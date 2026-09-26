@@ -74,13 +74,13 @@ claim-early-derivable = claim-after-typable 2 _
 claim-on-time-reported : report (infer [] (claim-after 3)) ≡ just (expected-claim-after 3)
 claim-on-time-reported = refl
 
--- the late claim is reported with the false premise `[0, 4 ] ≾ [0, 3 ]`
+-- the late claim fails its premise `[0, 4 ] ≾ [0, 3 ]`
 
-claim-late-reported : report (infer [] (claim-after 4)) ≡ just (expected-claim-refused 4)
-claim-late-reported = refl
+claim-late-verdict : infer [] (claim-after 4) ≡ untypable
+claim-late-verdict = refl
 
 claim-late-not-typable : ¬ Typable [] (claim-after 4)
-claim-late-not-typable = refuted-by-scheme (claim-after 4) refl
+claim-late-not-typable = infer-untypable [] (claim-after 4) claim-late-verdict
 
 ------------------------------------------------------------------
 -- 3. Inferred grades: a lease of at least two ticks
@@ -114,17 +114,17 @@ read-licenses-reported = refl
 read-licenses-derivable : Typable [] (op-licensed read)
 read-licenses-derivable = op-licensed-typable read _
 
-write-overruns-reported : report (infer [] (op-licensed write)) ≡ just (expected-op-refused write)
-write-overruns-reported = refl
+write-overruns-verdict : infer [] (op-licensed write) ≡ untypable
+write-overruns-verdict = refl
 
 write-overruns-not-typable : ¬ Typable [] (op-licensed write)
-write-overruns-not-typable = refuted-by-scheme (op-licensed write) refl
+write-overruns-not-typable = infer-untypable [] (op-licensed write) write-overruns-verdict
 
-send-overruns-reported : report (infer [] (op-licensed send)) ≡ just (expected-op-refused send)
-send-overruns-reported = refl
+send-overruns-verdict : infer [] (op-licensed send) ≡ untypable
+send-overruns-verdict = refl
 
 send-overruns-not-typable : ¬ Typable [] (op-licensed send)
-send-overruns-not-typable = refuted-by-scheme (op-licensed send) refl
+send-overruns-not-typable = infer-untypable [] (op-licensed send) send-overruns-verdict
 
 ------------------------------------------------------------------
 -- 7. Nested boxes: typed; built in place, the inner box goes stale

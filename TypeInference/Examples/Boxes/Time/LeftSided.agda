@@ -61,14 +61,13 @@ boxing-an-argument-reported = refl
 -- 2. A promise of three: claimable after three and after four
 -- ticks, not after two
 
--- the early claim is reported with the false premise
--- `[ 2 ,+∞⟩ ≾ [ 3 ,+∞⟩`
+-- the early claim fails its premise `[ 2 ,+∞⟩ ≾ [ 3 ,+∞⟩`
 
-claim-early-reported : report (infer [] (claim-after 2)) ≡ just (expected-claim-refused 2)
-claim-early-reported = refl
+claim-early-verdict : infer [] (claim-after 2) ≡ untypable
+claim-early-verdict = refl
 
 claim-early-not-typable : ¬ Typable [] (claim-after 2)
-claim-early-not-typable = refuted-by-scheme (claim-after 2) refl
+claim-early-not-typable = infer-untypable [] (claim-after 2) claim-early-verdict
 
 claim-on-time-reported : report (infer [] (claim-after 3)) ≡ just (expected-claim-after 3)
 claim-on-time-reported = refl
@@ -106,11 +105,11 @@ branches-reported = refl
 -- transmission, `[ 4 ,+∞⟩`, not after a reading, `[ 1 ,+∞⟩`:
 -- `claim-after-sampling-fails` of `Worked/Typing/Time/LeftSided.agda`
 
-read-too-early-reported : report (infer [] (op-licensed read)) ≡ just (expected-op-refused read)
-read-too-early-reported = refl
+read-too-early-verdict : infer [] (op-licensed read) ≡ untypable
+read-too-early-verdict = refl
 
 read-too-early-not-typable : ¬ Typable [] (op-licensed read)
-read-too-early-not-typable = refuted-by-scheme (op-licensed read) refl
+read-too-early-not-typable = infer-untypable [] (op-licensed read) read-too-early-verdict
 
 write-licenses-reported : report (infer [] (op-licensed write)) ≡ just (expected-op-licensed write)
 write-licenses-reported = refl

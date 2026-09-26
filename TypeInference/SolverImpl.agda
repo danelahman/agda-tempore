@@ -24,7 +24,8 @@
 --   (`retry-princ`/`-fail`), read back as obligations            --
 --   (`toOblig`).                                                 --
 -- * Read-back: `toHyps` (`toHyps-compl`, `etDec-refute`), then   --
---   `closedᴴ` deciding the closed atoms                          --
+--   `closedᴴ` deciding the closed atoms, with the closed         --
+--   orderings entailed by transitivity                           --
 --   (`closedᴴ-⊩`/`-⊆`/`-fail`).                                  --
 -- * The report (`reportOn`, `Reported`): `simplify`              --
 --   (`simplify-⊩`/`-⊨`), Pottier's elimination (`Elim`), with    --

@@ -4,11 +4,14 @@
 -- A grade expression with no unknowns has a value. An ordering   --
 -- between two such is decided by the grade's own `_≾?_`:         --
 -- `closedᴴ` drops each one that holds and fails on one that does --
--- not. A var-rule disjunction whose grade has a value is decided --
--- the same way against the unit: it is dropped when that holds,  --
--- and fails when it does not and the type is refuted eternal     --
--- (`etDec`). What is left entails what was there; a failure      --
--- leaves an atom that no closed instance satisfies.              --
+-- not. The orderings decided are those of the set and those it   --
+-- entails by transitivity: two closed sides joined by a chain of --
+-- orderings, the sides compared syntactically (`Transitive`,     --
+-- over `Reach`). A var-rule disjunction whose grade has a value  --
+-- is decided the same way against the unit: it is dropped when   --
+-- that holds, and fails when it does not and the type is refuted --
+-- eternal (`etDec`). What is left entails what was there; a      --
+-- failure leaves an atom that no closed instance satisfies.      --
 --                                                                --
 -- Contract. The result entails the set (`closedᴴ-⊩`) and is      --
 -- entailed wherever the set is (`closedᴴ-⊆`); a failure leaves   --
@@ -16,16 +19,23 @@
 -- decided; the others are kept verbatim.                         --
 ------------------------------------------------------------------
 
+open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)
+open import Data.Bool.ListAction using (any)
 open import Data.Empty using (⊥)
-open import Data.List.Base using (List; []; _∷_)
+open import Data.List.Base using (List; []; _∷_; _++_; map; concatMap)
 open import Data.List.Relation.Unary.All using ([]; _∷_)
 open import Data.List.Membership.Propositional using (_∈_)
+open import Data.List.Membership.Propositional.Properties using (∈-++⁺ˡ; ∈-++⁻; ∈-map⁻)
 open import Data.List.Relation.Unary.Any using (here; there)
-open import Data.Maybe.Base using (Maybe; just; nothing)
+open import Data.Maybe.Base using (Maybe; just; nothing; is-just)
 open import Data.Product using (Σ-syntax; _×_; _,_)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂)
 
+open import Relation.Binary.Construct.Closure.ReflexiveTransitive
+  using () renaming (ε to ◅-nil; _◅_ to _◅◅_)
+open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary using (¬_; yes; no)
+open import Relation.Nullary.Decidable using (does)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -47,6 +57,7 @@ open import TypeInference.OpenSyntax.Instances S
   using (Satisfiable; VarOK-∅; closed-≾ᵣ; closed-≾ᵣ⁻; closed-≾ₑ; closed-≾ₑ⁻; inst-≡̂ᵣ)
 
 open import TypeInference.SolverImpl.Resid S using (etDec; etDec-refute)
+import TypeInference.SolverImpl.Reach as Reachability
 
 ------------------------------------------------------------------------
 -- The value of an expression with no unknowns
@@ -271,10 +282,113 @@ falseᵉ (ε , ε' , c , c' , m , q , q' , n) δ k =
   n (closed-≾ₑ (convᵉ ε q) (convᵉ ε' q') δ (k m))
 
 ------------------------------------------------------------------------
+-- The orderings a list entails by transitivity
+--
+-- The sides of the orderings are the vertices of a graph and each
+-- ordering an edge, closed by `Reach`. A pair of closed sides joined
+-- by a chain of two or more edges is entailed; a shorter chain is an
+-- ordering of the list or reflexive.
+
+module Transitive {X : Set} (_≟_ : DecidableEquality X) (closed? : X → 𝔹)
+                  (l : List (X × X)) where
+
+  Edge : X → X → Set
+  Edge a b = (a , b) ∈ l
+
+  private
+
+    edgesOf : (k : List (X × X)) → (∀ {p} → p ∈ k → p ∈ l)
+            → List (Σ[ a ∈ X ] Σ[ b ∈ X ] Edge a b)
+    edgesOf []            f = []
+    edgesOf ((a , b) ∷ k) f = (a , b , f (here refl)) ∷ edgesOf k (λ m → f (there m))
+
+    insert : X → List X → List X
+    insert x xs with any (λ y → does (x ≟ y)) xs
+    ... | true  = xs
+    ... | false = x ∷ xs
+
+    sides : List (X × X) → List X
+    sides []            = []
+    sides ((a , b) ∷ k) = insert a (insert b (sides k))
+
+  vs : List X
+  vs = sides l
+
+  open Reachability _≟_ Edge (edgesOf l (λ m → m)) vs using (Chain; Closure; closure; reach)
+
+  private
+
+    closedOf : (k : List X) → (∀ {x} → x ∈ k → x ∈ vs) → List (Σ[ a ∈ X ] a ∈ vs)
+    closedOf []      f = []
+    closedOf (a ∷ k) f with closed? a
+    ... | true  = (a , f (here refl)) ∷ closedOf k (λ m → f (there m))
+    ... | false = closedOf k (λ m → f (there m))
+
+    long : ∀ {a b} → Chain a b → 𝔹
+    long (_ ◅◅ _ ◅◅ _) = true
+    long _             = false
+
+    from : Closure → List (Σ[ b ∈ X ] b ∈ vs) → Σ[ a ∈ X ] a ∈ vs
+         → List (Σ[ a ∈ X ] Σ[ b ∈ X ] Chain a b)
+    from C []              _        = []
+    from C ((b , mb) ∷ bs) (a , ma) with reach C ma mb
+    ... | nothing = from C bs (a , ma)
+    ... | just p with long p
+    ...   | true  = (a , b , p) ∷ from C bs (a , ma)
+    ...   | false = from C bs (a , ma)
+
+    among : Closure → List (Σ[ a ∈ X ] a ∈ vs) → List (Σ[ a ∈ X ] Σ[ b ∈ X ] Chain a b)
+    among C cs = concatMap (from C cs) cs
+
+    ends : (Σ[ a ∈ X ] Σ[ b ∈ X ] Chain a b) → X × X
+    ends (a , b , _) = a , b
+
+  -- The pairs of closed sides joined by a chain of two or more edges
+
+  chains : List (X × X)
+  chains = map ends (among closure (closedOf vs (λ m → m)))
+
+  -- Each holds wherever the orderings do, in a preorder
+
+  chains-⊩ : {Le : X → X → Set} → (∀ {a} → Le a a) → (∀ {a b c} → Le a b → Le b c → Le a c)
+           → (∀ {a b} → (a , b) ∈ l → Le a b) → ∀ {a b} → (a , b) ∈ chains → Le a b
+  chains-⊩ {Le} r t e m with ∈-map⁻ ends m
+  ... | (a , b , p) , _ , refl = along p
+    where
+      along : ∀ {a b} → Chain a b → Le a b
+      along ◅-nil     = r
+      along (x ◅◅ xs) = t (e x) (along xs)
+
+-- The resource and effect orderings, with those they entail by
+-- transitivity between closed sides
+
+withChainsʳ : ∀ {Θ} → List (RExp Θ × RExp Θ) → List (RExp Θ × RExp Θ)
+withChainsʳ l = l ++ Transitive.chains _≟ʳ_ (λ ρ → is-just (valʳ? ρ)) l
+
+withChainsᵉ : ∀ {Θ} → List (EExp Θ × EExp Θ) → List (EExp Θ × EExp Θ)
+withChainsᵉ l = l ++ Transitive.chains _≟ᵉ_ (λ ε → is-just (valᵉ? ε)) l
+
+withChainsʳ-⊩ : ∀ {Θ Θ'} {Q : Hyps Θ'} {δ : Subst Θ Θ'} → (l : List (RExp Θ × RExp Θ))
+              → (∀ {ρ ρ'} → (ρ , ρ') ∈ l → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ)
+              → ∀ {ρ ρ'} → (ρ , ρ') ∈ withChainsʳ l → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
+withChainsʳ-⊩ l h m with ∈-++⁻ l m
+... | inj₁ m' = h m'
+... | inj₂ m' =
+  Transitive.chains-⊩ _≟ʳ_ (λ ρ → is-just (valʳ? ρ)) l ⊩≾̂ᵣ-refl transᵣ h m'
+
+withChainsᵉ-⊩ : ∀ {Θ Θ'} {Q : Hyps Θ'} {δ : Subst Θ Θ'} → (l : List (EExp Θ × EExp Θ))
+              → (∀ {ε ε'} → (ε , ε') ∈ l → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ)
+              → ∀ {ε ε'} → (ε , ε') ∈ withChainsᵉ l → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
+withChainsᵉ-⊩ l h m with ∈-++⁻ l m
+... | inj₁ m' = h m'
+... | inj₂ m' =
+  Transitive.chains-⊩ _≟ᵉ_ (λ ε → is-just (valᵉ? ε)) l ⊩≾̂ₑ-refl transₑ h m'
+
+------------------------------------------------------------------------
 -- The closed orderings of a hypothesis set decided
 
 closedᴴ : ∀ {Θ} → Hyps Θ → Maybe (Hyps Θ)
-closedᴴ Q with closedʳ (ordᵣ Q) | closedᵉ (ordₑ Q) | closedᵈ (disj Q)
+closedᴴ Q with closedʳ (withChainsʳ (ordᵣ Q)) | closedᵉ (withChainsᵉ (ordₑ Q)) | closedᵈ (disj Q)
 ... | inj₂ kʳ | inj₂ kᵉ | inj₂ kᵈ =
       just (hyps (ets Q) (subᵥ Q) (lʳ kʳ) (lᵉ kᵉ) (lᵈ kᵈ))
 ... | _       | _       | _       = nothing
@@ -282,10 +396,10 @@ closedᴴ Q with closedʳ (ordᵣ Q) | closedᵉ (ordₑ Q) | closedᵈ (disj Q)
 -- What is left entails the set
 
 closedᴴ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → {Q₁ : Hyps Θ} → closedᴴ Q ≡ just Q₁ → Q₁ ⊩ᴴ Q [ idˢ ]
-closedᴴ-⊩ Q eq with closedʳ (ordᵣ Q) | closedᵉ (ordₑ Q) | closedᵈ (disj Q)
+closedᴴ-⊩ Q eq with closedʳ (withChainsʳ (ordᵣ Q)) | closedᵉ (withChainsᵉ (ordₑ Q)) | closedᵈ (disj Q)
 closedᴴ-⊩ Q refl | inj₂ kʳ | inj₂ kᵉ | inj₂ kᵈ =
-  mk⊩ᴴ (⊩ets r) (⊩subᵥ r) (entʳ kʳ idˢ (⊩ordᵣ r)) (entᵉ kᵉ idˢ (⊩ordₑ r))
-       (entᵈ kᵈ idˢ (⊩disj r))
+  mk⊩ᴴ (⊩ets r) (⊩subᵥ r) (λ m → entʳ kʳ idˢ (⊩ordᵣ r) (∈-++⁺ˡ m))
+       (λ m → entᵉ kᵉ idˢ (⊩ordₑ r) (∈-++⁺ˡ m)) (entᵈ kᵈ idˢ (⊩disj r))
   where r = ⊩ᴴ-refl {Q = hyps (ets Q) (subᵥ Q) (lʳ kʳ) (lᵉ kᵉ) (lᵈ kᵈ)}
 closedᴴ-⊩ Q () | inj₁ _ | _      | _
 closedᴴ-⊩ Q () | inj₂ _ | inj₁ _ | _
@@ -295,9 +409,10 @@ closedᴴ-⊩ Q () | inj₂ _ | inj₂ _ | inj₁ _
 
 closedᴴ-⊆ : ∀ {Θ Θ'} → (Q : Hyps Θ) → {Q₁ : Hyps Θ} → closedᴴ Q ≡ just Q₁
           → {Q' : Hyps Θ'} {δ : Subst Θ Θ'} → Q' ⊩ᴴ Q [ δ ] → Q' ⊩ᴴ Q₁ [ δ ]
-closedᴴ-⊆ Q eq h with closedʳ (ordᵣ Q) | closedᵉ (ordₑ Q) | closedᵈ (disj Q)
+closedᴴ-⊆ Q eq h with closedʳ (withChainsʳ (ordᵣ Q)) | closedᵉ (withChainsᵉ (ordₑ Q)) | closedᵈ (disj Q)
 closedᴴ-⊆ Q refl h | inj₂ kʳ | inj₂ kᵉ | inj₂ kᵈ =
-  mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (λ m → ⊩ordᵣ h (subʳ kʳ m)) (λ m → ⊩ordₑ h (subᵉ kᵉ m))
+  mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (λ m → withChainsʳ-⊩ (ordᵣ Q) (⊩ordᵣ h) (subʳ kʳ m))
+       (λ m → withChainsᵉ-⊩ (ordₑ Q) (⊩ordₑ h) (subᵉ kᵉ m))
        (λ m → ⊩disj h (subᵈ kᵈ m))
 closedᴴ-⊆ Q () h | inj₁ _ | _      | _
 closedᴴ-⊆ Q () h | inj₂ _ | inj₁ _ | _
@@ -306,8 +421,8 @@ closedᴴ-⊆ Q () h | inj₂ _ | inj₂ _ | inj₁ _
 -- A failure leaves the set unsatisfiable
 
 closedᴴ-fail : ∀ {Θ} → (Q : Hyps Θ) → closedᴴ Q ≡ nothing → ¬ Satisfiable Q []
-closedᴴ-fail Q eq (δ , h ∷ []) with closedʳ (ordᵣ Q) | closedᵉ (ordₑ Q) | closedᵈ (disj Q)
-... | inj₁ f | _      | _      = falseʳ f δ (⊩ordᵣ h)
-... | inj₂ _ | inj₁ f | _      = falseᵉ f δ (⊩ordₑ h)
+closedᴴ-fail Q eq (δ , h ∷ []) with closedʳ (withChainsʳ (ordᵣ Q)) | closedᵉ (withChainsᵉ (ordₑ Q)) | closedᵈ (disj Q)
+... | inj₁ f | _      | _      = falseʳ f δ (withChainsʳ-⊩ (ordᵣ Q) (⊩ordᵣ h))
+... | inj₂ _ | inj₁ f | _      = falseᵉ f δ (withChainsᵉ-⊩ (ordₑ Q) (⊩ordₑ h))
 ... | inj₂ _ | inj₂ _ | inj₁ f = falseᵈ f δ (⊩disj h)
 closedᴴ-fail Q () (δ , h ∷ []) | inj₂ _ | inj₂ _ | inj₂ _

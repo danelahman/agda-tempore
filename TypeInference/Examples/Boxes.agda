@@ -16,10 +16,10 @@
 --                                                                --
 -- A `typed` verdict is a principal scheme, and the term is       --
 -- typable exactly when the scheme's conditions are satisfiable.  --
--- Where an `unbox` is refused at a box of a constant grade,      --
--- inference answers `typed` with a closed false ordering among   --
--- the conditions; `closedᴴ` refutes it, so the term is not       --
--- typable (`refuted-by-scheme`).                                 --
+-- An `unbox` refused at a box of a constant grade is             --
+-- `untypable`: the unbox's grade unknown lies between the        --
+-- elapsed grade and the box's, and the ordering this entails     --
+-- between the two is decided false (`closedᴴ`).                  --
 --                                                                --
 -- The instances under `Boxes/` check the verdicts and schemes by --
 -- `refl` at the four example grades.                             --
@@ -28,11 +28,8 @@
 open import Data.Empty using (⊥-elim)
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
 open import Data.List.Base using ([]; _∷_)
-open import Data.Maybe.Base using (just; nothing)
 open import Data.Nat using (ℕ; suc)
 
-open import Function.Bundles using (Equivalence)
-open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable using (True; toWitness)
 
 open import Syntax.Grades
@@ -57,15 +54,14 @@ open import TypeInference.OpenSyntax.Types     S
 open import TypeInference.OpenSyntax.Contexts  S renaming (_∷_ to _▸_)
 open import TypeInference.OpenSyntax.Subst     S using (idˢ)
 open import TypeInference.OpenSyntax.Hyps      S
-open import TypeInference.OpenSyntax.Instances S using (Satisfiable; Satisfiable-∅)
+open import TypeInference.OpenSyntax.Instances S using (Satisfiable-∅)
 open import TypeInference.OpenSyntax.Language  S
 open import TypeInference.Raw.Syntax           S
 open import TypeInference.Raw.Subst            S using (_[_]ᴿᶜ)
 open import TypeInference.Erase                S using (⌊_⌋ᶜ)
 open import TypeInference.Principality         S
 open import TypeInference.SolverImpl           S opEnum
-  using (infer-complete; infer-handlerFree; infer-typed)
-open import TypeInference.SolverImpl.Closed    S using (closedᴴ; closedᴴ-fail)
+  using (infer-complete; infer-handlerFree)
 
 open import TypeInference.SolverImpl S opEnum using (infer) public
 open import TypeInference.Examples.Report S public
@@ -96,31 +92,6 @@ typed-of M t h with infer [] M | infer-complete [] M t | infer-handlerFree [] M 
 ... | typed p   | _  | _  = is-typed p
 ... | untypable | nu | _  = ⊥-elim (nu refl)
 ... | stuck     | _  | ns = ⊥-elim (ns refl)
-
--- A scheme with no obligations whose hypotheses include a closed
--- false ordering: no instance satisfies it, so the term is not typable.
--- `check` is one computation, so that a `refl` check of it runs the
--- solver once.
-
-data Check : Set where
-  unsatisfiable other : Check
-
-check : ∀ {M : RawC ∅ˢ 0} → Inference [] M → Check
-check (typed p) with PrincipalTyping.R̃ p | closedᴴ (PrincipalTyping.Q̃ p)
-... | [] | nothing = unsatisfiable
-... | _  | _       = other
-check untypable = other
-check stuck     = other
-
-refuted-by-scheme : (M : RawC ∅ˢ 0) → check (infer [] M) ≡ unsatisfiable → ¬ Typable [] M
-refuted-by-scheme M u t with infer [] M in e
-... | typed p with PrincipalTyping.R̃ p in r | closedᴴ (PrincipalTyping.Q̃ p) in c
-...   | [] | nothing =
-  closedᴴ-fail (PrincipalTyping.Q̃ p) c
-    (subst (Satisfiable (PrincipalTyping.Q̃ p)) r
-      (Equivalence.to (infer-typed [] M e) t))
-refuted-by-scheme M () t | typed p | [] | just _
-refuted-by-scheme M () t | typed p | _ ∷ _ | _
 
 ------------------------------------------------------------------
 -- Side conditions
@@ -260,11 +231,6 @@ claim-on-time-typed = typed-of (claim-after 3) (closed (claim-after-D 3 ≾ᵣ-r
 
 expected-claim-after : ℕ → Report
 expected-claim-after d = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ⌜ d ⌝ᵉ
-
--- the refused claim, reported with its false premise
-
-expected-claim-refused : ℕ → Report
-expected-claim-refused d = ∀[ 0 , 0 , 0 ] ⌜ d ⌝ʳ ≾ᵣ ⌜ 3 ⌝ʳ ⟹ Unit ‼ ⌜ d ⌝ᵉ
 
 ------------------------------------------------------------------
 -- 3. An inferred box grade
@@ -410,13 +376,6 @@ op-licensed-typable op p = closed (op-licensed-D op (toWitness p)) refl
 expected-op-licensed : Op → Report
 expected-op-licensed op =
   ∀[ 0 , 0 , 0 ] ⊤ ⟹ (⌜ param op ⌝ᵍ ⇒ Unit ‼ econst (op-grade op)) ‼ ûₑ
-
--- the refused claim, reported with its false premise
-
-expected-op-refused : Op → Report
-expected-op-refused op =
-  ∀[ 0 , 0 , 0 ] rconst (mapᵉ (op-grade op)) ≾ᵣ ⌜ 2 ⌝ʳ ⟹
-    (⌜ param op ⌝ᵍ ⇒ Unit ‼ econst (op-grade op)) ‼ ûₑ
 
 ------------------------------------------------------------------
 -- 7. Nested boxes
