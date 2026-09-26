@@ -31,26 +31,31 @@ open import Syntax.Grades.Regular.Automaton k
 -- the product of `L` and `M`, each pair carrying the word that reached
 -- it, reversed; the equality test compares pairs only
 
+-- a pair holding the empty word of `L & ~M`
+
+bad : DFA → DFA → (ℕ × ℕ) × Word → Bool
+bad L M ((p , q) , _) = isFinal L p ∧ not (isFinal M q)
+
 witnesses : DFA → DFA → Automaton
 witnesses L M = record
   { State = (ℕ × ℕ) × Word
   ; _≟_   = λ { ((p , q) , _) ((p′ , q′) , _) → (p ≡ᵇ p′) ∧ (q ≡ᵇ q′) }
   ; start = (0 , 0) , []
   ; δ     = λ { ((p , q) , vʳ) a → (next L p a , next M q a) , a ∷ vʳ }
-  ; final = λ { ((p , q) , _) → isFinal L p ∧ not (isFinal M q) }
+  ; final = bad L M
   ; bound = size L ℕ.* size M
   }
 
 -- the first discovered pair holding a counterexample, whose word is
 -- then a shortest one
 
+search : DFA → DFA → List ((ℕ × ℕ) × Word) → Maybe Word
+search L M []              = nothing
+search L M ((x , vʳ) ∷ xs) =
+  if bad L M (x , vʳ) then just (reverse vʳ) else search L M xs
+
 counterexample : DFA → DFA → Maybe Word
-counterexample L M = search (proj₁ (Explore.discover (witnesses L M)))
-  where
-  search : List ((ℕ × ℕ) × Word) → Maybe Word
-  search []                    = nothing
-  search (((p , q) , vʳ) ∷ ps) =
-    if isFinal L p ∧ not (isFinal M q) then just (reverse vʳ) else search ps
+counterexample L M = search L M (proj₁ (Explore.discover (witnesses L M)))
 
 _⊆ᵇ_ : DFA → DFA → Bool
 L ⊆ᵇ M = is-nothing (counterexample L M)
