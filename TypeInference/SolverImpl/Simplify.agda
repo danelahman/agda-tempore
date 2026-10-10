@@ -28,9 +28,9 @@
 -- examined, and every ordering that holds outright.            --
 --                                                              --
 -- For settling, for the disjunctions and for `trim`, an        --
--- ordering is entailed when it is among the orderings of the   --
--- set read or `decide≾` proves it from their atomic ones       --
--- (`entᵣ?`, `entₑ?`); two types are compared syntactically     --
+-- ordering is decided at the strength `atomic` of `Entail`     --
+-- from the orderings of the set read, and refuted against the  --
+-- unit by `refute≾u`; two types are compared syntactically     --
 -- (`sameᵛ?`).                                                  --
 --                                                              --
 -- Contract. `simplify Q` and `trim Q` entail `Q`               --
@@ -87,11 +87,10 @@ open import TypeInference.SolverImpl.Core.Rigid S using (zip₂-just)
 
 open import TypeInference.SolverImpl.Canon  S using (canonᴴ; canonᴴ-⊩; canonᴴ-⊩⁻)
 open import TypeInference.SolverImpl.Eliminate S using (Elim; mkElim)
-open import TypeInference.SolverImpl.Normal  S using (decide≾ᵣ; decide≾ₑ)
 open import TypeInference.SolverImpl.Product S using (_≺ᵣ_; _≺ₑ_)
 open import TypeInference.SolverImpl.Resid  S using (etDec; etDec-sound; etDec-compl; etDec-refute)
-open import TypeInference.SolverImpl.Refute S
-  using (Refutedᵤ; scanᵤ)
+open import TypeInference.SolverImpl.Entail S
+  using (decideᵣ; decideₑ; atomic; memʳ?; memᵉ?; refute≾u)
 
 -- Derivations reading only a list of subtyping hypotheses and a list
 -- of eternality atoms: `_⊢ᵖ_≾_` mirrors `_⊩ᵗᵛ_≾_`, `Etᴾ` mirrors
@@ -292,47 +291,17 @@ module Walk {A : Set} (Ok : List A → List A → A → Set)
            (λ { (here refl) → hk (here refl) ; (there q) → hs q })
            (λ q → hk (there q)) m
 
--- Membership of an ordering in a list
-
-memʳ? : ∀ {Θ} → (p : RExp Θ × RExp Θ) → (l : List (RExp Θ × RExp Θ)) → Maybe (p ∈ l)
-memʳ? p []              = nothing
-memʳ? (ρ , ρ') ((ρ₀ , ρ₀') ∷ l) with ρ ≟ʳ ρ₀ | ρ' ≟ʳ ρ₀'
-... | yes refl | yes refl = just (here refl)
-... | _        | _        with memʳ? (ρ , ρ') l
-...   | just m  = just (there m)
-...   | nothing = nothing
-
-memᵉ? : ∀ {Θ} → (p : EExp Θ × EExp Θ) → (l : List (EExp Θ × EExp Θ)) → Maybe (p ∈ l)
-memᵉ? p []              = nothing
-memᵉ? (ε , ε') ((ε₀ , ε₀') ∷ l) with ε ≟ᵉ ε₀ | ε' ≟ᵉ ε₀'
-... | yes refl | yes refl = just (here refl)
-... | _        | _        with memᵉ? (ε , ε') l
-...   | just m  = just (there m)
-...   | nothing = nothing
-
--- An entailed ordering: one among the set's orderings, or one
--- `decide≾` proves from the set's atomic orderings
-
-entᵣ? : ∀ {Θ} → (Q : Hyps Θ) → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
-entᵣ? Q ρ ρ' with memʳ? (ρ , ρ') (ordᵣ Q)
-... | just m  = just (hypᵣ m)
-... | nothing = decide≾ᵣ ρ ρ'
-
-entₑ? : ∀ {Θ} → (Q : Hyps Θ) → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
-entₑ? Q ε ε' with memᵉ? (ε , ε') (ordₑ Q)
-... | just m  = just (hypₑ m)
-... | nothing = decide≾ₑ ε ε'
-
--- One disjunction, settled against the deciders and the set itself
+-- One disjunction, settled at the strength `atomic`, by the set
+-- itself and by refutation against the unit
 
 settle : ∀ {Θ} → OVType Θ → RExp Θ → Hyps Θ → Hyps Θ
-settle A ρ Q with entᵣ? Q ρ ûᵣ
+settle A ρ Q with decideᵣ atomic Q ρ ûᵣ
 ... | just _  = Q
 ... | nothing with etDec A
 ...   | nothing = hyps (ets Q) (subᵥ Q) (insertᴼ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q)) (ordₑ Q) (disj Q)
 ...   | just αs with ets? Q αs
 ...     | just _  = Q
-...     | nothing with scanᵤ ρ
+...     | nothing with refute≾u ρ
 ...       | just _  = hyps (αs ++ ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) (disj Q)
 ...       | nothing = hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) ((A , ρ) ∷ disj Q)
 
@@ -341,7 +310,7 @@ settle A ρ Q with entᵣ? Q ρ ûᵣ
 
 settle-⊩ : ∀ {Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ)
          → (settle A ρ Q ⊩ᴴ Q) × VarOK (settle A ρ Q) A ρ
-settle-⊩ A ρ Q with entᵣ? Q ρ ûᵣ
+settle-⊩ A ρ Q with decideᵣ atomic Q ρ ûᵣ
 ... | just d  = ⊩ᴴ-refl , ≾ᵘ-ok d
 ... | nothing with etDec A in e
 ...   | nothing =
@@ -350,7 +319,7 @@ settle-⊩ A ρ Q with entᵣ? Q ρ ûᵣ
         , ≾ᵘ-ok (hypᵣ (insertᴼ-⊇ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q) (here refl)))
 ...   | just αs with ets? Q αs
 ...     | just k  = ⊩ᴴ-refl , et-ok (etDec-sound A e k)
-...     | nothing with scanᵤ ρ
+...     | nothing with refute≾u ρ
 ...       | just _  =
             ⊆ᴴ-⊩ (mk⊆ᴴ (∈-++⁺ʳ αs) (λ m → m) (λ m → m) (λ m → m) (λ m → m))
             , et-ok (etDec-sound A e (λ m → et-hyp (∈-++⁺ˡ m)))
@@ -364,7 +333,7 @@ settle-⊩ A ρ Q with entᵣ? Q ρ ûᵣ
 
 settle-inst : ∀ {Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ) → (δ : Subst Θ ∅ˢ)
             → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ᴴ settle A ρ Q [ δ ]
-settle-inst A ρ Q δ d h with entᵣ? Q ρ ûᵣ
+settle-inst A ρ Q δ d h with decideᵣ atomic Q ρ ûᵣ
 ... | just _  = h
 ... | nothing with etDec A in e
 ...   | nothing = mk⊩ᴴ (⊩ets h) (⊩subᵥ h) ordR (⊩ordₑ h) (⊩disj h)
@@ -376,7 +345,7 @@ settle-inst A ρ Q δ d h with entᵣ? Q ρ ûᵣ
         ... | there m'  = ⊩ordᵣ h m'
 ...   | just αs with ets? Q αs
 ...     | just _  = h
-...     | nothing with scanᵤ ρ
+...     | nothing with refute≾u ρ
 ...       | just ref = mk⊩ᴴ et' (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (⊩disj h)
       where
         etA : ∅ᴴ ⊩ᴱ A [ δ ]ᵛ
@@ -445,7 +414,7 @@ sameᶜ? (A ‼ ε) (A' ‼ ε') with sameᵛ? A A' | ε ≟ᵉ ε'
 ... | _         | _        = nothing
 
 -- A disjunction entailed by another: the same type, and a grade
--- entailed (by `entᵣ?`) above its own. Of two each entailing the
+-- entailed (at the strength `atomic`) above its own. Of two each entailing the
 -- other, the walk keeps the later.
 
 Hᵈ : ∀ {Θ} → Hyps Θ → List (OVType Θ × RExp Θ) → Hyps Θ
@@ -466,7 +435,7 @@ aboveᵈ? : ∀ {Θ} → (Q : Hyps Θ) → (A : OVType Θ) → (ρ : RExp Θ)
 aboveᵈ? Q A ρ []               = nothing
 aboveᵈ? Q A ρ ((A' , ρ') ∷ l) with sameᵛ? A A'
 ... | nothing   = thereᵈ (aboveᵈ? Q A ρ l)
-... | just refl with entᵣ? Q ρ ρ'
+... | just refl with decideᵣ atomic Q ρ ρ'
 ...   | just d  = just (ρ' , here refl , d)
 ...   | nothing = thereᵈ (aboveᵈ? Q A ρ l)
 
@@ -682,14 +651,14 @@ repeatᵉ? seen rest (ε , ε') with ε ≟ᵉ ε'
 ...   | just m  = just (hypₑ (∈-++⁺ˡ m))
 ...   | nothing = nothing
 
--- An ordering among those kept and those not yet examined, or one
--- `decide≾` proves from them
+-- An ordering entailed at the strength `atomic` by those kept and
+-- those not yet examined
 
 entailsʳ? : Testʳ
-entailsʳ? lₑ seen rest (ρ , ρ') = entᵣ? (Hʳ lₑ (seen ++ rest)) ρ ρ'
+entailsʳ? lₑ seen rest (ρ , ρ') = decideᵣ atomic (Hʳ lₑ (seen ++ rest)) ρ ρ'
 
 entailsᵉ? : Testᵉ
-entailsᵉ? seen rest (ε , ε') = entₑ? (Hᵉ (seen ++ rest)) ε ε'
+entailsᵉ? seen rest (ε , ε') = decideₑ atomic (Hᵉ (seen ++ rest)) ε ε'
 
 module Pruneᴼ (testʳ : Testʳ) (testᵉ : Testᵉ) where
 

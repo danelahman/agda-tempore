@@ -16,15 +16,15 @@ examples:
 #                                                        -> stdlib
 #   annotations                                          -> annotations
 #   clause-local unknowns, handlers (Localise)           -> handlers
-#   unbox, the var rule, closed orderings (Closed)       -> boxes
+#   unbox, the var rule, closed orderings (Entail)       -> boxes
 #   pruning, canonical forms, elimination
 #     (Simplify, Canon, Eliminate)                       -> reports (+ stdlib)
-#   product grades, normal forms (Product, Normal)       -> product
-#   durations other than ticks, dense time (Closed)      -> durations
+#   product grades, normal forms (Product, Normal, Entail) -> product
+#   durations other than ticks, dense time (Entail)      -> durations
 #   single stages on hand-written input: splitting,
 #     disjunction pruning, absorption by the top, multiset
 #     comparison of products, chained closed orderings, cycle
-#     collapse (Canon, Simplify, Normal, Closed, Localise) -> stages
+#     collapse (Canon, Simplify, Entail, Localise)       -> stages
 
 examples-stdlib:
 	agda TypeInference/Examples/Stdlib/All.agda

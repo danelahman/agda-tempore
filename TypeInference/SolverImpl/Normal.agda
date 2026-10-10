@@ -1,47 +1,30 @@
 --------------------------------------------------------------------
--- Deciding an entailed ordering of open grade expressions        --
+-- The engine of entailment: normal forms, chains, embedding      --
 --                                                                --
--- Both sides are put in the sum-of-products normal form of       --
--- `SolverImpl.Product` and compared alternative by alternative,  --
--- the answer glued back with `eqᵣ`/`monoᵣ`/`transᵣ`. Two         --
--- alternatives are compared by `_⊑ᵖ_`: the left embeds into the  --
--- right in order, a missing position being the unit, an atom     --
--- matched against nothing on the right when the unit is below it --
--- and on the left when it is below the unit, and an atom above   --
--- the top on the right standing for any run of atoms on the      --
--- left. Where the grade declares `_·_` commutative, products     --
--- compare as multisets: some permutation of the left embeds in   --
--- order into the right.                                          --
+-- Both sides of an ordering are put in the sum-of-products       --
+-- normal form of `SolverImpl.Product`. Two products are compared --
+-- by `_⊑ᵖ_`: the left embeds into the right in order, a missing  --
+-- position being the unit, an atom matched against nothing on    --
+-- the right when the unit is below it and on the left when it is --
+-- below the unit, and an atom above the top on the right         --
+-- standing for any run of atoms on the left. Where the grade     --
+-- declares `_·_` commutative, products compare as multisets:     --
+-- some permutation of the left embeds in order into the right.   --
 --                                                                --
--- Two atoms are compared by the grade's own order, by identity,  --
--- and along the atomic hypotheses: those assumed orderings whose --
--- two sides are single atoms, chained. An effect hypothesis      --
--- carries over to the images of its atoms. Hypotheses with a     --
--- product or a join on either side are not used.                 --
+-- `Chains` is the reachability table along a list of edges       --
+-- between atoms, and `Embedding` the comparison of products with --
+-- its atom comparisons as parameters. `SolverImpl.Entail`        --
+-- instantiates both at the edges of a hypothesis graph.          --
 --                                                                --
--- The sums are met by the universal property of the join:        --
--- `⊔-lub` reduces the left side to each of its alternatives in   --
--- turn, and `⊔-ubˡ`/`⊔-ubʳ` pick out an alternative of the right --
--- side for each. So a bounded ∀/∃ over alternatives sits above a --
--- pointwise comparison of products. The right side is first      --
--- grouped by skeleton, and each group that varies in one slot    --
--- folded into one alternative, that slot holding the join of its --
--- constants (`foldSumₑ`/`foldSumᵣ`).                             --
---                                                                --
--- `⊩-reflectᵣ`/`⊩-reflectₑ` are the closed special case: a       --
--- variable-free expression is convertible to the constant it     --
--- evaluates to, in both directions.                              --
---                                                                --
--- Contract. `decide≾ᵣ ρ ρ'` and `decide≾ₑ` are sound by their    --
--- types: a `just` is a derivation of `Q ⊩ ρ ≾̂ᵣ ρ'`, built from   --
--- the laws. Products: `_⊑ᵖ?_` decides `_⊑ᵖ_` (`steps-complete`,  --
--- `step-shrinks`), `prodˢ≾` returns a proof exactly when `_⊑ᵖ_`  --
--- holds (`prodˢ≾-complete`, `prodˢ≾-exact`), and `_⊑ᵖ_` is sound --
--- for entailment (`⊑ᵖ-sound`, at `stepₑ`/`stepᵣ`). A `nothing`   --
--- claims nothing about entailment: no completeness is proved,    --
--- for any fragment, and the atom comparisons are sound only.     --
--- What the search does not find is listed under Products below.  --
+-- Contract. `_⊑ᵖ?_` decides `_⊑ᵖ_` (`steps-complete`,            --
+-- `step-shrinks`), `prodˢ≾` returns a reading exactly when       --
+-- `_⊑ᵖ_` holds (`prodˢ≾-complete`, `prodˢ≾-exact`), and          --
+-- `⊑ᵖ-sound` reads a derivation into any relation closed under   --
+-- the steps. A table entry is a composite of the edges' proofs   --
+-- (`reach?`). What the search does not find is listed under      --
+-- Products below.                                                --
 --------------------------------------------------------------------
+
 
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Empty.Irrelevant using () renaming (⊥-elim to ⊥-elim-irr)
@@ -51,8 +34,8 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Properties using (length-removeAt′)
 open import Data.List.Relation.Unary.Any using (Any; here; there; any?; index; _─_)
 import Data.List.Relation.Unary.Any as Any
-open import Data.List.Relation.Unary.Any.Properties using (++⁺ˡ; ++⁺ʳ; map⁺; lookup-result)
-open import Data.Maybe using (Maybe; just; nothing; _<∣>_; Is-just; to-witness)
+open import Data.List.Relation.Unary.Any.Properties using (++⁺ˡ; ++⁺ʳ; map⁺)
+open import Data.Maybe using (Maybe; just; nothing; _<∣>_; Is-just)
 open import Data.Maybe.Properties using (just-injective)
 open import Data.Maybe.Relation.Unary.Any using () renaming (just to Any-just)
 open import Data.Nat.Base using (ℕ; zero; suc; _+_; _≡ᵇ_; _≤_; _<_; z≤n; s≤s)
@@ -85,33 +68,22 @@ open import TypeInference.OpenSyntax.Hyps   S
 
 open import TypeInference.SolverImpl.Product S public
 
--- The unit is below anything when the grade decides it least
-
-min≾ₑ : ∀ {Θ} {Q : Hyps Θ} {ε : EExp Θ} → Maybe (Is-just uₑ-least?) → Maybe (Q ⊩ ûₑ ≾̂ₑ ε)
-min≾ₑ (just ij) = just (minₑ ij)
-min≾ₑ nothing   = nothing
-
-min≾ᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → Maybe (Is-just uᵣ-least?) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ρ)
-min≾ᵣ (just ij) = just (minᵣ ij)
-min≾ᵣ nothing   = nothing
-
 ------------------------------------------------------------------
--- Atomic hypotheses
+-- Chains between atoms
 --
--- Two atoms are linked when they are equal, or are constants ordered
--- by the grade's own order. `a` reaches `b` along a chain of edges
--- when `a` is linked to the first source, each target to the next
--- source, and the last target to `b`; `a` reaches `b` when they are
--- linked, or `a` is linked to a source that reaches `b`.
+-- Two atoms are linked by `link?`. `a` reaches `b` along a chain of
+-- edges when `a` is linked to the first source, each target to the
+-- next source, and the last target to `b`; `a` reaches `b` when they
+-- are linked, or `a` is linked to a source that reaches `b`.
 --
--- The table, built at every call of `decide≾`, holds one entry per
--- distinct source `c`, in order of first occurrence among the edges:
--- the atoms `d` that `c` reaches, each with the derivation of `c ⊑ d`
--- composed along its chain. An entry is saturated by at most one
--- round per edge, stopping at the first round that reaches nothing
--- new. One entry per source suffices: an entry depends on its source
--- alone, and `reach?` answers with the first entry that answers, so
--- a repeated entry could not change an answer.
+-- The table holds one entry per distinct source `c`, in order of
+-- first occurrence among the edges: the atoms `d` that `c` reaches,
+-- each with the derivation of `c ⊑ d` composed along its chain. An
+-- entry is saturated by at most one round per edge, stopping at the
+-- first round that reaches nothing new. One entry per source
+-- suffices: an entry depends on its source alone, and `reach?`
+-- answers with the first entry that answers, so a repeated entry
+-- could not change an answer.
 
 module Chains {A : Set} (_⊑_ : A → A → Set)
               (refl⊑  : ∀ {a} → a ⊑ a)
@@ -164,14 +136,6 @@ module Chains {A : Set} (_⊑_ : A → A → Set)
       ...   | just w  = just (trans⊑ l w)
       ...   | nothing = go t'
 
--- An atomic hypothesis, as an edge between its two atoms
-
-EEdge : ∀ {Θ} → Hyps Θ → Set
-EEdge {Θ} Q = Σ[ a ∈ EAtom Θ ] Σ[ b ∈ EAtom Θ ] (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-
-REdge : ∀ {Θ} → Hyps Θ → Set
-REdge {Θ} Q = Σ[ a ∈ RAtom Θ ] Σ[ b ∈ RAtom Θ ] (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-
 -- A side that is a single atom
 
 atomᵉ? : ∀ {Θ} → (ε : EExp Θ) → Maybe (Σ[ a ∈ EAtom Θ ] ⟦ a ⟧ᵉᵃ ≡ ε)
@@ -185,25 +149,7 @@ atomʳ? (rconst c)     = just (rc c , refl)
 atomʳ? ∣ evar i ∣̂ᵉ    = just (rm i , refl)
 atomʳ? _              = nothing
 
--- The atomic hypotheses among a list of assumed orderings
-
-edgesₑ : ∀ {Θ} {Q : Hyps Θ} → (l : List (EExp Θ × EExp Θ))
-       → (∀ {p} → p ∈ l → p ∈ ordₑ Q) → List (EEdge Q)
-edgesₑ []             k = []
-edgesₑ ((ε , ε') ∷ l) k with atomᵉ? ε | atomᵉ? ε'
-... | just (a , refl) | just (b , refl) =
-      (a , b , hypₑ (k (here refl))) ∷ edgesₑ l (λ m → k (there m))
-... | _               | _               = edgesₑ l (λ m → k (there m))
-
-edgesᵣ : ∀ {Θ} {Q : Hyps Θ} → (l : List (RExp Θ × RExp Θ))
-       → (∀ {p} → p ∈ l → p ∈ ordᵣ Q) → List (REdge Q)
-edgesᵣ []             k = []
-edgesᵣ ((ρ , ρ') ∷ l) k with atomʳ? ρ | atomʳ? ρ'
-... | just (a , refl) | just (b , refl) =
-      (a , b , hypᵣ (k (here refl))) ∷ edgesᵣ l (λ m → k (there m))
-... | _               | _               = edgesᵣ l (λ m → k (there m))
-
--- The image of an effect atom, and of an effect edge by `map-mono`
+-- The image of an effect atom
 
 ∣_∣ᵃ : ∀ {Θ} → EAtom Θ → RAtom Θ
 ∣ ac c ∣ᵃ = rc (mapᵉ c)
@@ -213,46 +159,6 @@ edgesᵣ ((ρ , ρ') ∷ l) k with atomʳ? ρ | atomʳ? ρ'
 ∣⟦ ac c ⟧∣ = ≡̂ᵣ-map-const
 ∣⟦ av i ⟧∣ = ≡̂ᵣ-refl
 
-mapEdge : ∀ {Θ} {Q : Hyps Θ} → EEdge Q → REdge Q
-mapEdge (a , b , p) =
-  ∣ a ∣ᵃ , ∣ b ∣ᵃ , transᵣ (eqᵣ (≡̂ᵣ-sym ∣⟦ a ⟧∣)) (transᵣ (map-mono p) (eqᵣ ∣⟦ b ⟧∣))
-
--- Linked atoms
-
-linkₑ? : ∀ {Θ} {Q : Hyps Θ} → (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-linkₑ? (ac c) (ac d) with c ≾ₑ? d
-... | yes p = just (atomₑ p)
-... | no _  = nothing
-linkₑ? (av i) (av j) with i ≟ᶠ j
-... | yes refl = just ⊩≾̂ₑ-refl
-... | no _     = nothing
-linkₑ? _      _      = nothing
-
-linkᵣ? : ∀ {Θ} {Q : Hyps Θ} → (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-linkᵣ? (rc c) (rc d) with c ≾ᵣ? d
-... | yes p = just (atomᵣ p)
-... | no _  = nothing
-linkᵣ? (rv i) (rv j) with i ≟ᶠ j
-... | yes refl = just ⊩≾̂ᵣ-refl
-... | no _     = nothing
-linkᵣ? (rm i) (rm j) with i ≟ᶠ j
-... | yes refl = just ⊩≾̂ᵣ-refl
-... | no _     = nothing
-linkᵣ? _      _      = nothing
-
--- What the sources of the atomic hypotheses reach; on the resource
--- side along the resource ones and the images of the effect ones
-
-tableₑ : ∀ {Θ} → (Q : Hyps Θ) → Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-                                              ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ (edgesₑ (ordₑ Q) (λ m → m))
-tableₑ Q = Chains.table _ ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ (edgesₑ (ordₑ Q) (λ m → m))
-
-redgesᵣ : ∀ {Θ} → (Q : Hyps Θ) → List (REdge Q)
-redgesᵣ Q = edgesᵣ (ordᵣ Q) (λ m → m) ++ map mapEdge (edgesₑ (ordₑ Q) (λ m → m))
-
-tableᵣ : ∀ {Θ} → (Q : Hyps Θ) → Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-                                              ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ (redgesᵣ Q)
-tableᵣ Q = Chains.table _ ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ (redgesᵣ Q)
 
 ------------------------------------------------------------------
 -- Consing a constant adds at most one atom
@@ -346,8 +252,7 @@ anys-complete P? {x ∷ xs} (there p) with P? x
 -- The search is backtracking bipartite matching, exponential in the
 -- length of a product.
 --
--- Not found: anything that needs a hypothesis other than an atomic
--- one. A left alternative below the join of right alternatives only
+-- Not found: a left alternative below the join of right alternatives only
 -- jointly is found when those alternatives form a group that the
 -- fold makes one; not when they have different skeletons, or form a
 -- group that varies in more than one slot.
@@ -600,284 +505,3 @@ module Embedding
     prodˢ≾-exact {as} {bs} j with as ⊑ᵖ? bs | j
     ... | yes d | _ = d
     ... | no _  | ()
-
-module Searchₑ {Θ} {Q : Hyps Θ}
-               (t : Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-                                 ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ (edgesₑ (ordₑ Q) (λ m → m))) where
-
-  reachₑ? : (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-  reachₑ? = Chains.reach? _ ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ (edgesₑ (ordₑ Q) (λ m → m)) t
-
-  -- Anything is below an atom that the top reaches
-
-  ceilₑ : ∀ {ε : EExp Θ} → (b : EAtom Θ) → Maybe (Q ⊩ ε ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-  ceilₑ b with reachₑ? (ac ⊤ₑ) b
-  ... | just p  = just (transₑ topₑ p)
-  ... | nothing = nothing
-
-  -- An atom below an atom: linked, below an atom above the top, or
-  -- reached along the atomic hypotheses
-
-  atom≾ₑ : (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-  atom≾ₑ a b = linkₑ? a b <∣> ceilₑ b <∣> reachₑ? a b
-
-  -- The unit below an atom: when the grade's unit is least, or as the
-  -- constant atom `uₑ`
-
-  unit≾ₑ : (b : EAtom Θ) → Maybe (Q ⊩ ûₑ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-  unit≾ₑ b = min≾ₑ (Is-just? uₑ-least?) <∣> atom≾ₑ (ac uₑ) b
-
-  -- An atom below the unit, as the constant atom `uₑ`
-
-  ≾unitₑ : (a : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ûₑ)
-  ≾unitₑ a = atom≾ₑ a (ac uₑ)
-
-  -- The product comparison, its atom comparisons being these
-
-  constᵉ? : EAtom Θ → Maybe E
-  constᵉ? (ac c) = just c
-  constᵉ? (av _) = nothing
-
-  module Pₑ = Embedding constᵉ? (λ c → consₑ (ac c)) consₑ-length
-                (λ a b → Is-just (atom≾ₑ a b)) (λ a b → is-just? (atom≾ₑ a b))
-                (λ b → Is-just (unit≾ₑ b))     (λ b → is-just? (unit≾ₑ b))
-                (λ a → Is-just (≾unitₑ a))     (λ a → is-just? (≾unitₑ a))
-                (λ b → Is-just (reachₑ? (ac ⊤ₑ) b)) (λ b → is-just? (reachₑ? (ac ⊤ₑ) b))
-                (Is-just ·ₑ-comm?) (is-just? ·ₑ-comm?)
-  open Pₑ using (Step; match; skipʳ; skipˡ; absorb; mergeʳ; mergeˡ; pick; absorbAt)
-
-  -- Each step is an entailment, one use of `monoₑ` on products read
-  -- back with a trailing unit (`⟦_⟧ᵉˢ`)
-
-  stepₑ : ∀ {as bs as' bs'} → Step as bs as' bs'
-        → Q ⊩ ⟦ as' ⟧ᵉˢ ≾̂ₑ ⟦ bs' ⟧ᵉˢ → Q ⊩ ⟦ as ⟧ᵉˢ ≾̂ₑ ⟦ bs ⟧ᵉˢ
-  stepₑ (match p)  q = monoₑ (to-witness p) q
-  stepₑ (skipʳ p)  q = transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-identityˡ)) (monoₑ (to-witness p) q)
-  stepₑ (skipˡ p)  q = transₑ (monoₑ (to-witness p) q) (eqₑ ≡̂ₑ-identityˡ)
-  stepₑ (absorb p) q =
-    transₑ (monoₑ ⊩≾̂ₑ-refl q)
-           (transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-assoc)) (monoₑ (transₑ topₑ (to-witness p)) ⊩≾̂ₑ-refl))
-  stepₑ (mergeʳ {a = ac c} {bs = bs} refl p) q =
-    transₑ q (transₑ (eqₑ (≡̂ₑ-trans (consₑ-≡ (ac c) bs)
-                                    (≡̂ₑ-cong ≡̂ₑ-refl (≡̂ₑ-sym ≡̂ₑ-identityˡ))))
-                     (monoₑ ⊩≾̂ₑ-refl (monoₑ (to-witness p) ⊩≾̂ₑ-refl)))
-  stepₑ (mergeˡ {a = ac c} {as = as} refl p) q =
-    transₑ (monoₑ ⊩≾̂ₑ-refl (monoₑ (to-witness p) ⊩≾̂ₑ-refl))
-           (transₑ (eqₑ (≡̂ₑ-trans (≡̂ₑ-cong ≡̂ₑ-refl ≡̂ₑ-identityˡ)
-                                  (≡̂ₑ-sym (consₑ-≡ (ac c) as))))
-                   q)
-  stepₑ (pick c p) q =
-    transₑ (monoₑ (to-witness (lookup-result p)) q) (eqₑ (≡̂ₑ-sym (Commuteₑ.remove-≡ c p)))
-  stepₑ (absorbAt c p) q =
-    transₑ (monoₑ ⊩≾̂ₑ-refl q)
-           (transₑ (eqₑ (≡̂ₑ-trans (≡̂ₑ-cong ≡̂ₑ-refl (Commuteₑ.remove-≡ c p)) (≡̂ₑ-sym ≡̂ₑ-assoc)))
-                   (transₑ (monoₑ (transₑ topₑ (to-witness (lookup-result p))) ⊩≾̂ₑ-refl)
-                           (eqₑ (≡̂ₑ-sym (Commuteₑ.remove-≡ c p)))))
-  stepₑ (mergeʳ {a = av _} () _) _
-  stepₑ (mergeˡ {a = av _} () _) _
-
-  open Pₑ.Sound (λ as bs → Q ⊩ ⟦ as ⟧ᵉˢ ≾̂ₑ ⟦ bs ⟧ᵉˢ) ⊩≾̂ₑ-refl stepₑ using (prodˢ≾)
-
-  prod≾ₑ : (as bs : List (EAtom Θ))
-         → Maybe (Q ⊩ ⟦ as ⟧ᵉᵖ ≾̂ₑ ⟦ bs ⟧ᵉᵖ)
-  prod≾ₑ as bs with prodˢ≾ as bs
-  ... | just p  = just (transₑ (eqₑ (≡̂ₑ-sym (⟦⟧ᵉᵖ-≡ as)))
-                               (transₑ p (eqₑ (⟦⟧ᵉᵖ-≡ bs))))
-  ... | nothing = nothing
-
-  -- One alternative against a whole sum: some alternative of the sum
-  -- bounds it, and the join is above that one
-
-  altSum≾ₑ : (as : List (EAtom Θ))
-           → (t : Alts (List (EAtom Θ)))
-           → Maybe (Q ⊩ ⟦ as ⟧ᵉᵖ ≾̂ₑ ⟦ t ⟧ᵉᵖ⁺)
-  altSum≾ₑ as (alt P) = prod≾ₑ as P
-  altSum≾ₑ as (P ∷⁺ t) with prod≾ₑ as P
-  ... | just p  = just (transₑ p ⊔-ubˡₑ)
-  ... | nothing with altSum≾ₑ as t
-  ...   | just q  = just (transₑ q ⊔-ubʳₑ)
-  ...   | nothing = nothing
-
-  -- The whole comparison: every alternative of the left side is below
-  -- the right side, and their join is then below it too
-
-  sum≾ₑ : (s t : Alts (List (EAtom Θ)))
-        → Maybe (Q ⊩ ⟦ s ⟧ᵉᵖ⁺ ≾̂ₑ ⟦ t ⟧ᵉᵖ⁺)
-  sum≾ₑ (alt P)  t = altSum≾ₑ P t
-  sum≾ₑ (P ∷⁺ s) t with altSum≾ₑ P t | sum≾ₑ s t
-  ... | just p | just q = just (⊔-lubₑ p q)
-  ... | _      | _      = nothing
-
--- The right side is compared folded: each of its groups that varies in
--- one slot is one alternative, above each of the group's members
-
-foldₑ-≡ᵖ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ ⟦ foldSumₑ (nrmₑ ε) ⟧ᵉᵖ⁺
-foldₑ-≡ᵖ ε =
-  ≡̂ₑ-trans (nrmₑ-≡ ε)
-  (≡̂ₑ-trans (≡̂ₑ-sym (foldSumₑ-≡ (nrmₑ ε))) (⟦⟧ᵉᵖ⁺-≡ (foldSumₑ (nrmₑ ε))))
-
-decide≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
-decide≾ₑ {Q = Q} ε ε' with Searchₑ.sum≾ₑ (tableₑ Q) (nrmₑ ε) (foldSumₑ (nrmₑ ε'))
-... | just p  = just (transₑ (eqₑ (nrmₑ-≡ᵖ ε)) (transₑ p (eqₑ (≡̂ₑ-sym (foldₑ-≡ᵖ ε')))))
-... | nothing = nothing
-
-------------------------------------------------------------------
--- Resource grades: the same, with a third kind of atom, the image
--- `∣ x ∣` of an effect variable, which is treated as a variable. The
--- unit is below it when either sort's unit is least, the latter
--- carried through the morphism by `map-mono`, as `∣ u ∣ = u`.
-
-∣û∣ₑ : ∀ {Θ} → ûᵣ {Θ} ≡̂ᵣ ∣ ûₑ ∣̂ᵉ
-∣û∣ₑ = ≡̂ᵣ-sym (≡̂ᵣ-trans ≡̂ᵣ-map-const
-                        (subst (λ c → rconst (mapᵉ uₑ) ≡̂ᵣ rconst c) map-uᵉ ≡̂ᵣ-refl))
-
-module Searchᵣ {Θ} {Q : Hyps Θ}
-               (t : Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-                                 ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ (redgesᵣ Q)) where
-
-  reachᵣ? : (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-  reachᵣ? = Chains.reach? _ ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ (redgesᵣ Q) t
-
-  ceilᵣ : ∀ {ρ : RExp Θ} → (b : RAtom Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-  ceilᵣ b with reachᵣ? (rc ⊤ᵣ) b
-  ... | just p  = just (transᵣ topᵣ p)
-  ... | nothing = nothing
-
-  atom≾ᵣ : (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-  atom≾ᵣ a b = linkᵣ? a b <∣> ceilᵣ b <∣> reachᵣ? a b
-
-  minᵐ : (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-  minᵐ (rm i) with min≾ₑ {ε = evar i} (Is-just? uₑ-least?)
-  ... | just q  = just (transᵣ (eqᵣ ∣û∣ₑ) (map-mono q))
-  ... | nothing = nothing
-  minᵐ _ = nothing
-
-  unit≾ᵣ : (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-  unit≾ᵣ b = min≾ᵣ (Is-just? uᵣ-least?) <∣> minᵐ b <∣> atom≾ᵣ (rc uᵣ) b
-
-  ≾unitᵣ : (a : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ûᵣ)
-  ≾unitᵣ a = atom≾ᵣ a (rc uᵣ)
-
-  -- The product comparison, its atom comparisons being these
-
-  constʳ? : RAtom Θ → Maybe R
-  constʳ? (rc c) = just c
-  constʳ? (rv _) = nothing
-  constʳ? (rm _) = nothing
-
-  module Pᵣ = Embedding constʳ? (λ c → consᵣ (rc c)) consᵣ-length
-                (λ a b → Is-just (atom≾ᵣ a b)) (λ a b → is-just? (atom≾ᵣ a b))
-                (λ b → Is-just (unit≾ᵣ b))     (λ b → is-just? (unit≾ᵣ b))
-                (λ a → Is-just (≾unitᵣ a))     (λ a → is-just? (≾unitᵣ a))
-                (λ b → Is-just (reachᵣ? (rc ⊤ᵣ) b)) (λ b → is-just? (reachᵣ? (rc ⊤ᵣ) b))
-                (Is-just ·ᵣ-comm?) (is-just? ·ᵣ-comm?)
-  open Pᵣ using (Step; match; skipʳ; skipˡ; absorb; mergeʳ; mergeˡ; pick; absorbAt)
-
-  -- Each step is an entailment, one use of `monoᵣ` on products read
-  -- back with a trailing unit (`⟦_⟧ʳˢ`)
-
-  stepᵣ : ∀ {as bs as' bs'} → Step as bs as' bs'
-        → Q ⊩ ⟦ as' ⟧ʳˢ ≾̂ᵣ ⟦ bs' ⟧ʳˢ → Q ⊩ ⟦ as ⟧ʳˢ ≾̂ᵣ ⟦ bs ⟧ʳˢ
-  stepᵣ (match p)  q = monoᵣ (to-witness p) q
-  stepᵣ (skipʳ p)  q = transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityˡ)) (monoᵣ (to-witness p) q)
-  stepᵣ (skipˡ p)  q = transᵣ (monoᵣ (to-witness p) q) (eqᵣ ≡̂ᵣ-identityˡ)
-  stepᵣ (absorb p) q =
-    transᵣ (monoᵣ ⊩≾̂ᵣ-refl q)
-           (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-assoc)) (monoᵣ (transᵣ topᵣ (to-witness p)) ⊩≾̂ᵣ-refl))
-  stepᵣ (mergeʳ {a = rc c} {bs = bs} refl p) q =
-    transᵣ q (transᵣ (eqᵣ (≡̂ᵣ-trans (consᵣ-≡ (rc c) bs)
-                                    (≡̂ᵣ-cong ≡̂ᵣ-refl (≡̂ᵣ-sym ≡̂ᵣ-identityˡ))))
-                     (monoᵣ ⊩≾̂ᵣ-refl (monoᵣ (to-witness p) ⊩≾̂ᵣ-refl)))
-  stepᵣ (mergeˡ {a = rc c} {as = as} refl p) q =
-    transᵣ (monoᵣ ⊩≾̂ᵣ-refl (monoᵣ (to-witness p) ⊩≾̂ᵣ-refl))
-           (transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl ≡̂ᵣ-identityˡ)
-                                  (≡̂ᵣ-sym (consᵣ-≡ (rc c) as))))
-                   q)
-  stepᵣ (pick c p) q =
-    transᵣ (monoᵣ (to-witness (lookup-result p)) q) (eqᵣ (≡̂ᵣ-sym (Commuteᵣ.remove-≡ c p)))
-  stepᵣ (absorbAt c p) q =
-    transᵣ (monoᵣ ⊩≾̂ᵣ-refl q)
-           (transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl (Commuteᵣ.remove-≡ c p)) (≡̂ᵣ-sym ≡̂ᵣ-assoc)))
-                   (transᵣ (monoᵣ (transᵣ topᵣ (to-witness (lookup-result p))) ⊩≾̂ᵣ-refl)
-                           (eqᵣ (≡̂ᵣ-sym (Commuteᵣ.remove-≡ c p)))))
-  stepᵣ (mergeʳ {a = rv _} () _) _
-  stepᵣ (mergeʳ {a = rm _} () _) _
-  stepᵣ (mergeˡ {a = rv _} () _) _
-  stepᵣ (mergeˡ {a = rm _} () _) _
-
-  open Pᵣ.Sound (λ as bs → Q ⊩ ⟦ as ⟧ʳˢ ≾̂ᵣ ⟦ bs ⟧ʳˢ) ⊩≾̂ᵣ-refl stepᵣ using (prodˢ≾)
-
-  prod≾ᵣ : (as bs : List (RAtom Θ))
-         → Maybe (Q ⊩ ⟦ as ⟧ʳᵖ ≾̂ᵣ ⟦ bs ⟧ʳᵖ)
-  prod≾ᵣ as bs with prodˢ≾ as bs
-  ... | just p  = just (transᵣ (eqᵣ (≡̂ᵣ-sym (⟦⟧ʳᵖ-≡ as)))
-                               (transᵣ p (eqᵣ (⟦⟧ʳᵖ-≡ bs))))
-  ... | nothing = nothing
-
-  altSum≾ᵣ : (as : List (RAtom Θ))
-           → (t : Alts (List (RAtom Θ)))
-           → Maybe (Q ⊩ ⟦ as ⟧ʳᵖ ≾̂ᵣ ⟦ t ⟧ʳᵖ⁺)
-  altSum≾ᵣ as (alt P) = prod≾ᵣ as P
-  altSum≾ᵣ as (P ∷⁺ t) with prod≾ᵣ as P
-  ... | just p  = just (transᵣ p ⊔-ubˡᵣ)
-  ... | nothing with altSum≾ᵣ as t
-  ...   | just q  = just (transᵣ q ⊔-ubʳᵣ)
-  ...   | nothing = nothing
-
-  sum≾ᵣ : (s t : Alts (List (RAtom Θ)))
-        → Maybe (Q ⊩ ⟦ s ⟧ʳᵖ⁺ ≾̂ᵣ ⟦ t ⟧ʳᵖ⁺)
-  sum≾ᵣ (alt P)  t = altSum≾ᵣ P t
-  sum≾ᵣ (P ∷⁺ s) t with altSum≾ᵣ P t | sum≾ᵣ s t
-  ... | just p | just q = just (⊔-lubᵣ p q)
-  ... | _      | _      = nothing
-
-foldᵣ-≡ᵖ : ∀ {Θ} → (ρ : RExp Θ) → ρ ≡̂ᵣ ⟦ foldSumᵣ (nrmᵣ ρ) ⟧ʳᵖ⁺
-foldᵣ-≡ᵖ ρ =
-  ≡̂ᵣ-trans (nrmᵣ-≡ ρ)
-  (≡̂ᵣ-trans (≡̂ᵣ-sym (foldSumᵣ-≡ (nrmᵣ ρ))) (⟦⟧ʳᵖ⁺-≡ (foldSumᵣ (nrmᵣ ρ))))
-
-decide≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
-decide≾ᵣ {Q = Q} ρ ρ' with Searchᵣ.sum≾ᵣ (tableᵣ Q) (nrmᵣ ρ) (foldSumᵣ (nrmᵣ ρ'))
-... | just p  = just (transᵣ (eqᵣ (nrmᵣ-≡ᵖ ρ)) (transᵣ p (eqᵣ (≡̂ᵣ-sym (foldᵣ-≡ᵖ ρ')))))
-... | nothing = nothing
-
-evalᵉ : EExp ∅ˢ → E
-evalᵉ (evar ())
-evalᵉ (econst c) = c
-evalᵉ (ε ·̂ₑ ε')  = evalᵉ ε ·ₑ evalᵉ ε'
-evalᵉ (ε ⊔̂ₑ ε')  = evalᵉ ε ⊔ₑ evalᵉ ε'
-
-evalʳ : RExp ∅ˢ → R
-evalʳ (rvar ())
-evalʳ (rconst c) = c
-evalʳ (ρ ·̂ᵣ ρ')  = evalʳ ρ ·ᵣ evalʳ ρ'
-evalʳ (ρ ⊔̂ᵣ ρ')  = evalʳ ρ ⊔ᵣ evalʳ ρ'
-evalʳ ∣ ε ∣̂ᵉ     = mapᵉ (evalᵉ ε)
-
-evalᵉ-≡ : (ε : EExp ∅ˢ) → ε ≡̂ₑ econst (evalᵉ ε)
-evalᵉ-≡ (evar ())
-evalᵉ-≡ (econst c) = ≡̂ₑ-refl
-evalᵉ-≡ (ε ·̂ₑ ε')  =
-  ≡̂ₑ-trans (≡̂ₑ-cong (evalᵉ-≡ ε) (evalᵉ-≡ ε')) ≡̂ₑ-const-·
-evalᵉ-≡ (ε ⊔̂ₑ ε')  =
-  ≡̂ₑ-trans (≡̂ₑ-cong-⊔ (evalᵉ-≡ ε) (evalᵉ-≡ ε')) ≡̂ₑ-const-⊔
-
-evalʳ-≡ : (ρ : RExp ∅ˢ) → ρ ≡̂ᵣ rconst (evalʳ ρ)
-evalʳ-≡ (rvar ())
-evalʳ-≡ (rconst c) = ≡̂ᵣ-refl
-evalʳ-≡ (ρ ·̂ᵣ ρ')  =
-  ≡̂ᵣ-trans (≡̂ᵣ-cong (evalʳ-≡ ρ) (evalʳ-≡ ρ')) ≡̂ᵣ-const-·
-evalʳ-≡ (ρ ⊔̂ᵣ ρ')  =
-  ≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (evalʳ-≡ ρ) (evalʳ-≡ ρ')) ≡̂ᵣ-const-⊔
-evalʳ-≡ ∣ ε ∣̂ᵉ     =
-  ≡̂ᵣ-trans (≡̂ᵣ-map-cong (evalᵉ-≡ ε)) ≡̂ᵣ-map-const
-
--- A closed expression and its value entail one another
-
-⊩-reflectᵣ : (ρ : RExp ∅ˢ)
-           → (∅ᴴ ⊩ ρ ≾̂ᵣ rconst (evalʳ ρ)) × (∅ᴴ ⊩ rconst (evalʳ ρ) ≾̂ᵣ ρ)
-⊩-reflectᵣ ρ = eqᵣ (evalʳ-≡ ρ) , eqᵣ (≡̂ᵣ-sym (evalʳ-≡ ρ))
-
-⊩-reflectₑ : (ε : EExp ∅ˢ)
-           → (∅ᴴ ⊩ ε ≾̂ₑ econst (evalᵉ ε)) × (∅ᴴ ⊩ econst (evalᵉ ε) ≾̂ₑ ε)
-⊩-reflectₑ ε = eqₑ (evalᵉ-≡ ε) , eqₑ (≡̂ₑ-sym (evalᵉ-≡ ε))

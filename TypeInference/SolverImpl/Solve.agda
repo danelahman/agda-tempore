@@ -10,7 +10,7 @@
 -- eternality demand is decided by `etDec` when it is pushed:   --
 -- it is refuted, or residualised as its atoms on type          --
 -- variables (`solveEt`). A var-rule disjunction is dropped     --
--- where `decide≾ᵣ` proves its grade below the unit; otherwise  --
+-- where `derive` proves its grade below the unit; otherwise    --
 -- its type is decided: if never eternal, the grade side is     --
 -- residualised as an ordering; if eternal with no atom, the    --
 -- disjunction is dropped; otherwise it is residualised         --
@@ -112,8 +112,9 @@ open import TypeInference.SolverImpl.Core.Rigid      S
 open import TypeInference.SolverImpl.Deferred S
 open import TypeInference.SolverImpl.Resid  S
 open import TypeInference.SolverImpl.State  S
-open import TypeInference.SolverImpl.Closed S using (valʳ?; valᵉ?; convʳ; convᵉ)
 open import TypeInference.SolverImpl.Normal S
+open import TypeInference.SolverImpl.Entail S
+  using (decideᵣ; decideₑ; derive; closedᵣ?; closedₑ?; holdsᵣ; failsᵣ; holdsₑ; failsₑ)
 open import TypeInference.SolverImpl.Localise S
   using (Localised; localise; lσ; lR; lsnd; freeᵉ; freeʳ; Outerₑ; Outerᵣ; outerₑ?; outerᵣ?;
          evar?)
@@ -271,13 +272,13 @@ atomʳ O j ρ ρ' with strʳ⁺ j ρ | strʳ⁺ j ρ'
             λ δ Q k → subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ᵣ y)
                              (sym (pop⨟ʳ j ρ e₁ δ)) (sym (pop⨟ʳ j ρ' e₂ δ))
                              (⊩-wkᵉᵣ (k (here refl))))
-... | just (ρ₀ , e₁) | nothing          with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+... | just (ρ₀ , e₁) | nothing          with decideᵣ derive ∅ᴴ ρ ρ'
 ...   | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
 ...   | nothing = stripʳ-unit (Is-just? uₑ-least?) j ρ ρ' ρ₀ e₁
-atomʳ O j ρ ρ' | nothing | just (ρ₀' , e₂) with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+atomʳ O j ρ ρ' | nothing | just (ρ₀' , e₂) with decideᵣ derive ∅ᴴ ρ ρ'
 ... | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
 ... | nothing = stripʳ-top O j ρ ρ' ρ₀' e₂
-atomʳ O j ρ ρ' | nothing | nothing with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+atomʳ O j ρ ρ' | nothing | nothing with decideᵣ derive ∅ᴴ ρ ρ'
 ... | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
 ... | nothing = nothing
 
@@ -289,13 +290,13 @@ atomᵉ O j ε ε' with strᵉ⁺ j ε | strᵉ⁺ j ε'
             λ δ Q k → subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ₑ y)
                              (sym (pop⨟ᵉ j ε e₁ δ)) (sym (pop⨟ᵉ j ε' e₂ δ))
                              (⊩-wkᵉₑ (k (here refl))))
-... | just (ε₀ , e₁) | nothing          with decide≾ₑ {Q = ∅ᴴ} ε ε'
+... | just (ε₀ , e₁) | nothing          with decideₑ derive ∅ᴴ ε ε'
 ...   | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
 ...   | nothing = stripᵉ-unit (Is-just? uₑ-least?) j ε ε' ε₀ e₁
-atomᵉ O j ε ε' | nothing | just (ε₀' , e₂) with decide≾ₑ {Q = ∅ᴴ} ε ε'
+atomᵉ O j ε ε' | nothing | just (ε₀' , e₂) with decideₑ derive ∅ᴴ ε ε'
 ... | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
 ... | nothing = stripᵉ-top O j ε ε' ε₀' e₂
-atomᵉ O j ε ε' | nothing | nothing with decide≾ₑ {Q = ∅ᴴ} ε ε'
+atomᵉ O j ε ε' | nothing | nothing with decideₑ derive ∅ᴴ ε ε'
 ... | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
 ... | nothing = nothing
 
@@ -593,11 +594,12 @@ popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
 ------------------------------------------------------------------------
 -- Retrying the deferred conditions
 --
--- An ordering of an entry is dropped when `decide≾` derives it, the
--- rigids opaque, from the residual's orderings: a derivation at fresh
--- rigids under the hypotheses weakened to them. It refutes when a
--- closed witness per rigid, the unit or the top, makes it a failing
--- closed ordering. An entry left with no ordering is dropped.
+-- An ordering of an entry is dropped when it is decided at the
+-- strength `derive`, the rigids opaque, from the residual's
+-- orderings: a derivation at fresh rigids under the hypotheses
+-- weakened to them. It refutes when a closed witness per rigid, the
+-- unit or the top, makes it an ordering that fails at the strength
+-- `closed`. An entry left with no ordering is dropped.
 -- A retry keeps every instance (`retry-princ`), and a refusal refutes
 -- every one (`retry-fail`). An entry kept claims nothing: with a rigid
 -- on both sides, the witnesses decide nothing in general.
@@ -650,36 +652,26 @@ atWitᵉ k cs x y δ p =
 witnessʳ : ∀ {Ψ} {H : Hyps Ψ} → (k : ℕ) → (x y : RExp (Ψ +eⁿ k)) → List (List E)
          → Verdict H (Atʳ k) (x , y)
 witnessʳ k x y []         = undecided
-witnessʳ k x y (cs ∷ css) with valʳ? (x [ wit k cs ]ʳ) in e | valʳ? (y [ wit k cs ]ʳ) in e'
-... | just c  | just c' = pick (c ≾ᵣ? c')
-  where
-    pick : Dec (c ≾ᵣ c') → Verdict _ (Atʳ k) (x , y)
-    pick (no ¬le) = refuted (λ δ p → ¬le (closed-≾ᵣ {ρ = x [ wit k cs ]ʳ} {ρ' = y [ wit k cs ]ʳ}
-                                               (convʳ _ e) (convʳ _ e') δ (atWitʳ k cs x y δ p)))
-    pick (yes _)  = witnessʳ k x y css
-... | _       | _       = witnessʳ k x y css
+witnessʳ k x y (cs ∷ css) with closedᵣ? (x [ wit k cs ]ʳ) (y [ wit k cs ]ʳ)
+... | just (failsᵣ n) = refuted (λ δ p → n δ (atWitʳ k cs x y δ p))
+... | _               = witnessʳ k x y css
 
 witnessᵉ : ∀ {Ψ} {H : Hyps Ψ} → (k : ℕ) → (x y : EExp (Ψ +eⁿ k)) → List (List E)
          → Verdict H (Atᵉ k) (x , y)
 witnessᵉ k x y []         = undecided
-witnessᵉ k x y (cs ∷ css) with valᵉ? (x [ wit k cs ]ᵉ) in e | valᵉ? (y [ wit k cs ]ᵉ) in e'
-... | just c  | just c' = pick (c ≾ₑ? c')
-  where
-    pick : Dec (c ≾ₑ c') → Verdict _ (Atᵉ k) (x , y)
-    pick (no ¬le) = refuted (λ δ p → ¬le (closed-≾ₑ {ε = x [ wit k cs ]ᵉ} {ε' = y [ wit k cs ]ᵉ}
-                                               (convᵉ _ e) (convᵉ _ e') δ (atWitᵉ k cs x y δ p)))
-    pick (yes _)  = witnessᵉ k x y css
-... | _       | _       = witnessᵉ k x y css
+witnessᵉ k x y (cs ∷ css) with closedₑ? (x [ wit k cs ]ᵉ) (y [ wit k cs ]ᵉ)
+... | just (failsₑ n) = refuted (λ δ p → n δ (atWitᵉ k cs x y δ p))
+... | _               = witnessᵉ k x y css
 
 verdictʳ : ∀ {Ψ} → (H : Hyps Ψ) → (k : ℕ) → (a : RExp (Ψ +eⁿ k) × RExp (Ψ +eⁿ k))
          → Verdict H (Atʳ k) a
-verdictʳ H k (x , y) with decide≾ᵣ {Q = wkᵉⁿ-H k H} x y
+verdictʳ H k (x , y) with decideᵣ derive (wkᵉⁿ-H k H) x y
 ... | just p  = settled (λ δ h → ⊩-substᵣ (⊩ᴴ-↑ᵉⁿ k h) p)
 ... | nothing = witnessʳ k x y (witnesses k)
 
 verdictᵉ : ∀ {Ψ} → (H : Hyps Ψ) → (k : ℕ) → (a : EExp (Ψ +eⁿ k) × EExp (Ψ +eⁿ k))
          → Verdict H (Atᵉ k) a
-verdictᵉ H k (x , y) with decide≾ₑ {Q = wkᵉⁿ-H k H} x y
+verdictᵉ H k (x , y) with decideₑ derive (wkᵉⁿ-H k H) x y
 ... | just p  = settled (λ δ h → ⊩-substₑ (⊩ᴴ-↑ᵉⁿ k h) p)
 ... | nothing = witnessᵉ k x y (witnesses k)
 
@@ -947,7 +939,7 @@ solve s (ε ≾̂ₑᶜ ε') =
 
 solve s (Etᶜ A) = solveEt s A (etDec (A [ θ s ]ᵛ)) refl
 
-solve s (Et∨≾ᵘ A ρ) with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
+solve s (Et∨≾ᵘ A ρ) with decideᵣ derive ∅ᴴ (ρ [ θ s ]ʳ) ûᵣ
 ... | just p =
       solved (s , ⟶-id ,
             λ δ Q h → ≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ (θ s) δ)

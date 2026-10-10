@@ -66,7 +66,7 @@ open import TypeInference.OpenSyntax.Subst  S
 open import TypeInference.OpenSyntax.Hyps   S
 
 open import TypeInference.SolverImpl.Core.Occurs S using (occᵉ-e; occᵉ-r; occʳ-r)
-open import TypeInference.SolverImpl.Normal      S using (decide≾ᵣ; decide≾ₑ)
+open import TypeInference.SolverImpl.Entail      S using (decideᵣ; decideₑ; derive)
 
 isFalse : (b : 𝔹) → Maybe (b ≡ false)
 isFalse false = just refl
@@ -336,10 +336,10 @@ module Bounds {X : Set} (_≟_ : Decidable (_≡_ {A = X})) (occ : X → 𝔹) (
 -- unknown in resource expressions
 
 module Bᵉ {Ψ} (k : EVar Ψ) =
-  Bounds (_≟ᵉ_ {Ψ}) (occᵉ-e {Ψ} k) (evar k) (∅ᴴ ⊩_≾̂ₑ_) (decide≾ₑ {Q = ∅ᴴ})
+  Bounds (_≟ᵉ_ {Ψ}) (occᵉ-e {Ψ} k) (evar k) (∅ᴴ ⊩_≾̂ₑ_) (decideₑ derive ∅ᴴ)
 module Bᵉʳ {Ψ} (k : EVar Ψ) = Sides (_≟ʳ_ {Ψ}) (occᵉ-r {Ψ} k)
 module Bʳ {Ψ} (k : RVar Ψ) =
-  Bounds (_≟ʳ_ {Ψ}) (occʳ-r {Ψ} k) (rvar k) (∅ᴴ ⊩_≾̂ᵣ_) (decide≾ᵣ {Q = ∅ᴴ})
+  Bounds (_≟ʳ_ {Ψ}) (occʳ-r {Ψ} k) (rvar k) (∅ᴴ ⊩_≾̂ᵣ_) (decideᵣ derive ∅ᴴ)
 
 -- An assignment leaves alone what the assigned unknown does not occur in
 

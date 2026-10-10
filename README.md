@@ -480,12 +480,19 @@ type inference.
     by construction, completeness not proved.
   - `Deferred.agda`: deferred rigid conditions `∀ᵉ j₁ … jₖ. O`, retried after
     each close (`retry-princ`, `retry-fail`) and read back as obligations.
-  - `Closed.agda`: atoms without unknowns, decided by the grade's `_≾?_`
-    (`closedᴴ-⊩`, `closedᴴ-fail`).
+  - `Entail.agda`: entailment of grade orderings from a hypothesis set, at
+    explicit strengths (`Strength`: `closed`, `derive`, `atomic`;
+    `decideᵣ`/`decideₑ`), along the hypothesis graph whose edges hold where
+    the hypotheses do (`edgeᵣ-sound`, `edgeₑ-sound`); every decision is sound
+    by construction, completeness not claimed. Also the closed check, which
+    decides the atoms without unknowns and the closed orderings joined by
+    chains by the grade's `_≾?_` (`checkClosed-⊩`, `checkClosed-fail`), and
+    refutation of an ordering against the unit by the zero-product law
+    (`refute≾u`, `refute-⊩`).
   - `Product.agda`, `Normal.agda`, `Canon.agda`: the sum-of-products normal
-    form, with products sorted at commutative grades (`nrmᵣ-≡`); the decision
-    of entailed ordering (`decide≾ᵣ`/`decide≾ₑ`), sound by construction,
-    completeness not claimed; and the canonical form of reported grades
+    form, with products sorted at commutative grades (`nrmᵣ-≡`); the
+    reachability table and the embedding of products that `Entail`
+    instantiates; and the canonical form of reported grades
     (`canonᵣ-≡`), in which a product with the top is the top where the unit is
     least, and of hypothesis sets, in which each join on a left side is split
     (`canonᴴ-⊩`, `canonᴴ-⊩⁻`). Two products are compared by an ordered
@@ -512,7 +519,6 @@ type inference.
     component (`equateᵗ?`, by `Reach`). Each step is an `Elim`.
   - `Strengthen.agda`: a report over the variables occurring in it
     (`Strengthened`); `Vars.agda`: sets of variables.
-  - `Refute.agda`: refutation of an ordering against the unit (`refute-⊩`).
   - `Resid.agda`, `State.agda`, `Polarity.agda`: residual constraints and
     their exact decomposition (`SubDec`, `EtsDec`, `toHyps-compl`), the solver
     state, and the polarity of an unknown.
@@ -574,8 +580,8 @@ type inference.
   steps that the example programs exercise only in part or not at all:
   splitting joins on the left of
   hypotheses (`canonᴴ`), pruning disjunctions (`walkᵈ`), absorption by the top
-  (`canonᵣ`/`canonₑ`), multiset comparison of products (`decide≾`), the closed
-  check through chains (`closedᴴ`), and the collapse of a clause-local cycle
+  (`canonᵣ`/`canonₑ`), multiset comparison of products (`decideₑ`), the closed
+  check through chains (`checkClosed`), and the collapse of a clause-local cycle
   on which lowering alone is stuck. `Product.agda` gives programs at time
   paired with a security level (`Product/LeftSidedTimeLevel`,
   `Product/RightSidedTimeLevel`): an embargoed report claimed in time and

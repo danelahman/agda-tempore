@@ -68,6 +68,7 @@ open import TypeInference.OpenSyntax.Hyps      S
 open import TypeInference.OpenSyntax.Instances S using (⊩ᴴ-⊨ᴴ)
 
 open import TypeInference.SolverImpl.Normal    S
+open import TypeInference.SolverImpl.Entail    S using (decideᵣ; decideₑ; derive)
 open import TypeInference.SolverImpl.Eliminate S using (Elim; mkElim)
 
 -- Grouping with pruning, two alternatives being compared by the
@@ -80,11 +81,11 @@ open import TypeInference.SolverImpl.Eliminate S using (Elim; mkElim)
 
 module Mₑ {Θ : Scope} =
   Gₑ.Pruning {Θ} (∅ᴴ ⊩_≾̂ₑ_) ≡̂ₑ-absorb
-             (λ P P' → decide≾ₑ {Q = ∅ᴴ} Gₑ.⟦ P ⟧ᵖ Gₑ.⟦ P' ⟧ᵖ)
+             (λ P P' → decideₑ derive ∅ᴴ Gₑ.⟦ P ⟧ᵖ Gₑ.⟦ P' ⟧ᵖ)
 
 module Mᵣ {Θ : Scope} =
   Gᵣ.Pruning {Θ} (∅ᴴ ⊩_≾̂ᵣ_) ≡̂ᵣ-absorb
-             (λ P P' → decide≾ᵣ {Q = ∅ᴴ} Gᵣ.⟦ P ⟧ᵖ Gᵣ.⟦ P' ⟧ᵖ)
+             (λ P P' → decideᵣ derive ∅ᴴ Gᵣ.⟦ P ⟧ᵖ Gᵣ.⟦ P' ⟧ᵖ)
 
 -- At a grade whose unit is least, a product with the top among its
 -- factors is the top: it lies below the top, and above the top

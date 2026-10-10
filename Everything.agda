@@ -405,10 +405,12 @@ open import TypeInference.Principality
 
 import TypeInference.SolverImpl.Former
 
----- Refutation of a grade ordering against the unit, and simplification of
----- reported hypothesis sets
+---- Entailment of grade orderings from hypotheses at explicit strengths,
+---- the closed check and refutation against the unit, and simplification
+---- of reported hypothesis sets
 
-import TypeInference.SolverImpl.Refute
+import TypeInference.SolverImpl.Normal
+import TypeInference.SolverImpl.Entail
 import TypeInference.SolverImpl.Simplify
 
 ---- Sets of variables, the bounds of an unknown, polarity-based elimination
@@ -438,11 +440,10 @@ import TypeInference.SolverImpl.RigidFree
 
 import TypeInference.SolverImpl.Expand
 
----- Principality and refutation for the driver, decision of closed
----- orderings, strengthening of the report, and the solver and inference
+---- Principality and refutation for the driver, strengthening of the
+---- report, and the solver and inference
 
 import TypeInference.SolverImpl.Principal
-import TypeInference.SolverImpl.Closed
 import TypeInference.SolverImpl.Strengthen
 import TypeInference.SolverImpl
 

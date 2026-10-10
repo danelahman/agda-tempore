@@ -161,7 +161,7 @@ open import TypeInference.SolverImpl.Bounds    S
 open import TypeInference.SolverImpl.Vars      S
   using (Vars; vᵉ; vʳ; Fixes; mkFixes; fvᵛ; fvʳ; fvᵉ; ⊆-refl; fix-v; fix-r; fix-e)
 import TypeInference.SolverImpl.Reach as Reachability
-open import TypeInference.SolverImpl.Normal    S using (decide≾ᵣ; decide≾ₑ)
+open import TypeInference.SolverImpl.Entail    S using (decideᵣ; decideₑ; derive)
 open import TypeInference.SolverImpl.Canon     S
   using (canonᵣ; canonᵣ-≡; Ordʳ; Ordᵉ; Pieces; pieces; Split; splits; piecesʳ; piecesᵉ)
 
@@ -862,17 +862,17 @@ Disj : ∀ {Ψ Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → OVType Ψ × RExp Ψ → S
 Disj Q δ (A , ρ) = VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
 
 settledʳ : ∀ {Ψ} → (a : RExp Ψ × RExp Ψ) → Maybe (Every Ordʳ a)
-settledʳ (ρ , ρ') with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+settledʳ (ρ , ρ') with decideᵣ derive ∅ᴴ ρ ρ'
 ... | just p  = just (λ δ → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
 ... | nothing = nothing
 
 settledᵉ : ∀ {Ψ} → (a : EExp Ψ × EExp Ψ) → Maybe (Every Ordᵉ a)
-settledᵉ (ε , ε') with decide≾ₑ {Q = ∅ᴴ} ε ε'
+settledᵉ (ε , ε') with decideₑ derive ∅ᴴ ε ε'
 ... | just p  = just (λ δ → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
 ... | nothing = nothing
 
 settledᵈ : ∀ {Ψ} → (a : OVType Ψ × RExp Ψ) → Maybe (Every Disj a)
-settledᵈ (A , ρ) with decide≾ᵣ {Q = ∅ᴴ} ρ ûᵣ
+settledᵈ (A , ρ) with decideᵣ derive ∅ᴴ ρ ûᵣ
 ... | just p  = just (λ δ → ≾ᵘ-ok (⊩-substᵣ ∅ᴴ-⊩ᴴ p))
 ... | nothing with etDec A in e
 ...   | just [] = just (λ δ → et-ok (⊩ᴱ-subst ∅ᴴ-⊩ᴴ (etDec-sound {Q = ∅ᴴ} A e (λ ()))))
@@ -1501,7 +1501,7 @@ upAtₑ? : ∀ {Θ Φ} → (O' : Subst Θ Φ) → (l : List (Mem Φ)) → (a : E
        → Maybe (UpAtₑ O' l a)
 upAtₑ? O' l (x , y) with isFalse (hitₑ l x)
 ... | just q  = just (up-free q)
-... | nothing with decide≾ₑ {Q = ∅ᴴ} (econst ⊤ₑ) (y [ tops l ]ᵉ)
+... | nothing with decideₑ derive ∅ᴴ (econst ⊤ₑ) (y [ tops l ]ᵉ)
 ...   | just p  = just (up-top p)
 ...   | nothing with outerₑ? O' y | isFalse (hitₑ l y)
 ...     | just o | just q = just (up-outer o q)
@@ -1511,7 +1511,7 @@ upAtᵣ? : ∀ {Θ Φ} → (O' : Subst Θ Φ) → (l : List (Mem Φ)) → (a : R
        → Maybe (UpAtᵣ O' l a)
 upAtᵣ? O' l (x , y) with isFalse (hitᵣ l x)
 ... | just q  = just (up-free q)
-... | nothing with decide≾ᵣ {Q = ∅ᴴ} (rconst ⊤ᵣ) (y [ tops l ]ʳ)
+... | nothing with decideᵣ derive ∅ᴴ (rconst ⊤ᵣ) (y [ tops l ]ʳ)
 ...   | just p  = just (up-top p)
 ...   | nothing with outerᵣ? O' y | isFalse (hitᵣ l y)
 ...     | just o | just q = just (up-outer o q)
@@ -1555,7 +1555,7 @@ module Find {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) (j : EVar Φ) where
       ... | nothing = go as
       ... | just (k , refl) with ok k ∧ not (inᴱ k l) ∧ hitₑ (eᵐ j ∷ l) x
       ...   | false = go as
-      ...   | true with decide≾ₑ {Q = ∅ᴴ} (econst ⊤ₑ) (x [ tops (eᵐ j ∷ l) ]ᵉ)
+      ...   | true with decideₑ derive ∅ᴴ (econst ⊤ₑ) (x [ tops (eᵐ j ∷ l) ]ᵉ)
       ...     | just p  = just (k , x , m , p)
       ...     | nothing = go as
 
@@ -1572,7 +1572,7 @@ module Find {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) (j : EVar Φ) where
       ... | nothing = go as
       ... | just (k , refl) with ok k ∧ not (inᴿ k l) ∧ hitᵣ (eᵐ j ∷ l) x
       ...   | false = go as
-      ...   | true with decide≾ᵣ {Q = ∅ᴴ} (rconst ⊤ᵣ) (x [ tops (eᵐ j ∷ l) ]ʳ)
+      ...   | true with decideᵣ derive ∅ᴴ (rconst ⊤ᵣ) (x [ tops (eᵐ j ∷ l) ]ʳ)
       ...     | just p  = just (k , x , m , p)
       ...     | nothing = go as
 

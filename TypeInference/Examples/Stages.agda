@@ -11,10 +11,11 @@
 --     pruned (also `Reports`).                                 --
 --   * `canonᵣ`/`canonₑ`: a product with the top is the top     --
 --     where the unit is least (also `Reports`).                --
---   * `decide≾ᵣ`/`decide≾ₑ`: products compare as multisets     --
---     where `·` commutes. No example program depends on it.    --
---   * `closedᴴ`: closed sides joined by a chain of orderings   --
---     are compared (also `Boxes`).                             --
+--   * `decideᵣ`/`decideₑ` at `derive`: products compare as     --
+--     multisets where `·` commutes. No example program depends --
+--     on it.                                                   --
+--   * `checkClosed`: closed sides joined by a chain of         --
+--     orderings are compared (also `Boxes`).                   --
 --   * `collapse`: a cycle of unknowns local to a clause is one --
 --     unknown; without it, the clause's close is stuck.        --
 --                                                              --
@@ -62,8 +63,8 @@ module Deadline where
   open import TypeInference.OpenSyntax.Hyps     spec using (hyps; ∅ᴴ; ordᵣ; ordₑ; disj)
   open import TypeInference.SolverImpl.Canon    spec using (canonᴴ; canonᵣ; canonₑ)
   open import TypeInference.SolverImpl.Simplify spec using (walkᵈ)
-  open import TypeInference.SolverImpl.Normal   spec using (decide≾ₑ; decide≾ᵣ)
-  open import TypeInference.SolverImpl.Closed   spec using (closedᴴ)
+  open import TypeInference.SolverImpl.Entail   spec
+    using (decideₑ; decideᵣ; derive; checkClosed)
 
   Θ : Scope
   Θ = scope 1 4 4
@@ -127,30 +128,30 @@ module Deadline where
   top-product-join = refl
 
   ----------------------------------------------------------------
-  -- `decide≾ₑ`/`decide≾ᵣ`: products compare as multisets,
+  -- `decideₑ`/`decideᵣ` at `derive`: products compare as multisets,
   -- matching the factors crosswise
 
   -- c ≾ b, d ≾ a ⊩ c · d ≾ a · b
 
   crossed-e :
-    is-just (decide≾ₑ {Q = hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) []} (c ·̂ₑ d) (a ·̂ₑ b))
+    is-just (decideₑ derive (hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) []) (c ·̂ₑ d) (a ·̂ₑ b))
       ≡ true
   crossed-e = refl
 
-  crossed-e-∅ : is-just (decide≾ₑ {Q = ∅ᴴ} (c ·̂ₑ d) (a ·̂ₑ b)) ≡ false
+  crossed-e-∅ : is-just (decideₑ derive ∅ᴴ (c ·̂ₑ d) (a ·̂ₑ b)) ≡ false
   crossed-e-∅ = refl
 
   -- z ≾ y, w ≾ x ⊩ z · w ≾ x · y
 
   crossed-r :
-    is-just (decide≾ᵣ {Q = hyps [] [] ((z , y) ∷ (w , x) ∷ []) [] []} (z ·̂ᵣ w) (x ·̂ᵣ y))
+    is-just (decideᵣ derive (hyps [] [] ((z , y) ∷ (w , x) ∷ []) [] []) (z ·̂ᵣ w) (x ·̂ᵣ y))
       ≡ true
   crossed-r = refl
 
   -- with images of effect variables: z ≾ ∣a∣, ∣b∣ ≾ x ⊩ z · ∣b∣ ≾ x · ∣a∣
 
   crossed-images :
-    is-just (decide≾ᵣ {Q = hyps [] [] ((z , ∣ a ∣̂ᵉ) ∷ (∣ b ∣̂ᵉ , x) ∷ []) [] []}
+    is-just (decideᵣ derive (hyps [] [] ((z , ∣ a ∣̂ᵉ) ∷ (∣ b ∣̂ᵉ , x) ∷ []) [] [])
                       (z ·̂ᵣ ∣ b ∣̂ᵉ) (x ·̂ᵣ ∣ a ∣̂ᵉ))
       ≡ true
   crossed-images = refl
@@ -158,26 +159,26 @@ module Deadline where
   -- a constant: ⌜3⌝ ≾ b ⊩ ⌜3⌝ · a ≾ a · b
 
   crossed-constant :
-    is-just (decide≾ₑ {Q = hyps [] [] [] ((⌜ 3 ⌝ᵉ , b) ∷ []) []} (⌜ 3 ⌝ᵉ ·̂ₑ a) (a ·̂ₑ b))
+    is-just (decideₑ derive (hyps [] [] [] ((⌜ 3 ⌝ᵉ , b) ∷ []) []) (⌜ 3 ⌝ᵉ ·̂ₑ a) (a ·̂ₑ b))
       ≡ true
   crossed-constant = refl
 
-  crossed-constant-∅ : is-just (decide≾ₑ {Q = ∅ᴴ} (⌜ 3 ⌝ᵉ ·̂ₑ a) (a ·̂ₑ b)) ≡ false
+  crossed-constant-∅ : is-just (decideₑ derive ∅ᴴ (⌜ 3 ⌝ᵉ ·̂ₑ a) (a ·̂ₑ b)) ≡ false
   crossed-constant-∅ = refl
 
   ----------------------------------------------------------------
-  -- `closedᴴ`: two closed sides joined by a chain of
+  -- `checkClosed`: two closed sides joined by a chain of
   -- orderings are compared, though no ordering of the set is closed
 
-  chain-late : closedᴴ (hyps [] [] ((⌜ 3 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] []) ≡ nothing
+  chain-late : checkClosed (hyps [] [] ((⌜ 3 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] []) ≡ nothing
   chain-late = refl
 
   chain-late-long :
-    closedᴴ (hyps [] [] [] ((⌜ 5 ⌝ᵉ , a) ∷ (b , ⌜ 4 ⌝ᵉ) ∷ (a , c) ∷ (c , b) ∷ []) []) ≡ nothing
+    checkClosed (hyps [] [] [] ((⌜ 5 ⌝ᵉ , a) ∷ (b , ⌜ 4 ⌝ᵉ) ∷ (a , c) ∷ (c , b) ∷ []) []) ≡ nothing
   chain-late-long = refl
 
   chain-on-time :
-    closedᴴ (hyps [] [] ((⌜ 2 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [])
+    checkClosed (hyps [] [] ((⌜ 2 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [])
       ≡ just (hyps [] [] ((⌜ 2 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [])
   chain-on-time = refl
 
@@ -191,7 +192,7 @@ module Sequence where
 
   open import TypeInference.OpenSyntax.Grades spec
   open import TypeInference.OpenSyntax.Hyps   spec using (hyps)
-  open import TypeInference.SolverImpl.Normal spec using (decide≾ₑ)
+  open import TypeInference.SolverImpl.Entail spec using (decideₑ; derive)
 
   Θ : Scope
   Θ = scope 0 0 4
@@ -202,15 +203,15 @@ module Sequence where
   c = evar (suc (suc zero))
   d = evar (suc (suc (suc zero)))
 
-  -- `decide≾ₑ`: the factors match in order only
+  -- `decideₑ` at `derive`: the factors match in order only
 
   crossed-in-order :
-    is-just (decide≾ₑ {Q = hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) []} (c ·̂ₑ d) (a ·̂ₑ b))
+    is-just (decideₑ derive (hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) []) (c ·̂ₑ d) (a ·̂ₑ b))
       ≡ false
   crossed-in-order = refl
 
   crossed-in-order-swapped :
-    is-just (decide≾ₑ {Q = hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) []} (d ·̂ₑ c) (a ·̂ₑ b))
+    is-just (decideₑ derive (hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) []) (d ·̂ₑ c) (a ·̂ₑ b))
       ≡ true
   crossed-in-order-swapped = refl
 
@@ -227,7 +228,7 @@ module WithTop where
 
   open import TypeInference.OpenSyntax.Grades spec
   open import TypeInference.OpenSyntax.Hyps   spec using (∅ᴴ)
-  open import TypeInference.SolverImpl.Normal spec using (decide≾ₑ)
+  open import TypeInference.SolverImpl.Entail spec using (decideₑ; derive)
   open import TypeInference.SolverImpl.Canon  spec using (canonₑ)
 
   Θ : Scope
@@ -238,13 +239,13 @@ module WithTop where
   b  = evar (suc zero)
   ⊤̂ = econst untimed
 
-  -- `decide≾ₑ`: ⊩ a · b ≾ ⊤ · a, the top matching `b`
+  -- `decideₑ` at `derive`: ⊩ a · b ≾ ⊤ · a, the top matching `b`
   -- after the factors are matched crosswise; the converse fails
 
-  top-crossed : is-just (decide≾ₑ {Q = ∅ᴴ} (a ·̂ₑ b) (⊤̂ ·̂ₑ a)) ≡ true
+  top-crossed : is-just (decideₑ derive ∅ᴴ (a ·̂ₑ b) (⊤̂ ·̂ₑ a)) ≡ true
   top-crossed = refl
 
-  top-crossed-converse : is-just (decide≾ₑ {Q = ∅ᴴ} (⊤̂ ·̂ₑ a) (a ·̂ₑ b)) ≡ false
+  top-crossed-converse : is-just (decideₑ derive ∅ᴴ (⊤̂ ·̂ₑ a) (a ·̂ₑ b)) ≡ false
   top-crossed-converse = refl
 
   -- `canonₑ`: with the unit not least, a product with the

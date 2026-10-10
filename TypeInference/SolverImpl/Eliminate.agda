@@ -15,7 +15,8 @@
 -- against a single bound.                                      --
 --                                                              --
 -- A grade unknown that the hypotheses equate with an           --
--- expression free of it is replaced by that expression         --
+-- expression free of it, both orderings decided at the         --
+-- strength `atomic` (`Entail`), is replaced by that expression --
 -- everywhere, and the orderings made reflexive are removed; of --
 -- two equal unknowns, the one of smaller index remains. This   --
 -- step is tried before the steps against a bound, and the two  --
@@ -103,6 +104,7 @@ open import TypeInference.SolverImpl.Vars     S
   using (Vars; vᵗ; vʳ; vᵉ; Fixes; mkFixes; fixes-id; fixes-⨟; fixes-updᵉ; fixes-updʳ; outside)
 open import TypeInference.SolverImpl.Core.Occurs S using (occᵉ-e; occʳ-r)
 open import TypeInference.SolverImpl.Resid       S using (∅ᴴ-⊩ᴴ)
+open import TypeInference.SolverImpl.Entail      S using (decideᵣ; decideₑ; atomic)
 import TypeInference.SolverImpl.Reach as Reachability
 open import TypeInference.SolverImpl.Bounds      S
   using (module Bᵉ; module Bʳ; updᵉ-e; updʳ-r; joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩;
@@ -1373,69 +1375,56 @@ fitᵣ : ∀ {Θ} → RVar Θ → RExp Θ → 𝔹
 fitᵣ i (rvar j) = toℕ j <ᵇ toℕ i
 fitᵣ i ρ        = not (occʳ-r i ρ)
 
--- A test of entailed ordering on each grade sort; a `nothing` decides
--- nothing
+-- The search: the first fit expression facing the unknown that the
+-- test equates with it
 
-record Entails : Set where
-  constructor entails
-  field
-    entᵣ? : ∀ {Θ} → (Q : Hyps Θ) → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
-    entₑ? : ∀ {Θ} → (Q : Hyps Θ) → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
+equateᵉ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
+         → vᵉ F i ≡ false → Maybe (Elimᶠ F C Q)
+equateᵉ? {Θ} F C Q i o = try (facingₑ i (ordₑ Q))
+  where
+    try : List (EExp Θ) → Maybe (Elimᶠ F C Q)
+    try [] = nothing
+    try (b ∷ bs) with fitₑ i b | decideₑ atomic Q (evar i) b | decideₑ atomic Q b (evar i)
+    ... | true | just p | just q = just (equateᵉ C Q i b (p , q) , fixes-updᵉ i b o)
+    ... | _    | _      | _      = try bs
 
-module _ (ent : Entails) where
+equateʳ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
+         → vʳ F i ≡ false → Maybe (Elimᶠ F C Q)
+equateʳ? {Θ} F C Q i o = try (facingᵣ i (ordᵣ Q))
+  where
+    try : List (RExp Θ) → Maybe (Elimᶠ F C Q)
+    try [] = nothing
+    try (b ∷ bs) with fitᵣ i b | decideᵣ atomic Q (rvar i) b | decideᵣ atomic Q b (rvar i)
+    ... | true | just p | just q = just (equateʳ C Q i b (p , q) , fixes-updʳ i b o)
+    ... | _    | _      | _      = try bs
 
-  open Entails ent
+-- A step by equality first, then one against the bounds below, then
+-- one against a bound above, at an unknown outside `F`
 
-  -- The search: the first fit expression facing the unknown that the
-  -- test equates with it
+anyStep : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → Maybe (Elimᶠ F C Q)
+anyStep {Θ} F C Q with first (vᵉ F) (equateᵉ? F C Q) (fins (nE Θ))
+... | just r  = just r
+... | nothing with first (vʳ F) (equateʳ? F C Q) (fins (nR Θ))
+...   | just r  = just r
+...   | nothing with first (vᵉ F) (stepᵉ? F C Q) (fins (nE Θ))
+...     | just r  = just r
+...     | nothing with first (vʳ F) (stepʳ? F C Q) (fins (nR Θ))
+...       | just r  = just r
+...       | nothing with first (vᵉ F) (upᵉ? F C Q) (fins (nE Θ))
+...         | just r  = just r
+...         | nothing with first (vʳ F) (upʳ? F C Q) (fins (nR Θ))
+...           | just r  = just r
+...           | nothing with equateᵗ? F C Q
+...             | just r  = just r
+...             | nothing = first (vᵗ F) (stepᵗ? F C Q) (fins (nTy Θ))
 
-  equateᵉ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
-           → vᵉ F i ≡ false → Maybe (Elimᶠ F C Q)
-  equateᵉ? {Θ} F C Q i o = try (facingₑ i (ordₑ Q))
-    where
-      try : List (EExp Θ) → Maybe (Elimᶠ F C Q)
-      try [] = nothing
-      try (b ∷ bs) with fitₑ i b | entₑ? Q (evar i) b | entₑ? Q b (evar i)
-      ... | true | just p | just q = just (equateᵉ C Q i b (p , q) , fixes-updᵉ i b o)
-      ... | _    | _      | _      = try bs
+reduce : ∀ {Θ} → (F : Vars Θ) → ℕ → (C : OCType Θ) → (Q : Hyps Θ) → Elimᶠ F C Q
+reduce F zero    C Q = idElim C Q , fixes-id
+reduce F (suc n) C Q with anyStep F C Q
+... | nothing = idElim C Q , fixes-id
+... | just r  = r ⨾ᶠ reduce F n (Ĉ (proj₁ r)) (Q̂ (proj₁ r))
 
-  equateʳ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
-           → vʳ F i ≡ false → Maybe (Elimᶠ F C Q)
-  equateʳ? {Θ} F C Q i o = try (facingᵣ i (ordᵣ Q))
-    where
-      try : List (RExp Θ) → Maybe (Elimᶠ F C Q)
-      try [] = nothing
-      try (b ∷ bs) with fitᵣ i b | entᵣ? Q (rvar i) b | entᵣ? Q b (rvar i)
-      ... | true | just p | just q = just (equateʳ C Q i b (p , q) , fixes-updʳ i b o)
-      ... | _    | _      | _      = try bs
+-- One round per unknown suffices: a step removes one
 
-  -- A step by equality first, then one against the bounds below, then
-  -- one against a bound above, at an unknown outside `F`
-
-  anyStep : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → Maybe (Elimᶠ F C Q)
-  anyStep {Θ} F C Q with first (vᵉ F) (equateᵉ? F C Q) (fins (nE Θ))
-  ... | just r  = just r
-  ... | nothing with first (vʳ F) (equateʳ? F C Q) (fins (nR Θ))
-  ...   | just r  = just r
-  ...   | nothing with first (vᵉ F) (stepᵉ? F C Q) (fins (nE Θ))
-  ...     | just r  = just r
-  ...     | nothing with first (vʳ F) (stepʳ? F C Q) (fins (nR Θ))
-  ...       | just r  = just r
-  ...       | nothing with first (vᵉ F) (upᵉ? F C Q) (fins (nE Θ))
-  ...         | just r  = just r
-  ...         | nothing with first (vʳ F) (upʳ? F C Q) (fins (nR Θ))
-  ...           | just r  = just r
-  ...           | nothing with equateᵗ? F C Q
-  ...             | just r  = just r
-  ...             | nothing = first (vᵗ F) (stepᵗ? F C Q) (fins (nTy Θ))
-
-  reduce : ∀ {Θ} → (F : Vars Θ) → ℕ → (C : OCType Θ) → (Q : Hyps Θ) → Elimᶠ F C Q
-  reduce F zero    C Q = idElim C Q , fixes-id
-  reduce F (suc n) C Q with anyStep F C Q
-  ... | nothing = idElim C Q , fixes-id
-  ... | just r  = r ⨾ᶠ reduce F n (Ĉ (proj₁ r)) (Q̂ (proj₁ r))
-
-  -- One round per unknown suffices: a step removes one
-
-  eliminate : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → Elimᶠ F C Q
-  eliminate {Θ} F C Q = reduce F (nE Θ + nR Θ + nTy Θ) C Q
+eliminate : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → Elimᶠ F C Q
+eliminate {Θ} F C Q = reduce F (nE Θ + nR Θ + nTy Θ) C Q

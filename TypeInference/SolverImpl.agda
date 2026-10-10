@@ -26,9 +26,9 @@
 --     close (`retry-princ`/`-fail`) and read back as           --
 --     obligations (`toOblig`).                                 --
 --   * Read-back: `toHyps` (`toHyps-compl`, `etDec-refute`),    --
---     then `closedᴴ`, which decides the closed atoms and the   --
---     closed orderings entailed by transitivity                --
---     (`closedᴴ-⊩`/`-⊆`/`-fail`).                              --
+--     then `checkClosed`, which decides the closed atoms and   --
+--     the closed orderings joined by chains of hypotheses      --
+--     (`checkClosed-⊩`/`-⊆`/`-fail`).                          --
 --   * The report (`report`, `Reported`): `simplify`            --
 --     (`simplify-⊩`/`-⊨`), which normalises the set, splits    --
 --     each join on a left side and drops each var-rule         --
@@ -42,10 +42,19 @@
 --     those of the deferred conditions are neither eliminated  --
 --     nor dropped (`fix`, `instᴿ`).                            --
 --                                                              --
--- Entailed orderings are decided by `decide≾ᵣ`/`decide≾ₑ` on   --
--- normal forms (`nrmᵣ-≡`, `canonᵣ-≡`), sound by their types;   --
--- no completeness is claimed. Products are compared by         --
--- `prodˢ≾`, which decides the embedding `_⊑ᵖ_`                 --
+-- Entailed orderings are decided by one module, `Entail`, at   --
+-- explicit strengths: `closed` (variable-free sides, the       --
+-- grade's order; the closed check and the witnesses of         --
+-- `retry`), `derive` (the embedding of normal forms along the  --
+-- chains between atoms of the hypothesis graph; at no          --
+-- hypotheses in the driver, localisation, `Bounds` and         --
+-- `Canon`, and at the residual's orderings in `retry`), and    --
+-- `atomic` (an ordering of the set itself, or `derive`; the    --
+-- report's settling, pruning and equating). Every edge of the  --
+-- graph holds where its hypotheses do (`edgeᵣ-sound`), and     --
+-- each decision is a derivation composed of edges, sound by    --
+-- its type; no completeness is claimed. Products are compared  --
+-- by `prodˢ≾`, which decides the embedding `_⊑ᵖ_`              --
 -- (`prodˢ≾-complete`, `prodˢ≾-exact`), sound for entailment    --
 -- (`⊑ᵖ-sound`).                                                --
 --                                                              --
@@ -121,15 +130,16 @@ open import TypeInference.SolverImpl.Deferred  S
          ⊩ᵈ-resp-≐ˢ; ⊩ᵈ-subst; ⊩ᵈ-subst⁻; toOblig; ⊩ᴰ→⊩ᴼˢ; ⊩ᴼˢ→⊩ᴰ)
 open import TypeInference.OpenSyntax.Instances S using (wkᵉⁿ-H; _↑ᵉⁿ_)
 open import TypeInference.SolverImpl.Resid     S
-open import TypeInference.SolverImpl.Closed    S using (closedᴴ; closedᴴ-⊩; closedᴴ-⊆; closedᴴ-fail)
+open import TypeInference.SolverImpl.Entail    S
+  using (checkClosed; checkClosed-⊩; checkClosed-⊆; checkClosed-fail)
 open import TypeInference.SolverImpl.State     S
 open import TypeInference.SolverImpl.Solve     S opEnum
 open import TypeInference.SolverImpl.Principal S opEnum
 open import TypeInference.SolverImpl.RigidFree S opEnum using (solve-rigidFree)
 open import TypeInference.SolverImpl.Simplify  S
-  using (simplify; simplify-⊩; simplify-⊨; trimElim; entᵣ?; entₑ?)
+  using (simplify; simplify-⊩; simplify-⊨; trimElim)
 open import TypeInference.SolverImpl.Eliminate S
-  using (Elim; Elimᶠ; Entails; entails; eliminate; _⨾ᴱ_)
+  using (Elim; Elimᶠ; eliminate; _⨾ᴱ_)
 open import TypeInference.SolverImpl.Canon     S
   using (canonElim; canonₑ; canonᵣ; canonₑ-≡; canonᵣ-≡)
 open import TypeInference.SolverImpl.Vars       S
@@ -157,7 +167,7 @@ runSolverᴰ C with solve init C
 ...     | nothing = refuted
 ...     | just (s₂ , m₂) with toHyps (res s₂)
 ...       | nothing        = refuted
-...       | just (Q₀ , hq) with closedᴴ Q₀
+...       | just (Q₀ , hq) with checkClosed Q₀
 ...         | nothing = refuted
 ...         | just Q  = solved (Ψ s₂ , θ s₂ , Q , dfs (res s₂))
 
@@ -184,12 +194,12 @@ runSolverᴰ-sound C eq with solve init C
 ...     | nothing = ⊥refuted eq
 ...     | just (s₂ , m₂) with toHyps (res s₂)
 ...       | nothing = ⊥refuted eq
-...       | just (Q₀ , hq) with closedᴴ Q₀ in e''
+...       | just (Q₀ , hq) with checkClosed Q₀ in e''
 ...         | nothing = ⊥refuted eq
 ...         | just Q₁ with eq
 ...           | refl = λ δ Q' → λ { (hQ ∷ hR) →
                 wit-mono m₂ C (wit-mono m₁ C w) δ Q'
-                  (⊩ᴿ-bare (⊩ᴿ-resp-≐ˢ (⨟-idˡ δ) (⊩ᴿ-⨟ (⊩ᴴ-⨟ hQ (closedᴴ-⊩ Q₀ e'')) hq))
+                  (⊩ᴿ-bare (⊩ᴿ-resp-≐ˢ (⨟-idˡ δ) (⊩ᴿ-⨟ (⊩ᴴ-⨟ hQ (checkClosed-⊩ Q₀ e'')) hq))
                            (⊩ᴼˢ→⊩ᴰ (dfs (res s₂)) hR)) }
 
 runSolver-sound : ∀ {Θ} → (C : Constraint Θ)
@@ -218,10 +228,10 @@ runSolverᴰ-refutes C eq τ sat with solve init C in e
     fac  = solve-principal init C e τ sat ⊩ᴿ-empty
     fac₁ = retry-princ s' e₁ (proj₁ fac) (proj₁ (proj₂ (proj₂ fac)))
 ...     | just (s₂ , m₂) with toHyps (res s₂) in e'
-...       | just (Q₀ , hq) with closedᴴ Q₀ in e''
+...       | just (Q₀ , hq) with checkClosed Q₀ in e''
 ...         | just _  = ⊥solved eq
 ...         | nothing =
-              closedᴴ-fail Q₀ e''
+              checkClosed-fail Q₀ e''
                 (proj₁ fac₂ , toHyps-compl (res s₂) e' (proj₁ fac₂) (proj₂ (proj₂ fac₂)) ∷ [])
   where
     fac  = solve-principal init C e τ sat ⊩ᴿ-empty
@@ -263,7 +273,7 @@ runSolverᴰ-rigidFree C p with solve init C in e
 ...     | nothing = λ ()
 ...     | just (s₂ , m₂) with toHyps (res s₂)
 ...       | nothing = λ ()
-...       | just (Q₀ , hq) with closedᴴ Q₀
+...       | just (Q₀ , hq) with checkClosed Q₀
 ...         | nothing = λ ()
 ...         | just _  = λ ()
 
@@ -287,11 +297,11 @@ runSolverᴰ-principal C eq σ Q R sat δ₀ h₀ with solve init C in e
 ...     | nothing = ⊥refuted eq
 ...     | just (s₂ , m₂) with toHyps (res s₂) in e'
 ...       | nothing = ⊥refuted eq
-...       | just (Q₀ , hq) with closedᴴ Q₀ in e''
+...       | just (Q₀ , hq) with checkClosed Q₀ in e''
 ...         | nothing = ⊥refuted eq
 ...         | just Q₁ with eq
 ...           | refl = δ₂ , tri ,
-                       closedᴴ-⊆ Q₀ e'' (toHyps-compl (res s₂) e' δ₂ h₂)
+                       checkClosed-⊆ Q₀ e'' (toHyps-compl (res s₂) e' δ₂ h₂)
                        ∷ ⊩ᴰ→⊩ᴼˢ (dfs (res s₂)) (⊩dfs h₂)
   where
     fac  = solve-principal init C e (σ ⨟ˢ δ₀) (sat δ₀ ∅ᴴ h₀) ⊩ᴿ-empty
@@ -335,12 +345,6 @@ solver = record
   ; solve-refutes   = runSolver-complete
   ; solve-principal = runSolver-principal
   }
-
--- The entailment test of elimination by equality: an ordering among
--- the hypotheses, or one `decide≾` proves from them
-
-entailsᴴ : Entails
-entailsᴴ = entails entᵣ? entₑ?
 
 -- A solution, its residue as the solver returns it, and the residue
 -- simplified, which entails the residue and holds at each of its
@@ -439,7 +443,7 @@ reportOutcome : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → 
 reportOutcome w X C refuted                    e = refuted
 reportOutcome w X C stuck                      e = stuck
 reportOutcome w X C (solved (Θ' , σ , Q , D)) e =
-  solved (reportElim (eliminate entailsᴴ F (X [ σ ]ᶜ) (simplify Q)))
+  solved (reportElim (eliminate F (X [ σ ]ᶜ) (simplify Q)))
   where
     open Strengthened
 

@@ -80,6 +80,7 @@ open import TypeInference.SolverImpl.Deferred S
 open import TypeInference.SolverImpl.Resid  S
 open import TypeInference.SolverImpl.State  S
 open import TypeInference.SolverImpl.Normal S
+open import TypeInference.SolverImpl.Entail S using (decideᵣ; decideₑ; derive)
 open import TypeInference.SolverImpl.Solve  S opEnum
 open import TypeInference.SolverImpl.Localise S
   using (Localised; localise; lσ; lfix; lcpl; latom; localise-ds; updᵉ-absorb; freeᵉ; freeʳ; anyᶠ; anyᶠ-true;
@@ -607,17 +608,17 @@ atomʳ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (j 
 atomʳ-princ O j ρ ρ' eq γ hγ u p with strʳ⁺ j ρ | strʳ⁺ j ρ'
 ... | just (ρ₀ , e₁) | just (ρ₀' , e₂) with eq
 ...   | refl = λ { (here refl) → bndʳ j ρ ρ' e₁ e₂ γ p }
-atomʳ-princ O j ρ ρ' eq γ hγ u p | just (ρ₀ , e₁) | nothing with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+atomʳ-princ O j ρ ρ' eq γ hγ u p | just (ρ₀ , e₁) | nothing with decideᵣ derive ∅ᴴ ρ ρ'
 ... | just _  with eq
 ...   | refl = λ ()
 atomʳ-princ O j ρ ρ' eq γ hγ u p | just (ρ₀ , e₁) | nothing | nothing =
   stripʳ-unit-princ (Is-just? uₑ-least?) j ρ ρ' ρ₀ e₁ eq γ hγ p
-atomʳ-princ O j ρ ρ' eq γ hγ u p | nothing | just (ρ₀' , e₂) with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+atomʳ-princ O j ρ ρ' eq γ hγ u p | nothing | just (ρ₀' , e₂) with decideᵣ derive ∅ᴴ ρ ρ'
 ... | just _  with eq
 ...   | refl = λ ()
 atomʳ-princ O j ρ ρ' eq γ hγ u p | nothing | just (ρ₀' , e₂) | nothing =
   stripʳ-top-princ O j ρ ρ' ρ₀' e₂ eq γ hγ u p
-atomʳ-princ O j ρ ρ' eq γ hγ u p | nothing | nothing with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+atomʳ-princ O j ρ ρ' eq γ hγ u p | nothing | nothing with decideᵣ derive ∅ᴴ ρ ρ'
 ... | just _  with eq
 ...   | refl = λ ()
 atomʳ-princ O j ρ ρ' eq γ hγ u p | nothing | nothing | nothing = ⊥just eq
@@ -633,17 +634,17 @@ atomᵉ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (j
 atomᵉ-princ O j ε ε' eq γ hγ u p with strᵉ⁺ j ε | strᵉ⁺ j ε'
 ... | just (ε₀ , e₁) | just (ε₀' , e₂) with eq
 ...   | refl = λ { (here refl) → bndᵉ j ε ε' e₁ e₂ γ p }
-atomᵉ-princ O j ε ε' eq γ hγ u p | just (ε₀ , e₁) | nothing with decide≾ₑ {Q = ∅ᴴ} ε ε'
+atomᵉ-princ O j ε ε' eq γ hγ u p | just (ε₀ , e₁) | nothing with decideₑ derive ∅ᴴ ε ε'
 ... | just _  with eq
 ...   | refl = λ ()
 atomᵉ-princ O j ε ε' eq γ hγ u p | just (ε₀ , e₁) | nothing | nothing =
   stripᵉ-unit-princ (Is-just? uₑ-least?) j ε ε' ε₀ e₁ eq γ hγ p
-atomᵉ-princ O j ε ε' eq γ hγ u p | nothing | just (ε₀' , e₂) with decide≾ₑ {Q = ∅ᴴ} ε ε'
+atomᵉ-princ O j ε ε' eq γ hγ u p | nothing | just (ε₀' , e₂) with decideₑ derive ∅ᴴ ε ε'
 ... | just _  with eq
 ...   | refl = λ ()
 atomᵉ-princ O j ε ε' eq γ hγ u p | nothing | just (ε₀' , e₂) | nothing =
   stripᵉ-top-princ O j ε ε' ε₀' e₂ eq γ hγ u p
-atomᵉ-princ O j ε ε' eq γ hγ u p | nothing | nothing with decide≾ₑ {Q = ∅ᴴ} ε ε'
+atomᵉ-princ O j ε ε' eq γ hγ u p | nothing | nothing with decideₑ derive ∅ᴴ ε ε'
 ... | just _  with eq
 ...   | refl = λ ()
 atomᵉ-princ O j ε ε' eq γ hγ u p | nothing | nothing | nothing = ⊥just eq
@@ -1372,7 +1373,7 @@ solve-principal s (ε ≾̂ₑᶜ ε') refl δ₀ sat h =
 solve-principal s (Etᶜ A) eq = solveEt-princ s A _ refl eq
 
 solve-principal s (Et∨≾ᵘ A ρ) eq
-  with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
+  with decideᵣ derive ∅ᴴ (ρ [ θ s ]ʳ) ûᵣ
 ... | just p  with eq
 ...   | refl = λ δ₀ sat h → δ₀ , ≐ˢ-refl , h , (λ fx → fx)
 solve-principal s (Et∨≾ᵘ A ρ) eq | nothing = solveDisj-princ s A ρ _ refl eq
@@ -1729,7 +1730,7 @@ solve-fail s (ε ≾̂ₑᶜ ε') ()
 
 solve-fail s (Etᶜ A) eq = solveEt-fail s A _ refl eq
 
-solve-fail s (Et∨≾ᵘ A ρ) eq with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
+solve-fail s (Et∨≾ᵘ A ρ) eq with decideᵣ derive ∅ᴴ (ρ [ θ s ]ʳ) ûᵣ
 ... | just _  = ⊥solved eq
 ... | nothing = solveDisj-fail s A ρ _ refl eq
 

@@ -21,14 +21,14 @@
 -- alternative, and are what `canonᵣ`/`canonₑ` return.             --
 --                                                                 --
 -- `foldSumₑ`/`foldSumᵣ` group and fold a sum without pruning it;  --
--- `SolverImpl.Normal` compares against the folded right side.     --
+-- `SolverImpl.Entail` compares against the folded right side.     --
 --                                                                 --
 -- `Grouping` groups the alternatives by skeleton, lists the       --
 -- groups in skeleton order, folds a group that varies in one slot --
 -- into one alternative whose slot is a join of constants, and,    --
 -- given a decided order that the join absorbs, drops every        --
 -- alternative below another. `SolverImpl.Canon` instantiates it   --
--- with the decider of `SolverImpl.Normal` to form `canonᵣ` and    --
+-- with the decider of `SolverImpl.Entail` to form `canonᵣ` and    --
 -- `canonₑ`. Each step is certified by a single `≡̂ᵣ`/`≡̂ₑ`.         --
 --                                                                 --
 -- Contract. An expression is convertible to its normal form       --
@@ -1155,7 +1155,7 @@ nrmᵣ-≡ : ∀ {Θ} → (ρ : RExp Θ) → ρ ≡̂ᵣ ⟦ nrmᵣ ρ ⟧ʳˢ�
 nrmᵣ-≡ ρ = ≡̂ᵣ-trans (flatᵣ-≡ ρ) (≡̂ᵣ-sym (commSumᵣ-≡ ·ᵣ-comm? refl (flatᵣ ρ)))
 
 -- The normal form read back without trailing units, which is what
--- `decide≾ₑ`/`decide≾ᵣ` compare, alternative by alternative
+-- `deriveₑ`/`deriveᵣ` of `Entail` compare, alternative by alternative
 
 nrmₑ-≡ᵖ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ ⟦ nrmₑ ε ⟧ᵉᵖ⁺
 nrmₑ-≡ᵖ ε = ≡̂ₑ-trans (nrmₑ-≡ ε) (⟦⟧ᵉᵖ⁺-≡ (nrmₑ ε))

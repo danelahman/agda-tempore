@@ -20,7 +20,7 @@
 -- An `unbox` refused at a box of a constant grade is             --
 -- `untypable`: the unbox's grade unknown lies between the        --
 -- elapsed grade and the box's, and the ordering this entails     --
--- between the two is decided false (`closedᴴ`).                  --
+-- between the two is decided false (`checkClosed`).              --
 --                                                                --
 -- The instances under `Boxes/` check the verdicts and schemes by --
 -- `refl` at the four example grades.                             --
@@ -302,7 +302,7 @@ expected-kept-and-claimed =
 -- grade at `d = 2`. The unbox's grade is bounded by the box's only
 -- through the subtyping of `mk`'s result, so a refused claim is
 -- refuted by the ordering the two bounds entail, the transitive
--- closure of the closed orderings (`closedᴴ`): late at the
+-- closure of the closed orderings (`checkClosed`): late at the
 -- right-sided grades (`d = 4`), early at the left-sided ones
 -- (`d = 1`).
 
