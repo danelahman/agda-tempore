@@ -11,7 +11,7 @@ module Syntax.Grades.Example.Worked.Time.Dense.TwoSided where
 
 open import Relation.Nullary using (¬_)
 
-open import Syntax.Grades using (Grade; _→ᵍ_)
+open import Syntax.Grades using (Grade; GradeMorphism)
 
 open import Util.Equality
 
@@ -55,25 +55,25 @@ tsi-join = refl
 tsi-seq : T.[ 1 / 2 , ↑ 1 / 2 ] T.·ᵢ T.[ # 1 , ↑ # 2 ] ≡ T.[ 3 / 2 , ↑ 5 / 2 ]
 tsi-seq = refl
 
--- one time step is two half-unit delays
+-- a delay by one unit is two half-unit delays
 
-tsi-tick : Grade.of-dur T.dense-two-sided-intervals-with-∞ 1
+tsi-tick : Grade.of-dur T.dense-two-sided-intervals-with-∞ (# 1)
          ≡ T.[ 1 / 2 , ↑ 1 / 2 ] T.·ᵢ T.[ 1 / 2 , ↑ 1 / 2 ]
 tsi-tick = refl
 
 ------------------------------------------------------------------------
 -- The discrete windows, read in dense time
 
-tsi-embed : _→ᵍ_.map T.two-sided→dense Discrete.[ 1 , Discrete.↑ 2 ]
+tsi-embed : GradeMorphism.map T.two-sided→dense Discrete.[ 1 , Discrete.↑ 2 ]
           ≡ T.[ # 1 , ↑ # 2 ]
 tsi-embed = refl
 
-tsi-embed-∞ : _→ᵍ_.map T.two-sided→dense Discrete.[ 3 , Discrete.∞ ]
+tsi-embed-∞ : GradeMorphism.map T.two-sided→dense Discrete.[ 3 , Discrete.∞ ]
             ≡ T.[ # 3 , ∞ ]
 tsi-embed-∞ = refl
 
 -- a dense window strictly inside the image of a discrete one
 
 tsi-inside : T.[ 1 / 2 , ↑ 3 / 2 ]
-               T.≾ᵢ _→ᵍ_.map T.two-sided→dense Discrete.[ 0 , Discrete.↑ 2 ]
+               T.≾ᵢ GradeMorphism.map T.two-sided→dense Discrete.[ 0 , Discrete.↑ 2 ]
 tsi-inside = ≾²!

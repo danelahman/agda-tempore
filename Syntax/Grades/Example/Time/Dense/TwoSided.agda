@@ -9,8 +9,10 @@
 -- at least 1 and at most 2.5 units is `[ # 1 , ↑ 5 / 2 ]`. The order --
 -- is containment, and a wider window is the weaker grade.            --
 --                                                                    --
--- The discrete windows of `Time.TwoSidedWithInfinity` embed, a       --
--- window of time steps being read as the same window of dense time.  --
+-- Durations are non-negative rationals, a delay by `q` having grade  --
+-- `[ q , ↑ q ]`. The discrete windows of `Time.TwoSidedWithInfinity` --
+-- embed along the inclusion of durations, a window of time steps     --
+-- being read as the same window of dense time.                       --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Time.Dense.TwoSided where
@@ -28,7 +30,7 @@ open import Relation.Nullary.Negation.Core using (¬_)
 
 open import Data.Maybe.Base using (just; nothing)
 
-open import Syntax.Durations.Nat using (ℕᴰ)
+open import Syntax.Durations.NonNegativeRational using (ℚ≥0ᴰ; ℕ→ℚ≥0ᴰ)
 open import Syntax.Grades
 
 open import Util.Equality
@@ -238,7 +240,7 @@ infixl 7 _⊔ᵢ_
 
 -- the grade of two-sided intervals of dense time
 
-dense-two-sided-intervals-with-∞ : Grade ℕᴰ
+dense-two-sided-intervals-with-∞ : Grade ℚ≥0ᴰ
 dense-two-sided-intervals-with-∞ = record
   { Carrier = Interval∞
   ; _·_              = _·ᵢ_
@@ -271,16 +273,16 @@ dense-two-sided-intervals-with-∞ = record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵢ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ᵢ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ᵢ-irrelevant {i₁} {i₂}
-  ; of-dur            = λ n → [ # n , ↑ # n ] {fromWitness ≤-refl}
+  ; of-dur            = λ q → [ q , ↑ q ] {fromWitness ≤-refl}
   ; of-dur-zero       = eqᵢ refl refl
-  ; of-dur-plus       = λ {m} {n} → eqᵢ (#-+ m n) (cong ↑_ (#-+ m n))
+  ; of-dur-plus       = eqᵢ refl refl
   }
 
 ------------------------------------------------------------------------
 -- The discrete windows embed
 
-two-sided→dense : Discrete.two-sided-intervals-with-∞
-                    →ᵍ dense-two-sided-intervals-with-∞
+two-sided→dense : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.two-sided-intervals-with-∞
+                                     dense-two-sided-intervals-with-∞
 two-sided→dense = record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}

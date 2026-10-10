@@ -6,8 +6,8 @@
 -- counts whole ticks, and the figures of the alphabet (read 1, write --
 -- 3, send 6 at worst) are rounded up to whole ticks. In dense time   --
 -- the operations take at most read 1/2, write 5/2 and send 11/2,     --
--- each half a tick below its rounded figure; `delay` idles whole     --
--- ticks.                                                             --
+-- each half a tick below its rounded figure; `delay q` idles for `q` --
+-- units, a non-negative rational.                                    --
 --                                                                    --
 -- The grade behaves as the discrete upper bounds do: `[ ρ ] A` is a  --
 -- lease that expires, a reading goes stale after any activity, and a --
@@ -30,7 +30,7 @@ open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable
   using (True; False; toWitness; toWitnessFalse)
 
-open import Syntax.Grades using (_→ᵍ_)
+open import Syntax.Grades using (GradeMorphism)
 
 open import Syntax.Grades.Example.Time.Dense.RightSided
   using (𝕀ᵣ; ↑_; ℚ≥0; _/_; #_; nonZero; uₒ-least;
@@ -67,7 +67,7 @@ opTime send  = [0, 11 / 2 ]
 -- the embedding of the discrete intervals
 
 ticks : Op → 𝕀ᵣ
-ticks o = _→ᵍ_.map right-sided→dense Discrete.[0, Discrete.↑ slow o ]
+ticks o = GradeMorphism.map right-sided→dense Discrete.[0, Discrete.↑ slow o ]
 
 open import Syntax.Grades.Example.Worked.Typing.Core
   dense-right-sided-intervals opTime
@@ -152,8 +152,8 @@ rounded-up-it-expires :
   ¬ (uᵣ ·ᵣ ticks read ·ᵣ ticks send ≾ᵣ [0, # 6 ])
 rounded-up-it-expires = ≰ᵈ!
 
--- A lease of three and a half units: idling covers whole ticks of it,
--- and the half tick left over is exactly a reading.
+-- A lease of three and a half units: idling may spend any part of it,
+-- and three units of idling leave exactly a reading.
 
 half-tick-lease : R
 half-tick-lease = [0, 7 / 2 ]
@@ -162,7 +162,7 @@ claim-after-idling-and-sampling : [] ⊢C⦂ Unit ‼ [0, # 9 ]
 claim-after-idling-and-sampling =
   box {ρ = half-tick-lease} (const 42)
                                      -- ∷ [ [0, 7 / 2 ] ] Reading
-    (delay 3                         -- ⟨ [0, # 3 ] ⟩
+    (delay (# 3)                     -- ⟨ [0, # 3 ] ⟩
       (perform read ⋆                -- ⟨ [0, 1 / 2 ] ⟩ ∷ Reading
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-⟨⟩ Hd))) ≤ᵈ! (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -181,15 +181,26 @@ claim-after-storing-twice =
                  (<:ᵛ-refl _)        -- ∷ Reading
             (perform send here (return ⋆))))))
 
--- a fourth tick of idling overruns it by half a unit
+-- idling for all of it fills it as well
 
-idling-overruns : ¬ (uᵣ ·ᵣ of-durʳ 4 ≾ᵣ half-tick-lease)
+claim-after-idling : [] ⊢C⦂ Unit ‼ [0, # 9 ]
+claim-after-idling =
+  box {ρ = half-tick-lease} (const 42)
+                                     -- ∷ [ [0, 7 / 2 ] ] Reading
+    (delay (7 / 2)                   -- ⟨ [0, 7 / 2 ] ⟩
+      (unbox (Tl-⟨⟩ Hd) ≤ᵈ! (<:ᵛ-refl _)
+                                     -- ∷ Reading
+        (perform send here (return ⋆))))
+
+-- a quarter unit more of idling overruns it
+
+idling-overruns : ¬ (uᵣ ·ᵣ of-durʳ (15 / 4) ≾ᵣ half-tick-lease)
 idling-overruns = ≰ᵈ!
 
 -- and so does a second reading after the idling
 
 sampling-twice-overruns :
-  ¬ (uᵣ ·ᵣ of-durʳ 3 ·ᵣ opTime read ·ᵣ opTime read ≾ᵣ half-tick-lease)
+  ¬ (uᵣ ·ᵣ of-durʳ (# 3) ·ᵣ opTime read ·ᵣ opTime read ≾ᵣ half-tick-lease)
 sampling-twice-overruns = ≰ᵈ!
 
 ------------------------------------------------------------------------

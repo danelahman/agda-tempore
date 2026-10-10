@@ -20,6 +20,7 @@ examples:
 #   pruning, canonical forms, elimination
 #     (Simplify, Canon, Eliminate)                       -> reports (+ stdlib)
 #   product grades, normal forms (Product, Normal)       -> product
+#   durations other than ticks, dense time (Closed)      -> durations
 #   single stages on hand-written input: splitting,
 #     disjunction pruning, absorption by the top, multiset
 #     comparison of products, chained closed orderings, cycle
@@ -45,6 +46,9 @@ examples-product:
 
 examples-stages:
 	agda TypeInference/Examples/Stages/All.agda
+
+examples-durations:
+	agda TypeInference/Examples/Durations/All.agda
 
 clean:
 	git clean -fx

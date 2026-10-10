@@ -41,10 +41,10 @@ The development is checked with Agda 2.8.0 and the Agda standard library 2.3.
 type-inference examples. `make examples` checks those
 (`agda TypeInference/Examples.agda`), which run the solver at several grades and
 take minutes. They are divided into sets by what they test (`Stdlib`,
-`Annotations`, `Handlers`, `Boxes`, `Reports`, `Product`, `Stages`), each with
-an index `TypeInference/Examples/<Set>/All.agda` and a target
-`make examples-<set>`; the Makefile lists the parts of the solver that each set
-exercises.
+`Annotations`, `Handlers`, `Boxes`, `Reports`, `Product`, `Stages`,
+`Durations`), each with an index `TypeInference/Examples/<Set>/All.agda` and a
+target `make examples-<set>`; the Makefile lists the parts of the solver that
+each set exercises.
 
 ## Structure of the formalisation
 
@@ -63,7 +63,8 @@ operations.
 - `Syntax/Durations.agda` defines a `Duration`, the monoid of the durations
   of `delay`, its morphisms `_→ᴰ_`, and `Stepped` durations, isomorphic to
   ℕ; `Syntax/Durations/Nat.agda` gives ℕ as `ℕᴰ`, a duration being a number
-  of time steps.
+  of time steps, and `Syntax/Durations/NonNegativeRational.agda` the
+  non-negative rationals as `ℚ≥0ᴰ`, with the inclusion `ℕ→ℚ≥0ᴰ`.
 
 - `Syntax/Grades.agda` defines a `Grade D` (a partially ordered monoid with a
   monoid morphism `of-dur` from the durations `D`), grade morphisms
@@ -101,9 +102,10 @@ operations.
   non-negative rationals ℚ≥0 (`NonNegativeRational.agda`, with its extension
   by `∞` in `ExtendedRational.agda`): `LeftSided.agda` (`[ q ,+∞⟩`, at least
   `q` units), `RightSided.agda` (`[0, q ]`, at most `q` units, `q` possibly
-  `∞`), and `TwoSided.agda` (`[ min , max ]`, `max` possibly `∞`). Each
-  receives its discrete counterpart by a grade morphism sending `n` time steps
-  to `n` units of dense time.
+  `∞`), and `TwoSided.agda` (`[ min , max ]`, `max` possibly `∞`). Their
+  durations are ℚ≥0 (`ℚ≥0ᴰ` in `Syntax/Durations/NonNegativeRational.agda`),
+  and each receives its discrete counterpart by a grade morphism along the
+  inclusion `ℕ→ℚ≥0ᴰ`, sending `n` time steps to `n` units of dense time.
 
 - `Syntax/Grades/Example/SecurityLevel.agda` turns a decidable bounded
   join-semilattice of levels into a grade: `_·_` and `_⊔_` are both the join,
@@ -562,9 +564,11 @@ type inference.
   boxes and inside a handler clause, with the box's grade given or inferred;
   and a box that escapes through `return` and is claimed out of time, refuted
   through the transitive closure of the closed orderings. `Boxes/` checks the
-  verdicts and schemes at the four grades. `Reports.agda` gives two schemes
-  that the report simplifies: a var-rule disjunction entailed by another, and
-  a product with the top absorbed. `Reports/` checks them at the right-sided
+  verdicts and schemes at the four grades. `Durations.agda` gives boxes
+  claimed after two delays of rational durations, and a box grade inferred
+  over them; `Durations/` checks them at dense left- and right-sided time.
+  `Reports.agda` gives two schemes that the report simplifies: a var-rule
+  disjunction entailed by another, and a product with the top absorbed. `Reports/` checks them at the right-sided
   grades, where the unit is least and the simplifications apply.
   `Stages.agda` tests single solver stages on hand-written constraints, for
   steps that the example programs exercise only in part or not at all:

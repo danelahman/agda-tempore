@@ -5,10 +5,12 @@
 -- with `q` a non-negative rational; a delay of half a unit has grade --
 -- `[ 1 / 2 ,+∞⟩`. Multiplication adds the bounds and the order is    --
 -- the reverse of `≤` on them, and a *smaller* bound is the weaker    --
--- grade.                                                             --
+-- grade. Durations are non-negative rationals, a delay by `q` having --
+-- grade `[ q ,+∞⟩`.                                                  --
 --                                                                    --
--- The discrete intervals of `Time.LeftSided` embed, a bound of `n`   --
--- time steps being read as `n` units of dense time.                  --
+-- The discrete intervals of `Time.LeftSided` embed along the         --
+-- inclusion of durations, a bound of `n` time steps being read as    --
+-- `n` units of dense time.                                           --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Time.Dense.LeftSided where
@@ -26,7 +28,7 @@ open import Relation.Nullary.Negation.Core using (¬_)
 
 open import Data.Maybe.Base using (just; nothing)
 
-open import Syntax.Durations.Nat using (ℕᴰ)
+open import Syntax.Durations.NonNegativeRational using (ℚ≥0ᴰ; ℕ→ℚ≥0ᴰ)
 open import Syntax.Grades
 
 open import Util.Equality
@@ -171,7 +173,7 @@ infixl 7 _⊔ₒ_
 
 -- the grade of one-sided intervals of dense time
 
-dense-left-sided-intervals : Grade ℕᴰ
+dense-left-sided-intervals : Grade ℚ≥0ᴰ
 dense-left-sided-intervals = record
   { Carrier           = 𝕀
   ; _·_               = _·ₒ_
@@ -199,15 +201,16 @@ dense-left-sided-intervals = record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ₒ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ₒ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ₒ-irrelevant {i₁} {i₂}
-  ; of-dur            = λ n → [ # n ,+∞⟩
+  ; of-dur            = λ q → [ q ,+∞⟩
   ; of-dur-zero       = refl
-  ; of-dur-plus       = λ {m} {n} → eq𝕀 (#-+ m n)
+  ; of-dur-plus       = refl
   }
 
 ------------------------------------------------------------------------
 -- The discrete intervals embed
 
-left-sided→dense : Discrete.left-sided-intervals →ᵍ dense-left-sided-intervals
+left-sided→dense : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.left-sided-intervals
+                                       dense-left-sided-intervals
 left-sided→dense = record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}

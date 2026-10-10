@@ -145,6 +145,7 @@ open import Syntax.Normalisation
 
 open import Syntax.Durations
 open import Syntax.Durations.Nat
+open import Syntax.Durations.NonNegativeRational
 
 ---- Grades, grade morphisms, and grade systems
 

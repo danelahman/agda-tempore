@@ -18,6 +18,11 @@
 -- the left, as in `Worked/Typing/Product/LeftSidedTimeLevel`, at --
 -- most `slow` on the right.                                      --
 --                                                                --
+-- At dense time, the right-sided grade takes the measured        --
+-- figures of `Worked/Typing/Time/Dense/RightSided`, and the      --
+-- left-sided one the figures of `Worked/Typing/Time/LeftSided`   --
+-- read in dense time.                                            --
+--                                                                --
 -- The operations are the same at every grade, and so is their    --
 -- enumeration.                                                   --
 --------------------------------------------------------------------
@@ -112,6 +117,36 @@ module Product-RightSidedTimeLevel where
   opTime o = ([0, ↑ slow o ] , touches o)
 
   open import Syntax.Grades.Example.Worked.Typing.Core right-sided-time×low-high opTime
+    using (spec) public
+  open import TypeInference.SolverImpl.Enum spec using (OpEnum; opEnum)
+
+  enum : OpEnum
+  enum = opEnum sensor-ops sensor-complete
+
+module Dense-Time-RightSided where
+
+  open import Syntax.Grades.Example.Time.Dense.RightSided using (dense-right-sided-intervals)
+  open import Syntax.Grades.Example.Worked.Typing.Time.Dense.RightSided using (opTime)
+  open import Syntax.Grades.Example.Worked.Typing.Core dense-right-sided-intervals opTime
+    using (spec) public
+  open import TypeInference.SolverImpl.Enum spec using (OpEnum; opEnum)
+
+  enum : OpEnum
+  enum = opEnum sensor-ops sensor-complete
+
+module Dense-Time-LeftSided where
+
+  open import Syntax.Grades using (GradeMorphism)
+  open import Syntax.Grades.Example.Time.Dense.LeftSided
+    using (𝕀; dense-left-sided-intervals; left-sided→dense)
+  import Syntax.Grades.Example.Worked.Typing.Time.LeftSided as Discrete
+
+  -- the discrete figures, read in dense time
+
+  opTime : Op → 𝕀
+  opTime o = GradeMorphism.map left-sided→dense (Discrete.opTime o)
+
+  open import Syntax.Grades.Example.Worked.Typing.Core dense-left-sided-intervals opTime
     using (spec) public
   open import TypeInference.SolverImpl.Enum spec using (OpEnum; opEnum)
 

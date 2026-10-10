@@ -5,10 +5,13 @@
 -- with `q` a possibly infinite non-negative rational; a deadline of  --
 -- 2.5 units is `[0, ↑ 5 / 2 ]`. Multiplication adds the bounds and   --
 -- the order is `≤` on them, and a *larger* bound is the weaker       --
--- grade; `[0, ∞ ]` imposes no deadline and is absorbing.             --
+-- grade; `[0, ∞ ]` imposes no deadline and is absorbing. Durations   --
+-- are non-negative rationals, a delay by `q` having grade            --
+-- `[0, ↑ q ]`.                                                       --
 --                                                                    --
--- The discrete intervals of `Time.RightSided` embed, a deadline of   --
--- `n` time steps being read as one of `n` units of dense time.       --
+-- The discrete intervals of `Time.RightSided` embed along the        --
+-- inclusion of durations, a deadline of `n` time steps being read as --
+-- one of `n` units of dense time.                                    --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Time.Dense.RightSided where
@@ -23,7 +26,7 @@ open import Relation.Nullary.Decidable.Core
 
 open import Data.Maybe.Base using (just)
 
-open import Syntax.Durations.Nat using (ℕᴰ)
+open import Syntax.Durations.NonNegativeRational using (ℚ≥0ᴰ; ℕ→ℚ≥0ᴰ)
 open import Syntax.Grades
 
 open import Util.Equality
@@ -170,7 +173,7 @@ infixl 7 _⊔ₒ_
 
 -- the grade of (right) one-sided intervals of dense time
 
-dense-right-sided-intervals : Grade ℕᴰ
+dense-right-sided-intervals : Grade ℚ≥0ᴰ
 dense-right-sided-intervals = record
   { Carrier           = 𝕀ᵣ
   ; _·_               = _·ₒ_
@@ -198,15 +201,16 @@ dense-right-sided-intervals = record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ₒ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ₒ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ₒ-irrelevant {i₁} {i₂}
-  ; of-dur            = λ n → [0, ↑ # n ]
+  ; of-dur            = λ q → [0, ↑ q ]
   ; of-dur-zero       = refl
-  ; of-dur-plus       = λ {m} {n} → eq𝕀ᵣ (cong ↑_ (#-+ m n))
+  ; of-dur-plus       = refl
   }
 
 ------------------------------------------------------------------------
 -- The discrete intervals embed
 
-right-sided→dense : Discrete.right-sided-intervals →ᵍ dense-right-sided-intervals
+right-sided→dense : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.right-sided-intervals
+                                         dense-right-sided-intervals
 right-sided→dense = record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}

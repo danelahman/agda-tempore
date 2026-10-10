@@ -39,6 +39,10 @@
 -- hand-written constraints, each answer checked by `refl`, for --
 -- steps on which the programs of the other sets do not depend, --
 -- or depend only in part.                                      --
+--                                                              --
+-- Set 8 consists of boxes claimed after delays of rational     --
+-- durations, and a box grade inferred over them, at dense      --
+-- left- and right-sided time.                                  --
 ------------------------------------------------------------------
 
 module TypeInference.Examples where
@@ -75,6 +79,10 @@ import TypeInference.Examples.Product.All
 -- Report simplification: the generic module and its instances
 
 import TypeInference.Examples.Reports.All
+
+-- Durations other than ticks: the generic module and its instances
+
+import TypeInference.Examples.Durations.All
 
 -- Solver stages on hand-written constraints
 
