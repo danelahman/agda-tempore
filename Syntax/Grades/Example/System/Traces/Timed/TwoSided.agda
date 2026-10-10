@@ -64,7 +64,7 @@ open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-tr
 
 open import Syntax.Grades.Example.Traces.Timed.TwoSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
-  using (TwoSided; lo; hi; lo◇hi; _·ᵗˢ_; _⊔ᵗˢ_; ⊤ᵗˢ; of-natᵗˢ; two-sided;
+  using (TwoSided; lo; hi; lo◇hi; _·ᵗˢ_; _⊔ᵗˢ_; ⊤ᵗˢ; of-durᵗˢ; two-sided;
          _≾ᵗˢ_; _◇ˢ₀_)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
@@ -192,7 +192,7 @@ two-sided-traces→intervals = record
   ; map-·        = λ {i₁} {i₂} → mapₒ-· i₁ i₂
   ; map-⊤        = eqᵢ refl refl
   ; map-⊔        = λ {i₁} {i₂} → mapₒ-⊔ i₁ i₂
-  ; map-of-nat   = λ {n} →
+  ; map-of-dur   = λ {n} →
       eqᵢ (duration-⟨⟩ˡᵒ n)
           (cong ↑_ (trans (⊔-identityʳ (durationʰⁱ ⟨ n ⟩)) (duration-⟨⟩ʰⁱ n)))
   }

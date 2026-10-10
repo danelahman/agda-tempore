@@ -76,6 +76,7 @@ open import Relation.Nullary.Decidable
 
 open import Data.Maybe.Base using (nothing)
 
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades
 
 open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
@@ -92,10 +93,10 @@ open import Syntax.Grades.Example.Traces.Lifted.LeftSided
             _·_ to _·ˡᵒ_; u to uˡᵒ; _⊔_ to _⊔ˡᵒ_;
             ·-identityʳ to ·ˡᵒ-identityʳ; ·-identityˡ to ·ˡᵒ-identityˡ;
             ·-assoc to ·ˡᵒ-assoc;
-            of-nat to of-natˡᵒ; of-nat-zero to of-natˡᵒ-zero;
-            of-nat-plus to of-natˡᵒ-plus;
+            of-dur to of-durˡᵒ; of-dur-zero to of-durˡᵒ-zero;
+            of-dur-plus to of-durˡᵒ-plus;
             _≾_ to _≾ˡᵒ_; _≾?_ to _≾ˡᵒ?_; ≾-⊤ to ≾ˡᵒ-⊤;
-            u⋠of-nat-1 to uˡᵒ⋠of-natˡᵒ-1;
+            u⋠of-dur-1 to uˡᵒ⋠of-durˡᵒ-1;
             ≾-refl to ≾ˡᵒ-refl; ≾-trans to ≾ˡᵒ-trans;
             ·-monoˡ to ·ˡᵒ-monoˡ; ·-monoʳ to ·ˡᵒ-monoʳ;
             ≾-zero-productˡ to ≾ˡᵒ-zero-productˡ;
@@ -114,8 +115,8 @@ open import Syntax.Grades.Example.Traces.Lifted.RightSided
          ·ᵇ-identityʳ; ·ᵇ-identityˡ; ·ᵇ-assoc)
   renaming (Antichain to Antichainʰⁱ; traces to tracesʰⁱ;
             u to uʰⁱ; n to nʰⁱ; n-◃⁻ to nʰⁱ-◃⁻; ◃-∈ to ◃ʰⁱ-∈;
-            of-nat to of-natʰⁱ; of-nat-zero to of-natʰⁱ-zero;
-            of-nat-plus to of-natʰⁱ-plus;
+            of-dur to of-durʰⁱ; of-dur-zero to of-durʰⁱ-zero;
+            of-dur-plus to of-durʰⁱ-plus;
             _≾₀_ to _≾ʰⁱ₀_;
             _≾_ to _≾ʰⁱ_; _≾?_ to _≾ʰⁱ?_;
             ≾-refl to ≾ʰⁱ-refl; ≾-trans to ≾ʰⁱ-trans; ≾-⊤ to ≾ʰⁱ-⊤;
@@ -508,9 +509,9 @@ i₁ ⊔ᵗˢ i₂ =
 ------------------------------------------------------------------------
 -- Including the natural numbers, and deciding the order
 
-of-natᵗˢ : ℕ → TwoSided
-of-natᵗˢ n =
-  [ of-natˡᵒ n , within (of-natʰⁱ n) ] {◇ˢ₀-self (tracesˡᵒ (of-natˡᵒ n)) tt}
+of-durᵗˢ : ℕ → TwoSided
+of-durᵗˢ n =
+  [ of-durˡᵒ n , within (of-durʰⁱ n) ] {◇ˢ₀-self (tracesˡᵒ (of-durˡᵒ n)) tt}
 
 infix 5 _≾ᵗˢ?_
 
@@ -520,12 +521,12 @@ i₁ ≾ᵗˢ? i₂ = (lo i₁ ≾ˡᵒ? lo i₂) ×-dec (hi i₁ ≾ʰⁱ? hi i
 -- the unit is not least, its floor being greatest among floors
 
 uᵗˢ-not-least : ¬ Minimum _≾ᵗˢ_ uᵗˢ
-uᵗˢ-not-least least = uˡᵒ⋠of-natˡᵒ-1 (proj₁ (least (of-natᵗˢ 1)))
+uᵗˢ-not-least least = uˡᵒ⋠of-durˡᵒ-1 (proj₁ (least (of-durᵗˢ 1)))
 
 ------------------------------------------------------------------------
 -- The grade of two-sided trace intervals
 
-two-sided : Grade
+two-sided : Grade ℕᴰ
 two-sided = record
   { Carrier         = TwoSided
   ; _·_             = _·ᵗˢ_
@@ -553,9 +554,9 @@ two-sided = record
   ; ≾-zero-productˡ = λ {c} {d} → ≾ᵗˢ-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾ᵗˢ-zero-productʳ {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → ≾ᵗˢ-irrelevant {c} {d}
-  ; of-nat          = of-natᵗˢ
-  ; of-nat-zero     = eqᵗˢ of-natˡᵒ-zero (cong within_ of-natʰⁱ-zero)
-  ; of-nat-plus     = λ {m} {n} →
-                        eqᵗˢ (of-natˡᵒ-plus {m} {n})
-                             (cong within_ (of-natʰⁱ-plus {m} {n}))
+  ; of-dur          = of-durᵗˢ
+  ; of-dur-zero     = eqᵗˢ of-durˡᵒ-zero (cong within_ of-durʰⁱ-zero)
+  ; of-dur-plus     = λ {m} {n} →
+                        eqᵗˢ (of-durˡᵒ-plus {m} {n})
+                             (cong within_ (of-durʰⁱ-plus {m} {n}))
   }

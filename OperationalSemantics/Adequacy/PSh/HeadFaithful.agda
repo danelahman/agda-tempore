@@ -5,20 +5,22 @@
 -- assumption of the adequacy theorem — for the free graded tree monad --
 -- on presheaves, and `HeadTimed` with it.                             --
 --                                                                     --
--- Needs two frame assumptions: `TickFrame` (worlds are inhabited,     --
--- time can always pass by a tick) and `ConstFrame` (base constants'   --
+-- Needs stepped durations, a duration being a number of unit ticks,   --
+-- and two frame assumptions: `TickFrame` (worlds are inhabited, time  --
+-- can always pass by a tick) and `ConstFrame` (base constants'        --
 -- equality does not depend on when one looks, needed only for         --
 -- `leaf-const`).                                                      --
 ------------------------------------------------------------------------
 
 open import Data.Empty
 open import Data.Nat using (ℕ; zero; suc; _+_; _≤_)
-open import Data.Nat.Properties using (+-identityʳ; m≤m+n; m≤n+m)
+open import Data.Nat.Properties using (m≤m+n; m≤n+m)
 open import Data.Product
 open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (¬_)
 
+open import Syntax.Durations using (Stepped)
 open import Syntax.Grades
 open import Syntax.LanguageSpec
 open import Syntax.Operations
@@ -45,12 +47,14 @@ module OperationalSemantics.Adequacy.PSh.HeadFaithful
                                   (P.PShPast (LanguageSpec.Grades Spec) Wld)
                                   (A.PShAdj (LanguageSpec.Grades Spec) Wld)
                                   GTy)
+         (st : Stepped (GradeSystem.Dur (LanguageSpec.Grades Spec)))
        where
 
 open LanguageSpec Spec
 open GradeSystemInterface Grades
 open Operations Ops
 open World Wld
+open Stepped st using (toℕ; toℕ-injective; 1ᴰ)
 
 open import Syntax.Types Spec
 
@@ -65,7 +69,7 @@ open import DenotationalSemantics.Model.Example.PSh.Modality.Adjunction Grades W
 open import DenotationalSemantics.Model.Example.PSh.Modality.Past Grades Wld
   using (⟨_⟩ᵒ; mk⟨⟩)
 
-open import OperationalSemantics.Adequacy.PSh.TreeHead Spec Wld GTy
+open import OperationalSemantics.Adequacy.PSh.TreeHead Spec Wld GTy st
 
 open import OperationalSemantics.Adequacy.HeadFaithful
              Spec (B.PShCat Grades Wld) (F.PShFut Grades Wld)
@@ -78,7 +82,7 @@ record TickFrame : Set where
     some-world : W
 
     -- and time can always pass by one tick
-    ⊑-tick : (w : W) → Σ[ w' ∈ W ] w ⊑[ mapᵉ (of-natᵉ 1) ] w'
+    ⊑-tick : (w : W) → Σ[ w' ∈ W ] w ⊑[ mapᵉ (of-durᵉ 1ᴰ) ] w'
 
 record ConstFrame : Set where
   field
@@ -94,7 +98,7 @@ record ConstFrame : Set where
 
 reachable⇒tick : W → (∀ (ρ : R) (w : W) → Σ[ w' ∈ W ] w ⊑[ ρ ] w') → TickFrame
 reachable⇒tick w₀ f =
-  record { some-world = w₀ ; ⊑-tick = f (mapᵉ (of-natᵉ 1)) }
+  record { some-world = w₀ ; ⊑-tick = f (mapᵉ (of-durᵉ 1ᴰ)) }
 
 -- `Delaysᵐ` describes a morphism as `ηᵀ` bound after `delayᵀ`s; at the
 -- presheaf model each of its three shapes computes to the corresponding
@@ -102,11 +106,11 @@ reachable⇒tick w₀ f =
 
 -- one tick's worth of transition, spelled out at the concrete operations
 
-tick-delays : ∀ {X : PSh} → (τ : ℕ) → ∀ {w} (x : carrier X w)
-            → Delaysᵗ {⟨ of-natʳ τ ⟩ᵒ X}
-                (app (delayᵀ τ ∘ᵖ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵖ η⊣) x) (τ + 0)
+tick-delays : ∀ {X : PSh} → (τ : 𝔻) → ∀ {w} (x : carrier X w)
+            → Delaysᵗ {⟨ of-durʳ τ ⟩ᵒ X}
+                (app (delayᵀ τ ∘ᵖ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵖ η⊣) x) (τ +ᴰ 0ᴰ)
 tick-delays {X} τ {w} x =
-  d-delay τ {k = λ q → leaf (mk⟨⟩ (⊑-coe map-of-natᵉ q) x)} (λ q → d-leaf)
+  d-delay τ {k = λ q → leaf (mk⟨⟩ (⊑-coe map-of-durᵉ q) x)} (λ q → d-leaf)
 
 delaysᵐ→ᵗ : ∀ {X Y : PSh} {δ n} {d : X →ᵖ Tᵒ Y δ}
           → Delaysᵐ d n → ∀ {w} (x : carrier X w)
@@ -114,10 +118,10 @@ delaysᵐ→ᵗ : ∀ {X Y : PSh} {δ n} {d : X →ᵖ Tᵒ Y δ}
           → Delaysᵗ (app d x) n
 
 delaysᵐ→ᵗ no-delay              x = d-leaf
-delaysᵐ→ᵗ (η-step {t = t} dm)   x =
-  delays-bind {h = t} (delaysᵐ→ᵗ dm) (d-leaf {y = x})
+delaysᵐ→ᵗ (η-step {n = n} {t = t} dm) x =
+  d-≡ (+ᴰ-identityˡ n) (delays-bind {h = t} (delaysᵐ→ᵗ dm) (d-leaf {y = x}))
 delaysᵐ→ᵗ (τ-step {n = n} τ {t = t} dm) x =
-  d-≡ (cong (_+ n) (+-identityʳ τ))
+  d-≡ (cong (_+ᴰ n) (+ᴰ-identityʳ τ))
       (delays-bind {h = t} (delaysᵐ→ᵗ dm) (tick-delays τ x))
 delaysᵐ→ᵗ (delays-≈ e dm)       x = d-≈ (e x) (delaysᵐ→ᵗ dm x)
 
@@ -140,15 +144,15 @@ nodeᵐ-head op v k y p = h-op refl
 -- `delayedᵐ h d r` is `h` bound after `d`, coerced: a `sub` node over the
 -- bind, which `bind-head` descends.
 
-delayedᵐ-head : ∀ {X Y : PSh} {ε ε' δ : E} {n : ℕ} {P : Pred X}
+delayedᵐ-head : ∀ {X Y : PSh} {ε ε' δ : E} {n : 𝔻} {P : Pred X}
               → ≈-closed X P
               → {h : Y →ᵖ Tᵒ X ε'}
               → (∀ {w we} (y : carrier Y w) (p : Path w we) → Head P (app h y) p 0)
               → {d : 𝟙ᵖ →ᵖ Tᵒ Y δ} → Delaysᵐ d n
               → (r : δ ·ₑ ε' ≾ₑ ε)
-              → ∀ {w we} (p : Path w we) → n ≤ p-len p
+              → ∀ {w we} (p : Path w we) → toℕ n ≤ p-len p
               -------------------------------------------------
-              → Head P (app (delayedᵐ h d r) tt) p n
+              → Head P (app (delayedᵐ h d r) tt) p (toℕ n)
 
 delayedᵐ-head Pcl pH dm r p le =
   h-sub (bind-head Pcl pH (delaysᵐ→ᵗ dm tt) p le)
@@ -174,7 +178,7 @@ module _ (TF : TickFrame) where
                    , subst (n₁ ≤_) (sym e) (m≤m+n n₁ n₂)
                    , subst (n₂ ≤_) (sym e) (m≤n+m n₂ n₁)
 
-  rno : ∀ {X Y₁ Y₂ : PSh} {ε ε₂ δ₁ δ₂ : E} {n₁ n₂ : ℕ} {op : Op}
+  rno : ∀ {X Y₁ Y₂ : PSh} {ε ε₂ δ₁ δ₂ : E} {n₁ n₂ : 𝔻} {op : Op}
       → {a : Y₁ →ᵖ X}
       → {v : Y₂ →ᵖ ⟦ param op ⟧ᵍ}
       → {k : Y₂ →ᵖ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ X ε₂)}
@@ -186,13 +190,13 @@ module _ (TF : TickFrame) where
       → ¬ (delayedᵐ (leafᵐ a) d₁ r₁ ≈ᵖ delayedᵐ (nodeᵐ op v k) d₂ r₂)
 
   rno {X} {n₁ = n₁} {n₂ = n₂} {op = op} {a = a} {v = v} {k = k} nd₁ nd₂ r₁ r₂ eq
-    with two-paths some-world n₁ n₂
+    with two-paths some-world (toℕ n₁) (toℕ n₂)
   ... | _ , p , le₁ , le₂ =
     ret≉op (eq tt)
       (delayedᵐ-head (isRet-closed {X}) (leafᵐ-head a) nd₁ r₁ p le₁)
       (delayedᵐ-head (isOp-closed {X} {op}) (nodeᵐ-head op v k) nd₂ r₂ p le₂)
 
-  oinj : ∀ {X Y₁ Y₂ : PSh} {ε ε₁ ε₂ δ₁ δ₂ : E} {n₁ n₂ : ℕ} {op₁ op₂ : Op}
+  oinj : ∀ {X Y₁ Y₂ : PSh} {ε ε₁ ε₂ δ₁ δ₂ : E} {n₁ n₂ : 𝔻} {op₁ op₂ : Op}
        → {v₁ : Y₁ →ᵖ ⟦ param op₁ ⟧ᵍ}
        → {k₁ : Y₁ →ᵖ [ mapᵉ (op-grade op₁) ]ᵒ (⟦ arity op₁ ⟧ᵍ ⇒ᵖ Tᵒ X ε₁)}
        → {v₂ : Y₂ →ᵖ ⟦ param op₂ ⟧ᵍ}
@@ -207,7 +211,7 @@ module _ (TF : TickFrame) where
 
   oinj {X} {n₁ = n₁} {n₂ = n₂} {op₁ = op₁} {op₂ = op₂}
        {v₁ = v₁} {k₁ = k₁} {v₂ = v₂} {k₂ = k₂} nd₁ nd₂ r₁ r₂ eq
-    with two-paths some-world n₁ n₂
+    with two-paths some-world (toℕ n₁) (toℕ n₂)
   ... | _ , p , le₁ , le₂ =
     op-inj (eq tt)
       (delayedᵐ-head (isOp-closed {X} {op₁}) (nodeᵐ-head op₁ v₁ k₁) nd₁ r₁ p le₁)
@@ -234,7 +238,7 @@ module _ (TF : TickFrame) where
   -- *some* world the delays reach. Both answer types read their observation
   -- off this; what separates them is whether that world can be left again.
 
-  globals-meet : ∀ {X Y₁ Y₂ : PSh} {ε δ₁ δ₂ : E} {n₁ n₂ : ℕ}
+  globals-meet : ∀ {X Y₁ Y₂ : PSh} {ε δ₁ δ₂ : E} {n₁ n₂ : 𝔻}
                → {g₁ g₂ : 𝟙ᵖ →ᵖ X}
                → {d₁ : 𝟙ᵖ →ᵖ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
                → {d₂ : 𝟙ᵖ →ᵖ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
@@ -249,7 +253,7 @@ module _ (TF : TickFrame) where
 
   globals-meet {X} {Y₁} {Y₂} {n₁ = n₁} {n₂ = n₂} {g₁ = g₁} {g₂ = g₂}
                nd₁ nd₂ r₁ r₂ eq w
-    with two-paths w n₁ n₂
+    with two-paths w (toℕ n₁) (toℕ n₂)
   ... | _ , p , le₁ , le₂
     with heads-meet (isG-closed g₁) (eq tt)
            (delayedᵐ-head (isG-closed g₁) (isG-head {Y = Y₁} g₁) nd₁ r₁ p le₁)
@@ -261,7 +265,7 @@ module _ (TF : TickFrame) where
   -- At `𝔹ᵖ` the answer is world-independent, so no reflection assumption
   -- arises.
 
-  lbool : ∀ {Y₁ Y₂ : PSh} {ε δ₁ δ₂ : E} {n₁ n₂ : ℕ}
+  lbool : ∀ {Y₁ Y₂ : PSh} {ε δ₁ δ₂ : E} {n₁ n₂ : 𝔻}
         → {d₁ : 𝟙ᵖ →ᵖ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
         → {d₂ : 𝟙ᵖ →ᵖ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
         → (r₁ : δ₁ ·ₑ uₑ ≾ₑ ε)
@@ -279,7 +283,7 @@ module _ (TF : TickFrame) where
 
     open ConstFrame CF
 
-    lconst : ∀ {Y₁ Y₂ : PSh} {b : BaseType} {ε δ₁ δ₂ : E} {n₁ n₂ : ℕ}
+    lconst : ∀ {Y₁ Y₂ : PSh} {b : BaseType} {ε δ₁ δ₂ : E} {n₁ n₂ : 𝔻}
            → {c₁ c₂ : BaseConstants b}
            → {d₁ : 𝟙ᵖ →ᵖ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
            → {d₂ : 𝟙ᵖ →ᵖ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
@@ -314,7 +318,7 @@ module _ (TF : TickFrame) where
   -- The tick total is observable too, since no case of the invariance
   -- changes it: the path is descended equally far on both sides.
 
-  rte : ∀ {X Y₁ Y₂ : PSh} {ε δ₁ δ₂ : E} {n₁ n₂ : ℕ}
+  rte : ∀ {X Y₁ Y₂ : PSh} {ε δ₁ δ₂ : E} {n₁ n₂ : 𝔻}
       → {a₁ : Y₁ →ᵖ X} → {a₂ : Y₂ →ᵖ X}
       → {d₁ : 𝟙ᵖ →ᵖ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
       → {d₂ : 𝟙ᵖ →ᵖ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
@@ -325,13 +329,13 @@ module _ (TF : TickFrame) where
       → n₁ ≡ n₂
 
   rte {X} {n₁ = n₁} {n₂ = n₂} {a₁ = a₁} {a₂ = a₂} nd₁ nd₂ r₁ r₂ eq
-    with two-paths some-world n₁ n₂
-  ... | _ , p , le₁ , le₂ =
-    ticks-eq (isRet-closed {X}) (eq tt)
+    with two-paths some-world (toℕ n₁) (toℕ n₂)
+  ... | _ , p , le₁ , le₂ = toℕ-injective
+    (ticks-eq (isRet-closed {X}) (eq tt)
       (delayedᵐ-head (isRet-closed {X}) (leafᵐ-head a₁) nd₁ r₁ p le₁)
-      (delayedᵐ-head (isRet-closed {X}) (leafᵐ-head a₂) nd₂ r₂ p le₂)
+      (delayedᵐ-head (isRet-closed {X}) (leafᵐ-head a₂) nd₂ r₂ p le₂))
 
-  ote : ∀ {X Y₁ Y₂ : PSh} {ε ε₁ ε₂ δ₁ δ₂ : E} {n₁ n₂ : ℕ} {op : Op}
+  ote : ∀ {X Y₁ Y₂ : PSh} {ε ε₁ ε₂ δ₁ δ₂ : E} {n₁ n₂ : 𝔻} {op : Op}
       → {v₁ : Y₁ →ᵖ ⟦ param op ⟧ᵍ}
       → {k₁ : Y₁ →ᵖ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ X ε₁)}
       → {v₂ : Y₂ →ᵖ ⟦ param op ⟧ᵍ}
@@ -346,11 +350,11 @@ module _ (TF : TickFrame) where
 
   ote {X} {n₁ = n₁} {n₂ = n₂} {op = op} {v₁ = v₁} {k₁ = k₁} {v₂ = v₂} {k₂ = k₂}
       nd₁ nd₂ r₁ r₂ eq
-    with two-paths some-world n₁ n₂
-  ... | _ , p , le₁ , le₂ =
-    ticks-eq (isOp-closed {X} {op}) (eq tt)
+    with two-paths some-world (toℕ n₁) (toℕ n₂)
+  ... | _ , p , le₁ , le₂ = toℕ-injective
+    (ticks-eq (isOp-closed {X} {op}) (eq tt)
       (delayedᵐ-head (isOp-closed {X} {op}) (nodeᵐ-head op v₁ k₁) nd₁ r₁ p le₁)
-      (delayedᵐ-head (isOp-closed {X} {op}) (nodeᵐ-head op v₂ k₂) nd₂ r₂ p le₂)
+      (delayedᵐ-head (isOp-closed {X} {op}) (nodeᵐ-head op v₂ k₂) nd₂ r₂ p le₂))
 
   PShHeadTimed : HeadTimed
   PShHeadTimed = record

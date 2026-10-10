@@ -16,6 +16,7 @@
 
 module Syntax.Grades.Example.Product.RightSidedTimeLevel where
 
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades using (Grade)
 open import Syntax.Grades.Product using (_×ᵍ_)
 open import Syntax.Grades.Example.Time.RightSided using (right-sided-intervals)
@@ -24,10 +25,10 @@ open import Syntax.Grades.Example.SecurityLevel
 
 -- right-sided time and a lattice of levels
 
-right-sided-time×level : LevelLattice → Grade
+right-sided-time×level : LevelLattice → Grade ℕᴰ
 right-sided-time×level L = right-sided-intervals ×ᵍ level-grade L
 
 -- at the two-point lattice
 
-right-sided-time×low-high : Grade
+right-sided-time×low-high : Grade ℕᴰ
 right-sided-time×low-high = right-sided-time×level low-high

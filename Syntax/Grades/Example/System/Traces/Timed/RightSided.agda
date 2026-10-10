@@ -153,7 +153,7 @@ traces→right-sided-intervals = record
   ; map-·        = λ {P} {Q} → mapₒ-· P Q
   ; map-⊤        = refl
   ; map-⊔        = λ {P} {Q} → mapₒ-⊔ P Q
-  ; map-of-nat   = λ {n} →
+  ; map-of-dur   = λ {n} →
       eq𝕀ᵣ (cong ↑_ (trans (⊔-identityʳ (duration ⟨ n ⟩)) (duration-⟨⟩ n)))
   }
 

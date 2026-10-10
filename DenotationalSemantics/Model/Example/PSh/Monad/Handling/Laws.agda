@@ -20,7 +20,6 @@ module DenotationalSemantics.Model.Example.PSh.Monad.Handling.Laws
                               (F.PShFut (LanguageSpec.Grades S) Wld))
        where
 
-open import Data.Nat using (ℕ)
 open import Data.Product using (_,_; proj₁; proj₂)
 
 open import Util.Equality
@@ -53,18 +52,18 @@ T-alg-of-handlerᵀ-ηᵀ : ∀ {P A ε'} → (bc : Eternalᵒ P) → (h : Handl
                      ≈ᵖ ε-substᵀ (sym (·ₑ-identityˡ ε')) ∘ᵖ sndᵐ
 T-alg-of-handlerᵀ-ηᵀ bc h x = ≈ᵗ-refl _
 
-T-alg-of-handlerᵀ-delayᵀ : ∀ {P A ε' ε''} → (τ : ℕ) → (bc : Eternalᵒ P) → (h : Handlerˢ P A)
+T-alg-of-handlerᵀ-delayᵀ : ∀ {P A ε' ε''} → (τ : 𝔻) → (bc : Eternalᵒ P) → (h : Handlerˢ P A)
                          → T-alg-of-handlerᵀ bc h ∘ᵖ mapˣᵐ idᵖ (delayᵀ {Tᵒ A ε''} {ε'} τ)
-                         ≈ᵖ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε''))
+                         ≈ᵖ ε-substᵀ (sym (·ₑ-assoc (of-durᵉ τ) ε' ε''))
                            ∘ᵖ delayᵀ τ
-                           ∘ᵖ [ of-natʳ τ ]ᶠ (T-alg-of-handlerᵀ bc h)
+                           ∘ᵖ [ of-durʳ τ ]ᶠ (T-alg-of-handlerᵀ bc h)
                            ∘ᵖ []-monoidal
-                           ∘ᵖ mapˣᵐ (Eternalᵒ.necᵉ bc {of-natʳ τ}) idᵖ
+                           ∘ᵖ mapˣᵐ (Eternalᵒ.necᵉ bc {of-durʳ τ}) idᵖ
 T-alg-of-handlerᵀ-delayᵀ {P = P} τ bc h (pv , boxT) =
-  ε-substˢ-congᵗ (sym (·ₑ-assoc (of-natᵉ τ) _ _))
+  ε-substˢ-congᵗ (sym (·ₑ-assoc (of-durᵉ τ) _ _))
     (delay-≈ (λ q → T-alg-of-handlerˢ-congᵖ bc h
-                      (≈-sym P (Eternalᵒ.necᵉ-≤ bc (≾ᵣ-reflexive map-of-natᵉ) pv q))
-                      (fun boxT (⊑-coe map-of-natᵉ q))))
+                      (≈-sym P (Eternalᵒ.necᵉ-≤ bc (≾ᵣ-reflexive map-of-durᵉ) pv q))
+                      (fun boxT (⊑-coe map-of-durᵉ q))))
 
 T-alg-of-handlerᵀ-≤ : ∀ {P A ε₁ ε₂ ε'} → (bc : Eternalᵒ P) → (h : Handlerˢ P A) → (p : ε₁ ≾ₑ ε₂)
                     → T-alg-of-handlerᵀ {P} {A} {ε₂} {ε'} bc h ∘ᵖ mapˣᵐ idᵖ (T-≤ p)
@@ -225,14 +224,14 @@ T-alg-of-handlerˢ-≤ⁱ {ε₁' = ε₁'} {ε₂' = ε₂'} bc h p pv (op-node
                           (·ₑ-monoʳ-≾ₑ (·ₑ-monoʳ-≾ₑ p)) (·ₑ-monoʳ-≾ₑ p) _))
 T-alg-of-handlerˢ-≤ⁱ {ε₁' = ε₁'} {ε₂' = ε₂'} bc h p pv (delay-node {ε = ε₀} τ k kn) =
   ≈ᵗ-trans
-    (ε-substˢ-congᵗ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε₂'))
+    (ε-substˢ-congᵗ (sym (·ₑ-assoc (of-durᵉ τ) ε₀ ε₂'))
       (delay-≈ (λ q → T-alg-of-handlerˢ-≤ⁱ bc h p
                         (fun (app (Eternalᵒ.necᵉ bc) pv) q) (k q))))
     (≈ᵗ-trans
-      (ε-substˢ-congᵗ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε₂'))
+      (ε-substˢ-congᵗ (sym (·ₑ-assoc (of-durᵉ τ) ε₀ ε₂'))
         (≈ᵗ-sym (sub-delayᵗ (·ₑ-monoʳ-≾ₑ p) _ _)))
-      (≈ᵗ-sym (sub-ε-substᵗ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε₁'))
-                            (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε₂'))
+      (≈ᵗ-sym (sub-ε-substᵗ (sym (·ₑ-assoc (of-durᵉ τ) ε₀ ε₁'))
+                            (sym (·ₑ-assoc (of-durᵉ τ) ε₀ ε₂'))
                             (·ₑ-monoʳ-≾ₑ (·ₑ-monoʳ-≾ₑ p)) (·ₑ-monoʳ-≾ₑ p) _)))
 T-alg-of-handlerˢ-≤ⁱ bc h p pv (sub p₀ t) =
   ≈ᵗ-trans (sub-≈ (T-alg-of-handlerˢ-≤ⁱ bc h p pv t))

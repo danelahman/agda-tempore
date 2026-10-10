@@ -378,12 +378,12 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
       ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym implᵐ-ηᵀ)))
 
     -- `DELAY`'s transition, implemented: a tick
-    delay-tick : ∀ {X} → (τ : ℕ)
-               → implᵐ ∘ᵐ (delayᵀ {⟨ of-natʳ τ ⟩ᵒ X} {uₑ} τ
-                           ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣ {X} {of-natʳ τ})
-               ≈ᵐ tickᵏ (of-natᵉ τ)
-                  ∘ᵐ [ mapᵉ (of-natᵉ τ) ]ᶠ ηᵏ
-                  ∘ᵐ ([]-≤ (≾ᵣ-reflexive map-of-natᵉ) ∘ᵐ η⊣)
+    delay-tick : ∀ {X} → (τ : 𝔻)
+               → implᵐ ∘ᵐ (delayᵀ {⟨ of-durʳ τ ⟩ᵒ X} {uₑ} τ
+                           ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣ {X} {of-durʳ τ})
+               ≈ᵐ tickᵏ (of-durᵉ τ)
+                  ∘ᵐ [ mapᵉ (of-durᵉ τ) ]ᶠ ηᵏ
+                  ∘ᵐ ([]-≤ (≾ᵣ-reflexive map-of-durᵉ) ∘ᵐ η⊣)
     delay-tick τ =
         ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ᵏ ∘ᵐ-congˡ (implᵐ-delayᵀ τ)
@@ -421,7 +421,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     T-≤ᵏ-implstep B (HANDLE-STEP r _) g q = T-≤ᵏ-implstep B r g q
     T-≤ᵏ-implstep B (DELAY {τ = τ}) g q =
         ∘ᵐ-congʳ (∘ᵐ-congʳ (delay-tick τ))
-      ∙ᵏ tick-case (of-natᵉ τ) _ g q
+      ∙ᵏ tick-case (of-durᵉ τ) _ g q
       ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (delay-tick τ))))
 
 

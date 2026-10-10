@@ -134,7 +134,7 @@ no-more-time = fails
 -- nor an operation the run never performed: time pays for no
 -- operation under this order
 
-idling-guarantees-no-reading : ¬ (of-natᵉ 5 ·ₑ uₑ ≾ₑ ⟅ ⌈ read ⌉ ⟆)
+idling-guarantees-no-reading : ¬ (of-durᵉ 5 ·ₑ uₑ ≾ₑ ⟅ ⌈ read ⌉ ⟆)
 idling-guarantees-no-reading = fails
 
 ------------------------------------------------------------------------
@@ -243,7 +243,7 @@ either-way =
 -- idling does not discharge a demand for a reading, however long it
 -- goes on
 
-idling-does-not-discharge-it : ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ demand)
+idling-does-not-discharge-it : ¬ (uᵣ ·ᵣ of-durʳ 2 ≾ᵣ demand)
 idling-does-not-discharge-it = fails
 
 -- and neither does doing nothing at all: with no lock in between there
@@ -325,13 +325,13 @@ claim-after-a-reading =
 
 -- the coercion that trades the reading for its tick is available
 
-trading-it-for-a-tick : opTime read ·ₑ uₑ ≾ₑ of-natᵉ 1 ·ₑ uₑ
+trading-it-for-a-tick : opTime read ·ₑ uₑ ≾ₑ of-durᵉ 1 ·ₑ uₑ
 trading-it-for-a-tick = holds
 
 -- and taking it makes the lock `⟨ ⟅ ⟨ 1 ⟩ ⟆ ⟩`, which covers no
 -- reading, so the box is closed
 
-forgetting-the-reading-closes-it : ¬ (uᵣ ·ᵣ of-natʳ 1 ≾ᵣ demand)
+forgetting-the-reading-closes-it : ¬ (uᵣ ·ᵣ of-durʳ 1 ≾ᵣ demand)
 forgetting-the-reading-closes-it = fails
 
 ------------------------------------------------------------------------

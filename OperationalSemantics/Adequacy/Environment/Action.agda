@@ -550,8 +550,8 @@ env-Vˢ-pair (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V U =
 -- different (but equal) proofs, reconciled by `castᶜ-irr`.
 
 env-Cˢ-delay : ∀ {St Γ A ε τ} → (γ : Env St Γ) → (Δ : Ctx)
-             → (M : (Γ ++ᶜ Δ) ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
-             → env-Cˢ γ Δ (delay τ M) ≡ delay τ (env-Cˢ γ (Δ ⟨ of-natʳ τ ⟩) M)
+             → (M : (Γ ++ᶜ Δ) ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
+             → env-Cˢ γ Δ (delay τ M) ≡ delay τ (env-Cˢ γ (Δ ⟨ of-durʳ τ ⟩) M)
 
 env-Cˢ-delay ⌊ St ⌋ Δ M = refl
 env-Cˢ-delay (reachᵉ γ q) Δ M = cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-delay γ Δ M)
@@ -561,52 +561,52 @@ env-Cˢ-delay {τ = τ} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ'} γ q) Δ M =
     (begin
       castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (delay τ M)))
     ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-delay ei) ⟩
-      castᶜ eo (env-Cˢ γ Δ' (delay τ (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
-    ≡⟨ cong (castᶜ eo) (env-Cˢ-delay γ Δ' (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)) ⟩
-      castᶜ eo (delay τ (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩)
-                          (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
+      castᶜ eo (env-Cˢ γ Δ' (delay τ (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
+    ≡⟨ cong (castᶜ eo) (env-Cˢ-delay γ Δ' (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)) ⟩
+      castᶜ eo (delay τ (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩)
+                          (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
     ≡⟨ cast-delay eo ⟩
-      delay τ (castᶜ (cong (_⟨ of-natʳ τ ⟩) eo)
-                (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
-    ≡⟨ cong (delay τ) (castᶜ-irr (cong (_⟨ of-natʳ τ ⟩) eo) eo₂ _) ⟩
+      delay τ (castᶜ (cong (_⟨ of-durʳ τ ⟩) eo)
+                (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
+    ≡⟨ cong (delay τ) (castᶜ-irr (cong (_⟨ of-durʳ τ ⟩) eo) eo₂ _) ⟩
       delay τ (castᶜ eo₂
-                (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
-    ≡⟨ cong (λ z → delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) z)))
-            (castᶜ-irr (cong (_⟨ of-natʳ τ ⟩) ei) ei₂ M) ⟩
-      delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) (castᶜ ei₂ M)))
+                (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
+    ≡⟨ cong (λ z → delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) z)))
+            (castᶜ-irr (cong (_⟨ of-durʳ τ ⟩) ei) ei₂ M) ⟩
+      delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) (castᶜ ei₂ M)))
      ∎)
   where
     Δ'  = [] ⟨ ρ' ⟩ ++ᶜ Δ
     eo  = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ' ⟩) Δ)
     ei  = ++ᶜ-assoc Γ ([] ⟨ ρ' ⟩) Δ
-    eo₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ' ⟩) (Δ ⟨ of-natʳ τ ⟩))
-    ei₂ = ++ᶜ-assoc Γ ([] ⟨ ρ' ⟩) (Δ ⟨ of-natʳ τ ⟩)
+    eo₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ' ⟩) (Δ ⟨ of-durʳ τ ⟩))
+    ei₂ = ++ᶜ-assoc Γ ([] ⟨ ρ' ⟩) (Δ ⟨ of-durʳ τ ⟩)
 
 env-Cˢ-delay {τ = τ} (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ'} V₀ γ) Δ M =
   begin
     castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (delay τ M)))
   ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-delay ei) ⟩
-    castᶜ eo (env-Cˢ γ Δ' (delay τ (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
-  ≡⟨ cong (castᶜ eo) (env-Cˢ-delay γ Δ' (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)) ⟩
-    castᶜ eo (delay τ (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩)
-                        (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
+    castᶜ eo (env-Cˢ γ Δ' (delay τ (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
+  ≡⟨ cong (castᶜ eo) (env-Cˢ-delay γ Δ' (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)) ⟩
+    castᶜ eo (delay τ (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩)
+                        (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
   ≡⟨ cast-delay eo ⟩
-    delay τ (castᶜ (cong (_⟨ of-natʳ τ ⟩) eo)
-              (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
-  ≡⟨ cong (delay τ) (castᶜ-irr (cong (_⟨ of-natʳ τ ⟩) eo) eo₂ _) ⟩
+    delay τ (castᶜ (cong (_⟨ of-durʳ τ ⟩) eo)
+              (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
+  ≡⟨ cong (delay τ) (castᶜ-irr (cong (_⟨ of-durʳ τ ⟩) eo) eo₂ _) ⟩
     delay τ (castᶜ eo₂
-              (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
-  ≡⟨ cong (λ z → delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) z)))
-          (castᶜ-irr (cong (_⟨ of-natʳ τ ⟩) ei) ei₂ M) ⟩
-    delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) (castᶜ ei₂ M)))
+              (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
+  ≡⟨ cong (λ z → delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) z)))
+          (castᶜ-irr (cong (_⟨ of-durʳ τ ⟩) ei) ei₂ M) ⟩
+    delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) (castᶜ ei₂ M)))
    ∎
   where
     Δ₁  = [] ∷ [ ρ' ] A₀
     Δ'  = Δ₁ ++ᶜ Δ
     eo  = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
     ei  = ++ᶜ-assoc Γ Δ₁ Δ
-    eo₂ = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ⟨ of-natʳ τ ⟩))
-    ei₂ = ++ᶜ-assoc Γ Δ₁ (Δ ⟨ of-natʳ τ ⟩)
+    eo₂ = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ⟨ of-durʳ τ ⟩))
+    ei₂ = ++ᶜ-assoc Γ Δ₁ (Δ ⟨ of-durʳ τ ⟩)
 
 env-Cˢ-delay {τ = τ} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ M =
   begin
@@ -615,29 +615,29 @@ env-Cˢ-delay {τ = τ} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ M =
     sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ (delay τ (castᶜ (exτ eA) M)))) W
   ≡⟨ cong (λ z → sub-atᶜ Δ (castᶜ eIn z) W)
           (env-Cˢ-delay γ Δ₁ (castᶜ (exτ eA) M)) ⟩
-    sub-atᶜ Δ (castᶜ eIn (delay τ (env-Cˢ γ (Δ₁ ⟨ of-natʳ τ ⟩)
+    sub-atᶜ Δ (castᶜ eIn (delay τ (env-Cˢ γ (Δ₁ ⟨ of-durʳ τ ⟩)
                                     (castᶜ (exτ eA) M)))) W
   ≡⟨ cong (λ z → sub-atᶜ Δ z W) (cast-delay eIn) ⟩
-    sub-atᶜ Δ (delay τ (castᶜ (exτ eIn) (env-Cˢ γ (Δ₁ ⟨ of-natʳ τ ⟩)
+    sub-atᶜ Δ (delay τ (castᶜ (exτ eIn) (env-Cˢ γ (Δ₁ ⟨ of-durʳ τ ⟩)
                                           (castᶜ (exτ eA) M)))) W
-  ≡⟨ cong (λ z → delay τ (sub-atᶜ (Δ ⟨ of-natʳ τ ⟩) z W))
+  ≡⟨ cong (λ z → delay τ (sub-atᶜ (Δ ⟨ of-durʳ τ ⟩) z W))
           (castᶜ-irr (exτ eIn) eIn₂ _) ⟩
-    delay τ (sub-atᶜ (Δ ⟨ of-natʳ τ ⟩)
-               (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ of-natʳ τ ⟩)
+    delay τ (sub-atᶜ (Δ ⟨ of-durʳ τ ⟩)
+               (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ of-durʳ τ ⟩)
                              (castᶜ (exτ eA) M))) W)
-  ≡⟨ cong (λ z → delay τ (sub-atᶜ (Δ ⟨ of-natʳ τ ⟩)
-             (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ of-natʳ τ ⟩) z)) W))
+  ≡⟨ cong (λ z → delay τ (sub-atᶜ (Δ ⟨ of-durʳ τ ⟩)
+             (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ of-durʳ τ ⟩) z)) W))
           (castᶜ-irr (exτ eA) eA₂ M) ⟩
-    delay τ (sub-atᶜ (Δ ⟨ of-natʳ τ ⟩)
-               (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ of-natʳ τ ⟩) (castᶜ eA₂ M))) W)
+    delay τ (sub-atᶜ (Δ ⟨ of-durʳ τ ⟩)
+               (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ of-durʳ τ ⟩) (castᶜ eA₂ M))) W)
   ∎
   where
-    exτ   = λ {Γ₁ Γ₂ : Ctx} (e : Γ₁ ≡ Γ₂) → cong (_⟨ of-natʳ τ ⟩) e
+    exτ   = λ {Γ₁ Γ₂ : Ctx} (e : Γ₁ ≡ Γ₂) → cong (_⟨ of-durʳ τ ⟩) e
     Δ₁    = [] ∷ A₀ ++ᶜ Δ
     eIn   = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
-    eIn₂  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (Δ ⟨ of-natʳ τ ⟩))
+    eIn₂  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (Δ ⟨ of-durʳ τ ⟩))
     eA    = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
-    eA₂   = ++ᶜ-assoc Γ ([] ∷ A₀) (Δ ⟨ of-natʳ τ ⟩)
+    eA₂   = ++ᶜ-assoc Γ ([] ∷ A₀) (Δ ⟨ of-durʳ τ ⟩)
 
 env-Cˢ-seq : ∀ {St Γ A B ε ε'} → (γ : Env St Γ) → (Δ : Ctx)
            → (M : (Γ ++ᶜ Δ) ⊢C⦂ A ‼ ε)

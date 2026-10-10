@@ -332,7 +332,7 @@ mutual
   -- explicit delaying of a computation
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _ (delay {ε = ε} τ D) (delay {M = M} e') ceq st le =
-    ε , ih , subst (λ z → Q ⊩ econst (of-natᵉ τ) ·̂ₑ ε ≾̂ₑ z) (sym pt) le
+    ε , ih , subst (λ z → Q ⊩ econst (of-durᵉ τ) ·̂ₑ ε ≾̂ₑ z) (sym pt) le
     where
       ι↑ = ι ⨟ˢ wkˢᵉ
       Γ↑ = wkᵉ-ctx Γ
@@ -344,8 +344,8 @@ mutual
       pt = wk-,ᵉ-e   σ ε t
       pι = wk-,ᵉ-ˢ   ι σ ε
 
-      ih = cmpC ι↑ (Γ↑ ⟨ rconst (of-natʳ τ) ⟩) A↑ e M D (reC pι M e')
-                (cong (_⟨ rconst (of-natʳ τ) ⟩) (trans ceq (sym pΓ)))
+      ih = cmpC ι↑ (Γ↑ ⟨ rconst (of-durʳ τ) ⟩) A↑ e M D (reC pι M e')
+                (cong (_⟨ rconst (of-durʳ τ) ⟩) (trans ceq (sym pΓ)))
                 (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st) ⊩≾̂ₑ-refl
 
   -- effect handling

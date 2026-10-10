@@ -26,6 +26,7 @@ open import Relation.Nullary.Decidable.Core
 
 open import Data.Maybe.Base using (just)
 
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades
 
 open import Util.Equality
@@ -170,7 +171,7 @@ infixl 7 _⊔ₒ_
 
 -- the grade of (right) one-sided intervals
 
-right-sided-intervals : Grade
+right-sided-intervals : Grade ℕᴰ
 right-sided-intervals = record
   { Carrier          = 𝕀ᵣ
   ; _·_               = _·ₒ_
@@ -198,7 +199,7 @@ right-sided-intervals = record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ₒ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ₒ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ₒ-irrelevant {i₁} {i₂}
-  ; of-nat            = λ n → [0, ↑ n ]
-  ; of-nat-zero       = refl
-  ; of-nat-plus       = refl
+  ; of-dur            = λ n → [0, ↑ n ]
+  ; of-dur-zero       = refl
+  ; of-dur-plus       = refl
   }

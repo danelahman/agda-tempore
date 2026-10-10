@@ -40,6 +40,7 @@ open import Data.Vec.Properties using (tabulate-cong)
 
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
+open import Syntax.Durations using (Duration)
 open import Syntax.Grades
 
 open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
@@ -61,7 +62,7 @@ open import Syntax.Grades.Example.Counts.Occurrences Op index
 ------------------------------------------------------------------------
 -- An absorbing greatest grade sent to the unit collapses a morphism
 
-collapses : (G H : Grade)
+collapses : {D : Duration} (G H : Grade D)
           → (∀ c → Grade._·_ G (Grade.⊤ G) c ≡ Grade.⊤ G)
           → Grade.⊤ H ≡ Grade.u H
           → (F : G →ᵍ H) (c : Grade.Carrier G) → _→ᵍ_.map F c ≡ Grade.u H
@@ -147,8 +148,8 @@ mapₗ-⊔ any-run        Q       = sym (⊤ᵛ-⊔ᵛ (mapₗ Q))
 
 -- time draws on no counter
 
-mapₗ-of-nat : (k : ℕ) → mapₗ (Grade.of-nat right-sided k) ≡ uᵛ
-mapₗ-of-nat k =
+mapₗ-of-dur : (k : ℕ) → mapₗ (Grade.of-dur right-sided k) ≡ uᵛ
+mapₗ-of-dur k =
   tabulate-uᵛ (certain (⟨ k ⟩ ∷ [])) (λ i → cong certainly (occ-⟨⟩ i k))
 
 ------------------------------------------------------------------------
@@ -158,11 +159,11 @@ subsets→at-least-counts-with-⊤ : right-sided →ᵍ at-least-counts-with-⊤
 subsets→at-least-counts-with-⊤ = record
   { map          = mapₗ
   ; map-monotone = λ {P} {Q} → mapₗ-monotone {P} {Q}
-  ; map-u        = mapₗ-of-nat 0
+  ; map-u        = mapₗ-of-dur 0
   ; map-·        = λ {P} {Q} → mapₗ-· P Q
   ; map-⊤        = refl
   ; map-⊔        = λ {P} {Q} → mapₗ-⊔ P Q
-  ; map-of-nat   = λ {k} → mapₗ-of-nat k
+  ; map-of-dur   = λ {k} → mapₗ-of-dur k
   }
 
 subsetsToAtLeastCountsGradeSystem : GradeSystem

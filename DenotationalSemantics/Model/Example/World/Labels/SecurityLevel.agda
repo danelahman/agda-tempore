@@ -19,6 +19,7 @@ module DenotationalSemantics.Model.Example.World.Labels.SecurityLevel where
 open import Data.Nat.Base using (ℕ)
 open import Data.Product using (_×_)
 
+open import Syntax.Durations using (Duration)
 open import Syntax.Grades.Example.SecurityLevel
   using (LevelLattice; module LevelLattice; level-grade;
          low-high; two-point-levels; taint-lattice; taint-sets)
@@ -28,13 +29,13 @@ open import Util.Equality
 open import DenotationalSemantics.Model.World
 open import DenotationalSemantics.Model.World.Action using (action; forward)
 
--- The frame, at a lattice of levels.
+-- The frame, at a lattice of levels, for any durations.
 
-module _ (L : LevelLattice) where
+module _ {D : Duration} (L : LevelLattice) where
 
   open LevelLattice L
 
-  labels : World (level-grade L)
+  labels : World (level-grade L {D})
   labels = forward (action (level-grade L)) _⊑_ ⊑-refl ⊑-trans ⊑-irrelevant
 
   open World labels public using () renaming (_⊑[_]_ to _⊑ˡ[_]_)
@@ -46,10 +47,10 @@ module _ (L : LevelLattice) where
 
 -- at `Low < High`
 
-two-point-labels : World two-point-levels
+two-point-labels : {D : Duration} → World (two-point-levels {D})
 two-point-labels = labels low-high
 
 -- at taint sets over `Fin n`
 
-taint-labels : (n : ℕ) → World (taint-sets n)
+taint-labels : {D : Duration} (n : ℕ) → World (taint-sets {D} n)
 taint-labels n = labels (taint-lattice n)

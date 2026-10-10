@@ -193,7 +193,7 @@ import DenotationalSemantics.Model.Example.World.Product.LeftSidedTimeLevel
 import DenotationalSemantics.Model.Example.World.Product.RightSidedTimeLevel
 
 -- time points and energy spent, the energy frame being the time frame
--- along the identity, which ignores `of-nat`
+-- along the identity, which ignores `of-dur`
 
 import DenotationalSemantics.Model.Example.World.Product.RightSidedTimeEnergy
 

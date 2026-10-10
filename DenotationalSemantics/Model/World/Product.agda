@@ -15,6 +15,7 @@ module DenotationalSemantics.Model.World.Product where
 
 open import Data.Product using (_×_; _,_)
 
+open import Syntax.Durations using (Duration)
 open import Syntax.Grades using (Grade)
 open import Syntax.Grades.Product using (_×ᵍ_)
 
@@ -24,7 +25,7 @@ open import DenotationalSemantics.Model.World
 
 infixr 2 _⊗_
 
-_⊗_ : {G₁ G₂ : Grade} → World G₁ → World G₂ → World (G₁ ×ᵍ G₂)
+_⊗_ : {D : Duration} {G₁ G₂ : Grade D} → World G₁ → World G₂ → World (G₁ ×ᵍ G₂)
 F₁ ⊗ F₂ = record
   { W            = F₁.W × F₂.W
   ; _⊑[_]_       = λ (w₁ , w₂) (ρ₁ , ρ₂) (w₁' , w₂') →

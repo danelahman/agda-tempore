@@ -240,8 +240,8 @@ mutual
                  → Γ ⊢C⦂ perform op V M == perform op W N
 
     delay-cong  : ∀ {A τ ε}
-                → {M N : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε}
-                → Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ M == N
+                → {M N : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε}
+                → Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ M == N
                 --------------------------------------
                 → Γ ⊢C⦂ delay τ M == delay τ N
 
@@ -320,18 +320,18 @@ mutual
                                N))
 
     seq-delay : ∀ {A B τ ε ε'}
-              → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
-              → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+              → (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
+              → (N : Γ ⟨ mapᵉ (of-durᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
               -------------------------------------------------------
               → Γ ⊢C⦂ delay τ M ⨟ N
-                  == ε-subst (sym (·ₑ-assoc (of-natᵉ τ) ε ε'))
+                  == ε-subst (sym (·ₑ-assoc (of-durᵉ τ) ε ε'))
                        (delay τ
                          (M ⨟
                           C-rename
                             (cong-∷-ren
                               (eq-ren (cong (Γ ⟨_⟩)
                                                (trans map-·ᵉ
-                                                      (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))
+                                                      (cong (_·ᵣ mapᵉ ε) map-of-durᵉ)))
                                ∘ʳ ⟨⟩-μ-ren))
                             N))
 
@@ -491,15 +491,15 @@ mutual
                                    [ split-∷ split-[] ↦ V ]c))
 
     handle-delay : ∀ {A B τ ε ε'}
-                 → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
+                 → (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
                  → (H : (op : Op) → (ε'' : E) →
                           Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-                 → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+                 → (N : Γ ⟨ mapᵉ (of-durᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
                  ------------------------------------------------------------------------------
                  → Γ ⊢C⦂ handle delay τ M `with H `in N
-                     == ε-subst (sym (·ₑ-assoc (of-natᵉ τ) ε ε'))
+                     == ε-subst (sym (·ₑ-assoc (of-durᵉ τ) ε ε'))
                           (delay τ
                             (handle M
                             `with (λ op' ε'' →
@@ -510,7 +510,7 @@ mutual
                                   (cong-∷-ren
                                     (eq-ren (cong (Γ ⟨_⟩)
                                                      (trans map-·ᵉ
-                                                            (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))
+                                                            (cong (_·ᵣ mapᵉ ε) map-of-durᵉ)))
                                      ∘ʳ ⟨⟩-μ-ren))
                                   N)))
 
@@ -669,7 +669,7 @@ mutual
     subC-delay : ∀ {A A' τ ε ε'}
                → (w : A <:ᵛ A')
                → (rel : ε ≾ₑ ε')
-               → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
+               → (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
                ------------------------------------------------
                → Γ ⊢C⦂ subC (delay τ M) (w ‼ₛ ·ₑ-monoʳ-≾ₑ rel)
                     == delay τ (subC M (w ‼ₛ rel))
@@ -759,22 +759,22 @@ mutual
     -- equations for collapsing successive delays
 
     delay-zero : ∀ {A ε}
-               → (M : Γ ⟨ of-natʳ 0 ⟩ ⊢C⦂ A ‼ ε)
+               → (M : Γ ⟨ of-durʳ 0ᴰ ⟩ ⊢C⦂ A ‼ ε)
                --------------------------
-               → Γ ⊢C⦂ delay 0 M
-                   == ε-subst (sym (trans (cong (_·ₑ ε) of-natᵉ-zero) (·ₑ-identityˡ ε)))
+               → Γ ⊢C⦂ delay 0ᴰ M
+                   == ε-subst (sym (trans (cong (_·ₑ ε) of-durᵉ-zero) (·ₑ-identityˡ ε)))
                         (C-rename
-                          (eq-ren (cong (Γ ⟨_⟩) of-natʳ-zero) ∘ʳ ⟨⟩-η-ren)
+                          (eq-ren (cong (Γ ⟨_⟩) of-durʳ-zero) ∘ʳ ⟨⟩-η-ren)
                           M)
 
     delay-delay : ∀ {A τ₁ τ₂ ε}
-                → (M : Γ ⟨ of-natʳ (τ₁ + τ₂) ⟩ ⊢C⦂ A ‼ ε)
+                → (M : Γ ⟨ of-durʳ (τ₁ +ᴰ τ₂) ⟩ ⊢C⦂ A ‼ ε)
                 ------------------------------------
                 → Γ ⊢C⦂ delay τ₁ (delay τ₂
                            (C-rename
-                             (eq-ren (cong (Γ ⟨_⟩) of-natʳ-plus) ∘ʳ ⟨⟩-μ-ren)
+                             (eq-ren (cong (Γ ⟨_⟩) of-durʳ-plus) ∘ʳ ⟨⟩-μ-ren)
                              M))
-                    == ε-subst (trans (cong (_·ₑ ε) of-natᵉ-plus) (·ₑ-assoc (of-natᵉ τ₁) (of-natᵉ τ₂) ε))
-                         (delay (τ₁ + τ₂) M)
+                    == ε-subst (trans (cong (_·ₑ ε) of-durᵉ-plus) (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε))
+                         (delay (τ₁ +ᴰ τ₂) M)
 
   infix 18 _⊢C⦂_==_

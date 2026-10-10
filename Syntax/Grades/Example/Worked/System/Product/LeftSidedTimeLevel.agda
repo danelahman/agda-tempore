@@ -15,6 +15,8 @@ open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable
   using (True; False; toWitness; toWitnessFalse)
 
+open import Syntax.Durations using (Duration)
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades using (Grade; GradeSystem; _→ᵍ_)
 open import Syntax.Grades.Example.Time.LeftSided using ([_,+∞⟩; left-sided-intervals)
 open import Syntax.Grades.Example.SecurityLevel using (High; Low; two-point-levels)
@@ -32,7 +34,7 @@ open import Util.Equality
 -- grade. A run of 45 steps that read `High` data is the witness that
 -- the systems differ.
 
-module Checked (G : Grade) where
+module Checked {D : Duration} (G : Grade D) where
 
   open Grade G
 
@@ -72,8 +74,8 @@ module _ where
 -- taint check only: the run is refused whatever the time
 
 module _ where
-  open Grade two-point-levels
-  open Checked two-point-levels
+  open Grade (two-point-levels {ℕᴰ})
+  open Checked (two-point-levels {ℕᴰ})
 
   refused : ¬ (map (GradeSystem.∣ taint ∣ᵉ) tainted-run ≾ Low)
   refused = ⋠! High Low

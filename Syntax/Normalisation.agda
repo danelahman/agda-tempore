@@ -137,7 +137,7 @@ data NfC where
                {M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
            → NfV V → NfC M → NfC (perform op (subV V p) M)
 
-  delayⁿ   : ∀ {Γ A ε τ} {M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε} → NfC M → NfC (delay τ M)
+  delayⁿ   : ∀ {Γ A ε τ} {M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε} → NfC M → NfC (delay τ M)
 
   -- the clauses and the continuation meet at the handler's result type; the
   -- clauses' effects are fixed by the rule, the continuation's is not

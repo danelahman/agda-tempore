@@ -153,7 +153,7 @@ step-pv bc SUB-IF            pv = pv
 step-pv bc SUB               pv = pv
 step-pv bc (SEQ-STEP r c)    pv = step-pv bc r pv
 step-pv bc (HANDLE-STEP r c) pv = step-pv bc r pv
-step-pv bc (DELAY {τ = τ})   pv = Eternalᵒ.extᵉ bc ∘ᵐ ⟨ of-natʳ τ ⟩ᶠ pv
+step-pv bc (DELAY {τ = τ})   pv = Eternalᵒ.extᵉ bc ∘ᵐ ⟨ of-durʳ τ ⟩ᶠ pv
 
 -- The step transition commutes with the handler, by induction on the
 -- reduction. The `ηᵀ` rules go by `alg-ηᵀ`; `DELAY` ticks, and the
@@ -167,13 +167,13 @@ alg-stepᵀ : ∀ {ε ε₂ ε₁' ε₃' A A₀ B P} {S S' : 𝕊 []}
           → (alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
                    → alg {εb} ∘ᵐ mapˣᵐ idᵐ (T-≤ q)
                    ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa})
-          → (alg-delay : ∀ {ε'} → (τ : ℕ)
-                       → alg {of-natᵉ τ ·ₑ ε'}
+          → (alg-delay : ∀ {ε'} → (τ : 𝔻)
+                       → alg {of-durᵉ τ ·ₑ ε'}
                            ∘ᵐ mapˣᵐ idᵐ (delayᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂} {ε'} τ)
-                       ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε₂))
-                           ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (alg {ε'})
+                       ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-durᵉ τ) ε' ε₂))
+                           ∘ᵐ delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ (alg {ε'})
                            ∘ᵐ []-monoidal
-                           ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {of-natʳ τ}) idᵐ)
+                           ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {of-durʳ τ}) idᵐ)
           → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
           → (pv : ⟦ hist S ⟧ᶜᵗˣ →ᵐ P)
           → (f : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε)
@@ -201,22 +201,22 @@ alg-stepᵀ {B = B} bc alg alg-≤ alg-delay (HANDLE-STEP r c) pv f =
   alg-stepᵀ {B = B} bc alg alg-≤ alg-delay r pv f
 alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {τ = τ}) pv f =
   -- Both sides reach the same normal form: the tick, with the *whole* bind
-  -- carried under the box. `alg-ηᵀ` does the work there — under `[ of-natʳ τ ]`
+  -- carried under the box. `alg-ηᵀ` does the work there — under `[ of-durʳ τ ]`
   -- the step has become the trivial one, and the parameter has crossed the box
   -- as the lock's extraction.
   lhs ∙ ∘ᵐ-congˡ (≡→≈ᵐ (cong (λ z → ε-substᵀ z) uip)) ∙ ≈ᵐ-sym rhs
   where
-    pv' = Eternalᵒ.extᵉ bc {of-natʳ τ} ∘ᵐ ⟨ of-natʳ τ ⟩ᶠ pv
+    pv' = Eternalᵒ.extᵉ bc {of-durʳ τ} ∘ᵐ ⟨ of-durʳ τ ⟩ᶠ pv
 
     -- the common normal form
     NF : _ →ᵐ _
-    NF = delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (μᵀ ∘ᵐ Tᶠ (alg {ε} ∘ᵐ ⟨ pv' , f ⟩ᵐ) ∘ᵐ ηᵀ) ∘ᵐ η⊣
+    NF = delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ (μᵀ ∘ᵐ Tᶠ (alg {ε} ∘ᵐ ⟨ pv' , f ⟩ᵐ) ∘ᵐ ηᵀ) ∘ᵐ η⊣
 
     -- the tick is pulled out of the bind and everything collected under the box
-    pre : μᵀ ∘ᵐ Tᶠ f ∘ᵐ (delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
-        ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) uₑ ε))
-            ∘ᵐ ((delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ μᵀ)
-                  ∘ᵐ ([ of-natʳ τ ]ᶠ (Tᶠ f ∘ᵐ ηᵀ) ∘ᵐ η⊣))
+    pre : μᵀ ∘ᵐ Tᶠ f ∘ᵐ (delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
+        ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-durᵉ τ) uₑ ε))
+            ∘ᵐ ((delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ μᵀ)
+                  ∘ᵐ ([ of-durʳ τ ]ᶠ (Tᶠ f ∘ᵐ ηᵀ) ∘ᵐ η⊣))
     pre =
         ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
       ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (delayᵀ-nat τ f)))
@@ -229,10 +229,10 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {�
 
     -- the parameter crosses the tick's box as the lock's extraction, and pairs
     -- back up with the bind under one box (`necᵉ-mate`, `η⊣-⟨⟩`)
-    cross : []-monoidal ∘ᵐ ⟨ Eternalᵒ.necᵉ bc {of-natʳ τ} ∘ᵐ pv
-                           , [ of-natʳ τ ]ᶠ μᵀ
-                               ∘ᵐ ([ of-natʳ τ ]ᶠ (Tᶠ f ∘ᵐ ηᵀ) ∘ᵐ η⊣) ⟩ᵐ
-          ≈ᵐ [ of-natʳ τ ]ᶠ ⟨ pv' , μᵀ ∘ᵐ Tᶠ f ∘ᵐ ηᵀ ⟩ᵐ ∘ᵐ η⊣
+    cross : []-monoidal ∘ᵐ ⟨ Eternalᵒ.necᵉ bc {of-durʳ τ} ∘ᵐ pv
+                           , [ of-durʳ τ ]ᶠ μᵀ
+                               ∘ᵐ ([ of-durʳ τ ]ᶠ (Tᶠ f ∘ᵐ ηᵀ) ∘ᵐ η⊣) ⟩ᵐ
+          ≈ᵐ [ of-durʳ τ ]ᶠ ⟨ pv' , μᵀ ∘ᵐ Tᶠ f ∘ᵐ ηᵀ ⟩ᵐ ∘ᵐ η⊣
     cross =
         ∘ᵐ-congʳ
           (⟨   ∘ᵐ-congˡ (Eternalᵒ.necᵉ-mate bc)
@@ -245,14 +245,14 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {�
       ∙ η⊣-⟨⟩ _ _
 
     -- the source: pull the tick out, carry the parameter across, then `alg-ηᵀ`
-    lhs : alg {of-natᵉ τ ·ₑ uₑ ·ₑ ε}
-            ∘ᵐ ⟨ pv , μᵀ ∘ᵐ Tᶠ f ∘ᵐ (delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣) ⟩ᵐ
+    lhs : alg {of-durᵉ τ ·ₑ uₑ ·ₑ ε}
+            ∘ᵐ ⟨ pv , μᵀ ∘ᵐ Tᶠ f ∘ᵐ (delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣) ⟩ᵐ
         ≈ᵐ ε-substᵀ _ ∘ᵐ NF
     lhs =
         ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , pre ⟩ᵐ-cong)
       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (alg-ε-subst alg alg-≤ (sym (·ₑ-assoc (of-natᵉ τ) uₑ ε)))
+      ∙ ∘ᵐ-congˡ (alg-ε-subst alg alg-≤ (sym (·ₑ-assoc (of-durᵉ τ) uₑ ε)))
       ∙ ∘ᵐ-assoc _ _ _
       -- re-form `mapˣᵐ idᵐ (delayᵀ τ)` and fire the fold's delay law
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ∘ᵐ-assoc _ _ _ ⟩ᵐ-cong))
@@ -284,9 +284,9 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {�
       ∙ ∘ᵐ-congˡ (ε-substᵀ-trans _ _)
 
     -- the target: the same two laws, in the same order
-    rhs : ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ ·ₑ uₑ) ε ε₂))
+    rhs : ε-substᵀ (sym (·ₑ-assoc (of-durᵉ τ ·ₑ uₑ) ε ε₂))
             ∘ᵐ μᵀ ∘ᵐ Tᶠ (alg {ε} ∘ᵐ ⟨ pv' , f ⟩ᵐ)
-            ∘ᵐ (delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
+            ∘ᵐ (delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
         ≈ᵐ ε-substᵀ _ ∘ᵐ NF
     rhs =
         ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
@@ -399,7 +399,7 @@ step-pv-state (BOX {V = V}) pS (pV , _) =
 step-pv-state {S = S} (DELAY {τ = τ}) pS pM =
     ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (barrier-lock {⟦ toCtx S ⟧ᶜᵗˣ} {of-natʳ τ})
+  ∙ ∘ᵐ-congˡ (barrier-lock {⟦ toCtx S ⟧ᶜᵗˣ} {of-durʳ τ})
   ∙ ≈ᵐ-sym (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (delay-suc _))
 
 -- `HANDLE-STEP`: the same assembly as `SEQ-STEP`, with the handler's fold in
@@ -544,13 +544,13 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} H N {M'} r
           → alg {εb} ∘ᵐ mapˣᵐ idᵐ (T-≤ q) ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa}
     alg-≤ q = T-alg-of-handlerᵀ-≤ (bcᴱ (toCtx S)) (⟦_⟧ʰᵗ {toCtx S} H pH uH) q
 
-    alg-delay : ∀ {ε'} → (τ : ℕ)
-              → alg {of-natᵉ τ ·ₑ ε'}
+    alg-delay : ∀ {ε'} → (τ : 𝔻)
+              → alg {of-durᵉ τ ·ₑ ε'}
                   ∘ᵐ mapˣᵐ idᵐ (delayᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂} {ε'} τ)
-              ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε₂))
-                  ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (alg {ε'})
+              ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-durᵉ τ) ε' ε₂))
+                  ∘ᵐ delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ (alg {ε'})
                   ∘ᵐ []-monoidal
-                  ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ (bcᴱ (toCtx S)) {of-natʳ τ}) idᵐ
+                  ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ (bcᴱ (toCtx S)) {of-durʳ τ}) idᵐ
     alg-delay τ =
       T-alg-of-handlerᵀ-delayᵀ τ (bcᴱ (toCtx S)) (⟦_⟧ʰᵗ {toCtx S} H pH uH)
 

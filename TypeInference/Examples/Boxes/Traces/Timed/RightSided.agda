@@ -13,6 +13,7 @@ open import Data.Maybe.Base using (just)
 
 open import Relation.Nullary using (¬_)
 
+open import Syntax.Durations.Nat using (ℕᴰ-stepped)
 open import Syntax.Grades
 open import Syntax.LanguageSpec
 
@@ -32,7 +33,7 @@ open import TypeInference.OpenSyntax.Grades   spec using (rconst; ∣_∣̂ᵉ; 
 open import TypeInference.OpenSyntax.Contexts spec using ([])
 open import TypeInference.Principality spec using (Typable; untypable)
 open import TypeInference.SolverImpl spec enum using (infer-untypable)
-open import TypeInference.Examples.Boxes spec enum
+open import TypeInference.Examples.Boxes spec enum ℕᴰ-stepped
 open import TypeInference.Examples.Variables
 
 ------------------------------------------------------------------

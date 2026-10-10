@@ -169,10 +169,10 @@ mutual
 
     delay   : {A : VType}
             → {ε : E}
-            → (τ : ℕ)
-            → Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε
+            → (τ : 𝔻)
+            → Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε
             ------------------------------
-            → Γ ⊢C⦂ A ‼ (of-natᵉ τ ·ₑ ε)
+            → Γ ⊢C⦂ A ‼ (of-durᵉ τ ·ₑ ε)
 
     -- effect handling
 

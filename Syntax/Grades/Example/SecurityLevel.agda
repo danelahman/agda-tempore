@@ -3,8 +3,9 @@
 --                                                                    --
 -- A decidable bounded join-semilattice of levels is a grade: `_·_`   --
 -- and `_⊔_` are both the join, the unit is the least level and `⊤`   --
--- the greatest. `of-nat` is constantly the least level. The unit is  --
--- least and `_·_` commutes, and both are declared.                   --
+-- the greatest. `of-dur` is constantly the least level, for any      --
+-- durations. The unit is least and `_·_` commutes, and both are      --
+-- declared.                                                          --
 --                                                                    --
 -- The level is a floating label, as in LIO. The effect grade of a    --
 -- computation is the highest level it has touched (for taint sets,   --
@@ -35,6 +36,7 @@ open import Relation.Binary.Definitions
   using (Reflexive; Transitive; Irrelevant; Decidable)
 open import Relation.Nullary using (¬_; yes; no)
 
+open import Syntax.Durations using (Duration)
 open import Syntax.Grades using (Grade)
 
 open import Util.Equality
@@ -110,7 +112,7 @@ module _ (L : LevelLattice) where
       ∨-lub (∨-mono (∨-ubˡ b a) (∨-ubˡ c a))
             (⊑-trans (∨-ubʳ b a) (∨-ubˡ (b ∨ a) (c ∨ a)))
 
-  level-grade : Grade
+  level-grade : {D : Duration} → Grade D
   level-grade = record
     { Carrier         = Carrier
     ; _·_             = _∨_
@@ -118,7 +120,7 @@ module _ (L : LevelLattice) where
     ; _≾_             = _⊑_
     ; ⊤               = top
     ; _⊔_             = _∨_
-    ; of-nat          = λ _ → bot
+    ; of-dur          = λ _ → bot
     ; ·-identityˡ     = ∨-identityˡ
     ; ·-identityʳ     = ∨-identityʳ
     ; ·-assoc         = ∨-assoc
@@ -137,8 +139,8 @@ module _ (L : LevelLattice) where
     ; ·-distribʳ-⊔-≾  = ∨-distribʳ
     ; ≾-zero-productˡ = λ {a} {b} p → ⊑-trans (∨-ubˡ a b) p
     ; ≾-zero-productʳ = λ {a} {b} p → ⊑-trans (∨-ubʳ a b) p
-    ; of-nat-zero     = refl
-    ; of-nat-plus     = sym (∨-identityˡ bot)
+    ; of-dur-zero     = refl
+    ; of-dur-plus     = sym (∨-identityˡ bot)
     ; u-least?        = just bot-⊑
     ; ·-comm?         = just ∨-comm
     }
@@ -183,7 +185,7 @@ low-high = record
   ; ∨-lub        = λ { Low⊑ q → q ; High⊑ _ → High⊑ }
   }
 
-two-point-levels : Grade
+two-point-levels : {D : Duration} → Grade D
 two-point-levels = level-grade low-high
 
 ------------------------------------------------------------------------
@@ -283,7 +285,7 @@ TaintSet n = Vec LowHigh n
 taint-lattice : ℕ → LevelLattice
 taint-lattice = Power.power low-high
 
-taint-sets : ℕ → Grade
+taint-sets : {D : Duration} → ℕ → Grade D
 taint-sets n = level-grade (taint-lattice n)
 
 -- the empty set and the singletons

@@ -197,10 +197,10 @@ mutual
 
     delay   : {A : OVType Θ}
             → {ε : EExp Θ}
-            → (τ : ℕ)
-            → Q ∣ Γ ⟨ rconst (of-natʳ τ) ⟩ ⊢C⦂ A ‼ ε
+            → (τ : 𝔻)
+            → Q ∣ Γ ⟨ rconst (of-durʳ τ) ⟩ ⊢C⦂ A ‼ ε
             ----------------------------------------
-            → Q ∣ Γ ⊢C⦂ A ‼ (econst (of-natᵉ τ) ·̂ₑ ε)
+            → Q ∣ Γ ⊢C⦂ A ‼ (econst (of-durᵉ τ) ·̂ₑ ε)
 
     -- effect handling
 

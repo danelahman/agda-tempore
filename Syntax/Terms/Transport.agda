@@ -92,8 +92,8 @@ cast-if refl = refl
 -- transported there is `cong` of the extension.
 
 cast-delay : ∀ {Γ Γ' A ε τ} → (e : Γ ≡ Γ')
-           → {M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε}
-           → castᶜ e (delay τ M) ≡ delay τ (castᶜ (cong (_⟨ of-natʳ τ ⟩) e) M)
+           → {M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε}
+           → castᶜ e (delay τ M) ≡ delay τ (castᶜ (cong (_⟨ of-durʳ τ ⟩) e) M)
 cast-delay refl = refl
 
 cast-perform : ∀ {Γ Γ' A ε} → (e : Γ ≡ Γ') → {op : Op}

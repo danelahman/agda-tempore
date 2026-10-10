@@ -57,14 +57,14 @@ in-time = ≾! (node read · node write) token
 
 -- `logged` and eight ticks of idling: twelve steps, expired
 
-expired : ¬ (node read · node write · of-nat 8 ≾ token)
-expired = ⋠! (node read · node write · of-nat 8) token
+expired : ¬ (node read · node write · of-dur 8 ≾ token)
+expired = ⋠! (node read · node write · of-dur 8) token
 
 -- `uplink`: nine steps, in time, but it transmits, and the token is
 -- revoked
 
-revoked : ¬ (node read · of-nat 2 · node send ≾ token)
-revoked = ⋠! (node read · of-nat 2 · node send) token
+revoked : ¬ (node read · of-dur 2 · node send ≾ token)
+revoked = ⋠! (node read · of-dur 2 · node send) token
 
 -- the unit, no time and nothing touched, is below everything
 
@@ -73,7 +73,7 @@ unit-below = ≾! u ([0, ↑ 0 ] , High)
 
 -- sequencing adds the time and joins the levels
 
-seq : of-nat 2 · node send ≡ ([0, ↑ 8 ] , High)
+seq : of-dur 2 · node send ≡ ([0, ↑ 8 ] , High)
 seq = refl
 
 -- the greatest grade: no deadline, anything touched

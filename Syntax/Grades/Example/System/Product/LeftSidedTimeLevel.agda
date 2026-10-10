@@ -28,8 +28,10 @@
 
 module Syntax.Grades.Example.System.Product.LeftSidedTimeLevel where
 
+open import Syntax.Durations using (idᴰ)
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades using (GradeSystem)
-open import Syntax.Grades.Product using (π₁ᵍ; π₂ᵍ; _→ˢ_; _×ˢ_; π₁ˢ)
+open import Syntax.Grades.Product using (π₁ᵍ; π₂ᵍ; _→ˢ_; _×ˢ_⟨_⟩; π₁ˢ)
 open import Syntax.Grades.Example.System.Identity
   using (idᵍ; identityGradeSystem)
 open import Syntax.Grades.Example.Time.LeftSided using (left-sided-intervals)
@@ -51,18 +53,20 @@ embargo-and-taint = identityGradeSystem left-sided-time×low-high
 
 embargo : GradeSystem
 embargo = record
-  { RGrade = left-sided-intervals
+  { Dur    = ℕᴰ
+  ; RGrade = left-sided-intervals
   ; EGrade = left-sided-time×low-high
-  ; ∣_∣ᵉ   = π₁ᵍ {left-sided-intervals} {two-point-levels}
+  ; ∣_∣ᵉ   = π₁ᵍ {G₁ = left-sided-intervals} {two-point-levels}
   }
 
 -- taint check only
 
 taint : GradeSystem
 taint = record
-  { RGrade = two-point-levels
+  { Dur    = ℕᴰ
+  ; RGrade = two-point-levels
   ; EGrade = left-sided-time×low-high
-  ; ∣_∣ᵉ   = π₂ᵍ {left-sided-intervals} {two-point-levels}
+  ; ∣_∣ᵉ   = π₂ᵍ {G₁ = left-sided-intervals} {two-point-levels}
   }
 
 ------------------------------------------------------------------------
@@ -70,28 +74,32 @@ taint = record
 
 embargo-and-taint→embargo : embargo-and-taint →ˢ embargo
 embargo-and-taint→embargo = record
-  { mapᴱ   = idᵍ left-sided-time×low-high
-  ; mapᴿ   = π₁ᵍ {left-sided-intervals} {two-point-levels}
+  { mapᴰ   = idᴰ
+  ; mapᴱ   = idᵍ left-sided-time×low-high
+  ; mapᴿ   = π₁ᵍ {G₁ = left-sided-intervals} {two-point-levels}
   ; square = λ _ → refl
   }
 
 embargo-and-taint→taint : embargo-and-taint →ˢ taint
 embargo-and-taint→taint = record
-  { mapᴱ   = idᵍ left-sided-time×low-high
-  ; mapᴿ   = π₂ᵍ {left-sided-intervals} {two-point-levels}
+  { mapᴰ   = idᴰ
+  ; mapᴱ   = idᵍ left-sided-time×low-high
+  ; mapᴿ   = π₂ᵍ {G₁ = left-sided-intervals} {two-point-levels}
   ; square = λ _ → refl
   }
 
 embargo→time : embargo →ˢ identityGradeSystem left-sided-intervals
 embargo→time = record
-  { mapᴱ   = π₁ᵍ {left-sided-intervals} {two-point-levels}
+  { mapᴰ   = idᴰ
+  ; mapᴱ   = π₁ᵍ {G₁ = left-sided-intervals} {two-point-levels}
   ; mapᴿ   = idᵍ left-sided-intervals
   ; square = λ _ → refl
   }
 
 taint→level : taint →ˢ identityGradeSystem two-point-levels
 taint→level = record
-  { mapᴱ   = π₂ᵍ {left-sided-intervals} {two-point-levels}
+  { mapᴰ   = idᴰ
+  ; mapᴱ   = π₂ᵍ {G₁ = left-sided-intervals} {two-point-levels}
   ; mapᴿ   = idᵍ two-point-levels
   ; square = λ _ → refl
   }
@@ -102,16 +110,17 @@ taint→level = record
 
 identities : GradeSystem
 identities = identityGradeSystem left-sided-intervals
-          ×ˢ identityGradeSystem two-point-levels
+          ×ˢ identityGradeSystem two-point-levels ⟨ refl ⟩
 
 embargo-and-taint→identities : embargo-and-taint →ˢ identities
 embargo-and-taint→identities = record
-  { mapᴱ   = idᵍ left-sided-time×low-high
+  { mapᴰ   = idᴰ
+  ; mapᴱ   = idᵍ left-sided-time×low-high
   ; mapᴿ   = idᵍ left-sided-time×low-high
   ; square = λ _ → refl
   }
 
 identities→time : identities →ˢ identityGradeSystem left-sided-intervals
-identities→time = π₁ˢ {identityGradeSystem left-sided-intervals}
-                      {identityGradeSystem two-point-levels}
+identities→time = π₁ˢ (identityGradeSystem left-sided-intervals)
+                      (identityGradeSystem two-point-levels) refl
 

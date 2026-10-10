@@ -23,6 +23,7 @@ open import Data.Product using (proj₁)
 open import Relation.Binary.Definitions using (Minimum)
 open import Relation.Nullary using (¬_)
 
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades using (Grade)
 
 open import Syntax.Grades.Example.Time.LeftSided
@@ -33,7 +34,7 @@ open import Syntax.Grades.Example.Counts.Power left-sided-intervals public
 
 -- the grade over `n` counters
 
-at-least-counts : ℕ → Grade
+at-least-counts : ℕ → Grade ℕᴰ
 at-least-counts = power
 
 -- one coordinate
@@ -59,7 +60,7 @@ uᵛ-not-least {n} least =
 import Syntax.Grades.Example.Counts.Power as Power
 module WithTop = Power left-sided-intervals-with-⊤
 
-at-least-counts-with-⊤ : ℕ → Grade
+at-least-counts-with-⊤ : ℕ → Grade ℕᴰ
 at-least-counts-with-⊤ = WithTop.power
 
 -- one coordinate

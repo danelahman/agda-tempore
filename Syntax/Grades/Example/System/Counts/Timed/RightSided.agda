@@ -50,7 +50,7 @@ open import Syntax.Grades.Traces.Allowance.Core Op costʰⁱ
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
-  using (right-sided; within_; _≾_; singleton; of-nat; traces; _≽?_;
+  using (right-sided; within_; _≾_; singleton; of-dur; traces; _≽?_;
          Trace; ⌈_⌉; ⟨_⟩; ∣1+∣⁺)
 
 open import Syntax.Grades.Example.Time.RightSided using (_≾ₒ_; uₒ-least)
@@ -65,10 +65,10 @@ op≼delay o =
   bank-delay (use-op (≤-trans (n≤1+n (costʰⁱ o)) (≤-reflexive (sym (∣1+∣⁺ (costʰⁱ o))))) nil)
 
 op≾delay : (o : Op)
-         → within singleton ⌈ o ⌉ ≾ Grade.of-nat right-sided (suc (costʰⁱ o))
+         → within singleton ⌈ o ⌉ ≾ Grade.of-dur right-sided (suc (costʰⁱ o))
 op≾delay o p m with toWitness m
 ... | here refl =
-  fromWitness {a? = any? (_≽?_ ⌈ o ⌉) (traces (of-nat (suc (costʰⁱ o))))}
+  fromWitness {a? = any? (_≽?_ ⌈ o ⌉) (traces (of-dur (suc (costʰⁱ o))))}
               (here (op≼delay o))
 
 ------------------------------------------------------------------------
@@ -82,7 +82,7 @@ module _ (F : right-sided →ᵍ at-most-counts n) where
   erases o =
     ≾ᵛ-antisym
       (≾ᵛ-trans (map-monotone (op≾delay o))
-                (≾ᵛ-reflexive (map-of-nat {suc (costʰⁱ o)})))
+                (≾ᵛ-reflexive (map-of-dur {suc (costʰⁱ o)})))
       (uᵛ-least uₒ-least _)
 
   -- so the quota it gives `⌈ o ⌉` does not cover the run `⌈ o ⌉`

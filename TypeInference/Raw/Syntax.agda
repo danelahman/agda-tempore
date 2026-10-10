@@ -161,7 +161,7 @@ mutual
 
     -- explicit delaying of a computation
 
-    delay   : ℕ
+    delay   : 𝔻
             → RawC Θ n
             ---------
             → RawC Θ n

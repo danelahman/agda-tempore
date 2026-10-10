@@ -119,7 +119,7 @@ two-readings-short (short , _) = ≰! short
 -- and no amount of idling makes up the third
 
 idling-is-no-reading :
-  ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime read ·ᵣ of-natʳ 100 ≾ᵣ average)
+  ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime read ·ᵣ of-durʳ 100 ≾ᵣ average)
 idling-is-no-reading (short , _) = ≰! short
 
 -- nor does a transmission

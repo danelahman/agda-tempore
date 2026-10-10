@@ -21,6 +21,7 @@ open import Util.Equality
 
 open import TypeInference.Scopes using (∅ˢ)
 
+open import Syntax.Durations.Nat using (ℕᴰ-stepped)
 open import Syntax.Grades
 open import Syntax.LanguageSpec
 open import Syntax.Operations
@@ -42,7 +43,7 @@ open import TypeInference.OpenSyntax.Grades   spec using (RExp; rconst)
 open import TypeInference.OpenSyntax.Contexts spec using ([])
 open import TypeInference.Principality spec using (Typable; untypable)
 open import TypeInference.SolverImpl spec enum using (infer-untypable)
-open import TypeInference.Examples.Product spec enum
+open import TypeInference.Examples.Product spec enum ℕᴰ-stepped
 
 -- the token
 

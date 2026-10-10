@@ -10,9 +10,10 @@
 -- Every law holds pointwise, with no condition on the frame.         --
 ------------------------------------------------------------------------
 
+open import Syntax.Durations using (Duration)
 open import Syntax.Grades using (Grade)
 
-module DenotationalSemantics.Model.Example.World.Tallies.Counts.Power (G : Grade) where
+module DenotationalSemantics.Model.Example.World.Tallies.Counts.Power {D : Duration} (G : Grade D) where
 
 open import Data.Nat.Base using (ℕ)
 open import Data.Product using (_×_; _,_)

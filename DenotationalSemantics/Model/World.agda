@@ -31,11 +31,12 @@
 -- effect monad covariantly graded (`Σ`-shaped).                        --
 ------------------------------------------------------------------------
 
+open import Syntax.Durations using (Duration)
 open import Syntax.Grades
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.World (RG : Grade) where
+module DenotationalSemantics.Model.World {D : Duration} (RG : Grade D) where
 
 open Grade RG using () renaming
   (Carrier to R;

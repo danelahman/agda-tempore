@@ -3,7 +3,7 @@
 --                                                                    --
 -- A non-empty finite set of traces denotes the regular language of   --
 -- the encodings of its runs. The map preserves the unit, products,   --
--- unions and `of-nat`, and is an order embedding: the finite sets of --
+-- unions and `of-dur`, and is an order embedding: the finite sets of --
 -- `Traces.Subsets.RightSided` embed in the regular grade.            --
 --                                                                    --
 -- The embedding is not a grade morphism: `any-run` is greatest and   --
@@ -101,8 +101,8 @@ lang-reflect {P} {Q} le = SB.⊑-∈ λ s s∈ →
 lang-u : lang S.u ≡ R.u
 lang-u = cong ⟪_⟫ {x = enc ε} {y = []} refl
 
-lang-of-nat : ∀ m → lang (S.of-nat m) ≡ R.of-nat m
-lang-of-nat m = cong ⟪_⟫ (enc-⟨⟩ m)
+lang-of-dur : ∀ m → lang (S.of-dur m) ≡ R.of-dur m
+lang-of-dur m = cong ⟪_⟫ (enc-⟨⟩ m)
 
 lang-· : ∀ P Q → lang (P S.· Q) ≡ lang P ·ᴿ lang Q
 lang-· P Q = R.same-language (lang (P S.· Q)) (lang P ·ᴿ lang Q) to′ from′
@@ -150,19 +150,19 @@ lang-∪ P Q = R.same-language (lang (P S.∪ Q)) (lang P ⊔ᴿ lang Q) to′ f
 -- No morphism of grades
 
 no-morphism : ¬ (SR.right-sided →ᵍ R.right-sided)
-no-morphism f = R.∈·-elim (R.of-nat 1) R.⊤ (λ v → v ≡ [] → ⊥) [] []∈ absurd refl
+no-morphism f = R.∈·-elim (R.of-dur 1) R.⊤ (λ v → v ≡ [] → ⊥) [] []∈ absurd refl
   where
   open _→ᵍ_ f
 
   -- `{ ⟨1⟩ } · any-run` is `any-run`
-  top : R.⊤ ≡ R.of-nat 1 ·ᴿ R.⊤
+  top : R.⊤ ≡ R.of-dur 1 ·ᴿ R.⊤
   top = trans (sym map-⊤)
-          (trans (map-· {SR.of-natᵖ 1} {SR.any-run})
-                 (cong₂ _·ᴿ_ (map-of-nat {1}) map-⊤))
+          (trans (map-· {SR.of-durᵖ 1} {SR.any-run})
+                 (cong₂ _·ᴿ_ (map-of-dur {1}) map-⊤))
 
-  []∈ : [] ∈ table (R.of-nat 1 ·ᴿ R.⊤)
+  []∈ : [] ∈ table (R.of-dur 1 ·ᴿ R.⊤)
   []∈ = subst (λ c → [] ∈ table c) top (R.∈⊤ [])
 
-  absurd : ∀ x y → x ∈ table (R.of-nat 1) → y ∈ table R.⊤ → x ++ y ≡ [] → ⊥
+  absurd : ∀ x y → x ∈ table (R.of-dur 1) → y ∈ table R.⊤ → x ++ y ≡ [] → ⊥
   absurd x y x∈ _ eq with trans (sym (cong (_++ y) (R.∈tick⁻ 1 x x∈))) eq
   ... | ()

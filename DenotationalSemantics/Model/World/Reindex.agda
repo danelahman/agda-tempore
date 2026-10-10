@@ -8,7 +8,7 @@
 --                                                                     --
 -- carries a frame for the target back to one for the source, with     --
 -- `w ⊑[ ρ ] w'` read as `w ⊑[ g ρ ] w'`. A grade morphism is such a   --
--- map, strictly (`strict`); so is a map that disagrees with `of-nat`, --
+-- map, strictly (`strict`); so is a map that disagrees with `of-dur`, --
 -- `⊤` or the joins, which a frame never sees.                         --
 --                                                                     --
 -- Every law of a frame is universal in the worlds, so any function    --
@@ -17,7 +17,8 @@
 
 module DenotationalSemantics.Model.World.Reindex where
 
-open import Syntax.Grades using (Grade; _→ᵍ_)
+open import Syntax.Durations using (Duration; _→ᴰ_)
+open import Syntax.Grades using (Grade; GradeMorphism)
 
 open import Util.Equality
 
@@ -26,7 +27,7 @@ open import DenotationalSemantics.Model.World
 ------------------------------------------------------------------------
 -- Lax monotone monoid maps of grades
 
-record LaxMap (G H : Grade) : Set where
+record LaxMap {D₁ D₂ : Duration} (G : Grade D₁) (H : Grade D₂) : Set where
   private
     module G = Grade G
     module H = Grade H
@@ -38,7 +39,8 @@ record LaxMap (G H : Grade) : Set where
 
 -- a grade morphism, strictly
 
-strict : {G H : Grade} → G →ᵍ H → LaxMap G H
+strict : {D₁ D₂ : Duration} {h : D₁ →ᴰ D₂} {G : Grade D₁} {H : Grade D₂}
+       → GradeMorphism h G H → LaxMap G H
 strict {H = H} f = record
   { map      = map
   ; monotone = map-monotone
@@ -46,13 +48,13 @@ strict {H = H} f = record
   ; lax-·    = ≾-reflexive (sym map-·)
   }
   where
-    open _→ᵍ_ f
+    open GradeMorphism f
     open Grade H using (≾-reflexive)
 
 ------------------------------------------------------------------------
 -- Reindexing along the grades
 
-reindexᵍ : {G H : Grade} → LaxMap G H → World H → World G
+reindexᵍ : {D₁ D₂ : Duration} {G : Grade D₁} {H : Grade D₂} → LaxMap G H → World H → World G
 reindexᵍ g F = record
   { W            = W
   ; _⊑[_]_       = λ w ρ w' → w ⊑[ map ρ ] w'
@@ -68,7 +70,7 @@ reindexᵍ g F = record
 ------------------------------------------------------------------------
 -- Reindexing along the worlds
 
-reindexʷ : {G : Grade} {V : Set} (F : World G) → (V → World.W F) → World G
+reindexʷ : {D : Duration} {G : Grade D} {V : Set} (F : World G) → (V → World.W F) → World G
 reindexʷ {V = V} F f = record
   { W            = V
   ; _⊑[_]_       = λ v ρ v' → f v ⊑[ ρ ] f v'

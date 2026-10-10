@@ -24,7 +24,6 @@ module DenotationalSemantics.Model.Example.PSh.Monad.Effects
                               (F.PShFut (LanguageSpec.Grades S) Wld))
        where
 
-open import Data.Nat using (ℕ; _+_)
 open import Data.Product using (_,_; proj₁; proj₂)
 
 open import Util.Equality
@@ -41,15 +40,15 @@ open import DenotationalSemantics.Model.Example.PSh.Monad.Core S Wld GTy
 open import DenotationalSemantics.Model.Category
 open Category PShCat using (mapˣᵐ; map⇒ᵐ; fstᵐ; sndᵐ; ⟨_,_⟩ᵐ)
 
--- A delay: its continuation box `[ of-natʳ τ ]` is stored in the
+-- A delay: its continuation box `[ of-durʳ τ ]` is stored in the
 -- delay-node; the node's naturality is the box's own `fun-nat`.
 
-delayᵀ : ∀ {A ε} → (τ : ℕ)
-       → [ of-natʳ τ ]ᵒ (Tᵒ A ε) →ᵖ Tᵒ A (of-natᵉ τ ·ₑ ε)
+delayᵀ : ∀ {A ε} → (τ : 𝔻)
+       → [ of-durʳ τ ]ᵒ (Tᵒ A ε) →ᵖ Tᵒ A (of-durᵉ τ ·ₑ ε)
 delayᵀ τ = pmap
-  (λ x → delay-node τ (λ q → fun x (⊑-coe map-of-natᵉ q))
-           (λ q r → ≈ᵗ-trans ([]-fun-irr x _ _) (fun-nat x (⊑-coe map-of-natᵉ q) r)))
-  (λ e → delay-≈ (λ q → e (⊑-coe map-of-natᵉ q)))
+  (λ x → delay-node τ (λ q → fun x (⊑-coe map-of-durᵉ q))
+           (λ q r → ≈ᵗ-trans ([]-fun-irr x _ _) (fun-nat x (⊑-coe map-of-durᵉ q) r)))
+  (λ e → delay-≈ (λ q → e (⊑-coe map-of-durᵉ q)))
   (λ p x → delay-≈ (λ q → []-fun-irr x _ _))
 
 -- An algebraic operation: its boxed continuation `x` is applied at the
@@ -76,28 +75,28 @@ opᵀ op = pmap
 -- the accessibility witnesses being reconciled by `[]-fun-irr`.
 
 delayᵀ-zero : ∀ {A ε'}
-            → delayᵀ {A} {ε'} 0
-            ≈ᵖ ε-substᵀ (sym (trans (cong (_·ₑ ε') of-natᵉ-zero) (·ₑ-identityˡ ε')))
+            → delayᵀ {A} {ε'} 0ᴰ
+            ≈ᵖ ε-substᵀ (sym (trans (cong (_·ₑ ε') of-durᵉ-zero) (·ₑ-identityˡ ε')))
               ∘ᵖ ε
-              ∘ᵖ []-≤ (≾ᵣ-reflexive (sym of-natʳ-zero))
+              ∘ᵖ []-≤ (≾ᵣ-reflexive (sym of-durʳ-zero))
 delayᵀ-zero x =
   ≈ᵗ-trans (delay-zero {q₀ = ⊑-delay0} delay0ᵉ)
            (ε-substˢ-congᵗ delay0ᵉ ([]-fun-irr x _ _))
 
-delayᵀ-plus : ∀ {A ε'} → (τ₁ τ₂ : ℕ)
-            → delayᵀ {A} {of-natᵉ τ₂ ·ₑ ε'} τ₁
-                ∘ᵖ [ of-natʳ τ₁ ]ᶠ (delayᵀ {A} {ε'} τ₂)
+delayᵀ-plus : ∀ {A ε'} → (τ₁ τ₂ : 𝔻)
+            → delayᵀ {A} {of-durᵉ τ₂ ·ₑ ε'} τ₁
+                ∘ᵖ [ of-durʳ τ₁ ]ᶠ (delayᵀ {A} {ε'} τ₂)
                 ∘ᵖ δ
-                ∘ᵖ []-≤ (≾ᵣ-reflexive (sym of-natʳ-plus))
-            ≈ᵖ ε-substᵀ (trans (cong (_·ₑ ε') of-natᵉ-plus)
-                               (·ₑ-assoc (of-natᵉ τ₁) (of-natᵉ τ₂) ε'))
-              ∘ᵖ delayᵀ {A} {ε'} (τ₁ + τ₂)
+                ∘ᵖ []-≤ (≾ᵣ-reflexive (sym of-durʳ-plus))
+            ≈ᵖ ε-substᵀ (trans (cong (_·ₑ ε') of-durᵉ-plus)
+                               (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε'))
+              ∘ᵖ delayᵀ {A} {ε'} (τ₁ +ᴰ τ₂)
 delayᵀ-plus τ₁ τ₂ x = delay-plus (λ q₁ q₂ → []-fun-irr x _ _) delay+ᵉ
 
 -- Naturality
 
-delayᵀ-nat : ∀ {A B ε} → (τ : ℕ) → (f : A →ᵖ B)
-           → delayᵀ {ε = ε} τ ∘ᵖ [ of-natʳ τ ]ᶠ (Tᶠ f) ≈ᵖ Tᶠ f ∘ᵖ delayᵀ τ
+delayᵀ-nat : ∀ {A B ε} → (τ : 𝔻) → (f : A →ᵖ B)
+           → delayᵀ {ε = ε} τ ∘ᵖ [ of-durʳ τ ]ᶠ (Tᶠ f) ≈ᵖ Tᶠ f ∘ᵖ delayᵀ τ
 delayᵀ-nat τ f x = delay-≈ (λ q → ≈ᵗ-refl _)
 
 -- Sub-effecting the delayed computation is sub-effecting the delay: the `sub`
@@ -106,8 +105,8 @@ delayᵀ-nat τ f x = delay-≈ (λ q → ≈ᵗ-refl _)
 -- (`sub-delay`). This is what makes `T-≤` commute with the multiplication in
 -- the *inner* grade, and hence what lets the `↝*` closure compose.
 
-delayᵀ-≤ : ∀ {A ε ε'} → (τ : ℕ) → (p : ε ≾ₑ ε')
-         → delayᵀ {A} {ε'} τ ∘ᵖ [ of-natʳ τ ]ᶠ (T-≤ p)
+delayᵀ-≤ : ∀ {A ε ε'} → (τ : 𝔻) → (p : ε ≾ₑ ε')
+         → delayᵀ {A} {ε'} τ ∘ᵖ [ of-durʳ τ ]ᶠ (T-≤ p)
          ≈ᵖ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵖ delayᵀ {A} {ε} τ
 delayᵀ-≤ τ p x =
   -- the two delay nodes agree on their continuations, differing only in the
@@ -141,11 +140,11 @@ opᵀ-≤ {A} {ε = ε} op p (v , x) =
 
 -- Algebraicity: the operations commute with the monad multiplication.
 
-delayᵀ-algebraicity : ∀ {A ε' ε''} → (τ : ℕ)
-                    → μᵀ {A} {of-natᵉ τ ·ₑ ε'} {ε''} ∘ᵖ delayᵀ {ε = ε'} τ
-                    ≈ᵖ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε''))
-                      ∘ᵖ delayᵀ τ ∘ᵖ [ of-natʳ τ ]ᶠ (μᵀ {A} {ε'} {ε''})
-delayᵀ-algebraicity τ x = ε-substˢ-congᵗ (sym (·ₑ-assoc (of-natᵉ _) _ _)) (delay-≈ (λ q → ≈ᵗ-refl _))
+delayᵀ-algebraicity : ∀ {A ε' ε''} → (τ : 𝔻)
+                    → μᵀ {A} {of-durᵉ τ ·ₑ ε'} {ε''} ∘ᵖ delayᵀ {ε = ε'} τ
+                    ≈ᵖ ε-substᵀ (sym (·ₑ-assoc (of-durᵉ τ) ε' ε''))
+                      ∘ᵖ delayᵀ τ ∘ᵖ [ of-durʳ τ ]ᶠ (μᵀ {A} {ε'} {ε''})
+delayᵀ-algebraicity τ x = ε-substˢ-congᵗ (sym (·ₑ-assoc (of-durᵉ _) _ _)) (delay-≈ (λ q → ≈ᵗ-refl _))
 
 opᵀ-algebraicity : ∀ {A ε ε'} → (op : Op)
                  → μᵀ {A} {op-grade op ·ₑ ε} {ε'} ∘ᵖ opᵀ {ε = ε} op
@@ -162,16 +161,16 @@ opᵀ-algebraicity {A} {ε} {ε'} op (v , x) =
 -- same `delay-node`; under the delay each side strengths `x` at the reached
 -- world with box witnesses that agree by `[]-fun-irr` (via `strˢ-congᵗ`).
 
-strᵀ-delayᵀ-algebraicity : ∀ {A B ε} → (τ : ℕ)
-  → strᵀ {A} {B} {of-natᵉ τ ·ₑ ε} ∘ᵖ mapˣᵐ idᵖ (delayᵀ {B} {ε} τ)
+strᵀ-delayᵀ-algebraicity : ∀ {A B ε} → (τ : 𝔻)
+  → strᵀ {A} {B} {of-durᵉ τ ·ₑ ε} ∘ᵖ mapˣᵐ idᵖ (delayᵀ {B} {ε} τ)
   ≈ᵖ delayᵀ τ
-    ∘ᵖ [ of-natʳ τ ]ᶠ (strᵀ {A} {B} {ε})
+    ∘ᵖ [ of-durʳ τ ]ᶠ (strᵀ {A} {B} {ε})
     ∘ᵖ []-monoidal
     ∘ᵖ mapˣᵐ (δ ∘ᵖ []-≤ (≾ᵣ-reflexive
-         (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))) idᵖ
+         (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-durᵉ))))) idᵖ
 strᵀ-delayᵀ-algebraicity {A} τ (a , x) =
   delay-≈ (λ q →
-    strˢ-congᵗ A (λ r → []-fun-irr a _ _) (≈ᵗ-refl (fun x (⊑-coe map-of-natᵉ q))))
+    strˢ-congᵗ A (λ r → []-fun-irr a _ _) (≈ᵗ-refl (fun x (⊑-coe map-of-durᵉ q))))
 
 -- The operation is algebraic with respect to the strength. Both sides build
 -- the same `op-node`; under it each side strengths the sub-computation with

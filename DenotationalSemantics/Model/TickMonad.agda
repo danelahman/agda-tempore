@@ -8,7 +8,7 @@
 --   tickᵏ δ : [ mapᵉ δ ]ᵒ (Tᵏ A ε) →ᵐ Tᵏ A (δ ·ₑ ε)                     --
 --                                                                    --
 -- a delay at an arbitrary effect grade: `δ` worth of time passes and     --
--- nothing is observed. A delay is `tickᵏ (of-natᵉ τ)`; an operation that --
+-- nothing is observed. A delay is `tickᵏ (of-durᵉ τ)`; an operation that --
 -- has been implemented is `tickᵏ (op-grade op)`, leaving only the time   --
 -- it took. `Model.Implementation` supplies the monad morphism running    --
 -- the tree monad's operations into these ticks.                         --

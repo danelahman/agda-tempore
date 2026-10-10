@@ -111,7 +111,7 @@ tagged-relaying =
 -- below `[0, 0 ]` is itself, so a reading is usable only where no lock
 -- stands between its binding and its use.
 
-reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ uᵣ)
+reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-durʳ 2 ≾ᵣ uᵣ)
 reading-stale-after-idling = ≰!
 
 reading-stale-after-an-operation : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
@@ -217,7 +217,7 @@ lease-expired = ≰!
 
 -- idling spends the lease just as working does
 
-idling-spends-it : ¬ (uᵣ ·ᵣ of-natʳ 7 ≾ᵣ [0, 6 ])
+idling-spends-it : ¬ (uᵣ ·ᵣ of-durʳ 7 ≾ᵣ [0, 6 ])
 idling-spends-it = ≰!
 
 -- handing a leased resource to a function, which claims it itself
@@ -334,7 +334,7 @@ carrying-a-lease =
 
 -- the reading taken along the way is not available at that same point
 
-reading-is-not : ¬ (uᵣ ·ᵣ opTime read ·ᵣ of-natʳ 2 ≾ᵣ uᵣ)
+reading-is-not : ¬ (uᵣ ·ᵣ opTime read ·ᵣ of-durʳ 2 ≾ᵣ uᵣ)
 reading-is-not = ≰!
 
 -- a lease long enough to cover a transmission as well, spent down to

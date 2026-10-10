@@ -61,9 +61,9 @@ open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst
 open import EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
 open import EquationalTheory.Soundness.Seq S Cat Fut Pst Adj GTy Mon GE using (εᵇ-η⊣-u)
 
--- `delay 0 M` is `M` with its (now unit-graded) lock discarded.
+-- `delay 0ᴰ M` is `M` with its (now unit-graded) lock discarded.
 
-sound-delay-zero : ∀ {Γ A ε} → (M : Γ ⟨ of-natʳ 0 ⟩ ⊢C⦂ A ‼ ε)
+sound-delay-zero : ∀ {Γ A ε} → (M : Γ ⟨ of-durʳ 0ᴰ ⟩ ⊢C⦂ A ‼ ε)
                  → Soundᶜ== (delay-zero M)
 sound-delay-zero {Γ} {A} {ε} M pM pR =
     ∘ᵐ-congˡ delayᵀ-zero
@@ -75,27 +75,27 @@ sound-delay-zero {Γ} {A} {ε} M pM pR =
               ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
               ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat _))
               ∙ ∘ᵐ-assoc _ _ _
-              ∙ ∘ᵐ-congʳ (εᵇ-η⊣-u {⟦ Γ ⟧ᶜᵗˣ} of-natʳ-zero))
+              ∙ ∘ᵐ-congʳ (εᵇ-η⊣-u {⟦ Γ ⟧ᶜᵗˣ} of-durʳ-zero))
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e (C-rename r M)) pR (ε-substᴾ e _ (renᶜ r M pM))
             ∙ sound-ε-subst e (C-rename r M) (renᶜ r M pM)
             ∙ ∘ᵐ-congʳ (C-rename-nat r M pM)
-            ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (eq-ren-grade {Γ} of-natʳ-zero))))
+            ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (eq-ren-grade {Γ} of-durʳ-zero))))
   where
-    e = sym (trans (cong (_·ₑ ε) of-natᵉ-zero) (·ₑ-identityˡ ε))
-    r = eq-ren (cong (Γ ⟨_⟩) of-natʳ-zero) ∘ʳ ⟨⟩-η-ren
+    e = sym (trans (cong (_·ₑ ε) of-durᵉ-zero) (·ₑ-identityˡ ε))
+    r = eq-ren (cong (Γ ⟨_⟩) of-durʳ-zero) ∘ʳ ⟨⟩-η-ren
 
 -- Two consecutive delays are the one delay by the sum.
 --
 -- `M` occurs renamed on the left and under an `ε-subst` on the right, so its
 -- own certificate comes in separately (the axiom's `Midᶜ` payload).
 
-sound-delay-delay : ∀ {Γ A τ₁ τ₂ ε} → (M : Γ ⟨ of-natʳ (τ₁ + τ₂) ⟩ ⊢C⦂ A ‼ ε)
+sound-delay-delay : ∀ {Γ A τ₁ τ₂ ε} → (M : Γ ⟨ of-durʳ (τ₁ +ᴰ τ₂) ⟩ ⊢C⦂ A ‼ ε)
                   → Paramᶜ M → Soundᶜ== (delay-delay {τ₁ = τ₁} {τ₂ = τ₂} M)
 sound-delay-delay {Γ} {A} {τ₁} {τ₂} {ε} M pM pL pR =
     ⟦⟧ᶜᵗ-irr (delay τ₁ (delay τ₂ (C-rename r M))) pL (renᶜ r M pM)
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (
         C-rename-nat r M pM
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (eq-ren-grade {Γ} of-natʳ-plus))))))))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (eq-ren-grade {Γ} of-durʳ-plus))))))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-∘ᵐ _ _) ∙ ∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ delay-box)
   ∙ ≈ᵐ-sym (  ∘ᵐ-assoc _ _ _
@@ -103,19 +103,19 @@ sound-delay-delay {Γ} {A} {τ₁} {τ₂} {ε} M pM pL pR =
             ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
   ∙ ∘ᵐ-congˡ (delayᵀ-plus τ₁ τ₂)
   ∙ ∘ᵐ-assoc _ _ _
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e' (delay (τ₁ + τ₂) M)) pR (ε-substᴾ e' _ pM)
-            ∙ sound-ε-subst e' (delay (τ₁ + τ₂) M) pM)
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e' (delay (τ₁ +ᴰ τ₂) M)) pR (ε-substᴾ e' _ pM)
+            ∙ sound-ε-subst e' (delay (τ₁ +ᴰ τ₂) M) pM)
   where
-    e' = trans (cong (_·ₑ ε) of-natᵉ-plus) (·ₑ-assoc (of-natᵉ τ₁) (of-natᵉ τ₂) ε)
-    r  = eq-ren (cong (Γ ⟨_⟩) of-natʳ-plus) ∘ʳ ⟨⟩-μ-ren
+    e' = trans (cong (_·ₑ ε) of-durᵉ-plus) (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε)
+    r  = eq-ren (cong (Γ ⟨_⟩) of-durʳ-plus) ∘ʳ ⟨⟩-μ-ren
 
-    σ = ≾ᵣ-reflexive (sym (of-natʳ-plus {τ₁} {τ₂}))
+    σ = ≾ᵣ-reflexive (sym (of-durʳ-plus {τ₁} {τ₂}))
 
     m = ⟦ M ⟧ᶜᵗ pM
 
     -- The two nested transposes rebuild the comultiplication, and the
     -- syntactic lock-merge becomes the grade relaxation the model law wants.
-    lock-split : [ of-natʳ τ₁ ]ᶠ ([ of-natʳ τ₂ ]ᶠ (⟨⟩-≤ {⟦ Γ ⟧ᶜᵗˣ} σ ∘ᵐ μ {⟦ Γ ⟧ᶜᵗˣ} {of-natʳ τ₂} {of-natʳ τ₁}) ∘ᵐ η⊣) ∘ᵐ η⊣
+    lock-split : [ of-durʳ τ₁ ]ᶠ ([ of-durʳ τ₂ ]ᶠ (⟨⟩-≤ {⟦ Γ ⟧ᶜᵗˣ} σ ∘ᵐ μ {⟦ Γ ⟧ᶜᵗˣ} {of-durʳ τ₂} {of-durʳ τ₁}) ∘ᵐ η⊣) ∘ᵐ η⊣
                ≈ᵐ δ ∘ᵐ []-≤ σ ∘ᵐ η⊣
     lock-split =
         ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congˡ ([]-∘ᵐ _ _) ∙ ∘ᵐ-assoc _ _ _))
@@ -128,9 +128,9 @@ sound-delay-delay {Γ} {A} {τ₁} {τ₂} {ε} M pM pL pR =
       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-≤ _))
 
     -- The same, with the delayed computation carried along under the boxes.
-    delay-box : [ of-natʳ τ₁ ]ᶠ
-                  ([ of-natʳ τ₂ ]ᶠ (m ∘ᵐ ⟨⟩-≤ {⟦ Γ ⟧ᶜᵗˣ} σ ∘ᵐ μ {⟦ Γ ⟧ᶜᵗˣ} {of-natʳ τ₂} {of-natʳ τ₁}) ∘ᵐ η⊣) ∘ᵐ η⊣
-              ≈ᵐ δ ∘ᵐ []-≤ σ ∘ᵐ [ of-natʳ (τ₁ + τ₂) ]ᶠ m ∘ᵐ η⊣
+    delay-box : [ of-durʳ τ₁ ]ᶠ
+                  ([ of-durʳ τ₂ ]ᶠ (m ∘ᵐ ⟨⟩-≤ {⟦ Γ ⟧ᶜᵗˣ} σ ∘ᵐ μ {⟦ Γ ⟧ᶜᵗˣ} {of-durʳ τ₂} {of-durʳ τ₁}) ∘ᵐ η⊣) ∘ᵐ η⊣
+              ≈ᵐ δ ∘ᵐ []-≤ σ ∘ᵐ [ of-durʳ (τ₁ +ᴰ τ₂) ]ᶠ m ∘ᵐ η⊣
     delay-box =
         ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congˡ ([]-∘ᵐ _ _) ∙ ∘ᵐ-assoc _ _ _))
       ∙ ∘ᵐ-congˡ ([]-∘ᵐ _ _)

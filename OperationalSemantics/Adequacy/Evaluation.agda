@@ -82,29 +82,29 @@ bool-val-canonical (subV V Boolₛ) = bool-val-canonical V
 step-ticks : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
            → ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩
-           → ℕ
-step-ticks APP                 = 0
-step-ticks MATCH               = 0
-step-ticks IF-TRUE             = 0
-step-ticks IF-FALSE            = 0
+           → 𝔻
+step-ticks APP                 = 0ᴰ
+step-ticks MATCH               = 0ᴰ
+step-ticks IF-TRUE             = 0ᴰ
+step-ticks IF-FALSE            = 0ᴰ
 step-ticks (SEQ-STEP r _)      = step-ticks r
-step-ticks SEQ-RET             = 0
-step-ticks SEQ-OP              = 0
+step-ticks SEQ-RET             = 0ᴰ
+step-ticks SEQ-OP              = 0ᴰ
 step-ticks (DELAY {τ = τ})     = τ
-step-ticks HANDLE-RET          = 0
+step-ticks HANDLE-RET          = 0ᴰ
 step-ticks (HANDLE-STEP r _)   = step-ticks r
-step-ticks HANDLE-OP           = 0
-step-ticks BOX                 = 0
-step-ticks UNBOX               = 0
-step-ticks SUB-APP             = 0
-step-ticks SUB-IF              = 0
-step-ticks SUB                 = 0
+step-ticks HANDLE-OP           = 0ᴰ
+step-ticks BOX                 = 0ᴰ
+step-ticks UNBOX               = 0ᴰ
+step-ticks SUB-APP             = 0ᴰ
+step-ticks SUB-IF              = 0ᴰ
+step-ticks SUB                 = 0ᴰ
 
 ticks : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
       → cf ↝* cf'
-      → ℕ
-ticks ε*       = 0
-ticks (r ◅ rs) = step-ticks r + ticks rs
+      → 𝔻
+ticks ε*       = 0ᴰ
+ticks (r ◅ rs) = step-ticks r +ᴰ ticks rs
 
 -- Evaluation to a returned value.
 
@@ -136,10 +136,10 @@ data Halts {A : VType} {ε : E} (cf : Config (A ‼ ε)) : Set where
 
 -- The observable time of an evaluation.
 
-ret-ticks : ∀ {A ε} {cf : Config (A ‼ ε)} → Ret-whnf cf → ℕ
+ret-ticks : ∀ {A ε} {cf : Config (A ‼ ε)} → Ret-whnf cf → 𝔻
 ret-ticks w = ticks (Ret-whnf.run w)
 
-op-ticks : ∀ {A ε} {cf : Config (A ‼ ε)} → Op-whnf cf → ℕ
+op-ticks : ∀ {A ε} {cf : Config (A ‼ ε)} → Op-whnf cf → 𝔻
 op-ticks w = ticks (Op-whnf.run w)
 
 -- `toCtx ∅ ≡ []`, so this is `OperationalSemantics.Soundness.Preservation`'s

@@ -84,11 +84,11 @@ record Implementation : Set₁ where
 
     -- … it keeps a delay as a delay …
 
-    implᵐ-delayᵀ : ∀ {A ε} → (τ : ℕ)
+    implᵐ-delayᵀ : ∀ {A ε} → (τ : 𝔻)
                  → implᵐ ∘ᵐ delayᵀ {A} {ε} τ
-                 ≈ᵐ tickᵏ (of-natᵉ τ)
-                    ∘ᵐ []-≤ (≾ᵣ-reflexive map-of-natᵉ)
-                    ∘ᵐ [ of-natʳ τ ]ᶠ implᵐ
+                 ≈ᵐ tickᵏ (of-durᵉ τ)
+                    ∘ᵐ []-≤ (≾ᵣ-reflexive map-of-durᵉ)
+                    ∘ᵐ [ of-durʳ τ ]ᶠ implᵐ
 
     -- … and it runs an operation away: the continuation is fed the computed
     -- arity value, and only the operation's tick is left.

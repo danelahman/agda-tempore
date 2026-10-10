@@ -20,11 +20,12 @@
 -- unit-graded counit `εᵘ`.                                             --
 ------------------------------------------------------------------------
 
+open import Syntax.Durations using (Duration)
 open import Syntax.Grades
 
 open import DenotationalSemantics.Model.Category
 
-module DenotationalSemantics.Model.Modality.Future (Cat : Category) (G : Grade) where
+module DenotationalSemantics.Model.Modality.Future (Cat : Category) {D : Duration} (G : Grade D) where
 
 open import Util.Equality
 

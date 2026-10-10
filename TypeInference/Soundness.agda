@@ -606,9 +606,9 @@ mutual
       pt = wk-,ᵉ-e   σ ε t
       pι = wk-,ᵉ-ˢ   ι σ ε
 
-      ih = soundCˢ ι↑ (Γ↑ ⟨ rconst (of-natʳ τ) ⟩) M A↑ e s
+      ih = soundCˢ ι↑ (Γ↑ ⟨ rconst (of-durʳ τ) ⟩) M A↑ e s
 
-      c₀ = cong (_⟨ rconst (of-natʳ τ) ⟩) pΓ
+      c₀ = cong (_⟨ rconst (of-durʳ τ) ⟩) pΓ
 
       D₀ = c-subst (cong (_‼ _) pA) (ctx-substᶜ c₀ (proj₁ ih))
 

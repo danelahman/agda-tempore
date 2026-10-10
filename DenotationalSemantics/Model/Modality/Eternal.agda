@@ -15,6 +15,7 @@
 -- needs no seriality assumption.                                       --
 ------------------------------------------------------------------------
 
+open import Syntax.Durations using (Duration)
 open import Syntax.Grades
 
 open import DenotationalSemantics.Model.Category
@@ -24,7 +25,7 @@ open import DenotationalSemantics.Model.Modality.Adjunction
 
 module DenotationalSemantics.Model.Modality.Eternal
          (Cat : Category)
-         (G : Grade)
+         {D : Duration} (G : Grade D)
          (Fut : Future Cat G)
          (Pst : Past Cat G)
          (Adj : Adjunction Cat G Fut Pst)

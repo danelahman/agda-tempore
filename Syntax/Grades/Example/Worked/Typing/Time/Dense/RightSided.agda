@@ -183,13 +183,13 @@ claim-after-storing-twice =
 
 -- a fourth tick of idling overruns it by half a unit
 
-idling-overruns : ¬ (uᵣ ·ᵣ of-natʳ 4 ≾ᵣ half-tick-lease)
+idling-overruns : ¬ (uᵣ ·ᵣ of-durʳ 4 ≾ᵣ half-tick-lease)
 idling-overruns = ≰ᵈ!
 
 -- and so does a second reading after the idling
 
 sampling-twice-overruns :
-  ¬ (uᵣ ·ᵣ of-natʳ 3 ·ᵣ opTime read ·ᵣ opTime read ≾ᵣ half-tick-lease)
+  ¬ (uᵣ ·ᵣ of-durʳ 3 ·ᵣ opTime read ·ᵣ opTime read ≾ᵣ half-tick-lease)
 sampling-twice-overruns = ≰ᵈ!
 
 ------------------------------------------------------------------------

@@ -23,6 +23,7 @@ open import Relation.Nullary.Decidable.Core
 
 open import Data.Maybe.Base using (just)
 
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades
 
 open import Util.Equality
@@ -169,7 +170,7 @@ infixl 7 _⊔ₒ_
 
 -- the grade of (right) one-sided intervals of dense time
 
-dense-right-sided-intervals : Grade
+dense-right-sided-intervals : Grade ℕᴰ
 dense-right-sided-intervals = record
   { Carrier           = 𝕀ᵣ
   ; _·_               = _·ₒ_
@@ -197,9 +198,9 @@ dense-right-sided-intervals = record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ₒ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ₒ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ₒ-irrelevant {i₁} {i₂}
-  ; of-nat            = λ n → [0, ↑ # n ]
-  ; of-nat-zero       = refl
-  ; of-nat-plus       = λ {m} {n} → eq𝕀ᵣ (cong ↑_ (#-+ m n))
+  ; of-dur            = λ n → [0, ↑ # n ]
+  ; of-dur-zero       = refl
+  ; of-dur-plus       = λ {m} {n} → eq𝕀ᵣ (cong ↑_ (#-+ m n))
   }
 
 ------------------------------------------------------------------------
@@ -213,7 +214,7 @@ right-sided→dense = record
   ; map-·        = λ {i} {j} → hom {i} {j}
   ; map-⊤        = refl
   ; map-⊔        = λ {i} {j} → join {i} {j}
-  ; map-of-nat   = refl
+  ; map-of-dur   = refl
   }
   where
     embed : Discrete.𝕀ᵣ → 𝕀ᵣ

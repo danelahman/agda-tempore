@@ -25,6 +25,7 @@ open import Data.Unit using (⊤; tt)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 
 open import Syntax.BaseTypes
+open import Syntax.Durations using (Duration)
 open import Syntax.Grades
 open import Syntax.LanguageSpec
 open import Syntax.Operations
@@ -37,7 +38,7 @@ open import Syntax.Grades.Example.Worked.Operations
 open import Util.Equality
 
 module Syntax.Grades.Example.Worked.Typing.Core
-  (G : Grade) (opTime : Op → Grade.Carrier G) where
+  {D : Duration} (G : Grade D) (opTime : Op → Grade.Carrier G) where
 
 ------------------------------------------------------------------------
 -- The grades

@@ -660,17 +660,17 @@ P ∪ Q = neSet (traces P ++ traces Q) (++-ne (nonempty P) (nonempty Q))
 -- Inclusion of the natural numbers as pure delays
 --
 -- A natural number `n` becomes the singleton set containing the pure
--- delay of duration `n`, which is what a grade's `of-nat` asks for.
+-- delay of duration `n`, which is what a grade's `of-dur` asks for.
 
-of-nat : ℕ → NeTraces
-of-nat n = neTraces [ ⟨ n ⟩ ]
+of-dur : ℕ → NeTraces
+of-dur n = neTraces [ ⟨ n ⟩ ]
 
-of-nat-zero : of-nat 0 ≡ u
-of-nat-zero = refl
+of-dur-zero : of-dur 0 ≡ u
+of-dur-zero = refl
 
-of-nat-plus : {m n : ℕ} → of-nat (m + n) ≡ (of-nat m · of-nat n)
-of-nat-plus {m} {n} =
-  ne-ext {of-nat (m + n)} {of-nat m · of-nat n} (cong [_] (⟨⟩-hom m n))
+of-dur-plus : {m n : ℕ} → of-dur (m + n) ≡ (of-dur m · of-dur n)
+of-dur-plus {m} {n} =
+  ne-ext {of-dur (m + n)} {of-dur m · of-dur n} (cong [_] (⟨⟩-hom m n))
 
 ------------------------------------------------------------------------
 -- What decidable equality of operation symbols buys

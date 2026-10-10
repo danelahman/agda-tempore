@@ -286,12 +286,12 @@ sound-handle-unbox {Γ} {A} {A₀} {B} {C} {ρ₀} {ρ'} {ε} {ε'} x rel w M H 
 -- handled computation.
 
 sound-handle-delay : ∀ {Γ A B τ ε ε'}
-  → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
+  → (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
   → (H : (op : Op) → (ε'' : E)
        → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-  → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+  → (N : Γ ⟨ mapᵉ (of-durᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
   → Soundᶜ== (handle-delay M H N)
 sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
     ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , str-delay τ (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) ⟩ᵐ-cong)
@@ -330,7 +330,7 @@ sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
                                         T-congᶠ (C-rename-nat r N pN)
                                       ∙ T-congᶠ (∘ᵐ-congʳ (mapˣᵐ-cong
                                           (∘ᵐ-congˡ (eq-ren-grade (trans map-·ᵉ
-                                            (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))
+                                            (cong (_·ᵣ mapᵉ ε) map-of-durᵉ))))
                                           ≈ᵐ-refl)))) ⟩ᵐ-cong)
                       ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-refl , ≈ᵐ-sym (∘ᵐ-identityˡ _) ⟩ᵐ-cong
                                   ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
@@ -340,12 +340,12 @@ sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
                 pR (ε-substᴾ e _ pRc)
             ∙ sound-ε-subst e (delay τ (handle M `with R.Hᵣ `in (C-rename r N))) pRc)
   where
-    e   = sym (·ₑ-assoc (of-natᵉ τ) ε ε')
+    e   = sym (·ₑ-assoc (of-durᵉ τ) ε ε')
     r   = cong-∷-ren (eq-ren (cong (Γ ⟨_⟩)
-                               (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))
+                               (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-durᵉ)))
                       ∘ʳ ⟨⟩-μ-ren)
 
     module R = Reindex (⟨⟩-≤-ren (≾-⊤ᵣ _) ∘ʳ ⟨⟩-μ-ren)
-                       (⟨⟩-≤ (≾-⊤ᵣ (of-natʳ τ))) (barrier-μ (≾-⊤ᵣ _)) H pH uH
+                       (⟨⟩-≤ (≾-⊤ᵣ (of-durʳ τ))) (barrier-μ (≾-⊤ᵣ _)) H pH uH
 
     pRc = pM , renᶜ r N pN , R.pHᵣ , R.uHᵣ

@@ -84,17 +84,17 @@ open import OperationalSemantics.Soundness.Preservation.Handle S Cat Fut Pst Adj
 
 -- The grade a delayed computation's `ηᵀ` leaves behind.
 
-delay-z : ∀ (τ : ℕ) (ε : E) → of-natᵉ τ ·ₑ ε ≾ₑ (of-natᵉ τ ·ₑ uₑ) ·ₑ ε
+delay-z : ∀ (τ : 𝔻) (ε : E) → of-durᵉ τ ·ₑ ε ≾ₑ (of-durᵉ τ ·ₑ uₑ) ·ₑ ε
 delay-z τ ε =
   ≾ₑ-trans (·ₑ-monoʳ-≾ₑ (≾ₑ-reflexive (sym (·ₑ-identityˡ ε))))
-           (≾ₑ-reflexive (sym (·ₑ-assoc (of-natᵉ τ) uₑ ε)))
+           (≾ₑ-reflexive (sym (·ₑ-assoc (of-durᵉ τ) uₑ ε)))
 
 -- Binding a computation after a delay is delaying the bound computation. (The
 -- `ηᵀ` the transition carries is absorbed, leaving only a regrading.)
 
-delay-nf : ∀ {X Y B ε} → (τ : ℕ) → (env : X →ᵐ [ of-natʳ τ ]ᵒ Y) → (f : Y →ᵐ Tᵒ B ε)
-         → μᵀ ∘ᵐ Tᶠ f ∘ᵐ (delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ env)
-         ≈ᵐ T-≤ (delay-z τ ε) ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ f ∘ᵐ env
+delay-nf : ∀ {X Y B ε} → (τ : 𝔻) → (env : X →ᵐ [ of-durʳ τ ]ᵒ Y) → (f : Y →ᵐ Tᵒ B ε)
+         → μᵀ ∘ᵐ Tᶠ f ∘ᵐ (delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ env)
+         ≈ᵐ T-≤ (delay-z τ ε) ∘ᵐ delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ f ∘ᵐ env
 delay-nf {ε = ε} τ env f =
   -- push the bind under the delay …
     ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -181,7 +181,7 @@ T-≤-stepᵀ {εa = εa} {εb = εb} B (DELAY {τ = τ}) g q =
        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
        ∙ ∘ᵐ-congˡ (T-≤-trans (delay-z τ εa) (·ₑ-monoʳ-≾ₑ q) z))
   where
-    z : of-natᵉ τ ·ₑ εa ≾ₑ (of-natᵉ τ ·ₑ uₑ) ·ₑ εb
+    z : of-durᵉ τ ·ₑ εa ≾ₑ (of-durᵉ τ ·ₑ uₑ) ·ₑ εb
     z = ≾ₑ-trans (·ₑ-monoʳ-≾ₑ q) (delay-z τ εb)
 
 -- A reduction step relates denotationally equal configurations: the source's

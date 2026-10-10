@@ -139,13 +139,13 @@ Sim {A₁ = A₁} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 -- `⟨⟩-≐ˢ` and the extensions by `⟨⟩-≤≐`
 
 ↝-≐ˢ-delay : ∀ {A ε τ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-          → {M₀ : toCtx St ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε}
-          → (P' : toCtx St' ⊢C⦂ A ‼ (of-natᵉ τ ·ₑ ε))
+          → {M₀ : toCtx St ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε}
+          → (P' : toCtx St' ⊢C⦂ A ‼ (of-durᵉ τ ·ₑ ε))
           → delay τ M₀ ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
           → Sim es P' (DELAY {M = M₀})
 ↝-≐ˢ-delay {τ = τ} es P' eM with cast-delay⁻ (sym (toCtx-≐ˢ es)) P' eM
 ... | M₀' , refl , eM₀ =
-    _ , _ , ⟨⟩-≐ˢ (of-natʳ τ) es , DELAY , ⟨⟩-≤≐ (of-natʳ τ) id-≤≐
+    _ , _ , ⟨⟩-≐ˢ (of-durʳ τ) es , DELAY , ⟨⟩-≤≐ (of-durʳ τ) id-≤≐
   , subst (λ z → _ ≡ z) (castᶜ-irr _ _ M₀') eM₀
 
 -- `box` allocates: the two states are related by `∷-≐ˢ` at the stored values

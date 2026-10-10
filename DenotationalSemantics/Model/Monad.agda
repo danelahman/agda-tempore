@@ -32,7 +32,6 @@ module DenotationalSemantics.Model.Monad
          (GTy : GroundTypes S Cat Fut)
        where
 
-open import Data.Nat using (ℕ; _+_)
 open import Data.Product using (_,_; proj₁; proj₂; Σ; Σ-syntax)
 
 open import Util.Equality
@@ -138,8 +137,8 @@ record Monad : Set₁ where
 
     -- Operations and delays
 
-    delayᵀ : ∀ {A ε} → (τ : ℕ)
-           → [ of-natʳ τ ]ᵒ (Tᵒ A ε) →ᵐ Tᵒ A (of-natᵉ τ ·ₑ ε)
+    delayᵀ : ∀ {A ε} → (τ : 𝔻)
+           → [ of-durʳ τ ]ᵒ (Tᵒ A ε) →ᵐ Tᵒ A (of-durᵉ τ ·ₑ ε)
 
     opᵀ : ∀ {A ε} → (op : Op)
         → ⟦ param op ⟧ᵍ ×ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ A ε)
@@ -147,15 +146,15 @@ record Monad : Set₁ where
 
     -- Operations and delays are natural
 
-    delayᵀ-nat : ∀ {A B ε} → (τ : ℕ) → (f : A →ᵐ B)
-               → delayᵀ {ε = ε} τ ∘ᵐ [ of-natʳ τ ]ᶠ (Tᶠ f)
+    delayᵀ-nat : ∀ {A B ε} → (τ : 𝔻) → (f : A →ᵐ B)
+               → delayᵀ {ε = ε} τ ∘ᵐ [ of-durʳ τ ]ᶠ (Tᶠ f)
                ≈ᵐ Tᶠ f ∘ᵐ delayᵀ τ
 
     -- Sub-effecting the delayed computation is sub-effecting the delay — the
     -- inner-grade counterpart of `T-≤-μᵀ`.
 
-    delayᵀ-≤ : ∀ {A ε ε'} → (τ : ℕ) → (p : ε ≾ₑ ε')
-             → delayᵀ {A} {ε'} τ ∘ᵐ [ of-natʳ τ ]ᶠ (T-≤ p)
+    delayᵀ-≤ : ∀ {A ε ε'} → (τ : 𝔻) → (p : ε ≾ₑ ε')
+             → delayᵀ {A} {ε'} τ ∘ᵐ [ of-durʳ τ ]ᶠ (T-≤ p)
              ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵐ delayᵀ {A} {ε} τ
 
     opᵀ-nat : ∀ {A B ε} → (op : Op) → (f : A →ᵐ B)
@@ -171,31 +170,31 @@ record Monad : Set₁ where
 
     -- A delay by no time is no delay, and two consecutive delays are the one
     -- delay by the sum. Both are stated with the grade relaxation `[]-≤`,
-    -- `of-natʳ` being only propositionally a monoid morphism.
+    -- `of-durʳ` being only propositionally a monoid morphism.
 
     delayᵀ-zero : ∀ {A ε'}
-                → delayᵀ {A} {ε'} 0
-                ≈ᵐ ε-substᵀ (sym (trans (cong (_·ₑ ε') of-natᵉ-zero)
+                → delayᵀ {A} {ε'} 0ᴰ
+                ≈ᵐ ε-substᵀ (sym (trans (cong (_·ₑ ε') of-durᵉ-zero)
                                         (·ₑ-identityˡ ε')))
                   ∘ᵐ ε
-                  ∘ᵐ []-≤ (≾ᵣ-reflexive (sym of-natʳ-zero))
+                  ∘ᵐ []-≤ (≾ᵣ-reflexive (sym of-durʳ-zero))
 
-    delayᵀ-plus : ∀ {A ε'} → (τ₁ τ₂ : ℕ)
-                → delayᵀ {A} {of-natᵉ τ₂ ·ₑ ε'} τ₁
-                    ∘ᵐ [ of-natʳ τ₁ ]ᶠ (delayᵀ {A} {ε'} τ₂)
+    delayᵀ-plus : ∀ {A ε'} → (τ₁ τ₂ : 𝔻)
+                → delayᵀ {A} {of-durᵉ τ₂ ·ₑ ε'} τ₁
+                    ∘ᵐ [ of-durʳ τ₁ ]ᶠ (delayᵀ {A} {ε'} τ₂)
                     ∘ᵐ δ
-                    ∘ᵐ []-≤ (≾ᵣ-reflexive (sym of-natʳ-plus))
-                ≈ᵐ ε-substᵀ (trans (cong (_·ₑ ε') of-natᵉ-plus)
-                                   (·ₑ-assoc (of-natᵉ τ₁) (of-natᵉ τ₂) ε'))
-                  ∘ᵐ delayᵀ {A} {ε'} (τ₁ + τ₂)
+                    ∘ᵐ []-≤ (≾ᵣ-reflexive (sym of-durʳ-plus))
+                ≈ᵐ ε-substᵀ (trans (cong (_·ₑ ε') of-durᵉ-plus)
+                                   (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε'))
+                  ∘ᵐ delayᵀ {A} {ε'} (τ₁ +ᴰ τ₂)
 
     -- Operations and delays are algebraic
 
-    delayᵀ-algebraicity : ∀ {A ε' ε''} → (τ : ℕ)
-                        → μᵀ {A} {of-natᵉ τ ·ₑ ε'} {ε''} ∘ᵐ delayᵀ {ε = ε'} τ
-                        ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε''))
+    delayᵀ-algebraicity : ∀ {A ε' ε''} → (τ : 𝔻)
+                        → μᵀ {A} {of-durᵉ τ ·ₑ ε'} {ε''} ∘ᵐ delayᵀ {ε = ε'} τ
+                        ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-durᵉ τ) ε' ε''))
                           ∘ᵐ delayᵀ τ
-                          ∘ᵐ [ of-natʳ τ ]ᶠ (μᵀ {A} {ε'} {ε''})
+                          ∘ᵐ [ of-durʳ τ ]ᶠ (μᵀ {A} {ε'} {ε''})
 
     opᵀ-algebraicity : ∀ {A ε ε'} → (op : Op)
                      → μᵀ {A} {op-grade op ·ₑ ε} {ε'} ∘ᵐ opᵀ {ε = ε} op
@@ -262,13 +261,13 @@ record Monad : Set₁ where
 
     -- Operations are algebraic with respect to the strength.
 
-    strᵀ-delayᵀ-algebraicity : ∀ {A B ε} → (τ : ℕ)
-      → strᵀ {A} {B} {of-natᵉ τ ·ₑ ε} ∘ᵐ mapˣᵐ idᵐ (delayᵀ {B} {ε} τ)
+    strᵀ-delayᵀ-algebraicity : ∀ {A B ε} → (τ : 𝔻)
+      → strᵀ {A} {B} {of-durᵉ τ ·ₑ ε} ∘ᵐ mapˣᵐ idᵐ (delayᵀ {B} {ε} τ)
       ≈ᵐ delayᵀ τ
-        ∘ᵐ [ of-natʳ τ ]ᶠ (strᵀ {A} {B} {ε})
+        ∘ᵐ [ of-durʳ τ ]ᶠ (strᵀ {A} {B} {ε})
         ∘ᵐ []-monoidal
         ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive
-             (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))) idᵐ
+             (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-durᵉ))))) idᵐ
 
     -- The operation is algebraic with respect to the strength. The box
     -- `[ mapᵉ (op-grade op) ] A` is split off the strengthened argument and
@@ -336,13 +335,13 @@ record Monad : Set₁ where
                          → T-alg-of-handlerᵀ bc h ∘ᵐ mapˣᵐ idᵐ (ηᵀ {Tᵒ A ε'})
                          ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε')) ∘ᵐ sndᵐ
 
-    T-alg-of-handlerᵀ-delayᵀ : ∀ {P A ε' ε''} → (τ : ℕ) → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
+    T-alg-of-handlerᵀ-delayᵀ : ∀ {P A ε' ε''} → (τ : 𝔻) → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                              → T-alg-of-handlerᵀ bc h ∘ᵐ mapˣᵐ idᵐ (delayᵀ {Tᵒ A ε''} {ε'} τ)
-                             ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε''))
+                             ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-durᵉ τ) ε' ε''))
                                ∘ᵐ delayᵀ τ
-                               ∘ᵐ [ of-natʳ τ ]ᶠ (T-alg-of-handlerᵀ bc h)
+                               ∘ᵐ [ of-durʳ τ ]ᶠ (T-alg-of-handlerᵀ bc h)
                                ∘ᵐ []-monoidal
-                               ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {of-natʳ τ}) idᵐ
+                               ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {of-durʳ τ}) idᵐ
 
     T-alg-of-handlerᵀ-opᵀ : ∀ {P A ε' ε''} → (op : Op) → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                           → T-alg-of-handlerᵀ bc h ∘ᵐ mapˣᵐ idᵐ (opᵀ {Tᵒ A ε''} {ε'} op)

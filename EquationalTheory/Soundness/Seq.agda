@@ -230,17 +230,17 @@ sound-seq-unbox {ε = ε} x rel w M N (pM , pN) pR =
 
 -- The transposed pair, boxed, is exactly the tail that `strᵀ-delayᵀ-algebraicity` produces.
 
-delay-core3 : ∀ {X A ε} → (τ : ℕ) → (m : ⟨ of-natʳ τ ⟩ᵒ X →ᵐ Tᵒ A ε)
-            → [ of-natʳ τ ]ᶠ
+delay-core3 : ∀ {X A ε} → (τ : 𝔻) → (m : ⟨ of-durʳ τ ⟩ᵒ X →ᵐ Tᵒ A ε)
+            → [ of-durʳ τ ]ᶠ
                  ⟨ [ mapᵉ ε ]ᶠ (⟨⟩-≤ (≾ᵣ-reflexive
-                       (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))) ∘ᵐ μ)
+                       (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-durᵉ)))) ∘ᵐ μ)
                      ∘ᵐ η⊣
                  , m ⟩ᵐ
                 ∘ᵐ η⊣
             ≈ᵐ []-monoidal
                  ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive
-                       (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))) idᵐ
-                 ∘ᵐ ⟨ η⊣ , [ of-natʳ τ ]ᶠ m ∘ᵐ η⊣ ⟩ᵐ
+                       (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-durᵉ))))) idᵐ
+                 ∘ᵐ ⟨ η⊣ , [ of-durʳ τ ]ᶠ m ∘ᵐ η⊣ ⟩ᵐ
 delay-core3 τ m =
     ∘ᵐ-congˡ (  []-congᶠ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
                                   ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
@@ -267,14 +267,14 @@ delay-core3 τ m =
 -- strengthened continuation. `seq-delay` is this plus `delayᵀ-algebraicity`;
 -- `handle-delay` is this plus `T-alg-of-handlerᵀ-delayᵀ`.
 
-str-delay : ∀ {X A B ε ε'} → (τ : ℕ)
-          → (m : ⟨ of-natʳ τ ⟩ᵒ X →ᵐ Tᵒ A ε)
-          → (n : ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
-          → Tᶠ n ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ m ∘ᵐ η⊣ ⟩ᵐ
+str-delay : ∀ {X A B ε ε'} → (τ : 𝔻)
+          → (m : ⟨ of-durʳ τ ⟩ᵒ X →ᵐ Tᵒ A ε)
+          → (n : ⟨ mapᵉ (of-durᵉ τ ·ₑ ε) ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
+          → Tᶠ n ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ m ∘ᵐ η⊣ ⟩ᵐ
           ≈ᵐ delayᵀ τ
-               ∘ᵐ [ of-natʳ τ ]ᶠ
+               ∘ᵐ [ of-durʳ τ ]ᶠ
                     (Tᶠ (n ∘ᵐ mapˣᵐ (⟨⟩-≤ (≾ᵣ-reflexive
-                            (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))) ∘ᵐ μ) idᵐ)
+                            (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-durᵉ)))) ∘ᵐ μ) idᵐ)
                      ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ)
                ∘ᵐ η⊣
 str-delay {X} {A} {B} {ε} {ε'} τ m n =
@@ -304,8 +304,8 @@ str-delay {X} {A} {B} {ε} {ε'} τ m n =
                                                                           , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))))))
 
 sound-seq-delay : ∀ {Γ A B τ ε ε'}
-                → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
-                → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+                → (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
+                → (N : Γ ⟨ mapᵉ (of-durᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
                 → Soundᶜ== (seq-delay M N)
 sound-seq-delay {Γ} {A} {B} {τ} {ε} {ε'} M N (pM , pN) pR =
     ∘ᵐ-congʳ (str-delay τ (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN))
@@ -319,14 +319,14 @@ sound-seq-delay {Γ} {A} {B} {τ} {ε} {ε'} M N (pM , pN) pR =
                                           ≈ᵐ-sym (  T-congᶠ (C-rename-nat r N pN)
                                                   ∙ T-congᶠ (∘ᵐ-congʳ (mapˣᵐ-cong
                                                       (∘ᵐ-congˡ (eq-ren-grade (trans map-·ᵉ
-                                                        (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))
+                                                        (cong (_·ᵣ mapᵉ ε) map-of-durᵉ))))
                                                       ≈ᵐ-refl)))))))))
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e (delay τ (M ⨟ C-rename r N)))
                 pR (ε-substᴾ e _ pRc)
             ∙ sound-ε-subst e (delay τ (M ⨟ C-rename r N)) pRc)
   where
-    e   = sym (·ₑ-assoc (of-natᵉ τ) ε ε')
-    rin = eq-ren (cong (Γ ⟨_⟩) (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))
+    e   = sym (·ₑ-assoc (of-durᵉ τ) ε ε')
+    rin = eq-ren (cong (Γ ⟨_⟩) (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-durᵉ)))
           ∘ʳ ⟨⟩-μ-ren
     r   = cong-∷-ren rin
     pRc = pM , renᶜ r N pN

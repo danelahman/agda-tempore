@@ -1,0 +1,116 @@
+---------------------------------------
+-- Durations: the monoid of delays   --
+---------------------------------------
+
+module Syntax.Durations where
+
+open import Data.Empty using (⊥)
+open import Data.Nat.Base using (ℕ; zero; suc; _+_)
+open import Data.Nat.Properties using (suc-injective; m+n≡0⇒m≡0; m+n≡0⇒n≡0)
+open import Data.Product using (Σ; _,_)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
+
+open import Util.Equality
+
+-- Monoids of durations: `delay τ` lets the duration `τ` pass, and two
+-- consecutive delays are the delay by the sum
+
+record Duration : Set₁ where
+  infixl 6 _+ᴰ_
+
+  field
+    Carrier : Set₀
+    _+ᴰ_    : Carrier → Carrier → Carrier
+    0ᴰ      : Carrier
+
+    +ᴰ-identityˡ : (τ : Carrier) → 0ᴰ +ᴰ τ ≡ τ
+    +ᴰ-identityʳ : (τ : Carrier) → τ +ᴰ 0ᴰ ≡ τ
+    +ᴰ-assoc     : (τ τ' τ'' : Carrier) → (τ +ᴰ τ') +ᴰ τ'' ≡ τ +ᴰ (τ' +ᴰ τ'')
+
+
+-- Monoid morphisms of durations
+
+record _→ᴰ_ (D₁ D₂ : Duration) : Set where
+  private
+    module D₁ = Duration D₁
+    module D₂ = Duration D₂
+  field
+    map   : D₁.Carrier → D₂.Carrier
+    map-0 : map D₁.0ᴰ ≡ D₂.0ᴰ
+    map-+ : ∀ {τ τ'} → map (τ D₁.+ᴰ τ') ≡ map τ D₂.+ᴰ map τ'
+
+open _→ᴰ_
+
+idᴰ : ∀ {D} → D →ᴰ D
+idᴰ = record { map = λ τ → τ ; map-0 = refl ; map-+ = refl }
+
+_∘ᴰ_ : ∀ {D₁ D₂ D₃} → D₂ →ᴰ D₃ → D₁ →ᴰ D₂ → D₁ →ᴰ D₃
+g ∘ᴰ f = record
+  { map   = λ τ → map g (map f τ)
+  ; map-0 = trans (cong (map g) (map-0 f)) (map-0 g)
+  ; map-+ = trans (cong (map g) (map-+ f)) (map-+ g)
+  }
+
+
+-- Stepped durations: a monoid isomorphism with `ℕ`, a duration being a
+-- number of unit steps
+
+record Stepped (D : Duration) : Set where
+  open Duration D
+  field
+    toℕ       : Carrier → ℕ
+    fromℕ     : ℕ → Carrier
+    toℕ-fromℕ : (n : ℕ) → toℕ (fromℕ n) ≡ n
+    fromℕ-toℕ : (τ : Carrier) → fromℕ (toℕ τ) ≡ τ
+    toℕ-0     : toℕ 0ᴰ ≡ 0
+    toℕ-+     : (τ τ' : Carrier) → toℕ (τ +ᴰ τ') ≡ toℕ τ + toℕ τ'
+
+  -- the inverse is a monoid morphism as well
+  fromℕ-0 : fromℕ 0 ≡ 0ᴰ
+  fromℕ-0 = trans (cong fromℕ (sym toℕ-0)) (fromℕ-toℕ 0ᴰ)
+
+  fromℕ-+ : (m n : ℕ) → fromℕ (m + n) ≡ fromℕ m +ᴰ fromℕ n
+  fromℕ-+ m n =
+    trans (cong fromℕ (sym (cong₂ _+_ (toℕ-fromℕ m) (toℕ-fromℕ n))))
+          (trans (cong fromℕ (sym (toℕ-+ (fromℕ m) (fromℕ n))))
+                 (fromℕ-toℕ (fromℕ m +ᴰ fromℕ n)))
+
+  -- the unit step
+  1ᴰ : Carrier
+  1ᴰ = fromℕ 1
+
+  toℕ-injective : ∀ {τ τ'} → toℕ τ ≡ toℕ τ' → τ ≡ τ'
+  toℕ-injective {τ} {τ'} e =
+    trans (sym (fromℕ-toℕ τ)) (trans (cong fromℕ e) (fromℕ-toℕ τ'))
+
+  toℕ-1+ : (τ : Carrier) → toℕ (1ᴰ +ᴰ τ) ≡ suc (toℕ τ)
+  toℕ-1+ τ = trans (toℕ-+ 1ᴰ τ) (cong (_+ toℕ τ) (toℕ-fromℕ 1))
+
+  -- a duration is no time, or a step followed by a duration
+  zero-or-step : (τ : Carrier) → (τ ≡ 0ᴰ) ⊎ Σ Carrier (λ τ' → τ ≡ 1ᴰ +ᴰ τ')
+  zero-or-step τ = go (toℕ τ) refl
+    where
+      go : (m : ℕ) → toℕ τ ≡ m → (τ ≡ 0ᴰ) ⊎ Σ Carrier (λ τ' → τ ≡ 1ᴰ +ᴰ τ')
+      go zero    e = inj₁ (toℕ-injective (trans e (sym toℕ-0)))
+      go (suc m) e = inj₂ (fromℕ m , toℕ-injective
+                             (trans e (sym (trans (toℕ-1+ (fromℕ m))
+                                                  (cong suc (toℕ-fromℕ m))))))
+
+  1+≢0ᴰ : ∀ {τ} → 1ᴰ +ᴰ τ ≡ 0ᴰ → ⊥
+  1+≢0ᴰ {τ} e with trans (sym (toℕ-1+ τ)) (trans (cong toℕ e) toℕ-0)
+  ... | ()
+
+  1+-cancel : ∀ {τ τ'} → 1ᴰ +ᴰ τ ≡ 1ᴰ +ᴰ τ' → τ ≡ τ'
+  1+-cancel {τ} {τ'} e =
+    toℕ-injective (suc-injective (trans (sym (toℕ-1+ τ)) (trans (cong toℕ e) (toℕ-1+ τ'))))
+
+  -- no time is a sum only of no time
+  zero-sumˡ : ∀ {τ τ'} → τ +ᴰ τ' ≡ 0ᴰ → τ ≡ 0ᴰ
+  zero-sumˡ {τ} {τ'} e =
+    toℕ-injective (trans (m+n≡0⇒m≡0 (toℕ τ) (trans (sym (toℕ-+ τ τ')) (trans (cong toℕ e) toℕ-0)))
+                         (sym toℕ-0))
+
+  zero-sumʳ : ∀ {τ τ'} → τ +ᴰ τ' ≡ 0ᴰ → τ' ≡ 0ᴰ
+  zero-sumʳ {τ} {τ'} e =
+    toℕ-injective (trans (m+n≡0⇒n≡0 (toℕ τ) (trans (sym (toℕ-+ τ τ')) (trans (cong toℕ e) toℕ-0)))
+                         (sym toℕ-0))

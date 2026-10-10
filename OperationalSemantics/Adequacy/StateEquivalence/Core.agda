@@ -177,12 +177,12 @@ cast-perform⁻ : ∀ {Γ Γ' A ε} → (e : Γ' ≡ Γ) → {op : Op}
 cast-perform⁻ refl _ refl = _ , _ , refl , refl , refl
 
 cast-delay⁻ : ∀ {Γ Γ' A ε τ} → (e : Γ' ≡ Γ)
-         → {M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε}
-         → (P' : Γ' ⊢C⦂ A ‼ (of-natᵉ τ ·ₑ ε))
+         → {M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε}
+         → (P' : Γ' ⊢C⦂ A ‼ (of-durᵉ τ ·ₑ ε))
          → delay τ M ≡ castᶜ e P'
-         → Σ[ M' ∈ (Γ' ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε) ]
+         → Σ[ M' ∈ (Γ' ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε) ]
              (P' ≡ delay τ M')
-           × (M ≡ castᶜ (cong (_⟨ of-natʳ τ ⟩) e) M')
+           × (M ≡ castᶜ (cong (_⟨ of-durʳ τ ⟩) e) M')
 cast-delay⁻ refl _ refl = _ , refl , refl
 
 cast-box⁻ : ∀ {Γ Γ' A C ρ} → (e : Γ' ≡ Γ)

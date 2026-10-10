@@ -60,11 +60,17 @@ operations.
 
 ### Grades and grade systems
 
-- `Syntax/Grades.agda` defines a `Grade` (a partially ordered monoid with a
-  monoid morphism `of-nat` from ℕ, read as a number of time steps), grade
-  morphisms `_→ᵍ_`, and a `GradeSystem` (effect grades `EGrade`, resource
-  grades `RGrade`, and a grade morphism `∣_∣ᵉ` from the former to the latter),
-  with the interface `GradeSystemInterface`.
+- `Syntax/Durations.agda` defines a `Duration`, the monoid of the durations
+  of `delay`, its morphisms `_→ᴰ_`, and `Stepped` durations, isomorphic to
+  ℕ; `Syntax/Durations/Nat.agda` gives ℕ as `ℕᴰ`, a duration being a number
+  of time steps.
+
+- `Syntax/Grades.agda` defines a `Grade D` (a partially ordered monoid with a
+  monoid morphism `of-dur` from the durations `D`), grade morphisms
+  `GradeMorphism h` along a morphism `h` of durations and `_→ᵍ_` along the
+  identity, and a `GradeSystem` (durations `Dur`, effect grades `EGrade`,
+  resource grades `RGrade`, and a grade morphism `∣_∣ᵉ` from the former to
+  the latter), with the interface `GradeSystemInterface`.
 
 - A `Grade` has a greatest element `⊤` and **binary joins** `_⊔_`, over which
   multiplication distributes: the fields state `ρ · (σ ⊔ τ) ≾ (ρ · σ) ⊔ (ρ · τ)`
@@ -101,8 +107,8 @@ operations.
 
 - `Syntax/Grades/Example/SecurityLevel.agda` turns a decidable bounded
   join-semilattice of levels into a grade: `_·_` and `_⊔_` are both the join,
-  the unit is the least level, `⊤` the greatest, and `of-nat` is constantly
-  the unit. A boxed value may be unboxed only while the level has not risen
+  the unit is the least level, `⊤` the greatest, and `of-dur` is constantly
+  the unit, for any durations. A boxed value may be unboxed only while the level has not risen
   since boxing. `two-point-levels` is `Low < High`; `taint-sets n` is the
   `n`-fold power, read as sets of taint labels over `Fin n`.
 
@@ -140,7 +146,7 @@ operations.
   grades (`Syntax/Grades/Regular.agda` indexes the automata and their proofs).
   The order is inclusion, decided by a search of `L & ~M` that yields a
   shortest counterexample; the product is concatenation, the join union,
-  `⊤ = Σ*`, and `of-nat n = tickⁿ`.
+  `⊤ = Σ*`, and `of-dur n = tickⁿ`.
 
 - The literals of the regular grade are extended regular expressions (`|`,
   `·`, `*`, `&`, `~`, `Σ`, `tickⁿ`), elaborated to canonical tables with a

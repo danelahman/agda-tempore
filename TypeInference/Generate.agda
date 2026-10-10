@@ -206,8 +206,8 @@ mutual
   -- explicit delaying of a computation
 
   genCˢ {Θ = Θ} ι Γ (delay τ M) (A ‼ t) =
-    ∃ᵉ (  genCˢ ι↑ (Γ↑ ⟨ rconst (of-natʳ τ) ⟩) M (A↑ ‼ e)
-        ∧̂ ((econst (of-natᵉ τ) ·̂ₑ e) ≾̂ₑᶜ t↑))
+    ∃ᵉ (  genCˢ ι↑ (Γ↑ ⟨ rconst (of-durʳ τ) ⟩) M (A↑ ‼ e)
+        ∧̂ ((econst (of-durᵉ τ) ·̂ₑ e) ≾̂ₑᶜ t↑))
     where
       ι↑ = ι ⨟ˢ wkˢᵉ
       e  = evar (newᵉ {Θ})

@@ -22,6 +22,7 @@ module Syntax.Grades.Example.Counts.AtMost where
 
 open import Data.Nat.Base using (ℕ)
 
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades using (Grade)
 
 open import Syntax.Grades.Example.Time.RightSided
@@ -31,7 +32,7 @@ open import Syntax.Grades.Example.Counts.Power right-sided-intervals public
 
 -- the grade over `n` counters
 
-at-most-counts : ℕ → Grade
+at-most-counts : ℕ → Grade ℕᴰ
 at-most-counts = power
 
 -- one coordinate

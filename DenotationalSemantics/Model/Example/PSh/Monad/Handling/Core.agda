@@ -22,7 +22,6 @@ module DenotationalSemantics.Model.Example.PSh.Monad.Handling.Core
                               (F.PShFut (LanguageSpec.Grades S) Wld))
        where
 
-open import Data.Nat using (ℕ; _+_)
 open import Data.Product using (_,_; proj₁; proj₂; Σ; Σ-syntax)
 
 open import Util.Equality
@@ -177,7 +176,7 @@ mutual
     ε-substˢ (sym (·ₑ-assoc (op-grade op) ε₀ ε'))
       (app (clause h op (ε₀ ·ₑ ε')) (pv , (v , handler-box bc pv h op k kc kn)))
   T-alg-of-handlerˢ {ε' = ε'} bc h pv (delay-node {ε = ε₀} τ k kn) =
-    ε-substˢ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε'))
+    ε-substˢ (sym (·ₑ-assoc (of-durᵉ τ) ε₀ ε'))
       (delay-node τ (λ q → T-alg-of-handlerˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) q) (k q))
         (λ q r → ≈ᵗ-trans
           (T-alg-of-handlerˢ-congᵖ bc h (fun-nat (app (Eternalᵒ.necᵉ bc) pv) q r) (k (⊑ρ∘ᵘ q r)))
@@ -242,8 +241,8 @@ mutual
   T-alg-of-handlerˢ-congᵗ {ε' = ε'} bc h pv
     (sub-delay {ε = ε₁} {ε' = ε₁'} {τ = τ} {e = e}) =
     ≈ᵗ-trans
-      (sub-ε-substᵗ (sym (·ₑ-assoc (of-natᵉ τ) ε₁ ε'))
-                    (sym (·ₑ-assoc (of-natᵉ τ) ε₁' ε'))
+      (sub-ε-substᵗ (sym (·ₑ-assoc (of-durᵉ τ) ε₁ ε'))
+                    (sym (·ₑ-assoc (of-durᵉ τ) ε₁' ε'))
                     (·ₑ-monoʳ-≾ₑ (·ₑ-monoˡ-≾ₑ e))
                     (·ₑ-monoˡ-≾ₑ (·ₑ-monoʳ-≾ₑ e))
                     _)
@@ -285,7 +284,7 @@ mutual
                                          (T-alg-of-handlerˢ bc h pv (k q₀)))
                            (sym (T-alg-ε-substˢ bc h pv e (k q₀)))))))
     where
-      a₁ = sym (·ₑ-assoc (of-natᵉ 0) ε₀ ε')
+      a₁ = sym (·ₑ-assoc (of-durᵉ 0ᴰ) ε₀ ε')
   T-alg-of-handlerˢ-congᵗ {P = P} {ε' = ε'} bc h pv
     (delay-plus {ε = ε₀} {τ₁ = τ₁} {τ₂ = τ₂} {k = k} {kn = kn} {k' = k'} hk e) =
     ≈ᵗ-trans (ε-substˢ-congᵗ a₁
@@ -306,13 +305,13 @@ mutual
                     (trans (ε-substˢ-uip (trans (trans delay+ᵉ b₂) a₁)
                                          (trans a₃ (cong (_·ₑ ε') e)) D)
                     (trans (sym (ε-substˢ-trans a₃ (cong (_·ₑ ε') e) D))
-                           (sym (T-alg-ε-substˢ bc h pv e (delay-node (τ₁ + τ₂) k kn)))))))
+                           (sym (T-alg-ε-substˢ bc h pv e (delay-node (τ₁ +ᴰ τ₂) k kn)))))))
     where
-      a₁ = sym (·ₑ-assoc (of-natᵉ τ₁) (of-natᵉ τ₂ ·ₑ ε₀) ε')
-      a₂ = sym (·ₑ-assoc (of-natᵉ τ₂) ε₀ ε')
-      a₃ = sym (·ₑ-assoc (of-natᵉ (τ₁ + τ₂)) ε₀ ε')
-      b₂ = cong (of-natᵉ τ₁ ·ₑ_) a₂
-      D  = delay-node (τ₁ + τ₂)
+      a₁ = sym (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂ ·ₑ ε₀) ε')
+      a₂ = sym (·ₑ-assoc (of-durᵉ τ₂) ε₀ ε')
+      a₃ = sym (·ₑ-assoc (of-durᵉ (τ₁ +ᴰ τ₂)) ε₀ ε')
+      b₂ = cong (of-durᵉ τ₁ ·ₑ_) a₂
+      D  = delay-node (τ₁ +ᴰ τ₂)
              (λ q → T-alg-of-handlerˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) q) (k q))
              (λ q r → ≈ᵗ-trans
                (T-alg-of-handlerˢ-congᵖ bc h
@@ -380,10 +379,10 @@ mutual
         (≡→≈ᵗ (sym (transportᵗ-ε-substˢ r (sym (·ₑ-assoc (op-grade op) ε₀ _)) _))))
   T-alg-of-handlerˢ-nat bc h r pv (delay-node {ε = ε₀} τ k kn) =
     ≈ᵗ-trans
-      (ε-substˢ-congᵗ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ _))
+      (ε-substˢ-congᵗ (sym (·ₑ-assoc (of-durᵉ τ) ε₀ _))
         (delay-≈ (λ q → T-alg-of-handlerˢ-congᵖ bc h
                           (nat (Eternalᵒ.necᵉ bc) r pv q) (k (⊑ᵘ∘ρ r q)))))
-      (≡→≈ᵗ (sym (transportᵗ-ε-substˢ r (sym (·ₑ-assoc (of-natᵉ τ) ε₀ _)) _)))
+      (≡→≈ᵗ (sym (transportᵗ-ε-substˢ r (sym (·ₑ-assoc (of-durᵉ τ) ε₀ _)) _)))
   T-alg-of-handlerˢ-nat bc h r pv (sub e t) =
     sub-≈ (T-alg-of-handlerˢ-nat bc h r pv t)
 

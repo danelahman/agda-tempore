@@ -49,7 +49,7 @@ mutual
     absurd            : ErV → ErC
     if_`then_`else_   : ErV → ErC → ErC → ErC
     perform           : Op → ErV → ErC → ErC
-    delay             : ℕ → ErC → ErC
+    delay             : 𝔻 → ErC → ErC
     handle_`with_`in  : ErC → (Op → E → ErC) → ErC → ErC
     unbox             : ℕ → ErC → ErC
     box               : ErV → ErC → ErC

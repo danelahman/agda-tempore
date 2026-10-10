@@ -59,6 +59,7 @@ open import Relation.Nullary.Decidable using (fromWitness)
 
 open import Data.Maybe.Base using (nothing)
 
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades
 
 open Order.TraceOrder O using (≼-nil)
@@ -89,14 +90,14 @@ open R public hiding (≾-antisym)
 ≾-⊤ : (P : Antichain) → P ≾ u
 ≾-⊤ P s _ = fromWitness {a? = any? (_≽?_ s) (traces u)} (here ≼-nil)
 
--- The unit is therefore not least: `of-nat 1` would be equal to it.
+-- The unit is therefore not least: `of-dur 1` would be equal to it.
 
-u⋠of-nat-1 : ¬ (u ≾ of-nat 1)
-u⋠of-nat-1 rel with cong traces (≾-antisym {of-nat 1} {u} (≾-⊤ (of-nat 1)) rel)
+u⋠of-dur-1 : ¬ (u ≾ of-dur 1)
+u⋠of-dur-1 rel with cong traces (≾-antisym {of-dur 1} {u} (≾-⊤ (of-dur 1)) rel)
 ... | ()
 
 u-not-least : ¬ Minimum _≾_ u
-u-not-least least = u⋠of-nat-1 (least (of-nat 1))
+u-not-least least = u⋠of-dur-1 (least (of-dur 1))
 
 ------------------------------------------------------------------------
 -- Zero-product property
@@ -127,7 +128,7 @@ u-not-least least = u⋠of-nat-1 (least (of-nat 1))
 ------------------------------------------------------------------------
 -- The grade of antichains of timed traces, read as guarantees
 
-left-sided : Grade
+left-sided : Grade ℕᴰ
 left-sided = record
   { Carrier         = Antichain
   ; _·_             = _·_
@@ -155,7 +156,7 @@ left-sided = record
   ; ≾-zero-productˡ = λ {c} {d} → ≾-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾-zero-productʳ {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → ≾-irrelevant {c} {d}
-  ; of-nat          = of-nat
-  ; of-nat-zero     = of-nat-zero
-  ; of-nat-plus     = λ {m} {n} → of-nat-plus {m} {n}
+  ; of-dur          = of-dur
+  ; of-dur-zero     = of-dur-zero
+  ; of-dur-plus     = λ {m} {n} → of-dur-plus {m} {n}
   }

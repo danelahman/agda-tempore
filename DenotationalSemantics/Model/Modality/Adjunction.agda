@@ -15,6 +15,7 @@
 -- coercions.                                                           --
 ------------------------------------------------------------------------
 
+open import Syntax.Durations using (Duration)
 open import Syntax.Grades
 
 open import DenotationalSemantics.Model.Category
@@ -23,7 +24,7 @@ open import DenotationalSemantics.Model.Modality.Past
 
 module DenotationalSemantics.Model.Modality.Adjunction
          (Cat : Category)
-         (G : Grade)
+         {D : Duration} (G : Grade D)
          (Fut : Future Cat G)
          (Pst : Past Cat G)
        where

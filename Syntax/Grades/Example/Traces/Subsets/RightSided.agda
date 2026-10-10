@@ -52,6 +52,7 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 
 open import Data.Maybe.Base using (nothing)
 
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades
 
 open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
@@ -189,7 +190,7 @@ any-run        ≾ any-run        = ⊤
 -- there is no least grade: `{ ε }` is below only the lists naming `ε`
 
 uᵖ-not-least : ¬ Minimum _≾_ uᵖ
-uᵖ-not-least least = least (permitting (of-nat 1)) ε _
+uᵖ-not-least least = least (permitting (of-dur 1)) ε _
 
 ≾-refl : {P : Permits} → P ≾ P
 ≾-refl {permitting P} = ≾₀-refl {P}
@@ -304,14 +305,14 @@ any-run        ⊔ᵖ _              = any-run
 ------------------------------------------------------------------------
 -- The inclusion of ℕ, and deciding the order
 
-of-natᵖ : ℕ → Permits
-of-natᵖ n = permitting (of-nat n)
+of-durᵖ : ℕ → Permits
+of-durᵖ n = permitting (of-dur n)
 
-of-natᵖ-zero : of-natᵖ 0 ≡ uᵖ
-of-natᵖ-zero = cong permitting_ of-nat-zero
+of-durᵖ-zero : of-durᵖ 0 ≡ uᵖ
+of-durᵖ-zero = cong permitting_ of-dur-zero
 
-of-natᵖ-plus : {m n : ℕ} → of-natᵖ (m + n) ≡ of-natᵖ m ·ᵖ of-natᵖ n
-of-natᵖ-plus {m} {n} = cong permitting_ (of-nat-plus {m} {n})
+of-durᵖ-plus : {m n : ℕ} → of-durᵖ (m + n) ≡ of-durᵖ m ·ᵖ of-durᵖ n
+of-durᵖ-plus {m} {n} = cong permitting_ (of-dur-plus {m} {n})
 
 infix 5 _≾?_
 
@@ -324,7 +325,7 @@ any-run        ≾? any-run        = yes tt
 ------------------------------------------------------------------------
 -- The grade of sets of timed traces, read as upper bounds
 
-right-sided : Grade
+right-sided : Grade ℕᴰ
 right-sided = record
   { Carrier         = Permits
   ; _·_             = _·ᵖ_
@@ -352,7 +353,7 @@ right-sided = record
   ; ≾-zero-productˡ = λ {c} {d} → ≾-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾-zero-productʳ {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → ≾-irrelevant {c} {d}
-  ; of-nat          = of-natᵖ
-  ; of-nat-zero     = of-natᵖ-zero
-  ; of-nat-plus     = λ {m} {n} → of-natᵖ-plus {m} {n}
+  ; of-dur          = of-durᵖ
+  ; of-dur-zero     = of-durᵖ-zero
+  ; of-dur-plus     = λ {m} {n} → of-durᵖ-plus {m} {n}
   }

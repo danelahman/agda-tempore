@@ -10,13 +10,14 @@
 
 module Syntax.Grades.Example.System.Identity where
 
+open import Syntax.Durations using (Duration)
 open import Syntax.Grades
 
 open import Util.Equality
 
 -- the identity grade morphism
 
-idᵍ : (G : Grade) → G →ᵍ G
+idᵍ : {D : Duration} (G : Grade D) → G →ᵍ G
 idᵍ G = record
   { map          = λ c → c
   ; map-monotone = λ rel → rel
@@ -24,14 +25,15 @@ idᵍ G = record
   ; map-·        = refl
   ; map-⊤        = refl
   ; map-⊔        = refl
-  ; map-of-nat   = refl
+  ; map-of-dur   = refl
   }
 
 -- a grade, read as both the effect grades and the resource grades
 
-identityGradeSystem : Grade → GradeSystem
-identityGradeSystem G = record
-  { RGrade = G
+identityGradeSystem : {D : Duration} → Grade D → GradeSystem
+identityGradeSystem {D} G = record
+  { Dur    = D
+  ; RGrade = G
   ; EGrade = G
   ; ∣_∣ᵉ   = idᵍ G
   }

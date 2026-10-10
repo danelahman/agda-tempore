@@ -7,7 +7,6 @@ module Syntax.Grades where
 open import Algebra.Definitions using (Commutative)
 open import Data.Empty
 open import Data.Maybe.Base using (Maybe)
-open import Data.Nat.Base hiding (_⊔_)
 open import Data.Product hiding (map)
 open import Data.Sum hiding (map)
 
@@ -17,11 +16,17 @@ open import Relation.Binary.Core
 open import Relation.Binary.Definitions
 open import Relation.Nullary using (¬_; Dec; yes; no)
 
+open import Syntax.Durations
+
 open import Util.Equality
 
--- Partially ordered effect and resource monoids
+-- Partially ordered effect and resource monoids, over a monoid `D` of
+-- durations
 
-record Grade : Set₁ where
+record Grade (D : Duration) : Set₁ where
+  private
+    module D = Duration D
+
   infixl 7 _·_
   infixl 6 _⊔_
   infixl 5 _≾_
@@ -35,7 +40,7 @@ record Grade : Set₁ where
     _≾_     : Rel Carrier lzero
     ⊤       : Carrier
     _⊔_     : Carrier → Carrier → Carrier
-    of-nat  : ℕ → Carrier
+    of-dur  : D.Carrier → Carrier
 
     -- a monoid
     ·-identityˡ : (c : Carrier) → (u · c) ≡ c
@@ -68,9 +73,10 @@ record Grade : Set₁ where
     ≾-zero-productˡ : ∀ {c d} → c · d ≾ u → c ≾ u
     ≾-zero-productʳ : ∀ {c d} → c · d ≾ u → d ≾ u
 
-    -- ℕ included as a monoid morphism, `n` the grade of `n` time steps
-    of-nat-zero : of-nat 0 ≡ u
-    of-nat-plus : ∀ {m n} → of-nat (m + n) ≡ of-nat m · of-nat n
+    -- durations included as a monoid morphism, `of-dur τ` the grade of
+    -- the delay `τ`
+    of-dur-zero : of-dur D.0ᴰ ≡ u
+    of-dur-plus : ∀ {τ τ'} → of-dur (τ D.+ᴰ τ') ≡ of-dur τ · of-dur τ'
 
     -- optional declared properties
 
@@ -142,13 +148,15 @@ record Grade : Set₁ where
 open Grade
 
 
--- Morphisms of effect and resource monoids
+-- Morphisms of effect and resource monoids, along a morphism `h` of
+-- their durations
 
-record _→ᵍ_ (G₁ G₂ : Grade) : Set₁ where
+record GradeMorphism {D₁ D₂ : Duration} (h : D₁ →ᴰ D₂)
+                     (G₁ : Grade D₁) (G₂ : Grade D₂) : Set₁ where
   open Grade G₁ renaming (Carrier to C₁; _≾_ to _≾₁_; u to u₁; _·_ to _·₁_;
-                          ⊤ to ⊤₁; _⊔_ to _⊔₁_; of-nat to of-nat₁)
+                          ⊤ to ⊤₁; _⊔_ to _⊔₁_; of-dur to of-dur₁)
   open Grade G₂ renaming (Carrier to C₂; _≾_ to _≾₂_; u to u₂; _·_ to _·₂_;
-                          ⊤ to ⊤₂; _⊔_ to _⊔₂_; of-nat to of-nat₂)
+                          ⊤ to ⊤₂; _⊔_ to _⊔₂_; of-dur to of-dur₂)
   
   field
 
@@ -168,8 +176,16 @@ record _→ᵍ_ (G₁ G₂ : Grade) : Set₁ where
     -- map preserves binary joins
     map-⊔        : {c₁ c₁' : C₁} → map (c₁ ⊔₁ c₁') ≡ map c₁ ⊔₂ map c₁'
 
-    -- map preserves inclusion of ℕ
-    map-of-nat   : ∀ {n} → map (of-nat₁ n) ≡ of-nat₂ n
+    -- map preserves the inclusion of durations
+    map-of-dur   : ∀ {τ} → map (of-dur₁ τ) ≡ of-dur₂ (_→ᴰ_.map h τ)
+
+-- Morphisms of grades over the same durations
+
+_→ᵍ_ : {D : Duration} → Grade D → Grade D → Set₁
+G₁ →ᵍ G₂ = GradeMorphism idᴰ G₁ G₂
+
+module _→ᵍ_ {D : Duration} {G₁ G₂ : Grade D} (f : G₁ →ᵍ G₂) =
+  GradeMorphism f
 
 
 -- Grade systems
@@ -178,8 +194,9 @@ record GradeSystem : Set₂ where
 
   field
 
-    RGrade : Grade
-    EGrade : Grade
+    Dur    : Duration
+    RGrade : Grade Dur
+    EGrade : Grade Dur
     ∣_∣ᵉ : EGrade →ᵍ RGrade
 
 
@@ -189,6 +206,8 @@ module GradeSystemInterface (GS : GradeSystem) where
 
   open GradeSystem GS public
 
+  open Duration Dur renaming (Carrier to 𝔻) public
+
   open Grade RGrade renaming
     (Carrier to R;
      _·_ to _·ᵣ_;
@@ -196,7 +215,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾_ to _≾ᵣ_;
      ⊤ to ⊤ᵣ;
      _⊔_ to _⊔ᵣ_;
-     of-nat to of-natʳ;
+     of-dur to of-durʳ;
      ·-identityˡ to ·ᵣ-identityˡ;
      ·-identityʳ to ·ᵣ-identityʳ;
      ·-assoc to ·ᵣ-assoc;
@@ -215,8 +234,8 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-distribʳ-⊔-≾ to ·ᵣ-distribʳ-⊔ᵣ-≾ᵣ;
      ≾-zero-productˡ to ≾ᵣ-zero-productˡ;
      ≾-zero-productʳ to ≾ᵣ-zero-productʳ;
-     of-nat-zero to of-natʳ-zero;
-     of-nat-plus to of-natʳ-plus;
+     of-dur-zero to of-durʳ-zero;
+     of-dur-plus to of-durʳ-plus;
      u-least? to uᵣ-least?;
      ·-comm? to ·ᵣ-comm?;
      ≾-reflexive to ≾ᵣ-reflexive;
@@ -238,7 +257,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾_ to _≾ₑ_;
      ⊤ to ⊤ₑ;
      _⊔_ to _⊔ₑ_;
-     of-nat to of-natᵉ;
+     of-dur to of-durᵉ;
      ·-identityˡ to ·ₑ-identityˡ;
      ·-identityʳ to ·ₑ-identityʳ;
      ·-assoc to ·ₑ-assoc;
@@ -255,8 +274,8 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-monoʳ-≾ to ·ₑ-monoʳ-≾ₑ;
      ·-distribˡ-⊔-≾ to ·ₑ-distribˡ-⊔ₑ-≾ₑ;
      ·-distribʳ-⊔-≾ to ·ₑ-distribʳ-⊔ₑ-≾ₑ;
-     of-nat-zero to of-natᵉ-zero;
-     of-nat-plus to of-natᵉ-plus;
+     of-dur-zero to of-durᵉ-zero;
+     of-dur-plus to of-durᵉ-plus;
      u-least? to uₑ-least?;
      ·-comm? to ·ₑ-comm?;
      ≾-reflexive to ≾ₑ-reflexive;
@@ -278,5 +297,5 @@ module GradeSystemInterface (GS : GradeSystem) where
      map-· to map-·ᵉ;
      map-⊤ to map-⊤ᵉ;
      map-⊔ to map-⊔ᵉ;
-     map-of-nat to map-of-natᵉ
+     map-of-dur to map-of-durᵉ
     ) public

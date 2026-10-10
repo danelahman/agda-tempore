@@ -136,7 +136,7 @@ step-grade IF-FALSE             = uₑ
 step-grade (SEQ-STEP r _)       = step-grade r
 step-grade SEQ-RET              = uₑ
 step-grade SEQ-OP               = uₑ
-step-grade (DELAY {τ = τ})      = of-natᵉ τ ·ₑ uₑ
+step-grade (DELAY {τ = τ})      = of-durᵉ τ ·ₑ uₑ
 step-grade HANDLE-RET           = uₑ
 step-grade (HANDLE-STEP r _)    = step-grade r
 step-grade HANDLE-OP            = uₑ
@@ -161,7 +161,7 @@ stepᵀ IF-FALSE          = ηᵀ
 stepᵀ (SEQ-STEP r _)    = stepᵀ r
 stepᵀ SEQ-RET           = ηᵀ
 stepᵀ SEQ-OP            = ηᵀ
-stepᵀ (DELAY {τ = τ})   = delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣
+stepᵀ (DELAY {τ = τ})   = delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣
 stepᵀ HANDLE-RET        = ηᵀ
 stepᵀ (HANDLE-STEP r _) = stepᵀ r
 stepᵀ HANDLE-OP         = ηᵀ
@@ -189,7 +189,7 @@ step-≾ (SEQ-STEP {ε₂ = ε₂} {ε₃ = ε₃} r _) =
 step-≾ SEQ-RET        = ≾ₑ-reflexive refl
 step-≾ {ε = ε} SEQ-OP = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ (DELAY {τ = τ} {ε = ε}) =
-  ≾ₑ-reflexive (cong (_·ₑ ε) (·ₑ-identityʳ (of-natᵉ τ)))
+  ≾ₑ-reflexive (cong (_·ₑ ε) (·ₑ-identityʳ (of-durᵉ τ)))
 step-≾ HANDLE-RET     = ≾ₑ-reflexive refl
 step-≾ (HANDLE-STEP {ε₂ = ε₂} {ε₁' = ε₁'} r _) =
   ≾ₑ-trans
@@ -500,9 +500,9 @@ sound-IF-FALSE : ∀ {Γ C} → (M N : Γ ⊢C⦂ C) → (pM : Paramᶜ M) → (
                → ⟦ if false `then M `else N ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ N ⟧ᶜᵗ pN
 sound-IF-FALSE M N pM pN = ifᵐ-false (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
 
-delayᵀ-ε-substᵀ : ∀ {A ε ε'} → (τ : ℕ) → (e : ε ≡ ε')
-                → delayᵀ {A} {ε'} τ ∘ᵐ [ of-natʳ τ ]ᶠ (ε-substᵀ e)
-                ≈ᵐ ε-substᵀ (cong (of-natᵉ τ ·ₑ_) e) ∘ᵐ delayᵀ {A} {ε} τ
+delayᵀ-ε-substᵀ : ∀ {A ε ε'} → (τ : 𝔻) → (e : ε ≡ ε')
+                → delayᵀ {A} {ε'} τ ∘ᵐ [ of-durʳ τ ]ᶠ (ε-substᵀ e)
+                ≈ᵐ ε-substᵀ (cong (of-durᵉ τ ·ₑ_) e) ∘ᵐ delayᵀ {A} {ε} τ
 delayᵀ-ε-substᵀ τ refl =
   ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans ([]-congᶠ ε-substᵀ-refl) []-idᵐ))
   (≈ᵐ-trans (∘ᵐ-identityʳ _)
@@ -525,22 +525,22 @@ coe-cancel e q =
 -- (`⟦ St ⟨ ρ ⟩ₛ ⟧ˢ = ⟨ ρ ⟩ᶠ ⟦ St ⟧ˢ`), and `delayᵀ`'s algebraicity
 -- re-associates the transition's `delayᵀ` out.
 
-sound-DELAY : ∀ {A ε} → (τ : ℕ) → (St : 𝕊 [])
-            → (M : toCtx St ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
-            → (q : (of-natᵉ τ ·ₑ uₑ) ·ₑ ε ≾ₑ of-natᵉ τ ·ₑ ε)
+sound-DELAY : ∀ {A ε} → (τ : 𝔻) → (St : 𝕊 [])
+            → (M : toCtx St ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
+            → (q : (of-durᵉ τ ·ₑ uₑ) ·ₑ ε ≾ₑ of-durᵉ τ ·ₑ ε)
             → (pSt : Paramˢ St) → (pM : Paramᶜ M)
             → ⟦ delay τ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt
-            ≈ᵐ T-≤ q ∘ᵐ ((⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟨ of-natʳ τ ⟩ₛ ⟧ˢ pSt)
-                          ⋄ (delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣))
+            ≈ᵐ T-≤ q ∘ᵐ ((⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟨ of-durʳ τ ⟩ₛ ⟧ˢ pSt)
+                          ⋄ (delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣))
 sound-DELAY {ε = ε} τ St M q pSt pM =
   lhs≈ ∙ ≈ᵐ-sym (∘ᵐ-congʳ rhs≈ ∙ cancel)
   where
-    g : ⟨ of-natʳ τ ⟩ᵒ ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ _ ε
-    g = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟨ of-natʳ τ ⟩ₛ ⟧ˢ pSt
+    g : ⟨ of-durʳ τ ⟩ᵒ ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ _ ε
+    g = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟨ of-durʳ τ ⟩ₛ ⟧ˢ pSt
 
     -- the common normal form: delay the whole configuration
-    nf : ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ _ (of-natᵉ τ ·ₑ ε)
-    nf = delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ g ∘ᵐ η⊣
+    nf : ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ _ (of-durᵉ τ ·ₑ ε)
+    nf = delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ g ∘ᵐ η⊣
 
     -- the source: `η⊣`-naturality absorbs the state into the boxed body
     lhs≈ : ⟦ delay τ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt ≈ᵐ nf
@@ -554,13 +554,13 @@ sound-DELAY {ε = ε} τ St M q pSt pM =
     d : ε ≡ uₑ ·ₑ ε
     d = sym (·ₑ-identityˡ ε)
 
-    c : (of-natᵉ τ ·ₑ uₑ) ·ₑ ε ≡ of-natᵉ τ ·ₑ (uₑ ·ₑ ε)
-    c = ·ₑ-assoc (of-natᵉ τ) uₑ ε
+    c : (of-durᵉ τ ·ₑ uₑ) ·ₑ ε ≡ of-durᵉ τ ·ₑ (uₑ ·ₑ ε)
+    c = ·ₑ-assoc (of-durᵉ τ) uₑ ε
 
     -- the target: `delayᵀ` is natural, then algebraic; the leftover unit
     -- laws are pure transports
-    rhs≈ : (g ⋄ (delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣))
-         ≈ᵐ ε-substᵀ (sym c) ∘ᵐ ε-substᵀ (cong (of-natᵉ τ ·ₑ_) d) ∘ᵐ nf
+    rhs≈ : (g ⋄ (delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣))
+         ≈ᵐ ε-substᵀ (sym c) ∘ᵐ ε-substᵀ (cong (of-durᵉ τ ·ₑ_) d) ∘ᵐ nf
     rhs≈ =
       -- pull `Tᶠ g` through the delay (delayᵀ is natural)
         ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -585,7 +585,7 @@ sound-DELAY {ε = ε} τ St M q pSt pM =
       ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (delayᵀ-ε-substᵀ τ d))
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
 
-    cancel : T-≤ q ∘ᵐ (ε-substᵀ (sym c) ∘ᵐ ε-substᵀ (cong (of-natᵉ τ ·ₑ_) d) ∘ᵐ nf)
+    cancel : T-≤ q ∘ᵐ (ε-substᵀ (sym c) ∘ᵐ ε-substᵀ (cong (of-durᵉ τ ·ₑ_) d) ∘ᵐ nf)
            ≈ᵐ nf
     cancel =
       ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (ε-substᵀ-trans _ _))

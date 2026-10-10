@@ -411,7 +411,7 @@ waiting-instead =
 -- one tick short of it, the claim is refused: dropping the store from
 -- `duty-cycle` leaves three ticks against a resource promised in four
 
-one-tick-short : ¬ (uᵣ ·ᵣ opTime read ·ᵣ of-natʳ 2 ≾ᵣ [ 4 ,+∞⟩)
+one-tick-short : ¬ (uᵣ ·ᵣ opTime read ·ᵣ of-durʳ 2 ≾ᵣ [ 4 ,+∞⟩)
 one-tick-short = ≰!
 
 -- two resources on different schedules, claimed at the two points of

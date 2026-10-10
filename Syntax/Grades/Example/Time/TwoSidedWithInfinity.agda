@@ -26,6 +26,7 @@ open import Relation.Nullary.Negation.Core using (¬_)
 
 open import Data.Maybe.Base using (just; nothing)
 
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades
 
 open import Util.Equality
@@ -234,7 +235,7 @@ infixl 7 _⊔ᵢ_
 
 -- the grade of two-sided intervals with possibly-infinite max
 
-two-sided-intervals-with-∞ : Grade
+two-sided-intervals-with-∞ : Grade ℕᴰ
 two-sided-intervals-with-∞ = record
   { Carrier = Interval∞
   ; _·_              = _·ᵢ_
@@ -266,9 +267,9 @@ two-sided-intervals-with-∞ = record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵢ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ᵢ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ᵢ-irrelevant {i₁} {i₂}
-  ; of-nat            = λ n → [ n , ↑ n ] {fromWitness ≤-refl}
-  ; of-nat-zero       = eqᵢ refl refl
-  ; of-nat-plus       = eqᵢ refl refl
+  ; of-dur            = λ n → [ n , ↑ n ] {fromWitness ≤-refl}
+  ; of-dur-zero       = eqᵢ refl refl
+  ; of-dur-plus       = eqᵢ refl refl
   }
 
 ------------------------------------------------------------------------
@@ -469,7 +470,7 @@ infixl 7 _⊔ʷ_
 
 -- the grade of two-sided intervals with a formal greatest grade
 
-two-sided-intervals-with-⊤ : Grade
+two-sided-intervals-with-⊤ : Grade ℕᴰ
 two-sided-intervals-with-⊤ = record
   { Carrier           = Interval∞⊤
   ; _·_               = _·ʷ_
@@ -497,7 +498,7 @@ two-sided-intervals-with-⊤ = record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ʷ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ʷ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ʷ-irrelevant {i₁} {i₂}
-  ; of-nat            = λ n → window [ n , ↑ n ] {fromWitness ≤-refl}
-  ; of-nat-zero       = cong window_ (eqᵢ refl refl)
-  ; of-nat-plus       = cong window_ (eqᵢ refl refl)
+  ; of-dur            = λ n → window [ n , ↑ n ] {fromWitness ≤-refl}
+  ; of-dur-zero       = cong window_ (eqᵢ refl refl)
+  ; of-dur-plus       = cong window_ (eqᵢ refl refl)
   }

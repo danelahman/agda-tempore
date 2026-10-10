@@ -57,7 +57,7 @@ tsi-seq = refl
 
 -- one time step is two half-unit delays
 
-tsi-tick : Grade.of-nat T.dense-two-sided-intervals-with-∞ 1
+tsi-tick : Grade.of-dur T.dense-two-sided-intervals-with-∞ 1
          ≡ T.[ 1 / 2 , ↑ 1 / 2 ] T.·ᵢ T.[ 1 / 2 , ↑ 1 / 2 ]
 tsi-tick = refl
 

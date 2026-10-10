@@ -31,7 +31,7 @@ tsi→lsi = record
   ; map-·        = refl
   ; map-⊤        = refl
   ; map-⊔        = refl
-  ; map-of-nat   = refl
+  ; map-of-dur   = refl
   }
 
 twoSidedIntervalsToLeftSidedIntervalsGradeSystem : GradeSystem

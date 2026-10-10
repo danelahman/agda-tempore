@@ -3,7 +3,7 @@
 --                                                                    --
 -- The energy grade `[0, e ]` states "at most `e` units spent". It    --
 -- has the carrier, sum, order, join and `⊤ = [0, ∞ ]` of the         --
--- right-sided intervals, with `of-nat` constantly `[0, ↑ 0 ]`:       --
+-- right-sided intervals, with `of-dur` constantly `[0, ↑ 0 ]`:       --
 -- `delay` spends time and no energy, and energy is spent by          --
 -- operations alone.                                                  --
 --                                                                    --
@@ -19,6 +19,7 @@
 
 module Syntax.Grades.Example.Product.RightSidedTimeEnergy where
 
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades using (Grade)
 open import Syntax.Grades.Product using (_×ᵍ_)
 open import Syntax.Grades.Example.Time.RightSided
@@ -28,7 +29,7 @@ open import Util.Equality
 
 -- energy: at most so many units, idling free
 
-energy : Grade
+energy : Grade ℕᴰ
 energy = record
   { Carrier         = R.Carrier
   ; _·_             = R._·_
@@ -36,7 +37,7 @@ energy = record
   ; _≾_             = R._≾_
   ; ⊤               = R.⊤
   ; _⊔_             = R._⊔_
-  ; of-nat          = λ _ → [0, ↑ 0 ]
+  ; of-dur          = λ _ → [0, ↑ 0 ]
   ; ·-identityˡ     = R.·-identityˡ
   ; ·-identityʳ     = R.·-identityʳ
   ; ·-assoc         = R.·-assoc
@@ -55,12 +56,12 @@ energy = record
   ; ·-distribʳ-⊔-≾  = R.·-distribʳ-⊔-≾
   ; ≾-zero-productˡ = λ {c} {d} → R.≾-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → R.≾-zero-productʳ {c} {d}
-  ; of-nat-zero     = refl
-  ; of-nat-plus     = refl
+  ; of-dur-zero     = refl
+  ; of-dur-plus     = refl
   ; u-least?        = R.u-least?
   ; ·-comm?         = R.·-comm?
   }
   where module R = Grade right-sided-intervals
 
-right-sided-time×energy : Grade
+right-sided-time×energy : Grade ℕᴰ
 right-sided-time×energy = right-sided-intervals ×ᵍ energy

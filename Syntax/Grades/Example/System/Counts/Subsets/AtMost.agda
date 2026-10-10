@@ -135,8 +135,8 @@ mapₒ-⊔ any-run        Q              = sym (⊤ᵛ-⊔ᵛ (mapₒ Q))
 ------------------------------------------------------------------------
 -- Time draws on no counter
 
-mapₒ-of-nat : (k : ℕ) → mapₒ (Grade.of-nat right-sided k) ≡ uᵛ
-mapₒ-of-nat k =
+mapₒ-of-dur : (k : ℕ) → mapₒ (Grade.of-dur right-sided k) ≡ uᵛ
+mapₒ-of-dur k =
   tabulate-uᵛ (need (⟨ k ⟩ ∷ []))
     (λ i → cong upto (trans (⊔-identityʳ (occ i ⟨ k ⟩)) (occ-⟨⟩ i k)))
 
@@ -147,11 +147,11 @@ subsets→at-most-counts : right-sided →ᵍ at-most-counts n
 subsets→at-most-counts = record
   { map          = mapₒ
   ; map-monotone = λ {P} {Q} → mapₒ-monotone {P} {Q}
-  ; map-u        = mapₒ-of-nat 0
+  ; map-u        = mapₒ-of-dur 0
   ; map-·        = λ {P} {Q} → mapₒ-· P Q
   ; map-⊤        = refl
   ; map-⊔        = λ {P} {Q} → mapₒ-⊔ P Q
-  ; map-of-nat   = λ {k} → mapₒ-of-nat k
+  ; map-of-dur   = λ {k} → mapₒ-of-dur k
   }
 
 subsetsToAtMostCountsGradeSystem : GradeSystem

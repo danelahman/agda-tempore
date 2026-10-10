@@ -2,6 +2,7 @@ module Util.Monad where
 
 open import Function.Base using (const; _∘_)
 
+open import Syntax.Durations using (Duration)
 open import Syntax.Grades
 
 open import Util.Equality
@@ -17,7 +18,7 @@ open import Util.Equality
 -- The laws are stated up to a transport along the grade monoid's laws, since
 -- the two sides sit at grades that are equal but not definitionally so.
 
-record GradedMonad (G : Grade) : Set₁ where
+record GradedMonad {D : Duration} (G : Grade D) : Set₁ where
 
   open Grade G
 

@@ -61,5 +61,5 @@ lsi-top = refl
 
 -- `n` time steps, as a grade
 
-lsi-of-nat : Grade.of-nat left-sided-intervals 7 ≡ [ 7 ,+∞⟩
-lsi-of-nat = refl
+lsi-of-dur : Grade.of-dur left-sided-intervals 7 ≡ [ 7 ,+∞⟩
+lsi-of-dur = refl

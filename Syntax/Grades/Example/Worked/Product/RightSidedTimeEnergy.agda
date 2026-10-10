@@ -46,7 +46,7 @@ node o = ([0, ↑ slow o ] , [0, ↑ draws o ])
 -- the `uplink` run: read, idle two ticks, send
 
 uplink : Carrier
-uplink = node read · of-nat 2 · node send
+uplink = node read · of-dur 2 · node send
 
 -- a budget of 30 steps and 12 units
 
@@ -55,7 +55,7 @@ budget = ([0, ↑ 30 ] , [0, ↑ 12 ])
 
 -- idling is free
 
-idle : of-nat 7 ≡ ([0, ↑ 7 ] , [0, ↑ 0 ])
+idle : of-dur 7 ≡ ([0, ↑ 7 ] , [0, ↑ 0 ])
 idle = refl
 
 -- an uplink takes nine steps at worst and draws six units
@@ -75,8 +75,8 @@ three-uplinks-overdraw = ⋠! (uplink · uplink · uplink) budget
 
 -- idling for 31 steps draws nothing but misses the deadline
 
-long-idle-late : ¬ (of-nat 31 ≾ budget)
-long-idle-late = ⋠! (of-nat 31) budget
+long-idle-late : ¬ (of-dur 31 ≾ budget)
+long-idle-late = ⋠! (of-dur 31) budget
 
 -- the greatest grade: no deadline, no energy bound
 

@@ -331,8 +331,8 @@ C-sub-perform : ∀ {Γ Γ' A ε} → (σ : Sub [] Γ Γ') → (op : Op)
 C-sub-perform []ˢ      op V M = refl
 C-sub-perform (s ◅ σ) op V M = cong (C-sub₀ s) (C-sub-perform σ op V M)
 
-C-sub-delay : ∀ {Γ Γ' A ε} → (σ : Sub [] Γ Γ') → (τ : ℕ)
-            → (M : Γ' ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
+C-sub-delay : ∀ {Γ Γ' A ε} → (σ : Sub [] Γ Γ') → (τ : 𝔻)
+            → (M : Γ' ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
             → C-sub σ (delay τ M) ≡ delay τ (C-sub (cong-⟨⟩-subˢ σ) M)
 C-sub-delay []ˢ      τ M = refl
 C-sub-delay (s ◅ σ) τ M = cong (C-sub₀ s) (C-sub-delay σ τ M)

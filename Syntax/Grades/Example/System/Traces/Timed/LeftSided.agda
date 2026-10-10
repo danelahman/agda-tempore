@@ -136,7 +136,7 @@ traces→left-sided-intervals = record
   ; map-·        = λ {P} {Q} → mapₒ-· P Q
   ; map-⊤        = refl
   ; map-⊔        = λ {P} {Q} → mapₒ-⊔ P Q
-  ; map-of-nat   = λ {n} → eq𝕀 (duration-⟨⟩ n)
+  ; map-of-dur   = λ {n} → eq𝕀 (duration-⟨⟩ n)
   }
 
 tracesToLeftSidedIntervalsGradeSystem : GradeSystem

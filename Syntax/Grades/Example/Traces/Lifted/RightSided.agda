@@ -71,6 +71,7 @@ open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Data.Maybe.Base using (just; nothing)
 
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades
 
 open Order.TraceOrder O using (_≼_; ≼-trans; ≼-nil; ≼-ε-inv)
@@ -342,14 +343,14 @@ unbounded  ⊔ᵇ _          = unbounded
 ------------------------------------------------------------------------
 -- The inclusion of ℕ, and deciding the order
 
-of-natᵇ : ℕ → Bounds
-of-natᵇ n = within (of-nat n)
+of-durᵇ : ℕ → Bounds
+of-durᵇ n = within (of-dur n)
 
-of-natᵇ-zero : of-natᵇ 0 ≡ uᵇ
-of-natᵇ-zero = cong within_ of-nat-zero
+of-durᵇ-zero : of-durᵇ 0 ≡ uᵇ
+of-durᵇ-zero = cong within_ of-dur-zero
 
-of-natᵇ-plus : {m n : ℕ} → of-natᵇ (m + n) ≡ of-natᵇ m ·ᵇ of-natᵇ n
-of-natᵇ-plus {m} {n} = cong within_ (of-nat-plus {m} {n})
+of-durᵇ-plus : {m n : ℕ} → of-durᵇ (m + n) ≡ of-durᵇ m ·ᵇ of-durᵇ n
+of-durᵇ-plus {m} {n} = cong within_ (of-dur-plus {m} {n})
 
 infix 5 _≾?_
 
@@ -362,7 +363,7 @@ unbounded  ≾? unbounded  = yes tt
 ------------------------------------------------------------------------
 -- The grade of antichains of timed traces, read as upper bounds
 
-right-sided : Grade
+right-sided : Grade ℕᴰ
 right-sided = record
   { Carrier         = Bounds
   ; _·_             = _·ᵇ_
@@ -390,7 +391,7 @@ right-sided = record
   ; ≾-zero-productˡ = λ {c} {d} → ≾-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾-zero-productʳ {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → ≾-irrelevant {c} {d}
-  ; of-nat          = of-natᵇ
-  ; of-nat-zero     = of-natᵇ-zero
-  ; of-nat-plus     = λ {m} {n} → of-natᵇ-plus {m} {n}
+  ; of-dur          = of-durᵇ
+  ; of-dur-zero     = of-durᵇ-zero
+  ; of-dur-plus     = λ {m} {n} → of-durᵇ-plus {m} {n}
   }

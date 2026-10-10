@@ -140,6 +140,12 @@ open import Syntax.Normalisation
 -- GRADES
 ---------
 
+---- Durations: the monoid of delays, its morphisms, stepped durations,
+---- and the natural numbers as durations
+
+open import Syntax.Durations
+open import Syntax.Durations.Nat
+
 ---- Grades, grade morphisms, and grade systems
 
 open import Syntax.Grades

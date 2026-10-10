@@ -3,12 +3,13 @@
 --                                                                    --
 -- `Head0 t s` reads off `t`'s head, descending only structure that   --
 -- takes no time. This is `HeadFaithful`'s `ret≢op`/`op-inj` at zero  --
--- delay.                                                             --
+-- delay. The durations are stepped, so that no time is a sum only of --
+-- no time.                                                           --
 ------------------------------------------------------------------------
 
 open import Data.Empty
-open import Data.Nat using (ℕ; zero; suc; _+_)
 
+open import Syntax.Durations using (Stepped)
 open import Syntax.Grades
 open import Syntax.LanguageSpec
 open import Syntax.Operations
@@ -25,12 +26,14 @@ module OperationalSemantics.Adequacy.PSh.TreeShape
          (Wld : World (GradeSystem.RGrade (LanguageSpec.Grades Spec)))
          (GTy : GroundTypes Spec (B.PShCat (LanguageSpec.Grades Spec) Wld)
                                  (F.PShFut (LanguageSpec.Grades Spec) Wld))
+         (st : Stepped (GradeSystem.Dur (LanguageSpec.Grades Spec)))
        where
 
 open LanguageSpec Spec
 open GradeSystemInterface Grades
 open Operations Ops
 open World Wld
+open Stepped st using (zero-sumˡ; zero-sumʳ)
 
 open import DenotationalSemantics.Model.Example.PSh.Base Grades Wld
 open import DenotationalSemantics.Model.Example.PSh.Modality.Future Grades Wld
@@ -49,7 +52,10 @@ op-shape-inj : ∀ {op op'} → op-shape op ≡ op-shape op' → op ≡ op'
 op-shape-inj refl = refl
 
 -- `sub` nodes are transparent (reduction discards a `coerce`); a delay is
--- descended only when it delays by nothing, along the canonical zero-step.
+-- descended only when it delays by nothing, along a zero-step.
+
+⊑-zero : ∀ {τ w} → τ ≡ 0ᴰ → w ⊑[ mapᵉ (of-durᵉ τ) ] w
+⊑-zero refl = ⊑-delay0
 
 data Head0 {A : PSh} : ∀ {ε w} → Tˢ A ε w → Shape → Set where
 
@@ -69,13 +75,14 @@ data Head0 {A : PSh} : ∀ {ε w} → Tˢ A ε w → Shape → Set where
           --------------------------------------------
           → Head0 (op-node op v k kc kn) (op-shape op)
 
-  h-delay : ∀ {ε w s}
-          → {k : ∀ {w'} → w ⊑[ mapᵉ (of-natᵉ 0) ] w' → Tˢ A ε w'}
-          → {kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-natᵉ 0) ] w') (r : w' ⊑[ uᵣ ] w'')
+  h-delay : ∀ {ε w s τ}
+          → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
+          → {kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
                 → k (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (k q)}
-          → Head0 (k ⊑-delay0) s
-          ------------------------------
-          → Head0 (delay-node 0 k kn) s
+          → (z : τ ≡ 0ᴰ)
+          → Head0 (k (⊑-zero z)) s
+          -----------------------------
+          → Head0 (delay-node τ k kn) s
 
   h-sub   : ∀ {ε ε' w s} {e : ε ≾ₑ ε'} {t : Tˢ A ε w}
           → Head0 t s
@@ -92,7 +99,8 @@ head0-unique : ∀ {A ε w s s'} {t : Tˢ A ε w}
 head0-unique h-leaf      h-leaf      = refl
 head0-unique h-op        h-op        = refl
 head0-unique (h-sub h)   (h-sub h')  = head0-unique h h'
-head0-unique (h-delay h) (h-delay h') = head0-unique h h'
+head0-unique {t = delay-node _ k _} (h-delay z h) (h-delay z' h') =
+  head0-unique h (subst (λ q → Head0 (k q) _) (⊑-irrelevant _ _) h')
 
 -- Grade substitution is invisible.
 
@@ -111,9 +119,9 @@ head0-ε-subst⁺ refl h = h
 -- All zero-steps out of a world into the same world agree (`⊑-irrelevant`),
 -- which is what the two delay collapses need.
 
-head0-⊑ : ∀ {A ε w s}
-        → (k : ∀ {w'} → w ⊑[ mapᵉ (of-natᵉ 0) ] w' → Tˢ A ε w')
-        → (q q' : w ⊑[ mapᵉ (of-natᵉ 0) ] w)
+head0-⊑ : ∀ {A ε w s τ}
+        → (k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w')
+        → (q q' : w ⊑[ mapᵉ (of-durᵉ τ) ] w)
         → Head0 (k q) s
         ----------------
         → Head0 (k q') s
@@ -131,26 +139,23 @@ mutual
 
   head0-≈ᵗ (leaf-≈ _)   h-leaf              = h-leaf
   head0-≈ᵗ (op-≈ _ _)   h-op                = h-op
-  head0-≈ᵗ (delay-≈ ek) (h-delay h)         = h-delay (head0-≈ᵗ (ek ⊑-delay0) h)
+  head0-≈ᵗ (delay-≈ ek) (h-delay z h)       = h-delay z (head0-≈ᵗ (ek _) h)
   head0-≈ᵗ (sub-≈ et)   (h-sub h)           = h-sub (head0-≈ᵗ et h)
   head0-≈ᵗ sub-u        (h-sub h)           = h
   head0-≈ᵗ sub-∘        (h-sub (h-sub h))   = h-sub h
-  head0-≈ᵗ sub-delay    (h-sub (h-delay h)) = h-delay (h-sub h)
+  head0-≈ᵗ sub-delay    (h-sub (h-delay z h)) = h-delay z (h-sub h)
   head0-≈ᵗ sub-op       (h-sub h-op)        = h-op
 
   -- a zero delay *is* its own continuation, at the only zero-step there is
-  head0-≈ᵗ (delay-zero {k = k} {q₀ = q₀} e) (h-delay h) =
-    head0-ε-subst⁺ e (head0-⊑ k ⊑-delay0 q₀ h)
+  head0-≈ᵗ (delay-zero {k = k} {q₀ = q₀} e) (h-delay z h) =
+    head0-ε-subst⁺ e (head0-⊑ k _ q₀ h)
 
-  -- two zero delays are the one zero delay: the split of the canonical step is
-  -- the canonical step
-  head0-≈ᵗ (delay-plus {τ₁ = zero} {τ₂ = zero} {k = k} hk e) (h-delay (h-delay h)) =
+  -- two zero delays are the one zero delay: the split of a zero-step is a
+  -- zero-step
+  head0-≈ᵗ (delay-plus {k = k} hk e) (h-delay z₁ (h-delay z₂ h)) =
     head0-ε-subst⁺ e
-      (h-delay (head0-⊑ k (⊑-split ⊑-delay0 ⊑-delay0) ⊑-delay0
-                          (head0-≈ᵗ (hk ⊑-delay0 ⊑-delay0) h)))
-  -- a delay that delays cannot be descended
-  head0-≈ᵗ (delay-plus {τ₁ = zero} {τ₂ = suc _} hk e) (h-delay ())
-  head0-≈ᵗ (delay-plus {τ₁ = suc _} hk e) ()
+      (h-delay (trans (cong₂ _+ᴰ_ z₁ z₂) (+ᴰ-identityˡ 0ᴰ))
+               (head0-⊑ k _ _ (head0-≈ᵗ (hk _ _) h)))
 
   head0-≈ᵗ (≈ᵗ-sym et)       h = head0-≈ᵗ⁻ et h
   head0-≈ᵗ (≈ᵗ-trans et et') h = head0-≈ᵗ et' (head0-≈ᵗ et h)
@@ -162,28 +167,21 @@ mutual
 
   head0-≈ᵗ⁻ (leaf-≈ _)   h-leaf              = h-leaf
   head0-≈ᵗ⁻ (op-≈ _ _)   h-op                = h-op
-  head0-≈ᵗ⁻ (delay-≈ ek) (h-delay h)         = h-delay (head0-≈ᵗ⁻ (ek ⊑-delay0) h)
+  head0-≈ᵗ⁻ (delay-≈ ek) (h-delay z h)       = h-delay z (head0-≈ᵗ⁻ (ek _) h)
   head0-≈ᵗ⁻ (sub-≈ et)   (h-sub h)           = h-sub (head0-≈ᵗ⁻ et h)
   head0-≈ᵗ⁻ sub-u        h                   = h-sub h
   head0-≈ᵗ⁻ sub-∘        (h-sub h)           = h-sub (h-sub h)
-  head0-≈ᵗ⁻ sub-delay    (h-delay (h-sub h)) = h-sub (h-delay h)
+  head0-≈ᵗ⁻ sub-delay    (h-delay z (h-sub h)) = h-sub (h-delay z h)
   head0-≈ᵗ⁻ sub-op       h-op                = h-sub h-op
 
   head0-≈ᵗ⁻ (delay-zero {k = k} {q₀ = q₀} e) h =
-    h-delay (head0-⊑ k q₀ ⊑-delay0 (head0-ε-subst e h))
+    h-delay refl (head0-⊑ k q₀ _ (head0-ε-subst e h))
 
-  head0-≈ᵗ⁻ (delay-plus {τ₁ = zero} {τ₂ = zero} {k = k} hk e) h
+  head0-≈ᵗ⁻ (delay-plus {k = k} hk e) h
     with head0-ε-subst e h
-  ... | h-delay h' =
-    h-delay (h-delay
-      (head0-≈ᵗ⁻ (hk ⊑-delay0 ⊑-delay0)
-        (head0-⊑ k ⊑-delay0 (⊑-split ⊑-delay0 ⊑-delay0) h')))
-  head0-≈ᵗ⁻ (delay-plus {τ₁ = zero} {τ₂ = suc _} hk e) h
-    with head0-ε-subst e h
-  ... | ()
-  head0-≈ᵗ⁻ (delay-plus {τ₁ = suc _} hk e) h
-    with head0-ε-subst e h
-  ... | ()
+  ... | h-delay z h' =
+    h-delay (zero-sumˡ z) (h-delay (zero-sumʳ z)
+      (head0-≈ᵗ⁻ (hk _ _) (head0-⊑ k _ _ h')))
 
   head0-≈ᵗ⁻ (≈ᵗ-sym et)       h = head0-≈ᵗ et h
   head0-≈ᵗ⁻ (≈ᵗ-trans et et') h = head0-≈ᵗ⁻ et (head0-≈ᵗ⁻ et' h)

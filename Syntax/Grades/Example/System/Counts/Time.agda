@@ -4,8 +4,8 @@
 -- counts.                                                            --
 --                                                                    --
 -- In a count grade, `n` time steps are the unit for every `n`, so    --
--- `of-nat 1` and `of-nat 0` coincide; a time grade distinguishes     --
--- them, so no morphism from counts to time preserves `of-nat`.       --
+-- `of-dur 1` and `of-dur 0` coincide; a time grade distinguishes     --
+-- them, so no morphism from counts to time preserves `of-dur`.       --
 --                                                                    --
 -- A cost model `ks` weighs the counters, and `weigh ks` sums the     --
 -- weighted counts in `G`, the bound of each counter taken `k` times. --
@@ -22,6 +22,8 @@
 -- the images lies below the image of the join.                       --
 ------------------------------------------------------------------------
 
+open import Syntax.Durations using (Duration)
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades
 
 module Syntax.Grades.Example.System.Counts.Time where
@@ -40,13 +42,13 @@ import Syntax.Grades.Example.Counts.Power as Power
 ------------------------------------------------------------------------
 -- No projection onto a grade that counts time
 
-module _ (G H : Grade) where
+module _ (G H : Grade ℕᴰ) where
 
   open Power G using (power)
 
-  no-projection : ∀ {n} → ¬ (Grade.of-nat H 1 ≡ Grade.of-nat H 0)
+  no-projection : ∀ {n} → ¬ (Grade.of-dur H 1 ≡ Grade.of-dur H 0)
                 → ¬ (power n →ᵍ H)
-  no-projection ne F = ne (trans (sym (map-of-nat {1})) (map-of-nat {0}))
+  no-projection ne F = ne (trans (sym (map-of-dur {1})) (map-of-dur {0}))
     where open _→ᵍ_ F
 
 -- at the two time grades the counts are built from
@@ -71,7 +73,7 @@ no-at-least-counts→left-sided-intervals =
 ------------------------------------------------------------------------
 -- Weighted sums, in a commutative grade
 
-module Weigh (G : Grade) (comm : Commutative _≡_ (Grade._·_ G)) where
+module Weigh {D : Duration} (G : Grade D) (comm : Commutative _≡_ (Grade._·_ G)) where
 
   open Grade G renaming (Carrier to C)
   open Power G using (_·ᵛ_; _⊔ᵛ_; uᵛ; ⊤ᵛ; _≾ᵛ_; ⊔ᵛ-ubˡ; ⊔ᵛ-ubʳ)
@@ -148,8 +150,9 @@ module Weigh (G : Grade) (comm : Commutative _≡_ (Grade._·_ G)) where
   paired-u : ∀ {n} (ks : Vec ℕ n) → paired ks uᵛ u ≡ u
   paired-u ks = trans (cong (u ·_) (weigh-u ks)) (·-identityˡ u)
 
-  paired-of-nat : ∀ {n} (ks : Vec ℕ n) (m : ℕ) → paired ks uᵛ (of-nat m) ≡ of-nat m
-  paired-of-nat ks m = trans (cong (of-nat m ·_) (weigh-u ks)) (·-identityʳ (of-nat m))
+  paired-of-dur : ∀ {n} (ks : Vec ℕ n) (τ : Duration.Carrier D)
+                → paired ks uᵛ (of-dur τ) ≡ of-dur τ
+  paired-of-dur ks τ = trans (cong (of-dur τ ·_) (weigh-u ks)) (·-identityʳ (of-dur τ))
 
   paired-· : ∀ {n} (ks : Vec ℕ n) (c d : Vec C n) (s t : C)
            → paired ks (c ·ᵛ d) (s · t) ≡ paired ks c s · paired ks d t

@@ -82,7 +82,7 @@ idling = delay 5 (return ⋆)          -- ⟨ ([0, 5 ] , [0, 0 ]) ⟩
 -- and a reading goes stale under it all the same, on the time
 -- component
 
-reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-natʳ 1 ≾ᵣ uᵣ)
+reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-durʳ 1 ≾ᵣ uᵣ)
 reading-stale-after-idling (late , _) = ≰! late
 
 ------------------------------------------------------------------------
@@ -162,7 +162,7 @@ drained (_ , overdrawn) = ≰! overdrawn
 
 -- and idling past ten steps drifts it, having drawn nothing
 
-drifted : ¬ (uᵣ ·ᵣ of-natʳ 11 ≾ᵣ calibration)
+drifted : ¬ (uᵣ ·ᵣ of-durʳ 11 ≾ᵣ calibration)
 drifted (late , _) = ≰! late
 
 ------------------------------------------------------------------------

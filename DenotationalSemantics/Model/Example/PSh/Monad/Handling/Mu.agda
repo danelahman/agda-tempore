@@ -20,7 +20,6 @@ module DenotationalSemantics.Model.Example.PSh.Monad.Handling.Mu
                               (F.PShFut (LanguageSpec.Grades S) Wld))
        where
 
-open import Data.Nat using (ℕ)
 open import Data.Product using (_,_; proj₁; proj₂)
 
 open import Util.Equality
@@ -97,22 +96,22 @@ box-ε-substˢ-fun refl b q r y = refl
 -- argument), since `_≈ᵗ_` does not determine it.
 
 delay-ε-substˢ-nat : ∀ {A ε₁ ε₂ τ w} → (e : ε₁ ≡ ε₂)
-                   → (f : ∀ {w'} → w ⊑[ mapᵉ (of-natᵉ τ) ] w' → Tˢ A ε₁ w')
-                   → (fn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-natᵉ τ) ] w')
+                   → (f : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε₁ w')
+                   → (fn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w')
                              (r : w' ⊑[ uᵣ ] w'')
                          → f (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (f q))
-                   → ∀ {w' w''} (q : w ⊑[ mapᵉ (of-natᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+                   → ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
                    → ε-substˢ e (f (⊑ρ∘ᵘ q r)) ≈ᵗ transportᵗ r (ε-substˢ e (f q))
 delay-ε-substˢ-nat e f fn q r =
   ≈ᵗ-trans (ε-substˢ-congᵗ e (fn q r))
            (≡→≈ᵗ (sym (transportᵗ-ε-substˢ r e (f q))))
 
 delay-ε-substˢ : ∀ {A ε₁ ε₂ τ w} → (e : ε₁ ≡ ε₂)
-               → (f : ∀ {w'} → w ⊑[ mapᵉ (of-natᵉ τ) ] w' → Tˢ A ε₁ w')
-               → (fn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-natᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+               → (f : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε₁ w')
+               → (fn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
                      → f (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (f q))
                → delay-node τ (λ q → ε-substˢ e (f q)) (delay-ε-substˢ-nat e f fn)
-               ≈ᵗ ε-substˢ (cong (of-natᵉ τ ·ₑ_) e) (delay-node τ f fn)
+               ≈ᵗ ε-substˢ (cong (of-durᵉ τ ·ₑ_) e) (delay-node τ f fn)
 delay-ε-substˢ refl f fn = delay-≈ (λ q → ≈ᵗ-refl _)
 
 -- Advancing a necessitated parameter under a node (`box▸`) agrees with
@@ -223,7 +222,7 @@ T-alg-of-handlerˢ-μˢ {P = P} {A = A} {ε' = ε'} {ε'' = ε''} {w = w} bc h p
                    (strˢ P (box▸ P (⊑ρ∘ᵘ q r) (app (Eternalᵒ.necᵉ bc) pv)) (k (⊑ρ∘ᵘ q r) y)))
 T-alg-of-handlerˢ-μˢ {P = P} {A = A} {ε' = ε'} {ε'' = ε''} {w = w} bc h pv
                      (delay-node {ε = ε₁} τ k kn) =
-  ≈ᵗ-trans (≡→≈ᵗ (T-alg-ε-substˢ bc h pv (sym (·ₑ-assoc (of-natᵉ τ) ε₁ ε')) _))
+  ≈ᵗ-trans (≡→≈ᵗ (T-alg-ε-substˢ bc h pv (sym (·ₑ-assoc (of-durᵉ τ) ε₁ ε')) _))
   (≈ᵗ-trans (ε-substˢ-congᵗ E1 (ε-substˢ-congᵗ E2
               (≈ᵗ-trans
                 (delay-≈ (λ q →
@@ -239,18 +238,18 @@ T-alg-of-handlerˢ-μˢ {P = P} {A = A} {ε' = ε'} {ε'' = ε''} {w = w} bc h p
                   (trans (cong (λ z → ε-substˢ z X) uip)
                          (sym (ε-substˢ-trans e2 e1 X)))))))
   where
-    E1 = cong (_·ₑ ε'') (sym (·ₑ-assoc (of-natᵉ τ) ε₁ ε'))
-    E2 = sym (·ₑ-assoc (of-natᵉ τ) (ε₁ ·ₑ ε') ε'')
-    E3 = cong (of-natᵉ τ ·ₑ_) (sym (·ₑ-assoc ε₁ ε' ε''))
-    e1 = sym (·ₑ-assoc (of-natᵉ τ ·ₑ ε₁) ε' ε'')
-    e2 = sym (·ₑ-assoc (of-natᵉ τ) ε₁ (ε' ·ₑ ε''))
+    E1 = cong (_·ₑ ε'') (sym (·ₑ-assoc (of-durᵉ τ) ε₁ ε'))
+    E2 = sym (·ₑ-assoc (of-durᵉ τ) (ε₁ ·ₑ ε') ε'')
+    E3 = cong (of-durᵉ τ ·ₑ_) (sym (·ₑ-assoc ε₁ ε' ε''))
+    e1 = sym (·ₑ-assoc (of-durᵉ τ ·ₑ ε₁) ε' ε'')
+    e2 = sym (·ₑ-assoc (of-durᵉ τ) ε₁ (ε' ·ₑ ε''))
 
-    f-tgt : ∀ {w'} → w ⊑[ mapᵉ (of-natᵉ τ) ] w' → Tˢ A (ε₁ ·ₑ (ε' ·ₑ ε'')) w'
+    f-tgt : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A (ε₁ ·ₑ (ε' ·ₑ ε'')) w'
     f-tgt q = T-alg-of-handlerˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) q)
                 (Tˢᶠ (T-alg-of-handlerᵀ bc h)
                   (strˢ P (box▸ P q (app (Eternalᵒ.necᵉ bc) pv)) (k q)))
 
-    fn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-natᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+    fn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
        → f-tgt (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (f-tgt q)
     fn q r =
       ≈ᵗ-trans

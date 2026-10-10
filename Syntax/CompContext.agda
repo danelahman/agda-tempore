@@ -116,10 +116,10 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
     
     delay[_]ₖ : ∀ {A ε}
         → state ≤ᶠ f
-        → (τ : ℕ)
-        → Γ ⟨ of-natʳ τ ⟩ ⊢K[ f ◁ CH ]⦂ A ‼ ε
+        → (τ : 𝔻)
+        → Γ ⟨ of-durʳ τ ⟩ ⊢K[ f ◁ CH ]⦂ A ‼ ε
         -----------------------------------------
-        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (of-natᵉ τ ·ₑ ε)
+        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (of-durᵉ τ ·ₑ ε)
 
     unbox[_]ₖ : ∀ {A A₀ C ρ₀ ρ'}
         → state ≤ᶠ f
@@ -176,7 +176,7 @@ rel-hole-ctx (perform[_]ₖ p op V K) Γ' =
 rel-hole-ctx (handle[ p ]ₖ K `with H `in N) Γ' =
   rel-hole-ctx K Γ'
 rel-hole-ctx (delay[ p ]ₖ τ K) Γ' =
-  rel-hole-ctx K (Γ' ⟨ of-natʳ τ ⟩)
+  rel-hole-ctx K (Γ' ⟨ of-durʳ τ ⟩)
 rel-hole-ctx (unbox[_]ₖ {A = A} p x rel w K) Γ' =
   rel-hole-ctx K (Γ' ∷ A)
 rel-hole-ctx (box[_]ₖ {A = A} {ρ = ρ} p V K) Γ' =

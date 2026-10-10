@@ -76,7 +76,7 @@ tagged-relaying =
 -- `ρ ≾ᵣ uᵣ` asks the elapsed runs to be the empty one, so a reading is
 -- usable only where no lock stands between its binding and its use.
 
-reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ uᵣ)
+reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-durʳ 2 ≾ᵣ uᵣ)
 reading-stale-after-idling = fails
 
 reading-stale-after-an-operation : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
@@ -194,7 +194,7 @@ claiming-now-not-listed = failsᵉ uᵣ permit
 -- nor is one tick's idling, nor a reading followed by a store: a run
 -- that is not listed is refused however little it costs
 
-one-tick-not-listed : ¬ (uᵣ ·ᵣ of-natʳ 1 ≾ᵣ permit)
+one-tick-not-listed : ¬ (uᵣ ·ᵣ of-durʳ 1 ≾ᵣ permit)
 one-tick-not-listed = fails
 
 storing-not-listed : ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ permit)
@@ -276,7 +276,7 @@ permit-in-a-branch =
 -- other branch
 
 idling-not-covered-by-the-reading :
-  ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ permitting ⟅ ⌈ read ⌉ ⟆)
+  ¬ (uᵣ ·ᵣ of-durʳ 2 ≾ᵣ permitting ⟅ ⌈ read ⌉ ⟆)
 idling-not-covered-by-the-reading = fails
 
 reading-not-covered-by-the-idling :

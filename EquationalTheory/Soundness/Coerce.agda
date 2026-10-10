@@ -119,11 +119,11 @@ opᵀ-push op v k h q =
 
 -- The same for a delay: `delayᵀ-≤` and `delayᵀ-nat`.
 
-delayᵀ-push : ∀ {X A B ε ε'} → (τ : ℕ)
-            → (k : X →ᵐ [ of-natʳ τ ]ᵒ (Tᵒ A ε))
+delayᵀ-push : ∀ {X A B ε ε'} → (τ : 𝔻)
+            → (k : X →ᵐ [ of-durʳ τ ]ᵒ (Tᵒ A ε))
             → (h : A →ᵐ B) → (q : ε ≾ₑ ε')
             → (Tᶠ h ∘ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q)) ∘ᵐ delayᵀ {A} {ε} τ ∘ᵐ k
-            ≈ᵐ delayᵀ {B} {ε'} τ ∘ᵐ [ of-natʳ τ ]ᶠ (Tᶠ h ∘ᵐ T-≤ q) ∘ᵐ k
+            ≈ᵐ delayᵀ {B} {ε'} τ ∘ᵐ [ of-durʳ τ ]ᶠ (Tᶠ h ∘ᵐ T-≤ q) ∘ᵐ k
 delayᵀ-push τ k h q =
     ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -300,7 +300,7 @@ sound-subC-perform {op = op} w rel V M (pV , pM) (pV' , pM') =
 sound-subC-delay : ∀ {Γ A A' τ ε ε'}
                  → (w : A <:ᵛ A')
                  → (rel : ε ≾ₑ ε')
-                 → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
+                 → (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
                  → Soundᶜ== (subC-delay w rel M)
 sound-subC-delay {τ = τ} w rel M pM pM' =
     ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (⟦⟧ᶜᵗ-irr M pM pM'))))

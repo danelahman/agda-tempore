@@ -16,6 +16,8 @@ open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable
   using (True; False; toWitness; toWitnessFalse)
 
+open import Syntax.Durations using (Duration)
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades using (Grade)
 
 open import Util.Equality
@@ -33,7 +35,7 @@ open import Syntax.Grades.Example.Worked.Operations.Footprint using (touches)
 -- Each runs the grade's own decision procedure, so an ordering
 -- asserted the wrong way round does not typecheck.
 
-module _ {G : Grade} where
+module _ {D : Duration} {G : Grade D} where
 
   open Grade G
 
@@ -47,15 +49,15 @@ module _ {G : Grade} where
 
 module _ where
 
-  open Grade two-point-levels
+  open Grade (two-point-levels {ℕᴰ})
 
   -- a `Low` computation may be treated as `High`, not conversely
 
   low-⊑-high : Low ≾ High
-  low-⊑-high = ≾! {two-point-levels}
+  low-⊑-high = ≾! {G = two-point-levels {ℕᴰ}}
 
   high-⋢-low : ¬ (High ≾ Low)
-  high-⋢-low = ⋠! {two-point-levels}
+  high-⋢-low = ⋠! {G = two-point-levels {ℕᴰ}}
 
   -- reading `High` data raises the label for the rest of the run
 
@@ -64,7 +66,7 @@ module _ where
 
   -- waiting does not
 
-  idle : of-nat 5 · Low ≡ Low
+  idle : of-dur 5 · Low ≡ Low
   idle = refl
 
   -- at the sensor node, `logged` stays `Low` and `uplink`, which
@@ -73,14 +75,14 @@ module _ where
   logged-low : touches read · touches write ≡ Low
   logged-low = refl
 
-  uplink-high : touches read · of-nat 2 · touches send ≡ High
+  uplink-high : touches read · of-dur 2 · touches send ≡ High
   uplink-high = refl
 
 -- three taint labels: personal data, a key, the network
 
 module _ where
 
-  open Grade (taint-sets 3)
+  open Grade (taint-sets {ℕᴰ} 3)
 
   pii key net : TaintSet 3
   pii = label zero
@@ -88,18 +90,18 @@ module _ where
   net = label (suc (suc zero))
 
   pii-⊑-pii∪net : pii ≾ pii ∪ᵗ net
-  pii-⊑-pii∪net = ≾! {taint-sets 3}
+  pii-⊑-pii∪net = ≾! {G = taint-sets {ℕᴰ} 3}
 
   pii∪net-⋢-pii : ¬ (pii ∪ᵗ net ≾ pii)
-  pii∪net-⋢-pii = ⋠! {taint-sets 3}
+  pii∪net-⋢-pii = ⋠! {G = taint-sets {ℕᴰ} 3}
 
   -- incomparable labels
 
   pii-⋢-key : ¬ (pii ≾ key)
-  pii-⋢-key = ⋠! {taint-sets 3}
+  pii-⋢-key = ⋠! {G = taint-sets {ℕᴰ} 3}
 
   key-⋢-pii : ¬ (key ≾ pii)
-  key-⋢-pii = ⋠! {taint-sets 3}
+  key-⋢-pii = ⋠! {G = taint-sets {ℕᴰ} 3}
 
   -- sequencing collects the taints
 

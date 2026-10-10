@@ -86,7 +86,7 @@ open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans public
   hiding (NeTraces; neTraces; traces; sorted; nonempty; ne-ext; neSet;
           u; _·_; _∪_; ·-identityˡ; ·-identityʳ; ·-assoc;
           ·-distribˡ-∪; ·-distribʳ-∪; ·-zero-productˡ; ·-zero-productʳ;
-          of-nat; of-nat-zero; of-nat-plus)
+          of-dur; of-dur-zero; of-dur-plus)
 
 open WithDecEq _≟ₒ_ public
 
@@ -846,15 +846,15 @@ P ⊔ Q = acSet (traces P ++ traces Q) (++-ne (nonempty P) (nonempty Q))
 -- Inclusion of the natural numbers as pure delays
 --
 -- A natural number `m` becomes the singleton antichain containing the
--- pure delay of duration `m`, which is what a grade's `of-nat` asks
+-- pure delay of duration `m`, which is what a grade's `of-dur` asks
 -- for.
 
-of-nat : ℕ → Antichain
-of-nat m = singleton ⟨ m ⟩
+of-dur : ℕ → Antichain
+of-dur m = singleton ⟨ m ⟩
 
-of-nat-zero : of-nat 0 ≡ u
-of-nat-zero = refl
+of-dur-zero : of-dur 0 ≡ u
+of-dur-zero = refl
 
-of-nat-plus : {m k : ℕ} → of-nat (m + k) ≡ (of-nat m · of-nat k)
-of-nat-plus {m} {k} =
-  ac-ext {of-nat (m + k)} {of-nat m · of-nat k} (cong [_] (⟨⟩-hom m k))
+of-dur-plus : {m k : ℕ} → of-dur (m + k) ≡ (of-dur m · of-dur k)
+of-dur-plus {m} {k} =
+  ac-ext {of-dur (m + k)} {of-dur m · of-dur k} (cong [_] (⟨⟩-hom m k))

@@ -22,11 +22,12 @@
 -- `ctx-grade (Γ ⟨ ρ₁ ⟩ ⟨ ρ₂ ⟩) = (… · ρ₁) · ρ₂` of the calculus.      --
 ------------------------------------------------------------------------
 
+open import Syntax.Durations using (Duration)
 open import Syntax.Grades
 
 open import DenotationalSemantics.Model.Category
 
-module DenotationalSemantics.Model.Modality.Past (Cat : Category) (G : Grade) where
+module DenotationalSemantics.Model.Modality.Past (Cat : Category) {D : Duration} (G : Grade D) where
 
 open import Util.Equality
 

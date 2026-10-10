@@ -2,17 +2,19 @@
 -- The product of two grades, and of two grade systems.               --
 --                                                                    --
 -- `G₁ ×ᵍ G₂` is the componentwise product: `_·_`, `u`, `⊤`, `_⊔_`    --
--- and the order are those of the components, and `of-nat n` is       --
--- `(of-nat n , of-nat n)`, a time step advancing both components.    --
+-- and the order are those of the components, and `of-dur τ` is       --
+-- `(of-dur τ , of-dur τ)`, a delay advancing both components; the    --
+-- components share their durations.                                  --
 -- Every law holds componentwise, the zero-product laws included, and --
 -- the order is decided componentwise. `u-least?` and `·-comm?` are   --
 -- declared when both components declare them.                        --
 --                                                                    --
 -- Both projections are grade morphisms, each field of `_→ᵍ_` holding --
 -- by `refl`, and pairing of morphisms `⟨ f , g ⟩ᵍ` has the universal --
--- property. The product of two grade systems pairs the effect grades --
--- and the resource grades, with the componentwise projection, and    --
--- its two projections are maps of grade systems.                     --
+-- property. The product of two grade systems over the same           --
+-- durations pairs the effect grades and the resource grades, with    --
+-- the componentwise projection, and its two projections are maps of  --
+-- grade systems.                                                     --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Product where
@@ -22,6 +24,7 @@ open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
 open import Relation.Nullary.Decidable using (_×-dec_)
 
+open import Syntax.Durations
 open import Syntax.Grades
 
 open import Util.Equality
@@ -29,7 +32,7 @@ open import Util.Equality
 ------------------------------------------------------------------------
 -- Composition of morphisms
 
-module _ {G₁ G₂ G₃ : Grade} where
+module _ {D : Duration} {G₁ G₂ G₃ : Grade D} where
 
   open _→ᵍ_
 
@@ -43,7 +46,7 @@ module _ {G₁ G₂ G₃ : Grade} where
     ; map-·        = trans (cong (map g) (map-· f)) (map-· g)
     ; map-⊤        = trans (cong (map g) (map-⊤ f)) (map-⊤ g)
     ; map-⊔        = trans (cong (map g) (map-⊔ f)) (map-⊔ g)
-    ; map-of-nat   = trans (cong (map g) (map-of-nat f)) (map-of-nat g)
+    ; map-of-dur   = trans (cong (map g) (map-of-dur f)) (map-of-dur g)
     }
 
 ------------------------------------------------------------------------
@@ -51,7 +54,7 @@ module _ {G₁ G₂ G₃ : Grade} where
 
 infixr 2 _×ᵍ_
 
-_×ᵍ_ : Grade → Grade → Grade
+_×ᵍ_ : {D : Duration} → Grade D → Grade D → Grade D
 G₁ ×ᵍ G₂ = record
   { Carrier         = C₁ × C₂
   ; _·_             = λ (c₁ , c₂) (d₁ , d₂) → (c₁ ·₁ d₁ , c₂ ·₂ d₂)
@@ -59,7 +62,7 @@ G₁ ×ᵍ G₂ = record
   ; _≾_             = λ (c₁ , c₂) (d₁ , d₂) → (c₁ ≾₁ d₁) × (c₂ ≾₂ d₂)
   ; ⊤               = (⊤₁ , ⊤₂)
   ; _⊔_             = λ (c₁ , c₂) (d₁ , d₂) → (c₁ ⊔₁ d₁ , c₂ ⊔₂ d₂)
-  ; of-nat          = λ n → (of-nat₁ n , of-nat₂ n)
+  ; of-dur          = λ τ → (of-dur₁ τ , of-dur₂ τ)
   ; ·-identityˡ     = λ (c₁ , c₂) → cong₂ _,_ (G₁.·-identityˡ c₁) (G₂.·-identityˡ c₂)
   ; ·-identityʳ     = λ (c₁ , c₂) → cong₂ _,_ (G₁.·-identityʳ c₁) (G₂.·-identityʳ c₂)
   ; ·-assoc         = λ (c₁ , c₂) (d₁ , d₂) (e₁ , e₂) →
@@ -83,8 +86,8 @@ G₁ ×ᵍ G₂ = record
                         G₁.·-distribʳ-⊔-≾ c₁ d₁ e₁ , G₂.·-distribʳ-⊔-≾ c₂ d₂ e₂
   ; ≾-zero-productˡ = λ (p₁ , p₂) → G₁.≾-zero-productˡ p₁ , G₂.≾-zero-productˡ p₂
   ; ≾-zero-productʳ = λ (p₁ , p₂) → G₁.≾-zero-productʳ p₁ , G₂.≾-zero-productʳ p₂
-  ; of-nat-zero     = cong₂ _,_ G₁.of-nat-zero G₂.of-nat-zero
-  ; of-nat-plus     = cong₂ _,_ G₁.of-nat-plus G₂.of-nat-plus
+  ; of-dur-zero     = cong₂ _,_ G₁.of-dur-zero G₂.of-dur-zero
+  ; of-dur-plus     = cong₂ _,_ G₁.of-dur-plus G₂.of-dur-plus
   ; u-least?        = zipWith (λ l₁ l₂ (c₁ , c₂) → l₁ c₁ , l₂ c₂)
                               G₁.u-least? G₂.u-least?
   ; ·-comm?         = zipWith (λ m₁ m₂ (c₁ , c₂) (d₁ , d₂) →
@@ -95,14 +98,14 @@ G₁ ×ᵍ G₂ = record
     module G₁ = Grade G₁
     module G₂ = Grade G₂
     open Grade G₁ using () renaming (Carrier to C₁; _·_ to _·₁_; u to u₁;
-      _≾_ to _≾₁_; ⊤ to ⊤₁; _⊔_ to _⊔₁_; of-nat to of-nat₁)
+      _≾_ to _≾₁_; ⊤ to ⊤₁; _⊔_ to _⊔₁_; of-dur to of-dur₁)
     open Grade G₂ using () renaming (Carrier to C₂; _·_ to _·₂_; u to u₂;
-      _≾_ to _≾₂_; ⊤ to ⊤₂; _⊔_ to _⊔₂_; of-nat to of-nat₂)
+      _≾_ to _≾₂_; ⊤ to ⊤₂; _⊔_ to _⊔₂_; of-dur to of-dur₂)
 
 ------------------------------------------------------------------------
 -- The projections and pairing
 
-module _ {G₁ G₂ : Grade} where
+module _ {D : Duration} {G₁ G₂ : Grade D} where
 
   π₁ᵍ : (G₁ ×ᵍ G₂) →ᵍ G₁
   π₁ᵍ = record
@@ -112,7 +115,7 @@ module _ {G₁ G₂ : Grade} where
     ; map-·        = refl
     ; map-⊤        = refl
     ; map-⊔        = refl
-    ; map-of-nat   = refl
+    ; map-of-dur   = refl
     }
 
   π₂ᵍ : (G₁ ×ᵍ G₂) →ᵍ G₂
@@ -123,10 +126,10 @@ module _ {G₁ G₂ : Grade} where
     ; map-·        = refl
     ; map-⊤        = refl
     ; map-⊔        = refl
-    ; map-of-nat   = refl
+    ; map-of-dur   = refl
     }
 
-module _ {G G₁ G₂ : Grade} where
+module _ {D : Duration} {G G₁ G₂ : Grade D} where
 
   open _→ᵍ_
 
@@ -138,7 +141,7 @@ module _ {G G₁ G₂ : Grade} where
     ; map-·        = cong₂ _,_ (map-· f) (map-· g)
     ; map-⊤        = cong₂ _,_ (map-⊤ f) (map-⊤ g)
     ; map-⊔        = cong₂ _,_ (map-⊔ f) (map-⊔ g)
-    ; map-of-nat   = cong₂ _,_ (map-of-nat f) (map-of-nat g)
+    ; map-of-dur   = cong₂ _,_ (map-of-dur f) (map-of-dur g)
     }
 
   -- the universal property: pairing followed by a projection is the
@@ -146,20 +149,20 @@ module _ {G G₁ G₂ : Grade} where
   -- components
 
   π₁ᵍ-⟨⟩ : (f : G →ᵍ G₁) (g : G →ᵍ G₂) (c : Grade.Carrier G)
-         → map (π₁ᵍ {G₁} {G₂}) (map ⟨ f , g ⟩ᵍ c) ≡ map f c
+         → map (π₁ᵍ {G₁ = G₁} {G₂ = G₂}) (map ⟨ f , g ⟩ᵍ c) ≡ map f c
   π₁ᵍ-⟨⟩ f g c = refl
 
   π₂ᵍ-⟨⟩ : (f : G →ᵍ G₁) (g : G →ᵍ G₂) (c : Grade.Carrier G)
-         → map (π₂ᵍ {G₁} {G₂}) (map ⟨ f , g ⟩ᵍ c) ≡ map g c
+         → map (π₂ᵍ {G₁ = G₁} {G₂ = G₂}) (map ⟨ f , g ⟩ᵍ c) ≡ map g c
   π₂ᵍ-⟨⟩ f g c = refl
 
   ⟨⟩ᵍ-unique : (h : G →ᵍ (G₁ ×ᵍ G₂)) (c : Grade.Carrier G)
-             → map h c ≡ map ⟨ π₁ᵍ {G₁} {G₂} ∘ᵍ h , π₂ᵍ {G₁} {G₂} ∘ᵍ h ⟩ᵍ c
+             → map h c ≡ map ⟨ π₁ᵍ {G₁ = G₁} {G₂ = G₂} ∘ᵍ h , π₂ᵍ {G₁ = G₁} {G₂ = G₂} ∘ᵍ h ⟩ᵍ c
   ⟨⟩ᵍ-unique h c = refl
 
 -- the product of two morphisms, acting componentwise
 
-module _ {G₁ G₂ H₁ H₂ : Grade} where
+module _ {D : Duration} {G₁ G₂ H₁ H₂ : Grade D} where
 
   open _→ᵍ_
 
@@ -171,51 +174,59 @@ module _ {G₁ G₂ H₁ H₂ : Grade} where
     ; map-·        = cong₂ _,_ (map-· f) (map-· g)
     ; map-⊤        = cong₂ _,_ (map-⊤ f) (map-⊤ g)
     ; map-⊔        = cong₂ _,_ (map-⊔ f) (map-⊔ g)
-    ; map-of-nat   = cong₂ _,_ (map-of-nat f) (map-of-nat g)
+    ; map-of-dur   = cong₂ _,_ (map-of-dur f) (map-of-dur g)
     }
 
 ------------------------------------------------------------------------
 -- Maps of grade systems
 --
--- A morphism on the effect grades and one on the resource grades,
--- commuting with the projections `∣_∣ᵉ`.
+-- A morphism of the durations, and along it a morphism on the effect
+-- grades and one on the resource grades, commuting with the
+-- projections `∣_∣ᵉ`.
 
 record _→ˢ_ (S₁ S₂ : GradeSystem) : Set₁ where
   open GradeSystem
-  open _→ᵍ_
+  open GradeMorphism
 
   field
-    mapᴱ   : EGrade S₁ →ᵍ EGrade S₂
-    mapᴿ   : RGrade S₁ →ᵍ RGrade S₂
+    mapᴰ   : Dur S₁ →ᴰ Dur S₂
+    mapᴱ   : GradeMorphism mapᴰ (EGrade S₁) (EGrade S₂)
+    mapᴿ   : GradeMorphism mapᴰ (RGrade S₁) (RGrade S₂)
     square : (e : Grade.Carrier (EGrade S₁))
            → map ∣ S₂ ∣ᵉ (map mapᴱ e) ≡ map mapᴿ (map ∣ S₁ ∣ᵉ e)
 
 ------------------------------------------------------------------------
--- The product of two grade systems
+-- The product of two grade systems over the same durations
 
-infixr 2 _×ˢ_
+infixr 2 _×ˢ_⟨_⟩
 
-_×ˢ_ : GradeSystem → GradeSystem → GradeSystem
-S₁ ×ˢ S₂ = record
-  { RGrade = RGrade S₁ ×ᵍ RGrade S₂
-  ; EGrade = EGrade S₁ ×ᵍ EGrade S₂
-  ; ∣_∣ᵉ   = ∣ S₁ ∣ᵉ ×ᵐ ∣ S₂ ∣ᵉ
+_×ˢ_⟨_⟩ : (S₁ S₂ : GradeSystem)
+        → GradeSystem.Dur S₁ ≡ GradeSystem.Dur S₂ → GradeSystem
+record { Dur = D ; RGrade = R₁ ; EGrade = E₁ ; ∣_∣ᵉ = p₁ }
+  ×ˢ record { RGrade = R₂ ; EGrade = E₂ ; ∣_∣ᵉ = p₂ } ⟨ refl ⟩ = record
+  { Dur    = D
+  ; RGrade = R₁ ×ᵍ R₂
+  ; EGrade = E₁ ×ᵍ E₂
+  ; ∣_∣ᵉ   = p₁ ×ᵐ p₂
   }
-  where open GradeSystem
 
 -- its projections are maps of grade systems, the squares commuting on
 -- the nose
 
-module _ {S₁ S₂ : GradeSystem} where
+π₁ˢ : (S₁ S₂ : GradeSystem) (e : GradeSystem.Dur S₁ ≡ GradeSystem.Dur S₂)
+    → (S₁ ×ˢ S₂ ⟨ e ⟩) →ˢ S₁
+π₁ˢ record { RGrade = R₁ ; EGrade = E₁ }
+    record { RGrade = R₂ ; EGrade = E₂ } refl =
+  record { mapᴰ = idᴰ
+         ; mapᴱ = π₁ᵍ {G₁ = E₁} {E₂}
+         ; mapᴿ = π₁ᵍ {G₁ = R₁} {R₂}
+         ; square = λ _ → refl }
 
-  open GradeSystem
-
-  π₁ˢ : (S₁ ×ˢ S₂) →ˢ S₁
-  π₁ˢ = record { mapᴱ = π₁ᵍ {EGrade S₁} {EGrade S₂}
-                ; mapᴿ = π₁ᵍ {RGrade S₁} {RGrade S₂}
-                ; square = λ _ → refl }
-
-  π₂ˢ : (S₁ ×ˢ S₂) →ˢ S₂
-  π₂ˢ = record { mapᴱ = π₂ᵍ {EGrade S₁} {EGrade S₂}
-                ; mapᴿ = π₂ᵍ {RGrade S₁} {RGrade S₂}
-                ; square = λ _ → refl }
+π₂ˢ : (S₁ S₂ : GradeSystem) (e : GradeSystem.Dur S₁ ≡ GradeSystem.Dur S₂)
+    → (S₁ ×ˢ S₂ ⟨ e ⟩) →ˢ S₂
+π₂ˢ record { RGrade = R₁ ; EGrade = E₁ }
+    record { RGrade = R₂ ; EGrade = E₂ } refl =
+  record { mapᴰ = idᴰ
+         ; mapᴱ = π₂ᵍ {G₁ = E₁} {E₂}
+         ; mapᴿ = π₂ᵍ {G₁ = R₁} {R₂}
+         ; square = λ _ → refl }

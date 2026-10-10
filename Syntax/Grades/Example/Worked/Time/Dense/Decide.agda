@@ -9,9 +9,10 @@ open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable
   using (True; False; toWitness; toWitnessFalse)
 
+open import Syntax.Durations using (Duration)
 open import Syntax.Grades using (Grade)
 
-module Decide (G : Grade) where
+module Decide {D : Duration} (G : Grade D) where
   open Grade G
 
   ≾! : {c d : Carrier} {p : True (c ≾? d)} → c ≾ d

@@ -89,7 +89,7 @@ tagged-relaying =
 -- empty run. So a reading is usable only where no lock stands between
 -- its binding and its use.
 
-reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ uᵣ)
+reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-durʳ 2 ≾ᵣ uᵣ)
 reading-stale-after-idling = fails
 
 reading-stale-after-an-operation : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
@@ -112,7 +112,7 @@ exact-run-to-budget =
   coerce holds (perform read ⋆ (perform write here (return ⋆)))
 
 budget-back-to-the-run :
-  ¬ (opTime read ·ₑ (of-natᵉ 3 ·ₑ uₑ) ≾ₑ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆)
+  ¬ (opTime read ·ₑ (of-durᵉ 3 ·ₑ uₑ) ≾ₑ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆)
 budget-back-to-the-run = fails
 
 ------------------------------------------------------------------------

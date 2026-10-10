@@ -318,15 +318,15 @@ mutual
     subst (CRed' _ _ _) (sym (env-Cˢ-delay γ [] M))
       (CRed-expand DELAY
         (CRed-≡ᶜ
-          (C-rename-id-≡ unbox-ren-delay-≐ʳ (env-Cˢ γ ([] ⟨ of-natʳ τ ⟩) M))
+          (C-rename-id-≡ unbox-ren-delay-≐ʳ (env-Cˢ γ ([] ⟨ of-durʳ τ ⟩) M))
           (subst (CRed' _ _ _) eqδ (FL-C (γ ⟨ delay-reach ⟩ᵉ) pγ M))))
     where
-      eqδ = cong (C-rename (unbox-ren (delay-reach {of-natʳ τ} {St})))
+      eqδ = cong (C-rename (unbox-ren (delay-reach {of-durʳ τ} {St})))
               (trans
-                (castᶜ-irr (sym (++ᶜ-assoc (toCtx St) ([] ⟨ of-natʳ τ ⟩) []))
+                (castᶜ-irr (sym (++ᶜ-assoc (toCtx St) ([] ⟨ of-durʳ τ ⟩) []))
                            refl _)
-                (cong (env-Cˢ γ ([] ⟨ of-natʳ τ ⟩))
-                      (castᶜ-irr (++ᶜ-assoc _ ([] ⟨ of-natʳ τ ⟩) []) refl M)))
+                (cong (env-Cˢ γ ([] ⟨ of-durʳ τ ⟩))
+                      (castᶜ-irr (++ᶜ-assoc _ ([] ⟨ of-durʳ τ ⟩) []) refl M)))
 
   -- Sequencing: `env-Cˢ-seq` splits the action, `seq-CRed` runs the scrutinee and
   -- then the sequel. The environment the sequel needs is `(γ ⟨ q ⟩ᵉ) ∷ᵉ V` — and

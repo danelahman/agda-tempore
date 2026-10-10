@@ -201,7 +201,7 @@ tainted (_ , high) = ⋢! high
 
 -- and waiting afterwards does not clean it
 
-waiting-does-not-clean : ¬ (uᵣ ·ᵣ opTime send ·ᵣ of-natʳ 10 ≾ᵣ report)
+waiting-does-not-clean : ¬ (uᵣ ·ᵣ opTime send ·ᵣ of-durʳ 10 ≾ᵣ report)
 waiting-does-not-clean (_ , high) = ⋢! high
 
 -- a report cleared for the network may be published after a

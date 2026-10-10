@@ -28,7 +28,6 @@ module DenotationalSemantics.Model.Example.PSh.Implementation
                               (F.PShFut (LanguageSpec.Grades S) Wld))
        where
 
-open import Data.Nat using (ℕ; _+_)
 open import Data.Product using (_,_)
 
 open import Util.Equality
@@ -102,7 +101,7 @@ module _ (op-semᵐ : OpSemᵐ) where
                       (kn q r (semᵃ op q v))))
           (implˢ-nat r (k q (semᵃ op q v))))
     implˢ (delay-node τ k kn) =
-      tick-node (of-natᵉ τ)
+      tick-node (of-durᵉ τ)
         (λ q → implˢ (k q))
         (λ q r → ≈ᵏ-trans (implˢ-cong (kn q r)) (implˢ-nat r (k q)))
     implˢ (sub p t) = sub p (implˢ t)
@@ -123,14 +122,14 @@ module _ (op-semᵐ : OpSemᵐ) where
     -- a delay implements as a tick, so the two delay collapses implement as
     -- the two tick collapses; the split witnesses agree by `⊑-irrelevant`
     implˢ-cong (delay-zero {k = k} {q₀ = q₀} e) =
-      ≈ᵏ-trans (tick-u {q₀ = q₀} of-natᵉ-zero e)
+      ≈ᵏ-trans (tick-u {q₀ = q₀} of-durᵉ-zero e)
                (≡→≈ᵏ (sym (implˢ-ε-substˢ e (k q₀))))
     implˢ-cong (delay-plus {τ₁ = τ₁} {τ₂ = τ₂} {k = k} {kn = kn} hk e) =
-      ≈ᵏ-trans (tick-· of-natᵉ-plus
+      ≈ᵏ-trans (tick-· of-durᵉ-plus
                  (λ q₁ q₂ → ≈ᵏ-trans (implˢ-cong (hk q₁ q₂))
                               (≡→≈ᵏ (cong (λ z → implˢ (k z)) (⊑-irrelevant _ _))))
                  e)
-               (≡→≈ᵏ (sym (implˢ-ε-substˢ e (delay-node (τ₁ + τ₂) k kn))))
+               (≡→≈ᵏ (sym (implˢ-ε-substˢ e (delay-node (τ₁ +ᴰ τ₂) k kn))))
     implˢ-cong (≈ᵗ-sym et)  = ≈ᵏ-sym (implˢ-cong et)
     implˢ-cong (≈ᵗ-trans et et') =
       ≈ᵏ-trans (implˢ-cong et) (implˢ-cong et')
@@ -200,7 +199,7 @@ module _ (op-semᵐ : OpSemᵐ) where
       (ε-substᵏˢ-cong _ (tick-≈ (λ q → implˢ-μ (k q (semᵃ op q v)))))
   implˢ-μ {ε' = ε'} (delay-node {ε = ε₀} τ k kn) =
     ≈ᵏ-trans
-      (≡→≈ᵏ (implˢ-ε-subst (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε')) _))
+      (≡→≈ᵏ (implˢ-ε-subst (sym (·ₑ-assoc (of-durᵉ τ) ε₀ ε')) _))
       (ε-substᵏˢ-cong _ (tick-≈ (λ q → implˢ-μ (k q))))
   implˢ-μ (sub p t) = sub-≈ (implˢ-μ t)
 
@@ -208,14 +207,14 @@ module _ (op-semᵐ : OpSemᵐ) where
            → implᵐ ∘ᵖ μᵀ {A} {ε} {ε'} ≈ᵖ μᵏ ∘ᵖ Tᵏᶠ implᵐ ∘ᵖ implᵐ
   implᵐ-μᵀ t = implˢ-μ t
 
-  -- a delay becomes a tick at the delay's grade: the boxes sit at `of-natʳ τ`
-  -- and `mapᵉ (of-natᵉ τ)`, which agree, and `[]-fun-irr` absorbs the witness
+  -- a delay becomes a tick at the delay's grade: the boxes sit at `of-durʳ τ`
+  -- and `mapᵉ (of-durᵉ τ)`, which agree, and `[]-fun-irr` absorbs the witness
 
-  implᵐ-delayᵀ : ∀ {A ε} → (τ : ℕ)
+  implᵐ-delayᵀ : ∀ {A ε} → (τ : 𝔻)
                → implᵐ ∘ᵖ delayᵀ {A} {ε} τ
-               ≈ᵖ tickᵏ (of-natᵉ τ)
-                  ∘ᵖ []-≤ (≾ᵣ-reflexive map-of-natᵉ)
-                  ∘ᵖ [ of-natʳ τ ]ᶠ implᵐ
+               ≈ᵖ tickᵏ (of-durᵉ τ)
+                  ∘ᵖ []-≤ (≾ᵣ-reflexive map-of-durᵉ)
+                  ∘ᵖ [ of-durʳ τ ]ᶠ implᵐ
   implᵐ-delayᵀ τ x = tick-≈ (λ q → implˢ-cong ([]-fun-irr x _ _))
 
   -- and an operation becomes a tick, its continuation fed the computed value

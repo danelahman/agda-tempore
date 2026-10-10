@@ -25,6 +25,7 @@ module Syntax.Grades.Example.Traces.Regular.RightSided
 open import Data.List.Base using ([]; _∷_; _++_)
 open import Relation.Binary.PropositionalEquality using (subst; sym; trans)
 
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades using (Grade)
 open import Syntax.Grades.Example.Traces.Regular.Base Op n code code-injective
   using (Word; DFA; _∈_; tick; op; enc; enc-∙; enc-⟨⟩)
@@ -59,10 +60,10 @@ permits-∙ : ∀ L M {s t} → L permits s → M permits t → (L ·ᴿ M) perm
 permits-∙ L M {s} {t} s∈ t∈ =
   subst (λ v → v ∈ table (L ·ᴿ M)) (sym (enc-∙ s t)) (∈·⁺ L M (enc s) (enc t) s∈ t∈)
 
--- `of-nat m` permits the delay of duration `m`
+-- `of-dur m` permits the delay of duration `m`
 
-permits-⟨⟩ : ∀ m → of-nat m permits ⟨ m ⟩
-permits-⟨⟩ m = subst (λ v → v ∈ table (of-nat m)) (sym (enc-⟨⟩ m)) (∈tick⁺ m)
+permits-⟨⟩ : ∀ m → of-dur m permits ⟨ m ⟩
+permits-⟨⟩ m = subst (λ v → v ∈ table (of-dur m)) (sym (enc-⟨⟩ m)) (∈tick⁺ m)
 
 ------------------------------------------------------------------------
 -- Literals: extended regular expressions over the letters
@@ -81,5 +82,5 @@ delay m = tick ^ m
 ------------------------------------------------------------------------
 -- The grade
 
-right-sided : Grade
+right-sided : Grade ℕᴰ
 right-sided = regular-grade

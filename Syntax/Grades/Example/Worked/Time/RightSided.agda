@@ -57,5 +57,5 @@ rsi-weaken-to-top = _
 rsi-top-absorbs : ⊤ʳ ·ʳ [0, ↑ 9 ] ≡ ⊤ʳ
 rsi-top-absorbs = refl
 
-rsi-of-nat : Grade.of-nat right-sided-intervals 9 ≡ [0, ↑ 9 ]
-rsi-of-nat = refl
+rsi-of-dur : Grade.of-dur right-sided-intervals 9 ≡ [0, ↑ 9 ]
+rsi-of-dur = refl

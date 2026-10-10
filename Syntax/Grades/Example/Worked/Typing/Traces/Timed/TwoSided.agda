@@ -104,7 +104,7 @@ meeting-the-contract =
 -- the floor refuses a run that takes no reading, and the cap a run that
 -- spends more than the allowance, each with the other endpoint met
 
-idling-fails-the-floor : ¬ (of-natᵉ 5 ·ₑ uₑ ≾ₑ contract)
+idling-fails-the-floor : ¬ (of-durᵉ 5 ·ₑ uₑ ≾ₑ contract)
 idling-fails-the-floor = fails _ _
 
 transmitting-twice-fails-the-cap :
@@ -189,7 +189,7 @@ either-way =
 -- too little: idling covers no reading, though it is well inside the
 -- allowance
 
-idling-covers-nothing : ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ contract)
+idling-covers-nothing : ¬ (uᵣ ·ᵣ of-durʳ 2 ≾ᵣ contract)
 idling-covers-nothing = fails _ _
 
 claiming-at-once : ¬ (uᵣ ≾ᵣ contract)

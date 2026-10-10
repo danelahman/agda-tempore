@@ -11,7 +11,7 @@
 -- The energy frame is the right-sided tick frame reindexed along     --
 -- the identity. The identity is not a grade morphism, `energy` not   --
 -- counting time steps, but it is a lax monoid map, and a frame never --
--- sees `of-nat`.                                                     --
+-- sees `of-dur`.                                                     --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Product.RightSidedTimeEnergy where

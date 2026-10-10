@@ -745,7 +745,7 @@ step-box (BOX {ρ' = ρ'} {S = St} {V = V}) c g pS (pV , pM) =
 -- one again.
 
 step-box (DELAY {τ = τ} {S = St}) c g pS pM =
-    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ (delayᵀ τ) _ ([ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ (delayᵀ τ) _ ([ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (strᵀ-delayᵀ-algebraicity τ)
@@ -783,10 +783,10 @@ step-box (DELAY {τ = τ} {S = St}) c g pS pM =
                       -- and what is left is the pure possibility identity
                       ∙ ∘ᵐ-congˡ ([]-congᶠ
                           (past-tick _ _
-                            (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityʳ (of-natʳ τ))))
+                            (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityʳ (of-durʳ τ))))
                               (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (≾ᵣ-reflexive (sym map-uᵉ)))
                                         (≾ᵣ-reflexive (sym (trans map-·ᵉ
-                                          (cong (_·ᵣ mapᵉ uₑ) map-of-natᵉ))))))
+                                          (cong (_·ᵣ mapᵉ uₑ) map-of-durᵉ))))))
                             g _ (⟦ St ⟧ˢ pS)))
                     , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
       ∙ ηᵀ-nat _)))

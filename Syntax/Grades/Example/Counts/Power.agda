@@ -6,13 +6,15 @@
 -- joins are pointwise. Every law of `G` holds coordinatewise, the    --
 -- zero-product laws included.                                        --
 --                                                                    --
--- The inclusion of ℕ is constantly the unit: time steps draw on no   --
--- counter. Time is paired with the counters by a product of grades.  --
+-- The inclusion of durations is constantly the unit: delays draw on  --
+-- no counter. Time is paired with the counters by a product of       --
+-- grades.                                                            --
 ------------------------------------------------------------------------
 
+open import Syntax.Durations using (Duration)
 open import Syntax.Grades
 
-module Syntax.Grades.Example.Counts.Power (G : Grade) where
+module Syntax.Grades.Example.Counts.Power {D : Duration} (G : Grade D) where
 
 open import Data.Fin.Base using (Fin; zero; suc)
 open import Data.Maybe.Base using (just; nothing; maybe′)
@@ -247,7 +249,7 @@ uᵛ-least least (a ∷ as) = least a , uᵛ-least least as
 ------------------------------------------------------------------------
 -- The grade
 
-power : ℕ → Grade
+power : ℕ → Grade D
 power n = record
   { Carrier         = Vec C n
   ; _·_             = _·ᵛ_
@@ -275,7 +277,7 @@ power n = record
   ; _≾?_            = _≾ᵛ?_
   ; ≾-zero-productˡ = λ {c} {d} → ≾ᵛ-zero-productˡ {c = c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾ᵛ-zero-productʳ {c = c} {d}
-  ; of-nat          = λ _ → uᵛ
-  ; of-nat-zero     = refl
-  ; of-nat-plus     = sym (·ᵛ-identityˡ uᵛ)
+  ; of-dur          = λ _ → uᵛ
+  ; of-dur-zero     = refl
+  ; of-dur-plus     = sym (·ᵛ-identityˡ uᵛ)
   }

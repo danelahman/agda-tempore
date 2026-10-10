@@ -37,7 +37,7 @@ data EternalCtx : Ctx → Set where
 
 -- The 0-graded lock, the case the two bounds are `≾ᵣ-refl`, and the case of a
 -- grade only propositionally equal to the unit, which is the form the grades
--- standing in a context take (`of-natʳ-zero`, `map-uᵉ`).
+-- standing in a context take (`of-durʳ-zero`, `map-uᵉ`).
 
 ec-⟨⟩ᵘ : ∀ {Δ} → EternalCtx Δ → EternalCtx (Δ ⟨ uᵣ ⟩)
 ec-⟨⟩ᵘ = ec-⟨⟩ ≾ᵣ-refl ≾ᵣ-refl

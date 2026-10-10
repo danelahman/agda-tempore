@@ -74,8 +74,8 @@ tsi-unit = eqᵢ refl refl
 
 -- `n` time steps is the singleton window at `n`
 
-tsi-of-nat : Grade.of-nat two-sided-intervals-with-∞ 7 ≡ [ 7 , ↑ 7 ]
-tsi-of-nat = eqᵢ refl refl
+tsi-of-dur : Grade.of-dur two-sided-intervals-with-∞ 7 ≡ [ 7 , ↑ 7 ]
+tsi-of-dur = eqᵢ refl refl
 
 ------------------------------------------------------------------------
 -- The infinite upper endpoint

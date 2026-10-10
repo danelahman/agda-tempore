@@ -110,7 +110,7 @@ tagged-relaying =
 reading-stale-after-an-operation : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
 reading-stale-after-an-operation (_ , hi) = ≰! hi
 
-reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ uᵣ)
+reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-durʳ 2 ≾ᵣ uᵣ)
 reading-stale-after-idling (_ , hi) = ≰! hi
 
 -- the identifier is eternal, and so is not subject to any of this
@@ -354,10 +354,10 @@ staggered =
 -- the points cannot be swapped: at the earlier one the second window
 -- has not opened, and at the later one the first has closed
 
-second-not-open-yet : ¬ (uᵣ ·ᵣ of-natʳ 3 ≾ᵣ [ 6 , 12 ])
+second-not-open-yet : ¬ (uᵣ ·ᵣ of-durʳ 3 ≾ᵣ [ 6 , 12 ])
 second-not-open-yet (lo , _) = ≰! lo
 
-first-closed-by-then : ¬ (uᵣ ·ᵣ of-natʳ 3 ·ᵣ opTime send ≾ᵣ [ 2 , 6 ])
+first-closed-by-then : ¬ (uᵣ ·ᵣ of-durʳ 3 ·ᵣ opTime send ≾ᵣ [ 2 , 6 ])
 first-closed-by-then (_ , hi) = ≰! hi
 
 ------------------------------------------------------------------------

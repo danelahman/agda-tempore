@@ -73,27 +73,35 @@ open import OperationalSemantics.Adequacy.Evaluation Spec
 -- The class of morphisms `stepsᵀ` builds: `ηᵀ`, and a `DELAY`'s tick bound
 -- into a further transition, indexed by the tick total. Closed under `_≈ᵐ_`.
 
-data Delaysᵐ : ∀ {X Y : Obj} {δ : E} → (X →ᵐ Tᵒ Y δ) → ℕ → Set₁ where
+data Delaysᵐ : ∀ {X Y : Obj} {δ : E} → (X →ᵐ Tᵒ Y δ) → 𝔻 → Set₁ where
 
   no-delay   : ∀ {X : Obj}
-             --------------------
-             → Delaysᵐ (ηᵀ {X}) 0
+             ---------------------
+             → Delaysᵐ (ηᵀ {X}) 0ᴰ
 
-  η-step     : ∀ {X Y : Obj} {δ : E} {n : ℕ} {t : X →ᵐ Tᵒ Y δ}
+  η-step     : ∀ {X Y : Obj} {δ : E} {n : 𝔻} {t : X →ᵐ Tᵒ Y δ}
              → Delaysᵐ t n
              ---------------------
              → Delaysᵐ (t ⋄ ηᵀ) n
 
-  τ-step     : ∀ {X Z : Obj} {δ : E} {n : ℕ}
-             → (τ : ℕ) → {t : ⟨ of-natʳ τ ⟩ᵒ X →ᵐ Tᵒ Z δ}
+  τ-step     : ∀ {X Z : Obj} {δ : E} {n : 𝔻}
+             → (τ : 𝔻) → {t : ⟨ of-durʳ τ ⟩ᵒ X →ᵐ Tᵒ Z δ}
              → Delaysᵐ t n
              ----------------------------------------------------------------
-             → Delaysᵐ (t ⋄ (delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)) (τ + n)
+             → Delaysᵐ (t ⋄ (delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)) (τ +ᴰ n)
 
-  delays-≈   : ∀ {X Y : Obj} {δ : E} {n : ℕ} {t t' : X →ᵐ Tᵒ Y δ}
+  delays-≈   : ∀ {X Y : Obj} {δ : E} {n : 𝔻} {t t' : X →ᵐ Tᵒ Y δ}
              → t ≈ᵐ t' → Delaysᵐ t n
              -----------------------
              → Delaysᵐ t' n
+
+-- A step taking no time, at the tick total `0ᴰ +ᴰ n`.
+
+η-stepᴰ : ∀ {X Y : Obj} {δ : E} {n : 𝔻} {t : X →ᵐ Tᵒ Y δ}
+        → Delaysᵐ t n
+        ---------------------------------
+        → Delaysᵐ (t ⋄ ηᵀ) (0ᴰ +ᴰ n)
+η-stepᴰ {n = n} d = subst (Delaysᵐ _) (sym (+ᴰ-identityˡ n)) (η-step d)
 
 -- A run's transition lies in that class, at the run's tick total: the bridge
 -- between the syntactic observable (`ticks`) and the model-side interface.
@@ -105,24 +113,24 @@ step-delays : ∀ {ε ε' n} {St St' : 𝕊 []} {A A₀ : VType}
             → {X : Obj} → {δ : E} → {t : ⟦ hist St' ⟧ᶜᵗˣ →ᵐ Tᵒ X δ}
             → Delaysᵐ t n
             ------------------------------------------
-            → Delaysᵐ (t ⋄ stepᵀ r) (step-ticks r + n)
+            → Delaysᵐ (t ⋄ stepᵀ r) (step-ticks r +ᴰ n)
 
-step-delays APP                d = η-step d
-step-delays MATCH              d = η-step d
-step-delays IF-TRUE            d = η-step d
-step-delays IF-FALSE           d = η-step d
+step-delays APP                d = η-stepᴰ d
+step-delays MATCH              d = η-stepᴰ d
+step-delays IF-TRUE            d = η-stepᴰ d
+step-delays IF-FALSE           d = η-stepᴰ d
 step-delays (SEQ-STEP r _)     d = step-delays r d
-step-delays SEQ-RET            d = η-step d
-step-delays SEQ-OP             d = η-step d
+step-delays SEQ-RET            d = η-stepᴰ d
+step-delays SEQ-OP             d = η-stepᴰ d
 step-delays (DELAY {τ = τ})    d = τ-step τ d
-step-delays HANDLE-RET         d = η-step d
+step-delays HANDLE-RET         d = η-stepᴰ d
 step-delays (HANDLE-STEP r _)  d = step-delays r d
-step-delays HANDLE-OP          d = η-step d
-step-delays BOX                d = η-step d
-step-delays UNBOX              d = η-step d
-step-delays SUB-APP            d = η-step d
-step-delays SUB-IF             d = η-step d
-step-delays SUB                d = η-step d
+step-delays HANDLE-OP          d = η-stepᴰ d
+step-delays BOX                d = η-stepᴰ d
+step-delays UNBOX              d = η-stepᴰ d
+step-delays SUB-APP            d = η-stepᴰ d
+step-delays SUB-IF             d = η-stepᴰ d
+step-delays SUB                d = η-stepᴰ d
 
 stepsᵀ-delays : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
               → (rs : cf ↝* cf')
@@ -172,7 +180,7 @@ record HeadFaithful : Set₂ where
 
     -- A delayed leaf is never a delayed operation node.
 
-    ret≢op : ∀ {X Y₁ Y₂ : Obj} {ε ε₂ δ₁ δ₂ : E} {n₁ n₂ : ℕ} {op : Op}
+    ret≢op : ∀ {X Y₁ Y₂ : Obj} {ε ε₂ δ₁ δ₂ : E} {n₁ n₂ : 𝔻} {op : Op}
            → {a : Y₁ →ᵐ X}
            → {w : Y₂ →ᵐ ⟦ param op ⟧ᵍ}
            → {k : Y₂ →ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ X ε₂)}
@@ -185,7 +193,7 @@ record HeadFaithful : Set₂ where
 
     -- Distinct operations are distinct nodes.
 
-    op-inj : ∀ {X Y₁ Y₂ : Obj} {ε ε₁ ε₂ δ₁ δ₂ : E} {n₁ n₂ : ℕ} {op₁ op₂ : Op}
+    op-inj : ∀ {X Y₁ Y₂ : Obj} {ε ε₁ ε₂ δ₁ δ₂ : E} {n₁ n₂ : 𝔻} {op₁ op₂ : Op}
            → {w₁ : Y₁ →ᵐ ⟦ param op₁ ⟧ᵍ}
            → {k₁ : Y₁ →ᵐ [ mapᵉ (op-grade op₁) ]ᵒ (⟦ arity op₁ ⟧ᵍ ⇒ᵐ Tᵒ X ε₁)}
            → {w₂ : Y₂ →ᵐ ⟦ param op₂ ⟧ᵍ}
@@ -201,7 +209,7 @@ record HeadFaithful : Set₂ where
     -- Constant leaves are injective: what makes the returned answer at base
     -- type observable.
 
-    leaf-const : ∀ {Y₁ Y₂ : Obj} {b : BaseType} {ε δ₁ δ₂ : E} {n₁ n₂ : ℕ}
+    leaf-const : ∀ {Y₁ Y₂ : Obj} {b : BaseType} {ε δ₁ δ₂ : E} {n₁ n₂ : 𝔻}
                → {c₁ c₂ : BaseConstants b}
                → {d₁ : 𝟙ᵐ →ᵐ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
                → {d₂ : 𝟙ᵐ →ᵐ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
@@ -216,7 +224,7 @@ record HeadFaithful : Set₂ where
     -- observable. Stated at the two constants rather than at arbitrary global
     -- elements of `𝔹ᵐ`.
 
-    leaf-bool : ∀ {Y₁ Y₂ : Obj} {ε δ₁ δ₂ : E} {n₁ n₂ : ℕ}
+    leaf-bool : ∀ {Y₁ Y₂ : Obj} {ε δ₁ δ₂ : E} {n₁ n₂ : 𝔻}
               → {d₁ : 𝟙ᵐ →ᵐ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
               → {d₂ : 𝟙ᵐ →ᵐ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
               → (r₁ : δ₁ ·ₑ uₑ ≾ₑ ε)
@@ -233,7 +241,7 @@ record HeadTimed : Set₂ where
 
   field
 
-    ret-ticks-eq : ∀ {X Y₁ Y₂ : Obj} {ε δ₁ δ₂ : E} {n₁ n₂ : ℕ}
+    ret-ticks-eq : ∀ {X Y₁ Y₂ : Obj} {ε δ₁ δ₂ : E} {n₁ n₂ : 𝔻}
                  → {a₁ : Y₁ →ᵐ X} → {a₂ : Y₂ →ᵐ X}
                  → {d₁ : 𝟙ᵐ →ᵐ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
                  → {d₂ : 𝟙ᵐ →ᵐ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
@@ -243,7 +251,7 @@ record HeadTimed : Set₂ where
                  ---------------------------------------------------------
                  → n₁ ≡ n₂
 
-    op-ticks-eq : ∀ {X Y₁ Y₂ : Obj} {ε ε₁ ε₂ δ₁ δ₂ : E} {n₁ n₂ : ℕ} {op : Op}
+    op-ticks-eq : ∀ {X Y₁ Y₂ : Obj} {ε ε₁ ε₂ δ₁ δ₂ : E} {n₁ n₂ : 𝔻} {op : Op}
                 → {w₁ : Y₁ →ᵐ ⟦ param op ⟧ᵍ}
                 → {k₁ : Y₁ →ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ X ε₁)}
                 → {w₂ : Y₂ →ᵐ ⟦ param op ⟧ᵍ}

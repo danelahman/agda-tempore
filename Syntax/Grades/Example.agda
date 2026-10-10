@@ -2,11 +2,12 @@
 -- Example grades, and example grade systems built from them.         --
 --                                                                    --
 -- A `Grade` (see `Syntax.Grades`) is a partially ordered monoid with --
--- binary joins, a greatest element, and a monoid morphism `of-nat`   --
--- from ℕ, read as a number of time steps. A `GradeSystem` consists   --
--- of two grades (effect grades, recording what a computation may do, --
--- and resource grades, recording what is thereby guaranteed about    --
--- time) and a grade morphism from the first to the second.           --
+-- binary joins, a greatest element, and a monoid morphism `of-dur`   --
+-- from a monoid of durations; here the durations are ℕ, read as a    --
+-- number of time steps. A `GradeSystem` consists of two grades       --
+-- (effect grades, recording what a computation may do, and resource  --
+-- grades, recording what is thereby guaranteed about time) and a     --
+-- grade morphism from the first to the second.                       --
 --                                                                    --
 -- The examples form four families:                                   --
 --                                                                    --

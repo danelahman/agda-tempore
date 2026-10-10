@@ -138,9 +138,9 @@ mutual
         -- delay: let time pass, moving the lock into the state
         DELAY      : ∀ {A τ ε}
                    → {S : 𝕊 []}
-                   → {M : toCtx S ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε} → 
+                   → {M : toCtx S ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε} → 
                      -------------------------------------------------------------
-                     ⟨ S , (delay τ M) ⟩ ↝ ⟨ grade-pass S (of-natʳ τ) , M ⟩
+                     ⟨ S , (delay τ M) ⟩ ↝ ⟨ grade-pass S (of-durʳ τ) , M ⟩
 
         -- handling a returned value: run the return clause
         HANDLE-RET : ∀ {A B ε}
@@ -294,7 +294,7 @@ mutual
     step-extends-state (SEQ-STEP M↝M' _)    = step-extends-state M↝M'
     step-extends-state SEQ-RET              = id-suc
     step-extends-state SEQ-OP               = id-suc
-    step-extends-state DELAY                = ⟨⟩-suc (of-natʳ _) id-suc
+    step-extends-state DELAY                = ⟨⟩-suc (of-durʳ _) id-suc
     step-extends-state HANDLE-RET           = id-suc
     step-extends-state (HANDLE-STEP M↝M' _) = step-extends-state M↝M'
     step-extends-state HANDLE-OP            = id-suc
@@ -363,8 +363,8 @@ step-grade-≾ SEQ-OP = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ (DELAY {τ = τ} {ε = ε}) =
   ≾ᵣ-reflexive
     (trans
-      (cong (_·ᵣ mapᵉ ε) (·ᵣ-identityˡ (of-natʳ τ)))
-      (sym (trans (map-·ᵉ {of-natᵉ τ} {ε}) (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))
+      (cong (_·ᵣ mapᵉ ε) (·ᵣ-identityˡ (of-durʳ τ)))
+      (sym (trans (map-·ᵉ {of-durᵉ τ} {ε}) (cong (_·ᵣ mapᵉ ε) map-of-durᵉ))))
 step-grade-≾ (HANDLE-RET {ε = ε}) =
   ≾ᵣ-reflexive (sym (trans (map-·ᵉ {uₑ} {ε}) (cong (_·ᵣ mapᵉ ε) map-uᵉ)))
 step-grade-≾ (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₁' = ε₁'} step _) =

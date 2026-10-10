@@ -5,7 +5,7 @@
 -- by its canonical table, and equal languages are equal grades. The  --
 -- order is inclusion, the product concatenation and the join union;  --
 -- `⊤` is the set of all words, `u` the language of the empty word,   --
--- and `of-nat n` the word `tickⁿ`.                                   --
+-- and `of-dur n` the word `tickⁿ`.                                   --
 --                                                                    --
 -- Proofs about the tables of operations proceed by `subst` along     --
 -- equations between words, without unfolding their symbolic          --
@@ -29,6 +29,7 @@ open import Function.Bundles using (Equivalence)
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary.Decidable using (T?; recompute)
 
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades using (Grade)
 open import Syntax.Grades.Regular.Automaton k
 open import Syntax.Grades.Regular.Canonical k
@@ -93,8 +94,8 @@ u = ⟪ [] ⟫
 ⊤ : Regular
 ⊤ = regular Σ* Σ*-wf Σ*-canonical ([] , ∈-Σ* [])
 
-of-nat : ℕ → Regular
-of-nat n = ⟪ replicate n tick ⟫
+of-dur : ℕ → Regular
+of-dur n = ⟪ replicate n tick ⟫
 
 _·ᴿ_ : Regular → Regular → Regular
 c ·ᴿ d = regular (table c · table d) (·-wf {table c} {table d} (wf′ c) (wf′ d)) (·-canonical {table c} {table d} (wf′ c) (wf′ d)) inh
@@ -153,10 +154,10 @@ infix  4 _≾_
 ∈u⁺ : [] ∈ table u
 ∈u⁺ = ∈⟪⟫⁺ []
 
-∈tick⁻ : ∀ n w → w ∈ table (of-nat n) → w ≡ replicate n tick
+∈tick⁻ : ∀ n w → w ∈ table (of-dur n) → w ≡ replicate n tick
 ∈tick⁻ n = ∈⟪⟫⁻ (replicate n tick)
 
-∈tick⁺ : ∀ n → replicate n tick ∈ table (of-nat n)
+∈tick⁺ : ∀ n → replicate n tick ∈ table (of-dur n)
 ∈tick⁺ n = ∈⟪⟫⁺ (replicate n tick)
 
 ∈⊤ : ∀ w → w ∈ table ⊤
@@ -291,30 +292,30 @@ private
   go y y∈ (x , x∈) =
     subst (λ v → v ∈ table u) (sym (∈u-++ʳ x y (≾⇒⊆ (c ·ᴿ d) u p (x ++ y) (∈·⁺ c d x y x∈ y∈)))) ∈u⁺
 
-of-nat-zero : of-nat 0 ≡ u
-of-nat-zero = same-language (of-nat 0) u
+of-dur-zero : of-dur 0 ≡ u
+of-dur-zero = same-language (of-dur 0) u
   (λ w w∈ → subst (λ v → v ∈ table u) {[]} {w} (sym (∈tick⁻ 0 w w∈)) ∈u⁺)
-  (λ w w∈ → subst (λ v → v ∈ table (of-nat 0)) {replicate 0 tick} {w} (sym (∈u⁻ w w∈)) (∈tick⁺ 0))
+  (λ w w∈ → subst (λ v → v ∈ table (of-dur 0)) {replicate 0 tick} {w} (sym (∈u⁻ w w∈)) (∈tick⁺ 0))
 
-of-nat-plus : ∀ {m n} → of-nat (m + n) ≡ of-nat m ·ᴿ of-nat n
-of-nat-plus {m} {n} = same-language (of-nat (m + n)) (of-nat m ·ᴿ of-nat n) to′ from′
+of-dur-plus : ∀ {m n} → of-dur (m + n) ≡ of-dur m ·ᴿ of-dur n
+of-dur-plus {m} {n} = same-language (of-dur (m + n)) (of-dur m ·ᴿ of-dur n) to′ from′
   where
-  to′ : ∀ w → w ∈ table (of-nat (m + n)) → w ∈ table (of-nat m ·ᴿ of-nat n)
+  to′ : ∀ w → w ∈ table (of-dur (m + n)) → w ∈ table (of-dur m ·ᴿ of-dur n)
   to′ w w∈ =
-    subst (λ v → v ∈ table (of-nat m ·ᴿ of-nat n))
+    subst (λ v → v ∈ table (of-dur m ·ᴿ of-dur n))
           (sym (trans (∈tick⁻ (m + n) w w∈) (replicate-+ m n tick)))
-          (∈·⁺ (of-nat m) (of-nat n) (replicate m tick) (replicate n tick) (∈tick⁺ m) (∈tick⁺ n))
+          (∈·⁺ (of-dur m) (of-dur n) (replicate m tick) (replicate n tick) (∈tick⁺ m) (∈tick⁺ n))
 
-  from′ : ∀ w → w ∈ table (of-nat m ·ᴿ of-nat n) → w ∈ table (of-nat (m + n))
-  from′ w w∈ = ∈·-elim (of-nat m) (of-nat n) (λ v → v ∈ table (of-nat (m + n))) w w∈ λ x y x∈ y∈ →
-    subst (λ v → v ∈ table (of-nat (m + n)))
+  from′ : ∀ w → w ∈ table (of-dur m ·ᴿ of-dur n) → w ∈ table (of-dur (m + n))
+  from′ w w∈ = ∈·-elim (of-dur m) (of-dur n) (λ v → v ∈ table (of-dur (m + n))) w w∈ λ x y x∈ y∈ →
+    subst (λ v → v ∈ table (of-dur (m + n)))
           (sym (trans (cong₂ _++_ (∈tick⁻ m x x∈) (∈tick⁻ n y y∈)) (sym (replicate-+ m n tick))))
           (∈tick⁺ (m + n))
 
 ------------------------------------------------------------------------
 -- The grade
 
-regular-grade : Grade
+regular-grade : Grade ℕᴰ
 regular-grade = record
   { Carrier         = Regular
   ; _·_             = _·ᴿ_
@@ -322,7 +323,7 @@ regular-grade = record
   ; _≾_             = _≾_
   ; ⊤               = ⊤
   ; _⊔_             = _⊔ᴿ_
-  ; of-nat          = of-nat
+  ; of-dur          = of-dur
   ; ·-identityˡ     = ·-identityˡ
   ; ·-identityʳ     = ·-identityʳ
   ; ·-assoc         = ·-assoc
@@ -341,8 +342,8 @@ regular-grade = record
   ; ·-distribʳ-⊔-≾  = ·-distribʳ-⊔-≾
   ; ≾-zero-productˡ = λ {c} {d} → ≾-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾-zero-productʳ {c} {d}
-  ; of-nat-zero     = of-nat-zero
-  ; of-nat-plus     = λ {m} {n} → of-nat-plus {m} {n}
+  ; of-dur-zero     = of-dur-zero
+  ; of-dur-plus     = λ {m} {n} → of-dur-plus {m} {n}
   ; u-least?        = nothing
   ; ·-comm?         = nothing
   }

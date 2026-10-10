@@ -34,8 +34,8 @@ open import Syntax.Grades.Example.Traces.Regular.Base Op 2 code code-injective
 ⊤ : DFA
 ⊤ = Σ*
 
-of-nat : ℕ → DFA
-of-nat = ⟨_⟩
+of-dur : ℕ → DFA
+of-dur = ⟨_⟩
 
 R S : DFA
 R = ⌈ read ⌉
@@ -69,11 +69,11 @@ distrib-== = refl
 distrib-≡ : (R ∪ S) · ⟨ 1 ⟩ ≡ R · ⟨ 1 ⟩ ∪ S · ⟨ 1 ⟩
 distrib-≡ = refl
 
-of-nat-+-== : (of-nat 2 · of-nat 3 ==ᴰ of-nat 5) ≡ true
-of-nat-+-== = refl
+of-dur-+-== : (of-dur 2 · of-dur 3 ==ᴰ of-dur 5) ≡ true
+of-dur-+-== = refl
 
-of-nat-+-≡ : of-nat 2 · of-nat 3 ≡ of-nat 5
-of-nat-+-≡ = refl
+of-dur-+-≡ : of-dur 2 · of-dur 3 ≡ of-dur 5
+of-dur-+-≡ = refl
 
 ------------------------------------------------------------------------
 -- A moderately larger language: runs of `read`/`send`, each followed

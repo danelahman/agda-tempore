@@ -23,6 +23,7 @@ open import Relation.Nullary.Negation.Core using (¬_)
 
 open import Data.Maybe.Base using (just; nothing)
 
+open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades
 
 open import Util.Equality
@@ -165,7 +166,7 @@ infixl 7 _⊔ₒ_
 
 -- the grade of one-sided intervals
 
-left-sided-intervals : Grade
+left-sided-intervals : Grade ℕᴰ
 left-sided-intervals = record
   { Carrier          = 𝕀
   ; _·_               = _·ₒ_
@@ -193,9 +194,9 @@ left-sided-intervals = record
   ; ≾-zero-productˡ   = ≾ₒ-zero-productˡ
   ; ≾-zero-productʳ   = ≾ₒ-zero-productʳ
   ; ≾-irrelevant      = ≾ₒ-irrelevant
-  ; of-nat            = [_,+∞⟩
-  ; of-nat-zero       = refl
-  ; of-nat-plus       = refl
+  ; of-dur            = [_,+∞⟩
+  ; of-dur-zero       = refl
+  ; of-dur-plus       = refl
   }
 
 ------------------------------------------------------------------------
@@ -385,7 +386,7 @@ infixl 7 _⊔ᵗ_
 
 -- the grade of one-sided intervals with a formal greatest grade
 
-left-sided-intervals-with-⊤ : Grade
+left-sided-intervals-with-⊤ : Grade ℕᴰ
 left-sided-intervals-with-⊤ = record
   { Carrier           = 𝕀⊤
   ; _·_               = _·ᵗ_
@@ -413,7 +414,7 @@ left-sided-intervals-with-⊤ = record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵗ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ᵗ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ᵗ-irrelevant {i₁} {i₂}
-  ; of-nat            = λ n → timed [ n ,+∞⟩
-  ; of-nat-zero       = refl
-  ; of-nat-plus       = refl
+  ; of-dur            = λ n → timed [ n ,+∞⟩
+  ; of-dur-zero       = refl
+  ; of-dur-plus       = refl
   }
