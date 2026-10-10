@@ -19,17 +19,21 @@
 -- `toHyps` reads the atoms back as a hypothesis set,           --
 -- decomposing the eternality demands (`etsDec`) and the        --
 -- subtyping demands (`subDec`) into atoms on type variables    --
--- and keeping the rest unchanged. `subDec` stops at a pair of  --
--- type variables; a type variable against a former has no      --
--- decomposition.                                               --
+-- and keeping the rest unchanged. `subDec` and `etDec` read    --
+-- the variance table and its eternality column (`Former`),     --
+-- by recursion on the parts of a type. `subDec` stops at a     --
+-- pair of type variables; a type variable against a former,    --
+-- or two clashing formers, have no decomposition.              --
 --                                                              --
--- Contract. A decomposition `subDec A B` is exact at every     --
--- instance and under any hypotheses: its atoms entail the      --
--- demand (`intro`) and are entailed by it (`elim`), and        --
+-- Contract. A decomposition `subDec A B` is exact (`Exact`) at --
+-- every instance and under any hypotheses: its atoms entail    --
+-- the demand (`intro`) and are entailed by it (`elim`), and    --
 -- likewise for a list (`subsList`: `introˢ`/`elimˢ`). A        --
 -- failure claims nothing by itself; after an expansion none    --
--- occurs (`expandSub-dec`, `reexpand-dec`). `etDec` is exact   --
--- likewise (`etDec-intro`, `etDec-compl`; for a list,          --
+-- occurs (`expandSub-dec`, `reexpand-dec`), as `subDec`        --
+-- succeeds on the pairs of a symmetric relation that pairs     --
+-- types of one former part by part (`SubDecJust`). `etDec` is  --
+-- exact likewise (`etDec-intro`, `etDec-compl`; for a list,    --
 -- `etsDec`: `introᵗ`/`elimᵗ`); its failure refutes the demand  --
 -- at every instance (`etDec-refute`) and reduces a disjunction --
 -- to its grade side (`etDec-grade`). `atomiseᴿ` has the same   --
@@ -42,16 +46,21 @@
 -- The name follows OutsideIn(X) (Vytiniotis et al., JFP 2011). --
 ------------------------------------------------------------------
 
+open import Data.Bool.Base using (true; false)
 open import Data.List.Base using (List; []; _∷_; map; _++_)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties
   using (∈-map⁺; ∈-map⁻; ∈-++⁺ˡ; ∈-++⁺ʳ; ∈-++⁻)
 open import Data.List.Relation.Unary.Any using (here; there)
+open import Data.List.Relation.Unary.All using (All; []; _∷_; lookup; tabulate)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)
 open import Data.Maybe.Base using (Maybe; just; nothing) renaming (map to mmap)
-open import Data.Product using (Σ-syntax; _×_; _,_; proj₁)
+open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
+open import Data.Unit using (⊤; tt)
+
+open import Induction.WellFounded using (Acc; acc; WfRec)
 
 open import Relation.Nullary using (¬_; yes; no)
 
@@ -74,7 +83,8 @@ open import TypeInference.OpenSyntax.Types  S
 open import TypeInference.OpenSyntax.Subst  S
 open import TypeInference.OpenSyntax.Hyps   S
 
-open import TypeInference.SolverImpl.Core.Rigid S using (zip₂; zip₂-just; strᵛ)
+open import TypeInference.SolverImpl.Core.Rigid S using (zip₂; zip₂-just; zip₂-nothing; strᵛ)
+open import TypeInference.SolverImpl.Former     S
 open import TypeInference.SolverImpl.Deferred   S
   using (Dfr; _[_]ᵈ; _⊩ᵈ_[_]; ⊩ᵈ-resp-≐ˢ; ⊩ᵈ-subst; ⊩ᵈ-subst⁻; ⊩ᵈ-⨟)
 
@@ -367,122 +377,235 @@ atomsᴿ-⊩ {Q = Q} {δ = δ} a hs = mk⊩ᴿ (hr hs) (he hs) (λ ()) ss' (λ (
     ss' m with ∈-map⁻ (mapᵖ tvar) m
     ... | (α , β) , m₀ , refl = hv hs m₀
 
--- A decomposition carries both directions: the atoms entail the
--- demand at every instance, and every instance of the demand
--- entails them.
+-- An exact decomposition of a demand: atoms that entail it at every
+-- instance (`intro`) and that every instance of it entails (`elim`)
 
-record SubDec {Ψ : Scope} (A B : OVType Ψ) : Set where
-  constructor subdec
+record Exact {Ψ : Scope} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → Set) : Set where
+  constructor exact
   field
     atomsOf : SubAtoms Ψ
-    intro   : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
-            → Holds Q δ atomsOf → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
-    elim    : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
-            → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ → Holds Q δ atomsOf
+    intro   : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → Holds Q δ atomsOf → P Q δ
+    elim    : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → P Q δ → Holds Q δ atomsOf
 
-open SubDec public
+open Exact public
 
-record SubDecᶜ {Ψ : Scope} (C D : OCType Ψ) : Set where
-  constructor subdecᶜ
-  field
-    atomsOfᶜ : SubAtoms Ψ
-    introᶜ   : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
-             → Holds Q δ atomsOfᶜ → Q ∣ C [ δ ]ᶜ <:̂ᶜ D [ δ ]ᶜ
-    elimᶜ    : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
-             → Q ∣ C [ δ ]ᶜ <:̂ᶜ D [ δ ]ᶜ → Holds Q δ atomsOfᶜ
+SubDec : ∀ {Ψ} → OVType Ψ → OVType Ψ → Set
+SubDec A B = Exact (λ Q δ → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ)
 
-open SubDecᶜ public
+-- The demand of a pair of parts (`Former`)
 
--- One assembly per pair of matching formers
+PartDec : ∀ {Ψ} → Part Ψ → Set
+PartDec p = Exact (λ Q δ → Holdsᴾ Q (p [ δ ∣ δ ]ᴾ))
 
-pairᴰ : ∀ {Ψ} {A A' B B' : OVType Ψ} → SubDec A A' → SubDec B B'
-      → SubDec (A |×| B) (A' |×| B')
-pairᴰ d e =
-  subdec (atomsOf d ∪ᴬ atomsOf e)
-         (λ δ h → intro d δ (∪ᴬ-fst (atomsOf d) (atomsOf e) h) |×|ₛ
-                  intro e δ (∪ᴬ-snd (atomsOf d) (atomsOf e) h))
-         (λ { δ (p |×|ₛ q) → ∪ᴬ-intro (elim d δ p) (elim e δ q) })
+-- Exact decompositions combine: a conjunction, a demand at a variance
+-- from the decompositions of the demand and its converse, and the
+-- demands of every member of a list
 
-arrᴰ : ∀ {Ψ} {A A' : OVType Ψ} {C C' : OCType Ψ} → SubDec A' A → SubDecᶜ C C'
-     → SubDec (A ⇒ C) (A' ⇒ C')
-arrᴰ d e =
-  subdec (atomsOf d ∪ᴬ atomsOfᶜ e)
-         (λ δ h → intro d δ (∪ᴬ-fst (atomsOf d) (atomsOfᶜ e) h) ⇒ₛ
-                  introᶜ e δ (∪ᴬ-snd (atomsOf d) (atomsOfᶜ e) h))
-         (λ { δ (p ⇒ₛ q) → ∪ᴬ-intro (elim d δ p) (elimᶜ e δ q) })
+infixr 4 _∧ᴱ_
 
-boxᴰ : ∀ {Ψ} {A A' : OVType Ψ} → (ρ ρ' : RExp Ψ) → SubDec A A'
-     → SubDec ([ ρ ] A) ([ ρ' ] A')
-boxᴰ ρ ρ' d =
-  subdec (atomsʳ ρ' ρ ∪ᴬ atomsOf d)
-         (λ δ h → [ hr (∪ᴬ-fst (atomsʳ ρ' ρ) (atomsOf d) h) (here refl) ]ₛ
-                  intro d δ (∪ᴬ-snd (atomsʳ ρ' ρ) (atomsOf d) h))
-         (λ { δ ([ q ]ₛ p) → ∪ᴬ-intro (holdsʳ q) (elim d δ p) })
+_∧ᴱ_ : ∀ {Ψ} {P P' : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → Set}
+     → Exact P → Exact P' → Exact (λ Q δ → P Q δ × P' Q δ)
+d ∧ᴱ e = exact (atomsOf d ∪ᴬ atomsOf e)
+               (λ δ h → intro d δ (∪ᴬ-fst (atomsOf d) (atomsOf e) h) ,
+                        intro e δ (∪ᴬ-snd (atomsOf d) (atomsOf e) h))
+               (λ { δ (p , q) → ∪ᴬ-intro (elim d δ p) (elim e δ q) })
 
-bangᴰ : ∀ {Ψ} {A A' : OVType Ψ} → (ε ε' : EExp Ψ) → SubDec A A'
-      → SubDecᶜ (A ‼ ε) (A' ‼ ε')
-bangᴰ ε ε' d =
-  subdecᶜ (atomsOf d ∪ᴬ atomsᵉ ε ε')
-          (λ δ h → intro d δ (∪ᴬ-fst (atomsOf d) (atomsᵉ ε ε') h) ‼ₛ
-                   he (∪ᴬ-snd (atomsOf d) (atomsᵉ ε ε') h) (here refl))
-          (λ { δ (p ‼ₛ q) → ∪ᴬ-intro (elim d δ p) (holdsᵉ q) })
+atVarᴱ : ∀ {Ψ} {P P' : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → Set} → (v : Variance)
+       → Maybe (Exact P) → Maybe (Exact P') → Maybe (Exact (λ Q δ → Var v (P Q δ) (P' Q δ)))
+atVarᴱ co     d e = d
+atVarᴱ contra d e = e
+atVarᴱ inv    d e = zip₂ _∧ᴱ_ d e
 
-leafᴰ : ∀ {Ψ} {A B : OVType Ψ}
-      → (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ)
-      → SubDec A B
-leafᴰ f = subdec noAtoms (λ δ h → f δ) (λ δ p → holds (λ ()) (λ ()) (λ ()))
+allᴱ : ∀ {Ψ} {X : Set} (R : X → ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → Set) → (xs : List X)
+     → (∀ {x} → x ∈ xs → Maybe (Exact (R x)))
+     → Maybe (Exact (λ Q δ → All (λ x → R x Q δ) xs))
+allᴱ R []       f = just (exact noAtoms (λ δ h → []) (λ δ _ → holds (λ ()) (λ ()) (λ ())))
+allᴱ R (x ∷ xs) f = zip₂ cons (f (here refl)) (allᴱ R xs (λ m → f (there m)))
+  where
+    cons : Exact (R x) → Exact (λ Q δ → All (λ x → R x Q δ) xs)
+         → Exact (λ Q δ → All (λ x → R x Q δ) (x ∷ xs))
+    cons d e = exact (atomsOf d ∪ᴬ atomsOf e)
+                     (λ δ h → intro d δ (∪ᴬ-fst (atomsOf d) (atomsOf e) h) ∷
+                              intro e δ (∪ᴬ-snd (atomsOf d) (atomsOf e) h))
+                     (λ { δ (p ∷ ps) → ∪ᴬ-intro (elim d δ p) (elim e δ ps) })
 
--- `_∣_<:̂ᵛ_` has one rule per pair of matching formers and `tvarₛ` at a
--- pair of type variables: a demand reduces to atoms on type variables
--- and grade orderings, or has no decomposition.
+ordʳᴱ : ∀ {Ψ} → (ρ ρ' : RExp Ψ) → Exact (λ Q δ → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ)
+ordʳᴱ ρ ρ' = exact (atomsʳ ρ ρ') (λ δ h → hr h (here refl)) (λ δ p → holdsʳ p)
 
-subDec  : ∀ {Ψ} → (A B : OVType Ψ) → Maybe (SubDec A B)
-subDecᶜ : ∀ {Ψ} → (C D : OCType Ψ) → Maybe (SubDecᶜ C D)
+ordᵉᴱ : ∀ {Ψ} → (ε ε' : EExp Ψ) → Exact (λ Q δ → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ)
+ordᵉᴱ ε ε' = exact (atomsᵉ ε ε') (λ δ h → he h (here refl)) (λ δ p → holdsᵉ p)
 
-subDec (tvar α) (tvar β) =
-  just (subdec (atomsᵛ α β) (λ δ h → hv h (here refl)) (λ δ p → holdsᵛ p))
-subDec (Base b) (Base b') with b ≡ᵇ? b'
-... | yes refl = just (leafᴰ (λ δ → Baseₛ refl))
-... | no _     = nothing
-subDec Unit       Unit        = just (leafᴰ (λ δ → Unitₛ))
-subDec Bool       Bool        = just (leafᴰ (λ δ → Boolₛ))
-subDec Empty      Empty       = just (leafᴰ (λ δ → Emptyₛ))
-subDec (A |×| B)  (A' |×| B') = zip₂ pairᴰ (subDec A A') (subDec B B')
-subDec (A ⇒ C)    (A' ⇒ C')   = zip₂ arrᴰ (subDec A' A) (subDecᶜ C C')
-subDec ([ ρ ] A)  ([ ρ' ] A') = mmap (boxᴰ ρ ρ') (subDec A A')
-subDec _          _           = nothing
+-- Two types of one former decompose as their parts do (`<:-intro`,
+-- `<:-elim`)
 
-subDecᶜ (A ‼ ε) (A' ‼ ε') = mmap (bangᴰ ε ε') (subDec A A')
+fromParts : ∀ {Ψ} {A B : OVType Ψ} {ps} → Decomp A B ps
+          → Exact (λ Q δ → All (λ p → Holdsᴾ Q (p [ δ ∣ δ ]ᴾ)) ps) → SubDec A B
+fromParts g d = exact (atomsOf d) (λ δ h → <:-intro g δ δ (intro d δ h))
+                      (λ δ p → elim d δ (<:-elim g δ δ p))
 
--- `_⊩ᴱ_` has one rule per former except `_⇒_` and `[_]_`, and `et-hyp`
--- at a type variable: a demand reduces to demands on type variables or
--- is refuted.
+-- A demand reduces along the variance table to atoms on pairs of type
+-- variables and grade orderings, or has no decomposition: a type
+-- variable against a former, or two formers that clash. The recursion
+-- is on the parts (`≺-wf`).
+
+subDecᵃ : ∀ {Ψ} → (A B : OVType Ψ) → Acc _≺_ A → Acc _≺_ B → Maybe (SubDec A B)
+partDec : ∀ {Ψ} {A B : OVType Ψ} {ps} → Decomp A B ps
+        → WfRec _≺_ (Acc _≺_) A → WfRec _≺_ (Acc _≺_) B
+        → ∀ {p} → p ∈ ps → Maybe (PartDec p)
+
+subDecᵃ A B (acc ra) (acc rb) with decompose A B
+... | vars α β   = just (exact (atomsᵛ α β) (λ δ h → hv h (here refl)) (λ δ p → holdsᵛ p))
+... | parts ps g = mmap (fromParts g) (allᴱ (λ p Q δ → Holdsᴾ Q (p [ δ ∣ δ ]ᴾ)) ps
+                                            (partDec g ra rb))
+... | clash      = nothing
+
+partDec g ra rb {ty v X Y}  m = atVarᴱ v (subDecᵃ X Y (ra (left g m)) (rb (right g m)))
+                                         (subDecᵃ Y X (rb (right g m)) (ra (left g m)))
+partDec g ra rb {rg v ρ ρ'} m = atVarᴱ v (just (ordʳᴱ ρ ρ')) (just (ordʳᴱ ρ' ρ))
+partDec g ra rb {eg v ε ε'} m = atVarᴱ v (just (ordᵉᴱ ε ε')) (just (ordᵉᴱ ε' ε))
+
+subDec : ∀ {Ψ} → (A B : OVType Ψ) → Maybe (SubDec A B)
+subDec A B = subDecᵃ A B (≺-wf A) (≺-wf B)
+
+-- `subDec` succeeds on every pair of a symmetric relation that relates
+-- only pairs of type variables and types of one former whose
+-- value-type parts it relates (`Fitsᴰ`)
+
+Fits : ∀ {Ψ} → (OVType Ψ → OVType Ψ → Set) → Part Ψ → Set
+Fits S (ty _ X Y) = S X Y
+Fits S (rg _ _ _) = ⊤
+Fits S (eg _ _ _) = ⊤
+
+Fitsᴰ : ∀ {Ψ} {A B : OVType Ψ} → (OVType Ψ → OVType Ψ → Set) → Shape A B → Set
+Fitsᴰ S (vars _ _)   = ⊤
+Fitsᴰ S (parts ps _) = All (Fits S) ps
+Fitsᴰ S clash        = ⊥
+
+Just : ∀ {X : Set} → Maybe X → Set
+Just {X} m = Σ[ x ∈ X ] (m ≡ just x)
+
+module SubDecJust {Ψ : Scope} (S : OVType Ψ → OVType Ψ → Set)
+                  (S-sym : ∀ {A B} → S A B → S B A)
+                  (S-dec : ∀ {A B} → S A B → Fitsᴰ S (decompose A B)) where
+
+  zip₂-Just : ∀ {X Y Z : Set} → (f : X → Y → Z) → {m : Maybe X} {m' : Maybe Y}
+            → Just m → Just m' → Just (zip₂ f m m')
+  zip₂-Just f (x , refl) (y , refl) = f x y , refl
+
+  atVarᴱ-Just : ∀ {P P' : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → Set} → (v : Variance)
+              → {d : Maybe (Exact P)} {e : Maybe (Exact P')} → Just d → Just e
+              → Just (atVarᴱ v d e)
+  atVarᴱ-Just co     jd je = jd
+  atVarᴱ-Just contra jd je = je
+  atVarᴱ-Just inv    jd je = zip₂-Just _∧ᴱ_ jd je
+
+  allᴱ-Just : ∀ {X : Set} (R : X → ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → Set) → (xs : List X)
+            → {f : ∀ {x} → x ∈ xs → Maybe (Exact (R x))} → (∀ {x} → (m : x ∈ xs) → Just (f m))
+            → Just (allᴱ R xs f)
+  allᴱ-Just R []       k = _ , refl
+  allᴱ-Just R (x ∷ xs) k = zip₂-Just _ (k (here refl)) (allᴱ-Just R xs (λ m → k (there m)))
+
+  subDec-Justᵃ : (A B : OVType Ψ) → (a : Acc _≺_ A) → (b : Acc _≺_ B) → S A B
+               → Just (subDecᵃ A B a b)
+  partDec-Just : ∀ {A B : OVType Ψ} {ps} → (g : Decomp A B ps)
+               → (ra : WfRec _≺_ (Acc _≺_) A) → (rb : WfRec _≺_ (Acc _≺_) B)
+               → All (Fits S) ps → ∀ {p} → (m : p ∈ ps) → Just (partDec g ra rb m)
+
+  subDec-Justᵃ A B (acc ra) (acc rb) h with decompose A B | S-dec h
+  ... | vars α β   | _  = _ , refl
+  ... | parts ps g | fs with allᴱ-Just (λ p Q δ → Holdsᴾ Q (p [ δ ∣ δ ]ᴾ)) ps
+                               (partDec-Just g ra rb fs)
+  ...   | d , e = fromParts g d , cong (mmap (fromParts g)) e
+
+  partDec-Just g ra rb fs {ty v X Y} m =
+    atVarᴱ-Just v (subDec-Justᵃ X Y (ra (left g m)) (rb (right g m)) (lookup fs m))
+                  (subDec-Justᵃ Y X (rb (right g m)) (ra (left g m)) (S-sym (lookup fs m)))
+  partDec-Just g ra rb fs {rg v ρ ρ'} m = atVarᴱ-Just v (_ , refl) (_ , refl)
+  partDec-Just g ra rb fs {eg v ε ε'} m = atVarᴱ-Just v (_ , refl) (_ , refl)
+
+  subDec-Just : ∀ {A B} → S A B → Just (subDec A B)
+  subDec-Just {A} {B} = subDec-Justᵃ A B (≺-wf A) (≺-wf B)
+
+nothing≢just : ∀ {X : Set} {x : X} → nothing ≡ just x → ⊥
+nothing≢just ()
+
+false≢true : false ≡ true → ⊥
+false≢true ()
+
+-- The concatenation of the lists given to the members of a list, if
+-- every member is given one
+
+concatᴹ : ∀ {X Y : Set} → (xs : List X) → (∀ {x} → x ∈ xs → Maybe (List Y)) → Maybe (List Y)
+concatᴹ []       f = just []
+concatᴹ (x ∷ xs) f = zip₂ _++_ (f (here refl)) (concatᴹ xs (λ m → f (there m)))
+
+concatᴹ-⊆ : ∀ {X Y : Set} → (xs : List X) → {f : ∀ {x} → x ∈ xs → Maybe (List Y)}
+          → {ys : List Y} → concatᴹ xs f ≡ just ys → ∀ {x} → (m : x ∈ xs)
+          → Σ[ zs ∈ List Y ] ((f m ≡ just zs) × (∀ {y} → y ∈ zs → y ∈ ys))
+concatᴹ-⊆ (x ∷ xs) {f} e m with zip₂-just _++_ (f (here refl)) (concatᴹ xs (λ m' → f (there m'))) e
+concatᴹ-⊆ (x ∷ xs)     e (here refl) | zs , ws , e₁ , e₂ , refl = zs , e₁ , ∈-++⁺ˡ
+concatᴹ-⊆ (x ∷ xs) {f} e (there m)   | zs , ws , e₁ , e₂ , refl
+  with concatᴹ-⊆ xs {λ m' → f (there m')} e₂ m
+... | vs , e₃ , inc = vs , e₃ , (λ n → ∈-++⁺ʳ zs (inc n))
+
+concatᴹ-∈ : ∀ {X Y : Set} → (xs : List X) → {f : ∀ {x} → x ∈ xs → Maybe (List Y)}
+          → {ys : List Y} → concatᴹ xs f ≡ just ys → ∀ {y} → y ∈ ys
+          → Σ[ x ∈ X ] Σ[ m ∈ x ∈ xs ] Σ[ zs ∈ List Y ] ((f m ≡ just zs) × (y ∈ zs))
+concatᴹ-∈ []       refl ()
+concatᴹ-∈ (x ∷ xs) {f} e n with zip₂-just _++_ (f (here refl)) (concatᴹ xs (λ m' → f (there m'))) e
+... | zs , ws , e₁ , e₂ , refl with ∈-++⁻ zs n
+...   | inj₁ n' = x , here refl , zs , e₁ , n'
+...   | inj₂ n' with concatᴹ-∈ xs {λ m' → f (there m')} e₂ n'
+...     | x' , m , vs , e₃ , n'' = x' , there m , vs , e₃ , n''
+
+concatᴹ-nothing : ∀ {X Y : Set} → (xs : List X) → {f : ∀ {x} → x ∈ xs → Maybe (List Y)}
+                → concatᴹ xs f ≡ nothing → Σ[ x ∈ X ] Σ[ m ∈ x ∈ xs ] (f m ≡ nothing)
+concatᴹ-nothing (x ∷ xs) {f} e
+  with zip₂-nothing _++_ (f (here refl)) (concatᴹ xs (λ m' → f (there m'))) e
+... | inj₁ e₁ = x , here refl , e₁
+... | inj₂ e₂ with concatᴹ-nothing xs {λ m' → f (there m')} e₂
+...   | x' , m , e₃ = x' , there m , e₃
+
+-- An eternality demand reduces along the eternality column to demands
+-- on type variables, or is refuted. The recursion is on the parts
+-- (`≺-wf`).
+
+etDecᵃ : ∀ {Ψ} → (A : OVType Ψ) → Acc _≺_ A → Maybe (List (TyVar Ψ))
+etPart : ∀ {Ψ} {A B : OVType Ψ} {ps} → Decomp A B ps → WfRec _≺_ (Acc _≺_) A
+       → ∀ {p} → p ∈ ps → Maybe (List (TyVar Ψ))
+
+etDecᵃ A (acc r) with self A
+... | var α       = just (α ∷ [])
+... | form ps g _ with eternal g
+...   | true  = concatᴹ ps (etPart g r)
+...   | false = nothing
+
+etPart g r {ty _ X _} m = etDecᵃ X (r (left g m))
+etPart g r {rg _ _ _} m = just []
+etPart g r {eg _ _ _} m = just []
 
 etDec : ∀ {Ψ} → OVType Ψ → Maybe (List (TyVar Ψ))
-etDec (tvar α)  = just (α ∷ [])
-etDec (Base b)  with eternalBaseType? b
-... | yes _ = just []
-... | no _  = nothing
-etDec Unit      = just []
-etDec Bool      = just []
-etDec (A |×| B) = zip₂ _++_ (etDec A) (etDec B)
-etDec Empty     = just []
-etDec (A ⇒ C)   = nothing
-etDec ([ ρ ] A) = nothing
+etDec A = etDecᵃ A (≺-wf A)
+
+etDec-introᵃ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (A : OVType Ψ) → (a : Acc _≺_ A)
+             → {αs : List (TyVar Ψ)} → etDecᵃ A a ≡ just αs → (δ : Subst Ψ Ψ')
+             → (∀ {α} → α ∈ αs → Q ⊩ᴱ tvar α [ δ ]ᵛ) → Q ⊩ᴱ A [ δ ]ᵛ
+etDec-introᵃ {Q = Q} A (acc r) e δ k with self A
+etDec-introᵃ .(tvar α) (acc r) refl δ k | var α = k (here refl)
+... | form ps g _ with eternal g in et
+...   | false = ⊥-elim (nothing≢just e)
+...   | true  = ⊩ᴱ-intro g et δ (tabulate part)
+  where
+    part : ∀ {p} → p ∈ ps → Etᴾ Q (p [ δ ∣ δ ]ᴾ)
+    part {ty _ X _} m with concatᴹ-⊆ ps e m
+    ... | zs , ez , inc = etDec-introᵃ X (r (left g m)) ez δ (λ n → k (inc n))
+    part {rg _ _ _} m = tt
+    part {eg _ _ _} m = tt
 
 etDec-intro : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (A : OVType Ψ) → {αs : List (TyVar Ψ)}
             → etDec A ≡ just αs → (δ : Subst Ψ Ψ')
             → (∀ {α} → α ∈ αs → Q ⊩ᴱ tvar α [ δ ]ᵛ) → Q ⊩ᴱ A [ δ ]ᵛ
-etDec-intro (tvar α) refl δ k = k (here refl)
-etDec-intro (Base b) q δ k with eternalBaseType? b
-etDec-intro (Base b) refl δ k | yes p = Baseₑ p
-etDec-intro Unit  refl δ k = Unitₑ
-etDec-intro Bool  refl δ k = Boolₑ
-etDec-intro Empty refl δ k = Emptyₑ
-etDec-intro (A |×| B) q δ k with zip₂-just _++_ (etDec A) (etDec B) q
-... | as , bs , qa , qb , refl =
-      etDec-intro A qa δ (λ m → k (∈-++⁺ˡ m)) |×|ₑ
-      etDec-intro B qb δ (λ m → k (∈-++⁺ʳ as m))
+etDec-intro A = etDec-introᵃ A (≺-wf A)
 
 -- The same, read at the identity
 
@@ -502,52 +625,59 @@ etDec-str j (Base b) q = Base b , refl
 etDec-str j Unit     q = Unit , refl
 etDec-str j Bool     q = Bool , refl
 etDec-str j Empty    q = Empty , refl
-etDec-str j (A |×| B) q with zip₂-just _++_ (etDec A) (etDec B) q
-... | as , bs , qa , qb , _ with etDec-str j A qa | etDec-str j B qb
-...   | A₀ , ra | B₀ , rb = A₀ |×| B₀ , cong₂ (zip₂ _|×|_) ra rb
-etDec-str j (A ⇒ C)   ()
-etDec-str j ([ ρ ] A) ()
+etDec-str j (A |×| B) q with zip₂-just _++_ (etDec A) (zip₂ _++_ (etDec B) (just [])) q
+... | _ , _ , qa , q' , _ with zip₂-just _++_ (etDec B) (just []) q'
+...   | _ , _ , qb , _ , _ with etDec-str j A qa | etDec-str j B qb
+...     | A₀ , ra | B₀ , rb = A₀ |×| B₀ , cong₂ (zip₂ _|×|_) ra rb
+etDec-str j (A ⇒ (B ‼ ε)) ()
+etDec-str j ([ ρ ] A)     ()
 
 -- Conversely, every atom of a successful decomposition is entailed
 -- by the demand it came from.
 
+etDec-complᵃ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (A : OVType Ψ) → (a : Acc _≺_ A)
+             → {αs : List (TyVar Ψ)} → etDecᵃ A a ≡ just αs → (δ : Subst Ψ Ψ')
+             → Q ⊩ᴱ A [ δ ]ᵛ → ∀ {α} → α ∈ αs → Q ⊩ᴱ tvar α [ δ ]ᵛ
+etDec-complᵃ {Q = Q} A (acc r) e δ et n with self A
+etDec-complᵃ .(tvar α) (acc r) refl δ et (here refl) | var α = et
+... | form ps g _ with eternal g
+...   | false = ⊥-elim (nothing≢just e)
+...   | true with concatᴹ-∈ ps e n
+...     | _ , m , zs , ez , n' = part m ez n'
+  where
+    part : ∀ {p} → (m : p ∈ ps) → ∀ {zs} → etPart g r m ≡ just zs
+         → ∀ {α} → α ∈ zs → Q ⊩ᴱ tvar α [ δ ]ᵛ
+    part {ty _ X _} m ez n =
+      etDec-complᵃ X (r (left g m)) ez δ (lookup (proj₂ (⊩ᴱ-elim g δ et)) m) n
+    part {rg _ _ _} m refl ()
+    part {eg _ _ _} m refl ()
+
 etDec-compl : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (A : OVType Ψ) → {αs : List (TyVar Ψ)}
             → etDec A ≡ just αs → (δ : Subst Ψ Ψ') → Q ⊩ᴱ A [ δ ]ᵛ
             → ∀ {α} → α ∈ αs → Q ⊩ᴱ tvar α [ δ ]ᵛ
-etDec-compl (tvar β) refl δ et (here refl) = et
-etDec-compl (Base b) q δ et with eternalBaseType? b
-etDec-compl (Base b) refl δ et | yes p = λ ()
-etDec-compl (Base b) ()   δ et | no ¬p
-etDec-compl Unit  refl δ et = λ ()
-etDec-compl Bool  refl δ et = λ ()
-etDec-compl Empty refl δ et = λ ()
-etDec-compl (A |×| B) q δ (p |×|ₑ p') with zip₂-just _++_ (etDec A) (etDec B) q
-... | as , bs , qa , qb , refl =
-      λ m → [ etDec-compl A qa δ p , etDec-compl B qb δ p' ]′ (∈-++⁻ as m)
-etDec-compl (A ⇒ C)   () δ et
-etDec-compl ([ ρ ] A) () δ et
+etDec-compl A = etDec-complᵃ A (≺-wf A)
 
 -- A failed decomposition refutes the demand, at every instance:
--- substitution preserves the head former, and `_⊩ᴱ_` has no rule
--- for a function, a box, or a non-eternal base type.
+-- substitution preserves the former, which the column refuses, or a
+-- part that is refuted.
 
+etDec-refuteᵃ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (A : OVType Ψ) → (a : Acc _≺_ A)
+              → etDecᵃ A a ≡ nothing → (δ : Subst Ψ Ψ') → ¬ (Q ⊩ᴱ A [ δ ]ᵛ)
+etDec-refuteᵃ {Q = Q} A (acc r) e δ et with self A
+etDec-refuteᵃ .(tvar α) (acc r) () δ et | var α
+... | form ps g _ with eternal g in c
+...   | false = false≢true (trans (sym c) (proj₁ (⊩ᴱ-elim g δ et)))
+...   | true with concatᴹ-nothing ps e
+...     | _ , m , en = part m en
+  where
+    part : ∀ {p} → (m : p ∈ ps) → etPart g r m ≡ nothing → ⊥
+    part {ty _ X _} m en =
+      etDec-refuteᵃ X (r (left g m)) en δ (lookup (proj₂ (⊩ᴱ-elim g δ et)) m)
+    part {rg _ _ _} m ()
+    part {eg _ _ _} m ()
 etDec-refute : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (A : OVType Ψ) → etDec A ≡ nothing
              → (δ : Subst Ψ Ψ') → ¬ (Q ⊩ᴱ A [ δ ]ᵛ)
-etDec-refute (tvar α) () δ
-etDec-refute (Base b) q δ with eternalBaseType? b
-etDec-refute (Base b) () δ | yes p
-etDec-refute (Base b) q  δ | no ¬p = λ { (Baseₑ p') → ⊥-elim-irr (¬p p') }
-etDec-refute Unit      () δ
-etDec-refute Bool      () δ
-etDec-refute Empty     () δ
-etDec-refute (A |×| B) q δ with etDec A in e₁ | etDec B in e₂
-etDec-refute (A |×| B) () δ | just _  | just _
-etDec-refute (A |×| B) q  δ | just _  | nothing =
-  λ { (p |×|ₑ p') → etDec-refute B e₂ δ p' }
-etDec-refute (A |×| B) q  δ | nothing | _       =
-  λ { (p |×|ₑ p') → etDec-refute A e₁ δ p }
-etDec-refute (A ⇒ C)   q δ = λ ()
-etDec-refute ([ ρ ] A) q δ = λ ()
+etDec-refute A = etDec-refuteᵃ A (≺-wf A)
 
 -- So a disjunction on such a type is met, from no hypotheses, exactly
 -- by its grade side

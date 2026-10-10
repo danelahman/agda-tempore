@@ -400,6 +400,11 @@ open import TypeInference.Outcome
 open import TypeInference.Solver
 open import TypeInference.Principality
 
+---- Type formers and the variance of their parts: the table every
+---- decomposition, traversal and recursion along a type reads
+
+import TypeInference.SolverImpl.Former
+
 ---- Refutation of a grade ordering against the unit, and simplification of
 ---- reported hypothesis sets
 

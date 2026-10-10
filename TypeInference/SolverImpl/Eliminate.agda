@@ -42,9 +42,11 @@
 -- the hypotheses it keeps on the unknown's sort are entailed   --
 -- by `Bounds` (`lowerR`, `raiseL`); the type, the other sort   --
 -- and the disjunctions are kept by polarity (`Monoᵉ`, `Raiseᵉ` --
--- and their counterparts). For a step by equality (`equateᵉ`,  --
--- `equateʳ`, `equateᵗ`), the hypotheses bound `η` by the       --
--- identity in both directions, and it moves no type (`Equal`). --
+-- and their counterparts, each an instance of `Lift`, which    --
+-- relates the parts of a former at their variance). For a step --
+-- by equality (`equateᵉ`, `equateʳ`, `equateᵗ`), the           --
+-- hypotheses bound `η` by the identity in both directions, and --
+-- it moves no type (`Equal`).                                  --
 --                                                              --
 -- The polarity-based elimination follows Pottier's             --
 -- simplification of subtyping constraints (ICFP 1996); cycle   --
@@ -62,10 +64,14 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties
   using (∈-map⁺; ∈-map⁻; ∈-filter⁺; ∈-filter⁻)
 open import Data.List.Relation.Unary.Any using (here; there)
+open import Data.List.Relation.Unary.All using (All; lookup; tabulate)
 open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Nat.Base using (ℕ; zero; suc; _+_; _<ᵇ_)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
+open import Data.Unit using (⊤; tt)
+
+open import Induction.WellFounded using (Acc; acc; WfRec)
 
 open import Relation.Nullary using (¬_; yes; no)
 open import Relation.Nullary.Decidable using (⌊_⌋; ¬?)
@@ -91,6 +97,7 @@ open import TypeInference.OpenSyntax.Hyps      S
 open import TypeInference.OpenSyntax.Instances S
   using (_⊨ᴴ_; ⊨ᴴ-refl; ⊨ᴴ-trans; mk⊨ᴴ; VarOK-∅-mono)
 
+open import TypeInference.SolverImpl.Former   S
 open import TypeInference.SolverImpl.Polarity S
 open import TypeInference.SolverImpl.Vars     S
   using (Vars; vᵗ; vʳ; vᵉ; Fixes; mkFixes; fixes-id; fixes-⨟; fixes-updᵉ; fixes-updʳ; outside)
@@ -218,25 +225,82 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
   atᵛ-≡ ⁺ {A} refl = <:̂ᵛ-refl A
   atᵛ-≡ ⁻ {A} refl = <:̂ᵛ-refl A
 
-  atᵛ-|×| : (s : Sign) → {A A' B B' : OVType Θ}
-          → atᵛ Q s A A' → atᵛ Q s B B' → atᵛ Q s (A |×| B) (A' |×| B')
-  atᵛ-|×| ⁺ p q = p |×|ₛ q
-  atᵛ-|×| ⁻ p q = p |×|ₛ q
-
-  atᵛ-⇒ : (s : Sign) → {A A' : OVType Θ} {C C' : OCType Θ}
-        → atᵛ Q (flipˢ s) A A' → atᶜ Q s C C' → atᵛ Q s (A ⇒ C) (A' ⇒ C')
-  atᵛ-⇒ ⁺ p q = p ⇒ₛ q
-  atᵛ-⇒ ⁻ p q = p ⇒ₛ q
-
-  atᵛ-box : (s : Sign) → {ρ ρ' : RExp Θ} {A A' : OVType Θ}
-          → atʳ Q (flipˢ s) ρ ρ' → atᵛ Q s A A' → atᵛ Q s ([ ρ ] A) ([ ρ' ] A')
-  atᵛ-box ⁺ p q = [ p ]ₛ q
-  atᵛ-box ⁻ p q = [ p ]ₛ q
-
   atᶜ-‼ : (s : Sign) → {A A' : OVType Θ} {ε ε' : EExp Θ}
         → atᵛ Q s A A' → atᵉ Q s ε ε' → atᶜ Q s (A ‼ ε) (A' ‼ ε')
   atᶜ-‼ ⁺ p q = p ‼ₛ q
   atᶜ-‼ ⁻ p q = p ‼ₛ q
+
+------------------------------------------------------------------------
+-- A substitution related to the identity at every leaf of a type, at
+-- the sign of the leaf's position, is related to it at the type: the
+-- parts of a former are related at their variance (`Former`). A leaf
+-- is admitted by a predicate on its polarity, closed under the parts
+-- of a union.
+
+module Lift {Θ : Scope} {Q : Hyps Θ} (η : Subst Θ Θ)
+            (G : Pol → Set) (G-∪ : ∀ p q → G (p ∪ᴾ q) → G p × G q)
+            (lt : Sign → TyVar Θ → Pol) (lr : Sign → RExp Θ → Pol) (le : Sign → EExp Θ → Pol)
+            (ft : ∀ s α → G (lt s α) → atᵛ Q s (sTy η α) (tvar α))
+            (fr : ∀ s ρ → G (lr s ρ) → atʳ Q s (ρ [ η ]ʳ) ρ)
+            (fe : ∀ s ε → G (le s ε) → atᵉ Q s (ε [ η ]ᵉ) ε) where
+
+  G-∈ : ∀ {X : Set} → (xs : List X) → {f : ∀ {x} → x ∈ xs → Pol} → G (unionᴾ xs f)
+      → ∀ {x} → (m : x ∈ xs) → G (f m)
+  G-∈ (x ∷ xs) g (here refl) = proj₁ (G-∪ _ _ g)
+  G-∈ (x ∷ xs) {f} g (there m) = G-∈ xs {λ m' → f (there m')} (proj₂ (G-∪ _ _ g)) m
+
+  -- A position of a variance read at a sign, from the facts at either sign
+
+  byVar : (T : Sign → Set) → (v : Variance) → (s : Sign) → {f : Sign → Pol}
+        → G (atVar v s f) → (∀ s' → G (f s') → T s') → Var v (T s) (T (flipˢ s))
+  byVar T co     s g k = k s g
+  byVar T contra s g k = k (flipˢ s) g
+  byVar T inv    s g k = k s (proj₁ (G-∪ _ _ g)) , k (flipˢ s) (proj₂ (G-∪ _ _ g))
+
+  frᵢ : ∀ s ρ → G (lr s ρ) → atʳ Q s (ρ [ η ]ʳ) (ρ [ idˢ ]ʳ)
+  frᵢ s ρ g = subst (atʳ Q s (ρ [ η ]ʳ)) (sym ([id]ʳ ρ)) (fr s ρ g)
+
+  feᵢ : ∀ s ε → G (le s ε) → atᵉ Q s (ε [ η ]ᵉ) (ε [ idˢ ]ᵉ)
+  feᵢ s ε g = subst (atᵉ Q s (ε [ η ]ᵉ)) (sym ([id]ᵉ ε)) (fe s ε g)
+
+  -- The two instances compared at a sign
+
+  ends : Sign → Subst Θ Θ × Subst Θ Θ
+  ends ⁺ = η , idˢ
+  ends ⁻ = idˢ , η
+
+  liftᵃ : (s : Sign) → (A : OVType Θ) → (a : Acc _≺_ A) → G (polᵛᵃ lt lr le s A a)
+        → atᵛ Q s (A [ η ]ᵛ) (A [ idˢ ]ᵛ)
+  partˡ : (s : Sign) → {A : OVType Θ} {ps : List (Part Θ)} → (g : Decomp A A ps)
+        → All Diag ps → (r : WfRec _≺_ (Acc _≺_) A) → ∀ {p} → (m : p ∈ ps)
+        → G (polᴾ lt lr le s g r m) → Holdsᴾ Q (p [ proj₁ (ends s) ∣ proj₂ (ends s) ]ᴾ)
+
+  liftᵃ s A (acc r) h with self A
+  ... | var α       = ft s α h
+  ... | form ps g d = intro s (tabulate (λ m → partˡ s g d r m (G-∈ ps h m)))
+    where
+      intro : (s : Sign) → All (λ p → Holdsᴾ Q (p [ proj₁ (ends s) ∣ proj₂ (ends s) ]ᴾ)) ps
+            → atᵛ Q s (A [ η ]ᵛ) (A [ idˢ ]ᵛ)
+      intro ⁺ a = <:-intro g η idˢ a
+      intro ⁻ a = <:-intro g idˢ η a
+
+  partˡ ⁺ g d r {ty v X _} m h with lookup d m
+  ... | refl = byVar (λ s' → atᵛ Q s' (X [ η ]ᵛ) (X [ idˢ ]ᵛ)) v ⁺ h
+                     (λ s' → liftᵃ s' X (r (left g m)))
+  partˡ ⁻ g d r {ty v X _} m h with lookup d m
+  ... | refl = byVar (λ s' → atᵛ Q s' (X [ η ]ᵛ) (X [ idˢ ]ᵛ)) v ⁻ h
+                     (λ s' → liftᵃ s' X (r (left g m)))
+  partˡ ⁺ g d r {rg v ρ _} m h with lookup d m
+  ... | refl = byVar (λ s' → atʳ Q s' (ρ [ η ]ʳ) (ρ [ idˢ ]ʳ)) v ⁺ h (λ s' → frᵢ s' ρ)
+  partˡ ⁻ g d r {rg v ρ _} m h with lookup d m
+  ... | refl = byVar (λ s' → atʳ Q s' (ρ [ η ]ʳ) (ρ [ idˢ ]ʳ)) v ⁻ h (λ s' → frᵢ s' ρ)
+  partˡ ⁺ g d r {eg v ε _} m h with lookup d m
+  ... | refl = byVar (λ s' → atᵉ Q s' (ε [ η ]ᵉ) (ε [ idˢ ]ᵉ)) v ⁺ h (λ s' → feᵢ s' ε)
+  partˡ ⁻ g d r {eg v ε _} m h with lookup d m
+  ... | refl = byVar (λ s' → atᵉ Q s' (ε [ η ]ᵉ) (ε [ idˢ ]ᵉ)) v ⁻ h (λ s' → feᵢ s' ε)
+
+  lift : (s : Sign) → (A : OVType Θ) → G (polᵛ lt lr le s A) → atᵛ Q s (A [ η ]ᵛ) A
+  lift s A h = subst (atᵛ Q s (A [ η ]ᵛ)) ([id]ᵛ A) (liftᵃ s A (≺-wf A) h)
 
 ------------------------------------------------------------------------
 -- A substitution lowering every unknown lowers every grade expression
@@ -309,20 +373,13 @@ module Equal {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
   sameᵗ ⁺ β = lowt β
   sameᵗ ⁻ β = hit β
 
-  mutual
+  sameᵛ : (s : Sign) → (A : OVType Θ) → atᵛ Q s (A [ η₀ ]ᵛ) A
+  sameᵛ s A = Lift.lift η₀ (λ _ → ⊤) (λ _ _ _ → tt , tt)
+                (λ _ _ → noᴾ) (λ _ _ → noᴾ) (λ _ _ → noᴾ)
+                (λ s β _ → sameᵗ s β) (λ s ρ _ → sameʳ s ρ) (λ s ε _ → sameᵉ s ε) s A tt
 
-    sameᵛ : (s : Sign) → (A : OVType Θ) → atᵛ Q s (A [ η₀ ]ᵛ) A
-    sameᵛ s (tvar β)  = sameᵗ s β
-    sameᵛ s (Base c)  = atᵛ-≡ s refl
-    sameᵛ s Unit      = atᵛ-≡ s refl
-    sameᵛ s Bool      = atᵛ-≡ s refl
-    sameᵛ s (A |×| B) = atᵛ-|×| s (sameᵛ s A) (sameᵛ s B)
-    sameᵛ s Empty     = atᵛ-≡ s refl
-    sameᵛ s (A ⇒ C)   = atᵛ-⇒ s (sameᵛ (flipˢ s) A) (sameᶜ s C)
-    sameᵛ s ([ ρ ] A) = atᵛ-box s (sameʳ (flipˢ s) ρ) (sameᵛ s A)
-
-    sameᶜ : (s : Sign) → (C : OCType Θ) → atᶜ Q s (C [ η₀ ]ᶜ) C
-    sameᶜ s (A ‼ ε) = atᶜ-‼ s (sameᵛ s A) (sameᵉ s ε)
+  sameᶜ : (s : Sign) → (C : OCType Θ) → atᶜ Q s (C [ η₀ ]ᶜ) C
+  sameᶜ s (A ‼ ε) = atᶜ-‼ s (sameᵛ s A) (sameᵉ s ε)
 
 ------------------------------------------------------------------------
 -- An unknown absent from an expression is fixed by updating it
@@ -364,30 +421,16 @@ module Monoᵉ {Θ : Scope} {Q : Hyps Θ} (i : EVar Θ) (b : EExp Θ)
   monoᵉ-r ⁺ ρ q = lowʳ ρ
   monoᵉ-r ⁻ ρ q = atʳ-≡ ⁻ (absᵉ-r i b ρ q)
 
-  mutual
+  monoᵉ-v : (s : Sign) → (A : OVType Θ) → below (polₑ-v i s A) ≡ false
+          → atᵛ Q s (A [ updᵉ i b ]ᵛ) A
+  monoᵉ-v = Lift.lift (updᵉ i b) (λ p → below p ≡ false) below-∪
+              (λ _ _ → noᴾ) (polₑ-r i) (polₑ-e i) (λ s α _ → atᵛ-≡ s refl) monoᵉ-r monoᵉ-e
 
-    monoᵉ-v : (s : Sign) → (A : OVType Θ) → below (polₑ-v i s A) ≡ false
-            → atᵛ Q s (A [ updᵉ i b ]ᵛ) A
-    monoᵉ-v s (tvar α)  q = atᵛ-≡ s refl
-    monoᵉ-v s (Base c)  q = atᵛ-≡ s refl
-    monoᵉ-v s Unit      q = atᵛ-≡ s refl
-    monoᵉ-v s Bool      q = atᵛ-≡ s refl
-    monoᵉ-v s (A |×| B) q =
-      atᵛ-|×| s (monoᵉ-v s A (proj₁ d)) (monoᵉ-v s B (proj₂ d))
-      where d = below-∪ (polₑ-v i s A) (polₑ-v i s B) q
-    monoᵉ-v s Empty     q = atᵛ-≡ s refl
-    monoᵉ-v s (A ⇒ C)   q =
-      atᵛ-⇒ s (monoᵉ-v (flipˢ s) A (proj₁ d)) (monoᵉ-c s C (proj₂ d))
-      where d = below-∪ (polₑ-v i (flipˢ s) A) (polₑ-c i s C) q
-    monoᵉ-v s ([ ρ ] A) q =
-      atᵛ-box s (monoᵉ-r (flipˢ s) ρ (proj₁ d)) (monoᵉ-v s A (proj₂ d))
-      where d = below-∪ (polₑ-r i (flipˢ s) ρ) (polₑ-v i s A) q
-
-    monoᵉ-c : (s : Sign) → (C : OCType Θ) → below (polₑ-c i s C) ≡ false
-            → atᶜ Q s (C [ updᵉ i b ]ᶜ) C
-    monoᵉ-c s (A ‼ ε) q =
-      atᶜ-‼ s (monoᵉ-v s A (proj₁ d)) (monoᵉ-e s ε (proj₂ d))
-      where d = below-∪ (polₑ-v i s A) (polₑ-e i s ε) q
+  monoᵉ-c : (s : Sign) → (C : OCType Θ) → below (polₑ-c i s C) ≡ false
+          → atᶜ Q s (C [ updᵉ i b ]ᶜ) C
+  monoᵉ-c s (A ‼ ε) q =
+    atᶜ-‼ s (monoᵉ-v s A (proj₁ d)) (monoᵉ-e s ε (proj₂ d))
+    where d = below-∪ (polₑ-v i s A) (polₑ-e i s ε) q
 
 -- Reading the folded analysis at one entry of a component
 
@@ -532,28 +575,15 @@ module Monoʳ {Θ : Scope} {Q : Hyps Θ} (i : RVar Θ) (b : RExp Θ)
   monoʳ-r ⁺ ρ q = lowʳ ρ
   monoʳ-r ⁻ ρ q = atʳ-≡ ⁻ (absʳ-r i b ρ q)
 
-  mutual
+  monoʳ-v : (s : Sign) → (A : OVType Θ) → below (polᵣ-v i s A) ≡ false
+          → atᵛ Q s (A [ updʳ i b ]ᵛ) A
+  monoʳ-v = Lift.lift (updʳ i b) (λ p → below p ≡ false) below-∪
+              (λ _ _ → noᴾ) (polᵣ-r i) (λ _ _ → noᴾ) (λ s α _ → atᵛ-≡ s refl) monoʳ-r
+              (λ s ε _ → atᵉ-≡ s (updʳ-e i b ε))
 
-    monoʳ-v : (s : Sign) → (A : OVType Θ) → below (polᵣ-v i s A) ≡ false
-            → atᵛ Q s (A [ updʳ i b ]ᵛ) A
-    monoʳ-v s (tvar α)  q = atᵛ-≡ s refl
-    monoʳ-v s (Base c)  q = atᵛ-≡ s refl
-    monoʳ-v s Unit      q = atᵛ-≡ s refl
-    monoʳ-v s Bool      q = atᵛ-≡ s refl
-    monoʳ-v s (A |×| B) q =
-      atᵛ-|×| s (monoʳ-v s A (proj₁ d)) (monoʳ-v s B (proj₂ d))
-      where d = below-∪ (polᵣ-v i s A) (polᵣ-v i s B) q
-    monoʳ-v s Empty     q = atᵛ-≡ s refl
-    monoʳ-v s (A ⇒ C)   q =
-      atᵛ-⇒ s (monoʳ-v (flipˢ s) A (proj₁ d)) (monoʳ-c s C (proj₂ d))
-      where d = below-∪ (polᵣ-v i (flipˢ s) A) (polᵣ-c i s C) q
-    monoʳ-v s ([ ρ ] A) q =
-      atᵛ-box s (monoʳ-r (flipˢ s) ρ (proj₁ d)) (monoʳ-v s A (proj₂ d))
-      where d = below-∪ (polᵣ-r i (flipˢ s) ρ) (polᵣ-v i s A) q
-
-    monoʳ-c : (s : Sign) → (C : OCType Θ) → below (polᵣ-c i s C) ≡ false
-            → atᶜ Q s (C [ updʳ i b ]ᶜ) C
-    monoʳ-c s (A ‼ ε) q = atᶜ-‼ s (monoʳ-v s A q) (atᵉ-≡ s (updʳ-e i b ε))
+  monoʳ-c : (s : Sign) → (C : OCType Θ) → below (polᵣ-c i s C) ≡ false
+          → atᶜ Q s (C [ updʳ i b ]ᶜ) C
+  monoʳ-c s (A ‼ ε) q = atᶜ-‼ s (monoʳ-v s A q) (atᵉ-≡ s (updʳ-e i b ε))
 
 polsᵣ-disj-∈ : ∀ {Θ} → (i : RVar Θ) → (l : List (OVType Θ × RExp Θ))
              → below (polsᵣ-disj i l) ≡ false
@@ -698,30 +728,16 @@ module Raiseᵉ {Θ : Scope} {Q : Hyps Θ} (i : EVar Θ) (b : EExp Θ)
   raiseᵉ-r ⁺ ρ q = atʳ-≡ ⁺ (absᵉ-r⁺ i b ρ q)
   raiseᵉ-r ⁻ ρ q = upʳ ρ
 
-  mutual
+  raiseᵉ-v : (s : Sign) → (A : OVType Θ) → above (polₑ-v i s A) ≡ false
+           → atᵛ Q s (A [ updᵉ i b ]ᵛ) A
+  raiseᵉ-v = Lift.lift (updᵉ i b) (λ p → above p ≡ false) above-∪
+               (λ _ _ → noᴾ) (polₑ-r i) (polₑ-e i) (λ s α _ → atᵛ-≡ s refl) raiseᵉ-r raiseᵉ-e
 
-    raiseᵉ-v : (s : Sign) → (A : OVType Θ) → above (polₑ-v i s A) ≡ false
-             → atᵛ Q s (A [ updᵉ i b ]ᵛ) A
-    raiseᵉ-v s (tvar α)  q = atᵛ-≡ s refl
-    raiseᵉ-v s (Base c)  q = atᵛ-≡ s refl
-    raiseᵉ-v s Unit      q = atᵛ-≡ s refl
-    raiseᵉ-v s Bool      q = atᵛ-≡ s refl
-    raiseᵉ-v s (A |×| B) q =
-      atᵛ-|×| s (raiseᵉ-v s A (proj₁ d)) (raiseᵉ-v s B (proj₂ d))
-      where d = above-∪ (polₑ-v i s A) (polₑ-v i s B) q
-    raiseᵉ-v s Empty     q = atᵛ-≡ s refl
-    raiseᵉ-v s (A ⇒ C)   q =
-      atᵛ-⇒ s (raiseᵉ-v (flipˢ s) A (proj₁ d)) (raiseᵉ-c s C (proj₂ d))
-      where d = above-∪ (polₑ-v i (flipˢ s) A) (polₑ-c i s C) q
-    raiseᵉ-v s ([ ρ ] A) q =
-      atᵛ-box s (raiseᵉ-r (flipˢ s) ρ (proj₁ d)) (raiseᵉ-v s A (proj₂ d))
-      where d = above-∪ (polₑ-r i (flipˢ s) ρ) (polₑ-v i s A) q
-
-    raiseᵉ-c : (s : Sign) → (C : OCType Θ) → above (polₑ-c i s C) ≡ false
-             → atᶜ Q s (C [ updᵉ i b ]ᶜ) C
-    raiseᵉ-c s (A ‼ ε) q =
-      atᶜ-‼ s (raiseᵉ-v s A (proj₁ d)) (raiseᵉ-e s ε (proj₂ d))
-      where d = above-∪ (polₑ-v i s A) (polₑ-e i s ε) q
+  raiseᵉ-c : (s : Sign) → (C : OCType Θ) → above (polₑ-c i s C) ≡ false
+           → atᶜ Q s (C [ updᵉ i b ]ᶜ) C
+  raiseᵉ-c s (A ‼ ε) q =
+    atᶜ-‼ s (raiseᵉ-v s A (proj₁ d)) (raiseᵉ-e s ε (proj₂ d))
+    where d = above-∪ (polₑ-v i s A) (polₑ-e i s ε) q
 
 module Raiseʳ {Θ : Scope} {Q : Hyps Θ} (i : RVar Θ) (b : RExp Θ)
               (hig : Q ⊩ idˢ ≾ˢ updʳ i b) where
@@ -733,28 +749,15 @@ module Raiseʳ {Θ : Scope} {Q : Hyps Θ} (i : RVar Θ) (b : RExp Θ)
   raiseʳ-r ⁺ ρ q = atʳ-≡ ⁺ (absʳ-r⁺ i b ρ q)
   raiseʳ-r ⁻ ρ q = upʳ ρ
 
-  mutual
+  raiseʳ-v : (s : Sign) → (A : OVType Θ) → above (polᵣ-v i s A) ≡ false
+           → atᵛ Q s (A [ updʳ i b ]ᵛ) A
+  raiseʳ-v = Lift.lift (updʳ i b) (λ p → above p ≡ false) above-∪
+               (λ _ _ → noᴾ) (polᵣ-r i) (λ _ _ → noᴾ) (λ s α _ → atᵛ-≡ s refl) raiseʳ-r
+               (λ s ε _ → atᵉ-≡ s (updʳ-e i b ε))
 
-    raiseʳ-v : (s : Sign) → (A : OVType Θ) → above (polᵣ-v i s A) ≡ false
-             → atᵛ Q s (A [ updʳ i b ]ᵛ) A
-    raiseʳ-v s (tvar α)  q = atᵛ-≡ s refl
-    raiseʳ-v s (Base c)  q = atᵛ-≡ s refl
-    raiseʳ-v s Unit      q = atᵛ-≡ s refl
-    raiseʳ-v s Bool      q = atᵛ-≡ s refl
-    raiseʳ-v s (A |×| B) q =
-      atᵛ-|×| s (raiseʳ-v s A (proj₁ d)) (raiseʳ-v s B (proj₂ d))
-      where d = above-∪ (polᵣ-v i s A) (polᵣ-v i s B) q
-    raiseʳ-v s Empty     q = atᵛ-≡ s refl
-    raiseʳ-v s (A ⇒ C)   q =
-      atᵛ-⇒ s (raiseʳ-v (flipˢ s) A (proj₁ d)) (raiseʳ-c s C (proj₂ d))
-      where d = above-∪ (polᵣ-v i (flipˢ s) A) (polᵣ-c i s C) q
-    raiseʳ-v s ([ ρ ] A) q =
-      atᵛ-box s (raiseʳ-r (flipˢ s) ρ (proj₁ d)) (raiseʳ-v s A (proj₂ d))
-      where d = above-∪ (polᵣ-r i (flipˢ s) ρ) (polᵣ-v i s A) q
-
-    raiseʳ-c : (s : Sign) → (C : OCType Θ) → above (polᵣ-c i s C) ≡ false
-             → atᶜ Q s (C [ updʳ i b ]ᶜ) C
-    raiseʳ-c s (A ‼ ε) q = atᶜ-‼ s (raiseʳ-v s A q) (atᵉ-≡ s (updʳ-e i b ε))
+  raiseʳ-c : (s : Sign) → (C : OCType Θ) → above (polᵣ-c i s C) ≡ false
+           → atᶜ Q s (C [ updʳ i b ]ᶜ) C
+  raiseʳ-c s (A ‼ ε) q = atᶜ-‼ s (raiseʳ-v s A q) (atᵉ-≡ s (updʳ-e i b ε))
 
 -- Reading the folded analysis at the left side of an entry
 
@@ -999,27 +1002,19 @@ module Monoᵗ {Θ : Scope} {Q : Hyps Θ} (α γ : TyVar Θ) (le : (γ , α) ∈
   lowg : Q ⊩ updᵗ α γ ≾ˢ idˢ
   lowg = mk≾ˢ (λ _ → ⊩≾̂ᵣ-refl) (λ _ → ⊩≾̂ₑ-refl)
 
-  mutual
+  monoᵗ-v : (s : Sign) → (A : OVType Θ) → below (polₜ-v α s A) ≡ false
+          → atᵛ Q s (A [ updᵗ α γ ]ᵛ) A
+  monoᵗ-v = Lift.lift (updᵗ α γ) (λ p → below p ≡ false) below-∪
+              (λ s β → atˢ s ⌊ α ≟ᶠ β ⌋) (λ _ _ → noᴾ) (λ _ _ → noᴾ) tv
+              (λ s ρ _ → atʳ-≡ s (fixᵗ-r α γ ρ)) (λ s ε _ → atᵉ-≡ s (fixᵗ-e α γ ε))
+    where
+      tv : ∀ s β → below (atˢ s ⌊ α ≟ᶠ β ⌋) ≡ false → atᵛ Q s (sTy (updᵗ α γ) β) (tvar β)
+      tv ⁺ β q = lowt β
+      tv ⁻ β q = atᵛ-≡ ⁻ (cong tvar (upd-≢ α β γ idᶠ (⌊⌋-false q)))
 
-    monoᵗ-v : (s : Sign) → (A : OVType Θ) → below (polₜ-v α s A) ≡ false
-            → atᵛ Q s (A [ updᵗ α γ ]ᵛ) A
-    monoᵗ-v ⁺ (tvar β)  q = lowt β
-    monoᵗ-v ⁻ (tvar β)  q = atᵛ-≡ ⁻ (cong tvar (upd-≢ α β γ idᶠ (⌊⌋-false q)))
-    monoᵗ-v s (Base c)  q = atᵛ-≡ s refl
-    monoᵗ-v s Unit      q = atᵛ-≡ s refl
-    monoᵗ-v s Bool      q = atᵛ-≡ s refl
-    monoᵗ-v s (A |×| B) q =
-      atᵛ-|×| s (monoᵗ-v s A (proj₁ d)) (monoᵗ-v s B (proj₂ d))
-      where d = below-∪ (polₜ-v α s A) (polₜ-v α s B) q
-    monoᵗ-v s Empty     q = atᵛ-≡ s refl
-    monoᵗ-v s (A ⇒ C)   q =
-      atᵛ-⇒ s (monoᵗ-v (flipˢ s) A (proj₁ d)) (monoᵗ-c s C (proj₂ d))
-      where d = below-∪ (polₜ-v α (flipˢ s) A) (polₜ-c α s C) q
-    monoᵗ-v s ([ ρ ] A) q = atᵛ-box s (atʳ-≡ (flipˢ s) (fixᵗ-r α γ ρ)) (monoᵗ-v s A q)
-
-    monoᵗ-c : (s : Sign) → (C : OCType Θ) → below (polₜ-c α s C) ≡ false
-            → atᶜ Q s (C [ updᵗ α γ ]ᶜ) C
-    monoᵗ-c s (A ‼ ε) q = atᶜ-‼ s (monoᵗ-v s A q) (atᵉ-≡ s (fixᵗ-e α γ ε))
+  monoᵗ-c : (s : Sign) → (C : OCType Θ) → below (polₜ-c α s C) ≡ false
+          → atᶜ Q s (C [ updᵗ α γ ]ᶜ) C
+  monoᵗ-c s (A ‼ ε) q = atᶜ-‼ s (monoᵗ-v s A q) (atᵉ-≡ s (fixᵗ-e α γ ε))
 
 polsₜ-sub-∈ : ∀ {n} → (α : Fin n) → (l : List (Fin n × Fin n))
             → below (polsₜ-sub α l) ≡ false

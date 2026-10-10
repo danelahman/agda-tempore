@@ -7,10 +7,12 @@
 --     are the derivations erasing to `M` (`charC`).            --
 --   * The driver (`Solve`): subtyping demands, type equations  --
 --     included, are expanded (`expandSub-dec`,                 --
---     `expandSub-max`) and decomposed exactly (`SubDec`'s      --
---     `intro`/`elim`, `atomiseᴿ-sound`/`atomiseᴿ-compl`);      --
---     eternality demands and the type side of var-rule         --
---     disjunctions are decided when pushed                     --
+--     `expandSub-max`) and decomposed exactly along the        --
+--     variance table of the type formers (`Former`: `Decomp`,  --
+--     `<:-intro`/`<:-elim`; `SubDec`'s `intro`/`elim`,         --
+--     `atomiseᴿ-sound`/`atomiseᴿ-compl`); eternality demands   --
+--     and the type side of var-rule disjunctions are decided   --
+--     when pushed, along its eternality column                 --
 --     (`etDec-intro`/`-compl`/`-refute`, `etDec-grade`); other --
 --     atoms are residualised. A solution carries its witness   --
 --     (`Wit`) and is principal (`solve-principal`); a          --
@@ -31,13 +33,14 @@
 --     (`simplify-⊩`/`-⊨`), which normalises the set, splits    --
 --     each join on a left side and drops each var-rule         --
 --     disjunction entailed by another; polarity-based          --
---     elimination of unknowns (`Elim`), with cycle elimination --
---     on the type variables of subtyping cycles (`equateᵗ`);   --
---     normal forms again (`canonElim`); `trim` (`trimElim`);   --
---     strengthening (`Strengthened`). The unknowns of the      --
---     image of the caller's variables and those of the         --
---     deferred conditions are neither eliminated nor dropped   --
---     (`fix`, `instᴿ`).                                        --
+--     elimination of unknowns (`Elim`), the polarities read    --
+--     along the variance table (`polᵛ`, `Lift`), with cycle    --
+--     elimination on the type variables of subtyping cycles    --
+--     (`equateᵗ`); normal forms again (`canonElim`); `trim`    --
+--     (`trimElim`); strengthening (`Strengthened`). The        --
+--     unknowns of the image of the caller's variables and      --
+--     those of the deferred conditions are neither eliminated  --
+--     nor dropped (`fix`, `instᴿ`).                            --
 --                                                              --
 -- Entailed orderings are decided by `decide≾ᵣ`/`decide≾ₑ` on   --
 -- normal forms (`nrmᵣ-≡`, `canonᵣ-≡`), sound by their types;   --

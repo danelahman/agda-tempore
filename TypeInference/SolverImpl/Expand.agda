@@ -27,6 +27,7 @@ open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing; maybe′) renaming (map to mmap)
 open import Data.Nat.Base using (ℕ)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
+open import Data.List.Relation.Unary.All using ([]; _∷_)
 open import Data.Unit using (⊤; tt)
 open import Data.Vec.Base using (Vec; lookup; tabulate)
   renaming ([] to []ⱽ; _∷_ to _∷ⱽ_)
@@ -61,6 +62,7 @@ open import TypeInference.SolverImpl.Core.SkelUnifyMGU   S
 open import TypeInference.SolverImpl.Core.Decorate     S
 open import TypeInference.SolverImpl.Core.Rigid        S using (zip₂)
 
+open import TypeInference.SolverImpl.Former S using (decompose)
 open import TypeInference.SolverImpl.Resid S
 
 -- Shapes: skeletons over a single variable, in which all type variables
@@ -234,27 +236,25 @@ data _◃ᶜ_ {Ψ} {n} where
 
 -- Two decorations of one skeleton decompose
 
-mutual
+◃-fits : ∀ {Ψ n} {t : Skel n} {A B : OVType Ψ} → t ◃ᵛ A → t ◃ᵛ B
+       → Fitsᴰ (λ X Y → Σ[ u ∈ Skel n ] (u ◃ᵛ X × u ◃ᵛ Y)) (decompose A B)
+◃-fits var◃          var◃            = tt
+◃-fits (Base◃ {b})   Base◃           with b ≡ᵇ? b
+... | yes refl = []
+... | no ¬p    = ⊥-elim (¬p refl)
+◃-fits Unit◃         Unit◃           = []
+◃-fits Bool◃         Bool◃           = []
+◃-fits Empty◃        Empty◃          = []
+◃-fits (p ×◃ q)      (p' ×◃ q')      = (_ , p , p') ∷ (_ , q , q') ∷ []
+◃-fits (p ⇒◃ ‼◃ q)   (p' ⇒◃ ‼◃ q')   = (_ , p , p') ∷ (_ , q , q') ∷ tt ∷ []
+◃-fits (Box◃ p)      (Box◃ p')       = tt ∷ (_ , p , p') ∷ []
 
-  ◃-subDec : ∀ {Ψ n} {t : Skel n} {A B : OVType Ψ} → t ◃ᵛ A → t ◃ᵛ B
-           → Σ[ d ∈ SubDec A B ] (subDec A B ≡ just d)
-  ◃-subDec var◃      var◃      = _ , refl
-  ◃-subDec (Base◃ {b}) Base◃ with b ≡ᵇ? b
-  ... | yes refl = _ , refl
-  ... | no ¬p    = ⊥-elim (¬p refl)
-  ◃-subDec Unit◃     Unit◃     = _ , refl
-  ◃-subDec Bool◃     Bool◃     = _ , refl
-  ◃-subDec Empty◃    Empty◃    = _ , refl
-  ◃-subDec (p ×◃ q)  (p' ×◃ q') =
-    _ , cong₂ (zip₂ pairᴰ) (proj₂ (◃-subDec p p')) (proj₂ (◃-subDec q q'))
-  ◃-subDec (p ⇒◃ q)  (p' ⇒◃ q') =
-    _ , cong₂ (zip₂ arrᴰ) (proj₂ (◃-subDec p' p)) (proj₂ (◃-subDecᶜ q q'))
-  ◃-subDec (Box◃ p)  (Box◃ p') =
-    _ , cong (mmap (boxᴰ _ _)) (proj₂ (◃-subDec p p'))
-
-  ◃-subDecᶜ : ∀ {Ψ n} {t : Skel n} {C D : OCType Ψ} → t ◃ᶜ C → t ◃ᶜ D
-            → Σ[ d ∈ SubDecᶜ C D ] (subDecᶜ C D ≡ just d)
-  ◃-subDecᶜ (‼◃ p) (‼◃ q) = _ , cong (mmap (bangᴰ _ _)) (proj₂ (◃-subDec p q))
+◃-subDec : ∀ {Ψ n} {t : Skel n} {A B : OVType Ψ} → t ◃ᵛ A → t ◃ᵛ B
+         → Σ[ d ∈ SubDec A B ] (subDec A B ≡ just d)
+◃-subDec {n = n} p q =
+  SubDecJust.subDec-Just (λ X Y → Σ[ u ∈ Skel n ] (u ◃ᵛ X × u ◃ᵛ Y))
+                         (λ { (u , a , b) → u , b , a }) (λ { (u , a , b) → ◃-fits a b })
+                         (_ , p , q)
 
 -- A decoration of a store decorates every skeleton through it
 

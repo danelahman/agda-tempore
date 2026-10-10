@@ -3,10 +3,11 @@
 --                                                              --
 -- A demand bounds an unknown above, below, both, or not at     --
 -- all. An ordering is read from left to right; a type is       --
--- traversed with the variance of each position, an arrow's     --
--- domain and a box's grade reversing it. An eternality demand  --
--- and the type side of a var-rule disjunction depend only on   --
--- the skeleton and bound nothing.                              --
+-- traversed along the variance table (`Former`), a             --
+-- contravariant position reversing the sign and an invariant   --
+-- one reading both. An eternality demand and the type side of  --
+-- a var-rule disjunction depend only on the skeleton and bound --
+-- nothing.                                                     --
 --                                                              --
 -- At the reporting boundary, lowering an unknown that no       --
 -- demand bounds below preserves every hypothesis.              --
@@ -16,12 +17,18 @@ open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
 open import Data.Fin.Base using (Fin)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_)
+open import Data.List.Membership.Propositional using (_∈_)
+open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Product using (_×_; _,_)
+
+open import Induction.WellFounded using (Acc; acc; WfRec)
 
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
+
+open import Util.Equality
 
 open import TypeInference.Scopes
 
@@ -33,6 +40,8 @@ open GradeSystemInterface Grades
 open import TypeInference.OpenSyntax.Grades S
 open import TypeInference.OpenSyntax.Types  S
 open import TypeInference.OpenSyntax.Hyps   S
+
+open import TypeInference.SolverImpl.Former S
 
 record Pol : Set where
   constructor pol
@@ -63,6 +72,38 @@ atˢ : Sign → 𝔹 → Pol
 atˢ ⁺ b = pol b false
 atˢ ⁻ b = pol false b
 
+-- A position of a variance, read at a sign
+
+atVar : Variance → Sign → (Sign → Pol) → Pol
+atVar co     s f = f s
+atVar contra s f = f (flipˢ s)
+atVar inv    s f = f s ∪ᴾ f (flipˢ s)
+
+unionᴾ : ∀ {X : Set} → (xs : List X) → (∀ {x} → x ∈ xs → Pol) → Pol
+unionᴾ []       f = noᴾ
+unionᴾ (x ∷ xs) f = f (here refl) ∪ᴾ unionᴾ xs (λ m → f (there m))
+
+-- The occurrences at the leaves of a value type, each read at the sign
+-- of its position, and at the parts of a former
+
+polᵛᵃ : ∀ {Ψ} → (Sign → TyVar Ψ → Pol) → (Sign → RExp Ψ → Pol) → (Sign → EExp Ψ → Pol)
+      → Sign → (A : OVType Ψ) → Acc _≺_ A → Pol
+polᴾ : ∀ {Ψ} → (Sign → TyVar Ψ → Pol) → (Sign → RExp Ψ → Pol) → (Sign → EExp Ψ → Pol)
+     → Sign → {A B : OVType Ψ} {ps : List (Part Ψ)} → Decomp A B ps
+     → WfRec _≺_ (Acc _≺_) A → ∀ {p} → p ∈ ps → Pol
+
+polᵛᵃ lt lr le s A (acc r) with self A
+... | var α       = lt s α
+... | form ps g _ = unionᴾ ps (polᴾ lt lr le s g r)
+
+polᴾ lt lr le s g r {ty v X _} m = atVar v s (λ s' → polᵛᵃ lt lr le s' X (r (left g m)))
+polᴾ lt lr le s g r {rg v ρ _} m = atVar v s (λ s' → lr s' ρ)
+polᴾ lt lr le s g r {eg v ε _} m = atVar v s (λ s' → le s' ε)
+
+polᵛ : ∀ {Ψ} → (Sign → TyVar Ψ → Pol) → (Sign → RExp Ψ → Pol) → (Sign → EExp Ψ → Pol)
+     → Sign → OVType Ψ → Pol
+polᵛ lt lr le s A = polᵛᵃ lt lr le s A (≺-wf A)
+
 -- Occurrences of one resource-grade unknown
 
 polᵣ-r : ∀ {Ψ} → RVar Ψ → Sign → RExp Ψ → Pol
@@ -72,20 +113,11 @@ polᵣ-r i s (ρ ·̂ᵣ ρ')  = polᵣ-r i s ρ ∪ᴾ polᵣ-r i s ρ'
 polᵣ-r i s (ρ ⊔̂ᵣ ρ')  = polᵣ-r i s ρ ∪ᴾ polᵣ-r i s ρ'
 polᵣ-r i s ∣ _ ∣̂ᵉ     = noᴾ
 
-mutual
+polᵣ-v : ∀ {Ψ} → RVar Ψ → Sign → OVType Ψ → Pol
+polᵣ-v i = polᵛ (λ _ _ → noᴾ) (polᵣ-r i) (λ _ _ → noᴾ)
 
-  polᵣ-v : ∀ {Ψ} → RVar Ψ → Sign → OVType Ψ → Pol
-  polᵣ-v i s (tvar _)  = noᴾ
-  polᵣ-v i s (Base _)  = noᴾ
-  polᵣ-v i s Unit      = noᴾ
-  polᵣ-v i s Bool      = noᴾ
-  polᵣ-v i s (A |×| B) = polᵣ-v i s A ∪ᴾ polᵣ-v i s B
-  polᵣ-v i s Empty     = noᴾ
-  polᵣ-v i s (A ⇒ C)   = polᵣ-v i (flipˢ s) A ∪ᴾ polᵣ-c i s C
-  polᵣ-v i s ([ ρ ] A) = polᵣ-r i (flipˢ s) ρ ∪ᴾ polᵣ-v i s A
-
-  polᵣ-c : ∀ {Ψ} → RVar Ψ → Sign → OCType Ψ → Pol
-  polᵣ-c i s (A ‼ _) = polᵣ-v i s A
+polᵣ-c : ∀ {Ψ} → RVar Ψ → Sign → OCType Ψ → Pol
+polᵣ-c i s (A ‼ _) = polᵣ-v i s A
 
 -- Occurrences of one effect-grade unknown; a resource expression
 -- reaches them through the monotone `∣_∣̂ᵉ`
@@ -103,20 +135,11 @@ polₑ-r i s (ρ ·̂ᵣ ρ')  = polₑ-r i s ρ ∪ᴾ polₑ-r i s ρ'
 polₑ-r i s (ρ ⊔̂ᵣ ρ')  = polₑ-r i s ρ ∪ᴾ polₑ-r i s ρ'
 polₑ-r i s ∣ ε ∣̂ᵉ     = polₑ-e i s ε
 
-mutual
+polₑ-v : ∀ {Ψ} → EVar Ψ → Sign → OVType Ψ → Pol
+polₑ-v i = polᵛ (λ _ _ → noᴾ) (polₑ-r i) (polₑ-e i)
 
-  polₑ-v : ∀ {Ψ} → EVar Ψ → Sign → OVType Ψ → Pol
-  polₑ-v i s (tvar _)  = noᴾ
-  polₑ-v i s (Base _)  = noᴾ
-  polₑ-v i s Unit      = noᴾ
-  polₑ-v i s Bool      = noᴾ
-  polₑ-v i s (A |×| B) = polₑ-v i s A ∪ᴾ polₑ-v i s B
-  polₑ-v i s Empty     = noᴾ
-  polₑ-v i s (A ⇒ C)   = polₑ-v i (flipˢ s) A ∪ᴾ polₑ-c i s C
-  polₑ-v i s ([ ρ ] A) = polₑ-r i (flipˢ s) ρ ∪ᴾ polₑ-v i s A
-
-  polₑ-c : ∀ {Ψ} → EVar Ψ → Sign → OCType Ψ → Pol
-  polₑ-c i s (A ‼ ε) = polₑ-v i s A ∪ᴾ polₑ-e i s ε
+polₑ-c : ∀ {Ψ} → EVar Ψ → Sign → OCType Ψ → Pol
+polₑ-c i s (A ‼ ε) = polₑ-v i s A ∪ᴾ polₑ-e i s ε
 
 -- Orderings and var-rule disjunctions, listed
 
@@ -144,20 +167,11 @@ polsₑ-disj i ((_ , ρ) ∷ l) = polₑ-r i ⁺ ρ ∪ᴾ polsₑ-disj i l
 -- side of a var-rule disjunction read only the skeleton, which a
 -- subtyping hypothesis preserves, so neither bounds the variable.
 
-mutual
+polₜ-v : ∀ {Ψ} → TyVar Ψ → Sign → OVType Ψ → Pol
+polₜ-v α = polᵛ (λ s β → atˢ s ⌊ α ≟ᶠ β ⌋) (λ _ _ → noᴾ) (λ _ _ → noᴾ)
 
-  polₜ-v : ∀ {Ψ} → TyVar Ψ → Sign → OVType Ψ → Pol
-  polₜ-v α s (tvar β)  = atˢ s ⌊ α ≟ᶠ β ⌋
-  polₜ-v α s (Base _)  = noᴾ
-  polₜ-v α s Unit      = noᴾ
-  polₜ-v α s Bool      = noᴾ
-  polₜ-v α s (A |×| B) = polₜ-v α s A ∪ᴾ polₜ-v α s B
-  polₜ-v α s Empty     = noᴾ
-  polₜ-v α s (A ⇒ C)   = polₜ-v α (flipˢ s) A ∪ᴾ polₜ-c α s C
-  polₜ-v α s ([ ρ ] A) = polₜ-v α s A
-
-  polₜ-c : ∀ {Ψ} → TyVar Ψ → Sign → OCType Ψ → Pol
-  polₜ-c α s (A ‼ ε) = polₜ-v α s A
+polₜ-c : ∀ {Ψ} → TyVar Ψ → Sign → OCType Ψ → Pol
+polₜ-c α s (A ‼ ε) = polₜ-v α s A
 
 polsₜ-sub : ∀ {n} → Fin n → List (Fin n × Fin n) → Pol
 polsₜ-sub α []            = noᴾ
