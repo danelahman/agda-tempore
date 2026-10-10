@@ -11,9 +11,11 @@
 -- the continuation grade, quantified at the meta level in      --
 -- `Syntax.Language`, being a rigid effect-grade variable.      --
 --                                                              --
--- The rules `annᵛ`, `annᶜ` and `lamᵃ` record a type annotation --
--- of the raw term and have no counterpart in                   --
--- `Syntax.Language`; they are identities on typing.            --
+-- The rules `annᵛ`, `annᶜ`, `lamᵃ` and `unboxᵃ` record a type  --
+-- annotation of the raw term and have no counterpart in        --
+-- `Syntax.Language`; `annᵛ`, `annᶜ` and `lamᵃ` are identities  --
+-- on typing, and `unboxᵃ` is `unbox` with the declared type of --
+-- the variable checked against the annotation.                 --
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ)
@@ -236,6 +238,23 @@ mutual
             → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] Γ)
             → Q ⊩ ρ' ≾̂ᵣ ρ₀
             → Q ∣ A₀ <:̂ᵛ A
+            → Q ∣ Γ ∷ A ⊢C⦂ C
+            -----------------
+            → Q ∣ Γ ⊢C⦂ C
+
+    -- unboxing a variable with an annotated type
+
+    -- As `unbox`, the declared box type of the variable being a subtype of
+    -- the annotation `A'`.
+
+    unboxᵃ  : (A' : OVType Θ)
+            → {A A₀ : OVType Θ}
+            → {C : OCType Θ}
+            → {ρ₀ ρ' : RExp Θ}
+            → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] Γ)
+            → Q ⊩ ρ' ≾̂ᵣ ρ₀
+            → Q ∣ A₀ <:̂ᵛ A
+            → Q ∣ [ ρ₀ ] A₀ <:̂ᵛ A'
             → Q ∣ Γ ∷ A ⊢C⦂ C
             -----------------
             → Q ∣ Γ ⊢C⦂ C

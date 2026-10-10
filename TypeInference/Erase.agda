@@ -10,8 +10,9 @@
 -- a raw term over `Θ`, a handler clause to a                   --
 -- `RawC (Θ +e) (2+n)`, and a variable to its full-context      --
 -- position `var-pos`. It is not injective: `subV` and `subC`   --
--- erase to their subjects. The annotation rules `annᵛ`, `annᶜ` --
--- and `lamᵃ` erase to the annotated raw forms.                 --
+-- erase to their subjects. The annotation rules `annᵛ`,        --
+-- `annᶜ`, `lamᵃ` and `unboxᵃ` erase to the annotated raw       --
+-- forms.                                                       --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero)
@@ -83,6 +84,8 @@ mutual
   ⌊ handle M `with H `in N ⌋ᶜ   = handle ⌊ M ⌋ᶜ `with (λ op → ⌊ H op ⌋ᶜ) `in ⌊ N ⌋ᶜ
 
   ⌊ unbox x p q N ⌋ᶜ            = unbox (var-pos x) ⌊ N ⌋ᶜ
+
+  ⌊ unboxᵃ A x p q r N ⌋ᶜ       = unbox[ A ] (var-pos x) ⌊ N ⌋ᶜ
 
   ⌊ box ρ V N ⌋ᶜ                = box ρ ⌊ V ⌋ᵛ ⌊ N ⌋ᶜ
 

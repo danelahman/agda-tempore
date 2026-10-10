@@ -12,7 +12,8 @@
 -- operation of a `perform`, the duration of a `delay`, the     --
 -- variable of an `unbox`, the grade of a `box`, an expression  --
 -- over `Θ`, and the optional type annotations of a value, of a --
--- computation and of a lambda's argument, open types over `Θ`. --
+-- computation, of a lambda's argument and of an unboxed        --
+-- variable, open types over `Θ`.                               --
 -- A handler's clauses are scoped over `Θ +e`, binding the      --
 -- clause's continuation grade, and over the full context,      --
 -- `2 + n`.                                                     --
@@ -187,6 +188,14 @@ mutual
             --------------
             → RawC Θ n
 
+    -- unboxing a boxed variable with an annotated type
+
+    unbox[_] : OVType Θ
+             → Fin n
+             → RawC Θ (suc n)
+             --------------
+             → RawC Θ n
+
     -- boxing up a value
 
     -- The grade says when the boxed value becomes usable.
@@ -230,5 +239,6 @@ mutual
   HandlerFreeᶜ (delay τ M)              = HandlerFreeᶜ M
   HandlerFreeᶜ (handle M `with H `in N) = ⊥
   HandlerFreeᶜ (unbox i N)              = HandlerFreeᶜ N
+  HandlerFreeᶜ (unbox[ A ] i N)         = HandlerFreeᶜ N
   HandlerFreeᶜ (box ρ V N)              = HandlerFreeᵛ V × HandlerFreeᶜ N
   HandlerFreeᶜ (M ⦂ᶜ C)                 = HandlerFreeᶜ M

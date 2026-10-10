@@ -56,6 +56,7 @@ mutual
   (handle M `with H `in N) [ σ ]ᴿᶜ =
     handle (M [ σ ]ᴿᶜ) `with (λ op → H op [ σ ↑ᵉ ]ᴿᶜ) `in (N [ σ ]ᴿᶜ)
   unbox i N                [ σ ]ᴿᶜ = unbox i (N [ σ ]ᴿᶜ)
+  unbox[ A ] i N           [ σ ]ᴿᶜ = unbox[ A [ σ ]ᵛ ] i (N [ σ ]ᴿᶜ)
   box ρ V N                [ σ ]ᴿᶜ = box (ρ [ σ ]ʳ) (V [ σ ]ᴿᵛ) (N [ σ ]ᴿᶜ)
   (M ⦂ᶜ C)                 [ σ ]ᴿᶜ = (M [ σ ]ᴿᶜ) ⦂ᶜ (C [ σ ]ᶜ)
 
@@ -92,6 +93,8 @@ mutual
           (fun-ext (λ op → [≐]ᴿᶜ (≐ˢ-↑ᵉ p) (H op)))
           ([≐]ᴿᶜ p N)
   [≐]ᴿᶜ p (unbox i N)              = cong (unbox i) ([≐]ᴿᶜ p N)
+  [≐]ᴿᶜ p (unbox[ A ] i N)         =
+    cong₂ (λ x y → unbox[ x ] i y) ([≐]ᵛ p A) ([≐]ᴿᶜ p N)
   [≐]ᴿᶜ p (box ρ V N)              = cong₃ box ([≐]ʳ p ρ) ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p N)
   [≐]ᴿᶜ p (M ⦂ᶜ C)                 = cong₂ _⦂ᶜ_ ([≐]ᴿᶜ p M) ([≐]ᶜ p C)
 
@@ -126,6 +129,7 @@ mutual
           (fun-ext (λ op → trans ([≐]ᴿᶜ ↑ᵉ-id (H op)) ([id]ᴿᶜ (H op))))
           ([id]ᴿᶜ N)
   [id]ᴿᶜ (unbox i N)              = cong (unbox i) ([id]ᴿᶜ N)
+  [id]ᴿᶜ (unbox[ A ] i N)         = cong₂ (λ x y → unbox[ x ] i y) ([id]ᵛ A) ([id]ᴿᶜ N)
   [id]ᴿᶜ (box ρ V N)              = cong₃ box ([id]ʳ ρ) ([id]ᴿᵛ V) ([id]ᴿᶜ N)
   [id]ᴿᶜ (M ⦂ᶜ C)                 = cong₂ _⦂ᶜ_ ([id]ᴿᶜ M) ([id]ᶜ C)
 
@@ -163,6 +167,8 @@ mutual
                                  ([≐]ᴿᶜ (⨟-↑ᵉ σ δ) (H op))))
           ([⨟]ᴿᶜ N σ δ)
   [⨟]ᴿᶜ (unbox i N)              σ δ = cong (unbox i) ([⨟]ᴿᶜ N σ δ)
+  [⨟]ᴿᶜ (unbox[ A ] i N)         σ δ =
+    cong₂ (λ x y → unbox[ x ] i y) ([⨟]ᵛ A σ δ) ([⨟]ᴿᶜ N σ δ)
   [⨟]ᴿᶜ (box ρ V N)              σ δ = cong₃ box ([⨟]ʳ ρ σ δ) ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ N σ δ)
   [⨟]ᴿᶜ (M ⦂ᶜ C)                 σ δ = cong₂ _⦂ᶜ_ ([⨟]ᴿᶜ M σ δ) ([⨟]ᶜ C σ δ)
 
@@ -199,6 +205,7 @@ mutual
   handlerFree-[]ᴿᶜ (delay τ M)              h           = handlerFree-[]ᴿᶜ M h
   handlerFree-[]ᴿᶜ (handle M `with H `in N) ()
   handlerFree-[]ᴿᶜ (unbox i N)              h           = handlerFree-[]ᴿᶜ N h
+  handlerFree-[]ᴿᶜ (unbox[ A ] i N)         h           = handlerFree-[]ᴿᶜ N h
   handlerFree-[]ᴿᶜ (box ρ V N)              (h , k)     =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ N k
   handlerFree-[]ᴿᶜ (M ⦂ᶜ C)                 h           = handlerFree-[]ᴿᶜ M h
@@ -239,6 +246,8 @@ data InvC {Θ Θ' n} (σ : Subst Θ Θ') : RawC Θ n → RawC Θ' n → Set wher
           → ((op : Op) → H op [ σ ↑ᵉ ]ᴿᶜ ≡ H' op) → N [ σ ]ᴿᶜ ≡ N'
           → InvC σ (handle M `with H `in N) (handle M' `with H' `in N')
   unbox   : ∀ {i N N'} → N [ σ ]ᴿᶜ ≡ N' → InvC σ (unbox i N) (unbox i N')
+  unboxᵃ  : ∀ {A i N A' N'} → A [ σ ]ᵛ ≡ A' → N [ σ ]ᴿᶜ ≡ N'
+          → InvC σ (unbox[ A ] i N) (unbox[ A' ] i N')
   box     : ∀ {ρ V N ρ' V' N'} → ρ [ σ ]ʳ ≡ ρ' → V [ σ ]ᴿᵛ ≡ V' → N [ σ ]ᴿᶜ ≡ N'
           → InvC σ (box ρ V N) (box ρ' V' N')
   annᶜ    : ∀ {M A ε M' A' ε'} → M [ σ ]ᴿᶜ ≡ M' → A [ σ ]ᵛ ≡ A' → ε [ σ ]ᵉ ≡ ε'
@@ -268,5 +277,6 @@ invC (perform op V M)         refl = perform refl refl
 invC (delay τ M)              refl = delay refl
 invC (handle M `with H `in N) refl = handle refl (λ op → refl) refl
 invC (unbox i N)              refl = unbox refl
+invC (unbox[ A ] i N)         refl = unboxᵃ refl refl
 invC (box ρ V N)              refl = box refl refl refl
 invC (M ⦂ᶜ (A ‼ ε))           refl = annᶜ refl refl refl

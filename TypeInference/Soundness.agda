@@ -293,6 +293,21 @@ co²ᵗ²ᵉ-ˢ↑ ι σ B₁ B₂ ε₁ ε₂ =
   ≐ˢ-trans (⨟-↑ᵉ (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ) (σ ,ᵗ B₁ ,ᵗ B₂ ,ᵉ ε₁ ,ᵉ ε₂))
            (≐ˢ-↑ᵉ (co²ᵗ²ᵉ-ˢ ι σ B₁ B₂ ε₁ ε₂))
 
+-- The premises of `unbox` at the variable `i`, with the continuation's
+-- erasure; shared by `unbox` and `unboxᵃ`.
+
+record UnboxPremises {Θ n} (Q : Hyps Θ) (Γ : OCtx Θ n) (i : Fin n)
+                     (C : OCType Θ) (N : RawC Θ (suc n)) : Set where
+  field
+    ρ₀ ρ' : RExp Θ
+    A₀ A₁ : OVType Θ
+    x     : [ ρ₀ ] A₀ ∈̂[ ρ' ] Γ
+    pos   : var-pos x ≡ i
+    ok    : Q ⊩ ρ' ≾̂ᵣ ρ₀
+    ty    : Q ∣ A₀ <:̂ᵛ A₁
+    body  : Q ∣ Γ ∷ A₁ ⊢C⦂ C
+    erase : ⌊ body ⌋ᶜ ≡ N
+
 mutual
 
   soundVˢ : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
@@ -687,8 +702,87 @@ mutual
 
   -- unboxing a boxed variable
 
-  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (unbox i N) A t (B₁ , B₂ , ρ , (sb , _) , le , st , s') =
+  soundCˢ ι Γ (unbox i N) A t s = unbox x ok ty body , cong₂ unbox pos erase
+    where open UnboxPremises (soundUnboxˢ ι Γ i N A t s)
+
+  -- unboxing a boxed variable with an annotated type
+  --
+  -- The recorded annotation is the instantiated one; the subtyping atom,
+  -- at the looked-up type, is the declared box type's.
+
+  soundCˢ {σ = σ} {Q = Q} ι Γ (unbox[ B ] i N) A t (sa , s) =
+    unboxᵃ (B [ ι ]ᵛ [ σ ]ᵛ) x ok ty (subst (Q ∣_<:̂ᵛ _) decl sa) body ,
+    cong₃ unbox[_] ([⨟]ᵛ B ι σ) pos erase
+    where
+      open UnboxPremises (soundUnboxˢ ι Γ i N A t s)
+
+      decl : lookup-ty Γ i [ σ ]ᵛ ≡ [ ρ₀ ] A₀
+      decl = trans (sym (lookup-ty-subst Γ σ i))
+                   (trans (cong (lookup-ty (Γ [ σ ]ᶜᵗˣ)) (sym pos)) (var-pos-ty x))
+
+  -- boxing up a value
+  --
+  -- The grade is the annotation, instantiated; only the payload's type is
+  -- a witness.
+
+  soundCˢ {Θ = Θ} {σ = σ} ι Γ (box ρ V N) A t (B , s₁ , s₂) =
     D , q
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ
+      σ' = σ ,ᵗ B
+      Γ↑ = wkᵗ-ctx Γ
+      A↑ = wkᵗ-v A
+      t↑ = wkᵗ-e t
+      α  = tvar (newᵗ {Θ})
+      r  = ρ [ ι↑ ]ʳ
+      ρ' = ρ [ ι ⨟ˢ σ ]ʳ
+
+      pΓ = wk-,ᵗ-ctx σ B Γ
+      pA = wk-,ᵗ-v   σ B A
+      pt = wk-,ᵗ-e   σ B t
+      pι = wk-,ᵗ-ˢ   ι σ B
+
+      pr : r [ σ' ]ʳ ≡ ρ'
+      pr = trans ([⨟]ʳ ρ ι↑ σ') ([≐]ʳ pι ρ)
+
+      ih₁ = soundVˢ ι↑ (Γ↑ ⟨ r ⟩) V α s₁
+      ih₂ = soundCˢ ι↑ (Γ↑ ∷ [ r ] α) N A↑ t↑ s₂
+
+      c₁ = cong₂ _⟨_⟩ pΓ pr
+      c₂ = cong₂ (λ Γ₀ ρ₀ → Γ₀ ∷ [ ρ₀ ] B) pΓ pr
+
+      D₁ = ctx-substᵛ c₁ (proj₁ ih₁)
+      D₂ = c-subst (cong₂ _‼_ pA pt) (ctx-substᶜ c₂ (proj₁ ih₂))
+
+      D = box ρ' D₁ D₂
+
+      q = cong₂ (box ρ')
+                (trans (⌊ctxᵛ⌋ c₁ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V)))
+                (trans (⌊c⌋ (cong₂ _‼_ pA pt) (ctx-substᶜ c₂ (proj₁ ih₂)))
+                       (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂))
+                              (trans (proj₂ ih₂) ([≐]ᴿᶜ pι N))))
+
+  -- type annotation
+  --
+  -- As for values, the two atoms making up the `subC`.
+
+  soundCˢ {σ = σ} ι Γ (M ⦂ᶜ (B ‼ u)) A t (s , st , le) =
+    subC (annᶜ (B [ ι ]ᵛ [ σ ]ᵛ ‼ u [ ι ]ᵉ [ σ ]ᵉ) (proj₁ ih)) (st ‼ₛ le) ,
+    cong₂ _⦂ᶜ_ (proj₂ ih) ([⨟]ᶜ (B ‼ u) ι σ)
+    where
+      ih = soundCˢ ι Γ M (B [ ι ]ᵛ) (u [ ι ]ᵉ) s
+
+  -- unboxing the variable `i`
+
+  soundUnboxˢ : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
+              → (ι : Subst Θ₀ Θ) → (Γ : OCtx Θ n) → (i : Fin n)
+              → (N : RawC Θ₀ (suc n)) → (A : OVType Θ) → (t : EExp Θ)
+              → σ ⊨[ Q ] genUnboxˢ ι Γ i N (A ‼ t)
+              -----------------------------------------------------------
+              → UnboxPremises Q (Γ [ σ ]ᶜᵗˣ) i (A [ σ ]ᵛ ‼ t [ σ ]ᵉ) (N [ ι ⨟ˢ σ ]ᴿᶜ)
+
+  soundUnboxˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ i N A t (B₁ , B₂ , ρ , (sb , _) , le , st , s') =
+    record { x = x ; pos = pos ; ok = ok ; ty = ty' ; body = D₀ ; erase = q }
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
       σ' = σ ,ᵗ B₁ ,ᵗ B₂ ,ʳ ρ
@@ -750,66 +844,14 @@ mutual
 
       D₀ = c-subst (cong₂ _‼_ pA pt) (ctx-substᶜ c₀ (proj₁ ih))
 
-      D = unbox x ok (<:̂ᵛ-trans ty (subst₂ (Q ∣_<:̂ᵛ_) pα pβ st)) D₀
+      ty' = <:̂ᵛ-trans ty (subst₂ (Q ∣_<:̂ᵛ_) pα pβ st)
 
-      q = cong₂ unbox
-                (trans (var-pos-ty-subst eq' (lookup-var (Γ [ σ ]ᶜᵗˣ) i))
-                       (var-pos-lookup (Γ [ σ ]ᶜᵗˣ) i))
-                (trans (⌊c⌋ (cong₂ _‼_ pA pt) (ctx-substᶜ c₀ (proj₁ ih)))
-                       (trans (⌊ctxᶜ⌋ c₀ (proj₁ ih))
-                              (trans (proj₂ ih) ([≐]ᴿᶜ pι N))))
+      pos = trans (var-pos-ty-subst eq' (lookup-var (Γ [ σ ]ᶜᵗˣ) i))
+                  (var-pos-lookup (Γ [ σ ]ᶜᵗˣ) i)
 
-  -- boxing up a value
-  --
-  -- The grade is the annotation, instantiated; only the payload's type is
-  -- a witness.
-
-  soundCˢ {Θ = Θ} {σ = σ} ι Γ (box ρ V N) A t (B , s₁ , s₂) =
-    D , q
-    where
-      ι↑ = ι ⨟ˢ wkˢᵗ
-      σ' = σ ,ᵗ B
-      Γ↑ = wkᵗ-ctx Γ
-      A↑ = wkᵗ-v A
-      t↑ = wkᵗ-e t
-      α  = tvar (newᵗ {Θ})
-      r  = ρ [ ι↑ ]ʳ
-      ρ' = ρ [ ι ⨟ˢ σ ]ʳ
-
-      pΓ = wk-,ᵗ-ctx σ B Γ
-      pA = wk-,ᵗ-v   σ B A
-      pt = wk-,ᵗ-e   σ B t
-      pι = wk-,ᵗ-ˢ   ι σ B
-
-      pr : r [ σ' ]ʳ ≡ ρ'
-      pr = trans ([⨟]ʳ ρ ι↑ σ') ([≐]ʳ pι ρ)
-
-      ih₁ = soundVˢ ι↑ (Γ↑ ⟨ r ⟩) V α s₁
-      ih₂ = soundCˢ ι↑ (Γ↑ ∷ [ r ] α) N A↑ t↑ s₂
-
-      c₁ = cong₂ _⟨_⟩ pΓ pr
-      c₂ = cong₂ (λ Γ₀ ρ₀ → Γ₀ ∷ [ ρ₀ ] B) pΓ pr
-
-      D₁ = ctx-substᵛ c₁ (proj₁ ih₁)
-      D₂ = c-subst (cong₂ _‼_ pA pt) (ctx-substᶜ c₂ (proj₁ ih₂))
-
-      D = box ρ' D₁ D₂
-
-      q = cong₂ (box ρ')
-                (trans (⌊ctxᵛ⌋ c₁ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V)))
-                (trans (⌊c⌋ (cong₂ _‼_ pA pt) (ctx-substᶜ c₂ (proj₁ ih₂)))
-                       (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂))
-                              (trans (proj₂ ih₂) ([≐]ᴿᶜ pι N))))
-
-  -- type annotation
-  --
-  -- As for values, the two atoms making up the `subC`.
-
-  soundCˢ {σ = σ} ι Γ (M ⦂ᶜ (B ‼ u)) A t (s , st , le) =
-    subC (annᶜ (B [ ι ]ᵛ [ σ ]ᵛ ‼ u [ ι ]ᵉ [ σ ]ᵉ) (proj₁ ih)) (st ‼ₛ le) ,
-    cong₂ _⦂ᶜ_ (proj₂ ih) ([⨟]ᶜ (B ‼ u) ι σ)
-    where
-      ih = soundCˢ ι Γ M (B [ ι ]ᵛ) (u [ ι ]ᵉ) s
+      q = trans (⌊c⌋ (cong₂ _‼_ pA pt) (ctx-substᶜ c₀ (proj₁ ih)))
+                (trans (⌊ctxᶜ⌋ c₀ (proj₁ ih))
+                       (trans (proj₂ ih) ([≐]ᴿᶜ pι N)))
 
 -- Generation for a raw term over the scope of the context: the program's
 -- annotations are instantiated by the solution.

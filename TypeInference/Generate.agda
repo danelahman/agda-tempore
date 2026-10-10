@@ -26,7 +26,7 @@
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero)
-open import Data.Nat using (ℕ)
+open import Data.Nat using (ℕ; suc)
 open import Data.Product using (_,_)
 open import Data.Unit using (tt)
 
@@ -250,23 +250,15 @@ mutual
       Γ⇑  = wkᵉ-ctx (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))))
 
   -- unboxing a boxed variable
-  --
-  -- The declared box type is pinned, being read off the context; the
-  -- continuation binds a supertype of the payload.
 
-  genCˢ {Θ = Θ} ι Γ (unbox i N) (A ‼ t) =
-    ∃ᵗ (∃ᵗ (∃ʳ (  (lookup-ty Γ↑ i ≐ᵥ [ r ] α)
-                ∧̂ (lookup-gr Γ↑ i ≾̂ᵣᶜ r)
-                ∧̂ (α ≾̂ᵥᶜ β)
-                ∧̂ genCˢ ι↑ (Γ↑ ∷ β) N (A↑ ‼ t↑))))
-    where
-      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
-      α  = wkʳ-v (wkᵗ-v (tvar (newᵗ {Θ})))
-      β  = wkʳ-v (tvar (newᵗ {Θ +ty}))
-      r  = rvar (newʳ {Θ +ty +ty})
-      A↑ = wkʳ-v (wkᵗ-v (wkᵗ-v A))
-      t↑ = wkʳ-e (wkᵗ-e (wkᵗ-e t))
-      Γ↑ = wkʳ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
+  genCˢ ι Γ (unbox i N) C = genUnboxˢ ι Γ i N C
+
+  -- unboxing a boxed variable with an annotated type
+  --
+  -- As `unbox`, with the variable's type in the context a subtype of the
+  -- annotation, read through `ι`.
+
+  genCˢ ι Γ (unbox[ B ] i N) C = (lookup-ty Γ i ≾̂ᵥᶜ B [ ι ]ᵛ) ∧̂ genUnboxˢ ι Γ i N C
 
   -- boxing up a value
   --
@@ -291,6 +283,28 @@ mutual
     where
       B' = B [ ι ]ᵛ
       u' = u [ ι ]ᵉ
+
+
+  -- unboxing the variable `i`
+  --
+  -- The declared box type is pinned, being read off the context; the
+  -- continuation binds a supertype of the payload.
+
+  genUnboxˢ : ∀ {Θ₀ Θ n} → Subst Θ₀ Θ → OCtx Θ n → Fin n → RawC Θ₀ (suc n)
+            → OCType Θ → Constraint Θ
+  genUnboxˢ {Θ = Θ} ι Γ i N (A ‼ t) =
+    ∃ᵗ (∃ᵗ (∃ʳ (  (lookup-ty Γ↑ i ≐ᵥ [ r ] α)
+                ∧̂ (lookup-gr Γ↑ i ≾̂ᵣᶜ r)
+                ∧̂ (α ≾̂ᵥᶜ β)
+                ∧̂ genCˢ ι↑ (Γ↑ ∷ β) N (A↑ ‼ t↑))))
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
+      α  = wkʳ-v (wkᵗ-v (tvar (newᵗ {Θ})))
+      β  = wkʳ-v (tvar (newᵗ {Θ +ty}))
+      r  = rvar (newʳ {Θ +ty +ty})
+      A↑ = wkʳ-v (wkᵗ-v (wkᵗ-v A))
+      t↑ = wkʳ-e (wkᵗ-e (wkᵗ-e t))
+      Γ↑ = wkʳ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
 
 -- A handler-free term generates a constraint with no rigid binder
 
@@ -329,6 +343,8 @@ mutual
   genCˢ-rigidFree (handle M `with H `in N) {A ‼ t} ()
   genCˢ-rigidFree (unbox i N)              {A ‼ t} h           =
     (tt , tt) , tt , tt , genCˢ-rigidFree N h
+  genCˢ-rigidFree (unbox[ B ] i N)         {A ‼ t} h           =
+    tt , (tt , tt) , tt , tt , genCˢ-rigidFree N h
   genCˢ-rigidFree (box ρ V N)              {A ‼ t} (h , k)     =
     genVˢ-rigidFree V h , genCˢ-rigidFree N k
   genCˢ-rigidFree (M ⦂ᶜ (B ‼ u))           {A ‼ t} h           =
