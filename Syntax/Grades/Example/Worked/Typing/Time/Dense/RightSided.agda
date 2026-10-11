@@ -34,7 +34,7 @@ open import Syntax.Grades using (GradeMorphism)
 
 open import Syntax.Grades.Example.Time.Dense.RightSided
   using (𝕀ᵣ; ↑_; ℚ≥0; _/_; #_; nonZero; uₒ-least;
-         dense-right-sided-intervals; right-sided→dense)
+         dense-right-sided-intervals; dense-right-sided-witnesses; right-sided→dense)
   renaming ([0,_] to ⌈0,_⌉; _≤_ to _≤ᵈ_; _≤?_ to _≤ᵈ?_)
 
 import Syntax.Grades.Example.Time.RightSided as Discrete
@@ -70,7 +70,7 @@ ticks : Op → 𝕀ᵣ
 ticks o = GradeMorphism.map right-sided→dense Discrete.[0, Discrete.↑ slow o ]
 
 open import Syntax.Grades.Example.Worked.Typing.Core
-  dense-right-sided-intervals opTime
+  dense-right-sided-intervals opTime dense-right-sided-witnesses
   hiding (_/_)
 
 -- each measured figure is within its rounded one

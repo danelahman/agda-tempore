@@ -9,6 +9,8 @@
 module Syntax.Grades.Example.Time.LeftSided where
 
 open import Data.Empty using (⊥)
+open import Data.List.Base using (List; []; _∷_; upTo) renaming (map to mapᴸ)
+open import Data.Nat.ListAction using (sum)
 open import Data.Nat
 open import Data.Nat.Properties
 open import Data.Product
@@ -418,3 +420,26 @@ left-sided-intervals-with-⊤ = record
   ; of-dur-zero       = refl
   ; of-dur-plus       = refl
   }
+
+------------------------------------------------------------------------
+-- Candidate grades for a rigid: the bounds `0, …, s+1`, `s` the sum of
+-- the constants' bounds. Each side of an ordering in one rigid `j` is
+-- a minimum of pieces `c + a·j`, `c ≤ s`, two of which cross below `s`,
+-- so an ordering failing at some `j` fails at one of them.
+
+private
+  bound : 𝕀 → ℕ
+  bound [ n ,+∞⟩ = n
+
+left-sided-witnesses : ℕ → List 𝕀 → List 𝕀
+left-sided-witnesses _ cs = mapᴸ [_,+∞⟩ (upTo (2 + sum (mapᴸ bound cs)))
+
+-- with `untimed`, which no finite rigid gives, among the constants
+
+left-sided-witnesses-with-⊤ : ℕ → List 𝕀⊤ → List 𝕀⊤
+left-sided-witnesses-with-⊤ d cs = mapᴸ timed_ (left-sided-witnesses d (timeds cs))
+  where
+    timeds : List 𝕀⊤ → List 𝕀
+    timeds []              = []
+    timeds (timed i ∷ cs') = i ∷ timeds cs'
+    timeds (untimed ∷ cs') = timeds cs'

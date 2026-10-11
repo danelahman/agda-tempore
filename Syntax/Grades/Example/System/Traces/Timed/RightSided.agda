@@ -26,6 +26,7 @@
 -- projection preserves `_·_` at them.                                --
 ------------------------------------------------------------------------
 
+open import Data.List.Base using () renaming ([] to []ᴸ)
 open import Data.Maybe.Base using (nothing)
 open import Data.Nat.Base using (ℕ; _≤_; _<_)
 open import Data.Nat.Properties using (≤-trans; ≤-antisym; ⊔-identityʳ)
@@ -164,4 +165,5 @@ tracesToRightSidedIntervalsGradeSystem = record
   ; EGrade = right-sided
   ; ∣_∣ᵉ   = traces→right-sided-intervals
   ; reflects-u? = nothing
+  ; witnesses   = λ _ _ _ → []ᴸ
   }

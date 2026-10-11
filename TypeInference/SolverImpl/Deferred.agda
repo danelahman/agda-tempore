@@ -11,7 +11,9 @@
 --                                                                --
 -- A substitution below (above) the one it moves keeps an entry   --
 -- whose greater (smaller) sides it leaves fixed (`keepᵈ`). A     --
--- closed witness per rigid instantiates the rigids (`wit`).      --
+-- closed witness per rigid instantiates the rigids (`wit`), each --
+-- drawn from the candidates of an ordering: the unit, the top    --
+-- and the grade system's `witnesses` (`candidates`, `grid`).     --
 --                                                                --
 -- Contract. An entry and its obligation hold together            --
 -- (`⊩ᵈ→⊩ᴼ`, `⊩ᴼ→⊩ᵈ`). Closing an entry over one more rigid       --
@@ -21,13 +23,13 @@
 --------------------------------------------------------------------
 
 open import Data.Fin.Base using (zero; suc)
-open import Data.List.Base using (List; []; _∷_; map; _++_)
+open import Data.List.Base using (List; []; _∷_; map; _++_; concatMap; deduplicate)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁺; ∈-map⁻)
 open import Data.List.Relation.Unary.All using ([]; _∷_)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing)
-open import Data.Nat.Base using (ℕ; zero; suc)
+open import Data.Nat.Base using (ℕ; zero; suc; _+_; _⊔_)
 open import Data.Product using (_×_; _,_)
 open import Data.List.Properties using (≡-dec)
 
@@ -397,11 +399,59 @@ wit : ∀ {Ψ} → (k : ℕ) → List E → Subst (Ψ +eⁿ k) Ψ
 wit zero    cs = idˢ
 wit (suc k) cs = wit k (tlᵂ cs) ⨟ˢ κ⟨ econst (hdᵂ cs) ⟩
 
--- The unit or the top for each rigid
+-- Every choice of a candidate of `cs` for each rigid
 
-witnesses : ℕ → List (List E)
-witnesses zero    = [] ∷ []
-witnesses (suc k) = map (uₑ ∷_) (witnesses k) ++ map (⊤ₑ ∷_) (witnesses k)
+grid : List E → ℕ → List (List E)
+grid cs zero    = [] ∷ []
+grid cs (suc k) = concatMap (λ c → map (c ∷_) (grid cs k)) cs
+
+-- The candidates for the rigids of an ordering of degree `d` with
+-- constants `rcs` and `ecs`: the unit, the top and the grade system's
+-- own (`witnesses`), without repetition
+
+candidates : ℕ → List R → List E → List E
+candidates d rcs ecs = deduplicate _≡ₑ?_ (uₑ ∷ ⊤ₑ ∷ witnesses d rcs ecs)
+
+-- The constants of an expression, and its occurrences of effect
+-- variables: those of the rigids where its ordering can be refuted
+
+constsₑ : ∀ {Ψ} → EExp Ψ → List E
+constsₑ (evar _)   = []
+constsₑ (econst c) = c ∷ []
+constsₑ (a ·̂ₑ b)   = constsₑ a ++ constsₑ b
+constsₑ (a ⊔̂ₑ b)   = constsₑ a ++ constsₑ b
+
+_++²_ : List R × List E → List R × List E → List R × List E
+(r , e) ++² (r' , e') = r ++ r' , e ++ e'
+
+constsᵣ : ∀ {Ψ} → RExp Ψ → List R × List E
+constsᵣ (rvar _)   = [] , []
+constsᵣ (rconst c) = c ∷ [] , []
+constsᵣ (a ·̂ᵣ b)   = constsᵣ a ++² constsᵣ b
+constsᵣ (a ⊔̂ᵣ b)   = constsᵣ a ++² constsᵣ b
+constsᵣ ∣ ε ∣̂ᵉ     = [] , constsₑ ε
+
+degreeₑ : ∀ {Ψ} → EExp Ψ → ℕ
+degreeₑ (evar _)   = 1
+degreeₑ (econst _) = 0
+degreeₑ (a ·̂ₑ b)   = degreeₑ a + degreeₑ b
+degreeₑ (a ⊔̂ₑ b)   = degreeₑ a + degreeₑ b
+
+degreeᵣ : ∀ {Ψ} → RExp Ψ → ℕ
+degreeᵣ (rvar _)   = 0
+degreeᵣ (rconst _) = 0
+degreeᵣ (a ·̂ᵣ b)   = degreeᵣ a + degreeᵣ b
+degreeᵣ (a ⊔̂ᵣ b)   = degreeᵣ a + degreeᵣ b
+degreeᵣ ∣ ε ∣̂ᵉ     = degreeₑ ε
+
+-- The candidates for an ordering of either sort
+
+candidatesₑ : ∀ {Ψ} → EExp Ψ → EExp Ψ → List E
+candidatesₑ x y = candidates (degreeₑ x ⊔ degreeₑ y) [] (constsₑ x ++ constsₑ y)
+
+candidatesᵣ : ∀ {Ψ} → RExp Ψ → RExp Ψ → List E
+candidatesᵣ x y with constsᵣ x ++² constsᵣ y
+... | (rcs , ecs) = candidates (degreeᵣ x ⊔ degreeᵣ y) rcs ecs
 
 wit-⨟ : ∀ {Ψ Ψ'} → (δ : Subst Ψ Ψ') → (k : ℕ) → (cs : List E)
       → ((δ ↑ᵉⁿ k) ⨟ˢ wit k cs) ≐ˢ (wit k cs ⨟ˢ δ)

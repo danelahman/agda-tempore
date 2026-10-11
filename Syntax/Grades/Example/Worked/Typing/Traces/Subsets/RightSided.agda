@@ -37,7 +37,8 @@ open import Syntax.Grades.Example.Worked.Traces.Subsets.RightSided
 opTime : Op → Permits
 opTime o = permitting ⟅ ⌈ o ⌉ ⟆
 
-open import Syntax.Grades.Example.Worked.Typing.Core right-sided opTime
+open import Syntax.Grades.Example.System.Identity using (noWitnesses)
+open import Syntax.Grades.Example.Worked.Typing.Core right-sided opTime noWitnesses
 
 ------------------------------------------------------------------------
 -- Effectful computations

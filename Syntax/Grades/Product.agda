@@ -19,7 +19,9 @@
 
 module Syntax.Grades.Product where
 
+open import Data.List.Base using (List; concatMap) renaming (map to mapᴸ)
 open import Data.Maybe.Base using (Maybe; just; nothing; zipWith)
+open import Data.Nat.Base using (ℕ)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
 open import Relation.Nullary.Decidable using (_×-dec_)
@@ -196,20 +198,33 @@ record _→ˢ_ (S₁ S₂ : GradeSystem) : Set₁ where
            → map ∣ S₂ ∣ᵉ (map mapᴱ e) ≡ map mapᴿ (map ∣ S₁ ∣ᵉ e)
 
 ------------------------------------------------------------------------
+-- Candidate grades of a product: each candidate of the first component
+-- paired with each of the second, from the constants' components
+
+pairs : {A B : Set} → List A → List B → List (A × B)
+pairs as bs = concatMap (λ a → mapᴸ (a ,_) bs) as
+
+_×ʷ_ : {A B : Set} → (ℕ → List A → List A) → (ℕ → List B → List B) → ℕ → List (A × B) → List (A × B)
+(w₁ ×ʷ w₂) d cs = pairs (w₁ d (mapᴸ proj₁ cs)) (w₂ d (mapᴸ proj₂ cs))
+
+------------------------------------------------------------------------
 -- The product of two grade systems over the same durations; it reflects
--- the order at the unit where both components do
+-- the order at the unit where both components do, and its candidates
+-- are pairs of the components'
 
 infixr 2 _×ˢ_⟨_⟩
 
 _×ˢ_⟨_⟩ : (S₁ S₂ : GradeSystem)
         → GradeSystem.Dur S₁ ≡ GradeSystem.Dur S₂ → GradeSystem
-record { Dur = D ; RGrade = R₁ ; EGrade = E₁ ; ∣_∣ᵉ = p₁ ; reflects-u? = r₁ }
-  ×ˢ record { RGrade = R₂ ; EGrade = E₂ ; ∣_∣ᵉ = p₂ ; reflects-u? = r₂ } ⟨ refl ⟩ = record
+record { Dur = D ; RGrade = R₁ ; EGrade = E₁ ; ∣_∣ᵉ = p₁ ; reflects-u? = r₁ ; witnesses = w₁ }
+  ×ˢ record { RGrade = R₂ ; EGrade = E₂ ; ∣_∣ᵉ = p₂ ; reflects-u? = r₂ ; witnesses = w₂ } ⟨ refl ⟩ = record
   { Dur    = D
   ; RGrade = R₁ ×ᵍ R₂
   ; EGrade = E₁ ×ᵍ E₂
   ; ∣_∣ᵉ   = p₁ ×ᵐ p₂
   ; reflects-u? = zipWith (λ f g (e₁ , e₂) (q₁ , q₂) → f e₁ q₁ , g e₂ q₂) r₁ r₂
+  ; witnesses   = λ d rcs ecs → pairs (w₁ d (mapᴸ proj₁ rcs) (mapᴸ proj₁ ecs))
+                                      (w₂ d (mapᴸ proj₂ rcs) (mapᴸ proj₂ ecs))
   }
 
 -- its projections are maps of grade systems, the squares commuting on

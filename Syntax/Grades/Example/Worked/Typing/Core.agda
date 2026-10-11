@@ -4,7 +4,8 @@
 -- The alphabet of the sensor node, over an identity grade system:    --
 -- effect grades and resource grades are the same monoid `G` and      --
 -- `∣_∣ᵉ` is the identity, so `mapᵉ` reduces away. The instances vary --
--- `G` and the grade `opTime` assigns to each operation.              --
+-- `G`, the grade `opTime` assigns to each operation, and the         --
+-- candidate values `wit` of a rigid.                                 --
 --                                                                    --
 -- There are two base types, differing in eternality: a `reading` is  --
 -- the value of the sensor at the moment it was taken, and a `nodeid` --
@@ -19,6 +20,7 @@
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
+open import Data.List.Base using (List)
 open import Data.Nat.Base using (ℕ)
 open import Data.Unit using (⊤; tt)
 
@@ -38,13 +40,14 @@ open import Syntax.Grades.Example.Worked.Operations
 open import Util.Equality
 
 module Syntax.Grades.Example.Worked.Typing.Core
-  {D : Duration} (G : Grade D) (opTime : Op → Grade.Carrier G) where
+  {D : Duration} (G : Grade D) (opTime : Op → Grade.Carrier G)
+  (wit : ℕ → List (Grade.Carrier G) → List (Grade.Carrier G)) where
 
 ------------------------------------------------------------------------
--- The grades
+-- The grades, with the candidates `wit` for a rigid
 
 grades : GradeSystem
-grades = identityGradeSystem G
+grades = identityGradeSystem G wit
 
 open GradeSystemInterface grades public
 

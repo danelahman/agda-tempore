@@ -69,8 +69,9 @@ open LevelLattice low-high using (_⊑?_)
 opTime : Op → 𝕀 × LowHigh
 opTime o = ([ fast o ,+∞⟩ , touches o)
 
+open import Syntax.Grades.Example.System.Identity using (noWitnesses)
 open import Syntax.Grades.Example.Worked.Typing.Core
-  left-sided-time×low-high opTime
+  left-sided-time×low-high opTime noWitnesses
 
 ------------------------------------------------------------------------
 -- Effectful computations

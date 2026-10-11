@@ -25,6 +25,7 @@
 module Syntax.Grades.Example.SecurityLevel where
 
 open import Data.Fin.Base using (Fin; zero; suc)
+open import Data.List.Base using (List) renaming ([] to []ᴸ; _∷_ to _∷ᴸ_)
 open import Data.Maybe.Base using (just)
 open import Data.Nat.Base using (ℕ; zero; suc)
 open import Data.Vec.Base using (Vec; []; _∷_; replicate)
@@ -302,3 +303,9 @@ infixl 6 _∪ᵗ_
 _∪ᵗ_ : ∀ {n} → TaintSet n → TaintSet n → TaintSet n
 _∪ᵗ_ = Power._∨ⱽ_ low-high
 
+
+------------------------------------------------------------------------
+-- Candidate levels for a rigid: both of them
+
+low-high-witnesses : ℕ → List LowHigh → List LowHigh
+low-high-witnesses _ _ = Low ∷ᴸ High ∷ᴸ []ᴸ

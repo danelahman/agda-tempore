@@ -743,9 +743,11 @@ popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
 -- An ordering of an entry is dropped when it is decided at the
 -- strength `full`, the rigids opaque, from the residual's
 -- orderings: a derivation at fresh rigids under the hypotheses
--- weakened to them. It refutes when a closed witness per rigid, the
--- unit or the top, makes it an ordering that fails at the strength
--- `closed`. An entry left with no ordering is dropped.
+-- weakened to them. It refutes when a closed witness per rigid makes it
+-- an ordering that fails at the strength `closed`, each rigid ranging
+-- over the unit, the top and the grade system's candidates for the
+-- ordering's degree and constants (`candidatesᵣ`, `candidatesₑ`). An
+-- entry left with no ordering is dropped.
 -- A retry keeps every instance (`retry-princ`), and a refusal refutes
 -- every one (`retry-fail`). An entry kept claims nothing: with a rigid
 -- on both sides, the witnesses decide nothing in general.
@@ -813,13 +815,13 @@ verdictʳ : ∀ {Ψ} → (H : Hyps Ψ) → (k : ℕ) → (a : RExp (Ψ +eⁿ k) 
          → Verdict H (Atʳ k) a
 verdictʳ H k (x , y) with decideᵣ full (wkᵉⁿ-H k H) x y
 ... | just p  = settled (λ δ h → ⊩-substᵣ (⊩ᴴ-↑ᵉⁿ k h) p)
-... | nothing = witnessʳ k x y (witnesses k)
+... | nothing = witnessʳ k x y (grid (candidatesᵣ x y) k)
 
 verdictᵉ : ∀ {Ψ} → (H : Hyps Ψ) → (k : ℕ) → (a : EExp (Ψ +eⁿ k) × EExp (Ψ +eⁿ k))
          → Verdict H (Atᵉ k) a
 verdictᵉ H k (x , y) with decideₑ full (wkᵉⁿ-H k H) x y
 ... | just p  = settled (λ δ h → ⊩-substₑ (⊩ᴴ-↑ᵉⁿ k h) p)
-... | nothing = witnessᵉ k x y (witnesses k)
+... | nothing = witnessᵉ k x y (grid (candidatesₑ x y) k)
 
 -- The orderings of a list that are not settled, or one refuted
 

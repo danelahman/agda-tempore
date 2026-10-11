@@ -53,7 +53,8 @@ opTime read  = ⟪ 1 , 0 , 0 ⟫ˡ
 opTime write = ⟪ 0 , 1 , 0 ⟫ˡ
 opTime send  = ⟪ 0 , 0 , 1 ⟫ˡ
 
-open import Syntax.Grades.Example.Worked.Typing.Core (at-least-counts 3) opTime
+open import Syntax.Grades.Example.System.Identity using (noWitnesses)
+open import Syntax.Grades.Example.Worked.Typing.Core (at-least-counts 3) opTime noWitnesses
 
 ------------------------------------------------------------------------
 -- Effectful computations

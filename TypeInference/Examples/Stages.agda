@@ -24,13 +24,16 @@
 --     dropped.                                                 --
 --   * `collapse`: a cycle of unknowns local to a clause is one --
 --     unknown; without it, the clause's close is stuck.        --
+--   * `retry`: a deferred condition is refuted at a candidate  --
+--     value the grade supplies for its rigid.                  --
 --                                                              --
 -- The grades differ in the properties the stages read,         --
 -- `u-least?` and `·-comm?`: right-sided intervals (both hold), --
 -- timed traces under the allowance order (the unit least, `·`  --
 -- not commutative), left-sided intervals with an adjoined top  --
 -- (`·` commutative, the unit not least, the top distinct from  --
--- the unit), and both sides of time for the collapse.          --
+-- the unit), both sides of time for the collapse, and          --
+-- left-sided time for the retry.                               --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; not; _∧_) renaming (Bool to 𝔹)
@@ -261,9 +264,9 @@ module Sequence where
 module WithTop where
 
   open import Syntax.Grades.Example.Time.LeftSided
-    using (untimed; timed_; [_,+∞⟩; left-sided-intervals-with-⊤)
+    using (untimed; timed_; [_,+∞⟩; left-sided-intervals-with-⊤; left-sided-witnesses-with-⊤)
   open import Syntax.Grades.Example.Worked.Typing.Core
-    left-sided-intervals-with-⊤ (λ _ → timed [ 1 ,+∞⟩) using (spec)
+    left-sided-intervals-with-⊤ (λ _ → timed [ 1 ,+∞⟩) left-sided-witnesses-with-⊤ using (spec)
 
   open import TypeInference.OpenSyntax.Grades spec
   open import TypeInference.OpenSyntax.Hyps   spec using (hyps; ∅ᴴ)
@@ -339,7 +342,8 @@ module Cycle (S : LanguageSpec) (opEnum : OpEnum S) where
   open import TypeInference.OpenSyntax.Grades   S
   open import TypeInference.OpenSyntax.Subst    S using (Subst; wkˢᵉ; _⨟ˢ_; sE)
   open import TypeInference.SolverImpl.Resid    S using (Resid; resid)
-  open import TypeInference.SolverImpl.Localise S using (collapse; Collapse; stepᵉ; module Find)
+  open import TypeInference.SolverImpl.Localise S
+    using (collapse; Collapse; stepᵉ; module Find; allOpen; oᵉ; oʳ)
   open import TypeInference.SolverImpl.Solve    S opEnum using (splitᴿ)
 
   Θ Φ : Scope
@@ -370,9 +374,9 @@ module Cycle (S : LanguageSpec) (opEnum : OpEnum S) where
   -- the collapse sends `m` and `t` to `j`
 
   collapses : 𝔹
-  collapses = Collapse.cmove (collapse O R)
-            ∧ does (sE (Collapse.cσ (collapse O R)) (suc (suc zero)) ≟ᵉ j)
-            ∧ does (sE (Collapse.cσ (collapse O R)) (suc zero) ≟ᵉ j)
+  collapses = Collapse.cmove (collapse O (allOpen O) R)
+            ∧ does (sE (Collapse.cσ (collapse O (allOpen O) R)) (suc (suc zero)) ≟ᵉ j)
+            ∧ does (sE (Collapse.cσ (collapse O (allOpen O) R)) (suc zero) ≟ᵉ j)
 
   -- whether the close is not stuck
 
@@ -386,7 +390,8 @@ module Cycle (S : LanguageSpec) (opEnum : OpEnum S) where
   -- whether an unknown is stuck: no value step, and no set raised
 
   blocked : Fin (nE Φ) → Resid Φ → 𝔹
-  blocked k R' = not (is-just (stepᵉ k R')) ∧ not (is-just (Find.raise? O R' (suc (suc (suc zero)))))
+  blocked k R' = not (is-just (stepᵉ k R'))
+               ∧ not (is-just (Find.raise? O R' (suc (suc (suc zero))) (oᵉ (allOpen O)) (oʳ (allOpen O))))
 
   -- with the collapse the close goes through; without it, the close is
   -- stuck, and so are `t` in `Rm` and `m` in `Rt` where their
@@ -430,3 +435,60 @@ module Cycle-LeftSided where
 
   without-collapse-unblocked : blocked-without ≡ false
   without-collapse-unblocked = refl
+
+------------------------------------------------------------------
+-- `retry`: a deferred condition refuted at a candidate the grade
+-- supplies
+--
+-- At left-sided time, `∀ j. 3 ≾ 3 · j` holds only at `j = 0`, which is
+-- both the unit and the top. The candidates for its constants are the
+-- bounds `0, …, 7` (`left-sided-witnesses`); at `j = 1` the condition
+-- fails, and the entry is refuted. The unit and the top alone leave it
+-- undecided.
+
+module Witness where
+
+  open import Syntax.Grades.Example.Time.LeftSided using (𝕀; [_,+∞⟩)
+  open import TypeInference.Examples.Specs using (module Time-LeftSided)
+  open Time-LeftSided using (spec; enum)
+  open LanguageSpec spec using (Grades)
+  open GradeSystemInterface Grades using (uₑ; ⊤ₑ)
+
+  open import TypeInference.OpenSyntax.Grades    spec
+  open import TypeInference.OpenSyntax.Hyps      spec using (Hyps; ∅ᴴ)
+  open import TypeInference.OpenSyntax.Subst     spec using (Subst)
+  open import TypeInference.OpenSyntax.Instances spec using (_+eⁿ_)
+  open import TypeInference.SolverImpl.Deferred  spec using (ords; dfr; grid; candidatesₑ)
+  open import TypeInference.SolverImpl.Solve     spec enum
+    using (Retried; refutedᵈ; keptᵈ; retryᵈ; Verdict; settled; refuted; undecided; witnessᵉ)
+
+  Ψ : Scope
+  Ψ = scope 0 0 0
+
+  j : EExp (Ψ +eⁿ 1)
+  j = evar zero
+
+  ⌜_⌝ : ℕ → EExp (Ψ +eⁿ 1)
+  ⌜ n ⌝ = econst [ n ,+∞⟩
+
+  refutedᴿ : ∀ {H E} → Retried {Ψ} H E → 𝔹
+  refutedᴿ (refutedᵈ _)   = true
+  refutedᴿ (keptᵈ _ _ _) = false
+
+  undecidedⱽ : ∀ {X : Set} {H : Hyps Ψ} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set} {a : X}
+             → Verdict H P a → 𝔹
+  undecidedⱽ undecided = true
+  undecidedⱽ _         = false
+
+  candidates-0…7 :
+    candidatesₑ ⌜ 3 ⌝ (⌜ 3 ⌝ ·̂ₑ j)
+      ≡ [ 0 ,+∞⟩ ∷ [ 1 ,+∞⟩ ∷ [ 2 ,+∞⟩ ∷ [ 3 ,+∞⟩ ∷ [ 4 ,+∞⟩ ∷ [ 5 ,+∞⟩ ∷ [ 6 ,+∞⟩ ∷ [ 7 ,+∞⟩ ∷ []
+  candidates-0…7 = refl
+
+  refuted-at-one :
+    refutedᴿ (retryᵈ ∅ᴴ (dfr nothing 1 (ords [] ((⌜ 3 ⌝ , ⌜ 3 ⌝ ·̂ₑ j) ∷ [])))) ≡ true
+  refuted-at-one = refl
+
+  unit-top-undecided :
+    undecidedⱽ (witnessᵉ {H = ∅ᴴ} 1 ⌜ 3 ⌝ (⌜ 3 ⌝ ·̂ₑ j) (grid (uₑ ∷ ⊤ₑ ∷ []) 1)) ≡ true
+  unit-top-undecided = refl

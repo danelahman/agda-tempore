@@ -14,6 +14,7 @@
 
 module Syntax.Grades.Example.Time.RightSided where
 
+open import Data.List.Base using (List; upTo; foldr) renaming (map to mapᴸ)
 open import Data.Nat
 open import Data.Nat.Properties
 open import Data.Product
@@ -203,3 +204,16 @@ right-sided-intervals = record
   ; of-dur-zero       = refl
   ; of-dur-plus       = refl
   }
+
+------------------------------------------------------------------------
+-- Candidate grades for a rigid: the bounds `0, …, s+1`, `s` the sum of
+-- the finite constants. Each side of an ordering in one rigid `j` is a
+-- maximum of pieces `c + a·j`, `c ≤ s`, two of which cross below `s`,
+-- so an ordering failing at some finite `j` fails at one of them.
+
+right-sided-witnesses : ℕ → List 𝕀ᵣ → List 𝕀ᵣ
+right-sided-witnesses _ cs = mapᴸ (λ i → [0, ↑ i ]) (upTo (2 + foldr finite 0 cs))
+  where
+    finite : 𝕀ᵣ → ℕ → ℕ
+    finite [0, ↑ n ] s = n + s
+    finite [0, ∞ ]   s = s

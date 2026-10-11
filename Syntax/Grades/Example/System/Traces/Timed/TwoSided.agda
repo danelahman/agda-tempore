@@ -26,6 +26,7 @@
 -- below; neither is absorbing.                                       --
 ------------------------------------------------------------------------
 
+open import Data.List.Base using () renaming ([] to []ᴸ)
 open import Data.Maybe.Base using (nothing)
 open import Data.Nat.Base using (ℕ; _≤_; _<_)
 open import Data.Nat.Properties using (≤-refl; ≤-trans; ⊔-identityʳ)
@@ -204,4 +205,5 @@ tracesToTwoSidedIntervalsGradeSystem = record
   ; EGrade = two-sided
   ; ∣_∣ᵉ   = two-sided-traces→intervals
   ; reflects-u? = nothing
+  ; witnesses   = λ _ _ _ → []ᴸ
   }

@@ -15,6 +15,7 @@
 
 module Syntax.Grades.Example.Time.Dense.LeftSided where
 
+open import Data.List.Base using (List; []; _∷_) renaming (map to mapᴸ)
 open import Data.Nat.Base using (ℕ)
 open import Data.Product
 open import Data.Unit using (tt)
@@ -232,3 +233,13 @@ left-sided→dense = record
 
     join : ∀ {i j} → embed (i Discrete.⊔ₒ j) ≡ embed i ⊔ₒ embed j
     join {Discrete.[ m ,+∞⟩} {Discrete.[ n ,+∞⟩} = eq𝕀 (#-⊓ m n)
+
+------------------------------------------------------------------------
+-- Candidate grades for a rigid: the bounds of the grid of the
+-- constants (`grid`)
+
+dense-left-sided-witnesses : ℕ → List 𝕀 → List 𝕀
+dense-left-sided-witnesses d cs = mapᴸ [_,+∞⟩ (grid d (mapᴸ bound cs))
+  where
+    bound : 𝕀 → ℚ≥0
+    bound [ q ,+∞⟩ = q

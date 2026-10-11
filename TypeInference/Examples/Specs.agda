@@ -25,6 +25,11 @@
 --                                                                --
 -- The operations are the same at every grade, and so is their    --
 -- enumeration.                                                   --
+--                                                                --
+-- The candidate values of a rigid that retry tries: at time, the --
+-- bounds `0, …, s+1` for constants summing to `s` (at dense      --
+-- time, a grid of fractions); at the products, the pairs of the  --
+-- time candidates with both levels; at the timed traces, none.   --
 --------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_)
@@ -34,6 +39,8 @@ open import Data.List.Relation.Unary.Any using (here; there)
 open import Util.Equality
 
 open import Syntax.Grades.Example.Worked.Operations using (Op; read; write; send)
+open import Syntax.Grades.Example.System.Identity using (noWitnesses)
+open import Syntax.Grades.Product using (_×ʷ_)
 
 module TypeInference.Examples.Specs where
 
@@ -49,9 +56,9 @@ sensor-complete send  = there (there (here refl))
 
 module Time-RightSided where
 
-  open import Syntax.Grades.Example.Time.RightSided using (right-sided-intervals)
+  open import Syntax.Grades.Example.Time.RightSided using (right-sided-intervals; right-sided-witnesses)
   open import Syntax.Grades.Example.Worked.Typing.Time.RightSided using (opTime)
-  open import Syntax.Grades.Example.Worked.Typing.Core right-sided-intervals opTime
+  open import Syntax.Grades.Example.Worked.Typing.Core right-sided-intervals opTime right-sided-witnesses
     using (spec) public
   open import TypeInference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
@@ -60,9 +67,9 @@ module Time-RightSided where
 
 module Time-LeftSided where
 
-  open import Syntax.Grades.Example.Time.LeftSided using (left-sided-intervals)
+  open import Syntax.Grades.Example.Time.LeftSided using (left-sided-intervals; left-sided-witnesses)
   open import Syntax.Grades.Example.Worked.Typing.Time.LeftSided using (opTime)
-  open import Syntax.Grades.Example.Worked.Typing.Core left-sided-intervals opTime
+  open import Syntax.Grades.Example.Worked.Typing.Core left-sided-intervals opTime left-sided-witnesses
     using (spec) public
   open import TypeInference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
@@ -73,7 +80,7 @@ module Traces-Timed-RightSided where
 
   open import Syntax.Grades.Example.Worked.Traces.Timed.RightSided using (right-sided)
   open import Syntax.Grades.Example.Worked.Typing.Traces.Timed.RightSided using (opTime)
-  open import Syntax.Grades.Example.Worked.Typing.Core right-sided opTime
+  open import Syntax.Grades.Example.Worked.Typing.Core right-sided opTime noWitnesses
     using (spec) public
   open import TypeInference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
@@ -84,7 +91,7 @@ module Traces-Timed-LeftSided where
 
   open import Syntax.Grades.Example.Worked.Traces.Timed.LeftSided using (left-sided)
   open import Syntax.Grades.Example.Worked.Typing.Traces.Timed.LeftSided using (opTime)
-  open import Syntax.Grades.Example.Worked.Typing.Core left-sided opTime
+  open import Syntax.Grades.Example.Worked.Typing.Core left-sided opTime noWitnesses
     using (spec) public
   open import TypeInference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
@@ -94,8 +101,11 @@ module Traces-Timed-LeftSided where
 module Product-LeftSidedTimeLevel where
 
   open import Syntax.Grades.Example.Product.LeftSidedTimeLevel using (left-sided-time×low-high)
+  open import Syntax.Grades.Example.Time.LeftSided using (left-sided-witnesses)
+  open import Syntax.Grades.Example.SecurityLevel using (low-high-witnesses)
   open import Syntax.Grades.Example.Worked.Typing.Product.LeftSidedTimeLevel using (opTime)
   open import Syntax.Grades.Example.Worked.Typing.Core left-sided-time×low-high opTime
+    (left-sided-witnesses ×ʷ low-high-witnesses)
     using (spec) public
   open import TypeInference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
@@ -106,8 +116,8 @@ module Product-RightSidedTimeLevel where
 
   open import Data.Product using (_×_; _,_)
   open import Syntax.Grades.Example.Product.RightSidedTimeLevel using (right-sided-time×low-high)
-  open import Syntax.Grades.Example.Time.RightSided using (𝕀ᵣ; [0,_]; ↑_)
-  open import Syntax.Grades.Example.SecurityLevel using (LowHigh)
+  open import Syntax.Grades.Example.Time.RightSided using (𝕀ᵣ; [0,_]; ↑_; right-sided-witnesses)
+  open import Syntax.Grades.Example.SecurityLevel using (LowHigh; low-high-witnesses)
   open import Syntax.Grades.Example.Worked.Operations using (slow)
   open import Syntax.Grades.Example.Worked.Operations.Footprint using (touches)
 
@@ -117,6 +127,7 @@ module Product-RightSidedTimeLevel where
   opTime o = ([0, ↑ slow o ] , touches o)
 
   open import Syntax.Grades.Example.Worked.Typing.Core right-sided-time×low-high opTime
+    (right-sided-witnesses ×ʷ low-high-witnesses)
     using (spec) public
   open import TypeInference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
@@ -125,9 +136,11 @@ module Product-RightSidedTimeLevel where
 
 module Dense-Time-RightSided where
 
-  open import Syntax.Grades.Example.Time.Dense.RightSided using (dense-right-sided-intervals)
+  open import Syntax.Grades.Example.Time.Dense.RightSided
+    using (dense-right-sided-intervals; dense-right-sided-witnesses)
   open import Syntax.Grades.Example.Worked.Typing.Time.Dense.RightSided using (opTime)
   open import Syntax.Grades.Example.Worked.Typing.Core dense-right-sided-intervals opTime
+    dense-right-sided-witnesses
     using (spec) public
   open import TypeInference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
@@ -138,7 +151,7 @@ module Dense-Time-LeftSided where
 
   open import Syntax.Grades using (GradeMorphism)
   open import Syntax.Grades.Example.Time.Dense.LeftSided
-    using (𝕀; dense-left-sided-intervals; left-sided→dense)
+    using (𝕀; dense-left-sided-intervals; dense-left-sided-witnesses; left-sided→dense)
   import Syntax.Grades.Example.Worked.Typing.Time.LeftSided as Discrete
 
   -- the discrete figures, read in dense time
@@ -147,6 +160,7 @@ module Dense-Time-LeftSided where
   opTime o = GradeMorphism.map left-sided→dense (Discrete.opTime o)
 
   open import Syntax.Grades.Example.Worked.Typing.Core dense-left-sided-intervals opTime
+    dense-left-sided-witnesses
     using (spec) public
   open import TypeInference.SolverImpl.Enum spec using (OpEnum; opEnum)
 

@@ -46,7 +46,8 @@ open import Syntax.Grades.Example.Worked.Traces.Timed.LeftSided
 opTime : Op → Antichain
 opTime o = ⟅ ⌈ o ⌉ ⟆
 
-open import Syntax.Grades.Example.Worked.Typing.Core left-sided opTime
+open import Syntax.Grades.Example.System.Identity using (noWitnesses)
+open import Syntax.Grades.Example.Worked.Typing.Core left-sided opTime noWitnesses
 
 ------------------------------------------------------------------------
 -- Effectful computations

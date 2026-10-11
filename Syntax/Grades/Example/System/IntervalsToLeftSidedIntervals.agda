@@ -15,6 +15,7 @@
 
 module Syntax.Grades.Example.System.IntervalsToLeftSidedIntervals where
 
+open import Data.List.Base using () renaming ([] to []ᴸ)
 open import Data.Product
 open import Data.Maybe.Base using (nothing)
 
@@ -41,4 +42,5 @@ twoSidedIntervalsToLeftSidedIntervalsGradeSystem = record
   ; EGrade = two-sided-intervals-with-∞
   ; ∣_∣ᵉ   = tsi→lsi
   ; reflects-u? = nothing
+  ; witnesses   = λ _ _ _ → []ᴸ
   }

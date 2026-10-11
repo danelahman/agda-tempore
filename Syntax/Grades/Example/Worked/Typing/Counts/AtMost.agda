@@ -55,7 +55,8 @@ opTime read  = ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ
 opTime write = ⟪ upto 0 , upto 1 , upto 0 ⟫ᵐ
 opTime send  = ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ
 
-open import Syntax.Grades.Example.Worked.Typing.Core (at-most-counts 3) opTime
+open import Syntax.Grades.Example.System.Identity using (noWitnesses)
+open import Syntax.Grades.Example.Worked.Typing.Core (at-most-counts 3) opTime noWitnesses
 
 ------------------------------------------------------------------------
 -- Effectful computations

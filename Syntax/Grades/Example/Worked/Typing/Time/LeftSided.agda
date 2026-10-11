@@ -36,7 +36,7 @@ module Syntax.Grades.Example.Worked.Typing.Time.LeftSided where
 open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Example.Time.LeftSided
-  using (𝕀; [_,+∞⟩; left-sided-intervals)
+  using (𝕀; [_,+∞⟩; left-sided-intervals; left-sided-witnesses)
 
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send)
@@ -52,6 +52,7 @@ opTime write = [ 2 ,+∞⟩
 opTime send  = [ 4 ,+∞⟩
 
 open import Syntax.Grades.Example.Worked.Typing.Core left-sided-intervals opTime
+  left-sided-witnesses
 
 ------------------------------------------------------------------------
 -- Effectful computations

@@ -66,8 +66,9 @@ opTime read  = [ 1 , 1 ]
 opTime write = [ 2 , 3 ]
 opTime send  = [ 4 , 6 ]
 
+open import Syntax.Grades.Example.System.Identity using (noWitnesses)
 open import Syntax.Grades.Example.Worked.Typing.Core
-  two-sided-intervals-with-∞ opTime
+  two-sided-intervals-with-∞ opTime noWitnesses
 
 ------------------------------------------------------------------------
 -- Effectful computations

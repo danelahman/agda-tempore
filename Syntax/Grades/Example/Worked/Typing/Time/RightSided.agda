@@ -47,7 +47,7 @@ open import Data.Unit using (tt)
 open import Util.Equality
 
 open import Syntax.Grades.Example.Time.RightSided
-  using (𝕀ᵣ; ℕ∞; ↑_; ∞; right-sided-intervals)
+  using (𝕀ᵣ; ℕ∞; ↑_; ∞; right-sided-intervals; right-sided-witnesses)
   renaming ([0,_] to ⌈0,_⌉)
 
 -- every deadline written below is finite, and `⌈0, ∞ ⌉` is the greatest
@@ -70,6 +70,7 @@ opTime write = [0, 3 ]
 opTime send  = [0, 6 ]
 
 open import Syntax.Grades.Example.Worked.Typing.Core right-sided-intervals opTime
+  right-sided-witnesses
 
 ------------------------------------------------------------------------
 -- Effectful computations

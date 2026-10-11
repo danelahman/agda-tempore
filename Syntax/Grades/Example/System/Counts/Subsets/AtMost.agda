@@ -21,6 +21,7 @@
 -- pure delays project to the unit.                                   --
 ------------------------------------------------------------------------
 
+open import Data.List.Base using () renaming ([] to []ᴸ)
 open import Data.Fin.Base using (Fin)
 open import Data.Maybe.Base using (nothing)
 open import Data.Nat.Base using (ℕ)
@@ -161,4 +162,5 @@ subsetsToAtMostCountsGradeSystem = record
   ; EGrade = right-sided
   ; ∣_∣ᵉ   = subsets→at-most-counts
   ; reflects-u? = nothing
+  ; witnesses   = λ _ _ _ → []ᴸ
   }

@@ -49,7 +49,8 @@ opTime₀ o = ⟅ ⌈ o ⌉ ⟆
 opTime : Op → Bounds
 opTime o = within (opTime₀ o)
 
-open import Syntax.Grades.Example.Worked.Typing.Core right-sided opTime
+open import Syntax.Grades.Example.System.Identity using (noWitnesses)
+open import Syntax.Grades.Example.Worked.Typing.Core right-sided opTime noWitnesses
 
 ------------------------------------------------------------------------
 -- Effectful computations

@@ -57,8 +57,9 @@ open import Syntax.Grades.Example.Worked.Time.Decide using (≤!; ≰!)
 opTime : Op → 𝕀ᵣ × 𝕀ᵣ
 opTime o = ([0, slow o ] , [0, draws o ])
 
+open import Syntax.Grades.Example.System.Identity using (noWitnesses)
 open import Syntax.Grades.Example.Worked.Typing.Core
-  right-sided-time×energy opTime
+  right-sided-time×energy opTime noWitnesses
 
 ------------------------------------------------------------------------
 -- Effectful computations

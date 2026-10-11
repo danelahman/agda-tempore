@@ -20,6 +20,7 @@
 -- `[0, ∞ ]` imposes no deadline, and both are absorbing.             --
 ------------------------------------------------------------------------
 
+open import Data.List.Base using () renaming ([] to []ᴸ)
 open import Data.Maybe.Base using (nothing)
 open import Data.Nat.Base using (ℕ; _≤_)
 open import Data.Nat.Properties using (⊔-identityʳ)
@@ -111,4 +112,5 @@ subsetsToRightSidedIntervalsGradeSystem = record
   ; EGrade = right-sided
   ; ∣_∣ᵉ   = subsets→right-sided-intervals
   ; reflects-u? = nothing
+  ; witnesses   = λ _ _ _ → []ᴸ
   }

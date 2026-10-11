@@ -39,7 +39,8 @@ open import Syntax.Grades.Example.Worked.Traces.Timed.TwoSided
 opTime : Op → TwoSided
 opTime o = exact ⌈ o ⌉
 
-open import Syntax.Grades.Example.Worked.Typing.Core two-sided opTime
+open import Syntax.Grades.Example.System.Identity using (noWitnesses)
+open import Syntax.Grades.Example.Worked.Typing.Core two-sided opTime noWitnesses
 
 ------------------------------------------------------------------------
 -- Effectful computations

@@ -17,6 +17,11 @@ module Syntax.Grades.Example.Time.Dense.NonNegativeRational where
 
 open import Data.Bool.Properties using (T-irrelevant)
 open import Data.Integer.Base using () renaming (+_ to +ℤ_)
+import Data.Integer.Base as ℤ
+open import Data.List.Base using (List; map; upTo; foldr)
+open import Data.Nat.ListAction using (sum)
+open import Data.Nat.LCM using (lcm)
+open import Data.Nat.Base using (_!)
 open import Data.Nat.Base as ℕ using (ℕ; zero; suc; z≤n; s≤s)
 import Data.Nat.Properties as ℕ
 open import Data.Rational.Base as ℚ using (ℚ; 0ℚ; 1ℚ)
@@ -269,3 +274,27 @@ p≥q⇒p⊓q≡q (*≤ᵈ* q≤p) = ≡-val (ℚ.p≥q⇒p⊓q≡q q≤p)
                        (sym (p≤q⇒p⊓q≡p (#-mono-≤ m≤n)))
 ... | inj₂ n≤m = trans (cong #_ (ℕ.m≥n⇒m⊓n≡n n≤m))
                        (sym (p≥q⇒p⊓q≡q (#-mono-≤ n≤m)))
+
+------------------------------------------------------------------------
+-- A finite grid of candidate values for a rigid occurring at most `K`
+-- times on a side of an ordering whose constants are `cs`, `D` the
+-- least common multiple of their denominators and `s` their sum: the
+-- multiples of `1 / (2·D·K!)` up to `⌈s⌉ + 1`. Each side is an extremum
+-- of pieces `c + a·j`, `a ≤ K`, whose crossings lie at multiples of
+-- `1 / (D·a')`, `a' ≤ K`, below `s`; between two crossings, and beyond
+-- the last, the two sides are affine, so an ordering failing at some
+-- `j` fails at a crossing, at the midpoint of two, or at `⌈s⌉ + 1`.
+
+grid : ℕ → List ℚ≥0 → List ℚ≥0
+grid K cs = map (λ x → x / ℕ.suc (ℕ.pred N)) (upTo (ℕ.suc (M ℕ.* N)))
+  where
+    num : ℚ≥0 → ℕ
+    num q = ℤ.∣ ℚ.numerator (val q) ∣
+
+    ceil : ℚ≥0 → ℕ
+    ceil q = (num q ℕ.+ ℚ.denominator-1 (val q)) ℕ./ ℚ.denominatorℕ (val q)
+
+    D M N : ℕ
+    D = foldr (λ q d → lcm (ℚ.denominatorℕ (val q)) d) 1 cs
+    M = ℕ.suc (sum (map ceil cs))
+    N = 2 ℕ.* D ℕ.* (K ℕ.⊔ 1) !

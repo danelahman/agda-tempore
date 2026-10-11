@@ -6,7 +6,9 @@ module Syntax.Grades where
 
 open import Algebra.Definitions using (Commutative)
 open import Data.Empty
+open import Data.List.Base using (List)
 open import Data.Maybe.Base using (Maybe)
+open import Data.Nat.Base using (ℕ)
 open import Data.Product hiding (map)
 open import Data.Sum hiding (map)
 
@@ -204,6 +206,12 @@ record GradeSystem : Set₂ where
     reflects-u? : Maybe ((e : Carrier EGrade)
                          → _≾_ RGrade (GradeMorphism.map ∣_∣ᵉ e) (u RGrade)
                          → _≾_ EGrade e (u EGrade))
+
+    -- candidate values of an effect rigid of a deferred condition, from
+    -- the number of occurrences of the rigids on a side of an ordering
+    -- (the degree) and the condition's resource and effect constants;
+    -- any list is sound, the candidates serving only to refute
+    witnesses : ℕ → List (Carrier RGrade) → List (Carrier EGrade) → List (Carrier EGrade)
 
 
 -- Helpful module exporting effect and resource grade fields with different names

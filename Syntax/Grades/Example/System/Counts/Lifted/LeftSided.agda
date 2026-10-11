@@ -18,6 +18,7 @@
 -- greatest grade on both sides.                                      --
 ------------------------------------------------------------------------
 
+open import Data.List.Base using () renaming ([] to []ᴸ)
 open import Data.Fin.Base using (Fin)
 open import Data.Maybe.Base using (nothing)
 open import Data.Nat.Base using (ℕ; _≤_)
@@ -162,4 +163,5 @@ leftSidedToAtLeastCountsGradeSystem = record
   ; EGrade = left-sided
   ; ∣_∣ᵉ   = left-sided→at-least-counts
   ; reflects-u? = nothing
+  ; witnesses   = λ _ _ _ → []ᴸ
   }
