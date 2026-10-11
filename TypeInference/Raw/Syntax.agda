@@ -11,9 +11,8 @@
 -- The annotations are the base type of a constant, the         --
 -- operation of a `perform`, the duration of a `delay`, the     --
 -- variable of an `unbox`, the grade of a `box`, an expression  --
--- over `Θ`, and the optional type annotations of a value, of a --
--- computation, of a lambda's argument and of an unboxed        --
--- variable, open types over `Θ`.                               --
+-- over `Θ`, and the optional type annotations of a value and   --
+-- of a computation, open types over `Θ`.                       --
 -- A handler's clauses are scoped over `Θ +e`, binding the      --
 -- clause's continuation grade, and over the full context,      --
 -- `2 + n`.                                                     --
@@ -88,13 +87,6 @@ mutual
 
     lam     : RawC Θ (suc n)
               ------------
-            → RawV Θ n
-
-    -- lambda abstraction with an annotated argument
-
-    lam[_]_ : OVType Θ
-            → RawC Θ (suc n)
-            --------------
             → RawV Θ n
 
     -- type annotation
@@ -188,14 +180,6 @@ mutual
             --------------
             → RawC Θ n
 
-    -- unboxing a boxed variable with an annotated type
-
-    unbox[_] : OVType Θ
-             → Fin n
-             → RawC Θ (suc n)
-             --------------
-             → RawC Θ n
-
     -- boxing up a value
 
     -- The grade says when the boxed value becomes usable.
@@ -224,7 +208,6 @@ mutual
   HandlerFreeᵛ : ∀ {Θ n} → RawV Θ n → Set
   HandlerFreeᵛ ⦉ V , W ⦊     = HandlerFreeᵛ V × HandlerFreeᵛ W
   HandlerFreeᵛ (lam M)      = HandlerFreeᶜ M
-  HandlerFreeᵛ (lam[ A ] M) = HandlerFreeᶜ M
   HandlerFreeᵛ (V ⦂ᵛ A)     = HandlerFreeᵛ V
   HandlerFreeᵛ _            = ⊤
 
@@ -239,6 +222,5 @@ mutual
   HandlerFreeᶜ (delay τ M)              = HandlerFreeᶜ M
   HandlerFreeᶜ (handle M `with H `in N) = ⊥
   HandlerFreeᶜ (unbox i N)              = HandlerFreeᶜ N
-  HandlerFreeᶜ (unbox[ A ] i N)         = HandlerFreeᶜ N
   HandlerFreeᶜ (box ρ V N)              = HandlerFreeᵛ V × HandlerFreeᶜ N
   HandlerFreeᶜ (M ⦂ᶜ C)                 = HandlerFreeᶜ M

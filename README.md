@@ -413,14 +413,15 @@ type inference.
   of open types. `Language.agda` defines the qualified judgement
   `Q ∣ Γ ⊢C⦂ C`: the rules of `Syntax/Language.agda` over open types, with
   side conditions entailed from `Q`, `handle` typing its operation clauses at a
-  rigid effect variable, and three rules recording a type annotation.
+  rigid effect variable, and two rules, `annᵛ` and `annᶜ`, recording a type
+  annotation.
 
 - `TypeInference/Raw/Syntax.agda` defines raw terms, untyped and scoped by the
   grade and type variables of the context; `box` carries its grade, an
-  expression over that scope. The optional type annotations of a value
-  (`V ⦂ᵛ A`), of a computation (`M ⦂ᶜ C`) and of a lambda's argument
-  (`lam[ A ] M`) are open types over that scope; each fixes a shape, against
-  which generation checks the term. `Raw/Subst.agda` defines substitution into
+  expression over that scope. The optional type annotations, of a value
+  (`V ⦂ᵛ A`) and of a computation (`M ⦂ᶜ C`), are the only annotation forms;
+  they are open types over that scope, each fixing a shape against which
+  generation checks the term. `Raw/Subst.agda` defines substitution into
   the annotations. `TypeInference/Erase.agda` erases a derivation to a raw
   term.
 
@@ -554,8 +555,9 @@ type inference.
   language, that inference answers `typed` for each; `Stdlib/` checks the
   schemes by `refl` at four grades, which cover the combinations of `u-least?`
   and `·-comm?`. `Scheme.agda` writes schemes as `∀[ a , b , c ] C ⟹ X`.
-  `Annotations.agda` gives one program per annotation form with the type the
-  annotation forces; `Annotations/` checks the schemes at the four grades.
+  `Annotations.agda` gives programs annotated by `⦂ᵛ` and `⦂ᶜ`, a parameter
+  annotation among them, each with the type the annotation forces;
+  `Annotations/` checks the schemes at the four grades.
   `Handlers.agda` gives handlers without annotations. `relay`, whose clause
   resumes through the identity applied to its own result, and `relay-boxed`,
   whose clause passes the boxed continuation through the identity twice,

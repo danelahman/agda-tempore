@@ -12,7 +12,6 @@
 ------------------------------------------------------------------
 
 open import Data.Fin using (zero)
-open import Data.Nat using (suc)
 open import Data.Product using (Σ-syntax; _,_)
 
 open import Function.Bundles using (_⇔_; mk⇔)
@@ -149,32 +148,6 @@ mutual
 
       ih = cmpC ι↑ (Γ↑ ∷ α₁) α₂ e₀ M D (reC pι M e)
                 (cong (_∷ A₁) (trans ceq (sym pΓ))) (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
-
-  -- lambda abstraction with an annotated argument
-  --
-  -- The recorded annotation is the instance of the raw one, so the binder's
-  -- type needs no witness.
-
-  cmpV {Θ = Θ} {σ = σ} {Q = Q} ι Γ A _
-       (lamᵃ A₁ {C = A₂ ‼ ε₀} D) (lamᵃ {A = B} {M = M} eB e) ceq st =
-    A₂ , ε₀ , subst₂ (λ X Y → Q ∣ X ⇒ A₂ ‼ ε₀ <:̂ᵛ Y) (sym pB) (sym pA) st , ih
-    where
-      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
-      σ' = σ ,ᵗ A₂ ,ᵉ ε₀
-      Γ↑ = wkᵉ-ctx (wkᵗ-ctx Γ)
-      B' = B [ ι↑ ]ᵛ
-      α  = wkᵉ-v (tvar (newᵗ {Θ}))
-      e₀ = evar (newᵉ {Θ +ty})
-
-      pΓ = coᵗᵉ-ctx σ A₂ ε₀ Γ
-      pA = coᵗᵉ-v   σ A₂ ε₀ A
-      pι = coᵗᵉ-ˢ   ι σ A₂ ε₀
-
-      pB : B' [ σ' ]ᵛ ≡ A₁
-      pB = trans ([⨟]ᵛ B ι↑ σ') (trans ([≐]ᵛ pι B) eB)
-
-      ih = cmpC ι↑ (Γ↑ ∷ B') α e₀ M D (reC pι M e)
-                (cong₂ _∷_ (trans ceq (sym pΓ)) (sym pB)) (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
 
   -- type annotation
   --
@@ -417,28 +390,53 @@ mutual
 
   -- unboxing a boxed variable
 
-  cmpC ι Γ A t _ (unbox x ok sb D) (unbox {N = N} e') ceq st le =
-    cmpUnbox ι Γ A t N x ok sb D e' ceq st le
-
-  -- unboxing a boxed variable with an annotated type
-  --
-  -- The recorded annotation is the instance of the raw one; the declared
-  -- box type is the looked-up type, and the rest is `unbox`.
-
-  cmpC {σ = σ} {Q = Q} ι Γ A t _
-       (unboxᵃ A' {A₀ = A₁} {ρ₀ = ρ₀} x ok sb sa D) (unboxᵃ {A = B} {N = N} eB e')
+  cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
+       (unbox {A = A₂} {A₀ = A₁} {ρ₀ = ρ₀} {ρ' = ρ'} x ok sb D) (unbox {N = N} e')
        ceq st le =
-    subst₂ (Q ∣_<:̂ᵛ_) (sym lty) (sym pB) sa ,
-    cmpUnbox ι Γ A t N x ok sb D e' ceq st le
+    A₁ , A₂ , ρ₀ , ⊨-≐ᵥ σ' (lookup-ty Γ↑ i) ([ r ] α) lty ,
+    subst (λ z → Q ⊩ z ≾̂ᵣ ρ₀) (sym lgr) ok , sb , ih
     where
-      i = var-pos x
+      i  = var-pos x
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
+      α  = wkʳ-v (wkᵗ-v (tvar (newᵗ {Θ})))
+      r  = rvar (newʳ {Θ +ty +ty})
+      σ' = σ ,ᵗ A₁ ,ᵗ A₂ ,ʳ ρ₀
+      Γ↑ = wkʳ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
+      A↑ = wkʳ-v (wkᵗ-v (wkᵗ-v A))
+      t↑ = wkʳ-e (wkᵗ-e (wkᵗ-e t))
+      β  = wkʳ-v (tvar (newᵗ {Θ +ty}))
 
-      lty : lookup-ty Γ i [ σ ]ᵛ ≡ [ ρ₀ ] A₁
-      lty = trans (sym (lookup-ty-subst Γ σ i))
-                  (trans (cong (λ G → lookup-ty G i) (sym ceq)) (var-pos-ty x))
+      pΓ = co²ᵗʳ-ctx σ A₁ A₂ ρ₀ Γ
+      pA = co²ᵗʳ-v   σ A₁ A₂ ρ₀ A
+      pt = co²ᵗʳ-e   σ A₁ A₂ ρ₀ t
+      pι = co²ᵗʳ-ˢ   ι σ A₁ A₂ ρ₀
 
-      pB : B [ ι ]ᵛ [ σ ]ᵛ ≡ A'
-      pB = trans ([⨟]ᵛ B ι σ) eB
+      -- lookup in the weakened context, instantiated, is lookup in `Γ₀`
+
+      lty : lookup-ty Γ↑ i [ σ' ]ᵛ ≡ [ ρ₀ ] A₁
+      lty = trans (cong (_[ σ' ]ᵛ)
+                        (trans (lookup-ty-wkʳ (wkᵗ-ctx (wkᵗ-ctx Γ)) i)
+                               (cong wkʳ-v
+                                     (trans (lookup-ty-wkᵗ (wkᵗ-ctx Γ) i)
+                                            (cong wkᵗ-v (lookup-ty-wkᵗ Γ i))))))
+            (trans (co²ᵗʳ-v σ A₁ A₂ ρ₀ (lookup-ty Γ i))
+            (trans (sym (lookup-ty-subst Γ σ i))
+            (trans (cong (λ G → lookup-ty G i) (sym ceq)) (var-pos-ty x))))
+
+      lgr : lookup-gr Γ↑ i [ σ' ]ʳ ≡ ρ'
+      lgr = trans (cong (_[ σ' ]ʳ)
+                        (trans (lookup-gr-wkʳ (wkᵗ-ctx (wkᵗ-ctx Γ)) i)
+                               (cong wkʳ-r
+                                     (trans (lookup-gr-wkᵗ (wkᵗ-ctx Γ) i)
+                                            (cong wkᵗ-r (lookup-gr-wkᵗ Γ i))))))
+            (trans (co²ᵗʳ-r σ A₁ A₂ ρ₀ (lookup-gr Γ i))
+            (trans (sym (lookup-gr-subst Γ σ i))
+            (trans (cong (λ G → lookup-gr G i) (sym ceq)) (var-pos-gr x))))
+
+      ih = cmpC ι↑ (Γ↑ ∷ β) A↑ t↑ N D (reC pι N e')
+                (cong (_∷ A₂) (trans ceq (sym pΓ)))
+                (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st)
+                (subst (λ z → Q ⊩ _ ≾̂ₑ z) (sym pt) le)
 
   -- boxing up a value
   --
@@ -496,70 +494,6 @@ mutual
 
   cmpC ι Γ A t M (subC D (p ‼ₛ q)) inv ceq st le =
     cmpC ι Γ A t M D inv ceq (<:̂ᵛ-trans p st) (transₑ q le)
-
-  -- unboxing the variable `x`
-
-  cmpUnbox : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : OCtx Θ' n}
-           → (ι : Subst Θ₀ Θ) → (Γ : OCtx Θ n) → (A : OVType Θ) → (t : EExp Θ)
-           → (N : RawC Θ₀ (suc n))
-           → {A₀ A₁ A₂ : OVType Θ'} → {ε₀ : EExp Θ'} → {ρ₀ ρ' : RExp Θ'}
-           → (x : [ ρ₀ ] A₁ ∈̂[ ρ' ] Γ₀)
-           → Q ⊩ ρ' ≾̂ᵣ ρ₀
-           → Q ∣ A₁ <:̂ᵛ A₂
-           → (D : Q ∣ Γ₀ ∷ A₂ ⊢C⦂ A₀ ‼ ε₀)
-           → N [ ι ⨟ˢ σ ]ᴿᶜ ≡ ⌊ D ⌋ᶜ
-           → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
-           → Q ∣ A₀ <:̂ᵛ A [ σ ]ᵛ
-           → Q ⊩ ε₀ ≾̂ₑ t [ σ ]ᵉ
-           --------------------------------------------
-           → σ ⊨[ Q ] genUnboxˢ ι Γ (var-pos x) N (A ‼ t)
-
-  cmpUnbox {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t N
-           {A₁ = A₁} {A₂ = A₂} {ρ₀ = ρ₀} {ρ' = ρ'} x ok sb D e' ceq st le =
-    A₁ , A₂ , ρ₀ , ⊨-≐ᵥ σ' (lookup-ty Γ↑ i) ([ r ] α) lty ,
-    subst (λ z → Q ⊩ z ≾̂ᵣ ρ₀) (sym lgr) ok , sb , ih
-    where
-      i  = var-pos x
-      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
-      α  = wkʳ-v (wkᵗ-v (tvar (newᵗ {Θ})))
-      r  = rvar (newʳ {Θ +ty +ty})
-      σ' = σ ,ᵗ A₁ ,ᵗ A₂ ,ʳ ρ₀
-      Γ↑ = wkʳ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
-      A↑ = wkʳ-v (wkᵗ-v (wkᵗ-v A))
-      t↑ = wkʳ-e (wkᵗ-e (wkᵗ-e t))
-      β  = wkʳ-v (tvar (newᵗ {Θ +ty}))
-
-      pΓ = co²ᵗʳ-ctx σ A₁ A₂ ρ₀ Γ
-      pA = co²ᵗʳ-v   σ A₁ A₂ ρ₀ A
-      pt = co²ᵗʳ-e   σ A₁ A₂ ρ₀ t
-      pι = co²ᵗʳ-ˢ   ι σ A₁ A₂ ρ₀
-
-      -- lookup in the weakened context, instantiated, is lookup in `Γ₀`
-
-      lty : lookup-ty Γ↑ i [ σ' ]ᵛ ≡ [ ρ₀ ] A₁
-      lty = trans (cong (_[ σ' ]ᵛ)
-                        (trans (lookup-ty-wkʳ (wkᵗ-ctx (wkᵗ-ctx Γ)) i)
-                               (cong wkʳ-v
-                                     (trans (lookup-ty-wkᵗ (wkᵗ-ctx Γ) i)
-                                            (cong wkᵗ-v (lookup-ty-wkᵗ Γ i))))))
-            (trans (co²ᵗʳ-v σ A₁ A₂ ρ₀ (lookup-ty Γ i))
-            (trans (sym (lookup-ty-subst Γ σ i))
-            (trans (cong (λ G → lookup-ty G i) (sym ceq)) (var-pos-ty x))))
-
-      lgr : lookup-gr Γ↑ i [ σ' ]ʳ ≡ ρ'
-      lgr = trans (cong (_[ σ' ]ʳ)
-                        (trans (lookup-gr-wkʳ (wkᵗ-ctx (wkᵗ-ctx Γ)) i)
-                               (cong wkʳ-r
-                                     (trans (lookup-gr-wkᵗ (wkᵗ-ctx Γ) i)
-                                            (cong wkᵗ-r (lookup-gr-wkᵗ Γ i))))))
-            (trans (co²ᵗʳ-r σ A₁ A₂ ρ₀ (lookup-gr Γ i))
-            (trans (sym (lookup-gr-subst Γ σ i))
-            (trans (cong (λ G → lookup-gr G i) (sym ceq)) (var-pos-gr x))))
-
-      ih = cmpC ι↑ (Γ↑ ∷ β) A↑ t↑ N D (reC pι N e')
-                (cong (_∷ A₂) (trans ceq (sym pΓ)))
-                (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st)
-                (subst (λ z → Q ⊩ _ ≾̂ₑ z) (sym pt) le)
 
 -- Completeness: a derivation erasing to an instance of the raw term
 -- satisfies the constraint generated from the term.

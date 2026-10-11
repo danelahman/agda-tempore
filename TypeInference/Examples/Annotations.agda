@@ -1,18 +1,15 @@
 --------------------------------------------------------------------
 -- Inference on annotated programs                                --
 --                                                                --
--- An annotation fixes a shape: of a lambda's argument            --
--- (`lam[ A ]`), of a value (`⦂ᵛ`), of a computation (`⦂ᶜ`) or of --
--- an unboxed variable (`unbox[ A ]`). Each typed program has one --
--- annotation and no handler, and is typable at a closed          --
--- instance, so inference answers `typed` for each at every grade --
--- (a theorem over an arbitrary language); the scheme it reports  --
--- is the shape the annotation forces. `unbox-reject` is refuted: --
--- its variable's type is not below the annotation.               --
+-- An annotation fixes a shape: of a value (`⦂ᵛ`) or of a         --
+-- computation (`⦂ᶜ`). Each program has one annotation and no     --
+-- handler, and is typable at a closed instance, so inference     --
+-- answers `typed` for each at every grade (a theorem over an     --
+-- arbitrary language); the scheme it reports is the shape the    --
+-- annotation forces.                                             --
 --------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
-import Data.Fin as Fin
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -77,15 +74,17 @@ U⇒U = Unit ⇒ Unit ‼ ûₑ
 ------------------------------------------------------------------
 -- An argument annotation
 --
--- The identity at `Bool`: the argument's type is `Bool`, not a
--- variable.
+-- The identity at `Bool`, its argument annotated where it is first
+-- returned: the argument's type is `Bool`, not a variable.
 
 id-bool : RawC ∅ˢ 0
-id-bool = return (lam[ Bool ] (return v₀))
+id-bool = return (lam (return (v₀ ⦂ᵛ Bool) ⨟ return v₁))
 
 id-bool-typed : IsTyped (infer [] id-bool)
 id-bool-typed =
-  typed-of id-bool (closed (return (lamᵃ Bool (return (var Hd ok₀)))) refl) _
+  typed-of id-bool
+    (closed (return (lam (return (annᵛ Bool (var Hd ok₀))
+                          ⨟ return (var (Tl-∷ (Tl-⟨⟩ Hd)) ok₁)))) refl) _
 
 expected-id-bool : Scheme
 expected-id-bool = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Bool ⇒ Bool ‼ ûₑ) ‼ ûₑ
@@ -134,27 +133,3 @@ expected-compose-g : Scheme
 expected-compose-g =
   ∀[ 1 , 0 , 1 ] ⊤ ⟹
     ((Unit ⇒ α₀ ‼ ε₀) ⇒ (U⇒U ⇒ (Unit ⇒ α₀ ‼ ε₀) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
-
-------------------------------------------------------------------
--- An unboxed variable's annotation
---
--- A function unboxing its argument, annotated as a box of `Bool`
--- ready at once: the payload's type, otherwise a type variable, is
--- `Bool`.
-
-unbox-bool : RawC ∅ˢ 0
-unbox-bool = return (lam (unbox[ [ ûᵣ ] Bool ] Fin.zero (return v₀)))
-
-unbox-bool-typed : IsTyped (infer [] unbox-bool)
-unbox-bool-typed =
-  typed-of unbox-bool
-    (closed (return (lam (unboxᵃ ([ ûᵣ ] Bool) Hd ⊩≾̂ᵣ-refl (<:̂ᵛ-refl Bool)
-                                 (<:̂ᵛ-refl ([ ûᵣ ] Bool)) (return (var Hd ok₀))))) refl) _
-
-expected-unbox-bool : Scheme
-expected-unbox-bool = ∀[ 0 , 0 , 0 ] ⊤ ⟹ ([ ûᵣ ] Bool ⇒ Bool ‼ ûₑ) ‼ ûₑ
-
--- The annotation is checked: a box of `Bool` is not of type `Unit`.
-
-unbox-reject : RawC ∅ˢ 0
-unbox-reject = return (lam[ [ ûᵣ ] Bool ] (unbox[ Unit ] Fin.zero (return v₀)))

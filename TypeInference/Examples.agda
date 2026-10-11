@@ -8,8 +8,8 @@
 -- combinations of the two properties the solver reads from a   --
 -- grade, `u-least?` and `·-comm?`.                             --
 --                                                              --
--- Set 2 consists of annotated programs, one per annotation     --
--- form, each with the type the annotation forces.              --
+-- Set 2 consists of annotated programs, at both annotation     --
+-- forms, each with the type the annotation forces.             --
 --                                                              --
 -- Set 3 consists of handlers without annotations. Two leave    --
 -- cycles of unknowns local to the clause, which `Localise`     --
