@@ -25,7 +25,7 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁻; ∈-++⁻)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing)
-open import Data.Maybe using (Is-just)
+open import Data.Maybe using (Is-just; to-witness)
 open import Data.Nat.Base using (ℕ) renaming (zero to nzero; suc to nsuc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
@@ -80,7 +80,7 @@ open import TypeInference.SolverImpl.Deferred S
 open import TypeInference.SolverImpl.Resid  S
 open import TypeInference.SolverImpl.State  S
 open import TypeInference.SolverImpl.Normal S
-open import TypeInference.SolverImpl.Entail S using (decideᵣ; decideₑ; derive)
+open import TypeInference.SolverImpl.Entail S using (decideᵣ; decideₑ; full)
 open import TypeInference.SolverImpl.Solve  S opEnum
 open import TypeInference.SolverImpl.Localise S
   using (Localised; localise; lσ; lfix; lcpl; latom; localise-ds; updᵉ-absorb; freeᵉ; freeʳ; anyᶠ; anyᶠ-true;
@@ -597,57 +597,67 @@ stripᵉ-top-princ {Φ = Φ} {Φ'} {Q} O j ε ε' ε₀' e₁ eq γ hγ u p
 stripᵉ-top-princ O j ε ε' ε₀' e₁ eq γ hγ u p | just _  | nothing = ⊥just eq
 stripᵉ-top-princ O j ε ε' ε₀' e₁ eq γ hγ u p | nothing | _       = ⊥just eq
 
-atomʳ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (j : EVar (Φ +e))
+atomʳ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (H : Hyps (Φ +e)) → (j : EVar (Φ +e))
             → (ρ ρ' : RExp (Φ +e))
-            → ∀ {a} → atomʳ O j ρ ρ' ≡ just a
+            → ∀ {a} → atomʳ O H j ρ ρ' ≡ just a
             → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
             → Uniform O (popˢ j ⨟ˢ γ)
             → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ γ ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ γ ]ʳ
             → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
             → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ ≾̂ᵣ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ
-atomʳ-princ O j ρ ρ' eq γ hγ u p with strʳ⁺ j ρ | strʳ⁺ j ρ'
-... | just (ρ₀ , e₁) | just (ρ₀' , e₂) with eq
-...   | refl = λ { (here refl) → bndʳ j ρ ρ' e₁ e₂ γ p }
-atomʳ-princ O j ρ ρ' eq γ hγ u p | just (ρ₀ , e₁) | nothing with decideᵣ derive ∅ᴴ ρ ρ'
+atomʳ-princ O H j ρ ρ' eq γ hγ u p with strʳ⁺ j ρ | strʳ⁺ j ρ'
+... | just _ | just _ = ⊥just eq
+... | just (ρ₀ , e₁) | nothing with decideᵣ full H ρ ρ'
+...   | just _  with eq
+...     | refl = λ ()
+atomʳ-princ O H j ρ ρ' eq γ hγ u p | just (ρ₀ , e₁) | nothing | nothing
+  with stripʳ-unit (Is-just? uₑ-least?) j ρ ρ' ρ₀ e₁ in es
+... | nothing = ⊥just eq
+... | just _ with eq
+...   | refl = stripʳ-unit-princ (Is-just? uₑ-least?) j ρ ρ' ρ₀ e₁ es γ hγ p
+atomʳ-princ O H j ρ ρ' eq γ hγ u p | nothing | just (ρ₀' , e₂) with decideᵣ full H ρ ρ'
 ... | just _  with eq
 ...   | refl = λ ()
-atomʳ-princ O j ρ ρ' eq γ hγ u p | just (ρ₀ , e₁) | nothing | nothing =
-  stripʳ-unit-princ (Is-just? uₑ-least?) j ρ ρ' ρ₀ e₁ eq γ hγ p
-atomʳ-princ O j ρ ρ' eq γ hγ u p | nothing | just (ρ₀' , e₂) with decideᵣ derive ∅ᴴ ρ ρ'
+atomʳ-princ O H j ρ ρ' eq γ hγ u p | nothing | just (ρ₀' , e₂) | nothing
+  with stripʳ-top O j ρ ρ' ρ₀' e₂ in es
+... | nothing = ⊥just eq
+... | just _ with eq
+...   | refl = stripʳ-top-princ O j ρ ρ' ρ₀' e₂ es γ hγ u p
+atomʳ-princ O H j ρ ρ' eq γ hγ u p | nothing | nothing with decideᵣ full H ρ ρ'
 ... | just _  with eq
 ...   | refl = λ ()
-atomʳ-princ O j ρ ρ' eq γ hγ u p | nothing | just (ρ₀' , e₂) | nothing =
-  stripʳ-top-princ O j ρ ρ' ρ₀' e₂ eq γ hγ u p
-atomʳ-princ O j ρ ρ' eq γ hγ u p | nothing | nothing with decideᵣ derive ∅ᴴ ρ ρ'
-... | just _  with eq
-...   | refl = λ ()
-atomʳ-princ O j ρ ρ' eq γ hγ u p | nothing | nothing | nothing = ⊥just eq
+atomʳ-princ O H j ρ ρ' eq γ hγ u p | nothing | nothing | nothing = ⊥just eq
 
-atomᵉ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (j : EVar (Φ +e))
+atomᵉ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (H : Hyps (Φ +e)) → (j : EVar (Φ +e))
             → (ε ε' : EExp (Φ +e))
-            → ∀ {a} → atomᵉ O j ε ε' ≡ just a
+            → ∀ {a} → atomᵉ O H j ε ε' ≡ just a
             → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
             → Uniform O (popˢ j ⨟ˢ γ)
             → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ γ ]ᵉ ≾̂ₑ ε' [ popˢ j ⨟ˢ γ ]ᵉ
             → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
             → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ ≾̂ₑ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ
-atomᵉ-princ O j ε ε' eq γ hγ u p with strᵉ⁺ j ε | strᵉ⁺ j ε'
-... | just (ε₀ , e₁) | just (ε₀' , e₂) with eq
-...   | refl = λ { (here refl) → bndᵉ j ε ε' e₁ e₂ γ p }
-atomᵉ-princ O j ε ε' eq γ hγ u p | just (ε₀ , e₁) | nothing with decideₑ derive ∅ᴴ ε ε'
+atomᵉ-princ O H j ε ε' eq γ hγ u p with strᵉ⁺ j ε | strᵉ⁺ j ε'
+... | just _ | just _ = ⊥just eq
+... | just (ε₀ , e₁) | nothing with decideₑ full H ε ε'
+...   | just _  with eq
+...     | refl = λ ()
+atomᵉ-princ O H j ε ε' eq γ hγ u p | just (ε₀ , e₁) | nothing | nothing
+  with stripᵉ-unit (Is-just? uₑ-least?) j ε ε' ε₀ e₁ in es
+... | nothing = ⊥just eq
+... | just _ with eq
+...   | refl = stripᵉ-unit-princ (Is-just? uₑ-least?) j ε ε' ε₀ e₁ es γ hγ p
+atomᵉ-princ O H j ε ε' eq γ hγ u p | nothing | just (ε₀' , e₂) with decideₑ full H ε ε'
 ... | just _  with eq
 ...   | refl = λ ()
-atomᵉ-princ O j ε ε' eq γ hγ u p | just (ε₀ , e₁) | nothing | nothing =
-  stripᵉ-unit-princ (Is-just? uₑ-least?) j ε ε' ε₀ e₁ eq γ hγ p
-atomᵉ-princ O j ε ε' eq γ hγ u p | nothing | just (ε₀' , e₂) with decideₑ derive ∅ᴴ ε ε'
+atomᵉ-princ O H j ε ε' eq γ hγ u p | nothing | just (ε₀' , e₂) | nothing
+  with stripᵉ-top O j ε ε' ε₀' e₂ in es
+... | nothing = ⊥just eq
+... | just _ with eq
+...   | refl = stripᵉ-top-princ O j ε ε' ε₀' e₂ es γ hγ u p
+atomᵉ-princ O H j ε ε' eq γ hγ u p | nothing | nothing with decideₑ full H ε ε'
 ... | just _  with eq
 ...   | refl = λ ()
-atomᵉ-princ O j ε ε' eq γ hγ u p | nothing | just (ε₀' , e₂) | nothing =
-  stripᵉ-top-princ O j ε ε' ε₀' e₂ eq γ hγ u p
-atomᵉ-princ O j ε ε' eq γ hγ u p | nothing | nothing with decideₑ derive ∅ᴴ ε ε'
-... | just _  with eq
-...   | refl = λ ()
-atomᵉ-princ O j ε ε' eq γ hγ u p | nothing | nothing | nothing = ⊥just eq
+atomᵉ-princ O H j ε ε' eq γ hγ u p | nothing | nothing | nothing = ⊥just eq
 
 atomᵗ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (A : OVType (Φ +e))
             → ∀ {a} → atomᵗ j A ≡ just a
@@ -766,8 +776,8 @@ agree-≡ᵉ {O = O} {X₁} {X₂} eq x o =
 -- being uniform in it (`eqO`)
 
 listʳ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (O⁺ : Subst (Θ +e) (Φ +e))
-            → (j : EVar (Φ +e)) → (l : List (RExp (Φ +e) × RExp (Φ +e)))
-            → ∀ {a} → listʳ O O⁺ j l ≡ just a
+            → (H : Hyps (Φ +e)) → (j : EVar (Φ +e)) → (l : List (RExp (Φ +e) × RExp (Φ +e)))
+            → ∀ {a} → listʳ O O⁺ H j l ≡ just a
             → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
             → Uniform O (popˢ j ⨟ˢ γ)
             → (O⁺ ⨟ˢ (popˢ j ⨟ˢ γ)) ≐ˢ (O⁺ ⨟ˢ (popˢ j ⨟ˢ (((wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ) ↑ᵉ)))
@@ -777,21 +787,29 @@ listʳ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (O�
                  → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ ≾̂ᵣ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ)
             × (∀ {τ τ'} → (τ , τ') ∈ proj₁ (proj₂ a)
                  → wkᵉ-H Q ⊩ τ [ ((wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ) ↑ᵉ ]ʳ ≾̂ᵣ τ' [ ((wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ) ↑ᵉ ]ʳ)
-listʳ-princ O O⁺ j []              refl γ hγ u eqO k = (λ ()) , (λ ())
-listʳ-princ O O⁺ j ((ρ , ρ') ∷ l) eq γ hγ u eqO k with listʳ O O⁺ j l in e₂
+listʳ-princ O O⁺ H j []              refl γ hγ u eqO k = (λ ()) , (λ ())
+listʳ-princ O O⁺ H j ((ρ , ρ') ∷ l) eq γ hγ u eqO k with listʳ O O⁺ H j l in e₂
 ... | nothing = ⊥just eq
-... | just (l₀ , d₀ , f) with atomʳ O j ρ ρ' in e₁
-...   | just (a , fa) with eq
-...     | refl = (λ m → [ atomʳ-princ O j ρ ρ' e₁ γ hγ u (k (here refl)) , proj₁ ih ]′ (∈-++⁻ a m))
+... | just (l₀ , d₀ , f) with freeʳ? j ρ ρ'
+...   | yes (a , b) with eq
+...     | refl = (λ { (here refl) → bndʳ j ρ ρ' (proj₂ (to-witness a)) (proj₂ (to-witness b)) γ (k (here refl))
+                   ; (there m)   → proj₁ ih m })
                , proj₂ ih
   where
-    ih = listʳ-princ O O⁺ j l e₂ γ hγ u eqO (λ m' → k (there m'))
-listʳ-princ {Q = Q} O O⁺ j ((ρ , ρ') ∷ l) eq γ hγ u eqO k | just (l₀ , d₀ , f) | nothing
+    ih = listʳ-princ O O⁺ H j l e₂ γ hγ u eqO (λ m' → k (there m'))
+listʳ-princ O O⁺ H j ((ρ , ρ') ∷ l) eq γ hγ u eqO k | just (l₀ , d₀ , f) | no nf
+  with atomʳ O H j ρ ρ' in e₁
+... | just (a , fa) with eq
+...   | refl = (λ m → [ atomʳ-princ O H j ρ ρ' e₁ γ hγ u (k (here refl)) , proj₁ ih ]′ (∈-++⁻ a m))
+             , proj₂ ih
+  where
+    ih = listʳ-princ O O⁺ H j l e₂ γ hγ u eqO (λ m' → k (there m'))
+listʳ-princ {Q = Q} O O⁺ H j ((ρ , ρ') ∷ l) eq γ hγ u eqO k | just (l₀ , d₀ , f) | no nf | nothing
   with outerᵣ? O⁺ ρ | outerᵣ? O⁺ ρ'
 ... | just o | just o' with eq
 ...   | refl = proj₁ ih , (λ { (here refl) → deferred ; (there m) → proj₂ ih m })
   where
-    ih = listʳ-princ O O⁺ j l e₂ γ hγ u eqO (λ m' → k (there m'))
+    ih = listʳ-princ O O⁺ H j l e₂ γ hγ u eqO (λ m' → k (there m'))
 
     X = ((wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ) ↑ᵉ
 
@@ -800,12 +818,12 @@ listʳ-princ {Q = Q} O O⁺ j ((ρ , ρ') ∷ l) eq γ hγ u eqO k | just (l₀ 
 
     deferred : wkᵉ-H Q ⊩ ρ [ popˢ j ]ʳ [ X ]ʳ ≾̂ᵣ ρ' [ popˢ j ]ʳ [ X ]ʳ
     deferred = subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ᵣ y) (at ρ o) (at ρ' o') (k (here refl))
-listʳ-princ O O⁺ j ((ρ , ρ') ∷ l) eq γ hγ u eqO k | just _ | nothing | just _  | nothing = ⊥just eq
-listʳ-princ O O⁺ j ((ρ , ρ') ∷ l) eq γ hγ u eqO k | just _ | nothing | nothing | _       = ⊥just eq
+listʳ-princ O O⁺ H j ((ρ , ρ') ∷ l) eq γ hγ u eqO k | just _ | no _ | nothing | just _  | nothing = ⊥just eq
+listʳ-princ O O⁺ H j ((ρ , ρ') ∷ l) eq γ hγ u eqO k | just _ | no _ | nothing | nothing | _       = ⊥just eq
 
 listᵉ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (O⁺ : Subst (Θ +e) (Φ +e))
-            → (j : EVar (Φ +e)) → (l : List (EExp (Φ +e) × EExp (Φ +e)))
-            → ∀ {a} → listᵉ O O⁺ j l ≡ just a
+            → (H : Hyps (Φ +e)) → (j : EVar (Φ +e)) → (l : List (EExp (Φ +e) × EExp (Φ +e)))
+            → ∀ {a} → listᵉ O O⁺ H j l ≡ just a
             → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
             → Uniform O (popˢ j ⨟ˢ γ)
             → (O⁺ ⨟ˢ (popˢ j ⨟ˢ γ)) ≐ˢ (O⁺ ⨟ˢ (popˢ j ⨟ˢ (((wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ) ↑ᵉ)))
@@ -815,21 +833,29 @@ listᵉ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (O
                  → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ ≾̂ₑ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ)
             × (∀ {τ τ'} → (τ , τ') ∈ proj₁ (proj₂ a)
                  → wkᵉ-H Q ⊩ τ [ ((wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ) ↑ᵉ ]ᵉ ≾̂ₑ τ' [ ((wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ) ↑ᵉ ]ᵉ)
-listᵉ-princ O O⁺ j []              refl γ hγ u eqO k = (λ ()) , (λ ())
-listᵉ-princ O O⁺ j ((ε , ε') ∷ l) eq γ hγ u eqO k with listᵉ O O⁺ j l in e₂
+listᵉ-princ O O⁺ H j []              refl γ hγ u eqO k = (λ ()) , (λ ())
+listᵉ-princ O O⁺ H j ((ε , ε') ∷ l) eq γ hγ u eqO k with listᵉ O O⁺ H j l in e₂
 ... | nothing = ⊥just eq
-... | just (l₀ , d₀ , f) with atomᵉ O j ε ε' in e₁
-...   | just (a , fa) with eq
-...     | refl = (λ m → [ atomᵉ-princ O j ε ε' e₁ γ hγ u (k (here refl)) , proj₁ ih ]′ (∈-++⁻ a m))
+... | just (l₀ , d₀ , f) with freeᵉ? j ε ε'
+...   | yes (a , b) with eq
+...     | refl = (λ { (here refl) → bndᵉ j ε ε' (proj₂ (to-witness a)) (proj₂ (to-witness b)) γ (k (here refl))
+                   ; (there m)   → proj₁ ih m })
                , proj₂ ih
   where
-    ih = listᵉ-princ O O⁺ j l e₂ γ hγ u eqO (λ m' → k (there m'))
-listᵉ-princ {Q = Q} O O⁺ j ((ε , ε') ∷ l) eq γ hγ u eqO k | just (l₀ , d₀ , f) | nothing
+    ih = listᵉ-princ O O⁺ H j l e₂ γ hγ u eqO (λ m' → k (there m'))
+listᵉ-princ O O⁺ H j ((ε , ε') ∷ l) eq γ hγ u eqO k | just (l₀ , d₀ , f) | no nf
+  with atomᵉ O H j ε ε' in e₁
+... | just (a , fa) with eq
+...   | refl = (λ m → [ atomᵉ-princ O H j ε ε' e₁ γ hγ u (k (here refl)) , proj₁ ih ]′ (∈-++⁻ a m))
+             , proj₂ ih
+  where
+    ih = listᵉ-princ O O⁺ H j l e₂ γ hγ u eqO (λ m' → k (there m'))
+listᵉ-princ {Q = Q} O O⁺ H j ((ε , ε') ∷ l) eq γ hγ u eqO k | just (l₀ , d₀ , f) | no nf | nothing
   with outerₑ? O⁺ ε | outerₑ? O⁺ ε'
 ... | just o | just o' with eq
 ...   | refl = proj₁ ih , (λ { (here refl) → deferred ; (there m) → proj₂ ih m })
   where
-    ih = listᵉ-princ O O⁺ j l e₂ γ hγ u eqO (λ m' → k (there m'))
+    ih = listᵉ-princ O O⁺ H j l e₂ γ hγ u eqO (λ m' → k (there m'))
 
     X = ((wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ) ↑ᵉ
 
@@ -838,8 +864,8 @@ listᵉ-princ {Q = Q} O O⁺ j ((ε , ε') ∷ l) eq γ hγ u eqO k | just (l₀
 
     deferred : wkᵉ-H Q ⊩ ε [ popˢ j ]ᵉ [ X ]ᵉ ≾̂ₑ ε' [ popˢ j ]ᵉ [ X ]ᵉ
     deferred = subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ₑ y) (at ε o) (at ε' o') (k (here refl))
-listᵉ-princ O O⁺ j ((ε , ε') ∷ l) eq γ hγ u eqO k | just _ | nothing | just _  | nothing = ⊥just eq
-listᵉ-princ O O⁺ j ((ε , ε') ∷ l) eq γ hγ u eqO k | just _ | nothing | nothing | _       = ⊥just eq
+listᵉ-princ O O⁺ H j ((ε , ε') ∷ l) eq γ hγ u eqO k | just _ | no _ | nothing | just _  | nothing = ⊥just eq
+listᵉ-princ O O⁺ H j ((ε , ε') ∷ l) eq γ hγ u eqO k | just _ | no _ | nothing | nothing | _       = ⊥just eq
 
 listᵗ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e))
             → (l : List (OVType (Φ +e)))
@@ -908,7 +934,8 @@ splitᴿ-princ : ∀ {Θ Φ Φ'} → (O : Subst Θ (Φ +e)) → (O⁺ : Subst (�
              → ∅ᴴ ⊩ᴿ proj₁ a [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]
 splitᴿ-princ O O⁺ j R eq γ hγ u eqO h
   with listᵗ j (ts R) in e₃ | listˢ j (ss R) in e₄ | listᵈ j (ds R) in e₅
-     | listʳ O O⁺ j (rs R) in e₁ | listᵉ O O⁺ j (es R) in e₂ | outerD? O⁺ (dfs R)
+     | listʳ O O⁺ (freeᴴ j R) j (rs R) in e₁ | listᵉ O O⁺ (freeᴴ j R) j (es R) in e₂
+     | outerD? O⁺ (dfs R)
 ... | just (lt , ft) | just (ls , fs) | just (ld , fd)
     | just (lr , dr , fr) | just (le , de , fe) | just od with eq
 ...   | refl = mk⊩ᴿ (proj₁ pr) (proj₁ pe)
@@ -919,8 +946,8 @@ splitᴿ-princ O O⁺ j R eq γ hγ u eqO h
                                                     (mk⊩ᵒ (proj₂ pr) (proj₂ pe))
                        ; (there m) → lifted m })
   where
-    pr = listʳ-princ O O⁺ j (rs R) e₁ γ hγ u eqO (⊩rs h)
-    pe = listᵉ-princ O O⁺ j (es R) e₂ γ hγ u eqO (⊩es h)
+    pr = listʳ-princ O O⁺ (freeᴴ j R) j (rs R) e₁ γ hγ u eqO (⊩rs h)
+    pe = listᵉ-princ O O⁺ (freeᴴ j R) j (es R) e₂ γ hγ u eqO (⊩es h)
 
     lifted : ∀ {E} → E ∈ map (liftᵈ j) (dfs R) → ∅ᴴ ⊩ᵈ E [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]
     lifted m with ∈-map⁻ (liftᵈ j) m
@@ -1373,7 +1400,7 @@ solve-principal s (ε ≾̂ₑᶜ ε') refl δ₀ sat h =
 solve-principal s (Etᶜ A) eq = solveEt-princ s A _ refl eq
 
 solve-principal s (Et∨≾ᵘ A ρ) eq
-  with decideᵣ derive ∅ᴴ (ρ [ θ s ]ʳ) ûᵣ
+  with decideᵣ full ∅ᴴ (ρ [ θ s ]ʳ) ûᵣ
 ... | just p  with eq
 ...   | refl = λ δ₀ sat h → δ₀ , ≐ˢ-refl , h , (λ fx → fx)
 solve-principal s (Et∨≾ᵘ A ρ) eq | nothing = solveDisj-princ s A ρ _ refl eq
@@ -1546,7 +1573,7 @@ splitᴿ-fail : ∀ {Θ Φ Ψ''} → (O : Subst Θ (Φ +e)) → (O⁺ : Subst (�
             → (δ : Subst (Φ +e) Ψ'') → ∅ᴴ ⊩ᴿ R [ δ ] → ⊥
 splitᴿ-fail O O⁺ j R at et eq δ h
   with listᵗ j (ts R) in e₃ | listˢ j (ss R) in e₄ | listᵈ j (ds R) in e₅
-     | listʳ O O⁺ j (rs R) | listᵉ O O⁺ j (es R) | outerD? O⁺ (dfs R)
+     | listʳ O O⁺ (freeᴴ j R) j (rs R) | listᵉ O O⁺ (freeᴴ j R) j (es R) | outerD? O⁺ (dfs R)
 ... | just _  | just _  | just _  | just _  | just _  | just _  = ⊥solved eq
 ... | nothing | _       | _       | _       | _       | _       = listᵗ-fail j (ts R) e₃ δ (⊩ts h)
 ... | just _  | nothing | _       | _       | _       | _       = listˢ-fail j (ss R) at e₄
@@ -1730,7 +1757,7 @@ solve-fail s (ε ≾̂ₑᶜ ε') ()
 
 solve-fail s (Etᶜ A) eq = solveEt-fail s A _ refl eq
 
-solve-fail s (Et∨≾ᵘ A ρ) eq with decideᵣ derive ∅ᴴ (ρ [ θ s ]ʳ) ûᵣ
+solve-fail s (Et∨≾ᵘ A ρ) eq with decideᵣ full ∅ᴴ (ρ [ θ s ]ʳ) ûᵣ
 ... | just _  = ⊥solved eq
 ... | nothing = solveDisj-fail s A ρ _ refl eq
 

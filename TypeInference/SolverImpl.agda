@@ -27,8 +27,9 @@
 --     obligations (`toOblig`).                                 --
 --   * Read-back: `toHyps` (`toHyps-compl`, `etDec-refute`),    --
 --     then `checkClosed`, which decides the closed atoms and   --
---     the closed orderings joined by chains of hypotheses      --
---     (`checkClosed-⊩`/`-⊆`/`-fail`).                          --
+--     the closed orderings joined by chains of hypotheses and  --
+--     drops the disjunctions that follow from the orderings    --
+--     left (`checkClosed-⊩`/`-⊆`/`-fail`).                     --
 --   * The report (`report`, `Reported`): `simplify`            --
 --     (`simplify-⊩`/`-⊨`), which normalises the set, splits    --
 --     each join on a left side and drops each var-rule         --
@@ -46,12 +47,18 @@
 -- explicit strengths: `closed` (variable-free sides, the       --
 -- grade's order; the closed check and the witnesses of         --
 -- `retry`), `derive` (the embedding of normal forms along the  --
--- chains between atoms of the hypothesis graph; at no          --
--- hypotheses in the driver, localisation, `Bounds` and         --
--- `Canon`, and at the residual's orderings in `retry`), and    --
--- `atomic` (an ordering of the set itself, or `derive`; the    --
--- report's settling, pruning and equating). Every edge of the  --
--- graph holds where its hypotheses do (`edgeᵣ-sound`), and     --
+-- chains of the hypotheses between atoms; at no hypotheses in  --
+-- `Canon`), `atomic` (an ordering of the set itself, or        --
+-- `derive`; equating in the report), and `full` (`closed`, or  --
+-- the embedding along the chains between atoms of the whole    --
+-- hypothesis graph with its factor edges; at no hypotheses in  --
+-- the driver's disjunctions, localisation's settled orderings  --
+-- and raise, and `Bounds`; at the orderings of the scope in    --
+-- localisation's settled disjunctions and the split's          --
+-- discharge; at the residual's orderings in `retry`; at the    --
+-- orderings left by the closed check for its disjunctions; in  --
+-- the report's settling, disjunctions and trim). Every edge of --
+-- the graph holds where its hypotheses do (`edgeᵣ-sound`), and --
 -- each decision is a derivation composed of edges, sound by    --
 -- its type; no completeness is claimed. Products are compared  --
 -- by `prodˢ≾`, which decides the embedding `_⊑ᵖ_`              --

@@ -10,14 +10,15 @@
 -- eternality demand is decided by `etDec` when it is pushed:   --
 -- it is refuted, or residualised as its atoms on type          --
 -- variables (`solveEt`). A var-rule disjunction is dropped     --
--- where `derive` proves its grade below the unit; otherwise    --
--- its type is decided: if never eternal, the grade side is     --
--- residualised as an ordering; if eternal with no atom, the    --
--- disjunction is dropped; otherwise it is residualised         --
--- (`solveDisj`). An expansion of the type unknowns is followed --
--- by a second decomposition of the residual's subtyping and    --
--- eternality demands, which puts them on type variables and    --
--- residualises their grade orderings with the others.          --
+-- where its grade is below the unit at the strength `full`     --
+-- from no hypotheses; otherwise its type is decided: if never  --
+-- eternal, the grade side is residualised as an ordering; if   --
+-- eternal with no atom, the disjunction is dropped; otherwise  --
+-- it is residualised (`solveDisj`). An expansion of the type   --
+-- unknowns is followed by a second decomposition of the      --
+-- residual's subtyping and eternality demands, which puts them --
+-- on type variables and residualises their grade orderings     --
+-- with the others.                                             --
 --                                                              --
 -- The witness of a success is deferred: it is read at the      --
 -- state that a later component leaves, not transported along   --
@@ -29,11 +30,13 @@
 -- atoms decided true are dropped, and the unknowns local to    --
 -- the scope are assigned values that keep every instance       --
 -- entering it (`Localise`). Then an atom free of the rigid is  --
--- kept; one whose right side alone mentions the rigid is kept  --
--- at the unit rigid where the unit is least; one whose left    --
--- side alone mentions it is kept at the top rigid; any other   --
--- is discharged immediately or, when it mentions only the      --
--- rigid and outer unknowns, deferred as a new entry. The       --
+-- kept; one that mentions the rigid is discharged where it     --
+-- follows, at the strength `full`, from the orderings free of  --
+-- the rigid; otherwise one whose right side alone mentions the --
+-- rigid is kept at the unit rigid where the unit is least, one --
+-- whose left side alone mentions it is kept at the top rigid,  --
+-- and any other, when it mentions only the rigid and outer     --
+-- unknowns, is deferred as a new entry. The                    --
 -- scope's own entries are carried outward under the rigid, and --
 -- the image of an outer unknown must remain free of it. After  --
 -- each close the entries are retried.                          --
@@ -63,7 +66,9 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-++⁺ˡ; ∈-++⁺ʳ; ∈-++⁻; ∈-map⁺)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing)
-open import Data.Maybe using (Is-just)
+open import Data.Maybe using (Is-just; to-witness)
+open import Data.Maybe.Relation.Unary.Any using () renaming (just to Any-just)
+open import Data.Empty using (⊥-elim)
 open import Data.Nat.Base using (ℕ) renaming (zero to nzero; suc to nsuc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
@@ -114,7 +119,7 @@ open import TypeInference.SolverImpl.Resid  S
 open import TypeInference.SolverImpl.State  S
 open import TypeInference.SolverImpl.Normal S
 open import TypeInference.SolverImpl.Entail S
-  using (decideᵣ; decideₑ; derive; closedᵣ?; closedₑ?; holdsᵣ; failsᵣ; holdsₑ; failsₑ)
+  using (decideᵣ; decideₑ; derive; full; closedᵣ?; closedₑ?; holdsᵣ; failsᵣ; holdsₑ; failsₑ)
 open import TypeInference.SolverImpl.Localise S
   using (Localised; localise; lσ; lR; lsnd; freeᵉ; freeʳ; Outerₑ; Outerᵣ; outerₑ?; outerᵣ?;
          evar?)
@@ -134,7 +139,7 @@ wit-mono {s = s} m C w δ Q h =
 
 -- An atom either strengthens away from the rigid and is kept, or must
 -- be discharged where the rigid is still in scope; a decision against
--- `∅ᴴ` transports to any later hypothesis set and substitution.
+-- hypotheses transports to any instance of them.
 
 pop⨟ʳ : ∀ {Φ Φ'} → (j : EVar (Φ +e)) → (ρ : RExp (Φ +e)) → {ρ₀ : RExp Φ}
       → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → (δ : Subst Φ Φ')
@@ -157,15 +162,15 @@ pop⨟ᵛ j A {A₀} q δ =
   trans (sym ([⨟]ᵛ A (popˢ j) (δ ↑ᵉ)))
         (trans (cong (_[ δ ↑ᵉ ]ᵛ) q) (wk-↑ᵉ-v δ A₀))
 
-Atomʳ : ∀ {Φ} → EVar (Φ +e) → RExp (Φ +e) → RExp (Φ +e) → Set
-Atomʳ {Φ} j ρ ρ' =
+Stripʳ : ∀ {Φ} → EVar (Φ +e) → RExp (Φ +e) → RExp (Φ +e) → Set
+Stripʳ {Φ} j ρ ρ' =
   Σ[ l₀ ∈ List (RExp Φ × RExp Φ) ]
     (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
        → (∀ {τ τ'} → (τ , τ') ∈ l₀ → Q ⊩ τ [ δ ]ʳ ≾̂ᵣ τ' [ δ ]ʳ)
        → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ)
 
-Atomᵉ : ∀ {Φ} → EVar (Φ +e) → EExp (Φ +e) → EExp (Φ +e) → Set
-Atomᵉ {Φ} j ε ε' =
+Stripᵉ : ∀ {Φ} → EVar (Φ +e) → EExp (Φ +e) → EExp (Φ +e) → Set
+Stripᵉ {Φ} j ε ε' =
   Σ[ l₀ ∈ List (EExp Φ × EExp Φ) ]
     (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
        → (∀ {τ τ'} → (τ , τ') ∈ l₀ → Q ⊩ τ [ δ ]ᵉ ≾̂ₑ τ' [ δ ]ᵉ)
@@ -205,12 +210,12 @@ Atomᵈ {Φ} j A ρ =
 -- function of the rigid, and is kept at the unit rigid; so the side
 -- that `stripᵉ-top` keeps free of the rigid must mention no local
 -- unknown either, only those the scope was entered with (`Outerₑ`).
--- Right to left is each rule's type (`Atomʳ`/`Atomᵉ`); left to right
+-- Right to left is each rule's type (`Stripʳ`/`Stripᵉ`); left to right
 -- is `stripʳ-unit-princ` and its siblings (`PrincipalSolution`).
 
 stripʳ-unit : ∀ {Φ} → Maybe (Is-just uₑ-least?)
             → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
-            → (ρ₀ : RExp Φ) → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → Maybe (Atomʳ j ρ ρ')
+            → (ρ₀ : RExp Φ) → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → Maybe (Stripʳ j ρ ρ')
 stripʳ-unit nothing    j ρ ρ' ρ₀ e₁ = nothing
 stripʳ-unit (just ij)  j ρ ρ' ρ₀ e₁ with strʳ⁺ j (ρ' [ updᵉ j ûₑ ]ʳ)
 ... | nothing          = nothing
@@ -225,7 +230,7 @@ stripʳ-unit (just ij)  j ρ ρ' ρ₀ e₁ with strʳ⁺ j (ρ' [ updᵉ j û�
 
 stripᵉ-unit : ∀ {Φ} → Maybe (Is-just uₑ-least?)
             → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
-            → (ε₀ : EExp Φ) → ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀ → Maybe (Atomᵉ j ε ε')
+            → (ε₀ : EExp Φ) → ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀ → Maybe (Stripᵉ j ε ε')
 stripᵉ-unit nothing    j ε ε' ε₀ e₁ = nothing
 stripᵉ-unit (just ij)  j ε ε' ε₀ e₁ with strᵉ⁺ j (ε' [ updᵉ j ûₑ ]ᵉ)
 ... | nothing          = nothing
@@ -239,7 +244,7 @@ stripᵉ-unit (just ij)  j ε ε' ε₀ e₁ with strᵉ⁺ j (ε' [ updᵉ j û
                              (mono-substₑ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ ij)) ε'))
 
 stripʳ-top : ∀ {Θ Φ} → Subst Θ (Φ +e) → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
-           → (ρ₀' : RExp Φ) → ρ' [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀' → Maybe (Atomʳ j ρ ρ')
+           → (ρ₀' : RExp Φ) → ρ' [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀' → Maybe (Stripʳ j ρ ρ')
 stripʳ-top O j ρ ρ' ρ₀' e₁ with outerᵣ? O ρ' | strʳ⁺ j (ρ [ updᵉ j (econst ⊤ₑ) ]ʳ)
 ... | just _ | just (ρ₀ , e₂) =
       just ((ρ₀ , ρ₀') ∷ [] ,
@@ -252,7 +257,7 @@ stripʳ-top O j ρ ρ' ρ₀' e₁ with outerᵣ? O ρ' | strʳ⁺ j (ρ [ upd�
 ... | _      | _                = nothing
 
 stripᵉ-top : ∀ {Θ Φ} → Subst Θ (Φ +e) → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
-           → (ε₀' : EExp Φ) → ε' [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀' → Maybe (Atomᵉ j ε ε')
+           → (ε₀' : EExp Φ) → ε' [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀' → Maybe (Stripᵉ j ε ε')
 stripᵉ-top O j ε ε' ε₀' e₁ with outerₑ? O ε' | strᵉ⁺ j (ε [ updᵉ j (econst ⊤ₑ) ]ᵉ)
 ... | just _ | just (ε₀ , e₂) =
       just ((ε₀ , ε₀') ∷ [] ,
@@ -264,41 +269,118 @@ stripᵉ-top O j ε ε' ε₀' e₁ with outerₑ? O ε' | strᵉ⁺ j (ε [ upd
                                      (⊩-wkᵉₑ (k (here refl)))))
 ... | _      | _                = nothing
 
-atomʳ : ∀ {Θ Φ} → Subst Θ (Φ +e) → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
-      → Maybe (Atomʳ j ρ ρ')
-atomʳ O j ρ ρ' with strʳ⁺ j ρ | strʳ⁺ j ρ'
-... | just (ρ₀ , e₁) | just (ρ₀' , e₂) =
-      just ((ρ₀ , ρ₀') ∷ [] ,
-            λ δ Q k → subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ᵣ y)
-                             (sym (pop⨟ʳ j ρ e₁ δ)) (sym (pop⨟ʳ j ρ' e₂ δ))
-                             (⊩-wkᵉᵣ (k (here refl))))
-... | just (ρ₀ , e₁) | nothing          with decideᵣ derive ∅ᴴ ρ ρ'
-...   | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
-...   | nothing = stripʳ-unit (Is-just? uₑ-least?) j ρ ρ' ρ₀ e₁
-atomʳ O j ρ ρ' | nothing | just (ρ₀' , e₂) with decideᵣ derive ∅ᴴ ρ ρ'
-... | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
-... | nothing = stripʳ-top O j ρ ρ' ρ₀' e₂
-atomʳ O j ρ ρ' | nothing | nothing with decideᵣ derive ∅ᴴ ρ ρ'
-... | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
+-- An ordering that mentions the rigid is discharged where it follows,
+-- at the strength `full`, from the hypotheses `H`, the orderings of the
+-- scope free of the rigid; otherwise it is kept as `stripʳ-unit` or
+-- `stripʳ-top` keeps it. The discharge holds for every rigid, the
+-- hypotheses not mentioning it.
+
+Atomʳ : ∀ {Φ} → EVar (Φ +e) → Hyps (Φ +e) → RExp (Φ +e) → RExp (Φ +e) → Set
+Atomʳ {Φ} j H ρ ρ' =
+  Σ[ l₀ ∈ List (RExp Φ × RExp Φ) ]
+    (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
+       → wkᵉ-H Q ⊩ᴴ H [ popˢ j ⨟ˢ (δ ↑ᵉ) ]
+       → (∀ {τ τ'} → (τ , τ') ∈ l₀ → Q ⊩ τ [ δ ]ʳ ≾̂ᵣ τ' [ δ ]ʳ)
+       → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ)
+
+Atomᵉ : ∀ {Φ} → EVar (Φ +e) → Hyps (Φ +e) → EExp (Φ +e) → EExp (Φ +e) → Set
+Atomᵉ {Φ} j H ε ε' =
+  Σ[ l₀ ∈ List (EExp Φ × EExp Φ) ]
+    (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
+       → wkᵉ-H Q ⊩ᴴ H [ popˢ j ⨟ˢ (δ ↑ᵉ) ]
+       → (∀ {τ τ'} → (τ , τ') ∈ l₀ → Q ⊩ τ [ δ ]ᵉ ≾̂ₑ τ' [ δ ]ᵉ)
+       → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵉ ≾̂ₑ ε' [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵉ)
+
+fromStripʳ : ∀ {Φ} {j : EVar (Φ +e)} {H : Hyps (Φ +e)} {ρ ρ' : RExp (Φ +e)} → Maybe (Stripʳ j ρ ρ') → Maybe (Atomʳ j H ρ ρ')
+fromStripʳ (just (l₀ , f)) = just (l₀ , λ δ Q _ k → f δ Q k)
+fromStripʳ nothing         = nothing
+
+fromStripᵉ : ∀ {Φ} {j : EVar (Φ +e)} {H : Hyps (Φ +e)} {ε ε' : EExp (Φ +e)} → Maybe (Stripᵉ j ε ε') → Maybe (Atomᵉ j H ε ε')
+fromStripᵉ (just (l₀ , f)) = just (l₀ , λ δ Q _ k → f δ Q k)
+fromStripᵉ nothing         = nothing
+
+atomʳ : ∀ {Θ Φ} → Subst Θ (Φ +e) → (H : Hyps (Φ +e)) → (j : EVar (Φ +e))
+      → (ρ ρ' : RExp (Φ +e)) → Maybe (Atomʳ j H ρ ρ')
+atomʳ O H j ρ ρ' with strʳ⁺ j ρ | strʳ⁺ j ρ'
+... | just _         | just _           = nothing
+... | just (ρ₀ , e₁) | nothing          with decideᵣ full H ρ ρ'
+...   | just p  = just ([] , λ δ Q g k → ⊩-substᵣ g p)
+...   | nothing = fromStripʳ {j = j} {H = H} {ρ = ρ} {ρ' = ρ'} (stripʳ-unit (Is-just? uₑ-least?) j ρ ρ' ρ₀ e₁)
+atomʳ O H j ρ ρ' | nothing | just (ρ₀' , e₂) with decideᵣ full H ρ ρ'
+... | just p  = just ([] , λ δ Q g k → ⊩-substᵣ g p)
+... | nothing = fromStripʳ {j = j} {H = H} {ρ = ρ} {ρ' = ρ'} (stripʳ-top O j ρ ρ' ρ₀' e₂)
+atomʳ O H j ρ ρ' | nothing | nothing with decideᵣ full H ρ ρ'
+... | just p  = just ([] , λ δ Q g k → ⊩-substᵣ g p)
 ... | nothing = nothing
 
-atomᵉ : ∀ {Θ Φ} → Subst Θ (Φ +e) → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
-      → Maybe (Atomᵉ j ε ε')
-atomᵉ O j ε ε' with strᵉ⁺ j ε | strᵉ⁺ j ε'
-... | just (ε₀ , e₁) | just (ε₀' , e₂) =
-      just ((ε₀ , ε₀') ∷ [] ,
-            λ δ Q k → subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ₑ y)
-                             (sym (pop⨟ᵉ j ε e₁ δ)) (sym (pop⨟ᵉ j ε' e₂ δ))
-                             (⊩-wkᵉₑ (k (here refl))))
-... | just (ε₀ , e₁) | nothing          with decideₑ derive ∅ᴴ ε ε'
-...   | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
-...   | nothing = stripᵉ-unit (Is-just? uₑ-least?) j ε ε' ε₀ e₁
-atomᵉ O j ε ε' | nothing | just (ε₀' , e₂) with decideₑ derive ∅ᴴ ε ε'
-... | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
-... | nothing = stripᵉ-top O j ε ε' ε₀' e₂
-atomᵉ O j ε ε' | nothing | nothing with decideₑ derive ∅ᴴ ε ε'
-... | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
+atomᵉ : ∀ {Θ Φ} → Subst Θ (Φ +e) → (H : Hyps (Φ +e)) → (j : EVar (Φ +e))
+      → (ε ε' : EExp (Φ +e)) → Maybe (Atomᵉ j H ε ε')
+atomᵉ O H j ε ε' with strᵉ⁺ j ε | strᵉ⁺ j ε'
+... | just _         | just _           = nothing
+... | just (ε₀ , e₁) | nothing          with decideₑ full H ε ε'
+...   | just p  = just ([] , λ δ Q g k → ⊩-substₑ g p)
+...   | nothing = fromStripᵉ {j = j} {H = H} {ε = ε} {ε' = ε'} (stripᵉ-unit (Is-just? uₑ-least?) j ε ε' ε₀ e₁)
+atomᵉ O H j ε ε' | nothing | just (ε₀' , e₂) with decideₑ full H ε ε'
+... | just p  = just ([] , λ δ Q g k → ⊩-substₑ g p)
+... | nothing = fromStripᵉ {j = j} {H = H} {ε = ε} {ε' = ε'} (stripᵉ-top O j ε ε' ε₀' e₂)
+atomᵉ O H j ε ε' | nothing | nothing with decideₑ full H ε ε'
+... | just p  = just ([] , λ δ Q g k → ⊩-substₑ g p)
 ... | nothing = nothing
+
+-- Whether an ordering is free of the rigid
+
+freeʳ? : ∀ {Φ} → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
+       → Dec (Is-just (strʳ⁺ j ρ) × Is-just (strʳ⁺ j ρ'))
+freeʳ? j ρ ρ' with strʳ⁺ j ρ | strʳ⁺ j ρ'
+... | just _  | just _  = yes (Any-just tt , Any-just tt)
+... | just _  | nothing = no (λ { (_ , ()) })
+... | nothing | _       = no (λ { (() , _) })
+
+freeᵉ? : ∀ {Φ} → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
+       → Dec (Is-just (strᵉ⁺ j ε) × Is-just (strᵉ⁺ j ε'))
+freeᵉ? j ε ε' with strᵉ⁺ j ε | strᵉ⁺ j ε'
+... | just _  | just _  = yes (Any-just tt , Any-just tt)
+... | just _  | nothing = no (λ { (_ , ()) })
+... | nothing | _       = no (λ { (() , _) })
+
+-- The orderings of a list free of the rigid
+
+freesʳ : ∀ {Φ} → EVar (Φ +e) → List (RExp (Φ +e) × RExp (Φ +e)) → List (RExp (Φ +e) × RExp (Φ +e))
+freesʳ j []             = []
+freesʳ j ((x , y) ∷ l) with freeʳ? j x y
+... | yes _ = (x , y) ∷ freesʳ j l
+... | no _  = freesʳ j l
+
+freesᵉ : ∀ {Φ} → EVar (Φ +e) → List (EExp (Φ +e) × EExp (Φ +e)) → List (EExp (Φ +e) × EExp (Φ +e))
+freesᵉ j []             = []
+freesᵉ j ((x , y) ∷ l) with freeᵉ? j x y
+... | yes _ = (x , y) ∷ freesᵉ j l
+... | no _  = freesᵉ j l
+
+freesʳ-∈ : ∀ {Φ} → (j : EVar (Φ +e)) → (l : List (RExp (Φ +e) × RExp (Φ +e)))
+         → ∀ {ρ ρ'} → (ρ , ρ') ∈ freesʳ j l
+         → ((ρ , ρ') ∈ l) × (Is-just (strʳ⁺ j ρ) × Is-just (strʳ⁺ j ρ'))
+freesʳ-∈ j ((x , y) ∷ l) m with freeʳ? j x y
+freesʳ-∈ j ((x , y) ∷ l) (here refl) | yes fr = here refl , fr
+freesʳ-∈ j ((x , y) ∷ l) (there m)   | yes _  =
+  there (proj₁ (freesʳ-∈ j l m)) , proj₂ (freesʳ-∈ j l m)
+freesʳ-∈ j ((x , y) ∷ l) m           | no _   =
+  there (proj₁ (freesʳ-∈ j l m)) , proj₂ (freesʳ-∈ j l m)
+
+freesᵉ-∈ : ∀ {Φ} → (j : EVar (Φ +e)) → (l : List (EExp (Φ +e) × EExp (Φ +e)))
+         → ∀ {ε ε'} → (ε , ε') ∈ freesᵉ j l
+         → ((ε , ε') ∈ l) × (Is-just (strᵉ⁺ j ε) × Is-just (strᵉ⁺ j ε'))
+freesᵉ-∈ j ((x , y) ∷ l) m with freeᵉ? j x y
+freesᵉ-∈ j ((x , y) ∷ l) (here refl) | yes fr = here refl , fr
+freesᵉ-∈ j ((x , y) ∷ l) (there m)   | yes _  =
+  there (proj₁ (freesᵉ-∈ j l m)) , proj₂ (freesᵉ-∈ j l m)
+freesᵉ-∈ j ((x , y) ∷ l) m           | no _   =
+  there (proj₁ (freesᵉ-∈ j l m)) , proj₂ (freesᵉ-∈ j l m)
+
+-- The orderings of a residual free of the rigid, as hypotheses
+
+freeᴴ : ∀ {Φ} → EVar (Φ +e) → Resid (Φ +e) → Hyps (Φ +e)
+freeᴴ j R = hyps [] [] (freesʳ j (rs R)) (freesᵉ j (es R)) []
 
 -- An eternality demand is kept when its type strengthens away from the
 -- rigid. A type that does not mentions a grade, so is eternal at no
@@ -349,68 +431,123 @@ atomᵈ j A ρ with strᵛ⁺ j A | strʳ⁺ j (ρ [ updᵉ j (econst ⊤ₑ) ]�
 ... | just _         | nothing = nothing
 ... | nothing        | _       = nothing
 
--- An ordering no atom step keeps is deferred when it mentions only the
--- rigid and the unknowns the scope was entered with (`O⁺`, the rigid
--- among them), none local to the scope. It is read with the rigid
--- newest, and holds at a substitution lifted over the rigid.
+-- An ordering free of the rigid is kept; one that mentions it is
+-- decided by `atomʳ`. An ordering neither kept nor discharged is
+-- deferred when it mentions only the rigid and the unknowns the scope
+-- was entered with (`O⁺`, the rigid among them), none local to the
+-- scope. It is read with the rigid newest, and holds at a substitution
+-- lifted over the rigid. The orderings free of the rigid hold from
+-- those kept alone.
 
-Listʳ : ∀ {Φ} → EVar (Φ +e) → List (RExp (Φ +e) × RExp (Φ +e)) → Set
-Listʳ {Φ} j l =
+Listʳ : ∀ {Φ} → EVar (Φ +e) → Hyps (Φ +e) → List (RExp (Φ +e) × RExp (Φ +e)) → Set
+Listʳ {Φ} j H l =
   Σ[ l₀ ∈ List (RExp Φ × RExp Φ) ] Σ[ d₀ ∈ List (RExp (Φ +e) × RExp (Φ +e)) ]
-    (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
-       → (∀ {τ τ'} → (τ , τ') ∈ l₀ → Q ⊩ τ [ δ ]ʳ ≾̂ᵣ τ' [ δ ]ʳ)
-       → (∀ {τ τ'} → (τ , τ') ∈ d₀ → wkᵉ-H Q ⊩ τ [ δ ↑ᵉ ]ʳ ≾̂ᵣ τ' [ δ ↑ᵉ ]ʳ)
-       → (∀ {ρ ρ'} → (ρ , ρ') ∈ l
-            → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ))
+    ((∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
+        → wkᵉ-H Q ⊩ᴴ H [ popˢ j ⨟ˢ (δ ↑ᵉ) ]
+        → (∀ {τ τ'} → (τ , τ') ∈ l₀ → Q ⊩ τ [ δ ]ʳ ≾̂ᵣ τ' [ δ ]ʳ)
+        → (∀ {τ τ'} → (τ , τ') ∈ d₀ → wkᵉ-H Q ⊩ τ [ δ ↑ᵉ ]ʳ ≾̂ᵣ τ' [ δ ↑ᵉ ]ʳ)
+        → (∀ {ρ ρ'} → (ρ , ρ') ∈ l
+             → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ))
+    × (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
+        → (∀ {τ τ'} → (τ , τ') ∈ l₀ → Q ⊩ τ [ δ ]ʳ ≾̂ᵣ τ' [ δ ]ʳ)
+        → ∀ {ρ ρ'} → (ρ , ρ') ∈ l → Is-just (strʳ⁺ j ρ) × Is-just (strʳ⁺ j ρ')
+        → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ))
 
-Listᵉ : ∀ {Φ} → EVar (Φ +e) → List (EExp (Φ +e) × EExp (Φ +e)) → Set
-Listᵉ {Φ} j l =
+Listᵉ : ∀ {Φ} → EVar (Φ +e) → Hyps (Φ +e) → List (EExp (Φ +e) × EExp (Φ +e)) → Set
+Listᵉ {Φ} j H l =
   Σ[ l₀ ∈ List (EExp Φ × EExp Φ) ] Σ[ d₀ ∈ List (EExp (Φ +e) × EExp (Φ +e)) ]
-    (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
-       → (∀ {τ τ'} → (τ , τ') ∈ l₀ → Q ⊩ τ [ δ ]ᵉ ≾̂ₑ τ' [ δ ]ᵉ)
-       → (∀ {τ τ'} → (τ , τ') ∈ d₀ → wkᵉ-H Q ⊩ τ [ δ ↑ᵉ ]ᵉ ≾̂ₑ τ' [ δ ↑ᵉ ]ᵉ)
-       → (∀ {ε ε'} → (ε , ε') ∈ l
-            → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵉ ≾̂ₑ ε' [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵉ))
+    ((∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
+        → wkᵉ-H Q ⊩ᴴ H [ popˢ j ⨟ˢ (δ ↑ᵉ) ]
+        → (∀ {τ τ'} → (τ , τ') ∈ l₀ → Q ⊩ τ [ δ ]ᵉ ≾̂ₑ τ' [ δ ]ᵉ)
+        → (∀ {τ τ'} → (τ , τ') ∈ d₀ → wkᵉ-H Q ⊩ τ [ δ ↑ᵉ ]ᵉ ≾̂ₑ τ' [ δ ↑ᵉ ]ᵉ)
+        → (∀ {ε ε'} → (ε , ε') ∈ l
+             → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵉ ≾̂ₑ ε' [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵉ))
+    × (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
+        → (∀ {τ τ'} → (τ , τ') ∈ l₀ → Q ⊩ τ [ δ ]ᵉ ≾̂ₑ τ' [ δ ]ᵉ)
+        → ∀ {ε ε'} → (ε , ε') ∈ l → Is-just (strᵉ⁺ j ε) × Is-just (strᵉ⁺ j ε')
+        → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵉ ≾̂ₑ ε' [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵉ))
 
-listʳ : ∀ {Θ Φ} → Subst Θ (Φ +e) → Subst (Θ +e) (Φ +e) → (j : EVar (Φ +e))
-      → (l : List (RExp (Φ +e) × RExp (Φ +e))) → Maybe (Listʳ j l)
-listʳ O O⁺ j []              = just ([] , [] , λ δ Q k d → λ ())
-listʳ O O⁺ j ((ρ , ρ') ∷ l) with listʳ O O⁺ j l
-... | nothing = nothing
-... | just (l₀ , d₀ , f) with atomʳ O j ρ ρ'
-...   | just (a , fa) =
-        just (a ++ l₀ , d₀ ,
-              λ δ Q k d → λ { (here refl) → fa δ Q (λ m → k (∈-++⁺ˡ m))
-                            ; (there m)   → f δ Q (λ m' → k (∈-++⁺ʳ a m')) d m })
-...   | nothing with outerᵣ? O⁺ ρ | outerᵣ? O⁺ ρ'
-...     | just _ | just _ =
-          just (l₀ , (ρ [ popˢ j ]ʳ , ρ' [ popˢ j ]ʳ) ∷ d₀ ,
-                λ δ Q k d → λ { (here refl) → subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ᵣ y)
-                                                     ([⨟]ʳ ρ (popˢ j) (δ ↑ᵉ))
-                                                     ([⨟]ʳ ρ' (popˢ j) (δ ↑ᵉ))
-                                                     (d (here refl))
-                              ; (there m)   → f δ Q k (λ m' → d (there m')) m })
-...     | _      | _      = nothing
+-- A kept ordering free of the rigid holds where its strengthening does
 
-listᵉ : ∀ {Θ Φ} → Subst Θ (Φ +e) → Subst (Θ +e) (Φ +e) → (j : EVar (Φ +e))
-      → (l : List (EExp (Φ +e) × EExp (Φ +e))) → Maybe (Listᵉ j l)
-listᵉ O O⁺ j []              = just ([] , [] , λ δ Q k d → λ ())
-listᵉ O O⁺ j ((ε , ε') ∷ l) with listᵉ O O⁺ j l
+keptʳ : ∀ {Φ Φ'} → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e)) → {ρ₀ ρ₀' : RExp Φ}
+      → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → ρ' [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀'
+      → (δ : Subst Φ Φ') → (Q : Hyps Φ') → Q ⊩ ρ₀ [ δ ]ʳ ≾̂ᵣ ρ₀' [ δ ]ʳ
+      → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ
+keptʳ j ρ ρ' e₁ e₂ δ Q p =
+  subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ᵣ y) (sym (pop⨟ʳ j ρ e₁ δ)) (sym (pop⨟ʳ j ρ' e₂ δ)) (⊩-wkᵉᵣ p)
+
+keptᵉ : ∀ {Φ Φ'} → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e)) → {ε₀ ε₀' : EExp Φ}
+      → ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀ → ε' [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀'
+      → (δ : Subst Φ Φ') → (Q : Hyps Φ') → Q ⊩ ε₀ [ δ ]ᵉ ≾̂ₑ ε₀' [ δ ]ᵉ
+      → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵉ ≾̂ₑ ε' [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵉ
+keptᵉ j ε ε' e₁ e₂ δ Q p =
+  subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ₑ y) (sym (pop⨟ᵉ j ε e₁ δ)) (sym (pop⨟ᵉ j ε' e₂ δ)) (⊩-wkᵉₑ p)
+
+listʳ : ∀ {Θ Φ} → Subst Θ (Φ +e) → Subst (Θ +e) (Φ +e) → (H : Hyps (Φ +e)) → (j : EVar (Φ +e))
+      → (l : List (RExp (Φ +e) × RExp (Φ +e))) → Maybe (Listʳ j H l)
+listʳ O O⁺ H j []              = just ([] , [] , (λ δ Q g k d → λ ()) , (λ δ Q k → λ ()))
+listʳ O O⁺ H j ((ρ , ρ') ∷ l) with listʳ O O⁺ H j l
 ... | nothing = nothing
-... | just (l₀ , d₀ , f) with atomᵉ O j ε ε'
-...   | just (a , fa) =
-        just (a ++ l₀ , d₀ ,
-              λ δ Q k d → λ { (here refl) → fa δ Q (λ m → k (∈-++⁺ˡ m))
-                            ; (there m)   → f δ Q (λ m' → k (∈-++⁺ʳ a m')) d m })
-...   | nothing with outerₑ? O⁺ ε | outerₑ? O⁺ ε'
-...     | just _ | just _ =
-          just (l₀ , (ε [ popˢ j ]ᵉ , ε' [ popˢ j ]ᵉ) ∷ d₀ ,
-                λ δ Q k d → λ { (here refl) → subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ₑ y)
-                                                     ([⨟]ᵉ ε (popˢ j) (δ ↑ᵉ))
-                                                     ([⨟]ᵉ ε' (popˢ j) (δ ↑ᵉ))
-                                                     (d (here refl))
-                              ; (there m)   → f δ Q k (λ m' → d (there m')) m })
-...     | _      | _      = nothing
+... | just (l₀ , d₀ , f , g) with freeʳ? j ρ ρ'
+...   | yes (a , b) =
+        just ((proj₁ (to-witness a) , proj₁ (to-witness b)) ∷ l₀ , d₀ ,
+              (λ δ Q h k d → λ { (here refl) → keptʳ j ρ ρ' (proj₂ (to-witness a)) (proj₂ (to-witness b)) δ Q
+                                                     (k (here refl))
+                               ; (there m)   → f δ Q h (λ m' → k (there m')) d m }) ,
+              (λ δ Q k → λ { (here refl) _ → keptʳ j ρ ρ' (proj₂ (to-witness a)) (proj₂ (to-witness b)) δ Q
+                                                     (k (here refl))
+                           ; (there m)   fr → g δ Q (λ m' → k (there m')) m fr }))
+...   | no nf with atomʳ O H j ρ ρ'
+...     | just (a , fa) =
+          just (a ++ l₀ , d₀ ,
+                (λ δ Q h k d → λ { (here refl) → fa δ Q h (λ m → k (∈-++⁺ˡ m))
+                                 ; (there m)   → f δ Q h (λ m' → k (∈-++⁺ʳ a m')) d m }) ,
+                (λ δ Q k → λ { (here refl) fr → ⊥-elim (nf fr)
+                             ; (there m)   fr → g δ Q (λ m' → k (∈-++⁺ʳ a m')) m fr }))
+...     | nothing with outerᵣ? O⁺ ρ | outerᵣ? O⁺ ρ'
+...       | just _ | just _ =
+            just (l₀ , (ρ [ popˢ j ]ʳ , ρ' [ popˢ j ]ʳ) ∷ d₀ ,
+                  (λ δ Q h k d → λ { (here refl) → subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ᵣ y)
+                                                          ([⨟]ʳ ρ (popˢ j) (δ ↑ᵉ))
+                                                          ([⨟]ʳ ρ' (popˢ j) (δ ↑ᵉ))
+                                                          (d (here refl))
+                                   ; (there m)   → f δ Q h k (λ m' → d (there m')) m }) ,
+                  (λ δ Q k → λ { (here refl) fr → ⊥-elim (nf fr)
+                               ; (there m)   fr → g δ Q k m fr }))
+...       | _      | _      = nothing
+
+listᵉ : ∀ {Θ Φ} → Subst Θ (Φ +e) → Subst (Θ +e) (Φ +e) → (H : Hyps (Φ +e)) → (j : EVar (Φ +e))
+      → (l : List (EExp (Φ +e) × EExp (Φ +e))) → Maybe (Listᵉ j H l)
+listᵉ O O⁺ H j []              = just ([] , [] , (λ δ Q g k d → λ ()) , (λ δ Q k → λ ()))
+listᵉ O O⁺ H j ((ε , ε') ∷ l) with listᵉ O O⁺ H j l
+... | nothing = nothing
+... | just (l₀ , d₀ , f , g) with freeᵉ? j ε ε'
+...   | yes (a , b) =
+        just ((proj₁ (to-witness a) , proj₁ (to-witness b)) ∷ l₀ , d₀ ,
+              (λ δ Q h k d → λ { (here refl) → keptᵉ j ε ε' (proj₂ (to-witness a)) (proj₂ (to-witness b)) δ Q
+                                                     (k (here refl))
+                               ; (there m)   → f δ Q h (λ m' → k (there m')) d m }) ,
+              (λ δ Q k → λ { (here refl) _ → keptᵉ j ε ε' (proj₂ (to-witness a)) (proj₂ (to-witness b)) δ Q
+                                                     (k (here refl))
+                           ; (there m)   fr → g δ Q (λ m' → k (there m')) m fr }))
+...   | no nf with atomᵉ O H j ε ε'
+...     | just (a , fa) =
+          just (a ++ l₀ , d₀ ,
+                (λ δ Q h k d → λ { (here refl) → fa δ Q h (λ m → k (∈-++⁺ˡ m))
+                                 ; (there m)   → f δ Q h (λ m' → k (∈-++⁺ʳ a m')) d m }) ,
+                (λ δ Q k → λ { (here refl) fr → ⊥-elim (nf fr)
+                             ; (there m)   fr → g δ Q (λ m' → k (∈-++⁺ʳ a m')) m fr }))
+...     | nothing with outerₑ? O⁺ ε | outerₑ? O⁺ ε'
+...       | just _ | just _ =
+            just (l₀ , (ε [ popˢ j ]ᵉ , ε' [ popˢ j ]ᵉ) ∷ d₀ ,
+                  (λ δ Q h k d → λ { (here refl) → subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ₑ y)
+                                                          ([⨟]ᵉ ε (popˢ j) (δ ↑ᵉ))
+                                                          ([⨟]ᵉ ε' (popˢ j) (δ ↑ᵉ))
+                                                          (d (here refl))
+                                   ; (there m)   → f δ Q h k (λ m' → d (there m')) m }) ,
+                  (λ δ Q k → λ { (here refl) fr → ⊥-elim (nf fr)
+                               ; (there m)   fr → g δ Q k m fr }))
+...       | _      | _      = nothing
 
 listᵗ : ∀ {Φ} → (j : EVar (Φ +e)) → (l : List (OVType (Φ +e)))
       → Maybe (Σ[ l₀ ∈ List (OVType Φ) ]
@@ -503,12 +640,13 @@ splitᴿ : ∀ {Θ Φ} → Subst Θ (Φ +e) → Subst (Θ +e) (Φ +e) → (j : E
                     (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
                        → Q ⊩ᴿ R₀ [ δ ] → wkᵉ-H Q ⊩ᴿ R [ popˢ j ⨟ˢ (δ ↑ᵉ) ]))
 splitᴿ O O⁺ j R with listᵗ j (ts R) | listˢ j (ss R) | listᵈ j (ds R)
-                   | listʳ O O⁺ j (rs R) | listᵉ O O⁺ j (es R) | outerD? O⁺ (dfs R)
+                   | listʳ O O⁺ (freeᴴ j R) j (rs R) | listᵉ O O⁺ (freeᴴ j R) j (es R)
+                   | outerD? O⁺ (dfs R)
 ... | just (lt , ft) | just (ls , fs) | just (ld , fd)
-    | just (lr , dr , fr) | just (le , de , fe) | just _ =
+    | just (lr , dr , fr , gr) | just (le , de , fe , ge) | just _ =
       solved (resid lr le lt ls ld (closeᵈ (dfr nothing 0 (ords dr de)) ∷ map (liftᵈ j) (dfs R)) ,
-              λ δ Q h → mk⊩ᴿ (fr δ Q (⊩rs h) (⊩ors (new δ Q h)))
-                             (fe δ Q (⊩es h) (⊩oes (new δ Q h)))
+              λ δ Q h → mk⊩ᴿ (fr δ Q (free δ Q h) (⊩rs h) (⊩ors (new δ Q h)))
+                             (fe δ Q (free δ Q h) (⊩es h) (⊩oes (new δ Q h)))
                              (ft δ Q (⊩ts h)) (fs δ Q (⊩ss h)) (fd δ Q (⊩ds h))
                              (λ m → lifted δ Q h m))
   where
@@ -517,6 +655,14 @@ splitᴿ O O⁺ j R with listᵗ j (ts R) | listˢ j (ss R) | listᵈ j (ds R)
     new : ∀ {Φ'} → (δ : Subst _ Φ') → (Q : Hyps Φ') → Q ⊩ᴿ R₀ [ δ ]
         → wkᵉ-H Q ⊩ᵈ dfr nothing 0 (ords dr de) [ δ ↑ᵉ ]
     new δ Q h = closeᵈ-sound (dfr nothing 0 (ords dr de)) (⊩dfs h (here refl))
+
+    free : ∀ {Φ'} → (δ : Subst _ Φ') → (Q : Hyps Φ') → Q ⊩ᴿ R₀ [ δ ]
+         → wkᵉ-H Q ⊩ᴴ freeᴴ j R [ popˢ j ⨟ˢ (δ ↑ᵉ) ]
+    free δ Q h =
+      mk⊩ᴴ (λ ()) (λ ())
+           (λ m → gr δ Q (⊩rs h) (proj₁ (freesʳ-∈ j (rs R) m)) (proj₂ (freesʳ-∈ j (rs R) m)))
+           (λ m → ge δ Q (⊩es h) (proj₁ (freesᵉ-∈ j (es R) m)) (proj₂ (freesᵉ-∈ j (es R) m)))
+           (λ ())
 
     lifted : ∀ {Φ'} → (δ : Subst _ Φ') → (Q : Hyps Φ') → Q ⊩ᴿ R₀ [ δ ]
            → ∀ {E} → E ∈ dfs R → wkᵉ-H Q ⊩ᵈ E [ popˢ j ⨟ˢ (δ ↑ᵉ) ]
@@ -595,7 +741,7 @@ popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
 -- Retrying the deferred conditions
 --
 -- An ordering of an entry is dropped when it is decided at the
--- strength `derive`, the rigids opaque, from the residual's
+-- strength `full`, the rigids opaque, from the residual's
 -- orderings: a derivation at fresh rigids under the hypotheses
 -- weakened to them. It refutes when a closed witness per rigid, the
 -- unit or the top, makes it an ordering that fails at the strength
@@ -665,13 +811,13 @@ witnessᵉ k x y (cs ∷ css) with closedₑ? (x [ wit k cs ]ᵉ) (y [ wit k cs 
 
 verdictʳ : ∀ {Ψ} → (H : Hyps Ψ) → (k : ℕ) → (a : RExp (Ψ +eⁿ k) × RExp (Ψ +eⁿ k))
          → Verdict H (Atʳ k) a
-verdictʳ H k (x , y) with decideᵣ derive (wkᵉⁿ-H k H) x y
+verdictʳ H k (x , y) with decideᵣ full (wkᵉⁿ-H k H) x y
 ... | just p  = settled (λ δ h → ⊩-substᵣ (⊩ᴴ-↑ᵉⁿ k h) p)
 ... | nothing = witnessʳ k x y (witnesses k)
 
 verdictᵉ : ∀ {Ψ} → (H : Hyps Ψ) → (k : ℕ) → (a : EExp (Ψ +eⁿ k) × EExp (Ψ +eⁿ k))
          → Verdict H (Atᵉ k) a
-verdictᵉ H k (x , y) with decideₑ derive (wkᵉⁿ-H k H) x y
+verdictᵉ H k (x , y) with decideₑ full (wkᵉⁿ-H k H) x y
 ... | just p  = settled (λ δ h → ⊩-substₑ (⊩ᴴ-↑ᵉⁿ k h) p)
 ... | nothing = witnessᵉ k x y (witnesses k)
 
@@ -939,7 +1085,7 @@ solve s (ε ≾̂ₑᶜ ε') =
 
 solve s (Etᶜ A) = solveEt s A (etDec (A [ θ s ]ᵛ)) refl
 
-solve s (Et∨≾ᵘ A ρ) with decideᵣ derive ∅ᴴ (ρ [ θ s ]ʳ) ûᵣ
+solve s (Et∨≾ᵘ A ρ) with decideᵣ full ∅ᴴ (ρ [ θ s ]ʳ) ûᵣ
 ... | just p =
       solved (s , ⟶-id ,
             λ δ Q h → ≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ (θ s) δ)

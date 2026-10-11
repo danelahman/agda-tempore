@@ -14,8 +14,14 @@
 --   * `decideᵣ`/`decideₑ` at `derive`: products compare as     --
 --     multisets where `·` commutes. No example program depends --
 --     on it.                                                   --
+--   * `decideᵣ`/`decideₑ` at `full`: chains through compound   --
+--     sides, a chain from the left side to a vertex below the  --
+--     right side, and factor edges, with the evidence of the   --
+--     unit below a co-factor reached from a constant above it. --
 --   * `checkClosed`: closed sides joined by a chain of         --
---     orderings are compared (also `Boxes`).                   --
+--     orderings are compared (also `Boxes`); a disjunction     --
+--     whose grade is below the unit from the orderings left is --
+--     dropped.                                                 --
 --   * `collapse`: a cycle of unknowns local to a clause is one --
 --     unknown; without it, the clause's close is stuck.        --
 --                                                              --
@@ -64,7 +70,7 @@ module Deadline where
   open import TypeInference.SolverImpl.Canon    spec using (canonᴴ; canonᵣ; canonₑ)
   open import TypeInference.SolverImpl.Simplify spec using (walkᵈ)
   open import TypeInference.SolverImpl.Entail   spec
-    using (decideₑ; decideᵣ; derive; checkClosed)
+    using (decideₑ; decideᵣ; derive; full; checkClosed)
 
   Θ : Scope
   Θ = scope 1 4 4
@@ -182,6 +188,39 @@ module Deadline where
       ≡ just (hyps [] [] ((⌜ 2 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [])
   chain-on-time = refl
 
+  -- a disjunction whose grade is below the unit from the orderings
+  -- left is dropped: x ≾ y, y ≾ 0 ⊩ x ≾ 0
+
+  drop-following :
+    checkClosed (hyps [] [] ((x , y) ∷ (y , ⌜ 0 ⌝ʳ) ∷ []) [] ((α , x) ∷ []))
+      ≡ just (hyps [] [] ((x , y) ∷ (y , ⌜ 0 ⌝ʳ) ∷ []) [] [])
+  drop-following = refl
+
+  ----------------------------------------------------------------
+  -- `decideₑ` at `full`: a chain through a compound side,
+  -- a ≾ b ⊔ d, b ⊔ d ≾ c ⊩ a ≾ c
+
+  through-compound :
+    is-just (decideₑ full (hyps [] [] [] ((a , b ⊔̂ₑ d) ∷ (b ⊔̂ₑ d , c) ∷ []) []) a c) ≡ true
+  through-compound = refl
+
+  through-compound-derive :
+    is-just (decideₑ derive (hyps [] [] [] ((a , b ⊔̂ₑ d) ∷ (b ⊔̂ₑ d , c) ∷ []) []) a c)
+      ≡ false
+  through-compound-derive = refl
+
+  -- along a chain from the left side: a · b ≾ c ⊩ a · b ≾ c ⊔ d
+
+  along-vertex :
+    is-just (decideₑ full (hyps [] [] [] ((a ·̂ₑ b , c) ∷ []) []) (a ·̂ₑ b) (c ⊔̂ₑ d)) ≡ true
+  along-vertex = refl
+
+  -- a factor edge, the unit least: a · b ≾ c ⊩ a ≾ c
+
+  factor-least :
+    is-just (decideₑ full (hyps [] [] [] ((a ·̂ₑ b , c) ∷ []) []) a c) ≡ true
+  factor-least = refl
+
 ------------------------------------------------------------------
 -- Timed traces on the right: the unit least, `·` not commutative
 
@@ -227,17 +266,21 @@ module WithTop where
     left-sided-intervals-with-⊤ (λ _ → timed [ 1 ,+∞⟩) using (spec)
 
   open import TypeInference.OpenSyntax.Grades spec
-  open import TypeInference.OpenSyntax.Hyps   spec using (∅ᴴ)
-  open import TypeInference.SolverImpl.Entail spec using (decideₑ; derive)
+  open import TypeInference.OpenSyntax.Hyps   spec using (hyps; ∅ᴴ)
+  open import TypeInference.SolverImpl.Entail spec using (decideₑ; derive; full)
   open import TypeInference.SolverImpl.Canon  spec using (canonₑ)
 
   Θ : Scope
-  Θ = scope 0 0 2
+  Θ = scope 0 0 3
 
-  a b ⊤̂ : EExp Θ
+  a b c ⊤̂ : EExp Θ
   a  = evar zero
   b  = evar (suc zero)
+  c  = evar (suc (suc zero))
   ⊤̂ = econst untimed
+
+  ⌜_⌝ : ℕ → EExp Θ
+  ⌜ n ⌝ = econst (timed [ n ,+∞⟩)
 
   -- `decideₑ` at `derive`: ⊩ a · b ≾ ⊤ · a, the top matching `b`
   -- after the factors are matched crosswise; the converse fails
@@ -253,6 +296,27 @@ module WithTop where
 
   top-product-kept : canonₑ (a ·̂ₑ ⊤̂) ≡ ⊤̂ ·̂ₑ a
   top-product-kept = refl
+
+  -- `decideₑ` at `full`: a factor edge from `a` into `a · b` needs
+  -- the unit below `b`, here reached from the constant unit `⌜0⌝`:
+  -- ⌜0⌝ ≾ b, a · b ≾ c ⊩ a ≾ c. The constant `⌜3⌝` lies below the
+  -- unit, so it gives no evidence, and neither does nothing.
+
+  factor-evidence :
+    is-just (decideₑ full (hyps [] [] [] ((⌜ 0 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) []) a c) ≡ true
+  factor-evidence = refl
+
+  factor-no-evidence :
+    is-just (decideₑ full (hyps [] [] [] ((⌜ 3 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) []) a c) ≡ false
+  factor-no-evidence = refl
+
+  factor-none :
+    is-just (decideₑ full (hyps [] [] [] ((a ·̂ₑ b , c) ∷ []) []) a c) ≡ false
+  factor-none = refl
+
+  factor-derive :
+    is-just (decideₑ derive (hyps [] [] [] ((⌜ 0 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) []) a c) ≡ false
+  factor-derive = refl
 
 ------------------------------------------------------------------
 -- `collapse`: a cycle of unknowns local to a clause

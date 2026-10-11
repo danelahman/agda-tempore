@@ -60,9 +60,10 @@
 --                                                              --
 -- Before the first round, between rounds and after the last,   --
 -- the settled atoms are dropped: an ordering decided true      --
--- against no hypotheses, and a var-rule disjunction with a     --
--- side so decided (the type eternal, or the grade below the    --
--- unit). They hold at every instance and bound nothing. A      --
+-- against no hypotheses, and a var-rule disjunction whose type --
+-- is eternal at every instance or whose grade is below the     --
+-- unit from the orderings left, both at the strength `full`.   --
+-- They hold wherever those orderings do and bound nothing. A   --
 -- disjunction whose type a substitution has made eternal at no --
 -- instance becomes its grade side, which is what it means at   --
 -- every instance solving the scope from no hypotheses, the     --
@@ -161,7 +162,7 @@ open import TypeInference.SolverImpl.Bounds    S
 open import TypeInference.SolverImpl.Vars      S
   using (Vars; vᵉ; vʳ; Fixes; mkFixes; fvᵛ; fvʳ; fvᵉ; ⊆-refl; fix-v; fix-r; fix-e)
 import TypeInference.SolverImpl.Reach as Reachability
-open import TypeInference.SolverImpl.Entail    S using (decideᵣ; decideₑ; derive)
+open import TypeInference.SolverImpl.Entail    S using (decideᵣ; decideₑ; full)
 open import TypeInference.SolverImpl.Canon     S
   using (canonᵣ; canonᵣ-≡; Ordʳ; Ordᵉ; Pieces; pieces; Split; splits; piecesʳ; piecesᵉ)
 
@@ -852,8 +853,10 @@ topʳ-⊩ {Q = Q} {k} {R} fl cl df sd τ h =
                                (sym (updʳ-⨟r k (rconst ⊤ᵣ) τ ρ (df m))) ⊩≾̂ᵣ-refl)
 
 ------------------------------------------------------------------------
--- Settled atoms: an ordering, or a disjunction with a side, decided true
--- against no hypotheses holds at every instance and bounds nothing
+-- Settled atoms: an ordering decided true against no hypotheses holds
+-- at every instance and bounds nothing; so does a disjunction whose
+-- type is eternal at every instance, and one whose grade is below the
+-- unit from the orderings left holds wherever they do
 
 Every : ∀ {Ψ} {X : Set} → (∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) → X → Set
 Every P a = ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst _ Ψ') → P Q δ a
@@ -862,20 +865,27 @@ Disj : ∀ {Ψ Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → OVType Ψ × RExp Ψ → S
 Disj Q δ (A , ρ) = VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
 
 settledʳ : ∀ {Ψ} → (a : RExp Ψ × RExp Ψ) → Maybe (Every Ordʳ a)
-settledʳ (ρ , ρ') with decideᵣ derive ∅ᴴ ρ ρ'
+settledʳ (ρ , ρ') with decideᵣ full ∅ᴴ ρ ρ'
 ... | just p  = just (λ δ → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
 ... | nothing = nothing
 
 settledᵉ : ∀ {Ψ} → (a : EExp Ψ × EExp Ψ) → Maybe (Every Ordᵉ a)
-settledᵉ (ε , ε') with decideₑ derive ∅ᴴ ε ε'
+settledᵉ (ε , ε') with decideₑ full ∅ᴴ ε ε'
 ... | just p  = just (λ δ → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
 ... | nothing = nothing
 
-settledᵈ : ∀ {Ψ} → (a : OVType Ψ × RExp Ψ) → Maybe (Every Disj a)
-settledᵈ (A , ρ) with decideᵣ derive ∅ᴴ ρ ûᵣ
-... | just p  = just (λ δ → ≾ᵘ-ok (⊩-substᵣ ∅ᴴ-⊩ᴴ p))
+-- A disjunction settled from hypotheses `H`: its grade below the unit
+-- at the strength `full`, or its type eternal at every instance
+
+Under : ∀ {Ψ} {X : Set} → Hyps Ψ → (∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set)
+      → ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set
+Under H P Q δ a = Q ⊩ᴴ H [ δ ] → P Q δ a
+
+settledᵈ : ∀ {Ψ} → (H : Hyps Ψ) → (a : OVType Ψ × RExp Ψ) → Maybe (Every (Under H Disj) a)
+settledᵈ H (A , ρ) with decideᵣ full H ρ ûᵣ
+... | just p  = just (λ δ h → ≾ᵘ-ok (⊩-substᵣ h p))
 ... | nothing with etDec A in e
-...   | just [] = just (λ δ → et-ok (⊩ᴱ-subst ∅ᴴ-⊩ᴴ (etDec-sound {Q = ∅ᴴ} A e (λ ()))))
+...   | just [] = just (λ δ _ → et-ok (⊩ᴱ-subst ∅ᴴ-⊩ᴴ (etDec-sound {Q = ∅ᴴ} A e (λ ()))))
 ...   | just (_ ∷ _) = nothing
 ...   | nothing      = nothing
 
@@ -1501,7 +1511,7 @@ upAtₑ? : ∀ {Θ Φ} → (O' : Subst Θ Φ) → (l : List (Mem Φ)) → (a : E
        → Maybe (UpAtₑ O' l a)
 upAtₑ? O' l (x , y) with isFalse (hitₑ l x)
 ... | just q  = just (up-free q)
-... | nothing with decideₑ derive ∅ᴴ (econst ⊤ₑ) (y [ tops l ]ᵉ)
+... | nothing with decideₑ full ∅ᴴ (econst ⊤ₑ) (y [ tops l ]ᵉ)
 ...   | just p  = just (up-top p)
 ...   | nothing with outerₑ? O' y | isFalse (hitₑ l y)
 ...     | just o | just q = just (up-outer o q)
@@ -1511,7 +1521,7 @@ upAtᵣ? : ∀ {Θ Φ} → (O' : Subst Θ Φ) → (l : List (Mem Φ)) → (a : R
        → Maybe (UpAtᵣ O' l a)
 upAtᵣ? O' l (x , y) with isFalse (hitᵣ l x)
 ... | just q  = just (up-free q)
-... | nothing with decideᵣ derive ∅ᴴ (rconst ⊤ᵣ) (y [ tops l ]ʳ)
+... | nothing with decideᵣ full ∅ᴴ (rconst ⊤ᵣ) (y [ tops l ]ʳ)
 ...   | just p  = just (up-top p)
 ...   | nothing with outerᵣ? O' y | isFalse (hitᵣ l y)
 ...     | just o | just q = just (up-outer o q)
@@ -1555,7 +1565,7 @@ module Find {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) (j : EVar Φ) where
       ... | nothing = go as
       ... | just (k , refl) with ok k ∧ not (inᴱ k l) ∧ hitₑ (eᵐ j ∷ l) x
       ...   | false = go as
-      ...   | true with decideₑ derive ∅ᴴ (econst ⊤ₑ) (x [ tops (eᵐ j ∷ l) ]ᵉ)
+      ...   | true with decideₑ full ∅ᴴ (econst ⊤ₑ) (x [ tops (eᵐ j ∷ l) ]ᵉ)
       ...     | just p  = just (k , x , m , p)
       ...     | nothing = go as
 
@@ -1572,7 +1582,7 @@ module Find {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) (j : EVar Φ) where
       ... | nothing = go as
       ... | just (k , refl) with ok k ∧ not (inᴿ k l) ∧ hitᵣ (eᵐ j ∷ l) x
       ...   | false = go as
-      ...   | true with decideᵣ derive ∅ᴴ (rconst ⊤ᵣ) (x [ tops (eᵐ j ∷ l) ]ʳ)
+      ...   | true with decideᵣ full ∅ᴴ (rconst ⊤ᵣ) (x [ tops (eᵐ j ∷ l) ]ʳ)
       ...     | just p  = just (k , x , m , p)
       ...     | nothing = go as
 
@@ -1971,6 +1981,13 @@ loc-≐ p (loc σ R' fx sn cp la) =
   loc σ R' (≐ˢ-trans (⨟-congˡ (≐ˢ-sym p) σ) (≐ˢ-trans fx p)) sn
       (λ τ en h → cp τ (proj₁ en , ≐ˢ-trans (⨟-congˡ p τ) (proj₂ en)) h) la
 
+-- The orderings of a residual left once the settled ones are dropped,
+-- as hypotheses
+
+settleᴴ : ∀ {Ψ} → Resid Ψ → Hyps Ψ
+settleᴴ R = hyps [] [] (Unsettled.kept (unsettled settledʳ (rs R)))
+                       (Unsettled.kept (unsettled settledᵉ (es R))) []
+
 -- The settled atoms dropped, and each disjunction whose type is never
 -- eternal replaced by its grade side: the instances from no
 -- hypotheses are unchanged
@@ -1981,9 +1998,12 @@ loc-settle (loc σ R₀ fx sn cp la) =
                (Refined.rest F) (dfs R₀)) fx
       (λ δ Q h → sn δ Q (mk⊩ᴿ (Unsettled.back Uʳ δ (λ m → ⊩rs h (∈-++⁺ˡ m)))
                               (Unsettled.back Uᵉ δ (⊩es h)) (⊩ts h) (⊩ss h)
-                              (Unsettled.back Uᵈ δ
-                                (Refined.back F δ (⊩ds h)
-                                  (λ m → ⊩rs h (∈-++⁺ʳ (Unsettled.kept Uʳ) m))))
+                              (λ m → Unsettled.back Uᵈ δ
+                                       (λ m' _ → Refined.back F δ (⊩ds h)
+                                                   (λ m'' → ⊩rs h (∈-++⁺ʳ (Unsettled.kept Uʳ) m''))
+                                                   m')
+                                       m
+                                       (mk⊩ᴴ (λ ()) (λ ()) (λ m' → ⊩rs h (∈-++⁺ˡ m')) (⊩es h) (λ ())))
                               (⊩dfs h)))
       (λ τ en h → let h' = cp τ en h in
                  mk⊩ᴿ (λ m → [ (λ m' → ⊩rs h' (Unsettled.kept⊆ Uʳ m'))
@@ -1997,7 +2017,7 @@ loc-settle (loc σ R₀ fx sn cp la) =
   where
     Uʳ = unsettled settledʳ (rs R₀)
     Uᵉ = unsettled settledᵉ (es R₀)
-    Uᵈ = unsettled settledᵈ (ds R₀)
+    Uᵈ = unsettled (settledᵈ (settleᴴ R₀)) (ds R₀)
     F  = refine (Unsettled.kept Uᵈ)
 
 -- Whether a left side has a join: only then may an ordering split
@@ -2121,7 +2141,9 @@ localise-ds : ∀ {Θ Φ} → (O : Subst (Θ +e) Φ) → (R : Resid Φ)
             → ∀ {A ρ} → (A , ρ) ∈ ds (lR (localise O R))
             → Σ[ αs ∈ List (TyVar Φ) ] (etDec A ≡ just αs)
 localise-ds {Φ = Φ} O R =
-  Refined.restᴱ (refine (Unsettled.kept (unsettled settledᵈ (ds (lR (rounds (memo O) R (nE Φ + nR Φ) (loc-settle loc-id)))))))
+  Refined.restᴱ (refine (Unsettled.kept (unsettled (settledᵈ (settleᴴ R')) (ds R'))))
+  where
+    R' = lR (rounds (memo O) R (nE Φ + nR Φ) (loc-settle loc-id))
 
 -- An assignment the later substitution already agrees with is absorbed
 

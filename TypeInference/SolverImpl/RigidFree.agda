@@ -38,7 +38,7 @@ open import TypeInference.Constraints.Syntax S
 open import TypeInference.SolverImpl.Core.Decorate S using (expandSub)
 open import TypeInference.SolverImpl.Resid  S
 open import TypeInference.SolverImpl.State  S
-open import TypeInference.SolverImpl.Entail S using (decideᵣ; derive)
+open import TypeInference.SolverImpl.Entail S using (decideᵣ; full)
 open import TypeInference.SolverImpl.Solve  S opEnum
 
 open OpEnum opEnum
@@ -86,7 +86,7 @@ solve-rigidFree s (Etᶜ A) p = solveEt-≢stuck (etDec (A [ θ s ]ᵛ)) refl
     solveEt-≢stuck : ∀ x e → solveEt s A x e ≢ stuck
     solveEt-≢stuck nothing  e = λ ()
     solveEt-≢stuck (just _) e = λ ()
-solve-rigidFree s (Et∨≾ᵘ A ρ) p with decideᵣ derive ∅ᴴ (ρ [ θ s ]ʳ) ûᵣ
+solve-rigidFree s (Et∨≾ᵘ A ρ) p with decideᵣ full ∅ᴴ (ρ [ θ s ]ʳ) ûᵣ
 ... | just _  = λ ()
 ... | nothing = solveDisj-≢stuck (etDec (A [ θ s ]ᵛ)) refl
   where

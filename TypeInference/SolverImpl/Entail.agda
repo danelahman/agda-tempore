@@ -5,8 +5,19 @@
 -- a sort as vertices. Its edges (`Edgeₑ`, `Edgeᵣ`) are the       --
 -- orderings of `Q` (`hyp`), the grade's order between constants  --
 -- (`cst`), the links to the top (`top`) and from the unit when   --
--- the grade declares it least (`unit`), and on the resource side --
--- the images of the effect edges (`img`).                        --
+-- the grade declares it least (`unit`), on the resource side the --
+-- images of the chains between effect atoms (`img`), and the     --
+-- factor edges (`factor`): from the product of some atoms of a   --
+-- side of `Q` whose normal form is one product to that side,     --
+-- every other atom of it being above the unit (`Keepₑ`). An atom --
+-- is above the unit (`Aboveₑ`, `Aboveᵣ`) when it is a constant   --
+-- above it, when the unit is least (on the resource side also    --
+-- the image of an effect variable where the effect unit is       --
+-- least), or when a chain reaches it from a variable-free        --
+-- expression above the unit. The three are defined together, so  --
+-- the set of atoms above the unit is the least fixed point; the  --
+-- variables of it in the graph are computed by Kleene iteration  --
+-- (`aboveₑ`, `aboveᵣ`).                                           --
 --                                                                --
 -- A query `e ≾ e'` is answered at an explicit strength           --
 -- (`Strength`, `decideₑ`, `decideᵣ`):                             --
@@ -14,21 +25,29 @@
 --     grade's `_≾?_` (`closedₑ?`, `closedᵣ?`);                   --
 --   * `derive`: the embedding of normal forms of `Normal`, its   --
 --     atoms compared by identity, along the links and along      --
---     chains of the edges between single atoms;                  --
---   * `atomic`: an ordering of `Q` itself, or `derive`.          --
+--     chains of the `hyp` (and `img`) edges between single atoms;--
+--   * `atomic`: an ordering of `Q` itself, or `derive`;          --
+--   * `full`: `closed` where it holds, else the embedding along  --
+--     the chains between atoms of the whole graph, through any   --
+--     sides and factor edges (`atomEdgesₑ`), or, where the left  --
+--     side is a vertex, along a chain of the graph to a vertex   --
+--     that is the right side or embeds below it (`alongₑ`).      --
+-- At no hypotheses `full` is the prototype's `decided`.          --
 -- `refute≾u` refutes `ρ ≾ u` at every instance by the            --
 -- zero-product law, and `checkClosed` decides the closed atoms   --
 -- of `Q` and the closed orderings joined by a chain of `hyp`     --
--- edges.                                                         --
+-- edges, then drops each disjunction whose grade is below the    --
+-- unit at `full` from the orderings left.                        --
 --                                                                --
 -- Contract. Every edge holds where `Q` does (`edgeₑ-sound`,      --
--- `edgeᵣ-sound`; at an instance by `⊩-substₑ`/`⊩-substᵣ`).        --
--- Each decision is sound by its type: a `just` is a derivation   --
--- of `Q ⊩ e ≾̂ e'` composed of edges by the laws. A `nothing`     --
--- claims nothing; no completeness is proved. `refute≾u` is sound --
--- by its type (`Refutedᵤ`), stable under instantiation           --
--- (`refute-[]ʳ`), and rules out `ρ ≾ u` from every satisfiable   --
--- set (`refute-⊩`). `checkClosed Q` entails `Q`                  --
+-- `edgeᵣ-sound`, with `aboveₑ-sound` and `keepₑ-sound`; at an    --
+-- instance by `⊩-substₑ`/`⊩-substᵣ`). Each decision is sound by  --
+-- its type: a `just` is a derivation of `Q ⊩ e ≾̂ e'` composed of --
+-- edges by the laws; the edges of `derive` are among those of    --
+-- `full`. A `nothing` claims nothing; no completeness is proved. --
+-- `refute≾u` is sound by its type (`Refutedᵤ`), stable under     --
+-- instantiation (`refute-[]ʳ`), and rules out `ρ ≾ u` from every --
+-- satisfiable set (`refute-⊩`). `checkClosed Q` entails `Q`      --
 -- (`checkClosed-⊩`), is entailed wherever `Q` is                 --
 -- (`checkClosed-⊆`), and a failure leaves `Q` unsatisfiable      --
 -- (`checkClosed-fail`).                                          --
@@ -37,7 +56,7 @@
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)
 open import Data.Bool.ListAction using (any)
 open import Data.Empty using (⊥)
-open import Data.List.Base using (List; []; _∷_; _++_; map; concatMap)
+open import Data.List.Base using (List; []; _∷_; _++_; map; concatMap; length)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-++⁺ˡ; ∈-++⁻; ∈-map⁻)
 open import Data.List.Relation.Unary.All using ([]; _∷_)
@@ -45,12 +64,13 @@ open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.List.Relation.Unary.Any.Properties using (lookup-result)
 open import Data.Maybe.Base using (Maybe; just; nothing; is-just; _<∣>_)
 open import Data.Maybe using (Is-just; to-witness)
+open import Data.Nat.Base using (ℕ; zero; suc; _+_; _<ᵇ_)
 open import Data.Product using (Σ-syntax; _×_; _,_)
-open import Data.Sum.Base using (_⊎_; inj₁; inj₂)
+open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 
 open import Relation.Binary.Construct.Closure.ReflexiveTransitive
-  using () renaming (ε to ◅-nil; _◅_ to _◅◅_)
+  using (Star) renaming (ε to ◅-nil; _◅_ to _◅◅_; _◅◅_ to _⋆_)
 open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary using (¬_; yes; no)
 open import Relation.Nullary.Decidable using (does)
@@ -79,41 +99,194 @@ open import TypeInference.SolverImpl.Resid  S using (etDec; etDec-refute)
 import TypeInference.SolverImpl.Reach as Reachability
 
 ------------------------------------------------------------------------
+-- Sides and values
+
+-- The sides of a list of orderings
+
+sidesOf : ∀ {X : Set} → List (X × X) → List X
+sidesOf []            = []
+sidesOf ((a , b) ∷ l) = a ∷ b ∷ sidesOf l
+
+sidesₑ : ∀ {Θ} → Hyps Θ → List (EExp Θ)
+sidesₑ Q = sidesOf (ordₑ Q)
+
+sidesᵣ : ∀ {Θ} → Hyps Θ → List (RExp Θ)
+sidesᵣ Q = sidesOf (ordᵣ Q)
+
+-- The value of an expression with no unknowns
+
+valᵉ? : ∀ {Θ} → EExp Θ → Maybe E
+valᵉ? (evar i)   = nothing
+valᵉ? (econst c) = just c
+valᵉ? (ε ·̂ₑ ε') with valᵉ? ε | valᵉ? ε'
+... | just c | just c' = just (c ·ₑ c')
+... | _      | _       = nothing
+valᵉ? (ε ⊔̂ₑ ε') with valᵉ? ε | valᵉ? ε'
+... | just c | just c' = just (c ⊔ₑ c')
+... | _      | _       = nothing
+
+valʳ? : ∀ {Θ} → RExp Θ → Maybe R
+valʳ? (rvar i)   = nothing
+valʳ? (rconst c) = just c
+valʳ? (ρ ·̂ᵣ ρ') with valʳ? ρ | valʳ? ρ'
+... | just c | just c' = just (c ·ᵣ c')
+... | _      | _       = nothing
+valʳ? (ρ ⊔̂ᵣ ρ') with valʳ? ρ | valʳ? ρ'
+... | just c | just c' = just (c ⊔ᵣ c')
+... | _      | _       = nothing
+valʳ? ∣ ε ∣̂ᵉ with valᵉ? ε
+... | just c  = just (mapᵉ c)
+... | nothing = nothing
+
+-- An expression with a value is convertible to it
+
+convᵉ : ∀ {Θ} {c : E} → (ε : EExp Θ) → valᵉ? ε ≡ just c → ε ≡̂ₑ econst c
+convᵉ (evar i) ()
+convᵉ (econst c) refl = ≡̂ₑ-refl
+convᵉ (ε ·̂ₑ ε') q with valᵉ? ε in e₁ | valᵉ? ε' in e₂
+convᵉ (ε ·̂ₑ ε') refl | just c | just c' =
+  ≡̂ₑ-trans (≡̂ₑ-cong (convᵉ ε e₁) (convᵉ ε' e₂)) ≡̂ₑ-const-·
+convᵉ (ε ·̂ₑ ε') () | just _  | nothing
+convᵉ (ε ·̂ₑ ε') () | nothing | _
+convᵉ (ε ⊔̂ₑ ε') q with valᵉ? ε in e₁ | valᵉ? ε' in e₂
+convᵉ (ε ⊔̂ₑ ε') refl | just c | just c' =
+  ≡̂ₑ-trans (≡̂ₑ-cong-⊔ (convᵉ ε e₁) (convᵉ ε' e₂)) ≡̂ₑ-const-⊔
+convᵉ (ε ⊔̂ₑ ε') () | just _  | nothing
+convᵉ (ε ⊔̂ₑ ε') () | nothing | _
+
+convʳ : ∀ {Θ} {c : R} → (ρ : RExp Θ) → valʳ? ρ ≡ just c → ρ ≡̂ᵣ rconst c
+convʳ (rvar i) ()
+convʳ (rconst c) refl = ≡̂ᵣ-refl
+convʳ (ρ ·̂ᵣ ρ') q with valʳ? ρ in e₁ | valʳ? ρ' in e₂
+convʳ (ρ ·̂ᵣ ρ') refl | just c | just c' =
+  ≡̂ᵣ-trans (≡̂ᵣ-cong (convʳ ρ e₁) (convʳ ρ' e₂)) ≡̂ᵣ-const-·
+convʳ (ρ ·̂ᵣ ρ') () | just _  | nothing
+convʳ (ρ ·̂ᵣ ρ') () | nothing | _
+convʳ (ρ ⊔̂ᵣ ρ') q with valʳ? ρ in e₁ | valʳ? ρ' in e₂
+convʳ (ρ ⊔̂ᵣ ρ') refl | just c | just c' =
+  ≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (convʳ ρ e₁) (convʳ ρ' e₂)) ≡̂ᵣ-const-⊔
+convʳ (ρ ⊔̂ᵣ ρ') () | just _  | nothing
+convʳ (ρ ⊔̂ᵣ ρ') () | nothing | _
+convʳ ∣ ε ∣̂ᵉ q with valᵉ? ε in e
+convʳ ∣ ε ∣̂ᵉ refl | just c = ≡̂ᵣ-trans (≡̂ᵣ-map-cong (convᵉ ε e)) ≡̂ᵣ-map-const
+convʳ ∣ ε ∣̂ᵉ ()   | nothing
+
+
+-- The unit's image is the unit
+
+∣û∣ₑ : ∀ {Θ} → ûᵣ {Θ} ≡̂ᵣ ∣ ûₑ ∣̂ᵉ
+∣û∣ₑ = ≡̂ᵣ-sym (≡̂ᵣ-trans ≡̂ᵣ-map-const
+                        (subst (λ c → rconst (mapᵉ uₑ) ≡̂ᵣ rconst c) map-uᵉ ≡̂ᵣ-refl))
+
+------------------------------------------------------------------------
 -- The hypothesis graph
 
-data Edgeₑ {Θ : Scope} (Q : Hyps Θ) : EExp Θ → EExp Θ → Set where
-  hyp  : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Edgeₑ Q ε ε'
-  cst  : ∀ {c c'} → c ≾ₑ c' → Edgeₑ Q (econst c) (econst c')
-  top  : ∀ {ε} → Edgeₑ Q ε (econst ⊤ₑ)
-  unit : ∀ {ε} → Is-just uₑ-least? → Edgeₑ Q ûₑ ε
+mutual
 
-data Edgeᵣ {Θ : Scope} (Q : Hyps Θ) : RExp Θ → RExp Θ → Set where
-  hyp  : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Edgeᵣ Q ρ ρ'
-  cst  : ∀ {c c'} → c ≾ᵣ c' → Edgeᵣ Q (rconst c) (rconst c')
-  top  : ∀ {ρ} → Edgeᵣ Q ρ (rconst ⊤ᵣ)
-  unit : ∀ {ρ} → Is-just uᵣ-least? → Edgeᵣ Q ûᵣ ρ
-  img  : ∀ {ε ε'} → Edgeₑ Q ε ε' → Edgeᵣ Q ∣ ε ∣̂ᵉ ∣ ε' ∣̂ᵉ
+  data Edgeₑ {Θ : Scope} (Q : Hyps Θ) : EExp Θ → EExp Θ → Set where
+    hyp    : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Edgeₑ Q ε ε'
+    cst    : ∀ {c c'} → c ≾ₑ c' → Edgeₑ Q (econst c) (econst c')
+    top    : ∀ {ε} → Edgeₑ Q ε (econst ⊤ₑ)
+    unit   : ∀ {ε} → Is-just uₑ-least? → Edgeₑ Q ûₑ ε
+    factor : ∀ {ε ε₀ as bs} → ε ∈ sidesₑ Q → nrmₑ ε ≡ alt as → Keepₑ Q as bs
+           → ε₀ ≡̂ₑ ⟦ bs ⟧ᵉˢ → Edgeₑ Q ε₀ ε
+
+  -- `bs` is `as` with some atoms above the unit left out
+
+  data Keepₑ {Θ : Scope} (Q : Hyps Θ) : List (EAtom Θ) → List (EAtom Θ) → Set where
+    stop : Keepₑ Q [] []
+    keep : ∀ {a as bs} → Keepₑ Q as bs → Keepₑ Q (a ∷ as) (a ∷ bs)
+    skip : ∀ {a as bs} → Aboveₑ Q a → Keepₑ Q as bs → Keepₑ Q (a ∷ as) bs
+
+  data Aboveₑ {Θ : Scope} (Q : Hyps Θ) : EAtom Θ → Set where
+    const   : ∀ {c} → uₑ ≾ₑ c → Aboveₑ Q (ac c)
+    least   : ∀ {a} → Is-just uₑ-least? → Aboveₑ Q a
+    reached : ∀ {ε c a} → valᵉ? ε ≡ just c → uₑ ≾ₑ c → Star (Edgeₑ Q) ε ⟦ a ⟧ᵉᵃ
+            → Aboveₑ Q a
+
+mutual
+
+  data Edgeᵣ {Θ : Scope} (Q : Hyps Θ) : RExp Θ → RExp Θ → Set where
+    hyp    : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Edgeᵣ Q ρ ρ'
+    cst    : ∀ {c c'} → c ≾ᵣ c' → Edgeᵣ Q (rconst c) (rconst c')
+    top    : ∀ {ρ} → Edgeᵣ Q ρ (rconst ⊤ᵣ)
+    unit   : ∀ {ρ} → Is-just uᵣ-least? → Edgeᵣ Q ûᵣ ρ
+    img    : ∀ {a b} → Star (Edgeₑ Q) ⟦ a ⟧ᵉᵃ ⟦ b ⟧ᵉᵃ → Edgeᵣ Q ⟦ ∣ a ∣ᵃ ⟧ʳᵃ ⟦ ∣ b ∣ᵃ ⟧ʳᵃ
+    factor : ∀ {ρ ρ₀ as bs} → ρ ∈ sidesᵣ Q → nrmᵣ ρ ≡ alt as → Keepᵣ Q as bs
+           → ρ₀ ≡̂ᵣ ⟦ bs ⟧ʳˢ → Edgeᵣ Q ρ₀ ρ
+
+  data Keepᵣ {Θ : Scope} (Q : Hyps Θ) : List (RAtom Θ) → List (RAtom Θ) → Set where
+    stop : Keepᵣ Q [] []
+    keep : ∀ {a as bs} → Keepᵣ Q as bs → Keepᵣ Q (a ∷ as) (a ∷ bs)
+    skip : ∀ {a as bs} → Aboveᵣ Q a → Keepᵣ Q as bs → Keepᵣ Q (a ∷ as) bs
+
+  data Aboveᵣ {Θ : Scope} (Q : Hyps Θ) : RAtom Θ → Set where
+    const   : ∀ {c} → uᵣ ≾ᵣ c → Aboveᵣ Q (rc c)
+    least   : ∀ {a} → Is-just uᵣ-least? → Aboveᵣ Q a
+    image   : ∀ {i} → Is-just uₑ-least? → Aboveᵣ Q (rm i)
+    reached : ∀ {ρ c a} → valʳ? ρ ≡ just c → uᵣ ≾ᵣ c → Star (Edgeᵣ Q) ρ ⟦ a ⟧ʳᵃ
+            → Aboveᵣ Q a
 
 -- Every edge holds where the hypotheses do
 
-edgeₑ-sound : ∀ {Θ} {Q : Hyps Θ} {ε ε'} → Edgeₑ Q ε ε' → Q ⊩ ε ≾̂ₑ ε'
-edgeₑ-sound (hyp m)  = hypₑ m
-edgeₑ-sound (cst p)  = atomₑ p
-edgeₑ-sound top      = topₑ
-edgeₑ-sound (unit q) = minₑ q
+mutual
 
-edgeᵣ-sound : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → Edgeᵣ Q ρ ρ' → Q ⊩ ρ ≾̂ᵣ ρ'
-edgeᵣ-sound (hyp m)  = hypᵣ m
-edgeᵣ-sound (cst p)  = atomᵣ p
-edgeᵣ-sound top      = topᵣ
-edgeᵣ-sound (unit q) = minᵣ q
-edgeᵣ-sound (img e)  = map-mono (edgeₑ-sound e)
+  edgeₑ-sound : ∀ {Θ} {Q : Hyps Θ} {ε ε'} → Edgeₑ Q ε ε' → Q ⊩ ε ≾̂ₑ ε'
+  edgeₑ-sound (hyp m)  = hypₑ m
+  edgeₑ-sound (cst p)  = atomₑ p
+  edgeₑ-sound top      = topₑ
+  edgeₑ-sound (unit q) = minₑ q
+  edgeₑ-sound (factor {ε = ε} _ eq k c) =
+    transₑ (eqₑ c) (transₑ (keepₑ-sound k)
+                           (eqₑ (≡̂ₑ-sym (subst (λ s → ε ≡̂ₑ ⟦ s ⟧ᵉˢ⁺) eq (nrmₑ-≡ ε)))))
 
-------------------------------------------------------------------------
--- Factor edges
---
--- The graph has no edge from a factor to a product, `a ≾ a · b` where
--- the unit is below `b`.
+  -- `a · u ≾ a · b` where `u ≾ b`
+
+  keepₑ-sound : ∀ {Θ} {Q : Hyps Θ} {as bs} → Keepₑ Q as bs → Q ⊩ ⟦ bs ⟧ᵉˢ ≾̂ₑ ⟦ as ⟧ᵉˢ
+  keepₑ-sound stop       = ⊩≾̂ₑ-refl
+  keepₑ-sound (keep k)   = monoₑ ⊩≾̂ₑ-refl (keepₑ-sound k)
+  keepₑ-sound (skip a k) =
+    transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-identityˡ)) (monoₑ (aboveₑ-sound a) (keepₑ-sound k))
+
+  aboveₑ-sound : ∀ {Θ} {Q : Hyps Θ} {a} → Aboveₑ Q a → Q ⊩ ûₑ ≾̂ₑ ⟦ a ⟧ᵉᵃ
+  aboveₑ-sound (const p)                  = atomₑ p
+  aboveₑ-sound (least q)                  = minₑ q
+  aboveₑ-sound (reached {ε = ε} eq p ch) =
+    transₑ (atomₑ p) (transₑ (eqₑ (≡̂ₑ-sym (convᵉ ε eq))) (chainₑ-sound ch))
+
+  chainₑ-sound : ∀ {Θ} {Q : Hyps Θ} {ε ε'} → Star (Edgeₑ Q) ε ε' → Q ⊩ ε ≾̂ₑ ε'
+  chainₑ-sound ◅-nil     = ⊩≾̂ₑ-refl
+  chainₑ-sound (e ◅◅ ch) = transₑ (edgeₑ-sound e) (chainₑ-sound ch)
+
+mutual
+
+  edgeᵣ-sound : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → Edgeᵣ Q ρ ρ' → Q ⊩ ρ ≾̂ᵣ ρ'
+  edgeᵣ-sound (hyp m)  = hypᵣ m
+  edgeᵣ-sound (cst p)  = atomᵣ p
+  edgeᵣ-sound top      = topᵣ
+  edgeᵣ-sound (unit q) = minᵣ q
+  edgeᵣ-sound (img {a} {b} ch) =
+    transᵣ (eqᵣ (≡̂ᵣ-sym ∣⟦ a ⟧∣)) (transᵣ (map-mono (chainₑ-sound ch)) (eqᵣ ∣⟦ b ⟧∣))
+  edgeᵣ-sound (factor {ρ = ρ} _ eq k c) =
+    transᵣ (eqᵣ c) (transᵣ (keepᵣ-sound k)
+                           (eqᵣ (≡̂ᵣ-sym (subst (λ s → ρ ≡̂ᵣ ⟦ s ⟧ʳˢ⁺) eq (nrmᵣ-≡ ρ)))))
+
+  keepᵣ-sound : ∀ {Θ} {Q : Hyps Θ} {as bs} → Keepᵣ Q as bs → Q ⊩ ⟦ bs ⟧ʳˢ ≾̂ᵣ ⟦ as ⟧ʳˢ
+  keepᵣ-sound stop       = ⊩≾̂ᵣ-refl
+  keepᵣ-sound (keep k)   = monoᵣ ⊩≾̂ᵣ-refl (keepᵣ-sound k)
+  keepᵣ-sound (skip a k) =
+    transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityˡ)) (monoᵣ (aboveᵣ-sound a) (keepᵣ-sound k))
+
+  aboveᵣ-sound : ∀ {Θ} {Q : Hyps Θ} {a} → Aboveᵣ Q a → Q ⊩ ûᵣ ≾̂ᵣ ⟦ a ⟧ʳᵃ
+  aboveᵣ-sound (const p)                  = atomᵣ p
+  aboveᵣ-sound (least q)                  = minᵣ q
+  aboveᵣ-sound (image q)                  = transᵣ (eqᵣ ∣û∣ₑ) (map-mono (minₑ q))
+  aboveᵣ-sound (reached {ρ = ρ} eq p ch) =
+    transᵣ (atomᵣ p) (transᵣ (eqᵣ (≡̂ᵣ-sym (convʳ ρ eq))) (chainᵣ-sound ch))
+
+  chainᵣ-sound : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → Star (Edgeᵣ Q) ρ ρ' → Q ⊩ ρ ≾̂ᵣ ρ'
+  chainᵣ-sound ◅-nil     = ⊩≾̂ᵣ-refl
+  chainᵣ-sound (e ◅◅ ch) = transᵣ (edgeᵣ-sound e) (chainᵣ-sound ch)
 
 ------------------------------------------------------------------------
 -- Links and the edges between single atoms
@@ -158,8 +331,7 @@ readᵣ (a , b , e) = a , b , edgeᵣ-sound e
 -- The image of an edge between effect atoms, between their images
 
 imageᵣ : ∀ {Θ} {Q : Hyps Θ} → AEdgeₑ Q → REdge Q
-imageᵣ (a , b , e) =
-  ∣ a ∣ᵃ , ∣ b ∣ᵃ , transᵣ (eqᵣ (≡̂ᵣ-sym ∣⟦ a ⟧∣)) (transᵣ (edgeᵣ-sound (img e)) (eqᵣ ∣⟦ b ⟧∣))
+imageᵣ (a , b , e) = ∣ a ∣ᵃ , ∣ b ∣ᵃ , edgeᵣ-sound (img (e ◅◅ ◅-nil))
 
 edgesₑ : ∀ {Θ} → (Q : Hyps Θ) → List (EEdge Q)
 edgesₑ Q = map readₑ (atomicₑ (ordₑ Q) (λ m → m))
@@ -190,13 +362,13 @@ linkᵣ? _      _      = nothing
 
 -- What the sources of the edges between atoms reach
 
-tableₑ : ∀ {Θ} → (Q : Hyps Θ) → Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-                                              ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ (edgesₑ Q)
-tableₑ Q = Chains.table _ ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ (edgesₑ Q)
+tableₑ : ∀ {Θ} {Q : Hyps Θ} → (es : List (EEdge Q))
+       → Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ) ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ es
+tableₑ es = Chains.table _ ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ es
 
-tableᵣ : ∀ {Θ} → (Q : Hyps Θ) → Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-                                              ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ (edgesᵣ Q)
-tableᵣ Q = Chains.table _ ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ (edgesᵣ Q)
+tableᵣ : ∀ {Θ} {Q : Hyps Θ} → (es : List (REdge Q))
+       → Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ) ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ es
+tableᵣ es = Chains.table _ ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ es
 
 -- The unit below anything, along a `unit` edge
 
@@ -222,12 +394,12 @@ min≾ᵣ nothing  = nothing
 -- and along the chains; the unit is below an atom along a `unit`
 -- edge or a chain from the constant `u`.
 
-module Searchₑ {Θ} {Q : Hyps Θ}
+module Searchₑ {Θ} {Q : Hyps Θ} (es : List (EEdge Q))
                (t : Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-                                 ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ (edgesₑ Q)) where
+                                 ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ es) where
 
   reachₑ? : (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-  reachₑ? = Chains.reach? _ ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ (edgesₑ Q) t
+  reachₑ? = Chains.reach? _ ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ es t
 
   -- Anything is below an atom that the top reaches
 
@@ -337,10 +509,15 @@ foldₑ-≡ᵖ ε =
   ≡̂ₑ-trans (nrmₑ-≡ ε)
   (≡̂ₑ-trans (≡̂ₑ-sym (foldSumₑ-≡ (nrmₑ ε))) (⟦⟧ᵉᵖ⁺-≡ (foldSumₑ (nrmₑ ε))))
 
-deriveₑ : ∀ {Θ} → (Q : Hyps Θ) → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
-deriveₑ Q ε ε' with Searchₑ.sum≾ₑ (tableₑ Q) (nrmₑ ε) (foldSumₑ (nrmₑ ε'))
+-- The embedding along the chains of a list of edges between atoms
+
+embedₑ : ∀ {Θ} {Q : Hyps Θ} → List (EEdge Q) → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
+embedₑ es ε ε' with Searchₑ.sum≾ₑ es (tableₑ es) (nrmₑ ε) (foldSumₑ (nrmₑ ε'))
 ... | just p  = just (transₑ (eqₑ (nrmₑ-≡ᵖ ε)) (transₑ p (eqₑ (≡̂ₑ-sym (foldₑ-≡ᵖ ε')))))
 ... | nothing = nothing
+
+deriveₑ : ∀ {Θ} → (Q : Hyps Θ) → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
+deriveₑ Q = embedₑ (edgesₑ Q)
 
 ------------------------------------------------------------------------
 -- Resource grades: the same, with a third kind of atom, the image
@@ -348,16 +525,12 @@ deriveₑ Q ε ε' with Searchₑ.sum≾ₑ (tableₑ Q) (nrmₑ ε) (foldSumₑ
 -- unit is below it when either sort's unit is least, the latter
 -- carried through the morphism by `map-mono`, as `∣ u ∣ = u`.
 
-∣û∣ₑ : ∀ {Θ} → ûᵣ {Θ} ≡̂ᵣ ∣ ûₑ ∣̂ᵉ
-∣û∣ₑ = ≡̂ᵣ-sym (≡̂ᵣ-trans ≡̂ᵣ-map-const
-                        (subst (λ c → rconst (mapᵉ uₑ) ≡̂ᵣ rconst c) map-uᵉ ≡̂ᵣ-refl))
-
-module Searchᵣ {Θ} {Q : Hyps Θ}
+module Searchᵣ {Θ} {Q : Hyps Θ} (es : List (REdge Q))
                (t : Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-                                 ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ (edgesᵣ Q)) where
+                                 ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ es) where
 
   reachᵣ? : (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-  reachᵣ? = Chains.reach? _ ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ (edgesᵣ Q) t
+  reachᵣ? = Chains.reach? _ ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ es t
 
   ceilᵣ : ∀ {ρ : RExp Θ} → (b : RAtom Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
   ceilᵣ b with reachᵣ? (rc ⊤ᵣ) b
@@ -369,7 +542,7 @@ module Searchᵣ {Θ} {Q : Hyps Θ}
 
   minᵐ : (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
   minᵐ (rm i) with Is-just? uₑ-least?
-  ... | just q  = just (transᵣ (eqᵣ ∣û∣ₑ) (edgeᵣ-sound (img (unit {ε = evar i} q))))
+  ... | just q  = just (aboveᵣ-sound (image q))
   ... | nothing = nothing
   minᵐ _ = nothing
 
@@ -457,73 +630,456 @@ foldᵣ-≡ᵖ ρ =
   ≡̂ᵣ-trans (nrmᵣ-≡ ρ)
   (≡̂ᵣ-trans (≡̂ᵣ-sym (foldSumᵣ-≡ (nrmᵣ ρ))) (⟦⟧ʳᵖ⁺-≡ (foldSumᵣ (nrmᵣ ρ))))
 
-deriveᵣ : ∀ {Θ} → (Q : Hyps Θ) → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
-deriveᵣ Q ρ ρ' with Searchᵣ.sum≾ᵣ (tableᵣ Q) (nrmᵣ ρ) (foldSumᵣ (nrmᵣ ρ'))
+embedᵣ : ∀ {Θ} {Q : Hyps Θ} → List (REdge Q) → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
+embedᵣ es ρ ρ' with Searchᵣ.sum≾ᵣ es (tableᵣ es) (nrmᵣ ρ) (foldSumᵣ (nrmᵣ ρ'))
 ... | just p  = just (transᵣ (eqᵣ (nrmᵣ-≡ᵖ ρ)) (transᵣ p (eqᵣ (≡̂ᵣ-sym (foldᵣ-≡ᵖ ρ')))))
 ... | nothing = nothing
+
+deriveᵣ : ∀ {Θ} → (Q : Hyps Θ) → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
+deriveᵣ Q = embedᵣ (edgesᵣ Q)
+
+------------------------------------------------------------------------
+-- The strength `full`: the whole graph
+--
+-- The edges of the graph are the `hyp` edges, on the resource side
+-- the images of the chains between effect atoms of the effect graph,
+-- and the factor edges of each side whose normal form is one product
+-- of two or more atoms: from each atom whose co-factors are all above
+-- the unit, and from the product of its constants, where there are
+-- two or more and every variable is above the unit. The variables
+-- above the unit are those the graph reaches from a variable-free
+-- expression above the unit: from none, the graph is built again with
+-- the variables so found until no variable is added, at most once per
+-- variable (Kleene iteration). Where the unit is least, every atom is
+-- above it.
+--
+-- An ordering is decided by the embedding along the chains between
+-- atoms (`atomEdgesₑ`): the edges between two atoms, and through each
+-- side that is not an atom, from an atom with an edge to it to each
+-- atom it reaches along edges from sides that are not atoms; or, where
+-- the left side is a vertex, along a chain from it to a vertex that is
+-- the right side or embeds below it (`alongₑ`).
+
+-- Each element of a list with its membership
+
+withMem : ∀ {X : Set} → (l : List X) → List (Σ[ x ∈ X ] x ∈ l)
+withMem []      = []
+withMem (x ∷ l) = (x , here refl) ∷ map (λ { (y , m) → y , there m }) (withMem l)
+
+-- The first occurrence of each element, by a key
+
+firsts : ∀ {X K : Set} → DecidableEquality K → (X → K) → List K → List X → List X
+firsts _≟_ key seen []      = []
+firsts _≟_ key seen (x ∷ l) with any (λ k → does (key x ≟ k)) seen
+... | true  = firsts _≟_ key seen l
+... | false = x ∷ firsts _≟_ key (key x ∷ seen) l
+
+-- A product of constants
+
+prodₑ : List E → E
+prodₑ []       = uₑ
+prodₑ (c ∷ cs) = c ·ₑ prodₑ cs
+
+prodₑ-≡ : ∀ {Θ} → (cs : List E) → econst {Θ} (prodₑ cs) ≡̂ₑ ⟦ map ac cs ⟧ᵉˢ
+prodₑ-≡ []       = ≡̂ₑ-refl
+prodₑ-≡ (c ∷ cs) = ≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-const-·) (≡̂ₑ-cong ≡̂ₑ-refl (prodₑ-≡ cs))
+
+prodᵣ : List R → R
+prodᵣ []       = uᵣ
+prodᵣ (c ∷ cs) = c ·ᵣ prodᵣ cs
+
+prodᵣ-≡ : ∀ {Θ} → (cs : List R) → rconst {Θ} (prodᵣ cs) ≡̂ᵣ ⟦ map rc cs ⟧ʳˢ
+prodᵣ-≡ []       = ≡̂ᵣ-refl
+prodᵣ-≡ (c ∷ cs) = ≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-const-·) (≡̂ᵣ-cong ≡̂ᵣ-refl (prodᵣ-≡ cs))
+
+------------------------------------------------------------------------
+-- Effect grades
+
+GEdgeₑ : ∀ {Θ} → Hyps Θ → Set
+GEdgeₑ {Θ} Q = Σ[ ε ∈ EExp Θ ] Σ[ ε' ∈ EExp Θ ] Edgeₑ Q ε ε'
+
+AChainₑ : ∀ {Θ} → Hyps Θ → Set
+AChainₑ {Θ} Q = Σ[ a ∈ EAtom Θ ] Σ[ b ∈ EAtom Θ ] Star (Edgeₑ Q) ⟦ a ⟧ᵉᵃ ⟦ b ⟧ᵉᵃ
+
+-- The variables found above the unit
+
+Uₑ : ∀ {Θ} → Hyps Θ → Set
+Uₑ {Θ} Q = List (Σ[ i ∈ EVar Θ ] Aboveₑ Q (av i))
+
+lookupₑ : ∀ {Θ} {Q : Hyps Θ} → Uₑ Q → (i : EVar Θ) → Maybe (Aboveₑ Q (av i))
+lookupₑ []            i = nothing
+lookupₑ ((j , a) ∷ U) i with j ≟ᶠ i
+... | yes refl = just a
+... | no _     = lookupₑ U i
+
+atomAboveₑ : ∀ {Θ} {Q : Hyps Θ} → Uₑ Q → (a : EAtom Θ) → Maybe (Aboveₑ Q a)
+atomAboveₑ U (ac c) with uₑ ≾ₑ? c
+... | yes p = just (const p)
+... | no _  = nothing
+atomAboveₑ U (av i) = lookupₑ U i
+
+above?ₑ : ∀ {Θ} {Q : Hyps Θ} → Uₑ Q → (a : EAtom Θ) → Maybe (Aboveₑ Q a)
+above?ₑ U a with Is-just? uₑ-least?
+... | just q  = just (least q)
+... | nothing = atomAboveₑ U a
+
+-- The products that factor edges start from: one atom of a product,
+-- the others above the unit, and its constants, its variables above
+-- the unit
+
+allAboveₑ : ∀ {Θ} {Q : Hyps Θ} → Uₑ Q → (as : List (EAtom Θ)) → Maybe (Keepₑ Q as [])
+allAboveₑ U []       = just stop
+allAboveₑ U (a ∷ as) with above?ₑ U a | allAboveₑ U as
+... | just b | just k = just (skip b k)
+... | _      | _      = nothing
+
+hereₑ : ∀ {Θ} {Q : Hyps Θ} {as} → (a : EAtom Θ) → Maybe (Keepₑ Q as [])
+      → List (Σ[ b ∈ EAtom Θ ] Keepₑ Q (a ∷ as) (b ∷ []))
+hereₑ a (just k) = (a , keep k) ∷ []
+hereₑ a nothing  = []
+
+thereₑ : ∀ {Θ} {Q : Hyps Θ} {a as} → Maybe (Aboveₑ Q a)
+       → List (Σ[ b ∈ EAtom Θ ] Keepₑ Q as (b ∷ []))
+       → List (Σ[ b ∈ EAtom Θ ] Keepₑ Q (a ∷ as) (b ∷ []))
+thereₑ (just x) l = map (λ { (b , k) → b , skip x k }) l
+thereₑ nothing  l = []
+
+singlesₑ : ∀ {Θ} {Q : Hyps Θ} → Uₑ Q → (as : List (EAtom Θ))
+         → List (Σ[ b ∈ EAtom Θ ] Keepₑ Q as (b ∷ []))
+singlesₑ U []       = []
+singlesₑ U (a ∷ as) = hereₑ a (allAboveₑ U as) ++ thereₑ (above?ₑ U a) (singlesₑ U as)
+
+constsₑ : ∀ {Θ} {Q : Hyps Θ} → Uₑ Q → (as : List (EAtom Θ))
+        → Maybe (Σ[ cs ∈ List E ] Keepₑ Q as (map ac cs))
+constsₑ U []           = just ([] , stop)
+constsₑ U (ac c ∷ as) with constsₑ U as
+... | just (cs , k) = just (c ∷ cs , keep k)
+... | nothing       = nothing
+constsₑ U (av i ∷ as) with above?ₑ U (av i) | constsₑ U as
+... | just x | just (cs , k) = just (cs , skip x k)
+... | _      | _             = nothing
+
+productₑ : ∀ {Θ} {Q : Hyps Θ} {ε as} → ε ∈ sidesₑ Q → nrmₑ ε ≡ alt as
+         → Maybe (Σ[ cs ∈ List E ] Keepₑ Q as (map ac cs)) → List (GEdgeₑ Q)
+productₑ {ε = ε} m eq (just (c ∷ d ∷ cs , k)) =
+  (econst (prodₑ (c ∷ d ∷ cs)) , ε , factor m eq k (prodₑ-≡ (c ∷ d ∷ cs))) ∷ []
+productₑ m eq _ = []
+
+-- The factor edges into one side
+
+factorsOfₑ : ∀ {Θ} {Q : Hyps Θ} → Uₑ Q → (ε : EExp Θ) → ε ∈ sidesₑ Q → List (GEdgeₑ Q)
+factorsOfₑ U ε m with nrmₑ ε in eq
+... | alt (a ∷ b ∷ as) =
+      map (λ { (c , k) → ⟦ c ⟧ᵉᵃ , ε , factor m eq k (≡̂ₑ-sym ≡̂ₑ-identityʳ) })
+          (singlesₑ U (a ∷ b ∷ as))
+      ++ productₑ m eq (constsₑ U (a ∷ b ∷ as))
+... | _ = []
+
+-- The graph, with the variables `U` above the unit
+
+graphₑ : ∀ {Θ} → (Q : Hyps Θ) → Uₑ Q → List (GEdgeₑ Q)
+graphₑ Q U =
+  map (λ { ((ε , ε') , m) → ε , ε' , hyp m }) (withMem (ordₑ Q))
+  ++ concatMap (λ { (ε , m) → factorsOfₑ U ε m })
+               (firsts _≟ᵉ_ (λ { (ε , _) → ε }) [] (withMem (sidesₑ Q)))
+
+-- What an expression reaches along a list of edges
+
+linkˣₑ : ∀ {Θ} {Q : Hyps Θ} → (ε ε' : EExp Θ) → Maybe (Star (Edgeₑ Q) ε ε')
+linkˣₑ ε ε' with ε ≟ᵉ ε'
+... | yes refl = just ◅-nil
+... | no _     = nothing
+
+reachesₑ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeₑ Q) → (ε : EExp Θ)
+         → List (Σ[ ε' ∈ EExp Θ ] Star (Edgeₑ Q) ε ε')
+reachesₑ es ε =
+  Chains.sat _ ◅-nil _⋆_ linkˣₑ _≟ᵉ_ (map (λ { (x , y , e) → x , y , e ◅◅ ◅-nil }) es)
+             (length es) ((ε , ◅-nil) ∷ [])
+
+-- The variables reached from a variable-free source above the unit
+
+addVarsₑ : ∀ {Θ} {Q : Hyps Θ} {ε c} → valᵉ? ε ≡ just c → uₑ ≾ₑ c
+         → List (Σ[ ε' ∈ EExp Θ ] Star (Edgeₑ Q) ε ε') → Uₑ Q → Uₑ Q
+addVarsₑ q p []                   U = U
+addVarsₑ q p ((evar i , ch) ∷ l) U with lookupₑ U i
+... | just _  = addVarsₑ q p l U
+... | nothing = addVarsₑ q p l ((i , reached q p ch) ∷ U)
+addVarsₑ q p (_ ∷ l)             U = addVarsₑ q p l U
+
+fromₑ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeₑ Q) → EExp Θ → Uₑ Q → Uₑ Q
+fromₑ es ε U with valᵉ? ε in q
+... | nothing = U
+... | just c with uₑ ≾ₑ? c
+...   | yes p = addVarsₑ q p (reachesₑ es ε) U
+...   | no _  = U
+
+reachedₑ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeₑ Q) → Uₑ Q
+reachedₑ es = go (firsts _≟ᵉ_ (λ ε → ε) [] (map (λ { (ε , _ , _) → ε }) es)) []
+  where
+    go : List (EExp _) → Uₑ _ → Uₑ _
+    go []       U = U
+    go (ε ∷ εs) U = go εs (fromₑ es ε U)
+
+iterateₑ : ∀ {Θ} → (Q : Hyps Θ) → ℕ → Uₑ Q → Uₑ Q
+iterateₑ Q zero    U = U
+iterateₑ Q (suc n) U with reachedₑ (graphₑ Q U)
+... | U' with length U <ᵇ length U'
+...   | true  = iterateₑ Q n U'
+...   | false = U
+
+aboveₑ : ∀ {Θ} → (Q : Hyps Θ) → Uₑ Q
+aboveₑ {Θ} Q with Is-just? uₑ-least?
+... | just _  = []
+... | nothing = iterateₑ Q (suc (nE Θ)) []
+
+fullGraphₑ : ∀ {Θ} → (Q : Hyps Θ) → List (GEdgeₑ Q)
+fullGraphₑ Q = graphₑ Q (aboveₑ Q)
+
+-- The chains between atoms
+
+directₑ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeₑ Q) → List (AChainₑ Q)
+directₑ []              = []
+directₑ ((x , y , e) ∷ l) with atomᵉ? x | atomᵉ? y
+... | just (a , refl) | just (b , refl) = (a , b , e ◅◅ ◅-nil) ∷ directₑ l
+... | _               | _               = directₑ l
+
+compoundₑ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeₑ Q) → List (GEdgeₑ Q)
+compoundₑ []              = []
+compoundₑ ((x , y , e) ∷ l) with atomᵉ? x
+... | just _  = compoundₑ l
+... | nothing = (x , y , e) ∷ compoundₑ l
+
+atomsOfₑ : ∀ {Θ} {Q : Hyps Θ} {w} → (a : EAtom Θ) → Edgeₑ Q ⟦ a ⟧ᵉᵃ w
+         → List (Σ[ ε ∈ EExp Θ ] Star (Edgeₑ Q) w ε) → List (AChainₑ Q)
+atomsOfₑ a e []             = []
+atomsOfₑ a e ((ε , ch) ∷ l) with atomᵉ? ε
+... | just (b , refl) = (a , b , e ◅◅ ch) ∷ atomsOfₑ a e l
+... | nothing         = atomsOfₑ a e l
+
+throughₑ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeₑ Q) → GEdgeₑ Q → List (AChainₑ Q)
+throughₑ cs (x , w , e) with atomᵉ? x | atomᵉ? w
+... | just (a , refl) | nothing = atomsOfₑ a e (reachesₑ cs w)
+... | _               | _       = []
+
+atomEdgesₑ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeₑ Q) → List (AChainₑ Q)
+atomEdgesₑ g = directₑ g ++ concatMap (throughₑ (compoundₑ g)) g
+
+-- Along a chain from the left side to a vertex below the right side
+
+alongₑ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeₑ Q) → List (EEdge Q)
+       → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
+alongₑ {Q = Q} g es ε ε' = via (reachesₑ g ε)
+  where
+    via : List (Σ[ v ∈ EExp _ ] Star (Edgeₑ Q) ε v) → Maybe (Q ⊩ ε ≾̂ₑ ε')
+    via []             = nothing
+    via ((v , ch) ∷ l) with v ≟ᵉ ε
+    ... | yes _ = via l
+    ... | no _ with v ≟ᵉ ε'
+    ...   | yes refl = just (chainₑ-sound ch)
+    ...   | no _ with embedₑ es v ε'
+    ...     | just p  = just (transₑ (chainₑ-sound ch) p)
+    ...     | nothing = via l
+
+fullₑ : ∀ {Θ} → (Q : Hyps Θ) → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
+fullₑ Q ε ε' = embedₑ es ε ε' <∣> alongₑ g es ε ε'
+  where
+    g  = fullGraphₑ Q
+    es = map (λ { (a , b , ch) → a , b , chainₑ-sound ch }) (atomEdgesₑ g)
+
+------------------------------------------------------------------------
+-- Resource grades: the same, the images of the chains between effect
+-- atoms among the edges
+
+GEdgeᵣ : ∀ {Θ} → Hyps Θ → Set
+GEdgeᵣ {Θ} Q = Σ[ ρ ∈ RExp Θ ] Σ[ ρ' ∈ RExp Θ ] Edgeᵣ Q ρ ρ'
+
+AChainᵣ : ∀ {Θ} → Hyps Θ → Set
+AChainᵣ {Θ} Q = Σ[ a ∈ RAtom Θ ] Σ[ b ∈ RAtom Θ ] Star (Edgeᵣ Q) ⟦ a ⟧ʳᵃ ⟦ b ⟧ʳᵃ
+
+Uᵣ : ∀ {Θ} → Hyps Θ → Set
+Uᵣ {Θ} Q = List (Σ[ a ∈ RAtom Θ ] Aboveᵣ Q a)
+
+lookupᵣ : ∀ {Θ} {Q : Hyps Θ} → Uᵣ Q → (a : RAtom Θ) → Maybe (Aboveᵣ Q a)
+lookupᵣ []            a = nothing
+lookupᵣ ((b , x) ∷ U) a with b ≟ᵃᵣ a
+... | yes refl = just x
+... | no _     = lookupᵣ U a
+
+atomAboveᵣ : ∀ {Θ} {Q : Hyps Θ} → Uᵣ Q → (a : RAtom Θ) → Maybe (Aboveᵣ Q a)
+atomAboveᵣ U (rc c) with uᵣ ≾ᵣ? c
+... | yes p = just (const p)
+... | no _  = nothing
+atomAboveᵣ U (rv i) = lookupᵣ U (rv i)
+atomAboveᵣ U (rm i) with Is-just? uₑ-least?
+... | just q  = just (image q)
+... | nothing = lookupᵣ U (rm i)
+
+above?ᵣ : ∀ {Θ} {Q : Hyps Θ} → Uᵣ Q → (a : RAtom Θ) → Maybe (Aboveᵣ Q a)
+above?ᵣ U a with Is-just? uᵣ-least?
+... | just q  = just (least q)
+... | nothing = atomAboveᵣ U a
+
+allAboveᵣ : ∀ {Θ} {Q : Hyps Θ} → Uᵣ Q → (as : List (RAtom Θ)) → Maybe (Keepᵣ Q as [])
+allAboveᵣ U []       = just stop
+allAboveᵣ U (a ∷ as) with above?ᵣ U a | allAboveᵣ U as
+... | just b | just k = just (skip b k)
+... | _      | _      = nothing
+
+hereᵣ : ∀ {Θ} {Q : Hyps Θ} {as} → (a : RAtom Θ) → Maybe (Keepᵣ Q as [])
+      → List (Σ[ b ∈ RAtom Θ ] Keepᵣ Q (a ∷ as) (b ∷ []))
+hereᵣ a (just k) = (a , keep k) ∷ []
+hereᵣ a nothing  = []
+
+thereᵣ : ∀ {Θ} {Q : Hyps Θ} {a as} → Maybe (Aboveᵣ Q a)
+       → List (Σ[ b ∈ RAtom Θ ] Keepᵣ Q as (b ∷ []))
+       → List (Σ[ b ∈ RAtom Θ ] Keepᵣ Q (a ∷ as) (b ∷ []))
+thereᵣ (just x) l = map (λ { (b , k) → b , skip x k }) l
+thereᵣ nothing  l = []
+
+singlesᵣ : ∀ {Θ} {Q : Hyps Θ} → Uᵣ Q → (as : List (RAtom Θ))
+         → List (Σ[ b ∈ RAtom Θ ] Keepᵣ Q as (b ∷ []))
+singlesᵣ U []       = []
+singlesᵣ U (a ∷ as) = hereᵣ a (allAboveᵣ U as) ++ thereᵣ (above?ᵣ U a) (singlesᵣ U as)
+
+constsᵣ : ∀ {Θ} {Q : Hyps Θ} → Uᵣ Q → (as : List (RAtom Θ))
+        → Maybe (Σ[ cs ∈ List R ] Keepᵣ Q as (map rc cs))
+constsᵣ U []           = just ([] , stop)
+constsᵣ U (rc c ∷ as) with constsᵣ U as
+... | just (cs , k) = just (c ∷ cs , keep k)
+... | nothing       = nothing
+constsᵣ U (rv i ∷ as) with above?ᵣ U (rv i) | constsᵣ U as
+... | just x | just (cs , k) = just (cs , skip x k)
+... | _      | _             = nothing
+constsᵣ U (rm i ∷ as) with above?ᵣ U (rm i) | constsᵣ U as
+... | just x | just (cs , k) = just (cs , skip x k)
+... | _      | _             = nothing
+
+productᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ as} → ρ ∈ sidesᵣ Q → nrmᵣ ρ ≡ alt as
+         → Maybe (Σ[ cs ∈ List R ] Keepᵣ Q as (map rc cs)) → List (GEdgeᵣ Q)
+productᵣ {ρ = ρ} m eq (just (c ∷ d ∷ cs , k)) =
+  (rconst (prodᵣ (c ∷ d ∷ cs)) , ρ , factor m eq k (prodᵣ-≡ (c ∷ d ∷ cs))) ∷ []
+productᵣ m eq _ = []
+
+factorsOfᵣ : ∀ {Θ} {Q : Hyps Θ} → Uᵣ Q → (ρ : RExp Θ) → ρ ∈ sidesᵣ Q → List (GEdgeᵣ Q)
+factorsOfᵣ U ρ m with nrmᵣ ρ in eq
+... | alt (a ∷ b ∷ as) =
+      map (λ { (c , k) → ⟦ c ⟧ʳᵃ , ρ , factor m eq k (≡̂ᵣ-sym ≡̂ᵣ-identityʳ) })
+          (singlesᵣ U (a ∷ b ∷ as))
+      ++ productᵣ m eq (constsᵣ U (a ∷ b ∷ as))
+... | _ = []
+
+graphᵣ : ∀ {Θ} → (Q : Hyps Θ) → Uᵣ Q → List (GEdgeᵣ Q)
+graphᵣ Q U =
+  map (λ { ((ρ , ρ') , m) → ρ , ρ' , hyp m }) (withMem (ordᵣ Q))
+  ++ map (λ { (a , b , ch) → ⟦ ∣ a ∣ᵃ ⟧ʳᵃ , ⟦ ∣ b ∣ᵃ ⟧ʳᵃ , img ch }) (atomEdgesₑ (fullGraphₑ Q))
+  ++ concatMap (λ { (ρ , m) → factorsOfᵣ U ρ m })
+               (firsts _≟ʳ_ (λ { (ρ , _) → ρ }) [] (withMem (sidesᵣ Q)))
+
+linkˣᵣ : ∀ {Θ} {Q : Hyps Θ} → (ρ ρ' : RExp Θ) → Maybe (Star (Edgeᵣ Q) ρ ρ')
+linkˣᵣ ρ ρ' with ρ ≟ʳ ρ'
+... | yes refl = just ◅-nil
+... | no _     = nothing
+
+reachesᵣ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeᵣ Q) → (ρ : RExp Θ)
+         → List (Σ[ ρ' ∈ RExp Θ ] Star (Edgeᵣ Q) ρ ρ')
+reachesᵣ es ρ =
+  Chains.sat _ ◅-nil _⋆_ linkˣᵣ _≟ʳ_ (map (λ { (x , y , e) → x , y , e ◅◅ ◅-nil }) es)
+             (length es) ((ρ , ◅-nil) ∷ [])
+
+addVarᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ c} → valʳ? ρ ≡ just c → uᵣ ≾ᵣ c
+        → (a : RAtom Θ) → Star (Edgeᵣ Q) ρ ⟦ a ⟧ʳᵃ → Uᵣ Q → Uᵣ Q
+addVarᵣ q p a ch U with lookupᵣ U a
+... | just _  = U
+... | nothing = (a , reached q p ch) ∷ U
+
+addVarsᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ c} → valʳ? ρ ≡ just c → uᵣ ≾ᵣ c
+         → List (Σ[ ρ' ∈ RExp Θ ] Star (Edgeᵣ Q) ρ ρ') → Uᵣ Q → Uᵣ Q
+addVarsᵣ q p []                        U = U
+addVarsᵣ q p ((rvar i , ch) ∷ l)       U = addVarsᵣ q p l (addVarᵣ q p (rv i) ch U)
+addVarsᵣ q p ((∣ evar i ∣̂ᵉ , ch) ∷ l) U = addVarsᵣ q p l (addVarᵣ q p (rm i) ch U)
+addVarsᵣ q p (_ ∷ l)                   U = addVarsᵣ q p l U
+
+fromᵣ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeᵣ Q) → RExp Θ → Uᵣ Q → Uᵣ Q
+fromᵣ es ρ U with valʳ? ρ in q
+... | nothing = U
+... | just c with uᵣ ≾ᵣ? c
+...   | yes p = addVarsᵣ q p (reachesᵣ es ρ) U
+...   | no _  = U
+
+reachedᵣ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeᵣ Q) → Uᵣ Q
+reachedᵣ es = go (firsts _≟ʳ_ (λ ρ → ρ) [] (map (λ { (ρ , _ , _) → ρ }) es)) []
+  where
+    go : List (RExp _) → Uᵣ _ → Uᵣ _
+    go []       U = U
+    go (ρ ∷ ρs) U = go ρs (fromᵣ es ρ U)
+
+iterateᵣ : ∀ {Θ} → (Q : Hyps Θ) → ℕ → Uᵣ Q → Uᵣ Q
+iterateᵣ Q zero    U = U
+iterateᵣ Q (suc n) U with reachedᵣ (graphᵣ Q U)
+... | U' with length U <ᵇ length U'
+...   | true  = iterateᵣ Q n U'
+...   | false = U
+
+aboveᵣ : ∀ {Θ} → (Q : Hyps Θ) → Uᵣ Q
+aboveᵣ {Θ} Q with Is-just? uᵣ-least?
+... | just _  = []
+... | nothing = iterateᵣ Q (suc (nR Θ + nE Θ)) []
+
+fullGraphᵣ : ∀ {Θ} → (Q : Hyps Θ) → List (GEdgeᵣ Q)
+fullGraphᵣ Q = graphᵣ Q (aboveᵣ Q)
+
+directᵣ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeᵣ Q) → List (AChainᵣ Q)
+directᵣ []              = []
+directᵣ ((x , y , e) ∷ l) with atomʳ? x | atomʳ? y
+... | just (a , refl) | just (b , refl) = (a , b , e ◅◅ ◅-nil) ∷ directᵣ l
+... | _               | _               = directᵣ l
+
+compoundᵣ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeᵣ Q) → List (GEdgeᵣ Q)
+compoundᵣ []              = []
+compoundᵣ ((x , y , e) ∷ l) with atomʳ? x
+... | just _  = compoundᵣ l
+... | nothing = (x , y , e) ∷ compoundᵣ l
+
+atomsOfᵣ : ∀ {Θ} {Q : Hyps Θ} {w} → (a : RAtom Θ) → Edgeᵣ Q ⟦ a ⟧ʳᵃ w
+         → List (Σ[ ρ ∈ RExp Θ ] Star (Edgeᵣ Q) w ρ) → List (AChainᵣ Q)
+atomsOfᵣ a e []             = []
+atomsOfᵣ a e ((ρ , ch) ∷ l) with atomʳ? ρ
+... | just (b , refl) = (a , b , e ◅◅ ch) ∷ atomsOfᵣ a e l
+... | nothing         = atomsOfᵣ a e l
+
+throughᵣ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeᵣ Q) → GEdgeᵣ Q → List (AChainᵣ Q)
+throughᵣ cs (x , w , e) with atomʳ? x | atomʳ? w
+... | just (a , refl) | nothing = atomsOfᵣ a e (reachesᵣ cs w)
+... | _               | _       = []
+
+atomEdgesᵣ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeᵣ Q) → List (AChainᵣ Q)
+atomEdgesᵣ g = directᵣ g ++ concatMap (throughᵣ (compoundᵣ g)) g
+
+alongᵣ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeᵣ Q) → List (REdge Q)
+       → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
+alongᵣ {Q = Q} g es ρ ρ' = via (reachesᵣ g ρ)
+  where
+    via : List (Σ[ v ∈ RExp _ ] Star (Edgeᵣ Q) ρ v) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
+    via []             = nothing
+    via ((v , ch) ∷ l) with v ≟ʳ ρ
+    ... | yes _ = via l
+    ... | no _ with v ≟ʳ ρ'
+    ...   | yes refl = just (chainᵣ-sound ch)
+    ...   | no _ with embedᵣ es v ρ'
+    ...     | just p  = just (transᵣ (chainᵣ-sound ch) p)
+    ...     | nothing = via l
+
+fullᵣ : ∀ {Θ} → (Q : Hyps Θ) → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
+fullᵣ Q ρ ρ' = embedᵣ es ρ ρ' <∣> alongᵣ g es ρ ρ'
+  where
+    g  = fullGraphᵣ Q
+    es = map (λ { (a , b , ch) → a , b , chainᵣ-sound ch }) (atomEdgesᵣ g)
+
 
 ------------------------------------------------------------------------
 -- The strength `closed`: both sides variable-free, compared by the
 -- grade's order along a `cst` edge. An ordering that holds is entailed
 -- by every set; one that fails holds at no closed instance.
-
--- The value of an expression with no unknowns
-
-valᵉ? : ∀ {Θ} → EExp Θ → Maybe E
-valᵉ? (evar i)   = nothing
-valᵉ? (econst c) = just c
-valᵉ? (ε ·̂ₑ ε') with valᵉ? ε | valᵉ? ε'
-... | just c | just c' = just (c ·ₑ c')
-... | _      | _       = nothing
-valᵉ? (ε ⊔̂ₑ ε') with valᵉ? ε | valᵉ? ε'
-... | just c | just c' = just (c ⊔ₑ c')
-... | _      | _       = nothing
-
-valʳ? : ∀ {Θ} → RExp Θ → Maybe R
-valʳ? (rvar i)   = nothing
-valʳ? (rconst c) = just c
-valʳ? (ρ ·̂ᵣ ρ') with valʳ? ρ | valʳ? ρ'
-... | just c | just c' = just (c ·ᵣ c')
-... | _      | _       = nothing
-valʳ? (ρ ⊔̂ᵣ ρ') with valʳ? ρ | valʳ? ρ'
-... | just c | just c' = just (c ⊔ᵣ c')
-... | _      | _       = nothing
-valʳ? ∣ ε ∣̂ᵉ with valᵉ? ε
-... | just c  = just (mapᵉ c)
-... | nothing = nothing
-
--- An expression with a value is convertible to it
-
-convᵉ : ∀ {Θ} {c : E} → (ε : EExp Θ) → valᵉ? ε ≡ just c → ε ≡̂ₑ econst c
-convᵉ (evar i) ()
-convᵉ (econst c) refl = ≡̂ₑ-refl
-convᵉ (ε ·̂ₑ ε') q with valᵉ? ε in e₁ | valᵉ? ε' in e₂
-convᵉ (ε ·̂ₑ ε') refl | just c | just c' =
-  ≡̂ₑ-trans (≡̂ₑ-cong (convᵉ ε e₁) (convᵉ ε' e₂)) ≡̂ₑ-const-·
-convᵉ (ε ·̂ₑ ε') () | just _  | nothing
-convᵉ (ε ·̂ₑ ε') () | nothing | _
-convᵉ (ε ⊔̂ₑ ε') q with valᵉ? ε in e₁ | valᵉ? ε' in e₂
-convᵉ (ε ⊔̂ₑ ε') refl | just c | just c' =
-  ≡̂ₑ-trans (≡̂ₑ-cong-⊔ (convᵉ ε e₁) (convᵉ ε' e₂)) ≡̂ₑ-const-⊔
-convᵉ (ε ⊔̂ₑ ε') () | just _  | nothing
-convᵉ (ε ⊔̂ₑ ε') () | nothing | _
-
-convʳ : ∀ {Θ} {c : R} → (ρ : RExp Θ) → valʳ? ρ ≡ just c → ρ ≡̂ᵣ rconst c
-convʳ (rvar i) ()
-convʳ (rconst c) refl = ≡̂ᵣ-refl
-convʳ (ρ ·̂ᵣ ρ') q with valʳ? ρ in e₁ | valʳ? ρ' in e₂
-convʳ (ρ ·̂ᵣ ρ') refl | just c | just c' =
-  ≡̂ᵣ-trans (≡̂ᵣ-cong (convʳ ρ e₁) (convʳ ρ' e₂)) ≡̂ᵣ-const-·
-convʳ (ρ ·̂ᵣ ρ') () | just _  | nothing
-convʳ (ρ ·̂ᵣ ρ') () | nothing | _
-convʳ (ρ ⊔̂ᵣ ρ') q with valʳ? ρ in e₁ | valʳ? ρ' in e₂
-convʳ (ρ ⊔̂ᵣ ρ') refl | just c | just c' =
-  ≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (convʳ ρ e₁) (convʳ ρ' e₂)) ≡̂ᵣ-const-⊔
-convʳ (ρ ⊔̂ᵣ ρ') () | just _  | nothing
-convʳ (ρ ⊔̂ᵣ ρ') () | nothing | _
-convʳ ∣ ε ∣̂ᵉ q with valᵉ? ε in e
-convʳ ∣ ε ∣̂ᵉ refl | just c = ≡̂ᵣ-trans (≡̂ᵣ-map-cong (convᵉ ε e)) ≡̂ᵣ-map-const
-convʳ ∣ ε ∣̂ᵉ ()   | nothing
 
 -- The two outcomes of `closed`
 
@@ -557,7 +1113,7 @@ closedᵣ? ρ ρ' | nothing | _       = nothing
 -- Decisions at a strength
 
 data Strength : Set where
-  closed derive atomic : Strength
+  closed derive atomic full : Strength
 
 -- Membership of an ordering in a list
 
@@ -585,6 +1141,9 @@ decideₑ derive Q ε ε' = deriveₑ Q ε ε'
 decideₑ atomic Q ε ε' with memᵉ? (ε , ε') (ordₑ Q)
 ... | just m  = just (edgeₑ-sound (hyp m))
 ... | nothing = deriveₑ Q ε ε'
+decideₑ full Q ε ε' with closedₑ? ε ε'
+... | just (holdsₑ p) = just p
+... | _               = fullₑ Q ε ε'
 
 decideᵣ : ∀ {Θ} → Strength → (Q : Hyps Θ) → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
 decideᵣ closed Q ρ ρ' with closedᵣ? ρ ρ'
@@ -594,6 +1153,9 @@ decideᵣ derive Q ρ ρ' = deriveᵣ Q ρ ρ'
 decideᵣ atomic Q ρ ρ' with memʳ? (ρ , ρ') (ordᵣ Q)
 ... | just m  = just (edgeᵣ-sound (hyp m))
 ... | nothing = deriveᵣ Q ρ ρ'
+decideᵣ full Q ρ ρ' with closedᵣ? ρ ρ'
+... | just (holdsᵣ p) = just p
+... | _               = fullᵣ Q ρ ρ'
 
 ------------------------------------------------------------------------
 -- Refutation of `ρ ≾ u` by the zero-product law
@@ -951,12 +1513,41 @@ withChainsᵉ-⊩ l h m with ∈-++⁻ l m
   Transitive.chains-⊩ _≟ᵉ_ (λ ε → is-just (valᵉ? ε)) l ⊩≾̂ₑ-refl transₑ h m'
 
 ------------------------------------------------------------------------
--- The closed orderings of a hypothesis set decided
+-- The disjunctions left once those whose grade is below the unit at
+-- the strength `full` from a set are dropped
+
+record Followsᵈ {Θ : Scope} (H : Hyps Θ) (l : List (OVType Θ × RExp Θ)) : Set where
+  constructor followsᵈ
+  field
+    lᶠ   : List (OVType Θ × RExp Θ)
+    subᶠ : ∀ {p} → p ∈ lᶠ → p ∈ l
+    entᶠ : ∀ {A ρ} → (A , ρ) ∈ l → ((A , ρ) ∈ lᶠ) ⊎ (H ⊩ ρ ≾̂ᵣ ûᵣ)
+
+open Followsᵈ
+
+follows? : ∀ {Θ} → (H : Hyps Θ) → (l : List (OVType Θ × RExp Θ)) → Followsᵈ H l
+follows? H []            = followsᵈ [] (λ ()) (λ ())
+follows? H ((A , ρ) ∷ l) with follows? H l | decideᵣ full H ρ ûᵣ
+... | followsᵈ l' s e | just d  =
+      followsᵈ l' (λ m → there (s m)) (λ { (here refl) → inj₂ d ; (there m) → e m })
+... | followsᵈ l' s e | nothing =
+      followsᵈ ((A , ρ) ∷ l') (λ { (here refl) → here refl ; (there m) → there (s m) })
+               (λ { (here refl) → inj₁ (here refl)
+                  ; (there m) → [ (λ m' → inj₁ (there m')) , inj₂ ]′ (e m) })
+
+-- The orderings of two lists, as a set
+
+ordsᴴ : ∀ {Θ} → List (RExp Θ × RExp Θ) → List (EExp Θ × EExp Θ) → Hyps Θ
+ordsᴴ lʳ lᵉ = hyps [] [] lʳ lᵉ []
+
+------------------------------------------------------------------------
+-- The closed orderings of a hypothesis set decided, then the
+-- disjunctions that follow from the orderings left dropped
 
 checkClosed : ∀ {Θ} → Hyps Θ → Maybe (Hyps Θ)
 checkClosed Q with closedʳ (withChainsʳ (ordᵣ Q)) | closedᵉ (withChainsᵉ (ordₑ Q)) | closedᵈ (disj Q)
 ... | inj₂ kʳ | inj₂ kᵉ | inj₂ kᵈ =
-      just (hyps (ets Q) (subᵥ Q) (lʳ kʳ) (lᵉ kᵉ) (lᵈ kᵈ))
+      just (hyps (ets Q) (subᵥ Q) (lʳ kʳ) (lᵉ kᵉ) (lᶠ (follows? (ordsᴴ (lʳ kʳ) (lᵉ kᵉ)) (lᵈ kᵈ))))
 ... | _       | _       | _       = nothing
 
 -- What is left entails the set
@@ -965,8 +1556,17 @@ checkClosed-⊩ : ∀ {Θ} → (Q : Hyps Θ) → {Q₁ : Hyps Θ} → checkClose
 checkClosed-⊩ Q eq with closedʳ (withChainsʳ (ordᵣ Q)) | closedᵉ (withChainsᵉ (ordₑ Q)) | closedᵈ (disj Q)
 checkClosed-⊩ Q refl | inj₂ kʳ | inj₂ kᵉ | inj₂ kᵈ =
   mk⊩ᴴ (⊩ets r) (⊩subᵥ r) (λ m → entʳ kʳ idˢ (⊩ordᵣ r) (∈-++⁺ˡ m))
-       (λ m → entᵉ kᵉ idˢ (⊩ordₑ r) (∈-++⁺ˡ m)) (entᵈ kᵈ idˢ (⊩disj r))
-  where r = ⊩ᴴ-refl {Q = hyps (ets Q) (subᵥ Q) (lʳ kʳ) (lᵉ kᵉ) (lᵈ kᵈ)}
+       (λ m → entᵉ kᵉ idˢ (⊩ordₑ r) (∈-++⁺ˡ m)) (entᵈ kᵈ idˢ dsj)
+  where
+    H = ordsᴴ (lʳ kʳ) (lᵉ kᵉ)
+    F = follows? H (lᵈ kᵈ)
+    r = ⊩ᴴ-refl {Q = hyps (ets Q) (subᵥ Q) (lʳ kʳ) (lᵉ kᵉ) (lᶠ F)}
+
+    dsj : ∀ {A ρ} → (A , ρ) ∈ lᵈ kᵈ
+        → VarOK (hyps (ets Q) (subᵥ Q) (lʳ kʳ) (lᵉ kᵉ) (lᶠ F)) (A [ idˢ ]ᵛ) (ρ [ idˢ ]ʳ)
+    dsj m with entᶠ F m
+    ... | inj₁ m' = ⊩disj r m'
+    ... | inj₂ d  = ≾ᵘ-ok (⊩-substᵣ (mk⊩ᴴ (λ ()) (λ ()) (⊩ordᵣ r) (⊩ordₑ r) (λ ())) d)
 checkClosed-⊩ Q () | inj₁ _ | _      | _
 checkClosed-⊩ Q () | inj₂ _ | inj₁ _ | _
 checkClosed-⊩ Q () | inj₂ _ | inj₂ _ | inj₁ _
@@ -981,7 +1581,7 @@ checkClosed-⊆ Q refl h | inj₂ kʳ | inj₂ kᵉ | inj₂ kᵈ =
   mk⊩ᴴ (⊩ets h) (⊩subᵥ h)
        (λ m → withChainsʳ-⊩ (ordᵣ Q) (λ m' → ⊩-substᵣ h (edgeᵣ-sound (hyp m'))) (subʳ kʳ m))
        (λ m → withChainsᵉ-⊩ (ordₑ Q) (λ m' → ⊩-substₑ h (edgeₑ-sound (hyp m'))) (subᵉ kᵉ m))
-       (λ m → ⊩disj h (subᵈ kᵈ m))
+       (λ m → ⊩disj h (subᵈ kᵈ (subᶠ (follows? (ordsᴴ (lʳ kʳ) (lᵉ kᵉ)) (lᵈ kᵈ)) m)))
 checkClosed-⊆ Q () h | inj₁ _ | _      | _
 checkClosed-⊆ Q () h | inj₂ _ | inj₁ _ | _
 checkClosed-⊆ Q () h | inj₂ _ | inj₂ _ | inj₁ _
