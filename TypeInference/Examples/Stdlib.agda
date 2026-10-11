@@ -191,7 +191,10 @@ expected-pipe = ∀[ 2 , 0 , 1 ] ⊤ ⟹ (α₁ ⇒ ((α₁ ⇒ α₀ ‼ ε₀)
 -- Effects multiply in the order the calls run, `g`'s then `f`'s.
 -- The condition: `f` is an ordinary variable, not eternal, used after
 -- `g x` has run, so `var` asks that `g` take no time,
--- `∣ ε₁ ∣̂ᵉ ≾ uᵣ`.
+-- `∣ ε₁ ∣̂ᵉ ≾ uᵣ`. Where the unit is least and the grade system
+-- reflects the order at the unit, the condition forces `ε₁` to the
+-- unit: `g` is pure, and the effect is `f`'s (`expected-compose`);
+-- the grades where nothing goes stale report no condition.
 
 compose : RawC ∅ˢ 0
 compose = return (lam (return (lam (return (lam ((v₁ · v₀) ⨟ (v₃ · v₀)))))))
@@ -210,8 +213,8 @@ compose-typed =
 
 expected-compose : Scheme
 expected-compose =
-  ∀[ 3 , 0 , 2 ] ∣ ε₁ ∣̂ᵉ ≾ᵣ ûᵣ ⟹
-    ((α₁ ⇒ α₀ ‼ ε₀) ⇒ ((α₂ ⇒ α₁ ‼ ε₁) ⇒ (α₂ ⇒ α₀ ‼ (ε₁ ·̂ₑ ε₀)) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+  ∀[ 3 , 0 , 1 ] ⊤ ⟹
+    ((α₁ ⇒ α₀ ‼ ε₀) ⇒ ((α₂ ⇒ α₁ ‼ ûₑ) ⇒ (α₂ ⇒ α₀ ‼ ε₀) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
 
 ------------------------------------------------------------------
 -- let min x y = if x < y then x else y

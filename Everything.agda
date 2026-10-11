@@ -413,16 +413,18 @@ import TypeInference.SolverImpl.Normal
 import TypeInference.SolverImpl.Entail
 import TypeInference.SolverImpl.Simplify
 
----- Sets of variables, the bounds of an unknown, polarity-based elimination
----- of unknowns from a report, and normal forms of grade expressions
+---- Sets of variables, the value rules for an unknown, polarity-based
+---- elimination of unknowns from a report, and normal forms of grade
+---- expressions
 
 import TypeInference.SolverImpl.Vars
-import TypeInference.SolverImpl.Bounds
+import TypeInference.SolverImpl.Values
 import TypeInference.SolverImpl.Eliminate
 import TypeInference.SolverImpl.Product
 import TypeInference.SolverImpl.Canon
 
----- Reachability in a finite graph, by Warshall's algorithm
+---- Reachability in a finite graph, by Warshall's algorithm, and cycle
+---- elimination
 
 import TypeInference.SolverImpl.Reach
 

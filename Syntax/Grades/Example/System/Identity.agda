@@ -10,6 +10,8 @@
 
 module Syntax.Grades.Example.System.Identity where
 
+open import Data.Maybe.Base using (just)
+
 open import Syntax.Durations using (Duration)
 open import Syntax.Grades
 
@@ -28,7 +30,8 @@ idᵍ G = record
   ; map-of-dur   = refl
   }
 
--- a grade, read as both the effect grades and the resource grades
+-- a grade, read as both the effect grades and the resource grades; the
+-- identity reflects the order at the unit
 
 identityGradeSystem : {D : Duration} → Grade D → GradeSystem
 identityGradeSystem {D} G = record
@@ -36,4 +39,5 @@ identityGradeSystem {D} G = record
   ; RGrade = G
   ; EGrade = G
   ; ∣_∣ᵉ   = idᵍ G
+  ; reflects-u? = just (λ e p → p)
   }

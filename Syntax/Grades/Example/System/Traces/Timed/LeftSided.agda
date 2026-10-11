@@ -26,6 +26,7 @@
 -- least duration does not increase.                                  --
 ------------------------------------------------------------------------
 
+open import Data.Maybe.Base using (nothing)
 open import Data.Nat.Base using (ℕ; _≤_)
 open import Data.Nat.Properties using (≤-refl; ≤-trans; ≤-antisym)
 
@@ -144,4 +145,5 @@ tracesToLeftSidedIntervalsGradeSystem = record
   { RGrade = left-sided-intervals
   ; EGrade = left-sided
   ; ∣_∣ᵉ   = traces→left-sided-intervals
+  ; reflects-u? = nothing
   }

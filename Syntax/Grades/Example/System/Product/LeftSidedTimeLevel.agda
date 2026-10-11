@@ -28,6 +28,8 @@
 
 module Syntax.Grades.Example.System.Product.LeftSidedTimeLevel where
 
+open import Data.Maybe.Base using (nothing)
+
 open import Syntax.Durations using (idᴰ)
 open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades using (GradeSystem)
@@ -57,6 +59,7 @@ embargo = record
   ; RGrade = left-sided-intervals
   ; EGrade = left-sided-time×low-high
   ; ∣_∣ᵉ   = π₁ᵍ {G₁ = left-sided-intervals} {two-point-levels}
+  ; reflects-u? = nothing
   }
 
 -- taint check only
@@ -67,6 +70,7 @@ taint = record
   ; RGrade = two-point-levels
   ; EGrade = left-sided-time×low-high
   ; ∣_∣ᵉ   = π₂ᵍ {G₁ = left-sided-intervals} {two-point-levels}
+  ; reflects-u? = nothing
   }
 
 ------------------------------------------------------------------------

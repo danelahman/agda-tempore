@@ -19,6 +19,7 @@
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
+open import Data.Maybe.Base using (nothing)
 open import Data.Nat.Base using (ℕ; _≤_)
 
 open import Level using () renaming (zero to lzero)
@@ -160,4 +161,5 @@ leftSidedToAtLeastCountsGradeSystem = record
   { RGrade = at-least-counts n
   ; EGrade = left-sided
   ; ∣_∣ᵉ   = left-sided→at-least-counts
+  ; reflects-u? = nothing
   }

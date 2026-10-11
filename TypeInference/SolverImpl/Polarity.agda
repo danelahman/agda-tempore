@@ -143,10 +143,6 @@ polₑ-c i s (A ‼ ε) = polₑ-v i s A ∪ᴾ polₑ-e i s ε
 
 -- Orderings and var-rule disjunctions, listed
 
-polsᵣ-ord : ∀ {Ψ} → RVar Ψ → List (RExp Ψ × RExp Ψ) → Pol
-polsᵣ-ord i []             = noᴾ
-polsᵣ-ord i ((ρ , ρ') ∷ l) = polᵣ-r i ⁺ ρ ∪ᴾ polᵣ-r i ⁻ ρ' ∪ᴾ polsᵣ-ord i l
-
 polsᵣ-disj : ∀ {Ψ} → RVar Ψ → List (OVType Ψ × RExp Ψ) → Pol
 polsᵣ-disj i []            = noᴾ
 polsᵣ-disj i ((_ , ρ) ∷ l) = polᵣ-r i ⁺ ρ ∪ᴾ polsᵣ-disj i l
@@ -154,10 +150,6 @@ polsᵣ-disj i ((_ , ρ) ∷ l) = polᵣ-r i ⁺ ρ ∪ᴾ polsᵣ-disj i l
 polsₑ-ordᵣ : ∀ {Ψ} → EVar Ψ → List (RExp Ψ × RExp Ψ) → Pol
 polsₑ-ordᵣ i []             = noᴾ
 polsₑ-ordᵣ i ((ρ , ρ') ∷ l) = polₑ-r i ⁺ ρ ∪ᴾ polₑ-r i ⁻ ρ' ∪ᴾ polsₑ-ordᵣ i l
-
-polsₑ-ordₑ : ∀ {Ψ} → EVar Ψ → List (EExp Ψ × EExp Ψ) → Pol
-polsₑ-ordₑ i []             = noᴾ
-polsₑ-ordₑ i ((ε , ε') ∷ l) = polₑ-e i ⁺ ε ∪ᴾ polₑ-e i ⁻ ε' ∪ᴾ polsₑ-ordₑ i l
 
 polsₑ-disj : ∀ {Ψ} → EVar Ψ → List (OVType Ψ × RExp Ψ) → Pol
 polsₑ-disj i []            = noᴾ
@@ -177,16 +169,3 @@ polsₜ-sub : ∀ {n} → Fin n → List (Fin n × Fin n) → Pol
 polsₜ-sub α []            = noᴾ
 polsₜ-sub α ((β , γ) ∷ l) =
   atˢ ⁺ ⌊ α ≟ᶠ β ⌋ ∪ᴾ atˢ ⁻ ⌊ α ≟ᶠ γ ⌋ ∪ᴾ polsₜ-sub α l
-
--- Over a hypothesis set. Its eternality and subtyping atoms carry no
--- grade.
-
-polᵣᴴ : ∀ {Ψ} → Hyps Ψ → RVar Ψ → Pol
-polᵣᴴ Q i = polsᵣ-ord i (ordᵣ Q) ∪ᴾ polsᵣ-disj i (disj Q)
-
-polₑᴴ : ∀ {Ψ} → Hyps Ψ → EVar Ψ → Pol
-polₑᴴ Q i = polsₑ-ordᵣ i (ordᵣ Q) ∪ᴾ polsₑ-ordₑ i (ordₑ Q)
-              ∪ᴾ polsₑ-disj i (disj Q)
-
-polₜᴴ : ∀ {Ψ} → Hyps Ψ → TyVar Ψ → Pol
-polₜᴴ Q α = polsₜ-sub α (subᵥ Q)

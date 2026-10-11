@@ -33,15 +33,18 @@
 --   * The report (`report`, `Reported`): `simplify`            --
 --     (`simplify-⊩`/`-⊨`), which normalises the set, splits    --
 --     each join on a left side and drops each var-rule         --
---     disjunction entailed by another; polarity-based          --
---     elimination of unknowns (`Elim`), the polarities read    --
---     along the variance table (`polᵛ`, `Lift`), with cycle    --
---     elimination on the type variables of subtyping cycles    --
---     (`equateᵗ`); normal forms again (`canonElim`); `trim`    --
---     (`trimElim`); strengthening (`Strengthened`). The        --
---     unknowns of the image of the caller's variables and      --
---     those of the deferred conditions are neither eliminated  --
---     nor dropped (`fix`, `instᴿ`).                            --
+--     disjunction entailed by another; elimination of unknowns --
+--     (`Elim`) by the value rules of `Values` in the           --
+--     prototype's order: equating, lowering and raising under  --
+--     a polarity oracle, the polarities read along the         --
+--     variance table (`polᵛ`, `Lift`), the forced unit         --
+--     (`unitᵉ`, `unitʳ`), cycle elimination on the type        --
+--     variables of subtyping cycles (`collapseᵗ`, by `Reach`'s --
+--     `Collapse`), and lowering a type variable; normal forms  --
+--     again (`canonElim`); `trim` (`trimElim`); strengthening  --
+--     (`Strengthened`). The unknowns of the image of the       --
+--     caller's variables and those of the deferred conditions  --
+--     are neither eliminated nor dropped (`fix`, `instᴿ`).     --
 --                                                              --
 -- Entailed orderings are decided by one module, `Entail`, at   --
 -- explicit strengths: `closed` (variable-free sides, the       --
@@ -53,7 +56,7 @@
 -- the embedding along the chains between atoms of the whole    --
 -- hypothesis graph with its factor edges; at no hypotheses in  --
 -- the driver's disjunctions, localisation's settled orderings  --
--- and raise, and `Bounds`; at the orderings of the scope in    --
+-- and raise, and `Values`; at the orderings of the scope in    --
 -- localisation's settled disjunctions and the split's          --
 -- discharge; at the residual's orderings in `retry`; at the    --
 -- orderings left by the closed check for its disjunctions; in  --
@@ -146,9 +149,9 @@ open import TypeInference.SolverImpl.RigidFree S opEnum using (solve-rigidFree)
 open import TypeInference.SolverImpl.Simplify  S
   using (simplify; simplify-⊩; simplify-⊨; trimElim)
 open import TypeInference.SolverImpl.Eliminate S
-  using (Elim; Elimᶠ; eliminate; _⨾ᴱ_)
+  using (Elim; Elimᶠ; eliminate; _⨾ᴱ_; canonElim)
 open import TypeInference.SolverImpl.Canon     S
-  using (canonElim; canonₑ; canonᵣ; canonₑ-≡; canonᵣ-≡)
+  using (canonₑ; canonᵣ; canonₑ-≡; canonᵣ-≡)
 open import TypeInference.SolverImpl.Vars       S
   using (Vars; _∪ᵛ_; ⊆-refl; ⊆-∪ˡ; ⊆-∪ʳ; fvˢ; Fixes; fixes-id; fixes-⨟)
 open import TypeInference.SolverImpl.Strengthen S

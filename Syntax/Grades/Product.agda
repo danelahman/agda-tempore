@@ -196,18 +196,20 @@ record _→ˢ_ (S₁ S₂ : GradeSystem) : Set₁ where
            → map ∣ S₂ ∣ᵉ (map mapᴱ e) ≡ map mapᴿ (map ∣ S₁ ∣ᵉ e)
 
 ------------------------------------------------------------------------
--- The product of two grade systems over the same durations
+-- The product of two grade systems over the same durations; it reflects
+-- the order at the unit where both components do
 
 infixr 2 _×ˢ_⟨_⟩
 
 _×ˢ_⟨_⟩ : (S₁ S₂ : GradeSystem)
         → GradeSystem.Dur S₁ ≡ GradeSystem.Dur S₂ → GradeSystem
-record { Dur = D ; RGrade = R₁ ; EGrade = E₁ ; ∣_∣ᵉ = p₁ }
-  ×ˢ record { RGrade = R₂ ; EGrade = E₂ ; ∣_∣ᵉ = p₂ } ⟨ refl ⟩ = record
+record { Dur = D ; RGrade = R₁ ; EGrade = E₁ ; ∣_∣ᵉ = p₁ ; reflects-u? = r₁ }
+  ×ˢ record { RGrade = R₂ ; EGrade = E₂ ; ∣_∣ᵉ = p₂ ; reflects-u? = r₂ } ⟨ refl ⟩ = record
   { Dur    = D
   ; RGrade = R₁ ×ᵍ R₂
   ; EGrade = E₁ ×ᵍ E₂
   ; ∣_∣ᵉ   = p₁ ×ᵐ p₂
+  ; reflects-u? = zipWith (λ f g (e₁ , e₂) (q₁ , q₂) → f e₁ q₁ , g e₂ q₂) r₁ r₂
   }
 
 -- its projections are maps of grade systems, the squares commuting on

@@ -16,6 +16,7 @@
 module Syntax.Grades.Example.System.IntervalsToLeftSidedIntervals where
 
 open import Data.Product
+open import Data.Maybe.Base using (nothing)
 
 open import Syntax.Grades
 open import Syntax.Grades.Example.Time.LeftSided
@@ -39,4 +40,5 @@ twoSidedIntervalsToLeftSidedIntervalsGradeSystem = record
   { RGrade = left-sided-intervals
   ; EGrade = two-sided-intervals-with-∞
   ; ∣_∣ᵉ   = tsi→lsi
+  ; reflects-u? = nothing
   }

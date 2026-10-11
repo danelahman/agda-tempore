@@ -26,6 +26,7 @@
 -- projection preserves `_·_` at them.                                --
 ------------------------------------------------------------------------
 
+open import Data.Maybe.Base using (nothing)
 open import Data.Nat.Base using (ℕ; _≤_; _<_)
 open import Data.Nat.Properties using (≤-trans; ≤-antisym; ⊔-identityʳ)
 
@@ -162,4 +163,5 @@ tracesToRightSidedIntervalsGradeSystem = record
   { RGrade = right-sided-intervals
   ; EGrade = right-sided
   ; ∣_∣ᵉ   = traces→right-sided-intervals
+  ; reflects-u? = nothing
   }

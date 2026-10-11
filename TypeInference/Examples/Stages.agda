@@ -330,8 +330,9 @@ module WithTop where
 -- leaves `Rc`, `j · w ≾ j`, which the close defers. Without the
 -- collapse, lowering `m := t ⊔ j` (or `t := m ⊔ m · e₂`) and
 -- `e₂ := w` leaves `Rm` (or `Rt`), with a self-referential lower
--- bound `t · w ≾ t` (or `m · w ≾ m`) that no step moves, and the
--- close is stuck. Checked at both sides of time.
+-- bound `t · w ≾ t` (or `m · w ≾ m`), and the close is stuck. At
+-- right-sided time no step moves the bound; at left-sided time it holds
+-- at every instance and bounds nothing. Checked at both sides of time.
 
 module Cycle (S : LanguageSpec) (opEnum : OpEnum S) where
 
@@ -387,15 +388,18 @@ module Cycle (S : LanguageSpec) (opEnum : OpEnum S) where
   blocked : Fin (nE Φ) → Resid Φ → 𝔹
   blocked k R' = not (is-just (stepᵉ k R')) ∧ not (is-just (Find.raise? O R' (suc (suc (suc zero)))))
 
-  -- with the collapse the close goes through; without it, `t` in `Rm`
-  -- and `m` in `Rt` are stuck, and so is the close
+  -- with the collapse the close goes through; without it, the close is
+  -- stuck, and so are `t` in `Rm` and `m` in `Rt` where their
+  -- self-referential bounds are not valid
 
   with-collapse : 𝔹
   with-collapse = collapses ∧ closes Rc
 
   without-collapse : 𝔹
-  without-collapse = blocked (suc zero) Rm ∧ not (closes Rm)
-                   ∧ blocked (suc (suc zero)) Rt ∧ not (closes Rt)
+  without-collapse = not (closes Rm) ∧ not (closes Rt)
+
+  blocked-without : 𝔹
+  blocked-without = blocked (suc zero) Rm ∧ blocked (suc (suc zero)) Rt
 
 module Cycle-RightSided where
   open import TypeInference.Examples.Specs using (module Time-RightSided)
@@ -407,6 +411,13 @@ module Cycle-RightSided where
   without-collapse-stuck : without-collapse ≡ true
   without-collapse-stuck = refl
 
+  without-collapse-blocked : blocked-without ≡ true
+  without-collapse-blocked = refl
+
+-- At left-sided time `t · w ≾ t` and `m · w ≾ m` hold at every
+-- instance and bound nothing, so `t` and `m` are lowered; the close is
+-- stuck all the same
+
 module Cycle-LeftSided where
   open import TypeInference.Examples.Specs using (module Time-LeftSided)
   open Cycle Time-LeftSided.spec Time-LeftSided.enum
@@ -416,3 +427,6 @@ module Cycle-LeftSided where
 
   without-collapse-stuck : without-collapse ≡ true
   without-collapse-stuck = refl
+
+  without-collapse-unblocked : blocked-without ≡ false
+  without-collapse-unblocked = refl

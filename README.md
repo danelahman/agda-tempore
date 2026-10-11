@@ -70,8 +70,9 @@ operations.
   monoid morphism `of-dur` from the durations `D`), grade morphisms
   `GradeMorphism h` along a morphism `h` of durations and `_→ᵍ_` along the
   identity, and a `GradeSystem` (durations `Dur`, effect grades `EGrade`,
-  resource grades `RGrade`, and a grade morphism `∣_∣ᵉ` from the former to
-  the latter), with the interface `GradeSystemInterface`.
+  resource grades `RGrade`, a grade morphism `∣_∣ᵉ` from the former to the
+  latter, and optionally `reflects-u?`, that `∣ e ∣ ≾ u` gives `e ≾ u`), with
+  the interface `GradeSystemInterface`.
 
 - A `Grade` has a greatest element `⊤` and **binary joins** `_⊔_`, over which
   multiplication distributes: the fields state `ρ · (σ ⊔ τ) ≾ (ρ · σ) ⊔ (ρ · τ)`
@@ -477,8 +478,9 @@ type inference.
     unknowns is collapsed to one unknown in a single step (`collapse`,
     `equal-⊩`).
   - `Reach.agda`: the reflexive–transitive closure of a finite graph by
-    Warshall's algorithm, each entry a chain of edges (`reach`, `rep`); sound
-    by construction, completeness not proved.
+    Warshall's algorithm, each entry a chain of edges (`reach`, `rep`), and
+    cycle elimination over a policy of preferred and movable vertices
+    (`Collapse`, `equal`); sound by construction, completeness not proved.
   - `Deferred.agda`: deferred rigid conditions `∀ᵉ j₁ … jₖ. O`, retried after
     each close (`retry-princ`, `retry-fail`) and read back as obligations.
   - `Entail.agda`: entailment of grade orderings from a hypothesis set, at
@@ -506,18 +508,24 @@ type inference.
   - `Simplify.agda`: settles var-rule disjunctions, drops a disjunction
     entailed by another, and prunes entailed atoms of a report (`simplify-⊩`,
     `simplify-⊨`).
-  - `Bounds.agda`: the value rules shared by `Localise` and `Eliminate`, on the
-    orderings of one grade sort: lowering to the join of the lower bounds (or
-    to a least element), raising to an upper bound decided below the others or
-    to the top, and an equal value. Each keeps every ordering, read at an
-    instance or by entailment (`lower-keeps`, `raise-keeps`, `raise-free`,
-    `equal-keeps`); lowering is principal (`src`, `joinₑ-lub⊩`).
-  - `Eliminate.agda`: polarity-based elimination of unknowns (Pottier, ICFP
-    1996), by the rules of `Bounds` under a polarity condition on the reported
-    type; replacement of an unknown by an expression that the hypotheses
-    equate with it; and cycle elimination, sending a type variable on a cycle
-    of subtyping atoms to the representative of its strongly connected
-    component (`equateᵗ?`, by `Reach`). Each step is an `Elim`.
+  - `Values.agda`: the value rules shared by `Localise` and `Eliminate`, over
+    a sort (the expressions of one grade sort read for an unknown) and an
+    oracle (whether the unknown may decrease or increase): lowering to the
+    join of the lower bounds, raising to the first upper bound that caps the
+    others, the least element, the top, the forced unit and equating, each a
+    proposition with its decider. Lowering, the least element, the forced
+    unit and equating are principal; raising and the top keep every
+    instance. Each value keeps every ordering, read at an instance or by
+    entailment (`lower-keeps`, `raise-keeps`, `raise-free`, `equal-keeps`);
+    an ordering valid at every instance bounds nothing.
+  - `Eliminate.agda`: elimination of unknowns from a report in the
+    prototype's order (Pottier, ICFP 1996): equating, lowering and raising by
+    the rules of `Values` under a polarity oracle, the forced unit (where the
+    unit is least; through the image `∣ε∣` where the grade system reflects the
+    order at the unit, `reflects-u?`), cycle elimination sending the type
+    variables of each strongly connected component of the subtyping atoms to
+    its representative (`collapseᵗ`, by `Reach`'s `Collapse`), and lowering a
+    type variable. Each step is an `Elim`.
   - `Strengthen.agda`: a report over the variables occurring in it
     (`Strengthened`); `Vars.agda`: sets of variables.
   - `Resid.agda`, `State.agda`, `Polarity.agda`: residual constraints and

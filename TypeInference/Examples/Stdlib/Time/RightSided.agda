@@ -2,7 +2,7 @@
 -- The standard library at right-sided intervals                  --
 --                                                                --
 -- "At most `n` time steps": the unit is least and multiplication --
--- commutes. `compose` reports its effect as a sorted product.    --
+-- commutes. Every scheme is the shared one.                      --
 --------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -42,14 +42,7 @@ absurd′-reported = refl
 pipe-reported : schemeOf (infer [] pipe) ≡ just expected-pipe
 pipe-reported = refl
 
--- `·-comm?`: the product of the effects is sorted, `ε₀ ·̂ₑ ε₁`
-
-expected-compose-comm : Scheme
-expected-compose-comm =
-  ∀[ 3 , 0 , 2 ] ∣ ε₁ ∣̂ᵉ ≾ᵣ ûᵣ ⟹
-    ((α₁ ⇒ α₀ ‼ ε₀) ⇒ ((α₂ ⇒ α₁ ‼ ε₁) ⇒ (α₂ ⇒ α₀ ‼ (ε₀ ·̂ₑ ε₁)) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
-
-compose-reported : schemeOf (infer [] compose) ≡ just expected-compose-comm
+compose-reported : schemeOf (infer [] compose) ≡ just expected-compose
 compose-reported = refl
 
 min-reported : schemeOf (infer [] min) ≡ just expected-min

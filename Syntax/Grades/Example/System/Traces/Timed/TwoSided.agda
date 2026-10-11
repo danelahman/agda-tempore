@@ -26,6 +26,7 @@
 -- below; neither is absorbing.                                       --
 ------------------------------------------------------------------------
 
+open import Data.Maybe.Base using (nothing)
 open import Data.Nat.Base using (ℕ; _≤_; _<_)
 open import Data.Nat.Properties using (≤-refl; ≤-trans; ⊔-identityʳ)
 
@@ -202,4 +203,5 @@ tracesToTwoSidedIntervalsGradeSystem = record
   { RGrade = two-sided-intervals-with-∞
   ; EGrade = two-sided
   ; ∣_∣ᵉ   = two-sided-traces→intervals
+  ; reflects-u? = nothing
   }

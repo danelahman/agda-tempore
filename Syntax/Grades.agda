@@ -199,6 +199,12 @@ record GradeSystem : Set₂ where
     EGrade : Grade Dur
     ∣_∣ᵉ : EGrade →ᵍ RGrade
 
+    -- whether `∣_∣ᵉ` reflects the order at the unit, `∣ e ∣ ≾ u` giving
+    -- `e ≾ u`, where the system declares it
+    reflects-u? : Maybe ((e : Carrier EGrade)
+                         → _≾_ RGrade (GradeMorphism.map ∣_∣ᵉ e) (u RGrade)
+                         → _≾_ EGrade e (u EGrade))
+
 
 -- Helpful module exporting effect and resource grade fields with different names
 

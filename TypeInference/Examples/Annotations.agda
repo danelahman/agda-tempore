@@ -111,7 +111,7 @@ expected-id-unit = ∀[ 0 , 0 , 0 ] ⊤ ⟹ U⇒U ‼ ûₑ
 -- The standard library's `compose f g x = f (g x)`, with `g`
 -- annotated where it is applied as taking no time. `f` is used
 -- after `g x` has run, so without the annotation `var` asks for
--- `∣ ε₁ ∣ ≾ uᵣ` (`expected-compose` in `Stdlib`); with it, `g`'s
+-- `∣ ε₁ ∣ ≾ uᵣ` (`compose` in `Stdlib`); with it, `g`'s
 -- effect is the unit and nothing is asked. `g`'s argument and result
 -- are `Unit`, the annotation being closed; `f`'s type stays
 -- polymorphic, and the product `ûₑ ·̂ₑ ε₀` is reported as `ε₀`.

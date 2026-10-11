@@ -20,8 +20,7 @@
 --                                                              --
 -- A hypothesis set and its canonical form entail each other;   --
 -- the canonical form is the set stored. A type is convertible  --
--- to its canonical form, and `canonElim` is that fact as an    --
--- elimination step.                                            --
+-- to its canonical form.                                       --
 --                                                              --
 -- Contract. An expression is convertible to its canonical form --
 -- (`canonᵣ-≡`, `canonₑ-≡`; a product with the top to the top,  --
@@ -65,11 +64,9 @@ open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
 open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
-open import TypeInference.OpenSyntax.Instances S using (⊩ᴴ-⊨ᴴ)
 
 open import TypeInference.SolverImpl.Normal    S
 open import TypeInference.SolverImpl.Entail    S using (decideᵣ; decideₑ; derive)
-open import TypeInference.SolverImpl.Eliminate S using (Elim; mkElim)
 
 -- Grouping with pruning, two alternatives being compared by the
 -- decider at the empty hypothesis set, whose verdict convertibility
@@ -246,6 +243,11 @@ record Pieces {Ψ} {X : Set} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X 
     pback : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → (∀ {b} → b ∈ parts → P Q δ b) → P Q δ a
     pfwd  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → P Q δ a → ∀ {b} → b ∈ parts → P Q δ b
 
+-- An atom left whole
+
+whole : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set} → (a : X) → Pieces P a
+whole a = pieces (a ∷ []) (λ δ k → k (here refl)) (λ δ h → λ { (here refl) → h })
+
 record Split {Ψ} {X : Set} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) (l : List X) : Set where
   constructor split
   field
@@ -255,17 +257,25 @@ record Split {Ψ} {X : Set} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X �
     fwd  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
          → (∀ {a} → a ∈ l → P Q δ a) → ∀ {b} → b ∈ out → P Q δ b
 
+consˢ : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set} {a : X} {l : List X}
+      → Pieces P a → Split P l → Split P (a ∷ l)
+consˢ (pieces ps pb pf) (split o bk fw) =
+  split (ps ++ o)
+        (λ δ k → λ { (here refl) → pb δ (λ m → k (∈-++⁺ˡ m))
+                   ; (there m)   → bk δ (λ m' → k (∈-++⁺ʳ ps m')) m })
+        (λ δ k m → [ pf δ (k (here refl)) , fw δ (λ m' → k (there m')) ]′ (∈-++⁻ ps m))
+
 splits : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set}
        → ((a : X) → Pieces P a) → (l : List X) → Split P l
 splits f []      = split [] (λ δ k → λ ()) (λ δ k → λ ())
-splits {P = P} f (a ∷ l) = go (f a) (splits f l)
-  where
-    go : Pieces P a → Split P l → Split P (a ∷ l)
-    go (pieces ps pb pf) (split o bk fw) =
-      split (ps ++ o)
-            (λ δ k → λ { (here refl) → pb δ (λ m → k (∈-++⁺ˡ m))
-                       ; (there m)   → bk δ (λ m' → k (∈-++⁺ʳ ps m')) m })
-            (λ δ k m → [ pf δ (k (here refl)) , fw δ (λ m' → k (there m')) ]′ (∈-++⁻ ps m))
+splits f (a ∷ l) = consˢ (f a) (splits f l)
+
+-- The images of the entries under `g`, each split
+
+splitsBy : ∀ {Ψ} {X Y : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set}
+         → (g : Y → X) → ((a : Y) → Pieces P (g a)) → (l : List Y) → Split P (map g l)
+splitsBy g f []      = split [] (λ δ k → λ ()) (λ δ k → λ ())
+splitsBy g f (a ∷ l) = consˢ (f a) (splitsBy g f l)
 
 -- The alternatives of a sum, each below the same right side
 
@@ -376,13 +386,3 @@ canonᴴ-⊩⁻ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ord
     dsj m with ∈-map⁻ (mapᵈ canonᵛ canonᵣ) m
     ... | (A₀ , ρ₀) , m₀ , refl =
           hyp-ok m₀ (≡̂ᵛ-sym (canonᵛ-≡̂ A₀)) (eqᵣ (≡̂ᵣ-sym (canonᵣ-≡ ρ₀)))
-
--- Normalising a whole report, as an elimination step that instantiates
--- no unknown
-
-canonElim : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → Elim C Q
-canonElim C Q =
-  mkElim (canonᶜ C) (canonᴴ Q) idˢ
-         (subst (canonᶜ C ≡̂ᶜ_) (sym ([id]ᶜ C)) (≡̂ᶜ-sym (canonᶜ-≡̂ C)))
-         (canonᴴ-⊩ Q) (⊩ᴴ-⊨ᴴ (canonᴴ-⊩⁻ Q))
-         (λ δ h → <:̂ᶜ-subst h (≡̂ᶜ-<:̂ (≡̂ᶜ-sym (canonᶜ-≡̂ C))))

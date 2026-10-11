@@ -17,6 +17,7 @@
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
+open import Data.Maybe.Base using (nothing)
 open import Data.Nat.Base using (ℕ)
 
 open import Level using () renaming (zero to lzero)
@@ -171,4 +172,5 @@ subsetsToAtLeastCountsGradeSystem = record
   { RGrade = at-least-counts-with-⊤ n
   ; EGrade = right-sided
   ; ∣_∣ᵉ   = subsets→at-least-counts-with-⊤
+  ; reflects-u? = nothing
   }
