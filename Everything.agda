@@ -442,6 +442,11 @@ import TypeInference.SolverImpl.RigidFree
 
 import TypeInference.SolverImpl.Expand
 
+---- The closure of the one-step localisation relation: a declarative
+---- specification of localisation, not used by the solver
+
+import TypeInference.SolverImpl.Localise.Closure
+
 ---- Principality and refutation for the driver, strengthening of the
 ---- report, and the solver and inference
 

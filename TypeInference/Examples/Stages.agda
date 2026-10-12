@@ -342,8 +342,7 @@ module Cycle (S : LanguageSpec) (opEnum : OpEnum S) where
   open import TypeInference.OpenSyntax.Grades   S
   open import TypeInference.OpenSyntax.Subst    S using (Subst; wkˢᵉ; _⨟ˢ_; sE)
   open import TypeInference.SolverImpl.Resid    S using (Resid; resid)
-  open import TypeInference.SolverImpl.Localise S
-    using (collapse; Collapse; stepᵉ; module Find; allOpen; oᵉ; oʳ)
+  open import TypeInference.SolverImpl.Localise S using (collapse; Collapse; stepᵉ; module Find)
   open import TypeInference.SolverImpl.Solve    S opEnum using (splitᴿ)
 
   Θ Φ : Scope
@@ -374,9 +373,9 @@ module Cycle (S : LanguageSpec) (opEnum : OpEnum S) where
   -- the collapse sends `m` and `t` to `j`
 
   collapses : 𝔹
-  collapses = Collapse.cmove (collapse O (allOpen O) R)
-            ∧ does (sE (Collapse.cσ (collapse O (allOpen O) R)) (suc (suc zero)) ≟ᵉ j)
-            ∧ does (sE (Collapse.cσ (collapse O (allOpen O) R)) (suc zero) ≟ᵉ j)
+  collapses = Collapse.cmove (collapse O R)
+            ∧ does (sE (Collapse.cσ (collapse O R)) (suc (suc zero)) ≟ᵉ j)
+            ∧ does (sE (Collapse.cσ (collapse O R)) (suc zero) ≟ᵉ j)
 
   -- whether the close is not stuck
 
@@ -390,8 +389,7 @@ module Cycle (S : LanguageSpec) (opEnum : OpEnum S) where
   -- whether an unknown is stuck: no value step, and no set raised
 
   blocked : Fin (nE Φ) → Resid Φ → 𝔹
-  blocked k R' = not (is-just (stepᵉ k R'))
-               ∧ not (is-just (Find.raise? O R' (suc (suc (suc zero))) (oᵉ (allOpen O)) (oʳ (allOpen O))))
+  blocked k R' = not (is-just (stepᵉ k R')) ∧ not (is-just (Find.raise? O R' (suc (suc (suc zero)))))
 
   -- with the collapse the close goes through; without it, the close is
   -- stuck, and so are `t` in `Rm` and `m` in `Rt` where their
