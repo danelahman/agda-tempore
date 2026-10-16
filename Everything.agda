@@ -447,6 +447,10 @@ import TypeInference.SolverImpl.Expand
 
 import TypeInference.SolverImpl.Localise.Closure
 
+---- The search of a solution for a refutation and for a closed instance
+
+import TypeInference.SolverImpl.Search
+
 ---- Principality and refutation for the driver, strengthening of the
 ---- report, and the solver and inference
 

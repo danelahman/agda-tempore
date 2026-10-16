@@ -37,7 +37,9 @@
 -- zero-product law, and `checkClosed` decides the closed atoms   --
 -- of `Q` and the closed orderings joined by a chain of `hyp`     --
 -- edges, then drops each disjunction whose grade is below the    --
--- unit at `full` from the orderings left.                        --
+-- unit at `full` from the orderings left. `failingChain` follows --
+-- each variable-free vertex along the whole graph, factor edges  --
+-- included, to a variable-free vertex it is not below.           --
 --                                                                --
 -- Contract. Every edge holds where `Q` does (`edgeₑ-sound`,      --
 -- `edgeᵣ-sound`, with `aboveₑ-sound` and `keepₑ-sound`; at an    --
@@ -50,7 +52,7 @@
 -- satisfiable set (`refute-⊩`). `checkClosed Q` entails `Q`      --
 -- (`checkClosed-⊩`), is entailed wherever `Q` is                 --
 -- (`checkClosed-⊆`), and a failure leaves `Q` unsatisfiable      --
--- (`checkClosed-fail`).                                          --
+-- (`checkClosed-fail`); so does a failing chain, by its type.    --
 --------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)
@@ -1596,3 +1598,50 @@ checkClosed-fail Q eq (δ , h ∷ []) with closedʳ (withChainsʳ (ordᵣ Q)) | 
       falseᵉ f δ (withChainsᵉ-⊩ (ordₑ Q) (λ m → ⊩-substₑ h (edgeₑ-sound (hyp m))))
 ... | inj₂ _ | inj₂ _ | inj₁ f = falseᵈ f δ (⊩disj h)
 checkClosed-fail Q () (δ , h ∷ []) | inj₂ _ | inj₂ _ | inj₂ _
+
+------------------------------------------------------------------------
+-- Failing chains of the whole graph
+--
+-- A chain of the whole graph, factor edges included, from a
+-- variable-free vertex to a variable-free vertex it is not below at
+-- the strength `closed` leaves `Q` unsatisfiable: the chain is a
+-- derivation, and at a closed instance it compares the two values.
+-- Each source of an edge with a value is followed along the graph.
+
+-- The first vertex reached that the source is not below
+
+failsAlongₑ : ∀ {Θ} {Q : Hyps Θ} {ε : EExp Θ}
+            → List (Σ[ ε' ∈ EExp Θ ] Star (Edgeₑ Q) ε ε') → Maybe (¬ Satisfiable Q [])
+failsAlongₑ []                       = nothing
+failsAlongₑ {ε = ε} ((ε' , ch) ∷ l) with closedₑ? ε ε'
+... | just (failsₑ n) = just (λ { (δ , h ∷ []) → n δ (⊩-substₑ h (chainₑ-sound ch)) })
+... | _               = failsAlongₑ l
+
+failsAlongᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ}
+            → List (Σ[ ρ' ∈ RExp Θ ] Star (Edgeᵣ Q) ρ ρ') → Maybe (¬ Satisfiable Q [])
+failsAlongᵣ []                       = nothing
+failsAlongᵣ {ρ = ρ} ((ρ' , ch) ∷ l) with closedᵣ? ρ ρ'
+... | just (failsᵣ n) = just (λ { (δ , h ∷ []) → n δ (⊩-substᵣ h (chainᵣ-sound ch)) })
+... | _               = failsAlongᵣ l
+
+-- The sources with a value, each followed along the graph
+
+failingₑ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeₑ Q) → List (EExp Θ) → Maybe (¬ Satisfiable Q [])
+failingₑ g []       = nothing
+failingₑ g (ε ∷ εs) with valᵉ? ε
+... | just _  = failsAlongₑ (reachesₑ g ε) <∣> failingₑ g εs
+... | nothing = failingₑ g εs
+
+failingᵣ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeᵣ Q) → List (RExp Θ) → Maybe (¬ Satisfiable Q [])
+failingᵣ g []       = nothing
+failingᵣ g (ρ ∷ ρs) with valʳ? ρ
+... | just _  = failsAlongᵣ (reachesᵣ g ρ) <∣> failingᵣ g ρs
+... | nothing = failingᵣ g ρs
+
+failingChain : ∀ {Θ} → (Q : Hyps Θ) → Maybe (¬ Satisfiable Q [])
+failingChain Q =
+  failingₑ gₑ (firsts _≟ᵉ_ (λ ε → ε) [] (map (λ { (ε , _ , _) → ε }) gₑ))
+  <∣> failingᵣ gᵣ (firsts _≟ʳ_ (λ ρ → ρ) [] (map (λ { (ρ , _ , _) → ρ }) gᵣ))
+  where
+    gₑ = fullGraphₑ Q
+    gᵣ = fullGraphᵣ Q

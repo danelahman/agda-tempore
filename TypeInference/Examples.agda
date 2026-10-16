@@ -43,6 +43,11 @@
 -- Set 8 consists of boxes claimed after delays of rational     --
 -- durations, and a box grade inferred over them, at dense      --
 -- left- and right-sided time.                                  --
+--                                                              --
+-- Set 9 consists of programs whose conditions the solver       --
+-- leaves open: the search refutes some at definitions, and the --
+-- check of a run establishes, refutes or leaves unestablished  --
+-- the others, at left- and right-sided time.                   --
 ------------------------------------------------------------------
 
 module TypeInference.Examples where
@@ -87,3 +92,7 @@ import TypeInference.Examples.Durations.All
 -- Solver stages on hand-written constraints
 
 import TypeInference.Examples.Stages.All
+
+-- Satisfiability at definitions and establishment at runs
+
+import TypeInference.Examples.Runs.All

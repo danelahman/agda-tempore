@@ -25,6 +25,9 @@ examples:
 #     disjunction pruning, absorption by the top, multiset
 #     comparison of products, chained closed orderings, cycle
 #     collapse (Canon, Simplify, Entail, Localise)       -> stages
+#   the search for a refutation and establishment: retry,
+#     the closed check with failing chains, candidates
+#     (Search, Entail, Localise, Solve)                  -> runs
 
 examples-stdlib:
 	agda TypeInference/Examples/Stdlib/All.agda
@@ -49,6 +52,9 @@ examples-stages:
 
 examples-durations:
 	agda TypeInference/Examples/Durations/All.agda
+
+examples-runs:
+	agda TypeInference/Examples/Runs/All.agda
 
 clean:
 	git clean -fx

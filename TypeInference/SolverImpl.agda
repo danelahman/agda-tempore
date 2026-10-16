@@ -30,7 +30,7 @@
 --     the closed orderings joined by chains of hypotheses and  --
 --     drops the disjunctions that follow from the orderings    --
 --     left (`checkClosed-⊩`/`-⊆`/`-fail`).                     --
---   * The report (`report`, `Reported`): `simplify`            --
+--   * The report (`reportSolved`, `Reported`): `simplify`      --
 --     (`simplify-⊩`/`-⊨`), which normalises the set, splits    --
 --     each join on a left side and drops each var-rule         --
 --     disjunction entailed by another; elimination of unknowns --
@@ -72,12 +72,18 @@
 -- (`runSolver-sound`, `runSolver-principal`,                   --
 -- `runSolver-complete`) and is not stuck on a constraint       --
 -- without rigid binders (`runSolver-rigidFree`). `infer` is    --
--- the reference entry point: `scheme` is a principal type      --
--- scheme whose conditions are satisfiable exactly              --
--- when the term is typable (`infer-typed`); a refutation means --
--- that the term is untypable (`infer-untypable`,               --
--- `infer-complete`); a handler-free term is never stuck        --
--- (`infer-handlerFree`); `stuck` carries no claim.             --
+-- the reference entry point: the solver's answer is searched   --
+-- for a refutation (`Search.search`); `scheme` is a principal  --
+-- type scheme whose conditions are satisfiable exactly when    --
+-- the term is typable (`infer-typed`); a refutation, by the    --
+-- solver or the search, means that the term is untypable       --
+-- (`infer-untypable`, `infer-complete`); a handler-free term   --
+-- is never stuck (`infer-handlerFree`); `stuck` carries no     --
+-- claim. `check` also searches for a closed instance           --
+-- (`Search.establish`): an established term is typable         --
+-- (`check-established`), an untypable one is not               --
+-- (`check-untypable`), and an unestablished one carries no     --
+-- claim.                                                       --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
@@ -92,7 +98,7 @@ open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (inj₁; inj₂)
 
 open import Relation.Nullary using (¬_)
-open import Function.Bundles using (_⇔_)
+open import Function.Bundles using (_⇔_; Equivalence)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -120,7 +126,7 @@ open import TypeInference.OpenSyntax.Contexts  S hiding (_∷_)
 open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
 open import TypeInference.OpenSyntax.Instances S
-  using (Obligs; Satisfiable; _⊨ᴴ_; _⊩ᴼˢ_[_]; ⊩ᴼˢ-≐; _⊩_∣_[_]; _⊨_∣_)
+  using (Obligs; Satisfiable; Satisfiable-∅; _⊨ᴴ_; _⊩ᴼˢ_[_]; ⊩ᴼˢ-≐; _⊩_∣_[_]; _⊨_∣_)
 open import TypeInference.OpenSyntax.Language  S
 
 open import TypeInference.Raw.Syntax S using (RawC; HandlerFreeᶜ)
@@ -146,6 +152,9 @@ open import TypeInference.SolverImpl.State     S
 open import TypeInference.SolverImpl.Solve     S opEnum
 open import TypeInference.SolverImpl.Principal S opEnum
 open import TypeInference.SolverImpl.RigidFree S opEnum using (solve-rigidFree)
+open import TypeInference.SolverImpl.Search    S opEnum
+  using (Search; refutedˢ; openˢ; search; Establish; refutedᵉ; foundᵉ; undecidedᵉ; exhaustedᵉ;
+         establish)
 open import TypeInference.SolverImpl.Simplify  S
   using (simplify; simplify-⊩; simplify-⊨; trimElim)
 open import TypeInference.SolverImpl.Eliminate S
@@ -447,13 +456,11 @@ canonᵈ-⊩⁻ {δ = δ} (dfr l k o) h =
 -- the conditions are read over the report's scope along the
 -- strengthening's retraction, in canonical form.
 
-reportOutcome : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
-              → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ')) → runSolverᴰ C ≡ s
-              → Outcome (Reported w X C)
-reportOutcome w X C refuted                    e = refuted
-reportOutcome w X C stuck                      e = stuck
-reportOutcome w X C (solved (Θ' , σ , Q , D)) e =
-  solved (reportElim (eliminate F (X [ σ ]ᶜ) (simplify Q)))
+reportSolved : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
+             → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
+             → runSolverᴰ C ≡ solved (Θ' , σ , Q , D) → Reported w X C
+reportSolved w X C {Θ'} {σ} {Q} {D} e =
+  reportElim (eliminate F (X [ σ ]ᶜ) (simplify Q))
   where
     open Strengthened
 
@@ -522,28 +529,6 @@ reportOutcome w X C (solved (Θ' , σ , Q , D)) e =
     reportElim el₀ =
       reportStr (proj₁ el₀ ⨾ᴱ canonElim _ _ ⨾ᴱ trimElim _ _)
                 (fixes-⨟ (fixes-⨟ (proj₂ el₀) fixes-id) fixes-id)
-
-report : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
-       → Outcome (Reported w X C)
-report w X C = reportOutcome w X C (runSolverᴰ C) refl
-
--- A report is refuted only where the solver is
-
-reportOutcome-refuted : ∀ {Θ₀ Θ} {w : Subst Θ₀ Θ} {X : OCType Θ} {C : Constraint Θ}
-                      → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ'))
-                      → (e : runSolverᴰ C ≡ s)
-                      → reportOutcome w X C s e ≡ refuted → runSolver C ≡ refuted
-reportOutcome-refuted refuted    e eq = cong (mapᴼ readOut) e
-reportOutcome-refuted stuck      e ()
-reportOutcome-refuted (solved _) e ()
-
-reportOutcome-stuck : ∀ {Θ₀ Θ} {w : Subst Θ₀ Θ} {X : OCType Θ} {C : Constraint Θ}
-                    → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ'))
-                    → (e : runSolverᴰ C ≡ s)
-                    → reportOutcome w X C s e ≡ stuck → runSolver C ≡ stuck
-reportOutcome-stuck refuted    e ()
-reportOutcome-stuck stuck      e eq = cong (mapᴼ readOut) e
-reportOutcome-stuck (solved _) e ()
 
 ------------------------------------------------------------------------
 -- The reference entry point
@@ -661,35 +646,161 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ Q̃ R̃ X̃ inst' fac
           subst (λ A → ∅ᴴ ∣ A ‼ t̂ Θ [ σ ]ᵉ [ δ' ]ᵉ <:̂ᶜ A₀ [ δ₀ ]ᵛ ‼ ε₀ [ δ₀ ]ᵉ)
                 (sym aeq) (<:̂ᵛ-refl (A₀ [ δ₀ ]ᵛ) ‼ₛ le)
 
--- Inference: a principal type scheme, a refutation, or `stuck`. It is
--- stuck only where a handler clause's scope closes with a local unknown
--- to which `Localise` assigns no value; `SolverImpl.Localise` lists the
--- known cases.
+-- The solver's answer, closed: an instance types `M`, and a typing
+-- gives an instance
 
-inferred : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-         → Outcome (Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]) → Inference Γ M
-inferred Γ M (solved r) = typed (scheme Γ M r)
-inferred Γ M refuted    = untypable
-inferred Γ M stuck      = stuck
+answer-typable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+               → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
+               → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D)
+               → Satisfiable Q (map toOblig D) → Typable Γ M
+answer-typable Γ M {σ = σ} e (δ , h) =
+  typable ∅ˢ (wk₊ ⨟ˢ (σ ⨟ˢ δ)) ∅ᴴ _ (ctx-substᶜ ceq D₀)
+          (trans (⌊ctxᶜ⌋ ceq D₀) (trans (proj₂ i) meq)) Satisfiable-∅
+  where
+    i  = PrincipalSolution.instantiate
+           (principalSolution solver Γ M (cong (mapᴼ readOut) e)) δ ∅ᴴ h
+    D₀ = proj₁ i
+
+    ceq : Γ₊ Γ [ σ ⨟ˢ δ ]ᶜᵗˣ ≡ Γ [ wk₊ ⨟ˢ (σ ⨟ˢ δ) ]ᶜᵗˣ
+    ceq = Γ₊-[] Γ (σ ⨟ˢ δ)
+
+    meq : M₊ M [ σ ⨟ˢ δ ]ᴿᶜ ≡ M [ wk₊ ⨟ˢ (σ ⨟ˢ δ) ]ᴿᶜ
+    meq = M₊-[] M (σ ⨟ˢ δ)
+
+answer-untypable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+                 → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
+                 → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D)
+                 → ¬ Satisfiable Q (map toOblig D) → ¬ Typable Γ M
+answer-untypable Γ M e n (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e₀ (δ₀ , h₀)) =
+  n (proj₁ f , proj₂ (proj₂ f))
+  where
+    f = runSolverᴰ-principal C[ Γ , M ] e (σ₀ ,ᵗ A₀ ,ᵉ ε₀) Q₀ []
+          (⊨-∣ C[ Γ , M ] (typing-sat σ₀ D₀ e₀)) δ₀ h₀
+
+-- A refutation of the solver itself refutes every typing
+
+refuted-untypable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+                  → runSolverᴰ C[ Γ , M ] ≡ refuted → ¬ Typable Γ M
+refuted-untypable Γ M e (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e₀ sQ) =
+  runSolver-complete C[ Γ , M ] (cong (mapᴼ readOut) e)
+    (σ₀ ,ᵗ A₀ ,ᵉ ε₀) Q₀ [] sQ (⊨-∣ C[ Γ , M ] (typing-sat σ₀ D₀ e₀))
+
+-- The scheme reported from the solver's answer
+
+answerScheme : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+             → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
+             → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D) → PrincipalScheme Γ M
+answerScheme {Θ} Γ M e = scheme Γ M (reportSolved wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ] e)
+
+------------------------------------------------------------------------
+-- Inference: a principal type scheme, a refutation, or `stuck`. The
+-- solver's answer is searched for a refutation (`Search.search`); an
+-- open residual leaves the scheme. Inference is stuck only where a
+-- handler clause's scope closes with a local unknown to which
+-- `Localise` assigns no value; `SolverImpl.Localise` lists the known
+-- cases.
+
+inferSearched : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+              → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
+              → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D) → Search Q D → Inference Γ M
+inferSearched Γ M e (refutedˢ _) = untypable
+inferSearched Γ M e (openˢ _ _)  = typed (answerScheme Γ M e)
+
+inferFrom : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+          → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer (Θ +ty +e) Θ')) → runSolverᴰ C[ Γ , M ] ≡ s
+          → Inference Γ M
+inferFrom Γ M refuted                    e = untypable
+inferFrom Γ M stuck                      e = stuck
+inferFrom Γ M (solved (Θ' , σ , Q , D)) e = inferSearched Γ M e (search Q D)
 
 infer : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → Inference Γ M
-infer {Θ} Γ M = inferred Γ M (report wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ])
+infer Γ M = inferFrom Γ M (runSolverᴰ C[ Γ , M ]) refl
 
 -- An untypable verdict refutes every typing under satisfiable
 -- hypotheses
 
+inferFrom-untypable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+                    → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer (Θ +ty +e) Θ'))
+                    → (e : runSolverᴰ C[ Γ , M ] ≡ s)
+                    → inferFrom Γ M s e ≡ untypable → ¬ Typable Γ M
+inferFrom-untypable Γ M refuted                    e eq = refuted-untypable Γ M e
+inferFrom-untypable Γ M stuck                      e ()
+inferFrom-untypable Γ M (solved (Θ' , σ , Q , D)) e eq = searched (search Q D) eq
+  where
+    searched : (x : Search Q D) → inferSearched Γ M e x ≡ untypable → ¬ Typable Γ M
+    searched (refutedˢ n) eq = answer-untypable Γ M e n
+    searched (openˢ _ _)  ()
+
 infer-untypable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                 → infer Γ M ≡ untypable → ¬ Typable Γ M
-infer-untypable {Θ} Γ M eq (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e₀ sQ) =
-  runSolver-complete C[ Γ , M ]
-    (reportOutcome-refuted (runSolverᴰ C[ Γ , M ]) refl (untyped (report wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]) eq))
-    (σ₀ ,ᵗ A₀ ,ᵉ ε₀) Q₀ [] sQ (⊨-∣ C[ Γ , M ] (typing-sat σ₀ D₀ e₀))
+infer-untypable Γ M = inferFrom-untypable Γ M (runSolverᴰ C[ Γ , M ]) refl
+
+-- Inference is stuck only where the solver is
+
+inferFrom-stuck : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+                → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer (Θ +ty +e) Θ'))
+                → (e : runSolverᴰ C[ Γ , M ] ≡ s)
+                → inferFrom Γ M s e ≡ stuck → s ≡ stuck
+inferFrom-stuck Γ M refuted                    e ()
+inferFrom-stuck Γ M stuck                      e eq = refl
+inferFrom-stuck Γ M (solved (Θ' , σ , Q , D)) e eq = ⊥-elim (searched (search Q D) eq)
   where
-    untyped : (x : Outcome (Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]))
-            → inferred Γ M x ≡ untypable → x ≡ refuted
-    untyped refuted    eq = refl
-    untyped stuck      ()
-    untyped (solved _) ()
+    searched : (x : Search Q D) → inferSearched Γ M e x ≢ stuck
+    searched (refutedˢ _) ()
+    searched (openˢ _ _)  ()
+
+------------------------------------------------------------------------
+-- The check of a closed program: inference, then establishment
+-- (`Search.establish`). A closed instance found is one of the scheme's
+-- conditions; a refutation means that `M` is untypable; nothing is
+-- claimed of an unestablished verdict.
+
+checkEstablished : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+                 → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
+                 → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D) → Establish Q D → Check Γ M
+checkEstablished Γ M e (refutedᵉ _) = untypable
+checkEstablished Γ M e (foundᵉ s)   =
+  established (answerScheme Γ M e) (Equivalence.to (typable-⇔ (answerScheme Γ M e)) (answer-typable Γ M e s))
+checkEstablished Γ M e undecidedᵉ   = unestablished (answerScheme Γ M e)
+checkEstablished Γ M e exhaustedᵉ   = unestablished (answerScheme Γ M e)
+
+checkFrom : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+          → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer (Θ +ty +e) Θ')) → runSolverᴰ C[ Γ , M ] ≡ s
+          → Check Γ M
+checkFrom Γ M refuted                    e = untypable
+checkFrom Γ M stuck                      e = stuck
+checkFrom Γ M (solved (Θ' , σ , Q , D)) e = checkEstablished Γ M e (establish Q D)
+
+check : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → Check Γ M
+check Γ M = checkFrom Γ M (runSolverᴰ C[ Γ , M ]) refl
+
+checkFrom-untypable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+                    → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer (Θ +ty +e) Θ'))
+                    → (e : runSolverᴰ C[ Γ , M ] ≡ s)
+                    → checkFrom Γ M s e ≡ untypable → ¬ Typable Γ M
+checkFrom-untypable Γ M refuted                    e eq = refuted-untypable Γ M e
+checkFrom-untypable Γ M stuck                      e ()
+checkFrom-untypable Γ M (solved (Θ' , σ , Q , D)) e eq = established' (establish Q D) eq
+  where
+    established' : (x : Establish Q D) → checkEstablished Γ M e x ≡ untypable → ¬ Typable Γ M
+    established' (refutedᵉ n) eq = answer-untypable Γ M e n
+    established' (foundᵉ _)   ()
+    established' undecidedᵉ   ()
+    established' exhaustedᵉ   ()
+
+checkFrom-stuck : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+                → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer (Θ +ty +e) Θ'))
+                → (e : runSolverᴰ C[ Γ , M ] ≡ s)
+                → checkFrom Γ M s e ≡ stuck → s ≡ stuck
+checkFrom-stuck Γ M refuted                    e ()
+checkFrom-stuck Γ M stuck                      e eq = refl
+checkFrom-stuck Γ M (solved (Θ' , σ , Q , D)) e eq = ⊥-elim (established' (establish Q D) eq)
+  where
+    established' : (x : Establish Q D) → checkEstablished Γ M e x ≢ stuck
+    established' (refutedᵉ _) ()
+    established' (foundᵉ _)   ()
+    established' undecidedᵉ   ()
+    established' exhaustedᵉ   ()
 
 ------------------------------------------------------------------------
 -- The end-to-end theorem
@@ -699,7 +810,9 @@ infer-untypable {Θ} Γ M eq (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e�
 -- is not typable. Inference is therefore complete up to `stuck`: a
 -- typable `M` is never declared untypable. A handler-free `M` is never
 -- stuck. A typed verdict with no hypotheses and no obligations is
--- typable outright.
+-- typable outright. The check is sound the same way, and an
+-- established verdict carries a closed instance of the scheme's
+-- conditions, so `M` is typable.
 
 infer-typed : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalScheme Γ M}
             → infer Γ M ≡ typed p
@@ -717,12 +830,25 @@ infer-complete Γ M t eq = infer-untypable Γ M eq t
 
 infer-handlerFree : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                   → HandlerFreeᶜ M → infer Γ M ≢ stuck
-infer-handlerFree {Θ} Γ M h eq =
-  runSolver-rigidFree C[ Γ , M ] (C[]-rigidFree Γ M h)
-    (reportOutcome-stuck (runSolverᴰ C[ Γ , M ]) refl (unstuck (report wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]) eq))
-  where
-    unstuck : (x : Outcome (Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]))
-            → inferred Γ M x ≡ stuck → x ≡ stuck
-    unstuck refuted    ()
-    unstuck stuck      eq = refl
-    unstuck (solved _) ()
+infer-handlerFree Γ M h eq =
+  runSolverᴰ-rigidFree C[ Γ , M ] (C[]-rigidFree Γ M h)
+    (inferFrom-stuck Γ M (runSolverᴰ C[ Γ , M ]) refl eq)
+
+check-established : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+                  → {p : PrincipalScheme Γ M} {s : Satisfiable (PrincipalScheme.Q̃ p) (PrincipalScheme.R̃ p)}
+                  → check Γ M ≡ established p s → Typable Γ M
+check-established Γ M {p} {s} _ = Equivalence.from (typable-⇔ p) s
+
+check-untypable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+                → check Γ M ≡ untypable → ¬ Typable Γ M
+check-untypable Γ M = checkFrom-untypable Γ M (runSolverᴰ C[ Γ , M ]) refl
+
+check-complete : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+               → Typable Γ M → check Γ M ≢ untypable
+check-complete Γ M t eq = check-untypable Γ M eq t
+
+check-handlerFree : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+                  → HandlerFreeᶜ M → check Γ M ≢ stuck
+check-handlerFree Γ M h eq =
+  runSolverᴰ-rigidFree C[ Γ , M ] (C[]-rigidFree Γ M h)
+    (checkFrom-stuck Γ M (runSolverᴰ C[ Γ , M ]) refl eq)

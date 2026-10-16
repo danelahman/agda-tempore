@@ -17,7 +17,8 @@
 -- and every typing of `M` factors through it at each closed    --
 -- instance (`factor`). `M` is typable (`Typable`) exactly when --
 -- the scheme's conditions are satisfiable (`typable-⇔`).       --
--- `Inference Γ M` is the outcome of inference.                 --
+-- `Inference Γ M` is the outcome of inference, `Check Γ M`     --
+-- that of a check that exhibits a closed instance.             --
 --                                                              --
 -- Principal types with constraint sets follow Pretnar (LMCS    --
 -- 2014); "residual constraint" is the term of OutsideIn(X)     --
@@ -321,3 +322,13 @@ data Inference {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set whe
   typed     : PrincipalScheme Γ M → Inference Γ M
   untypable : Inference Γ M
   stuck     : Inference Γ M
+
+-- The outcome of a check of a closed program: a principal type scheme
+-- with a closed instance of its conditions, a refutation, a principal
+-- type scheme for which no instance was found, or stuck
+
+data Check {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
+  established   : (p : PrincipalScheme Γ M) → Satisfiable (Q̃ p) (R̃ p) → Check Γ M
+  untypable     : Check Γ M
+  unestablished : PrincipalScheme Γ M → Check Γ M
+  stuck         : Check Γ M
