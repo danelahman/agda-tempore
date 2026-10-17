@@ -28,15 +28,18 @@
 -- keeps the orderings of the other sort and the deferred       --
 -- conditions:                                                  --
 --   * the join of its lower bounds, where it occurs on a right --
---     side only as the whole side (Pottier's condition); each  --
+--     side only as the whole side (Pottier's condition), each  --
+--     cycle `p ≾ v` closing at the join (`Closes`); each       --
 --     ordering with it on the greater side is dropped, being a --
---     bound, below the join, or valid (`lower-drops`);         --
+--     bound, below the join, a cycle, or valid                 --
+--     (`lower-drops`);                                         --
 --   * dually, the first upper bound decided (from no           --
 --     hypotheses) below each of its others, where it occurs on --
 --     a left side only as the whole side;                      --
 --   * the unit, where it has no bound below and the unit is    --
 --     least, the unit being then the join of no bounds;        --
---   * the top, where it occurs on no left side.                --
+--   * the top, where it occurs on a left side only in an       --
+--     ordering whose right side it is.                         --
 -- An ordering valid at every instance bounds it on neither     --
 -- side.                                                        --
 -- In every case it occurs in no type of the residual. The      --
@@ -113,7 +116,9 @@
 -- outer scope's local unknown on both sides of an inner        --
 -- scope's deferred condition; a local unknown with no lower    --
 -- bound under several upper bounds, none decided below the     --
--- others, which in a program comes only from `absurd`.         --
+-- others, which in a program comes only from `absurd`; a cycle  --
+-- `p ≾ v` its join does not close, under an upper bound, such  --
+-- as `recℕ` with a tick a step inside an operation clause.     --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; _∧_; not; true; false; if_then_else_) renaming (Bool to 𝔹)
@@ -728,22 +733,39 @@ module Atʳ {Ψ Ψ'} (Q : Hyps Ψ') (k : RVar Ψ) (b : RExp Ψ) (τ : Subst Ψ �
   open Vʳ.Keep {Ψ} k (Q ⊩_≾̂ᵣ_) ⊩≾̂ᵣ-refl transᵣ (_[ τ ]ʳ) (_[ updʳ k b ⨟ˢ τ ]ʳ)
                (λ {x} → updʳ-⨟r k b τ x) (λ p → ⊩-substᵣ ∅ᴴ-⊩ᴴ p) public
 
+-- A cycle `x ≾ k` decided to hold once `k` is `b` holds at every
+-- instance after the assignment
+
+closeᵉ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (k : EVar Ψ) → (b : EExp Ψ) → (τ : Subst Ψ Ψ')
+       → ∀ {x} → ∅ᴴ ⊩ x [ updᵉ k b ]ᵉ ≾̂ₑ b → Q ⊩ x [ updᵉ k b ⨟ˢ τ ]ᵉ ≾̂ₑ evar k [ updᵉ k b ⨟ˢ τ ]ᵉ
+closeᵉ {Q = Q} k b τ {x} d =
+  subst₂ (λ y z → Q ⊩ y ≾̂ₑ z) ([⨟]ᵉ x (updᵉ k b) τ) (cong (_[ τ ]ᵉ) (sym (updᵉ-hit k b)))
+         (⊩-substₑ ∅ᴴ-⊩ᴴ d)
+
+closeʳ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (k : RVar Ψ) → (b : RExp Ψ) → (τ : Subst Ψ Ψ')
+       → ∀ {x} → ∅ᴴ ⊩ x [ updʳ k b ]ʳ ≾̂ᵣ b → Q ⊩ x [ updʳ k b ⨟ˢ τ ]ʳ ≾̂ᵣ rvar k [ updʳ k b ⨟ˢ τ ]ʳ
+closeʳ {Q = Q} k b τ {x} d =
+  subst₂ (λ y z → Q ⊩ y ≾̂ᵣ z) ([⨟]ʳ x (updʳ k b) τ) (cong (_[ τ ]ʳ) (sym (updʳ-hit k b)))
+         (⊩-substᵣ ∅ᴴ-⊩ᴴ d)
+
 -- Lowering an effect unknown below its value, to a bound above each of
--- its lower bounds
+-- its lower bounds at which its cycles hold
 
 lowerᵉ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : EVar Ψ} {R : Resid Ψ}
          → (lw : Vᵉ.Lows {Ψ} k (es R))
          → (∀ {a} → a ∈ rs R → Vⁱ.FreeR {Ψ} k a)
          → Cleanᵉ k R
          → (b : EExp Ψ) → (∀ {E} → E ∈ dfs R → Still dir↓ (updᵉ k b) E)
+         → Vᵉ.Closes {Ψ} k (es R) lw b
          → (τ : Subst Ψ Ψ')
          → Q ⊩ b [ τ ]ᵉ ≾̂ₑ sE τ k
          → (∀ {x} → x ∈ Vᵉ.bnds lw → Q ⊩ x [ τ ]ᵉ ≾̂ₑ b [ τ ]ᵉ)
          → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updᵉ k b ⨟ˢ τ ]
-lowerᵉ-⊩ {Q = Q} {k} {R} lw fr cl b sd τ below ub h =
+lowerᵉ-⊩ {Q = Q} {k} {R} lw fr cl b sd cy τ below ub h =
   mk⊩ᴿ (Atᵉ.R.lower-free Q k b τ fr (mono-substᵣ le) (⊩rs h))
        (Atᵉ.lower-keeps Q k b τ lw (mono-substₑ le)
           (λ {x} mx → subst (λ z → Q ⊩ x [ τ ]ᵉ ≾̂ₑ z [ τ ]ᵉ) (sym (updᵉ-hit k b)) (ub mx))
+          (λ {x} mc → closeᵉ k b τ {x} (cy mc))
           (⊩es h))
        (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
        (λ {E} m → keepᵈ dir↓ E (sd m) le (⊩dfs h m))
@@ -786,13 +808,15 @@ lowerʳ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : RVar Ψ} {R : Resid Ψ}
          → (lw : Vʳ.Lows {Ψ} k (rs R))
          → Cleanʳ k R
          → (b : RExp Ψ) → (∀ {E} → E ∈ dfs R → Still dir↓ (updʳ k b) E)
+         → Vʳ.Closes {Ψ} k (rs R) lw b
          → (τ : Subst Ψ Ψ')
          → Q ⊩ b [ τ ]ʳ ≾̂ᵣ sR τ k
          → (∀ {x} → x ∈ Vʳ.bnds lw → Q ⊩ x [ τ ]ʳ ≾̂ᵣ b [ τ ]ʳ)
          → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updʳ k b ⨟ˢ τ ]
-lowerʳ-⊩ {Q = Q} {k} {R} lw cl b sd τ below ub h =
+lowerʳ-⊩ {Q = Q} {k} {R} lw cl b sd cy τ below ub h =
   mk⊩ᴿ (Atʳ.lower-keeps Q k b τ lw (mono-substᵣ le)
           (λ {x} mx → subst (λ z → Q ⊩ x [ τ ]ʳ ≾̂ᵣ z [ τ ]ʳ) (sym (updʳ-hit k b)) (ub mx))
+          (λ {x} mc → closeʳ k b τ {x} (cy mc))
           (⊩rs h))
        (effects-fixed k b τ h)
        (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
@@ -830,7 +854,7 @@ raiseʳ-⊩ {Q = Q} {k} {R} up cl df sd τ h =
 -- Raising an unknown absent from every left side to the top
 
 topᵉ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : EVar Ψ} {R : Resid Ψ}
-       → (∀ {a} → a ∈ es R → Vᵉ.FreeL {Ψ} k a)
+       → (∀ {a} → a ∈ es R → Vᵉ.UnderTop {Ψ} k a)
        → (∀ {a} → a ∈ rs R → Vⁱ.FreeL {Ψ} k a)
        → Cleanᵉ k R → DFreeᵉ k R
        → (∀ {E} → E ∈ dfs R → Still dir↑ (updᵉ k (econst ⊤ₑ)) E)
@@ -838,7 +862,10 @@ topᵉ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : EVar Ψ} {R : Resid Ψ}
        → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updᵉ k (econst ⊤ₑ) ⨟ˢ τ ]
 topᵉ-⊩ {Q = Q} {k} {R} fe fl cl df sd τ h =
   mk⊩ᴿ (Atᵉ.R.raise-free Q k (econst ⊤ₑ) τ fl (mono-substᵣ ge) (⊩rs h))
-       (Atᵉ.raise-free Q k (econst ⊤ₑ) τ fe (mono-substₑ ge) (⊩es h))
+       (Atᵉ.top-keeps Q k (econst ⊤ₑ) τ fe (mono-substₑ ge)
+          (λ y → subst (λ z → Q ⊩ y [ updᵉ k (econst ⊤ₑ) ⨟ˢ τ ]ᵉ ≾̂ₑ z [ τ ]ᵉ)
+                       (sym (updᵉ-hit k (econst ⊤ₑ))) topₑ)
+          (⊩es h))
        (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
        (λ {E} m → keepᵈ dir↑ E (sd m) ge (⊩dfs h m))
   where
@@ -850,13 +877,16 @@ topᵉ-⊩ {Q = Q} {k} {R} fe fl cl df sd τ h =
                                (sym (updᵉ-⨟r k (econst ⊤ₑ) τ ρ (df m))) ⊩≾̂ᵣ-refl)
 
 topʳ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : RVar Ψ} {R : Resid Ψ}
-       → (∀ {a} → a ∈ rs R → Vʳ.FreeL {Ψ} k a)
+       → (∀ {a} → a ∈ rs R → Vʳ.UnderTop {Ψ} k a)
        → Cleanʳ k R → DFreeʳ k R
        → (∀ {E} → E ∈ dfs R → Still dir↑ (updʳ k (rconst ⊤ᵣ)) E)
        → (τ : Subst Ψ Ψ')
        → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updʳ k (rconst ⊤ᵣ) ⨟ˢ τ ]
 topʳ-⊩ {Q = Q} {k} {R} fl cl df sd τ h =
-  mk⊩ᴿ (Atʳ.raise-free Q k (rconst ⊤ᵣ) τ fl (mono-substᵣ ge) (⊩rs h))
+  mk⊩ᴿ (Atʳ.top-keeps Q k (rconst ⊤ᵣ) τ fl (mono-substᵣ ge)
+          (λ y → subst (λ z → Q ⊩ y [ updʳ k (rconst ⊤ᵣ) ⨟ˢ τ ]ʳ ≾̂ᵣ z [ τ ]ʳ)
+                       (sym (updʳ-hit k (rconst ⊤ᵣ))) topᵣ)
+          (⊩rs h))
        (effects-fixed k (rconst ⊤ᵣ) τ h)
        (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
        (λ {E} m → keepᵈ dir↑ E (sd m) ge (⊩dfs h m))
@@ -980,11 +1010,13 @@ left {R = R} (drops Dʳ Dᵉ) = record R { rs = Unsettled.kept Dʳ ; es = Unsett
 loweredᵉ : ∀ {Ψ} {k : EVar Ψ} {R : Resid Ψ} → (lw : Vᵉ.Lows {Ψ} k (es R)) → (b : EExp Ψ)
          → (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → ∀ {x} → x ∈ Vᵉ.bnds lw
             → Q ⊩ x [ δ ]ᵉ ≾̂ₑ b [ δ ]ᵉ)
+         → Vᵉ.Closes {Ψ} k (es R) lw b
          → Drops (updᵉ k b) R
-loweredᵉ {k = k} {R} lw b ub =
+loweredᵉ {k = k} {R} lw b ub cy =
   drops allKept
         (dropping (λ a → occᵉ-e k (proj₂ a)) (es R)
-                  (λ m q {Ψ'} {Q} δ → Atᵉ.lower-drops Q k b δ lw (hit δ) m q))
+                  (λ m q {Ψ'} {Q} δ → Atᵉ.lower-drops Q k b δ lw (hit δ)
+                                        (λ {x} mc → closeᵉ k b δ {x} (cy mc)) m q))
   where
     hit : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst _ Ψ') → ∀ {x} → x ∈ Vᵉ.bnds lw
         → Q ⊩ x [ δ ]ᵉ ≾̂ₑ evar k [ updᵉ k b ⨟ˢ δ ]ᵉ
@@ -993,10 +1025,12 @@ loweredᵉ {k = k} {R} lw b ub =
 loweredʳ : ∀ {Ψ} {k : RVar Ψ} {R : Resid Ψ} → (lw : Vʳ.Lows {Ψ} k (rs R)) → (b : RExp Ψ)
          → (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → ∀ {x} → x ∈ Vʳ.bnds lw
             → Q ⊩ x [ δ ]ʳ ≾̂ᵣ b [ δ ]ʳ)
+         → Vʳ.Closes {Ψ} k (rs R) lw b
          → Drops (updʳ k b) R
-loweredʳ {k = k} {R} lw b ub =
+loweredʳ {k = k} {R} lw b ub cy =
   drops (dropping (λ a → occʳ-r k (proj₂ a)) (rs R)
-                  (λ m q {Ψ'} {Q} δ → Atʳ.lower-drops Q k b δ lw (hit δ) m q))
+                  (λ m q {Ψ'} {Q} δ → Atʳ.lower-drops Q k b δ lw (hit δ)
+                                        (λ {x} mc → closeʳ k b δ {x} (cy mc)) m q))
         allKept
   where
     hit : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst _ Ψ') → ∀ {x} → x ∈ Vʳ.bnds lw
@@ -1098,21 +1132,21 @@ stepᵉ {Ψ} k R with cleanᵉ? k R
     o = oracleᵉ k R
 
     lower : Vᵉ.ByLower {Ψ} k o (es R) → Σ[ b ∈ EExp Ψ ] Step (updᵉ k b) R
-    lower (Vᵉ.byLower lw x xs e (fr , sd)) =
+    lower (Vᵉ.byLower lw x xs e cy (fr , sd)) =
       joinₑ x xs ,
-      (λ τ Q h → lowerᵉ-⊩ lw fr cl (joinₑ x xs) sd τ
+      (λ τ Q h → lowerᵉ-⊩ lw fr cl (joinₑ x xs) sd cy τ
                    (lowerᵉ-least {x = x} {xs} (λ m → Vᵉ.src lw (subst (_ ∈_) (sym e) m)) τ h)
                    (λ m → joinₑ-ub⊩ τ x xs (subst (_ ∈_) e m)) h) ,
-      loweredᵉ lw (joinₑ x xs) (λ δ m → joinₑ-ub⊩ δ x xs (subst (_ ∈_) e m))
+      loweredᵉ lw (joinₑ x xs) (λ δ m → joinₑ-ub⊩ δ x xs (subst (_ ∈_) e m)) cy
 
     raise : Vᵉ.ByRaise {Ψ} k o (es R) → Σ[ b ∈ EExp Ψ ] Step (updᵉ k b) R
     raise (Vᵉ.byRaise up (fl , df , sd)) =
       Vᵉ.cap up , (λ τ Q h → raiseᵉ-⊩ up fl cl df sd τ h) , keepAll
 
     least : Vᵉ.ByLeast {Ψ} k o (es R) → Σ[ b ∈ EExp Ψ ] Step (updᵉ k b) R
-    least (Vᵉ.byLeast lw nob ij (fr , sd)) =
-      ûₑ , (λ τ Q h → lowerᵉ-⊩ lw fr cl ûₑ sd τ (minₑ ij) (λ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) h) ,
-      loweredᵉ lw ûₑ (λ δ m → ⊥-elim (∉[] (subst (_ ∈_) nob m)))
+    least (Vᵉ.byLeast lw nob ij cy (fr , sd)) =
+      ûₑ , (λ τ Q h → lowerᵉ-⊩ lw fr cl ûₑ sd cy τ (minₑ ij) (λ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) h) ,
+      loweredᵉ lw ûₑ (λ δ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) cy
 
     top : Vᵉ.ByTop {Ψ} k o (es R) → Σ[ b ∈ EExp Ψ ] Step (updᵉ k b) R
     top (Vᵉ.byTop fe (fl , df , sd)) =
@@ -1130,21 +1164,21 @@ stepʳ {Ψ} k R with cleanʳ? k R
     o = oracleʳ k R
 
     lower : Vʳ.ByLower {Ψ} k o (rs R) → Σ[ b ∈ RExp Ψ ] Step (updʳ k b) R
-    lower (Vʳ.byLower lw x xs e sd) =
+    lower (Vʳ.byLower lw x xs e cy sd) =
       joinᵣ x xs ,
-      (λ τ Q h → lowerʳ-⊩ lw cl (joinᵣ x xs) sd τ
+      (λ τ Q h → lowerʳ-⊩ lw cl (joinᵣ x xs) sd cy τ
                    (lowerʳ-least {x = x} {xs} (λ m → Vʳ.src lw (subst (_ ∈_) (sym e) m)) τ h)
                    (λ m → joinᵣ-ub⊩ τ x xs (subst (_ ∈_) e m)) h) ,
-      loweredʳ lw (joinᵣ x xs) (λ δ m → joinᵣ-ub⊩ δ x xs (subst (_ ∈_) e m))
+      loweredʳ lw (joinᵣ x xs) (λ δ m → joinᵣ-ub⊩ δ x xs (subst (_ ∈_) e m)) cy
 
     raise : Vʳ.ByRaise {Ψ} k o (rs R) → Σ[ b ∈ RExp Ψ ] Step (updʳ k b) R
     raise (Vʳ.byRaise up (df , sd)) =
       Vʳ.cap up , (λ τ Q h → raiseʳ-⊩ up cl df sd τ h) , keepAll
 
     least : Vʳ.ByLeast {Ψ} k o (rs R) → Σ[ b ∈ RExp Ψ ] Step (updʳ k b) R
-    least (Vʳ.byLeast lw nob ij sd) =
-      ûᵣ , (λ τ Q h → lowerʳ-⊩ lw cl ûᵣ sd τ (minᵣ ij) (λ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) h) ,
-      loweredʳ lw ûᵣ (λ δ m → ⊥-elim (∉[] (subst (_ ∈_) nob m)))
+    least (Vʳ.byLeast lw nob ij cy sd) =
+      ûᵣ , (λ τ Q h → lowerʳ-⊩ lw cl ûᵣ sd cy τ (minᵣ ij) (λ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) h) ,
+      loweredʳ lw ûᵣ (λ δ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) cy
 
     top : Vʳ.ByTop {Ψ} k o (rs R) → Σ[ b ∈ RExp Ψ ] Step (updʳ k b) R
     top (Vʳ.byTop fl (df , sd)) =

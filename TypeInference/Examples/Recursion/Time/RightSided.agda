@@ -3,11 +3,11 @@
 --                                                              --
 -- "At most `n` ticks": `ε · ε ≾ ε` holds only at the unit and  --
 -- at the top, so a recursion's effect is one of the two. The   --
--- pure programs keep it as a qualified variable, which the     --
--- check establishes; a countdown, a tick a step, needs the     --
--- top. A function is not usable in the step. Recursion inside  --
--- an operation clause is stuck: `Localise` gives the cycle     --
--- `ε · ε ≾ ε` no value. A clause dropping its continuation     --
+-- pure programs have the unit, the least value at which the    --
+-- cycle `ε · ε ≾ ε` holds; a countdown, a tick a step, needs    --
+-- the top. A function is not usable in the step. A pure        --
+-- recursion inside an operation clause is typed; one with a    --
+-- tick a step is stuck. A clause dropping its continuation     --
 -- after a countdown is refuted by the report's closed check.   --
 ------------------------------------------------------------------
 
@@ -34,11 +34,11 @@ open import TypeInference.Examples.Recursion spec enum ℕᴰ-stepped
 open import TypeInference.Examples.Variables
 
 ------------------------------------------------------------------
--- 1. Pure recursion: the effect a qualified variable
+-- 1. Pure recursion: the effect is lowered to the unit, at which
+-- its cycle holds
 
 expected-add : Scheme
-expected-add =
-  ∀[ 0 , 0 , 1 ] (ε₀ ·̂ₑ ε₀ ≾ₑ ε₀) ⟹ (Nat ⇒ (Nat ⇒ Nat ‼ ε₀) ‼ ûₑ) ‼ ûₑ
+expected-add = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat ⇒ (Nat ⇒ Nat ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
 
 add-reported : schemeOf (infer [] add) ≡ just expected-add
 add-reported = refl
@@ -50,20 +50,14 @@ add-verdict = refl
 -- 2. The predecessor, and an outer natural number, in the step
 
 expected-rebuild : Scheme
-expected-rebuild =
-  ∀[ 0 , 0 , 1 ] (ε₀ ·̂ₑ ε₀ ≾ₑ ε₀) ⟹ (Nat ⇒ Nat ‼ ε₀) ‼ ûₑ
+expected-rebuild = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat ⇒ Nat ‼ ûₑ) ‼ ûₑ
 
 rebuild-reported : schemeOf (infer [] rebuild) ≡ just expected-rebuild
 rebuild-reported = refl
 
--- the inner recursion's effect is below the outer one's
+-- both recursions' effects the unit
 
-expected-mul : Scheme
-expected-mul =
-  ∀[ 0 , 0 , 2 ] (ε₀ ≾ₑ ε₁) ∧ (ε₀ ·̂ₑ ε₀ ≾ₑ ε₀) ∧ (ε₁ ·̂ₑ ε₁ ≾ₑ ε₁)
-    ⟹ (Nat ⇒ (Nat ⇒ Nat ‼ ε₁) ‼ ûₑ) ‼ ûₑ
-
-mul-reported : schemeOf (infer [] mul) ≡ just expected-mul
+mul-reported : schemeOf (infer [] mul) ≡ just expected-add
 mul-reported = refl
 
 mul-verdict : verdict (check [] mul) ≡ established
@@ -122,13 +116,17 @@ countdown-at-3-verdict : verdict (check [] (countdown-at 3)) ≡ unestablished
 countdown-at-3-verdict = refl
 
 ------------------------------------------------------------------
--- 5. Recursion inside an operation clause: stuck, with a pure step
--- although typable (`in-clause-pure-D`), and with a tick
+-- 5. Recursion inside an operation clause: with a pure step, the
+-- recursion's effect is lowered to the unit in the clause, as in
+-- `in-clause-pure-D`; with a tick a step it is stuck, its cycle
+-- holding at no lower bound and its one upper bound through a
+-- product with the resumption's effect
 
-in-clause-pure-verdict : infer [] in-clause-pure ≡ stuck
-in-clause-pure-verdict = refl
+in-clause-pure-reported :
+  schemeOf (infer [] in-clause-pure) ≡ just (∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ûₑ)
+in-clause-pure-reported = refl
 
-in-clause-pure-check : verdict (check [] in-clause-pure) ≡ stuck
+in-clause-pure-check : verdict (check [] in-clause-pure) ≡ established
 in-clause-pure-check = refl
 
 in-clause-tick-verdict : infer [] in-clause-tick ≡ stuck

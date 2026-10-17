@@ -11,8 +11,9 @@
 --     `equate`: of two equal unknowns, the one of smaller      --
 --     index remains);                                          --
 --   * lowering (`stepᵉ`, `stepʳ`): a grade unknown is sent to  --
---     the join of its lower bounds, which are removed with it  --
---     (`Values`' `lower`);                                     --
+--     the join of its lower bounds, which are removed with it, --
+--     and with its cycles, which close at the join (`Values`'  --
+--     `lower`);                                                --
 --   * raising (`upᵉ-step`, `upʳ-step`): a grade unknown is     --
 --     sent to the first upper bound that caps the others, the  --
 --     orderings it caps removed (`Values`' `raise`);           --
@@ -559,7 +560,7 @@ oracleᵉ C Q i = record
 
 stepᵉ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
       → Vᵉ.ByLower {Θ} i (oracleᵉ C Q i) (ordₑ Q) → Elim C Q
-stepᵉ {Θ} C Q i (Vᵉ.byLower lw x xs e (cb , cR , cc)) =
+stepᵉ {Θ} C Q i (Vᵉ.byLower lw x xs e cy (cb , cR , cc)) =
   mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
          (λ δ h → <:̂ᶜ-subst h (Monoᵉ.monoᵉ-c i b lowg ⁺ C cc))
   where
@@ -599,7 +600,10 @@ stepᵉ {Θ} C Q i (Vᵉ.byLower lw x xs e (cb , cR , cc)) =
         ... | inj₁ (refl , mb) =
               subst (Q₀ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ_) (trans (absᵉ-e i b b cb) (sym (updᵉ-hit i b)))
                     (joinₑ-ub⊩ η₀ x xs (subst (_ ∈_) e mb))
-        ... | inj₂ m' = hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m')
+        ... | inj₂ (inj₁ (refl , mc)) =
+              subst₂ (λ y z → Q₀ ⊩ y ≾̂ₑ z) ([id]ᵉ (ε [ η₀ ]ᵉ)) (trans ([id]ᵉ b) (sym (updᵉ-hit i b)))
+                     (⊩-substₑ {σ = idˢ} ∅ᴴ-⊩ᴴ (cy mc))
+        ... | inj₂ (inj₂ m') = hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m')
 
     keepR : ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q) → Q ⊩ ρ ≾̂ᵣ ρ'
     keepR m with ∈-map⁻ (mapᵖ (_[ η₀ ]ʳ)) m
@@ -623,7 +627,7 @@ stepᵉ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → 
 stepᵉ? {Θ} F C Q i o = Maybe.map at (Vᵉ.lower {Θ} i (oracleᵉ C Q i) (ordₑ Q))
   where
     at : Vᵉ.ByLower {Θ} i (oracleᵉ C Q i) (ordₑ Q) → Elimᶠ F C Q
-    at bl@(Vᵉ.byLower _ x xs _ _) = stepᵉ C Q i bl , fixes-updᵉ i (joinₑ x xs) o
+    at bl@(Vᵉ.byLower _ x xs _ _ _) = stepᵉ C Q i bl , fixes-updᵉ i (joinₑ x xs) o
 
 fins : (n : ℕ) → List (Fin n)
 fins zero    = []
@@ -699,7 +703,7 @@ oracleʳ C Q i = record
 
 stepʳ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
       → Vʳ.ByLower {Θ} i (oracleʳ C Q i) (ordᵣ Q) → Elim C Q
-stepʳ {Θ} C Q i (Vʳ.byLower lw x xs e (cb , cc)) =
+stepʳ {Θ} C Q i (Vʳ.byLower lw x xs e cy (cb , cc)) =
   mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
          (λ δ h → <:̂ᶜ-subst h (Monoʳ.monoʳ-c i b lowg ⁺ C cc))
   where
@@ -737,7 +741,10 @@ stepʳ {Θ} C Q i (Vʳ.byLower lw x xs e (cb , cc)) =
         ... | inj₁ (refl , mb) =
               subst (Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ_) (trans (absʳ-r i b b cb) (sym (updʳ-hit i b)))
                     (joinᵣ-ub⊩ η₀ x xs (subst (_ ∈_) e mb))
-        ... | inj₂ m' = hypᵣ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m')
+        ... | inj₂ (inj₁ (refl , mc)) =
+              subst₂ (λ y z → Q₀ ⊩ y ≾̂ᵣ z) ([id]ʳ (ρ [ η₀ ]ʳ)) (trans ([id]ʳ b) (sym (updʳ-hit i b)))
+                     (⊩-substᵣ {σ = idˢ} ∅ᴴ-⊩ᴴ (cy mc))
+        ... | inj₂ (inj₂ m') = hypᵣ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m')
 
     keepR : ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (_[ η₀ ]ʳ)) (Vʳ.rest lw) → Q ⊩ ρ ≾̂ᵣ ρ'
     keepR m with ∈-map⁻ (mapᵖ (_[ η₀ ]ʳ)) m
@@ -755,7 +762,7 @@ stepʳ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (
 stepʳ? {Θ} F C Q i o = Maybe.map at (Vʳ.lower {Θ} i (oracleʳ C Q i) (ordᵣ Q))
   where
     at : Vʳ.ByLower {Θ} i (oracleʳ C Q i) (ordᵣ Q) → Elimᶠ F C Q
-    at bl@(Vʳ.byLower _ x xs _ _) = stepʳ C Q i bl , fixes-updʳ i (joinᵣ x xs) o
+    at bl@(Vʳ.byLower _ x xs _ _ _) = stepʳ C Q i bl , fixes-updʳ i (joinᵣ x xs) o
 
 ------------------------------------------------------------------------
 -- The dual steps: an unknown on no left side but against its bounds

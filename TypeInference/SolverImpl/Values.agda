@@ -4,25 +4,30 @@
 -- A sort (`Sort`) reads the expressions of one grade sort for  --
 -- an unknown `v`: whether `v` occurs, the order decided from   --
 -- no hypotheses, the join, the unit, the top, canonical forms, --
--- whether the unit is least, and which expressions may replace --
--- `v`. An ordering is valid when it is reflexive or decided    --
--- (`Valid`); it bounds `v` on neither side. An oracle          --
--- (`Oracle`) says whether `v` may decrease, or increase, to a  --
--- value, the atoms outside the sort keeping their meaning.     --
+-- whether the unit is least, which expressions may replace     --
+-- `v`, and an expression with `v` sent to a value (`put`). An  --
+-- ordering is valid when it is reflexive or decided (`Valid`); --
+-- it bounds `v` on neither side. An oracle (`Oracle`) says     --
+-- whether `v` may decrease, or increase, to a value, the atoms --
+-- outside the sort keeping their meaning.                      --
 -- The rules, each a proposition with its decider:              --
 --   * lowering (`Lows`, `lower`), principal: every ordering is --
---     valid, has `v` on no right side, or is `x ≾ v` with `x`  --
---     free of `v`, a lower bound, of which there is one; the   --
---     value is the join of the lower bounds;                   --
+--     valid, has `v` on no right side, is `x ≾ v` with `x`     --
+--     free of `v`, a lower bound, of which there is one, or is --
+--     a cycle `p ≾ v` with `v` in `p`; the value `L` is the    --
+--     join of the lower bounds, and each cycle closes at it,   --
+--     `p` with `v` sent to `L` decided below `L` (`Closes`);   --
 --   * raising (`Ups`, `raise`), instance-keeping: the first    --
 --     ordering `v ≾ U`, `U` free of `v`, that caps the others, --
 --     every ordering being valid, reflexive, with `v` on no    --
 --     left side, or `v ≾ x'` with `U ≾ x'` decided; the value  --
 --     is `U`;                                                  --
 --   * least (`least`), principal: as lowering with no lower    --
---     bound, where the unit is least; the value is the unit;   --
---   * top (`top`), instance-keeping: every ordering is valid   --
---     or has `v` on no left side; the value is the top;        --
+--     bound, where the unit is least; the value is the unit,   --
+--     at which each cycle closes;                              --
+--   * top (`top`), instance-keeping: every ordering is valid,  --
+--     has `v` on no left side, or has `v` as its whole right   --
+--     side (`UnderTop`); the value is the top;                 --
 --   * forced unit (`Forces`), principal: an ordering `x ≾ y`   --
 --     with `x` canonically `v` and `y` decided below the unit, --
 --     the unit being least; every solution sends `v` to the    --
@@ -41,17 +46,21 @@
 -- keep the decided order after it: at an instance              --
 -- (`Localise`), or by entailment along the assignment          --
 -- (`Eliminate`). Each value keeps every ordering: lowering and --
--- the least element keep those that lie below `v`              --
--- (`lower-keeps`), the upper bound and the top those that lie  --
--- above it (`raise-keeps`, `raise-free`), and an equal value   --
--- all of them (`equal-keeps`); an unknown on no right side     --
--- remains so under lowering (`lower-free`). Under lowering,    --
--- each ordering with `v` on its right side holds outright,     --
--- being a lower bound, a bound free of `v`, or valid           --
--- (`lower-drops`). Lowering is principal: each lower bound is  --
--- an ordering below `v` (`src`), so wherever the orderings     --
--- hold, their join lies below `v` (`joinₑ-lub⊩`). That the     --
--- upper bound and the top are least is not claimed.            --
+-- the least element keep those that lie below `v` and its      --
+-- cycles (`lower-keeps`), the upper bound and the top those    --
+-- that lie above it (`raise-keeps`, `raise-free`), the top     --
+-- also those with `v` as the right side (`top-keeps`), and an  --
+-- equal value all of them (`equal-keeps`); an unknown on no    --
+-- right side remains so under lowering (`lower-free`). Under   --
+-- lowering, each ordering with `v` on its right side holds     --
+-- outright, being a lower bound, a cycle, a bound free of `v`, --
+-- or valid (`lower-drops`). Lowering is principal: each lower  --
+-- bound is an ordering below `v` (`src`), so wherever the      --
+-- orderings hold, their join lies below `v` (`joinₑ-lub⊩`).    --
+-- That the upper bound and the top are least is not claimed. A --
+-- cycle whose join does not close it is given no value below:  --
+-- where `v` has an upper bound as well, the least value at     --
+-- which it closes is a property of the grade, not of its laws. --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; not; true; false) renaming (Bool to 𝔹)
@@ -169,6 +178,7 @@ record Sort (X : Set) : Set₁ where
     Least  : Set                    -- the unit is least
     least? : Maybe Least
     fit    : X → 𝔹                  -- an earlier unknown, or free of the unknown
+    put    : X → X → X              -- `put b x`: `x` with the unknown sent to `b`
 
 module Rules {X : Set} (s : Sort X) where
 
@@ -220,15 +230,18 @@ module Rules {X : Set} (s : Sort X) where
   lives = partition valid?
 
   ----------------------------------------------------------------------
-  -- Lowering: the bounds below, each free of the unknown; every other
-  -- ordering has it on no right side, or is valid
+  -- Lowering: the bounds below, each free of the unknown, and the
+  -- cycles, orderings `p ≾ v` with `p` mentioning the unknown; every
+  -- other ordering has it on no right side, or is valid
 
   record Lows (l : List (X × X)) : Set where
     constructor lows
     field
       bnds  : List X
+      cycs  : List X
       rest  : List (X × X)
-      cls   : ∀ {x x'} → (x , x') ∈ l → ((x' ≡ self) × (x ∈ bnds)) ⊎ ((x , x') ∈ rest)
+      cls   : ∀ {x x'} → (x , x') ∈ l
+            → ((x' ≡ self) × (x ∈ bnds)) ⊎ ((x' ≡ self) × (x ∈ cycs)) ⊎ ((x , x') ∈ rest)
       src   : ∀ {x} → x ∈ bnds → (x , self) ∈ l
       bndF  : ∀ {x} → x ∈ bnds → occ x ≡ false
       rest⊆ : ∀ {a} → a ∈ rest → a ∈ l
@@ -237,31 +250,50 @@ module Rules {X : Set} (s : Sort X) where
   open Lows public
 
   lowsOf : (l : List (X × X)) → Maybe (Lows l)
-  lowsOf []             = just (lows [] [] (λ ()) (λ ()) (λ ()) (λ ()) (λ ()))
+  lowsOf []             = just (lows [] [] [] (λ ()) (λ ()) (λ ()) (λ ()) (λ ()))
   lowsOf ((x , x') ∷ l) = go (lowsOf l) (x' ≟ self) (isFalse (occ x)) (freeR? (x , x'))
     where
       toRest : Lows l → FreeR (x , x') → Lows ((x , x') ∷ l)
-      toRest (lows L r c s bf sb f) fr =
-        lows L ((x , x') ∷ r)
-             (λ { (here refl) → inj₂ (here refl)
-                ; (there m)   → [ inj₁ , (λ m' → inj₂ (there m')) ]′ (c m) })
+      toRest (lows L C r c s bf sb f) fr =
+        lows L C ((x , x') ∷ r)
+             (λ { (here refl) → inj₂ (inj₂ (here refl))
+                ; (there m)   → [ inj₁ , [ (λ y → inj₂ (inj₁ y)) , (λ m' → inj₂ (inj₂ (there m'))) ]′ ]′
+                                  (c m) })
              (λ m → there (s m)) bf
              (λ { (here refl) → here refl ; (there m) → there (sb m) })
              (λ { (here refl) → fr ; (there m) → f m })
 
+      toCyc : Lows l → x' ≡ self → Lows ((x , x') ∷ l)
+      toCyc (lows L C r c s bf sb f) e =
+        lows L (x ∷ C) r
+             (λ { (here refl) → inj₂ (inj₁ (e , here refl))
+                ; (there m)   → [ inj₁ , [ (λ { (e' , mc) → inj₂ (inj₁ (e' , there mc)) })
+                                         , (λ m' → inj₂ (inj₂ m')) ]′ ]′ (c m) })
+             (λ m → there (s m)) bf (λ m → there (sb m)) f
+
       go : Maybe (Lows l) → Dec (x' ≡ self) → Maybe (occ x ≡ false) → Maybe (FreeR (x , x'))
          → Maybe (Lows ((x , x') ∷ l))
-      go nothing                       _       _        _         = nothing
-      go (just (lows L r c s bf sb f)) (yes e) (just q) _         =
-        just (lows (x ∷ L) r
+      go nothing                         _       _        _         = nothing
+      go (just (lows L C r c s bf sb f)) (yes e) (just q) _         =
+        just (lows (x ∷ L) C r
                    (λ { (here refl) → inj₁ (e , here refl)
                       ; (there m)   → [ (λ { (e' , mb) → inj₁ (e' , there mb) })
                                       , (λ m' → inj₂ m') ]′ (c m) })
                    (λ { (here refl) → here (cong (x ,_) (sym e)) ; (there m) → there (s m) })
                    (λ { (here refl) → q ; (there m) → bf m })
                    (λ m → there (sb m)) f)
-      go (just lw)                     _       _        (just fr) = just (toRest lw fr)
-      go (just lw)                     _       _        nothing   = nothing
+      go (just lw)                       _       _        (just fr) = just (toRest lw fr)
+      go (just lw)                       (yes e) _        nothing   = just (toCyc lw e)
+      go (just lw)                       (no _)  _        nothing   = nothing
+
+  -- Each cycle holds once the unknown is sent to `b`, by the decided
+  -- order
+
+  Closes : (l : List (X × X)) → Lows l → X → Set
+  Closes l lw b = ∀ {p} → p ∈ cycs lw → put b p ≤ b
+
+  closes? : (l : List (X × X)) → (lw : Lows l) → (b : X) → Maybe (Closes l lw b)
+  closes? l lw b = every (λ p → dec≤ (put b p) b) (cycs lw)
 
   ----------------------------------------------------------------------
   -- Raising: a bound above, `U`. Every ordering with the unknown on its
@@ -411,6 +443,7 @@ module Rules {X : Set} (s : Sort X) where
       lo  : X
       los : List X
       lbs : bnds lw ≡ lo ∷ los
+      cyc : Closes l lw (joins join lo los)
       may : Lower o (joins join lo los)
 
   lower : (o : Oracle) → (l : List (X × X)) → Maybe (ByLower o l)
@@ -418,7 +451,9 @@ module Rules {X : Set} (s : Sort X) where
     where
       at : (lw : Lows l) → (bs : List X) → bnds lw ≡ bs → Maybe (ByLower o l)
       at lw []       e = nothing
-      at lw (x ∷ xs) e = map (byLower lw x xs e) (lower? o (joins join x xs))
+      at lw (x ∷ xs) e with closes? l lw (joins join x xs)
+      ... | just cy = map (byLower lw x xs e cy) (lower? o (joins join x xs))
+      ... | nothing = nothing
 
       go : Maybe (Lows l) → Maybe (ByLower o l)
       go (just lw) = at lw (bnds lw) refl
@@ -447,29 +482,43 @@ module Rules {X : Set} (s : Sort X) where
       lw  : Lows l
       nob : bnds lw ≡ []
       lst : Least
+      cyc : Closes l lw unit
       may : Lower o unit
 
   least : (o : Oracle) → (l : List (X × X)) → Maybe (ByLeast o l)
   least o l = go least? (lowsOf l)
     where
       at : Least → (lw : Lows l) → (bs : List X) → bnds lw ≡ bs → Maybe (ByLeast o l)
-      at lst lw []      e = map (byLeast lw e lst) (lower? o unit)
+      at lst lw []      e with closes? l lw unit
+      ... | just cy = map (byLeast lw e lst cy) (lower? o unit)
+      ... | nothing = nothing
       at lst lw (_ ∷ _) e = nothing
 
       go : Maybe Least → Maybe (Lows l) → Maybe (ByLeast o l)
       go (just lst) (just lw) = at lst lw (bnds lw) refl
       go _          _         = nothing
 
-  -- The top, instance-keeping
+  -- The top, instance-keeping: every ordering is valid, has the unknown
+  -- on no left side, or has it as its whole right side
+
+  UnderTop : X × X → Set
+  UnderTop (x , x') = FreeL (x , x') ⊎ (x' ≡ self)
+
+  underTop? : (a : X × X) → Maybe (UnderTop a)
+  underTop? (x , x') with freeL? (x , x')
+  ... | just f  = just (inj₁ f)
+  ... | nothing with x' ≟ self
+  ...   | yes e = just (inj₂ e)
+  ...   | no _  = nothing
 
   record ByTop (o : Oracle) (l : List (X × X)) : Set where
     constructor byTop
     field
-      fl  : ∀ {a} → a ∈ l → FreeL a
+      fl  : ∀ {a} → a ∈ l → UnderTop a
       may : Raise o top
 
   topOf : (o : Oracle) → (l : List (X × X)) → Maybe (ByTop o l)
-  topOf o l with freeLs l
+  topOf o l with every underTop? l
   ... | just fl = map (byTop fl) (raise? o top)
   ... | nothing = nothing
 
@@ -512,22 +561,37 @@ module Rules {X : Set} (s : Sort X) where
     -- Lowering to a value above every bound (the join, or the least
     -- element where there is none)
 
+    -- the cycles holding at the value
+
     lower-keeps : ∀ {l} → (lw : Lows l) → (∀ y → f₁ y ⊑ f₀ y)
-                → (∀ {x} → x ∈ bnds lw → f₀ x ⊑ f₁ self) → Holds f₀ l → Holds f₁ l
-    lower-keeps lw lo ub h m with cls lw m
-    ... | inj₁ (refl , mb) = ⊑-trans (lo _) (ub mb)
-    ... | inj₂ mr          = lowerR (restR lw mr) lo (h m)
+                → (∀ {x} → x ∈ bnds lw → f₀ x ⊑ f₁ self)
+                → (∀ {x} → x ∈ cycs lw → f₁ x ⊑ f₁ self) → Holds f₀ l → Holds f₁ l
+    lower-keeps lw lo ub cy h m with cls lw m
+    ... | inj₁ (refl , mb)        = ⊑-trans (lo _) (ub mb)
+    ... | inj₂ (inj₁ (refl , mc)) = cy mc
+    ... | inj₂ (inj₂ mr)          = lowerR (restR lw mr) lo (h m)
 
     -- ... and makes each ordering with the unknown on its greater side
-    -- hold outright: it is a bound, below the value, or valid
+    -- hold outright: it is a bound, below the value, a cycle, or valid
 
     lower-drops : ∀ {l} → (lw : Lows l) → (∀ {x} → x ∈ bnds lw → f₀ x ⊑ f₁ self)
+                → (∀ {x} → x ∈ cycs lw → f₁ x ⊑ f₁ self)
                 → ∀ {x x'} → (x , x') ∈ l → occ x' ≡ true → f₁ x ⊑ f₁ x'
-    lower-drops lw ub m q with cls lw m
-    ... | inj₁ (refl , mb) = subst (_⊑ f₁ self) (sym (same (bndF lw mb))) (ub mb)
-    ... | inj₂ mr with restR lw mr
+    lower-drops lw ub cy m q with cls lw m
+    ... | inj₁ (refl , mb)        = subst (_⊑ f₁ self) (sym (same (bndF lw mb))) (ub mb)
+    ... | inj₂ (inj₁ (refl , mc)) = cy mc
+    ... | inj₂ (inj₂ mr) with restR lw mr
     ...   | inj₁ v  = valid-holds v
     ...   | inj₂ q' = ⊥-elim (true≢false (trans (sym q) q'))
+
+    -- Raising to the top, where every side lies below the top
+    -- (`f₁ self`)
+
+    top-keeps : ∀ {l} → (∀ {a} → a ∈ l → UnderTop a) → (∀ y → f₀ y ⊑ f₁ y)
+              → (∀ y → f₁ y ⊑ f₁ self) → Holds f₀ l → Holds f₁ l
+    top-keeps ut hi tp h {x} m with ut m
+    ... | inj₁ fl   = raiseL fl hi (h m)
+    ... | inj₂ refl = tp x
 
     -- Raising to the upper bound
 
@@ -567,6 +631,16 @@ leastImage? with Is-just? uₑ-least? | reflects-u? | Is-just? uᵣ-least?
 ... | just a | just r | just c = just (a , r , c)
 ... | _      | _      | _      = nothing
 
+-- An image `∣ b ∣` as the value of the image of an effect unknown sends
+-- the unknown to `b`; any other expression leaves it
+
+putⁱ : ∀ {Ψ} → EVar Ψ → RExp Ψ → RExp Ψ → RExp Ψ
+putⁱ k ∣ b ∣̂ᵉ     x = x [ updᵉ k b ]ʳ
+putⁱ k (rvar _)   x = x
+putⁱ k (rconst _) x = x
+putⁱ k (_ ·̂ᵣ _)   x = x
+putⁱ k (_ ⊔̂ᵣ _)   x = x
+
 -- Effect expressions for an effect unknown, resource expressions for a
 -- resource unknown, and resource expressions for an effect unknown
 -- through its image `∣ k ∣`
@@ -576,21 +650,23 @@ sortᵉ k = record
   { _≟_ = _≟ᵉ_ ; occ = occᵉ-e k ; self = evar k
   ; _≤_ = ∅ᴴ ⊩_≾̂ₑ_ ; dec≤ = decideₑ full ∅ᴴ
   ; join = _⊔̂ₑ_ ; unit = ûₑ ; top = econst ⊤ₑ ; canon = canonₑ
-  ; Least = Is-just uₑ-least? ; least? = Is-just? uₑ-least? ; fit = fitₑ k }
+  ; Least = Is-just uₑ-least? ; least? = Is-just? uₑ-least? ; fit = fitₑ k
+  ; put = λ b x → x [ updᵉ k b ]ᵉ }
 
 sortʳ : ∀ {Ψ} → RVar Ψ → Sort (RExp Ψ)
 sortʳ k = record
   { _≟_ = _≟ʳ_ ; occ = occʳ-r k ; self = rvar k
   ; _≤_ = ∅ᴴ ⊩_≾̂ᵣ_ ; dec≤ = decideᵣ full ∅ᴴ
   ; join = _⊔̂ᵣ_ ; unit = ûᵣ ; top = rconst ⊤ᵣ ; canon = canonᵣ
-  ; Least = Is-just uᵣ-least? ; least? = Is-just? uᵣ-least? ; fit = fitᵣ k }
+  ; Least = Is-just uᵣ-least? ; least? = Is-just? uᵣ-least? ; fit = fitᵣ k
+  ; put = λ b x → x [ updʳ k b ]ʳ }
 
 imageᵉ : ∀ {Ψ} → EVar Ψ → Sort (RExp Ψ)
 imageᵉ k = record
   { _≟_ = _≟ʳ_ ; occ = occᵉ-r k ; self = ∣ evar k ∣̂ᵉ
   ; _≤_ = ∅ᴴ ⊩_≾̂ᵣ_ ; dec≤ = decideᵣ full ∅ᴴ
   ; join = _⊔̂ᵣ_ ; unit = ûᵣ ; top = rconst ⊤ᵣ ; canon = canonᵣ
-  ; Least = LeastImage ; least? = leastImage? ; fit = λ _ → false }
+  ; Least = LeastImage ; least? = leastImage? ; fit = λ _ → false ; put = putⁱ k }
 
 module Vᵉ {Ψ} (k : EVar Ψ) = Rules {EExp Ψ} (sortᵉ k)
 module Vʳ {Ψ} (k : RVar Ψ) = Rules {RExp Ψ} (sortʳ k)
