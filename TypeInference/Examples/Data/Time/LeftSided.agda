@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- Natural numbers at left-sided intervals                      --
+-- Natural numbers and sums at left-sided intervals             --
 --                                                              --
 -- "At least `n` ticks": `var`'s bound `ρ ≾ uᵣ` holds at every  --
 -- grade, so nothing goes stale and eternality is never asked   --
@@ -70,3 +70,33 @@ boxed-numeral-reported = refl
 
 joined-reported : schemeOf (infer [] joined) ≡ just expected-joined
 joined-reported = refl
+
+------------------------------------------------------------------
+-- 5. Sums
+
+swap-reported : schemeOf (infer [] swap) ≡ just expected-swap
+swap-reported = refl
+
+choose-reported : schemeOf (infer [] choose) ≡ just expected-choose
+choose-reported = refl
+
+widen-reported : schemeOf (infer [] widen) ≡ just expected-widen
+widen-reported = refl
+
+sum-later-reported : schemeOf (infer [] sum-later) ≡ just expected-sum-later
+sum-later-reported = refl
+
+case-of-bool+-verdict : infer [] case-of-bool+ ≡ untypable
+case-of-bool+-verdict = refl
+
+case-of-bool+-not-typable : ¬ Typable [] case-of-bool+
+case-of-bool+-not-typable = infer-untypable [] case-of-bool+ case-of-bool+-verdict
+
+inl-later-reported : schemeOf (infer [] inl-later) ≡ just expected-inl-later
+inl-later-reported = refl
+
+fun-sum-later-reported : schemeOf (infer [] fun-sum-later) ≡ just expected-fun-sum-later
+fun-sum-later-reported = refl
+
+fun-sum-later-derivable : Typable [] fun-sum-later
+fun-sum-later-derivable = fun-sum-later-typable _

@@ -408,6 +408,9 @@ sameᵛ? Nat Nat = just refl
 sameᵛ? (A |×| B) (A' |×| B') with sameᵛ? A A' | sameᵛ? B B'
 ... | just refl | just refl = just refl
 ... | _         | _         = nothing
+sameᵛ? (A |+| B) (A' |+| B') with sameᵛ? A A' | sameᵛ? B B'
+... | just refl | just refl = just refl
+... | _         | _         = nothing
 sameᵛ? Empty Empty = just refl
 sameᵛ? (A ⇒ C) (A' ⇒ C') with sameᵛ? A A' | sameᶜ? C C'
 ... | just refl | just refl = just refl

@@ -93,6 +93,16 @@ mutual
             ---------
             → RawV Θ n
 
+    -- injections into a sum
+
+    inl     : RawV Θ n
+              -------
+            → RawV Θ n
+
+    inr     : RawV Θ n
+              -------
+            → RawV Θ n
+
     -- lambda abstraction
 
     lam     : RawC Θ (suc n)
@@ -160,6 +170,15 @@ mutual
     caseℕ_`zero_`succ_
             : RawV Θ n
             → RawC Θ n
+            → RawC Θ (suc n)
+            --------------
+            → RawC Θ n
+
+    -- sum elimination, each branch binding the injected value
+
+    case+_`inl_`inr_
+            : RawV Θ n
+            → RawC Θ (suc n)
             → RawC Θ (suc n)
             --------------
             → RawC Θ n
@@ -243,6 +262,8 @@ mutual
   HandlerFreeᵛ : ∀ {Θ n} → RawV Θ n → Set
   HandlerFreeᵛ (succ V)     = HandlerFreeᵛ V
   HandlerFreeᵛ ⦉ V , W ⦊     = HandlerFreeᵛ V × HandlerFreeᵛ W
+  HandlerFreeᵛ (inl V)      = HandlerFreeᵛ V
+  HandlerFreeᵛ (inr V)      = HandlerFreeᵛ V
   HandlerFreeᵛ (lam M)      = HandlerFreeᶜ M
   HandlerFreeᵛ (V ⦂ᵛ A)     = HandlerFreeᵛ V
   HandlerFreeᵛ _            = ⊤
@@ -255,6 +276,7 @@ mutual
   HandlerFreeᶜ (absurd V)               = HandlerFreeᵛ V
   HandlerFreeᶜ (if V `then M `else N)   = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (caseℕ V `zero M `succ N) = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
+  HandlerFreeᶜ (case+ V `inl M `inr N)   = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (recℕ V M N)              = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (perform op V M)         = HandlerFreeᵛ V × HandlerFreeᶜ M
   HandlerFreeᶜ (delay τ M)              = HandlerFreeᶜ M

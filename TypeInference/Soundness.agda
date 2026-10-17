@@ -85,7 +85,7 @@ ctx-substᶜ refl M = M
 -- introduces; satisfaction instantiates those `∃`s by extending `σ`.
 -- Each pair cancels (`wk-,*`), one lemma per binder pattern below.
 
--- `∃ᵗ∃ᵗ` — pairing, pattern-matching
+-- `∃ᵗ∃ᵗ` — pairing, injections, pattern-matching, sum elimination
 
 co²ᵗ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ') → (Γ : OCtx Θ n)
          → wkᵗ-ctx (wkᵗ-ctx Γ) [ σ ,ᵗ B₁ ,ᵗ B₂ ]ᶜᵗˣ ≡ Γ [ σ ]ᶜᵗˣ
@@ -366,6 +366,46 @@ mutual
                 (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V₁)))
                 (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᵛ pι V₂)))
 
+  -- injections into a sum
+
+  soundVˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (inl V) A (B₁ , B₂ , (st , _) , s₁) =
+    D , q
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
+      Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
+      α₁ = wkᵗ-v (tvar (newᵗ {Θ}))
+
+      pΓ = co²ᵗ-ctx σ B₁ B₂ Γ
+      pA = co²ᵗ-v   σ B₁ B₂ A
+      pι = co²ᵗ-ˢ   ι σ B₁ B₂
+
+      ih₁ = soundVˢ ι↑ Γ↑ V α₁ s₁
+
+      D₁ = ctx-substᵛ pΓ (proj₁ ih₁)
+
+      D = subV (inl {B = B₂} D₁) (subst (λ z → Q ∣ B₁ |+| B₂ <:̂ᵛ z) pA st)
+
+      q = cong inl (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V)))
+
+  soundVˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (inr V) A (B₁ , B₂ , (st , _) , s₂) =
+    D , q
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
+      Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
+      α₂ = tvar (newᵗ {Θ +ty})
+
+      pΓ = co²ᵗ-ctx σ B₁ B₂ Γ
+      pA = co²ᵗ-v   σ B₁ B₂ A
+      pι = co²ᵗ-ˢ   ι σ B₁ B₂
+
+      ih₂ = soundVˢ ι↑ Γ↑ V α₂ s₂
+
+      D₂ = ctx-substᵛ pΓ (proj₁ ih₂)
+
+      D = subV (inr {A = B₁} D₂) (subst (λ z → Q ∣ B₁ |+| B₂ <:̂ᵛ z) pA st)
+
+      q = cong inr (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᵛ pι V)))
+
   -- lambda abstraction
 
   soundVˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (lam M) A (B₁ , B₂ , ε , st , s) =
@@ -539,6 +579,46 @@ mutual
       ih₀ = soundVˢ ι Γ V Nat s₀
       ih₁ = soundCˢ ι Γ M₁ A t s₁
       ih₂ = soundCˢ ι (Γ ∷ Nat) M₂ A t s₂
+
+  -- sum elimination
+
+  soundCˢ {Θ = Θ} {σ = σ} ι Γ (case+ V `inl M₁ `inr M₂) A t (B₁ , B₂ , s₀ , s₁ , s₂) =
+    D , q
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
+      Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
+      A↑ = wkᵗ-v (wkᵗ-v A)
+      t↑ = wkᵗ-e (wkᵗ-e t)
+      α₁ = wkᵗ-v (tvar (newᵗ {Θ}))
+      α₂ = tvar (newᵗ {Θ +ty})
+
+      pΓ = co²ᵗ-ctx σ B₁ B₂ Γ
+      pA = co²ᵗ-v   σ B₁ B₂ A
+      pt = co²ᵗ-e   σ B₁ B₂ t
+      pι = co²ᵗ-ˢ   ι σ B₁ B₂
+      pC = cong₂ _‼_ pA pt
+
+      ih₀ = soundVˢ ι↑ Γ↑ V (α₁ |+| α₂) s₀
+      ih₁ = soundCˢ ι↑ (Γ↑ ∷ α₁) M₁ A↑ t↑ s₁
+      ih₂ = soundCˢ ι↑ (Γ↑ ∷ α₂) M₂ A↑ t↑ s₂
+
+      c₁ = cong (_∷ B₁) pΓ
+      c₂ = cong (_∷ B₂) pΓ
+
+      D₀ = ctx-substᵛ pΓ (proj₁ ih₀)
+      D₁ = c-subst pC (ctx-substᶜ c₁ (proj₁ ih₁))
+      D₂ = c-subst pC (ctx-substᶜ c₂ (proj₁ ih₂))
+
+      D = case+ D₀ `inl D₁ `inr D₂
+
+      q = cong₃ case+_`inl_`inr_
+                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₀)) (trans (proj₂ ih₀) ([≐]ᴿᵛ pι V)))
+                (trans (⌊c⌋ pC (ctx-substᶜ c₁ (proj₁ ih₁)))
+                       (trans (⌊ctxᶜ⌋ c₁ (proj₁ ih₁))
+                              (trans (proj₂ ih₁) ([≐]ᴿᶜ pι M₁))))
+                (trans (⌊c⌋ pC (ctx-substᶜ c₂ (proj₁ ih₂)))
+                       (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂))
+                              (trans (proj₂ ih₂) ([≐]ᴿᶜ pι M₂))))
 
   -- primitive recursion on natural numbers
 

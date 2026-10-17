@@ -73,6 +73,7 @@ mutual
   Bool      [ σ ]ᵛ = Bool
   Nat       [ σ ]ᵛ = Nat
   (A |×| B) [ σ ]ᵛ = A [ σ ]ᵛ |×| B [ σ ]ᵛ
+  (A |+| B) [ σ ]ᵛ = A [ σ ]ᵛ |+| B [ σ ]ᵛ
   Empty     [ σ ]ᵛ = Empty
   (A ⇒ C)   [ σ ]ᵛ = A [ σ ]ᵛ ⇒ C [ σ ]ᶜ
   ([ ρ ] A) [ σ ]ᵛ = [ ρ [ σ ]ʳ ] A [ σ ]ᵛ
@@ -251,6 +252,7 @@ mutual
   [id]ᵛ Bool      = refl
   [id]ᵛ Nat       = refl
   [id]ᵛ (A |×| B) = cong₂ _|×|_ ([id]ᵛ A) ([id]ᵛ B)
+  [id]ᵛ (A |+| B) = cong₂ _|+|_ ([id]ᵛ A) ([id]ᵛ B)
   [id]ᵛ Empty     = refl
   [id]ᵛ (A ⇒ C)   = cong₂ _⇒_ ([id]ᵛ A) ([id]ᶜ C)
   [id]ᵛ ([ ρ ] A) = cong₂ [_]_ ([id]ʳ ρ) ([id]ᵛ A)
@@ -288,6 +290,7 @@ mutual
   [⨟]ᵛ Bool      σ δ = refl
   [⨟]ᵛ Nat       σ δ = refl
   [⨟]ᵛ (A |×| B) σ δ = cong₂ _|×|_ ([⨟]ᵛ A σ δ) ([⨟]ᵛ B σ δ)
+  [⨟]ᵛ (A |+| B) σ δ = cong₂ _|+|_ ([⨟]ᵛ A σ δ) ([⨟]ᵛ B σ δ)
   [⨟]ᵛ Empty     σ δ = refl
   [⨟]ᵛ (A ⇒ C)   σ δ = cong₂ _⇒_ ([⨟]ᵛ A σ δ) ([⨟]ᶜ C σ δ)
   [⨟]ᵛ ([ ρ ] A) σ δ = cong₂ [_]_ ([⨟]ʳ ρ σ δ) ([⨟]ᵛ A σ δ)
@@ -324,6 +327,7 @@ mutual
   [≐]ᵛ p Bool      = refl
   [≐]ᵛ p Nat       = refl
   [≐]ᵛ p (A |×| B) = cong₂ _|×|_ ([≐]ᵛ p A) ([≐]ᵛ p B)
+  [≐]ᵛ p (A |+| B) = cong₂ _|+|_ ([≐]ᵛ p A) ([≐]ᵛ p B)
   [≐]ᵛ p Empty     = refl
   [≐]ᵛ p (A ⇒ C)   = cong₂ _⇒_ ([≐]ᵛ p A) ([≐]ᶜ p C)
   [≐]ᵛ p ([ ρ ] A) = cong₂ [_]_ ([≐]ʳ p ρ) ([≐]ᵛ p A)
@@ -385,6 +389,7 @@ mutual
   wkˢᵗ-v Bool      = refl
   wkˢᵗ-v Nat       = refl
   wkˢᵗ-v (A |×| B) = cong₂ _|×|_ (wkˢᵗ-v A) (wkˢᵗ-v B)
+  wkˢᵗ-v (A |+| B) = cong₂ _|+|_ (wkˢᵗ-v A) (wkˢᵗ-v B)
   wkˢᵗ-v Empty     = refl
   wkˢᵗ-v (A ⇒ C)   = cong₂ _⇒_ (wkˢᵗ-v A) (wkˢᵗ-c C)
   wkˢᵗ-v ([ ρ ] A) = cong₂ [_]_ (wkˢᵗ-r ρ) (wkˢᵗ-v A)
@@ -401,6 +406,7 @@ mutual
   wkˢʳ-v Bool      = refl
   wkˢʳ-v Nat       = refl
   wkˢʳ-v (A |×| B) = cong₂ _|×|_ (wkˢʳ-v A) (wkˢʳ-v B)
+  wkˢʳ-v (A |+| B) = cong₂ _|+|_ (wkˢʳ-v A) (wkˢʳ-v B)
   wkˢʳ-v Empty     = refl
   wkˢʳ-v (A ⇒ C)   = cong₂ _⇒_ (wkˢʳ-v A) (wkˢʳ-c C)
   wkˢʳ-v ([ ρ ] A) = cong₂ [_]_ (wkˢʳ-r ρ) (wkˢʳ-v A)
@@ -417,6 +423,7 @@ mutual
   wkˢᵉ-v Bool      = refl
   wkˢᵉ-v Nat       = refl
   wkˢᵉ-v (A |×| B) = cong₂ _|×|_ (wkˢᵉ-v A) (wkˢᵉ-v B)
+  wkˢᵉ-v (A |+| B) = cong₂ _|+|_ (wkˢᵉ-v A) (wkˢᵉ-v B)
   wkˢᵉ-v Empty     = refl
   wkˢᵉ-v (A ⇒ C)   = cong₂ _⇒_ (wkˢᵉ-v A) (wkˢᵉ-c C)
   wkˢᵉ-v ([ ρ ] A) = cong₂ [_]_ (wkˢᵉ-r ρ) (wkˢᵉ-v A)

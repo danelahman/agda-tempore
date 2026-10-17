@@ -1,5 +1,6 @@
 ------------------------------------------------------------------
--- Natural numbers: the generic module and its instances        --
+-- Natural numbers and sums: the generic module and its         --
+-- instances                                                    --
 ------------------------------------------------------------------
 
 module TypeInference.Examples.Data.All where

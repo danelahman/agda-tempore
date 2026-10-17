@@ -49,10 +49,12 @@
 -- check of a run establishes, refutes or leaves unestablished  --
 -- the others, at left- and right-sided time.                   --
 --                                                              --
--- Set 10 consists of programs on natural numbers: elimination  --
--- by `caseℕ`, numerals, a `Nat` used under a lock where a      --
--- function is refused, and branches of different effects       --
--- joined, at left- and right-sided time.                       --
+-- Set 10 consists of programs on natural numbers and sums:     --
+-- elimination by `caseℕ` and `case+`, numerals, a `Nat` or an  --
+-- eternal sum used under a lock where a function or a sum with --
+-- a function summand is refused, subtyping through a sum, and  --
+-- branches of different effects joined, at left- and           --
+-- right-sided time.                                            --
 --                                                              --
 -- Set 11 consists of programs by primitive recursion: pure     --
 -- recursions using the predecessor and the recursive result,   --

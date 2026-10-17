@@ -2,10 +2,11 @@
 -- Open value and computation types                             --
 --                                                              --
 -- The types of `Syntax.Types` with grade expressions in place  --
--- of grades, a former `tvar` for type variables, and a type    --
--- `Nat` of natural numbers, which has no counterpart in        --
--- `Syntax.Types`. The ground types of the operation signature  --
--- embed by `⌜_⌝ᵍ`; `Nat` is not among them.                    --
+-- of grades, a former `tvar` for type variables, a type `Nat`  --
+-- of natural numbers and binary sums `_|+|_`, which have no    --
+-- counterpart in `Syntax.Types`. The ground types of the       --
+-- operation signature embed by `⌜_⌝ᵍ`; `Nat` and sums are not  --
+-- among them.                                                  --
 ------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -33,6 +34,7 @@ mutual
     Bool  : OVType Θ                         -- boolean type
     Nat   : OVType Θ                         -- natural-number type
     _|×|_ : OVType Θ → OVType Θ → OVType Θ   -- product type
+    _|+|_ : OVType Θ → OVType Θ → OVType Θ   -- sum type
     Empty : OVType Θ                         -- empty type
     _⇒_   : OVType Θ → OCType Θ → OVType Θ   -- function type
     [_]_  : RExp Θ → OVType Θ → OVType Θ     -- box modality
@@ -41,7 +43,7 @@ mutual
     _‼_ : OVType Θ → EExp Θ → OCType Θ
 
   infix  37 [_]_
-  infix  32 _|×|_
+  infix  32 _|×|_ _|+|_
   infixr 30 _⇒_
   infix  31 _‼_
 
@@ -66,6 +68,7 @@ mutual
   wkᵗ-v     Bool     = Bool
   wkᵗ-v     Nat      = Nat
   wkᵗ-v     (A |×| B) = wkᵗ-v A |×| wkᵗ-v B
+  wkᵗ-v     (A |+| B) = wkᵗ-v A |+| wkᵗ-v B
   wkᵗ-v     Empty    = Empty
   wkᵗ-v     (A ⇒ C)  = wkᵗ-v A ⇒ wkᵗ-c C
   wkᵗ-v     ([ ρ ] A) = [ wkᵗ-r ρ ] wkᵗ-v A
@@ -82,6 +85,7 @@ mutual
   wkʳ-v     Bool     = Bool
   wkʳ-v     Nat      = Nat
   wkʳ-v     (A |×| B) = wkʳ-v A |×| wkʳ-v B
+  wkʳ-v     (A |+| B) = wkʳ-v A |+| wkʳ-v B
   wkʳ-v     Empty    = Empty
   wkʳ-v     (A ⇒ C)  = wkʳ-v A ⇒ wkʳ-c C
   wkʳ-v     ([ ρ ] A) = [ wkʳ-r ρ ] wkʳ-v A
@@ -98,6 +102,7 @@ mutual
   wkᵉ-v     Bool     = Bool
   wkᵉ-v     Nat      = Nat
   wkᵉ-v     (A |×| B) = wkᵉ-v A |×| wkᵉ-v B
+  wkᵉ-v     (A |+| B) = wkᵉ-v A |+| wkᵉ-v B
   wkᵉ-v     Empty    = Empty
   wkᵉ-v     (A ⇒ C)  = wkᵉ-v A ⇒ wkᵉ-c C
   wkᵉ-v     ([ ρ ] A) = [ wkᵉ-r ρ ] wkᵉ-v A

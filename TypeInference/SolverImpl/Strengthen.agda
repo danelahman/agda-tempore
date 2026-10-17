@@ -277,6 +277,7 @@ module _ {Θ : Scope} (M : Vars Θ) where
     strᵛ Bool      h = Bool
     strᵛ Nat       h = Nat
     strᵛ (A |×| B) h = strᵛ A (⊆-∪ˡ (fvᵛ A) (fvᵛ B) h) |×| strᵛ B (⊆-∪ʳ (fvᵛ A) (fvᵛ B) h)
+    strᵛ (A |+| B) h = strᵛ A (⊆-∪ˡ (fvᵛ A) (fvᵛ B) h) |+| strᵛ B (⊆-∪ʳ (fvᵛ A) (fvᵛ B) h)
     strᵛ Empty     h = Empty
     strᵛ (A ⇒ C)   h = strᵛ A (⊆-∪ˡ (fvᵛ A) (fvᶜ C) h) ⇒ strᶜ C (⊆-∪ʳ (fvᵛ A) (fvᶜ C) h)
     strᵛ ([ ρ ] A) h = [ strʳ ρ (⊆-∪ˡ (fvʳ ρ) (fvᵛ A) h) ] strᵛ A (⊆-∪ʳ (fvʳ ρ) (fvᵛ A) h)
@@ -348,6 +349,7 @@ module _ {Θ : Scope} (M : Vars Θ) where
     strᵛ-ι Bool      h = refl
     strᵛ-ι Nat       h = refl
     strᵛ-ι (A |×| B) h = cong₂ _|×|_ (strᵛ-ι A _) (strᵛ-ι B _)
+    strᵛ-ι (A |+| B) h = cong₂ _|+|_ (strᵛ-ι A _) (strᵛ-ι B _)
     strᵛ-ι Empty     h = refl
     strᵛ-ι (A ⇒ C)   h = cong₂ _⇒_ (strᵛ-ι A _) (strᶜ-ι C _)
     strᵛ-ι ([ ρ ] A) h = cong₂ [_]_ (strʳ-ι ρ _) (strᵛ-ι A _)

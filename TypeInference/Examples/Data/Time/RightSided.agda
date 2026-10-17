@@ -1,9 +1,10 @@
 ------------------------------------------------------------------
--- Natural numbers at right-sided intervals                     --
+-- Natural numbers and sums at right-sided intervals            --
 --                                                              --
 -- "At most `n` ticks": `var`'s bound `ρ ≾ uᵣ` holds only at    --
 -- `[0, 0 ]`, so after a tick only a variable of eternal type,  --
--- such as `Nat`, is usable. A join of delays is the longer.    --
+-- such as `Nat` or `Nat + Bool`, is usable. A join of delays   --
+-- is the longer.                                               --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -70,3 +71,33 @@ boxed-numeral-reported = refl
 
 joined-reported : schemeOf (infer [] joined) ≡ just expected-joined
 joined-reported = refl
+
+------------------------------------------------------------------
+-- 5. Sums
+
+swap-reported : schemeOf (infer [] swap) ≡ just expected-swap
+swap-reported = refl
+
+choose-reported : schemeOf (infer [] choose) ≡ just expected-choose
+choose-reported = refl
+
+widen-reported : schemeOf (infer [] widen) ≡ just expected-widen
+widen-reported = refl
+
+sum-later-reported : schemeOf (infer [] sum-later) ≡ just expected-sum-later
+sum-later-reported = refl
+
+case-of-bool+-verdict : infer [] case-of-bool+ ≡ untypable
+case-of-bool+-verdict = refl
+
+case-of-bool+-not-typable : ¬ Typable [] case-of-bool+
+case-of-bool+-not-typable = infer-untypable [] case-of-bool+ case-of-bool+-verdict
+
+inl-later-reported : schemeOf (infer [] inl-later) ≡ just expected-inl-later-eternal
+inl-later-reported = refl
+
+fun-sum-later-verdict : infer [] fun-sum-later ≡ untypable
+fun-sum-later-verdict = refl
+
+fun-sum-later-not-typable : ¬ Typable [] fun-sum-later
+fun-sum-later-not-typable = infer-untypable [] fun-sum-later fun-sum-later-verdict

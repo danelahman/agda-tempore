@@ -28,9 +28,10 @@ examples:
 #   the search for a refutation and establishment: retry,
 #     the closed check with failing chains, candidates
 #     (Search, Entail, Localise, Solve)                  -> runs
-#   natural numbers: zero, succ, caseℕ and numerals,
-#     the former table at Nat, eternality under locks
-#     (Generate, Former, Entail)                         -> data
+#   natural numbers and sums: zero, succ, caseℕ, numerals,
+#     inl, inr and case+, the former table at Nat and at
+#     sums, eternality under locks
+#     (Generate, Former, Expand, Entail)                 -> data
 #   primitive recursion: recℕ, the cycle ε · ε ≾ ε, the
 #     step's lock at the top, recursion in a clause
 #     (Generate, Localise, Search)                       -> recursion

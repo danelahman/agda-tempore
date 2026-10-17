@@ -1,5 +1,5 @@
 --------------------------------------------------------------------
--- Inference on natural numbers                                   --
+-- Inference on natural numbers and sums                          --
 --                                                                --
 -- Programs exercising `zero`, `succ` and `caseℕ`, and numerals   --
 -- written with `numeral`. None has an annotation. `caseℕ V       --
@@ -7,6 +7,11 @@
 -- `N` with the predecessor bound; `Nat` has no proper subtype    --
 -- or supertype, and is eternal, so a natural number is usable    --
 -- under any lock, where a function is not.                       --
+--                                                                --
+-- Programs exercising `inl`, `inr` and `case+`. A sum is         --
+-- covariant in both summands and eternal exactly when both are;  --
+-- `case+ V `inl M `inr N` types both branches at one             --
+-- computation type, each with the injected value bound.          --
 --                                                                --
 -- The durations are stepped: `⌜ n ⌝` is the duration of `n`      --
 -- ticks, and `⌜ n ⌝ʳ` and `⌜ n ⌝ᵉ` its grades.                   --
@@ -270,3 +275,153 @@ expected-joined : Scheme
 expected-joined =
   ∀[ 0 , 0 , 0 ] ⊤ ⟹
     (Nat ⇒ Nat ‼ econst (of-durᵉ ⌜ 1 ⌝ ⊔ₑ of-durᵉ ⌜ 3 ⌝)) ‼ ûₑ
+
+------------------------------------------------------------------
+-- 5. Sums
+--
+--   swap s = case+ s of inl x ↦ inr x | inr y ↦ inl y
+--
+-- Both summands are type variables; typed at every grade.
+
+swap : RawC ∅ˢ 0
+swap = return (lam (case+ v₀ `inl return (inr v₀) `inr return (inl v₀)))
+
+swap-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat |+| Bool ⇒ Bool |+| Nat ‼ ûₑ) ‼ ûₑ
+swap-D =
+  return (lam (case+ var Hd ok₀ `inl return (inr (var Hd ok₀))
+                                `inr return (inl (var Hd ok₀))))
+
+swap-typed : IsTyped (infer [] swap)
+swap-typed = typed-of swap (closed swap-D refl) _
+
+expected-swap : Scheme
+expected-swap = ∀[ 2 , 0 , 0 ] ⊤ ⟹ (α₁ |+| α₀ ⇒ α₀ |+| α₁ ‼ ûₑ) ‼ ûₑ
+
+-- Branches of different effects, joined as for `caseℕ`; the left
+-- summand is used under the lock `⟨ ⌜ 1 ⌝ʳ ⟩`, which `Nat` survives,
+-- and the right summand is unconstrained.
+--
+--   choose s = case+ s of inl n ↦ delay 1; succ n | inr _ ↦ delay 3; 0
+
+choose : RawC ∅ˢ 0
+choose =
+  return (lam (case+ v₀ `inl delay ⌜ 1 ⌝ (return (succ v₀))
+                        `inr delay ⌜ 3 ⌝ (return zero)))
+
+choose-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat |+| Bool ⇒ Nat ‼ (⌜ 1 ⌝ᵉ ⊔̂ₑ ⌜ 3 ⌝ᵉ)) ‼ ûₑ
+choose-D =
+  return (lam (case+ var Hd ok₀
+    `inl coerce (transₑ (eqₑ ≡̂ₑ-identityʳ) ⊔-ubˡₑ)
+            (delay ⌜ 1 ⌝ (return (succ (var (Tl-⟨⟩ Hd) (et-ok Natₑ)))))
+    `inr coerce (transₑ (eqₑ ≡̂ₑ-identityʳ) ⊔-ubʳₑ) (delay ⌜ 3 ⌝ (return zero))))
+
+choose-typed : IsTyped (infer [] choose)
+choose-typed = typed-of choose (closed choose-D refl) _
+
+expected-choose : Scheme
+expected-choose =
+  ∀[ 1 , 0 , 0 ] ⊤ ⟹
+    (Nat |+| α₀ ⇒ Nat ‼ econst (of-durᵉ ⌜ 1 ⌝ ⊔ₑ of-durᵉ ⌜ 3 ⌝)) ‼ ûₑ
+
+-- Subtyping through the covariance of `_|+|_`: a value of type
+-- `Nat + (Unit ⇒ Unit ‼ ⌜ 1 ⌝)` is passed where the function's latent
+-- effect may be up to `⌜ 1 ⌝ ⊔ ⌜ 3 ⌝`. Typed at every grade.
+--
+--   widen = let f = (λ s. case+ s of inl _ ↦ delay 3; ()
+--                                  | inr g ↦ g ())
+--                   : Nat + (Unit ⇒ Unit ‼ 1 ⊔ 3) ⇒ Unit ‼ 1 ⊔ 3
+--           in f (inr (λ _. delay 1; ()) : Nat + (Unit ⇒ Unit ‼ 1))
+
+private
+
+  j₁₃ : ∀ {Θ} → EExp Θ
+  j₁₃ = ⌜ 1 ⌝ᵉ ⊔̂ₑ ⌜ 3 ⌝ᵉ
+
+  Wide Narrow : ∀ {Θ} → OVType Θ
+  Wide   = Nat |+| (Unit ⇒ Unit ‼ j₁₃)
+  Narrow = Nat |+| (Unit ⇒ Unit ‼ ⌜ 1 ⌝ᵉ)
+
+widen : RawC ∅ˢ 0
+widen =
+  return (lam (case+ v₀ `inl delay ⌜ 3 ⌝ (return ⋆) `inr (v₀ · ⋆))
+            ⦂ᵛ (Wide ⇒ Unit ‼ j₁₃))
+  ⨟ (v₀ · (inr (lam (delay ⌜ 1 ⌝ (return ⋆))) ⦂ᵛ Narrow))
+
+widen-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (ûₑ ·̂ₑ j₁₃)
+widen-D =
+  return (annᵛ (Wide ⇒ Unit ‼ j₁₃)
+           (lam (case+ var Hd ok₀
+                  `inl coerce (transₑ (eqₑ ≡̂ₑ-identityʳ) ⊔-ubʳₑ) (delay ⌜ 3 ⌝ (return ⋆))
+                  `inr (var Hd ok₀ · ⋆))))
+  ⨟ (var Hd ok₀ · subV (annᵛ Narrow
+                           (inr (lam (coerce (eqₑ ≡̂ₑ-identityʳ) (delay ⌜ 1 ⌝ (return ⋆))))))
+                         (Natₛ |+|ₛ (Unitₛ ⇒ₛ (Unitₛ ‼ₛ ⊔-ubˡₑ))))
+
+widen-typed : IsTyped (infer [] widen)
+widen-typed = typed-of widen (closed widen-D refl) _
+
+expected-widen : Scheme
+expected-widen = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ econst (of-durᵉ ⌜ 1 ⌝ ⊔ₑ of-durᵉ ⌜ 3 ⌝)
+
+-- A sum used under a lock: `Nat + Bool` is eternal, so it survives a
+-- tick at every grade.
+--
+--   sum-later = let s = (inl 2 : Nat + Bool) in delay 1; s
+
+sum-later : RawC ∅ˢ 0
+sum-later = return (inl (numeral 2) ⦂ᵛ (Nat |+| Bool)) ⨟ delay ⌜ 1 ⌝ (return v₀)
+
+sum-later-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat |+| Bool) ‼ (ûₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ ûₑ))
+sum-later-D =
+  return (annᵛ (Nat |+| Bool) (inl (numeralᵛ 2)))
+  ⨟ delay ⌜ 1 ⌝ (return (var (Tl-⟨⟩ Hd) (et-ok (Natₑ |+|ₑ Boolₑ))))
+
+sum-later-typed : IsTyped (infer [] sum-later)
+sum-later-typed = typed-of sum-later (closed sum-later-D refl) _
+
+expected-sum-later : Scheme
+expected-sum-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat |+| Bool) ‼ ⌜ 1 ⌝ᵉ
+
+-- Unannotated, the right summand is an unknown: the eternality of the
+-- sum is that of its unknown summand, asked for at the right-sided
+-- grades only.
+--
+--   inl-later = let s = inl 2 in delay 1; s
+
+inl-later : RawC ∅ˢ 0
+inl-later = return (inl (numeral 2)) ⨟ delay ⌜ 1 ⌝ (return v₀)
+
+expected-inl-later-eternal : Scheme
+expected-inl-later-eternal = ∀[ 1 , 0 , 0 ] eternal α₀ ⟹ (Nat |+| α₀) ‼ ⌜ 1 ⌝ᵉ
+
+expected-inl-later : Scheme
+expected-inl-later = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (Nat |+| α₀) ‼ ⌜ 1 ⌝ᵉ
+
+-- A sum with a function summand is not eternal: after a tick it is
+-- usable only where `⌜ 1 ⌝ʳ ≾ uᵣ`, at the left-sided grades.
+--
+--   fun-sum-later = let s = (inr (λ _. delay 1; ()) : Nat + (Unit ⇒ Unit ‼ 1))
+--                   in delay 1; s
+
+fun-sum-later : RawC ∅ˢ 0
+fun-sum-later =
+  return (inr (lam (delay ⌜ 1 ⌝ (return ⋆))) ⦂ᵛ Narrow) ⨟ delay ⌜ 1 ⌝ (return v₀)
+
+fun-sum-later-D : of-durʳ ⌜ 1 ⌝ ≾ᴳ uᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Narrow ‼ (ûₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ ûₑ))
+fun-sum-later-D q =
+  return (annᵛ Narrow (inr (lam (coerce (eqₑ ≡̂ₑ-identityʳ) (delay ⌜ 1 ⌝ (return ⋆))))))
+  ⨟ delay ⌜ 1 ⌝ (return (var (Tl-⟨⟩ Hd) (≾ᵘ-ok (after q))))
+
+fun-sum-later-typable : True (of-durʳ ⌜ 1 ⌝ ≾ᵣ? uᵣ) → Typable [] fun-sum-later
+fun-sum-later-typable q = closed (fun-sum-later-D (toWitness q)) refl
+
+expected-fun-sum-later : Scheme
+expected-fun-sum-later =
+  ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat |+| (Unit ⇒ Unit ‼ ⌜ 1 ⌝ᵉ)) ‼ ⌜ 1 ⌝ᵉ
+
+-- The scrutinee has to be a sum: `Bool` is not one.
+--
+--   case-of-bool+ = case+ true of inl _ ↦ () | inr _ ↦ ()
+
+case-of-bool+ : RawC ∅ˢ 0
+case-of-bool+ = case+ true `inl return ⋆ `inr return ⋆

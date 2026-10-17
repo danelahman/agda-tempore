@@ -16,7 +16,8 @@
 -- identities on typing.                                        --
 --                                                              --
 -- The rules `zero`, `succ`, `caseℕ` and `recℕ` for natural     --
--- numbers have no counterpart in `Syntax.Language` either.     --
+-- numbers, and `inl`, `inr` and `case+` for sums, have no      --
+-- counterpart in `Syntax.Language` either.                     --
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ; suc)
@@ -103,6 +104,18 @@ mutual
             → Q ∣ Γ ⊢V⦂ B
             -------------------
             → Q ∣ Γ ⊢V⦂ A |×| B
+
+    -- injections into a sum
+
+    inl     : {A B : OVType Θ}
+            → Q ∣ Γ ⊢V⦂ A
+            -------------------
+            → Q ∣ Γ ⊢V⦂ A |+| B
+
+    inr     : {A B : OVType Θ}
+            → Q ∣ Γ ⊢V⦂ B
+            -------------------
+            → Q ∣ Γ ⊢V⦂ A |+| B
 
     -- lambda abstraction
 
@@ -196,6 +209,21 @@ mutual
             → Q ∣ Γ ⊢V⦂ Nat
             → Q ∣ Γ ⊢C⦂ C
             → Q ∣ Γ ∷ Nat ⊢C⦂ C
+            -------------------
+            → Q ∣ Γ ⊢C⦂ C
+
+    -- sum elimination
+
+    -- As for `if`, both branches are typed at the same computation type;
+    -- each binds the injected value, as `match` binds the components of
+    -- a pair.
+
+    case+_`inl_`inr_
+            : {A B : OVType Θ}
+            → {C : OCType Θ}
+            → Q ∣ Γ ⊢V⦂ A |+| B
+            → Q ∣ Γ ∷ A ⊢C⦂ C
+            → Q ∣ Γ ∷ B ⊢C⦂ C
             -------------------
             → Q ∣ Γ ⊢C⦂ C
 

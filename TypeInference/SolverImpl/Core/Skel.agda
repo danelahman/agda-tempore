@@ -41,7 +41,7 @@ open import TypeInference.SolverImpl.Core.Thick
 open import TypeInference.SolverImpl.Core.Rigid S using (zip₂)
 
 infix  37 sBox_
-infix  32 _s×_
+infix  32 _s×_ _s+_
 infixr 30 _s⇒_
 
 data Skel (n : ℕ) : Set where
@@ -51,6 +51,7 @@ data Skel (n : ℕ) : Set where
   sBool  : Skel n                          -- boolean type
   sNat   : Skel n                          -- natural-number type
   _s×_   : Skel n → Skel n → Skel n        -- product type
+  _s+_   : Skel n → Skel n → Skel n        -- sum type
   sEmpty : Skel n                          -- empty type
   _s⇒_   : Skel n → Skel n → Skel n        -- function type, to its result's value part
   sBox_  : Skel n → Skel n                 -- box modality
@@ -68,6 +69,7 @@ svar?-just sUnit     ()
 svar?-just sBool     ()
 svar?-just sNat      ()
 svar?-just (t s× u)  ()
+svar?-just (t s+ u)  ()
 svar?-just sEmpty    ()
 svar?-just (t s⇒ u)  ()
 svar?-just (sBox t)  ()
@@ -83,6 +85,7 @@ mutual
   skelᵛ Bool      = sBool
   skelᵛ Nat       = sNat
   skelᵛ (A |×| B) = skelᵛ A s× skelᵛ B
+  skelᵛ (A |+| B) = skelᵛ A s+ skelᵛ B
   skelᵛ Empty     = sEmpty
   skelᵛ (A ⇒ C)   = skelᵛ A s⇒ skelᶜ C
   skelᵛ ([ ρ ] A) = sBox skelᵛ A
@@ -106,6 +109,7 @@ sUnit     [ σ ]ᵏ = sUnit
 sBool     [ σ ]ᵏ = sBool
 sNat      [ σ ]ᵏ = sNat
 (t s× u)  [ σ ]ᵏ = t [ σ ]ᵏ s× u [ σ ]ᵏ
+(t s+ u)  [ σ ]ᵏ = t [ σ ]ᵏ s+ u [ σ ]ᵏ
 sEmpty    [ σ ]ᵏ = sEmpty
 (t s⇒ u)  [ σ ]ᵏ = t [ σ ]ᵏ s⇒ u [ σ ]ᵏ
 (sBox t)  [ σ ]ᵏ = sBox t [ σ ]ᵏ
@@ -128,6 +132,7 @@ _≐ᵏ_ : ∀ {n m} → SSub n m → SSub n m → Set
 [id]ᵏ sBool     = refl
 [id]ᵏ sNat      = refl
 [id]ᵏ (t s× u)  = cong₂ _s×_ ([id]ᵏ t) ([id]ᵏ u)
+[id]ᵏ (t s+ u)  = cong₂ _s+_ ([id]ᵏ t) ([id]ᵏ u)
 [id]ᵏ sEmpty    = refl
 [id]ᵏ (t s⇒ u)  = cong₂ _s⇒_ ([id]ᵏ t) ([id]ᵏ u)
 [id]ᵏ (sBox t)  = cong sBox_ ([id]ᵏ t)
@@ -140,6 +145,7 @@ _≐ᵏ_ : ∀ {n m} → SSub n m → SSub n m → Set
 [⨟]ᵏ sBool     σ δ = refl
 [⨟]ᵏ sNat      σ δ = refl
 [⨟]ᵏ (t s× u)  σ δ = cong₂ _s×_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
+[⨟]ᵏ (t s+ u)  σ δ = cong₂ _s+_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
 [⨟]ᵏ sEmpty    σ δ = refl
 [⨟]ᵏ (t s⇒ u)  σ δ = cong₂ _s⇒_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
 [⨟]ᵏ (sBox t)  σ δ = cong sBox_ ([⨟]ᵏ t σ δ)
@@ -151,6 +157,7 @@ _≐ᵏ_ : ∀ {n m} → SSub n m → SSub n m → Set
 [≐]ᵏ p sBool     = refl
 [≐]ᵏ p sNat      = refl
 [≐]ᵏ p (t s× u)  = cong₂ _s×_ ([≐]ᵏ p t) ([≐]ᵏ p u)
+[≐]ᵏ p (t s+ u)  = cong₂ _s+_ ([≐]ᵏ p t) ([≐]ᵏ p u)
 [≐]ᵏ p sEmpty    = refl
 [≐]ᵏ p (t s⇒ u)  = cong₂ _s⇒_ ([≐]ᵏ p t) ([≐]ᵏ p u)
 [≐]ᵏ p (sBox t)  = cong sBox_ ([≐]ᵏ p t)
@@ -180,6 +187,7 @@ checkᵏ α sUnit     = just sUnit
 checkᵏ α sBool     = just sBool
 checkᵏ α sNat      = just sNat
 checkᵏ α (t s× u)  = zip₂ _s×_ (checkᵏ α t) (checkᵏ α u)
+checkᵏ α (t s+ u)  = zip₂ _s+_ (checkᵏ α t) (checkᵏ α u)
 checkᵏ α sEmpty    = just sEmpty
 checkᵏ α (t s⇒ u)  = zip₂ _s⇒_ (checkᵏ α t) (checkᵏ α u)
 checkᵏ α (sBox t)  = mmap sBox_ (checkᵏ α t)

@@ -96,6 +96,29 @@ mutual
       A↑ = wkᵗ-v (wkᵗ-v A)
       Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
 
+  -- injections into a sum
+  --
+  -- As for pairing, both summands are ∃-bound and the sum they form is
+  -- the expected type; the injected value is checked against its own.
+
+  genVˢ {Θ = Θ} ι Γ (inl V) A =
+    ∃ᵗ (∃ᵗ ((α₁ |+| α₂ ≐ᵥ A↑) ∧̂ genVˢ ι↑ Γ↑ V α₁))
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
+      α₁ = wkᵗ-v (tvar (newᵗ {Θ}))
+      α₂ = tvar (newᵗ {Θ +ty})
+      A↑ = wkᵗ-v (wkᵗ-v A)
+      Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
+
+  genVˢ {Θ = Θ} ι Γ (inr V) A =
+    ∃ᵗ (∃ᵗ ((α₁ |+| α₂ ≐ᵥ A↑) ∧̂ genVˢ ι↑ Γ↑ V α₂))
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
+      α₁ = wkᵗ-v (tvar (newᵗ {Θ}))
+      α₂ = tvar (newᵗ {Θ +ty})
+      A↑ = wkᵗ-v (wkᵗ-v A)
+      Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
+
   -- lambda abstraction
   --
   -- The body is typed at the arrow the lambda synthesises, which is a
@@ -184,6 +207,23 @@ mutual
 
   genCˢ ι Γ (caseℕ V `zero M₁ `succ M₂) (A ‼ t) =
     genVˢ ι Γ V Nat ∧̂ genCˢ ι Γ M₁ (A ‼ t) ∧̂ genCˢ ι (Γ ∷ Nat) M₂ (A ‼ t)
+
+  -- sum elimination
+  --
+  -- The summands are ∃-bound, as the components are for `match`; both
+  -- branches are checked against the expected type, as for `if`.
+
+  genCˢ {Θ = Θ} ι Γ (case+ V `inl M₁ `inr M₂) (A ‼ t) =
+    ∃ᵗ (∃ᵗ (  genVˢ ι↑ Γ↑ V (α₁ |+| α₂)
+            ∧̂ genCˢ ι↑ (Γ↑ ∷ α₁) M₁ (A↑ ‼ t↑)
+            ∧̂ genCˢ ι↑ (Γ↑ ∷ α₂) M₂ (A↑ ‼ t↑)))
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
+      α₁ = wkᵗ-v (tvar (newᵗ {Θ}))
+      α₂ = tvar (newᵗ {Θ +ty})
+      A↑ = wkᵗ-v (wkᵗ-v A)
+      t↑ = wkᵗ-e (wkᵗ-e t)
+      Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
 
   -- primitive recursion on natural numbers
   --
@@ -322,6 +362,8 @@ mutual
   genVˢ-rigidFree zero         h       = tt , tt
   genVˢ-rigidFree (succ V)     h       = (tt , tt) , genVˢ-rigidFree V h
   genVˢ-rigidFree ⦉ V₁ , V₂ ⦊   (h , k) = (tt , tt) , genVˢ-rigidFree V₁ h , genVˢ-rigidFree V₂ k
+  genVˢ-rigidFree (inl V)      h       = (tt , tt) , genVˢ-rigidFree V h
+  genVˢ-rigidFree (inr V)      h       = (tt , tt) , genVˢ-rigidFree V h
   genVˢ-rigidFree (lam M)      h       = tt , genCˢ-rigidFree M h
   genVˢ-rigidFree (V ⦂ᵛ B)     h       = genVˢ-rigidFree V h , tt
 
@@ -340,6 +382,8 @@ mutual
   genCˢ-rigidFree (if V `then M₁ `else M₂) {A ‼ t} (h , k , l) =
     genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
   genCˢ-rigidFree (caseℕ V `zero M₁ `succ M₂) {A ‼ t} (h , k , l) =
+    genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
+  genCˢ-rigidFree (case+ V `inl M₁ `inr M₂) {A ‼ t} (h , k , l) =
     genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
   genCˢ-rigidFree (recℕ V M₁ M₂)           {A ‼ t} (h , k , l) =
     genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l , tt , tt , tt

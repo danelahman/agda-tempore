@@ -119,6 +119,7 @@ amguᵏ sBool      sBool       s@(_ , anilᵏ) = just s
 amguᵏ sNat       sNat        s@(_ , anilᵏ) = just s
 amguᵏ sEmpty     sEmpty      s@(_ , anilᵏ) = just s
 amguᵏ (t s× u)   (t' s× u')  s@(_ , anilᵏ) = amguᵏ t t' s >>= amguᵏ u u'
+amguᵏ (t s+ u)   (t' s+ u')  s@(_ , anilᵏ) = amguᵏ t t' s >>= amguᵏ u u'
 amguᵏ (t s⇒ u)   (t' s⇒ u')  s@(_ , anilᵏ) = amguᵏ t t' s >>= amguᵏ u u'
 amguᵏ (sBox t)   (sBox t')   s@(_ , anilᵏ) = amguᵏ t t' s
 amguᵏ t          u            (_ , anilᵏ)  = nothing

@@ -98,6 +98,8 @@ data Decomp {Ψ : Scope} : OVType Ψ → OVType Ψ → List (Part Ψ) → Set wh
   Emptyᴰ : Decomp Empty Empty []
   |×|ᴰ   : ∀ {A A' B B'}
          → Decomp (A |×| B) (A' |×| B') (ty co A A' ∷ ty co B B' ∷ [])
+  |+|ᴰ   : ∀ {A A' B B'}
+         → Decomp (A |+| B) (A' |+| B') (ty co A A' ∷ ty co B B' ∷ [])
   ⇒ᴰ     : ∀ {A A' B B' ε ε'}
          → Decomp (A ⇒ B ‼ ε) (A' ⇒ B' ‼ ε')
                   (ty contra A A' ∷ ty co B B' ∷ eg co ε ε' ∷ [])
@@ -121,6 +123,7 @@ decompose Bool           Bool              = parts _ Boolᴰ
 decompose Nat            Nat               = parts _ Natᴰ
 decompose Empty          Empty             = parts _ Emptyᴰ
 decompose (A |×| B)      (A' |×| B')       = parts _ |×|ᴰ
+decompose (A |+| B)      (A' |+| B')       = parts _ |+|ᴰ
 decompose (A ⇒ (B ‼ ε))  (A' ⇒ (B' ‼ ε'))  = parts _ ⇒ᴰ
 decompose ([ ρ ] A)      ([ ρ' ] A')       = parts _ []ᴰ
 decompose _              _                 = clash
@@ -145,6 +148,7 @@ self Bool          = form _ Boolᴰ []
 self Nat           = form _ Natᴰ []
 self Empty         = form _ Emptyᴰ []
 self (A |×| B)     = form _ |×|ᴰ (refl ∷ refl ∷ [])
+self (A |+| B)     = form _ |+|ᴰ (refl ∷ refl ∷ [])
 self (A ⇒ (B ‼ ε)) = form _ ⇒ᴰ (refl ∷ refl ∷ refl ∷ [])
 self ([ ρ ] A)     = form _ []ᴰ (refl ∷ refl ∷ [])
 
@@ -157,6 +161,7 @@ eternal Boolᴰ       = true
 eternal Natᴰ        = true
 eternal Emptyᴰ      = true
 eternal |×|ᴰ        = true
+eternal |+|ᴰ        = true
 eternal ⇒ᴰ          = false
 eternal []ᴰ         = false
 
@@ -171,6 +176,7 @@ eternal []ᴰ         = false
 <:-intro Natᴰ   σ τ []              = Natₛ
 <:-intro Emptyᴰ σ τ []              = Emptyₛ
 <:-intro |×|ᴰ   σ τ (p ∷ q ∷ [])     = p |×|ₛ q
+<:-intro |+|ᴰ   σ τ (p ∷ q ∷ [])     = p |+|ₛ q
 <:-intro ⇒ᴰ     σ τ (p ∷ q ∷ e ∷ []) = p ⇒ₛ (q ‼ₛ e)
 <:-intro []ᴰ    σ τ (r ∷ p ∷ [])     = [ r ]ₛ p
 
@@ -183,6 +189,7 @@ eternal []ᴰ         = false
 <:-elim Natᴰ   σ τ Natₛ             = []
 <:-elim Emptyᴰ σ τ Emptyₛ           = []
 <:-elim |×|ᴰ   σ τ (p |×|ₛ q)       = p ∷ q ∷ []
+<:-elim |+|ᴰ   σ τ (p |+|ₛ q)       = p ∷ q ∷ []
 <:-elim ⇒ᴰ     σ τ (p ⇒ₛ (q ‼ₛ e))  = p ∷ q ∷ e ∷ []
 <:-elim []ᴰ    σ τ ([ r ]ₛ p)       = r ∷ p ∷ []
 
@@ -205,6 +212,7 @@ Etᴾ Q (eg _ _ _) = ⊤
 ⊩ᴱ-intro Natᴰ   e  δ []           = Natₑ
 ⊩ᴱ-intro Emptyᴰ e  δ []           = Emptyₑ
 ⊩ᴱ-intro |×|ᴰ   e  δ (p ∷ q ∷ []) = p |×|ₑ q
+⊩ᴱ-intro |+|ᴰ   e  δ (p ∷ q ∷ []) = p |+|ₑ q
 
 ⊩ᴱ-elim : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {A B : OVType Ψ} {ps} → (g : Decomp A B ps)
         → (δ : Subst Ψ Ψ') → Q ⊩ᴱ A [ δ ]ᵛ
@@ -217,6 +225,7 @@ Etᴾ Q (eg _ _ _) = ⊤
 ⊩ᴱ-elim Natᴰ   δ Natₑ       = refl , []
 ⊩ᴱ-elim Emptyᴰ δ Emptyₑ     = refl , []
 ⊩ᴱ-elim |×|ᴰ   δ (p |×|ₑ q) = refl , p ∷ q ∷ []
+⊩ᴱ-elim |+|ᴰ   δ (p |+|ₑ q) = refl , p ∷ q ∷ []
 
 -- The value-type parts of a type are smaller than it
 
@@ -248,6 +257,8 @@ accs Nat           = (λ { Natᴰ → [] }) , (λ { Natᴰ → [] })
 accs Empty         = (λ { Emptyᴰ → [] }) , (λ { Emptyᴰ → [] })
 accs (A |×| B)     = (λ { |×|ᴰ → ≺-wf A ∷ ≺-wf B ∷ [] })
                    , (λ { |×|ᴰ → ≺-wf A ∷ ≺-wf B ∷ [] })
+accs (A |+| B)     = (λ { |+|ᴰ → ≺-wf A ∷ ≺-wf B ∷ [] })
+                   , (λ { |+|ᴰ → ≺-wf A ∷ ≺-wf B ∷ [] })
 accs (A ⇒ (B ‼ ε)) = (λ { ⇒ᴰ → ≺-wf A ∷ ≺-wf B ∷ tt ∷ [] })
                    , (λ { ⇒ᴰ → ≺-wf A ∷ ≺-wf B ∷ tt ∷ [] })
 accs ([ ρ ] A)     = (λ { []ᴰ → tt ∷ ≺-wf A ∷ [] }) , (λ { []ᴰ → tt ∷ ≺-wf A ∷ [] })

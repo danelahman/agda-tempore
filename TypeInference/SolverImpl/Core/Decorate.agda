@@ -61,6 +61,9 @@ decorate Ψ sEmpty    = Ψ , idˢ , Empty
 decorate Ψ (t s× u) with decorate Ψ t
 ... | Ψ₁ , w₁ , A with decorate Ψ₁ u
 ...   | Ψ₂ , w₂ , B = Ψ₂ , w₁ ⨟ˢ w₂ , (A [ w₂ ]ᵛ |×| B)
+decorate Ψ (t s+ u) with decorate Ψ t
+... | Ψ₁ , w₁ , A with decorate Ψ₁ u
+...   | Ψ₂ , w₂ , B = Ψ₂ , w₁ ⨟ˢ w₂ , (A [ w₂ ]ᵛ |+| B)
 decorate Ψ (t s⇒ u) with decorate Ψ t
 ... | Ψ₁ , w₁ , A with decorate Ψ₁ u
 ...   | Ψ₂ , w₂ , B =

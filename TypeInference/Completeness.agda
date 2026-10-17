@@ -136,6 +136,41 @@ mutual
       ih₁ = cmpV ι↑ Γ↑ α₁ V₁ D₁ (reV pι V₁ e₁) (trans ceq (sym pΓ)) st₁
       ih₂ = cmpV ι↑ Γ↑ α₂ V₂ D₂ (reV pι V₂ e₂) (trans ceq (sym pΓ)) st₂
 
+  -- injections into a sum
+  --
+  -- A supertype of a sum is a sum; the injected summand carries its
+  -- slack, the other is the supertype's own.
+
+  cmpV {Θ = Θ} {σ = σ} ι Γ A _ (inl D₁) (inl {V = V} e) ceq st
+    with <:̂ᵛ-+ˡ st
+  ... | B₁ , B₂ , eq , st₁ , _ =
+    B₁ , B₂ , ⊨-≐ᵥ (σ ,ᵗ B₁ ,ᵗ B₂) (α₁ |+| α₂) (wkᵗ-v (wkᵗ-v A)) (trans (sym eq) (sym pA)) ,
+    cmpV ι↑ Γ↑ α₁ V D₁ (reV pι V e) (trans ceq (sym pΓ)) st₁
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
+      Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
+      α₁ = wkᵗ-v (tvar (newᵗ {Θ}))
+      α₂ = tvar (newᵗ {Θ +ty})
+
+      pΓ = co²ᵗ-ctx σ B₁ B₂ Γ
+      pA = co²ᵗ-v   σ B₁ B₂ A
+      pι = co²ᵗ-ˢ   ι σ B₁ B₂
+
+  cmpV {Θ = Θ} {σ = σ} ι Γ A _ (inr D₂) (inr {V = V} e) ceq st
+    with <:̂ᵛ-+ˡ st
+  ... | B₁ , B₂ , eq , _ , st₂ =
+    B₁ , B₂ , ⊨-≐ᵥ (σ ,ᵗ B₁ ,ᵗ B₂) (α₁ |+| α₂) (wkᵗ-v (wkᵗ-v A)) (trans (sym eq) (sym pA)) ,
+    cmpV ι↑ Γ↑ α₂ V D₂ (reV pι V e) (trans ceq (sym pΓ)) st₂
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
+      Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
+      α₁ = wkᵗ-v (tvar (newᵗ {Θ}))
+      α₂ = tvar (newᵗ {Θ +ty})
+
+      pΓ = co²ᵗ-ctx σ B₁ B₂ Γ
+      pA = co²ᵗ-v   σ B₁ B₂ A
+      pι = co²ᵗ-ˢ   ι σ B₁ B₂
+
   -- lambda abstraction
 
   cmpV {Θ = Θ} {σ = σ} {Q = Q} ι Γ A _
@@ -287,6 +322,37 @@ mutual
     cmpV ι Γ Nat V D₀ (invV V e₀) ceq Natₛ ,
     cmpC ι Γ A t M₁ D₁ (invC M₁ e₁) ceq st le ,
     cmpC ι (Γ ∷ Nat) A t M₂ D₂ (invC M₂ e₂) (cong (_∷ Nat) ceq) st le
+
+  -- sum elimination
+  --
+  -- The summands are the scrutinee's own; the branches inherit the slack.
+
+  cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
+       (case+_`inl_`inr_ {A = A₁} {B = A₂} D₀ D₁ D₂)
+       (case+ {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂) ceq st le =
+    A₁ , A₂ , ih₀ , ih₁ , ih₂
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
+      Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
+      A↑ = wkᵗ-v (wkᵗ-v A)
+      t↑ = wkᵗ-e (wkᵗ-e t)
+      α₁ = wkᵗ-v (tvar (newᵗ {Θ}))
+      α₂ = tvar (newᵗ {Θ +ty})
+
+      pΓ = co²ᵗ-ctx σ A₁ A₂ Γ
+      pA = co²ᵗ-v   σ A₁ A₂ A
+      pt = co²ᵗ-e   σ A₁ A₂ t
+      pι = co²ᵗ-ˢ   ι σ A₁ A₂
+
+      st↑ = subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st
+      le↑ = subst (λ z → Q ⊩ _ ≾̂ₑ z) (sym pt) le
+
+      ih₀ = cmpV ι↑ Γ↑ (α₁ |+| α₂) V D₀ (reV pι V e₀) (trans ceq (sym pΓ))
+                 (<:̂ᵛ-refl _)
+      ih₁ = cmpC ι↑ (Γ↑ ∷ α₁) A↑ t↑ M₁ D₁ (reC pι M₁ e₁)
+                 (cong (_∷ A₁) (trans ceq (sym pΓ))) st↑ le↑
+      ih₂ = cmpC ι↑ (Γ↑ ∷ α₂) A↑ t↑ M₂ D₂ (reC pι M₂ e₂)
+                 (cong (_∷ A₂) (trans ceq (sym pΓ))) st↑ le↑
 
   -- primitive recursion on natural numbers
   --

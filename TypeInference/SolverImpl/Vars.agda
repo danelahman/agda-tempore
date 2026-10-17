@@ -218,6 +218,8 @@ mutual
   fix-v f Empty     h = refl
   fix-v f (A |×| B) h = cong₂ _|×|_ (fix-v f A (⊆-∪ˡ (fvᵛ A) (fvᵛ B) h))
                                     (fix-v f B (⊆-∪ʳ (fvᵛ A) (fvᵛ B) h))
+  fix-v f (A |+| B) h = cong₂ _|+|_ (fix-v f A (⊆-∪ˡ (fvᵛ A) (fvᵛ B) h))
+                                    (fix-v f B (⊆-∪ʳ (fvᵛ A) (fvᵛ B) h))
   fix-v f (A ⇒ C)   h = cong₂ _⇒_ (fix-v f A (⊆-∪ˡ (fvᵛ A) (fvᶜ C) h))
                                   (fix-c f C (⊆-∪ʳ (fvᵛ A) (fvᶜ C) h))
   fix-v f ([ ρ ] A) h = cong₂ [_]_ (fix-r f ρ (⊆-∪ˡ (fvʳ ρ) (fvᵛ A) h))
