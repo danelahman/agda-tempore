@@ -250,3 +250,17 @@ plus∞-least {↑ suc n} {↑ m} p q with +∞-self {m} q
 plus∞-least {↑ suc n} {↑ m} () q | refl
 plus∞-least {↑ suc n} {∞}   p q = tt
 plus∞-least {∞}       {∞}   p q = tt
+
+-- a value that a summand does not move, the summand's closure does not
+-- move either
+
+plus∞-indˡ : ∀ {a b} → (a +∞ b) ≤∞ b → (plus∞ a +∞ b) ≤∞ b
+plus∞-indˡ {↑ zero}  {b}   p = p
+plus∞-indˡ {↑ suc n} {↑ m} p = ⊥-elim (<-irrefl refl (≤-trans p (m≤n+m m n)))
+plus∞-indˡ {↑ suc n} {∞}   p = tt
+plus∞-indˡ {∞}       {↑ _} ()
+plus∞-indˡ {∞}       {∞}   p = tt
+
+plus∞-indʳ : ∀ {a b} → (b +∞ a) ≤∞ b → (b +∞ plus∞ a) ≤∞ b
+plus∞-indʳ {a} {b} p =
+  subst (_≤∞ b) (+∞-comm (plus∞ a) b) (plus∞-indˡ (subst (_≤∞ b) (+∞-comm b a) p))

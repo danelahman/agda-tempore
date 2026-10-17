@@ -217,6 +217,21 @@ plus∞-least {↑ p} {↑ m} q₁ q₂ | no ¬r = ⊥-elim (¬r (≤-trans q₁
 plus∞-least {↑ p} {∞}   q₁ q₂ | no _  = tt
 plus∞-least {∞}   {∞}   q₁ q₂ = tt
 
+-- a value that a summand does not move, the summand's closure does not
+-- move either
+
+plus∞-indˡ : ∀ {a b} → (a +∞ b) ≤∞ b → (plus∞ a +∞ b) ≤∞ b
+plus∞-indˡ {↑ p} {b} q with p ≤? 0ᵈ
+plus∞-indˡ {↑ p} {b}   q | yes _ = q
+plus∞-indˡ {↑ p} {↑ m} q | no ¬r = ⊥-elim (¬r (+-absorbˡ q))
+plus∞-indˡ {↑ p} {∞}   q | no _  = tt
+plus∞-indˡ {∞}   {↑ _} ()
+plus∞-indˡ {∞}   {∞}   q = tt
+
+plus∞-indʳ : ∀ {a b} → (b +∞ a) ≤∞ b → (b +∞ plus∞ a) ≤∞ b
+plus∞-indʳ {a} {b} q =
+  subst (_≤∞ b) (+∞-comm (plus∞ a) b) (plus∞-indˡ (subst (_≤∞ b) (+∞-comm b a) q))
+
 ------------------------------------------------------------------------
 -- The embedding of the extended naturals
 

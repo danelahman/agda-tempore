@@ -24,7 +24,8 @@ examples:
 #   single stages on hand-written input: splitting,
 #     disjunction pruning, absorption by the top, multiset
 #     comparison of products, chained closed orderings, cycle
-#     collapse (Canon, Simplify, Entail, Localise)       -> stages
+#     collapse, the value of lowering at each shape of cycle
+#     (Canon, Simplify, Entail, Localise, Values)        -> stages
 #   the search for a refutation and establishment: retry,
 #     the closed check with failing chains, candidates
 #     (Search, Entail, Localise, Solve)                  -> runs

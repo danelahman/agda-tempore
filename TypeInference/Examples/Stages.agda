@@ -26,14 +26,19 @@
 --     unknown; without it, the clause's close is stuck.        --
 --   * `retry`: a deferred condition is refuted at a candidate  --
 --     value the grade supplies for its rigid.                  --
+--   * `stepᵉ`, lowering: the value `B* · L · C*`, and its      --
+--     closure, at each shape of cycle, with and without lower  --
+--     bounds; the annotated `wait` of the prototype is refuted --
+--     at the value.                                            --
 --                                                              --
 -- The grades differ in the properties the stages read,         --
 -- `u-least?` and `·-comm?`: right-sided intervals (both hold), --
 -- timed traces under the allowance order (the unit least, `·`  --
 -- not commutative), left-sided intervals with an adjoined top  --
 -- (`·` commutative, the unit not least, the top distinct from  --
--- the unit), both sides of time for the collapse, and          --
--- left-sided time for the retry.                               --
+-- the unit), both sides of time for the collapse, left-sided   --
+-- time for the retry, and right-sided time and two-sided       --
+-- intervals for lowering.                                      --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; not; _∧_) renaming (Bool to 𝔹)
@@ -490,3 +495,146 @@ module Witness where
   unit-top-undecided :
     undecidedⱽ (witnessᵉ {H = ∅ᴴ} 1 ⌜ 3 ⌝ (⌜ 3 ⌝ ·̂ₑ j) (grid (uₑ ∷ ⊤ₑ ∷ []) 1)) ≡ true
   unit-top-undecided = refl
+
+------------------------------------------------------------------
+-- `stepᵉ`, lowering: the value `V = B* · L · C*`, and its closure
+-- `(B* · L · C*)⁺` where there is a cycle `v · v ≾ v`. `L` is the
+-- join of the lower bounds, or the unit where there is none and it
+-- is least; `B` and `C` are the joins of the left and right
+-- multipliers of the cycles `b · v ≾ v` and `v · c ≾ v`, and
+-- `X* · y` is `y ⊔ X⁺ · y`. Each instance is shown by its value.
+
+module Lowering where
+
+  open import Data.Maybe.Base using (Maybe) renaming (map to mapᴹ)
+  open import Data.Product using (proj₁)
+
+  module Values (S : LanguageSpec) where
+
+    open import TypeInference.OpenSyntax.Grades   S
+    open import TypeInference.SolverImpl.Resid    S using (resid)
+    open import TypeInference.SolverImpl.Localise S using (stepᵉ)
+
+    Θ : Scope
+    Θ = scope 0 0 1
+
+    v : EExp Θ
+    v = evar zero
+
+    -- the value the first unknown is sent to
+
+    value : List (EExp Θ × EExp Θ) → Maybe (EExp Θ)
+    value l = mapᴹ proj₁ (stepᵉ zero (resid [] l [] [] [] []))
+
+  -- right-sided intervals: the closure of a non-zero bound is the top
+
+  module RightSided where
+
+    open import Syntax.Grades.Example.Time.RightSided using ([0,_]; ↑_; ∞)
+    open import TypeInference.Examples.Specs using (module Time-RightSided)
+    open Time-RightSided using (spec)
+
+    open import TypeInference.OpenSyntax.Grades spec
+    open import TypeInference.OpenSyntax.Hyps   spec using (hyps)
+    open import TypeInference.SolverImpl.Entail spec using (checkClosed)
+    open Values spec
+
+    ⌜_⌝ : ℕ → EExp Θ
+    ⌜ n ⌝ = econst [0, ↑ n ]
+
+    ∞̂ : EExp Θ
+    ∞̂ = econst [0, ∞ ]
+
+    -- no cycle: `L`
+
+    no-cycle : value ((⌜ 2 ⌝ , v) ∷ (⌜ 3 ⌝ , v) ∷ []) ≡ just (⌜ 2 ⌝ ⊔̂ₑ ⌜ 3 ⌝)
+    no-cycle = refl
+
+    -- `v · v ≾ v` only: `L⁺`
+
+    quadratic : value ((⌜ 1 ⌝ , v) ∷ (v ·̂ₑ v , v) ∷ []) ≡ just ∞̂
+    quadratic = refl
+
+    -- `d · v ≾ v` only: `L ⊔ D⁺ · L`
+
+    left-linear : value ((⌜ 1 ⌝ , v) ∷ (⌜ 2 ⌝ ·̂ₑ v , v) ∷ []) ≡ just (⌜ 1 ⌝ ⊔̂ₑ ∞̂ ·̂ₑ ⌜ 1 ⌝)
+    left-linear = refl
+
+    -- `v · d ≾ v` only: `L ⊔ L · D⁺`
+
+    right-linear : value ((⌜ 1 ⌝ , v) ∷ (v ·̂ₑ ⌜ 2 ⌝ , v) ∷ []) ≡ just (⌜ 1 ⌝ ⊔̂ₑ ⌜ 1 ⌝ ·̂ₑ ∞̂)
+    right-linear = refl
+
+    -- a multiplier leaving `L`: `L`
+
+    left-stays : value ((⌜ 1 ⌝ , v) ∷ (⌜ 0 ⌝ ·̂ₑ v , v) ∷ []) ≡ just ⌜ 1 ⌝
+    left-stays = refl
+
+    -- the annotated `wait`, `1 · ε ≾ ε ∧ 1 · ε ≾ 1`: no lower bound,
+    -- the unit least, so `u ⊔ 1⁺ · u`, the top; `1 · ⊤ ≾ 1` is then
+    -- closed and false
+
+    wait-value : value ((⌜ 1 ⌝ ·̂ₑ v , v) ∷ (⌜ 1 ⌝ ·̂ₑ v , ⌜ 1 ⌝) ∷ []) ≡ just (ûₑ ⊔̂ₑ ∞̂ ·̂ₑ ûₑ)
+    wait-value = refl
+
+    wait-refuted :
+      checkClosed (hyps [] [] [] ((⌜ 1 ⌝ ·̂ₑ (ûₑ ⊔̂ₑ ∞̂ ·̂ₑ ûₑ) , ⌜ 1 ⌝) ∷ []) []) ≡ nothing
+    wait-refuted = refl
+
+    -- its mirror, `ε · 1 ≾ ε ∧ ε · 1 ≾ 1`: `u ⊔ u · 1⁺`
+
+    wait-mirror-value :
+      value ((v ·̂ₑ ⌜ 1 ⌝ , v) ∷ (v ·̂ₑ ⌜ 1 ⌝ , ⌜ 1 ⌝) ∷ []) ≡ just (ûₑ ⊔̂ₑ ûₑ ·̂ₑ ∞̂)
+    wait-mirror-value = refl
+
+    wait-mirror-refuted :
+      checkClosed (hyps [] [] [] (((ûₑ ⊔̂ₑ ûₑ ·̂ₑ ∞̂) ·̂ₑ ⌜ 1 ⌝ , ⌜ 1 ⌝) ∷ []) []) ≡ nothing
+    wait-mirror-refuted = refl
+
+    -- left-linear and quadratic: `(L ⊔ D⁺ · L)⁺`, here its own closure
+
+    mixed : value ((⌜ 1 ⌝ , v) ∷ (⌜ 2 ⌝ ·̂ₑ v , v) ∷ (v ·̂ₑ v , v) ∷ [])
+              ≡ just (⌜ 1 ⌝ ⊔̂ₑ ∞̂ ·̂ₑ ⌜ 1 ⌝)
+    mixed = refl
+
+  -- two-sided intervals: the closure keeps the lower endpoint
+
+  module TwoSided where
+
+    open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
+      using (↑_; ∞; two-sided-intervals-with-∞) renaming ([_,_] to ⌈_,_⌉)
+    open import Syntax.Grades.Example.Worked.Typing.Time.TwoSided using (opTime)
+    open import Syntax.Grades.Example.System.Identity using (noWitnesses)
+    open import Syntax.Grades.Example.Worked.Typing.Core
+      two-sided-intervals-with-∞ opTime noWitnesses using (spec)
+
+    open import TypeInference.OpenSyntax.Grades spec
+    open import TypeInference.OpenSyntax.Hyps   spec using (hyps)
+    open import TypeInference.SolverImpl.Entail spec using (checkClosed)
+    open Values spec
+
+    -- `1 ≾ v ∧ v · v ≾ v ∧ v ≾ [1,∞]`: `v = [1,1]⁺ = [1,∞]`, and the
+    -- upper bound holds there
+
+    one : EExp Θ
+    one = econst ⌈ 1 , ↑ 1 ⌉
+
+    one-∞ : EExp Θ
+    one-∞ = econst ⌈ 1 , ∞ ⌉
+
+    interval-value : value ((one , v) ∷ (v ·̂ₑ v , v) ∷ (v , one-∞) ∷ []) ≡ just one-∞
+    interval-value = refl
+
+    interval-holds :
+      checkClosed (hyps [] [] [] ((one-∞ , one-∞) ∷ []) []) ≡ just (hyps [] [] [] [] [])
+    interval-holds = refl
+
+    -- left-linear and quadratic: `(L ⊔ D⁺ · L)⁺`, here its own
+    -- closure, `[1,∞]`
+
+    two : EExp Θ
+    two = econst ⌈ 2 , ↑ 2 ⌉
+
+    mixed : value ((one , v) ∷ (two ·̂ₑ v , v) ∷ (v ·̂ₑ v , v) ∷ [])
+              ≡ just (one ⊔̂ₑ econst ⌈ 2 , ∞ ⌉ ·̂ₑ one)
+    mixed = refl

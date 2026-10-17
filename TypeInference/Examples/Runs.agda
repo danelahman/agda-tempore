@@ -9,14 +9,13 @@
 -- argument and `τ` more, `ε₀ = ε₀ · τ` up to the order, applied  --
 -- to a function taking no time, the whole annotated at `c`. The  --
 -- program's effect variable `ε₀` is one of its variables. Where  --
--- the unit is least, the solver leaves `τ · ε₀ ≾ ε₀ ∧ ε₀ ≾ c`: a --
--- cycle through a product that localisation gives no value.      --
+-- the unit is least, the solver leaves `τ · ε₀ ≾ ε₀ ∧ ε₀ ≾ c`.   --
 -- Where `τ` is not below `c`, the chain `τ → τ · ε₀ → ε₀ → c`    --
 -- through the factor edge refutes it; where `c` is the top, the  --
--- top is a closed instance; otherwise, at right-sided time, no   --
--- candidate is one and the check is unestablished. At left-sided --
--- time the argument adds `u ≾ ε₀`, which with `ε₀ ≾ c` refutes   --
--- every `c` but the top.                                         --
+-- top is a closed instance; otherwise, at right-sided time,      --
+-- lowering sends `ε₀` to `u ⊔ τ⁺ · u`, the top, and `⊤ ≾ c`      --
+-- refutes it. At left-sided time the argument adds `u ≾ ε₀`,     --
+-- which with `ε₀ ≾ c` refutes every `c` but the top.             --
 --                                                                --
 -- `stretch τ` is a handler whose clauses resume and then call    --
 -- the resumption's result, a function its return clause makes    --

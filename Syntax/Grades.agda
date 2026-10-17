@@ -23,7 +23,8 @@ open import Syntax.Durations
 open import Util.Equality
 
 -- The closure of `c`, Kleene's plus: the least grade above `c` that
--- absorbs its own iteration
+-- absorbs its own iteration; a grade that `c` does not move, on either
+-- side, `c⁺` does not move either (induction)
 
 record Plus {C : Set} (_·_ : C → C → C) (_≾_ : C → C → Set) (c : C) : Set where
   constructor plus
@@ -32,12 +33,14 @@ record Plus {C : Set} (_·_ : C → C → C) (_≾_ : C → C → Set) (c : C) :
     ≾-c⁺     : c ≾ c⁺
     c⁺-iter  : (c⁺ · c⁺) ≾ c⁺
     c⁺-least : ∀ {v} → c ≾ v → (v · v) ≾ v → c⁺ ≾ v
+    ⁺-indˡ   : ∀ {d} → (c · d) ≾ d → (c⁺ · d) ≾ d
+    ⁺-indʳ   : ∀ {d} → (d · c) ≾ d → (d · c⁺) ≾ d
 
 -- A grade absorbing its own iteration is its own closure
 
 plus-self : ∀ {C : Set} {_·_ : C → C → C} {_≾_ : C → C → Set} {c : C}
           → c ≾ c → (c · c) ≾ c → Plus _·_ _≾_ c
-plus-self {c = c} refl' it = plus c refl' it (λ cv _ → cv)
+plus-self {c = c} refl' it = plus c refl' it (λ cv _ → cv) (λ q → q) (λ q → q)
 
 -- Partially ordered effect and resource monoids, over a monoid `D` of
 -- durations

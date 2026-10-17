@@ -240,6 +240,7 @@ plusᵢ : (i : Interval∞) → Plus _·ᵢ_ _≾ᵢ_ i
 plusᵢ i = plus i⁺ (≤-refl , ≤∞-plus∞ (max i))
                (m≤m+n (min i) (min i) , plus∞-iter (max i))
                (λ (p₁ , p₂) (_ , q₂) → p₁ , plus∞-least p₂ q₂)
+               (λ (p₁ , p₂) → p₁ , plus∞-indˡ p₂) (λ (p₁ , p₂) → p₁ , plus∞-indʳ p₂)
   where
     i⁺ : Interval∞
     i⁺ = [ min i , plus∞ (max i) ]
@@ -484,17 +485,31 @@ infixl 7 _⊔ʷ_
 -- the closure: a window's closure, and the greatest grade its own
 
 plusʷ : (i : Interval∞⊤) → Plus _·ʷ_ _≾ʷ_ i
-plusʷ (window i) = plus (window Plus.c⁺ p) (Plus.≾-c⁺ p) (Plus.c⁺-iter p) least
+plusʷ (window i) = plus (window Plus.c⁺ p) (Plus.≾-c⁺ p) (Plus.c⁺-iter p) least indˡ indʳ
   where
     p = plusᵢ i
 
     least : ∀ {v} → window i ≾ʷ v → v ·ʷ v ≾ʷ v → window Plus.c⁺ p ≾ʷ v
     least {window j} q r = Plus.c⁺-least p {j} q r
     least {no-window} q r = tt
-plusʷ no-window = plus no-window tt tt least
+
+    indˡ : ∀ {d} → window i ·ʷ d ≾ʷ d → window Plus.c⁺ p ·ʷ d ≾ʷ d
+    indˡ {window j} q = Plus.⁺-indˡ p {j} q
+    indˡ {no-window} q = tt
+
+    indʳ : ∀ {d} → d ·ʷ window i ≾ʷ d → d ·ʷ window Plus.c⁺ p ≾ʷ d
+    indʳ {window j} q = Plus.⁺-indʳ p {j} q
+    indʳ {no-window} q = tt
+plusʷ no-window = plus no-window tt tt least indˡ indʳ
   where
     least : ∀ {v} → no-window ≾ʷ v → v ·ʷ v ≾ʷ v → no-window ≾ʷ v
     least {no-window} q r = tt
+
+    indˡ : ∀ {d} → no-window ·ʷ d ≾ʷ d → no-window ·ʷ d ≾ʷ d
+    indˡ q = q
+
+    indʳ : ∀ {d} → d ·ʷ no-window ≾ʷ d → d ·ʷ no-window ≾ʷ d
+    indʳ q = q
 
 -- the grade of two-sided intervals with a formal greatest grade
 

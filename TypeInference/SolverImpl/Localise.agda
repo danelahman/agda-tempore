@@ -27,18 +27,19 @@
 -- to a value, under an oracle (`oracleᵉ`, `oracleʳ`) that      --
 -- keeps the orderings of the other sort and the deferred       --
 -- conditions:                                                  --
---   * the join of its lower bounds, where it occurs on a right --
---     side only as the whole side (Pottier's condition), each  --
---     cycle `p ≾ v` closing at the join (`Closes`), or else    --
---     the join's closure, where one cycle is `v · v ≾ v` and   --
---     each closes there (`LowTo`); each ordering with it on    --
---     the greater side is dropped, being a bound, below the    --
---     value, a cycle, or valid (`lower-drops`);                --
+--   * from the join `L` of its lower bounds, where it occurs   --
+--     on a right side only as the whole side (Pottier's        --
+--     condition), the value `B* · L · C*` of `Values`, or its  --
+--     closure where a cycle is `v · v ≾ v`, each cycle         --
+--     `p ≾ v` closing there (`Closes`, `LowTo`); each ordering --
+--     with it on the greater side is dropped, being a bound,   --
+--     below the value, a cycle, or valid (`lower-drops`);      --
 --   * dually, the first upper bound decided (from no           --
 --     hypotheses) below each of its others, where it occurs on --
 --     a left side only as the whole side;                      --
---   * the unit, where it has no bound below and the unit is    --
---     least, the unit being then the join of no bounds;        --
+--   * the same value from the unit, where it has no bound      --
+--     below and the unit is least, the unit being then the     --
+--     join of no bounds;                                       --
 --   * the top, where it occurs on a left side only in an       --
 --     ordering whose right side it is.                         --
 -- An ordering valid at every instance bounds it on neither     --
@@ -101,11 +102,11 @@
 -- the top as well, the instance stays one and every member is  --
 -- at the top, and the raised instance lies between the two.    --
 --                                                              --
--- The lowering and unit values are principal: at every         --
--- instance of the residual they lie below the unknown          --
--- (`LowToₑ`, `LowToᵣ`, `minₑ`, `minᵣ`). The raise              --
--- and top values, and a raised set, only keep every instance;  --
--- that they are least is not claimed.                          --
+-- The lowering values are principal: at every instance of the  --
+-- residual they lie below the unknown (`LowToₑ`, `LowToᵣ`,     --
+-- `minₑ`, `minᵣ`). The raise and top values, and a raised set, --
+-- only keep every instance; that they are least is not         --
+-- claimed.                                                     --
 --                                                              --
 -- A local unknown no step gives a value leaves the scope       --
 -- stuck. Known cases: a cycle through a compound side that     --
@@ -118,8 +119,8 @@
 -- scope's deferred condition; a local unknown with no lower    --
 -- bound under several upper bounds, none decided below the     --
 -- others, which in a program comes only from `absurd`; a cycle --
--- `p ≾ v` closing neither at the join nor at its closure, or   --
--- at a grade that declares no closure, under an upper bound.   --
+-- `p ≾ v` not closing at the value, or needing a closure the   --
+-- grade does not declare, under an upper bound.                --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; _∧_; not; true; false; if_then_else_) renaming (Bool to 𝔹)
@@ -1143,17 +1144,19 @@ stepᵉ {Ψ} k R with cleanᵉ? k R
     lower (Vᵉ.byLower lw x xs e b to (fr , sd)) =
       b ,
       (λ τ Q h → lowerᵉ-⊩ lw fr cl b sd (Vᵉ.lowTo-closes {Ψ} k to) τ
-                   (LowToₑ.below k lw e to τ (⊩es h)) (LowToₑ.above k lw e to τ) h) ,
-      loweredᵉ lw b (λ δ m → LowToₑ.above k lw e to δ m) (Vᵉ.lowTo-closes {Ψ} k to)
+                   (LowToₑ.Join.below k lw e to τ (⊩es h)) (LowToₑ.Join.above k lw e to τ) h) ,
+      loweredᵉ lw b (λ δ m → LowToₑ.Join.above k lw e to δ m) (Vᵉ.lowTo-closes {Ψ} k to)
 
     raise : Vᵉ.ByRaise {Ψ} k o (es R) → Σ[ b ∈ EExp Ψ ] Step (updᵉ k b) R
     raise (Vᵉ.byRaise up (fl , df , sd)) =
       Vᵉ.cap up , (λ τ Q h → raiseᵉ-⊩ up fl cl df sd τ h) , keepAll
 
     least : Vᵉ.ByLeast {Ψ} k o (es R) → Σ[ b ∈ EExp Ψ ] Step (updᵉ k b) R
-    least (Vᵉ.byLeast lw nob ij cy (fr , sd)) =
-      ûₑ , (λ τ Q h → lowerᵉ-⊩ lw fr cl ûₑ sd cy τ (minₑ ij) (λ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) h) ,
-      loweredᵉ lw ûₑ (λ δ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) cy
+    least (Vᵉ.byLeast lw nob ij b to (fr , sd)) =
+      b , (λ τ Q h → lowerᵉ-⊩ lw fr cl b sd (Vᵉ.lowTo-closes {Ψ} k to) τ
+                       (LowToₑ.least k lw to τ (minₑ ij) (⊩es h))
+                       (λ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) h) ,
+      loweredᵉ lw b (λ δ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) (Vᵉ.lowTo-closes {Ψ} k to)
 
     top : Vᵉ.ByTop {Ψ} k o (es R) → Σ[ b ∈ EExp Ψ ] Step (updᵉ k b) R
     top (Vᵉ.byTop fe (fl , df , sd)) =
@@ -1174,17 +1177,19 @@ stepʳ {Ψ} k R with cleanʳ? k R
     lower (Vʳ.byLower lw x xs e b to sd) =
       b ,
       (λ τ Q h → lowerʳ-⊩ lw cl b sd (Vʳ.lowTo-closes {Ψ} k to) τ
-                   (LowToᵣ.below k lw e to τ (⊩rs h)) (LowToᵣ.above k lw e to τ) h) ,
-      loweredʳ lw b (λ δ m → LowToᵣ.above k lw e to δ m) (Vʳ.lowTo-closes {Ψ} k to)
+                   (LowToᵣ.Join.below k lw e to τ (⊩rs h)) (LowToᵣ.Join.above k lw e to τ) h) ,
+      loweredʳ lw b (λ δ m → LowToᵣ.Join.above k lw e to δ m) (Vʳ.lowTo-closes {Ψ} k to)
 
     raise : Vʳ.ByRaise {Ψ} k o (rs R) → Σ[ b ∈ RExp Ψ ] Step (updʳ k b) R
     raise (Vʳ.byRaise up (df , sd)) =
       Vʳ.cap up , (λ τ Q h → raiseʳ-⊩ up cl df sd τ h) , keepAll
 
     least : Vʳ.ByLeast {Ψ} k o (rs R) → Σ[ b ∈ RExp Ψ ] Step (updʳ k b) R
-    least (Vʳ.byLeast lw nob ij cy sd) =
-      ûᵣ , (λ τ Q h → lowerʳ-⊩ lw cl ûᵣ sd cy τ (minᵣ ij) (λ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) h) ,
-      loweredʳ lw ûᵣ (λ δ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) cy
+    least (Vʳ.byLeast lw nob ij b to sd) =
+      b , (λ τ Q h → lowerʳ-⊩ lw cl b sd (Vʳ.lowTo-closes {Ψ} k to) τ
+                       (LowToᵣ.least k lw to τ (minᵣ ij) (⊩rs h))
+                       (λ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) h) ,
+      loweredʳ lw b (λ δ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) (Vʳ.lowTo-closes {Ψ} k to)
 
     top : Vʳ.ByTop {Ψ} k o (rs R) → Σ[ b ∈ RExp Ψ ] Step (updʳ k b) R
     top (Vʳ.byTop fl (df , sd)) =

@@ -247,6 +247,7 @@ plusᵢ : (i : Interval∞) → Plus _·ᵢ_ _≾ᵢ_ i
 plusᵢ i = plus i⁺ (≤-refl , ≤∞-plus∞ (max i))
                (p≤p+q (min i) (min i) , plus∞-iter (max i))
                (λ (p₁ , p₂) (_ , q₂) → p₁ , plus∞-least p₂ q₂)
+               (λ (p₁ , p₂) → p₁ , plus∞-indˡ p₂) (λ (p₁ , p₂) → p₁ , plus∞-indʳ p₂)
   where
     i⁺ : Interval∞
     i⁺ = [ min i , plus∞ (max i) ]

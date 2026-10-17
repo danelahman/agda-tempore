@@ -6,30 +6,36 @@
 -- no hypotheses, the join, the unit, the top, canonical forms, --
 -- whether the unit is least, which expressions may replace     --
 -- `v`, an expression with `v` sent to a value (`put`), the     --
--- product, and the closure of an expression where the grade    --
--- declares it (`Closure`). An ordering is valid when it is     --
--- reflexive or decided (`Valid`); it bounds `v` on neither     --
--- side. An oracle (`Oracle`) says whether `v` may decrease, or --
--- increase, to a value, the atoms outside the sort keeping     --
--- their meaning.                                               --
+-- product and a product's factors, and the closure of an       --
+-- expression where the grade declares it (`Closure`; none      --
+-- through the image of an effect unknown). An ordering is      --
+-- valid when it is reflexive or decided (`Valid`); it bounds   --
+-- `v` on neither side. An oracle (`Oracle`) says whether `v`   --
+-- may decrease, or increase, to a value, the atoms outside the --
+-- sort keeping their meaning.                                  --
 -- The rules, each a proposition with its decider:              --
 --   * lowering (`Lows`, `lower`), principal: every ordering is --
 --     valid, has `v` on no right side, is `x ≾ v` with `x`     --
 --     free of `v`, a lower bound, of which there is one, or is --
---     a cycle `p ≾ v` with `v` in `p`; the value is the join   --
---     `L` of the lower bounds where each cycle closes at it,   --
---     `p` with `v` sent to `L` decided below `L` (`Closes`),   --
---     and otherwise, where one cycle is `v · v ≾ v`, the       --
---     closure `L⁺` of `L` where each cycle closes there        --
---     (`LowTo`);                                               --
+--     a cycle `p ≾ v` with `v` in `p`. From the join `L` of    --
+--     the lower bounds, the value is `V = B* · L · C*`, and    --
+--     `V = (B* · L · C*)⁺` where a cycle is `v · v ≾ v`: `B`   --
+--     and `C` join the multipliers of the cycles `b · v ≾ v`   --
+--     and `v · c ≾ v`, `b` and `c` free of `v`, `X* · y` is    --
+--     `y ⊔ X⁺ · y`, or `y` where each multiplier leaves `y`,   --
+--     decided, and an expression absorbing its own iteration,  --
+--     decided, is its own closure (`Shapes`, `Clo`, `StarL`,   --
+--     `StarR`, `Sq`). `V` is taken where the closures it needs --
+--     exist and every cycle, of any shape, closes at it, `p`   --
+--     with `v` sent to `V` decided below `V` (`Closes`,        --
+--     `LowTo`);                                                --
 --   * raising (`Ups`, `raise`), instance-keeping: the first    --
 --     ordering `v ≾ U`, `U` free of `v`, that caps the others, --
 --     every ordering being valid, reflexive, with `v` on no    --
 --     left side, or `v ≾ x'` with `U ≾ x'` decided; the value  --
 --     is `U`;                                                  --
 --   * least (`least`), principal: as lowering with no lower    --
---     bound, where the unit is least; the value is the unit,   --
---     at which each cycle closes;                              --
+--     bound, where the unit is least, `L` being the unit;      --
 --   * top (`top`), instance-keeping: every ordering is valid,  --
 --     has `v` on no left side, or has `v` as its whole right   --
 --     side (`UnderTop`); the value is the top;                 --
@@ -62,9 +68,10 @@
 -- or valid (`lower-drops`). Lowering is principal: each lower  --
 -- bound is an ordering below `v` (`src`), so wherever the      --
 -- orderings hold, their join lies below `v` (`joinₑ-lub⊩`),    --
--- and so does its closure, `v · v ≾ v` holding as well         --
--- (`srcᶜ`, `plusₑ`; `LowToₑ`). That the upper bound and the    --
--- top are least is not claimed.                                --
+-- and so does `V`, by one argument from the laws of the        --
+-- closure for every shape of cycle (`srcᶜ`, `indˡₑ`, `indʳₑ`,  --
+-- `plusₑ`; `LowToₑ`). That the upper bound and the top are     --
+-- least is not claimed.                                        --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; not; true; false) renaming (Bool to 𝔹)
@@ -184,6 +191,7 @@ record Sort (X : Set) : Set₁ where
     fit    : X → 𝔹                  -- an earlier unknown, or free of the unknown
     put    : X → X → X              -- `put b x`: `x` with the unknown sent to `b`
     mul    : X → X → X              -- the product
+    factors : (x : X) → Maybe (Σ[ y ∈ X ] Σ[ z ∈ X ] (x ≡ mul y z))   -- a product's factors
     Closure  : X → X → Set          -- `Closure x y`: `y` is the closure of `x`
     closure? : (x : X) → Maybe (Σ[ y ∈ X ] Closure x y)
 
@@ -314,29 +322,135 @@ module Rules {X : Set} (s : Sort X) where
   ... | yes e = just (here e)
   ... | no _  = map there (x ∈? ys)
 
-  -- The value of lowering, from the join `L` of the bounds: `L` where
-  -- every cycle closes there; else, where one cycle is `v · v ≾ v`, the
-  -- closure of `L`, where every cycle closes there. Every solution of
-  -- the bounds and `v · v ≾ v` lies above the closure.
+  -- The cycles of the shapes the value is built from: left-linear
+  -- `b · v ≾ v` and right-linear `v · c ≾ v`, `b` and `c` free of the
+  -- unknown, and quadratic `v · v ≾ v`; a cycle of any other shape is
+  -- left to `Closes`
 
-  data LowTo (l : List (X × X)) (lw : Lows l) (L : X) : X → Set where
-    atJoin : Closes l lw L → LowTo l lw L L
-    atPlus : ∀ {L⁺} → Closure L L⁺ → mul self self ∈ cycs lw → Closes l lw L⁺ → LowTo l lw L L⁺
+  record Shapes (cs : List X) : Set where
+    constructor shapes
+    field
+      lefts  : List X
+      rights : List X
+      quad   : Maybe (mul self self ∈ cs)
+      leftˢ  : ∀ {b} → b ∈ lefts → mul b self ∈ cs
+      rightˢ : ∀ {c} → c ∈ rights → mul self c ∈ cs
 
-  lowTo? : (l : List (X × X)) → (lw : Lows l) → (L : X) → Maybe (Σ[ b ∈ X ] LowTo l lw L b)
-  lowTo? l lw L with closes? l lw L
-  ... | just cy = just (L , atJoin cy)
-  ... | nothing with closure? L
+  open Shapes public
+
+  shapesOf : (cs : List X) → Shapes cs
+  shapesOf []       = shapes [] [] nothing (λ ()) (λ ())
+  shapesOf (p ∷ cs) = go (shapesOf cs) (factors p)
+    where
+      shift : Shapes cs → Shapes (p ∷ cs)
+      shift (shapes ls rs q lˢ rˢ) =
+        shapes ls rs (map there q) (λ m → there (lˢ m)) (λ m → there (rˢ m))
+
+      byFactors : Shapes cs → (y z : X) → p ≡ mul y z
+                → Dec (y ≡ self) → Dec (z ≡ self) → Maybe (occ y ≡ false) → Maybe (occ z ≡ false)
+                → Shapes (p ∷ cs)
+      byFactors (shapes ls rs q lˢ rˢ) y z e (yes refl) (yes refl) _ _ =
+        shapes ls rs (just (here (sym e))) (λ m → there (lˢ m)) (λ m → there (rˢ m))
+      byFactors (shapes ls rs q lˢ rˢ) y z e _ (yes refl) (just _) _ =
+        shapes (y ∷ ls) rs (map there q)
+               (λ { (here refl) → here (sym e) ; (there m) → there (lˢ m) }) (λ m → there (rˢ m))
+      byFactors (shapes ls rs q lˢ rˢ) y z e (yes refl) _ _ (just _) =
+        shapes ls (z ∷ rs) (map there q)
+               (λ m → there (lˢ m)) (λ { (here refl) → here (sym e) ; (there m) → there (rˢ m) })
+      byFactors sh y z e _ _ _ _ = shift sh
+
+      go : Shapes cs → Maybe (Σ[ y ∈ X ] Σ[ z ∈ X ] (p ≡ mul y z)) → Shapes (p ∷ cs)
+      go sh nothing            = shift sh
+      go sh (just (y , z , e)) =
+        byFactors sh y z e (y ≟ self) (z ≟ self) (isFalse (occ y)) (isFalse (occ z))
+
+  -- The closure `x⁺` of an expression: `x` where it absorbs its own
+  -- iteration, decided; else the closure of its value, where the grade
+  -- declares it
+
+  data Clo (x : X) : X → Set where
+    idem  : mul x x ≤ x → Clo x x
+    const : ∀ {x⁺} → Closure x x⁺ → Clo x x⁺
+
+  clo? : (x : X) → Maybe (Σ[ x⁺ ∈ X ] Clo x x⁺)
+  clo? x with dec≤ (mul x x) x
+  ... | just p  = just (x , idem p)
+  ... | nothing = map (λ (x⁺ , c) → x⁺ , const c) (closure? x)
+
+  -- `B* · y`, `B` the join of the left multipliers `bs`: `y` where each
+  -- multiplier leaves it, decided; else `y ⊔ B⁺ · y`. Its mirror
+  -- `y · C*`.
+
+  data StarL (bs : List X) (y : X) : X → Set where
+    stays : (∀ {b} → b ∈ bs → mul b y ≤ y) → StarL bs y y
+    grows : ∀ {b₀ bs' B⁺} → bs ≡ b₀ ∷ bs' → Clo (joins join b₀ bs') B⁺
+          → StarL bs y (join y (mul B⁺ y))
+
+  data StarR (cs : List X) (y : X) : X → Set where
+    stays : (∀ {c} → c ∈ cs → mul y c ≤ y) → StarR cs y y
+    grows : ∀ {c₀ cs' C⁺} → cs ≡ c₀ ∷ cs' → Clo (joins join c₀ cs') C⁺
+          → StarR cs y (join y (mul y C⁺))
+
+  starL? : (bs : List X) → (y : X) → Maybe (Σ[ z ∈ X ] StarL bs y z)
+  starL? bs y with every (λ b → dec≤ (mul b y) y) bs
+  ... | just st = just (y , stays st)
+  ... | nothing = at bs refl
+    where
+      at : (bs' : List X) → bs ≡ bs' → Maybe (Σ[ z ∈ X ] StarL bs y z)
+      at []         e = nothing
+      at (b₀ ∷ bs') e = map (λ (B⁺ , c) → join y (mul B⁺ y) , grows e c) (clo? (joins join b₀ bs'))
+
+  starR? : (cs : List X) → (y : X) → Maybe (Σ[ z ∈ X ] StarR cs y z)
+  starR? cs y with every (λ c → dec≤ (mul y c) y) cs
+  ... | just st = just (y , stays st)
+  ... | nothing = at cs refl
+    where
+      at : (cs' : List X) → cs ≡ cs' → Maybe (Σ[ z ∈ X ] StarR cs y z)
+      at []         e = nothing
+      at (c₀ ∷ cs') e = map (λ (C⁺ , c) → join y (mul y C⁺) , grows e c) (clo? (joins join c₀ cs'))
+
+  -- The closure, where there is a quadratic cycle
+
+  data Sq {cs : List X} (sh : Shapes cs) (x : X) : X → Set where
+    linear    : quad sh ≡ nothing → Sq sh x x
+    quadratic : ∀ {m x⁺} → quad sh ≡ just m → Clo x x⁺ → Sq sh x x⁺
+
+  sq? : ∀ {cs} → (sh : Shapes cs) → (x : X) → Maybe (Σ[ x⁺ ∈ X ] Sq sh x x⁺)
+  sq? sh x = go (quad sh) refl
+    where
+      go : (q : Maybe _) → quad sh ≡ q → Maybe (Σ[ x⁺ ∈ X ] Sq sh x x⁺)
+      go nothing  e = just (x , linear e)
+      go (just m) e = map (λ (x⁺ , c) → x⁺ , quadratic e c) (clo? x)
+
+  -- The value of lowering from `L`, the join of the bounds or the unit:
+  -- `V = B* · L · C*`, and `V = (B* · L · C*)⁺` where there is a
+  -- quadratic cycle, where every cycle closes at `V`. Every solution of
+  -- `L ≾ v` and the cycles of the three shapes lies above `V`.
+
+  record LowTo (l : List (X × X)) (lw : Lows l) (L V : X) : Set where
+    constructor lowTo
+    field
+      sh  : Shapes (cycs lw)
+      y z : X
+      stL : StarL (lefts sh) L y
+      stR : StarR (rights sh) y z
+      sq  : Sq sh z V
+      cl  : Closes l lw V
+
+  lowTo? : (l : List (X × X)) → (lw : Lows l) → (L : X) → Maybe (Σ[ V ∈ X ] LowTo l lw L V)
+  lowTo? l lw L with shapesOf (cycs lw)
+  ... | sh with starL? (lefts sh) L
   ...   | nothing         = nothing
-  ...   | just (L⁺ , pl) with mul self self ∈? cycs lw | closes? l lw L⁺
-  ...     | just m  | just cy = just (L⁺ , atPlus pl m cy)
-  ...     | _       | _       = nothing
+  ...   | just (y , stL) with starR? (rights sh) y
+  ...     | nothing         = nothing
+  ...     | just (z , stR) with sq? sh z
+  ...       | nothing        = nothing
+  ...       | just (V , sq') = map (λ (cl : Closes l lw V) → V , lowTo sh y z stL stR sq' cl) (closes? l lw V)
 
   -- The value closes every cycle
 
-  lowTo-closes : ∀ {l lw L b} → LowTo l lw L b → Closes l lw b
-  lowTo-closes (atJoin cy)     = cy
-  lowTo-closes (atPlus _ _ cy) = cy
+  lowTo-closes : ∀ {l lw L V} → LowTo l lw L V → Closes l lw V
+  lowTo-closes = LowTo.cl
 
   ----------------------------------------------------------------------
   -- Raising: a bound above, `U`. Every ordering with the unknown on its
@@ -526,16 +640,17 @@ module Rules {X : Set} (s : Sort X) where
       lw  : Lows l
       nob : bnds lw ≡ []
       lst : Least
-      cyc : Closes l lw unit
-      may : Lower o unit
+      val : X
+      to  : LowTo l lw unit val
+      may : Lower o val
 
   least : (o : Oracle) → (l : List (X × X)) → Maybe (ByLeast o l)
   least o l = go least? (lowsOf l)
     where
       at : Least → (lw : Lows l) → (bs : List X) → bnds lw ≡ bs → Maybe (ByLeast o l)
-      at lst lw []      e with closes? l lw unit
-      ... | just cy = map (byLeast lw e lst cy) (lower? o unit)
-      ... | nothing = nothing
+      at lst lw []      e with lowTo? l lw unit
+      ... | just (b , to) = map (byLeast lw e lst b to) (lower? o b)
+      ... | nothing       = nothing
       at lst lw (_ ∷ _) e = nothing
 
       go : Maybe Least → Maybe (Lows l) → Maybe (ByLeast o l)
@@ -723,6 +838,16 @@ closureᵣ? L with evalᵣ L
 ...   | nothing = nothing
 ...   | just p  = just (rconst (Plus.c⁺ p) , c , p , eq , refl)
 
+-- The factors of a product
+
+factorsₑ : ∀ {Ψ} → (x : EExp Ψ) → Maybe (Σ[ y ∈ EExp Ψ ] Σ[ z ∈ EExp Ψ ] (x ≡ y ·̂ₑ z))
+factorsₑ (y ·̂ₑ z) = just (y , z , refl)
+factorsₑ _        = nothing
+
+factorsᵣ : ∀ {Ψ} → (x : RExp Ψ) → Maybe (Σ[ y ∈ RExp Ψ ] Σ[ z ∈ RExp Ψ ] (x ≡ y ·̂ᵣ z))
+factorsᵣ (y ·̂ᵣ z) = just (y , z , refl)
+factorsᵣ _        = nothing
+
 -- An image `∣ b ∣` as the value of the image of an effect unknown sends
 -- the unknown to `b`; any other expression leaves it
 
@@ -743,7 +868,7 @@ sortᵉ k = record
   ; _≤_ = ∅ᴴ ⊩_≾̂ₑ_ ; dec≤ = decideₑ full ∅ᴴ
   ; join = _⊔̂ₑ_ ; unit = ûₑ ; top = econst ⊤ₑ ; canon = canonₑ
   ; Least = Is-just uₑ-least? ; least? = Is-just? uₑ-least? ; fit = fitₑ k
-  ; put = λ b x → x [ updᵉ k b ]ᵉ ; mul = _·̂ₑ_
+  ; put = λ b x → x [ updᵉ k b ]ᵉ ; mul = _·̂ₑ_ ; factors = factorsₑ
   ; Closure = Closureₑ ; closure? = closureₑ? }
 
 sortʳ : ∀ {Ψ} → RVar Ψ → Sort (RExp Ψ)
@@ -752,7 +877,7 @@ sortʳ k = record
   ; _≤_ = ∅ᴴ ⊩_≾̂ᵣ_ ; dec≤ = decideᵣ full ∅ᴴ
   ; join = _⊔̂ᵣ_ ; unit = ûᵣ ; top = rconst ⊤ᵣ ; canon = canonᵣ
   ; Least = Is-just uᵣ-least? ; least? = Is-just? uᵣ-least? ; fit = fitᵣ k
-  ; put = λ b x → x [ updʳ k b ]ʳ ; mul = _·̂ᵣ_
+  ; put = λ b x → x [ updʳ k b ]ʳ ; mul = _·̂ᵣ_ ; factors = factorsᵣ
   ; Closure = Closureᵣ ; closure? = closureᵣ? }
 
 imageᵉ : ∀ {Ψ} → EVar Ψ → Sort (RExp Ψ)
@@ -761,7 +886,7 @@ imageᵉ k = record
   ; _≤_ = ∅ᴴ ⊩_≾̂ᵣ_ ; dec≤ = decideᵣ full ∅ᴴ
   ; join = _⊔̂ᵣ_ ; unit = ûᵣ ; top = rconst ⊤ᵣ ; canon = canonᵣ
   ; Least = LeastImage ; least? = leastImage? ; fit = λ _ → false ; put = putⁱ k
-  ; mul = _·̂ᵣ_ ; Closure = λ _ _ → ⊥ ; closure? = λ _ → nothing }
+  ; mul = _·̂ᵣ_ ; factors = factorsᵣ ; Closure = λ _ _ → ⊥ ; closure? = λ _ → nothing }
 
 module Vᵉ {Ψ} (k : EVar Ψ) = Rules {EExp Ψ} (sortᵉ k)
 module Vʳ {Ψ} (k : RVar Ψ) = Rules {RExp Ψ} (sortʳ k)
@@ -845,50 +970,241 @@ joinᵣ-lub⊩ τ x₀ (x₁ ∷ xs) k =
        ; (there m)   → k (there (there m)) })
 
 ------------------------------------------------------------------------
--- The value of lowering lies above each bound and, wherever the
--- orderings hold, below the unknown: the join by its least-upper-bound
--- property, the closure by its leastness (`plusₑ`, `plusᵣ`)
+-- The value of lowering lies above `L` and, wherever `L` lies below the
+-- unknown and the orderings hold, below the unknown, by one argument
+-- for every shape: each left multiplier `b` gives `b · v ≾ v`, so
+-- their join `B` does (distributivity), so `B⁺ · v ≾ v` (`indˡ`), and
+-- `B* · L ≾ v` by monotonicity; the mirror for `C*`; and, `v · v ≾ v`
+-- holding as well, the closure lies below `v` (`plus`). An expression
+-- absorbing its own iteration is its own closure, and a star that
+-- leaves its argument is the argument.
 
-module LowToₑ {Ψ} (k : EVar Ψ) {l : List (EExp Ψ × EExp Ψ)} (lw : Vᵉ.Lows {Ψ} k l)
-              {x₀ : EExp Ψ} {xs : List (EExp Ψ)} (e : Vᵉ.bnds lw ≡ x₀ ∷ xs) where
+-- the join of left (right) multipliers leaves what each leaves
 
-  above : ∀ {b} → Vᵉ.LowTo {Ψ} k l lw (joinₑ x₀ xs) b → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
-        → ∀ {y} → y ∈ Vᵉ.bnds lw → Q ⊩ y [ δ ]ᵉ ≾̂ₑ b [ δ ]ᵉ
-  above (Vᵉ.atJoin _)                       δ m = joinₑ-ub⊩ δ x₀ xs (subst (_ ∈_) e m)
-  above (Vᵉ.atPlus (c , p , eq , refl) _ _) δ m =
-    transₑ (joinₑ-ub⊩ δ x₀ xs (subst (_ ∈_) e m))
-           (transₑ (eqₑ (≡̂ₑ-subst δ eq)) (atomₑ (Plus.≾-c⁺ p)))
+joinₑ-mulˡ⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {w : EExp Ψ'} → (τ : Subst Ψ Ψ')
+            → (x₀ : EExp Ψ) → (xs : List (EExp Ψ))
+            → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ᵉ ·̂ₑ w ≾̂ₑ w)
+            → Q ⊩ joinₑ x₀ xs [ τ ]ᵉ ·̂ₑ w ≾̂ₑ w
+joinₑ-mulˡ⊩ τ x₀ []        k = k (here refl)
+joinₑ-mulˡ⊩ τ x₀ (x₁ ∷ xs) k =
+  joinₑ-mulˡ⊩ τ (x₀ ⊔̂ₑ x₁) xs
+    (λ { (here refl) → transₑ (eqₑ ≡̂ₑ-distribʳ-⊔) (⊔-lubₑ (k (here refl)) (k (there (here refl))))
+       ; (there m)   → k (there (there m)) })
 
-  join≾ : ∀ {Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ')
+joinₑ-mulʳ⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {w : EExp Ψ'} → (τ : Subst Ψ Ψ')
+            → (x₀ : EExp Ψ) → (xs : List (EExp Ψ))
+            → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ w ·̂ₑ x [ τ ]ᵉ ≾̂ₑ w)
+            → Q ⊩ w ·̂ₑ joinₑ x₀ xs [ τ ]ᵉ ≾̂ₑ w
+joinₑ-mulʳ⊩ τ x₀ []        k = k (here refl)
+joinₑ-mulʳ⊩ τ x₀ (x₁ ∷ xs) k =
+  joinₑ-mulʳ⊩ τ (x₀ ⊔̂ₑ x₁) xs
+    (λ { (here refl) → transₑ (eqₑ ≡̂ₑ-distribˡ-⊔) (⊔-lubₑ (k (here refl)) (k (there (here refl))))
+       ; (there m)   → k (there (there m)) })
+
+joinᵣ-mulˡ⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {w : RExp Ψ'} → (τ : Subst Ψ Ψ')
+            → (x₀ : RExp Ψ) → (xs : List (RExp Ψ))
+            → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ʳ ·̂ᵣ w ≾̂ᵣ w)
+            → Q ⊩ joinᵣ x₀ xs [ τ ]ʳ ·̂ᵣ w ≾̂ᵣ w
+joinᵣ-mulˡ⊩ τ x₀ []        k = k (here refl)
+joinᵣ-mulˡ⊩ τ x₀ (x₁ ∷ xs) k =
+  joinᵣ-mulˡ⊩ τ (x₀ ⊔̂ᵣ x₁) xs
+    (λ { (here refl) → transᵣ (eqᵣ ≡̂ᵣ-distribʳ-⊔) (⊔-lubᵣ (k (here refl)) (k (there (here refl))))
+       ; (there m)   → k (there (there m)) })
+
+joinᵣ-mulʳ⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {w : RExp Ψ'} → (τ : Subst Ψ Ψ')
+            → (x₀ : RExp Ψ) → (xs : List (RExp Ψ))
+            → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ w ·̂ᵣ x [ τ ]ʳ ≾̂ᵣ w)
+            → Q ⊩ w ·̂ᵣ joinᵣ x₀ xs [ τ ]ʳ ≾̂ᵣ w
+joinᵣ-mulʳ⊩ τ x₀ []        k = k (here refl)
+joinᵣ-mulʳ⊩ τ x₀ (x₁ ∷ xs) k =
+  joinᵣ-mulʳ⊩ τ (x₀ ⊔̂ᵣ x₁) xs
+    (λ { (here refl) → transᵣ (eqᵣ ≡̂ᵣ-distribˡ-⊔) (⊔-lubᵣ (k (here refl)) (k (there (here refl))))
+       ; (there m)   → k (there (there m)) })
+
+module LowToₑ {Ψ} (k : EVar Ψ) {l : List (EExp Ψ × EExp Ψ)} (lw : Vᵉ.Lows {Ψ} k l) where
+
+  -- the closure of an expression lies above it, below every grade above
+  -- it absorbing its own iteration, and leaves what the expression leaves
+
+  clo-above : ∀ {x x⁺} → Vᵉ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+            → Q ⊩ x [ δ ]ᵉ ≾̂ₑ x⁺ [ δ ]ᵉ
+  clo-above (Vᵉ.idem _)                    δ = ⊩≾̂ₑ-refl
+  clo-above (Vᵉ.const (c , p , eq , refl)) δ =
+    transₑ (eqₑ (≡̂ₑ-subst δ eq)) (atomₑ (Plus.≾-c⁺ p))
+
+  clo-least : ∀ {x x⁺} → Vᵉ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} {w} → (τ : Subst Ψ Ψ')
+            → Q ⊩ x [ τ ]ᵉ ≾̂ₑ w → Q ⊩ w ·̂ₑ w ≾̂ₑ w → Q ⊩ x⁺ [ τ ]ᵉ ≾̂ₑ w
+  clo-least (Vᵉ.idem _)                    τ h _  = h
+  clo-least (Vᵉ.const (c , p , eq , refl)) τ h sq =
+    plusₑ p (transₑ (eqₑ (≡̂ₑ-sym (≡̂ₑ-subst τ eq))) h) sq
+
+  clo-indˡ : ∀ {x x⁺} → Vᵉ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} {w} → (τ : Subst Ψ Ψ')
+           → Q ⊩ x [ τ ]ᵉ ·̂ₑ w ≾̂ₑ w → Q ⊩ x⁺ [ τ ]ᵉ ·̂ₑ w ≾̂ₑ w
+  clo-indˡ (Vᵉ.idem _)                    τ h = h
+  clo-indˡ (Vᵉ.const (c , p , eq , refl)) τ h =
+    indˡₑ p (transₑ (eqₑ (≡̂ₑ-cong (≡̂ₑ-sym (≡̂ₑ-subst τ eq)) ≡̂ₑ-refl)) h)
+
+  clo-indʳ : ∀ {x x⁺} → Vᵉ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} {w} → (τ : Subst Ψ Ψ')
+           → Q ⊩ w ·̂ₑ x [ τ ]ᵉ ≾̂ₑ w → Q ⊩ w ·̂ₑ x⁺ [ τ ]ᵉ ≾̂ₑ w
+  clo-indʳ (Vᵉ.idem _)                    τ h = h
+  clo-indʳ (Vᵉ.const (c , p , eq , refl)) τ h =
+    indʳₑ p (transₑ (eqₑ (≡̂ₑ-cong ≡̂ₑ-refl (≡̂ₑ-sym (≡̂ₑ-subst τ eq)))) h)
+
+  -- the value lies above `L`
+
+  grows : ∀ {L V} → Vᵉ.LowTo {Ψ} k l lw L V → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+        → Q ⊩ L [ δ ]ᵉ ≾̂ₑ V [ δ ]ᵉ
+  grows (Vᵉ.lowTo sh y z stL stR sq _) {Q = Q} δ = transₑ (starL stL) (transₑ (starR stR) (sqr sq))
+    where
+      starL : ∀ {bs L y} → Vᵉ.StarL {Ψ} k bs L y → Q ⊩ L [ δ ]ᵉ ≾̂ₑ y [ δ ]ᵉ
+      starL (Vᵉ.stays _)   = ⊩≾̂ₑ-refl
+      starL (Vᵉ.grows _ _) = ⊔-ubˡₑ
+
+      starR : ∀ {cs y z} → Vᵉ.StarR {Ψ} k cs y z → Q ⊩ y [ δ ]ᵉ ≾̂ₑ z [ δ ]ᵉ
+      starR (Vᵉ.stays _)   = ⊩≾̂ₑ-refl
+      starR (Vᵉ.grows _ _) = ⊔-ubˡₑ
+
+      sqr : ∀ {cs} {sh : Vᵉ.Shapes {Ψ} k cs} {z V} → Vᵉ.Sq {Ψ} k sh z V
+          → Q ⊩ z [ δ ]ᵉ ≾̂ₑ V [ δ ]ᵉ
+      sqr (Vᵉ.linear _)      = ⊩≾̂ₑ-refl
+      sqr (Vᵉ.quadratic _ c) = clo-above c δ
+
+  -- ... and below the unknown, wherever `L` does and the orderings hold
+
+  least : ∀ {L V} → Vᵉ.LowTo {Ψ} k l lw L V → ∀ {Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ')
+        → Q ⊩ L [ τ ]ᵉ ≾̂ₑ sE τ k
         → (∀ {a a'} → (a , a') ∈ l → Q ⊩ a [ τ ]ᵉ ≾̂ₑ a' [ τ ]ᵉ)
-        → Q ⊩ joinₑ x₀ xs [ τ ]ᵉ ≾̂ₑ sE τ k
-  join≾ τ h = joinₑ-lub⊩ τ x₀ xs (λ {y} m → h {y} (Vᵉ.src lw (subst (_ ∈_) (sym e) m)))
+        → Q ⊩ V [ τ ]ᵉ ≾̂ₑ sE τ k
+  least (Vᵉ.lowTo sh y z stL stR sq _) {Q = Q} τ hL h = sqr sq (starR stR (starL stL hL))
+    where
+      cyc : ∀ {p} → p ∈ Vᵉ.cycs lw → Q ⊩ p [ τ ]ᵉ ≾̂ₑ sE τ k
+      cyc m = h (Vᵉ.srcᶜ lw m)
 
-  below : ∀ {b} → Vᵉ.LowTo {Ψ} k l lw (joinₑ x₀ xs) b → ∀ {Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ')
-        → (∀ {a a'} → (a , a') ∈ l → Q ⊩ a [ τ ]ᵉ ≾̂ₑ a' [ τ ]ᵉ)
-        → Q ⊩ b [ τ ]ᵉ ≾̂ₑ sE τ k
-  below (Vᵉ.atJoin _)                       τ h = join≾ τ h
-  below (Vᵉ.atPlus (c , p , eq , refl) m _) τ h =
-    plusₑ p (transₑ (eqₑ (≡̂ₑ-sym (≡̂ₑ-subst τ eq))) (join≾ τ h)) (h (Vᵉ.srcᶜ lw m))
+      starL : ∀ {L y} → Vᵉ.StarL {Ψ} k (Vᵉ.lefts sh) L y
+            → Q ⊩ L [ τ ]ᵉ ≾̂ₑ sE τ k → Q ⊩ y [ τ ]ᵉ ≾̂ₑ sE τ k
+      starL (Vᵉ.stays _)              hy = hy
+      starL (Vᵉ.grows {b₀} {bs'} e c) hy =
+        ⊔-lubₑ hy (transₑ (monoₑ ⊩≾̂ₑ-refl hy)
+                          (clo-indˡ c τ (joinₑ-mulˡ⊩ τ b₀ bs'
+                             (λ {x} m → cyc (Vᵉ.leftˢ sh (subst (x ∈_) (sym e) m))))))
 
-module LowToᵣ {Ψ} (k : RVar Ψ) {l : List (RExp Ψ × RExp Ψ)} (lw : Vʳ.Lows {Ψ} k l)
-              {x₀ : RExp Ψ} {xs : List (RExp Ψ)} (e : Vʳ.bnds lw ≡ x₀ ∷ xs) where
+      starR : ∀ {y z} → Vᵉ.StarR {Ψ} k (Vᵉ.rights sh) y z
+            → Q ⊩ y [ τ ]ᵉ ≾̂ₑ sE τ k → Q ⊩ z [ τ ]ᵉ ≾̂ₑ sE τ k
+      starR (Vᵉ.stays _)              hy = hy
+      starR (Vᵉ.grows {c₀} {cs'} e c) hy =
+        ⊔-lubₑ hy (transₑ (monoₑ hy ⊩≾̂ₑ-refl)
+                          (clo-indʳ c τ (joinₑ-mulʳ⊩ τ c₀ cs'
+                             (λ {x} m → cyc (Vᵉ.rightˢ sh (subst (x ∈_) (sym e) m))))))
 
-  above : ∀ {b} → Vʳ.LowTo {Ψ} k l lw (joinᵣ x₀ xs) b → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
-        → ∀ {y} → y ∈ Vʳ.bnds lw → Q ⊩ y [ δ ]ʳ ≾̂ᵣ b [ δ ]ʳ
-  above (Vʳ.atJoin _)                       δ m = joinᵣ-ub⊩ δ x₀ xs (subst (_ ∈_) e m)
-  above (Vʳ.atPlus (c , p , eq , refl) _ _) δ m =
-    transᵣ (joinᵣ-ub⊩ δ x₀ xs (subst (_ ∈_) e m))
-           (transᵣ (eqᵣ (≡̂ᵣ-subst δ eq)) (atomᵣ (Plus.≾-c⁺ p)))
+      sqr : ∀ {z V} → Vᵉ.Sq {Ψ} k sh z V → Q ⊩ z [ τ ]ᵉ ≾̂ₑ sE τ k → Q ⊩ V [ τ ]ᵉ ≾̂ₑ sE τ k
+      sqr (Vᵉ.linear _)                  hz = hz
+      sqr (Vᵉ.quadratic {m = m} _ c) hz = clo-least c τ hz (cyc m)
 
-  join≾ : ∀ {Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ')
+  -- for lowering from the join of the bounds: the value lies above each
+  -- bound, and below the unknown wherever the orderings hold
+
+  module Join {x₀ : EExp Ψ} {xs : List (EExp Ψ)} (e : Vᵉ.bnds lw ≡ x₀ ∷ xs) where
+
+    above : ∀ {b} → Vᵉ.LowTo {Ψ} k l lw (joinₑ x₀ xs) b → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+          → ∀ {y} → y ∈ Vᵉ.bnds lw → Q ⊩ y [ δ ]ᵉ ≾̂ₑ b [ δ ]ᵉ
+    above to δ m = transₑ (joinₑ-ub⊩ δ x₀ xs (subst (_ ∈_) e m)) (grows to δ)
+
+    below : ∀ {b} → Vᵉ.LowTo {Ψ} k l lw (joinₑ x₀ xs) b → ∀ {Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ')
+          → (∀ {a a'} → (a , a') ∈ l → Q ⊩ a [ τ ]ᵉ ≾̂ₑ a' [ τ ]ᵉ)
+          → Q ⊩ b [ τ ]ᵉ ≾̂ₑ sE τ k
+    below to τ h =
+      least to τ (joinₑ-lub⊩ τ x₀ xs (λ {y} m → h {y} (Vᵉ.src lw (subst (_ ∈_) (sym e) m)))) h
+
+module LowToᵣ {Ψ} (k : RVar Ψ) {l : List (RExp Ψ × RExp Ψ)} (lw : Vʳ.Lows {Ψ} k l) where
+
+  -- the closure of an expression lies above it, below every grade above
+  -- it absorbing its own iteration, and leaves what the expression leaves
+
+  clo-above : ∀ {x x⁺} → Vʳ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+            → Q ⊩ x [ δ ]ʳ ≾̂ᵣ x⁺ [ δ ]ʳ
+  clo-above (Vʳ.idem _)                    δ = ⊩≾̂ᵣ-refl
+  clo-above (Vʳ.const (c , p , eq , refl)) δ =
+    transᵣ (eqᵣ (≡̂ᵣ-subst δ eq)) (atomᵣ (Plus.≾-c⁺ p))
+
+  clo-least : ∀ {x x⁺} → Vʳ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} {w} → (τ : Subst Ψ Ψ')
+            → Q ⊩ x [ τ ]ʳ ≾̂ᵣ w → Q ⊩ w ·̂ᵣ w ≾̂ᵣ w → Q ⊩ x⁺ [ τ ]ʳ ≾̂ᵣ w
+  clo-least (Vʳ.idem _)                    τ h _  = h
+  clo-least (Vʳ.const (c , p , eq , refl)) τ h sq =
+    plusᵣ p (transᵣ (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst τ eq))) h) sq
+
+  clo-indˡ : ∀ {x x⁺} → Vʳ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} {w} → (τ : Subst Ψ Ψ')
+           → Q ⊩ x [ τ ]ʳ ·̂ᵣ w ≾̂ᵣ w → Q ⊩ x⁺ [ τ ]ʳ ·̂ᵣ w ≾̂ᵣ w
+  clo-indˡ (Vʳ.idem _)                    τ h = h
+  clo-indˡ (Vʳ.const (c , p , eq , refl)) τ h =
+    indˡᵣ p (transᵣ (eqᵣ (≡̂ᵣ-cong (≡̂ᵣ-sym (≡̂ᵣ-subst τ eq)) ≡̂ᵣ-refl)) h)
+
+  clo-indʳ : ∀ {x x⁺} → Vʳ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} {w} → (τ : Subst Ψ Ψ')
+           → Q ⊩ w ·̂ᵣ x [ τ ]ʳ ≾̂ᵣ w → Q ⊩ w ·̂ᵣ x⁺ [ τ ]ʳ ≾̂ᵣ w
+  clo-indʳ (Vʳ.idem _)                    τ h = h
+  clo-indʳ (Vʳ.const (c , p , eq , refl)) τ h =
+    indʳᵣ p (transᵣ (eqᵣ (≡̂ᵣ-cong ≡̂ᵣ-refl (≡̂ᵣ-sym (≡̂ᵣ-subst τ eq)))) h)
+
+  -- the value lies above `L`
+
+  grows : ∀ {L V} → Vʳ.LowTo {Ψ} k l lw L V → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+        → Q ⊩ L [ δ ]ʳ ≾̂ᵣ V [ δ ]ʳ
+  grows (Vʳ.lowTo sh y z stL stR sq _) {Q = Q} δ = transᵣ (starL stL) (transᵣ (starR stR) (sqr sq))
+    where
+      starL : ∀ {bs L y} → Vʳ.StarL {Ψ} k bs L y → Q ⊩ L [ δ ]ʳ ≾̂ᵣ y [ δ ]ʳ
+      starL (Vʳ.stays _)   = ⊩≾̂ᵣ-refl
+      starL (Vʳ.grows _ _) = ⊔-ubˡᵣ
+
+      starR : ∀ {cs y z} → Vʳ.StarR {Ψ} k cs y z → Q ⊩ y [ δ ]ʳ ≾̂ᵣ z [ δ ]ʳ
+      starR (Vʳ.stays _)   = ⊩≾̂ᵣ-refl
+      starR (Vʳ.grows _ _) = ⊔-ubˡᵣ
+
+      sqr : ∀ {cs} {sh : Vʳ.Shapes {Ψ} k cs} {z V} → Vʳ.Sq {Ψ} k sh z V
+          → Q ⊩ z [ δ ]ʳ ≾̂ᵣ V [ δ ]ʳ
+      sqr (Vʳ.linear _)      = ⊩≾̂ᵣ-refl
+      sqr (Vʳ.quadratic _ c) = clo-above c δ
+
+  -- ... and below the unknown, wherever `L` does and the orderings hold
+
+  least : ∀ {L V} → Vʳ.LowTo {Ψ} k l lw L V → ∀ {Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ')
+        → Q ⊩ L [ τ ]ʳ ≾̂ᵣ sR τ k
         → (∀ {a a'} → (a , a') ∈ l → Q ⊩ a [ τ ]ʳ ≾̂ᵣ a' [ τ ]ʳ)
-        → Q ⊩ joinᵣ x₀ xs [ τ ]ʳ ≾̂ᵣ sR τ k
-  join≾ τ h = joinᵣ-lub⊩ τ x₀ xs (λ {y} m → h {y} (Vʳ.src lw (subst (_ ∈_) (sym e) m)))
+        → Q ⊩ V [ τ ]ʳ ≾̂ᵣ sR τ k
+  least (Vʳ.lowTo sh y z stL stR sq _) {Q = Q} τ hL h = sqr sq (starR stR (starL stL hL))
+    where
+      cyc : ∀ {p} → p ∈ Vʳ.cycs lw → Q ⊩ p [ τ ]ʳ ≾̂ᵣ sR τ k
+      cyc m = h (Vʳ.srcᶜ lw m)
 
-  below : ∀ {b} → Vʳ.LowTo {Ψ} k l lw (joinᵣ x₀ xs) b → ∀ {Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ')
-        → (∀ {a a'} → (a , a') ∈ l → Q ⊩ a [ τ ]ʳ ≾̂ᵣ a' [ τ ]ʳ)
-        → Q ⊩ b [ τ ]ʳ ≾̂ᵣ sR τ k
-  below (Vʳ.atJoin _)                       τ h = join≾ τ h
-  below (Vʳ.atPlus (c , p , eq , refl) m _) τ h =
-    plusᵣ p (transᵣ (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst τ eq))) (join≾ τ h)) (h (Vʳ.srcᶜ lw m))
+      starL : ∀ {L y} → Vʳ.StarL {Ψ} k (Vʳ.lefts sh) L y
+            → Q ⊩ L [ τ ]ʳ ≾̂ᵣ sR τ k → Q ⊩ y [ τ ]ʳ ≾̂ᵣ sR τ k
+      starL (Vʳ.stays _)              hy = hy
+      starL (Vʳ.grows {b₀} {bs'} e c) hy =
+        ⊔-lubᵣ hy (transᵣ (monoᵣ ⊩≾̂ᵣ-refl hy)
+                          (clo-indˡ c τ (joinᵣ-mulˡ⊩ τ b₀ bs'
+                             (λ {x} m → cyc (Vʳ.leftˢ sh (subst (x ∈_) (sym e) m))))))
+
+      starR : ∀ {y z} → Vʳ.StarR {Ψ} k (Vʳ.rights sh) y z
+            → Q ⊩ y [ τ ]ʳ ≾̂ᵣ sR τ k → Q ⊩ z [ τ ]ʳ ≾̂ᵣ sR τ k
+      starR (Vʳ.stays _)              hy = hy
+      starR (Vʳ.grows {c₀} {cs'} e c) hy =
+        ⊔-lubᵣ hy (transᵣ (monoᵣ hy ⊩≾̂ᵣ-refl)
+                          (clo-indʳ c τ (joinᵣ-mulʳ⊩ τ c₀ cs'
+                             (λ {x} m → cyc (Vʳ.rightˢ sh (subst (x ∈_) (sym e) m))))))
+
+      sqr : ∀ {z V} → Vʳ.Sq {Ψ} k sh z V → Q ⊩ z [ τ ]ʳ ≾̂ᵣ sR τ k → Q ⊩ V [ τ ]ʳ ≾̂ᵣ sR τ k
+      sqr (Vʳ.linear _)                  hz = hz
+      sqr (Vʳ.quadratic {m = m} _ c) hz = clo-least c τ hz (cyc m)
+
+  -- for lowering from the join of the bounds: the value lies above each
+  -- bound, and below the unknown wherever the orderings hold
+
+  module Join {x₀ : RExp Ψ} {xs : List (RExp Ψ)} (e : Vʳ.bnds lw ≡ x₀ ∷ xs) where
+
+    above : ∀ {b} → Vʳ.LowTo {Ψ} k l lw (joinᵣ x₀ xs) b → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+          → ∀ {y} → y ∈ Vʳ.bnds lw → Q ⊩ y [ δ ]ʳ ≾̂ᵣ b [ δ ]ʳ
+    above to δ m = transᵣ (joinᵣ-ub⊩ δ x₀ xs (subst (_ ∈_) e m)) (grows to δ)
+
+    below : ∀ {b} → Vʳ.LowTo {Ψ} k l lw (joinᵣ x₀ xs) b → ∀ {Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ')
+          → (∀ {a a'} → (a , a') ∈ l → Q ⊩ a [ τ ]ʳ ≾̂ᵣ a' [ τ ]ʳ)
+          → Q ⊩ b [ τ ]ʳ ≾̂ᵣ sR τ k
+    below to τ h =
+      least to τ (joinᵣ-lub⊩ τ x₀ xs (λ {y} m → h {y} (Vʳ.src lw (subst (_ ∈_) (sym e) m)))) h

@@ -213,6 +213,12 @@ data _⊩_≾̂ᵣ_ {Θ} Q where
   -- absorbs its own iteration
   plusᵣ    : ∀ {c ρ} → (p : Plus _·ᵣ_ _≾ᵣ_ c) → Q ⊩ rconst c ≾̂ᵣ ρ → Q ⊩ ρ ·̂ᵣ ρ ≾̂ᵣ ρ
            → Q ⊩ rconst (Plus.c⁺ p) ≾̂ᵣ ρ
+  -- a grade that a grade does not move, on either side, its closure
+  -- does not move either
+  indˡᵣ    : ∀ {c ρ} → (p : Plus _·ᵣ_ _≾ᵣ_ c) → Q ⊩ rconst c ·̂ᵣ ρ ≾̂ᵣ ρ
+           → Q ⊩ rconst (Plus.c⁺ p) ·̂ᵣ ρ ≾̂ᵣ ρ
+  indʳᵣ    : ∀ {c ρ} → (p : Plus _·ᵣ_ _≾ᵣ_ c) → Q ⊩ ρ ·̂ᵣ rconst c ≾̂ᵣ ρ
+           → Q ⊩ ρ ·̂ᵣ rconst (Plus.c⁺ p) ≾̂ᵣ ρ
 
 data _⊩_≾̂ₑ_ {Θ} Q where
   hypₑ   : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q ⊩ ε ≾̂ₑ ε'
@@ -236,6 +242,12 @@ data _⊩_≾̂ₑ_ {Θ} Q where
   -- absorbs its own iteration
   plusₑ  : ∀ {c ε} → (p : Plus _·ₑ_ _≾ₑ_ c) → Q ⊩ econst c ≾̂ₑ ε → Q ⊩ ε ·̂ₑ ε ≾̂ₑ ε
          → Q ⊩ econst (Plus.c⁺ p) ≾̂ₑ ε
+  -- a grade that a grade does not move, on either side, its closure
+  -- does not move either
+  indˡₑ  : ∀ {c ε} → (p : Plus _·ₑ_ _≾ₑ_ c) → Q ⊩ econst c ·̂ₑ ε ≾̂ₑ ε
+         → Q ⊩ econst (Plus.c⁺ p) ·̂ₑ ε ≾̂ₑ ε
+  indʳₑ  : ∀ {c ε} → (p : Plus _·ₑ_ _≾ₑ_ c) → Q ⊩ ε ·̂ₑ econst c ≾̂ₑ ε
+         → Q ⊩ ε ·̂ₑ econst (Plus.c⁺ p) ≾̂ₑ ε
 
 -- Entailed ordering is reflexive
 
@@ -689,6 +701,8 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substᵣ            h (zeroˡᵣ p)   = zeroˡᵣ (⊩-substᵣ h p)
 ⊩-substᵣ            h (zeroʳᵣ p)   = zeroʳᵣ (⊩-substᵣ h p)
 ⊩-substᵣ            h (plusᵣ p q r) = plusᵣ p (⊩-substᵣ h q) (⊩-substᵣ h r)
+⊩-substᵣ            h (indˡᵣ p q)  = indˡᵣ p (⊩-substᵣ h q)
+⊩-substᵣ            h (indʳᵣ p q)  = indʳᵣ p (⊩-substᵣ h q)
 
 ⊩-substₑ         h (hypₑ m)     = ⊩ordₑ h m
 ⊩-substₑ         h (atomₑ p)    = atomₑ p
@@ -703,6 +717,8 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substₑ         h (zeroˡₑ p)   = zeroˡₑ (⊩-substₑ h p)
 ⊩-substₑ         h (zeroʳₑ p)   = zeroʳₑ (⊩-substₑ h p)
 ⊩-substₑ         h (plusₑ p q r) = plusₑ p (⊩-substₑ h q) (⊩-substₑ h r)
+⊩-substₑ         h (indˡₑ p q)  = indˡₑ p (⊩-substₑ h q)
+⊩-substₑ         h (indʳₑ p q)  = indʳₑ p (⊩-substₑ h q)
 
 -- A type variable's image is an arbitrary open type, so an assumed
 -- subtyping transports to a subtyping derivation at those images.

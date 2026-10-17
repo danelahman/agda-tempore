@@ -187,6 +187,17 @@ q≤p+q p q = ≤-trans (p≤p+q q p) (≤-reflexive (+-comm q p))
     lt = subst (ℚ._< val p ℚ.+ val p) (ℚ.+-identityʳ (val p))
                (ℚ.+-monoʳ-< (val p) (ℚ.≰⇒> (λ x → ¬r (*≤ᵈ* x))))
 
+-- a value that a summand does not move is moved by zero
+
++-absorbˡ : ∀ {p q} → p + q ≤ q → p ≤ 0ᵈ
++-absorbˡ {p} {q} r with p ≤? 0ᵈ
+... | yes s = s
+... | no ¬s = ⊥-elim (ℚ.<-irrefl refl (ℚ.<-≤-trans lt (≤-val r)))
+  where
+    lt : val q ℚ.< val p ℚ.+ val q
+    lt = subst (ℚ._< val p ℚ.+ val q) (ℚ.+-identityˡ (val q))
+               (ℚ.+-monoˡ-< (val q) (ℚ.≰⇒> (λ x → ¬s (*≤ᵈ* x))))
+
 ------------------------------------------------------------------------
 -- Maximum and minimum
 

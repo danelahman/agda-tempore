@@ -591,8 +591,9 @@ type inference.
   splitting joins on the left of
   hypotheses (`canonᴴ`), pruning disjunctions (`walkᵈ`), absorption by the top
   (`canonᵣ`/`canonₑ`), multiset comparison of products (`decideₑ`), the closed
-  check through chains (`checkClosed`), and the collapse of a clause-local cycle
-  on which lowering alone is stuck. `Product.agda` gives programs at time
+  check through chains (`checkClosed`), the collapse of a clause-local cycle
+  on which lowering alone is stuck, and the value of lowering at each shape of
+  cycle. `Product.agda` gives programs at time
   paired with a security level (`Product/LeftSidedTimeLevel`,
   `Product/RightSidedTimeLevel`): an embargoed report claimed in time and
   untainted, out of time, and after a `High` operation; a branch whose box

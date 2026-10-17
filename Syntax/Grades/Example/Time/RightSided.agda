@@ -177,9 +177,16 @@ infixl 7 _⊔ₒ_
 
 plusₒ : (i : 𝕀ᵣ) → Plus _·ₒ_ _≾ₒ_ i
 plusₒ [0, m ] = plus [0, plus∞ m ] (≤∞-plus∞ m) (plus∞-iter m) (λ {v} → least v)
+                     (λ {d} → indˡ d) (λ {d} → indʳ d)
   where
     least : ∀ v → [0, m ] ≾ₒ v → v ·ₒ v ≾ₒ v → [0, plus∞ m ] ≾ₒ v
     least [0, n ] = plus∞-least
+
+    indˡ : ∀ d → [0, m ] ·ₒ d ≾ₒ d → [0, plus∞ m ] ·ₒ d ≾ₒ d
+    indˡ [0, n ] = plus∞-indˡ
+
+    indʳ : ∀ d → d ·ₒ [0, m ] ≾ₒ d → d ·ₒ [0, plus∞ m ] ≾ₒ d
+    indʳ [0, n ] = plus∞-indʳ
 
 right-sided-intervals : Grade ℕᴰ
 right-sided-intervals = record

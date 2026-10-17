@@ -11,10 +11,10 @@
 --     `equate`: of two equal unknowns, the one of smaller      --
 --     index remains);                                          --
 --   * lowering (`stepᵉ`, `stepʳ`): a grade unknown is sent to  --
---     the join of its lower bounds, or to the join's closure   --
---     where it has the cycle `v · v ≾ v`; the bounds are       --
---     removed with it, and its cycles, which close at the      --
---     value (`Values`' `lower`);                               --
+--     the value `B* · L · C*` from the join `L` of its lower   --
+--     bounds, or its closure where it has the cycle            --
+--     `v · v ≾ v`; the bounds are removed with it, and its     --
+--     cycles, which close at the value (`Values`' `lower`);    --
 --   * raising (`upᵉ-step`, `upʳ-step`): a grade unknown is     --
 --     sent to the first upper bound that caps the others, the  --
 --     orderings it caps removed (`Values`' `raise`);           --
@@ -576,7 +576,7 @@ stepᵉ {Θ} C Q i (Vᵉ.byLower lw x xs e b to (cb , cR , cc)) =
 
     lowg : Q ⊩ η₀ ≾ˢ idˢ
     lowg = ≾ˢ-idˡ (updᵉ-below i b idˢ
-             (LowToₑ.below i lw e to idˢ
+             (LowToₑ.Join.below i lw e to idˢ
                (λ {y} {y'} m → subst₂ (Q ⊩_≾̂ₑ_) (sym ([id]ᵉ y)) (sym ([id]ᵉ y')) (hypₑ m))))
 
     open Lowering {Q = Q} η₀ lowg (λ β → tvarₛ reflᵗᵛ)
@@ -594,7 +594,7 @@ stepᵉ {Θ} C Q i (Vᵉ.byLower lw x xs e b to (cb , cR , cc)) =
         ordE {ε} m with Vᵉ.cls lw m
         ... | inj₁ (refl , mb) =
               subst (Q₀ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ_) (trans (absᵉ-e i b b cb) (sym (updᵉ-hit i b)))
-                    (LowToₑ.above i lw e to η₀ mb)
+                    (LowToₑ.Join.above i lw e to η₀ mb)
         ... | inj₂ (inj₁ (refl , mc)) =
               subst₂ (λ y z → Q₀ ⊩ y ≾̂ₑ z) ([id]ᵉ (ε [ η₀ ]ᵉ)) (trans ([id]ᵉ b) (sym (updᵉ-hit i b)))
                      (⊩-substₑ {σ = idˢ} ∅ᴴ-⊩ᴴ (Vᵉ.lowTo-closes {Θ} i to mc))
@@ -713,7 +713,7 @@ stepʳ {Θ} C Q i (Vʳ.byLower lw x xs e b to (cb , cc)) =
 
     lowg : Q ⊩ η₀ ≾ˢ idˢ
     lowg = ≾ˢ-idˡ (updʳ-below i b idˢ
-             (LowToᵣ.below i lw e to idˢ
+             (LowToᵣ.Join.below i lw e to idˢ
                (λ {y} {y'} m → subst₂ (Q ⊩_≾̂ᵣ_) (sym ([id]ʳ y)) (sym ([id]ʳ y')) (hypᵣ m))))
 
     open Lowering {Q = Q} η₀ lowg (λ β → tvarₛ reflᵗᵛ)
@@ -729,7 +729,7 @@ stepʳ {Θ} C Q i (Vʳ.byLower lw x xs e b to (cb , cc)) =
         ordR {ρ} m with Vʳ.cls lw m
         ... | inj₁ (refl , mb) =
               subst (Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ_) (trans (absʳ-r i b b cb) (sym (updʳ-hit i b)))
-                    (LowToᵣ.above i lw e to η₀ mb)
+                    (LowToᵣ.Join.above i lw e to η₀ mb)
         ... | inj₂ (inj₁ (refl , mc)) =
               subst₂ (λ y z → Q₀ ⊩ y ≾̂ᵣ z) ([id]ʳ (ρ [ η₀ ]ʳ)) (trans ([id]ʳ b) (sym (updʳ-hit i b)))
                      (⊩-substᵣ {σ = idˢ} ∅ᴴ-⊩ᴴ (Vʳ.lowTo-closes {Θ} i to mc))

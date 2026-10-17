@@ -113,6 +113,8 @@ G₁ ×ᵍ G₂ = record
       plus (Plus.c⁺ p₁ , Plus.c⁺ p₂) (Plus.≾-c⁺ p₁ , Plus.≾-c⁺ p₂)
            (Plus.c⁺-iter p₁ , Plus.c⁺-iter p₂)
            (λ (a₁ , a₂) (b₁ , b₂) → Plus.c⁺-least p₁ a₁ b₁ , Plus.c⁺-least p₂ a₂ b₂)
+           (λ (a₁ , a₂) → Plus.⁺-indˡ p₁ a₁ , Plus.⁺-indˡ p₂ a₂)
+           (λ (a₁ , a₂) → Plus.⁺-indʳ p₁ a₁ , Plus.⁺-indʳ p₂ a₂)
 
 ------------------------------------------------------------------------
 -- The projections and pairing

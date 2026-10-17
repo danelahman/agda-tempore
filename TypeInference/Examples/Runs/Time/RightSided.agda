@@ -2,9 +2,8 @@
 -- Runs at right-sided intervals                                --
 --                                                              --
 -- "At most `n` ticks": a budget annotated at the top is        --
--- established, one below its delay refuted, one above it       --
--- unestablished; a handler that stretches its resumption's     --
--- result is refuted.                                           --
+-- established, one at any finite grade refuted; a handler that --
+-- stretches its resumption's result is refuted.                --
 ------------------------------------------------------------------
 
 open import Relation.Nullary using (¬_)
@@ -41,11 +40,14 @@ budget-short-verdict = refl
 budget-short-not-typable : ¬ Typable [] (budget-at 2 1)
 budget-short-not-typable = infer-untypable [] (budget-at 2 1) budget-short-verdict
 
--- above the delay: no candidate is a closed instance, and nothing is
--- claimed
+-- above the delay: `τ · ε₀ ≾ ε₀` lowers `ε₀` to `u ⊔ τ⁺ · u`, the
+-- top, and `⊤ ≾ ⌜ 3 ⌝` is closed and false
 
-budget-long-verdict : verdict (check [] (budget-at 1 3)) ≡ unestablished
+budget-long-verdict : infer [] (budget-at 1 3) ≡ untypable
 budget-long-verdict = refl
+
+budget-long-not-typable : ¬ Typable [] (budget-at 1 3)
+budget-long-not-typable = infer-untypable [] (budget-at 1 3) budget-long-verdict
 
 ------------------------------------------------------------------
 -- 2. A handler calling the result of its resumption: the deferred

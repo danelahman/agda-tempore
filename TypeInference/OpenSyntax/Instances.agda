@@ -237,6 +237,8 @@ val-≾ᵣ {ρ' = ρ'} (minᵣ ij) = to-witness ij (valʳ ρ')
 val-≾ᵣ (zeroˡᵣ p)   = ≾ᵣ-zero-productˡ (val-≾ᵣ p)
 val-≾ᵣ (zeroʳᵣ p)   = ≾ᵣ-zero-productʳ (val-≾ᵣ p)
 val-≾ᵣ (plusᵣ p q r) = Plus.c⁺-least p (val-≾ᵣ q) (val-≾ᵣ r)
+val-≾ᵣ (indˡᵣ p q)  = Plus.⁺-indˡ p (val-≾ᵣ q)
+val-≾ᵣ (indʳᵣ p q)  = Plus.⁺-indʳ p (val-≾ᵣ q)
 
 val-≾ₑ (hypₑ ())
 val-≾ₑ (atomₑ p)    = p
@@ -251,6 +253,8 @@ val-≾ₑ {ε' = ε'} (minₑ ij) = to-witness ij (valᵉ ε')
 val-≾ₑ (zeroˡₑ p)   = ≾ₑ-zero-productˡ (val-≾ₑ p)
 val-≾ₑ (zeroʳₑ p)   = ≾ₑ-zero-productʳ (val-≾ₑ p)
 val-≾ₑ (plusₑ p q r) = Plus.c⁺-least p (val-≾ₑ q) (val-≾ₑ r)
+val-≾ₑ (indˡₑ p q)  = Plus.⁺-indˡ p (val-≾ₑ q)
+val-≾ₑ (indʳₑ p q)  = Plus.⁺-indʳ p (val-≾ₑ q)
 
 ------------------------------------------------------------------------
 -- The key lemma: completeness, under any closed hypotheses, through

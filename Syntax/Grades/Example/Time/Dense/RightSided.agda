@@ -180,9 +180,16 @@ infixl 7 _⊔ₒ_
 
 plusₒ : (i : 𝕀ᵣ) → Plus _·ₒ_ _≾ₒ_ i
 plusₒ [0, a ] = plus [0, plus∞ a ] (≤∞-plus∞ a) (plus∞-iter a) (λ {v} → least v)
+                     (λ {d} → indˡ d) (λ {d} → indʳ d)
   where
     least : ∀ v → [0, a ] ≾ₒ v → v ·ₒ v ≾ₒ v → [0, plus∞ a ] ≾ₒ v
     least [0, b ] = plus∞-least
+
+    indˡ : ∀ d → [0, a ] ·ₒ d ≾ₒ d → [0, plus∞ a ] ·ₒ d ≾ₒ d
+    indˡ [0, b ] = plus∞-indˡ
+
+    indʳ : ∀ d → d ·ₒ [0, a ] ≾ₒ d → d ·ₒ [0, plus∞ a ] ≾ₒ d
+    indʳ [0, b ] = plus∞-indʳ
 
 dense-right-sided-intervals : Grade ℚ≥0ᴰ
 dense-right-sided-intervals = record
