@@ -59,7 +59,7 @@ compose-reported = refl
 
 expected-min-top : Scheme
 expected-min-top =
-  ∀[ 3 , 0 , 1 ] α₀ <: α₁ ∧ α₂ <: α₁ ⟹
+  ∀[ 3 , 0 , 1 ] α₂ <: α₁ ∧ α₀ <: α₁ ⟹
     ((α₂ |×| α₀ ⇒ Bool ‼ ε₀) ⇒ (α₂ ⇒ (α₀ ⇒ α₁ ‼ ε₀) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
 
 min-reported : schemeOf (infer [] min) ≡ just expected-min-top

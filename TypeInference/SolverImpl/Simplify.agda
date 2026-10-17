@@ -19,13 +19,16 @@
 --     the atoms kept before it is dropped, entailment there    --
 --     being reachability in a finite digraph, and a grade      --
 --     ordering is dropped when its two sides coincide or it    --
---     repeats one kept before it. The grade orderings are      --
---     finally listed by the skeletons of their two sides.      --
+--     repeats one kept before it; the atoms kept stay in       --
+--     place. The grade orderings are finally listed by the     --
+--     skeletons of their two sides.                            --
 --                                                              --
 -- `trim` settles the disjunctions again and drops those        --
--- entailed by the others, then drops every subtyping atom and  --
--- grade ordering entailed by those kept and those not yet      --
--- examined, the ordering itself left out, and every ordering   --
+-- entailed by the others, drops every subtyping atom entailed  --
+-- by those kept and those not yet examined, the atom itself    --
+-- left out, prunes the eternality atoms along the subtyping    --
+-- atoms left, then drops every grade ordering entailed by      --
+-- those kept and those not yet examined, and every ordering    --
 -- that holds outright.                                         --
 --                                                              --
 -- For settling, for the disjunctions and for `trim`, an        --
@@ -136,11 +139,15 @@ Etᴾ-mono k j (atomᴾ m)    = atomᴾ (j m)
 Etᴾ-mono k j (downᴾ m et) = downᴾ (k m) (Etᴾ-mono k j et)
 Etᴾ-mono k j (upᴾ m et)   = upᴾ (k m) (Etᴾ-mono k j et)
 
+Etᴾ-⊩' : ∀ {Θ} {Q : Hyps Θ} {l as α} → (∀ {p} → p ∈ l → p ∈ subᵥ Q)
+       → (∀ {β} → β ∈ as → Q ⊩ᴱ tvar β) → Etᴾ l as α → Q ⊩ᴱ tvar α
+Etᴾ-⊩' k j (atomᴾ m)    = j m
+Etᴾ-⊩' k j (downᴾ m et) = et-subˡ (hypᵗᵛ (k m)) (Etᴾ-⊩' k j et)
+Etᴾ-⊩' k j (upᴾ m et)   = et-subʳ (hypᵗᵛ (k m)) (Etᴾ-⊩' k j et)
+
 Etᴾ-⊩ : ∀ {Θ} {Q : Hyps Θ} {l as α} → (∀ {p} → p ∈ l → p ∈ subᵥ Q)
       → (∀ {β} → β ∈ as → β ∈ ets Q) → Etᴾ l as α → Q ⊩ᴱ tvar α
-Etᴾ-⊩ k j (atomᴾ m)    = et-hyp (j m)
-Etᴾ-⊩ k j (downᴾ m et) = et-subˡ (hypᵗᵛ (k m)) (Etᴾ-⊩ k j et)
-Etᴾ-⊩ k j (upᴾ m et)   = et-subʳ (hypᵗᵛ (k m)) (Etᴾ-⊩ k j et)
+Etᴾ-⊩ k j = Etᴾ-⊩' k (λ m → et-hyp (j m))
 
 -- Both searches saturate a labelled vertex set along the hypotheses,
 -- one round per edge: a shortest path uses at most that many.
@@ -299,7 +306,7 @@ settle : ∀ {Θ} → OVType Θ → RExp Θ → Hyps Θ → Hyps Θ
 settle A ρ Q with decideᵣ full Q ρ ûᵣ
 ... | just _  = Q
 ... | nothing with etDec A
-...   | nothing = hyps (ets Q) (subᵥ Q) (insertᴼ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q)) (ordₑ Q) (disj Q)
+...   | nothing = hyps (ets Q) (subᵥ Q) (ordᵣ Q ++ (ρ , ûᵣ) ∷ []) (ordₑ Q) (disj Q)
 ...   | just αs with ets? Q αs
 ...     | just _  = Q
 ...     | nothing with refute≾u ρ
@@ -315,9 +322,8 @@ settle-⊩ A ρ Q with decideᵣ full Q ρ ûᵣ
 ... | just d  = ⊩ᴴ-refl , ≾ᵘ-ok d
 ... | nothing with etDec A in e
 ...   | nothing =
-        ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m)
-                    (λ m → insertᴼ-⊇ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q) (there m)) (λ m → m) (λ m → m))
-        , ≾ᵘ-ok (hypᵣ (insertᴼ-⊇ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q) (here refl)))
+        ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m) ∈-++⁺ˡ (λ m → m) (λ m → m))
+        , ≾ᵘ-ok (hypᵣ (∈-++⁺ʳ (ordᵣ Q) (here refl)))
 ...   | just αs with ets? Q αs
 ...     | just k  = ⊩ᴴ-refl , et-ok (etDec-sound A e k)
 ...     | nothing with refute≾u ρ
@@ -339,11 +345,11 @@ settle-inst A ρ Q δ d h with decideᵣ full Q ρ ûᵣ
 ... | nothing with etDec A in e
 ...   | nothing = mk⊩ᴴ (⊩ets h) (⊩subᵥ h) ordR (⊩ordₑ h) (⊩disj h)
       where
-        ordR : ∀ {ρ₀ ρ₀'} → (ρ₀ , ρ₀') ∈ insertᴼ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q)
+        ordR : ∀ {ρ₀ ρ₀'} → (ρ₀ , ρ₀') ∈ ordᵣ Q ++ (ρ , ûᵣ) ∷ []
              → ∅ᴴ ⊩ ρ₀ [ δ ]ʳ ≾̂ᵣ ρ₀' [ δ ]ʳ
-        ordR m with insertᴼ-⊆ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q) m
-        ... | here refl = [ (λ et → ⊥-elim (etDec-refute A e δ et)) , val-≾ᵣ⁻ ]′ (VarOK-∅ d)
-        ... | there m'  = ⊩ordᵣ h m'
+        ordR m with ∈-++⁻ (ordᵣ Q) m
+        ... | inj₂ (here refl) = [ (λ et → ⊥-elim (etDec-refute A e δ et)) , val-≾ᵣ⁻ ]′ (VarOK-∅ d)
+        ... | inj₁ m'          = ⊩ordᵣ h m'
 ...   | just αs with ets? Q αs
 ...     | just _  = h
 ...     | nothing with refute≾u ρ
@@ -485,96 +491,86 @@ settleᴴ-⊨ Q =
            (⊩ᴴ-⊨ᴴ (walkᵈ-⊩⁻ (settleAll (disj Q) (split Q))))
 
 -- A subtyping or eternality atom entailed by the atoms kept before it
--- is dropped: entailment of such atoms is reachability in a finite
--- digraph.
+-- is dropped, those kept staying in place: entailment of such atoms is
+-- reachability in a finite digraph.
 
-pruneᵛ : ∀ {n} → List (Fin n × Fin n) → List (Fin n × Fin n) → List (Fin n × Fin n)
-pruneᵛ acc []            = acc
-pruneᵛ acc ((α , β) ∷ l) with reach? acc α β
-... | just _  = pruneᵛ acc l
-... | nothing = pruneᵛ ((α , β) ∷ acc) l
+Okᵖ : ∀ {n} → (seen rest : List (Fin n × Fin n)) → Fin n × Fin n → Set
+Okᵖ seen rest p = seen ⊢ᵖ proj₁ p ≾ proj₂ p
 
-pruneᵛ-⊇ : ∀ {n} → (acc l : List (Fin n × Fin n)) → ∀ {p} → p ∈ acc → p ∈ pruneᵛ acc l
-pruneᵛ-⊇ acc []            m = m
-pruneᵛ-⊇ acc ((α , β) ∷ l) m with reach? acc α β
-... | just _  = pruneᵛ-⊇ acc l m
-... | nothing = pruneᵛ-⊇ ((α , β) ∷ acc) l (there m)
+reachᵖ? : ∀ {n} → (seen rest : List (Fin n × Fin n)) → (p : Fin n × Fin n)
+        → Maybe (Okᵖ seen rest p)
+reachᵖ? seen rest (α , β) = reach? seen α β
 
-pruneᵛ-⊆ : ∀ {n} → (acc l : List (Fin n × Fin n))
-         → ∀ {p} → p ∈ pruneᵛ acc l → (p ∈ acc) ⊎ (p ∈ l)
-pruneᵛ-⊆ acc []            m = inj₁ m
-pruneᵛ-⊆ acc ((α , β) ∷ l) m with reach? acc α β
-... | just _  = [ inj₁ , (λ q → inj₂ (there q)) ]′ (pruneᵛ-⊆ acc l m)
-... | nothing with pruneᵛ-⊆ ((α , β) ∷ acc) l m
-...   | inj₁ (here refl) = inj₂ (here refl)
-...   | inj₁ (there q)   = inj₁ q
-...   | inj₂ q           = inj₂ (there q)
+pruneᵛ : ∀ {n} → List (Fin n × Fin n) → List (Fin n × Fin n)
+pruneᵛ = Walk.walk Okᵖ reachᵖ? []
 
-pruneᵛ-path : ∀ {n} → (acc l : List (Fin n × Fin n)) → ∀ {α β}
-            → (α , β) ∈ l → pruneᵛ acc l ⊢ᵖ α ≾ β
-pruneᵛ-path acc ((α₀ , β₀) ∷ l) m with reach? acc α₀ β₀
-pruneᵛ-path acc ((α₀ , β₀) ∷ l) (here refl) | just p  =
-  ⊢ᵖ-mono (pruneᵛ-⊇ acc l) p
-pruneᵛ-path acc ((α₀ , β₀) ∷ l) (there m)   | just p  = pruneᵛ-path acc l m
-pruneᵛ-path acc ((α₀ , β₀) ∷ l) (here refl) | nothing =
-  stepᵖ (pruneᵛ-⊇ ((α₀ , β₀) ∷ acc) l (here refl)) stopᵖ
-pruneᵛ-path acc ((α₀ , β₀) ∷ l) (there m)   | nothing =
-  pruneᵛ-path ((α₀ , β₀) ∷ acc) l m
+-- The eternality atoms, along the subtyping atoms `l`
 
-pruneᴱ : ∀ {n} → List (Fin n × Fin n) → List (Fin n) → List (Fin n) → List (Fin n)
-pruneᴱ l acc []       = acc
-pruneᴱ l acc (α ∷ as) with etᴾ? l acc α
-... | just _  = pruneᴱ l acc as
-... | nothing = pruneᴱ l (α ∷ acc) as
+Okᴱ : ∀ {n} → List (Fin n × Fin n) → (seen rest : List (Fin n)) → Fin n → Set
+Okᴱ l seen rest α = Etᴾ l seen α
 
-pruneᴱ-⊇ : ∀ {n} → (l : List (Fin n × Fin n)) → (acc as : List (Fin n))
-         → ∀ {α} → α ∈ acc → α ∈ pruneᴱ l acc as
-pruneᴱ-⊇ l acc []        m = m
-pruneᴱ-⊇ l acc (α₀ ∷ as) m with etᴾ? l acc α₀
-... | just _  = pruneᴱ-⊇ l acc as m
-... | nothing = pruneᴱ-⊇ l (α₀ ∷ acc) as (there m)
+etᴱ? : ∀ {n} → (l : List (Fin n × Fin n)) → (seen rest : List (Fin n)) → (α : Fin n)
+     → Maybe (Okᴱ l seen rest α)
+etᴱ? l seen rest α = etᴾ? l seen α
 
-pruneᴱ-⊆ : ∀ {n} → (l : List (Fin n × Fin n)) → (acc as : List (Fin n))
-         → ∀ {α} → α ∈ pruneᴱ l acc as → (α ∈ acc) ⊎ (α ∈ as)
-pruneᴱ-⊆ l acc []        m = inj₁ m
-pruneᴱ-⊆ l acc (α₀ ∷ as) m with etᴾ? l acc α₀
-... | just _  = [ inj₁ , (λ q → inj₂ (there q)) ]′ (pruneᴱ-⊆ l acc as m)
-... | nothing with pruneᴱ-⊆ l (α₀ ∷ acc) as m
-...   | inj₁ (here refl) = inj₂ (here refl)
-...   | inj₁ (there q)   = inj₁ q
-...   | inj₂ q           = inj₂ (there q)
+pruneᴱ : ∀ {n} → List (Fin n × Fin n) → List (Fin n) → List (Fin n)
+pruneᴱ l = Walk.walk (Okᴱ l) (etᴱ? l) []
 
-pruneᴱ-et : ∀ {n} → (l : List (Fin n × Fin n)) → (acc as : List (Fin n))
-          → ∀ {α} → α ∈ as → Etᴾ l (pruneᴱ l acc as) α
-pruneᴱ-et l acc (α₀ ∷ as) m with etᴾ? l acc α₀
-pruneᴱ-et l acc (α₀ ∷ as) (here refl) | just w  =
-  Etᴾ-mono (λ q → q) (pruneᴱ-⊇ l acc as) w
-pruneᴱ-et l acc (α₀ ∷ as) (there m)   | just w  = pruneᴱ-et l acc as m
-pruneᴱ-et l acc (α₀ ∷ as) (here refl) | nothing =
-  atomᴾ (pruneᴱ-⊇ l (α₀ ∷ acc) as (here refl))
-pruneᴱ-et l acc (α₀ ∷ as) (there m)   | nothing = pruneᴱ-et l (α₀ ∷ acc) as m
-
--- The type atoms pruned, the rest untouched. `pruneᵀ-at Q l` is the
--- set with its subtyping atoms `l` and its eternality atoms pruned along
--- them.
+-- The set with its subtyping atoms `l` and its eternality atoms pruned
+-- along them, the rest untouched
 
 pruneᵀ-at : ∀ {Θ} → Hyps Θ → List (TyVar Θ × TyVar Θ) → Hyps Θ
-pruneᵀ-at Q l = hyps (pruneᴱ l [] (ets Q)) l (ordᵣ Q) (ordₑ Q) (disj Q)
+pruneᵀ-at Q l = hyps (pruneᴱ l (ets Q)) l (ordᵣ Q) (ordₑ Q) (disj Q)
+
+pruneᵀ-at-⊩ : ∀ {Θ} → (Q : Hyps Θ) → (l : List (TyVar Θ × TyVar Θ))
+            → (∀ {α β} → (α , β) ∈ subᵥ Q → pruneᵀ-at Q l ⊩ᵗᵛ α ≾ β)
+            → pruneᵀ-at Q l ⊩ᴴ Q
+pruneᵀ-at-⊩ {Θ} Q l k =
+  mk⊩ᴴ⁼ (Walk.walk-⊨ (Okᴱ l) (etᴱ? l) (λ α → pruneᵀ-at Q l ⊩ᴱ tvar α) close
+                     [] (ets Q) (λ ()) et-hyp)
+        (λ m → tvarₛ (k m)) hypᵣ hypₑ hyp-ok₀
+  where
+    close : ∀ (seen rest : List (TyVar Θ)) {α} → Okᴱ l seen rest α
+          → (∀ {β} → β ∈ seen ++ rest → pruneᵀ-at Q l ⊩ᴱ tvar β)
+          → pruneᵀ-at Q l ⊩ᴱ tvar α
+    close seen rest w hs = Etᴾ-⊩' (λ q → q) (λ q → hs (∈-++⁺ˡ q)) w
+
+pruneᵀ-at-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → (l : List (TyVar Θ × TyVar Θ))
+             → (∀ {p} → p ∈ l → p ∈ subᵥ Q) → Q ⊩ᴴ pruneᵀ-at Q l
+pruneᵀ-at-⊩⁻ Q l k =
+  ⊆ᴴ-⊩ (mk⊆ᴴ (Walk.walk-⊆ (Okᴱ l) (etᴱ? l) [] (ets Q)) k (λ m → m) (λ m → m) (λ m → m))
+
+-- Both kinds of atom pruned
 
 pruneᵀ : ∀ {Θ} → Hyps Θ → Hyps Θ
-pruneᵀ Q = pruneᵀ-at Q (pruneᵛ [] (subᵥ Q))
+pruneᵀ Q = pruneᵀ-at Q (pruneᵛ (subᵥ Q))
 
 pruneᵀ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → pruneᵀ Q ⊩ᴴ Q
-pruneᵀ-⊩ Q =
-  mk⊩ᴴ⁼ (λ m → Etᴾ-⊩ (λ q → q) (λ q → q) (pruneᴱ-et (pruneᵛ [] (subᵥ Q)) [] (ets Q) m))
-        (λ m → tvarₛ (⊢ᵖ-⊩ (λ q → q) (pruneᵛ-path [] (subᵥ Q) m)))
-        hypᵣ hypₑ hyp-ok₀
+pruneᵀ-⊩ {Θ} Q =
+  pruneᵀ-at-⊩ Q l
+    (Walk.walk-⊨ Okᵖ reachᵖ? (λ p → pruneᵀ Q ⊩ᵗᵛ proj₁ p ≾ proj₂ p) close
+                 [] (subᵥ Q) (λ ()) hypᵗᵛ)
+  where
+    l = pruneᵛ (subᵥ Q)
+
+    close : ∀ (seen rest : List (TyVar Θ × TyVar Θ)) {p} → Okᵖ seen rest p
+          → (∀ {q} → q ∈ seen ++ rest → pruneᵀ Q ⊩ᵗᵛ proj₁ q ≾ proj₂ q)
+          → pruneᵀ Q ⊩ᵗᵛ proj₁ p ≾ proj₂ p
+    close seen rest w hs = ⊢ᵖ-⊩' (λ q → hs (∈-++⁺ˡ q)) w
 
 pruneᵀ-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ pruneᵀ Q
-pruneᵀ-⊩⁻ Q =
-  ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → [ (λ ()) , (λ q → q) ]′ (pruneᴱ-⊆ (pruneᵛ [] (subᵥ Q)) [] (ets Q) m))
-             (λ m → [ (λ ()) , (λ q → q) ]′ (pruneᵛ-⊆ [] (subᵥ Q) m))
-             (λ m → m) (λ m → m) (λ m → m))
+pruneᵀ-⊩⁻ Q = pruneᵀ-at-⊩⁻ Q (pruneᵛ (subᵥ Q)) (Walk.walk-⊆ Okᵖ reachᵖ? [] (subᵥ Q))
+
+-- The eternality atoms pruned along the subtyping atoms of the set
+
+pruneᴱᵀ : ∀ {Θ} → Hyps Θ → Hyps Θ
+pruneᴱᵀ Q = pruneᵀ-at Q (subᵥ Q)
+
+pruneᴱᵀ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → pruneᴱᵀ Q ⊩ᴴ Q
+pruneᴱᵀ-⊩ Q = pruneᵀ-at-⊩ Q (subᵥ Q) hypᵗᵛ
+
+pruneᴱᵀ-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ pruneᴱᵀ Q
+pruneᴱᵀ-⊩⁻ Q = pruneᵀ-at-⊩⁻ Q (subᵥ Q) (λ m → m)
 
 -- A subtyping atom reachable from the atoms kept and those not yet
 -- examined
@@ -752,21 +748,26 @@ simplify-⊨ Q =
       (⊩ᴴ-⊨ᴴ (⊩ᴴ-trans (prune-⊩⁻ (settleᴴ (canonᴴ Q)))
                        (order-⊩⁻ (prune (settleᴴ (canonᴴ Q)))))))
 
--- The disjunctions settled, then every subtyping atom and grade
--- ordering entailed by those kept and those not yet examined dropped
+-- The disjunctions settled, then every subtyping atom entailed by
+-- those kept and those not yet examined dropped, the eternality atoms
+-- pruned along those left, and every grade ordering entailed by those
+-- kept and those not yet examined dropped
 
 trim : ∀ {Θ} → Hyps Θ → Hyps Θ
-trim Q = Entailed.pruneᴼ (walkᵛ (settleᴴ Q))
+trim Q = Entailed.pruneᴼ (pruneᴱᵀ (walkᵛ (settleᴴ Q)))
 
 trim-⊩ : ∀ {Θ} → (Q : Hyps Θ) → trim Q ⊩ᴴ Q
 trim-⊩ Q =
-  ⊩ᴴ-trans (Entailed.pruneᴼ-⊩ (walkᵛ (settleᴴ Q)))
-    (⊩ᴴ-trans (walkᵛ-⊩ (settleᴴ Q)) (settleᴴ-⊩ Q))
+  ⊩ᴴ-trans (Entailed.pruneᴼ-⊩ (pruneᴱᵀ (walkᵛ (settleᴴ Q))))
+    (⊩ᴴ-trans (pruneᴱᵀ-⊩ (walkᵛ (settleᴴ Q)))
+      (⊩ᴴ-trans (walkᵛ-⊩ (settleᴴ Q)) (settleᴴ-⊩ Q)))
 
 trim-⊨ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊨ᴴ trim Q
 trim-⊨ Q =
   ⊨ᴴ-trans (settleᴴ-⊨ Q)
-    (⊩ᴴ-⊨ᴴ (⊩ᴴ-trans (walkᵛ-⊩⁻ (settleᴴ Q)) (Entailed.pruneᴼ-⊩⁻ (walkᵛ (settleᴴ Q)))))
+    (⊩ᴴ-⊨ᴴ (⊩ᴴ-trans (walkᵛ-⊩⁻ (settleᴴ Q))
+             (⊩ᴴ-trans (pruneᴱᵀ-⊩⁻ (walkᵛ (settleᴴ Q)))
+                       (Entailed.pruneᴼ-⊩⁻ (pruneᴱᵀ (walkᵛ (settleᴴ Q)))))))
 
 -- Trimming a whole report, as an elimination step that instantiates
 -- no unknown
