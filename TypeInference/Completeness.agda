@@ -288,6 +288,35 @@ mutual
     cmpC ι Γ A t M₁ D₁ (invC M₁ e₁) ceq st le ,
     cmpC ι (Γ ∷ Nat) A t M₂ D₂ (invC M₂ e₂) (cong (_∷ Nat) ceq) st le
 
+  -- primitive recursion on natural numbers
+  --
+  -- The result type and the effect are their own witnesses; the slack
+  -- sits in the two atoms against the expected type and effect.
+
+  cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
+       (recℕ {B = B} {ε = ε} D₀ D₁ D₂ it) (recℕ {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂)
+       ceq st le =
+    B , ε , ih₀ , ih₁ , ih₂ , it ,
+    subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st ,
+    subst (λ z → Q ⊩ ε ≾̂ₑ z) (sym pt) le
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
+      Γ↑ = wkᵉ-ctx (wkᵗ-ctx Γ)
+      β  = wkᵉ-v (tvar (newᵗ {Θ}))
+      e  = evar (newᵉ {Θ +ty})
+
+      pΓ = coᵗᵉ-ctx σ B ε Γ
+      pA = coᵗᵉ-v   σ B ε A
+      pt = coᵗᵉ-e   σ B ε t
+      pι = coᵗᵉ-ˢ   ι σ B ε
+
+      ih₀ = cmpV ι↑ Γ↑ Nat V D₀ (reV pι V e₀) (trans ceq (sym pΓ)) Natₛ
+      ih₁ = cmpC ι↑ Γ↑ β e M₁ D₁ (reC pι M₁ e₁) (trans ceq (sym pΓ))
+                 (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
+      ih₂ = cmpC ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) β e M₂ D₂ (reC pι M₂ e₂)
+                 (cong (λ G → (G ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B) (trans ceq (sym pΓ)))
+                 (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
+
   -- performing algebraic operations
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _

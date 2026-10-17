@@ -261,6 +261,11 @@ co²ᵗʳ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ �
 co²ᵗʳ-ˢ ι σ B₁ B₂ ρ =
   ≐ˢ-trans (wk-,ʳ-ˢ (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ) (σ ,ᵗ B₁ ,ᵗ B₂) ρ) (co²ᵗ-ˢ ι σ B₁ B₂)
 
+coᵗᵉ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B : OVType Θ')
+       → (ε : EExp Θ')
+       → (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ) ⨟ˢ (σ ,ᵗ B ,ᵉ ε) ≐ˢ ι ⨟ˢ σ
+coᵗᵉ-ˢ ι σ B ε = ≐ˢ-trans (wk-,ᵉ-ˢ (ι ⨟ˢ wkˢᵗ) (σ ,ᵗ B) ε) (wk-,ᵗ-ˢ ι σ B)
+
 coᵗ²ᵉ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B : OVType Θ')
         → (ε₁ ε₂ : EExp Θ')
         → (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ) ⨟ˢ (σ ,ᵗ B ,ᵉ ε₁ ,ᵉ ε₂) ≐ˢ ι ⨟ˢ σ
@@ -534,6 +539,41 @@ mutual
       ih₀ = soundVˢ ι Γ V Nat s₀
       ih₁ = soundCˢ ι Γ M₁ A t s₁
       ih₂ = soundCˢ ι (Γ ∷ Nat) M₂ A t s₂
+
+  -- primitive recursion on natural numbers
+
+  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (recℕ V M₁ M₂) A t
+          (B , ε , s₀ , s₁ , s₂ , it , st , le) =
+    D , q
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
+      Γ↑ = wkᵉ-ctx (wkᵗ-ctx Γ)
+      β  = wkᵉ-v (tvar (newᵗ {Θ}))
+      e  = evar (newᵉ {Θ +ty})
+
+      pΓ = coᵗᵉ-ctx σ B ε Γ
+      pA = coᵗᵉ-v   σ B ε A
+      pt = coᵗᵉ-e   σ B ε t
+      pι = coᵗᵉ-ˢ   ι σ B ε
+
+      ih₀ = soundVˢ ι↑ Γ↑ V Nat s₀
+      ih₁ = soundCˢ ι↑ Γ↑ M₁ β e s₁
+      ih₂ = soundCˢ ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) M₂ β e s₂
+
+      c₂ = cong (λ Γ₀ → (Γ₀ ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B) pΓ
+
+      D₀ = ctx-substᵛ pΓ (proj₁ ih₀)
+      D₁ = ctx-substᶜ pΓ (proj₁ ih₁)
+      D₂ = ctx-substᶜ c₂ (proj₁ ih₂)
+
+      D = subC (recℕ D₀ D₁ D₂ it)
+               (subst (λ z → Q ∣ _ <:̂ᵛ z) pA st
+                  ‼ₛ subst (λ z → Q ⊩ _ ≾̂ₑ z) pt le)
+
+      q = cong₃ recℕ
+                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₀)) (trans (proj₂ ih₀) ([≐]ᴿᵛ pι V)))
+                (trans (⌊ctxᶜ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᶜ pι M₁)))
+                (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᶜ pι M₂)))
 
   -- performing algebraic operations
 

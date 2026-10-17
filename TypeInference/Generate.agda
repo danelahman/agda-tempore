@@ -185,6 +185,27 @@ mutual
   genCˢ ι Γ (caseℕ V `zero M₁ `succ M₂) (A ‼ t) =
     genVˢ ι Γ V Nat ∧̂ genCˢ ι Γ M₁ (A ‼ t) ∧̂ genCˢ ι (Γ ∷ Nat) M₂ (A ‼ t)
 
+  -- primitive recursion on natural numbers
+  --
+  -- The result type, which the step also binds, and the effect are
+  -- ∃-bound, below the expected type and effect, shared by the base and
+  -- the step; the effect absorbs its own iteration.
+
+  genCˢ {Θ = Θ} ι Γ (recℕ V M₁ M₂) (A ‼ t) =
+    ∃ᵗ (∃ᵉ (  genVˢ ι↑ Γ↑ V Nat
+            ∧̂ genCˢ ι↑ Γ↑ M₁ (β ‼ e)
+            ∧̂ genCˢ ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) M₂ (β ‼ e)
+            ∧̂ ((e ·̂ₑ e) ≾̂ₑᶜ e)
+            ∧̂ (β ≾̂ᵥᶜ A↑)
+            ∧̂ (e ≾̂ₑᶜ t↑)))
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
+      β  = wkᵉ-v (tvar (newᵗ {Θ}))
+      e  = evar (newᵉ {Θ +ty})
+      A↑ = wkᵉ-v (wkᵗ-v A)
+      t↑ = wkᵉ-e (wkᵗ-e t)
+      Γ↑ = wkᵉ-ctx (wkᵗ-ctx Γ)
+
   -- performing algebraic operations
 
   genCˢ {Θ = Θ} ι Γ (perform op V M) (A ‼ t) =
@@ -320,7 +341,9 @@ mutual
     genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
   genCˢ-rigidFree (caseℕ V `zero M₁ `succ M₂) {A ‼ t} (h , k , l) =
     genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
-  genCˢ-rigidFree (perform op V M)         {A ‼ t} (h , k)     =
+  genCˢ-rigidFree (recℕ V M₁ M₂)           {A ‼ t} (h , k , l) =
+    genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l , tt , tt , tt
+  genCˢ-rigidFree (perform op V M)        {A ‼ t} (h , k)     =
     genVˢ-rigidFree V h , genCˢ-rigidFree M k , tt
   genCˢ-rigidFree (delay τ M)              {A ‼ t} h           =
     genCˢ-rigidFree M h , tt

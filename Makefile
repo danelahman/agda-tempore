@@ -31,6 +31,9 @@ examples:
 #   natural numbers: zero, succ, caseℕ and numerals,
 #     the former table at Nat, eternality under locks
 #     (Generate, Former, Entail)                         -> data
+#   primitive recursion: recℕ, the cycle ε · ε ≾ ε, the
+#     step's lock at the top, recursion in a clause
+#     (Generate, Localise, Search)                       -> recursion
 
 examples-stdlib:
 	agda TypeInference/Examples/Stdlib/All.agda
@@ -61,6 +64,9 @@ examples-runs:
 
 examples-data:
 	agda TypeInference/Examples/Data/All.agda
+
+examples-recursion:
+	agda TypeInference/Examples/Recursion/All.agda
 
 clean:
 	git clean -fx

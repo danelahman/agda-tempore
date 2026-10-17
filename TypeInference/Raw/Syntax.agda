@@ -164,6 +164,15 @@ mutual
             --------------
             → RawC Θ n
 
+    -- primitive recursion on natural numbers, the step binding the
+    -- predecessor and the result of the recursive call
+
+    recℕ    : RawV Θ n
+            → RawC Θ n
+            → RawC Θ (suc (suc n))
+            --------------------
+            → RawC Θ n
+
     -- performing algebraic operations
 
     perform : (op : Op)
@@ -246,6 +255,7 @@ mutual
   HandlerFreeᶜ (absurd V)               = HandlerFreeᵛ V
   HandlerFreeᶜ (if V `then M `else N)   = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (caseℕ V `zero M `succ N) = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
+  HandlerFreeᶜ (recℕ V M N)              = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (perform op V M)         = HandlerFreeᵛ V × HandlerFreeᶜ M
   HandlerFreeᶜ (delay τ M)              = HandlerFreeᶜ M
   HandlerFreeᶜ (handle M `with H `in N) = ⊥

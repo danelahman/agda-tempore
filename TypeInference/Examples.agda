@@ -53,6 +53,12 @@
 -- by `caseℕ`, numerals, a `Nat` used under a lock where a      --
 -- function is refused, and branches of different effects       --
 -- joined, at left- and right-sided time.                       --
+--                                                              --
+-- Set 11 consists of programs by primitive recursion: pure     --
+-- recursions using the predecessor and the recursive result,   --
+-- a countdown whose effect absorbs itself, a function refused  --
+-- in the step, and recursion inside an operation clause, at    --
+-- left- and right-sided time.                                  --
 ------------------------------------------------------------------
 
 module TypeInference.Examples where
@@ -105,3 +111,7 @@ import TypeInference.Examples.Runs.All
 -- Natural numbers: the generic module and its instances
 
 import TypeInference.Examples.Data.All
+
+-- Primitive recursion: the generic module and its instances
+
+import TypeInference.Examples.Recursion.All

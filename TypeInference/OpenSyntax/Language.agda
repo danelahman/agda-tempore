@@ -15,8 +15,8 @@
 -- raw term, have no counterpart in `Syntax.Language`, and are  --
 -- identities on typing.                                        --
 --                                                              --
--- The rules `zero`, `succ` and `caseℕ` for natural numbers     --
--- have no counterpart in `Syntax.Language` either.             --
+-- The rules `zero`, `succ`, `caseℕ` and `recℕ` for natural     --
+-- numbers have no counterpart in `Syntax.Language` either.     --
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ; suc)
@@ -198,6 +198,22 @@ mutual
             → Q ∣ Γ ∷ Nat ⊢C⦂ C
             -------------------
             → Q ∣ Γ ⊢C⦂ C
+
+    -- primitive recursion on natural numbers
+
+    -- The step is typed as an operation clause is, under a lock at `⊤ᵣ`;
+    -- it binds the predecessor and, after a lock at the effect, the
+    -- result of the recursive call, as `_⨟_` binds its continuation.
+    -- The effect absorbs its own iteration.
+
+    recℕ    : {B : OVType Θ}
+            → {ε : EExp Θ}
+            → Q ∣ Γ ⊢V⦂ Nat
+            → Q ∣ Γ ⊢C⦂ B ‼ ε
+            → Q ∣ (Γ ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε
+            → Q ⊩ ε ·̂ₑ ε ≾̂ₑ ε
+            ----------------------------------------------------
+            → Q ∣ Γ ⊢C⦂ B ‼ ε
 
     -- performing algebraic operations
 
