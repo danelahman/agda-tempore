@@ -6,7 +6,8 @@
 -- effect the unit. A countdown on three is refuted at three    --
 -- ticks, although each of its runs takes three. A function is  --
 -- usable in the step, `⊤ᵣ ≾ uᵣ` holding. Recursion inside an   --
--- operation clause is typed.                                   --
+-- operation clause is typed, but a clause dropping its         --
+-- continuation after a countdown is refuted.                   --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -95,3 +96,15 @@ in-clause-tick-reported = refl
 
 in-clause-tick-verdict : verdict (check [] in-clause-tick) ≡ established
 in-clause-tick-verdict = refl
+
+------------------------------------------------------------------
+-- 6. A clause dropping its continuation: refuted
+
+drop-clause-verdict : infer [] drop-clause ≡ untypable
+drop-clause-verdict = refl
+
+drop-clause-check : verdict (check [] drop-clause) ≡ untypable
+drop-clause-check = refl
+
+drop-clause-not-typable : ¬ Typable [] drop-clause
+drop-clause-not-typable = infer-untypable [] drop-clause drop-clause-verdict

@@ -282,3 +282,17 @@ in-clause-pure-D =
 
 in-clause-pure-typable : Typable [] in-clause-pure
 in-clause-pure-typable = closed in-clause-pure-D refl
+
+------------------------------------------------------------------
+-- 6. A clause that drops its continuation
+--
+--   drop-clause = handle () with
+--                   op p k ↦ recℕ 2 with zero ↦ () | succ p', r ↦ delay 1; ()
+--                   return x ↦ ()
+--
+-- The recursion's effect is the clause's: at least a tick, absorbing
+-- itself, and below the clause's bound `op · j` for every `j`.
+
+drop-clause : RawC ∅ˢ 0
+drop-clause =
+  handle (return ⋆) `with (λ op → recℕ (numeral 2) (return ⋆) (delay ⌜ 1 ⌝ (return ⋆))) `in (return ⋆)

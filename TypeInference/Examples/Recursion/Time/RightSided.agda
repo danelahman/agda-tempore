@@ -7,7 +7,8 @@
 -- check establishes; a countdown, a tick a step, needs the     --
 -- top. A function is not usable in the step. Recursion inside  --
 -- an operation clause is stuck: `Localise` gives the cycle     --
--- `ε · ε ≾ ε` no value.                                        --
+-- `ε · ε ≾ ε` no value. A clause dropping its continuation     --
+-- after a countdown is refuted by the report's closed check.   --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -132,3 +133,17 @@ in-clause-pure-check = refl
 
 in-clause-tick-verdict : infer [] in-clause-tick ≡ stuck
 in-clause-tick-verdict = refl
+
+------------------------------------------------------------------
+-- 6. A clause dropping its continuation: in the clause for `read`
+-- the effect is equated with `⌜ 1 ⌝`, and the report keeps
+-- `⌜ 1 ⌝ · ⌜ 1 ⌝ ≾ ⌜ 1 ⌝`, closed and false
+
+drop-clause-verdict : infer [] drop-clause ≡ untypable
+drop-clause-verdict = refl
+
+drop-clause-check : verdict (check [] drop-clause) ≡ untypable
+drop-clause-check = refl
+
+drop-clause-not-typable : ¬ Typable [] drop-clause
+drop-clause-not-typable = infer-untypable [] drop-clause drop-clause-verdict

@@ -45,6 +45,10 @@
 --     (`Strengthened`). The unknowns of the image of the       --
 --     caller's variables and those of the deferred conditions  --
 --     are neither eliminated nor dropped (`fix`, `instᴿ`).     --
+--   * The report's closed check (`closedReport`):              --
+--     `checkClosed` on the reported hypotheses, of which       --
+--     elimination can make orderings closed                    --
+--     (`closed-untypable`).                                    --
 --                                                              --
 -- Entailed orderings are decided by one module, `Entail`, at   --
 -- explicit strengths: `closed` (variable-free sides, the       --
@@ -73,10 +77,12 @@
 -- `runSolver-complete`) and is not stuck on a constraint       --
 -- without rigid binders (`runSolver-rigidFree`). `infer` is    --
 -- the reference entry point: the solver's answer is searched   --
--- for a refutation (`Search.search`); `scheme` is a principal  --
+-- for a refutation (`Search.search`), then reported and the    --
+-- report checked (`closedReport`); `scheme` is a principal     --
 -- type scheme whose conditions are satisfiable exactly when    --
 -- the term is typable (`infer-typed`); a refutation, by the    --
--- solver or the search, means that the term is untypable       --
+-- solver, the search or the report's closed check, means that  --
+-- the term is untypable                                        --
 -- (`infer-untypable`, `infer-complete`); a handler-free term   --
 -- is never stuck (`infer-handlerFree`); `stuck` carries no     --
 -- claim. `check` also searches for a closed instance           --
@@ -692,19 +698,45 @@ answerScheme : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
              → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D) → PrincipalScheme Γ M
 answerScheme {Θ} Γ M e = scheme Γ M (reportSolved wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ] e)
 
+-- The closed check of a reported scheme: `checkClosed` on its
+-- hypotheses. Elimination can make an ordering closed; a failure means
+-- that the scheme's conditions are unsatisfiable.
+
+data ClosedReport {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} (p : PrincipalScheme Γ M) : Set where
+  refutedᶜ : ¬ Satisfiable (PrincipalScheme.Q̃ p) (PrincipalScheme.R̃ p) → ClosedReport p
+  passedᶜ  : ClosedReport p
+
+closedReport : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalScheme Γ M) → ClosedReport p
+closedReport p with checkClosed (PrincipalScheme.Q̃ p) in e
+... | nothing = refutedᶜ refute
+  where
+    refute : ¬ Satisfiable (PrincipalScheme.Q̃ p) (PrincipalScheme.R̃ p)
+    refute (δ , h ∷ _) = checkClosed-fail (PrincipalScheme.Q̃ p) e (δ , h ∷ [])
+... | just _  = passedᶜ
+
+closed-untypable : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalScheme Γ M)
+                 → ¬ Satisfiable (PrincipalScheme.Q̃ p) (PrincipalScheme.R̃ p) → ¬ Typable Γ M
+closed-untypable p n t = n (Equivalence.to (typable-⇔ p) t)
+
 ------------------------------------------------------------------------
 -- Inference: a principal type scheme, a refutation, or `stuck`. The
 -- solver's answer is searched for a refutation (`Search.search`); an
--- open residual leaves the scheme. Inference is stuck only where a
+-- open residual is reported, and the report's closed check
+-- (`closedReport`) refutes it or leaves the scheme. Inference is stuck only where a
 -- handler clause's scope closes with a local unknown to which
 -- `Localise` assigns no value; `SolverImpl.Localise` lists the known
 -- cases.
+
+inferReported : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n}
+              → (p : PrincipalScheme Γ M) → ClosedReport p → Inference Γ M
+inferReported p (refutedᶜ _) = untypable
+inferReported p passedᶜ      = typed p
 
 inferSearched : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
               → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
               → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D) → Search Q D → Inference Γ M
 inferSearched Γ M e (refutedˢ _) = untypable
-inferSearched Γ M e (openˢ _ _)  = typed (answerScheme Γ M e)
+inferSearched Γ M e (openˢ _ _)  = inferReported (answerScheme Γ M e) (closedReport _)
 
 inferFrom : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
           → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer (Θ +ty +e) Θ')) → runSolverᴰ C[ Γ , M ] ≡ s
@@ -727,9 +759,14 @@ inferFrom-untypable Γ M refuted                    e eq = refuted-untypable Γ 
 inferFrom-untypable Γ M stuck                      e ()
 inferFrom-untypable Γ M (solved (Θ' , σ , Q , D)) e eq = searched (search Q D) eq
   where
+    closed : (c : ClosedReport (answerScheme Γ M e))
+             → inferReported (answerScheme Γ M e) c ≡ untypable → ¬ Typable Γ M
+    closed (refutedᶜ n) eq = closed-untypable (answerScheme Γ M e) n
+    closed passedᶜ      ()
+
     searched : (x : Search Q D) → inferSearched Γ M e x ≡ untypable → ¬ Typable Γ M
     searched (refutedˢ n) eq = answer-untypable Γ M e n
-    searched (openˢ _ _)  ()
+    searched (openˢ _ _)  eq = closed (closedReport _) eq
 
 infer-untypable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                 → infer Γ M ≡ untypable → ¬ Typable Γ M
@@ -745,15 +782,25 @@ inferFrom-stuck Γ M refuted                    e ()
 inferFrom-stuck Γ M stuck                      e eq = refl
 inferFrom-stuck Γ M (solved (Θ' , σ , Q , D)) e eq = ⊥-elim (searched (search Q D) eq)
   where
+    closed : (c : ClosedReport (answerScheme Γ M e)) → inferReported (answerScheme Γ M e) c ≢ stuck
+    closed (refutedᶜ _) ()
+    closed passedᶜ      ()
+
     searched : (x : Search Q D) → inferSearched Γ M e x ≢ stuck
     searched (refutedˢ _) ()
-    searched (openˢ _ _)  ()
+    searched (openˢ _ _)  = closed (closedReport _)
 
 ------------------------------------------------------------------------
 -- The check of a closed program: inference, then establishment
 -- (`Search.establish`). A closed instance found is one of the scheme's
--- conditions; a refutation means that `M` is untypable; nothing is
--- claimed of an unestablished verdict.
+-- conditions; a refutation, by establishment or by the report's closed
+-- check, means that `M` is untypable; nothing is claimed of an
+-- unestablished verdict.
+
+checkReported : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n}
+              → (p : PrincipalScheme Γ M) → ClosedReport p → Check Γ M
+checkReported p (refutedᶜ _) = untypable
+checkReported p passedᶜ      = unestablished p
 
 checkEstablished : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                  → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
@@ -761,8 +808,8 @@ checkEstablished : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
 checkEstablished Γ M e (refutedᵉ _) = untypable
 checkEstablished Γ M e (foundᵉ s)   =
   established (answerScheme Γ M e) (Equivalence.to (typable-⇔ (answerScheme Γ M e)) (answer-typable Γ M e s))
-checkEstablished Γ M e undecidedᵉ   = unestablished (answerScheme Γ M e)
-checkEstablished Γ M e exhaustedᵉ   = unestablished (answerScheme Γ M e)
+checkEstablished Γ M e undecidedᵉ   = checkReported (answerScheme Γ M e) (closedReport _)
+checkEstablished Γ M e exhaustedᵉ   = checkReported (answerScheme Γ M e) (closedReport _)
 
 checkFrom : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
           → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer (Θ +ty +e) Θ')) → runSolverᴰ C[ Γ , M ] ≡ s
@@ -782,11 +829,16 @@ checkFrom-untypable Γ M refuted                    e eq = refuted-untypable Γ 
 checkFrom-untypable Γ M stuck                      e ()
 checkFrom-untypable Γ M (solved (Θ' , σ , Q , D)) e eq = established' (establish Q D) eq
   where
+    closed : (c : ClosedReport (answerScheme Γ M e))
+             → checkReported (answerScheme Γ M e) c ≡ untypable → ¬ Typable Γ M
+    closed (refutedᶜ n) eq = closed-untypable (answerScheme Γ M e) n
+    closed passedᶜ      ()
+
     established' : (x : Establish Q D) → checkEstablished Γ M e x ≡ untypable → ¬ Typable Γ M
     established' (refutedᵉ n) eq = answer-untypable Γ M e n
     established' (foundᵉ _)   ()
-    established' undecidedᵉ   ()
-    established' exhaustedᵉ   ()
+    established' undecidedᵉ   eq = closed (closedReport _) eq
+    established' exhaustedᵉ   eq = closed (closedReport _) eq
 
 checkFrom-stuck : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                 → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer (Θ +ty +e) Θ'))
@@ -796,11 +848,15 @@ checkFrom-stuck Γ M refuted                    e ()
 checkFrom-stuck Γ M stuck                      e eq = refl
 checkFrom-stuck Γ M (solved (Θ' , σ , Q , D)) e eq = ⊥-elim (established' (establish Q D) eq)
   where
+    closed : (c : ClosedReport (answerScheme Γ M e)) → checkReported (answerScheme Γ M e) c ≢ stuck
+    closed (refutedᶜ _) ()
+    closed passedᶜ      ()
+
     established' : (x : Establish Q D) → checkEstablished Γ M e x ≢ stuck
     established' (refutedᵉ _) ()
     established' (foundᵉ _)   ()
-    established' undecidedᵉ   ()
-    established' exhaustedᵉ   ()
+    established' undecidedᵉ   = closed (closedReport _)
+    established' exhaustedᵉ   = closed (closedReport _)
 
 ------------------------------------------------------------------------
 -- The end-to-end theorem
