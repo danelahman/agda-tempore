@@ -3,6 +3,8 @@
 --                                                              --
 -- The steps, in the order they are tried, each at the first    --
 -- unknown outside a given set where it applies:                --
+--   * merging (`mergeᵉ?`, `mergeʳ?`): a lowering, as below,    --
+--     whose value is a single unknown;                         --
 --   * equating (`equateᵉ`, `equateʳ`): a grade unknown that    --
 --     the hypotheses equate with an expression an ordering     --
 --     sets against it, both orderings decided at the strength  --
@@ -752,6 +754,20 @@ stepʳ? {Θ} F C Q i o = Maybe.map at (Vʳ.lower {Θ} i (oracleʳ C Q i) (ordᵣ
   where
     at : Vʳ.ByLower {Θ} i (oracleʳ C Q i) (ordᵣ Q) → Elimᶠ F C Q
     at bl@(Vʳ.byLower _ _ _ _ b _ _) = stepʳ C Q i bl , fixes-updʳ i b o
+
+-- Merging: a lowering whose value is a single unknown
+
+mergeᵉ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
+        → vᵉ F i ≡ false → Maybe (Elimᶠ F C Q)
+mergeᵉ? {Θ} F C Q i o with Vᵉ.lower {Θ} i (oracleᵉ C Q i) (ordₑ Q)
+... | just bl@(Vᵉ.byLower _ _ _ _ b@(evar _) _ _) = just (stepᵉ C Q i bl , fixes-updᵉ i b o)
+... | _ = nothing
+
+mergeʳ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
+        → vʳ F i ≡ false → Maybe (Elimᶠ F C Q)
+mergeʳ? {Θ} F C Q i o with Vʳ.lower {Θ} i (oracleʳ C Q i) (ordᵣ Q)
+... | just bl@(Vʳ.byLower _ _ _ _ b@(rvar _) _ _) = just (stepʳ C Q i bl , fixes-updʳ i b o)
+... | _ = nothing
 
 ------------------------------------------------------------------------
 -- The dual steps: an unknown on no left side but against its bounds
@@ -1722,13 +1738,15 @@ unitᵉ? {Θ} F C Q i o with firstHit (Vᵉ.forces? {Θ} i) (ordₑ Q)
                 (firstHit (Vⁱ.forces? {Θ} i) (ordᵣ Q))
 
 ------------------------------------------------------------------------
--- The steps in order: equating, lowering, raising and the forced
--- unit, each at an effect unknown before a resource one, then cycle
--- elimination and lowering a type variable
+-- The steps in order: merging, equating, lowering, raising and the
+-- forced unit, each at an effect unknown before a resource one, then
+-- cycle elimination and lowering a type variable
 
 anyStep : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → Maybe (Elimᶠ F C Q)
 anyStep {Θ} F C Q =
-  orElse (first (vᵉ F) (equateᵉ? F C Q) (fins (nE Θ)))
+  orElse (first (vᵉ F) (mergeᵉ? F C Q) (fins (nE Θ)))
+  (orElse (first (vʳ F) (mergeʳ? F C Q) (fins (nR Θ)))
+  (orElse (first (vᵉ F) (equateᵉ? F C Q) (fins (nE Θ)))
   (orElse (first (vʳ F) (equateʳ? F C Q) (fins (nR Θ)))
   (orElse (first (vᵉ F) (stepᵉ? F C Q) (fins (nE Θ)))
   (orElse (first (vʳ F) (stepʳ? F C Q) (fins (nR Θ)))
@@ -1737,7 +1755,7 @@ anyStep {Θ} F C Q =
   (orElse (first (vᵉ F) (unitᵉ? F C Q) (fins (nE Θ)))
   (orElse (first (vʳ F) (unitʳ? F C Q) (fins (nR Θ)))
   (orElse (collapseᵗ? F C Q)
-          (first (vᵗ F) (stepᵗ? F C Q) (fins (nTy Θ)))))))))))
+          (first (vᵗ F) (stepᵗ? F C Q) (fins (nTy Θ)))))))))))))
   where
     orElse : ∀ {X : Set} → Maybe X → Maybe X → Maybe X
     orElse (just x) _ = just x

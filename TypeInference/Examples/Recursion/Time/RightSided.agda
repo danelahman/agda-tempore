@@ -15,6 +15,10 @@
 -- is usable at any type; a tick a step makes the top, so a     --
 -- head is asked to be eternal and a list of boxes is refused,  --
 -- and three ticks is refuted.                                  --
+--                                                              --
+-- A function built by recursion and calling the recursive      --
+-- result twice has the top as its latent effect, and is        --
+-- refuted at one tick.                                         --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -251,3 +255,35 @@ ticks-at-3-verdict = refl
 
 ticks-at-3-not-typable : ¬ Typable [] (ticks-at 3)
 ticks-at-3-not-typable = infer-untypable [] (ticks-at 3) ticks-at-3-verdict
+
+------------------------------------------------------------------
+-- 10. Calling the recursive result twice: each call's effect
+-- unknown is merged into the function's latent effect, whose cycle
+-- `ε · ε ≾ ε` lowers it to the top, the closure of a tick; the
+-- element type is asked to be eternal, the argument being used
+-- after a call
+
+expected-twice : Scheme
+expected-twice =
+  ∀[ 1 , 0 , 0 ] eternal α₀ ⟹
+    (Nat ⇒ ([ rconst ⊤ᵣ ] (α₀ ⇒ Unit ‼ econst ⊤ₑ)) ‼ ûₑ) ‼ ûₑ
+
+twice-reported : schemeOf (infer [] twice) ≡ just expected-twice
+twice-reported = refl
+
+expected-twice-run : Scheme
+expected-twice-run = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ econst ⊤ₑ
+
+twice-run-reported : schemeOf (infer [] twice-run) ≡ just expected-twice-run
+twice-run-reported = refl
+
+twice-run-verdict : verdict (check [] twice-run) ≡ established
+twice-run-verdict = refl
+
+-- annotated at one tick: refuted
+
+twice-run-at-1-verdict : infer [] (twice-run-at 1) ≡ untypable
+twice-run-at-1-verdict = refl
+
+twice-run-at-1-not-typable : ¬ Typable [] (twice-run-at 1)
+twice-run-at-1-not-typable = infer-untypable [] (twice-run-at 1) twice-run-at-1-verdict

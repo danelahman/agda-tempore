@@ -38,7 +38,7 @@ module TypeInference.Examples.Recursion (S : LanguageSpec) (opEnum : OpEnum S)
   (st : Stepped (GradeSystem.Dur (LanguageSpec.Grades S))) where
 
 open LanguageSpec S
-open GradeSystemInterface Grades using (R; 𝔻; of-durʳ; of-durᵉ; ⊤ₑ; ≾ᵣ-reflexive; map-uᵉ)
+open GradeSystemInterface Grades using (R; 𝔻; of-durʳ; of-durᵉ; ⊤ᵣ; ⊤ₑ; ≾ᵣ-reflexive; map-uᵉ)
 open Operations Ops using (Op; op-grade)
 
 open import TypeInference.OpenSyntax.Grades    S
@@ -420,3 +420,37 @@ ticks-top-D =
 
 ticks-top-typable : Typable [] ticks-top
 ticks-top-typable = closed ticks-top-D refl
+
+------------------------------------------------------------------
+-- 10. A recursion building a function that calls the recursive
+-- result twice
+--
+--   twice n = recℕ n with zero    ↦ box⊤ (λx. delay 1; ())
+--                       | succ p, r ↦ box⊤ (λx. unbox r as f in f x;
+--                                               unbox r as g in g x)
+--   twice-run = unbox (twice 2) as f in f ()
+--
+-- The result is boxed at `⊤ᵣ`, so it is unboxed after the first call's
+-- time has passed. Each call has its own effect unknown above the
+-- function's latent effect `ε`, and the step's body lies above their
+-- product, so `ε` absorbs its own iteration through the two calls.
+
+twice-base : ∀ {Θ n} → RawC Θ n
+twice-base = box (rconst ⊤ᵣ) (lam (delay ⌜ 1 ⌝ (return ⋆))) (return v₀)
+
+twice-step : ∀ {Θ n} → RawC Θ (suc (suc n))
+twice-step =
+  box (rconst ⊤ᵣ)
+      (lam (unbox (fsuc fzero) (v₀ · v₁) ⨟ unbox (fsuc (fsuc fzero)) (v₀ · v₂)))
+      (return v₀)
+
+twice : RawC ∅ˢ 0
+twice = return (lam (recℕ v₀ twice-base twice-step))
+
+twice-run : RawC ∅ˢ 0
+twice-run = recℕ (numeral 2) twice-base twice-step ⨟ unbox fzero (v₀ · ⋆)
+
+-- annotated at `k` ticks
+
+twice-run-at : ℕ → RawC ∅ˢ 0
+twice-run-at k = twice-run ⦂ᶜ (Unit ‼ ⌜ k ⌝ᵉ)
