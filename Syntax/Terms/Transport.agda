@@ -112,6 +112,17 @@ cast-match : ∀ {Γ Γ' A B C} → (e : Γ ≡ Γ')
            ≡ match (castᵛ e V) `in (castᶜ (cong (λ Γ₀ → Γ₀ ∷ A ∷ B) e) M)
 cast-match refl = refl
 
+cast-succ : ∀ {Γ Γ'} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ Nat}
+          → castᵛ e (succ V) ≡ succ (castᵛ e V)
+cast-succ refl = refl
+
+cast-caseℕ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ')
+           → {V : Γ ⊢V⦂ Nat} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ Nat ⊢C⦂ C}
+           → castᶜ e (caseℕ V `zero M `succ N)
+           ≡ caseℕ (castᵛ e V) `zero (castᶜ e M)
+                               `succ (castᶜ (cong (_∷ Nat) e) N)
+cast-caseℕ refl = refl
+
 cast-inl : ∀ {Γ Γ' A B} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ A}
          → castᵛ e (inl {B = B} V) ≡ inl (castᵛ e V)
 cast-inl refl = refl

@@ -4,7 +4,8 @@
 -- object's uniqueness, `fun-beta`/`fun-eta` the exponential's,         --
 -- `match-beta`/`match-eta` the product's, `absurd-eta` the initial     --
 -- object's strictness, the boolean equations are the boolean object's --
--- own laws, and the sum equations the coproduct's (`caseᵐ`).           --
+-- own laws, the natural-number equations those of `caseℕᵐ`, and the    --
+-- sum equations the coproduct's (`caseᵐ`).                             --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -122,6 +123,50 @@ sound-if-eta V M pM (pV , pT , pF) pR =
   ∙ ≈ᵐ-sym (ifᵐ-η (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM))
   ∙ ≈ᵐ-sym (C-subst-nat M split-[] V pM pV)
   ∙ ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ V ]c) (subᶜ M split-[] V pM pV) pR
+
+-- The natural-number betas are those of `caseℕᵐ`; at a successor the branch
+-- is then the substitution of the predecessor.
+
+sound-caseℕ-beta-zero : ∀ {Γ C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ Nat ⊢C⦂ C)
+                      → Soundᶜ== (caseℕ-beta-zero M N)
+sound-caseℕ-beta-zero M N (pV , pM , pN) pR =
+    caseℕᵐ-zero (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+  ∙ ⟦⟧ᶜᵗ-irr M pM pR
+
+sound-caseℕ-beta-succ : ∀ {Γ C} → (V : Γ ⊢V⦂ Nat)
+                      → (M : Γ ⊢C⦂ C) → (N : Γ ∷ Nat ⊢C⦂ C)
+                      → Soundᶜ== (caseℕ-beta-succ V M N)
+sound-caseℕ-beta-succ V M N (pV , pM , pN) pR =
+    caseℕᵐ-succ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+  ∙ ≈ᵐ-sym (C-subst-nat N split-[] V pN pV)
+  ∙ ⟦⟧ᶜᵗ-irr (N [ split-[] ↦ V ]c) (subᶜ N split-[] V pN pV) pR
+
+-- `caseℕ-eta`: the zero branch is the body at `zero`, the successor branch
+-- the body restricted along `succᵐ`, the shape `caseℕᵐ-η` speaks about.
+
+sound-caseℕ-eta : ∀ {Γ C} → (V : Γ ⊢V⦂ Nat) → (M : Γ ∷ Nat ⊢C⦂ C)
+                → Paramᶜ M → Soundᶜ== (caseℕ-eta V M)
+sound-caseℕ-eta {Γ} {C} V M pM (pV , pZ , pS) pR =
+    caseℕᵐ-cong ≈ᵐ-refl
+      (⟦⟧ᶜᵗ-irr (M [ split-[] ↦ zero ]c) pZ (subᶜ M split-[] zero pM tt)
+       ∙ C-subst-nat M split-[] zero pM tt)
+      (⟦⟧ᶜᵗ-irr (C-rename (cong-∷-ren wk-ren) M [ split-[] ↦ U ]c) pS
+                (subᶜ (C-rename (cong-∷-ren wk-ren) M) split-[] U
+                      (renᶜ (cong-∷-ren wk-ren) M pM) tt)
+       ∙ C-subst-nat (C-rename (cong-∷-ren wk-ren) M) split-[] U
+                     (renᶜ (cong-∷-ren wk-ren) M pM) tt
+       ∙ ∘ᵐ-congˡ (C-rename-nat (cong-∷-ren wk-ren) M pM)
+       ∙ ∘ᵐ-assoc _ _ _
+       ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+                   ∙ ⟨ ∘ᵐ-identityʳ _ ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _)
+                     , ∘ᵐ-identityˡ _
+                       ∙ ∘ᵐ-congʳ (var-morphism-Hd {Γ} {Nat} (λ _ → ≾ᵣ-refl)) ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (caseℕᵐ-η (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM))
+  ∙ ≈ᵐ-sym (C-subst-nat M split-[] V pM pV)
+  ∙ ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ V ]c) (subᶜ M split-[] V pM pV) pR
+  where
+    U : Γ ∷ Nat ⊢V⦂ Nat
+    U = succ (var (λ _ → ≾ᵣ-refl) Hd)
 
 -- The two sum betas are the coproduct's, read at the interpretation
 -- `⟦ inl V ⟧ᵛᵗ = inlᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ` of the scrutinee, after which the branch is

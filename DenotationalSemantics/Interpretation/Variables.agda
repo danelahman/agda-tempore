@@ -75,6 +75,7 @@ eternalᵛ-Eternalᵒ : ∀ {A} → Eternal A → Eternalᵒ ⟦ A ⟧ᵛ
 eternalᵛ-Eternalᵒ (Baseₑ {b} eb) = ⟦ b ⟧ᵇᵉ eb
 eternalᵛ-Eternalᵒ Unitₑ          = 𝟙-eternalᵒ
 eternalᵛ-Eternalᵒ Boolₑ          = 𝔹-eternalᵒ
+eternalᵛ-Eternalᵒ Natₑ           = ℕ-eternalᵒ
 eternalᵛ-Eternalᵒ Emptyₑ         = 𝟘-eternalᵒ
 eternalᵛ-Eternalᵒ (et₁ |×|ₑ et₂) =
   ×-eternalᵒ (eternalᵛ-Eternalᵒ et₁) (eternalᵛ-Eternalᵒ et₂)

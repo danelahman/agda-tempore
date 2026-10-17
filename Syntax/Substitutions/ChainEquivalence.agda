@@ -91,6 +91,8 @@ V-sub₀-ext s et (const c) = refl
 V-sub₀-ext s et ⋆         = refl
 V-sub₀-ext s et true      = refl
 V-sub₀-ext s et false     = refl
+V-sub₀-ext s et zero      = refl
+V-sub₀-ext s et (succ V)  = cong succ (V-sub₀-ext s et V)
 V-sub₀-ext s (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   cong₂ ⦉_,_⦊ (V-sub₀-ext s et₁ V₁) (V-sub₀-ext s et₂ V₂)
 V-sub₀-ext s (et₁ |+|ₑ _) (inl V) = cong inl (V-sub₀-ext s et₁ V)
@@ -159,6 +161,8 @@ eternal-val-ext-≡ et p (const c) = refl
 eternal-val-ext-≡ et p ⋆         = refl
 eternal-val-ext-≡ et p true      = refl
 eternal-val-ext-≡ et p false     = refl
+eternal-val-ext-≡ et p zero      = refl
+eternal-val-ext-≡ et p (succ V)  = cong succ (eternal-val-ext-≡ et p V)
 eternal-val-ext-≡ (et₁ |×|ₑ et₂) p ⦉ V₁ , V₂ ⦊ =
   cong₂ ⦉_,_⦊ (eternal-val-ext-≡ et₁ p V₁) (eternal-val-ext-≡ et₂ p V₂)
 eternal-val-ext-≡ (et₁ |+|ₑ _) p (inl V) = cong inl (eternal-val-ext-≡ et₁ p V)
@@ -274,6 +278,15 @@ V-sub-false : ∀ {Γ Γ'} → (σ : Sub [] Γ Γ') → V-sub σ false ≡ false
 V-sub-false []ˢ      = refl
 V-sub-false (s ◅ σ) = cong (V-sub₀ s) (V-sub-false σ)
 
+V-sub-zero : ∀ {Γ Γ'} → (σ : Sub [] Γ Γ') → V-sub σ zero ≡ zero
+V-sub-zero []ˢ      = refl
+V-sub-zero (s ◅ σ) = cong (V-sub₀ s) (V-sub-zero σ)
+
+V-sub-succ : ∀ {Γ Γ'} → (σ : Sub [] Γ Γ') → (V : Γ' ⊢V⦂ Nat)
+           → V-sub σ (succ V) ≡ succ (V-sub σ V)
+V-sub-succ []ˢ      V = refl
+V-sub-succ (s ◅ σ) V = cong (V-sub₀ s) (V-sub-succ σ V)
+
 V-sub-⦉⦊ : ∀ {Γ Γ' A B} → (σ : Sub [] Γ Γ')
          → (V : Γ' ⊢V⦂ A) → (W : Γ' ⊢V⦂ B)
          → V-sub σ ⦉ V , W ⦊ ≡ ⦉ V-sub σ V , V-sub σ W ⦊
@@ -336,6 +349,14 @@ C-sub-if : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ')
          ≡ if V-sub σ V `then C-sub σ M `else C-sub σ N
 C-sub-if []ˢ      V M N = refl
 C-sub-if (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-if σ V M N)
+
+C-sub-caseℕ : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ')
+            → (V : Γ' ⊢V⦂ Nat) → (M : Γ' ⊢C⦂ C) → (N : Γ' ∷ Nat ⊢C⦂ C)
+            → C-sub σ (caseℕ V `zero M `succ N)
+            ≡ caseℕ V-sub σ V `zero C-sub σ M
+                              `succ C-sub (cong-∷-subˢ σ) N
+C-sub-caseℕ []ˢ      V M N = refl
+C-sub-caseℕ (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-caseℕ σ V M N)
 
 C-sub-case+ : ∀ {Γ Γ' A B C} → (σ : Sub [] Γ Γ')
             → (V : Γ' ⊢V⦂ A |+| B) → (M : Γ' ∷ A ⊢C⦂ C) → (N : Γ' ∷ B ⊢C⦂ C)
@@ -423,6 +444,11 @@ mutual
     trans (V-sub-true σ) (sym (V-sub-true σ'))
   V-sub-≐ˢ {σ = σ} {σ' = σ'} h false =
     trans (V-sub-false σ) (sym (V-sub-false σ'))
+  V-sub-≐ˢ {σ = σ} {σ' = σ'} h zero =
+    trans (V-sub-zero σ) (sym (V-sub-zero σ'))
+  V-sub-≐ˢ {σ = σ} {σ' = σ'} h (succ V) =
+    trans (V-sub-succ σ V)
+      (trans (cong succ (V-sub-≐ˢ h V)) (sym (V-sub-succ σ' V)))
   V-sub-≐ˢ {σ = σ} {σ' = σ'} h ⦉ V , W ⦊ =
     trans (V-sub-⦉⦊ σ V W)
       (trans (cong₂ ⦉_,_⦊ (V-sub-≐ˢ h V) (V-sub-≐ˢ h W))
@@ -468,6 +494,11 @@ mutual
       (trans (cong₃ if_`then_`else_
                 (V-sub-≐ˢ h V) (C-sub-≐ˢ h M) (C-sub-≐ˢ h N))
              (sym (C-sub-if σ' V M N)))
+  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (caseℕ V `zero M `succ N) =
+    trans (C-sub-caseℕ σ V M N)
+      (trans (cong₃ caseℕ_`zero_`succ_ (V-sub-≐ˢ h V)
+                (C-sub-≐ˢ h M) (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) N))
+             (sym (C-sub-caseℕ σ' V M N)))
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (case+ V `inl M `inr N) =
     trans (C-sub-case+ σ V M N)
       (trans (cong₃ case+_`inl_`inr_ (V-sub-≐ˢ h V)

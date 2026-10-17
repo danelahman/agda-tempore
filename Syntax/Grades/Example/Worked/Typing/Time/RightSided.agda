@@ -174,6 +174,39 @@ sampling-then-branching =
       `else coerce ≤! (perform write here (return ⋆)))
 
 ------------------------------------------------------------------------
+-- Natural numbers
+--
+-- `caseℕ` binds the predecessor in its successor branch, and, as for
+-- `if`, both branches are coerced to one grade.
+
+is-zero : [] ⊢V⦂ Nat ⇒ Bool ‼ uₑ
+is-zero = lam (caseℕ here `zero return true `succ return false)
+
+predecessor : [] ⊢V⦂ Nat ⇒ Nat ‼ uₑ
+predecessor = lam (caseℕ here `zero return zero `succ return here)
+
+two-before-three : [] ⊢C⦂ Nat ‼ uₑ
+two-before-three = predecessor · numeralᵛ 3
+
+-- a count of pending transmissions: none costs nothing, otherwise the
+-- reading is transmitted; the reading is bound before the branch, with no
+-- lock in between, so `var` asks for nothing
+
+transmitting-if-pending : [] ∷ Nat ∷ Reading ⊢C⦂ Unit ‼ [0, 6 ]
+transmitting-if-pending =
+  caseℕ eternal-var Natₑ (Tl-∷ Hd)
+    `zero coerce ≤! (return ⋆)
+    `succ perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)  -- ∷ Nat
+
+-- a natural number is eternal: a count crosses a lock, here the one a
+-- reading leaves
+
+count-survives : [] ∷ Nat ⊢C⦂ Nat ‼ [0, 1 ]
+count-survives =
+  perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
+    (return (succ (eternal-var Natₑ (Tl-∷ (Tl-⟨⟩ Hd)))))
+
+------------------------------------------------------------------------
 -- Sums
 --
 -- `case+` binds the injected value in the branch its injection names,

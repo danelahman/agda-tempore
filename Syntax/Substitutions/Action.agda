@@ -49,6 +49,8 @@ mutual
   V-sub₀ s ⋆           = ⋆
   V-sub₀ s true        = true
   V-sub₀ s false       = false
+  V-sub₀ s zero        = zero
+  V-sub₀ s (succ V)    = succ (V-sub₀ s V)
   V-sub₀ s (⦉ V , W ⦊)  = ⦉ V-sub₀ s V , V-sub₀ s W ⦊
   V-sub₀ s (inl V)     = inl (V-sub₀ s V)
   V-sub₀ s (inr V)     = inr (V-sub₀ s V)
@@ -68,6 +70,8 @@ mutual
   C-sub₀ s (absurd V)       = absurd (V-sub₀ s V)
   C-sub₀ s (if V `then M `else N) =
     if V-sub₀ s V `then C-sub₀ s M `else C-sub₀ s N
+  C-sub₀ s (caseℕ V `zero M `succ N) =
+    caseℕ V-sub₀ s V `zero C-sub₀ s M `succ C-sub₀ (cong-sub₀ s) N
   C-sub₀ s (case+ V `inl M `inr N) =
     case+ V-sub₀ s V `inl C-sub₀ (cong-sub₀ s) M `inr C-sub₀ (cong-sub₀ s) N
   C-sub₀ s (perform op V M) = perform op (V-sub₀ s V) (C-sub₀ (cong-sub₀ s) M)

@@ -30,6 +30,7 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (⊤; tt)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import Data.Nat using (ℕ; zero; suc)
 
 open import Util.Equality
 
@@ -423,6 +424,61 @@ ifᵖ-η {X} {A} b m {w} x = go (app b x)
     go true  = ≈-refl A
     go false = ≈-refl A
 
+-- Natural numbers object
+--
+-- The constant presheaf on `Data.Nat`, like `𝔹ᵖ`. Iteration recurses on the
+-- number at each world; its laws are inductions on it.
+
+ℕᵖ : PSh
+ℕᵖ = record
+  { carrier         = λ _ → ℕ
+  ; _≈_             = _≡_
+  ; ≈-refl          = refl
+  ; ≈-sym           = sym
+  ; ≈-trans         = trans
+  ; transport       = λ _ x → x
+  ; transport-cong  = λ _ e → e
+  ; transport-refl  = λ _ → refl
+  ; transport-trans = λ _ _ _ → refl
+  }
+
+zeroᵖ : 𝟙ᵖ →ᵖ ℕᵖ
+zeroᵖ = pmap (λ _ → zero) (λ _ → refl) (λ _ _ → refl)
+
+succᵖ : ℕᵖ →ᵖ ℕᵖ
+succᵖ = pmap suc (cong suc) (λ _ _ → refl)
+
+iterᵖ : ∀ {A} → 𝟙ᵖ →ᵖ A → A →ᵖ A → ℕᵖ →ᵖ A
+iterᵖ {A} a f = pmap (λ n → go n) (λ { refl → ≈-refl A }) go-nat
+  where
+    go : ∀ {w} → ℕ → carrier A w
+    go zero    = app a tt
+    go (suc n) = app f (go n)
+
+    go-nat : ∀ {w w'} (p : w ⊑[ uᵣ ] w') (n : ℕ)
+           → _≈_ A (go n) (transport A p (go n))
+    go-nat p zero    = nat a p tt
+    go-nat p (suc n) = ≈-trans A (app-cong f (go-nat p n)) (nat f p (go n))
+
+iterᵖ-cong : ∀ {A} {a a' : 𝟙ᵖ →ᵖ A} {f f' : A →ᵖ A}
+           → a ≈ᵖ a' → f ≈ᵖ f' → iterᵖ a f ≈ᵖ iterᵖ a' f'
+iterᵖ-cong {A} {a} {a'} {f} {f'} pa pf zero    = pa tt
+iterᵖ-cong {A} {a} {a'} {f} {f'} pa pf (suc n) =
+  ≈-trans A (app-cong f (iterᵖ-cong {A} {a} {a'} {f} {f'} pa pf n)) (pf _)
+
+iterᵖ-zero : ∀ {A} → (a : 𝟙ᵖ →ᵖ A) → (f : A →ᵖ A) → iterᵖ a f ∘ᵖ zeroᵖ ≈ᵖ a
+iterᵖ-zero {A} a f x = ≈-refl A
+
+iterᵖ-succ : ∀ {A} → (a : 𝟙ᵖ →ᵖ A) → (f : A →ᵖ A)
+           → iterᵖ a f ∘ᵖ succᵖ ≈ᵖ f ∘ᵖ iterᵖ a f
+iterᵖ-succ {A} a f x = ≈-refl A
+
+iterᵖ-unique : ∀ {A} → (a : 𝟙ᵖ →ᵖ A) → (f : A →ᵖ A) → (h : ℕᵖ →ᵖ A)
+             → h ∘ᵖ zeroᵖ ≈ᵖ a → h ∘ᵖ succᵖ ≈ᵖ f ∘ᵖ h → h ≈ᵖ iterᵖ a f
+iterᵖ-unique {A} a f h p q zero    = p tt
+iterᵖ-unique {A} a f h p q (suc n) =
+  ≈-trans A (q n) (app-cong f (iterᵖ-unique a f h p q n))
+
 -- Kripke exponentials
 --
 -- An element of the exponential `A ⇒ᵖ B` at a world `w` is a Kripke
@@ -582,6 +638,14 @@ PShCat = record
   ; []ᵐ-inlᵐ     = []ᵖ-inlᵖ
   ; []ᵐ-inrᵐ     = []ᵖ-inrᵖ
   ; []ᵐ-unique   = []ᵖ-unique
+  ; ℕᵐ           = ℕᵖ
+  ; zeroᵐ        = zeroᵖ
+  ; succᵐ        = succᵖ
+  ; iterᵐ        = iterᵖ
+  ; iterᵐ-cong   = λ {A} {a} {a'} {f} {f'} → iterᵖ-cong {a = a} {a' = a'} {f = f} {f' = f'}
+  ; iterᵐ-zero   = iterᵖ-zero
+  ; iterᵐ-succ   = iterᵖ-succ
+  ; iterᵐ-unique = iterᵖ-unique
   ; 𝔹ᵐ           = 𝔹ᵖ
   ; trueᵐ        = trueᵖ
   ; falseᵐ       = falseᵖ

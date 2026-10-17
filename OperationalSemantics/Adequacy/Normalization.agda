@@ -275,9 +275,10 @@ FL-perform {St = St} {Γ = Γ} {op = op} γ pγ V M pV pM =
 
 mutual
 
-  -- The value half. Nothing is asked at a base, unit or empty type; a pair is
-  -- the pair of the actions' projections; an injection is its payload; a
-  -- variable is `env-var`; a subsumption is `VRed-sub`.
+  -- The value half. Nothing is asked at a base, unit, boolean, natural-number
+  -- or empty type; a pair is the pair of the actions' projections; an
+  -- injection is its payload; a variable is `env-var`; a subsumption is
+  -- `VRed-sub`.
   --
   -- At a lambda the environment moves to the state the Kripke clause offers and
   -- gains the argument (`reachᵉ`, `_∷ᵉ_`). The action is a `lam`, so `APP`
@@ -293,6 +294,8 @@ mutual
   FL-V γ pγ ⋆          = tt
   FL-V γ pγ true       = tt
   FL-V γ pγ false      = tt
+  FL-V γ pγ zero       = tt
+  FL-V γ pγ (succ V)   = tt
 
   FL-V {A = A |×| B} γ pγ ⦉ V , W ⦊ =
       VRed-≡ᵛ A (sym (cong fstᵛ (env-Vˢ-pair γ [] V W))) (FL-V γ pγ V)
@@ -345,6 +348,17 @@ mutual
   ... | inj₂ rs =
     subst (CRed' _ _ _) (sym (env-Cˢ-if γ [] V M N))
       (CRed-expand* rs (FL-C γ pγ N))
+
+  -- `caseℕ` likewise (`nat-canonical`); the successor branch receives the
+  -- predecessor, reducible as every natural number is.
+
+  FL-C γ pγ (caseℕ V `zero M `succ N) with nat-canonical (env-V γ V)
+  ... | inj₁ rs =
+    subst (CRed' _ _ _) (sym (env-Cˢ-caseℕ γ [] V M N))
+      (CRed-expand* rs (FL-C γ pγ M))
+  ... | inj₂ (W , rs) =
+    subst (CRed' _ _ _) (sym (env-Cˢ-caseℕ γ [] V M N))
+      (CRed-expand* rs (FL-C (γ ∷ᵉ W) (pγ , tt) N))
 
   FL-C γ pγ (V · W) =
     subst (CRed' _ _ _) (sym (env-Cˢ-app γ [] V W))

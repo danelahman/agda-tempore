@@ -153,6 +153,8 @@ mutual
   V-sub₀-≐ˢ₀ h ⋆         = refl
   V-sub₀-≐ˢ₀ h true      = refl
   V-sub₀-≐ˢ₀ h false     = refl
+  V-sub₀-≐ˢ₀ h zero      = refl
+  V-sub₀-≐ˢ₀ h (succ V)  = cong succ (V-sub₀-≐ˢ₀ h V)
   V-sub₀-≐ˢ₀ h ⦉ V , W ⦊  = cong₂ ⦉_,_⦊ (V-sub₀-≐ˢ₀ h V) (V-sub₀-≐ˢ₀ h W)
   V-sub₀-≐ˢ₀ h (inl V)   = cong inl (V-sub₀-≐ˢ₀ h V)
   V-sub₀-≐ˢ₀ h (inr V)   = cong inr (V-sub₀-≐ˢ₀ h V)
@@ -172,6 +174,9 @@ mutual
   C-sub₀-≐ˢ₀ h (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M) (C-sub₀-≐ˢ₀ h N)
+  C-sub₀-≐ˢ₀ h (caseℕ V `zero M `succ N) =
+    cong₃ caseℕ_`zero_`succ_ (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M)
+      (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) N)
   C-sub₀-≐ˢ₀ h (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_ (V-sub₀-≐ˢ₀ h V)
       (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) M)

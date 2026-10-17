@@ -121,6 +121,8 @@ step-delays IF-TRUE            d = η-stepᴰ d
 step-delays IF-FALSE           d = η-stepᴰ d
 step-delays CASE-INL           d = η-stepᴰ d
 step-delays CASE-INR           d = η-stepᴰ d
+step-delays CASEℕ-ZERO         d = η-stepᴰ d
+step-delays CASEℕ-SUCC         d = η-stepᴰ d
 step-delays (SEQ-STEP r _)     d = step-delays r d
 step-delays SEQ-RET            d = η-stepᴰ d
 step-delays SEQ-OP             d = η-stepᴰ d
@@ -133,6 +135,7 @@ step-delays UNBOX              d = η-stepᴰ d
 step-delays SUB-APP            d = η-stepᴰ d
 step-delays SUB-IF             d = η-stepᴰ d
 step-delays SUB-CASE           d = η-stepᴰ d
+step-delays SUB-CASEℕ          d = η-stepᴰ d
 step-delays SUB                d = η-stepᴰ d
 
 stepsᵀ-delays : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
@@ -296,6 +299,8 @@ uniform↝ IF-TRUE             _         = tt
 uniform↝ IF-FALSE            _         = tt
 uniform↝ CASE-INL            _         = tt
 uniform↝ CASE-INR            _         = tt
+uniform↝ CASEℕ-ZERO          _         = tt
+uniform↝ CASEℕ-SUCC          _         = tt
 uniform↝ (SEQ-STEP r _)      (pM , _)  = uniform↝ r pM
 uniform↝ SEQ-RET             _         = tt
 uniform↝ SEQ-OP              _         = tt
@@ -308,6 +313,7 @@ uniform↝ UNBOX               _         = tt
 uniform↝ SUB-APP             _         = tt
 uniform↝ SUB-IF              _         = tt
 uniform↝ SUB-CASE            _         = tt
+uniform↝ SUB-CASEℕ           _         = tt
 uniform↝ SUB                 _         = tt
 
 uniform↝* : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}

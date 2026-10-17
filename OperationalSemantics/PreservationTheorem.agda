@@ -91,6 +91,23 @@ mutual
                      --------------------------------------------
                    → ⟨ S , if false `then M `else N ⟩ ↝ ⟨ S , N ⟩
 
+        -- natural-number elimination: take the branch the scrutinee names,
+        -- substituting the predecessor into the successor branch
+        CASEℕ-ZERO : ∀ {C}
+                   → {S : 𝕊 []}
+                   → {M : toCtx S ⊢C⦂ C}
+                   → {N : toCtx S ∷ Nat ⊢C⦂ C}
+                     ------------------------------------------------
+                   → ⟨ S , caseℕ zero `zero M `succ N ⟩ ↝ ⟨ S , M ⟩
+
+        CASEℕ-SUCC : ∀ {C}
+                   → {S : 𝕊 []}
+                   → {V : toCtx S ⊢V⦂ Nat}
+                   → {M : toCtx S ⊢C⦂ C}
+                   → {N : toCtx S ∷ Nat ⊢C⦂ C}
+                     ------------------------------------------------------------
+                   → ⟨ S , caseℕ succ V `zero M `succ N ⟩ ↝ ⟨ S , N [ split-[] ↦ V ]c ⟩
+
         -- sum elimination: substitute the injected value into the branch the
         -- injection names
         CASE-INL   : ∀ {A B C}
@@ -282,6 +299,17 @@ mutual
                     → ⟨ S , if subV V Boolₛ `then M `else N ⟩ ↝
                       ⟨ S , if V `then M `else N ⟩
 
+        -- subsumption at a scrutinised natural number: `Nat <:ᵛ Nat` is the
+        -- identity, so it is simply dropped
+        SUB-CASEℕ   : ∀ {C}
+                    → {S : 𝕊 []}
+                    → {V : toCtx S ⊢V⦂ Nat}
+                    → {M : toCtx S ⊢C⦂ C}
+                    → {N : toCtx S ∷ Nat ⊢C⦂ C}
+                      ---------------------------------------------------------
+                    → ⟨ S , caseℕ subV V Natₛ `zero M `succ N ⟩ ↝
+                      ⟨ S , caseℕ V `zero M `succ N ⟩
+
         -- subsumption at a scrutinised sum: the coercion splits, each half
         -- moving onto the binder of its branch
         SUB-CASE    : ∀ {A A₁ B B₁ C}
@@ -324,6 +352,8 @@ mutual
     step-extends-state IF-FALSE             = id-suc
     step-extends-state CASE-INL             = id-suc
     step-extends-state CASE-INR             = id-suc
+    step-extends-state CASEℕ-ZERO           = id-suc
+    step-extends-state CASEℕ-SUCC           = id-suc
     step-extends-state (SEQ-STEP M↝M' _)    = step-extends-state M↝M'
     step-extends-state SEQ-RET              = id-suc
     step-extends-state SEQ-OP               = id-suc
@@ -336,6 +366,7 @@ mutual
     step-extends-state SUB-APP              = id-suc
     step-extends-state SUB-IF               = id-suc
     step-extends-state SUB-CASE             = id-suc
+    step-extends-state SUB-CASEℕ            = id-suc
     step-extends-state SUB                  = id-suc
 
     -- reduction steps refine the value type, just as they refine the effect
@@ -353,6 +384,8 @@ mutual
     step-refines-type {A = A} IF-FALSE          = <:ᵛ-refl A
     step-refines-type {A = A} CASE-INL          = <:ᵛ-refl A
     step-refines-type {A = A} CASE-INR          = <:ᵛ-refl A
+    step-refines-type {A = A} CASEℕ-ZERO        = <:ᵛ-refl A
+    step-refines-type {A = A} CASEℕ-SUCC        = <:ᵛ-refl A
     step-refines-type {A = A} (SEQ-STEP _ _)    = <:ᵛ-refl A
     step-refines-type {A = A} SEQ-RET           = <:ᵛ-refl A
     step-refines-type {A = A} SEQ-OP            = <:ᵛ-refl A
@@ -365,6 +398,7 @@ mutual
     step-refines-type (SUB-APP {r = p ‼ₛ _})    = p
     step-refines-type {A = A} SUB-IF            = <:ᵛ-refl A
     step-refines-type {A = A} SUB-CASE          = <:ᵛ-refl A
+    step-refines-type {A = A} SUB-CASEℕ         = <:ᵛ-refl A
     step-refines-type (SUB {w = p ‼ₛ _})        = p
 
 -- Reduction steps make effects more precise, in cancelled form: the grade δ by
@@ -387,6 +421,8 @@ step-grade-≾ IF-TRUE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ IF-FALSE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ CASE-INL = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ CASE-INR = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ CASEℕ-ZERO = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ CASEℕ-SUCC = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} step _) =
   ≾ᵣ-trans
     (≾ᵣ-reflexive
@@ -426,6 +462,7 @@ step-grade-≾ (SUB-APP {r = _ ‼ₛ s}) =
   ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ s)
 step-grade-≾ SUB-IF  = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ SUB-CASE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ SUB-CASEℕ = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ (SUB {w = _ ‼ₛ q}) =
   ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ q)
 

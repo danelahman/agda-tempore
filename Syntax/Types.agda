@@ -37,6 +37,7 @@ mutual
     Base  : BaseType → VType                 -- base types
     Unit  : VType                            -- unit type
     Bool  : VType                            -- boolean type
+    Nat   : VType                            -- natural-number type
     _|×|_ : VType → VType → VType            -- product type
     _|+|_ : VType → VType → VType            -- sum type
     Empty : VType                            -- empty type
@@ -55,6 +56,7 @@ data Eternal : VType → Set where
   Baseₑ  : ∀ {b} → .(EternalBaseType b) → Eternal (Base b)
   Unitₑ  : Eternal Unit
   Boolₑ  : Eternal Bool
+  Natₑ   : Eternal Nat
   _|×|ₑ_ : ∀ {A₁ A₂} → Eternal A₁ → Eternal A₂ → Eternal (A₁ |×| A₂)
   _|+|ₑ_ : ∀ {A₁ A₂} → Eternal A₁ → Eternal A₂ → Eternal (A₁ |+| A₂)
   Emptyₑ : Eternal Empty
@@ -68,6 +70,8 @@ eternal-irrelevant (Baseₑ p) (Baseₑ q) =
 eternal-irrelevant Unitₑ Unitₑ =
   refl
 eternal-irrelevant Boolₑ Boolₑ =
+  refl
+eternal-irrelevant Natₑ Natₑ =
   refl
 eternal-irrelevant (et₁ |×|ₑ et₂) (et₁' |×|ₑ et₂') =
   cong₂ _|×|ₑ_ (eternal-irrelevant et₁ et₁') (eternal-irrelevant et₂ et₂')
@@ -94,6 +98,7 @@ Base b ≡ᵥ? Base b' with b ≡ᵇ? b'
 ... | no ¬p = no (λ { refl → ¬p refl })
 Base b ≡ᵥ? Unit = no (λ { () })
 Base b ≡ᵥ? Bool = no (λ { () })
+Base b ≡ᵥ? Nat = no (λ { () })
 Base b ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
 Base b ≡ᵥ? (B₁ |+| B₂) = no (λ { () })
 Base b ≡ᵥ? Empty = no (λ { () })
@@ -102,6 +107,7 @@ Base b ≡ᵥ? ([ ρ' ] B) = no (λ { () })
 Unit ≡ᵥ? Base b' = no (λ { () })
 Unit ≡ᵥ? Unit = yes refl
 Unit ≡ᵥ? Bool = no (λ { () })
+Unit ≡ᵥ? Nat = no (λ { () })
 Unit ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
 Unit ≡ᵥ? (B₁ |+| B₂) = no (λ { () })
 Unit ≡ᵥ? Empty = no (λ { () })
@@ -110,14 +116,25 @@ Unit ≡ᵥ? ([ ρ' ] B) = no (λ { () })
 Bool ≡ᵥ? Base b' = no (λ { () })
 Bool ≡ᵥ? Unit = no (λ { () })
 Bool ≡ᵥ? Bool = yes refl
+Bool ≡ᵥ? Nat = no (λ { () })
 Bool ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
 Bool ≡ᵥ? (B₁ |+| B₂) = no (λ { () })
 Bool ≡ᵥ? Empty = no (λ { () })
 Bool ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
 Bool ≡ᵥ? ([ ρ' ] B) = no (λ { () })
+Nat ≡ᵥ? Base b' = no (λ { () })
+Nat ≡ᵥ? Unit = no (λ { () })
+Nat ≡ᵥ? Bool = no (λ { () })
+Nat ≡ᵥ? Nat = yes refl
+Nat ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
+Nat ≡ᵥ? (B₁ |+| B₂) = no (λ { () })
+Nat ≡ᵥ? Empty = no (λ { () })
+Nat ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
+Nat ≡ᵥ? ([ ρ' ] B) = no (λ { () })
 (A₁ |×| A₂) ≡ᵥ? Base b' = no (λ { () })
 (A₁ |×| A₂) ≡ᵥ? Unit = no (λ { () })
 (A₁ |×| A₂) ≡ᵥ? Bool = no (λ { () })
+(A₁ |×| A₂) ≡ᵥ? Nat = no (λ { () })
 (A₁ |×| A₂) ≡ᵥ? (B₁ |×| B₂) with A₁ ≡ᵥ? B₁ | A₂ ≡ᵥ? B₂
 ... | yes p | yes q = yes (cong₂ _|×|_ p q)
 ... | yes p | no ¬q = no (λ { refl → ¬q refl })
@@ -130,6 +147,7 @@ Bool ≡ᵥ? ([ ρ' ] B) = no (λ { () })
 (A₁ |+| A₂) ≡ᵥ? Base b' = no (λ { () })
 (A₁ |+| A₂) ≡ᵥ? Unit = no (λ { () })
 (A₁ |+| A₂) ≡ᵥ? Bool = no (λ { () })
+(A₁ |+| A₂) ≡ᵥ? Nat = no (λ { () })
 (A₁ |+| A₂) ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
 (A₁ |+| A₂) ≡ᵥ? (B₁ |+| B₂) with A₁ ≡ᵥ? B₁ | A₂ ≡ᵥ? B₂
 ... | yes p | yes q = yes (cong₂ _|+|_ p q)
@@ -142,6 +160,7 @@ Bool ≡ᵥ? ([ ρ' ] B) = no (λ { () })
 Empty ≡ᵥ? Base b' = no (λ { () })
 Empty ≡ᵥ? Unit = no (λ { () })
 Empty ≡ᵥ? Bool = no (λ { () })
+Empty ≡ᵥ? Nat = no (λ { () })
 Empty ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
 Empty ≡ᵥ? (B₁ |+| B₂) = no (λ { () })
 Empty ≡ᵥ? Empty = yes refl
@@ -150,6 +169,7 @@ Empty ≡ᵥ? ([ ρ' ] B) = no (λ { () })
 (A₁ ⇒ A₂) ≡ᵥ? Base b' = no (λ { () })
 (A₁ ⇒ A₂) ≡ᵥ? Unit = no (λ { () })
 (A₁ ⇒ A₂) ≡ᵥ? Bool = no (λ { () })
+(A₁ ⇒ A₂) ≡ᵥ? Nat = no (λ { () })
 (A₁ ⇒ A₂) ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
 (A₁ ⇒ A₂) ≡ᵥ? (B₁ |+| B₂) = no (λ { () })
 (A₁ ⇒ A₂) ≡ᵥ? Empty = no (λ { () })
@@ -166,6 +186,7 @@ Empty ≡ᵥ? ([ ρ' ] B) = no (λ { () })
 ([ ρ ] A) ≡ᵥ? Base b' = no (λ { () })
 ([ ρ ] A) ≡ᵥ? Unit = no (λ { () })
 ([ ρ ] A) ≡ᵥ? Bool = no (λ { () })
+([ ρ ] A) ≡ᵥ? Nat = no (λ { () })
 ([ ρ ] A) ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
 ([ ρ ] A) ≡ᵥ? (B₁ |+| B₂) = no (λ { () })
 ([ ρ ] A) ≡ᵥ? Empty = no (λ { () })
@@ -184,6 +205,7 @@ eternal? (Base b) with eternalBaseType? b
 ... | no ¬p = no λ { (Baseₑ p') → ⊥-elim-irr (¬p p') }
 eternal? Unit        = yes Unitₑ
 eternal? Bool        = yes Boolₑ
+eternal? Nat         = yes Natₑ
 eternal? (A₁ |×| A₂) with eternal? A₁ | eternal? A₂
 ... | yes p | yes q = yes (p |×|ₑ q)
 ... | yes _ | no ¬q = no λ { (_ |×|ₑ x₂) → ¬q x₂}

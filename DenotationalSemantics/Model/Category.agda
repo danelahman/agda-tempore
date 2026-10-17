@@ -7,8 +7,9 @@
 -- the context (possibility) modality may be realised as a coend.     --
 --                                                                    --
 -- Beyond the core (identities, composition, and its congruence) the  --
--- record carries the cartesian closed structure and binary           --
--- coproducts, with the congruences needed to reason up to `_≈ᵐ_`.    --
+-- record carries the cartesian closed structure, binary coproducts   --
+-- and a natural numbers object, with the congruences needed to       --
+-- reason up to `_≈ᵐ_`.                                               --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Category where
@@ -332,6 +333,58 @@ record Category : Set₂ where
   map+ᵐ-∘ a b c d =
     ≈ᵐ-trans ([]ᵐ-map+ᵐ _ _ c d)
              [ ∘ᵐ-assoc _ _ _ , ∘ᵐ-assoc _ _ _ ]ᵐ-cong
+
+  -- NATURAL NUMBERS OBJECT
+  --
+  -- Lawvere's: iteration from a global element along an endomorphism, with
+  -- its two β laws and uniqueness. The case analysis stable under a
+  -- context, `caseℕᵐ`, is derived below through the coproducts.
+
+  field
+    ℕᵐ : Obj
+
+    zeroᵐ : 𝟙ᵐ →ᵐ ℕᵐ
+    succᵐ : ℕᵐ →ᵐ ℕᵐ
+
+    iterᵐ : ∀ {A} → 𝟙ᵐ →ᵐ A → A →ᵐ A → ℕᵐ →ᵐ A
+
+    iterᵐ-cong : ∀ {A} {a a' : 𝟙ᵐ →ᵐ A} {f f' : A →ᵐ A}
+               → a ≈ᵐ a' → f ≈ᵐ f' → iterᵐ a f ≈ᵐ iterᵐ a' f'
+
+    iterᵐ-zero : ∀ {A} → (a : 𝟙ᵐ →ᵐ A) → (f : A →ᵐ A) → iterᵐ a f ∘ᵐ zeroᵐ ≈ᵐ a
+    iterᵐ-succ : ∀ {A} → (a : 𝟙ᵐ →ᵐ A) → (f : A →ᵐ A)
+               → iterᵐ a f ∘ᵐ succᵐ ≈ᵐ f ∘ᵐ iterᵐ a f
+    iterᵐ-unique : ∀ {A} → (a : 𝟙ᵐ →ᵐ A) → (f : A →ᵐ A) → (h : ℕᵐ →ᵐ A)
+                 → h ∘ᵐ zeroᵐ ≈ᵐ a → h ∘ᵐ succᵐ ≈ᵐ f ∘ᵐ h → h ≈ᵐ iterᵐ a f
+
+  -- two maps satisfying the same iteration equations agree
+
+  iterᵐ-ext : ∀ {A} → (a : 𝟙ᵐ →ᵐ A) → (f : A →ᵐ A) → (h h' : ℕᵐ →ᵐ A)
+            → h ∘ᵐ zeroᵐ ≈ᵐ a → h ∘ᵐ succᵐ ≈ᵐ f ∘ᵐ h
+            → h' ∘ᵐ zeroᵐ ≈ᵐ a → h' ∘ᵐ succᵐ ≈ᵐ f ∘ᵐ h'
+            → h ≈ᵐ h'
+  iterᵐ-ext a f h h' p q p' q' =
+    ≈ᵐ-trans (iterᵐ-unique a f h p q) (≈ᵐ-sym (iterᵐ-unique a f h' p' q'))
+
+  -- iterating the successor from zero is the identity
+
+  iterᵐ-idᵐ : iterᵐ zeroᵐ succᵐ ≈ᵐ idᵐ
+  iterᵐ-idᵐ =
+    ≈ᵐ-sym (iterᵐ-unique zeroᵐ succᵐ idᵐ (∘ᵐ-identityˡ _)
+             (≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _))))
+
+  -- fusion: a map commuting with the steps carries one iteration to the other
+
+  iterᵐ-fusion : ∀ {A B} → (a : 𝟙ᵐ →ᵐ A) → (f : A →ᵐ A) → (g : B →ᵐ B)
+               → (k : A →ᵐ B) → k ∘ᵐ f ≈ᵐ g ∘ᵐ k
+               → k ∘ᵐ iterᵐ a f ≈ᵐ iterᵐ (k ∘ᵐ a) g
+  iterᵐ-fusion a f g k e =
+    iterᵐ-unique _ _ _
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ (iterᵐ-zero a f)))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (iterᵐ-succ a f))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ e) (∘ᵐ-assoc _ _ _)))))
 
   -- EXPONENTIALS
 
@@ -779,3 +832,121 @@ record Category : Set₂ where
              → k ∘ᵐ caseᵐ s f g ≈ᵐ caseᵐ s (k ∘ᵐ f) (k ∘ᵐ g)
   caseᵐ-post s f g k =
     ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ (copairˣᵐ-post f g k))
+
+
+  -- NATURAL NUMBERS IN A CONTEXT
+  --
+  -- Lambek: `[ zeroᵐ , succᵐ ]ᵐ : 𝟙ᵐ +ᵐ ℕᵐ →ᵐ ℕᵐ` is an isomorphism, its
+  -- inverse `predᵐ` defined by iteration. `caseℕᵐ` is `caseᵐ` at the
+  -- predecessor, with the laws `caseᵐ` has.
+
+  predᵐ : ℕᵐ →ᵐ 𝟙ᵐ +ᵐ ℕᵐ
+  predᵐ = iterᵐ inlᵐ (inrᵐ ∘ᵐ [ zeroᵐ , succᵐ ]ᵐ)
+
+  predᵐ-zero : predᵐ ∘ᵐ zeroᵐ ≈ᵐ inlᵐ
+  predᵐ-zero = iterᵐ-zero _ _
+
+  -- the predecessor is a section of `[ zeroᵐ , succᵐ ]ᵐ`
+
+  [zero,succ]-predᵐ : [ zeroᵐ , succᵐ ]ᵐ ∘ᵐ predᵐ ≈ᵐ idᵐ
+  [zero,succ]-predᵐ =
+    ≈ᵐ-trans (iterᵐ-fusion _ _ succᵐ _
+               (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ ([]ᵐ-inrᵐ _ _))))
+    (≈ᵐ-trans (iterᵐ-cong ([]ᵐ-inlᵐ _ _) ≈ᵐ-refl) iterᵐ-idᵐ)
+
+  predᵐ-succ : predᵐ ∘ᵐ succᵐ ≈ᵐ inrᵐ
+  predᵐ-succ =
+    ≈ᵐ-trans (iterᵐ-succ _ _)
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ [zero,succ]-predᵐ) (∘ᵐ-identityʳ _)))
+
+  -- and a retraction
+
+  predᵐ-[zero,succ] : predᵐ ∘ᵐ [ zeroᵐ , succᵐ ]ᵐ ≈ᵐ idᵐ
+  predᵐ-[zero,succ] =
+    ≈ᵐ-trans ([]ᵐ-post _ _ _)
+    (≈ᵐ-trans [ ≈ᵐ-trans predᵐ-zero (≈ᵐ-sym (∘ᵐ-identityˡ _))
+              , ≈ᵐ-trans predᵐ-succ (≈ᵐ-sym (∘ᵐ-identityˡ _)) ]ᵐ-cong
+              (≈ᵐ-sym ([]ᵐ-unique _ _ idᵐ ≈ᵐ-refl ≈ᵐ-refl)))
+
+  -- The eliminator: a scrutinee, a zero branch, and a successor branch that
+  -- receives the predecessor, over the context.
+
+  caseℕᵐ : ∀ {X C} → X →ᵐ ℕᵐ → X →ᵐ C → X ×ᵐ ℕᵐ →ᵐ C → X →ᵐ C
+  caseℕᵐ s f g = caseᵐ (predᵐ ∘ᵐ s) (f ∘ᵐ fstᵐ) g
+
+  caseℕᵐ-cong : ∀ {X C} {s s' : X →ᵐ ℕᵐ} {f f' : X →ᵐ C} {g g' : X ×ᵐ ℕᵐ →ᵐ C}
+              → s ≈ᵐ s' → f ≈ᵐ f' → g ≈ᵐ g' → caseℕᵐ s f g ≈ᵐ caseℕᵐ s' f' g'
+  caseℕᵐ-cong ps pf pg = caseᵐ-cong (∘ᵐ-congʳ ps) (∘ᵐ-congˡ pf) pg
+
+  caseℕᵐ-zero : ∀ {X C} → (f : X →ᵐ C) → (g : X ×ᵐ ℕᵐ →ᵐ C)
+              → caseℕᵐ (zeroᵐ ∘ᵐ terminalᵐ) f g ≈ᵐ f
+  caseℕᵐ-zero f g =
+    ≈ᵐ-trans (caseᵐ-cong (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ predᵐ-zero))
+                         ≈ᵐ-refl ≈ᵐ-refl)
+    (≈ᵐ-trans (caseᵐ-inl terminalᵐ (f ∘ᵐ fstᵐ) g)
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)) (∘ᵐ-identityʳ f))))
+
+  caseℕᵐ-succ : ∀ {X C} → (n : X →ᵐ ℕᵐ) → (f : X →ᵐ C) → (g : X ×ᵐ ℕᵐ →ᵐ C)
+              → caseℕᵐ (succᵐ ∘ᵐ n) f g ≈ᵐ g ∘ᵐ ⟨ idᵐ , n ⟩ᵐ
+  caseℕᵐ-succ n f g =
+    ≈ᵐ-trans (caseᵐ-cong (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ predᵐ-succ))
+                         ≈ᵐ-refl ≈ᵐ-refl)
+             (caseᵐ-inr n (f ∘ᵐ fstᵐ) g)
+
+  caseℕᵐ-∘ : ∀ {Y X C} → (s : X →ᵐ ℕᵐ) → (f : X →ᵐ C) → (g : X ×ᵐ ℕᵐ →ᵐ C)
+           → (h : Y →ᵐ X)
+           → caseℕᵐ s f g ∘ᵐ h ≈ᵐ caseℕᵐ (s ∘ᵐ h) (f ∘ᵐ h) (g ∘ᵐ mapˣᵐ h idᵐ)
+  caseℕᵐ-∘ s f g h =
+    ≈ᵐ-trans (caseᵐ-∘ _ _ _ h)
+             (caseᵐ-cong (∘ᵐ-assoc _ _ _)
+                         (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                         (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
+                                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+                         ≈ᵐ-refl)
+
+  -- η: a map out of `X ×ᵐ ℕᵐ` is determined by its zero and successor
+  -- instances
+
+  caseℕᵐ-η : ∀ {X C} → (s : X →ᵐ ℕᵐ) → (m : X ×ᵐ ℕᵐ →ᵐ C)
+           → m ∘ᵐ ⟨ idᵐ , s ⟩ᵐ
+           ≈ᵐ caseℕᵐ s (m ∘ᵐ ⟨ idᵐ , zeroᵐ ∘ᵐ terminalᵐ ⟩ᵐ) (m ∘ᵐ mapˣᵐ idᵐ succᵐ)
+  caseℕᵐ-η {X} {C} s m =
+    ≈ᵐ-trans (∘ᵐ-congʳ ⟨ ≈ᵐ-refl
+                       , ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityˡ s))
+                         (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym [zero,succ]-predᵐ))
+                                   (∘ᵐ-assoc _ _ _)) ⟩ᵐ-cong)
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-mapˣᵐ [ zeroᵐ , succᵐ ]ᵐ (predᵐ ∘ᵐ s)))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (caseᵐ-η (predᵐ ∘ᵐ s) (m ∘ᵐ mapˣᵐ idᵐ [ zeroᵐ , succᵐ ]ᵐ))
+              (caseᵐ-cong ≈ᵐ-refl (branch zeroᵐ (zero-side) ([]ᵐ-inlᵐ _ _))
+                                  (branch succᵐ ≈ᵐ-refl ([]ᵐ-inrᵐ _ _))))))
+    where
+      -- a branch: the copairing restricted along an injection
+      branch : ∀ {A} {k : X ×ᵐ A →ᵐ C} → (c : A →ᵐ ℕᵐ) → m ∘ᵐ mapˣᵐ idᵐ c ≈ᵐ k
+             → {ι : A →ᵐ 𝟙ᵐ +ᵐ ℕᵐ} → [ zeroᵐ , succᵐ ]ᵐ ∘ᵐ ι ≈ᵐ c
+             → (m ∘ᵐ mapˣᵐ idᵐ [ zeroᵐ , succᵐ ]ᵐ) ∘ᵐ mapˣᵐ idᵐ ι ≈ᵐ k
+      branch c e {ι} p =
+        ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                                      (mapˣᵐ-cong (∘ᵐ-identityˡ _) p)))
+                  e)
+
+      -- at zero the context alone determines the argument
+      zero-side : m ∘ᵐ mapˣᵐ idᵐ zeroᵐ
+                ≈ᵐ (m ∘ᵐ ⟨ idᵐ , zeroᵐ ∘ᵐ terminalᵐ ⟩ᵐ) ∘ᵐ fstᵐ
+      zero-side =
+        ≈ᵐ-trans (∘ᵐ-congʳ
+          (≈ᵐ-sym (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+                   ⟨ ≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))
+                   , ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                              (∘ᵐ-congʳ (≈ᵐ-trans terminalᵐ-unique
+                                                  (≈ᵐ-sym terminalᵐ-unique))) ⟩ᵐ-cong)))
+                 (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+
+  caseℕᵐ-post : ∀ {X C D} → (s : X →ᵐ ℕᵐ)
+              → (f : X →ᵐ C) → (g : X ×ᵐ ℕᵐ →ᵐ C) → (k : C →ᵐ D)
+              → k ∘ᵐ caseℕᵐ s f g ≈ᵐ caseℕᵐ s (k ∘ᵐ f) (k ∘ᵐ g)
+  caseℕᵐ-post s f g k =
+    ≈ᵐ-trans (caseᵐ-post _ _ _ k) (caseᵐ-cong ≈ᵐ-refl (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) ≈ᵐ-refl)

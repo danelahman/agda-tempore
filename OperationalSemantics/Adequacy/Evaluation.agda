@@ -89,6 +89,8 @@ step-ticks IF-TRUE             = 0ᴰ
 step-ticks IF-FALSE            = 0ᴰ
 step-ticks CASE-INL            = 0ᴰ
 step-ticks CASE-INR            = 0ᴰ
+step-ticks CASEℕ-ZERO          = 0ᴰ
+step-ticks CASEℕ-SUCC          = 0ᴰ
 step-ticks (SEQ-STEP r _)      = step-ticks r
 step-ticks SEQ-RET             = 0ᴰ
 step-ticks SEQ-OP              = 0ᴰ
@@ -101,6 +103,7 @@ step-ticks UNBOX               = 0ᴰ
 step-ticks SUB-APP             = 0ᴰ
 step-ticks SUB-IF              = 0ᴰ
 step-ticks SUB-CASE            = 0ᴰ
+step-ticks SUB-CASEℕ           = 0ᴰ
 step-ticks SUB                 = 0ᴰ
 
 ticks : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
@@ -214,6 +217,8 @@ handle-step H N (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) =
 ↝-det IF-FALSE   IF-FALSE   = refl
 ↝-det CASE-INL   CASE-INL   = refl
 ↝-det CASE-INR   CASE-INR   = refl
+↝-det CASEℕ-ZERO CASEℕ-ZERO = refl
+↝-det CASEℕ-SUCC CASEℕ-SUCC = refl
 ↝-det SEQ-RET    SEQ-RET    = refl
 ↝-det SEQ-OP     SEQ-OP     = refl
 ↝-det DELAY      DELAY      = refl
@@ -224,6 +229,7 @@ handle-step H N (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) =
 ↝-det SUB-APP    SUB-APP    = refl
 ↝-det SUB-IF     SUB-IF     = refl
 ↝-det SUB-CASE   SUB-CASE   = refl
+↝-det SUB-CASEℕ  SUB-CASEℕ  = refl
 ↝-det SUB        SUB        = refl
 
 -- the congruences: normalise the grade premises (they are irrelevant), then

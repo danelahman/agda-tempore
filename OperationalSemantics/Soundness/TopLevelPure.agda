@@ -410,6 +410,8 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     T-≤ᵏ-implstep B IF-FALSE   g q = ηᵀ-step g q
     T-≤ᵏ-implstep B CASE-INL   g q = ηᵀ-step g q
     T-≤ᵏ-implstep B CASE-INR   g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B CASEℕ-ZERO g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B CASEℕ-SUCC g q = ηᵀ-step g q
     T-≤ᵏ-implstep B SEQ-RET    g q = ηᵀ-step g q
     T-≤ᵏ-implstep B SEQ-OP     g q = ηᵀ-step g q
     T-≤ᵏ-implstep B HANDLE-RET g q = ηᵀ-step g q
@@ -419,6 +421,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     T-≤ᵏ-implstep B SUB-APP    g q = ηᵀ-step g q
     T-≤ᵏ-implstep B SUB-IF     g q = ηᵀ-step g q
     T-≤ᵏ-implstep B SUB-CASE   g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SUB-CASEℕ  g q = ηᵀ-step g q
     T-≤ᵏ-implstep B SUB        g q = ηᵀ-step g q
     T-≤ᵏ-implstep B (SEQ-STEP r _)    g q = T-≤ᵏ-implstep B r g q
     T-≤ᵏ-implstep B (HANDLE-STEP r _) g q = T-≤ᵏ-implstep B r g q

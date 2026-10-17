@@ -135,6 +135,8 @@ mutual
   V-rename r ⋆           = ⋆
   V-rename r true        = true
   V-rename r false       = false
+  V-rename r zero        = zero
+  V-rename r (succ V)    = succ (V-rename r V)
   V-rename r (⦉ V , W ⦊)  = ⦉ V-rename r V , V-rename r W ⦊
   V-rename r (inl V)     = inl (V-rename r V)
   V-rename r (inr V)     = inr (V-rename r V)
@@ -154,6 +156,8 @@ mutual
   C-rename r (absurd V)       = absurd (V-rename r V)
   C-rename r (if V `then M `else N) =
     if V-rename r V `then C-rename r M `else C-rename r N
+  C-rename r (caseℕ V `zero M `succ N) =
+    caseℕ V-rename r V `zero C-rename r M `succ C-rename (cong-ren r) N
   C-rename r (case+ V `inl M `inr N) =
     case+ V-rename r V `inl C-rename (cong-ren r) M `inr C-rename (cong-ren r) N
   C-rename r (perform op V M) = perform op (V-rename r V) (C-rename (cong-ren r) M)

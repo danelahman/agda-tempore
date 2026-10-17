@@ -82,6 +82,11 @@ mutual
            ------------------------------
            → Γ ⊢V⦂ ⦉ V , W ⦊ == ⦉ V' , W' ⦊
 
+    succ-cong : {V V' : Γ ⊢V⦂ Nat}
+              → Γ ⊢V⦂ V == V'
+              ---------------------------
+              → Γ ⊢V⦂ succ V == succ V'
+
     inl-cong : ∀ {A B}
              → {V V' : Γ ⊢V⦂ A}
              → Γ ⊢V⦂ V == V'
@@ -255,6 +260,16 @@ mutual
             → Γ ⊢C⦂ N == N'
             ----------------------------------------------------------
             → Γ ⊢C⦂ if V `then M `else N == if W `then M' `else N'
+
+    caseℕ-cong : ∀ {C}
+               → {V W : Γ ⊢V⦂ Nat}
+               → {M M' : Γ ⊢C⦂ C}
+               → {N N' : Γ ∷ Nat ⊢C⦂ C}
+               → Γ ⊢V⦂ V == W
+               → Γ ⊢C⦂ M == M'
+               → Γ ∷ Nat ⊢C⦂ N == N'
+               --------------------------------------------------------------
+               → Γ ⊢C⦂ caseℕ V `zero M `succ N == caseℕ W `zero M' `succ N'
 
     case+-cong : ∀ {A B C}
                → {V W : Γ ⊢V⦂ A |+| B}
@@ -475,6 +490,35 @@ mutual
            → Γ ⊢C⦂ if V `then (M [ split-[] ↦ true  ]c)
                         `else (M [ split-[] ↦ false ]c)
                == M [ split-[] ↦ V ]c
+
+    -- beta-equations for natural-number elimination
+
+    caseℕ-beta-zero : ∀ {C}
+                    → (M : Γ ⊢C⦂ C)
+                    → (N : Γ ∷ Nat ⊢C⦂ C)
+                    -------------------------------------------
+                    → Γ ⊢C⦂ caseℕ zero `zero M `succ N == M
+
+    caseℕ-beta-succ : ∀ {C}
+                    → (V : Γ ⊢V⦂ Nat)
+                    → (M : Γ ⊢C⦂ C)
+                    → (N : Γ ∷ Nat ⊢C⦂ C)
+                    -------------------------------------------------------------
+                    → Γ ⊢C⦂ caseℕ succ V `zero M `succ N == N [ split-[] ↦ V ]c
+
+    -- eta-equation for natural-number elimination
+    --
+    -- Commuting conversions are instances of this rule.
+
+    caseℕ-eta : ∀ {C}
+              → (V : Γ ⊢V⦂ Nat)
+              → (M : Γ ∷ Nat ⊢C⦂ C)
+              ------------------------------------------------------------------
+              → Γ ⊢C⦂ caseℕ V
+                        `zero (M [ split-[] ↦ zero ]c)
+                        `succ (C-rename (cong-∷-ren wk-ren) M
+                                [ split-[] ↦ succ (var (λ _ → ≾ᵣ-refl) Hd) ]c)
+                  == M [ split-[] ↦ V ]c
 
     -- beta-equations for sum elimination
 

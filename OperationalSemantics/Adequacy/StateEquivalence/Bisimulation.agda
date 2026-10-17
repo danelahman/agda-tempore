@@ -97,6 +97,23 @@ Sim {A₁ = A₁} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
   , trans (cong₃ (λ v m n → if v `then m `else n) eV eM₀ eN₀)
           (sym (cast-if (sym (toCtx-≐ˢ es))))
 
+-- subsumption at a scrutinised natural number: `Natₛ` is dropped on both
+-- sides.
+
+↝-≐ˢ-sub-caseℕ : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+              → {V : toCtx St ⊢V⦂ Nat} → {M : toCtx St ⊢C⦂ A ‼ ε}
+              → {N : toCtx St ∷ Nat ⊢C⦂ A ‼ ε}
+              → (P' : toCtx St' ⊢C⦂ A ‼ ε)
+              → (caseℕ subV V Natₛ `zero M `succ N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+              → Sim es P' (SUB-CASEℕ {V = V} {M = M} {N = N})
+↝-≐ˢ-sub-caseℕ es P' eM with cast-caseℕ⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | Vn' , M₀' , N₀' , refl , eVn , eM₀ , eN₀
+  with cast-subV⁻ (sym (toCtx-≐ˢ es)) Vn' eVn
+...   | Natₛ , V' , refl , eV =
+    _ , _ , es , SUB-CASEℕ , id-≤≐
+  , trans (cong₃ (λ v m n → caseℕ v `zero m `succ n) eV eM₀ eN₀)
+          (sym (cast-caseℕ (sym (toCtx-≐ˢ es))))
+
 -- subsumption at a scrutinised sum: the coercion moves onto the branches'
 -- binders on both sides, `subCtx` commuting with the cast (`subCtx-cast`).
 
@@ -150,6 +167,34 @@ Sim {A₁ = A₁} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 ... | V' , M₀' , N₀' , refl , eV , eM₀ , eN₀
       with cast-false⁻ (sym (toCtx-≐ˢ es)) V' eV
 ...     | refl = _ , _ , es , IF-FALSE , id-≤≐ , eN₀
+
+-- natural-number elimination: the scrutinee is `zero` on both sides
+-- (`cast-zero⁻`), the reduct the zero branch; or the same successor
+-- (`cast-succ⁻`), the reducts the same substitution into the successor branch.
+
+↝-≐ˢ-caseℕ-zero : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+               → {M : toCtx St ⊢C⦂ A ‼ ε} → {N : toCtx St ∷ Nat ⊢C⦂ A ‼ ε}
+               → (P' : toCtx St' ⊢C⦂ A ‼ ε)
+               → (caseℕ zero `zero M `succ N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+               → Sim es P' (CASEℕ-ZERO {M = M} {N = N})
+↝-≐ˢ-caseℕ-zero es P' eM with cast-caseℕ⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | V' , M₀' , N₀' , refl , eV , eM₀ , eN₀
+      with cast-zero⁻ (sym (toCtx-≐ˢ es)) V' eV
+...     | refl = _ , _ , es , CASEℕ-ZERO , id-≤≐ , eM₀
+
+↝-≐ˢ-caseℕ-succ : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+               → {V : toCtx St ⊢V⦂ Nat}
+               → {M : toCtx St ⊢C⦂ A ‼ ε} → {N : toCtx St ∷ Nat ⊢C⦂ A ‼ ε}
+               → (P' : toCtx St' ⊢C⦂ A ‼ ε)
+               → (caseℕ succ V `zero M `succ N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+               → Sim es P' (CASEℕ-SUCC {V = V} {M = M} {N = N})
+↝-≐ˢ-caseℕ-succ es P' eM with cast-caseℕ⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | U' , M' , N' , refl , eU , eM₀ , eN₀
+      with cast-succ⁻ (sym (toCtx-≐ˢ es)) U' eU
+...     | V' , refl , eV =
+    _ , _ , es , CASEℕ-SUCC , id-≤≐
+  , subst (λ z → _ ≡ z) (cast-app-reduct (sym (toCtx-≐ˢ es)) N' V')
+          (sub-≡ᶜ split-[] eV eN₀)
 
 -- sum elimination: the scrutinee is the same injection on both sides
 -- (`cast-inl⁻`/`cast-inr⁻`), and the reducts are the same substitution into
@@ -576,6 +621,8 @@ cast-handle-op refl V' M' H' N' = refl
 ↝-≐ˢ es eM MATCH       = ↝-≐ˢ-match es _ eM
 ↝-≐ˢ es eM IF-TRUE     = ↝-≐ˢ-if-true es _ eM
 ↝-≐ˢ es eM IF-FALSE    = ↝-≐ˢ-if-false es _ eM
+↝-≐ˢ es eM CASEℕ-ZERO  = ↝-≐ˢ-caseℕ-zero es _ eM
+↝-≐ˢ es eM CASEℕ-SUCC  = ↝-≐ˢ-caseℕ-succ es _ eM
 ↝-≐ˢ es eM CASE-INL    = ↝-≐ˢ-case-inl es _ eM
 ↝-≐ˢ es eM CASE-INR    = ↝-≐ˢ-case-inr es _ eM
 ↝-≐ˢ es eM SEQ-RET     = ↝-≐ˢ-seq-ret es _ eM
@@ -587,6 +634,7 @@ cast-handle-op refl V' M' H' N' = refl
 ↝-≐ˢ es eM UNBOX       = ↝-≐ˢ-unbox es _ eM
 ↝-≐ˢ es eM SUB-APP     = ↝-≐ˢ-sub-app es _ eM
 ↝-≐ˢ es eM SUB-IF      = ↝-≐ˢ-sub-if es _ eM
+↝-≐ˢ es eM SUB-CASEℕ   = ↝-≐ˢ-sub-caseℕ es _ eM
 ↝-≐ˢ es eM SUB-CASE    = ↝-≐ˢ-sub-case es _ eM
 ↝-≐ˢ es eM SUB         = ↝-≐ˢ-sub es _ eM
 

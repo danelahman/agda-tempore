@@ -66,8 +66,9 @@ open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst
 -- rebuild a `Γ`-environment from one for `Γ` with `x` removed, by
 -- computing the missing component with `⟦ W ⟧`.
 
--- `eternal-val-ext` builds only variables, constants, units, booleans, pairs
--- and injections — never a `lam` — so its result is parametric outright.
+-- `eternal-val-ext` builds only variables, constants, units, booleans,
+-- numerals, pairs and injections — never a `lam` — so its result is
+-- parametric outright.
 
 eternal-val-extᴾ : ∀ {Γ A ρ} → (et : Eternal A) → (V : Γ ⊢V⦂ A)
                  → Paramᵛ (eternal-val-ext {ρ = ρ} et V)
@@ -76,6 +77,8 @@ eternal-val-extᴾ _  (const b)                  = tt
 eternal-val-extᴾ _  ⋆                          = tt
 eternal-val-extᴾ _  true                       = tt
 eternal-val-extᴾ _  false                      = tt
+eternal-val-extᴾ _  zero                       = tt
+eternal-val-extᴾ et (succ V)                   = eternal-val-extᴾ et V
 eternal-val-extᴾ (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊    =
   eternal-val-extᴾ et₁ V₁ , eternal-val-extᴾ et₂ V₂
 eternal-val-extᴾ (et₁ |+|ₑ _) (inl V)          = eternal-val-extᴾ et₁ V
@@ -144,6 +147,19 @@ eternal-val-ext-nat Boolₑ false _ =
     (≈ᵐ-trans (∘ᵐ-congˡ falseᵐ-eternal)
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
               (∘ᵐ-congʳ terminalᵐ-unique)))))
+eternal-val-ext-nat Natₑ zero _ =
+  ≈ᵐ-sym
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ zeroᵐ-eternal)
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+              (∘ᵐ-congʳ terminalᵐ-unique)))))
+eternal-val-ext-nat Natₑ (succ V) pV =
+  ≈ᵐ-trans (∘ᵐ-congʳ (eternal-val-ext-nat Natₑ V pV))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym succᵐ-eternal))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))))))
 eternal-val-ext-nat (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ (p₁ , p₂) =
   ≈ᵐ-trans (⟨ eternal-val-ext-nat et₁ V₁ p₁ , eternal-val-ext-nat et₂ V₂ p₂ ⟩ᵐ-cong)
   (≈ᵐ-trans (⟨ ∘ᵐ-congʳ (⟨⟩-congᶠ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)))

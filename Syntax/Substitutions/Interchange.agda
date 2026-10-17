@@ -59,6 +59,9 @@ eternal-val-ext-ren et             r (const c)   = refl
 eternal-val-ext-ren et             r ⋆           = refl
 eternal-val-ext-ren et             r true        = refl
 eternal-val-ext-ren et             r false       = refl
+eternal-val-ext-ren et             r zero        = refl
+eternal-val-ext-ren et             r (succ V)    =
+  cong succ (eternal-val-ext-ren et r V)
 eternal-val-ext-ren (et₁ |×|ₑ et₂) r ⦉ V₁ , V₂ ⦊  =
   cong₂ ⦉_,_⦊ (eternal-val-ext-ren et₁ r V₁) (eternal-val-ext-ren et₂ r V₂)
 eternal-val-ext-ren (et₁ |+|ₑ _)   r (inl V)     =
@@ -117,6 +120,8 @@ mutual
   V-sub₀-⌜⌝ r ⋆         = refl
   V-sub₀-⌜⌝ r true      = refl
   V-sub₀-⌜⌝ r false     = refl
+  V-sub₀-⌜⌝ r zero      = refl
+  V-sub₀-⌜⌝ r (succ V)  = cong succ (V-sub₀-⌜⌝ r V)
   V-sub₀-⌜⌝ r ⦉ V , W ⦊  = cong₂ ⦉_,_⦊ (V-sub₀-⌜⌝ r V) (V-sub₀-⌜⌝ r W)
   V-sub₀-⌜⌝ r (inl V)   = cong inl (V-sub₀-⌜⌝ r V)
   V-sub₀-⌜⌝ r (inr V)   = cong inr (V-sub₀-⌜⌝ r V)
@@ -142,6 +147,10 @@ mutual
   C-sub₀-⌜⌝ r (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-sub₀-⌜⌝ r V) (C-sub₀-⌜⌝ r M) (C-sub₀-⌜⌝ r N)
+  C-sub₀-⌜⌝ r (caseℕ V `zero M `succ N) =
+    cong₃ caseℕ_`zero_`succ_ (V-sub₀-⌜⌝ r V) (C-sub₀-⌜⌝ r M)
+      (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) N)
+             (C-sub₀-⌜⌝ (cong-ren r) N))
   C-sub₀-⌜⌝ r (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_ (V-sub₀-⌜⌝ r V)
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
@@ -276,6 +285,8 @@ mutual
   V-sub₀-ren h ⋆         = refl
   V-sub₀-ren h true      = refl
   V-sub₀-ren h false     = refl
+  V-sub₀-ren h zero      = refl
+  V-sub₀-ren h (succ V)  = cong succ (V-sub₀-ren h V)
   V-sub₀-ren h ⦉ V , W ⦊  = cong₂ ⦉_,_⦊ (V-sub₀-ren h V) (V-sub₀-ren h W)
   V-sub₀-ren h (inl V)   = cong inl (V-sub₀-ren h V)
   V-sub₀-ren h (inr V)   = cong inr (V-sub₀-ren h V)
@@ -297,6 +308,9 @@ mutual
   C-sub₀-ren h (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-sub₀-ren h V) (C-sub₀-ren h M) (C-sub₀-ren h N)
+  C-sub₀-ren h (caseℕ V `zero M `succ N) =
+    cong₃ caseℕ_`zero_`succ_ (V-sub₀-ren h V) (C-sub₀-ren h M)
+      (C-sub₀-ren (⋈-cong ([] ∷ _) h) N)
   C-sub₀-ren h (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_ (V-sub₀-ren h V)
       (C-sub₀-ren (⋈-cong ([] ∷ _) h) M) (C-sub₀-ren (⋈-cong ([] ∷ _) h) N)

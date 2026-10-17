@@ -103,6 +103,7 @@ mutual
   -- congruences
   soundᵛ (⦉⦊-cong p q)        (mp , mq)    (pV , pW) (pV' , pW') =
     ⟨ soundᵛ p mp pV pV' , soundᵛ q mq pW pW' ⟩ᵐ-cong
+  soundᵛ (succ-cong p)        mp           pV pV' = ∘ᵐ-congʳ (soundᵛ p mp pV pV')
   soundᵛ (inl-cong p)         mp           pV pV' = ∘ᵐ-congʳ (soundᵛ p mp pV pV')
   soundᵛ (inr-cong p)         mp           pV pV' = ∘ᵐ-congʳ (soundᵛ p mp pV pV')
   soundᵛ (lam-cong p)         mp           pM pM' = curryᵐ-cong (soundᶜ p mp pM pM')
@@ -151,6 +152,9 @@ mutual
   soundᶜ (if-cong p q r)      (mp , mq , mr)
          (pV , pM , pN) (pV' , pM' , pN') =
     ifᵐ-cong (soundᵛ p mp pV pV') (soundᶜ q mq pM pM') (soundᶜ r mr pN pN')
+  soundᶜ (caseℕ-cong p q r)   (mp , mq , mr)
+         (pV , pM , pN) (pV' , pM' , pN') =
+    caseℕᵐ-cong (soundᵛ p mp pV pV') (soundᶜ q mq pM pM') (soundᶜ r mr pN pN')
   soundᶜ (case+-cong p q r)   (mp , mq , mr)
          (pV , pM , pN) (pV' , pM' , pN') =
     caseᵐ-cong (soundᵛ p mp pV pV') (soundᶜ q mq pM pM') (soundᶜ r mr pN pN')
@@ -199,6 +203,9 @@ mutual
   soundᶜ (if-beta-true M N)   _  = sound-if-beta-true M N
   soundᶜ (if-beta-false M N)  _  = sound-if-beta-false M N
   soundᶜ (if-eta V M)         m  = sound-if-eta V M m
+  soundᶜ (caseℕ-beta-zero M N) _ = sound-caseℕ-beta-zero M N
+  soundᶜ (caseℕ-beta-succ V M N) _ = sound-caseℕ-beta-succ V M N
+  soundᶜ (caseℕ-eta V M)      m  = sound-caseℕ-eta V M m
   soundᶜ (case+-beta-inl V M N) _ = sound-case+-beta-inl V M N
   soundᶜ (case+-beta-inr V M N) _ = sound-case+-beta-inr V M N
   soundᶜ (case+-eta V M)      m  = sound-case+-eta V M m

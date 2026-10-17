@@ -123,6 +123,7 @@ shapeᵛ : VType → Shape
 shapeᵛ (Base b)      = ⋆ˢ
 shapeᵛ Unit          = ⋆ˢ
 shapeᵛ Bool          = ⋆ˢ
+shapeᵛ Nat           = ⋆ˢ
 shapeᵛ (A |×| B)     = shapeᵛ A ×ˢ shapeᵛ B
 shapeᵛ (A |+| B)     = shapeᵛ A +ˢ shapeᵛ B
 shapeᵛ Empty         = ⋆ˢ
@@ -154,6 +155,7 @@ shapeᵛ ([ _ ] A)     = □ˢ (shapeᵛ A)
 <:ᵛ-shape (Baseₛ _)       = refl
 <:ᵛ-shape Unitₛ           = refl
 <:ᵛ-shape Boolₛ           = refl
+<:ᵛ-shape Natₛ            = refl
 <:ᵛ-shape (p |×|ₛ q)      = cong₂ _×ˢ_ (<:ᵛ-shape p) (<:ᵛ-shape q)
 <:ᵛ-shape (p |+|ₛ q)      = cong₂ _+ˢ_ (<:ᵛ-shape p) (<:ᵛ-shape q)
 <:ᵛ-shape Emptyₛ          = refl
@@ -181,6 +183,7 @@ VRedᵍˢ (t ×ˢ t') {A |×| B}     e  St V =
 VRedᵍˢ (t ×ˢ t') {Base b}      () St V
 VRedᵍˢ (t ×ˢ t') {Unit}        () St V
 VRedᵍˢ (t ×ˢ t') {Bool}        () St V
+VRedᵍˢ (t ×ˢ t') {Nat}         () St V
 VRedᵍˢ (t ×ˢ t') {A |+| B}     () St V
 
 VRedᵍˢ (t +ˢ t') {A |+| B}     e  St V =
@@ -188,6 +191,7 @@ VRedᵍˢ (t +ˢ t') {A |+| B}     e  St V =
 VRedᵍˢ (t +ˢ t') {Base b}      () St V
 VRedᵍˢ (t +ˢ t') {Unit}        () St V
 VRedᵍˢ (t +ˢ t') {Bool}        () St V
+VRedᵍˢ (t +ˢ t') {Nat}         () St V
 VRedᵍˢ (t +ˢ t') {A |×| B}     () St V
 VRedᵍˢ (t +ˢ t') {Empty}       () St V
 VRedᵍˢ (t +ˢ t') {A ⇒ (B ‼ ε)} () St V
@@ -202,6 +206,7 @@ VRedᵍˢ (□ˢ t) {[ ρ ] A}     e  St V =
 VRedᵍˢ (□ˢ t) {Base b}      () St V
 VRedᵍˢ (□ˢ t) {Unit}        () St V
 VRedᵍˢ (□ˢ t) {Bool}        () St V
+VRedᵍˢ (□ˢ t) {Nat}         () St V
 VRedᵍˢ (□ˢ t) {A |+| B}     () St V
 VRedᵍˢ (□ˢ t) {A |×| B}     () St V
 VRedᵍˢ (□ˢ t) {Empty}       () St V
@@ -269,6 +274,7 @@ VRedˢ (t ×ˢ t') {A |×| B}     e  St V =
 VRedˢ (t ×ˢ t') {Base b}      () St V
 VRedˢ (t ×ˢ t') {Unit}        () St V
 VRedˢ (t ×ˢ t') {Bool}        () St V
+VRedˢ (t ×ˢ t') {Nat}         () St V
 VRedˢ (t ×ˢ t') {A |+| B}     () St V
 
 VRedˢ (t +ˢ t') {A |+| B}     e  St V =
@@ -276,6 +282,7 @@ VRedˢ (t +ˢ t') {A |+| B}     e  St V =
 VRedˢ (t +ˢ t') {Base b}      () St V
 VRedˢ (t +ˢ t') {Unit}        () St V
 VRedˢ (t +ˢ t') {Bool}        () St V
+VRedˢ (t +ˢ t') {Nat}         () St V
 VRedˢ (t +ˢ t') {A |×| B}     () St V
 VRedˢ (t +ˢ t') {Empty}       () St V
 VRedˢ (t +ˢ t') {A ⇒ (B ‼ ε)} () St V
@@ -292,6 +299,7 @@ VRedˢ (t →ˢ t') {A ⇒ (B ‼ ε)} e  St V =
 VRedˢ (t →ˢ t') {Base b}      () St V
 VRedˢ (t →ˢ t') {Unit}        () St V
 VRedˢ (t →ˢ t') {Bool}        () St V
+VRedˢ (t →ˢ t') {Nat}         () St V
 VRedˢ (t →ˢ t') {A |+| B}     () St V
 VRedˢ (t →ˢ t') {A |×| B}     () St V
 VRedˢ (t →ˢ t') {Empty}       () St V
@@ -303,6 +311,7 @@ VRedˢ (□ˢ t) {[ ρ ] A}     e  St V =
 VRedˢ (□ˢ t) {Base b}      () St V
 VRedˢ (□ˢ t) {Unit}        () St V
 VRedˢ (□ˢ t) {Bool}        () St V
+VRedˢ (□ˢ t) {Nat}         () St V
 VRedˢ (□ˢ t) {A |+| B}     () St V
 VRedˢ (□ˢ t) {A |×| B}     () St V
 VRedˢ (□ˢ t) {Empty}       () St V
@@ -397,6 +406,7 @@ VRedˢ-sub : ∀ {s A A'} {e : shapeᵛ A ≡ s} {e' : shapeᵛ A' ≡ s} {St : 
 VRedˢ-sub {e' = refl} (Baseₛ refl) V pV         = tt
 VRedˢ-sub {e' = refl} Unitₛ        V pV         = tt
 VRedˢ-sub {e' = refl} Boolₛ        V pV         = tt
+VRedˢ-sub {e' = refl} Natₛ         V pV         = tt
 VRedˢ-sub {e' = refl} Emptyₛ       V pV         = tt
 VRedˢ-sub {e' = refl} (p |×|ₛ p')  V (pV , pV') =
   VRedˢ-sub p (fstᵛ V) pV , VRedˢ-sub p' (sndᵛ V) pV'
@@ -496,14 +506,33 @@ case+-run {St = St} (subV V (p |+|ₛ q)) M N =
     go (inj₂ W) rs =
       SUB-CASE ◅ subst (λ z → ⟨ St , _ ⟩ ↝* ⟨ St , z ⟩) (subCtx-sub q N W) rs
 
--- An eternal type is built from base, unit, empty, products and sums, so
--- `VRed` asks nothing of a value of eternal type beyond its injections.
+-- A natural number over a state context runs to the zero branch or to the
+-- successor branch at a predecessor: a variable is ruled out by
+-- `Nat-not-in-toCtx`, and a subsumption is dropped by `SUB-CASEℕ`.
+
+nat-canonical : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Nat)
+              → (∀ {A ε} {M : toCtx St ⊢C⦂ A ‼ ε} {N : toCtx St ∷ Nat ⊢C⦂ A ‼ ε}
+                   → ⟨ St , caseℕ V `zero M `succ N ⟩ ↝* ⟨ St , M ⟩)
+              ⊎ Σ[ W ∈ toCtx St ⊢V⦂ Nat ]
+                  (∀ {A ε} {M : toCtx St ⊢C⦂ A ‼ ε} {N : toCtx St ∷ Nat ⊢C⦂ A ‼ ε}
+                     → ⟨ St , caseℕ V `zero M `succ N ⟩ ↝* ⟨ St , N [ split-[] ↦ W ]c ⟩)
+nat-canonical (var f x)     = ⊥-elim (Nat-not-in-toCtx x)
+nat-canonical zero          = inj₁ (CASEℕ-ZERO ◅ ε*)
+nat-canonical (succ V)      = inj₂ (V , CASEℕ-SUCC ◅ ε*)
+nat-canonical (subV V Natₛ) with nat-canonical V
+... | inj₁ rs       = inj₁ (SUB-CASEℕ ◅ rs)
+... | inj₂ (W , rs) = inj₂ (W , SUB-CASEℕ ◅ rs)
+
+-- An eternal type is built from base, unit, boolean, natural-number and empty
+-- types, products and sums, so `VRed` asks nothing of a value of eternal type
+-- beyond its injections.
 
 VRed-eternal : ∀ {A} {St : 𝕊 []} → Eternal A → (V : toCtx St ⊢V⦂ A) → VRed A St V
 
 VRed-eternal (Baseₑ _)        V = tt
 VRed-eternal Unitₑ            V = tt
 VRed-eternal Boolₑ            V = tt
+VRed-eternal Natₑ             V = tt
 VRed-eternal Emptyₑ           V = tt
 VRed-eternal (et₁ |×|ₑ et₂)   V =
   VRed-eternal et₁ (fstᵛ V) , VRed-eternal et₂ (sndᵛ V)
@@ -557,6 +586,7 @@ VRedˢ-reach {t ×ˢ t'} {A |×| B}     q e  V (p₁ , p₂) =
 VRedˢ-reach {t ×ˢ t'} {Base b}      q () V p
 VRedˢ-reach {t ×ˢ t'} {Unit}        q () V p
 VRedˢ-reach {t ×ˢ t'} {Bool}        q () V p
+VRedˢ-reach {t ×ˢ t'} {Nat}         q () V p
 VRedˢ-reach {t ×ˢ t'} {A |+| B}     q () V p
 VRedˢ-reach {t ×ˢ t'} {Empty}       q () V p
 VRedˢ-reach {t ×ˢ t'} {A ⇒ (B ‼ ε)} q () V p
@@ -574,6 +604,7 @@ VRedˢ-reach {t +ˢ t'} {A |+| B}     q e  V p =
 VRedˢ-reach {t +ˢ t'} {Base b}      q () V p
 VRedˢ-reach {t +ˢ t'} {Unit}        q () V p
 VRedˢ-reach {t +ˢ t'} {Bool}        q () V p
+VRedˢ-reach {t +ˢ t'} {Nat}         q () V p
 VRedˢ-reach {t +ˢ t'} {A |×| B}     q () V p
 VRedˢ-reach {t +ˢ t'} {Empty}       q () V p
 VRedˢ-reach {t +ˢ t'} {A ⇒ (B ‼ ε)} q () V p
@@ -587,6 +618,7 @@ VRedˢ-reach {t →ˢ t'} {A ⇒ (B ‼ ε)} q₀ e  V f = λ q' W pW →
 VRedˢ-reach {t →ˢ t'} {Base b}      q () V f
 VRedˢ-reach {t →ˢ t'} {Unit}        q () V f
 VRedˢ-reach {t →ˢ t'} {Bool}        q () V f
+VRedˢ-reach {t →ˢ t'} {Nat}         q () V f
 VRedˢ-reach {t →ˢ t'} {A |+| B}     q () V f
 VRedˢ-reach {t →ˢ t'} {A |×| B}     q () V f
 VRedˢ-reach {t →ˢ t'} {Empty}       q () V f
@@ -596,6 +628,7 @@ VRedˢ-reach {□ˢ t} {[ ρ ] A}     q e  V f = reach-read-val q V _ _ f
 VRedˢ-reach {□ˢ t} {Base b}      q () V f
 VRedˢ-reach {□ˢ t} {Unit}        q () V f
 VRedˢ-reach {□ˢ t} {Bool}        q () V f
+VRedˢ-reach {□ˢ t} {Nat}         q () V f
 VRedˢ-reach {□ˢ t} {A |+| B}     q () V f
 VRedˢ-reach {□ˢ t} {A |×| B}     q () V f
 VRedˢ-reach {□ˢ t} {Empty}       q () V f
@@ -628,6 +661,7 @@ VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {A |×| B}     e  V (p₁ , p₂) =
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Base b}      () V p
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Unit}        () V p
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Bool}        () V p
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Nat}         () V p
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {A |+| B}     () V p
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Empty}       () V p
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {A ⇒ (B ‼ ε)} () V p
@@ -638,6 +672,7 @@ VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {[ ρ ] A}     e  V p =
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Base b}      () V p
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Unit}        () V p
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Bool}        () V p
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Nat}         () V p
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {A |+| B}     () V p
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {A |×| B}     () V p
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Empty}       () V p
@@ -660,6 +695,7 @@ VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {A |×| B}     e  V (p₁ , p₂) =
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Base b}      () V p
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Unit}        () V p
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Bool}        () V p
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Nat}         () V p
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {A |+| B}     () V p
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Empty}       () V p
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {A ⇒ (B ‼ ε)} () V p
@@ -670,6 +706,7 @@ VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {[ ρ ] A}     e  V p =
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Base b}      () V p
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Unit}        () V p
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Bool}        () V p
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Nat}         () V p
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {A |+| B}     () V p
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {A |×| B}     () V p
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Empty}       () V p
@@ -739,6 +776,7 @@ SRed-var : ∀ {A ρ} {St : 𝕊 []} → SRed St
 SRed-var {Base b}    pSt x f = tt
 SRed-var {Unit}      pSt x f = tt
 SRed-var {Bool}      pSt x f = tt
+SRed-var {Nat}       pSt x f = tt
 SRed-var {Empty}     pSt x f = tt
 SRed-var {A₁ |×| A₂} pSt x f = ⊥-elim (⦉⦊-not-in-toCtx x)
 SRed-var {A₁ |+| A₂} pSt x f = ⊥-elim (|+|-not-in-toCtx x)

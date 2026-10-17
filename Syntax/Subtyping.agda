@@ -38,6 +38,7 @@ data _<:ᵛ_ where
   Baseₛ  : ∀ {b b'} → b ≡ b' → Base b <:ᵛ Base b'
   Unitₛ  : Unit <:ᵛ Unit
   Boolₛ  : Bool <:ᵛ Bool
+  Natₛ   : Nat <:ᵛ Nat
   _|×|ₛ_ : ∀ {A A' B B'} → A <:ᵛ A' → B <:ᵛ B' → (A |×| B) <:ᵛ (A' |×| B')
   _|+|ₛ_ : ∀ {A A' B B'} → A <:ᵛ A' → B <:ᵛ B' → (A |+| B) <:ᵛ (A' |+| B')
   Emptyₛ : Empty <:ᵛ Empty
@@ -64,6 +65,7 @@ data _<:ᶜ_ where
 <:ᵛ-refl (Base b)  = Baseₛ refl
 <:ᵛ-refl Unit      = Unitₛ
 <:ᵛ-refl Bool      = Boolₛ
+<:ᵛ-refl Nat       = Natₛ
 <:ᵛ-refl (A |×| B) = <:ᵛ-refl A |×|ₛ <:ᵛ-refl B
 <:ᵛ-refl (A |+| B) = <:ᵛ-refl A |+|ₛ <:ᵛ-refl B
 <:ᵛ-refl Empty     = Emptyₛ
@@ -80,6 +82,7 @@ data _<:ᶜ_ where
 <:ᵛ-trans (Baseₛ p)  (Baseₛ q)  = Baseₛ (trans p q)
 <:ᵛ-trans Unitₛ      Unitₛ      = Unitₛ
 <:ᵛ-trans Boolₛ      Boolₛ      = Boolₛ
+<:ᵛ-trans Natₛ       Natₛ       = Natₛ
 <:ᵛ-trans (p |×|ₛ r) (q |×|ₛ s) = <:ᵛ-trans p q |×|ₛ <:ᵛ-trans r s
 <:ᵛ-trans (p |+|ₛ r) (q |+|ₛ s) = <:ᵛ-trans p q |+|ₛ <:ᵛ-trans r s
 <:ᵛ-trans Emptyₛ     Emptyₛ     = Emptyₛ
@@ -98,6 +101,7 @@ data _<:ᶜ_ where
 <:ᵛ-antisym (Baseₛ p)  (Baseₛ _)  = cong Base p
 <:ᵛ-antisym Unitₛ      Unitₛ      = refl
 <:ᵛ-antisym Boolₛ      Boolₛ      = refl
+<:ᵛ-antisym Natₛ       Natₛ       = refl
 <:ᵛ-antisym (p |×|ₛ r) (q |×|ₛ s) =
   cong₂ _|×|_ (<:ᵛ-antisym p q) (<:ᵛ-antisym r s)
 <:ᵛ-antisym (p |+|ₛ r) (q |+|ₛ s) =
@@ -119,6 +123,7 @@ data _<:ᶜ_ where
 <:ᵛ-irrelevant (Baseₛ p)  (Baseₛ q)  = cong Baseₛ uip
 <:ᵛ-irrelevant Unitₛ      Unitₛ      = refl
 <:ᵛ-irrelevant Boolₛ      Boolₛ      = refl
+<:ᵛ-irrelevant Natₛ       Natₛ       = refl
 <:ᵛ-irrelevant (p |×|ₛ r) (q |×|ₛ s) =
   cong₂ _|×|ₛ_ (<:ᵛ-irrelevant p q) (<:ᵛ-irrelevant r s)
 <:ᵛ-irrelevant (p |+|ₛ r) (q |+|ₛ s) =
@@ -140,6 +145,7 @@ data _<:ᶜ_ where
 <:ᵛ-eternalˡ (Baseₛ refl) et          = et
 <:ᵛ-eternalˡ Unitₛ        et          = et
 <:ᵛ-eternalˡ Boolₛ        et          = et
+<:ᵛ-eternalˡ Natₛ         et          = et
 <:ᵛ-eternalˡ (p |×|ₛ r)   (et |×|ₑ e) = <:ᵛ-eternalˡ p et |×|ₑ <:ᵛ-eternalˡ r e
 <:ᵛ-eternalˡ (p |+|ₛ r)   (et |+|ₑ e) = <:ᵛ-eternalˡ p et |+|ₑ <:ᵛ-eternalˡ r e
 <:ᵛ-eternalˡ Emptyₛ       et          = et
@@ -148,6 +154,7 @@ data _<:ᶜ_ where
 <:ᵛ-eternalʳ (Baseₛ refl) et          = et
 <:ᵛ-eternalʳ Unitₛ        et          = et
 <:ᵛ-eternalʳ Boolₛ        et          = et
+<:ᵛ-eternalʳ Natₛ         et          = et
 <:ᵛ-eternalʳ (p |×|ₛ r)   (et |×|ₑ e) = <:ᵛ-eternalʳ p et |×|ₑ <:ᵛ-eternalʳ r e
 <:ᵛ-eternalʳ (p |+|ₛ r)   (et |+|ₑ e) = <:ᵛ-eternalʳ p et |+|ₑ <:ᵛ-eternalʳ r e
 <:ᵛ-eternalʳ Emptyₛ       et          = et
@@ -186,6 +193,7 @@ data _⊔ᵛ_≡_ where
     Baseⱼ  : ∀ {b} → Base b ⊔ᵛ Base b ≡ Base b
     Unitⱼ  : Unit ⊔ᵛ Unit ≡ Unit
     Boolⱼ  : Bool ⊔ᵛ Bool ≡ Bool
+    Natⱼ   : Nat ⊔ᵛ Nat ≡ Nat
     |×|ⱼ   : ∀ {A₁ A₂ A B₁ B₂ B}
            → {{A₁ ⊔ᵛ A₂ ≡ A}}
            → {{B₁ ⊔ᵛ B₂ ≡ B}}
@@ -216,6 +224,7 @@ data _⊔ᶜ_≡_ where
 ⊔ᵛ-ubˡ Baseⱼ              = Baseₛ refl
 ⊔ᵛ-ubˡ Unitⱼ              = Unitₛ
 ⊔ᵛ-ubˡ Boolⱼ              = Boolₛ
+⊔ᵛ-ubˡ Natⱼ               = Natₛ
 ⊔ᵛ-ubˡ Emptyⱼ             = Emptyₛ
 ⊔ᵛ-ubˡ (|×|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubˡ j |×|ₛ ⊔ᵛ-ubˡ k
 ⊔ᵛ-ubˡ (|+|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubˡ j |+|ₛ ⊔ᵛ-ubˡ k
@@ -230,6 +239,7 @@ data _⊔ᶜ_≡_ where
 ⊔ᵛ-ubʳ Baseⱼ              = Baseₛ refl
 ⊔ᵛ-ubʳ Unitⱼ              = Unitₛ
 ⊔ᵛ-ubʳ Boolⱼ              = Boolₛ
+⊔ᵛ-ubʳ Natⱼ               = Natₛ
 ⊔ᵛ-ubʳ Emptyⱼ             = Emptyₛ
 ⊔ᵛ-ubʳ (|×|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubʳ j |×|ₛ ⊔ᵛ-ubʳ k
 ⊔ᵛ-ubʳ (|+|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubʳ j |+|ₛ ⊔ᵛ-ubʳ k
@@ -251,6 +261,7 @@ data _⊔ᶜ_≡_ where
 ⊔ᵛ-lub Baseⱼ  p          _          = p
 ⊔ᵛ-lub Unitⱼ  p          _          = p
 ⊔ᵛ-lub Boolⱼ  p          _          = p
+⊔ᵛ-lub Natⱼ   p          _          = p
 ⊔ᵛ-lub Emptyⱼ p          _          = p
 ⊔ᵛ-lub (|×|ⱼ {{j}} {{k}}) (p |×|ₛ r) (q |×|ₛ s) =
   ⊔ᵛ-lub j p q |×|ₛ ⊔ᵛ-lub k r s
@@ -269,6 +280,7 @@ data _⊔ᶜ_≡_ where
 ⊔ᵛ-det Baseⱼ  Baseⱼ  = refl
 ⊔ᵛ-det Unitⱼ  Unitⱼ  = refl
 ⊔ᵛ-det Boolⱼ  Boolⱼ  = refl
+⊔ᵛ-det Natⱼ   Natⱼ   = refl
 ⊔ᵛ-det Emptyⱼ Emptyⱼ = refl
 ⊔ᵛ-det (|×|ⱼ {{j}} {{k}}) (|×|ⱼ {{j'}} {{k'}}) =
   cong₂ _|×|_ (⊔ᵛ-det j j') (⊔ᵛ-det k k')
@@ -292,6 +304,7 @@ data _⊔ᶜ_≡_ where
 ⊔ᵛ-idem (Base b)  = Baseⱼ
 ⊔ᵛ-idem Unit      = Unitⱼ
 ⊔ᵛ-idem Bool      = Boolⱼ
+⊔ᵛ-idem Nat       = Natⱼ
 ⊔ᵛ-idem (A |×| B) = |×|ⱼ {{⊔ᵛ-idem A}} {{⊔ᵛ-idem B}}
 ⊔ᵛ-idem (A |+| B) = |+|ⱼ {{⊔ᵛ-idem A}} {{⊔ᵛ-idem B}}
 ⊔ᵛ-idem Empty     = Emptyⱼ

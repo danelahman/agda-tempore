@@ -132,6 +132,8 @@ mutual
   Paramᵛ ⋆          = ⊤
   Paramᵛ true       = ⊤
   Paramᵛ false      = ⊤
+  Paramᵛ zero       = ⊤
+  Paramᵛ (succ V)   = Paramᵛ V
   Paramᵛ ⦉ V , W ⦊  = Paramᵛ V × Paramᵛ W
   Paramᵛ (inl V)    = Paramᵛ V
   Paramᵛ (inr V)    = Paramᵛ V
@@ -145,6 +147,7 @@ mutual
   Paramᶜ (match V `in M)  = Paramᵛ V × Paramᶜ M
   Paramᶜ (absurd V)       = Paramᵛ V
   Paramᶜ (if V `then M `else N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
+  Paramᶜ (caseℕ V `zero M `succ N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (case+ V `inl M `inr N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (perform op V M) = Paramᵛ V × Paramᶜ M
   Paramᶜ (delay τ M)      = Paramᶜ M
@@ -180,6 +183,8 @@ mutual
   ⟦ ⋆        ⟧ᵛᵗ _ = terminalᵐ
   ⟦ true     ⟧ᵛᵗ _ = trueᵐ ∘ᵐ terminalᵐ
   ⟦ false    ⟧ᵛᵗ _ = falseᵐ ∘ᵐ terminalᵐ
+  ⟦ zero     ⟧ᵛᵗ _ = zeroᵐ ∘ᵐ terminalᵐ
+  ⟦ succ V   ⟧ᵛᵗ pV = succᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
   ⟦ ⦉ V , W ⦊ ⟧ᵛᵗ (pV , pW) = ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
   ⟦ inl V    ⟧ᵛᵗ pV = inlᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
   ⟦ inr V    ⟧ᵛᵗ pV = inrᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
@@ -196,6 +201,8 @@ mutual
   ⟦ absurd V ⟧ᶜᵗ pV = initialᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
   ⟦ if V `then M `else N ⟧ᶜᵗ (pV , pM , pN) =
     ifᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+  ⟦ caseℕ V `zero M `succ N ⟧ᶜᵗ (pV , pM , pN) =
+    caseℕᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ⟦ case+ V `inl M `inr N ⟧ᶜᵗ (pV , pM , pN) =
     caseᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ⟦_⟧ᶜᵗ {Γ} (perform {A} {ε} op V M) (pV , pM) =

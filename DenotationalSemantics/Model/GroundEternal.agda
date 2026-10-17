@@ -6,17 +6,17 @@
 -- `Eternalᵒ` structure (in particular the extraction `extᵉ`).           --
 --                                                                    --
 -- The structure is supplied for each *former* of `Syntax.Types.Eternal`: --
--- the eternal base types, and closure under `Unit`, `Bool`, `Empty`,     --
--- products and sums. `Interpretation.Variables` then assembles an        --
--- `Eternalᵒ` for every eternal type by recursion on the eternality       --
+-- the eternal base types, and closure under `Unit`, `Bool`, `Nat`,      --
+-- `Empty`, products and sums. `Interpretation.Variables` then assembles  --
+-- an `Eternalᵒ` for every eternal type by recursion on the eternality    --
 -- witness, so all the eternal *laws* (grade-uniformity, the unit grade,  --
 -- the `⟨_⟩`-algebra law) come from `Eternalᵒ` rather than being          --
 -- re-derived per former.                                                 --
 --                                                                    --
 -- In the presheaf model (`Example.PSh.Modality.Eternal`) the constant    --
 -- presheaves `Kᵖ` carry this structure (`Kᵖ-eternalᵒ`), and the formers  --
--- are covered by `𝟙ᵖ-eternalᵒ`, `𝔹ᵖ-eternalᵒ`, `𝟘ᵖ-eternalᵒ`,            --
--- `×ᵖ-eternalᵒ` and `+ᵖ-eternalᵒ`.                                       --
+-- are covered by `𝟙ᵖ-eternalᵒ`, `𝔹ᵖ-eternalᵒ`, `ℕᵖ-eternalᵒ`,          --
+-- `𝟘ᵖ-eternalᵒ`, `×ᵖ-eternalᵒ` and `+ᵖ-eternalᵒ`.                       --
 ------------------------------------------------------------------------
 
 open import Syntax.BaseTypes
@@ -58,6 +58,7 @@ record GroundEternal : Set₁ where
     𝟙-eternalᵒ : Eternalᵒ 𝟙ᵐ
     𝟘-eternalᵒ : Eternalᵒ 𝟘ᵐ
     𝔹-eternalᵒ : Eternalᵒ 𝔹ᵐ
+    ℕ-eternalᵒ : Eternalᵒ ℕᵐ
     ×-eternalᵒ : ∀ {A B} → Eternalᵒ A → Eternalᵒ B → Eternalᵒ (A ×ᵐ B)
 
     -- The product's eternal extraction acts componentwise (the closure is
@@ -92,3 +93,12 @@ record GroundEternal : Set₁ where
     falseᵐ-eternal : ∀ {ρ}
                    → Eternalᵒ.extᵉ 𝔹-eternalᵒ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ falseᵐ
                    ≈ᵐ falseᵐ ∘ᵐ terminalᵐ
+
+    -- Zero is a global element in the same sense, and the eternal
+    -- extraction commutes with the successor.
+    zeroᵐ-eternal : ∀ {ρ}
+                  → Eternalᵒ.extᵉ ℕ-eternalᵒ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ zeroᵐ
+                  ≈ᵐ zeroᵐ ∘ᵐ terminalᵐ
+    succᵐ-eternal : ∀ {ρ}
+                  → Eternalᵒ.extᵉ ℕ-eternalᵒ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ succᵐ
+                  ≈ᵐ succᵐ ∘ᵐ Eternalᵒ.extᵉ ℕ-eternalᵒ {ρ}

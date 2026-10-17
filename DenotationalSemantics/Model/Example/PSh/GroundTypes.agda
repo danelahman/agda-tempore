@@ -39,7 +39,7 @@ open import DenotationalSemantics.Model.Example.PSh.Modality.Past Grades Wld
 open import DenotationalSemantics.Model.Example.PSh.Modality.Adjunction Grades Wld
   using (PShAdj)
 open import DenotationalSemantics.Model.Example.PSh.Modality.Eternal Grades Wld
-  using (Kᵖ; Kᵖ-const; Kᵖ-eternalᵒ; 𝟙ᵖ-eternalᵒ; 𝟘ᵖ-eternalᵒ; 𝔹ᵖ-eternalᵒ; ×ᵖ-eternalᵒ; ×ᵖ-eternalᵒ-extᵉ
+  using (Kᵖ; Kᵖ-const; Kᵖ-eternalᵒ; 𝟙ᵖ-eternalᵒ; 𝟘ᵖ-eternalᵒ; 𝔹ᵖ-eternalᵒ; ℕᵖ-eternalᵒ; ×ᵖ-eternalᵒ; ×ᵖ-eternalᵒ-extᵉ
         ; +ᵖ-eternalᵒ)
 
 open import DenotationalSemantics.Model.Category
@@ -110,6 +110,7 @@ module PShGround (BT : PShBaseTypes) where
     ; 𝟙-eternalᵒ    = 𝟙ᵖ-eternalᵒ
     ; 𝟘-eternalᵒ    = 𝟘ᵖ-eternalᵒ
     ; 𝔹-eternalᵒ    = 𝔹ᵖ-eternalᵒ
+    ; ℕ-eternalᵒ    = ℕᵖ-eternalᵒ
     ; ×-eternalᵒ    = ×ᵖ-eternalᵒ
     ; ×-eternalᵒ-extᵉ = ×ᵖ-eternalᵒ-extᵉ
     ; +-eternalᵒ    = +ᵖ-eternalᵒ
@@ -118,4 +119,6 @@ module PShGround (BT : PShBaseTypes) where
     ; ⟦⟧ᵇᶜ-eternal  = λ {b} eb c → constᵇ-eternal (eternalBaseType? b) eb c
     ; trueᵐ-eternal  = λ _ → refl
     ; falseᵐ-eternal = λ _ → refl
+    ; zeroᵐ-eternal  = λ _ → refl
+    ; succᵐ-eternal  = λ _ → refl
     }

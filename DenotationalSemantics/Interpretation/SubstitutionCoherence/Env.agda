@@ -368,6 +368,8 @@ mutual
   subᵛˢ s p ⋆           _         = tt
   subᵛˢ s p true        _         = tt
   subᵛˢ s p false       _         = tt
+  subᵛˢ s p zero        _         = tt
+  subᵛˢ s p (succ V)    pV        = subᵛˢ s p V pV
   subᵛˢ s p ⦉ V , W ⦊   (pV , pW) = subᵛˢ s p V pV , subᵛˢ s p W pW
   subᵛˢ s p (inl V)     pV        = subᵛˢ s p V pV
   subᵛˢ s p (inr V)     pV        = subᵛˢ s p V pV
@@ -385,6 +387,8 @@ mutual
   subᶜˢ s p (absurd V)       pV        = subᵛˢ s p V pV
   subᶜˢ s p (if V `then M `else N) (pV , pM , pN) =
     subᵛˢ s p V pV , subᶜˢ s p M pM , subᶜˢ s p N pN
+  subᶜˢ s p (caseℕ V `zero M `succ N) (pV , pM , pN) =
+    subᵛˢ s p V pV , subᶜˢ s p M pM , subᶜˢ (cong-∷-sub s) p N pN
   subᶜˢ s p (case+ V `inl M `inr N) (pV , pM , pN) =
     subᵛˢ s p V pV , subᶜˢ (cong-∷-sub s) p M pM , subᶜˢ (cong-∷-sub s) p N pN
   subᶜˢ s p (perform op V M) (pV , pM) =
@@ -447,6 +451,10 @@ mutual
     ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
   V-subst-natˢ s p false _ =
     ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
+  V-subst-natˢ s p zero _ =
+    ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
+  V-subst-natˢ s p (succ V) pV =
+    ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-natˢ s p V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   V-subst-natˢ s p ⦉ V , W ⦊ (pV , pW) =
     ≈ᵐ-trans (⟨ V-subst-natˢ s p V pV , V-subst-natˢ s p W pW ⟩ᵐ-cong)
              (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
@@ -508,7 +516,12 @@ mutual
     ≈ᵐ-trans (ifᵐ-cong (V-subst-natˢ s p V pV)
                        (C-subst-natˢ s p M pM) (C-subst-natˢ s p N pN))
              (≈ᵐ-sym (ifᵐ-∘ _ _ _ _))
-  -- likewise for `case+`: `caseᵐ-∘`
+  -- likewise for `caseℕ` and `case+`: `caseℕᵐ-∘`, `caseᵐ-∘`
+  C-subst-natˢ s p (caseℕ V `zero M `succ N) (pV , pM , pN) =
+    ≈ᵐ-trans (caseℕᵐ-cong (V-subst-natˢ s p V pV)
+                          (C-subst-natˢ s p M pM)
+                          (C-subst-natˢ (cong-∷-sub s) p N pN))
+             (≈ᵐ-sym (caseℕᵐ-∘ _ _ _ _))
   C-subst-natˢ s p (case+ V `inl M `inr N) (pV , pM , pN) =
     ≈ᵐ-trans (caseᵐ-cong (V-subst-natˢ s p V pV)
                          (C-subst-natˢ (cong-∷-sub s) p M pM)

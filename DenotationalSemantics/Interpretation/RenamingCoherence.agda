@@ -171,6 +171,8 @@ mutual
   renᵛ r ⋆        _ = tt
   renᵛ r true     _ = tt
   renᵛ r false    _ = tt
+  renᵛ r zero     _ = tt
+  renᵛ r (succ V)  pV = renᵛ r V pV
   renᵛ r ⦉ V , W ⦊ (pV , pW) = renᵛ r V pV , renᵛ r W pW
   renᵛ r (inl V)   pV = renᵛ r V pV
   renᵛ r (inr V)   pV = renᵛ r V pV
@@ -187,6 +189,8 @@ mutual
   renᶜ r (absurd V)       pV        = renᵛ r V pV
   renᶜ r (if V `then M `else N) (pV , pM , pN) =
     renᵛ r V pV , renᶜ r M pM , renᶜ r N pN
+  renᶜ r (caseℕ V `zero M `succ N) (pV , pM , pN) =
+    renᵛ r V pV , renᶜ r M pM , renᶜ (cong-∷-ren r) N pN
   renᶜ r (case+ V `inl M `inr N) (pV , pM , pN) =
     renᵛ r V pV , renᶜ (cong-∷-ren r) M pM , renᶜ (cong-∷-ren r) N pN
   renᶜ r (perform op V M) (pV , pM) =
@@ -248,6 +252,10 @@ mutual
     ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
   V-rename-nat r false _ =
     ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
+  V-rename-nat r zero _ =
+    ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
+  V-rename-nat r (succ V) pV =
+    ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   V-rename-nat r ⦉ V , W ⦊ (pV , pW) =
     ≈ᵐ-trans (⟨ V-rename-nat r V pV , V-rename-nat r W pW ⟩ᵐ-cong)
              (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
@@ -307,7 +315,12 @@ mutual
     ≈ᵐ-trans (ifᵐ-cong (V-rename-nat r V pV)
                        (C-rename-nat r M pM) (C-rename-nat r N pN))
              (≈ᵐ-sym (ifᵐ-∘ _ _ _ _))
-  -- likewise for `case+`: `caseᵐ-∘`
+  -- likewise for `caseℕ` and `case+`: `caseℕᵐ-∘`, `caseᵐ-∘`
+  C-rename-nat r (caseℕ V `zero M `succ N) (pV , pM , pN) =
+    ≈ᵐ-trans (caseℕᵐ-cong (V-rename-nat r V pV)
+                          (C-rename-nat r M pM)
+                          (C-rename-nat (cong-∷-ren r) N pN))
+             (≈ᵐ-sym (caseℕᵐ-∘ _ _ _ _))
   C-rename-nat r (case+ V `inl M `inr N) (pV , pM , pN) =
     ≈ᵐ-trans (caseᵐ-cong (V-rename-nat r V pV)
                          (C-rename-nat (cong-∷-ren r) M pM)

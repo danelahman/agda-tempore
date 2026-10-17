@@ -65,6 +65,7 @@ mutual
   Midᵛ (V-trans {W = W} p q)             = Paramᵛ W × Midᵛ p × Midᵛ q
   Midᵛ (V-subst {V = V} {W = W} p x q U) = Paramᵛ V × Paramᵛ W × Paramᵛ U × Midᵛ p
   Midᵛ (⦉⦊-cong p q)                     = Midᵛ p × Midᵛ q
+  Midᵛ (succ-cong p)                     = Midᵛ p
   Midᵛ (inl-cong p)                      = Midᵛ p
   Midᵛ (inr-cong p)                      = Midᵛ p
   Midᵛ (lam-cong p)                      = Midᶜ p
@@ -82,6 +83,7 @@ mutual
   Midᶜ (match-cong p q)                  = Midᵛ p × Midᶜ q
   Midᶜ (absurd-cong p)                   = Midᵛ p
   Midᶜ (if-cong p q r)                   = Midᵛ p × Midᶜ q × Midᶜ r
+  Midᶜ (caseℕ-cong p q r)                = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (case+-cong p q r)                = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (perform-cong p q)                = Midᵛ p × Midᶜ q
   Midᶜ (delay-cong p)                    = Midᶜ p
@@ -97,6 +99,7 @@ mutual
   -- and under an `ε-subst` on the right.
   Midᶜ (match-eta V M)                   = Paramᶜ M
   Midᶜ (if-eta V M)                      = Paramᶜ M
+  Midᶜ (caseℕ-eta V M)                   = Paramᶜ M
   Midᶜ (case+-eta V M)                   = Paramᶜ M
   Midᶜ (delay-delay M)                   = Paramᶜ M
   -- `unbox-beta` mentions `K` and `N` only inside the filled context.

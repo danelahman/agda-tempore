@@ -38,6 +38,8 @@ mutual
     ⋆     : ErV
     true  : ErV
     false : ErV
+    zero  : ErV
+    succ  : ErV → ErV
     ⦉_,_⦊ : ErV → ErV → ErV
     inl   : ErV → ErV
     inr   : ErV → ErV
@@ -50,6 +52,7 @@ mutual
     match_`in_        : ErV → ErC → ErC
     absurd            : ErV → ErC
     if_`then_`else_   : ErV → ErC → ErC → ErC
+    caseℕ_`zero_`succ_ : ErV → ErC → ErC → ErC
     case+_`inl_`inr_  : ErV → ErC → ErC → ErC
     perform           : Op → ErV → ErC → ErC
     delay             : 𝔻 → ErC → ErC
@@ -75,6 +78,8 @@ mutual
   ⌊ ⋆ ⌋ᵛ         = ⋆
   ⌊ true ⌋ᵛ      = true
   ⌊ false ⌋ᵛ     = false
+  ⌊ zero ⌋ᵛ      = zero
+  ⌊ succ V ⌋ᵛ    = succ ⌊ V ⌋ᵛ
   ⌊ ⦉ V , W ⦊ ⌋ᵛ  = ⦉ ⌊ V ⌋ᵛ , ⌊ W ⌋ᵛ ⦊
   ⌊ inl V ⌋ᵛ     = inl ⌊ V ⌋ᵛ
   ⌊ inr V ⌋ᵛ     = inr ⌊ V ⌋ᵛ
@@ -89,6 +94,7 @@ mutual
   ⌊ match V `in M ⌋ᶜ          = match ⌊ V ⌋ᵛ `in ⌊ M ⌋ᶜ
   ⌊ absurd V ⌋ᶜ               = absurd ⌊ V ⌋ᵛ
   ⌊ if V `then M `else N ⌋ᶜ   = if ⌊ V ⌋ᵛ `then ⌊ M ⌋ᶜ `else ⌊ N ⌋ᶜ
+  ⌊ caseℕ V `zero M `succ N ⌋ᶜ = caseℕ ⌊ V ⌋ᵛ `zero ⌊ M ⌋ᶜ `succ ⌊ N ⌋ᶜ
   ⌊ case+ V `inl M `inr N ⌋ᶜ = case+ ⌊ V ⌋ᵛ `inl ⌊ M ⌋ᶜ `inr ⌊ N ⌋ᶜ
   ⌊ perform op V M ⌋ᶜ         = perform op ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ
   ⌊ delay τ M ⌋ᶜ              = delay τ ⌊ M ⌋ᶜ

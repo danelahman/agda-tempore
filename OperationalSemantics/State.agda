@@ -265,6 +265,10 @@ snd-split-time≡time-from-head S x =
 ⦉⦊-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = ⦉⦊-not-in-toCtx x
 ⦉⦊-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = ⦉⦊-not-in-toCtx x
 
+Nat-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} → Nat ∈[ ρ ] toCtx S → ⊥
+Nat-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = Nat-not-in-toCtx x
+Nat-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = Nat-not-in-toCtx x
+
 |+|-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} {A B : VType} → A |+| B ∈[ ρ ] toCtx S → ⊥
 |+|-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = |+|-not-in-toCtx x
 |+|-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = |+|-not-in-toCtx x

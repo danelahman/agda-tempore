@@ -4,8 +4,8 @@
 -- Every derivation has one with the same erasure in which `subV` and  --
 -- `subC` occur only where a sub-derivation must meet a type it does   --
 -- not itself determine: an application's argument, a `perform`'s      --
--- parameter, the branches of `if` and `case+`, a handler's clauses    --
--- and its continuation, and the root. `NfV`/`NfC` pin those           --
+-- parameter, the branches of `if`, `caseℕ` and `case+`, a handler's   --
+-- clauses and its continuation, and the root. `NfV`/`NfC` pin those   --
 -- positions and `C-normal-form` is the theorem.                       --
 --                                                                     --
 -- The tool is context subsumption along `_≼ᶜ_`, which lowers binder   --
@@ -100,6 +100,10 @@ data NfV where
 
   falseⁿ : ∀ {Γ} → NfV {Γ} false
 
+  zeroⁿ  : ∀ {Γ} → NfV {Γ} zero
+
+  succⁿ  : ∀ {Γ} {V : Γ ⊢V⦂ Nat} → NfV V → NfV (succ V)
+
   pairⁿ  : ∀ {Γ A B} {V : Γ ⊢V⦂ A} {W : Γ ⊢V⦂ B}
          → NfV V → NfV W → NfV ⦉ V , W ⦊
 
@@ -134,7 +138,13 @@ data NfC where
            → NfV V → NfC M → NfC N
            → NfC (if V `then subC M p `else subC N q)
 
-  -- likewise for the branches of a `case+`
+  -- likewise for the branches of a `caseℕ` and of a `case+`
+
+  caseℕⁿ   : ∀ {Γ A ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ Nat}
+               {M : Γ ⊢C⦂ A₁ ‼ ε₁} {N : Γ ∷ Nat ⊢C⦂ A₂ ‼ ε₂}
+               {p : (A₁ ‼ ε₁) <:ᶜ (A ‼ ε)} {q : (A₂ ‼ ε₂) <:ᶜ (A ‼ ε)}
+           → NfV V → NfC M → NfC N
+           → NfC (caseℕ V `zero subC M p `succ subC N q)
 
   case+ⁿ   : ∀ {Γ A B A' ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ A |+| B}
                {M : Γ ∷ A ⊢C⦂ A₁ ‼ ε₁} {N : Γ ∷ B ⊢C⦂ A₂ ‼ ε₂}
@@ -225,6 +235,11 @@ V-subCtx c trueⁿ =
   nfv true Boolₛ trueⁿ refl
 V-subCtx c falseⁿ =
   nfv false Boolₛ falseⁿ refl
+V-subCtx c zeroⁿ =
+  nfv zero Natₛ zeroⁿ refl
+V-subCtx c (succⁿ nV) with V-subCtx c nV
+... | nfv V' Natₛ n e =
+  nfv (succ V') Natₛ (succⁿ n) (cong succ e)
 V-subCtx c (pairⁿ nV nW) with V-subCtx c nV | V-subCtx c nW
 ... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
   nfv ⦉ V' , W' ⦊ (s₁ |×|ₛ s₂) (pairⁿ n₁ n₂) (cong₂ ⦉_,_⦊ e₁ e₂)
@@ -264,6 +279,13 @@ C-subCtx c (ifⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
              `else subC N' (<:ᶜ-trans (sv₂ ‼ₛ se₂) q))
       (<:ᵛ-refl _) ≾ₑ-refl (ifⁿ nV' nM' nN')
       (cong₃ (λ a b d → if a `then b `else d) eV eM eN)
+C-subCtx c (caseℕⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
+... | nfv V' Natₛ nV' eV with C-subCtx c nM | C-subCtx (≼-∷ c Natₛ) nN
+...   | nfc M' sv₁ se₁ nM' eM | nfc N' sv₂ se₂ nN' eN =
+  nfc (caseℕ V' `zero subC M' (<:ᶜ-trans (sv₁ ‼ₛ se₁) p)
+                `succ subC N' (<:ᶜ-trans (sv₂ ‼ₛ se₂) q))
+      (<:ᵛ-refl _) ≾ₑ-refl (caseℕⁿ nV' nM' nN')
+      (cong₃ (λ a b d → caseℕ a `zero b `succ d) eV eM eN)
 C-subCtx c (case+ⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
 ... | nfv V' (s₁ |+|ₛ s₂) nV' eV
       with C-subCtx (≼-∷ c s₁) nM | C-subCtx (≼-∷ c s₂) nN
@@ -324,6 +346,11 @@ V-normalise true =
   nfv true Boolₛ trueⁿ refl
 V-normalise false =
   nfv false Boolₛ falseⁿ refl
+V-normalise zero =
+  nfv zero Natₛ zeroⁿ refl
+V-normalise (succ V) with V-normalise V
+... | nfv V' Natₛ n e =
+  nfv (succ V') Natₛ (succⁿ n) (cong succ e)
 V-normalise ⦉ V , W ⦊ with V-normalise V | V-normalise W
 ... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
   nfv ⦉ V' , W' ⦊ (s₁ |×|ₛ s₂) (pairⁿ n₁ n₂) (cong₂ ⦉_,_⦊ e₁ e₂)
@@ -370,6 +397,12 @@ C-normalise (if V `then M `else N) with V-normalise V
   nfc (if V' `then subC M' (sv₁ ‼ₛ se₁) `else subC N' (sv₂ ‼ₛ se₂))
       (<:ᵛ-refl _) ≾ₑ-refl (ifⁿ nV nM nN)
       (cong₃ (λ a b d → if a `then b `else d) eV eM eN)
+C-normalise (caseℕ V `zero M `succ N) with V-normalise V
+... | nfv V' Natₛ nV eV with C-normalise M | C-normalise N
+...   | nfc M' sv₁ se₁ nM eM | nfc N' sv₂ se₂ nN eN =
+  nfc (caseℕ V' `zero subC M' (sv₁ ‼ₛ se₁) `succ subC N' (sv₂ ‼ₛ se₂))
+      (<:ᵛ-refl _) ≾ₑ-refl (caseℕⁿ nV nM nN)
+      (cong₃ (λ a b d → caseℕ a `zero b `succ d) eV eM eN)
 C-normalise (case+ V `inl M `inr N) with V-normalise V
 ... | nfv V' (s₁ |+|ₛ s₂) nV eV with C-normalise M | C-normalise N
 ...   | nfc M₁ sv₁ se₁ nM eM | nfc N₁ sv₂ se₂ nN eN

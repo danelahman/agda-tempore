@@ -5,7 +5,8 @@
 -- an eta rule the commutation is a theorem, not an axiom: the eta rule --
 -- re-expands the node around the subsumption and the beta rules        --
 -- collapse the copies. The atomic value formers get theirs from        --
--- `subV-refl`, the witness at `Base`/`Unit`/`Bool` being reflexive.    --
+-- `subV-refl`, the witness at `Base`/`Unit`/`Bool`/`Nat` being        --
+-- reflexive.                                                         --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -344,3 +345,60 @@ subC-case+ {Γ} {A} {B} {C} {C'} w V M N =
     castR : bodyR [ split-[] ↦ V ]c ≡ case+ V `inl subC M w `inr subC N w
     castR = cong₂ (λ X Y → case+ V `inl subC X w `inr subC Y w)
                   (sub-wk-≡ᶜ ([] ∷ A) V M) (sub-wk-≡ᶜ ([] ∷ B) V N)
+
+
+-- Natural-number elimination, likewise: the beta rules at `zero` and at a
+-- successor, lifted to an arbitrary scrutinee by the eta rule.
+
+subC-caseℕ-zero : ∀ {Γ C C'}
+                → (w : C <:ᶜ C')
+                → (M : Γ ⊢C⦂ C)
+                → (N : Γ ∷ Nat ⊢C⦂ C)
+                ------------------------------------------------------------
+                → Γ ⊢C⦂ subC (caseℕ zero `zero M `succ N) w
+                     == caseℕ zero `zero subC M w `succ subC N w
+subC-caseℕ-zero w M N =
+  C-trans (subC-cong (caseℕ-beta-zero M N))
+          (C-sym (caseℕ-beta-zero (subC M w) (subC N w)))
+
+subC-caseℕ-succ : ∀ {Γ C C'}
+                → (w : C <:ᶜ C')
+                → (V : Γ ⊢V⦂ Nat)
+                → (M : Γ ⊢C⦂ C)
+                → (N : Γ ∷ Nat ⊢C⦂ C)
+                ------------------------------------------------------------
+                → Γ ⊢C⦂ subC (caseℕ succ V `zero M `succ N) w
+                     == caseℕ succ V `zero subC M w `succ subC N w
+subC-caseℕ-succ w V M N =
+  C-trans (subC-cong (caseℕ-beta-succ V M N))
+          (C-sym (caseℕ-beta-succ V (subC M w) (subC N w)))
+
+subC-caseℕ : ∀ {Γ C C'}
+           → (w : C <:ᶜ C')
+           → (V : Γ ⊢V⦂ Nat)
+           → (M : Γ ⊢C⦂ C)
+           → (N : Γ ∷ Nat ⊢C⦂ C)
+           ------------------------------------------------------------
+           → Γ ⊢C⦂ subC (caseℕ V `zero M `succ N) w
+                == caseℕ V `zero subC M w `succ subC N w
+subC-caseℕ {Γ} {C} {C'} w V M N =
+  C-trans
+    (C-sym (==-castᶜ refl castL (caseℕ-eta V bodyL)))
+    (C-trans (caseℕ-cong V-refl (subC-caseℕ-zero w _ _) (subC-caseℕ-succ w _ _ _))
+             (==-castᶜ refl castR (caseℕ-eta V bodyR)))
+  where
+    rN = cong-ren {Γ'' = [] ∷ Nat} (wk-ren {Δ = Γ} {A = Nat})
+
+    bodyL : Γ ∷ Nat ⊢C⦂ C'
+    bodyL = subC (caseℕ hd `zero C-rename wk-ren M `succ C-rename rN N) w
+
+    bodyR : Γ ∷ Nat ⊢C⦂ C'
+    bodyR = caseℕ hd `zero subC (C-rename wk-ren M) w `succ subC (C-rename rN N) w
+
+    castL : bodyL [ split-[] ↦ V ]c ≡ subC (caseℕ V `zero M `succ N) w
+    castL = cong₂ (λ X Y → subC (caseℕ V `zero X `succ Y) w)
+                  (sub-wk-≡ᶜ [] V M) (sub-wk-≡ᶜ ([] ∷ Nat) V N)
+
+    castR : bodyR [ split-[] ↦ V ]c ≡ caseℕ V `zero subC M w `succ subC N w
+    castR = cong₂ (λ X Y → caseℕ V `zero subC X w `succ subC Y w)
+                  (sub-wk-≡ᶜ [] V M) (sub-wk-≡ᶜ ([] ∷ Nat) V N)

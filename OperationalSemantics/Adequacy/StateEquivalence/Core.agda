@@ -127,6 +127,16 @@ cast-inr⁻ : ∀ {Γ Γ' A B} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ B}
           → Σ[ V' ∈ (Γ' ⊢V⦂ B) ] (U' ≡ inr V') × (V ≡ castᵛ e V')
 cast-inr⁻ refl _ refl = _ , refl , refl
 
+cast-zero⁻ : ∀ {Γ Γ'} → (e : Γ' ≡ Γ) → (V' : Γ' ⊢V⦂ Nat)
+           → zero ≡ castᵛ e V' → V' ≡ zero
+cast-zero⁻ refl _ refl = refl
+
+cast-succ⁻ : ∀ {Γ Γ'} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ Nat}
+           → (U' : Γ' ⊢V⦂ Nat)
+           → succ V ≡ castᵛ e U'
+           → Σ[ V' ∈ (Γ' ⊢V⦂ Nat) ] (U' ≡ succ V') × (V ≡ castᵛ e V')
+cast-succ⁻ refl _ refl = _ , refl , refl
+
 cast-true⁻ : ∀ {Γ Γ'} → (e : Γ' ≡ Γ) → (V' : Γ' ⊢V⦂ Bool)
         → true ≡ castᵛ e V' → V' ≡ true
 cast-true⁻ refl _ refl = refl
@@ -174,6 +184,16 @@ cast-if⁻ : ∀ {Γ Γ' C} → (e : Γ' ≡ Γ)
           (P' ≡ (if V' `then M' `else N')) × (V ≡ castᵛ e V')
         × (M ≡ castᶜ e M') × (N ≡ castᶜ e N')
 cast-if⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
+
+cast-caseℕ⁻ : ∀ {Γ Γ' C} → (e : Γ' ≡ Γ)
+            → {V : Γ ⊢V⦂ Nat} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ Nat ⊢C⦂ C}
+            → (P' : Γ' ⊢C⦂ C)
+            → (caseℕ V `zero M `succ N) ≡ castᶜ e P'
+            → Σ[ V' ∈ (Γ' ⊢V⦂ Nat) ] Σ[ M' ∈ (Γ' ⊢C⦂ C) ]
+              Σ[ N' ∈ (Γ' ∷ Nat ⊢C⦂ C) ]
+                (P' ≡ (caseℕ V' `zero M' `succ N')) × (V ≡ castᵛ e V')
+              × (M ≡ castᶜ e M') × (N ≡ castᶜ (cong (_∷ Nat) e) N')
+cast-caseℕ⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
 
 cast-case+⁻ : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
             → {V : Γ ⊢V⦂ A |+| B} → {M : Γ ∷ A ⊢C⦂ C} → {N : Γ ∷ B ⊢C⦂ C}

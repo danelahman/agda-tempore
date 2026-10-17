@@ -71,6 +71,16 @@ mutual
               -----------
               Γ ⊢V⦂ Bool
 
+    -- natural numbers
+
+    zero    :
+              ----------
+              Γ ⊢V⦂ Nat
+
+    succ    : Γ ⊢V⦂ Nat
+              ---------
+            → Γ ⊢V⦂ Nat
+
     -- pairing
 
     ⦉_,_⦊    : {A B : VType}
@@ -165,6 +175,19 @@ mutual
             → Γ ⊢C⦂ C
             → Γ ⊢C⦂ C
             ------------
+            → Γ ⊢C⦂ C
+
+    -- natural-number elimination
+
+    -- As for `if`, both branches are typed at the same computation type;
+    -- the successor branch binds the predecessor.
+
+    caseℕ_`zero_`succ_
+            : {C : CType}
+            → Γ ⊢V⦂ Nat
+            → Γ ⊢C⦂ C
+            → Γ ∷ Nat ⊢C⦂ C
+            ---------------
             → Γ ⊢C⦂ C
 
     -- sum elimination
@@ -264,6 +287,12 @@ coerce : ∀ {Γ A ε ε'}
 
 coerce {A = A} p M = subC M (<:ᵛ-refl A ‼ₛ p)
 
+-- Numerals
+
+numeralᵛ : ∀ {Γ} → ℕ → Γ ⊢V⦂ Nat
+numeralᵛ 0       = zero
+numeralᵛ (suc k) = succ (numeralᵛ k)
+
 -- Useful substitution of effect annotations
 
 ε-subst : ∀ {Γ A ε ε'}
@@ -302,6 +331,10 @@ eternal-val-ext _ true =
   true
 eternal-val-ext _ false =
   false
+eternal-val-ext _ zero =
+  zero
+eternal-val-ext et (succ V) =
+  succ (eternal-val-ext et V)
 eternal-val-ext (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   ⦉ eternal-val-ext et₁ V₁ , eternal-val-ext et₂ V₂ ⦊
 eternal-val-ext (et₁ |+|ₑ _) (inl V) =

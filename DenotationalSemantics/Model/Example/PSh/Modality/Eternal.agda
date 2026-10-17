@@ -8,10 +8,10 @@
 -- (`Kᵖ-eternalᵒ`). This is what interprets the eternal *base* types.     --
 --                                                                    --
 -- The eternal *type formers* are handled by the closure lemmas:          --
--- `𝟙ᵖ-eternalᵒ` (Unit), `𝔹ᵖ-eternalᵒ` (Bool), `𝟘ᵖ-eternalᵒ` (Empty), and --
--- `×ᵖ-eternalᵒ` (products) and `+ᵖ-eternalᵒ` (sums), for any two eternal --
--- objects. Together they cover exactly the `Syntax.Types.Eternal`        --
--- formers.                                                               --
+-- `𝟙ᵖ-eternalᵒ` (Unit), `𝔹ᵖ-eternalᵒ` (Bool), `ℕᵖ-eternalᵒ` (Nat),      --
+-- `𝟘ᵖ-eternalᵒ` (Empty), and `×ᵖ-eternalᵒ` (products) and `+ᵖ-eternalᵒ`  --
+-- (sums), for any two eternal objects. Together they cover exactly the   --
+-- `Syntax.Types.Eternal` formers.                                        --
 --                                                                    --
 -- For the constant presheaves the `⟨ ⊤ ⟩`-algebra `α` is the mate         --
 -- `ε⊣ ∘ᵖ ⟨ ⊤ ⟩ᶠ nec` of a necessitation `nec`, and its two laws hold by   --
@@ -26,6 +26,7 @@ module DenotationalSemantics.Model.Example.PSh.Modality.Eternal (GS : GradeSyste
 
 open import Level using (0ℓ)
 open import Data.Bool using (Bool)
+open import Data.Nat using (ℕ)
 open import Data.Unit using (tt)
 open import Relation.Binary.Bundles using (Setoid)
 open import Relation.Binary.PropositionalEquality using (setoid)
@@ -119,6 +120,12 @@ Kᵖ-eternalᵒ S = record
 
 𝔹ᵖ-eternalᵒ : Eternalᵒ 𝔹ᵖ
 𝔹ᵖ-eternalᵒ = Kᵖ-eternalᵒ (setoid Bool)
+
+-- Closure: the natural numbers object, likewise the constant presheaf on
+-- `Data.Nat`.
+
+ℕᵖ-eternalᵒ : Eternalᵒ ℕᵖ
+ℕᵖ-eternalᵒ = Kᵖ-eternalᵒ (setoid ℕ)
 
 -- Closure: binary products of eternal objects. Algebras are closed under the
 -- category's products, so this is the generic construction.

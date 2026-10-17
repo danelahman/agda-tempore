@@ -81,6 +81,8 @@ mutual
   ⟦⟧ᵛᵗ-irr false      _ _ = ≈ᵐ-refl
   ⟦⟧ᵛᵗ-irr ⦉ V , W ⦊ (pV , pW) (pV' , pW') =
     ⟨ ⟦⟧ᵛᵗ-irr V pV pV' , ⟦⟧ᵛᵗ-irr W pW pW' ⟩ᵐ-cong
+  ⟦⟧ᵛᵗ-irr zero      _ _ = ≈ᵐ-refl
+  ⟦⟧ᵛᵗ-irr (succ V)  pV pV' = ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
   ⟦⟧ᵛᵗ-irr (inl V)   pV pV' = ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
   ⟦⟧ᵛᵗ-irr (inr V)   pV pV' = ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
   ⟦⟧ᵛᵗ-irr (lam M)   pM pM' = curryᵐ-cong (⟦⟧ᶜᵗ-irr M pM pM')
@@ -101,6 +103,8 @@ mutual
   ⟦⟧ᶜᵗ-irr (absurd V) pV pV' = ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
   ⟦⟧ᶜᵗ-irr (if V `then M `else N) (pV , pM , pN) (pV' , pM' , pN') =
     ifᵐ-cong (⟦⟧ᵛᵗ-irr V pV pV') (⟦⟧ᶜᵗ-irr M pM pM') (⟦⟧ᶜᵗ-irr N pN pN')
+  ⟦⟧ᶜᵗ-irr (caseℕ V `zero M `succ N) (pV , pM , pN) (pV' , pM' , pN') =
+    caseℕᵐ-cong (⟦⟧ᵛᵗ-irr V pV pV') (⟦⟧ᶜᵗ-irr M pM pM') (⟦⟧ᶜᵗ-irr N pN pN')
   ⟦⟧ᶜᵗ-irr (case+ V `inl M `inr N) (pV , pM , pN) (pV' , pM' , pN') =
     caseᵐ-cong (⟦⟧ᵛᵗ-irr V pV pV') (⟦⟧ᶜᵗ-irr M pM pM') (⟦⟧ᶜᵗ-irr N pN pN')
   ⟦⟧ᶜᵗ-irr (perform op V M) (pV , pM) (pV' , pM') =
