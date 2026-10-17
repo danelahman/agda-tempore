@@ -233,6 +233,18 @@ infixl 7 _⊔ᵢ_
     ≤-reflexive (sym (+-distribʳ-⊓ (min i₁) (min i₂) (min i₃)))
   , ≤∞-reflexive (+∞-distribʳ-⊔∞ (max i₁) (max i₂) (max i₃))
 
+-- the closure: the same lower bound, and an upper bound that only no
+-- time or the absent bound absorbs
+
+plusᵢ : (i : Interval∞) → Plus _·ᵢ_ _≾ᵢ_ i
+plusᵢ i = plus i⁺ (≤-refl , ≤∞-plus∞ (max i))
+               (m≤m+n (min i) (min i) , plus∞-iter (max i))
+               (λ (p₁ , p₂) (_ , q₂) → p₁ , plus∞-least p₂ q₂)
+  where
+    i⁺ : Interval∞
+    i⁺ = [ min i , plus∞ (max i) ]
+           {fromWitness (≤∞-trans {↑ min i} {max i} (min≤max i) (≤∞-plus∞ (max i)))}
+
 -- the grade of two-sided intervals with possibly-infinite max
 
 two-sided-intervals-with-∞ : Grade ℕᴰ
@@ -248,6 +260,7 @@ two-sided-intervals-with-∞ = record
   ; ≾-⊤              = ≾ᵢ-⊤
   ; u-least?         = nothing
   ; ·-comm?          = just ·ᵢ-comm
+  ; plus?            = λ i → just (plusᵢ i)
   ; _⊔_              = _⊔ᵢ_
   ; ⊔-ubˡ            = ⊔ᵢ-ubˡ
   ; ⊔-ubʳ            = ⊔ᵢ-ubʳ
@@ -468,6 +481,21 @@ infixl 7 _⊔ʷ_
 ·ʷ-distribʳ-⊔ʷ no-window  (window _) no-window  = tt
 ·ʷ-distribʳ-⊔ʷ _          no-window  _          = tt
 
+-- the closure: a window's closure, and the greatest grade its own
+
+plusʷ : (i : Interval∞⊤) → Plus _·ʷ_ _≾ʷ_ i
+plusʷ (window i) = plus (window Plus.c⁺ p) (Plus.≾-c⁺ p) (Plus.c⁺-iter p) least
+  where
+    p = plusᵢ i
+
+    least : ∀ {v} → window i ≾ʷ v → v ·ʷ v ≾ʷ v → window Plus.c⁺ p ≾ʷ v
+    least {window j} q r = Plus.c⁺-least p {j} q r
+    least {no-window} q r = tt
+plusʷ no-window = plus no-window tt tt least
+  where
+    least : ∀ {v} → no-window ≾ʷ v → v ·ʷ v ≾ʷ v → no-window ≾ʷ v
+    least {no-window} q r = tt
+
 -- the grade of two-sided intervals with a formal greatest grade
 
 two-sided-intervals-with-⊤ : Grade ℕᴰ
@@ -483,6 +511,7 @@ two-sided-intervals-with-⊤ = record
   ; ≾-⊤               = ≾ʷ-⊤
   ; u-least?          = nothing
   ; ·-comm?           = just ·ʷ-comm
+  ; plus?             = λ i → just (plusʷ i)
   ; _⊔_               = _⊔ʷ_
   ; ⊔-ubˡ             = ⊔ʷ-ubˡ
   ; ⊔-ubʳ             = ⊔ʷ-ubʳ

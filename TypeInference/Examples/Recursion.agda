@@ -220,6 +220,11 @@ countdown-on = recℕ (numeral 3) (return ⋆) (delay ⌜ 1 ⌝ (return ⋆))
 countdown-at : ℕ → RawC ∅ˢ 0
 countdown-at k = countdown-on ⦂ᶜ (Unit ‼ ⌜ k ⌝ᵉ)
 
+-- Two ticks annotated at one, the shape of `wait 2 : unit # 1`
+
+wait-2-at-1 : RawC ∅ˢ 0
+wait-2-at-1 = recℕ (numeral 2) (return ⋆) (delay ⌜ 1 ⌝ (return ⋆)) ⦂ᶜ (Unit ‼ ⌜ 1 ⌝ᵉ)
+
 -- annotated at the top
 
 countdown-top : RawC ∅ˢ 0

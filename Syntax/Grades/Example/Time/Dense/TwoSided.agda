@@ -240,6 +240,18 @@ infixl 7 _⊔ᵢ_
 
 -- the grade of two-sided intervals of dense time
 
+-- the closure: the same lower bound, and an upper bound that only no
+-- time or the absent bound absorbs
+
+plusᵢ : (i : Interval∞) → Plus _·ᵢ_ _≾ᵢ_ i
+plusᵢ i = plus i⁺ (≤-refl , ≤∞-plus∞ (max i))
+               (p≤p+q (min i) (min i) , plus∞-iter (max i))
+               (λ (p₁ , p₂) (_ , q₂) → p₁ , plus∞-least p₂ q₂)
+  where
+    i⁺ : Interval∞
+    i⁺ = [ min i , plus∞ (max i) ]
+           {fromWitness (≤∞-trans {↑ min i} {max i} (min≤max i) (≤∞-plus∞ (max i)))}
+
 dense-two-sided-intervals-with-∞ : Grade ℚ≥0ᴰ
 dense-two-sided-intervals-with-∞ = record
   { Carrier = Interval∞
@@ -253,6 +265,7 @@ dense-two-sided-intervals-with-∞ = record
   ; ≾-⊤              = ≾ᵢ-⊤
   ; u-least?         = nothing
   ; ·-comm?          = just ·ᵢ-comm
+  ; plus?            = λ i → just (plusᵢ i)
   ; _⊔_              = _⊔ᵢ_
   ; ⊔-ubˡ            = ⊔ᵢ-ubˡ
   ; ⊔-ubʳ            = ⊔ᵢ-ubʳ

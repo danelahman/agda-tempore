@@ -29,10 +29,11 @@
 -- conditions:                                                  --
 --   * the join of its lower bounds, where it occurs on a right --
 --     side only as the whole side (Pottier's condition), each  --
---     cycle `p ≾ v` closing at the join (`Closes`); each       --
---     ordering with it on the greater side is dropped, being a --
---     bound, below the join, a cycle, or valid                 --
---     (`lower-drops`);                                         --
+--     cycle `p ≾ v` closing at the join (`Closes`), or else    --
+--     the join's closure, where one cycle is `v · v ≾ v` and   --
+--     each closes there (`LowTo`); each ordering with it on    --
+--     the greater side is dropped, being a bound, below the    --
+--     value, a cycle, or valid (`lower-drops`);                --
 --   * dually, the first upper bound decided (from no           --
 --     hypotheses) below each of its others, where it occurs on --
 --     a left side only as the whole side;                      --
@@ -102,7 +103,7 @@
 --                                                              --
 -- The lowering and unit values are principal: at every         --
 -- instance of the residual they lie below the unknown          --
--- (`lowerᵉ-least`, `lowerʳ-least`, `minₑ`, `minᵣ`). The raise  --
+-- (`LowToₑ`, `LowToᵣ`, `minₑ`, `minᵣ`). The raise              --
 -- and top values, and a raised set, only keep every instance;  --
 -- that they are least is not claimed.                          --
 --                                                              --
@@ -116,9 +117,9 @@
 -- outer scope's local unknown on both sides of an inner        --
 -- scope's deferred condition; a local unknown with no lower    --
 -- bound under several upper bounds, none decided below the     --
--- others, which in a program comes only from `absurd`; a cycle  --
--- `p ≾ v` its join does not close, under an upper bound, such  --
--- as `recℕ` with a tick a step inside an operation clause.     --
+-- others, which in a program comes only from `absurd`; a cycle --
+-- `p ≾ v` closing neither at the join nor at its closure, or   --
+-- at a grade that declares no closure, under an upper bound.   --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; _∧_; not; true; false; if_then_else_) renaming (Bool to 𝔹)
@@ -170,7 +171,7 @@ open import TypeInference.SolverImpl.Deferred  S
 open import TypeInference.SolverImpl.Resid     S
 open import TypeInference.SolverImpl.Values    S
   using (module Vᵉ; module Vʳ; module Vⁱ; isFalse; equal-keeps; updᵉ-e; updᵉ-r; updʳ-r;
-         joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩; joinᵣ-ub⊩; joinᵣ-lub⊩)
+         joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩; joinᵣ-ub⊩; joinᵣ-lub⊩; module LowToₑ; module LowToᵣ)
 open import TypeInference.SolverImpl.Vars      S
   using (Vars; vᵉ; vʳ; Fixes; mkFixes; fvᵛ; fvʳ; fvᵉ; ⊆-refl; fix-v; fix-r; fix-e)
 import TypeInference.SolverImpl.Reach as Reachability
@@ -1037,19 +1038,6 @@ loweredʳ {k = k} {R} lw b ub cy =
         → Q ⊩ x [ δ ]ʳ ≾̂ᵣ rvar k [ updʳ k b ⨟ˢ δ ]ʳ
     hit {Q = Q} δ {x} mx = subst (λ z → Q ⊩ x [ δ ]ʳ ≾̂ᵣ z [ δ ]ʳ) (sym (updʳ-hit k b)) (ub δ mx)
 
--- The lowering value is principal: at every instance of the residual
--- it lies below the unknown
-
-lowerᵉ-least : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : EVar Ψ} {R : Resid Ψ} {x : EExp Ψ} {xs : List (EExp Ψ)}
-             → (∀ {y} → y ∈ x ∷ xs → (y , evar k) ∈ es R)
-             → (τ : Subst Ψ Ψ') → Q ⊩ᴿ R [ τ ] → Q ⊩ joinₑ x xs [ τ ]ᵉ ≾̂ₑ sE τ k
-lowerᵉ-least {x = x} {xs} s τ h = joinₑ-lub⊩ τ x xs (λ m → ⊩es h (s m))
-
-lowerʳ-least : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : RVar Ψ} {R : Resid Ψ} {x : RExp Ψ} {xs : List (RExp Ψ)}
-             → (∀ {y} → y ∈ x ∷ xs → (y , rvar k) ∈ rs R)
-             → (τ : Subst Ψ Ψ') → Q ⊩ᴿ R [ τ ] → Q ⊩ joinᵣ x xs [ τ ]ʳ ≾̂ᵣ sR τ k
-lowerʳ-least {x = x} {xs} s τ h = joinᵣ-lub⊩ τ x xs (λ m → ⊩rs h (s m))
-
 first : ∀ {X : Set} → Maybe X → Maybe X → Maybe X
 first (just x) _ = just x
 first nothing  y = y
@@ -1132,12 +1120,11 @@ stepᵉ {Ψ} k R with cleanᵉ? k R
     o = oracleᵉ k R
 
     lower : Vᵉ.ByLower {Ψ} k o (es R) → Σ[ b ∈ EExp Ψ ] Step (updᵉ k b) R
-    lower (Vᵉ.byLower lw x xs e cy (fr , sd)) =
-      joinₑ x xs ,
-      (λ τ Q h → lowerᵉ-⊩ lw fr cl (joinₑ x xs) sd cy τ
-                   (lowerᵉ-least {x = x} {xs} (λ m → Vᵉ.src lw (subst (_ ∈_) (sym e) m)) τ h)
-                   (λ m → joinₑ-ub⊩ τ x xs (subst (_ ∈_) e m)) h) ,
-      loweredᵉ lw (joinₑ x xs) (λ δ m → joinₑ-ub⊩ δ x xs (subst (_ ∈_) e m)) cy
+    lower (Vᵉ.byLower lw x xs e b to (fr , sd)) =
+      b ,
+      (λ τ Q h → lowerᵉ-⊩ lw fr cl b sd (Vᵉ.lowTo-closes {Ψ} k to) τ
+                   (LowToₑ.below k lw e to τ (⊩es h)) (LowToₑ.above k lw e to τ) h) ,
+      loweredᵉ lw b (λ δ m → LowToₑ.above k lw e to δ m) (Vᵉ.lowTo-closes {Ψ} k to)
 
     raise : Vᵉ.ByRaise {Ψ} k o (es R) → Σ[ b ∈ EExp Ψ ] Step (updᵉ k b) R
     raise (Vᵉ.byRaise up (fl , df , sd)) =
@@ -1164,12 +1151,11 @@ stepʳ {Ψ} k R with cleanʳ? k R
     o = oracleʳ k R
 
     lower : Vʳ.ByLower {Ψ} k o (rs R) → Σ[ b ∈ RExp Ψ ] Step (updʳ k b) R
-    lower (Vʳ.byLower lw x xs e cy sd) =
-      joinᵣ x xs ,
-      (λ τ Q h → lowerʳ-⊩ lw cl (joinᵣ x xs) sd cy τ
-                   (lowerʳ-least {x = x} {xs} (λ m → Vʳ.src lw (subst (_ ∈_) (sym e) m)) τ h)
-                   (λ m → joinᵣ-ub⊩ τ x xs (subst (_ ∈_) e m)) h) ,
-      loweredʳ lw (joinᵣ x xs) (λ δ m → joinᵣ-ub⊩ δ x xs (subst (_ ∈_) e m)) cy
+    lower (Vʳ.byLower lw x xs e b to sd) =
+      b ,
+      (λ τ Q h → lowerʳ-⊩ lw cl b sd (Vʳ.lowTo-closes {Ψ} k to) τ
+                   (LowToᵣ.below k lw e to τ (⊩rs h)) (LowToᵣ.above k lw e to τ) h) ,
+      loweredʳ lw b (λ δ m → LowToᵣ.above k lw e to δ m) (Vʳ.lowTo-closes {Ψ} k to)
 
     raise : Vʳ.ByRaise {Ψ} k o (rs R) → Σ[ b ∈ RExp Ψ ] Step (updʳ k b) R
     raise (Vʳ.byRaise up (df , sd)) =

@@ -95,6 +95,7 @@ G₁ ×ᵍ G₂ = record
   ; ·-comm?         = zipWith (λ m₁ m₂ (c₁ , c₂) (d₁ , d₂) →
                                  cong₂ _,_ (m₁ c₁ d₁) (m₂ c₂ d₂))
                               G₁.·-comm? G₂.·-comm?
+  ; plus?           = λ (c₁ , c₂) → zipWith plus× (G₁.plus? c₁) (G₂.plus? c₂)
   }
   where
     module G₁ = Grade G₁
@@ -103,6 +104,15 @@ G₁ ×ᵍ G₂ = record
       _≾_ to _≾₁_; ⊤ to ⊤₁; _⊔_ to _⊔₁_; of-dur to of-dur₁)
     open Grade G₂ using () renaming (Carrier to C₂; _·_ to _·₂_; u to u₂;
       _≾_ to _≾₂_; ⊤ to ⊤₂; _⊔_ to _⊔₂_; of-dur to of-dur₂)
+
+    -- the closure, componentwise
+    plus× : ∀ {c₁ c₂} → Plus _·₁_ _≾₁_ c₁ → Plus _·₂_ _≾₂_ c₂
+          → Plus (λ (c₁ , c₂) (d₁ , d₂) → (c₁ ·₁ d₁ , c₂ ·₂ d₂))
+                 (λ (c₁ , c₂) (d₁ , d₂) → (c₁ ≾₁ d₁) × (c₂ ≾₂ d₂)) (c₁ , c₂)
+    plus× p₁ p₂ =
+      plus (Plus.c⁺ p₁ , Plus.c⁺ p₂) (Plus.≾-c⁺ p₁ , Plus.≾-c⁺ p₂)
+           (Plus.c⁺-iter p₁ , Plus.c⁺-iter p₂)
+           (λ (a₁ , a₂) (b₁ , b₂) → Plus.c⁺-least p₁ a₁ b₁ , Plus.c⁺-least p₂ a₂ b₂)
 
 ------------------------------------------------------------------------
 -- The projections and pairing

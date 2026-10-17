@@ -11,9 +11,10 @@
 --     `equate`: of two equal unknowns, the one of smaller      --
 --     index remains);                                          --
 --   * lowering (`stepᵉ`, `stepʳ`): a grade unknown is sent to  --
---     the join of its lower bounds, which are removed with it, --
---     and with its cycles, which close at the join (`Values`'  --
---     `lower`);                                                --
+--     the join of its lower bounds, or to the join's closure   --
+--     where it has the cycle `v · v ≾ v`; the bounds are       --
+--     removed with it, and its cycles, which close at the      --
+--     value (`Values`' `lower`);                               --
 --   * raising (`upᵉ-step`, `upʳ-step`): a grade unknown is     --
 --     sent to the first upper bound that caps the others, the  --
 --     orderings it caps removed (`Values`' `raise`);           --
@@ -124,7 +125,7 @@ import TypeInference.SolverImpl.Reach as Reachability
 open import TypeInference.SolverImpl.Values      S
   using (module Vᵉ; module Vʳ; module Vⁱ; isFalse; Parts; partition; kept; kept⊆; which;
          updᵉ-e; updᵉ-r; updʳ-r;
-         joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩; joinᵣ-ub⊩; joinᵣ-lub⊩)
+         joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩; joinᵣ-ub⊩; joinᵣ-lub⊩; module LowToₑ; module LowToᵣ)
 open import TypeInference.SolverImpl.Canon       S
   using (canonₑ; canonᵣ; canonₑ-≡; canonᵣ-≡; canonᵛ; canonᵛ-≡̂; canonᶜ; canonᶜ-≡̂;
          canonᴴ; canonᴴ-⊩; canonᴴ-⊩⁻; Ordʳ; Ordᵉ; Pieces; whole; Split; splitsBy;
@@ -560,13 +561,10 @@ oracleᵉ C Q i = record
 
 stepᵉ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
       → Vᵉ.ByLower {Θ} i (oracleᵉ C Q i) (ordₑ Q) → Elim C Q
-stepᵉ {Θ} C Q i (Vᵉ.byLower lw x xs e cy (cb , cR , cc)) =
+stepᵉ {Θ} C Q i (Vᵉ.byLower lw x xs e b to (cb , cR , cc)) =
   mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
          (λ δ h → <:̂ᶜ-subst h (Monoᵉ.monoᵉ-c i b lowg ⁺ C cc))
   where
-    b : EExp Θ
-    b = joinₑ x xs
-
     η₀ : Subst Θ Θ
     η₀ = updᵉ i b
 
@@ -576,13 +574,10 @@ stepᵉ {Θ} C Q i (Vᵉ.byLower lw x xs e cy (cb , cR , cc)) =
               (map (mapᵖ (_[ η₀ ]ᵉ)) (Vᵉ.rest lw))
               (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
 
-    bnd : ∀ {ε} → ε ∈ x ∷ xs → (ε , evar i) ∈ ordₑ Q
-    bnd m = Vᵉ.src lw (subst (_ ∈_) (sym e) m)
-
     lowg : Q ⊩ η₀ ≾ˢ idˢ
     lowg = ≾ˢ-idˡ (updᵉ-below i b idˢ
-             (joinₑ-lub⊩ idˢ x xs
-               (λ {y} m → subst (λ z → Q ⊩ z ≾̂ₑ evar i) (sym ([id]ᵉ y)) (hypₑ (bnd m)))))
+             (LowToₑ.below i lw e to idˢ
+               (λ {y} {y'} m → subst₂ (Q ⊩_≾̂ₑ_) (sym ([id]ᵉ y)) (sym ([id]ᵉ y')) (hypₑ m))))
 
     open Lowering {Q = Q} η₀ lowg (λ β → tvarₛ reflᵗᵛ)
     module K = Vᵉ.Keep {Θ} i (Q ⊩_≾̂ₑ_) ⊩≾̂ₑ-refl transₑ (λ ε → ε) (_[ η₀ ]ᵉ)
@@ -599,10 +594,10 @@ stepᵉ {Θ} C Q i (Vᵉ.byLower lw x xs e cy (cb , cR , cc)) =
         ordE {ε} m with Vᵉ.cls lw m
         ... | inj₁ (refl , mb) =
               subst (Q₀ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ_) (trans (absᵉ-e i b b cb) (sym (updᵉ-hit i b)))
-                    (joinₑ-ub⊩ η₀ x xs (subst (_ ∈_) e mb))
+                    (LowToₑ.above i lw e to η₀ mb)
         ... | inj₂ (inj₁ (refl , mc)) =
               subst₂ (λ y z → Q₀ ⊩ y ≾̂ₑ z) ([id]ᵉ (ε [ η₀ ]ᵉ)) (trans ([id]ᵉ b) (sym (updᵉ-hit i b)))
-                     (⊩-substₑ {σ = idˢ} ∅ᴴ-⊩ᴴ (cy mc))
+                     (⊩-substₑ {σ = idˢ} ∅ᴴ-⊩ᴴ (Vᵉ.lowTo-closes {Θ} i to mc))
         ... | inj₂ (inj₂ m') = hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m')
 
     keepR : ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q) → Q ⊩ ρ ≾̂ᵣ ρ'
@@ -627,7 +622,7 @@ stepᵉ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → 
 stepᵉ? {Θ} F C Q i o = Maybe.map at (Vᵉ.lower {Θ} i (oracleᵉ C Q i) (ordₑ Q))
   where
     at : Vᵉ.ByLower {Θ} i (oracleᵉ C Q i) (ordₑ Q) → Elimᶠ F C Q
-    at bl@(Vᵉ.byLower _ x xs _ _ _) = stepᵉ C Q i bl , fixes-updᵉ i (joinₑ x xs) o
+    at bl@(Vᵉ.byLower _ _ _ _ b _ _) = stepᵉ C Q i bl , fixes-updᵉ i b o
 
 fins : (n : ℕ) → List (Fin n)
 fins zero    = []
@@ -703,13 +698,10 @@ oracleʳ C Q i = record
 
 stepʳ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
       → Vʳ.ByLower {Θ} i (oracleʳ C Q i) (ordᵣ Q) → Elim C Q
-stepʳ {Θ} C Q i (Vʳ.byLower lw x xs e cy (cb , cc)) =
+stepʳ {Θ} C Q i (Vʳ.byLower lw x xs e b to (cb , cc)) =
   mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
          (λ δ h → <:̂ᶜ-subst h (Monoʳ.monoʳ-c i b lowg ⁺ C cc))
   where
-    b : RExp Θ
-    b = joinᵣ x xs
-
     η₀ : Subst Θ Θ
     η₀ = updʳ i b
 
@@ -719,13 +711,10 @@ stepʳ {Θ} C Q i (Vʳ.byLower lw x xs e cy (cb , cc)) =
               (map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q))
               (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
 
-    bnd : ∀ {ρ} → ρ ∈ x ∷ xs → (ρ , rvar i) ∈ ordᵣ Q
-    bnd m = Vʳ.src lw (subst (_ ∈_) (sym e) m)
-
     lowg : Q ⊩ η₀ ≾ˢ idˢ
     lowg = ≾ˢ-idˡ (updʳ-below i b idˢ
-             (joinᵣ-lub⊩ idˢ x xs
-               (λ {y} m → subst (λ z → Q ⊩ z ≾̂ᵣ rvar i) (sym ([id]ʳ y)) (hypᵣ (bnd m)))))
+             (LowToᵣ.below i lw e to idˢ
+               (λ {y} {y'} m → subst₂ (Q ⊩_≾̂ᵣ_) (sym ([id]ʳ y)) (sym ([id]ʳ y')) (hypᵣ m))))
 
     open Lowering {Q = Q} η₀ lowg (λ β → tvarₛ reflᵗᵛ)
     module K = Vʳ.Keep {Θ} i (Q ⊩_≾̂ᵣ_) ⊩≾̂ᵣ-refl transᵣ (λ ρ → ρ) (_[ η₀ ]ʳ)
@@ -740,10 +729,10 @@ stepʳ {Θ} C Q i (Vʳ.byLower lw x xs e cy (cb , cc)) =
         ordR {ρ} m with Vʳ.cls lw m
         ... | inj₁ (refl , mb) =
               subst (Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ_) (trans (absʳ-r i b b cb) (sym (updʳ-hit i b)))
-                    (joinᵣ-ub⊩ η₀ x xs (subst (_ ∈_) e mb))
+                    (LowToᵣ.above i lw e to η₀ mb)
         ... | inj₂ (inj₁ (refl , mc)) =
               subst₂ (λ y z → Q₀ ⊩ y ≾̂ᵣ z) ([id]ʳ (ρ [ η₀ ]ʳ)) (trans ([id]ʳ b) (sym (updʳ-hit i b)))
-                     (⊩-substᵣ {σ = idˢ} ∅ᴴ-⊩ᴴ (cy mc))
+                     (⊩-substᵣ {σ = idˢ} ∅ᴴ-⊩ᴴ (Vʳ.lowTo-closes {Θ} i to mc))
         ... | inj₂ (inj₂ m') = hypᵣ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m')
 
     keepR : ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (_[ η₀ ]ʳ)) (Vʳ.rest lw) → Q ⊩ ρ ≾̂ᵣ ρ'
@@ -762,7 +751,7 @@ stepʳ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (
 stepʳ? {Θ} F C Q i o = Maybe.map at (Vʳ.lower {Θ} i (oracleʳ C Q i) (ordᵣ Q))
   where
     at : Vʳ.ByLower {Θ} i (oracleʳ C Q i) (ordᵣ Q) → Elimᶠ F C Q
-    at bl@(Vʳ.byLower _ x xs _ _ _) = stepʳ C Q i bl , fixes-updʳ i (joinᵣ x xs) o
+    at bl@(Vʳ.byLower _ _ _ _ b _ _) = stepʳ C Q i bl , fixes-updʳ i b o
 
 ------------------------------------------------------------------------
 -- The dual steps: an unknown on no left side but against its bounds

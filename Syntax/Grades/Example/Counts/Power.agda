@@ -261,6 +261,7 @@ power n = record
   ; ⊤               = ⊤ᵛ
   ; ≾-⊤             = ≾ᵛ-⊤
   ; u-least?        = maybe′ (λ least → just (uᵛ-least least)) nothing u-least?
+  ; plus?           = λ _ → nothing
   ; ·-comm?         = maybe′ (λ comm → just (·ᵛ-comm comm)) nothing ·-comm?
   ; _⊔_             = _⊔ᵛ_
   ; ⊔-ubˡ           = ⊔ᵛ-ubˡ

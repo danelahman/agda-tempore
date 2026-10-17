@@ -209,6 +209,10 @@ data _⊩_≾̂ᵣ_ {Θ} Q where
   -- zero-product: a product below the unit has both factors below it
   zeroˡᵣ   : ∀ {ρ ρ'} → Q ⊩ ρ ·̂ᵣ ρ' ≾̂ᵣ ûᵣ → Q ⊩ ρ ≾̂ᵣ ûᵣ
   zeroʳᵣ   : ∀ {ρ ρ'} → Q ⊩ ρ ·̂ᵣ ρ' ≾̂ᵣ ûᵣ → Q ⊩ ρ' ≾̂ᵣ ûᵣ
+  -- the closure of a grade lies below every grade above it that
+  -- absorbs its own iteration
+  plusᵣ    : ∀ {c ρ} → (p : Plus _·ᵣ_ _≾ᵣ_ c) → Q ⊩ rconst c ≾̂ᵣ ρ → Q ⊩ ρ ·̂ᵣ ρ ≾̂ᵣ ρ
+           → Q ⊩ rconst (Plus.c⁺ p) ≾̂ᵣ ρ
 
 data _⊩_≾̂ₑ_ {Θ} Q where
   hypₑ   : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q ⊩ ε ≾̂ₑ ε'
@@ -228,6 +232,10 @@ data _⊩_≾̂ₑ_ {Θ} Q where
   -- zero-product: a product below the unit has both factors below it
   zeroˡₑ : ∀ {ε ε'} → Q ⊩ ε ·̂ₑ ε' ≾̂ₑ ûₑ → Q ⊩ ε ≾̂ₑ ûₑ
   zeroʳₑ : ∀ {ε ε'} → Q ⊩ ε ·̂ₑ ε' ≾̂ₑ ûₑ → Q ⊩ ε' ≾̂ₑ ûₑ
+  -- the closure of a grade lies below every grade above it that
+  -- absorbs its own iteration
+  plusₑ  : ∀ {c ε} → (p : Plus _·ₑ_ _≾ₑ_ c) → Q ⊩ econst c ≾̂ₑ ε → Q ⊩ ε ·̂ₑ ε ≾̂ₑ ε
+         → Q ⊩ econst (Plus.c⁺ p) ≾̂ₑ ε
 
 -- Entailed ordering is reflexive
 
@@ -640,6 +648,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substᵣ            h (minᵣ eq)    = minᵣ eq
 ⊩-substᵣ            h (zeroˡᵣ p)   = zeroˡᵣ (⊩-substᵣ h p)
 ⊩-substᵣ            h (zeroʳᵣ p)   = zeroʳᵣ (⊩-substᵣ h p)
+⊩-substᵣ            h (plusᵣ p q r) = plusᵣ p (⊩-substᵣ h q) (⊩-substᵣ h r)
 
 ⊩-substₑ         h (hypₑ m)     = ⊩ordₑ h m
 ⊩-substₑ         h (atomₑ p)    = atomₑ p
@@ -653,6 +662,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substₑ         h (minₑ eq)    = minₑ eq
 ⊩-substₑ         h (zeroˡₑ p)   = zeroˡₑ (⊩-substₑ h p)
 ⊩-substₑ         h (zeroʳₑ p)   = zeroʳₑ (⊩-substₑ h p)
+⊩-substₑ         h (plusₑ p q r) = plusₑ p (⊩-substₑ h q) (⊩-substₑ h r)
 
 -- A type variable's image is an arbitrary open type, so an assumed
 -- subtyping transports to a subtyping derivation at those images.

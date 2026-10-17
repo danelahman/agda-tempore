@@ -218,3 +218,35 @@ infixl 7 _⊔∞_
 ≤∞-↑0 : ∀ {a} → a ≤∞ ↑ 0 → a ≡ ↑ 0
 ≤∞-↑0 {↑ _} p = cong ↑_ (n≤0⇒n≡0 p)
 ≤∞-↑0 {∞}   ()
+
+------------------------------------------------------------------------
+-- The closure under addition: `0` absorbs its own iteration, and of the
+-- other values only `∞` does
+
+plus∞ : ℕ∞ → ℕ∞
+plus∞ (↑ zero)  = ↑ zero
+plus∞ (↑ suc _) = ∞
+plus∞ ∞         = ∞
+
+≤∞-plus∞ : ∀ a → a ≤∞ plus∞ a
+≤∞-plus∞ (↑ zero)  = ≤-refl
+≤∞-plus∞ (↑ suc _) = tt
+≤∞-plus∞ ∞         = tt
+
+plus∞-iter : ∀ a → (plus∞ a +∞ plus∞ a) ≤∞ plus∞ a
+plus∞-iter (↑ zero)  = ≤-refl
+plus∞-iter (↑ suc _) = tt
+plus∞-iter ∞         = tt
+
+-- a finite value absorbing its own iteration is zero
+
++∞-self : ∀ {n} → (↑ n +∞ ↑ n) ≤∞ ↑ n → n ≡ 0
++∞-self {n} p = n≤0⇒n≡0 (+-cancelˡ-≤ n n 0 (subst (n + n ≤_) (sym (+-identityʳ n)) p))
+
+plus∞-least : ∀ {a v} → a ≤∞ v → (v +∞ v) ≤∞ v → plus∞ a ≤∞ v
+plus∞-least {↑ zero}  {↑ _} p q = z≤n
+plus∞-least {↑ zero}  {∞}   p q = tt
+plus∞-least {↑ suc n} {↑ m} p q with +∞-self {m} q
+plus∞-least {↑ suc n} {↑ m} () q | refl
+plus∞-least {↑ suc n} {∞}   p q = tt
+plus∞-least {∞}       {∞}   p q = tt

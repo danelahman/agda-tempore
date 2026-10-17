@@ -538,6 +538,7 @@ two-sided = record
   ; ⊤               = ⊤ᵗˢ
   ; ≾-⊤             = ≾ᵗˢ-⊤
   ; u-least?        = nothing
+  ; plus?           = λ _ → nothing
   ; ·-comm?         = nothing
   ; _⊔_             = _⊔ᵗˢ_
   ; ⊔-ubˡ           = ⊔ᵗˢ-ubˡ

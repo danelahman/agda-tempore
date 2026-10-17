@@ -168,6 +168,11 @@ infixl 7 _⊔ₒ_
 
 -- the grade of one-sided intervals
 
+-- every grade absorbs its own iteration, and is its own closure
+
+·ₒ-iter : (i : 𝕀) → i ·ₒ i ≾ₒ i
+·ₒ-iter [ m ,+∞⟩ = m≤m+n m m
+
 left-sided-intervals : Grade ℕᴰ
 left-sided-intervals = record
   { Carrier          = 𝕀
@@ -181,6 +186,7 @@ left-sided-intervals = record
   ; ≾-⊤               = ≾ₒ-⊤
   ; u-least?          = nothing
   ; ·-comm?           = just ·ₒ-comm
+  ; plus?             = λ i → just (plus-self (≾ₒ-refl {i}) (·ₒ-iter i))
   ; _⊔_               = _⊔ₒ_
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
   ; ⊔-ubʳ             = ⊔ₒ-ubʳ
@@ -388,6 +394,12 @@ infixl 7 _⊔ᵗ_
 
 -- the grade of one-sided intervals with a formal greatest grade
 
+-- every grade absorbs its own iteration, and is its own closure
+
+·ᵗ-iter : (i : 𝕀⊤) → i ·ᵗ i ≾ᵗ i
+·ᵗ-iter (timed i) = ·ₒ-iter i
+·ᵗ-iter untimed   = tt
+
 left-sided-intervals-with-⊤ : Grade ℕᴰ
 left-sided-intervals-with-⊤ = record
   { Carrier           = 𝕀⊤
@@ -401,6 +413,7 @@ left-sided-intervals-with-⊤ = record
   ; ≾-⊤               = ≾ᵗ-⊤
   ; u-least?          = nothing
   ; ·-comm?           = just ·ᵗ-comm
+  ; plus?             = λ i → just (plus-self (≾ᵗ-refl {i}) (·ᵗ-iter i))
   ; _⊔_               = _⊔ᵗ_
   ; ⊔-ubˡ             = ⊔ᵗ-ubˡ
   ; ⊔-ubʳ             = ⊔ᵗ-ubʳ

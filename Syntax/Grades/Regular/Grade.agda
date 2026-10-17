@@ -345,5 +345,6 @@ regular-grade = record
   ; of-dur-zero     = of-dur-zero
   ; of-dur-plus     = λ {m} {n} → of-dur-plus {m} {n}
   ; u-least?        = nothing
+  ; plus?           = λ _ → nothing
   ; ·-comm?         = nothing
   }

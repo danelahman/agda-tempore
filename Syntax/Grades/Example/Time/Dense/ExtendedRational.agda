@@ -187,6 +187,37 @@ infixl 7 _⊔∞_
 ≤∞-↑0 {∞}   ()
 
 ------------------------------------------------------------------------
+-- The closure under addition: `0` absorbs its own iteration, and of the
+-- other values only `∞` does
+
+closure : (p : ℚ≥0) → Dec (p ≤ 0ᵈ) → ℚ∞
+closure p (yes _) = ↑ p
+closure p (no _)  = ∞
+
+plus∞ : ℚ∞ → ℚ∞
+plus∞ (↑ p) = closure p (p ≤? 0ᵈ)
+plus∞ ∞     = ∞
+
+≤∞-plus∞ : ∀ a → a ≤∞ plus∞ a
+≤∞-plus∞ (↑ p) with p ≤? 0ᵈ
+... | yes _ = ≤-refl
+... | no _  = tt
+≤∞-plus∞ ∞ = tt
+
+plus∞-iter : ∀ a → (plus∞ a +∞ plus∞ a) ≤∞ plus∞ a
+plus∞-iter (↑ p) with p ≤? 0ᵈ
+... | yes r = ≤-trans (+-mono-≤ r r) (≤-trans (≤-reflexive (+-identityʳ 0ᵈ)) (0≤ p))
+... | no _  = tt
+plus∞-iter ∞ = tt
+
+plus∞-least : ∀ {a v} → a ≤∞ v → (v +∞ v) ≤∞ v → plus∞ a ≤∞ v
+plus∞-least {↑ p} {v} q₁ q₂ with p ≤? 0ᵈ
+plus∞-least {↑ p} {v}   q₁ q₂ | yes _ = q₁
+plus∞-least {↑ p} {↑ m} q₁ q₂ | no ¬r = ⊥-elim (¬r (≤-trans q₁ (+-self q₂)))
+plus∞-least {↑ p} {∞}   q₁ q₂ | no _  = tt
+plus∞-least {∞}   {∞}   q₁ q₂ = tt
+
+------------------------------------------------------------------------
 -- The embedding of the extended naturals
 
 ℕ∞→ℚ∞ : ℕ∞.ℕ∞ → ℚ∞

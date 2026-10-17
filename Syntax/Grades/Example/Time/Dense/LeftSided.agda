@@ -174,6 +174,11 @@ infixl 7 _⊔ₒ_
 
 -- the grade of one-sided intervals of dense time
 
+-- every grade absorbs its own iteration, and is its own closure
+
+·ₒ-iter : (i : 𝕀) → i ·ₒ i ≾ₒ i
+·ₒ-iter [ p ,+∞⟩ = p≤p+q p p
+
 dense-left-sided-intervals : Grade ℚ≥0ᴰ
 dense-left-sided-intervals = record
   { Carrier           = 𝕀
@@ -187,6 +192,7 @@ dense-left-sided-intervals = record
   ; ≾-⊤               = ≾ₒ-⊤
   ; u-least?          = nothing
   ; ·-comm?           = just ·ₒ-comm
+  ; plus?             = λ i → just (plus-self (≾ₒ-refl {i}) (·ₒ-iter i))
   ; _⊔_               = _⊔ₒ_
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
   ; ⊔-ubʳ             = ⊔ₒ-ubʳ

@@ -337,6 +337,7 @@ right-sided = record
   ; ⊤               = any-run
   ; ≾-⊤             = ≾-⊤
   ; u-least?        = nothing
+  ; plus?           = λ _ → nothing
   ; ·-comm?         = nothing
   ; _⊔_             = _⊔ᵖ_
   ; ⊔-ubˡ           = ⊔ᵖ-ubˡ

@@ -60,6 +60,7 @@ energy = record
   ; of-dur-plus     = refl
   ; u-least?        = R.u-least?
   ; ·-comm?         = R.·-comm?
+  ; plus?           = R.plus?
   }
   where module R = Grade right-sided-intervals
 

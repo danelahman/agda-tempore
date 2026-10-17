@@ -16,6 +16,7 @@
 module Syntax.Grades.Example.Time.Dense.NonNegativeRational where
 
 open import Data.Bool.Properties using (T-irrelevant)
+open import Data.Empty using (⊥-elim)
 open import Data.Integer.Base using () renaming (+_ to +ℤ_)
 import Data.Integer.Base as ℤ
 open import Data.List.Base using (List; map; upTo; foldr)
@@ -174,6 +175,17 @@ q≤p+q p q = ≤-trans (p≤p+q q p) (≤-reflexive (+-comm q p))
 
 +-≤0ʳ : ∀ {p q} → p + q ≤ 0ᵈ → q ≤ 0ᵈ
 +-≤0ʳ {p} {q} r = ≤-trans (q≤p+q p q) r
+
+-- a value absorbing its own sum is zero
+
++-self : ∀ {p} → p + p ≤ p → p ≤ 0ᵈ
++-self {p} q with p ≤? 0ᵈ
+... | yes r = r
+... | no ¬r = ⊥-elim (ℚ.<-irrefl refl (ℚ.<-≤-trans lt (≤-val q)))
+  where
+    lt : val p ℚ.< val p ℚ.+ val p
+    lt = subst (ℚ._< val p ℚ.+ val p) (ℚ.+-identityʳ (val p))
+               (ℚ.+-monoʳ-< (val p) (ℚ.≰⇒> (λ x → ¬r (*≤ᵈ* x))))
 
 ------------------------------------------------------------------------
 -- Maximum and minimum

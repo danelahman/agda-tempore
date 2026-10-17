@@ -375,6 +375,7 @@ right-sided = record
   ; ⊤               = unbounded
   ; ≾-⊤             = ≾-⊤
   ; u-least?        = just ≾-⊥
+  ; plus?           = λ _ → nothing
   ; ·-comm?         = nothing
   ; _⊔_             = _⊔ᵇ_
   ; ⊔-ubˡ           = ⊔ᵇ-ubˡ

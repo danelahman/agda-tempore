@@ -175,6 +175,15 @@ infixl 7 _⊔ₒ_
 
 -- the grade of (right) one-sided intervals of dense time
 
+-- the closure: no time absorbs its own iteration, and of the other
+-- bounds only the absent one does
+
+plusₒ : (i : 𝕀ᵣ) → Plus _·ₒ_ _≾ₒ_ i
+plusₒ [0, a ] = plus [0, plus∞ a ] (≤∞-plus∞ a) (plus∞-iter a) (λ {v} → least v)
+  where
+    least : ∀ v → [0, a ] ≾ₒ v → v ·ₒ v ≾ₒ v → [0, plus∞ a ] ≾ₒ v
+    least [0, b ] = plus∞-least
+
 dense-right-sided-intervals : Grade ℚ≥0ᴰ
 dense-right-sided-intervals = record
   { Carrier           = 𝕀ᵣ
@@ -188,6 +197,7 @@ dense-right-sided-intervals = record
   ; ≾-⊤               = ≾ₒ-⊤
   ; u-least?          = just uₒ-least
   ; ·-comm?           = just ·ₒ-comm
+  ; plus?             = λ i → just (plusₒ i)
   ; _⊔_               = _⊔ₒ_
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
   ; ⊔-ubʳ             = ⊔ₒ-ubʳ

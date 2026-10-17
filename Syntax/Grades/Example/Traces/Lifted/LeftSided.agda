@@ -140,6 +140,7 @@ left-sided = record
   ; ⊤               = u
   ; ≾-⊤             = ≾-⊤
   ; u-least?        = nothing
+  ; plus?           = λ _ → nothing
   ; ·-comm?         = nothing
   ; _⊔_             = _⊔_
   ; ⊔-ubˡ           = ⊔-ubˡ

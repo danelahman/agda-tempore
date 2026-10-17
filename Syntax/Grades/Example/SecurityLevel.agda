@@ -26,7 +26,7 @@ module Syntax.Grades.Example.SecurityLevel where
 
 open import Data.Fin.Base using (Fin; zero; suc)
 open import Data.List.Base using (List) renaming ([] to []ᴸ; _∷_ to _∷ᴸ_)
-open import Data.Maybe.Base using (just)
+open import Data.Maybe.Base using (just; nothing)
 open import Data.Nat.Base using (ℕ; zero; suc)
 open import Data.Vec.Base using (Vec; []; _∷_; replicate)
 
@@ -143,6 +143,7 @@ module _ (L : LevelLattice) where
     ; of-dur-zero     = refl
     ; of-dur-plus     = sym (∨-identityˡ bot)
     ; u-least?        = just bot-⊑
+    ; plus?           = λ _ → nothing
     ; ·-comm?         = just ∨-comm
     }
 

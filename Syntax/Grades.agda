@@ -22,6 +22,23 @@ open import Syntax.Durations
 
 open import Util.Equality
 
+-- The closure of `c`, Kleene's plus: the least grade above `c` that
+-- absorbs its own iteration
+
+record Plus {C : Set} (_·_ : C → C → C) (_≾_ : C → C → Set) (c : C) : Set where
+  constructor plus
+  field
+    c⁺       : C
+    ≾-c⁺     : c ≾ c⁺
+    c⁺-iter  : (c⁺ · c⁺) ≾ c⁺
+    c⁺-least : ∀ {v} → c ≾ v → (v · v) ≾ v → c⁺ ≾ v
+
+-- A grade absorbing its own iteration is its own closure
+
+plus-self : ∀ {C : Set} {_·_ : C → C → C} {_≾_ : C → C → Set} {c : C}
+          → c ≾ c → (c · c) ≾ c → Plus _·_ _≾_ c
+plus-self {c = c} refl' it = plus c refl' it (λ cv _ → cv)
+
 -- Partially ordered effect and resource monoids, over a monoid `D` of
 -- durations
 
@@ -88,6 +105,9 @@ record Grade (D : Duration) : Set₁ where
     -- commutativity of `_·_`, where the grade declares it; the trace
     -- grades leave it out, as there it depends on whether `Op` is empty
     ·-comm? : Maybe (Commutative _≡_ _·_)
+
+    -- the closure of a grade, where the grade declares it
+    plus? : (c : Carrier) → Maybe (Plus _·_ _≾_ c)
 
   -- _≡_ is included in _≾_
   ≾-reflexive  : _≡_ ⇒ _≾_
@@ -252,6 +272,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      of-dur-plus to of-durʳ-plus;
      u-least? to uᵣ-least?;
      ·-comm? to ·ᵣ-comm?;
+     plus? to plusᵣ?;
      ≾-reflexive to ≾ᵣ-reflexive;
      _≡?_ to _≡ᵣ?_;
      ⊔-mono to ⊔ᵣ-mono;
@@ -292,6 +313,9 @@ module GradeSystemInterface (GS : GradeSystem) where
      of-dur-plus to of-durᵉ-plus;
      u-least? to uₑ-least?;
      ·-comm? to ·ₑ-comm?;
+     ≾-zero-productˡ to ≾ₑ-zero-productˡ;
+     ≾-zero-productʳ to ≾ₑ-zero-productʳ;
+     plus? to plusₑ?;
      ≾-reflexive to ≾ₑ-reflexive;
      _≡?_ to _≡ₑ?_;
      ⊔-mono to ⊔ₑ-mono;

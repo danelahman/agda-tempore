@@ -172,6 +172,15 @@ infixl 7 _⊔ₒ_
 
 -- the grade of (right) one-sided intervals
 
+-- the closure: no time absorbs its own iteration, and of the other
+-- bounds only the absent one does
+
+plusₒ : (i : 𝕀ᵣ) → Plus _·ₒ_ _≾ₒ_ i
+plusₒ [0, m ] = plus [0, plus∞ m ] (≤∞-plus∞ m) (plus∞-iter m) (λ {v} → least v)
+  where
+    least : ∀ v → [0, m ] ≾ₒ v → v ·ₒ v ≾ₒ v → [0, plus∞ m ] ≾ₒ v
+    least [0, n ] = plus∞-least
+
 right-sided-intervals : Grade ℕᴰ
 right-sided-intervals = record
   { Carrier          = 𝕀ᵣ
@@ -185,6 +194,7 @@ right-sided-intervals = record
   ; ≾-⊤               = ≾ₒ-⊤
   ; u-least?          = just uₒ-least
   ; ·-comm?           = just ·ₒ-comm
+  ; plus?             = λ i → just (plusₒ i)
   ; _⊔_               = _⊔ₒ_
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
   ; ⊔-ubʳ             = ⊔ₒ-ubʳ
