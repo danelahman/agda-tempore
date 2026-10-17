@@ -314,6 +314,7 @@ _≡̂ₑ?_ : (ε ε' : EExp ∅ˢ) → Dec (ε ≡̂ₑ ε')
 ... | no ¬p = no λ { (Baseₑ p) → ⊥-elim-irr (¬p p) }
 ⊩ᴱ? Unit      = yes Unitₑ
 ⊩ᴱ? Bool      = yes Boolₑ
+⊩ᴱ? Nat       = yes Natₑ
 ⊩ᴱ? (A |×| B) =
   map′ (λ (p , q) → p |×|ₑ q) (λ { (p |×|ₑ q) → p , q }) (⊩ᴱ? A ×-dec ⊩ᴱ? B)
 ⊩ᴱ? Empty     = yes Emptyₑ
@@ -351,12 +352,14 @@ former (_ |×| _) = 4
 former Empty     = 5
 former (_ ⇒ _)   = 6
 former ([ _ ] _) = 7
+former Nat       = 8
 
 <:̂ᵛ-former : ∀ {Θ} {Q : Hyps Θ} {A B : OVType Θ} → Q ∣ A <:̂ᵛ B → former A ≡ former B
 <:̂ᵛ-former (tvarₛ _)  = refl
 <:̂ᵛ-former (Baseₛ _)  = refl
 <:̂ᵛ-former Unitₛ      = refl
 <:̂ᵛ-former Boolₛ      = refl
+<:̂ᵛ-former Natₛ       = refl
 <:̂ᵛ-former (_ |×|ₛ _) = refl
 <:̂ᵛ-former Emptyₛ     = refl
 <:̂ᵛ-former (_ ⇒ₛ _)   = refl
@@ -373,6 +376,7 @@ same (tvar ()) _ _
 same (Base b)  (Base b')  refl = map′ Baseₛ (λ { (Baseₛ p) → p }) (b ≡ᵇ? b')
 same Unit      Unit       refl = yes Unitₛ
 same Bool      Bool       refl = yes Boolₛ
+same Nat       Nat        refl = yes Natₛ
 same (A |×| B) (A' |×| B') refl =
   map′ (λ (p , q) → p |×|ₛ q) (λ { (p |×|ₛ q) → p , q }) (A <:̂ᵛ? A' ×-dec B <:̂ᵛ? B')
 same Empty     Empty      refl = yes Emptyₛ

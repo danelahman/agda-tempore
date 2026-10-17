@@ -90,6 +90,7 @@ private
     walkᵛ (Base b)  = true
     walkᵛ Unit      = true
     walkᵛ Bool      = true
+    walkᵛ Nat       = true
     walkᵛ (A |×| B) = walkᵛ A && walkᵛ B
     walkᵛ Empty     = true
     walkᵛ (A ⇒ C)   = walkᵛ A && walkᶜ C

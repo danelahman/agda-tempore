@@ -214,6 +214,7 @@ mutual
   fix-v f (Base b)  h = refl
   fix-v f Unit      h = refl
   fix-v f Bool      h = refl
+  fix-v f Nat       h = refl
   fix-v f Empty     h = refl
   fix-v f (A |×| B) h = cong₂ _|×|_ (fix-v f A (⊆-∪ˡ (fvᵛ A) (fvᵛ B) h))
                                     (fix-v f B (⊆-∪ʳ (fvᵛ A) (fvᵛ B) h))

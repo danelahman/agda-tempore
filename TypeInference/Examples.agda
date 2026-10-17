@@ -48,6 +48,11 @@
 -- leaves open: the search refutes some at definitions, and the --
 -- check of a run establishes, refutes or leaves unestablished  --
 -- the others, at left- and right-sided time.                   --
+--                                                              --
+-- Set 10 consists of programs on natural numbers: elimination  --
+-- by `caseℕ`, numerals, a `Nat` used under a lock where a      --
+-- function is refused, and branches of different effects       --
+-- joined, at left- and right-sided time.                       --
 ------------------------------------------------------------------
 
 module TypeInference.Examples where
@@ -96,3 +101,7 @@ import TypeInference.Examples.Stages.All
 -- Satisfiability at definitions and establishment at runs
 
 import TypeInference.Examples.Runs.All
+
+-- Natural numbers: the generic module and its instances
+
+import TypeInference.Examples.Data.All

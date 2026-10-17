@@ -113,6 +113,7 @@ mutual
   strᵛ j (Base b)  = just (Base b)
   strᵛ j Unit      = just Unit
   strᵛ j Bool      = just Bool
+  strᵛ j Nat       = just Nat
   strᵛ j (A |×| B) = zip₂ _|×|_ (strᵛ j A) (strᵛ j B)
   strᵛ j Empty     = just Empty
   strᵛ j (A ⇒ C)   = zip₂ _⇒_ (strᵛ j A) (strᶜ j C)
@@ -161,6 +162,7 @@ mutual
   str-popᵛ j (Base b)  refl = refl
   str-popᵛ j Unit      refl = refl
   str-popᵛ j Bool      refl = refl
+  str-popᵛ j Nat       refl = refl
   str-popᵛ j Empty     refl = refl
   str-popᵛ j (A |×| B) q with zip₂-just _|×|_ (strᵛ j A) (strᵛ j B) q
   ... | a , b , qa , qb , refl = cong₂ _|×|_ (str-popᵛ j A qa) (str-popᵛ j B qb)
@@ -194,6 +196,7 @@ mutual
   str-wkᵛ (Base b)  = refl
   str-wkᵛ Unit      = refl
   str-wkᵛ Bool      = refl
+  str-wkᵛ Nat       = refl
   str-wkᵛ Empty     = refl
   str-wkᵛ (A |×| B) = cong₂ (zip₂ _|×|_) (str-wkᵛ A) (str-wkᵛ B)
   str-wkᵛ (A ⇒ C)   = cong₂ (zip₂ _⇒_) (str-wkᵛ A) (str-wkᶜ C)
@@ -330,6 +333,7 @@ mutual
   escᵛ σ j k r (Base b)  ()
   escᵛ σ j k r Unit      ()
   escᵛ σ j k r Bool      ()
+  escᵛ σ j k r Nat       ()
   escᵛ σ j k r Empty     ()
   escᵛ σ j k r (A |×| B) q with ∨-true (occᵉ-v j A) (occᵉ-v j B) q
   ... | inj₁ s = ∨-left  (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-v k (B [ σ ]ᵛ)) (escᵛ σ j k r A s)
@@ -376,6 +380,7 @@ mutual
   occ-wkᵛ (Base b)  ()
   occ-wkᵛ Unit      ()
   occ-wkᵛ Bool      ()
+  occ-wkᵛ Nat       ()
   occ-wkᵛ Empty     ()
   occ-wkᵛ {Ψ} (A |×| B) q =
     [ occ-wkᵛ A , occ-wkᵛ B ]′
@@ -424,6 +429,7 @@ mutual
   str-occᵛ j (Base b)  ()
   str-occᵛ j Unit      ()
   str-occᵛ j Bool      ()
+  str-occᵛ j Nat       ()
   str-occᵛ j Empty     ()
   str-occᵛ j (A |×| B) q with zip₂-nothing _|×|_ (strᵛ j A) (strᵛ j B) q
   ... | inj₁ s = ∨-left  (occᵉ-v j A) (occᵉ-v j B) (str-occᵛ j A s)

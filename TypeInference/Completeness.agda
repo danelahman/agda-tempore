@@ -106,6 +106,12 @@ mutual
   cmpV {σ = σ} ι Γ A _ true        true  ceq st = ⊨-≐ᵥ σ Bool A (sym (<:̂ᵛ-Boolˡ st))
   cmpV {σ = σ} ι Γ A _ false       false ceq st = ⊨-≐ᵥ σ Bool A (sym (<:̂ᵛ-Boolˡ st))
 
+  -- natural numbers
+
+  cmpV {σ = σ} ι Γ A _ zero        zero  ceq st = ⊨-≐ᵥ σ Nat A (sym (<:̂ᵛ-Natˡ st))
+  cmpV {σ = σ} ι Γ A _ (succ D) (succ {V = V} e) ceq st =
+    ⊨-≐ᵥ σ Nat A (sym (<:̂ᵛ-Natˡ st)) , cmpV ι Γ Nat V D (invV V e) ceq Natₛ
+
   -- pairing
   --
   -- A supertype of a product is a product, so the slack splits between
@@ -273,6 +279,14 @@ mutual
     cmpV ι Γ Bool V D₀ (invV V e₀) ceq Boolₛ ,
     cmpC ι Γ A t M₁ D₁ (invC M₁ e₁) ceq st le ,
     cmpC ι Γ A t M₂ D₂ (invC M₂ e₂) ceq st le
+
+  -- natural-number elimination
+
+  cmpC ι Γ A t _ (caseℕ_`zero_`succ_ D₀ D₁ D₂)
+       (caseℕ {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂) ceq st le =
+    cmpV ι Γ Nat V D₀ (invV V e₀) ceq Natₛ ,
+    cmpC ι Γ A t M₁ D₁ (invC M₁ e₁) ceq st le ,
+    cmpC ι (Γ ∷ Nat) A t M₂ D₂ (invC M₂ e₂) (cong (_∷ Nat) ceq) st le
 
   -- performing algebraic operations
 

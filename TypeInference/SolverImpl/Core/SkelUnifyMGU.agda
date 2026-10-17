@@ -119,6 +119,7 @@ sizeᵏ (svar α)  = 1
 sizeᵏ (sBase b) = 1
 sizeᵏ sUnit     = 1
 sizeᵏ sBool     = 1
+sizeᵏ sNat      = 1
 sizeᵏ (t s× u)  = suc (sizeᵏ t + sizeᵏ u)
 sizeᵏ sEmpty    = 1
 sizeᵏ (t s⇒ u)  = suc (sizeᵏ t + sizeᵏ u)
@@ -134,6 +135,7 @@ checkᵏ-nothing α (svar β)   q =
 checkᵏ-nothing α (sBase b)  ()
 checkᵏ-nothing α sUnit      ()
 checkᵏ-nothing α sBool      ()
+checkᵏ-nothing α sNat       ()
 checkᵏ-nothing α (t₁ s× t₂) q with zip₂-nothing _s×_ (checkᵏ α t₁) (checkᵏ α t₂) q
 ... | inj₁ r = occ-×ˡ (checkᵏ-nothing α t₁ r)
 ... | inj₂ r = occ-×ʳ (checkᵏ-nothing α t₂ r)
@@ -187,6 +189,7 @@ checkᵏ-thinᵏ α (svar β)   q with map-just svar (thick α β) q
 checkᵏ-thinᵏ α (sBase b)  refl = refl
 checkᵏ-thinᵏ α sUnit      refl = refl
 checkᵏ-thinᵏ α sBool      refl = refl
+checkᵏ-thinᵏ α sNat       refl = refl
 checkᵏ-thinᵏ α (t₁ s× t₂) q with zip₂-just _s×_ (checkᵏ α t₁) (checkᵏ α t₂) q
 ... | _ , _ , q₁ , q₂ , refl =
   cong₂ _s×_ (checkᵏ-thinᵏ α t₁ q₁) (checkᵏ-thinᵏ α t₂ q₂)
@@ -399,6 +402,7 @@ amguᵏ-spec (svar α)  (svar β)    anilᵏ = flexFlexᵏ-spec α β
 amguᵏ-spec (svar α)  (sBase b')  anilᵏ = flexᵏ-spec α (sBase b') (λ ())
 amguᵏ-spec (svar α)  sUnit       anilᵏ = flexᵏ-spec α sUnit (λ ())
 amguᵏ-spec (svar α)  sBool       anilᵏ = flexᵏ-spec α sBool (λ ())
+amguᵏ-spec (svar α)  sNat        anilᵏ = flexᵏ-spec α sNat (λ ())
 amguᵏ-spec (svar α) (u₁ s× u₂)   anilᵏ = flexᵏ-spec α (u₁ s× u₂) (λ ())
 amguᵏ-spec (svar α)  sEmpty      anilᵏ = flexᵏ-spec α sEmpty (λ ())
 amguᵏ-spec (svar α) (u₁ s⇒ u₂)   anilᵏ = flexᵏ-spec α (u₁ s⇒ u₂) (λ ())
@@ -407,6 +411,7 @@ amguᵏ-spec (svar α) (sBox u₁)    anilᵏ = flexᵏ-spec α (sBox u₁) (λ 
 amguᵏ-spec (sBase b)   (svar β) anilᵏ = Specᵏ-map sym (flexᵏ-spec β (sBase b) (λ ()))
 amguᵏ-spec sUnit       (svar β) anilᵏ = Specᵏ-map sym (flexᵏ-spec β sUnit (λ ()))
 amguᵏ-spec sBool       (svar β) anilᵏ = Specᵏ-map sym (flexᵏ-spec β sBool (λ ()))
+amguᵏ-spec sNat        (svar β) anilᵏ = Specᵏ-map sym (flexᵏ-spec β sNat (λ ()))
 amguᵏ-spec (t₁ s× t₂)  (svar β) anilᵏ = Specᵏ-map sym (flexᵏ-spec β (t₁ s× t₂) (λ ()))
 amguᵏ-spec sEmpty      (svar β) anilᵏ = Specᵏ-map sym (flexᵏ-spec β sEmpty (λ ()))
 amguᵏ-spec (t₁ s⇒ t₂)  (svar β) anilᵏ = Specᵏ-map sym (flexᵏ-spec β (t₁ s⇒ t₂) (λ ()))
@@ -415,6 +420,7 @@ amguᵏ-spec (sBox t₁)   (svar β) anilᵏ = Specᵏ-map sym (flexᵏ-spec β 
 amguᵏ-spec (sBase b) (sBase b')  anilᵏ = const-specᵏ (b ≡ᵇ? b') (λ δ p → sBase-inj p)
 amguᵏ-spec (sBase b) sUnit       anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBase b) sBool       anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (sBase b) sNat        anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBase b) (u₁ s× u₂)  anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBase b) sEmpty      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBase b) (u₁ s⇒ u₂)  anilᵏ = clashᵏ (λ δ ())
@@ -423,6 +429,7 @@ amguᵏ-spec (sBase b) (sBox u₁)   anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sUnit (sBase b')      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sUnit sUnit           anilᵏ = keepᵏ
 amguᵏ-spec sUnit sBool           anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec sUnit sNat            anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sUnit (u₁ s× u₂)      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sUnit sEmpty          anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sUnit (u₁ s⇒ u₂)      anilᵏ = clashᵏ (λ δ ())
@@ -431,14 +438,24 @@ amguᵏ-spec sUnit (sBox u₁)       anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sBool (sBase b')      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sBool sUnit           anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sBool sBool           anilᵏ = keepᵏ
+amguᵏ-spec sBool sNat            anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sBool (u₁ s× u₂)      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sBool sEmpty          anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sBool (u₁ s⇒ u₂)      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sBool (sBox u₁)       anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec sNat (sBase b')      anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec sNat sUnit           anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec sNat sBool           anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec sNat sNat            anilᵏ = keepᵏ
+amguᵏ-spec sNat (u₁ s× u₂)      anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec sNat sEmpty          anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec sNat (u₁ s⇒ u₂)      anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec sNat (sBox u₁)       anilᵏ = clashᵏ (λ δ ())
 
 amguᵏ-spec (t₁ s× t₂) (sBase b') anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s× t₂) sUnit      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s× t₂) sBool      anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (t₁ s× t₂) sNat       anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec {n} (t₁ s× t₂) (u₁ s× u₂) anilᵏ =
   seq-specᵏ (amguᵏ t₁ u₁ (n , anilᵏ)) (amguᵏ t₂ u₂)
             (amguᵏ-spec t₁ u₁ anilᵏ) (amguᵏ-spec t₂ u₂)
@@ -450,6 +467,7 @@ amguᵏ-spec (t₁ s× t₂) (sBox u₁)  anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sEmpty (sBase b')     anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sEmpty sUnit          anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sEmpty sBool          anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec sEmpty sNat           anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sEmpty (u₁ s× u₂)     anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sEmpty sEmpty         anilᵏ = keepᵏ
 amguᵏ-spec sEmpty (u₁ s⇒ u₂)     anilᵏ = clashᵏ (λ δ ())
@@ -458,6 +476,7 @@ amguᵏ-spec sEmpty (sBox u₁)      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s⇒ t₂) (sBase b') anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s⇒ t₂) sUnit      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s⇒ t₂) sBool      anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (t₁ s⇒ t₂) sNat       anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s⇒ t₂) (u₁ s× u₂) anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s⇒ t₂) sEmpty     anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec {n} (t₁ s⇒ t₂) (u₁ s⇒ u₂) anilᵏ =
@@ -469,6 +488,7 @@ amguᵏ-spec (t₁ s⇒ t₂) (sBox u₁)  anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBox t₁) (sBase b')  anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBox t₁) sUnit       anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBox t₁) sBool       anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (sBox t₁) sNat        anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBox t₁) (u₁ s× u₂)  anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBox t₁) sEmpty      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBox t₁) (u₁ s⇒ u₂)  anilᵏ = clashᵏ (λ δ ())

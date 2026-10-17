@@ -28,6 +28,9 @@ examples:
 #   the search for a refutation and establishment: retry,
 #     the closed check with failing chains, candidates
 #     (Search, Entail, Localise, Solve)                  -> runs
+#   natural numbers: zero, succ, caseℕ and numerals,
+#     the former table at Nat, eternality under locks
+#     (Generate, Former, Entail)                         -> data
 
 examples-stdlib:
 	agda TypeInference/Examples/Stdlib/All.agda
@@ -55,6 +58,9 @@ examples-durations:
 
 examples-runs:
 	agda TypeInference/Examples/Runs/All.agda
+
+examples-data:
+	agda TypeInference/Examples/Data/All.agda
 
 clean:
 	git clean -fx

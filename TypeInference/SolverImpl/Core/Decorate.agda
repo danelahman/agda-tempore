@@ -56,6 +56,7 @@ decorate Ψ (svar γ)  = Ψ +ty , wkˢᵗ , tvar (newᵗ {Ψ})
 decorate Ψ (sBase b) = Ψ , idˢ , Base b
 decorate Ψ sUnit     = Ψ , idˢ , Unit
 decorate Ψ sBool     = Ψ , idˢ , Bool
+decorate Ψ sNat      = Ψ , idˢ , Nat
 decorate Ψ sEmpty    = Ψ , idˢ , Empty
 decorate Ψ (t s× u) with decorate Ψ t
 ... | Ψ₁ , w₁ , A with decorate Ψ₁ u

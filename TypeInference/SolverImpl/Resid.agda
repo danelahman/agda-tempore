@@ -624,6 +624,7 @@ etDec-str j (tvar α) q = _ , refl
 etDec-str j (Base b) q = Base b , refl
 etDec-str j Unit     q = Unit , refl
 etDec-str j Bool     q = Bool , refl
+etDec-str j Nat      q = Nat , refl
 etDec-str j Empty    q = Empty , refl
 etDec-str j (A |×| B) q with zip₂-just _++_ (etDec A) (zip₂ _++_ (etDec B) (just [])) q
 ... | _ , _ , qa , q' , _ with zip₂-just _++_ (etDec B) (just []) q'

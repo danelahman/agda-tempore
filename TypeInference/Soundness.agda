@@ -327,6 +327,14 @@ mutual
   soundVˢ ι Γ true        A (st , _) = subV true st        , refl
   soundVˢ ι Γ false       A (st , _) = subV false st       , refl
 
+  -- natural numbers
+
+  soundVˢ ι Γ zero        A (st , _) = subV zero st        , refl
+  soundVˢ ι Γ (succ V)    A ((st , _) , s) =
+    subV (succ (proj₁ ih)) st , cong succ (proj₂ ih)
+    where
+      ih = soundVˢ ι Γ V Nat s
+
   -- pairing
 
   soundVˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ ⦉ V₁ , V₂ ⦊ A (B₁ , B₂ , (st , _) , s₁ , s₂) =
@@ -516,6 +524,16 @@ mutual
       ih₀ = soundVˢ ι Γ V Bool s₀
       ih₁ = soundCˢ ι Γ M₁ A t s₁
       ih₂ = soundCˢ ι Γ M₂ A t s₂
+
+  -- natural-number elimination
+
+  soundCˢ ι Γ (caseℕ V `zero M₁ `succ M₂) A t (s₀ , s₁ , s₂) =
+    caseℕ (proj₁ ih₀) `zero (proj₁ ih₁) `succ (proj₁ ih₂) ,
+    cong₃ caseℕ_`zero_`succ_ (proj₂ ih₀) (proj₂ ih₁) (proj₂ ih₂)
+    where
+      ih₀ = soundVˢ ι Γ V Nat s₀
+      ih₁ = soundCˢ ι Γ M₁ A t s₁
+      ih₂ = soundCˢ ι (Γ ∷ Nat) M₂ A t s₂
 
   -- performing algebraic operations
 

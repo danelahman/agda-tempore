@@ -116,6 +116,7 @@ amguᵏ t          (svar β)     (_ , anilᵏ)  = flexᵏ β t
 amguᵏ (sBase b)  (sBase b')  s@(_ , anilᵏ) = if ⌊ b ≡ᵇ? b' ⌋ then just s else nothing
 amguᵏ sUnit      sUnit       s@(_ , anilᵏ) = just s
 amguᵏ sBool      sBool       s@(_ , anilᵏ) = just s
+amguᵏ sNat       sNat        s@(_ , anilᵏ) = just s
 amguᵏ sEmpty     sEmpty      s@(_ , anilᵏ) = just s
 amguᵏ (t s× u)   (t' s× u')  s@(_ , anilᵏ) = amguᵏ t t' s >>= amguᵏ u u'
 amguᵏ (t s⇒ u)   (t' s⇒ u')  s@(_ , anilᵏ) = amguᵏ t t' s >>= amguᵏ u u'

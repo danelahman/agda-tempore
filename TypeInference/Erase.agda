@@ -53,6 +53,8 @@ mutual
   ⌊ ⋆ ⌋ᵛ          = ⋆
   ⌊ true ⌋ᵛ       = true
   ⌊ false ⌋ᵛ      = false
+  ⌊ zero ⌋ᵛ       = zero
+  ⌊ succ V ⌋ᵛ     = succ ⌊ V ⌋ᵛ
   ⌊ ⦉ V , W ⦊ ⌋ᵛ   = ⦉ ⌊ V ⌋ᵛ , ⌊ W ⌋ᵛ ⦊
   ⌊ lam M ⌋ᵛ      = lam ⌊ M ⌋ᶜ
   ⌊ annᵛ A V ⌋ᵛ   = ⌊ V ⌋ᵛ ⦂ᵛ A
@@ -73,6 +75,7 @@ mutual
   ⌊ match V `in M ⌋ᶜ            = match ⌊ V ⌋ᵛ `in ⌊ M ⌋ᶜ
   ⌊ absurd V ⌋ᶜ                 = absurd ⌊ V ⌋ᵛ
   ⌊ if V `then M `else N ⌋ᶜ     = if ⌊ V ⌋ᵛ `then ⌊ M ⌋ᶜ `else ⌊ N ⌋ᶜ
+  ⌊ caseℕ V `zero M `succ N ⌋ᶜ  = caseℕ ⌊ V ⌋ᵛ `zero ⌊ M ⌋ᶜ `succ ⌊ N ⌋ᶜ
   ⌊ perform op V M ⌋ᶜ           = perform op ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ
   ⌊ delay τ M ⌋ᶜ                = delay τ ⌊ M ⌋ᶜ
 

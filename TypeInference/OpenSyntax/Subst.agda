@@ -71,6 +71,7 @@ mutual
   Base b    [ σ ]ᵛ = Base b
   Unit      [ σ ]ᵛ = Unit
   Bool      [ σ ]ᵛ = Bool
+  Nat       [ σ ]ᵛ = Nat
   (A |×| B) [ σ ]ᵛ = A [ σ ]ᵛ |×| B [ σ ]ᵛ
   Empty     [ σ ]ᵛ = Empty
   (A ⇒ C)   [ σ ]ᵛ = A [ σ ]ᵛ ⇒ C [ σ ]ᶜ
@@ -248,6 +249,7 @@ mutual
   [id]ᵛ (Base b)  = refl
   [id]ᵛ Unit      = refl
   [id]ᵛ Bool      = refl
+  [id]ᵛ Nat       = refl
   [id]ᵛ (A |×| B) = cong₂ _|×|_ ([id]ᵛ A) ([id]ᵛ B)
   [id]ᵛ Empty     = refl
   [id]ᵛ (A ⇒ C)   = cong₂ _⇒_ ([id]ᵛ A) ([id]ᶜ C)
@@ -284,6 +286,7 @@ mutual
   [⨟]ᵛ (Base b)  σ δ = refl
   [⨟]ᵛ Unit      σ δ = refl
   [⨟]ᵛ Bool      σ δ = refl
+  [⨟]ᵛ Nat       σ δ = refl
   [⨟]ᵛ (A |×| B) σ δ = cong₂ _|×|_ ([⨟]ᵛ A σ δ) ([⨟]ᵛ B σ δ)
   [⨟]ᵛ Empty     σ δ = refl
   [⨟]ᵛ (A ⇒ C)   σ δ = cong₂ _⇒_ ([⨟]ᵛ A σ δ) ([⨟]ᶜ C σ δ)
@@ -319,6 +322,7 @@ mutual
   [≐]ᵛ p (Base b)  = refl
   [≐]ᵛ p Unit      = refl
   [≐]ᵛ p Bool      = refl
+  [≐]ᵛ p Nat       = refl
   [≐]ᵛ p (A |×| B) = cong₂ _|×|_ ([≐]ᵛ p A) ([≐]ᵛ p B)
   [≐]ᵛ p Empty     = refl
   [≐]ᵛ p (A ⇒ C)   = cong₂ _⇒_ ([≐]ᵛ p A) ([≐]ᶜ p C)
@@ -379,6 +383,7 @@ mutual
   wkˢᵗ-v (Base b)  = refl
   wkˢᵗ-v Unit      = refl
   wkˢᵗ-v Bool      = refl
+  wkˢᵗ-v Nat       = refl
   wkˢᵗ-v (A |×| B) = cong₂ _|×|_ (wkˢᵗ-v A) (wkˢᵗ-v B)
   wkˢᵗ-v Empty     = refl
   wkˢᵗ-v (A ⇒ C)   = cong₂ _⇒_ (wkˢᵗ-v A) (wkˢᵗ-c C)
@@ -394,6 +399,7 @@ mutual
   wkˢʳ-v (Base b)  = refl
   wkˢʳ-v Unit      = refl
   wkˢʳ-v Bool      = refl
+  wkˢʳ-v Nat       = refl
   wkˢʳ-v (A |×| B) = cong₂ _|×|_ (wkˢʳ-v A) (wkˢʳ-v B)
   wkˢʳ-v Empty     = refl
   wkˢʳ-v (A ⇒ C)   = cong₂ _⇒_ (wkˢʳ-v A) (wkˢʳ-c C)
@@ -409,6 +415,7 @@ mutual
   wkˢᵉ-v (Base b)  = refl
   wkˢᵉ-v Unit      = refl
   wkˢᵉ-v Bool      = refl
+  wkˢᵉ-v Nat       = refl
   wkˢᵉ-v (A |×| B) = cong₂ _|×|_ (wkˢᵉ-v A) (wkˢᵉ-v B)
   wkˢᵉ-v Empty     = refl
   wkˢᵉ-v (A ⇒ C)   = cong₂ _⇒_ (wkˢᵉ-v A) (wkˢᵉ-c C)

@@ -94,6 +94,7 @@ data Decomp {Ψ : Scope} : OVType Ψ → OVType Ψ → List (Part Ψ) → Set wh
   Baseᴰ  : ∀ {b} → Decomp (Base b) (Base b) []
   Unitᴰ  : Decomp Unit Unit []
   Boolᴰ  : Decomp Bool Bool []
+  Natᴰ   : Decomp Nat Nat []
   Emptyᴰ : Decomp Empty Empty []
   |×|ᴰ   : ∀ {A A' B B'}
          → Decomp (A |×| B) (A' |×| B') (ty co A A' ∷ ty co B B' ∷ [])
@@ -117,6 +118,7 @@ decompose (Base b)       (Base b')         with b ≡ᵇ? b'
 ... | no _     = clash
 decompose Unit           Unit              = parts _ Unitᴰ
 decompose Bool           Bool              = parts _ Boolᴰ
+decompose Nat            Nat               = parts _ Natᴰ
 decompose Empty          Empty             = parts _ Emptyᴰ
 decompose (A |×| B)      (A' |×| B')       = parts _ |×|ᴰ
 decompose (A ⇒ (B ‼ ε))  (A' ⇒ (B' ‼ ε'))  = parts _ ⇒ᴰ
@@ -140,6 +142,7 @@ self (tvar α)      = var α
 self (Base b)      = form _ Baseᴰ []
 self Unit          = form _ Unitᴰ []
 self Bool          = form _ Boolᴰ []
+self Nat           = form _ Natᴰ []
 self Empty         = form _ Emptyᴰ []
 self (A |×| B)     = form _ |×|ᴰ (refl ∷ refl ∷ [])
 self (A ⇒ (B ‼ ε)) = form _ ⇒ᴰ (refl ∷ refl ∷ refl ∷ [])
@@ -151,6 +154,7 @@ eternal : ∀ {Ψ} {A B : OVType Ψ} {ps} → Decomp A B ps → 𝔹
 eternal (Baseᴰ {b}) = ⌊ eternalBaseType? b ⌋
 eternal Unitᴰ       = true
 eternal Boolᴰ       = true
+eternal Natᴰ        = true
 eternal Emptyᴰ      = true
 eternal |×|ᴰ        = true
 eternal ⇒ᴰ          = false
@@ -164,6 +168,7 @@ eternal []ᴰ         = false
 <:-intro Baseᴰ  σ τ []              = Baseₛ refl
 <:-intro Unitᴰ  σ τ []              = Unitₛ
 <:-intro Boolᴰ  σ τ []              = Boolₛ
+<:-intro Natᴰ   σ τ []              = Natₛ
 <:-intro Emptyᴰ σ τ []              = Emptyₛ
 <:-intro |×|ᴰ   σ τ (p ∷ q ∷ [])     = p |×|ₛ q
 <:-intro ⇒ᴰ     σ τ (p ∷ q ∷ e ∷ []) = p ⇒ₛ (q ‼ₛ e)
@@ -175,6 +180,7 @@ eternal []ᴰ         = false
 <:-elim Baseᴰ  σ τ (Baseₛ _)        = []
 <:-elim Unitᴰ  σ τ Unitₛ            = []
 <:-elim Boolᴰ  σ τ Boolₛ            = []
+<:-elim Natᴰ   σ τ Natₛ             = []
 <:-elim Emptyᴰ σ τ Emptyₛ           = []
 <:-elim |×|ᴰ   σ τ (p |×|ₛ q)       = p ∷ q ∷ []
 <:-elim ⇒ᴰ     σ τ (p ⇒ₛ (q ‼ₛ e))  = p ∷ q ∷ e ∷ []
@@ -196,6 +202,7 @@ Etᴾ Q (eg _ _ _) = ⊤
 ⊩ᴱ-intro (Baseᴰ {b}) () δ [] | no _
 ⊩ᴱ-intro Unitᴰ  e  δ []           = Unitₑ
 ⊩ᴱ-intro Boolᴰ  e  δ []           = Boolₑ
+⊩ᴱ-intro Natᴰ   e  δ []           = Natₑ
 ⊩ᴱ-intro Emptyᴰ e  δ []           = Emptyₑ
 ⊩ᴱ-intro |×|ᴰ   e  δ (p ∷ q ∷ []) = p |×|ₑ q
 
@@ -207,6 +214,7 @@ Etᴾ Q (eg _ _ _) = ⊤
 ... | no ¬p = ⊥-elim-irr (¬p p)
 ⊩ᴱ-elim Unitᴰ  δ Unitₑ      = refl , []
 ⊩ᴱ-elim Boolᴰ  δ Boolₑ      = refl , []
+⊩ᴱ-elim Natᴰ   δ Natₑ       = refl , []
 ⊩ᴱ-elim Emptyᴰ δ Emptyₑ     = refl , []
 ⊩ᴱ-elim |×|ᴰ   δ (p |×|ₑ q) = refl , p ∷ q ∷ []
 
@@ -236,6 +244,7 @@ accs (tvar α)      = (λ ()) , (λ ())
 accs (Base b)      = (λ { Baseᴰ → [] }) , (λ { Baseᴰ → [] })
 accs Unit          = (λ { Unitᴰ → [] }) , (λ { Unitᴰ → [] })
 accs Bool          = (λ { Boolᴰ → [] }) , (λ { Boolᴰ → [] })
+accs Nat           = (λ { Natᴰ → [] }) , (λ { Natᴰ → [] })
 accs Empty         = (λ { Emptyᴰ → [] }) , (λ { Emptyᴰ → [] })
 accs (A |×| B)     = (λ { |×|ᴰ → ≺-wf A ∷ ≺-wf B ∷ [] })
                    , (λ { |×|ᴰ → ≺-wf A ∷ ≺-wf B ∷ [] })

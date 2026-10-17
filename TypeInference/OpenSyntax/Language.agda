@@ -14,9 +14,12 @@
 -- The rules `annᵛ` and `annᶜ` record a type annotation of the  --
 -- raw term, have no counterpart in `Syntax.Language`, and are  --
 -- identities on typing.                                        --
+--                                                              --
+-- The rules `zero`, `succ` and `caseℕ` for natural numbers     --
+-- have no counterpart in `Syntax.Language` either.             --
 ------------------------------------------------------------------
 
-open import Data.Nat using (ℕ)
+open import Data.Nat using (ℕ; suc)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -82,6 +85,16 @@ mutual
     false   :
               -------------
               Q ∣ Γ ⊢V⦂ Bool
+
+    -- natural numbers
+
+    zero    :
+              ------------
+              Q ∣ Γ ⊢V⦂ Nat
+
+    succ    : Q ∣ Γ ⊢V⦂ Nat
+              -------------
+            → Q ∣ Γ ⊢V⦂ Nat
 
     -- pairing
 
@@ -172,6 +185,20 @@ mutual
             ----------------
             → Q ∣ Γ ⊢C⦂ C
 
+    -- natural-number elimination
+
+    -- As for `if`, both branches are typed at the same computation type;
+    -- the successor branch binds the predecessor, as `match` binds the
+    -- components of a pair.
+
+    caseℕ_`zero_`succ_
+            : {C : OCType Θ}
+            → Q ∣ Γ ⊢V⦂ Nat
+            → Q ∣ Γ ⊢C⦂ C
+            → Q ∣ Γ ∷ Nat ⊢C⦂ C
+            -------------------
+            → Q ∣ Γ ⊢C⦂ C
+
     -- performing algebraic operations
 
     -- Parameter and arity types are ground, hence closed: they embed at any
@@ -256,6 +283,12 @@ mutual
             → Q ∣ C <:̂ᶜ C'
             --------------
             → Q ∣ Γ ⊢C⦂ C'
+
+-- Numerals
+
+numeralᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} → ℕ → Q ∣ Γ ⊢V⦂ Nat
+numeralᵛ 0       = zero
+numeralᵛ (suc k) = succ (numeralᵛ k)
 
 -- Sub-effecting, recovered as subsumption at an effect-only derivation
 

@@ -404,6 +404,7 @@ sameᵛ? (Base b) (Base b') with b ≡ᵇ? b'
 ... | no _     = nothing
 sameᵛ? Unit Unit = just refl
 sameᵛ? Bool Bool = just refl
+sameᵛ? Nat Nat = just refl
 sameᵛ? (A |×| B) (A' |×| B') with sameᵛ? A A' | sameᵛ? B B'
 ... | just refl | just refl = just refl
 ... | _         | _         = nothing

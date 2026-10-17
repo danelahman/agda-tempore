@@ -49,6 +49,7 @@ data Skel (n : ℕ) : Set where
   sBase  : BaseType → Skel n               -- base types
   sUnit  : Skel n                          -- unit type
   sBool  : Skel n                          -- boolean type
+  sNat   : Skel n                          -- natural-number type
   _s×_   : Skel n → Skel n → Skel n        -- product type
   sEmpty : Skel n                          -- empty type
   _s⇒_   : Skel n → Skel n → Skel n        -- function type, to its result's value part
@@ -65,6 +66,7 @@ svar?-just (svar γ)  refl = refl
 svar?-just (sBase b) ()
 svar?-just sUnit     ()
 svar?-just sBool     ()
+svar?-just sNat      ()
 svar?-just (t s× u)  ()
 svar?-just sEmpty    ()
 svar?-just (t s⇒ u)  ()
@@ -79,6 +81,7 @@ mutual
   skelᵛ (Base b)  = sBase b
   skelᵛ Unit      = sUnit
   skelᵛ Bool      = sBool
+  skelᵛ Nat       = sNat
   skelᵛ (A |×| B) = skelᵛ A s× skelᵛ B
   skelᵛ Empty     = sEmpty
   skelᵛ (A ⇒ C)   = skelᵛ A s⇒ skelᶜ C
@@ -101,6 +104,7 @@ svar α    [ σ ]ᵏ = σ α
 sBase b   [ σ ]ᵏ = sBase b
 sUnit     [ σ ]ᵏ = sUnit
 sBool     [ σ ]ᵏ = sBool
+sNat      [ σ ]ᵏ = sNat
 (t s× u)  [ σ ]ᵏ = t [ σ ]ᵏ s× u [ σ ]ᵏ
 sEmpty    [ σ ]ᵏ = sEmpty
 (t s⇒ u)  [ σ ]ᵏ = t [ σ ]ᵏ s⇒ u [ σ ]ᵏ
@@ -122,6 +126,7 @@ _≐ᵏ_ : ∀ {n m} → SSub n m → SSub n m → Set
 [id]ᵏ (sBase b) = refl
 [id]ᵏ sUnit     = refl
 [id]ᵏ sBool     = refl
+[id]ᵏ sNat      = refl
 [id]ᵏ (t s× u)  = cong₂ _s×_ ([id]ᵏ t) ([id]ᵏ u)
 [id]ᵏ sEmpty    = refl
 [id]ᵏ (t s⇒ u)  = cong₂ _s⇒_ ([id]ᵏ t) ([id]ᵏ u)
@@ -133,6 +138,7 @@ _≐ᵏ_ : ∀ {n m} → SSub n m → SSub n m → Set
 [⨟]ᵏ (sBase b) σ δ = refl
 [⨟]ᵏ sUnit     σ δ = refl
 [⨟]ᵏ sBool     σ δ = refl
+[⨟]ᵏ sNat      σ δ = refl
 [⨟]ᵏ (t s× u)  σ δ = cong₂ _s×_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
 [⨟]ᵏ sEmpty    σ δ = refl
 [⨟]ᵏ (t s⇒ u)  σ δ = cong₂ _s⇒_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
@@ -143,6 +149,7 @@ _≐ᵏ_ : ∀ {n m} → SSub n m → SSub n m → Set
 [≐]ᵏ p (sBase b) = refl
 [≐]ᵏ p sUnit     = refl
 [≐]ᵏ p sBool     = refl
+[≐]ᵏ p sNat      = refl
 [≐]ᵏ p (t s× u)  = cong₂ _s×_ ([≐]ᵏ p t) ([≐]ᵏ p u)
 [≐]ᵏ p sEmpty    = refl
 [≐]ᵏ p (t s⇒ u)  = cong₂ _s⇒_ ([≐]ᵏ p t) ([≐]ᵏ p u)
@@ -171,6 +178,7 @@ checkᵏ α (svar β)  = mmap svar (thick α β)
 checkᵏ α (sBase b) = just (sBase b)
 checkᵏ α sUnit     = just sUnit
 checkᵏ α sBool     = just sBool
+checkᵏ α sNat      = just sNat
 checkᵏ α (t s× u)  = zip₂ _s×_ (checkᵏ α t) (checkᵏ α u)
 checkᵏ α sEmpty    = just sEmpty
 checkᵏ α (t s⇒ u)  = zip₂ _s⇒_ (checkᵏ α t) (checkᵏ α u)

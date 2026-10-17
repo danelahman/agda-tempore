@@ -80,6 +80,11 @@ mutual
   genVˢ ι Γ true        A = Bool ≐ᵥ A
   genVˢ ι Γ false       A = Bool ≐ᵥ A
 
+  -- natural numbers
+
+  genVˢ ι Γ zero        A = Nat ≐ᵥ A
+  genVˢ ι Γ (succ V)    A = (Nat ≐ᵥ A) ∧̂ genVˢ ι Γ V Nat
+
   -- pairing
 
   genVˢ {Θ = Θ} ι Γ ⦉ V₁ , V₂ ⦊ A =
@@ -174,6 +179,11 @@ mutual
 
   genCˢ ι Γ (if V `then M₁ `else M₂) (A ‼ t) =
     genVˢ ι Γ V Bool ∧̂ genCˢ ι Γ M₁ (A ‼ t) ∧̂ genCˢ ι Γ M₂ (A ‼ t)
+
+  -- natural-number elimination
+
+  genCˢ ι Γ (caseℕ V `zero M₁ `succ M₂) (A ‼ t) =
+    genVˢ ι Γ V Nat ∧̂ genCˢ ι Γ M₁ (A ‼ t) ∧̂ genCˢ ι (Γ ∷ Nat) M₂ (A ‼ t)
 
   -- performing algebraic operations
 
@@ -288,6 +298,8 @@ mutual
   genVˢ-rigidFree ⋆            h       = tt , tt
   genVˢ-rigidFree true         h       = tt , tt
   genVˢ-rigidFree false        h       = tt , tt
+  genVˢ-rigidFree zero         h       = tt , tt
+  genVˢ-rigidFree (succ V)     h       = (tt , tt) , genVˢ-rigidFree V h
   genVˢ-rigidFree ⦉ V₁ , V₂ ⦊   (h , k) = (tt , tt) , genVˢ-rigidFree V₁ h , genVˢ-rigidFree V₂ k
   genVˢ-rigidFree (lam M)      h       = tt , genCˢ-rigidFree M h
   genVˢ-rigidFree (V ⦂ᵛ B)     h       = genVˢ-rigidFree V h , tt
@@ -305,6 +317,8 @@ mutual
   genCˢ-rigidFree (absurd V)               {A ‼ t} h           =
     genVˢ-rigidFree V h
   genCˢ-rigidFree (if V `then M₁ `else M₂) {A ‼ t} (h , k , l) =
+    genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
+  genCˢ-rigidFree (caseℕ V `zero M₁ `succ M₂) {A ‼ t} (h , k , l) =
     genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
   genCˢ-rigidFree (perform op V M)         {A ‼ t} (h , k)     =
     genVˢ-rigidFree V h , genCˢ-rigidFree M k , tt

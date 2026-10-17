@@ -62,6 +62,7 @@ checkᵏ-forᵏ α (svar β)   q    s with map-just svar (thick α β) q
 checkᵏ-forᵏ α (sBase b)  refl s = refl
 checkᵏ-forᵏ α sUnit      refl s = refl
 checkᵏ-forᵏ α sBool      refl s = refl
+checkᵏ-forᵏ α sNat       refl s = refl
 checkᵏ-forᵏ α (t₁ s× t₂) q    s with zip₂-just _s×_ (checkᵏ α t₁) (checkᵏ α t₂) q
 ... | _ , _ , q₁ , q₂ , refl =
   cong₂ _s×_ (checkᵏ-forᵏ α t₁ q₁ s) (checkᵏ-forᵏ α t₂ q₂ s)
@@ -188,6 +189,7 @@ amguᵏ-sound (svar α)   (svar β)   anilᵏ eq = flexFlexᵏ-sound α β eq
 amguᵏ-sound (svar α)   (sBase b') anilᵏ eq = flexᵏ-sound α (sBase b') eq
 amguᵏ-sound (svar α)   sUnit      anilᵏ eq = flexᵏ-sound α sUnit eq
 amguᵏ-sound (svar α)   sBool      anilᵏ eq = flexᵏ-sound α sBool eq
+amguᵏ-sound (svar α)   sNat       anilᵏ eq = flexᵏ-sound α sNat eq
 amguᵏ-sound (svar α) (u₁ s× u₂)   anilᵏ eq = flexᵏ-sound α (u₁ s× u₂) eq
 amguᵏ-sound (svar α)   sEmpty     anilᵏ eq = flexᵏ-sound α sEmpty eq
 amguᵏ-sound (svar α) (u₁ s⇒ u₂)   anilᵏ eq = flexᵏ-sound α (u₁ s⇒ u₂) eq
@@ -196,6 +198,7 @@ amguᵏ-sound (svar α)  (sBox u₁)   anilᵏ eq = flexᵏ-sound α (sBox u₁)
 amguᵏ-sound (sBase b)   (svar β) anilᵏ eq = Soundᵏ-map sym (flexᵏ-sound β (sBase b) eq)
 amguᵏ-sound sUnit       (svar β) anilᵏ eq = Soundᵏ-map sym (flexᵏ-sound β sUnit eq)
 amguᵏ-sound sBool       (svar β) anilᵏ eq = Soundᵏ-map sym (flexᵏ-sound β sBool eq)
+amguᵏ-sound sNat        (svar β) anilᵏ eq = Soundᵏ-map sym (flexᵏ-sound β sNat eq)
 amguᵏ-sound (t₁ s× t₂)  (svar β) anilᵏ eq = Soundᵏ-map sym (flexᵏ-sound β (t₁ s× t₂) eq)
 amguᵏ-sound sEmpty      (svar β) anilᵏ eq = Soundᵏ-map sym (flexᵏ-sound β sEmpty eq)
 amguᵏ-sound (t₁ s⇒ t₂)  (svar β) anilᵏ eq = Soundᵏ-map sym (flexᵏ-sound β (t₁ s⇒ t₂) eq)
@@ -207,6 +210,7 @@ amguᵏ-sound {n} (sBase b) (sBase b') anilᵏ eq
 ... | inj₂ ()
 amguᵏ-sound (sBase b) sUnit        anilᵏ ()
 amguᵏ-sound (sBase b) sBool        anilᵏ ()
+amguᵏ-sound (sBase b) sNat         anilᵏ ()
 amguᵏ-sound (sBase b) (u₁ s× u₂)   anilᵏ ()
 amguᵏ-sound (sBase b) sEmpty       anilᵏ ()
 amguᵏ-sound (sBase b) (u₁ s⇒ u₂)   anilᵏ ()
@@ -215,6 +219,7 @@ amguᵏ-sound (sBase b) (sBox u₁)    anilᵏ ()
 amguᵏ-sound sUnit (sBase b')       anilᵏ ()
 amguᵏ-sound sUnit sUnit            anilᵏ refl = soundᵏ anilᵏ refl refl
 amguᵏ-sound sUnit sBool            anilᵏ ()
+amguᵏ-sound sUnit sNat             anilᵏ ()
 amguᵏ-sound sUnit (u₁ s× u₂)       anilᵏ ()
 amguᵏ-sound sUnit sEmpty           anilᵏ ()
 amguᵏ-sound sUnit (u₁ s⇒ u₂)       anilᵏ ()
@@ -223,14 +228,24 @@ amguᵏ-sound sUnit (sBox u₁)        anilᵏ ()
 amguᵏ-sound sBool (sBase b')       anilᵏ ()
 amguᵏ-sound sBool sUnit            anilᵏ ()
 amguᵏ-sound sBool sBool            anilᵏ refl = soundᵏ anilᵏ refl refl
+amguᵏ-sound sBool sNat             anilᵏ ()
 amguᵏ-sound sBool (u₁ s× u₂)       anilᵏ ()
 amguᵏ-sound sBool sEmpty           anilᵏ ()
 amguᵏ-sound sBool (u₁ s⇒ u₂)       anilᵏ ()
 amguᵏ-sound sBool (sBox u₁)        anilᵏ ()
+amguᵏ-sound sNat (sBase b')       anilᵏ ()
+amguᵏ-sound sNat sUnit            anilᵏ ()
+amguᵏ-sound sNat sBool            anilᵏ ()
+amguᵏ-sound sNat sNat             anilᵏ refl = soundᵏ anilᵏ refl refl
+amguᵏ-sound sNat (u₁ s× u₂)       anilᵏ ()
+amguᵏ-sound sNat sEmpty           anilᵏ ()
+amguᵏ-sound sNat (u₁ s⇒ u₂)       anilᵏ ()
+amguᵏ-sound sNat (sBox u₁)        anilᵏ ()
 
 amguᵏ-sound (t₁ s× t₂) (sBase b')  anilᵏ ()
 amguᵏ-sound (t₁ s× t₂) sUnit       anilᵏ ()
 amguᵏ-sound (t₁ s× t₂) sBool       anilᵏ ()
+amguᵏ-sound (t₁ s× t₂) sNat        anilᵏ ()
 amguᵏ-sound {n} (t₁ s× t₂) (u₁ s× u₂) anilᵏ eq =
   seq-soundᵏ (amguᵏ t₁ u₁ (n , anilᵏ)) (amguᵏ t₂ u₂)
              (amguᵏ-sound t₁ u₁ anilᵏ) (amguᵏ-sound t₂ u₂)
@@ -242,6 +257,7 @@ amguᵏ-sound (t₁ s× t₂) (sBox u₁)   anilᵏ ()
 amguᵏ-sound sEmpty (sBase b')      anilᵏ ()
 amguᵏ-sound sEmpty sUnit           anilᵏ ()
 amguᵏ-sound sEmpty sBool           anilᵏ ()
+amguᵏ-sound sEmpty sNat            anilᵏ ()
 amguᵏ-sound sEmpty (u₁ s× u₂)      anilᵏ ()
 amguᵏ-sound sEmpty sEmpty          anilᵏ refl = soundᵏ anilᵏ refl refl
 amguᵏ-sound sEmpty (u₁ s⇒ u₂)      anilᵏ ()
@@ -250,6 +266,7 @@ amguᵏ-sound sEmpty (sBox u₁)       anilᵏ ()
 amguᵏ-sound (t₁ s⇒ t₂) (sBase b')  anilᵏ ()
 amguᵏ-sound (t₁ s⇒ t₂) sUnit       anilᵏ ()
 amguᵏ-sound (t₁ s⇒ t₂) sBool       anilᵏ ()
+amguᵏ-sound (t₁ s⇒ t₂) sNat        anilᵏ ()
 amguᵏ-sound (t₁ s⇒ t₂) (u₁ s× u₂)  anilᵏ ()
 amguᵏ-sound (t₁ s⇒ t₂) sEmpty      anilᵏ ()
 amguᵏ-sound {n} (t₁ s⇒ t₂) (u₁ s⇒ u₂) anilᵏ eq =
@@ -261,6 +278,7 @@ amguᵏ-sound (t₁ s⇒ t₂) (sBox u₁)   anilᵏ ()
 amguᵏ-sound (sBox t₁) (sBase b')   anilᵏ ()
 amguᵏ-sound (sBox t₁) sUnit        anilᵏ ()
 amguᵏ-sound (sBox t₁) sBool        anilᵏ ()
+amguᵏ-sound (sBox t₁) sNat         anilᵏ ()
 amguᵏ-sound (sBox t₁) (u₁ s× u₂)   anilᵏ ()
 amguᵏ-sound (sBox t₁) sEmpty       anilᵏ ()
 amguᵏ-sound (sBox t₁) (u₁ s⇒ u₂)   anilᵏ ()

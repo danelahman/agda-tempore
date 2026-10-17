@@ -2,8 +2,10 @@
 -- Open value and computation types                             --
 --                                                              --
 -- The types of `Syntax.Types` with grade expressions in place  --
--- of grades and a former `tvar` for type variables. The ground --
--- types of the operation signature embed by `⌜_⌝ᵍ`.            --
+-- of grades, a former `tvar` for type variables, and a type    --
+-- `Nat` of natural numbers, which has no counterpart in        --
+-- `Syntax.Types`. The ground types of the operation signature  --
+-- embed by `⌜_⌝ᵍ`; `Nat` is not among them.                    --
 ------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -29,6 +31,7 @@ mutual
     Base  : BaseType → OVType Θ              -- base types
     Unit  : OVType Θ                         -- unit type
     Bool  : OVType Θ                         -- boolean type
+    Nat   : OVType Θ                         -- natural-number type
     _|×|_ : OVType Θ → OVType Θ → OVType Θ   -- product type
     Empty : OVType Θ                         -- empty type
     _⇒_   : OVType Θ → OCType Θ → OVType Θ   -- function type
@@ -61,6 +64,7 @@ mutual
   wkᵗ-v     (Base b) = Base b
   wkᵗ-v     Unit     = Unit
   wkᵗ-v     Bool     = Bool
+  wkᵗ-v     Nat      = Nat
   wkᵗ-v     (A |×| B) = wkᵗ-v A |×| wkᵗ-v B
   wkᵗ-v     Empty    = Empty
   wkᵗ-v     (A ⇒ C)  = wkᵗ-v A ⇒ wkᵗ-c C
@@ -76,6 +80,7 @@ mutual
   wkʳ-v     (Base b) = Base b
   wkʳ-v     Unit     = Unit
   wkʳ-v     Bool     = Bool
+  wkʳ-v     Nat      = Nat
   wkʳ-v     (A |×| B) = wkʳ-v A |×| wkʳ-v B
   wkʳ-v     Empty    = Empty
   wkʳ-v     (A ⇒ C)  = wkʳ-v A ⇒ wkʳ-c C
@@ -91,6 +96,7 @@ mutual
   wkᵉ-v     (Base b) = Base b
   wkᵉ-v     Unit     = Unit
   wkᵉ-v     Bool     = Bool
+  wkᵉ-v     Nat      = Nat
   wkᵉ-v     (A |×| B) = wkᵉ-v A |×| wkᵉ-v B
   wkᵉ-v     Empty    = Empty
   wkᵉ-v     (A ⇒ C)  = wkᵉ-v A ⇒ wkᵉ-c C

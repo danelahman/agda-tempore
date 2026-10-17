@@ -233,6 +233,7 @@ mutual
   updᵉ-v k b (Base c)  q = refl
   updᵉ-v k b Unit      q = refl
   updᵉ-v k b Bool      q = refl
+  updᵉ-v k b Nat       q = refl
   updᵉ-v k b Empty     q = refl
   updᵉ-v k b (A |×| B) q with ∨-false (occᵉ-v k A) (occᵉ-v k B) q
   ... | q₁ , q₂ = cong₂ _|×|_ (updᵉ-v k b A q₁) (updᵉ-v k b B q₂)
@@ -254,6 +255,7 @@ mutual
   updʳ-v k b (Base c)  q = refl
   updʳ-v k b Unit      q = refl
   updʳ-v k b Bool      q = refl
+  updʳ-v k b Nat       q = refl
   updʳ-v k b Empty     q = refl
   updʳ-v k b (A |×| B) q with ∨-false (occʳ-v k A) (occʳ-v k B) q
   ... | q₁ , q₂ = cong₂ _|×|_ (updʳ-v k b A q₁) (updʳ-v k b B q₂)
@@ -1237,6 +1239,7 @@ hitᵥ l (tvar α)  = false
 hitᵥ l (Base b)  = false
 hitᵥ l Unit      = false
 hitᵥ l Bool      = false
+hitᵥ l Nat       = false
 hitᵥ l Empty     = false
 hitᵥ l (A |×| B) = hitᵥ l A ∨ hitᵥ l B
 hitᵥ l (A ⇒ C)   = hitᵥ l A ∨ hitᶜ l C
@@ -1268,6 +1271,7 @@ tops-v l (tvar α)  q = refl
 tops-v l (Base b)  q = refl
 tops-v l Unit      q = refl
 tops-v l Bool      q = refl
+tops-v l Nat       q = refl
 tops-v l Empty     q = refl
 tops-v l (A |×| B) q with ∨-false (hitᵥ l A) (hitᵥ l B) q
 ... | q₁ , q₂ = cong₂ _|×|_ (tops-v l A q₁) (tops-v l B q₂)

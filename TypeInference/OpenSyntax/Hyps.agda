@@ -278,10 +278,10 @@ data _⊩_≾̂ₑ_ {Θ} Q where
   ≡̂ₑ-antisym-∅ (⊔-lubₑ (⊔-lubₑ ⊔-ubˡₑ (transₑ ⊔-ubˡₑ ⊔-ubʳₑ)) (transₑ ⊔-ubʳₑ ⊔-ubʳₑ))
                (⊔-lubₑ (transₑ ⊔-ubˡₑ ⊔-ubˡₑ) (⊔-lubₑ (transₑ ⊔-ubʳₑ ⊔-ubˡₑ) ⊔-ubʳₑ))
 
--- Mirrors `Eternal` of `Syntax.Types`, plus rules for the eternality
--- atoms of the hypothesis set and for transfer along an assumed
--- subtyping in both directions; as in the original, no rule for `_⇒_`
--- and `[_]_`.
+-- Mirrors `Eternal` of `Syntax.Types`, with a rule for `Nat`, plus
+-- rules for the eternality atoms of the hypothesis set and for transfer
+-- along an assumed subtyping in both directions; as in the original, no
+-- rule for `_⇒_` and `[_]_`.
 
 infix 4 _⊩ᴱ_
 
@@ -292,6 +292,7 @@ data _⊩ᴱ_ {Θ : Scope} (Q : Hyps Θ) : OVType Θ → Set where
   Baseₑ   : ∀ {b} → .(EternalBaseType b) → Q ⊩ᴱ Base b
   Unitₑ   : Q ⊩ᴱ Unit
   Boolₑ   : Q ⊩ᴱ Bool
+  Natₑ    : Q ⊩ᴱ Nat
   _|×|ₑ_  : ∀ {A₁ A₂} → Q ⊩ᴱ A₁ → Q ⊩ᴱ A₂ → Q ⊩ᴱ A₁ |×| A₂
   Emptyₑ  : Q ⊩ᴱ Empty
 
@@ -312,6 +313,7 @@ data _≡̂ᵛ_ {Θ} where
   Base≡̂   : ∀ {b} → Base b ≡̂ᵛ Base b
   Unit≡̂   : Unit ≡̂ᵛ Unit
   Bool≡̂   : Bool ≡̂ᵛ Bool
+  Nat≡̂   : Nat ≡̂ᵛ Nat
   _|×|≡̂_  : ∀ {A A' B B'} → A ≡̂ᵛ A' → B ≡̂ᵛ B' → A |×| B ≡̂ᵛ A' |×| B'
   Empty≡̂  : Empty ≡̂ᵛ Empty
   _⇒≡̂_    : ∀ {A A' C C'} → A ≡̂ᵛ A' → C ≡̂ᶜ C' → A ⇒ C ≡̂ᵛ A' ⇒ C'
@@ -327,6 +329,7 @@ data _≡̂ᶜ_ {Θ} where
 ≡̂ᵛ-refl (Base b)  = Base≡̂
 ≡̂ᵛ-refl Unit      = Unit≡̂
 ≡̂ᵛ-refl Bool      = Bool≡̂
+≡̂ᵛ-refl Nat       = Nat≡̂
 ≡̂ᵛ-refl (A |×| B) = ≡̂ᵛ-refl A |×|≡̂ ≡̂ᵛ-refl B
 ≡̂ᵛ-refl Empty     = Empty≡̂
 ≡̂ᵛ-refl (A ⇒ C)   = ≡̂ᵛ-refl A ⇒≡̂ ≡̂ᶜ-refl C
@@ -341,6 +344,7 @@ data _≡̂ᶜ_ {Θ} where
 ≡̂ᵛ-sym Base≡̂       = Base≡̂
 ≡̂ᵛ-sym Unit≡̂       = Unit≡̂
 ≡̂ᵛ-sym Bool≡̂       = Bool≡̂
+≡̂ᵛ-sym Nat≡̂       = Nat≡̂
 ≡̂ᵛ-sym (p |×|≡̂ q)  = ≡̂ᵛ-sym p |×|≡̂ ≡̂ᵛ-sym q
 ≡̂ᵛ-sym Empty≡̂      = Empty≡̂
 ≡̂ᵛ-sym (p ⇒≡̂ q)    = ≡̂ᵛ-sym p ⇒≡̂ ≡̂ᶜ-sym q
@@ -355,6 +359,7 @@ data _≡̂ᶜ_ {Θ} where
 ≡̂ᵛ-trans Base≡̂      Base≡̂       = Base≡̂
 ≡̂ᵛ-trans Unit≡̂      Unit≡̂       = Unit≡̂
 ≡̂ᵛ-trans Bool≡̂      Bool≡̂       = Bool≡̂
+≡̂ᵛ-trans Nat≡̂      Nat≡̂       = Nat≡̂
 ≡̂ᵛ-trans (p |×|≡̂ q) (p' |×|≡̂ q') = ≡̂ᵛ-trans p p' |×|≡̂ ≡̂ᵛ-trans q q'
 ≡̂ᵛ-trans Empty≡̂     Empty≡̂      = Empty≡̂
 ≡̂ᵛ-trans (p ⇒≡̂ q)   (p' ⇒≡̂ q')   = ≡̂ᵛ-trans p p' ⇒≡̂ ≡̂ᶜ-trans q q'
@@ -369,6 +374,7 @@ data _≡̂ᶜ_ {Θ} where
 ⊩ᴱ-≡̂ Base≡̂      et           = et
 ⊩ᴱ-≡̂ Unit≡̂      et           = et
 ⊩ᴱ-≡̂ Bool≡̂      et           = et
+⊩ᴱ-≡̂ Nat≡̂      et           = et
 ⊩ᴱ-≡̂ (p |×|≡̂ q) (et |×|ₑ et') = ⊩ᴱ-≡̂ p et |×|ₑ ⊩ᴱ-≡̂ q et'
 ⊩ᴱ-≡̂ Empty≡̂     et           = et
 
@@ -397,10 +403,10 @@ VarOK-≡̂ p q (≾ᵘ-ok le)       = ≾ᵘ-ok (transᵣ q le)
 VarOK-≡̂ p q (hyp-ok m p' q') = hyp-ok m (≡̂ᵛ-trans p p') (transᵣ q q')
 
 -- Shape-preserving subtyping of open value and computation types,
--- mirroring `Syntax.Subtyping` former by former: one constructor per
--- pair of matching type formers, no `refl` or `trans` constructor. The
--- grade slots carry entailments from `Q`, and an unknown head is
--- related only by an assumed subtyping.
+-- mirroring `Syntax.Subtyping` former by former, with `Natₛ` for `Nat`:
+-- one constructor per pair of matching type formers, no `refl` or
+-- `trans` constructor. The grade slots carry entailments from `Q`, and
+-- an unknown head is related only by an assumed subtyping.
 --
 -- Unlike `Syntax.Subtyping`, the relation is proof-relevant, as
 -- entailment is.
@@ -419,6 +425,7 @@ data _∣_<:̂ᵛ_ {Θ} Q where
   Baseₛ  : ∀ {b b'} → b ≡ b' → Q ∣ Base b <:̂ᵛ Base b'
   Unitₛ  : Q ∣ Unit <:̂ᵛ Unit
   Boolₛ  : Q ∣ Bool <:̂ᵛ Bool
+  Natₛ   : Q ∣ Nat <:̂ᵛ Nat
   _|×|ₛ_ : ∀ {A A' B B'} → Q ∣ A <:̂ᵛ A' → Q ∣ B <:̂ᵛ B'
          → Q ∣ (A |×| B) <:̂ᵛ (A' |×| B')
   Emptyₛ : Q ∣ Empty <:̂ᵛ Empty
@@ -440,6 +447,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-refl (Base b)  = Baseₛ refl
 <:̂ᵛ-refl Unit      = Unitₛ
 <:̂ᵛ-refl Bool      = Boolₛ
+<:̂ᵛ-refl Nat       = Natₛ
 <:̂ᵛ-refl (A |×| B) = <:̂ᵛ-refl A |×|ₛ <:̂ᵛ-refl B
 <:̂ᵛ-refl Empty     = Emptyₛ
 <:̂ᵛ-refl (A ⇒ C)   = <:̂ᵛ-refl A ⇒ₛ <:̂ᶜ-refl C
@@ -458,6 +466,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-trans (Baseₛ p)  (Baseₛ q)  = Baseₛ (trans p q)
 <:̂ᵛ-trans Unitₛ      Unitₛ      = Unitₛ
 <:̂ᵛ-trans Boolₛ      Boolₛ      = Boolₛ
+<:̂ᵛ-trans Natₛ       Natₛ       = Natₛ
 <:̂ᵛ-trans (p |×|ₛ r) (q |×|ₛ s) = <:̂ᵛ-trans p q |×|ₛ <:̂ᵛ-trans r s
 <:̂ᵛ-trans Emptyₛ     Emptyₛ     = Emptyₛ
 <:̂ᵛ-trans (p ⇒ₛ r)   (q ⇒ₛ s)   = <:̂ᵛ-trans q p ⇒ₛ <:̂ᶜ-trans r s
@@ -474,6 +483,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 ≡̂ᵛ-<:̂ Base≡̂      = Baseₛ refl
 ≡̂ᵛ-<:̂ Unit≡̂      = Unitₛ
 ≡̂ᵛ-<:̂ Bool≡̂      = Boolₛ
+≡̂ᵛ-<:̂ Nat≡̂      = Natₛ
 ≡̂ᵛ-<:̂ (p |×|≡̂ q) = ≡̂ᵛ-<:̂ p |×|ₛ ≡̂ᵛ-<:̂ q
 ≡̂ᵛ-<:̂ Empty≡̂     = Emptyₛ
 ≡̂ᵛ-<:̂ (p ⇒≡̂ q)   = ≡̂ᵛ-<:̂ (≡̂ᵛ-sym p) ⇒ₛ ≡̂ᶜ-<:̂ q
@@ -489,6 +499,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-eternalˡ (Baseₛ refl) et          = et
 <:̂ᵛ-eternalˡ Unitₛ        et          = et
 <:̂ᵛ-eternalˡ Boolₛ        et          = et
+<:̂ᵛ-eternalˡ Natₛ         et          = et
 <:̂ᵛ-eternalˡ (p |×|ₛ r)   (et |×|ₑ e) = <:̂ᵛ-eternalˡ p et |×|ₑ <:̂ᵛ-eternalˡ r e
 <:̂ᵛ-eternalˡ Emptyₛ       et          = et
 
@@ -497,6 +508,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-eternalʳ (Baseₛ refl) et          = et
 <:̂ᵛ-eternalʳ Unitₛ        et          = et
 <:̂ᵛ-eternalʳ Boolₛ        et          = et
+<:̂ᵛ-eternalʳ Natₛ         et          = et
 <:̂ᵛ-eternalʳ (p |×|ₛ r)   (et |×|ₑ e) = <:̂ᵛ-eternalʳ p et |×|ₑ <:̂ᵛ-eternalʳ r e
 <:̂ᵛ-eternalʳ Emptyₛ       et          = et
 
@@ -510,6 +522,8 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 
 <:̂ᵛ-Boolˡ : ∀ {Θ} {Q : Hyps Θ} {A} → Q ∣ Bool <:̂ᵛ A → A ≡ Bool
 <:̂ᵛ-Boolˡ Boolₛ = refl
+<:̂ᵛ-Natˡ : ∀ {Θ} {Q : Hyps Θ} {A} → Q ∣ Nat <:̂ᵛ A → A ≡ Nat
+<:̂ᵛ-Natˡ Natₛ = refl
 
 -- Inversion at a product: a supertype is a product, componentwise
 
@@ -657,6 +671,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩ᴱ-subst h (Baseₑ p)      = Baseₑ p
 ⊩ᴱ-subst h Unitₑ          = Unitₑ
 ⊩ᴱ-subst h Boolₑ          = Boolₑ
+⊩ᴱ-subst h Natₑ           = Natₑ
 ⊩ᴱ-subst h (et₁ |×|ₑ et₂) = ⊩ᴱ-subst h et₁ |×|ₑ ⊩ᴱ-subst h et₂
 ⊩ᴱ-subst h Emptyₑ         = Emptyₑ
 
@@ -667,6 +682,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ᵛ-subst σ Base≡̂       = Base≡̂
 ≡̂ᵛ-subst σ Unit≡̂       = Unit≡̂
 ≡̂ᵛ-subst σ Bool≡̂       = Bool≡̂
+≡̂ᵛ-subst σ Nat≡̂       = Nat≡̂
 ≡̂ᵛ-subst σ (p |×|≡̂ q)  = ≡̂ᵛ-subst σ p |×|≡̂ ≡̂ᵛ-subst σ q
 ≡̂ᵛ-subst σ Empty≡̂      = Empty≡̂
 ≡̂ᵛ-subst σ (p ⇒≡̂ q)    = ≡̂ᵛ-subst σ p ⇒≡̂ ≡̂ᶜ-subst σ q
@@ -685,6 +701,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩ᴱ-<:ˢ k (Base b)  et           = et
 ⊩ᴱ-<:ˢ k Unit      et           = et
 ⊩ᴱ-<:ˢ k Bool      et           = et
+⊩ᴱ-<:ˢ k Nat       et           = et
 ⊩ᴱ-<:ˢ k (A |×| B) (et |×|ₑ et') = ⊩ᴱ-<:ˢ k A et |×|ₑ ⊩ᴱ-<:ˢ k B et'
 ⊩ᴱ-<:ˢ k Empty     et           = et
 ⊩ᴱ-<:ˢ k (A ⇒ C)   ()
@@ -706,6 +723,7 @@ VarOK-subst {σ = σ} h (hyp-ok m p q) = VarOK-≡̂ (≡̂ᵛ-subst σ p) (⊩-
 <:̂ᵛ-subst h (Baseₛ p)  = Baseₛ p
 <:̂ᵛ-subst h Unitₛ      = Unitₛ
 <:̂ᵛ-subst h Boolₛ      = Boolₛ
+<:̂ᵛ-subst h Natₛ       = Natₛ
 <:̂ᵛ-subst h (p |×|ₛ r) = <:̂ᵛ-subst h p |×|ₛ <:̂ᵛ-subst h r
 <:̂ᵛ-subst h Emptyₛ     = Emptyₛ
 <:̂ᵛ-subst h (p ⇒ₛ r)   = <:̂ᵛ-subst h p ⇒ₛ <:̂ᶜ-subst h r

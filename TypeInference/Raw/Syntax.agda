@@ -76,6 +76,16 @@ mutual
               -------
               RawV Θ n
 
+    -- natural numbers
+
+    zero    :
+              -------
+              RawV Θ n
+
+    succ    : RawV Θ n
+              -------
+            → RawV Θ n
+
     -- pairing
 
     ⦉_,_⦊    : RawV Θ n
@@ -144,6 +154,16 @@ mutual
             ---------
             → RawC Θ n
 
+    -- natural-number elimination, the successor branch binding the
+    -- predecessor
+
+    caseℕ_`zero_`succ_
+            : RawV Θ n
+            → RawC Θ n
+            → RawC Θ (suc n)
+            --------------
+            → RawC Θ n
+
     -- performing algebraic operations
 
     perform : (op : Op)
@@ -201,11 +221,18 @@ mutual
 
 infix 5 _⦂ᵛ_ _⦂ᶜ_
 
+-- Numerals
+
+numeral : ∀ {Θ n} → ℕ → RawV Θ n
+numeral 0       = zero
+numeral (suc k) = succ (numeral k)
+
 -- A term with no handler
 
 mutual
 
   HandlerFreeᵛ : ∀ {Θ n} → RawV Θ n → Set
+  HandlerFreeᵛ (succ V)     = HandlerFreeᵛ V
   HandlerFreeᵛ ⦉ V , W ⦊     = HandlerFreeᵛ V × HandlerFreeᵛ W
   HandlerFreeᵛ (lam M)      = HandlerFreeᶜ M
   HandlerFreeᵛ (V ⦂ᵛ A)     = HandlerFreeᵛ V
@@ -218,6 +245,7 @@ mutual
   HandlerFreeᶜ (match V `in M)          = HandlerFreeᵛ V × HandlerFreeᶜ M
   HandlerFreeᶜ (absurd V)               = HandlerFreeᵛ V
   HandlerFreeᶜ (if V `then M `else N)   = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
+  HandlerFreeᶜ (caseℕ V `zero M `succ N) = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (perform op V M)         = HandlerFreeᵛ V × HandlerFreeᶜ M
   HandlerFreeᶜ (delay τ M)              = HandlerFreeᶜ M
   HandlerFreeᶜ (handle M `with H `in N) = ⊥

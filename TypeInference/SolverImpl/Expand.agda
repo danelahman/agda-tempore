@@ -75,6 +75,7 @@ mutual
   shapeᵛ (Base b)  = sBase b
   shapeᵛ Unit      = sUnit
   shapeᵛ Bool      = sBool
+  shapeᵛ Nat       = sNat
   shapeᵛ (A |×| B) = shapeᵛ A s× shapeᵛ B
   shapeᵛ Empty     = sEmpty
   shapeᵛ (A ⇒ C)   = shapeᵛ A s⇒ shapeᶜ C
@@ -96,6 +97,7 @@ mutual
   shape-[]ᵛ (Base b)  δ = refl
   shape-[]ᵛ Unit      δ = refl
   shape-[]ᵛ Bool      δ = refl
+  shape-[]ᵛ Nat       δ = refl
   shape-[]ᵛ (A |×| B) δ = cong₂ _s×_ (shape-[]ᵛ A δ) (shape-[]ᵛ B δ)
   shape-[]ᵛ Empty     δ = refl
   shape-[]ᵛ (A ⇒ C)   δ = cong₂ _s⇒_ (shape-[]ᵛ A δ) (shape-[]ᶜ C δ)
@@ -114,6 +116,7 @@ mutual
   <:̂ᵛ-shape (Baseₛ refl) = refl
   <:̂ᵛ-shape Unitₛ        = refl
   <:̂ᵛ-shape Boolₛ        = refl
+  <:̂ᵛ-shape Natₛ         = refl
   <:̂ᵛ-shape (p |×|ₛ q)   = cong₂ _s×_ (<:̂ᵛ-shape p) (<:̂ᵛ-shape q)
   <:̂ᵛ-shape Emptyₛ       = refl
   <:̂ᵛ-shape (p ⇒ₛ q)     = cong₂ _s⇒_ (sym (<:̂ᵛ-shape p)) (<:̂ᶜ-shape q)
@@ -135,6 +138,7 @@ data _⊑ᵛ_ {Ψ} {n} where
   Base⊑  : ∀ {b} → sBase {n} b ⊑ᵛ Base {Ψ} b
   Unit⊑  : sUnit {n} ⊑ᵛ Unit {Ψ}
   Bool⊑  : sBool {n} ⊑ᵛ Bool {Ψ}
+  Nat⊑   : sNat {n} ⊑ᵛ Nat {Ψ}
   _×⊑_   : ∀ {t u A B} → t ⊑ᵛ A → u ⊑ᵛ B → (t s× u) ⊑ᵛ (A |×| B)
   Empty⊑ : sEmpty {n} ⊑ᵛ Empty {Ψ}
   _⇒⊑_   : ∀ {t u A C} → t ⊑ᵛ A → u ⊑ᶜ C → (t s⇒ u) ⊑ᵛ (A ⇒ C)
@@ -154,6 +158,7 @@ mutual
   ⊑-from (sBase b) ζ (Base b')   refl = Base⊑
   ⊑-from (sBase b) ζ Unit        ()
   ⊑-from (sBase b) ζ Bool        ()
+  ⊑-from (sBase b) ζ Nat         ()
   ⊑-from (sBase b) ζ (A |×| B)   ()
   ⊑-from (sBase b) ζ Empty       ()
   ⊑-from (sBase b) ζ (A ⇒ C)     ()
@@ -162,6 +167,7 @@ mutual
   ⊑-from sUnit     ζ (Base b')   ()
   ⊑-from sUnit     ζ Unit        refl = Unit⊑
   ⊑-from sUnit     ζ Bool        ()
+  ⊑-from sUnit     ζ Nat         ()
   ⊑-from sUnit     ζ (A |×| B)   ()
   ⊑-from sUnit     ζ Empty       ()
   ⊑-from sUnit     ζ (A ⇒ C)     ()
@@ -170,14 +176,25 @@ mutual
   ⊑-from sBool     ζ (Base b')   ()
   ⊑-from sBool     ζ Unit        ()
   ⊑-from sBool     ζ Bool        refl = Bool⊑
+  ⊑-from sBool     ζ Nat         ()
   ⊑-from sBool     ζ (A |×| B)   ()
   ⊑-from sBool     ζ Empty       ()
   ⊑-from sBool     ζ (A ⇒ C)     ()
   ⊑-from sBool     ζ ([ ρ ] A)   ()
+  ⊑-from sNat      ζ (tvar α)    ()
+  ⊑-from sNat      ζ (Base b')   ()
+  ⊑-from sNat      ζ Unit        ()
+  ⊑-from sNat      ζ Bool        ()
+  ⊑-from sNat      ζ Nat         refl = Nat⊑
+  ⊑-from sNat      ζ (A |×| B)   ()
+  ⊑-from sNat      ζ Empty       ()
+  ⊑-from sNat      ζ (A ⇒ C)     ()
+  ⊑-from sNat      ζ ([ ρ ] A)   ()
   ⊑-from (t s× u)  ζ (tvar α)    ()
   ⊑-from (t s× u)  ζ (Base b')   ()
   ⊑-from (t s× u)  ζ Unit        ()
   ⊑-from (t s× u)  ζ Bool        ()
+  ⊑-from (t s× u)  ζ Nat         ()
   ⊑-from (t s× u)  ζ (A |×| B)   eq   =
     ⊑-from t ζ A (proj₁ (s×-inj eq)) ×⊑ ⊑-from u ζ B (proj₂ (s×-inj eq))
   ⊑-from (t s× u)  ζ Empty       ()
@@ -187,6 +204,7 @@ mutual
   ⊑-from sEmpty    ζ (Base b')   ()
   ⊑-from sEmpty    ζ Unit        ()
   ⊑-from sEmpty    ζ Bool        ()
+  ⊑-from sEmpty    ζ Nat         ()
   ⊑-from sEmpty    ζ (A |×| B)   ()
   ⊑-from sEmpty    ζ Empty       refl = Empty⊑
   ⊑-from sEmpty    ζ (A ⇒ C)     ()
@@ -195,6 +213,7 @@ mutual
   ⊑-from (t s⇒ u)  ζ (Base b')   ()
   ⊑-from (t s⇒ u)  ζ Unit        ()
   ⊑-from (t s⇒ u)  ζ Bool        ()
+  ⊑-from (t s⇒ u)  ζ Nat         ()
   ⊑-from (t s⇒ u)  ζ (A |×| B)   ()
   ⊑-from (t s⇒ u)  ζ Empty       ()
   ⊑-from (t s⇒ u)  ζ (A ⇒ C)     eq   =
@@ -204,6 +223,7 @@ mutual
   ⊑-from (sBox t)  ζ (Base b')   ()
   ⊑-from (sBox t)  ζ Unit        ()
   ⊑-from (sBox t)  ζ Bool        ()
+  ⊑-from (sBox t)  ζ Nat         ()
   ⊑-from (sBox t)  ζ (A |×| B)   ()
   ⊑-from (sBox t)  ζ Empty       ()
   ⊑-from (sBox t)  ζ (A ⇒ C)     ()
@@ -226,6 +246,7 @@ data _◃ᵛ_ {Ψ} {n} where
   Base◃  : ∀ {b} → sBase {n} b ◃ᵛ Base {Ψ} b
   Unit◃  : sUnit {n} ◃ᵛ Unit {Ψ}
   Bool◃  : sBool {n} ◃ᵛ Bool {Ψ}
+  Nat◃   : sNat {n} ◃ᵛ Nat {Ψ}
   _×◃_   : ∀ {t u A B} → t ◃ᵛ A → u ◃ᵛ B → (t s× u) ◃ᵛ (A |×| B)
   Empty◃ : sEmpty {n} ◃ᵛ Empty {Ψ}
   _⇒◃_   : ∀ {t u A C} → t ◃ᵛ A → u ◃ᶜ C → (t s⇒ u) ◃ᵛ (A ⇒ C)
@@ -244,6 +265,7 @@ data _◃ᶜ_ {Ψ} {n} where
 ... | no ¬p    = ⊥-elim (¬p refl)
 ◃-fits Unit◃         Unit◃           = []
 ◃-fits Bool◃         Bool◃           = []
+◃-fits Nat◃          Nat◃            = []
 ◃-fits Empty◃        Empty◃          = []
 ◃-fits (p ×◃ q)      (p' ×◃ q')      = (_ , p , p') ∷ (_ , q , q') ∷ []
 ◃-fits (p ⇒◃ ‼◃ q)   (p' ⇒◃ ‼◃ q')   = (_ , p , p') ∷ (_ , q , q') ∷ tt ∷ []
@@ -266,6 +288,7 @@ mutual
   ◃-skel (Base b)  k = Base◃
   ◃-skel Unit      k = Unit◃
   ◃-skel Bool      k = Bool◃
+  ◃-skel Nat       k = Nat◃
   ◃-skel (A |×| B) k = ◃-skel A k ×◃ ◃-skel B k
   ◃-skel Empty     k = Empty◃
   ◃-skel (A ⇒ C)   k = ◃-skel A k ⇒◃ ◃-skelᶜ C k
@@ -313,6 +336,7 @@ mutual
   ◃-ren r Base◃     = Base◃
   ◃-ren r Unit◃     = Unit◃
   ◃-ren r Bool◃     = Bool◃
+  ◃-ren r Nat◃      = Nat◃
   ◃-ren r (p ×◃ q)  = ◃-ren r p ×◃ ◃-ren r q
   ◃-ren r Empty◃    = Empty◃
   ◃-ren r (p ⇒◃ q)  = ◃-ren r p ⇒◃ ◃-renᶜ r q
@@ -339,6 +363,7 @@ decorate-◃ Ψ (svar γ)  = TyRen-wkᵗ , var◃
 decorate-◃ Ψ (sBase b) = TyRen-idˢ , Base◃
 decorate-◃ Ψ sUnit     = TyRen-idˢ , Unit◃
 decorate-◃ Ψ sBool     = TyRen-idˢ , Bool◃
+decorate-◃ Ψ sNat      = TyRen-idˢ , Nat◃
 decorate-◃ Ψ sEmpty    = TyRen-idˢ , Empty◃
 decorate-◃ Ψ (t s× u) with decorate Ψ t | decorate-◃ Ψ t
 ... | Ψ₁ , w₁ , A | r₁ , d₁ with decorate Ψ₁ u | decorate-◃ Ψ₁ u
@@ -374,6 +399,7 @@ decorate-max Ψ (svar γ)  δ {A₀} var⊑ = (δ ,ᵗ A₀) , wkˢᵗ-,ᵗ δ A
 decorate-max Ψ (sBase b) δ Base⊑  = δ , ⨟-idˡ δ , refl
 decorate-max Ψ sUnit     δ Unit⊑  = δ , ⨟-idˡ δ , refl
 decorate-max Ψ sBool     δ Bool⊑  = δ , ⨟-idˡ δ , refl
+decorate-max Ψ sNat      δ Nat⊑   = δ , ⨟-idˡ δ , refl
 decorate-max Ψ sEmpty    δ Empty⊑ = δ , ⨟-idˡ δ , refl
 decorate-max Ψ (t s× u) δ (p ×⊑ q) with decorate Ψ t | decorate-max Ψ t δ p
 ... | Ψ₁ , w₁ , A | δ₁ , tri₁ , eq₁ with decorate Ψ₁ u | decorate-max Ψ₁ u δ₁ q
