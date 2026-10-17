@@ -119,6 +119,25 @@ mutual
       A↑ = wkᵗ-v (wkᵗ-v A)
       Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
 
+  -- lists
+  --
+  -- The element type is ∃-bound and the list type it forms is the
+  -- expected type; the head is checked against the element type and the
+  -- tail against the list type.
+
+  genVˢ {Θ = Θ} ι Γ nil A =
+    ∃ᵗ (|List| α ≐ᵥ wkᵗ-v A)
+    where
+      α = tvar (newᵗ {Θ})
+
+  genVˢ {Θ = Θ} ι Γ (cons V W) A =
+    ∃ᵗ ((|List| α ≐ᵥ A↑) ∧̂ genVˢ ι↑ Γ↑ V α ∧̂ genVˢ ι↑ Γ↑ W (|List| α))
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ
+      α  = tvar (newᵗ {Θ})
+      A↑ = wkᵗ-v A
+      Γ↑ = wkᵗ-ctx Γ
+
   -- lambda abstraction
   --
   -- The body is typed at the arrow the lambda synthesises, which is a
@@ -246,6 +265,42 @@ mutual
       t↑ = wkᵉ-e (wkᵗ-e t)
       Γ↑ = wkᵉ-ctx (wkᵗ-ctx Γ)
 
+  -- list elimination
+  --
+  -- The element type is ∃-bound; both branches are checked against the
+  -- expected type, as for `if`.
+
+  genCˢ {Θ = Θ} ι Γ (caseL V `nil M₁ `cons M₂) (A ‼ t) =
+    ∃ᵗ (  genVˢ ι↑ Γ↑ V (|List| α)
+        ∧̂ genCˢ ι↑ Γ↑ M₁ (A↑ ‼ t↑)
+        ∧̂ genCˢ ι↑ (Γ↑ ∷ α ∷ |List| α) M₂ (A↑ ‼ t↑))
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ
+      α  = tvar (newᵗ {Θ})
+      A↑ = wkᵗ-v A
+      t↑ = wkᵗ-e t
+      Γ↑ = wkᵗ-ctx Γ
+
+  -- primitive recursion on lists
+  --
+  -- As for `recℕ`, with the element type ∃-bound in addition.
+
+  genCˢ {Θ = Θ} ι Γ (recL V M₁ M₂) (A ‼ t) =
+    ∃ᵗ (∃ᵗ (∃ᵉ (  genVˢ ι↑ Γ↑ V (|List| α)
+                ∧̂ genCˢ ι↑ Γ↑ M₁ (β ‼ e)
+                ∧̂ genCˢ ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ α ∷ |List| α) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) M₂ (β ‼ e)
+                ∧̂ ((e ·̂ₑ e) ≾̂ₑᶜ e)
+                ∧̂ (β ≾̂ᵥᶜ A↑)
+                ∧̂ (e ≾̂ₑᶜ t↑))))
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
+      α  = wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ})))
+      β  = wkᵉ-v (tvar (newᵗ {Θ +ty}))
+      e  = evar (newᵉ {Θ +ty +ty})
+      A↑ = wkᵉ-v (wkᵗ-v (wkᵗ-v A))
+      t↑ = wkᵉ-e (wkᵗ-e (wkᵗ-e t))
+      Γ↑ = wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
+
   -- performing algebraic operations
 
   genCˢ {Θ = Θ} ι Γ (perform op V M) (A ‼ t) =
@@ -364,6 +419,8 @@ mutual
   genVˢ-rigidFree ⦉ V₁ , V₂ ⦊   (h , k) = (tt , tt) , genVˢ-rigidFree V₁ h , genVˢ-rigidFree V₂ k
   genVˢ-rigidFree (inl V)      h       = (tt , tt) , genVˢ-rigidFree V h
   genVˢ-rigidFree (inr V)      h       = (tt , tt) , genVˢ-rigidFree V h
+  genVˢ-rigidFree nil          h       = tt , tt
+  genVˢ-rigidFree (cons V W)   (h , k) = (tt , tt) , genVˢ-rigidFree V h , genVˢ-rigidFree W k
   genVˢ-rigidFree (lam M)      h       = tt , genCˢ-rigidFree M h
   genVˢ-rigidFree (V ⦂ᵛ B)     h       = genVˢ-rigidFree V h , tt
 
@@ -386,6 +443,10 @@ mutual
   genCˢ-rigidFree (case+ V `inl M₁ `inr M₂) {A ‼ t} (h , k , l) =
     genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
   genCˢ-rigidFree (recℕ V M₁ M₂)           {A ‼ t} (h , k , l) =
+    genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l , tt , tt , tt
+  genCˢ-rigidFree (caseL V `nil M₁ `cons M₂) {A ‼ t} (h , k , l) =
+    genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
+  genCˢ-rigidFree (recL V M₁ M₂)           {A ‼ t} (h , k , l) =
     genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l , tt , tt , tt
   genCˢ-rigidFree (perform op V M)        {A ‼ t} (h , k)     =
     genVˢ-rigidFree V h , genCˢ-rigidFree M k , tt

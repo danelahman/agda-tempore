@@ -16,8 +16,9 @@
 -- identities on typing.                                        --
 --                                                              --
 -- The rules `zero`, `succ`, `caseℕ` and `recℕ` for natural     --
--- numbers, and `inl`, `inr` and `case+` for sums, have no      --
--- counterpart in `Syntax.Language` either.                     --
+-- numbers, `inl`, `inr` and `case+` for sums, and `nil`,       --
+-- `cons`, `caseL` and `recL` for lists have no counterpart in  --
+-- `Syntax.Language` either.                                    --
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ; suc)
@@ -117,6 +118,18 @@ mutual
             -------------------
             → Q ∣ Γ ⊢V⦂ A |+| B
 
+
+    -- lists
+
+    nil     : {A : OVType Θ}
+              ---------------------
+            → Q ∣ Γ ⊢V⦂ |List| A
+
+    cons    : {A : OVType Θ}
+            → Q ∣ Γ ⊢V⦂ A
+            → Q ∣ Γ ⊢V⦂ |List| A
+            --------------------
+            → Q ∣ Γ ⊢V⦂ |List| A
     -- lambda abstraction
 
     lam     : {A : OVType Θ}
@@ -227,6 +240,21 @@ mutual
             -------------------
             → Q ∣ Γ ⊢C⦂ C
 
+    -- list elimination
+
+    -- As for `if`, both branches are typed at the same computation type;
+    -- the `cons` branch binds the head and then the tail, as `match`
+    -- binds the components of a pair.
+
+    caseL_`nil_`cons_
+            : {A : OVType Θ}
+            → {C : OCType Θ}
+            → Q ∣ Γ ⊢V⦂ |List| A
+            → Q ∣ Γ ⊢C⦂ C
+            → Q ∣ Γ ∷ A ∷ |List| A ⊢C⦂ C
+            ----------------------------
+            → Q ∣ Γ ⊢C⦂ C
+
     -- primitive recursion on natural numbers
 
     -- The step is typed as an operation clause is, under a lock at `⊤ᵣ`;
@@ -241,6 +269,20 @@ mutual
             → Q ∣ (Γ ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε
             → Q ⊩ ε ·̂ₑ ε ≾̂ₑ ε
             ----------------------------------------------------
+            → Q ∣ Γ ⊢C⦂ B ‼ ε
+
+    -- primitive recursion on lists
+
+    -- As `recℕ`, the step binding the head and the tail in place of the
+    -- predecessor.
+
+    recL    : {A B : OVType Θ}
+            → {ε : EExp Θ}
+            → Q ∣ Γ ⊢V⦂ |List| A
+            → Q ∣ Γ ⊢C⦂ B ‼ ε
+            → Q ∣ (Γ ⟨ rconst ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε
+            → Q ⊩ ε ·̂ₑ ε ≾̂ₑ ε
+            -------------------------------------------------------------
             → Q ∣ Γ ⊢C⦂ B ‼ ε
 
     -- performing algebraic operations

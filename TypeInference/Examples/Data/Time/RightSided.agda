@@ -1,10 +1,10 @@
 ------------------------------------------------------------------
--- Natural numbers and sums at right-sided intervals            --
+-- Natural numbers, sums and lists at right-sided intervals     --
 --                                                              --
 -- "At most `n` ticks": `var`'s bound `ρ ≾ uᵣ` holds only at    --
 -- `[0, 0 ]`, so after a tick only a variable of eternal type,  --
--- such as `Nat` or `Nat + Bool`, is usable. A join of delays   --
--- is the longer.                                               --
+-- such as `Nat`, `Nat + Bool` or `List Nat`, is usable. A join --
+-- of delays is the longer.                                     --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -101,3 +101,27 @@ fun-sum-later-verdict = refl
 
 fun-sum-later-not-typable : ¬ Typable [] fun-sum-later
 fun-sum-later-not-typable = infer-untypable [] fun-sum-later fun-sum-later-verdict
+
+------------------------------------------------------------------
+-- 6. Lists
+
+head-or-reported : schemeOf (infer [] head-or) ≡ just expected-head-or
+head-or-reported = refl
+
+list-later-reported : schemeOf (infer [] list-later) ≡ just expected-list-later
+list-later-reported = refl
+
+nil-later-reported : schemeOf (infer [] nil-later) ≡ just expected-nil-later-eternal
+nil-later-reported = refl
+
+fun-list-later-verdict : infer [] fun-list-later ≡ untypable
+fun-list-later-verdict = refl
+
+fun-list-later-not-typable : ¬ Typable [] fun-list-later
+fun-list-later-not-typable = infer-untypable [] fun-list-later fun-list-later-verdict
+
+case-of-nat-verdict : infer [] case-of-nat ≡ untypable
+case-of-nat-verdict = refl
+
+case-of-nat-not-typable : ¬ Typable [] case-of-nat
+case-of-nat-not-typable = infer-untypable [] case-of-nat case-of-nat-verdict

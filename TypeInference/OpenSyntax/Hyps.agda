@@ -286,8 +286,8 @@ data _⊩_≾̂ₑ_ {Θ} Q where
   ≡̂ₑ-antisym-∅ (⊔-lubₑ (⊔-lubₑ ⊔-ubˡₑ (transₑ ⊔-ubˡₑ ⊔-ubʳₑ)) (transₑ ⊔-ubʳₑ ⊔-ubʳₑ))
                (⊔-lubₑ (transₑ ⊔-ubˡₑ ⊔-ubˡₑ) (⊔-lubₑ (transₑ ⊔-ubʳₑ ⊔-ubˡₑ) ⊔-ubʳₑ))
 
--- Mirrors `Eternal` of `Syntax.Types`, with rules for `Nat` and for
--- sums, plus rules for the eternality atoms of the hypothesis set and
+-- Mirrors `Eternal` of `Syntax.Types`, with rules for `Nat`, for sums
+-- and for lists, plus rules for the eternality atoms of the hypothesis set and
 -- for transfer along an assumed subtyping in both directions; as in the
 -- original, no rule for `_⇒_` and `[_]_`.
 
@@ -303,6 +303,7 @@ data _⊩ᴱ_ {Θ : Scope} (Q : Hyps Θ) : OVType Θ → Set where
   Natₑ    : Q ⊩ᴱ Nat
   _|×|ₑ_  : ∀ {A₁ A₂} → Q ⊩ᴱ A₁ → Q ⊩ᴱ A₂ → Q ⊩ᴱ A₁ |×| A₂
   _|+|ₑ_  : ∀ {A₁ A₂} → Q ⊩ᴱ A₁ → Q ⊩ᴱ A₂ → Q ⊩ᴱ A₁ |+| A₂
+  |List|ₑ : ∀ {A} → Q ⊩ᴱ A → Q ⊩ᴱ |List| A
   Emptyₑ  : Q ⊩ᴱ Empty
 
 -- Convertibility of open types: the same shape, the grades related
@@ -325,6 +326,7 @@ data _≡̂ᵛ_ {Θ} where
   Nat≡̂   : Nat ≡̂ᵛ Nat
   _|×|≡̂_  : ∀ {A A' B B'} → A ≡̂ᵛ A' → B ≡̂ᵛ B' → A |×| B ≡̂ᵛ A' |×| B'
   _|+|≡̂_  : ∀ {A A' B B'} → A ≡̂ᵛ A' → B ≡̂ᵛ B' → A |+| B ≡̂ᵛ A' |+| B'
+  |List|≡̂ : ∀ {A A'} → A ≡̂ᵛ A' → |List| A ≡̂ᵛ |List| A'
   Empty≡̂  : Empty ≡̂ᵛ Empty
   _⇒≡̂_    : ∀ {A A' C C'} → A ≡̂ᵛ A' → C ≡̂ᶜ C' → A ⇒ C ≡̂ᵛ A' ⇒ C'
   [_]≡̂_   : ∀ {ρ ρ' A A'} → ρ ≡̂ᵣ ρ' → A ≡̂ᵛ A' → [ ρ ] A ≡̂ᵛ [ ρ' ] A'
@@ -342,6 +344,7 @@ data _≡̂ᶜ_ {Θ} where
 ≡̂ᵛ-refl Nat       = Nat≡̂
 ≡̂ᵛ-refl (A |×| B) = ≡̂ᵛ-refl A |×|≡̂ ≡̂ᵛ-refl B
 ≡̂ᵛ-refl (A |+| B) = ≡̂ᵛ-refl A |+|≡̂ ≡̂ᵛ-refl B
+≡̂ᵛ-refl (|List| A) = |List|≡̂ (≡̂ᵛ-refl A)
 ≡̂ᵛ-refl Empty     = Empty≡̂
 ≡̂ᵛ-refl (A ⇒ C)   = ≡̂ᵛ-refl A ⇒≡̂ ≡̂ᶜ-refl C
 ≡̂ᵛ-refl ([ ρ ] A) = [ ≡̂ᵣ-refl ]≡̂ ≡̂ᵛ-refl A
@@ -358,6 +361,7 @@ data _≡̂ᶜ_ {Θ} where
 ≡̂ᵛ-sym Nat≡̂       = Nat≡̂
 ≡̂ᵛ-sym (p |×|≡̂ q)  = ≡̂ᵛ-sym p |×|≡̂ ≡̂ᵛ-sym q
 ≡̂ᵛ-sym (p |+|≡̂ q)  = ≡̂ᵛ-sym p |+|≡̂ ≡̂ᵛ-sym q
+≡̂ᵛ-sym (|List|≡̂ p) = |List|≡̂ (≡̂ᵛ-sym p)
 ≡̂ᵛ-sym Empty≡̂      = Empty≡̂
 ≡̂ᵛ-sym (p ⇒≡̂ q)    = ≡̂ᵛ-sym p ⇒≡̂ ≡̂ᶜ-sym q
 ≡̂ᵛ-sym ([ r ]≡̂ p)  = [ ≡̂ᵣ-sym r ]≡̂ ≡̂ᵛ-sym p
@@ -374,6 +378,7 @@ data _≡̂ᶜ_ {Θ} where
 ≡̂ᵛ-trans Nat≡̂      Nat≡̂       = Nat≡̂
 ≡̂ᵛ-trans (p |×|≡̂ q) (p' |×|≡̂ q') = ≡̂ᵛ-trans p p' |×|≡̂ ≡̂ᵛ-trans q q'
 ≡̂ᵛ-trans (p |+|≡̂ q) (p' |+|≡̂ q') = ≡̂ᵛ-trans p p' |+|≡̂ ≡̂ᵛ-trans q q'
+≡̂ᵛ-trans (|List|≡̂ p) (|List|≡̂ p') = |List|≡̂ (≡̂ᵛ-trans p p')
 ≡̂ᵛ-trans Empty≡̂     Empty≡̂      = Empty≡̂
 ≡̂ᵛ-trans (p ⇒≡̂ q)   (p' ⇒≡̂ q')   = ≡̂ᵛ-trans p p' ⇒≡̂ ≡̂ᶜ-trans q q'
 ≡̂ᵛ-trans ([ r ]≡̂ p) ([ r' ]≡̂ p') = [ ≡̂ᵣ-trans r r' ]≡̂ ≡̂ᵛ-trans p p'
@@ -390,6 +395,7 @@ data _≡̂ᶜ_ {Θ} where
 ⊩ᴱ-≡̂ Nat≡̂      et           = et
 ⊩ᴱ-≡̂ (p |×|≡̂ q) (et |×|ₑ et') = ⊩ᴱ-≡̂ p et |×|ₑ ⊩ᴱ-≡̂ q et'
 ⊩ᴱ-≡̂ (p |+|≡̂ q) (et |+|ₑ et') = ⊩ᴱ-≡̂ p et |+|ₑ ⊩ᴱ-≡̂ q et'
+⊩ᴱ-≡̂ (|List|≡̂ p) (|List|ₑ et) = |List|ₑ (⊩ᴱ-≡̂ p et)
 ⊩ᴱ-≡̂ Empty≡̂     et           = et
 
 -- The side condition of the `var` rule: `Eternal` is undecided at open
@@ -418,7 +424,7 @@ VarOK-≡̂ p q (hyp-ok m p' q') = hyp-ok m (≡̂ᵛ-trans p p') (transᵣ q q'
 
 -- Shape-preserving subtyping of open value and computation types,
 -- mirroring `Syntax.Subtyping` former by former, with `Natₛ` for `Nat`
--- and `_|+|ₛ_` for sums: one constructor per pair of matching type
+-- `_|+|ₛ_` for sums and `|List|ₛ` for lists: one constructor per pair of matching type
 -- formers, no `refl` or `trans` constructor. The grade slots carry entailments from `Q`, and
 -- an unknown head is related only by an assumed subtyping.
 --
@@ -444,6 +450,7 @@ data _∣_<:̂ᵛ_ {Θ} Q where
          → Q ∣ (A |×| B) <:̂ᵛ (A' |×| B')
   _|+|ₛ_ : ∀ {A A' B B'} → Q ∣ A <:̂ᵛ A' → Q ∣ B <:̂ᵛ B'
          → Q ∣ (A |+| B) <:̂ᵛ (A' |+| B')
+  |List|ₛ : ∀ {A A'} → Q ∣ A <:̂ᵛ A' → Q ∣ |List| A <:̂ᵛ |List| A'
   Emptyₛ : Q ∣ Empty <:̂ᵛ Empty
   _⇒ₛ_   : ∀ {A A' C C'} → Q ∣ A' <:̂ᵛ A → Q ∣ C <:̂ᶜ C'
          → Q ∣ (A ⇒ C) <:̂ᵛ (A' ⇒ C')
@@ -466,6 +473,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-refl Nat       = Natₛ
 <:̂ᵛ-refl (A |×| B) = <:̂ᵛ-refl A |×|ₛ <:̂ᵛ-refl B
 <:̂ᵛ-refl (A |+| B) = <:̂ᵛ-refl A |+|ₛ <:̂ᵛ-refl B
+<:̂ᵛ-refl (|List| A) = |List|ₛ (<:̂ᵛ-refl A)
 <:̂ᵛ-refl Empty     = Emptyₛ
 <:̂ᵛ-refl (A ⇒ C)   = <:̂ᵛ-refl A ⇒ₛ <:̂ᶜ-refl C
 <:̂ᵛ-refl ([ ρ ] A) = [ ⊩≾̂ᵣ-refl ]ₛ <:̂ᵛ-refl A
@@ -486,6 +494,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-trans Natₛ       Natₛ       = Natₛ
 <:̂ᵛ-trans (p |×|ₛ r) (q |×|ₛ s) = <:̂ᵛ-trans p q |×|ₛ <:̂ᵛ-trans r s
 <:̂ᵛ-trans (p |+|ₛ r) (q |+|ₛ s) = <:̂ᵛ-trans p q |+|ₛ <:̂ᵛ-trans r s
+<:̂ᵛ-trans (|List|ₛ p) (|List|ₛ q) = |List|ₛ (<:̂ᵛ-trans p q)
 <:̂ᵛ-trans Emptyₛ     Emptyₛ     = Emptyₛ
 <:̂ᵛ-trans (p ⇒ₛ r)   (q ⇒ₛ s)   = <:̂ᵛ-trans q p ⇒ₛ <:̂ᶜ-trans r s
 <:̂ᵛ-trans ([ p ]ₛ r) ([ q ]ₛ s) = [ transᵣ q p ]ₛ <:̂ᵛ-trans r s
@@ -504,6 +513,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 ≡̂ᵛ-<:̂ Nat≡̂      = Natₛ
 ≡̂ᵛ-<:̂ (p |×|≡̂ q) = ≡̂ᵛ-<:̂ p |×|ₛ ≡̂ᵛ-<:̂ q
 ≡̂ᵛ-<:̂ (p |+|≡̂ q) = ≡̂ᵛ-<:̂ p |+|ₛ ≡̂ᵛ-<:̂ q
+≡̂ᵛ-<:̂ (|List|≡̂ p) = |List|ₛ (≡̂ᵛ-<:̂ p)
 ≡̂ᵛ-<:̂ Empty≡̂     = Emptyₛ
 ≡̂ᵛ-<:̂ (p ⇒≡̂ q)   = ≡̂ᵛ-<:̂ (≡̂ᵛ-sym p) ⇒ₛ ≡̂ᶜ-<:̂ q
 ≡̂ᵛ-<:̂ ([ r ]≡̂ p) = [ eqᵣ (≡̂ᵣ-sym r) ]ₛ ≡̂ᵛ-<:̂ p
@@ -521,6 +531,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-eternalˡ Natₛ         et          = et
 <:̂ᵛ-eternalˡ (p |×|ₛ r)   (et |×|ₑ e) = <:̂ᵛ-eternalˡ p et |×|ₑ <:̂ᵛ-eternalˡ r e
 <:̂ᵛ-eternalˡ (p |+|ₛ r)   (et |+|ₑ e) = <:̂ᵛ-eternalˡ p et |+|ₑ <:̂ᵛ-eternalˡ r e
+<:̂ᵛ-eternalˡ (|List|ₛ p)  (|List|ₑ et) = |List|ₑ (<:̂ᵛ-eternalˡ p et)
 <:̂ᵛ-eternalˡ Emptyₛ       et          = et
 
 <:̂ᵛ-eternalʳ : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ∣ A <:̂ᵛ B → Q ⊩ᴱ A → Q ⊩ᴱ B
@@ -531,6 +542,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-eternalʳ Natₛ         et          = et
 <:̂ᵛ-eternalʳ (p |×|ₛ r)   (et |×|ₑ e) = <:̂ᵛ-eternalʳ p et |×|ₑ <:̂ᵛ-eternalʳ r e
 <:̂ᵛ-eternalʳ (p |+|ₛ r)   (et |+|ₑ e) = <:̂ᵛ-eternalʳ p et |+|ₑ <:̂ᵛ-eternalʳ r e
+<:̂ᵛ-eternalʳ (|List|ₛ p)  (|List|ₑ et) = |List|ₑ (<:̂ᵛ-eternalʳ p et)
 <:̂ᵛ-eternalʳ Emptyₛ       et          = et
 
 -- Inversion at the formers with no proper supertype
@@ -561,6 +573,13 @@ data _∣_<:̂ᶜ_ {Θ} Q where
        → Σ[ B₁ ∈ OVType Θ ] Σ[ B₂ ∈ OVType Θ ]
            (B ≡ B₁ |+| B₂) × (Q ∣ A₁ <:̂ᵛ B₁) × (Q ∣ A₂ <:̂ᵛ B₂)
 <:̂ᵛ-+ˡ (p |+|ₛ q) = _ , _ , refl , p , q
+
+-- Inversion at a list type: a supertype is a list type
+
+<:̂ᵛ-Listˡ : ∀ {Θ} {Q : Hyps Θ} {A B}
+          → Q ∣ |List| A <:̂ᵛ B
+          → Σ[ B₁ ∈ OVType Θ ] (B ≡ |List| B₁) × (Q ∣ A <:̂ᵛ B₁)
+<:̂ᵛ-Listˡ (|List|ₛ p) = _ , refl , p
 
 -- Inversion at box type
 
@@ -705,6 +724,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩ᴱ-subst h Natₑ           = Natₑ
 ⊩ᴱ-subst h (et₁ |×|ₑ et₂) = ⊩ᴱ-subst h et₁ |×|ₑ ⊩ᴱ-subst h et₂
 ⊩ᴱ-subst h (et₁ |+|ₑ et₂) = ⊩ᴱ-subst h et₁ |+|ₑ ⊩ᴱ-subst h et₂
+⊩ᴱ-subst h (|List|ₑ et)   = |List|ₑ (⊩ᴱ-subst h et)
 ⊩ᴱ-subst h Emptyₑ         = Emptyₑ
 
 ≡̂ᵛ-subst : ∀ {Θ Θ'} {A A' : OVType Θ} → (σ : Subst Θ Θ') → A ≡̂ᵛ A' → A [ σ ]ᵛ ≡̂ᵛ A' [ σ ]ᵛ
@@ -717,6 +737,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ᵛ-subst σ Nat≡̂       = Nat≡̂
 ≡̂ᵛ-subst σ (p |×|≡̂ q)  = ≡̂ᵛ-subst σ p |×|≡̂ ≡̂ᵛ-subst σ q
 ≡̂ᵛ-subst σ (p |+|≡̂ q)  = ≡̂ᵛ-subst σ p |+|≡̂ ≡̂ᵛ-subst σ q
+≡̂ᵛ-subst σ (|List|≡̂ p) = |List|≡̂ (≡̂ᵛ-subst σ p)
 ≡̂ᵛ-subst σ Empty≡̂      = Empty≡̂
 ≡̂ᵛ-subst σ (p ⇒≡̂ q)    = ≡̂ᵛ-subst σ p ⇒≡̂ ≡̂ᶜ-subst σ q
 ≡̂ᵛ-subst σ ([ r ]≡̂ p)  = [ ≡̂ᵣ-subst σ r ]≡̂ ≡̂ᵛ-subst σ p
@@ -737,6 +758,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩ᴱ-<:ˢ k Nat       et           = et
 ⊩ᴱ-<:ˢ k (A |×| B) (et |×|ₑ et') = ⊩ᴱ-<:ˢ k A et |×|ₑ ⊩ᴱ-<:ˢ k B et'
 ⊩ᴱ-<:ˢ k (A |+| B) (et |+|ₑ et') = ⊩ᴱ-<:ˢ k A et |+|ₑ ⊩ᴱ-<:ˢ k B et'
+⊩ᴱ-<:ˢ k (|List| A) (|List|ₑ et) = |List|ₑ (⊩ᴱ-<:ˢ k A et)
 ⊩ᴱ-<:ˢ k Empty     et           = et
 ⊩ᴱ-<:ˢ k (A ⇒ C)   ()
 ⊩ᴱ-<:ˢ k ([ ρ ] A) ()
@@ -760,6 +782,7 @@ VarOK-subst {σ = σ} h (hyp-ok m p q) = VarOK-≡̂ (≡̂ᵛ-subst σ p) (⊩-
 <:̂ᵛ-subst h Natₛ       = Natₛ
 <:̂ᵛ-subst h (p |×|ₛ r) = <:̂ᵛ-subst h p |×|ₛ <:̂ᵛ-subst h r
 <:̂ᵛ-subst h (p |+|ₛ r) = <:̂ᵛ-subst h p |+|ₛ <:̂ᵛ-subst h r
+<:̂ᵛ-subst h (|List|ₛ p) = |List|ₛ (<:̂ᵛ-subst h p)
 <:̂ᵛ-subst h Emptyₛ     = Emptyₛ
 <:̂ᵛ-subst h (p ⇒ₛ r)   = <:̂ᵛ-subst h p ⇒ₛ <:̂ᶜ-subst h r
 <:̂ᵛ-subst h ([ q ]ₛ p) = [ ⊩-substᵣ h q ]ₛ <:̂ᵛ-subst h p

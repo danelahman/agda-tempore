@@ -52,6 +52,7 @@ data Skel (n : ℕ) : Set where
   sNat   : Skel n                          -- natural-number type
   _s×_   : Skel n → Skel n → Skel n        -- product type
   _s+_   : Skel n → Skel n → Skel n        -- sum type
+  sList  : Skel n → Skel n                 -- list type
   sEmpty : Skel n                          -- empty type
   _s⇒_   : Skel n → Skel n → Skel n        -- function type, to its result's value part
   sBox_  : Skel n → Skel n                 -- box modality
@@ -70,6 +71,7 @@ svar?-just sBool     ()
 svar?-just sNat      ()
 svar?-just (t s× u)  ()
 svar?-just (t s+ u)  ()
+svar?-just (sList t) ()
 svar?-just sEmpty    ()
 svar?-just (t s⇒ u)  ()
 svar?-just (sBox t)  ()
@@ -86,6 +88,7 @@ mutual
   skelᵛ Nat       = sNat
   skelᵛ (A |×| B) = skelᵛ A s× skelᵛ B
   skelᵛ (A |+| B) = skelᵛ A s+ skelᵛ B
+  skelᵛ (|List| A) = sList (skelᵛ A)
   skelᵛ Empty     = sEmpty
   skelᵛ (A ⇒ C)   = skelᵛ A s⇒ skelᶜ C
   skelᵛ ([ ρ ] A) = sBox skelᵛ A
@@ -110,6 +113,7 @@ sBool     [ σ ]ᵏ = sBool
 sNat      [ σ ]ᵏ = sNat
 (t s× u)  [ σ ]ᵏ = t [ σ ]ᵏ s× u [ σ ]ᵏ
 (t s+ u)  [ σ ]ᵏ = t [ σ ]ᵏ s+ u [ σ ]ᵏ
+(sList t) [ σ ]ᵏ = sList (t [ σ ]ᵏ)
 sEmpty    [ σ ]ᵏ = sEmpty
 (t s⇒ u)  [ σ ]ᵏ = t [ σ ]ᵏ s⇒ u [ σ ]ᵏ
 (sBox t)  [ σ ]ᵏ = sBox t [ σ ]ᵏ
@@ -133,6 +137,7 @@ _≐ᵏ_ : ∀ {n m} → SSub n m → SSub n m → Set
 [id]ᵏ sNat      = refl
 [id]ᵏ (t s× u)  = cong₂ _s×_ ([id]ᵏ t) ([id]ᵏ u)
 [id]ᵏ (t s+ u)  = cong₂ _s+_ ([id]ᵏ t) ([id]ᵏ u)
+[id]ᵏ (sList t) = cong sList ([id]ᵏ t)
 [id]ᵏ sEmpty    = refl
 [id]ᵏ (t s⇒ u)  = cong₂ _s⇒_ ([id]ᵏ t) ([id]ᵏ u)
 [id]ᵏ (sBox t)  = cong sBox_ ([id]ᵏ t)
@@ -146,6 +151,7 @@ _≐ᵏ_ : ∀ {n m} → SSub n m → SSub n m → Set
 [⨟]ᵏ sNat      σ δ = refl
 [⨟]ᵏ (t s× u)  σ δ = cong₂ _s×_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
 [⨟]ᵏ (t s+ u)  σ δ = cong₂ _s+_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
+[⨟]ᵏ (sList t) σ δ = cong sList ([⨟]ᵏ t σ δ)
 [⨟]ᵏ sEmpty    σ δ = refl
 [⨟]ᵏ (t s⇒ u)  σ δ = cong₂ _s⇒_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
 [⨟]ᵏ (sBox t)  σ δ = cong sBox_ ([⨟]ᵏ t σ δ)
@@ -158,6 +164,7 @@ _≐ᵏ_ : ∀ {n m} → SSub n m → SSub n m → Set
 [≐]ᵏ p sNat      = refl
 [≐]ᵏ p (t s× u)  = cong₂ _s×_ ([≐]ᵏ p t) ([≐]ᵏ p u)
 [≐]ᵏ p (t s+ u)  = cong₂ _s+_ ([≐]ᵏ p t) ([≐]ᵏ p u)
+[≐]ᵏ p (sList t) = cong sList ([≐]ᵏ p t)
 [≐]ᵏ p sEmpty    = refl
 [≐]ᵏ p (t s⇒ u)  = cong₂ _s⇒_ ([≐]ᵏ p t) ([≐]ᵏ p u)
 [≐]ᵏ p (sBox t)  = cong sBox_ ([≐]ᵏ p t)
@@ -188,6 +195,7 @@ checkᵏ α sBool     = just sBool
 checkᵏ α sNat      = just sNat
 checkᵏ α (t s× u)  = zip₂ _s×_ (checkᵏ α t) (checkᵏ α u)
 checkᵏ α (t s+ u)  = zip₂ _s+_ (checkᵏ α t) (checkᵏ α u)
+checkᵏ α (sList t) = mmap sList (checkᵏ α t)
 checkᵏ α sEmpty    = just sEmpty
 checkᵏ α (t s⇒ u)  = zip₂ _s⇒_ (checkᵏ α t) (checkᵏ α u)
 checkᵏ α (sBox t)  = mmap sBox_ (checkᵏ α t)

@@ -3,10 +3,10 @@
 --                                                              --
 -- The types of `Syntax.Types` with grade expressions in place  --
 -- of grades, a former `tvar` for type variables, a type `Nat`  --
--- of natural numbers and binary sums `_|+|_`, which have no    --
--- counterpart in `Syntax.Types`. The ground types of the       --
--- operation signature embed by `⌜_⌝ᵍ`; `Nat` and sums are not  --
--- among them.                                                  --
+-- of natural numbers, binary sums `_|+|_` and lists `|List|`,  --
+-- which have no counterpart in `Syntax.Types`. The ground      --
+-- types of the operation signature embed by `⌜_⌝ᵍ`; `Nat`,     --
+-- sums and lists are not among them.                           --
 ------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -35,6 +35,7 @@ mutual
     Nat   : OVType Θ                         -- natural-number type
     _|×|_ : OVType Θ → OVType Θ → OVType Θ   -- product type
     _|+|_ : OVType Θ → OVType Θ → OVType Θ   -- sum type
+    |List| : OVType Θ → OVType Θ             -- list type
     Empty : OVType Θ                         -- empty type
     _⇒_   : OVType Θ → OCType Θ → OVType Θ   -- function type
     [_]_  : RExp Θ → OVType Θ → OVType Θ     -- box modality
@@ -69,6 +70,7 @@ mutual
   wkᵗ-v     Nat      = Nat
   wkᵗ-v     (A |×| B) = wkᵗ-v A |×| wkᵗ-v B
   wkᵗ-v     (A |+| B) = wkᵗ-v A |+| wkᵗ-v B
+  wkᵗ-v     (|List| A) = |List| (wkᵗ-v A)
   wkᵗ-v     Empty    = Empty
   wkᵗ-v     (A ⇒ C)  = wkᵗ-v A ⇒ wkᵗ-c C
   wkᵗ-v     ([ ρ ] A) = [ wkᵗ-r ρ ] wkᵗ-v A
@@ -86,6 +88,7 @@ mutual
   wkʳ-v     Nat      = Nat
   wkʳ-v     (A |×| B) = wkʳ-v A |×| wkʳ-v B
   wkʳ-v     (A |+| B) = wkʳ-v A |+| wkʳ-v B
+  wkʳ-v     (|List| A) = |List| (wkʳ-v A)
   wkʳ-v     Empty    = Empty
   wkʳ-v     (A ⇒ C)  = wkʳ-v A ⇒ wkʳ-c C
   wkʳ-v     ([ ρ ] A) = [ wkʳ-r ρ ] wkʳ-v A
@@ -103,6 +106,7 @@ mutual
   wkᵉ-v     Nat      = Nat
   wkᵉ-v     (A |×| B) = wkᵉ-v A |×| wkᵉ-v B
   wkᵉ-v     (A |+| B) = wkᵉ-v A |+| wkᵉ-v B
+  wkᵉ-v     (|List| A) = |List| (wkᵉ-v A)
   wkᵉ-v     Empty    = Empty
   wkᵉ-v     (A ⇒ C)  = wkᵉ-v A ⇒ wkᵉ-c C
   wkᵉ-v     ([ ρ ] A) = [ wkᵉ-r ρ ] wkᵉ-v A

@@ -8,6 +8,10 @@
 -- eternal outer variable, such as a `Nat`, is usable in it. The  --
 -- effect `ε` absorbs its own iteration, `ε · ε ≾ ε`.             --
 --                                                                --
+-- `recL V M N` is the same on lists, its step binding the head   --
+-- and the tail before the lock at the effect, so a head of       --
+-- non-eternal type is usable in it only where `∣ ε ∣ ≾ uᵣ`.      --
+--                                                                --
 -- The durations are stepped: `⌜ n ⌝` is the duration of `n`      --
 -- ticks, and `⌜ n ⌝ʳ` and `⌜ n ⌝ᵉ` its grades.                   --
 --                                                                --
@@ -301,3 +305,118 @@ in-clause-pure-typable = closed in-clause-pure-D refl
 drop-clause : RawC ∅ˢ 0
 drop-clause =
   handle (return ⋆) `with (λ op → recℕ (numeral 2) (return ⋆) (delay ⌜ 1 ⌝ (return ⋆))) `in (return ⋆)
+
+------------------------------------------------------------------
+-- 7. Pure recursion on lists
+--
+--   length l  = recL l with nil ↦ 0  | cons h t, r ↦ succ r
+--   sum l     = recL l with nil ↦ 0  | cons h t, r ↦ add h r
+--   inc-all l = recL l with nil ↦ [] | cons h t, r ↦ cons (succ h) r
+--
+-- `recL` is `recℕ` with the head and the tail in place of the
+-- predecessor; `add h r` is written out as a `recℕ` on the head. The
+-- effect is the unit. Typed at every grade.
+
+length : RawC ∅ˢ 0
+length = return (lam (recL v₀ (return zero) (return (succ v₀))))
+
+length-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (|List| Bool ⇒ Nat ‼ ûₑ) ‼ ûₑ
+length-D = return (lam (recL (var Hd ok₀) (return zero) (return (succ (var Hd ok₀))) pure))
+
+length-typed : IsTyped (infer [] length)
+length-typed = typed-of length (closed length-D refl) _
+
+sum : RawC ∅ˢ 0
+sum = return (lam (recL v₀ (return zero) (recℕ v₂ (return v₀) (return (succ v₀)))))
+
+inc-all : RawC ∅ˢ 0
+inc-all = return (lam (recL v₀ (return nil) (return (cons (succ v₂) v₀))))
+
+------------------------------------------------------------------
+-- 8. The head in the step
+--
+--   copy l       = recL l with nil ↦ [] | cons h t, r ↦ cons h r
+--   call-all l   = recL l with nil ↦ () | cons h t, r ↦ h ()
+--   last-or d l  = recL l with nil ↦ d  | cons h t, r ↦ delay 1; h
+--   last-box d l = last-or d (l : List ([1] Nat))
+--
+-- The head is bound behind the lock at the effect `ε`, so `var` asks
+-- for `eternal A ∨ ∣ ε ∣ ≾ uᵣ` at the element type `A`. A pure step
+-- leaves `ε` the unit: the head is usable at any type, a function
+-- among them (`copy-D`). A step of a tick makes `ε` at least a tick:
+-- at the right-sided grades the head's type is then asked to be
+-- eternal, and a list of boxes is refused.
+
+copy : RawC ∅ˢ 0
+copy = return (lam (recL v₀ (return nil) (return (cons v₂ v₀))))
+
+private
+
+  Fn : ∀ {Θ} → OVType Θ
+  Fn = Unit ⇒ Unit ‼ ûₑ
+
+copy-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (|List| Fn ⇒ |List| Fn ‼ ûₑ) ‼ ûₑ
+copy-D =
+  return (lam
+    (recL (var Hd ok₀) (return nil)
+          (return (cons (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) (≾ᵘ-ok u-passed)) (var Hd ok₀)))
+          pure))
+
+copy-typed : IsTyped (infer [] copy)
+copy-typed = typed-of copy (closed copy-D refl) _
+
+call-all : RawC ∅ˢ 0
+call-all = return (lam (recL v₀ (return ⋆) (v₂ · ⋆)))
+
+last-or : RawC ∅ˢ 0
+last-or = return (lam (return (lam (recL v₀ (return v₁) (delay ⌜ 1 ⌝ (return v₂))))))
+
+last-box : RawC ∅ˢ 0
+last-box =
+  return (lam (return (lam
+    (recL (v₀ ⦂ᵛ |List| ([ ⌜ 1 ⌝ʳ ] Nat)) (return v₁) (delay ⌜ 1 ⌝ (return v₂))))))
+
+-- Unboxing the head instead asks only that the time passed reach the
+-- box's grade.
+--
+--   latest l = recL l with nil ↦ 0 | cons h t, r ↦ delay 1; unbox h as x in x
+
+latest : RawC ∅ˢ 0
+latest =
+  return (lam (recL v₀ (return zero) (delay ⌜ 1 ⌝ (unbox (fsuc (fsuc fzero)) (return v₀)))))
+
+latest-ready : RawC ∅ˢ 0
+latest-ready =
+  return (lam (recL (v₀ ⦂ᵛ |List| ([ ⌜ 1 ⌝ʳ ] Nat)) (return zero)
+                    (delay ⌜ 1 ⌝ (unbox (fsuc (fsuc fzero)) (return v₀)))))
+
+------------------------------------------------------------------
+-- 9. A tick per element
+--
+--   ticks l = recL l with nil ↦ () | cons h t, r ↦ delay 1; ()
+--
+-- As for `countdown`: the effect is at least a tick and absorbs
+-- itself.
+
+ticks : RawC ∅ˢ 0
+ticks = return (lam (recL v₀ (return ⋆) (delay ⌜ 1 ⌝ (return ⋆))))
+
+-- On a list of three, annotated at `k` ticks, and at the top
+
+ticks-on : RawC ∅ˢ 0
+ticks-on = recL (cons ⋆ (cons ⋆ (cons ⋆ nil))) (return ⋆) (delay ⌜ 1 ⌝ (return ⋆))
+
+ticks-at : ℕ → RawC ∅ˢ 0
+ticks-at k = ticks-on ⦂ᶜ (Unit ‼ ⌜ k ⌝ᵉ)
+
+ticks-top : RawC ∅ˢ 0
+ticks-top = ticks-on ⦂ᶜ (Unit ‼ econst ⊤ₑ)
+
+ticks-top-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ econst ⊤ₑ
+ticks-top-D =
+  annᶜ (Unit ‼ econst ⊤ₑ)
+    (recL (cons ⋆ (cons ⋆ (cons ⋆ nil))) (coerce topₑ (return ⋆))
+          (coerce topₑ (delay ⌜ 1 ⌝ (return ⋆))) topₑ)
+
+ticks-top-typable : Typable [] ticks-top
+ticks-top-typable = closed ticks-top-D refl

@@ -245,6 +245,7 @@ mutual
   ... | q₁ , q₂ = cong₂ _|×|_ (updᵉ-v k b A q₁) (updᵉ-v k b B q₂)
   updᵉ-v k b (A |+| B) q with ∨-false (occᵉ-v k A) (occᵉ-v k B) q
   ... | q₁ , q₂ = cong₂ _|+|_ (updᵉ-v k b A q₁) (updᵉ-v k b B q₂)
+  updᵉ-v k b (|List| A) q = cong |List| (updᵉ-v k b A q)
   updᵉ-v k b (A ⇒ C)   q with ∨-false (occᵉ-v k A) (occᵉ-c k C) q
   ... | q₁ , q₂ = cong₂ _⇒_ (updᵉ-v k b A q₁) (updᵉ-c k b C q₂)
   updᵉ-v k b ([ ρ ] A) q with ∨-false (occᵉ-r k ρ) (occᵉ-v k A) q
@@ -269,6 +270,7 @@ mutual
   ... | q₁ , q₂ = cong₂ _|×|_ (updʳ-v k b A q₁) (updʳ-v k b B q₂)
   updʳ-v k b (A |+| B) q with ∨-false (occʳ-v k A) (occʳ-v k B) q
   ... | q₁ , q₂ = cong₂ _|+|_ (updʳ-v k b A q₁) (updʳ-v k b B q₂)
+  updʳ-v k b (|List| A) q = cong |List| (updʳ-v k b A q)
   updʳ-v k b (A ⇒ C)   q with ∨-false (occʳ-v k A) (occʳ-c k C) q
   ... | q₁ , q₂ = cong₂ _⇒_ (updʳ-v k b A q₁) (updʳ-c k b C q₂)
   updʳ-v k b ([ ρ ] A) q with ∨-false (occʳ-r k ρ) (occʳ-v k A) q
@@ -476,6 +478,9 @@ module _ {Θ Φ Ψ Ψ'} {O : Subst Θ Φ} {X : Subst Φ Ψ} {σ₁ σ₂ : Subst
 |+|-inj : ∀ {Ψ} {A B C D : OVType Ψ} → A |+| B ≡ C |+| D → (A ≡ C) × (B ≡ D)
 |+|-inj refl = refl , refl
 
+|List|-inj : ∀ {Ψ} {A B : OVType Ψ} → |List| A ≡ |List| B → A ≡ B
+|List|-inj refl = refl
+
 ⇒-inj : ∀ {Ψ} {A B : OVType Ψ} {C D : OCType Ψ} → A ⇒ C ≡ B ⇒ D → (A ≡ B) × (C ≡ D)
 ⇒-inj refl = refl , refl
 
@@ -521,6 +526,7 @@ module _ {Φ Ψ Ψ'} (X : Subst Φ Ψ) (σ₁ σ₂ : Subst Ψ Ψ') where
   subᵉ-v {k} (A |+| B) r e with ∨-true (occᵉ-v k A) (occᵉ-v k B) r
   ... | inj₁ r' = subᵉ-v A r' (proj₁ (|+|-inj e))
   ... | inj₂ r' = subᵉ-v B r' (proj₂ (|+|-inj e))
+  subᵉ-v {k} (|List| A) r e = subᵉ-v A r (|List|-inj e)
   subᵉ-v {k} (A ⇒ C) r e with ∨-true (occᵉ-v k A) (occᵉ-c k C) r
   ... | inj₁ r' = subᵉ-v A r' (proj₁ (⇒-inj e))
   ... | inj₂ r' = subᵉ-c C r' (proj₂ (⇒-inj e))
@@ -556,6 +562,7 @@ module _ {Φ Ψ Ψ'} (X : Subst Φ Ψ) (σ₁ σ₂ : Subst Ψ Ψ') where
   subʳ-v {k} (A |+| B) r e with ∨-true (occʳ-v k A) (occʳ-v k B) r
   ... | inj₁ r' = subʳ-v A r' (proj₁ (|+|-inj e))
   ... | inj₂ r' = subʳ-v B r' (proj₂ (|+|-inj e))
+  subʳ-v {k} (|List| A) r e = subʳ-v A r (|List|-inj e)
   subʳ-v {k} (A ⇒ C) r e with ∨-true (occʳ-v k A) (occʳ-c k C) r
   ... | inj₁ r' = subʳ-v A r' (proj₁ (⇒-inj e))
   ... | inj₂ r' = subʳ-c C r' (proj₂ (⇒-inj e))
@@ -1276,6 +1283,7 @@ hitᵥ l Nat       = false
 hitᵥ l Empty     = false
 hitᵥ l (A |×| B) = hitᵥ l A ∨ hitᵥ l B
 hitᵥ l (A |+| B) = hitᵥ l A ∨ hitᵥ l B
+hitᵥ l (|List| A) = hitᵥ l A
 hitᵥ l (A ⇒ C)   = hitᵥ l A ∨ hitᶜ l C
 hitᵥ l ([ ρ ] A) = hitᵣ l ρ ∨ hitᵥ l A
 hitᶜ l (A ‼ ε)   = hitᵥ l A ∨ hitₑ l ε
@@ -1311,6 +1319,7 @@ tops-v l (A |×| B) q with ∨-false (hitᵥ l A) (hitᵥ l B) q
 ... | q₁ , q₂ = cong₂ _|×|_ (tops-v l A q₁) (tops-v l B q₂)
 tops-v l (A |+| B) q with ∨-false (hitᵥ l A) (hitᵥ l B) q
 ... | q₁ , q₂ = cong₂ _|+|_ (tops-v l A q₁) (tops-v l B q₂)
+tops-v l (|List| A) q = cong |List| (tops-v l A q)
 tops-v l (A ⇒ C)   q with ∨-false (hitᵥ l A) (hitᶜ l C) q
 ... | q₁ , q₂ = cong₂ _⇒_ (tops-v l A q₁) (tops-c l C q₂)
 tops-v l ([ ρ ] A) q with ∨-false (hitᵣ l ρ) (hitᵥ l A) q

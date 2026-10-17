@@ -88,6 +88,9 @@ s⇒-inj refl = refl , refl
 sBox-inj : ∀ {n} {t t' : Skel n} → sBox t ≡ sBox t' → t ≡ t'
 sBox-inj refl = refl
 
+sList-inj : ∀ {n} {t t' : Skel n} → sList t ≡ sList t' → t ≡ t'
+sList-inj refl = refl
+
 -- Substitutions unifying an equation are closed under pointwise
 -- equality
 
@@ -117,6 +120,7 @@ data Occᵏ {n : ℕ} (α : Fin n) : Skel n → Set where
   occ-⇒ˡ  : ∀ {t u} → Occᵏ α t → Occᵏ α (t s⇒ u)
   occ-⇒ʳ  : ∀ {t u} → Occᵏ α u → Occᵏ α (t s⇒ u)
   occ-box : ∀ {t}   → Occᵏ α t → Occᵏ α (sBox t)
+  occ-list : ∀ {t}  → Occᵏ α t → Occᵏ α (sList t)
 
 sizeᵏ : ∀ {n} → Skel n → ℕ
 sizeᵏ (svar α)  = 1
@@ -129,6 +133,7 @@ sizeᵏ (t s+ u)  = suc (sizeᵏ t + sizeᵏ u)
 sizeᵏ sEmpty    = 1
 sizeᵏ (t s⇒ u)  = suc (sizeᵏ t + sizeᵏ u)
 sizeᵏ (sBox t)  = suc (sizeᵏ t)
+sizeᵏ (sList t) = suc (sizeᵏ t)
 
 -- A failed occurrence check exhibits the occurrence
 
@@ -153,6 +158,8 @@ checkᵏ-nothing α (t₁ s⇒ t₂) q with zip₂-nothing _s⇒_ (checkᵏ α t
 ... | inj₂ r = occ-⇒ʳ (checkᵏ-nothing α t₂ r)
 checkᵏ-nothing α (sBox t₁)  q =
   occ-box (checkᵏ-nothing α t₁ (map-nothing sBox_ (checkᵏ α t₁) q))
+checkᵏ-nothing α (sList t₁) q =
+  occ-list (checkᵏ-nothing α t₁ (map-nothing sList (checkᵏ α t₁) q))
 
 occ≤ᵏ : ∀ {n m} {t : Skel n} → (α : Fin n) → (σ : SSub n m) → Occᵏ α t
       → sizeᵏ (σ α) ≤ sizeᵏ (t [ σ ]ᵏ)
@@ -164,6 +171,7 @@ occ≤ᵏ α σ (occ-+ʳ o)  = m≤n⇒m≤1+n (≤-trans (occ≤ᵏ α σ o) (m
 occ≤ᵏ α σ (occ-⇒ˡ o)  = m≤n⇒m≤1+n (≤-trans (occ≤ᵏ α σ o) (m≤m+n _ _))
 occ≤ᵏ α σ (occ-⇒ʳ o)  = m≤n⇒m≤1+n (≤-trans (occ≤ᵏ α σ o) (m≤n+m _ _))
 occ≤ᵏ α σ (occ-box o) = m≤n⇒m≤1+n (occ≤ᵏ α σ o)
+occ≤ᵏ α σ (occ-list o) = m≤n⇒m≤1+n (occ≤ᵏ α σ o)
 
 -- A variable occurring in a skeleton other than itself is never sent
 -- to that skeleton's instance
@@ -190,6 +198,8 @@ no-cycleᵏ α σ nv (occ-⇒ʳ o)  u =
   1+n≰n (subst (suc (sizeᵏ (σ α)) ≤_) (sym (cong sizeᵏ u))
                (s≤s (≤-trans (occ≤ᵏ α σ o) (m≤n+m _ _))))
 no-cycleᵏ α σ nv (occ-box o) u =
+  1+n≰n (subst (suc (sizeᵏ (σ α)) ≤_) (sym (cong sizeᵏ u)) (s≤s (occ≤ᵏ α σ o)))
+no-cycleᵏ α σ nv (occ-list o) u =
   1+n≰n (subst (suc (sizeᵏ (σ α)) ≤_) (sym (cong sizeᵏ u)) (s≤s (occ≤ᵏ α σ o)))
 
 -- A skeleton that passes the occurrence check is the thinning of the
@@ -218,6 +228,8 @@ checkᵏ-thinᵏ α (t₁ s⇒ t₂) q with zip₂-just _s⇒_ (checkᵏ α t₁
   cong₂ _s⇒_ (checkᵏ-thinᵏ α t₁ q₁) (checkᵏ-thinᵏ α t₂ q₂)
 checkᵏ-thinᵏ α (sBox t₁)  q with map-just sBox_ (checkᵏ α t₁) q
 ... | _ , q₁ , refl = cong sBox_ (checkᵏ-thinᵏ α t₁ q₁)
+checkᵏ-thinᵏ α (sList t₁) q with map-just sList (checkᵏ α t₁) q
+... | _ , q₁ , refl = cong sList (checkᵏ-thinᵏ α t₁ q₁)
 
 -- A property of substitutions out of one scope
 
@@ -427,6 +439,7 @@ amguᵏ-spec (svar α) (u₁ s+ u₂)   anilᵏ = flexᵏ-spec α (u₁ s+ u₂)
 amguᵏ-spec (svar α)  sEmpty      anilᵏ = flexᵏ-spec α sEmpty (λ ())
 amguᵏ-spec (svar α) (u₁ s⇒ u₂)   anilᵏ = flexᵏ-spec α (u₁ s⇒ u₂) (λ ())
 amguᵏ-spec (svar α) (sBox u₁)    anilᵏ = flexᵏ-spec α (sBox u₁) (λ ())
+amguᵏ-spec (svar α) (sList u₁)    anilᵏ = flexᵏ-spec α (sList u₁) (λ ())
 
 amguᵏ-spec (sBase b)   (svar β) anilᵏ = Specᵏ-map sym (flexᵏ-spec β (sBase b) (λ ()))
 amguᵏ-spec sUnit       (svar β) anilᵏ = Specᵏ-map sym (flexᵏ-spec β sUnit (λ ()))
@@ -437,6 +450,7 @@ amguᵏ-spec (t₁ s+ t₂)  (svar β) anilᵏ = Specᵏ-map sym (flexᵏ-spec �
 amguᵏ-spec sEmpty      (svar β) anilᵏ = Specᵏ-map sym (flexᵏ-spec β sEmpty (λ ()))
 amguᵏ-spec (t₁ s⇒ t₂)  (svar β) anilᵏ = Specᵏ-map sym (flexᵏ-spec β (t₁ s⇒ t₂) (λ ()))
 amguᵏ-spec (sBox t₁)   (svar β) anilᵏ = Specᵏ-map sym (flexᵏ-spec β (sBox t₁) (λ ()))
+amguᵏ-spec (sList t₁)   (svar β) anilᵏ = Specᵏ-map sym (flexᵏ-spec β (sList t₁) (λ ()))
 
 amguᵏ-spec (sBase b) (sBase b')  anilᵏ = const-specᵏ (b ≡ᵇ? b') (λ δ p → sBase-inj p)
 amguᵏ-spec (sBase b) sUnit       anilᵏ = clashᵏ (λ δ ())
@@ -447,6 +461,7 @@ amguᵏ-spec (sBase b) (u₁ s+ u₂)  anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBase b) sEmpty      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBase b) (u₁ s⇒ u₂)  anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBase b) (sBox u₁)   anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (sBase b) (sList u₁)   anilᵏ = clashᵏ (λ δ ())
 
 amguᵏ-spec sUnit (sBase b')      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sUnit sUnit           anilᵏ = keepᵏ
@@ -457,6 +472,7 @@ amguᵏ-spec sUnit (u₁ s+ u₂)      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sUnit sEmpty          anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sUnit (u₁ s⇒ u₂)      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sUnit (sBox u₁)       anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec sUnit (sList u₁)       anilᵏ = clashᵏ (λ δ ())
 
 amguᵏ-spec sBool (sBase b')      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sBool sUnit           anilᵏ = clashᵏ (λ δ ())
@@ -467,6 +483,7 @@ amguᵏ-spec sBool (u₁ s+ u₂)      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sBool sEmpty          anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sBool (u₁ s⇒ u₂)      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sBool (sBox u₁)       anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec sBool (sList u₁)       anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sNat (sBase b')      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sNat sUnit           anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sNat sBool           anilᵏ = clashᵏ (λ δ ())
@@ -476,6 +493,7 @@ amguᵏ-spec sNat (u₁ s+ u₂)      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sNat sEmpty          anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sNat (u₁ s⇒ u₂)      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sNat (sBox u₁)       anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec sNat (sList u₁)       anilᵏ = clashᵏ (λ δ ())
 
 amguᵏ-spec (t₁ s× t₂) (sBase b') anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s× t₂) sUnit      anilᵏ = clashᵏ (λ δ ())
@@ -489,6 +507,7 @@ amguᵏ-spec (t₁ s× t₂) (u₁ s+ u₂) anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s× t₂) sEmpty     anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s× t₂) (u₁ s⇒ u₂) anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s× t₂) (sBox u₁)  anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (t₁ s× t₂) (sList u₁)  anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s+ t₂) (sBase b') anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s+ t₂) sUnit      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s+ t₂) sBool      anilᵏ = clashᵏ (λ δ ())
@@ -501,6 +520,7 @@ amguᵏ-spec (t₁ s+ t₂) (u₁ s× u₂) anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s+ t₂) sEmpty     anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s+ t₂) (u₁ s⇒ u₂) anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s+ t₂) (sBox u₁)  anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (t₁ s+ t₂) (sList u₁)  anilᵏ = clashᵏ (λ δ ())
 
 amguᵏ-spec sEmpty (sBase b')     anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sEmpty sUnit          anilᵏ = clashᵏ (λ δ ())
@@ -511,6 +531,7 @@ amguᵏ-spec sEmpty (u₁ s+ u₂)     anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sEmpty sEmpty         anilᵏ = keepᵏ
 amguᵏ-spec sEmpty (u₁ s⇒ u₂)     anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec sEmpty (sBox u₁)      anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec sEmpty (sList u₁)      anilᵏ = clashᵏ (λ δ ())
 
 amguᵏ-spec (t₁ s⇒ t₂) (sBase b') anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (t₁ s⇒ t₂) sUnit      anilᵏ = clashᵏ (λ δ ())
@@ -524,6 +545,7 @@ amguᵏ-spec {n} (t₁ s⇒ t₂) (u₁ s⇒ u₂) anilᵏ =
             (amguᵏ-spec t₁ u₁ anilᵏ) (amguᵏ-spec t₂ u₂)
             (λ p → s⇒-inj p)
 amguᵏ-spec (t₁ s⇒ t₂) (sBox u₁)  anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (t₁ s⇒ t₂) (sList u₁)  anilᵏ = clashᵏ (λ δ ())
 
 amguᵏ-spec (sBox t₁) (sBase b')  anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBox t₁) sUnit       anilᵏ = clashᵏ (λ δ ())
@@ -535,6 +557,19 @@ amguᵏ-spec (sBox t₁) sEmpty      anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBox t₁) (u₁ s⇒ u₂)  anilᵏ = clashᵏ (λ δ ())
 amguᵏ-spec (sBox t₁) (sBox u₁)   anilᵏ =
   Specᵏ-map (λ p → sBox-inj p) (amguᵏ-spec t₁ u₁ anilᵏ)
+amguᵏ-spec (sBox t₁) (sList u₁)  anilᵏ = clashᵏ (λ δ ())
+
+amguᵏ-spec (sList t₁) (sBase b') anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (sList t₁) sUnit      anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (sList t₁) sBool      anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (sList t₁) sNat       anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (sList t₁) (u₁ s× u₂) anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (sList t₁) (u₁ s+ u₂) anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (sList t₁) sEmpty     anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (sList t₁) (u₁ s⇒ u₂) anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (sList t₁) (sBox u₁)  anilᵏ = clashᵏ (λ δ ())
+amguᵏ-spec (sList t₁) (sList u₁) anilᵏ =
+  Specᵏ-map (λ p → sList-inj p) (amguᵏ-spec t₁ u₁ anilᵏ)
 
 unifyᴷ-spec : ∀ {n m} → (es : SEqns n) → (τ : SAList n m)
             → Specᵏ (Unisᵏ es) τ (unifyᴷ es (m , τ))

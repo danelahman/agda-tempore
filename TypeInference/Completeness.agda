@@ -171,6 +171,31 @@ mutual
       pA = co²ᵗ-v   σ B₁ B₂ A
       pι = co²ᵗ-ˢ   ι σ B₁ B₂
 
+  -- lists
+  --
+  -- A supertype of a list type is a list type; its element type is the
+  -- witness, the head carrying the slack and the tail its lifting.
+
+  cmpV {Θ = Θ} {σ = σ} ι Γ A _ nil nil ceq st
+    with <:̂ᵛ-Listˡ st
+  ... | B , eq , _ =
+    B , ⊨-≐ᵥ (σ ,ᵗ B) (|List| (tvar (newᵗ {Θ}))) (wkᵗ-v A) (trans (sym eq) (sym (wk-,ᵗ-v σ B A)))
+
+  cmpV {Θ = Θ} {σ = σ} ι Γ A _ (cons D₁ D₂) (cons {V = V} {W = W} e₁ e₂) ceq st
+    with <:̂ᵛ-Listˡ st
+  ... | B , eq , st₁ =
+    B , ⊨-≐ᵥ (σ ,ᵗ B) (|List| α) (wkᵗ-v A) (trans (sym eq) (sym pA)) ,
+    cmpV ι↑ Γ↑ α V D₁ (reV pι V e₁) (trans ceq (sym pΓ)) st₁ ,
+    cmpV ι↑ Γ↑ (|List| α) W D₂ (reV pι W e₂) (trans ceq (sym pΓ)) (|List|ₛ st₁)
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ
+      Γ↑ = wkᵗ-ctx Γ
+      α  = tvar (newᵗ {Θ})
+
+      pΓ = wk-,ᵗ-ctx σ B Γ
+      pA = wk-,ᵗ-v   σ B A
+      pι = wk-,ᵗ-ˢ   ι σ B
+
   -- lambda abstraction
 
   cmpV {Θ = Θ} {σ = σ} {Q = Q} ι Γ A _
@@ -381,6 +406,67 @@ mutual
                  (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
       ih₂ = cmpC ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) β e M₂ D₂ (reC pι M₂ e₂)
                  (cong (λ G → (G ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B) (trans ceq (sym pΓ)))
+                 (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
+
+  -- list elimination
+  --
+  -- The element type is the scrutinee's own; the branches inherit the
+  -- slack.
+
+  cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
+       (caseL_`nil_`cons_ {A = A₁} D₀ D₁ D₂)
+       (caseL {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂) ceq st le =
+    A₁ , ih₀ , ih₁ , ih₂
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ
+      Γ↑ = wkᵗ-ctx Γ
+      A↑ = wkᵗ-v A
+      t↑ = wkᵗ-e t
+      α  = tvar (newᵗ {Θ})
+
+      pΓ = wk-,ᵗ-ctx σ A₁ Γ
+      pA = wk-,ᵗ-v   σ A₁ A
+      pt = wk-,ᵗ-e   σ A₁ t
+      pι = wk-,ᵗ-ˢ   ι σ A₁
+
+      st↑ = subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st
+      le↑ = subst (λ z → Q ⊩ _ ≾̂ₑ z) (sym pt) le
+
+      ih₀ = cmpV ι↑ Γ↑ (|List| α) V D₀ (reV pι V e₀) (trans ceq (sym pΓ))
+                 (<:̂ᵛ-refl _)
+      ih₁ = cmpC ι↑ Γ↑ A↑ t↑ M₁ D₁ (reC pι M₁ e₁) (trans ceq (sym pΓ)) st↑ le↑
+      ih₂ = cmpC ι↑ (Γ↑ ∷ α ∷ |List| α) A↑ t↑ M₂ D₂ (reC pι M₂ e₂)
+                 (cong (λ G → G ∷ A₁ ∷ |List| A₁) (trans ceq (sym pΓ))) st↑ le↑
+
+  -- primitive recursion on lists
+  --
+  -- As for `recℕ`, with the scrutinee's element type as a further
+  -- witness.
+
+  cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
+       (recL {A = A₁} {B = B} {ε = ε} D₀ D₁ D₂ it) (recL {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂)
+       ceq st le =
+    A₁ , B , ε , ih₀ , ih₁ , ih₂ , it ,
+    subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st ,
+    subst (λ z → Q ⊩ ε ≾̂ₑ z) (sym pt) le
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
+      Γ↑ = wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
+      α  = wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ})))
+      β  = wkᵉ-v (tvar (newᵗ {Θ +ty}))
+      e  = evar (newᵉ {Θ +ty +ty})
+
+      pΓ = co²ᵗᵉ-ctx σ A₁ B ε Γ
+      pA = co²ᵗᵉ-v   σ A₁ B ε A
+      pt = co²ᵗᵉ-e   σ A₁ B ε t
+      pι = co²ᵗᵉ-ˢ   ι σ A₁ B ε
+
+      ih₀ = cmpV ι↑ Γ↑ (|List| α) V D₀ (reV pι V e₀) (trans ceq (sym pΓ)) (<:̂ᵛ-refl _)
+      ih₁ = cmpC ι↑ Γ↑ β e M₁ D₁ (reC pι M₁ e₁) (trans ceq (sym pΓ))
+                 (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
+      ih₂ = cmpC ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ α ∷ |List| α) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) β e M₂ D₂ (reC pι M₂ e₂)
+                 (cong (λ G → (G ⟨ rconst ⊤ᵣ ⟩ ∷ A₁ ∷ |List| A₁) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B)
+                       (trans ceq (sym pΓ)))
                  (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
 
   -- performing algebraic operations

@@ -634,6 +634,9 @@ etDec-str j (A |+| B) q with zip₂-just _++_ (etDec A) (zip₂ _++_ (etDec B) (
 ... | _ , _ , qa , q' , _ with zip₂-just _++_ (etDec B) (just []) q'
 ...   | _ , _ , qb , _ , _ with etDec-str j A qa | etDec-str j B qb
 ...     | A₀ , ra | B₀ , rb = A₀ |+| B₀ , cong₂ (zip₂ _|+|_) ra rb
+etDec-str j (|List| A) q with zip₂-just _++_ (etDec A) (just []) q
+... | _ , _ , qa , _ , _ with etDec-str j A qa
+...   | A₀ , ra = |List| A₀ , cong (mmap |List|) ra
 etDec-str j (A ⇒ (B ‼ ε)) ()
 etDec-str j ([ ρ ] A)     ()
 

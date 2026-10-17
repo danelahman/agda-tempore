@@ -10,6 +10,11 @@
 -- pure recursion inside an operation clause is typed. A clause --
 -- dropping its continuation after a countdown is refuted by    --
 -- the report's closed check.                                   --
+--                                                              --
+-- On lists the same: a pure step leaves the unit, so the head  --
+-- is usable at any type; a tick a step makes the top, so a     --
+-- head is asked to be eternal and a list of boxes is refused,  --
+-- and three ticks is refuted.                                  --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -27,7 +32,7 @@ open import TypeInference.Examples.Specs using (module Time-RightSided)
 module TypeInference.Examples.Recursion.Time.RightSided where
 
 open Time-RightSided using (spec; enum)
-open GradeSystemInterface (LanguageSpec.Grades spec) using (⊤ₑ)
+open GradeSystemInterface (LanguageSpec.Grades spec) using (⊤ᵣ; ⊤ₑ)
 
 open import TypeInference.OpenSyntax.Grades   spec
 open import TypeInference.OpenSyntax.Types    spec
@@ -154,3 +159,95 @@ drop-clause-check = refl
 
 drop-clause-not-typable : ¬ Typable [] drop-clause
 drop-clause-not-typable = infer-untypable [] drop-clause drop-clause-verdict
+
+------------------------------------------------------------------
+-- 7. Pure recursion on lists: the effect is the unit
+
+expected-length : Scheme
+expected-length = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (|List| α₀ ⇒ Nat ‼ ûₑ) ‼ ûₑ
+
+length-reported : schemeOf (infer [] length) ≡ just expected-length
+length-reported = refl
+
+expected-sum : Scheme
+expected-sum = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (|List| Nat ⇒ Nat ‼ ûₑ) ‼ ûₑ
+
+sum-reported : schemeOf (infer [] sum) ≡ just expected-sum
+sum-reported = refl
+
+sum-verdict : verdict (check [] sum) ≡ established
+sum-verdict = refl
+
+expected-inc-all : Scheme
+expected-inc-all = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (|List| Nat ⇒ |List| Nat ‼ ûₑ) ‼ ûₑ
+
+inc-all-reported : schemeOf (infer [] inc-all) ≡ just expected-inc-all
+inc-all-reported = refl
+
+------------------------------------------------------------------
+-- 8. The head in the step: with a pure step, usable at any type, a
+-- function among them; with a tick a step, asked to be eternal, so a
+-- list of boxes is refused. Unboxing the head instead needs the time
+-- passed, at least the top, to reach the box's grade: the top for an
+-- unknown grade, refuted at a grade of one tick.
+
+expected-copy : Scheme
+expected-copy = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (|List| α₀ ⇒ |List| α₀ ‼ ûₑ) ‼ ûₑ
+
+copy-reported : schemeOf (infer [] copy) ≡ just expected-copy
+copy-reported = refl
+
+expected-call-all : Scheme
+expected-call-all = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (|List| (Unit ⇒ Unit ‼ ûₑ) ⇒ Unit ‼ ûₑ) ‼ ûₑ
+
+call-all-reported : schemeOf (infer [] call-all) ≡ just expected-call-all
+call-all-reported = refl
+
+expected-last-or : Scheme
+expected-last-or =
+  ∀[ 3 , 0 , 0 ] eternal α₀ ∧ α₂ <: α₁ ∧ α₀ <: α₁ ⟹
+    (α₂ ⇒ (|List| α₀ ⇒ α₁ ‼ econst ⊤ₑ) ‼ ûₑ) ‼ ûₑ
+
+last-or-reported : schemeOf (infer [] last-or) ≡ just expected-last-or
+last-or-reported = refl
+
+last-box-verdict : infer [] last-box ≡ untypable
+last-box-verdict = refl
+
+last-box-not-typable : ¬ Typable [] last-box
+last-box-not-typable = infer-untypable [] last-box last-box-verdict
+
+expected-latest : Scheme
+expected-latest =
+  ∀[ 0 , 0 , 0 ] ⊤ ⟹ (|List| ([ rconst ⊤ᵣ ] Nat) ⇒ Nat ‼ econst ⊤ₑ) ‼ ûₑ
+
+latest-reported : schemeOf (infer [] latest) ≡ just expected-latest
+latest-reported = refl
+
+latest-ready-verdict : infer [] latest-ready ≡ untypable
+latest-ready-verdict = refl
+
+latest-ready-not-typable : ¬ Typable [] latest-ready
+latest-ready-not-typable = infer-untypable [] latest-ready latest-ready-verdict
+
+------------------------------------------------------------------
+-- 9. A tick per element: the top, the closure of a tick; refuted
+-- at three ticks, established at the top
+
+expected-ticks : Scheme
+expected-ticks = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (|List| α₀ ⇒ Unit ‼ econst ⊤ₑ) ‼ ûₑ
+
+ticks-reported : schemeOf (infer [] ticks) ≡ just expected-ticks
+ticks-reported = refl
+
+ticks-verdict : verdict (check [] ticks) ≡ established
+ticks-verdict = refl
+
+ticks-top-verdict : verdict (check [] ticks-top) ≡ established
+ticks-top-verdict = refl
+
+ticks-at-3-verdict : infer [] (ticks-at 3) ≡ untypable
+ticks-at-3-verdict = refl
+
+ticks-at-3-not-typable : ¬ Typable [] (ticks-at 3)
+ticks-at-3-not-typable = infer-untypable [] (ticks-at 3) ticks-at-3-verdict

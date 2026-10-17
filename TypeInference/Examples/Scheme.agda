@@ -93,6 +93,7 @@ private
     walkᵛ Nat       = true
     walkᵛ (A |×| B) = walkᵛ A && walkᵛ B
     walkᵛ (A |+| B) = walkᵛ A && walkᵛ B
+    walkᵛ (|List| A) = walkᵛ A
     walkᵛ Empty     = true
     walkᵛ (A ⇒ C)   = walkᵛ A && walkᶜ C
     walkᵛ ([ ρ ] A) = walkʳ ρ && walkᵛ A

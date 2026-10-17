@@ -321,6 +321,7 @@ _≡̂ₑ?_ : (ε ε' : EExp ∅ˢ) → Dec (ε ≡̂ₑ ε')
   map′ (λ (p , q) → p |×|ₑ q) (λ { (p |×|ₑ q) → p , q }) (⊩ᴱ? A ×-dec ⊩ᴱ? B)
 ⊩ᴱ? (A |+| B) =
   map′ (λ (p , q) → p |+|ₑ q) (λ { (p |+|ₑ q) → p , q }) (⊩ᴱ? A ×-dec ⊩ᴱ? B)
+⊩ᴱ? (|List| A) = map′ |List|ₑ (λ { (|List|ₑ p) → p }) (⊩ᴱ? A)
 ⊩ᴱ? Empty     = yes Emptyₑ
 ⊩ᴱ? (A ⇒ C)   = no λ ()
 ⊩ᴱ? ([ ρ ] A) = no λ ()
@@ -358,6 +359,7 @@ former (_ ⇒ _)   = 6
 former ([ _ ] _) = 7
 former Nat       = 8
 former (_ |+| _) = 9
+former (|List| _) = 10
 
 <:̂ᵛ-former : ∀ {Θ} {Q : Hyps Θ} {A B : OVType Θ} → Q ∣ A <:̂ᵛ B → former A ≡ former B
 <:̂ᵛ-former (tvarₛ _)  = refl
@@ -367,6 +369,7 @@ former (_ |+| _) = 9
 <:̂ᵛ-former Natₛ       = refl
 <:̂ᵛ-former (_ |×|ₛ _) = refl
 <:̂ᵛ-former (_ |+|ₛ _) = refl
+<:̂ᵛ-former (|List|ₛ _) = refl
 <:̂ᵛ-former Emptyₛ     = refl
 <:̂ᵛ-former (_ ⇒ₛ _)   = refl
 <:̂ᵛ-former ([ _ ]ₛ _) = refl
@@ -387,6 +390,8 @@ same (A |×| B) (A' |×| B') refl =
   map′ (λ (p , q) → p |×|ₛ q) (λ { (p |×|ₛ q) → p , q }) (A <:̂ᵛ? A' ×-dec B <:̂ᵛ? B')
 same (A |+| B) (A' |+| B') refl =
   map′ (λ (p , q) → p |+|ₛ q) (λ { (p |+|ₛ q) → p , q }) (A <:̂ᵛ? A' ×-dec B <:̂ᵛ? B')
+same (|List| A) (|List| A') refl =
+  map′ |List|ₛ (λ { (|List|ₛ p) → p }) (A <:̂ᵛ? A')
 same Empty     Empty      refl = yes Emptyₛ
 same (A ⇒ C)   (A' ⇒ C')  refl =
   map′ (λ (p , q) → p ⇒ₛ q) (λ { (p ⇒ₛ q) → p , q }) (A' <:̂ᵛ? A ×-dec C <:̂ᶜ? C')

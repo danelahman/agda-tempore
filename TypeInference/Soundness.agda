@@ -83,7 +83,8 @@ ctx-substᶜ refl M = M
 
 -- Generation weakens its arguments into the scope of the `∃`s it
 -- introduces; satisfaction instantiates those `∃`s by extending `σ`.
--- Each pair cancels (`wk-,*`), one lemma per binder pattern below.
+-- Each pair cancels (`wk-,*`), one lemma per binder pattern below; a
+-- single `∃ᵗ` (lists, list elimination) by `wk-,ᵗ-*` itself.
 
 -- `∃ᵗ∃ᵗ` — pairing, injections, pattern-matching, sum elimination
 
@@ -103,7 +104,7 @@ co²ᵗ-r : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ') �
        → wkᵗ-r (wkᵗ-r ρ) [ σ ,ᵗ B₁ ,ᵗ B₂ ]ʳ ≡ ρ [ σ ]ʳ
 co²ᵗ-r σ B₁ B₂ ρ = trans (wk-,ᵗ-r (σ ,ᵗ B₁) B₂ (wkᵗ-r ρ)) (wk-,ᵗ-r σ B₁ ρ)
 
--- `∃ᵗ∃ᵗ∃ᵉ` — lambda abstraction, function application
+-- `∃ᵗ∃ᵗ∃ᵉ` — lambda abstraction, function application, list recursion
 
 co²ᵗᵉ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ') → (ε : EExp Θ')
           → (Γ : OCtx Θ n)
@@ -406,6 +407,34 @@ mutual
 
       q = cong inr (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᵛ pι V)))
 
+  -- lists
+
+  soundVˢ {σ = σ} {Q = Q} ι Γ nil A (B , (st , _)) =
+    subV (nil {A = B}) (subst (λ z → Q ∣ |List| B <:̂ᵛ z) (wk-,ᵗ-v σ B A) st) , refl
+
+  soundVˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (cons V W) A (B , (st , _) , s₁ , s₂) =
+    D , q
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ
+      Γ↑ = wkᵗ-ctx Γ
+      α  = tvar (newᵗ {Θ})
+
+      pΓ = wk-,ᵗ-ctx σ B Γ
+      pA = wk-,ᵗ-v   σ B A
+      pι = wk-,ᵗ-ˢ   ι σ B
+
+      ih₁ = soundVˢ ι↑ Γ↑ V α s₁
+      ih₂ = soundVˢ ι↑ Γ↑ W (|List| α) s₂
+
+      D₁ = ctx-substᵛ pΓ (proj₁ ih₁)
+      D₂ = ctx-substᵛ pΓ (proj₁ ih₂)
+
+      D = subV (cons D₁ D₂) (subst (λ z → Q ∣ |List| B <:̂ᵛ z) pA st)
+
+      q = cong₂ cons
+                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V)))
+                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᵛ pι W)))
+
   -- lambda abstraction
 
   soundVˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (lam M) A (B₁ , B₂ , ε , st , s) =
@@ -651,6 +680,80 @@ mutual
                   ‼ₛ subst (λ z → Q ⊩ _ ≾̂ₑ z) pt le)
 
       q = cong₃ recℕ
+                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₀)) (trans (proj₂ ih₀) ([≐]ᴿᵛ pι V)))
+                (trans (⌊ctxᶜ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᶜ pι M₁)))
+                (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᶜ pι M₂)))
+
+  -- list elimination
+
+  soundCˢ {Θ = Θ} {σ = σ} ι Γ (caseL V `nil M₁ `cons M₂) A t (B , s₀ , s₁ , s₂) =
+    D , q
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ
+      Γ↑ = wkᵗ-ctx Γ
+      A↑ = wkᵗ-v A
+      t↑ = wkᵗ-e t
+      α  = tvar (newᵗ {Θ})
+
+      pΓ = wk-,ᵗ-ctx σ B Γ
+      pA = wk-,ᵗ-v   σ B A
+      pt = wk-,ᵗ-e   σ B t
+      pι = wk-,ᵗ-ˢ   ι σ B
+      pC = cong₂ _‼_ pA pt
+
+      ih₀ = soundVˢ ι↑ Γ↑ V (|List| α) s₀
+      ih₁ = soundCˢ ι↑ Γ↑ M₁ A↑ t↑ s₁
+      ih₂ = soundCˢ ι↑ (Γ↑ ∷ α ∷ |List| α) M₂ A↑ t↑ s₂
+
+      c₂ = cong (λ G → G ∷ B ∷ |List| B) pΓ
+
+      D₀ = ctx-substᵛ pΓ (proj₁ ih₀)
+      D₁ = c-subst pC (ctx-substᶜ pΓ (proj₁ ih₁))
+      D₂ = c-subst pC (ctx-substᶜ c₂ (proj₁ ih₂))
+
+      D = caseL D₀ `nil D₁ `cons D₂
+
+      q = cong₃ caseL_`nil_`cons_
+                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₀)) (trans (proj₂ ih₀) ([≐]ᴿᵛ pι V)))
+                (trans (⌊c⌋ pC (ctx-substᶜ pΓ (proj₁ ih₁)))
+                       (trans (⌊ctxᶜ⌋ pΓ (proj₁ ih₁))
+                              (trans (proj₂ ih₁) ([≐]ᴿᶜ pι M₁))))
+                (trans (⌊c⌋ pC (ctx-substᶜ c₂ (proj₁ ih₂)))
+                       (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂))
+                              (trans (proj₂ ih₂) ([≐]ᴿᶜ pι M₂))))
+
+  -- primitive recursion on lists
+
+  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (recL V M₁ M₂) A t
+          (B₁ , B₂ , ε , s₀ , s₁ , s₂ , it , st , le) =
+    D , q
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
+      Γ↑ = wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
+      α  = wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ})))
+      β  = wkᵉ-v (tvar (newᵗ {Θ +ty}))
+      e  = evar (newᵉ {Θ +ty +ty})
+
+      pΓ = co²ᵗᵉ-ctx σ B₁ B₂ ε Γ
+      pA = co²ᵗᵉ-v   σ B₁ B₂ ε A
+      pt = co²ᵗᵉ-e   σ B₁ B₂ ε t
+      pι = co²ᵗᵉ-ˢ   ι σ B₁ B₂ ε
+
+      ih₀ = soundVˢ ι↑ Γ↑ V (|List| α) s₀
+      ih₁ = soundCˢ ι↑ Γ↑ M₁ β e s₁
+      ih₂ = soundCˢ ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ α ∷ |List| α) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) M₂ β e s₂
+
+      c₂ = cong (λ Γ₀ → (Γ₀ ⟨ rconst ⊤ᵣ ⟩ ∷ B₁ ∷ |List| B₁) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B₂) pΓ
+
+      D₀ = ctx-substᵛ pΓ (proj₁ ih₀)
+      D₁ = ctx-substᶜ pΓ (proj₁ ih₁)
+      D₂ = ctx-substᶜ c₂ (proj₁ ih₂)
+
+      D = subC (recL D₀ D₁ D₂ it)
+               (subst (λ z → Q ∣ _ <:̂ᵛ z) pA st
+                  ‼ₛ subst (λ z → Q ⊩ _ ≾̂ₑ z) pt le)
+
+      q = cong₃ recL
                 (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₀)) (trans (proj₂ ih₀) ([≐]ᴿᵛ pι V)))
                 (trans (⌊ctxᶜ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᶜ pι M₁)))
                 (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᶜ pι M₂)))

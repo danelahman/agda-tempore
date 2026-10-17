@@ -49,18 +49,21 @@
 -- check of a run establishes, refutes or leaves unestablished  --
 -- the others, at left- and right-sided time.                   --
 --                                                              --
--- Set 10 consists of programs on natural numbers and sums:     --
--- elimination by `caseℕ` and `case+`, numerals, a `Nat` or an  --
--- eternal sum used under a lock where a function or a sum with --
--- a function summand is refused, subtyping through a sum, and  --
--- branches of different effects joined, at left- and           --
+-- Set 10 consists of programs on natural numbers, sums and     --
+-- lists: elimination by `caseℕ`, `case+` and `caseL`,          --
+-- numerals, a `Nat`, an eternal sum or a list of naturals used --
+-- under a lock where a function, a sum with a function summand --
+-- or a list of functions is refused, subtyping through a sum,  --
+-- and branches of different effects joined, at left- and       --
 -- right-sided time.                                            --
 --                                                              --
--- Set 11 consists of programs by primitive recursion: pure     --
--- recursions using the predecessor and the recursive result,   --
--- a countdown whose effect absorbs itself, a function refused  --
--- in the step, and recursion inside an operation clause, at    --
--- left- and right-sided time.                                  --
+-- Set 11 consists of programs by primitive recursion on        --
+-- natural numbers and lists: pure recursions using the         --
+-- predecessor, the head and the recursive result, a countdown  --
+-- and a tick per element whose effects absorb themselves, a    --
+-- function refused in the step, a head usable after a pure     --
+-- step and refused, as a box, after a tick, and recursion      --
+-- inside an operation clause, at left- and right-sided time.   --
 ------------------------------------------------------------------
 
 module TypeInference.Examples where

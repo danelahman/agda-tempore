@@ -103,6 +103,17 @@ mutual
               -------
             → RawV Θ n
 
+    -- lists
+
+    nil     :
+              --------
+              RawV Θ n
+
+    cons    : RawV Θ n
+            → RawV Θ n
+              -------
+            → RawV Θ n
+
     -- lambda abstraction
 
     lam     : RawC Θ (suc n)
@@ -183,6 +194,15 @@ mutual
             --------------
             → RawC Θ n
 
+    -- list elimination, the `cons` branch binding the head and the tail
+
+    caseL_`nil_`cons_
+            : RawV Θ n
+            → RawC Θ n
+            → RawC Θ (suc (suc n))
+            --------------------
+            → RawC Θ n
+
     -- primitive recursion on natural numbers, the step binding the
     -- predecessor and the result of the recursive call
 
@@ -190,6 +210,15 @@ mutual
             → RawC Θ n
             → RawC Θ (suc (suc n))
             --------------------
+            → RawC Θ n
+
+    -- primitive recursion on lists, the step binding the head, the tail
+    -- and the result of the recursive call
+
+    recL    : RawV Θ n
+            → RawC Θ n
+            → RawC Θ (suc (suc (suc n)))
+            --------------------------
             → RawC Θ n
 
     -- performing algebraic operations
@@ -264,6 +293,7 @@ mutual
   HandlerFreeᵛ ⦉ V , W ⦊     = HandlerFreeᵛ V × HandlerFreeᵛ W
   HandlerFreeᵛ (inl V)      = HandlerFreeᵛ V
   HandlerFreeᵛ (inr V)      = HandlerFreeᵛ V
+  HandlerFreeᵛ (cons V W)   = HandlerFreeᵛ V × HandlerFreeᵛ W
   HandlerFreeᵛ (lam M)      = HandlerFreeᶜ M
   HandlerFreeᵛ (V ⦂ᵛ A)     = HandlerFreeᵛ V
   HandlerFreeᵛ _            = ⊤
@@ -278,6 +308,8 @@ mutual
   HandlerFreeᶜ (caseℕ V `zero M `succ N) = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (case+ V `inl M `inr N)   = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (recℕ V M N)              = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
+  HandlerFreeᶜ (caseL V `nil M `cons N)  = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
+  HandlerFreeᶜ (recL V M N)              = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (perform op V M)         = HandlerFreeᵛ V × HandlerFreeᶜ M
   HandlerFreeᶜ (delay τ M)              = HandlerFreeᶜ M
   HandlerFreeᶜ (handle M `with H `in N) = ⊥

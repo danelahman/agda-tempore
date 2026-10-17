@@ -1,5 +1,5 @@
 --------------------------------------------------------------------
--- Inference on natural numbers and sums                          --
+-- Inference on natural numbers, sums and lists                   --
 --                                                                --
 -- Programs exercising `zero`, `succ` and `caseℕ`, and numerals   --
 -- written with `numeral`. None has an annotation. `caseℕ V       --
@@ -12,6 +12,10 @@
 -- covariant in both summands and eternal exactly when both are;  --
 -- `case+ V `inl M `inr N` types both branches at one             --
 -- computation type, each with the injected value bound.          --
+--                                                                --
+-- Programs exercising `nil`, `cons` and `caseL`. A list type is  --
+-- covariant and eternal exactly when its element type is;        --
+-- `caseL V `nil M `cons N` binds the head and the tail in `N`.   --
 --                                                                --
 -- The durations are stepped: `⌜ n ⌝` is the duration of `n`      --
 -- ticks, and `⌜ n ⌝ʳ` and `⌜ n ⌝ᵉ` its grades.                   --
@@ -425,3 +429,91 @@ expected-fun-sum-later =
 
 case-of-bool+ : RawC ∅ˢ 0
 case-of-bool+ = case+ true `inl return ⋆ `inr return ⋆
+
+------------------------------------------------------------------
+-- 6. Lists
+--
+--   head-or d l = caseL l of nil ↦ d | cons h t ↦ h
+--
+-- The element type is a type variable, and the result a common
+-- supertype of the default and the element; typed at every grade.
+
+head-or : RawC ∅ˢ 0
+head-or = return (lam (return (lam (caseL v₀ `nil return v₁ `cons return v₁))))
+
+head-or-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ (|List| Nat ⇒ Nat ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+head-or-D =
+  return (lam (return (lam (caseL var Hd ok₀ `nil return (var (Tl-∷ Hd) ok₀)
+                                            `cons return (var (Tl-∷ Hd) ok₀)))))
+
+head-or-typed : IsTyped (infer [] head-or)
+head-or-typed = typed-of head-or (closed head-or-D refl) _
+
+expected-head-or : Scheme
+expected-head-or =
+  ∀[ 3 , 0 , 0 ] α₂ <: α₁ ∧ α₀ <: α₁ ⟹ (α₂ ⇒ (|List| α₀ ⇒ α₁ ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+
+-- A list used under a lock: `List Nat` is eternal, so it survives a
+-- tick at every grade.
+--
+--   list-later = let l = ([2] : List Nat) in delay 1; l
+
+list-later : RawC ∅ˢ 0
+list-later = return (cons (numeral 2) nil ⦂ᵛ |List| Nat) ⨟ delay ⌜ 1 ⌝ (return v₀)
+
+list-later-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ |List| Nat ‼ (ûₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ ûₑ))
+list-later-D =
+  return (annᵛ (|List| Nat) (cons (numeralᵛ 2) nil))
+  ⨟ delay ⌜ 1 ⌝ (return (var (Tl-⟨⟩ Hd) (et-ok (|List|ₑ Natₑ))))
+
+list-later-typed : IsTyped (infer [] list-later)
+list-later-typed = typed-of list-later (closed list-later-D refl) _
+
+expected-list-later : Scheme
+expected-list-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ |List| Nat ‼ ⌜ 1 ⌝ᵉ
+
+-- Unannotated, the empty list's element type is an unknown, whose
+-- eternality is asked for at the right-sided grades only.
+--
+--   nil-later = let l = [] in delay 1; l
+
+nil-later : RawC ∅ˢ 0
+nil-later = return nil ⨟ delay ⌜ 1 ⌝ (return v₀)
+
+expected-nil-later-eternal : Scheme
+expected-nil-later-eternal = ∀[ 1 , 0 , 0 ] eternal α₀ ⟹ |List| α₀ ‼ ⌜ 1 ⌝ᵉ
+
+expected-nil-later : Scheme
+expected-nil-later = ∀[ 1 , 0 , 0 ] ⊤ ⟹ |List| α₀ ‼ ⌜ 1 ⌝ᵉ
+
+-- A list of functions is not eternal: after a tick it is usable only
+-- where `⌜ 1 ⌝ʳ ≾ uᵣ`, at the left-sided grades.
+--
+--   fun-list-later = let l = ([λ _. ()] : List (Unit ⇒ Unit)) in delay 1; l
+
+private
+
+  Fn : ∀ {Θ} → OVType Θ
+  Fn = Unit ⇒ Unit ‼ ûₑ
+
+fun-list-later : RawC ∅ˢ 0
+fun-list-later =
+  return (cons (lam (return ⋆)) nil ⦂ᵛ |List| Fn) ⨟ delay ⌜ 1 ⌝ (return v₀)
+
+fun-list-later-D : of-durʳ ⌜ 1 ⌝ ≾ᴳ uᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ |List| Fn ‼ (ûₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ ûₑ))
+fun-list-later-D q =
+  return (annᵛ (|List| Fn) (cons (lam (return ⋆)) nil))
+  ⨟ delay ⌜ 1 ⌝ (return (var (Tl-⟨⟩ Hd) (≾ᵘ-ok (after q))))
+
+fun-list-later-typable : True (of-durʳ ⌜ 1 ⌝ ≾ᵣ? uᵣ) → Typable [] fun-list-later
+fun-list-later-typable q = closed (fun-list-later-D (toWitness q)) refl
+
+expected-fun-list-later : Scheme
+expected-fun-list-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ |List| Fn ‼ ⌜ 1 ⌝ᵉ
+
+-- The scrutinee has to be a list: `Nat` is not one.
+--
+--   case-of-nat = caseL 0 of nil ↦ () | cons h t ↦ ()
+
+case-of-nat : RawC ∅ˢ 0
+case-of-nat = caseL zero `nil return ⋆ `cons return ⋆

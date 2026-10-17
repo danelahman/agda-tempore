@@ -28,12 +28,14 @@ examples:
 #   the search for a refutation and establishment: retry,
 #     the closed check with failing chains, candidates
 #     (Search, Entail, Localise, Solve)                  -> runs
-#   natural numbers and sums: zero, succ, caseℕ, numerals,
-#     inl, inr and case+, the former table at Nat and at
-#     sums, eternality under locks
+#   natural numbers, sums and lists: zero, succ, caseℕ,
+#     numerals, inl, inr, case+, nil, cons and caseL, the
+#     former table at Nat, at sums and at lists, eternality
+#     under locks
 #     (Generate, Former, Expand, Entail)                 -> data
-#   primitive recursion: recℕ, the cycle ε · ε ≾ ε, the
-#     step's lock at the top, recursion in a clause
+#   primitive recursion: recℕ and recL, the cycle
+#     ε · ε ≾ ε, the step's lock at the top, the head
+#     behind the lock at the effect, recursion in a clause
 #     (Generate, Localise, Search)                       -> recursion
 
 examples-stdlib:

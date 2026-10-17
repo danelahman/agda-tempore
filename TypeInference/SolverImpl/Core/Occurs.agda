@@ -47,6 +47,7 @@ mutual
   occᵗ-v α Nat       = false
   occᵗ-v α (A |×| B) = occᵗ-v α A ∨ occᵗ-v α B
   occᵗ-v α (A |+| B) = occᵗ-v α A ∨ occᵗ-v α B
+  occᵗ-v α (|List| A) = occᵗ-v α A
   occᵗ-v α Empty     = false
   occᵗ-v α (A ⇒ C)   = occᵗ-v α A ∨ occᵗ-c α C
   occᵗ-v α ([ ρ ] A) = occᵗ-v α A
@@ -71,6 +72,7 @@ mutual
   occʳ-v i Nat       = false
   occʳ-v i (A |×| B) = occʳ-v i A ∨ occʳ-v i B
   occʳ-v i (A |+| B) = occʳ-v i A ∨ occʳ-v i B
+  occʳ-v i (|List| A) = occʳ-v i A
   occʳ-v i Empty     = false
   occʳ-v i (A ⇒ C)   = occʳ-v i A ∨ occʳ-c i C
   occʳ-v i ([ ρ ] A) = occʳ-r i ρ ∨ occʳ-v i A
@@ -101,6 +103,7 @@ mutual
   occᵉ-v i Nat       = false
   occᵉ-v i (A |×| B) = occᵉ-v i A ∨ occᵉ-v i B
   occᵉ-v i (A |+| B) = occᵉ-v i A ∨ occᵉ-v i B
+  occᵉ-v i (|List| A) = occᵉ-v i A
   occᵉ-v i Empty     = false
   occᵉ-v i (A ⇒ C)   = occᵉ-v i A ∨ occᵉ-c i C
   occᵉ-v i ([ ρ ] A) = occᵉ-r i ρ ∨ occᵉ-v i A

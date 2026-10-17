@@ -411,6 +411,9 @@ sameᵛ? (A |×| B) (A' |×| B') with sameᵛ? A A' | sameᵛ? B B'
 sameᵛ? (A |+| B) (A' |+| B') with sameᵛ? A A' | sameᵛ? B B'
 ... | just refl | just refl = just refl
 ... | _         | _         = nothing
+sameᵛ? (|List| A) (|List| A') with sameᵛ? A A'
+... | just refl = just refl
+... | _         = nothing
 sameᵛ? Empty Empty = just refl
 sameᵛ? (A ⇒ C) (A' ⇒ C') with sameᵛ? A A' | sameᶜ? C C'
 ... | just refl | just refl = just refl

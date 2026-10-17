@@ -64,6 +64,8 @@ decorate Ψ (t s× u) with decorate Ψ t
 decorate Ψ (t s+ u) with decorate Ψ t
 ... | Ψ₁ , w₁ , A with decorate Ψ₁ u
 ...   | Ψ₂ , w₂ , B = Ψ₂ , w₁ ⨟ˢ w₂ , (A [ w₂ ]ᵛ |+| B)
+decorate Ψ (sList t) with decorate Ψ t
+... | Ψ₁ , w₁ , A = Ψ₁ , w₁ , |List| A
 decorate Ψ (t s⇒ u) with decorate Ψ t
 ... | Ψ₁ , w₁ , A with decorate Ψ₁ u
 ...   | Ψ₂ , w₂ , B =

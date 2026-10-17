@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- Natural numbers and sums at left-sided intervals             --
+-- Natural numbers, sums and lists at left-sided intervals      --
 --                                                              --
 -- "At least `n` ticks": `var`'s bound `ρ ≾ uᵣ` holds at every  --
 -- grade, so nothing goes stale and eternality is never asked   --
@@ -100,3 +100,27 @@ fun-sum-later-reported = refl
 
 fun-sum-later-derivable : Typable [] fun-sum-later
 fun-sum-later-derivable = fun-sum-later-typable _
+
+------------------------------------------------------------------
+-- 6. Lists
+
+head-or-reported : schemeOf (infer [] head-or) ≡ just expected-head-or
+head-or-reported = refl
+
+list-later-reported : schemeOf (infer [] list-later) ≡ just expected-list-later
+list-later-reported = refl
+
+nil-later-reported : schemeOf (infer [] nil-later) ≡ just expected-nil-later
+nil-later-reported = refl
+
+fun-list-later-reported : schemeOf (infer [] fun-list-later) ≡ just expected-fun-list-later
+fun-list-later-reported = refl
+
+fun-list-later-derivable : Typable [] fun-list-later
+fun-list-later-derivable = fun-list-later-typable _
+
+case-of-nat-verdict : infer [] case-of-nat ≡ untypable
+case-of-nat-verdict = refl
+
+case-of-nat-not-typable : ¬ Typable [] case-of-nat
+case-of-nat-not-typable = infer-untypable [] case-of-nat case-of-nat-verdict

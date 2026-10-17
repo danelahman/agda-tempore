@@ -116,6 +116,7 @@ mutual
   strᵛ j Nat       = just Nat
   strᵛ j (A |×| B) = zip₂ _|×|_ (strᵛ j A) (strᵛ j B)
   strᵛ j (A |+| B) = zip₂ _|+|_ (strᵛ j A) (strᵛ j B)
+  strᵛ j (|List| A) = mmap |List| (strᵛ j A)
   strᵛ j Empty     = just Empty
   strᵛ j (A ⇒ C)   = zip₂ _⇒_ (strᵛ j A) (strᶜ j C)
   strᵛ j ([ ρ ] A) = zip₂ [_]_ (strʳ j ρ) (strᵛ j A)
@@ -169,6 +170,8 @@ mutual
   ... | a , b , qa , qb , refl = cong₂ _|×|_ (str-popᵛ j A qa) (str-popᵛ j B qb)
   str-popᵛ j (A |+| B) q with zip₂-just _|+|_ (strᵛ j A) (strᵛ j B) q
   ... | a , b , qa , qb , refl = cong₂ _|+|_ (str-popᵛ j A qa) (str-popᵛ j B qb)
+  str-popᵛ j (|List| A) q with map-just |List| (strᵛ j A) q
+  ... | a , qa , refl = cong |List| (str-popᵛ j A qa)
   str-popᵛ j (A ⇒ C)   q with zip₂-just _⇒_ (strᵛ j A) (strᶜ j C) q
   ... | a , b , qa , qb , refl = cong₂ _⇒_ (str-popᵛ j A qa) (str-popᶜ j C qb)
   str-popᵛ j ([ ρ ] A) q with zip₂-just [_]_ (strʳ j ρ) (strᵛ j A) q
@@ -203,6 +206,7 @@ mutual
   str-wkᵛ Empty     = refl
   str-wkᵛ (A |×| B) = cong₂ (zip₂ _|×|_) (str-wkᵛ A) (str-wkᵛ B)
   str-wkᵛ (A |+| B) = cong₂ (zip₂ _|+|_) (str-wkᵛ A) (str-wkᵛ B)
+  str-wkᵛ (|List| A) = cong (mmap |List|) (str-wkᵛ A)
   str-wkᵛ (A ⇒ C)   = cong₂ (zip₂ _⇒_) (str-wkᵛ A) (str-wkᶜ C)
   str-wkᵛ ([ ρ ] A) = cong₂ (zip₂ [_]_) (str-wkʳ ρ) (str-wkᵛ A)
 
@@ -345,6 +349,7 @@ mutual
   escᵛ σ j k r (A |+| B) q with ∨-true (occᵉ-v j A) (occᵉ-v j B) q
   ... | inj₁ s = ∨-left  (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-v k (B [ σ ]ᵛ)) (escᵛ σ j k r A s)
   ... | inj₂ s = ∨-right (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-v k (B [ σ ]ᵛ)) (escᵛ σ j k r B s)
+  escᵛ σ j k r (|List| A) q = escᵛ σ j k r A q
   escᵛ σ j k r (A ⇒ C)   q with ∨-true (occᵉ-v j A) (occᵉ-c j C) q
   ... | inj₁ s = ∨-left  (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-c k (C [ σ ]ᶜ)) (escᵛ σ j k r A s)
   ... | inj₂ s = ∨-right (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-c k (C [ σ ]ᶜ)) (escᶜ σ j k r C s)
@@ -395,6 +400,7 @@ mutual
   occ-wkᵛ {Ψ} (A |+| B) q =
     [ occ-wkᵛ A , occ-wkᵛ B ]′
       (∨-true (occᵉ-v (newᵉ {Ψ}) (wkᵉ-v A)) (occᵉ-v (newᵉ {Ψ}) (wkᵉ-v B)) q)
+  occ-wkᵛ {Ψ} (|List| A) q = occ-wkᵛ A q
   occ-wkᵛ {Ψ} (A ⇒ C)   q =
     [ occ-wkᵛ A , occ-wkᶜ C ]′
       (∨-true (occᵉ-v (newᵉ {Ψ}) (wkᵉ-v A)) (occᵉ-c (newᵉ {Ψ}) (wkᵉ-c C)) q)
@@ -447,6 +453,7 @@ mutual
   str-occᵛ j (A |+| B) q with zip₂-nothing _|+|_ (strᵛ j A) (strᵛ j B) q
   ... | inj₁ s = ∨-left  (occᵉ-v j A) (occᵉ-v j B) (str-occᵛ j A s)
   ... | inj₂ s = ∨-right (occᵉ-v j A) (occᵉ-v j B) (str-occᵛ j B s)
+  str-occᵛ j (|List| A) q = str-occᵛ j A (map-nothing |List| (strᵛ j A) q)
   str-occᵛ j (A ⇒ C)   q with zip₂-nothing _⇒_ (strᵛ j A) (strᶜ j C) q
   ... | inj₁ s = ∨-left  (occᵉ-v j A) (occᵉ-c j C) (str-occᵛ j A s)
   ... | inj₂ s = ∨-right (occᵉ-v j A) (occᵉ-c j C) (str-occᶜ j C s)
