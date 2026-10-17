@@ -15,8 +15,7 @@
 -- raw term, have no counterpart in `Syntax.Language`, and are  --
 -- identities on typing.                                        --
 --                                                              --
--- The rules `nil`, `cons`, `caseL` and `recL` for lists, and   --
--- `cmp` for comparisons, have no counterpart in               --
+-- The rule `cmp` for comparisons has no counterpart in         --
 -- `Syntax.Language` either.                                    --
 ------------------------------------------------------------------
 

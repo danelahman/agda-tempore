@@ -41,6 +41,7 @@ data _<:ᵛ_ where
   Natₛ   : Nat <:ᵛ Nat
   _|×|ₛ_ : ∀ {A A' B B'} → A <:ᵛ A' → B <:ᵛ B' → (A |×| B) <:ᵛ (A' |×| B')
   _|+|ₛ_ : ∀ {A A' B B'} → A <:ᵛ A' → B <:ᵛ B' → (A |+| B) <:ᵛ (A' |+| B')
+  |List|ₛ : ∀ {A A'} → A <:ᵛ A' → (|List| A) <:ᵛ (|List| A')
   Emptyₛ : Empty <:ᵛ Empty
   _⇒ₛ_   : ∀ {A A' C C'} → A' <:ᵛ A → C <:ᶜ C' → (A ⇒ C) <:ᵛ (A' ⇒ C')
   [_]ₛ_  : ∀ {ρ ρ' A A'} → ρ' ≾ᵣ ρ → A <:ᵛ A' → ([ ρ ] A) <:ᵛ ([ ρ' ] A')
@@ -68,6 +69,7 @@ data _<:ᶜ_ where
 <:ᵛ-refl Nat       = Natₛ
 <:ᵛ-refl (A |×| B) = <:ᵛ-refl A |×|ₛ <:ᵛ-refl B
 <:ᵛ-refl (A |+| B) = <:ᵛ-refl A |+|ₛ <:ᵛ-refl B
+<:ᵛ-refl (|List| A) = |List|ₛ (<:ᵛ-refl A)
 <:ᵛ-refl Empty     = Emptyₛ
 <:ᵛ-refl (A ⇒ C)   = <:ᵛ-refl A ⇒ₛ <:ᶜ-refl C
 <:ᵛ-refl ([ ρ ] A) = [ ≾ᵣ-refl ]ₛ <:ᵛ-refl A
@@ -85,6 +87,7 @@ data _<:ᶜ_ where
 <:ᵛ-trans Natₛ       Natₛ       = Natₛ
 <:ᵛ-trans (p |×|ₛ r) (q |×|ₛ s) = <:ᵛ-trans p q |×|ₛ <:ᵛ-trans r s
 <:ᵛ-trans (p |+|ₛ r) (q |+|ₛ s) = <:ᵛ-trans p q |+|ₛ <:ᵛ-trans r s
+<:ᵛ-trans (|List|ₛ p) (|List|ₛ q) = |List|ₛ (<:ᵛ-trans p q)
 <:ᵛ-trans Emptyₛ     Emptyₛ     = Emptyₛ
 <:ᵛ-trans (p ⇒ₛ r)   (q ⇒ₛ s)   = <:ᵛ-trans q p ⇒ₛ <:ᶜ-trans r s
 <:ᵛ-trans ([ p ]ₛ r) ([ q ]ₛ s) = [ ≾ᵣ-trans q p ]ₛ <:ᵛ-trans r s
@@ -106,6 +109,7 @@ data _<:ᶜ_ where
   cong₂ _|×|_ (<:ᵛ-antisym p q) (<:ᵛ-antisym r s)
 <:ᵛ-antisym (p |+|ₛ r) (q |+|ₛ s) =
   cong₂ _|+|_ (<:ᵛ-antisym p q) (<:ᵛ-antisym r s)
+<:ᵛ-antisym (|List|ₛ p) (|List|ₛ q) = cong |List| (<:ᵛ-antisym p q)
 <:ᵛ-antisym Emptyₛ     Emptyₛ     = refl
 <:ᵛ-antisym (p ⇒ₛ r)   (q ⇒ₛ s)   =
   cong₂ _⇒_ (<:ᵛ-antisym q p) (<:ᶜ-antisym r s)
@@ -128,6 +132,7 @@ data _<:ᶜ_ where
   cong₂ _|×|ₛ_ (<:ᵛ-irrelevant p q) (<:ᵛ-irrelevant r s)
 <:ᵛ-irrelevant (p |+|ₛ r) (q |+|ₛ s) =
   cong₂ _|+|ₛ_ (<:ᵛ-irrelevant p q) (<:ᵛ-irrelevant r s)
+<:ᵛ-irrelevant (|List|ₛ p) (|List|ₛ q) = cong |List|ₛ (<:ᵛ-irrelevant p q)
 <:ᵛ-irrelevant Emptyₛ     Emptyₛ     = refl
 <:ᵛ-irrelevant (p ⇒ₛ r)   (q ⇒ₛ s)   =
   cong₂ _⇒ₛ_ (<:ᵛ-irrelevant p q) (<:ᶜ-irrelevant r s)
@@ -148,6 +153,7 @@ data _<:ᶜ_ where
 <:ᵛ-eternalˡ Natₛ         et          = et
 <:ᵛ-eternalˡ (p |×|ₛ r)   (et |×|ₑ e) = <:ᵛ-eternalˡ p et |×|ₑ <:ᵛ-eternalˡ r e
 <:ᵛ-eternalˡ (p |+|ₛ r)   (et |+|ₑ e) = <:ᵛ-eternalˡ p et |+|ₑ <:ᵛ-eternalˡ r e
+<:ᵛ-eternalˡ (|List|ₛ p)   (|List|ₑ et) = |List|ₑ (<:ᵛ-eternalˡ p et)
 <:ᵛ-eternalˡ Emptyₛ       et          = et
 
 <:ᵛ-eternalʳ : ∀ {A B} → A <:ᵛ B → Eternal A → Eternal B
@@ -157,6 +163,7 @@ data _<:ᶜ_ where
 <:ᵛ-eternalʳ Natₛ         et          = et
 <:ᵛ-eternalʳ (p |×|ₛ r)   (et |×|ₑ e) = <:ᵛ-eternalʳ p et |×|ₑ <:ᵛ-eternalʳ r e
 <:ᵛ-eternalʳ (p |+|ₛ r)   (et |+|ₑ e) = <:ᵛ-eternalʳ p et |+|ₑ <:ᵛ-eternalʳ r e
+<:ᵛ-eternalʳ (|List|ₛ p)   (|List|ₑ et) = |List|ₑ (<:ᵛ-eternalʳ p et)
 <:ᵛ-eternalʳ Emptyₛ       et          = et
 
 
@@ -202,6 +209,9 @@ data _⊔ᵛ_≡_ where
            → {{A₁ ⊔ᵛ A₂ ≡ A}}
            → {{B₁ ⊔ᵛ B₂ ≡ B}}
            → (A₁ |+| B₁) ⊔ᵛ (A₂ |+| B₂) ≡ (A |+| B)
+    |List|ⱼ : ∀ {A₁ A₂ A}
+           → {{A₁ ⊔ᵛ A₂ ≡ A}}
+           → (|List| A₁) ⊔ᵛ (|List| A₂) ≡ (|List| A)
     Emptyⱼ : Empty ⊔ᵛ Empty ≡ Empty
     ⇒ⱼ     : ∀ {A C₁ C₂ C}
            → {{C₁ ⊔ᶜ C₂ ≡ C}}
@@ -228,6 +238,7 @@ data _⊔ᶜ_≡_ where
 ⊔ᵛ-ubˡ Emptyⱼ             = Emptyₛ
 ⊔ᵛ-ubˡ (|×|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubˡ j |×|ₛ ⊔ᵛ-ubˡ k
 ⊔ᵛ-ubˡ (|+|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubˡ j |+|ₛ ⊔ᵛ-ubˡ k
+⊔ᵛ-ubˡ (|List|ⱼ {{j}})    = |List|ₛ (⊔ᵛ-ubˡ j)
 ⊔ᵛ-ubˡ (⇒ⱼ {{j}})         = <:ᵛ-refl _ ⇒ₛ ⊔ᶜ-ubˡ j
 ⊔ᵛ-ubˡ ([]ⱼ {{j}})        = [ ≾ᵣ-refl ]ₛ ⊔ᵛ-ubˡ j
 
@@ -243,6 +254,7 @@ data _⊔ᶜ_≡_ where
 ⊔ᵛ-ubʳ Emptyⱼ             = Emptyₛ
 ⊔ᵛ-ubʳ (|×|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubʳ j |×|ₛ ⊔ᵛ-ubʳ k
 ⊔ᵛ-ubʳ (|+|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubʳ j |+|ₛ ⊔ᵛ-ubʳ k
+⊔ᵛ-ubʳ (|List|ⱼ {{j}})    = |List|ₛ (⊔ᵛ-ubʳ j)
 ⊔ᵛ-ubʳ (⇒ⱼ {{j}})         = <:ᵛ-refl _ ⇒ₛ ⊔ᶜ-ubʳ j
 ⊔ᵛ-ubʳ ([]ⱼ {{j}})        = [ ≾ᵣ-refl ]ₛ ⊔ᵛ-ubʳ j
 
@@ -267,6 +279,7 @@ data _⊔ᶜ_≡_ where
   ⊔ᵛ-lub j p q |×|ₛ ⊔ᵛ-lub k r s
 ⊔ᵛ-lub (|+|ⱼ {{j}} {{k}}) (p |+|ₛ r) (q |+|ₛ s) =
   ⊔ᵛ-lub j p q |+|ₛ ⊔ᵛ-lub k r s
+⊔ᵛ-lub (|List|ⱼ {{j}}) (|List|ₛ p) (|List|ₛ q) = |List|ₛ (⊔ᵛ-lub j p q)
 ⊔ᵛ-lub (⇒ⱼ {{j}})  (p ⇒ₛ r)   (_ ⇒ₛ s)   = p ⇒ₛ ⊔ᶜ-lub j r s
 ⊔ᵛ-lub ([]ⱼ {{j}}) ([ p ]ₛ r) ([ _ ]ₛ s) = [ p ]ₛ ⊔ᵛ-lub j r s
 
@@ -286,6 +299,7 @@ data _⊔ᶜ_≡_ where
   cong₂ _|×|_ (⊔ᵛ-det j j') (⊔ᵛ-det k k')
 ⊔ᵛ-det (|+|ⱼ {{j}} {{k}}) (|+|ⱼ {{j'}} {{k'}}) =
   cong₂ _|+|_ (⊔ᵛ-det j j') (⊔ᵛ-det k k')
+⊔ᵛ-det (|List|ⱼ {{j}}) (|List|ⱼ {{j'}}) = cong |List| (⊔ᵛ-det j j')
 ⊔ᵛ-det (⇒ⱼ {{j}})  (⇒ⱼ {{j'}})  = cong (_ ⇒_) (⊔ᶜ-det j j')
 ⊔ᵛ-det ([]ⱼ {{j}}) ([]ⱼ {{j'}}) = cong ([ _ ]_) (⊔ᵛ-det j j')
 
@@ -307,6 +321,7 @@ data _⊔ᶜ_≡_ where
 ⊔ᵛ-idem Nat       = Natⱼ
 ⊔ᵛ-idem (A |×| B) = |×|ⱼ {{⊔ᵛ-idem A}} {{⊔ᵛ-idem B}}
 ⊔ᵛ-idem (A |+| B) = |+|ⱼ {{⊔ᵛ-idem A}} {{⊔ᵛ-idem B}}
+⊔ᵛ-idem (|List| A) = |List|ⱼ {{⊔ᵛ-idem A}}
 ⊔ᵛ-idem Empty     = Emptyⱼ
 ⊔ᵛ-idem (A ⇒ C)   = ⇒ⱼ {{⊔ᶜ-idem C}}
 ⊔ᵛ-idem ([ ρ ] A) = []ⱼ {{⊔ᵛ-idem A}}

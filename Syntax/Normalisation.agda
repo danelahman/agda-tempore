@@ -4,10 +4,10 @@
 -- Every derivation has one with the same erasure in which `subV` and  --
 -- `subC` occur only where a sub-derivation must meet a type it does   --
 -- not itself determine: an application's argument, a `perform`'s      --
--- parameter, the branches of `if`, `caseℕ` and `case+`, the base and  --
--- step of `recℕ`, a handler's clauses and its continuation, and the   --
--- root. `NfV`/`NfC` pin those positions and `C-normal-form` is the    --
--- theorem.                                                            --
+-- parameter, the head and tail of a `cons`, the branches of `if`,     --
+-- `caseℕ`, `case+` and `caseL`, the base and step of `recℕ` and       --
+-- `recL`, a handler's clauses and its continuation, and the root.     --
+-- `NfV`/`NfC` pin those positions and `C-normal-form` is the theorem. --
 --                                                                     --
 -- The tool is context subsumption along `_≼ᶜ_`, which lowers binder   --
 -- types and lock grades at once. It is a statement about derivations: --
@@ -112,6 +112,14 @@ data NfV where
 
   inrⁿ   : ∀ {Γ A B} {V : Γ ⊢V⦂ B} → NfV V → NfV (inr {A = A} V)
 
+  nilⁿ   : ∀ {Γ A} → NfV {Γ} (nil {A = A})
+
+  -- the head and the tail meet at the element type
+
+  consⁿ  : ∀ {Γ A A₁ A₂} {V : Γ ⊢V⦂ A₁} {W : Γ ⊢V⦂ A₂}
+             {p : A₁ <:ᵛ A} {q : A₂ <:ᵛ |List| A}
+         → NfV V → NfV W → NfV (cons (subV V p) (subV W q))
+
   lamⁿ   : ∀ {Γ A B ε} {M : Γ ∷ A ⊢C⦂ B ‼ ε} → NfC M → NfV (lam M)
 
 data NfC where
@@ -162,6 +170,20 @@ data NfC where
                {p : (A₁ ‼ ε₁) <:ᶜ (A' ‼ ε)} {q : (A₂ ‼ ε₂) <:ᶜ (A' ‼ ε)}
            → NfV V → NfC M → NfC N
            → NfC (case+ V `inl subC M p `inr subC N q)
+
+  caseLⁿ   : ∀ {Γ A A' ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ |List| A}
+               {M : Γ ⊢C⦂ A₁ ‼ ε₁} {N : Γ ∷ A ∷ |List| A ⊢C⦂ A₂ ‼ ε₂}
+               {p : (A₁ ‼ ε₁) <:ᶜ (A' ‼ ε)} {q : (A₂ ‼ ε₂) <:ᶜ (A' ‼ ε)}
+           → NfV V → NfC M → NfC N
+           → NfC (caseL V `nil subC M p `cons subC N q)
+
+  recLⁿ    : ∀ {Γ A B ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ |List| A}
+               {M : Γ ⊢C⦂ A₁ ‼ ε₁}
+               {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ A₂ ‼ ε₂}
+               {p : (A₁ ‼ ε₁) <:ᶜ (B ‼ ε)} {q : (A₂ ‼ ε₂) <:ᶜ (B ‼ ε)}
+               {r : ε ·ₑ ε ≾ₑ ε}
+           → NfV V → NfC M → NfC N
+           → NfC (recL V (subC M p) (subC N q) r)
 
   -- the parameter meets the ground type the operation fixes; the slack is
   -- non-trivial because ground types include the box modality
@@ -260,6 +282,12 @@ V-subCtx c (inlⁿ nV) with V-subCtx c nV
 V-subCtx c (inrⁿ nV) with V-subCtx c nV
 ... | nfv V' s n e =
   nfv (inr V') (<:ᵛ-refl _ |+|ₛ s) (inrⁿ n) (cong inr e)
+V-subCtx c nilⁿ =
+  nfv nil (<:ᵛ-refl _) nilⁿ refl
+V-subCtx c (consⁿ {p = p} {q = q} nV nW) with V-subCtx c nV | V-subCtx c nW
+... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
+  nfv (cons (subV V' (<:ᵛ-trans s₁ p)) (subV W' (<:ᵛ-trans s₂ q))) (<:ᵛ-refl _)
+      (consⁿ n₁ n₂) (cong₂ cons e₁ e₂)
 V-subCtx c (lamⁿ {A = A} nM) with C-subCtx (≼-∷ c (<:ᵛ-refl A)) nM
 ... | nfc M' sv se n e =
   nfv (lam M') (<:ᵛ-refl A ⇒ₛ (sv ‼ₛ se)) (lamⁿ n) (cong lam e)
@@ -314,6 +342,24 @@ C-subCtx c (case+ⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
                 `inr subC N' (<:ᶜ-trans (sv₂ ‼ₛ se₂) q))
       (<:ᵛ-refl _) ≾ₑ-refl (case+ⁿ nV' nM' nN')
       (cong₃ (λ a b d → case+ a `inl b `inr d) eV eM eN)
+C-subCtx c (caseLⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
+... | nfv V' (|List|ₛ s) nV' eV
+      with C-subCtx c nM | C-subCtx (≼-∷ (≼-∷ c s) (|List|ₛ s)) nN
+...   | nfc M' sv₁ se₁ nM' eM | nfc N' sv₂ se₂ nN' eN =
+  nfc (caseL V' `nil subC M' (<:ᶜ-trans (sv₁ ‼ₛ se₁) p)
+                `cons subC N' (<:ᶜ-trans (sv₂ ‼ₛ se₂) q))
+      (<:ᵛ-refl _) ≾ₑ-refl (caseLⁿ nV' nM' nN')
+      (cong₃ (λ a b d → caseL a `nil b `cons d) eV eM eN)
+C-subCtx c (recLⁿ {B = B} {p = p} {q = q} {r = r} nV nM nN) with V-subCtx c nV
+... | nfv V' (|List|ₛ s) nV' eV
+      with C-subCtx c nM
+         | C-subCtx (≼-∷ (≼-⟨⟩ (≼-∷ (≼-∷ (≼-⟨⟩ c ≾ᵣ-refl) s) (|List|ₛ s)) ≾ᵣ-refl)
+                         (<:ᵛ-refl B)) nN
+...   | nfc M' sv₁ se₁ nM' eM | nfc N' sv₂ se₂ nN' eN =
+  nfc (recL V' (subC M' (<:ᶜ-trans (sv₁ ‼ₛ se₁) p))
+               (subC N' (<:ᶜ-trans (sv₂ ‼ₛ se₂) q)) r)
+      (<:ᵛ-refl _) ≾ₑ-refl (recLⁿ nV' nM' nN')
+      (cong₃ (λ a b d → recL a b d) eV eM eN)
 C-subCtx c (performⁿ {op = op} {p = p} nV nM) with V-subCtx c nV
 ... | nfv V' s nV' eV
       with C-subCtx (≼-∷ (≼-⟨⟩ c ≾ᵣ-refl) (<:ᵛ-refl _)) nM
@@ -380,6 +426,11 @@ V-normalise (inl V) with V-normalise V
 V-normalise (inr V) with V-normalise V
 ... | nfv V' s n e =
   nfv (inr V') (<:ᵛ-refl _ |+|ₛ s) (inrⁿ n) (cong inr e)
+V-normalise nil =
+  nfv nil (<:ᵛ-refl _) nilⁿ refl
+V-normalise (cons V W) with V-normalise V | V-normalise W
+... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
+  nfv (cons (subV V' s₁) (subV W' s₂)) (<:ᵛ-refl _) (consⁿ n₁ n₂) (cong₂ cons e₁ e₂)
 V-normalise (lam {A = A} {C = B ‼ ε} M) with C-normalise M
 ... | nfc M' sv se n e =
   nfv (lam M') (<:ᵛ-refl A ⇒ₛ (sv ‼ₛ se)) (lamⁿ n) (cong lam e)
@@ -438,6 +489,24 @@ C-normalise (case+ V `inl M `inr N) with V-normalise V
                 `inr subC N' (<:ᵛ-trans sv₂' sv₂ ‼ₛ ≾ₑ-trans se₂' se₂))
       (<:ᵛ-refl _) ≾ₑ-refl (case+ⁿ nV nM' nN')
       (cong₃ (λ a b d → case+ a `inl b `inr d) eV (trans eM' eM) (trans eN' eN))
+C-normalise (caseL V `nil M `cons N) with V-normalise V
+... | nfv V' (|List|ₛ s) nV eV with C-normalise M | C-normalise N
+...   | nfc M' sv₁ se₁ nM eM | nfc N₁ sv₂ se₂ nN eN
+        with C-subCtx (≼-∷ (≼-∷ (≼ᶜ-refl _) s) (|List|ₛ s)) nN
+...     | nfc N' sv₂' se₂' nN' eN' =
+  nfc (caseL V' `nil subC M' (sv₁ ‼ₛ se₁)
+                `cons subC N' (<:ᵛ-trans sv₂' sv₂ ‼ₛ ≾ₑ-trans se₂' se₂))
+      (<:ᵛ-refl _) ≾ₑ-refl (caseLⁿ nV nM nN')
+      (cong₃ (λ a b d → caseL a `nil b `cons d) eV eM (trans eN' eN))
+C-normalise (recL {B = B} V M N r) with V-normalise V
+... | nfv V' (|List|ₛ s) nV eV with C-normalise M | C-normalise N
+...   | nfc M' sv₁ se₁ nM eM | nfc N₁ sv₂ se₂ nN eN
+        with C-subCtx (≼-∷ (≼-⟨⟩ (≼-∷ (≼-∷ (≼-⟨⟩ (≼ᶜ-refl _) ≾ᵣ-refl) s) (|List|ₛ s))
+                                 ≾ᵣ-refl) (<:ᵛ-refl B)) nN
+...     | nfc N' sv₂' se₂' nN' eN' =
+  nfc (recL V' (subC M' (sv₁ ‼ₛ se₁)) (subC N' (<:ᵛ-trans sv₂' sv₂ ‼ₛ ≾ₑ-trans se₂' se₂)) r)
+      (<:ᵛ-refl _) ≾ₑ-refl (recLⁿ nV nM nN')
+      (cong₃ (λ a b d → recL a b d) eV eM (trans eN' eN))
 C-normalise (perform op V M) with V-normalise V
 ... | nfv V' s nV eV with C-normalise M
 ...   | nfc M' sv se nM eM =

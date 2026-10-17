@@ -31,6 +31,7 @@ open import Data.Unit using (⊤; tt)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Nat using (ℕ; zero; suc)
+open import Data.List using (List; []; _∷_; map)
 
 open import Util.Equality
 
@@ -479,6 +480,107 @@ iterᵖ-unique {A} a f h p q zero    = p tt
 iterᵖ-unique {A} a f h p q (suc n) =
   ≈-trans A (q n) (app-cong f (iterᵖ-unique a f h p q n))
 
+-- List object
+--
+-- Pointwise lists: elements related elementwise, transport acting on each
+-- element. The fold recurses on the list at each world; its laws are
+-- inductions on it.
+
+module _ (A : PSh) where
+
+  _≈ᴸ_ : ∀ {w} → List (carrier A w) → List (carrier A w) → Set
+  []       ≈ᴸ []       = ⊤
+  (x ∷ xs) ≈ᴸ (y ∷ ys) = _≈_ A x y × xs ≈ᴸ ys
+  []       ≈ᴸ (_ ∷ _)  = ⊥
+  (_ ∷ _)  ≈ᴸ []       = ⊥
+
+  reflᴸ : ∀ {w} (xs : List (carrier A w)) → xs ≈ᴸ xs
+  reflᴸ []       = tt
+  reflᴸ (x ∷ xs) = ≈-refl A , reflᴸ xs
+
+  symᴸ : ∀ {w} (xs ys : List (carrier A w)) → xs ≈ᴸ ys → ys ≈ᴸ xs
+  symᴸ []       []       e        = tt
+  symᴸ (x ∷ xs) (y ∷ ys) (e , es) = ≈-sym A e , symᴸ xs ys es
+
+  transᴸ : ∀ {w} (xs ys zs : List (carrier A w)) → xs ≈ᴸ ys → ys ≈ᴸ zs → xs ≈ᴸ zs
+  transᴸ []       []       []       e        e'         = tt
+  transᴸ (x ∷ xs) (y ∷ ys) (z ∷ zs) (e , es) (e' , es') =
+    ≈-trans A e e' , transᴸ xs ys zs es es'
+
+  trᴸ : ∀ {w w'} → w ⊑[ uᵣ ] w' → List (carrier A w) → List (carrier A w')
+  trᴸ p = map (transport A p)
+
+  tr-congᴸ : ∀ {w w'} (p : w ⊑[ uᵣ ] w') (xs ys : List (carrier A w))
+           → xs ≈ᴸ ys → trᴸ p xs ≈ᴸ trᴸ p ys
+  tr-congᴸ p []       []       e        = tt
+  tr-congᴸ p (x ∷ xs) (y ∷ ys) (e , es) = transport-cong A p e , tr-congᴸ p xs ys es
+
+  tr-reflᴸ : ∀ {w} (xs : List (carrier A w)) → trᴸ ⊑-refl xs ≈ᴸ xs
+  tr-reflᴸ []       = tt
+  tr-reflᴸ (x ∷ xs) = transport-refl A x , tr-reflᴸ xs
+
+  tr-transᴸ : ∀ {w w' w''} (p : w ⊑[ uᵣ ] w') (q : w' ⊑[ uᵣ ] w'')
+              (xs : List (carrier A w))
+            → trᴸ (⊑ᵘ-trans p q) xs ≈ᴸ trᴸ q (trᴸ p xs)
+  tr-transᴸ p q []       = tt
+  tr-transᴸ p q (x ∷ xs) = transport-trans A p q x , tr-transᴸ p q xs
+
+  Listᵖ : PSh
+  Listᵖ = record
+    { carrier         = λ w → List (carrier A w)
+    ; _≈_             = _≈ᴸ_
+    ; ≈-refl          = λ {w} {x} → reflᴸ x
+    ; ≈-sym           = λ {w} {x} {y} → symᴸ x y
+    ; ≈-trans         = λ {w} {x} {y} {z} → transᴸ x y z
+    ; transport       = trᴸ
+    ; transport-cong  = λ p {x} {y} → tr-congᴸ p x y
+    ; transport-refl  = tr-reflᴸ
+    ; transport-trans = tr-transᴸ
+    }
+
+nilᵖ : ∀ {A} → 𝟙ᵖ →ᵖ Listᵖ A
+nilᵖ = pmap (λ _ → []) (λ _ → tt) (λ _ _ → tt)
+
+consᵖ : ∀ {A} → A ×ᵖ Listᵖ A →ᵖ Listᵖ A
+consᵖ {A} = pmap (λ x → proj₁ x ∷ proj₂ x) (λ e → e)
+                 (λ p x → ≈-refl A , reflᴸ A (trᴸ A p (proj₂ x)))
+
+foldᵖ : ∀ {A C} → 𝟙ᵖ →ᵖ C → A ×ᵖ C →ᵖ C → Listᵖ A →ᵖ C
+foldᵖ {A} {C} a f = pmap go go-cong go-nat
+  where
+    go : ∀ {w} → List (carrier A w) → carrier C w
+    go []       = app a tt
+    go (x ∷ xs) = app f (x , go xs)
+
+    go-cong : ∀ {w} {xs ys : List (carrier A w)} → _≈ᴸ_ A xs ys → _≈_ C (go xs) (go ys)
+    go-cong {xs = []}     {[]}     e        = ≈-refl C
+    go-cong {xs = x ∷ xs} {y ∷ ys} (e , es) = app-cong f (e , go-cong es)
+
+    go-nat : ∀ {w w'} (p : w ⊑[ uᵣ ] w') (xs : List (carrier A w))
+           → _≈_ C (go (trᴸ A p xs)) (transport C p (go xs))
+    go-nat p []       = nat a p tt
+    go-nat p (x ∷ xs) = ≈-trans C (app-cong f (≈-refl A , go-nat p xs)) (nat f p (x , go xs))
+
+foldᵖ-cong : ∀ {A C} {a a' : 𝟙ᵖ →ᵖ C} {f f' : A ×ᵖ C →ᵖ C}
+           → a ≈ᵖ a' → f ≈ᵖ f' → foldᵖ a f ≈ᵖ foldᵖ a' f'
+foldᵖ-cong                         pa pf []       = pa tt
+foldᵖ-cong {A} {C} {a} {a'} {f} {f'} pa pf (x ∷ xs) =
+  ≈-trans C (app-cong f (≈-refl A , foldᵖ-cong {A} {C} {a} {a'} {f} {f'} pa pf xs)) (pf _)
+
+foldᵖ-nil : ∀ {A C} → (a : 𝟙ᵖ →ᵖ C) → (f : A ×ᵖ C →ᵖ C) → foldᵖ a f ∘ᵖ nilᵖ ≈ᵖ a
+foldᵖ-nil {C = C} a f x = ≈-refl C
+
+foldᵖ-cons : ∀ {A C} → (a : 𝟙ᵖ →ᵖ C) → (f : A ×ᵖ C →ᵖ C)
+           → foldᵖ a f ∘ᵖ consᵖ ≈ᵖ f ∘ᵖ ⟨ idᵖ ∘ᵖ fstᵖ , foldᵖ a f ∘ᵖ sndᵖ ⟩ᵖ
+foldᵖ-cons {C = C} a f x = ≈-refl C
+
+foldᵖ-unique : ∀ {A C} → (a : 𝟙ᵖ →ᵖ C) → (f : A ×ᵖ C →ᵖ C) → (h : Listᵖ A →ᵖ C)
+             → h ∘ᵖ nilᵖ ≈ᵖ a → h ∘ᵖ consᵖ ≈ᵖ f ∘ᵖ ⟨ idᵖ ∘ᵖ fstᵖ , h ∘ᵖ sndᵖ ⟩ᵖ
+             → h ≈ᵖ foldᵖ a f
+foldᵖ-unique {A} {C} a f h p q []       = p tt
+foldᵖ-unique {A} {C} a f h p q (x ∷ xs) =
+  ≈-trans C (q (x , xs)) (app-cong f (≈-refl A , foldᵖ-unique a f h p q xs))
+
 -- Kripke exponentials
 --
 -- An element of the exponential `A ⇒ᵖ B` at a world `w` is a Kripke
@@ -646,6 +748,14 @@ PShCat = record
   ; iterᵐ-zero   = iterᵖ-zero
   ; iterᵐ-succ   = iterᵖ-succ
   ; iterᵐ-unique = iterᵖ-unique
+  ; Listᵐ        = Listᵖ
+  ; nilᵐ         = nilᵖ
+  ; consᵐ        = consᵖ
+  ; foldᵐ        = foldᵖ
+  ; foldᵐ-cong   = λ {A} {C} {a} {a'} {f} {f'} → foldᵖ-cong {a = a} {a' = a'} {f = f} {f' = f'}
+  ; foldᵐ-nil    = foldᵖ-nil
+  ; foldᵐ-cons   = foldᵖ-cons
+  ; foldᵐ-unique = foldᵖ-unique
   ; 𝔹ᵐ           = 𝔹ᵖ
   ; trueᵐ        = trueᵖ
   ; falseᵐ       = falseᵖ

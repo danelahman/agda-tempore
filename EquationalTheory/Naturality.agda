@@ -402,3 +402,61 @@ subC-caseℕ {Γ} {C} {C'} w V M N =
     castR : bodyR [ split-[] ↦ V ]c ≡ caseℕ V `zero subC M w `succ subC N w
     castR = cong₂ (λ X Y → caseℕ V `zero subC X w `succ subC Y w)
                   (sub-wk-≡ᶜ [] V M) (sub-wk-≡ᶜ ([] ∷ Nat) V N)
+
+
+-- List elimination, likewise: the beta rules at `nil` and at a `cons`, lifted
+-- to an arbitrary scrutinee by the eta rule.
+
+subC-caseL-nil : ∀ {Γ A C C'}
+               → (w : C <:ᶜ C')
+               → (M : Γ ⊢C⦂ C)
+               → (N : Γ ∷ A ∷ |List| A ⊢C⦂ C)
+               ------------------------------------------------------------
+               → Γ ⊢C⦂ subC (caseL nil `nil M `cons N) w
+                    == caseL nil `nil subC M w `cons subC N w
+subC-caseL-nil w M N =
+  C-trans (subC-cong (caseL-beta-nil M N))
+          (C-sym (caseL-beta-nil (subC M w) (subC N w)))
+
+subC-caseL-cons : ∀ {Γ A C C'}
+                → (w : C <:ᶜ C')
+                → (V : Γ ⊢V⦂ A)
+                → (W : Γ ⊢V⦂ |List| A)
+                → (M : Γ ⊢C⦂ C)
+                → (N : Γ ∷ A ∷ |List| A ⊢C⦂ C)
+                ------------------------------------------------------------
+                → Γ ⊢C⦂ subC (caseL cons V W `nil M `cons N) w
+                     == caseL cons V W `nil subC M w `cons subC N w
+subC-caseL-cons w V W M N =
+  C-trans (subC-cong (caseL-beta-cons V W M N))
+          (C-sym (caseL-beta-cons V W (subC M w) (subC N w)))
+
+subC-caseL : ∀ {Γ A C C'}
+           → (w : C <:ᶜ C')
+           → (V : Γ ⊢V⦂ |List| A)
+           → (M : Γ ⊢C⦂ C)
+           → (N : Γ ∷ A ∷ |List| A ⊢C⦂ C)
+           ------------------------------------------------------------
+           → Γ ⊢C⦂ subC (caseL V `nil M `cons N) w
+                == caseL V `nil subC M w `cons subC N w
+subC-caseL {Γ} {A} {C} {C'} w V M N =
+  C-trans
+    (C-sym (==-castᶜ refl castL (caseL-eta V bodyL)))
+    (C-trans (caseL-cong V-refl (subC-caseL-nil w _ _) (subC-caseL-cons w _ _ _ _))
+             (==-castᶜ refl castR (caseL-eta V bodyR)))
+  where
+    rN = cong-ren {Γ'' = [] ∷ A ∷ |List| A} (wk-ren {Δ = Γ} {A = |List| A})
+
+    bodyL : Γ ∷ |List| A ⊢C⦂ C'
+    bodyL = subC (caseL hd `nil C-rename wk-ren M `cons C-rename rN N) w
+
+    bodyR : Γ ∷ |List| A ⊢C⦂ C'
+    bodyR = caseL hd `nil subC (C-rename wk-ren M) w `cons subC (C-rename rN N) w
+
+    castL : bodyL [ split-[] ↦ V ]c ≡ subC (caseL V `nil M `cons N) w
+    castL = cong₂ (λ X Y → subC (caseL V `nil X `cons Y) w)
+                  (sub-wk-≡ᶜ [] V M) (sub-wk-≡ᶜ ([] ∷ A ∷ |List| A) V N)
+
+    castR : bodyR [ split-[] ↦ V ]c ≡ caseL V `nil subC M w `cons subC N w
+    castR = cong₂ (λ X Y → caseL V `nil subC X w `cons subC Y w)
+                  (sub-wk-≡ᶜ [] V M) (sub-wk-≡ᶜ ([] ∷ A ∷ |List| A) V N)

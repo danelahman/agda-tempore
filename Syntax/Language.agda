@@ -101,6 +101,18 @@ mutual
             ---------------
             → Γ ⊢V⦂ A |+| B
 
+    -- lists
+
+    nil     : {A : VType}
+              ---------------
+            → Γ ⊢V⦂ |List| A
+
+    cons    : {A : VType}
+            → Γ ⊢V⦂ A
+            → Γ ⊢V⦂ |List| A
+            ---------------
+            → Γ ⊢V⦂ |List| A
+
     -- lambda abstraction
           
     lam     : {A : VType}
@@ -219,6 +231,35 @@ mutual
             → Γ ∷ B ⊢C⦂ C
             ---------------
             → Γ ⊢C⦂ C
+
+    -- list elimination
+
+    -- As for `if`, both branches are typed at the same computation type;
+    -- the `cons` branch binds the head and then the tail, as `match`.
+
+    caseL_`nil_`cons_
+            : {A : VType}
+            → {C : CType}
+            → Γ ⊢V⦂ |List| A
+            → Γ ⊢C⦂ C
+            → Γ ∷ A ∷ |List| A ⊢C⦂ C
+            ------------------------
+            → Γ ⊢C⦂ C
+
+    -- primitive recursion on lists
+
+    -- As for `recℕ`: the step sees the ambient context behind `⟨ ⊤ᵣ ⟩`,
+    -- binds the head and the tail, and, behind the lock of the recursion's
+    -- grade, the result of the recursive call on the tail.
+
+    recL    : {A B : VType}
+            → {ε : E}
+            → Γ ⊢V⦂ |List| A
+            → Γ ⊢C⦂ B ‼ ε
+            → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε
+            → ε ·ₑ ε ≾ₑ ε
+            ----------------------------------------------------
+            → Γ ⊢C⦂ B ‼ ε
 
     -- performing algebraic operations
 
@@ -357,5 +398,9 @@ eternal-val-ext (et₁ |+|ₑ _) (inl V) =
   inl (eternal-val-ext et₁ V)
 eternal-val-ext (_ |+|ₑ et₂) (inr V) =
   inr (eternal-val-ext et₂ V)
+eternal-val-ext _ nil =
+  nil
+eternal-val-ext (|List|ₑ et) (cons V W) =
+  cons (eternal-val-ext et V) (eternal-val-ext (|List|ₑ et) W)
 eternal-val-ext et (subV V p) =
   subV (eternal-val-ext (<:ᵛ-eternalˡ p et) V) p

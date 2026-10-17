@@ -128,6 +128,16 @@ recℕ-stepᵗ : ∀ {X B ε}
 recℕ-stepᵗ p n =
   T-≤ p ∘ᵐ μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ ∘ᵐ mapˣᵐ (η⊣ ∘ᵐ mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ
 
+-- The step of a primitive recursion on lists, likewise; the barred part of the
+-- context is the ambient one, the head and the tail sit beside it.
+
+recL-stepᵗ : ∀ {X A B ε}
+           → ε ·ₑ ε ≾ₑ ε
+           → ⟨ mapᵉ ε ⟩ᵒ ((⟨ ⊤ᵣ ⟩ᵒ X ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ B →ᵐ Tᵒ B ε
+           → ((X ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ Tᵒ B ε →ᵐ Tᵒ B ε
+recL-stepᵗ p n =
+  T-≤ p ∘ᵐ μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ ∘ᵐ mapˣᵐ (η⊣ ∘ᵐ mapˣᵐ (mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ) idᵐ
+
 -- The interpretation is defined only for *parametric* terms: a term whose
 -- handlers are uniform in the residual effect grade the clauses are quantified
 -- over. `Paramᶜ`/`Paramᵛ` is that certificate, and it is defined simultaneously
@@ -146,6 +156,8 @@ mutual
   Paramᵛ false      = ⊤
   Paramᵛ zero       = ⊤
   Paramᵛ (succ V)   = Paramᵛ V
+  Paramᵛ nil        = ⊤
+  Paramᵛ (cons V W) = Paramᵛ V × Paramᵛ W
   Paramᵛ ⦉ V , W ⦊  = Paramᵛ V × Paramᵛ W
   Paramᵛ (inl V)    = Paramᵛ V
   Paramᵛ (inr V)    = Paramᵛ V
@@ -161,6 +173,8 @@ mutual
   Paramᶜ (if V `then M `else N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (caseℕ V `zero M `succ N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (recℕ V M N p) = Paramᵛ V × Paramᶜ M × Paramᶜ N
+  Paramᶜ (caseL V `nil M `cons N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
+  Paramᶜ (recL V M N p) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (case+ V `inl M `inr N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (perform op V M) = Paramᵛ V × Paramᶜ M
   Paramᶜ (delay τ M)      = Paramᶜ M
@@ -198,6 +212,8 @@ mutual
   ⟦ false    ⟧ᵛᵗ _ = falseᵐ ∘ᵐ terminalᵐ
   ⟦ zero     ⟧ᵛᵗ _ = zeroᵐ ∘ᵐ terminalᵐ
   ⟦ succ V   ⟧ᵛᵗ pV = succᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
+  ⟦ nil      ⟧ᵛᵗ _ = nilᵐ ∘ᵐ terminalᵐ
+  ⟦ cons V W ⟧ᵛᵗ (pV , pW) = consᵐ ∘ᵐ ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
   ⟦ ⦉ V , W ⦊ ⟧ᵛᵗ (pV , pW) = ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
   ⟦ inl V    ⟧ᵛᵗ pV = inlᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
   ⟦ inr V    ⟧ᵛᵗ pV = inrᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
@@ -219,6 +235,11 @@ mutual
   -- primitive recursion at `T ⟦ B ⟧ ε`, from the scrutinee
   ⟦ recℕ V M N p ⟧ᶜᵗ (pV , pM , pN) =
     recℕᵐ (⟦ M ⟧ᶜᵗ pM) (recℕ-stepᵗ p (⟦ N ⟧ᶜᵗ pN)) ∘ᵐ ⟨ idᵐ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
+  ⟦ caseL V `nil M `cons N ⟧ᶜᵗ (pV , pM , pN) =
+    caseLᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+  -- primitive recursion on lists at `T ⟦ B ⟧ ε`, from the scrutinee
+  ⟦ recL V M N p ⟧ᶜᵗ (pV , pM , pN) =
+    recLᵐ (⟦ M ⟧ᶜᵗ pM) (recL-stepᵗ p (⟦ N ⟧ᶜᵗ pN)) ∘ᵐ ⟨ idᵐ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
   ⟦ case+ V `inl M `inr N ⟧ᶜᵗ (pV , pM , pN) =
     caseᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ⟦_⟧ᶜᵗ {Γ} (perform {A} {ε} op V M) (pV , pM) =

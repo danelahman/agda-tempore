@@ -30,6 +30,7 @@ open Operations Ops
 open import Data.Empty using (⊥-elim)
 open import Data.Product using (_,_; _×_; proj₁; proj₂)
 open import Data.Unit using (⊤; tt)
+open import Data.Sum using (inj₁; inj₂)
 
 open import Syntax.Types     S
 open import Syntax.Contexts  S
@@ -94,6 +95,8 @@ stepᴾˢ : ∀ {ε ε' A B} {S S' : 𝕊 []}
        → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩) → Paramˢ S → Paramᶜ M → Paramˢ S'
 stepᴾˢ APP                 pS _              = pS
 stepᴾˢ MATCH               pS _              = pS
+stepᴾˢ CASEL               pS _              = pS
+stepᴾˢ RECL                pS _              = pS
 stepᴾˢ IF-TRUE             pS _              = pS
 stepᴾˢ IF-FALSE            pS _              = pS
 stepᴾˢ CASE-INL            pS _              = pS
@@ -141,6 +144,8 @@ step-grade : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
            → E
 step-grade APP                  = uₑ
 step-grade MATCH                = uₑ
+step-grade CASEL                = uₑ
+step-grade RECL                 = uₑ
 step-grade IF-TRUE              = uₑ
 step-grade IF-FALSE             = uₑ
 step-grade CASE-INL             = uₑ
@@ -175,6 +180,8 @@ stepᵀ : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
       → ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ hist St' ⟧ᶜᵗˣ (step-grade r)
 stepᵀ APP               = ηᵀ
 stepᵀ MATCH             = ηᵀ
+stepᵀ CASEL             = ηᵀ
+stepᵀ RECL              = ηᵀ
 stepᵀ IF-TRUE           = ηᵀ
 stepᵀ IF-FALSE          = ηᵀ
 stepᵀ CASE-INL          = ηᵀ
@@ -208,6 +215,8 @@ step-≾ : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
        → step-grade r ·ₑ ε' ≾ₑ ε
 step-≾ {ε = ε} APP    = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} MATCH  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ {ε = ε} CASEL  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ {ε = ε} RECL   = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} IF-TRUE  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} IF-FALSE = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} CASE-INL = ≾ₑ-reflexive (·ₑ-identityˡ ε)
@@ -389,6 +398,99 @@ sound-MATCH St P M pP pM =
                                (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
                                (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
                                          (∘ᵐ-identityʳ _))) ⟩ᵐ-cong)))))))
+
+-- The decomposition of a list in a state context: the certificate it
+-- transports, and the list it denotes, which is the list itself.
+
+subLᴾ : ∀ {Γ A A₁} → (p : A₁ <:ᵛ A) → (l : ListView Γ A₁)
+      → Paramᵛ (unlistᵛ l) → Paramᵛ (unlistᵛ (subL p l))
+subLᴾ p (inj₁ tt)      _  = tt
+subLᴾ p (inj₂ (W , L)) pl = pl
+
+listᵛᴾ : ∀ {Γ A} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ |List| A)
+       → Paramᵛ V → Paramᵛ (unlistᵛ (listᵛ {S = St} V))
+listᵛᴾ St (var f x)            pV = ⊥-elim (|List|-not-in-toCtx x)
+listᵛᴾ St nil                  pV = tt
+listᵛᴾ St (cons V W)           pV = pV
+listᵛᴾ St (subV V (|List|ₛ p)) pV = subLᴾ p (listᵛ V) (listᵛᴾ St V pV)
+
+subL-sound : ∀ {Γ A A₁} → (p : A₁ <:ᵛ A) → (l : ListView Γ A₁)
+           → (pl : Paramᵛ (unlistᵛ l))
+           → ⟦ unlistᵛ (subL p l) ⟧ᵛᵗ (subLᴾ p l pl)
+           ≈ᵐ mapListᵐ ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ unlistᵛ l ⟧ᵛᵗ pl
+subL-sound p (inj₁ tt)      _  =
+  ≈ᵐ-sym (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (mapListᵐ-nil _))
+subL-sound p (inj₂ (W , L)) pl =
+  ≈ᵐ-sym ( ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+         ∙ ∘ᵐ-congˡ (mapListᵐ-cons _)
+         ∙ ∘ᵐ-assoc _ _ _
+         ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
+
+listᵛ-sound : ∀ {Γ A} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ |List| A) → (pV : Paramᵛ V)
+            → ⟦ unlistᵛ (listᵛ {S = St} V) ⟧ᵛᵗ (listᵛᴾ St V pV) ≈ᵐ ⟦ V ⟧ᵛᵗ pV
+listᵛ-sound St (var f x)            pV = ⊥-elim (|List|-not-in-toCtx x)
+listᵛ-sound St nil                  pV = ≈ᵐ-refl
+listᵛ-sound St (cons V W)           pV = ≈ᵐ-refl
+listᵛ-sound St (subV V (|List|ₛ p)) pV =
+    subL-sound p (listᵛ V) (listᵛᴾ St V pV)
+  ∙ ∘ᵐ-congʳ (listᵛ-sound St V pV)
+
+-- The reducts of the list eliminators, and their certificates.
+
+caseL-reductᴾ : ∀ {Γ A C} → (l : ListView Γ A) → (M : Γ ⊢C⦂ C)
+              → (N : Γ ∷ A ∷ |List| A ⊢C⦂ C)
+              → Paramᵛ (unlistᵛ l) → Paramᶜ M → Paramᶜ N
+              → Paramᶜ (caseL-reduct l M N)
+caseL-reductᴾ (inj₁ tt)      M N pl         pM pN = pM
+caseL-reductᴾ (inj₂ (W , L)) M N (pW , pL) pM pN =
+  subᶜ (N [ split-[] ↦ V-rename wk-ren L ]c) split-[] W
+    (subᶜ N split-[] (V-rename wk-ren L) pN (renᵛ wk-ren L pL)) pW
+
+recL-reductᴾ : ∀ {Γ A B ε} → (l : ListView Γ A) → (M : Γ ⊢C⦂ B ‼ ε)
+             → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+             → (p : ε ·ₑ ε ≾ₑ ε)
+             → Paramᵛ (unlistᵛ l) → Paramᶜ M → Paramᶜ N
+             → Paramᶜ (recL-reduct l M N p)
+recL-reductᴾ (inj₁ tt)      M N p pl        pM pN = pM
+recL-reductᴾ (inj₂ (W , L)) M N p (pW , pL) pM pN =
+  (pL , pM , pN) , recL-stepᴾ W L N pW pL pN
+
+-- CASEL / RECL: the scrutinee denotes its decomposition, at which the beta
+-- laws apply.
+
+sound-CASEL : ∀ {Γ A C} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ |List| A)
+            → (M : toCtx St ⊢C⦂ C) → (N : toCtx St ∷ A ∷ |List| A ⊢C⦂ C)
+            → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+            → ⟦ caseL V `nil M `cons N ⟧ᶜᵗ (pV , pM , pN)
+            ≈ᵐ ⟦ caseL-reduct (listᵛ {S = St} V) M N ⟧ᶜᵗ
+                 (caseL-reductᴾ (listᵛ V) M N (listᵛᴾ St V pV) pM pN)
+sound-CASEL St V M N pV pM pN =
+    caseLᵐ-cong (≈ᵐ-sym (listᵛ-sound St V pV)) ≈ᵐ-refl ≈ᵐ-refl
+  ∙ go (listᵛ V) (listᵛᴾ St V pV)
+  where
+    go : (l : ListView (toCtx St) _) → (pl : Paramᵛ (unlistᵛ l))
+       → ⟦ caseL (unlistᵛ l) `nil M `cons N ⟧ᶜᵗ (pl , pM , pN)
+       ≈ᵐ ⟦ caseL-reduct l M N ⟧ᶜᵗ (caseL-reductᴾ l M N pl pM pN)
+    go (inj₁ tt)      pl        = sound-CASEL-NIL M N pM pN
+    go (inj₂ (W , L)) (pW , pL) = sound-CASEL-CONS W L M N pW pL pM pN
+
+sound-RECL : ∀ {Γ A B ε} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ |List| A)
+           → (M : toCtx St ⊢C⦂ B ‼ ε)
+           → (N : (toCtx St ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+           → (p : ε ·ₑ ε ≾ₑ ε)
+           → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+           → ⟦ recL V M N p ⟧ᶜᵗ (pV , pM , pN)
+           ≈ᵐ ⟦ recL-reduct (listᵛ {S = St} V) M N p ⟧ᶜᵗ
+                (recL-reductᴾ (listᵛ V) M N p (listᵛᴾ St V pV) pM pN)
+sound-RECL St V M N p pV pM pN =
+    ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ≈ᵐ-sym (listᵛ-sound St V pV) ⟩ᵐ-cong
+  ∙ go (listᵛ V) (listᵛᴾ St V pV)
+  where
+    go : (l : ListView (toCtx St) _) → (pl : Paramᵛ (unlistᵛ l))
+       → ⟦ recL (unlistᵛ l) M N p ⟧ᶜᵗ (pl , pM , pN)
+       ≈ᵐ ⟦ recL-reduct l M N p ⟧ᶜᵗ (recL-reductᴾ l M N p pl pM pN)
+    go (inj₁ tt)      pl        = sound-RECL-NIL M N p pM pN
+    go (inj₂ (W , L)) (pW , pL) = sound-RECL-CONS W L M N p pW pL pM pN
 
 -- BOX: allocating a resource and extending the store are the *same* morphism,
 -- so the two configurations' denotations coincide outright. The stored value

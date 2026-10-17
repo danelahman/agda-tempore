@@ -99,6 +99,14 @@ mutual
              --------------------------------------
              → Γ ⊢V⦂ inr {A = A} V == inr {A = A} V'
 
+    cons-cong : ∀ {A}
+              → {V V' : Γ ⊢V⦂ A}
+              → {W W' : Γ ⊢V⦂ |List| A}
+              → Γ ⊢V⦂ V == V'
+              → Γ ⊢V⦂ W == W'
+              ---------------------------------
+              → Γ ⊢V⦂ cons V W == cons V' W'
+
     lam-cong : ∀ {A B ε}
              → {M N : Γ ∷ A ⊢C⦂ B ‼ ε}
              → Γ ∷ A ⊢C⦂ M == N
@@ -143,7 +151,8 @@ mutual
 
     -- Subsumption is natural in the value formers: the witness splits the way
     -- its type does. At `⦉_,_⦊` that is functoriality of `_|×|_`, at `inl` and
-    -- `inr` functoriality of `_|+|_`, at `lam` functoriality of `_⇒_` —
+    -- `inr` functoriality of `_|+|_`, at `nil` and `cons` functoriality of
+    -- `|List|`, at `lam` functoriality of `_⇒_` —
     -- contravariant in the domain, so the binder is subsumed rather than the
     -- body coerced there. The atomic formers and `var` have no rule of their
     -- own.
@@ -167,6 +176,19 @@ mutual
              → (V : Γ ⊢V⦂ B)
              ---------------------------------------------------
              → Γ ⊢V⦂ subV (inr V) (p |+|ₛ q) == inr (subV V q)
+
+    subV-nil : ∀ {A A'}
+             → (p : A <:ᵛ A')
+             ---------------------------------------------
+             → Γ ⊢V⦂ subV (nil {A = A}) (|List|ₛ p) == nil
+
+    subV-cons : ∀ {A A'}
+              → (p : A <:ᵛ A')
+              → (V : Γ ⊢V⦂ A)
+              → (W : Γ ⊢V⦂ |List| A)
+              ------------------------------------------------------------
+              → Γ ⊢V⦂ subV (cons V W) (|List|ₛ p)
+                   == cons (subV V p) (subV W (|List|ₛ p))
 
     subV-lam : ∀ {A A' C C'}
              → (p : A' <:ᵛ A)
@@ -281,6 +303,27 @@ mutual
               → (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ N == N'
               -----------------------------------------------
               → Γ ⊢C⦂ recℕ V M N p == recℕ W M' N' p
+
+    caseL-cong : ∀ {A C}
+               → {V W : Γ ⊢V⦂ |List| A}
+               → {M M' : Γ ⊢C⦂ C}
+               → {N N' : Γ ∷ A ∷ |List| A ⊢C⦂ C}
+               → Γ ⊢V⦂ V == W
+               → Γ ⊢C⦂ M == M'
+               → Γ ∷ A ∷ |List| A ⊢C⦂ N == N'
+               ------------------------------------------------------------
+               → Γ ⊢C⦂ caseL V `nil M `cons N == caseL W `nil M' `cons N'
+
+    recL-cong : ∀ {A B ε}
+              → {V W : Γ ⊢V⦂ |List| A}
+              → {M M' : Γ ⊢C⦂ B ‼ ε}
+              → {N N' : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+              → {p : ε ·ₑ ε ≾ₑ ε}
+              → Γ ⊢V⦂ V == W
+              → Γ ⊢C⦂ M == M'
+              → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ N == N'
+              ---------------------------------------------------------
+              → Γ ⊢C⦂ recL V M N p == recL W M' N' p
 
     case+-cong : ∀ {A B C}
                → {V W : Γ ⊢V⦂ A |+| B}
@@ -582,6 +625,59 @@ mutual
                         `inr (C-rename (cong-∷-ren wk-ren) M
                                 [ split-[] ↦ inr (var (λ _ → ≾ᵣ-refl) Hd) ]c)
                   == M [ split-[] ↦ V ]c
+
+    -- beta-equations for list elimination
+
+    caseL-beta-nil : ∀ {A C}
+                   → (M : Γ ⊢C⦂ C)
+                   → (N : Γ ∷ A ∷ |List| A ⊢C⦂ C)
+                   -----------------------------------------
+                   → Γ ⊢C⦂ caseL nil `nil M `cons N == M
+
+    caseL-beta-cons : ∀ {A C}
+                    → (V : Γ ⊢V⦂ A)
+                    → (W : Γ ⊢V⦂ |List| A)
+                    → (M : Γ ⊢C⦂ C)
+                    → (N : Γ ∷ A ∷ |List| A ⊢C⦂ C)
+                    ----------------------------------------------
+                    → Γ ⊢C⦂ caseL cons V W `nil M `cons N
+                        == N [ split-[] ↦ V-rename wk-ren W ]c
+                             [ split-[] ↦ V ]c
+
+    -- eta-equation for list elimination
+    --
+    -- Commuting conversions are instances of this rule.
+
+    caseL-eta : ∀ {A C}
+              → (V : Γ ⊢V⦂ |List| A)
+              → (M : Γ ∷ |List| A ⊢C⦂ C)
+              -------------------------------------------------------------
+              → Γ ⊢C⦂ caseL V
+                        `nil (M [ split-[] ↦ nil ]c)
+                        `cons ((C-rename (wk-ren ∘ʳ exch-ren ∘ʳ wk-ren ∘ʳ exch-ren) M)
+                                 [ split-[] ↦ cons (var (λ _ → ≾ᵣ-refl) (Tl-∷ Hd))
+                                                   (var (λ _ → ≾ᵣ-refl) Hd) ]c)
+                  == M [ split-[] ↦ V ]c
+
+    -- beta-equations for primitive recursion on lists; no eta-equation, as
+    -- for `recℕ`
+
+    recL-beta-nil : ∀ {A B ε}
+                  → (M : Γ ⊢C⦂ B ‼ ε)
+                  → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                  → (p : ε ·ₑ ε ≾ₑ ε)
+                  ---------------------------------------
+                  → Γ ⊢C⦂ recL nil M N p == M
+
+    recL-beta-cons : ∀ {A B ε}
+                   → (V : Γ ⊢V⦂ A)
+                   → (W : Γ ⊢V⦂ |List| A)
+                   → (M : Γ ⊢C⦂ B ‼ ε)
+                   → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                   → (p : ε ·ₑ ε ≾ₑ ε)
+                   ------------------------------------------------------------
+                   → Γ ⊢C⦂ recL (cons V W) M N p
+                       == coerce p (recL W M N p ⨟ recL-step V W N)
 
     -- computational/beta-equations for effect handling
     --

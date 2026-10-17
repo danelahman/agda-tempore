@@ -54,6 +54,8 @@ mutual
   V-sub₀ s (⦉ V , W ⦊)  = ⦉ V-sub₀ s V , V-sub₀ s W ⦊
   V-sub₀ s (inl V)     = inl (V-sub₀ s V)
   V-sub₀ s (inr V)     = inr (V-sub₀ s V)
+  V-sub₀ s nil         = nil
+  V-sub₀ s (cons V W)  = cons (V-sub₀ s V) (V-sub₀ s W)
   V-sub₀ s (lam M)     = lam (C-sub₀ (cong-sub₀ s) M)
   V-sub₀ s (subV V p)  = subV (V-sub₀ s V) p
 
@@ -75,6 +77,11 @@ mutual
   C-sub₀ s (recℕ V M N p) =
     recℕ (V-sub₀ s V) (C-sub₀ s M)
          (C-sub₀ (cong-∷-sub (cong-⟨⟩-sub (cong-∷-sub (cong-⟨⟩-sub s)))) N) p
+  C-sub₀ s (caseL V `nil M `cons N) =
+    caseL V-sub₀ s V `nil C-sub₀ s M `cons C-sub₀ (cong-sub₀ s) N
+  C-sub₀ s (recL V M N p) =
+    recL (V-sub₀ s V) (C-sub₀ s M)
+         (C-sub₀ (cong-∷-sub (cong-⟨⟩-sub (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s))))) N) p
   C-sub₀ s (case+ V `inl M `inr N) =
     case+ V-sub₀ s V `inl C-sub₀ (cong-sub₀ s) M `inr C-sub₀ (cong-sub₀ s) N
   C-sub₀ s (perform op V M) = perform op (V-sub₀ s V) (C-sub₀ (cong-sub₀ s) M)

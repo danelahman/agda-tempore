@@ -68,6 +68,7 @@ mutual
   Midᵛ (succ-cong p)                     = Midᵛ p
   Midᵛ (inl-cong p)                      = Midᵛ p
   Midᵛ (inr-cong p)                      = Midᵛ p
+  Midᵛ (cons-cong p q)                   = Midᵛ p × Midᵛ q
   Midᵛ (lam-cong p)                      = Midᶜ p
   Midᵛ (subV-cong p)                     = Midᵛ p
   Midᵛ _                                 = ⊤
@@ -86,6 +87,8 @@ mutual
   Midᶜ (caseℕ-cong p q r)                = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (case+-cong p q r)                = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (recℕ-cong p q r)                 = Midᵛ p × Midᶜ q × Midᶜ r
+  Midᶜ (caseL-cong p q r)                = Midᵛ p × Midᶜ q × Midᶜ r
+  Midᶜ (recL-cong p q r)                 = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (perform-cong p q)                = Midᵛ p × Midᶜ q
   Midᶜ (delay-cong p)                    = Midᶜ p
   Midᶜ (handle-cong p hs q)              =
@@ -102,6 +105,7 @@ mutual
   Midᶜ (if-eta V M)                      = Paramᶜ M
   Midᶜ (caseℕ-eta V M)                   = Paramᶜ M
   Midᶜ (case+-eta V M)                   = Paramᶜ M
+  Midᶜ (caseL-eta V M)                   = Paramᶜ M
   Midᶜ (delay-delay M)                   = Paramᶜ M
   -- `unbox-beta` mentions `K` and `N` only inside the filled context.
   Midᶜ (unbox-beta V K p w N)            = Paramᵏ K × Paramᶜ N

@@ -147,3 +147,19 @@ recℕ-step : ∀ {Γ B ε}
 recℕ-step V N =
   C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren barrier-ren))) N
     [ split-∷ (split-⟨⟩ split-[]) ↦ V ]c
+
+-- One unfolding of a list recursion's step at a head and a tail: as for
+-- `recℕ-step`, the barred view is included into the ambient context, then the
+-- head and the tail are substituted across the lock binding the recursive
+-- call's result, the head first.
+
+recL-step : ∀ {Γ A B ε}
+          → Γ ⊢V⦂ A
+          → Γ ⊢V⦂ |List| A
+          → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε
+          ----------------------------------------------------
+          → Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε
+recL-step V W N =
+  (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-∷-ren barrier-ren)))) N
+     [ split-∷ (split-⟨⟩ (split-∷ split-[])) ↦ V ]c)
+     [ split-∷ (split-⟨⟩ split-[]) ↦ W ]c

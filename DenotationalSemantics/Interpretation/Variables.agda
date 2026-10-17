@@ -81,6 +81,7 @@ eternalᵛ-Eternalᵒ (et₁ |×|ₑ et₂) =
   ×-eternalᵒ (eternalᵛ-Eternalᵒ et₁) (eternalᵛ-Eternalᵒ et₂)
 eternalᵛ-Eternalᵒ (et₁ |+|ₑ et₂) =
   +-eternalᵒ (eternalᵛ-Eternalᵒ et₁) (eternalᵛ-Eternalᵒ et₂)
+eternalᵛ-Eternalᵒ (|List|ₑ et)   = List-eternalᵒ (eternalᵛ-Eternalᵒ et)
 
 -- Eternal extraction at an arbitrary grade.
 

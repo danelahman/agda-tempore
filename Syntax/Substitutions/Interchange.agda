@@ -68,6 +68,9 @@ eternal-val-ext-ren (et₁ |+|ₑ _)   r (inl V)     =
   cong inl (eternal-val-ext-ren et₁ r V)
 eternal-val-ext-ren (_ |+|ₑ et₂)   r (inr V)     =
   cong inr (eternal-val-ext-ren et₂ r V)
+eternal-val-ext-ren et             r nil         = refl
+eternal-val-ext-ren (|List|ₑ et)   r (cons V W)  =
+  cong₂ cons (eternal-val-ext-ren et r V) (eternal-val-ext-ren (|List|ₑ et) r W)
 eternal-val-ext-ren et             r (subV V p) =
   cong (λ W → subV W p) (eternal-val-ext-ren (<:ᵛ-eternalˡ p et) r V)
 
@@ -125,6 +128,8 @@ mutual
   V-sub₀-⌜⌝ r ⦉ V , W ⦊  = cong₂ ⦉_,_⦊ (V-sub₀-⌜⌝ r V) (V-sub₀-⌜⌝ r W)
   V-sub₀-⌜⌝ r (inl V)   = cong inl (V-sub₀-⌜⌝ r V)
   V-sub₀-⌜⌝ r (inr V)   = cong inr (V-sub₀-⌜⌝ r V)
+  V-sub₀-⌜⌝ r nil       = refl
+  V-sub₀-⌜⌝ r (cons V W) = cong₂ cons (V-sub₀-⌜⌝ r V) (V-sub₀-⌜⌝ r W)
   V-sub₀-⌜⌝ r (lam M)   =
     cong lam (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
                     (C-sub₀-⌜⌝ (cong-ren r) M))
@@ -155,6 +160,14 @@ mutual
     cong₃ (λ a b c → recℕ a b c p) (V-sub₀-⌜⌝ r V) (C-sub₀-⌜⌝ r M)
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _) r) N)
              (C-sub₀-⌜⌝ (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _)} r) N))
+  C-sub₀-⌜⌝ r (caseL V `nil M `cons N) =
+    cong₃ caseL_`nil_`cons_ (V-sub₀-⌜⌝ r V) (C-sub₀-⌜⌝ r M)
+      (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _ ∷ _) r) N)
+             (C-sub₀-⌜⌝ (cong-ren r) N))
+  C-sub₀-⌜⌝ r (recL V M N p) =
+    cong₃ (λ a b c → recL a b c p) (V-sub₀-⌜⌝ r V) (C-sub₀-⌜⌝ r M)
+      (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (([] ⟨ _ ⟩ ∷ _ ∷ |List| _) ⟨ _ ⟩ ∷ _) r) N)
+             (C-sub₀-⌜⌝ (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ _ ∷ |List| _) ⟨ _ ⟩ ∷ _)} r) N))
   C-sub₀-⌜⌝ r (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_ (V-sub₀-⌜⌝ r V)
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
@@ -294,6 +307,8 @@ mutual
   V-sub₀-ren h ⦉ V , W ⦊  = cong₂ ⦉_,_⦊ (V-sub₀-ren h V) (V-sub₀-ren h W)
   V-sub₀-ren h (inl V)   = cong inl (V-sub₀-ren h V)
   V-sub₀-ren h (inr V)   = cong inr (V-sub₀-ren h V)
+  V-sub₀-ren h nil       = refl
+  V-sub₀-ren h (cons V W) = cong₂ cons (V-sub₀-ren h V) (V-sub₀-ren h W)
   V-sub₀-ren h (lam M)   = cong lam (C-sub₀-ren (⋈-cong ([] ∷ _) h) M)
   V-sub₀-ren h (subV V p) = subV-≡ (V-sub₀-ren h V)
 
@@ -318,6 +333,12 @@ mutual
   C-sub₀-ren h (recℕ V M N p) =
     cong₃ (λ a b c → recℕ a b c p) (V-sub₀-ren h V) (C-sub₀-ren h M)
       (C-sub₀-ren (⋈-cong (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _) h) N)
+  C-sub₀-ren h (caseL V `nil M `cons N) =
+    cong₃ caseL_`nil_`cons_ (V-sub₀-ren h V) (C-sub₀-ren h M)
+      (C-sub₀-ren (⋈-cong ([] ∷ _ ∷ _) h) N)
+  C-sub₀-ren h (recL V M N p) =
+    cong₃ (λ a b c → recL a b c p) (V-sub₀-ren h V) (C-sub₀-ren h M)
+      (C-sub₀-ren (⋈-cong (([] ⟨ _ ⟩ ∷ _ ∷ |List| _) ⟨ _ ⟩ ∷ _) h) N)
   C-sub₀-ren h (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_ (V-sub₀-ren h V)
       (C-sub₀-ren (⋈-cong ([] ∷ _) h) M) (C-sub₀-ren (⋈-cong ([] ∷ _) h) N)

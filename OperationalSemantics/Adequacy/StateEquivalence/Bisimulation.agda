@@ -322,6 +322,36 @@ Sim {A₁ = A₁} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
   , BOX , ∷-≤≐ id-≤≐
   , subst (λ z → _ ≡ z) (castᶜ-irr _ _ M₀') eM₀
 
+-- list elimination: the scrutinee corresponds on both sides, and its
+-- decomposition commutes with the cast (`listᵛ-cast`).
+
+↝-≐ˢ-caseL : ∀ {A D ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+           → {U : toCtx St ⊢V⦂ |List| A}
+           → {M₀ : toCtx St ⊢C⦂ D ‼ ε} → {N₀ : toCtx St ∷ A ∷ |List| A ⊢C⦂ D ‼ ε}
+           → (P' : toCtx St' ⊢C⦂ D ‼ ε)
+           → caseL U `nil M₀ `cons N₀ ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+           → Sim es P' (CASEL {V = U} {M = M₀} {N = N₀})
+↝-≐ˢ-caseL es P' eM with cast-caseL⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | U' , M₀' , N₀' , refl , eU , eM₀ , eN₀ =
+    _ , _ , es , CASEL , id-≤≐
+  , trans (cong₃ (λ u m n → caseL-reduct (listᵛ u) m n) eU eM₀ eN₀)
+      (trans (cong (λ l → caseL-reduct l _ _) (listᵛ-cast (sym (toCtx-≐ˢ es)) U'))
+             (cast-caseL-reduct (sym (toCtx-≐ˢ es)) (listᵛ U') M₀' N₀'))
+
+↝-≐ˢ-recL : ∀ {A B ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+          → {U : toCtx St ⊢V⦂ |List| A} → {M₀ : toCtx St ⊢C⦂ B ‼ ε}
+          → {N₀ : (toCtx St ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+          → {p : ε ·ₑ ε ≾ₑ ε}
+          → (P' : toCtx St' ⊢C⦂ B ‼ ε)
+          → recL U M₀ N₀ p ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+          → Sim es P' (RECL {V = U} {M = M₀} {N = N₀} {p = p})
+↝-≐ˢ-recL es {p = p} P' eM with cast-recL⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | U' , M₀' , N₀' , refl , eU , eM₀ , eN₀ =
+    _ , _ , es , RECL , id-≤≐
+  , trans (cong₃ (λ u m n → recL-reduct (listᵛ u) m n p) eU eM₀ eN₀)
+      (trans (cong (λ l → recL-reduct l _ _ p) (listᵛ-cast (sym (toCtx-≐ˢ es)) U'))
+             (cast-recL-reduct (sym (toCtx-≐ˢ es)) (listᵛ U') M₀' N₀' p))
+
 -- matching: the scrutinee corresponds on both sides, and its two projections
 -- commute with the cast (`fstᵛ-cast`/`sndᵛ-cast`).
 
@@ -668,6 +698,8 @@ cast-handle-op refl V' M' H' N' = refl
 
 ↝-≐ˢ es eM APP         = ↝-≐ˢ-app es _ eM
 ↝-≐ˢ es eM MATCH       = ↝-≐ˢ-match es _ eM
+↝-≐ˢ es eM CASEL       = ↝-≐ˢ-caseL es _ eM
+↝-≐ˢ es eM RECL        = ↝-≐ˢ-recL es _ eM
 ↝-≐ˢ es eM IF-TRUE     = ↝-≐ˢ-if-true es _ eM
 ↝-≐ˢ es eM IF-FALSE    = ↝-≐ˢ-if-false es _ eM
 ↝-≐ˢ es eM CASEℕ-ZERO  = ↝-≐ˢ-caseℕ-zero es _ eM

@@ -1,4 +1,5 @@
 open import Data.Product
+open import Data.Sum using (inj₁; inj₂)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -54,6 +55,24 @@ unbox-lookup {A} {ρ} S z ρ'≾ρ =
        ∘ʳ eq-ren (split-state-++ᶜ S z))
     (resource-lookup S z)
 
+-- The reducts of the list eliminators at a decomposed scrutinee: at the empty
+-- list the `nil` branch, resp. the base; at a head and a tail the `cons`
+-- branch with both substituted, as for `match`, resp. the recursion at the tail
+-- sequenced with one unfolding of the step.
+
+caseL-reduct : ∀ {Γ A C} → ListView Γ A → Γ ⊢C⦂ C → Γ ∷ A ∷ |List| A ⊢C⦂ C
+             → Γ ⊢C⦂ C
+caseL-reduct (inj₁ _)       M N = M
+caseL-reduct (inj₂ (W , L)) M N =
+  (N [ split-[] ↦ V-rename wk-ren L ]c) [ split-[] ↦ W ]c
+
+recL-reduct : ∀ {Γ A B ε} → ListView Γ A → Γ ⊢C⦂ B ‼ ε
+            → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε
+            → ε ·ₑ ε ≾ₑ ε
+            → Γ ⊢C⦂ B ‼ ε
+recL-reduct (inj₁ _)       M N p = M
+recL-reduct (inj₂ (W , L)) M N p = coerce p (recL L M N p ⨟ recL-step W L N)
+
 mutual
 
     -- Small-step operational semantics aka Preservation theorem
@@ -77,6 +96,29 @@ mutual
                    → ⟨ S , match P `in M ⟩ ↝
                      ⟨ S , (M [ split-[] ↦ V-rename wk-ren (sndᵛ P) ]c)
                              [ split-[] ↦ fstᵛ P ]c ⟩
+
+        -- list elimination: the reduct at the scrutinee's canonical
+        -- decomposition (`listᵛ`), which pushes its coercions into the head
+        -- and the tail
+        CASEL      : ∀ {A C}
+                   → {S : 𝕊 []}
+                   → {V : toCtx S ⊢V⦂ |List| A}
+                   → {M : toCtx S ⊢C⦂ C}
+                   → {N : toCtx S ∷ A ∷ |List| A ⊢C⦂ C}
+                     ------------------------------------------------------------
+                   → ⟨ S , caseL V `nil M `cons N ⟩ ↝ ⟨ S , caseL-reduct (listᵛ V) M N ⟩
+
+        -- primitive recursion on lists: at the empty list the base; at a head
+        -- and a tail the recursion at the tail sequenced with one unfolding of
+        -- the step, the effect absorbing its own iteration
+        RECL       : ∀ {A B ε}
+                   → {S : 𝕊 []}
+                   → {V : toCtx S ⊢V⦂ |List| A}
+                   → {M : toCtx S ⊢C⦂ B ‼ ε}
+                   → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+                   → {p : ε ·ₑ ε ≾ₑ ε}
+                     ------------------------------------------------------------
+                   → ⟨ S , recL V M N p ⟩ ↝ ⟨ S , recL-reduct (listᵛ V) M N p ⟩
 
         -- boolean elimination: take the branch the scrutinee names
         IF-TRUE    : ∀ {C}
@@ -379,6 +421,8 @@ mutual
 
     step-extends-state APP                  = id-suc
     step-extends-state MATCH                = id-suc
+    step-extends-state CASEL                = id-suc
+    step-extends-state RECL                 = id-suc
     step-extends-state IF-TRUE              = id-suc
     step-extends-state IF-FALSE             = id-suc
     step-extends-state CASE-INL             = id-suc
@@ -414,6 +458,8 @@ mutual
 
     step-refines-type {A = A} APP               = <:ᵛ-refl A
     step-refines-type {A = A} MATCH             = <:ᵛ-refl A
+    step-refines-type {A = A} CASEL             = <:ᵛ-refl A
+    step-refines-type {A = A} RECL              = <:ᵛ-refl A
     step-refines-type {A = A} IF-TRUE           = <:ᵛ-refl A
     step-refines-type {A = A} IF-FALSE          = <:ᵛ-refl A
     step-refines-type {A = A} CASE-INL          = <:ᵛ-refl A
@@ -454,6 +500,8 @@ step-grade-≾ : ∀ {A B ε ε'}
 
 step-grade-≾ APP   = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ MATCH = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ CASEL = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ RECL = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ IF-TRUE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ IF-FALSE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ CASE-INL = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
@@ -540,3 +588,30 @@ run-refines-type : ∀ {A B ε ε'}
                  → cf ↝* cf' → B <:ᵛ A
 run-refines-type {A = A} ε* = <:ᵛ-refl A
 run-refines-type (r ◅ rs)   = <:ᵛ-trans (run-refines-type rs) (step-refines-type r)
+
+-- The list eliminators at `nil` and at a `cons`: `CASEL` and `RECL`, by
+-- computation of `listᵛ`.
+
+CASEL-NIL  : ∀ {A C} {S : 𝕊 []} {M : toCtx S ⊢C⦂ C} {N : toCtx S ∷ A ∷ |List| A ⊢C⦂ C}
+           → ⟨ S , caseL nil `nil M `cons N ⟩ ↝ ⟨ S , M ⟩
+CASEL-NIL = CASEL
+
+CASEL-CONS : ∀ {A C} {S : 𝕊 []} {V : toCtx S ⊢V⦂ A} {W : toCtx S ⊢V⦂ |List| A}
+             {M : toCtx S ⊢C⦂ C} {N : toCtx S ∷ A ∷ |List| A ⊢C⦂ C}
+           → ⟨ S , caseL cons V W `nil M `cons N ⟩ ↝
+             ⟨ S , (N [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟩
+CASEL-CONS = CASEL
+
+RECL-NIL   : ∀ {A B ε} {S : 𝕊 []} {M : toCtx S ⊢C⦂ B ‼ ε}
+             {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+             {p : ε ·ₑ ε ≾ₑ ε}
+           → ⟨ S , recL nil M N p ⟩ ↝ ⟨ S , M ⟩
+RECL-NIL = RECL
+
+RECL-CONS  : ∀ {A B ε} {S : 𝕊 []} {V : toCtx S ⊢V⦂ A} {W : toCtx S ⊢V⦂ |List| A}
+             {M : toCtx S ⊢C⦂ B ‼ ε}
+             {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+             {p : ε ·ₑ ε ≾ₑ ε}
+           → ⟨ S , recL (cons V W) M N p ⟩ ↝
+             ⟨ S , coerce p (recL W M N p ⨟ recL-step V W N) ⟩
+RECL-CONS = RECL

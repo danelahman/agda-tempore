@@ -7,9 +7,9 @@
 -- the context (possibility) modality may be realised as a coend.     --
 --                                                                    --
 -- Beyond the core (identities, composition, and its congruence) the  --
--- record carries the cartesian closed structure, binary coproducts   --
--- and a natural numbers object, with the congruences needed to       --
--- reason up to `_≈ᵐ_`.                                               --
+-- record carries the cartesian closed structure, binary coproducts,  --
+-- a natural numbers object and a list object, with the congruences   --
+-- needed to reason up to `_≈ᵐ_`.                                     --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Category where
@@ -356,6 +356,29 @@ record Category : Set₂ where
                → iterᵐ a f ∘ᵐ succᵐ ≈ᵐ f ∘ᵐ iterᵐ a f
     iterᵐ-unique : ∀ {A} → (a : 𝟙ᵐ →ᵐ A) → (f : A →ᵐ A) → (h : ℕᵐ →ᵐ A)
                  → h ∘ᵐ zeroᵐ ≈ᵐ a → h ∘ᵐ succᵐ ≈ᵐ f ∘ᵐ h → h ≈ᵐ iterᵐ a f
+
+  -- LIST OBJECT
+  --
+  -- The initial algebra of `𝟙ᵐ +ᵐ A ×ᵐ -`: a fold from a global element along
+  -- a step, with its two β laws and uniqueness. The eliminators stable under a
+  -- context are derived below through the exponentials and the coproducts.
+
+  field
+    Listᵐ : Obj → Obj
+
+    nilᵐ  : ∀ {A} → 𝟙ᵐ →ᵐ Listᵐ A
+    consᵐ : ∀ {A} → A ×ᵐ Listᵐ A →ᵐ Listᵐ A
+
+    foldᵐ : ∀ {A C} → 𝟙ᵐ →ᵐ C → A ×ᵐ C →ᵐ C → Listᵐ A →ᵐ C
+
+    foldᵐ-cong : ∀ {A C} {a a' : 𝟙ᵐ →ᵐ C} {f f' : A ×ᵐ C →ᵐ C}
+               → a ≈ᵐ a' → f ≈ᵐ f' → foldᵐ a f ≈ᵐ foldᵐ a' f'
+
+    foldᵐ-nil : ∀ {A C} → (a : 𝟙ᵐ →ᵐ C) → (f : A ×ᵐ C →ᵐ C) → foldᵐ a f ∘ᵐ nilᵐ ≈ᵐ a
+    foldᵐ-cons : ∀ {A C} → (a : 𝟙ᵐ →ᵐ C) → (f : A ×ᵐ C →ᵐ C)
+               → foldᵐ a f ∘ᵐ consᵐ ≈ᵐ f ∘ᵐ mapˣᵐ idᵐ (foldᵐ a f)
+    foldᵐ-unique : ∀ {A C} → (a : 𝟙ᵐ →ᵐ C) → (f : A ×ᵐ C →ᵐ C) → (h : Listᵐ A →ᵐ C)
+                 → h ∘ᵐ nilᵐ ≈ᵐ a → h ∘ᵐ consᵐ ≈ᵐ f ∘ᵐ mapˣᵐ idᵐ h → h ≈ᵐ foldᵐ a f
 
   -- two maps satisfying the same iteration equations agree
 
@@ -1219,3 +1242,556 @@ record Category : Set₂ where
                   ⟨ ≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))
                   , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))))
       (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))))
+
+
+  private
+    infixr 3 _∙_
+    _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
+    _∙_ = ≈ᵐ-trans
+
+  -- the second projection out of a right-nested product, split
+
+  sndᵐ-split : ∀ {A B C} → sndᵐ {A} {B ×ᵐ C} ≈ᵐ ⟨ fstᵐ ∘ᵐ sndᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ
+  sndᵐ-split = ⟨⟩ᵐ-unique _ _ sndᵐ ≈ᵐ-refl ≈ᵐ-refl
+
+  -- the inverse associator is natural in its first factor
+
+  ×ᵐ-assoc⁻¹-mapˣᵐ : ∀ {X X' B C} → (h : X' →ᵐ X)
+                   → ×ᵐ-assoc⁻¹ {X} {B} {C} ∘ᵐ mapˣᵐ h idᵐ
+                   ≈ᵐ mapˣᵐ (mapˣᵐ h idᵐ) idᵐ ∘ᵐ ×ᵐ-assoc⁻¹
+  ×ᵐ-assoc⁻¹-mapˣᵐ h =
+      ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ∙ sndᵐ-split ⟩ᵐ-cong
+    ∙ ×ᵐ-assoc⁻¹-⟨⟩ _ _ _
+    ∙ ≈ᵐ-sym ( mapˣᵐ-∘⟨⟩ _ _ _ _
+             ∙ ⟨ mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
+               , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+
+  -- two maps satisfying the same fold equations agree
+
+  foldᵐ-ext : ∀ {A C} → (a : 𝟙ᵐ →ᵐ C) → (f : A ×ᵐ C →ᵐ C) → (h h' : Listᵐ A →ᵐ C)
+            → h ∘ᵐ nilᵐ ≈ᵐ a → h ∘ᵐ consᵐ ≈ᵐ f ∘ᵐ mapˣᵐ idᵐ h
+            → h' ∘ᵐ nilᵐ ≈ᵐ a → h' ∘ᵐ consᵐ ≈ᵐ f ∘ᵐ mapˣᵐ idᵐ h'
+            → h ≈ᵐ h'
+  foldᵐ-ext a f h h' p q p' q' =
+    foldᵐ-unique a f h p q ∙ ≈ᵐ-sym (foldᵐ-unique a f h' p' q')
+
+  -- folding the constructors is the identity
+
+  foldᵐ-idᵐ : ∀ {A} → foldᵐ nilᵐ consᵐ ≈ᵐ idᵐ {Listᵐ A}
+  foldᵐ-idᵐ =
+    ≈ᵐ-sym (foldᵐ-unique nilᵐ consᵐ idᵐ (∘ᵐ-identityˡ _)
+             (∘ᵐ-identityˡ _ ∙ ≈ᵐ-sym (∘ᵐ-congʳ mapˣᵐ-idᵐ ∙ ∘ᵐ-identityʳ _)))
+
+  -- fusion: a map commuting with the steps carries one fold to the other
+
+  foldᵐ-fusion : ∀ {A C D} → (a : 𝟙ᵐ →ᵐ C) → (f : A ×ᵐ C →ᵐ C) → (g : A ×ᵐ D →ᵐ D)
+               → (k : C →ᵐ D) → k ∘ᵐ f ≈ᵐ g ∘ᵐ mapˣᵐ idᵐ k
+               → k ∘ᵐ foldᵐ a f ≈ᵐ foldᵐ (k ∘ᵐ a) g
+  foldᵐ-fusion a f g k e =
+    foldᵐ-unique _ _ _
+      (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (foldᵐ-nil a f))
+      ( ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (foldᵐ-cons a f)
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ e
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (mapˣᵐ-∘ _ _ _ _ ∙ mapˣᵐ-cong (∘ᵐ-identityˡ _) ≈ᵐ-refl))
+
+  -- The functorial action of the list object.
+
+  mapListᵐ : ∀ {A B} → A →ᵐ B → Listᵐ A →ᵐ Listᵐ B
+  mapListᵐ f = foldᵐ nilᵐ (consᵐ ∘ᵐ mapˣᵐ f idᵐ)
+
+  mapListᵐ-cong : ∀ {A B} {f f' : A →ᵐ B} → f ≈ᵐ f' → mapListᵐ f ≈ᵐ mapListᵐ f'
+  mapListᵐ-cong p = foldᵐ-cong ≈ᵐ-refl (∘ᵐ-congʳ (mapˣᵐ-cong p ≈ᵐ-refl))
+
+  mapListᵐ-nil : ∀ {A B} → (f : A →ᵐ B) → mapListᵐ f ∘ᵐ nilᵐ ≈ᵐ nilᵐ
+  mapListᵐ-nil f = foldᵐ-nil _ _
+
+  mapListᵐ-cons : ∀ {A B} → (f : A →ᵐ B)
+                → mapListᵐ f ∘ᵐ consᵐ ≈ᵐ consᵐ ∘ᵐ mapˣᵐ f (mapListᵐ f)
+  mapListᵐ-cons f =
+      foldᵐ-cons _ _
+    ∙ ∘ᵐ-assoc _ _ _
+    ∙ ∘ᵐ-congʳ (mapˣᵐ-∘ _ _ _ _ ∙ mapˣᵐ-cong (∘ᵐ-identityʳ f) (∘ᵐ-identityˡ _))
+
+  mapListᵐ-idᵐ : ∀ {A} → mapListᵐ (idᵐ {A}) ≈ᵐ idᵐ
+  mapListᵐ-idᵐ = foldᵐ-cong ≈ᵐ-refl (∘ᵐ-congʳ mapˣᵐ-idᵐ ∙ ∘ᵐ-identityʳ _) ∙ foldᵐ-idᵐ
+
+  mapListᵐ-∘ : ∀ {A B C} → (f : B →ᵐ C) → (g : A →ᵐ B)
+             → mapListᵐ f ∘ᵐ mapListᵐ g ≈ᵐ mapListᵐ (f ∘ᵐ g)
+  mapListᵐ-∘ f g =
+    foldᵐ-fusion _ _ _ (mapListᵐ f) e ∙ foldᵐ-cong (mapListᵐ-nil f) ≈ᵐ-refl
+    where
+      e : mapListᵐ f ∘ᵐ (consᵐ ∘ᵐ mapˣᵐ g idᵐ)
+        ≈ᵐ (consᵐ ∘ᵐ mapˣᵐ (f ∘ᵐ g) idᵐ) ∘ᵐ mapˣᵐ idᵐ (mapListᵐ f)
+      e =  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+         ∙ ∘ᵐ-congˡ (mapListᵐ-cons f)
+         ∙ ∘ᵐ-assoc _ _ _
+         ∙ ∘ᵐ-congʳ ( mapˣᵐ-∘ _ _ _ _
+                    ∙ mapˣᵐ-cong ≈ᵐ-refl (∘ᵐ-identityʳ _)
+                    ∙ ≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _
+                              ∙ mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _)))
+         ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+
+  -- LISTS IN A CONTEXT
+  --
+  -- Lambek: `[ nilᵐ , consᵐ ]ᵐ : 𝟙ᵐ +ᵐ (A ×ᵐ Listᵐ A) →ᵐ Listᵐ A` is an
+  -- isomorphism, its inverse `unconsᵐ` defined by a fold. `caseLᵐ` is `caseᵐ`
+  -- at it, the cons branch reading the context, head and tail left-nested as
+  -- the syntax binds them.
+
+  unconsᵐ : ∀ {A} → Listᵐ A →ᵐ 𝟙ᵐ +ᵐ (A ×ᵐ Listᵐ A)
+  unconsᵐ = foldᵐ inlᵐ (inrᵐ ∘ᵐ mapˣᵐ idᵐ [ nilᵐ , consᵐ ]ᵐ)
+
+  unconsᵐ-nil : ∀ {A} → unconsᵐ ∘ᵐ nilᵐ {A} ≈ᵐ inlᵐ
+  unconsᵐ-nil = foldᵐ-nil _ _
+
+  [nil,cons]-unconsᵐ : ∀ {A} → [ nilᵐ , consᵐ ]ᵐ ∘ᵐ unconsᵐ {A} ≈ᵐ idᵐ
+  [nil,cons]-unconsᵐ =
+      foldᵐ-fusion _ _ consᵐ _ (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ ([]ᵐ-inrᵐ _ _))
+    ∙ foldᵐ-cong ([]ᵐ-inlᵐ _ _) ≈ᵐ-refl
+    ∙ foldᵐ-idᵐ
+
+  unconsᵐ-cons : ∀ {A} → unconsᵐ ∘ᵐ consᵐ {A} ≈ᵐ inrᵐ
+  unconsᵐ-cons =
+      foldᵐ-cons _ _
+    ∙ ∘ᵐ-assoc _ _ _
+    ∙ ∘ᵐ-congʳ ( mapˣᵐ-∘ _ _ _ _
+               ∙ mapˣᵐ-cong (∘ᵐ-identityˡ _) [nil,cons]-unconsᵐ
+               ∙ mapˣᵐ-idᵐ)
+    ∙ ∘ᵐ-identityʳ _
+
+  unconsᵐ-[nil,cons] : ∀ {A} → unconsᵐ ∘ᵐ [ nilᵐ , consᵐ ]ᵐ ≈ᵐ idᵐ {𝟙ᵐ +ᵐ (A ×ᵐ Listᵐ A)}
+  unconsᵐ-[nil,cons] =
+      []ᵐ-post _ _ _
+    ∙ [ unconsᵐ-nil ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _)
+      , unconsᵐ-cons ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _) ]ᵐ-cong
+    ∙ ≈ᵐ-sym ([]ᵐ-unique _ _ idᵐ ≈ᵐ-refl ≈ᵐ-refl)
+
+  -- The eliminator: a scrutinee, a nil branch, and a cons branch that
+  -- receives the head and the tail, over the context.
+
+  caseLᵐ : ∀ {X A C} → X →ᵐ Listᵐ A → X →ᵐ C → (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C → X →ᵐ C
+  caseLᵐ s f g = caseᵐ (unconsᵐ ∘ᵐ s) (f ∘ᵐ fstᵐ) (g ∘ᵐ ×ᵐ-assoc⁻¹)
+
+  caseLᵐ-cong : ∀ {X A C} {s s' : X →ᵐ Listᵐ A} {f f' : X →ᵐ C}
+                {g g' : (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C}
+              → s ≈ᵐ s' → f ≈ᵐ f' → g ≈ᵐ g' → caseLᵐ s f g ≈ᵐ caseLᵐ s' f' g'
+  caseLᵐ-cong ps pf pg = caseᵐ-cong (∘ᵐ-congʳ ps) (∘ᵐ-congˡ pf) (∘ᵐ-congˡ pg)
+
+  caseLᵐ-nil : ∀ {X A C} → (f : X →ᵐ C) → (g : (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C)
+             → caseLᵐ (nilᵐ ∘ᵐ terminalᵐ) f g ≈ᵐ f
+  caseLᵐ-nil f g =
+      caseᵐ-cong (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ unconsᵐ-nil) ≈ᵐ-refl ≈ᵐ-refl
+    ∙ caseᵐ-inl terminalᵐ (f ∘ᵐ fstᵐ) _
+    ∙ ∘ᵐ-assoc _ _ _
+    ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
+    ∙ ∘ᵐ-identityʳ f
+
+  caseLᵐ-cons : ∀ {X A C} → (v : X →ᵐ A) → (w : X →ᵐ Listᵐ A)
+              → (f : X →ᵐ C) → (g : (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C)
+              → caseLᵐ (consᵐ ∘ᵐ ⟨ v , w ⟩ᵐ) f g ≈ᵐ g ∘ᵐ ⟨ ⟨ idᵐ , v ⟩ᵐ , w ⟩ᵐ
+  caseLᵐ-cons v w f g =
+      caseᵐ-cong (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ unconsᵐ-cons) ≈ᵐ-refl ≈ᵐ-refl
+    ∙ caseᵐ-inr ⟨ v , w ⟩ᵐ _ _
+    ∙ ∘ᵐ-assoc _ _ _
+    ∙ ∘ᵐ-congʳ (×ᵐ-assoc⁻¹-⟨⟩ idᵐ v w)
+
+  caseLᵐ-∘ : ∀ {Y X A C} → (s : X →ᵐ Listᵐ A) → (f : X →ᵐ C)
+           → (g : (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C) → (h : Y →ᵐ X)
+           → caseLᵐ s f g ∘ᵐ h
+           ≈ᵐ caseLᵐ (s ∘ᵐ h) (f ∘ᵐ h) (g ∘ᵐ mapˣᵐ (mapˣᵐ h idᵐ) idᵐ)
+  caseLᵐ-∘ s f g h =
+      caseᵐ-∘ _ _ _ h
+    ∙ caseᵐ-cong (∘ᵐ-assoc _ _ _)
+        (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (×ᵐ-assoc⁻¹-mapˣᵐ h) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+
+  -- η: a map out of `X ×ᵐ Listᵐ A` is determined by its nil and cons
+  -- instances
+
+  caseLᵐ-η : ∀ {X A C} → (s : X →ᵐ Listᵐ A) → (m : X ×ᵐ Listᵐ A →ᵐ C)
+           → m ∘ᵐ ⟨ idᵐ , s ⟩ᵐ
+           ≈ᵐ caseLᵐ s (m ∘ᵐ ⟨ idᵐ , nilᵐ ∘ᵐ terminalᵐ ⟩ᵐ)
+                       (m ∘ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , consᵐ ∘ᵐ mapˣᵐ sndᵐ idᵐ ⟩ᵐ)
+  caseLᵐ-η {X} {A} {C} s m =
+      ∘ᵐ-congʳ ⟨ ≈ᵐ-refl
+               , ≈ᵐ-sym (∘ᵐ-identityˡ s)
+                 ∙ ∘ᵐ-congˡ (≈ᵐ-sym [nil,cons]-unconsᵐ)
+                 ∙ ∘ᵐ-assoc _ _ _ ⟩ᵐ-cong
+    ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-mapˣᵐ [ nilᵐ , consᵐ ]ᵐ (unconsᵐ ∘ᵐ s))
+    ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+    ∙ caseᵐ-η (unconsᵐ ∘ᵐ s) (m ∘ᵐ mapˣᵐ idᵐ [ nilᵐ , consᵐ ]ᵐ)
+    ∙ caseᵐ-cong ≈ᵐ-refl (branch nilᵐ nil-side ([]ᵐ-inlᵐ _ _))
+                         (branch consᵐ cons-side ([]ᵐ-inrᵐ _ _))
+    where
+      -- a branch: the copairing restricted along an injection
+      branch : ∀ {B} {k : X ×ᵐ B →ᵐ C} → (c : B →ᵐ Listᵐ A) → m ∘ᵐ mapˣᵐ idᵐ c ≈ᵐ k
+             → {ι : B →ᵐ 𝟙ᵐ +ᵐ (A ×ᵐ Listᵐ A)} → [ nilᵐ , consᵐ ]ᵐ ∘ᵐ ι ≈ᵐ c
+             → (m ∘ᵐ mapˣᵐ idᵐ [ nilᵐ , consᵐ ]ᵐ) ∘ᵐ mapˣᵐ idᵐ ι ≈ᵐ k
+      branch c e {ι} p =
+          ∘ᵐ-assoc _ _ _
+        ∙ ∘ᵐ-congʳ (mapˣᵐ-∘ _ _ _ _ ∙ mapˣᵐ-cong (∘ᵐ-identityˡ _) p)
+        ∙ e
+
+      -- at nil the context alone determines the argument
+      nil-side : m ∘ᵐ mapˣᵐ idᵐ nilᵐ ≈ᵐ (m ∘ᵐ ⟨ idᵐ , nilᵐ ∘ᵐ terminalᵐ ⟩ᵐ) ∘ᵐ fstᵐ
+      nil-side =
+          ∘ᵐ-congʳ
+            (≈ᵐ-sym ( ⟨⟩ᵐ-∘ _ _ _
+                    ∙ ⟨ ∘ᵐ-identityˡ _ ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _)
+                      , ∘ᵐ-assoc _ _ _
+                        ∙ ∘ᵐ-congʳ (terminalᵐ-unique ∙ ≈ᵐ-sym terminalᵐ-unique) ⟩ᵐ-cong))
+        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+      -- at cons the head and the tail are reassembled
+      cons-side : m ∘ᵐ mapˣᵐ idᵐ consᵐ
+                ≈ᵐ (m ∘ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , consᵐ ∘ᵐ mapˣᵐ sndᵐ idᵐ ⟩ᵐ) ∘ᵐ ×ᵐ-assoc⁻¹
+      cons-side =
+          ∘ᵐ-congʳ (≈ᵐ-sym reassemble)
+        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+        where
+          reassemble : ⟨ fstᵐ ∘ᵐ fstᵐ , consᵐ ∘ᵐ mapˣᵐ sndᵐ idᵐ ⟩ᵐ ∘ᵐ ×ᵐ-assoc⁻¹
+                     ≈ᵐ mapˣᵐ idᵐ consᵐ
+          reassemble =
+              ⟨⟩ᵐ-∘ _ _ _
+            ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _) ∙ ⟨⟩ᵐ-fstᵐ _ _
+                ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _)
+              , ∘ᵐ-assoc _ _ _
+                ∙ ∘ᵐ-congʳ ( mapˣᵐ-∘⟨⟩ _ _ _ _
+                           ∙ ⟨ ⟨⟩ᵐ-sndᵐ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
+                           ∙ ≈ᵐ-sym sndᵐ-split) ⟩ᵐ-cong
+
+  caseLᵐ-post : ∀ {X A C D} → (s : X →ᵐ Listᵐ A)
+              → (f : X →ᵐ C) → (g : (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C) → (k : C →ᵐ D)
+              → k ∘ᵐ caseLᵐ s f g ≈ᵐ caseLᵐ s (k ∘ᵐ f) (k ∘ᵐ g)
+  caseLᵐ-post s f g k =
+    caseᵐ-post _ _ _ k
+    ∙ caseᵐ-cong ≈ᵐ-refl (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+
+
+  -- FOLDS AND PRIMITIVE RECURSION ON LISTS IN A CONTEXT
+  --
+  -- As for the natural numbers: folding in `X ⇒ᵐ C` gives `pfoldᵐ`, the fold
+  -- stable under a context `X`, and folding in `Listᵐ A ×ᵐ C`, the tail
+  -- alongside the result, gives the primitive recursor `recLᵐ`, whose step
+  -- receives the head and the tail.
+
+  -- the transposed step and the curried fold whose uncurrying is `pfoldᵐ`
+
+  pfold-stepᵐ : ∀ {X A C} → (X ×ᵐ A) ×ᵐ C →ᵐ C → A ×ᵐ (X ⇒ᵐ C) →ᵐ X ⇒ᵐ C
+  pfold-stepᵐ g =
+    curryᵐ (g ∘ᵐ ⟨ ⟨ sndᵐ , fstᵐ ∘ᵐ fstᵐ ⟩ᵐ , appᵐ ∘ᵐ ⟨ sndᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ ⟩ᵐ)
+
+  pfold-curriedᵐ : ∀ {X A C} → X →ᵐ C → (X ×ᵐ A) ×ᵐ C →ᵐ C → Listᵐ A →ᵐ X ⇒ᵐ C
+  pfold-curriedᵐ f g = foldᵐ (curryᵐ (f ∘ᵐ sndᵐ)) (pfold-stepᵐ g)
+
+  pfoldᵐ : ∀ {X A C} → X →ᵐ C → (X ×ᵐ A) ×ᵐ C →ᵐ C → X ×ᵐ Listᵐ A →ᵐ C
+  pfoldᵐ f g = uncurryᵐ (pfold-curriedᵐ f g) ∘ᵐ swapᵐ
+
+  pfoldᵐ-cong : ∀ {X A C} {f f' : X →ᵐ C} {g g' : (X ×ᵐ A) ×ᵐ C →ᵐ C}
+              → f ≈ᵐ f' → g ≈ᵐ g' → pfoldᵐ f g ≈ᵐ pfoldᵐ f' g'
+  pfoldᵐ-cong pf pg =
+    ∘ᵐ-congˡ (uncurryᵐ-cong (foldᵐ-cong (curryᵐ-cong (∘ᵐ-congˡ pf))
+                                        (curryᵐ-cong (∘ᵐ-congˡ pg))))
+
+  pfoldᵐ-nil : ∀ {X A C} → (f : X →ᵐ C) → (g : (X ×ᵐ A) ×ᵐ C →ᵐ C)
+             → pfoldᵐ f g ∘ᵐ ⟨ idᵐ , nilᵐ ∘ᵐ terminalᵐ ⟩ᵐ ≈ᵐ f
+  pfoldᵐ-nil f g =
+      ∘ᵐ-assoc _ _ _
+    ∙ ∘ᵐ-congʳ (swapᵐ-⟨⟩ _ _
+                ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ nilᵐ idᵐ terminalᵐ idᵐ
+                          ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+    ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+    ∙ ∘ᵐ-congˡ (≈ᵐ-sym (uncurryᵐ-nat nilᵐ _))
+    ∙ ∘ᵐ-congˡ (uncurryᵐ-cong (foldᵐ-nil _ _))
+    ∙ ∘ᵐ-congˡ (curryᵐ-uncurryᵐ-iso _)
+    ∙ ∘ᵐ-assoc _ _ _
+    ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)
+    ∙ ∘ᵐ-identityʳ f
+
+  -- the transposed step, applied after the curried fold
+  private
+    pfold-step : ∀ {X A C} → (g : (X ×ᵐ A) ×ᵐ C →ᵐ C) → (k : X ×ᵐ Listᵐ A →ᵐ C)
+               → (K : Listᵐ A →ᵐ X ⇒ᵐ C) → uncurryᵐ K ∘ᵐ swapᵐ ≈ᵐ k
+               → uncurryᵐ (pfold-stepᵐ g ∘ᵐ mapˣᵐ idᵐ K) ∘ᵐ swapᵐ
+               ≈ᵐ g ∘ᵐ ⟨ mapˣᵐ idᵐ fstᵐ , k ∘ᵐ mapˣᵐ idᵐ sndᵐ ⟩ᵐ
+    pfold-step g k K e =
+        ∘ᵐ-congˡ (uncurryᵐ-nat (mapˣᵐ idᵐ K) _)
+      ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (curryᵐ-uncurryᵐ-iso _))
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _ ∙ ⟨ heads , results ⟩ᵐ-cong)
+      where
+        Q : _
+        Q = mapˣᵐ (mapˣᵐ idᵐ K) idᵐ ∘ᵐ swapᵐ
+
+        Qeq : Q ≈ᵐ ⟨ mapˣᵐ idᵐ K ∘ᵐ sndᵐ , idᵐ ∘ᵐ fstᵐ ⟩ᵐ
+        Qeq = mapˣᵐ-∘⟨⟩ _ _ sndᵐ fstᵐ
+
+        heads : ⟨ sndᵐ , fstᵐ ∘ᵐ fstᵐ ⟩ᵐ ∘ᵐ Q ≈ᵐ mapˣᵐ idᵐ fstᵐ
+        heads =
+            ⟨⟩ᵐ-∘ _ _ _
+          ∙ ⟨ ∘ᵐ-congʳ Qeq ∙ ⟨⟩ᵐ-sndᵐ _ _
+            , ∘ᵐ-assoc _ _ _
+              ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ Qeq ∙ ⟨⟩ᵐ-fstᵐ _ _)
+              ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+              ∙ ∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _ ∙ ∘ᵐ-identityˡ _) ⟩ᵐ-cong
+
+        -- both sides apply `K` at the tail to the context
+        target : _
+        target = appᵐ ∘ᵐ ⟨ K ∘ᵐ (sndᵐ ∘ᵐ sndᵐ) , fstᵐ ⟩ᵐ
+
+        lhs : (appᵐ ∘ᵐ ⟨ sndᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ) ∘ᵐ Q ≈ᵐ target
+        lhs =
+            ∘ᵐ-assoc _ _ _
+          ∙ ∘ᵐ-congʳ ( ⟨⟩ᵐ-∘ _ _ _
+                     ∙ ⟨ ∘ᵐ-assoc _ _ _
+                         ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ Qeq ∙ ⟨⟩ᵐ-fstᵐ _ _)
+                         ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                         ∙ ∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _)
+                         ∙ ∘ᵐ-assoc _ _ _
+                       , ∘ᵐ-congʳ Qeq ∙ ⟨⟩ᵐ-sndᵐ _ _ ∙ ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+
+        rhs : k ∘ᵐ mapˣᵐ idᵐ sndᵐ ≈ᵐ target
+        rhs =
+            ∘ᵐ-congˡ (≈ᵐ-sym e)
+          ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (≈ᵐ-sym (appᵐ-mapˣᵐ K)))
+          ∙ ∘ᵐ-assoc _ _ _
+          ∙ ∘ᵐ-assoc _ _ _
+          ∙ ∘ᵐ-congʳ ( ∘ᵐ-congʳ (swapᵐ-mapˣᵐ idᵐ sndᵐ)
+                     ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                     ∙ ∘ᵐ-congˡ (mapˣᵐ-∘ _ _ _ _)
+                     ∙ mapˣᵐ-∘⟨⟩ _ _ sndᵐ fstᵐ
+                     ∙ ⟨ ∘ᵐ-assoc _ _ _
+                       , ∘ᵐ-congˡ (∘ᵐ-identityˡ _) ∙ ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+
+        results : (appᵐ ∘ᵐ ⟨ sndᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ) ∘ᵐ Q ≈ᵐ k ∘ᵐ mapˣᵐ idᵐ sndᵐ
+        results = lhs ∙ ≈ᵐ-sym rhs
+
+  pfoldᵐ-cons : ∀ {X A C} → (f : X →ᵐ C) → (g : (X ×ᵐ A) ×ᵐ C →ᵐ C)
+              → pfoldᵐ f g ∘ᵐ mapˣᵐ idᵐ consᵐ
+              ≈ᵐ g ∘ᵐ ⟨ mapˣᵐ idᵐ fstᵐ , pfoldᵐ f g ∘ᵐ mapˣᵐ idᵐ sndᵐ ⟩ᵐ
+  pfoldᵐ-cons f g =
+      ∘ᵐ-assoc _ _ _
+    ∙ ∘ᵐ-congʳ (swapᵐ-mapˣᵐ idᵐ consᵐ)
+    ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+    ∙ ∘ᵐ-congˡ (≈ᵐ-sym (uncurryᵐ-nat consᵐ _))
+    ∙ ∘ᵐ-congˡ (uncurryᵐ-cong (foldᵐ-cons _ _))
+    ∙ pfold-step g (pfoldᵐ f g) (pfold-curriedᵐ f g) ≈ᵐ-refl
+
+  pfoldᵐ-unique : ∀ {X A C} → (f : X →ᵐ C) → (g : (X ×ᵐ A) ×ᵐ C →ᵐ C)
+                → (h : X ×ᵐ Listᵐ A →ᵐ C)
+                → h ∘ᵐ ⟨ idᵐ , nilᵐ ∘ᵐ terminalᵐ ⟩ᵐ ≈ᵐ f
+                → h ∘ᵐ mapˣᵐ idᵐ consᵐ ≈ᵐ g ∘ᵐ ⟨ mapˣᵐ idᵐ fstᵐ , h ∘ᵐ mapˣᵐ idᵐ sndᵐ ⟩ᵐ
+                → h ≈ᵐ pfoldᵐ f g
+  pfoldᵐ-unique {X} {A} {C} f g h p q =
+      ≈ᵐ-sym (∘ᵐ-identityʳ h)
+    ∙ ∘ᵐ-congʳ (≈ᵐ-sym swapᵐ-swapᵐ)
+    ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+    ∙ ∘ᵐ-congˡ (≈ᵐ-sym (curryᵐ-uncurryᵐ-iso (h ∘ᵐ swapᵐ)) ∙ uncurryᵐ-cong H≈)
+    where
+      H : Listᵐ A →ᵐ X ⇒ᵐ C
+      H = curryᵐ (h ∘ᵐ swapᵐ)
+
+      H-unc : uncurryᵐ H ∘ᵐ swapᵐ ≈ᵐ h
+      H-unc =
+          ∘ᵐ-congˡ (curryᵐ-uncurryᵐ-iso _)
+        ∙ ∘ᵐ-assoc _ _ _
+        ∙ ∘ᵐ-congʳ swapᵐ-swapᵐ
+        ∙ ∘ᵐ-identityʳ h
+
+      -- at nil the argument is fixed by the unit
+      nil-ctx : mapˣᵐ idᵐ nilᵐ ∘ᵐ swapᵐ
+              ≈ᵐ ⟨ idᵐ , nilᵐ ∘ᵐ terminalᵐ ⟩ᵐ ∘ᵐ sndᵐ {𝟙ᵐ} {X}
+      nil-ctx =
+          mapˣᵐ-∘⟨⟩ _ _ _ _
+        ∙ ≈ᵐ-sym ( ⟨⟩ᵐ-∘ _ _ _
+                 ∙ ⟨ ≈ᵐ-refl
+                   , ∘ᵐ-assoc _ _ _
+                     ∙ ∘ᵐ-congʳ (terminalᵐ-unique ∙ ≈ᵐ-sym terminalᵐ-unique) ⟩ᵐ-cong)
+
+      H-nil : H ∘ᵐ nilᵐ ≈ᵐ curryᵐ (f ∘ᵐ sndᵐ)
+      H-nil =
+          ≈ᵐ-sym (curryᵐ-nat nilᵐ _)
+        ∙ curryᵐ-cong ( ∘ᵐ-assoc _ _ _
+                      ∙ ∘ᵐ-congʳ (swapᵐ-mapˣᵐ nilᵐ idᵐ)
+                      ∙ ∘ᵐ-congʳ nil-ctx
+                      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                      ∙ ∘ᵐ-congˡ p)
+
+      H-cons : H ∘ᵐ consᵐ ≈ᵐ pfold-stepᵐ g ∘ᵐ mapˣᵐ idᵐ H
+      H-cons =
+          ≈ᵐ-sym (curryᵐ-nat consᵐ _)
+        ∙ curryᵐ-cong ( ∘ᵐ-assoc _ _ _
+                      ∙ ∘ᵐ-congʳ (swapᵐ-mapˣᵐ consᵐ idᵐ)
+                      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                      ∙ ∘ᵐ-congˡ q
+                      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (pfold-step g h H H-unc))
+                      ∙ ∘ᵐ-assoc _ _ _
+                      ∙ ∘ᵐ-congʳ swapᵐ-swapᵐ
+                      ∙ ∘ᵐ-identityʳ _)
+        ∙ uncurryᵐ-curryᵐ-iso _
+
+      H≈ : H ≈ᵐ pfold-curriedᵐ f g
+      H≈ = foldᵐ-unique _ _ H H-nil H-cons
+
+  -- two maps satisfying the same parametrised fold equations agree
+
+  pfoldᵐ-ext : ∀ {X A C} → (f : X →ᵐ C) → (g : (X ×ᵐ A) ×ᵐ C →ᵐ C)
+             → (h h' : X ×ᵐ Listᵐ A →ᵐ C)
+             → h ∘ᵐ ⟨ idᵐ , nilᵐ ∘ᵐ terminalᵐ ⟩ᵐ ≈ᵐ f
+             → h ∘ᵐ mapˣᵐ idᵐ consᵐ ≈ᵐ g ∘ᵐ ⟨ mapˣᵐ idᵐ fstᵐ , h ∘ᵐ mapˣᵐ idᵐ sndᵐ ⟩ᵐ
+             → h' ∘ᵐ ⟨ idᵐ , nilᵐ ∘ᵐ terminalᵐ ⟩ᵐ ≈ᵐ f
+             → h' ∘ᵐ mapˣᵐ idᵐ consᵐ ≈ᵐ g ∘ᵐ ⟨ mapˣᵐ idᵐ fstᵐ , h' ∘ᵐ mapˣᵐ idᵐ sndᵐ ⟩ᵐ
+             → h ≈ᵐ h'
+  pfoldᵐ-ext f g h h' p q p' q' =
+    pfoldᵐ-unique f g h p q ∙ ≈ᵐ-sym (pfoldᵐ-unique f g h' p' q')
+
+  -- Primitive recursion: a base, and a step receiving the context, the head,
+  -- the tail, and the result at the tail. The list folded alongside the
+  -- result is the argument itself (`recL-counterᵐ`).
+
+  recL-stepᵐ : ∀ {X A C} → ((X ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ C →ᵐ C
+             → (X ×ᵐ A) ×ᵐ (Listᵐ A ×ᵐ C) →ᵐ Listᵐ A ×ᵐ C
+  recL-stepᵐ g = ⟨ consᵐ ∘ᵐ ⟨ sndᵐ ∘ᵐ fstᵐ , fstᵐ ∘ᵐ sndᵐ ⟩ᵐ , g ∘ᵐ ×ᵐ-assoc⁻¹ ⟩ᵐ
+
+  recL-pairᵐ : ∀ {X A C} → X →ᵐ C → ((X ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ C →ᵐ C
+             → X ×ᵐ Listᵐ A →ᵐ Listᵐ A ×ᵐ C
+  recL-pairᵐ f g = pfoldᵐ ⟨ nilᵐ ∘ᵐ terminalᵐ , f ⟩ᵐ (recL-stepᵐ g)
+
+  recLᵐ : ∀ {X A C} → X →ᵐ C → ((X ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ C →ᵐ C
+        → X ×ᵐ Listᵐ A →ᵐ C
+  recLᵐ f g = sndᵐ ∘ᵐ recL-pairᵐ f g
+
+  private
+    -- the step's list component at a pairing
+    cons-at : ∀ {Y X A} → (a : Y →ᵐ X ×ᵐ A) → (b : Y →ᵐ Listᵐ A)
+            → (consᵐ ∘ᵐ ⟨ sndᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ) ∘ᵐ ⟨ a , b ⟩ᵐ
+            ≈ᵐ consᵐ ∘ᵐ ⟨ sndᵐ ∘ᵐ a , b ⟩ᵐ
+    cons-at a b =
+        ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _
+                  ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _) , ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong)
+
+  recL-counterᵐ : ∀ {X A C} → (f : X →ᵐ C) → (g : ((X ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ C →ᵐ C)
+                → fstᵐ ∘ᵐ recL-pairᵐ f g ≈ᵐ sndᵐ
+  recL-counterᵐ f g =
+    pfoldᵐ-ext (nilᵐ ∘ᵐ terminalᵐ) (consᵐ ∘ᵐ ⟨ sndᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ) _ _
+      (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (pfoldᵐ-nil _ _) ∙ ⟨⟩ᵐ-fstᵐ _ _)
+      ( ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (pfoldᵐ-cons _ _)
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _)
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ ( ⟨⟩ᵐ-∘ _ _ _
+                 ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
+                   , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ⟩ᵐ-cong)
+      ∙ ≈ᵐ-sym (cons-at _ _))
+      (⟨⟩ᵐ-sndᵐ _ _)
+      ( ⟨⟩ᵐ-sndᵐ _ _
+      ∙ ∘ᵐ-congʳ sndᵐ-split
+      ∙ ≈ᵐ-sym (cons-at _ _
+                ∙ ∘ᵐ-congʳ ⟨ ⟨⟩ᵐ-sndᵐ _ _ , ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong))
+
+  recLᵐ-cong : ∀ {X A C} {f f' : X →ᵐ C} {g g' : ((X ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ C →ᵐ C}
+             → f ≈ᵐ f' → g ≈ᵐ g' → recLᵐ f g ≈ᵐ recLᵐ f' g'
+  recLᵐ-cong pf pg =
+    ∘ᵐ-congʳ (pfoldᵐ-cong ⟨ ≈ᵐ-refl , pf ⟩ᵐ-cong ⟨ ≈ᵐ-refl , ∘ᵐ-congˡ pg ⟩ᵐ-cong)
+
+  recLᵐ-nil : ∀ {X A C} → (f : X →ᵐ C) → (g : ((X ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ C →ᵐ C)
+            → recLᵐ f g ∘ᵐ ⟨ idᵐ , nilᵐ ∘ᵐ terminalᵐ ⟩ᵐ ≈ᵐ f
+  recLᵐ-nil f g = ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (pfoldᵐ-nil _ _) ∙ ⟨⟩ᵐ-sndᵐ _ _
+
+  private
+    -- the step's context: the inverse associator, at the tail's own pair
+    recL-ctx : ∀ {X A L C} → (c : X ×ᵐ (A ×ᵐ L) →ᵐ C)
+             → ×ᵐ-assoc⁻¹ ∘ᵐ ⟨ mapˣᵐ idᵐ fstᵐ , ⟨ sndᵐ ∘ᵐ sndᵐ , c ⟩ᵐ ⟩ᵐ
+             ≈ᵐ ⟨ ×ᵐ-assoc⁻¹ , c ⟩ᵐ
+    recL-ctx c =
+        ×ᵐ-assoc⁻¹-⟨⟩ _ _ _
+      ∙ ⟨ ⟨ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong , ≈ᵐ-refl ⟩ᵐ-cong , ≈ᵐ-refl ⟩ᵐ-cong
+
+  recLᵐ-cons : ∀ {X A C} → (f : X →ᵐ C) → (g : ((X ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ C →ᵐ C)
+             → recLᵐ f g ∘ᵐ mapˣᵐ idᵐ consᵐ
+             ≈ᵐ g ∘ᵐ ⟨ ×ᵐ-assoc⁻¹ , recLᵐ f g ∘ᵐ mapˣᵐ idᵐ sndᵐ ⟩ᵐ
+  recLᵐ-cons f g =
+      ∘ᵐ-assoc _ _ _
+    ∙ ∘ᵐ-congʳ (pfoldᵐ-cons _ _)
+    ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+    ∙ ∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _)
+    ∙ ∘ᵐ-assoc _ _ _
+    ∙ ∘ᵐ-congʳ ( ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , tail ⟩ᵐ-cong
+               ∙ recL-ctx _)
+    where
+      tail : recL-pairᵐ f g ∘ᵐ mapˣᵐ idᵐ sndᵐ
+           ≈ᵐ ⟨ sndᵐ ∘ᵐ sndᵐ , recLᵐ f g ∘ᵐ mapˣᵐ idᵐ sndᵐ ⟩ᵐ
+      tail =
+        ⟨⟩ᵐ-unique _ _ _
+          ( ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+          ∙ ∘ᵐ-congˡ (recL-counterᵐ f g)
+          ∙ ⟨⟩ᵐ-sndᵐ _ _)
+          (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+
+  recLᵐ-unique : ∀ {X A C} → (f : X →ᵐ C) → (g : ((X ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ C →ᵐ C)
+               → (h : X ×ᵐ Listᵐ A →ᵐ C)
+               → h ∘ᵐ ⟨ idᵐ , nilᵐ ∘ᵐ terminalᵐ ⟩ᵐ ≈ᵐ f
+               → h ∘ᵐ mapˣᵐ idᵐ consᵐ ≈ᵐ g ∘ᵐ ⟨ ×ᵐ-assoc⁻¹ , h ∘ᵐ mapˣᵐ idᵐ sndᵐ ⟩ᵐ
+               → h ≈ᵐ recLᵐ f g
+  recLᵐ-unique f g h p q =
+      ≈ᵐ-sym (⟨⟩ᵐ-sndᵐ sndᵐ h)
+    ∙ ∘ᵐ-congʳ (pfoldᵐ-unique _ _ ⟨ sndᵐ , h ⟩ᵐ pn pc)
+    where
+      pn : ⟨ sndᵐ , h ⟩ᵐ ∘ᵐ ⟨ idᵐ , nilᵐ ∘ᵐ terminalᵐ ⟩ᵐ
+         ≈ᵐ ⟨ nilᵐ ∘ᵐ terminalᵐ , f ⟩ᵐ
+      pn = ⟨⟩ᵐ-∘ _ _ _ ∙ ⟨ ⟨⟩ᵐ-sndᵐ _ _ , p ⟩ᵐ-cong
+
+      b-eq : ⟨ sndᵐ , h ⟩ᵐ ∘ᵐ mapˣᵐ idᵐ sndᵐ ≈ᵐ ⟨ sndᵐ ∘ᵐ sndᵐ , h ∘ᵐ mapˣᵐ idᵐ sndᵐ ⟩ᵐ
+      b-eq = ⟨⟩ᵐ-∘ _ _ _ ∙ ⟨ ⟨⟩ᵐ-sndᵐ _ _ , ≈ᵐ-refl ⟩ᵐ-cong
+
+      pc : ⟨ sndᵐ , h ⟩ᵐ ∘ᵐ mapˣᵐ idᵐ consᵐ
+         ≈ᵐ recL-stepᵐ g ∘ᵐ ⟨ mapˣᵐ idᵐ fstᵐ , ⟨ sndᵐ , h ⟩ᵐ ∘ᵐ mapˣᵐ idᵐ sndᵐ ⟩ᵐ
+      pc =
+          ⟨⟩ᵐ-∘ _ _ _
+        ∙ ⟨ ⟨⟩ᵐ-sndᵐ _ _ , q ⟩ᵐ-cong
+        ∙ ≈ᵐ-sym ( ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , b-eq ⟩ᵐ-cong
+                 ∙ ⟨⟩ᵐ-∘ _ _ _
+                 ∙ ⟨ ∘ᵐ-assoc _ _ _
+                     ∙ ∘ᵐ-congʳ ( ⟨⟩ᵐ-∘ _ _ _
+                                ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _) ∙ ⟨⟩ᵐ-sndᵐ _ _
+                                  , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-fstᵐ _ _ ⟩ᵐ-cong
+                                ∙ ≈ᵐ-sym sndᵐ-split)
+                   , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (recL-ctx _) ⟩ᵐ-cong)
+
+  -- naturality in the context
+
+  recLᵐ-∘ : ∀ {Y X A C} → (f : X →ᵐ C) → (g : ((X ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ C →ᵐ C)
+          → (k : Y →ᵐ X)
+          → recLᵐ f g ∘ᵐ mapˣᵐ k idᵐ
+          ≈ᵐ recLᵐ (f ∘ᵐ k) (g ∘ᵐ mapˣᵐ (mapˣᵐ (mapˣᵐ k idᵐ) idᵐ) idᵐ)
+  recLᵐ-∘ f g k =
+    recLᵐ-unique _ _ _
+      ( ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ ( mapˣᵐ-∘⟨⟩ _ _ _ _
+                 ∙ ≈ᵐ-sym ( ⟨⟩ᵐ-∘ _ _ _
+                          ∙ ⟨ ∘ᵐ-identityˡ _ ∙ ≈ᵐ-sym (∘ᵐ-identityʳ _)
+                            , ∘ᵐ-assoc _ _ _
+                              ∙ ∘ᵐ-congʳ (terminalᵐ-unique ∙ ≈ᵐ-sym terminalᵐ-unique)
+                              ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _) ⟩ᵐ-cong))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (recLᵐ-nil f g))
+      ( ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (mapˣᵐ-comm k consᵐ)
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (recLᵐ-cons f g)
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ ( ⟨⟩ᵐ-∘ _ _ _
+                 ∙ ⟨ ×ᵐ-assoc⁻¹-mapˣᵐ k
+                   , ∘ᵐ-assoc _ _ _
+                     ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-comm k sndᵐ))
+                     ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                     ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _) ⟩ᵐ-cong
+                 ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))

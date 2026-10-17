@@ -1,7 +1,8 @@
 ------------------------------------------------------------------------
 -- Primitive recursion: the denotation of one unfolding of the step,   --
--- and the recursor's two beta laws read at the interpretation. Shared --
--- by the soundness of the reduction and of the equational theory.     --
+-- and the recursors' beta laws read at the interpretation, with the   --
+-- list eliminator's. Shared by the soundness of the reduction and of  --
+-- the equational theory.                                              --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -39,12 +40,12 @@ open import Syntax.Types         S
 open import Syntax.Contexts      S
 open import Syntax.Language      S
 open import Syntax.Renamings     S
-open import Syntax.RenActions    S using (C-rename)
+open import Syntax.RenActions    S using (V-rename; C-rename)
 open import Syntax.Substitutions S
 
 open Category Cat
 open Future Fut using ([_]ᶠ)
-open Past Pst using (⟨_⟩ᶠ; ⟨⟩-∘ᵐ)
+open Past Pst using (⟨_⟩ᶠ; ⟨⟩-∘ᵐ; ⟨⟩-congᶠ)
 open Adjunction Adj using (η⊣; η⊣-nat)
 open Monad Mon
 
@@ -136,3 +137,127 @@ sound-RECℕ-SUCC {B = B} V M N p pV pM pN =
         mapˣᵐ-∘⟨⟩ _ _ _ _
       ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ ≈ᵐ-sym (η⊣-nat _) , ≈ᵐ-refl ⟩ᵐ-cong
       ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _)
+
+-- One unfolding of a list recursion's step, likewise: the barred part by
+-- `⟨⊤⟩-η`, the head and the tail by the values, under the lock.
+
+recL-stepᴾ : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ |List| A)
+           → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+           → Paramᵛ V → Paramᵛ W → Paramᶜ N → Paramᶜ (recL-step V W N)
+recL-stepᴾ V W N pV pW pN =
+  subᶜ (C-rename r N [ split-∷ (split-⟨⟩ (split-∷ split-[])) ↦ V ]c)
+       (split-∷ (split-⟨⟩ split-[])) W
+       (subᶜ (C-rename r N) (split-∷ (split-⟨⟩ (split-∷ split-[]))) V (renᶜ r N pN) pV)
+       pW
+  where
+    r = cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-∷-ren barrier-ren)))
+
+sound-recL-step : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ |List| A)
+                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pN : Paramᶜ N)
+                → ⟦ recL-step V W N ⟧ᶜᵗ (recL-stepᴾ V W N pV pW pN)
+                ≈ᵐ ⟦ N ⟧ᶜᵗ pN
+                     ∘ᵐ mapˣᵐ (⟨ mapᵉ ε ⟩ᶠ (mapˣᵐ (mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ
+                                            ∘ᵐ ⟨ ⟨ idᵐ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ))
+                              idᵐ
+sound-recL-step V W N pV pW pN =
+    C-subst-nat (C-rename r N [ s₁ ↦ V ]c) s₂ W
+                (subᶜ (C-rename r N) s₁ V (renᶜ r N pN) pV) pW
+  ∙ ∘ᵐ-congˡ (C-subst-nat (C-rename r N) s₁ V (renᶜ r N pN) pV)
+  ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (C-rename-nat r N pN))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ ( ∘ᵐ-congʳ ( mapˣᵐ-∘ _ _ _ _
+                         ∙ mapˣᵐ-cong (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)) (∘ᵐ-identityˡ _))
+             ∙ mapˣᵐ-∘ _ _ _ _
+             ∙ mapˣᵐ-cong (≈ᵐ-sym (⟨⟩-∘ᵐ _ _) ∙ ⟨⟩-congᶠ inner) (∘ᵐ-identityˡ _))
+  where
+    r  = cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-∷-ren barrier-ren)))
+    s₁ = split-∷ (split-⟨⟩ (split-∷ split-[]))
+    s₂ = split-∷ (split-⟨⟩ split-[])
+
+    inner : mapˣᵐ (mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ ∘ᵐ (mapˣᵐ ⟨ idᵐ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ idᵐ
+              ∘ᵐ ⟨ idᵐ , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ)
+          ≈ᵐ mapˣᵐ (mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ
+              ∘ᵐ ⟨ ⟨ idᵐ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
+    inner = ∘ᵐ-congʳ ( mapˣᵐ-∘⟨⟩ _ _ _ _
+                     ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+
+-- The list recursor's beta laws, at `nil` and at a `cons`.
+
+sound-RECL-NIL : ∀ {Γ A B ε} → (M : Γ ⊢C⦂ B ‼ ε)
+               → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+               → (p : ε ·ₑ ε ≾ₑ ε) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+               → ⟦ recL nil M N p ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ M ⟧ᶜᵗ pM
+sound-RECL-NIL M N p pM pN = recLᵐ-nil _ _
+
+sound-RECL-CONS : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ |List| A)
+                → (M : Γ ⊢C⦂ B ‼ ε)
+                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                → (p : ε ·ₑ ε ≾ₑ ε)
+                → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+                → ⟦ recL (cons V W) M N p ⟧ᶜᵗ ((pV , pW) , pM , pN)
+                ≈ᵐ ⟦ coerce p (recL W M N p ⨟ recL-step V W N) ⟧ᶜᵗ
+                     ((pW , pM , pN) , recL-stepᴾ V W N pV pW pN)
+sound-RECL-CONS {B = B} V W M N p pV pW pM pN =
+  -- the recursor's cons law, at the scrutinee
+    ∘ᵐ-congʳ (⟨⟩ᵐ-mapˣᵐ consᵐ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (recLᵐ-cons _ _)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ ( ⟨⟩ᵐ-∘ _ _ _
+             ∙ ⟨ ×ᵐ-assoc⁻¹-⟨⟩ _ _ _
+               , ∘ᵐ-assoc _ _ _
+                 ∙ ∘ᵐ-congʳ ( mapˣᵐ-∘⟨⟩ _ _ _ _
+                            ∙ ⟨ ∘ᵐ-identityˡ _ , ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong) ⟩ᵐ-cong)
+  -- the step at that context is the sequencing with the unfolding
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ ctx)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
+        ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (strᵀ-natˡ _))
+                  ∙ ∘ᵐ-assoc _ _ _)
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _)
+                  ∙ T-congᶠ (≈ᵐ-sym (sound-recL-step V W N pV pW pN)))))
+  -- the coercion is the sub-effecting alone
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-congˡ (T-congᶠ (⟦⟧<:ᵛ-refl B) ∙ T-idᵐ) ∙ ∘ᵐ-identityˡ _))
+  where
+    c = ⟨ ⟨ idᵐ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
+    rec = ⟦ recL W M N p ⟧ᶜᵗ (pW , pM , pN)
+
+    ctx : mapˣᵐ (η⊣ ∘ᵐ mapˣᵐ (mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ) idᵐ ∘ᵐ ⟨ c , rec ⟩ᵐ
+        ≈ᵐ mapˣᵐ ([ _ ]ᶠ (⟨ _ ⟩ᶠ (mapˣᵐ (mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ ∘ᵐ c))) idᵐ
+            ∘ᵐ ⟨ η⊣ , rec ⟩ᵐ
+    ctx =
+        mapˣᵐ-∘⟨⟩ _ _ _ _
+      ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ ≈ᵐ-sym (η⊣-nat _) , ≈ᵐ-refl ⟩ᵐ-cong
+      ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _)
+
+-- The list eliminator's beta laws: at `nil` the `nil` branch, at a `cons`
+-- the `cons` branch with the head and the tail substituted, as for `match`.
+
+sound-CASEL-NIL : ∀ {Γ A C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ |List| A ⊢C⦂ C)
+                → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+                → ⟦ caseL nil `nil M `cons N ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ M ⟧ᶜᵗ pM
+sound-CASEL-NIL M N pM pN = caseLᵐ-nil _ _
+
+sound-CASEL-CONS : ∀ {Γ A C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ |List| A)
+                 → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ |List| A ⊢C⦂ C)
+                 → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+                 → ⟦ caseL cons V W `nil M `cons N ⟧ᶜᵗ ((pV , pW) , pM , pN)
+                 ≈ᵐ ⟦ (N [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟧ᶜᵗ
+                      (subᶜ (N [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
+                         (subᶜ N split-[] (V-rename wk-ren W) pN (renᵛ wk-ren W pW)) pV)
+sound-CASEL-CONS V W M N pV pW pM pN =
+    caseLᵐ-cons _ _ _ _
+  ∙ ≈ᵐ-sym (  C-subst-nat (N [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
+                (subᶜ N split-[] (V-rename wk-ren W) pN (renᵛ wk-ren W pW)) pV
+            ∙ ∘ᵐ-congˡ (  C-subst-nat N split-[] (V-rename wk-ren W) pN (renᵛ wk-ren W pW)
+                        ∙ ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , V-rename-nat wk-ren W pW ⟩ᵐ-cong)
+            ∙ ∘ᵐ-assoc _ _ _
+            ∙ ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _
+                        ∙ ⟨ ∘ᵐ-identityˡ _
+                          , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
+                            ∙ ∘ᵐ-identityʳ _ ⟩ᵐ-cong))

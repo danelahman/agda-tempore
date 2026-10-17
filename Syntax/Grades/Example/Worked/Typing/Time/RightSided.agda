@@ -307,6 +307,94 @@ reading-or-tag-not-eternal : ¬ Eternal (Reading |+| NodeId)
 reading-or-tag-not-eternal (r |+|ₑ _) = reading-not-eternal r
 
 ------------------------------------------------------------------------
+-- Lists
+--
+-- `caseL` binds the head and then the tail in its `cons` branch, and,
+-- as for `if`, both branches are coerced to one grade.
+
+-- the first pending reading is transmitted, an empty list costs nothing;
+-- the head is bound by the branch itself, so `var` asks for nothing
+
+transmitting-the-first : [] ∷ |List| Reading ⊢C⦂ Unit ‼ [0, 6 ]
+transmitting-the-first =
+  caseL here
+    `nil coerce ≤! (return ⋆)
+    `cons perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)
+                                     -- ∷ Reading ∷ |List| Reading
+
+-- a list is eternal when its elements are: identifiers cross a lock, a
+-- list that may hold readings does not
+
+ids-survive : [] ∷ |List| NodeId ⊢C⦂ |List| NodeId ‼ [0, 1 ]
+ids-survive =
+  perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
+    (return (eternal-var (|List|ₑ nodeid-eternal) (Tl-∷ (Tl-⟨⟩ Hd))))
+
+readings-not-eternal : ¬ Eternal (|List| Reading)
+readings-not-eternal (|List|ₑ r) = reading-not-eternal r
+
+------------------------------------------------------------------------
+-- Primitive recursion on lists
+--
+-- `recL`'s step sees the ambient context behind `⟨ ⊤ᵣ ⟩`, binds the head
+-- and the tail, and, behind the lock of the recursion's own grade, the
+-- result at the tail. As for `recℕ`, the grade absorbs its own
+-- iteration: a pure recursion is graded at the unit, one that idles at
+-- each element at the top.
+
+-- the length, whatever the elements are
+
+length : ∀ {A} → [] ⊢V⦂ |List| A ⇒ Nat ‼ uₑ
+length =
+  lam (recL here
+        (return zero)
+        (return (succ here))         -- ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A ⟨ [0, 0 ] ⟩ ∷ Nat
+        ≤!)
+
+three-readings-long : [] ⊢C⦂ Nat ‼ uₑ
+three-readings-long =
+  length {Reading} · cons (const 1) (cons (const 2) (cons (const 3) nil))
+
+-- a pure map: each count is incremented; a count is eternal, so the head
+-- crosses the result's lock
+
+incrementing : [] ⊢V⦂ |List| Nat ⇒ |List| Nat ‼ uₑ
+incrementing =
+  lam (recL here
+        (return nil)
+        (return (cons (succ (eternal-var Natₑ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))) here))
+        ≤!)
+
+-- pacing a list, a tick an element: graded at the top, which absorbs
+-- itself
+
+pacing : ∀ {A} → [] ⊢V⦂ |List| A ⇒ Unit ‼ ⊤ₑ
+pacing =
+  lam (recL here
+        (coerce (≾-⊤ₑ uₑ) (return ⋆))
+        (coerce (≾-⊤ₑ (of-durᵉ 1 ·ₑ uₑ)) (delay 1 (return ⋆)))
+                                     -- ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A ⟨ ⌈0, ∞ ⌉ ⟩ ∷ Unit
+        (≾-⊤ₑ (⊤ₑ ·ₑ ⊤ₑ)))
+
+-- The head is bound before the result's lock, so the step reads it only
+-- after the recursion at the tail has run. A reading is a head the step
+-- may use when that takes no time: the latest reading, at the unit.
+
+latest : [] ⊢V⦂ |List| Reading ⇒ (Reading |+| Unit) ‼ uₑ
+latest =
+  lam (recL here
+        (return (inr ⋆))
+        (return (inl (fresh-var ≤! (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))))
+                                     -- ⟨ ⊤ᵣ ⟩ ∷ Reading ∷ |List| Reading
+                                     --   ⟨ [0, 0 ] ⟩ ∷ (Reading |+| Unit)
+        ≤!)
+
+-- behind the lock of a recursion that may take time, the head is stale
+
+head-stale-behind-the-top : ¬ (uᵣ ·ᵣ mapᵉ ⊤ₑ ≾ᵣ uᵣ)
+head-stale-behind-the-top ()
+
+------------------------------------------------------------------------
 -- Unboxing: a lease that expires
 --
 -- `unbox`'s premise `elapsed ≾ᵣ ρ` reads `elapsed ≤ ρ` here: the box

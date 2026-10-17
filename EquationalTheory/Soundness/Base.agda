@@ -85,6 +85,9 @@ mutual
   ⟦⟧ᵛᵗ-irr (succ V)  pV pV' = ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
   ⟦⟧ᵛᵗ-irr (inl V)   pV pV' = ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
   ⟦⟧ᵛᵗ-irr (inr V)   pV pV' = ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
+  ⟦⟧ᵛᵗ-irr nil       _ _ = ≈ᵐ-refl
+  ⟦⟧ᵛᵗ-irr (cons V W) (pV , pW) (pV' , pW') =
+    ∘ᵐ-congʳ ⟨ ⟦⟧ᵛᵗ-irr V pV pV' , ⟦⟧ᵛᵗ-irr W pW pW' ⟩ᵐ-cong
   ⟦⟧ᵛᵗ-irr (lam M)   pM pM' = curryᵐ-cong (⟦⟧ᶜᵗ-irr M pM pM')
   ⟦⟧ᵛᵗ-irr (subV V w) pV pV' = ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
 
@@ -107,6 +110,12 @@ mutual
     caseℕᵐ-cong (⟦⟧ᵛᵗ-irr V pV pV') (⟦⟧ᶜᵗ-irr M pM pM') (⟦⟧ᶜᵗ-irr N pN pN')
   ⟦⟧ᶜᵗ-irr (recℕ V M N p) (pV , pM , pN) (pV' , pM' , pN') =
     ∘ᵐ-cong (recℕᵐ-cong (⟦⟧ᶜᵗ-irr M pM pM')
+                        (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (⟦⟧ᶜᵗ-irr N pN pN'))))))
+            ⟨ ≈ᵐ-refl , ⟦⟧ᵛᵗ-irr V pV pV' ⟩ᵐ-cong
+  ⟦⟧ᶜᵗ-irr (caseL V `nil M `cons N) (pV , pM , pN) (pV' , pM' , pN') =
+    caseLᵐ-cong (⟦⟧ᵛᵗ-irr V pV pV') (⟦⟧ᶜᵗ-irr M pM pM') (⟦⟧ᶜᵗ-irr N pN pN')
+  ⟦⟧ᶜᵗ-irr (recL V M N p) (pV , pM , pN) (pV' , pM' , pN') =
+    ∘ᵐ-cong (recLᵐ-cong (⟦⟧ᶜᵗ-irr M pM pM')
                         (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (⟦⟧ᶜᵗ-irr N pN pN'))))))
             ⟨ ≈ᵐ-refl , ⟦⟧ᵛᵗ-irr V pV pV' ⟩ᵐ-cong
   ⟦⟧ᶜᵗ-irr (case+ V `inl M `inr N) (pV , pM , pN) (pV' , pM' , pN') =

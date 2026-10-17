@@ -7,16 +7,16 @@
 --                                                                    --
 -- The structure is supplied for each *former* of `Syntax.Types.Eternal`: --
 -- the eternal base types, and closure under `Unit`, `Bool`, `Nat`,      --
--- `Empty`, products and sums. `Interpretation.Variables` then assembles  --
--- an `Eternalᵒ` for every eternal type by recursion on the eternality    --
--- witness, so all the eternal *laws* (grade-uniformity, the unit grade,  --
--- the `⟨_⟩`-algebra law) come from `Eternalᵒ` rather than being          --
--- re-derived per former.                                                 --
+-- `Empty`, products, sums and lists. `Interpretation.Variables` then     --
+-- assembles an `Eternalᵒ` for every eternal type by recursion on the     --
+-- eternality witness, so all the eternal *laws* (grade-uniformity, the   --
+-- unit grade, the `⟨_⟩`-algebra law) come from `Eternalᵒ` rather than    --
+-- being re-derived per former.                                           --
 --                                                                    --
 -- In the presheaf model (`Example.PSh.Modality.Eternal`) the constant    --
 -- presheaves `Kᵖ` carry this structure (`Kᵖ-eternalᵒ`), and the formers  --
 -- are covered by `𝟙ᵖ-eternalᵒ`, `𝔹ᵖ-eternalᵒ`, `ℕᵖ-eternalᵒ`,          --
--- `𝟘ᵖ-eternalᵒ`, `×ᵖ-eternalᵒ` and `+ᵖ-eternalᵒ`.                       --
+-- `𝟘ᵖ-eternalᵒ`, `×ᵖ-eternalᵒ`, `+ᵖ-eternalᵒ` and `Listᵖ-eternalᵒ`.    --
 ------------------------------------------------------------------------
 
 open import Syntax.BaseTypes
@@ -78,6 +78,18 @@ record GroundEternal : Set₁ where
     +-eternalᵒ-inr : ∀ {A B} → (eA : Eternalᵒ A) → (eB : Eternalᵒ B) → ∀ {ρ}
                    → Eternalᵒ.extᵉ (+-eternalᵒ eA eB) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ inrᵐ
                    ≈ᵐ inrᵐ ∘ᵐ Eternalᵒ.extᵉ eB {ρ}
+
+    List-eternalᵒ : ∀ {A} → Eternalᵒ A → Eternalᵒ (Listᵐ A)
+
+    -- The list's eternal extraction acts elementwise (the closure is
+    -- compatible with the constructors).
+    List-eternalᵒ-nil : ∀ {A} → (eA : Eternalᵒ A) → ∀ {ρ}
+                      → Eternalᵒ.extᵉ (List-eternalᵒ eA) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ nilᵐ
+                      ≈ᵐ nilᵐ ∘ᵐ terminalᵐ
+    List-eternalᵒ-cons : ∀ {A} → (eA : Eternalᵒ A) → ∀ {ρ}
+                       → Eternalᵒ.extᵉ (List-eternalᵒ eA) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ consᵐ
+                       ≈ᵐ consᵐ ∘ᵐ ⟨ Eternalᵒ.extᵉ eA {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ fstᵐ
+                                  , Eternalᵒ.extᵉ (List-eternalᵒ eA) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
 
     -- A constant of an eternal base type denotes a *global* element: it is
     -- the same at every world, so the eternal extraction recovers it. This

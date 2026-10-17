@@ -5,8 +5,8 @@
 -- `match-beta`/`match-eta` the product's, `absurd-eta` the initial     --
 -- object's strictness, the boolean equations are the boolean object's --
 -- own laws, the natural-number equations those of `caseℕᵐ` and of     --
--- the recursor `recℕᵐ`, and the sum equations the coproduct's          --
--- (`caseᵐ`).                                                           --
+-- the recursor `recℕᵐ`, the sum equations the coproduct's (`caseᵐ`),  --
+-- and the list equations those of `caseLᵐ` and of `recLᵐ`.            --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -323,3 +323,82 @@ sound-match-beta V W M ((pV , pW) , pM) pR =
                         ∙ ⟨ ∘ᵐ-identityˡ _
                           , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
                             ∙ ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+
+
+-- The list eliminator's betas, as for the reductions at `nil` and `cons`.
+
+sound-caseL-beta-nil : ∀ {Γ A C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ |List| A ⊢C⦂ C)
+                     → Soundᶜ== (caseL-beta-nil M N)
+sound-caseL-beta-nil M N (_ , pM , pN) pR =
+  sound-CASEL-NIL M N pM pN ∙ ⟦⟧ᶜᵗ-irr M pM pR
+
+sound-caseL-beta-cons : ∀ {Γ A C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ |List| A)
+                      → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ |List| A ⊢C⦂ C)
+                      → Soundᶜ== (caseL-beta-cons V W M N)
+sound-caseL-beta-cons V W M N ((pV , pW) , pM , pN) pR =
+    sound-CASEL-CONS V W M N pV pW pM pN
+  ∙ ⟦⟧ᶜᵗ-irr ((N [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c) _ pR
+
+-- `caseL-eta`: the `nil` branch is the body at `nil`, the `cons` branch the
+-- body at the re-consed components, the shape `caseLᵐ-η` speaks about. `M`
+-- occurs only under a substitution on both sides.
+
+sound-caseL-eta : ∀ {Γ A C} → (V : Γ ⊢V⦂ |List| A) → (M : Γ ∷ |List| A ⊢C⦂ C)
+                → Paramᶜ M → Soundᶜ== (caseL-eta V M)
+sound-caseL-eta {Γ} {A} {C} V M pM (pV , pZ , pS) pR =
+    caseLᵐ-cong ≈ᵐ-refl
+      (⟦⟧ᶜᵗ-irr (M [ split-[] ↦ nil ]c) pZ (subᶜ M split-[] nil pM tt)
+       ∙ C-subst-nat M split-[] nil pM tt)
+      (⟦⟧ᶜᵗ-irr ((C-rename ρ M) [ split-[] ↦ U ]c) pS
+                (subᶜ (C-rename ρ M) split-[] U (renᶜ ρ M pM) (tt , tt))
+       ∙ C-subst-nat (C-rename ρ M) split-[] U (renᶜ ρ M pM) (tt , tt)
+       ∙ ∘ᵐ-congˡ (C-rename-nat ρ M pM)
+       ∙ ∘ᵐ-assoc _ _ _
+       ∙ ∘ᵐ-congʳ cart)
+  ∙ ≈ᵐ-sym (caseLᵐ-η (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM))
+  ∙ ≈ᵐ-sym (C-subst-nat M split-[] V pM pV)
+  ∙ ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ V ]c) (subᶜ M split-[] V pM pV) pR
+  where
+    ρ = wk-ren ∘ʳ exch-ren ∘ʳ wk-ren ∘ʳ exch-ren
+    U = cons (var (λ _ → ≾ᵣ-refl) (Tl-∷ Hd)) (var (λ _ → ≾ᵣ-refl) Hd)
+
+    -- the renaming forgets the two re-bound components
+    ρ-mor : ⟦ ρ ⟧ʳ ≈ᵐ mapˣᵐ (fstᵐ ∘ᵐ fstᵐ) idᵐ
+    ρ-mor =
+        ∘ᵐ-congʳ (∘ᵐ-congʳ (  ∘ᵐ-congʳ (exch-ren-mor {Γ ∷ A} {|List| A} {|List| A})
+                            ∙ ⟨⟩ᵐ-fstᵐ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (exch-ren-mor {Γ} {A} {|List| A}))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _)
+      ∙ mapˣᵐ-∘ _ _ _ _
+      ∙ mapˣᵐ-cong ≈ᵐ-refl (∘ᵐ-identityˡ _)
+
+    cart : ⟦ ρ ⟧ʳ ∘ᵐ sub-env split-[] U (tt , tt)
+         ≈ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , consᵐ ∘ᵐ mapˣᵐ sndᵐ idᵐ ⟩ᵐ
+    cart =
+        ∘ᵐ-congˡ ρ-mor
+      ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
+      ∙ ⟨ ∘ᵐ-identityʳ _
+        , ∘ᵐ-identityˡ _
+          ∙ ∘ᵐ-congʳ ⟨ var-morphism-Tl-∷ {Γ ∷ A} {|List| A} {A} Hd _
+                       ∙ ∘ᵐ-congˡ (var-morphism-Hd {Γ} {A} _)
+                     , var-morphism-Hd {Γ ∷ A} {|List| A} _
+                       ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _) ⟩ᵐ-cong ⟩ᵐ-cong
+
+-- The list recursor's betas, as for the reductions.
+
+sound-recL-beta-nil : ∀ {Γ A B ε} → (M : Γ ⊢C⦂ B ‼ ε)
+                    → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                    → (p : ε ·ₑ ε ≾ₑ ε)
+                    → Soundᶜ== (recL-beta-nil M N p)
+sound-recL-beta-nil M N p (_ , pM , pN) pR =
+  sound-RECL-NIL M N p pM pN ∙ ⟦⟧ᶜᵗ-irr M pM pR
+
+sound-recL-beta-cons : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ |List| A)
+                     → (M : Γ ⊢C⦂ B ‼ ε)
+                     → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                     → (p : ε ·ₑ ε ≾ₑ ε)
+                     → Soundᶜ== (recL-beta-cons V W M N p)
+sound-recL-beta-cons V W M N p ((pV , pW) , pM , pN) pR =
+    sound-RECL-CONS V W M N p pV pW pM pN
+  ∙ ⟦⟧ᶜᵗ-irr (coerce p (recL W M N p ⨟ recL-step V W N)) _ pR

@@ -106,6 +106,8 @@ mutual
   soundᵛ (succ-cong p)        mp           pV pV' = ∘ᵐ-congʳ (soundᵛ p mp pV pV')
   soundᵛ (inl-cong p)         mp           pV pV' = ∘ᵐ-congʳ (soundᵛ p mp pV pV')
   soundᵛ (inr-cong p)         mp           pV pV' = ∘ᵐ-congʳ (soundᵛ p mp pV pV')
+  soundᵛ (cons-cong p q)      (mp , mq)    (pV , pW) (pV' , pW') =
+    ∘ᵐ-congʳ ⟨ soundᵛ p mp pV pV' , soundᵛ q mq pW pW' ⟩ᵐ-cong
   soundᵛ (lam-cong p)         mp           pM pM' = curryᵐ-cong (soundᶜ p mp pM pM')
   soundᵛ (subV-cong {w = w} {w' = w'} p) mp pV pW =
     ∘ᵐ-cong (⟦⟧<:ᵛ-irr w w') (soundᵛ p mp pV pW)
@@ -118,6 +120,8 @@ mutual
   soundᵛ (subV-pair p q V W)  _            = sound-subV-pair p q V W
   soundᵛ (subV-inl p q V)     _            = sound-subV-inl p q V
   soundᵛ (subV-inr p q V)     _            = sound-subV-inr p q V
+  soundᵛ {Γ} (subV-nil p)     _            = sound-subV-nil {Γ = Γ} p
+  soundᵛ (subV-cons p V W)    _            = sound-subV-cons p V W
   soundᵛ (subV-lam p w M)     _            = sound-subV-lam p w M
 
   soundᶜ : ∀ {Γ C} {M N : Γ ⊢C⦂ C} → (p : Γ ⊢C⦂ M == N) → Midᶜ p → Soundᶜ== p
@@ -158,6 +162,14 @@ mutual
   soundᶜ (recℕ-cong p q r)    (mp , mq , mr)
          (pV , pM , pN) (pV' , pM' , pN') =
     ∘ᵐ-cong (recℕᵐ-cong (soundᶜ q mq pM pM')
+                        (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (soundᶜ r mr pN pN'))))))
+            ⟨ ≈ᵐ-refl , soundᵛ p mp pV pV' ⟩ᵐ-cong
+  soundᶜ (caseL-cong p q r)   (mp , mq , mr)
+         (pV , pM , pN) (pV' , pM' , pN') =
+    caseLᵐ-cong (soundᵛ p mp pV pV') (soundᶜ q mq pM pM') (soundᶜ r mr pN pN')
+  soundᶜ (recL-cong p q r)    (mp , mq , mr)
+         (pV , pM , pN) (pV' , pM' , pN') =
+    ∘ᵐ-cong (recLᵐ-cong (soundᶜ q mq pM pM')
                         (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (soundᶜ r mr pN pN'))))))
             ⟨ ≈ᵐ-refl , soundᵛ p mp pV pV' ⟩ᵐ-cong
   soundᶜ (case+-cong p q r)   (mp , mq , mr)
@@ -216,6 +228,11 @@ mutual
   soundᶜ (case+-beta-inl V M N) _ = sound-case+-beta-inl V M N
   soundᶜ (case+-beta-inr V M N) _ = sound-case+-beta-inr V M N
   soundᶜ (case+-eta V M)      m  = sound-case+-eta V M m
+  soundᶜ (caseL-beta-nil M N) _ = sound-caseL-beta-nil M N
+  soundᶜ (caseL-beta-cons V W M N) _ = sound-caseL-beta-cons V W M N
+  soundᶜ (caseL-eta V M)      m  = sound-caseL-eta V M m
+  soundᶜ (recL-beta-nil M N p) _ = sound-recL-beta-nil M N p
+  soundᶜ (recL-beta-cons V W M N p) _ = sound-recL-beta-cons V W M N p
   -- axioms — handling
   soundᶜ (handle-return V H N)   _ = sound-handle-return V H N
   soundᶜ (handle-perform V M H N) _ = sound-handle-perform V M H N

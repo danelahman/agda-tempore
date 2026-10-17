@@ -107,6 +107,8 @@ step-ticks SUB-IF              = 0ᴰ
 step-ticks SUB-CASE            = 0ᴰ
 step-ticks SUB-CASEℕ           = 0ᴰ
 step-ticks SUB-RECℕ            = 0ᴰ
+step-ticks CASEL               = 0ᴰ
+step-ticks RECL                = 0ᴰ
 step-ticks SUB                 = 0ᴰ
 
 ticks : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
@@ -236,6 +238,8 @@ handle-step H N (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) =
 ↝-det SUB-CASE   SUB-CASE   = refl
 ↝-det SUB-CASEℕ  SUB-CASEℕ  = refl
 ↝-det SUB-RECℕ   SUB-RECℕ   = refl
+↝-det CASEL      CASEL      = refl
+↝-det RECL       RECL       = refl
 ↝-det SUB        SUB        = refl
 
 -- the congruences: normalise the grade premises (they are irrelevant), then

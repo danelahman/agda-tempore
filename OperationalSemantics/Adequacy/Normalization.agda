@@ -1,10 +1,12 @@
 ------------------------------------------------------------------------
 -- Weak-head normalization: the fundamental lemma.                    --
 --                                                                    --
--- Recursion is primitive recursion on a natural number, so a          --
--- `recℕ` terminates by induction on the numeral its scrutinee runs   --
--- to; everything else terminates syntactically. Reducibility is      --
--- needed, since substitution can grow a term.                        --
+-- Recursion is primitive recursion on a natural number or a list,    --
+-- so a `recℕ` terminates by induction on the numeral its scrutinee   --
+-- runs to, a `recL` by induction on the reducibility of its          --
+-- scrutinee's decomposition; everything else terminates              --
+-- syntactically. Reducibility is needed, since substitution can grow --
+-- a term.                                                            --
 --                                                                    --
 -- The `handle` case is an induction on the scrutinee's `CRed`        --
 -- derivation: each `HANDLE-OP` consumes one resumption premise.      --
@@ -195,6 +197,83 @@ FL-recℕ {St = St} {B = B} {ε = ε} γ pγ V M N p pM pN =
                                            barrier-reach-≐ʳ) N₀))
             (pN ((((γ ⟨ barrier-reach ⟩ᵉ) ∷ᵉ W) ⟨ q ⟩ᵉ) ∷ᵉ U) ((pγ , tt) , pU))
 
+-- List elimination: `CASEL` reduces at the scrutinee's decomposition, whose
+-- reducibility names the branch; the `cons` branch substitutes the head and
+-- the tail in the opposite order from the environment, as for `match`.
+
+FL-caseL : ∀ {St Γ A D ε} → (γ : Env St Γ) → Rel-Env γ
+         → (V : Γ ⊢V⦂ |List| A)
+         → (M : Γ ⊢C⦂ D ‼ ε) → (N : Γ ∷ A ∷ |List| A ⊢C⦂ D ‼ ε)
+         → VRed (|List| A) St (env-V γ V)
+         → CRed' D ε St (env-C γ M)
+         → (∀ {St'} → (γ' : Env St' (Γ ∷ A ∷ |List| A)) → Rel-Env γ'
+              → CRed' D ε St' (env-C γ' N))
+         --------------------------------------------------------------
+         → CRed' D ε St (env-C γ (caseL V `nil M `cons N))
+
+FL-caseL {St = St} {A = A} {D = D} {ε = ε} γ pγ V M N pV pM pN =
+  subst (CRed' _ _ St) (sym (env-Cˢ-caseL γ [] V M N))
+    (CRed-expand CASEL (go (listᵛ (env-V γ V)) pV))
+  where
+    M₀ = env-C γ M
+    N₀ = env-Cˢ γ ([] ∷ A ∷ |List| A) N
+
+    go : (l : ListView (toCtx St) A) → VRedL (VRed A St) l
+       → CRed' D ε St (caseL-reduct l M₀ N₀)
+    go (inj₁ tt)      red-nil          = pM
+    go (inj₂ (W , L)) (red-cons pW pL) =
+      CRed-≡ᶜ (sym (sub-swap-C [] N₀ L W)) (pN ((γ ∷ᵉ W) ∷ᵉ L) ((pγ , pW) , pL))
+
+-- Primitive recursion on lists: induction on the reducibility of the
+-- scrutinee's decomposition. At a head and a tail `RECL` sequences the
+-- recursion at the tail, reducible by induction, with one unfolding of the
+-- step, as for `recℕ`; the environment the unfolding describes is the barrier,
+-- the head, the tail, the reach and the result.
+
+FL-recL : ∀ {St Γ A B ε} → (γ : Env St Γ) → Rel-Env γ
+        → (V : Γ ⊢V⦂ |List| A) → (M : Γ ⊢C⦂ B ‼ ε)
+        → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+        → (p : ε ·ₑ ε ≾ₑ ε)
+        → VRed (|List| A) St (env-V γ V)
+        → CRed' B ε St (env-C γ M)
+        → (∀ {St'} → (γ' : Env St' ((Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B))
+             → Rel-Env γ' → CRed' B ε St' (env-C γ' N))
+        --------------------------------------------------------------
+        → CRed' B ε St (env-C γ (recL V M N p))
+
+FL-recL {St = St} {A = A} {B = B} {ε = ε} γ pγ V M N p pV pM pN =
+  subst (CRed' _ _ St) (sym (env-Cˢ-recL γ [] V M N p))
+    (CRed-expand RECL (go (listᵛ (env-V γ V)) pV))
+  where
+    M₀ = env-C γ M
+    N₀ = env-Cˢ γ (([] ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B) N
+
+    go : (l : ListView (toCtx St) A) → VRedL (VRed A St) l
+       → CRed' B ε St (recL-reduct l M₀ N₀ p)
+    go (inj₁ tt)      red-nil          = pM
+    go (inj₂ (W , L)) (red-cons pW pL) =
+      CRed'-sub (<:ᵛ-refl B) p
+        (seq-CRed (recL-step W L N₀) rec cont)
+      where
+        rec : CRed' B ε St (recL L M₀ N₀ p)
+        rec = CRed-expand RECL (go (listᵛ L) pL)
+
+        cont : ∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ mapᵉ ε ] St₁)
+             → (U : toCtx St₁ ⊢V⦂ B) → VRed B St₁ U
+             → CRed' B ε St₁
+                 ((C-rename (cong-∷-ren (unbox-ren q)) (recL-step W L N₀))
+                    [ split-[] ↦ U ]c)
+        cont q U pU =
+          subst (CRed' _ _ _)
+            (cong (λ z → (C-rename (cong-∷-ren (unbox-ren q))
+                            ((z [ split-∷ (split-⟨⟩ (split-∷ split-[])) ↦ W ]c)
+                                [ split-∷ (split-⟨⟩ split-[]) ↦ L ]c))
+                           [ split-[] ↦ U ]c)
+                  (C-rename-≡ (cong-ren-≐ʳ (([] ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B)
+                                           barrier-reach-≐ʳ) N₀))
+            (pN (((((γ ⟨ barrier-reach ⟩ᵉ) ∷ᵉ W) ∷ᵉ L) ⟨ q ⟩ᵉ) ∷ᵉ U)
+                (((pγ , pW) , pL) , pU))
+
 -- Handling: `env-Cˢ-handle` splits the action, `handle-CRed` runs the scrutinee
 -- and then the clauses and the sequel.
 --
@@ -355,6 +434,13 @@ mutual
   FL-V {A = A |+| B} γ pγ (inr V) =
     subst (VRed (A |+| B) _) (sym (env-Vˢ-inr γ [] V)) (red-inr (FL-V γ pγ V))
 
+  FL-V {A = |List| A} γ pγ nil =
+    subst (VRed (|List| A) _) (sym (env-Vˢ-nil γ [])) red-nil
+
+  FL-V {A = |List| A} γ pγ (cons V W) =
+    subst (VRed (|List| A) _) (sym (env-Vˢ-cons γ [] V W))
+      (red-cons (FL-V γ pγ V) (FL-V γ pγ W))
+
   FL-V {A = A ⇒ (B ‼ ε)} γ pγ (lam M) q W pW =
     subst (λ z → CRed' B ε _ (reach-val q z · W)) (sym (env-Vˢ-lam γ [] M))
       (CRed-expand APP (FL-C (reachᵉ γ q ∷ᵉ W) (pγ , pW) M))
@@ -447,6 +533,12 @@ mutual
 
   FL-C γ pγ (recℕ V M N p) =
     FL-recℕ γ pγ V M N p (FL-C γ pγ M) (λ γ' pγ' → FL-C γ' pγ' N)
+
+  FL-C γ pγ (caseL V `nil M `cons N) =
+    FL-caseL γ pγ V M N (FL-V γ pγ V) (FL-C γ pγ M) (λ γ' pγ' → FL-C γ' pγ' N)
+
+  FL-C γ pγ (recL V M N p) =
+    FL-recL γ pγ V M N p (FL-V γ pγ V) (FL-C γ pγ M) (λ γ' pγ' → FL-C γ' pγ' N)
 
   FL-C γ pγ (match V `in M) =
     FL-match γ pγ V M (FL-V γ pγ V) (λ γ' pγ' → FL-C γ' pγ' M)

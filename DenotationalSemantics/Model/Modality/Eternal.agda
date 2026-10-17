@@ -655,6 +655,228 @@ module _ {A B : Obj} (eA : Eternalᵒ A) (eB : Eternalᵒ B) where
   +ᵐ-eternalᵒ-inr = ext-side inrᵐ EB.α pfʳ
 
 
+-- A map out of `⟨ ρ ⟩ᵒ (Listᵐ A)` is determined by its value at nil and a
+-- recurrence at cons: the mates of two such maps are folds of one algebra.
+
+-- the mate reindexed along a map into its source
+⟨⟩-mate-pre : ∀ {A D C ρ} → (h : ⟨ ρ ⟩ᵒ A →ᵐ C) → (ι : D →ᵐ A)
+            → ([ ρ ]ᶠ h ∘ᵐ η⊣) ∘ᵐ ι ≈ᵐ [ ρ ]ᶠ (h ∘ᵐ ⟨ ρ ⟩ᶠ ι) ∘ᵐ η⊣
+⟨⟩-mate-pre h ι =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat ι))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+
+-- the algebra a recurrence transposes to
+rec-mate-step : ∀ {H C ρ} → ⟨ ρ ⟩ᵒ H ×ᵐ C →ᵐ C → H ×ᵐ [ ρ ]ᵒ C →ᵐ [ ρ ]ᵒ C
+rec-mate-step {ρ = ρ} k = [ ρ ]ᶠ (k ∘ᵐ ⟨ ⟨ ρ ⟩ᶠ fstᵐ , ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ) ∘ᵐ η⊣
+
+-- a recurrence under `⟨ ρ ⟩` transposes to one for the mate
+rec-mate : ∀ {E D H C ρ} → (c : E →ᵐ D) → (a : E →ᵐ H) → (b : E →ᵐ D)
+         → (f : ⟨ ρ ⟩ᵒ D →ᵐ C) → (k : ⟨ ρ ⟩ᵒ H ×ᵐ C →ᵐ C)
+         → f ∘ᵐ ⟨ ρ ⟩ᶠ c ≈ᵐ k ∘ᵐ ⟨ ⟨ ρ ⟩ᶠ a , f ∘ᵐ ⟨ ρ ⟩ᶠ b ⟩ᵐ
+         → ([ ρ ]ᶠ f ∘ᵐ η⊣) ∘ᵐ c
+           ≈ᵐ rec-mate-step k ∘ᵐ ⟨ a , ([ ρ ]ᶠ f ∘ᵐ η⊣) ∘ᵐ b ⟩ᵐ
+rec-mate {ρ = ρ} c a b f k e =
+    ⟨⟩-mate-pre f c
+  ∙ ∘ᵐ-congˡ ([]-congᶠ (e ∙ ∘ᵐ-congʳ (≈ᵐ-sym inner) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  ∙ ≈ᵐ-sym (⟨⟩-mate-pre _ _)
+  where
+    inner : ⟨ ⟨ ρ ⟩ᶠ fstᵐ , ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ ∘ᵐ ⟨ ρ ⟩ᶠ ⟨ a , ([ ρ ]ᶠ f ∘ᵐ η⊣) ∘ᵐ b ⟩ᵐ
+          ≈ᵐ ⟨ ⟨ ρ ⟩ᶠ a , f ∘ᵐ ⟨ ρ ⟩ᶠ b ⟩ᵐ
+    inner =
+        ⟨⟩ᵐ-∘ _ _ _
+      ∙ ⟨ ≈ᵐ-sym (⟨⟩-∘ᵐ _ _) ∙ ⟨⟩-congᶠ (⟨⟩ᵐ-fstᵐ _ _)
+        , ∘ᵐ-assoc _ _ _
+          ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _) ∙ ⟨⟩-congᶠ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩-∘ᵐ _ _)
+          ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+          ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-transpose f)) ⟩ᵐ-cong
+
+List-⟨⟩-ext : ∀ {A C ρ} {f g : ⟨ ρ ⟩ᵒ (Listᵐ A) →ᵐ C} → (k : ⟨ ρ ⟩ᵒ A ×ᵐ C →ᵐ C)
+            → f ∘ᵐ ⟨ ρ ⟩ᶠ nilᵐ ≈ᵐ g ∘ᵐ ⟨ ρ ⟩ᶠ nilᵐ
+            → f ∘ᵐ ⟨ ρ ⟩ᶠ consᵐ ≈ᵐ k ∘ᵐ ⟨ ⟨ ρ ⟩ᶠ fstᵐ , f ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
+            → g ∘ᵐ ⟨ ρ ⟩ᶠ consᵐ ≈ᵐ k ∘ᵐ ⟨ ⟨ ρ ⟩ᶠ fstᵐ , g ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
+            → f ≈ᵐ g
+List-⟨⟩-ext {ρ = ρ} {f} {g} k pn pf pg =
+  ⟨⟩-mate-≈
+    (foldᵐ-ext ([ ρ ]ᶠ (f ∘ᵐ ⟨ ρ ⟩ᶠ nilᵐ) ∘ᵐ η⊣) (rec-mate-step k) _ _
+      (⟨⟩-mate-pre f nilᵐ)
+      (step f pf)
+      (⟨⟩-mate-pre g nilᵐ ∙ ∘ᵐ-congˡ ([]-congᶠ (≈ᵐ-sym pn)))
+      (step g pg))
+  where
+    step : ∀ h → h ∘ᵐ ⟨ ρ ⟩ᶠ consᵐ ≈ᵐ k ∘ᵐ ⟨ ⟨ ρ ⟩ᶠ fstᵐ , h ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
+         → ([ ρ ]ᶠ h ∘ᵐ η⊣) ∘ᵐ consᵐ
+           ≈ᵐ rec-mate-step k ∘ᵐ mapˣᵐ idᵐ ([ ρ ]ᶠ h ∘ᵐ η⊣)
+    step h e =
+        rec-mate consᵐ fstᵐ sndᵐ h k e
+      ∙ ∘ᵐ-congʳ ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong
+
+-- the same through two layers
+List-⟨⟩²-ext : ∀ {A C ρ₁ ρ₂} {f g : ⟨ ρ₁ ⟩ᵒ (⟨ ρ₂ ⟩ᵒ (Listᵐ A)) →ᵐ C}
+             → (k : ⟨ ρ₁ ⟩ᵒ (⟨ ρ₂ ⟩ᵒ A) ×ᵐ C →ᵐ C)
+             → f ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ nilᵐ) ≈ᵐ g ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ nilᵐ)
+             → f ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ consᵐ)
+               ≈ᵐ k ∘ᵐ ⟨ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ fstᵐ) , f ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ sndᵐ) ⟩ᵐ
+             → g ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ consᵐ)
+               ≈ᵐ k ∘ᵐ ⟨ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ fstᵐ) , g ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ sndᵐ) ⟩ᵐ
+             → f ≈ᵐ g
+List-⟨⟩²-ext {ρ₁ = ρ₁} {ρ₂} {f} {g} k pn pf pg =
+  ⟨⟩-mate-≈
+    (List-⟨⟩-ext (rec-mate-step k)
+      (⟨⟩-mate-pre f _ ∙ ∘ᵐ-congˡ ([]-congᶠ pn) ∙ ≈ᵐ-sym (⟨⟩-mate-pre g _))
+      (rec-mate (⟨ ρ₂ ⟩ᶠ consᵐ) (⟨ ρ₂ ⟩ᶠ fstᵐ) (⟨ ρ₂ ⟩ᶠ sndᵐ) f k pf)
+      (rec-mate (⟨ ρ₂ ⟩ᶠ consᵐ) (⟨ ρ₂ ⟩ᶠ fstᵐ) (⟨ ρ₂ ⟩ᶠ sndᵐ) g k pg))
+
+-- Eilenberg–Moore algebras are closed under the list object: the structure
+-- map is the transpose of a necessitation defined by a fold, and acts
+-- elementwise.
+
+module _ {A : Obj} (eA : Eternalᵒ A) where
+
+  private
+    module EA = Eternalᵒ eA
+
+    L = Listᵐ A
+
+    necL : L →ᵐ [ ⊤ ]ᵒ L
+    necL = foldᵐ ([ ⊤ ]ᶠ (nilᵐ ∘ᵐ terminalᵐ) ∘ᵐ η⊣)
+                 (rec-mate-step (consᵐ ∘ᵐ mapˣᵐ EA.α idᵐ))
+
+    αL : ⟨ ⊤ ⟩ᵒ L →ᵐ L
+    αL = ε⊣ ∘ᵐ ⟨ ⊤ ⟩ᶠ necL
+
+    -- `ε⊣` undoes a mate
+    counit-mate : ∀ {X C} → (h : ⟨ ⊤ ⟩ᵒ X →ᵐ C) → ε⊣ ∘ᵐ ⟨ ⊤ ⟩ᶠ ([ ⊤ ]ᶠ h ∘ᵐ η⊣) ≈ᵐ h
+    counit-mate h = ≈ᵐ-sym (⟨⟩-transpose h)
+
+    αL-nil : αL ∘ᵐ ⟨ ⊤ ⟩ᶠ nilᵐ ≈ᵐ nilᵐ ∘ᵐ terminalᵐ
+    αL-nil =
+        ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _) ∙ ⟨⟩-congᶠ (foldᵐ-nil _ _))
+      ∙ counit-mate _
+
+    αL-cons : αL ∘ᵐ ⟨ ⊤ ⟩ᶠ consᵐ ≈ᵐ consᵐ ∘ᵐ ⟨ EA.α ∘ᵐ ⟨ ⊤ ⟩ᶠ fstᵐ , αL ∘ᵐ ⟨ ⊤ ⟩ᶠ sndᵐ ⟩ᵐ
+    αL-cons =
+        ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ ( ≈ᵐ-sym (⟨⟩-∘ᵐ _ _)
+                 ∙ ⟨⟩-congᶠ (foldᵐ-cons _ _)
+                 ∙ ⟨⟩-∘ᵐ _ _)
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (counit-mate _)
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ ( ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
+                 ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
+                 ∙ ⟨ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _) ∙ ⟨⟩-congᶠ (⟨⟩ᵐ-fstᵐ _ _ ∙ ∘ᵐ-identityˡ _))
+                   , ∘ᵐ-identityˡ _
+                     ∙ ∘ᵐ-assoc _ _ _
+                     ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _) ∙ ⟨⟩-congᶠ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩-∘ᵐ _ _)
+                     ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ⟩ᵐ-cong)
+
+    -- the constant nil absorbs a precomposition
+    nil-unit : ∀ {X Y} {t : X →ᵐ Y} → (nilᵐ {A} ∘ᵐ terminalᵐ {Y}) ∘ᵐ t ≈ᵐ nilᵐ ∘ᵐ terminalᵐ {X}
+    nil-unit = ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (terminalᵐ-unique ∙ ≈ᵐ-sym terminalᵐ-unique)
+
+    unit : αL ∘ᵐ ⟨⊤⟩-η ≈ᵐ idᵐ
+    unit =
+      foldᵐ-ext nilᵐ consᵐ _ _
+        ( ∘ᵐ-assoc _ _ _
+        ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⊤⟩-η-nat nilᵐ))
+        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+        ∙ ∘ᵐ-congˡ αL-nil
+        ∙ nil-unit
+        ∙ ∘ᵐ-congʳ (≈ᵐ-sym terminalᵐ-unique)
+        ∙ ∘ᵐ-identityʳ _)
+        ( ∘ᵐ-assoc _ _ _
+        ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⊤⟩-η-nat consᵐ))
+        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+        ∙ ∘ᵐ-congˡ αL-cons
+        ∙ ∘ᵐ-assoc _ _ _
+        ∙ ∘ᵐ-congʳ ( ⟨⟩ᵐ-∘ _ _ _
+                   ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⊤⟩-η-nat fstᵐ)
+                       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ EA.α-unit
+                     , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⊤⟩-η-nat sndᵐ)
+                       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ⟩ᵐ-cong))
+        (∘ᵐ-identityˡ _)
+        (∘ᵐ-identityˡ _ ∙ ≈ᵐ-sym (∘ᵐ-congʳ mapˣᵐ-idᵐ ∙ ∘ᵐ-identityʳ _))
+
+    -- the recurrence both sides of associativity satisfy
+    k² : ⟨ ⊤ ⟩ᵒ (⟨ ⊤ ⟩ᵒ A) ×ᵐ L →ᵐ L
+    k² = consᵐ ∘ᵐ mapˣᵐ (EA.α ∘ᵐ ⟨⊤⟩-μ) idᵐ
+
+    -- `αL` after a map into `⟨ ⊤ ⟩ᵒ` of a cons
+    αL-cons-at : ∀ {X} → (h : X →ᵐ ⟨ ⊤ ⟩ᵒ (A ×ᵐ L))
+               → (αL ∘ᵐ ⟨ ⊤ ⟩ᶠ consᵐ) ∘ᵐ h
+               ≈ᵐ consᵐ ∘ᵐ ⟨ EA.α ∘ᵐ (⟨ ⊤ ⟩ᶠ fstᵐ ∘ᵐ h) , αL ∘ᵐ (⟨ ⊤ ⟩ᶠ sndᵐ ∘ᵐ h) ⟩ᵐ
+    αL-cons-at h =
+        ∘ᵐ-congˡ αL-cons
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _ ∙ ⟨ ∘ᵐ-assoc _ _ _ , ∘ᵐ-assoc _ _ _ ⟩ᵐ-cong)
+
+    k²-at : ∀ {X} → (a : X →ᵐ ⟨ ⊤ ⟩ᵒ (⟨ ⊤ ⟩ᵒ A)) → (b : X →ᵐ L)
+          → k² ∘ᵐ ⟨ a , b ⟩ᵐ ≈ᵐ consᵐ ∘ᵐ ⟨ (EA.α ∘ᵐ ⟨⊤⟩-μ) ∘ᵐ a , b ⟩ᵐ
+    k²-at a b =
+        ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+
+    assoc : αL ∘ᵐ ⟨⊤⟩-μ ≈ᵐ αL ∘ᵐ ⟨ ⊤ ⟩ᶠ αL
+    assoc =
+      List-⟨⟩²-ext k²
+        ( ∘ᵐ-assoc _ _ _
+        ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⊤⟩-μ-nat nilᵐ))
+        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+        ∙ ∘ᵐ-congˡ αL-nil
+        ∙ nil-unit
+        ∙ ≈ᵐ-sym nil-unit
+        ∙ ∘ᵐ-congˡ (≈ᵐ-sym αL-nil)
+        ∙ ∘ᵐ-assoc _ _ _
+        ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _) ∙ ⟨⟩-congᶠ (≈ᵐ-sym αL-nil) ∙ ⟨⟩-∘ᵐ _ _)
+        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        ( ∘ᵐ-assoc _ _ _
+        ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⊤⟩-μ-nat consᵐ))
+        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+        ∙ αL-cons-at _
+        ∙ ∘ᵐ-congʳ ⟨ ∘ᵐ-congʳ (⟨⊤⟩-μ-nat fstᵐ) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                   , ∘ᵐ-congʳ (⟨⊤⟩-μ-nat sndᵐ) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ⟩ᵐ-cong
+        ∙ ≈ᵐ-sym (k²-at _ _))
+        ( ∘ᵐ-assoc _ _ _
+        ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _) ∙ ⟨⟩-congᶠ αL-cons ∙ ⟨⟩-∘ᵐ _ _)
+        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+        ∙ αL-cons-at _
+        ∙ ∘ᵐ-congʳ ⟨ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _) ∙ ⟨⟩-congᶠ (⟨⟩ᵐ-fstᵐ _ _) ∙ ⟨⟩-∘ᵐ _ _)
+                     ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                     ∙ ∘ᵐ-congˡ (≈ᵐ-sym EA.α-assoc)
+                   , ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _) ∙ ⟨⟩-congᶠ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩-∘ᵐ _ _)
+                     ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ⟩ᵐ-cong
+        ∙ ≈ᵐ-sym (k²-at _ _))
+
+  Listᵐ-eternalᵒ : Eternalᵒ (Listᵐ A)
+  Listᵐ-eternalᵒ = record { α = αL ; α-unit = unit ; α-assoc = assoc }
+
+  -- The list's extraction acts elementwise at every grade.
+
+  Listᵐ-eternalᵒ-nil : ∀ {ρ} → Eternalᵒ.extᵉ Listᵐ-eternalᵒ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ nilᵐ
+                             ≈ᵐ nilᵐ ∘ᵐ terminalᵐ
+  Listᵐ-eternalᵒ-nil {ρ} =
+      ∘ᵐ-assoc _ _ _
+    ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-≤-nat nilᵐ (≾-⊤ ρ)))
+    ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+    ∙ ∘ᵐ-congˡ αL-nil
+    ∙ nil-unit
+
+  Listᵐ-eternalᵒ-cons : ∀ {ρ} → Eternalᵒ.extᵉ Listᵐ-eternalᵒ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ consᵐ
+                              ≈ᵐ consᵐ ∘ᵐ ⟨ Eternalᵒ.extᵉ eA {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ fstᵐ
+                                         , Eternalᵒ.extᵉ Listᵐ-eternalᵒ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
+  Listᵐ-eternalᵒ-cons {ρ} =
+      ∘ᵐ-assoc _ _ _
+    ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-≤-nat consᵐ (≾-⊤ ρ)))
+    ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+    ∙ αL-cons-at _
+    ∙ ∘ᵐ-congʳ ⟨ ∘ᵐ-congʳ (⟨⟩-≤-nat fstᵐ (≾-⊤ ρ)) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+               , ∘ᵐ-congʳ (⟨⟩-≤-nat sndᵐ (≾-⊤ ρ)) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ⟩ᵐ-cong
+
+
 -- Being eternal is invariant under isomorphism: conjugating the algebra by an
 -- iso preserves both laws.
 

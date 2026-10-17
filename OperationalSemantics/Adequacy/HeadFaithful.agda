@@ -139,6 +139,8 @@ step-delays SUB-IF             d = η-stepᴰ d
 step-delays SUB-CASE           d = η-stepᴰ d
 step-delays SUB-CASEℕ          d = η-stepᴰ d
 step-delays SUB-RECℕ           d = η-stepᴰ d
+step-delays CASEL              d = η-stepᴰ d
+step-delays RECL               d = η-stepᴰ d
 step-delays SUB                d = η-stepᴰ d
 
 stepsᵀ-delays : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
@@ -320,6 +322,8 @@ uniform↝ SUB-IF              _         = tt
 uniform↝ SUB-CASE            _         = tt
 uniform↝ SUB-CASEℕ           _         = tt
 uniform↝ SUB-RECℕ            _         = tt
+uniform↝ CASEL               _         = tt
+uniform↝ RECL                _         = tt
 uniform↝ SUB                 _         = tt
 
 uniform↝* : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}

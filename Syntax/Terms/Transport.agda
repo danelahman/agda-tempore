@@ -131,6 +131,29 @@ cast-inr : ∀ {Γ Γ' A B} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ B}
          → castᵛ e (inr {A = A} V) ≡ inr (castᵛ e V)
 cast-inr refl = refl
 
+cast-nil : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → castᵛ e (nil {A = A}) ≡ nil
+cast-nil refl = refl
+
+cast-cons : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ A} → {W : Γ ⊢V⦂ |List| A}
+          → castᵛ e (cons V W) ≡ cons (castᵛ e V) (castᵛ e W)
+cast-cons refl = refl
+
+cast-caseL : ∀ {Γ Γ' A C} → (e : Γ ≡ Γ')
+           → {V : Γ ⊢V⦂ |List| A} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ A ∷ |List| A ⊢C⦂ C}
+           → castᶜ e (caseL V `nil M `cons N)
+           ≡ caseL (castᵛ e V) `nil (castᶜ e M)
+                               `cons (castᶜ (cong (λ Δ → Δ ∷ A ∷ |List| A) e) N)
+cast-caseL refl = refl
+
+cast-recL : ∀ {Γ Γ' A B ε} → (e : Γ ≡ Γ')
+          → {V : Γ ⊢V⦂ |List| A} → {M : Γ ⊢C⦂ B ‼ ε}
+          → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+          → {p : ε ·ₑ ε ≾ₑ ε}
+          → castᶜ e (recL V M N p)
+          ≡ recL (castᵛ e V) (castᶜ e M)
+                 (castᶜ (cong (λ Δ → (Δ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B) e) N) p
+cast-recL refl = refl
+
 cast-recℕ : ∀ {Γ Γ' B ε} → (e : Γ ≡ Γ')
           → {V : Γ ⊢V⦂ Nat} → {M : Γ ⊢C⦂ B ‼ ε}
           → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}

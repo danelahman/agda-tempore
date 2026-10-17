@@ -370,6 +370,8 @@ mutual
   subᵛˢ s p false       _         = tt
   subᵛˢ s p zero        _         = tt
   subᵛˢ s p (succ V)    pV        = subᵛˢ s p V pV
+  subᵛˢ s p nil         _         = tt
+  subᵛˢ s p (cons V W)  (pV , pW) = subᵛˢ s p V pV , subᵛˢ s p W pW
   subᵛˢ s p ⦉ V , W ⦊   (pV , pW) = subᵛˢ s p V pV , subᵛˢ s p W pW
   subᵛˢ s p (inl V)     pV        = subᵛˢ s p V pV
   subᵛˢ s p (inr V)     pV        = subᵛˢ s p V pV
@@ -387,6 +389,11 @@ mutual
   subᶜˢ s p (absurd V)       pV        = subᵛˢ s p V pV
   subᶜˢ s p (if V `then M `else N) (pV , pM , pN) =
     subᵛˢ s p V pV , subᶜˢ s p M pM , subᶜˢ s p N pN
+  subᶜˢ s p (caseL V `nil M `cons N) (pV , pM , pN) =
+    subᵛˢ s p V pV , subᶜˢ s p M pM , subᶜˢ (cong-∷-sub (cong-∷-sub s)) p N pN
+  subᶜˢ s p (recL V M N q) (pV , pM , pN) =
+      subᵛˢ s p V pV , subᶜˢ s p M pM
+    , subᶜˢ (cong-∷-sub (cong-⟨⟩-sub (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s))))) p N pN
   subᶜˢ s p (caseℕ V `zero M `succ N) (pV , pM , pN) =
     subᵛˢ s p V pV , subᶜˢ s p M pM , subᶜˢ (cong-∷-sub s) p N pN
   subᶜˢ s p (recℕ V M N q) (pV , pM , pN) =
@@ -458,6 +465,12 @@ mutual
     ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
   V-subst-natˢ s p (succ V) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-natˢ s p V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  V-subst-natˢ s p nil _ =
+    ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
+  V-subst-natˢ s p (cons V W) (pV , pW) =
+    ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (⟨ V-subst-natˢ s p V pV , V-subst-natˢ s p W pW ⟩ᵐ-cong)
+                                 (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
+             (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   V-subst-natˢ s p ⦉ V , W ⦊ (pV , pW) =
     ≈ᵐ-trans (⟨ V-subst-natˢ s p V pV , V-subst-natˢ s p W pW ⟩ᵐ-cong)
              (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
@@ -533,6 +546,27 @@ mutual
                                 p N pN)))
               ⟨ ≈ᵐ-refl , V-subst-natˢ s p V pV ⟩ᵐ-cong)
     (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (recℕᵐ-∘ _ _ _)))
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ
+       (≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)
+       (≈ᵐ-trans ⟨ ≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))
+                 , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
+                 (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))))
+    (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+  -- lists: `caseLᵐ-∘`, and `recLᵐ-∘` with `recL-stepᵗ-nat`
+  C-subst-natˢ s p (caseL V `nil M `cons N) (pV , pM , pN) =
+    ≈ᵐ-trans (caseLᵐ-cong (V-subst-natˢ s p V pV)
+                          (C-subst-natˢ s p M pM)
+                          (C-subst-natˢ (cong-∷-sub (cong-∷-sub s)) p N pN))
+             (≈ᵐ-sym (caseLᵐ-∘ _ _ _ _))
+  C-subst-natˢ s p (recL V M N q) (pV , pM , pN) =
+    ≈ᵐ-trans (∘ᵐ-cong (recLᵐ-cong (C-subst-natˢ s p M pM)
+                (recL-stepᵗ-nat q _ _ (⟦ s ⟧ˢ₀ p)
+                  (C-subst-natˢ (cong-∷-sub (cong-⟨⟩-sub (cong-∷-sub (cong-∷-sub
+                                   (cong-⟨⟩-sub s)))))
+                                p N pN)))
+              ⟨ ≈ᵐ-refl , V-subst-natˢ s p V pV ⟩ᵐ-cong)
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (recLᵐ-∘ _ _ _)))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ
        (≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)

@@ -43,6 +43,8 @@ mutual
     ⦉_,_⦊ : ErV → ErV → ErV
     inl   : ErV → ErV
     inr   : ErV → ErV
+    nil   : ErV
+    cons  : ErV → ErV → ErV
     lam   : ErC → ErV
 
   data ErC : Set where
@@ -55,6 +57,8 @@ mutual
     caseℕ_`zero_`succ_ : ErV → ErC → ErC → ErC
     recℕ              : ErV → ErC → ErC → ErC
     case+_`inl_`inr_  : ErV → ErC → ErC → ErC
+    caseL_`nil_`cons_ : ErV → ErC → ErC → ErC
+    recL              : ErV → ErC → ErC → ErC
     perform           : Op → ErV → ErC → ErC
     delay             : 𝔻 → ErC → ErC
     handle_`with_`in  : ErC → (Op → E → ErC) → ErC → ErC
@@ -84,6 +88,8 @@ mutual
   ⌊ ⦉ V , W ⦊ ⌋ᵛ  = ⦉ ⌊ V ⌋ᵛ , ⌊ W ⌋ᵛ ⦊
   ⌊ inl V ⌋ᵛ     = inl ⌊ V ⌋ᵛ
   ⌊ inr V ⌋ᵛ     = inr ⌊ V ⌋ᵛ
+  ⌊ nil ⌋ᵛ       = nil
+  ⌊ cons V W ⌋ᵛ  = cons ⌊ V ⌋ᵛ ⌊ W ⌋ᵛ
   ⌊ lam M ⌋ᵛ     = lam ⌊ M ⌋ᶜ
   ⌊ subV V p ⌋ᵛ  = ⌊ V ⌋ᵛ
 
@@ -98,6 +104,8 @@ mutual
   ⌊ caseℕ V `zero M `succ N ⌋ᶜ = caseℕ ⌊ V ⌋ᵛ `zero ⌊ M ⌋ᶜ `succ ⌊ N ⌋ᶜ
   ⌊ recℕ V M N p ⌋ᶜ            = recℕ ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ ⌊ N ⌋ᶜ
   ⌊ case+ V `inl M `inr N ⌋ᶜ = case+ ⌊ V ⌋ᵛ `inl ⌊ M ⌋ᶜ `inr ⌊ N ⌋ᶜ
+  ⌊ caseL V `nil M `cons N ⌋ᶜ = caseL ⌊ V ⌋ᵛ `nil ⌊ M ⌋ᶜ `cons ⌊ N ⌋ᶜ
+  ⌊ recL V M N p ⌋ᶜ            = recL ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ ⌊ N ⌋ᶜ
   ⌊ perform op V M ⌋ᶜ         = perform op ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ
   ⌊ delay τ M ⌋ᶜ              = delay τ ⌊ M ⌋ᶜ
   ⌊ handle M `with H `in N ⌋ᶜ =

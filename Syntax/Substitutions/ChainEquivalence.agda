@@ -97,6 +97,9 @@ V-sub₀-ext s (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   cong₂ ⦉_,_⦊ (V-sub₀-ext s et₁ V₁) (V-sub₀-ext s et₂ V₂)
 V-sub₀-ext s (et₁ |+|ₑ _) (inl V) = cong inl (V-sub₀-ext s et₁ V)
 V-sub₀-ext s (_ |+|ₑ et₂) (inr V) = cong inr (V-sub₀-ext s et₂ V)
+V-sub₀-ext s et nil       = refl
+V-sub₀-ext s (|List|ₑ et) (cons V W) =
+  cong₂ cons (V-sub₀-ext s et V) (V-sub₀-ext s (|List|ₑ et) W)
 V-sub₀-ext s et (subV V p) =
   cong (λ W → subV W p) (V-sub₀-ext s (<:ᵛ-eternalˡ p et) V)
 
@@ -167,6 +170,9 @@ eternal-val-ext-≡ (et₁ |×|ₑ et₂) p ⦉ V₁ , V₂ ⦊ =
   cong₂ ⦉_,_⦊ (eternal-val-ext-≡ et₁ p V₁) (eternal-val-ext-≡ et₂ p V₂)
 eternal-val-ext-≡ (et₁ |+|ₑ _) p (inl V) = cong inl (eternal-val-ext-≡ et₁ p V)
 eternal-val-ext-≡ (_ |+|ₑ et₂) p (inr V) = cong inr (eternal-val-ext-≡ et₂ p V)
+eternal-val-ext-≡ et p nil       = refl
+eternal-val-ext-≡ (|List|ₑ et) p (cons V W) =
+  cong₂ cons (eternal-val-ext-≡ et p V) (eternal-val-ext-≡ (|List|ₑ et) p W)
 eternal-val-ext-≡ et p (subV V q) =
   cong (λ W → subV W q) (eternal-val-ext-≡ (<:ᵛ-eternalˡ q et) p V)
 
@@ -303,6 +309,15 @@ V-sub-inr : ∀ {Γ Γ' A B} → (σ : Sub [] Γ Γ') → (V : Γ' ⊢V⦂ B)
 V-sub-inr []ˢ      V = refl
 V-sub-inr (s ◅ σ) V = cong (V-sub₀ s) (V-sub-inr σ V)
 
+V-sub-nil : ∀ {Γ Γ' A} → (σ : Sub [] Γ Γ') → V-sub σ (nil {A = A}) ≡ nil
+V-sub-nil []ˢ      = refl
+V-sub-nil (s ◅ σ) = cong (V-sub₀ s) (V-sub-nil σ)
+
+V-sub-cons : ∀ {Γ Γ' A} → (σ : Sub [] Γ Γ') → (V : Γ' ⊢V⦂ A) → (W : Γ' ⊢V⦂ |List| A)
+           → V-sub σ (cons V W) ≡ cons (V-sub σ V) (V-sub σ W)
+V-sub-cons []ˢ      V W = refl
+V-sub-cons (s ◅ σ) V W = cong (V-sub₀ s) (V-sub-cons σ V W)
+
 V-sub-lam : ∀ {Γ Γ' A C} → (σ : Sub [] Γ Γ') → (M : Γ' ∷ A ⊢C⦂ C)
           → V-sub σ (lam M) ≡ lam (C-sub (cong-∷-subˢ σ) M)
 V-sub-lam []ˢ      M = refl
@@ -375,6 +390,23 @@ C-sub-case+ : ∀ {Γ Γ' A B C} → (σ : Sub [] Γ Γ')
                               `inr C-sub (cong-∷-subˢ σ) N
 C-sub-case+ []ˢ      V M N = refl
 C-sub-case+ (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-case+ σ V M N)
+
+C-sub-caseL : ∀ {Γ Γ' A C} → (σ : Sub [] Γ Γ')
+            → (V : Γ' ⊢V⦂ |List| A) → (M : Γ' ⊢C⦂ C) → (N : Γ' ∷ A ∷ |List| A ⊢C⦂ C)
+            → C-sub σ (caseL V `nil M `cons N)
+            ≡ caseL V-sub σ V `nil C-sub σ M `cons C-sub (cong-∷-subˢ (cong-∷-subˢ σ)) N
+C-sub-caseL []ˢ      V M N = refl
+C-sub-caseL (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-caseL σ V M N)
+
+C-sub-recL : ∀ {Γ Γ' A B ε} → (σ : Sub [] Γ Γ')
+           → (V : Γ' ⊢V⦂ |List| A) → (M : Γ' ⊢C⦂ B ‼ ε)
+           → (N : (Γ' ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+           → (p : ε ·ₑ ε ≾ₑ ε)
+           → C-sub σ (recL V M N p)
+           ≡ recL (V-sub σ V) (C-sub σ M)
+                  (C-sub (cong-∷-subˢ (cong-⟨⟩-subˢ (cong-∷-subˢ (cong-∷-subˢ (cong-⟨⟩-subˢ σ))))) N) p
+C-sub-recL []ˢ      V M N p = refl
+C-sub-recL (s ◅ σ) V M N p = cong (C-sub₀ s) (C-sub-recL σ V M N p)
 
 C-sub-perform : ∀ {Γ Γ' A ε} → (σ : Sub [] Γ Γ') → (op : Op)
               → (V : Γ' ⊢V⦂ type-of-gtype (param op))
@@ -469,6 +501,11 @@ mutual
   V-sub-≐ˢ {σ = σ} {σ' = σ'} h (inr V) =
     trans (V-sub-inr σ V)
       (trans (cong inr (V-sub-≐ˢ h V)) (sym (V-sub-inr σ' V)))
+  V-sub-≐ˢ {σ = σ} {σ' = σ'} h nil =
+    trans (V-sub-nil σ) (sym (V-sub-nil σ'))
+  V-sub-≐ˢ {σ = σ} {σ' = σ'} h (cons V W) =
+    trans (V-sub-cons σ V W)
+      (trans (cong₂ cons (V-sub-≐ˢ h V) (V-sub-≐ˢ h W)) (sym (V-sub-cons σ' V W)))
   V-sub-≐ˢ {σ = σ} {σ' = σ'} h (lam M) =
     trans (V-sub-lam σ M)
       (trans (cong lam (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) M))
@@ -515,6 +552,17 @@ mutual
                 (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ
                              (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h)))) N))
              (sym (C-sub-recℕ σ' V M N p)))
+  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (caseL V `nil M `cons N) =
+    trans (C-sub-caseL σ V M N)
+      (trans (cong₃ caseL_`nil_`cons_ (V-sub-≐ˢ h V) (C-sub-≐ˢ h M)
+                    (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-∷-subˢ-≐ˢ h)) N))
+             (sym (C-sub-caseL σ' V M N)))
+  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (recL V M N p) =
+    trans (C-sub-recL σ V M N p)
+      (trans (cong₃ (λ a b c → recL a b c p) (V-sub-≐ˢ h V) (C-sub-≐ˢ h M)
+                (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ
+                             (cong-∷-subˢ-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h))))) N))
+             (sym (C-sub-recL σ' V M N p)))
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (case+ V `inl M `inr N) =
     trans (C-sub-case+ σ V M N)
       (trans (cong₃ case+_`inl_`inr_ (V-sub-≐ˢ h V)

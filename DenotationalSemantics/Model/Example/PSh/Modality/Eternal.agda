@@ -9,14 +9,14 @@
 --                                                                    --
 -- The eternal *type formers* are handled by the closure lemmas:          --
 -- `𝟙ᵖ-eternalᵒ` (Unit), `𝔹ᵖ-eternalᵒ` (Bool), `ℕᵖ-eternalᵒ` (Nat),      --
--- `𝟘ᵖ-eternalᵒ` (Empty), and `×ᵖ-eternalᵒ` (products) and `+ᵖ-eternalᵒ`  --
--- (sums), for any two eternal objects. Together they cover exactly the   --
--- `Syntax.Types.Eternal` formers.                                        --
+-- `𝟘ᵖ-eternalᵒ` (Empty), `×ᵖ-eternalᵒ` (products), `+ᵖ-eternalᵒ` (sums) --
+-- and `Listᵖ-eternalᵒ` (lists), for any eternal objects. Together they   --
+-- cover exactly the `Syntax.Types.Eternal` formers.                      --
 --                                                                    --
 -- For the constant presheaves the `⟨ ⊤ ⟩`-algebra `α` is the mate         --
 -- `ε⊣ ∘ᵖ ⟨ ⊤ ⟩ᶠ nec` of a necessitation `nec`, and its two laws hold by   --
--- reflexivity; products and sums reuse the generic closures             --
--- `×ᵐ-eternalᵒ` and `+ᵐ-eternalᵒ`.                                        --
+-- reflexivity; products, sums and lists reuse the generic closures      --
+-- `×ᵐ-eternalᵒ`, `+ᵐ-eternalᵒ` and `Listᵐ-eternalᵒ`.                      --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -50,7 +50,7 @@ open import DenotationalSemantics.Model.Modality.Past PShCat RGrade using (Past)
 
 open import DenotationalSemantics.Model.Modality.Eternal
        PShCat RGrade PShFut PShPast PShAdj
-  using (Eternalᵒ; ×ᵐ-eternalᵒ; ×ᵐ-eternalᵒ-extᵉ; +ᵐ-eternalᵒ)
+  using (Eternalᵒ; ×ᵐ-eternalᵒ; ×ᵐ-eternalᵒ-extᵉ; +ᵐ-eternalᵒ; Listᵐ-eternalᵒ)
 
 -- The constant presheaf on a setoid: the same value at every world,
 -- transported by the identity.
@@ -146,3 +146,8 @@ Kᵖ-eternalᵒ S = record
 
 +ᵖ-eternalᵒ : ∀ {A B} → Eternalᵒ A → Eternalᵒ B → Eternalᵒ (A +ᵖ B)
 +ᵖ-eternalᵒ = +ᵐ-eternalᵒ
+
+-- Closure: lists of an eternal object, again the generic construction.
+
+Listᵖ-eternalᵒ : ∀ {A} → Eternalᵒ A → Eternalᵒ (Listᵖ A)
+Listᵖ-eternalᵒ = Listᵐ-eternalᵒ

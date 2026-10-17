@@ -190,6 +190,49 @@ recℕ-stepᵗ-nat {B = B} {ε = ε} p n n' h e =
                  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
+-- The step of a primitive recursion on lists is natural in its context
+-- likewise.
+
+recL-stepᵗ-nat : ∀ {X X' A B ε} → (p : ε ·ₑ ε ≾ₑ ε)
+               → (n : ⟨ mapᵉ ε ⟩ᵒ ((⟨ ⊤ᵣ ⟩ᵒ X ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ B →ᵐ Tᵒ B ε)
+               → (n' : ⟨ mapᵉ ε ⟩ᵒ ((⟨ ⊤ᵣ ⟩ᵒ X' ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ B →ᵐ Tᵒ B ε)
+               → (h : X' →ᵐ X)
+               → n' ≈ᵐ n ∘ᵐ mapˣᵐ (⟨ mapᵉ ε ⟩ᶠ (mapˣᵐ (mapˣᵐ (⟨ ⊤ᵣ ⟩ᶠ h) idᵐ) idᵐ)) idᵐ
+               → recL-stepᵗ p n' ≈ᵐ recL-stepᵗ p n ∘ᵐ mapˣᵐ (mapˣᵐ (mapˣᵐ h idᵐ) idᵐ) idᵐ
+recL-stepᵗ-nat {A = A} {B = B} {ε = ε} p n n' h e =
+    ∘ᵐ-congʳ (∘ᵐ-congʳ core ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  where
+    pre : (η⊣ ∘ᵐ mapˣᵐ (mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ) ∘ᵐ mapˣᵐ (mapˣᵐ h idᵐ) idᵐ
+        ≈ᵐ [ mapᵉ ε ]ᶠ (⟨ mapᵉ ε ⟩ᶠ (mapˣᵐ (mapˣᵐ (⟨ ⊤ᵣ ⟩ᶠ h) idᵐ) idᵐ))
+             ∘ᵐ (η⊣ ∘ᵐ mapˣᵐ (mapˣᵐ ⟨⊤⟩-η (idᵐ {A})) (idᵐ {Listᵐ A}))
+    pre =
+        ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ ( mapˣᵐ-∘ _ _ _ _
+                 ∙ mapˣᵐ-cong ( mapˣᵐ-∘ _ _ _ _
+                              ∙ mapˣᵐ-cong (≈ᵐ-sym (⟨⊤⟩-η-nat h)) ≈ᵐ-refl
+                              ∙ ≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _))
+                              ≈ᵐ-refl
+                 ∙ ≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (η⊣-nat _))
+      ∙ ∘ᵐ-assoc _ _ _
+    ctx : mapˣᵐ (η⊣ ∘ᵐ mapˣᵐ (mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ) idᵐ
+            ∘ᵐ mapˣᵐ (mapˣᵐ (mapˣᵐ h idᵐ) idᵐ) (idᵐ {Tᵒ B ε})
+        ≈ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ (⟨ mapᵉ ε ⟩ᶠ (mapˣᵐ (mapˣᵐ (⟨ ⊤ᵣ ⟩ᶠ h) idᵐ) idᵐ))) idᵐ
+             ∘ᵐ mapˣᵐ (η⊣ ∘ᵐ mapˣᵐ (mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ) idᵐ
+    ctx = mapˣᵐ-∘ _ _ _ _ ∙ mapˣᵐ-cong pre ≈ᵐ-refl ∙ ≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _)
+    core =
+        ∘ᵐ-congˡ (T-congᶠ e)
+      ∙ ∘ᵐ-congˡ (T-∘ᵐ _ _)
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ ( ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                 ∙ ∘ᵐ-congˡ (strᵀ-natˡ _)
+                 ∙ ∘ᵐ-assoc _ _ _
+                 ∙ ∘ᵐ-congʳ (≈ᵐ-sym ctx)
+                 ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
 -- Renaming preserves parametricity, and the interpretation is natural in the
 -- renaming. The two are defined simultaneously: transporting a handler's
 -- clause-uniformity across a renaming (`renᶜ`'s `handle` case) needs the
@@ -212,6 +255,8 @@ mutual
   renᵛ r false    _ = tt
   renᵛ r zero     _ = tt
   renᵛ r (succ V)  pV = renᵛ r V pV
+  renᵛ r nil      _ = tt
+  renᵛ r (cons V W) (pV , pW) = renᵛ r V pV , renᵛ r W pW
   renᵛ r ⦉ V , W ⦊ (pV , pW) = renᵛ r V pV , renᵛ r W pW
   renᵛ r (inl V)   pV = renᵛ r V pV
   renᵛ r (inr V)   pV = renᵛ r V pV
@@ -228,6 +273,11 @@ mutual
   renᶜ r (absurd V)       pV        = renᵛ r V pV
   renᶜ r (if V `then M `else N) (pV , pM , pN) =
     renᵛ r V pV , renᶜ r M pM , renᶜ r N pN
+  renᶜ r (caseL V `nil M `cons N) (pV , pM , pN) =
+    renᵛ r V pV , renᶜ r M pM , renᶜ (cong-∷-ren (cong-∷-ren r)) N pN
+  renᶜ r (recL V M N p) (pV , pM , pN) =
+      renᵛ r V pV , renᶜ r M pM
+    , renᶜ (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r))))) N pN
   renᶜ r (caseℕ V `zero M `succ N) (pV , pM , pN) =
     renᵛ r V pV , renᶜ r M pM , renᶜ (cong-∷-ren r) N pN
   renᶜ r (recℕ V M N p) (pV , pM , pN) =
@@ -298,6 +348,12 @@ mutual
     ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
   V-rename-nat r (succ V) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  V-rename-nat r nil _ =
+    ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
+  V-rename-nat r (cons V W) (pV , pW) =
+    ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (⟨ V-rename-nat r V pV , V-rename-nat r W pW ⟩ᵐ-cong)
+                                 (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
+             (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   V-rename-nat r ⦉ V , W ⦊ (pV , pW) =
     ≈ᵐ-trans (⟨ V-rename-nat r V pV , V-rename-nat r W pW ⟩ᵐ-cong)
              (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
@@ -372,6 +428,25 @@ mutual
                                 N pN)))
               ⟨ ≈ᵐ-refl , V-rename-nat r V pV ⟩ᵐ-cong
     ∙ ∘ᵐ-congˡ (≈ᵐ-sym (recℕᵐ-∘ _ _ _))
+    ∙ ∘ᵐ-assoc _ _ _
+    ∙ ∘ᵐ-congʳ ( mapˣᵐ-∘⟨⟩ _ _ _ _
+               ∙ ⟨ ∘ᵐ-identityʳ _ ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
+               ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
+    ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  -- lists: `caseLᵐ-∘`, and for the recursor `recLᵐ-∘` with `recL-stepᵗ-nat`
+  C-rename-nat r (caseL V `nil M `cons N) (pV , pM , pN) =
+    ≈ᵐ-trans (caseLᵐ-cong (V-rename-nat r V pV)
+                          (C-rename-nat r M pM)
+                          (C-rename-nat (cong-∷-ren (cong-∷-ren r)) N pN))
+             (≈ᵐ-sym (caseLᵐ-∘ _ _ _ _))
+  C-rename-nat r (recL V M N p) (pV , pM , pN) =
+      ∘ᵐ-cong (recLᵐ-cong (C-rename-nat r M pM)
+                (recL-stepᵗ-nat p _ _ ⟦ r ⟧ʳ
+                  (C-rename-nat (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-∷-ren
+                                   (cong-⟨⟩-ren r)))))
+                                N pN)))
+              ⟨ ≈ᵐ-refl , V-rename-nat r V pV ⟩ᵐ-cong
+    ∙ ∘ᵐ-congˡ (≈ᵐ-sym (recLᵐ-∘ _ _ _))
     ∙ ∘ᵐ-assoc _ _ _
     ∙ ∘ᵐ-congʳ ( mapˣᵐ-∘⟨⟩ _ _ _ _
                ∙ ⟨ ∘ᵐ-identityʳ _ ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong

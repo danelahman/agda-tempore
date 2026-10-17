@@ -4,6 +4,8 @@
 
 open import Data.Empty
 open import Data.Product
+open import Data.Sum using (inj₁; inj₂)
+open import Data.Unit using (tt)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -220,6 +222,29 @@ cast-recℕ-reduct : ∀ {Γ Γ' B ε} → (e : Γ' ≡ Γ)
                    ≡ castᶜ e (coerce p (recℕ V' M' N' p ⨟ recℕ-step V' N'))
 cast-recℕ-reduct refl V' M' N' p = refl
 
+cast-caseL⁻ : ∀ {Γ Γ' A C} → (e : Γ' ≡ Γ)
+            → {V : Γ ⊢V⦂ |List| A} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ A ∷ |List| A ⊢C⦂ C}
+            → (P' : Γ' ⊢C⦂ C)
+            → caseL V `nil M `cons N ≡ castᶜ e P'
+            → Σ[ V' ∈ (Γ' ⊢V⦂ |List| A) ] Σ[ M' ∈ (Γ' ⊢C⦂ C) ]
+              Σ[ N' ∈ (Γ' ∷ A ∷ |List| A ⊢C⦂ C) ]
+                (P' ≡ caseL V' `nil M' `cons N') × (V ≡ castᵛ e V')
+              × (M ≡ castᶜ e M') × (N ≡ castᶜ (cong (λ X → X ∷ A ∷ |List| A) e) N')
+cast-caseL⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
+
+cast-recL⁻ : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ)
+           → {V : Γ ⊢V⦂ |List| A} → {M : Γ ⊢C⦂ B ‼ ε}
+           → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+           → {p : ε ·ₑ ε ≾ₑ ε}
+           → (P' : Γ' ⊢C⦂ B ‼ ε)
+           → recL V M N p ≡ castᶜ e P'
+           → Σ[ V' ∈ (Γ' ⊢V⦂ |List| A) ] Σ[ M' ∈ (Γ' ⊢C⦂ B ‼ ε) ]
+             Σ[ N' ∈ ((Γ' ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε) ]
+               (P' ≡ recL V' M' N' p) × (V ≡ castᵛ e V')
+             × (M ≡ castᶜ e M')
+             × (N ≡ castᶜ (cong (λ X → (X ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B) e) N')
+cast-recL⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
+
 cast-case+⁻ : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
             → {V : Γ ⊢V⦂ A |+| B} → {M : Γ ∷ A ⊢C⦂ C} → {N : Γ ∷ B ⊢C⦂ C}
             → (P' : Γ' ⊢C⦂ C)
@@ -348,6 +373,46 @@ sndᵛ-cast e (subV V (_ |×|ₛ q)) =
   trans (cong sndᵛ (cast-subV e {V = V}))
         (trans (cong (λ z → subV z q) (sndᵛ-cast e V))
                (sym (cast-subV e)))
+
+-- The decomposition of a list commutes with a context equality, and so do
+-- the reducts the list eliminators build from it.
+
+castL : ∀ {Γ Γ' A} → Γ ≡ Γ' → ListView Γ A → ListView Γ' A
+castL e (inj₁ tt)      = inj₁ tt
+castL e (inj₂ (W , L)) = inj₂ (castᵛ e W , castᵛ e L)
+
+listᵛ-cast : ∀ {A} {St St' : 𝕊 []} → (e : toCtx St ≡ toCtx St')
+           → (V : toCtx St ⊢V⦂ |List| A)
+           → listᵛ (castᵛ e V) ≡ castL e (listᵛ V)
+listᵛ-cast e (var _ x)            = ⊥-elim (|List|-not-in-toCtx x)
+listᵛ-cast e nil                  = cong listᵛ (cast-nil e)
+listᵛ-cast e (cons V W)           = cong listᵛ (cast-cons e {V} {W})
+listᵛ-cast e (subV V (|List|ₛ p)) =
+  trans (cong listᵛ (cast-subV e {V = V}))
+        (trans (cong (subL p) (listᵛ-cast e V)) (comm (listᵛ V)))
+  where
+    comm : ∀ l → subL p (castL e l) ≡ castL e (subL p l)
+    comm (inj₁ tt)      = refl
+    comm (inj₂ (W , L)) =
+      cong₂ (λ a b → inj₂ (a , b)) (sym (cast-subV e)) (sym (cast-subV e))
+
+cast-caseL-reduct : ∀ {Γ Γ' A C} → (e : Γ' ≡ Γ) → (l : ListView Γ' A)
+                  → (M' : Γ' ⊢C⦂ C) → (N' : Γ' ∷ A ∷ |List| A ⊢C⦂ C)
+                  → caseL-reduct (castL e l) (castᶜ e M')
+                                 (castᶜ (cong (λ X → X ∷ A ∷ |List| A) e) N')
+                  ≡ castᶜ e (caseL-reduct l M' N')
+cast-caseL-reduct refl (inj₁ tt)      M' N' = refl
+cast-caseL-reduct refl (inj₂ (W , L)) M' N' = refl
+
+cast-recL-reduct : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ) → (l : ListView Γ' A)
+                 → (M' : Γ' ⊢C⦂ B ‼ ε)
+                 → (N' : (Γ' ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                 → (p : ε ·ₑ ε ≾ₑ ε)
+                 → recL-reduct (castL e l) (castᶜ e M')
+                     (castᶜ (cong (λ X → (X ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B) e) N') p
+                 ≡ castᶜ e (recL-reduct l M' N' p)
+cast-recL-reduct refl (inj₁ tt)      M' N' p = refl
+cast-recL-reduct refl (inj₂ (W , L)) M' N' p = refl
 
 cast-match-reduct : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
            → (M' : Γ' ∷ A ∷ B ⊢C⦂ C) → (V' : Γ' ⊢V⦂ A) → (W' : Γ' ⊢V⦂ B)

@@ -140,6 +140,8 @@ mutual
   V-rename r (⦉ V , W ⦊)  = ⦉ V-rename r V , V-rename r W ⦊
   V-rename r (inl V)     = inl (V-rename r V)
   V-rename r (inr V)     = inr (V-rename r V)
+  V-rename r nil         = nil
+  V-rename r (cons V W)  = cons (V-rename r V) (V-rename r W)
   V-rename r (lam M)     = lam (C-rename (cong-ren r) M)
   V-rename r (subV V p)  = subV (V-rename r V) p
 
@@ -163,6 +165,11 @@ mutual
          (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-⟨⟩-ren r)))) N) p
   C-rename r (case+ V `inl M `inr N) =
     case+ V-rename r V `inl C-rename (cong-ren r) M `inr C-rename (cong-ren r) N
+  C-rename r (caseL V `nil M `cons N) =
+    caseL V-rename r V `nil C-rename r M `cons C-rename (cong-ren r) N
+  C-rename r (recL V M N p) =
+    recL (V-rename r V) (C-rename r M)
+         (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r))))) N) p
   C-rename r (perform op V M) = perform op (V-rename r V) (C-rename (cong-ren r) M)
   C-rename r (delay τ M)      = delay τ (C-rename (cong-ren r) M)
   C-rename r (handle M `with H `in N) =

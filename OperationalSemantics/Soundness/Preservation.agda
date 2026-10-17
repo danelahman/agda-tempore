@@ -151,6 +151,8 @@ T-≤-stepᵀ : ∀ {ε ε' εa εb A A₀} {S S' : 𝕊 []} → (B : Obj)
           ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵀ ∘ᵐ Tᶠ g ∘ᵐ stepᵀ r
 T-≤-stepᵀ B APP         g q = ηᵀ-case g q
 T-≤-stepᵀ B MATCH       g q = ηᵀ-case g q
+T-≤-stepᵀ B CASEL       g q = ηᵀ-case g q
+T-≤-stepᵀ B RECL        g q = ηᵀ-case g q
 T-≤-stepᵀ B IF-TRUE     g q = ηᵀ-case g q
 T-≤-stepᵀ B IF-FALSE    g q = ηᵀ-case g q
 T-≤-stepᵀ B CASE-INL    g q = ηᵀ-case g q
@@ -215,6 +217,8 @@ Uniform↝ (SEQ-STEP r _)      (pM , _)     = Uniform↝ r pM
 Uniform↝ (HANDLE-STEP r _)   (pM , _)     = Uniform↝ r pM
 Uniform↝ APP                 _            = ⊤
 Uniform↝ MATCH               _            = ⊤
+Uniform↝ CASEL               _            = ⊤
+Uniform↝ RECL                _            = ⊤
 Uniform↝ IF-TRUE             _            = ⊤
 Uniform↝ IF-FALSE            _            = ⊤
 Uniform↝ CASE-INL            _            = ⊤
@@ -250,6 +254,10 @@ stepᴾᶜ (MATCH {S = St} {P = P} {M = M}) pS (pP , pM) =
     (subᶜ M split-[] (V-rename wk-ren (sndᵛ {S = St} P)) pM
        (renᵛ wk-ren (sndᵛ {S = St} P) (sndᵛᴾ St P pP)))
     (fstᵛᴾ St P pP)
+stepᴾᶜ (CASEL {S = St} {V = V} {M = M} {N = N}) pS (pV , pM , pN) =
+  caseL-reductᴾ (listᵛ {S = St} V) M N (listᵛᴾ St V pV) pM pN
+stepᴾᶜ (RECL {S = St} {V = V} {M = M} {N = N} {p = p}) pS (pV , pM , pN) =
+  recL-reductᴾ (listᵛ {S = St} V) M N p (listᵛᴾ St V pV) pM pN
 stepᴾᶜ (SEQ-STEP {N = N} r c)           pS (pM , pN)  =
   stepᴾᶜ r pS pM
   , subCtxᴾ (step-refines-type r)
@@ -329,6 +337,12 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-APP M V pM pV)) ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ↝-sound {A = A} r@(MATCH {S = St} {P = P} {M = M}) pS (pP , pM) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-MATCH St P M pP pM)) ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} r@(CASEL {S = St} {V = V} {M = M} {N = N}) pS (pV , pM , pN) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-CASEL St V M N pV pM pN))
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} r@(RECL {S = St} {V = V} {M = M} {N = N} {p = p}) pS (pV , pM , pN) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-RECL St V M N p pV pM pN))
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ↝-sound {A = A} r@(SEQ-OP {op = op} {V = V} {M = M} {N = N}) pS ((pV , pM) , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SEQ-OP op V M N pV pM pN))
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))

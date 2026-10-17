@@ -5,6 +5,7 @@
 open import Data.Empty
 open import Data.Product
 open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import Data.Unit using (⊤; tt)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -273,6 +274,10 @@ Nat-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = Nat-not-in-toCtx x
 |+|-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = |+|-not-in-toCtx x
 |+|-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = |+|-not-in-toCtx x
 
+|List|-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} {A : VType} → |List| A ∈[ ρ ] toCtx S → ⊥
+|List|-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = |List|-not-in-toCtx x
+|List|-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = |List|-not-in-toCtx x
+
 Empty-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} → Empty ∈[ ρ ] toCtx S → ⊥
 Empty-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = Empty-not-in-toCtx x
 Empty-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = Empty-not-in-toCtx x
@@ -313,6 +318,29 @@ injᵛ (var _ x)           = ⊥-elim (|+|-not-in-toCtx x)
 injᵛ (inl V)             = inj₁ V
 injᵛ (inr V)             = inj₂ V
 injᵛ (subV V (p |+|ₛ q)) = sub⊎ p q (injᵛ V)
+
+-- The canonical decomposition of a list: empty, or a head and a tail. Over a
+-- state context the value is `nil` or a `cons` under a spine of subsumptions,
+-- which the recursion pushes into the head and the tail.
+
+ListView : Ctx → VType → Set
+ListView Γ A = ⊤ ⊎ ((Γ ⊢V⦂ A) × (Γ ⊢V⦂ |List| A))
+
+subL : ∀ {Γ A A₁} → A₁ <:ᵛ A → ListView Γ A₁ → ListView Γ A
+subL p (inj₁ tt)      = inj₁ tt
+subL p (inj₂ (W , L)) = inj₂ (subV W p , subV L (|List|ₛ p))
+
+listᵛ : ∀ {Γ A} {S : 𝕊 Γ} → toCtx S ⊢V⦂ |List| A → ListView (toCtx S) A
+listᵛ (var _ x)             = ⊥-elim (|List|-not-in-toCtx x)
+listᵛ nil                   = inj₁ tt
+listᵛ (cons V W)            = inj₂ (V , W)
+listᵛ (subV V (|List|ₛ p))  = subL p (listᵛ V)
+
+-- and back
+
+unlistᵛ : ∀ {Γ A} → ListView Γ A → Γ ⊢V⦂ |List| A
+unlistᵛ (inj₁ tt)      = nil
+unlistᵛ (inj₂ (W , L)) = cons W L
 
 -- There is no value of the empty type over a state context.
 

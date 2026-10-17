@@ -40,14 +40,14 @@ open import DenotationalSemantics.Model.Example.PSh.Modality.Adjunction Grades W
   using (PShAdj)
 open import DenotationalSemantics.Model.Example.PSh.Modality.Eternal Grades Wld
   using (Kᵖ; Kᵖ-const; Kᵖ-eternalᵒ; 𝟙ᵖ-eternalᵒ; 𝟘ᵖ-eternalᵒ; 𝔹ᵖ-eternalᵒ; ℕᵖ-eternalᵒ; ×ᵖ-eternalᵒ; ×ᵖ-eternalᵒ-extᵉ
-        ; +ᵖ-eternalᵒ)
+        ; +ᵖ-eternalᵒ; Listᵖ-eternalᵒ)
 
 open import DenotationalSemantics.Model.Category
 open Category PShCat using (_≈ᵐ_; _∘ᵐ_; terminalᵐ)
 
 open import DenotationalSemantics.Model.Modality.Eternal
        PShCat RGrade PShFut PShPast PShAdj
-  using (Eternalᵒ; +ᵐ-eternalᵒ-inl; +ᵐ-eternalᵒ-inr)
+  using (Eternalᵒ; +ᵐ-eternalᵒ-inl; +ᵐ-eternalᵒ-inr; Listᵐ-eternalᵒ-nil; Listᵐ-eternalᵒ-cons)
 
 open import DenotationalSemantics.Model.GroundTypes
 open import DenotationalSemantics.Model.GroundEternal
@@ -116,6 +116,9 @@ module PShGround (BT : PShBaseTypes) where
     ; +-eternalᵒ    = +ᵖ-eternalᵒ
     ; +-eternalᵒ-inl = +ᵐ-eternalᵒ-inl
     ; +-eternalᵒ-inr = +ᵐ-eternalᵒ-inr
+    ; List-eternalᵒ = Listᵖ-eternalᵒ
+    ; List-eternalᵒ-nil = Listᵐ-eternalᵒ-nil
+    ; List-eternalᵒ-cons = Listᵐ-eternalᵒ-cons
     ; ⟦⟧ᵇᶜ-eternal  = λ {b} eb c → constᵇ-eternal (eternalBaseType? b) eb c
     ; trueᵐ-eternal  = λ _ → refl
     ; falseᵐ-eternal = λ _ → refl

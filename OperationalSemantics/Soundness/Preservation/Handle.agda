@@ -140,6 +140,8 @@ step-pv : ∀ {ε₁ ε₃ A A₀ P} {S S' : 𝕊 []}
         → (⟦ hist S ⟧ᶜᵗˣ →ᵐ P) → (⟦ hist S' ⟧ᶜᵗˣ →ᵐ P)
 step-pv bc APP               pv = pv
 step-pv bc MATCH             pv = pv
+step-pv bc CASEL             pv = pv
+step-pv bc RECL              pv = pv
 step-pv bc IF-TRUE           pv = pv
 step-pv bc IF-FALSE          pv = pv
 step-pv bc CASE-INL          pv = pv
@@ -193,6 +195,8 @@ alg-stepᵀ : ∀ {ε ε₂ ε₁' ε₃' A A₀ B P} {S S' : 𝕊 []}
               ∘ᵐ Tᶠ (alg {ε} ∘ᵐ ⟨ step-pv bc r pv , f ⟩ᵐ) ∘ᵐ stepᵀ r
 alg-stepᵀ bc alg alg-≤ alg-delay APP        pv f = alg-ηᵀ alg alg-≤ pv f
 alg-stepᵀ bc alg alg-≤ alg-delay MATCH      pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay CASEL      pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay RECL       pv f = alg-ηᵀ alg alg-≤ pv f
 alg-stepᵀ bc alg alg-≤ alg-delay IF-TRUE    pv f = alg-ηᵀ alg alg-≤ pv f
 alg-stepᵀ bc alg alg-≤ alg-delay IF-FALSE   pv f = alg-ηᵀ alg alg-≤ pv f
 alg-stepᵀ bc alg alg-≤ alg-delay CASE-INL   pv f = alg-ηᵀ alg alg-≤ pv f
@@ -395,6 +399,8 @@ step-pv-state : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []}
                  ∘ᵐ (⟨⊤⟩-η ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
 step-pv-state APP        pS pM = id-suc-step _ _
 step-pv-state MATCH      pS pM = id-suc-step _ _
+step-pv-state CASEL      pS pM = id-suc-step _ _
+step-pv-state RECL       pS pM = id-suc-step _ _
 step-pv-state IF-TRUE    pS pM = id-suc-step _ _
 step-pv-state IF-FALSE   pS pM = id-suc-step _ _
 step-pv-state CASE-INL   pS pM = id-suc-step _ _
