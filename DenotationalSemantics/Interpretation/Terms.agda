@@ -116,6 +116,18 @@ map⇒ᵐ-swap f g =
             (≈ᵐ-sym (≈ᵐ-trans (map⇒ᵐ-curryᵐ g _)
                               (curryᵐ-cong (∘ᵐ-congʳ (∘ᵐ-identityˡ _))))))
 
+-- The step of a primitive recursion at `T B ε`: the recursive call's result
+-- sequenced with the step's body `n` exactly as `_⨟_` is interpreted, the
+-- context reaching `n` through `⟨⊤⟩-η` as a handler clause's does, followed
+-- by the sub-effecting that absorbs the iteration.
+
+recℕ-stepᵗ : ∀ {X B ε}
+           → ε ·ₑ ε ≾ₑ ε
+           → ⟨ mapᵉ ε ⟩ᵒ (⟨ ⊤ᵣ ⟩ᵒ X ×ᵐ ℕᵐ) ×ᵐ B →ᵐ Tᵒ B ε
+           → (X ×ᵐ ℕᵐ) ×ᵐ Tᵒ B ε →ᵐ Tᵒ B ε
+recℕ-stepᵗ p n =
+  T-≤ p ∘ᵐ μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ ∘ᵐ mapˣᵐ (η⊣ ∘ᵐ mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ
+
 -- The interpretation is defined only for *parametric* terms: a term whose
 -- handlers are uniform in the residual effect grade the clauses are quantified
 -- over. `Paramᶜ`/`Paramᵛ` is that certificate, and it is defined simultaneously
@@ -148,6 +160,7 @@ mutual
   Paramᶜ (absurd V)       = Paramᵛ V
   Paramᶜ (if V `then M `else N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (caseℕ V `zero M `succ N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
+  Paramᶜ (recℕ V M N p) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (case+ V `inl M `inr N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (perform op V M) = Paramᵛ V × Paramᶜ M
   Paramᶜ (delay τ M)      = Paramᶜ M
@@ -203,6 +216,9 @@ mutual
     ifᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ⟦ caseℕ V `zero M `succ N ⟧ᶜᵗ (pV , pM , pN) =
     caseℕᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+  -- primitive recursion at `T ⟦ B ⟧ ε`, from the scrutinee
+  ⟦ recℕ V M N p ⟧ᶜᵗ (pV , pM , pN) =
+    recℕᵐ (⟦ M ⟧ᶜᵗ pM) (recℕ-stepᵗ p (⟦ N ⟧ᶜᵗ pN)) ∘ᵐ ⟨ idᵐ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
   ⟦ case+ V `inl M `inr N ⟧ᶜᵗ (pV , pM , pN) =
     caseᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ⟦_⟧ᶜᵗ {Γ} (perform {A} {ε} op V M) (pV , pM) =

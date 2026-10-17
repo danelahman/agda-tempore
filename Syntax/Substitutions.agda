@@ -133,3 +133,17 @@ _[_↦_]cl : ∀ {Γ Γ₁ Γ₂ A B}
 (H [ s ↦ W ]cl) op ε'' =
   C-sub₀ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub (sub-split₀ s W))))
          (H op ε'')
+
+-- One unfolding of a primitive recursion's step at a predecessor: the step's
+-- view of the ambient context is included into the ambient itself (as a
+-- handler clause's is when it fires), and the predecessor is substituted
+-- across the lock binding the recursive call's result
+
+recℕ-step : ∀ {Γ B ε}
+          → Γ ⊢V⦂ Nat
+          → (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε
+          ------------------------------------------
+          → Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε
+recℕ-step V N =
+  C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren barrier-ren))) N
+    [ split-∷ (split-⟨⟩ split-[]) ↦ V ]c

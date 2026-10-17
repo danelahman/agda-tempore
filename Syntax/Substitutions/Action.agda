@@ -72,6 +72,9 @@ mutual
     if V-sub₀ s V `then C-sub₀ s M `else C-sub₀ s N
   C-sub₀ s (caseℕ V `zero M `succ N) =
     caseℕ V-sub₀ s V `zero C-sub₀ s M `succ C-sub₀ (cong-sub₀ s) N
+  C-sub₀ s (recℕ V M N p) =
+    recℕ (V-sub₀ s V) (C-sub₀ s M)
+         (C-sub₀ (cong-∷-sub (cong-⟨⟩-sub (cong-∷-sub (cong-⟨⟩-sub s)))) N) p
   C-sub₀ s (case+ V `inl M `inr N) =
     case+ V-sub₀ s V `inl C-sub₀ (cong-sub₀ s) M `inr C-sub₀ (cong-sub₀ s) N
   C-sub₀ s (perform op V M) = perform op (V-sub₀ s V) (C-sub₀ (cong-sub₀ s) M)

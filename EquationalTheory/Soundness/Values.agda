@@ -4,8 +4,9 @@
 -- object's uniqueness, `fun-beta`/`fun-eta` the exponential's,         --
 -- `match-beta`/`match-eta` the product's, `absurd-eta` the initial     --
 -- object's strictness, the boolean equations are the boolean object's --
--- own laws, the natural-number equations those of `caseℕᵐ`, and the    --
--- sum equations the coproduct's (`caseᵐ`).                             --
+-- own laws, the natural-number equations those of `caseℕᵐ` and of     --
+-- the recursor `recℕᵐ`, and the sum equations the coproduct's          --
+-- (`caseᵐ`).                                                           --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -63,6 +64,7 @@ open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut Pst Adj GTy Mon GE
+open import DenotationalSemantics.Interpretation.Recursion S Cat Fut Pst Adj GTy Mon GE
 
 open import EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
 
@@ -167,6 +169,23 @@ sound-caseℕ-eta {Γ} {C} V M pM (pV , pZ , pS) pR =
   where
     U : Γ ∷ Nat ⊢V⦂ Nat
     U = succ (var (λ _ → ≾ᵣ-refl) Hd)
+
+-- The recursor's betas, as for the reductions `RECℕ-ZERO`/`RECℕ-SUCC`.
+
+sound-recℕ-beta-zero : ∀ {Γ B ε} → (M : Γ ⊢C⦂ B ‼ ε)
+                     → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                     → (p : ε ·ₑ ε ≾ₑ ε)
+                     → Soundᶜ== (recℕ-beta-zero M N p)
+sound-recℕ-beta-zero M N p (_ , pM , pN) pR =
+  sound-RECℕ-ZERO M N p pM pN ∙ ⟦⟧ᶜᵗ-irr M pM pR
+
+sound-recℕ-beta-succ : ∀ {Γ B ε} → (V : Γ ⊢V⦂ Nat) → (M : Γ ⊢C⦂ B ‼ ε)
+                     → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                     → (p : ε ·ₑ ε ≾ₑ ε)
+                     → Soundᶜ== (recℕ-beta-succ V M N p)
+sound-recℕ-beta-succ V M N p (pV , pM , pN) pR =
+    sound-RECℕ-SUCC V M N p pV pM pN
+  ∙ ⟦⟧ᶜᵗ-irr (coerce p (recℕ V M N p ⨟ recℕ-step V N)) _ pR
 
 -- The two sum betas are the coproduct's, read at the interpretation
 -- `⟦ inl V ⟧ᵛᵗ = inlᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ` of the scrutinee, after which the branch is

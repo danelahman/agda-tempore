@@ -195,6 +195,31 @@ cast-caseℕ⁻ : ∀ {Γ Γ' C} → (e : Γ' ≡ Γ)
               × (M ≡ castᶜ e M') × (N ≡ castᶜ (cong (_∷ Nat) e) N')
 cast-caseℕ⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
 
+cast-recℕ⁻ : ∀ {Γ Γ' B ε} → (e : Γ' ≡ Γ)
+           → {V : Γ ⊢V⦂ Nat} → {M : Γ ⊢C⦂ B ‼ ε}
+           → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+           → {p : ε ·ₑ ε ≾ₑ ε}
+           → (P' : Γ' ⊢C⦂ B ‼ ε)
+           → recℕ V M N p ≡ castᶜ e P'
+           → Σ[ V' ∈ (Γ' ⊢V⦂ Nat) ] Σ[ M' ∈ (Γ' ⊢C⦂ B ‼ ε) ]
+             Σ[ N' ∈ ((Γ' ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε) ]
+               (P' ≡ recℕ V' M' N' p) × (V ≡ castᵛ e V')
+             × (M ≡ castᶜ e M')
+             × (N ≡ castᶜ (cong (λ X → (X ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B) e) N')
+cast-recℕ⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
+
+-- The successor reduct of a recursion commutes with a context equality.
+
+cast-recℕ-reduct : ∀ {Γ Γ' B ε} → (e : Γ' ≡ Γ)
+                 → (V' : Γ' ⊢V⦂ Nat) → (M' : Γ' ⊢C⦂ B ‼ ε)
+                 → (N' : (Γ' ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                 → (p : ε ·ₑ ε ≾ₑ ε)
+                 → let N₁ = castᶜ (cong (λ X → (X ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B) e) N' in
+                   coerce p (recℕ (castᵛ e V') (castᶜ e M') N₁ p
+                             ⨟ recℕ-step (castᵛ e V') N₁)
+                   ≡ castᶜ e (coerce p (recℕ V' M' N' p ⨟ recℕ-step V' N'))
+cast-recℕ-reduct refl V' M' N' p = refl
+
 cast-case+⁻ : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
             → {V : Γ ⊢V⦂ A |+| B} → {M : Γ ∷ A ⊢C⦂ C} → {N : Γ ∷ B ⊢C⦂ C}
             → (P' : Γ' ⊢C⦂ C)

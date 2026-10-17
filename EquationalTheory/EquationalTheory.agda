@@ -271,6 +271,17 @@ mutual
                --------------------------------------------------------------
                → Γ ⊢C⦂ caseℕ V `zero M `succ N == caseℕ W `zero M' `succ N'
 
+    recℕ-cong : ∀ {B ε}
+              → {V W : Γ ⊢V⦂ Nat}
+              → {M M' : Γ ⊢C⦂ B ‼ ε}
+              → {N N' : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+              → {p : ε ·ₑ ε ≾ₑ ε}
+              → Γ ⊢V⦂ V == W
+              → Γ ⊢C⦂ M == M'
+              → (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ N == N'
+              -----------------------------------------------
+              → Γ ⊢C⦂ recℕ V M N p == recℕ W M' N' p
+
     case+-cong : ∀ {A B C}
                → {V W : Γ ⊢V⦂ A |+| B}
                → {M M' : Γ ∷ A ⊢C⦂ C}
@@ -519,6 +530,27 @@ mutual
                         `succ (C-rename (cong-∷-ren wk-ren) M
                                 [ split-[] ↦ succ (var (λ _ → ≾ᵣ-refl) Hd) ]c)
                   == M [ split-[] ↦ V ]c
+
+    -- beta-equations for primitive recursion
+    --
+    -- There is no eta-equation: the recursor's uniqueness is an induction
+    -- principle over the scrutinee, not an equation between two terms.
+
+    recℕ-beta-zero : ∀ {B ε}
+                   → (M : Γ ⊢C⦂ B ‼ ε)
+                   → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                   → (p : ε ·ₑ ε ≾ₑ ε)
+                   ---------------------------------------
+                   → Γ ⊢C⦂ recℕ zero M N p == M
+
+    recℕ-beta-succ : ∀ {B ε}
+                   → (V : Γ ⊢V⦂ Nat)
+                   → (M : Γ ⊢C⦂ B ‼ ε)
+                   → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                   → (p : ε ·ₑ ε ≾ₑ ε)
+                   ------------------------------------------------------------
+                   → Γ ⊢C⦂ recℕ (succ V) M N p
+                       == coerce p (recℕ V M N p ⨟ recℕ-step V N)
 
     -- beta-equations for sum elimination
 

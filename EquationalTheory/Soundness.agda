@@ -155,6 +155,11 @@ mutual
   soundᶜ (caseℕ-cong p q r)   (mp , mq , mr)
          (pV , pM , pN) (pV' , pM' , pN') =
     caseℕᵐ-cong (soundᵛ p mp pV pV') (soundᶜ q mq pM pM') (soundᶜ r mr pN pN')
+  soundᶜ (recℕ-cong p q r)    (mp , mq , mr)
+         (pV , pM , pN) (pV' , pM' , pN') =
+    ∘ᵐ-cong (recℕᵐ-cong (soundᶜ q mq pM pM')
+                        (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (soundᶜ r mr pN pN'))))))
+            ⟨ ≈ᵐ-refl , soundᵛ p mp pV pV' ⟩ᵐ-cong
   soundᶜ (case+-cong p q r)   (mp , mq , mr)
          (pV , pM , pN) (pV' , pM' , pN') =
     caseᵐ-cong (soundᵛ p mp pV pV') (soundᶜ q mq pM pM') (soundᶜ r mr pN pN')
@@ -206,6 +211,8 @@ mutual
   soundᶜ (caseℕ-beta-zero M N) _ = sound-caseℕ-beta-zero M N
   soundᶜ (caseℕ-beta-succ V M N) _ = sound-caseℕ-beta-succ V M N
   soundᶜ (caseℕ-eta V M)      m  = sound-caseℕ-eta V M m
+  soundᶜ (recℕ-beta-zero M N p) _ = sound-recℕ-beta-zero M N p
+  soundᶜ (recℕ-beta-succ V M N p) _ = sound-recℕ-beta-succ V M N p
   soundᶜ (case+-beta-inl V M N) _ = sound-case+-beta-inl V M N
   soundᶜ (case+-beta-inr V M N) _ = sound-case+-beta-inr V M N
   soundᶜ (case+-eta V M)      m  = sound-case+-eta V M m

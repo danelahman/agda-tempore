@@ -131,6 +131,15 @@ cast-inr : ∀ {Γ Γ' A B} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ B}
          → castᵛ e (inr {A = A} V) ≡ inr (castᵛ e V)
 cast-inr refl = refl
 
+cast-recℕ : ∀ {Γ Γ' B ε} → (e : Γ ≡ Γ')
+          → {V : Γ ⊢V⦂ Nat} → {M : Γ ⊢C⦂ B ‼ ε}
+          → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+          → {p : ε ·ₑ ε ≾ₑ ε}
+          → castᶜ e (recℕ V M N p)
+          ≡ recℕ (castᵛ e V) (castᶜ e M)
+                 (castᶜ (cong (λ Δ → (Δ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B) e) N) p
+cast-recℕ refl = refl
+
 cast-case+ : ∀ {Γ Γ' A B C} → (e : Γ ≡ Γ')
            → {V : Γ ⊢V⦂ A |+| B} → {M : Γ ∷ A ⊢C⦂ C} → {N : Γ ∷ B ⊢C⦂ C}
            → castᶜ e (case+ V `inl M `inr N)

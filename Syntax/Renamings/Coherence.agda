@@ -91,6 +91,10 @@ mutual
     cong₃ caseℕ_`zero_`succ_
       (V-rename-≡ h V) (C-rename-≡ h M)
       (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) N)
+  C-rename-≡ h (recℕ V M N p) =
+    cong₃ (λ a b c → recℕ a b c p)
+      (V-rename-≡ h V) (C-rename-≡ h M)
+      (C-rename-≡ (cong-ren-≐ʳ (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _) h) N)
   C-rename-≡ h (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_
       (V-rename-≡ h V) (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
@@ -182,6 +186,10 @@ mutual
     cong₃ caseℕ_`zero_`succ_
       (V-rename-id-≡ h V) (C-rename-id-≡ h M)
       (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) N)
+  C-rename-id-≡ h (recℕ V M N p) =
+    cong₃ (λ a b c → recℕ a b c p)
+      (V-rename-id-≡ h V) (C-rename-id-≡ h M)
+      (C-rename-id-≡ (cong-ren-id-≐ʳ (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _) h) N)
   C-rename-id-≡ h (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_
       (V-rename-id-≡ h V) (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) M)
@@ -331,6 +339,10 @@ mutual
     cong₃ caseℕ_`zero_`succ_ (V-rename-∘ r₂ r₁ V) (C-rename-∘ r₂ r₁ M)
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _) r₂ r₁) N)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))
+  C-rename-∘ r₂ r₁ (recℕ V M N p) =
+    cong₃ (λ a b c → recℕ a b c p) (V-rename-∘ r₂ r₁ V) (C-rename-∘ r₂ r₁ M)
+      (trans (C-rename-≡ (cong-ren-∘-≐ʳ (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _) r₂ r₁) N)
+             (C-rename-∘ (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _)} r₂) (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _)} r₁) N))
   C-rename-∘ r₂ r₁ (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_ (V-rename-∘ r₂ r₁ V)
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _) r₂ r₁) M)

@@ -207,6 +207,76 @@ count-survives =
     (return (succ (eternal-var Natₑ (Tl-∷ (Tl-⟨⟩ Hd)))))
 
 ------------------------------------------------------------------------
+-- Primitive recursion
+--
+-- `recℕ`'s step sees the ambient context behind `⟨ ⊤ᵣ ⟩`, binds the
+-- predecessor, and, behind the lock of the recursion's own grade, the
+-- result at the predecessor. The grade absorbs its own iteration,
+-- `ε · ε ≾ ε`, which "at most `n` ticks" meets only at no tick and at no
+-- deadline: a pure recursion is graded at the unit, a countdown at the
+-- top.
+
+-- addition, recursing on the first argument
+
+add : [] ⊢V⦂ Nat ⇒ (Nat ⇒ Nat ‼ uₑ) ‼ uₑ
+add =
+  lam (return (lam
+    (recℕ (eternal-var Natₑ (Tl-∷ Hd))
+      (return here)
+      (return (succ here))         -- ⟨ ⊤ᵣ ⟩ ∷ Nat ⟨ [0, 0 ] ⟩ ∷ Nat
+      ≤!)))
+
+two-plus-three : [] ⊢C⦂ Nat ‼ uₑ
+two-plus-three =
+  recℕ (numeralᵛ 2) (return (numeralᵛ 3)) (return (succ here)) ≤!
+
+-- the predecessor, bound by the step, rebuilds the number
+
+rebuild : [] ⊢V⦂ Nat ⇒ Nat ‼ uₑ
+rebuild =
+  lam (recℕ here
+        (return zero)
+        (return (succ (eternal-var Natₑ (Tl-∷ (Tl-⟨⟩ Hd)))))
+        ≤!)
+
+-- an identifier from outside the step: eternal, so it crosses the
+-- barrier
+
+tagging-each : [] ∷ NodeId ⊢C⦂ NodeId ‼ uₑ
+tagging-each =
+  recℕ (numeralᵛ 2)
+    (return here)
+    (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))))))
+    ≤!
+
+-- a reading from outside the step is barred: the step's barrier is the
+-- top, which lies above the unit
+
+barrier-is-the-top : ⊤ᵣ ≡ ⌈0, ∞ ⌉
+barrier-is-the-top = refl
+
+reading-barred-from-step : ¬ (uᵣ ·ᵣ ⌈0, ∞ ⌉ ≾ᵣ uᵣ)
+reading-barred-from-step ()
+
+-- a countdown, a tick a step: graded at the top, which absorbs itself
+
+countdown : [] ⊢V⦂ Nat ⇒ Unit ‼ ⊤ₑ
+countdown =
+  lam (recℕ here
+        (coerce (≾-⊤ₑ uₑ) (return ⋆))
+        (coerce (≾-⊤ₑ (of-durᵉ 1 ·ₑ uₑ)) (delay 1 (return ⋆)))
+                                   -- ⟨ ⊤ᵣ ⟩ ∷ Nat ⟨ ⌈0, ∞ ⌉ ⟩ ∷ Unit
+        (≾-⊤ₑ (⊤ₑ ·ₑ ⊤ₑ)))
+
+three-ticks : [] ⊢C⦂ Unit ‼ ⊤ₑ
+three-ticks = countdown · numeralᵛ 3
+
+-- at any finite deadline a tick a step does not absorb itself
+
+tick-a-step-overruns : ¬ ([0, 1 ] ·ₑ [0, 1 ] ≾ₑ [0, 1 ])
+tick-a-step-overruns = ≰!
+
+------------------------------------------------------------------------
 -- Sums
 --
 -- `case+` binds the injected value in the branch its injection names,

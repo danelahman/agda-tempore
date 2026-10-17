@@ -629,6 +629,14 @@ barrier-unbox-≐ʳ q b =
     (∘ʳ-≐ʳ (≐ʳ-sym (suc-comp-ren-≤ (ext q) (reach-bound q) b (≾-⊤ᵣ uᵣ)))
           ≐ʳ-refl)
 
+-- At the state itself the `⊤ᵣ`-reach is entering the barrier.
+
+barrier-reach : ∀ {St : 𝕊 []} → St ⊑ₛ[ ⊤ᵣ ] St
+barrier-reach = reach id-suc (≾-⊤ᵣ _)
+
+barrier-reach-≐ʳ : ∀ {St : 𝕊 []} → unbox-ren (barrier-reach {St}) ≐ʳ barrier-ren
+barrier-reach-≐ʳ = ∘ʳ-≐ʳ (⟨⟩-≤-ren-≐ʳ _ _) ≐ʳ-refl
+
 -- Crossing a lock and then following a guarded reach is following the same reach
 -- at the unit budget (`reach-≤`): the source grade is relaxed from `ρ` to `uᵣ`,
 -- which is pre-composition with `⟨⟩-≤-ren` (`suc-comp-ren-≤ˡ`).

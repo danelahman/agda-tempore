@@ -273,6 +273,7 @@ open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Env
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Transport
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Core
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence
+open import DenotationalSemantics.Interpretation.Recursion
 open import DenotationalSemantics.Interpretation.State
 
 ---- Soundness of the equational theory with respect to the interpretation

@@ -54,7 +54,7 @@ open Monad Mon
 
 open import DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj
-       using (Eternalᵒ; ⟨⊤⟩-η-nat; ⟨⊤⟩-eternalᵒ; ⟨⊤⟩-free-necᵉ-nat)
+       using (Eternalᵒ; ⟨⊤⟩-η; ⟨⊤⟩-η-nat; ⟨⊤⟩-eternalᵒ; ⟨⊤⟩-free-necᵉ-nat)
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
@@ -151,6 +151,45 @@ mapˣ-swapᵐ a c =
   (≈ᵐ-trans (mapˣᵐ-cong (≈ᵐ-sym (∘ᵐ-identityˡ a)) (≈ᵐ-sym (∘ᵐ-identityʳ c)))
             (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _))))
 
+-- A primitive recursion's step is natural in its context: reindexing the
+-- context `X` reindexes the body's context under both locks.
+
+recℕ-stepᵗ-nat : ∀ {X X' B ε} → (p : ε ·ₑ ε ≾ₑ ε)
+               → (n : ⟨ mapᵉ ε ⟩ᵒ (⟨ ⊤ᵣ ⟩ᵒ X ×ᵐ ℕᵐ) ×ᵐ B →ᵐ Tᵒ B ε)
+               → (n' : ⟨ mapᵉ ε ⟩ᵒ (⟨ ⊤ᵣ ⟩ᵒ X' ×ᵐ ℕᵐ) ×ᵐ B →ᵐ Tᵒ B ε)
+               → (h : X' →ᵐ X)
+               → n' ≈ᵐ n ∘ᵐ mapˣᵐ (⟨ mapᵉ ε ⟩ᶠ (mapˣᵐ (⟨ ⊤ᵣ ⟩ᶠ h) idᵐ)) idᵐ
+               → recℕ-stepᵗ p n' ≈ᵐ recℕ-stepᵗ p n ∘ᵐ mapˣᵐ (mapˣᵐ h idᵐ) idᵐ
+recℕ-stepᵗ-nat {B = B} {ε = ε} p n n' h e =
+    ∘ᵐ-congʳ (∘ᵐ-congʳ core ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  where
+    pre : (η⊣ ∘ᵐ mapˣᵐ ⟨⊤⟩-η idᵐ) ∘ᵐ mapˣᵐ h idᵐ
+        ≈ᵐ [ mapᵉ ε ]ᶠ (⟨ mapᵉ ε ⟩ᶠ (mapˣᵐ (⟨ ⊤ᵣ ⟩ᶠ h) idᵐ))
+             ∘ᵐ (η⊣ ∘ᵐ mapˣᵐ ⟨⊤⟩-η (idᵐ {ℕᵐ}))
+    pre =
+        ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ ( mapˣᵐ-∘ _ _ _ _
+                 ∙ mapˣᵐ-cong (≈ᵐ-sym (⟨⊤⟩-η-nat h)) ≈ᵐ-refl
+                 ∙ ≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (η⊣-nat _))
+      ∙ ∘ᵐ-assoc _ _ _
+    ctx : mapˣᵐ (η⊣ ∘ᵐ mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ ∘ᵐ mapˣᵐ (mapˣᵐ h idᵐ) (idᵐ {Tᵒ B ε})
+        ≈ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ (⟨ mapᵉ ε ⟩ᶠ (mapˣᵐ (⟨ ⊤ᵣ ⟩ᶠ h) idᵐ))) idᵐ
+             ∘ᵐ mapˣᵐ (η⊣ ∘ᵐ mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ
+    ctx = mapˣᵐ-∘ _ _ _ _ ∙ mapˣᵐ-cong pre ≈ᵐ-refl ∙ ≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _)
+    core =
+        ∘ᵐ-congˡ (T-congᶠ e)
+      ∙ ∘ᵐ-congˡ (T-∘ᵐ _ _)
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ ( ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                 ∙ ∘ᵐ-congˡ (strᵀ-natˡ _)
+                 ∙ ∘ᵐ-assoc _ _ _
+                 ∙ ∘ᵐ-congʳ (≈ᵐ-sym ctx)
+                 ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
 -- Renaming preserves parametricity, and the interpretation is natural in the
 -- renaming. The two are defined simultaneously: transporting a handler's
 -- clause-uniformity across a renaming (`renᶜ`'s `handle` case) needs the
@@ -191,6 +230,9 @@ mutual
     renᵛ r V pV , renᶜ r M pM , renᶜ r N pN
   renᶜ r (caseℕ V `zero M `succ N) (pV , pM , pN) =
     renᵛ r V pV , renᶜ r M pM , renᶜ (cong-∷-ren r) N pN
+  renᶜ r (recℕ V M N p) (pV , pM , pN) =
+      renᵛ r V pV , renᶜ r M pM
+    , renᶜ (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-⟨⟩-ren r)))) N pN
   renᶜ r (case+ V `inl M `inr N) (pV , pM , pN) =
     renᵛ r V pV , renᶜ (cong-∷-ren r) M pM , renᶜ (cong-∷-ren r) N pN
   renᶜ r (perform op V M) (pV , pM) =
@@ -321,6 +363,20 @@ mutual
                           (C-rename-nat r M pM)
                           (C-rename-nat (cong-∷-ren r) N pN))
              (≈ᵐ-sym (caseℕᵐ-∘ _ _ _ _))
+  -- the recursor is natural in its context: `recℕᵐ-∘`, the step by
+  -- `recℕ-stepᵗ-nat`
+  C-rename-nat r (recℕ V M N p) (pV , pM , pN) =
+      ∘ᵐ-cong (recℕᵐ-cong (C-rename-nat r M pM)
+                (recℕ-stepᵗ-nat p _ _ ⟦ r ⟧ʳ
+                  (C-rename-nat (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-⟨⟩-ren r))))
+                                N pN)))
+              ⟨ ≈ᵐ-refl , V-rename-nat r V pV ⟩ᵐ-cong
+    ∙ ∘ᵐ-congˡ (≈ᵐ-sym (recℕᵐ-∘ _ _ _))
+    ∙ ∘ᵐ-assoc _ _ _
+    ∙ ∘ᵐ-congʳ ( mapˣᵐ-∘⟨⟩ _ _ _ _
+               ∙ ⟨ ∘ᵐ-identityʳ _ ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
+               ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
+    ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   C-rename-nat r (case+ V `inl M `inr N) (pV , pM , pN) =
     ≈ᵐ-trans (caseᵐ-cong (V-rename-nat r V pV)
                          (C-rename-nat (cong-∷-ren r) M pM)

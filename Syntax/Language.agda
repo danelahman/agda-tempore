@@ -190,6 +190,22 @@ mutual
             ---------------
             → Γ ⊢C⦂ C
 
+    -- primitive recursion on natural numbers
+
+    -- The step runs at a time the recursion does not fix, so, as a handler
+    -- clause, it sees the ambient context barred by `⟨ ⊤ᵣ ⟩`; it binds the
+    -- predecessor, and, as `_⨟_` binds its continuation, the result of the
+    -- recursive call. The effect absorbs its own iteration.
+
+    recℕ    : {B : VType}
+            → {ε : E}
+            → Γ ⊢V⦂ Nat
+            → Γ ⊢C⦂ B ‼ ε
+            → (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε
+            → ε ·ₑ ε ≾ₑ ε
+            ------------------------------------------
+            → Γ ⊢C⦂ B ‼ ε
+
     -- sum elimination
 
     -- As for `if`, both branches are typed at the same computation type;

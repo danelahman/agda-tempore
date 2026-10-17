@@ -72,6 +72,7 @@ open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut Pst Adj GTy Mon GE
+open import DenotationalSemantics.Interpretation.Recursion S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon GE
 
 open import DenotationalSemantics.Model.Modality.Eternal
@@ -156,6 +157,8 @@ T-≤-stepᵀ B CASE-INL    g q = ηᵀ-case g q
 T-≤-stepᵀ B CASE-INR    g q = ηᵀ-case g q
 T-≤-stepᵀ B CASEℕ-ZERO  g q = ηᵀ-case g q
 T-≤-stepᵀ B CASEℕ-SUCC  g q = ηᵀ-case g q
+T-≤-stepᵀ B RECℕ-ZERO   g q = ηᵀ-case g q
+T-≤-stepᵀ B RECℕ-SUCC   g q = ηᵀ-case g q
 T-≤-stepᵀ B SEQ-RET     g q = ηᵀ-case g q
 T-≤-stepᵀ B SEQ-OP      g q = ηᵀ-case g q
 T-≤-stepᵀ B HANDLE-RET  g q = ηᵀ-case g q
@@ -166,6 +169,7 @@ T-≤-stepᵀ B SUB-APP     g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB-IF      g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB-CASE    g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB-CASEℕ   g q = ηᵀ-case g q
+T-≤-stepᵀ B SUB-RECℕ    g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB         g q = ηᵀ-case g q
 -- the congruences transition exactly as their sub-reduction does
 T-≤-stepᵀ B (SEQ-STEP r _)    g q = T-≤-stepᵀ B r g q
@@ -217,6 +221,8 @@ Uniform↝ CASE-INL            _            = ⊤
 Uniform↝ CASE-INR            _            = ⊤
 Uniform↝ CASEℕ-ZERO          _            = ⊤
 Uniform↝ CASEℕ-SUCC          _            = ⊤
+Uniform↝ RECℕ-ZERO           _            = ⊤
+Uniform↝ RECℕ-SUCC           _            = ⊤
 Uniform↝ SEQ-RET             _            = ⊤
 Uniform↝ SEQ-OP              _            = ⊤
 Uniform↝ DELAY               _            = ⊤
@@ -227,6 +233,7 @@ Uniform↝ SUB-APP             _            = ⊤
 Uniform↝ SUB-IF              _            = ⊤
 Uniform↝ SUB-CASE            _            = ⊤
 Uniform↝ SUB-CASEℕ           _            = ⊤
+Uniform↝ SUB-RECℕ            _            = ⊤
 Uniform↝ SUB                 _            = ⊤
 
 -- The computation's certificate across a step: every reduct is built from the
@@ -257,6 +264,9 @@ stepᴾᶜ IF-TRUE                          pS (_ , pM , pN) = pM
 stepᴾᶜ IF-FALSE                         pS (_ , pM , pN) = pN
 stepᴾᶜ CASEℕ-ZERO                       pS (_ , pM , pN) = pM
 stepᴾᶜ (CASEℕ-SUCC {V = V} {N = N})    pS (pV , pM , pN) = subᶜ N split-[] V pN pV
+stepᴾᶜ RECℕ-ZERO                        pS (_ , pM , pN) = pM
+stepᴾᶜ (RECℕ-SUCC {V = V} {N = N})     pS (pV , pM , pN) =
+  (pV , pM , pN) , recℕ-stepᴾ V N pV pN
 stepᴾᶜ (CASE-INL {V = V} {M = M})      pS (pV , pM , pN) = subᶜ M split-[] V pM pV
 stepᴾᶜ (CASE-INR {V = V} {N = N})      pS (pV , pM , pN) = subᶜ N split-[] V pN pV
 stepᴾᶜ DELAY                            pS pM         = pM
@@ -288,6 +298,7 @@ stepᴾᶜ (UNBOX {S = S} {z = z} {rel = rel} {p = p} {M = M}) pS pM =
 stepᴾᶜ SUB-APP                          pS pM         = pM
 stepᴾᶜ SUB-IF                           pS pM         = pM
 stepᴾᶜ SUB-CASEℕ                        pS pM         = pM
+stepᴾᶜ SUB-RECℕ                         pS pM         = pM
 stepᴾᶜ (SUB-CASE {p = p} {q = q} {M = M} {N = N}) pS (pV , pM , pN) =
   pV , subCtxᴾ p M pM , subCtxᴾ q N pN
 stepᴾᶜ SUB                              pS pM         = pM
@@ -331,6 +342,12 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 ↝-sound {A = A} r@(CASEℕ-SUCC {V = V} {M = M} {N = N}) pS (pV , pM , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-CASEℕ-SUCC V M N pV pM pN))
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} r@(RECℕ-ZERO {M = M} {N = N} {p = p}) pS (_ , pM , pN) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-RECℕ-ZERO M N p pM pN))
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} r@(RECℕ-SUCC {V = V} {M = M} {N = N} {p = p}) pS (pV , pM , pN) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-RECℕ-SUCC V M N p pV pM pN))
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ↝-sound {A = A} r@(CASE-INL {V = V} {M = M} {N = N}) pS (pV , pM , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-CASE-INL V M N pV pM pN))
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
@@ -360,7 +377,7 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 
 -- Peeling a subsumption: at an eliminated function it splits (`SUB-APP`), at a
 -- scrutinised boolean or natural number it is the identity (`SUB-IF`,
--- `SUB-CASEℕ`), at a scrutinised sum it moves onto the branches
+-- `SUB-CASEℕ`, `SUB-RECℕ`), at a scrutinised sum it moves onto the branches
 -- (`SUB-CASE`), and at a computation it is discarded (`SUB`) — in the first
 -- and last the codomain half becomes the step's own refinement of both
 -- components.
@@ -376,6 +393,9 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ↝-sound {A = A} r@(SUB-CASEℕ {V = V} {M = M} {N = N}) pS (pV , pM , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SUB-CASEℕ V M N pV pM pN))
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} r@(SUB-RECℕ {V = V} {M = M} {N = N} {p = p}) pS (pV , pM , pN) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SUB-RECℕ V M N p pV pM pN))
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ↝-sound {A = A} r@(SUB-CASE {V = V} {p = p} {q = q} {M = M} {N = N}) pS (pV , pM , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SUB-CASE V p q M N pV pM pN))

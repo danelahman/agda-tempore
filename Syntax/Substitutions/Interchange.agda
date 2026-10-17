@@ -151,6 +151,10 @@ mutual
     cong₃ caseℕ_`zero_`succ_ (V-sub₀-⌜⌝ r V) (C-sub₀-⌜⌝ r M)
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) N)
              (C-sub₀-⌜⌝ (cong-ren r) N))
+  C-sub₀-⌜⌝ r (recℕ V M N p) =
+    cong₃ (λ a b c → recℕ a b c p) (V-sub₀-⌜⌝ r V) (C-sub₀-⌜⌝ r M)
+      (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _) r) N)
+             (C-sub₀-⌜⌝ (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _)} r) N))
   C-sub₀-⌜⌝ r (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_ (V-sub₀-⌜⌝ r V)
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
@@ -311,6 +315,9 @@ mutual
   C-sub₀-ren h (caseℕ V `zero M `succ N) =
     cong₃ caseℕ_`zero_`succ_ (V-sub₀-ren h V) (C-sub₀-ren h M)
       (C-sub₀-ren (⋈-cong ([] ∷ _) h) N)
+  C-sub₀-ren h (recℕ V M N p) =
+    cong₃ (λ a b c → recℕ a b c p) (V-sub₀-ren h V) (C-sub₀-ren h M)
+      (C-sub₀-ren (⋈-cong (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _) h) N)
   C-sub₀-ren h (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_ (V-sub₀-ren h V)
       (C-sub₀-ren (⋈-cong ([] ∷ _) h) M) (C-sub₀-ren (⋈-cong ([] ∷ _) h) N)

@@ -1,8 +1,10 @@
 ------------------------------------------------------------------------
 -- Weak-head normalization: the fundamental lemma.                    --
 --                                                                    --
--- The language has no recursion, so termination is syntactic.        --
--- Reducibility is needed, since substitution can grow a term.        --
+-- Recursion is primitive recursion on a natural number, so a          --
+-- `recℕ` terminates by induction on the numeral its scrutinee runs   --
+-- to; everything else terminates syntactically. Reducibility is      --
+-- needed, since substitution can grow a term.                        --
 --                                                                    --
 -- The `handle` case is an induction on the scrutinee's `CRed`        --
 -- derivation: each `HANDLE-OP` consumes one resumption premise.      --
@@ -146,6 +148,52 @@ FL-case+ {St = St} {A = A} {B = B} {D = D} {ε = ε} γ pγ V M N pV pM pN =
        → CRed' D ε St (case+ U `inl M₀ `inr N₀)
     go rs (red-inl {W} pW) = CRed-expand* rs (pM (γ ∷ᵉ W) (pγ , pW))
     go rs (red-inr {W} pW) = CRed-expand* rs (pN (γ ∷ᵉ W) (pγ , pW))
+
+-- Primitive recursion: induction on the scrutinee, which over a state context
+-- is a numeral up to subsumption. At a successor `RECℕ-SUCC` sequences the
+-- recursion at the predecessor, reducible by induction, with one unfolding of
+-- the step; `seq-CRed` runs the two. The unfolding at the sequel's reach and
+-- result is the action at the environment the step's context describes: the
+-- barrier entered at the current state (`barrier-reach`, the renaming the
+-- unfolding crosses it by), the predecessor, the reach, and the result.
+
+FL-recℕ : ∀ {St Γ B ε} → (γ : Env St Γ) → Rel-Env γ
+        → (V : Γ ⊢V⦂ Nat) → (M : Γ ⊢C⦂ B ‼ ε)
+        → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+        → (p : ε ·ₑ ε ≾ₑ ε)
+        → CRed' B ε St (env-C γ M)
+        → (∀ {St'} → (γ' : Env St' ((Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B))
+             → Rel-Env γ' → CRed' B ε St' (env-C γ' N))
+        --------------------------------------------------------------
+        → CRed' B ε St (env-C γ (recℕ V M N p))
+
+FL-recℕ {St = St} {B = B} {ε = ε} γ pγ V M N p pM pN =
+  subst (CRed' _ _ St) (sym (env-Cˢ-recℕ γ [] V M N p)) (go (env-V γ V))
+  where
+    M₀ = env-C γ M
+    N₀ = env-Cˢ γ (([] ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B) N
+
+    go : (U : toCtx St ⊢V⦂ Nat) → CRed' B ε St (recℕ U M₀ N₀ p)
+    go (var f x)     = ⊥-elim (Nat-not-in-toCtx x)
+    go zero          = CRed-expand RECℕ-ZERO pM
+    go (subV U Natₛ) = CRed-expand SUB-RECℕ (go U)
+    go (succ W)      =
+      CRed-expand RECℕ-SUCC
+        (CRed'-sub (<:ᵛ-refl B) p (seq-CRed (recℕ-step W N₀) (go W) cont))
+      where
+        cont : ∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ mapᵉ ε ] St₁)
+             → (U : toCtx St₁ ⊢V⦂ B) → VRed B St₁ U
+             → CRed' B ε St₁
+                 ((C-rename (cong-∷-ren (unbox-ren q)) (recℕ-step W N₀))
+                    [ split-[] ↦ U ]c)
+        cont q U pU =
+          subst (CRed' _ _ _)
+            (cong (λ z → (C-rename (cong-∷-ren (unbox-ren q))
+                            (z [ split-∷ (split-⟨⟩ split-[]) ↦ W ]c))
+                           [ split-[] ↦ U ]c)
+                  (C-rename-≡ (cong-ren-≐ʳ (([] ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B)
+                                           barrier-reach-≐ʳ) N₀))
+            (pN ((((γ ⟨ barrier-reach ⟩ᵉ) ∷ᵉ W) ⟨ q ⟩ᵉ) ∷ᵉ U) ((pγ , tt) , pU))
 
 -- Handling: `env-Cˢ-handle` splits the action, `handle-CRed` runs the scrutinee
 -- and then the clauses and the sequel.
@@ -396,6 +444,9 @@ mutual
   FL-C γ pγ (handle M `with H `in N) =
     FL-handle γ pγ M H N (FL-C γ pγ M)
       (λ γ' pγ' → FL-C γ' pγ' (H _ _)) (λ γ' pγ' → FL-C γ' pγ' N)
+
+  FL-C γ pγ (recℕ V M N p) =
+    FL-recℕ γ pγ V M N p (FL-C γ pγ M) (λ γ' pγ' → FL-C γ' pγ' N)
 
   FL-C γ pγ (match V `in M) =
     FL-match γ pγ V M (FL-V γ pγ V) (λ γ' pγ' → FL-C γ' pγ' M)

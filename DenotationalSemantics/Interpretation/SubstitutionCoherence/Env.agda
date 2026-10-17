@@ -389,6 +389,9 @@ mutual
     subᵛˢ s p V pV , subᶜˢ s p M pM , subᶜˢ s p N pN
   subᶜˢ s p (caseℕ V `zero M `succ N) (pV , pM , pN) =
     subᵛˢ s p V pV , subᶜˢ s p M pM , subᶜˢ (cong-∷-sub s) p N pN
+  subᶜˢ s p (recℕ V M N q) (pV , pM , pN) =
+      subᵛˢ s p V pV , subᶜˢ s p M pM
+    , subᶜˢ (cong-∷-sub (cong-⟨⟩-sub (cong-∷-sub (cong-⟨⟩-sub s)))) p N pN
   subᶜˢ s p (case+ V `inl M `inr N) (pV , pM , pN) =
     subᵛˢ s p V pV , subᶜˢ (cong-∷-sub s) p M pM , subᶜˢ (cong-∷-sub s) p N pN
   subᶜˢ s p (perform op V M) (pV , pM) =
@@ -522,6 +525,21 @@ mutual
                           (C-subst-natˢ s p M pM)
                           (C-subst-natˢ (cong-∷-sub s) p N pN))
              (≈ᵐ-sym (caseℕᵐ-∘ _ _ _ _))
+  -- the recursor is natural in its context: `recℕᵐ-∘`, `recℕ-stepᵗ-nat`
+  C-subst-natˢ s p (recℕ V M N q) (pV , pM , pN) =
+    ≈ᵐ-trans (∘ᵐ-cong (recℕᵐ-cong (C-subst-natˢ s p M pM)
+                (recℕ-stepᵗ-nat q _ _ (⟦ s ⟧ˢ₀ p)
+                  (C-subst-natˢ (cong-∷-sub (cong-⟨⟩-sub (cong-∷-sub (cong-⟨⟩-sub s))))
+                                p N pN)))
+              ⟨ ≈ᵐ-refl , V-subst-natˢ s p V pV ⟩ᵐ-cong)
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (recℕᵐ-∘ _ _ _)))
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ
+       (≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)
+       (≈ᵐ-trans ⟨ ≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))
+                 , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
+                 (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))))
+    (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
   C-subst-natˢ s p (case+ V `inl M `inr N) (pV , pM , pN) =
     ≈ᵐ-trans (caseᵐ-cong (V-subst-natˢ s p V pV)
                          (C-subst-natˢ (cong-∷-sub s) p M pM)

@@ -105,6 +105,10 @@ mutual
     ifᵐ-cong (⟦⟧ᵛᵗ-irr V pV pV') (⟦⟧ᶜᵗ-irr M pM pM') (⟦⟧ᶜᵗ-irr N pN pN')
   ⟦⟧ᶜᵗ-irr (caseℕ V `zero M `succ N) (pV , pM , pN) (pV' , pM' , pN') =
     caseℕᵐ-cong (⟦⟧ᵛᵗ-irr V pV pV') (⟦⟧ᶜᵗ-irr M pM pM') (⟦⟧ᶜᵗ-irr N pN pN')
+  ⟦⟧ᶜᵗ-irr (recℕ V M N p) (pV , pM , pN) (pV' , pM' , pN') =
+    ∘ᵐ-cong (recℕᵐ-cong (⟦⟧ᶜᵗ-irr M pM pM')
+                        (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (⟦⟧ᶜᵗ-irr N pN pN'))))))
+            ⟨ ≈ᵐ-refl , ⟦⟧ᵛᵗ-irr V pV pV' ⟩ᵐ-cong
   ⟦⟧ᶜᵗ-irr (case+ V `inl M `inr N) (pV , pM , pN) (pV' , pM' , pN') =
     caseᵐ-cong (⟦⟧ᵛᵗ-irr V pV pV') (⟦⟧ᶜᵗ-irr M pM pM') (⟦⟧ᶜᵗ-irr N pN pN')
   ⟦⟧ᶜᵗ-irr (perform op V M) (pV , pM) (pV' , pM') =

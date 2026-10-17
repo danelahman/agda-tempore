@@ -15,9 +15,9 @@
 -- raw term, have no counterpart in `Syntax.Language`, and are  --
 -- identities on typing.                                        --
 --                                                              --
--- The rules `recℕ` for natural numbers, `nil`, `cons`, `caseL` --
--- and `recL` for lists, and `cmp` for comparisons, have no     --
--- counterpart in `Syntax.Language` either.                     --
+-- The rules `nil`, `cons`, `caseL` and `recL` for lists, and   --
+-- `cmp` for comparisons, have no counterpart in               --
+-- `Syntax.Language` either.                                    --
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ; suc)

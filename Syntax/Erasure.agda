@@ -53,6 +53,7 @@ mutual
     absurd            : ErV → ErC
     if_`then_`else_   : ErV → ErC → ErC → ErC
     caseℕ_`zero_`succ_ : ErV → ErC → ErC → ErC
+    recℕ              : ErV → ErC → ErC → ErC
     case+_`inl_`inr_  : ErV → ErC → ErC → ErC
     perform           : Op → ErV → ErC → ErC
     delay             : 𝔻 → ErC → ErC
@@ -95,6 +96,7 @@ mutual
   ⌊ absurd V ⌋ᶜ               = absurd ⌊ V ⌋ᵛ
   ⌊ if V `then M `else N ⌋ᶜ   = if ⌊ V ⌋ᵛ `then ⌊ M ⌋ᶜ `else ⌊ N ⌋ᶜ
   ⌊ caseℕ V `zero M `succ N ⌋ᶜ = caseℕ ⌊ V ⌋ᵛ `zero ⌊ M ⌋ᶜ `succ ⌊ N ⌋ᶜ
+  ⌊ recℕ V M N p ⌋ᶜ            = recℕ ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ ⌊ N ⌋ᶜ
   ⌊ case+ V `inl M `inr N ⌋ᶜ = case+ ⌊ V ⌋ᵛ `inl ⌊ M ⌋ᶜ `inr ⌊ N ⌋ᶜ
   ⌊ perform op V M ⌋ᶜ         = perform op ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ
   ⌊ delay τ M ⌋ᶜ              = delay τ ⌊ M ⌋ᶜ

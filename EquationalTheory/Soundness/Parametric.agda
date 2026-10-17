@@ -85,6 +85,7 @@ mutual
   Midᶜ (if-cong p q r)                   = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (caseℕ-cong p q r)                = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (case+-cong p q r)                = Midᵛ p × Midᶜ q × Midᶜ r
+  Midᶜ (recℕ-cong p q r)                 = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (perform-cong p q)                = Midᵛ p × Midᶜ q
   Midᶜ (delay-cong p)                    = Midᶜ p
   Midᶜ (handle-cong p hs q)              =

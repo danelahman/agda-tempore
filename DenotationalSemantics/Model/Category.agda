@@ -950,3 +950,272 @@ record Category : Set₂ where
               → k ∘ᵐ caseℕᵐ s f g ≈ᵐ caseℕᵐ s (k ∘ᵐ f) (k ∘ᵐ g)
   caseℕᵐ-post s f g k =
     ≈ᵐ-trans (caseᵐ-post _ _ _ k) (caseᵐ-cong ≈ᵐ-refl (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) ≈ᵐ-refl)
+
+
+  -- ITERATION AND PRIMITIVE RECURSION IN A CONTEXT
+  --
+  -- In a cartesian closed category the plain natural numbers object is
+  -- parametrised: iterating in `X ⇒ᵐ A` gives `piterᵐ`, the iteration stable
+  -- under a context `X`, and iterating it in `ℕᵐ ×ᵐ A`, a counter alongside
+  -- the result, gives the primitive recursor `recℕᵐ`, whose step receives the
+  -- predecessor. Each is characterised by its two β laws and uniqueness.
+
+  -- the curried iteration whose uncurrying is `piterᵐ`
+
+  piter-curriedᵐ : ∀ {X A} → X →ᵐ A → X ×ᵐ A →ᵐ A → ℕᵐ →ᵐ X ⇒ᵐ A
+  piter-curriedᵐ f g = iterᵐ (curryᵐ (f ∘ᵐ sndᵐ)) (curryᵐ (g ∘ᵐ ⟨ sndᵐ , appᵐ ⟩ᵐ))
+
+  piterᵐ : ∀ {X A} → X →ᵐ A → X ×ᵐ A →ᵐ A → X ×ᵐ ℕᵐ →ᵐ A
+  piterᵐ f g = uncurryᵐ (piter-curriedᵐ f g) ∘ᵐ swapᵐ
+
+  -- application of an exponential-valued map, transposed back
+
+  appᵐ-mapˣᵐ : ∀ {X A B} → (k : X →ᵐ A ⇒ᵐ B) → appᵐ ∘ᵐ mapˣᵐ k idᵐ ≈ᵐ uncurryᵐ k
+  appᵐ-mapˣᵐ k =
+    ≈ᵐ-trans (≈ᵐ-sym (uncurryᵐ-nat k idᵐ)) (uncurryᵐ-cong (∘ᵐ-identityˡ k))
+
+  piterᵐ-cong : ∀ {X A} {f f' : X →ᵐ A} {g g' : X ×ᵐ A →ᵐ A}
+              → f ≈ᵐ f' → g ≈ᵐ g' → piterᵐ f g ≈ᵐ piterᵐ f' g'
+  piterᵐ-cong pf pg =
+    ∘ᵐ-congˡ (uncurryᵐ-cong (iterᵐ-cong (curryᵐ-cong (∘ᵐ-congˡ pf))
+                                        (curryᵐ-cong (∘ᵐ-congˡ pg))))
+
+  piterᵐ-zero : ∀ {X A} → (f : X →ᵐ A) → (g : X ×ᵐ A →ᵐ A)
+              → piterᵐ f g ∘ᵐ ⟨ idᵐ , zeroᵐ ∘ᵐ terminalᵐ ⟩ᵐ ≈ᵐ f
+  piterᵐ-zero f g =
+    ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (swapᵐ-⟨⟩ _ _)
+                          (≈ᵐ-sym (≈ᵐ-trans (mapˣᵐ-∘⟨⟩ zeroᵐ idᵐ terminalᵐ idᵐ)
+                                            ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (uncurryᵐ-nat zeroᵐ _)))
+    (≈ᵐ-trans (∘ᵐ-congˡ (uncurryᵐ-cong (iterᵐ-zero _ _)))
+    (≈ᵐ-trans (∘ᵐ-congˡ (curryᵐ-uncurryᵐ-iso _))
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)) (∘ᵐ-identityʳ f))))))))
+
+  -- the transposed step, applied after the curried iteration
+  private
+    piter-step : ∀ {X A} → (g : X ×ᵐ A →ᵐ A) → (k : X ×ᵐ ℕᵐ →ᵐ A)
+               → (K : ℕᵐ →ᵐ X ⇒ᵐ A) → uncurryᵐ K ∘ᵐ swapᵐ ≈ᵐ k
+               → uncurryᵐ (curryᵐ (g ∘ᵐ ⟨ sndᵐ , appᵐ ⟩ᵐ) ∘ᵐ K) ∘ᵐ swapᵐ
+               ≈ᵐ g ∘ᵐ ⟨ fstᵐ , k ⟩ᵐ
+    piter-step g k K e =
+      ≈ᵐ-trans (∘ᵐ-congˡ (uncurryᵐ-nat K _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congˡ (curryᵐ-uncurryᵐ-iso _)))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (∘ᵐ-congʳ
+        (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+          ⟨ ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+            (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩ᵐ-sndᵐ _ _) (∘ᵐ-identityˡ _)))
+                      (⟨⟩ᵐ-sndᵐ _ _))
+          , ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+            (≈ᵐ-trans (∘ᵐ-congˡ (appᵐ-mapˣᵐ K)) e) ⟩ᵐ-cong)))))
+
+  piterᵐ-succ : ∀ {X A} → (f : X →ᵐ A) → (g : X ×ᵐ A →ᵐ A)
+              → piterᵐ f g ∘ᵐ mapˣᵐ idᵐ succᵐ ≈ᵐ g ∘ᵐ ⟨ fstᵐ , piterᵐ f g ⟩ᵐ
+  piterᵐ-succ f g =
+    ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (swapᵐ-mapˣᵐ idᵐ succᵐ))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (uncurryᵐ-nat succᵐ _)))
+    (≈ᵐ-trans (∘ᵐ-congˡ (uncurryᵐ-cong (iterᵐ-succ _ _)))
+              (piter-step g (piterᵐ f g) (piter-curriedᵐ f g) ≈ᵐ-refl)))))
+
+  piterᵐ-unique : ∀ {X A} → (f : X →ᵐ A) → (g : X ×ᵐ A →ᵐ A) → (h : X ×ᵐ ℕᵐ →ᵐ A)
+                → h ∘ᵐ ⟨ idᵐ , zeroᵐ ∘ᵐ terminalᵐ ⟩ᵐ ≈ᵐ f
+                → h ∘ᵐ mapˣᵐ idᵐ succᵐ ≈ᵐ g ∘ᵐ ⟨ fstᵐ , h ⟩ᵐ
+                → h ≈ᵐ piterᵐ f g
+  piterᵐ-unique {X} {A} f g h p q =
+    ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ h))
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym swapᵐ-swapᵐ))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (∘ᵐ-congˡ (≈ᵐ-trans (≈ᵐ-sym (curryᵐ-uncurryᵐ-iso (h ∘ᵐ swapᵐ)))
+                        (uncurryᵐ-cong H≈)))))
+    where
+      H : ℕᵐ →ᵐ X ⇒ᵐ A
+      H = curryᵐ (h ∘ᵐ swapᵐ)
+
+      H-unc : uncurryᵐ H ∘ᵐ swapᵐ ≈ᵐ h
+      H-unc =
+        ≈ᵐ-trans (∘ᵐ-congˡ (curryᵐ-uncurryᵐ-iso _))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ swapᵐ-swapᵐ) (∘ᵐ-identityʳ h)))
+
+      -- at zero the argument is fixed by the unit
+      zero-ctx : mapˣᵐ idᵐ zeroᵐ ∘ᵐ swapᵐ
+               ≈ᵐ ⟨ idᵐ , zeroᵐ ∘ᵐ terminalᵐ ⟩ᵐ ∘ᵐ sndᵐ {𝟙ᵐ} {X}
+      zero-ctx =
+        ≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)
+        (≈ᵐ-sym (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+                 ⟨ ≈ᵐ-refl
+                 , ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                   (∘ᵐ-congʳ (≈ᵐ-trans terminalᵐ-unique
+                                       (≈ᵐ-sym terminalᵐ-unique))) ⟩ᵐ-cong))
+
+      H-zero : H ∘ᵐ zeroᵐ ≈ᵐ curryᵐ (f ∘ᵐ sndᵐ)
+      H-zero =
+        ≈ᵐ-trans (≈ᵐ-sym (curryᵐ-nat zeroᵐ _))
+        (curryᵐ-cong
+          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+          (≈ᵐ-trans (∘ᵐ-congʳ (swapᵐ-mapˣᵐ zeroᵐ idᵐ))
+          (≈ᵐ-trans (∘ᵐ-congʳ zero-ctx)
+          (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ p))))))
+
+      H-succ : H ∘ᵐ succᵐ ≈ᵐ curryᵐ (g ∘ᵐ ⟨ sndᵐ , appᵐ ⟩ᵐ) ∘ᵐ H
+      H-succ =
+        ≈ᵐ-trans (≈ᵐ-sym (curryᵐ-nat succᵐ _))
+        (≈ᵐ-trans (curryᵐ-cong
+          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+          (≈ᵐ-trans (∘ᵐ-congʳ (swapᵐ-mapˣᵐ succᵐ idᵐ))
+          (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+          (≈ᵐ-trans (∘ᵐ-congˡ q)
+          (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (piter-step g h H H-unc)))
+          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+          (≈ᵐ-trans (∘ᵐ-congʳ swapᵐ-swapᵐ) (∘ᵐ-identityʳ _)))))))))
+        (uncurryᵐ-curryᵐ-iso _))
+
+      H≈ : H ≈ᵐ piter-curriedᵐ f g
+      H≈ = iterᵐ-unique _ _ H H-zero H-succ
+
+  -- two maps satisfying the same parametrised iteration equations agree
+
+  piterᵐ-ext : ∀ {X A} → (f : X →ᵐ A) → (g : X ×ᵐ A →ᵐ A) → (h h' : X ×ᵐ ℕᵐ →ᵐ A)
+             → h ∘ᵐ ⟨ idᵐ , zeroᵐ ∘ᵐ terminalᵐ ⟩ᵐ ≈ᵐ f
+             → h ∘ᵐ mapˣᵐ idᵐ succᵐ ≈ᵐ g ∘ᵐ ⟨ fstᵐ , h ⟩ᵐ
+             → h' ∘ᵐ ⟨ idᵐ , zeroᵐ ∘ᵐ terminalᵐ ⟩ᵐ ≈ᵐ f
+             → h' ∘ᵐ mapˣᵐ idᵐ succᵐ ≈ᵐ g ∘ᵐ ⟨ fstᵐ , h' ⟩ᵐ
+             → h ≈ᵐ h'
+  piterᵐ-ext f g h h' p q p' q' =
+    ≈ᵐ-trans (piterᵐ-unique f g h p q) (≈ᵐ-sym (piterᵐ-unique f g h' p' q'))
+
+  -- the pairing of the projections
+
+  ⟨fst,snd⟩ᵐ : ∀ {A B} → ⟨ fstᵐ , sndᵐ ⟩ᵐ ≈ᵐ idᵐ {A ×ᵐ B}
+  ⟨fst,snd⟩ᵐ = ≈ᵐ-sym (⟨⟩ᵐ-unique _ _ idᵐ (∘ᵐ-identityʳ _) (∘ᵐ-identityʳ _))
+
+  -- the inverse associator on a right-nested pairing
+
+  ×ᵐ-assoc⁻¹-⟨⟩ : ∀ {X A B C} → (a : X →ᵐ A) → (b : X →ᵐ B) → (c : X →ᵐ C)
+               → ×ᵐ-assoc⁻¹ ∘ᵐ ⟨ a , ⟨ b , c ⟩ᵐ ⟩ᵐ ≈ᵐ ⟨ ⟨ a , b ⟩ᵐ , c ⟩ᵐ
+  ×ᵐ-assoc⁻¹-⟨⟩ a b c =
+    ≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+      ⟨ ≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+          ⟨ ⟨⟩ᵐ-fstᵐ _ _
+          , ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)) (⟨⟩ᵐ-fstᵐ _ _)) ⟩ᵐ-cong
+      , ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)) (⟨⟩ᵐ-sndᵐ _ _)) ⟩ᵐ-cong
+
+  -- Primitive recursion: a base, and a step receiving the context, the
+  -- predecessor, and the result at the predecessor. The counter iterated
+  -- alongside the result is the argument itself (`recℕ-counterᵐ`).
+
+  recℕ-stepᵐ : ∀ {X A} → (X ×ᵐ ℕᵐ) ×ᵐ A →ᵐ A → X ×ᵐ (ℕᵐ ×ᵐ A) →ᵐ ℕᵐ ×ᵐ A
+  recℕ-stepᵐ g = ⟨ succᵐ ∘ᵐ fstᵐ ∘ᵐ sndᵐ , g ∘ᵐ ×ᵐ-assoc⁻¹ ⟩ᵐ
+
+  recℕ-pairᵐ : ∀ {X A} → X →ᵐ A → (X ×ᵐ ℕᵐ) ×ᵐ A →ᵐ A → X ×ᵐ ℕᵐ →ᵐ ℕᵐ ×ᵐ A
+  recℕ-pairᵐ f g = piterᵐ ⟨ zeroᵐ ∘ᵐ terminalᵐ , f ⟩ᵐ (recℕ-stepᵐ g)
+
+  recℕᵐ : ∀ {X A} → X →ᵐ A → (X ×ᵐ ℕᵐ) ×ᵐ A →ᵐ A → X ×ᵐ ℕᵐ →ᵐ A
+  recℕᵐ f g = sndᵐ ∘ᵐ recℕ-pairᵐ f g
+
+  recℕ-counterᵐ : ∀ {X A} → (f : X →ᵐ A) → (g : (X ×ᵐ ℕᵐ) ×ᵐ A →ᵐ A)
+                → fstᵐ ∘ᵐ recℕ-pairᵐ f g ≈ᵐ sndᵐ
+  recℕ-counterᵐ f g =
+    piterᵐ-ext (zeroᵐ ∘ᵐ terminalᵐ) (succᵐ ∘ᵐ sndᵐ) _ _
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (piterᵐ-zero _ _)) (⟨⟩ᵐ-fstᵐ _ _)))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (piterᵐ-succ _ _))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                           (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _))
+                                     (≈ᵐ-sym (⟨⟩ᵐ-sndᵐ fstᵐ _)))))
+                (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))))
+      (⟨⟩ᵐ-sndᵐ _ _)
+      (≈ᵐ-trans (⟨⟩ᵐ-sndᵐ _ _)
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ _))
+                (∘ᵐ-congʳ (≈ᵐ-sym ⟨fst,snd⟩ᵐ))))
+
+  recℕᵐ-cong : ∀ {X A} {f f' : X →ᵐ A} {g g' : (X ×ᵐ ℕᵐ) ×ᵐ A →ᵐ A}
+             → f ≈ᵐ f' → g ≈ᵐ g' → recℕᵐ f g ≈ᵐ recℕᵐ f' g'
+  recℕᵐ-cong pf pg =
+    ∘ᵐ-congʳ (piterᵐ-cong ⟨ ≈ᵐ-refl , pf ⟩ᵐ-cong ⟨ ≈ᵐ-refl , ∘ᵐ-congˡ pg ⟩ᵐ-cong)
+
+  recℕᵐ-zero : ∀ {X A} → (f : X →ᵐ A) → (g : (X ×ᵐ ℕᵐ) ×ᵐ A →ᵐ A)
+             → recℕᵐ f g ∘ᵐ ⟨ idᵐ , zeroᵐ ∘ᵐ terminalᵐ ⟩ᵐ ≈ᵐ f
+  recℕᵐ-zero f g =
+    ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (piterᵐ-zero _ _)) (⟨⟩ᵐ-sndᵐ _ _))
+
+  recℕᵐ-succ : ∀ {X A} → (f : X →ᵐ A) → (g : (X ×ᵐ ℕᵐ) ×ᵐ A →ᵐ A)
+             → recℕᵐ f g ∘ᵐ mapˣᵐ idᵐ succᵐ ≈ᵐ g ∘ᵐ ⟨ idᵐ , recℕᵐ f g ⟩ᵐ
+  recℕᵐ-succ f g =
+    ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (piterᵐ-succ _ _))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (∘ᵐ-congʳ
+      (≈ᵐ-trans (∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ⟨⟩ᵐ-unique _ _ _ ≈ᵐ-refl ≈ᵐ-refl ⟩ᵐ-cong)
+      (≈ᵐ-trans (×ᵐ-assoc⁻¹-⟨⟩ _ _ _)
+        ⟨ ≈ᵐ-trans ⟨ ≈ᵐ-refl , recℕ-counterᵐ f g ⟩ᵐ-cong ⟨fst,snd⟩ᵐ
+        , ≈ᵐ-refl ⟩ᵐ-cong)))))))
+
+  recℕᵐ-unique : ∀ {X A} → (f : X →ᵐ A) → (g : (X ×ᵐ ℕᵐ) ×ᵐ A →ᵐ A)
+               → (h : X ×ᵐ ℕᵐ →ᵐ A)
+               → h ∘ᵐ ⟨ idᵐ , zeroᵐ ∘ᵐ terminalᵐ ⟩ᵐ ≈ᵐ f
+               → h ∘ᵐ mapˣᵐ idᵐ succᵐ ≈ᵐ g ∘ᵐ ⟨ idᵐ , h ⟩ᵐ
+               → h ≈ᵐ recℕᵐ f g
+  recℕᵐ-unique f g h p q =
+    ≈ᵐ-trans (≈ᵐ-sym (⟨⟩ᵐ-sndᵐ sndᵐ h))
+             (∘ᵐ-congʳ (piterᵐ-unique _ _ ⟨ sndᵐ , h ⟩ᵐ pz ps))
+    where
+      pz : ⟨ sndᵐ , h ⟩ᵐ ∘ᵐ ⟨ idᵐ , zeroᵐ ∘ᵐ terminalᵐ ⟩ᵐ
+         ≈ᵐ ⟨ zeroᵐ ∘ᵐ terminalᵐ , f ⟩ᵐ
+      pz = ≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _) ⟨ ⟨⟩ᵐ-sndᵐ _ _ , p ⟩ᵐ-cong
+
+      ps : ⟨ sndᵐ , h ⟩ᵐ ∘ᵐ mapˣᵐ idᵐ succᵐ
+         ≈ᵐ recℕ-stepᵐ g ∘ᵐ ⟨ fstᵐ , ⟨ sndᵐ , h ⟩ᵐ ⟩ᵐ
+      ps =
+        ≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+        (≈ᵐ-trans ⟨ ⟨⟩ᵐ-sndᵐ _ _ , q ⟩ᵐ-cong
+        (≈ᵐ-sym (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+          ⟨ ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                      (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)) (⟨⟩ᵐ-fstᵐ _ _))))
+          , ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (∘ᵐ-congʳ (≈ᵐ-trans (×ᵐ-assoc⁻¹-⟨⟩ _ _ _)
+                                ⟨ ⟨fst,snd⟩ᵐ , ≈ᵐ-refl ⟩ᵐ-cong)) ⟩ᵐ-cong)))
+
+  -- naturality in the context
+
+  recℕᵐ-∘ : ∀ {Y X A} → (f : X →ᵐ A) → (g : (X ×ᵐ ℕᵐ) ×ᵐ A →ᵐ A) → (k : Y →ᵐ X)
+          → recℕᵐ f g ∘ᵐ mapˣᵐ k idᵐ
+          ≈ᵐ recℕᵐ (f ∘ᵐ k) (g ∘ᵐ mapˣᵐ (mapˣᵐ k idᵐ) idᵐ)
+  recℕᵐ-∘ f g k =
+    recℕᵐ-unique _ _ _
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ
+        (≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)
+        (≈ᵐ-sym (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+          ⟨ ≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _))
+          , ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans terminalᵐ-unique (≈ᵐ-sym terminalᵐ-unique)))
+                      (≈ᵐ-sym (∘ᵐ-identityˡ _))) ⟩ᵐ-cong))))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ (recℕᵐ-zero f g)))))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-comm k succᵐ))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (recℕᵐ-succ f g))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ
+        (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+        (≈ᵐ-sym (≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)
+                  ⟨ ≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))
+                  , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))))
+      (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))))

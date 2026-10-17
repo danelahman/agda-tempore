@@ -177,6 +177,9 @@ mutual
   C-sub₀-≐ˢ₀ h (caseℕ V `zero M `succ N) =
     cong₃ caseℕ_`zero_`succ_ (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M)
       (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) N)
+  C-sub₀-≐ˢ₀ h (recℕ V M N p) =
+    cong₃ (λ a b c → recℕ a b c p) (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M)
+      (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _) h) N)
   C-sub₀-≐ˢ₀ h (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_ (V-sub₀-≐ˢ₀ h V)
       (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) M)

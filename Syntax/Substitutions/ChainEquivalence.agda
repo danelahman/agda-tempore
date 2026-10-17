@@ -358,6 +358,16 @@ C-sub-caseℕ : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ')
 C-sub-caseℕ []ˢ      V M N = refl
 C-sub-caseℕ (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-caseℕ σ V M N)
 
+C-sub-recℕ : ∀ {Γ Γ' B ε} → (σ : Sub [] Γ Γ')
+           → (V : Γ' ⊢V⦂ Nat) → (M : Γ' ⊢C⦂ B ‼ ε)
+           → (N : (Γ' ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+           → (p : ε ·ₑ ε ≾ₑ ε)
+           → C-sub σ (recℕ V M N p)
+           ≡ recℕ (V-sub σ V) (C-sub σ M)
+                  (C-sub (cong-∷-subˢ (cong-⟨⟩-subˢ (cong-∷-subˢ (cong-⟨⟩-subˢ σ)))) N) p
+C-sub-recℕ []ˢ      V M N p = refl
+C-sub-recℕ (s ◅ σ) V M N p = cong (C-sub₀ s) (C-sub-recℕ σ V M N p)
+
 C-sub-case+ : ∀ {Γ Γ' A B C} → (σ : Sub [] Γ Γ')
             → (V : Γ' ⊢V⦂ A |+| B) → (M : Γ' ∷ A ⊢C⦂ C) → (N : Γ' ∷ B ⊢C⦂ C)
             → C-sub σ (case+ V `inl M `inr N)
@@ -499,6 +509,12 @@ mutual
       (trans (cong₃ caseℕ_`zero_`succ_ (V-sub-≐ˢ h V)
                 (C-sub-≐ˢ h M) (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) N))
              (sym (C-sub-caseℕ σ' V M N)))
+  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (recℕ V M N p) =
+    trans (C-sub-recℕ σ V M N p)
+      (trans (cong₃ (λ a b c → recℕ a b c p) (V-sub-≐ˢ h V) (C-sub-≐ˢ h M)
+                (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ
+                             (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h)))) N))
+             (sym (C-sub-recℕ σ' V M N p)))
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (case+ V `inl M `inr N) =
     trans (C-sub-case+ σ V M N)
       (trans (cong₃ case+_`inl_`inr_ (V-sub-≐ˢ h V)

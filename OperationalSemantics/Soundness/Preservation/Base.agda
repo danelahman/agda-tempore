@@ -64,6 +64,7 @@ open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy 
 open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon GE
+open import DenotationalSemantics.Interpretation.Recursion S Cat Fut Pst Adj GTy Mon GE
 
 open import DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj
@@ -99,6 +100,8 @@ stepᴾˢ CASE-INL            pS _              = pS
 stepᴾˢ CASE-INR            pS _              = pS
 stepᴾˢ CASEℕ-ZERO          pS _              = pS
 stepᴾˢ CASEℕ-SUCC          pS _              = pS
+stepᴾˢ RECℕ-ZERO           pS _              = pS
+stepᴾˢ RECℕ-SUCC           pS _              = pS
 stepᴾˢ (SEQ-STEP r _)      pS (pM , _)       = stepᴾˢ r pS pM
 stepᴾˢ SEQ-RET             pS _              = pS
 stepᴾˢ SEQ-OP              pS _              = pS
@@ -113,6 +116,7 @@ stepᴾˢ SUB-APP             pS _              = pS
 stepᴾˢ SUB-IF              pS _              = pS
 stepᴾˢ SUB-CASE            pS _              = pS
 stepᴾˢ SUB-CASEℕ           pS _              = pS
+stepᴾˢ SUB-RECℕ            pS _              = pS
 stepᴾˢ SUB                 pS _              = pS
 
 -- Kleisli composition with a time transition: running a computation over
@@ -143,6 +147,8 @@ step-grade CASE-INL             = uₑ
 step-grade CASE-INR             = uₑ
 step-grade CASEℕ-ZERO           = uₑ
 step-grade CASEℕ-SUCC           = uₑ
+step-grade RECℕ-ZERO            = uₑ
+step-grade RECℕ-SUCC            = uₑ
 step-grade (SEQ-STEP r _)       = step-grade r
 step-grade SEQ-RET              = uₑ
 step-grade SEQ-OP               = uₑ
@@ -156,6 +162,7 @@ step-grade SUB-APP              = uₑ
 step-grade SUB-IF               = uₑ
 step-grade SUB-CASE             = uₑ
 step-grade SUB-CASEℕ            = uₑ
+step-grade SUB-RECℕ             = uₑ
 step-grade SUB                  = uₑ
 
 -- The transition itself. `DELAY` ticks: it names the present as the past of
@@ -174,6 +181,8 @@ stepᵀ CASE-INL          = ηᵀ
 stepᵀ CASE-INR          = ηᵀ
 stepᵀ CASEℕ-ZERO        = ηᵀ
 stepᵀ CASEℕ-SUCC        = ηᵀ
+stepᵀ RECℕ-ZERO         = ηᵀ
+stepᵀ RECℕ-SUCC         = ηᵀ
 stepᵀ (SEQ-STEP r _)    = stepᵀ r
 stepᵀ SEQ-RET           = ηᵀ
 stepᵀ SEQ-OP            = ηᵀ
@@ -187,6 +196,7 @@ stepᵀ SUB-APP           = ηᵀ
 stepᵀ SUB-IF            = ηᵀ
 stepᵀ SUB-CASE          = ηᵀ
 stepᵀ SUB-CASEℕ         = ηᵀ
+stepᵀ SUB-RECℕ          = ηᵀ
 stepᵀ SUB               = ηᵀ
 
 -- The step's effect, composed with the target's, refines the source's. This is
@@ -204,6 +214,8 @@ step-≾ {ε = ε} CASE-INL = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} CASE-INR = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} CASEℕ-ZERO = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} CASEℕ-SUCC = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ {ε = ε} RECℕ-ZERO = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ {ε = ε} RECℕ-SUCC = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ (SEQ-STEP {ε₂ = ε₂} {ε₃ = ε₃} r _) =
   ≾ₑ-trans
     (≾ₑ-reflexive (sym (·ₑ-assoc (step-grade r) ε₃ ε₂)))
@@ -226,6 +238,7 @@ step-≾ (SUB-APP {r = _ ‼ₛ s}) = ≾ₑ-trans (≾ₑ-reflexive (·ₑ-iden
 step-≾ {ε = ε} SUB-IF  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} SUB-CASE = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} SUB-CASEℕ = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ {ε = ε} SUB-RECℕ = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ (SUB {w = _ ‼ₛ q}) = ≾ₑ-trans (≾ₑ-reflexive (·ₑ-identityˡ _)) q
 
 -- Sub-effecting is irrelevant in its witness (the effect order is).
@@ -549,6 +562,16 @@ sound-SUB-CASEℕ : ∀ {Γ C} → (V : Γ ⊢V⦂ Nat)
                 → ⟦ caseℕ subV V Natₛ `zero M `succ N ⟧ᶜᵗ (pV , pM , pN)
                 ≈ᵐ ⟦ caseℕ V `zero M `succ N ⟧ᶜᵗ (pV , pM , pN)
 sound-SUB-CASEℕ V M N pV pM pN = caseℕᵐ-cong (∘ᵐ-identityˡ _) ≈ᵐ-refl ≈ᵐ-refl
+
+-- SUB-RECℕ: `Nat <:ᵛ Nat` denotes the identity.
+
+sound-SUB-RECℕ : ∀ {Γ B ε} → (V : Γ ⊢V⦂ Nat) → (M : Γ ⊢C⦂ B ‼ ε)
+               → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+               → (p : ε ·ₑ ε ≾ₑ ε)
+               → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+               → ⟦ recℕ (subV V Natₛ) M N p ⟧ᶜᵗ (pV , pM , pN)
+               ≈ᵐ ⟦ recℕ V M N p ⟧ᶜᵗ (pV , pM , pN)
+sound-SUB-RECℕ V M N p pV pM pN = ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
 
 -- CASE-INL / CASE-INR: taking a branch is the coproduct's beta law, followed
 -- by the substitution coherence.
