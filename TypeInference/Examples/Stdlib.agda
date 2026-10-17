@@ -220,7 +220,8 @@ expected-compose =
 -- let min x y = if x < y then x else y
 -- prototype: [α] α → α → α
 --
--- The comparison, a primitive absent from the calculus, is passed in.
+-- The comparison is passed in as a function, at any type; `cmp`
+-- would require an eternal one.
 -- The result is a common supertype of `x` and `y` (`α₀ <: α₁`,
 -- `α₂ <: α₁`). The conditions: `x` and `y` are used after the
 -- comparison has run, so each is eternal or the comparison takes no

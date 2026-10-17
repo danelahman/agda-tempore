@@ -14,9 +14,6 @@
 -- The rules `annᵛ` and `annᶜ` record a type annotation of the  --
 -- raw term, have no counterpart in `Syntax.Language`, and are  --
 -- identities on typing.                                        --
---                                                              --
--- The rule `cmp` for comparisons has no counterpart in         --
--- `Syntax.Language` either.                                    --
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ; suc)

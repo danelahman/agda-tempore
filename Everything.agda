@@ -48,6 +48,10 @@
 --     soundness and completeness, principal type schemes relative to   --
 --     an axiomatised constraint solver, and a concrete solver with a   --
 --     simplified report of its solutions                               --
+--                                                                      --
+--   - the bridge from the open calculus to the closed one: an open     --
+--     derivation at a closed instance is a closed typing of the same   --
+--     term, so inferred programs are typed in the semantics' calculus  --
 --------------------------------------------------------------------------
 
 open import Syntax.LanguageSpec
@@ -475,3 +479,22 @@ import TypeInference.SolverImpl
 ---- `agda TypeInference/Examples.agda`
 
 -- import TypeInference.Examples
+
+
+-- BRIDGE
+---------
+
+---- Closed open types as closed types, and the side judgements at a
+---- closed instance
+
+open import Bridge.Types
+open import Bridge.Judgements
+
+---- Open derivations at a closed instance as closed typings of the same
+---- term
+
+open import Bridge.Terms
+
+---- Inferred programs are typed in the closed calculus
+
+import Bridge.Inference
