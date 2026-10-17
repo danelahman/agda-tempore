@@ -57,6 +57,7 @@ open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 ⟦ Unitₛ      ⟧<:ᵛ = idᵐ
 ⟦ Boolₛ      ⟧<:ᵛ = idᵐ
 ⟦ p |×|ₛ q   ⟧<:ᵛ = mapˣᵐ ⟦ p ⟧<:ᵛ ⟦ q ⟧<:ᵛ
+⟦ p |+|ₛ q   ⟧<:ᵛ = map+ᵐ ⟦ p ⟧<:ᵛ ⟦ q ⟧<:ᵛ
 ⟦ Emptyₛ     ⟧<:ᵛ = idᵐ
 ⟦ p ⇒ₛ q     ⟧<:ᵛ = map⇒ᵐ ⟦ p ⟧<:ᵛ ⟦ q ⟧<:ᶜ
 ⟦ [_]ₛ_ {ρ' = ρ'} q p ⟧<:ᵛ = [ ρ' ]ᶠ ⟦ p ⟧<:ᵛ ∘ᵐ []-≤ q
@@ -81,6 +82,8 @@ open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 ⟦⟧<:ᵛ-refl Bool      = ≈ᵐ-refl
 ⟦⟧<:ᵛ-refl (A |×| B) =
   ≈ᵐ-trans (mapˣᵐ-cong (⟦⟧<:ᵛ-refl A) (⟦⟧<:ᵛ-refl B)) mapˣᵐ-idᵐ
+⟦⟧<:ᵛ-refl (A |+| B) =
+  ≈ᵐ-trans (map+ᵐ-cong (⟦⟧<:ᵛ-refl A) (⟦⟧<:ᵛ-refl B)) map+ᵐ-idᵐ
 ⟦⟧<:ᵛ-refl Empty     = ≈ᵐ-refl
 ⟦⟧<:ᵛ-refl (A ⇒ C)   =
   ≈ᵐ-trans (map⇒ᵐ-cong (⟦⟧<:ᵛ-refl A) (⟦⟧<:ᶜ-refl C)) map⇒ᵐ-idᵐ
@@ -103,6 +106,9 @@ open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 ⟦⟧<:ᵛ-trans (p |×|ₛ r)   (q |×|ₛ s)   =
   ≈ᵐ-trans (mapˣᵐ-cong (⟦⟧<:ᵛ-trans p q) (⟦⟧<:ᵛ-trans r s))
            (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _))
+⟦⟧<:ᵛ-trans (p |+|ₛ r)   (q |+|ₛ s)   =
+  ≈ᵐ-trans (map+ᵐ-cong (⟦⟧<:ᵛ-trans p q) (⟦⟧<:ᵛ-trans r s))
+           (≈ᵐ-sym (map+ᵐ-∘ _ _ _ _))
 ⟦⟧<:ᵛ-trans Emptyₛ       Emptyₛ       = ≈ᵐ-sym (∘ᵐ-identityˡ _)
 ⟦⟧<:ᵛ-trans (p ⇒ₛ r)     (q ⇒ₛ s)     =
   ≈ᵐ-trans (map⇒ᵐ-cong (⟦⟧<:ᵛ-trans q p) (⟦⟧<:ᶜ-trans r s))
@@ -151,4 +157,6 @@ open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 <:ᵛ-eternal-≡ et          Boolₛ        = refl
 <:ᵛ-eternal-≡ (et |×|ₑ e) (p |×|ₛ q)   =
   cong₂ _|×|_ (<:ᵛ-eternal-≡ et p) (<:ᵛ-eternal-≡ e q)
+<:ᵛ-eternal-≡ (et |+|ₑ e) (p |+|ₛ q)   =
+  cong₂ _|+|_ (<:ᵛ-eternal-≡ et p) (<:ᵛ-eternal-≡ e q)
 <:ᵛ-eternal-≡ et          Emptyₛ       = refl

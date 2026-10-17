@@ -152,6 +152,8 @@ T-≤-stepᵀ B APP         g q = ηᵀ-case g q
 T-≤-stepᵀ B MATCH       g q = ηᵀ-case g q
 T-≤-stepᵀ B IF-TRUE     g q = ηᵀ-case g q
 T-≤-stepᵀ B IF-FALSE    g q = ηᵀ-case g q
+T-≤-stepᵀ B CASE-INL    g q = ηᵀ-case g q
+T-≤-stepᵀ B CASE-INR    g q = ηᵀ-case g q
 T-≤-stepᵀ B SEQ-RET     g q = ηᵀ-case g q
 T-≤-stepᵀ B SEQ-OP      g q = ηᵀ-case g q
 T-≤-stepᵀ B HANDLE-RET  g q = ηᵀ-case g q
@@ -160,6 +162,7 @@ T-≤-stepᵀ B BOX         g q = ηᵀ-case g q
 T-≤-stepᵀ B UNBOX       g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB-APP     g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB-IF      g q = ηᵀ-case g q
+T-≤-stepᵀ B SUB-CASE    g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB         g q = ηᵀ-case g q
 -- the congruences transition exactly as their sub-reduction does
 T-≤-stepᵀ B (SEQ-STEP r _)    g q = T-≤-stepᵀ B r g q
@@ -207,6 +210,8 @@ Uniform↝ APP                 _            = ⊤
 Uniform↝ MATCH               _            = ⊤
 Uniform↝ IF-TRUE             _            = ⊤
 Uniform↝ IF-FALSE            _            = ⊤
+Uniform↝ CASE-INL            _            = ⊤
+Uniform↝ CASE-INR            _            = ⊤
 Uniform↝ SEQ-RET             _            = ⊤
 Uniform↝ SEQ-OP              _            = ⊤
 Uniform↝ DELAY               _            = ⊤
@@ -215,6 +220,7 @@ Uniform↝ BOX                 _            = ⊤
 Uniform↝ UNBOX               _            = ⊤
 Uniform↝ SUB-APP             _            = ⊤
 Uniform↝ SUB-IF              _            = ⊤
+Uniform↝ SUB-CASE            _            = ⊤
 Uniform↝ SUB                 _            = ⊤
 
 -- The computation's certificate across a step: every reduct is built from the
@@ -243,6 +249,8 @@ stepᴾᶜ (SEQ-OP {op = op} {S = S} {V = V} {M = M} {N = N}) pS ((pV , pM) , pN
     (pV , pM , renᶜ (cong-∷-ren ((eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN)
 stepᴾᶜ IF-TRUE                          pS (_ , pM , pN) = pM
 stepᴾᶜ IF-FALSE                         pS (_ , pM , pN) = pN
+stepᴾᶜ (CASE-INL {V = V} {M = M})      pS (pV , pM , pN) = subᶜ M split-[] V pM pV
+stepᴾᶜ (CASE-INR {V = V} {N = N})      pS (pV , pM , pN) = subᶜ N split-[] V pN pV
 stepᴾᶜ DELAY                            pS pM         = pM
 stepᴾᶜ (HANDLE-RET {V = V} {N = N})     pS (pV , pN , pH , uH) = ret-subᴾ V N pV pN
 stepᴾᶜ (HANDLE-STEP {S = S} {S' = S'} {H = H} {N = N} r c) pS (pM , pN , pH , uH) =
@@ -271,6 +279,8 @@ stepᴾᶜ (UNBOX {S = S} {z = z} {rel = rel} {p = p} {M = M}) pS pM =
   subᶜ M split-[] (subV (unbox-lookup S z rel) p) pM (unbox-lookupᴾ S z rel pS)
 stepᴾᶜ SUB-APP                          pS pM         = pM
 stepᴾᶜ SUB-IF                           pS pM         = pM
+stepᴾᶜ (SUB-CASE {p = p} {q = q} {M = M} {N = N}) pS (pV , pM , pN) =
+  pV , subCtxᴾ p M pM , subCtxᴾ q N pN
 stepᴾᶜ SUB                              pS pM         = pM
 
 -- Both halves at once, for a configuration.
@@ -306,6 +316,12 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-IF-TRUE M N pM pN)) ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ↝-sound {A = A} r@(IF-FALSE {M = M} {N = N}) pS (_ , pM , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-IF-FALSE M N pM pN)) ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} r@(CASE-INL {V = V} {M = M} {N = N}) pS (pV , pM , pN) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-CASE-INL V M N pV pM pN))
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} r@(CASE-INR {V = V} {M = M} {N = N}) pS (pV , pM , pN) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-CASE-INR V M N pV pM pN))
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 
 -- Allocation and lookup: also plain equations, but ones that mention the store.
 
@@ -328,9 +344,10 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 
 -- Peeling a subsumption: at an eliminated function it splits (`SUB-APP`), at a
--- scrutinised boolean it is the identity (`SUB-IF`), and at a computation it is
--- discarded (`SUB`) — in the first and third the codomain half becomes the
--- step's own refinement of both components.
+-- scrutinised boolean it is the identity (`SUB-IF`), at a scrutinised sum it
+-- moves onto the branches (`SUB-CASE`), and at a computation it is discarded
+-- (`SUB`) — in the first and last the codomain half becomes the step's own
+-- refinement of both components.
 
 ↝-sound {A = A} r@(SUB-APP {V = V} {W = W} {q = q} {r = p ‼ₛ s}) pS (pV , pW) _ =
   pure-step<: (step-≾ r) p s
@@ -340,6 +357,9 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
      ∙ ∘ᵐ-assoc _ _ _)
 ↝-sound {A = A} r@(SUB-IF {V = V} {M = M} {N = N}) pS (pV , pM , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SUB-IF V M N pV pM pN))
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} r@(SUB-CASE {V = V} {p = p} {q = q} {M = M} {N = N}) pS (pV , pM , pN) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SUB-CASE V p q M N pV pM pN))
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ↝-sound {A = A} {S = St} r@(SUB {M = M₀} {w = p ‼ₛ q}) pS pM _ =
   pure-step<: (step-≾ r) p q (sound-SUB {S = St} {M = M₀} p q pS pM)

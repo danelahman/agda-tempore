@@ -369,6 +369,8 @@ mutual
   subᵛˢ s p true        _         = tt
   subᵛˢ s p false       _         = tt
   subᵛˢ s p ⦉ V , W ⦊   (pV , pW) = subᵛˢ s p V pV , subᵛˢ s p W pW
+  subᵛˢ s p (inl V)     pV        = subᵛˢ s p V pV
+  subᵛˢ s p (inr V)     pV        = subᵛˢ s p V pV
   subᵛˢ s p (lam M)     pM        = subᶜˢ (cong-∷-sub s) p M pM
   subᵛˢ s p (subV V q)  pV        = subᵛˢ s p V pV
 
@@ -383,6 +385,8 @@ mutual
   subᶜˢ s p (absurd V)       pV        = subᵛˢ s p V pV
   subᶜˢ s p (if V `then M `else N) (pV , pM , pN) =
     subᵛˢ s p V pV , subᶜˢ s p M pM , subᶜˢ s p N pN
+  subᶜˢ s p (case+ V `inl M `inr N) (pV , pM , pN) =
+    subᵛˢ s p V pV , subᶜˢ (cong-∷-sub s) p M pM , subᶜˢ (cong-∷-sub s) p N pN
   subᶜˢ s p (perform op V M) (pV , pM) =
     subᵛˢ s p V pV , subᶜˢ (cong-∷-sub (cong-⟨⟩-sub s)) p M pM
   subᶜˢ s p (delay τ M)      pM        = subᶜˢ (cong-⟨⟩-sub s) p M pM
@@ -446,6 +450,10 @@ mutual
   V-subst-natˢ s p ⦉ V , W ⦊ (pV , pW) =
     ≈ᵐ-trans (⟨ V-subst-natˢ s p V pV , V-subst-natˢ s p W pW ⟩ᵐ-cong)
              (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
+  V-subst-natˢ s p (inl V) pV =
+    ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-natˢ s p V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  V-subst-natˢ s p (inr V) pV =
+    ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-natˢ s p V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   V-subst-natˢ s p (lam M) pM =
     ≈ᵐ-trans (curryᵐ-cong (C-subst-natˢ (cong-∷-sub s) p M pM))
              (curryᵐ-nat (⟦ s ⟧ˢ₀ p) (⟦ M ⟧ᶜᵗ pM))
@@ -500,6 +508,12 @@ mutual
     ≈ᵐ-trans (ifᵐ-cong (V-subst-natˢ s p V pV)
                        (C-subst-natˢ s p M pM) (C-subst-natˢ s p N pN))
              (≈ᵐ-sym (ifᵐ-∘ _ _ _ _))
+  -- likewise for `case+`: `caseᵐ-∘`
+  C-subst-natˢ s p (case+ V `inl M `inr N) (pV , pM , pN) =
+    ≈ᵐ-trans (caseᵐ-cong (V-subst-natˢ s p V pV)
+                         (C-subst-natˢ (cong-∷-sub s) p M pM)
+                         (C-subst-natˢ (cong-∷-sub s) p N pN))
+             (≈ᵐ-sym (caseᵐ-∘ _ _ _ _))
   C-subst-natˢ s p (perform op V M) (pV , pM) =
     ≈ᵐ-trans (∘ᵐ-congʳ
       (⟨ ≈ᵐ-trans (substᶜ-≈ (ty-gty (param op)) (V-subst-natˢ s p V pV))

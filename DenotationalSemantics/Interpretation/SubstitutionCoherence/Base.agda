@@ -66,8 +66,8 @@ open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst
 -- rebuild a `Γ`-environment from one for `Γ` with `x` removed, by
 -- computing the missing component with `⟦ W ⟧`.
 
--- `eternal-val-ext` builds only variables, constants, units and pairs — never
--- a `lam` — so its result is parametric outright.
+-- `eternal-val-ext` builds only variables, constants, units, booleans, pairs
+-- and injections — never a `lam` — so its result is parametric outright.
 
 eternal-val-extᴾ : ∀ {Γ A ρ} → (et : Eternal A) → (V : Γ ⊢V⦂ A)
                  → Paramᵛ (eternal-val-ext {ρ = ρ} et V)
@@ -78,6 +78,8 @@ eternal-val-extᴾ _  true                       = tt
 eternal-val-extᴾ _  false                      = tt
 eternal-val-extᴾ (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊    =
   eternal-val-extᴾ et₁ V₁ , eternal-val-extᴾ et₂ V₂
+eternal-val-extᴾ (et₁ |+|ₑ _) (inl V)          = eternal-val-extᴾ et₁ V
+eternal-val-extᴾ (_ |+|ₑ et₂) (inr V)          = eternal-val-extᴾ et₂ V
 eternal-val-extᴾ et (subV V p)                 =
   eternal-val-extᴾ (<:ᵛ-eternalˡ p et) V
 
@@ -151,6 +153,20 @@ eternal-val-ext-nat (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ (p₁ , p₂) =
   (≈ᵐ-trans (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
             (∘ᵐ-congˡ (≈ᵐ-sym (×-eternalᵒ-extᵉ (eternalᵛ-Eternalᵒ et₁)
                                               (eternalᵛ-Eternalᵒ et₂))))))))
+eternal-val-ext-nat (et₁ |+|ₑ et₂) (inl V) pV =
+  ≈ᵐ-trans (∘ᵐ-congʳ (eternal-val-ext-nat et₁ V pV))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (+-eternalᵒ-inl (eternalᵛ-Eternalᵒ et₁)
+                                               (eternalᵛ-Eternalᵒ et₂))))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))))))
+eternal-val-ext-nat (et₁ |+|ₑ et₂) (inr V) pV =
+  ≈ᵐ-trans (∘ᵐ-congʳ (eternal-val-ext-nat et₂ V pV))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (+-eternalᵒ-inr (eternalᵛ-Eternalᵒ et₁)
+                                               (eternalᵛ-Eternalᵒ et₂))))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))))))
 eternal-val-ext-nat et (subV V p) pV =
   ≈ᵐ-trans (∘ᵐ-congʳ (eternal-val-ext-nat (<:ᵛ-eternalˡ p et) V pV))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))

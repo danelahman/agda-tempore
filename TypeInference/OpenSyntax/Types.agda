@@ -2,11 +2,11 @@
 -- Open value and computation types                             --
 --                                                              --
 -- The types of `Syntax.Types` with grade expressions in place  --
--- of grades, a former `tvar` for type variables, a type `Nat`  --
--- of natural numbers, binary sums `_|+|_` and lists `|List|`,  --
--- which have no counterpart in `Syntax.Types`. The ground      --
--- types of the operation signature embed by `⌜_⌝ᵍ`; `Nat`,     --
--- sums and lists are not among them.                           --
+-- of grades, a former `tvar` for type variables, and the       --
+-- types `Nat` of natural numbers and `|List|` of lists, which  --
+-- have no counterpart in `Syntax.Types`. The ground types of   --
+-- the operation signature embed by `⌜_⌝ᵍ`; `Nat`, sums and     --
+-- lists are not among them.                                    --
 ------------------------------------------------------------------
 
 open import Syntax.Grades

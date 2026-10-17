@@ -174,6 +174,36 @@ sampling-then-branching =
       `else coerce ≤! (perform write here (return ⋆)))
 
 ------------------------------------------------------------------------
+-- Sums
+--
+-- `case+` binds the injected value in the branch its injection names,
+-- and, as for `if`, both branches are coerced to one grade.
+
+swap : ∀ {A B} → [] ⊢V⦂ (A |+| B) ⇒ (B |+| A) ‼ uₑ
+swap = lam (case+ here `inl return (inr here) `inr return (inl here))
+
+-- a reading is transmitted, an identifier stands for none and costs
+-- nothing; the reading is bound by the branch itself, so `var` asks for
+-- nothing
+
+relaying-or-not : [] ∷ (Reading |+| NodeId) ⊢C⦂ Unit ‼ [0, 6 ]
+relaying-or-not =
+  case+ here
+    `inl perform send here (return ⋆)  -- ∷ Reading
+    `inr coerce ≤! (return ⋆)          -- ∷ NodeId
+
+-- a sum is eternal when both summands are: a tagged identifier crosses
+-- a lock, a sum that may hold a reading does not
+
+tag-survives : [] ∷ (NodeId |+| Unit) ⊢C⦂ (NodeId |+| Unit) ‼ [0, 1 ]
+tag-survives =
+  perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
+    (return (eternal-var (nodeid-eternal |+|ₑ Unitₑ) (Tl-∷ (Tl-⟨⟩ Hd))))
+
+reading-or-tag-not-eternal : ¬ Eternal (Reading |+| NodeId)
+reading-or-tag-not-eternal (r |+|ₑ _) = reading-not-eternal r
+
+------------------------------------------------------------------------
 -- Unboxing: a lease that expires
 --
 -- `unbox`'s premise `elapsed ≾ᵣ ρ` reads `elapsed ≤ ρ` here: the box

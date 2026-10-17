@@ -25,7 +25,7 @@ open import Syntax.Types S
 
 infix  4  _<:ᵛ_ _<:ᶜ_
 infix  37 [_]ₛ_
-infix  32 _|×|ₛ_
+infix  32 _|×|ₛ_ _|+|ₛ_
 infixr 30 _⇒ₛ_
 infix  31 _‼ₛ_
 
@@ -39,6 +39,7 @@ data _<:ᵛ_ where
   Unitₛ  : Unit <:ᵛ Unit
   Boolₛ  : Bool <:ᵛ Bool
   _|×|ₛ_ : ∀ {A A' B B'} → A <:ᵛ A' → B <:ᵛ B' → (A |×| B) <:ᵛ (A' |×| B')
+  _|+|ₛ_ : ∀ {A A' B B'} → A <:ᵛ A' → B <:ᵛ B' → (A |+| B) <:ᵛ (A' |+| B')
   Emptyₛ : Empty <:ᵛ Empty
   _⇒ₛ_   : ∀ {A A' C C'} → A' <:ᵛ A → C <:ᶜ C' → (A ⇒ C) <:ᵛ (A' ⇒ C')
   [_]ₛ_  : ∀ {ρ ρ' A A'} → ρ' ≾ᵣ ρ → A <:ᵛ A' → ([ ρ ] A) <:ᵛ ([ ρ' ] A')
@@ -64,6 +65,7 @@ data _<:ᶜ_ where
 <:ᵛ-refl Unit      = Unitₛ
 <:ᵛ-refl Bool      = Boolₛ
 <:ᵛ-refl (A |×| B) = <:ᵛ-refl A |×|ₛ <:ᵛ-refl B
+<:ᵛ-refl (A |+| B) = <:ᵛ-refl A |+|ₛ <:ᵛ-refl B
 <:ᵛ-refl Empty     = Emptyₛ
 <:ᵛ-refl (A ⇒ C)   = <:ᵛ-refl A ⇒ₛ <:ᶜ-refl C
 <:ᵛ-refl ([ ρ ] A) = [ ≾ᵣ-refl ]ₛ <:ᵛ-refl A
@@ -79,6 +81,7 @@ data _<:ᶜ_ where
 <:ᵛ-trans Unitₛ      Unitₛ      = Unitₛ
 <:ᵛ-trans Boolₛ      Boolₛ      = Boolₛ
 <:ᵛ-trans (p |×|ₛ r) (q |×|ₛ s) = <:ᵛ-trans p q |×|ₛ <:ᵛ-trans r s
+<:ᵛ-trans (p |+|ₛ r) (q |+|ₛ s) = <:ᵛ-trans p q |+|ₛ <:ᵛ-trans r s
 <:ᵛ-trans Emptyₛ     Emptyₛ     = Emptyₛ
 <:ᵛ-trans (p ⇒ₛ r)   (q ⇒ₛ s)   = <:ᵛ-trans q p ⇒ₛ <:ᶜ-trans r s
 <:ᵛ-trans ([ p ]ₛ r) ([ q ]ₛ s) = [ ≾ᵣ-trans q p ]ₛ <:ᵛ-trans r s
@@ -97,6 +100,8 @@ data _<:ᶜ_ where
 <:ᵛ-antisym Boolₛ      Boolₛ      = refl
 <:ᵛ-antisym (p |×|ₛ r) (q |×|ₛ s) =
   cong₂ _|×|_ (<:ᵛ-antisym p q) (<:ᵛ-antisym r s)
+<:ᵛ-antisym (p |+|ₛ r) (q |+|ₛ s) =
+  cong₂ _|+|_ (<:ᵛ-antisym p q) (<:ᵛ-antisym r s)
 <:ᵛ-antisym Emptyₛ     Emptyₛ     = refl
 <:ᵛ-antisym (p ⇒ₛ r)   (q ⇒ₛ s)   =
   cong₂ _⇒_ (<:ᵛ-antisym q p) (<:ᶜ-antisym r s)
@@ -116,6 +121,8 @@ data _<:ᶜ_ where
 <:ᵛ-irrelevant Boolₛ      Boolₛ      = refl
 <:ᵛ-irrelevant (p |×|ₛ r) (q |×|ₛ s) =
   cong₂ _|×|ₛ_ (<:ᵛ-irrelevant p q) (<:ᵛ-irrelevant r s)
+<:ᵛ-irrelevant (p |+|ₛ r) (q |+|ₛ s) =
+  cong₂ _|+|ₛ_ (<:ᵛ-irrelevant p q) (<:ᵛ-irrelevant r s)
 <:ᵛ-irrelevant Emptyₛ     Emptyₛ     = refl
 <:ᵛ-irrelevant (p ⇒ₛ r)   (q ⇒ₛ s)   =
   cong₂ _⇒ₛ_ (<:ᵛ-irrelevant p q) (<:ᶜ-irrelevant r s)
@@ -134,6 +141,7 @@ data _<:ᶜ_ where
 <:ᵛ-eternalˡ Unitₛ        et          = et
 <:ᵛ-eternalˡ Boolₛ        et          = et
 <:ᵛ-eternalˡ (p |×|ₛ r)   (et |×|ₑ e) = <:ᵛ-eternalˡ p et |×|ₑ <:ᵛ-eternalˡ r e
+<:ᵛ-eternalˡ (p |+|ₛ r)   (et |+|ₑ e) = <:ᵛ-eternalˡ p et |+|ₑ <:ᵛ-eternalˡ r e
 <:ᵛ-eternalˡ Emptyₛ       et          = et
 
 <:ᵛ-eternalʳ : ∀ {A B} → A <:ᵛ B → Eternal A → Eternal B
@@ -141,6 +149,7 @@ data _<:ᶜ_ where
 <:ᵛ-eternalʳ Unitₛ        et          = et
 <:ᵛ-eternalʳ Boolₛ        et          = et
 <:ᵛ-eternalʳ (p |×|ₛ r)   (et |×|ₑ e) = <:ᵛ-eternalʳ p et |×|ₑ <:ᵛ-eternalʳ r e
+<:ᵛ-eternalʳ (p |+|ₛ r)   (et |+|ₑ e) = <:ᵛ-eternalʳ p et |+|ₑ <:ᵛ-eternalʳ r e
 <:ᵛ-eternalʳ Emptyₛ       et          = et
 
 
@@ -181,6 +190,10 @@ data _⊔ᵛ_≡_ where
            → {{A₁ ⊔ᵛ A₂ ≡ A}}
            → {{B₁ ⊔ᵛ B₂ ≡ B}}
            → (A₁ |×| B₁) ⊔ᵛ (A₂ |×| B₂) ≡ (A |×| B)
+    |+|ⱼ   : ∀ {A₁ A₂ A B₁ B₂ B}
+           → {{A₁ ⊔ᵛ A₂ ≡ A}}
+           → {{B₁ ⊔ᵛ B₂ ≡ B}}
+           → (A₁ |+| B₁) ⊔ᵛ (A₂ |+| B₂) ≡ (A |+| B)
     Emptyⱼ : Empty ⊔ᵛ Empty ≡ Empty
     ⇒ⱼ     : ∀ {A C₁ C₂ C}
            → {{C₁ ⊔ᶜ C₂ ≡ C}}
@@ -205,6 +218,7 @@ data _⊔ᶜ_≡_ where
 ⊔ᵛ-ubˡ Boolⱼ              = Boolₛ
 ⊔ᵛ-ubˡ Emptyⱼ             = Emptyₛ
 ⊔ᵛ-ubˡ (|×|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubˡ j |×|ₛ ⊔ᵛ-ubˡ k
+⊔ᵛ-ubˡ (|+|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubˡ j |+|ₛ ⊔ᵛ-ubˡ k
 ⊔ᵛ-ubˡ (⇒ⱼ {{j}})         = <:ᵛ-refl _ ⇒ₛ ⊔ᶜ-ubˡ j
 ⊔ᵛ-ubˡ ([]ⱼ {{j}})        = [ ≾ᵣ-refl ]ₛ ⊔ᵛ-ubˡ j
 
@@ -218,6 +232,7 @@ data _⊔ᶜ_≡_ where
 ⊔ᵛ-ubʳ Boolⱼ              = Boolₛ
 ⊔ᵛ-ubʳ Emptyⱼ             = Emptyₛ
 ⊔ᵛ-ubʳ (|×|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubʳ j |×|ₛ ⊔ᵛ-ubʳ k
+⊔ᵛ-ubʳ (|+|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubʳ j |+|ₛ ⊔ᵛ-ubʳ k
 ⊔ᵛ-ubʳ (⇒ⱼ {{j}})         = <:ᵛ-refl _ ⇒ₛ ⊔ᶜ-ubʳ j
 ⊔ᵛ-ubʳ ([]ⱼ {{j}})        = [ ≾ᵣ-refl ]ₛ ⊔ᵛ-ubʳ j
 
@@ -239,6 +254,8 @@ data _⊔ᶜ_≡_ where
 ⊔ᵛ-lub Emptyⱼ p          _          = p
 ⊔ᵛ-lub (|×|ⱼ {{j}} {{k}}) (p |×|ₛ r) (q |×|ₛ s) =
   ⊔ᵛ-lub j p q |×|ₛ ⊔ᵛ-lub k r s
+⊔ᵛ-lub (|+|ⱼ {{j}} {{k}}) (p |+|ₛ r) (q |+|ₛ s) =
+  ⊔ᵛ-lub j p q |+|ₛ ⊔ᵛ-lub k r s
 ⊔ᵛ-lub (⇒ⱼ {{j}})  (p ⇒ₛ r)   (_ ⇒ₛ s)   = p ⇒ₛ ⊔ᶜ-lub j r s
 ⊔ᵛ-lub ([]ⱼ {{j}}) ([ p ]ₛ r) ([ _ ]ₛ s) = [ p ]ₛ ⊔ᵛ-lub j r s
 
@@ -255,6 +272,8 @@ data _⊔ᶜ_≡_ where
 ⊔ᵛ-det Emptyⱼ Emptyⱼ = refl
 ⊔ᵛ-det (|×|ⱼ {{j}} {{k}}) (|×|ⱼ {{j'}} {{k'}}) =
   cong₂ _|×|_ (⊔ᵛ-det j j') (⊔ᵛ-det k k')
+⊔ᵛ-det (|+|ⱼ {{j}} {{k}}) (|+|ⱼ {{j'}} {{k'}}) =
+  cong₂ _|+|_ (⊔ᵛ-det j j') (⊔ᵛ-det k k')
 ⊔ᵛ-det (⇒ⱼ {{j}})  (⇒ⱼ {{j'}})  = cong (_ ⇒_) (⊔ᶜ-det j j')
 ⊔ᵛ-det ([]ⱼ {{j}}) ([]ⱼ {{j'}}) = cong ([ _ ]_) (⊔ᵛ-det j j')
 
@@ -274,6 +293,7 @@ data _⊔ᶜ_≡_ where
 ⊔ᵛ-idem Unit      = Unitⱼ
 ⊔ᵛ-idem Bool      = Boolⱼ
 ⊔ᵛ-idem (A |×| B) = |×|ⱼ {{⊔ᵛ-idem A}} {{⊔ᵛ-idem B}}
+⊔ᵛ-idem (A |+| B) = |+|ⱼ {{⊔ᵛ-idem A}} {{⊔ᵛ-idem B}}
 ⊔ᵛ-idem Empty     = Emptyⱼ
 ⊔ᵛ-idem (A ⇒ C)   = ⇒ⱼ {{⊔ᶜ-idem C}}
 ⊔ᵛ-idem ([ ρ ] A) = []ⱼ {{⊔ᵛ-idem A}}

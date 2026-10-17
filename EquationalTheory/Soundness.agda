@@ -103,6 +103,8 @@ mutual
   -- congruences
   soundᵛ (⦉⦊-cong p q)        (mp , mq)    (pV , pW) (pV' , pW') =
     ⟨ soundᵛ p mp pV pV' , soundᵛ q mq pW pW' ⟩ᵐ-cong
+  soundᵛ (inl-cong p)         mp           pV pV' = ∘ᵐ-congʳ (soundᵛ p mp pV pV')
+  soundᵛ (inr-cong p)         mp           pV pV' = ∘ᵐ-congʳ (soundᵛ p mp pV pV')
   soundᵛ (lam-cong p)         mp           pM pM' = curryᵐ-cong (soundᶜ p mp pM pM')
   soundᵛ (subV-cong {w = w} {w' = w'} p) mp pV pW =
     ∘ᵐ-cong (⟦⟧<:ᵛ-irr w w') (soundᵛ p mp pV pW)
@@ -113,6 +115,8 @@ mutual
   soundᵛ (subV-refl w V)      _            = sound-subV-refl w V
   soundᵛ (subV-trans w w' w'' V) _         = sound-subV-trans w w' w'' V
   soundᵛ (subV-pair p q V W)  _            = sound-subV-pair p q V W
+  soundᵛ (subV-inl p q V)     _            = sound-subV-inl p q V
+  soundᵛ (subV-inr p q V)     _            = sound-subV-inr p q V
   soundᵛ (subV-lam p w M)     _            = sound-subV-lam p w M
 
   soundᶜ : ∀ {Γ C} {M N : Γ ⊢C⦂ C} → (p : Γ ⊢C⦂ M == N) → Midᶜ p → Soundᶜ== p
@@ -147,6 +151,9 @@ mutual
   soundᶜ (if-cong p q r)      (mp , mq , mr)
          (pV , pM , pN) (pV' , pM' , pN') =
     ifᵐ-cong (soundᵛ p mp pV pV') (soundᶜ q mq pM pM') (soundᶜ r mr pN pN')
+  soundᶜ (case+-cong p q r)   (mp , mq , mr)
+         (pV , pM , pN) (pV' , pM' , pN') =
+    caseᵐ-cong (soundᵛ p mp pV pV') (soundᶜ q mq pM pM') (soundᶜ r mr pN pN')
   soundᶜ (perform-cong p q)   (mp , mq)    (pV , pM) (pV' , pM') =
     ∘ᵐ-congʳ (⟨ substᶜ-≈ (ty-gty (param _)) (soundᵛ p mp pV pV')
               , ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong
@@ -192,6 +199,9 @@ mutual
   soundᶜ (if-beta-true M N)   _  = sound-if-beta-true M N
   soundᶜ (if-beta-false M N)  _  = sound-if-beta-false M N
   soundᶜ (if-eta V M)         m  = sound-if-eta V M m
+  soundᶜ (case+-beta-inl V M N) _ = sound-case+-beta-inl V M N
+  soundᶜ (case+-beta-inr V M N) _ = sound-case+-beta-inr V M N
+  soundᶜ (case+-eta V M)      m  = sound-case+-eta V M m
   -- axioms — handling
   soundᶜ (handle-return V H N)   _ = sound-handle-return V H N
   soundᶜ (handle-perform V M H N) _ = sound-handle-perform V M H N

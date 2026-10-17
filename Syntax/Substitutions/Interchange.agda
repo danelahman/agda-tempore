@@ -47,8 +47,8 @@ hit-⟨⟩-img : ∀ {Γ A σ ρ} → (p : ρ ≾ᵣ uᵣ) → (y : A ∈[ σ ] 
            → var-img (⟨⟩-η⁻¹-ren {Δ = Γ} ∘ʳ ⟨⟩-≤-ren p) y ≡ Var-⟨⟩ ρ (σ , y)
 hit-⟨⟩-img p y = cong (var-img′ (⟨⟩-≤-ren p)) (⟨⟩-η⁻¹-img y)
 
--- An eternal extension is natural: it builds only variables, constants, `⋆`
--- and pairs, so a renaming passes through it.
+-- An eternal extension is natural: it builds only variables, constants, `⋆`,
+-- booleans, pairs and injections, so a renaming passes through it.
 
 eternal-val-ext-ren : ∀ {Γ Γ' A ρ} → (et : Eternal A) → (r : Ren [] Γ Γ')
                     → (V : Γ' ⊢V⦂ A)
@@ -61,6 +61,10 @@ eternal-val-ext-ren et             r true        = refl
 eternal-val-ext-ren et             r false       = refl
 eternal-val-ext-ren (et₁ |×|ₑ et₂) r ⦉ V₁ , V₂ ⦊  =
   cong₂ ⦉_,_⦊ (eternal-val-ext-ren et₁ r V₁) (eternal-val-ext-ren et₂ r V₂)
+eternal-val-ext-ren (et₁ |+|ₑ _)   r (inl V)     =
+  cong inl (eternal-val-ext-ren et₁ r V)
+eternal-val-ext-ren (_ |+|ₑ et₂)   r (inr V)     =
+  cong inr (eternal-val-ext-ren et₂ r V)
 eternal-val-ext-ren et             r (subV V p) =
   cong (λ W → subV W p) (eternal-val-ext-ren (<:ᵛ-eternalˡ p et) r V)
 
@@ -114,6 +118,8 @@ mutual
   V-sub₀-⌜⌝ r true      = refl
   V-sub₀-⌜⌝ r false     = refl
   V-sub₀-⌜⌝ r ⦉ V , W ⦊  = cong₂ ⦉_,_⦊ (V-sub₀-⌜⌝ r V) (V-sub₀-⌜⌝ r W)
+  V-sub₀-⌜⌝ r (inl V)   = cong inl (V-sub₀-⌜⌝ r V)
+  V-sub₀-⌜⌝ r (inr V)   = cong inr (V-sub₀-⌜⌝ r V)
   V-sub₀-⌜⌝ r (lam M)   =
     cong lam (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
                     (C-sub₀-⌜⌝ (cong-ren r) M))
@@ -136,6 +142,12 @@ mutual
   C-sub₀-⌜⌝ r (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-sub₀-⌜⌝ r V) (C-sub₀-⌜⌝ r M) (C-sub₀-⌜⌝ r N)
+  C-sub₀-⌜⌝ r (case+ V `inl M `inr N) =
+    cong₃ case+_`inl_`inr_ (V-sub₀-⌜⌝ r V)
+      (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
+             (C-sub₀-⌜⌝ (cong-ren r) M))
+      (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) N)
+             (C-sub₀-⌜⌝ (cong-ren r) N))
   C-sub₀-⌜⌝ r (perform op V M) =
     cong₂ (perform _) (V-sub₀-⌜⌝ r V)
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (_ ⟨ _ ⟩ ∷ _) r) M)
@@ -265,6 +277,8 @@ mutual
   V-sub₀-ren h true      = refl
   V-sub₀-ren h false     = refl
   V-sub₀-ren h ⦉ V , W ⦊  = cong₂ ⦉_,_⦊ (V-sub₀-ren h V) (V-sub₀-ren h W)
+  V-sub₀-ren h (inl V)   = cong inl (V-sub₀-ren h V)
+  V-sub₀-ren h (inr V)   = cong inr (V-sub₀-ren h V)
   V-sub₀-ren h (lam M)   = cong lam (C-sub₀-ren (⋈-cong ([] ∷ _) h) M)
   V-sub₀-ren h (subV V p) = subV-≡ (V-sub₀-ren h V)
 
@@ -283,6 +297,9 @@ mutual
   C-sub₀-ren h (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-sub₀-ren h V) (C-sub₀-ren h M) (C-sub₀-ren h N)
+  C-sub₀-ren h (case+ V `inl M `inr N) =
+    cong₃ case+_`inl_`inr_ (V-sub₀-ren h V)
+      (C-sub₀-ren (⋈-cong ([] ∷ _) h) M) (C-sub₀-ren (⋈-cong ([] ∷ _) h) N)
   C-sub₀-ren h (perform op V M) =
     cong₂ (perform _) (V-sub₀-ren h V) (C-sub₀-ren (⋈-cong (_ ⟨ _ ⟩ ∷ _) h) M)
   C-sub₀-ren h (delay τ M) =

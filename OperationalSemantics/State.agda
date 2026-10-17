@@ -4,6 +4,7 @@
 
 open import Data.Empty
 open import Data.Product
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -264,6 +265,10 @@ snd-split-time≡time-from-head S x =
 ⦉⦊-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = ⦉⦊-not-in-toCtx x
 ⦉⦊-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = ⦉⦊-not-in-toCtx x
 
+|+|-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} {A B : VType} → A |+| B ∈[ ρ ] toCtx S → ⊥
+|+|-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = |+|-not-in-toCtx x
+|+|-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = |+|-not-in-toCtx x
+
 Empty-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} → Empty ∈[ ρ ] toCtx S → ⊥
 Empty-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = Empty-not-in-toCtx x
 Empty-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = Empty-not-in-toCtx x
@@ -288,6 +293,22 @@ fstᵛ (subV V (p |×|ₛ _)) = subV (fstᵛ V) p
 sndᵛ (var _ x)        = ⊥-elim (⦉⦊-not-in-toCtx x)
 sndᵛ ⦉ _ , W ⦊        = W
 sndᵛ (subV V (_ |×|ₛ q)) = subV (sndᵛ V) q
+
+-- The injection a value of sum type is. Over a state context the value is an
+-- injection under a spine of subsumptions, which the recursion pushes onto the
+-- payload.
+
+sub⊎ : ∀ {Γ A A₁ B B₁} → A₁ <:ᵛ A → B₁ <:ᵛ B
+     → (Γ ⊢V⦂ A₁) ⊎ (Γ ⊢V⦂ B₁) → (Γ ⊢V⦂ A) ⊎ (Γ ⊢V⦂ B)
+sub⊎ p q (inj₁ W) = inj₁ (subV W p)
+sub⊎ p q (inj₂ W) = inj₂ (subV W q)
+
+injᵛ : ∀ {Γ A B} {S : 𝕊 Γ} → toCtx S ⊢V⦂ A |+| B
+     → (toCtx S ⊢V⦂ A) ⊎ (toCtx S ⊢V⦂ B)
+injᵛ (var _ x)           = ⊥-elim (|+|-not-in-toCtx x)
+injᵛ (inl V)             = inj₁ V
+injᵛ (inr V)             = inj₂ V
+injᵛ (subV V (p |+|ₛ q)) = sub⊎ p q (injᵛ V)
 
 -- There is no value of the empty type over a state context.
 

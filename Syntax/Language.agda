@@ -79,6 +79,18 @@ mutual
             ---------------
             → Γ ⊢V⦂ A |×| B
 
+    -- injections into a sum
+
+    inl     : {A B : VType}
+            → Γ ⊢V⦂ A
+            ---------------
+            → Γ ⊢V⦂ A |+| B
+
+    inr     : {A B : VType}
+            → Γ ⊢V⦂ B
+            ---------------
+            → Γ ⊢V⦂ A |+| B
+
     -- lambda abstraction
           
     lam     : {A : VType}
@@ -153,6 +165,20 @@ mutual
             → Γ ⊢C⦂ C
             → Γ ⊢C⦂ C
             ------------
+            → Γ ⊢C⦂ C
+
+    -- sum elimination
+
+    -- As for `if`, both branches are typed at the same computation type;
+    -- each binds the injected value.
+
+    case+_`inl_`inr_
+            : {A B : VType}
+            → {C : CType}
+            → Γ ⊢V⦂ A |+| B
+            → Γ ∷ A ⊢C⦂ C
+            → Γ ∷ B ⊢C⦂ C
+            ---------------
             → Γ ⊢C⦂ C
 
     -- performing algebraic operations
@@ -278,5 +304,9 @@ eternal-val-ext _ false =
   false
 eternal-val-ext (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   ⦉ eternal-val-ext et₁ V₁ , eternal-val-ext et₂ V₂ ⦊
+eternal-val-ext (et₁ |+|ₑ _) (inl V) =
+  inl (eternal-val-ext et₁ V)
+eternal-val-ext (_ |+|ₑ et₂) (inr V) =
+  inr (eternal-val-ext et₂ V)
 eternal-val-ext et (subV V p) =
   subV (eternal-val-ext (<:ᵛ-eternalˡ p et) V) p

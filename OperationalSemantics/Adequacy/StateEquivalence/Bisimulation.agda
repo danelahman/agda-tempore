@@ -97,6 +97,37 @@ Sim {A₁ = A₁} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
   , trans (cong₃ (λ v m n → if v `then m `else n) eV eM₀ eN₀)
           (sym (cast-if (sym (toCtx-≐ˢ es))))
 
+-- subsumption at a scrutinised sum: the coercion moves onto the branches'
+-- binders on both sides, `subCtx` commuting with the cast (`subCtx-cast`).
+
+↝-≐ˢ-sub-case : ∀ {A A₁ B B₁ D ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+             → {V : toCtx St ⊢V⦂ A₁ |+| B₁} → {p : A₁ <:ᵛ A} → {q : B₁ <:ᵛ B}
+             → {M : toCtx St ∷ A ⊢C⦂ D ‼ ε} → {N : toCtx St ∷ B ⊢C⦂ D ‼ ε}
+             → (P' : toCtx St' ⊢C⦂ D ‼ ε)
+             → (case+ subV V (p |+|ₛ q) `inl M `inr N)
+               ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+             → Sim es P' (SUB-CASE {V = V} {p = p} {q = q} {M = M} {N = N})
+↝-≐ˢ-sub-case es {p = p} {q = q} P' eM
+  with cast-case+⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | U' , M' , N' , refl , eU , eM₀ , eN₀
+  with cast-subV⁻ (sym (toCtx-≐ˢ es)) U' eU
+...   | p₁ |+|ₛ q₁ , V' , refl , eV =
+    _ , _ , es , SUB-CASE , id-≤≐
+  , trans (cong₃ (λ v m n → case+ v `inl m `inr n) eV
+                 (branch p p₁ M' eM₀) (branch q q₁ N' eN₀))
+          (sym (cast-case+ (sym (toCtx-≐ˢ es))))
+  where
+    e = sym (toCtx-≐ˢ es)
+
+    branch : ∀ {X X₁ D'} {K : toCtx _ ∷ X ⊢C⦂ D'}
+           → (w w₁ : X₁ <:ᵛ X) → (K' : toCtx _ ∷ X ⊢C⦂ D')
+           → K ≡ castᶜ (cong (_∷ X) e) K'
+           → subCtx w K ≡ castᶜ (cong (_∷ X₁) e) (subCtx w₁ K')
+    branch w w₁ K' eK =
+      trans (cong (subCtx w) eK)
+            (trans (subCtx-cast (λ Γ₀ → Γ₀) e w K')
+                   (cong (λ z → castᶜ _ (subCtx z K')) (<:ᵛ-irrelevant w w₁)))
+
 -- boolean elimination: the scrutinee is the same constant on both sides
 -- (`cast-true⁻`/`cast-false⁻`), and the reduct is the branch it names.
 
@@ -119,6 +150,38 @@ Sim {A₁ = A₁} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 ... | V' , M₀' , N₀' , refl , eV , eM₀ , eN₀
       with cast-false⁻ (sym (toCtx-≐ˢ es)) V' eV
 ...     | refl = _ , _ , es , IF-FALSE , id-≤≐ , eN₀
+
+-- sum elimination: the scrutinee is the same injection on both sides
+-- (`cast-inl⁻`/`cast-inr⁻`), and the reducts are the same substitution into
+-- the branch it names, as for application.
+
+↝-≐ˢ-case-inl : ∀ {A B D ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+             → {V : toCtx St ⊢V⦂ A}
+             → {M : toCtx St ∷ A ⊢C⦂ D ‼ ε} → {N : toCtx St ∷ B ⊢C⦂ D ‼ ε}
+             → (P' : toCtx St' ⊢C⦂ D ‼ ε)
+             → (case+ inl V `inl M `inr N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+             → Sim es P' (CASE-INL {V = V} {M = M} {N = N})
+↝-≐ˢ-case-inl es P' eM with cast-case+⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | U' , M' , N' , refl , eU , eM₀ , eN₀
+      with cast-inl⁻ (sym (toCtx-≐ˢ es)) U' eU
+...     | V' , refl , eV =
+    _ , _ , es , CASE-INL , id-≤≐
+  , subst (λ z → _ ≡ z) (cast-app-reduct (sym (toCtx-≐ˢ es)) M' V')
+          (sub-≡ᶜ split-[] eV eM₀)
+
+↝-≐ˢ-case-inr : ∀ {A B D ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+             → {V : toCtx St ⊢V⦂ B}
+             → {M : toCtx St ∷ A ⊢C⦂ D ‼ ε} → {N : toCtx St ∷ B ⊢C⦂ D ‼ ε}
+             → (P' : toCtx St' ⊢C⦂ D ‼ ε)
+             → (case+ inr V `inl M `inr N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+             → Sim es P' (CASE-INR {V = V} {M = M} {N = N})
+↝-≐ˢ-case-inr es P' eM with cast-case+⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | U' , M' , N' , refl , eU , eM₀ , eN₀
+      with cast-inr⁻ (sym (toCtx-≐ˢ es)) U' eU
+...     | V' , refl , eV =
+    _ , _ , es , CASE-INR , id-≤≐
+  , subst (λ z → _ ≡ z) (cast-app-reduct (sym (toCtx-≐ˢ es)) N' V')
+          (sub-≡ᶜ split-[] eV eN₀)
 
 -- application: the function is a lambda on both sides, and the reducts are the
 -- same substitution (`sub-≡ᶜ`), the cast commuting with it (`cast-app-reduct`).
@@ -513,6 +576,8 @@ cast-handle-op refl V' M' H' N' = refl
 ↝-≐ˢ es eM MATCH       = ↝-≐ˢ-match es _ eM
 ↝-≐ˢ es eM IF-TRUE     = ↝-≐ˢ-if-true es _ eM
 ↝-≐ˢ es eM IF-FALSE    = ↝-≐ˢ-if-false es _ eM
+↝-≐ˢ es eM CASE-INL    = ↝-≐ˢ-case-inl es _ eM
+↝-≐ˢ es eM CASE-INR    = ↝-≐ˢ-case-inr es _ eM
 ↝-≐ˢ es eM SEQ-RET     = ↝-≐ˢ-seq-ret es _ eM
 ↝-≐ˢ es eM SEQ-OP      = ↝-≐ˢ-seq-op es _ eM
 ↝-≐ˢ es eM DELAY       = ↝-≐ˢ-delay es _ eM
@@ -522,6 +587,7 @@ cast-handle-op refl V' M' H' N' = refl
 ↝-≐ˢ es eM UNBOX       = ↝-≐ˢ-unbox es _ eM
 ↝-≐ˢ es eM SUB-APP     = ↝-≐ˢ-sub-app es _ eM
 ↝-≐ˢ es eM SUB-IF      = ↝-≐ˢ-sub-if es _ eM
+↝-≐ˢ es eM SUB-CASE    = ↝-≐ˢ-sub-case es _ eM
 ↝-≐ˢ es eM SUB         = ↝-≐ˢ-sub es _ eM
 
 -- sequencing: simulate the head, then rebuild

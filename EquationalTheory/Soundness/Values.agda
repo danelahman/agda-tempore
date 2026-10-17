@@ -3,8 +3,8 @@
 -- These are the cartesian closed structure: `unit-eta` is the terminal --
 -- object's uniqueness, `fun-beta`/`fun-eta` the exponential's,         --
 -- `match-beta`/`match-eta` the product's, `absurd-eta` the initial     --
--- object's strictness, and the boolean equations are the boolean       --
--- object's own laws.                                                   --
+-- object's strictness, the boolean equations are the boolean object's --
+-- own laws, and the sum equations the coproduct's (`caseᵐ`).           --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -122,6 +122,61 @@ sound-if-eta V M pM (pV , pT , pF) pR =
   ∙ ≈ᵐ-sym (ifᵐ-η (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM))
   ∙ ≈ᵐ-sym (C-subst-nat M split-[] V pM pV)
   ∙ ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ V ]c) (subᶜ M split-[] V pM pV) pR
+
+-- The two sum betas are the coproduct's, read at the interpretation
+-- `⟦ inl V ⟧ᵛᵗ = inlᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ` of the scrutinee, after which the branch is
+-- the substitution of the payload.
+
+sound-case+-beta-inl : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A)
+                     → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
+                     → Soundᶜ== (case+-beta-inl V M N)
+sound-case+-beta-inl V M N (pV , pM , pN) pR =
+    caseᵐ-inl (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+  ∙ ≈ᵐ-sym (C-subst-nat M split-[] V pM pV)
+  ∙ ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ V ]c) (subᶜ M split-[] V pM pV) pR
+
+sound-case+-beta-inr : ∀ {Γ A B C} → (V : Γ ⊢V⦂ B)
+                     → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
+                     → Soundᶜ== (case+-beta-inr V M N)
+sound-case+-beta-inr V M N (pV , pM , pN) pR =
+    caseᵐ-inr (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+  ∙ ≈ᵐ-sym (C-subst-nat N split-[] V pN pV)
+  ∙ ⟦⟧ᶜᵗ-irr (N [ split-[] ↦ V ]c) (subᶜ N split-[] V pN pV) pR
+
+-- `case+-eta`: each branch is the body restricted along an injection, which
+-- is the shape `caseᵐ-η` speaks about. As with `if-eta`, `M` occurs only under
+-- a substitution on both sides, so its certificate comes in separately.
+
+sound-case+-eta : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A |+| B) → (M : Γ ∷ A |+| B ⊢C⦂ C)
+                → Paramᶜ M → Soundᶜ== (case+-eta V M)
+sound-case+-eta {Γ} {A} {B} {C} V M pM (pV , pL , pR') pR =
+    caseᵐ-cong ≈ᵐ-refl
+      (restrict (inl (var (λ _ → ≾ᵣ-refl) Hd)) tt inlᵐ refl pL)
+      (restrict (inr (var (λ _ → ≾ᵣ-refl) Hd)) tt inrᵐ refl pR')
+  ∙ ≈ᵐ-sym (caseᵐ-η (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM))
+  ∙ ≈ᵐ-sym (C-subst-nat M split-[] V pM pV)
+  ∙ ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ V ]c) (subᶜ M split-[] V pM pV) pR
+  where
+    -- the body weakened past the bound payload, then restricted along the
+    -- injection that rebuilds the scrutinee from it
+    restrict : ∀ {A₀} → (U : Γ ∷ A₀ ⊢V⦂ A |+| B) → (pU₀ : Paramᵛ U)
+             → (ι : ⟦ A₀ ⟧ᵛ →ᵐ ⟦ A |+| B ⟧ᵛ)
+             → ⟦ U ⟧ᵛᵗ pU₀ ≡ ι ∘ᵐ var-morphism {Γ ∷ A₀} {A₀} (λ _ → ≾ᵣ-refl) Hd
+             → (pU : Paramᶜ (C-rename (cong-∷-ren wk-ren) M [ split-[] ↦ U ]c))
+             → ⟦ C-rename (cong-∷-ren wk-ren) M [ split-[] ↦ U ]c ⟧ᶜᵗ pU
+               ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ mapˣᵐ idᵐ ι
+    restrict {A₀} U pU₀ ι e pU =
+        ⟦⟧ᶜᵗ-irr (C-rename (cong-∷-ren wk-ren) M [ split-[] ↦ U ]c) pU
+                 (subᶜ (C-rename (cong-∷-ren wk-ren) M) split-[] U
+                       (renᶜ (cong-∷-ren wk-ren) M pM) pU₀)
+      ∙ C-subst-nat (C-rename (cong-∷-ren wk-ren) M) split-[] U
+                    (renᶜ (cong-∷-ren wk-ren) M pM) pU₀
+      ∙ ∘ᵐ-congˡ (C-rename-nat (cong-∷-ren wk-ren) M pM)
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+                  ∙ ⟨ ∘ᵐ-identityʳ _ ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _)
+                    , ∘ᵐ-identityˡ _ ∙ ≡→≈ᵐ e
+                      ∙ ∘ᵐ-congʳ (var-morphism-Hd {Γ} {A₀} _) ⟩ᵐ-cong)
 
 -- `match-eta`: re-pairing the two bound components rebuilds the matched value
 -- (the product's eta, `⟨⟩ᵐ-unique`). Both sides mention `M` only under a

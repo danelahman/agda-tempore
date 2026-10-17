@@ -9,12 +9,14 @@
 --                                                                    --
 -- The eternal *type formers* are handled by the closure lemmas:          --
 -- `𝟙ᵖ-eternalᵒ` (Unit), `𝔹ᵖ-eternalᵒ` (Bool), `𝟘ᵖ-eternalᵒ` (Empty), and --
--- `×ᵖ-eternalᵒ` (products, for any two eternal objects). Together they   --
--- cover exactly the `Syntax.Types.Eternal` formers.                      --
+-- `×ᵖ-eternalᵒ` (products) and `+ᵖ-eternalᵒ` (sums), for any two eternal --
+-- objects. Together they cover exactly the `Syntax.Types.Eternal`        --
+-- formers.                                                               --
 --                                                                    --
 -- For the constant presheaves the `⟨ ⊤ ⟩`-algebra `α` is the mate         --
 -- `ε⊣ ∘ᵖ ⟨ ⊤ ⟩ᶠ nec` of a necessitation `nec`, and its two laws hold by   --
--- reflexivity; products reuse the generic closure `×ᵐ-eternalᵒ`.          --
+-- reflexivity; products and sums reuse the generic closures             --
+-- `×ᵐ-eternalᵒ` and `+ᵐ-eternalᵒ`.                                        --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -47,7 +49,7 @@ open import DenotationalSemantics.Model.Modality.Past PShCat RGrade using (Past)
 
 open import DenotationalSemantics.Model.Modality.Eternal
        PShCat RGrade PShFut PShPast PShAdj
-  using (Eternalᵒ; ×ᵐ-eternalᵒ; ×ᵐ-eternalᵒ-extᵉ)
+  using (Eternalᵒ; ×ᵐ-eternalᵒ; ×ᵐ-eternalᵒ-extᵉ; +ᵐ-eternalᵒ)
 
 -- The constant presheaf on a setoid: the same value at every world,
 -- transported by the identity.
@@ -131,3 +133,9 @@ Kᵖ-eternalᵒ S = record
                  → Eternalᵒ.extᵉ (×ᵖ-eternalᵒ eA eB) {ρ}
                  ≈ᵐ ⟨ Eternalᵒ.extᵉ eA ∘ᵐ ⟨ ρ ⟩ᶠ fstᵐ , Eternalᵒ.extᵉ eB ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
 ×ᵖ-eternalᵒ-extᵉ = ×ᵐ-eternalᵒ-extᵉ
+
+-- Closure: binary coproducts of eternal objects, again the generic
+-- construction.
+
++ᵖ-eternalᵒ : ∀ {A B} → Eternalᵒ A → Eternalᵒ B → Eternalᵒ (A +ᵖ B)
++ᵖ-eternalᵒ = +ᵐ-eternalᵒ

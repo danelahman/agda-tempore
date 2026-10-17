@@ -91,6 +91,24 @@ mutual
                      --------------------------------------------
                    → ⟨ S , if false `then M `else N ⟩ ↝ ⟨ S , N ⟩
 
+        -- sum elimination: substitute the injected value into the branch the
+        -- injection names
+        CASE-INL   : ∀ {A B C}
+                   → {S : 𝕊 []}
+                   → {V : toCtx S ⊢V⦂ A}
+                   → {M : toCtx S ∷ A ⊢C⦂ C}
+                   → {N : toCtx S ∷ B ⊢C⦂ C}
+                     ----------------------------------------------------------
+                   → ⟨ S , case+ inl V `inl M `inr N ⟩ ↝ ⟨ S , M [ split-[] ↦ V ]c ⟩
+
+        CASE-INR   : ∀ {A B C}
+                   → {S : 𝕊 []}
+                   → {V : toCtx S ⊢V⦂ B}
+                   → {M : toCtx S ∷ A ⊢C⦂ C}
+                   → {N : toCtx S ∷ B ⊢C⦂ C}
+                     ----------------------------------------------------------
+                   → ⟨ S , case+ inr V `inl M `inr N ⟩ ↝ ⟨ S , N [ split-[] ↦ V ]c ⟩
+
         -- sequencing: step the scrutinee, carrying time and state forward and
         -- subsuming the sequel's binder to the scrutinee's refined type
         SEQ-STEP   : ∀ {ε₁ ε₂ ε₃}
@@ -264,6 +282,19 @@ mutual
                     → ⟨ S , if subV V Boolₛ `then M `else N ⟩ ↝
                       ⟨ S , if V `then M `else N ⟩
 
+        -- subsumption at a scrutinised sum: the coercion splits, each half
+        -- moving onto the binder of its branch
+        SUB-CASE    : ∀ {A A₁ B B₁ C}
+                    → {S : 𝕊 []}
+                    → {V : toCtx S ⊢V⦂ A₁ |+| B₁}
+                    → {p : A₁ <:ᵛ A}
+                    → {q : B₁ <:ᵛ B}
+                    → {M : toCtx S ∷ A ⊢C⦂ C}
+                    → {N : toCtx S ∷ B ⊢C⦂ C}
+                      ---------------------------------------------------------
+                    → ⟨ S , case+ subV V (p |+|ₛ q) `inl M `inr N ⟩ ↝
+                      ⟨ S , case+ V `inl subCtx p M `inr subCtx q N ⟩
+
         -- subsumption at a computation: discarded, the reduct landing at the
         -- subtype the step is free to refine to
         SUB         : ∀ {C C'}
@@ -291,6 +322,8 @@ mutual
     step-extends-state MATCH                = id-suc
     step-extends-state IF-TRUE              = id-suc
     step-extends-state IF-FALSE             = id-suc
+    step-extends-state CASE-INL             = id-suc
+    step-extends-state CASE-INR             = id-suc
     step-extends-state (SEQ-STEP M↝M' _)    = step-extends-state M↝M'
     step-extends-state SEQ-RET              = id-suc
     step-extends-state SEQ-OP               = id-suc
@@ -302,6 +335,7 @@ mutual
     step-extends-state UNBOX                = id-suc
     step-extends-state SUB-APP              = id-suc
     step-extends-state SUB-IF               = id-suc
+    step-extends-state SUB-CASE             = id-suc
     step-extends-state SUB                  = id-suc
 
     -- reduction steps refine the value type, just as they refine the effect
@@ -317,6 +351,8 @@ mutual
     step-refines-type {A = A} MATCH             = <:ᵛ-refl A
     step-refines-type {A = A} IF-TRUE           = <:ᵛ-refl A
     step-refines-type {A = A} IF-FALSE          = <:ᵛ-refl A
+    step-refines-type {A = A} CASE-INL          = <:ᵛ-refl A
+    step-refines-type {A = A} CASE-INR          = <:ᵛ-refl A
     step-refines-type {A = A} (SEQ-STEP _ _)    = <:ᵛ-refl A
     step-refines-type {A = A} SEQ-RET           = <:ᵛ-refl A
     step-refines-type {A = A} SEQ-OP            = <:ᵛ-refl A
@@ -328,6 +364,7 @@ mutual
     step-refines-type {A = A} UNBOX             = <:ᵛ-refl A
     step-refines-type (SUB-APP {r = p ‼ₛ _})    = p
     step-refines-type {A = A} SUB-IF            = <:ᵛ-refl A
+    step-refines-type {A = A} SUB-CASE          = <:ᵛ-refl A
     step-refines-type (SUB {w = p ‼ₛ _})        = p
 
 -- Reduction steps make effects more precise, in cancelled form: the grade δ by
@@ -348,6 +385,8 @@ step-grade-≾ APP   = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ MATCH = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ IF-TRUE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ IF-FALSE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ CASE-INL = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ CASE-INR = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} step _) =
   ≾ᵣ-trans
     (≾ᵣ-reflexive
@@ -386,6 +425,7 @@ step-grade-≾ UNBOX   = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ (SUB-APP {r = _ ‼ₛ s}) =
   ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ s)
 step-grade-≾ SUB-IF  = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ SUB-CASE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ (SUB {w = _ ‼ₛ q}) =
   ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ q)
 

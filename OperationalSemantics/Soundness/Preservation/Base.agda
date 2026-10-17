@@ -95,6 +95,8 @@ stepᴾˢ APP                 pS _              = pS
 stepᴾˢ MATCH               pS _              = pS
 stepᴾˢ IF-TRUE             pS _              = pS
 stepᴾˢ IF-FALSE            pS _              = pS
+stepᴾˢ CASE-INL            pS _              = pS
+stepᴾˢ CASE-INR            pS _              = pS
 stepᴾˢ (SEQ-STEP r _)      pS (pM , _)       = stepᴾˢ r pS pM
 stepᴾˢ SEQ-RET             pS _              = pS
 stepᴾˢ SEQ-OP              pS _              = pS
@@ -107,6 +109,7 @@ stepᴾˢ (BOX {V = V})       pS (pV , _)       =
 stepᴾˢ UNBOX               pS _              = pS
 stepᴾˢ SUB-APP             pS _              = pS
 stepᴾˢ SUB-IF              pS _              = pS
+stepᴾˢ SUB-CASE            pS _              = pS
 stepᴾˢ SUB                 pS _              = pS
 
 -- Kleisli composition with a time transition: running a computation over
@@ -133,6 +136,8 @@ step-grade APP                  = uₑ
 step-grade MATCH                = uₑ
 step-grade IF-TRUE              = uₑ
 step-grade IF-FALSE             = uₑ
+step-grade CASE-INL             = uₑ
+step-grade CASE-INR             = uₑ
 step-grade (SEQ-STEP r _)       = step-grade r
 step-grade SEQ-RET              = uₑ
 step-grade SEQ-OP               = uₑ
@@ -144,6 +149,7 @@ step-grade BOX                  = uₑ
 step-grade UNBOX                = uₑ
 step-grade SUB-APP              = uₑ
 step-grade SUB-IF               = uₑ
+step-grade SUB-CASE             = uₑ
 step-grade SUB                  = uₑ
 
 -- The transition itself. `DELAY` ticks: it names the present as the past of
@@ -158,6 +164,8 @@ stepᵀ APP               = ηᵀ
 stepᵀ MATCH             = ηᵀ
 stepᵀ IF-TRUE           = ηᵀ
 stepᵀ IF-FALSE          = ηᵀ
+stepᵀ CASE-INL          = ηᵀ
+stepᵀ CASE-INR          = ηᵀ
 stepᵀ (SEQ-STEP r _)    = stepᵀ r
 stepᵀ SEQ-RET           = ηᵀ
 stepᵀ SEQ-OP            = ηᵀ
@@ -169,6 +177,7 @@ stepᵀ BOX               = ηᵀ
 stepᵀ UNBOX             = ηᵀ
 stepᵀ SUB-APP           = ηᵀ
 stepᵀ SUB-IF            = ηᵀ
+stepᵀ SUB-CASE          = ηᵀ
 stepᵀ SUB               = ηᵀ
 
 -- The step's effect, composed with the target's, refines the source's. This is
@@ -182,6 +191,8 @@ step-≾ {ε = ε} APP    = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} MATCH  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} IF-TRUE  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} IF-FALSE = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ {ε = ε} CASE-INL = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ {ε = ε} CASE-INR = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ (SEQ-STEP {ε₂ = ε₂} {ε₃ = ε₃} r _) =
   ≾ₑ-trans
     (≾ₑ-reflexive (sym (·ₑ-assoc (step-grade r) ε₃ ε₂)))
@@ -202,6 +213,7 @@ step-≾ {ε = ε} BOX    = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} UNBOX   = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ (SUB-APP {r = _ ‼ₛ s}) = ≾ₑ-trans (≾ₑ-reflexive (·ₑ-identityˡ _)) s
 step-≾ {ε = ε} SUB-IF  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ {ε = ε} SUB-CASE = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ (SUB {w = _ ‼ₛ q}) = ≾ₑ-trans (≾ₑ-reflexive (·ₑ-identityˡ _)) q
 
 -- Sub-effecting is irrelevant in its witness (the effect order is).
@@ -499,6 +511,41 @@ sound-IF-TRUE M N pM pN = ifᵐ-true (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
 sound-IF-FALSE : ∀ {Γ C} → (M N : Γ ⊢C⦂ C) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                → ⟦ if false `then M `else N ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ N ⟧ᶜᵗ pN
 sound-IF-FALSE M N pM pN = ifᵐ-false (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+
+-- CASE-INL / CASE-INR: taking a branch is the coproduct's beta law, followed
+-- by the substitution coherence.
+
+sound-CASE-INL : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A)
+               → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
+               → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+               → ⟦ case+ inl V `inl M `inr N ⟧ᶜᵗ (pV , pM , pN)
+               ≈ᵐ ⟦ M [ split-[] ↦ V ]c ⟧ᶜᵗ (subᶜ M split-[] V pM pV)
+sound-CASE-INL V M N pV pM pN =
+    caseᵐ-inl (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+  ∙ ≈ᵐ-sym (C-subst-nat M split-[] V pM pV)
+
+sound-CASE-INR : ∀ {Γ A B C} → (V : Γ ⊢V⦂ B)
+               → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
+               → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+               → ⟦ case+ inr V `inl M `inr N ⟧ᶜᵗ (pV , pM , pN)
+               ≈ᵐ ⟦ N [ split-[] ↦ V ]c ⟧ᶜᵗ (subᶜ N split-[] V pN pV)
+sound-CASE-INR V M N pV pM pN =
+    caseᵐ-inr (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+  ∙ ≈ᵐ-sym (C-subst-nat N split-[] V pN pV)
+
+-- SUB-CASE: the coproduct's action on the scrutinee moves onto the branches'
+-- binders (`caseᵐ-map+ᵐ`), where it is the subsumed binder (`subCtx-nat`).
+
+sound-SUB-CASE : ∀ {Γ A A₁ B B₁ C} → (V : Γ ⊢V⦂ A₁ |+| B₁)
+               → (p : A₁ <:ᵛ A) → (q : B₁ <:ᵛ B)
+               → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
+               → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+               → ⟦ case+ subV V (p |+|ₛ q) `inl M `inr N ⟧ᶜᵗ (pV , pM , pN)
+               ≈ᵐ ⟦ case+ V `inl subCtx p M `inr subCtx q N ⟧ᶜᵗ
+                    (pV , subCtxᴾ p M pM , subCtxᴾ q N pN)
+sound-SUB-CASE V p q M N pV pM pN =
+    caseᵐ-map+ᵐ (⟦ V ⟧ᵛᵗ pV) ⟦ p ⟧<:ᵛ ⟦ q ⟧<:ᵛ (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+  ∙ caseᵐ-cong ≈ᵐ-refl (≈ᵐ-sym (subCtx-nat p M pM)) (≈ᵐ-sym (subCtx-nat q N pN))
 
 delayᵀ-ε-substᵀ : ∀ {A ε ε'} → (τ : 𝔻) → (e : ε ≡ ε')
                 → delayᵀ {A} {ε'} τ ∘ᵐ [ of-durʳ τ ]ᶠ (ε-substᵀ e)

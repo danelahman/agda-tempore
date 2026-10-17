@@ -15,7 +15,7 @@
 
 open import Data.Empty
 open import Data.Product
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import Data.Sum using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (¬_)
@@ -49,6 +49,7 @@ open import Syntax.Terms.Transport       Spec
 open import Syntax.Substitutions.Variables Spec
 open import OperationalSemantics.Adequacy.GradedReach           Spec
 open import Syntax.Substitutions.Equivalence Spec
+open import Syntax.Substitutions.Subsumption Spec using (subCtx; subCtx-sub)
 
 -- A value of box type is a variable under a spine of subsumptions: the spine
 -- leaves the variable alone, so the value still names a cell, but at the
@@ -90,11 +91,31 @@ sndᵛ-ren r (var _ x)             = ⊥-elim (⦉⦊-not-in-toCtx x)
 sndᵛ-ren r ⦉ _ , _ ⦊             = refl
 sndᵛ-ren r (subV V (_ |×|ₛ q))   = cong (λ z → subV z q) (sndᵛ-ren r V)
 
+-- The injection commutes with renaming: the renaming acts on the payload.
+
+ren⊎ : ∀ {Γ Γ' A B} → Ren [] Γ' Γ → (Γ ⊢V⦂ A) ⊎ (Γ ⊢V⦂ B) → (Γ' ⊢V⦂ A) ⊎ (Γ' ⊢V⦂ B)
+ren⊎ r (inj₁ W) = inj₁ (V-rename r W)
+ren⊎ r (inj₂ W) = inj₂ (V-rename r W)
+
+injᵛ-ren : ∀ {A B} {St St' : 𝕊 []} → (r : Ren [] (toCtx St') (toCtx St))
+         → (V : toCtx St ⊢V⦂ A |+| B)
+         → injᵛ (V-rename r V) ≡ ren⊎ r (injᵛ V)
+injᵛ-ren r (var _ x)           = ⊥-elim (|+|-not-in-toCtx x)
+injᵛ-ren r (inl V)             = refl
+injᵛ-ren r (inr V)             = refl
+injᵛ-ren r (subV V (p |+|ₛ q)) =
+  trans (cong (sub⊎ p q) (injᵛ-ren r V)) (comm (injᵛ V))
+  where
+    comm : ∀ s → sub⊎ p q (ren⊎ r s) ≡ ren⊎ r (sub⊎ p q s)
+    comm (inj₁ W) = refl
+    comm (inj₂ W) = refl
+
 -- The skeleton a type shares with all its subtypes.
 
 data Shape : Set where
   ⋆ˢ   : Shape
   _×ˢ_ : Shape → Shape → Shape
+  _+ˢ_ : Shape → Shape → Shape
   _→ˢ_ : Shape → Shape → Shape
   □ˢ   : Shape → Shape
 
@@ -103,6 +124,7 @@ shapeᵛ (Base b)      = ⋆ˢ
 shapeᵛ Unit          = ⋆ˢ
 shapeᵛ Bool          = ⋆ˢ
 shapeᵛ (A |×| B)     = shapeᵛ A ×ˢ shapeᵛ B
+shapeᵛ (A |+| B)     = shapeᵛ A +ˢ shapeᵛ B
 shapeᵛ Empty         = ⋆ˢ
 shapeᵛ (A ⇒ (B ‼ _)) = shapeᵛ A →ˢ shapeᵛ B
 shapeᵛ ([ _ ] A)     = □ˢ (shapeᵛ A)
@@ -112,6 +134,12 @@ shapeᵛ ([ _ ] A)     = □ˢ (shapeᵛ A)
 
 ×ˢ-inj₂ : ∀ {t t' s s'} → (t ×ˢ t') ≡ (s ×ˢ s') → t' ≡ s'
 ×ˢ-inj₂ refl = refl
+
++ˢ-inj₁ : ∀ {t t' s s'} → (t +ˢ t') ≡ (s +ˢ s') → t ≡ s
++ˢ-inj₁ refl = refl
+
++ˢ-inj₂ : ∀ {t t' s s'} → (t +ˢ t') ≡ (s +ˢ s') → t' ≡ s'
++ˢ-inj₂ refl = refl
 
 →ˢ-inj₁ : ∀ {t t' s s'} → (t →ˢ t') ≡ (s →ˢ s') → t ≡ s
 →ˢ-inj₁ refl = refl
@@ -127,9 +155,17 @@ shapeᵛ ([ _ ] A)     = □ˢ (shapeᵛ A)
 <:ᵛ-shape Unitₛ           = refl
 <:ᵛ-shape Boolₛ           = refl
 <:ᵛ-shape (p |×|ₛ q)      = cong₂ _×ˢ_ (<:ᵛ-shape p) (<:ᵛ-shape q)
+<:ᵛ-shape (p |+|ₛ q)      = cong₂ _+ˢ_ (<:ᵛ-shape p) (<:ᵛ-shape q)
 <:ᵛ-shape Emptyₛ          = refl
 <:ᵛ-shape (p ⇒ₛ (q ‼ₛ _)) = cong₂ _→ˢ_ (sym (<:ᵛ-shape p)) (<:ᵛ-shape q)
 <:ᵛ-shape ([ _ ]ₛ p)      = cong □ˢ (<:ᵛ-shape p)
+
+-- A sum is reducible when it is an injection of a reducible payload.
+
+data VRed⊎ {Γ A B} (P : Γ ⊢V⦂ A → Set) (Q : Γ ⊢V⦂ B → Set)
+     : (Γ ⊢V⦂ A) ⊎ (Γ ⊢V⦂ B) → Set where
+  red-inl : ∀ {W} → P W → VRed⊎ P Q (inj₁ W)
+  red-inr : ∀ {W} → Q W → VRed⊎ P Q (inj₂ W)
 
 -- Ground types are the parameter and arity types of operations. They contain
 -- no arrows, so the arrow clause is vacuous and this needs nothing but itself.
@@ -145,6 +181,17 @@ VRedᵍˢ (t ×ˢ t') {A |×| B}     e  St V =
 VRedᵍˢ (t ×ˢ t') {Base b}      () St V
 VRedᵍˢ (t ×ˢ t') {Unit}        () St V
 VRedᵍˢ (t ×ˢ t') {Bool}        () St V
+VRedᵍˢ (t ×ˢ t') {A |+| B}     () St V
+
+VRedᵍˢ (t +ˢ t') {A |+| B}     e  St V =
+  VRed⊎ (VRedᵍˢ t (+ˢ-inj₁ e) St) (VRedᵍˢ t' (+ˢ-inj₂ e) St) (injᵛ V)
+VRedᵍˢ (t +ˢ t') {Base b}      () St V
+VRedᵍˢ (t +ˢ t') {Unit}        () St V
+VRedᵍˢ (t +ˢ t') {Bool}        () St V
+VRedᵍˢ (t +ˢ t') {A |×| B}     () St V
+VRedᵍˢ (t +ˢ t') {Empty}       () St V
+VRedᵍˢ (t +ˢ t') {A ⇒ (B ‼ ε)} () St V
+VRedᵍˢ (t +ˢ t') {[ ρ ] A}     () St V
 VRedᵍˢ (t ×ˢ t') {Empty}       () St V
 VRedᵍˢ (t ×ˢ t') {A ⇒ (B ‼ ε)} () St V
 VRedᵍˢ (t ×ˢ t') {[ ρ ] A}     () St V
@@ -155,6 +202,7 @@ VRedᵍˢ (□ˢ t) {[ ρ ] A}     e  St V =
 VRedᵍˢ (□ˢ t) {Base b}      () St V
 VRedᵍˢ (□ˢ t) {Unit}        () St V
 VRedᵍˢ (□ˢ t) {Bool}        () St V
+VRedᵍˢ (□ˢ t) {A |+| B}     () St V
 VRedᵍˢ (□ˢ t) {A |×| B}     () St V
 VRedᵍˢ (□ˢ t) {Empty}       () St V
 VRedᵍˢ (□ˢ t) {A ⇒ (B ‼ ε)} () St V
@@ -206,7 +254,8 @@ data CRed (s : Shape) (P : VPred s)
           → CRed s P e ε St M
 
 -- Stated through the eliminators, so that subsumption is absorbed: a product
--- by its two projections, a function by what it does to a reducible argument
+-- by its two projections, a sum by the injection it is (`injᵛ`) and its
+-- payload, a function by what it does to a reducible argument
 -- at a later state, a box by what reading its cell yields. Both `⇒` and
 -- `[ ρ ]` are Kripke.
 
@@ -220,6 +269,17 @@ VRedˢ (t ×ˢ t') {A |×| B}     e  St V =
 VRedˢ (t ×ˢ t') {Base b}      () St V
 VRedˢ (t ×ˢ t') {Unit}        () St V
 VRedˢ (t ×ˢ t') {Bool}        () St V
+VRedˢ (t ×ˢ t') {A |+| B}     () St V
+
+VRedˢ (t +ˢ t') {A |+| B}     e  St V =
+  VRed⊎ (VRedˢ t (+ˢ-inj₁ e) St) (VRedˢ t' (+ˢ-inj₂ e) St) (injᵛ V)
+VRedˢ (t +ˢ t') {Base b}      () St V
+VRedˢ (t +ˢ t') {Unit}        () St V
+VRedˢ (t +ˢ t') {Bool}        () St V
+VRedˢ (t +ˢ t') {A |×| B}     () St V
+VRedˢ (t +ˢ t') {Empty}       () St V
+VRedˢ (t +ˢ t') {A ⇒ (B ‼ ε)} () St V
+VRedˢ (t +ˢ t') {[ ρ ] A}     () St V
 VRedˢ (t ×ˢ t') {Empty}       () St V
 VRedˢ (t ×ˢ t') {A ⇒ (B ‼ ε)} () St V
 VRedˢ (t ×ˢ t') {[ ρ ] A}     () St V
@@ -232,6 +292,7 @@ VRedˢ (t →ˢ t') {A ⇒ (B ‼ ε)} e  St V =
 VRedˢ (t →ˢ t') {Base b}      () St V
 VRedˢ (t →ˢ t') {Unit}        () St V
 VRedˢ (t →ˢ t') {Bool}        () St V
+VRedˢ (t →ˢ t') {A |+| B}     () St V
 VRedˢ (t →ˢ t') {A |×| B}     () St V
 VRedˢ (t →ˢ t') {Empty}       () St V
 VRedˢ (t →ˢ t') {[ ρ ] A}     () St V
@@ -242,6 +303,7 @@ VRedˢ (□ˢ t) {[ ρ ] A}     e  St V =
 VRedˢ (□ˢ t) {Base b}      () St V
 VRedˢ (□ˢ t) {Unit}        () St V
 VRedˢ (□ˢ t) {Bool}        () St V
+VRedˢ (□ˢ t) {A |+| B}     () St V
 VRedˢ (□ˢ t) {A |×| B}     () St V
 VRedˢ (□ˢ t) {Empty}       () St V
 VRedˢ (□ˢ t) {A ⇒ (B ‼ ε)} () St V
@@ -338,6 +400,14 @@ VRedˢ-sub {e' = refl} Boolₛ        V pV         = tt
 VRedˢ-sub {e' = refl} Emptyₛ       V pV         = tt
 VRedˢ-sub {e' = refl} (p |×|ₛ p')  V (pV , pV') =
   VRedˢ-sub p (fstᵛ V) pV , VRedˢ-sub p' (sndᵛ V) pV'
+VRedˢ-sub {A' = A₂ |+| B₂} {e = e} {e' = refl} {St = St} (p |+|ₛ p') V pV =
+  sub-inj pV
+  where
+    sub-inj : ∀ {s}
+            → VRed⊎ (VRedˢ (shapeᵛ A₂) (+ˢ-inj₁ e) St) (VRedˢ (shapeᵛ B₂) (+ˢ-inj₂ e) St) s
+            → VRed⊎ (VRedˢ (shapeᵛ A₂) refl St) (VRedˢ (shapeᵛ B₂) refl St) (sub⊎ p p' s)
+    sub-inj (red-inl pW) = red-inl (VRedˢ-sub p _ pW)
+    sub-inj (red-inr pW) = red-inr (VRedˢ-sub p' _ pW)
 VRedˢ-sub {e' = refl} (p ⇒ₛ (p' ‼ₛ q)) V f      =
   λ q₀ W pW → CRed-expand SUB-APP (f q₀ (subV W p) (VRedˢ-sub p W pW))
 VRedˢ-sub {e' = refl} ([ _ ]ₛ p)   V f          = λ r → VRedˢ-≡ˢ (f r)
@@ -394,8 +464,40 @@ bool-canonical (subV V Boolₛ) with bool-canonical V
 ... | inj₁ rs = inj₁ (SUB-IF ◅ rs)
 ... | inj₂ rs = inj₂ (SUB-IF ◅ rs)
 
--- An eternal type is built from base, unit, empty and products, so `VRed`
--- asks nothing of a value of eternal type.
+-- A sum over a state context runs to the branch its injection names, at the
+-- injection's payload: a variable is ruled out by `|+|-not-in-toCtx`, and a
+-- subsumption moves onto the branches' binders by `SUB-CASE`, where
+-- substituting the payload subsumes it (`subCtx-sub`).
+
+case+-run : ∀ {St : 𝕊 []} {A B D ε} → (V : toCtx St ⊢V⦂ A |+| B)
+          → (M : toCtx St ∷ A ⊢C⦂ D ‼ ε) → (N : toCtx St ∷ B ⊢C⦂ D ‼ ε)
+          → [ (λ W → ⟨ St , case+ V `inl M `inr N ⟩ ↝* ⟨ St , M [ split-[] ↦ W ]c ⟩)
+            , (λ W → ⟨ St , case+ V `inl M `inr N ⟩ ↝* ⟨ St , N [ split-[] ↦ W ]c ⟩)
+            ]′ (injᵛ V)
+case+-run (var f x)           M N = ⊥-elim (|+|-not-in-toCtx x)
+case+-run (inl V)             M N = CASE-INL ◅ ε*
+case+-run (inr V)             M N = CASE-INR ◅ ε*
+case+-run {St = St} (subV V (p |+|ₛ q)) M N =
+  go (injᵛ V) (case+-run V (subCtx p M) (subCtx q N))
+  where
+    go : ∀ s
+       → [ (λ W → ⟨ St , case+ V `inl subCtx p M `inr subCtx q N ⟩
+                   ↝* ⟨ St , subCtx p M [ split-[] ↦ W ]c ⟩)
+         , (λ W → ⟨ St , case+ V `inl subCtx p M `inr subCtx q N ⟩
+                   ↝* ⟨ St , subCtx q N [ split-[] ↦ W ]c ⟩)
+         ]′ s
+       → [ (λ W → ⟨ St , case+ subV V (p |+|ₛ q) `inl M `inr N ⟩
+                   ↝* ⟨ St , M [ split-[] ↦ W ]c ⟩)
+         , (λ W → ⟨ St , case+ subV V (p |+|ₛ q) `inl M `inr N ⟩
+                   ↝* ⟨ St , N [ split-[] ↦ W ]c ⟩)
+         ]′ (sub⊎ p q s)
+    go (inj₁ W) rs =
+      SUB-CASE ◅ subst (λ z → ⟨ St , _ ⟩ ↝* ⟨ St , z ⟩) (subCtx-sub p M W) rs
+    go (inj₂ W) rs =
+      SUB-CASE ◅ subst (λ z → ⟨ St , _ ⟩ ↝* ⟨ St , z ⟩) (subCtx-sub q N W) rs
+
+-- An eternal type is built from base, unit, empty, products and sums, so
+-- `VRed` asks nothing of a value of eternal type beyond its injections.
 
 VRed-eternal : ∀ {A} {St : 𝕊 []} → Eternal A → (V : toCtx St ⊢V⦂ A) → VRed A St V
 
@@ -405,6 +507,11 @@ VRed-eternal Boolₑ            V = tt
 VRed-eternal Emptyₑ           V = tt
 VRed-eternal (et₁ |×|ₑ et₂)   V =
   VRed-eternal et₁ (fstᵛ V) , VRed-eternal et₂ (sndᵛ V)
+VRed-eternal (et₁ |+|ₑ et₂)   V = eternal-inj (injᵛ V)
+  where
+    eternal-inj : ∀ s → VRed⊎ (VRed _ _) (VRed _ _) s
+    eternal-inj (inj₁ W) = red-inl (VRed-eternal et₁ W)
+    eternal-inj (inj₂ W) = red-inr (VRed-eternal et₂ W)
 
 VRed-≡ᵛ : ∀ {St : 𝕊 []} → (A : VType) → {V V' : toCtx St ⊢V⦂ A}
         → V ≡ V' → VRed A St V → VRed A St V'
@@ -450,9 +557,27 @@ VRedˢ-reach {t ×ˢ t'} {A |×| B}     q e  V (p₁ , p₂) =
 VRedˢ-reach {t ×ˢ t'} {Base b}      q () V p
 VRedˢ-reach {t ×ˢ t'} {Unit}        q () V p
 VRedˢ-reach {t ×ˢ t'} {Bool}        q () V p
+VRedˢ-reach {t ×ˢ t'} {A |+| B}     q () V p
 VRedˢ-reach {t ×ˢ t'} {Empty}       q () V p
 VRedˢ-reach {t ×ˢ t'} {A ⇒ (B ‼ ε)} q () V p
 VRedˢ-reach {t ×ˢ t'} {[ ρ ] A}     q () V p
+
+VRedˢ-reach {t +ˢ t'} {A |+| B}     q e  V p =
+  subst (VRed⊎ (VRedˢ t (+ˢ-inj₁ e) _) (VRedˢ t' (+ˢ-inj₂ e) _))
+        (sym (injᵛ-ren (reach-renᵘ q) V)) (reach-inj p)
+  where
+    reach-inj : ∀ {s} → VRed⊎ (VRedˢ t (+ˢ-inj₁ e) _) (VRedˢ t' (+ˢ-inj₂ e) _) s
+              → VRed⊎ (VRedˢ t (+ˢ-inj₁ e) _) (VRedˢ t' (+ˢ-inj₂ e) _)
+                  (ren⊎ (reach-renᵘ q) s)
+    reach-inj (red-inl pW) = red-inl (VRedˢ-reach q (+ˢ-inj₁ e) _ pW)
+    reach-inj (red-inr pW) = red-inr (VRedˢ-reach q (+ˢ-inj₂ e) _ pW)
+VRedˢ-reach {t +ˢ t'} {Base b}      q () V p
+VRedˢ-reach {t +ˢ t'} {Unit}        q () V p
+VRedˢ-reach {t +ˢ t'} {Bool}        q () V p
+VRedˢ-reach {t +ˢ t'} {A |×| B}     q () V p
+VRedˢ-reach {t +ˢ t'} {Empty}       q () V p
+VRedˢ-reach {t +ˢ t'} {A ⇒ (B ‼ ε)} q () V p
+VRedˢ-reach {t +ˢ t'} {[ ρ ] A}     q () V p
 
 VRedˢ-reach {t →ˢ t'} {A ⇒ (B ‼ ε)} q₀ e  V f = λ q' W pW →
   subst (λ z → CRed t' (VRedˢ t') (→ˢ-inj₂ e) ε _ (z · W))
@@ -462,6 +587,7 @@ VRedˢ-reach {t →ˢ t'} {A ⇒ (B ‼ ε)} q₀ e  V f = λ q' W pW →
 VRedˢ-reach {t →ˢ t'} {Base b}      q () V f
 VRedˢ-reach {t →ˢ t'} {Unit}        q () V f
 VRedˢ-reach {t →ˢ t'} {Bool}        q () V f
+VRedˢ-reach {t →ˢ t'} {A |+| B}     q () V f
 VRedˢ-reach {t →ˢ t'} {A |×| B}     q () V f
 VRedˢ-reach {t →ˢ t'} {Empty}       q () V f
 VRedˢ-reach {t →ˢ t'} {[ ρ ] A}     q () V f
@@ -470,6 +596,7 @@ VRedˢ-reach {□ˢ t} {[ ρ ] A}     q e  V f = reach-read-val q V _ _ f
 VRedˢ-reach {□ˢ t} {Base b}      q () V f
 VRedˢ-reach {□ˢ t} {Unit}        q () V f
 VRedˢ-reach {□ˢ t} {Bool}        q () V f
+VRedˢ-reach {□ˢ t} {A |+| B}     q () V f
 VRedˢ-reach {□ˢ t} {A |×| B}     q () V f
 VRedˢ-reach {□ˢ t} {Empty}       q () V f
 VRedˢ-reach {□ˢ t} {A ⇒ (B ‼ ε)} q () V f
@@ -501,6 +628,7 @@ VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {A |×| B}     e  V (p₁ , p₂) =
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Base b}      () V p
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Unit}        () V p
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Bool}        () V p
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {A |+| B}     () V p
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Empty}       () V p
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {A ⇒ (B ‼ ε)} () V p
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {[ ρ ] A}     () V p
@@ -510,6 +638,7 @@ VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {[ ρ ] A}     e  V p =
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Base b}      () V p
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Unit}        () V p
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Bool}        () V p
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {A |+| B}     () V p
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {A |×| B}     () V p
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Empty}       () V p
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {A ⇒ (B ‼ ε)} () V p
@@ -531,6 +660,7 @@ VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {A |×| B}     e  V (p₁ , p₂) =
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Base b}      () V p
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Unit}        () V p
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Bool}        () V p
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {A |+| B}     () V p
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Empty}       () V p
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {A ⇒ (B ‼ ε)} () V p
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {[ ρ ] A}     () V p
@@ -540,6 +670,7 @@ VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {[ ρ ] A}     e  V p =
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Base b}      () V p
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Unit}        () V p
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Bool}        () V p
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {A |+| B}     () V p
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {A |×| B}     () V p
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Empty}       () V p
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {A ⇒ (B ‼ ε)} () V p
@@ -596,7 +727,7 @@ SRed-fresh {A} {ρ} {St} V pV f {St'} r =
                           (sym (≤ₛ-embed-grade e (Hd {Γ = toCtx St})))))
                  rel)
 
--- Every variable of a state context is of box type, so at the other four
+-- Every variable of a state context is of box type, so at the other
 -- types there is nothing to show. At a box type a usable variable is
 -- reducible via the store read at the states its own box grade allows.
 
@@ -610,6 +741,7 @@ SRed-var {Unit}      pSt x f = tt
 SRed-var {Bool}      pSt x f = tt
 SRed-var {Empty}     pSt x f = tt
 SRed-var {A₁ |×| A₂} pSt x f = ⊥-elim (⦉⦊-not-in-toCtx x)
+SRed-var {A₁ |+| A₂} pSt x f = ⊥-elim (|+|-not-in-toCtx x)
 SRed-var {A₁ ⇒ C}    pSt x f = ⊥-elim (⇒-not-in-toCtx x)
 
 SRed-var {[ ρ ] A} pSt x f r = VRedˢ-≡ˢ (pSt x r)

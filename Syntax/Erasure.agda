@@ -39,6 +39,8 @@ mutual
     true  : ErV
     false : ErV
     ⦉_,_⦊ : ErV → ErV → ErV
+    inl   : ErV → ErV
+    inr   : ErV → ErV
     lam   : ErC → ErV
 
   data ErC : Set where
@@ -48,6 +50,7 @@ mutual
     match_`in_        : ErV → ErC → ErC
     absurd            : ErV → ErC
     if_`then_`else_   : ErV → ErC → ErC → ErC
+    case+_`inl_`inr_  : ErV → ErC → ErC → ErC
     perform           : Op → ErV → ErC → ErC
     delay             : 𝔻 → ErC → ErC
     handle_`with_`in  : ErC → (Op → E → ErC) → ErC → ErC
@@ -73,6 +76,8 @@ mutual
   ⌊ true ⌋ᵛ      = true
   ⌊ false ⌋ᵛ     = false
   ⌊ ⦉ V , W ⦊ ⌋ᵛ  = ⦉ ⌊ V ⌋ᵛ , ⌊ W ⌋ᵛ ⦊
+  ⌊ inl V ⌋ᵛ     = inl ⌊ V ⌋ᵛ
+  ⌊ inr V ⌋ᵛ     = inr ⌊ V ⌋ᵛ
   ⌊ lam M ⌋ᵛ     = lam ⌊ M ⌋ᶜ
   ⌊ subV V p ⌋ᵛ  = ⌊ V ⌋ᵛ
 
@@ -84,6 +89,7 @@ mutual
   ⌊ match V `in M ⌋ᶜ          = match ⌊ V ⌋ᵛ `in ⌊ M ⌋ᶜ
   ⌊ absurd V ⌋ᶜ               = absurd ⌊ V ⌋ᵛ
   ⌊ if V `then M `else N ⌋ᶜ   = if ⌊ V ⌋ᵛ `then ⌊ M ⌋ᶜ `else ⌊ N ⌋ᶜ
+  ⌊ case+ V `inl M `inr N ⌋ᶜ = case+ ⌊ V ⌋ᵛ `inl ⌊ M ⌋ᶜ `inr ⌊ N ⌋ᶜ
   ⌊ perform op V M ⌋ᶜ         = perform op ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ
   ⌊ delay τ M ⌋ᶜ              = delay τ ⌊ M ⌋ᶜ
   ⌊ handle M `with H `in N ⌋ᶜ =

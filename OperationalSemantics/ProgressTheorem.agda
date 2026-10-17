@@ -83,6 +83,10 @@ progress (if var ρ≾uᵣ x `then M `else N) = ⊥-elim (Bool-not-in-toCtx x)
 progress (if true       `then M `else N) = step-progress IF-TRUE
 progress (if false      `then M `else N) = step-progress IF-FALSE
 progress (if subV V Boolₛ `then M `else N) = step-progress SUB-IF
+progress (case+ var ρ≾uᵣ x `inl M `inr N) = ⊥-elim (|+|-not-in-toCtx x)
+progress (case+ inl V `inl M `inr N)      = step-progress CASE-INL
+progress (case+ inr V `inl M `inr N)      = step-progress CASE-INR
+progress (case+ subV V (_ |+|ₛ _) `inl M `inr N) = step-progress SUB-CASE
 progress (perform op V M)          = is-op
 progress (delay τ M)               = step-progress DELAY
 progress (handle M `with H `in N) with progress M

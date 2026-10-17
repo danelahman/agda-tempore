@@ -112,6 +112,21 @@ cast-match : ∀ {Γ Γ' A B C} → (e : Γ ≡ Γ')
            ≡ match (castᵛ e V) `in (castᶜ (cong (λ Γ₀ → Γ₀ ∷ A ∷ B) e) M)
 cast-match refl = refl
 
+cast-inl : ∀ {Γ Γ' A B} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ A}
+         → castᵛ e (inl {B = B} V) ≡ inl (castᵛ e V)
+cast-inl refl = refl
+
+cast-inr : ∀ {Γ Γ' A B} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ B}
+         → castᵛ e (inr {A = A} V) ≡ inr (castᵛ e V)
+cast-inr refl = refl
+
+cast-case+ : ∀ {Γ Γ' A B C} → (e : Γ ≡ Γ')
+           → {V : Γ ⊢V⦂ A |+| B} → {M : Γ ∷ A ⊢C⦂ C} → {N : Γ ∷ B ⊢C⦂ C}
+           → castᶜ e (case+ V `inl M `inr N)
+           ≡ case+ (castᵛ e V) `inl (castᶜ (cong (_∷ A) e) M)
+                               `inr (castᶜ (cong (_∷ B) e) N)
+cast-case+ refl = refl
+
 cast-box : ∀ {Γ Γ' A C ρ} → (e : Γ ≡ Γ')
          → {V : Γ ⟨ ρ ⟩ ⊢V⦂ A} → {M : Γ ∷ [ ρ ] A ⊢C⦂ C}
          → castᶜ e (box V M)

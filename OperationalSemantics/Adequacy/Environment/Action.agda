@@ -932,6 +932,213 @@ env-Cˢ-match {A = A} {B = B} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ 
     eA₂   = ++ᶜ-assoc Γ ([] ∷ A₀) (Δ ∷ A ∷ B)
     exf   = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ∷ A ∷ B) p
 
+-- The injections: the action passes the injection, as it passes a pair.
+
+env-Vˢ-inl : ∀ {St Γ A B} → (γ : Env St Γ) → (Δ : Ctx)
+           → (V : (Γ ++ᶜ Δ) ⊢V⦂ A)
+           → env-Vˢ γ Δ (inl {B = B} V) ≡ inl (env-Vˢ γ Δ V)
+
+env-Vˢ-inl ⌊ St ⌋ Δ V = refl
+env-Vˢ-inl (reachᵉ γ q) Δ V =
+  cong (V-rename (cong-ren (reach-renᵘ q))) (env-Vˢ-inl γ Δ V)
+
+env-Vˢ-inl {B = B} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V =
+  cong (V-rename (cong-ren (unbox-ren q)))
+    (trans (cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-inl ei))
+    (trans (cong (castᵛ eo) (env-Vˢ-inl {B = B} γ Δ' (castᵛ ei V)))
+           (cast-inl eo)))
+  where
+    Δ' = [] ⟨ ρ ⟩ ++ᶜ Δ
+    eo = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
+    ei = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
+
+env-Vˢ-inl {B = B} (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ} V₀ γ) Δ V =
+  trans (cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-inl ei))
+  (trans (cong (castᵛ eo) (env-Vˢ-inl {B = B} γ Δ' (castᵛ ei V)))
+         (cast-inl eo))
+  where
+    Δ₁ = [] ∷ [ ρ ] A₀
+    Δ' = Δ₁ ++ᶜ Δ
+    eo = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
+    ei = ++ᶜ-assoc Γ Δ₁ Δ
+
+env-Vˢ-inl {B = B} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V =
+  trans (cong (λ z → sub-atᵛ Δ (castᵛ eIn (env-Vˢ γ Δ₁ z)) W) (cast-inl eA))
+  (trans (cong (λ z → sub-atᵛ Δ (castᵛ eIn z) W)
+               (env-Vˢ-inl {B = B} γ Δ₁ (castᵛ eA V)))
+         (cong (λ z → sub-atᵛ Δ z W) (cast-inl eIn)))
+  where
+    Δ₁   = [] ∷ A₀ ++ᶜ Δ
+    eIn  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
+    eA   = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
+
+env-Vˢ-inr : ∀ {St Γ A B} → (γ : Env St Γ) → (Δ : Ctx)
+           → (V : (Γ ++ᶜ Δ) ⊢V⦂ B)
+           → env-Vˢ γ Δ (inr {A = A} V) ≡ inr (env-Vˢ γ Δ V)
+
+env-Vˢ-inr ⌊ St ⌋ Δ V = refl
+env-Vˢ-inr (reachᵉ γ q) Δ V =
+  cong (V-rename (cong-ren (reach-renᵘ q))) (env-Vˢ-inr γ Δ V)
+
+env-Vˢ-inr {A = A} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V =
+  cong (V-rename (cong-ren (unbox-ren q)))
+    (trans (cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-inr ei))
+    (trans (cong (castᵛ eo) (env-Vˢ-inr {A = A} γ Δ' (castᵛ ei V)))
+           (cast-inr eo)))
+  where
+    Δ' = [] ⟨ ρ ⟩ ++ᶜ Δ
+    eo = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
+    ei = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
+
+env-Vˢ-inr {A = A} (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ} V₀ γ) Δ V =
+  trans (cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-inr ei))
+  (trans (cong (castᵛ eo) (env-Vˢ-inr {A = A} γ Δ' (castᵛ ei V)))
+         (cast-inr eo))
+  where
+    Δ₁ = [] ∷ [ ρ ] A₀
+    Δ' = Δ₁ ++ᶜ Δ
+    eo = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
+    ei = ++ᶜ-assoc Γ Δ₁ Δ
+
+env-Vˢ-inr {A = A} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V =
+  trans (cong (λ z → sub-atᵛ Δ (castᵛ eIn (env-Vˢ γ Δ₁ z)) W) (cast-inr eA))
+  (trans (cong (λ z → sub-atᵛ Δ (castᵛ eIn z) W)
+               (env-Vˢ-inr {A = A} γ Δ₁ (castᵛ eA V)))
+         (cong (λ z → sub-atᵛ Δ z W) (cast-inr eIn)))
+  where
+    Δ₁   = [] ∷ A₀ ++ᶜ Δ
+    eIn  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
+    eA   = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
+
+-- Sum elimination: each branch sits at the suffix extended by its own binder,
+-- the two casts reconciled by `castᶜ-irr` as for `match`.
+
+env-Cˢ-case+ : ∀ {St Γ A B C} → (γ : Env St Γ) → (Δ : Ctx)
+             → (V : (Γ ++ᶜ Δ) ⊢V⦂ A |+| B)
+             → (M : (Γ ++ᶜ Δ) ∷ A ⊢C⦂ C)
+             → (N : (Γ ++ᶜ Δ) ∷ B ⊢C⦂ C)
+             → env-Cˢ γ Δ (case+ V `inl M `inr N)
+             ≡ case+ (env-Vˢ γ Δ V) `inl (env-Cˢ γ (Δ ∷ A) M)
+                                    `inr (env-Cˢ γ (Δ ∷ B) N)
+
+env-Cˢ-case+ ⌊ St ⌋ Δ V M N = refl
+env-Cˢ-case+ (reachᵉ γ q) Δ V M N =
+  cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-case+ γ Δ V M N)
+
+env-Cˢ-case+ {A = A} {B = B} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V M N =
+  cong (C-rename (cong-ren (unbox-ren q)))
+    (begin
+      castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (case+ V `inl M `inr N)))
+    ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-case+ ei) ⟩
+      castᶜ eo (env-Cˢ γ Δ' (case+ castᵛ ei V `inl castᶜ (exA ei) M
+                                              `inr castᶜ (exB ei) N))
+    ≡⟨ cong (castᶜ eo) (env-Cˢ-case+ γ Δ' (castᵛ ei V) (castᶜ (exA ei) M)
+                                          (castᶜ (exB ei) N)) ⟩
+      castᶜ eo (case+ env-Vˢ γ Δ' (castᵛ ei V)
+                  `inl env-Cˢ γ (Δ' ∷ A) (castᶜ (exA ei) M)
+                  `inr env-Cˢ γ (Δ' ∷ B) (castᶜ (exB ei) N))
+    ≡⟨ cast-case+ eo ⟩
+      case+ castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))
+        `inl castᶜ (exA eo) (env-Cˢ γ (Δ' ∷ A) (castᶜ (exA ei) M))
+        `inr castᶜ (exB eo) (env-Cˢ γ (Δ' ∷ B) (castᶜ (exB ei) N))
+    ≡⟨ cong₂ (λ y z → case+ castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V)) `inl y `inr z)
+             (trans (castᶜ-irr (exA eo) eoA _)
+                    (cong (λ z → castᶜ eoA (env-Cˢ γ (Δ' ∷ A) z))
+                          (castᶜ-irr (exA ei) eiA M)))
+             (trans (castᶜ-irr (exB eo) eoB _)
+                    (cong (λ z → castᶜ eoB (env-Cˢ γ (Δ' ∷ B) z))
+                          (castᶜ-irr (exB ei) eiB N))) ⟩
+      case+ castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))
+        `inl castᶜ eoA (env-Cˢ γ (Δ' ∷ A) (castᶜ eiA M))
+        `inr castᶜ eoB (env-Cˢ γ (Δ' ∷ B) (castᶜ eiB N))
+     ∎)
+  where
+    Δ'  = [] ⟨ ρ ⟩ ++ᶜ Δ
+    eo  = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
+    ei  = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
+    eoA = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) (Δ ∷ A))
+    eiA = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) (Δ ∷ A)
+    eoB = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) (Δ ∷ B))
+    eiB = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) (Δ ∷ B)
+    exA = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (_∷ A) p
+    exB = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (_∷ B) p
+
+env-Cˢ-case+ {A = A} {B = B} (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ} V₀ γ) Δ V M N =
+  begin
+    castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (case+ V `inl M `inr N)))
+  ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-case+ ei) ⟩
+    castᶜ eo (env-Cˢ γ Δ' (case+ castᵛ ei V `inl castᶜ (exA ei) M
+                                            `inr castᶜ (exB ei) N))
+  ≡⟨ cong (castᶜ eo) (env-Cˢ-case+ γ Δ' (castᵛ ei V) (castᶜ (exA ei) M)
+                                        (castᶜ (exB ei) N)) ⟩
+    castᶜ eo (case+ env-Vˢ γ Δ' (castᵛ ei V)
+                `inl env-Cˢ γ (Δ' ∷ A) (castᶜ (exA ei) M)
+                `inr env-Cˢ γ (Δ' ∷ B) (castᶜ (exB ei) N))
+  ≡⟨ cast-case+ eo ⟩
+    case+ castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))
+      `inl castᶜ (exA eo) (env-Cˢ γ (Δ' ∷ A) (castᶜ (exA ei) M))
+      `inr castᶜ (exB eo) (env-Cˢ γ (Δ' ∷ B) (castᶜ (exB ei) N))
+  ≡⟨ cong₂ (λ y z → case+ castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V)) `inl y `inr z)
+           (trans (castᶜ-irr (exA eo) eoA _)
+                  (cong (λ z → castᶜ eoA (env-Cˢ γ (Δ' ∷ A) z))
+                        (castᶜ-irr (exA ei) eiA M)))
+           (trans (castᶜ-irr (exB eo) eoB _)
+                  (cong (λ z → castᶜ eoB (env-Cˢ γ (Δ' ∷ B) z))
+                        (castᶜ-irr (exB ei) eiB N))) ⟩
+    case+ castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))
+      `inl castᶜ eoA (env-Cˢ γ (Δ' ∷ A) (castᶜ eiA M))
+      `inr castᶜ eoB (env-Cˢ γ (Δ' ∷ B) (castᶜ eiB N))
+   ∎
+  where
+    Δ₁  = [] ∷ [ ρ ] A₀
+    Δ'  = Δ₁ ++ᶜ Δ
+    eo  = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
+    ei  = ++ᶜ-assoc Γ Δ₁ Δ
+    eoA = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ∷ A))
+    eiA = ++ᶜ-assoc Γ Δ₁ (Δ ∷ A)
+    eoB = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ∷ B))
+    eiB = ++ᶜ-assoc Γ Δ₁ (Δ ∷ B)
+    exA = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (_∷ A) p
+    exB = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (_∷ B) p
+
+env-Cˢ-case+ {A = A} {B = B} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V M N =
+  begin
+    sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ (castᶜ eA (case+ V `inl M `inr N)))) W
+  ≡⟨ cong (λ z → sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ z)) W) (cast-case+ eA) ⟩
+    sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁
+                (case+ castᵛ eA V `inl castᶜ (exA eA) M `inr castᶜ (exB eA) N))) W
+  ≡⟨ cong (λ z → sub-atᶜ Δ (castᶜ eIn z) W)
+          (env-Cˢ-case+ γ Δ₁ (castᵛ eA V) (castᶜ (exA eA) M) (castᶜ (exB eA) N)) ⟩
+    sub-atᶜ Δ (castᶜ eIn (case+ env-Vˢ γ Δ₁ (castᵛ eA V)
+                            `inl env-Cˢ γ (Δ₁ ∷ A) (castᶜ (exA eA) M)
+                            `inr env-Cˢ γ (Δ₁ ∷ B) (castᶜ (exB eA) N))) W
+  ≡⟨ cong (λ z → sub-atᶜ Δ z W) (cast-case+ eIn) ⟩
+    sub-atᶜ Δ (case+ castᵛ eIn (env-Vˢ γ Δ₁ (castᵛ eA V))
+                 `inl castᶜ (exA eIn) (env-Cˢ γ (Δ₁ ∷ A) (castᶜ (exA eA) M))
+                 `inr castᶜ (exB eIn) (env-Cˢ γ (Δ₁ ∷ B) (castᶜ (exB eA) N))) W
+  ≡⟨ cong₂ (λ y z → case+ sub-atᵛ Δ (castᵛ eIn (env-Vˢ γ Δ₁ (castᵛ eA V))) W
+                      `inl sub-atᶜ (Δ ∷ A) y W `inr sub-atᶜ (Δ ∷ B) z W)
+           (trans (castᶜ-irr (exA eIn) eInA _)
+                  (cong (λ z → castᶜ eInA (env-Cˢ γ (Δ₁ ∷ A) z))
+                        (castᶜ-irr (exA eA) eAA M)))
+           (trans (castᶜ-irr (exB eIn) eInB _)
+                  (cong (λ z → castᶜ eInB (env-Cˢ γ (Δ₁ ∷ B) z))
+                        (castᶜ-irr (exB eA) eAB N))) ⟩
+    case+ sub-atᵛ Δ (castᵛ eIn (env-Vˢ γ Δ₁ (castᵛ eA V))) W
+      `inl sub-atᶜ (Δ ∷ A) (castᶜ eInA (env-Cˢ γ (Δ₁ ∷ A) (castᶜ eAA M))) W
+      `inr sub-atᶜ (Δ ∷ B) (castᶜ eInB (env-Cˢ γ (Δ₁ ∷ B) (castᶜ eAB N))) W
+  ∎
+  where
+    Δ₁    = [] ∷ A₀ ++ᶜ Δ
+    eIn   = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
+    eInA  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (Δ ∷ A))
+    eInB  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (Δ ∷ B))
+    eA    = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
+    eAA   = ++ᶜ-assoc Γ ([] ∷ A₀) (Δ ∷ A)
+    eAB   = ++ᶜ-assoc Γ ([] ∷ A₀) (Δ ∷ B)
+    exA   = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (_∷ A) p
+    exB   = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (_∷ B) p
+
 env-Cˢ-box : ∀ {St Γ A C ρ} → (γ : Env St Γ) → (Δ : Ctx)
            → (V : (Γ ++ᶜ Δ) ⟨ ρ ⟩ ⊢V⦂ A)
            → (M : (Γ ++ᶜ Δ) ∷ [ ρ ] A ⊢C⦂ C)

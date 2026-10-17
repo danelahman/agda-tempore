@@ -7,8 +7,8 @@
 -- the context (possibility) modality may be realised as a coend.     --
 --                                                                    --
 -- Beyond the core (identities, composition, and its congruence) the  --
--- record carries the cartesian closed structure with the congruences --
--- needed to reason up to `_≈ᵐ_`.                                     --
+-- record carries the cartesian closed structure and binary           --
+-- coproducts, with the congruences needed to reason up to `_≈ᵐ_`.    --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Category where
@@ -265,6 +265,74 @@ record Category : Set₂ where
           ≈ᵐ ifᵐ b (m ∘ᵐ ⟨ idᵐ , trueᵐ  ∘ᵐ terminalᵐ ⟩ᵐ)
                    (m ∘ᵐ ⟨ idᵐ , falseᵐ ∘ᵐ terminalᵐ ⟩ᵐ)
 
+  -- BINARY COPRODUCTS
+  --
+  -- Plain coproducts: copairing with its two β laws and uniqueness. The
+  -- eliminator stable under a context, `caseᵐ`, is derived below from the
+  -- exponentials.
+
+  field
+    _+ᵐ_ : Obj → Obj → Obj
+
+    inlᵐ : ∀ {A B} → A →ᵐ A +ᵐ B
+    inrᵐ : ∀ {A B} → B →ᵐ A +ᵐ B
+    [_,_]ᵐ : ∀ {A B C} → A →ᵐ C → B →ᵐ C → A +ᵐ B →ᵐ C
+
+    [_,_]ᵐ-cong : ∀ {A B C} {f f' : A →ᵐ C} {g g' : B →ᵐ C}
+                → f ≈ᵐ f' → g ≈ᵐ g' → [ f , g ]ᵐ ≈ᵐ [ f' , g' ]ᵐ
+
+    []ᵐ-inlᵐ : ∀ {A B C} → (f : A →ᵐ C) → (g : B →ᵐ C) → [ f , g ]ᵐ ∘ᵐ inlᵐ ≈ᵐ f
+    []ᵐ-inrᵐ : ∀ {A B C} → (f : A →ᵐ C) → (g : B →ᵐ C) → [ f , g ]ᵐ ∘ᵐ inrᵐ ≈ᵐ g
+    []ᵐ-unique : ∀ {A B C} → (f : A →ᵐ C) → (g : B →ᵐ C) → (h : A +ᵐ B →ᵐ C)
+               → h ∘ᵐ inlᵐ ≈ᵐ f → h ∘ᵐ inrᵐ ≈ᵐ g → h ≈ᵐ [ f , g ]ᵐ
+
+  infixr 22 _+ᵐ_
+
+  -- copairing absorbs a postcomposition
+
+  []ᵐ-post : ∀ {A B C D} → (f : A →ᵐ C) → (g : B →ᵐ C) → (h : C →ᵐ D)
+           → h ∘ᵐ [ f , g ]ᵐ ≈ᵐ [ h ∘ᵐ f , h ∘ᵐ g ]ᵐ
+  []ᵐ-post f g h =
+    []ᵐ-unique _ _ _
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ ([]ᵐ-inlᵐ f g)))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ ([]ᵐ-inrᵐ f g)))
+
+  -- functorial action of the coproduct
+
+  map+ᵐ : ∀ {A B C D} → A →ᵐ C → B →ᵐ D → A +ᵐ B →ᵐ C +ᵐ D
+  map+ᵐ f g = [ inlᵐ ∘ᵐ f , inrᵐ ∘ᵐ g ]ᵐ
+
+  map+ᵐ-cong : ∀ {A B C D} {f f' : A →ᵐ C} {g g' : B →ᵐ D}
+             → f ≈ᵐ f' → g ≈ᵐ g' → map+ᵐ f g ≈ᵐ map+ᵐ f' g'
+  map+ᵐ-cong p q = [ ∘ᵐ-congʳ p , ∘ᵐ-congʳ q ]ᵐ-cong
+
+  map+ᵐ-idᵐ : ∀ {A B} → map+ᵐ (idᵐ {A}) (idᵐ {B}) ≈ᵐ idᵐ
+  map+ᵐ-idᵐ =
+    ≈ᵐ-sym ([]ᵐ-unique _ _ idᵐ
+             (≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _)))
+             (≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _))))
+
+  -- a copairing precomposed with the coproduct's action
+
+  []ᵐ-map+ᵐ : ∀ {A B C D E} → (f : C →ᵐ E) → (g : D →ᵐ E)
+            → (a : A →ᵐ C) → (b : B →ᵐ D)
+            → [ f , g ]ᵐ ∘ᵐ map+ᵐ a b ≈ᵐ [ f ∘ᵐ a , g ∘ᵐ b ]ᵐ
+  []ᵐ-map+ᵐ f g a b =
+    []ᵐ-unique _ _ _
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ ([]ᵐ-inlᵐ _ _))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ ([]ᵐ-inlᵐ f g)))))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ ([]ᵐ-inrᵐ _ _))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ ([]ᵐ-inrᵐ f g)))))
+
+  map+ᵐ-∘ : ∀ {A B C D E F} → (a : C →ᵐ E) → (b : D →ᵐ F)
+          → (c : A →ᵐ C) → (d : B →ᵐ D)
+          → map+ᵐ a b ∘ᵐ map+ᵐ c d ≈ᵐ map+ᵐ (a ∘ᵐ c) (b ∘ᵐ d)
+  map+ᵐ-∘ a b c d =
+    ≈ᵐ-trans ([]ᵐ-map+ᵐ _ _ c d)
+             [ ∘ᵐ-assoc _ _ _ , ∘ᵐ-assoc _ _ _ ]ᵐ-cong
+
   -- EXPONENTIALS
 
   field
@@ -500,3 +568,214 @@ record Category : Set₂ where
         ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
         (≈ᵐ-trans (∘ᵐ-congʳ (step idᵐ _))
                   (∘ᵐ-congʳ (ifᵐ-cong ≈ᵐ-refl (∘ᵐ-identityʳ _) (∘ᵐ-identityʳ _))))
+
+
+  -- SUMS IN A CONTEXT
+  --
+  -- `X ×ᵐ -` preserves the coproduct, being left adjoint to `X ⇒ᵐ -`: a map
+  -- out of `X ×ᵐ (A +ᵐ B)` is the copairing `copairˣᵐ` of its two
+  -- restrictions. `caseᵐ` is the eliminator this yields, with the laws that
+  -- `ifᵐ` has as fields.
+
+  swapᵐ : ∀ {A B} → A ×ᵐ B →ᵐ B ×ᵐ A
+  swapᵐ = ⟨ sndᵐ , fstᵐ ⟩ᵐ
+
+  swapᵐ-⟨⟩ : ∀ {X A B} → (f : X →ᵐ A) → (g : X →ᵐ B)
+           → swapᵐ ∘ᵐ ⟨ f , g ⟩ᵐ ≈ᵐ ⟨ g , f ⟩ᵐ
+  swapᵐ-⟨⟩ f g = ≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _) ⟨ ⟨⟩ᵐ-sndᵐ f g , ⟨⟩ᵐ-fstᵐ f g ⟩ᵐ-cong
+
+  swapᵐ-swapᵐ : ∀ {A B} → swapᵐ {B} {A} ∘ᵐ swapᵐ {A} {B} ≈ᵐ idᵐ
+  swapᵐ-swapᵐ =
+    ≈ᵐ-trans (swapᵐ-⟨⟩ sndᵐ fstᵐ)
+             (≈ᵐ-sym (⟨⟩ᵐ-unique fstᵐ sndᵐ idᵐ (∘ᵐ-identityʳ _) (∘ᵐ-identityʳ _)))
+
+  swapᵐ-mapˣᵐ : ∀ {A B C D} → (a : A →ᵐ C) → (b : B →ᵐ D)
+              → swapᵐ ∘ᵐ mapˣᵐ a b ≈ᵐ mapˣᵐ b a ∘ᵐ swapᵐ
+  swapᵐ-mapˣᵐ a b =
+    ≈ᵐ-trans (swapᵐ-⟨⟩ _ _) (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ b a sndᵐ fstᵐ))
+
+  -- the two factors of a product act independently
+
+  mapˣᵐ-comm : ∀ {A B C D} → (a : A →ᵐ C) → (b : B →ᵐ D)
+             → mapˣᵐ a idᵐ ∘ᵐ mapˣᵐ idᵐ b ≈ᵐ mapˣᵐ idᵐ b ∘ᵐ mapˣᵐ a idᵐ
+  mapˣᵐ-comm a b =
+    ≈ᵐ-trans (mapˣᵐ-∘ a idᵐ idᵐ b)
+    (≈ᵐ-trans (mapˣᵐ-cong (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _)))
+                          (≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _))))
+              (≈ᵐ-sym (mapˣᵐ-∘ idᵐ b a idᵐ)))
+
+  -- a pairing with an injected second component
+
+  ⟨⟩ᵐ-mapˣᵐ : ∀ {X A B} → (ι : A →ᵐ B) → (a : X →ᵐ A)
+            → ⟨ idᵐ , ι ∘ᵐ a ⟩ᵐ ≈ᵐ mapˣᵐ idᵐ ι ∘ᵐ ⟨ idᵐ , a ⟩ᵐ
+  ⟨⟩ᵐ-mapˣᵐ ι a =
+    ≈ᵐ-sym (≈ᵐ-trans (mapˣᵐ-∘⟨⟩ idᵐ ι idᵐ a) ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)
+
+  copairˣᵐ : ∀ {X A B C} → X ×ᵐ A →ᵐ C → X ×ᵐ B →ᵐ C → X ×ᵐ (A +ᵐ B) →ᵐ C
+  copairˣᵐ f g =
+    uncurryᵐ [ curryᵐ (f ∘ᵐ swapᵐ) , curryᵐ (g ∘ᵐ swapᵐ) ]ᵐ ∘ᵐ swapᵐ
+
+  copairˣᵐ-cong : ∀ {X A B C} {f f' : X ×ᵐ A →ᵐ C} {g g' : X ×ᵐ B →ᵐ C}
+                → f ≈ᵐ f' → g ≈ᵐ g' → copairˣᵐ f g ≈ᵐ copairˣᵐ f' g'
+  copairˣᵐ-cong p q =
+    ∘ᵐ-congˡ (uncurryᵐ-cong [ curryᵐ-cong (∘ᵐ-congˡ p)
+                            , curryᵐ-cong (∘ᵐ-congˡ q) ]ᵐ-cong)
+
+  -- β: the restriction of the transposed copairing along an injection
+
+  private
+    copairˣᵐ-β : ∀ {X A A' C} → (k : A →ᵐ X ⇒ᵐ C) → (ι : A' →ᵐ A)
+               → (f : X ×ᵐ A' →ᵐ C) → k ∘ᵐ ι ≈ᵐ curryᵐ (f ∘ᵐ swapᵐ)
+               → (uncurryᵐ k ∘ᵐ swapᵐ) ∘ᵐ mapˣᵐ idᵐ ι ≈ᵐ f
+    copairˣᵐ-β k ι f p =
+      ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (swapᵐ-mapˣᵐ idᵐ ι))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (uncurryᵐ-nat ι k)))
+      (≈ᵐ-trans (∘ᵐ-congˡ (uncurryᵐ-cong p))
+      (≈ᵐ-trans (∘ᵐ-congˡ (curryᵐ-uncurryᵐ-iso _))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ swapᵐ-swapᵐ) (∘ᵐ-identityʳ f))))))))
+
+    -- the transpose of a map restricted along an injection
+    copairˣᵐ-restrict : ∀ {X A A' C} → (h : X ×ᵐ A →ᵐ C) → (ι : A' →ᵐ A)
+                      → (f : X ×ᵐ A' →ᵐ C) → h ∘ᵐ mapˣᵐ idᵐ ι ≈ᵐ f
+                      → curryᵐ (h ∘ᵐ swapᵐ) ∘ᵐ ι ≈ᵐ curryᵐ (f ∘ᵐ swapᵐ)
+    copairˣᵐ-restrict h ι f p =
+      ≈ᵐ-trans (≈ᵐ-sym (curryᵐ-nat ι (h ∘ᵐ swapᵐ)))
+        (curryᵐ-cong
+          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+          (≈ᵐ-trans (∘ᵐ-congʳ (swapᵐ-mapˣᵐ ι idᵐ))
+          (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ p)))))
+
+  copairˣᵐ-inl : ∀ {X A B C} → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
+               → copairˣᵐ f g ∘ᵐ mapˣᵐ idᵐ inlᵐ ≈ᵐ f
+  copairˣᵐ-inl f g = copairˣᵐ-β _ inlᵐ f ([]ᵐ-inlᵐ _ _)
+
+  copairˣᵐ-inr : ∀ {X A B C} → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
+               → copairˣᵐ f g ∘ᵐ mapˣᵐ idᵐ inrᵐ ≈ᵐ g
+  copairˣᵐ-inr f g = copairˣᵐ-β _ inrᵐ g ([]ᵐ-inrᵐ _ _)
+
+  copairˣᵐ-unique : ∀ {X A B C} → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
+                  → (h : X ×ᵐ (A +ᵐ B) →ᵐ C)
+                  → h ∘ᵐ mapˣᵐ idᵐ inlᵐ ≈ᵐ f → h ∘ᵐ mapˣᵐ idᵐ inrᵐ ≈ᵐ g
+                  → h ≈ᵐ copairˣᵐ f g
+  copairˣᵐ-unique f g h p q =
+    ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ h))
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym swapᵐ-swapᵐ))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (curryᵐ-uncurryᵐ-iso (h ∘ᵐ swapᵐ))))
+              (∘ᵐ-congˡ (uncurryᵐ-cong
+                ([]ᵐ-unique _ _ _ (copairˣᵐ-restrict h inlᵐ f p)
+                                  (copairˣᵐ-restrict h inrᵐ g q)))))))
+
+  -- reindexing the context
+
+  copairˣᵐ-∘ : ∀ {Y X A B C} → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
+             → (h : Y →ᵐ X)
+             → copairˣᵐ f g ∘ᵐ mapˣᵐ h idᵐ
+             ≈ᵐ copairˣᵐ (f ∘ᵐ mapˣᵐ h idᵐ) (g ∘ᵐ mapˣᵐ h idᵐ)
+  copairˣᵐ-∘ {Y} {X} {A} {B} {C} f g h = copairˣᵐ-unique _ _ _ (side inlᵐ (copairˣᵐ-inl f g))
+                                           (side inrᵐ (copairˣᵐ-inr f g))
+    where
+      side : ∀ {A'} {k : X ×ᵐ A' →ᵐ C} → (ι : A' →ᵐ A +ᵐ B)
+           → copairˣᵐ f g ∘ᵐ mapˣᵐ idᵐ ι ≈ᵐ k
+           → (copairˣᵐ f g ∘ᵐ mapˣᵐ h idᵐ) ∘ᵐ mapˣᵐ idᵐ ι ≈ᵐ k ∘ᵐ mapˣᵐ h idᵐ
+      side ι p =
+        ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-comm h ι))
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ p)))
+
+  -- reindexing the summands
+
+  copairˣᵐ-map+ᵐ : ∀ {X A A' B B' C} → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
+                 → (a : A' →ᵐ A) → (b : B' →ᵐ B)
+                 → copairˣᵐ f g ∘ᵐ mapˣᵐ idᵐ (map+ᵐ a b)
+                 ≈ᵐ copairˣᵐ (f ∘ᵐ mapˣᵐ idᵐ a) (g ∘ᵐ mapˣᵐ idᵐ b)
+  copairˣᵐ-map+ᵐ {X} {A} {A'} {B} {B'} {C} f g a b =
+    copairˣᵐ-unique _ _ _ (side inlᵐ inlᵐ a ([]ᵐ-inlᵐ _ _) (copairˣᵐ-inl f g))
+                          (side inrᵐ inrᵐ b ([]ᵐ-inrᵐ _ _) (copairˣᵐ-inr f g))
+    where
+      side : ∀ {A₀ A₁} {k : X ×ᵐ A₁ →ᵐ C}
+           → (ι : A₀ →ᵐ _) → (ι' : A₁ →ᵐ A +ᵐ B) → (c : A₀ →ᵐ A₁)
+           → map+ᵐ a b ∘ᵐ ι ≈ᵐ ι' ∘ᵐ c
+           → copairˣᵐ f g ∘ᵐ mapˣᵐ idᵐ ι' ≈ᵐ k
+           → (copairˣᵐ f g ∘ᵐ mapˣᵐ idᵐ (map+ᵐ a b)) ∘ᵐ mapˣᵐ idᵐ ι
+             ≈ᵐ k ∘ᵐ mapˣᵐ idᵐ c
+      side ι ι' c e p =
+        ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ
+          (≈ᵐ-trans (mapˣᵐ-∘ idᵐ (map+ᵐ a b) idᵐ ι)
+          (≈ᵐ-trans (mapˣᵐ-cong ≈ᵐ-refl e)
+                    (≈ᵐ-sym (≈ᵐ-trans (mapˣᵐ-∘ idᵐ ι' idᵐ c)
+                                      (mapˣᵐ-cong ≈ᵐ-refl ≈ᵐ-refl))))))
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ p)))
+
+  -- absorbing a postcomposition
+
+  copairˣᵐ-post : ∀ {X A B C D} → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
+                → (k : C →ᵐ D)
+                → k ∘ᵐ copairˣᵐ f g ≈ᵐ copairˣᵐ (k ∘ᵐ f) (k ∘ᵐ g)
+  copairˣᵐ-post f g k =
+    copairˣᵐ-unique _ _ _
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ (copairˣᵐ-inl f g)))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ (copairˣᵐ-inr f g)))
+
+  -- The eliminator: a scrutinee and two branches over the context.
+
+  caseᵐ : ∀ {X A B C} → X →ᵐ A +ᵐ B → X ×ᵐ A →ᵐ C → X ×ᵐ B →ᵐ C → X →ᵐ C
+  caseᵐ s f g = copairˣᵐ f g ∘ᵐ ⟨ idᵐ , s ⟩ᵐ
+
+  caseᵐ-cong : ∀ {X A B C} {s s' : X →ᵐ A +ᵐ B}
+               {f f' : X ×ᵐ A →ᵐ C} {g g' : X ×ᵐ B →ᵐ C}
+             → s ≈ᵐ s' → f ≈ᵐ f' → g ≈ᵐ g' → caseᵐ s f g ≈ᵐ caseᵐ s' f' g'
+  caseᵐ-cong ps pf pg = ∘ᵐ-cong (copairˣᵐ-cong pf pg) ⟨ ≈ᵐ-refl , ps ⟩ᵐ-cong
+
+  caseᵐ-inl : ∀ {X A B C} → (a : X →ᵐ A)
+            → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
+            → caseᵐ (inlᵐ ∘ᵐ a) f g ≈ᵐ f ∘ᵐ ⟨ idᵐ , a ⟩ᵐ
+  caseᵐ-inl a f g =
+    ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-mapˣᵐ inlᵐ a))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ (copairˣᵐ-inl f g)))
+
+  caseᵐ-inr : ∀ {X A B C} → (b : X →ᵐ B)
+            → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
+            → caseᵐ (inrᵐ ∘ᵐ b) f g ≈ᵐ g ∘ᵐ ⟨ idᵐ , b ⟩ᵐ
+  caseᵐ-inr b f g =
+    ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-mapˣᵐ inrᵐ b))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ (copairˣᵐ-inr f g)))
+
+  caseᵐ-∘ : ∀ {Y X A B C} → (s : X →ᵐ A +ᵐ B)
+          → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C) → (h : Y →ᵐ X)
+          → caseᵐ s f g ∘ᵐ h
+          ≈ᵐ caseᵐ (s ∘ᵐ h) (f ∘ᵐ mapˣᵐ h idᵐ) (g ∘ᵐ mapˣᵐ h idᵐ)
+  caseᵐ-∘ s f g h =
+    ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ
+      (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+      (≈ᵐ-sym (≈ᵐ-trans (mapˣᵐ-∘⟨⟩ h idᵐ idᵐ (s ∘ᵐ h))
+                        ⟨ ≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))
+                        , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+              (∘ᵐ-congˡ (copairˣᵐ-∘ f g h))))
+
+  caseᵐ-η : ∀ {X A B C} → (s : X →ᵐ A +ᵐ B) → (m : X ×ᵐ (A +ᵐ B) →ᵐ C)
+          → m ∘ᵐ ⟨ idᵐ , s ⟩ᵐ
+          ≈ᵐ caseᵐ s (m ∘ᵐ mapˣᵐ idᵐ inlᵐ) (m ∘ᵐ mapˣᵐ idᵐ inrᵐ)
+  caseᵐ-η s m = ∘ᵐ-congˡ (copairˣᵐ-unique _ _ m ≈ᵐ-refl ≈ᵐ-refl)
+
+  caseᵐ-map+ᵐ : ∀ {X A A' B B' C} → (s : X →ᵐ A' +ᵐ B')
+              → (a : A' →ᵐ A) → (b : B' →ᵐ B)
+              → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
+              → caseᵐ (map+ᵐ a b ∘ᵐ s) f g
+              ≈ᵐ caseᵐ s (f ∘ᵐ mapˣᵐ idᵐ a) (g ∘ᵐ mapˣᵐ idᵐ b)
+  caseᵐ-map+ᵐ s a b f g =
+    ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-mapˣᵐ (map+ᵐ a b) s))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+              (∘ᵐ-congˡ (copairˣᵐ-map+ᵐ f g a b)))
+
+  caseᵐ-post : ∀ {X A B C D} → (s : X →ᵐ A +ᵐ B)
+             → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C) → (k : C →ᵐ D)
+             → k ∘ᵐ caseᵐ s f g ≈ᵐ caseᵐ s (k ∘ᵐ f) (k ∘ᵐ g)
+  caseᵐ-post s f g k =
+    ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ (copairˣᵐ-post f g k))

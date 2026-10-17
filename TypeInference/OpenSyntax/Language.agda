@@ -16,10 +16,9 @@
 -- identities on typing.                                        --
 --                                                              --
 -- The rules `zero`, `succ`, `caseℕ` and `recℕ` for natural     --
--- numbers, `inl`, `inr` and `case+` for sums, and `nil`,       --
--- `cons`, `caseL` and `recL` for lists, and `cmp` for          --
--- comparisons, have no counterpart in `Syntax.Language`        --
--- either.                                                      --
+-- numbers, `nil`, `cons`, `caseL` and `recL` for lists, and    --
+-- `cmp` for comparisons, have no counterpart in                --
+-- `Syntax.Language` either.                                    --
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ; suc)

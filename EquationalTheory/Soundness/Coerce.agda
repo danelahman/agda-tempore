@@ -176,7 +176,7 @@ sound-subC-trans w w' w'' M pL pR =
   ∙ ∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr M pL pR)
 
 
--- Naturality in the value formers: functoriality of `_|×|_` and of `_⇒_`
+-- Naturality in the value formers: functoriality of `_|×|_`, `_|+|_` and `_⇒_`
 
 sound-subV-pair : ∀ {Γ A A' B B'}
                 → (p : A <:ᵛ A') → (q : B <:ᵛ B')
@@ -186,6 +186,26 @@ sound-subV-pair p q V W (pV , pW) (pV' , pW') =
     mapˣᵐ-∘⟨⟩ _ _ _ _
   ∙ ⟨ ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
     , ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr W pW pW') ⟩ᵐ-cong
+
+sound-subV-inl : ∀ {Γ A A' B B'}
+               → (p : A <:ᵛ A') → (q : B <:ᵛ B')
+               → (V : Γ ⊢V⦂ A)
+               → Soundᵛ== (subV-inl p q V)
+sound-subV-inl p q V pV pV' =
+    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ ([]ᵐ-inlᵐ _ _)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV'))
+
+sound-subV-inr : ∀ {Γ A A' B B'}
+               → (p : A <:ᵛ A') → (q : B <:ᵛ B')
+               → (V : Γ ⊢V⦂ B)
+               → Soundᵛ== (subV-inr p q V)
+sound-subV-inr p q V pV pV' =
+    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ ([]ᵐ-inrᵐ _ _)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV'))
 
 sound-subV-lam : ∀ {Γ A A' C C'}
                → (p : A' <:ᵛ A) → (w : C <:ᶜ C')

@@ -10,7 +10,7 @@
 
 open import Data.Empty
 open import Data.Product
-open import Data.Sum using (inj₁; inj₂)
+open import Data.Sum using (inj₁; inj₂; [_,_]′)
 open import Data.Unit using (⊤; tt)
 
 open import Syntax.Grades
@@ -114,6 +114,38 @@ FL-match {St = St} {A = A} {B = B} γ pγ V M (p₁ , p₂) pM =
     step : (M₀ [ split-[] ↦ V-rename wk-ren U₂ ]c) [ split-[] ↦ U₁ ]c
          ≡ env-C ((γ ∷ᵉ U₁) ∷ᵉ U₂) M
     step = sub-swap-C [] M₀ U₂ U₁
+
+-- Sum elimination: the scrutinee's reducibility names its injection and gives
+-- the payload's reducibility; `case+-run` reaches that branch with the payload
+-- substituted, which is the action at the environment extended by it.
+
+FL-case+ : ∀ {St Γ A B D ε} → (γ : Env St Γ) → Rel-Env γ
+         → (V : Γ ⊢V⦂ A |+| B)
+         → (M : Γ ∷ A ⊢C⦂ D ‼ ε) → (N : Γ ∷ B ⊢C⦂ D ‼ ε)
+         → VRed (A |+| B) St (env-V γ V)
+         → (∀ {St'} → (γ' : Env St' (Γ ∷ A)) → Rel-Env γ'
+              → CRed' D ε St' (env-C γ' M))
+         → (∀ {St'} → (γ' : Env St' (Γ ∷ B)) → Rel-Env γ'
+              → CRed' D ε St' (env-C γ' N))
+         --------------------------------------------------------------
+         → CRed' D ε St (env-C γ (case+ V `inl M `inr N))
+
+FL-case+ {St = St} {A = A} {B = B} {D = D} {ε = ε} γ pγ V M N pV pM pN =
+  subst (CRed' _ _ St) (sym (env-Cˢ-case+ γ [] V M N))
+    (go (case+-run U M₀ N₀) pV)
+  where
+    U  = env-V γ V
+    M₀ = env-Cˢ γ ([] ∷ A) M
+    N₀ = env-Cˢ γ ([] ∷ B) N
+
+    go : ∀ {s}
+       → [ (λ W → ⟨ St , case+ U `inl M₀ `inr N₀ ⟩ ↝* ⟨ St , M₀ [ split-[] ↦ W ]c ⟩)
+         , (λ W → ⟨ St , case+ U `inl M₀ `inr N₀ ⟩ ↝* ⟨ St , N₀ [ split-[] ↦ W ]c ⟩)
+         ]′ s
+       → VRed⊎ (VRed A St) (VRed B St) s
+       → CRed' D ε St (case+ U `inl M₀ `inr N₀)
+    go rs (red-inl {W} pW) = CRed-expand* rs (pM (γ ∷ᵉ W) (pγ , pW))
+    go rs (red-inr {W} pW) = CRed-expand* rs (pN (γ ∷ᵉ W) (pγ , pW))
 
 -- Handling: `env-Cˢ-handle` splits the action, `handle-CRed` runs the scrutinee
 -- and then the clauses and the sequel.
@@ -244,8 +276,8 @@ FL-perform {St = St} {Γ = Γ} {op = op} γ pγ V M pV pM =
 mutual
 
   -- The value half. Nothing is asked at a base, unit or empty type; a pair is
-  -- the pair of the actions' projections; a variable is `env-var`; a
-  -- subsumption is `VRed-sub`.
+  -- the pair of the actions' projections; an injection is its payload; a
+  -- variable is `env-var`; a subsumption is `VRed-sub`.
   --
   -- At a lambda the environment moves to the state the Kripke clause offers and
   -- gains the argument (`reachᵉ`, `_∷ᵉ_`). The action is a `lam`, so `APP`
@@ -265,6 +297,12 @@ mutual
   FL-V {A = A |×| B} γ pγ ⦉ V , W ⦊ =
       VRed-≡ᵛ A (sym (cong fstᵛ (env-Vˢ-pair γ [] V W))) (FL-V γ pγ V)
     , VRed-≡ᵛ B (sym (cong sndᵛ (env-Vˢ-pair γ [] V W))) (FL-V γ pγ W)
+
+  FL-V {A = A |+| B} γ pγ (inl V) =
+    subst (VRed (A |+| B) _) (sym (env-Vˢ-inl γ [] V)) (red-inl (FL-V γ pγ V))
+
+  FL-V {A = A |+| B} γ pγ (inr V) =
+    subst (VRed (A |+| B) _) (sym (env-Vˢ-inr γ [] V)) (red-inr (FL-V γ pγ V))
 
   FL-V {A = A ⇒ (B ‼ ε)} γ pγ (lam M) q W pW =
     subst (λ z → CRed' B ε _ (reach-val q z · W)) (sym (env-Vˢ-lam γ [] M))
@@ -347,6 +385,10 @@ mutual
 
   FL-C γ pγ (match V `in M) =
     FL-match γ pγ V M (FL-V γ pγ V) (λ γ' pγ' → FL-C γ' pγ' M)
+
+  FL-C γ pγ (case+ V `inl M `inr N) =
+    FL-case+ γ pγ V M N (FL-V γ pγ V)
+      (λ γ' pγ' → FL-C γ' pγ' M) (λ γ' pγ' → FL-C γ' pγ' N)
 
   FL-C γ pγ (perform op V M) =
     FL-perform γ pγ V M (FL-V γ pγ V) (λ γ' pγ' → FL-C γ' pγ' M)

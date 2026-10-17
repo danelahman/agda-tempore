@@ -6,16 +6,17 @@
 -- `Eternalᵒ` structure (in particular the extraction `extᵉ`).           --
 --                                                                    --
 -- The structure is supplied for each *former* of `Syntax.Types.Eternal`: --
--- the eternal base types, and closure under `Unit`, `Bool`, `Empty`, and --
--- products. `Interpretation.Variables` then assembles an `Eternalᵒ` for  --
--- every eternal type by recursion on the eternality witness, so all the  --
--- eternal *laws* (grade-uniformity, the unit grade, the `⟨_⟩`-algebra    --
--- law) come from `Eternalᵒ` rather than being re-derived per former.     --
+-- the eternal base types, and closure under `Unit`, `Bool`, `Empty`,     --
+-- products and sums. `Interpretation.Variables` then assembles an        --
+-- `Eternalᵒ` for every eternal type by recursion on the eternality       --
+-- witness, so all the eternal *laws* (grade-uniformity, the unit grade,  --
+-- the `⟨_⟩`-algebra law) come from `Eternalᵒ` rather than being          --
+-- re-derived per former.                                                 --
 --                                                                    --
 -- In the presheaf model (`Example.PSh.Modality.Eternal`) the constant    --
 -- presheaves `Kᵖ` carry this structure (`Kᵖ-eternalᵒ`), and the formers  --
--- are covered by `𝟙ᵖ-eternalᵒ`, `𝔹ᵖ-eternalᵒ`, `𝟘ᵖ-eternalᵒ`, and        --
--- `×ᵖ-eternalᵒ`.                                                         --
+-- are covered by `𝟙ᵖ-eternalᵒ`, `𝔹ᵖ-eternalᵒ`, `𝟘ᵖ-eternalᵒ`,            --
+-- `×ᵖ-eternalᵒ` and `+ᵖ-eternalᵒ`.                                       --
 ------------------------------------------------------------------------
 
 open import Syntax.BaseTypes
@@ -65,6 +66,17 @@ record GroundEternal : Set₁ where
                     → Eternalᵒ.extᵉ (×-eternalᵒ eA eB) {ρ}
                     ≈ᵐ ⟨ Eternalᵒ.extᵉ eA ∘ᵐ ⟨ ρ ⟩ᶠ fstᵐ
                        , Eternalᵒ.extᵉ eB ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
+
+    +-eternalᵒ : ∀ {A B} → Eternalᵒ A → Eternalᵒ B → Eternalᵒ (A +ᵐ B)
+
+    -- The coproduct's eternal extraction acts summandwise (the closure is
+    -- compatible with the injections).
+    +-eternalᵒ-inl : ∀ {A B} → (eA : Eternalᵒ A) → (eB : Eternalᵒ B) → ∀ {ρ}
+                   → Eternalᵒ.extᵉ (+-eternalᵒ eA eB) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ inlᵐ
+                   ≈ᵐ inlᵐ ∘ᵐ Eternalᵒ.extᵉ eA {ρ}
+    +-eternalᵒ-inr : ∀ {A B} → (eA : Eternalᵒ A) → (eB : Eternalᵒ B) → ∀ {ρ}
+                   → Eternalᵒ.extᵉ (+-eternalᵒ eA eB) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ inrᵐ
+                   ≈ᵐ inrᵐ ∘ᵐ Eternalᵒ.extᵉ eB {ρ}
 
     -- A constant of an eternal base type denotes a *global* element: it is
     -- the same at every world, so the eternal extraction recovers it. This

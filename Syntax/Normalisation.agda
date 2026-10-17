@@ -4,9 +4,9 @@
 -- Every derivation has one with the same erasure in which `subV` and  --
 -- `subC` occur only where a sub-derivation must meet a type it does   --
 -- not itself determine: an application's argument, a `perform`'s      --
--- parameter, the branches of `if`, a handler's clauses and its        --
--- continuation, and the root. `NfV`/`NfC` pin those positions and     --
--- `C-normal-form` is the theorem.                                     --
+-- parameter, the branches of `if` and `case+`, a handler's clauses    --
+-- and its continuation, and the root. `NfV`/`NfC` pin those           --
+-- positions and `C-normal-form` is the theorem.                       --
 --                                                                     --
 -- The tool is context subsumption along `_≼ᶜ_`, which lowers binder   --
 -- types and lock grades at once. It is a statement about derivations: --
@@ -103,6 +103,10 @@ data NfV where
   pairⁿ  : ∀ {Γ A B} {V : Γ ⊢V⦂ A} {W : Γ ⊢V⦂ B}
          → NfV V → NfV W → NfV ⦉ V , W ⦊
 
+  inlⁿ   : ∀ {Γ A B} {V : Γ ⊢V⦂ A} → NfV V → NfV (inl {B = B} V)
+
+  inrⁿ   : ∀ {Γ A B} {V : Γ ⊢V⦂ B} → NfV V → NfV (inr {A = A} V)
+
   lamⁿ   : ∀ {Γ A B ε} {M : Γ ∷ A ⊢C⦂ B ‼ ε} → NfC M → NfV (lam M)
 
 data NfC where
@@ -129,6 +133,14 @@ data NfC where
                {p : (A₁ ‼ ε₁) <:ᶜ (A ‼ ε)} {q : (A₂ ‼ ε₂) <:ᶜ (A ‼ ε)}
            → NfV V → NfC M → NfC N
            → NfC (if V `then subC M p `else subC N q)
+
+  -- likewise for the branches of a `case+`
+
+  case+ⁿ   : ∀ {Γ A B A' ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ A |+| B}
+               {M : Γ ∷ A ⊢C⦂ A₁ ‼ ε₁} {N : Γ ∷ B ⊢C⦂ A₂ ‼ ε₂}
+               {p : (A₁ ‼ ε₁) <:ᶜ (A' ‼ ε)} {q : (A₂ ‼ ε₂) <:ᶜ (A' ‼ ε)}
+           → NfV V → NfC M → NfC N
+           → NfC (case+ V `inl subC M p `inr subC N q)
 
   -- the parameter meets the ground type the operation fixes; the slack is
   -- non-trivial because ground types include the box modality
@@ -216,6 +228,12 @@ V-subCtx c falseⁿ =
 V-subCtx c (pairⁿ nV nW) with V-subCtx c nV | V-subCtx c nW
 ... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
   nfv ⦉ V' , W' ⦊ (s₁ |×|ₛ s₂) (pairⁿ n₁ n₂) (cong₂ ⦉_,_⦊ e₁ e₂)
+V-subCtx c (inlⁿ nV) with V-subCtx c nV
+... | nfv V' s n e =
+  nfv (inl V') (s |+|ₛ <:ᵛ-refl _) (inlⁿ n) (cong inl e)
+V-subCtx c (inrⁿ nV) with V-subCtx c nV
+... | nfv V' s n e =
+  nfv (inr V') (<:ᵛ-refl _ |+|ₛ s) (inrⁿ n) (cong inr e)
 V-subCtx c (lamⁿ {A = A} nM) with C-subCtx (≼-∷ c (<:ᵛ-refl A)) nM
 ... | nfc M' sv se n e =
   nfv (lam M') (<:ᵛ-refl A ⇒ₛ (sv ‼ₛ se)) (lamⁿ n) (cong lam e)
@@ -246,6 +264,14 @@ C-subCtx c (ifⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
              `else subC N' (<:ᶜ-trans (sv₂ ‼ₛ se₂) q))
       (<:ᵛ-refl _) ≾ₑ-refl (ifⁿ nV' nM' nN')
       (cong₃ (λ a b d → if a `then b `else d) eV eM eN)
+C-subCtx c (case+ⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
+... | nfv V' (s₁ |+|ₛ s₂) nV' eV
+      with C-subCtx (≼-∷ c s₁) nM | C-subCtx (≼-∷ c s₂) nN
+...   | nfc M' sv₁ se₁ nM' eM | nfc N' sv₂ se₂ nN' eN =
+  nfc (case+ V' `inl subC M' (<:ᶜ-trans (sv₁ ‼ₛ se₁) p)
+                `inr subC N' (<:ᶜ-trans (sv₂ ‼ₛ se₂) q))
+      (<:ᵛ-refl _) ≾ₑ-refl (case+ⁿ nV' nM' nN')
+      (cong₃ (λ a b d → case+ a `inl b `inr d) eV eM eN)
 C-subCtx c (performⁿ {op = op} {p = p} nV nM) with V-subCtx c nV
 ... | nfv V' s nV' eV
       with C-subCtx (≼-∷ (≼-⟨⟩ c ≾ᵣ-refl) (<:ᵛ-refl _)) nM
@@ -301,6 +327,12 @@ V-normalise false =
 V-normalise ⦉ V , W ⦊ with V-normalise V | V-normalise W
 ... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
   nfv ⦉ V' , W' ⦊ (s₁ |×|ₛ s₂) (pairⁿ n₁ n₂) (cong₂ ⦉_,_⦊ e₁ e₂)
+V-normalise (inl V) with V-normalise V
+... | nfv V' s n e =
+  nfv (inl V') (s |+|ₛ <:ᵛ-refl _) (inlⁿ n) (cong inl e)
+V-normalise (inr V) with V-normalise V
+... | nfv V' s n e =
+  nfv (inr V') (<:ᵛ-refl _ |+|ₛ s) (inrⁿ n) (cong inr e)
 V-normalise (lam {A = A} {C = B ‼ ε} M) with C-normalise M
 ... | nfc M' sv se n e =
   nfv (lam M') (<:ᵛ-refl A ⇒ₛ (sv ‼ₛ se)) (lamⁿ n) (cong lam e)
@@ -338,6 +370,15 @@ C-normalise (if V `then M `else N) with V-normalise V
   nfc (if V' `then subC M' (sv₁ ‼ₛ se₁) `else subC N' (sv₂ ‼ₛ se₂))
       (<:ᵛ-refl _) ≾ₑ-refl (ifⁿ nV nM nN)
       (cong₃ (λ a b d → if a `then b `else d) eV eM eN)
+C-normalise (case+ V `inl M `inr N) with V-normalise V
+... | nfv V' (s₁ |+|ₛ s₂) nV eV with C-normalise M | C-normalise N
+...   | nfc M₁ sv₁ se₁ nM eM | nfc N₁ sv₂ se₂ nN eN
+        with C-subCtx (≼-∷ (≼ᶜ-refl _) s₁) nM | C-subCtx (≼-∷ (≼ᶜ-refl _) s₂) nN
+...     | nfc M' sv₁' se₁' nM' eM' | nfc N' sv₂' se₂' nN' eN' =
+  nfc (case+ V' `inl subC M' (<:ᵛ-trans sv₁' sv₁ ‼ₛ ≾ₑ-trans se₁' se₁)
+                `inr subC N' (<:ᵛ-trans sv₂' sv₂ ‼ₛ ≾ₑ-trans se₂' se₂))
+      (<:ᵛ-refl _) ≾ₑ-refl (case+ⁿ nV nM' nN')
+      (cong₃ (λ a b d → case+ a `inl b `inr d) eV (trans eM' eM) (trans eN' eN))
 C-normalise (perform op V M) with V-normalise V
 ... | nfv V' s nV eV with C-normalise M
 ...   | nfc M' sv se nM eM =

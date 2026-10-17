@@ -493,6 +493,168 @@ module _ {A B : Obj} (eA : Eternalᵒ A) (eB : Eternalᵒ B) where
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
 
 
+-- `⟨ ρ ⟩` is a left adjoint, so it preserves the coproduct: a map out of
+-- `⟨ ρ ⟩ᵒ (A +ᵐ B)` is determined by its restrictions along the injections.
+-- Both directions go through the transpose `[ ρ ]ᶠ f ∘ᵐ η⊣`.
+
+⟨⟩-transpose : ∀ {A C ρ} → (f : ⟨ ρ ⟩ᵒ A →ᵐ C)
+             → f ≈ᵐ ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ ([ ρ ]ᶠ f ∘ᵐ η⊣)
+⟨⟩-transpose {ρ = ρ} f = ≈ᵐ-sym
+  ( ∘ᵐ-congʳ (⟨⟩-∘ᵐ ([ ρ ]ᶠ f) η⊣)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (ε⊣-nat f))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ triangleˡ
+  ∙ ∘ᵐ-identityʳ f)
+
+⟨⟩-mate-≈ : ∀ {A C ρ} {f g : ⟨ ρ ⟩ᵒ A →ᵐ C}
+          → [ ρ ]ᶠ f ∘ᵐ η⊣ ≈ᵐ [ ρ ]ᶠ g ∘ᵐ η⊣ → f ≈ᵐ g
+⟨⟩-mate-≈ {f = f} {g} e =
+  ⟨⟩-transpose f ∙ ∘ᵐ-congʳ (⟨⟩-congᶠ e) ∙ ≈ᵐ-sym (⟨⟩-transpose g)
+
+⟨⟩-mate-∘ : ∀ {A D C ρ} {f g : ⟨ ρ ⟩ᵒ A →ᵐ C} → (ι : D →ᵐ A)
+          → f ∘ᵐ ⟨ ρ ⟩ᶠ ι ≈ᵐ g ∘ᵐ ⟨ ρ ⟩ᶠ ι
+          → ([ ρ ]ᶠ f ∘ᵐ η⊣) ∘ᵐ ι ≈ᵐ ([ ρ ]ᶠ g ∘ᵐ η⊣) ∘ᵐ ι
+⟨⟩-mate-∘ {f = f} {g} ι e = flat f ∙ ∘ᵐ-congˡ ([]-congᶠ e) ∙ ≈ᵐ-sym (flat g)
+  where
+    flat : ∀ h → ([ _ ]ᶠ h ∘ᵐ η⊣) ∘ᵐ ι ≈ᵐ [ _ ]ᶠ (h ∘ᵐ ⟨ _ ⟩ᶠ ι) ∘ᵐ η⊣
+    flat h =
+        ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat ι))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+
+-- two maps out of a coproduct agree iff they agree on both injections
+
++-ext : ∀ {A B C} {f g : A +ᵐ B →ᵐ C}
+      → f ∘ᵐ inlᵐ ≈ᵐ g ∘ᵐ inlᵐ → f ∘ᵐ inrᵐ ≈ᵐ g ∘ᵐ inrᵐ → f ≈ᵐ g
++-ext {f = f} {g} p q =
+    []ᵐ-unique _ _ f ≈ᵐ-refl ≈ᵐ-refl
+  ∙ [ p , q ]ᵐ-cong
+  ∙ ≈ᵐ-sym ([]ᵐ-unique _ _ g ≈ᵐ-refl ≈ᵐ-refl)
+
+⟨⟩-+-ext : ∀ {A B C ρ} {f g : ⟨ ρ ⟩ᵒ (A +ᵐ B) →ᵐ C}
+         → f ∘ᵐ ⟨ ρ ⟩ᶠ inlᵐ ≈ᵐ g ∘ᵐ ⟨ ρ ⟩ᶠ inlᵐ
+         → f ∘ᵐ ⟨ ρ ⟩ᶠ inrᵐ ≈ᵐ g ∘ᵐ ⟨ ρ ⟩ᶠ inrᵐ
+         → f ≈ᵐ g
+⟨⟩-+-ext p q = ⟨⟩-mate-≈ (+-ext (⟨⟩-mate-∘ inlᵐ p) (⟨⟩-mate-∘ inrᵐ q))
+
+-- the same through two layers
+
+⟨⟩²-+-ext : ∀ {A B C ρ₁ ρ₂} {f g : ⟨ ρ₁ ⟩ᵒ (⟨ ρ₂ ⟩ᵒ (A +ᵐ B)) →ᵐ C}
+          → f ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ inlᵐ) ≈ᵐ g ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ inlᵐ)
+          → f ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ inrᵐ) ≈ᵐ g ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ inrᵐ)
+          → f ≈ᵐ g
+⟨⟩²-+-ext p q =
+  ⟨⟩-mate-≈ (⟨⟩-+-ext (⟨⟩-mate-∘ (⟨ _ ⟩ᶠ inlᵐ) p) (⟨⟩-mate-∘ (⟨ _ ⟩ᶠ inrᵐ) q))
+
+-- At the greatest grade, extraction is the algebra itself.
+
+extᵉ-⊤ : ∀ {A} → (eA : Eternalᵒ A) → Eternalᵒ.extᵉ eA {⊤} ≈ᵐ Eternalᵒ.α eA
+extᵉ-⊤ eA =
+    ∘ᵐ-congʳ (⟨⟩-≤-irr _ ≾-refl)
+  ∙ ∘ᵐ-congʳ ⟨⟩-≤-refl
+  ∙ ∘ᵐ-identityʳ _
+
+-- Eilenberg–Moore algebras are closed under the category's coproducts: the
+-- structure map is the transpose of the summands' necessitations, and acts
+-- summandwise.
+
+module _ {A B : Obj} (eA : Eternalᵒ A) (eB : Eternalᵒ B) where
+
+  private
+    module EA = Eternalᵒ eA
+    module EB = Eternalᵒ eB
+
+    α+ : ⟨ ⊤ ⟩ᵒ (A +ᵐ B) →ᵐ A +ᵐ B
+    α+ = ε⊣ ∘ᵐ ⟨ ⊤ ⟩ᶠ [ [ ⊤ ]ᶠ inlᵐ ∘ᵐ EA.necᵉ {⊤} , [ ⊤ ]ᶠ inrᵐ ∘ᵐ EB.necᵉ {⊤} ]ᵐ
+
+    -- on one summand, given its injection's copairing law
+    summand : ∀ {X} (eX : Eternalᵒ X) (ι : X →ᵐ A +ᵐ B)
+            → [ [ ⊤ ]ᶠ inlᵐ ∘ᵐ EA.necᵉ {⊤} , [ ⊤ ]ᶠ inrᵐ ∘ᵐ EB.necᵉ {⊤} ]ᵐ ∘ᵐ ι
+              ≈ᵐ [ ⊤ ]ᶠ ι ∘ᵐ Eternalᵒ.necᵉ eX {⊤}
+            → α+ ∘ᵐ ⟨ ⊤ ⟩ᶠ ι ≈ᵐ ι ∘ᵐ Eternalᵒ.α eX
+    summand eX ι e =
+        ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+      ∙ ∘ᵐ-congʳ (⟨⟩-congᶠ e)
+      ∙ ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (ε⊣-nat ι))
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (Eternalᵒ.extᵉ-mate eX))
+      ∙ ∘ᵐ-congʳ (extᵉ-⊤ eX)
+
+    pfˡ : α+ ∘ᵐ ⟨ ⊤ ⟩ᶠ inlᵐ ≈ᵐ inlᵐ ∘ᵐ EA.α
+    pfˡ = summand eA inlᵐ ([]ᵐ-inlᵐ _ _)
+
+    pfʳ : α+ ∘ᵐ ⟨ ⊤ ⟩ᶠ inrᵐ ≈ᵐ inrᵐ ∘ᵐ EB.α
+    pfʳ = summand eB inrᵐ ([]ᵐ-inrᵐ _ _)
+
+    unit-side : ∀ {X} (ι : X →ᵐ A +ᵐ B) (α : ⟨ ⊤ ⟩ᵒ X →ᵐ X)
+              → α ∘ᵐ ⟨⊤⟩-η ≈ᵐ idᵐ → α+ ∘ᵐ ⟨ ⊤ ⟩ᶠ ι ≈ᵐ ι ∘ᵐ α
+              → (α+ ∘ᵐ ⟨⊤⟩-η) ∘ᵐ ι ≈ᵐ idᵐ ∘ᵐ ι
+    unit-side ι α αu pf =
+        ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⊤⟩-η-nat ι))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ pf
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ αu
+      ∙ ∘ᵐ-identityʳ ι
+      ∙ ≈ᵐ-sym (∘ᵐ-identityˡ ι)
+
+    assoc-side : ∀ {X} (ι : X →ᵐ A +ᵐ B) (α : ⟨ ⊤ ⟩ᵒ X →ᵐ X)
+               → α ∘ᵐ ⟨⊤⟩-μ ≈ᵐ α ∘ᵐ ⟨ ⊤ ⟩ᶠ α → α+ ∘ᵐ ⟨ ⊤ ⟩ᶠ ι ≈ᵐ ι ∘ᵐ α
+               → (α+ ∘ᵐ ⟨⊤⟩-μ) ∘ᵐ ⟨ ⊤ ⟩ᶠ (⟨ ⊤ ⟩ᶠ ι)
+                 ≈ᵐ (α+ ∘ᵐ ⟨ ⊤ ⟩ᶠ α+) ∘ᵐ ⟨ ⊤ ⟩ᶠ (⟨ ⊤ ⟩ᶠ ι)
+    assoc-side ι α αa pf =
+        ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⊤⟩-μ-nat ι))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ pf
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ αa
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (≈ᵐ-sym pf)
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+      ∙ ∘ᵐ-congʳ (⟨⟩-congᶠ (≈ᵐ-sym pf))
+      ∙ ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+  +ᵐ-eternalᵒ : Eternalᵒ (A +ᵐ B)
+  +ᵐ-eternalᵒ = record
+    { α       = α+
+    ; α-unit  = +-ext (unit-side inlᵐ EA.α EA.α-unit pfˡ)
+                      (unit-side inrᵐ EB.α EB.α-unit pfʳ)
+    ; α-assoc = ⟨⟩²-+-ext (assoc-side inlᵐ EA.α EA.α-assoc pfˡ)
+                          (assoc-side inrᵐ EB.α EB.α-assoc pfʳ)
+    }
+
+  -- The coproduct's extraction acts summandwise at every grade.
+
+  private
+    ext-side : ∀ {X ρ} (ι : X →ᵐ A +ᵐ B) (α : ⟨ ⊤ ⟩ᵒ X →ᵐ X)
+             → α+ ∘ᵐ ⟨ ⊤ ⟩ᶠ ι ≈ᵐ ι ∘ᵐ α
+             → Eternalᵒ.extᵉ +ᵐ-eternalᵒ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ ι
+               ≈ᵐ ι ∘ᵐ (α ∘ᵐ ⟨⟩-≤ (≾-⊤ ρ))
+    ext-side {ρ = ρ} ι α pf =
+        ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-≤-nat ι (≾-⊤ ρ)))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ pf
+      ∙ ∘ᵐ-assoc _ _ _
+
+  +ᵐ-eternalᵒ-inl : ∀ {ρ} → Eternalᵒ.extᵉ +ᵐ-eternalᵒ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ inlᵐ
+                          ≈ᵐ inlᵐ ∘ᵐ Eternalᵒ.extᵉ eA {ρ}
+  +ᵐ-eternalᵒ-inl = ext-side inlᵐ EA.α pfˡ
+
+  +ᵐ-eternalᵒ-inr : ∀ {ρ} → Eternalᵒ.extᵉ +ᵐ-eternalᵒ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ inrᵐ
+                          ≈ᵐ inrᵐ ∘ᵐ Eternalᵒ.extᵉ eB {ρ}
+  +ᵐ-eternalᵒ-inr = ext-side inrᵐ EB.α pfʳ
+
+
 -- Being eternal is invariant under isomorphism: conjugating the algebra by an
 -- iso preserves both laws.
 

@@ -115,6 +115,18 @@ cast-pair⁻ : ∀ {Γ Γ' A B} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ A} → 
             (U' ≡ ⦉ V' , W' ⦊) × (V ≡ castᵛ e V') × (W ≡ castᵛ e W')
 cast-pair⁻ refl _ refl = _ , _ , refl , refl , refl
 
+cast-inl⁻ : ∀ {Γ Γ' A B} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ A}
+          → (U' : Γ' ⊢V⦂ A |+| B)
+          → inl V ≡ castᵛ e U'
+          → Σ[ V' ∈ (Γ' ⊢V⦂ A) ] (U' ≡ inl V') × (V ≡ castᵛ e V')
+cast-inl⁻ refl _ refl = _ , refl , refl
+
+cast-inr⁻ : ∀ {Γ Γ' A B} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ B}
+          → (U' : Γ' ⊢V⦂ A |+| B)
+          → inr V ≡ castᵛ e U'
+          → Σ[ V' ∈ (Γ' ⊢V⦂ B) ] (U' ≡ inr V') × (V ≡ castᵛ e V')
+cast-inr⁻ refl _ refl = _ , refl , refl
+
 cast-true⁻ : ∀ {Γ Γ'} → (e : Γ' ≡ Γ) → (V' : Γ' ⊢V⦂ Bool)
         → true ≡ castᵛ e V' → V' ≡ true
 cast-true⁻ refl _ refl = refl
@@ -162,6 +174,16 @@ cast-if⁻ : ∀ {Γ Γ' C} → (e : Γ' ≡ Γ)
           (P' ≡ (if V' `then M' `else N')) × (V ≡ castᵛ e V')
         × (M ≡ castᶜ e M') × (N ≡ castᶜ e N')
 cast-if⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
+
+cast-case+⁻ : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
+            → {V : Γ ⊢V⦂ A |+| B} → {M : Γ ∷ A ⊢C⦂ C} → {N : Γ ∷ B ⊢C⦂ C}
+            → (P' : Γ' ⊢C⦂ C)
+            → (case+ V `inl M `inr N) ≡ castᶜ e P'
+            → Σ[ V' ∈ (Γ' ⊢V⦂ A |+| B) ] Σ[ M' ∈ (Γ' ∷ A ⊢C⦂ C) ]
+              Σ[ N' ∈ (Γ' ∷ B ⊢C⦂ C) ]
+                (P' ≡ (case+ V' `inl M' `inr N')) × (V ≡ castᵛ e V')
+              × (M ≡ castᶜ (cong (_∷ A) e) M') × (N ≡ castᶜ (cong (_∷ B) e) N')
+cast-case+⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
 
 cast-perform⁻ : ∀ {Γ Γ' A ε} → (e : Γ' ≡ Γ) → {op : Op}
            → {V : Γ ⊢V⦂ type-of-gtype (param op)}

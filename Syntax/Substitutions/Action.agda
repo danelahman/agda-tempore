@@ -50,6 +50,8 @@ mutual
   V-sub₀ s true        = true
   V-sub₀ s false       = false
   V-sub₀ s (⦉ V , W ⦊)  = ⦉ V-sub₀ s V , V-sub₀ s W ⦊
+  V-sub₀ s (inl V)     = inl (V-sub₀ s V)
+  V-sub₀ s (inr V)     = inr (V-sub₀ s V)
   V-sub₀ s (lam M)     = lam (C-sub₀ (cong-sub₀ s) M)
   V-sub₀ s (subV V p)  = subV (V-sub₀ s V) p
 
@@ -66,6 +68,8 @@ mutual
   C-sub₀ s (absurd V)       = absurd (V-sub₀ s V)
   C-sub₀ s (if V `then M `else N) =
     if V-sub₀ s V `then C-sub₀ s M `else C-sub₀ s N
+  C-sub₀ s (case+ V `inl M `inr N) =
+    case+ V-sub₀ s V `inl C-sub₀ (cong-sub₀ s) M `inr C-sub₀ (cong-sub₀ s) N
   C-sub₀ s (perform op V M) = perform op (V-sub₀ s V) (C-sub₀ (cong-sub₀ s) M)
   C-sub₀ s (delay τ M)      = delay τ (C-sub₀ (cong-sub₀ s) M)
   C-sub₀ s (handle M `with H `in N) =

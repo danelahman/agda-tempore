@@ -29,6 +29,7 @@ open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (⊤; tt)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 
 open import Util.Equality
 
@@ -224,6 +225,107 @@ sndᵖ {A} {B} = pmap proj₂ (λ e → proj₂ e) (λ p x → ≈-refl B)
 ⟨⟩ᵖ-unique : ∀ {A B C} → (f : A →ᵖ B) → (g : A →ᵖ C) → (h : A →ᵖ B ×ᵖ C)
            → fstᵖ ∘ᵖ h ≈ᵖ f → sndᵖ ∘ᵖ h ≈ᵖ g → h ≈ᵖ ⟨ f , g ⟩ᵖ
 ⟨⟩ᵖ-unique f g h p q x = p x , q x
+
+-- Binary coproducts
+--
+-- Pointwise disjoint union: elements are related only within one summand, and
+-- transport acts summandwise.
+
+_≈⁺_ : ∀ {A B : PSh} {w} → carrier A w ⊎ carrier B w → carrier A w ⊎ carrier B w → Set
+_≈⁺_ {A}     (inj₁ x) (inj₁ y) = _≈_ A x y
+_≈⁺_ {B = B} (inj₂ x) (inj₂ y) = _≈_ B x y
+_≈⁺_         (inj₁ _) (inj₂ _) = ⊥
+_≈⁺_         (inj₂ _) (inj₁ _) = ⊥
+
+infixr 22 _+ᵖ_
+
+_+ᵖ_ : PSh → PSh → PSh
+A +ᵖ B = record
+  { carrier         = λ w → carrier A w ⊎ carrier B w
+  ; _≈_             = _≈⁺_ {A} {B}
+  ; ≈-refl          = λ {w} {x} → refl⁺ x
+  ; ≈-sym           = λ {w} {x} {y} → sym⁺ x y
+  ; ≈-trans         = λ {w} {x} {y} {z} → trans⁺ x y z
+  ; transport       = tr⁺
+  ; transport-cong  = λ p {x} {y} → tr-cong⁺ p x y
+  ; transport-refl  = tr-refl⁺
+  ; transport-trans = tr-trans⁺
+  }
+  where
+    refl⁺ : ∀ {w} (x : carrier A w ⊎ carrier B w) → _≈⁺_ {A} {B} x x
+    refl⁺ (inj₁ x) = ≈-refl A
+    refl⁺ (inj₂ x) = ≈-refl B
+
+    sym⁺ : ∀ {w} (x y : carrier A w ⊎ carrier B w)
+         → _≈⁺_ {A} {B} x y → _≈⁺_ {A} {B} y x
+    sym⁺ (inj₁ x) (inj₁ y) e = ≈-sym A e
+    sym⁺ (inj₂ x) (inj₂ y) e = ≈-sym B e
+
+    trans⁺ : ∀ {w} (x y z : carrier A w ⊎ carrier B w)
+           → _≈⁺_ {A} {B} x y → _≈⁺_ {A} {B} y z → _≈⁺_ {A} {B} x z
+    trans⁺ (inj₁ x) (inj₁ y) (inj₁ z) e e' = ≈-trans A e e'
+    trans⁺ (inj₂ x) (inj₂ y) (inj₂ z) e e' = ≈-trans B e e'
+
+    tr⁺ : ∀ {w w'} → w ⊑[ uᵣ ] w' → carrier A w ⊎ carrier B w → carrier A w' ⊎ carrier B w'
+    tr⁺ p (inj₁ x) = inj₁ (transport A p x)
+    tr⁺ p (inj₂ x) = inj₂ (transport B p x)
+
+    tr-cong⁺ : ∀ {w w'} (p : w ⊑[ uᵣ ] w') (x y : carrier A w ⊎ carrier B w)
+             → _≈⁺_ {A} {B} x y → _≈⁺_ {A} {B} (tr⁺ p x) (tr⁺ p y)
+    tr-cong⁺ p (inj₁ x) (inj₁ y) e = transport-cong A p e
+    tr-cong⁺ p (inj₂ x) (inj₂ y) e = transport-cong B p e
+
+    tr-refl⁺ : ∀ {w} (x : carrier A w ⊎ carrier B w) → _≈⁺_ {A} {B} (tr⁺ ⊑-refl x) x
+    tr-refl⁺ (inj₁ x) = transport-refl A x
+    tr-refl⁺ (inj₂ x) = transport-refl B x
+
+    tr-trans⁺ : ∀ {w w' w''} (p : w ⊑[ uᵣ ] w') (q : w' ⊑[ uᵣ ] w'')
+                (x : carrier A w ⊎ carrier B w)
+              → _≈⁺_ {A} {B} (tr⁺ (⊑ᵘ-trans p q) x) (tr⁺ q (tr⁺ p x))
+    tr-trans⁺ p q (inj₁ x) = transport-trans A p q x
+    tr-trans⁺ p q (inj₂ x) = transport-trans B p q x
+
+inlᵖ : ∀ {A B} → A →ᵖ A +ᵖ B
+inlᵖ {A} = pmap inj₁ (λ e → e) (λ p x → ≈-refl A)
+
+inrᵖ : ∀ {A B} → B →ᵖ A +ᵖ B
+inrᵖ {B = B} = pmap inj₂ (λ e → e) (λ p x → ≈-refl B)
+
+[_,_]ᵖ : ∀ {A B C} → A →ᵖ C → B →ᵖ C → A +ᵖ B →ᵖ C
+[_,_]ᵖ {A} {B} {C} f g = pmap
+  copair
+  (λ {w} {x} {y} → copair-cong x y)
+  copair-nat
+  where
+    copair : ∀ {w} → carrier A w ⊎ carrier B w → carrier C w
+    copair (inj₁ x) = app f x
+    copair (inj₂ y) = app g y
+
+    copair-cong : ∀ {w} (x y : carrier A w ⊎ carrier B w)
+                → _≈⁺_ {A} {B} x y → _≈_ C (copair x) (copair y)
+    copair-cong (inj₁ x) (inj₁ y) e = app-cong f e
+    copair-cong (inj₂ x) (inj₂ y) e = app-cong g e
+
+    copair-nat : ∀ {w w'} (p : w ⊑[ uᵣ ] w') (x : carrier A w ⊎ carrier B w)
+               → _≈_ C (copair (transport (A +ᵖ B) p x)) (transport C p (copair x))
+    copair-nat p (inj₁ x) = nat f p x
+    copair-nat p (inj₂ x) = nat g p x
+
+[_,_]ᵖ-cong : ∀ {A B C} {f f' : A →ᵖ C} {g g' : B →ᵖ C}
+            → f ≈ᵖ f' → g ≈ᵖ g' → [ f , g ]ᵖ ≈ᵖ [ f' , g' ]ᵖ
+[ pf , pg ]ᵖ-cong (inj₁ x) = pf x
+[ pf , pg ]ᵖ-cong (inj₂ x) = pg x
+
+[]ᵖ-inlᵖ : ∀ {A B C} → (f : A →ᵖ C) → (g : B →ᵖ C) → [ f , g ]ᵖ ∘ᵖ inlᵖ ≈ᵖ f
+[]ᵖ-inlᵖ {C = C} f g x = ≈-refl C
+
+[]ᵖ-inrᵖ : ∀ {A B C} → (f : A →ᵖ C) → (g : B →ᵖ C) → [ f , g ]ᵖ ∘ᵖ inrᵖ ≈ᵖ g
+[]ᵖ-inrᵖ {C = C} f g x = ≈-refl C
+
+[]ᵖ-unique : ∀ {A B C} → (f : A →ᵖ C) → (g : B →ᵖ C) → (h : A +ᵖ B →ᵖ C)
+           → h ∘ᵖ inlᵖ ≈ᵖ f → h ∘ᵖ inrᵖ ≈ᵖ g → h ≈ᵖ [ f , g ]ᵖ
+[]ᵖ-unique f g h p q (inj₁ x) = p x
+[]ᵖ-unique f g h p q (inj₂ x) = q x
 
 -- Boolean object
 --
@@ -472,6 +574,14 @@ PShCat = record
   ; ⟨⟩ᵐ-fstᵐ     = ⟨⟩ᵖ-fstᵖ
   ; ⟨⟩ᵐ-sndᵐ     = ⟨⟩ᵖ-sndᵖ
   ; ⟨⟩ᵐ-unique   = ⟨⟩ᵖ-unique
+  ; _+ᵐ_         = _+ᵖ_
+  ; inlᵐ         = inlᵖ
+  ; inrᵐ         = inrᵖ
+  ; [_,_]ᵐ       = [_,_]ᵖ
+  ; [_,_]ᵐ-cong  = λ {A} {B} {C} {f} {f'} {g} {g'} → [_,_]ᵖ-cong {f = f} {f' = f'} {g = g} {g' = g'}
+  ; []ᵐ-inlᵐ     = []ᵖ-inlᵖ
+  ; []ᵐ-inrᵐ     = []ᵖ-inrᵖ
+  ; []ᵐ-unique   = []ᵖ-unique
   ; 𝔹ᵐ           = 𝔹ᵖ
   ; trueᵐ        = trueᵖ
   ; falseᵐ       = falseᵖ

@@ -298,8 +298,8 @@ data _⊩_≾̂ₑ_ {Θ} Q where
   ≡̂ₑ-antisym-∅ (⊔-lubₑ (⊔-lubₑ ⊔-ubˡₑ (transₑ ⊔-ubˡₑ ⊔-ubʳₑ)) (transₑ ⊔-ubʳₑ ⊔-ubʳₑ))
                (⊔-lubₑ (transₑ ⊔-ubˡₑ ⊔-ubˡₑ) (⊔-lubₑ (transₑ ⊔-ubʳₑ ⊔-ubˡₑ) ⊔-ubʳₑ))
 
--- Mirrors `Eternal` of `Syntax.Types`, with rules for `Nat`, for sums
--- and for lists, plus rules for the eternality atoms of the hypothesis set and
+-- Mirrors `Eternal` of `Syntax.Types`, with rules for `Nat` and for lists,
+-- plus rules for the eternality atoms of the hypothesis set and
 -- for transfer along an assumed subtyping in both directions; as in the
 -- original, no rule for `_⇒_` and `[_]_`.
 
@@ -436,7 +436,7 @@ VarOK-≡̂ p q (hyp-ok m p' q') = hyp-ok m (≡̂ᵛ-trans p p') (transᵣ q q'
 
 -- Shape-preserving subtyping of open value and computation types,
 -- mirroring `Syntax.Subtyping` former by former, with `Natₛ` for `Nat`
--- `_|+|ₛ_` for sums and `|List|ₛ` for lists: one constructor per pair of matching type
+-- and `|List|ₛ` for lists: one constructor per pair of matching type
 -- formers, no `refl` or `trans` constructor. The grade slots carry entailments from `Q`, and
 -- an unknown head is related only by an assumed subtyping.
 --

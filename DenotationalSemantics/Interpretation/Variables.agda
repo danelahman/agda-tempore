@@ -78,6 +78,8 @@ eternalᵛ-Eternalᵒ Boolₑ          = 𝔹-eternalᵒ
 eternalᵛ-Eternalᵒ Emptyₑ         = 𝟘-eternalᵒ
 eternalᵛ-Eternalᵒ (et₁ |×|ₑ et₂) =
   ×-eternalᵒ (eternalᵛ-Eternalᵒ et₁) (eternalᵛ-Eternalᵒ et₂)
+eternalᵛ-Eternalᵒ (et₁ |+|ₑ et₂) =
+  +-eternalᵒ (eternalᵛ-Eternalᵒ et₁) (eternalᵛ-Eternalᵒ et₂)
 
 -- Eternal extraction at an arbitrary grade.
 

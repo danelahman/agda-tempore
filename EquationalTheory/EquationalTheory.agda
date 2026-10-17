@@ -82,6 +82,18 @@ mutual
            ------------------------------
            → Γ ⊢V⦂ ⦉ V , W ⦊ == ⦉ V' , W' ⦊
 
+    inl-cong : ∀ {A B}
+             → {V V' : Γ ⊢V⦂ A}
+             → Γ ⊢V⦂ V == V'
+             --------------------------------------
+             → Γ ⊢V⦂ inl {B = B} V == inl {B = B} V'
+
+    inr-cong : ∀ {A B}
+             → {V V' : Γ ⊢V⦂ B}
+             → Γ ⊢V⦂ V == V'
+             --------------------------------------
+             → Γ ⊢V⦂ inr {A = A} V == inr {A = A} V'
+
     lam-cong : ∀ {A B ε}
              → {M N : Γ ∷ A ⊢C⦂ B ‼ ε}
              → Γ ∷ A ⊢C⦂ M == N
@@ -125,10 +137,11 @@ mutual
                → Γ ⊢V⦂ subV (subV V w) w' == subV V w''
 
     -- Subsumption is natural in the value formers: the witness splits the way
-    -- its type does. At `⦉_,_⦊` that is functoriality of `_|×|_`, at `lam`
-    -- functoriality of `_⇒_` — contravariant in the domain, so the binder is
-    -- subsumed rather than the body coerced there. The atomic formers and `var`
-    -- have no rule of their own.
+    -- its type does. At `⦉_,_⦊` that is functoriality of `_|×|_`, at `inl` and
+    -- `inr` functoriality of `_|+|_`, at `lam` functoriality of `_⇒_` —
+    -- contravariant in the domain, so the binder is subsumed rather than the
+    -- body coerced there. The atomic formers and `var` have no rule of their
+    -- own.
 
     subV-pair : ∀ {A A' B B'}
               → (p : A <:ᵛ A') → (q : B <:ᵛ B')
@@ -137,6 +150,18 @@ mutual
               ------------------------------------------------------
               → Γ ⊢V⦂ subV ⦉ V , W ⦊ (p |×|ₛ q)
                    == ⦉ subV V p , subV W q ⦊
+
+    subV-inl : ∀ {A A' B B'}
+             → (p : A <:ᵛ A') → (q : B <:ᵛ B')
+             → (V : Γ ⊢V⦂ A)
+             ---------------------------------------------------
+             → Γ ⊢V⦂ subV (inl V) (p |+|ₛ q) == inl (subV V p)
+
+    subV-inr : ∀ {A A' B B'}
+             → (p : A <:ᵛ A') → (q : B <:ᵛ B')
+             → (V : Γ ⊢V⦂ B)
+             ---------------------------------------------------
+             → Γ ⊢V⦂ subV (inr V) (p |+|ₛ q) == inr (subV V q)
 
     subV-lam : ∀ {A A' C C'}
              → (p : A' <:ᵛ A)
@@ -230,6 +255,16 @@ mutual
             → Γ ⊢C⦂ N == N'
             ----------------------------------------------------------
             → Γ ⊢C⦂ if V `then M `else N == if W `then M' `else N'
+
+    case+-cong : ∀ {A B C}
+               → {V W : Γ ⊢V⦂ A |+| B}
+               → {M M' : Γ ∷ A ⊢C⦂ C}
+               → {N N' : Γ ∷ B ⊢C⦂ C}
+               → Γ ⊢V⦂ V == W
+               → Γ ∷ A ⊢C⦂ M == M'
+               → Γ ∷ B ⊢C⦂ N == N'
+               ------------------------------------------------------------
+               → Γ ⊢C⦂ case+ V `inl M `inr N == case+ W `inl M' `inr N'
 
     perform-cong : ∀ {A ε op}
                  → {V W : Γ ⊢V⦂ type-of-gtype (param op)}
@@ -440,6 +475,37 @@ mutual
            → Γ ⊢C⦂ if V `then (M [ split-[] ↦ true  ]c)
                         `else (M [ split-[] ↦ false ]c)
                == M [ split-[] ↦ V ]c
+
+    -- beta-equations for sum elimination
+
+    case+-beta-inl : ∀ {A B C}
+                   → (V : Γ ⊢V⦂ A)
+                   → (M : Γ ∷ A ⊢C⦂ C)
+                   → (N : Γ ∷ B ⊢C⦂ C)
+                   ----------------------------------------------------------
+                   → Γ ⊢C⦂ case+ inl V `inl M `inr N == M [ split-[] ↦ V ]c
+
+    case+-beta-inr : ∀ {A B C}
+                   → (V : Γ ⊢V⦂ B)
+                   → (M : Γ ∷ A ⊢C⦂ C)
+                   → (N : Γ ∷ B ⊢C⦂ C)
+                   ----------------------------------------------------------
+                   → Γ ⊢C⦂ case+ inr V `inl M `inr N == N [ split-[] ↦ V ]c
+
+    -- eta-equation for sum elimination
+    --
+    -- Commuting conversions are instances of this rule.
+
+    case+-eta : ∀ {A B C}
+              → (V : Γ ⊢V⦂ A |+| B)
+              → (M : Γ ∷ A |+| B ⊢C⦂ C)
+              ------------------------------------------------------------------
+              → Γ ⊢C⦂ case+ V
+                        `inl (C-rename (cong-∷-ren wk-ren) M
+                                [ split-[] ↦ inl (var (λ _ → ≾ᵣ-refl) Hd) ]c)
+                        `inr (C-rename (cong-∷-ren wk-ren) M
+                                [ split-[] ↦ inr (var (λ _ → ≾ᵣ-refl) Hd) ]c)
+                  == M [ split-[] ↦ V ]c
 
     -- computational/beta-equations for effect handling
     --
