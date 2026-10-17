@@ -352,6 +352,18 @@ Sim {A₁ = A₁} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
       (trans (cong (λ l → recL-reduct l _ _ p) (listᵛ-cast (sym (toCtx-≐ˢ es)) U'))
              (cast-recL-reduct (sym (toCtx-≐ˢ es)) (listᵛ U') M₀' N₀' p))
 
+-- comparison: the operands correspond on both sides, and so do their data
+-- (`cast-cmp-reduct`).
+
+↝-≐ˢ-cmp : ∀ {A ⋈} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+         → {U W : toCtx St ⊢V⦂ A} → {et : Eternal A}
+         → (P' : toCtx St' ⊢C⦂ Bool ‼ uₑ)
+         → cmp ⋈ U W et ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+         → Sim es P' (CMP {⋈ = ⋈} {V = U} {W = W} {et = et})
+↝-≐ˢ-cmp {⋈ = ⋈} es {et = et} P' eM with cast-cmp⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | U' , W' , refl , refl , refl =
+    _ , _ , es , CMP , id-≤≐ , cast-cmp-reduct (sym (toCtx-≐ˢ es)) ⋈ U' W' et
+
 -- matching: the scrutinee corresponds on both sides, and its two projections
 -- commute with the cast (`fstᵛ-cast`/`sndᵛ-cast`).
 
@@ -698,6 +710,7 @@ cast-handle-op refl V' M' H' N' = refl
 
 ↝-≐ˢ es eM APP         = ↝-≐ˢ-app es _ eM
 ↝-≐ˢ es eM MATCH       = ↝-≐ˢ-match es _ eM
+↝-≐ˢ es eM CMP         = ↝-≐ˢ-cmp es _ eM
 ↝-≐ˢ es eM CASEL       = ↝-≐ˢ-caseL es _ eM
 ↝-≐ˢ es eM RECL        = ↝-≐ˢ-recL es _ eM
 ↝-≐ˢ es eM IF-TRUE     = ↝-≐ˢ-if-true es _ eM

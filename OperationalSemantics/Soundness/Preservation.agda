@@ -154,6 +154,7 @@ T-≤-stepᵀ B MATCH       g q = ηᵀ-case g q
 T-≤-stepᵀ B CASEL       g q = ηᵀ-case g q
 T-≤-stepᵀ B RECL        g q = ηᵀ-case g q
 T-≤-stepᵀ B IF-TRUE     g q = ηᵀ-case g q
+T-≤-stepᵀ B CMP         g q = ηᵀ-case g q
 T-≤-stepᵀ B IF-FALSE    g q = ηᵀ-case g q
 T-≤-stepᵀ B CASE-INL    g q = ηᵀ-case g q
 T-≤-stepᵀ B CASE-INR    g q = ηᵀ-case g q
@@ -220,6 +221,7 @@ Uniform↝ MATCH               _            = ⊤
 Uniform↝ CASEL               _            = ⊤
 Uniform↝ RECL                _            = ⊤
 Uniform↝ IF-TRUE             _            = ⊤
+Uniform↝ CMP                 _            = ⊤
 Uniform↝ IF-FALSE            _            = ⊤
 Uniform↝ CASE-INL            _            = ⊤
 Uniform↝ CASE-INR            _            = ⊤
@@ -269,6 +271,7 @@ stepᴾᶜ (SEQ-OP {op = op} {S = S} {V = V} {M = M} {N = N}) pS ((pV , pM) , pN
     (perform op V (M ⨟ C-rename (cong-∷-ren ((eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N))
     (pV , pM , renᶜ (cong-∷-ren ((eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN)
 stepᴾᶜ IF-TRUE                          pS (_ , pM , pN) = pM
+stepᴾᶜ (CMP {S = St} {⋈ = ⋈} {V = V} {W = W} {et = et}) pS _ = cmp-reductᴾ St ⋈ V W et
 stepᴾᶜ IF-FALSE                         pS (_ , pM , pN) = pN
 stepᴾᶜ CASEℕ-ZERO                       pS (_ , pM , pN) = pM
 stepᴾᶜ (CASEℕ-SUCC {V = V} {N = N})    pS (pV , pM , pN) = subᶜ N split-[] V pN pV
@@ -348,6 +351,9 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ↝-sound {A = A} r@(IF-TRUE {M = M} {N = N}) pS (_ , pM , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-IF-TRUE M N pM pN)) ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound r@(CMP {S = St} {⋈ = ⋈} {V = V} {W = W} {et = et}) pS (pV , pW) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-CMP St ⋈ V W et pV pW))
+  ∙ ∘ᵐ-congʳ (insert-coe Boolₛ)
 ↝-sound {A = A} r@(IF-FALSE {M = M} {N = N}) pS (_ , pM , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-IF-FALSE M N pM pN)) ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ↝-sound {A = A} r@(CASEℕ-ZERO {M = M} {N = N}) pS (_ , pM , pN) _ =

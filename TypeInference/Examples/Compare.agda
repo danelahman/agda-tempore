@@ -40,7 +40,7 @@ open import TypeInference.OpenSyntax.Contexts    S
 open import TypeInference.OpenSyntax.Subst       S using (idˢ)
 open import TypeInference.OpenSyntax.Hyps        S
 open import TypeInference.OpenSyntax.Instances   S using (Satisfiable-∅)
-open import TypeInference.OpenSyntax.Comparisons
+open import Syntax.Comparisons using (Cmp; eq; ne; lt; le; gt; ge)
 open import TypeInference.OpenSyntax.Language    S
 open import TypeInference.Raw.Syntax             S
 open import TypeInference.Raw.Subst              S using (_[_]ᴿᶜ)

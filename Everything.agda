@@ -85,7 +85,16 @@ open import Syntax.Contexts
 
 open import Syntax.Subtyping
 
+---- Comparison relations and their outcomes
+
+open import Syntax.Comparisons
+
 open import Syntax.Language
+
+---- The data of the eternal types, and their structural order
+
+open import Syntax.Data
+open import Syntax.Data.Order
 
 ---- Renamings and substitutions
 
@@ -221,6 +230,7 @@ open import EquationalTheory.Soundness
 ---- Abstract model interface
 
 open import DenotationalSemantics.Model.Category
+open import DenotationalSemantics.Model.Comparison
 open import DenotationalSemantics.Model.World
 open import DenotationalSemantics.Model.Modality.Future
 open import DenotationalSemantics.Model.Modality.Past
@@ -262,7 +272,9 @@ open import DenotationalSemantics.Interpretation.Types
 open import DenotationalSemantics.Interpretation.Subtyping
 open import DenotationalSemantics.Interpretation.Contexts
 open import DenotationalSemantics.Interpretation.Variables
+open import DenotationalSemantics.Interpretation.Comparisons
 open import DenotationalSemantics.Interpretation.Terms
+open import DenotationalSemantics.Interpretation.Data
 open import DenotationalSemantics.Interpretation.Renaming.Algebra
 open import DenotationalSemantics.Interpretation.Renaming.Extension
 open import DenotationalSemantics.Interpretation.Renaming.Structural
@@ -371,7 +383,6 @@ open import TypeInference.OpenSyntax.Instances
 
 ---- The open type system
 
-open import TypeInference.OpenSyntax.Comparisons
 open import TypeInference.OpenSyntax.Language
 
 ---- Raw terms and erasure

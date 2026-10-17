@@ -60,6 +60,8 @@ open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Subtyping S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
+open import DenotationalSemantics.Interpretation.Comparisons S Cat Fut Pst Adj GTy Mon GE
+  using (holdsᵐ; cmpᵐ)
 
 -- The value-type interpretation of a ground type coincides with its
 -- ground-type interpretation.
@@ -170,6 +172,7 @@ mutual
   Paramᶜ (V · W)          = Paramᵛ V × Paramᵛ W
   Paramᶜ (match V `in M)  = Paramᵛ V × Paramᶜ M
   Paramᶜ (absurd V)       = Paramᵛ V
+  Paramᶜ (cmp ⋈ V W et)   = Paramᵛ V × Paramᵛ W
   Paramᶜ (if V `then M `else N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (caseℕ V `zero M `succ N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (recℕ V M N p) = Paramᵛ V × Paramᶜ M × Paramᶜ N
@@ -228,6 +231,9 @@ mutual
   ⟦ match V `in M ⟧ᶜᵗ (pV , pM) =
     ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ ⟨ idᵐ , fstᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ , sndᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
   ⟦ absurd V ⟧ᶜᵗ pV = initialᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
+  -- the relation's truth on the comparison of the operands
+  ⟦ cmp ⋈ V W et ⟧ᶜᵗ (pV , pW) =
+    ηᵀ ∘ᵐ holdsᵐ ⋈ ∘ᵐ cmpᵐ et ∘ᵐ ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
   ⟦ if V `then M `else N ⟧ᶜᵗ (pV , pM , pN) =
     ifᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ⟦ caseℕ V `zero M `succ N ⟧ᶜᵗ (pV , pM , pN) =

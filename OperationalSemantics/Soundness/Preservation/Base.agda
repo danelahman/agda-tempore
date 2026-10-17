@@ -32,6 +32,8 @@ open import Data.Product using (_,_; _×_; proj₁; proj₂)
 open import Data.Unit using (⊤; tt)
 open import Data.Sum using (inj₁; inj₂)
 
+open import Syntax.Comparisons using (Cmp; holds)
+open import Syntax.Data S using (compareᵈ)
 open import Syntax.Types     S
 open import Syntax.Contexts  S
 open import Syntax.Language  S
@@ -66,6 +68,9 @@ open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Recursion S Cat Fut Pst Adj GTy Mon GE
+open import DenotationalSemantics.Interpretation.Comparisons S Cat Fut Pst Adj GTy Mon GE
+  using (⌜_⌝ᵈ; ⌜⌝ᵈ-coe)
+open import DenotationalSemantics.Interpretation.Data S Cat Fut Pst Adj GTy Mon GE
 
 open import DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj
@@ -98,6 +103,7 @@ stepᴾˢ MATCH               pS _              = pS
 stepᴾˢ CASEL               pS _              = pS
 stepᴾˢ RECL                pS _              = pS
 stepᴾˢ IF-TRUE             pS _              = pS
+stepᴾˢ CMP                 pS _              = pS
 stepᴾˢ IF-FALSE            pS _              = pS
 stepᴾˢ CASE-INL            pS _              = pS
 stepᴾˢ CASE-INR            pS _              = pS
@@ -147,6 +153,7 @@ step-grade MATCH                = uₑ
 step-grade CASEL                = uₑ
 step-grade RECL                 = uₑ
 step-grade IF-TRUE              = uₑ
+step-grade CMP                  = uₑ
 step-grade IF-FALSE             = uₑ
 step-grade CASE-INL             = uₑ
 step-grade CASE-INR             = uₑ
@@ -183,6 +190,7 @@ stepᵀ MATCH             = ηᵀ
 stepᵀ CASEL             = ηᵀ
 stepᵀ RECL              = ηᵀ
 stepᵀ IF-TRUE           = ηᵀ
+stepᵀ CMP               = ηᵀ
 stepᵀ IF-FALSE          = ηᵀ
 stepᵀ CASE-INL          = ηᵀ
 stepᵀ CASE-INR          = ηᵀ
@@ -218,6 +226,7 @@ step-≾ {ε = ε} MATCH  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} CASEL  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} RECL   = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} IF-TRUE  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ {ε = ε} CMP      = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} IF-FALSE = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} CASE-INL = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} CASE-INR = ≾ₑ-reflexive (·ₑ-identityˡ ε)
@@ -454,6 +463,47 @@ recL-reductᴾ : ∀ {Γ A B ε} → (l : ListView Γ A) → (M : Γ ⊢C⦂ B �
 recL-reductᴾ (inj₁ tt)      M N p pl        pM pN = pM
 recL-reductᴾ (inj₂ (W , L)) M N p (pW , pL) pM pN =
   (pL , pM , pN) , recL-stepᴾ W L N pW pL pN
+
+-- CMP: a value of an eternal type denotes the point of its datum, at which
+-- the comparison morphism orders as the data are ordered.
+
+⌊⌋ᵈ-sound : ∀ {Γ A} → (St : 𝕊 Γ) → (et : Eternal A) → (V : toCtx St ⊢V⦂ A)
+          → (pV : Paramᵛ V) → ⟦ V ⟧ᵛᵗ pV ≈ᵐ ⌜ et ⌝ᵈ (⌊_⌋ᵈ {S = St} et V) ∘ᵐ terminalᵐ
+⌊⌋ᵈ-sound St et (var _ x) pV = ⊥-elim (eternal-not-in-toCtx et x)
+⌊⌋ᵈ-sound St et (subV V p) pV =
+    ∘ᵐ-congʳ (⌊⌋ᵈ-sound St (<:ᵛ-eternalˡ p et) V pV)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (⌜⌝ᵈ-coe p et _)
+⌊⌋ᵈ-sound St (Baseₑ _) (const c) pV = ≈ᵐ-refl
+⌊⌋ᵈ-sound St Unitₑ ⋆ pV = ≈ᵐ-sym terminalᵐ-unique
+⌊⌋ᵈ-sound St Boolₑ true pV = ≈ᵐ-refl
+⌊⌋ᵈ-sound St Boolₑ false pV = ≈ᵐ-refl
+⌊⌋ᵈ-sound St Natₑ zero pV = ≈ᵐ-refl
+⌊⌋ᵈ-sound St Natₑ (succ V) pV =
+  ∘ᵐ-congʳ (⌊⌋ᵈ-sound St Natₑ V pV) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+⌊⌋ᵈ-sound St (et₁ |×|ₑ et₂) ⦉ V , W ⦊ (pV , pW) =
+  ⟨ ⌊⌋ᵈ-sound St et₁ V pV , ⌊⌋ᵈ-sound St et₂ W pW ⟩ᵐ-cong ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)
+⌊⌋ᵈ-sound St (et₁ |+|ₑ et₂) (inl V) pV =
+  ∘ᵐ-congʳ (⌊⌋ᵈ-sound St et₁ V pV) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+⌊⌋ᵈ-sound St (et₁ |+|ₑ et₂) (inr V) pV =
+  ∘ᵐ-congʳ (⌊⌋ᵈ-sound St et₂ V pV) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+⌊⌋ᵈ-sound St (|List|ₑ et) nil pV = ≈ᵐ-refl
+⌊⌋ᵈ-sound St (|List|ₑ et) (cons V W) (pV , pW) =
+    ∘ᵐ-congʳ (⟨ ⌊⌋ᵈ-sound St et V pV , ⌊⌋ᵈ-sound St (|List|ₑ et) W pW ⟩ᵐ-cong
+              ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+cmp-reductᴾ : ∀ {Γ A} → (St : 𝕊 Γ) → (⋈ : Cmp) → (V W : toCtx St ⊢V⦂ A) → (et : Eternal A)
+            → Paramᶜ (cmp-reduct {S = St} ⋈ V W et)
+cmp-reductᴾ St ⋈ V W et =
+  param-⌈⌉ Boolₑ (holds ⋈ (compareᵈ et (⌊_⌋ᵈ {S = St} et V) (⌊_⌋ᵈ {S = St} et W)))
+
+sound-CMP : ∀ {Γ A} → (St : 𝕊 Γ) → (⋈ : Cmp) → (V W : toCtx St ⊢V⦂ A) → (et : Eternal A)
+          → (pV : Paramᵛ V) → (pW : Paramᵛ W)
+          → ⟦ cmp ⋈ V W et ⟧ᶜᵗ (pV , pW)
+          ≈ᵐ ⟦ cmp-reduct {S = St} ⋈ V W et ⟧ᶜᵗ (cmp-reductᴾ St ⋈ V W et)
+sound-CMP St ⋈ V W et pV pW =
+  sound-cmp ⋈ et V W pV pW _ _ (⌊⌋ᵈ-sound St et V pV) (⌊⌋ᵈ-sound St et W pW)
 
 -- CASEL / RECL: the scrutinee denotes its decomposition, at which the beta
 -- laws apply.

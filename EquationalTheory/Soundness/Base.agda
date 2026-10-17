@@ -104,6 +104,8 @@ mutual
             (⟨ ⟨ ≈ᵐ-refl , ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV') ⟩ᵐ-cong
              , ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV') ⟩ᵐ-cong)
   ⟦⟧ᶜᵗ-irr (absurd V) pV pV' = ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
+  ⟦⟧ᶜᵗ-irr (cmp ⋈ V W et) (pV , pW) (pV' , pW') =
+    ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ⟦⟧ᵛᵗ-irr V pV pV' , ⟦⟧ᵛᵗ-irr W pW pW' ⟩ᵐ-cong)))
   ⟦⟧ᶜᵗ-irr (if V `then M `else N) (pV , pM , pN) (pV' , pM' , pN') =
     ifᵐ-cong (⟦⟧ᵛᵗ-irr V pV pV') (⟦⟧ᶜᵗ-irr M pM pM') (⟦⟧ᶜᵗ-irr N pN pN')
   ⟦⟧ᶜᵗ-irr (caseℕ V `zero M `succ N) (pV , pM , pN) (pV' , pM' , pN') =

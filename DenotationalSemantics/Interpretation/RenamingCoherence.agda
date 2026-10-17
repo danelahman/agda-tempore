@@ -271,6 +271,7 @@ mutual
   renᶜ r (match V `in M)  (pV , pM) =
     renᵛ r V pV , renᶜ (cong-∷-ren (cong-∷-ren r)) M pM
   renᶜ r (absurd V)       pV        = renᵛ r V pV
+  renᶜ r (cmp ⋈ V W et)   (pV , pW) = renᵛ r V pV , renᵛ r W pW
   renᶜ r (if V `then M `else N) (pV , pM , pN) =
     renᵛ r V pV , renᶜ r M pM , renᶜ r N pN
   renᶜ r (caseL V `nil M `cons N) (pV , pM , pN) =
@@ -408,6 +409,13 @@ mutual
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
   C-rename-nat r (absurd V) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  C-rename-nat r (cmp ⋈ V W et) (pV , pW) =
+    ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+               (≈ᵐ-trans (⟨ V-rename-nat r V pV , V-rename-nat r W pW ⟩ᵐ-cong)
+                         (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+              (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
   -- the renaming distributes over the branches: `ifᵐ-∘`
   C-rename-nat r (if V `then M `else N) (pV , pM , pN) =
     ≈ᵐ-trans (ifᵐ-cong (V-rename-nat r V pV)

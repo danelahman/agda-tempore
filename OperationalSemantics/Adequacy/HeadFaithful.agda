@@ -117,6 +117,7 @@ step-delays : ∀ {ε ε' n} {St St' : 𝕊 []} {A A₀ : VType}
 
 step-delays APP                d = η-stepᴰ d
 step-delays MATCH              d = η-stepᴰ d
+step-delays CMP                d = η-stepᴰ d
 step-delays IF-TRUE            d = η-stepᴰ d
 step-delays IF-FALSE           d = η-stepᴰ d
 step-delays CASE-INL           d = η-stepᴰ d
@@ -300,6 +301,7 @@ uniform↝ : ∀ {A A₀ ε ε'} {St St' : 𝕊 []}
 
 uniform↝ APP                 _         = tt
 uniform↝ MATCH               _         = tt
+uniform↝ CMP                 _         = tt
 uniform↝ IF-TRUE             _         = tt
 uniform↝ IF-FALSE            _         = tt
 uniform↝ CASE-INL            _         = tt

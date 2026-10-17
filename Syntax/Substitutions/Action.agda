@@ -70,6 +70,7 @@ mutual
   C-sub₀ s (V · W)          = V-sub₀ s V · V-sub₀ s W
   C-sub₀ s (match V `in M)  = match V-sub₀ s V `in C-sub₀ (cong-sub₀ s) M
   C-sub₀ s (absurd V)       = absurd (V-sub₀ s V)
+  C-sub₀ s (cmp ⋈ V W et)   = cmp ⋈ (V-sub₀ s V) (V-sub₀ s W) et
   C-sub₀ s (if V `then M `else N) =
     if V-sub₀ s V `then C-sub₀ s M `else C-sub₀ s N
   C-sub₀ s (caseℕ V `zero M `succ N) =

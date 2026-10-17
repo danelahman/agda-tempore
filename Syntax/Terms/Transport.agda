@@ -88,6 +88,11 @@ cast-if : ∀ {Γ Γ' C} → (e : Γ ≡ Γ')
         ≡ if (castᵛ e V) `then (castᶜ e M) `else (castᶜ e N)
 cast-if refl = refl
 
+cast-cmp : ∀ {Γ Γ' A ⋈} → (e : Γ ≡ Γ')
+         → {V W : Γ ⊢V⦂ A} → {et : Eternal A}
+         → castᶜ e (cmp ⋈ V W et) ≡ cmp ⋈ (castᵛ e V) (castᵛ e W) et
+cast-cmp refl = refl
+
 -- The binding formers put their body at an *extended* context, so the cast
 -- transported there is `cong` of the extension.
 

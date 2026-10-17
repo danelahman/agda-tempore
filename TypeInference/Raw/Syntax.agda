@@ -40,7 +40,7 @@ open Operations Ops
 open import Syntax.Types S using (BaseType; BaseConstants)
 
 open import TypeInference.Scopes
-open import TypeInference.OpenSyntax.Comparisons using (Cmp)
+open import Syntax.Comparisons using (Cmp)
 open import TypeInference.OpenSyntax.Grades S using (RExp)
 open import TypeInference.OpenSyntax.Types  S using (OVType; OCType)
 

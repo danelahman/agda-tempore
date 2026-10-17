@@ -83,6 +83,7 @@ mutual
   Midᶜ (app-cong p q)                    = Midᵛ p × Midᵛ q
   Midᶜ (match-cong p q)                  = Midᵛ p × Midᶜ q
   Midᶜ (absurd-cong p)                   = Midᵛ p
+  Midᶜ (cmp-cong p q)                    = Midᵛ p × Midᵛ q
   Midᶜ (if-cong p q r)                   = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (caseℕ-cong p q r)                = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (case+-cong p q r)                = Midᵛ p × Midᶜ q × Midᶜ r

@@ -11,6 +11,7 @@ open import Relation.Nullary using (¬_)
 open import Syntax.Grades
 open import Syntax.LanguageSpec
 open import Syntax.Operations
+open import Syntax.Comparisons using (Cmp)
 
 open import Util.Equality
 
@@ -175,6 +176,19 @@ mutual
             → Γ ⊢V⦂ Empty
             -------------
             → Γ ⊢C⦂ C
+
+    -- comparison at an eternal type
+
+    -- One rule for the six relations of `Cmp`: both operands at one
+    -- eternal type, the outcome a boolean.
+
+    cmp     : {A : VType}
+            → (⋈ : Cmp)
+            → Γ ⊢V⦂ A
+            → Γ ⊢V⦂ A
+            → Eternal A
+            -----------------
+            → Γ ⊢C⦂ Bool ‼ uₑ
 
     -- boolean elimination
 

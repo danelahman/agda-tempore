@@ -149,6 +149,8 @@ mutual
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _ ∷ _) r) M)
              (C-sub₀-⌜⌝ (cong-ren r) M))
   C-sub₀-⌜⌝ r (absurd V) = cong absurd (V-sub₀-⌜⌝ r V)
+  C-sub₀-⌜⌝ r (cmp ⋈ V W et) =
+    cong₂ (λ a b → cmp ⋈ a b et) (V-sub₀-⌜⌝ r V) (V-sub₀-⌜⌝ r W)
   C-sub₀-⌜⌝ r (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-sub₀-⌜⌝ r V) (C-sub₀-⌜⌝ r M) (C-sub₀-⌜⌝ r N)
@@ -324,6 +326,8 @@ mutual
   C-sub₀-ren h (match V `in M) =
     cong₂ match_`in_ (V-sub₀-ren h V) (C-sub₀-ren (⋈-cong ([] ∷ _ ∷ _) h) M)
   C-sub₀-ren h (absurd V) = cong absurd (V-sub₀-ren h V)
+  C-sub₀-ren h (cmp ⋈ V W et) =
+    cong₂ (λ a b → cmp ⋈ a b et) (V-sub₀-ren h V) (V-sub₀-ren h W)
   C-sub₀-ren h (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-sub₀-ren h V) (C-sub₀-ren h M) (C-sub₀-ren h N)

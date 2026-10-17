@@ -16,7 +16,8 @@
 module Syntax.Grades.Example.Worked.Spec where
 
 open import Data.Empty using (⊥)
-open import Data.Nat.Base using (ℕ)
+open import Data.Nat.Base using (ℕ) renaming (_<_ to _<ℕ_)
+import Data.Nat.Properties as ℕₚ
 
 open import Relation.Nullary using (yes; no)
 
@@ -54,6 +55,8 @@ baseTypes = record
   ; EternalBaseType  = λ _ → ⊥
   ; eternalBaseType? = λ _ → no λ ()
   ; BaseConstants    = λ _ → ℕ
+  ; _≺ᵇ_                  = _<ℕ_
+  ; ≺ᵇ-isStrictTotalOrder = λ _ → ℕₚ.<-isStrictTotalOrder
   }
 
 open import Syntax.GroundTypes grades baseTypes

@@ -13,6 +13,10 @@
 -- unit grade, the `⟨_⟩`-algebra law) come from `Eternalᵒ` rather than    --
 -- being re-derived per former.                                           --
 --                                                                    --
+-- An eternal base type also carries its order, a comparison morphism    --
+-- (`cmpᵇᵐ`) agreeing with the signature's order on the constants;       --
+-- `Interpretation.Comparisons` extends it to every eternal type.         --
+--                                                                    --
 -- In the presheaf model (`Example.PSh.Modality.Eternal`) the constant    --
 -- presheaves `Kᵖ` carry this structure (`Kᵖ-eternalᵒ`), and the formers  --
 -- are covered by `𝟙ᵖ-eternalᵒ`, `𝔹ᵖ-eternalᵒ`, `ℕᵖ-eternalᵒ`,          --
@@ -24,6 +28,7 @@ open import Syntax.Grades
 open import Syntax.LanguageSpec
 
 open import DenotationalSemantics.Model.Category
+import DenotationalSemantics.Model.Comparison as Comparison
 open import DenotationalSemantics.Model.Modality.Future
 open import DenotationalSemantics.Model.Modality.Past
 open import DenotationalSemantics.Model.Modality.Adjunction
@@ -43,6 +48,7 @@ open GradeSystemInterface Grades
 open BaseTypes BTs
 
 open Category Cat
+open Comparison Cat using (Ordᵐ; Compares)
 open Past Pst using (⟨_⟩ᶠ)
 open GroundTypes GTy
 open import DenotationalSemantics.Model.Modality.Eternal
@@ -97,6 +103,12 @@ record GroundEternal : Set₁ where
     ⟦⟧ᵇᶜ-eternal : ∀ {b} → .(eb : EternalBaseType b) → (c : BaseConstants b) → ∀ {ρ}
                  → Eternalᵒ.extᵉ (⟦ b ⟧ᵇᵉ eb) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟦_⟧ᵇᶜ {b} c)
                  ≈ᵐ ⟦_⟧ᵇᶜ {b} c ∘ᵐ terminalᵐ
+
+    -- An eternal base type's order: a comparison, which compares two
+    -- constants as the signature orders them.
+    cmpᵇᵐ    : (b : BaseType) → .(EternalBaseType b) → ⟦ b ⟧ᵇ ×ᵐ ⟦ b ⟧ᵇ →ᵐ Ordᵐ
+    cmpᵇᵐ-pt : ∀ {b} → .(eb : EternalBaseType b)
+             → Compares (cmpᵇᵐ b eb) (⟦_⟧ᵇᶜ {b}) (compareᵇ eb)
 
     -- The two booleans are global elements in the same sense.
     trueᵐ-eternal : ∀ {ρ}

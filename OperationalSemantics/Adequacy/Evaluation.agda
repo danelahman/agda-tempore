@@ -85,6 +85,7 @@ step-ticks : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
            → 𝔻
 step-ticks APP                 = 0ᴰ
 step-ticks MATCH               = 0ᴰ
+step-ticks CMP                 = 0ᴰ
 step-ticks IF-TRUE             = 0ᴰ
 step-ticks IF-FALSE            = 0ᴰ
 step-ticks CASE-INL            = 0ᴰ
@@ -218,6 +219,7 @@ handle-step H N (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) =
 -- the rules that fire on a determined term shape
 ↝-det APP        APP        = refl
 ↝-det MATCH      MATCH      = refl
+↝-det CMP        CMP        = refl
 ↝-det IF-TRUE    IF-TRUE    = refl
 ↝-det IF-FALSE   IF-FALSE   = refl
 ↝-det CASE-INL   CASE-INL   = refl

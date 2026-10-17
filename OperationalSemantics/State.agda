@@ -6,6 +6,8 @@ open import Data.Empty
 open import Data.Product
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
+import Data.Bool.Base as Bool
+import Data.List.Base as List
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -18,6 +20,7 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 
 open import Syntax.Contexts   S
+open import Syntax.Data       S using (⟪_⟫; ⟪_⟫ˢ)
 open import Syntax.Language   S
 open import Syntax.RenActions S
 open import Syntax.Renamings  S
@@ -341,6 +344,31 @@ listᵛ (subV V (|List|ₛ p))  = subL p (listᵛ V)
 unlistᵛ : ∀ {Γ A} → ListView Γ A → Γ ⊢V⦂ |List| A
 unlistᵛ (inj₁ tt)      = nil
 unlistᵛ (inj₂ (W , L)) = cons W L
+
+-- A state context binds only boxed types, none of them eternal.
+
+eternal-not-in-toCtx : ∀ {Γ ρ A} {S : 𝕊 Γ} → Eternal A → A ∈[ ρ ] toCtx S → ⊥
+eternal-not-in-toCtx {S = S ⟨ _ ⟩ₛ} et (Tl-⟨⟩ x) = eternal-not-in-toCtx et x
+eternal-not-in-toCtx {S = S ∷ₛ _}   () Hd
+eternal-not-in-toCtx {S = S ∷ₛ _}   et (Tl-∷ x)  = eternal-not-in-toCtx et x
+
+-- The datum a value of an eternal type is. Over a state context the value is
+-- a datum under a spine of subsumptions, which act on the data.
+
+⌊_⌋ᵈ : ∀ {Γ A} {S : 𝕊 Γ} → Eternal A → toCtx S ⊢V⦂ A → ⟪ A ⟫
+⌊ et ⌋ᵈ             (var _ x)   = ⊥-elim (eternal-not-in-toCtx et x)
+⌊ et ⌋ᵈ             (subV V p)  = ⟪ p ⟫ˢ (⌊ <:ᵛ-eternalˡ p et ⌋ᵈ V)
+⌊ Baseₑ _ ⌋ᵈ        (const c)   = c
+⌊ Unitₑ ⌋ᵈ          ⋆           = tt
+⌊ Boolₑ ⌋ᵈ          true        = Bool.true
+⌊ Boolₑ ⌋ᵈ          false       = Bool.false
+⌊ Natₑ ⌋ᵈ           zero        = 0
+⌊ Natₑ ⌋ᵈ           (succ V)    = suc (⌊ Natₑ ⌋ᵈ V)
+⌊ et₁ |×|ₑ et₂ ⌋ᵈ   ⦉ V , W ⦊    = ⌊ et₁ ⌋ᵈ V , ⌊ et₂ ⌋ᵈ W
+⌊ et₁ |+|ₑ et₂ ⌋ᵈ   (inl V)     = inj₁ (⌊ et₁ ⌋ᵈ V)
+⌊ et₁ |+|ₑ et₂ ⌋ᵈ   (inr V)     = inj₂ (⌊ et₂ ⌋ᵈ V)
+⌊ |List|ₑ et ⌋ᵈ     nil         = List.[]
+⌊ |List|ₑ et ⌋ᵈ     (cons V W)  = ⌊ et ⌋ᵈ V List.∷ ⌊ |List|ₑ et ⌋ᵈ W
 
 -- There is no value of the empty type over a state context.
 

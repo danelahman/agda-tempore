@@ -6,6 +6,7 @@ open import Data.Empty
 open import Data.Product
 open import Data.Sum using (inj₁; inj₂)
 open import Data.Unit using (tt)
+import Data.List.Base as List
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -23,7 +24,9 @@ open Operations Ops
 open import OperationalSemantics.PreservationTheorem Spec
 open import OperationalSemantics.State               Spec
 
+open import Syntax.Comparisons using (Cmp; holds)
 open import Syntax.Contexts      Spec
+open import Syntax.Data          Spec using (⟪_⟫ˢ; compareᵈ; ⌈_⌉ᵇ)
 open import Syntax.Language      Spec
 open import Syntax.RenActions    Spec
 open import Syntax.Renamings     Spec
@@ -186,6 +189,14 @@ cast-if⁻ : ∀ {Γ Γ' C} → (e : Γ' ≡ Γ)
           (P' ≡ (if V' `then M' `else N')) × (V ≡ castᵛ e V')
         × (M ≡ castᶜ e M') × (N ≡ castᶜ e N')
 cast-if⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
+
+cast-cmp⁻ : ∀ {Γ Γ' A ⋈} → (e : Γ' ≡ Γ)
+          → {V W : Γ ⊢V⦂ A} → {et : Eternal A}
+          → (P' : Γ' ⊢C⦂ Bool ‼ uₑ)
+          → cmp ⋈ V W et ≡ castᶜ e P'
+          → Σ[ V' ∈ (Γ' ⊢V⦂ A) ] Σ[ W' ∈ (Γ' ⊢V⦂ A) ]
+              (P' ≡ cmp ⋈ V' W' et) × (V ≡ castᵛ e V') × (W ≡ castᵛ e W')
+cast-cmp⁻ refl _ refl = _ , _ , refl , refl , refl
 
 cast-caseℕ⁻ : ∀ {Γ Γ' C} → (e : Γ' ≡ Γ)
             → {V : Γ ⊢V⦂ Nat} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ Nat ⊢C⦂ C}
@@ -373,6 +384,52 @@ sndᵛ-cast e (subV V (_ |×|ₛ q)) =
   trans (cong sndᵛ (cast-subV e {V = V}))
         (trans (cong (λ z → subV z q) (sndᵛ-cast e V))
                (sym (cast-subV e)))
+
+-- The datum a value of an eternal type is commutes with a context equality,
+-- and so does the comparison's reduct: the data, hence the outcome, agree.
+
+cast-closed : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (V : ∀ {Δ} → Δ ⊢V⦂ A) → castᵛ e V ≡ V
+cast-closed refl V = refl
+
+⌊⌋ᵈ-cast : ∀ {A} {St St' : 𝕊 []} → (e : toCtx St ≡ toCtx St') → (et : Eternal A)
+         → (V : toCtx St ⊢V⦂ A)
+         → ⌊_⌋ᵈ {S = St'} et (castᵛ e V) ≡ ⌊_⌋ᵈ {S = St} et V
+⌊⌋ᵈ-cast e et (var _ x) = ⊥-elim (eternal-not-in-toCtx et x)
+⌊⌋ᵈ-cast {St' = St'} e et (subV V p) =
+  trans (cong (⌊_⌋ᵈ {S = St'} et) (cast-subV e {V = V}))
+        (cong ⟪ p ⟫ˢ (⌊⌋ᵈ-cast e (<:ᵛ-eternalˡ p et) V))
+⌊⌋ᵈ-cast {St' = St'} e et@(Baseₑ _) (const c) =
+  cong (⌊_⌋ᵈ {S = St'} et) (cast-closed e (const c))
+⌊⌋ᵈ-cast {St' = St'} e Unitₑ ⋆ = cong (⌊_⌋ᵈ {S = St'} Unitₑ) (cast-closed e ⋆)
+⌊⌋ᵈ-cast {St' = St'} e Boolₑ true = cong (⌊_⌋ᵈ {S = St'} Boolₑ) (cast-closed e true)
+⌊⌋ᵈ-cast {St' = St'} e Boolₑ false = cong (⌊_⌋ᵈ {S = St'} Boolₑ) (cast-closed e false)
+⌊⌋ᵈ-cast {St' = St'} e Natₑ zero = cong (⌊_⌋ᵈ {S = St'} Natₑ) (cast-closed e zero)
+⌊⌋ᵈ-cast {St' = St'} e Natₑ (succ V) =
+  trans (cong (⌊_⌋ᵈ {S = St'} Natₑ) (cast-succ e {V = V}))
+        (cong suc (⌊⌋ᵈ-cast e Natₑ V))
+⌊⌋ᵈ-cast {St' = St'} e et@(et₁ |×|ₑ et₂) ⦉ V , W ⦊ =
+  trans (cong (⌊_⌋ᵈ {S = St'} et) (cast-pair e {V} {W}))
+        (cong₂ _,_ (⌊⌋ᵈ-cast e et₁ V) (⌊⌋ᵈ-cast e et₂ W))
+⌊⌋ᵈ-cast {St' = St'} e et@(et₁ |+|ₑ et₂) (inl V) =
+  trans (cong (⌊_⌋ᵈ {S = St'} et) (cast-inl e {V = V}))
+        (cong inj₁ (⌊⌋ᵈ-cast e et₁ V))
+⌊⌋ᵈ-cast {St' = St'} e et@(et₁ |+|ₑ et₂) (inr V) =
+  trans (cong (⌊_⌋ᵈ {S = St'} et) (cast-inr e {V = V}))
+        (cong inj₂ (⌊⌋ᵈ-cast e et₂ V))
+⌊⌋ᵈ-cast {St' = St'} e et@(|List|ₑ _) nil =
+  cong (⌊_⌋ᵈ {S = St'} et) (cast-nil e)
+⌊⌋ᵈ-cast {St' = St'} e et@(|List|ₑ et₁) (cons V W) =
+  trans (cong (⌊_⌋ᵈ {S = St'} et) (cast-cons e {V} {W}))
+        (cong₂ List._∷_ (⌊⌋ᵈ-cast e et₁ V) (⌊⌋ᵈ-cast e et W))
+
+cast-cmp-reduct : ∀ {A} {St St' : 𝕊 []} → (e : toCtx St' ≡ toCtx St)
+                → (⋈ : Cmp) → (V' W' : toCtx St' ⊢V⦂ A) → (et : Eternal A)
+                → cmp-reduct {S = St} ⋈ (castᵛ e V') (castᵛ e W') et
+                ≡ castᶜ e (cmp-reduct {S = St'} ⋈ V' W' et)
+cast-cmp-reduct e ⋈ V' W' et =
+  trans (cong₂ (λ a b → return ⌈ holds ⋈ (compareᵈ et a b) ⌉ᵇ)
+               (⌊⌋ᵈ-cast e et V') (⌊⌋ᵈ-cast e et W'))
+        (sym (trans (cast-ret e) (cong return (cast-closed e ⌈ _ ⌉ᵇ))))
 
 -- The decomposition of a list commutes with a context equality, and so do
 -- the reducts the list eliminators build from it.

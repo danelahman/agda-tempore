@@ -13,6 +13,7 @@
 ------------------------------------------------------------------
 
 open import Syntax.Grades
+open import Syntax.Comparisons using (Cmp)
 open import Syntax.LanguageSpec
 open import Syntax.Operations
 
@@ -53,6 +54,7 @@ mutual
     _·_               : ErV → ErV → ErC
     match_`in_        : ErV → ErC → ErC
     absurd            : ErV → ErC
+    cmp               : Cmp → ErV → ErV → ErC
     if_`then_`else_   : ErV → ErC → ErC → ErC
     caseℕ_`zero_`succ_ : ErV → ErC → ErC → ErC
     recℕ              : ErV → ErC → ErC → ErC
@@ -100,6 +102,7 @@ mutual
   ⌊ V · W ⌋ᶜ                  = ⌊ V ⌋ᵛ · ⌊ W ⌋ᵛ
   ⌊ match V `in M ⌋ᶜ          = match ⌊ V ⌋ᵛ `in ⌊ M ⌋ᶜ
   ⌊ absurd V ⌋ᶜ               = absurd ⌊ V ⌋ᵛ
+  ⌊ cmp ⋈ V W _ ⌋ᶜ            = cmp ⋈ ⌊ V ⌋ᵛ ⌊ W ⌋ᵛ
   ⌊ if V `then M `else N ⌋ᶜ   = if ⌊ V ⌋ᵛ `then ⌊ M ⌋ᶜ `else ⌊ N ⌋ᶜ
   ⌊ caseℕ V `zero M `succ N ⌋ᶜ = caseℕ ⌊ V ⌋ᵛ `zero ⌊ M ⌋ᶜ `succ ⌊ N ⌋ᶜ
   ⌊ recℕ V M N p ⌋ᶜ            = recℕ ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ ⌊ N ⌋ᶜ

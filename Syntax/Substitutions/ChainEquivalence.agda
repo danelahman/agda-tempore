@@ -13,6 +13,7 @@ open import Data.Product
 open import Relation.Nullary using (¬_; yes; no; Dec)
 
 open import Syntax.Grades
+open import Syntax.Comparisons using (Cmp)
 open import Syntax.LanguageSpec
 open import Syntax.Operations
 
@@ -358,6 +359,12 @@ C-sub-absurd : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ') → (V : Γ' ⊢V⦂ Empt
 C-sub-absurd []ˢ      V = refl
 C-sub-absurd (s ◅ σ) V = cong (C-sub₀ s) (C-sub-absurd σ V)
 
+C-sub-cmp : ∀ {Γ Γ' A} → (σ : Sub [] Γ Γ') → (⋈ : Cmp) → (V W : Γ' ⊢V⦂ A)
+          → (et : Eternal A)
+          → C-sub σ (cmp ⋈ V W et) ≡ cmp ⋈ (V-sub σ V) (V-sub σ W) et
+C-sub-cmp []ˢ      ⋈ V W et = refl
+C-sub-cmp (s ◅ σ) ⋈ V W et = cong (C-sub₀ s) (C-sub-cmp σ ⋈ V W et)
+
 C-sub-if : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ')
          → (V : Γ' ⊢V⦂ Bool) → (M N : Γ' ⊢C⦂ C)
          → C-sub σ (if V `then M `else N)
@@ -536,6 +543,10 @@ mutual
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (absurd V) =
     trans (C-sub-absurd σ V)
       (trans (cong absurd (V-sub-≐ˢ h V)) (sym (C-sub-absurd σ' V)))
+  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (cmp ⋈ V W et) =
+    trans (C-sub-cmp σ ⋈ V W et)
+      (trans (cong₂ (λ a b → cmp ⋈ a b et) (V-sub-≐ˢ h V) (V-sub-≐ˢ h W))
+             (sym (C-sub-cmp σ' ⋈ V W et)))
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (if V `then M `else N) =
     trans (C-sub-if σ V M N)
       (trans (cong₃ if_`then_`else_

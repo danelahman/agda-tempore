@@ -156,6 +156,7 @@ mutual
   C-rename r (V · W)          = V-rename r V · V-rename r W
   C-rename r (match V `in M)  = match V-rename r V `in C-rename (cong-ren r) M
   C-rename r (absurd V)       = absurd (V-rename r V)
+  C-rename r (cmp ⋈ V W et)   = cmp ⋈ (V-rename r V) (V-rename r W) et
   C-rename r (if V `then M `else N) =
     if V-rename r V `then C-rename r M `else C-rename r N
   C-rename r (caseℕ V `zero M `succ N) =

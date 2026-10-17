@@ -38,7 +38,11 @@
 
 module Syntax.Grades.Example.Worked.Typing.Time.RightSided where
 
+open import Data.Bool.Base using (true; false)
+import Data.List.Base as List
 open import Data.Nat.Base using (ℕ)
+open import Data.Product using (_,_)
+open import Data.Sum using (inj₁; inj₂)
 
 open import Relation.Nullary using (¬_)
 
@@ -71,6 +75,11 @@ opTime send  = [0, 6 ]
 
 open import Syntax.Grades.Example.Worked.Typing.Core right-sided-intervals opTime
   right-sided-witnesses
+
+open import Syntax.Comparisons using (Cmp; eq; ne; lt; le; gt; ge; less; equal; greater; holds)
+open import Syntax.Data spec using (compareᵈ)
+open import OperationalSemantics.State spec using (∅)
+open import OperationalSemantics.PreservationTheorem spec using (⟨_,_⟩; _↝_; CMP)
 
 ------------------------------------------------------------------------
 -- Effectful computations
@@ -393,6 +402,81 @@ latest =
 
 head-stale-behind-the-top : ¬ (uᵣ ·ᵣ mapᵉ ⊤ₑ ≾ᵣ uᵣ)
 head-stale-behind-the-top ()
+
+------------------------------------------------------------------------
+-- Comparisons
+--
+-- `cmp` compares two values of one eternal type and returns the truth
+-- of the relation, taking no time. Identifiers are ordered as their
+-- numbers; the data built from eternal types, lexicographically.
+
+-- two identifiers, bound together, compared at once
+
+same-node : [] ∷ NodeId ∷ NodeId ⊢C⦂ Bool ‼ uₑ
+same-node =
+  cmp eq (eternal-var nodeid-eternal (Tl-∷ Hd)) here nodeid-eternal
+
+-- an identifier is eternal, so it is compared after a reading all the same
+
+below-after-reading : [] ∷ NodeId ⊢C⦂ Bool ‼ [0, 1 ]
+below-after-reading =
+  perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
+    (cmp lt (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))) (const 7) nodeid-eternal)
+
+-- a reading is not eternal, so no comparison of readings is typed
+
+readings-not-compared : ¬ Eternal Reading
+readings-not-compared = reading-not-eternal
+
+-- the comparison decides the branch: transmit the reading only to a
+-- node above the threshold
+
+transmitting-above : [] ∷ NodeId ∷ Reading ⊢C⦂ Unit ‼ [0, 6 ]
+transmitting-above =
+  cmp gt (eternal-var nodeid-eternal (Tl-∷ Hd)) (const 3) nodeid-eternal
+    ⨟                                -- ⟨ [0, 0 ] ⟩ ∷ Bool
+  coerce ≤!
+    (if here
+      `then perform send (fresh-var ≤! (Tl-∷ (Tl-⟨⟩ Hd))) (return ⋆)
+      `else coerce ≤! (return ⋆))
+
+-- The order on data, computed: numerals as numbers, lists and pairs
+-- lexicographically, `inl` before `inr`, identifiers as their numbers.
+
+two-below-three : compareᵈ Natₑ 2 3 ≡ less
+two-below-three = refl
+
+shorter-prefix-first : compareᵈ (|List|ₑ Natₑ) (1 List.∷ 2 List.∷ List.[])
+                                       (1 List.∷ 2 List.∷ 0 List.∷ List.[]) ≡ less
+shorter-prefix-first = refl
+
+first-difference-decides : compareᵈ (|List|ₑ Natₑ) (1 List.∷ 5 List.∷ List.[])
+                                           (2 List.∷ 0 List.∷ List.[]) ≡ less
+first-difference-decides = refl
+
+pairs-by-first-then-second : compareᵈ (Natₑ |×|ₑ Boolₑ) (1 , true) (1 , false) ≡ greater
+pairs-by-first-then-second = refl
+
+inl-before-inr : compareᵈ (Natₑ |+|ₑ Unitₑ) (inj₁ 9) (inj₂ tt) ≡ less
+inl-before-inr = refl
+
+identifiers-as-numbers : compareᵈ nodeid-eternal 4 4 ≡ equal
+identifiers-as-numbers = refl
+
+-- each relation is read off the one outcome
+
+at-most-of-equal : holds le (compareᵈ nodeid-eternal 4 4) ≡ true
+at-most-of-equal = refl
+
+differ-of-less : holds ne (compareᵈ Natₑ 2 3) ≡ true
+differ-of-less = refl
+
+-- `CMP` reduces a comparison to the returned outcome, reading the operands'
+-- data off the values
+
+two-below-three-reduces : ⟨ ∅ , cmp lt (numeralᵛ 2) (numeralᵛ 3) Natₑ ⟩
+                        ↝ ⟨ ∅ , return true ⟩
+two-below-three-reduces = CMP
 
 ------------------------------------------------------------------------
 -- Unboxing: a lease that expires

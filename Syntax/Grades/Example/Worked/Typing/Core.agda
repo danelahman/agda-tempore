@@ -21,7 +21,8 @@
 
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.List.Base using (List)
-open import Data.Nat.Base using (ℕ)
+open import Data.Nat.Base using (ℕ) renaming (_<_ to _<ℕ_)
+import Data.Nat.Properties as ℕₚ
 open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (¬_; Dec; yes; no)
@@ -82,6 +83,8 @@ baseTypes = record
   ; EternalBaseType  = EternalBT
   ; eternalBaseType? = eternalBT?
   ; BaseConstants    = λ _ → ℕ
+  ; _≺ᵇ_                  = _<ℕ_
+  ; ≺ᵇ-isStrictTotalOrder = λ _ → ℕₚ.<-isStrictTotalOrder
   }
 
 open import Syntax.GroundTypes grades baseTypes

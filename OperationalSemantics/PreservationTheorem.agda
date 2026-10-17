@@ -15,7 +15,9 @@ open Operations Ops
 
 open import OperationalSemantics.State S
 
+open import Syntax.Comparisons
 open import Syntax.Contexts      S
+open import Syntax.Data          S using (compareᵈ; ⌈_⌉ᵇ)
 open import Syntax.Language      S
 open import Syntax.RenActions    S
 open import Syntax.Renamings     S
@@ -73,6 +75,12 @@ recL-reduct : ∀ {Γ A B ε} → ListView Γ A → Γ ⊢C⦂ B ‼ ε
 recL-reduct (inj₁ _)       M N p = M
 recL-reduct (inj₂ (W , L)) M N p = coerce p (recL L M N p ⨟ recL-step W L N)
 
+-- The reduct of a comparison: the relation's truth on the operands' data
+
+cmp-reduct : ∀ {Γ A} {S : 𝕊 Γ} → Cmp → (V W : toCtx S ⊢V⦂ A) → Eternal A
+           → toCtx S ⊢C⦂ Bool ‼ uₑ
+cmp-reduct ⋈ V W et = return ⌈ holds ⋈ (compareᵈ et (⌊ et ⌋ᵈ V) (⌊ et ⌋ᵈ W)) ⌉ᵇ
+
 mutual
 
     -- Small-step operational semantics aka Preservation theorem
@@ -119,6 +127,15 @@ mutual
                    → {p : ε ·ₑ ε ≾ₑ ε}
                      ------------------------------------------------------------
                    → ⟨ S , recL V M N p ⟩ ↝ ⟨ S , recL-reduct (listᵛ V) M N p ⟩
+
+        -- comparison: the relation's truth on the operands' data
+        CMP        : ∀ {A}
+                   → {S : 𝕊 []}
+                   → {⋈ : Cmp}
+                   → {V W : toCtx S ⊢V⦂ A}
+                   → {et : Eternal A}
+                     ------------------------------------------------------------
+                   → ⟨ S , cmp ⋈ V W et ⟩ ↝ ⟨ S , cmp-reduct ⋈ V W et ⟩
 
         -- boolean elimination: take the branch the scrutinee names
         IF-TRUE    : ∀ {C}
@@ -424,6 +441,7 @@ mutual
     step-extends-state CASEL                = id-suc
     step-extends-state RECL                 = id-suc
     step-extends-state IF-TRUE              = id-suc
+    step-extends-state CMP                  = id-suc
     step-extends-state IF-FALSE             = id-suc
     step-extends-state CASE-INL             = id-suc
     step-extends-state CASE-INR             = id-suc
@@ -461,6 +479,7 @@ mutual
     step-refines-type {A = A} CASEL             = <:ᵛ-refl A
     step-refines-type {A = A} RECL              = <:ᵛ-refl A
     step-refines-type {A = A} IF-TRUE           = <:ᵛ-refl A
+    step-refines-type CMP                       = Boolₛ
     step-refines-type {A = A} IF-FALSE          = <:ᵛ-refl A
     step-refines-type {A = A} CASE-INL          = <:ᵛ-refl A
     step-refines-type {A = A} CASE-INR          = <:ᵛ-refl A
@@ -503,6 +522,7 @@ step-grade-≾ MATCH = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ CASEL = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ RECL = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ IF-TRUE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ CMP = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ IF-FALSE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ CASE-INL = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ CASE-INR = ≾ᵣ-reflexive (·ᵣ-identityˡ _)

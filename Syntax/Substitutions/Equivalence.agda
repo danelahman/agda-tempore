@@ -173,6 +173,8 @@ mutual
   C-sub₀-≐ˢ₀ h (match V `in M) =
     cong₂ match_`in_ (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _ ∷ _) h) M)
   C-sub₀-≐ˢ₀ h (absurd V) = cong absurd (V-sub₀-≐ˢ₀ h V)
+  C-sub₀-≐ˢ₀ h (cmp ⋈ V W et) =
+    cong₂ (λ a b → cmp ⋈ a b et) (V-sub₀-≐ˢ₀ h V) (V-sub₀-≐ˢ₀ h W)
   C-sub₀-≐ˢ₀ h (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M) (C-sub₀-≐ˢ₀ h N)

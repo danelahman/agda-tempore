@@ -42,7 +42,9 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
+open import Syntax.Comparisons using (Cmp; holds)
 open import Syntax.Types         S
+open import Syntax.Data          S using (⟪_⟫; compareᵈ; ⌈_⌉; ⌈_⌉ᵇ)
 open import Syntax.Contexts      S
 open import Syntax.Language      S
 open import Syntax.Renamings     S
@@ -58,6 +60,7 @@ open GroundTypes GTy
 open Monad Mon
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Data S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
@@ -95,6 +98,17 @@ sound-fun-beta M W (pM , pW) pR =
 sound-absurd-eta : ∀ {Γ C} → (V : Γ ⊢V⦂ Empty) → (M : Γ ∷ Empty ⊢C⦂ C)
                  → Soundᶜ== (absurd-eta V M)
 sound-absurd-eta V M pV pR = 𝟘ᵐ-strict (⟦ V ⟧ᵛᵗ pV) _ _
+
+-- The comparison beta: the embedded data denote their points, at which the
+-- comparison morphism orders as the data are ordered.
+
+sound-cmp-beta : ∀ {Γ A} → (⋈ : Cmp) → (et : Eternal A) → (d e : ⟪ A ⟫)
+               → Soundᶜ== (cmp-beta {Γ = Γ} ⋈ et d e)
+sound-cmp-beta ⋈ et d e (pV , pW) pR =
+    sound-cmp ⋈ et (⌈ et ⌉ d) (⌈ et ⌉ e) pV pW d e
+      (⟦⟧ᵛᵗ-irr (⌈ et ⌉ d) pV (param-⌈⌉ et d) ∙ ⟦⌈⌉⟧ et d)
+      (⟦⟧ᵛᵗ-irr (⌈ et ⌉ e) pW (param-⌈⌉ et e) ∙ ⟦⌈⌉⟧ et e)
+  ∙ ⟦⟧ᶜᵗ-irr (return ⌈ holds ⋈ (compareᵈ et d e) ⌉ᵇ) _ pR
 
 -- The two boolean betas are the boolean object's own beta laws, read at the
 -- interpretation `⟦ true ⟧ᵛᵗ = trueᵐ ∘ᵐ terminalᵐ` of the scrutinee.

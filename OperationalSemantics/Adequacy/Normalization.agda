@@ -471,6 +471,12 @@ mutual
 
   FL-C γ pγ (absurd V) = ⊥-elim (empty-not-value (env-V γ V))
 
+  -- `cmp` is head expansion off `CMP`, whose reduct returns a boolean.
+
+  FL-C γ pγ (cmp ⋈ V W et) =
+    subst (CRed' _ _ _) (sym (env-Cˢ-cmp γ [] ⋈ V W et))
+      (CRed-expand {e₀ = refl} CMP (cred-ret refl ε* tt))
+
   -- `if` is head expansion along whichever run the scrutinee licenses: over a
   -- state context a boolean reaches one of the two branches
   -- (`bool-canonical`).

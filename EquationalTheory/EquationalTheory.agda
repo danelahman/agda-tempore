@@ -16,7 +16,9 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
+open import Syntax.Comparisons using (Cmp; holds)
 open import Syntax.CompContext   S
+open import Syntax.Data          S using (⟪_⟫; compareᵈ; ⌈_⌉; ⌈_⌉ᵇ)
 open import Syntax.Contexts      S
 open import Syntax.Language      S
 open import Syntax.RenActions    S
@@ -274,6 +276,14 @@ mutual
                 ------------------------------------
                 → Γ ⊢C⦂ absurd {C = C} V == absurd {C = C} W
 
+    cmp-cong : ∀ {A ⋈}
+             → {V V' W W' : Γ ⊢V⦂ A}
+             → {et : Eternal A}
+             → Γ ⊢V⦂ V == V'
+             → Γ ⊢V⦂ W == W'
+             ------------------------------------------
+             → Γ ⊢C⦂ cmp ⋈ V W et == cmp ⋈ V' W' et
+
     if-cong : ∀ {C}
             → {V W : Γ ⊢V⦂ Bool}
             → {M M' N N' : Γ ⊢C⦂ C}
@@ -520,6 +530,17 @@ mutual
                -----------------------
                → Γ ⊢C⦂ absurd {C = C} V
                    == M [ split-[] ↦ V ]c
+
+    -- beta-equation for comparison: at data, the relation's truth on their
+    -- order
+
+    cmp-beta : ∀ {A}
+             → (⋈ : Cmp)
+             → (et : Eternal A)
+             → (d e : ⟪ A ⟫)
+             ---------------------------------------------------------------
+             → Γ ⊢C⦂ cmp ⋈ (⌈ et ⌉ d) (⌈ et ⌉ e) et
+                 == return ⌈ holds ⋈ (compareᵈ et d e) ⌉ᵇ
 
     -- beta-equations for boolean elimination
 

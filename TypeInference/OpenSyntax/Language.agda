@@ -28,7 +28,7 @@ open import Syntax.Operations
 open import Util.Equality
 
 open import TypeInference.Scopes
-open import TypeInference.OpenSyntax.Comparisons
+open import Syntax.Comparisons using (Cmp; eq; ne; lt; le; gt; ge)
 
 module TypeInference.OpenSyntax.Language (S : LanguageSpec) where
 

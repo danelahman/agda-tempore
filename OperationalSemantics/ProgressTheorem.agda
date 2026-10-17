@@ -80,6 +80,7 @@ progress (subV V (_ ⇒ₛ (_ ‼ₛ _)) · W) = step-progress SUB-APP
 progress (match P `in M)           = step-progress MATCH
 progress (caseL V `nil M `cons N)  = step-progress CASEL
 progress (recL V M N p)            = step-progress RECL
+progress (cmp ⋈ V W et)            = step-progress CMP
 progress (absurd V)                = ⊥-elim (empty-not-value V)
 progress (if var ρ≾uᵣ x `then M `else N) = ⊥-elim (Bool-not-in-toCtx x)
 progress (if true       `then M `else N) = step-progress IF-TRUE

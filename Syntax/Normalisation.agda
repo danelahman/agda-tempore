@@ -4,9 +4,10 @@
 -- Every derivation has one with the same erasure in which `subV` and  --
 -- `subC` occur only where a sub-derivation must meet a type it does   --
 -- not itself determine: an application's argument, a `perform`'s      --
--- parameter, the head and tail of a `cons`, the branches of `if`,     --
--- `caseℕ`, `case+` and `caseL`, the base and step of `recℕ` and       --
--- `recL`, a handler's clauses and its continuation, and the root.     --
+-- parameter, the head and tail of a `cons`, the operands of a `cmp`,  --
+-- the branches of `if`, `caseℕ`, `case+` and `caseL`, the base and    --
+-- step of `recℕ` and `recL`, a handler's clauses and its              --
+-- continuation, and the root.                                         --
 -- `NfV`/`NfC` pin those positions and `C-normal-form` is the theorem. --
 --                                                                     --
 -- The tool is context subsumption along `_≼ᶜ_`, which lowers binder   --
@@ -138,6 +139,12 @@ data NfC where
            → NfV V → NfC N → NfC (match V `in N)
 
   absurdⁿ  : ∀ {Γ A ε} {V : Γ ⊢V⦂ Empty} → NfV V → NfC (absurd {C = A ‼ ε} V)
+
+  -- the operands meet at the compared type
+
+  cmpⁿ     : ∀ {Γ A A₁ A₂ ⋈} {V : Γ ⊢V⦂ A₁} {W : Γ ⊢V⦂ A₂}
+               {p : A₁ <:ᵛ A} {q : A₂ <:ᵛ A} {et : Eternal A}
+           → NfV V → NfV W → NfC (cmp ⋈ (subV V p) (subV W q) et)
 
   -- the branches meet at the type the `if` is used at
 
@@ -311,6 +318,11 @@ C-subCtx c (matchⁿ nV nN) with V-subCtx c nV
 C-subCtx c (absurdⁿ nV) with V-subCtx c nV
 ... | nfv V' Emptyₛ nV' eV =
   nfc (absurd V') (<:ᵛ-refl _) ≾ₑ-refl (absurdⁿ nV') (cong absurd eV)
+C-subCtx c (cmpⁿ {⋈ = ⋈} {p = p} {q = q} {et = et} nV nW)
+  with V-subCtx c nV | V-subCtx c nW
+... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
+  nfc (cmp ⋈ (subV V' (<:ᵛ-trans s₁ p)) (subV W' (<:ᵛ-trans s₂ q)) et) (<:ᵛ-refl _)
+      ≾ₑ-refl (cmpⁿ n₁ n₂) (cong₂ (cmp ⋈) e₁ e₂)
 C-subCtx c (ifⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
 ... | nfv V' Boolₛ nV' eV with C-subCtx c nM | C-subCtx c nN
 ...   | nfc M' sv₁ se₁ nM' eM | nfc N' sv₂ se₂ nN' eN =
@@ -462,6 +474,10 @@ C-normalise (match V `in N) with V-normalise V
 C-normalise (absurd V) with V-normalise V
 ... | nfv V' Emptyₛ nV eV =
   nfc (absurd V') (<:ᵛ-refl _) ≾ₑ-refl (absurdⁿ nV) (cong absurd eV)
+C-normalise (cmp ⋈ V W et) with V-normalise V | V-normalise W
+... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
+  nfc (cmp ⋈ (subV V' s₁) (subV W' s₂) et) (<:ᵛ-refl _) ≾ₑ-refl (cmpⁿ n₁ n₂)
+      (cong₂ (cmp ⋈) e₁ e₂)
 C-normalise (if V `then M `else N) with V-normalise V
 ... | nfv V' Boolₛ nV eV with C-normalise M | C-normalise N
 ...   | nfc M' sv₁ se₁ nM eM | nfc N' sv₂ se₂ nN eN =

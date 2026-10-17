@@ -86,6 +86,8 @@ mutual
   C-rename-≡ h (match V `in M) =
     cong₂ match_`in_ (V-rename-≡ h V) (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _ ∷ _) h) M)
   C-rename-≡ h (absurd V) = cong absurd (V-rename-≡ h V)
+  C-rename-≡ h (cmp ⋈ V W et) =
+    cong₂ (λ a b → cmp ⋈ a b et) (V-rename-≡ h V) (V-rename-≡ h W)
   C-rename-≡ h (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-rename-≡ h V) (C-rename-≡ h M) (C-rename-≡ h N)
@@ -191,6 +193,8 @@ mutual
   C-rename-id-≡ h (match V `in M) =
     cong₂ match_`in_ (V-rename-id-≡ h V) (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _ ∷ _) h) M)
   C-rename-id-≡ h (absurd V) = cong absurd (V-rename-id-≡ h V)
+  C-rename-id-≡ h (cmp ⋈ V W et) =
+    cong₂ (λ a b → cmp ⋈ a b et) (V-rename-id-≡ h V) (V-rename-id-≡ h W)
   C-rename-id-≡ h (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-rename-id-≡ h V) (C-rename-id-≡ h M) (C-rename-id-≡ h N)
@@ -354,6 +358,8 @@ mutual
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _ ∷ _) r₂ r₁) M)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
   C-rename-∘ r₂ r₁ (absurd V) = cong absurd (V-rename-∘ r₂ r₁ V)
+  C-rename-∘ r₂ r₁ (cmp ⋈ V W et) =
+    cong₂ (λ a b → cmp ⋈ a b et) (V-rename-∘ r₂ r₁ V) (V-rename-∘ r₂ r₁ W)
   C-rename-∘ r₂ r₁ (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-rename-∘ r₂ r₁ V) (C-rename-∘ r₂ r₁ M) (C-rename-∘ r₂ r₁ N)
