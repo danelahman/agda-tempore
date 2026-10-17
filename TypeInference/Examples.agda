@@ -64,6 +64,11 @@
 -- function refused in the step, a head usable after a pure     --
 -- step and refused, as a box, after a tick, and recursion      --
 -- inside an operation clause, at left- and right-sided time.   --
+--                                                              --
+-- Set 12 consists of comparisons: of natural numbers, lists,   --
+-- pairs and sums, refused at functions and boxes, polymorphic  --
+-- with the operands' type asked to be eternal, and after a     --
+-- tick, at left- and right-sided time.                         --
 ------------------------------------------------------------------
 
 module TypeInference.Examples where
@@ -120,3 +125,7 @@ import TypeInference.Examples.Data.All
 -- Primitive recursion: the generic module and its instances
 
 import TypeInference.Examples.Recursion.All
+
+-- Comparisons: the generic module and its instances
+
+import TypeInference.Examples.Compare.All

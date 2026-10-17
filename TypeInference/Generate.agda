@@ -222,6 +222,25 @@ mutual
   genCˢ ι Γ (if V `then M₁ `else M₂) (A ‼ t) =
     genVˢ ι Γ V Bool ∧̂ genCˢ ι Γ M₁ (A ‼ t) ∧̂ genCˢ ι Γ M₂ (A ‼ t)
 
+  -- comparison
+  --
+  -- The operands' common type is ∃-bound and has to be eternal; the
+  -- result is a pure `Bool`, related to the expected type as for
+  -- `return`.
+
+  genCˢ {Θ = Θ} ι Γ (cmp ⋈ V W) (A ‼ t) =
+    ∃ᵗ (  genVˢ ι↑ Γ↑ V α
+        ∧̂ genVˢ ι↑ Γ↑ W α
+        ∧̂ Etᶜ α
+        ∧̂ (Bool ≾̂ᵥᶜ A↑)
+        ∧̂ (ûₑ ≾̂ₑᶜ t↑))
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ
+      α  = tvar (newᵗ {Θ})
+      A↑ = wkᵗ-v A
+      t↑ = wkᵗ-e t
+      Γ↑ = wkᵗ-ctx Γ
+
   -- natural-number elimination
 
   genCˢ ι Γ (caseℕ V `zero M₁ `succ M₂) (A ‼ t) =
@@ -438,6 +457,8 @@ mutual
     genVˢ-rigidFree V h
   genCˢ-rigidFree (if V `then M₁ `else M₂) {A ‼ t} (h , k , l) =
     genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
+  genCˢ-rigidFree (cmp ⋈ V W)              {A ‼ t} (h , k)     =
+    genVˢ-rigidFree V h , genVˢ-rigidFree W k , tt , tt , tt
   genCˢ-rigidFree (caseℕ V `zero M₁ `succ M₂) {A ‼ t} (h , k , l) =
     genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
   genCˢ-rigidFree (case+ V `inl M₁ `inr M₂) {A ‼ t} (h , k , l) =

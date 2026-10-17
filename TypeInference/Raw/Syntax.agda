@@ -40,6 +40,7 @@ open Operations Ops
 open import Syntax.Types S using (BaseType; BaseConstants)
 
 open import TypeInference.Scopes
+open import TypeInference.OpenSyntax.Comparisons using (Cmp)
 open import TypeInference.OpenSyntax.Grades S using (RExp)
 open import TypeInference.OpenSyntax.Types  S using (OVType; OCType)
 
@@ -175,6 +176,14 @@ mutual
             ---------
             → RawC Θ n
 
+    -- comparison of two values by one of the relations of `Cmp`
+
+    cmp     : Cmp
+            → RawV Θ n
+            → RawV Θ n
+            ---------
+            → RawC Θ n
+
     -- natural-number elimination, the successor branch binding the
     -- predecessor
 
@@ -305,6 +314,7 @@ mutual
   HandlerFreeᶜ (match V `in M)          = HandlerFreeᵛ V × HandlerFreeᶜ M
   HandlerFreeᶜ (absurd V)               = HandlerFreeᵛ V
   HandlerFreeᶜ (if V `then M `else N)   = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
+  HandlerFreeᶜ (cmp ⋈ V W)               = HandlerFreeᵛ V × HandlerFreeᵛ W
   HandlerFreeᶜ (caseℕ V `zero M `succ N) = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (case+ V `inl M `inr N)   = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (recℕ V M N)              = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N

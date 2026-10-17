@@ -370,6 +370,7 @@ open import TypeInference.OpenSyntax.Instances
 
 ---- The open type system
 
+open import TypeInference.OpenSyntax.Comparisons
 open import TypeInference.OpenSyntax.Language
 
 ---- Raw terms and erasure

@@ -56,6 +56,7 @@ mutual
   (match V `in M)          [ σ ]ᴿᶜ = match (V [ σ ]ᴿᵛ) `in (M [ σ ]ᴿᶜ)
   absurd V                 [ σ ]ᴿᶜ = absurd (V [ σ ]ᴿᵛ)
   (if V `then M `else N)   [ σ ]ᴿᶜ = if (V [ σ ]ᴿᵛ) `then (M [ σ ]ᴿᶜ) `else (N [ σ ]ᴿᶜ)
+  cmp ⋈ V W                [ σ ]ᴿᶜ = cmp ⋈ (V [ σ ]ᴿᵛ) (W [ σ ]ᴿᵛ)
   (caseℕ V `zero M `succ N) [ σ ]ᴿᶜ = caseℕ (V [ σ ]ᴿᵛ) `zero (M [ σ ]ᴿᶜ) `succ (N [ σ ]ᴿᶜ)
   (case+ V `inl M `inr N) [ σ ]ᴿᶜ = case+ (V [ σ ]ᴿᵛ) `inl (M [ σ ]ᴿᶜ) `inr (N [ σ ]ᴿᶜ)
   recℕ V M N               [ σ ]ᴿᶜ = recℕ (V [ σ ]ᴿᵛ) (M [ σ ]ᴿᶜ) (N [ σ ]ᴿᶜ)
@@ -99,6 +100,7 @@ mutual
   [≐]ᴿᶜ p (absurd V)               = cong absurd ([≐]ᴿᵛ p V)
   [≐]ᴿᶜ p (if V `then M `else N)   =
     cong₃ if_`then_`else_ ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M) ([≐]ᴿᶜ p N)
+  [≐]ᴿᶜ p (cmp ⋈ V W)              = cong₂ (cmp ⋈) ([≐]ᴿᵛ p V) ([≐]ᴿᵛ p W)
   [≐]ᴿᶜ p (caseℕ V `zero M `succ N) =
     cong₃ caseℕ_`zero_`succ_ ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M) ([≐]ᴿᶜ p N)
   [≐]ᴿᶜ p (case+ V `inl M `inr N) =
@@ -148,6 +150,7 @@ mutual
   [id]ᴿᶜ (absurd V)               = cong absurd ([id]ᴿᵛ V)
   [id]ᴿᶜ (if V `then M `else N)   =
     cong₃ if_`then_`else_ ([id]ᴿᵛ V) ([id]ᴿᶜ M) ([id]ᴿᶜ N)
+  [id]ᴿᶜ (cmp ⋈ V W)              = cong₂ (cmp ⋈) ([id]ᴿᵛ V) ([id]ᴿᵛ W)
   [id]ᴿᶜ (caseℕ V `zero M `succ N) =
     cong₃ caseℕ_`zero_`succ_ ([id]ᴿᵛ V) ([id]ᴿᶜ M) ([id]ᴿᶜ N)
   [id]ᴿᶜ (case+ V `inl M `inr N) =
@@ -199,6 +202,7 @@ mutual
   [⨟]ᴿᶜ (absurd V)               σ δ = cong absurd ([⨟]ᴿᵛ V σ δ)
   [⨟]ᴿᶜ (if V `then M `else N)   σ δ =
     cong₃ if_`then_`else_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᶜ N σ δ)
+  [⨟]ᴿᶜ (cmp ⋈ V W)              σ δ = cong₂ (cmp ⋈) ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᵛ W σ δ)
   [⨟]ᴿᶜ (caseℕ V `zero M `succ N) σ δ =
     cong₃ caseℕ_`zero_`succ_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᶜ N σ δ)
   [⨟]ᴿᶜ (case+ V `inl M `inr N) σ δ =
@@ -254,6 +258,8 @@ mutual
   handlerFree-[]ᴿᶜ (absurd V)               h           = handlerFree-[]ᴿᵛ V h
   handlerFree-[]ᴿᶜ (if V `then M `else N)   (h , k , l) =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k , handlerFree-[]ᴿᶜ N l
+  handlerFree-[]ᴿᶜ (cmp ⋈ V W)              (h , k)     =
+    handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᵛ W k
   handlerFree-[]ᴿᶜ (caseℕ V `zero M `succ N) (h , k , l) =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k , handlerFree-[]ᴿᶜ N l
   handlerFree-[]ᴿᶜ (case+ V `inl M `inr N) (h , k , l) =
@@ -307,6 +313,8 @@ data InvC {Θ Θ' n} (σ : Subst Θ Θ') : RawC Θ n → RawC Θ' n → Set wher
   absurd  : ∀ {V V'} → V [ σ ]ᴿᵛ ≡ V' → InvC σ (absurd V) (absurd V')
   if      : ∀ {V M N V' M' N'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M' → N [ σ ]ᴿᶜ ≡ N'
           → InvC σ (if V `then M `else N) (if V' `then M' `else N')
+  cmp     : ∀ {⋈ V W V' W'} → V [ σ ]ᴿᵛ ≡ V' → W [ σ ]ᴿᵛ ≡ W'
+          → InvC σ (cmp ⋈ V W) (cmp ⋈ V' W')
   caseℕ   : ∀ {V M N V' M' N'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M' → N [ σ ]ᴿᶜ ≡ N'
           → InvC σ (caseℕ V `zero M `succ N) (caseℕ V' `zero M' `succ N')
   case+   : ∀ {V M N V' M' N'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M' → N [ σ ]ᴿᶜ ≡ N'
@@ -354,6 +362,7 @@ invC (V · W)                  refl = refl · refl
 invC (match V `in M)          refl = match refl refl
 invC (absurd V)               refl = absurd refl
 invC (if V `then M `else N)   refl = if refl refl refl
+invC (cmp ⋈ V W)              refl = cmp refl refl
 invC (caseℕ V `zero M `succ N) refl = caseℕ refl refl refl
 invC (case+ V `inl M `inr N) refl = case+ refl refl refl
 invC (recℕ V M N)             refl = recℕ refl refl refl

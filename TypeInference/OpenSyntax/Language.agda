@@ -17,8 +17,9 @@
 --                                                              --
 -- The rules `zero`, `succ`, `caseℕ` and `recℕ` for natural     --
 -- numbers, `inl`, `inr` and `case+` for sums, and `nil`,       --
--- `cons`, `caseL` and `recL` for lists have no counterpart in  --
--- `Syntax.Language` either.                                    --
+-- `cons`, `caseL` and `recL` for lists, and `cmp` for          --
+-- comparisons, have no counterpart in `Syntax.Language`        --
+-- either.                                                      --
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ; suc)
@@ -30,6 +31,7 @@ open import Syntax.Operations
 open import Util.Equality
 
 open import TypeInference.Scopes
+open import TypeInference.OpenSyntax.Comparisons
 
 module TypeInference.OpenSyntax.Language (S : LanguageSpec) where
 
@@ -210,6 +212,19 @@ mutual
             → Q ∣ Γ ⊢C⦂ C
             ----------------
             → Q ∣ Γ ⊢C⦂ C
+
+    -- comparison
+
+    -- One rule for the six relations of `Cmp`: both operands at one
+    -- type, which has to be eternal, and the result a pure `Bool`.
+
+    cmp     : {A : OVType Θ}
+            → (⋈ : Cmp)
+            → Q ∣ Γ ⊢V⦂ A
+            → Q ∣ Γ ⊢V⦂ A
+            → Q ⊩ᴱ A
+            -------------------
+            → Q ∣ Γ ⊢C⦂ Bool ‼ ûₑ
 
     -- natural-number elimination
 

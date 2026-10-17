@@ -38,6 +38,9 @@ examples:
 #     ε · ε ≾ ε, the step's lock at the top, the head
 #     behind the lock at the effect, recursion in a clause
 #     (Generate, Localise, Search)                       -> recursion
+#   comparisons: cmp at eternal types, refused at
+#     functions and boxes, eternality asked of an unknown
+#     (Generate, Solve)                                  -> compare
 
 examples-stdlib:
 	agda TypeInference/Examples/Stdlib/All.agda
@@ -71,6 +74,9 @@ examples-data:
 
 examples-recursion:
 	agda TypeInference/Examples/Recursion/All.agda
+
+examples-compare:
+	agda TypeInference/Examples/Compare/All.agda
 
 clean:
 	git clean -fx

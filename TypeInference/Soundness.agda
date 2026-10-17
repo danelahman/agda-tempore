@@ -599,6 +599,37 @@ mutual
       ih₁ = soundCˢ ι Γ M₁ A t s₁
       ih₂ = soundCˢ ι Γ M₂ A t s₂
 
+  -- comparison
+  --
+  -- The witness is the operands' type, eternal by the `Etᶜ` conjunct;
+  -- the two atoms against the expected type make up a `subC`.
+
+  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (cmp ⋈ V W) A t (B , s₁ , s₂ , et , st , le) =
+    D , q
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ
+      Γ↑ = wkᵗ-ctx Γ
+      α  = tvar (newᵗ {Θ})
+
+      pΓ = wk-,ᵗ-ctx σ B Γ
+      pA = wk-,ᵗ-v   σ B A
+      pt = wk-,ᵗ-e   σ B t
+      pι = wk-,ᵗ-ˢ   ι σ B
+
+      ih₁ = soundVˢ ι↑ Γ↑ V α s₁
+      ih₂ = soundVˢ ι↑ Γ↑ W α s₂
+
+      D₁ = ctx-substᵛ pΓ (proj₁ ih₁)
+      D₂ = ctx-substᵛ pΓ (proj₁ ih₂)
+
+      D = subC (cmp ⋈ D₁ D₂ et)
+               (subst (λ z → Q ∣ Bool <:̂ᵛ z) pA st
+                  ‼ₛ subst (λ z → Q ⊩ ûₑ ≾̂ₑ z) pt le)
+
+      q = cong₂ (cmp ⋈)
+                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V)))
+                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᵛ pι W)))
+
   -- natural-number elimination
 
   soundCˢ ι Γ (caseℕ V `zero M₁ `succ M₂) A t (s₀ , s₁ , s₂) =

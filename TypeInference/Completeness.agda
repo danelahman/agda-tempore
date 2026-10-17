@@ -340,6 +340,29 @@ mutual
     cmpC ι Γ A t M₁ D₁ (invC M₁ e₁) ceq st le ,
     cmpC ι Γ A t M₂ D₂ (invC M₂ e₂) ceq st le
 
+  -- comparison
+  --
+  -- The operands' type is its own witness; the slack sits in the two
+  -- atoms against the expected type and effect.
+
+  cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
+       (cmp {A = A₁} ⋈ D₁ D₂ et) (cmp {V = V} {W = W} e₁ e₂) ceq st le =
+    A₁ , ih₁ , ih₂ , et ,
+    subst (λ z → Q ∣ Bool <:̂ᵛ z) (sym pA) st ,
+    subst (λ z → Q ⊩ ûₑ ≾̂ₑ z) (sym pt) le
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ
+      Γ↑ = wkᵗ-ctx Γ
+      α  = tvar (newᵗ {Θ})
+
+      pΓ = wk-,ᵗ-ctx σ A₁ Γ
+      pA = wk-,ᵗ-v   σ A₁ A
+      pt = wk-,ᵗ-e   σ A₁ t
+      pι = wk-,ᵗ-ˢ   ι σ A₁
+
+      ih₁ = cmpV ι↑ Γ↑ α V D₁ (reV pι V e₁) (trans ceq (sym pΓ)) (<:̂ᵛ-refl _)
+      ih₂ = cmpV ι↑ Γ↑ α W D₂ (reV pι W e₂) (trans ceq (sym pΓ)) (<:̂ᵛ-refl _)
+
   -- natural-number elimination
 
   cmpC ι Γ A t _ (caseℕ_`zero_`succ_ D₀ D₁ D₂)
