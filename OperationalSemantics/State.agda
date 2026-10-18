@@ -322,6 +322,12 @@ injᵛ (inl V)             = inj₁ V
 injᵛ (inr V)             = inj₂ V
 injᵛ (subV V (p |+|ₛ q)) = sub⊎ p q (injᵛ V)
 
+-- and back
+
+uninjᵛ : ∀ {Γ A B} → (Γ ⊢V⦂ A) ⊎ (Γ ⊢V⦂ B) → Γ ⊢V⦂ A |+| B
+uninjᵛ (inj₁ W) = inl W
+uninjᵛ (inj₂ W) = inr W
+
 -- The canonical decomposition of a list: empty, or a head and a tail. Over a
 -- state context the value is `nil` or a `cons` under a spine of subsumptions,
 -- which the recursion pushes into the head and the tail.

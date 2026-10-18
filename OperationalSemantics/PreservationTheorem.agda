@@ -1,5 +1,5 @@
 open import Data.Product
-open import Data.Sum using (inj₁; inj₂)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -74,6 +74,14 @@ recL-reduct : ∀ {Γ A B ε} → ListView Γ A → Γ ⊢C⦂ B ‼ ε
             → Γ ⊢C⦂ B ‼ ε
 recL-reduct (inj₁ _)       M N p = M
 recL-reduct (inj₂ (W , L)) M N p = coerce p (recL L M N p ⨟ recL-step W L N)
+
+-- The reduct of sum elimination at a decomposed scrutinee: the branch the
+-- injection names, with the payload substituted.
+
+case+-reduct : ∀ {Γ A B C} → (Γ ⊢V⦂ A) ⊎ (Γ ⊢V⦂ B) → Γ ∷ A ⊢C⦂ C → Γ ∷ B ⊢C⦂ C
+             → Γ ⊢C⦂ C
+case+-reduct (inj₁ W) M N = M [ split-[] ↦ W ]c
+case+-reduct (inj₂ W) M N = N [ split-[] ↦ W ]c
 
 -- The reduct of a comparison: the relation's truth on the operands' data
 
@@ -188,23 +196,15 @@ mutual
                    → ⟨ S , recℕ (succ V) M N p ⟩ ↝
                      ⟨ S , coerce p (recℕ V M N p ⨟ recℕ-step V N) ⟩
 
-        -- sum elimination: substitute the injected value into the branch the
-        -- injection names
-        CASE-INL   : ∀ {A B C}
+        -- sum elimination: the reduct at the scrutinee's canonical
+        -- decomposition (`injᵛ`), which pushes its coercions into the payload
+        CASE+      : ∀ {A B C}
                    → {S : 𝕊 []}
-                   → {V : toCtx S ⊢V⦂ A}
+                   → {V : toCtx S ⊢V⦂ A |+| B}
                    → {M : toCtx S ∷ A ⊢C⦂ C}
                    → {N : toCtx S ∷ B ⊢C⦂ C}
                      ----------------------------------------------------------
-                   → ⟨ S , case+ inl V `inl M `inr N ⟩ ↝ ⟨ S , M [ split-[] ↦ V ]c ⟩
-
-        CASE-INR   : ∀ {A B C}
-                   → {S : 𝕊 []}
-                   → {V : toCtx S ⊢V⦂ B}
-                   → {M : toCtx S ∷ A ⊢C⦂ C}
-                   → {N : toCtx S ∷ B ⊢C⦂ C}
-                     ----------------------------------------------------------
-                   → ⟨ S , case+ inr V `inl M `inr N ⟩ ↝ ⟨ S , N [ split-[] ↦ V ]c ⟩
+                   → ⟨ S , case+ V `inl M `inr N ⟩ ↝ ⟨ S , case+-reduct (injᵛ V) M N ⟩
 
         -- sequencing: step the scrutinee, carrying time and state forward and
         -- subsuming the sequel's binder to the scrutinee's refined type
@@ -400,19 +400,6 @@ mutual
                       ---------------------------------------------------------
                     → ⟨ S , recℕ (subV V Natₛ) M N p ⟩ ↝ ⟨ S , recℕ V M N p ⟩
 
-        -- subsumption at a scrutinised sum: the coercion splits, each half
-        -- moving onto the binder of its branch
-        SUB-CASE    : ∀ {A A₁ B B₁ C}
-                    → {S : 𝕊 []}
-                    → {V : toCtx S ⊢V⦂ A₁ |+| B₁}
-                    → {p : A₁ <:ᵛ A}
-                    → {q : B₁ <:ᵛ B}
-                    → {M : toCtx S ∷ A ⊢C⦂ C}
-                    → {N : toCtx S ∷ B ⊢C⦂ C}
-                      ---------------------------------------------------------
-                    → ⟨ S , case+ subV V (p |+|ₛ q) `inl M `inr N ⟩ ↝
-                      ⟨ S , case+ V `inl subCtx p M `inr subCtx q N ⟩
-
         -- subsumption at a computation: discarded, the reduct landing at the
         -- subtype the step is free to refine to
         SUB         : ∀ {C C'}
@@ -443,8 +430,7 @@ mutual
     step-extends-state IF-TRUE              = id-suc
     step-extends-state CMP                  = id-suc
     step-extends-state IF-FALSE             = id-suc
-    step-extends-state CASE-INL             = id-suc
-    step-extends-state CASE-INR             = id-suc
+    step-extends-state CASE+                = id-suc
     step-extends-state CASEℕ-ZERO           = id-suc
     step-extends-state CASEℕ-SUCC           = id-suc
     step-extends-state RECℕ-ZERO            = id-suc
@@ -460,7 +446,6 @@ mutual
     step-extends-state UNBOX                = id-suc
     step-extends-state SUB-APP              = id-suc
     step-extends-state SUB-IF               = id-suc
-    step-extends-state SUB-CASE             = id-suc
     step-extends-state SUB-CASEℕ            = id-suc
     step-extends-state SUB-RECℕ             = id-suc
     step-extends-state SUB                  = id-suc
@@ -481,8 +466,7 @@ mutual
     step-refines-type {A = A} IF-TRUE           = <:ᵛ-refl A
     step-refines-type CMP                       = Boolₛ
     step-refines-type {A = A} IF-FALSE          = <:ᵛ-refl A
-    step-refines-type {A = A} CASE-INL          = <:ᵛ-refl A
-    step-refines-type {A = A} CASE-INR          = <:ᵛ-refl A
+    step-refines-type {A = A} CASE+             = <:ᵛ-refl A
     step-refines-type {A = A} CASEℕ-ZERO        = <:ᵛ-refl A
     step-refines-type {A = A} CASEℕ-SUCC        = <:ᵛ-refl A
     step-refines-type {A = A} RECℕ-ZERO         = <:ᵛ-refl A
@@ -498,7 +482,6 @@ mutual
     step-refines-type {A = A} UNBOX             = <:ᵛ-refl A
     step-refines-type (SUB-APP {r = p ‼ₛ _})    = p
     step-refines-type {A = A} SUB-IF            = <:ᵛ-refl A
-    step-refines-type {A = A} SUB-CASE          = <:ᵛ-refl A
     step-refines-type {A = A} SUB-CASEℕ         = <:ᵛ-refl A
     step-refines-type {A = A} SUB-RECℕ          = <:ᵛ-refl A
     step-refines-type (SUB {w = p ‼ₛ _})        = p
@@ -524,8 +507,7 @@ step-grade-≾ RECL = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ IF-TRUE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ CMP = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ IF-FALSE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ CASE-INL = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ CASE-INR = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ CASE+ = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ CASEℕ-ZERO = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ CASEℕ-SUCC = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ RECℕ-ZERO = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
@@ -568,7 +550,6 @@ step-grade-≾ UNBOX   = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ (SUB-APP {r = _ ‼ₛ s}) =
   ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ s)
 step-grade-≾ SUB-IF  = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ SUB-CASE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ SUB-CASEℕ = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ SUB-RECℕ = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ (SUB {w = _ ‼ₛ q}) =
@@ -608,6 +589,18 @@ run-refines-type : ∀ {A B ε ε'}
                  → cf ↝* cf' → B <:ᵛ A
 run-refines-type {A = A} ε* = <:ᵛ-refl A
 run-refines-type (r ◅ rs)   = <:ᵛ-trans (run-refines-type rs) (step-refines-type r)
+
+-- Sum elimination at an injection: `CASE+`, by computation of `injᵛ`.
+
+CASE-INL : ∀ {A B C} {S : 𝕊 []} {V : toCtx S ⊢V⦂ A}
+           {M : toCtx S ∷ A ⊢C⦂ C} {N : toCtx S ∷ B ⊢C⦂ C}
+         → ⟨ S , case+ inl V `inl M `inr N ⟩ ↝ ⟨ S , M [ split-[] ↦ V ]c ⟩
+CASE-INL = CASE+
+
+CASE-INR : ∀ {A B C} {S : 𝕊 []} {V : toCtx S ⊢V⦂ B}
+           {M : toCtx S ∷ A ⊢C⦂ C} {N : toCtx S ∷ B ⊢C⦂ C}
+         → ⟨ S , case+ inr V `inl M `inr N ⟩ ↝ ⟨ S , N [ split-[] ↦ V ]c ⟩
+CASE-INR = CASE+
 
 -- The list eliminators at `nil` and at a `cons`: `CASEL` and `RECL`, by
 -- computation of `listᵛ`.

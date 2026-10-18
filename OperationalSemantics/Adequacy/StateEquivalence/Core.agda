@@ -4,7 +4,7 @@
 
 open import Data.Empty
 open import Data.Product
-open import Data.Sum using (inj₁; inj₂)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (tt)
 import Data.List.Base as List
 
@@ -119,18 +119,6 @@ cast-pair⁻ : ∀ {Γ Γ' A B} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ A} → 
         → Σ[ V' ∈ (Γ' ⊢V⦂ A) ] Σ[ W' ∈ (Γ' ⊢V⦂ B) ]
             (U' ≡ ⦉ V' , W' ⦊) × (V ≡ castᵛ e V') × (W ≡ castᵛ e W')
 cast-pair⁻ refl _ refl = _ , _ , refl , refl , refl
-
-cast-inl⁻ : ∀ {Γ Γ' A B} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ A}
-          → (U' : Γ' ⊢V⦂ A |+| B)
-          → inl V ≡ castᵛ e U'
-          → Σ[ V' ∈ (Γ' ⊢V⦂ A) ] (U' ≡ inl V') × (V ≡ castᵛ e V')
-cast-inl⁻ refl _ refl = _ , refl , refl
-
-cast-inr⁻ : ∀ {Γ Γ' A B} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ B}
-          → (U' : Γ' ⊢V⦂ A |+| B)
-          → inr V ≡ castᵛ e U'
-          → Σ[ V' ∈ (Γ' ⊢V⦂ B) ] (U' ≡ inr V') × (V ≡ castᵛ e V')
-cast-inr⁻ refl _ refl = _ , refl , refl
 
 cast-zero⁻ : ∀ {Γ Γ'} → (e : Γ' ≡ Γ) → (V' : Γ' ⊢V⦂ Nat)
            → zero ≡ castᵛ e V' → V' ≡ zero
@@ -470,6 +458,35 @@ cast-recL-reduct : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ) → (l : ListView Γ
                  ≡ castᶜ e (recL-reduct l M' N' p)
 cast-recL-reduct refl (inj₁ tt)      M' N' p = refl
 cast-recL-reduct refl (inj₂ (W , L)) M' N' p = refl
+
+-- The decomposition of a sum commutes with a context equality, and so does
+-- the reduct sum elimination builds from it.
+
+cast⊎ : ∀ {Γ Γ' A B} → Γ ≡ Γ' → (Γ ⊢V⦂ A) ⊎ (Γ ⊢V⦂ B) → (Γ' ⊢V⦂ A) ⊎ (Γ' ⊢V⦂ B)
+cast⊎ e (inj₁ W) = inj₁ (castᵛ e W)
+cast⊎ e (inj₂ W) = inj₂ (castᵛ e W)
+
+injᵛ-cast : ∀ {A B} {St St' : 𝕊 []} → (e : toCtx St ≡ toCtx St')
+          → (V : toCtx St ⊢V⦂ A |+| B)
+          → injᵛ (castᵛ e V) ≡ cast⊎ e (injᵛ V)
+injᵛ-cast e (var _ x)           = ⊥-elim (|+|-not-in-toCtx x)
+injᵛ-cast e (inl V)             = cong injᵛ (cast-inl e {V = V})
+injᵛ-cast e (inr V)             = cong injᵛ (cast-inr e {V = V})
+injᵛ-cast e (subV V (p |+|ₛ q)) =
+  trans (cong injᵛ (cast-subV e {V = V}))
+        (trans (cong (sub⊎ p q) (injᵛ-cast e V)) (comm (injᵛ V)))
+  where
+    comm : ∀ s → sub⊎ p q (cast⊎ e s) ≡ cast⊎ e (sub⊎ p q s)
+    comm (inj₁ W) = cong inj₁ (sym (cast-subV e))
+    comm (inj₂ W) = cong inj₂ (sym (cast-subV e))
+
+cast-case+-reduct : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ) → (s : (Γ' ⊢V⦂ A) ⊎ (Γ' ⊢V⦂ B))
+                  → (M' : Γ' ∷ A ⊢C⦂ C) → (N' : Γ' ∷ B ⊢C⦂ C)
+                  → case+-reduct (cast⊎ e s) (castᶜ (cong (_∷ A) e) M')
+                                 (castᶜ (cong (_∷ B) e) N')
+                  ≡ castᶜ e (case+-reduct s M' N')
+cast-case+-reduct refl (inj₁ W) M' N' = refl
+cast-case+-reduct refl (inj₂ W) M' N' = refl
 
 cast-match-reduct : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
            → (M' : Γ' ∷ A ∷ B ⊢C⦂ C) → (V' : Γ' ⊢V⦂ A) → (W' : Γ' ⊢V⦂ B)

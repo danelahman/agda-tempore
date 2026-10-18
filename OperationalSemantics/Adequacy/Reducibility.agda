@@ -15,7 +15,7 @@
 
 open import Data.Empty
 open import Data.Product
-open import Data.Sum using (_⊎_; inj₁; inj₂; [_,_]′)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (¬_)
@@ -49,7 +49,6 @@ open import Syntax.Terms.Transport       Spec
 open import Syntax.Substitutions.Variables Spec
 open import OperationalSemantics.Adequacy.GradedReach           Spec
 open import Syntax.Substitutions.Equivalence Spec
-open import Syntax.Substitutions.Subsumption Spec using (subCtx; subCtx-sub)
 
 -- A value of box type is a variable under a spine of subsumptions: the spine
 -- leaves the variable alone, so the value still names a cell, but at the
@@ -539,38 +538,6 @@ bool-canonical false          = inj₂ (IF-FALSE ◅ ε*)
 bool-canonical (subV V Boolₛ) with bool-canonical V
 ... | inj₁ rs = inj₁ (SUB-IF ◅ rs)
 ... | inj₂ rs = inj₂ (SUB-IF ◅ rs)
-
--- A sum over a state context runs to the branch its injection names, at the
--- injection's payload: a variable is ruled out by `|+|-not-in-toCtx`, and a
--- subsumption moves onto the branches' binders by `SUB-CASE`, where
--- substituting the payload subsumes it (`subCtx-sub`).
-
-case+-run : ∀ {St : 𝕊 []} {A B D ε} → (V : toCtx St ⊢V⦂ A |+| B)
-          → (M : toCtx St ∷ A ⊢C⦂ D ‼ ε) → (N : toCtx St ∷ B ⊢C⦂ D ‼ ε)
-          → [ (λ W → ⟨ St , case+ V `inl M `inr N ⟩ ↝* ⟨ St , M [ split-[] ↦ W ]c ⟩)
-            , (λ W → ⟨ St , case+ V `inl M `inr N ⟩ ↝* ⟨ St , N [ split-[] ↦ W ]c ⟩)
-            ]′ (injᵛ V)
-case+-run (var f x)           M N = ⊥-elim (|+|-not-in-toCtx x)
-case+-run (inl V)             M N = CASE-INL ◅ ε*
-case+-run (inr V)             M N = CASE-INR ◅ ε*
-case+-run {St = St} (subV V (p |+|ₛ q)) M N =
-  go (injᵛ V) (case+-run V (subCtx p M) (subCtx q N))
-  where
-    go : ∀ s
-       → [ (λ W → ⟨ St , case+ V `inl subCtx p M `inr subCtx q N ⟩
-                   ↝* ⟨ St , subCtx p M [ split-[] ↦ W ]c ⟩)
-         , (λ W → ⟨ St , case+ V `inl subCtx p M `inr subCtx q N ⟩
-                   ↝* ⟨ St , subCtx q N [ split-[] ↦ W ]c ⟩)
-         ]′ s
-       → [ (λ W → ⟨ St , case+ subV V (p |+|ₛ q) `inl M `inr N ⟩
-                   ↝* ⟨ St , M [ split-[] ↦ W ]c ⟩)
-         , (λ W → ⟨ St , case+ subV V (p |+|ₛ q) `inl M `inr N ⟩
-                   ↝* ⟨ St , N [ split-[] ↦ W ]c ⟩)
-         ]′ (sub⊎ p q s)
-    go (inj₁ W) rs =
-      SUB-CASE ◅ subst (λ z → ⟨ St , _ ⟩ ↝* ⟨ St , z ⟩) (subCtx-sub p M W) rs
-    go (inj₂ W) rs =
-      SUB-CASE ◅ subst (λ z → ⟨ St , _ ⟩ ↝* ⟨ St , z ⟩) (subCtx-sub q N W) rs
 
 -- A natural number over a state context runs to the zero branch or to the
 -- successor branch at a predecessor: a variable is ruled out by

@@ -14,7 +14,7 @@
 
 open import Data.Empty
 open import Data.Product
-open import Data.Sum using (inj₁; inj₂; [_,_]′)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
 
 open import Syntax.Grades
@@ -119,9 +119,9 @@ FL-match {St = St} {A = A} {B = B} γ pγ V M (p₁ , p₂) pM =
          ≡ env-C ((γ ∷ᵉ U₁) ∷ᵉ U₂) M
     step = sub-swap-C [] M₀ U₂ U₁
 
--- Sum elimination: the scrutinee's reducibility names its injection and gives
--- the payload's reducibility; `case+-run` reaches that branch with the payload
--- substituted, which is the action at the environment extended by it.
+-- Sum elimination: `CASE+` reduces at the scrutinee's decomposition, whose
+-- reducibility names the branch and gives the payload's; that branch with the
+-- payload substituted is the action at the environment extended by it.
 
 FL-case+ : ∀ {St Γ A B D ε} → (γ : Env St Γ) → Rel-Env γ
          → (V : Γ ⊢V⦂ A |+| B)
@@ -136,20 +136,15 @@ FL-case+ : ∀ {St Γ A B D ε} → (γ : Env St Γ) → Rel-Env γ
 
 FL-case+ {St = St} {A = A} {B = B} {D = D} {ε = ε} γ pγ V M N pV pM pN =
   subst (CRed' _ _ St) (sym (env-Cˢ-case+ γ [] V M N))
-    (go (case+-run U M₀ N₀) pV)
+    (CRed-expand CASE+ (go (injᵛ (env-V γ V)) pV))
   where
-    U  = env-V γ V
     M₀ = env-Cˢ γ ([] ∷ A) M
     N₀ = env-Cˢ γ ([] ∷ B) N
 
-    go : ∀ {s}
-       → [ (λ W → ⟨ St , case+ U `inl M₀ `inr N₀ ⟩ ↝* ⟨ St , M₀ [ split-[] ↦ W ]c ⟩)
-         , (λ W → ⟨ St , case+ U `inl M₀ `inr N₀ ⟩ ↝* ⟨ St , N₀ [ split-[] ↦ W ]c ⟩)
-         ]′ s
-       → VRed⊎ (VRed A St) (VRed B St) s
-       → CRed' D ε St (case+ U `inl M₀ `inr N₀)
-    go rs (red-inl {W} pW) = CRed-expand* rs (pM (γ ∷ᵉ W) (pγ , pW))
-    go rs (red-inr {W} pW) = CRed-expand* rs (pN (γ ∷ᵉ W) (pγ , pW))
+    go : (s : (toCtx St ⊢V⦂ A) ⊎ (toCtx St ⊢V⦂ B)) → VRed⊎ (VRed A St) (VRed B St) s
+       → CRed' D ε St (case+-reduct s M₀ N₀)
+    go _ (red-inl {W} pW) = pM (γ ∷ᵉ W) (pγ , pW)
+    go _ (red-inr {W} pW) = pN (γ ∷ᵉ W) (pγ , pW)
 
 -- Primitive recursion: induction on the scrutinee, which over a state context
 -- is a numeral up to subsumption. At a successor `RECℕ-SUCC` sequences the

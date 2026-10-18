@@ -30,7 +30,7 @@ open Operations Ops
 open import Data.Empty using (⊥-elim)
 open import Data.Product using (_,_; _×_; proj₁; proj₂)
 open import Data.Unit using (⊤; tt)
-open import Data.Sum using (inj₁; inj₂)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 
 open import Syntax.Comparisons using (Cmp; holds)
 open import Syntax.Data S using (compareᵈ)
@@ -105,8 +105,7 @@ stepᴾˢ RECL                pS _              = pS
 stepᴾˢ IF-TRUE             pS _              = pS
 stepᴾˢ CMP                 pS _              = pS
 stepᴾˢ IF-FALSE            pS _              = pS
-stepᴾˢ CASE-INL            pS _              = pS
-stepᴾˢ CASE-INR            pS _              = pS
+stepᴾˢ CASE+               pS _              = pS
 stepᴾˢ CASEℕ-ZERO          pS _              = pS
 stepᴾˢ CASEℕ-SUCC          pS _              = pS
 stepᴾˢ RECℕ-ZERO           pS _              = pS
@@ -123,7 +122,6 @@ stepᴾˢ (BOX {V = V})       pS (pV , _)       =
 stepᴾˢ UNBOX               pS _              = pS
 stepᴾˢ SUB-APP             pS _              = pS
 stepᴾˢ SUB-IF              pS _              = pS
-stepᴾˢ SUB-CASE            pS _              = pS
 stepᴾˢ SUB-CASEℕ           pS _              = pS
 stepᴾˢ SUB-RECℕ            pS _              = pS
 stepᴾˢ SUB                 pS _              = pS
@@ -155,8 +153,7 @@ step-grade RECL                 = uₑ
 step-grade IF-TRUE              = uₑ
 step-grade CMP                  = uₑ
 step-grade IF-FALSE             = uₑ
-step-grade CASE-INL             = uₑ
-step-grade CASE-INR             = uₑ
+step-grade CASE+                = uₑ
 step-grade CASEℕ-ZERO           = uₑ
 step-grade CASEℕ-SUCC           = uₑ
 step-grade RECℕ-ZERO            = uₑ
@@ -172,7 +169,6 @@ step-grade BOX                  = uₑ
 step-grade UNBOX                = uₑ
 step-grade SUB-APP              = uₑ
 step-grade SUB-IF               = uₑ
-step-grade SUB-CASE             = uₑ
 step-grade SUB-CASEℕ            = uₑ
 step-grade SUB-RECℕ             = uₑ
 step-grade SUB                  = uₑ
@@ -192,8 +188,7 @@ stepᵀ RECL              = ηᵀ
 stepᵀ IF-TRUE           = ηᵀ
 stepᵀ CMP               = ηᵀ
 stepᵀ IF-FALSE          = ηᵀ
-stepᵀ CASE-INL          = ηᵀ
-stepᵀ CASE-INR          = ηᵀ
+stepᵀ CASE+             = ηᵀ
 stepᵀ CASEℕ-ZERO        = ηᵀ
 stepᵀ CASEℕ-SUCC        = ηᵀ
 stepᵀ RECℕ-ZERO         = ηᵀ
@@ -209,7 +204,6 @@ stepᵀ BOX               = ηᵀ
 stepᵀ UNBOX             = ηᵀ
 stepᵀ SUB-APP           = ηᵀ
 stepᵀ SUB-IF            = ηᵀ
-stepᵀ SUB-CASE          = ηᵀ
 stepᵀ SUB-CASEℕ         = ηᵀ
 stepᵀ SUB-RECℕ          = ηᵀ
 stepᵀ SUB               = ηᵀ
@@ -228,8 +222,7 @@ step-≾ {ε = ε} RECL   = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} IF-TRUE  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} CMP      = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} IF-FALSE = ≾ₑ-reflexive (·ₑ-identityˡ ε)
-step-≾ {ε = ε} CASE-INL = ≾ₑ-reflexive (·ₑ-identityˡ ε)
-step-≾ {ε = ε} CASE-INR = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ {ε = ε} CASE+    = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} CASEℕ-ZERO = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} CASEℕ-SUCC = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} RECℕ-ZERO = ≾ₑ-reflexive (·ₑ-identityˡ ε)
@@ -254,7 +247,6 @@ step-≾ {ε = ε} BOX    = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} UNBOX   = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ (SUB-APP {r = _ ‼ₛ s}) = ≾ₑ-trans (≾ₑ-reflexive (·ₑ-identityˡ _)) s
 step-≾ {ε = ε} SUB-IF  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
-step-≾ {ε = ε} SUB-CASE = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} SUB-CASEℕ = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} SUB-RECℕ = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ (SUB {w = _ ‼ₛ q}) = ≾ₑ-trans (≾ₑ-reflexive (·ₑ-identityˡ _)) q
@@ -371,9 +363,8 @@ sndᵛ-sound St (subV P (p |×|ₛ q)) pP        =
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _))
   ∙ ∘ᵐ-assoc _ _ _
 
--- MATCH: destructing a pair is the two substitutions in sequence. The inner
--- one substitutes the second projection weakened past `A`, which reindexes it
--- by `fstᵐ`; that projection is then cancelled by the outer environment.
+-- MATCH: destructing a pair is substituting its two projections
+-- (`C-subst₂-nat`), which denote its components.
 
 sound-MATCH : ∀ {Γ A B C} → (St : 𝕊 Γ) → (P : toCtx St ⊢V⦂ A |×| B)
             → (M : toCtx St ∷ A ∷ B ⊢C⦂ C)
@@ -381,32 +372,11 @@ sound-MATCH : ∀ {Γ A B C} → (St : 𝕊 Γ) → (P : toCtx St ⊢V⦂ A |×|
             → ⟦ match P `in M ⟧ᶜᵗ (pP , pM)
             ≈ᵐ ⟦ (M [ split-[] ↦ V-rename wk-ren (sndᵛ {S = St} P) ]c)
                    [ split-[] ↦ fstᵛ {S = St} P ]c ⟧ᶜᵗ
-                 (subᶜ (M [ split-[] ↦ V-rename wk-ren (sndᵛ {S = St} P) ]c) split-[]
-                    (fstᵛ {S = St} P)
-                    (subᶜ M split-[] (V-rename wk-ren (sndᵛ {S = St} P)) pM
-                       (renᵛ wk-ren (sndᵛ {S = St} P) (sndᵛᴾ St P pP)))
-                    (fstᵛᴾ St P pP))
+                 (subᶜ₂ M (fstᵛ {S = St} P) (sndᵛ {S = St} P) pM (fstᵛᴾ St P pP) (sndᵛᴾ St P pP))
 sound-MATCH St P M pP pM =
-  ≈ᵐ-trans
-    (∘ᵐ-congʳ (⟨ ⟨ ≈ᵐ-refl , ≈ᵐ-sym (fstᵛ-sound St P pP) ⟩ᵐ-cong
-               , ≈ᵐ-sym (sndᵛ-sound St P pP) ⟩ᵐ-cong))
-    (≈ᵐ-sym
-      (≈ᵐ-trans (C-subst-nat (M [ split-[] ↦ V-rename wk-ren (sndᵛ {S = St} P) ]c)
-                   split-[] (fstᵛ {S = St} P)
-                   (subᶜ M split-[] (V-rename wk-ren (sndᵛ {S = St} P)) pM
-                      (renᵛ wk-ren (sndᵛ {S = St} P) (sndᵛᴾ St P pP)))
-                   (fstᵛᴾ St P pP))
-      (≈ᵐ-trans (∘ᵐ-congˡ (C-subst-nat M split-[] (V-rename wk-ren (sndᵛ {S = St} P)) pM
-                             (renᵛ wk-ren (sndᵛ {S = St} P) (sndᵛᴾ St P pP))))
-      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                (∘ᵐ-congʳ
-                  (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
-                            (⟨ ∘ᵐ-identityˡ _
-                             , ≈ᵐ-trans (∘ᵐ-congˡ (V-rename-nat wk-ren (sndᵛ {S = St} P)
-                                                     (sndᵛᴾ St P pP)))
-                               (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                               (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
-                                         (∘ᵐ-identityʳ _))) ⟩ᵐ-cong)))))))
+    ∘ᵐ-congʳ (⟨ ⟨ ≈ᵐ-refl , ≈ᵐ-sym (fstᵛ-sound St P pP) ⟩ᵐ-cong
+             , ≈ᵐ-sym (sndᵛ-sound St P pP) ⟩ᵐ-cong)
+  ∙ ≈ᵐ-sym (C-subst₂-nat M (fstᵛ {S = St} P) (sndᵛ {S = St} P) pM (fstᵛᴾ St P pP) (sndᵛᴾ St P pP))
 
 -- The decomposition of a list in a state context: the certificate it
 -- transports, and the list it denotes, which is the list itself.
@@ -451,9 +421,7 @@ caseL-reductᴾ : ∀ {Γ A C} → (l : ListView Γ A) → (M : Γ ⊢C⦂ C)
               → Paramᵛ (unlistᵛ l) → Paramᶜ M → Paramᶜ N
               → Paramᶜ (caseL-reduct l M N)
 caseL-reductᴾ (inj₁ tt)      M N pl         pM pN = pM
-caseL-reductᴾ (inj₂ (W , L)) M N (pW , pL) pM pN =
-  subᶜ (N [ split-[] ↦ V-rename wk-ren L ]c) split-[] W
-    (subᶜ N split-[] (V-rename wk-ren L) pN (renᵛ wk-ren L pL)) pW
+caseL-reductᴾ (inj₂ (W , L)) M N (pW , pL) pM pN = subᶜ₂ N W L pN pW pL
 
 recL-reductᴾ : ∀ {Γ A B ε} → (l : ListView Γ A) → (M : Γ ⊢C⦂ B ‼ ε)
              → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
@@ -463,6 +431,46 @@ recL-reductᴾ : ∀ {Γ A B ε} → (l : ListView Γ A) → (M : Γ ⊢C⦂ B �
 recL-reductᴾ (inj₁ tt)      M N p pl        pM pN = pM
 recL-reductᴾ (inj₂ (W , L)) M N p (pW , pL) pM pN =
   (pL , pM , pN) , recL-stepᴾ W L N pW pL pN
+
+-- The decomposition of a sum in a state context: the certificate it
+-- transports, and the sum it denotes, which is the sum itself.
+
+sub⊎ᴾ : ∀ {Γ A A₁ B B₁} → (p : A₁ <:ᵛ A) → (q : B₁ <:ᵛ B)
+      → (s : (Γ ⊢V⦂ A₁) ⊎ (Γ ⊢V⦂ B₁))
+      → Paramᵛ (uninjᵛ s) → Paramᵛ (uninjᵛ (sub⊎ p q s))
+sub⊎ᴾ p q (inj₁ W) pW = pW
+sub⊎ᴾ p q (inj₂ W) pW = pW
+
+injᵛᴾ : ∀ {Γ A B} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ A |+| B)
+      → Paramᵛ V → Paramᵛ (uninjᵛ (injᵛ {S = St} V))
+injᵛᴾ St (var f x)           pV = ⊥-elim (|+|-not-in-toCtx x)
+injᵛᴾ St (inl V)             pV = pV
+injᵛᴾ St (inr V)             pV = pV
+injᵛᴾ St (subV V (p |+|ₛ q)) pV = sub⊎ᴾ p q (injᵛ V) (injᵛᴾ St V pV)
+
+sub⊎-sound : ∀ {Γ A A₁ B B₁} → (p : A₁ <:ᵛ A) → (q : B₁ <:ᵛ B)
+           → (s : (Γ ⊢V⦂ A₁) ⊎ (Γ ⊢V⦂ B₁)) → (ps : Paramᵛ (uninjᵛ s))
+           → ⟦ uninjᵛ (sub⊎ p q s) ⟧ᵛᵗ (sub⊎ᴾ p q s ps)
+           ≈ᵐ map+ᵐ ⟦ p ⟧<:ᵛ ⟦ q ⟧<:ᵛ ∘ᵐ ⟦ uninjᵛ s ⟧ᵛᵗ ps
+sub⊎-sound p q (inj₁ W) pW =
+  ≈ᵐ-sym (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ ([]ᵐ-inlᵐ _ _) ∙ ∘ᵐ-assoc _ _ _)
+sub⊎-sound p q (inj₂ W) pW =
+  ≈ᵐ-sym (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ ([]ᵐ-inrᵐ _ _) ∙ ∘ᵐ-assoc _ _ _)
+
+injᵛ-sound : ∀ {Γ A B} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ A |+| B) → (pV : Paramᵛ V)
+           → ⟦ uninjᵛ (injᵛ {S = St} V) ⟧ᵛᵗ (injᵛᴾ St V pV) ≈ᵐ ⟦ V ⟧ᵛᵗ pV
+injᵛ-sound St (var f x)           pV = ⊥-elim (|+|-not-in-toCtx x)
+injᵛ-sound St (inl V)             pV = ≈ᵐ-refl
+injᵛ-sound St (inr V)             pV = ≈ᵐ-refl
+injᵛ-sound St (subV V (p |+|ₛ q)) pV =
+  sub⊎-sound p q (injᵛ V) (injᵛᴾ St V pV) ∙ ∘ᵐ-congʳ (injᵛ-sound St V pV)
+
+case+-reductᴾ : ∀ {Γ A B C} → (s : (Γ ⊢V⦂ A) ⊎ (Γ ⊢V⦂ B))
+              → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
+              → Paramᵛ (uninjᵛ s) → Paramᶜ M → Paramᶜ N
+              → Paramᶜ (case+-reduct s M N)
+case+-reductᴾ (inj₁ W) M N pW pM pN = subᶜ M split-[] W pM pW
+case+-reductᴾ (inj₂ W) M N pW pM pN = subᶜ N split-[] W pN pW
 
 -- CMP: a value of an eternal type denotes the point of its datum, at which
 -- the comparison morphism orders as the data are ordered.
@@ -541,6 +549,25 @@ sound-RECL St V M N p pV pM pN =
        ≈ᵐ ⟦ recL-reduct l M N p ⟧ᶜᵗ (recL-reductᴾ l M N p pl pM pN)
     go (inj₁ tt)      pl        = sound-RECL-NIL M N p pM pN
     go (inj₂ (W , L)) (pW , pL) = sound-RECL-CONS W L M N p pW pL pM pN
+
+-- CASE+: the scrutinee denotes its decomposition, at which the coproduct's
+-- beta laws apply.
+
+sound-CASE+ : ∀ {Γ A B C} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ A |+| B)
+            → (M : toCtx St ∷ A ⊢C⦂ C) → (N : toCtx St ∷ B ⊢C⦂ C)
+            → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+            → ⟦ case+ V `inl M `inr N ⟧ᶜᵗ (pV , pM , pN)
+            ≈ᵐ ⟦ case+-reduct (injᵛ {S = St} V) M N ⟧ᶜᵗ
+                 (case+-reductᴾ (injᵛ V) M N (injᵛᴾ St V pV) pM pN)
+sound-CASE+ St V M N pV pM pN =
+    caseᵐ-cong (≈ᵐ-sym (injᵛ-sound St V pV)) ≈ᵐ-refl ≈ᵐ-refl
+  ∙ go (injᵛ V) (injᵛᴾ St V pV)
+  where
+    go : (s : (toCtx St ⊢V⦂ _) ⊎ (toCtx St ⊢V⦂ _)) → (ps : Paramᵛ (uninjᵛ s))
+       → ⟦ case+ uninjᵛ s `inl M `inr N ⟧ᶜᵗ (ps , pM , pN)
+       ≈ᵐ ⟦ case+-reduct s M N ⟧ᶜᵗ (case+-reductᴾ s M N ps pM pN)
+    go (inj₁ W) pW = caseᵐ-inl _ _ _ ∙ ≈ᵐ-sym (C-subst-nat M split-[] W pM pW)
+    go (inj₂ W) pW = caseᵐ-inr _ _ _ ∙ ≈ᵐ-sym (C-subst-nat N split-[] W pN pW)
 
 -- BOX: allocating a resource and extending the store are the *same* morphism,
 -- so the two configurations' denotations coincide outright. The stored value
@@ -724,41 +751,6 @@ sound-SUB-RECℕ : ∀ {Γ B ε} → (V : Γ ⊢V⦂ Nat) → (M : Γ ⊢C⦂ B 
                → ⟦ recℕ (subV V Natₛ) M N p ⟧ᶜᵗ (pV , pM , pN)
                ≈ᵐ ⟦ recℕ V M N p ⟧ᶜᵗ (pV , pM , pN)
 sound-SUB-RECℕ V M N p pV pM pN = ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
-
--- CASE-INL / CASE-INR: taking a branch is the coproduct's beta law, followed
--- by the substitution coherence.
-
-sound-CASE-INL : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A)
-               → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
-               → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-               → ⟦ case+ inl V `inl M `inr N ⟧ᶜᵗ (pV , pM , pN)
-               ≈ᵐ ⟦ M [ split-[] ↦ V ]c ⟧ᶜᵗ (subᶜ M split-[] V pM pV)
-sound-CASE-INL V M N pV pM pN =
-    caseᵐ-inl (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
-  ∙ ≈ᵐ-sym (C-subst-nat M split-[] V pM pV)
-
-sound-CASE-INR : ∀ {Γ A B C} → (V : Γ ⊢V⦂ B)
-               → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
-               → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-               → ⟦ case+ inr V `inl M `inr N ⟧ᶜᵗ (pV , pM , pN)
-               ≈ᵐ ⟦ N [ split-[] ↦ V ]c ⟧ᶜᵗ (subᶜ N split-[] V pN pV)
-sound-CASE-INR V M N pV pM pN =
-    caseᵐ-inr (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
-  ∙ ≈ᵐ-sym (C-subst-nat N split-[] V pN pV)
-
--- SUB-CASE: the coproduct's action on the scrutinee moves onto the branches'
--- binders (`caseᵐ-map+ᵐ`), where it is the subsumed binder (`subCtx-nat`).
-
-sound-SUB-CASE : ∀ {Γ A A₁ B B₁ C} → (V : Γ ⊢V⦂ A₁ |+| B₁)
-               → (p : A₁ <:ᵛ A) → (q : B₁ <:ᵛ B)
-               → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
-               → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-               → ⟦ case+ subV V (p |+|ₛ q) `inl M `inr N ⟧ᶜᵗ (pV , pM , pN)
-               ≈ᵐ ⟦ case+ V `inl subCtx p M `inr subCtx q N ⟧ᶜᵗ
-                    (pV , subCtxᴾ p M pM , subCtxᴾ q N pN)
-sound-SUB-CASE V p q M N pV pM pN =
-    caseᵐ-map+ᵐ (⟦ V ⟧ᵛᵗ pV) ⟦ p ⟧<:ᵛ ⟦ q ⟧<:ᵛ (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
-  ∙ caseᵐ-cong ≈ᵐ-refl (≈ᵐ-sym (subCtx-nat p M pM)) (≈ᵐ-sym (subCtx-nat q N pN))
 
 delayᵀ-ε-substᵀ : ∀ {A ε ε'} → (τ : 𝔻) → (e : ε ≡ ε')
                 → delayᵀ {A} {ε'} τ ∘ᵐ [ of-durʳ τ ]ᶠ (ε-substᵀ e)

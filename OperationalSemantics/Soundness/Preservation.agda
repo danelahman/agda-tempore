@@ -156,8 +156,7 @@ T-≤-stepᵀ B RECL        g q = ηᵀ-case g q
 T-≤-stepᵀ B IF-TRUE     g q = ηᵀ-case g q
 T-≤-stepᵀ B CMP         g q = ηᵀ-case g q
 T-≤-stepᵀ B IF-FALSE    g q = ηᵀ-case g q
-T-≤-stepᵀ B CASE-INL    g q = ηᵀ-case g q
-T-≤-stepᵀ B CASE-INR    g q = ηᵀ-case g q
+T-≤-stepᵀ B CASE+       g q = ηᵀ-case g q
 T-≤-stepᵀ B CASEℕ-ZERO  g q = ηᵀ-case g q
 T-≤-stepᵀ B CASEℕ-SUCC  g q = ηᵀ-case g q
 T-≤-stepᵀ B RECℕ-ZERO   g q = ηᵀ-case g q
@@ -170,7 +169,6 @@ T-≤-stepᵀ B BOX         g q = ηᵀ-case g q
 T-≤-stepᵀ B UNBOX       g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB-APP     g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB-IF      g q = ηᵀ-case g q
-T-≤-stepᵀ B SUB-CASE    g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB-CASEℕ   g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB-RECℕ    g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB         g q = ηᵀ-case g q
@@ -223,8 +221,7 @@ Uniform↝ RECL                _            = ⊤
 Uniform↝ IF-TRUE             _            = ⊤
 Uniform↝ CMP                 _            = ⊤
 Uniform↝ IF-FALSE            _            = ⊤
-Uniform↝ CASE-INL            _            = ⊤
-Uniform↝ CASE-INR            _            = ⊤
+Uniform↝ CASE+               _            = ⊤
 Uniform↝ CASEℕ-ZERO          _            = ⊤
 Uniform↝ CASEℕ-SUCC          _            = ⊤
 Uniform↝ RECℕ-ZERO           _            = ⊤
@@ -237,7 +234,6 @@ Uniform↝ BOX                 _            = ⊤
 Uniform↝ UNBOX               _            = ⊤
 Uniform↝ SUB-APP             _            = ⊤
 Uniform↝ SUB-IF              _            = ⊤
-Uniform↝ SUB-CASE            _            = ⊤
 Uniform↝ SUB-CASEℕ           _            = ⊤
 Uniform↝ SUB-RECℕ            _            = ⊤
 Uniform↝ SUB                 _            = ⊤
@@ -251,11 +247,7 @@ stepᴾᶜ : ∀ {ε ε' A A₀} {S S' : 𝕊 []}
        → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩) → Paramˢ S → Paramᶜ M → Paramᶜ M'
 stepᴾᶜ (APP {M = M} {V = V})            pS (pM , pV)  = subᶜ M split-[] V pM pV
 stepᴾᶜ (MATCH {S = St} {P = P} {M = M}) pS (pP , pM) =
-  subᶜ (M [ split-[] ↦ V-rename wk-ren (sndᵛ {S = St} P) ]c) split-[]
-    (fstᵛ {S = St} P)
-    (subᶜ M split-[] (V-rename wk-ren (sndᵛ {S = St} P)) pM
-       (renᵛ wk-ren (sndᵛ {S = St} P) (sndᵛᴾ St P pP)))
-    (fstᵛᴾ St P pP)
+  subᶜ₂ M (fstᵛ {S = St} P) (sndᵛ {S = St} P) pM (fstᵛᴾ St P pP) (sndᵛᴾ St P pP)
 stepᴾᶜ (CASEL {S = St} {V = V} {M = M} {N = N}) pS (pV , pM , pN) =
   caseL-reductᴾ (listᵛ {S = St} V) M N (listᵛᴾ St V pV) pM pN
 stepᴾᶜ (RECL {S = St} {V = V} {M = M} {N = N} {p = p}) pS (pV , pM , pN) =
@@ -278,8 +270,8 @@ stepᴾᶜ (CASEℕ-SUCC {V = V} {N = N})    pS (pV , pM , pN) = subᶜ N split-
 stepᴾᶜ RECℕ-ZERO                        pS (_ , pM , pN) = pM
 stepᴾᶜ (RECℕ-SUCC {V = V} {N = N})     pS (pV , pM , pN) =
   (pV , pM , pN) , recℕ-stepᴾ V N pV pN
-stepᴾᶜ (CASE-INL {V = V} {M = M})      pS (pV , pM , pN) = subᶜ M split-[] V pM pV
-stepᴾᶜ (CASE-INR {V = V} {N = N})      pS (pV , pM , pN) = subᶜ N split-[] V pN pV
+stepᴾᶜ (CASE+ {S = St} {V = V} {M = M} {N = N}) pS (pV , pM , pN) =
+  case+-reductᴾ (injᵛ {S = St} V) M N (injᵛᴾ St V pV) pM pN
 stepᴾᶜ DELAY                            pS pM         = pM
 stepᴾᶜ (HANDLE-RET {V = V} {N = N})     pS (pV , pN , pH , uH) = ret-subᴾ V N pV pN
 stepᴾᶜ (HANDLE-STEP {S = S} {S' = S'} {H = H} {N = N} r c) pS (pM , pN , pH , uH) =
@@ -310,8 +302,6 @@ stepᴾᶜ SUB-APP                          pS pM         = pM
 stepᴾᶜ SUB-IF                           pS pM         = pM
 stepᴾᶜ SUB-CASEℕ                        pS pM         = pM
 stepᴾᶜ SUB-RECℕ                         pS pM         = pM
-stepᴾᶜ (SUB-CASE {p = p} {q = q} {M = M} {N = N}) pS (pV , pM , pN) =
-  pV , subCtxᴾ p M pM , subCtxᴾ q N pN
 stepᴾᶜ SUB                              pS pM         = pM
 
 -- Both halves at once, for a configuration.
@@ -368,11 +358,8 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 ↝-sound {A = A} r@(RECℕ-SUCC {V = V} {M = M} {N = N} {p = p}) pS (pV , pM , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-RECℕ-SUCC V M N p pV pM pN))
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
-↝-sound {A = A} r@(CASE-INL {V = V} {M = M} {N = N}) pS (pV , pM , pN) _ =
-  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-CASE-INL V M N pV pM pN))
-  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
-↝-sound {A = A} r@(CASE-INR {V = V} {M = M} {N = N}) pS (pV , pM , pN) _ =
-  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-CASE-INR V M N pV pM pN))
+↝-sound {A = A} r@(CASE+ {S = St} {V = V} {M = M} {N = N}) pS (pV , pM , pN) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-CASE+ St V M N pV pM pN))
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 
 -- Allocation and lookup: also plain equations, but ones that mention the store.
@@ -397,10 +384,9 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 
 -- Peeling a subsumption: at an eliminated function it splits (`SUB-APP`), at a
 -- scrutinised boolean or natural number it is the identity (`SUB-IF`,
--- `SUB-CASEℕ`, `SUB-RECℕ`), at a scrutinised sum it moves onto the branches
--- (`SUB-CASE`), and at a computation it is discarded (`SUB`) — in the first
--- and last the codomain half becomes the step's own refinement of both
--- components.
+-- `SUB-CASEℕ`, `SUB-RECℕ`), and at a computation it is discarded (`SUB`) — in
+-- the first and last the codomain half becomes the step's own refinement of
+-- both components.
 
 ↝-sound {A = A} r@(SUB-APP {V = V} {W = W} {q = q} {r = p ‼ₛ s}) pS (pV , pW) _ =
   pure-step<: (step-≾ r) p s
@@ -416,9 +402,6 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ↝-sound {A = A} r@(SUB-RECℕ {V = V} {M = M} {N = N} {p = p}) pS (pV , pM , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SUB-RECℕ V M N p pV pM pN))
-  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
-↝-sound {A = A} r@(SUB-CASE {V = V} {p = p} {q = q} {M = M} {N = N}) pS (pV , pM , pN) _ =
-  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SUB-CASE V p q M N pV pM pN))
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ↝-sound {A = A} {S = St} r@(SUB {M = M₀} {w = p ‼ₛ q}) pS pM _ =
   pure-step<: (step-≾ r) p q (sound-SUB {S = St} {M = M₀} p q pS pM)

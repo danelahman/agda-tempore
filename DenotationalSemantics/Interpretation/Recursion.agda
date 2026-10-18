@@ -248,16 +248,6 @@ sound-CASEL-CONS : ∀ {Γ A C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ |List
                  → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                  → ⟦ caseL cons V W `nil M `cons N ⟧ᶜᵗ ((pV , pW) , pM , pN)
                  ≈ᵐ ⟦ (N [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟧ᶜᵗ
-                      (subᶜ (N [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
-                         (subᶜ N split-[] (V-rename wk-ren W) pN (renᵛ wk-ren W pW)) pV)
+                      (subᶜ₂ N V W pN pV pW)
 sound-CASEL-CONS V W M N pV pW pM pN =
-    caseLᵐ-cons _ _ _ _
-  ∙ ≈ᵐ-sym (  C-subst-nat (N [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
-                (subᶜ N split-[] (V-rename wk-ren W) pN (renᵛ wk-ren W pW)) pV
-            ∙ ∘ᵐ-congˡ (  C-subst-nat N split-[] (V-rename wk-ren W) pN (renᵛ wk-ren W pW)
-                        ∙ ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , V-rename-nat wk-ren W pW ⟩ᵐ-cong)
-            ∙ ∘ᵐ-assoc _ _ _
-            ∙ ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _
-                        ∙ ⟨ ∘ᵐ-identityˡ _
-                          , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
-                            ∙ ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  caseLᵐ-cons _ _ _ _ ∙ ≈ᵐ-sym (C-subst₂-nat N V W pN pV pW)

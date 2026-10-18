@@ -326,17 +326,8 @@ sound-match-beta : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ B) 
 sound-match-beta V W M ((pV , pW) , pM) pR =
     ∘ᵐ-congʳ (⟨ ⟨ ≈ᵐ-refl , ⟨⟩ᵐ-fstᵐ _ _ ⟩ᵐ-cong , ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong)
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr ((M [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c) pR
-                (subᶜ (M [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
-                   (subᶜ M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV)
-            ∙ C-subst-nat (M [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
-                (subᶜ M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV
-            ∙ ∘ᵐ-congˡ (  C-subst-nat M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)
-                        ∙ ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , V-rename-nat wk-ren W pW ⟩ᵐ-cong)
-            ∙ ∘ᵐ-assoc _ _ _
-            ∙ ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _
-                        ∙ ⟨ ∘ᵐ-identityˡ _
-                          , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
-                            ∙ ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+                (subᶜ₂ M V W pM pV pW)
+            ∙ C-subst₂-nat M V W pM pV pW)
 
 
 -- The list eliminator's betas, as for the reductions at `nil` and `cons`.

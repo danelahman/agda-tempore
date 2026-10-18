@@ -762,31 +762,6 @@ record Category : Set₂ where
         (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-comm h ι))
         (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ p)))
 
-  -- reindexing the summands
-
-  copairˣᵐ-map+ᵐ : ∀ {X A A' B B' C} → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
-                 → (a : A' →ᵐ A) → (b : B' →ᵐ B)
-                 → copairˣᵐ f g ∘ᵐ mapˣᵐ idᵐ (map+ᵐ a b)
-                 ≈ᵐ copairˣᵐ (f ∘ᵐ mapˣᵐ idᵐ a) (g ∘ᵐ mapˣᵐ idᵐ b)
-  copairˣᵐ-map+ᵐ {X} {A} {A'} {B} {B'} {C} f g a b =
-    copairˣᵐ-unique _ _ _ (side inlᵐ inlᵐ a ([]ᵐ-inlᵐ _ _) (copairˣᵐ-inl f g))
-                          (side inrᵐ inrᵐ b ([]ᵐ-inrᵐ _ _) (copairˣᵐ-inr f g))
-    where
-      side : ∀ {A₀ A₁} {k : X ×ᵐ A₁ →ᵐ C}
-           → (ι : A₀ →ᵐ _) → (ι' : A₁ →ᵐ A +ᵐ B) → (c : A₀ →ᵐ A₁)
-           → map+ᵐ a b ∘ᵐ ι ≈ᵐ ι' ∘ᵐ c
-           → copairˣᵐ f g ∘ᵐ mapˣᵐ idᵐ ι' ≈ᵐ k
-           → (copairˣᵐ f g ∘ᵐ mapˣᵐ idᵐ (map+ᵐ a b)) ∘ᵐ mapˣᵐ idᵐ ι
-             ≈ᵐ k ∘ᵐ mapˣᵐ idᵐ c
-      side ι ι' c e p =
-        ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-        (≈ᵐ-trans (∘ᵐ-congʳ
-          (≈ᵐ-trans (mapˣᵐ-∘ idᵐ (map+ᵐ a b) idᵐ ι)
-          (≈ᵐ-trans (mapˣᵐ-cong ≈ᵐ-refl e)
-                    (≈ᵐ-sym (≈ᵐ-trans (mapˣᵐ-∘ idᵐ ι' idᵐ c)
-                                      (mapˣᵐ-cong ≈ᵐ-refl ≈ᵐ-refl))))))
-        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ p)))
-
   -- absorbing a postcomposition
 
   copairˣᵐ-post : ∀ {X A B C D} → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
@@ -839,16 +814,6 @@ record Category : Set₂ where
           → m ∘ᵐ ⟨ idᵐ , s ⟩ᵐ
           ≈ᵐ caseᵐ s (m ∘ᵐ mapˣᵐ idᵐ inlᵐ) (m ∘ᵐ mapˣᵐ idᵐ inrᵐ)
   caseᵐ-η s m = ∘ᵐ-congˡ (copairˣᵐ-unique _ _ m ≈ᵐ-refl ≈ᵐ-refl)
-
-  caseᵐ-map+ᵐ : ∀ {X A A' B B' C} → (s : X →ᵐ A' +ᵐ B')
-              → (a : A' →ᵐ A) → (b : B' →ᵐ B)
-              → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
-              → caseᵐ (map+ᵐ a b ∘ᵐ s) f g
-              ≈ᵐ caseᵐ s (f ∘ᵐ mapˣᵐ idᵐ a) (g ∘ᵐ mapˣᵐ idᵐ b)
-  caseᵐ-map+ᵐ s a b f g =
-    ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-mapˣᵐ (map+ᵐ a b) s))
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-              (∘ᵐ-congˡ (copairˣᵐ-map+ᵐ f g a b)))
 
   caseᵐ-post : ∀ {X A B C D} → (s : X →ᵐ A +ᵐ B)
              → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C) → (k : C →ᵐ D)
