@@ -41,6 +41,8 @@ examples:
 #   comparisons: cmp at eternal types, refused at
 #     functions and boxes, eternality asked of an unknown
 #     (Generate, Solve)                                  -> compare
+#   completeness on a uniform handler typing
+#     (Localise, Instantiation/)                         -> uniform
 
 examples-stdlib:
 	agda TypeInference/Examples/Stdlib/All.agda
@@ -77,6 +79,9 @@ examples-recursion:
 
 examples-compare:
 	agda TypeInference/Examples/Compare/All.agda
+
+examples-uniform:
+	agda TypeInference/Examples/Uniform/All.agda
 
 clean:
 	git clean -fx

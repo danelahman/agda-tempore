@@ -227,7 +227,7 @@ data NfC where
            → NfC N → NfC (unbox x rel (<:ᵛ-refl A₀) N)
 
   boxⁿ     : ∀ {Γ A ε A₁ ρ} {V : Γ ⟨ ρ ⟩ ⊢V⦂ A₁} {N : Γ ∷ [ ρ ] A₁ ⊢C⦂ A ‼ ε}
-           → NfV V → NfC N → NfC (box V N)
+           → NfV V → NfC N → NfC (box _ V N)
 
 
 -- A normal derivation in a subtype context, with its residual subtyping
@@ -405,7 +405,7 @@ C-subCtx c (unboxⁿ {x = x} {rel = rel} nN) with ≼ᶜ-lookup c x
 C-subCtx c (boxⁿ nV nN) with V-subCtx (≼-⟨⟩ c ≾ᵣ-refl) nV
 ... | nfv V' s nV' eV with C-subCtx (≼-∷ c ([ ≾ᵣ-refl ]ₛ s)) nN
 ...   | nfc N' sv se nN' eN =
-  nfc (box V' N') sv se (boxⁿ nV' nN') (cong₂ box eV eN)
+  nfc (box _ V' N') sv se (boxⁿ nV' nN') (cong₂ (box _) eV eN)
 
 
 -- Normalisation: every derivation has a normal one at a subtype, with the
@@ -553,12 +553,12 @@ C-normalise (unbox x rel p N) with C-normalise N
 ...   | nfc N' sv' se' nN' eN' =
   nfc (unbox x rel (<:ᵛ-refl _) N') (<:ᵛ-trans sv' sv) (≾ₑ-trans se' se)
       (unboxⁿ nN') (cong (unbox (var-pos x)) (trans eN' eN))
-C-normalise (box V N) with V-normalise V
+C-normalise (box _ V N) with V-normalise V
 ... | nfv V' s nV eV with C-normalise N
 ...   | nfc N₁ sv se nN eN with C-subCtx (≼-∷ (≼ᶜ-refl _) ([ ≾ᵣ-refl ]ₛ s)) nN
 ...     | nfc N' sv' se' nN' eN' =
-  nfc (box V' N') (<:ᵛ-trans sv' sv) (≾ₑ-trans se' se)
-      (boxⁿ nV nN') (cong₂ box eV (trans eN' eN))
+  nfc (box _ V' N') (<:ᵛ-trans sv' sv) (≾ₑ-trans se' se)
+      (boxⁿ nV nN') (cong₂ (box _) eV (trans eN' eN))
 C-normalise (subC M (pv ‼ₛ pe)) with C-normalise M
 ... | nfc M' sv se n e =
   nfc M' (<:ᵛ-trans sv pv) (≾ₑ-trans se pe) n e

@@ -156,7 +156,7 @@ licence = ⟪ unlimited , unlimited , upto 1 ⟫ᵐ
 
 sent-twice : [] ⊢C⦂ Unit ‼ ⟪ upto 0 , upto 0 , upto 2 ⟫ᵐ
 sent-twice =
-  box {ρ = licence} (const 42)       -- ∷ [ licence ] Reading
+  box licence (const 42)             -- ∷ [ licence ] Reading
     (unbox Hd (tt , tt , ≤! , tt) (<:ᵛ-refl _)
                                      -- ∷ Reading
       (perform send here             -- ⟨ ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ ⟩ ∷ Unit
@@ -173,7 +173,7 @@ a-third-claim (_ , _ , second , _) = ≰! second
 
 claim-after-a-long-wait : [] ⊢C⦂ Unit ‼ ⟪ upto 1 , upto 1 , upto 1 ⟫ᵐ
 claim-after-a-long-wait =
-  box {ρ = licence} (const 42)       -- ∷ [ licence ] Reading
+  box licence (const 42)             -- ∷ [ licence ] Reading
     (delay 100                       -- ⟨ ⟪ upto 0 , upto 0 , upto 0 ⟫ᵐ ⟩
       (perform read ⋆                -- ⟨ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ ⟩ ∷ Reading
         (perform write here          -- ⟨ ⟪ upto 0 , upto 1 , upto 0 ⟫ᵐ ⟩ ∷ Unit

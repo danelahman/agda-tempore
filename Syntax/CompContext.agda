@@ -339,7 +339,7 @@ unbox[ p ]ₖ x rel w K [ N ] =
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
              (sym (++ᶜ-assoc _ ([] ∷ _) (hole-ctx K))))) N ])
 box[ p ]ₖ V K [ N ] =
-  box V
+  box _ V
     (K [ C-rename (eq-ren
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))

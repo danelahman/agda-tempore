@@ -10,7 +10,7 @@
 --                                                              --
 -- A uniform typing in a context `Γ'` meaning `Δ` embeds as an  --
 -- open typing `∅ᴴ ∣ Γ' ⊢C⦂ ⌜ C ⌝ᶜ` at the empty scope erasing  --
--- to `M` (`embedᶜ`, `embedᵛ`), and erases to `⌊ M ⌋ᴿᶜ`         --
+-- to `M` (`embedᶜ`, `embedᵛ`), and erases to `⌞ M ⌟ᴿᶜ`         --
 -- (`uniform-⌊⌋ᶜ`). Grades of `Γ'` and `M` are expressions,     --
 -- those of `D` their values; they meet through `⌞_⌟` and the   --
 -- conversion of a closed expression to its value.              --
@@ -163,8 +163,7 @@ Clause Γ' B op =
 -- constant, so that `⌞ Γ' ⌟ᶜᵗˣ` stays the context of `D`.
 --
 -- A box grade is part of the program: the raw `box ρ V N` carries it,
--- and a typing of `M` uses it. Erasure drops it only because the closed
--- `box` rule leaves its grade implicit.
+-- and the declarative box of a uniform typing is at its value `⌞ ρ ⌟ʳ`.
 --
 -- Uniform handlers are the paper rule: one derivation per operation
 -- clause, parametric in the continuation grade. The closed rule's
@@ -311,11 +310,10 @@ mutual
 
     -- the box at the program's grade
 
-    u-box    : ∀ {n} {Γ' : OCtx ∅ˢ n} {ρ : RExp ∅ˢ} {Vᴿ Nᴿ Δ A C ρᴰ}
-               {V : Δ ⟨ ρᴰ ⟩ ⊢V⦂ A} {N : Δ ∷ [ ρᴰ ] A ⊢C⦂ C}
-             → ⌞ ρ ⌟ʳ ≡ ρᴰ
+    u-box    : ∀ {n} {Γ' : OCtx ∅ˢ n} {ρ : RExp ∅ˢ} {Vᴿ Nᴿ Δ A C}
+               {V : Δ ⟨ ⌞ ρ ⌟ʳ ⟩ ⊢V⦂ A} {N : Δ ∷ [ ⌞ ρ ⌟ʳ ] A ⊢C⦂ C}
              → Uᵛ (Γ' ⟨ ρ ⟩) Vᴿ V → Uᶜ (Γ' ∷ [ ρ ] ⌜ A ⌝ᵛ) Nᴿ N
-             → Uᶜ Γ' (box ρ Vᴿ Nᴿ) (box V N)
+             → Uᶜ Γ' (box ρ Vᴿ Nᴿ) (box ⌞ ρ ⌟ʳ V N)
 
     u-subC   : ∀ {n} {Γ' : OCtx ∅ˢ n} {Mᴿ Δ C C'} {M : Δ ⊢C⦂ C} {p : C <:ᶜ C'}
              → Uᶜ Γ' Mᴿ M → Uᶜ Γ' Mᴿ (subC M p)
@@ -330,7 +328,7 @@ mutual
 mutual
 
   uniform-⌊⌋ᵛ : ∀ {n} {Γ' : OCtx ∅ˢ n} {Vᴿ Δ A} {V : Δ ⊢V⦂ A}
-              → Uᵛ Γ' Vᴿ V → CE.⌊ V ⌋ᵛ ≡ ⌊ Vᴿ ⌋ᴿᵛ
+              → Uᵛ Γ' Vᴿ V → CE.⌊ V ⌋ᵛ ≡ ⌞ Vᴿ ⌟ᴿᵛ
   uniform-⌊⌋ᵛ (u-var p)    = cong var p
   uniform-⌊⌋ᵛ u-const      = refl
   uniform-⌊⌋ᵛ u-⋆          = refl
@@ -348,7 +346,7 @@ mutual
   uniform-⌊⌋ᵛ (u-annᵛ u)   = uniform-⌊⌋ᵛ u
 
   uniform-⌊⌋ᶜ : ∀ {n} {Γ' : OCtx ∅ˢ n} {Mᴿ Δ C} {M : Δ ⊢C⦂ C}
-              → Uᶜ Γ' Mᴿ M → CE.⌊ M ⌋ᶜ ≡ ⌊ Mᴿ ⌋ᴿᶜ
+              → Uᶜ Γ' Mᴿ M → CE.⌊ M ⌋ᶜ ≡ ⌞ Mᴿ ⌟ᴿᶜ
   uniform-⌊⌋ᶜ (u-return u)      = cong return (uniform-⌊⌋ᵛ u)
   uniform-⌊⌋ᶜ (u-seq u v)       = cong₂ _⨟_ (uniform-⌊⌋ᶜ u) (uniform-⌊⌋ᶜ v)
   uniform-⌊⌋ᶜ (u-app u v)       = cong₂ _·_ (uniform-⌊⌋ᵛ u) (uniform-⌊⌋ᵛ v)
@@ -374,10 +372,10 @@ mutual
           (fun-ext λ op → fun-ext λ c →
              trans (m op c)
                    (trans (instᶜ-⌊⌋ (∅ᴰ ,ᵉᴰ c) (⊨ᴰ-,ᵉ c ⊨ᴰ-∅) (Hᵒ op))
-                          (cong ⌊_⌋ᴿᶜ (e op))))
+                          (cong (λ X → ⌊ X ⌋ᴿᶜ (∅ᴰ ,ᵉᴰ c)) (e op))))
           (uniform-⌊⌋ᶜ v)
   uniform-⌊⌋ᶜ (u-unbox p u)     = cong₂ unbox p (uniform-⌊⌋ᶜ u)
-  uniform-⌊⌋ᶜ (u-box _ u v)     = cong₂ box (uniform-⌊⌋ᵛ u) (uniform-⌊⌋ᶜ v)
+  uniform-⌊⌋ᶜ (u-box {ρ = ρ} u v) = cong₂ (box ⌞ ρ ⌟ʳ) (uniform-⌊⌋ᵛ u) (uniform-⌊⌋ᶜ v)
   uniform-⌊⌋ᶜ (u-subC u)        = uniform-⌊⌋ᶜ u
   uniform-⌊⌋ᶜ (u-annᶜ u)        = uniform-⌊⌋ᶜ u
 
@@ -577,9 +575,9 @@ mutual
     unbox x' (val-≾ᵣ⁻ (subst₂ _≾ᵣ_ (sym (valʳ-⌞⌟ ρ' eρ)) (sym (valʳ-⌞⌟ r er)) p))
              (⌞⌟-<:ᵛ A₀' ⌜ A ⌝ᵛ (subst₂ _<:ᵛ_ (sym eA₀) (sym ⌞⌜ A ⌝⌟ᵛ) q)) N' ,
     cong₂ unbox (toℕ-injective (trans epos ep)) e
-  embedᶜ (u-box {ρ = ρ} {A = A} er u v) (a , b) eq
-    with embedᵛ u a (cong₂ _⟨_⟩ eq er)
-       | embedᶜ v b (cong₂ _∷_ eq (cong₂ [_]_ er ⌞⌜ A ⌝⌟ᵛ))
+  embedᶜ (u-box {ρ = ρ} {A = A} u v) (a , b) eq
+    with embedᵛ u a (lock eq ⌞ ρ ⌟ʳ)
+       | embedᶜ v b (cong₂ _∷_ eq (cong ([ ⌞ ρ ⌟ʳ ]_) ⌞⌜ A ⌝⌟ᵛ))
   ... | V' , e | N' , e' = box ρ V' N' , cong₂ (box ρ) e e'
   embedᶜ (u-subC {p = p} u) a eq with embedᶜ u a eq
   ... | M' , e = subC M' (⌜⌝-<:ᶜ p) , e

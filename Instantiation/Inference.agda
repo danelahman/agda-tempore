@@ -6,8 +6,9 @@
 -- scheme `∀ Θ̃. Q̃ ∧ R̃ ⇒ X̃` gives, for every declarative         --
 -- instance `σ` of `Θ̃` with `σ ⊨ᴰ Q̃` and the obligations `R̃`    --
 -- met at `⌜ σ ⌝ˢ`, a declarative typing                        --
--- `⟦ Γ [ σ̃ ]ᶜᵗˣ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ X̃ ⟧ᶜ σ` of the same term          --
--- (`infer-instantiate`), and so does an established check,     --
+-- `⟦ Γ [ σ̃ ]ᶜᵗˣ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ X̃ ⟧ᶜ σ` of the term at the       --
+-- instance `σ̃ ⨟ᴰ σ` of its variables, box grades evaluated    --
+-- there (`infer-instantiate`); so does an established check,   --
 -- through its scheme alone (`check-instantiate`). No instance  --
 -- is chosen.                                                   --
 --                                                              --
@@ -17,7 +18,7 @@
 -- (`⊩ᴼˢ→⊨ᴰᴿ`), not conversely.                                 --
 --                                                              --
 -- A checked program in the empty context is, at each such      --
--- instance, a closed program of the same term, and it halts    --
+-- instance, a closed program of that term, and it halts        --
 -- (`check-program`, by `Adequacy.Normalization.halts`); its    --
 -- denotation in any model is that of the closed program, to    --
 -- which operational soundness and adequacy apply as stated.    --
@@ -74,7 +75,7 @@ open PrincipalScheme
 scheme-instantiate : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n}
                    → (p : PrincipalScheme Γ M)
                    → (σ : DInst (Θ̃ p)) → σ ⊨ᴰ Q̃ p → ∅ᴴ ⊩ᴼˢ R̃ p [ ⌜ σ ⌝ˢ ]
-                   → Σ[ D ∈ ⟦ Γ [ σ̃ p ]ᶜᵗˣ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ X̃ p ⟧ᶜ σ ] (CE.⌊ D ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ)
+                   → Σ[ D ∈ ⟦ Γ [ σ̃ p ]ᶜᵗˣ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ X̃ p ⟧ᶜ σ ] (CE.⌊ D ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ (σ̃ p ⨟ᴰ σ))
 scheme-instantiate {Γ = Γ} {M} p σ s r
   with ⌜⌝ˢ-⊨ s
 ... | h , _
@@ -83,7 +84,9 @@ scheme-instantiate {Γ = Γ} {M} p σ s r
   with instantiateᶜ ∅ᴰ ⊨ᴰ-∅ D
 ... | D' , e' =
   castᶜ pΓ pC D' ,
-  trans (castᶜ-⌊⌋ pΓ pC D') (trans e' (trans (cong ⌊_⌋ᴿᶜ e) (⌊[]⌋ᴿᶜ M (σ̃ p ⨟ˢ δ))))
+  trans (castᶜ-⌊⌋ pΓ pC D')
+    (trans e' (trans (cong (λ X → ⌊ X ⌋ᴿᶜ ∅ᴰ) e)
+                     (trans (⌊[]⌋ᴿᶜ M (σ̃ p ⨟ˢ δ) ∅ᴰ) (⌊≗⌋ᴿᶜ pσ M))))
   where
     δ = ⌜ σ ⌝ˢ
 
@@ -94,13 +97,16 @@ scheme-instantiate {Γ = Γ} {M} p σ s r
     pC : ⌞ X̃ p [ δ ]ᶜ ⌟ᶜ ≡ ⟦ X̃ p ⟧ᶜ σ
     pC = trans (⌞[]⌟ᶜ δ (X̃ p)) (⟦≗⟧ᶜ ⌞⌜ σ ⌝ˢ⌟ (X̃ p))
 
+    pσ : ((σ̃ p ⨟ˢ δ) ⨟ᴰ ∅ᴰ) ≗ᴰ (σ̃ p ⨟ᴰ σ)
+    pσ = ≗ᴰ-trans (⨟ˢ-⨟ᴰ (σ̃ p) δ ∅ᴰ) (⨟ᴰ-≗ (σ̃ p) ⌞⌜ σ ⌝ˢ⌟)
+
 -- Inference: a typed verdict is a family of declarative typings, one
 -- per instance satisfying its scheme
 
 infer-instantiate : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalScheme Γ M}
                   → infer Γ M ≡ typed p
                   → (σ : DInst (Θ̃ p)) → σ ⊨ᴰ Q̃ p → ∅ᴴ ⊩ᴼˢ R̃ p [ ⌜ σ ⌝ˢ ]
-                  → Σ[ D ∈ ⟦ Γ [ σ̃ p ]ᶜᵗˣ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ X̃ p ⟧ᶜ σ ] (CE.⌊ D ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ)
+                  → Σ[ D ∈ ⟦ Γ [ σ̃ p ]ᶜᵗˣ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ X̃ p ⟧ᶜ σ ] (CE.⌊ D ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ (σ̃ p ⨟ᴰ σ))
 infer-instantiate Γ M {p} _ = scheme-instantiate p
 
 -- Checking: the same from an established check, through its scheme
@@ -110,11 +116,11 @@ check-instantiate : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                   → {p : PrincipalScheme Γ M} → {e : Satisfiable (Q̃ p) (R̃ p)}
                   → check Γ M ≡ established p e
                   → (σ : DInst (Θ̃ p)) → σ ⊨ᴰ Q̃ p → ∅ᴴ ⊩ᴼˢ R̃ p [ ⌜ σ ⌝ˢ ]
-                  → Σ[ D ∈ ⟦ Γ [ σ̃ p ]ᶜᵗˣ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ X̃ p ⟧ᶜ σ ] (CE.⌊ D ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ)
+                  → Σ[ D ∈ ⟦ Γ [ σ̃ p ]ᶜᵗˣ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ X̃ p ⟧ᶜ σ ] (CE.⌊ D ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ (σ̃ p ⨟ᴰ σ))
 check-instantiate Γ M {p} _ = scheme-instantiate p
 
 -- A program, checked in the empty context, is at every instance
--- satisfying its scheme a closed program of the same term, and it halts.
+-- satisfying its scheme a closed program of the term there, and it halts.
 -- Its denotation in any model is that of this program, to which
 -- operational soundness and adequacy apply as stated.
 
@@ -125,7 +131,7 @@ check-program : ∀ {Θ} → (M : RawC Θ 0)
               → {p : PrincipalScheme [] M} → {e : Satisfiable (Q̃ p) (R̃ p)}
               → check [] M ≡ established p e
               → (σ : DInst (Θ̃ p)) → σ ⊨ᴰ Q̃ p → ∅ᴴ ⊩ᴼˢ R̃ p [ ⌜ σ ⌝ˢ ]
-              → Σ[ P ∈ [] ⊢C⦂ ⟦ X̃ p ⟧ᶜ σ ] ((CE.⌊ P ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ) × Halts∅ _ P)
+              → Σ[ P ∈ [] ⊢C⦂ ⟦ X̃ p ⟧ᶜ σ ] ((CE.⌊ P ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ (σ̃ p ⨟ᴰ σ)) × Halts∅ _ P)
 check-program M {p} _ σ s r with scheme-instantiate p σ s r
 ... | P , e = P , e , halts∅ (⟦ X̃ p ⟧ᶜ σ) P
   where

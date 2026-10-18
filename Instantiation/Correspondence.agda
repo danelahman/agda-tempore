@@ -19,7 +19,9 @@
 -- Every declarative instance `σ` arises so, from `⌜ σ ⌝ˢ`,     --
 -- which sends each variable to a constant: `⌞ ⌜ σ ⌝ˢ ⌟ˢ` is    --
 -- `σ` pointwise (`⌞⌜_⌝ˢ⌟`), and satisfies what `σ` satisfies   --
--- (`⌜⌝ˢ-⊨`).                                                   --
+-- (`⌜⌝ˢ-⊨`). Obligations, which mention only grades, held at   --
+-- `δ` hold at `⌜ ⌞ δ ⌟ˢ ⌝ˢ` (`⊩ᴼˢ-⌜⌞⌟⌝`), the two being         --
+-- convertible on grades (`⊩ᴼˢ-resp-≡̂ᵍ`).                        --
 ------------------------------------------------------------------
 
 open import Data.Fin using (zero; suc)
@@ -168,6 +170,32 @@ module _ {Θ Θ'} (δ : Subst Θ Θ') (σ : DInst Θ') where
   ⟦[]⟧ᶜᵗˣ []        = refl
   ⟦[]⟧ᶜᵗˣ (Γ ∷ A)   = cong₂ _∷_ (⟦[]⟧ᶜᵗˣ Γ) (⟦[]⟧ᵛ A)
   ⟦[]⟧ᶜᵗˣ (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (⟦[]⟧ᶜᵗˣ Γ) (⟦[]⟧ʳ ρ)
+
+-- Pointwise equality is an equivalence, kept by extension and by
+-- composition; composition with a substitution is associative
+
+≗ᴰ-sym : ∀ {Θ} {σ σ' : DInst Θ} → σ ≗ᴰ σ' → σ' ≗ᴰ σ
+≗ᴰ-sym p = mk≗ᴰ (λ α → sym (ty≗ p α)) (λ i → sym (res≗ p i)) (λ i → sym (eff≗ p i))
+
+≗ᴰ-trans : ∀ {Θ} {σ σ' σ'' : DInst Θ} → σ ≗ᴰ σ' → σ' ≗ᴰ σ'' → σ ≗ᴰ σ''
+≗ᴰ-trans p q = mk≗ᴰ (λ α → trans (ty≗ p α) (ty≗ q α)) (λ i → trans (res≗ p i) (res≗ q i))
+                    (λ i → trans (eff≗ p i) (eff≗ q i))
+
+≗ᴰ-,ᵉ : ∀ {Θ} {σ σ' : DInst Θ} → σ ≗ᴰ σ' → (c : E) → (σ ,ᵉᴰ c) ≗ᴰ (σ' ,ᵉᴰ c)
+≗ᴰ-,ᵉ p c = mk≗ᴰ (ty≗ p) (res≗ p) (λ { zero → refl ; (suc i) → eff≗ p i })
+
+⨟ᴰ-≗ : ∀ {Θ Θ'} → (δ : Subst Θ Θ') → {σ σ' : DInst Θ'} → σ ≗ᴰ σ' → (δ ⨟ᴰ σ) ≗ᴰ (δ ⨟ᴰ σ')
+⨟ᴰ-≗ δ p = mk≗ᴰ (λ α → ⟦≗⟧ᵛ p (sTy δ α)) (λ i → ⟦≗⟧ʳ p (sR δ i)) (λ i → ⟦≗⟧ᵉ p (sE δ i))
+
+⨟ˢ-⨟ᴰ : ∀ {Θ Θ' Θ''} → (δ : Subst Θ Θ') → (δ' : Subst Θ' Θ'') → (σ : DInst Θ'')
+       → ((δ ⨟ˢ δ') ⨟ᴰ σ) ≗ᴰ (δ ⨟ᴰ (δ' ⨟ᴰ σ))
+⨟ˢ-⨟ᴰ δ δ' σ = mk≗ᴰ (λ α → ⟦[]⟧ᵛ δ' σ (sTy δ α)) (λ i → ⟦[]⟧ʳ δ' σ (sR δ i))
+                     (λ i → ⟦[]⟧ᵉ δ' σ (sE δ i))
+
+↑ᵉ-⨟ᴰ : ∀ {Θ Θ'} → (δ : Subst Θ Θ') → (τ : DInst Θ') → (c : E)
+      → ((δ ↑ᵉ) ⨟ᴰ (τ ,ᵉᴰ c)) ≗ᴰ ((δ ⨟ᴰ τ) ,ᵉᴰ c)
+↑ᵉ-⨟ᴰ δ τ c = mk≗ᴰ (λ α → ⟦wkᵉ⟧ᵛ τ c (sTy δ α)) (λ i → ⟦wkᵉ⟧ʳ τ c (sR δ i))
+                   (λ { zero → refl ; (suc i) → ⟦wkᵉ⟧ᵉ τ c (sE δ i) })
 
 -- Entailment along a substitution: an instance of the entailing set,
 -- composed with the substitution, is an instance of the entailed one
@@ -394,9 +422,6 @@ module _ {Θ} (δ : Subst Θ ∅ˢ) where
 
 ⌜⌝ˢ-⊨ : ∀ {Θ} {Q : Hyps Θ} {σ : DInst Θ} → σ ⊨ᴰ Q → ⌜ σ ⌝ˢ ⊨ Q ∣ []
 ⌜⌝ˢ-⊨ {σ = σ} s = ⊨ᴰ→⊨ (⊨ᴰ-≗ (≗ᴰ-sym ⌞⌜ σ ⌝ˢ⌟) s)
-  where
-    ≗ᴰ-sym : ∀ {Θ} {σ σ' : DInst Θ} → σ ≗ᴰ σ' → σ' ≗ᴰ σ
-    ≗ᴰ-sym p = mk≗ᴰ (λ α → sym (ty≗ p α)) (λ i → sym (res≗ p i)) (λ i → sym (eff≗ p i))
 
 ------------------------------------------------------------------------
 -- Obligations: one held in the open syntax, its rigids kept as
@@ -404,18 +429,10 @@ module _ {Θ} (δ : Subst Θ ∅ˢ) where
 
 private
 
-  ≗ᴰ-,ᵉ : ∀ {Θ} {σ σ' : DInst Θ} → σ ≗ᴰ σ' → (c : E) → (σ ,ᵉᴰ c) ≗ᴰ (σ' ,ᵉᴰ c)
-  ≗ᴰ-,ᵉ p c = mk≗ᴰ (ty≗ p) (res≗ p) (λ { zero → refl ; (suc i) → eff≗ p i })
-
   ⊨ᴰ⟨⟩-≗ : ∀ {Θ} {σ σ' : DInst Θ} → (k : ℕ) → {B : Ords (Θ +eⁿ k)}
          → σ ≗ᴰ σ' → σ ⊨ᴰ⟨ k ⟩ B → σ' ⊨ᴰ⟨ k ⟩ B
   ⊨ᴰ⟨⟩-≗ zero    p s = ⊨ᴰᵒ-≗ p s
   ⊨ᴰ⟨⟩-≗ (suc k) p s = λ c → ⊨ᴰ⟨⟩-≗ k (≗ᴰ-,ᵉ p c) (s c)
-
-  ↑ᵉ-⨟ᴰ : ∀ {Θ Θ'} → (δ : Subst Θ Θ') → (τ : DInst Θ') → (c : E)
-        → ((δ ↑ᵉ) ⨟ᴰ (τ ,ᵉᴰ c)) ≗ᴰ ((δ ⨟ᴰ τ) ,ᵉᴰ c)
-  ↑ᵉ-⨟ᴰ δ τ c = mk≗ᴰ (λ α → ⟦wkᵉ⟧ᵛ τ c (sTy δ α)) (λ i → ⟦wkᵉ⟧ʳ τ c (sR δ i))
-                     (λ { zero → refl ; (suc i) → ⟦wkᵉ⟧ᵉ τ c (sE δ i) })
 
   sound-⊩ᴼ : ∀ {Θ Θ'} {Q' : Hyps Θ'} {δ : Subst Θ Θ'} {τ : DInst Θ'}
            → (k : ℕ) → {B : Ords (Θ +eⁿ k)}
@@ -427,3 +444,67 @@ private
 ⊩ᴼˢ→⊨ᴰᴿ : ∀ {Θ} {R : Obligs Θ} {δ : Subst Θ ∅ˢ} → ∅ᴴ ⊩ᴼˢ R [ δ ] → ⌞ δ ⌟ˢ ⊨ᴰᴿ R
 ⊩ᴼˢ→⊨ᴰᴿ []ᴬ                    = []ᴬ
 ⊩ᴼˢ→⊨ᴰᴿ {R = O ∷ˡ R} (h ∷ᴬ hs) = sound-⊩ᴼ (rigids O) h ⊨ᴰ-∅ ∷ᴬ ⊩ᴼˢ→⊨ᴰᴿ hs
+
+------------------------------------------------------------------------
+-- Obligations along convertible instances: two closed instances whose
+-- grade variables go to convertible expressions entail the same
+-- obligations, which mention no types. So `δ` and `⌜ ⌞ δ ⌟ˢ ⌝ˢ`, which
+-- sends each grade variable to the constant of its value, do.
+
+infix 4 _≡̂ᵍ_
+
+record _≡̂ᵍ_ {Θ Ξ} (δ δ' : Subst Θ Ξ) : Set where
+  constructor mk≡̂ᵍ
+  field
+    res≡̂ : ∀ i → sR δ i ≡̂ᵣ sR δ' i
+    eff≡̂ : ∀ i → sE δ i ≡̂ₑ sE δ' i
+
+open _≡̂ᵍ_ public
+
+module _ {Θ Ξ} {δ δ' : Subst Θ Ξ} (p : δ ≡̂ᵍ δ') where
+
+  [≡̂]ᵉ : (ε : EExp Θ) → ε [ δ ]ᵉ ≡̂ₑ ε [ δ' ]ᵉ
+  [≡̂]ᵉ (evar i)   = eff≡̂ p i
+  [≡̂]ᵉ (econst c) = ≡̂ₑ-refl
+  [≡̂]ᵉ (ε ·̂ₑ ε')  = ≡̂ₑ-cong ([≡̂]ᵉ ε) ([≡̂]ᵉ ε')
+  [≡̂]ᵉ (ε ⊔̂ₑ ε')  = ≡̂ₑ-cong-⊔ ([≡̂]ᵉ ε) ([≡̂]ᵉ ε')
+
+  [≡̂]ʳ : (ρ : RExp Θ) → ρ [ δ ]ʳ ≡̂ᵣ ρ [ δ' ]ʳ
+  [≡̂]ʳ (rvar i)   = res≡̂ p i
+  [≡̂]ʳ (rconst c) = ≡̂ᵣ-refl
+  [≡̂]ʳ (ρ ·̂ᵣ ρ')  = ≡̂ᵣ-cong ([≡̂]ʳ ρ) ([≡̂]ʳ ρ')
+  [≡̂]ʳ (ρ ⊔̂ᵣ ρ')  = ≡̂ᵣ-cong-⊔ ([≡̂]ʳ ρ) ([≡̂]ʳ ρ')
+  [≡̂]ʳ ∣ ε ∣̂ᵉ     = ≡̂ᵣ-map-cong ([≡̂]ᵉ ε)
+
+  ⊩ᵒ-resp-≡̂ᵍ : {Q : Hyps Ξ} {o : Ords Θ} → Q ⊩ᵒ o [ δ ] → Q ⊩ᵒ o [ δ' ]
+  ⊩ᵒ-resp-≡̂ᵍ h = mk⊩ᵒ
+    (λ {ρ} {ρ'} m → transᵣ (eqᵣ (≡̂ᵣ-sym ([≡̂]ʳ ρ))) (transᵣ (⊩ors h m) (eqᵣ ([≡̂]ʳ ρ'))))
+    (λ {ε} {ε'} m → transₑ (eqₑ (≡̂ₑ-sym ([≡̂]ᵉ ε))) (transₑ (⊩oes h m) (eqₑ ([≡̂]ᵉ ε'))))
+
+≡̂ᵍ-↑ᵉ : ∀ {Θ Ξ} {δ δ' : Subst Θ Ξ} → δ ≡̂ᵍ δ' → (δ ↑ᵉ) ≡̂ᵍ (δ' ↑ᵉ)
+≡̂ᵍ-↑ᵉ {δ = δ} {δ'} p = mk≡̂ᵍ
+  (λ i → subst₂ _≡̂ᵣ_ (wkˢᵉ-r (sR δ i)) (wkˢᵉ-r (sR δ' i)) (≡̂ᵣ-subst wkˢᵉ (res≡̂ p i)))
+  (λ { zero    → ≡̂ₑ-refl
+     ; (suc i) → subst₂ _≡̂ₑ_ (wkˢᵉ-e (sE δ i)) (wkˢᵉ-e (sE δ' i))
+                        (≡̂ₑ-subst wkˢᵉ (eff≡̂ p i)) })
+
+≡̂ᵍ-↑ᵉⁿ : ∀ {Θ Ξ} {δ δ' : Subst Θ Ξ} → (k : ℕ) → δ ≡̂ᵍ δ' → (δ ↑ᵉⁿ k) ≡̂ᵍ (δ' ↑ᵉⁿ k)
+≡̂ᵍ-↑ᵉⁿ zero    p = p
+≡̂ᵍ-↑ᵉⁿ (suc k) p = ≡̂ᵍ-↑ᵉⁿ k (≡̂ᵍ-↑ᵉ p)
+
+⊩ᴼˢ-resp-≡̂ᵍ : ∀ {Θ Ξ} {Q : Hyps Ξ} {R : Obligs Θ} {δ δ' : Subst Θ Ξ}
+            → δ ≡̂ᵍ δ' → Q ⊩ᴼˢ R [ δ ] → Q ⊩ᴼˢ R [ δ' ]
+⊩ᴼˢ-resp-≡̂ᵍ p []ᴬ = []ᴬ
+⊩ᴼˢ-resp-≡̂ᵍ {R = O ∷ˡ R} p (h ∷ᴬ hs) =
+  ⊩ᵒ-resp-≡̂ᵍ (≡̂ᵍ-↑ᵉⁿ (rigids O) p) h ∷ᴬ ⊩ᴼˢ-resp-≡̂ᵍ p hs
+
+-- a closed instance is convertible to the constants of its values
+
+⌜⌞_⌟⌝ᵍ : ∀ {Θ} → (δ : Subst Θ ∅ˢ) → δ ≡̂ᵍ ⌜ ⌞ δ ⌟ˢ ⌝ˢ
+⌜⌞ δ ⌟⌝ᵍ = mk≡̂ᵍ
+  (λ i → subst (λ c → sR δ i ≡̂ᵣ rconst c) (sym (⌞⌟-valʳ (sR δ i))) (valʳ-conv (sR δ i)))
+  (λ i → subst (λ c → sE δ i ≡̂ₑ econst c) (sym (⌞⌟-valᵉ (sE δ i))) (valᵉ-conv (sE δ i)))
+
+⊩ᴼˢ-⌜⌞⌟⌝ : ∀ {Θ} {R : Obligs Θ} → (δ : Subst Θ ∅ˢ)
+         → ∅ᴴ ⊩ᴼˢ R [ δ ] → ∅ᴴ ⊩ᴼˢ R [ ⌜ ⌞ δ ⌟ˢ ⌝ˢ ]
+⊩ᴼˢ-⌜⌞⌟⌝ δ = ⊩ᴼˢ-resp-≡̂ᵍ ⌜⌞ δ ⌟⌝ᵍ

@@ -69,6 +69,10 @@
 -- pairs and sums, refused at functions and boxes, polymorphic  --
 -- with the operands' type asked to be eternal, and after a     --
 -- tick, at left- and right-sided time.                         --
+--                                                              --
+-- Set 13 consists of a declarative typing of a handler whose   --
+-- clause resumes, shown uniform, to which completeness applies --
+-- at right-sided time.                                         --
 ------------------------------------------------------------------
 
 module TypeInference.Examples where
@@ -129,3 +133,7 @@ import TypeInference.Examples.Recursion.All
 -- Comparisons: the generic module and its instances
 
 import TypeInference.Examples.Compare.All
+
+-- Completeness on a uniform handler typing
+
+import TypeInference.Examples.Uniform.All

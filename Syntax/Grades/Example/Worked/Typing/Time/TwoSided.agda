@@ -185,7 +185,7 @@ sampling-then-branching =
 
 claim-in-the-window : [] ⊢C⦂ Unit ‼ [ 7 , 9 ]
 claim-in-the-window =
-  box {ρ = [ 2 , 6 ]} (const 42)     -- ∷ [ [ 2 , 6 ] ] Reading
+  box [ 2 , 6 ] (const 42)           -- ∷ [ [ 2 , 6 ] ] Reading
     (delay 3                         -- ⟨ [ 3 , 3 ] ⟩
       (unbox (Tl-⟨⟩ Hd) (≤! , ≤!) (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -206,7 +206,7 @@ claim-too-late (_ , hi) = ≰! hi
 
 claim-after-storing : [] ⊢C⦂ Unit ‼ [ 7 , 10 ]
 claim-after-storing =
-  box {ρ = [ 1 , 6 ]} (const 42)     -- ∷ [ [ 1 , 6 ] ] Reading
+  box [ 1 , 6 ] (const 42)           -- ∷ [ [ 1 , 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
       (perform write here            -- ⟨ [ 2 , 3 ] ⟩ ∷ Unit
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (≤! , ≤!) (<:ᵛ-refl _)
@@ -215,7 +215,7 @@ claim-after-storing =
 
 handed-over : [] ⊢C⦂ Unit ‼ [ 6 , 9 ]
 handed-over =
-  box {ρ = [ 1 , 6 ]} (const 42)     -- ∷ [ [ 1 , 6 ] ] Reading
+  box [ 1 , 6 ] (const 42)           -- ∷ [ [ 1 , 6 ] ] Reading
     (lam                             -- ∷ [ [ 1 , 6 ] ] Reading
        (perform write (const 0)      -- ⟨ [ 2 , 3 ] ⟩ ∷ Unit
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!) (<:ᵛ-refl _)
@@ -227,7 +227,7 @@ handed-over =
 
 claiming-now : [] ⊢C⦂ Unit ‼ [ 4 , 6 ]
 claiming-now =
-  box {ρ = [ 0 , 6 ]} (const 42)     -- ∷ [ [ 0 , 6 ] ] Reading
+  box [ 0 , 6 ] (const 42)           -- ∷ [ [ 0 , 6 ] ] Reading
     (unbox Hd (≤! , ≤!) (<:ᵛ-refl _) -- ∷ Reading
       (perform send here (return ⋆)))
 
@@ -236,7 +236,7 @@ claiming-now =
 
 either-way : [] ∷ Bool ⊢C⦂ Unit ‼ [ 5 , 7 ]
 either-way =
-  box {ρ = [ 0 , 6 ]} (const 42)     -- ∷ [ [ 0 , 6 ] ] Reading
+  box [ 0 , 6 ] (const 42)           -- ∷ [ [ 0 , 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!) (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -253,7 +253,7 @@ either-way =
 
 claimed-in-both-branches : [] ⊢C⦂ Unit ‼ [ 5 , 12 ]
 claimed-in-both-branches =
-  box {ρ = [ 0 , 8 ]} (const 42)     -- ∷ [ [ 0 , 8 ] ] Reading
+  box [ 0 , 8 ] (const 42)           -- ∷ [ [ 0 , 8 ] ] Reading
     (if true
       `then coerce (≤! , ≤!)
               (perform read ⋆        -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
@@ -280,7 +280,7 @@ claimed-in-both-branches =
 
 claim-after-a-store : [] ⊢C⦂ Unit ‼ [ 7 , 10 ]
 claim-after-a-store =
-  box {ρ = [ 3 , 6 ]} (const 42)     -- ∷ [ [ 3 , 6 ] ] Reading
+  box [ 3 , 6 ] (const 42)           -- ∷ [ [ 3 , 6 ] ] Reading
     ((perform read ⋆ (perform write here (return ⋆)))
       ⨟                              -- ⟨ [ 3 , 4 ] ⟩ ∷ Unit
         unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!) (<:ᵛ-refl _)
@@ -298,7 +298,7 @@ coercing-closes-it (lo , _) = ≰! lo
 
 claim-after-a-coerced-store : [] ⊢C⦂ Unit ‼ [ 6 , 12 ]
 claim-after-a-coerced-store =
-  box {ρ = [ 2 , 6 ]} (const 42)     -- ∷ [ [ 2 , 6 ] ] Reading
+  box [ 2 , 6 ] (const 42)           -- ∷ [ [ 2 , 6 ] ] Reading
     (coerce {ε' = [ 2 , 6 ]} (≤! , ≤!)
        (perform read ⋆ (perform write here (return ⋆)))
       ⨟                              -- ⟨ [ 2 , 6 ] ⟩ ∷ Unit
@@ -315,7 +315,7 @@ claim-after-a-coerced-store =
 
 window-in-a-branch : [] ∷ Bool ⊢C⦂ Unit ‼ [ 6 , 12 ]
 window-in-a-branch =
-  box {ρ = [ 2 , 6 ]} (const 42)     -- ∷ [ [ 2 , 6 ] ] Reading
+  box [ 2 , 6 ] (const 42)           -- ∷ [ [ 2 , 6 ] ] Reading
     (if eternal-var Boolₑ (Tl-∷ Hd)
       `then coerce (≤! , ≤!)
               (delay 3               -- ⟨ [ 3 , 3 ] ⟩
@@ -341,8 +341,8 @@ one-reading-too-many (_ , hi) = ≰! hi
 
 staggered : [] ⊢C⦂ Unit ‼ [ 11 , 15 ]
 staggered =
-  box {ρ = [ 2 , 6 ]} (const 1)      -- ∷ [ [ 2 , 6 ] ] Reading
-    (box {ρ = [ 6 , 12 ]} (const 2)
+  box [ 2 , 6 ] (const 1)            -- ∷ [ [ 2 , 6 ] ] Reading
+    (box [ 6 , 12 ] (const 2)
                                      -- ∷ [ [ 6 , 12 ] ] Reading
       (delay 3                       -- ⟨ [ 3 , 3 ] ⟩
         (unbox (Tl-⟨⟩ (Tl-∷ Hd)) (≤! , ≤!) (<:ᵛ-refl _)

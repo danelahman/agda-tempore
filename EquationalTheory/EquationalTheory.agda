@@ -394,7 +394,7 @@ mutual
              → Γ ⟨ ρ ⟩ ⊢V⦂ V == W
              → Γ ∷ [ ρ ] A ⊢C⦂ M == N
              --------------------------
-             → Γ ⊢C⦂ box V M == box W N
+             → Γ ⊢C⦂ box _ V M == box _ W N
 
     subC-cong : ∀ {C C'}
               → {w w' : C <:ᶜ C'}
@@ -454,8 +454,8 @@ mutual
             → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
             → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
             -------------------------------------------------------
-            → Γ ⊢C⦂ box V M ⨟ N
-                == box V (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
+            → Γ ⊢C⦂ box _ V M ⨟ N
+                == box _ V (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
 
     seq-unbox : ∀ {A A₀ B C ρ₀ ρ' ε ε'}
               → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ)
@@ -731,7 +731,7 @@ mutual
                    ----------------------------------------------------------------
                    → Γ ⊢C⦂ handle perform op V M `with H `in N
                        == ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
-                            (box (lam
+                            (box _ (lam
                                    (handle M
                                    `with (λ op' ε'' →
                                             C-rename
@@ -782,8 +782,8 @@ mutual
                           ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
                  ------------------------------------------------------------------------------
-                 → Γ ⊢C⦂ handle box V M `with H `in N
-                     == box V
+                 → Γ ⊢C⦂ handle box _ V M `with H `in N
+                     == box _ V
                         (handle M
                         `with (λ op' ε'' →
                                  C-rename (cong-∷-ren (cong-∷-ren
@@ -821,12 +821,12 @@ mutual
                → (w : A <:ᵛ A')
                → (N : (Γ ∷ [ ρ ] A ++ᶜ hole-ctx K) ∷ A' ⊢C⦂ D)
                -----------------------------------------------------------------------
-               → Γ ⊢C⦂ box V (K [ unbox (∈-++ᶜˡ (hole-ctx K) Hd)
+               → Γ ⊢C⦂ box _ V (K [ unbox (∈-++ᶜˡ (hole-ctx K) Hd)
                                         (≾ᵣ-trans (≾ᵣ-reflexive
                                                     (grade-++ᶜˡ-uᵣ (hole-ctx K)))
                                                   p)
                                         w N ])
-                   == box V (K [ N [ split-[] ↦ subV (V-rename ((cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ wk-ren-⟨ρ⟩-ctx refl) V) w ]c ])
+                   == box _ V (K [ N [ split-[] ↦ subV (V-rename ((cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ wk-ren-⟨ρ⟩-ctx refl) V) w ]c ])
 
 
     -- unboxing non-related values commute
@@ -854,10 +854,10 @@ mutual
              → (W : Γ ⟨ ρ' ⟩ ⊢V⦂ B)
              → (M : Γ ∷ [ ρ ] A ∷ [ ρ' ] B ⊢C⦂ C)
              -------------------------------------------------
-             → Γ ⊢C⦂ box V
-                     (box (V-rename (cong-⟨⟩-ren wk-ren) W) M)
-                 == box W
-                     (box
+             → Γ ⊢C⦂ box _ V
+                     (box _ (V-rename (cong-⟨⟩-ren wk-ren) W) M)
+                 == box _ W
+                     (box _
                        (V-rename (cong-⟨⟩-ren wk-ren) V)
                        (C-rename exch-ren M))
 
@@ -867,7 +867,7 @@ mutual
                    → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
                    → (M : Γ ⊢C⦂ C ‼ ε)
                    -----------------------------------
-                   → Γ ⊢C⦂ box V (C-rename wk-ren M)
+                   → Γ ⊢C⦂ box _ V (C-rename wk-ren M)
                        == M
 
     -- eta rule for unbox
@@ -890,10 +890,10 @@ mutual
                    → (w₂ : B₂ <:ᵛ B)
                    → (M : Γ ∷ [ ρ ] A ∷ B ⊢C⦂ C)
                    -----------------------------------
-                   → Γ ⊢C⦂ box V
+                   → Γ ⊢C⦂ box _ V
                             (unbox (Tl-∷ x₂) rel₂ w₂ M)
                        == unbox x₂ rel₂ w₂
-                            (box
+                            (box _
                               (V-rename (cong-⟨⟩-ren wk-ren) V)
                               (C-rename exch-ren M))
 
@@ -975,7 +975,7 @@ mutual
              → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
              → (M : Γ ∷ [ ρ ] A ⊢C⦂ C)
              ----------------------------------------------------
-             → Γ ⊢C⦂ subC (box V M) w == box V (subC M w)
+             → Γ ⊢C⦂ subC (box _ V M) w == box _ V (subC M w)
 
     subC-unbox : ∀ {A A₀ C C' ρ₀ ρ'}
                → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ)

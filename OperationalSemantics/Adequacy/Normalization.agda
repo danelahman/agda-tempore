@@ -328,7 +328,7 @@ FL-box : ∀ {St Γ A D ρ ε} → (γ : Env St Γ) → Rel-Env γ
        → (∀ {St'} → (γ' : Env St' (Γ ∷ [ ρ ] A)) → Rel-Env γ'
             → CRed' D ε St' (env-C γ' M))
        --------------------------------------------------------------
-       → CRed' D ε St (env-C γ (box V M))
+       → CRed' D ε St (env-C γ (box _ V M))
 
 FL-box {St = St} {Γ = Γ} {A = A} {ρ = ρ} γ pγ V M pV pM =
   subst (CRed' _ _ St) (sym (env-Cˢ-box γ [] V M))
@@ -556,7 +556,7 @@ mutual
   FL-C γ pγ (perform op V M) =
     FL-perform γ pγ V M (FL-V γ pγ V) (λ γ' pγ' → FL-C γ' pγ' M)
 
-  FL-C γ pγ (box V M) =
+  FL-C γ pγ (box _ V M) =
     FL-box γ pγ V M (λ γ' pγ' → FL-V γ' pγ' V) (λ γ' pγ' → FL-C γ' pγ' M)
 
   FL-C γ pγ (unbox x rel p M) =

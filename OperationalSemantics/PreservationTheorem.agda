@@ -317,7 +317,7 @@ mutual
                     → {N : toCtx S ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε''}
                       --------------------------------------------------------------------------
                     → ⟨ S , handle perform op V M `with H `in N ⟩ ↝
-                      ⟨ S , box (lam
+                      ⟨ S , box _ (lam
                               (handle M
                               `with (λ op' ε' →
                                        C-rename
@@ -341,7 +341,7 @@ mutual
                     → {V : toCtx S ⟨ ρ' ⟩ ⊢V⦂ A}
                     → {M : toCtx S ∷ [ ρ' ] A ⊢C⦂ B ‼ ε}
                       -------------------------------------------------------
-                    → ⟨ S , (box V M) ⟩ ↝
+                    → ⟨ S , (box _ V M) ⟩ ↝
                       ⟨ extend-state S (V-rename (eq-ren (sym ++ᶜ-identityˡ)) V) , M ⟩
 
 

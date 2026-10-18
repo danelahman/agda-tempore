@@ -549,7 +549,7 @@ sound-RECL St V M N p pV pM pN =
 sound-BOX : ∀ {A B ρ ε} → (St : 𝕊 []) → (V : toCtx St ⟨ ρ ⟩ ⊢V⦂ A)
           → (M : toCtx St ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
           → (pSt : Paramˢ St) → (pV : Paramᵛ V) → (pM : Paramᶜ M)
-          → ⟦ box V M ⟧ᶜᵗ (pV , pM) ∘ᵐ ⟦ St ⟧ˢ pSt
+          → ⟦ box _ V M ⟧ᶜᵗ (pV , pM) ∘ᵐ ⟦ St ⟧ˢ pSt
           ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ∷ₛ V-rename (eq-ren (sym ++ᶜ-identityˡ)) V ⟧ˢ
                             (pSt , renᵛ (eq-ren (sym ++ᶜ-identityˡ)) V pV)
 sound-BOX {ρ = ρ} St V M pSt pV pM =

@@ -182,5 +182,5 @@ mutual
     unbox (proj₁ (proj₂ (rvar-rename r x)))
           (≾ᵣ-trans (proj₂ (proj₂ (rvar-rename r x))) rel) p
           (C-rename (cong-ren r) M)
-  C-rename r (box V M) = box (V-rename (cong-ren r) V) (C-rename (cong-ren r) M)
+  C-rename r (box _ V M) = box _ (V-rename (cong-ren r) V) (C-rename (cong-ren r) M)
   C-rename r (subC M p) = subC (C-rename r M) p

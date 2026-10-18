@@ -1,11 +1,13 @@
 ------------------------------------------------------------------
 -- Erasure of well-typed terms to their underlying raw terms.    --
 --                                                               --
--- `ErV`/`ErC` are the term formers with every type, grade and   --
--- subsumption witness dropped; variables become de Bruijn       --
--- positions, counting binders and skipping locks. Two           --
--- derivations have the same erasure exactly when they are the   --
--- same program typed differently.                               --
+-- `ErV`/`ErC` are the term formers with every type, side       --
+-- condition and subsumption witness dropped; a box keeps its    --
+-- grade and a delay its duration, both being part of the        --
+-- program. Variables become de Bruijn positions, counting       --
+-- binders and skipping locks. Two derivations have the same     --
+-- erasure exactly when they are the same program typed          --
+-- differently.                                                  --
 --                                                               --
 -- A handler's clause family is indexed by the operation and the --
 -- continuation's effect, as in the typing rule, so that equal   --
@@ -65,7 +67,7 @@ mutual
     delay             : 𝔻 → ErC → ErC
     handle_`with_`in  : ErC → (Op → E → ErC) → ErC → ErC
     unbox             : ℕ → ErC → ErC
-    box               : ErV → ErC → ErC
+    box               : R → ErV → ErC → ErC
 
 -- De Bruijn position of a variable: locks contribute nothing.
 
@@ -114,5 +116,5 @@ mutual
   ⌊ handle M `with H `in N ⌋ᶜ =
     handle ⌊ M ⌋ᶜ `with (λ op ε'' → ⌊ H op ε'' ⌋ᶜ) `in ⌊ N ⌋ᶜ
   ⌊ unbox x rel p N ⌋ᶜ        = unbox (var-pos x) ⌊ N ⌋ᶜ
-  ⌊ box V N ⌋ᶜ                = box ⌊ V ⌋ᵛ ⌊ N ⌋ᶜ
+  ⌊ box ρ V N ⌋ᶜ              = box ρ ⌊ V ⌋ᵛ ⌊ N ⌋ᶜ
   ⌊ subC M p ⌋ᶜ               = ⌊ M ⌋ᶜ

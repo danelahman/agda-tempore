@@ -102,5 +102,5 @@ mutual
           (≾ᵣ-trans (≾ᵣ-trans (tgt-≾₀ s x) rel) (tgt-grade-≾₀ s x))
           (<:ᵛ-trans (tgt-type-<:₀ s x) p)
           (C-sub₀ (cong-sub₀ s) M)
-  C-sub₀ s (box V M) = box (V-sub₀ (cong-sub₀ s) V) (C-sub₀ (cong-sub₀ s) M)
+  C-sub₀ s (box _ V M) = box _ (V-sub₀ (cong-sub₀ s) V) (C-sub₀ (cong-sub₀ s) M)
   C-sub₀ s (subC M p) = subC (C-sub₀ s M) p

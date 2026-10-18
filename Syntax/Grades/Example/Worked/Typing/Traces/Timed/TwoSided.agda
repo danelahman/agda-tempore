@@ -160,7 +160,7 @@ either-reading =
 claim-after-storing :
   [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉)
 claim-after-storing =
-  box {ρ = contract} (const 42)      -- ∷ [ contract ] Reading
+  box contract (const 42)            -- ∷ [ contract ] Reading
     (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
       (perform write here            -- ⟨ exact ⌈ write ⌉ ⟩ ∷ Unit
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (holds _ _) (<:ᵛ-refl _)
@@ -169,7 +169,7 @@ claim-after-storing =
 
 handed-over : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 handed-over =
-  box {ρ = contract} (const 42)      -- ∷ [ contract ] Reading
+  box contract (const 42)            -- ∷ [ contract ] Reading
     (lam                             -- ∷ [ contract ] Reading
        (perform read ⋆               -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _) (<:ᵛ-refl _)
@@ -179,7 +179,7 @@ handed-over =
 
 either-way : [] ∷ Bool ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 either-way =
-  box {ρ = contract} (const 42)      -- ∷ [ contract ] Reading
+  box contract (const 42)            -- ∷ [ contract ] Reading
     (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -221,7 +221,7 @@ alternatives = [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⟨ 6 �
 claimed-in-both-branches :
   [] ⊢C⦂ Unit ‼ [ ⟅ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⟨ 12 ⟩ ⟆ ]
 claimed-in-both-branches =
-  box {ρ = alternatives} (const 42)  -- ∷ [ alternatives ] Reading
+  box alternatives (const 42)        -- ∷ [ alternatives ] Reading
     (if true
       `then coerce (holds _ _)
               (perform read ⋆        -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
@@ -273,7 +273,7 @@ claim-after-a-branch :
   [] ∷ Bool ⊢C⦂ Unit ‼ [ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆ˡᵒ
                        , within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆ ]
 claim-after-a-branch =
-  box {ρ = mixed-contract} (const 42)
+  box mixed-contract (const 42)
                                      -- ∷ [ mixed-contract ] Reading
     ((if eternal-var Boolₑ (Tl-∷ Hd)
         `then coerce {ε' = branch-join} (holds _ _)
@@ -296,7 +296,7 @@ claim-after-a-branch =
 store-or-not :
   [] ∷ Bool ⊢C⦂ Unit ‼ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 9 ⟩ ⟆ ]
 store-or-not =
-  box {ρ = contract} (const 42)      -- ∷ [ contract ] Reading
+  box contract (const 42)            -- ∷ [ contract ] Reading
     (if eternal-var Boolₑ (Tl-∷ Hd)
       `then coerce (holds _ _)
               (perform read ⋆        -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading

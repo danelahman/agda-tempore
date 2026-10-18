@@ -198,7 +198,7 @@ demand = ⟅ ⌈ read ⌉ ⟆
 
 claim-after-storing : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-storing =
-  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+  box demand (const 42)              -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
     (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (perform write here            -- ⟨ ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) holds (<:ᵛ-refl _)
@@ -207,7 +207,7 @@ claim-after-storing =
 
 handed-over : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over =
-  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+  box demand (const 42)              -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
     (lam                             -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
        (perform read ⋆               -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
@@ -222,7 +222,7 @@ handed-over =
 
 handed-over' : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over' =
-  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+  box demand (const 42)              -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
     (lam                             -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
        (perform read ⋆               -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
          (perform read ⋆             -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
@@ -233,7 +233,7 @@ handed-over' =
 
 either-way : [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 either-way =
-  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+  box demand (const 42)              -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
     (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -261,7 +261,7 @@ waiting = ⟅ ⟨ 2 ⟩ ⟆
 
 claim-after-idling : [] ⊢C⦂ Unit ‼ ⟅ ⟨ 3 ⟩ ∙ ⌈ send ⌉ ⟆
 claim-after-idling =
-  box {ρ = waiting} (const 42)       -- ∷ [ ⟅ ⟨ 2 ⟩ ⟆ ] Reading
+  box waiting (const 42)             -- ∷ [ ⟅ ⟨ 2 ⟩ ⟆ ] Reading
     (delay 3                         -- ⟨ ⟅ ⟨ 3 ⟩ ⟆ ⟩
       (unbox (Tl-⟨⟩ Hd) holds (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -282,7 +282,7 @@ alternatives = ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
 
 claimed-in-both-branches : [] ⊢C⦂ Unit ‼ ⟅ ⌈ send ⌉ ⟆
 claimed-in-both-branches =
-  box {ρ = alternatives} (const 42)
+  box alternatives (const 42)
                                      -- ∷ [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ ] Reading
     (if true
       `then coerce holds
@@ -317,7 +317,7 @@ transmitting-branch-does-not = fails
 
 claim-after-a-reading : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-a-reading =
-  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+  box demand (const 42)              -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
     ((perform read ⋆ (return here))
       ⨟                              -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
         unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
@@ -366,7 +366,7 @@ storing-branch-not-the-reading = fails
 claim-after-a-branch :
   [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-a-branch =
-  box {ρ = mixed-demand} (const 42)
+  box mixed-demand (const 42)
                                      -- ∷ [ ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     ((if eternal-var Boolₑ (Tl-∷ Hd)
         `then coerce {ε' = after-the-join} holds (perform read ⋆ (return ⋆))
@@ -410,7 +410,7 @@ claim-after-three-ways :
                        ∣ ⌈ write ⌉ ∙ ⌈ send ⌉
                        ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-three-ways =
-  box {ρ = ⟅ ⟨ 1 ⟩ ⟆} (const 42)     -- ∷ [ ⟅ ⟨ 1 ⟩ ⟆ ] Reading
+  box ⟅ ⟨ 1 ⟩ ⟆ (const 42)           -- ∷ [ ⟅ ⟨ 1 ⟩ ⟆ ] Reading
     ((if eternal-var Boolₑ (Tl-∷ Hd)
         `then coerce {ε' = three-ways} holds (perform read ⋆ (return ⋆))
         `else (if eternal-var Boolₑ (Tl-∷ Hd)
@@ -440,7 +440,7 @@ two-ticks = ⟅ ⟨ 2 ⟩ ⟆
 
 work-or-wait : [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⟨ 6 ⟩ ⟆
 work-or-wait =
-  box {ρ = two-ticks} (const 42)     -- ∷ [ ⟅ ⟨ 2 ⟩ ⟆ ] Reading
+  box two-ticks (const 42)           -- ∷ [ ⟅ ⟨ 2 ⟩ ⟆ ] Reading
     (if eternal-var Boolₑ (Tl-∷ Hd)
       `then coerce holds
               (perform write (const 0)

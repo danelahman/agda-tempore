@@ -172,7 +172,7 @@ report = ([ 5 ,+∞⟩ , Low)
 
 published : [] ⊢C⦂ Unit ‼ ([ 9 ,+∞⟩ , High)
 published =
-  box {ρ = report} (const 42)        -- ∷ [ report ] Reading
+  box report (const 42)              -- ∷ [ report ] Reading
     (perform read ⋆                  -- ⟨ ([ 1 ,+∞⟩ , Low) ⟩ ∷ Reading
       (perform write here            -- ⟨ ([ 2 ,+∞⟩ , Low) ⟩ ∷ Unit
         (delay 2                     -- ⟨ ([ 2 ,+∞⟩ , Low) ⟩
@@ -184,7 +184,7 @@ published =
 
 waited-out : [] ⊢C⦂ Unit ‼ ([ 9 ,+∞⟩ , High)
 waited-out =
-  box {ρ = report} (const 42)        -- ∷ [ report ] Reading
+  box report (const 42)              -- ∷ [ report ] Reading
     (delay 5                         -- ⟨ ([ 5 ,+∞⟩ , Low) ⟩
       (unbox (Tl-⟨⟩ Hd) (≤! , ⊑!) (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -213,7 +213,7 @@ cleared = ([ 5 ,+∞⟩ , High)
 
 relayed-then-published : [] ⊢C⦂ Unit ‼ ([ 9 ,+∞⟩ , High)
 relayed-then-published =
-  box {ρ = cleared} (const 42)       -- ∷ [ cleared ] Reading
+  box cleared (const 42)             -- ∷ [ cleared ] Reading
     (perform read ⋆                  -- ⟨ ([ 1 ,+∞⟩ , Low) ⟩ ∷ Reading
       (perform send here             -- ⟨ ([ 4 ,+∞⟩ , High) ⟩ ∷ Unit
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (≤! , ⊑!) (<:ᵛ-refl _)
@@ -228,7 +228,7 @@ relayed-then-published =
 
 quiet-branch : [] ∷ Bool ⊢C⦂ Unit ‼ ([ 4 ,+∞⟩ , High)
 quiet-branch =
-  box {ρ = report} (const 42)        -- ∷ [ report ] Reading
+  box report (const 42)              -- ∷ [ report ] Reading
     (if eternal-var Boolₑ (Tl-∷ Hd)
       `then coerce (≤! , ⊑!)
               (perform write (const 0)
@@ -244,7 +244,7 @@ quiet-branch =
 
 after-a-quiet-branch : [] ∷ Bool ⊢C⦂ Unit ‼ ([ 9 ,+∞⟩ , High)
 after-a-quiet-branch =
-  box {ρ = report} (const 42)        -- ∷ [ report ] Reading
+  box report (const 42)              -- ∷ [ report ] Reading
     ((if eternal-var Boolₑ (Tl-∷ Hd)
         `then perform write (const 0) (delay 3 (return ⋆))
         `else delay 5 (return ⋆))

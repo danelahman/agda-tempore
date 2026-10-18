@@ -1016,7 +1016,7 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
                 → ⟦ handle perform op V M `with H `in N ⟧ᶜᵗ
                      ((pV , pM) , pN , pH , uH)
                 ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε''))
-                   ∘ᵐ ⟦ box (lam (handle M
+                   ∘ᵐ ⟦ box _ (lam (handle M
                                    `with (λ op' ε' →
                                             C-rename (cong-∷-ren (cong-∷-ren
                                               (barrier-wk-ren (mapᵉ (op-grade op))

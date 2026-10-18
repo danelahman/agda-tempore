@@ -290,7 +290,7 @@ mutual
     renᵛ r V pV , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) M pM
   renᶜ r (delay τ M)      pM        = renᶜ (cong-⟨⟩-ren r) M pM
   renᶜ r (unbox x rel p M) pM       = renᶜ (cong-∷-ren r) M pM
-  renᶜ r (box V M)        (pV , pM) =
+  renᶜ r (box _ V M)        (pV , pM) =
     renᵛ (cong-⟨⟩-ren r) V pV , renᶜ (cong-∷-ren r) M pM
   renᶜ r (subC M p)       pM        = renᶜ r M pM
   -- the clauses' uniformity transports by `ren-clauses-uniform`
@@ -550,7 +550,7 @@ mutual
                              (≈ᵐ-sym (∘ᵐ-assoc _ _ _))) ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
-  C-rename-nat r (box V M) (pV , pM) =
+  C-rename-nat r (box _ V M) (pV , pM) =
     ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren r) M pM))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))

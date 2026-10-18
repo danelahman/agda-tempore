@@ -311,7 +311,7 @@ Sim {A₁ = A₁} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 ↝-≐ˢ-box : ∀ {A B ρ ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
         → {V : toCtx St ⟨ ρ ⟩ ⊢V⦂ A} → {M₀ : toCtx St ∷ [ ρ ] A ⊢C⦂ B ‼ ε}
         → (P' : toCtx St' ⊢C⦂ B ‼ ε)
-        → box V M₀ ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+        → box _ V M₀ ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
         → Sim es P' (BOX {V = V} {M = M₀})
 ↝-≐ˢ-box es P' eM with cast-box⁻ (sym (toCtx-≐ˢ es)) P' eM
 ... | V' , M₀' , refl , eV , eM₀ =
@@ -526,7 +526,7 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                                (type-of-gtype (arity op') ⇒ B ‼ ε')
                          ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
                → (N' : Γ' ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε'')
-               → box (lam
+               → box _ (lam
                        (handle (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩
                                                       ∷ type-of-gtype (arity op))
                                             e) M')
@@ -557,7 +557,7 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                                (H' op (ε ·ₑ ε'')))
                        [ split-∷ split-[] ↦ castᵛ e V' ]c)
                ≡ castᶜ e
-                   (box (lam
+                   (box _ (lam
                           (handle M'
                           `with (λ op' ε' →
                                    C-rename
@@ -602,7 +602,7 @@ cast-handle-op refl V' M' H' N' = refl
     _ , _ , es , HANDLE-OP , id-≤≐
   , subst (λ z → _ ≡ z)
       (cast-handle-op (sym (toCtx-≐ˢ es)) V' M₀' H' N')
-      (cong₂ box
+      (cong₂ (box _)
         (cong lam
           (handle-≡ eM₀
             (λ op' ε' →

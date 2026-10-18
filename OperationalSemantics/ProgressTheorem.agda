@@ -105,7 +105,7 @@ progress (handle (return V) `with H `in N) | is-value = step-progress HANDLE-RET
 ... | is-op                     = step-progress HANDLE-OP
 ... | steps M↝M' p _            = step-progress (HANDLE-STEP M↝M' p)
 progress (unbox _ _ _ _) = step-progress UNBOX
-progress (box _ _)       = step-progress BOX
+progress (box _ _ _)       = step-progress BOX
 progress (subC M (_ ‼ₛ _)) = step-progress SUB
 
 -- Theorem: is-value is indeed final state (make no further steps)

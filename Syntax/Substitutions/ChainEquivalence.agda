@@ -464,8 +464,8 @@ C-sub-unbox (s ◅ σ) x rel p M =
 
 C-sub-box : ∀ {Γ Γ' A C ρ} → (σ : Sub [] Γ Γ')
           → (V : Γ' ⟨ ρ ⟩ ⊢V⦂ A) → (M : Γ' ∷ [ ρ ] A ⊢C⦂ C)
-          → C-sub σ (box V M)
-          ≡ box (V-sub (cong-⟨⟩-subˢ σ) V) (C-sub (cong-∷-subˢ σ) M)
+          → C-sub σ (box _ V M)
+          ≡ box _ (V-sub (cong-⟨⟩-subˢ σ) V) (C-sub (cong-∷-subˢ σ) M)
 C-sub-box []ˢ      V M = refl
 C-sub-box (s ◅ σ) V M = cong (C-sub₀ s) (C-sub-box σ V M)
 
@@ -600,9 +600,9 @@ mutual
     trans (proj₂ (proj₂ (C-sub-unbox σ x rel p M)))
       (trans (unbox-≡ (atᵗ h x) (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) M))
              (sym (proj₂ (proj₂ (C-sub-unbox σ' x rel p M)))))
-  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (box V M) =
+  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (box _ V M) =
     trans (C-sub-box σ V M)
-      (trans (cong₂ box (V-sub-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h) V)
+      (trans (cong₂ (box _) (V-sub-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h) V)
                         (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) M))
              (sym (C-sub-box σ' V M)))
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (subC M p) =

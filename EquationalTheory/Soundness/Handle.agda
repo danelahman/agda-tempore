@@ -215,7 +215,7 @@ sound-handle-box : ∀ {Γ A B C ρ ε ε'}
   → Soundᶜ== (handle-box V M H N)
 sound-handle-box {Γ} {A} {B} {C} {ρ} V M H N ((pV , pM) , pN , pH , uH)
                  (pV₂ , pM₂ , pN₂ , pH₂ , uH₂) =
-  ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (box V (handle M `with R.Hᵣ `in (C-rename r N)))
+  ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (box _ V (handle M `with R.Hᵣ `in (C-rename r N)))
               (pV₂ , (pM₂ , pN₂ , pH₂ , uH₂))
               (pV , (pM , renᶜ r N pN , pH₂ , uH₂))
           ∙ ∘ᵐ-congˡ (  ∘ᵐ-congˡ (R.alg-nat pH₂ uH₂)

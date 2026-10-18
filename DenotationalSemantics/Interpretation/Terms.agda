@@ -182,7 +182,7 @@ mutual
   Paramᶜ (perform op V M) = Paramᵛ V × Paramᶜ M
   Paramᶜ (delay τ M)      = Paramᶜ M
   Paramᶜ (unbox x rel p M) = Paramᶜ M
-  Paramᶜ (box V M)        = Paramᵛ V × Paramᶜ M
+  Paramᶜ (box _ V M)        = Paramᵛ V × Paramᶜ M
   Paramᶜ (subC M p)       = Paramᶜ M
   -- the handled computation, the return clause, every operation clause, and —
   -- the actual content — the clauses' uniformity in the residual grade
@@ -261,7 +261,7 @@ mutual
     ∘ᵐ ⟨ ⟨⊤⟩-η , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ ⟩ᵐ
   ⟦ unbox x rel p M ⟧ᶜᵗ pM =
     ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , ⟦ p ⟧<:ᵛ ∘ᵐ ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
-  ⟦ box {ρ = ρ} V M ⟧ᶜᵗ (pV , pM) =
+  ⟦ box ρ V M ⟧ᶜᵗ (pV , pM) =
     ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , [ ρ ]ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ η⊣ ⟩ᵐ
   ⟦ subC M p ⟧ᶜᵗ pM = ⟦ p ⟧<:ᶜ ∘ᵐ ⟦ M ⟧ᶜᵗ pM
 

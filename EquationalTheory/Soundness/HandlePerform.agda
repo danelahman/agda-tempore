@@ -128,7 +128,7 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
     pBody : Paramᶜ (handle M `with H' `in (C-rename (cong-∷-ren ren) N))
     pBody = pM , renᶜ (cong-∷-ren ren) N pN , pH' , uH'
 
-    pBox : Paramᶜ (box (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))
+    pBox : Paramᶜ (box _ (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))
                        (CL [ split-∷ split-[] ↦ V ]c))
     pBox = pBody , subᶜ CL (split-∷ split-[]) V pCL pV
 
@@ -217,11 +217,11 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
                 , boxpart ⟩ᵐ-cong ⟩ᵐ-cong))
       ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr
                     (ε-subst e
-                      (box (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))
+                      (box _ (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))
                            (CL [ split-∷ split-[] ↦ V ]c)))
                     pR (ε-substᴾ e _ pBox)
                 ∙ sound-ε-subst e
-                    (box (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))
+                    (box _ (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))
                          (CL [ split-∷ split-[] ↦ V ]c))
                     pBox
                 ∙ ∘ᵐ-congʳ rhs-inner)

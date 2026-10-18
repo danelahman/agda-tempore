@@ -194,8 +194,8 @@ mutual
     unbox-≡ refl
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
              (C-sub₀-⌜⌝ (cong-ren r) M))
-  C-sub₀-⌜⌝ r (box V M) =
-    cong₂ box (trans (V-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ⟨ _ ⟩) r) V)
+  C-sub₀-⌜⌝ r (box _ V M) =
+    cong₂ (box _) (trans (V-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ⟨ _ ⟩) r) V)
                      (V-sub₀-⌜⌝ (cong-ren r) V))
               (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
                      (C-sub₀-⌜⌝ (cong-ren r) M))
@@ -356,7 +356,7 @@ mutual
       (C-sub₀-ren (⋈-cong (_ ⟨ _ ⟩ ∷ _) h) N)
   C-sub₀-ren h (unbox x rel q M) =
     unbox-≡ (atᵗ h x) (C-sub₀-ren (⋈-cong ([] ∷ _) h) M)
-  C-sub₀-ren h (box V M) =
-    cong₂ box (V-sub₀-ren (⋈-cong ([] ⟨ _ ⟩) h) V)
+  C-sub₀-ren h (box _ V M) =
+    cong₂ (box _) (V-sub₀-ren (⋈-cong ([] ⟨ _ ⟩) h) V)
               (C-sub₀-ren (⋈-cong ([] ∷ _) h) M)
   C-sub₀-ren h (subC M p) = subC-≡ (C-sub₀-ren h M)

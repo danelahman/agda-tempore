@@ -178,10 +178,10 @@ sound-box-unbox-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} V x₂ rel₂ w₂ M (p
                           ,   ∘ᵐ-congʳ (unbox-env-nat (wk-ren {A = [ ρ ] A}) x₂ rel₂ rel₂)
                             ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ⟩ᵐ-cong))
   ∙ comm-l (⟦ M ⟧ᶜᵗ pM) _ _
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x₂ rel₂ w₂ (box (V-rename (cong-⟨⟩-ren wk-ren) V)
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x₂ rel₂ w₂ (box _ (V-rename (cong-⟨⟩-ren wk-ren) V)
                                               (C-rename exch-ren M)))
                 pR (renᵛ (cong-⟨⟩-ren wk-ren) V pV , renᶜ exch-ren M pM)
-            ∙ unbox-def x₂ rel₂ w₂ (box (V-rename (cong-⟨⟩-ren wk-ren) V)
+            ∙ unbox-def x₂ rel₂ w₂ (box _ (V-rename (cong-⟨⟩-ren wk-ren) V)
                                         (C-rename exch-ren M))
                 (renᵛ (cong-⟨⟩-ren wk-ren) V pV , renᶜ exch-ren M pM)
             ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (  C-rename-nat exch-ren M pM

@@ -11,7 +11,12 @@
 -- principal type is a subtype of that of `D` (`principalᴰ`,    --
 -- `infer-principal`, `check-principal`). An untypable verdict  --
 -- leaves no such typing (`infer-untypableᴰ`,                   --
--- `check-untypableᴰ`). Soundness is `Instantiation.Inference`. --
+-- `check-untypableᴰ`). Soundness is `Instantiation.Inference`; --
+-- the factoring instance meets its premises                    --
+-- (`principal-premises`), so the scheme there types the term   --
+-- of `D`, which is `M` at `σ₀` (`uniform-erasure`), in `D`'s   --
+-- context below `D`'s type (`principal-typing`,                --
+-- `infer-principal-typing`).                                   --
 ------------------------------------------------------------------
 
 open import Data.List.Relation.Unary.All using () renaming ([] to []ᴬ)
@@ -55,7 +60,10 @@ open import TypeInference.SolverImpl           S opEnum
 open import Instantiation.Types          S
 open import Instantiation.Judgements     S
 open import Instantiation.Correspondence S
+open import Instantiation.Terms          S using (⌊_⌋ᴿᶜ; ⌊≗⌋ᴿᶜ; ⌊[]⌋ᴿᶜ; castᶜ; castᶜ-⌊⌋)
 open import Instantiation.Embedding      S
+open import Instantiation.Inference      S opEnum using (scheme-instantiate)
+import Syntax.Erasure S as CE
 
 open PrincipalScheme
 
@@ -82,6 +90,13 @@ module _ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} where
                → Σ[ D' ∈ ∅ᴴ ∣ Γ [ ⌜ σ₀ ⌝ˢ ]ᶜᵗˣ ⊢C⦂ ⌜ C ⌝ᶜ ]
                    (OE.⌊ D' ⌋ᶜ ≡ M [ ⌜ σ₀ ⌝ˢ ]ᴿᶜ)
   embed-typing a σ₀ D u = embedᶜ u (annFree-[]ᶜ M ⌜ σ₀ ⌝ˢ a) (⌞Γ⌜σ₀⌝⌟ σ₀)
+
+  -- a uniform typing is of the term at `σ₀`
+
+  uniform-erasure : (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
+                  → UniformTyping Γ σ₀ M D → CE.⌊ D ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ σ₀
+  uniform-erasure σ₀ D u =
+    trans (uniform-⌊⌋ᶜ u) (trans (⌊[]⌋ᴿᶜ M ⌜ σ₀ ⌝ˢ ∅ᴰ) (⌊≗⌋ᴿᶜ ⌞⌜ σ₀ ⌝ˢ⌟ M))
 
   -- so `M` is typable
 
@@ -172,3 +187,45 @@ check-untypableᴰ : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                         UniformTyping Γ σ₀ M D)
 check-untypableᴰ Γ M eq a (σ₀ , C , D , u) =
   check-untypable Γ M eq (uniform-typable {Γ = Γ} {M} a σ₀ D u)
+
+------------------------------------------------------------------------
+-- The round trip: the factoring instance of `principalᴰ`, read as
+-- `⌞ δ ⌟ˢ`, meets the premises of the scheme's instantiation
+-- (`Instantiation.Inference`), its obligations through the
+-- convertibility of `δ` and `⌜ ⌞ δ ⌟ˢ ⌝ˢ`
+
+principal-premises : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} {p : PrincipalScheme Γ M}
+                       {σ₀ : DInst Θ} {C : CType}
+                   → (P : Principalᴰ p σ₀ C)
+                   → (⌞ Principalᴰ.δ P ⌟ˢ ⊨ᴰ Q̃ p)
+                   × (∅ᴴ ⊩ᴼˢ R̃ p [ ⌜ ⌞ Principalᴰ.δ P ⌟ˢ ⌝ˢ ])
+principal-premises P = sat-Q , ⊩ᴼˢ-⌜⌞⌟⌝ δ sat-R
+  where open Principalᴰ P
+
+-- so the principal scheme, at that instance, types the term of a
+-- uniform typing `D` in `D`'s context, at a subtype of `D`'s type
+
+principal-typing : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalScheme Γ M)
+                 → AnnFreeᶜ M → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
+                 → UniformTyping Γ σ₀ M D
+                 → Σ[ C' ∈ CType ] Σ[ D' ∈ ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C' ]
+                     ((C' <:ᶜ C) × (CE.⌊ D' ⌋ᶜ ≡ CE.⌊ D ⌋ᶜ))
+principal-typing {Γ = Γ} {M} p a σ₀ D u
+  with principalᴰ p a σ₀ D u
+... | P with principal-premises P
+...   | sQ , sR with scheme-instantiate p ⌞ Principalᴰ.δ P ⌟ˢ sQ sR
+...     | D' , e =
+  ⟦ X̃ p ⟧ᶜ ⌞ Principalᴰ.δ P ⌟ˢ ,
+  castᶜ (Principalᴰ.ctx P) refl D' ,
+  Principalᴰ.below P ,
+  trans (castᶜ-⌊⌋ (Principalᴰ.ctx P) refl D')
+        (trans e (trans (⌊≗⌋ᴿᶜ (Principalᴰ.agree P) M)
+                        (sym (uniform-erasure {Γ = Γ} {M} σ₀ D u))))
+
+infer-principal-typing : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalScheme Γ M}
+                       → infer Γ M ≡ typed p
+                       → AnnFreeᶜ M → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
+                       → UniformTyping Γ σ₀ M D
+                       → Σ[ C' ∈ CType ] Σ[ D' ∈ ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C' ]
+                           ((C' <:ᶜ C) × (CE.⌊ D' ⌋ᶜ ≡ CE.⌊ D ⌋ᶜ))
+infer-principal-typing Γ M {p} _ = principal-typing p

@@ -102,7 +102,7 @@ average = ⟪ 3 , 0 , 0 ⟫ˡ
 
 claim-after-three-readings : [] ⊢C⦂ Unit ‼ ⟪ 3 , 0 , 2 ⟫ˡ
 claim-after-three-readings =
-  box {ρ = average} (const 42)       -- ∷ [ average ] Reading
+  box average (const 42)             -- ∷ [ average ] Reading
     (perform read ⋆                  -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading
       (perform send here             -- ⟨ ⟪ 0 , 0 , 1 ⟫ˡ ⟩ ∷ Unit
         (perform read ⋆              -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading

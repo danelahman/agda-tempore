@@ -291,9 +291,9 @@ cast-delay⁻ refl _ refl = _ , refl , refl
 cast-box⁻ : ∀ {Γ Γ' A C ρ} → (e : Γ' ≡ Γ)
        → {V : Γ ⟨ ρ ⟩ ⊢V⦂ A} → {M : Γ ∷ [ ρ ] A ⊢C⦂ C}
        → (P' : Γ' ⊢C⦂ C)
-       → box V M ≡ castᶜ e P'
+       → box _ V M ≡ castᶜ e P'
        → Σ[ V' ∈ (Γ' ⟨ ρ ⟩ ⊢V⦂ A) ] Σ[ M' ∈ (Γ' ∷ [ ρ ] A ⊢C⦂ C) ]
-           (P' ≡ box V' M') × (V ≡ castᵛ (cong (_⟨ ρ ⟩) e) V')
+           (P' ≡ box _ V' M') × (V ≡ castᵛ (cong (_⟨ ρ ⟩) e) V')
          × (M ≡ castᶜ (cong (_∷ [ ρ ] A) e) M')
 cast-box⁻ refl _ refl = _ , _ , refl , refl , refl
 

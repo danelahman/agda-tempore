@@ -201,7 +201,7 @@ sound-seq-box : ∀ {Γ A B C ρ ε ε'}
               → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
               → Soundᶜ== (seq-box V M N)
 sound-seq-box {ρ = ρ} V M N ((pV , pM) , pN) pR =
-    ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (box V (M ⨟ C-rename r N)) pR (pV , (pM , renᶜ r N pN))
+    ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (box _ V (M ⨟ C-rename r N)) pR (pV , (pM , renᶜ r N pN))
             ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (C-rename-nat r N pN))))
             ∙ (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
             ∙ seq-extend (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) g fstᵐ (⟨⟩ᵐ-fstᵐ _ _))

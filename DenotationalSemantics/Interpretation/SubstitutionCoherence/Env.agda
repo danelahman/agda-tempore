@@ -406,7 +406,7 @@ mutual
     subᵛˢ s p V pV , subᶜˢ (cong-∷-sub (cong-⟨⟩-sub s)) p M pM
   subᶜˢ s p (delay τ M)      pM        = subᶜˢ (cong-⟨⟩-sub s) p M pM
   subᶜˢ s p (unbox x rel q M) pM       = subᶜˢ (cong-∷-sub s) p M pM
-  subᶜˢ s p (box V M)        (pV , pM) =
+  subᶜˢ s p (box _ V M)        (pV , pM) =
     subᵛˢ (cong-⟨⟩-sub s) p V pV , subᶜˢ (cong-∷-sub s) p M pM
   subᶜˢ s p (subC M q)       pM        = subᶜˢ s p M pM
   -- the clauses are substituted into under the barrier lock, which acts on the
@@ -616,7 +616,7 @@ mutual
   -- resource lookup (`sub-lkˢ`).
   C-subst-natˢ s p (unbox x rel q M) pM =
     unbox-subst-natˢ s p x rel q M (C-subst-natˢ (cong-∷-sub s) p M pM)
-  C-subst-natˢ s p (box V M) (pV , pM) =
+  C-subst-natˢ s p (box _ V M) (pV , pM) =
     ≈ᵐ-trans (∘ᵐ-congˡ (C-subst-natˢ (cong-∷-sub s) p M pM))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))

@@ -177,8 +177,8 @@ cast-case+ refl = refl
 
 cast-box : ∀ {Γ Γ' A C ρ} → (e : Γ ≡ Γ')
          → {V : Γ ⟨ ρ ⟩ ⊢V⦂ A} → {M : Γ ∷ [ ρ ] A ⊢C⦂ C}
-         → castᶜ e (box V M)
-         ≡ box (castᵛ (cong (_⟨ ρ ⟩) e) V) (castᶜ (cong (_∷ [ ρ ] A) e) M)
+         → castᶜ e (box _ V M)
+         ≡ box _ (castᵛ (cong (_⟨ ρ ⟩) e) V) (castᶜ (cong (_∷ [ ρ ] A) e) M)
 cast-box refl = refl
 
 cast-handle : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
