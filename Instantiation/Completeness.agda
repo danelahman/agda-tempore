@@ -1,0 +1,174 @@
+------------------------------------------------------------------
+-- Completeness of inference for the declarative system         --
+--                                                              --
+-- For uniform handlers and annotation-free terms. A uniform    --
+-- declarative typing `D` of `M` at an instance `σ₀` of the     --
+-- context's variables (`UniformTyping Γ σ₀ M D`) embeds in the --
+-- open calculus at the empty scope (`Instantiation.Embedding`) --
+-- and so factors through a principal scheme (`factor`): the    --
+-- factoring instance satisfies the scheme's hypotheses and     --
+-- obligations, agrees with `σ₀` on the context, and there the  --
+-- principal type is a subtype of that of `D` (`principalᴰ`,    --
+-- `infer-principal`, `check-principal`). An untypable verdict  --
+-- leaves no such typing (`infer-untypableᴰ`,                   --
+-- `check-untypableᴰ`). Soundness is `Instantiation.Inference`. --
+------------------------------------------------------------------
+
+open import Data.List.Relation.Unary.All using () renaming ([] to []ᴬ)
+open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
+open import Relation.Nullary using (¬_)
+
+open import Syntax.Grades
+open import Syntax.LanguageSpec
+
+open import Util.Equality
+
+open import TypeInference.Scopes
+open import TypeInference.SolverImpl.Enum using (OpEnum)
+
+module Instantiation.Completeness (S : LanguageSpec) (opEnum : OpEnum S) where
+
+open LanguageSpec S
+open GradeSystemInterface Grades
+
+open import Syntax.Types     S
+open import Syntax.Contexts  S using (Ctx)
+open import Syntax.Language  S using (_⊢C⦂_)
+open import Syntax.Subtyping S using (_<:ᶜ_)
+
+open import TypeInference.OpenSyntax.Types     S using (OCType)
+open import TypeInference.OpenSyntax.Contexts  S using (OCtx)
+open import TypeInference.OpenSyntax.Subst     S
+open import TypeInference.OpenSyntax.Hyps      S using (∅ᴴ; ⊩ᴴ-∅)
+open import TypeInference.OpenSyntax.Instances S
+  using (Satisfiable; _⊩ᴼˢ_[_])
+open import TypeInference.OpenSyntax.Language  S using (_∣_⊢C⦂_)
+open import TypeInference.Raw.Syntax           S using (RawC)
+import TypeInference.Erase S as OE
+open import TypeInference.Raw.Subst            S
+open import TypeInference.Principality         S
+  using (PrincipalScheme; module PrincipalScheme; Typable; typable;
+         typed; established; untypable)
+open import TypeInference.SolverImpl           S opEnum
+  using (infer; check; infer-untypable; check-untypable)
+
+open import Instantiation.Types          S
+open import Instantiation.Judgements     S
+open import Instantiation.Correspondence S
+open import Instantiation.Embedding      S
+
+open PrincipalScheme
+
+-- `D` is a uniform typing of `M` in `Γ` at `σ₀`: in the open context
+-- `Γ [ ⌜ σ₀ ⌝ˢ ]ᶜᵗˣ`, whose meaning is `⟦ Γ ⟧ᶜᵗˣ σ₀`, of the raw term
+-- with its box grades at `σ₀`
+
+UniformTyping : ∀ {Θ n} → (Γ : OCtx Θ n) → (σ₀ : DInst Θ) → RawC Θ n
+              → ∀ {C} → ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C → Set
+UniformTyping Γ σ₀ M D = Uᶜ (Γ [ ⌜ σ₀ ⌝ˢ ]ᶜᵗˣ) (M [ ⌜ σ₀ ⌝ˢ ]ᴿᶜ) D
+
+module _ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} where
+
+  -- the meaning of the instantiated context
+
+  ⌞Γ⌜σ₀⌝⌟ : (σ₀ : DInst Θ) → ⌞ Γ [ ⌜ σ₀ ⌝ˢ ]ᶜᵗˣ ⌟ᶜᵗˣ ≡ ⟦ Γ ⟧ᶜᵗˣ σ₀
+  ⌞Γ⌜σ₀⌝⌟ σ₀ = trans (⌞[]⌟ᶜᵗˣ ⌜ σ₀ ⌝ˢ Γ) (⟦≗⟧ᶜᵗˣ ⌞⌜ σ₀ ⌝ˢ⌟ Γ)
+
+  -- a uniform typing of an annotation-free term is a typing in the
+  -- open calculus, at the instance `⌜ σ₀ ⌝ˢ`
+
+  embed-typing : AnnFreeᶜ M → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
+               → UniformTyping Γ σ₀ M D
+               → Σ[ D' ∈ ∅ᴴ ∣ Γ [ ⌜ σ₀ ⌝ˢ ]ᶜᵗˣ ⊢C⦂ ⌜ C ⌝ᶜ ]
+                   (OE.⌊ D' ⌋ᶜ ≡ M [ ⌜ σ₀ ⌝ˢ ]ᴿᶜ)
+  embed-typing a σ₀ D u = embedᶜ u (annFree-[]ᶜ M ⌜ σ₀ ⌝ˢ a) (⌞Γ⌜σ₀⌝⌟ σ₀)
+
+  -- so `M` is typable
+
+  uniform-typable : AnnFreeᶜ M → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
+                  → UniformTyping Γ σ₀ M D → Typable Γ M
+  uniform-typable a σ₀ {C} D u with embed-typing a σ₀ D u
+  ... | D' , e = typable ∅ˢ ⌜ σ₀ ⌝ˢ ∅ᴴ ⌜ C ⌝ᶜ D' e (idˢ , ⊩ᴴ-∅ , []ᴬ)
+
+-- The principal scheme's instance factoring a declarative typing: the
+-- closed instance `δ` that `factor` yields from the embedded typing, read
+-- declaratively as `⌞ δ ⌟ˢ`. It satisfies the hypotheses, and the
+-- obligations in `factor`'s reading, the open entailment at `δ`, and so
+-- pointwise; it agrees with `σ₀` on the context's variables; and there
+-- the principal type is a subtype of the typing's.
+
+record Principalᴰ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n}
+                  (p : PrincipalScheme Γ M) (σ₀ : DInst Θ) (C : CType) : Set where
+  field
+    δ      : Subst (Θ̃ p) ∅ˢ
+    sat-Q  : ⌞ δ ⌟ˢ ⊨ᴰ Q̃ p
+    sat-R  : ∅ᴴ ⊩ᴼˢ R̃ p [ δ ]
+    sat-Rᴰ : ⌞ δ ⌟ˢ ⊨ᴰᴿ R̃ p
+    agree  : (σ̃ p ⨟ᴰ ⌞ δ ⌟ˢ) ≗ᴰ σ₀
+    ctx    : ⟦ Γ [ σ̃ p ]ᶜᵗˣ ⟧ᶜᵗˣ ⌞ δ ⌟ˢ ≡ ⟦ Γ ⟧ᶜᵗˣ σ₀
+    below  : ⟦ X̃ p ⟧ᶜ ⌞ δ ⌟ˢ <:ᶜ C
+
+-- Declarative principality: a uniform typing of an annotation-free term
+-- factors through every principal scheme
+
+principalᴰ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalScheme Γ M)
+           → AnnFreeᶜ M → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
+           → UniformTyping Γ σ₀ M D
+           → Principalᴰ p σ₀ C
+principalᴰ {Γ = Γ} {M} p a σ₀ {C} D u with embed-typing {Γ = Γ} {M} a σ₀ D u
+... | D' , e with factor p ⌜ σ₀ ⌝ˢ ∅ᴴ D' e idˢ (⊩ᴴ-∅ , []ᴬ)
+... | δ , tri , (hQ , hR) , le = record
+  { δ      = δ
+  ; sat-Q  = ⊨→⊨ᴰ (hQ , []ᴬ)
+  ; sat-R  = hR
+  ; sat-Rᴰ = ⊩ᴼˢ→⊨ᴰᴿ hR
+  ; agree  = agree
+  ; ctx    = trans (⟦[]⟧ᶜᵗˣ (σ̃ p) ⌞ δ ⌟ˢ Γ) (⟦≗⟧ᶜᵗˣ agree Γ)
+  ; below  = subst₂ _<:ᶜ_ (⌞[]⌟ᶜ δ (X̃ p))
+                    (trans (cong ⌞_⌟ᶜ ([id]ᶜ ⌜ C ⌝ᶜ)) ⌞⌜ C ⌝⌟ᶜ)
+                    (sound-<:ᶜ (⊨ᴰ-∅ {σ = ∅ᴰ}) le)
+  }
+  where
+    agree : (σ̃ p ⨟ᴰ ⌞ δ ⌟ˢ) ≗ᴰ σ₀
+    agree = mk≗ᴰ
+      (λ α → trans (sym (⟦[]⟧ᵛ δ ∅ᴰ (sTy (σ̃ p) α)))
+               (trans (cong ⌞_⌟ᵛ (≐ᵗ tri α))
+                 (trans (cong ⌞_⌟ᵛ ([id]ᵛ ⌜ ty σ₀ α ⌝ᵛ)) ⌞⌜ ty σ₀ α ⌝⌟ᵛ)))
+      (λ i → trans (sym (⟦[]⟧ʳ δ ∅ᴰ (sR (σ̃ p) i))) (cong ⌞_⌟ʳ (≐ʳ tri i)))
+      (λ i → trans (sym (⟦[]⟧ᵉ δ ∅ᴰ (sE (σ̃ p) i))) (cong ⌞_⌟ᵉ (≐ᵉ tri i)))
+
+-- Inference: a typed verdict's scheme is principal for uniform typings
+
+infer-principal : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalScheme Γ M}
+                → infer Γ M ≡ typed p
+                → AnnFreeᶜ M → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
+                → UniformTyping Γ σ₀ M D
+                → Principalᴰ p σ₀ C
+infer-principal Γ M {p} _ = principalᴰ p
+
+-- and an untypable verdict leaves no uniform typing
+
+infer-untypableᴰ : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+                 → infer Γ M ≡ untypable → AnnFreeᶜ M
+                 → ¬ (Σ[ σ₀ ∈ DInst Θ ] Σ[ C ∈ CType ] Σ[ D ∈ ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C ]
+                        UniformTyping Γ σ₀ M D)
+infer-untypableᴰ Γ M eq a (σ₀ , C , D , u) =
+  infer-untypable Γ M eq (uniform-typable {Γ = Γ} {M} a σ₀ D u)
+
+-- Checking: the same through an established check's scheme, and from an
+-- untypable verdict
+
+check-principal : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+                → {p : PrincipalScheme Γ M} → {e : Satisfiable (Q̃ p) (R̃ p)}
+                → check Γ M ≡ established p e
+                → AnnFreeᶜ M → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
+                → UniformTyping Γ σ₀ M D
+                → Principalᴰ p σ₀ C
+check-principal Γ M {p} _ = principalᴰ p
+
+check-untypableᴰ : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+                 → check Γ M ≡ untypable → AnnFreeᶜ M
+                 → ¬ (Σ[ σ₀ ∈ DInst Θ ] Σ[ C ∈ CType ] Σ[ D ∈ ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C ]
+                        UniformTyping Γ σ₀ M D)
+check-untypableᴰ Γ M eq a (σ₀ , C , D , u) =
+  check-untypable Γ M eq (uniform-typable {Γ = Γ} {M} a σ₀ D u)

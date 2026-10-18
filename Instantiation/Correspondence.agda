@@ -321,44 +321,42 @@ module _ {Θ} (δ : Subst Θ ∅ˢ) where
 -- Satisfaction: a closed instance satisfies `Q` exactly when the
 -- declarative instance it determines does
 
-private
+-- eternality of a closed open type is eternality of its meaning
 
-  -- eternality of a closed open type is eternality of its meaning
+⌞⌟-⊩ᴱ : (A : OVType ∅ˢ) → Eternal ⌞ A ⌟ᵛ → ∅ᴴ ⊩ᴱ A
+⌞⌟-⊩ᴱ (tvar ())
+⌞⌟-⊩ᴱ (Base b)   (Baseₑ p)   = Baseₑ p
+⌞⌟-⊩ᴱ Unit       Unitₑ       = Unitₑ
+⌞⌟-⊩ᴱ Bool       Boolₑ       = Boolₑ
+⌞⌟-⊩ᴱ Nat        Natₑ        = Natₑ
+⌞⌟-⊩ᴱ (A |×| B)  (p |×|ₑ q)  = ⌞⌟-⊩ᴱ A p |×|ₑ ⌞⌟-⊩ᴱ B q
+⌞⌟-⊩ᴱ (A |+| B)  (p |+|ₑ q)  = ⌞⌟-⊩ᴱ A p |+|ₑ ⌞⌟-⊩ᴱ B q
+⌞⌟-⊩ᴱ (|List| A) (|List|ₑ p) = |List|ₑ (⌞⌟-⊩ᴱ A p)
+⌞⌟-⊩ᴱ Empty      Emptyₑ      = Emptyₑ
 
-  ⌞⌟-⊩ᴱ : (A : OVType ∅ˢ) → Eternal ⌞ A ⌟ᵛ → ∅ᴴ ⊩ᴱ A
-  ⌞⌟-⊩ᴱ (tvar ())
-  ⌞⌟-⊩ᴱ (Base b)   (Baseₑ p)   = Baseₑ p
-  ⌞⌟-⊩ᴱ Unit       Unitₑ       = Unitₑ
-  ⌞⌟-⊩ᴱ Bool       Boolₑ       = Boolₑ
-  ⌞⌟-⊩ᴱ Nat        Natₑ        = Natₑ
-  ⌞⌟-⊩ᴱ (A |×| B)  (p |×|ₑ q)  = ⌞⌟-⊩ᴱ A p |×|ₑ ⌞⌟-⊩ᴱ B q
-  ⌞⌟-⊩ᴱ (A |+| B)  (p |+|ₑ q)  = ⌞⌟-⊩ᴱ A p |+|ₑ ⌞⌟-⊩ᴱ B q
-  ⌞⌟-⊩ᴱ (|List| A) (|List|ₑ p) = |List|ₑ (⌞⌟-⊩ᴱ A p)
-  ⌞⌟-⊩ᴱ Empty      Emptyₑ      = Emptyₑ
+-- subtyping between embeddings, with constant grades
 
-  -- subtyping between embeddings, with constant grades
+⌜⌝-<:ᵛ : ∀ {A B} → A <:ᵛ B → ∅ᴴ ∣ ⌜ A ⌝ᵛ <:̂ᵛ ⌜ B ⌝ᵛ
+⌜⌝-<:ᶜ : ∀ {C D} → C <:ᶜ D → ∅ᴴ ∣ ⌜ C ⌝ᶜ <:̂ᶜ ⌜ D ⌝ᶜ
 
-  ⌜⌝-<:ᵛ : ∀ {A B} → A <:ᵛ B → ∅ᴴ ∣ ⌜ A ⌝ᵛ <:̂ᵛ ⌜ B ⌝ᵛ
-  ⌜⌝-<:ᶜ : ∀ {C D} → C <:ᶜ D → ∅ᴴ ∣ ⌜ C ⌝ᶜ <:̂ᶜ ⌜ D ⌝ᶜ
+⌜⌝-<:ᵛ (Baseₛ p)   = Baseₛ p
+⌜⌝-<:ᵛ Unitₛ       = Unitₛ
+⌜⌝-<:ᵛ Boolₛ       = Boolₛ
+⌜⌝-<:ᵛ Natₛ        = Natₛ
+⌜⌝-<:ᵛ (p |×|ₛ q)  = ⌜⌝-<:ᵛ p |×|ₛ ⌜⌝-<:ᵛ q
+⌜⌝-<:ᵛ (p |+|ₛ q)  = ⌜⌝-<:ᵛ p |+|ₛ ⌜⌝-<:ᵛ q
+⌜⌝-<:ᵛ (|List|ₛ p) = |List|ₛ (⌜⌝-<:ᵛ p)
+⌜⌝-<:ᵛ Emptyₛ      = Emptyₛ
+⌜⌝-<:ᵛ (p ⇒ₛ q)    = ⌜⌝-<:ᵛ p ⇒ₛ ⌜⌝-<:ᶜ q
+⌜⌝-<:ᵛ ([ p ]ₛ q)  = [ atomᵣ p ]ₛ ⌜⌝-<:ᵛ q
 
-  ⌜⌝-<:ᵛ (Baseₛ p)   = Baseₛ p
-  ⌜⌝-<:ᵛ Unitₛ       = Unitₛ
-  ⌜⌝-<:ᵛ Boolₛ       = Boolₛ
-  ⌜⌝-<:ᵛ Natₛ        = Natₛ
-  ⌜⌝-<:ᵛ (p |×|ₛ q)  = ⌜⌝-<:ᵛ p |×|ₛ ⌜⌝-<:ᵛ q
-  ⌜⌝-<:ᵛ (p |+|ₛ q)  = ⌜⌝-<:ᵛ p |+|ₛ ⌜⌝-<:ᵛ q
-  ⌜⌝-<:ᵛ (|List|ₛ p) = |List|ₛ (⌜⌝-<:ᵛ p)
-  ⌜⌝-<:ᵛ Emptyₛ      = Emptyₛ
-  ⌜⌝-<:ᵛ (p ⇒ₛ q)    = ⌜⌝-<:ᵛ p ⇒ₛ ⌜⌝-<:ᶜ q
-  ⌜⌝-<:ᵛ ([ p ]ₛ q)  = [ atomᵣ p ]ₛ ⌜⌝-<:ᵛ q
+⌜⌝-<:ᶜ (p ‼ₛ q) = ⌜⌝-<:ᵛ p ‼ₛ atomₑ q
 
-  ⌜⌝-<:ᶜ (p ‼ₛ q) = ⌜⌝-<:ᵛ p ‼ₛ atomₑ q
+-- subtyping between closed open types is subtyping of their meanings
 
-  -- subtyping between closed open types is subtyping of their meanings
-
-  ⌞⌟-<:ᵛ : (A B : OVType ∅ˢ) → ⌞ A ⌟ᵛ <:ᵛ ⌞ B ⌟ᵛ → ∅ᴴ ∣ A <:̂ᵛ B
-  ⌞⌟-<:ᵛ A B p =
-    <:̂ᵛ-trans (≡̂ᵛ-<:̂ ⌜⌞ A ⌟⌝ᵛ) (<:̂ᵛ-trans (⌜⌝-<:ᵛ p) (≡̂ᵛ-<:̂ (≡̂ᵛ-sym ⌜⌞ B ⌟⌝ᵛ)))
+⌞⌟-<:ᵛ : (A B : OVType ∅ˢ) → ⌞ A ⌟ᵛ <:ᵛ ⌞ B ⌟ᵛ → ∅ᴴ ∣ A <:̂ᵛ B
+⌞⌟-<:ᵛ A B p =
+  <:̂ᵛ-trans (≡̂ᵛ-<:̂ ⌜⌞ A ⌟⌝ᵛ) (<:̂ᵛ-trans (⌜⌝-<:ᵛ p) (≡̂ᵛ-<:̂ (≡̂ᵛ-sym ⌜⌞ B ⌟⌝ᵛ)))
 
 ⊨→⊨ᴰ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → δ ⊨ Q ∣ [] → ⌞ δ ⌟ˢ ⊨ᴰ Q
 ⊨→⊨ᴰ (h , []ᴬ) = sound-⊩ᴴ h ⊨ᴰ-∅

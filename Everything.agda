@@ -499,3 +499,10 @@ open import Instantiation.Terms
 ---- satisfying the scheme
 
 import Instantiation.Inference
+
+---- Soundness and completeness of inference for the declarative system,
+---- for uniform handlers and annotation-free terms: uniform typings embed
+---- in the open calculus and factor through the principal scheme
+
+open import Instantiation.Embedding
+import Instantiation.Completeness
