@@ -49,9 +49,9 @@
 --     an axiomatised constraint solver, and a concrete solver with a   --
 --     simplified report of its solutions                               --
 --                                                                      --
---   - the bridge from the open calculus to the closed one: an open     --
---     derivation at a closed instance is a closed typing of the same   --
---     term, so inferred programs are typed in the semantics' calculus  --
+--   - the instantiation theorem: an open typing under hypotheses Q is  --
+--     a family of declarative typings of the same term, one per        --
+--     instance of its variables satisfying Q                           --
 --------------------------------------------------------------------------
 
 open import Syntax.LanguageSpec
@@ -481,20 +481,21 @@ import TypeInference.SolverImpl
 -- import TypeInference.Examples
 
 
--- BRIDGE
----------
+-- INSTANTIATION
+----------------
 
----- Closed open types as closed types, and the side judgements at a
----- closed instance
+---- Declarative instances, the meaning of open types and declarative
+---- satisfaction of hypotheses
 
-open import Bridge.Types
-open import Bridge.Judgements
+open import Instantiation.Types
+open import Instantiation.Judgements
+open import Instantiation.Correspondence
 
----- Open derivations at a closed instance as closed typings of the same
----- term
+---- The instantiation theorem
 
-open import Bridge.Terms
+open import Instantiation.Terms
 
----- Inferred programs are typed in the closed calculus
+---- Inference yields a family of declarative typings, one per instance
+---- satisfying the scheme
 
-import Bridge.Inference
+import Instantiation.Inference
