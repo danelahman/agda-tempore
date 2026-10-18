@@ -458,10 +458,9 @@ module Witness where
   open GradeSystemInterface Grades using (uₑ; ⊤ₑ)
 
   open import TypeInference.OpenSyntax.Grades    spec
-  open import TypeInference.OpenSyntax.Hyps      spec using (Hyps; ∅ᴴ)
+  open import TypeInference.OpenSyntax.Hyps      spec using (Hyps; ∅ᴴ; _+eⁿ_; ords; oblig)
   open import TypeInference.OpenSyntax.Subst     spec using (Subst)
-  open import TypeInference.OpenSyntax.Instances spec using (_+eⁿ_)
-  open import TypeInference.SolverImpl.Deferred  spec using (ords; dfr; grid; candidatesₑ)
+  open import TypeInference.SolverImpl.Deferred  spec using (grid; candidatesₑ)
   open import TypeInference.SolverImpl.Solve     spec enum
     using (Retried; refutedᵈ; keptᵈ; retryᵈ; Verdict; settled; refuted; undecided; witnessᵉ)
 
@@ -489,7 +488,7 @@ module Witness where
   candidates-0…7 = refl
 
   refuted-at-one :
-    refutedᴿ (retryᵈ ∅ᴴ (dfr nothing 1 (ords [] ((⌜ 3 ⌝ , ⌜ 3 ⌝ ·̂ₑ j) ∷ [])))) ≡ true
+    refutedᴿ (retryᵈ ∅ᴴ (oblig nothing 1 (ords [] ((⌜ 3 ⌝ , ⌜ 3 ⌝ ·̂ₑ j) ∷ [])))) ≡ true
   refuted-at-one = refl
 
   unit-top-undecided :

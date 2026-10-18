@@ -14,9 +14,7 @@
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)
-open import Data.List.Base using (_∷_)
 open import Data.List.Membership.Propositional using (_∈_)
-open import Data.List.Relation.Unary.All using (_∷_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁻)
 open import Data.Product using (_,_)
 
@@ -38,7 +36,6 @@ open import TypeInference.OpenSyntax.Grades S
 open import TypeInference.OpenSyntax.Types  S
 open import TypeInference.OpenSyntax.Subst  S
 open import TypeInference.OpenSyntax.Hyps   S
-open import TypeInference.OpenSyntax.Instances S using (Obligs)
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
@@ -98,46 +95,6 @@ private
   ↑ᵉ-,ᵉ δ σ ε = mk≐ˢ (λ α → wk-,ᵉ-v σ ε (sTy δ α))
                      (λ i → wk-,ᵉ-r σ ε (sR δ i))
                      (λ { zero → refl ; (suc i) → wk-,ᵉ-e σ ε (sE δ i) })
-
--- Transports hypothesis entailment along `_↑ᵉ`, for the `∀ᵉ` case of
--- `⊨-mono`; members of a weakened `Hyps` are read back with `∈-map⁻`.
-
-⊩ᴴ-↑ᵉ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {δ : Subst Θ Θ'}
-      → Q' ⊩ᴴ Q [ δ ] → wkᵉ-H Q' ⊩ᴴ (wkᵉ-H Q) [ δ ↑ᵉ ]
-⊩ᴴ-↑ᵉ {Θ} {Θ'} {Q} {Q'} {δ} h = mk⊩ᴴ ets↑ subᵥ↑ ordᵣ↑ ordₑ↑ disj↑
-  where
-    ets↑ : ∀ {α} → α ∈ ets (wkᵉ-H Q) → wkᵉ-H Q' ⊩ᴱ sTy (δ ↑ᵉ) α
-    ets↑ m with ∈-map⁻ (wkᵉ-tv Θ) m
-    ... | α₀ , m₀ , refl = ⊩ᴱ-wkᵉ (⊩ets h m₀)
-
-    subᵥ↑ : ∀ {α β} → (α , β) ∈ subᵥ (wkᵉ-H Q)
-          → wkᵉ-H Q' ∣ sTy (δ ↑ᵉ) α <:̂ᵛ sTy (δ ↑ᵉ) β
-    subᵥ↑ m with ∈-map⁻ (mapᵖ (wkᵉ-tv Θ)) m
-    ... | (α₀ , β₀) , m₀ , refl = <:̂ᵛ-wkᵉ (⊩subᵥ h m₀)
-
-    ordᵣ↑ : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ (wkᵉ-H Q)
-          → wkᵉ-H Q' ⊩ ρ [ δ ↑ᵉ ]ʳ ≾̂ᵣ ρ' [ δ ↑ᵉ ]ʳ
-    ordᵣ↑ m with ∈-map⁻ (mapᵖ wkᵉ-r) m
-    ... | (ρ₀ , ρ₀') , m₀ , refl =
-      subst₂ (λ x y → wkᵉ-H Q' ⊩ x ≾̂ᵣ y)
-             (sym (wk-↑ᵉ-r δ ρ₀)) (sym (wk-↑ᵉ-r δ ρ₀'))
-             (⊩-wkᵉᵣ (⊩ordᵣ h m₀))
-
-    ordₑ↑ : ∀ {ε ε'} → (ε , ε') ∈ ordₑ (wkᵉ-H Q)
-          → wkᵉ-H Q' ⊩ ε [ δ ↑ᵉ ]ᵉ ≾̂ₑ ε' [ δ ↑ᵉ ]ᵉ
-    ordₑ↑ m with ∈-map⁻ (mapᵖ wkᵉ-e) m
-    ... | (ε₀ , ε₀') , m₀ , refl =
-      subst₂ (λ x y → wkᵉ-H Q' ⊩ x ≾̂ₑ y)
-             (sym (wk-↑ᵉ-e δ ε₀)) (sym (wk-↑ᵉ-e δ ε₀'))
-             (⊩-wkᵉₑ (⊩ordₑ h m₀))
-
-    disj↑ : ∀ {A ρ} → (A , ρ) ∈ disj (wkᵉ-H Q)
-          → VarOK (wkᵉ-H Q') (A [ δ ↑ᵉ ]ᵛ) (ρ [ δ ↑ᵉ ]ʳ)
-    disj↑ m with ∈-map⁻ (mapᵈ wkᵉ-v wkᵉ-r) m
-    ... | (A₀ , ρ₀) , m₀ , refl =
-      subst₂ (VarOK (wkᵉ-H Q'))
-             (sym (wk-↑ᵉ-v δ A₀)) (sym (wk-↑ᵉ-r δ ρ₀))
-             (VarOK-wkᵉ (⊩disj h m₀))
 
 ⊨-mono : ∀ {Θ Θ' Θ''} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
            {δ : Subst Θ' Θ''} {Q' : Hyps Θ''}
@@ -222,7 +179,7 @@ private
 
 ⊨-∣ : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
     → (C : Constraint Θ) → σ ⊨[ Q ] C → σ ⊨[ Q ∣ R ] C
-⊨-∣ C s δ Q' (h ∷ _) = ⊨-mono h C s
+⊨-∣ C s δ Q' (h , _) = ⊨-mono h C s
 
 -- Types equal along a substitution solve a type equation
 

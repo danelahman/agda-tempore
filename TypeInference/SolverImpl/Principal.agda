@@ -75,7 +75,6 @@ open import TypeInference.SolverImpl.Core.Decorate S using (expandSub)
 open import TypeInference.SolverImpl.Expand S
   using (ExpMax; ExpDec; expandSub-max; expandSub-dec)
 
-open import TypeInference.OpenSyntax.Instances S using (_+eⁿ_; _↑ᵉⁿ_; wkᵉⁿ-H; ≐ˢ-↑ᵉⁿ)
 open import TypeInference.SolverImpl.Deferred S
 open import TypeInference.SolverImpl.Resid  S
 open import TypeInference.SolverImpl.State  S
@@ -752,10 +751,10 @@ agree-≡ᵉ {O = O} {X₁} {X₂} eq x o =
 -- An entry mentioning only such unknowns, under its binders, holds
 -- after the one when it holds after the other
 
-⊩ᵈ-agree : ∀ {Θ Φ Ψ} {Q : Hyps Ψ} {O : Subst Θ Φ} {X₁ X₂ : Subst Φ Ψ} → (E : Dfr Φ)
-         → Outerᵒ (O ↑ᵉⁿ nb E) (body E) → (O ⨟ˢ X₁) ≐ˢ (O ⨟ˢ X₂)
-         → Q ⊩ᵈ E [ X₁ ] → Q ⊩ᵈ E [ X₂ ]
-⊩ᵈ-agree {Q = Q} {O} {X₁} {X₂} (dfr l k o) (or , oe) eq h = mk⊩ᵒ r e
+⊩ᴼ-agree : ∀ {Θ Φ Ψ} {Q : Hyps Ψ} {O : Subst Θ Φ} {X₁ X₂ : Subst Φ Ψ} → (E : Oblig Φ)
+         → Outerᵒ (O ↑ᵉⁿ rigids E) (body E) → (O ⨟ˢ X₁) ≐ˢ (O ⨟ˢ X₂)
+         → Q ⊩ᴼ E [ X₁ ] → Q ⊩ᴼ E [ X₂ ]
+⊩ᴼ-agree {Q = Q} {O} {X₁} {X₂} (oblig l k o) (or , oe) eq h = mk⊩ᵒ r e
   where
     eq' : ((O ↑ᵉⁿ k) ⨟ˢ (X₁ ↑ᵉⁿ k)) ≐ˢ ((O ↑ᵉⁿ k) ⨟ˢ (X₂ ↑ᵉⁿ k))
     eq' = ≐ˢ-trans (⨟-↑ᵉⁿ O X₁ k) (≐ˢ-trans (≐ˢ-↑ᵉⁿ eq k) (≐ˢ-sym (⨟-↑ᵉⁿ O X₂ k)))
@@ -917,12 +916,12 @@ listᵈ-princ j ((A , ρ) ∷ l) eq γ hγ k | nothing | _       = ⊥just eq
 -- binder it is the inner entry at the inner instance, read the same
 
 liftᵈ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O⁺ : Subst (Θ +e) (Φ +e)) → (j : EVar (Φ +e))
-            → (γ : Subst (Φ +e) (Φ' +e)) → (δ : Subst Φ Φ') → (E : Dfr (Φ +e))
-            → Outerᵒ (O⁺ ↑ᵉⁿ nb E) (body E)
+            → (γ : Subst (Φ +e) (Φ' +e)) → (δ : Subst Φ Φ') → (E : Oblig (Φ +e))
+            → Outerᵒ (O⁺ ↑ᵉⁿ rigids E) (body E)
             → (O⁺ ⨟ˢ (popˢ j ⨟ˢ γ)) ≐ˢ (O⁺ ⨟ˢ (popˢ j ⨟ˢ (δ ↑ᵉ)))
-            → wkᵉ-H Q ⊩ᵈ E [ popˢ j ⨟ˢ γ ] → Q ⊩ᵈ liftᵈ j E [ δ ]
+            → wkᵉ-H Q ⊩ᴼ E [ popˢ j ⨟ˢ γ ] → Q ⊩ᴼ liftᵈ j E [ δ ]
 liftᵈ-princ O⁺ j γ δ E oo eqO h =
-  closeᵈ-princ (E [ popˢ j ]ᵈ) (⊩ᵈ-subst⁻ E (⊩ᵈ-agree E oo eqO h))
+  closeᵈ-princ (E [ popˢ j ]ᵒᵇ) (⊩ᴼ-subst⁻ E (⊩ᴼ-agree E oo eqO h))
 
 splitᴿ-princ : ∀ {Θ Φ Φ'} → (O : Subst Θ (Φ +e)) → (O⁺ : Subst (Θ +e) (Φ +e))
              → (j : EVar (Φ +e)) → (R : Resid (Φ +e))
@@ -942,14 +941,14 @@ splitᴿ-princ O O⁺ j R eq γ hγ u eqO h
                     (listᵗ-princ j (ts R) e₃ γ (⊩ts h))
                     (listˢ-princ j (ss R) e₄ γ (⊩ss h))
                     (listᵈ-princ j (ds R) e₅ γ hγ (⊩ds h))
-                    (λ { (here refl) → closeᵈ-princ (dfr nothing 0 (ords dr de))
+                    (λ { (here refl) → closeᵈ-princ (oblig nothing 0 (ords dr de))
                                                     (mk⊩ᵒ (proj₂ pr) (proj₂ pe))
                        ; (there m) → lifted m })
   where
     pr = listʳ-princ O O⁺ (freeᴴ j R) j (rs R) e₁ γ hγ u eqO (⊩rs h)
     pe = listᵉ-princ O O⁺ (freeᴴ j R) j (es R) e₂ γ hγ u eqO (⊩es h)
 
-    lifted : ∀ {E} → E ∈ map (liftᵈ j) (dfs R) → ∅ᴴ ⊩ᵈ E [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]
+    lifted : ∀ {E} → E ∈ map (liftᵈ j) (dfs R) → ∅ᴴ ⊩ᴼ E [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]
     lifted m with ∈-map⁻ (liftᵈ j) m
     ... | E₀ , m₀ , refl = liftᵈ-princ O⁺ j γ ((wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ) E₀ (od m₀) eqO (⊩dfs h m₀)
 splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | nothing | _       | _       | _      | _      | _       = ⊥refuted eq
@@ -1119,10 +1118,10 @@ thenRetry-princ {C = C} (solved (s₁ , m₁ , w₁)) p eq δ₀ sat h with retr
 
 -- Labelling changes no meaning
 
-relabel-⊩⁻ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (op : Op) → (E : Dfr Ψ)
-           → Q ⊩ᵈ E [ δ ] → Q ⊩ᵈ relabel op E [ δ ]
-relabel-⊩⁻ op (dfr nothing  k o) h = h
-relabel-⊩⁻ op (dfr (just l) k o) h = h
+relabel-⊩⁻ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (op : Op) → (E : Oblig Ψ)
+           → Q ⊩ᴼ E [ δ ] → Q ⊩ᴼ relabel op E [ δ ]
+relabel-⊩⁻ op (oblig nothing  k o) h = h
+relabel-⊩⁻ op (oblig (just l) k o) h = h
 
 labelled-princ : ∀ {Θ} {s : St Θ} {C : Constraint Θ} → (op : Op)
                → (x : Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C)))
@@ -1142,7 +1141,7 @@ labelled-princ op (solved (s₁ , m₁ , w₁)) p refl δ₀ sat h =
     h₁   = proj₁ (proj₂ (proj₂ f₁))
     fx₁  = proj₂ (proj₂ (proj₂ f₁))
 
-    dfs' : ∀ {E} → E ∈ map (relabel op) (dfs (res s₁)) → ∅ᴴ ⊩ᵈ E [ δ₁ ]
+    dfs' : ∀ {E} → E ∈ map (relabel op) (dfs (res s₁)) → ∅ᴴ ⊩ᴼ E [ δ₁ ]
     dfs' m with ∈-map⁻ (relabel op) m
     ... | E₀ , m₀ , refl = relabel-⊩⁻ op E₀ (⊩dfs h₁ m₀)
 

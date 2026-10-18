@@ -42,7 +42,7 @@ open import TypeInference.OpenSyntax.Grades S
 open import TypeInference.OpenSyntax.Types  S
 open import TypeInference.OpenSyntax.Subst  S
 open import TypeInference.OpenSyntax.Hyps   S
-open import TypeInference.OpenSyntax.Instances S using (Obligs; _⊩_∣_[_])
+open import TypeInference.OpenSyntax.Instances S using (_⊩_∣_[_])
 
 open import TypeInference.Constraints.Syntax S
 

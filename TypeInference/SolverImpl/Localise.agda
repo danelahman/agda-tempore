@@ -167,8 +167,7 @@ open import TypeInference.SolverImpl.Core.Rigid S
   using (∨-true; ∨-left; ∨-right; dec-true; true-dec)
 
 open import TypeInference.SolverImpl.Deferred  S
-  using (Dfr; dfr; _⊩ᵈ_[_]; mk⊩ᵒ; ⊩ors; ⊩oes; ≾ˢ-↑ᵉⁿ; Dir; dir↓; dir↑; Still; stills?;
-         keepᵈ; allOf; κ⟨_⟩; wk-κ; κ-wkᵛ; κ-wkʳ; κ-wkᵉ; ⊩ᴴ-κ)
+  using (≾ˢ-↑ᵉⁿ; Dir; dir↓; dir↑; Still; stills?; keepᵈ; allOf; κ⟨_⟩; wk-κ; κ-wkᵛ; κ-wkʳ; κ-wkᵉ; ⊩ᴴ-κ)
 open import TypeInference.SolverImpl.Resid     S
 open import TypeInference.SolverImpl.Values    S
   using (module Vᵉ; module Vʳ; module Vⁱ; isFalse; equal-keeps; updᵉ-e; updᵉ-r; updʳ-r;
@@ -1203,13 +1202,13 @@ record Refined {Ψ} (l : List (OVType Ψ × RExp Ψ)) : Set where
   constructor refined
   field
     rest  : List (OVType Ψ × RExp Ψ)
-    ords  : List (RExp Ψ × RExp Ψ)
+    orders : List (RExp Ψ × RExp Ψ)
     rest⊆ : ∀ {a} → a ∈ rest → a ∈ l
     back  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
-          → (∀ {a} → a ∈ rest → Disj Q δ a) → (∀ {a} → a ∈ ords → Ordʳ Q δ a)
+          → (∀ {a} → a ∈ rest → Disj Q δ a) → (∀ {a} → a ∈ orders → Ordʳ Q δ a)
           → ∀ {a} → a ∈ l → Disj Q δ a
     fwd   : ∀ {Ψ'} → (δ : Subst Ψ Ψ')
-          → (∀ {a} → a ∈ l → Disj ∅ᴴ δ a) → ∀ {a} → a ∈ ords → Ordʳ ∅ᴴ δ a
+          → (∀ {a} → a ∈ l → Disj ∅ᴴ δ a) → ∀ {a} → a ∈ orders → Ordʳ ∅ᴴ δ a
     restᴱ : ∀ {A ρ} → (A , ρ) ∈ rest → Σ[ αs ∈ List (TyVar Ψ) ] (etDec A ≡ just αs)
 
 -- One disjunction, by the verdict of `etDec` on its type
@@ -1788,9 +1787,9 @@ edgesʳ {Ψ} l = go (withMem l)
 -- A deferred condition survives a substitution equivalent to the one
 -- it moves
 
-keep⇕ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {σ : Subst Ψ Ψ} {τ : Subst Ψ Ψ'} → (E : Dfr Ψ)
-      → Q ⊩ (σ ⨟ˢ τ) ≾ˢ τ → Q ⊩ τ ≾ˢ (σ ⨟ˢ τ) → Q ⊩ᵈ E [ τ ] → Q ⊩ᵈ E [ σ ⨟ˢ τ ]
-keep⇕ (dfr l k o) le ge h =
+keep⇕ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {σ : Subst Ψ Ψ} {τ : Subst Ψ Ψ'} → (E : Oblig Ψ)
+      → Q ⊩ (σ ⨟ˢ τ) ≾ˢ τ → Q ⊩ τ ≾ˢ (σ ⨟ˢ τ) → Q ⊩ᴼ E [ τ ] → Q ⊩ᴼ E [ σ ⨟ˢ τ ]
+keep⇕ (oblig l k o) le ge h =
   mk⊩ᵒ (λ {x} {y} m → transᵣ (mono-substᵣ (≾ˢ-↑ᵉⁿ k le) x)
                              (transᵣ (⊩ors h m) (mono-substᵣ (≾ˢ-↑ᵉⁿ k ge) y)))
        (λ {x} {y} m → transₑ (mono-substₑ (≾ˢ-↑ᵉⁿ k le) x)
@@ -1989,7 +1988,7 @@ settleᴴ R = hyps [] [] (Unsettled.kept (unsettled settledʳ (rs R)))
 
 loc-settle : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → Localised O R → Localised O R
 loc-settle (loc σ R₀ fx sn cp la) =
-  loc σ (resid (Unsettled.kept Uʳ ++ Refined.ords F) (Unsettled.kept Uᵉ) (ts R₀) (ss R₀)
+  loc σ (resid (Unsettled.kept Uʳ ++ Refined.orders F) (Unsettled.kept Uᵉ) (ts R₀) (ss R₀)
                (Refined.rest F) (dfs R₀)) fx
       (λ δ Q h → sn δ Q (mk⊩ᴿ (Unsettled.back Uʳ δ (λ m → ⊩rs h (∈-++⁺ˡ m)))
                               (Unsettled.back Uᵉ δ (⊩es h)) (⊩ts h) (⊩ss h)

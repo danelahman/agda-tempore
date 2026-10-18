@@ -75,8 +75,7 @@ open import TypeInference.SolverImpl.Core.Rigid S
   using (∨-true; ∨-left; ∨-right; dec-true; true-dec)
 
 open import TypeInference.SolverImpl.Deferred  S
-  using (Dfr; dfr; _⊩ᵈ_[_]; mk⊩ᵒ; ⊩ors; ⊩oes; ≾ˢ-↑ᵉⁿ; Dir; dir↓; dir↑; Still; stills?;
-         keepᵈ; allOf; κ⟨_⟩; wk-κ; κ-wkᵛ; κ-wkʳ; κ-wkᵉ; ⊩ᴴ-κ)
+  using (≾ˢ-↑ᵉⁿ; Dir; dir↓; dir↑; Still; stills?; keepᵈ; allOf; κ⟨_⟩; wk-κ; κ-wkᵛ; κ-wkʳ; κ-wkᵉ; ⊩ᴴ-κ)
 open import TypeInference.SolverImpl.Resid     S
 open import TypeInference.SolverImpl.Values    S
   using (module Vᵉ; module Vʳ; module Vⁱ; isFalse; equal-keeps; updᵉ-e; updᵉ-r; updʳ-r;
@@ -506,7 +505,7 @@ refinedOf : ∀ {Ψ} → (R : Resid Ψ) → Refined (Unsettled.kept (settledOf R
 refinedOf R = refine (Unsettled.kept (settledOf R))
 
 settleᴿ : ∀ {Ψ} → Resid Ψ → Resid Ψ
-settleᴿ R = record R { rs = rs R ++ Refined.ords (refinedOf R) ; ds = Refined.rest (refinedOf R) }
+settleᴿ R = record R { rs = rs R ++ Refined.orders (refinedOf R) ; ds = Refined.rest (refinedOf R) }
 
 -- Some disjunction is settled
 

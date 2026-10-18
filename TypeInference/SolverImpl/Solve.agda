@@ -102,7 +102,7 @@ open import TypeInference.OpenSyntax.Types  S
 open import TypeInference.OpenSyntax.Subst  S
 open import TypeInference.OpenSyntax.Hyps   S
 open import TypeInference.OpenSyntax.Instances S
-  using (_+eⁿ_; _↑ᵉⁿ_; wkᵉⁿ-H; closed-≾ᵣ; closed-≾ₑ)
+  using (closed-≾ᵣ; closed-≾ₑ)
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
@@ -610,18 +610,18 @@ outerᵒ? : ∀ {Θ Φ} → (O : Subst Θ Φ) → (o : Ords Φ) → Maybe (Outer
 outerᵒ? O o = both? (allOf (λ a → both? (outerᵣ? O (proj₁ a)) (outerᵣ? O (proj₂ a))) (ors o))
                     (allOf (λ a → both? (outerₑ? O (proj₁ a)) (outerₑ? O (proj₂ a))) (oes o))
 
-OuterD : ∀ {Θ Φ} → Subst Θ Φ → List (Dfr Φ) → Set
-OuterD O D = ∀ {E} → E ∈ D → Outerᵒ (O ↑ᵉⁿ nb E) (body E)
+OuterD : ∀ {Θ Φ} → Subst Θ Φ → List (Oblig Φ) → Set
+OuterD O D = ∀ {E} → E ∈ D → Outerᵒ (O ↑ᵉⁿ rigids E) (body E)
 
-outerD? : ∀ {Θ Φ} → (O : Subst Θ Φ) → (D : List (Dfr Φ)) → Maybe (OuterD O D)
-outerD? O = allOf (λ E → outerᵒ? (O ↑ᵉⁿ nb E) (body E))
+outerD? : ∀ {Θ Φ} → (O : Subst Θ Φ) → (D : List (Oblig Φ)) → Maybe (OuterD O D)
+outerD? O = allOf (λ E → outerᵒ? (O ↑ᵉⁿ rigids E) (body E))
 
-liftᵈ : ∀ {Φ} → EVar (Φ +e) → Dfr (Φ +e) → Dfr Φ
-liftᵈ j E = closeᵈ (E [ popˢ j ]ᵈ)
+liftᵈ : ∀ {Φ} → EVar (Φ +e) → Oblig (Φ +e) → Oblig Φ
+liftᵈ j E = closeᵈ (E [ popˢ j ]ᵒᵇ)
 
-liftᵈ-sound : ∀ {Φ Φ'} {Q : Hyps Φ'} {δ : Subst Φ Φ'} → (j : EVar (Φ +e)) → (E : Dfr (Φ +e))
-            → Q ⊩ᵈ liftᵈ j E [ δ ] → wkᵉ-H Q ⊩ᵈ E [ popˢ j ⨟ˢ (δ ↑ᵉ) ]
-liftᵈ-sound j E h = ⊩ᵈ-subst E (closeᵈ-sound (E [ popˢ j ]ᵈ) h)
+liftᵈ-sound : ∀ {Φ Φ'} {Q : Hyps Φ'} {δ : Subst Φ Φ'} → (j : EVar (Φ +e)) → (E : Oblig (Φ +e))
+            → Q ⊩ᴼ liftᵈ j E [ δ ] → wkᵉ-H Q ⊩ᴼ E [ popˢ j ⨟ˢ (δ ↑ᵉ) ]
+liftᵈ-sound j E h = ⊩ᴼ-subst E (closeᵈ-sound (E [ popˢ j ]ᵒᵇ) h)
 
 -- The atoms are split three ways: those strengthened away from the
 -- rigid, kept outside; those deferred, one new entry; and the inner
@@ -644,17 +644,17 @@ splitᴿ O O⁺ j R with listᵗ j (ts R) | listˢ j (ss R) | listᵈ j (ds R)
                    | outerD? O⁺ (dfs R)
 ... | just (lt , ft) | just (ls , fs) | just (ld , fd)
     | just (lr , dr , fr , gr) | just (le , de , fe , ge) | just _ =
-      solved (resid lr le lt ls ld (closeᵈ (dfr nothing 0 (ords dr de)) ∷ map (liftᵈ j) (dfs R)) ,
+      solved (resid lr le lt ls ld (closeᵈ (oblig nothing 0 (ords dr de)) ∷ map (liftᵈ j) (dfs R)) ,
               λ δ Q h → mk⊩ᴿ (fr δ Q (free δ Q h) (⊩rs h) (⊩ors (new δ Q h)))
                              (fe δ Q (free δ Q h) (⊩es h) (⊩oes (new δ Q h)))
                              (ft δ Q (⊩ts h)) (fs δ Q (⊩ss h)) (fd δ Q (⊩ds h))
                              (λ m → lifted δ Q h m))
   where
-    R₀ = resid lr le lt ls ld (closeᵈ (dfr nothing 0 (ords dr de)) ∷ map (liftᵈ j) (dfs R))
+    R₀ = resid lr le lt ls ld (closeᵈ (oblig nothing 0 (ords dr de)) ∷ map (liftᵈ j) (dfs R))
 
     new : ∀ {Φ'} → (δ : Subst _ Φ') → (Q : Hyps Φ') → Q ⊩ᴿ R₀ [ δ ]
-        → wkᵉ-H Q ⊩ᵈ dfr nothing 0 (ords dr de) [ δ ↑ᵉ ]
-    new δ Q h = closeᵈ-sound (dfr nothing 0 (ords dr de)) (⊩dfs h (here refl))
+        → wkᵉ-H Q ⊩ᴼ oblig nothing 0 (ords dr de) [ δ ↑ᵉ ]
+    new δ Q h = closeᵈ-sound (oblig nothing 0 (ords dr de)) (⊩dfs h (here refl))
 
     free : ∀ {Φ'} → (δ : Subst _ Φ') → (Q : Hyps Φ') → Q ⊩ᴿ R₀ [ δ ]
          → wkᵉ-H Q ⊩ᴴ freeᴴ j R [ popˢ j ⨟ˢ (δ ↑ᵉ) ]
@@ -665,7 +665,7 @@ splitᴿ O O⁺ j R with listᵗ j (ts R) | listˢ j (ss R) | listᵈ j (ds R)
            (λ ())
 
     lifted : ∀ {Φ'} → (δ : Subst _ Φ') → (Q : Hyps Φ') → Q ⊩ᴿ R₀ [ δ ]
-           → ∀ {E} → E ∈ dfs R → wkᵉ-H Q ⊩ᵈ E [ popˢ j ⨟ˢ (δ ↑ᵉ) ]
+           → ∀ {E} → E ∈ dfs R → wkᵉ-H Q ⊩ᴼ E [ popˢ j ⨟ˢ (δ ↑ᵉ) ]
     lifted δ Q h {E} m = liftᵈ-sound j E (⊩dfs h (there (∈-map⁺ (liftᵈ j) m)))
 ... | nothing | _       | _       | _      | _      | _       = refuted
 ... | just _  | nothing | _       | _      | _      | _       = refuted
@@ -853,35 +853,35 @@ sift v (a ∷ l) with v a | sift v l
 
 -- An entry with no ordering left is dropped
 
-unlessEmpty : ∀ {Ψ} → Maybe Op → (k : ℕ) → Ords (Ψ +eⁿ k) → List (Dfr Ψ)
+unlessEmpty : ∀ {Ψ} → Maybe Op → (k : ℕ) → Ords (Ψ +eⁿ k) → List (Oblig Ψ)
 unlessEmpty l k (ords [] []) = []
-unlessEmpty l k o            = dfr l k o ∷ []
+unlessEmpty l k o            = oblig l k o ∷ []
 
 unlessEmpty-back : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} {l : Maybe Op} {k : ℕ}
                  → (o : Ords (Ψ +eⁿ k))
-                 → (∀ {E'} → E' ∈ unlessEmpty l k o → Q ⊩ᵈ E' [ δ ]) → Q ⊩ᵈ dfr l k o [ δ ]
+                 → (∀ {E'} → E' ∈ unlessEmpty l k o → Q ⊩ᴼ E' [ δ ]) → Q ⊩ᴼ oblig l k o [ δ ]
 unlessEmpty-back (ords [] [])      f = mk⊩ᵒ (λ ()) (λ ())
 unlessEmpty-back (ords (a ∷ r) e)  f = f (here refl)
 unlessEmpty-back (ords [] (a ∷ e)) f = f (here refl)
 
 unlessEmpty-fwd : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} {l : Maybe Op} {k : ℕ}
                 → (o : Ords (Ψ +eⁿ k))
-                → Q ⊩ᵈ dfr l k o [ δ ] → ∀ {E'} → E' ∈ unlessEmpty l k o → Q ⊩ᵈ E' [ δ ]
+                → Q ⊩ᴼ oblig l k o [ δ ] → ∀ {E'} → E' ∈ unlessEmpty l k o → Q ⊩ᴼ E' [ δ ]
 unlessEmpty-fwd (ords [] [])      h ()
 unlessEmpty-fwd (ords (a ∷ r) e)  h (here refl) = h
 unlessEmpty-fwd (ords [] (a ∷ e)) h (here refl) = h
 
-data Retried {Ψ} (H : Hyps Ψ) (E : Dfr Ψ) : Set where
-  refutedᵈ : ((δ : Subst Ψ ∅ˢ) → ¬ (∅ᴴ ⊩ᵈ E [ δ ])) → Retried H E
-  keptᵈ    : (D : List (Dfr Ψ))
+data Retried {Ψ} (H : Hyps Ψ) (E : Oblig Ψ) : Set where
+  refutedᵈ : ((δ : Subst Ψ ∅ˢ) → ¬ (∅ᴴ ⊩ᴼ E [ δ ])) → Retried H E
+  keptᵈ    : (D : List (Oblig Ψ))
            → (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → Q ⊩ᴴ H [ δ ]
-                → (∀ {E'} → E' ∈ D → Q ⊩ᵈ E' [ δ ]) → Q ⊩ᵈ E [ δ ])
-           → (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → Q ⊩ᵈ E [ δ ]
-                → ∀ {E'} → E' ∈ D → Q ⊩ᵈ E' [ δ ])
+                → (∀ {E'} → E' ∈ D → Q ⊩ᴼ E' [ δ ]) → Q ⊩ᴼ E [ δ ])
+           → (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → Q ⊩ᴼ E [ δ ]
+                → ∀ {E'} → E' ∈ D → Q ⊩ᴼ E' [ δ ])
            → Retried H E
 
-retryᵈ : ∀ {Ψ} → (H : Hyps Ψ) → (E : Dfr Ψ) → Retried H E
-retryᵈ H (dfr l k o) with sift (verdictʳ H k) (ors o) | sift (verdictᵉ H k) (oes o)
+retryᵈ : ∀ {Ψ} → (H : Hyps Ψ) → (E : Oblig Ψ) → Retried H E
+retryᵈ H (oblig l k o) with sift (verdictʳ H k) (ors o) | sift (verdictᵉ H k) (oes o)
 ... | inj₁ (a , m , r) | _                = refutedᵈ (λ δ h → r δ (⊩ors h m))
 ... | inj₂ _           | inj₁ (a , m , r) = refutedᵈ (λ δ h → r δ (⊩oes h m))
 ... | inj₂ (sifted lr sr br) | inj₂ (sifted le se be) =
@@ -891,19 +891,19 @@ retryᵈ H (dfr l k o) with sift (verdictʳ H k) (ors o) | sift (verdictᵉ H k)
             (λ δ h → unlessEmpty-fwd (ords lr le)
                        (mk⊩ᵒ (λ m → ⊩ors h (sr m)) (λ m → ⊩oes h (se m))))
 
-record RetriedL {Ψ} (H : Hyps Ψ) (D : List (Dfr Ψ)) : Set where
+record RetriedL {Ψ} (H : Hyps Ψ) (D : List (Oblig Ψ)) : Set where
   constructor retriedL
   field
-    D'    : List (Dfr Ψ)
+    D'    : List (Oblig Ψ)
     backᴰ : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → Q ⊩ᴴ H [ δ ]
-          → (∀ {E} → E ∈ D' → Q ⊩ᵈ E [ δ ]) → ∀ {E} → E ∈ D → Q ⊩ᵈ E [ δ ]
+          → (∀ {E} → E ∈ D' → Q ⊩ᴼ E [ δ ]) → ∀ {E} → E ∈ D → Q ⊩ᴼ E [ δ ]
     fwdᴰ  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
-          → (∀ {E} → E ∈ D → Q ⊩ᵈ E [ δ ]) → ∀ {E} → E ∈ D' → Q ⊩ᵈ E [ δ ]
+          → (∀ {E} → E ∈ D → Q ⊩ᴼ E [ δ ]) → ∀ {E} → E ∈ D' → Q ⊩ᴼ E [ δ ]
 
-RefutedL : ∀ {Ψ} → List (Dfr Ψ) → Set
-RefutedL {Ψ} D = Σ[ E ∈ Dfr Ψ ] ((E ∈ D) × ((δ : Subst Ψ ∅ˢ) → ¬ (∅ᴴ ⊩ᵈ E [ δ ])))
+RefutedL : ∀ {Ψ} → List (Oblig Ψ) → Set
+RefutedL {Ψ} D = Σ[ E ∈ Oblig Ψ ] ((E ∈ D) × ((δ : Subst Ψ ∅ˢ) → ¬ (∅ᴴ ⊩ᴼ E [ δ ])))
 
-retryᴰ : ∀ {Ψ} → (H : Hyps Ψ) → (D : List (Dfr Ψ)) → RefutedL D ⊎ RetriedL H D
+retryᴰ : ∀ {Ψ} → (H : Hyps Ψ) → (D : List (Oblig Ψ)) → RefutedL D ⊎ RetriedL H D
 retryᴰ H []      = inj₂ (retriedL [] (λ δ h g → λ ()) (λ δ g → λ ()))
 retryᴰ H (E ∷ D) with retryᵈ H E | retryᴰ H D
 ... | refutedᵈ r     | _                    = inj₁ (E , here refl , r)
@@ -916,7 +916,7 @@ retryᴰ H (E ∷ D) with retryᵈ H E | retryᴰ H D
 
 -- A residual with its deferred conditions replaced
 
-withDfs : ∀ {Ψ} → Resid Ψ → List (Dfr Ψ) → Resid Ψ
+withDfs : ∀ {Ψ} → Resid Ψ → List (Oblig Ψ) → Resid Ψ
 withDfs R D = resid (rs R) (es R) (ts R) (ss R) (ds R) D
 
 retry : ∀ {Θ} → (s : St Θ) → Maybe (Σ[ s' ∈ St Θ ] (s ⟶ s'))
@@ -942,14 +942,14 @@ thenRetry {C = C} (solved (s₁ , m₁ , w₁)) with retry s₁
 
 -- The entries a clause leaves carry its operation
 
-relabel : ∀ {Ψ} → Op → Dfr Ψ → Dfr Ψ
-relabel op (dfr nothing  k o) = dfr (just op) k o
-relabel op (dfr (just l) k o) = dfr (just l) k o
+relabel : ∀ {Ψ} → Op → Oblig Ψ → Oblig Ψ
+relabel op (oblig nothing  k o) = oblig (just op) k o
+relabel op (oblig (just l) k o) = oblig (just l) k o
 
-relabel-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (op : Op) → (E : Dfr Ψ)
-          → Q ⊩ᵈ relabel op E [ δ ] → Q ⊩ᵈ E [ δ ]
-relabel-⊩ op (dfr nothing  k o) h = h
-relabel-⊩ op (dfr (just l) k o) h = h
+relabel-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (op : Op) → (E : Oblig Ψ)
+          → Q ⊩ᴼ relabel op E [ δ ] → Q ⊩ᴼ E [ δ ]
+relabel-⊩ op (oblig nothing  k o) h = h
+relabel-⊩ op (oblig (just l) k o) h = h
 
 labelled : ∀ {Θ} {s : St Θ} {C : Constraint Θ} → Op
          → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))

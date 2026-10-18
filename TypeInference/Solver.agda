@@ -44,7 +44,7 @@ open Operations Ops
 open import TypeInference.OpenSyntax.Types S
 open import TypeInference.OpenSyntax.Subst S
 open import TypeInference.OpenSyntax.Hyps  S
-open import TypeInference.OpenSyntax.Instances S using (Obligs; Satisfiable; _⊨_∣_)
+open import TypeInference.OpenSyntax.Instances S using (Satisfiable; _⊨_∣_)
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S

@@ -117,6 +117,11 @@ module _ {Θ} {σ σ' : DInst Θ} (p : σ ≗ᴰ σ') where
     (λ {ε} {ε'} m → subst₂ _≾ₑ_ (⟦≗⟧ᵉ ε) (⟦≗⟧ᵉ ε') (⊨ordₑ s m))
     (λ {A} {ρ} m → subst₂ (λ X r → Eternal X ⊎ (r ≾ᵣ uᵣ)) (⟦≗⟧ᵛ A) (⟦≗⟧ʳ ρ) (⊨disj s m))
 
+  ⊨ᴰᵒ-≗ : {o : Ords Θ} → σ ⊨ᴰᵒ o → σ' ⊨ᴰᵒ o
+  ⊨ᴰᵒ-≗ s = mk⊨ᴰᵒ
+    (λ {ρ} {ρ'} m → subst₂ _≾ᵣ_ (⟦≗⟧ʳ ρ) (⟦≗⟧ʳ ρ') (⊨ors s m))
+    (λ {ε} {ε'} m → subst₂ _≾ₑ_ (⟦≗⟧ᵉ ε) (⟦≗⟧ᵉ ε') (⊨oes s m))
+
 ------------------------------------------------------------------------
 -- Substitution: interpreting `X [ δ ]` at `σ` is interpreting `X` at
 -- the composite `δ ⨟ᴰ σ`
@@ -176,6 +181,12 @@ sound-⊩ᴴ {δ = δ} {σ} h s = mk⊨ᴰ
   (λ {ε} {ε'} m → subst₂ _≾ₑ_ (⟦[]⟧ᵉ δ σ ε) (⟦[]⟧ᵉ δ σ ε') (sound-≾ₑ s (⊩ordₑ h m)))
   (λ {A} {ρ} m → subst₂ (λ X r → Eternal X ⊎ (r ≾ᵣ uᵣ)) (⟦[]⟧ᵛ δ σ A) (⟦[]⟧ʳ δ σ ρ)
                         (sound-VarOK s (⊩disj h m)))
+
+sound-⊩ᵒ : ∀ {Θ Θ'} {o : Ords Θ} {Q' : Hyps Θ'} {δ : Subst Θ Θ'} {σ : DInst Θ'}
+         → Q' ⊩ᵒ o [ δ ] → σ ⊨ᴰ Q' → (δ ⨟ᴰ σ) ⊨ᴰᵒ o
+sound-⊩ᵒ {δ = δ} {σ} h s = mk⊨ᴰᵒ
+  (λ {ρ} {ρ'} m → subst₂ _≾ᵣ_ (⟦[]⟧ʳ δ σ ρ) (⟦[]⟧ʳ δ σ ρ') (sound-≾ᵣ s (⊩ors h m)))
+  (λ {ε} {ε'} m → subst₂ _≾ₑ_ (⟦[]⟧ᵉ δ σ ε) (⟦[]⟧ᵉ δ σ ε') (sound-≾ₑ s (⊩oes h m)))
 
 ------------------------------------------------------------------------
 -- Closed open syntax: the interpretation at the empty instance
@@ -350,10 +361,10 @@ private
     <:̂ᵛ-trans (≡̂ᵛ-<:̂ ⌜⌞ A ⌟⌝ᵛ) (<:̂ᵛ-trans (⌜⌝-<:ᵛ p) (≡̂ᵛ-<:̂ (≡̂ᵛ-sym ⌜⌞ B ⌟⌝ᵛ)))
 
 ⊨→⊨ᴰ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → δ ⊨ Q ∣ [] → ⌞ δ ⌟ˢ ⊨ᴰ Q
-⊨→⊨ᴰ (h ∷ᴬ []ᴬ) = sound-⊩ᴴ h ⊨ᴰ-∅
+⊨→⊨ᴰ (h , []ᴬ) = sound-⊩ᴴ h ⊨ᴰ-∅
 
 ⊨ᴰ→⊨ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → ⌞ δ ⌟ˢ ⊨ᴰ Q → δ ⊨ Q ∣ []
-⊨ᴰ→⊨ {Θ} {Q} {δ} s = mk⊩ᴴ ets' subᵥ' ordᵣ' ordₑ' disj' ∷ᴬ []ᴬ
+⊨ᴰ→⊨ {Θ} {Q} {δ} s = mk⊩ᴴ ets' subᵥ' ordᵣ' ordₑ' disj' , []ᴬ
   where
     eqʳ : (ρ : RExp Θ) → valʳ (ρ [ δ ]ʳ) ≡ ⟦ ρ ⟧ʳ ⌞ δ ⌟ˢ
     eqʳ ρ = trans (sym (⌞⌟-valʳ (ρ [ δ ]ʳ))) (⌞[]⌟ʳ δ ρ)
@@ -398,9 +409,9 @@ private
   ≗ᴰ-,ᵉ : ∀ {Θ} {σ σ' : DInst Θ} → σ ≗ᴰ σ' → (c : E) → (σ ,ᵉᴰ c) ≗ᴰ (σ' ,ᵉᴰ c)
   ≗ᴰ-,ᵉ p c = mk≗ᴰ (ty≗ p) (res≗ p) (λ { zero → refl ; (suc i) → eff≗ p i })
 
-  ⊨ᴰ⟨⟩-≗ : ∀ {Θ} {σ σ' : DInst Θ} → (k : ℕ) → {B : Hyps (Θ +eⁿ k)}
+  ⊨ᴰ⟨⟩-≗ : ∀ {Θ} {σ σ' : DInst Θ} → (k : ℕ) → {B : Ords (Θ +eⁿ k)}
          → σ ≗ᴰ σ' → σ ⊨ᴰ⟨ k ⟩ B → σ' ⊨ᴰ⟨ k ⟩ B
-  ⊨ᴰ⟨⟩-≗ zero    p s = ⊨ᴰ-≗ p s
+  ⊨ᴰ⟨⟩-≗ zero    p s = ⊨ᴰᵒ-≗ p s
   ⊨ᴰ⟨⟩-≗ (suc k) p s = λ c → ⊨ᴰ⟨⟩-≗ k (≗ᴰ-,ᵉ p c) (s c)
 
   ↑ᵉ-⨟ᴰ : ∀ {Θ Θ'} → (δ : Subst Θ Θ') → (τ : DInst Θ') → (c : E)
@@ -409,9 +420,9 @@ private
                      (λ { zero → refl ; (suc i) → ⟦wkᵉ⟧ᵉ τ c (sE δ i) })
 
   sound-⊩ᴼ : ∀ {Θ Θ'} {Q' : Hyps Θ'} {δ : Subst Θ Θ'} {τ : DInst Θ'}
-           → (k : ℕ) → {B : Hyps (Θ +eⁿ k)}
-           → wkᵉⁿ-H k Q' ⊩ᴴ B [ δ ↑ᵉⁿ k ] → τ ⊨ᴰ Q' → (δ ⨟ᴰ τ) ⊨ᴰ⟨ k ⟩ B
-  sound-⊩ᴼ zero    h s = sound-⊩ᴴ h s
+           → (k : ℕ) → {B : Ords (Θ +eⁿ k)}
+           → wkᵉⁿ-H k Q' ⊩ᵒ B [ δ ↑ᵉⁿ k ] → τ ⊨ᴰ Q' → (δ ⨟ᴰ τ) ⊨ᴰ⟨ k ⟩ B
+  sound-⊩ᴼ zero    h s = sound-⊩ᵒ h s
   sound-⊩ᴼ {δ = δ} {τ} (suc k) h s c =
     ⊨ᴰ⟨⟩-≗ k (↑ᵉ-⨟ᴰ δ τ c) (sound-⊩ᴼ {δ = δ ↑ᵉ} {τ ,ᵉᴰ c} k h (⊨ᴰ-,ᵉ c s))
 

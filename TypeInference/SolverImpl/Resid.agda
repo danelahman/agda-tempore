@@ -85,8 +85,6 @@ open import TypeInference.OpenSyntax.Hyps   S
 
 open import TypeInference.SolverImpl.Core.Rigid S using (zip₂; zip₂-just; zip₂-nothing; strᵛ)
 open import TypeInference.SolverImpl.Former     S
-open import TypeInference.SolverImpl.Deferred   S
-  using (Dfr; _[_]ᵈ; _⊩ᵈ_[_]; ⊩ᵈ-resp-≐ˢ; ⊩ᵈ-subst; ⊩ᵈ-subst⁻; ⊩ᵈ-⨟)
 
 record Resid (Ψ : Scope) : Set where
   constructor resid
@@ -96,7 +94,7 @@ record Resid (Ψ : Scope) : Set where
     ts : List (OVType Ψ)                   -- open eternality demands, on type variables
     ss : List (OVType Ψ × OVType Ψ)        -- open subtyping demands
     ds : List (OVType Ψ × RExp Ψ)          -- open var-rule disjunctions
-    dfs : List (Dfr Ψ)                     -- deferred rigid conditions
+    dfs : List (Oblig Ψ)                     -- deferred rigid conditions
 
 open Resid public
 
@@ -112,7 +110,7 @@ R [ σ ]ᴿ = resid (map (mapᵖ (_[ σ ]ʳ)) (rs R))
                  (map (_[ σ ]ᵛ) (ts R))
                  (map (mapᵖ (_[ σ ]ᵛ)) (ss R))
                  (map (mapᵈ (_[ σ ]ᵛ) (_[ σ ]ʳ)) (ds R))
-                 (map (_[ σ ]ᵈ) (dfs R))
+                 (map (_[ σ ]ᵒᵇ) (dfs R))
 
 -- Subtyping demands that are pairs of type variables, which a
 -- substitution fixing every type variable keeps
@@ -156,7 +154,7 @@ record _⊩ᴿ_[_] {Ψ Ψ' : Scope} (Q : Hyps Ψ') (R : Resid Ψ) (δ : Subst Ψ
     ⊩ts : ∀ {A}    → A ∈ ts R        → Q ⊩ᴱ A [ δ ]ᵛ
     ⊩ss : ∀ {A B}  → (A , B) ∈ ss R  → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
     ⊩ds : ∀ {A ρ}  → (A , ρ) ∈ ds R  → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
-    ⊩dfs : ∀ {E}   → E ∈ dfs R       → Q ⊩ᵈ E [ δ ]
+    ⊩dfs : ∀ {E}   → E ∈ dfs R       → Q ⊩ᴼ E [ δ ]
 
 open _⊩ᴿ_[_] public
 
@@ -171,7 +169,7 @@ open _⊩ᴿ_[_] public
        (λ {A}       m → subst (Q ⊩ᴱ_) ([≐]ᵛ p A) (⊩ts h m))
        (λ {A} {B}   m → subst₂ (Q ∣_<:̂ᵛ_) ([≐]ᵛ p A) ([≐]ᵛ p B) (⊩ss h m))
        (λ {A} {ρ}   m → subst₂ (VarOK Q) ([≐]ᵛ p A) ([≐]ʳ p ρ) (⊩ds h m))
-       (λ {E}       m → ⊩ᵈ-resp-≐ˢ E p (⊩dfs h m))
+       (λ {E}       m → ⊩ᴼ-resp-≐ˢ E p (⊩dfs h m))
 
 -- A residual pushed through a substitution
 
@@ -189,7 +187,7 @@ open _⊩ᴿ_[_] public
                               (⊩ss h (∈-map⁺ (mapᵖ (_[ σ ]ᵛ)) m)))
        (λ {A} {ρ}  m → subst₂ (VarOK Q) ([⨟]ᵛ A σ δ) ([⨟]ʳ ρ σ δ)
                               (⊩ds h (∈-map⁺ (mapᵈ (_[ σ ]ᵛ) (_[ σ ]ʳ)) m)))
-       (λ {E}      m → ⊩ᵈ-subst E (⊩dfs h (∈-map⁺ (_[ σ ]ᵈ) m)))
+       (λ {E}      m → ⊩ᴼ-subst E (⊩dfs h (∈-map⁺ (_[ σ ]ᵒᵇ) m)))
 
 -- The converse of `⊩ᴿ-subst`
 
@@ -222,9 +220,9 @@ open _⊩ᴿ_[_] public
     ... | (A₀ , ρ₀) , m₀ , refl =
       subst₂ (VarOK Q) (sym ([⨟]ᵛ A₀ σ δ)) (sym ([⨟]ʳ ρ₀ σ δ)) (⊩ds h m₀)
 
-    dfs' : ∀ {E} → E ∈ dfs (R [ σ ]ᴿ) → Q ⊩ᵈ E [ δ ]
-    dfs' m with ∈-map⁻ (_[ σ ]ᵈ) m
-    ... | E₀ , m₀ , refl = ⊩ᵈ-subst⁻ E₀ (⊩dfs h m₀)
+    dfs' : ∀ {E} → E ∈ dfs (R [ σ ]ᴿ) → Q ⊩ᴼ E [ δ ]
+    dfs' m with ∈-map⁻ (_[ σ ]ᵒᵇ) m
+    ... | E₀ , m₀ , refl = ⊩ᴼ-subst⁻ E₀ (⊩dfs h m₀)
 
 -- A discharge followed by a strengthening of the hypotheses
 
@@ -241,7 +239,7 @@ open _⊩ᴿ_[_] public
                               (<:̂ᵛ-subst g (⊩ss h m)))
        (λ {A} {ρ}  m → subst₂ (VarOK Q') ([⨟]ᵛ A δ δ') ([⨟]ʳ ρ δ δ')
                               (VarOK-subst g (⊩ds h m)))
-       (λ {E}      m → ⊩ᵈ-⨟ E g (⊩dfs h m))
+       (λ {E}      m → ⊩ᴼ-⨟ E g (⊩dfs h m))
 
 -- The two components of a union
 
@@ -834,7 +832,7 @@ bareᴿ : ∀ {Ψ} → Resid Ψ → Resid Ψ
 bareᴿ R = resid (rs R) (es R) (ts R) (ss R) (ds R) []
 
 ⊩ᴿ-bare : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {δ : Subst Ψ Ψ'}
-        → Q ⊩ᴿ bareᴿ R [ δ ] → (∀ {E} → E ∈ dfs R → Q ⊩ᵈ E [ δ ]) → Q ⊩ᴿ R [ δ ]
+        → Q ⊩ᴿ bareᴿ R [ δ ] → (∀ {E} → E ∈ dfs R → Q ⊩ᴼ E [ δ ]) → Q ⊩ᴿ R [ δ ]
 ⊩ᴿ-bare h f = mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (⊩ss h) (⊩ds h) f
 
 toHyps : ∀ {Ψ} → (R : Resid Ψ) → Maybe (Σ[ Q ∈ Hyps Ψ ] (Q ⊩ᴿ bareᴿ R [ idˢ ]))

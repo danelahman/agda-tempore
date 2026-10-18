@@ -45,7 +45,6 @@ open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
 open import TypeInference.OpenSyntax.Contexts  S
 open import TypeInference.OpenSyntax.Hyps      S
-open import TypeInference.OpenSyntax.Instances S using (_+eⁿ_; Oblig; Obligs; rigids; body)
 
 open import Instantiation.Types S
 
@@ -68,13 +67,23 @@ open _⊨ᴰ_ public
 ⊨ᴰ-∅ : ∀ {Θ} {σ : DInst Θ} → σ ⊨ᴰ ∅ᴴ
 ⊨ᴰ-∅ = mk⊨ᴰ (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
 
--- An obligation `∀ᵉ j₁ … jₖ. B` holds when `B` does at every extension
+-- Grade orderings hold when each does in the grade's order
+
+infix 4 _⊨ᴰᵒ_ _⊨ᴰ⟨_⟩_ _⊨ᴰᴼ_ _⊨ᴰᴿ_
+
+record _⊨ᴰᵒ_ {Θ : Scope} (σ : DInst Θ) (o : Ords Θ) : Set where
+  constructor mk⊨ᴰᵒ
+  field
+    ⊨ors : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors o → ⟦ ρ ⟧ʳ σ ≾ᵣ ⟦ ρ' ⟧ʳ σ
+    ⊨oes : ∀ {ε ε'} → (ε , ε') ∈ oes o → ⟦ ε ⟧ᵉ σ ≾ₑ ⟦ ε' ⟧ᵉ σ
+
+open _⊨ᴰᵒ_ public
+
+-- An obligation `∀ᵉ j₁ … jₖ. O` holds when `O` does at every extension
 -- by grades for its rigids
 
-infix 4 _⊨ᴰ⟨_⟩_ _⊨ᴰᴼ_ _⊨ᴰᴿ_
-
-_⊨ᴰ⟨_⟩_ : ∀ {Θ} → DInst Θ → (k : ℕ) → Hyps (Θ +eⁿ k) → Set
-σ ⊨ᴰ⟨ zero ⟩  B = σ ⊨ᴰ B
+_⊨ᴰ⟨_⟩_ : ∀ {Θ} → DInst Θ → (k : ℕ) → Ords (Θ +eⁿ k) → Set
+σ ⊨ᴰ⟨ zero ⟩  B = σ ⊨ᴰᵒ B
 σ ⊨ᴰ⟨ suc k ⟩ B = (c : E) → (σ ,ᵉᴰ c) ⊨ᴰ⟨ k ⟩ B
 
 _⊨ᴰᴼ_ : ∀ {Θ} → DInst Θ → Oblig Θ → Set

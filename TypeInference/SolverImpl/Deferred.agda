@@ -2,12 +2,11 @@
 -- Deferred rigid conditions                                      --
 --                                                                --
 -- A clause's grade orderings that mix its rigid with outer       --
--- unknowns are deferred as an entry `∀ᵉ j₁ … jₖ. O`: orderings   --
--- over the scope extended by `k` rigids, `j₁` outermost,         --
--- labelled with the operation of the clause that left them. An   --
--- entry is discharged along a substitution when its orderings    --
--- are, at fresh rigids, by the hypotheses weakened to them: it   --
--- reads back as an obligation (`toOblig`).                       --
+-- unknowns are deferred as an obligation `∀ᵉ j₁ … jₖ. O`         --
+-- (`Obligations`), labelled with the operation of the clause     --
+-- that left them, and discharged along a substitution when its   --
+-- orderings are, at fresh rigids, by the hypotheses weakened to  --
+-- them (`_⊩ᴼ_[_]`).                                              --
 --                                                                --
 -- A substitution below (above) the one it moves keeps an entry   --
 -- whose greater (smaller) sides it leaves fixed (`keepᵈ`). A     --
@@ -15,9 +14,8 @@
 -- drawn from the candidates of an ordering: the unit, the top    --
 -- and the grade system's `witnesses` (`candidates`, `grid`).     --
 --                                                                --
--- Contract. An entry and its obligation hold together            --
--- (`⊩ᵈ→⊩ᴼ`, `⊩ᴼ→⊩ᵈ`). Closing an entry over one more rigid       --
--- (`closeᵈ`) holds exactly where the entry does at a fresh rigid --
+-- Contract. Closing an entry over one more rigid (`closeᵈ`)      --
+-- holds exactly where the entry does at a fresh rigid            --
 -- (`closeᵈ-sound`, `closeᵈ-princ`). Retrying the entries is the  --
 -- driver's (`retry`, `SolverImpl.Solve`).                        --
 --------------------------------------------------------------------
@@ -53,22 +51,10 @@ open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
 open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
-open import TypeInference.OpenSyntax.Instances S
-  using (_+eⁿ_; _↑ᵉⁿ_; wkᵉⁿ-H; ≐ˢ-↑ᵉⁿ; Oblig; oblig; Obligs; _⊩ᴼ_[_]; _⊩ᴼˢ_[_])
-open import TypeInference.Constraints.Properties S using (⊩ᴴ-↑ᵉ)
+open import TypeInference.OpenSyntax.Instances S using (_⊩ᴼˢ_[_])
 
 ------------------------------------------------------------------------
--- Lifting over the rigids
-
-⨟-↑ᵉⁿ : ∀ {Θ Θ₁ Θ₂} → (σ : Subst Θ Θ₁) → (δ : Subst Θ₁ Θ₂) → (k : ℕ)
-      → ((σ ↑ᵉⁿ k) ⨟ˢ (δ ↑ᵉⁿ k)) ≐ˢ ((σ ⨟ˢ δ) ↑ᵉⁿ k)
-⨟-↑ᵉⁿ σ δ zero    = ≐ˢ-refl
-⨟-↑ᵉⁿ σ δ (suc k) = ≐ˢ-trans (⨟-↑ᵉⁿ (σ ↑ᵉ) (δ ↑ᵉ) k) (≐ˢ-↑ᵉⁿ (⨟-↑ᵉ σ δ) k)
-
-⊩ᴴ-↑ᵉⁿ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {δ : Subst Θ Θ'} → (k : ℕ)
-       → Q' ⊩ᴴ Q [ δ ] → wkᵉⁿ-H k Q' ⊩ᴴ wkᵉⁿ-H k Q [ δ ↑ᵉⁿ k ]
-⊩ᴴ-↑ᵉⁿ zero    h = h
-⊩ᴴ-↑ᵉⁿ (suc k) h = ⊩ᴴ-↑ᵉⁿ k (⊩ᴴ-↑ᵉ h)
+-- Lifting an ordering of substitutions over the rigids
 
 ≾ˢ-↑ᵉ : ∀ {Θ Θ'} {Q : Hyps Θ'} {σ τ : Subst Θ Θ'}
       → Q ⊩ σ ≾ˢ τ → wkᵉ-H Q ⊩ (σ ↑ᵉ) ≾ˢ (τ ↑ᵉ)
@@ -85,137 +71,23 @@ wkᵉⁿ-∅ zero    = refl
 wkᵉⁿ-∅ (suc k) = wkᵉⁿ-∅ k
 
 ------------------------------------------------------------------------
--- Grade orderings
-
-record Ords (Ψ : Scope) : Set where
-  constructor ords
-  field
-    ors : List (RExp Ψ × RExp Ψ)
-    oes : List (EExp Ψ × EExp Ψ)
-
-open Ords public
-
-infixl 50 _[_]ᴼ
-
-_[_]ᴼ : ∀ {Ψ Ψ'} → Ords Ψ → Subst Ψ Ψ' → Ords Ψ'
-o [ σ ]ᴼ = ords (map (mapᵖ (_[ σ ]ʳ)) (ors o)) (map (mapᵖ (_[ σ ]ᵉ)) (oes o))
-
-infix 4 _⊩ᵒ_[_]
-
-record _⊩ᵒ_[_] {Ψ Ψ' : Scope} (Q : Hyps Ψ') (o : Ords Ψ) (δ : Subst Ψ Ψ') : Set where
-  constructor mk⊩ᵒ
-  field
-    ⊩ors : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors o → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
-    ⊩oes : ∀ {ε ε'} → (ε , ε') ∈ oes o → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
-
-open _⊩ᵒ_[_] public
-
-⊩ᵒ-resp-≐ˢ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {o : Ords Ψ} {δ δ' : Subst Ψ Ψ'}
-           → δ ≐ˢ δ' → Q ⊩ᵒ o [ δ ] → Q ⊩ᵒ o [ δ' ]
-⊩ᵒ-resp-≐ˢ {Q = Q} p h =
-  mk⊩ᵒ (λ {ρ} {ρ'} m → subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) ([≐]ʳ p ρ) ([≐]ʳ p ρ') (⊩ors h m))
-       (λ {ε} {ε'} m → subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) ([≐]ᵉ p ε) ([≐]ᵉ p ε') (⊩oes h m))
-
-⊩ᵒ-subst : ∀ {Ψ Ψ₁ Ψ'} {Q : Hyps Ψ'} {o : Ords Ψ} {σ : Subst Ψ Ψ₁} {δ : Subst Ψ₁ Ψ'}
-         → Q ⊩ᵒ o [ σ ]ᴼ [ δ ] → Q ⊩ᵒ o [ σ ⨟ˢ δ ]
-⊩ᵒ-subst {Q = Q} {σ = σ} {δ} h =
-  mk⊩ᵒ (λ {ρ} {ρ'} m → subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) ([⨟]ʳ ρ σ δ) ([⨟]ʳ ρ' σ δ)
-                              (⊩ors h (∈-map⁺ (mapᵖ (_[ σ ]ʳ)) m)))
-       (λ {ε} {ε'} m → subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε σ δ) ([⨟]ᵉ ε' σ δ)
-                              (⊩oes h (∈-map⁺ (mapᵖ (_[ σ ]ᵉ)) m)))
-
-⊩ᵒ-subst⁻ : ∀ {Ψ Ψ₁ Ψ'} {Q : Hyps Ψ'} {o : Ords Ψ} {σ : Subst Ψ Ψ₁} {δ : Subst Ψ₁ Ψ'}
-          → Q ⊩ᵒ o [ σ ⨟ˢ δ ] → Q ⊩ᵒ o [ σ ]ᴼ [ δ ]
-⊩ᵒ-subst⁻ {Q = Q} {o = o} {σ = σ} {δ} h = mk⊩ᵒ r e
-  where
-    r : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors (o [ σ ]ᴼ) → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
-    r m with ∈-map⁻ (mapᵖ (_[ σ ]ʳ)) m
-    ... | (ρ₀ , ρ₀') , m₀ , refl =
-      subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) (sym ([⨟]ʳ ρ₀ σ δ)) (sym ([⨟]ʳ ρ₀' σ δ)) (⊩ors h m₀)
-
-    e : ∀ {ε ε'} → (ε , ε') ∈ oes (o [ σ ]ᴼ) → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
-    e m with ∈-map⁻ (mapᵖ (_[ σ ]ᵉ)) m
-    ... | (ε₀ , ε₀') , m₀ , refl =
-      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([⨟]ᵉ ε₀ σ δ)) (sym ([⨟]ᵉ ε₀' σ δ)) (⊩oes h m₀)
-
-⊩ᵒ-⨟ : ∀ {Ψ Ψ' Ψ''} {Q : Hyps Ψ'} {Q' : Hyps Ψ''} {o : Ords Ψ}
-         {δ : Subst Ψ Ψ'} {δ' : Subst Ψ' Ψ''}
-     → Q' ⊩ᴴ Q [ δ' ] → Q ⊩ᵒ o [ δ ] → Q' ⊩ᵒ o [ δ ⨟ˢ δ' ]
-⊩ᵒ-⨟ {Q' = Q'} {δ = δ} {δ'} g h =
-  mk⊩ᵒ (λ {ρ} {ρ'} m → subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y) ([⨟]ʳ ρ δ δ') ([⨟]ʳ ρ' δ δ')
-                              (⊩-substᵣ g (⊩ors h m)))
-       (λ {ε} {ε'} m → subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε δ δ') ([⨟]ᵉ ε' δ δ')
-                              (⊩-substₑ g (⊩oes h m)))
-
-------------------------------------------------------------------------
 -- Entries
-
-record Dfr (Ψ : Scope) : Set where
-  constructor dfr
-  field
-    lbl  : Maybe Op
-    nb   : ℕ
-    body : Ords (Ψ +eⁿ nb)
-
-open Dfr public
-
-infixl 50 _[_]ᵈ
-
-_[_]ᵈ : ∀ {Ψ Ψ'} → Dfr Ψ → Subst Ψ Ψ' → Dfr Ψ'
-dfr l k o [ σ ]ᵈ = dfr l k (o [ σ ↑ᵉⁿ k ]ᴼ)
-
-infix 4 _⊩ᵈ_[_]
-
-_⊩ᵈ_[_] : ∀ {Ψ Ψ'} → Hyps Ψ' → Dfr Ψ → Subst Ψ Ψ' → Set
-Q ⊩ᵈ E [ δ ] = wkᵉⁿ-H (nb E) Q ⊩ᵒ body E [ δ ↑ᵉⁿ nb E ]
-
-⊩ᵈ-resp-≐ˢ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ δ' : Subst Ψ Ψ'} → (E : Dfr Ψ)
-           → δ ≐ˢ δ' → Q ⊩ᵈ E [ δ ] → Q ⊩ᵈ E [ δ' ]
-⊩ᵈ-resp-≐ˢ (dfr l k o) p h = ⊩ᵒ-resp-≐ˢ (≐ˢ-↑ᵉⁿ p k) h
-
-⊩ᵈ-subst : ∀ {Ψ Ψ₁ Ψ'} {Q : Hyps Ψ'} {σ : Subst Ψ Ψ₁} {δ : Subst Ψ₁ Ψ'} → (E : Dfr Ψ)
-         → Q ⊩ᵈ E [ σ ]ᵈ [ δ ] → Q ⊩ᵈ E [ σ ⨟ˢ δ ]
-⊩ᵈ-subst {σ = σ} {δ} (dfr l k o) h = ⊩ᵒ-resp-≐ˢ (⨟-↑ᵉⁿ σ δ k) (⊩ᵒ-subst h)
-
-⊩ᵈ-subst⁻ : ∀ {Ψ Ψ₁ Ψ'} {Q : Hyps Ψ'} {σ : Subst Ψ Ψ₁} {δ : Subst Ψ₁ Ψ'} → (E : Dfr Ψ)
-          → Q ⊩ᵈ E [ σ ⨟ˢ δ ] → Q ⊩ᵈ E [ σ ]ᵈ [ δ ]
-⊩ᵈ-subst⁻ {σ = σ} {δ} (dfr l k o) h =
-  ⊩ᵒ-subst⁻ (⊩ᵒ-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉⁿ σ δ k)) h)
-
-⊩ᵈ-⨟ : ∀ {Ψ Ψ' Ψ''} {Q : Hyps Ψ'} {Q' : Hyps Ψ''} {δ : Subst Ψ Ψ'} {δ' : Subst Ψ' Ψ''}
-     → (E : Dfr Ψ) → Q' ⊩ᴴ Q [ δ' ] → Q ⊩ᵈ E [ δ ] → Q' ⊩ᵈ E [ δ ⨟ˢ δ' ]
-⊩ᵈ-⨟ {δ = δ} {δ'} (dfr l k o) g h =
-  ⊩ᵒ-resp-≐ˢ (⨟-↑ᵉⁿ δ δ' k) (⊩ᵒ-⨟ (⊩ᴴ-↑ᵉⁿ k g) h)
 
 -- An entry over the scope extended by one rigid binds it outermost
 
-bindᵈ : ∀ {Ψ} → Dfr (Ψ +e) → Dfr Ψ
-bindᵈ (dfr l k o) = dfr l (suc k) o
+bindᵈ : ∀ {Ψ} → Oblig (Ψ +e) → Oblig Ψ
+bindᵈ (oblig l k o) = oblig l (suc k) o
 
--- An entry reads back as an obligation
+-- A list of entries, discharged member by member
 
-ordsH : ∀ {Ψ} → Ords Ψ → Hyps Ψ
-ordsH o = hyps [] [] (ors o) (oes o) []
-
-toOblig : ∀ {Ψ} → Dfr Ψ → Oblig Ψ
-toOblig (dfr l k o) = oblig l k (ordsH o)
-
-⊩ᵈ→⊩ᴼ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (E : Dfr Ψ)
-      → Q ⊩ᵈ E [ δ ] → Q ⊩ᴼ toOblig E [ δ ]
-⊩ᵈ→⊩ᴼ (dfr l k o) h = mk⊩ᴴ (λ ()) (λ ()) (⊩ors h) (⊩oes h) (λ ())
-
-⊩ᴼ→⊩ᵈ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (E : Dfr Ψ)
-      → Q ⊩ᴼ toOblig E [ δ ] → Q ⊩ᵈ E [ δ ]
-⊩ᴼ→⊩ᵈ (dfr l k o) h = mk⊩ᵒ (⊩ordᵣ h) (⊩ordₑ h)
-
-⊩ᴰ→⊩ᴼˢ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (D : List (Dfr Ψ))
-       → (∀ {E} → E ∈ D → Q ⊩ᵈ E [ δ ]) → Q ⊩ᴼˢ map toOblig D [ δ ]
+⊩ᴰ→⊩ᴼˢ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (D : List (Oblig Ψ))
+       → (∀ {E} → E ∈ D → Q ⊩ᴼ E [ δ ]) → Q ⊩ᴼˢ D [ δ ]
 ⊩ᴰ→⊩ᴼˢ []      h = []
-⊩ᴰ→⊩ᴼˢ (E ∷ D) h = ⊩ᵈ→⊩ᴼ E (h (here refl)) ∷ ⊩ᴰ→⊩ᴼˢ D (λ m → h (there m))
+⊩ᴰ→⊩ᴼˢ (E ∷ D) h = h (here refl) ∷ ⊩ᴰ→⊩ᴼˢ D (λ m → h (there m))
 
-⊩ᴼˢ→⊩ᴰ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (D : List (Dfr Ψ))
-       → Q ⊩ᴼˢ map toOblig D [ δ ] → ∀ {E} → E ∈ D → Q ⊩ᵈ E [ δ ]
-⊩ᴼˢ→⊩ᴰ (E ∷ D) (h ∷ hs) (here refl) = ⊩ᴼ→⊩ᵈ E h
+⊩ᴼˢ→⊩ᴰ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (D : List (Oblig Ψ))
+       → Q ⊩ᴼˢ D [ δ ] → ∀ {E} → E ∈ D → Q ⊩ᴼ E [ δ ]
+⊩ᴼˢ→⊩ᴰ (E ∷ D) (h ∷ hs) (here refl) = h
 ⊩ᴼˢ→⊩ᴰ (E ∷ D) (h ∷ hs) (there m)   = ⊩ᴼˢ→⊩ᴰ D hs m
 
 ------------------------------------------------------------------------
@@ -264,25 +136,25 @@ allOf f (a ∷ l) with f a | allOf f l
 ... | just p | just g = just (λ { (here refl) → p ; (there m) → g m })
 ... | _      | _      = nothing
 
-record Still {Ψ} (d : Dir) (σ : Subst Ψ Ψ) (E : Dfr Ψ) : Set where
+record Still {Ψ} (d : Dir) (σ : Subst Ψ Ψ) (E : Oblig Ψ) : Set where
   constructor still
   field
-    stʳ : ∀ {a} → a ∈ ors (body E) → Fixedʳ d (σ ↑ᵉⁿ nb E) a
-    stᵉ : ∀ {a} → a ∈ oes (body E) → Fixedᵉ d (σ ↑ᵉⁿ nb E) a
+    stʳ : ∀ {a} → a ∈ ors (body E) → Fixedʳ d (σ ↑ᵉⁿ rigids E) a
+    stᵉ : ∀ {a} → a ∈ oes (body E) → Fixedᵉ d (σ ↑ᵉⁿ rigids E) a
 
-still? : ∀ {Ψ} → (d : Dir) → (σ : Subst Ψ Ψ) → (E : Dfr Ψ) → Maybe (Still d σ E)
-still? d σ E with allOf (fixedʳ? d (σ ↑ᵉⁿ nb E)) (ors (body E))
-                | allOf (fixedᵉ? d (σ ↑ᵉⁿ nb E)) (oes (body E))
+still? : ∀ {Ψ} → (d : Dir) → (σ : Subst Ψ Ψ) → (E : Oblig Ψ) → Maybe (Still d σ E)
+still? d σ E with allOf (fixedʳ? d (σ ↑ᵉⁿ rigids E)) (ors (body E))
+                | allOf (fixedᵉ? d (σ ↑ᵉⁿ rigids E)) (oes (body E))
 ... | just r | just e = just (still r e)
 ... | _      | _      = nothing
 
-stills? : ∀ {Ψ} → (d : Dir) → (σ : Subst Ψ Ψ) → (D : List (Dfr Ψ))
+stills? : ∀ {Ψ} → (d : Dir) → (σ : Subst Ψ Ψ) → (D : List (Oblig Ψ))
         → Maybe (∀ {E} → E ∈ D → Still d σ E)
 stills? d σ = allOf (still? d σ)
 
-keepᵈ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {σ : Subst Ψ Ψ} {τ : Subst Ψ Ψ'} → (d : Dir) → (E : Dfr Ψ)
-      → Still d σ E → Moves d Q σ τ → Q ⊩ᵈ E [ τ ] → Q ⊩ᵈ E [ σ ⨟ˢ τ ]
-keepᵈ {Q = Q} {σ} {τ} d (dfr l k o) (still sr se) mv h = mk⊩ᵒ (r d sr mv) (e d se mv)
+keepᵈ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {σ : Subst Ψ Ψ} {τ : Subst Ψ Ψ'} → (d : Dir) → (E : Oblig Ψ)
+      → Still d σ E → Moves d Q σ τ → Q ⊩ᴼ E [ τ ] → Q ⊩ᴼ E [ σ ⨟ˢ τ ]
+keepᵈ {Q = Q} {σ} {τ} d (oblig l k o) (still sr se) mv h = mk⊩ᵒ (r d sr mv) (e d se mv)
   where
     Q' = wkᵉⁿ-H k Q
 
@@ -488,14 +360,14 @@ ords r e ≟ᴼ ords r' e' with ≡-dec (pair≟ _≟ʳ_) r r' | ≡-dec (pair�
 ... | no ne    | _        = no (λ { refl → ne refl })
 ... | yes _    | no ne    = no (λ { refl → ne refl })
 
-closeᵈ : ∀ {Ψ} → Dfr (Ψ +e) → Dfr Ψ
-closeᵈ (dfr l k o) with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
-... | yes _ = dfr l k (o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ)
-... | no _  = bindᵈ (dfr l k o)
+closeᵈ : ∀ {Ψ} → Oblig (Ψ +e) → Oblig Ψ
+closeᵈ (oblig l k o) with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
+... | yes _ = oblig l k (o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ)
+... | no _  = bindᵈ (oblig l k o)
 
-closeᵈ-sound : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (E : Dfr (Ψ +e))
-             → Q ⊩ᵈ closeᵈ E [ δ ] → wkᵉ-H Q ⊩ᵈ E [ δ ↑ᵉ ]
-closeᵈ-sound {Q = Q} {δ} (dfr l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
+closeᵈ-sound : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (E : Oblig (Ψ +e))
+             → Q ⊩ᴼ closeᵈ E [ δ ] → wkᵉ-H Q ⊩ᴼ E [ δ ↑ᵉ ]
+closeᵈ-sound {Q = Q} {δ} (oblig l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
 ... | no _  = h
 ... | yes q =
       subst (λ o' → wkᵉⁿ-H k (wkᵉ-H Q) ⊩ᵒ o' [ (δ ↑ᵉ) ↑ᵉⁿ k ]) q
@@ -505,9 +377,9 @@ closeᵈ-sound {Q = Q} {δ} (dfr l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]
     eq = ≐ˢ-trans (⨟-↑ᵉⁿ δ wkˢᵉ k)
          (≐ˢ-trans (≐ˢ-↑ᵉⁿ (≐ˢ-sym (wkˢᵉ-↑ᵉ δ)) k) (≐ˢ-sym (⨟-↑ᵉⁿ wkˢᵉ (δ ↑ᵉ) k)))
 
-closeᵈ-princ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (E : Dfr (Ψ +e))
-             → wkᵉ-H Q ⊩ᵈ E [ δ ↑ᵉ ] → Q ⊩ᵈ closeᵈ E [ δ ]
-closeᵈ-princ {Q = Q} {δ} (dfr l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
+closeᵈ-princ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (E : Oblig (Ψ +e))
+             → wkᵉ-H Q ⊩ᴼ E [ δ ↑ᵉ ] → Q ⊩ᴼ closeᵈ E [ δ ]
+closeᵈ-princ {Q = Q} {δ} (oblig l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
 ... | no _  = h
 ... | yes _ = ⊩ᵒ-subst⁻ (⊩ᵒ-resp-≐ˢ eq (⊩ᵒ-⨟ (⊩ᴴ-↑ᵉⁿ k (⊩ᴴ-κ ûₑ)) h))
   where

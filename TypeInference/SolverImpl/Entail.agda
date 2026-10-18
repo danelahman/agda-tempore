@@ -1215,7 +1215,7 @@ refute-[]ʳ {ρ = ρ} σ ref δ le = ref (σ ⨟ˢ δ) (subst (λ x → valʳ x 
 
 refute-⊩ : ∀ {Ψ} {ρ : RExp Ψ} {Q : Hyps Ψ} → Satisfiable Q []
          → Refutedᵤ ρ → ¬ (Q ⊩ ρ ≾̂ᵣ ûᵣ)
-refute-⊩ (δ , h ∷ []) ref d = ref δ (inst-≾ᵣ h d)
+refute-⊩ (δ , h , []) ref d = ref δ (inst-≾ᵣ h d)
 
 -- Satisfiability is essential: a hypothesis names any ordering at all
 
@@ -1591,13 +1591,13 @@ checkClosed-⊆ Q () h | inj₂ _ | inj₂ _ | inj₁ _
 -- A failure leaves the set unsatisfiable
 
 checkClosed-fail : ∀ {Θ} → (Q : Hyps Θ) → checkClosed Q ≡ nothing → ¬ Satisfiable Q []
-checkClosed-fail Q eq (δ , h ∷ []) with closedʳ (withChainsʳ (ordᵣ Q)) | closedᵉ (withChainsᵉ (ordₑ Q)) | closedᵈ (disj Q)
+checkClosed-fail Q eq (δ , h , []) with closedʳ (withChainsʳ (ordᵣ Q)) | closedᵉ (withChainsᵉ (ordₑ Q)) | closedᵈ (disj Q)
 ... | inj₁ f | _      | _      =
       falseʳ f δ (withChainsʳ-⊩ (ordᵣ Q) (λ m → ⊩-substᵣ h (edgeᵣ-sound (hyp m))))
 ... | inj₂ _ | inj₁ f | _      =
       falseᵉ f δ (withChainsᵉ-⊩ (ordₑ Q) (λ m → ⊩-substₑ h (edgeₑ-sound (hyp m))))
 ... | inj₂ _ | inj₂ _ | inj₁ f = falseᵈ f δ (⊩disj h)
-checkClosed-fail Q () (δ , h ∷ []) | inj₂ _ | inj₂ _ | inj₂ _
+checkClosed-fail Q () (δ , h , []) | inj₂ _ | inj₂ _ | inj₂ _
 
 ------------------------------------------------------------------------
 -- Failing chains of the whole graph
@@ -1614,14 +1614,14 @@ failsAlongₑ : ∀ {Θ} {Q : Hyps Θ} {ε : EExp Θ}
             → List (Σ[ ε' ∈ EExp Θ ] Star (Edgeₑ Q) ε ε') → Maybe (¬ Satisfiable Q [])
 failsAlongₑ []                       = nothing
 failsAlongₑ {ε = ε} ((ε' , ch) ∷ l) with closedₑ? ε ε'
-... | just (failsₑ n) = just (λ { (δ , h ∷ []) → n δ (⊩-substₑ h (chainₑ-sound ch)) })
+... | just (failsₑ n) = just (λ { (δ , h , []) → n δ (⊩-substₑ h (chainₑ-sound ch)) })
 ... | _               = failsAlongₑ l
 
 failsAlongᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ}
             → List (Σ[ ρ' ∈ RExp Θ ] Star (Edgeᵣ Q) ρ ρ') → Maybe (¬ Satisfiable Q [])
 failsAlongᵣ []                       = nothing
 failsAlongᵣ {ρ = ρ} ((ρ' , ch) ∷ l) with closedᵣ? ρ ρ'
-... | just (failsᵣ n) = just (λ { (δ , h ∷ []) → n δ (⊩-substᵣ h (chainᵣ-sound ch)) })
+... | just (failsᵣ n) = just (λ { (δ , h , []) → n δ (⊩-substᵣ h (chainᵣ-sound ch)) })
 ... | _               = failsAlongᵣ l
 
 -- The sources with a value, each followed along the graph

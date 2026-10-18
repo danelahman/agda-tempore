@@ -47,13 +47,11 @@ open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
 open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
-open import TypeInference.OpenSyntax.Instances S using (_+eⁿ_; _↑ᵉⁿ_)
 
 open import TypeInference.SolverImpl.Vars      S
 open import TypeInference.SolverImpl.Eliminate S using (Elim; Ĉ; Q̂; η; conv; inst; keep; princ)
 open import TypeInference.SolverImpl.Core.Occurs S using (occᵉ-v)
 open import TypeInference.SolverImpl.Deferred    S
-  using (Ords; ords; ors; oes; _[_]ᴼ; Dfr; dfr; nb; body; _[_]ᵈ; _⊩ᵈ_[_]; ⊩ᵈ-subst; ⊩ᵈ-subst⁻)
 
 ------------------------------------------------------------------------
 -- Thinning by a mask
@@ -492,10 +490,10 @@ map-fix g (a ∷ l) p = cong₂ _∷_ (p (here refl)) (map-fix g l (λ m → p (
 fvᵒ : ∀ {Θ} → Ords Θ → Vars Θ
 fvᵒ o = ⋃ᵛ fvʳʳ (ors o) ∪ᵛ ⋃ᵛ fvᵉᵉ (oes o)
 
-fvᵈ : ∀ {Θ} → Dfr Θ → Vars Θ
-fvᵈ E = unliftᵛⁿ (nb E) (fvᵒ (body E))
+fvᵈ : ∀ {Θ} → Oblig Θ → Vars Θ
+fvᵈ E = unliftᵛⁿ (rigids E) (fvᵒ (body E))
 
-fvᴰ : ∀ {Θ} → List (Dfr Θ) → Vars Θ
+fvᴰ : ∀ {Θ} → List (Oblig Θ) → Vars Θ
 fvᴰ = ⋃ᵛ fvᵈ
 
 fixᵒ : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ → (o : Ords Θ) → fvᵒ o ⊆ᵛ F
@@ -514,25 +512,25 @@ fixᵒ {ρ = ρ} f o h =
     e {x , y} m = cong₂ _,_ (fix-e f x (⊆-∪ˡ (fvᵉ x) (fvᵉ y) (⋃ᵛ-∈ fvᵉᵉ he m)))
                             (fix-e f y (⊆-∪ʳ (fvᵉ x) (fvᵉ y) (⋃ᵛ-∈ fvᵉᵉ he m)))
 
-fixᵈ : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ → (E : Dfr Θ) → fvᵈ E ⊆ᵛ F
-     → E [ ρ ]ᵈ ≡ E
-fixᵈ f (dfr l k o) h =
-  cong (dfr l k) (fixᵒ (fixes-liftᵛⁿ k f) o (⊆-trans (⊆-liftᵛⁿ k (fvᵒ o)) (liftᵛⁿ-mono k h)))
+fixᵈ : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ → (E : Oblig Θ) → fvᵈ E ⊆ᵛ F
+     → E [ ρ ]ᵒᵇ ≡ E
+fixᵈ f (oblig l k o) h =
+  cong (oblig l k) (fixᵒ (fixes-liftᵛⁿ k f) o (⊆-trans (⊆-liftᵛⁿ k (fvᵒ o)) (liftᵛⁿ-mono k h)))
 
 -- a substitution fixing their variables leaves the conditions' meaning
 -- unchanged
 
-fix-⊩ᵈ : ∀ {Θ Ψ} {Q : Hyps Ψ} {F : Vars Θ} {ρ : Subst Θ Θ} {δ : Subst Θ Ψ}
-       → Fixes F ρ → {D : List (Dfr Θ)} → fvᴰ D ⊆ᵛ F
-       → ∀ {E} → E ∈ D → Q ⊩ᵈ E [ δ ] → Q ⊩ᵈ E [ ρ ⨟ˢ δ ]
-fix-⊩ᵈ {Q = Q} {δ = δ} f h {E} m p =
-  ⊩ᵈ-subst E (subst (λ E' → Q ⊩ᵈ E' [ δ ]) (sym (fixᵈ f E (⋃ᵛ-∈ fvᵈ h m))) p)
+fix-⊩ᴼ : ∀ {Θ Ψ} {Q : Hyps Ψ} {F : Vars Θ} {ρ : Subst Θ Θ} {δ : Subst Θ Ψ}
+       → Fixes F ρ → {D : List (Oblig Θ)} → fvᴰ D ⊆ᵛ F
+       → ∀ {E} → E ∈ D → Q ⊩ᴼ E [ δ ] → Q ⊩ᴼ E [ ρ ⨟ˢ δ ]
+fix-⊩ᴼ {Q = Q} {δ = δ} f h {E} m p =
+  ⊩ᴼ-subst E (subst (λ E' → Q ⊩ᴼ E' [ δ ]) (sym (fixᵈ f E (⋃ᵛ-∈ fvᵈ h m))) p)
 
-fix-⊩ᵈ⁻ : ∀ {Θ Ψ} {Q : Hyps Ψ} {F : Vars Θ} {ρ : Subst Θ Θ} {δ : Subst Θ Ψ}
-        → Fixes F ρ → {D : List (Dfr Θ)} → fvᴰ D ⊆ᵛ F
-        → ∀ {E} → E ∈ D → Q ⊩ᵈ E [ ρ ⨟ˢ δ ] → Q ⊩ᵈ E [ δ ]
-fix-⊩ᵈ⁻ {Q = Q} {δ = δ} f h {E} m p =
-  subst (λ E' → Q ⊩ᵈ E' [ δ ]) (fixᵈ f E (⋃ᵛ-∈ fvᵈ h m)) (⊩ᵈ-subst⁻ E p)
+fix-⊩ᴼ⁻ : ∀ {Θ Ψ} {Q : Hyps Ψ} {F : Vars Θ} {ρ : Subst Θ Θ} {δ : Subst Θ Ψ}
+        → Fixes F ρ → {D : List (Oblig Θ)} → fvᴰ D ⊆ᵛ F
+        → ∀ {E} → E ∈ D → Q ⊩ᴼ E [ ρ ⨟ˢ δ ] → Q ⊩ᴼ E [ δ ]
+fix-⊩ᴼ⁻ {Q = Q} {δ = δ} f h {E} m p =
+  subst (λ E' → Q ⊩ᴼ E' [ δ ]) (fixᵈ f E (⋃ᵛ-∈ fvᵈ h m)) (⊩ᴼ-subst⁻ E p)
 
 ------------------------------------------------------------------------
 -- The step: a type, a hypothesis set and a substitution, stated over

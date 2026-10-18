@@ -40,8 +40,8 @@ open Operations Ops using (Op)
 open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
 open import TypeInference.OpenSyntax.Contexts  S using (OCtx)
-open import TypeInference.OpenSyntax.Hyps      S using (Hyps; hyps; ets; subᵥ; ordᵣ; ordₑ; disj)
-open import TypeInference.OpenSyntax.Instances S using (Oblig; Obligs; oblig; _+eⁿ_)
+open import TypeInference.OpenSyntax.Hyps      S
+  using (Hyps; hyps; ets; subᵥ; ordᵣ; ordₑ; disj; Ords; ords; Oblig; Obligs; oblig; _+eⁿ_)
 open import TypeInference.Raw.Syntax           S
 open import TypeInference.Principality         S
 
@@ -114,10 +114,13 @@ private
     && walkˡ (walkᵖ walkʳ walkʳ) rs && walkˡ (walkᵖ walkᵉ walkᵉ) fs
     && walkˡ (walkᵖ walkᵛ walkʳ) ds
 
+  walkᴼ : ∀ {Θ} → Ords Θ → 𝔹
+  walkᴼ (ords rs fs) = walkˡ (walkᵖ walkʳ walkʳ) rs && walkˡ (walkᵖ walkᵉ walkᵉ) fs
+
   walk : Scheme → 𝔹
   walk (scope a b c , Q , R , X) =
     walkℕ a && walkℕ b && walkℕ c && walkᴴ Q
-    && walkˡ (λ { (oblig _ k O) → walkℕ k && walkᴴ O }) R && walkᶜ X
+    && walkˡ (λ { (oblig _ k O) → walkℕ k && walkᴼ O }) R && walkᶜ X
 
   -- `x`, whatever `b` is; matching on `b` computes it first
 
@@ -207,16 +210,19 @@ hypsOf (ordʳ-atom ρ ρ' ∷ C) = let Q = hypsOf C in record Q { ordᵣ = (ρ ,
 hypsOf (ordᵉ-atom ε ε' ∷ C) = let Q = hypsOf C in record Q { ordₑ = (ε , ε') ∷ ordₑ Q }
 hypsOf (disj-atom A ρ  ∷ C) = let Q = hypsOf C in record Q { disj = (A , ρ) ∷ disj Q }
 
--- Obligations: `∀ᵉ k ∙ C` binds `k` rigid effect variables over `C`,
--- `∀ᵉ⟨ op ⟩ k ∙ C` is left by the clause for `op`
+-- Obligations: `∀ᵉ k ∙ C` binds `k` rigid effect variables over the
+-- orderings of `C`, `∀ᵉ⟨ op ⟩ k ∙ C` is left by the clause for `op`
+
+ordsOf : ∀ {Θ} → Conj Θ → Ords Θ
+ordsOf C = let Q = hypsOf C in ords (ordᵣ Q) (ordₑ Q)
 
 infix 3 ∀ᵉ_∙_ ∀ᵉ⟨_⟩_∙_
 
 ∀ᵉ_∙_ : ∀ {Θ} → (k : ℕ) → Conj (Θ +eⁿ k) → Oblig Θ
-∀ᵉ k ∙ C = oblig nothing k (hypsOf C)
+∀ᵉ k ∙ C = oblig nothing k (ordsOf C)
 
 ∀ᵉ⟨_⟩_∙_ : ∀ {Θ} → Op → (k : ℕ) → Conj (Θ +eⁿ k) → Oblig Θ
-∀ᵉ⟨ op ⟩ k ∙ C = oblig (just op) k (hypsOf C)
+∀ᵉ⟨ op ⟩ k ∙ C = oblig (just op) k (ordsOf C)
 
 -- Schemes: `a` type, `b` resource-grade and `c` effect-grade
 -- variables, hypotheses `C`, obligations `R`, type `X`

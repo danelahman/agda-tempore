@@ -24,7 +24,6 @@
 ------------------------------------------------------------------
 
 open import Data.Product using (Σ-syntax; _×_; _,_)
-open import Data.List.Relation.Unary.All using () renaming (_∷_ to _∷ᴬ_)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -78,8 +77,8 @@ scheme-instantiate : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n}
                    → Σ[ D ∈ ⟦ Γ [ σ̃ p ]ᶜᵗˣ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ X̃ p ⟧ᶜ σ ] (CE.⌊ D ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ)
 scheme-instantiate {Γ = Γ} {M} p σ s r
   with ⌜⌝ˢ-⊨ s
-... | h ∷ᴬ _
-  with instantiate p ⌜ σ ⌝ˢ ∅ᴴ (h ∷ᴬ r)
+... | h , _
+  with instantiate p ⌜ σ ⌝ˢ ∅ᴴ (h , r)
 ... | D , e
   with instantiateᶜ ∅ᴰ ⊨ᴰ-∅ D
 ... | D' , e' =

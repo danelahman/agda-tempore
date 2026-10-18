@@ -23,8 +23,9 @@
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_; map)
+open import Data.Nat.Base using (ℕ; zero; suc)
 open import Data.List.Membership.Propositional using (_∈_)
-open import Data.List.Membership.Propositional.Properties using (∈-map⁺)
+open import Data.List.Membership.Propositional.Properties using (∈-map⁺; ∈-map⁻)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Maybe using (Is-just)
@@ -54,6 +55,7 @@ open import Syntax.Types S using (EternalBaseType)
 open import TypeInference.OpenSyntax.Grades S
 open import TypeInference.OpenSyntax.Types  S
 open import TypeInference.OpenSyntax.Subst  S
+open import TypeInference.OpenSyntax.Obligations S public
 
 -- Deciding a `Maybe` carries the trivial witness of `Is-just` along with it
 
@@ -84,11 +86,6 @@ open Hyps public
 ∅ᴴ : ∀ {Θ} → Hyps Θ
 ∅ᴴ = hyps [] [] [] [] []
 
--- Pairwise action of a function on a homogeneous pair
-
-mapᵖ : ∀ {A B : Set} → (A → B) → A × A → B × B
-mapᵖ f (x , y) = f x , f y
-
 -- Componentwise action on a type-and-grade pair
 
 mapᵈ : ∀ {Θ Θ'} → (OVType Θ → OVType Θ') → (RExp Θ → RExp Θ')
@@ -117,6 +114,12 @@ wkᵉ-H {Θ} Q = hyps (map (wkᵉ-tv Θ) (ets Q))
                    (map (mapᵖ wkᵉ-r) (ordᵣ Q))
                    (map (mapᵖ wkᵉ-e) (ordₑ Q))
                    (map (mapᵈ wkᵉ-v wkᵉ-r) (disj Q))
+
+-- Weakening by the rigids of an obligation
+
+wkᵉⁿ-H : ∀ {Θ} → (k : ℕ) → Hyps Θ → Hyps (Θ +eⁿ k)
+wkᵉⁿ-H zero    Q = Q
+wkᵉⁿ-H (suc k) Q = wkᵉⁿ-H k (wkᵉ-H Q)
 
 -- Assumed subtyping between type variables, closed under reflexivity
 -- and transitivity
@@ -1011,6 +1014,125 @@ VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
         → Q ∣ A <:̂ᵛ A' → wkᵉ-H Q ∣ wkᵉ-v A <:̂ᵛ wkᵉ-v A'
 <:̂ᵛ-wkᵉ {Q = Q} {A} {A'} p =
   subst₂ (wkᵉ-H Q ∣_<:̂ᵛ_) (wkˢᵉ-v A) (wkˢᵉ-v A') (<:̂ᵛ-subst ⊩ᴴ-wkᵉ p)
+
+-- Entailment is stable under lifting over an effect-grade variable;
+-- members of a weakened `Hyps` are read back with `∈-map⁻`.
+
+⊩ᴴ-↑ᵉ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {δ : Subst Θ Θ'}
+      → Q' ⊩ᴴ Q [ δ ] → wkᵉ-H Q' ⊩ᴴ (wkᵉ-H Q) [ δ ↑ᵉ ]
+⊩ᴴ-↑ᵉ {Θ} {Θ'} {Q} {Q'} {δ} h = mk⊩ᴴ ets↑ subᵥ↑ ordᵣ↑ ordₑ↑ disj↑
+  where
+    ets↑ : ∀ {α} → α ∈ ets (wkᵉ-H Q) → wkᵉ-H Q' ⊩ᴱ sTy (δ ↑ᵉ) α
+    ets↑ m with ∈-map⁻ (wkᵉ-tv Θ) m
+    ... | α₀ , m₀ , refl = ⊩ᴱ-wkᵉ (⊩ets h m₀)
+
+    subᵥ↑ : ∀ {α β} → (α , β) ∈ subᵥ (wkᵉ-H Q)
+          → wkᵉ-H Q' ∣ sTy (δ ↑ᵉ) α <:̂ᵛ sTy (δ ↑ᵉ) β
+    subᵥ↑ m with ∈-map⁻ (mapᵖ (wkᵉ-tv Θ)) m
+    ... | (α₀ , β₀) , m₀ , refl = <:̂ᵛ-wkᵉ (⊩subᵥ h m₀)
+
+    ordᵣ↑ : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ (wkᵉ-H Q)
+          → wkᵉ-H Q' ⊩ ρ [ δ ↑ᵉ ]ʳ ≾̂ᵣ ρ' [ δ ↑ᵉ ]ʳ
+    ordᵣ↑ m with ∈-map⁻ (mapᵖ wkᵉ-r) m
+    ... | (ρ₀ , ρ₀') , m₀ , refl =
+      subst₂ (λ x y → wkᵉ-H Q' ⊩ x ≾̂ᵣ y)
+             (sym (wk-↑ᵉ-r δ ρ₀)) (sym (wk-↑ᵉ-r δ ρ₀'))
+             (⊩-wkᵉᵣ (⊩ordᵣ h m₀))
+
+    ordₑ↑ : ∀ {ε ε'} → (ε , ε') ∈ ordₑ (wkᵉ-H Q)
+          → wkᵉ-H Q' ⊩ ε [ δ ↑ᵉ ]ᵉ ≾̂ₑ ε' [ δ ↑ᵉ ]ᵉ
+    ordₑ↑ m with ∈-map⁻ (mapᵖ wkᵉ-e) m
+    ... | (ε₀ , ε₀') , m₀ , refl =
+      subst₂ (λ x y → wkᵉ-H Q' ⊩ x ≾̂ₑ y)
+             (sym (wk-↑ᵉ-e δ ε₀)) (sym (wk-↑ᵉ-e δ ε₀'))
+             (⊩-wkᵉₑ (⊩ordₑ h m₀))
+
+    disj↑ : ∀ {A ρ} → (A , ρ) ∈ disj (wkᵉ-H Q)
+          → VarOK (wkᵉ-H Q') (A [ δ ↑ᵉ ]ᵛ) (ρ [ δ ↑ᵉ ]ʳ)
+    disj↑ m with ∈-map⁻ (mapᵈ wkᵉ-v wkᵉ-r) m
+    ... | (A₀ , ρ₀) , m₀ , refl =
+      subst₂ (VarOK (wkᵉ-H Q'))
+             (sym (wk-↑ᵉ-v δ A₀)) (sym (wk-↑ᵉ-r δ ρ₀))
+             (VarOK-wkᵉ (⊩disj h m₀))
+
+⊩ᴴ-↑ᵉⁿ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {δ : Subst Θ Θ'} → (k : ℕ)
+       → Q' ⊩ᴴ Q [ δ ] → wkᵉⁿ-H k Q' ⊩ᴴ wkᵉⁿ-H k Q [ δ ↑ᵉⁿ k ]
+⊩ᴴ-↑ᵉⁿ zero    h = h
+⊩ᴴ-↑ᵉⁿ (suc k) h = ⊩ᴴ-↑ᵉⁿ k (⊩ᴴ-↑ᵉ h)
+
+------------------------------------------------------------------------
+-- Entailment of grade orderings and of obligations
+
+infix 4 _⊩ᵒ_[_] _⊩ᴼ_[_]
+
+record _⊩ᵒ_[_] {Ψ Ψ' : Scope} (Q : Hyps Ψ') (o : Ords Ψ) (δ : Subst Ψ Ψ') : Set where
+  constructor mk⊩ᵒ
+  field
+    ⊩ors : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors o → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
+    ⊩oes : ∀ {ε ε'} → (ε , ε') ∈ oes o → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
+
+open _⊩ᵒ_[_] public
+
+⊩ᵒ-resp-≐ˢ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {o : Ords Ψ} {δ δ' : Subst Ψ Ψ'}
+           → δ ≐ˢ δ' → Q ⊩ᵒ o [ δ ] → Q ⊩ᵒ o [ δ' ]
+⊩ᵒ-resp-≐ˢ {Q = Q} p h =
+  mk⊩ᵒ (λ {ρ} {ρ'} m → subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) ([≐]ʳ p ρ) ([≐]ʳ p ρ') (⊩ors h m))
+       (λ {ε} {ε'} m → subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) ([≐]ᵉ p ε) ([≐]ᵉ p ε') (⊩oes h m))
+
+⊩ᵒ-subst : ∀ {Ψ Ψ₁ Ψ'} {Q : Hyps Ψ'} {o : Ords Ψ} {σ : Subst Ψ Ψ₁} {δ : Subst Ψ₁ Ψ'}
+         → Q ⊩ᵒ o [ σ ]ᴼ [ δ ] → Q ⊩ᵒ o [ σ ⨟ˢ δ ]
+⊩ᵒ-subst {Q = Q} {σ = σ} {δ} h =
+  mk⊩ᵒ (λ {ρ} {ρ'} m → subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) ([⨟]ʳ ρ σ δ) ([⨟]ʳ ρ' σ δ)
+                              (⊩ors h (∈-map⁺ (mapᵖ (_[ σ ]ʳ)) m)))
+       (λ {ε} {ε'} m → subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε σ δ) ([⨟]ᵉ ε' σ δ)
+                              (⊩oes h (∈-map⁺ (mapᵖ (_[ σ ]ᵉ)) m)))
+
+⊩ᵒ-subst⁻ : ∀ {Ψ Ψ₁ Ψ'} {Q : Hyps Ψ'} {o : Ords Ψ} {σ : Subst Ψ Ψ₁} {δ : Subst Ψ₁ Ψ'}
+          → Q ⊩ᵒ o [ σ ⨟ˢ δ ] → Q ⊩ᵒ o [ σ ]ᴼ [ δ ]
+⊩ᵒ-subst⁻ {Q = Q} {o = o} {σ = σ} {δ} h = mk⊩ᵒ r e
+  where
+    r : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors (o [ σ ]ᴼ) → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
+    r m with ∈-map⁻ (mapᵖ (_[ σ ]ʳ)) m
+    ... | (ρ₀ , ρ₀') , m₀ , refl =
+      subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) (sym ([⨟]ʳ ρ₀ σ δ)) (sym ([⨟]ʳ ρ₀' σ δ)) (⊩ors h m₀)
+
+    e : ∀ {ε ε'} → (ε , ε') ∈ oes (o [ σ ]ᴼ) → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
+    e m with ∈-map⁻ (mapᵖ (_[ σ ]ᵉ)) m
+    ... | (ε₀ , ε₀') , m₀ , refl =
+      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([⨟]ᵉ ε₀ σ δ)) (sym ([⨟]ᵉ ε₀' σ δ)) (⊩oes h m₀)
+
+⊩ᵒ-⨟ : ∀ {Ψ Ψ' Ψ''} {Q : Hyps Ψ'} {Q' : Hyps Ψ''} {o : Ords Ψ}
+         {δ : Subst Ψ Ψ'} {δ' : Subst Ψ' Ψ''}
+     → Q' ⊩ᴴ Q [ δ' ] → Q ⊩ᵒ o [ δ ] → Q' ⊩ᵒ o [ δ ⨟ˢ δ' ]
+⊩ᵒ-⨟ {Q' = Q'} {δ = δ} {δ'} g h =
+  mk⊩ᵒ (λ {ρ} {ρ'} m → subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y) ([⨟]ʳ ρ δ δ') ([⨟]ʳ ρ' δ δ')
+                              (⊩-substᵣ g (⊩ors h m)))
+       (λ {ε} {ε'} m → subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε δ δ') ([⨟]ᵉ ε' δ δ')
+                              (⊩-substₑ g (⊩oes h m)))
+
+-- An obligation is entailed along a substitution when its orderings
+-- are, at fresh rigids, by the hypotheses weakened to them
+
+_⊩ᴼ_[_] : ∀ {Θ Ξ} → Hyps Ξ → Oblig Θ → Subst Θ Ξ → Set
+Q ⊩ᴼ O [ δ ] = wkᵉⁿ-H (rigids O) Q ⊩ᵒ body O [ δ ↑ᵉⁿ rigids O ]
+
+⊩ᴼ-resp-≐ˢ : ∀ {Θ Ξ} {Q : Hyps Ξ} {δ δ' : Subst Θ Ξ} → (O : Oblig Θ)
+           → δ ≐ˢ δ' → Q ⊩ᴼ O [ δ ] → Q ⊩ᴼ O [ δ' ]
+⊩ᴼ-resp-≐ˢ (oblig l k o) p h = ⊩ᵒ-resp-≐ˢ (≐ˢ-↑ᵉⁿ p k) h
+
+⊩ᴼ-subst : ∀ {Θ Θ₁ Ξ} {Q : Hyps Ξ} {σ : Subst Θ Θ₁} {δ : Subst Θ₁ Ξ} → (O : Oblig Θ)
+         → Q ⊩ᴼ O [ σ ]ᵒᵇ [ δ ] → Q ⊩ᴼ O [ σ ⨟ˢ δ ]
+⊩ᴼ-subst {σ = σ} {δ} (oblig l k o) h = ⊩ᵒ-resp-≐ˢ (⨟-↑ᵉⁿ σ δ k) (⊩ᵒ-subst h)
+
+⊩ᴼ-subst⁻ : ∀ {Θ Θ₁ Ξ} {Q : Hyps Ξ} {σ : Subst Θ Θ₁} {δ : Subst Θ₁ Ξ} → (O : Oblig Θ)
+          → Q ⊩ᴼ O [ σ ⨟ˢ δ ] → Q ⊩ᴼ O [ σ ]ᵒᵇ [ δ ]
+⊩ᴼ-subst⁻ {σ = σ} {δ} (oblig l k o) h =
+  ⊩ᵒ-subst⁻ (⊩ᵒ-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉⁿ σ δ k)) h)
+
+⊩ᴼ-⨟ : ∀ {Θ Ξ Ξ'} {Q : Hyps Ξ} {Q' : Hyps Ξ'} {δ : Subst Θ Ξ} {δ' : Subst Ξ Ξ'}
+     → (O : Oblig Θ) → Q' ⊩ᴴ Q [ δ' ] → Q ⊩ᴼ O [ δ ] → Q' ⊩ᴼ O [ δ ⨟ˢ δ' ]
+⊩ᴼ-⨟ {δ = δ} {δ'} (oblig l k o) g h =
+  ⊩ᵒ-resp-≐ˢ (⨟-↑ᵉⁿ δ δ' k) (⊩ᵒ-⨟ (⊩ᴴ-↑ᵉⁿ k g) h)
 
 -- Grade expressions are monotone in their variables: every former is,
 -- so two substitutions ordered pointwise on the grade variables order

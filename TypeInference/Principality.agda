@@ -58,7 +58,7 @@ open import TypeInference.OpenSyntax.Subst    S
 open import TypeInference.OpenSyntax.Hyps     S
 open import TypeInference.OpenSyntax.Language S
 open import TypeInference.OpenSyntax.Instances S
-  using (Obligs; _⊩_∣_[_]; _⊨_∣_; Satisfiable; Satisfiable-∅)
+  using (_⊩_∣_[_]; _⊨_∣_; Satisfiable; Satisfiable-∅)
 
 open import TypeInference.Raw.Syntax S
 open import TypeInference.Raw.Subst  S
@@ -306,7 +306,7 @@ typable-⇔ {Γ = Γ} {M} p = mk⇔ to from
 
     from : Satisfiable (Q̃ p) (R̃ p) → Typable Γ M
     from (δ , h) with instantiate p δ ∅ᴴ h
-    ... | D , e = typable ∅ˢ (σ̃ p ⨟ˢ δ) ∅ᴴ (X̃ p [ δ ]ᶜ) D e (idˢ , All._∷_ ⊩ᴴ-∅ All.[])
+    ... | D , e = typable ∅ˢ (σ̃ p ⨟ˢ δ) ∅ᴴ (X̃ p [ δ ]ᶜ) D e (idˢ , ⊩ᴴ-∅ , All.[])
 
 -- A term whose principal type scheme has no hypotheses and no
 -- obligations is typable

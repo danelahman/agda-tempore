@@ -22,9 +22,8 @@
 --     (`Localised`, `localise-princ`), `splitᴿ`                --
 --     (`splitᴿ-princ`/`-fail`), `popᵉ`                         --
 --     (`popᵉ-princ`/`-escape`/`-fail`).                        --
---   * Deferred conditions (`Deferred`), retried after each     --
---     close (`retry-princ`/`-fail`) and read back as           --
---     obligations (`toOblig`).                                 --
+--   * Deferred conditions, obligations (`Deferred`), retried   --
+--     after each close (`retry-princ`/`-fail`).                --
 --   * Read-back: `toHyps` (`toHyps-compl`, `etDec-refute`),    --
 --     then `checkClosed`, which decides the closed atoms and   --
 --     the closed orderings joined by chains of hypotheses and  --
@@ -132,7 +131,7 @@ open import TypeInference.OpenSyntax.Contexts  S hiding (_∷_)
 open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
 open import TypeInference.OpenSyntax.Instances S
-  using (Obligs; Satisfiable; Satisfiable-∅; _⊨ᴴ_; _⊩ᴼˢ_[_]; ⊩ᴼˢ-≐; _⊩_∣_[_]; _⊨_∣_)
+  using (Satisfiable; Satisfiable-∅; _⊨ᴴ_; _⊩ᴼˢ_[_]; ⊩ᴼˢ-≐; _⊩_∣_[_]; _⊨_∣_)
 open import TypeInference.OpenSyntax.Language  S
 
 open import TypeInference.Raw.Syntax S using (RawC; HandlerFreeᶜ)
@@ -148,9 +147,7 @@ open import TypeInference.Principality      S
 open import TypeInference.Solver            S
 
 open import TypeInference.SolverImpl.Deferred  S
-  using (Ords; ords; ors; oes; Dfr; dfr; _[_]ᵈ; _⊩ᵈ_[_]; mk⊩ᵒ; ⊩ors; ⊩oes;
-         ⊩ᵈ-resp-≐ˢ; ⊩ᵈ-subst; ⊩ᵈ-subst⁻; toOblig; ⊩ᴰ→⊩ᴼˢ; ⊩ᴼˢ→⊩ᴰ)
-open import TypeInference.OpenSyntax.Instances S using (wkᵉⁿ-H; _↑ᵉⁿ_)
+  using (⊩ᴰ→⊩ᴼˢ; ⊩ᴼˢ→⊩ᴰ)
 open import TypeInference.SolverImpl.Resid     S
 open import TypeInference.SolverImpl.Entail    S
   using (checkClosed; checkClosed-⊩; checkClosed-⊆; checkClosed-fail)
@@ -171,7 +168,7 @@ open import TypeInference.SolverImpl.Vars       S
   using (Vars; _∪ᵛ_; ⊆-refl; ⊆-∪ˡ; ⊆-∪ʳ; fvˢ; Fixes; fixes-id; fixes-⨟)
 open import TypeInference.SolverImpl.Strengthen S
   using (Ren; Strengthened; strengthen; ⌜_⌝ʳ; _[_]ᴴ; ⊩ᴴ-ren⁺; fixes-≐; fixes-⊆; fvᴰ;
-         fix-⊩ᵈ; fix-⊩ᵈ⁻; conv⁻; inst⁻; keep⁻; princ⁻)
+         fix-⊩ᴼ; fix-⊩ᴼ⁻; conv⁻; inst⁻; keep⁻; princ⁻)
 
 Fixing-[] : ∀ {Θ Ψ} → (σ : Subst Θ Ψ) → Fixing [] σ
 Fixing-[] σ = fixing (λ i ()) (λ i i' ())
@@ -180,7 +177,7 @@ Fixing-[] σ = fixing (λ i ()) (λ i i' ())
 -- as hypotheses, and the deferred conditions, retried once more
 
 Answer : Scope → Scope → Set
-Answer Θ Θ' = Subst Θ Θ' × Hyps Θ' × List (Dfr Θ')
+Answer Θ Θ' = Subst Θ Θ' × Hyps Θ' × Obligs Θ'
 
 runSolverᴰ : ∀ {Θ} → Constraint Θ → Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ')
 runSolverᴰ C with solve init C
@@ -196,20 +193,14 @@ runSolverᴰ C with solve init C
 ...         | nothing = refuted
 ...         | just Q  = solved (Ψ s₂ , θ s₂ , Q , dfs (res s₂))
 
--- An entry reads back as an obligation
-
-readOut : ∀ {Θ} → Σ[ Θ' ∈ Scope ] Answer Θ Θ'
-        → Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ' × Obligs Θ')
-readOut (Θ' , σ , Q , D) = Θ' , σ , Q , map toOblig D
-
 runSolver : ∀ {Θ} → Constraint Θ
           → Outcome (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ' × Obligs Θ'))
-runSolver C = mapᴼ readOut (runSolverᴰ C)
+runSolver = runSolverᴰ
 
 runSolverᴰ-sound : ∀ {Θ} → (C : Constraint Θ)
-                 → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
+                 → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
                  → runSolverᴰ C ≡ solved (Θ' , σ , Q , D)
-                 → σ ⊨[ Q ∣ map toOblig D ] C
+                 → σ ⊨[ Q ∣ D ] C
 runSolverᴰ-sound C eq with solve init C
 ... | refuted = ⊥refuted eq
 ... | stuck   = ⊥stuck eq
@@ -222,7 +213,7 @@ runSolverᴰ-sound C eq with solve init C
 ...       | just (Q₀ , hq) with checkClosed Q₀ in e''
 ...         | nothing = ⊥refuted eq
 ...         | just Q₁ with eq
-...           | refl = λ δ Q' → λ { (hQ ∷ hR) →
+...           | refl = λ δ Q' → λ { (hQ , hR) →
                 wit-mono m₂ C (wit-mono m₁ C w) δ Q'
                   (⊩ᴿ-bare (⊩ᴿ-resp-≐ˢ (⨟-idˡ δ) (⊩ᴿ-⨟ (⊩ᴴ-⨟ hQ (checkClosed-⊩ Q₀ e'')) hq))
                            (⊩ᴼˢ→⊩ᴰ (dfs (res s₂)) hR)) }
@@ -231,8 +222,7 @@ runSolver-sound : ∀ {Θ} → (C : Constraint Θ)
                 → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
                 → runSolver C ≡ solved (Θ' , σ , Q , R)
                 → σ ⊨[ Q ∣ R ] C
-runSolver-sound C eq with mapᴼ-solved (runSolverᴰ C) eq
-... | (Θ' , σ , Q , D) , e , refl = runSolverᴰ-sound C e
+runSolver-sound = runSolverᴰ-sound
 
 -- A refutation refutes every closed instance
 
@@ -257,7 +247,7 @@ runSolverᴰ-refutes C eq τ sat with solve init C in e
 ...         | just _  = ⊥solved eq
 ...         | nothing =
               checkClosed-fail Q₀ e''
-                (proj₁ fac₂ , toHyps-compl (res s₂) e' (proj₁ fac₂) (proj₂ (proj₂ fac₂)) ∷ [])
+                (proj₁ fac₂ , toHyps-compl (res s₂) e' (proj₁ fac₂) (proj₂ (proj₂ fac₂)) , [])
   where
     fac  = solve-principal init C e τ sat ⊩ᴿ-empty
     fac₁ = retry-princ s' e₁ (proj₁ fac) (proj₁ (proj₂ (proj₂ fac)))
@@ -276,7 +266,7 @@ runSolverᴰ-refutes C eq τ sat | solved (s' , m , w) | just (s₁ , m₁) | ju
 runSolver-refutes : ∀ {Θ} → (C : Constraint Θ)
                   → runSolver C ≡ refuted
                   → (τ : Subst Θ ∅ˢ) → ¬ (τ ⊨[ ∅ᴴ ] C)
-runSolver-refutes C eq = runSolverᴰ-refutes C (mapᴼ-refuted (runSolverᴰ C) eq)
+runSolver-refutes = runSolverᴰ-refutes
 
 runSolver-complete : ∀ {Θ} → (C : Constraint Θ)
                    → runSolver C ≡ refuted
@@ -303,16 +293,16 @@ runSolverᴰ-rigidFree C p with solve init C in e
 ...         | just _  = λ ()
 
 runSolver-rigidFree : ∀ {Θ} → (C : Constraint Θ) → RigidFree C → runSolver C ≢ stuck
-runSolver-rigidFree C p eq = runSolverᴰ-rigidFree C p (mapᴼ-stuck (runSolverᴰ C) eq)
+runSolver-rigidFree = runSolverᴰ-rigidFree
 
 runSolverᴰ-principal : ∀ {Θ} → (C : Constraint Θ)
-                     → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺} {D⁺ : List (Dfr Θ⁺)}
+                     → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺} {D⁺ : List (Oblig Θ⁺)}
                      → runSolverᴰ C ≡ solved (Θ⁺ , σ⁺ , Q⁺ , D⁺)
                      → ∀ {Θ''} → (σ : Subst Θ Θ'') → (Q : Hyps Θ'') → (R : Obligs Θ'')
                      → σ ⊨[ Q ∣ R ] C
                      → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ R
                      → Σ[ δ ∈ Subst Θ⁺ ∅ˢ ]
-                       (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺ ∣ map toOblig D⁺))
+                       (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺ ∣ D⁺))
 runSolverᴰ-principal C eq σ Q R sat δ₀ h₀ with solve init C in e
 ... | refuted = ⊥refuted eq
 ... | stuck   = ⊥stuck eq
@@ -327,7 +317,7 @@ runSolverᴰ-principal C eq σ Q R sat δ₀ h₀ with solve init C in e
 ...         | just Q₁ with eq
 ...           | refl = δ₂ , tri ,
                        checkClosed-⊆ Q₀ e'' (toHyps-compl (res s₂) e' δ₂ h₂)
-                       ∷ ⊩ᴰ→⊩ᴼˢ (dfs (res s₂)) (⊩dfs h₂)
+                       , ⊩ᴰ→⊩ᴼˢ (dfs (res s₂)) (⊩dfs h₂)
   where
     fac  = solve-principal init C e (σ ⨟ˢ δ₀) (sat δ₀ ∅ᴴ h₀) ⊩ᴿ-empty
     δ    = proj₁ fac
@@ -360,8 +350,7 @@ runSolver-principal : ∀ {Θ} → (C : Constraint Θ)
                     → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ R
                     → Σ[ δ ∈ Subst Θ⁺ ∅ˢ ]
                       (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺ ∣ R⁺))
-runSolver-principal C eq with mapᴼ-solved (runSolverᴰ C) eq
-... | (Θ' , σ , Q , D) , e , refl = runSolverᴰ-principal C e
+runSolver-principal = runSolverᴰ-principal
 
 solver : Solver
 solver = record
@@ -421,12 +410,12 @@ record Reported {Θ₀ Θ : Scope} (w : Subst Θ₀ Θ) (X : OCType Θ) (C : Con
 
 -- An entry with its grade expressions in canonical form means the same
 
-canonᵈ : ∀ {Θ} → Dfr Θ → Dfr Θ
-canonᵈ (dfr l k o) = dfr l k (ords (map (mapᵖ canonᵣ) (ors o)) (map (mapᵖ canonₑ) (oes o)))
+canonᵈ : ∀ {Θ} → Oblig Θ → Oblig Θ
+canonᵈ (oblig l k o) = oblig l k (ords (map (mapᵖ canonᵣ) (ors o)) (map (mapᵖ canonₑ) (oes o)))
 
-canonᵈ-⊩ : ∀ {Θ Ξ} {Q : Hyps Ξ} {δ : Subst Θ Ξ} → (E : Dfr Θ)
-         → Q ⊩ᵈ E [ δ ] → Q ⊩ᵈ canonᵈ E [ δ ]
-canonᵈ-⊩ {δ = δ} (dfr l k o) h = mk⊩ᵒ r e
+canonᵈ-⊩ : ∀ {Θ Ξ} {Q : Hyps Ξ} {δ : Subst Θ Ξ} → (E : Oblig Θ)
+         → Q ⊩ᴼ E [ δ ] → Q ⊩ᴼ canonᵈ E [ δ ]
+canonᵈ-⊩ {δ = δ} (oblig l k o) h = mk⊩ᵒ r e
   where
     r : ∀ {x y} → (x , y) ∈ map (mapᵖ canonᵣ) (ors o)
       → wkᵉⁿ-H k _ ⊩ x [ δ ↑ᵉⁿ k ]ʳ ≾̂ᵣ y [ δ ↑ᵉⁿ k ]ʳ
@@ -442,9 +431,9 @@ canonᵈ-⊩ {δ = δ} (dfr l k o) h = mk⊩ᵒ r e
       transₑ (eqₑ (≡̂ₑ-sym (≡̂ₑ-subst (δ ↑ᵉⁿ k) (canonₑ-≡ x))))
              (transₑ (⊩oes h m₀) (eqₑ (≡̂ₑ-subst (δ ↑ᵉⁿ k) (canonₑ-≡ y))))
 
-canonᵈ-⊩⁻ : ∀ {Θ Ξ} {Q : Hyps Ξ} {δ : Subst Θ Ξ} → (E : Dfr Θ)
-          → Q ⊩ᵈ canonᵈ E [ δ ] → Q ⊩ᵈ E [ δ ]
-canonᵈ-⊩⁻ {δ = δ} (dfr l k o) h =
+canonᵈ-⊩⁻ : ∀ {Θ Ξ} {Q : Hyps Ξ} {δ : Subst Θ Ξ} → (E : Oblig Θ)
+          → Q ⊩ᴼ canonᵈ E [ δ ] → Q ⊩ᴼ E [ δ ]
+canonᵈ-⊩⁻ {δ = δ} (oblig l k o) h =
   mk⊩ᵒ (λ {x} {y} m → transᵣ (eqᵣ (≡̂ᵣ-subst (δ ↑ᵉⁿ k) (canonᵣ-≡ x)))
                         (transᵣ (⊩ors h (∈-map⁺ (mapᵖ canonᵣ) m))
                                 (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst (δ ↑ᵉⁿ k) (canonᵣ-≡ y))))))
@@ -463,7 +452,7 @@ canonᵈ-⊩⁻ {δ = δ} (dfr l k o) h =
 -- strengthening's retraction, in canonical form.
 
 reportSolved : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
-             → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
+             → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
              → runSolverᴰ C ≡ solved (Θ' , σ , Q , D) → Reported w X C
 reportSolved w X C {Θ'} {σ} {Q} {D} e =
   reportElim (eliminate F (X [ σ ]ᶜ) (simplify Q))
@@ -478,9 +467,9 @@ reportSolved w X C {Θ'} {σ} {Q} {D} e =
     reportWith : (el : Elim (X [ σ ]ᶜ) (simplify Q)) → Fixes F (Elim.η el)
                → Strengthened (w ⨟ˢ σ) (Elim.Ĉ el) (Elim.Q̂ el) (fvᴰ D) → Reported w X C
     reportWith el fx sr =
-      reported Θ' σ Q (map toOblig D) (simplify Q) (Θ⁻ sr) (ι sr) (τ⁻ sr) (X⁻ sr) (Q⁻ sr)
-             (map toOblig D̃) (Elim.η el)
-             (cong (mapᴼ readOut) e) (simplify-⊨ Q) (simplify-⊩ Q)
+      reported Θ' σ Q (D) (simplify Q) (Θ⁻ sr) (ι sr) (τ⁻ sr) (X⁻ sr) (Q⁻ sr)
+             (D̃) (Elim.η el)
+             e (simplify-⊨ Q) (simplify-⊩ Q)
              (fixes-≐ fx (w ⨟ˢ σ) (⊆-∪ˡ (fvˢ (w ⨟ˢ σ)) (fvᴰ D) ⊆-refl)) (τ-ι sr)
              (conv⁻ el sr) (inst⁻ el sr) instᴿ' (keep⁻ el sr) to-R̃'
              (princ⁻ el sr) (ext-ι sr)
@@ -488,41 +477,41 @@ reportSolved w X C {Θ'} {σ} {Q} {D} e =
         fxᴰ : Fixes (fvᴰ D) (Elim.η el)
         fxᴰ = fixes-⊆ (⊆-∪ʳ (fvˢ (w ⨟ˢ σ)) (fvᴰ D) ⊆-refl) fx
 
-        read : Dfr Θ' → Dfr (Θ⁻ sr)
-        read E = canonᵈ (E [ π sr ]ᵈ)
+        read : Oblig Θ' → Oblig (Θ⁻ sr)
+        read E = canonᵈ (E [ π sr ]ᵒᵇ)
 
-        D̃ : List (Dfr (Θ⁻ sr))
+        D̃ : List (Oblig (Θ⁻ sr))
         D̃ = map read D
 
         -- read back along `ι`, an entry is itself
         back : ∀ {Ξ} {Q' : Hyps Ξ} {δ : Subst Θ' Ξ}
-             → ∀ {E} → E ∈ D → Q' ⊩ᵈ read E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᵈ E [ δ ]
+             → ∀ {E} → E ∈ D → Q' ⊩ᴼ read E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᴼ E [ δ ]
         back {δ = δ} {E} m h =
-          fix-⊩ᵈ⁻ (π-fix sr) ⊆-refl m
-            (⊩ᵈ-resp-≐ˢ E (≐ˢ-sym (⨟-assoc (π sr) ⌜ ι sr ⌝ʳ δ))
-              (⊩ᵈ-subst E (canonᵈ-⊩⁻ (E [ π sr ]ᵈ) h)))
+          fix-⊩ᴼ⁻ (π-fix sr) ⊆-refl m
+            (⊩ᴼ-resp-≐ˢ E (≐ˢ-sym (⨟-assoc (π sr) ⌜ ι sr ⌝ʳ δ))
+              (⊩ᴼ-subst E (canonᵈ-⊩⁻ (E [ π sr ]ᵒᵇ) h)))
 
         fwd : ∀ {Ξ} {Q' : Hyps Ξ} {δ : Subst Θ' Ξ}
-            → ∀ {E} → E ∈ D → Q' ⊩ᵈ E [ δ ] → Q' ⊩ᵈ read E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]
+            → ∀ {E} → E ∈ D → Q' ⊩ᴼ E [ δ ] → Q' ⊩ᴼ read E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]
         fwd {δ = δ} {E} m h =
-          canonᵈ-⊩ (E [ π sr ]ᵈ)
-            (⊩ᵈ-subst⁻ E (⊩ᵈ-resp-≐ˢ E (⨟-assoc (π sr) ⌜ ι sr ⌝ʳ δ) (fix-⊩ᵈ (π-fix sr) ⊆-refl m h)))
+          canonᵈ-⊩ (E [ π sr ]ᵒᵇ)
+            (⊩ᴼ-subst⁻ E (⊩ᴼ-resp-≐ˢ E (⨟-assoc (π sr) ⌜ ι sr ⌝ʳ δ) (fix-⊩ᴼ (π-fix sr) ⊆-refl m h)))
 
         instᴿ' : ∀ {Ξ} → (δ : Subst Θ' Ξ) → (Q' : Hyps Ξ)
-               → Q' ⊩ᴼˢ map toOblig D̃ [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᴼˢ map toOblig D [ Elim.η el ⨟ˢ δ ]
+               → Q' ⊩ᴼˢ D̃ [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᴼˢ D [ Elim.η el ⨟ˢ δ ]
         instᴿ' δ Q' h =
           ⊩ᴰ→⊩ᴼˢ {Q = Q'} {δ = Elim.η el ⨟ˢ δ} D
-            (λ {E} m → fix-⊩ᵈ {Q = Q'} {ρ = Elim.η el} {δ = δ} fxᴰ {D = D} ⊆-refl m
+            (λ {E} m → fix-⊩ᴼ {Q = Q'} {ρ = Elim.η el} {δ = δ} fxᴰ {D = D} ⊆-refl m
                          (back {Q' = Q'} {δ = δ} m
                            (⊩ᴼˢ→⊩ᴰ {Q = Q'} {δ = ⌜ ι sr ⌝ʳ ⨟ˢ δ} D̃ h (∈-map⁺ read m))))
 
-        to-R̃' : (δ : Subst Θ' ∅ˢ) → δ ⊨ simplify Q ∣ map toOblig D
-              → ∅ᴴ ⊩ᴼˢ map toOblig D̃ [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]
+        to-R̃' : (δ : Subst Θ' ∅ˢ) → δ ⊨ simplify Q ∣ D
+              → ∅ᴴ ⊩ᴼˢ D̃ [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]
         to-R̃' δ h =
           ⊩ᴰ→⊩ᴼˢ {Q = ∅ᴴ} {δ = ⌜ ι sr ⌝ʳ ⨟ˢ δ} D̃
-            (∈-map-elim read {P = λ E → ∅ᴴ ⊩ᵈ E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]}
+            (∈-map-elim read {P = λ E → ∅ᴴ ⊩ᴼ E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]}
               (λ m₀ → fwd {Q' = ∅ᴴ} {δ = δ} m₀
-                        (⊩ᴼˢ→⊩ᴰ {Q = ∅ᴴ} {δ = δ} D (All.tail h) m₀)))
+                        (⊩ᴼˢ→⊩ᴰ {Q = ∅ᴴ} {δ = δ} D (proj₂ h) m₀)))
 
     -- The report from an elimination fixing `F`, and its strengthening
 
@@ -609,11 +598,11 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ Q̃ R̃ X̃ inst' fac
 
     inst' : ∀ {Θ''} → (δ : Subst Θ̃ Θ'') → (Q' : Hyps Θ'') → Q' ⊩ Q̃ ∣ R̃ [ δ ]
           → Σ[ D ∈ (Q' ∣ Γ [ σ̃ ⨟ˢ δ ]ᶜᵗˣ ⊢C⦂ X̃ [ δ ]ᶜ) ] (⌊ D ⌋ᶜ ≡ M [ σ̃ ⨟ˢ δ ]ᴿᶜ)
-    inst' δ Q' (h ∷ hs) =
+    inst' δ Q' (h , hs) =
       subC (ctx-substᶜ ceq D) (≡̂ᶜ-<:̂ (ty δ)) , trans (⌊ctxᶜ⌋ ceq D) (trans e meq)
       where
         τ = η ⨟ˢ π ⨟ˢ δ
-        i = PrincipalSolution.instantiate p τ Q' (⊩ᴴ-⨟ h hQ ∷ hR δ Q' hs)
+        i = PrincipalSolution.instantiate p τ Q' (⊩ᴴ-⨟ h hQ , hR δ Q' hs)
         D = proj₁ i
         e = proj₂ i
 
@@ -629,7 +618,7 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ Q̃ R̃ X̃ inst' fac
         → Σ[ δ ∈ Subst Θ̃ ∅ˢ ]
             ((σ̃ ⨟ˢ δ ≐ˢ σ₀ ⨟ˢ δ₀) × (δ ⊨ Q̃ ∣ R̃) × (∅ᴴ ∣ X̃ [ δ ]ᶜ <:̂ᶜ C₀ [ δ₀ ]ᶜ))
     fac σ₀ Q₀ {A₀ ‼ ε₀} D₀ e₀ δ₀ h₀ =
-      ⌜ ι ⌝ʳ ⨟ˢ δ' , agree , to-Q̃ δ' hQ̂ ∷ to-R̃ δ' (hQ̂ ∷ All.tail hq) ,
+      ⌜ ι ⌝ʳ ⨟ˢ δ' , agree , (to-Q̃ δ' hQ̂ , to-R̃ δ' (hQ̂ , proj₂ hq)) ,
       <:̂ᶜ-trans (princ δ' hQ̂) below
       where
         pi   = principal-inst p σ₀ Q₀ D₀ e₀ δ₀ h₀
@@ -640,7 +629,7 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ Q̃ R̃ X̃ inst' fac
         hq   = proj₂ (proj₂ (proj₂ (proj₂ pi)))
 
         hQ̂ : ∅ᴴ ⊩ᴴ Q̂ [ δ' ]
-        hQ̂ = to-Q̂ δ' (All.head hq)
+        hQ̂ = to-Q̂ δ' (proj₁ hq)
 
         agree : σ̃ ⨟ˢ (⌜ ι ⌝ʳ ⨟ˢ δ') ≐ˢ σ₀ ⨟ˢ δ₀
         agree =
@@ -656,15 +645,15 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ Q̃ R̃ X̃ inst' fac
 -- gives an instance
 
 answer-typable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-               → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
+               → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
                → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D)
-               → Satisfiable Q (map toOblig D) → Typable Γ M
+               → Satisfiable Q (D) → Typable Γ M
 answer-typable Γ M {σ = σ} e (δ , h) =
   typable ∅ˢ (wk₊ ⨟ˢ (σ ⨟ˢ δ)) ∅ᴴ _ (ctx-substᶜ ceq D₀)
           (trans (⌊ctxᶜ⌋ ceq D₀) (trans (proj₂ i) meq)) Satisfiable-∅
   where
     i  = PrincipalSolution.instantiate
-           (principalSolution solver Γ M (cong (mapᴼ readOut) e)) δ ∅ᴴ h
+           (principalSolution solver Γ M e) δ ∅ᴴ h
     D₀ = proj₁ i
 
     ceq : Γ₊ Γ [ σ ⨟ˢ δ ]ᶜᵗˣ ≡ Γ [ wk₊ ⨟ˢ (σ ⨟ˢ δ) ]ᶜᵗˣ
@@ -674,9 +663,9 @@ answer-typable Γ M {σ = σ} e (δ , h) =
     meq = M₊-[] M (σ ⨟ˢ δ)
 
 answer-untypable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-                 → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
+                 → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
                  → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D)
-                 → ¬ Satisfiable Q (map toOblig D) → ¬ Typable Γ M
+                 → ¬ Satisfiable Q (D) → ¬ Typable Γ M
 answer-untypable Γ M e n (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e₀ (δ₀ , h₀)) =
   n (proj₁ f , proj₂ (proj₂ f))
   where
@@ -688,13 +677,13 @@ answer-untypable Γ M e n (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e₀ (
 refuted-untypable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                   → runSolverᴰ C[ Γ , M ] ≡ refuted → ¬ Typable Γ M
 refuted-untypable Γ M e (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e₀ sQ) =
-  runSolver-complete C[ Γ , M ] (cong (mapᴼ readOut) e)
+  runSolver-complete C[ Γ , M ] e
     (σ₀ ,ᵗ A₀ ,ᵉ ε₀) Q₀ [] sQ (⊨-∣ C[ Γ , M ] (typing-sat σ₀ D₀ e₀))
 
 -- The scheme reported from the solver's answer
 
 answerScheme : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-             → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
+             → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
              → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D) → PrincipalScheme Γ M
 answerScheme {Θ} Γ M e = scheme Γ M (reportSolved wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ] e)
 
@@ -711,7 +700,7 @@ closedReport p with checkClosed (PrincipalScheme.Q̃ p) in e
 ... | nothing = refutedᶜ refute
   where
     refute : ¬ Satisfiable (PrincipalScheme.Q̃ p) (PrincipalScheme.R̃ p)
-    refute (δ , h ∷ _) = checkClosed-fail (PrincipalScheme.Q̃ p) e (δ , h ∷ [])
+    refute (δ , h , _) = checkClosed-fail (PrincipalScheme.Q̃ p) e (δ , h , [])
 ... | just _  = passedᶜ
 
 closed-untypable : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalScheme Γ M)
@@ -733,7 +722,7 @@ inferReported p (refutedᶜ _) = untypable
 inferReported p passedᶜ      = typed p
 
 inferSearched : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-              → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
+              → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
               → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D) → Search Q D → Inference Γ M
 inferSearched Γ M e (refutedˢ _) = untypable
 inferSearched Γ M e (openˢ _ _)  = inferReported (answerScheme Γ M e) (closedReport _)
@@ -803,7 +792,7 @@ checkReported p (refutedᶜ _) = untypable
 checkReported p passedᶜ      = unestablished p
 
 checkEstablished : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-                 → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
+                 → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
                  → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D) → Establish Q D → Check Γ M
 checkEstablished Γ M e (refutedᵉ _) = untypable
 checkEstablished Γ M e (foundᵉ s)   =
