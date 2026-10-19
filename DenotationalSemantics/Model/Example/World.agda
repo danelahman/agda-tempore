@@ -149,7 +149,8 @@ import DenotationalSemantics.Model.Example.World.Ticks.Time.Dense.LeftSided
 
 import DenotationalSemantics.Model.Example.World.Ticks.Time.Dense.RightSided
 
--- reach the worlds inside the window `[ p , a ]` ahead
+-- reach the worlds ahead by a duration the interval admits, its ends
+-- open or closed
 
 import DenotationalSemantics.Model.Example.World.Ticks.Time.Dense.TwoSided
 

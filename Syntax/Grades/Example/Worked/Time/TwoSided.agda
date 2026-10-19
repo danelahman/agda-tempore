@@ -23,7 +23,7 @@ open import Util.Equality
 open import Syntax.Grades.Example.Time.ExtendedNat using (↑_; ∞)
 
 open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
-  using (Interval∞; [_,_]; eqᵢ; two-sided-intervals-with-∞)
+  using (Interval∞; [_,_]; ]_,_]; [_,_[; ]_,_[; eqᵢ; two-sided-intervals-with-∞)
   renaming (_·ᵢ_ to _·²_; _≾ᵢ_ to _≾²_; ⊤ᵢ to ⊤²)
 
 open import Syntax.Grades.Example.Worked.Time.Decide using (≤!; ≰!)
@@ -119,3 +119,18 @@ tsi-weaken-to-top = ≤! , _
 
 tsi-top-keeps-min : ⊤² ·² [ 6 , ∞ ] ≡ [ 6 , ∞ ]
 tsi-top-keeps-min = eqᵢ refl refl
+
+------------------------------------------------------------------------
+-- Open ends are notation for the adjacent closed ones
+
+tsi-open-lower : ] 1 , ↑ 3 ] ≡ [ 2 , ↑ 3 ]
+tsi-open-lower = refl
+
+tsi-open-upper : [ 1 , ↑ 3 [ ≡ [ 1 , ↑ 2 ]
+tsi-open-upper = refl
+
+tsi-open-both : ] 1 , ↑ 3 [ ≡ [ 2 , ↑ 2 ]
+tsi-open-both = refl
+
+tsi-open-∞ : [ 4 , ∞ [ ≡ [ 4 , ∞ ]
+tsi-open-∞ = refl

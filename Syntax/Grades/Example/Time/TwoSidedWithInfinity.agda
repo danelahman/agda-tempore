@@ -13,6 +13,7 @@ module Syntax.Grades.Example.Time.TwoSidedWithInfinity where
 open import Data.Bool.Properties using (T-irrelevant)
 open import Data.Empty using (⊥)
 open import Data.Nat
+import Data.Nat as ℕ
 open import Data.Nat.Properties
 open import Data.Product
 open import Data.Unit using (⊤; tt)
@@ -50,6 +51,31 @@ record Interval∞ : Set₀ where
     {min≤max?} : True (↑ min ≤∞? max)
 
 open Interval∞ public
+
+-- Open ends are notation for the adjacent closed ones, as no time
+-- passes strictly between two steps: `] n , a ]` is `[ n + 1 , a ]`,
+-- `[ n , ↑ m [` is `[ n , ↑ (m ∸ 1) ]`, and `[ n , ∞ [` is `[ n , ∞ ]`.
+
+-- the closed upper end just below an open one
+
+adjacent : ℕ∞ → ℕ∞
+adjacent (↑ m) = ↑ (m ∸ 1)
+adjacent ∞     = ∞
+
+adjacent-≤∞ : ∀ {n a} → ↑ ℕ.suc n ≤∞ a → ↑ n ≤∞ adjacent a
+adjacent-≤∞ {n} {↑ m} p = ∸-monoˡ-≤ 1 p
+adjacent-≤∞ {n} {∞}   _ = tt
+
+infix 5 ]_,_] [_,_[ ]_,_[
+
+]_,_] : (n : ℕ) (a : ℕ∞) → {True (↑ ℕ.suc n ≤∞? a)} → Interval∞
+] n , a ] {p} = [ ℕ.suc n , a ] {p}
+
+[_,_[ : (n : ℕ) (a : ℕ∞) → {True (↑ ℕ.suc n ≤∞? a)} → Interval∞
+[ n , a [ {p} = [ n , adjacent a ] {fromWitness (adjacent-≤∞ {n} {a} (toWitness p))}
+
+]_,_[ : (n : ℕ) (a : ℕ∞) → {True (↑ ℕ.suc (ℕ.suc n) ≤∞? a)} → Interval∞
+] n , a [ {p} = [ ℕ.suc n , adjacent a ] {fromWitness (adjacent-≤∞ {ℕ.suc n} {a} (toWitness p))}
 
 -- the side condition, as a proof
 

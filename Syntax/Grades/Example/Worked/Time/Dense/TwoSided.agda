@@ -17,6 +17,7 @@ open import Util.Equality
 
 import Syntax.Grades.Example.Time.Dense.TwoSided as T
 
+import Syntax.Grades.Example.Time.Dense.TwoSidedClosed as Closed
 import Syntax.Grades.Example.Time.TwoSidedWithInfinity as Discrete
 
 open import Syntax.Grades.Example.Time.Dense.ExtendedRational
@@ -77,3 +78,46 @@ tsi-embed-∞ = refl
 tsi-inside : T.[ 1 / 2 , ↑ 3 / 2 ]
                T.≾ᵢ GradeMorphism.map T.two-sided→dense Discrete.[ 0 , Discrete.↑ 2 ]
 tsi-inside = ≾²!
+
+------------------------------------------------------------------------
+-- Open ends
+
+-- an open end is a smaller interval than the closed one at the same
+-- point, and not the other way round
+
+tsi-open-inside : T.] # 1 , ↑ # 2 ] T.≾ᵢ T.[ # 1 , ↑ # 2 ]
+tsi-open-inside = ≾²!
+
+tsi-open-not-outside : ¬ (T.[ # 1 , ↑ # 2 ] T.≾ᵢ T.] # 1 , ↑ # 2 ])
+tsi-open-not-outside = ⋠²!
+
+-- and a closed interval with a higher lower end does not contain it
+
+tsi-open-not-closed : ¬ (T.] # 1 , ↑ # 2 ] T.≾ᵢ T.[ 1001 / 1000 , ↑ # 2 ])
+tsi-open-not-closed = ⋠²!
+
+-- an end of a sum is open when an end summed is
+
+tsi-open-seq : T.] # 0 , ↑ # 1 [ T.·ᵢ T.[ 1 / 2 , ↑ # 1 ] ≡ T.] 1 / 2 , ↑ # 2 [
+tsi-open-seq = refl
+
+tsi-closed-seq : T.[ # 1 , ↑ # 2 ] T.·ᵢ T.[ # 1 , ↑ # 1 ] ≡ T.[ # 2 , ↑ # 3 ]
+tsi-closed-seq = refl
+
+-- the join of two half-open windows meeting at a point is the closed
+-- window around both
+
+tsi-open-join : T.[ # 0 , ↑ # 1 [ T.⊔ᵢ T.] # 1 , ↑ # 2 ] ≡ T.[ # 0 , ↑ # 2 ]
+tsi-open-join = refl
+
+-- without an upper bound, the open and closed ends are the same grade
+
+tsi-open-∞ : T.[ # 3 , ∞ [ ≡ T.[ # 3 , ∞ ]
+tsi-open-∞ = refl
+
+------------------------------------------------------------------------
+-- The closed intervals, as a sub-grade
+
+tsi-closed : GradeMorphism.map T.closed→strict Closed.[ 1 / 2 , ↑ # 2 ]
+           ≡ T.[ 1 / 2 , ↑ # 2 ]
+tsi-closed = refl

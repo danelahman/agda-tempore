@@ -65,6 +65,20 @@ operations.
   ℕ; `Syntax/Durations/Nat.agda` gives ℕ as `ℕᴰ`, a duration being a number
   of time steps, and `Syntax/Durations/NonNegativeRational.agda` the
   non-negative rationals as `ℚ≥0ᴰ`, with the inclusion `ℕ→ℚ≥0ᴰ`.
+  A `TimeDomain D` adds a decidable total order that the monoid induces, in
+  a commutative cancellative monoid; `Syntax/Durations/Monus.agda` derives
+  the strict order, truncated subtraction and the extremal operations, and
+  `ℕᵀ` and `ℚ≥0ᵀ` are the instances, the latter `Dense`.
+
+- `Syntax/Durations/Intervals.agda` gives the intervals of a time domain:
+  ends are cuts `p ∣ ⁻` and `p ∣ ⁺` (just below and just above `p`), so each
+  end is open or closed, and the upper end may be `∞`. Intervals are ordered
+  by their ends, summed end by end (an end of a sum open when an end summed
+  is) and joined by the hull. `Intervals/Dense.agda` relates the ends to the
+  durations admitted: the order is sound for containment and the sum admits
+  the sums of what its summands admit, and in a dense time domain with a
+  positive duration both are exact (`⊆ⁱ-complete`, `⊕-complete`, the
+  Minkowski sum).
 
 - `Syntax/Grades.agda` defines a `Grade D` (a partially ordered monoid with a
   monoid morphism `of-dur` from the durations `D`), grade morphisms
@@ -103,10 +117,15 @@ operations.
   non-negative rationals ℚ≥0 (`NonNegativeRational.agda`, with its extension
   by `∞` in `ExtendedRational.agda`): `LeftSided.agda` (`[ q ,+∞⟩`, at least
   `q` units), `RightSided.agda` (`[0, q ]`, at most `q` units, `q` possibly
-  `∞`), and `TwoSided.agda` (`[ min , max ]`, `max` possibly `∞`). Their
-  durations are ℚ≥0 (`ℚ≥0ᴰ` in `Syntax/Durations/NonNegativeRational.agda`),
-  and each receives its discrete counterpart by a grade morphism along the
-  inclusion `ℕ→ℚ≥0ᴰ`, sending `n` time steps to `n` units of dense time.
+  `∞`), and `TwoSided.agda`, the intervals of `Time/Intervals.agda` at ℚ≥0:
+  each end open or closed, written ISO style (`[ p , a ]`, `] p , a ]`,
+  `[ p , a [`, `] p , a [`), the upper possibly `∞`; its closed intervals are
+  the sub-grade `TwoSidedClosed.agda` (`closed→strict`). Their durations are
+  ℚ≥0 (`ℚ≥0ᴰ` in `Syntax/Durations/NonNegativeRational.agda`), and each
+  receives its discrete counterpart by a grade morphism along the inclusion
+  `ℕ→ℚ≥0ᴰ`, sending `n` time steps to `n` units of dense time. Over ℕ an open
+  end is notation for the adjacent closed one (`] n , a ]` is
+  `[ n + 1 , a ]`, in `TwoSidedWithInfinity.agda`).
 
 - `Syntax/Grades/Example/SecurityLevel.agda` turns a decidable bounded
   join-semilattice of levels into a grade: `_·_` and `_⊔_` are both the join,

@@ -69,13 +69,20 @@ import Syntax.Grades.Example.Time.RightSided
 import Syntax.Grades.Example.Time.ExtendedNat
 import Syntax.Grades.Example.Time.TwoSidedWithInfinity
 
+-- intervals of any time domain, each end open or closed, the upper
+-- one possibly absent
+
+import Syntax.Grades.Example.Time.Intervals
+
 -- the same three shapes over the non-negative rationals ℚ≥0, with
--- morphisms embedding the discrete grades above
+-- morphisms embedding the discrete grades above; the two-sided grade
+-- has open or closed ends, the closed intervals being a sub-grade
 
 import Syntax.Grades.Example.Time.Dense.NonNegativeRational
 import Syntax.Grades.Example.Time.Dense.ExtendedRational
 import Syntax.Grades.Example.Time.Dense.LeftSided
 import Syntax.Grades.Example.Time.Dense.RightSided
+import Syntax.Grades.Example.Time.Dense.TwoSidedClosed
 import Syntax.Grades.Example.Time.Dense.TwoSided
 
 ------------------------------------------------------------------------

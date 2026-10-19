@@ -154,11 +154,14 @@ open import Syntax.Normalisation
 ---------
 
 ---- Durations: the monoid of delays, its morphisms, stepped durations,
----- time domains and their arithmetic, and the natural numbers and the
----- non-negative rationals as durations
+---- time domains and their arithmetic, intervals of a time domain with
+---- open or closed ends, and the natural numbers and the non-negative
+---- rationals as durations
 
 open import Syntax.Durations
 import Syntax.Durations.Monus
+import Syntax.Durations.Intervals
+import Syntax.Durations.Intervals.Dense
 open import Syntax.Durations.Nat
 open import Syntax.Durations.NonNegativeRational
 
