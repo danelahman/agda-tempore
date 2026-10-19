@@ -27,6 +27,8 @@ open import Util.Equality
 
 open import Syntax.Durations.Nat using (ℕᵀ)
 
+open import Data.Nat.Properties using (<⇒≢)
+
 module Syntax.Grades.Example.System.Counts.Timed.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -51,7 +53,7 @@ open import Syntax.Grades.Traces.Allowance.Core ℕᵀ Op costʰⁱ
   using (_≼ᵃ[_]_; nil; bank-delay; use-op)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
   using (right-sided; within_; _≾_; singleton; of-dur; traces; _≽?_;
          Trace; ⌈_⌉; ⟨_⟩; ⟨⟩-pos)
 

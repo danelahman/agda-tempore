@@ -157,9 +157,13 @@ operations.
   grade is determined by its closure, so at a floor `⟅ ε ⟆` and
   `⟅ ε ∣ ⌈ o ⌉ ⟆` are the same grade. Every order here is a partial order.
   `Lifted/{LeftSided,RightSided,TwoSided}.agda` are the constructions,
-  parameterised by an order on traces; `Timed/*` instantiate them at the two
-  cost-sensitive orders below (a floor, a cap, and their pairing under a
-  coherence field), and `Subsets/RightSided.agda` is the cap at equality.
+  parameterised by a time domain and an order on traces; `Timed/*` instantiate
+  them at the two cost-sensitive orders below (a floor, a cap, and their
+  pairing under a coherence field), over whole steps or dense time, and
+  `Subsets/RightSided.agda` is the cap at equality, over whole steps.
+  `Lifted/Morphism.agda` maps the lifted grades along a map of traces between
+  time domains, and `Timed/Morphism.agda` along a morphism of durations;
+  `Timed/Dense.agda` reads every whole-step timed grade in dense time.
 
 - `Syntax/Grades/Example/Traces/Regular/` holds the cap at inclusion over
   non-empty *regular* sets of timed traces, a trace being a word over
@@ -180,9 +184,8 @@ operations.
 
 - `Syntax/Grades/Traces.agda` indexes the timed-trace toolkit on which these
   grades are built. It is parameterised by a time domain (`TimeDomain`), so
-  delays are whole steps over `ℕᵀ` or units of dense time over `ℚ≥0ᵀ`; the
-  orders and grades below are taken at `ℕᵀ`. The modules are `Positive` (the
-  strictly positive duration of a delay),
+  delays are whole steps over `ℕᵀ` or units of dense time over `ℚ≥0ᵀ`. The
+  modules are `Positive` (the strictly positive duration of a delay),
   `Base` (timed traces and their sequencing monoid), `Lexicographic` (a strict
   total order on traces, over one on the alphabet, which makes the carrier
   canonical), `Sets` (sorted duplicate-free non-empty finite sets of traces,
@@ -194,7 +197,10 @@ operations.
   about the unit; and the antichains of minimal members that the lifted grades
   take as carrier, floors at the order and caps at its converse). Each order
   below instantiates the interface once and inherits the construction with its
-  laws.
+  laws. Across time domains: `Along` maps traces along a morphism of
+  durations, delay by delay, `Embedding` carries antichains along such a map,
+  and `RunningTimes` gives operations running-time intervals with open or
+  closed ends, the costs being their closed hull.
 
 - The two cost-sensitive orders on traces are in
   `Syntax/Grades/Traces/Allowance/` and `Syntax/Grades/Traces/Coverage/`. Both

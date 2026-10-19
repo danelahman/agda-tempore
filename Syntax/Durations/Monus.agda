@@ -404,6 +404,9 @@ module Notation where
   ≤-trans : τ ≤ τ' → τ' ≤ τ'' → τ ≤ τ''
   ≤-trans = ≤ᴰ-trans
 
+  ≤-irrelevant : (p q : τ ≤ τ') → p ≡ q
+  ≤-irrelevant = ≤ᴰ-irrelevant
+
   m≤m+n : (m n : Carrier) → m ≤ m + n
   m≤m+n = ≤ᴰ-+
 

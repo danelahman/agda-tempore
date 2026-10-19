@@ -1,9 +1,10 @@
 ------------------------------------------------------------------------
 -- A time-ticks Kripke frame for the trace grade of guarantees.       --
 --                                                                    --
--- Worlds are time points `ℕ`. A tick world records only elapsed      --
--- time, and a grade is read through the durations of the guarantees  --
--- it lists: moving between worlds takes at least one of them.        --
+-- Worlds are time points of the time domain. A tick world records    --
+-- only elapsed time, and a grade is read through the durations of    --
+-- the guarantees it lists: moving between worlds takes at least one  --
+-- of them.                                                           --
 --                                                                    --
 --   w ⊑ᵗ[ P ] w'   iff   w + duration p ≤ w'   for some p ∈ P        --
 --                                                                    --
@@ -18,8 +19,6 @@
 -- of that trace take, not which operations it demands.               --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; _≤_)
-
 open import Level using () renaming (zero to lzero)
 
 open import Relation.Binary.Core using (Rel)
@@ -28,17 +27,18 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Relation.Nullary using (¬_)
+
+open import Syntax.Durations using (Duration; TimeDomain)
 
 module DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.LeftSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  {D : Duration} (T : TimeDomain D) (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
-  (costˡᵒ : Op → ℕ) where
+  (costˡᵒ : Op → Duration.Carrier D) where
 
-open import Data.Nat using (_+_; _≤?_)
-open import Data.Nat.Properties
-  using (≤-refl; ≤-trans; ≤-reflexive; +-assoc; +-mono-≤; +-identityʳ)
+open import Syntax.Durations.Monus T as M using (Carrier)
+open M.Notation
 open import Data.List.Membership.Propositional using (find)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺)
@@ -47,11 +47,11 @@ open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Durations ℕᵀ Op
-open import Syntax.Grades.Traces.Coverage ℕᵀ Op costˡᵒ using (duration-≼ᶜ)
+open import Syntax.Grades.Traces.Durations T Op
+open import Syntax.Grades.Traces.Coverage T Op costˡᵒ using (duration-≼ᶜ)
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
   using (left-sided; _≾_; Antichain; traces; u; _·_; _∙_; _·ˢ_;
          n-◃⁻; ◃-∈; True-irr)
 
@@ -65,7 +65,7 @@ open Durations costˡᵒ
 -- Accessibility on time ticks: advance at least as far as one of the
 -- listed guarantees takes.
 
-_⊑ᵗ[_]_ : ℕ → Antichain → ℕ → Set
+_⊑ᵗ[_]_ : Carrier → Antichain → Carrier → Set
 w ⊑ᵗ[ P ] w' = True (any? (λ p → (w + duration p) ≤? w') (traces P))
 
 -- reflexivity at the unit grade `{ ε }`: the empty guarantee demands no
@@ -121,7 +121,7 @@ w ⊑ᵗ[ P ] w' = True (any? (λ p → (w + duration p) ≤? w') (traces P))
 
 ticks : World left-sided
 ticks = record
-  { W             = ℕ
+  { W             = Carrier
   ; _⊑[_]_       = _⊑ᵗ[_]_
   ; ⊑-refl       = ⊑ᵗ-refl
   ; ⊑-trans      = λ {P} {Q} → ⊑ᵗ-trans {P} {Q}

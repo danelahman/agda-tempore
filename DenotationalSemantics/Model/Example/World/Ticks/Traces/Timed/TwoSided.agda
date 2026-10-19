@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
 -- A time-ticks Kripke frame for the two-sided trace intervals.       --
 --                                                                    --
--- Worlds are time points `ℕ`, and a grade `[ P , Q ]` bounds the     --
--- advance from both sides:                                           --
+-- Worlds are time points of the time domain, and a grade `[ P , Q ]` --
+-- bounds the advance from both sides:                                --
 --                                                                    --
 --   w ⊑ᵗ[ [ P , Q ] ] w'  iff  w + durationˡᵒ p ≤ w'  for some p ∈ P --
 --                         and  w' ≤ w + durationʰⁱ q  for some q ∈ Q --
@@ -20,8 +20,6 @@
 -- non-empty.                                                         --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; _≤_; _<_)
-
 open import Level using () renaming (zero to lzero)
 
 open import Relation.Binary.Core using (Rel)
@@ -30,18 +28,24 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
+open import Relation.Nullary using (¬_)
+
+open import Syntax.Durations using (Duration; TimeDomain)
+
 module DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.TwoSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  {D : Duration} (T : TimeDomain D) (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
-  (costˡᵒ costʰⁱ : Op → ℕ)
-  (cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o)
-  (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
+  (costˡᵒ costʰⁱ : Op → Duration.Carrier D)
+  (cost-≤ : (o : Op) → TimeDomain._≤ᴰ_ T (costˡᵒ o) (costʰⁱ o))
+  (costʰⁱ-pos : (o : Op) → ¬ (costʰⁱ o ≡ Duration.0ᴰ D)) where
 
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
+open import Syntax.Durations.Monus T using (Carrier)
+
 open import Syntax.Grades.Example.Traces.Timed.TwoSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
+  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
   using (TwoSided; lo; hi; uᵗˢ; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
 
 open import DenotationalSemantics.Model.World
@@ -53,10 +57,10 @@ import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.LeftSided
 import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.RightSided
   as Hi
 
-open Lo Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ using () renaming
+open Lo T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ using () renaming
   (_⊑ᵗ[_]_ to _⊑ˡᵒ[_]_; ⊑ᵗ-refl to ⊑ˡᵒ-refl; ⊑ᵗ-trans to ⊑ˡᵒ-trans;
    ⊑ᵗ-mono to ⊑ˡᵒ-mono; ⊑ᵗ-irrelevant to ⊑ˡᵒ-irrelevant)
-open Hi Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos using () renaming
+open Hi T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos using () renaming
   (_⊑ᵗ[_]_ to _⊑ʰⁱ[_]_; ⊑ᵗ-refl to ⊑ʰⁱ-refl; ⊑ᵗ-trans to ⊑ʰⁱ-trans;
    ⊑ᵗ-mono to ⊑ʰⁱ-mono; ⊑ᵗ-irrelevant to ⊑ʰⁱ-irrelevant)
 
@@ -66,7 +70,7 @@ open Hi Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos using () 
 -- Accessibility on time ticks: far enough for one of the guarantees,
 -- and no further than one of the allowances.
 
-_⊑ᵗ[_]_ : ℕ → TwoSided → ℕ → Set
+_⊑ᵗ[_]_ : Carrier → TwoSided → Carrier → Set
 w ⊑ᵗ[ i ] w' = (w ⊑ˡᵒ[ lo i ] w') × (w ⊑ʰⁱ[ hi i ] w')
 
 -- reflexivity at the unit grade: neither endpoint asks for time to pass
@@ -97,7 +101,7 @@ w ⊑ᵗ[ i ] w' = (w ⊑ˡᵒ[ lo i ] w') × (w ⊑ʰⁱ[ hi i ] w')
 
 ticks : World two-sided
 ticks = record
-  { W             = ℕ
+  { W             = Carrier
   ; _⊑[_]_       = _⊑ᵗ[_]_
   ; ⊑-refl       = ⊑ᵗ-refl
   ; ⊑-trans      = λ {i₁} {i₂} → ⊑ᵗ-trans {i₁} {i₂}

@@ -51,20 +51,20 @@ open import Util.Equality
 import Syntax.Grades.Traces.Order as Order
 import Syntax.Grades.Traces.Reduced as Reduced
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
 module Syntax.Grades.Example.Traces.Lifted.RightSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  {D : Duration} (T : TimeDomain D) (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
-  (O : Order.TraceOrder ℕᵀ Op) where
+  (O : Order.TraceOrder T Op) where
 
 open import Data.Empty using (⊥)
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺)
 open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
-open import Data.Nat.Base using (ℕ; _+_)
+open import Syntax.Durations.Monus T using (Carrier; 0ᴰ; _+ᴰ_)
 open import Data.Product using (_,_)
 open import Data.Unit using (⊤; tt)
 
@@ -73,19 +73,18 @@ open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Data.Maybe.Base using (just; nothing)
 
-open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades
 
 open Order.TraceOrder O using (_≼_; ≼-trans; ≼-nil; ≼-ε-inv)
 
 -- the carrier of the written-out bounds and every law the
 -- order-theoretic half supplies: the monoid, the order, its decision
--- procedure, the joins and the inclusion of the naturals. The
+-- procedure, the joins and the inclusion of durations. The
 -- reduction runs at the converse order, so its minimal members are
 -- this grade's maximal ones.
 
-module R = Reduced ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
-             (Order.flipᵖ ℕᵀ Op (Order.TraceOrder.base O))
+module R = Reduced T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
+             (Order.flipᵖ T Op (Order.TraceOrder.base O))
 
 open R public
   renaming (_≾_ to _≾₀_; _≾?_ to _≾₀?_;
@@ -343,15 +342,15 @@ unbounded  ⊔ᵇ _          = unbounded
 ≾-zero-productʳ {unbounded} {_}         ()
 
 ------------------------------------------------------------------------
--- The inclusion of ℕ, and deciding the order
+-- The inclusion of durations, and deciding the order
 
-of-durᵇ : ℕ → Bounds
+of-durᵇ : Carrier → Bounds
 of-durᵇ n = within (of-dur n)
 
-of-durᵇ-zero : of-durᵇ 0 ≡ uᵇ
+of-durᵇ-zero : of-durᵇ 0ᴰ ≡ uᵇ
 of-durᵇ-zero = cong within_ of-dur-zero
 
-of-durᵇ-plus : {m n : ℕ} → of-durᵇ (m + n) ≡ of-durᵇ m ·ᵇ of-durᵇ n
+of-durᵇ-plus : {m n : Carrier} → of-durᵇ (m +ᴰ n) ≡ of-durᵇ m ·ᵇ of-durᵇ n
 of-durᵇ-plus {m} {n} = cong within_ (of-dur-plus {m} {n})
 
 infix 5 _≾?_
@@ -365,7 +364,7 @@ unbounded  ≾? unbounded  = yes tt
 ------------------------------------------------------------------------
 -- The grade of antichains of timed traces, read as upper bounds
 
-right-sided : Grade ℕᴰ
+right-sided : Grade D
 right-sided = record
   { Carrier         = Bounds
   ; _·_             = _·ᵇ_

@@ -35,6 +35,8 @@ open import Util.Equality
 
 open import Syntax.Durations.Nat using (ℕᵀ)
 
+open import Data.Nat.Properties using (<⇒≢)
+
 module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -65,13 +67,13 @@ open import Syntax.Grades.Traces.Allowance.Decidable ℕᵀ Op costʰⁱ
   using (module DecAllowance)
 
 open import Syntax.Grades.Example.Traces.Timed.TwoSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
   using (TwoSided; lo; hi; uᵗˢ; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
 
 -- the floor endpoint is the left-sided grade's antichain carrier
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
   using () renaming (traces to tracesˡᵒ; u to uˡᵒ;
                      n-◃⁻ to nˡᵒ-◃⁻; ◃-∈ to ◃ˡᵒ-∈)
 
@@ -79,7 +81,7 @@ open import Syntax.Grades.Example.Traces.Timed.LeftSided
 -- all
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
   using (Bounds; within_; unbounded; _·ᵇ_)
   renaming (_≾_ to _≾ʰⁱ_; traces to tracesʰⁱ; u to uʰⁱ;
             n-◃⁻ to nʰⁱ-◃⁻; ◃-∈ to ◃ʰⁱ-∈)

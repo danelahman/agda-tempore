@@ -12,8 +12,6 @@
 -- A bound charges an operation `costʰⁱ`, the most time it can take.  --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; _<_)
-
 open import Level using () renaming (zero to lzero)
 
 open import Relation.Binary.Core using (Rel)
@@ -22,19 +20,20 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
-open import Data.Nat.Properties using (<⇒≢)
+open import Relation.Nullary using (¬_)
+
+open import Syntax.Durations using (Duration; TimeDomain)
 
 module Syntax.Grades.Example.Traces.Timed.RightSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  {D : Duration} (T : TimeDomain D) (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
-  (costʰⁱ : Op → ℕ)
-  (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
+  (costʰⁱ : Op → Duration.Carrier D)
+  (costʰⁱ-pos : (o : Op) → ¬ (costʰⁱ o ≡ Duration.0ᴰ D)) where
 
 open import Syntax.Grades.Traces.Allowance.AsOrder
-  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
+  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
   using (allowanceOrder)
 
 open import Syntax.Grades.Example.Traces.Lifted.RightSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans allowanceOrder public
+  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans allowanceOrder public

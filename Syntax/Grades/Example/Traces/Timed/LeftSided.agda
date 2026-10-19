@@ -11,8 +11,6 @@
 -- can take.                                                          --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ)
-
 open import Level using () renaming (zero to lzero)
 
 open import Relation.Binary.Core using (Rel)
@@ -21,17 +19,17 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
 module Syntax.Grades.Example.Traces.Timed.LeftSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  {D : Duration} (T : TimeDomain D) (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
-  (costˡᵒ : Op → ℕ) where
+  (costˡᵒ : Op → Duration.Carrier D) where
 
 open import Syntax.Grades.Traces.Coverage.AsOrder
-  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
   using (coverageOrder)
 
 open import Syntax.Grades.Example.Traces.Lifted.LeftSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans coverageOrder public
+  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans coverageOrder public

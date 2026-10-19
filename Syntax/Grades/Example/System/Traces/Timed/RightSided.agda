@@ -46,6 +46,8 @@ open import Util.Equality
 
 open import Syntax.Durations.Nat using (ℕᵀ)
 
+open import Data.Nat.Properties using (<⇒≢)
+
 module Syntax.Grades.Example.System.Traces.Timed.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -64,7 +66,7 @@ open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-tr
 open import Syntax.Grades.Traces.Allowance ℕᵀ Op costʰⁱ using (duration-≼ᵃ)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
   using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _⊔ᵇ_; _≾_; _≾₀_;
          Antichain; traces; nonempty; Trace; n; n-∈⁻; n-◃⁻; ◃-∈;
          _·ˢ_; _∙_; ⟨_⟩)

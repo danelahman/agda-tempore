@@ -52,7 +52,7 @@ open import Syntax.Grades.Traces.Coverage.Decidable ℕᵀ Op costˡᵒ
   using (module DecCoverage)
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
   using (left-sided; _≾_; Antichain; traces; u; _·_; Trace; _∙_; _·ˢ_;
          ∙-identityʳ; ∙-assoc; ∙-cancelˡ; ε; n-◃⁻; ◃-∈; True-irr)
 

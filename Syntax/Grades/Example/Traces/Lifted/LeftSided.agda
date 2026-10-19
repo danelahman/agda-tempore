@@ -46,31 +46,34 @@ open import Util.Equality
 import Syntax.Grades.Traces.Order as Order
 import Syntax.Grades.Traces.Reduced as Reduced
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
 module Syntax.Grades.Example.Traces.Lifted.LeftSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  {D : Duration} (T : TimeDomain D) (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
-  (O : Order.TraceOrder ℕᵀ Op) where
+  (O : Order.TraceOrder T Op) where
 
 open import Data.List.Relation.Unary.Any using (here; any?)
 
 open import Relation.Nullary using (¬_)
+open import Data.Empty using (⊥)
+open import Data.List.Properties using (∷-injectiveˡ)
+
+open import Syntax.Durations.Monus T using (Carrier; 0ᴰ; _<ᴰ_)
 open import Relation.Nullary.Decidable using (fromWitness)
 
 open import Data.Maybe.Base using (nothing)
 
-open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades
 
 open Order.TraceOrder O using (≼-nil)
 
 -- the carrier and every law the order-theoretic half supplies: the
 -- monoid, the order, its decision procedure, the joins and the
--- inclusion of the naturals
+-- inclusion of durations
 
-module R = Reduced ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans (Order.TraceOrder.base O)
+module R = Reduced T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans (Order.TraceOrder.base O)
 
 open R public hiding (≾-antisym)
 
@@ -92,14 +95,18 @@ open R public hiding (≾-antisym)
 ≾-⊤ : (P : Antichain) → P ≾ u
 ≾-⊤ P s _ = fromWitness {a? = any? (_≽?_ s) (traces u)} (here ≼-nil)
 
--- The unit is therefore not least: `of-dur 1` would be equal to it.
+-- The unit is therefore not least, once some duration is positive:
+-- the delay by it would be equal to the unit.
 
-u⋠of-dur-1 : ¬ (u ≾ of-dur 1)
-u⋠of-dur-1 rel with cong traces (≾-antisym {of-dur 1} {u} (≾-⊤ (of-dur 1)) rel)
-... | ()
+u⋠of-dur : (τ : Carrier) → 0ᴰ <ᴰ τ → ¬ (u ≾ of-dur τ)
+u⋠of-dur τ pos rel with cong traces (≾-antisym {of-dur τ} {u} (≾-⊤ (of-dur τ)) rel)
+... | e = delay≢ε (trans (sym (⟨⟩-pos τ pos)) (∷-injectiveˡ e))
+  where
+    delay≢ε : ∀ {d} → delay d ε⁻ ≡ ε → ⊥
+    delay≢ε ()
 
-u-not-least : ¬ Minimum _≾_ u
-u-not-least least = u⋠of-dur-1 (least (of-dur 1))
+u-not-least : (τ : Carrier) → 0ᴰ <ᴰ τ → ¬ Minimum _≾_ u
+u-not-least τ pos least = u⋠of-dur τ pos (least (of-dur τ))
 
 ------------------------------------------------------------------------
 -- Zero-product property
@@ -130,7 +137,7 @@ u-not-least least = u⋠of-dur-1 (least (of-dur 1))
 ------------------------------------------------------------------------
 -- The grade of antichains of timed traces, read as guarantees
 
-left-sided : Grade ℕᴰ
+left-sided : Grade D
 left-sided = record
   { Carrier         = Antichain
   ; _·_             = _·_

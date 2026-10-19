@@ -46,6 +46,8 @@ open import Util.Equality
 
 open import Syntax.Durations.Nat using (ℕᵀ)
 
+open import Data.Nat.Properties using (<⇒≢)
+
 module Syntax.Grades.Example.System.Traces.Timed.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -67,12 +69,12 @@ open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-tr
   using (bigMax-mem; module MaxDurations)
 
 open import Syntax.Grades.Example.Traces.Timed.TwoSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
   using (TwoSided; lo; hi; lo◇hi; _·ᵗˢ_; _⊔ᵗˢ_; ⊤ᵗˢ; of-durᵗˢ; two-sided;
          _≾ᵗˢ_; _◇ˢ₀_)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
   using (Bounds; within_; unbounded; _·ᵇ_; _⊔ᵇ_)
   renaming (_≾_ to _≾ʰⁱ_; Antichain to Antichainʰⁱ; traces to tracesʰⁱ;
             nonempty to nonemptyʰⁱ)
@@ -81,7 +83,7 @@ open import Syntax.Grades.Example.Traces.Timed.RightSided
 -- one-sided grades are, each at its own cost model
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
   using () renaming (Antichain to Antichainˡᵒ; traces to tracesˡᵒ;
                      nonempty to nonemptyˡᵒ)
 

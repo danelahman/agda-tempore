@@ -76,7 +76,8 @@ import DenotationalSemantics.Model.Example.World.Ticks.Time.LeftSidedWithTop
 import DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSidedWithInfinityAndTop
 
 -- advance no further than one of the bounds a trace grade lists: the
--- right-sided interval frame, with the bound read off a trace
+-- right-sided interval frame, with the bound read off a trace; these
+-- three are over any time domain, worlds being its time points
 
 import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.RightSided
 

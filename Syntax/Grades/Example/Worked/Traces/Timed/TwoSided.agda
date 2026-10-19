@@ -26,6 +26,9 @@
 -- listed allowance, measured in the right.                           --
 ------------------------------------------------------------------------
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+open import Data.Nat.Properties using (<⇒≢)
+
 module Syntax.Grades.Example.Worked.Traces.Timed.TwoSided where
 
 open import Data.List.Base using ([]; _∷_)
@@ -44,14 +47,14 @@ open import Syntax.Grades.Example.Worked.Operations
          costʰⁱ-pos; read; write; send; Trace; ⌈_⌉; ⟨_⟩; _∙_; ε)
 
 open import Syntax.Grades.Example.Traces.Timed.TwoSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
   using (TwoSided; [_,_]; lo; hi; ⊤ᵗˢ; _◇ˢ_; ◇ˢ₀-self; _·ᵗˢ_;
          two-sided; _≾ᵗˢ_; _≾ᵗˢ?_) public
 
 -- the floor endpoint is an antichain, and is written out the same way
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
   using () renaming (Antichain to Antichainˡᵒ; traces to tracesˡᵒ;
                      acSet to acSetˡᵒ)
 
@@ -65,7 +68,7 @@ open import Syntax.Grades.Example.Traces.Timed.LeftSided
 -- `within_` where `unbounded` could stand instead
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
   using (Bounds; within_; unbounded)
   renaming (Antichain to Antichainʰⁱ; acSet to acSetʰⁱ) public
 

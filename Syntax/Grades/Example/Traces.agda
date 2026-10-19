@@ -44,6 +44,11 @@ import Syntax.Grades.Example.Traces.Lifted.LeftSided
 import Syntax.Grades.Example.Traces.Lifted.RightSided
 import Syntax.Grades.Example.Traces.Lifted.TwoSided
 
+-- grade morphisms between them along a map of traces between two time
+-- domains
+
+import Syntax.Grades.Example.Traces.Lifted.Morphism
+
 ------------------------------------------------------------------------
 -- At the cost-sensitive orders
 --
@@ -54,6 +59,11 @@ import Syntax.Grades.Example.Traces.Lifted.TwoSided
 import Syntax.Grades.Example.Traces.Timed.LeftSided
 import Syntax.Grades.Example.Traces.Timed.RightSided
 import Syntax.Grades.Example.Traces.Timed.TwoSided
+
+-- along a morphism of time domains, and whole steps read in dense time
+
+import Syntax.Grades.Example.Traces.Timed.Morphism
+import Syntax.Grades.Example.Traces.Timed.Dense
 
 ------------------------------------------------------------------------
 -- At the subset order

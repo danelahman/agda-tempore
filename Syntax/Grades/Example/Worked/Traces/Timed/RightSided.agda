@@ -35,6 +35,9 @@
 -- is established by the decision procedure of the grade.             --
 ------------------------------------------------------------------------
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+open import Data.Nat.Properties using (<⇒≢)
+
 module Syntax.Grades.Example.Worked.Traces.Timed.RightSided where
 
 open import Relation.Nullary using (¬_)
@@ -53,7 +56,7 @@ open import Syntax.Grades.Example.Worked.Operations
          read; write; send; Trace; ⌈_⌉; ⟨_⟩; _∙_; ε)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
   using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_; _≾?_;
          ≾-antisym; ≾-⊥; Antichain; acSet)
   public

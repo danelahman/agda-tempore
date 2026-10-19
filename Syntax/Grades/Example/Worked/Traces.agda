@@ -33,6 +33,11 @@ import Syntax.Grades.Example.Worked.Traces.Timed.RightSided
 
 import Syntax.Grades.Example.Worked.Traces.Timed.TwoSided
 
+-- in dense time: running times with open or closed ends, rational
+-- delays, and whole steps read in dense time
+
+import Syntax.Grades.Example.Worked.Traces.Timed.Dense
+
 ------------------------------------------------------------------------
 -- At the subset order
 

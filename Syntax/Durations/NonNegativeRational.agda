@@ -10,7 +10,7 @@ open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades.Example.Time.Dense.NonNegativeRational
   using (ℚ≥0; ⟨_⟩; val; nonneg; ≡-val; 0ᵈ; _+_; #_; #-+; +-identityˡ;
          +-identityʳ; +-assoc; +-comm; _≤_; *≤ᵈ*; _≤?_; ≤-refl; ≤-trans;
-         ≤-antisym; p≤p+q)
+         ≤-antisym; ≤-irrelevant; p≤p+q)
 
 open import Data.Product using (Σ; _,_)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
@@ -86,6 +86,7 @@ private
   ; ≤ᴰ-trans   = ≤-trans
   ; ≤ᴰ-antisym = ≤-antisym
   ; ≤ᴰ-total   = total
+  ; ≤ᴰ-irrelevant = ≤-irrelevant
   ; ≤ᴰ-+       = p≤p+q
   ; diff       = diff
   }

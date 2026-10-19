@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
 -- A time-ticks Kripke frame for the trace grade of upper bounds.     --
 --                                                                    --
--- Worlds are time points `ℕ`. A tick world records only elapsed      --
--- time, and a grade is read through the durations of the bounds it   --
--- lists: moving between worlds goes forward and takes no longer than --
--- one of them.                                                       --
+-- Worlds are time points of the time domain. A tick world records    --
+-- only elapsed time, and a grade is read through the durations of    --
+-- the bounds it lists: moving between worlds goes forward and takes  --
+-- no longer than one of them.                                        --
 --                                                                    --
 --   w ⊑[ P ] w'   iff   w ≤ w'   and                                 --
 --                       w' ≤ w + duration p   for some p ∈ P         --
@@ -25,8 +25,6 @@
 -- least, and without `w ≤ w'` the unit grade would reach the past.   --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; _≤_; _<_)
-
 open import Level using () renaming (zero to lzero)
 
 open import Relation.Binary.Core using (Rel)
@@ -35,19 +33,19 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Relation.Nullary using (¬_)
+
+open import Syntax.Durations using (Duration; TimeDomain)
 
 module DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.RightSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  {D : Duration} (T : TimeDomain D) (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
-  (costʰⁱ : Op → ℕ)
-  (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
+  (costʰⁱ : Op → Duration.Carrier D)
+  (costʰⁱ-pos : (o : Op) → ¬ (costʰⁱ o ≡ Duration.0ᴰ D)) where
 
-open import Data.Nat using (_+_; _≤?_)
-open import Data.Nat.Properties
-  using (≤-refl; ≤-trans; ≤-reflexive; ≤-irrelevant; +-assoc; +-mono-≤;
-         +-identityʳ)
+open import Syntax.Durations.Monus T as M using (Carrier)
+open M.Notation
 open import Data.List.Membership.Propositional using (find)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺)
@@ -57,11 +55,11 @@ open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Durations ℕᵀ Op
-open import Syntax.Grades.Traces.Allowance ℕᵀ Op costʰⁱ using (duration-≼ᵃ)
+open import Syntax.Grades.Traces.Durations T Op
+open import Syntax.Grades.Traces.Allowance T Op costʰⁱ using (duration-≼ᵃ)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
+  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
   using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_;
          Antichain; traces; u; _∙_; _·ˢ_; n-◃⁻; ◃-∈; True-irr)
 
@@ -76,7 +74,7 @@ open Durations costʰⁱ
 -- The bound: advance no further than one of the listed bounds takes;
 -- at `unbounded` there is no bound to stay within.
 
-_⊑ᵗ[_]_ : ℕ → Bounds → ℕ → Set
+_⊑ᵗ[_]_ : Carrier → Bounds → Carrier → Set
 w ⊑ᵗ[ (within P) ] w' = True (any? (λ p → w' ≤? (w + duration p)) (traces P))
 w ⊑ᵗ[ unbounded ]      w' = ⊤
 
@@ -141,7 +139,7 @@ w ⊑ᵗ[ unbounded ]      w' = ⊤
 private
   bounded : World right-sided
   bounded = record
-    { W             = ℕ
+    { W             = Carrier
     ; _⊑[_]_       = _⊑ᵗ[_]_
     ; ⊑-refl       = ⊑ᵗ-refl
     ; ⊑-trans      = λ {P} {Q} → ⊑ᵗ-trans {P} {Q}

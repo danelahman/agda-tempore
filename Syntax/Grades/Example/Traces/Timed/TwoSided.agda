@@ -19,8 +19,6 @@
 -- only the empty run.                                                 --
 -------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; _≤_; _<_)
-
 open import Level using () renaming (zero to lzero)
 
 open import Relation.Binary.Core using (Rel)
@@ -29,27 +27,28 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
-open import Data.Nat.Properties using (<⇒≢)
+open import Relation.Nullary using (¬_)
+
+open import Syntax.Durations using (Duration; TimeDomain)
 
 module Syntax.Grades.Example.Traces.Timed.TwoSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  {D : Duration} (T : TimeDomain D) (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
-  (costˡᵒ costʰⁱ : Op → ℕ)
-  (cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o)
-  (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
+  (costˡᵒ costʰⁱ : Op → Duration.Carrier D)
+  (cost-≤ : (o : Op) → TimeDomain._≤ᴰ_ T (costˡᵒ o) (costʰⁱ o))
+  (costʰⁱ-pos : (o : Op) → ¬ (costʰⁱ o ≡ Duration.0ᴰ D)) where
 
 open import Syntax.Grades.Traces.Coverage.AsOrder
-  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
   using (coverageOrder)
-open import Syntax.Grades.Traces.Coverage ℕᵀ Op costˡᵒ using (duration-≼ᶜ)
+open import Syntax.Grades.Traces.Coverage T Op costˡᵒ using (duration-≼ᶜ)
 
 open import Syntax.Grades.Traces.Allowance.AsOrder
-  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
+  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
   using (allowanceOrder)
-open import Syntax.Grades.Traces.Allowance ℕᵀ Op costʰⁱ using (duration-≼ᵃ)
+open import Syntax.Grades.Traces.Allowance T Op costʰⁱ using (duration-≼ᵃ)
 
 open import Syntax.Grades.Example.Traces.Lifted.TwoSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤
+  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤
   coverageOrder allowanceOrder duration-≼ᶜ duration-≼ᵃ public

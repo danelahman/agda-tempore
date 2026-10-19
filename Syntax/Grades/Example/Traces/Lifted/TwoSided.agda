@@ -31,8 +31,6 @@
 -- under the unbounded allowance of the cap. It is not absorbing.     --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; _≤_)
-
 open import Level using () renaming (zero to lzero)
 
 open import Relation.Binary.Core using (Rel)
@@ -45,27 +43,29 @@ import Syntax.Grades.Traces.Base as Base
 import Syntax.Grades.Traces.Durations as Dur
 import Syntax.Grades.Traces.Order as Order
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
 module Syntax.Grades.Example.Traces.Lifted.TwoSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  {D : Duration} (T : TimeDomain D) (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
-  (costˡᵒ costʰⁱ : Op → ℕ)
-  (cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o)
-  (Oᶠ Oᶜ : Order.TraceOrder ℕᵀ Op)
-  (durᶠ : {s t : Base.Trace ℕᵀ Op}
+  (costˡᵒ costʰⁱ : Op → Duration.Carrier D)
+  (cost-≤ : (o : Op) → TimeDomain._≤ᴰ_ T (costˡᵒ o) (costʰⁱ o))
+  (Oᶠ Oᶜ : Order.TraceOrder T Op)
+  (durᶠ : {s t : Base.Trace T Op}
         → Order.TraceOrder._≼_ Oᶠ s t
-        → Dur.Durations.duration ℕᵀ Op costˡᵒ s ≤ Dur.Durations.duration ℕᵀ Op costˡᵒ t)
-  (durᶜ : {s t : Base.Trace ℕᵀ Op}
+        → TimeDomain._≤ᴰ_ T (Dur.Durations.duration T Op costˡᵒ s)
+                             (Dur.Durations.duration T Op costˡᵒ t))
+  (durᶜ : {s t : Base.Trace T Op}
         → Order.TraceOrder._≼_ Oᶜ s t
-        → Dur.Durations.duration ℕᵀ Op costʰⁱ s ≤ Dur.Durations.duration ℕᵀ Op costʰⁱ t)
+        → TimeDomain._≤ᴰ_ T (Dur.Durations.duration T Op costʰⁱ s)
+                             (Dur.Durations.duration T Op costʰⁱ t))
   where
 
 open import Data.List.Base using (List; _++_)
 open import Data.Unit using (⊤; tt)
-open import Data.Nat using (_+_; _≤?_)
-open import Data.Nat.Properties using (≤-refl; ≤-trans; ≤-reflexive; +-mono-≤)
+open import Syntax.Durations.Monus T as M using (Carrier; 0ᴰ; _<ᴰ_)
+open M.Notation using (_+_; _≤_; _≤?_; ≤-refl; ≤-trans; ≤-reflexive; +-mono-≤)
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺; ∈-++⁺ˡ)
@@ -78,17 +78,16 @@ open import Relation.Nullary.Decidable
 
 open import Data.Maybe.Base using (nothing)
 
-open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades
 
-open import Syntax.Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
-open import Syntax.Grades.Traces.Durations ℕᵀ Op
+open import Syntax.Grades.Traces.Sets T Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
+open import Syntax.Grades.Traces.Durations T Op
 
 -- each endpoint is ordered exactly as the corresponding one-sided grade
 -- orders it, at its own order
 
 open import Syntax.Grades.Example.Traces.Lifted.LeftSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans Oᶠ
+  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans Oᶠ
   using (Antichain)
   renaming (traces to tracesˡᵒ; nonempty to nonemptyˡᵒ;
             n to nˡᵒ; n-◃⁻ to nˡᵒ-◃⁻; ◃-∈ to ◃ˡᵒ-∈;
@@ -98,7 +97,7 @@ open import Syntax.Grades.Example.Traces.Lifted.LeftSided
             of-dur to of-durˡᵒ; of-dur-zero to of-durˡᵒ-zero;
             of-dur-plus to of-durˡᵒ-plus;
             _≾_ to _≾ˡᵒ_; _≾?_ to _≾ˡᵒ?_; ≾-⊤ to ≾ˡᵒ-⊤;
-            u⋠of-dur-1 to uˡᵒ⋠of-durˡᵒ-1;
+            u⋠of-dur to uˡᵒ⋠of-durˡᵒ;
             ≾-refl to ≾ˡᵒ-refl; ≾-trans to ≾ˡᵒ-trans;
             ·-monoˡ to ·ˡᵒ-monoˡ; ·-monoʳ to ·ˡᵒ-monoʳ;
             ≾-zero-productˡ to ≾ˡᵒ-zero-productˡ;
@@ -112,7 +111,7 @@ open import Syntax.Grades.Example.Traces.Lifted.LeftSided
 -- grade's own greatest element
 
 open import Syntax.Grades.Example.Traces.Lifted.RightSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans Oᶜ
+  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans Oᶜ
   using (Bounds; within_; unbounded; _·ᵇ_; uᵇ; _⊔ᵇ_;
          ·ᵇ-identityʳ; ·ᵇ-identityˡ; ·ᵇ-assoc)
   renaming (Antichain to Antichainʰⁱ; traces to tracesʰⁱ;
@@ -509,9 +508,9 @@ i₁ ⊔ᵗˢ i₂ =
             (≾ʰⁱ-irrelevant {hi i₁} {hi i₂} h h')
 
 ------------------------------------------------------------------------
--- Including the natural numbers, and deciding the order
+-- Including durations, and deciding the order
 
-of-durᵗˢ : ℕ → TwoSided
+of-durᵗˢ : Carrier → TwoSided
 of-durᵗˢ n =
   [ of-durˡᵒ n , within (of-durʰⁱ n) ] {◇ˢ₀-self (tracesˡᵒ (of-durˡᵒ n)) tt}
 
@@ -520,15 +519,16 @@ infix 5 _≾ᵗˢ?_
 _≾ᵗˢ?_ : (i₁ i₂ : TwoSided) → Dec (i₁ ≾ᵗˢ i₂)
 i₁ ≾ᵗˢ? i₂ = (lo i₁ ≾ˡᵒ? lo i₂) ×-dec (hi i₁ ≾ʰⁱ? hi i₂)
 
--- the unit is not least, its floor being greatest among floors
+-- the unit is not least, once some duration is positive, its floor
+-- being greatest among floors
 
-uᵗˢ-not-least : ¬ Minimum _≾ᵗˢ_ uᵗˢ
-uᵗˢ-not-least least = uˡᵒ⋠of-durˡᵒ-1 (proj₁ (least (of-durᵗˢ 1)))
+uᵗˢ-not-least : (τ : Carrier) → 0ᴰ <ᴰ τ → ¬ Minimum _≾ᵗˢ_ uᵗˢ
+uᵗˢ-not-least τ pos least = uˡᵒ⋠of-durˡᵒ τ pos (proj₁ (least (of-durᵗˢ τ)))
 
 ------------------------------------------------------------------------
 -- The grade of two-sided trace intervals
 
-two-sided : Grade ℕᴰ
+two-sided : Grade D
 two-sided = record
   { Carrier         = TwoSided
   ; _·_             = _·ᵗˢ_

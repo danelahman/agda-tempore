@@ -61,7 +61,7 @@ open import Syntax.Grades.Traces.MinDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-tr
 open import Syntax.Grades.Traces.Coverage ℕᵀ Op costˡᵒ using (duration-≼ᶜ)
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
   using (left-sided; _≾_; Antichain; traces; nonempty; _·_; _⊔_;
          Trace; NonEmpty; n; n-ne; n-∈⁻; n-◃⁻; ◃-∈; _·ˢ_; ·ˢ-ne; ++-ne)
 

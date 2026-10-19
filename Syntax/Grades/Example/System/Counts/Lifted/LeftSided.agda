@@ -58,7 +58,7 @@ open import Data.Vec.Properties using (tabulate-cong)
 open import Syntax.Grades
 
 open import Syntax.Grades.Example.Traces.Lifted.LeftSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O
   using (left-sided; Antichain; traces; nonempty; _≾_; _·_; _⊔_; u; of-dur;
          Trace; ⟨_⟩; ε; ·ˢ-ne; ++-ne; n-ne; n-∈⁻; n-◃⁻; ◃-∈; ≾ˢ-◃)
   renaming (NonEmpty to NonEmptyˢ; _·ˢ_ to _⊙_; n to reduce)

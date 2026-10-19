@@ -7,7 +7,7 @@ module Syntax.Durations.Nat where
 open import Data.Nat.Base using (ℕ; _+_; _≤_; _∸_)
 open import Data.Nat.Properties
   using (+-identityʳ; +-assoc; +-comm; +-cancelˡ-≡; _≤?_; ≤-refl; ≤-trans;
-         ≤-antisym; ≤-total; m≤m+n; m+[n∸m]≡n)
+         ≤-antisym; ≤-total; ≤-irrelevant; m≤m+n; m+[n∸m]≡n)
 open import Data.Product using (_,_)
 
 open import Syntax.Durations
@@ -48,6 +48,7 @@ open import Util.Equality
   ; ≤ᴰ-trans   = ≤-trans
   ; ≤ᴰ-antisym = ≤-antisym
   ; ≤ᴰ-total   = ≤-total
+  ; ≤ᴰ-irrelevant = ≤-irrelevant
   ; ≤ᴰ-+       = m≤m+n
   ; diff       = λ {m} {n} p → n ∸ m , m+[n∸m]≡n p
   }

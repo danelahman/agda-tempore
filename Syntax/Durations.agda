@@ -141,6 +141,8 @@ record TimeDomain (D : Duration) : Set₁ where
     ≤ᴰ-trans   : {τ τ' τ'' : Carrier} → τ ≤ᴰ τ' → τ' ≤ᴰ τ'' → τ ≤ᴰ τ''
     ≤ᴰ-antisym : {τ τ' : Carrier} → τ ≤ᴰ τ' → τ' ≤ᴰ τ → τ ≡ τ'
     ≤ᴰ-total   : (τ τ' : Carrier) → τ ≤ᴰ τ' ⊎ τ' ≤ᴰ τ
+    -- a comparison is a proposition
+    ≤ᴰ-irrelevant : {τ τ' : Carrier} (p q : τ ≤ᴰ τ') → p ≡ q
 
     -- the order is the one the monoid induces: a summand is below the
     -- sum, and what lies above `τ` is `τ` followed by a difference

@@ -28,6 +28,8 @@
 -- is established by the decision procedure of the grade.             --
 ------------------------------------------------------------------------
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Example.Worked.Traces.Timed.LeftSided where
 
 open import Relation.Nullary using (¬_)
@@ -46,7 +48,7 @@ open import Syntax.Grades.Example.Worked.Operations
          read; write; send; Trace; ⌈_⌉; ⟨_⟩; _∙_; ε)
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
   using (left-sided; _≾_; _≾?_; ≾-⊤; ≾-antisym; Antichain; acSet; _·_; u)
   public
 

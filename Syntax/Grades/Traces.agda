@@ -84,11 +84,16 @@ import Syntax.Grades.Traces.Order
 
 import Syntax.Grades.Traces.Reduced
 
+-- Antichains carried along a map of traces that is a monoid morphism
+-- and monotone, normalising before or after mapping being the same.
+
+import Syntax.Grades.Traces.Embedding
+
 ------------------------------------------------------------------------
 -- The two orders on traces
 --
--- Both are indexed by a running number of time units and share the
--- arithmetic that manipulates it.
+-- Both are indexed by a running duration and share the arithmetic that
+-- manipulates it.
 
 -- The slack arithmetic and the size measure the two relations induct
 -- on, stated once.
@@ -159,3 +164,16 @@ import Syntax.Grades.Traces.Coverage.AsOrder
 
 import Syntax.Grades.Traces.Prefix
 
+------------------------------------------------------------------------
+-- Across time domains
+
+-- Traces along a morphism of durations that keeps positive durations
+-- positive: a monoid morphism, scaling durations, monotone for both
+-- orders at the mapped costs.
+
+import Syntax.Grades.Traces.Along
+
+-- Running times of operations as intervals, each end open or closed,
+-- and the costs read off their closed hull.
+
+import Syntax.Grades.Traces.RunningTimes
