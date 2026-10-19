@@ -67,3 +67,22 @@ import Syntax.Grades.Example.Worked.Traces.Rigid.Regular.RightSided
 -- lower bounds: undisturbed waits, explicit flanks
 
 import Syntax.Grades.Example.Worked.Traces.Rigid.Regular.LeftSided
+
+------------------------------------------------------------------------
+-- Rigid timed finite-expression grades, in dense time
+
+-- upper bounds: the F4 products at rational lengths, open against
+-- closed ends, an equivalence of distinct expressions, the window rule,
+-- open running times, the hull
+
+import Syntax.Grades.Example.Worked.Traces.Rigid.Finite.RightSided
+
+-- lower bounds: waits add up, undisturbed waits, flanks, open ends, the
+-- hull
+
+import Syntax.Grades.Example.Worked.Traces.Rigid.Finite.LeftSided
+
+-- intervals: a demanded wait separating budgets, delays read on both
+-- sides
+
+import Syntax.Grades.Example.Worked.Traces.Rigid.Finite.TwoSided

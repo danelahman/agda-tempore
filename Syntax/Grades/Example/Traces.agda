@@ -98,3 +98,16 @@ import Syntax.Grades.Example.Traces.Rigid.Regular.Base
 import Syntax.Grades.Example.Traces.Rigid.Regular.RightSided
 import Syntax.Grades.Example.Traces.Rigid.Regular.LeftSided
 import Syntax.Grades.Example.Traces.Rigid.Regular.TwoSided
+
+------------------------------------------------------------------------
+-- Rigid timed finite-expression grades
+--
+-- Preordered grades over the non-negative rationals: finite one-sided
+-- expressions over interval letters with open or closed ends, compared
+-- by the runs they denote and decided by the pouring reader
+-- (`Grades.Exact.Finite`); upper bounds, lower bounds, and their pairs.
+
+import Syntax.Grades.Example.Traces.Rigid.Finite.Base
+import Syntax.Grades.Example.Traces.Rigid.Finite.RightSided
+import Syntax.Grades.Example.Traces.Rigid.Finite.LeftSided
+import Syntax.Grades.Example.Traces.Rigid.Finite.TwoSided

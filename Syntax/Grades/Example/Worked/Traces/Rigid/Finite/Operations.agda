@@ -1,0 +1,57 @@
+------------------------------------------------------------------------
+-- The operations of the worked finite-expression grades, with        --
+-- running times in dense time, ends open or closed:                  --
+--                                                                    --
+--   heat   [2, 4]                                                    --
+--   cool   ]1, 2[    more than one unit, less than two               --
+--   log    ]1/4, 1/2]                                                --
+------------------------------------------------------------------------
+
+module Syntax.Grades.Example.Worked.Traces.Rigid.Finite.Operations where
+
+open import Data.Fin.Base using (Fin; zero; suc)
+open import Relation.Nullary.Decidable using (toWitness)
+
+open import Util.Equality
+
+open import Syntax.Durations.NonNegativeRational using (ℚ≥0ᵀ)
+open import Syntax.Grades.Example.Time.Dense.TwoSided
+  using (Interval; [_,_]; ]_,_]; ]_,_[; ↑_; _/_; #_; _⊑?_; 0⁺; lo)
+open import Syntax.Grades.Traces.RunningTimes ℚ≥0ᵀ using (RunningTimes) renaming (fin to bounded)
+
+data Op : Set where
+  heat cool log : Op
+
+code : Op → Fin 3
+code heat = zero
+code cool = suc zero
+code log  = suc (suc zero)
+
+name : Fin 3 → Op
+name zero             = heat
+name (suc zero)       = cool
+name (suc (suc zero)) = log
+
+name-code : ∀ o → name (code o) ≡ o
+name-code heat = refl
+name-code cool = refl
+name-code log  = refl
+
+code-name : ∀ c → code (name c) ≡ c
+code-name zero             = refl
+code-name (suc zero)       = refl
+code-name (suc (suc zero)) = refl
+
+rt : Op → Interval
+rt heat = [ # 2 , ↑ # 4 ]
+rt cool = ] # 1 , ↑ # 2 [
+rt log  = ] 1 / 4 , ↑ 1 / 2 ]
+
+running : RunningTimes Op
+running = record
+  { rt          = rt
+  ; rt-bounded  = λ { heat → bounded _ ; cool → bounded _ ; log → bounded _ }
+  ; rt-positive = λ { heat → toWitness {a? = 0⁺ ⊑? lo (rt heat)} _
+                    ; cool → toWitness {a? = 0⁺ ⊑? lo (rt cool)} _
+                    ; log  → toWitness {a? = 0⁺ ⊑? lo (rt log)} _ }
+  }

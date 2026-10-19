@@ -83,3 +83,9 @@ import Syntax.Grades.Exact.Reader.Lower.Close
 import Syntax.Grades.Exact.Reader.Lower.Zone
 import Syntax.Grades.Exact.Reader.Lower.Mimic
 import Syntax.Grades.Exact.Reader.Lower.Correct
+
+-- finite expressions: their words, the decision of their order, and
+-- the preordered grades they form in each instance
+
+import Syntax.Grades.Exact.Finite
+import Syntax.Grades.Exact.Finite.Grades
