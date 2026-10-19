@@ -160,6 +160,7 @@ open import Syntax.Normalisation
 
 open import Syntax.Durations
 import Syntax.Durations.Monus
+import Syntax.Durations.Solver
 import Syntax.Durations.Intervals
 import Syntax.Durations.Intervals.Dense
 open import Syntax.Durations.Nat

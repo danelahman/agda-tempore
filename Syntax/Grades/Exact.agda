@@ -13,3 +13,26 @@ import Syntax.Grades.Exact.Base
 -- sequencing preserves, antisymmetric on normal words
 
 import Syntax.Grades.Exact.Order
+
+-- sets of words under the ∀∃ lift: a preorder, a monotone product
+-- distributing over joins, greatest elements, the zero-product property
+
+import Syntax.Grades.Exact.Lift
+
+-- one-sided expressions over interval letters and the sets they denote
+
+import Syntax.Grades.Exact.Expression
+
+-- shortening and lengthening stretches; upper expressions are closed
+-- under the first, lower ones under the second
+
+import Syntax.Grades.Exact.Resize
+
+-- removing and inserting time, and fitting after resizing
+
+import Syntax.Grades.Exact.Splice
+
+-- the hull of a run on either side is invisible against bounds of
+-- that side
+
+import Syntax.Grades.Exact.Hull

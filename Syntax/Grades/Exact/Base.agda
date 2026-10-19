@@ -243,48 +243,77 @@ dur-∙ (i ∷ x) y =
 ∙-conicalʳ (i ∷ x) eq = ⊥-elim (◂-nonempty i _ eq)
 
 ------------------------------------------------------------------------
--- Strict waits
+-- Stretches of a given length, and strict waits
 
--- the strict wait of a positive length, and of no length
+-- the stretch of a positive length, and of no length
 
-wait-of : (τ : Carrier) → Dec (0ᴰ <ᴰ τ) → Word
-wait-of τ (yes p) = st (pos⁺ τ p) Data.Fin.Subset.⊥ ∷ []
-wait-of τ (no _)  = []
+stretch-of : OpSet → (τ : Carrier) → Dec (0ᴰ <ᴰ τ) → Word
+stretch-of S τ (yes p) = st (pos⁺ τ p) S ∷ []
+stretch-of S τ (no _)  = []
+
+stretch : OpSet → Carrier → Word
+stretch S τ = stretch-of S τ (0ᴰ <ᴰ? τ)
+
+-- a strict wait admits no operation
 
 ![_] : Carrier → Word
-![ τ ] = wait-of τ (0ᴰ <ᴰ? τ)
+![ τ ] = stretch Data.Fin.Subset.⊥ τ
 
-![]-normal : (τ : Carrier) → Normal ![ τ ]
-![]-normal τ = case (0ᴰ <ᴰ? τ)
+stretch-pos : ∀ S τ (p : 0ᴰ <ᴰ τ) → stretch S τ ≡ st (pos⁺ τ p) S ∷ []
+stretch-pos S τ p = case (0ᴰ <ᴰ? τ)
   where
-    case : (c : Dec (0ᴰ <ᴰ τ)) → Normal (wait-of τ c)
+    case : (c : Dec (0ᴰ <ᴰ τ)) → stretch-of S τ c ≡ st (pos⁺ τ p) S ∷ []
+    case (yes _) = cong (λ d → st d S ∷ []) (∣∣⁺-inj refl)
+    case (no ¬p) = ⊥-elim (¬p p)
+
+stretch-zero : ∀ S τ → ¬ (0ᴰ <ᴰ τ) → stretch S τ ≡ []
+stretch-zero S τ ¬p = case (0ᴰ <ᴰ? τ)
+  where
+    case : (c : Dec (0ᴰ <ᴰ τ)) → stretch-of S τ c ≡ []
+    case (yes p) = ⊥-elim (¬p p)
+    case (no _)  = refl
+
+dur-stretch : ∀ S τ → dur (stretch S τ) ≡ τ
+dur-stretch S τ = case (0ᴰ <ᴰ? τ)
+  where
+    case : (c : Dec (0ᴰ <ᴰ τ)) → dur (stretch-of S τ c) ≡ τ
+    case (yes _) = +ᴰ-identityʳ τ
+    case (no ¬p) = sym (≮0⇒≡0 ¬p)
+
+stretch-normal : ∀ S τ → Normal (stretch S τ)
+stretch-normal S τ = case (0ᴰ <ᴰ? τ)
+  where
+    case : (c : Dec (0ᴰ <ᴰ τ)) → Normal (stretch-of S τ c)
     case (yes _) = tt , tt
     case (no _)  = tt
 
-![]-zero : ![ 0ᴰ ] ≡ []
-![]-zero = case (0ᴰ <ᴰ? 0ᴰ)
-  where
-    case : (c : Dec (0ᴰ <ᴰ 0ᴰ)) → wait-of 0ᴰ c ≡ []
-    case (yes p) = ⊥-elim (<⇒≢ p refl)
-    case (no _)  = refl
+![]-normal : (τ : Carrier) → Normal ![ τ ]
+![]-normal = stretch-normal _
 
-![]-hom : (m n : Carrier) → ![ m +ᴰ n ] ≡ ![ m ] ∙ ![ n ]
-![]-hom m n = hom (0ᴰ <ᴰ? m) (0ᴰ <ᴰ? n) (0ᴰ <ᴰ? (m +ᴰ n))
+![]-zero : ![ 0ᴰ ] ≡ []
+![]-zero = stretch-zero _ 0ᴰ (λ p → <⇒≢ p refl)
+
+-- stretches with one set add up
+
+stretch-hom : (S : OpSet) (m n : Carrier) → stretch S (m +ᴰ n) ≡ stretch S m ∙ stretch S n
+stretch-hom S m n = hom (0ᴰ <ᴰ? m) (0ᴰ <ᴰ? n) (0ᴰ <ᴰ? (m +ᴰ n))
   where
-    ∅ = Data.Fin.Subset.⊥
     hom : (a : Dec (0ᴰ <ᴰ m)) (b : Dec (0ᴰ <ᴰ n)) (c : Dec (0ᴰ <ᴰ (m +ᴰ n)))
-        → wait-of (m +ᴰ n) c ≡ wait-of m a ∙ wait-of n b
-    hom (yes p) (yes q) (yes r) with ∅ ≟ˢ ∅
-    ... | yes _ = cong (λ d → st d ∅ ∷ []) (∣∣⁺-inj refl)
+        → stretch-of S (m +ᴰ n) c ≡ stretch-of S m a ∙ stretch-of S n b
+    hom (yes p) (yes q) (yes r) with S ≟ˢ S
+    ... | yes _ = cong (λ d → st d S ∷ []) (∣∣⁺-inj refl)
     ... | no ¬e = ⊥-elim (¬e refl)
     hom (yes p) (no ¬q) (yes r) =
-      cong (λ d → st d ∅ ∷ [])
+      cong (λ d → st d S ∷ [])
            (∣∣⁺-inj (trans (cong (m +ᴰ_) (≮0⇒≡0 ¬q)) (+ᴰ-identityʳ m)))
     hom (no ¬p) (yes q) (yes r) =
-      cong (λ d → st d ∅ ∷ [])
+      cong (λ d → st d S ∷ [])
            (∣∣⁺-inj (trans (cong (_+ᴰ n) (≮0⇒≡0 ¬p)) (+ᴰ-identityˡ n)))
     hom (no ¬p) (no ¬q) (yes r) =
       ⊥-elim (<⇒≢ r (sym (trans (cong₂ _+ᴰ_ (≮0⇒≡0 ¬p) (≮0⇒≡0 ¬q)) (+ᴰ-identityˡ 0ᴰ))))
     hom (yes p) _ (no ¬r) = ⊥-elim (¬r (<-≤-trans p (≤ᴰ-+ m n)))
     hom (no _) (yes q) (no ¬r) = ⊥-elim (¬r (<-≤-trans q (≤ᴰ-+ˡ n m)))
     hom (no _) (no _) (no _) = refl
+
+![]-hom : (m n : Carrier) → ![ m +ᴰ n ] ≡ ![ m ] ∙ ![ n ]
+![]-hom = stretch-hom _
