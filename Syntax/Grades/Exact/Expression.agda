@@ -118,3 +118,24 @@ data Star (X : Lang) : Lang where
 ⟦ e ∣ f   ⟧ = ⟦ e ⟧ ∪ᴸ ⟦ f ⟧
 ⟦ e · f   ⟧ = ⟦ e ⟧ ·ᴸ ⟦ f ⟧
 ⟦ e *     ⟧ = Star ⟦ e ⟧
+
+------------------------------------------------------------------------
+-- Bounded repetition, unrolled
+
+open import Data.Nat.Base using (ℕ; zero; suc; _∸_)
+
+infix 8 _^_ _^[_,_] _^≥_
+
+_^_ : ∀ {s} → Expr s → ℕ → Expr s
+e ^ zero  = ε
+e ^ suc m = e · e ^ m
+
+-- between `m` and `n` repetitions
+
+_^[_,_] : ∀ {s} → Expr s → ℕ → ℕ → Expr s
+e ^[ m , n ] = e ^ m · (e ∣ ε) ^ (n ∸ m)
+
+-- at least `m` repetitions
+
+_^≥_ : ∀ {s} → Expr s → ℕ → Expr s
+e ^≥ m = e ^ m · e *

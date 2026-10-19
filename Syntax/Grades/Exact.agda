@@ -36,3 +36,12 @@ import Syntax.Grades.Exact.Splice
 -- that side
 
 import Syntax.Grades.Exact.Hull
+
+-- moving within an operation of a word
+
+import Syntax.Grades.Exact.Offsets
+
+-- in whole steps: words of slots, and the order as slot-by-slot
+-- comparison; slots coded as letters
+
+import Syntax.Grades.Exact.Slots

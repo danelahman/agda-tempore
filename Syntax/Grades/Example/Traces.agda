@@ -84,3 +84,17 @@ import Syntax.Grades.Example.Traces.Subsets.RightSided
 
 import Syntax.Grades.Example.Traces.Regular.RightSided
 import Syntax.Grades.Example.Traces.Regular.Subsets
+
+------------------------------------------------------------------------
+-- Rigid timed regular grades
+--
+-- A grade is a non-empty regular language of whole-step slots closed
+-- downward under the slot order, the order on exact words
+-- (`Grades.Exact`) read slot by slot. Literals are one-sided
+-- expressions over interval letters; upper bounds, lower bounds, and
+-- their pairs.
+
+import Syntax.Grades.Example.Traces.Rigid.Regular.Base
+import Syntax.Grades.Example.Traces.Rigid.Regular.RightSided
+import Syntax.Grades.Example.Traces.Rigid.Regular.LeftSided
+import Syntax.Grades.Example.Traces.Rigid.Regular.TwoSided
