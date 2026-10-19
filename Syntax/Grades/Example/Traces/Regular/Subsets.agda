@@ -40,7 +40,8 @@ open import Data.Product.Base using (_×_; _,_; ∃; ∃₂)
 open import Data.Sum.Base using (inj₁; inj₂)
 open import Relation.Nullary using (¬_)
 
-open import Syntax.Grades using (_→ᵍ_)
+open import Syntax.Grades using (_→ᵍ_; Grade)
+open import Data.Product.Base using (proj₁; proj₂)
 open import Syntax.Grades.Example.Traces.Regular.Base Op n code code-injective
   using (Word; _∈_; tick; enc; enc-∙; enc-⟨⟩; enc-injective)
 
@@ -151,20 +152,46 @@ lang-∪ P Q = R.same-language (lang (P S.∪ Q)) (lang P ⊔ᴿ lang Q) to′ f
 ------------------------------------------------------------------------
 -- No morphism of grades
 
+-- A run of the one-tick grade is not empty.
+
+tick-nonempty : ∀ x y → x ∈ table (R.of-dur 1) → y ∈ table R.⊤ → x ++ y ≡ [] → ⊥
+tick-nonempty x y x∈ _ eq with trans (sym (cong (_++ y) (R.∈tick⁻ 1 x x∈))) eq
+... | ()
+
 no-morphism : ¬ (SR.right-sided →ᵍ R.right-sided)
-no-morphism f = R.∈·-elim (R.of-dur 1) R.⊤ (λ v → v ≡ [] → ⊥) [] []∈ absurd refl
+no-morphism f = R.∈·-elim (R.of-dur 1) R.⊤ (λ v → v ≡ [] → ⊥) [] []∈ tick-nonempty refl
   where
   open _→ᵍ_ f
 
-  -- `{ ⟨1⟩ } · any-run` is `any-run`
-  top : R.⊤ ≡ R.of-dur 1 ·ᴿ R.⊤
-  top = trans (sym map-⊤)
-          (trans (map-· {SR.of-durᵖ 1} {SR.any-run})
-                 (cong₂ _·ᴿ_ (map-of-dur {1}) map-⊤))
+  -- `{ ⟨1⟩ } · any-run` is above `any-run`. Each step is stated at the
+  -- exact terms it relates, the carriers' equations being `refl`: the order
+  -- is decided by a computation the checker would otherwise unfold.
+  top : R.⊤ ≾ R.of-dur 1 ·ᴿ R.⊤
+  top = R≾-trans R.⊤ M (R.of-dur 1 ·ᴿ R.⊤) t₁
+          (R≾-trans M (map (SR.of-durᵖ 1) ·ᴿ map SR.any-run) (R.of-dur 1 ·ᴿ R.⊤) t₂
+            (R≾-trans (map (SR.of-durᵖ 1) ·ᴿ map SR.any-run) (R.of-dur 1 ·ᴿ map SR.any-run)
+                      (R.of-dur 1 ·ᴿ R.⊤) t₃ t₄))
+    where
+      module RG = Grade R.right-sided
+      module SG = Grade SR.right-sided
+      R≾-trans : ∀ a b c → a ≾ b → b ≾ c → a ≾ c
+      R≾-trans a b c = RG.≾-trans {a} {b} {c}
+      M = map (SR.of-durᵖ 1 SG.· SR.any-run)
+      e₁ : SG.⊤ ≡ SR.of-durᵖ 1 SG.· SR.any-run
+      e₁ = refl
+      t₁ : R.⊤ ≾ map (SR.of-durᵖ 1 SG.· SR.any-run)
+      t₁ = subst (λ c → R.⊤ ≾ map c) e₁ (proj₂ map-⊤)
+      t₂ : map (SR.of-durᵖ 1 SG.· SR.any-run) ≾ map (SR.of-durᵖ 1) ·ᴿ map SR.any-run
+      t₂ = proj₁ (map-· {SR.of-durᵖ 1} {SR.any-run})
+      t₃ : map (SR.of-durᵖ 1) ·ᴿ map SR.any-run ≾ R.of-dur 1 ·ᴿ map SR.any-run
+      t₃ = RG.·-monoˡ-≾ {map SR.any-run} {map (SR.of-durᵖ 1)} {R.of-dur 1}
+             (proj₁ (map-of-dur {1}))
+      t₄ : R.of-dur 1 ·ᴿ map SR.any-run ≾ R.of-dur 1 ·ᴿ R.⊤
+      t₄ = RG.·-monoʳ-≾ {R.of-dur 1} {map SR.any-run} {R.⊤}
+             (subst (λ c → map c ≾ R.⊤) (sym e₂) (proj₁ map-⊤))
+        where
+          e₂ : SR.any-run ≡ SG.⊤
+          e₂ = refl
 
   []∈ : [] ∈ table (R.of-dur 1 ·ᴿ R.⊤)
-  []∈ = subst (λ c → [] ∈ table c) top (R.∈⊤ [])
-
-  absurd : ∀ x y → x ∈ table (R.of-dur 1) → y ∈ table R.⊤ → x ++ y ≡ [] → ⊥
-  absurd x y x∈ _ eq with trans (sym (cong (_++ y) (R.∈tick⁻ 1 x x∈))) eq
-  ... | ()
+  []∈ = R.≾⇒⊆ R.⊤ (R.of-dur 1 ·ᴿ R.⊤) top [] (R.∈⊤ [])

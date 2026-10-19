@@ -410,10 +410,10 @@ mutual
                → (M : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
                -----------------------------------------------------
                → Γ ⊢C⦂ return V ⨟ M
-                   == ε-subst (sym (·ₑ-identityˡ ε))
+                   == ε-≃ (≃ₑ-sym (·ₑ-identityˡ ε))
                         ((C-rename
                            (cong-∷-ren
-                             (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren))
+                             (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren))
                            M)
                          [ split-[] ↦ V ]c)
 
@@ -423,12 +423,12 @@ mutual
                 → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
                 ---------------------------------------------------------------------
                 → Γ ⊢C⦂ (perform op V M) ⨟ N
-                    == ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
+                    == ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
                          (perform op V
                             (M ⨟
                              C-rename
                                (cong-∷-ren
-                                 ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+                                 ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)
                                   ∘ʳ ⟨⟩-μ-ren)
                                   ∘ʳ cong-⟨⟩-ren wk-ren))
                                N))
@@ -438,14 +438,12 @@ mutual
               → (N : Γ ⟨ mapᵉ (of-durᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
               -------------------------------------------------------
               → Γ ⊢C⦂ delay τ M ⨟ N
-                  == ε-subst (sym (·ₑ-assoc (of-durᵉ τ) ε ε'))
+                  == ε-≃ (≃ₑ-sym (·ₑ-assoc (of-durᵉ τ) ε ε'))
                        (delay τ
                          (M ⨟
                           C-rename
                             (cong-∷-ren
-                              (eq-ren (cong (Γ ⟨_⟩)
-                                               (trans map-·ᵉ
-                                                      (cong (_·ᵣ mapᵉ ε) map-of-durᵉ)))
+                              (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))
                                ∘ʳ ⟨⟩-μ-ren))
                             N))
 
@@ -473,7 +471,7 @@ mutual
             → (M : Γ ⊢C⦂ A ‼ ε)
             ----------------------------------------------------------
             → Γ ⊢C⦂ M
-                == ε-subst (·ₑ-identityʳ ε) (M ⨟ return (var (λ _ → ≾ᵣ-refl) Hd))
+                == ε-≃ (·ₑ-identityʳ ε) (M ⨟ return (var (λ _ → ≾ᵣ-refl) Hd))
 
     -- associativity equation for sequential composition
 
@@ -483,10 +481,10 @@ mutual
               → (P : Γ ⟨ mapᵉ (ε ·ₑ ε') ⟩ ∷ B ⊢C⦂ C ‼ ε'')
               ---------------------------------------------------------------------
               → Γ ⊢C⦂ (M ⨟ N) ⨟ P
-                  == ε-subst (sym (·ₑ-assoc ε ε' ε''))
+                  == ε-≃ (≃ₑ-sym (·ₑ-assoc ε ε' ε''))
                        (M ⨟ (N ⨟ C-rename
                                    (cong-∷-ren
-                                     ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+                                     ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)
                                       ∘ʳ ⟨⟩-μ-ren)
                                       ∘ʳ cong-⟨⟩-ren wk-ren))
                                    P))
@@ -713,10 +711,10 @@ mutual
                   → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
                   ----------------------------------------------------------------
                   → Γ ⊢C⦂ handle return V `with H `in N
-                      == ε-subst (sym (·ₑ-identityˡ ε))
+                      == ε-≃ (≃ₑ-sym (·ₑ-identityˡ ε))
                            ((C-rename
                               (cong-∷-ren
-                                (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren))
+                                (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren))
                               N)
                             [ split-[] ↦ V ]c)
 
@@ -730,7 +728,7 @@ mutual
                    → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
                    ----------------------------------------------------------------
                    → Γ ⊢C⦂ handle perform op V M `with H `in N
-                       == ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
+                       == ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
                             (box _ (lam
                                    (handle M
                                    `with (λ op' ε'' →
@@ -741,7 +739,7 @@ mutual
                                               (H op' ε''))
                                    `in (C-rename
                                          (cong-∷-ren
-                                           ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+                                           ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)
                                             ∘ʳ ⟨⟩-μ-ren)
                                             ∘ʳ cong-⟨⟩-ren wk-ren))
                                          N)))
@@ -758,7 +756,7 @@ mutual
                  → (N : Γ ⟨ mapᵉ (of-durᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
                  ------------------------------------------------------------------------------
                  → Γ ⊢C⦂ handle delay τ M `with H `in N
-                     == ε-subst (sym (·ₑ-assoc (of-durᵉ τ) ε ε'))
+                     == ε-≃ (≃ₑ-sym (·ₑ-assoc (of-durᵉ τ) ε ε'))
                           (delay τ
                             (handle M
                             `with (λ op' ε'' →
@@ -767,9 +765,7 @@ mutual
                                        (H op' ε''))
                             `in (C-rename
                                   (cong-∷-ren
-                                    (eq-ren (cong (Γ ⟨_⟩)
-                                                     (trans map-·ᵉ
-                                                            (cong (_·ᵣ mapᵉ ε) map-of-durᵉ)))
+                                    (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))
                                      ∘ʳ ⟨⟩-μ-ren))
                                   N)))
 
@@ -1021,9 +1017,9 @@ mutual
                → (M : Γ ⟨ of-durʳ 0ᴰ ⟩ ⊢C⦂ A ‼ ε)
                --------------------------
                → Γ ⊢C⦂ delay 0ᴰ M
-                   == ε-subst (sym (trans (cong (_·ₑ ε) of-durᵉ-zero) (·ₑ-identityˡ ε)))
+                   == ε-≃ (≃ₑ-sym (≃ₑ-trans (·ₑ-cong of-durᵉ-zero ≃ₑ-refl) (·ₑ-identityˡ ε)))
                         (C-rename
-                          (eq-ren (cong (Γ ⟨_⟩) of-durʳ-zero) ∘ʳ ⟨⟩-η-ren)
+                          (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ of-durʳ-zero) ∘ʳ ⟨⟩-η-ren)
                           M)
 
     delay-delay : ∀ {A τ₁ τ₂ ε}
@@ -1031,9 +1027,9 @@ mutual
                 ------------------------------------
                 → Γ ⊢C⦂ delay τ₁ (delay τ₂
                            (C-rename
-                             (eq-ren (cong (Γ ⟨_⟩) of-durʳ-plus) ∘ʳ ⟨⟩-μ-ren)
+                             (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ of-durʳ-plus) ∘ʳ ⟨⟩-μ-ren)
                              M))
-                    == ε-subst (trans (cong (_·ₑ ε) of-durᵉ-plus) (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε))
+                    == ε-≃ (≃ₑ-trans (·ₑ-cong of-durᵉ-plus ≃ₑ-refl) (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε))
                          (delay (τ₁ +ᴰ τ₂) M)
 
   infix 18 _⊢C⦂_==_

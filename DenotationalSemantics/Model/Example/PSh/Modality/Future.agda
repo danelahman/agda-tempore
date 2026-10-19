@@ -37,10 +37,10 @@ open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
 -- collapsing `ρ ·ᵣ uᵣ` resp. `uᵣ ·ᵣ ρ` back to `ρ`.
 
 ⊑ρ∘ᵘ : ∀ {ρ w w' w''} → w ⊑[ ρ ] w' → w' ⊑[ u ] w'' → w ⊑[ ρ ] w''
-⊑ρ∘ᵘ {ρ} q r = ⊑-mono (≾-reflexive (·-identityʳ ρ)) (⊑-trans q r)
+⊑ρ∘ᵘ {ρ} q r = ⊑-mono (≃⇒≾ (·-identityʳ ρ)) (⊑-trans q r)
 
 ⊑ᵘ∘ρ : ∀ {ρ w w' w''} → w ⊑[ u ] w' → w' ⊑[ ρ ] w'' → w ⊑[ ρ ] w''
-⊑ᵘ∘ρ {ρ} p q = ⊑-mono (≾-reflexive (·-identityˡ ρ)) (⊑-trans p q)
+⊑ᵘ∘ρ {ρ} p q = ⊑-mono (≃⇒≾ (·-identityˡ ρ)) (⊑-trans p q)
 
 -- The underlying Kripke family of a box: a value of `A` at every world
 -- reachable from `w` by spending the resource grade `ρ`. This is exactly

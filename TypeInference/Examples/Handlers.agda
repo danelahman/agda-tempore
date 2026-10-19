@@ -39,7 +39,7 @@ module TypeInference.Examples.Handlers (S : LanguageSpec) (opEnum : OpEnum S) wh
 
 open LanguageSpec S
 open GradeSystemInterface Grades
-  using (≾ᵣ-reflexive; map-uᵉ; uₑ; ⊤ₑ; _≾ₑ?_; uₑ-least?; mapᵉ)
+  using (≃ᵣ⇒≾ᵣ; map-uᵉ; uₑ; ⊤ₑ; _≾ₑ?_; uₑ-least?; mapᵉ)
 open Operations Ops using (Op; arity; op-grade)
 
 open import TypeInference.OpenSyntax.Grades    S
@@ -75,7 +75,7 @@ ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
 ok₁ : ∀ {Θ} {A : OVType Θ} → VarOK ∅ᴴ A (ûᵣ ·̂ᵣ ∣ ûₑ ∣̂ᵉ)
 ok₁ = ≾ᵘ-ok (transᵣ (eqᵣ ≡̂ᵣ-identityˡ)
-               (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≾ᵣ-reflexive map-uᵉ))))
+               (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-uᵉ))))
 
 U⇒U : ∀ {Θ} → OVType Θ
 U⇒U = Unit ⇒ Unit ‼ ûₑ
@@ -180,7 +180,7 @@ private
   ok₃ = ≾ᵘ-ok (step (step (step ⊩≾̂ᵣ-refl)))
     where
       u-map : ∀ {Θ} → ∅ᴴ {Θ} ⊩ ∣ ûₑ ∣̂ᵉ ≾̂ᵣ ûᵣ
-      u-map = transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≾ᵣ-reflexive map-uᵉ))
+      u-map = transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-uᵉ))
 
       step : ∀ {Θ} {ρ : RExp Θ} → ∅ᴴ ⊩ ρ ≾̂ᵣ ûᵣ → ∅ᴴ ⊩ ρ ·̂ᵣ ∣ ûₑ ∣̂ᵉ ≾̂ᵣ ûᵣ
       step p = transᵣ (monoᵣ p u-map) (eqᵣ ≡̂ᵣ-identityˡ)
@@ -289,7 +289,7 @@ resume-twice-D top =
     okʲ : ∀ {Θ} {Q : Hyps Θ} {A ε} → VarOK Q A (ûᵣ ·̂ᵣ ∣ ε ∣̂ᵉ)
     okʲ = ≾ᵘ-ok (transᵣ (eqᵣ ≡̂ᵣ-identityˡ)
                   (transᵣ (map-mono below-u)
-                    (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≾ᵣ-reflexive map-uᵉ)))))
+                    (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-uᵉ)))))
 
 resume-twice-typable : True (⊤ₑ ≾ₑ? uₑ) → Typable [] resume-twice
 resume-twice-typable top = closed (resume-twice-D top) refl

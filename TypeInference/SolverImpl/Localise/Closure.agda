@@ -343,11 +343,11 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (P : Open O) (R : Resid Φ) where
   -- Each sort's components (`Reach`): outer unknowns preferred as
   -- representatives, the open ones absent from every type movable
 
-  module Cᵉ = Reachability.Collapse _≟ᶠ_ (λ a b → (evar a , evar b) ∈ es R) (edgesᵉ (es R))
-                (bothEnds (edgesᵉ (es R))) (λ k → freeᵉ k O) Mvᵉ
+  module Cᵉ = Reachability.Collapse (λ a b → (evar a , evar b) ∈ es R) sameᶠ? (edgesᵉ (es R))
+                (bothEnds (edgesᵉ (es R))) _≟ᶠ_ (λ k → freeᵉ k O) Mvᵉ
                 (λ k → both (isTrue (oᵉ P k)) (cleanᵉ? k R))
-  module Cʳ = Reachability.Collapse _≟ᶠ_ (λ a b → (rvar a , rvar b) ∈ rs R) (edgesʳ (rs R))
-                (bothEnds (edgesʳ (rs R))) (λ k → freeʳ k O) Mvʳ
+  module Cʳ = Reachability.Collapse (λ a b → (rvar a , rvar b) ∈ rs R) sameᶠ? (edgesʳ (rs R))
+                (bothEnds (edgesʳ (rs R))) _≟ᶠ_ (λ k → freeʳ k O) Mvʳ
                 (λ k → both (isTrue (oʳ P k)) (cleanʳ? k R))
 
   movedᵉ : Cᵉ.Moves → EVar Φ → 𝔹

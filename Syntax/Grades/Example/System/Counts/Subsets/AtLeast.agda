@@ -55,7 +55,7 @@ open import Syntax.Grades.Example.Traces.Subsets.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
   using (right-sided; Permits; permitting_; any-run; _·ᵖ_; _⊔ᵖ_; _≾_)
 
-open import Syntax.Grades.Example.Time.LeftSided using (𝕀⊤; timed_; untimed; _·ᵗ_)
+open import Syntax.Grades.Example.Time.LeftSided using (𝕀⊤; timed_; untimed; _·ᵗ_; ≾ᵗ-antisym)
 
 open import Syntax.Grades.Example.Counts.AtLeast
   using (at-least-counts; at-least-counts-with-⊤; certainly; module WithTop)
@@ -69,24 +69,23 @@ open import Syntax.Grades.Example.Counts.Occurrences Op index
 collapses : {D : Duration} (G H : Grade D)
           → (∀ c → Grade._·_ G (Grade.⊤ G) c ≡ Grade.⊤ G)
           → Grade.⊤ H ≡ Grade.u H
-          → (F : G →ᵍ H) (c : Grade.Carrier G) → _→ᵍ_.map F c ≡ Grade.u H
+          → (F : G →ᵍ H) (c : Grade.Carrier G) → Grade._≃_ H (_→ᵍ_.map F c) (Grade.u H)
 collapses G H absorb top-unit F c =
-  begin
-    map c                           ≡⟨ sym (Grade.·-identityˡ H (map c)) ⟩
-    Grade._·_ H (Grade.u H) (map c) ≡⟨ cong (λ z → Grade._·_ H z (map c))
-                                            (sym (trans map-⊤ top-unit)) ⟩
-    Grade._·_ H (map (Grade.⊤ G)) (map c)
-                                    ≡⟨ sym map-· ⟩
-    map (Grade._·_ G (Grade.⊤ G) c) ≡⟨ cong map (absorb c) ⟩
-    map (Grade.⊤ G)                 ≡⟨ trans map-⊤ top-unit ⟩
-    Grade.u H
-  ∎
-  where open _→ᵍ_ F
+  ≃-trans (≃-sym (·-identityˡ (map c)))
+  (≃-trans (·-cong (≃-sym top≃u) ≃-refl)
+  (≃-trans (≃-sym map-·)
+  (≃-trans (≃-reflexive (cong map (absorb c)))
+           top≃u)))
+  where
+    open _→ᵍ_ F
+    open Grade H using (≃-trans; ≃-sym; ≃-refl; ≃-reflexive; ·-cong; ·-identityˡ)
+    top≃u : Grade._≃_ H (map (Grade.⊤ G)) (Grade.u H)
+    top≃u = ≃-trans map-⊤ (≃-reflexive top-unit)
 
 -- so every morphism from the cap into the at-least counts is constant
 
 constant : (F : right-sided →ᵍ at-least-counts n) (P : Permits)
-         → _→ᵍ_.map F P ≡ Grade.u (at-least-counts n)
+         → Grade._≃_ (at-least-counts n) (_→ᵍ_.map F P) (Grade.u (at-least-counts n))
 constant = collapses right-sided (at-least-counts n) (λ _ → refl) refl
 
 ------------------------------------------------------------------------
@@ -147,8 +146,8 @@ mapₗ-⊔ (permitting P) (permitting Q) =
                                            (ne (traces P) (nonempty P))
                                            (ne (traces Q) (nonempty Q)))))
         (tabulate-⊔ᵛ (certain (traces P)) (certain (traces Q)))
-mapₗ-⊔ (permitting P) any-run = sym (⊔ᵛ-⊤ᵛ (mapₗ (permitting P)))
-mapₗ-⊔ any-run        Q       = sym (⊤ᵛ-⊔ᵛ (mapₗ Q))
+mapₗ-⊔ (permitting P) any-run = sym (⊔ᵛ-⊤ᵛ (⊔-⊤-≡ ≾ᵗ-antisym) (mapₗ (permitting P)))
+mapₗ-⊔ any-run        Q       = sym (⊤ᵛ-⊔ᵛ (⊤-⊔-≡ ≾ᵗ-antisym) (mapₗ Q))
 
 -- time draws on no counter
 
@@ -160,7 +159,7 @@ mapₗ-of-dur k =
 -- The grade morphism and the grade system
 
 subsets→at-least-counts-with-⊤ : right-sided →ᵍ at-least-counts-with-⊤ n
-subsets→at-least-counts-with-⊤ = record
+subsets→at-least-counts-with-⊤ = strictᵍ record
   { map          = mapₗ
   ; map-monotone = λ {P} {Q} → mapₗ-monotone {P} {Q}
   ; map-u        = mapₗ-of-dur 0

@@ -188,17 +188,12 @@ headᵏ-≡ⁿ : ∀ {A} {P : Pred A} {ε w we τ n n'}
          → n ≡ n' → Headᵏ P τ k p n → Headᵏ P τ k p n'
 headᵏ-≡ⁿ refl h = h
 
--- Grade transports are invisible.
+-- A sub-effecting node is invisible.
 
-head-ε-subst : ∀ {A} {P : Pred A} {ε ε' w we n} → (e : ε ≡ ε')
-             → {t : Tˢ A ε w} → {p : Path w we}
-             → Head P (ε-substˢ e t) p n → Head P t p n
-head-ε-subst refl h = h
-
-head-ε-subst⁺ : ∀ {A} {P : Pred A} {ε ε' w we n} → (e : ε ≡ ε')
-              → {t : Tˢ A ε w} → {p : Path w we}
-              → Head P t p n → Head P (ε-substˢ e t) p n
-head-ε-subst⁺ refl h = h
+head-sub⁻ : ∀ {A} {P : Pred A} {ε ε' w we n} {e : ε ≾ₑ ε'}
+          → {t : Tˢ A ε w} → {p : Path w we}
+          → Head P (sub e t) p n → Head P t p n
+head-sub⁻ (h-sub h) = h
 
 -- A sub-effecting node pushed into a delay's continuation is invisible, in
 -- both directions: what `sub-delay` needs.
@@ -303,12 +298,12 @@ module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
 
     -- a zero delay *is* its own continuation, at the only zero-step there is
     head-≈ᵗ (delay-zero {k = k} {q₀ = q₀} e) (h-delay (hk-zero z h)) =
-      head-ε-subst⁺ e (head-⊑ k (⊑-zero z) q₀ h)
+      h-sub (head-⊑ k (⊑-zero z) q₀ h)
     head-≈ᵗ (delay-zero e) (h-delay (hk-suc τ' e' q h)) = ⊥-elim (1+≢0ᴰ (sym e'))
 
     -- and consecutive delays are the one delay by their sum
     head-≈ᵗ (delay-plus {τ₁ = τ₁} {τ₂ = τ₂} hk e) (h-delay h) =
-      head-ε-subst⁺ e (h-delay (plus-fwd τ₁ τ₂ hk h))
+      h-sub (h-delay (plus-fwd τ₁ τ₂ hk h))
 
     head-≈ᵗ (≈ᵗ-sym et)       h = head-≈ᵗ⁻ et h
     head-≈ᵗ (≈ᵗ-trans et et') h = head-≈ᵗ et' (head-≈ᵗ et h)
@@ -328,9 +323,9 @@ module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
     head-≈ᵗ⁻ sub-op       (h-op px)           = h-sub (h-op px)
 
     head-≈ᵗ⁻ (delay-zero {k = k} {q₀ = q₀} e) h =
-      h-delay (hk-zero refl (head-⊑ k q₀ (⊑-zero refl) (head-ε-subst e h)))
+      h-delay (hk-zero refl (head-⊑ k q₀ (⊑-zero refl) (head-sub⁻ h)))
 
-    head-≈ᵗ⁻ (delay-plus {τ₁ = τ₁} {τ₂ = τ₂} hk e) h with head-ε-subst e h
+    head-≈ᵗ⁻ (delay-plus {τ₁ = τ₁} {τ₂ = τ₂} hk e) h with head-sub⁻ h
     ... | h-delay h' = h-delay (plus-bwd τ₁ τ₂ hk h')
 
     head-≈ᵗ⁻ (≈ᵗ-sym et)       h = head-≈ᵗ et h
@@ -471,10 +466,6 @@ data Delaysᵗ {Y : PSh} : ∀ {δ w} → Tˢ Y δ w → 𝔻 → Set where
           -----------------------
           → Delaysᵗ t' n
 
-d-ε : ∀ {Y δ δ' w n} → (e : δ ≡ δ') → {t : Tˢ Y δ w}
-    → Delaysᵗ t n → Delaysᵗ (ε-substˢ e t) n
-d-ε refl d = d
-
 d-≡ : ∀ {Y δ w n n'} {t : Tˢ Y δ w} → n ≡ n' → Delaysᵗ t n → Delaysᵗ t n'
 d-≡ refl d = d
 
@@ -486,10 +477,10 @@ delays-bind : ∀ {Y X : PSh} {δ ε' n m} {h : Y →ᵖ Tᵒ X ε'}
             ------------------------------------
             → Delaysᵗ (μˢ (Tˢᶠ h t)) (n +ᴰ m)
 
-delays-bind {m = m} pH (d-leaf {y = y}) = d-ε _ (d-≡ (sym (+ᴰ-identityˡ m)) (pH y))
+delays-bind {m = m} pH (d-leaf {y = y}) = d-sub (d-≡ (sym (+ᴰ-identityˡ m)) (pH y))
 
 delays-bind {m = m} pH (d-delay τ {k = k} f) =
-  d-ε _ (d-≡ (sym (+ᴰ-assoc τ _ m)) (d-delay τ (λ q → delays-bind pH (f q))))
+  d-sub (d-≡ (sym (+ᴰ-assoc τ _ m)) (d-delay τ (λ q → delays-bind pH (f q))))
 
 delays-bind pH (d-sub d) = d-sub (delays-bind pH d)
 
@@ -535,11 +526,11 @@ bind-head : ∀ {Y X : PSh} {δ ε' n} {P : Pred X} {h : Y →ᵖ Tᵒ X ε'}
           → Head P (μˢ (Tˢᶠ h t)) p (toℕ n)
 
 bind-head Pcl pH (d-leaf {y = y}) p le =
-  head-≡ (sym toℕ-0) (head-ε-subst⁺ _ (pH y p))
+  head-≡ (sym toℕ-0) (h-sub (pH y p))
 
 bind-head Pcl pH (d-delay {n = n} τ f) p le =
   head-≡ (sym (toℕ-+ τ n))
-    (head-ε-subst⁺ _
+    (h-sub
       (h-delay (headᵏ-walk τ p (subst (_≤ p-len p) (toℕ-+ τ n) le)
                  (λ q p' le' → bind-head Pcl pH (f q) p' le'))))
 

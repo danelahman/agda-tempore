@@ -529,7 +529,7 @@ uᵗˢ-not-least τ pos least = uˡᵒ⋠of-durˡᵒ τ pos (proj₁ (least (of-
 -- The grade of two-sided trace intervals
 
 two-sided : Grade D
-two-sided = record
+two-sided = posetᵍ record
   { Carrier         = TwoSided
   ; _·_             = _·ᵗˢ_
   ; u               = uᵗˢ

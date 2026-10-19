@@ -38,7 +38,7 @@ plusⁱ i = plus (i⁺ i)
   (λ { (p , q) → p , plusʰ-indʳ {hi i} q })
 
 intervals : Grade D
-intervals = record
+intervals = posetᵍ record
   { Carrier         = Interval
   ; _·_             = _⊕_
   ; u               = 0ⁱ

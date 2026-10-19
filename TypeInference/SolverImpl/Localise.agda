@@ -138,7 +138,7 @@ open import Data.Nat.Base using (ℕ; _+_) renaming (zero to nzero; suc to nsuc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 
-open import Relation.Binary.Construct.Closure.ReflexiveTransitive using (Star; fold)
+open import Relation.Binary.Construct.Closure.ReflexiveTransitive using (Star; fold) renaming (ε to ε⋆)
 open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
@@ -178,6 +178,13 @@ import TypeInference.SolverImpl.Reach as Reachability
 open import TypeInference.SolverImpl.Entail    S using (decideᵣ; decideₑ; full)
 open import TypeInference.SolverImpl.Canon     S
   using (canonᵣ; canonᵣ-≡; Ordʳ; Ordᵉ; Pieces; pieces; Split; splits; piecesʳ; piecesᵉ)
+
+-- Equal unknowns, joined by the empty chain
+
+sameᶠ? : ∀ {n} {E : Fin n → Fin n → Set} → (a b : Fin n) → Maybe (Star E a b)
+sameᶠ? a b with a ≟ᶠ b
+... | yes refl = just ε⋆
+... | no _     = nothing
 
 ------------------------------------------------------------------------
 -- Booleans and finite enumerations
@@ -1877,11 +1884,11 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
   -- Each sort's components (`Reach`): outer unknowns preferred as
   -- representatives, the local ones absent from every type movable
 
-  module Cᵉ = Reachability.Collapse _≟ᶠ_ (λ a b → (evar a , evar b) ∈ es R) (edgesᵉ (es R))
-                (bothEnds (edgesᵉ (es R))) (λ k → freeᵉ k O) Mvᵉ
+  module Cᵉ = Reachability.Collapse (λ a b → (evar a , evar b) ∈ es R) sameᶠ? (edgesᵉ (es R))
+                (bothEnds (edgesᵉ (es R))) _≟ᶠ_ (λ k → freeᵉ k O) Mvᵉ
                 (λ k → both (isFalse (freeᵉ k O)) (cleanᵉ? k R))
-  module Cʳ = Reachability.Collapse _≟ᶠ_ (λ a b → (rvar a , rvar b) ∈ rs R) (edgesʳ (rs R))
-                (bothEnds (edgesʳ (rs R))) (λ k → freeʳ k O) Mvʳ
+  module Cʳ = Reachability.Collapse (λ a b → (rvar a , rvar b) ∈ rs R) sameᶠ? (edgesʳ (rs R))
+                (bothEnds (edgesʳ (rs R))) _≟ᶠ_ (λ k → freeʳ k O) Mvʳ
                 (λ k → both (isFalse (freeʳ k O)) (cleanʳ? k R))
 
   collapse : Collapse O R

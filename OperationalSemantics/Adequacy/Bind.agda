@@ -76,22 +76,20 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
 
     b : ≤ₛ-grade E₀ ≾ᵣ mapᵉ ε₁
     b = ≾ᵣ-trans
-          (≾ᵣ-reflexive
-            (trans (sym (·ᵣ-identityʳ (≤ₛ-grade E₀)))
-                   (cong (≤ₛ-grade E₀ ·ᵣ_) (sym map-uᵉ))))
+          (≃ᵣ⇒≾ᵣ
+            (≃ᵣ-trans (≃ᵣ-sym (·ᵣ-identityʳ (≤ₛ-grade E₀))) (·ᵣ-cong ≃ᵣ-refl (≃ᵣ-sym map-uᵉ))))
           (steps-grade-≾ rs)
 
     q = reach E₀ b
 
     -- the renaming `SEQ-RET` puts in front of the sequel it reached
     R₁ : Ren [] (toCtx St₁) (toCtx St₁ ⟨ mapᵉ uₑ ⟩)
-    R₁ = eq-ren (cong (toCtx St₁ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren
+    R₁ = ⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren
 
     eqr : (srs ∘ʳ R₁) ≐ʳ unbox-ren q
-    eqr = ≐ʳ-trans (≐ʳ-sym (∘ʳ-assoc-≐ʳ srs (eq-ren (cong (toCtx St₁ ⟨_⟩) map-uᵉ))
+    eqr = ≐ʳ-trans (≐ʳ-sym (∘ʳ-assoc-≐ʳ srs (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ))
                                        ⟨⟩-η-ren))
-                   (∘ʳ-≐ʳ (suc-comp-ren-grade E₀ map-uᵉ (steps-grade-≾ rs)
-                                             (reach-bound q))
+                   (∘ʳ-≐ʳ (≐ʳ-sym (suc-comp-ren-≤ E₀ (reach-bound q) (steps-grade-≾ rs) (≃ᵣ⇒≿ᵣ map-uᵉ)))
                          ≐ʳ-refl)
 
     ren-shift : C-rename (cong-∷-ren R₁) (C-rename (cong-∷-ren srs) N)
@@ -124,7 +122,7 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
 ... | N₁ , rs' , eN₁ =
   CRed-expand* {e₀ = refl} rs'
     (CRed-expand {e₀ = refl} SEQ-OP
-      (CRed-ε-subst (sym (·ₑ-assoc (op-grade op) ε₃ ε₂))
+      (CRed-coerce (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) ε₃ ε₂))
         (cred-op refl ε* pW resump)))
   where
     ρₒ  = mapᵉ (op-grade op)
@@ -133,14 +131,11 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
     b₀  = steps-grade-≾ rs
     srs = suc-comp-ren E₀ b₀
 
-    emap : toCtx St₁ ⟨ mapᵉ (op-grade op ·ₑ ε₃) ⟩
-         ≡ toCtx St₁ ⟨ ρₒ ·ᵣ mapᵉ ε₃ ⟩
-    emap = cong (toCtx St₁ ⟨_⟩) map-·ᵉ
 
     -- the renaming `SEQ-OP` puts in front of the sequel it reached
     κ : Ren [] ((toCtx St₁ ⟨ ρₒ ⟩ ∷ Ar) ⟨ mapᵉ ε₃ ⟩)
               (toCtx St₁ ⟨ mapᵉ (op-grade op ·ₑ ε₃) ⟩)
-    κ = (eq-ren emap ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
+    κ = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
 
     N₂ = C-rename (cong-∷-ren κ) N₁
 
@@ -160,18 +155,18 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
         B₁' = ·ᵣ-monoˡ-≾ᵣ (bound q)
 
         B₁ : ≤ₛ-grade (ext q) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ (op-grade op ·ₑ ε₃)
-        B₁ = ≾ᵣ-trans B₁' (≾ᵣ-reflexive (sym map-·ᵉ))
+        B₁ = ≾ᵣ-trans B₁' (≃ᵣ⇒≿ᵣ map-·ᵉ)
 
         -- what is left of the sequel's renaming once the arity variable is gone
         W₁ : Ren [] (toCtx St₂ ⟨ mapᵉ ε₃ ⟩)
                   (toCtx St₁ ⟨ mapᵉ (op-grade op ·ₑ ε₃) ⟩)
-        W₁ = (eq-ren emap ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren sq
+        W₁ = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren sq
 
         eW₁ : W₁ ≐ʳ suc-comp-ren (ext q) B₁
         eW₁ =
-          ≐ʳ-trans (∘ʳ-assoc-≐ʳ (eq-ren emap) ⟨⟩-μ-ren (cong-⟨⟩-ren sq))
+          ≐ʳ-trans (∘ʳ-assoc-≐ʳ (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)) ⟨⟩-μ-ren (cong-⟨⟩-ren sq))
             (≐ʳ-trans (∘ʳ-≐ʳ ≐ʳ-refl (unbox-ren-μ-≐ʳ q B₁'))
-                      (suc-comp-ren-grade-src (ext q) map-·ᵉ B₁' B₁))
+                      (≐ʳ-sym (suc-comp-ren-≤ˡ (ext q) B₁ B₁' (≃ᵣ⇒≿ᵣ map-·ᵉ))))
 
         -- the sequel the recursion needs is the original one, renamed and
         -- subsumed along the run
@@ -189,7 +184,7 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
             inner : (κ ∘ʳ cong-⟨⟩-ren (cong-∷-ren sq))
                   ≐ʳ (W₁ ∘ʳ cong-⟨⟩-ren wk-ren)
             inner =
-              ≐ʳ-trans (∘ʳ-assoc-≐ʳ (eq-ren emap ∘ʳ ⟨⟩-μ-ren)
+              ≐ʳ-trans (∘ʳ-assoc-≐ʳ (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
                                    (cong-⟨⟩-ren wk-ren)
                                    (cong-⟨⟩-ren (cong-∷-ren sq)))
                 (≐ʳ-trans
@@ -197,7 +192,7 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
                     (≐ʳ-trans (≐ʳ-sym (cong-⟨⟩-ren-∘-≐ʳ wk-ren (cong-∷-ren sq)))
                       (≐ʳ-trans (cong-⟨⟩-ren-≐ʳ (wk-ren-nat-≐ʳ sq))
                                 (cong-⟨⟩-ren-∘-≐ʳ sq wk-ren))))
-                  (≐ʳ-sym (∘ʳ-assoc-≐ʳ (eq-ren emap ∘ʳ ⟨⟩-μ-ren)
+                  (≐ʳ-sym (∘ʳ-assoc-≐ʳ (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
                                       (cong-⟨⟩-ren sq)
                                       (cong-⟨⟩-ren wk-ren))))
 
@@ -230,15 +225,14 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
             B₂ : ≤ₛ-grade (≤ₛ-trans E₀ (ext q)) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁
             B₂ =
               ≾ᵣ-trans
-                (≾ᵣ-reflexive
-                  (trans (cong (_·ᵣ mapᵉ ε₃) (≤ₛ-grade-trans E₀ (ext q)))
-                         (·ᵣ-assoc (≤ₛ-grade E₀) (≤ₛ-grade (ext q)) (mapᵉ ε₃))))
+                (≃ᵣ⇒≾ᵣ
+                  (≃ᵣ-trans (·ᵣ-cong (≤ₛ-grade-trans E₀ (ext q)) ≃ᵣ-refl) (·ᵣ-assoc (≤ₛ-grade E₀) (≤ₛ-grade (ext q)) (mapᵉ ε₃))))
                 (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ B₁) b₀)
 
             q₁ : St ⊑ₛ[ mapᵉ ε₁ ] St₃
             q₁ = reach (≤ₛ-trans (≤ₛ-trans E₀ (ext q)) (ext q'))
                    (≾ᵣ-trans
-                     (≾ᵣ-reflexive
+                     (≃ᵣ⇒≾ᵣ
                        (≤ₛ-grade-trans (≤ₛ-trans E₀ (ext q)) (ext q')))
                      (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (bound q')) B₂))
 

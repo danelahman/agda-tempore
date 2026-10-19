@@ -191,7 +191,7 @@ mapₒ-⊔ i₁ i₂ =
       (capDuration-⊔ (hi i₁) (hi i₂))
 
 two-sided-traces→intervals : two-sided →ᵍ two-sided-intervals-with-∞
-two-sided-traces→intervals = record
+two-sided-traces→intervals = strictᵍ record
   { map          = mapₒ
   ; map-monotone = λ {i₁} {i₂} → mapₒ-monotone {i₁} {i₂}
   ; map-u        = eqᵢ refl refl

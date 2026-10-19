@@ -121,15 +121,12 @@ module _ (op-semᵐ : OpSemᵐ) where
     implˢ-cong sub-op       = sub-tick
     -- a delay implements as a tick, so the two delay collapses implement as
     -- the two tick collapses; the split witnesses agree by `⊑-irrelevant`
-    implˢ-cong (delay-zero {k = k} {q₀ = q₀} e) =
-      ≈ᵏ-trans (tick-u {q₀ = q₀} of-durᵉ-zero e)
-               (≡→≈ᵏ (sym (implˢ-ε-substˢ e (k q₀))))
+    implˢ-cong (delay-zero {k = k} {q₀ = q₀} e) = tick-u {q₀ = q₀} of-durᵉ-zero e
     implˢ-cong (delay-plus {τ₁ = τ₁} {τ₂ = τ₂} {k = k} {kn = kn} hk e) =
-      ≈ᵏ-trans (tick-· of-durᵉ-plus
-                 (λ q₁ q₂ → ≈ᵏ-trans (implˢ-cong (hk q₁ q₂))
-                              (≡→≈ᵏ (cong (λ z → implˢ (k z)) (⊑-irrelevant _ _))))
-                 e)
-               (≡→≈ᵏ (sym (implˢ-ε-substˢ e (delay-node (τ₁ +ᴰ τ₂) k kn))))
+      tick-· of-durᵉ-plus
+        (λ q₁ q₂ → ≈ᵏ-trans (implˢ-cong (hk q₁ q₂))
+                     (≡→≈ᵏ (cong (λ z → implˢ (k z)) (⊑-irrelevant _ _))))
+        e
     implˢ-cong (≈ᵗ-sym et)  = ≈ᵏ-sym (implˢ-cong et)
     implˢ-cong (≈ᵗ-trans et et') =
       ≈ᵏ-trans (implˢ-cong et) (implˢ-cong et')
@@ -192,15 +189,11 @@ module _ (op-semᵐ : OpSemᵐ) where
 
   implˢ-μ : ∀ {A ε ε' w} → (t : Tˢ (Tᵒ A ε') ε w)
           → implˢ (μˢ t) ≈ᵏ μᵏˢ (Tᵏˢᶠ implᵐ (implˢ t))
-  implˢ-μ {ε' = ε'} (leaf s) = ≡→≈ᵏ (implˢ-ε-subst (sym (·ₑ-identityˡ ε')) s)
+  implˢ-μ {ε' = ε'} (leaf s) = ≈ᵏ-refl _
   implˢ-μ {ε' = ε'} (op-node {ε = ε₀} op v k kc kn) =
-    ≈ᵏ-trans
-      (≡→≈ᵏ (implˢ-ε-subst (sym (·ₑ-assoc (op-grade op) ε₀ ε')) _))
-      (ε-substᵏˢ-cong _ (tick-≈ (λ q → implˢ-μ (k q (semᵃ op q v)))))
+    sub-congᵏ (tick-≈ (λ q → implˢ-μ (k q (semᵃ op q v))))
   implˢ-μ {ε' = ε'} (delay-node {ε = ε₀} τ k kn) =
-    ≈ᵏ-trans
-      (≡→≈ᵏ (implˢ-ε-subst (sym (·ₑ-assoc (of-durᵉ τ) ε₀ ε')) _))
-      (ε-substᵏˢ-cong _ (tick-≈ (λ q → implˢ-μ (k q))))
+    sub-congᵏ (tick-≈ (λ q → implˢ-μ (k q)))
   implˢ-μ (sub p t) = sub-≈ (implˢ-μ t)
 
   implᵐ-μᵀ : ∀ {A ε ε'}
@@ -213,7 +206,7 @@ module _ (op-semᵐ : OpSemᵐ) where
   implᵐ-delayᵀ : ∀ {A ε} → (τ : 𝔻)
                → implᵐ ∘ᵖ delayᵀ {A} {ε} τ
                ≈ᵖ tickᵏ (of-durᵉ τ)
-                  ∘ᵖ []-≤ (≾ᵣ-reflexive map-of-durᵉ)
+                  ∘ᵖ []-≤ (≃ᵣ⇒≾ᵣ map-of-durᵉ)
                   ∘ᵖ [ of-durʳ τ ]ᶠ implᵐ
   implᵐ-delayᵀ τ x = tick-≈ (λ q → implˢ-cong ([]-fun-irr x _ _))
 

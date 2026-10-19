@@ -34,8 +34,8 @@
 -- For settling, for the disjunctions and for `trim`, an        --
 -- ordering is decided at the strength `full` of `Entail` from  --
 -- the orderings of the set read, and refuted against the unit  --
--- by `refute≾u`; two types are compared syntactically          --
--- (`sameᵛ?`).                                                  --
+-- by `refute≾u`; two types are compared up to the sameness of --
+-- their grades (`sameᵛ?`).                                     --
 --                                                              --
 -- Contract. `simplify Q` and `trim Q` entail `Q`               --
 -- (`simplify-⊩`, `trim-⊩`), and every closed instance of `Q`   --
@@ -94,7 +94,7 @@ open import TypeInference.SolverImpl.Eliminate S using (Elim; mkElim)
 open import TypeInference.SolverImpl.Product S using (_≺ᵣ_; _≺ₑ_)
 open import TypeInference.SolverImpl.Resid  S using (etDec; etDec-sound; etDec-compl; etDec-refute)
 open import TypeInference.SolverImpl.Entail S
-  using (decideᵣ; decideₑ; full; memʳ?; memᵉ?; refute≾u)
+  using (decideᵣ; decideₑ; full; memʳ?; memᵉ?; memʳ-⊩; memᵉ-⊩; refute≾u)
 
 -- Derivations reading only a list of subtyping hypotheses and a list
 -- of eternality atoms: `_⊢ᵖ_≾_` mirrors `_⊩ᵗᵛ_≾_`, `Etᴾ` mirrors
@@ -391,43 +391,45 @@ settleAll-inst ((A , ρ) ∷ l) Q₀ δ k h =
 split : ∀ {Θ} → Hyps Θ → Hyps Θ
 split Q₀ = hyps (ets Q₀) (subᵥ Q₀) (ordᵣ Q₀) (ordₑ Q₀) []
 
--- Syntactic identity of types
+-- Types the same up to the sameness of their grades, which makes them
+-- convertible
 
-sameᵛ? : ∀ {Θ} → (A A' : OVType Θ) → Maybe (A ≡ A')
-sameᶜ? : ∀ {Θ} → (C C' : OCType Θ) → Maybe (C ≡ C')
+sameᵛ? : ∀ {Θ} → (A A' : OVType Θ) → Maybe (A ≡̂ᵛ A')
+sameᶜ? : ∀ {Θ} → (C C' : OCType Θ) → Maybe (C ≡̂ᶜ C')
 
 sameᵛ? (tvar α) (tvar β) with α ≟ᶠ β
-... | yes refl = just refl
+... | yes refl = just tvar≡̂
 ... | no _     = nothing
 sameᵛ? (Base b) (Base b') with b ≡ᵇ? b'
-... | yes refl = just refl
+... | yes refl = just Base≡̂
 ... | no _     = nothing
-sameᵛ? Unit Unit = just refl
-sameᵛ? Bool Bool = just refl
-sameᵛ? Nat Nat = just refl
+sameᵛ? Unit Unit = just Unit≡̂
+sameᵛ? Bool Bool = just Bool≡̂
+sameᵛ? Nat Nat = just Nat≡̂
 sameᵛ? (A |×| B) (A' |×| B') with sameᵛ? A A' | sameᵛ? B B'
-... | just refl | just refl = just refl
-... | _         | _         = nothing
+... | just p | just q = just (p |×|≡̂ q)
+... | _      | _      = nothing
 sameᵛ? (A |+| B) (A' |+| B') with sameᵛ? A A' | sameᵛ? B B'
-... | just refl | just refl = just refl
-... | _         | _         = nothing
+... | just p | just q = just (p |+|≡̂ q)
+... | _      | _      = nothing
 sameᵛ? (|List| A) (|List| A') with sameᵛ? A A'
-... | just refl = just refl
-... | _         = nothing
-sameᵛ? Empty Empty = just refl
+... | just p = just (|List|≡̂ p)
+... | _      = nothing
+sameᵛ? Empty Empty = just Empty≡̂
 sameᵛ? (A ⇒ C) (A' ⇒ C') with sameᵛ? A A' | sameᶜ? C C'
-... | just refl | just refl = just refl
-... | _         | _         = nothing
+... | just p | just q = just (p ⇒≡̂ q)
+... | _      | _      = nothing
 sameᵛ? ([ ρ ] A) ([ ρ' ] A') with ρ ≟ʳ ρ' | sameᵛ? A A'
-... | yes refl | just refl = just refl
-... | _        | _         = nothing
+... | yes r | just p = just ([ ≅ʳ⇒≡̂ r ]≡̂ p)
+... | _     | _      = nothing
 sameᵛ? _ _ = nothing
 
 sameᶜ? (A ‼ ε) (A' ‼ ε') with sameᵛ? A A' | ε ≟ᵉ ε'
-... | just refl | yes refl = just refl
-... | _         | _        = nothing
+... | just p | yes e = just (p ‼≡̂ ≅ᵉ⇒≡̂ e)
+... | _      | _     = nothing
 
--- A disjunction entailed by another: the same type, and a grade
+-- A disjunction entailed by another: the same type, up to the
+-- sameness of grades, and a grade
 -- entailed (at the strength `full`) above its own. Of two each entailing the
 -- other, the walk keeps the later.
 
@@ -438,25 +440,26 @@ Okᵈ : ∀ {Θ} → Hyps Θ → (seen rest : List (OVType Θ × RExp Θ)) → O
 Okᵈ Q seen rest (A , ρ) = VarOK (Hᵈ Q (seen ++ rest)) A ρ
 
 Aboveᵈ : ∀ {Θ} → Hyps Θ → OVType Θ → RExp Θ → List (OVType Θ × RExp Θ) → Set
-Aboveᵈ {Θ} Q A ρ l = Σ[ ρ' ∈ RExp Θ ] ((A , ρ') ∈ l × Q ⊩ ρ ≾̂ᵣ ρ')
+Aboveᵈ {Θ} Q A ρ l =
+  Σ[ A' ∈ OVType Θ ] Σ[ ρ' ∈ RExp Θ ] ((A' , ρ') ∈ l × A ≡̂ᵛ A' × Q ⊩ ρ ≾̂ᵣ ρ')
 
 thereᵈ : ∀ {Θ} {Q : Hyps Θ} {A ρ x l} → Maybe (Aboveᵈ Q A ρ l) → Maybe (Aboveᵈ Q A ρ (x ∷ l))
-thereᵈ (just (ρ' , m , d)) = just (ρ' , there m , d)
-thereᵈ nothing             = nothing
+thereᵈ (just (A' , ρ' , m , e , d)) = just (A' , ρ' , there m , e , d)
+thereᵈ nothing                      = nothing
 
 aboveᵈ? : ∀ {Θ} → (Q : Hyps Θ) → (A : OVType Θ) → (ρ : RExp Θ)
         → (l : List (OVType Θ × RExp Θ)) → Maybe (Aboveᵈ Q A ρ l)
 aboveᵈ? Q A ρ []               = nothing
 aboveᵈ? Q A ρ ((A' , ρ') ∷ l) with sameᵛ? A A'
-... | nothing   = thereᵈ (aboveᵈ? Q A ρ l)
-... | just refl with decideᵣ full Q ρ ρ'
-...   | just d  = just (ρ' , here refl , d)
+... | nothing = thereᵈ (aboveᵈ? Q A ρ l)
+... | just e with decideᵣ full Q ρ ρ'
+...   | just d  = just (A' , ρ' , here refl , e , d)
 ...   | nothing = thereᵈ (aboveᵈ? Q A ρ l)
 
 testᵈ : ∀ {Θ} → (Q : Hyps Θ) → (seen rest : List (OVType Θ × RExp Θ))
       → (p : OVType Θ × RExp Θ) → Maybe (Okᵈ Q seen rest p)
 testᵈ Q seen rest (A , ρ) with aboveᵈ? (Hᵈ Q (seen ++ rest)) A ρ (seen ++ rest)
-... | just (ρ' , m , d) = just (hyp-ok m (≡̂ᵛ-refl A) d)
+... | just (A' , ρ' , m , e , d) = just (hyp-ok m e d)
 ... | nothing           = nothing
 
 walkᵈ : ∀ {Θ} → Hyps Θ → Hyps Θ
@@ -639,20 +642,21 @@ Testᵉ : Set
 Testᵉ = ∀ {Θ} → (seen rest : List (EExp Θ × EExp Θ))
       → (p : EExp Θ × EExp Θ) → Maybe (Okᵉ seen rest p)
 
--- An ordering whose two sides are the same, or a repeat of one kept
+-- An ordering whose two sides are the same, or a repeat of one kept,
+-- up to the sameness of its sides
 
 repeatʳ? : Testʳ
 repeatʳ? lₑ seen rest (ρ , ρ') with ρ ≟ʳ ρ'
-... | yes refl = just ⊩≾̂ᵣ-refl
+... | yes e = just (eqᵣ (≅ʳ⇒≡̂ e))
 ... | no _ with memʳ? (ρ , ρ') seen
-...   | just m  = just (hypᵣ (∈-++⁺ˡ m))
+...   | just m  = just (memʳ-⊩ (λ m' → hypᵣ (∈-++⁺ˡ m')) m)
 ...   | nothing = nothing
 
 repeatᵉ? : Testᵉ
 repeatᵉ? seen rest (ε , ε') with ε ≟ᵉ ε'
-... | yes refl = just ⊩≾̂ₑ-refl
+... | yes e = just (eqₑ (≅ᵉ⇒≡̂ e))
 ... | no _ with memᵉ? (ε , ε') seen
-...   | just m  = just (hypₑ (∈-++⁺ˡ m))
+...   | just m  = just (memᵉ-⊩ (λ m' → hypₑ (∈-++⁺ˡ m')) m)
 ...   | nothing = nothing
 
 -- An ordering entailed at the strength `full` by those kept and

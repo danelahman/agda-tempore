@@ -374,6 +374,16 @@ numeralᵛ (suc k) = succ (numeralᵛ k)
 
 ε-subst refl M = M
 
+-- Regrading along an equivalence of effects, as sub-effecting
+
+ε-≃ : ∀ {Γ A ε ε'}
+    → ε ≃ₑ ε'
+    → Γ ⊢C⦂ A ‼ ε
+    ---------------
+    → Γ ⊢C⦂ A ‼ ε'
+
+ε-≃ e M = coerce (proj₁ e) M
+
 -- Values with graded modal types are variables, up to subsumption: the
 -- occurrence is at the *declared* box type, which the value's type only
 -- bounds.

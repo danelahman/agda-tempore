@@ -408,20 +408,20 @@ cast-seq-op : ∀ {Γ Γ' A B ε ε'} {op : Op} → (e : Γ' ≡ Γ)
             → (M' : Γ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
                       ⊢C⦂ A ‼ ε)
             → (N' : Γ' ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
-            → ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
+            → ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
                 (perform op (castᵛ e V')
                   ((castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩
                                           ∷ type-of-gtype (arity op)) e) M')
                     ⨟ C-rename
-                        (cong-∷-ren ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
+                        (cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
                                      ∘ʳ cong-⟨⟩-ren wk-ren))
                         (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A) e)
                                N')))
             ≡ castᶜ e
-                (ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
+                (ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
                   (perform op V'
                     (M' ⨟ C-rename
-                            (cong-∷-ren ((eq-ren (cong (Γ' ⟨_⟩) map-·ᵉ)
+                            (cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)
                                           ∘ʳ ⟨⟩-μ-ren)
                                          ∘ʳ cong-⟨⟩-ren wk-ren))
                             N')))
@@ -441,7 +441,7 @@ cast-seq-op refl V' M' N' = refl
 ...   | V' , M₀' , refl , eV , eM₀ =
     _ , _ , es , SEQ-OP , id-≤≐
   , subst (λ z → _ ≡ z) (cast-seq-op (sym (toCtx-≐ˢ es)) V' M₀' N')
-      (ε-subst-≡ _
+      (cong (coerce _)
         (cong₂ (perform _) eV (cong₂ _⨟_ eM₀ (C-rename-cong (cong-∷-ren _) eN))))
 
 cast-rename-∷ : ∀ {Γ₁ Γ₂ Γ₁' Γ₂' A C} → (e₁ : Γ₁' ≡ Γ₁) → (e₂ : Γ₂' ≡ Γ₂)
@@ -495,7 +495,7 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                                                e)
                                          (H' op' ε')))
                        `in (C-rename
-                             (  cong-∷-ren ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+                             (  cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)
                              ∘ʳ ⟨⟩-μ-ren)
                              ∘ʳ cong-⟨⟩-ren wk-ren))
                              (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A)
@@ -518,7 +518,7 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                                                        (type-of-gtype (arity op)))))
                                      (H' op' ε'))
                           `in (C-rename
-                                (  cong-∷-ren ((eq-ren (cong (Γ' ⟨_⟩) map-·ᵉ)
+                                (  cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)
                                 ∘ʳ ⟨⟩-μ-ren)
                                 ∘ʳ cong-⟨⟩-ren wk-ren))
                                 N')))

@@ -120,10 +120,10 @@ ctx-grade (Γ ⟨ ρ ⟩) = ctx-grade Γ ·ᵣ ρ
 -- Interaction of time-passage and ++ᶜ
 
 ctx-grade-++ᶜ : (Γ Γ' : Ctx)
-              → ctx-grade (Γ ++ᶜ Γ') ≡ (ctx-grade Γ ·ᵣ ctx-grade Γ')
-ctx-grade-++ᶜ Γ []         = sym (·ᵣ-identityʳ (ctx-grade Γ))
+              → ctx-grade (Γ ++ᶜ Γ') ≃ᵣ (ctx-grade Γ ·ᵣ ctx-grade Γ')
+ctx-grade-++ᶜ Γ []         = ≃ᵣ-sym (·ᵣ-identityʳ (ctx-grade Γ))
 ctx-grade-++ᶜ Γ (Γ' ∷ x)   = ctx-grade-++ᶜ Γ Γ'
-ctx-grade-++ᶜ Γ (Γ' ⟨ ρ ⟩) = trans (cong (_·ᵣ ρ) (ctx-grade-++ᶜ Γ Γ'))
+ctx-grade-++ᶜ Γ (Γ' ⟨ ρ ⟩) = ≃ᵣ-trans (·ᵣ-cong (ctx-grade-++ᶜ Γ Γ') ≃ᵣ-refl)
                              (·ᵣ-assoc (ctx-grade Γ) (ctx-grade Γ') ρ)
 
 -- Proof that sub-contexts split a given context

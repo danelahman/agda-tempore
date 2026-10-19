@@ -15,8 +15,9 @@ open import Util.Equality
 -- `op-grade op` is not merely asserted by the reduction rule — it is the grade
 -- of the runtime computation itself, and the two cannot disagree.
 --
--- The laws are stated up to a transport along the grade monoid's laws, since
--- the two sides sit at grades that are equal but not definitionally so.
+-- The grades form a preorder, so the monad carries a sub-effecting coercion,
+-- functorial in the order, and the laws are stated up to it: the two sides of
+-- each sit at equivalent grades.
 
 record GradedMonad {D : Duration} (G : Grade D) : Set₁ where
 
@@ -29,21 +30,21 @@ record GradedMonad {D : Duration} (G : Grade D) : Set₁ where
     returnM : ∀ {A} → A → T u A
     _>>=_   : ∀ {ε ε' A B} → T ε A → (A → T ε' B) → T (ε · ε') B
 
-  -- transport along an equality of grades
+    -- sub-effecting, functorial in the order
+    subᵐ    : ∀ {ε ε' A} → ε ≾ ε' → T ε A → T ε' A
+    subᵐ-refl  : ∀ {ε A} → (p : ε ≾ ε) → (t : T ε A) → subᵐ p t ≡ t
+    subᵐ-trans : ∀ {ε ε' ε'' A} → (p : ε ≾ ε') → (q : ε' ≾ ε'') → (r : ε ≾ ε'')
+               → (t : T ε A) → subᵐ q (subᵐ p t) ≡ subᵐ r t
 
-  ε-substᵐ : ∀ {A} {ε ε' : Carrier} → ε ≡ ε' → T ε A → T ε' A
-  ε-substᵐ e t = subst (λ ε → T ε _) e t
-
-  field
     >>=-apply : ∀ {ε A B} → (a : A) → (F : A → T ε B)
-              → (returnM a >>= F) ≡ ε-substᵐ (sym (·-identityˡ ε)) (F a)
+              → (returnM a >>= F) ≡ subᵐ (≃⇒≿ (·-identityˡ ε)) (F a)
 
     >>=-id    : ∀ {ε A} → (ta : T ε A)
-              → (ta >>= returnM) ≡ ε-substᵐ (sym (·-identityʳ ε)) ta
+              → (ta >>= returnM) ≡ subᵐ (≃⇒≿ (·-identityʳ ε)) ta
 
     >>=-assoc : ∀ {ε ε' ε'' A B C}
               → (ta : T ε A)
               → (F : A → T ε' B)
               → (G : B → T ε'' C)
               → ((ta >>= F) >>= G)
-              ≡ ε-substᵐ (sym (·-assoc ε ε' ε'')) (ta >>= λ a → F a >>= G)
+              ≡ subᵐ (≃⇒≿ (·-assoc ε ε' ε'')) (ta >>= λ a → F a >>= G)

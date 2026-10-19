@@ -46,7 +46,7 @@ open Category Cat
 open Future Fut using ([_]ᵒ; [_]ᶠ; []-≤; []-≤-nat; []-∘ᵐ; []-congᶠ; []-ε-nat;
                        δ; []-δ-nat)
                 renaming (ε to εᵇ)
-open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; μ; ⟨⟩-≤)
+open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; μ; ⟨⟩-≤; ⟨⟩-≤-irr)
 open Adjunction Adj using (η⊣; η⊣-≤; η⊣-δ)
 open GroundTypes GTy
 open Monad Mon
@@ -76,13 +76,13 @@ sound-delay-zero {Γ} {A} {ε} M pM pR =
               ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat _))
               ∙ ∘ᵐ-assoc _ _ _
               ∙ ∘ᵐ-congʳ (εᵇ-η⊣-u {⟦ Γ ⟧ᶜᵗˣ} of-durʳ-zero))
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e (C-rename r M)) pR (ε-substᴾ e _ (renᶜ r M pM))
-            ∙ sound-ε-subst e (C-rename r M) (renᶜ r M pM)
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ e (C-rename r M)) pR (renᶜ r M pM)
+            ∙ sound-ε-≃ e (C-rename r M) (renᶜ r M pM)
             ∙ ∘ᵐ-congʳ (C-rename-nat r M pM)
-            ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (eq-ren-grade {Γ} of-durʳ-zero))))
+            ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))))
   where
-    e = sym (trans (cong (_·ₑ ε) of-durᵉ-zero) (·ₑ-identityˡ ε))
-    r = eq-ren (cong (Γ ⟨_⟩) of-durʳ-zero) ∘ʳ ⟨⟩-η-ren
+    e = ≃ₑ-sym (≃ₑ-trans (·ₑ-cong of-durᵉ-zero ≃ₑ-refl) (·ₑ-identityˡ ε))
+    r = ⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ of-durʳ-zero) ∘ʳ ⟨⟩-η-ren
 
 -- Two consecutive delays are the one delay by the sum.
 --
@@ -95,7 +95,7 @@ sound-delay-delay {Γ} {A} {τ₁} {τ₂} {ε} M pM pL pR =
     ⟦⟧ᶜᵗ-irr (delay τ₁ (delay τ₂ (C-rename r M))) pL (renᶜ r M pM)
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (
         C-rename-nat r M pM
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (eq-ren-grade {Γ} of-durʳ-plus))))))))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))))))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-∘ᵐ _ _) ∙ ∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ delay-box)
   ∙ ≈ᵐ-sym (  ∘ᵐ-assoc _ _ _
@@ -103,13 +103,13 @@ sound-delay-delay {Γ} {A} {τ₁} {τ₂} {ε} M pM pL pR =
             ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
   ∙ ∘ᵐ-congˡ (delayᵀ-plus τ₁ τ₂)
   ∙ ∘ᵐ-assoc _ _ _
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e' (delay (τ₁ +ᴰ τ₂) M)) pR (ε-substᴾ e' _ pM)
-            ∙ sound-ε-subst e' (delay (τ₁ +ᴰ τ₂) M) pM)
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ e' (delay (τ₁ +ᴰ τ₂) M)) pR pM
+            ∙ sound-ε-≃ e' (delay (τ₁ +ᴰ τ₂) M) pM)
   where
-    e' = trans (cong (_·ₑ ε) of-durᵉ-plus) (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε)
-    r  = eq-ren (cong (Γ ⟨_⟩) of-durʳ-plus) ∘ʳ ⟨⟩-μ-ren
+    e' = ≃ₑ-trans (·ₑ-cong of-durᵉ-plus ≃ₑ-refl) (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε)
+    r  = ⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ of-durʳ-plus) ∘ʳ ⟨⟩-μ-ren
 
-    σ = ≾ᵣ-reflexive (sym (of-durʳ-plus {τ₁} {τ₂}))
+    σ = ≃ᵣ⇒≿ᵣ (of-durʳ-plus {τ₁} {τ₂})
 
     m = ⟦ M ⟧ᶜᵗ pM
 

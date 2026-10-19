@@ -141,21 +141,19 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
 
     b : ≤ₛ-grade E₀ ≾ᵣ mapᵉ ε₁
     b = ≾ᵣ-trans
-          (≾ᵣ-reflexive
-            (trans (sym (·ᵣ-identityʳ (≤ₛ-grade E₀)))
-                   (cong (≤ₛ-grade E₀ ·ᵣ_) (sym map-uᵉ))))
+          (≃ᵣ⇒≾ᵣ
+            (≃ᵣ-trans (≃ᵣ-sym (·ᵣ-identityʳ (≤ₛ-grade E₀))) (·ᵣ-cong ≃ᵣ-refl (≃ᵣ-sym map-uᵉ))))
           (steps-grade-≾ rs)
 
     q = reach E₀ b
 
     R₁ : Ren [] (toCtx St₁) (toCtx St₁ ⟨ mapᵉ uₑ ⟩)
-    R₁ = eq-ren (cong (toCtx St₁ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren
+    R₁ = ⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren
 
     eqr : (srs ∘ʳ R₁) ≐ʳ unbox-ren q
-    eqr = ≐ʳ-trans (≐ʳ-sym (∘ʳ-assoc-≐ʳ srs (eq-ren (cong (toCtx St₁ ⟨_⟩) map-uᵉ))
+    eqr = ≐ʳ-trans (≐ʳ-sym (∘ʳ-assoc-≐ʳ srs (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ))
                                        ⟨⟩-η-ren))
-                   (∘ʳ-≐ʳ (suc-comp-ren-grade E₀ map-uᵉ (steps-grade-≾ rs)
-                                             (reach-bound q))
+                   (∘ʳ-≐ʳ (≐ʳ-sym (suc-comp-ren-≤ E₀ (reach-bound q) (steps-grade-≾ rs) (≃ᵣ⇒≿ᵣ map-uᵉ)))
                          ≐ʳ-refl)
 
     ren-shift : C-rename (cong-∷-ren R₁) (C-rename (cong-∷-ren srs) N)
@@ -208,13 +206,10 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
     q₀ : St ⊑ₛ[ ⊤ᵣ ] St₁
     q₀ = reach E₀ (≾-⊤ᵣ _)
 
-    emap : toCtx St₁ ⟨ mapᵉ (op-grade op ·ₑ ε₃) ⟩
-         ≡ toCtx St₁ ⟨ ρₒ ·ᵣ mapᵉ ε₃ ⟩
-    emap = cong (toCtx St₁ ⟨_⟩) map-·ᵉ
 
     κ : Ren [] ((toCtx St₁ ⟨ ρₒ ⟩ ∷ Ar) ⟨ mapᵉ ε₃ ⟩)
               (toCtx St₁ ⟨ mapᵉ (op-grade op ·ₑ ε₃) ⟩)
-    κ = (eq-ren emap ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
+    κ = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
 
     -- the clauses and sequel `HANDLE-OP` puts under the boxed resumption
     H₁' : Fam B ((toCtx St₁ ⟨ ρₒ ⟩ ∷ Ar) ⟨ ⊤ᵣ ⟩)
@@ -334,20 +329,20 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
 
             B₁ : ≤ₛ-grade (ext q₂) ·ᵣ mapᵉ ε₃
                ≾ᵣ mapᵉ (op-grade op ·ₑ ε₃)
-            B₁ = ≾ᵣ-trans B₁' (≾ᵣ-reflexive (sym map-·ᵉ))
+            B₁ = ≾ᵣ-trans B₁' (≃ᵣ⇒≿ᵣ map-·ᵉ)
 
             -- what is left of the sequel's renaming once the arity variable
             -- is gone
             W₁ : Ren [] (toCtx St'' ⟨ mapᵉ ε₃ ⟩)
                       (toCtx St₁ ⟨ mapᵉ (op-grade op ·ₑ ε₃) ⟩)
-            W₁ = (eq-ren emap ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren sq
+            W₁ = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren sq
 
             eW₁ : W₁ ≐ʳ suc-comp-ren (ext q₂) B₁
             eW₁ =
               ≐ʳ-trans
-                (∘ʳ-assoc-≐ʳ (eq-ren emap) ⟨⟩-μ-ren (cong-⟨⟩-ren sq))
+                (∘ʳ-assoc-≐ʳ (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)) ⟨⟩-μ-ren (cong-⟨⟩-ren sq))
                 (≐ʳ-trans (∘ʳ-≐ʳ ≐ʳ-refl (unbox-ren-μ-≐ʳ q₂ B₁'))
-                          (suc-comp-ren-grade-src (ext q₂) map-·ᵉ B₁' B₁))
+                          (≐ʳ-sym (suc-comp-ren-≤ˡ (ext q₂) B₁ B₁' (≃ᵣ⇒≿ᵣ map-·ᵉ))))
 
             -- the sequel the recursion needs is the original one, renamed:
             -- `HANDLE-OP` weakens it past the arity variable and `resume`
@@ -371,7 +366,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
                        ≐ʳ (W₁ ∘ʳ cong-⟨⟩-ren wk-ren)
                 innerᵣ =
                   ≐ʳ-trans
-                    (∘ʳ-assoc-≐ʳ (eq-ren emap ∘ʳ ⟨⟩-μ-ren)
+                    (∘ʳ-assoc-≐ʳ (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
                                 (cong-⟨⟩-ren wk-ren)
                                 (cong-⟨⟩-ren (cong-∷-ren sq)))
                     (≐ʳ-trans
@@ -380,7 +375,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
                           (≐ʳ-sym (cong-⟨⟩-ren-∘-≐ʳ wk-ren (cong-∷-ren sq)))
                           (≐ʳ-trans (cong-⟨⟩-ren-≐ʳ (wk-ren-nat-≐ʳ sq))
                                     (cong-⟨⟩-ren-∘-≐ʳ sq wk-ren))))
-                      (≐ʳ-sym (∘ʳ-assoc-≐ʳ (eq-ren emap ∘ʳ ⟨⟩-μ-ren)
+                      (≐ʳ-sym (∘ʳ-assoc-≐ʳ (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
                                           (cong-⟨⟩-ren sq)
                                           (cong-⟨⟩-ren wk-ren))))
 
@@ -417,17 +412,14 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
                 B₂ : ≤ₛ-grade (≤ₛ-trans E₀ (ext q₂)) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁
                 B₂ =
                   ≾ᵣ-trans
-                    (≾ᵣ-reflexive
-                      (trans (cong (_·ᵣ mapᵉ ε₃)
-                                   (≤ₛ-grade-trans E₀ (ext q₂)))
-                             (·ᵣ-assoc (≤ₛ-grade E₀) (≤ₛ-grade (ext q₂))
-                                       (mapᵉ ε₃))))
+                    (≃ᵣ⇒≾ᵣ
+                      (≃ᵣ-trans (·ᵣ-cong (≤ₛ-grade-trans E₀ (ext q₂)) ≃ᵣ-refl) (·ᵣ-assoc (≤ₛ-grade E₀) (≤ₛ-grade (ext q₂)) (mapᵉ ε₃))))
                     (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ B₁) b₀)
 
                 q₄ : St ⊑ₛ[ mapᵉ ε₁ ] St₃
                 q₄ = reach (≤ₛ-trans (≤ₛ-trans E₀ (ext q₂)) (ext q₃))
                        (≾ᵣ-trans
-                         (≾ᵣ-reflexive
+                         (≃ᵣ⇒≾ᵣ
                            (≤ₛ-grade-trans (≤ₛ-trans E₀ (ext q₂)) (ext q₃)))
                          (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (bound q₃)) B₂))
 

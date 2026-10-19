@@ -61,7 +61,7 @@ open import Syntax.Grades.Example.Traces.Subsets.RightSided
   using (right-sided; Permits; permitting_; any-run; _·ᵖ_; _⊔ᵖ_; _≾_)
 
 open import Syntax.Grades.Example.Time.RightSided
-  using (𝕀ᵣ; [0,_]; ↑_; ∞; _·ₒ_)
+  using (𝕀ᵣ; [0,_]; ↑_; ∞; _·ₒ_; ≾ₒ-antisym)
 
 open import Syntax.Grades.Example.Counts.AtMost
 open import Syntax.Grades.Example.Counts.Extrema
@@ -133,8 +133,8 @@ mapₒ-⊔ (permitting P) (permitting Q) =
            trans (need-nf (traces P ++ traces Q) i)
                  (cong upto (maxOf-++ (occ i) (traces P) (traces Q))))
         (tabulate-⊔ᵛ (need (traces P)) (need (traces Q)))
-mapₒ-⊔ (permitting P) any-run        = sym (⊔ᵛ-⊤ᵛ (mapₒ (permitting P)))
-mapₒ-⊔ any-run        Q              = sym (⊤ᵛ-⊔ᵛ (mapₒ Q))
+mapₒ-⊔ (permitting P) any-run        = sym (⊔ᵛ-⊤ᵛ (⊔-⊤-≡ ≾ₒ-antisym) (mapₒ (permitting P)))
+mapₒ-⊔ any-run        Q              = sym (⊤ᵛ-⊔ᵛ (⊤-⊔-≡ ≾ₒ-antisym) (mapₒ Q))
 
 ------------------------------------------------------------------------
 -- Time draws on no counter
@@ -148,7 +148,7 @@ mapₒ-of-dur k =
 -- The grade morphism and the grade system
 
 subsets→at-most-counts : right-sided →ᵍ at-most-counts n
-subsets→at-most-counts = record
+subsets→at-most-counts = strictᵍ record
   { map          = mapₒ
   ; map-monotone = λ {P} {Q} → mapₒ-monotone {P} {Q}
   ; map-u        = mapₒ-of-dur 0

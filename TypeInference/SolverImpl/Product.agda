@@ -148,7 +148,7 @@ module Grouping
   (distribʳ : ∀ {a b c} → ((b ∨ c) ∙ a) ≈ ((b ∙ a) ∨ (c ∙ a)))
   (κ : K → X) (_⊔ᴷ_ : K → K → K)
   (κ-⊔      : ∀ {c d} → (κ c ∨ κ d) ≈ κ (c ⊔ᴷ d))
-  (_≟ᴷ_     : DecidableEquality K)
+  (_≈ᴷ?_    : (c d : K) → Maybe (κ c ≈ κ d))
   (ν : V → X) (_≟ⱽ_ : DecidableEquality V) (_<ⱽ_ : V → V → 𝔹)
   where
 
@@ -169,14 +169,11 @@ module Grouping
   ⟦ alt s ⟧ᵏ⁺  = ⟦ s ⟧ᵏ
   ⟦ s ∷⁺ g ⟧ᵏ⁺ = ⟦ s ⟧ᵏ ∨ ⟦ g ⟧ᵏ⁺
 
-  _≟ᵏ_ : ∀ {vs} → DecidableEquality (Slots vs)
-  ⌜ c ⌝   ≟ᵏ ⌜ d ⌝ with c ≟ᴷ d
-  ... | yes refl = yes refl
-  ... | no ¬p    = no λ { refl → ¬p refl }
-  (c ▸ s) ≟ᵏ (d ▸ t) with c ≟ᴷ d | s ≟ᵏ t
-  ... | yes refl | yes refl = yes refl
-  ... | no ¬p    | _        = no λ { refl → ¬p refl }
-  ... | _        | no ¬q    = no λ { refl → ¬q refl }
+  _≈ᵏ?_ : ∀ {vs} → (s t : Slots vs) → Maybe (⟦ s ⟧ᵏ ≈ ⟦ t ⟧ᵏ)
+  ⌜ c ⌝   ≈ᵏ? ⌜ d ⌝ = c ≈ᴷ? d
+  (c ▸ s) ≈ᵏ? (d ▸ t) with c ≈ᴷ? d | s ≈ᵏ? t
+  ... | just p | just q = just (∙-cong p (∙-cong ≈-refl q))
+  ... | _      | _      = nothing
 
   -- A product, with its skeleton
 
@@ -216,10 +213,10 @@ module Grouping
   sameHead? (alt (c ▸ s)) = just (c , ≈-refl)
   sameHead? ((c ▸ s) ∷⁺ g) with sameHead? g
   ... | nothing       = nothing
-  ... | just (c' , p) with c ≟ᴷ c'
-  ...   | no _     = nothing
-  ...   | yes refl =
-          just (c , ≈-trans (∨-cong ≈-refl p)
+  ... | just (c' , p) with c ≈ᴷ? c'
+  ...   | nothing = nothing
+  ...   | just e  =
+          just (c , ≈-trans (∨-cong ≈-refl (≈-trans p (∙-cong (≈-sym e) ≈-refl)))
                             (≈-sym (≈-trans (∙-cong ≈-refl distribˡ) distribˡ)))
 
   sameTail? : ∀ {a vs} → (g : Alts (Slots (a ∷ vs)))
@@ -227,10 +224,11 @@ module Grouping
   sameTail? (alt (c ▸ s)) = just (c ▸ s , ≈-refl)
   sameTail? ((c ▸ s) ∷⁺ g) with sameTail? g
   ... | nothing = nothing
-  ... | just (c' ▸ s' , p) with s ≟ᵏ s'
-  ...   | no _     = nothing
-  ...   | yes refl =
-          just ((c ⊔ᴷ c') ▸ s , ≈-trans (∨-cong ≈-refl p)
+  ... | just (c' ▸ s' , p) with s ≈ᵏ? s'
+  ...   | nothing = nothing
+  ...   | just e  =
+          just ((c ⊔ᴷ c') ▸ s , ≈-trans (∨-cong ≈-refl
+                                        (≈-trans p (∙-cong ≈-refl (∙-cong ≈-refl (≈-sym e)))))
                                       (≈-trans (≈-sym distribʳ) (∙-cong κ-⊔ ≈-refl)))
 
   fold? : ∀ {vs} → (g : Alts (Slots vs)) → Maybe (Σ[ s ∈ Slots vs ] (⟦ g ⟧ᵏ⁺ ≈ ⟦ s ⟧ᵏ))
@@ -257,12 +255,13 @@ module Grouping
 
   within? : ∀ {vs} → (s : Slots vs) → (g : Alts (Slots vs))
           → Maybe ((⟦ s ⟧ᵏ ∨ ⟦ g ⟧ᵏ⁺) ≈ ⟦ g ⟧ᵏ⁺)
-  within? s (alt t) with s ≟ᵏ t
-  ... | yes refl = just ∨-idem
-  ... | no _     = nothing
-  within? s (t ∷⁺ g) with s ≟ᵏ t
-  ... | yes refl = just (≈-trans (≈-sym ∨-assoc) (∨-cong ∨-idem ≈-refl))
-  ... | no _ with within? s g
+  within? s (alt t) with s ≈ᵏ? t
+  ... | just e  = just (≈-trans (∨-cong e ≈-refl) ∨-idem)
+  ... | nothing = nothing
+  within? s (t ∷⁺ g) with s ≈ᵏ? t
+  ... | just e  =
+        just (≈-trans (∨-cong e ≈-refl) (≈-trans (≈-sym ∨-assoc) (∨-cong ∨-idem ≈-refl)))
+  ... | nothing with within? s g
   ...   | just p  =
           just (≈-trans (≈-sym ∨-assoc)
                (≈-trans (∨-cong ∨-comm ≈-refl) (≈-trans ∨-assoc (∨-cong ≈-refl p))))
@@ -553,7 +552,7 @@ data EAtom (Θ : Scope) : Set where
 
 consₑ : ∀ {Θ} → EAtom Θ → List (EAtom Θ) → List (EAtom Θ)
 consₑ (ac c) (ac d ∷ as) = consₑ (ac (c ·ₑ d)) as
-consₑ (ac c) as with c ≡ₑ? uₑ
+consₑ (ac c) as with c ≃ₑ? uₑ
 ... | yes _ = as
 ... | no _  = ac c ∷ as
 consₑ (av i) as = av i ∷ as
@@ -563,11 +562,11 @@ consₑ-≡ : ∀ {Θ} → (a : EAtom Θ) → (as : List (EAtom Θ))
 consₑ-≡ (ac c) (ac d ∷ as) =
   ≡̂ₑ-trans (consₑ-≡ (ac (c ·ₑ d)) as)
   (≡̂ₑ-trans (≡̂ₑ-cong (≡̂ₑ-sym ≡̂ₑ-const-·) ≡̂ₑ-refl) ≡̂ₑ-assoc)
-consₑ-≡ (ac c) [] with c ≡ₑ? uₑ
-... | yes refl = ≡̂ₑ-sym ≡̂ₑ-identityˡ
+consₑ-≡ (ac c) [] with c ≃ₑ? uₑ
+... | yes e = ≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-identityˡ) (≡̂ₑ-cong (≡̂ₑ-const (≃ₑ-sym e)) ≡̂ₑ-refl)
 ... | no _     = ≡̂ₑ-refl
-consₑ-≡ (ac c) (av i ∷ as) with c ≡ₑ? uₑ
-... | yes refl = ≡̂ₑ-sym ≡̂ₑ-identityˡ
+consₑ-≡ (ac c) (av i ∷ as) with c ≃ₑ? uₑ
+... | yes e = ≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-identityˡ) (≡̂ₑ-cong (≡̂ₑ-const (≃ₑ-sym e)) ≡̂ₑ-refl)
 ... | no _     = ≡̂ₑ-refl
 consₑ-≡ (av i) as = ≡̂ₑ-refl
 
@@ -619,18 +618,13 @@ mulₑ-≡ (P ∷⁺ s) t =
 -- commutativity and associativity licence; a repeat is absorbed by
 -- its last occurrence
 
-_≟ᵃₑ_ : ∀ {Θ} → DecidableEquality (EAtom Θ)
-ac c ≟ᵃₑ ac d with c ≡ₑ? d
-... | yes refl = yes refl
-... | no ¬p    = no λ { refl → ¬p refl }
-ac c ≟ᵃₑ av j = no λ ()
-av i ≟ᵃₑ ac d = no λ ()
-av i ≟ᵃₑ av j with i ≟ᶠ j
-... | yes refl = yes refl
-... | no ¬p    = no λ { refl → ¬p refl }
+-- Atoms and products are compared by the sameness of their read-backs
 
-_≟ᵖₑ_ : ∀ {Θ} → DecidableEquality (List (EAtom Θ))
-_≟ᵖₑ_ = ≡-decᴸ _≟ᵃₑ_
+_≟ᵃₑ_ : ∀ {Θ} → (a b : EAtom Θ) → Dec (⟦ a ⟧ᵉᵃ ≅ᵉ ⟦ b ⟧ᵉᵃ)
+a ≟ᵃₑ b = ⟦ a ⟧ᵉᵃ ≟ᵉ ⟦ b ⟧ᵉᵃ
+
+_≟ᵖₑ_ : ∀ {Θ} → (P Q : List (EAtom Θ)) → Dec (⟦ P ⟧ᵉˢ ≅ᵉ ⟦ Q ⟧ᵉˢ)
+P ≟ᵖₑ Q = ⟦ P ⟧ᵉˢ ≟ᵉ ⟦ Q ⟧ᵉˢ
 
 -- An alternative already in the sum is absorbed by it, which keeps
 -- the order of the remaining alternatives
@@ -638,11 +632,12 @@ _≟ᵖₑ_ = ≡-decᴸ _≟ᵃₑ_
 withinₑ? : ∀ {Θ} → (P : List (EAtom Θ)) → (s : Alts (List (EAtom Θ)))
          → Maybe (⟦ P ⟧ᵉˢ ⊔̂ₑ ⟦ s ⟧ᵉˢ⁺ ≡̂ₑ ⟦ s ⟧ᵉˢ⁺)
 withinₑ? P (alt Q) with P ≟ᵖₑ Q
-... | yes refl = just ≡̂ₑ-idem-⊔
+... | yes e = just (≡̂ₑ-trans (≡̂ₑ-cong-⊔ (≅ᵉ⇒≡̂ e) ≡̂ₑ-refl) ≡̂ₑ-idem-⊔)
 ... | no _     = nothing
 withinₑ? P (Q ∷⁺ t) with P ≟ᵖₑ Q
-... | yes refl =
-      just (≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-assoc-⊔) (≡̂ₑ-cong-⊔ ≡̂ₑ-idem-⊔ ≡̂ₑ-refl))
+... | yes e =
+      just (≡̂ₑ-trans (≡̂ₑ-cong-⊔ (≅ᵉ⇒≡̂ e) ≡̂ₑ-refl)
+           (≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-assoc-⊔) (≡̂ₑ-cong-⊔ ≡̂ₑ-idem-⊔ ≡̂ₑ-refl)))
 ... | no _ with withinₑ? P t
 ...   | just p  =
         just (≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-assoc-⊔)
@@ -674,18 +669,18 @@ nubₑ-≡ (P ∷⁺ s) =
 -- product when the unit is the top, `consₑ` dropping a constant that
 -- is the unit
 
-isTopₑ? : ∀ {Θ} → (P : List (EAtom Θ)) → Maybe (⟦ P ⟧ᵉᵖ ≡ econst ⊤ₑ)
-isTopₑ? [] with uₑ ≡ₑ? ⊤ₑ
-... | yes p = just (cong econst p)
+isTopₑ? : ∀ {Θ} → (P : List (EAtom Θ)) → Maybe (⟦ P ⟧ᵉᵖ ≡̂ₑ econst ⊤ₑ)
+isTopₑ? [] with uₑ ≃ₑ? ⊤ₑ
+... | yes p = just (≡̂ₑ-const p)
 ... | no _  = nothing
-isTopₑ? (ac c ∷ []) with c ≡ₑ? ⊤ₑ
-... | yes p = just (cong econst p)
+isTopₑ? (ac c ∷ []) with c ≃ₑ? ⊤ₑ
+... | yes p = just (≡̂ₑ-const p)
 ... | no _  = nothing
 isTopₑ? _ = nothing
 
-isTopₑ-≡ : ∀ {Θ} → (P : List (EAtom Θ)) → ⟦ P ⟧ᵉᵖ ≡ econst ⊤ₑ
+isTopₑ-≡ : ∀ {Θ} → (P : List (EAtom Θ)) → ⟦ P ⟧ᵉᵖ ≡̂ₑ econst ⊤ₑ
          → ⟦ P ⟧ᵉˢ ≡̂ₑ econst ⊤ₑ
-isTopₑ-≡ P eq = ≡̂ₑ-trans (⟦⟧ᵉᵖ-≡ P) (subst (⟦ P ⟧ᵉᵖ ≡̂ₑ_) eq ≡̂ₑ-refl)
+isTopₑ-≡ P eq = ≡̂ₑ-trans (⟦⟧ᵉᵖ-≡ P) eq
 
 -- A sum with a top alternative is the top, which absorbs the join
 
@@ -775,7 +770,7 @@ data RAtom (Θ : Scope) : Set where
 
 consᵣ : ∀ {Θ} → RAtom Θ → List (RAtom Θ) → List (RAtom Θ)
 consᵣ (rc c) (rc d ∷ as) = consᵣ (rc (c ·ᵣ d)) as
-consᵣ (rc c) as with c ≡ᵣ? uᵣ
+consᵣ (rc c) as with c ≃ᵣ? uᵣ
 ... | yes _ = as
 ... | no _  = rc c ∷ as
 consᵣ (rv i) as = rv i ∷ as
@@ -786,14 +781,14 @@ consᵣ-≡ : ∀ {Θ} → (a : RAtom Θ) → (as : List (RAtom Θ))
 consᵣ-≡ (rc c) (rc d ∷ as) =
   ≡̂ᵣ-trans (consᵣ-≡ (rc (c ·ᵣ d)) as)
   (≡̂ᵣ-trans (≡̂ᵣ-cong (≡̂ᵣ-sym ≡̂ᵣ-const-·) ≡̂ᵣ-refl) ≡̂ᵣ-assoc)
-consᵣ-≡ (rc c) [] with c ≡ᵣ? uᵣ
-... | yes refl = ≡̂ᵣ-sym ≡̂ᵣ-identityˡ
+consᵣ-≡ (rc c) [] with c ≃ᵣ? uᵣ
+... | yes e = ≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-identityˡ) (≡̂ᵣ-cong (≡̂ᵣ-const (≃ᵣ-sym e)) ≡̂ᵣ-refl)
 ... | no _     = ≡̂ᵣ-refl
-consᵣ-≡ (rc c) (rv i ∷ as) with c ≡ᵣ? uᵣ
-... | yes refl = ≡̂ᵣ-sym ≡̂ᵣ-identityˡ
+consᵣ-≡ (rc c) (rv i ∷ as) with c ≃ᵣ? uᵣ
+... | yes e = ≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-identityˡ) (≡̂ᵣ-cong (≡̂ᵣ-const (≃ᵣ-sym e)) ≡̂ᵣ-refl)
 ... | no _     = ≡̂ᵣ-refl
-consᵣ-≡ (rc c) (rm i ∷ as) with c ≡ᵣ? uᵣ
-... | yes refl = ≡̂ᵣ-sym ≡̂ᵣ-identityˡ
+consᵣ-≡ (rc c) (rm i ∷ as) with c ≃ᵣ? uᵣ
+... | yes e = ≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-identityˡ) (≡̂ᵣ-cong (≡̂ᵣ-const (≃ᵣ-sym e)) ≡̂ᵣ-refl)
 ... | no _     = ≡̂ᵣ-refl
 consᵣ-≡ (rv i) as = ≡̂ᵣ-refl
 consᵣ-≡ (rm i) as = ≡̂ᵣ-refl
@@ -837,25 +832,11 @@ mulᵣ-≡ (P ∷⁺ s) t =
   ≡̂ᵣ-trans (⧺ᵣ-≡ (mul1ᵣ P t) (mulᵣ s t))
   (≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (mul1ᵣ-≡ P t) (mulᵣ-≡ s t)) (≡̂ᵣ-sym ≡̂ᵣ-distribʳ-⊔))
 
-_≟ᵃᵣ_ : ∀ {Θ} → DecidableEquality (RAtom Θ)
-rc c ≟ᵃᵣ rc d with c ≡ᵣ? d
-... | yes refl = yes refl
-... | no ¬p    = no λ { refl → ¬p refl }
-rc c ≟ᵃᵣ rv j = no λ ()
-rc c ≟ᵃᵣ rm j = no λ ()
-rv i ≟ᵃᵣ rc d = no λ ()
-rv i ≟ᵃᵣ rv j with i ≟ᶠ j
-... | yes refl = yes refl
-... | no ¬p    = no λ { refl → ¬p refl }
-rv i ≟ᵃᵣ rm j = no λ ()
-rm i ≟ᵃᵣ rc d = no λ ()
-rm i ≟ᵃᵣ rv j = no λ ()
-rm i ≟ᵃᵣ rm j with i ≟ᶠ j
-... | yes refl = yes refl
-... | no ¬p    = no λ { refl → ¬p refl }
+_≟ᵃᵣ_ : ∀ {Θ} → (a b : RAtom Θ) → Dec (⟦ a ⟧ʳᵃ ≅ʳ ⟦ b ⟧ʳᵃ)
+a ≟ᵃᵣ b = ⟦ a ⟧ʳᵃ ≟ʳ ⟦ b ⟧ʳᵃ
 
-_≟ᵖᵣ_ : ∀ {Θ} → DecidableEquality (List (RAtom Θ))
-_≟ᵖᵣ_ = ≡-decᴸ _≟ᵃᵣ_
+_≟ᵖᵣ_ : ∀ {Θ} → (P Q : List (RAtom Θ)) → Dec (⟦ P ⟧ʳˢ ≅ʳ ⟦ Q ⟧ʳˢ)
+P ≟ᵖᵣ Q = ⟦ P ⟧ʳˢ ≟ʳ ⟦ Q ⟧ʳˢ
 
 -- An alternative already in the sum is absorbed by it, which keeps
 -- the order of the remaining alternatives
@@ -863,11 +844,12 @@ _≟ᵖᵣ_ = ≡-decᴸ _≟ᵃᵣ_
 withinᵣ? : ∀ {Θ} → (P : List (RAtom Θ)) → (s : Alts (List (RAtom Θ)))
          → Maybe (⟦ P ⟧ʳˢ ⊔̂ᵣ ⟦ s ⟧ʳˢ⁺ ≡̂ᵣ ⟦ s ⟧ʳˢ⁺)
 withinᵣ? P (alt Q) with P ≟ᵖᵣ Q
-... | yes refl = just ≡̂ᵣ-idem-⊔
+... | yes e = just (≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (≅ʳ⇒≡̂ e) ≡̂ᵣ-refl) ≡̂ᵣ-idem-⊔)
 ... | no _     = nothing
 withinᵣ? P (Q ∷⁺ t) with P ≟ᵖᵣ Q
-... | yes refl =
-      just (≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-assoc-⊔) (≡̂ᵣ-cong-⊔ ≡̂ᵣ-idem-⊔ ≡̂ᵣ-refl))
+... | yes e =
+      just (≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (≅ʳ⇒≡̂ e) ≡̂ᵣ-refl)
+           (≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-assoc-⊔) (≡̂ᵣ-cong-⊔ ≡̂ᵣ-idem-⊔ ≡̂ᵣ-refl)))
 ... | no _ with withinᵣ? P t
 ...   | just p  =
         just (≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-assoc-⊔)
@@ -895,18 +877,18 @@ nubᵣ-≡ (alt P)  = ≡̂ᵣ-refl
 nubᵣ-≡ (P ∷⁺ s) =
   ≡̂ᵣ-trans (nub1ᵣ-≡ P (nubᵣ s)) (≡̂ᵣ-cong-⊔ ≡̂ᵣ-refl (nubᵣ-≡ s))
 
-isTopᵣ? : ∀ {Θ} → (P : List (RAtom Θ)) → Maybe (⟦ P ⟧ʳᵖ ≡ rconst ⊤ᵣ)
-isTopᵣ? [] with uᵣ ≡ᵣ? ⊤ᵣ
-... | yes p = just (cong rconst p)
+isTopᵣ? : ∀ {Θ} → (P : List (RAtom Θ)) → Maybe (⟦ P ⟧ʳᵖ ≡̂ᵣ rconst ⊤ᵣ)
+isTopᵣ? [] with uᵣ ≃ᵣ? ⊤ᵣ
+... | yes p = just (≡̂ᵣ-const p)
 ... | no _  = nothing
-isTopᵣ? (rc c ∷ []) with c ≡ᵣ? ⊤ᵣ
-... | yes p = just (cong rconst p)
+isTopᵣ? (rc c ∷ []) with c ≃ᵣ? ⊤ᵣ
+... | yes p = just (≡̂ᵣ-const p)
 ... | no _  = nothing
 isTopᵣ? _ = nothing
 
-isTopᵣ-≡ : ∀ {Θ} → (P : List (RAtom Θ)) → ⟦ P ⟧ʳᵖ ≡ rconst ⊤ᵣ
+isTopᵣ-≡ : ∀ {Θ} → (P : List (RAtom Θ)) → ⟦ P ⟧ʳᵖ ≡̂ᵣ rconst ⊤ᵣ
          → ⟦ P ⟧ʳˢ ≡̂ᵣ rconst ⊤ᵣ
-isTopᵣ-≡ P eq = ≡̂ᵣ-trans (⟦⟧ʳᵖ-≡ P) (subst (⟦ P ⟧ʳᵖ ≡̂ᵣ_) eq ≡̂ᵣ-refl)
+isTopᵣ-≡ P eq = ≡̂ᵣ-trans (⟦⟧ʳᵖ-≡ P) eq
 
 topSumᵣ? : ∀ {Θ} → (s : Alts (List (RAtom Θ))) → Maybe (⟦ s ⟧ʳˢ⁺ ≡̂ᵣ rconst ⊤ᵣ)
 topSumᵣ? (alt P) with isTopᵣ? P
@@ -1051,12 +1033,12 @@ module Commuteₑ (ij : Is-just ·ₑ-comm?) where
   commutes-≡ (alt P)  = commute-≡ P
   commutes-≡ (P ∷⁺ s) = ≡̂ₑ-cong-⊔ (commute-≡ P) (commutes-≡ s)
 
-commSumₑ : ∀ {Θ} → Maybe (Commutative _≡_ _·ₑ_)
+commSumₑ : ∀ {Θ} → Maybe (Commutative _≃ₑ_ _·ₑ_)
          → Alts (List (EAtom Θ)) → Alts (List (EAtom Θ))
 commSumₑ (just _) s = nubₑ (mapᴬ commuteₑ s)
 commSumₑ nothing  s = s
 
-commSumₑ-≡ : ∀ {Θ} → (m : Maybe (Commutative _≡_ _·ₑ_)) → ·ₑ-comm? ≡ m
+commSumₑ-≡ : ∀ {Θ} → (m : Maybe (Commutative _≃ₑ_ _·ₑ_)) → ·ₑ-comm? ≡ m
            → (s : Alts (List (EAtom Θ))) → ⟦ commSumₑ m s ⟧ᵉˢ⁺ ≡̂ₑ ⟦ s ⟧ᵉˢ⁺
 commSumₑ-≡ (just c) eq s =
   ≡̂ₑ-trans (nubₑ-≡ (mapᴬ commuteₑ s)) (Commuteₑ.commutes-≡ (≡-Is-just eq) s)
@@ -1128,12 +1110,12 @@ module Commuteᵣ (ij : Is-just ·ᵣ-comm?) where
   commutes-≡ (alt P)  = commute-≡ P
   commutes-≡ (P ∷⁺ s) = ≡̂ᵣ-cong-⊔ (commute-≡ P) (commutes-≡ s)
 
-commSumᵣ : ∀ {Θ} → Maybe (Commutative _≡_ _·ᵣ_)
+commSumᵣ : ∀ {Θ} → Maybe (Commutative _≃ᵣ_ _·ᵣ_)
          → Alts (List (RAtom Θ)) → Alts (List (RAtom Θ))
 commSumᵣ (just _) s = nubᵣ (mapᴬ commuteᵣ s)
 commSumᵣ nothing  s = s
 
-commSumᵣ-≡ : ∀ {Θ} → (m : Maybe (Commutative _≡_ _·ᵣ_)) → ·ᵣ-comm? ≡ m
+commSumᵣ-≡ : ∀ {Θ} → (m : Maybe (Commutative _≃ᵣ_ _·ᵣ_)) → ·ᵣ-comm? ≡ m
            → (s : Alts (List (RAtom Θ))) → ⟦ commSumᵣ m s ⟧ʳˢ⁺ ≡̂ᵣ ⟦ s ⟧ʳˢ⁺
 commSumᵣ-≡ (just c) eq s =
   ≡̂ᵣ-trans (nubᵣ-≡ (mapᴬ commuteᵣ s)) (Commuteᵣ.commutes-≡ (≡-Is-just eq) s)
@@ -1173,6 +1155,18 @@ nrmᵣ-≡ᵖ ρ = ≡̂ᵣ-trans (nrmᵣ-≡ ρ) (⟦⟧ʳᵖ⁺-≡ (nrmᵣ ρ
 -- forms themselves need the decider, and are assembled in
 -- `SolverImpl.Canon`.
 
+-- Constants are compared by the grade's equivalence
+
+sameConstₑ? : ∀ {Θ} → (c d : E) → Maybe (econst {Θ} c ≡̂ₑ econst d)
+sameConstₑ? c d with c ≃ₑ? d
+... | yes e = just (≡̂ₑ-const e)
+... | no _  = nothing
+
+sameConstᵣ? : ∀ {Θ} → (c d : R) → Maybe (rconst {Θ} c ≡̂ᵣ rconst d)
+sameConstᵣ? c d with c ≃ᵣ? d
+... | yes e = just (≡̂ᵣ-const e)
+... | no _  = nothing
+
 -- Effect variables are ordered by index
 
 _<ᵉᵛ_ : ∀ {Θ} → EVar Θ → EVar Θ → 𝔹
@@ -1182,7 +1176,7 @@ module Gₑ {Θ : Scope} =
   Grouping {EExp Θ} {E} {EVar Θ} _≡̂ₑ_ ≡̂ₑ-refl ≡̂ₑ-sym ≡̂ₑ-trans _·̂ₑ_ _⊔̂ₑ_
            ≡̂ₑ-cong ≡̂ₑ-cong-⊔ ≡̂ₑ-idem-⊔ ≡̂ₑ-comm-⊔ ≡̂ₑ-assoc-⊔
            ≡̂ₑ-distribˡ-⊔ ≡̂ₑ-distribʳ-⊔
-           econst _⊔ₑ_ ≡̂ₑ-const-⊔ _≡ₑ?_ evar _≟ᶠ_ (_<ᵉᵛ_ {Θ})
+           econst _⊔ₑ_ ≡̂ₑ-const-⊔ sameConstₑ? evar _≟ᶠ_ (_<ᵉᵛ_ {Θ})
 
 -- The unit, where no constant has been met
 
@@ -1269,7 +1263,7 @@ module Gᵣ {Θ : Scope} =
   Grouping {RExp Θ} {R} {RVAtom Θ} _≡̂ᵣ_ ≡̂ᵣ-refl ≡̂ᵣ-sym ≡̂ᵣ-trans _·̂ᵣ_ _⊔̂ᵣ_
            ≡̂ᵣ-cong ≡̂ᵣ-cong-⊔ ≡̂ᵣ-idem-⊔ ≡̂ᵣ-comm-⊔ ≡̂ᵣ-assoc-⊔
            ≡̂ᵣ-distribˡ-⊔ ≡̂ᵣ-distribʳ-⊔
-           rconst _⊔ᵣ_ ≡̂ᵣ-const-⊔ _≡ᵣ?_ ⟦_⟧ʳᵛ _≟ʳᵛ_ _<ʳᵛ_
+           rconst _⊔ᵣ_ ≡̂ᵣ-const-⊔ sameConstᵣ? ⟦_⟧ʳᵛ _≟ʳᵛ_ _<ʳᵛ_
 
 ⌊_⌋ᵣ : Maybe R → R
 ⌊ nothing ⌋ᵣ = uᵣ

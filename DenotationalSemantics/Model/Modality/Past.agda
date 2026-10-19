@@ -109,13 +109,13 @@ record Past : Set₁ where
 
     ⟨⟩-μ∘η≡id : ∀ {A ρ}
               → μ {A} {u} {ρ} ∘ᵐ η
-              ≈ᵐ ⟨⟩-≤ (≾-reflexive (sym (·-identityʳ ρ)))
+              ≈ᵐ ⟨⟩-≤ (≃⇒≿ (·-identityʳ ρ))
     ⟨⟩-μ∘Tη≡id : ∀ {A ρ}
                → μ {A} {ρ} {u} ∘ᵐ ⟨ ρ ⟩ᶠ η
-               ≈ᵐ ⟨⟩-≤ (≾-reflexive (sym (·-identityˡ ρ)))
+               ≈ᵐ ⟨⟩-≤ (≃⇒≿ (·-identityˡ ρ))
     ⟨⟩-μ∘μ≡μ∘Tμ : ∀ {A ρ₁ ρ₂ ρ₃}
                 → μ {A} {ρ₂ · ρ₁} {ρ₃} ∘ᵐ μ {⟨ ρ₃ ⟩ᵒ A} {ρ₁} {ρ₂}
-                ≈ᵐ    ⟨⟩-≤ (≾-reflexive (·-assoc ρ₃ ρ₂ ρ₁))
+                ≈ᵐ    ⟨⟩-≤ (≃⇒≾ (·-assoc ρ₃ ρ₂ ρ₁))
                   ∘ᵐ μ {A} {ρ₁} {ρ₃ · ρ₂} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (μ {A} {ρ₂} {ρ₃})
 
     -- εᵘ is natural
@@ -138,7 +138,7 @@ record Past : Set₁ where
   -- Folding a unit-graded outer layer with `μ` (and relaxing the redundant
   -- `· u`) is the counit `εᵘ`.
 
-  μ-εᵘ : ∀ {A ρ} → ⟨⟩-≤ (≾-reflexive (·-identityʳ ρ)) ∘ᵐ μ {A} {u} {ρ} ≈ᵐ εᵘ
+  μ-εᵘ : ∀ {A ρ} → ⟨⟩-≤ (≃⇒≾ (·-identityʳ ρ)) ∘ᵐ μ {A} {u} {ρ} ≈ᵐ εᵘ
   μ-εᵘ {A} {ρ} =
     ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ _))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym ⟨⟩-η∘εᵘ≡id))
@@ -146,7 +146,7 @@ record Past : Set₁ where
     (≈ᵐ-trans (∘ᵐ-congˡ fη≡id)
               (∘ᵐ-identityˡ εᵘ))))
     where
-      fη≡id : (⟨⟩-≤ (≾-reflexive (·-identityʳ ρ)) ∘ᵐ μ {A} {u} {ρ}) ∘ᵐ η ≈ᵐ idᵐ
+      fη≡id : (⟨⟩-≤ (≃⇒≾ (·-identityʳ ρ)) ∘ᵐ μ {A} {u} {ρ}) ∘ᵐ η ≈ᵐ idᵐ
       fη≡id =
         ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
         (≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-μ∘η≡id)
@@ -208,7 +208,7 @@ record Past : Set₁ where
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
     where
       uu : u · u ≾ u
-      uu = ≾-reflexive (·-identityʳ u)
+      uu = ≃⇒≾ (·-identityʳ u)
 
       w : ρ₂ · ρ₁ ≾ u
       w = ≾-trans (·-mono-≾ q p) uu

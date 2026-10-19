@@ -44,7 +44,7 @@ open World Wld
 -- `uᵣ ·ᵣ uᵣ ≡ uᵣ`.
 
 ⊑ᵘ-trans : ∀ {w w' w''} → w ⊑[ uᵣ ] w' → w' ⊑[ uᵣ ] w'' → w ⊑[ uᵣ ] w''
-⊑ᵘ-trans p q = ⊑-mono (≾ᵣ-reflexive (·ᵣ-identityʳ uᵣ)) (⊑-trans p q)
+⊑ᵘ-trans p q = ⊑-mono (≃ᵣ⇒≾ᵣ (·ᵣ-identityʳ uᵣ)) (⊑-trans p q)
 
 -- Setoid-valued unit-monotone presheaves over the worlds
 

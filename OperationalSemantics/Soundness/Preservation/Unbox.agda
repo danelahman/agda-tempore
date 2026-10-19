@@ -133,15 +133,15 @@ state-lookup (St ⟨ σ ⟩ₛ) (Tl-⟨⟩ y) pSt =
 -- equality `unbox-lookup` feeds to `wk-ren-⟨ρ⟩-ctx`.)
 
 cell-grade : ∀ {A ρ ρ'} → (St : 𝕊 []) → (x : [ ρ ] A ∈[ ρ' ] toCtx St)
-           → ctx-grade (([] ∷ [ ρ ] A) ++ᶜ toCtx (split-state-snd St x)) ≡ ρ'
+           → ctx-grade (([] ∷ [ ρ ] A) ++ᶜ toCtx (split-state-snd St x)) ≃ᵣ ρ'
 cell-grade {A = A} {ρ = ρ} St x =
-  trans
-    (trans
-      (trans
+  ≃ᵣ-trans
+    (≃ᵣ-trans
+      (≃ᵣ-trans
         (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd St x)))
         (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd St x)))))
-      (sym (grades-≡ (split-state-snd St x))))
-    (snd-split-time≡time-from-head St x)
+      (≃ᵣ-reflexive (sym (grades-≡ (split-state-snd St x)))))
+    (≃ᵣ-reflexive (snd-split-time≡time-from-head St x))
 
 -- The renaming composite of `unbox-lookup`, minus the grade relaxation and the
 -- `[] ++ᶜ_` transport, denotes the reach-back into the allocating prefix.
@@ -211,7 +211,7 @@ past-core {A} {ρ} (St ⟨ σ ⟩ₛ) (Tl-⟨⟩ y) pSt p =
   where
     assoc = ++ᶜ-assoc (toCtx (split-state-fst St y)) ([] ∷ [ ρ ] A)
                       (toCtx (split-state-snd St y))
-    p₀ = ≾ᵣ-reflexive (sym (cell-grade St y))
+    p₀ = ≃ᵣ⇒≿ᵣ (cell-grade St y)
 
 -- The grade equality that `wk-ren-⟨ρ⟩-ctx` carries can be split off as a
 -- `⟨⟩-≤` (here `Γ`, `Γ'` and `ρ` are independent, so the equality *can* be
@@ -237,14 +237,7 @@ unbox-lookupᴾ {A} {ρ} St z rel pSt =
   renᵛ
     ((((  eq-ren ++ᶜ-identityˡ
        ∘ʳ ⟨⟩-≤-ren rel)
-       ∘ʳ wk-ren-⟨ρ⟩-ctx
-            (trans
-              (trans
-                (trans
-                  (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd St z)))
-                  (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd St z)))))
-                (sym (grades-≡ (split-state-snd St z))))
-              (snd-split-time≡time-from-head St z)))
+       ∘ʳ (⟨⟩-≤-ren (≃ᵣ⇒≾ᵣ (≃ᵣ-trans (≃ᵣ-trans (≃ᵣ-trans (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd St z))) (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd St z))))) (≃ᵣ-reflexive (sym (grades-≡ (split-state-snd St z))))) (≃ᵣ-reflexive (snd-split-time≡time-from-head St z)))) ∘ʳ wk-ren-⟨ρ⟩-ctx refl))
        ∘ʳ eq-ren (sym (++ᶜ-assoc _ ([] ∷ [ ρ ] A) _)))
        ∘ʳ eq-ren (split-state-++ᶜ St z))
     (resource-lookup St z) (resource-lookupᴾ St z pSt)
@@ -266,9 +259,6 @@ unbox-lookup-sound {A} {ρ} St x rel pSt =
     ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
     -- split the grade equality off the `wk-ren-⟨ρ⟩-ctx`, then the rest of the
     -- composite is exactly `past-core`'s reach-back
-    ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (wk-lock-≤ {toCtx (split-state-fst St x)}
-                             {([] ∷ [ ρ ] A) ++ᶜ toCtx (split-state-snd St x)}
-                             (cell-grade St x)))))
     ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
     ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (past-core St x pSt p₀))))
     -- the two grade coercions cancel
@@ -279,7 +269,7 @@ unbox-lookup-sound {A} {ρ} St x rel pSt =
     ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
     ∙ ≈ᵐ-sym rhs
   where
-    p₀ = ≾ᵣ-reflexive (sym (cell-grade St x))
+    p₀ = ≃ᵣ⇒≿ᵣ (cell-grade St x)
 
     g = ⟦ resource-lookup St x ⟧ᵛᵗ (resource-lookupᴾ St x pSt)
           ∘ᵐ ⟦ eq-ren (++ᶜ-identityˡ

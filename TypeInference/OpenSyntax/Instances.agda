@@ -15,7 +15,7 @@
 -- A closed grade expression has a value in the carrier.        --
 -- Entailed ordering between closed expressions is the          --
 -- carrier's ordering of their values, and convertibility is    --
--- equality of values. Closed subtyping, closed eternality and  --
+-- equivalence of values. Closed subtyping, closed eternality and  --
 -- the closed var-rule disjunction are decidable.               --
 ------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ open import Data.List.Base using (List; []; _∷_)
 open import Data.List.Relation.Unary.All using (All; []; _∷_)
 open import Data.Nat.Properties using () renaming (_≟_ to _≟ℕ_)
 open import Data.List.Membership.Propositional using (_∈_)
-open import Data.Product using (Σ-syntax; _×_; _,_)
+open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Data.Maybe.Base using (Maybe; nothing)
 open import Data.Maybe using (to-witness)
@@ -122,45 +122,49 @@ valʳ-conv (ρ ⊔̂ᵣ ρ')  = ≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (valʳ-conv ρ
 valʳ-conv ∣ ε ∣̂ᵉ     = ≡̂ᵣ-trans (≡̂ᵣ-map-cong (valᵉ-conv ε)) ≡̂ᵣ-map-const
 
 ------------------------------------------------------------------------
+-- The join respects equivalence
+
 -- The key lemma: soundness. Every rule of convertibility and of
 -- entailment from no hypotheses is a law of the carrier.
 
-val-≡̂ᵣ : {ρ ρ' : RExp ∅ˢ} → ρ ≡̂ᵣ ρ' → valʳ ρ ≡ valʳ ρ'
-val-≡̂ₑ : {ε ε' : EExp ∅ˢ} → ε ≡̂ₑ ε' → valᵉ ε ≡ valᵉ ε'
+val-≡̂ᵣ : {ρ ρ' : RExp ∅ˢ} → ρ ≡̂ᵣ ρ' → valʳ ρ ≃ᵣ valʳ ρ'
+val-≡̂ₑ : {ε ε' : EExp ∅ˢ} → ε ≡̂ₑ ε' → valᵉ ε ≃ₑ valᵉ ε'
 val-≾ᵣ : {ρ ρ' : RExp ∅ˢ} → ∅ᴴ ⊩ ρ ≾̂ᵣ ρ' → valʳ ρ ≾ᵣ valʳ ρ'
 val-≾ₑ : {ε ε' : EExp ∅ˢ} → ∅ᴴ ⊩ ε ≾̂ₑ ε' → valᵉ ε ≾ₑ valᵉ ε'
 
-val-≡̂ᵣ ≡̂ᵣ-refl          = refl
-val-≡̂ᵣ (≡̂ᵣ-sym p)       = sym (val-≡̂ᵣ p)
-val-≡̂ᵣ (≡̂ᵣ-trans p q)   = trans (val-≡̂ᵣ p) (val-≡̂ᵣ q)
-val-≡̂ᵣ (≡̂ᵣ-cong p q)    = cong₂ _·ᵣ_ (val-≡̂ᵣ p) (val-≡̂ᵣ q)
+val-≡̂ᵣ ≡̂ᵣ-refl          = ≃ᵣ-refl
+val-≡̂ᵣ (≡̂ᵣ-sym p)       = ≃ᵣ-sym (val-≡̂ᵣ p)
+val-≡̂ᵣ (≡̂ᵣ-trans p q)   = ≃ᵣ-trans (val-≡̂ᵣ p) (val-≡̂ᵣ q)
+val-≡̂ᵣ (≡̂ᵣ-cong p q)    = ·ᵣ-cong (val-≡̂ᵣ p) (val-≡̂ᵣ q)
 val-≡̂ᵣ ≡̂ᵣ-assoc         = ·ᵣ-assoc _ _ _
 val-≡̂ᵣ ≡̂ᵣ-identityˡ     = ·ᵣ-identityˡ _
 val-≡̂ᵣ ≡̂ᵣ-identityʳ     = ·ᵣ-identityʳ _
-val-≡̂ᵣ ≡̂ᵣ-const-·       = refl
+val-≡̂ᵣ (≡̂ᵣ-const e)     = e
+val-≡̂ᵣ ≡̂ᵣ-const-·       = ≃ᵣ-refl
 val-≡̂ᵣ (≡̂ᵣ-comm ij)     = to-witness ij _ _
-val-≡̂ᵣ (≡̂ᵣ-cong-⊔ p q)  = cong₂ _⊔ᵣ_ (val-≡̂ᵣ p) (val-≡̂ᵣ q)
-val-≡̂ᵣ ≡̂ᵣ-const-⊔       = refl
+val-≡̂ᵣ (≡̂ᵣ-cong-⊔ p q)  = ⊔ᵣ-cong (val-≡̂ᵣ p) (val-≡̂ᵣ q)
+val-≡̂ᵣ ≡̂ᵣ-const-⊔       = ≃ᵣ-refl
 val-≡̂ᵣ ≡̂ᵣ-comm-⊔        = ⊔ᵣ-comm _ _
 val-≡̂ᵣ ≡̂ᵣ-distribˡ-⊔    = ·ᵣ-distribˡ-⊔ᵣ _ _ _
 val-≡̂ᵣ ≡̂ᵣ-distribʳ-⊔    = ·ᵣ-distribʳ-⊔ᵣ _ _ _
 val-≡̂ᵣ ≡̂ᵣ-map-·         = map-·ᵉ
 val-≡̂ᵣ ≡̂ᵣ-map-⊔         = map-⊔ᵉ
-val-≡̂ᵣ ≡̂ᵣ-map-const     = refl
-val-≡̂ᵣ (≡̂ᵣ-map-cong p)  = cong mapᵉ (val-≡̂ₑ p)
+val-≡̂ᵣ ≡̂ᵣ-map-const     = ≃ᵣ-refl
+val-≡̂ᵣ (≡̂ᵣ-map-cong p)  = map-≃ᵉ (val-≡̂ₑ p)
 val-≡̂ᵣ (≡̂ᵣ-absorb p)    = ⊔ᵣ-absorb (val-≾ᵣ p)
 
-val-≡̂ₑ ≡̂ₑ-refl          = refl
-val-≡̂ₑ (≡̂ₑ-sym p)       = sym (val-≡̂ₑ p)
-val-≡̂ₑ (≡̂ₑ-trans p q)   = trans (val-≡̂ₑ p) (val-≡̂ₑ q)
-val-≡̂ₑ (≡̂ₑ-cong p q)    = cong₂ _·ₑ_ (val-≡̂ₑ p) (val-≡̂ₑ q)
+val-≡̂ₑ ≡̂ₑ-refl          = ≃ₑ-refl
+val-≡̂ₑ (≡̂ₑ-sym p)       = ≃ₑ-sym (val-≡̂ₑ p)
+val-≡̂ₑ (≡̂ₑ-trans p q)   = ≃ₑ-trans (val-≡̂ₑ p) (val-≡̂ₑ q)
+val-≡̂ₑ (≡̂ₑ-cong p q)    = ·ₑ-cong (val-≡̂ₑ p) (val-≡̂ₑ q)
 val-≡̂ₑ ≡̂ₑ-assoc         = ·ₑ-assoc _ _ _
 val-≡̂ₑ ≡̂ₑ-identityˡ     = ·ₑ-identityˡ _
 val-≡̂ₑ ≡̂ₑ-identityʳ     = ·ₑ-identityʳ _
-val-≡̂ₑ ≡̂ₑ-const-·       = refl
+val-≡̂ₑ (≡̂ₑ-const e)     = e
+val-≡̂ₑ ≡̂ₑ-const-·       = ≃ₑ-refl
 val-≡̂ₑ (≡̂ₑ-comm ij)     = to-witness ij _ _
-val-≡̂ₑ (≡̂ₑ-cong-⊔ p q)  = cong₂ _⊔ₑ_ (val-≡̂ₑ p) (val-≡̂ₑ q)
-val-≡̂ₑ ≡̂ₑ-const-⊔       = refl
+val-≡̂ₑ (≡̂ₑ-cong-⊔ p q)  = ⊔ₑ-cong (val-≡̂ₑ p) (val-≡̂ₑ q)
+val-≡̂ₑ ≡̂ₑ-const-⊔       = ≃ₑ-refl
 val-≡̂ₑ ≡̂ₑ-comm-⊔        = ⊔ₑ-comm _ _
 val-≡̂ₑ ≡̂ₑ-distribˡ-⊔    = ·ₑ-distribˡ-⊔ₑ _ _ _
 val-≡̂ₑ ≡̂ₑ-distribʳ-⊔    = ·ₑ-distribʳ-⊔ₑ _ _ _
@@ -168,7 +172,7 @@ val-≡̂ₑ (≡̂ₑ-absorb p)    = ⊔ₑ-absorb (val-≾ₑ p)
 
 val-≾ᵣ (hypᵣ ())
 val-≾ᵣ (atomᵣ p)    = p
-val-≾ᵣ (eqᵣ p)      = ≾ᵣ-reflexive (val-≡̂ᵣ p)
+val-≾ᵣ (eqᵣ p)      = ≃ᵣ⇒≾ᵣ (val-≡̂ᵣ p)
 val-≾ᵣ (transᵣ p q) = ≾ᵣ-trans (val-≾ᵣ p) (val-≾ᵣ q)
 val-≾ᵣ (monoᵣ p q)  = ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (val-≾ᵣ p)) (·ᵣ-monoʳ-≾ᵣ (val-≾ᵣ q))
 val-≾ᵣ (map-mono p) = map-monotoneᵉ (val-≾ₑ p)
@@ -185,7 +189,7 @@ val-≾ᵣ (indʳᵣ p q)  = Plus.⁺-indʳ p (val-≾ᵣ q)
 
 val-≾ₑ (hypₑ ())
 val-≾ₑ (atomₑ p)    = p
-val-≾ₑ (eqₑ p)      = ≾ₑ-reflexive (val-≡̂ₑ p)
+val-≾ₑ (eqₑ p)      = ≃ₑ⇒≾ₑ (val-≡̂ₑ p)
 val-≾ₑ (transₑ p q) = ≾ₑ-trans (val-≾ₑ p) (val-≾ₑ q)
 val-≾ₑ (monoₑ p q)  = ≾ₑ-trans (·ₑ-monoˡ-≾ₑ (val-≾ₑ p)) (·ₑ-monoʳ-≾ₑ (val-≾ₑ q))
 val-≾ₑ (⊔-ubˡₑ {ε₁} {ε₂}) = ⊔ₑ-ubˡ (valᵉ ε₁) (valᵉ ε₂)
@@ -213,27 +217,27 @@ val-≾ₑ⁻ {ε = ε} {ε'} p =
 
 -- Convertibility of closed expressions is equality of values
 
-val-≡̂ᵣ⁻ : {ρ ρ' : RExp ∅ˢ} → valʳ ρ ≡ valʳ ρ' → ρ ≡̂ᵣ ρ'
+val-≡̂ᵣ⁻ : {ρ ρ' : RExp ∅ˢ} → valʳ ρ ≃ᵣ valʳ ρ' → ρ ≡̂ᵣ ρ'
 val-≡̂ᵣ⁻ {ρ} {ρ'} p =
-  ≡̂ᵣ-trans (valʳ-conv ρ) (subst (λ c → rconst c ≡̂ᵣ ρ') (sym p) (≡̂ᵣ-sym (valʳ-conv ρ')))
+  ≡̂ᵣ-trans (valʳ-conv ρ) (≡̂ᵣ-trans (≡̂ᵣ-const p) (≡̂ᵣ-sym (valʳ-conv ρ')))
 
-val-≡̂ₑ⁻ : {ε ε' : EExp ∅ˢ} → valᵉ ε ≡ valᵉ ε' → ε ≡̂ₑ ε'
+val-≡̂ₑ⁻ : {ε ε' : EExp ∅ˢ} → valᵉ ε ≃ₑ valᵉ ε' → ε ≡̂ₑ ε'
 val-≡̂ₑ⁻ {ε} {ε'} p =
-  ≡̂ₑ-trans (valᵉ-conv ε) (subst (λ c → econst c ≡̂ₑ ε') (sym p) (≡̂ₑ-sym (valᵉ-conv ε')))
+  ≡̂ₑ-trans (valᵉ-conv ε) (≡̂ₑ-trans (≡̂ₑ-const p) (≡̂ₑ-sym (valᵉ-conv ε')))
 
--- and so is equality from no hypotheses, by antisymmetry
+-- and so is equality from no hypotheses, the order's equivalence
 
-val-⊩≡̂ᵣ : {ρ ρ' : RExp ∅ˢ} → ∅ᴴ ⊩ ρ ≡̂ᵣ ρ' → valʳ ρ ≡ valʳ ρ'
-val-⊩≡̂ᵣ (p , q) = ≾ᵣ-antisym (val-≾ᵣ p) (val-≾ᵣ q)
+val-⊩≡̂ᵣ : {ρ ρ' : RExp ∅ˢ} → ∅ᴴ ⊩ ρ ≡̂ᵣ ρ' → valʳ ρ ≃ᵣ valʳ ρ'
+val-⊩≡̂ᵣ (p , q) = val-≾ᵣ p , val-≾ᵣ q
 
-val-⊩≡̂ₑ : {ε ε' : EExp ∅ˢ} → ∅ᴴ ⊩ ε ≡̂ₑ ε' → valᵉ ε ≡ valᵉ ε'
-val-⊩≡̂ₑ (p , q) = ≾ₑ-antisym (val-≾ₑ p) (val-≾ₑ q)
+val-⊩≡̂ₑ : {ε ε' : EExp ∅ˢ} → ∅ᴴ ⊩ ε ≡̂ₑ ε' → valᵉ ε ≃ₑ valᵉ ε'
+val-⊩≡̂ₑ (p , q) = val-≾ₑ p , val-≾ₑ q
 
-val-⊩≡̂ᵣ⁻ : {Q : Hyps ∅ˢ} {ρ ρ' : RExp ∅ˢ} → valʳ ρ ≡ valʳ ρ' → Q ⊩ ρ ≡̂ᵣ ρ'
-val-⊩≡̂ᵣ⁻ p = val-≾ᵣ⁻ (≾ᵣ-reflexive p) , val-≾ᵣ⁻ (≾ᵣ-reflexive (sym p))
+val-⊩≡̂ᵣ⁻ : {Q : Hyps ∅ˢ} {ρ ρ' : RExp ∅ˢ} → valʳ ρ ≃ᵣ valʳ ρ' → Q ⊩ ρ ≡̂ᵣ ρ'
+val-⊩≡̂ᵣ⁻ p = val-≾ᵣ⁻ (proj₁ p) , val-≾ᵣ⁻ (proj₂ p)
 
-val-⊩≡̂ₑ⁻ : {Q : Hyps ∅ˢ} {ε ε' : EExp ∅ˢ} → valᵉ ε ≡ valᵉ ε' → Q ⊩ ε ≡̂ₑ ε'
-val-⊩≡̂ₑ⁻ p = val-≾ₑ⁻ (≾ₑ-reflexive p) , val-≾ₑ⁻ (≾ₑ-reflexive (sym p))
+val-⊩≡̂ₑ⁻ : {Q : Hyps ∅ˢ} {ε ε' : EExp ∅ˢ} → valᵉ ε ≃ₑ valᵉ ε' → Q ⊩ ε ≡̂ₑ ε'
+val-⊩≡̂ₑ⁻ p = val-≾ₑ⁻ (proj₁ p) , val-≾ₑ⁻ (proj₂ p)
 
 -- Closed orderings and convertibilities are decided by the carrier
 
@@ -246,10 +250,10 @@ _≾̂ₑ?_ : (ε ε' : EExp ∅ˢ) → Dec (∅ᴴ ⊩ ε ≾̂ₑ ε')
 ε ≾̂ₑ? ε' = map′ val-≾ₑ⁻ val-≾ₑ (valᵉ ε ≾ₑ? valᵉ ε')
 
 _≡̂ᵣ?_ : (ρ ρ' : RExp ∅ˢ) → Dec (ρ ≡̂ᵣ ρ')
-ρ ≡̂ᵣ? ρ' = map′ val-≡̂ᵣ⁻ val-≡̂ᵣ (valʳ ρ ≡ᵣ? valʳ ρ')
+ρ ≡̂ᵣ? ρ' = map′ val-≡̂ᵣ⁻ val-≡̂ᵣ (valʳ ρ ≃ᵣ? valʳ ρ')
 
 _≡̂ₑ?_ : (ε ε' : EExp ∅ˢ) → Dec (ε ≡̂ₑ ε')
-ε ≡̂ₑ? ε' = map′ val-≡̂ₑ⁻ val-≡̂ₑ (valᵉ ε ≡ₑ? valᵉ ε')
+ε ≡̂ₑ? ε' = map′ val-≡̂ₑ⁻ val-≡̂ₑ (valᵉ ε ≃ₑ? valᵉ ε')
 
 ------------------------------------------------------------------------
 -- Closed types
@@ -419,19 +423,19 @@ inst-≾ₑ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {ε ε' : EExp Θ}
 inst-≾ₑ h p = val-≾ₑ (⊩-substₑ h p)
 
 inst-⊩≡̂ᵣ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {ρ ρ' : RExp Θ}
-         → ∅ᴴ ⊩ᴴ Q [ δ ] → Q ⊩ ρ ≡̂ᵣ ρ' → valʳ (ρ [ δ ]ʳ) ≡ valʳ (ρ' [ δ ]ʳ)
-inst-⊩≡̂ᵣ h (p , q) = ≾ᵣ-antisym (inst-≾ᵣ h p) (inst-≾ᵣ h q)
+         → ∅ᴴ ⊩ᴴ Q [ δ ] → Q ⊩ ρ ≡̂ᵣ ρ' → valʳ (ρ [ δ ]ʳ) ≃ᵣ valʳ (ρ' [ δ ]ʳ)
+inst-⊩≡̂ᵣ h (p , q) = inst-≾ᵣ h p , inst-≾ᵣ h q
 
 inst-⊩≡̂ₑ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {ε ε' : EExp Θ}
-         → ∅ᴴ ⊩ᴴ Q [ δ ] → Q ⊩ ε ≡̂ₑ ε' → valᵉ (ε [ δ ]ᵉ) ≡ valᵉ (ε' [ δ ]ᵉ)
-inst-⊩≡̂ₑ h (p , q) = ≾ₑ-antisym (inst-≾ₑ h p) (inst-≾ₑ h q)
+         → ∅ᴴ ⊩ᴴ Q [ δ ] → Q ⊩ ε ≡̂ₑ ε' → valᵉ (ε [ δ ]ᵉ) ≃ₑ valᵉ (ε' [ δ ]ᵉ)
+inst-⊩≡̂ₑ h (p , q) = inst-≾ₑ h p , inst-≾ₑ h q
 
 inst-≡̂ᵣ : ∀ {Θ} {ρ ρ' : RExp Θ} → (δ : Subst Θ ∅ˢ)
-        → ρ ≡̂ᵣ ρ' → valʳ (ρ [ δ ]ʳ) ≡ valʳ (ρ' [ δ ]ʳ)
+        → ρ ≡̂ᵣ ρ' → valʳ (ρ [ δ ]ʳ) ≃ᵣ valʳ (ρ' [ δ ]ʳ)
 inst-≡̂ᵣ δ p = val-≡̂ᵣ (≡̂ᵣ-subst δ p)
 
 inst-≡̂ₑ : ∀ {Θ} {ε ε' : EExp Θ} → (δ : Subst Θ ∅ˢ)
-        → ε ≡̂ₑ ε' → valᵉ (ε [ δ ]ᵉ) ≡ valᵉ (ε' [ δ ]ᵉ)
+        → ε ≡̂ₑ ε' → valᵉ (ε [ δ ]ᵉ) ≃ₑ valᵉ (ε' [ δ ]ᵉ)
 inst-≡̂ₑ δ p = val-≡̂ₑ (≡̂ₑ-subst δ p)
 
 inst-VarOK : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {A : OVType Θ} {ρ : RExp Θ}
@@ -445,7 +449,8 @@ inst-VarOK h ok = VarOK-∅ (VarOK-subst h ok)
 closed-≾ᵣ : ∀ {Θ} {ρ ρ' : RExp Θ} {c c' : R}
           → ρ ≡̂ᵣ rconst c → ρ' ≡̂ᵣ rconst c' → (δ : Subst Θ ∅ˢ)
           → ∅ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ → c ≾ᵣ c'
-closed-≾ᵣ q q' δ p = subst₂ _≾ᵣ_ (inst-≡̂ᵣ δ q) (inst-≡̂ᵣ δ q') (val-≾ᵣ p)
+closed-≾ᵣ q q' δ p =
+  ≾ᵣ-trans (proj₂ (inst-≡̂ᵣ δ q)) (≾ᵣ-trans (val-≾ᵣ p) (proj₁ (inst-≡̂ᵣ δ q')))
 
 closed-≾ᵣ⁻ : ∀ {Θ Θ'} {Q : Hyps Θ'} {ρ ρ' : RExp Θ} {c c' : R}
            → ρ ≡̂ᵣ rconst c → ρ' ≡̂ᵣ rconst c' → (σ : Subst Θ Θ')
@@ -456,7 +461,8 @@ closed-≾ᵣ⁻ q q' σ p =
 closed-≾ₑ : ∀ {Θ} {ε ε' : EExp Θ} {c c' : E}
           → ε ≡̂ₑ econst c → ε' ≡̂ₑ econst c' → (δ : Subst Θ ∅ˢ)
           → ∅ᴴ ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ → c ≾ₑ c'
-closed-≾ₑ q q' δ p = subst₂ _≾ₑ_ (inst-≡̂ₑ δ q) (inst-≡̂ₑ δ q') (val-≾ₑ p)
+closed-≾ₑ q q' δ p =
+  ≾ₑ-trans (proj₂ (inst-≡̂ₑ δ q)) (≾ₑ-trans (val-≾ₑ p) (proj₁ (inst-≡̂ₑ δ q')))
 
 closed-≾ₑ⁻ : ∀ {Θ Θ'} {Q : Hyps Θ'} {ε ε' : EExp Θ} {c c' : E}
            → ε ≡̂ₑ econst c → ε' ≡̂ₑ econst c' → (σ : Subst Θ Θ')

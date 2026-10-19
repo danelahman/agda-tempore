@@ -78,7 +78,7 @@ open Adjunction Adj
   (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (·-monoʳ-≾ (≾-⊤ u)) (≾-⊤ (⊤ · ⊤))))
-  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾-reflexive (·-identityʳ ⊤))))
+  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ (≃⇒≾ (·-identityʳ ⊤))))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (μ-εᵘ {A} {⊤}))
             ⟨⟩-εᵘ∘η≡id))))))))
@@ -117,7 +117,7 @@ open Adjunction Adj
       (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (·-monoʳ-≾ (≾-⊤ (⊤ · ⊤))) (≾-⊤ (⊤ · ⊤))))
       (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-μ∘μ≡μ∘Tμ {A} {⊤} {⊤} {⊤}))
       (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (≾-reflexive (·-assoc ⊤ ⊤ ⊤)) _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (≃⇒≾ (·-assoc ⊤ ⊤ ⊤)) _))
                 (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))))))))))
 
     right : ⟨⊤⟩-μ {A} ∘ᵐ ⟨ ⊤ ⟩ᶠ (⟨⊤⟩-μ {A}) ≈ᵐ mid

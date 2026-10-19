@@ -133,7 +133,7 @@ mapₒ-⊔ P Q =
                 (nonempty P) (nonempty Q)))
 
 traces→left-sided-intervals : left-sided →ᵍ left-sided-intervals
-traces→left-sided-intervals = record
+traces→left-sided-intervals = strictᵍ record
   { map          = mapₒ
   ; map-monotone = λ {P} {Q} → mapₒ-monotone {P} {Q}
   ; map-u        = refl

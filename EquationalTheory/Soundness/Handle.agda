@@ -47,7 +47,7 @@ open import EquationalTheory.EquationalTheory S
 
 open Category Cat
 open Future Fut using ([_]ᵒ; [_]ᶠ; []-∘ᵐ; []-congᶠ; []-monoidal; []-monoidal-nat)
-open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; ⟨⟩-≤; ⟨⟩-∘ᵐ; μ)
+open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; ⟨⟩-≤; ⟨⟩-∘ᵐ; μ; ⟨⟩-≤-irr)
 open Adjunction Adj using (η⊣; ε⊣; η⊣-nat; η⊣-monoidal)
 open GroundTypes GTy
 open Monad Mon
@@ -100,19 +100,19 @@ sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
                         ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ εᵇ-η⊣-u {⟦ Γ ⟧ᶜᵗˣ} map-uᵉ
                           , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e ((C-rename r N) [ split-[] ↦ V ]c))
-                pR (ε-substᴾ e _ pRc)
-            ∙ sound-ε-subst e ((C-rename r N) [ split-[] ↦ V ]c) pRc
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ e ((C-rename r N) [ split-[] ↦ V ]c))
+                pR pRc
+            ∙ sound-ε-≃ e ((C-rename r N) [ split-[] ↦ V ]c) pRc
             ∙ ∘ᵐ-congʳ (  C-subst-nat (C-rename r N) split-[] V (renᶜ r N pN) pV
                         ∙ ∘ᵐ-congˡ (C-rename-nat r N pN)
                         ∙ ∘ᵐ-assoc _ _ _
                         ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
                                     ∙ ⟨ ∘ᵐ-identityʳ _
-                                        ∙ ∘ᵐ-congˡ (eq-ren-grade {Γ} map-uᵉ)
+                                        ∙ ∘ᵐ-congˡ (⟨⟩-≤-irr _ _)
                                       , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))
   where
-    e   = sym (·ₑ-identityˡ ε)
-    r   = cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)
+    e = ≃ₑ-sym (·ₑ-identityˡ ε)
+    r   = cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren)
     pRc = subᶜ (C-rename r N) split-[] V (renᶜ r N pN) pV
 
 -- Transports the fold along a clause-family renaming `r` that factors as
@@ -329,20 +329,18 @@ sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
                                   , ∘ᵐ-congˡ (≈ᵐ-sym (
                                         T-congᶠ (C-rename-nat r N pN)
                                       ∙ T-congᶠ (∘ᵐ-congʳ (mapˣᵐ-cong
-                                          (∘ᵐ-congˡ (eq-ren-grade (trans map-·ᵉ
-                                            (cong (_·ᵣ mapᵉ ε) map-of-durᵉ))))
+                                          (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))
                                           ≈ᵐ-refl)))) ⟩ᵐ-cong)
                       ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-refl , ≈ᵐ-sym (∘ᵐ-identityˡ _) ⟩ᵐ-cong
                                   ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
                       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
                       ∙ ∘ᵐ-congˡ (≈ᵐ-sym (R.alg-nat R.pHᵣ R.uHᵣ))))))
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e (delay τ (handle M `with R.Hᵣ `in (C-rename r N))))
-                pR (ε-substᴾ e _ pRc)
-            ∙ sound-ε-subst e (delay τ (handle M `with R.Hᵣ `in (C-rename r N))) pRc)
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ e (delay τ (handle M `with R.Hᵣ `in (C-rename r N))))
+                pR pRc
+            ∙ sound-ε-≃ e (delay τ (handle M `with R.Hᵣ `in (C-rename r N))) pRc)
   where
-    e   = sym (·ₑ-assoc (of-durᵉ τ) ε ε')
-    r   = cong-∷-ren (eq-ren (cong (Γ ⟨_⟩)
-                               (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-durᵉ)))
+    e = ≃ₑ-sym (·ₑ-assoc (of-durᵉ τ) ε ε')
+    r   = cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))
                       ∘ʳ ⟨⟩-μ-ren)
 
     module R = Reindex (⟨⟩-≤-ren (≾-⊤ᵣ _) ∘ʳ ⟨⟩-μ-ren)

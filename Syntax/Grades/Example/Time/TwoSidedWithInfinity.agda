@@ -275,7 +275,7 @@ plusᵢ i = plus i⁺ (≤-refl , ≤∞-plus∞ (max i))
 -- the grade of two-sided intervals with possibly-infinite max
 
 two-sided-intervals-with-∞ : Grade ℕᴰ
-two-sided-intervals-with-∞ = record
+two-sided-intervals-with-∞ = posetᵍ record
   { Carrier = Interval∞
   ; _·_              = _·ᵢ_
   ; u                = uᵢ
@@ -540,7 +540,7 @@ plusʷ no-window = plus no-window tt tt least indˡ indʳ
 -- the grade of two-sided intervals with a formal greatest grade
 
 two-sided-intervals-with-⊤ : Grade ℕᴰ
-two-sided-intervals-with-⊤ = record
+two-sided-intervals-with-⊤ = posetᵍ record
   { Carrier           = Interval∞⊤
   ; _·_               = _·ʷ_
   ; u                 = uʷ

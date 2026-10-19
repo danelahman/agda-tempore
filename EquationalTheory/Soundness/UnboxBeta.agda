@@ -173,7 +173,7 @@ sound-unbox-beta {Γ} {A} {A'} {C} {D} {ρ} V K p u N pK pN (pV , pL) (pV' , pR)
 
     -- reaching `xB` is reaching the head variable through the lock
     c : uᵣ ·ᵣ ρ ≾ᵣ ρ
-    c = ≾ᵣ-reflexive (·ᵣ-identityˡ ρ)
+    c = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ ρ)
 
     wImg : var-img w (Tl-⟨⟩ (Hd {Γ = Γ})) ≡ (grade-++ᶜˡ uᵣ Θ , xB)
     wImg = wk-ren-⟨ρ⟩-ctx-img Θ refl (Hd {Γ = Γ})

@@ -45,14 +45,7 @@ unbox-lookup {A} {ρ} S z ρ'≾ρ =
   V-rename
     ((((  eq-ren ++ᶜ-identityˡ
        ∘ʳ ⟨⟩-≤-ren ρ'≾ρ)
-       ∘ʳ wk-ren-⟨ρ⟩-ctx
-            (trans
-              (trans
-                (trans
-                  (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd S z)))
-                  (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd S z)))))
-                (sym (grades-≡ (split-state-snd S z))))
-              (snd-split-time≡time-from-head S z)))
+       ∘ʳ (⟨⟩-≤-ren (≃ᵣ⇒≾ᵣ (≃ᵣ-trans (≃ᵣ-trans (≃ᵣ-trans (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd S z))) (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd S z))))) (≃ᵣ-reflexive (sym (grades-≡ (split-state-snd S z))))) (≃ᵣ-reflexive (snd-split-time≡time-from-head S z)))) ∘ʳ wk-ren-⟨ρ⟩-ctx refl))
        ∘ʳ eq-ren (sym (++ᶜ-assoc _ ([] ∷ [ ρ ] A) _)))
        ∘ʳ eq-ren (split-state-++ᶜ S z))
     (resource-lookup S z)
@@ -232,7 +225,7 @@ mutual
                    → ⟨ S , return V ⨟ N ⟩ ↝
                      ⟨ S , (C-rename
                              (cong-∷-ren
-                               ((eq-ren (cong (toCtx S ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)))
+                               ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren)))
                               N) [ split-[] ↦ V ]c ⟩
 
         -- sequencing an operation: float it out, the sequel joining its
@@ -244,10 +237,10 @@ mutual
                    → {N : toCtx S ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε'} 
                     -----------------------------------------------------------------------------------
                    → ⟨ S , (perform op V M) ⨟ N  ⟩ ↝
-                     ⟨ S , ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
+                     ⟨ S , ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
                              (perform op V
                                (M ⨟ C-rename
-                                      (cong-∷-ren ((eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren))
+                                      (cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren))
                                       N)) ⟩
 
         -- delay: let time pass, moving the lock into the state
@@ -273,7 +266,7 @@ mutual
                    → ⟨ S , handle return V `with H `in N ⟩ ↝
                      ⟨ S , (C-rename
                              (cong-∷-ren
-                               (eq-ren (cong (toCtx S ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren))
+                               (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren))
                              N) [ split-[] ↦ V ]c ⟩
                      
         -- handling: step the handled computation, carrying time and state forward
@@ -326,7 +319,7 @@ mutual
                                                            (type-of-gtype (arity op)))))
                                          (H op' ε'))
                               `in (C-rename
-                                    (  cong-∷-ren ((eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ)
+                                    (  cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)
                                     ∘ʳ ⟨⟩-μ-ren)
                                     ∘ʳ cong-⟨⟩-ren wk-ren))
                                     N)))
@@ -500,60 +493,52 @@ step-grade-≾ : ∀ {A B ε ε'}
              -------------------------------------------------
              → ≤ₛ-grade (step-extends-state r) ·ᵣ mapᵉ ε' ≾ᵣ mapᵉ ε
 
-step-grade-≾ APP   = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ MATCH = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ CASEL = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ RECL = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ IF-TRUE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ CMP = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ IF-FALSE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ CASE+ = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ CASEℕ-ZERO = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ CASEℕ-SUCC = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ RECℕ-ZERO = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ RECℕ-SUCC = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ APP   = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ MATCH = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ CASEL = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ RECL = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ IF-TRUE = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ CMP = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ IF-FALSE = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ CASE+ = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ CASEℕ-ZERO = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ CASEℕ-SUCC = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ RECℕ-ZERO = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ RECℕ-SUCC = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} step _) =
   ≾ᵣ-trans
-    (≾ᵣ-reflexive
-      (trans
-        (cong (≤ₛ-grade (step-extends-state step) ·ᵣ_) (map-·ᵉ {ε₃} {ε₂}))
-        (sym (·ᵣ-assoc (≤ₛ-grade (step-extends-state step)) (mapᵉ ε₃) (mapᵉ ε₂)))))
+    (≃ᵣ⇒≾ᵣ
+      (≃ᵣ-trans (·ᵣ-cong ≃ᵣ-refl (map-·ᵉ {ε₃} {ε₂})) (≃ᵣ-sym (·ᵣ-assoc (≤ₛ-grade (step-extends-state step)) (mapᵉ ε₃) (mapᵉ ε₂)))))
     (≾ᵣ-trans
       (·ᵣ-monoˡ-≾ᵣ (step-grade-≾ step))
-      (≾ᵣ-reflexive (sym (map-·ᵉ {ε₁} {ε₂}))))
+      (≃ᵣ⇒≿ᵣ (map-·ᵉ {ε₁} {ε₂})))
 step-grade-≾ (SEQ-RET {ε = ε}) =
-  ≾ᵣ-reflexive (sym (trans (map-·ᵉ {uₑ} {ε}) (cong (_·ᵣ mapᵉ ε) map-uᵉ)))
-step-grade-≾ SEQ-OP = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+  ≃ᵣ⇒≿ᵣ (≃ᵣ-trans (map-·ᵉ {uₑ} {ε}) (·ᵣ-cong map-uᵉ ≃ᵣ-refl))
+step-grade-≾ SEQ-OP = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ (DELAY {τ = τ} {ε = ε}) =
-  ≾ᵣ-reflexive
-    (trans
-      (cong (_·ᵣ mapᵉ ε) (·ᵣ-identityˡ (of-durʳ τ)))
-      (sym (trans (map-·ᵉ {of-durᵉ τ} {ε}) (cong (_·ᵣ mapᵉ ε) map-of-durᵉ))))
+  ≃ᵣ⇒≾ᵣ
+    (≃ᵣ-trans (·ᵣ-cong (·ᵣ-identityˡ (of-durʳ τ)) ≃ᵣ-refl) (≃ᵣ-sym (≃ᵣ-trans (map-·ᵉ {of-durᵉ τ} {ε}) (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl))))
 step-grade-≾ (HANDLE-RET {ε = ε}) =
-  ≾ᵣ-reflexive (sym (trans (map-·ᵉ {uₑ} {ε}) (cong (_·ᵣ mapᵉ ε) map-uᵉ)))
+  ≃ᵣ⇒≿ᵣ (≃ᵣ-trans (map-·ᵉ {uₑ} {ε}) (·ᵣ-cong map-uᵉ ≃ᵣ-refl))
 step-grade-≾ (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₁' = ε₁'} step _) =
   ≾ᵣ-trans
-    (≾ᵣ-reflexive
-      (trans
-        (cong (≤ₛ-grade (step-extends-state step) ·ᵣ_) (map-·ᵉ {ε₁'} {ε₂}))
-        (sym (·ᵣ-assoc (≤ₛ-grade (step-extends-state step)) (mapᵉ ε₁') (mapᵉ ε₂)))))
+    (≃ᵣ⇒≾ᵣ
+      (≃ᵣ-trans (·ᵣ-cong ≃ᵣ-refl (map-·ᵉ {ε₁'} {ε₂})) (≃ᵣ-sym (·ᵣ-assoc (≤ₛ-grade (step-extends-state step)) (mapᵉ ε₁') (mapᵉ ε₂)))))
     (≾ᵣ-trans
       (·ᵣ-monoˡ-≾ᵣ (step-grade-≾ step))
-      (≾ᵣ-reflexive (sym (map-·ᵉ {ε₁} {ε₂}))))
+      (≃ᵣ⇒≿ᵣ (map-·ᵉ {ε₁} {ε₂})))
 step-grade-≾ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op}) =
-  ≾ᵣ-reflexive
-    (trans
-      (·ᵣ-identityˡ _)
-      (cong mapᵉ (sym (·ₑ-assoc (op-grade op) ε ε''))))
-step-grade-≾ BOX     = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ UNBOX   = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+  ≃ᵣ⇒≾ᵣ
+    (≃ᵣ-trans (·ᵣ-identityˡ _) (map-≃ᵉ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε''))))
+step-grade-≾ BOX     = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ UNBOX   = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ (SUB-APP {r = _ ‼ₛ s}) =
-  ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ s)
-step-grade-≾ SUB-IF  = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ SUB-CASEℕ = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ SUB-RECℕ = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+  ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)) (map-monotoneᵉ s)
+step-grade-≾ SUB-IF  = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ SUB-CASEℕ = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ SUB-RECℕ = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ (SUB {w = _ ‼ₛ q}) =
-  ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ q)
+  ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)) (map-monotoneᵉ q)
 
 -- invariants preserved by the small-step operational semantics, stated in
 -- terms of the two states' grades

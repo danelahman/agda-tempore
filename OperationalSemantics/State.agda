@@ -89,7 +89,7 @@ data _≤ₛ_ : ∀ {Γ Γ'} → 𝕊 Γ → 𝕊 Γ' → Set where
             → S ≤ₛ (S' ∷ₛ V)
 
 -- The grade δ accumulated when passing from a state 𝕊 to a successor state 𝕊',
--- i.e. the δ with state-grade S' ≡ state-grade S ·ᵣ δ (see state-grade-≤ₛ).
+-- i.e. the δ with state-grade S' ≃ᵣ state-grade S ·ᵣ δ (see state-grade-≤ₛ).
 
 ≤ₛ-grade : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'} → S ≤ₛ S' → R
 ≤ₛ-grade id-suc       = uᵣ
@@ -100,11 +100,11 @@ data _≤ₛ_ : ∀ {Γ Γ'} → 𝕊 Γ → 𝕊 Γ' → Set where
 
 state-grade-≤ₛ : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'}
                → (q : S ≤ₛ S')
-               → state-grade S' ≡ state-grade S ·ᵣ ≤ₛ-grade q
+               → state-grade S' ≃ᵣ state-grade S ·ᵣ ≤ₛ-grade q
 state-grade-≤ₛ {S = S} id-suc =
-  sym (·ᵣ-identityʳ (state-grade S))
+  ≃ᵣ-sym (·ᵣ-identityʳ (state-grade S))
 state-grade-≤ₛ {S = S} (⟨⟩-suc ρ q) =
-  trans (cong (_·ᵣ ρ) (state-grade-≤ₛ q)) (·ᵣ-assoc (state-grade S) (≤ₛ-grade q) ρ)
+  ≃ᵣ-trans (·ᵣ-cong (state-grade-≤ₛ q) ≃ᵣ-refl) (·ᵣ-assoc (state-grade S) (≤ₛ-grade q) ρ)
 state-grade-≤ₛ (∷-suc V q) =
   state-grade-≤ₛ q
 
@@ -120,9 +120,9 @@ suc-comp-ren : ∀ {Γ Γ'}
              → Ren [] (toCtx S' ⟨ ρ''' ⟩) (toCtx S ⟨ ρ'' ⟩)
 
 suc-comp-ren {ρ''' = ρ'''} id-suc δρ'''≾ρ'' =
-  ⟨⟩-≤-ren (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityˡ ρ'''))) δρ'''≾ρ'')
+  ⟨⟩-≤-ren (≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-identityˡ ρ''')) δρ'''≾ρ'')
 suc-comp-ren {ρ''' = ρ'''} (⟨⟩-suc ρ q) δρ'''≾ρ'' =
-  suc-comp-ren q (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-assoc (≤ₛ-grade q) ρ ρ'''))) δρ'''≾ρ'') ∘ʳ ⟨⟩-μ-ren
+  suc-comp-ren q (≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-assoc (≤ₛ-grade q) ρ ρ''')) δρ'''≾ρ'') ∘ʳ ⟨⟩-μ-ren
 suc-comp-ren (∷-suc V q) δρ'''≾ρ'' =
   suc-comp-ren q δρ'''≾ρ'' ∘ʳ cong-⟨⟩-ren wk-ren
 
@@ -135,7 +135,7 @@ cancelled⇒total : ∀ {Γ Γ'} → {a b : R} → {S : 𝕊 Γ} → {S' : 𝕊 
                 → state-grade S' ·ᵣ a ≾ᵣ state-grade S ·ᵣ b
 cancelled⇒total {a = a} {S = S} q δa≾b =
   ≾ᵣ-trans
-    (≾ᵣ-reflexive (trans (cong (_·ᵣ a) (state-grade-≤ₛ q)) (·ᵣ-assoc (state-grade S) (≤ₛ-grade q) a)))
+    (≃ᵣ⇒≾ᵣ (≃ᵣ-trans (·ᵣ-cong (state-grade-≤ₛ q) ≃ᵣ-refl) (·ᵣ-assoc (state-grade S) (≤ₛ-grade q) a)))
     (·ᵣ-monoʳ-≾ᵣ δa≾b)
 
 -- Concatenation/composition of states

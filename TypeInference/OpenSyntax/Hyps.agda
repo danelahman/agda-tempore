@@ -134,7 +134,7 @@ data _⊩ᵗᵛ_≾_ {Θ : Scope} (Q : Hyps Θ) : TyVar Θ → TyVar Θ → Set 
 -- Convertibility: the monoid laws, commutativity of multiplication
 -- where the grade declares it, commutativity of the join,
 -- distributivity of multiplication over the join, the constants'
--- arithmetic, `∣_∣̂ᵉ` being a monoid morphism, and absorption of a join
+-- equivalence and arithmetic, `∣_∣̂ᵉ` being a monoid morphism, and absorption of a join
 -- by an upper bound. Idempotence, the top's absorption, antisymmetry at
 -- the empty hypothesis set and associativity of the join are derived
 -- below.
@@ -160,6 +160,7 @@ data _≡̂ᵣ_ {Θ} where
   ≡̂ᵣ-assoc      : ∀ {ρ₁ ρ₂ ρ₃} → (ρ₁ ·̂ᵣ ρ₂) ·̂ᵣ ρ₃ ≡̂ᵣ ρ₁ ·̂ᵣ (ρ₂ ·̂ᵣ ρ₃)
   ≡̂ᵣ-identityˡ  : ∀ {ρ} → ûᵣ ·̂ᵣ ρ ≡̂ᵣ ρ
   ≡̂ᵣ-identityʳ  : ∀ {ρ} → ρ ·̂ᵣ ûᵣ ≡̂ᵣ ρ
+  ≡̂ᵣ-const     : ∀ {ρ ρ'} → ρ ≃ᵣ ρ' → rconst ρ ≡̂ᵣ rconst ρ'
   ≡̂ᵣ-const-·    : ∀ {ρ ρ'} → rconst ρ ·̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ·ᵣ ρ')
   ≡̂ᵣ-comm       : ∀ {ρ₁ ρ₂} → Is-just ·ᵣ-comm? → ρ₁ ·̂ᵣ ρ₂ ≡̂ᵣ ρ₂ ·̂ᵣ ρ₁
   ≡̂ᵣ-cong-⊔     : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≡̂ᵣ ρ₁' → ρ₂ ≡̂ᵣ ρ₂'
@@ -183,6 +184,7 @@ data _≡̂ₑ_ {Θ} where
   ≡̂ₑ-assoc      : ∀ {ε₁ ε₂ ε₃} → (ε₁ ·̂ₑ ε₂) ·̂ₑ ε₃ ≡̂ₑ ε₁ ·̂ₑ (ε₂ ·̂ₑ ε₃)
   ≡̂ₑ-identityˡ  : ∀ {ε} → ûₑ ·̂ₑ ε ≡̂ₑ ε
   ≡̂ₑ-identityʳ  : ∀ {ε} → ε ·̂ₑ ûₑ ≡̂ₑ ε
+  ≡̂ₑ-const     : ∀ {ε ε'} → ε ≃ₑ ε' → econst ε ≡̂ₑ econst ε'
   ≡̂ₑ-const-·    : ∀ {ε ε'} → econst ε ·̂ₑ econst ε' ≡̂ₑ econst (ε ·ₑ ε')
   ≡̂ₑ-comm       : ∀ {ε₁ ε₂} → Is-just ·ₑ-comm? → ε₁ ·̂ₑ ε₂ ≡̂ₑ ε₂ ·̂ₑ ε₁
   ≡̂ₑ-cong-⊔     : ∀ {ε₁ ε₁' ε₂ ε₂'} → ε₁ ≡̂ₑ ε₁' → ε₂ ≡̂ₑ ε₂'
@@ -259,6 +261,21 @@ data _⊩_≾̂ₑ_ {Θ} Q where
 
 ⊩≾̂ₑ-refl : ∀ {Θ} {Q : Hyps Θ} {ε} → Q ⊩ ε ≾̂ₑ ε
 ⊩≾̂ₑ-refl = eqₑ ≡̂ₑ-refl
+
+-- Same expressions are convertible
+
+≅ᵉ⇒≡̂ : ∀ {Θ} {ε ε' : EExp Θ} → ε ≅ᵉ ε' → ε ≡̂ₑ ε'
+≅ᵉ⇒≡̂ evar≅       = ≡̂ₑ-refl
+≅ᵉ⇒≡̂ (econst≅ e) = ≡̂ₑ-const e
+≅ᵉ⇒≡̂ (·≅ p q)    = ≡̂ₑ-cong (≅ᵉ⇒≡̂ p) (≅ᵉ⇒≡̂ q)
+≅ᵉ⇒≡̂ (⊔≅ p q)    = ≡̂ₑ-cong-⊔ (≅ᵉ⇒≡̂ p) (≅ᵉ⇒≡̂ q)
+
+≅ʳ⇒≡̂ : ∀ {Θ} {ρ ρ' : RExp Θ} → ρ ≅ʳ ρ' → ρ ≡̂ᵣ ρ'
+≅ʳ⇒≡̂ rvar≅       = ≡̂ᵣ-refl
+≅ʳ⇒≡̂ (rconst≅ e) = ≡̂ᵣ-const e
+≅ʳ⇒≡̂ (·≅ p q)    = ≡̂ᵣ-cong (≅ʳ⇒≡̂ p) (≅ʳ⇒≡̂ q)
+≅ʳ⇒≡̂ (⊔≅ p q)    = ≡̂ᵣ-cong-⊔ (≅ʳ⇒≡̂ p) (≅ʳ⇒≡̂ q)
+≅ʳ⇒≡̂ (∣∣≅ p)     = ≡̂ᵣ-map-cong (≅ᵉ⇒≡̂ p)
 
 -- Idempotence of the join and absorption by the top: instances of
 -- absorption, as in `Syntax.Grades`
@@ -661,6 +678,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ᵣ-subst σ ≡̂ᵣ-assoc         = ≡̂ᵣ-assoc
 ≡̂ᵣ-subst σ ≡̂ᵣ-identityˡ     = ≡̂ᵣ-identityˡ
 ≡̂ᵣ-subst σ ≡̂ᵣ-identityʳ     = ≡̂ᵣ-identityʳ
+≡̂ᵣ-subst σ (≡̂ᵣ-const e)     = ≡̂ᵣ-const e
 ≡̂ᵣ-subst σ ≡̂ᵣ-const-·       = ≡̂ᵣ-const-·
 ≡̂ᵣ-subst σ (≡̂ᵣ-comm ij)     = ≡̂ᵣ-comm ij
 ≡̂ᵣ-subst σ (≡̂ᵣ-cong-⊔ p q)  = ≡̂ᵣ-cong-⊔ (≡̂ᵣ-subst σ p) (≡̂ᵣ-subst σ q)
@@ -681,6 +699,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ₑ-subst σ ≡̂ₑ-assoc         = ≡̂ₑ-assoc
 ≡̂ₑ-subst σ ≡̂ₑ-identityˡ     = ≡̂ₑ-identityˡ
 ≡̂ₑ-subst σ ≡̂ₑ-identityʳ     = ≡̂ₑ-identityʳ
+≡̂ₑ-subst σ (≡̂ₑ-const e)     = ≡̂ₑ-const e
 ≡̂ₑ-subst σ ≡̂ₑ-const-·       = ≡̂ₑ-const-·
 ≡̂ₑ-subst σ (≡̂ₑ-comm ij)     = ≡̂ₑ-comm ij
 ≡̂ₑ-subst σ (≡̂ₑ-cong-⊔ p q)  = ≡̂ₑ-cong-⊔ (≡̂ₑ-subst σ p) (≡̂ₑ-subst σ q)

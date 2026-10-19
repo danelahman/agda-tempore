@@ -34,7 +34,7 @@ open import Relation.Nullary.Decidable using (isYes)
 open import Syntax.Grades using (module Grade)
 open import Syntax.Grades.Regular.Decide 3 using (nonempty?)
 open import Syntax.Grades.Example.Traces.Regular.RightSided Op 2 code code-injective
-open Syntax.Grades.Grade right-sided using (_≾?_; _≡?_)
+open Syntax.Grades.Grade right-sided using (_≾?_; _≃?_)
 
 read·tick²≾⊤ : isYes ((operationᴿ read ·ᴿ of-dur 2) ≾? ⊤) ≡ true
 read·tick²≾⊤ = refl
@@ -42,7 +42,7 @@ read·tick²≾⊤ = refl
 send⋠read : isYes (operationᴿ send ≾? operationᴿ read) ≡ false
 send⋠read = refl
 
-of-dur-2+3 : isYes ((of-dur 2 ·ᴿ of-dur 3) ≡? of-dur 5) ≡ true
+of-dur-2+3 : isYes ((of-dur 2 ·ᴿ of-dur 3) ≃? of-dur 5) ≡ true
 of-dur-2+3 = refl
 
 -- `⊤` is not absorbing
@@ -53,7 +53,7 @@ of-dur-2+3 = refl
 -- literals
 
 distrib : isYes (⌊ (‵op read ∣ ‵op send) · delay 1 ⌋
-                 ≡? ⌊ ‵op read · delay 1 ∣ ‵op send · delay 1 ⌋) ≡ true
+                 ≃? ⌊ ‵op read · delay 1 ∣ ‵op send · delay 1 ⌋) ≡ true
 distrib = refl
 
 -- the runs that never send
@@ -67,7 +67,7 @@ reads≾no-send = refl
 send⋠no-send : isYes (⌊ ‵op read · ‵op send ⌋ ≾? ⌊ no-send ⌋) ≡ false
 send⋠no-send = refl
 
-de-morgan : isYes (⌊ ~ (‵op read ∣ ‵op send) ⌋ ≡? ⌊ ~ ‵op read & ~ ‵op send ⌋) ≡ true
+de-morgan : isYes (⌊ ~ (‵op read ∣ ‵op send) ⌋ ≃? ⌊ ~ ‵op read & ~ ‵op send ⌋) ≡ true
 de-morgan = refl
 
 -- `‵op send & ~ ‵op send` is empty, so `⌊ ‵op send & ~ ‵op send ⌋` is

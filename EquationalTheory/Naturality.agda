@@ -149,6 +149,26 @@ coerce-ε-subst : ∀ {Γ A ε₁ ε₂ ε₃ ε₄}
                → Γ ⊢C⦂ ε-subst e' (coerce c (ε-subst e M)) == coerce c' M
 coerce-ε-subst refl refl c c' M = subC-cong C-refl
 
+-- The same for regrading along an equivalence, which is a sub-effecting:
+-- stated at the underlying orderings, which unification can read off a term.
+
+ε-≃-cong : ∀ {Γ A ε ε'} → (c : ε ≾ₑ ε') → {M N : Γ ⊢C⦂ A ‼ ε}
+         → Γ ⊢C⦂ M == N
+         ------------------------------------------
+         → Γ ⊢C⦂ coerce c M == coerce c N
+ε-≃-cong c p = subC-cong p
+
+coerce-ε-≃ : ∀ {Γ A ε₁ ε₂ ε₃ ε₄}
+           → (e : ε₁ ≾ₑ ε₂) → (e' : ε₃ ≾ₑ ε₄)
+           → (c : ε₂ ≾ₑ ε₃) → (c' : ε₁ ≾ₑ ε₄)
+           → (M : Γ ⊢C⦂ A ‼ ε₁)
+           ----------------------------------------------------------
+           → Γ ⊢C⦂ coerce e' (coerce c (coerce e M)) == coerce c' M
+coerce-ε-≃ {A = A} e e' c c' M =
+  C-trans (subC-cong (subC-trans (<:ᵛ-refl A ‼ₛ e) (<:ᵛ-refl A ‼ₛ c)
+                                 (<:ᵛ-refl A ‼ₛ ≾ₑ-trans e c) M))
+  (C-trans (subC-trans _ (<:ᵛ-refl A ‼ₛ e') (<:ᵛ-refl A ‼ₛ c') M) C-refl)
+
 
 -- Returning: expand the subsumed `return` by the sequencing eta rule, move
 -- the subsumption onto the trailing binder, and collapse the bind. Only the
@@ -163,9 +183,9 @@ subC-return : ∀ {Γ A A' ε'}
             → Γ ⊢C⦂ subC (return V) (p ‼ₛ q) == coerce q (return (subV V p))
 subC-return p q V =
   C-trans (seq-eta (subC (return V) (p ‼ₛ q)))
-  (C-trans (ε-subst-cong _ (subC-seq p q (return V) (return hd)))
-  (C-trans (ε-subst-cong _ (subC-cong (seq-return V (return (subV hd p)))))
-           (coerce-ε-subst _ _ (·ₑ-monoˡ-≾ₑ q) q (return (subV V p)))))
+  (C-trans (ε-≃-cong _ (subC-seq p q (return V) (return hd)))
+  (C-trans (ε-≃-cong _ (subC-cong (seq-return V (return (subV hd p)))))
+           (coerce-ε-≃ _ _ (·ₑ-monoˡ-≾ₑ q) q (return (subV V p)))))
 
 
 -- The subsumption of a computation, expanded by the sequencing eta rule: a
@@ -178,11 +198,11 @@ subC-seq-eta : ∀ {Γ A A' ε₁ ε₂}
              → (M : Γ ⊢C⦂ A ‼ ε₁)
              -------------------------------------------------------------
              → Γ ⊢C⦂ subC M (v ‼ₛ rel)
-                  == ε-subst (·ₑ-identityʳ ε₂)
+                  == ε-≃ (·ₑ-identityʳ ε₂)
                        (coerce (·ₑ-monoˡ-≾ₑ rel) (M ⨟ return (subV hd v)))
 subC-seq-eta v rel M =
   C-trans (seq-eta (subC M (v ‼ₛ rel)))
-          (ε-subst-cong _ (subC-seq v rel M (return hd)))
+          (ε-≃-cong _ (subC-seq v rel M (return hd)))
 
 -- An `ε-subst` in a continuation is one on the composite.
 
@@ -223,24 +243,27 @@ subC-seq-in {Γ} {B' = B'} {ε = ε} {ε₁' = ε₁'} v q M N =
                                         (v ‼ₛ q) N))))
   where
     assoc-≾ : ε ·ₑ (ε₁' ·ₑ uₑ) ≾ₑ ε ·ₑ ε₁'
-    assoc-≾ = ≾ₑ-reflexive (cong (ε ·ₑ_) (·ₑ-identityʳ ε₁'))
+    assoc-≾ = ≃ₑ⇒≾ₑ (·ₑ-cong ≃ₑ-refl (·ₑ-identityʳ ε₁'))
 
     value-half : Γ ⊢C⦂ subC (M ⨟ N) (v ‼ₛ ≾ₑ-refl)
                     == M ⨟ subC N (v ‼ₛ ≾ₑ-refl)
     value-half =
       C-trans
         (C-trans (subC-seq-eta v ≾ₑ-refl (M ⨟ N))
-        (C-trans (ε-subst-cong _ (subC-cong
-                    (==-castᶜ refl (cong (λ X → ε-subst (sym (·ₑ-assoc ε ε₁' uₑ)) (M ⨟ (N ⨟ X)))
+        (C-trans (ε-≃-cong _ (subC-cong
+                    (==-castᶜ refl (cong (λ X → ε-≃ (≃ₑ-sym (·ₑ-assoc ε ε₁' uₑ)) (M ⨟ (N ⨟ X)))
                                          (cong return (subV-≡ var-≡)))
                               (seq-assoc M N (return (subV hd v))))))
-                 (coerce-ε-subst _ _ (·ₑ-monoˡ-≾ₑ ≾ₑ-refl) assoc-≾
+                 (coerce-ε-≃ _ _ (·ₑ-monoˡ-≾ₑ ≾ₑ-refl) assoc-≾
                                  (M ⨟ (N ⨟ return (subV hd v))))))
         (C-sym
           (C-trans (seq-cong C-refl (subC-seq-eta v ≾ₑ-refl N))
-          (C-trans (seq-cong C-refl (ε-subst-cong _ (subC-refl _ _)))
-          (C-trans (==-castᶜ refl (seq-ε-subst _ M (N ⨟ return (subV hd v))) C-refl)
-                   (ε-subst-coerce _ assoc-≾ (M ⨟ (N ⨟ return (subV hd v))))))))
+          (C-trans (seq-cong C-refl (ε-≃-cong _ (subC-refl _ _)))
+          (C-trans (C-sym (coerce-seq-in _ M (N ⨟ return (subV hd v))))
+                   (==-castᶜ refl
+                      (cong (λ w → coerce w (M ⨟ (N ⨟ return (subV hd v))))
+                            (≾ₑ-irrelevant _ _))
+                      C-refl)))))
 
 
 -- Pattern matching. At a pair scrutinee the beta rule reduces both sides to

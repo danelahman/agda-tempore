@@ -174,7 +174,7 @@ infixl 7 _⊔ₒ_
 ·ₒ-iter [ m ,+∞⟩ = m≤m+n m m
 
 left-sided-intervals : Grade ℕᴰ
-left-sided-intervals = record
+left-sided-intervals = posetᵍ record
   { Carrier          = 𝕀
   ; _·_               = _·ₒ_
   ; u                 = uₒ
@@ -401,7 +401,7 @@ infixl 7 _⊔ᵗ_
 ·ᵗ-iter untimed   = tt
 
 left-sided-intervals-with-⊤ : Grade ℕᴰ
-left-sided-intervals-with-⊤ = record
+left-sided-intervals-with-⊤ = posetᵍ record
   { Carrier           = 𝕀⊤
   ; _·_               = _·ᵗ_
   ; u                 = uᵗ

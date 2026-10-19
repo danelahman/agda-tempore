@@ -31,6 +31,12 @@ open import Syntax.Grades
 
 open import Util.Equality
 
+open Grade using (≃-refl; ≃-trans)
+
+private
+  pairᵐ : ∀ {a b c d : Set} → a × b → c × d → (a × c) × (b × d)
+  pairᵐ (p , p') (q , q') = (p , q) , (p' , q')
+
 ------------------------------------------------------------------------
 -- Composition of morphisms
 
@@ -44,11 +50,11 @@ module _ {D : Duration} {G₁ G₂ G₃ : Grade D} where
   g ∘ᵍ f = record
     { map          = λ c → map g (map f c)
     ; map-monotone = λ p → map-monotone g (map-monotone f p)
-    ; map-u        = trans (cong (map g) (map-u f)) (map-u g)
-    ; map-·        = trans (cong (map g) (map-· f)) (map-· g)
-    ; map-⊤        = trans (cong (map g) (map-⊤ f)) (map-⊤ g)
-    ; map-⊔        = trans (cong (map g) (map-⊔ f)) (map-⊔ g)
-    ; map-of-dur   = trans (cong (map g) (map-of-dur f)) (map-of-dur g)
+    ; map-u        = ≃-trans G₃ (map-≃ g (map-u f)) (map-u g)
+    ; map-·        = ≃-trans G₃ (map-≃ g (map-· f)) (map-· g)
+    ; map-⊤        = ≃-trans G₃ (map-≃ g (map-⊤ f)) (map-⊤ g)
+    ; map-⊔        = ≃-trans G₃ (map-≃ g (map-⊔ f)) (map-⊔ g)
+    ; map-of-dur   = ≃-trans G₃ (map-≃ g (map-of-dur f)) (map-of-dur g)
     }
 
 ------------------------------------------------------------------------
@@ -65,14 +71,12 @@ G₁ ×ᵍ G₂ = record
   ; ⊤               = (⊤₁ , ⊤₂)
   ; _⊔_             = λ (c₁ , c₂) (d₁ , d₂) → (c₁ ⊔₁ d₁ , c₂ ⊔₂ d₂)
   ; of-dur          = λ τ → (of-dur₁ τ , of-dur₂ τ)
-  ; ·-identityˡ     = λ (c₁ , c₂) → cong₂ _,_ (G₁.·-identityˡ c₁) (G₂.·-identityˡ c₂)
-  ; ·-identityʳ     = λ (c₁ , c₂) → cong₂ _,_ (G₁.·-identityʳ c₁) (G₂.·-identityʳ c₂)
+  ; ·-identityˡ     = λ (c₁ , c₂) → pair≃ (G₁.·-identityˡ c₁) (G₂.·-identityˡ c₂)
+  ; ·-identityʳ     = λ (c₁ , c₂) → pair≃ (G₁.·-identityʳ c₁) (G₂.·-identityʳ c₂)
   ; ·-assoc         = λ (c₁ , c₂) (d₁ , d₂) (e₁ , e₂) →
-                        cong₂ _,_ (G₁.·-assoc c₁ d₁ e₁) (G₂.·-assoc c₂ d₂ e₂)
+                        pair≃ (G₁.·-assoc c₁ d₁ e₁) (G₂.·-assoc c₂ d₂ e₂)
   ; ≾-refl          = G₁.≾-refl , G₂.≾-refl
   ; ≾-trans         = λ (p₁ , p₂) (q₁ , q₂) → G₁.≾-trans p₁ q₁ , G₂.≾-trans p₂ q₂
-  ; ≾-antisym       = λ (p₁ , p₂) (q₁ , q₂) →
-                        cong₂ _,_ (G₁.≾-antisym p₁ q₁) (G₂.≾-antisym p₂ q₂)
   ; ≾-irrelevant    = λ (p₁ , p₂) (q₁ , q₂) →
                         cong₂ _,_ (G₁.≾-irrelevant p₁ q₁) (G₂.≾-irrelevant p₂ q₂)
   ; _≾?_            = λ (c₁ , c₂) (d₁ , d₂) → (c₁ G₁.≾? d₁) ×-dec (c₂ G₂.≾? d₂)
@@ -88,18 +92,23 @@ G₁ ×ᵍ G₂ = record
                         G₁.·-distribʳ-⊔-≾ c₁ d₁ e₁ , G₂.·-distribʳ-⊔-≾ c₂ d₂ e₂
   ; ≾-zero-productˡ = λ (p₁ , p₂) → G₁.≾-zero-productˡ p₁ , G₂.≾-zero-productˡ p₂
   ; ≾-zero-productʳ = λ (p₁ , p₂) → G₁.≾-zero-productʳ p₁ , G₂.≾-zero-productʳ p₂
-  ; of-dur-zero     = cong₂ _,_ G₁.of-dur-zero G₂.of-dur-zero
-  ; of-dur-plus     = cong₂ _,_ G₁.of-dur-plus G₂.of-dur-plus
+  ; of-dur-zero     = pair≃ G₁.of-dur-zero G₂.of-dur-zero
+  ; of-dur-plus     = pair≃ G₁.of-dur-plus G₂.of-dur-plus
+  ; antisym?        = zipWith (λ a₁ a₂ (p₁ , p₂) (q₁ , q₂) → cong₂ _,_ (a₁ p₁ q₁) (a₂ p₂ q₂))
+                              G₁.antisym? G₂.antisym?
   ; u-least?        = zipWith (λ l₁ l₂ (c₁ , c₂) → l₁ c₁ , l₂ c₂)
                               G₁.u-least? G₂.u-least?
   ; ·-comm?         = zipWith (λ m₁ m₂ (c₁ , c₂) (d₁ , d₂) →
-                                 cong₂ _,_ (m₁ c₁ d₁) (m₂ c₂ d₂))
+                                 pair≃ (m₁ c₁ d₁) (m₂ c₂ d₂))
                               G₁.·-comm? G₂.·-comm?
   ; plus?           = λ (c₁ , c₂) → zipWith plus× (G₁.plus? c₁) (G₂.plus? c₂)
   }
   where
     module G₁ = Grade G₁
     module G₂ = Grade G₂
+    pair≃ : ∀ {a a' b b'} → a G₁.≃ a' → b G₂.≃ b'
+          → (a G₁.≾ a' × b G₂.≾ b') × (a' G₁.≾ a × b' G₂.≾ b)
+    pair≃ (p , p') (q , q') = (p , q) , (p' , q')
     open Grade G₁ using () renaming (Carrier to C₁; _·_ to _·₁_; u to u₁;
       _≾_ to _≾₁_; ⊤ to ⊤₁; _⊔_ to _⊔₁_; of-dur to of-dur₁)
     open Grade G₂ using () renaming (Carrier to C₂; _·_ to _·₂_; u to u₂;
@@ -125,22 +134,22 @@ module _ {D : Duration} {G₁ G₂ : Grade D} where
   π₁ᵍ = record
     { map          = proj₁
     ; map-monotone = proj₁
-    ; map-u        = refl
-    ; map-·        = refl
-    ; map-⊤        = refl
-    ; map-⊔        = refl
-    ; map-of-dur   = refl
+    ; map-u        = ≃-refl G₁
+    ; map-·        = ≃-refl G₁
+    ; map-⊤        = ≃-refl G₁
+    ; map-⊔        = ≃-refl G₁
+    ; map-of-dur   = ≃-refl G₁
     }
 
   π₂ᵍ : (G₁ ×ᵍ G₂) →ᵍ G₂
   π₂ᵍ = record
     { map          = proj₂
     ; map-monotone = proj₂
-    ; map-u        = refl
-    ; map-·        = refl
-    ; map-⊤        = refl
-    ; map-⊔        = refl
-    ; map-of-dur   = refl
+    ; map-u        = ≃-refl G₂
+    ; map-·        = ≃-refl G₂
+    ; map-⊤        = ≃-refl G₂
+    ; map-⊔        = ≃-refl G₂
+    ; map-of-dur   = ≃-refl G₂
     }
 
 module _ {D : Duration} {G G₁ G₂ : Grade D} where
@@ -151,11 +160,11 @@ module _ {D : Duration} {G G₁ G₂ : Grade D} where
   ⟨ f , g ⟩ᵍ = record
     { map          = λ c → (map f c , map g c)
     ; map-monotone = λ p → map-monotone f p , map-monotone g p
-    ; map-u        = cong₂ _,_ (map-u f) (map-u g)
-    ; map-·        = cong₂ _,_ (map-· f) (map-· g)
-    ; map-⊤        = cong₂ _,_ (map-⊤ f) (map-⊤ g)
-    ; map-⊔        = cong₂ _,_ (map-⊔ f) (map-⊔ g)
-    ; map-of-dur   = cong₂ _,_ (map-of-dur f) (map-of-dur g)
+    ; map-u        = pairᵐ (map-u f) (map-u g)
+    ; map-·        = pairᵐ (map-· f) (map-· g)
+    ; map-⊤        = pairᵐ (map-⊤ f) (map-⊤ g)
+    ; map-⊔        = pairᵐ (map-⊔ f) (map-⊔ g)
+    ; map-of-dur   = pairᵐ (map-of-dur f) (map-of-dur g)
     }
 
   -- the universal property: pairing followed by a projection is the
@@ -184,11 +193,11 @@ module _ {D : Duration} {G₁ G₂ H₁ H₂ : Grade D} where
   f ×ᵐ g = record
     { map          = λ (c₁ , c₂) → (map f c₁ , map g c₂)
     ; map-monotone = λ (p₁ , p₂) → map-monotone f p₁ , map-monotone g p₂
-    ; map-u        = cong₂ _,_ (map-u f) (map-u g)
-    ; map-·        = cong₂ _,_ (map-· f) (map-· g)
-    ; map-⊤        = cong₂ _,_ (map-⊤ f) (map-⊤ g)
-    ; map-⊔        = cong₂ _,_ (map-⊔ f) (map-⊔ g)
-    ; map-of-dur   = cong₂ _,_ (map-of-dur f) (map-of-dur g)
+    ; map-u        = pairᵐ (map-u f) (map-u g)
+    ; map-·        = pairᵐ (map-· f) (map-· g)
+    ; map-⊤        = pairᵐ (map-⊤ f) (map-⊤ g)
+    ; map-⊔        = pairᵐ (map-⊔ f) (map-⊔ g)
+    ; map-of-dur   = pairᵐ (map-of-dur f) (map-of-dur g)
     }
 
 ------------------------------------------------------------------------

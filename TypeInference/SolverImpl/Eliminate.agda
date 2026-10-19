@@ -93,8 +93,8 @@ open import Induction.WellFounded using (Acc; acc; WfRec)
 
 open import Relation.Nullary using (¬_; yes; no)
 open import Relation.Nullary.Decidable using (⌊_⌋; ¬?)
-open import Relation.Binary.Definitions using (DecidableEquality)
-open import Relation.Binary.Construct.Closure.ReflexiveTransitive using (Star; fold)
+open import Relation.Binary.Definitions using (Decidable)
+open import Relation.Binary.Construct.Closure.ReflexiveTransitive using (Star; fold) renaming (ε to ε⋆)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -169,36 +169,36 @@ below-∪ : (p q : Pol) → below (p ∪ᴾ q) ≡ false
         → (below p ≡ false) × (below q ≡ false)
 below-∪ p q e = ∨-false (below p) (below q) e
 
--- The pairs whose two sides differ
+-- The pairs whose two sides are not the same
 
-apart : ∀ {X : Set} → DecidableEquality X → List (X × X) → List (X × X)
+apart : ∀ {X : Set} {_≅_ : X → X → Set} → Decidable _≅_ → List (X × X) → List (X × X)
 apart _≟_ = filter (λ p → ¬? (proj₁ p ≟ proj₂ p))
 
-apart-⊆ : ∀ {X : Set} → (_≟_ : DecidableEquality X) → ∀ {p l}
+apart-⊆ : ∀ {X : Set} {_≅_ : X → X → Set} → (_≟_ : Decidable _≅_) → ∀ {p l}
         → p ∈ apart _≟_ l → p ∈ l
 apart-⊆ _≟_ m = proj₁ (∈-filter⁻ (λ p → ¬? (proj₁ p ≟ proj₂ p)) m)
 
-apart-∈ : ∀ {X : Set} → (_≟_ : DecidableEquality X) → ∀ {a b l}
-        → (a , b) ∈ l → (a ≡ b) ⊎ ((a , b) ∈ apart _≟_ l)
+apart-∈ : ∀ {X : Set} {_≅_ : X → X → Set} → (_≟_ : Decidable _≅_) → ∀ {a b l}
+        → (a , b) ∈ l → (a ≅ b) ⊎ ((a , b) ∈ apart _≟_ l)
 apart-∈ _≟_ {a} {b} m with a ≟ b
 ... | yes e  = inj₁ e
 ... | no  ¬e = inj₂ (∈-filter⁺ (λ p → ¬? (proj₁ p ≟ proj₂ p)) m ¬e)
 
--- Along a split, the pieces apart from the reflexive ones
+-- Along a split, the pieces apart from those with the same two sides
 
-apart-back : ∀ {Ψ} {X : Set} → (_≟_ : DecidableEquality X)
+apart-back : ∀ {Ψ} {X : Set} {_≅_ : X → X → Set} → (_≟_ : Decidable _≅_)
            → {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X × X → Set}
-           → (∀ {Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} {x} → P Q δ (x , x))
+           → (∀ {Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} {x x'} → x ≅ x' → P Q δ (x , x'))
            → ∀ {l} → (S : Split P l) → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
            → (∀ {b} → b ∈ apart _≟_ (Split.out S) → P Q δ b) → ∀ {a} → a ∈ l → P Q δ a
 apart-back _≟_ {P} prefl S {Q = Q} δ k = Split.back S δ pick
   where
     pick : ∀ {b} → b ∈ Split.out S → P Q δ b
     pick {x , x'} mb with apart-∈ _≟_ mb
-    ... | inj₁ refl = prefl
+    ... | inj₁ e = prefl e
     ... | inj₂ m    = k m
 
-apart-fwd : ∀ {Ψ} {X : Set} → (_≟_ : DecidableEquality X)
+apart-fwd : ∀ {Ψ} {X : Set} {_≅_ : X → X → Set} → (_≟_ : Decidable _≅_)
           → {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X × X → Set}
           → ∀ {l} → (S : Split P l) → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
           → (∀ {a} → a ∈ l → P Q δ a) → ∀ {b} → b ∈ apart _≟_ (Split.out S) → P Q δ b
@@ -1267,12 +1267,12 @@ equateᵉ {Θ} C Q i b eq =
       where
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
         ordR {ρ} m with apart-∈ _≟ʳ_ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m)
-        ... | inj₁ e  = subst (Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ_) e ⊩≾̂ᵣ-refl
+        ... | inj₁ e  = eqᵣ (≅ʳ⇒≡̂ e)
         ... | inj₂ m' = hypᵣ m'
 
         ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q₀ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ ε' [ η₀ ]ᵉ
         ordE {ε} m with apart-∈ _≟ᵉ_ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m)
-        ... | inj₁ e  = subst (Q₀ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ_) e ⊩≾̂ₑ-refl
+        ... | inj₁ e  = eqₑ (≅ᵉ⇒≡̂ e)
         ... | inj₂ m' = hypₑ m'
 
     keep₀ : Q ⊨ᴴ Q₀
@@ -1312,7 +1312,7 @@ equateʳ {Θ} C Q i b eq =
       where
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
         ordR {ρ} m with apart-∈ _≟ʳ_ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m)
-        ... | inj₁ e  = subst (Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ_) e ⊩≾̂ᵣ-refl
+        ... | inj₁ e  = eqᵣ (≅ʳ⇒≡̂ e)
         ... | inj₂ m' = hypᵣ m'
 
     keep₀ : Q ⊨ᴴ Q₀
@@ -1398,9 +1398,14 @@ collapseᵗ? {Θ} F C Q = from moves
                       ∧ any (λ p → ⌊ proj₂ p ≟ᶠ β ⌋) (subᵥ Q))
                  (fins (nTy Θ))
 
-    open Reachability _≟ᶠ_ Edge (map (λ { ((a , b) , m) → a , b , m }) (withMem (subᵥ Q))) vs
+    same? : (a b : TyVar Θ) → Maybe (Star Edge a b)
+    same? a b with a ≟ᶠ b
+    ... | yes refl = just ε⋆
+    ... | no _     = nothing
+
+    open Reachability Edge same? (map (λ { ((a , b) , m) → a , b , m }) (withMem (subᵥ Q))) vs
       using (module Collapse)
-    open Collapse (vᵗ F) (λ k → vᵗ F k ≡ false) (λ k → isFalse (vᵗ F k))
+    open Collapse _≟ᶠ_ (vᵗ F) (λ k → vᵗ F k ≡ false) (λ k → isFalse (vᵗ F k))
 
     t≢f : ∀ {b : 𝔹} → b ≡ true → b ≡ false → ⊥
     t≢f refl ()
@@ -1515,12 +1520,12 @@ module Retouch {Θ : Scope} (η₀ : Subst Θ Θ) (tᵣ : RExp Θ × RExp Θ →
 
   instʳ : ∀ {x x'} → (x , x') ∈ rs → retouched ⊩ x [ η₀ ]ʳ ≾̂ᵣ x' [ η₀ ]ʳ
   instʳ m =
-    ordʳ-id (apart-back _≟ʳ_ ⊩≾̂ᵣ-refl Sʳ idˢ (λ mb → idʳ-ord (hypᵣ mb))
+    ordʳ-id (apart-back _≟ʳ_ (λ e → eqᵣ (≡̂ᵣ-subst _ (≅ʳ⇒≡̂ e))) Sʳ idˢ (λ mb → idʳ-ord (hypᵣ mb))
                         (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m))
 
   instᵉ : ∀ {x x'} → (x , x') ∈ es → retouched ⊩ x [ η₀ ]ᵉ ≾̂ₑ x' [ η₀ ]ᵉ
   instᵉ m =
-    ordᵉ-id (apart-back _≟ᵉ_ ⊩≾̂ₑ-refl Sᵉ idˢ (λ mb → idᵉ-ord (hypₑ mb))
+    ordᵉ-id (apart-back _≟ᵉ_ (λ e → eqₑ (≡̂ₑ-subst _ (≅ᵉ⇒≡̂ e))) Sᵉ idˢ (λ mb → idᵉ-ord (hypₑ mb))
                         (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m))
 
   instᵈ : ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK retouched (A [ η₀ ]ᵛ) (ρ [ η₀ ]ʳ)
@@ -1694,8 +1699,7 @@ unitᵉ {Θ} C Q i w = forced C Q Q⁺ η₀ lowg hig (λ β → refl) Q₁ inst
               transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-subst η₀ (lhsᵣ {ρ} f))
                                     (≡̂ᵣ-trans (subst (λ z → ∣ z ∣̂ᵉ ≡̂ᵣ ∣ ûₑ ∣̂ᵉ)
                                                      (sym (updᵉ-hit i ûₑ)) ≡̂ᵣ-refl)
-                                              (subst (λ z → ∣ ûₑ ∣̂ᵉ ≡̂ᵣ rconst z) map-uᵉ
-                                                     ≡̂ᵣ-map-const))))
+                                              (≡̂ᵣ-trans ≡̂ᵣ-map-const (≡̂ᵣ-const map-uᵉ)))))
                      (minᵣ lstᵣ)
         ... | inj₂ mk = instʳ mk
 

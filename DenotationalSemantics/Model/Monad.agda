@@ -125,13 +125,13 @@ record Monad : Set₁ where
 
     T-μ∘η≡id : ∀ {A ε}
              → μᵀ {A} {uₑ} {ε} ∘ᵐ ηᵀ {Tᵒ A ε}
-             ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
+             ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
     T-μ∘Tη≡id : ∀ {A ε}
               → μᵀ {A} {ε} {uₑ} ∘ᵐ Tᶠ (ηᵀ {A})
-              ≈ᵐ ε-substᵀ (sym (·ₑ-identityʳ ε))
+              ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityʳ ε))
     T-μ∘μ≡μ∘Tμ : ∀ {A ε ε' ε''}
                → μᵀ {A} {ε} {ε' ·ₑ ε''} ∘ᵐ Tᶠ (μᵀ {A} {ε'} {ε''})
-               ≈ᵐ ε-substᵀ (·ₑ-assoc ε ε' ε'') ∘ᵐ μᵀ ∘ᵐ μᵀ
+               ≈ᵐ T-≤ (≃ₑ⇒≾ₑ (·ₑ-assoc ε ε' ε'')) ∘ᵐ μᵀ ∘ᵐ μᵀ
 
     -- EFFECTS
 
@@ -174,31 +174,29 @@ record Monad : Set₁ where
 
     delayᵀ-zero : ∀ {A ε'}
                 → delayᵀ {A} {ε'} 0ᴰ
-                ≈ᵐ ε-substᵀ (sym (trans (cong (_·ₑ ε') of-durᵉ-zero)
-                                        (·ₑ-identityˡ ε')))
+                ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (≃ₑ-trans (·ₑ-cong of-durᵉ-zero ≃ₑ-refl) (·ₑ-identityˡ ε')))
                   ∘ᵐ ε
-                  ∘ᵐ []-≤ (≾ᵣ-reflexive (sym of-durʳ-zero))
+                  ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ of-durʳ-zero)
 
     delayᵀ-plus : ∀ {A ε'} → (τ₁ τ₂ : 𝔻)
                 → delayᵀ {A} {of-durᵉ τ₂ ·ₑ ε'} τ₁
                     ∘ᵐ [ of-durʳ τ₁ ]ᶠ (delayᵀ {A} {ε'} τ₂)
                     ∘ᵐ δ
-                    ∘ᵐ []-≤ (≾ᵣ-reflexive (sym of-durʳ-plus))
-                ≈ᵐ ε-substᵀ (trans (cong (_·ₑ ε') of-durᵉ-plus)
-                                   (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε'))
+                    ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ of-durʳ-plus)
+                ≈ᵐ T-≤ (≃ₑ⇒≾ₑ (≃ₑ-trans (·ₑ-cong of-durᵉ-plus ≃ₑ-refl) (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε')))
                   ∘ᵐ delayᵀ {A} {ε'} (τ₁ +ᴰ τ₂)
 
     -- Operations and delays are algebraic
 
     delayᵀ-algebraicity : ∀ {A ε' ε''} → (τ : 𝔻)
                         → μᵀ {A} {of-durᵉ τ ·ₑ ε'} {ε''} ∘ᵐ delayᵀ {ε = ε'} τ
-                        ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-durᵉ τ) ε' ε''))
+                        ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) ε' ε''))
                           ∘ᵐ delayᵀ τ
                           ∘ᵐ [ of-durʳ τ ]ᶠ (μᵀ {A} {ε'} {ε''})
 
     opᵀ-algebraicity : ∀ {A ε ε'} → (op : Op)
                      → μᵀ {A} {op-grade op ·ₑ ε} {ε'} ∘ᵐ opᵀ {ε = ε} op
-                     ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε'))
+                     ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) ε ε'))
                        ∘ᵐ opᵀ op
                        ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (μᵀ {A} {ε} {ε'})))
 
@@ -238,7 +236,7 @@ record Monad : Set₁ where
 
     strᵀ-ηᵀ : ∀ {A B}
             → strᵀ {A} {B} {uₑ} ∘ᵐ mapˣᵐ idᵐ ηᵀ
-            ≈ᵐ ηᵀ {A ×ᵐ B} ∘ᵐ mapˣᵐ (ε ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-uᵉ))) idᵐ
+            ≈ᵐ ηᵀ {A ×ᵐ B} ∘ᵐ mapˣᵐ (ε ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-uᵉ)) idᵐ
 
     -- Multiplication: threading the box through two monad layers agrees with
     -- threading it once at the combined grade, after splitting the box with
@@ -249,7 +247,7 @@ record Monad : Set₁ where
             ≈ᵐ μᵀ {A ×ᵐ B} {ε} {ε'}
               ∘ᵐ Tᶠ (strᵀ {A} {B} {ε'})
               ∘ᵐ strᵀ {[ mapᵉ ε' ]ᵒ A} {Tᵒ B ε'} {ε}
-              ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ))) idᵐ
+              ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ)) idᵐ
 
     -- Associativity with the product: box monoidality `[]-monoidal`
     -- distributes the box over the pair.
@@ -266,8 +264,8 @@ record Monad : Set₁ where
       ≈ᵐ delayᵀ τ
         ∘ᵐ [ of-durʳ τ ]ᶠ (strᵀ {A} {B} {ε})
         ∘ᵐ []-monoidal
-        ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive
-             (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-durᵉ))))) idᵐ
+        ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ
+             (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))) idᵐ
 
     -- The operation is algebraic with respect to the strength. The box
     -- `[ mapᵉ (op-grade op) ] A` is split off the strengthened argument and
@@ -282,7 +280,7 @@ record Monad : Set₁ where
                (   map⇒ᵐ idᵐ (strᵀ {A} {B} {ε})
                 ∘ᵐ exp-strᵐ)
              ∘ᵐ []-monoidal
-             ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ))) idᵐ)
+             ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ)) idᵐ)
         ∘ᵐ ⟨ fstᵐ ∘ᵐ sndᵐ , ⟨ fstᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ ⟩ᵐ
 
   -- EFFECT HANDLING
@@ -333,11 +331,11 @@ record Monad : Set₁ where
 
     T-alg-of-handlerᵀ-ηᵀ : ∀ {P A ε'} → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                          → T-alg-of-handlerᵀ bc h ∘ᵐ mapˣᵐ idᵐ (ηᵀ {Tᵒ A ε'})
-                         ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε')) ∘ᵐ sndᵐ
+                         ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε')) ∘ᵐ sndᵐ
 
     T-alg-of-handlerᵀ-delayᵀ : ∀ {P A ε' ε''} → (τ : 𝔻) → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                              → T-alg-of-handlerᵀ bc h ∘ᵐ mapˣᵐ idᵐ (delayᵀ {Tᵒ A ε''} {ε'} τ)
-                             ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-durᵉ τ) ε' ε''))
+                             ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) ε' ε''))
                                ∘ᵐ delayᵀ τ
                                ∘ᵐ [ of-durʳ τ ]ᶠ (T-alg-of-handlerᵀ bc h)
                                ∘ᵐ []-monoidal
@@ -345,7 +343,7 @@ record Monad : Set₁ where
 
     T-alg-of-handlerᵀ-opᵀ : ∀ {P A ε' ε''} → (op : Op) → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                           → T-alg-of-handlerᵀ bc h ∘ᵐ mapˣᵐ idᵐ (opᵀ {Tᵒ A ε''} {ε'} op)
-                          ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε' ε''))
+                          ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) ε' ε''))
                             ∘ᵐ clauseᵀ h op (ε' ·ₑ ε'')
                             ∘ᵐ ⟨ fstᵐ
                                , ⟨ fstᵐ ∘ᵐ sndᵐ
@@ -379,7 +377,7 @@ record Monad : Set₁ where
     T-alg-of-handlerᵀ-μᵀ : ∀ {P A ε ε' ε''} → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                          → T-alg-of-handlerᵀ {P} {A} {ε ·ₑ ε'} {ε''} bc h
                              ∘ᵐ mapˣᵐ idᵐ (μᵀ {Tᵒ A ε''} {ε} {ε'})
-                         ≈ᵐ ε-substᵀ (sym (·ₑ-assoc ε ε' ε''))
+                         ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc ε ε' ε''))
                              ∘ᵐ T-alg-of-handlerᵀ {P} {A} {ε} {ε' ·ₑ ε''} bc h
                              ∘ᵐ ⟨ fstᵐ
                                 ,   Tᶠ (T-alg-of-handlerᵀ {P} {A} {ε'} {ε''} bc h)

@@ -58,6 +58,7 @@ open import Syntax.Grades.Example.Traces.Timed.RightSided
          Trace; ⌈_⌉; ⟨_⟩; ⟨⟩-pos)
 
 open import Syntax.Grades.Example.Time.RightSided using (_≾ₒ_; uₒ-least)
+open import Data.Product using (_,_; proj₁)
 open import Syntax.Grades.Example.Counts.AtMost
 open import Syntax.Grades.Example.Counts.Occurrences Op index
 
@@ -83,12 +84,10 @@ module _ (F : right-sided →ᵍ at-most-counts n) where
 
   open _→ᵍ_ F
 
-  erases : (o : Op) → map (within singleton ⌈ o ⌉) ≡ uᵛ
+  erases : (o : Op) → map (within singleton ⌈ o ⌉) ≃ᵛ uᵛ
   erases o =
-    ≾ᵛ-antisym
-      (≾ᵛ-trans (map-monotone (op≾delay o))
-                (≾ᵛ-reflexive (map-of-dur {suc (costʰⁱ o)})))
-      (uᵛ-least uₒ-least _)
+      ≾ᵛ-trans (map-monotone (op≾delay o)) (proj₁ (map-of-dur {suc (costʰⁱ o)}))
+    , uᵛ-least uₒ-least _
 
   -- so the quota it gives `⌈ o ⌉` does not cover the run `⌈ o ⌉`
 
@@ -98,7 +97,7 @@ module _ (F : right-sided →ᵍ at-most-counts n) where
     absurd (subst (λ h → h + 0 ≤ 0) (hit-index o)
              (subst₂ _≾ₒ_ (lookup∘tabulate (λ i → upto (occ i ⌈ o ⌉)) (index o))
                           (lookup-uᵛ (index o))
-                          (≾ᵛ-lookup (subst (_ ≾ᵛ_) (erases o) rel) (index o))))
+                          (≾ᵛ-lookup (≾ᵛ-trans rel (proj₁ (erases o))) (index o))))
     where
       absurd : ¬ (1 + 0 ≤ 0)
       absurd ()

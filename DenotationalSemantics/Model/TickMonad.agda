@@ -88,13 +88,13 @@ record TickMonad : Set₁ where
 
     Tᵏ-μ∘η≡id : ∀ {A ε}
               → μᵏ {A} {uₑ} {ε} ∘ᵐ ηᵏ {Tᵏ A ε}
-              ≈ᵐ ε-substᵏ (sym (·ₑ-identityˡ ε))
+              ≈ᵐ T-≤ᵏ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
     Tᵏ-μ∘Tη≡id : ∀ {A ε}
                → μᵏ {A} {ε} {uₑ} ∘ᵐ Tᵏᶠ (ηᵏ {A})
-               ≈ᵐ ε-substᵏ (sym (·ₑ-identityʳ ε))
+               ≈ᵐ T-≤ᵏ (≃ₑ⇒≿ₑ (·ₑ-identityʳ ε))
     Tᵏ-μ∘μ≡μ∘Tμ : ∀ {A ε ε' ε''}
                 → μᵏ {A} {ε} {ε' ·ₑ ε''} ∘ᵐ Tᵏᶠ (μᵏ {A} {ε'} {ε''})
-                ≈ᵐ ε-substᵏ (·ₑ-assoc ε ε' ε'') ∘ᵐ μᵏ ∘ᵐ μᵏ
+                ≈ᵐ T-≤ᵏ (≃ₑ⇒≾ₑ (·ₑ-assoc ε ε' ε'')) ∘ᵐ μᵏ ∘ᵐ μᵏ
 
     -- THE TICK
     --
@@ -113,7 +113,7 @@ record TickMonad : Set₁ where
 
     tickᵏ-algebraicity : ∀ {A ε ε'} → (δ : E)
                        → μᵏ {A} {δ ·ₑ ε} {ε'} ∘ᵐ tickᵏ {ε = ε} δ
-                       ≈ᵐ ε-substᵏ (sym (·ₑ-assoc δ ε ε'))
+                       ≈ᵐ T-≤ᵏ (≃ₑ⇒≿ₑ (·ₑ-assoc δ ε ε'))
                          ∘ᵐ tickᵏ δ
                          ∘ᵐ [ mapᵉ δ ]ᶠ (μᵏ {A} {ε} {ε'})
 

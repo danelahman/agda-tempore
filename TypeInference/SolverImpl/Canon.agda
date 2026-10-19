@@ -104,7 +104,7 @@ module Mᵣ {Θ : Scope} =
 topProdₑ? : ∀ {Θ} → Is-just uₑ-least? → (P : List (EAtom Θ)) → Maybe (⟦ P ⟧ᵉˢ ≡̂ₑ econst ⊤ₑ)
 topProdₑ? ij []      = nothing
 topProdₑ? ij (a ∷ P) with a ≟ᵃₑ ac ⊤ₑ
-... | yes refl = just (⊤-·ₑ ij)
+... | yes e = just (≡̂ₑ-trans (≡̂ₑ-cong (≅ᵉ⇒≡̂ e) ≡̂ₑ-refl) (⊤-·ₑ ij))
 ... | no _ with topProdₑ? ij P
 ...   | just q  = just (≡̂ₑ-trans (≡̂ₑ-cong ≡̂ₑ-refl q) (·-⊤ₑ ij))
 ...   | nothing = nothing
@@ -112,7 +112,7 @@ topProdₑ? ij (a ∷ P) with a ≟ᵃₑ ac ⊤ₑ
 topProdᵣ? : ∀ {Θ} → Is-just uᵣ-least? → (P : List (RAtom Θ)) → Maybe (⟦ P ⟧ʳˢ ≡̂ᵣ rconst ⊤ᵣ)
 topProdᵣ? ij []      = nothing
 topProdᵣ? ij (a ∷ P) with a ≟ᵃᵣ rc ⊤ᵣ
-... | yes refl = just (⊤-·ᵣ ij)
+... | yes e = just (≡̂ᵣ-trans (≡̂ᵣ-cong (≅ʳ⇒≡̂ e) ≡̂ᵣ-refl) (⊤-·ᵣ ij))
 ... | no _ with topProdᵣ? ij P
 ...   | just q  = just (≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl q) (·-⊤ᵣ ij))
 ...   | nothing = nothing

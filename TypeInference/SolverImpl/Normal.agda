@@ -47,7 +47,7 @@ open import Data.Unit using (tt)
 
 open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (map′)
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Relation.Binary.Definitions using (Decidable)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -76,20 +76,20 @@ open import TypeInference.SolverImpl.Product S public
 -- next source, and the last target to `b`; `a` reaches `b` when they
 -- are linked, or `a` is linked to a source that reaches `b`.
 --
--- The table holds one entry per distinct source `c`, in order of
--- first occurrence among the edges: the atoms `d` that `c` reaches,
--- each with the derivation of `c ⊑ d` composed along its chain. An
--- entry is saturated by at most one round per edge, stopping at the
--- first round that reaches nothing new. One entry per source
--- suffices: an entry depends on its source alone, and `reach?`
--- answers with the first entry that answers, so a repeated entry
--- could not change an answer.
+-- The table holds one entry per source `c`, sources the same by `_≟_`
+-- counted once, in order of first occurrence among the edges: the
+-- atoms `d` that `c` reaches, each with the derivation of `c ⊑ d`
+-- composed along its chain. An entry is saturated by at most one
+-- round per edge, stopping at the first round that reaches nothing
+-- new. An entry depends on its source alone, and `reach?` answers
+-- with the first entry that answers, so a repeated entry could not
+-- change an answer.
 
 module Chains {A : Set} (_⊑_ : A → A → Set)
               (refl⊑  : ∀ {a} → a ⊑ a)
               (trans⊑ : ∀ {a b c} → a ⊑ b → b ⊑ c → a ⊑ c)
               (link?  : (a b : A) → Maybe (a ⊑ b))
-              (_≟_    : DecidableEquality A)
+              {_≅_    : A → A → Set} (_≟_ : Decidable _≅_)
               (edges  : List (Σ[ a ∈ A ] Σ[ b ∈ A ] a ⊑ b))
               where
 
@@ -166,23 +166,23 @@ atomʳ? _              = nothing
 consₑ-length : ∀ {Θ} → (c : E) → (as : List (EAtom Θ))
              → length (consₑ (ac c) as) ≤ suc (length as)
 consₑ-length c (ac d ∷ as) = m≤n⇒m≤1+n (consₑ-length (c ·ₑ d) as)
-consₑ-length c [] with c ≡ₑ? uₑ
+consₑ-length c [] with c ≃ₑ? uₑ
 ... | yes _ = z≤n
 ... | no _  = ≤-refl
-consₑ-length c (av i ∷ as) with c ≡ₑ? uₑ
+consₑ-length c (av i ∷ as) with c ≃ₑ? uₑ
 ... | yes _ = n≤1+n _
 ... | no _  = ≤-refl
 
 consᵣ-length : ∀ {Θ} → (c : R) → (as : List (RAtom Θ))
              → length (consᵣ (rc c) as) ≤ suc (length as)
 consᵣ-length c (rc d ∷ as) = m≤n⇒m≤1+n (consᵣ-length (c ·ᵣ d) as)
-consᵣ-length c [] with c ≡ᵣ? uᵣ
+consᵣ-length c [] with c ≃ᵣ? uᵣ
 ... | yes _ = z≤n
 ... | no _  = ≤-refl
-consᵣ-length c (rv i ∷ as) with c ≡ᵣ? uᵣ
+consᵣ-length c (rv i ∷ as) with c ≃ᵣ? uᵣ
 ... | yes _ = n≤1+n _
 ... | no _  = ≤-refl
-consᵣ-length c (rm i ∷ as) with c ≡ᵣ? uᵣ
+consᵣ-length c (rm i ∷ as) with c ≃ᵣ? uᵣ
 ... | yes _ = n≤1+n _
 ... | no _  = ≤-refl
 

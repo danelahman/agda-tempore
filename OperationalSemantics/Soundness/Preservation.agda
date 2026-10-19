@@ -87,8 +87,8 @@ open import OperationalSemantics.Soundness.Preservation.Handle S Cat Fut Pst Adj
 
 delay-z : ∀ (τ : 𝔻) (ε : E) → of-durᵉ τ ·ₑ ε ≾ₑ (of-durᵉ τ ·ₑ uₑ) ·ₑ ε
 delay-z τ ε =
-  ≾ₑ-trans (·ₑ-monoʳ-≾ₑ (≾ₑ-reflexive (sym (·ₑ-identityˡ ε))))
-           (≾ₑ-reflexive (sym (·ₑ-assoc (of-durᵉ τ) uₑ ε)))
+  ≾ₑ-trans (·ₑ-monoʳ-≾ₑ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε)))
+           (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) uₑ ε))
 
 -- Binding a computation after a delay is delaying the bound computation. (The
 -- `ηᵀ` the transition carries is absorbed, leaving only a regrading.)
@@ -112,7 +112,7 @@ delay-nf {ε = ε} τ env f =
        ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
        ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
-       ∙ ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-assoc _ _ _ ∙ ⋄-ηᵀ f ∙ ∘ᵐ-congˡ (T-≤-≡ _)))
+       ∙ ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-assoc _ _ _ ∙ ⋄-ηᵀ f))
        ∙ ∘ᵐ-congˡ ([]-∘ᵐ _ _)
        ∙ ∘ᵐ-assoc _ _ _))
   -- what is left is a coercion under the box, which `delayᵀ-≤` pulls out
@@ -120,7 +120,7 @@ delay-nf {ε = ε} τ env f =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (delayᵀ-≤ τ _))
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (T-≤-≡ _) ∙ T-≤-trans _ _ (delay-z τ ε))
+  ∙ ∘ᵐ-congˡ (T-≤-trans _ _ (delay-z τ ε))
 
 -- The rules that transition by `ηᵀ`: the coercion simply passes through,
 -- both sides collapsing to the same chain of sub-effectings.
@@ -130,16 +130,15 @@ delay-nf {ε = ε} τ env f =
         ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵀ ∘ᵐ Tᶠ g ∘ᵐ ηᵀ
 ηᵀ-case {εa = εa} {εb = εb} g q =
     ⋄-ηᵀ (T-≤ q ∘ᵐ g)
-  ∙ ∘ᵐ-congˡ (T-≤-≡ _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (T-≤-trans q _ w)
   ∙ ≈ᵐ-sym
-      (  ∘ᵐ-congʳ (⋄-ηᵀ g ∙ ∘ᵐ-congˡ (T-≤-≡ _))
+      (  ∘ᵐ-congʳ (⋄-ηᵀ g)
        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
        ∙ ∘ᵐ-congˡ (T-≤-trans _ _ w))
   where
     w : εa ≾ₑ uₑ ·ₑ εb
-    w = ≾ₑ-trans q (≾ₑ-reflexive (sym (·ₑ-identityˡ εb)))
+    w = ≾ₑ-trans q (≃ₑ⇒≿ₑ (·ₑ-identityˡ εb))
 
 -- The coercion escapes the bind, for the transition of any step.
 
@@ -259,9 +258,7 @@ stepᴾᶜ (SEQ-STEP {N = N} r c)           pS (pM , pN)  =
       (renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN)
 stepᴾᶜ (SEQ-RET {V = V} {N = N})        pS (pV , pN)  = ret-subᴾ V N pV pN
 stepᴾᶜ (SEQ-OP {op = op} {S = S} {V = V} {M = M} {N = N}) pS ((pV , pM) , pN) =
-  ε-substᴾ (sym (·ₑ-assoc (op-grade op) _ _))
-    (perform op V (M ⨟ C-rename (cong-∷-ren ((eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N))
-    (pV , pM , renᶜ (cong-∷-ren ((eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN)
+  (pV , pM , renᶜ (cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN)
 stepᴾᶜ IF-TRUE                          pS (_ , pM , pN) = pM
 stepᴾᶜ (CMP {S = St} {⋈ = ⋈} {V = V} {W = W} {et = et}) pS _ = cmp-reductᴾ St ⋈ V W et
 stepᴾᶜ IF-FALSE                         pS (_ , pM , pN) = pN
@@ -286,7 +283,7 @@ stepᴾᶜ (HANDLE-STEP {S = S} {S' = S'} {H = H} {N = N} r c) pS (pM , pN , pH 
 stepᴾᶜ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op} {S = S} {V = V} {M = M} {H = H} {N = N})
        pS ((pV , pM) , pN , pH , uH) =
     (pM
-    , renᶜ (cong-∷-ren ((eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN
+    , renᶜ (cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN
     , (λ op' ε' → renᶜ (cong-∷-ren (cong-∷-ren (barrier-wk-ren (mapᵉ (op-grade op)) (type-of-gtype (arity op))))) (H op' ε') (pH op' ε'))
     , ren-clauses-uniform
         (barrier-wk-ren (mapᵉ (op-grade op)) (type-of-gtype (arity op))) H pH uH)
@@ -373,13 +370,13 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 -- which `T-≤-≡` turns into the sub-effecting the theorem asks for.
 
 ↝-sound {A = A} r@(SEQ-RET {V = V} {N = N}) pS (pV , pN) _ =
-  pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-identityˡ _)))
-    (∘ᵐ-congˡ (sound-SEQ-RET V N pV pN) ∙ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congˡ (T-≤-≡ _))
+  pure-step (step-≾ r) (≃ₑ⇒≿ₑ (·ₑ-identityˡ _))
+    (∘ᵐ-congˡ (sound-SEQ-RET V N pV pN) ∙ ∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ↝-sound {A = A} r@(HANDLE-RET {V = V} {H = H} {N = N}) pS (pV , pN , pH , uH) _ =
-  pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-identityˡ _)))
+  pure-step (step-≾ r) (≃ₑ⇒≿ₑ (·ₑ-identityˡ _))
     (∘ᵐ-congˡ (sound-HANDLE-RET V H N pV pN pH uH)
-     ∙ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congˡ (T-≤-≡ _))
+     ∙ ∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 
 -- Peeling a subsumption: at an eliminated function it splits (`SUB-APP`), at a
@@ -427,10 +424,9 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 
 ↝-sound {A = A} {S = S} r@(HANDLE-OP {op = op} {V = V} {M = M} {H = H} {N = N})
         pS ((pV , pM) , pN , pH , uH) u =
-  pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-assoc (op-grade op) _ _)))
+  pure-step (step-≾ r) (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) _ _))
     (∘ᵐ-congˡ (sound-HANDLE-OP op V M H N pV pM pN pH uH)
-     ∙ ∘ᵐ-assoc _ _ _
-     ∙ ∘ᵐ-congˡ (T-≤-≡ _))
+     ∙ ∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 
 
@@ -454,10 +450,10 @@ stepsᵀ (r ◅ rs) = stepsᵀ rs ⋄ stepᵀ r
 
 steps-≾ : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
         → (rs : cf ↝* cf') → steps-grade rs ·ₑ ε' ≾ₑ ε
-steps-≾ {ε = ε} ε*       = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+steps-≾ {ε = ε} ε*       = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 steps-≾ {ε' = ε'} (_◅_ {ε₂ = ε₂} r rs) =
   -- the step's own refinement, after the run's, reassociated
-  ≾ₑ-trans (≾ₑ-reflexive (·ₑ-assoc (step-grade r) (steps-grade rs) ε'))
+  ≾ₑ-trans (≃ₑ⇒≾ₑ (·ₑ-assoc (step-grade r) (steps-grade rs) ε'))
   (≾ₑ-trans (·ₑ-monoʳ-≾ₑ (steps-≾ rs)) (step-≾ r))
 
 -- Every handler the run reaches must be uniform.
@@ -482,7 +478,7 @@ Uniform↝* (r ◅ rs) (pS , pM) =
 bind-bind : ∀ {X Y Z B ε₁ ε₂ ε₃}
           → (f : Z →ᵐ Tᵒ B ε₃) → (t : Y →ᵐ Tᵒ Z ε₂) → (s : X →ᵐ Tᵒ Y ε₁)
           → μᵀ ∘ᵐ Tᶠ (f ⋄ t) ∘ᵐ s
-          ≈ᵐ ε-substᵀ (·ₑ-assoc ε₁ ε₂ ε₃) ∘ᵐ (f ⋄ (t ⋄ s))
+          ≈ᵐ T-≤ (≃ₑ⇒≾ₑ (·ₑ-assoc ε₁ ε₂ ε₃)) ∘ᵐ (f ⋄ (t ⋄ s))
 bind-bind f t s =
   -- split the bound composite's functorial action …
     ∘ᵐ-congʳ (∘ᵐ-congˡ (T-∘ᵐ _ _ ∙ ∘ᵐ-congʳ (T-∘ᵐ _ _)))
@@ -553,7 +549,6 @@ run-collapse h₁ h₂ a m c w K =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
       (bind-bind (⟦ cf₃ ⟧ᶜᶠ (stepsᴾᶜᶠ rs (stepᴾᶜᶠ r (pS , pM))))
                  (stepsᵀ rs) (stepᵀ r)))))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-≡ _)))))
   -- … and the two refinements, with the three sub-effectings between them,
   -- collapse into the run's own pair
   ∙ run-collapse ⟦ step-refines-type r ⟧<:ᵛ ⟦ run-refines-type rs ⟧<:ᵛ

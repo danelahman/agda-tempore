@@ -365,7 +365,7 @@ unbounded  ≾? unbounded  = yes tt
 -- The grade of antichains of timed traces, read as upper bounds
 
 right-sided : Grade D
-right-sided = record
+right-sided = posetᵍ record
   { Carrier         = Bounds
   ; _·_             = _·ᵇ_
   ; u               = uᵇ

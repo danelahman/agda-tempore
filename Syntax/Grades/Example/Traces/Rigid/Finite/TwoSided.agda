@@ -22,12 +22,13 @@ module Syntax.Grades.Example.Traces.Rigid.Finite.TwoSided
 
 open import Data.Product using (_×_; _,_)
 
-open import Syntax.Grades.Preordered using (PreorderedGrade; _×ᵖ_)
+open import Syntax.Grades using (Grade)
+open import Syntax.Grades.Product using (_×ᵍ_)
 
 open import Syntax.Grades.Example.Traces.Rigid.Finite.Base Op n code name name-code code-name running
 
-two-sided : PreorderedGrade ℚ≥0ᴰ
-two-sided = lowerᵖ ×ᵖ upperᵖ
+two-sided : Grade ℚ≥0ᴰ
+two-sided = lowerᵍ ×ᵍ upperᵍ
 
 [_,_] : Proper′ lower → Proper′ upper → Proper′ lower × Proper′ upper
 [ L , U ] = L , U

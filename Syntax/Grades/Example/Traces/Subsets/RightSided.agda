@@ -328,7 +328,7 @@ any-run        ≾? any-run        = yes tt
 -- The grade of sets of timed traces, read as upper bounds
 
 right-sided : Grade ℕᴰ
-right-sided = record
+right-sided = posetᵍ record
   { Carrier         = Permits
   ; _·_             = _·ᵖ_
   ; u               = uᵖ

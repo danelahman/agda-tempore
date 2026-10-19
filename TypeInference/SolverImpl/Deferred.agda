@@ -28,10 +28,14 @@ open import Data.List.Relation.Unary.All using ([]; _∷_)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Nat.Base using (ℕ; zero; suc; _+_; _⊔_)
-open import Data.Product using (_×_; _,_)
+open import Data.Product using (Σ-syntax; _×_; _,_)
+open import Data.List.Relation.Binary.Pointwise using (Pointwise; []; _∷_)
+import Data.List.Relation.Binary.Pointwise as Pw
 open import Data.List.Properties using (≡-dec)
 
 open import Relation.Nullary using (Dec; yes; no)
+open import Relation.Nullary.Decidable using (_×-dec_)
+open import Relation.Binary.Definitions using (Decidable)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -106,12 +110,12 @@ Moves dir↑ Q σ τ = Q ⊩ τ ≾ˢ (σ ⨟ˢ τ)
 -- down, the smaller under a move up
 
 Fixedʳ : ∀ {Ψ} → Dir → Subst Ψ Ψ → RExp Ψ × RExp Ψ → Set
-Fixedʳ dir↓ σ (x , y) = y [ σ ]ʳ ≡ y
-Fixedʳ dir↑ σ (x , y) = x [ σ ]ʳ ≡ x
+Fixedʳ dir↓ σ (x , y) = y [ σ ]ʳ ≅ʳ y
+Fixedʳ dir↑ σ (x , y) = x [ σ ]ʳ ≅ʳ x
 
 Fixedᵉ : ∀ {Ψ} → Dir → Subst Ψ Ψ → EExp Ψ × EExp Ψ → Set
-Fixedᵉ dir↓ σ (x , y) = y [ σ ]ᵉ ≡ y
-Fixedᵉ dir↑ σ (x , y) = x [ σ ]ᵉ ≡ x
+Fixedᵉ dir↓ σ (x , y) = y [ σ ]ᵉ ≅ᵉ y
+Fixedᵉ dir↑ σ (x , y) = x [ σ ]ᵉ ≅ᵉ x
 
 fixedʳ? : ∀ {Ψ} → (d : Dir) → (σ : Subst Ψ Ψ) → (a : RExp Ψ × RExp Ψ) → Maybe (Fixedʳ d σ a)
 fixedʳ? dir↓ σ (x , y) with y [ σ ]ʳ ≟ʳ y
@@ -158,30 +162,34 @@ keepᵈ {Q = Q} {σ} {τ} d (oblig l k o) (still sr se) mv h = mk⊩ᵒ (r d sr 
   where
     Q' = wkᵉⁿ-H k Q
 
-    fixr : (y : RExp _) → y [ σ ↑ᵉⁿ k ]ʳ ≡ y → y [ τ ↑ᵉⁿ k ]ʳ ≡ y [ (σ ⨟ˢ τ) ↑ᵉⁿ k ]ʳ
-    fixr y q = trans (cong (_[ τ ↑ᵉⁿ k ]ʳ) (sym q))
-                     (trans ([⨟]ʳ y (σ ↑ᵉⁿ k) (τ ↑ᵉⁿ k)) ([≐]ʳ (⨟-↑ᵉⁿ σ τ k) y))
+    fixr : (y : RExp _) → y [ σ ↑ᵉⁿ k ]ʳ ≅ʳ y → y [ τ ↑ᵉⁿ k ]ʳ ≡̂ᵣ y [ (σ ⨟ˢ τ) ↑ᵉⁿ k ]ʳ
+    fixr y q = ≡̂ᵣ-trans (≡̂ᵣ-subst (τ ↑ᵉⁿ k) (≡̂ᵣ-sym (≅ʳ⇒≡̂ q)))
+                       (subst (y [ σ ↑ᵉⁿ k ]ʳ [ τ ↑ᵉⁿ k ]ʳ ≡̂ᵣ_)
+                              (trans ([⨟]ʳ y (σ ↑ᵉⁿ k) (τ ↑ᵉⁿ k)) ([≐]ʳ (⨟-↑ᵉⁿ σ τ k) y))
+                              ≡̂ᵣ-refl)
 
-    fixe : (y : EExp _) → y [ σ ↑ᵉⁿ k ]ᵉ ≡ y → y [ τ ↑ᵉⁿ k ]ᵉ ≡ y [ (σ ⨟ˢ τ) ↑ᵉⁿ k ]ᵉ
-    fixe y q = trans (cong (_[ τ ↑ᵉⁿ k ]ᵉ) (sym q))
-                     (trans ([⨟]ᵉ y (σ ↑ᵉⁿ k) (τ ↑ᵉⁿ k)) ([≐]ᵉ (⨟-↑ᵉⁿ σ τ k) y))
+    fixe : (y : EExp _) → y [ σ ↑ᵉⁿ k ]ᵉ ≅ᵉ y → y [ τ ↑ᵉⁿ k ]ᵉ ≡̂ₑ y [ (σ ⨟ˢ τ) ↑ᵉⁿ k ]ᵉ
+    fixe y q = ≡̂ₑ-trans (≡̂ₑ-subst (τ ↑ᵉⁿ k) (≡̂ₑ-sym (≅ᵉ⇒≡̂ q)))
+                       (subst (y [ σ ↑ᵉⁿ k ]ᵉ [ τ ↑ᵉⁿ k ]ᵉ ≡̂ₑ_)
+                              (trans ([⨟]ᵉ y (σ ↑ᵉⁿ k) (τ ↑ᵉⁿ k)) ([≐]ᵉ (⨟-↑ᵉⁿ σ τ k) y))
+                              ≡̂ₑ-refl)
 
     r : (d : Dir) → (∀ {a} → a ∈ ors o → Fixedʳ d (σ ↑ᵉⁿ k) a) → Moves d Q σ τ
       → ∀ {x y} → (x , y) ∈ ors o → Q' ⊩ x [ (σ ⨟ˢ τ) ↑ᵉⁿ k ]ʳ ≾̂ᵣ y [ (σ ⨟ˢ τ) ↑ᵉⁿ k ]ʳ
     r dir↓ sr mv {x} {y} m =
       transᵣ (mono-substᵣ (≾ˢ-↑ᵉⁿ k mv) x)
-             (subst (λ z → Q' ⊩ x [ τ ↑ᵉⁿ k ]ʳ ≾̂ᵣ z) (fixr y (sr m)) (⊩ors h m))
+             (transᵣ (⊩ors h m) (eqᵣ (fixr y (sr m))))
     r dir↑ sr mv {x} {y} m =
-      transᵣ (subst (λ z → Q' ⊩ z ≾̂ᵣ y [ τ ↑ᵉⁿ k ]ʳ) (fixr x (sr m)) (⊩ors h m))
+      transᵣ (transᵣ (eqᵣ (≡̂ᵣ-sym (fixr x (sr m)))) (⊩ors h m))
              (mono-substᵣ (≾ˢ-↑ᵉⁿ k mv) y)
 
     e : (d : Dir) → (∀ {a} → a ∈ oes o → Fixedᵉ d (σ ↑ᵉⁿ k) a) → Moves d Q σ τ
       → ∀ {x y} → (x , y) ∈ oes o → Q' ⊩ x [ (σ ⨟ˢ τ) ↑ᵉⁿ k ]ᵉ ≾̂ₑ y [ (σ ⨟ˢ τ) ↑ᵉⁿ k ]ᵉ
     e dir↓ se mv {x} {y} m =
       transₑ (mono-substₑ (≾ˢ-↑ᵉⁿ k mv) x)
-             (subst (λ z → Q' ⊩ x [ τ ↑ᵉⁿ k ]ᵉ ≾̂ₑ z) (fixe y (se m)) (⊩oes h m))
+             (transₑ (⊩oes h m) (eqₑ (fixe y (se m))))
     e dir↑ se mv {x} {y} m =
-      transₑ (subst (λ z → Q' ⊩ z ≾̂ₑ y [ τ ↑ᵉⁿ k ]ᵉ) (fixe x (se m)) (⊩oes h m))
+      transₑ (transₑ (eqₑ (≡̂ₑ-sym (fixe x (se m)))) (⊩oes h m))
              (mono-substₑ (≾ˢ-↑ᵉⁿ k mv) y)
 
 ------------------------------------------------------------------------
@@ -282,7 +290,7 @@ grid cs (suc k) = concatMap (λ c → map (c ∷_) (grid cs k)) cs
 -- own (`witnesses`), without repetition
 
 candidates : ℕ → List R → List E → List E
-candidates d rcs ecs = deduplicate _≡ₑ?_ (uₑ ∷ ⊤ₑ ∷ witnesses d rcs ecs)
+candidates d rcs ecs = deduplicate _≃ₑ?_ (uₑ ∷ ⊤ₑ ∷ witnesses d rcs ecs)
 
 -- The constants of an expression, and its occurrences of effect
 -- variables: those of the rigids where its ordering can be refuted
@@ -348,17 +356,41 @@ wit-⨟ δ (suc k) cs =
 -- scope: bound outermost where the entry mentions it, and dropped
 -- otherwise
 
-pair≟ : ∀ {X : Set} → ((x y : X) → Dec (x ≡ y)) → (a b : X × X) → Dec (a ≡ b)
-pair≟ _≟_ (x , y) (x' , y') with x ≟ x' | y ≟ y'
-... | yes refl | yes refl = yes refl
-... | no ne    | _        = no (λ { refl → ne refl })
-... | yes _    | no ne    = no (λ { refl → ne refl })
+-- Orderings the same pair by pair, both sides the same
 
-_≟ᴼ_ : ∀ {Ψ} → (o o' : Ords Ψ) → Dec (o ≡ o')
-ords r e ≟ᴼ ords r' e' with ≡-dec (pair≟ _≟ʳ_) r r' | ≡-dec (pair≟ _≟ᵉ_) e e'
-... | yes refl | yes refl = yes refl
-... | no ne    | _        = no (λ { refl → ne refl })
-... | yes _    | no ne    = no (λ { refl → ne refl })
+Pairs : ∀ {X : Set} → (X → X → Set) → X × X → X × X → Set
+Pairs _≅_ (x , y) (x' , y') = x ≅ x' × y ≅ y'
+
+pairs? : ∀ {X : Set} {_≅_ : X → X → Set} → Decidable _≅_ → Decidable (Pairs _≅_)
+pairs? _≟_ (x , y) (x' , y') = (x ≟ x') ×-dec (y ≟ y')
+
+Sameᴼ : ∀ {Ψ} → Ords Ψ → Ords Ψ → Set
+Sameᴼ o o' = Pointwise (Pairs _≅ʳ_) (ors o) (ors o') × Pointwise (Pairs _≅ᵉ_) (oes o) (oes o')
+
+_≟ᴼ_ : ∀ {Ψ} → (o o' : Ords Ψ) → Dec (Sameᴼ o o')
+o ≟ᴼ o' = Pw.decidable (pairs? _≟ʳ_) (ors o) (ors o') ×-dec Pw.decidable (pairs? _≟ᵉ_) (oes o) (oes o')
+
+pw-∈ : ∀ {X : Set} {R : X → X → Set} {xs ys y} → Pointwise R xs ys → y ∈ ys
+     → Σ[ x ∈ X ] (x ∈ xs × R x y)
+pw-∈ (r ∷ rs) (here refl) = _ , here refl , r
+pw-∈ (r ∷ rs) (there m) with pw-∈ rs m
+... | x , m' , q = x , there m' , q
+
+⊩ᵒ-same : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {o o' : Ords Ψ} {δ : Subst Ψ Ψ'}
+        → Sameᴼ o o' → Q ⊩ᵒ o [ δ ] → Q ⊩ᵒ o' [ δ ]
+⊩ᵒ-same {Q = Q} {o' = o'} {δ} (pr , pe) h = mk⊩ᵒ r e
+  where
+    r : ∀ {x y} → (x , y) ∈ ors o' → Q ⊩ x [ δ ]ʳ ≾̂ᵣ y [ δ ]ʳ
+    r m with pw-∈ pr m
+    ... | _ , m₀ , p , q =
+          transᵣ (eqᵣ (≡̂ᵣ-subst δ (≡̂ᵣ-sym (≅ʳ⇒≡̂ p))))
+                 (transᵣ (⊩ors h m₀) (eqᵣ (≡̂ᵣ-subst δ (≅ʳ⇒≡̂ q))))
+
+    e : ∀ {x y} → (x , y) ∈ oes o' → Q ⊩ x [ δ ]ᵉ ≾̂ₑ y [ δ ]ᵉ
+    e m with pw-∈ pe m
+    ... | _ , m₀ , p , q =
+          transₑ (eqₑ (≡̂ₑ-subst δ (≡̂ₑ-sym (≅ᵉ⇒≡̂ p))))
+                 (transₑ (⊩oes h m₀) (eqₑ (≡̂ₑ-subst δ (≅ᵉ⇒≡̂ q))))
 
 closeᵈ : ∀ {Ψ} → Oblig (Ψ +e) → Oblig Ψ
 closeᵈ (oblig l k o) with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
@@ -370,7 +402,7 @@ closeᵈ-sound : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (E : Oblig 
 closeᵈ-sound {Q = Q} {δ} (oblig l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
 ... | no _  = h
 ... | yes q =
-      subst (λ o' → wkᵉⁿ-H k (wkᵉ-H Q) ⊩ᵒ o' [ (δ ↑ᵉ) ↑ᵉⁿ k ]) q
+      ⊩ᵒ-same q
             (⊩ᵒ-subst⁻ (⊩ᵒ-resp-≐ˢ eq (⊩ᵒ-⨟ (⊩ᴴ-↑ᵉⁿ k ⊩ᴴ-wkᵉ) h)))
   where
     eq : ((δ ↑ᵉⁿ k) ⨟ˢ (wkˢᵉ ↑ᵉⁿ k)) ≐ˢ ((wkˢᵉ ↑ᵉⁿ k) ⨟ˢ ((δ ↑ᵉ) ↑ᵉⁿ k))

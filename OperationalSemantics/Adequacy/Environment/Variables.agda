@@ -206,7 +206,7 @@ env-Vˢ-var-l (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₁} γ q) Δ ¬et p (Tl-
     ei = ++ᶜ-assoc Γ Δ₁ Δ
 
     pρ = ≾ᵣ-zero-productʳ (grade-++ᶜˡ-zeroˡ Δ (f ¬et))
-    pₗ = ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ ρ₁)) pρ
+    pₗ = ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ ρ₁)) pρ
     p₁ = ctx-grade-++ᶜ-≾ᵣ Δ₁ Δ pₗ p
 
     f₁  = λ z → subst (_≾ᵣ uᵣ) (sym (grade-++ᶜˡ-assoc _ Δ₁ Δ)) (f z)
@@ -377,7 +377,7 @@ env-var-lock {ρ = ρ} γ q ¬et p x f f' =
               (V-rename-≡ (≐ʳ-trans (∘ʳ-≐ʳ (push-ren-⟨⟩ pₗ p) ≐ʳ-refl)
                                     (unbox-ren-unit q p)) _))
   where
-    pₗ = ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)) p
+    pₗ = ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ ρ)) p
 
 -- Every variable of a reducible environment's context becomes a reducible
 -- value: the fundamental lemma's variable case. `VRed` holds of everything at

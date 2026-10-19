@@ -34,7 +34,7 @@ open import TypeInference.Scopes
 module TypeInference.Examples.Scheme (S : LanguageSpec) where
 
 open LanguageSpec S
-open GradeSystemInterface Grades using (_≡ᵣ?_; _≡ₑ?_)
+open GradeSystemInterface Grades using (_≃ᵣ?_; _≃ₑ?_)
 open Operations Ops using (Op)
 
 open import TypeInference.OpenSyntax.Grades    S
@@ -72,13 +72,13 @@ private
 
   walkᵉ : ∀ {Θ} → EExp Θ → 𝔹
   walkᵉ (evar i)   = walkᶠ i
-  walkᵉ (econst c) = does (c ≡ₑ? c)
+  walkᵉ (econst c) = does (c ≃ₑ? c)
   walkᵉ (ε ·̂ₑ ε')  = walkᵉ ε && walkᵉ ε'
   walkᵉ (ε ⊔̂ₑ ε')  = walkᵉ ε && walkᵉ ε'
 
   walkʳ : ∀ {Θ} → RExp Θ → 𝔹
   walkʳ (rvar i)   = walkᶠ i
-  walkʳ (rconst c) = does (c ≡ᵣ? c)
+  walkʳ (rconst c) = does (c ≃ᵣ? c)
   walkʳ (ρ ·̂ᵣ ρ')  = walkʳ ρ && walkʳ ρ'
   walkʳ (ρ ⊔̂ᵣ ρ')  = walkʳ ρ && walkʳ ρ'
   walkʳ ∣ ε ∣̂ᵉ     = walkᵉ ε

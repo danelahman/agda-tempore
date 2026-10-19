@@ -7,7 +7,8 @@ module Syntax.Grades where
 open import Algebra.Definitions using (Commutative)
 open import Data.Empty
 open import Data.List.Base using (List)
-open import Data.Maybe.Base using (Maybe)
+open import Data.Maybe.Base using (Maybe; just)
+import Data.Maybe.Base
 open import Data.Nat.Base using (ℕ)
 open import Data.Product hiding (map)
 open import Data.Sum hiding (map)
@@ -42,8 +43,12 @@ plus-self : ∀ {C : Set} {_·_ : C → C → C} {_≾_ : C → C → Set} {c : 
           → c ≾ c → (c · c) ≾ c → Plus _·_ _≾_ c
 plus-self {c = c} refl' it = plus c refl' it (λ cv _ → cv) (λ q → q) (λ q → q)
 
--- Partially ordered effect and resource monoids, over a monoid `D` of
--- durations
+-- Preordered effect and resource monoids, over a monoid `D` of
+-- durations. Equality of grades is the order's equivalence
+--
+--   c ≃ d   =   c ≾ d × d ≾ c
+--
+-- and the monoid laws and the inclusion of durations hold up to it.
 
 record Grade (D : Duration) : Set₁ where
   private
@@ -52,6 +57,7 @@ record Grade (D : Duration) : Set₁ where
   infixl 7 _·_
   infixl 6 _⊔_
   infixl 5 _≾_
+  infix  4 _≃_
 
   field
 
@@ -64,15 +70,20 @@ record Grade (D : Duration) : Set₁ where
     _⊔_     : Carrier → Carrier → Carrier
     of-dur  : D.Carrier → Carrier
 
-    -- a monoid
-    ·-identityˡ : (c : Carrier) → (u · c) ≡ c
-    ·-identityʳ : (c : Carrier) → (c · u) ≡ c
-    ·-assoc     : (c d e : Carrier) → (c · d) · e ≡ c · (d · e)
+  -- equality is the order's equivalence
+  _≃_ : Rel Carrier lzero
+  c ≃ d = (c ≾ d) × (d ≾ c)
 
-    -- a partial order, decidable and proof-irrelevant
+  field
+
+    -- a monoid, up to equivalence
+    ·-identityˡ : (c : Carrier) → (u · c) ≃ c
+    ·-identityʳ : (c : Carrier) → (c · u) ≃ c
+    ·-assoc     : (c d e : Carrier) → (c · d) · e ≃ c · (d · e)
+
+    -- a preorder, decidable and proof-irrelevant
     ≾-refl       : Reflexive _≾_
     ≾-trans      : Transitive _≾_
-    ≾-antisym    : {c d : Carrier} → c ≾ d → d ≾ c → c ≡ d
     ≾-irrelevant : ∀ {c d} → (p q : c ≾ d) → p ≡ q
     _≾?_         : Decidable _≾_
 
@@ -95,19 +106,22 @@ record Grade (D : Duration) : Set₁ where
     ≾-zero-productˡ : ∀ {c d} → c · d ≾ u → c ≾ u
     ≾-zero-productʳ : ∀ {c d} → c · d ≾ u → d ≾ u
 
-    -- durations included as a monoid morphism, `of-dur τ` the grade of
-    -- the delay `τ`
-    of-dur-zero : of-dur D.0ᴰ ≡ u
-    of-dur-plus : ∀ {τ τ'} → of-dur (τ D.+ᴰ τ') ≡ of-dur τ · of-dur τ'
+    -- durations included as a monoid morphism up to equivalence,
+    -- `of-dur τ` the grade of the delay `τ`
+    of-dur-zero : of-dur D.0ᴰ ≃ u
+    of-dur-plus : ∀ {τ τ'} → of-dur (τ D.+ᴰ τ') ≃ of-dur τ · of-dur τ'
 
     -- optional declared properties
+
+    -- whether the order is antisymmetric, where the grade declares it
+    antisym? : Maybe (∀ {c d} → c ≾ d → d ≾ c → c ≡ d)
 
     -- whether the unit is least, where the grade declares it
     u-least? : Maybe (Minimum _≾_ u)
 
     -- commutativity of `_·_`, where the grade declares it; the trace
     -- grades leave it out, as there it depends on whether `Op` is empty
-    ·-comm? : Maybe (Commutative _≡_ _·_)
+    ·-comm? : Maybe (Commutative _≃_ _·_)
 
     -- the closure of a grade, where the grade declares it
     plus? : (c : Carrier) → Maybe (Plus _·_ _≾_ c)
@@ -116,61 +130,159 @@ record Grade (D : Duration) : Set₁ where
   ≾-reflexive  : _≡_ ⇒ _≾_
   ≾-reflexive refl = ≾-refl
 
-  -- _≡_ (on Carrier) is decidable: by antisymmetry, two grades are
-  -- equal exactly when each is below the other
-  _≡?_ : Decidable (_≡_ {A = Carrier})
-  c ≡? d with c ≾? d | d ≾? c
-  ... | yes p | yes q = yes (≾-antisym p q)
-  ... | yes _ | no ¬q = no λ eq → ¬q (≾-reflexive (sym eq))
-  ... | no ¬p | _     = no λ eq → ¬p (≾-reflexive eq)
+  -- _≃_ is a proof-irrelevant equivalence including _≡_
+  ≃-refl : ∀ {c} → c ≃ c
+  ≃-refl = ≾-refl , ≾-refl
+
+  ≃-sym : ∀ {c d} → c ≃ d → d ≃ c
+  ≃-sym e = proj₂ e , proj₁ e
+
+  ≃-trans : ∀ {c d e} → c ≃ d → d ≃ e → c ≃ e
+  ≃-trans e e' = ≾-trans (proj₁ e) (proj₁ e') , ≾-trans (proj₂ e') (proj₂ e)
+
+  ≃-reflexive : _≡_ ⇒ _≃_
+  ≃-reflexive refl = ≃-refl
+
+  ≃⇒≾ : ∀ {c d} → c ≃ d → c ≾ d
+  ≃⇒≾ = proj₁
+
+  ≃⇒≿ : ∀ {c d} → c ≃ d → d ≾ c
+  ≃⇒≿ = proj₂
+
+  ≃-irrelevant : ∀ {c d} → (p q : c ≃ d) → p ≡ q
+  ≃-irrelevant (p , q) (p' , q') =
+    cong₂ _,_ (≾-irrelevant p p') (≾-irrelevant q q')
+
+  -- _≃_ is decidable
+  _≃?_ : Decidable _≃_
+  c ≃? d with c ≾? d | d ≾? c
+  ... | yes p | yes q = yes (p , q)
+  ... | yes _ | no ¬q = no λ r → ¬q (proj₂ r)
+  ... | no ¬p | _     = no λ r → ¬p (proj₁ r)
+
+  -- _·_ is a congruence for _≃_
+  ·-cong : ∀ {c c' d d'} → c ≃ c' → d ≃ d' → c · d ≃ c' · d'
+  ·-cong a b =
+    ≾-trans (·-monoˡ-≾ (proj₁ a)) (·-monoʳ-≾ (proj₁ b)) , ≾-trans (·-monoˡ-≾ (proj₂ a)) (·-monoʳ-≾ (proj₂ b))
 
   -- _⊔_ is monotone with respect to _≾_
   ⊔-mono : ∀ {c c' d d'} → c ≾ c' → d ≾ d' → c ⊔ d ≾ c' ⊔ d'
   ⊔-mono {c' = c'} {d' = d'} p q =
     ⊔-lub (≾-trans p (⊔-ubˡ c' d')) (≾-trans q (⊔-ubʳ c' d'))
 
+  -- _⊔_ is a congruence for _≃_
+  ⊔-cong : ∀ {c c' d d'} → c ≃ c' → d ≃ d' → c ⊔ d ≃ c' ⊔ d'
+  ⊔-cong a b = ⊔-mono (proj₁ a) (proj₁ b) , ⊔-mono (proj₂ a) (proj₂ b)
+
   -- _⊔_ is idempotent, commutative and associative: each direction is
-  -- a least upper bound, and antisymmetry turns the pair into an
-  -- equation
-  ⊔-idem : (c : Carrier) → c ⊔ c ≡ c
-  ⊔-idem c = ≾-antisym (⊔-lub ≾-refl ≾-refl) (⊔-ubˡ c c)
+  -- a least upper bound
+  ⊔-idem : (c : Carrier) → c ⊔ c ≃ c
+  ⊔-idem c = ⊔-lub ≾-refl ≾-refl , ⊔-ubˡ c c
 
-  ⊔-comm : (c d : Carrier) → c ⊔ d ≡ d ⊔ c
-  ⊔-comm c d = ≾-antisym (⊔-lub (⊔-ubʳ d c) (⊔-ubˡ d c))
-                         (⊔-lub (⊔-ubʳ c d) (⊔-ubˡ c d))
+  ⊔-comm : (c d : Carrier) → c ⊔ d ≃ d ⊔ c
+  ⊔-comm c d = ⊔-lub (⊔-ubʳ d c) (⊔-ubˡ d c) , ⊔-lub (⊔-ubʳ c d) (⊔-ubˡ c d)
 
-  ⊔-assoc : (c d e : Carrier) → (c ⊔ d) ⊔ e ≡ c ⊔ (d ⊔ e)
+  ⊔-assoc : (c d e : Carrier) → (c ⊔ d) ⊔ e ≃ c ⊔ (d ⊔ e)
   ⊔-assoc c d e =
-    ≾-antisym
-      (⊔-lub (⊔-lub (⊔-ubˡ c (d ⊔ e))
-                    (≾-trans (⊔-ubˡ d e) (⊔-ubʳ c (d ⊔ e))))
-             (≾-trans (⊔-ubʳ d e) (⊔-ubʳ c (d ⊔ e))))
-      (⊔-lub (≾-trans (⊔-ubˡ c d) (⊔-ubˡ (c ⊔ d) e))
-             (⊔-lub (≾-trans (⊔-ubʳ c d) (⊔-ubˡ (c ⊔ d) e))
-                    (⊔-ubʳ (c ⊔ d) e)))
+      ⊔-lub (⊔-lub (⊔-ubˡ c (d ⊔ e))
+                   (≾-trans (⊔-ubˡ d e) (⊔-ubʳ c (d ⊔ e))))
+            (≾-trans (⊔-ubʳ d e) (⊔-ubʳ c (d ⊔ e)))
+    , ⊔-lub (≾-trans (⊔-ubˡ c d) (⊔-ubˡ (c ⊔ d) e))
+            (⊔-lub (≾-trans (⊔-ubʳ c d) (⊔-ubˡ (c ⊔ d) e))
+                   (⊔-ubʳ (c ⊔ d) e))
 
   -- a grade below another is absorbed by it in a join
-  ⊔-absorb : ∀ {c d} → c ≾ d → c ⊔ d ≡ d
-  ⊔-absorb {c} {d} p = ≾-antisym (⊔-lub p ≾-refl) (⊔-ubʳ c d)
+  ⊔-absorb : ∀ {c d} → c ≾ d → c ⊔ d ≃ d
+  ⊔-absorb {c} {d} p = ⊔-lub p ≾-refl , ⊔-ubʳ c d
 
   -- ⊤ absorbs joins
-  ⊔-⊤ : (c : Carrier) → c ⊔ ⊤ ≡ ⊤
+  ⊔-⊤ : (c : Carrier) → c ⊔ ⊤ ≃ ⊤
   ⊔-⊤ c = ⊔-absorb (≾-⊤ c)
 
   -- `_·_` distributes over `_⊔_`: the converse of each field follows
-  -- from `_·_` being monotone in each argument separately, so the two
-  -- sides are equal
-  ·-distribˡ-⊔ : (c d e : Carrier) → c · (d ⊔ e) ≡ (c · d) ⊔ (c · e)
+  -- from `_·_` being monotone in each argument separately
+  ·-distribˡ-⊔ : (c d e : Carrier) → c · (d ⊔ e) ≃ (c · d) ⊔ (c · e)
   ·-distribˡ-⊔ c d e =
-    ≾-antisym (·-distribˡ-⊔-≾ c d e)
-              (⊔-lub (·-monoʳ-≾ (⊔-ubˡ d e)) (·-monoʳ-≾ (⊔-ubʳ d e)))
+    ·-distribˡ-⊔-≾ c d e , ⊔-lub (·-monoʳ-≾ (⊔-ubˡ d e)) (·-monoʳ-≾ (⊔-ubʳ d e))
 
-  ·-distribʳ-⊔ : (c d e : Carrier) → (d ⊔ e) · c ≡ (d · c) ⊔ (e · c)
+  ·-distribʳ-⊔ : (c d e : Carrier) → (d ⊔ e) · c ≃ (d · c) ⊔ (e · c)
   ·-distribʳ-⊔ c d e =
-    ≾-antisym (·-distribʳ-⊔-≾ c d e)
-              (⊔-lub (·-monoˡ-≾ (⊔-ubˡ d e)) (·-monoˡ-≾ (⊔-ubʳ d e)))
+    ·-distribʳ-⊔-≾ c d e , ⊔-lub (·-monoˡ-≾ (⊔-ubˡ d e)) (·-monoˡ-≾ (⊔-ubʳ d e))
 
 open Grade
+
+
+-- Partially ordered grades: the laws on the nose, with antisymmetry. Each
+-- is a grade, its equivalence then coinciding with equality.
+
+record PosetGrade (D : Duration) : Set₁ where
+  private
+    module D = Duration D
+
+  field
+    Carrier : Set₀
+    _·_     : Carrier → Carrier → Carrier
+    u       : Carrier
+    _≾_     : Rel Carrier lzero
+    ⊤       : Carrier
+    _⊔_     : Carrier → Carrier → Carrier
+    of-dur  : D.Carrier → Carrier
+
+    ·-identityˡ : (c : Carrier) → (u · c) ≡ c
+    ·-identityʳ : (c : Carrier) → (c · u) ≡ c
+    ·-assoc     : (c d e : Carrier) → ((c · d) · e) ≡ (c · (d · e))
+
+    ≾-refl       : Reflexive _≾_
+    ≾-trans      : Transitive _≾_
+    ≾-antisym    : {c d : Carrier} → c ≾ d → d ≾ c → c ≡ d
+    ≾-irrelevant : ∀ {c d} → (p q : c ≾ d) → p ≡ q
+    _≾?_         : Decidable _≾_
+
+    ≾-⊤ : (c : Carrier) → c ≾ ⊤
+
+    ⊔-ubˡ : (c d : Carrier) → c ≾ (c ⊔ d)
+    ⊔-ubʳ : (c d : Carrier) → d ≾ (c ⊔ d)
+    ⊔-lub : {c d e : Carrier} → c ≾ e → d ≾ e → (c ⊔ d) ≾ e
+
+    ·-monoˡ-≾      : ∀ {c} → _Preserves_⟶_ (_· c) _≾_ _≾_
+    ·-monoʳ-≾      : ∀ {c} → _Preserves_⟶_ (c ·_) _≾_ _≾_
+    ·-distribˡ-⊔-≾ : (c d e : Carrier) → (c · (d ⊔ e)) ≾ ((c · d) ⊔ (c · e))
+    ·-distribʳ-⊔-≾ : (c d e : Carrier) → ((d ⊔ e) · c) ≾ ((d · c) ⊔ (e · c))
+
+    ≾-zero-productˡ : ∀ {c d} → (c · d) ≾ u → c ≾ u
+    ≾-zero-productʳ : ∀ {c d} → (c · d) ≾ u → d ≾ u
+
+    of-dur-zero : of-dur D.0ᴰ ≡ u
+    of-dur-plus : ∀ {τ τ'} → of-dur (τ D.+ᴰ τ') ≡ (of-dur τ · of-dur τ')
+
+    u-least? : Maybe (Minimum _≾_ u)
+    ·-comm?  : Maybe (Commutative _≡_ _·_)
+    plus?    : (c : Carrier) → Maybe (Plus _·_ _≾_ c)
+
+posetᵍ : {D : Duration} → PosetGrade D → Grade D
+posetᵍ G = record
+  { Carrier = P.Carrier ; _·_ = P._·_ ; u = P.u ; _≾_ = P._≾_ ; ⊤ = P.⊤
+  ; _⊔_ = P._⊔_ ; of-dur = P.of-dur
+  ; ·-identityˡ = λ c → ≡⇒≃ (P.·-identityˡ c)
+  ; ·-identityʳ = λ c → ≡⇒≃ (P.·-identityʳ c)
+  ; ·-assoc = λ c d e → ≡⇒≃ (P.·-assoc c d e)
+  ; ≾-refl = P.≾-refl ; ≾-trans = P.≾-trans ; ≾-irrelevant = P.≾-irrelevant
+  ; _≾?_ = P._≾?_ ; ≾-⊤ = P.≾-⊤ ; ⊔-ubˡ = P.⊔-ubˡ ; ⊔-ubʳ = P.⊔-ubʳ
+  ; ⊔-lub = P.⊔-lub
+  ; ·-monoˡ-≾ = P.·-monoˡ-≾ ; ·-monoʳ-≾ = P.·-monoʳ-≾
+  ; ·-distribˡ-⊔-≾ = P.·-distribˡ-⊔-≾ ; ·-distribʳ-⊔-≾ = P.·-distribʳ-⊔-≾
+  ; ≾-zero-productˡ = P.≾-zero-productˡ ; ≾-zero-productʳ = P.≾-zero-productʳ
+  ; of-dur-zero = ≡⇒≃ P.of-dur-zero
+  ; of-dur-plus = ≡⇒≃ P.of-dur-plus
+  ; antisym? = just P.≾-antisym
+  ; u-least? = P.u-least?
+  ; ·-comm? = Data.Maybe.Base.map (λ m c d → ≡⇒≃ (m c d)) P.·-comm?
+  ; plus? = P.plus?
+  }
+  where
+    module P = PosetGrade G
+    ≡⇒≃ : ∀ {c d} → c ≡ d → P._≾_ c d × P._≾_ d c
+    ≡⇒≃ refl = P.≾-refl , P.≾-refl
 
 
 -- Morphisms of effect and resource monoids, along a morphism `h` of
@@ -179,10 +291,10 @@ open Grade
 record GradeMorphism {D₁ D₂ : Duration} (h : D₁ →ᴰ D₂)
                      (G₁ : Grade D₁) (G₂ : Grade D₂) : Set₁ where
   open Grade G₁ renaming (Carrier to C₁; _≾_ to _≾₁_; u to u₁; _·_ to _·₁_;
-                          ⊤ to ⊤₁; _⊔_ to _⊔₁_; of-dur to of-dur₁)
+                          ⊤ to ⊤₁; _⊔_ to _⊔₁_; of-dur to of-dur₁; _≃_ to _≃₁_)
   open Grade G₂ renaming (Carrier to C₂; _≾_ to _≾₂_; u to u₂; _·_ to _·₂_;
-                          ⊤ to ⊤₂; _⊔_ to _⊔₂_; of-dur to of-dur₂)
-  
+                          ⊤ to ⊤₂; _⊔_ to _⊔₂_; of-dur to of-dur₂; _≃_ to _≃₂_)
+
   field
 
     -- map between carriers of grades
@@ -192,17 +304,50 @@ record GradeMorphism {D₁ D₂ : Duration} (h : D₁ →ᴰ D₂)
     map-monotone : {c₁ c₁' : C₁} → (c₁ ≾₁ c₁') → (map c₁ ≾₂ map c₁')
 
     -- map preserves the monoid structure
-    map-u        : map u₁ ≡ u₂
-    map-·        : {c₁ c₁' : C₁} → map (c₁ ·₁ c₁') ≡ map c₁ ·₂ map c₁'
+    map-u        : map u₁ ≃₂ u₂
+    map-·        : {c₁ c₁' : C₁} → map (c₁ ·₁ c₁') ≃₂ map c₁ ·₂ map c₁'
 
     -- map preserves the greatest grade
-    map-⊤        : map ⊤₁ ≡ ⊤₂
+    map-⊤        : map ⊤₁ ≃₂ ⊤₂
 
     -- map preserves binary joins
-    map-⊔        : {c₁ c₁' : C₁} → map (c₁ ⊔₁ c₁') ≡ map c₁ ⊔₂ map c₁'
+    map-⊔        : {c₁ c₁' : C₁} → map (c₁ ⊔₁ c₁') ≃₂ map c₁ ⊔₂ map c₁'
 
     -- map preserves the inclusion of durations
+    map-of-dur   : ∀ {τ} → map (of-dur₁ τ) ≃₂ of-dur₂ (_→ᴰ_.map h τ)
+
+  -- map preserves the equivalence
+  map-≃ : {c₁ c₁' : C₁} → c₁ ≃₁ c₁' → map c₁ ≃₂ map c₁'
+  map-≃ a = map-monotone (proj₁ a) , map-monotone (proj₂ a)
+
+-- Morphisms preserving the structure on the nose
+
+record StrictMorphism {D₁ D₂ : Duration} (h : D₁ →ᴰ D₂)
+                      (G₁ : Grade D₁) (G₂ : Grade D₂) : Set₁ where
+  open Grade G₁ renaming (Carrier to C₁; _≾_ to _≾₁_; u to u₁; _·_ to _·₁_;
+                          ⊤ to ⊤₁; _⊔_ to _⊔₁_; of-dur to of-dur₁)
+  open Grade G₂ renaming (Carrier to C₂; _≾_ to _≾₂_; u to u₂; _·_ to _·₂_;
+                          ⊤ to ⊤₂; _⊔_ to _⊔₂_; of-dur to of-dur₂)
+  field
+    map          : C₁ → C₂
+    map-monotone : {c₁ c₁' : C₁} → (c₁ ≾₁ c₁') → (map c₁ ≾₂ map c₁')
+    map-u        : map u₁ ≡ u₂
+    map-·        : {c₁ c₁' : C₁} → map (c₁ ·₁ c₁') ≡ (map c₁ ·₂ map c₁')
+    map-⊤        : map ⊤₁ ≡ ⊤₂
+    map-⊔        : {c₁ c₁' : C₁} → map (c₁ ⊔₁ c₁') ≡ (map c₁ ⊔₂ map c₁')
     map-of-dur   : ∀ {τ} → map (of-dur₁ τ) ≡ of-dur₂ (_→ᴰ_.map h τ)
+
+strictᵍ : {D₁ D₂ : Duration} {h : D₁ →ᴰ D₂} {G₁ : Grade D₁} {G₂ : Grade D₂}
+       → StrictMorphism h G₁ G₂ → GradeMorphism h G₁ G₂
+strictᵍ {G₂ = G₂} f = record
+  { map = map ; map-monotone = map-monotone
+  ; map-u = ≃-reflexive G₂ map-u
+  ; map-· = ≃-reflexive G₂ map-·
+  ; map-⊤ = ≃-reflexive G₂ map-⊤
+  ; map-⊔ = ≃-reflexive G₂ map-⊔
+  ; map-of-dur = ≃-reflexive G₂ map-of-dur
+  }
+  where open StrictMorphism f
 
 -- Morphisms of grades over the same durations
 
@@ -250,6 +395,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      _·_ to _·ᵣ_;
      u to uᵣ;
      _≾_ to _≾ᵣ_;
+     _≃_ to _≃ᵣ_;
      ⊤ to ⊤ᵣ;
      _⊔_ to _⊔ᵣ_;
      of-dur to of-durʳ;
@@ -258,7 +404,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-assoc to ·ᵣ-assoc;
      ≾-refl to ≾ᵣ-refl;
      ≾-trans to ≾ᵣ-trans;
-     ≾-antisym to ≾ᵣ-antisym;
      ≾-irrelevant to ≾ᵣ-irrelevant;
      _≾?_ to _≾ᵣ?_;
      ≾-⊤ to ≾-⊤ᵣ;
@@ -273,12 +418,22 @@ module GradeSystemInterface (GS : GradeSystem) where
      ≾-zero-productʳ to ≾ᵣ-zero-productʳ;
      of-dur-zero to of-durʳ-zero;
      of-dur-plus to of-durʳ-plus;
+     antisym? to antisymᵣ?;
      u-least? to uᵣ-least?;
      ·-comm? to ·ᵣ-comm?;
      plus? to plusᵣ?;
      ≾-reflexive to ≾ᵣ-reflexive;
-     _≡?_ to _≡ᵣ?_;
+     ≃-refl to ≃ᵣ-refl;
+     ≃-sym to ≃ᵣ-sym;
+     ≃-trans to ≃ᵣ-trans;
+     ≃-reflexive to ≃ᵣ-reflexive;
+     ≃⇒≾ to ≃ᵣ⇒≾ᵣ;
+     ≃⇒≿ to ≃ᵣ⇒≿ᵣ;
+     ≃-irrelevant to ≃ᵣ-irrelevant;
+     _≃?_ to _≃ᵣ?_;
+     ·-cong to ·ᵣ-cong;
      ⊔-mono to ⊔ᵣ-mono;
+     ⊔-cong to ⊔ᵣ-cong;
      ⊔-idem to ⊔ᵣ-idem;
      ⊔-comm to ⊔ᵣ-comm;
      ⊔-assoc to ⊔ᵣ-assoc;
@@ -293,6 +448,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      _·_ to _·ₑ_;
      u to uₑ;
      _≾_ to _≾ₑ_;
+     _≃_ to _≃ₑ_;
      ⊤ to ⊤ₑ;
      _⊔_ to _⊔ₑ_;
      of-dur to of-durᵉ;
@@ -301,7 +457,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-assoc to ·ₑ-assoc;
      ≾-refl to ≾ₑ-refl;
      ≾-trans to ≾ₑ-trans;
-     ≾-antisym to ≾ₑ-antisym;
      ≾-irrelevant to ≾ₑ-irrelevant;
      _≾?_ to _≾ₑ?_;
      ≾-⊤ to ≾-⊤ₑ;
@@ -314,14 +469,24 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-distribʳ-⊔-≾ to ·ₑ-distribʳ-⊔ₑ-≾ₑ;
      of-dur-zero to of-durᵉ-zero;
      of-dur-plus to of-durᵉ-plus;
+     antisym? to antisymₑ?;
      u-least? to uₑ-least?;
      ·-comm? to ·ₑ-comm?;
      ≾-zero-productˡ to ≾ₑ-zero-productˡ;
      ≾-zero-productʳ to ≾ₑ-zero-productʳ;
      plus? to plusₑ?;
      ≾-reflexive to ≾ₑ-reflexive;
-     _≡?_ to _≡ₑ?_;
+     ≃-refl to ≃ₑ-refl;
+     ≃-sym to ≃ₑ-sym;
+     ≃-trans to ≃ₑ-trans;
+     ≃-reflexive to ≃ₑ-reflexive;
+     ≃⇒≾ to ≃ₑ⇒≾ₑ;
+     ≃⇒≿ to ≃ₑ⇒≿ₑ;
+     ≃-irrelevant to ≃ₑ-irrelevant;
+     _≃?_ to _≃ₑ?_;
+     ·-cong to ·ₑ-cong;
      ⊔-mono to ⊔ₑ-mono;
+     ⊔-cong to ⊔ₑ-cong;
      ⊔-idem to ⊔ₑ-idem;
      ⊔-comm to ⊔ₑ-comm;
      ⊔-assoc to ⊔ₑ-assoc;
@@ -338,5 +503,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      map-· to map-·ᵉ;
      map-⊤ to map-⊤ᵉ;
      map-⊔ to map-⊔ᵉ;
-     map-of-dur to map-of-durᵉ
+     map-of-dur to map-of-durᵉ;
+     map-≃ to map-≃ᵉ
     ) public

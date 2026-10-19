@@ -48,7 +48,7 @@ open import Syntax.Substitutions S
 
 open Category Cat
 open Future Fut
-open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; ⟨⟩-≤; ⟨⟩-∘ᵐ; ⟨⟩-idᵐ; ⟨⟩-congᶠ; μ)
+open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; ⟨⟩-≤; ⟨⟩-∘ᵐ; ⟨⟩-idᵐ; ⟨⟩-congᶠ; μ; ⟨⟩-≤-irr)
 open Adjunction Adj using (η⊣; ε⊣; η⊣-nat; η⊣-monoidal)
 open GroundTypes GTy
 open GroundEternal GE using (×-eternalᵒ; ×-eternalᵒ-extᵉ)
@@ -96,14 +96,14 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
   where
     ren : Ren [] ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
                  (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
-    ren = (eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
+    ren = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
 
-    ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
-    ern = ∘ᵐ-congˡ (∘ᵐ-congˡ (eq-ren-grade {Γ} map-·ᵉ)) ∙ ∘ᵐ-assoc _ _ _
+    ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
+    ern = ∘ᵐ-congˡ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _)) ∙ ∘ᵐ-assoc _ _ _
 
     Vp = subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV)
 
-    e = sym (·ₑ-assoc (op-grade op) ε ε')
+    e = ≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε')
 
     -- the reduct's pieces, with their certificates
     bren = barrier-wk-ren {Γ} (mapᵉ (op-grade op)) (type-of-gtype (arity op))
@@ -216,11 +216,11 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
               ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-fstᵐ _ _
                 , boxpart ⟩ᵐ-cong ⟩ᵐ-cong))
       ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr
-                    (ε-subst e
+                    (ε-≃ e
                       (box _ (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))
                            (CL [ split-∷ split-[] ↦ V ]c)))
-                    pR (ε-substᴾ e _ pBox)
-                ∙ sound-ε-subst e
+                    pR pBox
+                ∙ sound-ε-≃ e
                     (box _ (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))
                          (CL [ split-∷ split-[] ↦ V ]c))
                     pBox

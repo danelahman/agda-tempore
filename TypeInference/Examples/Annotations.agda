@@ -22,7 +22,7 @@ open import TypeInference.SolverImpl.Enum using (OpEnum)
 module TypeInference.Examples.Annotations (S : LanguageSpec) (opEnum : OpEnum S) where
 
 open LanguageSpec S
-open GradeSystemInterface Grades using (≾ᵣ-reflexive; map-uᵉ)
+open GradeSystemInterface Grades using (≃ᵣ⇒≾ᵣ; map-uᵉ)
 
 open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
@@ -66,7 +66,7 @@ ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
 ok₁ : ∀ {Θ} {A : OVType Θ} → VarOK ∅ᴴ A (ûᵣ ·̂ᵣ ∣ ûₑ ∣̂ᵉ)
 ok₁ = ≾ᵘ-ok (transᵣ (eqᵣ ≡̂ᵣ-identityˡ)
-               (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≾ᵣ-reflexive map-uᵉ))))
+               (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-uᵉ))))
 
 U⇒U : ∀ {Θ} → OVType Θ
 U⇒U = Unit ⇒ Unit ‼ ûₑ

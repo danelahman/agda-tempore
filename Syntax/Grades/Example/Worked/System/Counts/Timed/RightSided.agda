@@ -27,5 +27,5 @@ open AtMost using (at-most-counts)
 a-delay-permits-a-reading : within ⟅ ⌈ read ⌉ ⟆ ≾ within ⟅ ⟨ 2 ⟩ ⟆
 a-delay-permits-a-reading = holds
 
-reading-erased : (F : _ →ᵍ at-most-counts 3) → _→ᵍ_.map F (within ⟅ ⌈ read ⌉ ⟆) ≡ AtMost.uᵛ
+reading-erased : (F : _ →ᵍ at-most-counts 3) → AtMost._≃ᵛ_ (_→ᵍ_.map F (within ⟅ ⌈ read ⌉ ⟆)) AtMost.uᵛ
 reading-erased F = erases F read

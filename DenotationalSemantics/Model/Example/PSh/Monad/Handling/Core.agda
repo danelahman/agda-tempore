@@ -125,13 +125,13 @@ clause-mono {P} h op {εa} q pv v bx bx' rel =
 -- At a grade that *is* the unit, necessitating and reading back is the
 -- identity (`necᵉ-≤` down to `uᵣ`, then `necᵉ-u`).
 
-necᵉ-pt-u : ∀ {P ρ w} → (bc : Eternalᵒ P) → (u₀ : ρ ≡ uᵣ)
+necᵉ-pt-u : ∀ {P ρ w} → (bc : Eternalᵒ P) → (u₀ : ρ ≃ᵣ uᵣ)
           → (pv : carrier P w) → (q₀ : w ⊑[ ρ ] w)
           → _≈_ P (fun (app (Eternalᵒ.necᵉ bc {ρ}) pv) q₀) pv
 necᵉ-pt-u {P} bc u₀ pv q₀ =
   ≈-trans P ([]-fun-irr (app (Eternalᵒ.necᵉ bc) pv) q₀
-               (⊑-mono (≾ᵣ-reflexive (sym u₀)) ⊑-refl))
-  (≈-trans P (Eternalᵒ.necᵉ-≤ bc (≾ᵣ-reflexive (sym u₀)) pv ⊑-refl)
+               (⊑-mono (≃ᵣ⇒≿ᵣ u₀) ⊑-refl))
+  (≈-trans P (Eternalᵒ.necᵉ-≤ bc (≃ᵣ⇒≿ᵣ u₀) pv ⊑-refl)
   (≈-trans P (Eternalᵒ.necᵉ-u bc pv ⊑-refl)
              (transport-refl P pv)))
 
@@ -171,12 +171,12 @@ mutual
   T-alg-of-handlerˢ : ∀ {P A ε ε' w} → Eternalᵒ P → Handlerˢ P A
                     → carrier P w → Tˢ (Tᵒ A ε') ε w → Tˢ A (ε ·ₑ ε') w
   T-alg-of-handlerˢ {ε' = ε'} bc h pv (leaf s) =
-    ε-substˢ (sym (·ₑ-identityˡ ε')) s
+    sub (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε')) s
   T-alg-of-handlerˢ {ε' = ε'} bc h pv (op-node {ε = ε₀} op v k kc kn) =
-    ε-substˢ (sym (·ₑ-assoc (op-grade op) ε₀ ε'))
+    sub (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) ε₀ ε'))
       (app (clause h op (ε₀ ·ₑ ε')) (pv , (v , handler-box bc pv h op k kc kn)))
   T-alg-of-handlerˢ {ε' = ε'} bc h pv (delay-node {ε = ε₀} τ k kn) =
-    ε-substˢ (sym (·ₑ-assoc (of-durᵉ τ) ε₀ ε'))
+    sub (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) ε₀ ε'))
       (delay-node τ (λ q → T-alg-of-handlerˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) q) (k q))
         (λ q r → ≈ᵗ-trans
           (T-alg-of-handlerˢ-congᵖ bc h (fun-nat (app (Eternalᵒ.necᵉ bc) pv) q r) (k (⊑ρ∘ᵘ q r)))
@@ -228,12 +228,12 @@ mutual
   T-alg-of-handlerˢ-congᵗ : ∀ {P A ε ε' w} (bc : Eternalᵒ P) (h : Handlerˢ P A)
                             (pv : carrier P w) {t t' : Tˢ (Tᵒ A ε') ε w}
                           → t ≈ᵗ t' → T-alg-of-handlerˢ bc h pv t ≈ᵗ T-alg-of-handlerˢ bc h pv t'
-  T-alg-of-handlerˢ-congᵗ bc h pv (leaf-≈ e)             = ε-substˢ-congᵗ _ e
+  T-alg-of-handlerˢ-congᵗ bc h pv (leaf-≈ e)             = sub-congᵗ e
   T-alg-of-handlerˢ-congᵗ {P = P} bc h pv (op-≈ {op = op} ev ek) =
-    ε-substˢ-congᵗ _ (app-cong (clause h op _)
+    sub-congᵗ (app-cong (clause h op _)
       (≈-refl P , (ev , (λ q p y → T-alg-of-handlerˢ-congᵗ bc h _ (ek (⊑ρ∘ᵘ q p) y)))))
   T-alg-of-handlerˢ-congᵗ bc h pv (delay-≈ ek)           =
-    ε-substˢ-congᵗ _ (delay-≈ (λ q → T-alg-of-handlerˢ-congᵗ bc h _ (ek q)))
+    sub-congᵗ (delay-≈ (λ q → T-alg-of-handlerˢ-congᵗ bc h _ (ek q)))
   T-alg-of-handlerˢ-congᵗ bc h pv (sub-≈ et)             =
     sub-≈ (T-alg-of-handlerˢ-congᵗ bc h pv et)
   T-alg-of-handlerˢ-congᵗ bc h pv sub-u                 = sub-uᵗ _ _
@@ -241,12 +241,9 @@ mutual
   T-alg-of-handlerˢ-congᵗ {ε' = ε'} bc h pv
     (sub-delay {ε = ε₁} {ε' = ε₁'} {τ = τ} {e = e}) =
     ≈ᵗ-trans
-      (sub-ε-substᵗ (sym (·ₑ-assoc (of-durᵉ τ) ε₁ ε'))
-                    (sym (·ₑ-assoc (of-durᵉ τ) ε₁' ε'))
-                    (·ₑ-monoʳ-≾ₑ (·ₑ-monoˡ-≾ₑ e))
-                    (·ₑ-monoˡ-≾ₑ (·ₑ-monoʳ-≾ₑ e))
-                    _)
-      (ε-substˢ-congᵗ _ sub-delay)
+      (sub-swapᵗ _ _ (·ₑ-monoʳ-≾ₑ (·ₑ-monoˡ-≾ₑ e))
+                     (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) ε₁' ε')) _)
+      (sub-congᵗ sub-delay)
   -- The `op` case: the coercion pushed under the operation changes which clause
   -- the fold selects, and `clause-mono` is what identifies the two. The two
   -- boxes it relates differ exactly by the fold's own `sub` clause, so the
@@ -254,12 +251,9 @@ mutual
   T-alg-of-handlerˢ-congᵗ {P = P} {ε' = ε'} bc h pv
     (sub-op {ε = ε₁} {ε' = ε₁'} {op = op} {e = e} {v = v} {k = k} {kc = kc} {kn = kn}) =
     ≈ᵗ-trans
-      (sub-ε-substᵗ (sym (·ₑ-assoc (op-grade op) ε₁ ε'))
-                    (sym (·ₑ-assoc (op-grade op) ε₁' ε'))
-                    (·ₑ-monoʳ-≾ₑ (·ₑ-monoˡ-≾ₑ e))
-                    (·ₑ-monoˡ-≾ₑ (·ₑ-monoʳ-≾ₑ e))
-                    _)
-      (ε-substˢ-congᵗ _
+      (sub-swapᵗ _ _ (·ₑ-monoʳ-≾ₑ (·ₑ-monoˡ-≾ₑ e))
+                     (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) ε₁' ε')) _)
+      (sub-congᵗ
         (≈ᵗ-trans
           (≈ᵗ-sym (clause-mono h op (·ₑ-monoˡ-≾ₑ e) pv v
                      (handler-box bc pv h op k kc kn)
@@ -273,57 +267,35 @@ mutual
   -- The fold regrades a delay node but leaves the node itself, and carries the
   -- eternal parameter under it by `necᵉ`; so both collapses are reapplied to
   -- the folded continuations, with `necᵉ-pt-u`/`necᵉ-pt-·` collapsing the
-  -- parameter alongside and UIP reconciling the regradings.
+  -- parameter alongside and proof irrelevance reconciling the regradings.
   T-alg-of-handlerˢ-congᵗ {ε' = ε'} bc h pv
     (delay-zero {ε = ε₀} {k = k} {q₀ = q₀} e) =
-    ≈ᵗ-trans (ε-substˢ-congᵗ a₁ (delay-zero {q₀ = q₀} delay0ᵉ))
-    (≈ᵗ-trans (ε-substˢ-congᵗ a₁ (ε-substˢ-congᵗ delay0ᵉ
+    ≈ᵗ-trans (sub-congᵗ (delay-zero {q₀ = q₀} delay0ᵉ))
+    (≈ᵗ-trans (sub-congᵗ (sub-congᵗ
                 (T-alg-of-handlerˢ-congᵖ bc h (necᵉ-pt-u bc delay-uᵣ pv q₀) (k q₀))))
-              (≡→≈ᵗ (trans (ε-substˢ-trans delay0ᵉ a₁ (T-alg-of-handlerˢ bc h pv (k q₀)))
-                    (trans (ε-substˢ-uip (trans delay0ᵉ a₁) (cong (_·ₑ ε') e)
-                                         (T-alg-of-handlerˢ bc h pv (k q₀)))
-                           (sym (T-alg-ε-substˢ bc h pv e (k q₀)))))))
-    where
-      a₁ = sym (·ₑ-assoc (of-durᵉ 0ᴰ) ε₀ ε')
+              (sub-∘ᵗ _ _ _ _))
   T-alg-of-handlerˢ-congᵗ {P = P} {ε' = ε'} bc h pv
     (delay-plus {ε = ε₀} {τ₁ = τ₁} {τ₂ = τ₂} {k = k} {kn = kn} {k' = k'} hk e) =
-    ≈ᵗ-trans (ε-substˢ-congᵗ a₁
-               (delay-plus-out a₂
-                  (λ q₁ q₂ → T-alg-of-handlerˢ bc h
-                               (fun (app (Eternalᵒ.necᵉ bc)
-                                         (fun (app (Eternalᵒ.necᵉ bc) pv) q₁)) q₂)
-                               (k' q₁ q₂))
-                  _ _
-                  (λ q → T-alg-of-handlerˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) q) (k q))
-                  _
-                  (λ q₁ q₂ →
-                     ≈ᵗ-trans (T-alg-of-handlerˢ-congᵖ bc h
-                                (≈-sym P (necᵉ-pt-· bc (≾ᵣ-reflexive delay-·ᵣ) pv q₁ q₂))
-                                (k' q₁ q₂))
-                              (T-alg-of-handlerˢ-congᵗ bc h _ (hk q₁ q₂)))))
-              (≡→≈ᵗ (trans (ε-substˢ-trans (trans delay+ᵉ b₂) a₁ D)
-                    (trans (ε-substˢ-uip (trans (trans delay+ᵉ b₂) a₁)
-                                         (trans a₃ (cong (_·ₑ ε') e)) D)
-                    (trans (sym (ε-substˢ-trans a₃ (cong (_·ₑ ε') e) D))
-                           (sym (T-alg-ε-substˢ bc h pv e (delay-node (τ₁ +ᴰ τ₂) k kn)))))))
-    where
-      a₁ = sym (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂ ·ₑ ε₀) ε')
-      a₂ = sym (·ₑ-assoc (of-durᵉ τ₂) ε₀ ε')
-      a₃ = sym (·ₑ-assoc (of-durᵉ (τ₁ +ᴰ τ₂)) ε₀ ε')
-      b₂ = cong (of-durᵉ τ₁ ·ₑ_) a₂
-      D  = delay-node (τ₁ +ᴰ τ₂)
-             (λ q → T-alg-of-handlerˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) q) (k q))
-             (λ q r → ≈ᵗ-trans
-               (T-alg-of-handlerˢ-congᵖ bc h
-                 (fun-nat (app (Eternalᵒ.necᵉ bc) pv) q r) (k (⊑ρ∘ᵘ q r)))
-               (≈ᵗ-trans
-                 (T-alg-of-handlerˢ-congᵗ bc h _ (kn q r))
-                 (T-alg-of-handlerˢ-nat bc h r (fun (app (Eternalᵒ.necᵉ bc) pv) q) (k q))))
+    ≈ᵗ-trans
+      (delay-plus-out (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ₂) ε₀ ε'))
+         (λ q₁ q₂ → T-alg-of-handlerˢ bc h
+                      (fun (app (Eternalᵒ.necᵉ bc)
+                                (fun (app (Eternalᵒ.necᵉ bc) pv) q₁)) q₂)
+                      (k' q₁ q₂))
+         _ _
+         (λ q → T-alg-of-handlerˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) q) (k q))
+         _
+         (λ q₁ q₂ →
+            ≈ᵗ-trans (T-alg-of-handlerˢ-congᵖ bc h
+                       (≈-sym P (necᵉ-pt-· bc (≃ᵣ⇒≾ᵣ delay-·ᵣ) pv q₁ q₂))
+                       (k' q₁ q₂))
+                     (T-alg-of-handlerˢ-congᵗ bc h _ (hk q₁ q₂)))
+         (≾ₑ-trans (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ (τ₁ +ᴰ τ₂)) ε₀ ε')) (·ₑ-monoˡ-≾ₑ e)) _)
+      (≈ᵗ-sym (sub-∘ᵗ _ _ _ _))
   T-alg-of-handlerˢ-congᵗ bc h pv (≈ᵗ-sym et)           =
     ≈ᵗ-sym (T-alg-of-handlerˢ-congᵗ bc h pv et)
   T-alg-of-handlerˢ-congᵗ bc h pv (≈ᵗ-trans et et')     =
     ≈ᵗ-trans (T-alg-of-handlerˢ-congᵗ bc h pv et) (T-alg-of-handlerˢ-congᵗ bc h pv et')
-
   -- The fold commutes with a grade transport.
 
   T-alg-ε-substˢ : ∀ {P A ε ε₁ ε' w} → (bc : Eternalᵒ P) → (h : Handlerˢ P A)
@@ -340,12 +312,12 @@ mutual
                           → T-alg-of-handlerˢ bc h pv t ≈ᵗ T-alg-of-handlerˢ bc h pv' t
   T-alg-of-handlerˢ-congᵖ bc h ep (leaf s)               = ≈ᵗ-refl _
   T-alg-of-handlerˢ-congᵖ bc h ep (op-node op v k kc kn) =
-    ε-substˢ-congᵗ _ (app-cong (clause h op _)
+    sub-congᵗ (app-cong (clause h op _)
       (ep , (≈-refl ⟦ param op ⟧ᵍ ,
         (λ q r y → T-alg-of-handlerˢ-congᵖ bc h
                      (app-cong (Eternalᵒ.necᵉ bc) ep (⊑ρ∘ᵘ q r)) (k (⊑ρ∘ᵘ q r) y)))))
   T-alg-of-handlerˢ-congᵖ bc h ep (delay-node τ k kn)    =
-    ε-substˢ-congᵗ _ (delay-≈
+    sub-congᵗ (delay-≈
       (λ q → T-alg-of-handlerˢ-congᵖ bc h (app-cong (Eternalᵒ.necᵉ bc) ep q) (k q)))
   T-alg-of-handlerˢ-congᵖ bc h ep (sub p t)              =
     sub-≈ (T-alg-of-handlerˢ-congᵖ bc h ep t)
@@ -359,10 +331,10 @@ mutual
                         → T-alg-of-handlerˢ bc h (transport P r pv) (transportᵗ r t)
                         ≈ᵗ transportᵗ r (T-alg-of-handlerˢ bc h pv t)
   T-alg-of-handlerˢ-nat bc h r pv (leaf s) =
-    ≡→≈ᵗ (sym (transportᵗ-ε-substˢ r (sym (·ₑ-identityˡ _)) s))
+    ≈ᵗ-refl _
   T-alg-of-handlerˢ-nat {P = P} bc h r pv (op-node {ε = ε₀} op v k kc kn) =
     ≈ᵗ-trans
-      (ε-substˢ-congᵗ (sym (·ₑ-assoc (op-grade op) ε₀ _))
+      (sub-congᵗ
         (app-cong (clause h op _)
           (≈-refl P ,
            (≈-refl ⟦ param op ⟧ᵍ ,
@@ -374,15 +346,15 @@ mutual
               (T-alg-of-handlerˢ-congᵗ bc h _
                 (≡→≈ᵗ (cong (λ z → k z y) (⊑-irrelevant _ _)))))))))
       (≈ᵗ-trans
-        (ε-substˢ-congᵗ (sym (·ₑ-assoc (op-grade op) ε₀ _))
+        (sub-congᵗ
           (nat (clause h op _) r (pv , (v , handler-box bc pv h op k kc kn))))
-        (≡→≈ᵗ (sym (transportᵗ-ε-substˢ r (sym (·ₑ-assoc (op-grade op) ε₀ _)) _))))
+        (≈ᵗ-refl _))
   T-alg-of-handlerˢ-nat bc h r pv (delay-node {ε = ε₀} τ k kn) =
     ≈ᵗ-trans
-      (ε-substˢ-congᵗ (sym (·ₑ-assoc (of-durᵉ τ) ε₀ _))
+      (sub-congᵗ
         (delay-≈ (λ q → T-alg-of-handlerˢ-congᵖ bc h
                           (nat (Eternalᵒ.necᵉ bc) r pv q) (k (⊑ᵘ∘ρ r q)))))
-      (≡→≈ᵗ (sym (transportᵗ-ε-substˢ r (sym (·ₑ-assoc (of-durᵉ τ) ε₀ _)) _)))
+      (≈ᵗ-refl _)
   T-alg-of-handlerˢ-nat bc h r pv (sub e t) =
     sub-≈ (T-alg-of-handlerˢ-nat bc h r pv t)
 

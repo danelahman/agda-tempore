@@ -60,7 +60,7 @@ open _⊑ₛ[_]_ public
 
 reach-bound : ∀ {St St' ρ} → (q : St ⊑ₛ[ ρ ] St')
             → ≤ₛ-grade (ext q) ·ᵣ uᵣ ≾ᵣ ρ
-reach-bound q = ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityʳ _)) (bound q)
+reach-bound q = ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityʳ _)) (bound q)
 
 -- The witness an `unbox` needs: enough time has passed for a `ρ`-boxed value
 -- to be ready at `St'`. This is the shape of `UNBOX`'s premise, hence what
@@ -116,12 +116,12 @@ resume q M W = (C-rename (cong-∷-ren (unbox-ren q)) M) [ split-[] ↦ W ]c
 ≤ₛ-grade-trans : ∀ {Γ Γ' Γ''} → {St : 𝕊 Γ} → {St' : 𝕊 Γ'} → {St'' : 𝕊 Γ''}
                → (q : St ≤ₛ St') → (q' : St' ≤ₛ St'')
                ---------------------------------------------------------
-               → ≤ₛ-grade (≤ₛ-trans q q') ≡ ≤ₛ-grade q ·ᵣ ≤ₛ-grade q'
+               → ≤ₛ-grade (≤ₛ-trans q q') ≃ᵣ ≤ₛ-grade q ·ᵣ ≤ₛ-grade q'
 
 ≤ₛ-grade-trans q id-suc        =
-  sym (·ᵣ-identityʳ (≤ₛ-grade q))
+  ≃ᵣ-sym (·ᵣ-identityʳ (≤ₛ-grade q))
 ≤ₛ-grade-trans q (⟨⟩-suc ρ q') =
-  trans (cong (_·ᵣ ρ) (≤ₛ-grade-trans q q')) (·ᵣ-assoc _ _ ρ)
+  ≃ᵣ-trans (·ᵣ-cong (≤ₛ-grade-trans q q') ≃ᵣ-refl) (·ᵣ-assoc _ _ ρ)
 ≤ₛ-grade-trans q (∷-suc V q')  =
   ≤ₛ-grade-trans q q'
 
@@ -138,7 +138,7 @@ reach-∘ᵍ : ∀ {St St' St'' ρ ρ'}
 
 reach-∘ᵍ (reach e' b') (reach e b) =
   reach (≤ₛ-trans e e')
-    (≾ᵣ-trans (≾ᵣ-reflexive (≤ₛ-grade-trans e e'))
+    (≾ᵣ-trans (≃ᵣ⇒≾ᵣ (≤ₛ-grade-trans e e'))
               (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ b) (·ᵣ-monoʳ-≾ᵣ b')))
 
 -- The two shapes the development uses: a unit reach appended to a guarded one,
@@ -147,7 +147,7 @@ reach-∘ᵍ (reach e' b') (reach e b) =
 
 reach-∘ : ∀ {St St' St'' ρ} → St' ⊑ₛ[ uᵣ ] St'' → St ⊑ₛ[ ρ ] St'
         → St ⊑ₛ[ ρ ] St''
-reach-∘ {ρ = ρ} q' q = reach-≤ (reach-∘ᵍ q' q) (≾ᵣ-reflexive (·ᵣ-identityʳ ρ))
+reach-∘ {ρ = ρ} q' q = reach-≤ (reach-∘ᵍ q' q) (≃ᵣ⇒≾ᵣ (·ᵣ-identityʳ ρ))
 
 -- Allocating a cell accumulates nothing (`BOX`); letting time pass costs
 -- exactly the lock it passes (`DELAY`).
@@ -162,7 +162,7 @@ delay-reach : ∀ {ρ} {St : 𝕊 []}
             ----------------------------
             → St ⊑ₛ[ ρ ] (St ⟨ ρ ⟩ₛ)
 
-delay-reach {ρ} = reach (⟨⟩-suc ρ id-suc) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))
+delay-reach {ρ} = reach (⟨⟩-suc ρ id-suc) (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ ρ))
 
 -- Extending twice is extending once along the composite.
 
@@ -256,7 +256,7 @@ suc-comp-ren-∘-≐ʳ : ∀ {St St₁ St₂ : 𝕊 []} {ρ₀ ρ₁ ρ₂ : R}
 -- `≤ₛ-trans e id-suc` *is* `e`, so the composite is `e` at a relaxed grade
 suc-comp-ren-∘-≐ʳ {ρ₂ = ρ₂} e id-suc b b₁ b₂ =
   suc-comp-ren-≤ e b b₁
-    (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityˡ ρ₂))) b₂)
+    (≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-identityˡ ρ₂)) b₂)
 
 suc-comp-ren-∘-≐ʳ e (⟨⟩-suc ρ e') b b₁ b₂ =
   ≐ʳ-trans (∘ʳ-≐ʳ (suc-comp-ren-∘-≐ʳ e e' _ b₁ _) ≐ʳ-refl)
@@ -308,11 +308,11 @@ suc-comp-ren-img (∷-suc V e)  b x =
 
 ≤ₛ-embed-grade : ∀ {St St₁ : 𝕊 []} → (e : St ≤ₛ St₁) → ∀ {A σ}
                → (x : A ∈[ σ ] toCtx St)
-               → proj₁ (≤ₛ-embed e x) ≡ σ ·ᵣ ≤ₛ-grade e
-≤ₛ-embed-grade id-suc       {σ = σ} x = sym (·ᵣ-identityʳ σ)
+               → proj₁ (≤ₛ-embed e x) ≃ᵣ σ ·ᵣ ≤ₛ-grade e
+≤ₛ-embed-grade id-suc       {σ = σ} x = ≃ᵣ-sym (·ᵣ-identityʳ σ)
 ≤ₛ-embed-grade (⟨⟩-suc ρ e) {σ = σ} x =
-  trans (cong (_·ᵣ ρ) (≤ₛ-embed-grade e x))
-        (·ᵣ-assoc σ (≤ₛ-grade e) ρ)
+  ≃ᵣ-trans (·ᵣ-cong (≤ₛ-embed-grade e x) ≃ᵣ-refl)
+           (·ᵣ-assoc σ (≤ₛ-grade e) ρ)
 ≤ₛ-embed-grade (∷-suc V e)  x = ≤ₛ-embed-grade e x
 
 -- What a reach does to a variable: the embedding of its extension.
@@ -347,15 +347,11 @@ steps-grade-≾ : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼
               → (rs : cf ↝* cf')
               → ≤ₛ-grade (steps-extends-state rs) ·ᵣ mapᵉ ε' ≾ᵣ mapᵉ ε
 
-steps-grade-≾ {ε = ε} ε* = ≾ᵣ-reflexive (·ᵣ-identityˡ (mapᵉ ε))
+steps-grade-≾ {ε = ε} ε* = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ (mapᵉ ε))
 steps-grade-≾ {ε' = ε'} (r ◅ rs) =
   ≾ᵣ-trans
-    (≾ᵣ-reflexive
-      (trans (cong (_·ᵣ mapᵉ ε')
-                   (≤ₛ-grade-trans (step-extends-state r)
-                                   (steps-extends-state rs)))
-             (·ᵣ-assoc (≤ₛ-grade (step-extends-state r))
-                       (≤ₛ-grade (steps-extends-state rs)) (mapᵉ ε'))))
+    (≃ᵣ⇒≾ᵣ
+      (≃ᵣ-trans (·ᵣ-cong (≤ₛ-grade-trans (step-extends-state r) (steps-extends-state rs)) ≃ᵣ-refl) (·ᵣ-assoc (≤ₛ-grade (step-extends-state r)) (≤ₛ-grade (steps-extends-state rs)) (mapᵉ ε'))))
     (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (steps-grade-≾ rs)) (step-grade-≾ r))
 
 -- The renaming a whole run licenses. A run's bound relates two locked contexts,
@@ -675,19 +671,19 @@ unbox-ren-delay-≐ʳ = mk≐ʳ go
 
 lookup-ren′ : ∀ {A ρ σ} {Γ : Ctx} → (Γf Γs : Ctx)
             → (eq : (Γf ∷ [ ρ ] A) ++ᶜ Γs ≡ Γ)
-            → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs) ≡ σ)
+            → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs) ≾ᵣ σ)
             → (rel : σ ≾ᵣ ρ)
             → Ren [] Γ (([] ++ᶜ Γf) ⟨ ρ ⟩)
 lookup-ren′ {A} {ρ} Γf Γs eq h rel =
   (((  eq-ren ++ᶜ-identityˡ
    ∘ʳ ⟨⟩-≤-ren rel)
-   ∘ʳ wk-ren-⟨ρ⟩-ctx h)
+   ∘ʳ (⟨⟩-≤-ren h ∘ʳ wk-ren-⟨ρ⟩-ctx refl))
    ∘ʳ eq-ren (sym (++ᶜ-assoc Γf ([] ∷ [ ρ ] A) Γs)))
    ∘ʳ eq-ren eq
 
 lookup-body′ : ∀ {A ρ σ} {Γ : Ctx} → (Γf Γs : Ctx)
              → (eq : (Γf ∷ [ ρ ] A) ++ᶜ Γs ≡ Γ)
-             → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs) ≡ σ)
+             → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs) ≾ᵣ σ)
              → (rel : σ ≾ᵣ ρ)
              → ([] ++ᶜ Γf) ⟨ ρ ⟩ ⊢V⦂ A
              → Γ ⊢V⦂ A
@@ -699,13 +695,7 @@ lookup-body {A} {ρ} St (ρ' , z) rel =
   lookup-body′
     (toCtx (split-state-fst St z)) (toCtx (split-state-snd St z))
     (split-state-++ᶜ St z)
-    (trans
-      (trans
-        (trans
-          (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd St z)))
-          (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd St z)))))
-        (sym (grades-≡ (split-state-snd St z))))
-      (snd-split-time≡time-from-head St z))
+    (≃ᵣ⇒≾ᵣ (≃ᵣ-trans (≃ᵣ-trans (≃ᵣ-trans (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd St z))) (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd St z))))) (≃ᵣ-reflexive (sym (grades-≡ (split-state-snd St z))))) (≃ᵣ-reflexive (snd-split-time≡time-from-head St z))))
     rel
     (resource-lookup St z)
 
@@ -716,8 +706,8 @@ lookup-body′-≡ : ∀ {A ρ σ} {Γ Γ' : Ctx} → (eΓ : Γ' ≡ Γ)
                → {Γf Γf' Γs Γs' : Ctx} → (eF : Γf' ≡ Γf) → (eS : Γs' ≡ Γs)
                → (eq : (Γf ∷ [ ρ ] A) ++ᶜ Γs ≡ Γ)
                → (eq' : (Γf' ∷ [ ρ ] A) ++ᶜ Γs' ≡ Γ')
-               → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs) ≡ σ)
-               → (h' : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs') ≡ σ)
+               → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs) ≾ᵣ σ)
+               → (h' : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs') ≾ᵣ σ)
                → (rel rel' : σ ≾ᵣ ρ)
                → (U : ([] ++ᶜ Γf) ⟨ ρ ⟩ ⊢V⦂ A)
                → (U' : ([] ++ᶜ Γf') ⟨ ρ ⟩ ⊢V⦂ A)
@@ -725,7 +715,7 @@ lookup-body′-≡ : ∀ {A ρ σ} {Γ Γ' : Ctx} → (eΓ : Γ' ≡ Γ)
                → lookup-body′ Γf Γs eq h rel U
                ≡ castᵛ eΓ (lookup-body′ Γf' Γs' eq' h' rel' U')
 lookup-body′-≡ refl refl refl eq eq' h h' rel rel' U U' eU
-  rewrite uip {p = eq} {q = eq'} | uip {p = h} {q = h'}
+  rewrite uip {p = eq} {q = eq'} | ≾ᵣ-irrelevant h h'
         | ≾ᵣ-irrelevant rel rel' = V-rename-cong _ eU
 
 -- Same cell, same value: the bound is `≾ᵣ`-irrelevant.
@@ -822,7 +812,7 @@ subst-state-castᵛ refl U = refl
 alloc-lookup-ren : ∀ {A ρ σ} {St St' : 𝕊 []}
                  → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
                  → (e : (St ∷ₛ V) ≤ₛ St')
-                 → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ ≤ₛ-ctx e) ≡ σ)
+                 → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ ≤ₛ-ctx e) ≾ᵣ σ)
                  → (rel : σ ≾ᵣ ρ)
                  → (q₀ : St ⊑ₛ[ ρ ] St')
                  → ext q₀ ≡ ≤ₛ-trans (∷-suc V id-suc) e
@@ -842,7 +832,7 @@ alloc-lookup-ren {A} {ρ} {σ} {St} {St'} V e h rel q₀ eq₀ = mk≐ʳ go
     go {A'} (Tl-⟨⟩ {ρ' = τ'} w) =
       trans (cong (λ t → f₅ (f₄ (f₃ (f₂ (f₁ t))))) s₀)
         (trans (cong (λ t → f₅ (f₄ (f₃ t)))
-                     (wk-ren-⟨ρ⟩-ctx-img (Δ₁ ++ᶜ Δ) h y))
+                     (wk-ren-⟨ρ⟩-ctx-img (Δ₁ ++ᶜ Δ) refl y))
           (trans (cong (λ t → f₅ (f₄ t))
                        (trans (eq-ren-img assoc (∈-++ᶜˡ (Δ₁ ++ᶜ Δ) y))
                               (∈-++ᶜˡ-assoc Δ₁ Δ y)))
@@ -857,7 +847,7 @@ alloc-lookup-ren {A} {ρ} {σ} {St} {St'} V e h rel q₀ eq₀ = mk≐ʳ go
         y = subst (λ Γ₀ → A' ∈[ τ' ] Γ₀) ++ᶜ-identityˡ w
 
         f₁ = var-img′ {A = A'} (⟨⟩-≤-ren rel)
-        f₂ = var-img′ {A = A'} (wk-ren-⟨ρ⟩-ctx h)
+        f₂ = var-img′ {A = A'} (⟨⟩-≤-ren h ∘ʳ wk-ren-⟨ρ⟩-ctx refl)
         f₃ = var-img′ {A = A'} (eq-ren assoc)
         f₄ = var-img′ {A = A'} (eq-ren (refl {x = (toCtx St ∷ [ ρ ] A) ++ᶜ Δ}))
         f₅ = var-img′ {A = A'} (eq-ren eΓ)
@@ -891,10 +881,10 @@ alloc-lookup-≡ {A} {ρ} {St} {St'} V e rel q₀ eq₀ =
     eF = cong toCtx (sym (≤ₛ-embed-fst e (Hd {Γ = toCtx St})))
     eS = sym (trans (≤ₛ-embed-snd-ctx e (Hd {Γ = toCtx St})) ++ᶜ-identityˡ)
 
-    h : ctx-grade (Δ₁ ++ᶜ Δ) ≡ proj₁ (≤ₛ-embed e (Hd {Γ = toCtx St}))
-    h = trans (trans (ctx-grade-++ᶜ Δ₁ Δ) (·ᵣ-identityˡ (ctx-grade Δ)))
-              (trans (sym (grade-++ᶜˡ-uᵣ Δ))
-                     (sym (cong proj₁ (≤ₛ-embed-push e (Hd {Γ = toCtx St})))))
+    h : ctx-grade (Δ₁ ++ᶜ Δ) ≾ᵣ proj₁ (≤ₛ-embed e (Hd {Γ = toCtx St}))
+    h = ≃ᵣ⇒≾ᵣ (≃ᵣ-trans (≃ᵣ-trans (ctx-grade-++ᶜ Δ₁ Δ) (·ᵣ-identityˡ (ctx-grade Δ)))
+                (≃ᵣ-reflexive (trans (sym (grade-++ᶜˡ-uᵣ Δ))
+                     (sym (cong proj₁ (≤ₛ-embed-push e (Hd {Γ = toCtx St})))))))
 
     eU : resource-lookup St' (proj₂ (≤ₛ-embed e (Hd {Γ = toCtx St})))
        ≡ castᵛ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) eF) V

@@ -22,7 +22,7 @@ open import Util.Equality
 -- the identity grade morphism
 
 idᵍ : {D : Duration} (G : Grade D) → G →ᵍ G
-idᵍ G = record
+idᵍ G = strictᵍ record
   { map          = λ c → c
   ; map-monotone = λ rel → rel
   ; map-u        = refl

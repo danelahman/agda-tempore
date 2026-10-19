@@ -149,7 +149,7 @@ mapₗ-of-dur k = tabulate-uᵛ (certain (⟨ k ⟩ ∷ [])) (λ i → cong atle
 -- The grade morphism and the grade system
 
 left-sided→at-least-counts : left-sided →ᵍ at-least-counts n
-left-sided→at-least-counts = record
+left-sided→at-least-counts = strictᵍ record
   { map          = mapₗ
   ; map-monotone = λ {P} {Q} → mapₗ-monotone {P} {Q}
   ; map-u        = mapₗ-of-dur 0

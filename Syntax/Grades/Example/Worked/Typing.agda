@@ -94,6 +94,11 @@ import Syntax.Grades.Example.Worked.Typing.Traces.Subsets.RightSided
 
 import Syntax.Grades.Example.Worked.Typing.Traces.Rigid.Regular.TwoSided
 
+-- the same over finite expressions in dense time: a box opened after an
+-- undisturbed wait, and refused after an operation fills it
+
+import Syntax.Grades.Example.Worked.Typing.Traces.Rigid.Finite.TwoSided
+
 ------------------------------------------------------------------------
 -- Grades that pair time with something else
 --

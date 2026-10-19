@@ -174,11 +174,6 @@ open import Syntax.Grades
 
 import Syntax.Grades.Product
 
----- Preordered grades: the order a preorder, equality its equivalence;
----- the componentwise product
-
-import Syntax.Grades.Preordered
-
 ---- The timed-trace toolkit of the trace-based grades
 
 import Syntax.Grades.Traces

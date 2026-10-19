@@ -180,7 +180,7 @@ infixl 7 _⊔ₒ_
 ·ₒ-iter [ p ,+∞⟩ = p≤p+q p p
 
 dense-left-sided-intervals : Grade ℚ≥0ᴰ
-dense-left-sided-intervals = record
+dense-left-sided-intervals = posetᵍ record
   { Carrier           = 𝕀
   ; _·_               = _·ₒ_
   ; u                 = uₒ
@@ -218,7 +218,7 @@ dense-left-sided-intervals = record
 
 left-sided→dense : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.left-sided-intervals
                                        dense-left-sided-intervals
-left-sided→dense = record
+left-sided→dense = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}
   ; map-u        = refl

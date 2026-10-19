@@ -192,7 +192,7 @@ plusₒ [0, a ] = plus [0, plus∞ a ] (≤∞-plus∞ a) (plus∞-iter a) (λ {
     indʳ [0, b ] = plus∞-indʳ
 
 dense-right-sided-intervals : Grade ℚ≥0ᴰ
-dense-right-sided-intervals = record
+dense-right-sided-intervals = posetᵍ record
   { Carrier           = 𝕀ᵣ
   ; _·_               = _·ₒ_
   ; u                 = uₒ
@@ -230,7 +230,7 @@ dense-right-sided-intervals = record
 
 right-sided→dense : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.right-sided-intervals
                                          dense-right-sided-intervals
-right-sided→dense = record
+right-sided→dense = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}
   ; map-u        = refl

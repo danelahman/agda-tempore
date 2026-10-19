@@ -393,11 +393,11 @@ constsOf (cond (oblig _ k o)) =
 -- The candidates of a class
 
 candsₑ : ℕ → List R × List E → List E
-candsₑ d (rcs , ecs) = deduplicate _≡ₑ?_ (uₑ ∷ ⊤ₑ ∷ ecs ++ witnesses d rcs ecs)
+candsₑ d (rcs , ecs) = deduplicate _≃ₑ?_ (uₑ ∷ ⊤ₑ ∷ ecs ++ witnesses d rcs ecs)
 
 candsᵣ : ℕ → List R × List E → List R
 candsᵣ d (rcs , ecs) =
-  deduplicate _≡ᵣ?_ (uᵣ ∷ ⊤ᵣ ∷ rcs ++ map mapᵉ (ecs ++ witnesses d rcs ecs))
+  deduplicate _≃ᵣ?_ (uᵣ ∷ ⊤ᵣ ∷ rcs ++ map mapᵉ (ecs ++ witnesses d rcs ecs))
 
 ------------------------------------------------------------------------
 -- The search of a class, and of a residual

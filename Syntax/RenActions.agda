@@ -53,11 +53,11 @@ var-rename (var-ren p y) Hd =
 var-rename (var-ren p y) (Tl-∷ x) =
   _ , (λ _ → ≾ᵣ-refl) , x
 var-rename ⟨⟩-η-ren (Tl-⟨⟩ x) =
-  _ , (λ _ → ≾ᵣ-reflexive (sym (·ᵣ-identityʳ _))) , x
+  _ , (λ _ → ≃ᵣ⇒≿ᵣ (·ᵣ-identityʳ _)) , x
 var-rename ⟨⟩-η⁻¹-ren x =
-  _ , (λ _ → ≾ᵣ-reflexive (·ᵣ-identityʳ _)) , Tl-⟨⟩ x
+  _ , (λ _ → ≃ᵣ⇒≾ᵣ (·ᵣ-identityʳ _)) , Tl-⟨⟩ x
 var-rename ⟨⟩-μ-ren (Tl-⟨⟩ x) =
-  _ , (λ _ → ≾ᵣ-reflexive (·ᵣ-assoc _ _ _)) , Tl-⟨⟩ (Tl-⟨⟩ x)
+  _ , (λ _ → ≃ᵣ⇒≾ᵣ (·ᵣ-assoc _ _ _)) , Tl-⟨⟩ (Tl-⟨⟩ x)
 var-rename (⟨⟩-≤-ren {ρ = ρ₁} {ρ' = ρ₂} ρ₂≾ρ₁) (Tl-⟨⟩ x) =
   _ ·ᵣ ρ₂ , (λ _ → ·ᵣ-monoʳ-≾ᵣ ρ₂≾ρ₁) , Tl-⟨⟩ x
 var-rename (cong-∷-ren r) Hd =
@@ -103,7 +103,7 @@ unbox⇒var {ρ = ρ} r V with grad-typ⇒var<: V
     ρ₀ , A₀ , ρ' , z
   , ≾ᵣ-trans (ρ'≾σ·ρ (λ ()))
       (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ σ≾u)
-        (≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)) ρ≾ρ₀))
+        (≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ ρ)) ρ≾ρ₀))
   , p
 
 unbox-val : ∀ {Γ Δ A C ρ}

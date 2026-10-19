@@ -98,6 +98,12 @@ alg-ε-subst alg alg-≤ e =
   ∙ ∘ᵐ-congˡ (T-≤-irr _ (≾ₑ-reflexive (cong (_·ₑ _) e)))
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (T-≤-≡ (cong (_·ₑ _) e)))
 
+-- Two sub-effectings compose to their composite.
+
+T-≤-∘ : ∀ {A ε₁ ε₂ ε₃} → (p : ε₁ ≾ₑ ε₂) → (q : ε₂ ≾ₑ ε₃)
+      → T-≤ {A} q ∘ᵐ T-≤ {A} p ≈ᵐ T-≤ (≾ₑ-trans p q)
+T-≤-∘ p q = T-≤-trans p q (≾ₑ-trans p q)
+
 -- The `ηᵀ` case: a step that performs nothing. Both sides collapse by the
 -- monad's left-unit law, and the algebra passes the returned value through.
 
@@ -109,7 +115,7 @@ alg-ηᵀ : ∀ {B Y P ε ε₂}
        → (pv : Y →ᵐ P)
        → (f : Y →ᵐ Tᵒ (Tᵒ B ε₂) ε)
        → alg {uₑ ·ₑ ε} ∘ᵐ ⟨ pv , μᵀ {Tᵒ B ε₂} {uₑ} {ε} ∘ᵐ Tᶠ f ∘ᵐ ηᵀ ⟩ᵐ
-       ≈ᵐ ε-substᵀ (sym (·ₑ-assoc uₑ ε ε₂))
+       ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc uₑ ε ε₂))
            ∘ᵐ μᵀ {B} {uₑ} {ε ·ₑ ε₂} ∘ᵐ Tᶠ (alg {ε} ∘ᵐ ⟨ pv , f ⟩ᵐ) ∘ᵐ ηᵀ
 alg-ηᵀ {ε = ε} {ε₂ = ε₂} alg alg-≤ pv f =
   -- pull `ηᵀ` to the front, then the unit law collapses `μᵀ ∘ ηᵀ`
@@ -120,12 +126,11 @@ alg-ηᵀ {ε = ε} {ε₂ = ε₂} alg alg-≤ pv f =
   -- the algebra passes the transport through
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (alg-ε-subst alg alg-≤ (sym (·ₑ-identityˡ ε)))
+  ∙ ∘ᵐ-congˡ (alg-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε)))
   ∙ ∘ᵐ-assoc _ _ _
-  -- and the two accumulated transports agree (`uip`), so the same chain
-  -- rebuilds the right-hand side
-  ∙ ∘ᵐ-congˡ (≡→≈ᵐ (cong (λ z → ε-substᵀ z) uip))
-  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (ε-substᵀ-trans _ _))
+  -- and the accumulated coercion splits into the right-hand side's two
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (T-≤-trans (≃ₑ⇒≿ₑ (·ₑ-identityˡ (ε ·ₑ ε₂)))
+                                (≃ₑ⇒≿ₑ (·ₑ-assoc uₑ ε ε₂)) _))
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym T-μ∘η≡id))
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
@@ -180,7 +185,7 @@ alg-stepᵀ : ∀ {ε ε₂ ε₁' ε₃' A A₀ B P} {S S' : 𝕊 []}
           → (alg-delay : ∀ {ε'} → (τ : 𝔻)
                        → alg {of-durᵉ τ ·ₑ ε'}
                            ∘ᵐ mapˣᵐ idᵐ (delayᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂} {ε'} τ)
-                       ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-durᵉ τ) ε' ε₂))
+                       ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) ε' ε₂))
                            ∘ᵐ delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ (alg {ε'})
                            ∘ᵐ []-monoidal
                            ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {of-durʳ τ}) idᵐ)
@@ -189,7 +194,7 @@ alg-stepᵀ : ∀ {ε ε₂ ε₁' ε₃' A A₀ B P} {S S' : 𝕊 []}
           → (f : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε)
           → alg {step-grade r ·ₑ ε}
               ∘ᵐ ⟨ pv , μᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂} {step-grade r} {ε} ∘ᵐ Tᶠ f ∘ᵐ stepᵀ r ⟩ᵐ
-          ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (step-grade r) ε ε₂))
+          ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (step-grade r) ε ε₂))
               ∘ᵐ μᵀ {⟦ B ⟧ᵛ} {step-grade r} {ε ·ₑ ε₂}
               ∘ᵐ Tᶠ (alg {ε} ∘ᵐ ⟨ step-pv bc r pv , f ⟩ᵐ) ∘ᵐ stepᵀ r
 alg-stepᵀ bc alg alg-≤ alg-delay APP        pv f = alg-ηᵀ alg alg-≤ pv f
@@ -224,7 +229,7 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {�
   -- carried under the box. `alg-ηᵀ` does the work there — under `[ of-durʳ τ ]`
   -- the step has become the trivial one, and the parameter has crossed the box
   -- as the lock's extraction.
-  lhs ∙ ∘ᵐ-congˡ (≡→≈ᵐ (cong (λ z → ε-substᵀ z) uip)) ∙ ≈ᵐ-sym rhs
+  lhs ∙ ∘ᵐ-congˡ (T-≤-irr _ _) ∙ ≈ᵐ-sym rhs
   where
     pv' = Eternalᵒ.extᵉ bc {of-durʳ τ} ∘ᵐ ⟨ of-durʳ τ ⟩ᶠ pv
 
@@ -234,7 +239,7 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {�
 
     -- the tick is pulled out of the bind and everything collected under the box
     pre : μᵀ ∘ᵐ Tᶠ f ∘ᵐ (delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
-        ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-durᵉ τ) uₑ ε))
+        ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) uₑ ε))
             ∘ᵐ ((delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ μᵀ)
                   ∘ᵐ ([ of-durʳ τ ]ᶠ (Tᶠ f ∘ᵐ ηᵀ) ∘ᵐ η⊣))
     pre =
@@ -267,12 +272,12 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {�
     -- the source: pull the tick out, carry the parameter across, then `alg-ηᵀ`
     lhs : alg {of-durᵉ τ ·ₑ uₑ ·ₑ ε}
             ∘ᵐ ⟨ pv , μᵀ ∘ᵐ Tᶠ f ∘ᵐ (delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣) ⟩ᵐ
-        ≈ᵐ ε-substᵀ _ ∘ᵐ NF
+        ≈ᵐ T-≤ _ ∘ᵐ NF
     lhs =
         ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , pre ⟩ᵐ-cong)
       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (alg-ε-subst alg alg-≤ (sym (·ₑ-assoc (of-durᵉ τ) uₑ ε)))
+      ∙ ∘ᵐ-congˡ (alg-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) uₑ ε)))
       ∙ ∘ᵐ-assoc _ _ _
       -- re-form `mapˣᵐ idᵐ (delayᵀ τ)` and fire the fold's delay law
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ∘ᵐ-assoc _ _ _ ⟩ᵐ-cong))
@@ -282,7 +287,7 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {�
       ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (alg-delay τ))
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (ε-substᵀ-trans _ _)
+      ∙ ∘ᵐ-congˡ (T-≤-∘ _ _)
       -- the parameter and the bind meet under the tick's box
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
@@ -298,16 +303,16 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {�
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-∘ᵐ _ _)))
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (delayᵀ-ε-substᵀ τ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (delayᵀ-≤ τ _))
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (ε-substᵀ-trans _ _)
+      ∙ ∘ᵐ-congˡ (T-≤-∘ _ _)
 
     -- the target: the same two laws, in the same order
-    rhs : ε-substᵀ (sym (·ₑ-assoc (of-durᵉ τ ·ₑ uₑ) ε ε₂))
+    rhs : T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ ·ₑ uₑ) ε ε₂))
             ∘ᵐ μᵀ ∘ᵐ Tᶠ (alg {ε} ∘ᵐ ⟨ pv' , f ⟩ᵐ)
             ∘ᵐ (delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
-        ≈ᵐ ε-substᵀ _ ∘ᵐ NF
+        ≈ᵐ T-≤ _ ∘ᵐ NF
     rhs =
         ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (delayᵀ-nat τ (alg ∘ᵐ ⟨ pv' , f ⟩ᵐ)))))
@@ -318,7 +323,7 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {�
       ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (delayᵀ-algebraicity τ))
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (ε-substᵀ-trans _ _)
+      ∙ ∘ᵐ-congˡ (T-≤-∘ _ _)
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))))
@@ -577,7 +582,7 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} H N {M'} r
     alg-delay : ∀ {ε'} → (τ : 𝔻)
               → alg {of-durᵉ τ ·ₑ ε'}
                   ∘ᵐ mapˣᵐ idᵐ (delayᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂} {ε'} τ)
-              ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-durᵉ τ) ε' ε₂))
+              ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) ε' ε₂))
                   ∘ᵐ delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ (alg {ε'})
                   ∘ᵐ []-monoidal
                   ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ (bcᴱ (toCtx S)) {of-durʳ τ}) idᵐ
@@ -660,12 +665,12 @@ seq-op-box : ∀ {X A B ε ε'} → (op : Op)
   → (n : (⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X ×ᵐ A) →ᵐ Tᵒ B ε')
   → (rn : ⟨ mapᵉ ε ⟩ᵒ (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ ⟦ arity op ⟧ᵍ)
           →ᵐ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X)
-  → rn ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
+  → rn ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
   → [ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ alg)
       ∘ᵐ [ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Tᶠ n))
       ∘ᵐ ( [ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (strᵀ {_} {A} {ε}) ∘ᵐ exp-strᵐ)
          ∘ᵐ []-monoidal
-         ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ))) idᵐ )
+         ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ)) idᵐ )
       ∘ᵐ ⟨ η⊣ {X} {mapᵉ (op-grade op ·ₑ ε)}
          , [ mapᵉ (op-grade op) ]ᶠ (curryᵐ m) ∘ᵐ η⊣ {X} {mapᵉ (op-grade op)} ⟩ᵐ
   ≈ᵐ [ mapᵉ (op-grade op) ]ᶠ
@@ -709,7 +714,7 @@ seq-op-box {X} {A} {B} {ε} {ε'} op alg m n rn ern =
     -- and that map is `op-env`
     body : alg ∘ᵐ Tᶠ n ∘ᵐ Tᶠ (mapˣᵐ rn idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ
          ≈ᵐ alg ∘ᵐ Tᶠ n ∘ᵐ strᵀ
-              ∘ᵐ ⟨ ([ mapᵉ ε ]ᶠ (⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ) ∘ᵐ η⊣)
+              ∘ᵐ ⟨ ([ mapᵉ ε ]ᶠ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ) ∘ᵐ η⊣)
                      ∘ᵐ fstᵐ
                  , m ⟩ᵐ
     body =
@@ -735,7 +740,7 @@ seq-op-core : ∀ {X Y A B ε ε'} → (op : Op)
                        ×ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ B (ε ·ₑ ε')))
                     →ᵐ Tᵒ B (op-grade op ·ₑ (ε ·ₑ ε')))
             → (alg-op : alg {op-grade op ·ₑ ε} ∘ᵐ opᵀ {ε = ε} op
-                      ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε'))
+                      ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) ε ε'))
                          ∘ᵐ cl
                          ∘ᵐ mapˣᵐ idᵐ
                               ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (alg {ε}))))
@@ -745,7 +750,7 @@ seq-op-core : ∀ {X Y A B ε ε'} → (op : Op)
             → (n : (⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X ×ᵐ A) →ᵐ Tᵒ B ε')
             → (rn : ⟨ mapᵉ ε ⟩ᵒ (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ Y)
                     →ᵐ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X)
-            → rn ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
+            → rn ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
             → alg ∘ᵐ Tᶠ n ∘ᵐ strᵀ
                 ∘ᵐ ⟨ η⊣
                    , opᵀ op
@@ -755,7 +760,7 @@ seq-op-core : ∀ {X Y A B ε ε'} → (op : Op)
                                                     →ᵐ Tᵒ A ε)
                                              ea m))
                               ∘ᵐ η⊣ ⟩ᵐ ⟩ᵐ
-            ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε'))
+            ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) ε ε'))
                ∘ᵐ cl
                ∘ᵐ ⟨ v
                   , [ mapᵉ (op-grade op) ]ᶠ
@@ -804,11 +809,11 @@ str-op-box : ∀ {X A B ε ε'} → (op : Op)
   → (n : (⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X ×ᵐ A) →ᵐ Tᵒ B ε')
   → (rn : ⟨ mapᵉ ε ⟩ᵒ (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ ⟦ arity op ⟧ᵍ)
           →ᵐ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X)
-  → rn ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
+  → rn ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
   → [ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Tᶠ n))
       ∘ᵐ ( [ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (strᵀ {_} {A} {ε}) ∘ᵐ exp-strᵐ)
          ∘ᵐ []-monoidal
-         ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ))) idᵐ )
+         ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ)) idᵐ )
       ∘ᵐ ⟨ η⊣ {X} {mapᵉ (op-grade op ·ₑ ε)}
          , [ mapᵉ (op-grade op) ]ᶠ (curryᵐ m) ∘ᵐ η⊣ {X} {mapᵉ (op-grade op)} ⟩ᵐ
   ≈ᵐ [ mapᵉ (op-grade op) ]ᶠ
@@ -842,7 +847,7 @@ str-op-box {X} {A} {B} {ε} {ε'} op m n rn ern =
   where
     body : Tᶠ n ∘ᵐ Tᶠ (mapˣᵐ rn idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ
          ≈ᵐ Tᶠ n ∘ᵐ strᵀ
-              ∘ᵐ ⟨ ([ mapᵉ ε ]ᶠ (⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ) ∘ᵐ η⊣)
+              ∘ᵐ ⟨ ([ mapᵉ ε ]ᶠ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ) ∘ᵐ η⊣)
                      ∘ᵐ fstᵐ
                  , m ⟩ᵐ
     body =
@@ -861,7 +866,7 @@ str-op : ∀ {X Y A B ε ε'} → (op : Op)
   → (n : (⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X ×ᵐ A) →ᵐ Tᵒ B ε')
   → (rn : ⟨ mapᵉ ε ⟩ᵒ (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ Y)
           →ᵐ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X)
-  → rn ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
+  → rn ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
   → Tᶠ n ∘ᵐ strᵀ
       ∘ᵐ ⟨ η⊣
          , opᵀ op
@@ -957,21 +962,19 @@ sound-SEQ-OP : ∀ {Γ A B ε ε'} → (op : Op)
              → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
              → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
              → ⟦ perform op V M ⨟ N ⟧ᶜᵗ ((pV , pM) , pN)
-             ≈ᵐ ⟦ ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
+             ≈ᵐ ⟦ ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
                     (perform op V
                       (M ⨟ C-rename
-                             (cong-∷-ren ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
+                             (cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
                                           ∘ʳ cong-⟨⟩-ren wk-ren))
                              N)) ⟧ᶜᵗ
-                  (ε-substᴾ (sym (·ₑ-assoc (op-grade op) ε ε'))
-                     (perform op V (M ⨟ C-rename (cong-∷-ren ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N))
-                     (pV , pM , renᶜ (cong-∷-ren ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN))
+                  (pV , pM , renᶜ (cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN)
 sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N pV pM pN =
     seq-op-core op μᵀ (opᵀ op) (opᵀ-algebraicity op) (ty-gty (arity op))
       (subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV))
       (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) ⟦ ren ⟧ʳ ern
   ∙ ≈ᵐ-sym
-      (  sound-ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
+      (  sound-ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
            (perform op V (M ⨟ C-rename (cong-∷-ren ren) N))
            (pV , pM , renᶜ (cong-∷-ren ren) N pN)
        ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
@@ -981,12 +984,12 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N pV pM pN =
   where
     ren : Ren [] ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
                  (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
-    ren = (eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
+    ren = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
 
     -- the renaming is the `μ`-refold of the two locks, after weakening past the
     -- arity value the continuation binds
-    ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
-    ern = ∘ᵐ-congˡ (∘ᵐ-congˡ (eq-ren-grade map-·ᵉ)) ∙ ∘ᵐ-assoc _ _ _
+    ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
+    ern = ∘ᵐ-congˡ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _)) ∙ ∘ᵐ-assoc _ _ _
 
 -- `HANDLE-OP`: handling an operation applies the matching clause, with the rest
 -- of the handled computation boxed up as the clause's continuation. The equation
@@ -1009,7 +1012,7 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
                 → (uH : EffUniformʰ {Γ} H pH)
                 → ⟦ handle perform op V M `with H `in N ⟧ᶜᵗ
                      ((pV , pM) , pN , pH , uH)
-                ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε''))
+                ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) ε ε''))
                    ∘ᵐ ⟦ box _ (lam (handle M
                                    `with (λ op' ε' →
                                             C-rename (cong-∷-ren (cong-∷-ren
@@ -1017,13 +1020,13 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
                                                               (type-of-gtype (arity op)))))
                                               (H op' ε'))
                                    `in (C-rename (cong-∷-ren
-                                          ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
+                                          ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
                                            ∘ʳ cong-⟨⟩-ren wk-ren)) N)))
                             (C-rename (cong-∷-ren (cong-∷-ren (barrier-ren {Γ})))
                                        (H op (ε ·ₑ ε''))
                              [ split-∷ split-[] ↦ V ]c) ⟧ᶜᵗ
                      ( (pM
-                       , renᶜ (cong-∷-ren ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN
+                       , renᶜ (cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN
                        , (λ op' ε' →
                             renᶜ (cong-∷-ren (cong-∷-ren (barrier-wk-ren (mapᵉ (op-grade op)) (type-of-gtype (arity op))))) (H op' ε') (pH op' ε'))
                        , ren-clauses-uniform
@@ -1063,10 +1066,10 @@ sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} op V M H N pV pM pN pH uH =
 
     ren : Ren [] ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
                  (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
-    ren = (eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
+    ren = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
 
-    ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
-    ern = ∘ᵐ-congˡ (∘ᵐ-congˡ (eq-ren-grade map-·ᵉ)) ∙ ∘ᵐ-assoc _ _ _
+    ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
+    ern = ∘ᵐ-congˡ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _)) ∙ ∘ᵐ-assoc _ _ _
 
     -- the operation's boxed continuation: the eternal parameter is carried
     -- under the box by `necᵉ` (its mate `η⊣`), pairs up with the continuation

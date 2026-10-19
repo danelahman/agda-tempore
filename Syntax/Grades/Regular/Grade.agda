@@ -31,7 +31,7 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary.Decidable using (T?; recompute)
 
 open import Syntax.Durations.Nat using (ℕᴰ)
-open import Syntax.Grades using (Grade; Plus; plus)
+open import Syntax.Grades using (posetᵍ; Grade; Plus; plus)
 import Syntax.Grades.Regular.Plus
 open import Syntax.Grades.Regular.Constructions k using (_∈*_; none; more)
 open import Syntax.Grades.Regular.Automaton k
@@ -410,7 +410,7 @@ c⁺-def c = refl
 -- The grade
 
 regular-grade : Grade ℕᴰ
-regular-grade = record
+regular-grade = posetᵍ record
   { Carrier         = Regular
   ; _·_             = _·ᴿ_
   ; u               = u

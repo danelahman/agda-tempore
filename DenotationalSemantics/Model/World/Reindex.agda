@@ -44,12 +44,12 @@ strict : {D₁ D₂ : Duration} {h : D₁ →ᴰ D₂} {G : Grade D₁} {H : Gra
 strict {H = H} f = record
   { map      = map
   ; monotone = map-monotone
-  ; lax-u    = ≾-reflexive (sym map-u)
-  ; lax-·    = ≾-reflexive (sym map-·)
+  ; lax-u    = proj₂ map-u
+  ; lax-·    = proj₂ map-·
   }
   where
     open GradeMorphism f
-    open Grade H using (≾-reflexive)
+    open import Data.Product using (proj₂)
 
 ------------------------------------------------------------------------
 -- Reindexing along the grades

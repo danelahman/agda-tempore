@@ -138,7 +138,7 @@ u-not-least τ pos least = u⋠of-dur τ pos (least (of-dur τ))
 -- The grade of antichains of timed traces, read as guarantees
 
 left-sided : Grade D
-left-sided = record
+left-sided = posetᵍ record
   { Carrier         = Antichain
   ; _·_             = _·_
   ; u               = u

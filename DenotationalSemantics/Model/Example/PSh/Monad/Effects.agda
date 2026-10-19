@@ -46,9 +46,9 @@ open Category PShCat using (mapˣᵐ; map⇒ᵐ; fstᵐ; sndᵐ; ⟨_,_⟩ᵐ)
 delayᵀ : ∀ {A ε} → (τ : 𝔻)
        → [ of-durʳ τ ]ᵒ (Tᵒ A ε) →ᵖ Tᵒ A (of-durᵉ τ ·ₑ ε)
 delayᵀ τ = pmap
-  (λ x → delay-node τ (λ q → fun x (⊑-coe map-of-durᵉ q))
-           (λ q r → ≈ᵗ-trans ([]-fun-irr x _ _) (fun-nat x (⊑-coe map-of-durᵉ q) r)))
-  (λ e → delay-≈ (λ q → e (⊑-coe map-of-durᵉ q)))
+  (λ x → delay-node τ (λ q → fun x (⊑-mono (≃ᵣ⇒≾ᵣ map-of-durᵉ) q))
+           (λ q r → ≈ᵗ-trans ([]-fun-irr x _ _) (fun-nat x (⊑-mono (≃ᵣ⇒≾ᵣ map-of-durᵉ) q) r)))
+  (λ e → delay-≈ (λ q → e (⊑-mono (≃ᵣ⇒≾ᵣ map-of-durᵉ) q)))
   (λ p x → delay-≈ (λ q → []-fun-irr x _ _))
 
 -- An algebraic operation: its boxed continuation `x` is applied at the
@@ -76,22 +76,22 @@ opᵀ op = pmap
 
 delayᵀ-zero : ∀ {A ε'}
             → delayᵀ {A} {ε'} 0ᴰ
-            ≈ᵖ ε-substᵀ (sym (trans (cong (_·ₑ ε') of-durᵉ-zero) (·ₑ-identityˡ ε')))
+            ≈ᵖ T-≤ (≃ₑ⇒≿ₑ (≃ₑ-trans (·ₑ-cong of-durᵉ-zero ≃ₑ-refl) (·ₑ-identityˡ ε')))
               ∘ᵖ ε
-              ∘ᵖ []-≤ (≾ᵣ-reflexive (sym of-durʳ-zero))
+              ∘ᵖ []-≤ (≃ᵣ⇒≿ᵣ of-durʳ-zero)
 delayᵀ-zero x =
   ≈ᵗ-trans (delay-zero {q₀ = ⊑-delay0} delay0ᵉ)
-           (ε-substˢ-congᵗ delay0ᵉ ([]-fun-irr x _ _))
+           (sub-≈ ([]-fun-irr x _ _))
 
 delayᵀ-plus : ∀ {A ε'} → (τ₁ τ₂ : 𝔻)
             → delayᵀ {A} {of-durᵉ τ₂ ·ₑ ε'} τ₁
                 ∘ᵖ [ of-durʳ τ₁ ]ᶠ (delayᵀ {A} {ε'} τ₂)
                 ∘ᵖ δ
-                ∘ᵖ []-≤ (≾ᵣ-reflexive (sym of-durʳ-plus))
-            ≈ᵖ ε-substᵀ (trans (cong (_·ₑ ε') of-durᵉ-plus)
-                               (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε'))
+                ∘ᵖ []-≤ (≃ᵣ⇒≿ᵣ of-durʳ-plus)
+            ≈ᵖ T-≤ (≃ₑ⇒≾ₑ (≃ₑ-trans (·ₑ-cong of-durᵉ-plus ≃ₑ-refl) (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε')))
               ∘ᵖ delayᵀ {A} {ε'} (τ₁ +ᴰ τ₂)
-delayᵀ-plus τ₁ τ₂ x = delay-plus (λ q₁ q₂ → []-fun-irr x _ _) delay+ᵉ
+delayᵀ-plus τ₁ τ₂ x =
+  ≈ᵗ-trans (delay-plus (λ q₁ q₂ → []-fun-irr x _ _) delay+ᵉ) (sub-≈ (≈ᵗ-refl _))
 
 -- Naturality
 
@@ -142,17 +142,17 @@ opᵀ-≤ {A} {ε = ε} op p (v , x) =
 
 delayᵀ-algebraicity : ∀ {A ε' ε''} → (τ : 𝔻)
                     → μᵀ {A} {of-durᵉ τ ·ₑ ε'} {ε''} ∘ᵖ delayᵀ {ε = ε'} τ
-                    ≈ᵖ ε-substᵀ (sym (·ₑ-assoc (of-durᵉ τ) ε' ε''))
+                    ≈ᵖ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) ε' ε''))
                       ∘ᵖ delayᵀ τ ∘ᵖ [ of-durʳ τ ]ᶠ (μᵀ {A} {ε'} {ε''})
-delayᵀ-algebraicity τ x = ε-substˢ-congᵗ (sym (·ₑ-assoc (of-durᵉ _) _ _)) (delay-≈ (λ q → ≈ᵗ-refl _))
+delayᵀ-algebraicity τ x = sub-≈ (delay-≈ (λ q → ≈ᵗ-refl _))
 
 opᵀ-algebraicity : ∀ {A ε ε'} → (op : Op)
                  → μᵀ {A} {op-grade op ·ₑ ε} {ε'} ∘ᵖ opᵀ {ε = ε} op
-                 ≈ᵖ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε'))
+                 ≈ᵖ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) ε ε'))
                    ∘ᵖ opᵀ op
                    ∘ᵖ mapˣᵐ idᵖ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵖ (μᵀ {A} {ε} {ε'})))
 opᵀ-algebraicity {A} {ε} {ε'} op (v , x) =
-  ε-substˢ-congᵗ (sym (·ₑ-assoc (op-grade op) ε ε'))
+  sub-≈
     (op-≈ (≈-refl ⟦ param op ⟧ᵍ)
       (λ q y → μˢ-congᵗ
         (≈ᵗ-sym (transport-refl (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ (Tᵒ A ε') ε) (fun x q) ⊑-refl y))))
@@ -166,11 +166,11 @@ strᵀ-delayᵀ-algebraicity : ∀ {A B ε} → (τ : 𝔻)
   ≈ᵖ delayᵀ τ
     ∘ᵖ [ of-durʳ τ ]ᶠ (strᵀ {A} {B} {ε})
     ∘ᵖ []-monoidal
-    ∘ᵖ mapˣᵐ (δ ∘ᵖ []-≤ (≾ᵣ-reflexive
-         (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-durᵉ))))) idᵖ
+    ∘ᵖ mapˣᵐ (δ ∘ᵖ []-≤ (≃ᵣ⇒≿ᵣ
+         (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))) idᵖ
 strᵀ-delayᵀ-algebraicity {A} τ (a , x) =
   delay-≈ (λ q →
-    strˢ-congᵗ A (λ r → []-fun-irr a _ _) (≈ᵗ-refl (fun x (⊑-coe map-of-durᵉ q))))
+    strˢ-congᵗ A (λ r → []-fun-irr a _ _) (≈ᵗ-refl (fun x (⊑-mono (≃ᵣ⇒≾ᵣ map-of-durᵉ) q))))
 
 -- The operation is algebraic with respect to the strength. Both sides build
 -- the same `op-node`; under it each side strengths the sub-computation with
@@ -184,7 +184,7 @@ strᵀ-opᵀ-algebraicity : ∀ {A B ε} → (op : Op)
            (   map⇒ᵐ idᵖ (strᵀ {A} {B} {ε})
             ∘ᵖ expᵖ-str)
          ∘ᵖ []-monoidal
-         ∘ᵖ mapˣᵐ (δ ∘ᵖ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ))) idᵖ)
+         ∘ᵖ mapˣᵐ (δ ∘ᵖ []-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ)) idᵖ)
     ∘ᵖ ⟨ fstᵐ ∘ᵖ sndᵐ , ⟨ fstᵐ , sndᵐ ∘ᵖ sndᵐ ⟩ᵐ ⟩ᵐ
 strᵀ-opᵀ-algebraicity {A} {B} {ε} op {w} (a , v , boxk) =
   op-≈ (≈-refl ⟦ param op ⟧ᵍ)

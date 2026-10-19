@@ -97,7 +97,7 @@ mapₒ-⊔ any-run        (permitting _) = refl
 mapₒ-⊔ any-run        any-run        = refl
 
 subsets→right-sided-intervals : right-sided →ᵍ right-sided-intervals
-subsets→right-sided-intervals = record
+subsets→right-sided-intervals = strictᵍ record
   { map          = mapₒ
   ; map-monotone = λ {P} {Q} → mapₒ-monotone {P} {Q}
   ; map-u        = refl

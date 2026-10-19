@@ -87,7 +87,7 @@ record Implementation : Set₁ where
     implᵐ-delayᵀ : ∀ {A ε} → (τ : 𝔻)
                  → implᵐ ∘ᵐ delayᵀ {A} {ε} τ
                  ≈ᵐ tickᵏ (of-durᵉ τ)
-                    ∘ᵐ []-≤ (≾ᵣ-reflexive map-of-durᵉ)
+                    ∘ᵐ []-≤ (≃ᵣ⇒≾ᵣ map-of-durᵉ)
                     ∘ᵐ [ of-durʳ τ ]ᶠ implᵐ
 
     -- … and it runs an operation away: the continuation is fed the computed

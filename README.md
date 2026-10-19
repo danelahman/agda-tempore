@@ -80,7 +80,7 @@ operations.
   positive duration both are exact (`⊆ⁱ-complete`, `⊕-complete`, the
   Minkowski sum).
 
-- `Syntax/Grades.agda` defines a `Grade D` (a partially ordered monoid with a
+- `Syntax/Grades.agda` defines a `Grade D` (a preordered monoid with a
   monoid morphism `of-dur` from the durations `D`), grade morphisms
   `GradeMorphism h` along a morphism `h` of durations and `_→ᵍ_` along the
   identity, and a `GradeSystem` (durations `Dur`, effect grades `EGrade`,
@@ -91,15 +91,19 @@ operations.
 - A `Grade` has a greatest element `⊤` and **binary joins** `_⊔_`, over which
   multiplication distributes: the fields state `ρ · (σ ⊔ τ) ≾ (ρ · σ) ⊔ (ρ · τ)`
   and its mirror image, the converse inequalities following from
-  monotonicity. The order is **antisymmetric** (`≾-antisym`), so the derived
-  laws are equations: both distributive laws, and the idempotence,
-  commutativity and associativity of the join and its absorption by `⊤`, hold
-  at `_≡_`. A grade morphism preserves joins up to equality. A branching
+  monotonicity. Equality of grades is the order's **equivalence**
+  `c ≃ d = c ≾ d × d ≾ c`: the monoid laws and the inclusion of durations are
+  stated up to it, and so are the derived laws, both distributive laws and
+  the idempotence, commutativity and associativity of the join and its
+  absorption by `⊤`. A grade morphism preserves the structure up to `_≃_`.
+  Antisymmetry is optional (`antisym?`); `PosetGrade` and `StrictMorphism`
+  give, through `posetᵍ` and `strictᵍ`, the instances and morphisms whose laws
+  hold on the nose. A branching
   construct is graded by the join of its branches, and type inference reports
   the join of two bounds.
 
 - A `Grade` also carries the data read by type inference: a **decidable**
-  order (`_≾?_`), and hence, by antisymmetry, decidable equality; and two
+  order (`_≾?_`), and hence a decidable equivalence (`_≃?_`); and two
   optional properties, that the unit is least (`u-least?`) and that `_·_` is
   commutative (`·-comm?`). The open calculus's `minᵣ`/`minₑ` and
   `≡̂ᵣ-comm`/`≡̂ₑ-comm` take `Is-just` proofs of them, and the solver reads them
@@ -312,9 +316,9 @@ operations.
   the context former `Γ ⟨ ρ ⟩` for the passage of a grade.
 - `Syntax/Subtyping.agda` defines shape-preserving subtyping of value and
   computation types, `_<:ᵛ_` and `_<:ᶜ_`, contravariant in a function's domain
-  and a box's grade and covariant in a computation's effect. It is a partial
-  order on types: by antisymmetry of the grade orders, mutual subtypes are
-  equal. The module also defines least upper bounds of types, `_⊔ᵛ_≡_` and
+  and a box's grade and covariant in a computation's effect. It is a preorder
+  on types, and a partial order where the grade orders are antisymmetric
+  (`<:ᵛ-antisym`). The module also defines least upper bounds of types, `_⊔ᵛ_≡_` and
   `_⊔ᶜ_≡_`, as inductive relations. They are partial: in the contravariant
   positions (a function's domain and a box's grade) the two types coincide,
   a join there being a meet of value types or of resource grades, which the
@@ -437,7 +441,7 @@ type inference.
   `mapᵉ`. `Types.agda` and `Contexts.agda` define open types and contexts, with
   `ContextsLemmas.agda` for lookup under weakening and substitution, and
   `Subst.agda` substitutions between scopes. `Hyps.agda` defines hypothesis
-  sets and entailment: convertibility `_≡̂_`, entailed ordering
+  sets and entailment: convertibility `_≡̂_` (constants up to `_≃_`), entailed ordering
   `_⊩_≾̂ᵣ_`/`_⊩_≾̂ₑ_` (including the zero-product laws of the grades),
   eternality, the var-rule disjunction `VarOK`, and shape-preserving subtyping
   of open types. `Language.agda` defines the qualified judgement
@@ -487,7 +491,7 @@ type inference.
   rigids. `Satisfiable` and semantic entailment `_⊨ᴴ_` are defined through it.
   The central lemma (`val-≾ᵣ`, `val-≾ᵣ⁻` and their companions) states that, at
   closed expressions, entailed ordering is the carrier's ordering of values and
-  convertibility is equality of values. Closed subtyping, eternality and
+  convertibility is equivalence of values. Closed subtyping, eternality and
   `VarOK` are decidable.
 
 - `TypeInference/SolverImpl.agda` is the concrete solver (`solver : Solver`),

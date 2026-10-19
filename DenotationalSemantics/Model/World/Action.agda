@@ -37,10 +37,10 @@ action : {D : Duration} (G : Grade D) → World G
 action G = record
   { W            = Carrier
   ; _⊑[_]_       = λ c ρ c' → c' ≾ c · ρ
-  ; ⊑-refl       = λ {c} → ≾-reflexive (sym (·-identityʳ c))
+  ; ⊑-refl       = λ {c} → ≃⇒≿ (·-identityʳ c)
   ; ⊑-trans      = λ {ρ₁} {ρ₂} {c} p q →
                      ≾-trans q (≾-trans (·-monoˡ-≾ p)
-                                        (≾-reflexive (·-assoc c ρ₁ ρ₂)))
+                                        (≃⇒≾ (·-assoc c ρ₁ ρ₂)))
   ; ⊑-mono       = λ r p → ≾-trans p (·-monoʳ-≾ r)
   ; ⊑-irrelevant = ≾-irrelevant
   }

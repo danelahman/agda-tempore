@@ -9,6 +9,9 @@
 
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 
+open import Data.Maybe.Base using (Maybe; just; nothing)
+open import Data.Product using (proj₁; proj₂)
+
 open import Relation.Binary.Definitions using (Decidable)
 open import Relation.Nullary using (yes; no)
 
@@ -101,74 +104,142 @@ wkᵉ-r     (ρ ·̂ᵣ ρ')  = wkᵉ-r ρ ·̂ᵣ wkᵉ-r ρ'
 wkᵉ-r     (ρ ⊔̂ᵣ ρ')  = wkᵉ-r ρ ⊔̂ᵣ wkᵉ-r ρ'
 wkᵉ-r     ∣ ε ∣̂ᵉ     = ∣ wkᵉ-e ε ∣̂ᵉ
 
--- Decidable equality, the constants deciding by the grade interface
+-- Sameness of expressions: equal formers, the same variables, and
+-- equivalent constants. Decidable, the constants deciding by the grade
+-- interface's `_≃?_`.
 
-infix 4 _≟ᵉ_ _≟ʳ_
+infix 4 _≅ᵉ_ _≅ʳ_ _≟ᵉ_ _≟ʳ_ _≡ᵉ?_ _≡ʳ?_
 
-_≟ᵉ_ : ∀ {Θ} → Decidable (_≡_ {A = EExp Θ})
-_≟ʳ_ : ∀ {Θ} → Decidable (_≡_ {A = RExp Θ})
+data _≅ᵉ_ {Θ} : EExp Θ → EExp Θ → Set where
+  evar≅   : ∀ {i} → evar i ≅ᵉ evar i
+  econst≅ : ∀ {c c'} → c ≃ₑ c' → econst c ≅ᵉ econst c'
+  ·≅      : ∀ {ε₁ ε₁' ε₂ ε₂'} → ε₁ ≅ᵉ ε₁' → ε₂ ≅ᵉ ε₂' → ε₁ ·̂ₑ ε₂ ≅ᵉ ε₁' ·̂ₑ ε₂'
+  ⊔≅      : ∀ {ε₁ ε₁' ε₂ ε₂'} → ε₁ ≅ᵉ ε₁' → ε₂ ≅ᵉ ε₂' → ε₁ ⊔̂ₑ ε₂ ≅ᵉ ε₁' ⊔̂ₑ ε₂'
+
+data _≅ʳ_ {Θ} : RExp Θ → RExp Θ → Set where
+  rvar≅   : ∀ {i} → rvar i ≅ʳ rvar i
+  rconst≅ : ∀ {c c'} → c ≃ᵣ c' → rconst c ≅ʳ rconst c'
+  ·≅      : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≅ʳ ρ₁' → ρ₂ ≅ʳ ρ₂' → ρ₁ ·̂ᵣ ρ₂ ≅ʳ ρ₁' ·̂ᵣ ρ₂'
+  ⊔≅      : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≅ʳ ρ₁' → ρ₂ ≅ʳ ρ₂' → ρ₁ ⊔̂ᵣ ρ₂ ≅ʳ ρ₁' ⊔̂ᵣ ρ₂'
+  ∣∣≅     : ∀ {ε ε'} → ε ≅ᵉ ε' → ∣ ε ∣̂ᵉ ≅ʳ ∣ ε' ∣̂ᵉ
+
+≅ᵉ-refl : ∀ {Θ} {ε : EExp Θ} → ε ≅ᵉ ε
+≅ᵉ-refl {ε = evar i}   = evar≅
+≅ᵉ-refl {ε = econst c} = econst≅ ≃ₑ-refl
+≅ᵉ-refl {ε = ε ·̂ₑ ε'}  = ·≅ ≅ᵉ-refl ≅ᵉ-refl
+≅ᵉ-refl {ε = ε ⊔̂ₑ ε'}  = ⊔≅ ≅ᵉ-refl ≅ᵉ-refl
+
+≅ʳ-refl : ∀ {Θ} {ρ : RExp Θ} → ρ ≅ʳ ρ
+≅ʳ-refl {ρ = rvar i}   = rvar≅
+≅ʳ-refl {ρ = rconst c} = rconst≅ ≃ᵣ-refl
+≅ʳ-refl {ρ = ρ ·̂ᵣ ρ'}  = ·≅ ≅ʳ-refl ≅ʳ-refl
+≅ʳ-refl {ρ = ρ ⊔̂ᵣ ρ'}  = ⊔≅ ≅ʳ-refl ≅ʳ-refl
+≅ʳ-refl {ρ = ∣ ε ∣̂ᵉ}   = ∣∣≅ ≅ᵉ-refl
+
+_≟ᵉ_ : ∀ {Θ} → Decidable (_≅ᵉ_ {Θ})
+_≟ʳ_ : ∀ {Θ} → Decidable (_≅ʳ_ {Θ})
 
 evar i     ≟ᵉ evar j     with i ≟ᶠ j
-... | yes refl = yes refl
-... | no  ¬p   = no λ { refl → ¬p refl }
-evar i     ≟ᵉ econst _   = no λ ()
-evar i     ≟ᵉ (_ ·̂ₑ _)   = no λ ()
-evar i     ≟ᵉ (_ ⊔̂ₑ _)   = no λ ()
+... | yes refl = yes evar≅
+... | no  ¬p   = no λ { evar≅ → ¬p refl }
+econst c   ≟ᵉ econst c'  with c ≃ₑ? c'
+... | yes p = yes (econst≅ p)
+... | no ¬p = no λ { (econst≅ p) → ¬p p }
+(ε₁ ·̂ₑ ε₂) ≟ᵉ (ε₁' ·̂ₑ ε₂') with ε₁ ≟ᵉ ε₁' | ε₂ ≟ᵉ ε₂'
+... | yes p   | yes q    = yes (·≅ p q)
+... | no  ¬p   | _        = no λ { (·≅ p _) → ¬p p }
+... | _        | no ¬q    = no λ { (·≅ _ q) → ¬q q }
+(ε₁ ⊔̂ₑ ε₂) ≟ᵉ (ε₁' ⊔̂ₑ ε₂') with ε₁ ≟ᵉ ε₁' | ε₂ ≟ᵉ ε₂'
+... | yes p   | yes q    = yes (⊔≅ p q)
+... | no  ¬p   | _        = no λ { (⊔≅ p _) → ¬p p }
+... | _        | no ¬q    = no λ { (⊔≅ _ q) → ¬q q }
+evar _     ≟ᵉ econst _   = no λ ()
+evar _     ≟ᵉ (_ ·̂ₑ _)   = no λ ()
+evar _     ≟ᵉ (_ ⊔̂ₑ _)   = no λ ()
 econst _   ≟ᵉ evar _     = no λ ()
-econst ε   ≟ᵉ econst ε'  with ε ≡ₑ? ε'
-... | yes refl = yes refl
-... | no  ¬p   = no λ { refl → ¬p refl }
 econst _   ≟ᵉ (_ ·̂ₑ _)   = no λ ()
 econst _   ≟ᵉ (_ ⊔̂ₑ _)   = no λ ()
 (_ ·̂ₑ _)   ≟ᵉ evar _     = no λ ()
 (_ ·̂ₑ _)   ≟ᵉ econst _   = no λ ()
-(ε₁ ·̂ₑ ε₂) ≟ᵉ (ε₁' ·̂ₑ ε₂') with ε₁ ≟ᵉ ε₁' | ε₂ ≟ᵉ ε₂'
-... | yes refl | yes refl = yes refl
-... | no  ¬p   | _        = no λ { refl → ¬p refl }
-... | _        | no ¬p    = no λ { refl → ¬p refl }
 (_ ·̂ₑ _)   ≟ᵉ (_ ⊔̂ₑ _)   = no λ ()
 (_ ⊔̂ₑ _)   ≟ᵉ evar _     = no λ ()
 (_ ⊔̂ₑ _)   ≟ᵉ econst _   = no λ ()
 (_ ⊔̂ₑ _)   ≟ᵉ (_ ·̂ₑ _)   = no λ ()
-(ε₁ ⊔̂ₑ ε₂) ≟ᵉ (ε₁' ⊔̂ₑ ε₂') with ε₁ ≟ᵉ ε₁' | ε₂ ≟ᵉ ε₂'
-... | yes refl | yes refl = yes refl
-... | no  ¬p   | _        = no λ { refl → ¬p refl }
-... | _        | no ¬p    = no λ { refl → ¬p refl }
 
 rvar i     ≟ʳ rvar j     with i ≟ᶠ j
-... | yes refl = yes refl
-... | no  ¬p   = no λ { refl → ¬p refl }
+... | yes refl = yes rvar≅
+... | no  ¬p   = no λ { rvar≅ → ¬p refl }
+rconst c   ≟ʳ rconst c'  with c ≃ᵣ? c'
+... | yes p = yes (rconst≅ p)
+... | no ¬p = no λ { (rconst≅ p) → ¬p p }
+(ρ₁ ·̂ᵣ ρ₂) ≟ʳ (ρ₁' ·̂ᵣ ρ₂') with ρ₁ ≟ʳ ρ₁' | ρ₂ ≟ʳ ρ₂'
+... | yes p   | yes q    = yes (·≅ p q)
+... | no  ¬p   | _        = no λ { (·≅ p _) → ¬p p }
+... | _        | no ¬q    = no λ { (·≅ _ q) → ¬q q }
+(ρ₁ ⊔̂ᵣ ρ₂) ≟ʳ (ρ₁' ⊔̂ᵣ ρ₂') with ρ₁ ≟ʳ ρ₁' | ρ₂ ≟ʳ ρ₂'
+... | yes p   | yes q    = yes (⊔≅ p q)
+... | no  ¬p   | _        = no λ { (⊔≅ p _) → ¬p p }
+... | _        | no ¬q    = no λ { (⊔≅ _ q) → ¬q q }
+∣ ε ∣̂ᵉ     ≟ʳ ∣ ε' ∣̂ᵉ    with ε ≟ᵉ ε'
+... | yes p = yes (∣∣≅ p)
+... | no ¬p = no λ { (∣∣≅ p) → ¬p p }
 rvar _     ≟ʳ rconst _   = no λ ()
 rvar _     ≟ʳ (_ ·̂ᵣ _)   = no λ ()
 rvar _     ≟ʳ (_ ⊔̂ᵣ _)   = no λ ()
 rvar _     ≟ʳ ∣ _ ∣̂ᵉ     = no λ ()
 rconst _   ≟ʳ rvar _     = no λ ()
-rconst ρ   ≟ʳ rconst ρ'  with ρ ≡ᵣ? ρ'
-... | yes refl = yes refl
-... | no  ¬p   = no λ { refl → ¬p refl }
 rconst _   ≟ʳ (_ ·̂ᵣ _)   = no λ ()
 rconst _   ≟ʳ (_ ⊔̂ᵣ _)   = no λ ()
 rconst _   ≟ʳ ∣ _ ∣̂ᵉ     = no λ ()
 (_ ·̂ᵣ _)   ≟ʳ rvar _     = no λ ()
 (_ ·̂ᵣ _)   ≟ʳ rconst _   = no λ ()
-(ρ₁ ·̂ᵣ ρ₂) ≟ʳ (ρ₁' ·̂ᵣ ρ₂') with ρ₁ ≟ʳ ρ₁' | ρ₂ ≟ʳ ρ₂'
-... | yes refl | yes refl = yes refl
-... | no  ¬p   | _        = no λ { refl → ¬p refl }
-... | _        | no ¬p    = no λ { refl → ¬p refl }
 (_ ·̂ᵣ _)   ≟ʳ (_ ⊔̂ᵣ _)   = no λ ()
 (_ ·̂ᵣ _)   ≟ʳ ∣ _ ∣̂ᵉ     = no λ ()
 (_ ⊔̂ᵣ _)   ≟ʳ rvar _     = no λ ()
 (_ ⊔̂ᵣ _)   ≟ʳ rconst _   = no λ ()
 (_ ⊔̂ᵣ _)   ≟ʳ (_ ·̂ᵣ _)   = no λ ()
-(ρ₁ ⊔̂ᵣ ρ₂) ≟ʳ (ρ₁' ⊔̂ᵣ ρ₂') with ρ₁ ≟ʳ ρ₁' | ρ₂ ≟ʳ ρ₂'
-... | yes refl | yes refl = yes refl
-... | no  ¬p   | _        = no λ { refl → ¬p refl }
-... | _        | no ¬p    = no λ { refl → ¬p refl }
 (_ ⊔̂ᵣ _)   ≟ʳ ∣ _ ∣̂ᵉ     = no λ ()
 ∣ _ ∣̂ᵉ     ≟ʳ rvar _     = no λ ()
 ∣ _ ∣̂ᵉ     ≟ʳ rconst _   = no λ ()
 ∣ _ ∣̂ᵉ     ≟ʳ (_ ·̂ᵣ _)   = no λ ()
 ∣ _ ∣̂ᵉ     ≟ʳ (_ ⊔̂ᵣ _)   = no λ ()
-∣ ε ∣̂ᵉ     ≟ʳ ∣ ε' ∣̂ᵉ    with ε ≟ᵉ ε'
-... | yes refl = yes refl
-... | no  ¬p   = no λ { refl → ¬p refl }
+
+-- Same expressions are equal where the grade declares its order
+-- antisymmetric, and equality is decided where they are
+
+≅ᵉ⇒≡? : ∀ {Θ} {ε ε' : EExp Θ} → ε ≅ᵉ ε' → Maybe (ε ≡ ε')
+≅ᵉ⇒≡? evar≅ = just refl
+≅ᵉ⇒≡? (econst≅ e) with antisymₑ?
+... | just anti = just (cong econst (anti (proj₁ e) (proj₂ e)))
+... | nothing   = nothing
+≅ᵉ⇒≡? (·≅ p q) with ≅ᵉ⇒≡? p | ≅ᵉ⇒≡? q
+... | just refl | just refl = just refl
+... | _         | _         = nothing
+≅ᵉ⇒≡? (⊔≅ p q) with ≅ᵉ⇒≡? p | ≅ᵉ⇒≡? q
+... | just refl | just refl = just refl
+... | _         | _         = nothing
+
+≅ʳ⇒≡? : ∀ {Θ} {ρ ρ' : RExp Θ} → ρ ≅ʳ ρ' → Maybe (ρ ≡ ρ')
+≅ʳ⇒≡? rvar≅ = just refl
+≅ʳ⇒≡? (rconst≅ e) with antisymᵣ?
+... | just anti = just (cong rconst (anti (proj₁ e) (proj₂ e)))
+... | nothing   = nothing
+≅ʳ⇒≡? (·≅ p q) with ≅ʳ⇒≡? p | ≅ʳ⇒≡? q
+... | just refl | just refl = just refl
+... | _         | _         = nothing
+≅ʳ⇒≡? (⊔≅ p q) with ≅ʳ⇒≡? p | ≅ʳ⇒≡? q
+... | just refl | just refl = just refl
+... | _         | _         = nothing
+≅ʳ⇒≡? (∣∣≅ p) with ≅ᵉ⇒≡? p
+... | just refl = just refl
+... | nothing   = nothing
+
+_≡ᵉ?_ : ∀ {Θ} → (ε ε' : EExp Θ) → Maybe (ε ≡ ε')
+ε ≡ᵉ? ε' with ε ≟ᵉ ε'
+... | yes p = ≅ᵉ⇒≡? p
+... | no _  = nothing
+
+_≡ʳ?_ : ∀ {Θ} → (ρ ρ' : RExp Θ) → Maybe (ρ ≡ ρ')
+ρ ≡ʳ? ρ' with ρ ≟ʳ ρ'
+... | yes p = ≅ʳ⇒≡? p
+... | no _  = nothing

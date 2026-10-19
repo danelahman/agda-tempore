@@ -189,7 +189,7 @@ plusₒ [0, m ] = plus [0, plus∞ m ] (≤∞-plus∞ m) (plus∞-iter m) (λ {
     indʳ [0, n ] = plus∞-indʳ
 
 right-sided-intervals : Grade ℕᴰ
-right-sided-intervals = record
+right-sided-intervals = posetᵍ record
   { Carrier          = 𝕀ᵣ
   ; _·_               = _·ₒ_
   ; u                 = uₒ

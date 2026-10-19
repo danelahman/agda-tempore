@@ -59,7 +59,7 @@ module PureTopLevelProgressTheorem (OpSemantics : TopLevelOpSemantics) where
     is-top-level-value
   ... | is-op =
     top-level-steps
-      (≾ᵣ-reflexive (trans (·ᵣ-assoc _ _ _) (cong (state-grade S ·ᵣ_) (sym map-·ᵉ))))
+      (≃ᵣ⇒≾ᵣ (≃ᵣ-trans (·ᵣ-assoc _ _ _) (·ᵣ-cong ≃ᵣ-refl (≃ᵣ-sym map-·ᵉ))))
       (<:ᵛ-refl _)
       OP-STEP
   ... | steps M↝M' p t =

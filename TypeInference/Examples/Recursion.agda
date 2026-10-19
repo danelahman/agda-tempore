@@ -38,7 +38,7 @@ module TypeInference.Examples.Recursion (S : LanguageSpec) (opEnum : OpEnum S)
   (st : Stepped (GradeSystem.Dur (LanguageSpec.Grades S))) where
 
 open LanguageSpec S
-open GradeSystemInterface Grades using (R; 𝔻; of-durʳ; of-durᵉ; ⊤ᵣ; ⊤ₑ; ≾ᵣ-reflexive; map-uᵉ)
+open GradeSystemInterface Grades using (R; 𝔻; of-durʳ; of-durᵉ; ⊤ᵣ; ⊤ₑ; ≃ᵣ⇒≾ᵣ; map-uᵉ)
 open Operations Ops using (Op; op-grade)
 
 open import TypeInference.OpenSyntax.Grades    S
@@ -128,7 +128,7 @@ private
 
   u-passed : ∀ {Θ} {Q : Hyps Θ} → Q ⊩ ûᵣ ·̂ᵣ ∣ ûₑ ∣̂ᵉ ≾̂ᵣ ûᵣ
   u-passed = transᵣ (eqᵣ ≡̂ᵣ-identityˡ)
-               (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≾ᵣ-reflexive map-uᵉ)))
+               (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-uᵉ)))
 
   -- A pure step iterates purely
 

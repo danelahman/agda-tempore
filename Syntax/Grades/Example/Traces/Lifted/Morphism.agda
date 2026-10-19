@@ -45,7 +45,7 @@ open import Data.Product using (_,_; proj₁; proj₂)
 open import Data.Unit using (tt)
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
-open import Syntax.Grades using (Grade; GradeMorphism)
+open import Syntax.Grades using (strictᵍ; Grade; GradeMorphism; StrictMorphism)
 
 import Syntax.Grades.Traces.Embedding as Embedding
 import Syntax.Grades.Traces.Durations as Dur
@@ -69,8 +69,12 @@ module Left (O₁ : Order.TraceOrder T₁ Op) (O₂ : Order.TraceOrder T₂ Op)
     module E = Embedding T₁ T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
                  (Order.TraceOrder.base O₁) (Order.TraceOrder.base O₂) f f-∙ f-mono
 
+  left-sided→ˢ : StrictMorphism h L₁.left-sided L₂.left-sided
+
   left-sided→ : GradeMorphism h L₁.left-sided L₂.left-sided
-  left-sided→ = record
+  left-sided→ = strictᵍ left-sided→ˢ
+
+  left-sided→ˢ = record
     { map          = E.mapᴬ
     ; map-monotone = λ {P} {Q} → E.mapᴬ-mono {P} {Q}
     ; map-u        = trans (E.mapᴬ-singleton _) (cong L₂.singleton f-ε)
@@ -113,8 +117,12 @@ module Right (O₁ : Order.TraceOrder T₁ Op) (O₂ : Order.TraceOrder T₂ Op)
   mapᵇ-⊔ (R₁.within _) R₁.unbounded  = refl
   mapᵇ-⊔ R₁.unbounded  _             = refl
 
+  right-sided→ˢ : StrictMorphism h R₁.right-sided R₂.right-sided
+
   right-sided→ : GradeMorphism h R₁.right-sided R₂.right-sided
-  right-sided→ = record
+  right-sided→ = strictᵍ right-sided→ˢ
+
+  right-sided→ˢ = record
     { map          = mapᵇ
     ; map-monotone = λ {P} {Q} → mapᵇ-mono {P} {Q}
     ; map-u        = cong R₂.within_
@@ -212,18 +220,18 @@ module Two
        {map-◇ˢ {EL.R₁.traces (W₁.lo i)} {W₁.hi i} (W₁.lo◇hi i)}
 
   two-sided→ : GradeMorphism h W₁.two-sided W₂.two-sided
-  two-sided→ = record
+  two-sided→ = strictᵍ record
     { map          = mapᵗˢ
     ; map-monotone = λ { {i} {j} (p , q) →
                            EL.mapᴬ-mono {W₁.lo i} {W₁.lo j} p
                          , MR.mapᵇ-mono {W₁.hi i} {W₁.hi j} q }
-    ; map-u        = W₂.eqᵗˢ (GradeMorphism.map-u ML.left-sided→)
-                             (GradeMorphism.map-u MR.right-sided→)
+    ; map-u        = W₂.eqᵗˢ (StrictMorphism.map-u ML.left-sided→ˢ)
+                             (StrictMorphism.map-u MR.right-sided→ˢ)
     ; map-·        = λ {i} {j} → W₂.eqᵗˢ (EL.mapᴬ-· (W₁.lo i) (W₁.lo j))
                                          (MR.mapᵇ-· (W₁.hi i) (W₁.hi j))
-    ; map-⊤        = W₂.eqᵗˢ (GradeMorphism.map-⊤ ML.left-sided→) refl
+    ; map-⊤        = W₂.eqᵗˢ (StrictMorphism.map-⊤ ML.left-sided→ˢ) refl
     ; map-⊔        = λ {i} {j} → W₂.eqᵗˢ (EL.mapᴬ-⊔ (W₁.lo i) (W₁.lo j))
                                          (MR.mapᵇ-⊔ (W₁.hi i) (W₁.hi j))
-    ; map-of-dur   = λ {τ} → W₂.eqᵗˢ (GradeMorphism.map-of-dur ML.left-sided→ {τ})
-                                     (GradeMorphism.map-of-dur MR.right-sided→ {τ})
+    ; map-of-dur   = λ {τ} → W₂.eqᵗˢ (StrictMorphism.map-of-dur ML.left-sided→ˢ {τ})
+                                     (StrictMorphism.map-of-dur MR.right-sided→ˢ {τ})
     }

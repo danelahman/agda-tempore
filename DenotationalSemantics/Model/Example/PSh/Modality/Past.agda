@@ -59,7 +59,7 @@ open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
 -- back to `ρ`.
 
 ⊑ρ∘ᵘ : ∀ {ρ w w' w''} → w ⊑[ ρ ] w' → w' ⊑[ u ] w'' → w ⊑[ ρ ] w''
-⊑ρ∘ᵘ {ρ} q r = ⊑-mono (≾-reflexive (·-identityʳ ρ)) (⊑-trans q r)
+⊑ρ∘ᵘ {ρ} q r = ⊑-mono (≃⇒≾ (·-identityʳ ρ)) (⊑-trans q r)
 
 -- The possibility bundle: a Kripke-possibility element of `⟨ ρ ⟩ A` at `w`.
 
@@ -236,17 +236,17 @@ A-isEquiv {A} = record { refl = ≈-refl A ; sym = ≈-sym A ; trans = ≈-trans
 
 ⟨⟩-μ∘η≡id : ∀ {A ρ}
           → μ {A} {u} {ρ} ∘ᵖ η
-          ≈ᵖ ⟨⟩-≤ (≾-reflexive (sym (·-identityʳ ρ)))
+          ≈ᵖ ⟨⟩-≤ (≃⇒≿ (·-identityʳ ρ))
 ⟨⟩-μ∘η≡id {A} x = ≈-mk-irr _ _ (val x)
 
 ⟨⟩-μ∘Tη≡id : ∀ {A ρ}
            → μ {A} {ρ} {u} ∘ᵖ ⟨ ρ ⟩ᶠ η
-           ≈ᵖ ⟨⟩-≤ (≾-reflexive (sym (·-identityˡ ρ)))
+           ≈ᵖ ⟨⟩-≤ (≃⇒≿ (·-identityˡ ρ))
 ⟨⟩-μ∘Tη≡id {A} e = ≈-mk-irr _ _ (val e)
 
 ⟨⟩-μ∘μ≡μ∘Tμ : ∀ {A ρ₁ ρ₂ ρ₃}
             → μ {A} {ρ₂ · ρ₁} {ρ₃} ∘ᵖ μ {⟨ ρ₃ ⟩ᵒ A} {ρ₁} {ρ₂}
-            ≈ᵖ    ⟨⟩-≤ (≾-reflexive (·-assoc ρ₃ ρ₂ ρ₁))
+            ≈ᵖ    ⟨⟩-≤ (≃⇒≾ (·-assoc ρ₃ ρ₂ ρ₁))
               ∘ᵖ μ {A} {ρ₁} {ρ₃ · ρ₂} ∘ᵖ ⟨ ρ₁ ⟩ᶠ (μ {A} {ρ₂} {ρ₃})
 ⟨⟩-μ∘μ≡μ∘Tμ {A} e = ≈-mk-irr _ _ (val (val (val e)))
 

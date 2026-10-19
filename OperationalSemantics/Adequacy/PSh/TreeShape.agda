@@ -102,19 +102,13 @@ head0-unique (h-sub h)   (h-sub h')  = head0-unique h h'
 head0-unique {t = delay-node _ k _} (h-delay z h) (h-delay z' h') =
   head0-unique h (subst (λ q → Head0 (k q) _) (⊑-irrelevant _ _) h')
 
--- Grade substitution is invisible.
+-- A sub-effecting node is invisible.
 
-head0-ε-subst : ∀ {A ε ε' w s} → (e : ε ≡ ε') → {t : Tˢ A ε w}
-              → Head0 (ε-substˢ e t) s
-              -----------------------
-              → Head0 t s
-head0-ε-subst refl h = h
-
-head0-ε-subst⁺ : ∀ {A ε ε' w s} → (e : ε ≡ ε') → {t : Tˢ A ε w}
-               → Head0 t s
-               ------------------------
-               → Head0 (ε-substˢ e t) s
-head0-ε-subst⁺ refl h = h
+head0-sub⁻ : ∀ {A ε ε' w s} {e : ε ≾ₑ ε'} {t : Tˢ A ε w}
+           → Head0 (sub e t) s
+           -------------------
+           → Head0 t s
+head0-sub⁻ (h-sub h) = h
 
 -- All zero-steps out of a world into the same world agree (`⊑-irrelevant`),
 -- which is what the two delay collapses need.
@@ -148,12 +142,12 @@ mutual
 
   -- a zero delay *is* its own continuation, at the only zero-step there is
   head0-≈ᵗ (delay-zero {k = k} {q₀ = q₀} e) (h-delay z h) =
-    head0-ε-subst⁺ e (head0-⊑ k _ q₀ h)
+    h-sub (head0-⊑ k _ q₀ h)
 
   -- two zero delays are the one zero delay: the split of a zero-step is a
   -- zero-step
   head0-≈ᵗ (delay-plus {k = k} hk e) (h-delay z₁ (h-delay z₂ h)) =
-    head0-ε-subst⁺ e
+    h-sub
       (h-delay (trans (cong₂ _+ᴰ_ z₁ z₂) (+ᴰ-identityˡ 0ᴰ))
                (head0-⊑ k _ _ (head0-≈ᵗ (hk _ _) h)))
 
@@ -175,10 +169,10 @@ mutual
   head0-≈ᵗ⁻ sub-op       h-op                = h-sub h-op
 
   head0-≈ᵗ⁻ (delay-zero {k = k} {q₀ = q₀} e) h =
-    h-delay refl (head0-⊑ k q₀ _ (head0-ε-subst e h))
+    h-delay refl (head0-⊑ k q₀ _ (head0-sub⁻ h))
 
   head0-≈ᵗ⁻ (delay-plus {k = k} hk e) h
-    with head0-ε-subst e h
+    with head0-sub⁻ h
   ... | h-delay z h' =
     h-delay (zero-sumˡ z) (h-delay (zero-sumʳ z)
       (head0-≈ᵗ⁻ (hk _ _) (head0-⊑ k _ _ h')))
@@ -187,7 +181,7 @@ mutual
   head0-≈ᵗ⁻ (≈ᵗ-trans et et') h = head0-≈ᵗ⁻ et (head0-≈ᵗ⁻ et' h)
 
 -- A returned value is never an operation. Stated at the head observation,
--- which sees through the `ε-substˢ`/`sub` the two denotations carry (a leaf
+-- which sees through the `sub` nodes the two denotations carry (a leaf
 -- and an operation node sit at different effect grades).
 
 ret≉op : ∀ {A ε w} {op : Op} {t t' : Tˢ A ε w}

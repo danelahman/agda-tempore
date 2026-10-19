@@ -497,11 +497,11 @@ cast-match-reduct refl M' V' W' = refl
 
 cast-seq-ret : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ)
              → (N' : Γ' ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε) → (V' : Γ' ⊢V⦂ A)
-             → (C-rename (cong-∷-ren (eq-ren (cong (_⟨_⟩ Γ) map-uᵉ) ∘ʳ ⟨⟩-η-ren))
+             → (C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren))
                  (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ uₑ ⟩ ∷ A) e) N'))
                    [ split-[] ↦ castᵛ e V' ]c
              ≡ castᶜ e ((C-rename
-                          (cong-∷-ren (eq-ren (cong (_⟨_⟩ Γ') map-uᵉ) ∘ʳ ⟨⟩-η-ren))
+                          (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren))
                           N') [ split-[] ↦ V' ]c)
 cast-seq-ret refl N' V' = refl
 

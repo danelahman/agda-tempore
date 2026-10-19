@@ -4,7 +4,8 @@
 -- Over a list of vertices `vs` and a list of edges, the          --
 -- reflexive-transitive closure by Warshall's algorithm. It holds --
 -- an entry for each pair of vertices, starting from the edges    --
--- and the diagonal; for each vertex `k` in turn, a pair joined   --
+-- and the chains `same?` gives between vertices it identifies    --
+-- (the diagonal); for each vertex `k` in turn, a pair joined     --
 -- through `k`, the first to `k` and `k` to the second, gains an  --
 -- entry. An entry is a chain of edges (`Star`). The              --
 -- representative of a vertex in a given order is the first       --
@@ -43,7 +44,7 @@ open import Relation.Nullary using (yes; no)
 open import Util.Equality
 
 module TypeInference.SolverImpl.Reach
-  {V : Set} (_≟_ : DecidableEquality V) (Edge : V → V → Set)
+  {V : Set} (Edge : V → V → Set) (same? : (a b : V) → Maybe (Star Edge a b))
   (edges : List (Σ[ a ∈ V ] Σ[ b ∈ V ] Edge a b)) (vs : List V)
   where
 
@@ -58,18 +59,19 @@ Row a = All (λ b → Maybe (Chain a b)) vs
 Closure : Set
 Closure = All Row vs
 
--- The empty chain on the diagonal, else an edge
+-- The chain `same?` gives on the diagonal, else an edge between
+-- vertices it joins to the ends
 
 start : (a b : V) → Maybe (Chain a b)
-start a b with a ≟ b
-... | yes refl = just ε
-... | no _     = find edges
+start a b with same? a b
+... | just p  = just p
+... | nothing = find edges
   where
     find : List (Σ[ c ∈ V ] Σ[ d ∈ V ] Edge c d) → Maybe (Chain a b)
     find []                = nothing
-    find ((c , d , e) ∷ l) with c ≟ a | d ≟ b
-    ... | yes refl | yes refl = just (e ◅ ε)
-    ... | _        | _        = find l
+    find ((c , d , e) ∷ l) with same? a c | same? d b
+    ... | just p | just q = just (p ◅◅ (e ◅ q))
+    ... | _      | _      = find l
 
 -- The pairs joined through `k` gain an entry
 
@@ -106,7 +108,7 @@ rep C ((v , mv) ∷ ord) ma with reach C ma mv | reach C mv ma
 -- Cycle elimination over a policy: the preferred vertices, and those
 -- that may move (`Mv`)
 
-module Collapse (preferred : V → Bool) (Mv : V → Set) (mv? : (v : V) → Maybe (Mv v)) where
+module Collapse (_≟_ : DecidableEquality V) (preferred : V → Bool) (Mv : V → Set) (mv? : (v : V) → Maybe (Mv v)) where
 
   -- A vertex that moves: its target, a chain each way, and its licence
 

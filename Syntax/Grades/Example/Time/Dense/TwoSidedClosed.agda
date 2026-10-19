@@ -254,7 +254,7 @@ plusᵢ i = plus i⁺ (≤-refl , ≤∞-plus∞ (max i))
            {fromWitness (≤∞-trans {↑ min i} {max i} (min≤max i) (≤∞-plus∞ (max i)))}
 
 dense-closed-two-sided-intervals-with-∞ : Grade ℚ≥0ᴰ
-dense-closed-two-sided-intervals-with-∞ = record
+dense-closed-two-sided-intervals-with-∞ = posetᵍ record
   { Carrier = Interval∞
   ; _·_              = _·ᵢ_
   ; u                = uᵢ
@@ -297,7 +297,7 @@ dense-closed-two-sided-intervals-with-∞ = record
 
 two-sided→dense-closed : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.two-sided-intervals-with-∞
                                      dense-closed-two-sided-intervals-with-∞
-two-sided→dense-closed = record
+two-sided→dense-closed = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}
   ; map-u        = eqᵢ refl refl

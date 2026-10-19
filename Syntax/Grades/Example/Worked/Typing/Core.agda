@@ -209,7 +209,7 @@ forwarding : ∀ {Γ B} → (op : Op) → (ε'' : E)
 forwarding op ε'' =
   perform op (fresh-var ≾ᵣ-refl (Tl-∷ Hd))
                                      -- ⟨ op-grade op ⟩ ∷ arity op
-    (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≾ᵣ-reflexive (·ᵣ-identityˡ _))
+    (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _))
            (<:ᵛ-refl _)              -- ∷ arity op ⇒ B ‼ ε''
       (here · fresh-var ≾ᵣ-refl (Tl-∷ Hd)))
 
@@ -222,10 +222,10 @@ identifying : (op : Op) → (ε'' : E)
                     ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ NodeId ‼ ε'')
               ⊢C⦂ NodeId ‼ (op-grade op ·ₑ ε'')
 identifying op ε'' =
-  ε-subst (cong (op-grade op ·ₑ_) (·ₑ-identityʳ ε''))
+  ε-≃ (·ₑ-cong ≃ₑ-refl (·ₑ-identityʳ ε''))
     (perform op (fresh-var ≾ᵣ-refl (Tl-∷ Hd))
                                      -- ⟨ op-grade op ⟩ ∷ arity op
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≾ᵣ-reflexive (·ᵣ-identityˡ _))
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _))
            (<:ᵛ-refl _)              -- ∷ arity op ⇒ NodeId ‼ ε''
         ((here · fresh-var ≾ᵣ-refl (Tl-∷ Hd))
           ⨟                          -- ⟨ ε'' ⟩ ∷ NodeId
@@ -246,10 +246,10 @@ reporting : (reading-crosses :
                   ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Reading ‼ ε'')
             ⊢C⦂ Reading ‼ (op-grade op ·ₑ ε'')
 reporting reading-crosses op ε'' =
-  ε-subst (cong (op-grade op ·ₑ_) (·ₑ-identityʳ ε''))
+  ε-≃ (·ₑ-cong ≃ₑ-refl (·ₑ-identityʳ ε''))
     (perform op (fresh-var ≾ᵣ-refl (Tl-∷ Hd))
                                      -- ⟨ op-grade op ⟩ ∷ arity op
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≾ᵣ-reflexive (·ᵣ-identityˡ _))
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _))
            (<:ᵛ-refl _)              -- ∷ arity op ⇒ Reading ‼ ε''
         ((here · fresh-var ≾ᵣ-refl (Tl-∷ Hd))
           ⨟                          -- ⟨ ε'' ⟩ ∷ Reading

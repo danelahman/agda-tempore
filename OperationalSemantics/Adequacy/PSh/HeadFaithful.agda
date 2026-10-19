@@ -110,7 +110,7 @@ tick-delays : ∀ {X : PSh} → (τ : 𝔻) → ∀ {w} (x : carrier X w)
             → Delaysᵗ {⟨ of-durʳ τ ⟩ᵒ X}
                 (app (delayᵀ τ ∘ᵖ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵖ η⊣) x) (τ +ᴰ 0ᴰ)
 tick-delays {X} τ {w} x =
-  d-delay τ {k = λ q → leaf (mk⟨⟩ (⊑-coe map-of-durᵉ q) x)} (λ q → d-leaf)
+  d-delay τ {k = λ q → leaf (mk⟨⟩ (⊑-mono (≃ᵣ⇒≾ᵣ map-of-durᵉ) q) x)} (λ q → d-leaf)
 
 delaysᵐ→ᵗ : ∀ {X Y : PSh} {δ n} {d : X →ᵖ Tᵒ Y δ}
           → Delaysᵐ d n → ∀ {w} (x : carrier X w)

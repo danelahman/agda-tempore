@@ -281,7 +281,7 @@ ctx-grade-++ᶜ-≾ᵣ Δ₁ []          p₁ p₂ = p₁
 ctx-grade-++ᶜ-≾ᵣ Δ₁ (Δ₂ ∷ B)    p₁ p₂ = ctx-grade-++ᶜ-≾ᵣ Δ₁ Δ₂ p₁ p₂
 ctx-grade-++ᶜ-≾ᵣ Δ₁ (Δ₂ ⟨ ρ ⟩)  p₁ p₂ =
   ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (ctx-grade-++ᶜ-≾ᵣ Δ₁ Δ₂ p₁ (≾ᵣ-zero-productˡ p₂)))
-           (≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)) (≾ᵣ-zero-productʳ p₂))
+           (≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ ρ)) (≾ᵣ-zero-productʳ p₂))
 
 -- At the unit the push contributes the suffix's own grade, which is the grade
 -- `split→∈` records.

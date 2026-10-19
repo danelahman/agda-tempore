@@ -319,3 +319,12 @@ sound-ε-subst : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢C⦂ A �
               → ⟦ ε-subst e M ⟧ᶜᵗ (ε-substᴾ e M pM) ≈ᵐ ε-substᵀ e ∘ᵐ ⟦ M ⟧ᶜᵗ pM
 sound-ε-subst refl M pM =
   ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-congˡ ε-substᵀ-refl) (∘ᵐ-identityˡ _))
+
+-- Regrading along an equivalence of effects is a sub-effecting, so it denotes
+-- the monad's `T-≤`, and the certificate is the term's own.
+
+sound-ε-≃ : ∀ {Γ A ε ε'} → (e : ε ≃ₑ ε') → (M : Γ ⊢C⦂ A ‼ ε) → (pM : Paramᶜ M)
+          → ⟦ ε-≃ e M ⟧ᶜᵗ pM ≈ᵐ T-≤ (proj₁ e) ∘ᵐ ⟦ M ⟧ᶜᵗ pM
+sound-ε-≃ {A = A} e M pM =
+  ∘ᵐ-congˡ (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (T-congᶠ (⟦⟧<:ᵛ-refl A)) T-idᵐ))
+                     (∘ᵐ-identityˡ _))

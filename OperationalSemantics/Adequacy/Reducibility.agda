@@ -456,6 +456,13 @@ CRed-ε-subst : ∀ {s} {P : VPred s} {A ε ε'} {e : shapeᵛ A ≡ s} {St : �
              → CRed s P e ε St M → CRed s P e ε' St (ε-subst eε M)
 CRed-ε-subst refl p = p
 
+-- A sub-effected computation is its own reduct, one `SUB` step on.
+
+CRed-coerce : ∀ {s} {P : VPred s} {A ε ε'} {e : shapeᵛ A ≡ s} {St : 𝕊 []}
+            → (q : ε ≾ₑ ε') → {M : toCtx St ⊢C⦂ A ‼ ε}
+            → CRed s P e ε St M → CRed s P e ε' St (coerce q M)
+CRed-coerce q = CRed-expand SUB
+
 -- Reducibility is monotone in the subtyping order. Both halves are stated at a
 -- fixed skeleton, the subtyping witness moving the equality index alone. The
 -- value half recurses on the witness; at an arrow `SUB-APP` splits the witness
@@ -832,9 +839,8 @@ SRed-fresh {A} {ρ} {St} V pV f {St'} r =
     q₀ : St ⊑ₛ[ ρ ] St'
     q₀ = reach (≤ₛ-trans (∷-suc V id-suc) e)
                (≾ᵣ-trans
-                 (≾ᵣ-reflexive
-                   (trans (≤ₛ-grade-trans (∷-suc V id-suc) e)
-                          (sym (≤ₛ-embed-grade e (Hd {Γ = toCtx St})))))
+                 (≃ᵣ⇒≾ᵣ
+                   (≃ᵣ-trans (≤ₛ-grade-trans (∷-suc V id-suc) e) (≃ᵣ-sym (≤ₛ-embed-grade e (Hd {Γ = toCtx St})))))
                  rel)
 
 -- Every variable of a state context is of box type, so at the other

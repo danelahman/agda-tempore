@@ -55,7 +55,7 @@ _⋄ᵏ_ : ∀ {X Y A ε ε'} → (Y →ᵐ Tᵏ A ε') → (X →ᵐ Tᵏ Y ε)
 f ⋄ᵏ t = μᵏ ∘ᵐ Tᵏᶠ f ∘ᵐ t
 
 ⋄ᵏ-ηᵏ : ∀ {X A ε'} → (f : X →ᵐ Tᵏ A ε')
-      → f ⋄ᵏ ηᵏ ≈ᵐ ε-substᵏ (sym (·ₑ-identityˡ ε')) ∘ᵐ f
+      → f ⋄ᵏ ηᵏ ≈ᵐ T-≤ᵏ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε')) ∘ᵐ f
 ⋄ᵏ-ηᵏ f =
     ∘ᵐ-congʳ (≈ᵐ-sym (ηᵏ-nat f))
   ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -66,7 +66,7 @@ f ⋄ᵏ t = μᵏ ∘ᵐ Tᵏᶠ f ∘ᵐ t
 bind-bindᵏ : ∀ {X Y Z B ε₁ ε₂ ε₃}
            → (f : Z →ᵐ Tᵏ B ε₃) → (t : Y →ᵐ Tᵏ Z ε₂) → (s : X →ᵐ Tᵏ Y ε₁)
            → μᵏ ∘ᵐ Tᵏᶠ (f ⋄ᵏ t) ∘ᵐ s
-           ≈ᵐ ε-substᵏ (·ₑ-assoc ε₁ ε₂ ε₃) ∘ᵐ (f ⋄ᵏ (t ⋄ᵏ s))
+           ≈ᵐ T-≤ᵏ (≃ₑ⇒≾ₑ (·ₑ-assoc ε₁ ε₂ ε₃)) ∘ᵐ (f ⋄ᵏ (t ⋄ᵏ s))
 bind-bindᵏ f t s =
     ∘ᵐ-congʳ (∘ᵐ-congˡ (Tᵏ-∘ᵐ _ _ ∙ᵏ ∘ᵐ-congʳ (Tᵏ-∘ᵐ _ _)))
   ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
@@ -86,8 +86,8 @@ bind-bindᵏ f t s =
 
 tick-z : ∀ (δ : E) (ε : E) → δ ·ₑ ε ≾ₑ (δ ·ₑ uₑ) ·ₑ ε
 tick-z δ ε =
-  ≾ₑ-trans (·ₑ-monoʳ-≾ₑ (≾ₑ-reflexive (sym (·ₑ-identityˡ ε))))
-           (≾ₑ-reflexive (sym (·ₑ-assoc δ uₑ ε)))
+  ≾ₑ-trans (·ₑ-monoʳ-≾ₑ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε)))
+           (≃ₑ⇒≿ₑ (·ₑ-assoc δ uₑ ε))
 
 tick-nf : ∀ {X Y B ε} → (δ : E) → (env : X →ᵐ [ mapᵉ δ ]ᵒ Y)
         → (f : Y →ᵐ Tᵏ B ε)
@@ -106,14 +106,14 @@ tick-nf {ε = ε} δ env f =
        ∙ᵏ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
        ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
        ∙ᵏ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
-       ∙ᵏ ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-assoc _ _ _ ∙ᵏ ⋄ᵏ-ηᵏ f ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-≡ _)))
+       ∙ᵏ ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-assoc _ _ _ ∙ᵏ ⋄ᵏ-ηᵏ f))
        ∙ᵏ ∘ᵐ-congˡ ([]-∘ᵐ _ _)
        ∙ᵏ ∘ᵐ-assoc _ _ _))
   ∙ᵏ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (tickᵏ-≤ δ _))
   ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ᵏ ∘ᵐ-congˡ (∘ᵐ-congˡ (T-≤ᵏ-≡ _) ∙ᵏ T-≤ᵏ-trans _ _ (tick-z δ ε))
+  ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-trans _ _ (tick-z δ ε))
 
 -- Being a graded monad morphism, an implementation maps a bind to a bind. This
 -- is what carries the tree monad's soundness theorem over to `↝-STEP`.

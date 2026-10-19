@@ -26,7 +26,7 @@ open import TypeInference.SolverImpl.Enum using (OpEnum)
 module TypeInference.Examples.Stdlib (S : LanguageSpec) (opEnum : OpEnum S) where
 
 open LanguageSpec S
-open GradeSystemInterface Grades using (≾ᵣ-reflexive; map-uᵉ)
+open GradeSystemInterface Grades using (≃ᵣ⇒≾ᵣ; map-uᵉ)
 
 open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
@@ -209,7 +209,7 @@ compose-typed =
   where
     u·u≾u : ∅ᴴ ⊩ ûᵣ ·̂ᵣ ∣ ûₑ ∣̂ᵉ ≾̂ᵣ ûᵣ
     u·u≾u = transᵣ (eqᵣ ≡̂ᵣ-identityˡ)
-              (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≾ᵣ-reflexive map-uᵉ)))
+              (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-uᵉ)))
 
 expected-compose : Scheme
 expected-compose =

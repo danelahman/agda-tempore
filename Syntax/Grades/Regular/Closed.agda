@@ -32,7 +32,7 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary.Decidable using (True; toWitness; T?; recompute; map′)
 
 open import Syntax.Durations.Nat using (ℕᴰ)
-open import Syntax.Grades using (Grade; Plus; plus)
+open import Syntax.Grades using (posetᵍ; Grade; Plus; plus)
 open import Syntax.Grades.Regular.Automaton k
 open import Syntax.Grades.Regular.Inclusion k using (_⊆ᵇ_)
 open import Syntax.Grades.Regular.Decide k using (⊆ᵇ-sound; ⊆ᵇ-complete; nonempty?)
@@ -239,7 +239,7 @@ module WithDurations
   (of-dur-plus : ∀ {m n} → of-dur (m + n) ≡ of-dur m · of-dur n) where
 
   closed-grade : Grade ℕᴰ
-  closed-grade = record
+  closed-grade = posetᵍ record
     { Carrier         = Closed
     ; _·_             = _·_
     ; u               = u

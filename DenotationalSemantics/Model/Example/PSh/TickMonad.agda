@@ -89,9 +89,9 @@ mutual
                {kn : ∀ {w' w''} (q : w ⊑[ mapᵉ δ ] w') (r : w' ⊑[ uᵣ ] w'')
                    → k (⊑ρ∘ᵘ q r) ≈ᵏ transportᵏ r (k q)}
                {q₀ : w ⊑[ mapᵉ δ ] w}
-           → (u : δ ≡ uₑ)
-           → (e : ε ≡ δ ·ₑ ε)
-           → tick-node δ k kn ≈ᵏ subst (λ z → Tᵏˢ A z w) e (k q₀)
+           → (u : δ ≃ₑ uₑ)
+           → (e : ε ≾ₑ δ ·ₑ ε)
+           → tick-node δ k kn ≈ᵏ sub e (k q₀)
 
     tick-· : ∀ {ε w} {δ δ₁ δ₂ : E}
                {k : ∀ {w'} → w ⊑[ mapᵉ δ ] w' → Tᵏˢ A ε w'}
@@ -105,14 +105,14 @@ mutual
                {kn₁ : ∀ {w' w''} (q₁ : w ⊑[ mapᵉ δ₁ ] w') (r : w' ⊑[ uᵣ ] w'')
                     → tick-node δ₂ (k' (⊑ρ∘ᵘ q₁ r)) (kn₂ (⊑ρ∘ᵘ q₁ r))
                     ≈ᵏ transportᵏ r (tick-node δ₂ (k' q₁) (kn₂ q₁))}
-           → (m : δ ≡ δ₁ ·ₑ δ₂)
+           → (m : δ ≃ₑ δ₁ ·ₑ δ₂)
            → (∀ {w' w''} (q₁ : w ⊑[ mapᵉ δ₁ ] w') (q₂ : w' ⊑[ mapᵉ δ₂ ] w'')
               → k' q₁ q₂
-              ≈ᵏ k (⊑-mono (≾ᵣ-reflexive (trans (sym map-·ᵉ) (cong mapᵉ (sym m))))
+              ≈ᵏ k (⊑-mono (≃ᵣ⇒≾ᵣ (≃ᵣ-trans (≃ᵣ-sym map-·ᵉ) (map-≃ᵉ (≃ₑ-sym m))))
                      (⊑-trans q₁ q₂)))
-           → (e : δ ·ₑ ε ≡ δ₁ ·ₑ (δ₂ ·ₑ ε))
+           → (e : δ ·ₑ ε ≾ₑ δ₁ ·ₑ (δ₂ ·ₑ ε))
            → tick-node δ₁ (λ q₁ → tick-node δ₂ (k' q₁) (kn₂ q₁)) kn₁
-           ≈ᵏ subst (λ z → Tᵏˢ A z w) e (tick-node δ k kn)
+           ≈ᵏ sub e (tick-node δ k kn)
 
     ≈ᵏ-sym   : ∀ {ε w} {t t' : Tᵏˢ A ε w} → t ≈ᵏ t' → t' ≈ᵏ t
     ≈ᵏ-trans : ∀ {ε w} {t t' t'' : Tᵏˢ A ε w} → t ≈ᵏ t' → t' ≈ᵏ t'' → t ≈ᵏ t''
@@ -135,6 +135,11 @@ infix 4 _≈ᵏ_
 ≡→≈ᵏ : ∀ {A ε w} {t t' : Tᵏˢ A ε w} → t ≡ t' → t ≈ᵏ t'
 ≡→≈ᵏ refl = ≈ᵏ-refl _
 
+-- A sub-effecting node respects `_≈ᵏ_` at a fixed witness.
+
+sub-congᵏ : ∀ {A ε ε' w} {e : ε ≾ₑ ε'} {t t' : Tᵏˢ A ε w} → t ≈ᵏ t' → sub e t ≈ᵏ sub e t'
+sub-congᵏ = sub-≈
+
 -- `sub-u`/`sub-∘` at *any* witnesses of the required orderings; the
 -- constructors are stated at `≾ₑ-refl`/`≾ₑ-trans`, and sub-effecting witnesses
 -- are proof-irrelevant.
@@ -146,6 +151,23 @@ sub-∘ᵏ : ∀ {A ε ε' ε'' w} → (e : ε ≾ₑ ε') → (e' : ε' ≾ₑ 
        → (t : Tᵏˢ A ε w) → sub e' (sub e t) ≈ᵏ sub e'' t
 sub-∘ᵏ e e' e'' t rewrite ≾ₑ-irrelevant e'' (≾ₑ-trans e e') = sub-∘
 
+-- Two composites of sub-effecting nodes with the same endpoints agree.
+
+sub-swapᵏ : ∀ {A ε₀ ε₁ ε₁' ε₂ w} (b : ε₀ ≾ₑ ε₁) (a : ε₁ ≾ₑ ε₂) (d : ε₀ ≾ₑ ε₁') (c : ε₁' ≾ₑ ε₂)
+          → (t : Tᵏˢ A ε₀ w) → sub a (sub b t) ≈ᵏ sub c (sub d t)
+sub-swapᵏ b a d c t =
+  ≈ᵏ-trans (sub-∘ᵏ b a (≾ₑ-trans d c) t) (≈ᵏ-sym (sub-∘ᵏ d c (≾ₑ-trans d c) t))
+
+-- Three sub-effecting nodes against two, with the same endpoints.
+
+sub3ᵏ : ∀ {A ε₀ ε₁ ε₂ ε₃ ε₅ w}
+      → (d : ε₀ ≾ₑ ε₁) (a : ε₁ ≾ₑ ε₅) (c : ε₀ ≾ₑ ε₂) (Y : ε₂ ≾ₑ ε₃) (X : ε₃ ≾ₑ ε₅)
+      → (t : Tᵏˢ A ε₀ w) → sub a (sub d t) ≈ᵏ sub X (sub Y (sub c t))
+sub3ᵏ d a c Y X t =
+  ≈ᵏ-trans (sub-∘ᵏ d a (≾ₑ-trans (≾ₑ-trans c Y) X) t)
+    (≈ᵏ-sym (≈ᵏ-trans (sub-≈ (sub-∘ᵏ c Y (≾ₑ-trans c Y) t))
+                      (sub-∘ᵏ (≾ₑ-trans c Y) X _ t)))
+
 -- `sub-tick` with its coherence witness pinned (never inferable from a goal).
 
 sub-tickᵏ : ∀ {A ε ε' w} {δ : E} → (e : ε ≾ₑ ε')
@@ -156,9 +178,7 @@ sub-tickᵏ : ∀ {A ε ε' w} {δ : E} → (e : ε ≾ₑ ε')
           ≈ᵏ tick-node δ (λ q → sub e (k q)) (λ q r → sub-≈ (kn q r))
 sub-tickᵏ e k kn = sub-tick
 
--- Defined as `subst` (rather than by matching `refl`) so that it *is* the
--- transport the tick-collapsing rules `tick-u`/`tick-·` are stated with, which
--- — being inside the defining block — cannot mention this name.
+-- Transport of a tree along an equality of grades.
 
 ε-substᵏˢ : ∀ {A ε ε' w} → ε ≡ ε' → Tᵏˢ A ε w → Tᵏˢ A ε' w
 ε-substᵏˢ {A} {w = w} e = subst (λ z → Tᵏˢ A z w) e
@@ -171,18 +191,10 @@ transportᵏ-ε-substᵏˢ : ∀ {A ε ε' w w'} (p : w ⊑[ uᵣ ] w') (e : ε 
                      → transportᵏ p (ε-substᵏˢ e t) ≡ ε-substᵏˢ e (transportᵏ p t)
 transportᵏ-ε-substᵏˢ p refl t = refl
 
-ε-substᵏˢ-trans : ∀ {A ε ε' ε'' w} → (p : ε ≡ ε') → (q : ε' ≡ ε'') → (t : Tᵏˢ A ε w)
-                → ε-substᵏˢ q (ε-substᵏˢ p t) ≡ ε-substᵏˢ (trans p q) t
-ε-substᵏˢ-trans refl refl t = refl
-
-ε-substᵏˢ-uip : ∀ {A ε ε' w} → (p q : ε ≡ ε') → (t : Tᵏˢ A ε w)
-              → ε-substᵏˢ p t ≡ ε-substᵏˢ q t
-ε-substᵏˢ-uip p q t = cong (λ z → ε-substᵏˢ z t) (uip {p = p} {q = q})
-
 -- The no-time step from a world to itself.
 
-⊑-tick0 : ∀ {δ w} → δ ≡ uₑ → w ⊑[ mapᵉ δ ] w
-⊑-tick0 u = ⊑-mono (≾ᵣ-reflexive (sym (trans (cong mapᵉ u) map-uᵉ))) ⊑-refl
+⊑-tick0 : ∀ {δ w} → δ ≃ₑ uₑ → w ⊑[ mapᵉ δ ] w
+⊑-tick0 u = ⊑-mono (≃ᵣ⇒≿ᵣ (≃ᵣ-trans (map-≃ᵉ u) map-uᵉ)) ⊑-refl
 
 -- A tick node is independent of its stored coherence witness.
 
@@ -193,33 +205,45 @@ tick-irrᵏ : ∀ {A ε w} {δ : E}
           → tick-node δ k kn ≈ᵏ tick-node δ k kn'
 tick-irrᵏ k kn kn' = tick-≈ (λ q → ≈ᵏ-refl (k q))
 
--- `tick-·` when the inner node sits under a grade transport — the shape the
+-- `tick-·` when the inner node sits under a sub-effecting node — the shape the
 -- structural recursions produce, with every witness explicit.
 
 tick-·-out :
-  ∀ {A ε ε₂ w} {δ δ₁ δ₂ : E}
-  → (p : δ₂ ·ₑ ε ≡ ε₂)
+  ∀ {A ε ε₂ ε₃ w} {δ δ₁ δ₂ : E}
+  → (p : δ₂ ·ₑ ε ≾ₑ ε₂)
   → (k' : ∀ {w'} → w ⊑[ mapᵉ δ₁ ] w' → ∀ {w''} → w' ⊑[ mapᵉ δ₂ ] w'' → Tᵏˢ A ε w'')
   → (kn₂ : ∀ {w'} (q₁ : w ⊑[ mapᵉ δ₁ ] w')
          → ∀ {w'' w'''} (q₂ : w' ⊑[ mapᵉ δ₂ ] w'') (r : w'' ⊑[ uᵣ ] w''')
          → k' q₁ (⊑ρ∘ᵘ q₂ r) ≈ᵏ transportᵏ r (k' q₁ q₂))
   → (kn₁ : ∀ {w' w''} (q₁ : w ⊑[ mapᵉ δ₁ ] w') (r : w' ⊑[ uᵣ ] w'')
-         → ε-substᵏˢ p (tick-node δ₂ (k' (⊑ρ∘ᵘ q₁ r)) (kn₂ (⊑ρ∘ᵘ q₁ r)))
-         ≈ᵏ transportᵏ r (ε-substᵏˢ p (tick-node δ₂ (k' q₁) (kn₂ q₁))))
+         → sub p (tick-node δ₂ (k' (⊑ρ∘ᵘ q₁ r)) (kn₂ (⊑ρ∘ᵘ q₁ r)))
+         ≈ᵏ transportᵏ r (sub p (tick-node δ₂ (k' q₁) (kn₂ q₁))))
   → (k : ∀ {w'} → w ⊑[ mapᵉ δ ] w' → Tᵏˢ A ε w')
   → (kn : ∀ {w' w''} (q : w ⊑[ mapᵉ δ ] w') (r : w' ⊑[ uᵣ ] w'')
         → k (⊑ρ∘ᵘ q r) ≈ᵏ transportᵏ r (k q))
-  → (m : δ ≡ δ₁ ·ₑ δ₂)
+  → (m : δ ≃ₑ δ₁ ·ₑ δ₂)
   → (∀ {w' w''} (q₁ : w ⊑[ mapᵉ δ₁ ] w') (q₂ : w' ⊑[ mapᵉ δ₂ ] w'')
      → k' q₁ q₂
-     ≈ᵏ k (⊑-mono (≾ᵣ-reflexive (trans (sym map-·ᵉ) (cong mapᵉ (sym m))))
+     ≈ᵏ k (⊑-mono (≃ᵣ⇒≾ᵣ (≃ᵣ-trans (≃ᵣ-sym map-·ᵉ) (map-≃ᵉ (≃ₑ-sym m))))
             (⊑-trans q₁ q₂)))
-  → (e : δ ·ₑ ε ≡ δ₁ ·ₑ (δ₂ ·ₑ ε))
-  → tick-node δ₁ (λ q₁ → ε-substᵏˢ p (tick-node δ₂ (k' q₁) (kn₂ q₁))) kn₁
-  ≈ᵏ ε-substᵏˢ (trans e (cong (δ₁ ·ₑ_) p)) (tick-node δ k kn)
-tick-·-out refl k' kn₂ kn₁ k kn m hk e =
-  ≈ᵏ-trans (tick-· m hk e)
-           (≡→≈ᵏ (ε-substᵏˢ-uip e (trans e refl) (tick-node _ k kn)))
+  → (e : δ ·ₑ ε ≾ₑ δ₁ ·ₑ (δ₂ ·ₑ ε))
+  → (P : δ ·ₑ ε ≾ₑ ε₃)
+  → (P' : δ₁ ·ₑ ε₂ ≾ₑ ε₃)
+  → sub P' (tick-node δ₁ (λ q₁ → sub p (tick-node δ₂ (k' q₁) (kn₂ q₁))) kn₁)
+  ≈ᵏ sub P (tick-node δ k kn)
+tick-·-out {w = w} {δ = δ} {δ₁} {δ₂} p k' kn₂ kn₁ k kn m hk e P P' =
+  ≈ᵏ-trans (sub-congᵏ (≈ᵏ-sym (sub-tick {e = p} {kn = kn₁'} {kn' = kn₁})))
+  (≈ᵏ-trans (sub-congᵏ (sub-congᵏ (tick-· m hk e)))
+  (≈ᵏ-trans (sub-congᵏ (sub-∘ᵏ e (·ₑ-monoʳ-≾ₑ p) X _))
+            (sub-∘ᵏ X P' P _)))
+  where
+    X = ≾ₑ-trans e (·ₑ-monoʳ-≾ₑ p)
+    kn₁' : ∀ {w' w''} (q₁ : w ⊑[ mapᵉ δ₁ ] w') (r : w' ⊑[ uᵣ ] w'')
+         → tick-node δ₂ (k' (⊑ρ∘ᵘ q₁ r)) (kn₂ (⊑ρ∘ᵘ q₁ r))
+         ≈ᵏ transportᵏ r (tick-node δ₂ (k' q₁) (kn₂ q₁))
+    kn₁' q₁ r = tick-≈ (λ q₂ →
+                  ≈ᵏ-trans (hk _ _)
+                    (≈ᵏ-trans (≡→≈ᵏ (cong k (⊑-irrelevant _ _))) (≈ᵏ-sym (hk _ _))))
 
 transportᵏ-cong : ∀ {A ε w w'} (p : w ⊑[ uᵣ ] w') {t t' : Tᵏˢ A ε w}
                 → t ≈ᵏ t' → transportᵏ p t ≈ᵏ transportᵏ p t'
@@ -233,12 +257,10 @@ transportᵏ-cong p sub-tick           = sub-tick
 -- what is left is the zero-tick's own naturality, resp. witness irrelevance
 transportᵏ-cong p (tick-u {k = k} {kn = kn} {q₀ = q₀} u e) =
   ≈ᵏ-trans (tick-u {q₀ = ⊑-tick0 u} u e)
-    (≈ᵏ-trans (ε-substᵏˢ-cong e (≈ᵏ-trans (≡→≈ᵏ (cong k (⊑-irrelevant _ _))) (kn q₀ p)))
-              (≡→≈ᵏ (sym (transportᵏ-ε-substᵏˢ p e (k q₀)))))
+    (sub-congᵏ (≈ᵏ-trans (≡→≈ᵏ (cong k (⊑-irrelevant _ _))) (kn q₀ p)))
 transportᵏ-cong p (tick-· {δ = δ} {k = k} {kn = kn} m hk e) =
-  ≈ᵏ-trans (tick-· m (λ q₁ q₂ → ≈ᵏ-trans (hk (⊑ᵘ∘ρ p q₁) q₂)
-                                        (≡→≈ᵏ (cong k (⊑-irrelevant _ _)))) e)
-           (≡→≈ᵏ (sym (transportᵏ-ε-substᵏˢ p e (tick-node δ k kn))))
+  tick-· m (λ q₁ q₂ → ≈ᵏ-trans (hk (⊑ᵘ∘ρ p q₁) q₂)
+                               (≡→≈ᵏ (cong k (⊑-irrelevant _ _)))) e
 transportᵏ-cong p (≈ᵏ-sym et)        = ≈ᵏ-sym (transportᵏ-cong p et)
 transportᵏ-cong p (≈ᵏ-trans et et')  =
   ≈ᵏ-trans (transportᵏ-cong p et) (transportᵏ-cong p et')
@@ -269,11 +291,6 @@ Tᵏ A ε = record
   ; transport-trans = transportᵏ-trans
   }
 
-sub-ε-substᵏ : ∀ {A ε₁ ε₁' ε₂ ε₂' w} → (a : ε₁ ≡ ε₁') → (b : ε₂ ≡ ε₂')
-             → (q : ε₁ ≾ₑ ε₂) → (q' : ε₁' ≾ₑ ε₂') → (t : Tᵏˢ A ε₁ w)
-             → sub q' (ε-substᵏˢ a t) ≈ᵏ ε-substᵏˢ b (sub q t)
-sub-ε-substᵏ refl refl q q' t = sub-≈ (≈ᵏ-refl t)
-
 ε-substᵏ : ∀ {A ε ε'} → ε ≡ ε' → Tᵏ A ε →ᵖ Tᵏ A ε'
 ε-substᵏ p =
   pmap (ε-substᵏˢ p) (ε-substᵏˢ-cong p)
@@ -301,23 +318,14 @@ mutual
   Tᵏˢᶠ-cong f sub-u        = sub-uᵏ _ _
   Tᵏˢᶠ-cong f sub-∘        = sub-∘ᵏ _ _ _ _
   Tᵏˢᶠ-cong f sub-tick     = sub-tick
-  -- the functorial action pushes into the continuations and past the grade
-  -- transport, so both collapses are reapplied at the mapped tree
-  Tᵏˢᶠ-cong f (tick-u {k = k} {q₀ = q₀} u e) =
-    ≈ᵏ-trans (tick-u {q₀ = q₀} u e) (≡→≈ᵏ (ε-substᵏˢ-Tᵏˢᶠ' e f (k q₀)))
+  -- the functorial action pushes into the continuations and leaves the
+  -- sub-effecting node, so both collapses are reapplied at the mapped tree
+  Tᵏˢᶠ-cong f (tick-u {k = k} {q₀ = q₀} u e) = tick-u {q₀ = q₀} u e
   Tᵏˢᶠ-cong f (tick-· {δ = δ} {k = k} {kn = kn} m hk e) =
-    ≈ᵏ-trans (tick-· m (λ q₁ q₂ → Tᵏˢᶠ-cong f (hk q₁ q₂)) e)
-             (≡→≈ᵏ (ε-substᵏˢ-Tᵏˢᶠ' e f (tick-node δ k kn)))
+    tick-· m (λ q₁ q₂ → Tᵏˢᶠ-cong f (hk q₁ q₂)) e
   Tᵏˢᶠ-cong f (≈ᵏ-sym et)  = ≈ᵏ-sym (Tᵏˢᶠ-cong f et)
   Tᵏˢᶠ-cong f (≈ᵏ-trans et et') =
     ≈ᵏ-trans (Tᵏˢᶠ-cong f et) (Tᵏˢᶠ-cong f et')
-
-  -- the functorial action commutes with a grade transport (needed here;
-  -- `ε-substᵏˢ-Tᵏˢᶠ` below is the same fact, named for its later uses)
-
-  ε-substᵏˢ-Tᵏˢᶠ' : ∀ {A B ε ε' w} → (p : ε ≡ ε') → (f : A →ᵖ B) → (t : Tᵏˢ A ε w)
-                  → ε-substᵏˢ p (Tᵏˢᶠ f t) ≡ Tᵏˢᶠ f (ε-substᵏˢ p t)
-  ε-substᵏˢ-Tᵏˢᶠ' refl f t = refl
 
   Tᵏˢᶠ-nat : ∀ {A B ε w w'} (f : A →ᵖ B) (p : w ⊑[ uᵣ ] w') (t : Tᵏˢ A ε w)
            → Tᵏˢᶠ f (transportᵏ p t) ≈ᵏ transportᵏ p (Tᵏˢᶠ f t)
@@ -355,10 +363,6 @@ Tᵏˢᶠ-cong-fg e (sub p t)         = sub-≈ (Tᵏˢᶠ-cong-fg e t)
 Tᵏ-congᶠ : ∀ {A B ε} {f g : A →ᵖ B} → f ≈ᵖ g → Tᵏᶠ {A} {B} {ε} f ≈ᵖ Tᵏᶠ g
 Tᵏ-congᶠ e t = Tᵏˢᶠ-cong-fg e t
 
-ε-substᵏˢ-Tᵏˢᶠ : ∀ {A B ε ε' w} → (p : ε ≡ ε') → (f : A →ᵖ B) → (t : Tᵏˢ A ε w)
-               → ε-substᵏˢ p (Tᵏˢᶠ f t) ≡ Tᵏˢᶠ f (ε-substᵏˢ p t)
-ε-substᵏˢ-Tᵏˢᶠ refl f t = refl
-
 -- SUB-EFFECTING
 
 T-≤ᵏ : ∀ {A ε ε'} → ε ≾ₑ ε' → Tᵏ A ε →ᵖ Tᵏ A ε'
@@ -390,109 +394,52 @@ mutual
   {-# TERMINATING #-}
 
   μᵏˢ : ∀ {A ε ε' w} → Tᵏˢ (Tᵏ A ε') ε w → Tᵏˢ A (ε ·ₑ ε') w
-  μᵏˢ {ε' = ε'} (leaf t) = ε-substᵏˢ (sym (·ₑ-identityˡ ε')) t
+  μᵏˢ {ε' = ε'} (leaf t) = sub (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε')) t
   μᵏˢ {ε' = ε'} (tick-node {ε = ε₀} δ k kn) =
-    ε-substᵏˢ (sym (·ₑ-assoc δ ε₀ ε'))
+    sub (≃ₑ⇒≿ₑ (·ₑ-assoc δ ε₀ ε'))
       (tick-node δ (λ q → μᵏˢ (k q))
         (λ q r → ≈ᵏ-trans (μᵏˢ-cong (kn q r)) (μᵏˢ-nat r (k q))))
   μᵏˢ (sub p t) = sub (·ₑ-monoˡ-≾ₑ p) (μᵏˢ t)
 
   μᵏˢ-cong : ∀ {A ε ε' w} {t t' : Tᵏˢ (Tᵏ A ε') ε w} → t ≈ᵏ t' → μᵏˢ t ≈ᵏ μᵏˢ t'
-  μᵏˢ-cong (leaf-≈ e)  = ε-substᵏˢ-cong _ e
-  μᵏˢ-cong (tick-≈ ek) = ε-substᵏˢ-cong _ (tick-≈ (λ q → μᵏˢ-cong (ek q)))
+  μᵏˢ-cong (leaf-≈ e)  = sub-congᵏ e
+  μᵏˢ-cong (tick-≈ ek) = sub-congᵏ (tick-≈ (λ q → μᵏˢ-cong (ek q)))
   μᵏˢ-cong (sub-≈ et)  = sub-≈ (μᵏˢ-cong et)
   μᵏˢ-cong sub-u       = sub-uᵏ _ _
   μᵏˢ-cong sub-∘       = sub-∘ᵏ _ _ _ _
   μᵏˢ-cong {ε' = ε'} (sub-tick {ε = ε₁} {ε' = ε₁'} {δ = δ} {e = e}) =
     ≈ᵏ-trans
-      (sub-ε-substᵏ (sym (·ₑ-assoc δ ε₁ ε')) (sym (·ₑ-assoc δ ε₁' ε'))
-                    (·ₑ-monoʳ-≾ₑ (·ₑ-monoˡ-≾ₑ e))
-                    (·ₑ-monoˡ-≾ₑ (·ₑ-monoʳ-≾ₑ e))
-                    _)
-      (ε-substᵏˢ-cong _ sub-tick)
+      (sub-swapᵏ _ _ (·ₑ-monoʳ-≾ₑ (·ₑ-monoˡ-≾ₑ e)) (≃ₑ⇒≿ₑ (·ₑ-assoc δ ε₁' ε')) _)
+      (sub-congᵏ sub-tick)
   -- `μᵏˢ` regrades a tick node but leaves the node itself, so both collapses
-  -- are reapplied to the folded continuations; the regradings agree by UIP
+  -- are reapplied to the folded continuations; the regradings agree by proof
+  -- irrelevance of the order
   μᵏˢ-cong {ε' = ε'} (tick-u {ε = ε₀} {δ = δ} {k = k} {q₀ = q₀} u e) =
-    ≈ᵏ-trans (ε-substᵏˢ-cong a₁ (tick-u {q₀ = q₀} u tick0ᵉ))
-             (≡→≈ᵏ (trans (ε-substᵏˢ-trans tick0ᵉ a₁ (μᵏˢ (k q₀)))
-                   (trans (ε-substᵏˢ-uip (trans tick0ᵉ a₁) (cong (_·ₑ ε') e) (μᵏˢ (k q₀)))
-                          (sym (ε-substᵏˢ-μᵏˢ' e (k q₀))))))
-    where
-      a₁ = sym (·ₑ-assoc δ ε₀ ε')
-      tick0ᵉ = trans (cong (_·ₑ ε') e) (·ₑ-assoc δ ε₀ ε')
+    ≈ᵏ-trans (sub-congᵏ (tick-u {q₀ = q₀} u (≃ₑ⇒≿ₑ (≃ₑ-trans (·ₑ-cong u ≃ₑ-refl) (·ₑ-identityˡ _))))) (sub-∘ᵏ _ _ _ _)
   μᵏˢ-cong {ε' = ε'} (tick-· {ε = ε₀} {δ = δ} {δ₁ = δ₁} {δ₂ = δ₂}
                              {k = k} {kn = kn} {k' = k'} m hk e) =
-    ≈ᵏ-trans (ε-substᵏˢ-cong a₁
-               (tick-·-out a₂ (λ q₁ q₂ → μᵏˢ (k' q₁ q₂)) _ _ (λ q → μᵏˢ (k q)) _ m
-                  (λ q₁ q₂ → μᵏˢ-cong (hk q₁ q₂)) tick+ᵉ))
-             (≡→≈ᵏ (trans (ε-substᵏˢ-trans (trans tick+ᵉ b₂) a₁ D)
-                   (trans (ε-substᵏˢ-uip (trans (trans tick+ᵉ b₂) a₁)
-                                         (trans a₃ (cong (_·ₑ ε') e)) D)
-                   (trans (sym (ε-substᵏˢ-trans a₃ (cong (_·ₑ ε') e) D))
-                          (sym (ε-substᵏˢ-μᵏˢ' e (tick-node δ k kn)))))))
-    where
-      a₁ = sym (·ₑ-assoc δ₁ (δ₂ ·ₑ ε₀) ε')
-      a₂ = sym (·ₑ-assoc δ₂ ε₀ ε')
-      a₃ = sym (·ₑ-assoc δ ε₀ ε')
-      b₂ = cong (δ₁ ·ₑ_) a₂
-      tick+ᵉ = trans (cong (_·ₑ (ε₀ ·ₑ ε')) m) (·ₑ-assoc δ₁ δ₂ (ε₀ ·ₑ ε'))
-      D  = tick-node δ (λ q → μᵏˢ (k q))
-             (λ q r → ≈ᵏ-trans (μᵏˢ-cong (kn q r)) (μᵏˢ-nat r (k q)))
+    ≈ᵏ-trans
+      (tick-·-out (≃ₑ⇒≿ₑ (·ₑ-assoc δ₂ ε₀ ε')) (λ q₁ q₂ → μᵏˢ (k' q₁ q₂)) _ _
+                  (λ q → μᵏˢ (k q)) _ m (λ q₁ q₂ → μᵏˢ-cong (hk q₁ q₂))
+                  (≾ₑ-trans (·ₑ-monoˡ-≾ₑ (≃ₑ⇒≾ₑ m)) (≃ₑ⇒≾ₑ (·ₑ-assoc δ₁ δ₂ (ε₀ ·ₑ ε'))))
+                  (≾ₑ-trans (≃ₑ⇒≿ₑ (·ₑ-assoc δ ε₀ ε')) (·ₑ-monoˡ-≾ₑ e)) _)
+      (≈ᵏ-sym (sub-∘ᵏ _ _ _ _))
   μᵏˢ-cong (≈ᵏ-sym et)       = ≈ᵏ-sym (μᵏˢ-cong et)
   μᵏˢ-cong (≈ᵏ-trans et et') = ≈ᵏ-trans (μᵏˢ-cong et) (μᵏˢ-cong et')
 
-  -- `μᵏˢ` commutes with a grade transport (needed here; `ε-substᵏˢ-μᵏˢ` below
-  -- is the same fact, named for its later uses)
-
-  ε-substᵏˢ-μᵏˢ' : ∀ {A ε ε₁ δ w} → (p : ε ≡ ε₁) → (t : Tᵏˢ (Tᵏ A δ) ε w)
-                 → μᵏˢ (ε-substᵏˢ p t) ≡ ε-substᵏˢ (cong (_·ₑ δ) p) (μᵏˢ t)
-  ε-substᵏˢ-μᵏˢ' refl t = refl
-
   μᵏˢ-nat : ∀ {A ε ε' w w'} (p : w ⊑[ uᵣ ] w') (t : Tᵏˢ (Tᵏ A ε') ε w)
           → μᵏˢ (transportᵏ p t) ≈ᵏ transportᵏ p (μᵏˢ t)
-  μᵏˢ-nat p (leaf t) =
-    ≡→≈ᵏ (sym (transportᵏ-ε-substᵏˢ p (sym (·ₑ-identityˡ _)) t))
-  μᵏˢ-nat p (tick-node δ k kn) =
-    ≈ᵏ-trans
-      (ε-substᵏˢ-cong (sym (·ₑ-assoc _ _ _)) (tick-≈ (λ q → ≈ᵏ-refl _)))
-      (≡→≈ᵏ (sym (transportᵏ-ε-substᵏˢ p (sym (·ₑ-assoc _ _ _)) _)))
+  μᵏˢ-nat p (leaf t) = ≈ᵏ-refl _
+  μᵏˢ-nat p (tick-node δ k kn) = sub-congᵏ (tick-≈ (λ q → ≈ᵏ-refl _))
   μᵏˢ-nat p (sub e t) = sub-≈ (μᵏˢ-nat p t)
 
 μᵏ : ∀ {A ε ε'} → Tᵏ (Tᵏ A ε') ε →ᵖ Tᵏ A (ε ·ₑ ε')
 μᵏ = pmap μᵏˢ μᵏˢ-cong (λ p t → μᵏˢ-nat p t)
 
--- `ε-substᵏˢ` pushes under a tick, and past the multiplication and `sub`.
-
-ε-substᵏˢ-tick : ∀ {A ε ε' w} → (δ : E) → (p : ε ≡ ε')
-               → (k : ∀ {w'} → w ⊑[ mapᵉ δ ] w' → Tᵏˢ A ε w')
-               → (kn : ∀ {w' w''} (q : w ⊑[ mapᵉ δ ] w') (r : w' ⊑[ uᵣ ] w'')
-                     → k (⊑ρ∘ᵘ q r) ≈ᵏ transportᵏ r (k q))
-               → ε-substᵏˢ (cong (δ ·ₑ_) p) (tick-node δ k kn)
-               ≈ᵏ tick-node δ (λ q → ε-substᵏˢ p (k q))
-                    (λ q r → ≈ᵏ-trans (ε-substᵏˢ-cong p (kn q r))
-                                      (≡→≈ᵏ (sym (transportᵏ-ε-substᵏˢ r p (k q)))))
-ε-substᵏˢ-tick δ refl k kn = tick-≈ (λ q → ≈ᵏ-refl _)
-
-ε-substᵏˢ-μᵏˢ : ∀ {A ε ε₁ δ w} → (p : ε ≡ ε₁) → (t : Tᵏˢ (Tᵏ A δ) ε w)
-              → μᵏˢ (ε-substᵏˢ p t) ≡ ε-substᵏˢ (cong (_·ₑ δ) p) (μᵏˢ t)
-ε-substᵏˢ-μᵏˢ = ε-substᵏˢ-μᵏˢ'
-
-sub-substᵏˢ : ∀ {A ε₀ ε₁ ε₂ w} → (P : ε₁ ≾ₑ ε₂) → (r : ε₀ ≡ ε₁) → (t : Tᵏˢ A ε₀ w)
-            → sub P (ε-substᵏˢ r t) ≡ sub (subst (_≾ₑ ε₂) (sym r) P) t
-sub-substᵏˢ P refl t = refl
-
-ε-substᵏˢ-sub : ∀ {A ε₁ ε₂ ε₃ w} → (P : ε₁ ≾ₑ ε₂) → (r : ε₂ ≡ ε₃) → (t : Tᵏˢ A ε₁ w)
-              → ε-substᵏˢ r (sub P t) ≡ sub (subst (ε₁ ≾ₑ_) r P) t
-ε-substᵏˢ-sub P refl t = refl
-
 μᵏˢ-nat-f : ∀ {A B ε ε' w} (f : A →ᵖ B) (t : Tᵏˢ (Tᵏ A ε') ε w)
           → μᵏˢ (Tᵏˢᶠ (Tᵏᶠ f) t) ≈ᵏ Tᵏˢᶠ f (μᵏˢ t)
-μᵏˢ-nat-f f (leaf s) = ≡→≈ᵏ (ε-substᵏˢ-Tᵏˢᶠ (sym (·ₑ-identityˡ _)) f s)
-μᵏˢ-nat-f f (tick-node δ k kn) =
-  ≈ᵏ-trans
-    (ε-substᵏˢ-cong (sym (·ₑ-assoc _ _ _))
-      (tick-≈ (λ q → μᵏˢ-nat-f f (k q))))
-    (≡→≈ᵏ (ε-substᵏˢ-Tᵏˢᶠ (sym (·ₑ-assoc _ _ _)) f _))
+μᵏˢ-nat-f f (leaf s) = ≈ᵏ-refl _
+μᵏˢ-nat-f f (tick-node δ k kn) = sub-congᵏ (tick-≈ (λ q → μᵏˢ-nat-f f (k q)))
 μᵏˢ-nat-f f (sub p t) = sub-≈ (μᵏˢ-nat-f f t)
 
 μᵏ-nat : ∀ {A B ε ε'} → (f : A →ᵖ B)
@@ -505,83 +452,38 @@ T-≤ᵏ-μᵏ : ∀ {A ε₁ ε₂ ε'} → (p : ε₁ ≾ₑ ε₂)
         → μᵏ {A} {ε₂} {ε'} ∘ᵖ T-≤ᵏ p ≈ᵖ T-≤ᵏ (·ₑ-monoˡ-≾ₑ p) ∘ᵖ μᵏ {A} {ε₁} {ε'}
 T-≤ᵏ-μᵏ p t = ≈ᵏ-refl _
 
-Tᵏ-μ∘η≡id : ∀ {A ε} → μᵏ {A} {uₑ} {ε} ∘ᵖ ηᵏ {Tᵏ A ε} ≈ᵖ ε-substᵏ (sym (·ₑ-identityˡ ε))
+Tᵏ-μ∘η≡id : ∀ {A ε} → μᵏ {A} {uₑ} {ε} ∘ᵖ ηᵏ {Tᵏ A ε} ≈ᵖ T-≤ᵏ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
 Tᵏ-μ∘η≡id t = ≈ᵏ-refl _
 
 μᵏˢ-identity₂ : ∀ {A ε w} → (t : Tᵏˢ A ε w)
-              → μᵏˢ (Tᵏˢᶠ ηᵏ t) ≈ᵏ ε-substᵏˢ (sym (·ₑ-identityʳ ε)) t
-μᵏˢ-identity₂ (leaf x) = ≡→≈ᵏ (cong (λ p → ε-substᵏˢ p (leaf x)) uip)
+              → μᵏˢ (Tᵏˢᶠ ηᵏ t) ≈ᵏ sub (≃ₑ⇒≿ₑ (·ₑ-identityʳ ε)) t
+μᵏˢ-identity₂ (leaf x) = sub-≈ (≈ᵏ-refl _)
 μᵏˢ-identity₂ (tick-node {ε = ε₀} δ k kn) =
   ≈ᵏ-trans
-    (ε-substᵏˢ-cong (sym (·ₑ-assoc δ ε₀ uₑ))
-      (≈ᵏ-trans
-        (tick-≈ (λ q → μᵏˢ-identity₂ (k q)))
-        (≈ᵏ-sym (ε-substᵏˢ-tick δ (sym (·ₑ-identityʳ ε₀)) k kn))))
-    (≡→≈ᵏ
-      (trans
-        (ε-substᵏˢ-trans (cong (δ ·ₑ_) (sym (·ₑ-identityʳ ε₀)))
-          (sym (·ₑ-assoc δ ε₀ uₑ)) (tick-node δ k kn))
-        (cong (λ p → ε-substᵏˢ p (tick-node δ k kn)) uip)))
+    (sub-congᵏ (≈ᵏ-trans (tick-≈ (λ q → μᵏˢ-identity₂ (k q)))
+                         (≈ᵏ-sym (sub-tickᵏ (≃ₑ⇒≿ₑ (·ₑ-identityʳ ε₀)) k kn))))
+    (sub-∘ᵏ _ _ _ _)
 μᵏˢ-identity₂ (sub p t) =
-  ≈ᵏ-trans
-    (sub-≈ (μᵏˢ-identity₂ t))
-    (≡→≈ᵏ
-      (trans (sub-substᵏˢ (·ₑ-monoˡ-≾ₑ p) (sym (·ₑ-identityʳ _)) t)
-        (trans (cong (λ P → sub P t) (≾ₑ-irrelevant _ _))
-               (sym (ε-substᵏˢ-sub p (sym (·ₑ-identityʳ _)) t)))))
+  ≈ᵏ-trans (sub-congᵏ (μᵏˢ-identity₂ t)) (sub-swapᵏ _ _ _ _ t)
 
-Tᵏ-μ∘Tη≡id : ∀ {A ε} → μᵏ {A} {ε} {uₑ} ∘ᵖ Tᵏᶠ (ηᵏ {A}) ≈ᵖ ε-substᵏ (sym (·ₑ-identityʳ ε))
+Tᵏ-μ∘Tη≡id : ∀ {A ε} → μᵏ {A} {ε} {uₑ} ∘ᵖ Tᵏᶠ (ηᵏ {A}) ≈ᵖ T-≤ᵏ (≃ₑ⇒≿ₑ (·ₑ-identityʳ ε))
 Tᵏ-μ∘Tη≡id t = μᵏˢ-identity₂ t
 
 μᵏˢ-assoc : ∀ {A ε ε' ε'' w} → (t : Tᵏˢ (Tᵏ (Tᵏ A ε'') ε') ε w)
           → μᵏˢ {ε = ε} {ε' = ε' ·ₑ ε''} (Tᵏˢᶠ (μᵏ {A} {ε'} {ε''}) t)
-          ≈ᵏ ε-substᵏˢ (·ₑ-assoc ε ε' ε'') (μᵏˢ (μᵏˢ t))
-μᵏˢ-assoc {ε' = ε'} {ε'' = ε''} (leaf s) =
-  ≡→≈ᵏ (sym
-    (trans
-      (cong (ε-substᵏˢ (·ₑ-assoc uₑ ε' ε'')) (ε-substᵏˢ-μᵏˢ (sym (·ₑ-identityˡ ε')) s))
-      (trans
-        (ε-substᵏˢ-trans (cong (_·ₑ ε'') (sym (·ₑ-identityˡ ε'))) (·ₑ-assoc uₑ ε' ε'') (μᵏˢ s))
-        (cong (λ p → ε-substᵏˢ p (μᵏˢ s)) uip))))
+          ≈ᵏ sub (≃ₑ⇒≾ₑ (·ₑ-assoc ε ε' ε'')) (μᵏˢ (μᵏˢ t))
+μᵏˢ-assoc {ε' = ε'} {ε'' = ε''} (leaf s) = ≈ᵏ-sym (sub-∘ᵏ _ _ _ _)
 μᵏˢ-assoc {ε' = ε'} {ε'' = ε''} (tick-node {ε = ε₀} δ k kn) =
   ≈ᵏ-trans
-    (ε-substᵏˢ-cong (sym (·ₑ-assoc δ ε₀ (ε' ·ₑ ε'')))
-      (≈ᵏ-trans
-        (tick-≈ (λ q → μᵏˢ-assoc (k q)))
-        (≈ᵏ-sym (ε-substᵏˢ-tick δ (·ₑ-assoc ε₀ ε' ε'') (λ q → μᵏˢ (μᵏˢ (k q))) _))))
-    (≡→≈ᵏ
-      (trans
-        (ε-substᵏˢ-trans (cong (δ ·ₑ_) (·ₑ-assoc ε₀ ε' ε''))
-          (sym (·ₑ-assoc δ ε₀ (ε' ·ₑ ε''))) BASE)
-      (trans
-        (cong (λ p → ε-substᵏˢ p BASE) uip)
-        (sym
-          (trans
-            (cong (ε-substᵏˢ (·ₑ-assoc (δ ·ₑ ε₀) ε' ε''))
-              (trans
-                (ε-substᵏˢ-μᵏˢ (sym (·ₑ-assoc δ ε₀ ε')) BASE1)
-                (ε-substᵏˢ-trans (sym (·ₑ-assoc δ (ε₀ ·ₑ ε') ε''))
-                  (cong (_·ₑ ε'') (sym (·ₑ-assoc δ ε₀ ε'))) BASE)))
-            (ε-substᵏˢ-trans
-              (trans (sym (·ₑ-assoc δ (ε₀ ·ₑ ε') ε''))
-                (cong (_·ₑ ε'') (sym (·ₑ-assoc δ ε₀ ε'))))
-              (·ₑ-assoc (δ ·ₑ ε₀) ε' ε'') BASE))))))
-  where
-    BASE1 = tick-node δ (λ q → μᵏˢ (k q))
-              (λ q r → ≈ᵏ-trans (μᵏˢ-cong (kn q r)) (μᵏˢ-nat r (k q)))
-    BASE = tick-node δ (λ q → μᵏˢ (μᵏˢ (k q)))
-             (λ q r → ≈ᵏ-trans (μᵏˢ-cong (≈ᵏ-trans (μᵏˢ-cong (kn q r)) (μᵏˢ-nat r (k q))))
-                               (μᵏˢ-nat r (μᵏˢ (k q))))
+    (sub-congᵏ (≈ᵏ-trans (tick-≈ (λ q → μᵏˢ-assoc (k q)))
+                         (≈ᵏ-sym (sub-tickᵏ (≃ₑ⇒≾ₑ (·ₑ-assoc ε₀ ε' ε'')) _ _))))
+    (sub3ᵏ _ _ _ _ _ _)
 μᵏˢ-assoc {ε' = ε'} {ε'' = ε''} (sub p t) =
-  ≈ᵏ-trans (sub-≈ (μᵏˢ-assoc t))
-    (≡→≈ᵏ (trans (sub-substᵏˢ (·ₑ-monoˡ-≾ₑ p) (·ₑ-assoc _ ε' ε'') (μᵏˢ (μᵏˢ t)))
-      (trans (cong (λ P → sub P (μᵏˢ (μᵏˢ t))) (≾ₑ-irrelevant _ _))
-             (sym (ε-substᵏˢ-sub (·ₑ-monoˡ-≾ₑ (·ₑ-monoˡ-≾ₑ p)) (·ₑ-assoc _ ε' ε'')
-                    (μᵏˢ (μᵏˢ t)))))))
+  ≈ᵏ-trans (sub-congᵏ (μᵏˢ-assoc t)) (sub-swapᵏ _ _ _ _ _)
 
 Tᵏ-μ∘μ≡μ∘Tμ : ∀ {A ε ε' ε''}
             → μᵏ {A} {ε} {ε' ·ₑ ε''} ∘ᵖ Tᵏᶠ (μᵏ {A} {ε'} {ε''})
-            ≈ᵖ ε-substᵏ (·ₑ-assoc ε ε' ε'') ∘ᵖ μᵏ ∘ᵖ μᵏ
+            ≈ᵖ T-≤ᵏ (≃ₑ⇒≾ₑ (·ₑ-assoc ε ε' ε'')) ∘ᵖ μᵏ ∘ᵖ μᵏ
 Tᵏ-μ∘μ≡μ∘Tμ t = μᵏˢ-assoc t
 
 -- `δ` worth of time passes; the computation resumes in the future the box
@@ -599,9 +501,9 @@ tickᵏ-nat δ f x = tick-≈ (λ q → ≈ᵏ-refl _)
 
 tickᵏ-algebraicity : ∀ {A ε ε'} → (δ : E)
                    → μᵏ {A} {δ ·ₑ ε} {ε'} ∘ᵖ tickᵏ {ε = ε} δ
-                   ≈ᵖ ε-substᵏ (sym (·ₑ-assoc δ ε ε'))
+                   ≈ᵖ T-≤ᵏ (≃ₑ⇒≿ₑ (·ₑ-assoc δ ε ε'))
                      ∘ᵖ tickᵏ δ ∘ᵖ [ mapᵉ δ ]ᶠ (μᵏ {A} {ε} {ε'})
-tickᵏ-algebraicity δ x = ε-substᵏˢ-cong _ (tick-≈ (λ q → ≈ᵏ-refl _))
+tickᵏ-algebraicity δ x = sub-congᵏ (tick-≈ (λ q → ≈ᵏ-refl _))
 
 -- SUB-EFFECTING PASSES UNDER A TICK
 

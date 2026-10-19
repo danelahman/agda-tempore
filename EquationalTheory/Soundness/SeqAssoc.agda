@@ -53,7 +53,7 @@ open import EquationalTheory.EquationalTheory S
 open Category Cat
 open Future Fut using ([_]ᵒ; [_]ᶠ; []-≤; []-∘ᵐ; []-idᵐ; []-congᶠ; δ; []-monoidal;
                        []-δ-nat; []-monoidal-nat)
-open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; μ; ⟨⟩-≤; ⟨⟩-∘ᵐ; ⟨⟩-congᶠ)
+open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; μ; ⟨⟩-≤; ⟨⟩-∘ᵐ; ⟨⟩-congᶠ; ⟨⟩-≤-irr)
 open Adjunction Adj using (η⊣; η⊣-nat; η⊣-≤; η⊣-δ; η⊣-monoidal; ε⊣)
 open GroundTypes GTy
 open Monad Mon
@@ -92,11 +92,11 @@ sound-seq-assoc : ∀ {Γ A B C ε ε' ε''}
                 → Soundᶜ== (seq-assoc M N P)
 sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
     bigchase
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e (M ⨟ (N ⨟ C-rename r P))) pR (ε-substᴾ e _ pRc)
-            ∙ sound-ε-subst e (M ⨟ (N ⨟ C-rename r P)) pRc)
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ e (M ⨟ (N ⨟ C-rename r P))) pR pRc
+            ∙ sound-ε-≃ e (M ⨟ (N ⨟ C-rename r P)) pRc)
   where
-    e   = sym (·ₑ-assoc ε ε' ε'')
-    rin = (eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+    e = ≃ₑ-sym (·ₑ-assoc ε ε' ε'')
+    rin = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)
            ∘ʳ ⟨⟩-μ-ren)
           ∘ʳ cong-⟨⟩-ren wk-ren
     r   = cong-∷-ren rin
@@ -113,14 +113,14 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
     -- The lock-merging renaming denotes exactly "weaken, then fold the two
     -- locks with `μ`, then relax the merged grade" — this is (‡), the only
     -- place the syntax of `rin` is used.
-    φ-def : φ ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε' ⟩ᶠ fstᵐ
-    φ-def = ∘ᵐ-congˡ (∘ᵐ-congˡ (eq-ren-grade {Γ} map-·ᵉ)) ∙ ∘ᵐ-assoc _ _ _
+    φ-def : φ ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε' ⟩ᶠ fstᵐ
+    φ-def = ∘ᵐ-congˡ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _)) ∙ ∘ᵐ-assoc _ _ _
 
     -- The environment's `⟨ mapᵉ ε ⟩`-lock, transposed at `mapᵉ ε'` and merged
     -- with the outer lock by `μ`. This is the *value* the box carries once the
     -- comultiplication `δ` has split it.
     α : ⟨ mapᵉ ε ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ mapᵉ ε' ]ᵒ (⟨ mapᵉ (ε ·ₑ ε') ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ)
-    α = [ mapᵉ ε' ]ᶠ (⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ) ∘ᵐ η⊣
+    α = [ mapᵉ ε' ]ᶠ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ) ∘ᵐ η⊣
 
     -- (†) The transposed lock-merge `α`, precomposed with the projection that
     -- forgets the bound value, is the renaming `φ` transposed.
@@ -134,7 +134,7 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
 
     -- (Step B) The split box `δ ∘ []-≤ σ ∘ η⊣` is the transpose of `α`: the
     -- adjunction reconciles the comultiplication with the lock merge.
-    box-split : δ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ η⊣
+    box-split : δ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ η⊣
               ≈ᵐ [ mapᵉ ε ]ᶠ α ∘ᵐ η⊣
     box-split =
         ∘ᵐ-congʳ (η⊣-≤ _)
@@ -189,7 +189,7 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
     -- (★) The strength-coherence core: the two nestings of the strength agree
     -- once the environment box is split (`box-split`) and re-threaded.
     core :
-         (Tᶠ strᵀ ∘ᵐ strᵀ ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ))) idᵐ)
+         (Tᶠ strᵀ ∘ᵐ strᵀ ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ)) idᵐ)
            ∘ᵐ mapˣᵐ η⊣ (Tᶠ n) ∘ᵐ mapˣᵐ idᵐ strᵀ ∘ᵐ ⟨ idᵐ , ⟨ η⊣ , m ⟩ᵐ ⟩ᵐ
       ≈ᵐ Tᶠ (Tᶠ (mapˣᵐ φ idᵐ)) ∘ᵐ Tᶠ strᵀ ∘ᵐ Tᶠ ⟨ η⊣ , n ⟩ᵐ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ
     core =
@@ -261,7 +261,7 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
     -- and the `ε-subst` cancelling the associativity coercion), meets the
     -- left-hand side at the common midpoint `COMMON`.
     rhs→common :
-         ε-substᵀ e ∘ᵐ ⟦ M ⨟ (N ⨟ C-rename r P) ⟧ᶜᵗ pRc
+         T-≤ (proj₁ e) ∘ᵐ ⟦ M ⨟ (N ⨟ C-rename r P) ⟧ᶜᵗ pRc
       ≈ᵐ μᵀ ∘ᵐ μᵀ ∘ᵐ Tᶠ (Tᶠ q) ∘ᵐ Tᶠ strᵀ ∘ᵐ Tᶠ ⟨ η⊣ , n ⟩ᵐ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ
     rhs→common =
         ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ
@@ -271,16 +271,14 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
                   ∙ ∘ᵐ-congˡ T-μ∘μ≡μ∘Tμ)
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (  ε-substᵀ-trans (·ₑ-assoc ε ε' ε'') e
-                  ∙ ≡→≈ᵐ (cong ε-substᵀ uip)
-                  ∙ ε-substᵀ-refl)
+      ∙ ∘ᵐ-congˡ (  T-≤-trans _ _ ≾ₑ-refl ∙ T-≤-refl _)
       ∙ ∘ᵐ-identityˡ _
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
 
     bigchase :
          μᵀ ∘ᵐ Tᶠ p ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ ⟩ᵐ
-      ≈ᵐ ε-substᵀ e ∘ᵐ ⟦ M ⨟ (N ⨟ C-rename r P) ⟧ᶜᵗ pRc
+      ≈ᵐ T-≤ (proj₁ e) ∘ᵐ ⟦ M ⨟ (N ⨟ C-rename r P) ⟧ᶜᵗ pRc
     bigchase =
       begin
         μᵀ ∘ᵐ Tᶠ p ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ ⟩ᵐ
@@ -295,5 +293,5 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
                                   ∙ T-congᶠ (≈ᵐ-sym (C-rename-nat r P pP)))))) ⟩
         μᵀ ∘ᵐ μᵀ ∘ᵐ Tᶠ (Tᶠ q) ∘ᵐ Tᶠ strᵀ ∘ᵐ Tᶠ ⟨ η⊣ , n ⟩ᵐ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ
       ≈˘⟨ rhs→common ⟩
-        ε-substᵀ e ∘ᵐ ⟦ M ⨟ (N ⨟ C-rename r P) ⟧ᶜᵗ pRc
+        T-≤ (proj₁ e) ∘ᵐ ⟦ M ⨟ (N ⨟ C-rename r P) ⟧ᶜᵗ pRc
       ∎

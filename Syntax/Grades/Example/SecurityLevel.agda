@@ -38,7 +38,7 @@ open import Relation.Binary.Definitions
 open import Relation.Nullary using (¬_; yes; no)
 
 open import Syntax.Durations using (Duration)
-open import Syntax.Grades using (Grade)
+open import Syntax.Grades using (posetᵍ; Grade)
 
 open import Util.Equality
 
@@ -114,7 +114,7 @@ module _ (L : LevelLattice) where
             (⊑-trans (∨-ubʳ b a) (∨-ubˡ (b ∨ a) (c ∨ a)))
 
   level-grade : {D : Duration} → Grade D
-  level-grade = record
+  level-grade = posetᵍ record
     { Carrier         = Carrier
     ; _·_             = _∨_
     ; u               = bot

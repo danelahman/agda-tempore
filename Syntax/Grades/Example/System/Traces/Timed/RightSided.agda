@@ -152,7 +152,7 @@ mapₒ-⊔ unbounded  (within _) = refl
 mapₒ-⊔ unbounded  unbounded  = refl
 
 traces→right-sided-intervals : right-sided →ᵍ right-sided-intervals
-traces→right-sided-intervals = record
+traces→right-sided-intervals = strictᵍ record
   { map          = mapₒ
   ; map-monotone = λ {P} {Q} → mapₒ-monotone {P} {Q}
   ; map-u        = refl

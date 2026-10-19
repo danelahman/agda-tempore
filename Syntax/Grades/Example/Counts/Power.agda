@@ -35,8 +35,8 @@ open import Util.Equality
 open Grade G
   renaming (Carrier to C; _≾_ to _≾ᴳ_; u to uᴳ; ⊤ to ⊤ᴳ; _·_ to _·ᴳ_;
             _⊔_ to _⊔ᴳ_; _≾?_ to _≾ᴳ?_; ≾-refl to ≾ᴳ-refl;
-            ≾-trans to ≾ᴳ-trans; ≾-antisym to ≾ᴳ-antisym;
-            ≾-irrelevant to ≾ᴳ-irrelevant)
+            ≾-trans to ≾ᴳ-trans; ≾-irrelevant to ≾ᴳ-irrelevant;
+            _≃_ to _≃ᴳ_)
 
 ------------------------------------------------------------------------
 -- The operations, pointwise
@@ -60,6 +60,16 @@ _⊔ᵛ_ = zipWith _⊔ᴳ_
 _≾ᵛ_ : ∀ {n} → Vec C n → Vec C n → Set
 []       ≾ᵛ []       = 𝟙
 (a ∷ as) ≾ᵛ (b ∷ bs) = a ≾ᴳ b × as ≾ᵛ bs
+
+-- the order's equivalence, coordinatewise
+
+infix 4 _≃ᵛ_
+
+_≃ᵛ_ : ∀ {n} → Vec C n → Vec C n → Set
+c ≃ᵛ d = c ≾ᵛ d × d ≾ᵛ c
+
+∷-≃ᵛ : ∀ {n} {a b : C} {xs ys : Vec C n} → a ≃ᴳ b → xs ≃ᵛ ys → (a ∷ xs) ≃ᵛ (b ∷ ys)
+∷-≃ᵛ e es = (proj₁ e , proj₁ es) , (proj₂ e , proj₂ es)
 
 ------------------------------------------------------------------------
 -- Coordinates
@@ -94,22 +104,21 @@ lookup-⊤ᵛ i = lookup-replicate i ⊤ᴳ
 ------------------------------------------------------------------------
 -- The monoid
 
-·ᵛ-identityˡ : ∀ {n} (c : Vec C n) → uᵛ ·ᵛ c ≡ c
-·ᵛ-identityˡ []       = refl
-·ᵛ-identityˡ (a ∷ as) = cong₂ _∷_ (·-identityˡ a) (·ᵛ-identityˡ as)
+·ᵛ-identityˡ : ∀ {n} (c : Vec C n) → uᵛ ·ᵛ c ≃ᵛ c
+·ᵛ-identityˡ []       = tt , tt
+·ᵛ-identityˡ (a ∷ as) = ∷-≃ᵛ (·-identityˡ a) (·ᵛ-identityˡ as)
 
-·ᵛ-identityʳ : ∀ {n} (c : Vec C n) → c ·ᵛ uᵛ ≡ c
-·ᵛ-identityʳ []       = refl
-·ᵛ-identityʳ (a ∷ as) = cong₂ _∷_ (·-identityʳ a) (·ᵛ-identityʳ as)
+·ᵛ-identityʳ : ∀ {n} (c : Vec C n) → c ·ᵛ uᵛ ≃ᵛ c
+·ᵛ-identityʳ []       = tt , tt
+·ᵛ-identityʳ (a ∷ as) = ∷-≃ᵛ (·-identityʳ a) (·ᵛ-identityʳ as)
 
-·ᵛ-assoc : ∀ {n} (c d e : Vec C n) → (c ·ᵛ d) ·ᵛ e ≡ c ·ᵛ (d ·ᵛ e)
-·ᵛ-assoc []       []       []       = refl
-·ᵛ-assoc (a ∷ as) (b ∷ bs) (c ∷ cs) =
-  cong₂ _∷_ (·-assoc a b c) (·ᵛ-assoc as bs cs)
+·ᵛ-assoc : ∀ {n} (c d e : Vec C n) → (c ·ᵛ d) ·ᵛ e ≃ᵛ c ·ᵛ (d ·ᵛ e)
+·ᵛ-assoc []       []       []       = tt , tt
+·ᵛ-assoc (a ∷ as) (b ∷ bs) (c ∷ cs) = ∷-≃ᵛ (·-assoc a b c) (·ᵛ-assoc as bs cs)
 
-·ᵛ-comm : Commutative _≡_ _·ᴳ_ → ∀ {n} (c d : Vec C n) → c ·ᵛ d ≡ d ·ᵛ c
-·ᵛ-comm comm []       []       = refl
-·ᵛ-comm comm (a ∷ as) (b ∷ bs) = cong₂ _∷_ (comm a b) (·ᵛ-comm comm as bs)
+·ᵛ-comm : Commutative _≃ᴳ_ _·ᴳ_ → ∀ {n} (c d : Vec C n) → c ·ᵛ d ≃ᵛ d ·ᵛ c
+·ᵛ-comm comm []       []       = tt , tt
+·ᵛ-comm comm (a ∷ as) (b ∷ bs) = ∷-≃ᵛ (comm a b) (·ᵛ-comm comm as bs)
 
 ------------------------------------------------------------------------
 -- The order
@@ -126,10 +135,13 @@ lookup-⊤ᵛ i = lookup-replicate i ⊤ᴳ
 ≾ᵛ-trans {c = _ ∷ _} {_ ∷ _} {_ ∷ _} (p , ps) (q , qs) =
   ≾ᴳ-trans p q , ≾ᵛ-trans ps qs
 
-≾ᵛ-antisym : ∀ {n} {c d : Vec C n} → c ≾ᵛ d → d ≾ᵛ c → c ≡ d
-≾ᵛ-antisym {c = []}    {[]}    _       _       = refl
-≾ᵛ-antisym {c = _ ∷ _} {_ ∷ _} (p , ps) (q , qs) =
-  cong₂ _∷_ (≾ᴳ-antisym p q) (≾ᵛ-antisym ps qs)
+-- antisymmetric where `G`'s order is
+
+≾ᵛ-antisym : (∀ {a b} → a ≾ᴳ b → b ≾ᴳ a → a ≡ b)
+           → ∀ {n} {c d : Vec C n} → c ≾ᵛ d → d ≾ᵛ c → c ≡ d
+≾ᵛ-antisym anti {c = []}    {[]}    _       _       = refl
+≾ᵛ-antisym anti {c = _ ∷ _} {_ ∷ _} (p , ps) (q , qs) =
+  cong₂ _∷_ (anti p q) (≾ᵛ-antisym anti ps qs)
 
 ≾ᵛ-irrelevant : ∀ {n} {c d : Vec C n} → (p q : c ≾ᵛ d) → p ≡ q
 ≾ᵛ-irrelevant {c = []}    {[]}    tt       tt       = refl
@@ -202,13 +214,21 @@ _≾ᵛ?_ : ∀ {n} (c d : Vec C n) → Dec (c ≾ᵛ d)
 ------------------------------------------------------------------------
 -- The greatest grade absorbs joins, and products where `G`'s does
 
-⊤ᵛ-⊔ᵛ : ∀ {n} (c : Vec C n) → ⊤ᵛ ⊔ᵛ c ≡ ⊤ᵛ
-⊤ᵛ-⊔ᵛ []       = refl
-⊤ᵛ-⊔ᵛ (a ∷ as) = cong₂ _∷_ (trans (⊔-comm ⊤ᴳ a) (⊔-⊤ a)) (⊤ᵛ-⊔ᵛ as)
+-- where `G`'s order is antisymmetric, its top absorbs joins on the nose
 
-⊔ᵛ-⊤ᵛ : ∀ {n} (c : Vec C n) → c ⊔ᵛ ⊤ᵛ ≡ ⊤ᵛ
-⊔ᵛ-⊤ᵛ []       = refl
-⊔ᵛ-⊤ᵛ (a ∷ as) = cong₂ _∷_ (⊔-⊤ a) (⊔ᵛ-⊤ᵛ as)
+⊔-⊤-≡ : (∀ {a b} → a ≾ᴳ b → b ≾ᴳ a → a ≡ b) → ∀ a → a ⊔ᴳ ⊤ᴳ ≡ ⊤ᴳ
+⊔-⊤-≡ anti a = anti (proj₁ (⊔-⊤ a)) (proj₂ (⊔-⊤ a))
+
+⊤-⊔-≡ : (∀ {a b} → a ≾ᴳ b → b ≾ᴳ a → a ≡ b) → ∀ a → ⊤ᴳ ⊔ᴳ a ≡ ⊤ᴳ
+⊤-⊔-≡ anti a = anti (⊔-lub (≾-⊤ ⊤ᴳ) (≾-⊤ a)) (⊔-ubˡ ⊤ᴳ a)
+
+⊤ᵛ-⊔ᵛ : (∀ a → ⊤ᴳ ⊔ᴳ a ≡ ⊤ᴳ) → ∀ {n} (c : Vec C n) → ⊤ᵛ ⊔ᵛ c ≡ ⊤ᵛ
+⊤ᵛ-⊔ᵛ absorb []       = refl
+⊤ᵛ-⊔ᵛ absorb (a ∷ as) = cong₂ _∷_ (absorb a) (⊤ᵛ-⊔ᵛ absorb as)
+
+⊔ᵛ-⊤ᵛ : (∀ a → a ⊔ᴳ ⊤ᴳ ≡ ⊤ᴳ) → ∀ {n} (c : Vec C n) → c ⊔ᵛ ⊤ᵛ ≡ ⊤ᵛ
+⊔ᵛ-⊤ᵛ absorb []       = refl
+⊔ᵛ-⊤ᵛ absorb (a ∷ as) = cong₂ _∷_ (absorb a) (⊔ᵛ-⊤ᵛ absorb as)
 
 ⊤ᵛ-·ᵛ : (∀ a → ⊤ᴳ ·ᴳ a ≡ ⊤ᴳ) → ∀ {n} (c : Vec C n) → ⊤ᵛ ·ᵛ c ≡ ⊤ᵛ
 ⊤ᵛ-·ᵛ absorb []       = refl
@@ -273,12 +293,14 @@ power n = record
   ; ·-monoʳ-≾       = λ {e} {c} {d} → ·ᵛ-monoʳ {e = e} {c} {d}
   ; ≾-refl          = λ {c} → ≾ᵛ-refl {c = c}
   ; ≾-trans         = λ {c} {d} {e} → ≾ᵛ-trans {c = c} {d} {e}
-  ; ≾-antisym       = λ {c} {d} → ≾ᵛ-antisym {c = c} {d}
+  ; antisym?        = maybe′ (λ (anti : ∀ {a b} → a ≾ᴳ b → b ≾ᴳ a → a ≡ b)
+                                → just (λ {c} {d} → ≾ᵛ-antisym anti {c = c} {d}))
+                              nothing antisym?
   ; ≾-irrelevant    = λ {c} {d} → ≾ᵛ-irrelevant {c = c} {d}
   ; _≾?_            = _≾ᵛ?_
   ; ≾-zero-productˡ = λ {c} {d} → ≾ᵛ-zero-productˡ {c = c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾ᵛ-zero-productʳ {c = c} {d}
   ; of-dur          = λ _ → uᵛ
-  ; of-dur-zero     = refl
-  ; of-dur-plus     = sym (·ᵛ-identityˡ uᵛ)
+  ; of-dur-zero     = ≾ᵛ-refl , ≾ᵛ-refl
+  ; of-dur-plus     = proj₂ (·ᵛ-identityˡ uᵛ) , proj₁ (·ᵛ-identityˡ uᵛ)
   }

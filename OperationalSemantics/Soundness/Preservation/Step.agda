@@ -137,19 +137,21 @@ box-push {ρ' = ρ'} e h =
 -- transposition into the possibility unit. (The object-general form of
 -- `ret-env`.)
 
-εᵇ-η⊣ : ∀ {X ρ} → (e : ρ ≡ uᵣ)
-      → εᵇ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym e)) ∘ᵐ η⊣ {X} {ρ}
-      ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym e)) ∘ᵐ η
-εᵇ-η⊣ refl =
-    ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-≤-irr _ ≾ᵣ-refl ∙ []-≤-refl))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-identityˡ _)
-  ∙ ∘ᵐ-congʳ η⊣-u
+εᵇ-η⊣ : ∀ {X ρ} → (e : ρ ≃ᵣ uᵣ)
+      → εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ e) ∘ᵐ η⊣ {X} {ρ}
+      ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ e) ∘ᵐ η
+εᵇ-η⊣ e =
+    ∘ᵐ-congʳ (η⊣-≤ (≃ᵣ⇒≿ᵣ e))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat η))
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat _))
   ∙ ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ []-ε∘ηᵘ≡id
-  ∙ ∘ᵐ-identityʳ _
-  ∙ ≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩-≤-irr _ ≾ᵣ-refl ∙ ⟨⟩-≤-refl) ∙ ∘ᵐ-identityˡ _)
+  ∙ ∘ᵐ-congʳ
+      (  ∘ᵐ-congʳ η⊣-u
+       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+       ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat η))
+       ∙ ∘ᵐ-assoc _ _ _
+       ∙ ∘ᵐ-congʳ []-ε∘ηᵘ≡id
+       ∙ ∘ᵐ-identityʳ _)
 
 -- Opening a unit-graded box around an arbitrary map.
 --
@@ -157,13 +159,13 @@ box-push {ρ' = ρ'} e h =
 -- transposition entirely, leaving the possibility unit relaxed to the grade.
 -- `εᵇ-η⊣` with a map `H` carried through.
 
-box-open : ∀ {X Z ρ} → (e : ρ ≡ uᵣ) → (H : ⟨ ρ ⟩ᵒ X →ᵐ Z)
-         → (εᵇ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym e))) ∘ᵐ [ ρ ]ᶠ H ∘ᵐ η⊣ {X} {ρ}
-         ≈ᵐ H ∘ᵐ (⟨⟩-≤ (≾ᵣ-reflexive (sym e)) ∘ᵐ η)
+box-open : ∀ {X Z ρ} → (e : ρ ≃ᵣ uᵣ) → (H : ⟨ ρ ⟩ᵒ X →ᵐ Z)
+         → (εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ e)) ∘ᵐ [ ρ ]ᶠ H ∘ᵐ η⊣ {X} {ρ}
+         ≈ᵐ H ∘ᵐ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ e) ∘ᵐ η)
 box-open e H =
     ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-≤-nat H (≾ᵣ-reflexive (sym e)))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-≤-nat H (≃ᵣ⇒≿ᵣ e))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat H))
@@ -193,13 +195,13 @@ box-open e H =
 -- `box-split`.
 
 box-η : ∀ {X ρ₁ ρ₃} → (a : mapᵉ uₑ ·ᵣ ρ₃ ≾ᵣ ρ₁) → (w : ρ₃ ≾ᵣ ρ₁)
-      → εᵇ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-uᵉ)) ∘ᵐ δ ∘ᵐ []-≤ a ∘ᵐ η⊣ {X} {ρ₁}
+      → εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ᵐ δ ∘ᵐ []-≤ a ∘ᵐ η⊣ {X} {ρ₁}
       ≈ᵐ [ ρ₃ ]ᶠ (⟨⟩-≤ w) ∘ᵐ η⊣ {X} {ρ₃}
 box-η {X} {ρ₁} {ρ₃} a w =
     ∘ᵐ-congʳ (∘ᵐ-congʳ (box-split a))
   -- the outer box is at the unit grade, so the counit discharges it
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-≤-nat _ (≾ᵣ-reflexive (sym map-uᵉ)))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-≤-nat _ (≃ᵣ⇒≿ᵣ map-uᵉ))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat _))
@@ -213,13 +215,13 @@ box-η {X} {ρ₁} {ρ₃} a w =
   ∙ ∘ᵐ-congˡ ([]-congᶠ collapse)
   where
     collapse : (⟨⟩-≤ a ∘ᵐ μ {X} {ρ₃} {mapᵉ uₑ})
-                 ∘ᵐ ⟨ ρ₃ ⟩ᶠ (⟨⟩-≤ (≾ᵣ-reflexive (sym map-uᵉ)) ∘ᵐ η)
+                 ∘ᵐ ⟨ ρ₃ ⟩ᶠ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ᵐ η)
              ≈ᵐ ⟨⟩-≤ w
     collapse =
         ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ˡ (≾ᵣ-reflexive (sym map-uᵉ)))))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ˡ (≃ᵣ⇒≿ᵣ map-uᵉ))))
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ ⟨⟩-μ∘Tη≡id)
       ∙ ∘ᵐ-congʳ (⟨⟩-≤-trans _ _)
@@ -351,7 +353,7 @@ str-split : ∀ {Γ Δ Δ' A d ε₁ ε₃}
           ≈ᵐ μᵀ ∘ᵐ Tᶠ (strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₃}) ∘ᵐ Tᶠ (mapˣᵐ idᵐ g')
               ∘ᵐ strᵀ {[ mapᵉ ε₃ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ)} {Δ'} {d}
               ∘ᵐ ⟨ (δ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {mapᵉ d} {mapᵉ ε₃}
-                      ∘ᵐ []-≤ (≾ᵣ-reflexive (sym (map-·ᵉ {d} {ε₃})))) ∘ᵐ box₂ , t ⟩ᵐ
+                      ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ (map-·ᵉ {d} {ε₃}))) ∘ᵐ box₂ , t ⟩ᵐ
 str-split {Γ = Γ} {d = d} {ε₁ = ε₁} {ε₃ = ε₃} box₂ g' t =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ μᵀ box₂ (Tᶠ g' ∘ᵐ t)
                       ∙ ⟨ ∘ᵐ-identityˡ box₂ , ≈ᵐ-refl ⟩ᵐ-cong))
@@ -397,7 +399,7 @@ push-str : ∀ {Γ Δ Δ' A B P d ε₁ ε₂ ε₃}
                   ∘ᵐ Tᶠ (mapˣᵐ idᵐ g')
                   ∘ᵐ strᵀ {[ mapᵉ ε₃ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ)} {Δ'} {d}
                   ∘ᵐ ⟨ (δ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {mapᵉ d} {mapᵉ ε₃}
-                          ∘ᵐ []-≤ (≾ᵣ-reflexive (sym (map-·ᵉ {d} {ε₃}))))
+                          ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ (map-·ᵉ {d} {ε₃})))
                          ∘ᵐ ([]-≤ (map-monotoneᵉ p) ∘ᵐ bx)
                      , t ⟩ᵐ ⟩ᵐ
 push-str alg alg-≤ pv bx n g' t p =
@@ -412,12 +414,11 @@ seq-coe : ∀ {X A d ε₁ ε₂ ε₃}
         → (p : d ·ₑ ε₃ ≾ₑ ε₁)
         → (q : d ·ₑ (ε₃ ·ₑ ε₂) ≾ₑ ε₁ ·ₑ ε₂)
         → (f : X →ᵐ Tᵒ A (d ·ₑ (ε₃ ·ₑ ε₂)))
-        → T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵐ ε-substᵀ (sym (·ₑ-assoc d ε₃ ε₂)) ∘ᵐ f
+        → T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc d ε₃ ε₂)) ∘ᵐ f
         ≈ᵐ T-≤ q ∘ᵐ f
 seq-coe {d = d} {ε₂ = ε₂} {ε₃ = ε₃} p q f =
-    ∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-≡ (sym (·ₑ-assoc d ε₃ ε₂))))
-  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (T-≤-trans (≾ₑ-reflexive (sym (·ₑ-assoc d ε₃ ε₂)))
+    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (T-≤-trans (≃ₑ⇒≿ₑ (·ₑ-assoc d ε₃ ε₂))
                         (·ₑ-monoˡ-≾ₑ p) q)
 
 -- SEQ-STEP (scaffold: isolating the `step-box` residual).
@@ -452,7 +453,7 @@ seq-step-core : ∀ {ε₁ ε₂ ε₃ A A₀ B P} {S S' : 𝕊 []}
             ∘ᵐ strᵀ {[ mapᵉ ε₃ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ)} {⟦ hist S' ⟧ᶜᵗˣ}
                     {step-grade r}
             ∘ᵐ ⟨ (δ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {mapᵉ (step-grade r)} {mapᵉ ε₃}
-                    ∘ᵐ []-≤ (≾ᵣ-reflexive (sym (map-·ᵉ {step-grade r} {ε₃}))))
+                    ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ (map-·ᵉ {step-grade r} {ε₃})))
                    ∘ᵐ ([]-≤ (map-monotoneᵉ (step-≾ r)) ∘ᵐ (η⊣ ∘ᵐ ⟦ S ⟧ˢ pS))
                , stepᵀ r ⟩ᵐ ⟩ᵐ
 seq-step-core {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {P} {S} {S'} alg alg-≤ pv {M} N {M'} r c pS pM pN m' ih =
@@ -478,7 +479,7 @@ seq-step-core {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {P} {S} {S'} alg alg-≤ pv
 
 box-core : ∀ {X ρ₂ ρ₄}
          → (a : mapᵉ uₑ ·ᵣ ρ₄ ≾ᵣ ρ₂) → (w : ρ₄ ≾ᵣ ρ₂)
-         → (εᵇ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-uᵉ)))
+         → (εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-uᵉ))
              ∘ᵐ ((δ ∘ᵐ []-≤ a) ∘ᵐ η⊣ {X} {ρ₂})
          ≈ᵐ [ ρ₄ ]ᶠ (⟨⟩-≤ w) ∘ᵐ η⊣ {X} {ρ₄}
 box-core a w =
@@ -489,12 +490,12 @@ box-core a w =
 box-id-suc : ∀ {X Y ρ₂ ρ₄}
            → (a : mapᵉ uₑ ·ᵣ ρ₄ ≾ᵣ ρ₂) → (w : ρ₄ ≾ᵣ ρ₂)
            → (env : Y →ᵐ X)
-           → (εᵇ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-uᵉ)))
+           → (εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-uᵉ))
                ∘ᵐ (δ ∘ᵐ []-≤ a) ∘ᵐ (η⊣ {X} {ρ₂} ∘ᵐ env)
            ≈ᵐ [ ρ₄ ]ᶠ (⟨⟩-≤ w ∘ᵐ ⟨ ρ₄ ⟩ᶠ env) ∘ᵐ η⊣ {Y} {ρ₄}
 box-id-suc {ρ₂ = ρ₂} a w env =
     ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc (δ ∘ᵐ []-≤ a) (η⊣ {_} {ρ₂}) env))
-  ∙ ≈ᵐ-sym (∘ᵐ-assoc (εᵇ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-uᵉ)))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc (εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-uᵉ))
                      ((δ ∘ᵐ []-≤ a) ∘ᵐ η⊣ {_} {ρ₂}) env)
   ∙ ∘ᵐ-congˡ (box-core a w)
   ∙ ∘ᵐ-assoc _ _ _
@@ -548,7 +549,7 @@ past-tick pu e k g w E =
 -- The grade witness that `suc-comp-ren id-suc` carries.
 
 wk-w : ∀ {ρ₂ ρ₄} → (c : uᵣ ·ᵣ ρ₄ ≾ᵣ ρ₂) → ρ₄ ≾ᵣ ρ₂
-wk-w {ρ₄ = ρ₄} c = ≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityˡ ρ₄))) c
+wk-w {ρ₄ = ρ₄} c = ≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-identityˡ ρ₄)) c
 
 -- The `∷-suc` cancellation: `suc-comp-ren` prefixes a `cong-⟨⟩-ren wk-ren`,
 -- whose `fstᵐ` projects away exactly the cell that `⟦_⟧ˢ` just allocated, so
@@ -883,10 +884,9 @@ step-box (DELAY {τ = τ} {S = St}) c g pS pM =
                       -- and what is left is the pure possibility identity
                       ∙ ∘ᵐ-congˡ ([]-congᶠ
                           (past-tick _ _
-                            (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityʳ (of-durʳ τ))))
-                              (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (≾ᵣ-reflexive (sym map-uᵉ)))
-                                        (≾ᵣ-reflexive (sym (trans map-·ᵉ
-                                          (cong (_·ᵣ mapᵉ uₑ) map-of-durᵉ))))))
+                            (≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-identityʳ (of-durʳ τ)))
+                              (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (≃ᵣ⇒≿ᵣ map-uᵉ))
+                                        (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))))
                             g _ (⟦ St ⟧ˢ pS)))
                     , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
       ∙ ηᵀ-nat _)))
@@ -902,15 +902,13 @@ step-box (DELAY {τ = τ} {S = St}) c g pS pM =
 
 μμ : ∀ {A ε ε' ε''}
    → μᵀ {A} {ε ·ₑ ε'} {ε''} ∘ᵐ μᵀ {Tᵒ A ε''} {ε} {ε'}
-   ≈ᵐ ε-substᵀ (sym (·ₑ-assoc ε ε' ε''))
+   ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc ε ε' ε''))
        ∘ᵐ μᵀ {A} {ε} {ε' ·ₑ ε''} ∘ᵐ Tᶠ (μᵀ {A} {ε'} {ε''})
 μμ {ε = ε} {ε' = ε'} {ε'' = ε''} =
   ≈ᵐ-sym
       (∘ᵐ-congʳ T-μ∘μ≡μ∘Tμ
     ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-    ∙ ∘ᵐ-congˡ (ε-substᵀ-trans _ _
-                ∙ ≡→≈ᵐ (cong (λ z → ε-substᵀ z) uip)
-                ∙ ε-substᵀ-refl)
+    ∙ ∘ᵐ-congˡ (T-≤-trans _ _ ≾ₑ-refl ∙ T-≤-refl _)
     ∙ ∘ᵐ-identityˡ _)
 
 -- `SEQ-STEP`: `seq-step-core` reduces the source to the
@@ -926,7 +924,7 @@ seq-g : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []}
       → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
       → mapᵉ (step-grade r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁
 seq-g {ε₃ = ε₃} r =
-  ≾ᵣ-trans (≾ᵣ-reflexive (sym (map-·ᵉ {step-grade r} {ε₃})))
+  ≾ᵣ-trans (≃ᵣ⇒≿ᵣ (map-·ᵉ {step-grade r} {ε₃}))
            (map-monotoneᵉ (step-≾ r))
 
 box-merge : ∀ {X Y Z ρ₁ ρ₂ ρ₃} → (p : ρ₁ ≾ᵣ ρ₂) → (q : ρ₂ ≾ᵣ ρ₃) → (m : ρ₁ ≾ᵣ ρ₃)

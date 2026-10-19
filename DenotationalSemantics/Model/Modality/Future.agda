@@ -121,14 +121,14 @@ record Future : Set₁ where
 
     []-ε∘δ≡id : ∀ {A ρ}
               → ε {[ ρ ]ᵒ A} ∘ᵐ δ {A} {u} {ρ}
-              ≈ᵐ []-≤ {A = A} (≾-reflexive (sym (·-identityˡ ρ)))
+              ≈ᵐ []-≤ {A = A} (≃⇒≿ (·-identityˡ ρ))
     []-Dε∘δ≡id : ∀ {A ρ}
                → [ ρ ]ᶠ (ε {A}) ∘ᵐ δ {A} {ρ} {u}
-               ≈ᵐ []-≤ {A} (≾-reflexive (sym (·-identityʳ ρ)))
+               ≈ᵐ []-≤ {A} (≃⇒≿ (·-identityʳ ρ))
     []-δ∘δ≡Dδ∘δ : ∀ {A ρ₁ ρ₂ ρ₃}
                 → δ {[ ρ₃ ]ᵒ A} {ρ₁} {ρ₂} ∘ᵐ δ {A} {ρ₁ · ρ₂} {ρ₃}
                 ≈ᵐ    [ ρ₁ ]ᶠ (δ {A} {ρ₂} {ρ₃}) ∘ᵐ δ {A} {ρ₁} {ρ₂ · ρ₃}
-                  ∘ᵐ []-≤ {A} (≾-reflexive (sym (·-assoc ρ₁ ρ₂ ρ₃)))
+                  ∘ᵐ []-≤ {A} (≃⇒≿ (·-assoc ρ₁ ρ₂ ρ₃))
 
     -- ηᵘ is natural
 

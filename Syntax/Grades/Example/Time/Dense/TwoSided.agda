@@ -29,7 +29,7 @@ open import Relation.Nullary.Decidable.Core using (True; fromWitness)
 open import Syntax.Durations using (_→ᴰ_)
 open import Syntax.Durations.NonNegativeRational
   using (ℚ≥0ᴰ; ℚ≥0ᵀ; ℕ→ℚ≥0ᴰ)
-open import Syntax.Grades using (Grade; GradeMorphism)
+open import Syntax.Grades using (strictᵍ; Grade; GradeMorphism)
 
 open import Util.Equality
 
@@ -133,7 +133,7 @@ closed i = ⟪ Closed.min i ∣ ⁻ , ⌈ Closed.max i ⌉ ⟫
 
 closed→strict : GradeMorphism Syntax.Durations.idᴰ Closed.dense-closed-two-sided-intervals-with-∞
                                                    dense-two-sided-intervals-with-∞
-closed→strict = record
+closed→strict = strictᵍ record
   { map          = closed
   ; map-monotone = λ { {i} {j} (r , r') → ≤⇒⁻⊑⁻ r , ⌈⌉-mono {Closed.max i} {Closed.max j} r' }
   ; map-u        = eqⁱ refl refl
@@ -155,14 +155,19 @@ two-sided→dense = record
   { map          = λ i → closed (D.map i)
   ; map-monotone = λ {i} {j} r →
       S.map-monotone {D.map i} {D.map j} (D.map-monotone {i} {j} r)
-  ; map-u        = trans (cong closed D.map-u) S.map-u
+  ; map-u        = trG (closed (D.map (Grade.u Discrete.two-sided-intervals-with-∞))) (closed (Grade.u Closed.dense-closed-two-sided-intervals-with-∞)) (Grade.u G) (S.map-≃ {c₁ = D.map (Grade.u Discrete.two-sided-intervals-with-∞)} {c₁' = Grade.u Closed.dense-closed-two-sided-intervals-with-∞} D.map-u) S.map-u
   ; map-·        = λ {i} {j} →
-      trans (cong closed (D.map-· {i} {j})) (S.map-· {D.map i} {D.map j})
-  ; map-⊤        = trans (cong closed D.map-⊤) S.map-⊤
+      trG (closed (D.map (Grade._·_ Discrete.two-sided-intervals-with-∞ i j))) (closed (Grade._·_ Closed.dense-closed-two-sided-intervals-with-∞ (D.map i) (D.map j))) (Grade._·_ G (closed (D.map i)) (closed (D.map j))) (S.map-≃ {c₁ = D.map (Grade._·_ Discrete.two-sided-intervals-with-∞ i j)} {c₁' = Grade._·_ Closed.dense-closed-two-sided-intervals-with-∞ (D.map i) (D.map j)} (D.map-· {i} {j})) (S.map-· {D.map i} {D.map j})
+  ; map-⊤        = trG (closed (D.map (Grade.⊤ Discrete.two-sided-intervals-with-∞))) (closed (Grade.⊤ Closed.dense-closed-two-sided-intervals-with-∞)) (Grade.⊤ G) (S.map-≃ {c₁ = D.map (Grade.⊤ Discrete.two-sided-intervals-with-∞)} {c₁' = Grade.⊤ Closed.dense-closed-two-sided-intervals-with-∞} D.map-⊤) S.map-⊤
   ; map-⊔        = λ {i} {j} →
-      trans (cong closed (D.map-⊔ {i} {j})) (S.map-⊔ {D.map i} {D.map j})
-  ; map-of-dur   = trans (cong closed D.map-of-dur) S.map-of-dur
+      trG (closed (D.map (Grade._⊔_ Discrete.two-sided-intervals-with-∞ i j))) (closed (Grade._⊔_ Closed.dense-closed-two-sided-intervals-with-∞ (D.map i) (D.map j))) (Grade._⊔_ G (closed (D.map i)) (closed (D.map j))) (S.map-≃ {c₁ = D.map (Grade._⊔_ Discrete.two-sided-intervals-with-∞ i j)} {c₁' = Grade._⊔_ Closed.dense-closed-two-sided-intervals-with-∞ (D.map i) (D.map j)} (D.map-⊔ {i} {j})) (S.map-⊔ {D.map i} {D.map j})
+  ; map-of-dur   = λ {τ} → trG (closed (D.map (Grade.of-dur Discrete.two-sided-intervals-with-∞ τ))) (closed (Grade.of-dur Closed.dense-closed-two-sided-intervals-with-∞ (Syntax.Durations._→ᴰ_.map ℕ→ℚ≥0ᴰ τ))) (Grade.of-dur G (Syntax.Durations._→ᴰ_.map ℕ→ℚ≥0ᴰ τ)) (S.map-≃ {c₁ = D.map (Grade.of-dur Discrete.two-sided-intervals-with-∞ τ)} {c₁' = Grade.of-dur Closed.dense-closed-two-sided-intervals-with-∞ (Syntax.Durations._→ᴰ_.map ℕ→ℚ≥0ᴰ τ)} (D.map-of-dur {τ})) S.map-of-dur
   }
   where
     module D = GradeMorphism Closed.two-sided→dense-closed
     module S = GradeMorphism closed→strict
+    G = dense-two-sided-intervals-with-∞
+    open Grade using (≃-trans)
+
+    trG : (a b c : Interval) → Grade._≃_ G a b → Grade._≃_ G b c → Grade._≃_ G a c
+    trG a b c = ≃-trans G {a} {b} {c}

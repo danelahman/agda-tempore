@@ -165,7 +165,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
           → top-grade r ·ₑ ε' ≾ₑ ε
     top-≾ (↝-STEP r) = step-≾ r
     top-≾ (OP-STEP {ε = ε} {op = op}) =
-      ≾ₑ-reflexive (cong (_·ₑ ε) (·ₑ-identityʳ (op-grade op)))
+      ≃ₑ⇒≾ₑ (·ₑ-cong (·ₑ-identityʳ (op-grade op)) ≃ₑ-refl)
 
     -- The value type a top-level step refines to.
 
@@ -335,16 +335,15 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
             ≈ᵐ T-≤ᵏ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵏ ∘ᵐ Tᵏᶠ g ∘ᵐ ηᵏ
     ηᵏ-case {εa = εa} {εb = εb} g q =
         ⋄ᵏ-ηᵏ (T-≤ᵏ q ∘ᵐ g)
-      ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-≡ _)
       ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-trans q _ w)
       ∙ᵏ ≈ᵐ-sym
-          (  ∘ᵐ-congʳ (⋄ᵏ-ηᵏ g ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-≡ _))
+          (  ∘ᵐ-congʳ (⋄ᵏ-ηᵏ g)
            ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
            ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-trans _ _ w))
       where
         w : εa ≾ₑ uₑ ·ₑ εb
-        w = ≾ₑ-trans q (≾ₑ-reflexive (sym (·ₑ-identityˡ εb)))
+        w = ≾ₑ-trans q (≃ₑ⇒≿ₑ (·ₑ-identityˡ εb))
 
     tick-case : ∀ {X Y B εa εb} → (δ : E) → (env : X →ᵐ [ mapᵉ δ ]ᵒ Y)
               → (g : Y →ᵐ Tᵏ B εa) → (q : εa ≾ₑ εb)
@@ -383,7 +382,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
                            ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣ {X} {of-durʳ τ})
                ≈ᵐ tickᵏ (of-durᵉ τ)
                   ∘ᵐ [ mapᵉ (of-durᵉ τ) ]ᶠ ηᵏ
-                  ∘ᵐ ([]-≤ (≾ᵣ-reflexive map-of-durᵉ) ∘ᵐ η⊣)
+                  ∘ᵐ ([]-≤ (≃ᵣ⇒≾ᵣ map-of-durᵉ) ∘ᵐ η⊣)
     delay-tick τ =
         ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ᵏ ∘ᵐ-congˡ (implᵐ-delayᵀ τ)
@@ -460,9 +459,9 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
 
     top-steps-≾ : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
                 → (rs : cf ⟿* cf') → top-steps-grade rs ·ₑ ε' ≾ₑ ε
-    top-steps-≾ {ε = ε} ε*ᵗ = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+    top-steps-≾ {ε = ε} ε*ᵗ = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
     top-steps-≾ {ε' = ε'} (r ◅ᵗ rs) =
-      ≾ₑ-trans (≾ₑ-reflexive (·ₑ-assoc (top-grade r) (top-steps-grade rs) ε'))
+      ≾ₑ-trans (≃ₑ⇒≾ₑ (·ₑ-assoc (top-grade r) (top-steps-grade rs) ε'))
       (≾ₑ-trans (·ₑ-monoʳ-≾ₑ (top-steps-≾ rs)) (top-≾ r))
 
     top-stepsᴾᶜᶠ : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
@@ -498,7 +497,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     ⟿*-sound {A = A} {ε = ε} {cf = cf} ε*ᵗ p _ =
       ≈ᵐ-sym
         (  ∘ᵐ-congʳ (∘ᵐ-congˡ (T⟦⟧<:ᵛ-idᵏ (<:ᵛ-refl A)) ∙ᵏ ∘ᵐ-identityˡ _)
-         ∙ᵏ ∘ᵐ-congʳ (⋄ᵏ-ηᵏ (⟦ cf ⟧ᵏᶜᶠ p) ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-≡ _))
+         ∙ᵏ ∘ᵐ-congʳ (⋄ᵏ-ηᵏ (⟦ cf ⟧ᵏᶜᶠ p))
          ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
          ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-trans _ _ (≾ₑ-reflexive {ε} refl))
          ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-refl _)
@@ -520,7 +519,6 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
       ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
            (bind-bindᵏ (⟦ cf₃ ⟧ᵏᶜᶠ (top-stepsᴾᶜᶠ rs (topᴾᶜᶠ r p)))
                        (top-stepsᵏ rs) (top-stepᵏ r)))))
-      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤ᵏ-≡ _)))))
       -- … and the two refinements collapse into the run's own
       ∙ᵏ run-collapseᵏ ⟦ top-refines-type r ⟧<:ᵛ ⟦ run⟿-refines-type rs ⟧<:ᵛ
            (top-≾ r) (·ₑ-monoʳ-≾ₑ (top-steps-≾ rs)) _ (top-steps-≾ (r ◅ᵗ rs))

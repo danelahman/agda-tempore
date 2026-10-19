@@ -24,7 +24,7 @@ module Syntax.Grades.Example.Traces.Rigid.Finite.RightSided
 
 open import Data.Fin.Subset using () renaming (⊤ to all; ⊥ to none)
 
-open import Syntax.Grades.Preordered using (PreorderedGrade)
+open import Syntax.Grades using (Grade)
 open import Syntax.Durations.Monus ℚ≥0ᵀ using (Carrier)
 open import Syntax.Durations.Intervals ℚ≥0ᵀ using (fin; ∞; ⁻; ⁺) renaming (_∣_ to _∣ᶜ_)
 
@@ -57,5 +57,5 @@ e       & _ = e
 ------------------------------------------------------------------------
 -- The grade
 
-right-sided : PreorderedGrade ℚ≥0ᴰ
-right-sided = upperᵖ
+right-sided : Grade ℚ≥0ᴰ
+right-sided = upperᵍ

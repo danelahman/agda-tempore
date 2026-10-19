@@ -26,7 +26,7 @@ open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
 open import Util.Equality
 
 tsi→lsi : two-sided-intervals-with-∞ →ᵍ left-sided-intervals
-tsi→lsi = record
+tsi→lsi = strictᵍ record
   { map          = λ tsi → [ min tsi ,+∞⟩
   ; map-monotone = λ rel → proj₁ rel
   ; map-u        = refl

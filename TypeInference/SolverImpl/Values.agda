@@ -86,7 +86,7 @@ open import Data.Nat.Base using (_<ᵇ_)
 open import Data.Product using (Σ-syntax; _×_; _,_)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Relation.Binary.Definitions using (DecidableEquality; Decidable)
 open import Relation.Nullary using (Dec; yes; no)
 
 open import Syntax.Grades
@@ -177,11 +177,14 @@ equal-keeps ⊑-trans lo hi h {x} {x'} m = ⊑-trans (lo x) (⊑-trans (h m) (hi
 
 record Sort (X : Set) : Set₁ where
   field
-    _≟_    : DecidableEquality X
+    _≟_    : (x y : X) → Maybe (x ≡ y)   -- equality, where it is decided
     occ    : X → 𝔹                  -- whether the unknown occurs
     self   : X                      -- the unknown, as an expression
     _≤_    : X → X → Set            -- the order decided from no hypotheses
     dec≤   : (x y : X) → Maybe (x ≤ y)
+    _≅_    : X → X → Set                -- sameness, the grades up to equivalence
+    _≅?_   : Decidable _≅_
+    ≅⇒≤    : ∀ {x y} → x ≅ y → x ≤ y
     join   : X → X → X
     unit   : X
     top    : X
@@ -202,14 +205,14 @@ module Rules {X : Set} (s : Sort X) where
   ----------------------------------------------------------------------
   -- How the unknown occurs in a list of orderings
 
-  -- Valid: reflexive, or decided
+  -- Valid: reflexive, or decided, sides the same included
 
   Valid : X × X → Set
   Valid (x , x') = (x ≡ x') ⊎ (x ≤ x')
 
   valid? : (a : X × X) → Maybe (Valid a)
-  valid? (x , x') with x ≟ x'
-  ... | yes e = just (inj₁ e)
+  valid? (x , x') with x ≅? x'
+  ... | yes e = just (inj₂ (≅⇒≤ e))
   ... | no _  = map inj₂ (dec≤ x x')
 
   -- Valid, or the unknown absent from the right (left) side
@@ -289,10 +292,10 @@ module Rules {X : Set} (s : Sort X) where
              (λ { (here refl) → here (cong (x ,_) (sym e)) ; (there m) → there (sc m) })
              bf (λ m → there (sb m)) f
 
-      go : Maybe (Lows l) → Dec (x' ≡ self) → Maybe (occ x ≡ false) → Maybe (FreeR (x , x'))
+      go : Maybe (Lows l) → Maybe (x' ≡ self) → Maybe (occ x ≡ false) → Maybe (FreeR (x , x'))
          → Maybe (Lows ((x , x') ∷ l))
       go nothing                            _       _        _         = nothing
-      go (just (lows L C r c s sc bf sb f)) (yes e) (just q) _         =
+      go (just (lows L C r c s sc bf sb f)) (just e) (just q) _         =
         just (lows (x ∷ L) C r
                    (λ { (here refl) → inj₁ (e , here refl)
                       ; (there m)   → [ (λ { (e' , mb) → inj₁ (e' , there mb) })
@@ -302,8 +305,8 @@ module Rules {X : Set} (s : Sort X) where
                    (λ { (here refl) → q ; (there m) → bf m })
                    (λ m → there (sb m)) f)
       go (just lw)                          _       _        (just fr) = just (toRest lw fr)
-      go (just lw)                          (yes e) _        nothing   = just (toCyc lw e)
-      go (just lw)                          (no _)  _        nothing   = nothing
+      go (just lw)                          (just e) _        nothing   = just (toCyc lw e)
+      go (just lw)                          nothing  _        nothing   = nothing
 
   -- Each cycle holds once the unknown is sent to `b`, by the decided
   -- order
@@ -319,8 +322,8 @@ module Rules {X : Set} (s : Sort X) where
   _∈?_ : (x : X) → (xs : List X) → Maybe (x ∈ xs)
   x ∈? []       = nothing
   x ∈? (y ∷ ys) with x ≟ y
-  ... | yes e = just (here e)
-  ... | no _  = map there (x ∈? ys)
+  ... | just e = just (here e)
+  ... | nothing  = map there (x ∈? ys)
 
   -- The cycles of the shapes the value is built from: left-linear
   -- `b · v ≾ v` and right-linear `v · c ≾ v`, `b` and `c` free of the
@@ -347,14 +350,14 @@ module Rules {X : Set} (s : Sort X) where
         shapes ls rs (map there q) (λ m → there (lˢ m)) (λ m → there (rˢ m))
 
       byFactors : Shapes cs → (y z : X) → p ≡ mul y z
-                → Dec (y ≡ self) → Dec (z ≡ self) → Maybe (occ y ≡ false) → Maybe (occ z ≡ false)
+                → Maybe (y ≡ self) → Maybe (z ≡ self) → Maybe (occ y ≡ false) → Maybe (occ z ≡ false)
                 → Shapes (p ∷ cs)
-      byFactors (shapes ls rs q lˢ rˢ) y z e (yes refl) (yes refl) _ _ =
+      byFactors (shapes ls rs q lˢ rˢ) y z e (just refl) (just refl) _ _ =
         shapes ls rs (just (here (sym e))) (λ m → there (lˢ m)) (λ m → there (rˢ m))
-      byFactors (shapes ls rs q lˢ rˢ) y z e _ (yes refl) (just _) _ =
+      byFactors (shapes ls rs q lˢ rˢ) y z e _ (just refl) (just _) _ =
         shapes (y ∷ ls) rs (map there q)
                (λ { (here refl) → here (sym e) ; (there m) → there (lˢ m) }) (λ m → there (rˢ m))
-      byFactors (shapes ls rs q lˢ rˢ) y z e (yes refl) _ _ (just _) =
+      byFactors (shapes ls rs q lˢ rˢ) y z e (just refl) _ _ (just _) =
         shapes ls (z ∷ rs) (map there q)
                (λ m → there (lˢ m)) (λ { (here refl) → here (sym e) ; (there m) → there (rˢ m) })
       byFactors sh y z e _ _ _ _ = shift sh
@@ -489,24 +492,29 @@ module Rules {X : Set} (s : Sort X) where
       shift []                 = []
       shift ((U , q , m) ∷ us) = (U , q , there m) ∷ shift us
 
-      go : Dec (x ≡ self) → Maybe (occ x' ≡ false)
+      go : Maybe (x ≡ self) → Maybe (occ x' ≡ false)
          → List (Σ[ U ∈ X ] ((occ U ≡ false) × ((self , U) ∈ l)))
          → List (Σ[ U ∈ X ] ((occ U ≡ false) × ((self , U) ∈ (x , x') ∷ l)))
-      go (yes e) (just q) us = (x' , q , here (cong (_, x') (sym e))) ∷ shift us
+      go (just e) (just q) us = (x' , q , here (cong (_, x') (sym e))) ∷ shift us
       go _       _        us = shift us
 
   upsAt : (U : X) → (l : List (X × X)) → Maybe (Capped U l)
   upsAt U []             = just (capped [] (λ ()) (λ ()) (λ ()))
-  upsAt U ((x , x') ∷ l) = go (upsAt U l) (x ≟ x') (isFalse (occ x))
+  upsAt U ((x , x') ∷ l) = go (upsAt U l) (same x x') (isFalse (occ x))
     where
-      above : x ≡ self → Maybe ((x ≡ self) × ((x' ≡ U) ⊎ (U ≤ x')))
-      above e with x' ≟ U
-      ... | yes e' = just (e , inj₁ e')
-      ... | no _   = map (λ p → e , inj₂ p) (dec≤ U x')
+      same : (y y' : X) → Maybe (y ≤ y')
+      same y y' with y ≅? y'
+      ... | yes e = just (≅⇒≤ e)
+      ... | no _  = nothing
 
-      capOf : Dec (x ≡ self) → Maybe ((x ≡ self) × ((x' ≡ U) ⊎ (U ≤ x')))
-      capOf (yes e) = above e
-      capOf (no _)  = nothing
+      above : x ≡ self → Maybe ((x ≡ self) × ((x' ≡ U) ⊎ (U ≤ x')))
+      above e with same U x'
+      ... | just p  = just (e , inj₂ p)
+      ... | nothing = map (λ p → e , inj₂ p) (dec≤ U x')
+
+      capOf : Maybe (x ≡ self) → Maybe ((x ≡ self) × ((x' ≡ U) ⊎ (U ≤ x')))
+      capOf (just e) = above e
+      capOf nothing  = nothing
 
       toRest : Capped U l → FreeL (x , x') → Capped U ((x , x') ∷ l)
       toRest (capped r c sb f) fl =
@@ -528,12 +536,12 @@ module Rules {X : Set} (s : Sort X) where
       orValid c nothing  (just p) = just (toRest c (inj₁ (inj₂ p)))
       orValid c nothing  nothing  = nothing
 
-      go : Maybe (Capped U l) → Dec (x ≡ x') → Maybe (occ x ≡ false)
+      go : Maybe (Capped U l) → Maybe (x ≤ x') → Maybe (occ x ≡ false)
          → Maybe (Capped U ((x , x') ∷ l))
       go nothing  _       _        = nothing
-      go (just c) (yes e) _        = just (toRest c (inj₁ (inj₁ e)))
-      go (just c) (no _)  (just q) = just (toRest c (inj₂ q))
-      go (just c) (no _)  nothing  = orValid c (capOf (x ≟ self)) (dec≤ x x')
+      go (just c) (just e) _        = just (toRest c (inj₁ (inj₂ e)))
+      go (just c) nothing  (just q) = just (toRest c (inj₂ q))
+      go (just c) nothing  nothing  = orValid c (capOf (x ≟ self)) (dec≤ x x')
 
   -- The first candidate that caps the others
 
@@ -555,7 +563,7 @@ module Rules {X : Set} (s : Sort X) where
 
   forces? : (a : X × X) → Maybe (Forces a)
   forces? (x , y) with least? | canon x ≟ self
-  ... | just lst | yes e = map (λ p → lst , e , p) (dec≤ y unit)
+  ... | just lst | just e = map (λ p → lst , e , p) (dec≤ y unit)
   ... | _        | _     = nothing
 
   ----------------------------------------------------------------------
@@ -565,9 +573,9 @@ module Rules {X : Set} (s : Sort X) where
   facing : List (X × X) → List X
   facing []             = []
   facing ((x , x') ∷ l) with x ≟ self | x' ≟ self
-  ... | yes _ | _     = x' ∷ facing l
-  ... | no  _ | yes _ = x ∷ facing l
-  ... | no  _ | no  _ = facing l
+  ... | just _ | _     = x' ∷ facing l
+  ... | nothing | just _ = x ∷ facing l
+  ... | nothing | nothing = facing l
 
   equate : {Ent : X → X → Set} → ((x y : X) → Maybe (Ent x y)) → List (X × X)
          → Maybe (Σ[ b ∈ X ] (Ent self b × Ent b self))
@@ -667,8 +675,8 @@ module Rules {X : Set} (s : Sort X) where
   underTop? (x , x') with freeL? (x , x')
   ... | just f  = just (inj₁ f)
   ... | nothing with x' ≟ self
-  ...   | yes e = just (inj₂ e)
-  ...   | no _  = nothing
+  ...   | just e = just (inj₂ e)
+  ...   | nothing  = nothing
 
   record ByTop (o : Oracle) (l : List (X × X)) : Set where
     constructor byTop
@@ -864,7 +872,8 @@ putⁱ k (_ ⊔̂ᵣ _)   x = x
 
 sortᵉ : ∀ {Ψ} → EVar Ψ → Sort (EExp Ψ)
 sortᵉ k = record
-  { _≟_ = _≟ᵉ_ ; occ = occᵉ-e k ; self = evar k
+  { _≟_ = _≡ᵉ?_ ; _≅_ = _≅ᵉ_ ; _≅?_ = _≟ᵉ_ ; ≅⇒≤ = λ e → eqₑ (≅ᵉ⇒≡̂ e)
+  ; occ = occᵉ-e k ; self = evar k
   ; _≤_ = ∅ᴴ ⊩_≾̂ₑ_ ; dec≤ = decideₑ full ∅ᴴ
   ; join = _⊔̂ₑ_ ; unit = ûₑ ; top = econst ⊤ₑ ; canon = canonₑ
   ; Least = Is-just uₑ-least? ; least? = Is-just? uₑ-least? ; fit = fitₑ k
@@ -873,7 +882,8 @@ sortᵉ k = record
 
 sortʳ : ∀ {Ψ} → RVar Ψ → Sort (RExp Ψ)
 sortʳ k = record
-  { _≟_ = _≟ʳ_ ; occ = occʳ-r k ; self = rvar k
+  { _≟_ = _≡ʳ?_ ; _≅_ = _≅ʳ_ ; _≅?_ = _≟ʳ_ ; ≅⇒≤ = λ e → eqᵣ (≅ʳ⇒≡̂ e)
+  ; occ = occʳ-r k ; self = rvar k
   ; _≤_ = ∅ᴴ ⊩_≾̂ᵣ_ ; dec≤ = decideᵣ full ∅ᴴ
   ; join = _⊔̂ᵣ_ ; unit = ûᵣ ; top = rconst ⊤ᵣ ; canon = canonᵣ
   ; Least = Is-just uᵣ-least? ; least? = Is-just? uᵣ-least? ; fit = fitᵣ k
@@ -882,7 +892,8 @@ sortʳ k = record
 
 imageᵉ : ∀ {Ψ} → EVar Ψ → Sort (RExp Ψ)
 imageᵉ k = record
-  { _≟_ = _≟ʳ_ ; occ = occᵉ-r k ; self = ∣ evar k ∣̂ᵉ
+  { _≟_ = _≡ʳ?_ ; _≅_ = _≅ʳ_ ; _≅?_ = _≟ʳ_ ; ≅⇒≤ = λ e → eqᵣ (≅ʳ⇒≡̂ e)
+  ; occ = occᵉ-r k ; self = ∣ evar k ∣̂ᵉ
   ; _≤_ = ∅ᴴ ⊩_≾̂ᵣ_ ; dec≤ = decideᵣ full ∅ᴴ
   ; join = _⊔̂ᵣ_ ; unit = ûᵣ ; top = rconst ⊤ᵣ ; canon = canonᵣ
   ; Least = LeastImage ; least? = leastImage? ; fit = λ _ → false ; put = putⁱ k

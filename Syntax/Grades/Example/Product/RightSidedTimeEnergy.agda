@@ -20,7 +20,7 @@
 module Syntax.Grades.Example.Product.RightSidedTimeEnergy where
 
 open import Syntax.Durations.Nat using (ℕᴰ)
-open import Syntax.Grades using (Grade)
+open import Syntax.Grades using (posetᵍ; Grade)
 open import Syntax.Grades.Product using (_×ᵍ_)
 open import Syntax.Grades.Example.Time.RightSided
   using ([0,_]; ↑_; right-sided-intervals)
@@ -43,7 +43,6 @@ energy = record
   ; ·-assoc         = R.·-assoc
   ; ≾-refl          = λ {c} → R.≾-refl {c}
   ; ≾-trans         = λ {c} {d} {e} → R.≾-trans {c} {d} {e}
-  ; ≾-antisym       = λ {c} {d} → R.≾-antisym {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → R.≾-irrelevant {c} {d}
   ; _≾?_            = R._≾?_
   ; ≾-⊤             = R.≾-⊤
@@ -56,8 +55,9 @@ energy = record
   ; ·-distribʳ-⊔-≾  = R.·-distribʳ-⊔-≾
   ; ≾-zero-productˡ = λ {c} {d} → R.≾-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → R.≾-zero-productʳ {c} {d}
-  ; of-dur-zero     = refl
-  ; of-dur-plus     = refl
+  ; of-dur-zero     = R.≃-refl
+  ; of-dur-plus     = R.≃-refl
+  ; antisym?        = R.antisym?
   ; u-least?        = R.u-least?
   ; ·-comm?         = R.·-comm?
   ; plus?           = R.plus?

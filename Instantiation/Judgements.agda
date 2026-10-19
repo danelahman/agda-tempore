@@ -21,7 +21,7 @@ open import Data.List.Relation.Unary.All using (All)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁻)
 open import Data.Maybe using (to-witness)
-open import Data.Product using (_,_)
+open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂)
 
 open import Syntax.Grades
@@ -95,44 +95,46 @@ _⊨ᴰᴿ_ : ∀ {Θ} → DInst Θ → Obligs Θ → Set
 ------------------------------------------------------------------------
 -- Soundness of convertibility and entailed ordering
 
-sound-≡̂ᵣ : ∀ {Θ} {ρ ρ' : RExp Θ} → (σ : DInst Θ) → ρ ≡̂ᵣ ρ' → ⟦ ρ ⟧ʳ σ ≡ ⟦ ρ' ⟧ʳ σ
-sound-≡̂ₑ : ∀ {Θ} {ε ε' : EExp Θ} → (σ : DInst Θ) → ε ≡̂ₑ ε' → ⟦ ε ⟧ᵉ σ ≡ ⟦ ε' ⟧ᵉ σ
+sound-≡̂ᵣ : ∀ {Θ} {ρ ρ' : RExp Θ} → (σ : DInst Θ) → ρ ≡̂ᵣ ρ' → ⟦ ρ ⟧ʳ σ ≃ᵣ ⟦ ρ' ⟧ʳ σ
+sound-≡̂ₑ : ∀ {Θ} {ε ε' : EExp Θ} → (σ : DInst Θ) → ε ≡̂ₑ ε' → ⟦ ε ⟧ᵉ σ ≃ₑ ⟦ ε' ⟧ᵉ σ
 sound-≾ᵣ : ∀ {Θ} {σ : DInst Θ} {Q : Hyps Θ} {ρ ρ' : RExp Θ}
          → σ ⊨ᴰ Q → Q ⊩ ρ ≾̂ᵣ ρ' → ⟦ ρ ⟧ʳ σ ≾ᵣ ⟦ ρ' ⟧ʳ σ
 sound-≾ₑ : ∀ {Θ} {σ : DInst Θ} {Q : Hyps Θ} {ε ε' : EExp Θ}
          → σ ⊨ᴰ Q → Q ⊩ ε ≾̂ₑ ε' → ⟦ ε ⟧ᵉ σ ≾ₑ ⟦ ε' ⟧ᵉ σ
 
-sound-≡̂ᵣ σ ≡̂ᵣ-refl          = refl
-sound-≡̂ᵣ σ (≡̂ᵣ-sym p)       = sym (sound-≡̂ᵣ σ p)
-sound-≡̂ᵣ σ (≡̂ᵣ-trans p q)   = trans (sound-≡̂ᵣ σ p) (sound-≡̂ᵣ σ q)
-sound-≡̂ᵣ σ (≡̂ᵣ-cong p q)    = cong₂ _·ᵣ_ (sound-≡̂ᵣ σ p) (sound-≡̂ᵣ σ q)
+sound-≡̂ᵣ σ ≡̂ᵣ-refl          = ≃ᵣ-refl
+sound-≡̂ᵣ σ (≡̂ᵣ-sym p)       = ≃ᵣ-sym (sound-≡̂ᵣ σ p)
+sound-≡̂ᵣ σ (≡̂ᵣ-trans p q)   = ≃ᵣ-trans (sound-≡̂ᵣ σ p) (sound-≡̂ᵣ σ q)
+sound-≡̂ᵣ σ (≡̂ᵣ-cong p q)    = ·ᵣ-cong (sound-≡̂ᵣ σ p) (sound-≡̂ᵣ σ q)
+sound-≡̂ᵣ σ (≡̂ᵣ-const e)     = e
 sound-≡̂ᵣ σ ≡̂ᵣ-assoc         = ·ᵣ-assoc _ _ _
 sound-≡̂ᵣ σ ≡̂ᵣ-identityˡ     = ·ᵣ-identityˡ _
 sound-≡̂ᵣ σ ≡̂ᵣ-identityʳ     = ·ᵣ-identityʳ _
-sound-≡̂ᵣ σ ≡̂ᵣ-const-·       = refl
+sound-≡̂ᵣ σ ≡̂ᵣ-const-·       = ≃ᵣ-refl
 sound-≡̂ᵣ σ (≡̂ᵣ-comm ij)     = to-witness ij _ _
-sound-≡̂ᵣ σ (≡̂ᵣ-cong-⊔ p q)  = cong₂ _⊔ᵣ_ (sound-≡̂ᵣ σ p) (sound-≡̂ᵣ σ q)
-sound-≡̂ᵣ σ ≡̂ᵣ-const-⊔       = refl
+sound-≡̂ᵣ σ (≡̂ᵣ-cong-⊔ p q)  = ⊔ᵣ-cong (sound-≡̂ᵣ σ p) (sound-≡̂ᵣ σ q)
+sound-≡̂ᵣ σ ≡̂ᵣ-const-⊔       = ≃ᵣ-refl
 sound-≡̂ᵣ σ ≡̂ᵣ-comm-⊔        = ⊔ᵣ-comm _ _
 sound-≡̂ᵣ σ ≡̂ᵣ-distribˡ-⊔    = ·ᵣ-distribˡ-⊔ᵣ _ _ _
 sound-≡̂ᵣ σ ≡̂ᵣ-distribʳ-⊔    = ·ᵣ-distribʳ-⊔ᵣ _ _ _
 sound-≡̂ᵣ σ ≡̂ᵣ-map-·         = map-·ᵉ
 sound-≡̂ᵣ σ ≡̂ᵣ-map-⊔         = map-⊔ᵉ
-sound-≡̂ᵣ σ ≡̂ᵣ-map-const     = refl
-sound-≡̂ᵣ σ (≡̂ᵣ-map-cong p)  = cong mapᵉ (sound-≡̂ₑ σ p)
+sound-≡̂ᵣ σ ≡̂ᵣ-map-const     = ≃ᵣ-refl
+sound-≡̂ᵣ σ (≡̂ᵣ-map-cong p)  = map-≃ᵉ (sound-≡̂ₑ σ p)
 sound-≡̂ᵣ σ (≡̂ᵣ-absorb p)    = ⊔ᵣ-absorb (sound-≾ᵣ (⊨ᴰ-∅ {σ = σ}) p)
 
-sound-≡̂ₑ σ ≡̂ₑ-refl          = refl
-sound-≡̂ₑ σ (≡̂ₑ-sym p)       = sym (sound-≡̂ₑ σ p)
-sound-≡̂ₑ σ (≡̂ₑ-trans p q)   = trans (sound-≡̂ₑ σ p) (sound-≡̂ₑ σ q)
-sound-≡̂ₑ σ (≡̂ₑ-cong p q)    = cong₂ _·ₑ_ (sound-≡̂ₑ σ p) (sound-≡̂ₑ σ q)
+sound-≡̂ₑ σ ≡̂ₑ-refl          = ≃ₑ-refl
+sound-≡̂ₑ σ (≡̂ₑ-sym p)       = ≃ₑ-sym (sound-≡̂ₑ σ p)
+sound-≡̂ₑ σ (≡̂ₑ-trans p q)   = ≃ₑ-trans (sound-≡̂ₑ σ p) (sound-≡̂ₑ σ q)
+sound-≡̂ₑ σ (≡̂ₑ-cong p q)    = ·ₑ-cong (sound-≡̂ₑ σ p) (sound-≡̂ₑ σ q)
+sound-≡̂ₑ σ (≡̂ₑ-const e)     = e
 sound-≡̂ₑ σ ≡̂ₑ-assoc         = ·ₑ-assoc _ _ _
 sound-≡̂ₑ σ ≡̂ₑ-identityˡ     = ·ₑ-identityˡ _
 sound-≡̂ₑ σ ≡̂ₑ-identityʳ     = ·ₑ-identityʳ _
-sound-≡̂ₑ σ ≡̂ₑ-const-·       = refl
+sound-≡̂ₑ σ ≡̂ₑ-const-·       = ≃ₑ-refl
 sound-≡̂ₑ σ (≡̂ₑ-comm ij)     = to-witness ij _ _
-sound-≡̂ₑ σ (≡̂ₑ-cong-⊔ p q)  = cong₂ _⊔ₑ_ (sound-≡̂ₑ σ p) (sound-≡̂ₑ σ q)
-sound-≡̂ₑ σ ≡̂ₑ-const-⊔       = refl
+sound-≡̂ₑ σ (≡̂ₑ-cong-⊔ p q)  = ⊔ₑ-cong (sound-≡̂ₑ σ p) (sound-≡̂ₑ σ q)
+sound-≡̂ₑ σ ≡̂ₑ-const-⊔       = ≃ₑ-refl
 sound-≡̂ₑ σ ≡̂ₑ-comm-⊔        = ⊔ₑ-comm _ _
 sound-≡̂ₑ σ ≡̂ₑ-distribˡ-⊔    = ·ₑ-distribˡ-⊔ₑ _ _ _
 sound-≡̂ₑ σ ≡̂ₑ-distribʳ-⊔    = ·ₑ-distribʳ-⊔ₑ _ _ _
@@ -140,7 +142,7 @@ sound-≡̂ₑ σ (≡̂ₑ-absorb p)    = ⊔ₑ-absorb (sound-≾ₑ (⊨ᴰ-�
 
 sound-≾ᵣ s (hypᵣ m)     = ⊨ordᵣ s m
 sound-≾ᵣ s (atomᵣ p)    = p
-sound-≾ᵣ {σ = σ} s (eqᵣ p) = ≾ᵣ-reflexive (sound-≡̂ᵣ σ p)
+sound-≾ᵣ {σ = σ} s (eqᵣ p) = ≃ᵣ⇒≾ᵣ (sound-≡̂ᵣ σ p)
 sound-≾ᵣ s (transᵣ p q) = ≾ᵣ-trans (sound-≾ᵣ s p) (sound-≾ᵣ s q)
 sound-≾ᵣ s (monoᵣ p q)  = ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (sound-≾ᵣ s p)) (·ᵣ-monoʳ-≾ᵣ (sound-≾ᵣ s q))
 sound-≾ᵣ s (map-mono p) = map-monotoneᵉ (sound-≾ₑ s p)
@@ -157,7 +159,7 @@ sound-≾ᵣ s (indʳᵣ p q)  = Plus.⁺-indʳ p (sound-≾ᵣ s q)
 
 sound-≾ₑ s (hypₑ m)     = ⊨ordₑ s m
 sound-≾ₑ s (atomₑ p)    = p
-sound-≾ₑ {σ = σ} s (eqₑ p) = ≾ₑ-reflexive (sound-≡̂ₑ σ p)
+sound-≾ₑ {σ = σ} s (eqₑ p) = ≃ₑ⇒≾ₑ (sound-≡̂ₑ σ p)
 sound-≾ₑ s (transₑ p q) = ≾ₑ-trans (sound-≾ₑ s p) (sound-≾ₑ s q)
 sound-≾ₑ s (monoₑ p q)  = ≾ₑ-trans (·ₑ-monoˡ-≾ₑ (sound-≾ₑ s p)) (·ₑ-monoʳ-≾ₑ (sound-≾ₑ s q))
 sound-≾ₑ {σ = σ} s (⊔-ubˡₑ {ε₁} {ε₂}) = ⊔ₑ-ubˡ (⟦ ε₁ ⟧ᵉ σ) (⟦ ε₂ ⟧ᵉ σ)
@@ -174,24 +176,31 @@ sound-≾ₑ s (indʳₑ p q)  = Plus.⁺-indʳ p (sound-≾ₑ s q)
 ------------------------------------------------------------------------
 -- Soundness of the type-level judgements
 
--- Convertible types mean the same type
+-- Convertible types are subtypes of each other
 
-sound-≡̂ᵛ : ∀ {Θ} {A A' : OVType Θ} → (σ : DInst Θ) → A ≡̂ᵛ A' → ⟦ A ⟧ᵛ σ ≡ ⟦ A' ⟧ᵛ σ
-sound-≡̂ᶜ : ∀ {Θ} {C C' : OCType Θ} → (σ : DInst Θ) → C ≡̂ᶜ C' → ⟦ C ⟧ᶜ σ ≡ ⟦ C' ⟧ᶜ σ
+sound-≡̂ᵛ : ∀ {Θ} {A A' : OVType Θ} → (σ : DInst Θ) → A ≡̂ᵛ A'
+         → (⟦ A ⟧ᵛ σ <:ᵛ ⟦ A' ⟧ᵛ σ) × (⟦ A' ⟧ᵛ σ <:ᵛ ⟦ A ⟧ᵛ σ)
+sound-≡̂ᶜ : ∀ {Θ} {C C' : OCType Θ} → (σ : DInst Θ) → C ≡̂ᶜ C'
+         → (⟦ C ⟧ᶜ σ <:ᶜ ⟦ C' ⟧ᶜ σ) × (⟦ C' ⟧ᶜ σ <:ᶜ ⟦ C ⟧ᶜ σ)
 
-sound-≡̂ᵛ σ tvar≡̂       = refl
-sound-≡̂ᵛ σ Base≡̂       = refl
-sound-≡̂ᵛ σ Unit≡̂       = refl
-sound-≡̂ᵛ σ Bool≡̂       = refl
-sound-≡̂ᵛ σ Nat≡̂        = refl
-sound-≡̂ᵛ σ (p |×|≡̂ q)  = cong₂ _|×|_ (sound-≡̂ᵛ σ p) (sound-≡̂ᵛ σ q)
-sound-≡̂ᵛ σ (p |+|≡̂ q)  = cong₂ _|+|_ (sound-≡̂ᵛ σ p) (sound-≡̂ᵛ σ q)
-sound-≡̂ᵛ σ (|List|≡̂ p) = cong |List| (sound-≡̂ᵛ σ p)
-sound-≡̂ᵛ σ Empty≡̂      = refl
-sound-≡̂ᵛ σ (p ⇒≡̂ q)    = cong₂ _⇒_ (sound-≡̂ᵛ σ p) (sound-≡̂ᶜ σ q)
-sound-≡̂ᵛ σ ([ r ]≡̂ p)  = cong₂ [_]_ (sound-≡̂ᵣ σ r) (sound-≡̂ᵛ σ p)
+sound-≡̂ᵛ σ (tvar≡̂ {α}) = <:ᵛ-refl (ty σ α) , <:ᵛ-refl (ty σ α)
+sound-≡̂ᵛ σ Base≡̂       = Baseₛ refl , Baseₛ refl
+sound-≡̂ᵛ σ Unit≡̂       = Unitₛ , Unitₛ
+sound-≡̂ᵛ σ Bool≡̂       = Boolₛ , Boolₛ
+sound-≡̂ᵛ σ Nat≡̂        = Natₛ , Natₛ
+sound-≡̂ᵛ σ (p |×|≡̂ q)  = proj₁ (sound-≡̂ᵛ σ p) |×|ₛ proj₁ (sound-≡̂ᵛ σ q)
+                        , proj₂ (sound-≡̂ᵛ σ p) |×|ₛ proj₂ (sound-≡̂ᵛ σ q)
+sound-≡̂ᵛ σ (p |+|≡̂ q)  = proj₁ (sound-≡̂ᵛ σ p) |+|ₛ proj₁ (sound-≡̂ᵛ σ q)
+                        , proj₂ (sound-≡̂ᵛ σ p) |+|ₛ proj₂ (sound-≡̂ᵛ σ q)
+sound-≡̂ᵛ σ (|List|≡̂ p) = |List|ₛ (proj₁ (sound-≡̂ᵛ σ p)) , |List|ₛ (proj₂ (sound-≡̂ᵛ σ p))
+sound-≡̂ᵛ σ Empty≡̂      = Emptyₛ , Emptyₛ
+sound-≡̂ᵛ σ (p ⇒≡̂ q)    = proj₂ (sound-≡̂ᵛ σ p) ⇒ₛ proj₁ (sound-≡̂ᶜ σ q)
+                        , proj₁ (sound-≡̂ᵛ σ p) ⇒ₛ proj₂ (sound-≡̂ᶜ σ q)
+sound-≡̂ᵛ σ ([ r ]≡̂ p)  = [ ≃ᵣ⇒≿ᵣ (sound-≡̂ᵣ σ r) ]ₛ proj₁ (sound-≡̂ᵛ σ p)
+                        , [ ≃ᵣ⇒≾ᵣ (sound-≡̂ᵣ σ r) ]ₛ proj₂ (sound-≡̂ᵛ σ p)
 
-sound-≡̂ᶜ σ (p ‼≡̂ e) = cong₂ _‼_ (sound-≡̂ᵛ σ p) (sound-≡̂ₑ σ e)
+sound-≡̂ᶜ σ (p ‼≡̂ e) = proj₁ (sound-≡̂ᵛ σ p) ‼ₛ ≃ₑ⇒≾ₑ (sound-≡̂ₑ σ e)
+                    , proj₂ (sound-≡̂ᵛ σ p) ‼ₛ ≃ₑ⇒≿ₑ (sound-≡̂ₑ σ e)
 
 module _ {Θ : Scope} {σ : DInst Θ} {Q : Hyps Θ} (s : σ ⊨ᴰ Q) where
 
@@ -237,7 +246,7 @@ module _ {Θ : Scope} {σ : DInst Θ} {Q : Hyps Θ} (s : σ ⊨ᴰ Q) where
   sound-VarOK (et-ok et) = inj₁ (sound-⊩ᴱ et)
   sound-VarOK (≾ᵘ-ok le) = inj₂ (sound-≾ᵣ s le)
   sound-VarOK (hyp-ok m p q) with ⊨disj s m
-  ... | inj₁ et = inj₁ (subst Eternal (sym (sound-≡̂ᵛ σ p)) et)
+  ... | inj₁ et = inj₁ (<:ᵛ-eternalˡ (proj₁ (sound-≡̂ᵛ σ p)) et)
   ... | inj₂ le = inj₂ (≾ᵣ-trans (sound-≾ᵣ s q) le)
 
 ------------------------------------------------------------------------
