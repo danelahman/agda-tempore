@@ -42,7 +42,7 @@ open import Syntax.Grades.Regular.Grade k tick public
   using (Regular; regular; table; wf′; ∈·⁺; ∈·-elim; ∈⊔⁺ˡ; ∈⊔⁺ʳ; ∈⊔-elim; ∈u⁻; ∈u⁺; ∈⊤)
   renaming (_≾_ to _≾ᴿ_; _·ᴿ_ to _·ᴿ_; _⊔ᴿ_ to _⊔ᴿ_; u to uᴿ; ⊤ to ⊤ᴿ)
 import Syntax.Grades.Regular.Grade k tick as G
-open import Syntax.Grades.Regular.Plus k tick using (starᴿ; ∈*⁻; ∈*⁺; plusᴿ; c⁺-def)
+open import Syntax.Grades.Regular.Grade k tick using (starᴿ; ∈*⁻; ∈*⁺; plusᴿ; c⁺-def)
 
 open Equivalence using (to; from)
 

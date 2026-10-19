@@ -20,8 +20,8 @@ import Syntax.Grades.Regular.Decide        -- inclusion decided
 import Syntax.Grades.Regular.Properties    -- operations correct
 import Syntax.Grades.Regular.Boolean       -- ∩, complement, single letters
 import Syntax.Grades.Regular.Expression    -- extended regular expressions
+import Syntax.Grades.Regular.Plus          -- Kleene's plus of a language
 import Syntax.Grades.Regular.Grade         -- the Grade instance
 import Syntax.Grades.Regular.Literal       -- grade literals
-import Syntax.Grades.Regular.Plus          -- Kleene's plus
 import Syntax.Grades.Regular.Closure       -- downward closure under a letter order
 import Syntax.Grades.Regular.Closed        -- the sub-grade of closed languages

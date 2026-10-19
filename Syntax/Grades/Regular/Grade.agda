@@ -5,7 +5,8 @@
 -- by its canonical table, and equal languages are equal grades. The  --
 -- order is inclusion, the product concatenation and the join union;  --
 -- `⊤` is the set of all words, `u` the language of the empty word,   --
--- and `of-dur n` the word `tickⁿ`.                                   --
+-- and `of-dur n` the word `tickⁿ`. Every grade has Kleene's plus,    --
+-- `c · c*`, with the laws of `Regular.Plus`.                         --
 --                                                                    --
 -- Proofs about the tables of operations proceed by `subst` along     --
 -- equations between words, without unfolding their symbolic          --
@@ -22,7 +23,7 @@ open import Data.Bool.Properties using (T-∨; T-irrelevant)
 open import Data.List.Base using (List; []; _∷_; _++_; replicate)
 open import Data.List.Properties using (++-assoc; ++-identityʳ; ++-conicalˡ; ++-conicalʳ)
 open import Function.Base using (case_of_)
-open import Data.Maybe.Base using (nothing)
+open import Data.Maybe.Base using (just; nothing)
 open import Data.Product.Base using (_×_; _,_; ∃; ∃₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Function.Bundles using (Equivalence)
@@ -30,7 +31,9 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary.Decidable using (T?; recompute)
 
 open import Syntax.Durations.Nat using (ℕᴰ)
-open import Syntax.Grades using (Grade)
+open import Syntax.Grades using (Grade; Plus; plus)
+import Syntax.Grades.Regular.Plus
+open import Syntax.Grades.Regular.Constructions k using (_∈*_; none; more)
 open import Syntax.Grades.Regular.Automaton k
 open import Syntax.Grades.Regular.Canonical k
 open import Syntax.Grades.Regular.Operations k
@@ -313,6 +316,97 @@ of-dur-plus {m} {n} = same-language (of-dur (m + n)) (of-dur m ·ᴿ of-dur n) t
           (∈tick⁺ (m + n))
 
 ------------------------------------------------------------------------
+-- Kleene's plus: `c · c*`, with the laws of `Regular.Plus`
+
+starᴿ : Regular → Regular
+starᴿ c = regular (table c *) (*-wf {table c} (wf′ c)) (*-canonical {table c} (wf′ c))
+                  ([] , from (∈-* {table c} (wf′ c) []) (none refl))
+
+∈*⁻ : ∀ c w → w ∈ table (starᴿ c) → w ∈* table c
+∈*⁻ c w = to (∈-* {table c} (wf′ c) w)
+
+∈*⁺ : ∀ c w → w ∈* table c → w ∈ table (starᴿ c)
+∈*⁺ c w = from (∈-* {table c} (wf′ c) w)
+
+private
+  module K = Syntax.Grades.Regular.Plus {Fin k}
+
+  ⟪_⟫ˡ : Regular → K.Lang
+  ⟪ c ⟫ˡ w = w ∈ table c
+
+  ∈*⇒Star : ∀ c {w} → w ∈* table c → K.Star ⟪ c ⟫ˡ w
+  ∈*⇒Star c (none e)              = K.none e
+  ∈*⇒Star c (more u v e u∈ vs)    = K.more u v e u∈ (∈*⇒Star c vs)
+
+  Star⇒∈* : ∀ c {w} → K.Star ⟪ c ⟫ˡ w → w ∈* table c
+  Star⇒∈* c (K.none e)            = none e
+  Star⇒∈* c (K.more u v e u∈ vs)  = more u v e u∈ (Star⇒∈* c vs)
+
+  -- a product of tables is a product of languages
+
+  ·⇒ : ∀ c d w → w ∈ table (c ·ᴿ d) → (⟪ c ⟫ˡ K.·ˡ ⟪ d ⟫ˡ) w
+  ·⇒ c d w w∈ = ∈·⁻ c d w w∈
+
+  ⇒· : ∀ c d w → (⟪ c ⟫ˡ K.·ˡ ⟪ d ⟫ˡ) w → w ∈ table (c ·ᴿ d)
+  ⇒· c d w (x , y , e , x∈ , y∈) = subst (λ v → v ∈ table (c ·ᴿ d)) (sym e) (∈·⁺ c d x y x∈ y∈)
+
+  ⁺⇒ : ∀ c w → w ∈ table (c ·ᴿ starᴿ c) → (⟪ c ⟫ˡ K.⁺) w
+  ⁺⇒ c w w∈ = case (·⇒ c (starᴿ c) w w∈)
+    where
+      case : (⟪ c ⟫ˡ K.·ˡ ⟪ starᴿ c ⟫ˡ) w → (⟪ c ⟫ˡ K.⁺) w
+      case (x , y , e , x∈ , y∈) = x , y , e , x∈ , ∈*⇒Star c (to (∈-* {table c} (wf′ c) y) y∈)
+
+  ⇒⁺ : ∀ c w → (⟪ c ⟫ˡ K.⁺) w → w ∈ table (c ·ᴿ starᴿ c)
+  ⇒⁺ c w (x , y , e , x∈ , y∈) =
+    ⇒· c (starᴿ c) w (x , y , e , x∈ , from (∈-* {table c} (wf′ c) y) (Star⇒∈* c y∈))
+
+  -- a product with the plus on either side
+
+  ⁺·⇒ : ∀ c d w → w ∈ table ((c ·ᴿ starᴿ c) ·ᴿ d) → ((⟪ c ⟫ˡ K.⁺) K.·ˡ ⟪ d ⟫ˡ) w
+  ⁺·⇒ c d w w∈ = case (·⇒ (c ·ᴿ starᴿ c) d w w∈)
+    where
+      case : (⟪ c ·ᴿ starᴿ c ⟫ˡ K.·ˡ ⟪ d ⟫ˡ) w → ((⟪ c ⟫ˡ K.⁺) K.·ˡ ⟪ d ⟫ˡ) w
+      case (a , z , e , a∈ , z∈) = a , z , e , ⁺⇒ c a a∈ , z∈
+
+  ·⁺⇒ : ∀ c d w → w ∈ table (d ·ᴿ (c ·ᴿ starᴿ c)) → (⟪ d ⟫ˡ K.·ˡ (⟪ c ⟫ˡ K.⁺)) w
+  ·⁺⇒ c d w w∈ = case (·⇒ d (c ·ᴿ starᴿ c) w w∈)
+    where
+      case : (⟪ d ⟫ˡ K.·ˡ ⟪ c ·ᴿ starᴿ c ⟫ˡ) w → (⟪ d ⟫ˡ K.·ˡ (⟪ c ⟫ˡ K.⁺)) w
+      case (z , a , e , z∈ , a∈) = z , a , e , z∈ , ⁺⇒ c a a∈
+
+plusᴿ : (c : Regular) → Plus _·ᴿ_ _≾_ c
+plusᴿ c = plus (c ·ᴿ starᴿ c) ≾-c⁺ c⁺-iter (λ {v} → least {v}) (λ {d} → indˡ {d}) (λ {d} → indʳ {d})
+  where
+    c⁺ = c ·ᴿ starᴿ c
+
+    ≾-c⁺ : c ≾ c⁺
+    ≾-c⁺ = ⊆⇒≾ c c⁺ λ w w∈ → ⇒⁺ c w (K.⊆-⁺ {⟪ c ⟫ˡ} w w∈)
+
+    c⁺-iter : c⁺ ·ᴿ c⁺ ≾ c⁺
+    c⁺-iter = ⊆⇒≾ (c⁺ ·ᴿ c⁺) c⁺ λ w w∈ → ⇒⁺ c w (K.⁺-iter {⟪ c ⟫ˡ} w (case (·⇒ c⁺ c⁺ w w∈)))
+      where
+        case : ∀ {w} → (⟪ c⁺ ⟫ˡ K.·ˡ ⟪ c⁺ ⟫ˡ) w → ((⟪ c ⟫ˡ K.⁺) K.·ˡ (⟪ c ⟫ˡ K.⁺)) w
+        case (a , b , e , a∈ , b∈) = a , b , e , ⁺⇒ c a a∈ , ⁺⇒ c b b∈
+
+    least : ∀ {v} → c ≾ v → (v ·ᴿ v) ≾ v → c⁺ ≾ v
+    least {v} cv vv = ⊆⇒≾ c⁺ v λ w w∈ →
+      K.⁺-least {⟪ c ⟫ˡ} {⟪ v ⟫ˡ} (≾⇒⊆ c v cv)
+        (λ u u∈ → ≾⇒⊆ (v ·ᴿ v) v vv u (⇒· v v u u∈)) w (⁺⇒ c w w∈)
+
+    indˡ : ∀ {d} → (c ·ᴿ d) ≾ d → (c⁺ ·ᴿ d) ≾ d
+    indˡ {d} cd = ⊆⇒≾ (c⁺ ·ᴿ d) d λ w w∈ →
+      K.⁺-indˡ {⟪ c ⟫ˡ} {⟪ d ⟫ˡ} (λ u u∈ → ≾⇒⊆ (c ·ᴿ d) d cd u (⇒· c d u u∈)) w (⁺·⇒ c d w w∈)
+
+    indʳ : ∀ {d} → (d ·ᴿ c) ≾ d → (d ·ᴿ c⁺) ≾ d
+    indʳ {d} dc = ⊆⇒≾ (d ·ᴿ c⁺) d λ w w∈ →
+      K.⁺-indʳ {⟪ c ⟫ˡ} {⟪ d ⟫ˡ} (λ u u∈ → ≾⇒⊆ (d ·ᴿ c) d dc u (⇒· d c u u∈)) w (·⁺⇒ c d w w∈)
+
+-- the closure is the product with the iteration
+
+c⁺-def : ∀ c → Plus.c⁺ (plusᴿ c) ≡ c ·ᴿ starᴿ c
+c⁺-def c = refl
+
+------------------------------------------------------------------------
 -- The grade
 
 regular-grade : Grade ℕᴰ
@@ -345,6 +439,6 @@ regular-grade = record
   ; of-dur-zero     = of-dur-zero
   ; of-dur-plus     = λ {m} {n} → of-dur-plus {m} {n}
   ; u-least?        = nothing
-  ; plus?           = λ _ → nothing
+  ; plus?           = λ c → just (plusᴿ c)
   ; ·-comm?         = nothing
   }
