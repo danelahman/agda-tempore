@@ -14,7 +14,8 @@ module Syntax.Grades.Regular.Closure (k : ℕ) where
 
 open import Data.Bool.Base using (Bool; true; false; T; if_then_else_)
 open import Data.Bool.ListAction using (any)
-open import Data.List.Base using (List; []; _∷_; map; concatMap; length)
+open import Data.List.Base using (List; []; _∷_; map; concatMap; length; tabulate)
+open import Data.Fin.Base using (Fin; zero; suc; toℕ)
 open import Data.List.Properties using (length-map)
 open import Data.List.Membership.Propositional using (find; lose)
   renaming (_∈_ to _∈ˡ_)
@@ -72,10 +73,28 @@ module _ (R : Letter → Letter → Bool) where
   Below : Word → Word → Set
   Below = Pointwise (λ a b → T (R a b))
 
-  module Close (L : DFA) where
+  -- the letters above each letter, tabulated once, so that a closure
+  -- computes them once
+
+  above-table : List (List Letter)
+  above-table = map (λ a → above a letters) letters
+
+  aboveᵗ : List (List Letter) → Letter → List Letter
+  aboveᵗ t a = lookupOr [] t (toℕ a)
+
+  aboveᵗ-correct : ∀ a → aboveᵗ above-table a ≡ above a letters
+  aboveᵗ-correct a = lookup-tabulate (λ b → b) a
+    where
+      lookup-tabulate : ∀ {m} (g : Fin m → Letter) (i : Fin m)
+                      → lookupOr [] (map (λ b → above b letters) (tabulate g)) (toℕ i)
+                        ≡ above (g i) letters
+      lookup-tabulate g zero    = refl
+      lookup-tabulate g (suc i) = lookup-tabulate (λ j → g (suc j)) i
+
+  module CloseWith (t : List (List Letter)) (L : DFA) where
 
     step : List ℕ → Letter → List ℕ
-    step S a = fromList (concatMap (λ q → map (next L q) (above a letters)) S)
+    step S a = fromList (concatMap (λ q → map (next L q) (aboveᵗ t a)) S)
 
     closure : Automaton
     closure = record
@@ -87,8 +106,10 @@ module _ (R : Letter → Letter → Bool) where
       ; bound = 2 Data.Nat.Base.^ size L
       }
 
+  module Close (L : DFA) = CloseWith above-table L
+
   ↓ : DFA → DFA
-  ↓ L = normalise (Close.closure L)
+  ↓ L = normalise (CloseWith.closure above-table L)
 
   ----------------------------------------------------------------------
   -- Correctness
@@ -113,9 +134,9 @@ module _ (R : Letter → Letter → Bool) where
 
       step⁻ : ∀ S a {w} → Sem (step S a) w → Sem S (a ∷ w)
       step⁻ S a {w} x with find (any-fromList⁻ _ x)
-      ... | p , p∈ , v , wv , v∈ with find (cm⁻ {P = _≡ p} (λ q → map (next L q) (above a letters)) S (lose p∈ refl))
+      ... | p , p∈ , v , wv , v∈ with find (cm⁻ {P = _≡ p} (λ q → map (next L q) (aboveᵗ above-table a)) S (lose p∈ refl))
       ...   | q , q∈ , m with find (Any.map⁻ {f = next L q} m)
-      ...     | b , b∈ , e = lose q∈ (b ∷ v , ∈-above⁻ a letters b∈ ∷ wv , subst (λ r → v ∈[ r ]) (sym e) v∈)
+      ...     | b , b∈ , e = lose q∈ (b ∷ v , ∈-above⁻ a letters (subst (b ∈ˡ_) (aboveᵗ-correct a) b∈) ∷ wv , subst (λ r → v ∈[ r ]) (sym e) v∈)
 
       step⁺ : ∀ S a {w} → Sem S (a ∷ w) → Sem (step S a) w
       step⁺ S a {w} x with find x
@@ -124,10 +145,10 @@ module _ (R : Letter → Letter → Bool) where
           (Any.map (λ {r′} e → v , wv , subst (λ z → v ∈[ z ]) (sym e) v∈) hit)
         where
           f : ℕ → List ℕ
-          f q′ = map (next L q′) (above a letters)
+          f q′ = map (next L q′) (aboveᵗ above-table a)
           hit : Any (_≡ next L q b) (concatMap f S)
           hit = cm⁺ {P = _≡ next L q b} f
-                  (lose q∈ (Any.map⁺ {f = next L q} (lose (∈-above⁺ a letters r (∈-allFin b)) refl)))
+                  (lose q∈ (Any.map⁺ {f = next L q} (lose (subst (b ∈ˡ_) (sym (aboveᵗ-correct a)) (∈-above⁺ a letters r (∈-allFin b))) refl)))
 
       accepts-from : ∀ S w → T (any (isFinal L) (δ* S w)) ⇔ Sem S w
       accepts-from S [] = mk⇔ to′ from′
@@ -161,14 +182,14 @@ module _ (R : Letter → Letter → Bool) where
 
       good-δ : ∀ {S} a → Good S → Good (step S a)
       good-δ {S} a (_ , S<) =
-        fromList-increasing (concatMap (λ q → map (next L q) (above a letters)) S) ,
-        fromList-all (concatMap (λ q → map (next L q) (above a letters)) S) (all-concatMap S S<)
+        fromList-increasing (concatMap (λ q → map (next L q) (aboveᵗ above-table a)) S) ,
+        fromList-all (concatMap (λ q → map (next L q) (aboveᵗ above-table a)) S) (all-concatMap S S<)
         where
           all-concatMap : ∀ S → All (_< size L) S
-                        → All (_< size L) (concatMap (λ q → map (next L q) (above a letters)) S)
+                        → All (_< size L) (concatMap (λ q → map (next L q) (aboveᵗ above-table a)) S)
           all-concatMap []      []         = []
           all-concatMap (q ∷ S) (q< ∷ S<) =
-            AllP.++⁺ (all-map (above a letters)) (all-concatMap S S<)
+            AllP.++⁺ (all-map (aboveᵗ above-table a)) (all-concatMap S S<)
             where
               all-map : ∀ bs → All (_< size L) (map (next L q) bs)
               all-map []       = []

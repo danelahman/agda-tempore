@@ -29,7 +29,7 @@ open import Data.Product.Base using (Σ; _×_; _,_; ∃; ∃₂)
 open import Data.Sum.Base using (inj₁; inj₂)
 open import Function.Bundles using (Equivalence)
 open import Relation.Binary.PropositionalEquality
-open import Relation.Nullary.Decidable using (True; toWitness; T?; recompute)
+open import Relation.Nullary.Decidable using (True; toWitness; T?; recompute; map′)
 
 open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades using (Grade; Plus; plus)
@@ -191,19 +191,26 @@ star c = ⟨ starᴿ (lang c) ⟩ᶜ (star-closed (lang c) (closedness′ c))
 
 infix 4 _≾_
 
-_≾_ : Closed → Closed → Set
-c ≾ d = lang c ≾ᴿ lang d
+-- inclusion of the languages, wrapped so that the two grades can be
+-- read off a comparison
+
+record _≾_ (c d : Closed) : Set where
+  constructor ≾-intro
+  field
+    ≾-lang : lang c ≾ᴿ lang d
+
+open _≾_ public
 
 ≾-antisym : ∀ {c d} → c ≾ d → d ≾ c → c ≡ d
-≾-antisym {c} {d} p q = lang-injective (G.≾-antisym {lang c} {lang d} p q)
+≾-antisym {c} {d} (≾-intro p) (≾-intro q) = lang-injective (G.≾-antisym {lang c} {lang d} p q)
 
 -- Kleene's plus
 
 plusᶜ : (c : Closed) → Plus _·_ _≾_ c
-plusᶜ c = plus c⁺ (Plus.≾-c⁺ P) (Plus.c⁺-iter P)
-               (λ {v} cv vv → Plus.c⁺-least P {lang v} cv vv)
-               (λ {d} → Plus.⁺-indˡ P {lang d})
-               (λ {d} → Plus.⁺-indʳ P {lang d})
+plusᶜ c = plus c⁺ (≾-intro (Plus.≾-c⁺ P)) (≾-intro (Plus.c⁺-iter P))
+               (λ {v} cv vv → ≾-intro (Plus.c⁺-least P {lang v} (≾-lang cv) (≾-lang vv)))
+               (λ {d} cd → ≾-intro (Plus.⁺-indˡ P {lang d} (≾-lang cd)))
+               (λ {d} dc → ≾-intro (Plus.⁺-indʳ P {lang d} (≾-lang dc)))
   where
     P = plusᴿ (lang c)
     c⁺ : Closed
@@ -243,21 +250,21 @@ module WithDurations
     ; ·-identityˡ     = ·-identityˡ
     ; ·-identityʳ     = ·-identityʳ
     ; ·-assoc         = ·-assoc
-    ; ≾-refl          = λ {c} → G.≾-refl {lang c}
-    ; ≾-trans         = λ {c} {d} {e} → G.≾-trans {lang c} {lang d} {lang e}
+    ; ≾-refl          = λ {c} → ≾-intro (G.≾-refl {lang c})
+    ; ≾-trans         = λ {c} {d} {e} p q → ≾-intro (G.≾-trans {lang c} {lang d} {lang e} (≾-lang p) (≾-lang q))
     ; ≾-antisym       = λ {c} {d} → ≾-antisym {c} {d}
-    ; ≾-irrelevant    = λ {c} {d} → T-irrelevant
-    ; _≾?_            = λ c d → T? (table (lang c) ⊆ᵇ table (lang d))
-    ; ≾-⊤             = λ c → G.≾-⊤ (lang c)
-    ; ⊔-ubˡ           = λ c d → G.⊔-ubˡ (lang c) (lang d)
-    ; ⊔-ubʳ           = λ c d → G.⊔-ubʳ (lang c) (lang d)
-    ; ⊔-lub           = λ {c} {d} {e} → G.⊔-lub {lang c} {lang d} {lang e}
-    ; ·-monoˡ-≾       = λ {c} {d} {d′} → G.·-monoˡ-≾ {lang c} {lang d} {lang d′}
-    ; ·-monoʳ-≾       = λ {c} {d} {d′} → G.·-monoʳ-≾ {lang c} {lang d} {lang d′}
-    ; ·-distribˡ-⊔-≾  = λ c d e → G.·-distribˡ-⊔-≾ (lang c) (lang d) (lang e)
-    ; ·-distribʳ-⊔-≾  = λ c d e → G.·-distribʳ-⊔-≾ (lang c) (lang d) (lang e)
-    ; ≾-zero-productˡ = λ {c} {d} → G.≾-zero-productˡ {lang c} {lang d}
-    ; ≾-zero-productʳ = λ {c} {d} → G.≾-zero-productʳ {lang c} {lang d}
+    ; ≾-irrelevant    = λ {c} {d} p q → cong ≾-intro (T-irrelevant (≾-lang p) (≾-lang q))
+    ; _≾?_            = λ c d → map′ ≾-intro ≾-lang (T? (table (lang c) ⊆ᵇ table (lang d)))
+    ; ≾-⊤             = λ c → ≾-intro (G.≾-⊤ (lang c))
+    ; ⊔-ubˡ           = λ c d → ≾-intro (G.⊔-ubˡ (lang c) (lang d))
+    ; ⊔-ubʳ           = λ c d → ≾-intro (G.⊔-ubʳ (lang c) (lang d))
+    ; ⊔-lub           = λ {c} {d} {e} p q → ≾-intro (G.⊔-lub {lang c} {lang d} {lang e} (≾-lang p) (≾-lang q))
+    ; ·-monoˡ-≾       = λ {c} {d} {d′} p → ≾-intro (G.·-monoˡ-≾ {lang c} {lang d} {lang d′} (≾-lang p))
+    ; ·-monoʳ-≾       = λ {c} {d} {d′} p → ≾-intro (G.·-monoʳ-≾ {lang c} {lang d} {lang d′} (≾-lang p))
+    ; ·-distribˡ-⊔-≾  = λ c d e → ≾-intro (G.·-distribˡ-⊔-≾ (lang c) (lang d) (lang e))
+    ; ·-distribʳ-⊔-≾  = λ c d e → ≾-intro (G.·-distribʳ-⊔-≾ (lang c) (lang d) (lang e))
+    ; ≾-zero-productˡ = λ {c} {d} p → ≾-intro (G.≾-zero-productˡ {lang c} {lang d} (≾-lang p))
+    ; ≾-zero-productʳ = λ {c} {d} p → ≾-intro (G.≾-zero-productʳ {lang c} {lang d} (≾-lang p))
     ; of-dur-zero     = of-dur-zero
     ; of-dur-plus     = λ {m} {n} → of-dur-plus {m} {n}
     ; u-least?        = nothing

@@ -46,6 +46,7 @@ open import Data.Nat.Base using (zero; suc; _+_; _∸_; _≤_; _<_; z≤n; s≤s
 import Data.Nat.Properties as ℕ
 open import Data.Product using (Σ; Σ-syntax; ∃; ∃₂; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import Data.Maybe.Base using (Maybe; just; nothing; is-just)
 open import Function.Bundles using (_⇔_; mk⇔; Equivalence)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 
@@ -154,37 +155,75 @@ lit-complete : ∀ w → RE.⟦ lit w ⟧ w
 lit-complete []      = refl
 lit-complete (a ∷ w) = a ∷ [] , w , refl , refl , lit-complete w
 
+-- possibly empty expressions: `nothing` is the empty language, kept
+-- out of unions so that no table is built for it
+
+⟦_⟧ᵐ : Maybe RE.Expr → List (Fin k) → Set
+⟦ nothing ⟧ᵐ w = ⊥
+⟦ just e  ⟧ᵐ w = RE.⟦ e ⟧ w
+
+_∪ᵐ_ : Maybe RE.Expr → Maybe RE.Expr → Maybe RE.Expr
+nothing ∪ᵐ m       = m
+just e  ∪ᵐ nothing = just e
+just e  ∪ᵐ just f  = just (e RE.∣ f)
+
+∪ᵐ-sound : ∀ m m′ {w} → ⟦ m ∪ᵐ m′ ⟧ᵐ w → ⟦ m ⟧ᵐ w ⊎ ⟦ m′ ⟧ᵐ w
+∪ᵐ-sound nothing  m′       w∈ = inj₂ w∈
+∪ᵐ-sound (just e) nothing  w∈ = inj₁ w∈
+∪ᵐ-sound (just e) (just f) w∈ = w∈
+
+∪ᵐ-completeˡ : ∀ m m′ {w} → ⟦ m ⟧ᵐ w → ⟦ m ∪ᵐ m′ ⟧ᵐ w
+∪ᵐ-completeˡ (just e) nothing  w∈ = w∈
+∪ᵐ-completeˡ (just e) (just f) w∈ = inj₁ w∈
+
+∪ᵐ-completeʳ : ∀ m m′ {w} → ⟦ m′ ⟧ᵐ w → ⟦ m ∪ᵐ m′ ⟧ᵐ w
+∪ᵐ-completeʳ nothing  m′       w∈ = w∈
+∪ᵐ-completeʳ (just e) (just f) w∈ = inj₂ w∈
+
+-- the expression of a possibly empty one
+
+close : Maybe RE.Expr → RE.Expr
+close nothing  = ∅ʳ
+close (just e) = e
+
+close-sound : ∀ m {w} → RE.⟦ close m ⟧ w → ⟦ m ⟧ᵐ w
+close-sound nothing  w∈ = ∅ʳ-empty w∈
+close-sound (just e) w∈ = w∈
+
+close-complete : ∀ m {w} → ⟦ m ⟧ᵐ w → RE.⟦ close m ⟧ w
+close-complete (just e) w∈ = w∈
+
 -- the union of `f j` for `j < m`
 
-⋃< : (ℕ → RE.Expr) → ℕ → RE.Expr
-⋃< f zero    = ∅ʳ
-⋃< f (suc m) = ⋃< f m RE.∣ f m
+⋃< : (ℕ → RE.Expr) → ℕ → Maybe RE.Expr
+⋃< f zero    = nothing
+⋃< f (suc m) = ⋃< f m ∪ᵐ just (f m)
 
-⋃<-sound : ∀ f m {w} → RE.⟦ ⋃< f m ⟧ w → Σ[ j ∈ ℕ ] j < m × RE.⟦ f j ⟧ w
-⋃<-sound f zero    w∈ = ⊥-elim (∅ʳ-empty w∈)
-⋃<-sound f (suc m) (inj₁ w∈) with ⋃<-sound f m w∈
-... | j , j< , fj = j , ℕ.m≤n⇒m≤1+n j< , fj
-⋃<-sound f (suc m) (inj₂ w∈) = m , ℕ.≤-refl , w∈
+⋃<-sound : ∀ f m {w} → ⟦ ⋃< f m ⟧ᵐ w → Σ[ j ∈ ℕ ] j < m × RE.⟦ f j ⟧ w
+⋃<-sound f (suc m) w∈ with ∪ᵐ-sound (⋃< f m) (just (f m)) w∈
+... | inj₁ w∈′ with ⋃<-sound f m w∈′
+...   | j , j< , fj = j , ℕ.m≤n⇒m≤1+n j< , fj
+⋃<-sound f (suc m) w∈ | inj₂ fm = m , ℕ.≤-refl , fm
 
-⋃<-complete : ∀ f m {w j} → j < m → RE.⟦ f j ⟧ w → RE.⟦ ⋃< f m ⟧ w
+⋃<-complete : ∀ f m {w j} → j < m → RE.⟦ f j ⟧ w → ⟦ ⋃< f m ⟧ᵐ w
 ⋃<-complete f (suc m) {j = j} j< fj with j ℕ.≟ m
-... | yes refl = inj₂ fj
-... | no j≢m   = inj₁ (⋃<-complete f m (ℕ.≤∧≢⇒< (ℕ.≤-pred j<) j≢m) fj)
+... | yes refl = ∪ᵐ-completeʳ (⋃< f m) (just (f j)) fj
+... | no j≢m   = ∪ᵐ-completeˡ (⋃< f m) (just (f m)) (⋃<-complete f m (ℕ.≤∧≢⇒< (ℕ.≤-pred j<) j≢m) fj)
 
 -- the union of `f c` over the codes
 
-⋃ˡ : List (Fin n) → (Fin n → RE.Expr) → RE.Expr
-⋃ˡ []       f = ∅ʳ
-⋃ˡ (c ∷ cs) f = f c RE.∣ ⋃ˡ cs f
+⋃ˡ : List (Fin n) → (Fin n → Maybe RE.Expr) → Maybe RE.Expr
+⋃ˡ []       f = nothing
+⋃ˡ (c ∷ cs) f = f c ∪ᵐ ⋃ˡ cs f
 
-⋃ˡ-sound : ∀ cs f {w} → RE.⟦ ⋃ˡ cs f ⟧ w → Σ[ c ∈ Fin n ] RE.⟦ f c ⟧ w
-⋃ˡ-sound []       f w∈        = ⊥-elim (∅ʳ-empty w∈)
-⋃ˡ-sound (c ∷ cs) f (inj₁ w∈) = c , w∈
-⋃ˡ-sound (c ∷ cs) f (inj₂ w∈) = ⋃ˡ-sound cs f w∈
+⋃ˡ-sound : ∀ cs f {w} → ⟦ ⋃ˡ cs f ⟧ᵐ w → Σ[ c ∈ Fin n ] ⟦ f c ⟧ᵐ w
+⋃ˡ-sound (c ∷ cs) f w∈ with ∪ᵐ-sound (f c) (⋃ˡ cs f) w∈
+... | inj₁ w∈′ = c , w∈′
+... | inj₂ w∈′ = ⋃ˡ-sound cs f w∈′
 
-⋃ˡ-complete : ∀ cs f {w c} → c ∈ˡ cs → RE.⟦ f c ⟧ w → RE.⟦ ⋃ˡ cs f ⟧ w
-⋃ˡ-complete (c ∷ cs) f (here refl) w∈ = inj₁ w∈
-⋃ˡ-complete (_ ∷ cs) f (there c∈)  w∈ = inj₂ (⋃ˡ-complete cs f c∈ w∈)
+⋃ˡ-complete : ∀ cs f {w c} → c ∈ˡ cs → ⟦ f c ⟧ᵐ w → ⟦ ⋃ˡ cs f ⟧ᵐ w
+⋃ˡ-complete (c ∷ cs) f (here refl) w∈ = ∪ᵐ-completeˡ (f c) (⋃ˡ cs f) w∈
+⋃ˡ-complete (d ∷ cs) f (there c∈)  w∈ = ∪ᵐ-completeʳ (f d) (⋃ˡ cs f) (⋃ˡ-complete cs f c∈ w∈)
 
 -- iterations of one letter
 
@@ -253,19 +292,19 @@ encᶠ-op o d =
 
 -- the operations of a set, each at each of its running times
 
-opsAt : Fin n → RE.Expr
+opsAt : Fin n → Maybe RE.Expr
 opsAt c =
   ⋃< (λ j → lit (opWord c (lo# (lo (rt (name c))) + j)))
      (hiS (hi-cut (name c)) ∸ lo# (lo (rt (name c))))
 
-guard : ∀ {P : Set} → Dec P → RE.Expr → RE.Expr
+guard : ∀ {P : Set} → Dec P → Maybe RE.Expr → Maybe RE.Expr
 guard (yes _) e = e
-guard (no _)  _ = ∅ʳ
+guard (no _)  _ = nothing
 
 compile : ∀ {s} → Expr s → RE.Expr
 compile ε                 = RE.ε
-compile (ops A)           = ⋃ˡ (allFin n) (λ c → guard (c ∈? A) (opsAt c))
-compile {upper} (str S (fin c)) = ⋃< (λ t → lit (replicate t (sˢ S))) (hiS c)
+compile (ops A)           = close (⋃ˡ (allFin n) (λ c → guard (c ∈? A) (opsAt c)))
+compile {upper} (str S (fin c)) = close (⋃< (λ t → lit (replicate t (sˢ S))) (hiS c))
 compile {upper} (str S ∞)       = RE.‵ sˢ S RE.*
 compile {lower} (str S c)       = lit (replicate (lo# c) (sˢ S)) RE.· (RE.‵ sˢ S RE.*)
 compile (e ∣ f)           = compile e RE.∣ compile f
@@ -277,11 +316,11 @@ compile (e *)             = compile e RE.*
 -- the exact words of `e`
 
 private
-  guard-sound : ∀ {P : Set} (d : Dec P) e {w} → RE.⟦ guard d e ⟧ w → P × RE.⟦ e ⟧ w
+  guard-sound : ∀ {P : Set} (d : Dec P) e {w} → ⟦ guard d e ⟧ᵐ w → P × ⟦ e ⟧ᵐ w
   guard-sound (yes p) e w∈ = p , w∈
-  guard-sound (no _)  e w∈ = ⊥-elim (∅ʳ-empty w∈)
+  guard-sound (no _)  e ()
 
-  guard-complete : ∀ {P : Set} (d : Dec P) e {w} → P → RE.⟦ e ⟧ w → RE.⟦ guard d e ⟧ w
+  guard-complete : ∀ {P : Set} (d : Dec P) e {w} → P → ⟦ e ⟧ᵐ w → ⟦ guard d e ⟧ᵐ w
   guard-complete (yes _) e _ w∈ = w∈
   guard-complete (no ¬p) e p _  = ⊥-elim (¬p p)
 
@@ -306,7 +345,7 @@ private
   bound⁻¹ l h t l≤t t<h = ℕ.∸-monoˡ-< t<h l≤t
 
   ops-sound : ∀ {s} A {w} → RE.⟦ compile {s} (ops A) ⟧ w → ∃ λ x → opsᴸ A x × w ≡ encᶠ x
-  ops-sound A w∈ with ⋃ˡ-sound (allFin n) _ w∈
+  ops-sound A w∈ with ⋃ˡ-sound (allFin n) (λ c → guard (c ∈? A) (opsAt c)) (close-sound (⋃ˡ (allFin n) (λ c → guard (c ∈? A) (opsAt c))) w∈)
   ... | c , g with guard-sound (c ∈? A) (opsAt c) g
   ...   | c∈ , at with ⋃<-sound _ _ at
   ...     | j , j< , l =
@@ -326,12 +365,12 @@ private
 
   ops-complete : ∀ {s} A {x} → opsᴸ A x → RE.⟦ compile {s} (ops A) ⟧ (encᶠ x)
   ops-complete A (o , d , c∈ , t∈ , refl) =
-    ⋃ˡ-complete (allFin n) _ (∈-allFin (code o))
+    close-complete (⋃ˡ (allFin n) (λ c → guard (c ∈? A) (opsAt c))) (⋃ˡ-complete (allFin n) (λ c → guard (c ∈? A) (opsAt c)) (∈-allFin (code o))
       (guard-complete (code o ∈? A) _ c∈
         (⋃<-complete _ _ (bound⁻¹ l₀ (hiS (hi-cut o′)) ∣ d ∣⁺ lo≤ t<)
           (subst (λ w → RE.⟦ lit (opWord (code o) (l₀ + (∣ d ∣⁺ ∸ l₀))) ⟧ w)
                  (sym (trans (encᶠ-op o d) (cong (opWord (code o)) (sym (ℕ.m+[n∸m]≡n lo≤)))))
-                 (lit-complete _))))
+                 (lit-complete _)))))
     where
       o′ = name (code o)
       l₀ = lo# (lo (rt o′))
@@ -341,7 +380,7 @@ private
       t< = subst (λ z → ∣ d ∣⁺ < hiS (hi-cut z)) (sym (name-code o)) (proj₂ (rt-sound o t∈))
 
   str-sound : ∀ {s} S (e : End s) {w} → RE.⟦ compile (str S e) ⟧ w → ∃ λ x → strᴸ S e x × w ≡ encᶠ x
-  str-sound {upper} S (fin c) w∈ with ⋃<-sound _ (hiS c) w∈
+  str-sound {upper} S (fin c) w∈ with ⋃<-sound (λ t → lit (replicate t (sˢ S))) (hiS c) (close-sound (⋃< (λ t → lit (replicate t (sˢ S))) (hiS c)) w∈)
   ... | t , t< , l = stretch S t , (t , hiS-complete c t< , refl) ,
                      trans (lit-sound _ l) (sym (encᶠ-stretch S t))
   str-sound {upper} S ∞ w∈ with star-letter-sound (sˢ S) w∈
@@ -354,8 +393,8 @@ private
 
   str-complete : ∀ {s} S (e : End s) {x} → strᴸ S e x → RE.⟦ compile (str S e) ⟧ (encᶠ x)
   str-complete {upper} S (fin c) (t , a , refl) =
-    ⋃<-complete _ (hiS c) (hiS-sound c a)
-      (subst (λ w → RE.⟦ lit (replicate t (sˢ S)) ⟧ w) (sym (encᶠ-stretch S t)) (lit-complete _))
+    close-complete (⋃< (λ t → lit (replicate t (sˢ S))) (hiS c)) (⋃<-complete (λ t → lit (replicate t (sˢ S))) (hiS c) (hiS-sound c a)
+      (subst (λ w → RE.⟦ lit (replicate t (sˢ S)) ⟧ w) (sym (encᶠ-stretch S t)) (lit-complete _)))
   str-complete {upper} S ∞ (t , _ , refl) =
     subst (λ w → RE.⟦ RE.‵ sˢ S RE.* ⟧ w) (sym (encᶠ-stretch S t)) (star-letter-complete (sˢ S) t)
   str-complete {lower} S c (t , a , refl) with ℕ.m≤n⇒∃[o]m+o≡n (lo#-sound c a)
@@ -398,7 +437,6 @@ compile-complete (e *)     (more {x} {y} x∈ ys) =
 -- Literals
 
 open import Syntax.Grades.Regular.Grade k tick using () renaming (⊆⇒≾ to ⊆⇒≾ᴿ; ≾⇒⊆ to ≾⇒⊆ᴿ)
-open import Syntax.Grades.Regular.Decide k using (nonempty?)
 open import Relation.Nullary.Decidable using (True)
 
 -- letters below the encoding of a word
@@ -446,16 +484,54 @@ table-of-wf e = RE.elab-wf (compile e)
 ∈-table-of⁻ : ∀ {s} (e : Expr s) {w} → w A.∈ table-of e → ∃ λ x → ⟦ e ⟧ x × w ≡ encᶠ x
 ∈-table-of⁻ e w∈ = compile-sound e (to (RE.elab-correct (compile e) _) w∈)
 
--- the literal of an expression, its non-emptiness found by computation
-
-⌜_⌝ : ∀ {s} (e : Expr s)
-    → {ne : True (nonempty? (↓ _≤ᶠ_ (table-of e)) (↓-wf _≤ᶠ_ {table-of e} (table-of-wf e)))} → Closed
-⌜ e ⌝ {ne} = C.⌜ table-of e ⌝ {table-of-wf e} {ne}
-
 -- the literal of an expression with a word shown
 
 ⌜_⌝′ : ∀ {s} (e : Expr s) → ∃ ⟦ e ⟧ → Closed
 ⌜ e ⌝′ (x , x∈) = C.⌜ table-of e ⌝′ (table-of-wf e) (encᶠ x , ∈-table-of⁺ e x∈)
+
+-- a word of an expression, found without building a table
+
+private
+  ops-witness : ∀ A (cs : List (Fin n)) → Maybe (∃ (opsᴸ A))
+  ops-witness A []       = nothing
+  ops-witness A (c ∷ cs) = case (c ∈? A) (lo# (lo (rt (name c))) ℕ.<? hiS (hi-cut (name c)))
+    where
+      o = name c
+      t = lo# (lo (rt o))
+      case : Dec (c ∈ A) → Dec (t < hiS (hi-cut o)) → Maybe (∃ (opsᴸ A))
+      case (yes c∈) (yes t<) =
+        just (op o d ∷ [] , o , d , subst (_∈ A) (sym (code-name c)) c∈ ,
+              rt-complete o ℕ.≤-refl t< , refl)
+        where
+          d : D⁺
+          d = pos⁺ t (ℕ.<⇒≱ (lo#-pos o))
+      case _ _ = ops-witness A cs
+
+witness : ∀ {s} (e : Expr s) → Maybe (∃ ⟦ e ⟧)
+witness ε = just ([] , refl)
+witness (ops A) = ops-witness A (allFin n)
+witness {upper} (str S (fin c)) with 0 ℕ.<? hiS c
+... | yes p = just (stretch S 0 , 0 , hiS-complete c p , refl)
+... | no _  = nothing
+witness {upper} (str S ∞) = just (stretch S 0 , 0 , _ , refl)
+witness {lower} (str S c) = just (stretch S (lo# c) , lo# c , lo#-complete c ℕ.≤-refl , refl)
+witness (e ∣ f) with witness e | witness f
+... | just (x , x∈) | _             = just (x , inj₁ x∈)
+... | nothing       | just (y , y∈) = just (y , inj₂ y∈)
+... | nothing       | nothing       = nothing
+witness (e · f) with witness e | witness f
+... | just (x , x∈) | just (y , y∈) = just (x ++ y , x , y , refl , x∈ , y∈)
+... | _             | _             = nothing
+witness (e *) = just ([] , stop)
+
+private
+  the : ∀ {B : Set} (m : Maybe B) → T (is-just m) → B
+  the (just b) _ = b
+
+-- the literal of an expression, a word of it found by computation
+
+⌜_⌝ : ∀ {s} (e : Expr s) → {p : T (is-just (witness e))} → Closed
+⌜ e ⌝ {p} = ⌜ e ⌝′ (the (witness e) p)
 
 -- what a literal holds: the letter words below the encoding of a word
 -- of the expression
@@ -468,12 +544,6 @@ private
   holds⁻ e {w} (v , wv , v∈) with ∈-table-of⁻ e v∈
   ... | x , x∈ , eq = x , x∈ , subst (Belowᶠ w) eq wv
 
-∈-⌜⌝⁻ : ∀ {s} (e : Expr s) {ne} w → w A.∈ C.table (lang (⌜ e ⌝ {ne})) → Holds e w
-∈-⌜⌝⁻ e {ne} w w∈ = holds⁻ e (C.∈-⌜⌝ (table-of e) {table-of-wf e} {ne} w w∈)
-
-∈-⌜⌝⁺ : ∀ {s} (e : Expr s) {ne} w → Holds e w → w A.∈ C.table (lang (⌜ e ⌝ {ne}))
-∈-⌜⌝⁺ e {ne} w (x , x∈ , wx) = C.∈-⌜⌝⁺ (table-of e) {table-of-wf e} {ne} w (encᶠ x) wx (∈-table-of⁺ e x∈)
-
 ∈-⌜⌝′⁻ : ∀ {s} (e : Expr s) {i} w → w A.∈ C.table (lang (⌜ e ⌝′ i)) → Holds e w
 ∈-⌜⌝′⁻ e {x , x∈} w w∈ =
   holds⁻ e (C.∈-⌜⌝′ (table-of e) {table-of-wf e} {encᶠ x , ∈-table-of⁺ e x∈} w w∈)
@@ -481,6 +551,12 @@ private
 ∈-⌜⌝′⁺ : ∀ {s} (e : Expr s) {i} w → Holds e w → w A.∈ C.table (lang (⌜ e ⌝′ i))
 ∈-⌜⌝′⁺ e {x₀ , x₀∈} w (x , x∈ , wx) =
   C.∈-⌜⌝′⁺ (table-of e) {table-of-wf e} {encᶠ x₀ , ∈-table-of⁺ e x₀∈} w (encᶠ x) wx (∈-table-of⁺ e x∈)
+
+∈-⌜⌝⁻ : ∀ {s} (e : Expr s) {p} w → w A.∈ C.table (lang (⌜ e ⌝ {p})) → Holds e w
+∈-⌜⌝⁻ e {p} w = ∈-⌜⌝′⁻ e {the (witness e) p} w
+
+∈-⌜⌝⁺ : ∀ {s} (e : Expr s) {p} w → Holds e w → w A.∈ C.table (lang (⌜ e ⌝ {p}))
+∈-⌜⌝⁺ e {p} w = ∈-⌜⌝′⁺ e {the (witness e) p} w
 
 ------------------------------------------------------------------------
 -- Literals compare as their sets of exact words
@@ -499,9 +575,9 @@ holds-≾ e f le w (x , x∈ , wx) with le x x∈
      → C._≾_ (⌜ e ⌝ {ne}) (⌜ f ⌝ {ne′}) ⇔ ⟦ e ⟧ ≾ ⟦ f ⟧
 ⌜⌝-≾ e f {ne} {ne′} =
   mk⇔ (λ le → ≾-holds e f λ w h →
-          ∈-⌜⌝⁻ f {ne′} w (≾⇒⊆ᴿ (lang (⌜ e ⌝ {ne})) (lang (⌜ f ⌝ {ne′})) le w (∈-⌜⌝⁺ e {ne} w h)))
-      (λ le → ⊆⇒≾ᴿ (lang (⌜ e ⌝ {ne})) (lang (⌜ f ⌝ {ne′})) λ w w∈ →
-          ∈-⌜⌝⁺ f {ne′} w (holds-≾ e f le w (∈-⌜⌝⁻ e {ne} w w∈)))
+          ∈-⌜⌝⁻ f {ne′} w (≾⇒⊆ᴿ (lang (⌜ e ⌝ {ne})) (lang (⌜ f ⌝ {ne′})) (C.≾-lang le) w (∈-⌜⌝⁺ e {ne} w h)))
+      (λ le → C.≾-intro (⊆⇒≾ᴿ (lang (⌜ e ⌝ {ne})) (lang (⌜ f ⌝ {ne′})) λ w w∈ →
+          ∈-⌜⌝⁺ f {ne′} w (holds-≾ e f le w (∈-⌜⌝⁻ e {ne} w w∈))))
 
 ------------------------------------------------------------------------
 -- Delays of one step, at most and at least
@@ -529,3 +605,30 @@ steps-plus : ∀ w {m n} → steps w (m + n) ≡ steps w m C.· steps w n
 steps-plus w {zero}  {n} = sym (C.·-identityˡ (steps w n))
 steps-plus w {suc m} {n} =
   trans (cong (w C.·_) (steps-plus w {m} {n})) (sym (C.·-assoc w (steps w m) (steps w n)))
+
+------------------------------------------------------------------------
+-- Deciding the order by running the inclusion test
+--
+-- A comparison of two named grades is established by computation: the
+-- equation below holds by `refl` exactly when the inclusion test
+-- succeeds. Grades compared this way are best given names, so that
+-- checking the equation runs the test once.
+
+import Syntax.Grades.Regular.Inclusion k as Inclusion
+
+_⊑ᵇ_ : Closed → Closed → Bool
+c ⊑ᵇ d = C.table (lang c) Inclusion.⊆ᵇ C.table (lang d)
+
+holds : (c d : Closed) → c ⊑ᵇ d ≡ true → C._≾_ c d
+holds c d e = C.≾-intro (subst T (sym e) _)
+
+fails : (c d : Closed) → c ⊑ᵇ d ≡ false → ¬ C._≾_ c d
+fails c d e (C.≾-intro t) = subst T e t
+
+-- with the grades read off the goal
+
+holds′ : ∀ {c d} → c ⊑ᵇ d ≡ true → C._≾_ c d
+holds′ = holds _ _
+
+fails′ : ∀ {c d} → c ⊑ᵇ d ≡ false → ¬ C._≾_ c d
+fails′ = fails _ _

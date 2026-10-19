@@ -89,6 +89,11 @@ import Syntax.Grades.Example.Worked.Typing.Traces.Timed.TwoSided
 
 import Syntax.Grades.Example.Worked.Typing.Traces.Subsets.RightSided
 
+-- a guarantee and a bound over interval letters: a box opened after an
+-- undisturbed wait, and refused after operations fill it
+
+import Syntax.Grades.Example.Worked.Typing.Traces.Rigid.Regular.TwoSided
+
 ------------------------------------------------------------------------
 -- Grades that pair time with something else
 --

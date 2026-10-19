@@ -55,3 +55,15 @@ import Syntax.Grades.Example.Worked.Traces.Regular.Base
 -- runs that may occur, as a regular set, with literals
 
 import Syntax.Grades.Example.Worked.Traces.Regular.RightSided
+
+------------------------------------------------------------------------
+-- Rigid timed regular grades, in whole steps
+
+-- upper bounds: the order of strict waits and budgets, the prototype's
+-- tests, the window rule, the delays
+
+import Syntax.Grades.Example.Worked.Traces.Rigid.Regular.RightSided
+
+-- lower bounds: undisturbed waits, explicit flanks
+
+import Syntax.Grades.Example.Worked.Traces.Rigid.Regular.LeftSided
