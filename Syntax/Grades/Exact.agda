@@ -45,3 +45,41 @@ import Syntax.Grades.Exact.Offsets
 -- comparison; slots coded as letters
 
 import Syntax.Grades.Exact.Slots
+
+-- walking two words in step: pouring a word into another is fitting it
+
+import Syntax.Grades.Exact.Pour
+
+-- words of one-sided letters, their instances as pieces, and where the
+-- pieces of a fit lie in time
+
+import Syntax.Grades.Exact.Letters
+import Syntax.Grades.Exact.Positions
+
+-- the pouring reader, in both instances, and moving its runs between
+-- readings of the same words
+
+import Syntax.Grades.Exact.Reader
+import Syntax.Grades.Exact.Reader.Transfer
+
+-- the upper reader: building a word of the bound from a run, reading a
+-- fit as a run, closing the bounds, runs near the upper ends, smaller
+-- weights; sound and complete, against several bounds at once
+
+import Syntax.Grades.Exact.Reader.Upper
+import Syntax.Grades.Exact.Reader.Upper.Build
+import Syntax.Grades.Exact.Reader.Upper.Read
+import Syntax.Grades.Exact.Reader.Upper.Close
+import Syntax.Grades.Exact.Reader.Upper.Zone
+import Syntax.Grades.Exact.Reader.Upper.Mimic
+import Syntax.Grades.Exact.Reader.Upper.Correct
+
+-- the lower reader, likewise
+
+import Syntax.Grades.Exact.Reader.Lower
+import Syntax.Grades.Exact.Reader.Lower.Build
+import Syntax.Grades.Exact.Reader.Lower.Read
+import Syntax.Grades.Exact.Reader.Lower.Close
+import Syntax.Grades.Exact.Reader.Lower.Zone
+import Syntax.Grades.Exact.Reader.Lower.Mimic
+import Syntax.Grades.Exact.Reader.Lower.Correct
