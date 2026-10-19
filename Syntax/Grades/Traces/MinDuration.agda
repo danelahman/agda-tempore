@@ -32,13 +32,15 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Traces.MinDuration
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_) where
 
-open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
-open import Syntax.Grades.Traces.Durations Op
+open import Syntax.Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
+open import Syntax.Grades.Traces.Durations ℕᵀ Op
 
 open WithDecEq _≟ₒ_
 

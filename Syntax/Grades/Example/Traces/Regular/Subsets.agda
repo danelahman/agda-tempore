@@ -21,6 +21,8 @@ open import Relation.Binary.Definitions
   using (DecidableEquality; Transitive; Trichotomous)
 open import Relation.Binary.PropositionalEquality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Example.Traces.Regular.Subsets
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -42,7 +44,7 @@ open import Syntax.Grades using (_→ᵍ_)
 open import Syntax.Grades.Example.Traces.Regular.Base Op n code code-injective
   using (Word; _∈_; tick; enc; enc-∙; enc-⟨⟩; enc-injective)
 
-import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans as S
+import Syntax.Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans as S
 open S using (Trace; ε; _∙_; NeTraces; neTraces; traces; nf-∈⁺; nf-∈⁻)
 import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans as SB
 import Syntax.Grades.Example.Traces.Subsets.RightSided Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans as SR

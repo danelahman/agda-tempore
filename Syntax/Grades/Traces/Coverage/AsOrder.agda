@@ -20,13 +20,15 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Traces.Coverage.AsOrder
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
   (costˡᵒ : Op → ℕ) where
 
-open import Syntax.Grades.Traces.Order Op
+open import Syntax.Grades.Traces.Order ℕᵀ Op
 open import Syntax.Grades.Traces.Coverage Op costˡᵒ
 open import Syntax.Grades.Traces.Coverage.Antisym Op costˡᵒ
 

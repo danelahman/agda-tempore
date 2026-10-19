@@ -42,6 +42,8 @@ open import Syntax.Grades.Example.Time.LeftSided
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Example.System.Traces.Timed.LeftSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -54,7 +56,7 @@ open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Durations Op
+open import Syntax.Grades.Traces.Durations ℕᵀ Op
 open import Syntax.Grades.Traces.MinDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Coverage Op costˡᵒ using (duration-≼ᶜ)
 

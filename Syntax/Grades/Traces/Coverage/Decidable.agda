@@ -20,9 +20,11 @@ open import Relation.Nullary using (Dec; yes; no)
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Traces.Coverage.Decidable (Op : Set) (costˡᵒ : Op → ℕ) where
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Base ℕᵀ Op
 
 
 open import Syntax.Grades.Traces.Coverage.Core Op costˡᵒ

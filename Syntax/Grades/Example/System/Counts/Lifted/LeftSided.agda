@@ -34,11 +34,13 @@ open import Util.Equality
 import Syntax.Grades.Traces.Order as Order
 import Syntax.Grades.Example.Counts.Occurrences as Occurrences
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Example.System.Counts.Lifted.LeftSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
-  (O : Order.TraceOrder Op)
+  (O : Order.TraceOrder ℕᵀ Op)
   {n : ℕ} (index : Op → Fin n)
   (occ-mono : ∀ {s t} → Order.TraceOrder._≼_ O s t
             → (i : Fin n) → Occurrences.occ Op index i s ≤ Occurrences.occ Op index i t)

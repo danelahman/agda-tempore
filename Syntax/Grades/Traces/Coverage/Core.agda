@@ -33,14 +33,16 @@ open import Data.Nat.Properties
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Traces.Coverage.Core (Op : Set) (costˡᵒ : Op → ℕ) where
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Base ℕᵀ Op
 
 -- the slack arithmetic and the size measure are shared with the other
 -- order on traces
 
-open import Syntax.Grades.Traces.Slack Op public
+open import Syntax.Grades.Traces.Slack ℕᵀ Op public
 
 ------------------------------------------------------------------------
 -- The relation

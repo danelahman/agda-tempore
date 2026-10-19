@@ -28,12 +28,14 @@ open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
-module Syntax.Grades.Traces.Prefix (Op : Set) where
+open import Syntax.Durations using (Duration; TimeDomain)
+
+module Syntax.Grades.Traces.Prefix {D : Duration} (T : TimeDomain D) (Op : Set) where
 
 open import Data.Empty using (⊥-elim)
 open import Data.Product using (Σ; Σ-syntax; _,_; proj₁; proj₂)
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Base T Op
 
 ------------------------------------------------------------------------
 -- The relation

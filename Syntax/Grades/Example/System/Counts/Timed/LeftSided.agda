@@ -26,6 +26,8 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Example.System.Counts.Timed.LeftSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -36,7 +38,7 @@ module Syntax.Grades.Example.System.Counts.Timed.LeftSided
 open import Data.Nat.Base using (_≤_; z≤n)
 open import Data.Nat.Properties using (≤-trans; +-monoʳ-≤; m≤n+m)
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Base ℕᵀ Op
 open import Syntax.Grades.Traces.Coverage.Core Op costˡᵒ
 open import Syntax.Grades.Traces.Coverage.AsOrder
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ

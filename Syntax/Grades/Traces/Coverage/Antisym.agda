@@ -22,9 +22,21 @@ open import Data.Nat.Properties using (≤-trans; 1+n≰n; n≤1+n; n≮0)
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Traces.Coverage.Antisym (Op : Set) (costˡᵒ : Op → ℕ) where
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Base ℕᵀ Op hiding (∣∣⁺-∸≡0)
+
+import Data.Nat.Base as ℕ
+import Data.Nat.Properties as ℕ
+
+-- two delays that bound each other leave nothing when one is taken
+-- from the other
+
+∣∣⁺-∸≡0 : {d e : D⁺} → ∣ d ∣⁺ ≤ ∣ e ∣⁺ → ∣ e ∣⁺ ≤ ∣ d ∣⁺ → ∣ e ∣⁺ ℕ.∸ ∣ d ∣⁺ ≡ 0
+∣∣⁺-∸≡0 {d} {e} le₁ le₂ =
+  trans (cong (∣ e ∣⁺ ℕ.∸_) (ℕ.≤-antisym le₁ le₂)) (ℕ.n∸n≡0 ∣ e ∣⁺)
 open import Syntax.Grades.Traces.Coverage Op costˡᵒ
 
 ------------------------------------------------------------------------
@@ -96,9 +108,9 @@ ops-≼ᶜ (use-delay {s⁻ = s⁻} _ d) = subst (_≤ _) (ops-inj⁻ s⁻) (ops
 -- spent, and the lengths pin each other
 
 ≼ᶜ-antisym₀ refl refl
-  (del-delay {t⁻ = ε⁻} (use-delay le₁ _))
+  (del-delay {e = y} {t⁻ = ε⁻} (use-delay {d = x} le₁ _))
   (del-delay {t⁻ = ε⁻} (use-delay le₂ _)) =
-  cong (λ x → delay x ε⁻) (same-delay le₁ le₂)
+  cong (λ x → delay x ε⁻) (same-delay {x} {y} le₁ le₂)
 ≼ᶜ-antisym₀ refl refl
   (del-delay {t⁻ = operation⁻ _ _} _)
   (del-delay {t⁻ = ε⁻} d₂) = ⊥-elim (n≮0 (ops-≼ᶜ d₂))
@@ -110,14 +122,14 @@ ops-≼ᶜ (use-delay {s⁻ = s⁻} _ d) = subst (_≤ _) (ops-inj⁻ s⁻) (ops
   (del-delay {t⁻ = operation⁻ _ _} d₂) =
   ⊥-elim (1+n≰n (≤-trans (ops-≼ᶜ d₂) (ops-≼ᶜ d₁)))
 ≼ᶜ-antisym₀ refl refl
-  (del-delay {t⁻ = operation⁻ _ _} (use-delay le₁ r₁))
+  (del-delay {e = y} {t⁻ = operation⁻ _ _} p₁@(use-delay {d = x} le₁ r₁))
   (del-delay {t⁻ = operation⁻ _ _} (pay-op d₂)) =
-  ⊥-elim (1+n≰n (≤-trans (ops-≼ᶜ (use-delay le₁ r₁)) (ops-≼ᶜ d₂)))
+  ⊥-elim (1+n≰n (≤-trans (ops-≼ᶜ p₁) (ops-≼ᶜ d₂)))
 ≼ᶜ-antisym₀ refl refl
-  (del-delay {t⁻ = operation⁻ _ _} (use-delay le₁ r₁))
+  (del-delay {e = y} {t⁻ = operation⁻ _ _} (use-delay {d = x} le₁ r₁))
   (del-delay {t⁻ = operation⁻ _ _} (use-delay le₂ r₂)) =
-  cong₂ delay (same-delay le₁ le₂)
-              (inj⁻-inj (≼ᶜ-antisym₀ (∣∣⁺-∸≡0 le₁ le₂) (∣∣⁺-∸≡0 le₂ le₁) r₁ r₂))
+  cong₂ delay (same-delay {x} {y} le₁ le₂)
+              (inj⁻-inj (≼ᶜ-antisym₀ (∣∣⁺-∸≡0 {x} {y} le₁ le₂) (∣∣⁺-∸≡0 {y} {x} le₂ le₁) r₁ r₂))
 
 ≼ᶜ-antisym : {s t : Trace} → s ≼ᶜ t → t ≼ᶜ s → s ≡ t
 ≼ᶜ-antisym = ≼ᶜ-antisym₀ refl refl

@@ -51,7 +51,7 @@ open import Syntax.Grades.Traces.Allowance.Core Op costʰⁱ
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
   using (right-sided; within_; _≾_; singleton; of-dur; traces; _≽?_;
-         Trace; ⌈_⌉; ⟨_⟩; ∣1+∣⁺)
+         Trace; ⌈_⌉; ⟨_⟩; ⟨⟩-pos)
 
 open import Syntax.Grades.Example.Time.RightSided using (_≾ₒ_; uₒ-least)
 open import Syntax.Grades.Example.Counts.AtMost
@@ -62,7 +62,8 @@ open import Syntax.Grades.Example.Counts.Occurrences Op index
 
 op≼delay : (o : Op) → ⌈ o ⌉ ≼ᵃ[ 0 ] ⟨ suc (costʰⁱ o) ⟩
 op≼delay o =
-  bank-delay (use-op (≤-trans (n≤1+n (costʰⁱ o)) (≤-reflexive (sym (∣1+∣⁺ (costʰⁱ o))))) nil)
+  subst (⌈ o ⌉ ≼ᵃ[ 0 ]_) (sym (⟨⟩-pos (suc (costʰⁱ o)) λ ()))
+        (bank-delay (use-op (n≤1+n (costʰⁱ o)) nil))
 
 op≾delay : (o : Op)
          → within singleton ⌈ o ⌉ ≾ Grade.of-dur right-sided (suc (costʰⁱ o))

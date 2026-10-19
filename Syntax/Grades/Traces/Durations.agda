@@ -8,14 +8,18 @@
 -- aggregation over a set of traces differs between them.             --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; zero; suc; _+_; _≤_; z≤n)
-open import Data.Nat.Properties using (≤-refl; +-assoc; +-identityʳ; +-mono-≤)
-
 open import Util.Equality
 
-module Syntax.Grades.Traces.Durations (Op : Set) where
+open import Syntax.Durations using (Duration; TimeDomain)
 
-open import Syntax.Grades.Traces.Base Op
+module Syntax.Grades.Traces.Durations {D : Duration} (T : TimeDomain D) (Op : Set) where
+
+open import Relation.Nullary using (Dec; yes; no)
+
+open import Syntax.Grades.Traces.Base T Op
+open import Syntax.Durations.Monus T
+  using (Carrier; 0ᴰ; _+ᴰ_; _≤ᴰ_; _<ᴰ_; _<ᴰ?_; ≤ᴰ-refl; 0ᴰ-least; +ᴰ-assoc;
+         +ᴰ-identityˡ; +ᴰ-identityʳ; +ᴰ-mono-≤; ≮0⇒≡0)
 
 ------------------------------------------------------------------------
 -- Durations relative to a fixed cost on operation symbols
@@ -23,7 +27,7 @@ open import Syntax.Grades.Traces.Base Op
 -- The development below is parameterised by the map `c` assigning to
 -- each operation symbol its cost (its contribution to a duration).
 
-module Durations (c : Op → ℕ) where
+module Durations (c : Op → Carrier) where
 
   ----------------------------------------------------------------------
   -- The duration of a trace
@@ -31,45 +35,46 @@ module Durations (c : Op → ℕ) where
   -- A delay contributes its length, an operation `o` its cost `c o`.
 
   mutual
-    duration : Trace → ℕ
-    duration ε               = zero
-    duration (operation o t) = c o + duration t
-    duration (delay d t)     = ∣ d ∣⁺ + duration⁻ t
+    duration : Trace → Carrier
+    duration ε               = 0ᴰ
+    duration (operation o t) = c o +ᴰ duration t
+    duration (delay d t)     = ∣ d ∣⁺ +ᴰ duration⁻ t
 
-    duration⁻ : Trace⁻ → ℕ
-    duration⁻ ε⁻               = zero
-    duration⁻ (operation⁻ o t) = c o + duration t
+    duration⁻ : Trace⁻ → Carrier
+    duration⁻ ε⁻               = 0ᴰ
+    duration⁻ (operation⁻ o t) = c o +ᴰ duration t
 
   -- prepending a delay adds its length
 
-  duration-prepend : (d : ℕ⁺) (t : Trace)
-                   → duration (prepend d t) ≡ ∣ d ∣⁺ + duration t
+  duration-prepend : (d : D⁺) (t : Trace)
+                   → duration (prepend d t) ≡ ∣ d ∣⁺ +ᴰ duration t
   duration-prepend d ε               = refl
   duration-prepend d (operation o t) = refl
-  duration-prepend d (delay e t)     =
-    trans (cong (_+ duration⁻ t) (∣∣⁺-+⁺ d e))
-          (+-assoc ∣ d ∣⁺ ∣ e ∣⁺ (duration⁻ t))
+  duration-prepend d (delay e t)     = +ᴰ-assoc ∣ d ∣⁺ ∣ e ∣⁺ (duration⁻ t)
 
   -- the duration is a monoid homomorphism for sequencing of traces
 
-  duration-∙ : (s t : Trace) → duration (s ∙ t) ≡ duration s + duration t
-  duration-∙ ε               t = refl
+  duration-∙ : (s t : Trace) → duration (s ∙ t) ≡ duration s +ᴰ duration t
+  duration-∙ ε               t = sym (+ᴰ-identityˡ (duration t))
   duration-∙ (operation o s) t =
-    trans (cong (c o +_) (duration-∙ s t))
-          (sym (+-assoc (c o) (duration s) (duration t)))
+    trans (cong (c o +ᴰ_) (duration-∙ s t))
+          (sym (+ᴰ-assoc (c o) (duration s) (duration t)))
   duration-∙ (delay d ε⁻)    t =
     trans (duration-prepend d t)
-          (cong (_+ duration t) (sym (+-identityʳ ∣ d ∣⁺)))
+          (cong (_+ᴰ duration t) (sym (+ᴰ-identityʳ ∣ d ∣⁺)))
   duration-∙ (delay d (operation⁻ o s)) t =
-    trans (cong (λ z → ∣ d ∣⁺ + (c o + z)) (duration-∙ s t))
-          (trans (cong (∣ d ∣⁺ +_) (sym (+-assoc (c o) (duration s) (duration t))))
-                 (sym (+-assoc ∣ d ∣⁺ (c o + duration s) (duration t))))
+    trans (cong (λ z → ∣ d ∣⁺ +ᴰ (c o +ᴰ z)) (duration-∙ s t))
+          (trans (cong (∣ d ∣⁺ +ᴰ_) (sym (+ᴰ-assoc (c o) (duration s) (duration t))))
+                 (sym (+ᴰ-assoc ∣ d ∣⁺ (c o +ᴰ duration s) (duration t))))
 
-  -- a pure delay of `n` has duration `n`
+  -- a pure delay of `τ` has duration `τ`
 
-  duration-⟨⟩ : (n : ℕ) → duration ⟨ n ⟩ ≡ n
-  duration-⟨⟩ zero    = refl
-  duration-⟨⟩ (suc n) = trans (+-identityʳ ∣ 1+ n ∣⁺) (∣1+∣⁺ n)
+  duration-⟨⟩ : (τ : Carrier) → duration ⟨ τ ⟩ ≡ τ
+  duration-⟨⟩ τ = case (0ᴰ <ᴰ? τ)
+    where
+      case : (p : Dec (0ᴰ <ᴰ τ)) → duration (delay-of τ p) ≡ τ
+      case (yes _) = +ᴰ-identityʳ τ
+      case (no ¬p) = sym (≮0⇒≡0 ¬p)
 
 ------------------------------------------------------------------------
 -- Comparing durations across two different costs
@@ -79,13 +84,13 @@ open Durations
 -- the duration is monotone in the cost
 
 mutual
-  duration-mono : (c c' : Op → ℕ) → (∀ o → c o ≤ c' o) → (t : Trace)
-                → duration c t ≤ duration c' t
-  duration-mono c c' h ε               = z≤n
-  duration-mono c c' h (operation o t) = +-mono-≤ (h o) (duration-mono c c' h t)
-  duration-mono c c' h (delay d t)     = +-mono-≤ ≤-refl (duration⁻-mono c c' h t)
+  duration-mono : (c c' : Op → Carrier) → (∀ o → c o ≤ᴰ c' o) → (t : Trace)
+                → duration c t ≤ᴰ duration c' t
+  duration-mono c c' h ε               = ≤ᴰ-refl
+  duration-mono c c' h (operation o t) = +ᴰ-mono-≤ (h o) (duration-mono c c' h t)
+  duration-mono c c' h (delay d t)     = +ᴰ-mono-≤ ≤ᴰ-refl (duration⁻-mono c c' h t)
 
-  duration⁻-mono : (c c' : Op → ℕ) → (∀ o → c o ≤ c' o) → (t : Trace⁻)
-                 → duration⁻ c t ≤ duration⁻ c' t
-  duration⁻-mono c c' h ε⁻               = z≤n
-  duration⁻-mono c c' h (operation⁻ o t) = +-mono-≤ (h o) (duration-mono c c' h t)
+  duration⁻-mono : (c c' : Op → Carrier) → (∀ o → c o ≤ᴰ c' o) → (t : Trace⁻)
+                 → duration⁻ c t ≤ᴰ duration⁻ c' t
+  duration⁻-mono c c' h ε⁻               = ≤ᴰ-refl
+  duration⁻-mono c c' h (operation⁻ o t) = +ᴰ-mono-≤ (h o) (duration-mono c c' h t)

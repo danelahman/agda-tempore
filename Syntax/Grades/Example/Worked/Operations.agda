@@ -19,6 +19,8 @@
 -- The module re-exports the timed traces over this alphabet.         --
 ------------------------------------------------------------------------
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Example.Worked.Operations where
 
 open import Data.List.Base using ([]; _∷_)
@@ -131,8 +133,8 @@ costʰⁱ-pos send  = s≤s z≤n
 ------------------------------------------------------------------------
 -- Timed traces over this alphabet
 
-open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans public
-open import Syntax.Grades.Traces.Durations Op public
+open import Syntax.Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans public
+open import Syntax.Grades.Traces.Durations ℕᵀ Op public
 
 -- a trace is measured at either cost model
 

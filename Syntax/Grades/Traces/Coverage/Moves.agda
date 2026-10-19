@@ -29,9 +29,11 @@ open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Traces.Coverage.Moves (Op : Set) (costˡᵒ : Op → ℕ) where
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Base ℕᵀ Op
 
 -- the arithmetic helpers are about `ℕ` alone, so they are shared with
 -- the allowance order rather than restated
@@ -59,7 +61,7 @@ del-delay-inv {k} {e} (use-delay {d = d} p d') =
 ------------------------------------------------------------------------
 -- Prepending a delay to the right-hand trace, modulo slack
 
-absorbR : ∀ {k t} (d : ℕ⁺) (t' : Trace)
+absorbR : ∀ {k t} (d : D⁺) (t' : Trace)
         → t ≼ᶜ[ k + ∣ d ∣⁺ ] t' → t ≼ᶜ[ k ] prepend d t'
 absorbR d ε                 hyp = del-delay hyp
 absorbR d (operation o t')  hyp = del-delay hyp
@@ -71,7 +73,7 @@ absorbR {k} d (delay e t'⁻) hyp =
 ------------------------------------------------------------------------
 -- Bumping a leading delay on the left, paid for by equal extra slack
 
-bumpL : ∀ {m e Z⁻ Y} (d : ℕ⁺)
+bumpL : ∀ {m e Z⁻ Y} (d : D⁺)
       → delay e Z⁻ ≼ᶜ[ m ] Y → delay (d +⁺ e) Z⁻ ≼ᶜ[ m + ∣ d ∣⁺ ] Y
 bumpL {m} d (use-delay {d = e} p prem) =
   use-delay
@@ -87,7 +89,7 @@ bumpL {m} d (del-delay {e = f} prem) =
 ------------------------------------------------------------------------
 -- Spending slack on a leading delay of `prepend d X`
 
-spendL : ∀ {c t} (d : ℕ⁺) (X : Trace) → ∣ d ∣⁺ ≤ c
+spendL : ∀ {c t} (d : D⁺) (X : Trace) → ∣ d ∣⁺ ≤ c
        → X ≼ᶜ[ c ∸ ∣ d ∣⁺ ] t → prepend d X ≼ᶜ[ c ] t
 spendL d ε                p hyp = use-delay p hyp
 spendL d (operation o X') p hyp = use-delay p hyp
@@ -96,7 +98,7 @@ spendL {c} d (delay e X'⁻) p hyp = coe (m∸n+n≡m p) (bumpL d hyp)
 ------------------------------------------------------------------------
 -- Prepending content to the right-hand trace
 
-pad-delay : ∀ {k t t'} (d : ℕ⁺) → t ≼ᶜ[ k ] t' → t ≼ᶜ[ k ] prepend d t'
+pad-delay : ∀ {k t t'} (d : D⁺) → t ≼ᶜ[ k ] t' → t ≼ᶜ[ k ] prepend d t'
 pad-delay d D = absorbR d _ (weaken ∣ d ∣⁺ D)
 
 pad-left : ∀ {k t t'} (c : Trace) → t ≼ᶜ[ k ] t' → t ≼ᶜ[ k ] (c ∙ t')

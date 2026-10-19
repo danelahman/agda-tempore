@@ -33,6 +33,8 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -50,7 +52,7 @@ open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
+open import Syntax.Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
 open import Syntax.Grades.Traces.Coverage Op costˡᵒ
   using (_≼ᶜ_; ≼ᶜ-refl; ≼ᶜ-trans) renaming (mono-∙ to mono-∙ᶜ)

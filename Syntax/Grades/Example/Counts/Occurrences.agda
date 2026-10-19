@@ -15,6 +15,8 @@
 open import Data.Fin.Base using (Fin)
 open import Data.Nat.Base using (ℕ)
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Example.Counts.Occurrences
   (Op : Set) {n : ℕ} (index : Op → Fin n) where
 
@@ -30,7 +32,7 @@ open import Data.Nat.Properties
 open import Data.Product using (_,_)
 open import Relation.Nullary using (yes; no)
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Base ℕᵀ Op
 open import Syntax.Grades.Example.Counts.Extrema
 
 open import Util.Equality
@@ -65,7 +67,7 @@ mutual
 
 -- delays draw on nothing
 
-occ-prepend : (i : Fin n) (d : ℕ⁺) (t : Trace) → occ i (prepend d t) ≡ occ i t
+occ-prepend : (i : Fin n) (d : D⁺) (t : Trace) → occ i (prepend d t) ≡ occ i t
 occ-prepend i d ε               = refl
 occ-prepend i d (operation o t) = refl
 occ-prepend i d (delay e t)     = refl

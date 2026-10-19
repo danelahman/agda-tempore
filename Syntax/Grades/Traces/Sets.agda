@@ -33,8 +33,10 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
+open import Syntax.Durations using (Duration; TimeDomain)
+
 module Syntax.Grades.Traces.Sets
-  (Op : Set) (_<ᵒ_ : Rel Op lzero)
+  {D : Duration} (T : TimeDomain D) (Op : Set) (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_) where
 
 open import Data.Empty using (⊥; ⊥-elim)
@@ -59,11 +61,13 @@ open import Relation.Nullary.Decidable using (True; toWitness; fromWitness; map�
 
 -- the timed traces the sets are made of
 
-open import Syntax.Grades.Traces.Base Op public
+open import Syntax.Grades.Traces.Base T Op public
+
+open import Syntax.Durations.Monus T using (Carrier; 0ᴰ; _+ᴰ_; <-irrefl)
 
 -- and the order that puts them in a canonical sequence
 
-open import Syntax.Grades.Traces.Lexicographic Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans public
+open import Syntax.Grades.Traces.Lexicographic T Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans public
   using (_<ᵀ_; <ᵀ-trans; <ᵀ-cmp; _<ᵀ?_)
 
 ------------------------------------------------------------------------
@@ -657,20 +661,20 @@ P ∪ Q = neSet (traces P ++ traces Q) (++-ne (nonempty P) (nonempty Q))
                   (sym (nf-++-nf (traces P ·ˢ traces R) (traces Q ·ˢ traces R)))))
 
 ------------------------------------------------------------------------
--- Inclusion of the natural numbers as pure delays
+-- Inclusion of durations as pure delays
 --
--- A natural number `n` becomes the singleton set containing the pure
--- delay of duration `n`, which is what a grade's `of-dur` asks for.
+-- A duration `τ` becomes the singleton set containing the pure delay of
+-- duration `τ`, which is what a grade's `of-dur` asks for.
 
-of-dur : ℕ → NeTraces
-of-dur n = neTraces [ ⟨ n ⟩ ]
+of-dur : Carrier → NeTraces
+of-dur τ = neTraces [ ⟨ τ ⟩ ]
 
-of-dur-zero : of-dur 0 ≡ u
-of-dur-zero = refl
+of-dur-zero : of-dur 0ᴰ ≡ u
+of-dur-zero = ne-ext {of-dur 0ᴰ} {u} (cong [_] (⟨⟩-zero 0ᴰ <-irrefl))
 
-of-dur-plus : {m n : ℕ} → of-dur (m + n) ≡ (of-dur m · of-dur n)
+of-dur-plus : {m n : Carrier} → of-dur (m +ᴰ n) ≡ (of-dur m · of-dur n)
 of-dur-plus {m} {n} =
-  ne-ext {of-dur (m + n)} {of-dur m · of-dur n} (cong [_] (⟨⟩-hom m n))
+  ne-ext {of-dur (m +ᴰ n)} {of-dur m · of-dur n} (cong [_] (⟨⟩-hom m n))
 
 ------------------------------------------------------------------------
 -- What decidable equality of operation symbols buys

@@ -140,6 +140,13 @@ _<ᴰ?_ : Decidable _<ᴰ_
 <-trans : τ <ᴰ τ' → τ' <ᴰ τ'' → τ <ᴰ τ''
 <-trans p q = <-≤-trans p (<⇒≤ q)
 
+-- not strictly above zero is zero
+
+≮0⇒≡0 : ¬ (0ᴰ <ᴰ τ) → τ ≡ 0ᴰ
+≮0⇒≡0 {τ} p with τ ≤ᴰ? 0ᴰ
+... | yes q = ≤0⇒≡0 q
+... | no ¬q = ⊥-elim (p ¬q)
+
 -- a positive duration strictly increases what it is added to
 
 <-+ : 0ᴰ <ᴰ κ → τ <ᴰ τ +ᴰ κ

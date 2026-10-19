@@ -24,13 +24,15 @@ open import Util.Equality
 
 -- the order on traces is built from one on the alphabet
 
+open import Syntax.Durations using (Duration; TimeDomain)
+
 module Syntax.Grades.Traces.Lexicographic
-  (Op : Set) (_<ᵒ_ : Rel Op lzero)
+  {D : Duration} (T : TimeDomain D) (Op : Set) (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_) where
 
 open import Relation.Nullary using (Dec; yes; no)
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Base T Op
 
 ------------------------------------------------------------------------
 -- The order

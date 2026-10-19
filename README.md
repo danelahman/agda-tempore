@@ -179,7 +179,10 @@ operations.
   `any-run` absorbs products and `Σ*` does not (`Traces/Regular/Subsets.agda`).
 
 - `Syntax/Grades/Traces.agda` indexes the timed-trace toolkit on which these
-  grades are built: `Positive` (the strictly positive duration of a delay),
+  grades are built. It is parameterised by a time domain (`TimeDomain`), so
+  delays are whole steps over `ℕᵀ` or units of dense time over `ℚ≥0ᵀ`; the
+  orders and grades below are taken at `ℕᵀ`. The modules are `Positive` (the
+  strictly positive duration of a delay),
   `Base` (timed traces and their sequencing monoid), `Lexicographic` (a strict
   total order on traces, over one on the alphabet, which makes the carrier
   canonical), `Sets` (sorted duplicate-free non-empty finite sets of traces,

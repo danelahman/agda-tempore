@@ -21,6 +21,8 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Traces.Allowance.AsOrder
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -28,7 +30,7 @@ module Syntax.Grades.Traces.Allowance.AsOrder
   (costʰⁱ : Op → ℕ)
   (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
 
-open import Syntax.Grades.Traces.Order Op
+open import Syntax.Grades.Traces.Order ℕᵀ Op
 open import Syntax.Grades.Traces.Allowance Op costʰⁱ
 open import Syntax.Grades.Traces.Allowance.Antisym Op costʰⁱ costʰⁱ-pos
 

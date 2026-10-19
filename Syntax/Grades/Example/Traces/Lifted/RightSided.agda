@@ -51,11 +51,13 @@ open import Util.Equality
 import Syntax.Grades.Traces.Order as Order
 import Syntax.Grades.Traces.Reduced as Reduced
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Example.Traces.Lifted.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
-  (O : Order.TraceOrder Op) where
+  (O : Order.TraceOrder ℕᵀ Op) where
 
 open import Data.Empty using (⊥)
 open import Data.List.Membership.Propositional using (_∈_; find)
@@ -82,8 +84,8 @@ open Order.TraceOrder O using (_≼_; ≼-trans; ≼-nil; ≼-ε-inv)
 -- reduction runs at the converse order, so its minimal members are
 -- this grade's maximal ones.
 
-module R = Reduced Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
-             (Order.flipᵖ Op (Order.TraceOrder.base O))
+module R = Reduced ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
+             (Order.flipᵖ ℕᵀ Op (Order.TraceOrder.base O))
 
 open R public
   renaming (_≾_ to _≾₀_; _≾?_ to _≾₀?_;

@@ -40,14 +40,16 @@ open import Util.Equality
 -- and by the map `costʰⁱ` giving each operation the most time it can
 -- take, that being what a bound must budget for.
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Traces.Allowance.Core (Op : Set) (costʰⁱ : Op → ℕ) where
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Base ℕᵀ Op
 
 -- the slack arithmetic and the size measure are the same for either
 -- order on traces, so they are shared rather than restated
 
-open import Syntax.Grades.Traces.Slack Op public
+open import Syntax.Grades.Traces.Slack ℕᵀ Op public
 
 ------------------------------------------------------------------------
 -- The relation

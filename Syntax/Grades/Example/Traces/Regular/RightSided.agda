@@ -18,6 +18,8 @@ open import Data.Nat.Base using (ℕ; suc)
 open import Data.Fin.Base using (Fin; zero)
 open import Relation.Binary.PropositionalEquality using (_≡_)
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Example.Traces.Regular.RightSided
   (Op : Set) (n : ℕ) (code : Op → Fin n)
   (code-injective : ∀ {o o′} → code o ≡ code o′ → o ≡ o′) where
@@ -29,7 +31,7 @@ open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades using (Grade)
 open import Syntax.Grades.Example.Traces.Regular.Base Op n code code-injective
   using (Word; DFA; _∈_; tick; op; enc; enc-∙; enc-⟨⟩)
-open import Syntax.Grades.Traces.Base Op using (Trace; _∙_; ⟨_⟩)
+open import Syntax.Grades.Traces.Base ℕᵀ Op using (Trace; _∙_; ⟨_⟩)
 
 open import Syntax.Grades.Regular.Grade (suc n) zero public
 

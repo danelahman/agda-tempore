@@ -7,6 +7,9 @@
 -- with the leading delay of the second, so that a trace has a unique   --
 -- representation with no two adjacent delays.                          --
 --                                                                     --
+-- Delays are durations of a time domain `T`: whole steps over ℕ, or    --
+-- units of dense time over ℚ≥0.                                        --
+--                                                                     --
 -- This is the trace layer alone. The sets of traces the grades are     --
 -- built from live in `Traces.Sets`, and the positive durations a delay --
 -- carries in `Traces.Positive`, which is re-exported here.             --
@@ -14,20 +17,25 @@
 
 open import Util.Equality
 
--- Trace-based grades are parameterised by a set `Op` of operation names.
+open import Syntax.Durations using (Duration; TimeDomain)
 
-module Syntax.Grades.Traces.Base (Op : Set) where
+-- Trace-based grades are parameterised by a time domain and a set `Op`
+-- of operation names.
+
+module Syntax.Grades.Traces.Base {D : Duration} (T : TimeDomain D) (Op : Set) where
 
 open import Data.Empty using (⊥-elim)
-open import Data.Nat.Base using (ℕ; zero; suc; _+_)
-open import Data.Nat.Properties using (+-identityʳ)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
-open import Relation.Nullary using (yes; no)
+open import Relation.Nullary using (¬_; Dec; yes; no)
+
+open import Syntax.Durations.Monus T
+  using (Carrier; 0ᴰ; _+ᴰ_; _<ᴰ_; _<ᴰ?_; +ᴰ-identityˡ; +ᴰ-identityʳ;
+         <⇒≢; <-≤-trans; ≤ᴰ-+; ≤ᴰ-+ˡ; ≮0⇒≡0)
 
 -- a delay carries a strictly positive duration
 
-open import Syntax.Grades.Traces.Positive public
+open import Syntax.Grades.Traces.Positive T public
 
 ------------------------------------------------------------------------
 -- Timed traces
@@ -43,7 +51,7 @@ mutual
   data Trace : Set where
     ε         : Trace
     operation : Op → Trace → Trace
-    delay     : ℕ⁺ → Trace⁻ → Trace
+    delay     : D⁺ → Trace⁻ → Trace
 
   -- timed traces that do not begin with a delay
 
@@ -51,11 +59,14 @@ mutual
     ε⁻         : Trace⁻
     operation⁻ : Op → Trace → Trace⁻
 
--- the pure delay of duration n (a zero delay is just the empty trace)
+-- the pure delay of duration τ (a zero delay is just the empty trace)
 
-⟨_⟩ : ℕ → Trace
-⟨ zero  ⟩ = ε
-⟨ suc n ⟩ = delay (1+ n) ε⁻
+delay-of : (τ : Carrier) → Dec (0ᴰ <ᴰ τ) → Trace
+delay-of τ (yes p) = delay (pos⁺ τ p) ε⁻
+delay-of τ (no _)  = ε
+
+⟨_⟩ : Carrier → Trace
+⟨ τ ⟩ = delay-of τ (0ᴰ <ᴰ? τ)
 
 -- a single operation event (no surrounding delay)
 
@@ -82,7 +93,7 @@ inj⁻-inj {operation⁻ _ _} {operation⁻ _ _} refl = refl
 -- prepending a positive delay to a trace,
 -- merging it with the leading delay of the trace
 
-prepend : ℕ⁺ → Trace → Trace
+prepend : D⁺ → Trace → Trace
 prepend d ε                = delay d ε⁻
 prepend d (operation op t) = delay d (operation⁻ op t)
 prepend d (delay e t)      = delay (d +⁺ e) t
@@ -111,14 +122,14 @@ delay d (operation⁻ o s) ∙ t = delay d (operation⁻ o (s ∙ t))
 
 -- prepending commutes with the additive merging of delays
 
-prepend-+⁺ : (d e : ℕ⁺) (u : Trace) → prepend (d +⁺ e) u ≡ prepend d (prepend e u)
+prepend-+⁺ : (d e : D⁺) (u : Trace) → prepend (d +⁺ e) u ≡ prepend d (prepend e u)
 prepend-+⁺ d e ε                = refl
 prepend-+⁺ d e (operation o u)  = refl
 prepend-+⁺ d e (delay f u)      = cong (λ z → delay z u) (+⁺-assoc d e f)
 
 -- prepending commutes with sequencing on the right
 
-prepend-∙ : (d : ℕ⁺) (t u : Trace) → ((prepend d t) ∙ u) ≡ prepend d (t ∙ u)
+prepend-∙ : (d : D⁺) (t u : Trace) → ((prepend d t) ∙ u) ≡ prepend d (t ∙ u)
 prepend-∙ d ε                        u = refl
 prepend-∙ d (operation o t)          u = refl
 prepend-∙ d (delay e ε⁻)             u = prepend-+⁺ d e u
@@ -176,7 +187,7 @@ delay-operation-inj refl = refl
 
 -- prepending a fixed delay is injective in the continuation
 
-prepend-injʳ : (d : ℕ⁺) {t t' : Trace} → prepend d t ≡ prepend d t' → t ≡ t'
+prepend-injʳ : (d : D⁺) {t t' : Trace} → prepend d t ≡ prepend d t' → t ≡ t'
 prepend-injʳ d {ε}             {ε}             _  = refl
 prepend-injʳ d {ε}             {operation _ _} ()
 prepend-injʳ d {ε}             {delay e' u'}   eq =
@@ -204,12 +215,40 @@ prepend-injʳ d {delay e u}     {delay e' u'}   eq =
 -- Pure delays are a monoid homomorphism
 --
 -- Adding durations corresponds to sequencing the pure delays, which is
--- what the inclusion of ℕ into the trace-based grades is built on.
+-- what the inclusion of durations into the trace-based grades is built
+-- on.
 
-⟨⟩-hom : (m n : ℕ) → ⟨ m + n ⟩ ≡ (⟨ m ⟩ ∙ ⟨ n ⟩)
-⟨⟩-hom zero    n       = refl
-⟨⟩-hom (suc m) zero    = cong (λ z → delay (1+ z) ε⁻) (+-identityʳ m)
-⟨⟩-hom (suc m) (suc n) = cong (λ z → delay z ε⁻) (sym (1+-+⁺ m n))
+-- a positive duration is a delay, and no time is the empty trace
+
+⟨⟩-pos : (τ : Carrier) (p : 0ᴰ <ᴰ τ) → ⟨ τ ⟩ ≡ delay (pos⁺ τ p) ε⁻
+⟨⟩-pos τ p = case (0ᴰ <ᴰ? τ)
+  where
+    case : (c : Dec (0ᴰ <ᴰ τ)) → delay-of τ c ≡ delay (pos⁺ τ p) ε⁻
+    case (yes _) = cong (λ d → delay d ε⁻) (∣∣⁺-inj refl)
+    case (no ¬p) = ⊥-elim (¬p p)
+
+⟨⟩-zero : (τ : Carrier) → ¬ (0ᴰ <ᴰ τ) → ⟨ τ ⟩ ≡ ε
+⟨⟩-zero τ ¬p = case (0ᴰ <ᴰ? τ)
+  where
+    case : (c : Dec (0ᴰ <ᴰ τ)) → delay-of τ c ≡ ε
+    case (yes p) = ⊥-elim (¬p p)
+    case (no _)  = refl
+
+⟨⟩-hom : (m n : Carrier) → ⟨ m +ᴰ n ⟩ ≡ (⟨ m ⟩ ∙ ⟨ n ⟩)
+⟨⟩-hom m n = hom (0ᴰ <ᴰ? m) (0ᴰ <ᴰ? n) (0ᴰ <ᴰ? (m +ᴰ n))
+  where
+    hom : (a : Dec (0ᴰ <ᴰ m)) (b : Dec (0ᴰ <ᴰ n)) (c : Dec (0ᴰ <ᴰ (m +ᴰ n)))
+        → delay-of (m +ᴰ n) c ≡ (delay-of m a ∙ delay-of n b)
+    hom (yes p) (yes q) (yes r) = cong (λ d → delay d ε⁻) (∣∣⁺-inj refl)
+    hom (yes p) (no ¬q) (yes r) =
+      cong (λ d → delay d ε⁻) (∣∣⁺-inj (trans (cong (m +ᴰ_) (≮0⇒≡0 ¬q)) (+ᴰ-identityʳ m)))
+    hom (no ¬p) (yes q) (yes r) =
+      cong (λ d → delay d ε⁻) (∣∣⁺-inj (trans (cong (_+ᴰ n) (≮0⇒≡0 ¬p)) (+ᴰ-identityˡ n)))
+    hom (no ¬p) (no ¬q) (yes r) =
+      ⊥-elim (<⇒≢ r (sym (trans (cong₂ _+ᴰ_ (≮0⇒≡0 ¬p) (≮0⇒≡0 ¬q)) (+ᴰ-identityˡ 0ᴰ))))
+    hom (yes p) _ (no ¬r) = ⊥-elim (¬r (<-≤-trans p (≤ᴰ-+ m n)))
+    hom (no _) (yes q) (no ¬r) = ⊥-elim (¬r (<-≤-trans q (≤ᴰ-+ˡ n m)))
+    hom (no _) (no _) (no _) = refl
 
 ------------------------------------------------------------------------
 -- Traces have decidable equality, given decidable equality of the

@@ -11,8 +11,9 @@
 --                                                                     --
 -- Nothing in this module is itself a grade; it is the shared layer     --
 -- underneath. This module is only an index -- everything is           --
--- parameterised by the alphabet `Op`, so it lists the pieces rather    --
--- than re-exporting them.                                              --
+-- parameterised by the alphabet `Op`, and the trace layer also by the  --
+-- time domain of its delays, so it lists the pieces rather than        --
+-- re-exporting them.                                                   --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Traces where
@@ -20,8 +21,8 @@ module Syntax.Grades.Traces where
 ------------------------------------------------------------------------
 -- Traces and sets of traces
 
--- Strictly positive durations, which is what a delay carries. Alphabet
--- independent, so it stands alone.
+-- Strictly positive durations of a time domain, which is what a delay
+-- carries. Alphabet independent, so it stands alone.
 
 import Syntax.Grades.Traces.Positive
 

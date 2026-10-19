@@ -45,19 +45,21 @@ import Syntax.Grades.Traces.Base as Base
 import Syntax.Grades.Traces.Durations as Dur
 import Syntax.Grades.Traces.Order as Order
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Example.Traces.Lifted.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
   (costˡᵒ costʰⁱ : Op → ℕ)
   (cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o)
-  (Oᶠ Oᶜ : Order.TraceOrder Op)
-  (durᶠ : {s t : Base.Trace Op}
+  (Oᶠ Oᶜ : Order.TraceOrder ℕᵀ Op)
+  (durᶠ : {s t : Base.Trace ℕᵀ Op}
         → Order.TraceOrder._≼_ Oᶠ s t
-        → Dur.Durations.duration Op costˡᵒ s ≤ Dur.Durations.duration Op costˡᵒ t)
-  (durᶜ : {s t : Base.Trace Op}
+        → Dur.Durations.duration ℕᵀ Op costˡᵒ s ≤ Dur.Durations.duration ℕᵀ Op costˡᵒ t)
+  (durᶜ : {s t : Base.Trace ℕᵀ Op}
         → Order.TraceOrder._≼_ Oᶜ s t
-        → Dur.Durations.duration Op costʰⁱ s ≤ Dur.Durations.duration Op costʰⁱ t)
+        → Dur.Durations.duration ℕᵀ Op costʰⁱ s ≤ Dur.Durations.duration ℕᵀ Op costʰⁱ t)
   where
 
 open import Data.List.Base using (List; _++_)
@@ -79,8 +81,8 @@ open import Data.Maybe.Base using (nothing)
 open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades
 
-open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
-open import Syntax.Grades.Traces.Durations Op
+open import Syntax.Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
+open import Syntax.Grades.Traces.Durations ℕᵀ Op
 
 -- each endpoint is ordered exactly as the corresponding one-sided grade
 -- orders it, at its own order

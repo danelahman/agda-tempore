@@ -39,6 +39,8 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -58,8 +60,8 @@ open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
-open import Syntax.Grades.Traces.Durations Op
+open import Syntax.Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
+open import Syntax.Grades.Traces.Durations ℕᵀ Op
 
 open import Syntax.Grades.Example.Traces.Subsets.Base
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans using (∈-⊑)

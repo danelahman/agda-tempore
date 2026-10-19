@@ -29,10 +29,12 @@ open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Traces.Allowance.Duration (Op : Set) (costʰⁱ : Op → ℕ) where
 
-open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.Traces.Durations Op
+open import Syntax.Grades.Traces.Base ℕᵀ Op
+open import Syntax.Grades.Traces.Durations ℕᵀ Op
 open import Syntax.Grades.Traces.Allowance.Core Op costʰⁱ
 
 open Durations costʰⁱ
@@ -121,10 +123,6 @@ duration-≼ᵃ {s} {t} p =
 
 0≮0 : ¬ (0 < 0)
 0≮0 ()
-
-∣∣⁺-pos : (d : ℕ⁺) → ¬ (∣ d ∣⁺ ≤ zero)
-∣∣⁺-pos 𝟏        ()
-∣∣⁺-pos (suc⁺ d) ()
 
 ≼ᵃ-ε-inv : ((o : Op) → 0 < costʰⁱ o) → {s : Trace} → s ≼ᵃ ε → s ≡ ε
 ≼ᵃ-ε-inv pos nil                      = refl

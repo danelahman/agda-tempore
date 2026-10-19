@@ -26,10 +26,12 @@ open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Traces.Coverage.Duration (Op : Set) (costˡᵒ : Op → ℕ) where
 
-open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.Traces.Durations Op
+open import Syntax.Grades.Traces.Base ℕᵀ Op
+open import Syntax.Grades.Traces.Durations ℕᵀ Op
 open import Syntax.Grades.Traces.Coverage.Core Op costˡᵒ
 
 open Durations costˡᵒ
@@ -106,10 +108,6 @@ duration-≼ᶜ {s} {t} p =
 
 ------------------------------------------------------------------------
 -- Nothing but the empty guarantee is covered by a spent run
-
-∣∣⁺-pos : (d : ℕ⁺) → ¬ (∣ d ∣⁺ ≤ zero)
-∣∣⁺-pos 𝟏        ()
-∣∣⁺-pos (suc⁺ d) ()
 
 ≼ᶜ-ε-inv : {s : Trace} → s ≼ᶜ ε → s ≡ ε
 ≼ᶜ-ε-inv nil                      = refl

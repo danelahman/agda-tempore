@@ -18,13 +18,15 @@ open import Data.Fin.Base using (Fin)
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Regular.RightSided
   (Op : Set) (n : ℕ) (code : Op → Fin n)
   (code-injective : ∀ {o o′} → code o ≡ code o′ → o ≡ o′) where
 
 open import Data.Bool.Properties using (T-irrelevant)
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Base ℕᵀ Op
   using (Trace; ε; _∙_; ∙-assoc; ∙-identityʳ; ∙-cancelˡ)
 open import Syntax.Grades.Example.Traces.Regular.Base Op n code code-injective
   using (enc)

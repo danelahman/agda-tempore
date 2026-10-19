@@ -46,11 +46,13 @@ open import Util.Equality
 import Syntax.Grades.Traces.Order as Order
 import Syntax.Grades.Traces.Reduced as Reduced
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Example.Traces.Lifted.LeftSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
-  (O : Order.TraceOrder Op) where
+  (O : Order.TraceOrder ℕᵀ Op) where
 
 open import Data.List.Relation.Unary.Any using (here; any?)
 
@@ -68,7 +70,7 @@ open Order.TraceOrder O using (≼-nil)
 -- monoid, the order, its decision procedure, the joins and the
 -- inclusion of the naturals
 
-module R = Reduced Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans (Order.TraceOrder.base O)
+module R = Reduced ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans (Order.TraceOrder.base O)
 
 open R public hiding (≾-antisym)
 

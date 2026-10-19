@@ -55,11 +55,13 @@ open import Util.Equality
 
 import Syntax.Grades.Traces.Order
 
+open import Syntax.Durations using (Duration; TimeDomain)
+
 module Syntax.Grades.Traces.Reduced
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  {D : Duration} (T : TimeDomain D) (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
-  (P : Syntax.Grades.Traces.Order.TracePartialOrder Op) where
+  (P : Syntax.Grades.Traces.Order.TracePartialOrder T Op) where
 
 open import Data.Empty using (⊥-elim)
 open import Data.List.Base using (List; []; _∷_; [_]; _++_)
@@ -82,13 +84,15 @@ open import Relation.Nullary.Decidable
 -- language product; the set-level monoid of `Traces.Sets` is the one
 -- the antichains below carry instead, so it stays out of the re-export
 
-open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans public
+open import Syntax.Grades.Traces.Sets T Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans public
   hiding (NeTraces; neTraces; traces; sorted; nonempty; ne-ext; neSet;
           u; _·_; _∪_; ·-identityˡ; ·-identityʳ; ·-assoc;
           ·-distribˡ-∪; ·-distribʳ-∪; ·-zero-productˡ; ·-zero-productʳ;
           of-dur; of-dur-zero; of-dur-plus)
 
 open WithDecEq _≟ₒ_ public
+
+open import Syntax.Durations.Monus T using (Carrier; 0ᴰ; _+ᴰ_; <-irrefl)
 
 open Syntax.Grades.Traces.Order.TracePartialOrder P
 
@@ -843,18 +847,17 @@ P ⊔ Q = acSet (traces P ++ traces Q) (++-ne (nonempty P) (nonempty Q))
                    (λ {w} → n-◃ (ps ·ˢ cs)) (λ {w} → n-◃ (qs ·ˢ cs)) p))
 
 ------------------------------------------------------------------------
--- Inclusion of the natural numbers as pure delays
+-- Inclusion of durations as pure delays
 --
--- A natural number `m` becomes the singleton antichain containing the
--- pure delay of duration `m`, which is what a grade's `of-dur` asks
--- for.
+-- A duration `τ` becomes the singleton antichain containing the pure
+-- delay of duration `τ`, which is what a grade's `of-dur` asks for.
 
-of-dur : ℕ → Antichain
-of-dur m = singleton ⟨ m ⟩
+of-dur : Carrier → Antichain
+of-dur τ = singleton ⟨ τ ⟩
 
-of-dur-zero : of-dur 0 ≡ u
-of-dur-zero = refl
+of-dur-zero : of-dur 0ᴰ ≡ u
+of-dur-zero = ac-ext {of-dur 0ᴰ} {u} (cong [_] (⟨⟩-zero 0ᴰ <-irrefl))
 
-of-dur-plus : {m k : ℕ} → of-dur (m + k) ≡ (of-dur m · of-dur k)
+of-dur-plus : {m k : Carrier} → of-dur (m +ᴰ k) ≡ (of-dur m · of-dur k)
 of-dur-plus {m} {k} =
-  ac-ext {of-dur (m + k)} {of-dur m · of-dur k} (cong [_] (⟨⟩-hom m k))
+  ac-ext {of-dur (m +ᴰ k)} {of-dur m · of-dur k} (cong [_] (⟨⟩-hom m k))

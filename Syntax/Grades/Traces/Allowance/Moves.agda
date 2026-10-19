@@ -32,9 +32,11 @@ open import Data.Nat.Properties
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Traces.Allowance.Moves (Op : Set) (costʰⁱ : Op → ℕ) where
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Base ℕᵀ Op
 
 open import Syntax.Grades.Traces.Allowance.Core Op costʰⁱ
 
@@ -54,7 +56,7 @@ bank-delay-inv {k} {e} (use-op {o = o} p d')    =
 ------------------------------------------------------------------------
 -- Prepending a delay to the bound, modulo budget
 
-absorbR : ∀ {k t} (d : ℕ⁺) (t' : Trace)
+absorbR : ∀ {k t} (d : D⁺) (t' : Trace)
         → t ≼ᵃ[ k + ∣ d ∣⁺ ] t' → t ≼ᵃ[ k ] prepend d t'
 absorbR d ε                 hyp = bank-delay hyp
 absorbR d (operation o t')  hyp = bank-delay hyp
@@ -66,7 +68,7 @@ absorbR {k} d (delay e t'⁻) hyp =
 ------------------------------------------------------------------------
 -- Bumping a leading delay of the run, and spending budget on one
 
-bumpL : ∀ {m e Z⁻ Y} (d : ℕ⁺)
+bumpL : ∀ {m e Z⁻ Y} (d : D⁺)
       → delay e Z⁻ ≼ᵃ[ m ] Y → delay (d +⁺ e) Z⁻ ≼ᵃ[ m + ∣ d ∣⁺ ] Y
 bumpL {m} d (use-delay {d = e} p prem) =
   use-delay
@@ -78,7 +80,7 @@ bumpL {m} d (skip-op prem)             = skip-op (bumpL d prem)
 bumpL {m} d (bank-delay {e = f} prem)  =
   bank-delay (coe (lem-swap m ∣ f ∣⁺ ∣ d ∣⁺) (bumpL d prem))
 
-spendL : ∀ {c t} (d : ℕ⁺) (X : Trace) → ∣ d ∣⁺ ≤ c
+spendL : ∀ {c t} (d : D⁺) (X : Trace) → ∣ d ∣⁺ ≤ c
        → X ≼ᵃ[ c ∸ ∣ d ∣⁺ ] t → prepend d X ≼ᵃ[ c ] t
 spendL d ε                 p hyp = use-delay p hyp
 spendL d (operation o X')  p hyp = use-delay p hyp
@@ -87,7 +89,7 @@ spendL {c} d (delay e X'⁻) p hyp = coe (m∸n+n≡m p) (bumpL d hyp)
 ------------------------------------------------------------------------
 -- Prepending content to the bound
 
-pad-delay : ∀ {k t t'} (d : ℕ⁺) → t ≼ᵃ[ k ] t' → t ≼ᵃ[ k ] prepend d t'
+pad-delay : ∀ {k t t'} (d : D⁺) → t ≼ᵃ[ k ] t' → t ≼ᵃ[ k ] prepend d t'
 pad-delay d D = absorbR d _ (weaken ∣ d ∣⁺ D)
 
 pad-left : ∀ {k t t'} (c : Trace) → t ≼ᵃ[ k ] t' → t ≼ᵃ[ k ] (c ∙ t')

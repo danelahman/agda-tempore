@@ -34,6 +34,8 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Example.System.Counts.Subsets.AtMost
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -50,7 +52,7 @@ open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Syntax.Grades
 
-open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
+open import Syntax.Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
   using (Trace; traces; nonempty; nf; nf-∈⁺; nf-∈⁻; ⟨_⟩)
   renaming (NonEmpty to NonEmptyˢ; _·ˢ_ to _⊙_)
 

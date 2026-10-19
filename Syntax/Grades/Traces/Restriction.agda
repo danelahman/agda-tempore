@@ -16,7 +16,7 @@ open import Level using () renaming (zero to lzero)
 open import Relation.Binary.Core using (Rel)
 open import Relation.Binary.Definitions
   using (DecidableEquality; Transitive; Trichotomous; tri<; tri≈; tri>)
-open import Relation.Nullary using (yes; no)
+open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Data.Bool
@@ -30,21 +30,26 @@ open import Data.Unit using (tt)
 
 open import Util.Equality
 
+open import Syntax.Durations using (Duration; TimeDomain)
+
 module Syntax.Grades.Traces.Restriction
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  {D : Duration} (TD : TimeDomain D) (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
   (OpPred : Op → Bool) where
 
 -- the traces themselves do not depend on the order, so the trace
--- toolkit is opened unapplied and the alphabet named at each use; the
--- sets of traces do, so each alphabet gets its own instance below
+-- toolkit is opened at the time domain alone and the alphabet named at
+-- each use; the sets of traces do, so each alphabet gets its own
+-- instance below
 
-open import Syntax.Grades.Traces.Base
+open import Syntax.Grades.Traces.Base TD
 
 import Syntax.Grades.Traces.Sets as Sets
 
-module S = Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
+open import Syntax.Durations.Monus TD using (Carrier; 0ᴰ; _<ᴰ_; _<ᴰ?_)
+
+module S = Sets TD Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
 Op' : Set
 Op' = Σ[ op ∈ Op ] T (OpPred op)
@@ -78,14 +83,14 @@ x <ᵒ' y = proj₁ x <ᵒ proj₁ y
 -- the transitivity proof is instantiated at the sub-alphabet's own
 -- triple, which a bare name would leave for unification to guess
 
-module S' = Sets Op' _<ᵒ'_ <ᵒ'-cmp (λ {x} {y} {z} → <ᵒ'-trans {x} {y} {z})
+module S' = Sets TD Op' _<ᵒ'_ <ᵒ'-cmp (λ {x} {y} {z} → <ᵒ'-trans {x} {y} {z})
 
 operation' : (op : Op) → T (OpPred op) → Op'
 operation' op p = op , p
 
 -- Restricting a trace keeps the operations the predicate admits, drops
--- the rest, and leaves the delays alone -- a delay's duration is a plain
--- positive natural, shared by both alphabets.
+-- the rest, and leaves the delays alone -- a delay's duration is a
+-- positive duration of the time domain, shared by both alphabets.
 
 mutual
   restrict-trace : Trace Op → Trace Op'
@@ -124,7 +129,7 @@ restrict-op⁻ op t with T? (OpPred op)
 ... | yes _ = refl
 ... | no  _ = refl
 
-restrict-prepend : (d : ℕ⁺) (t : Trace Op)
+restrict-prepend : (d : D⁺ Op) (t : Trace Op)
                  → restrict-trace (prepend Op d t)
                  ≡ prepend Op' d (restrict-trace t)
 restrict-prepend d ε                = refl
@@ -164,6 +169,9 @@ restrict-·ˢ (x ∷ xs) ys =
     (map-++ restrict-trace (Data.List.map (_∙_ Op x) ys) (S._·ˢ_ xs ys))
     (cong₂ _++_ (restrict-map-∙ x ys) (restrict-·ˢ xs ys))
 
-restrict-⟨⟩ : (n : ℕ) → restrict-trace (⟨_⟩ Op n) ≡ ⟨_⟩ Op' n
-restrict-⟨⟩ zero    = refl
-restrict-⟨⟩ (suc n) = refl
+restrict-⟨⟩ : (τ : Carrier) → restrict-trace (⟨_⟩ Op τ) ≡ ⟨_⟩ Op' τ
+restrict-⟨⟩ τ = case (0ᴰ <ᴰ? τ)
+  where
+    case : (p : Dec (0ᴰ <ᴰ τ)) → restrict-trace (delay-of Op τ p) ≡ delay-of Op' τ p
+    case (yes _) = refl
+    case (no _)  = refl

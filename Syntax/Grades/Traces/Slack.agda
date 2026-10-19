@@ -14,9 +14,11 @@ open import Data.Nat.Properties
 
 open import Util.Equality
 
-module Syntax.Grades.Traces.Slack (Op : Set) where
+open import Syntax.Durations using (Duration; TimeDomain)
 
-open import Syntax.Grades.Traces.Base Op
+module Syntax.Grades.Traces.Slack {D : Duration} (T : TimeDomain D) (Op : Set) where
+
+open import Syntax.Grades.Traces.Base T Op
 
 ------------------------------------------------------------------------
 -- Small arithmetic helpers

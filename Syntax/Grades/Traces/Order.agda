@@ -28,9 +28,11 @@ open import Relation.Binary.Definitions using (Decidable)
 
 open import Util.Equality
 
-module Syntax.Grades.Traces.Order (Op : Set) where
+open import Syntax.Durations using (Duration; TimeDomain)
 
-open import Syntax.Grades.Traces.Base Op
+module Syntax.Grades.Traces.Order {D : Duration} (T : TimeDomain D) (Op : Set) where
+
+open import Syntax.Grades.Traces.Base T Op
 
 ------------------------------------------------------------------------
 -- The order-theoretic half

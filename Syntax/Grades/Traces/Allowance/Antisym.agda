@@ -25,12 +25,24 @@ open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Traces.Allowance.Antisym
   (Op : Set) (costʰⁱ : Op → ℕ)
   (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
 
-open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.Traces.Durations Op
+open import Syntax.Grades.Traces.Base ℕᵀ Op hiding (∣∣⁺-∸≡0)
+
+import Data.Nat.Base as ℕ
+import Data.Nat.Properties as ℕ
+
+-- two delays that bound each other leave nothing when one is taken
+-- from the other
+
+∣∣⁺-∸≡0 : {d e : D⁺} → ∣ d ∣⁺ ≤ ∣ e ∣⁺ → ∣ e ∣⁺ ≤ ∣ d ∣⁺ → ∣ e ∣⁺ ℕ.∸ ∣ d ∣⁺ ≡ 0
+∣∣⁺-∸≡0 {d} {e} le₁ le₂ =
+  trans (cong (∣ e ∣⁺ ℕ.∸_) (ℕ.≤-antisym le₁ le₂)) (ℕ.n∸n≡0 ∣ e ∣⁺)
+open import Syntax.Grades.Traces.Durations ℕᵀ Op
 open import Syntax.Grades.Traces.Allowance Op costʰⁱ
 
 open Durations costʰⁱ using (duration; duration⁻)
@@ -88,64 +100,64 @@ shift a b c = trans (lem-past a b c) (cong (b +_) (+-comm a c))
   ⊥-elim (no-room x (≤-trans (duration-≼ᵃ d₂) (duration-≼ᵃ d₁)))
 ≼ᵃ-antisym₀ refl refl (skip-op {o = x} d₁) q =
   ⊥-elim (no-room x (≤-trans (duration-≼ᵃ q) (duration-≼ᵃ d₁)))
-≼ᵃ-antisym₀ refl refl (bank-delay d₁) (skip-op {o = x} d₂) =
-  ⊥-elim (no-room x (≤-trans (duration-≼ᵃ (bank-delay d₁)) (duration-≼ᵃ d₂)))
+≼ᵃ-antisym₀ refl refl p₁@(bank-delay d₁) (skip-op {o = x} d₂) =
+  ⊥-elim (no-room x (≤-trans (duration-≼ᵃ p₁) (duration-≼ᵃ d₂)))
 
 -- two leading delays
 
 ≼ᵃ-antisym₀ refl refl
-  (bank-delay {t⁻ = ε⁻} (use-delay le₁ _))
+  (bank-delay {e = y} {t⁻ = ε⁻} (use-delay {d = x} le₁ _))
   (bank-delay {t⁻ = ε⁻} (use-delay le₂ _)) =
-  cong (λ x → delay x ε⁻) (same-delay le₁ le₂)
+  cong (λ x → delay x ε⁻) (same-delay {x} {y} le₁ le₂)
 
 ≼ᵃ-antisym₀ refl refl
-  (bank-delay {t⁻ = operation⁻ b _} (use-delay le₁ _))
+  (bank-delay {e = y} {t⁻ = operation⁻ b _} (use-delay {d = x} le₁ _))
   (bank-delay {t⁻ = ε⁻} (use-delay le₂ (use-op le₃ _))) =
-  ⊥-elim (no-budget b (subst (costʰⁱ b ≤_) (∣∣⁺-∸≡0 le₂ le₁) le₃))
+  ⊥-elim (no-budget b (subst (costʰⁱ b ≤_) (∣∣⁺-∸≡0 {y} {x} le₂ le₁) le₃))
 
 ≼ᵃ-antisym₀ refl refl
   (bank-delay {e = e} {t⁻ = operation⁻ b t''} (skip-op d₁))
-  (bank-delay {t⁻ = ε⁻} d₂) =
+  p₂@(bank-delay {t⁻ = ε⁻} d₂) =
   ⊥-elim (no-room b
     (subst (_≤ duration t'' + ∣ e ∣⁺)
            (shift ∣ e ∣⁺ (costʰⁱ b) (duration t''))
-           (≤-trans (duration-≼ᵃ (bank-delay d₂)) (duration-slack d₁))))
+           (≤-trans (duration-≼ᵃ p₂) (duration-slack d₁))))
 
 ≼ᵃ-antisym₀ refl refl
-  (bank-delay {t⁻ = ε⁻} (use-delay le₁ (use-op le₃ _)))
+  (bank-delay {e = y} {t⁻ = ε⁻} (use-delay {d = x} le₁ (use-op le₃ _)))
   (bank-delay {t⁻ = operation⁻ a _} (use-delay le₂ _)) =
-  ⊥-elim (no-budget a (subst (costʰⁱ a ≤_) (∣∣⁺-∸≡0 le₁ le₂) le₃))
+  ⊥-elim (no-budget a (subst (costʰⁱ a ≤_) (∣∣⁺-∸≡0 {x} {y} le₁ le₂) le₃))
 
 ≼ᵃ-antisym₀ refl refl
-  (bank-delay {t⁻ = ε⁻} d₁)
+  p₁@(bank-delay {t⁻ = ε⁻} d₁)
   (bank-delay {e = d} {t⁻ = operation⁻ a s''} (skip-op d₂)) =
   ⊥-elim (no-room a
     (subst (_≤ duration s'' + ∣ d ∣⁺)
            (shift ∣ d ∣⁺ (costʰⁱ a) (duration s''))
-           (≤-trans (duration-≼ᵃ (bank-delay d₁)) (duration-slack d₂))))
+           (≤-trans (duration-≼ᵃ p₁) (duration-slack d₂))))
 
 ≼ᵃ-antisym₀ refl refl
   (bank-delay {e = e} {t⁻ = operation⁻ b t''} (skip-op d₁))
-  (bank-delay {t⁻ = operation⁻ _ _} d₂) =
+  p₂@(bank-delay {t⁻ = operation⁻ _ _} d₂) =
   ⊥-elim (no-room b
     (subst (_≤ duration t'' + ∣ e ∣⁺)
            (shift ∣ e ∣⁺ (costʰⁱ b) (duration t''))
-           (≤-trans (duration-≼ᵃ (bank-delay d₂)) (duration-slack d₁))))
+           (≤-trans (duration-≼ᵃ p₂) (duration-slack d₁))))
 
 ≼ᵃ-antisym₀ refl refl
-  (bank-delay {t⁻ = operation⁻ _ _} (use-delay le₁ r₁))
+  p₁@(bank-delay {e = y} {t⁻ = operation⁻ _ _} (use-delay {d = x} le₁ r₁))
   (bank-delay {e = d} {t⁻ = operation⁻ a s''} (skip-op d₂)) =
   ⊥-elim (no-room a
     (subst (_≤ duration s'' + ∣ d ∣⁺)
            (shift ∣ d ∣⁺ (costʰⁱ a) (duration s''))
-           (≤-trans (duration-≼ᵃ (bank-delay (use-delay le₁ r₁)))
+           (≤-trans (duration-≼ᵃ p₁)
                     (duration-slack d₂))))
 
 ≼ᵃ-antisym₀ refl refl
-  (bank-delay {t⁻ = operation⁻ _ _} (use-delay le₁ r₁))
+  (bank-delay {e = y} {t⁻ = operation⁻ _ _} (use-delay {d = x} le₁ r₁))
   (bank-delay {t⁻ = operation⁻ _ _} (use-delay le₂ r₂)) =
-  cong₂ delay (same-delay le₁ le₂)
-              (inj⁻-inj (≼ᵃ-antisym₀ (∣∣⁺-∸≡0 le₁ le₂) (∣∣⁺-∸≡0 le₂ le₁) r₁ r₂))
+  cong₂ delay (same-delay {x} {y} le₁ le₂)
+              (inj⁻-inj (≼ᵃ-antisym₀ (∣∣⁺-∸≡0 {x} {y} le₁ le₂) (∣∣⁺-∸≡0 {y} {x} le₂ le₁) r₁ r₂))
 
 ≼ᵃ-antisym : {s t : Trace} → s ≼ᵃ t → t ≼ᵃ s → s ≡ t
 ≼ᵃ-antisym = ≼ᵃ-antisym₀ refl refl

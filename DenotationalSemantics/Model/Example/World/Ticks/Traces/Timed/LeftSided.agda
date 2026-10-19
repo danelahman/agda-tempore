@@ -28,6 +28,8 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.LeftSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -45,7 +47,7 @@ open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Durations Op
+open import Syntax.Grades.Traces.Durations ℕᵀ Op
 open import Syntax.Grades.Traces.Coverage Op costˡᵒ using (duration-≼ᶜ)
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided

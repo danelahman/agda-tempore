@@ -18,6 +18,8 @@
 
 open import Data.Nat using (ℕ; _+_; _≤_; z≤n)
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module DenotationalSemantics.Model.Example.World.TraceHistory.Time.TwoSidedWithInfinity
   (Op : Set) (c : Op → ℕ) where
 
@@ -29,8 +31,8 @@ open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
   using (Interval∞; [_,_]; min; max; _·ᵢ_; _≾ᵢ_; two-sided-intervals-with-∞;
          ℕ∞; ↑_; ∞; _+∞_; _≤∞_; +∞-mono-≤∞; ≤∞-refl; ≤∞-trans; ≤∞-irrelevant)
 
-open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.Traces.Durations Op
+open import Syntax.Grades.Traces.Base ℕᵀ Op
+open import Syntax.Grades.Traces.Durations ℕᵀ Op
 open Durations c
 
 open import Util.Equality
