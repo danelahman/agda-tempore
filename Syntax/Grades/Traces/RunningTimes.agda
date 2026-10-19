@@ -2,11 +2,12 @@
 -- Running times of operations, and the costs they give.              --
 --                                                                    --
 -- Each operation runs for a duration in an interval of the time      --
--- domain, each end open or closed. An operation that takes some time --
--- for sure is one whose upper end lies above the point zero. The     --
--- trace orders read the closed hull of the interval: an operation is --
--- credited with its least running time, the lower end, and charged   --
--- its most, the upper end, which must therefore be finite.           --
+-- domain, each end open or closed. Every operation takes some time:  --
+-- its lower end lies at or above the cut just above zero, so the     --
+-- interval admits positive durations only. The trace orders read the --
+-- closed hull of the interval: an operation is credited with its     --
+-- least running time, the lower end, and charged its most, the upper --
+-- end, which must therefore be finite.                               --
 ------------------------------------------------------------------------
 
 open import Syntax.Durations using (Duration; TimeDomain)
@@ -32,8 +33,15 @@ record RunningTimes : Set where
   field
     rt         : Op → Interval
     rt-bounded : (o : Op) → Bounded (hi (rt o))
-    -- every operation takes some time: its upper end is above zero
-    rt-takes-time : (o : Op) → ¬ (hi (rt o) ⊑ʰ fin 0⁺)
+    -- every operation takes some time: its lower end is above zero
+    rt-positive : (o : Op) → 0⁺ ⊑ lo (rt o)
+
+  -- so its upper end is above zero too
+
+  rt-takes-time : (o : Op) → ¬ (hi (rt o) ⊑ʰ fin 0⁺)
+  rt-takes-time o with hi (rt o) | lo◁hi (rt o)
+  ... | fin c | p = λ q → ⊑-⊏-trans (rt-positive o) p q
+  ... | ∞     | _ = λ ()
 
   -- the closed hull, as costs
 

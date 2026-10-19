@@ -32,7 +32,7 @@ open import Syntax.Grades using (GradeMorphism)
 open import Syntax.Durations.Nat using (ℕᵀ)
 open import Syntax.Durations.NonNegativeRational using (ℚ≥0ᵀ)
 open import Syntax.Grades.Example.Time.Dense.TwoSided
-  using (Interval; [_,_]; ]_,_]; ↑_; _/_; #_; nonZero; fin; _⊑ʰ?_; 0⁺; hi)
+  using (Interval; [_,_]; ]_,_]; ↑_; _/_; #_; nonZero; _⊑?_; 0⁺; lo)
 
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; read; write; send)
@@ -54,9 +54,9 @@ running-times : RunningTimes
 running-times = record
   { rt            = rt
   ; rt-bounded    = λ { read → bounded _ ; write → bounded _ ; send → bounded _ }
-  ; rt-takes-time = λ { read  → toWitnessFalse {a? = hi (rt read)  ⊑ʰ? fin 0⁺} _
-                      ; write → toWitnessFalse {a? = hi (rt write) ⊑ʰ? fin 0⁺} _
-                      ; send  → toWitnessFalse {a? = hi (rt send)  ⊑ʰ? fin 0⁺} _ }
+  ; rt-positive   = λ { read  → toWitness {a? = 0⁺ ⊑? lo (rt read)} _
+                      ; write → toWitness {a? = 0⁺ ⊑? lo (rt write)} _
+                      ; send  → toWitness {a? = 0⁺ ⊑? lo (rt send)} _ }
   }
 
 open RunningTimes running-times using (costˡᵒ; costʰⁱ; costʰⁱ-pos)

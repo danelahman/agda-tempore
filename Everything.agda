@@ -182,6 +182,11 @@ import Syntax.Grades.Traces
 
 import Syntax.Grades.Regular
 
+---- Exact timed words: operations with exact running times, stretches
+---- admitting sets of operations, and the order of time-aligned fit
+
+import Syntax.Grades.Exact
+
 ---- Example grades and grade systems: time, sets of timed traces, counts,
 ---- security levels and their products, and the projections between them
 
