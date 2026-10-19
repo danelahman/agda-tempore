@@ -4,8 +4,11 @@
 
 module Syntax.Durations.Nat where
 
-open import Data.Nat.Base using (ℕ; _+_)
-open import Data.Nat.Properties using (+-identityʳ; +-assoc)
+open import Data.Nat.Base using (ℕ; _+_; _≤_; _∸_)
+open import Data.Nat.Properties
+  using (+-identityʳ; +-assoc; +-comm; +-cancelˡ-≡; _≤?_; ≤-refl; ≤-trans;
+         ≤-antisym; ≤-total; m≤m+n; m+[n∸m]≡n)
+open import Data.Product using (_,_)
 
 open import Syntax.Durations
 
@@ -31,4 +34,20 @@ open import Util.Equality
   ; fromℕ-toℕ = λ _ → refl
   ; toℕ-0     = refl
   ; toℕ-+     = λ _ _ → refl
+  }
+
+-- the natural numbers under their usual order form a time domain
+
+ℕᵀ : TimeDomain ℕᴰ
+ℕᵀ = record
+  { +ᴰ-comm    = +-comm
+  ; +ᴰ-cancelˡ = λ m {n} {o} → +-cancelˡ-≡ m n o
+  ; _≤ᴰ_       = _≤_
+  ; _≤ᴰ?_      = _≤?_
+  ; ≤ᴰ-refl    = ≤-refl
+  ; ≤ᴰ-trans   = ≤-trans
+  ; ≤ᴰ-antisym = ≤-antisym
+  ; ≤ᴰ-total   = ≤-total
+  ; ≤ᴰ-+       = m≤m+n
+  ; diff       = λ {m} {n} p → n ∸ m , m+[n∸m]≡n p
   }

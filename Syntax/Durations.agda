@@ -7,8 +7,11 @@ module Syntax.Durations where
 open import Data.Empty using (⊥)
 open import Data.Nat.Base using (ℕ; zero; suc; _+_)
 open import Data.Nat.Properties using (suc-injective; m+n≡0⇒m≡0; m+n≡0⇒n≡0)
-open import Data.Product using (Σ; _,_)
+open import Data.Product using (Σ; _,_; _×_)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
+
+open import Relation.Binary.Definitions using (Decidable)
+open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
@@ -114,3 +117,42 @@ record Stepped (D : Duration) : Set where
   zero-sumʳ {τ} {τ'} e =
     toℕ-injective (trans (m+n≡0⇒n≡0 (toℕ τ) (trans (sym (toℕ-+ τ τ')) (trans (cong toℕ e) toℕ-0)))
                          (sym toℕ-0))
+
+
+-- Time domains: durations that are compared and subtracted. A time
+-- domain is a commutative, cancellative monoid of durations with a
+-- decidable total order in which `τ ≤ τ'` exactly when `τ'` is `τ`
+-- followed by some further duration -- the positive cone of a totally
+-- ordered abelian group. The difference, the truncated subtraction and
+-- the extremal operations are derived from these fields in
+-- `Durations.Monus`.
+
+record TimeDomain (D : Duration) : Set₁ where
+  open Duration D
+  infix 4 _≤ᴰ_ _≤ᴰ?_
+
+  field
+    +ᴰ-comm    : (τ τ' : Carrier) → τ +ᴰ τ' ≡ τ' +ᴰ τ
+    +ᴰ-cancelˡ : (τ : Carrier) {τ' τ'' : Carrier} → τ +ᴰ τ' ≡ τ +ᴰ τ'' → τ' ≡ τ''
+
+    _≤ᴰ_       : Carrier → Carrier → Set₀
+    _≤ᴰ?_      : Decidable _≤ᴰ_
+    ≤ᴰ-refl    : {τ : Carrier} → τ ≤ᴰ τ
+    ≤ᴰ-trans   : {τ τ' τ'' : Carrier} → τ ≤ᴰ τ' → τ' ≤ᴰ τ'' → τ ≤ᴰ τ''
+    ≤ᴰ-antisym : {τ τ' : Carrier} → τ ≤ᴰ τ' → τ' ≤ᴰ τ → τ ≡ τ'
+    ≤ᴰ-total   : (τ τ' : Carrier) → τ ≤ᴰ τ' ⊎ τ' ≤ᴰ τ
+
+    -- the order is the one the monoid induces: a summand is below the
+    -- sum, and what lies above `τ` is `τ` followed by a difference
+    ≤ᴰ-+       : (τ τ' : Carrier) → τ ≤ᴰ τ +ᴰ τ'
+    diff       : {τ τ' : Carrier} → τ ≤ᴰ τ' → Σ Carrier (λ κ → τ +ᴰ κ ≡ τ')
+
+
+-- Dense time domains: between two distinct durations lies a third
+
+Dense : {D : Duration} → TimeDomain D → Set₀
+Dense {D} T = {τ τ' : Carrier} → ¬ (τ' ≤ᴰ τ)
+            → Σ Carrier (λ τ'' → ¬ (τ'' ≤ᴰ τ) × ¬ (τ' ≤ᴰ τ''))
+  where
+    open Duration D
+    open TimeDomain T
