@@ -18,23 +18,30 @@
 
 open import Data.Nat.Base using (ℕ)
 
-module Syntax.Grades.Traces.Allowance (Op : Set) (costʰⁱ : Op → ℕ) where
+open import Syntax.Durations using (Duration; TimeDomain)
+
+module Syntax.Grades.Traces.Allowance
+  {D : Duration} (T : TimeDomain D) (Op : Set) (costʰⁱ : Op → Duration.Carrier D) where
+
+open import Syntax.Durations.Monus T as M
+  using (Carrier; 0ᴰ; +-∸-assoc; +-∸-comm; ∸-+-assoc)
+open M.Notation
 
 -- The relation itself, and its preorder structure: reflexivity at any
 -- budget, weakening to more budget, and transitivity adding the
 -- budgets.
 
-open import Syntax.Grades.Traces.Allowance.Core Op costʰⁱ public
+open import Syntax.Grades.Traces.Allowance.Core T Op costʰⁱ public
 
 -- The moves that lift the head-wise rules to the trace operations, up
 -- to monotonicity of the trace product.
 
-open import Syntax.Grades.Traces.Allowance.Moves Op costʰⁱ public
+open import Syntax.Grades.Traces.Allowance.Moves T Op costʰⁱ public
 
 -- How the order bounds durations, and what the empty bound permits.
 
-open import Syntax.Grades.Traces.Allowance.Duration Op costʰⁱ public
+open import Syntax.Grades.Traces.Allowance.Duration T Op costʰⁱ public
 
 -- The decision procedure, given decidable equality of operation names.
 
-open import Syntax.Grades.Traces.Allowance.Decidable Op costʰⁱ public
+open import Syntax.Grades.Traces.Allowance.Decidable T Op costʰⁱ public

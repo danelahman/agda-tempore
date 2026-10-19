@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
 -- The budget-indexed allowance relation, and its preorder structure.  --
 --                                                                    --
--- `s ≼ᵃ[ k ] t` reads: the bound `t` permits the run `s`, given `k`    --
--- units of budget already banked. Read as a bound `t` and a run `s`:   --
+-- `s ≼ᵃ[ k ] t` reads: the bound `t` permits the run `s`, given a      --
+-- budget `k` already banked. Read as a bound `t` and a run `s`:        --
 --                                                                    --
 --   * an operation the bound names is permitted outright (`keep`),     --
 --     and one the bound does not name is paid for out of budget, at    --
@@ -29,10 +29,7 @@
 -- lives in the sibling modules.                                       --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; zero; suc; _+_; _∸_; _≤_)
-open import Data.Nat.Properties
-  using (+-comm; +-assoc; +-identityʳ; ≤-trans; m≤m+n; m≤n+m; +-∸-comm;
-         m+n∸n≡m; m+[n∸m]≡n; m∸n+n≡m; +-monoʳ-≤; ∸-+-assoc; +-∸-assoc)
+open import Data.Nat.Base using (ℕ; zero; suc)
 
 open import Util.Equality
 
@@ -40,23 +37,28 @@ open import Util.Equality
 -- and by the map `costʰⁱ` giving each operation the most time it can
 -- take, that being what a bound must budget for.
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
-module Syntax.Grades.Traces.Allowance.Core (Op : Set) (costʰⁱ : Op → ℕ) where
+module Syntax.Grades.Traces.Allowance.Core
+  {D : Duration} (T : TimeDomain D) (Op : Set) (costʰⁱ : Op → Duration.Carrier D) where
 
-open import Syntax.Grades.Traces.Base ℕᵀ Op
+open import Syntax.Durations.Monus T as M
+  using (Carrier; 0ᴰ; +-∸-assoc; +-∸-comm; ∸-+-assoc)
+open M.Notation
+
+open import Syntax.Grades.Traces.Base T Op
 
 -- the slack arithmetic and the size measure are the same for either
 -- order on traces, so they are shared rather than restated
 
-open import Syntax.Grades.Traces.Slack ℕᵀ Op public
+open import Syntax.Grades.Traces.Slack T Op public
 
 ------------------------------------------------------------------------
 -- The relation
 
 infix 4 _≼ᵃ[_]_
 
-data _≼ᵃ[_]_ : Trace → ℕ → Trace → Set where
+data _≼ᵃ[_]_ : Trace → Carrier → Trace → Set where
 
   -- the empty run is permitted by every bound
   nil        : ∀ {k t}
@@ -66,7 +68,7 @@ data _≼ᵃ[_]_ : Trace → ℕ → Trace → Set where
   -- an operation the bound names is permitted outright -- and the
   -- budget banked up to here does NOT cross the match
   keep       : ∀ {k o s t}
-             → s ≼ᵃ[ 0 ] t
+             → s ≼ᵃ[ 0ᴰ ] t
              --------------------------------------
              → operation o s ≼ᵃ[ k ] operation o t
 
@@ -102,7 +104,7 @@ data _≼ᵃ[_]_ : Trace → ℕ → Trace → Set where
 infix 4 _≼ᵃ_
 
 _≼ᵃ_ : Trace → Trace → Set
-s ≼ᵃ t = s ≼ᵃ[ 0 ] t
+s ≼ᵃ t = s ≼ᵃ[ 0ᴰ ] t
 
 -- rewriting the budget along an equation (the endpoints are fixed, so
 -- this is just transport and avoids leaving them as metavariables)
@@ -136,7 +138,7 @@ mutual
 -- A matched operation discards the budget anyway, so that case has
 -- nothing to weaken.
 
-weaken : ∀ {j s t} (m : ℕ) → s ≼ᵃ[ j ] t → s ≼ᵃ[ j + m ] t
+weaken : ∀ {j s t} (m : Carrier) → s ≼ᵃ[ j ] t → s ≼ᵃ[ j + m ] t
 weaken m nil                          = nil
 weaken m (keep d)                     = keep d
 weaken m (skip-op d)                  = skip-op (weaken m d)
@@ -158,9 +160,10 @@ weaken {j} m (use-op {o = o} p d')    =
 
 ≼ᵃ-trans : ∀ {j k s t u} → s ≼ᵃ[ j ] t → t ≼ᵃ[ k ] u → s ≼ᵃ[ j + k ] u
 ≼ᵃ-trans nil                       _                       = nil
-≼ᵃ-trans (keep d1)                 (keep d2)               = keep (≼ᵃ-trans d1 d2)
+≼ᵃ-trans (keep d1)                 (keep d2)               =
+  keep (coe (+-identityʳ 0ᴰ) (≼ᵃ-trans d1 d2))
 ≼ᵃ-trans {j} {k} (skip-op d1)      (keep d2)               =
-  skip-op (coe (trans (+-assoc j 0 k) (cong (j +_) refl))
+  skip-op (coe (trans (+-assoc j 0ᴰ k) (cong (j +_) (+-identityˡ k)))
                (weaken k (≼ᵃ-trans d1 d2)))
 ≼ᵃ-trans d1                        (skip-op d2)            = skip-op (≼ᵃ-trans d1 d2)
 ≼ᵃ-trans {j} {k} d1                (bank-delay {e = e} d2) =
@@ -168,7 +171,7 @@ weaken {j} m (use-op {o = o} p d')    =
 ≼ᵃ-trans {j} {k} (keep d1)         (use-op {o = o} p d2)   =
   use-op (≤-trans p (m≤n+m k j))
          (coe (trans (+-comm (k ∸ costʰⁱ o) j) (sym (+-∸-assoc j p)))
-              (weaken j (≼ᵃ-trans d1 d2)))
+              (weaken j (coe (+-identityˡ (k ∸ costʰⁱ o)) (≼ᵃ-trans d1 d2))))
 ≼ᵃ-trans {j} {k} (skip-op d1)      (use-op {o = o} p d2)   =
   coe (trans (+-assoc j (k ∸ costʰⁱ o) (costʰⁱ o))
              (cong (j +_) (m∸n+n≡m p)))

@@ -54,14 +54,14 @@ open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
-open import Syntax.Grades.Traces.Coverage Op costˡᵒ
+open import Syntax.Grades.Traces.Coverage ℕᵀ Op costˡᵒ
   using (_≼ᶜ_; ≼ᶜ-refl; ≼ᶜ-trans) renaming (mono-∙ to mono-∙ᶜ)
-open import Syntax.Grades.Traces.Coverage.Decidable Op costˡᵒ
+open import Syntax.Grades.Traces.Coverage.Decidable ℕᵀ Op costˡᵒ
   using (module DecCoverage)
 
-open import Syntax.Grades.Traces.Allowance Op costʰⁱ
+open import Syntax.Grades.Traces.Allowance ℕᵀ Op costʰⁱ
   using (_≼ᵃ_; ≼ᵃ-refl; ≼ᵃ-trans) renaming (mono-∙ to mono-∙ᵃ)
-open import Syntax.Grades.Traces.Allowance.Decidable Op costʰⁱ
+open import Syntax.Grades.Traces.Allowance.Decidable ℕᵀ Op costʰⁱ
   using (module DecAllowance)
 
 open import Syntax.Grades.Example.Traces.Timed.TwoSided

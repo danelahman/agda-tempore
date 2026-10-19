@@ -17,27 +17,21 @@
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
-open import Data.Nat.Base using (ℕ; zero; suc; _≤_; z≤n; s≤s)
-open import Data.Nat.Properties using (≤-trans; 1+n≰n; n≤1+n; n≮0)
+open import Data.Nat.Base using (ℕ; zero; suc; s≤s; z≤n; _≤_)
+open import Data.Nat.Properties using (1+n≰n; n≤1+n; n≮0; ≤-trans)
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
-module Syntax.Grades.Traces.Coverage.Antisym (Op : Set) (costˡᵒ : Op → ℕ) where
+module Syntax.Grades.Traces.Coverage.Antisym
+  {D : Duration} (T : TimeDomain D) (Op : Set) (costˡᵒ : Op → Duration.Carrier D) where
 
-open import Syntax.Grades.Traces.Base ℕᵀ Op hiding (∣∣⁺-∸≡0)
+open import Syntax.Durations.Monus T as M
+  using (Carrier; 0ᴰ; _+ᴰ_; _∸ᴰ_; _≤ᴰ_; ≤ᴰ-trans; ≤ᴰ-reflexive; +ᴰ-identityˡ)
 
-import Data.Nat.Base as ℕ
-import Data.Nat.Properties as ℕ
-
--- two delays that bound each other leave nothing when one is taken
--- from the other
-
-∣∣⁺-∸≡0 : {d e : D⁺} → ∣ d ∣⁺ ≤ ∣ e ∣⁺ → ∣ e ∣⁺ ≤ ∣ d ∣⁺ → ∣ e ∣⁺ ℕ.∸ ∣ d ∣⁺ ≡ 0
-∣∣⁺-∸≡0 {d} {e} le₁ le₂ =
-  trans (cong (∣ e ∣⁺ ℕ.∸_) (ℕ.≤-antisym le₁ le₂)) (ℕ.n∸n≡0 ∣ e ∣⁺)
-open import Syntax.Grades.Traces.Coverage Op costˡᵒ
+open import Syntax.Grades.Traces.Base T Op
+open import Syntax.Grades.Traces.Coverage T Op costˡᵒ
 
 ------------------------------------------------------------------------
 -- The measure
@@ -69,13 +63,28 @@ ops-≼ᶜ (del-delay {t⁻ = t⁻} d)   = subst (_ ≤_) (ops-inj⁻ t⁻) (ops
 ops-≼ᶜ (use-delay {s⁻ = s⁻} _ d) = subst (_≤ _) (ops-inj⁻ s⁻) (ops-≼ᶜ d)
 
 ------------------------------------------------------------------------
+-- Delays met against an empty slack
+
+-- banked onto an empty slack, a delay is its own slack
+
+banked : ∀ {a b} → a ≤ᴰ 0ᴰ +ᴰ b → a ≤ᴰ b
+banked {a} {b} le = ≤ᴰ-trans le (≤ᴰ-reflexive (+ᴰ-identityˡ b))
+
+-- two delays met against each other leave nothing over
+
+spent : {d e : D⁺} → ∣ d ∣⁺ ≤ᴰ 0ᴰ +ᴰ ∣ e ∣⁺ → ∣ e ∣⁺ ≤ᴰ 0ᴰ +ᴰ ∣ d ∣⁺
+      → (0ᴰ +ᴰ ∣ e ∣⁺) ∸ᴰ ∣ d ∣⁺ ≡ 0ᴰ
+spent {d} {e} le₁ le₂ =
+  trans (cong (_∸ᴰ ∣ d ∣⁺) (+ᴰ-identityˡ ∣ e ∣⁺)) (∣∣⁺-∸≡0 {d} {e} (banked le₁) (banked le₂))
+
+------------------------------------------------------------------------
 -- Antisymmetry
 --
 -- Stated at an arbitrary pair of slacks so that the recursion under two
 -- matched delays can pass on the slack they leave, which the equations
--- `j ≡ 0`, `k ≡ 0` pin to zero.
+-- `j ≡ 0ᴰ`, `k ≡ 0ᴰ` pin to zero.
 
-≼ᶜ-antisym₀ : ∀ {j k s t} → j ≡ 0 → k ≡ 0
+≼ᶜ-antisym₀ : ∀ {j k s t} → j ≡ 0ᴰ → k ≡ 0ᴰ
             → s ≼ᶜ[ j ] t → t ≼ᶜ[ k ] s → s ≡ t
 
 -- slack zero leaves no delay to spend
@@ -110,7 +119,7 @@ ops-≼ᶜ (use-delay {s⁻ = s⁻} _ d) = subst (_≤ _) (ops-inj⁻ s⁻) (ops
 ≼ᶜ-antisym₀ refl refl
   (del-delay {e = y} {t⁻ = ε⁻} (use-delay {d = x} le₁ _))
   (del-delay {t⁻ = ε⁻} (use-delay le₂ _)) =
-  cong (λ x → delay x ε⁻) (same-delay {x} {y} le₁ le₂)
+  cong (λ x → delay x ε⁻) (same-delay {x} {y} (banked le₁) (banked le₂))
 ≼ᶜ-antisym₀ refl refl
   (del-delay {t⁻ = operation⁻ _ _} _)
   (del-delay {t⁻ = ε⁻} d₂) = ⊥-elim (n≮0 (ops-≼ᶜ d₂))
@@ -128,8 +137,8 @@ ops-≼ᶜ (use-delay {s⁻ = s⁻} _ d) = subst (_≤ _) (ops-inj⁻ s⁻) (ops
 ≼ᶜ-antisym₀ refl refl
   (del-delay {e = y} {t⁻ = operation⁻ _ _} (use-delay {d = x} le₁ r₁))
   (del-delay {t⁻ = operation⁻ _ _} (use-delay le₂ r₂)) =
-  cong₂ delay (same-delay {x} {y} le₁ le₂)
-              (inj⁻-inj (≼ᶜ-antisym₀ (∣∣⁺-∸≡0 {x} {y} le₁ le₂) (∣∣⁺-∸≡0 {y} {x} le₂ le₁) r₁ r₂))
+  cong₂ delay (same-delay {x} {y} (banked le₁) (banked le₂))
+              (inj⁻-inj (≼ᶜ-antisym₀ (spent {x} {y} le₁ le₂) (spent {y} {x} le₂ le₁) r₁ r₂))
 
 ≼ᶜ-antisym : {s t : Trace} → s ≼ᶜ t → t ≼ᶜ s → s ≡ t
 ≼ᶜ-antisym = ≼ᶜ-antisym₀ refl refl

@@ -48,7 +48,7 @@ open import Data.Product using (_,_)
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Durations ℕᵀ Op
-open import Syntax.Grades.Traces.Coverage Op costˡᵒ using (duration-≼ᶜ)
+open import Syntax.Grades.Traces.Coverage ℕᵀ Op costˡᵒ using (duration-≼ᶜ)
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ

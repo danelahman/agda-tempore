@@ -20,22 +20,24 @@
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
-open import Data.Nat.Base using (ℕ; zero; suc; _+_; _∸_; _≤_; _<_; z≤n; s≤s)
-open import Data.Nat.Properties
-  using (≤-refl; ≤-trans; ≤-reflexive; +-assoc; +-comm; +-identityʳ;
-         +-monoʳ-≤; +-monoˡ-≤; m≤m+n; m≤n+m; m+[n∸m]≡n; n≤0⇒n≡0)
+open import Data.Nat.Base using (ℕ; zero; suc; s≤s)
 
 open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
-module Syntax.Grades.Traces.Allowance.Duration (Op : Set) (costʰⁱ : Op → ℕ) where
+module Syntax.Grades.Traces.Allowance.Duration
+  {D : Duration} (T : TimeDomain D) (Op : Set) (costʰⁱ : Op → Duration.Carrier D) where
 
-open import Syntax.Grades.Traces.Base ℕᵀ Op
-open import Syntax.Grades.Traces.Durations ℕᵀ Op
-open import Syntax.Grades.Traces.Allowance.Core Op costʰⁱ
+open import Syntax.Durations.Monus T as M
+  using (Carrier; 0ᴰ; +-∸-assoc; +-∸-comm; ∸-+-assoc)
+open M.Notation
+
+open import Syntax.Grades.Traces.Base T Op
+open import Syntax.Grades.Traces.Durations T Op
+open import Syntax.Grades.Traces.Allowance.Core T Op costʰⁱ
 
 open Durations costʰⁱ
 
@@ -45,14 +47,14 @@ open Durations costʰⁱ
 -- moving what the bound's head contributes out of its duration and into
 -- the budget the premise carries
 
-lem-front : (d k e : ℕ) → d + (k + e) ≡ (e + d) + k
+lem-front : (d k e : Carrier) → d + (k + e) ≡ (e + d) + k
 lem-front d k e =
   trans (cong (d +_) (+-comm k e))
         (trans (sym (+-assoc d e k)) (cong (_+ k) (+-comm d e)))
 
 -- what the run's head spends moves past the bound's duration
 
-lem-past : (a b e : ℕ) → a + (b + e) ≡ b + (a + e)
+lem-past : (a b e : Carrier) → a + (b + e) ≡ b + (a + e)
 lem-past a b e =
   trans (sym (+-assoc a b e))
         (trans (cong (_+ e) (+-comm a b)) (+-assoc b a e))
@@ -121,11 +123,7 @@ duration-≼ᵃ {s} {t} p =
 -- With no budget there is nothing to pay a delay or an unnamed
 -- operation with, and the empty bound names nothing to keep or skip.
 
-0≮0 : ¬ (0 < 0)
-0≮0 ()
-
-≼ᵃ-ε-inv : ((o : Op) → 0 < costʰⁱ o) → {s : Trace} → s ≼ᵃ ε → s ≡ ε
+≼ᵃ-ε-inv : ((o : Op) → ¬ (costʰⁱ o ≡ 0ᴰ)) → {s : Trace} → s ≼ᵃ ε → s ≡ ε
 ≼ᵃ-ε-inv pos nil                      = refl
 ≼ᵃ-ε-inv pos (use-delay {d = d} le _) = ⊥-elim (∣∣⁺-pos d le)
-≼ᵃ-ε-inv pos (use-op {o = o} le _)    =
-  ⊥-elim (0≮0 (subst (0 <_) (n≤0⇒n≡0 le) (pos o)))
+≼ᵃ-ε-inv pos (use-op {o = o} le _)    = ⊥-elim (pos o (n≤0⇒n≡0 le))

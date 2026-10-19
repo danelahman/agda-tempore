@@ -25,6 +25,8 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Example.System.Counts.Timed.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -45,7 +47,7 @@ open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Syntax.Grades
 
-open import Syntax.Grades.Traces.Allowance.Core Op costʰⁱ
+open import Syntax.Grades.Traces.Allowance.Core ℕᵀ Op costʰⁱ
   using (_≼ᵃ[_]_; nil; bank-delay; use-op)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided

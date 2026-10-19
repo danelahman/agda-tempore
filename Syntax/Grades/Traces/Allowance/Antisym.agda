@@ -18,32 +18,26 @@
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
-open import Data.Nat.Base using (ℕ; zero; suc; _+_; _≤_; _<_)
-open import Data.Nat.Properties using (≤-trans; 1+n≰n; +-monoˡ-≤; +-comm; n≮0)
+open import Data.Nat.Base using (ℕ; zero; suc)
+open import Data.Nat.Properties using (1+n≰n; n≮0)
 
 open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
 module Syntax.Grades.Traces.Allowance.Antisym
-  (Op : Set) (costʰⁱ : Op → ℕ)
-  (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
+  {D : Duration} (T : TimeDomain D) (Op : Set) (costʰⁱ : Op → Duration.Carrier D)
+  (costʰⁱ-pos : (o : Op) → ¬ (costʰⁱ o ≡ Duration.0ᴰ D)) where
 
-open import Syntax.Grades.Traces.Base ℕᵀ Op hiding (∣∣⁺-∸≡0)
+open import Syntax.Durations.Monus T as M
+  using (Carrier; 0ᴰ; +-∸-assoc; +-∸-comm; ∸-+-assoc)
+open M.Notation
 
-import Data.Nat.Base as ℕ
-import Data.Nat.Properties as ℕ
-
--- two delays that bound each other leave nothing when one is taken
--- from the other
-
-∣∣⁺-∸≡0 : {d e : D⁺} → ∣ d ∣⁺ ≤ ∣ e ∣⁺ → ∣ e ∣⁺ ≤ ∣ d ∣⁺ → ∣ e ∣⁺ ℕ.∸ ∣ d ∣⁺ ≡ 0
-∣∣⁺-∸≡0 {d} {e} le₁ le₂ =
-  trans (cong (∣ e ∣⁺ ℕ.∸_) (ℕ.≤-antisym le₁ le₂)) (ℕ.n∸n≡0 ∣ e ∣⁺)
-open import Syntax.Grades.Traces.Durations ℕᵀ Op
-open import Syntax.Grades.Traces.Allowance Op costʰⁱ
+open import Syntax.Grades.Traces.Base T Op
+open import Syntax.Grades.Traces.Durations T Op
+open import Syntax.Grades.Traces.Allowance T Op costʰⁱ
 
 open Durations costʰⁱ using (duration; duration⁻)
 
@@ -52,27 +46,45 @@ open Durations costʰⁱ using (duration; duration⁻)
 
 -- an operation fits into no room at all
 
-no-room : (x : Op) {n : ℕ} → costʰⁱ x + n ≤ n → ⊥
-no-room x {n} le = 1+n≰n (≤-trans (+-monoˡ-≤ n (costʰⁱ-pos x)) le)
+no-room : (x : Op) {n : Carrier} → costʰⁱ x + n ≤ n → ⊥
+no-room x {n} le =
+  costʰⁱ-pos x
+    (n≤0⇒n≡0 (M.+ᴰ-cancelʳ-≤ n (≤-trans le (≤-reflexive (sym (+-identityˡ n))))))
 
 -- and is not paid for out of an empty budget
 
-no-budget : (x : Op) → ¬ (costʰⁱ x ≤ 0)
-no-budget x le = n≮0 (≤-trans (costʰⁱ-pos x) le)
+no-budget : (x : Op) → ¬ (costʰⁱ x ≤ 0ᴰ)
+no-budget x le = costʰⁱ-pos x (n≤0⇒n≡0 le)
 
 -- moving a banked delay past the head of the bound
 
-shift : (a b c : ℕ) → a + (b + c) ≡ b + (c + a)
+shift : (a b c : Carrier) → a + (b + c) ≡ b + (c + a)
 shift a b c = trans (lem-past a b c) (cong (b +_) (+-comm a c))
+
+-- banked onto an empty budget, a delay is its own budget
+
+banked : ∀ {a b} → a ≤ 0ᴰ + b → a ≤ b
+banked {a} {b} le = ≤-trans le (≤-reflexive (+-identityˡ b))
+
+slack₀ : ∀ {b s t} → s ≼ᵃ[ 0ᴰ + b ] t → duration s ≤ duration t + b
+slack₀ {b} {t = t} p =
+  ≤-trans (duration-slack p) (≤-reflexive (cong (duration t +_) (+-identityˡ b)))
+
+-- two delays banked against each other leave nothing over
+
+spent : {d e : D⁺} → ∣ d ∣⁺ ≤ 0ᴰ + ∣ e ∣⁺ → ∣ e ∣⁺ ≤ 0ᴰ + ∣ d ∣⁺
+      → (0ᴰ + ∣ e ∣⁺) ∸ ∣ d ∣⁺ ≡ 0ᴰ
+spent {d} {e} le₁ le₂ =
+  trans (cong (_∸ ∣ d ∣⁺) (+-identityˡ ∣ e ∣⁺)) (∣∣⁺-∸≡0 {d} {e} (banked le₁) (banked le₂))
 
 ------------------------------------------------------------------------
 -- Antisymmetry
 --
 -- Stated at an arbitrary pair of budgets so that the recursion under
 -- two matched delays can pass on the budget they leave, which the
--- equations `j ≡ 0`, `k ≡ 0` pin to zero.
+-- equations `j ≡ 0ᴰ`, `k ≡ 0ᴰ` pin to zero.
 
-≼ᵃ-antisym₀ : ∀ {j k s t} → j ≡ 0 → k ≡ 0
+≼ᵃ-antisym₀ : ∀ {j k s t} → j ≡ 0ᴰ → k ≡ 0ᴰ
             → s ≼ᵃ[ j ] t → t ≼ᵃ[ k ] s → s ≡ t
 
 -- at budget zero nothing can be spent
@@ -108,12 +120,12 @@ shift a b c = trans (lem-past a b c) (cong (b +_) (+-comm a c))
 ≼ᵃ-antisym₀ refl refl
   (bank-delay {e = y} {t⁻ = ε⁻} (use-delay {d = x} le₁ _))
   (bank-delay {t⁻ = ε⁻} (use-delay le₂ _)) =
-  cong (λ x → delay x ε⁻) (same-delay {x} {y} le₁ le₂)
+  cong (λ x → delay x ε⁻) (same-delay {x} {y} (banked le₁) (banked le₂))
 
 ≼ᵃ-antisym₀ refl refl
   (bank-delay {e = y} {t⁻ = operation⁻ b _} (use-delay {d = x} le₁ _))
   (bank-delay {t⁻ = ε⁻} (use-delay le₂ (use-op le₃ _))) =
-  ⊥-elim (no-budget b (subst (costʰⁱ b ≤_) (∣∣⁺-∸≡0 {y} {x} le₂ le₁) le₃))
+  ⊥-elim (no-budget b (subst (costʰⁱ b ≤_) (spent {y} {x} le₂ le₁) le₃))
 
 ≼ᵃ-antisym₀ refl refl
   (bank-delay {e = e} {t⁻ = operation⁻ b t''} (skip-op d₁))
@@ -121,12 +133,12 @@ shift a b c = trans (lem-past a b c) (cong (b +_) (+-comm a c))
   ⊥-elim (no-room b
     (subst (_≤ duration t'' + ∣ e ∣⁺)
            (shift ∣ e ∣⁺ (costʰⁱ b) (duration t''))
-           (≤-trans (duration-≼ᵃ p₂) (duration-slack d₁))))
+           (≤-trans (duration-≼ᵃ p₂) (slack₀ d₁))))
 
 ≼ᵃ-antisym₀ refl refl
   (bank-delay {e = y} {t⁻ = ε⁻} (use-delay {d = x} le₁ (use-op le₃ _)))
   (bank-delay {t⁻ = operation⁻ a _} (use-delay le₂ _)) =
-  ⊥-elim (no-budget a (subst (costʰⁱ a ≤_) (∣∣⁺-∸≡0 {x} {y} le₁ le₂) le₃))
+  ⊥-elim (no-budget a (subst (costʰⁱ a ≤_) (spent {x} {y} le₁ le₂) le₃))
 
 ≼ᵃ-antisym₀ refl refl
   p₁@(bank-delay {t⁻ = ε⁻} d₁)
@@ -134,7 +146,7 @@ shift a b c = trans (lem-past a b c) (cong (b +_) (+-comm a c))
   ⊥-elim (no-room a
     (subst (_≤ duration s'' + ∣ d ∣⁺)
            (shift ∣ d ∣⁺ (costʰⁱ a) (duration s''))
-           (≤-trans (duration-≼ᵃ p₁) (duration-slack d₂))))
+           (≤-trans (duration-≼ᵃ p₁) (slack₀ d₂))))
 
 ≼ᵃ-antisym₀ refl refl
   (bank-delay {e = e} {t⁻ = operation⁻ b t''} (skip-op d₁))
@@ -142,7 +154,7 @@ shift a b c = trans (lem-past a b c) (cong (b +_) (+-comm a c))
   ⊥-elim (no-room b
     (subst (_≤ duration t'' + ∣ e ∣⁺)
            (shift ∣ e ∣⁺ (costʰⁱ b) (duration t''))
-           (≤-trans (duration-≼ᵃ p₂) (duration-slack d₁))))
+           (≤-trans (duration-≼ᵃ p₂) (slack₀ d₁))))
 
 ≼ᵃ-antisym₀ refl refl
   p₁@(bank-delay {e = y} {t⁻ = operation⁻ _ _} (use-delay {d = x} le₁ r₁))
@@ -151,13 +163,13 @@ shift a b c = trans (lem-past a b c) (cong (b +_) (+-comm a c))
     (subst (_≤ duration s'' + ∣ d ∣⁺)
            (shift ∣ d ∣⁺ (costʰⁱ a) (duration s''))
            (≤-trans (duration-≼ᵃ p₁)
-                    (duration-slack d₂))))
+                    (slack₀ d₂))))
 
 ≼ᵃ-antisym₀ refl refl
   (bank-delay {e = y} {t⁻ = operation⁻ _ _} (use-delay {d = x} le₁ r₁))
   (bank-delay {t⁻ = operation⁻ _ _} (use-delay le₂ r₂)) =
-  cong₂ delay (same-delay {x} {y} le₁ le₂)
-              (inj⁻-inj (≼ᵃ-antisym₀ (∣∣⁺-∸≡0 {x} {y} le₁ le₂) (∣∣⁺-∸≡0 {y} {x} le₂ le₁) r₁ r₂))
+  cong₂ delay (same-delay {x} {y} (banked le₁) (banked le₂))
+              (inj⁻-inj (≼ᵃ-antisym₀ (spent {x} {y} le₁ le₂) (spent {y} {x} le₂ le₁) r₁ r₂))
 
 ≼ᵃ-antisym : {s t : Trace} → s ≼ᵃ t → t ≼ᵃ s → s ≡ t
 ≼ᵃ-antisym = ≼ᵃ-antisym₀ refl refl

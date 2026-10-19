@@ -352,3 +352,78 @@ _⊓ᴰ_ : Carrier → Carrier → Carrier
 ⊓-glb {τ''} {τ} {τ'} p q with τ ≤ᴰ? τ'
 ... | yes _ = p
 ... | no _  = q
+
+------------------------------------------------------------------------
+-- The arithmetic under the names the standard library gives it on ℕ,
+-- with the same argument conventions, for developments that read
+-- durations the way they read numbers of steps
+
+module Notation where
+
+  infixl 6 _+_ _∸_
+  infix  4 _≤_ _≤?_ _<_
+
+  _+_ _∸_ : Carrier → Carrier → Carrier
+  _+_ = _+ᴰ_
+  _∸_ = _∸ᴰ_
+
+  _≤_ _<_ : Carrier → Carrier → Set₀
+  _≤_ = _≤ᴰ_
+  _<_ = _<ᴰ_
+
+  _≤?_ : Decidable _≤_
+  _≤?_ = _≤ᴰ?_
+
+  +-assoc : (m n o : Carrier) → (m + n) + o ≡ m + (n + o)
+  +-assoc = +ᴰ-assoc
+
+  +-comm : (m n : Carrier) → m + n ≡ n + m
+  +-comm = +ᴰ-comm
+
+  +-identityˡ : (m : Carrier) → 0ᴰ + m ≡ m
+  +-identityˡ = +ᴰ-identityˡ
+
+  +-identityʳ : (m : Carrier) → m + 0ᴰ ≡ m
+  +-identityʳ = +ᴰ-identityʳ
+
+  +-monoʳ-≤ : (n : Carrier) → m ≤ o → n + m ≤ n + o
+  +-monoʳ-≤ = +ᴰ-monoʳ-≤
+
+  +-monoˡ-≤ : (n : Carrier) → m ≤ o → m + n ≤ o + n
+  +-monoˡ-≤ = +ᴰ-monoˡ-≤
+
+  +-mono-≤ : m ≤ n → τ ≤ τ' → m + τ ≤ n + τ'
+  +-mono-≤ = +ᴰ-mono-≤
+
+  ≤-refl : τ ≤ τ
+  ≤-refl = ≤ᴰ-refl
+
+  ≤-reflexive : τ ≡ τ' → τ ≤ τ'
+  ≤-reflexive = ≤ᴰ-reflexive
+
+  ≤-trans : τ ≤ τ' → τ' ≤ τ'' → τ ≤ τ''
+  ≤-trans = ≤ᴰ-trans
+
+  m≤m+n : (m n : Carrier) → m ≤ m + n
+  m≤m+n = ≤ᴰ-+
+
+  m≤n+m : (m n : Carrier) → m ≤ n + m
+  m≤n+m = ≤ᴰ-+ˡ
+
+  m+[n∸m]≡n : m ≤ n → m + (n ∸ m) ≡ n
+  m+[n∸m]≡n = +-∸
+
+  m∸n+n≡m : n ≤ m → (m ∸ n) + n ≡ m
+  m∸n+n≡m = ∸-+
+
+  m+n∸n≡m : (m n : Carrier) → (m + n) ∸ n ≡ m
+  m+n∸n≡m = m+n∸n
+
+  n∸n≡0 : (n : Carrier) → n ∸ n ≡ 0ᴰ
+  n∸n≡0 = ∸-self
+
+  n≤0⇒n≡0 : n ≤ 0ᴰ → n ≡ 0ᴰ
+  n≤0⇒n≡0 = ≤0⇒≡0
+
+  z≤n : 0ᴰ ≤ n
+  z≤n {n} = 0ᴰ-least n

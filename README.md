@@ -198,8 +198,9 @@ operations.
 
 - The two cost-sensitive orders on traces are in
   `Syntax/Grades/Traces/Allowance/` and `Syntax/Grades/Traces/Coverage/`. Both
-  are parameterised by a cost model `cost : Op → ℕ` and proceed by induction
-  with a running number of time units, whose arithmetic is in `Slack.agda`;
+  are parameterised by a time domain and a cost model `cost : Op → D` and
+  proceed by induction with a running duration banked, whose arithmetic is in
+  `Slack.agda` over the monus of `Syntax/Durations/Monus.agda`;
   each has `Core`, `Moves`, `Decidable` and `Duration` submodules,
   `Antisym.agda` proving antisymmetry and `AsOrder.agda` giving a
   `TraceOrder`. The allowance order further assumes that every operation has a

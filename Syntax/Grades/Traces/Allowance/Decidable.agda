@@ -17,28 +17,34 @@
 -- as a parameter.                                                     --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; zero; suc; _+_; _∸_; _≤_; s≤s)
-open import Data.Nat.Properties
-  using (≤-refl; ≤-trans; +-monoʳ-≤; _≤?_; +-suc; n≤1+n)
+open import Data.Nat.Base using (ℕ; zero; suc; s≤s)
+open import Data.Nat.Properties using (+-suc; n≤1+n)
+import Data.Nat.Base as ℕ
+import Data.Nat.Properties as ℕ
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary using (Dec; yes; no)
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
-module Syntax.Grades.Traces.Allowance.Decidable (Op : Set) (costʰⁱ : Op → ℕ) where
+module Syntax.Grades.Traces.Allowance.Decidable
+  {D : Duration} (T : TimeDomain D) (Op : Set) (costʰⁱ : Op → Duration.Carrier D) where
 
-open import Syntax.Grades.Traces.Base ℕᵀ Op
+open import Syntax.Durations.Monus T as M
+  using (Carrier; 0ᴰ; +-∸-assoc; +-∸-comm; ∸-+-assoc)
+open M.Notation
 
-open import Syntax.Grades.Traces.Allowance.Core Op costʰⁱ
-open import Syntax.Grades.Traces.Allowance.Moves Op costʰⁱ using (bank-delay-inv)
+open import Syntax.Grades.Traces.Base T Op
+
+open import Syntax.Grades.Traces.Allowance.Core T Op costʰⁱ
+open import Syntax.Grades.Traces.Allowance.Moves T Op costʰⁱ using (bank-delay-inv)
 
 module DecAllowance (_≟ₒ_ : DecidableEquality Op) where
 
-  dec : (n : ℕ) (s : Trace) (k : ℕ) (t : Trace)
-      → size s + size t ≤ n → Dec (s ≼ᵃ[ k ] t)
+  dec : (n : ℕ) (s : Trace) (k : Carrier) (t : Trace)
+      → size s ℕ.+ size t ℕ.≤ n → Dec (s ≼ᵃ[ k ] t)
 
   -- the empty run is permitted by every bound
   dec n ε k t le = yes nil
@@ -56,7 +62,7 @@ module DecAllowance (_≟ₒ_ : DecidableEquality Op) where
   -- match -- and matching carries no budget across
   dec (suc n) (operation o s') k (operation o' t') (s≤s le)
     with dec n (operation o s') k t'
-               (subst (_≤ n) (+-suc (size s') (size t')) le)
+               (subst (ℕ._≤ n) (+-suc (size s') (size t')) le)
   ... | yes d = yes (skip-op d)
   ... | no ¬d
           with costʰⁱ o ≤? k
@@ -68,8 +74,8 @@ module DecAllowance (_≟ₒ_ : DecidableEquality Op) where
                                  ; (skip-op d)   → ¬d d
                                  ; (use-op _ d') → ¬d' d' })
   ...           | yes refl
-                    with dec n s' 0 t'
-                             (≤-trans (+-monoʳ-≤ (size s') (n≤1+n (size t'))) le)
+                    with dec n s' 0ᴰ t'
+                             (ℕ.≤-trans (ℕ.+-monoʳ-≤ (size s') (n≤1+n (size t'))) le)
   ...               | yes d'' = yes (keep d'')
   ...               | no ¬d'' = no (λ { (keep d'')    → ¬d'' d''
                                       ; (skip-op d)   → ¬d d
@@ -80,8 +86,8 @@ module DecAllowance (_≟ₒ_ : DecidableEquality Op) where
                          ; (skip-op d)  → ¬d d
                          ; (use-op p _) → ¬p p })
   ...   | yes refl
-            with dec n s' 0 t'
-                     (≤-trans (+-monoʳ-≤ (size s') (n≤1+n (size t'))) le)
+            with dec n s' 0ᴰ t'
+                     (ℕ.≤-trans (ℕ.+-monoʳ-≤ (size s') (n≤1+n (size t'))) le)
   ...       | yes d'' = yes (keep d'')
   ...       | no ¬d'' = no (λ { (keep d'')   → ¬d'' d''
                               ; (skip-op d)  → ¬d d
@@ -90,8 +96,8 @@ module DecAllowance (_≟ₒ_ : DecidableEquality Op) where
   -- a leading delay of the bound: banked, and that settles it
   dec (suc n) (operation o s') k (delay e t⁻) (s≤s le)
     with dec n (operation o s') (k + ∣ e ∣⁺) (inj⁻ t⁻)
-               (subst (λ z → suc (size s') + z ≤ n) (sym (size-inj⁻ t⁻))
-                      (subst (_≤ n) (+-suc (size s') (size⁻ t⁻)) le))
+               (subst (λ z → suc (size s') ℕ.+ z ℕ.≤ n) (sym (size-inj⁻ t⁻))
+                      (subst (ℕ._≤ n) (+-suc (size s') (size⁻ t⁻)) le))
   ... | yes d  = yes (bank-delay d)
   ... | no ¬d = no (λ deriv → ¬d (bank-delay-inv deriv))
 
@@ -101,21 +107,21 @@ module DecAllowance (_≟ₒ_ : DecidableEquality Op) where
   ... | no ¬p = no (λ { (use-delay p _) → ¬p p })
   ... | yes p
           with dec n (inj⁻ s⁻) (k ∸ ∣ d ∣⁺) ε
-                   (subst (λ z → z + size ε ≤ n) (sym (size-inj⁻ s⁻)) le)
+                   (subst (λ z → z ℕ.+ size ε ℕ.≤ n) (sym (size-inj⁻ s⁻)) le)
   ...     | yes d'  = yes (use-delay p d')
   ...     | no ¬d' = no (λ { (use-delay _ d') → ¬d' d' })
 
   -- a delay of the run against an operation of the bound
   dec (suc n) (delay d s⁻) k (operation o' t') (s≤s le)
     with dec n (delay d s⁻) k t'
-               (subst (_≤ n) (+-suc (size⁻ s⁻) (size t')) le)
+               (subst (ℕ._≤ n) (+-suc (size⁻ s⁻) (size t')) le)
   ... | yes d'' = yes (skip-op d'')
   ... | no ¬d'' with ∣ d ∣⁺ ≤? k
   ...   | no ¬p = no (λ { (use-delay p _) → ¬p p
                         ; (skip-op d'')   → ¬d'' d'' })
   ...   | yes p
             with dec n (inj⁻ s⁻) (k ∸ ∣ d ∣⁺) (operation o' t')
-                     (subst (λ z → z + suc (size t') ≤ n) (sym (size-inj⁻ s⁻)) le)
+                     (subst (λ z → z ℕ.+ suc (size t') ℕ.≤ n) (sym (size-inj⁻ s⁻)) le)
   ...       | yes d'  = yes (use-delay p d')
   ...       | no ¬d' = no (λ { (use-delay _ d') → ¬d' d'
                              ; (skip-op d'')    → ¬d'' d'' })
@@ -123,8 +129,8 @@ module DecAllowance (_≟ₒ_ : DecidableEquality Op) where
   -- a delay of the run against one of the bound
   dec (suc n) (delay d s⁻) k (delay e t⁻) (s≤s le)
     with dec n (delay d s⁻) (k + ∣ e ∣⁺) (inj⁻ t⁻)
-               (subst (λ z → suc (size⁻ s⁻) + z ≤ n) (sym (size-inj⁻ t⁻))
-                      (subst (_≤ n) (+-suc (size⁻ s⁻) (size⁻ t⁻)) le))
+               (subst (λ z → suc (size⁻ s⁻) ℕ.+ z ℕ.≤ n) (sym (size-inj⁻ t⁻))
+                      (subst (ℕ._≤ n) (+-suc (size⁻ s⁻) (size⁻ t⁻)) le))
   ... | yes d'' = yes (bank-delay d'')
   ... | no ¬d'' = no (λ deriv → ¬d'' (bank-delay-inv deriv))
 
@@ -132,12 +138,12 @@ module DecAllowance (_≟ₒ_ : DecidableEquality Op) where
 
   infix 4 _≼ᵃ[_]?_
 
-  _≼ᵃ[_]?_ : (s : Trace) (k : ℕ) (t : Trace) → Dec (s ≼ᵃ[ k ] t)
-  s ≼ᵃ[ k ]? t = dec (size s + size t) s k t ≤-refl
+  _≼ᵃ[_]?_ : (s : Trace) (k : Carrier) (t : Trace) → Dec (s ≼ᵃ[ k ] t)
+  s ≼ᵃ[ k ]? t = dec (size s ℕ.+ size t) s k t ℕ.≤-refl
 
   -- the time-strict allowance order proper (no budget)
 
   infix 4 _≼ᵃ?_
 
   _≼ᵃ?_ : (s t : Trace) → Dec (s ≼ᵃ t)
-  s ≼ᵃ? t = s ≼ᵃ[ 0 ]? t
+  s ≼ᵃ? t = s ≼ᵃ[ 0ᴰ ]? t

@@ -39,9 +39,9 @@ open import Data.Nat.Base using (_≤_; z≤n)
 open import Data.Nat.Properties using (≤-trans; +-monoʳ-≤; m≤n+m)
 
 open import Syntax.Grades.Traces.Base ℕᵀ Op
-open import Syntax.Grades.Traces.Coverage.Core Op costˡᵒ
+open import Syntax.Grades.Traces.Coverage.Core ℕᵀ Op costˡᵒ
 open import Syntax.Grades.Traces.Coverage.AsOrder
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
   using (coverageOrder)
 
 open import Syntax.Grades.Example.Counts.Occurrences Op index

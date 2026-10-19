@@ -18,10 +18,7 @@
 -- `_≼ᶜ_ = _≼ᶜ[ 0 ]_`, so it is the instance the grades need.          --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; zero; suc; _+_; _∸_; _≤_)
-open import Data.Nat.Properties
-  using (+-comm; +-assoc; +-identityʳ; ≤-trans; m≤m+n; m+[n∸m]≡n;
-         m∸n+n≡m; +-∸-comm)
+open import Data.Nat.Base using (ℕ; zero; suc)
 
 open import Data.Empty using (⊥-elim)
 
@@ -29,17 +26,21 @@ open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
-module Syntax.Grades.Traces.Coverage.Moves (Op : Set) (costˡᵒ : Op → ℕ) where
+module Syntax.Grades.Traces.Coverage.Moves
+  {D : Duration} (T : TimeDomain D) (Op : Set) (costˡᵒ : Op → Duration.Carrier D) where
 
-open import Syntax.Grades.Traces.Base ℕᵀ Op
+open import Syntax.Durations.Monus T as M
+  using (Carrier; 0ᴰ; +-∸-assoc; +-∸-comm; ∸-+-assoc)
+open M.Notation
 
--- the arithmetic helpers are about `ℕ` alone, so they are shared with
+open import Syntax.Grades.Traces.Base T Op
+
+-- the arithmetic helpers are about durations alone, so they are shared with
 -- the allowance order rather than restated
 
-
-open import Syntax.Grades.Traces.Coverage.Core Op costˡᵒ
+open import Syntax.Grades.Traces.Coverage.Core T Op costˡᵒ
 
 ------------------------------------------------------------------------
 -- Nothing meets a demand that names an operation once the run is spent
@@ -120,12 +121,12 @@ prepend-left t (use-delay {s⁻ = operation⁻ o s''} p d') = ⊥-elim (op-⋠�
 -- Monotonicity of the trace product, second slack pinned to zero
 --
 -- With the second slack zero there is nothing to swap past, so no case
--- does any slack arithmetic. The `keep` case recurses at slack zero,
+-- does slack arithmetic beyond adding zero. The `keep` case recurses at slack zero,
 -- which is precisely where the rule puts it.
 
 mono-∙ : ∀ {j s s' t t'}
-       → s ≼ᶜ[ j ] s' → t ≼ᶜ[ 0 ] t' → (s ∙ t) ≼ᶜ[ j ] (s' ∙ t')
-mono-∙ {j} {s' = s'} nil D2 = pad-left s' (weaken j D2)
+       → s ≼ᶜ[ j ] s' → t ≼ᶜ[ 0ᴰ ] t' → (s ∙ t) ≼ᶜ[ j ] (s' ∙ t')
+mono-∙ {j} {s' = s'} nil D2 = pad-left s' (coe (+-identityˡ j) (weaken j D2))
 mono-∙ (keep d1) D2 = keep (mono-∙ d1 D2)
 mono-∙ (pay-op d1) D2 = pay-op (mono-∙ d1 D2)
 mono-∙ {j} (del-delay {e = e} {t⁻ = ε⁻} d1) D2 =
@@ -133,6 +134,6 @@ mono-∙ {j} (del-delay {e = e} {t⁻ = ε⁻} d1) D2 =
     (coe (+-identityʳ (j + ∣ e ∣⁺)) (≼ᶜ-trans (prepend-left _ d1) D2))
 mono-∙ (del-delay {t⁻ = operation⁻ o s'''} d1) D2 = del-delay (mono-∙ d1 D2)
 mono-∙ {j} {s' = s'} (use-delay {d = d} {s⁻ = ε⁻} p d1) D2 =
-  spendL d _ p (pad-left s' (weaken (j ∸ ∣ d ∣⁺) D2))
+  spendL d _ p (pad-left s' (coe (+-identityˡ (j ∸ ∣ d ∣⁺)) (weaken (j ∸ ∣ d ∣⁺) D2)))
 mono-∙ (use-delay {s⁻ = operation⁻ o s''} p d1) D2 =
   use-delay p (mono-∙ d1 D2)

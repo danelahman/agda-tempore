@@ -18,21 +18,28 @@
 
 open import Data.Nat.Base using (ℕ)
 
-module Syntax.Grades.Traces.Coverage (Op : Set) (costˡᵒ : Op → ℕ) where
+open import Syntax.Durations using (Duration; TimeDomain)
+
+module Syntax.Grades.Traces.Coverage
+  {D : Duration} (T : TimeDomain D) (Op : Set) (costˡᵒ : Op → Duration.Carrier D) where
+
+open import Syntax.Durations.Monus T as M
+  using (Carrier; 0ᴰ; +-∸-assoc; +-∸-comm; ∸-+-assoc)
+open M.Notation
 
 -- The relation itself, and its preorder structure: reflexivity at any
 -- slack, weakening to more slack, and transitivity adding the slacks.
 
-open import Syntax.Grades.Traces.Coverage.Core Op costˡᵒ public
+open import Syntax.Grades.Traces.Coverage.Core T Op costˡᵒ public
 
 -- The moves, with monotonicity of the trace product in its pinned form.
 
-open import Syntax.Grades.Traces.Coverage.Moves Op costˡᵒ public
+open import Syntax.Grades.Traces.Coverage.Moves T Op costˡᵒ public
 
 -- How the order bounds durations, and what a spent run covers.
 
-open import Syntax.Grades.Traces.Coverage.Duration Op costˡᵒ public
+open import Syntax.Grades.Traces.Coverage.Duration T Op costˡᵒ public
 
 -- The decision procedure, given decidable equality of operation names.
 
-open import Syntax.Grades.Traces.Coverage.Decidable Op costˡᵒ public
+open import Syntax.Grades.Traces.Coverage.Decidable T Op costˡᵒ public

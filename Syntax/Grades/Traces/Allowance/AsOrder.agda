@@ -11,7 +11,7 @@
 -- the empty run, and so what the grades' zero-product law rests on.   --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; _<_)
+open import Data.Nat.Base using (ℕ)
 
 open import Level using () renaming (zero to lzero)
 
@@ -21,18 +21,24 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Relation.Nullary using (¬_)
+
+open import Syntax.Durations using (Duration; TimeDomain)
 
 module Syntax.Grades.Traces.Allowance.AsOrder
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  {D : Duration} (T : TimeDomain D) (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
-  (costʰⁱ : Op → ℕ)
-  (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
+  (costʰⁱ : Op → Duration.Carrier D)
+  (costʰⁱ-pos : (o : Op) → ¬ (costʰⁱ o ≡ Duration.0ᴰ D)) where
 
-open import Syntax.Grades.Traces.Order ℕᵀ Op
-open import Syntax.Grades.Traces.Allowance Op costʰⁱ
-open import Syntax.Grades.Traces.Allowance.Antisym Op costʰⁱ costʰⁱ-pos
+open import Syntax.Durations.Monus T as M
+  using (Carrier; 0ᴰ; +-∸-assoc; +-∸-comm; ∸-+-assoc)
+open M.Notation
+
+open import Syntax.Grades.Traces.Order T Op
+open import Syntax.Grades.Traces.Allowance T Op costʰⁱ
+open import Syntax.Grades.Traces.Allowance.Antisym T Op costʰⁱ costʰⁱ-pos
 
 open DecAllowance _≟ₒ_ using (_≼ᵃ?_)
 
@@ -41,7 +47,7 @@ allowancePartialOrder = record
   { _≼_       = _≼ᵃ_
   ; _≼?_      = _≼ᵃ?_
   ; ≼-refl    = ≼ᵃ-refl
-  ; ≼-trans   = ≼ᵃ-trans
+  ; ≼-trans   = λ p q → coe (+-identityʳ 0ᴰ) (≼ᵃ-trans p q)
   ; ≼-antisym = ≼ᵃ-antisym
   ; mono-∙    = mono-∙
   }

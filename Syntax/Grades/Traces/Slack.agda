@@ -1,16 +1,14 @@
 ------------------------------------------------------------------------
 -- The slack arithmetic the trace orders share.                        --
 --                                                                    --
--- Both orders on timed traces carry a natural number of banked time   --
+-- Both orders on timed traces carry a duration of banked time        --
 -- and shuffle it about as they walk the two traces, and both are      --
 -- decided by recursion on a fuel budget bounding the combined size of  --
 -- those traces. None of that depends on the rules, so it is collected  --
 -- here rather than restated in each.                                  --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; zero; suc; _+_; _∸_; _≤_)
-open import Data.Nat.Properties
-  using (+-comm; +-assoc; +-monoʳ-≤; m+n∸n≡m; ∸-+-assoc)
+open import Data.Nat.Base using (ℕ; zero; suc)
 
 open import Util.Equality
 
@@ -20,25 +18,28 @@ module Syntax.Grades.Traces.Slack {D : Duration} (T : TimeDomain D) (Op : Set) w
 
 open import Syntax.Grades.Traces.Base T Op
 
+open import Syntax.Durations.Monus T as M using (Carrier; ∸-+-assoc)
+open M.Notation
+
 ------------------------------------------------------------------------
 -- Small arithmetic helpers
 
 -- swapping the two trailing summands
 
-lem-swap : (a b c : ℕ) → (a + b) + c ≡ (a + c) + b
+lem-swap : (a b c : Carrier) → (a + b) + c ≡ (a + c) + b
 lem-swap a b c =
   trans (+-assoc a b c)
         (trans (cong (a +_) (+-comm b c)) (sym (+-assoc a c b)))
 
 -- cancelling a common summand under truncated subtraction
 
-∸-cancel : (m d e : ℕ) → (m + d) ∸ (d + e) ≡ m ∸ e
+∸-cancel : (m d e : Carrier) → (m + d) ∸ (d + e) ≡ m ∸ e
 ∸-cancel m d e =
   trans (sym (∸-+-assoc (m + d) d e)) (cong (_∸ e) (m+n∸n≡m m d))
 
 -- monotonicity used when bumping a leading delay
 
-≤-bump : (D E m : ℕ) → E ≤ m → D + E ≤ m + D
+≤-bump : (D E m : Carrier) → E ≤ m → D + E ≤ m + D
 ≤-bump D E m E≤m = subst (D + E ≤_) (+-comm D m) (+-monoʳ-≤ D E≤m)
 
 ------------------------------------------------------------------------

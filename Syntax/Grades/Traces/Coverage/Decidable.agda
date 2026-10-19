@@ -11,28 +11,33 @@
 -- about traces, not about either relation.                             --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; zero; suc; _+_; _∸_; _≤_; s≤s)
-open import Data.Nat.Properties
-  using (≤-refl; ≤-trans; +-monoʳ-≤; _≤?_; +-suc; n≤1+n)
+open import Data.Nat.Base using (ℕ; zero; suc; s≤s)
+open import Data.Nat.Properties using (+-suc; n≤1+n)
+import Data.Nat.Base as ℕ
+import Data.Nat.Properties as ℕ
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary using (Dec; yes; no)
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
-module Syntax.Grades.Traces.Coverage.Decidable (Op : Set) (costˡᵒ : Op → ℕ) where
+module Syntax.Grades.Traces.Coverage.Decidable
+  {D : Duration} (T : TimeDomain D) (Op : Set) (costˡᵒ : Op → Duration.Carrier D) where
 
-open import Syntax.Grades.Traces.Base ℕᵀ Op
+open import Syntax.Durations.Monus T as M
+  using (Carrier; 0ᴰ; +-∸-assoc; +-∸-comm; ∸-+-assoc)
+open M.Notation
 
+open import Syntax.Grades.Traces.Base T Op
 
-open import Syntax.Grades.Traces.Coverage.Core Op costˡᵒ
+open import Syntax.Grades.Traces.Coverage.Core T Op costˡᵒ
 
 module DecCoverage (_≟ₒ_ : DecidableEquality Op) where
 
-  dec : (n : ℕ) (s : Trace) (k : ℕ) (t : Trace)
-      → size s + size t ≤ n → Dec (s ≼ᶜ[ k ] t)
+  dec : (n : ℕ) (s : Trace) (k : Carrier) (t : Trace)
+      → size s ℕ.+ size t ℕ.≤ n → Dec (s ≼ᶜ[ k ] t)
 
   -- the empty demand is met by any run
   dec n ε k t le = yes nil
@@ -45,14 +50,14 @@ module DecCoverage (_≟ₒ_ : DecidableEquality Op) where
   -- run's operation, or match it once the two symbols agree
   dec (suc n) (operation o s') k (operation o' t') (s≤s le)
     with dec n (operation o s') (k + costˡᵒ o') t'
-                (subst (_≤ n) (+-suc (size s') (size t')) le)
+                (subst (ℕ._≤ n) (+-suc (size s') (size t')) le)
   ... | yes d = yes (pay-op d)
   ... | no ¬d with o ≟ₒ o'
   ...   | no ¬eq = no (λ { (keep _)  → ¬eq refl
                          ; (pay-op d) → ¬d d })
   ...   | yes refl
-            with dec n s' 0 t'
-                     (≤-trans (+-monoʳ-≤ (size s') (n≤1+n (size t'))) le)
+            with dec n s' 0ᴰ t'
+                     (ℕ.≤-trans (ℕ.+-monoʳ-≤ (size s') (n≤1+n (size t'))) le)
   ...       | yes d' = yes (keep d')
   ...       | no ¬d' = no (λ { (keep d')  → ¬d' d'
                              ; (pay-op d) → ¬d d })
@@ -61,8 +66,8 @@ module DecCoverage (_≟ₒ_ : DecidableEquality Op) where
   -- banked, and nothing else can happen
   dec (suc n) (operation o s') k (delay e t⁻) (s≤s le)
     with dec n (operation o s') (k + ∣ e ∣⁺) (inj⁻ t⁻)
-               (subst (λ z → suc (size s') + z ≤ n) (sym (size-inj⁻ t⁻))
-                      (subst (_≤ n) (+-suc (size s') (size⁻ t⁻)) le))
+               (subst (λ z → suc (size s') ℕ.+ z ℕ.≤ n) (sym (size-inj⁻ t⁻))
+                      (subst (ℕ._≤ n) (+-suc (size s') (size⁻ t⁻)) le))
   ... | yes d  = yes (del-delay d)
   ... | no ¬d = no (λ { (del-delay d) → ¬d d })
 
@@ -72,7 +77,7 @@ module DecCoverage (_≟ₒ_ : DecidableEquality Op) where
   ... | no ¬p = no (λ { (use-delay p _) → ¬p p })
   ... | yes p
           with dec n (inj⁻ s⁻) (k ∸ ∣ d ∣⁺) ε
-                   (subst (λ z → z + size ε ≤ n) (sym (size-inj⁻ s⁻)) le)
+                   (subst (λ z → z ℕ.+ size ε ℕ.≤ n) (sym (size-inj⁻ s⁻)) le)
   ...     | yes d'  = yes (use-delay p d')
   ...     | no ¬d' = no (λ { (use-delay _ d') → ¬d' d' })
 
@@ -80,14 +85,14 @@ module DecCoverage (_≟ₒ_ : DecidableEquality Op) where
   -- of the slack, or bank the operation into it
   dec (suc n) (delay d s⁻) k (operation o' t') (s≤s le)
     with dec n (delay d s⁻) (k + costˡᵒ o') t'
-               (subst (_≤ n) (+-suc (size⁻ s⁻) (size t')) le)
+               (subst (ℕ._≤ n) (+-suc (size⁻ s⁻) (size t')) le)
   ... | yes d'' = yes (pay-op d'')
   ... | no ¬d'' with ∣ d ∣⁺ ≤? k
   ...   | no ¬p = no (λ { (use-delay p _) → ¬p p
                         ; (pay-op d'')    → ¬d'' d'' })
   ...   | yes p
             with dec n (inj⁻ s⁻) (k ∸ ∣ d ∣⁺) (operation o' t')
-                     (subst (λ z → z + suc (size t') ≤ n) (sym (size-inj⁻ s⁻)) le)
+                     (subst (λ z → z ℕ.+ suc (size t') ℕ.≤ n) (sym (size-inj⁻ s⁻)) le)
   ...       | yes d'  = yes (use-delay p d')
   ...       | no ¬d' = no (λ { (use-delay _ d') → ¬d' d'
                              ; (pay-op d'')     → ¬d'' d'' })
@@ -95,15 +100,15 @@ module DecCoverage (_≟ₒ_ : DecidableEquality Op) where
   -- a demanded delay against a delay of the run: pay or bank
   dec (suc n) (delay d s⁻) k (delay e t⁻) (s≤s le)
     with dec n (delay d s⁻) (k + ∣ e ∣⁺) (inj⁻ t⁻)
-               (subst (λ z → suc (size⁻ s⁻) + z ≤ n) (sym (size-inj⁻ t⁻))
-                      (subst (_≤ n) (+-suc (size⁻ s⁻) (size⁻ t⁻)) le))
+               (subst (λ z → suc (size⁻ s⁻) ℕ.+ z ℕ.≤ n) (sym (size-inj⁻ t⁻))
+                      (subst (ℕ._≤ n) (+-suc (size⁻ s⁻) (size⁻ t⁻)) le))
   ... | yes d'' = yes (del-delay d'')
   ... | no ¬d'' with ∣ d ∣⁺ ≤? k
   ...   | no ¬p = no (λ { (use-delay p _) → ¬p p
                         ; (del-delay d'') → ¬d'' d'' })
   ...   | yes p
             with dec n (inj⁻ s⁻) (k ∸ ∣ d ∣⁺) (delay e t⁻)
-                     (subst (λ z → z + suc (size⁻ t⁻) ≤ n) (sym (size-inj⁻ s⁻)) le)
+                     (subst (λ z → z ℕ.+ suc (size⁻ t⁻) ℕ.≤ n) (sym (size-inj⁻ s⁻)) le)
   ...       | yes d'  = yes (use-delay p d')
   ...       | no ¬d' = no (λ { (use-delay _ d') → ¬d' d'
                              ; (del-delay d'')  → ¬d'' d'' })
@@ -112,12 +117,12 @@ module DecCoverage (_≟ₒ_ : DecidableEquality Op) where
 
   infix 4 _≼ᶜ[_]?_
 
-  _≼ᶜ[_]?_ : (s : Trace) (k : ℕ) (t : Trace) → Dec (s ≼ᶜ[ k ] t)
-  s ≼ᶜ[ k ]? t = dec (size s + size t) s k t ≤-refl
+  _≼ᶜ[_]?_ : (s : Trace) (k : Carrier) (t : Trace) → Dec (s ≼ᶜ[ k ] t)
+  s ≼ᶜ[ k ]? t = dec (size s ℕ.+ size t) s k t ℕ.≤-refl
 
   -- the coverage order proper (no slack)
 
   infix 4 _≼ᶜ?_
 
   _≼ᶜ?_ : (s t : Trace) → Dec (s ≼ᶜ t)
-  s ≼ᶜ? t = s ≼ᶜ[ 0 ]? t
+  s ≼ᶜ? t = s ≼ᶜ[ 0ᴰ ]? t

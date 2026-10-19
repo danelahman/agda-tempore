@@ -21,6 +21,8 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module Syntax.Grades.Example.Traces.Timed.LeftSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -28,7 +30,7 @@ module Syntax.Grades.Example.Traces.Timed.LeftSided
   (costˡᵒ : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Coverage.AsOrder
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
   using (coverageOrder)
 
 open import Syntax.Grades.Example.Traces.Lifted.LeftSided

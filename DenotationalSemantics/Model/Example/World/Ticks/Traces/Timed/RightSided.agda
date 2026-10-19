@@ -58,7 +58,7 @@ open import Data.Unit using (⊤; tt)
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Durations ℕᵀ Op
-open import Syntax.Grades.Traces.Allowance Op costʰⁱ using (duration-≼ᵃ)
+open import Syntax.Grades.Traces.Allowance ℕᵀ Op costʰⁱ using (duration-≼ᵃ)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos

@@ -21,31 +21,34 @@
 -- `Allowance.Duration` supply both fields.                           --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; _≤_)
-open import Data.Nat.Properties using (≤-reflexive)
+open import Data.Nat.Base using (ℕ)
 
 open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
 module Syntax.Grades.Traces.Allowance.ZeroCost
-  (Op : Set) (costʰⁱ : Op → ℕ) where
+  {D : Duration} (T : TimeDomain D) (Op : Set) (costʰⁱ : Op → Duration.Carrier D) where
 
-open import Syntax.Grades.Traces.Base ℕᵀ Op
-open import Syntax.Grades.Traces.Allowance Op costʰⁱ
+open import Syntax.Durations.Monus T as M
+  using (Carrier; 0ᴰ; +-∸-assoc; +-∸-comm; ∸-+-assoc)
+open M.Notation
+
+open import Syntax.Grades.Traces.Base T Op
+open import Syntax.Grades.Traces.Allowance T Op costʰⁱ
 
 ------------------------------------------------------------------------
 -- What a free operation permits
 --
 -- One operation costing nothing is enough to exhibit the failure.
 
-module FreeOperation (o : Op) (free : costʰⁱ o ≡ 0) where
+module FreeOperation (o : Op) (free : costʰⁱ o ≡ 0ᴰ) where
 
   -- its execution time fits inside an empty budget
 
-  free≤0 : costʰⁱ o ≤ 0
+  free≤0 : costʰⁱ o ≤ 0ᴰ
   free≤0 = ≤-reflexive free
 
   -- so the spent bound `ε` permits the run that performs `o`

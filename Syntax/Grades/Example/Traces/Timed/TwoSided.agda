@@ -29,6 +29,9 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+open import Data.Nat.Properties using (<⇒≢)
+
 module Syntax.Grades.Example.Traces.Timed.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -38,14 +41,14 @@ module Syntax.Grades.Example.Traces.Timed.TwoSided
   (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
 
 open import Syntax.Grades.Traces.Coverage.AsOrder
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
   using (coverageOrder)
-open import Syntax.Grades.Traces.Coverage Op costˡᵒ using (duration-≼ᶜ)
+open import Syntax.Grades.Traces.Coverage ℕᵀ Op costˡᵒ using (duration-≼ᶜ)
 
 open import Syntax.Grades.Traces.Allowance.AsOrder
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
+  ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
   using (allowanceOrder)
-open import Syntax.Grades.Traces.Allowance Op costʰⁱ using (duration-≼ᵃ)
+open import Syntax.Grades.Traces.Allowance ℕᵀ Op costʰⁱ using (duration-≼ᵃ)
 
 open import Syntax.Grades.Example.Traces.Lifted.TwoSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤

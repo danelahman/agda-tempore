@@ -61,7 +61,7 @@ open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Durations ℕᵀ Op
 open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
-open import Syntax.Grades.Traces.Allowance Op costʰⁱ using (duration-≼ᵃ)
+open import Syntax.Grades.Traces.Allowance ℕᵀ Op costʰⁱ using (duration-≼ᵃ)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos

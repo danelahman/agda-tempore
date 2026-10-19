@@ -17,22 +17,24 @@
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
-open import Data.Nat.Base using (ℕ; zero; suc; _+_; _∸_; _≤_; z≤n)
-open import Data.Nat.Properties
-  using (≤-refl; ≤-trans; ≤-reflexive; +-assoc; +-comm; +-identityʳ;
-         +-monoʳ-≤; m≤m+n; m+[n∸m]≡n)
+open import Data.Nat.Base using (ℕ; zero; suc)
 
 open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
-module Syntax.Grades.Traces.Coverage.Duration (Op : Set) (costˡᵒ : Op → ℕ) where
+module Syntax.Grades.Traces.Coverage.Duration
+  {D : Duration} (T : TimeDomain D) (Op : Set) (costˡᵒ : Op → Duration.Carrier D) where
 
-open import Syntax.Grades.Traces.Base ℕᵀ Op
-open import Syntax.Grades.Traces.Durations ℕᵀ Op
-open import Syntax.Grades.Traces.Coverage.Core Op costˡᵒ
+open import Syntax.Durations.Monus T as M
+  using (Carrier; 0ᴰ; +-∸-assoc; +-∸-comm; ∸-+-assoc)
+open M.Notation
+
+open import Syntax.Grades.Traces.Base T Op
+open import Syntax.Grades.Traces.Durations T Op
+open import Syntax.Grades.Traces.Coverage.Core T Op costˡᵒ
 
 open Durations costˡᵒ
 
@@ -42,14 +44,14 @@ open Durations costˡᵒ
 -- moving what the run's head contributes out of its duration and into
 -- the slack the premise carries
 
-lem-front : (d k e : ℕ) → d + (k + e) ≡ (e + d) + k
+lem-front : (d k e : Carrier) → d + (k + e) ≡ (e + d) + k
 lem-front d k e =
   trans (cong (d +_) (+-comm k e))
         (trans (sym (+-assoc d e k)) (cong (_+ k) (+-comm d e)))
 
 -- what the guarantee spends moves past the run's duration
 
-lem-past : (a b e : ℕ) → a + (b + e) ≡ b + (a + e)
+lem-past : (a b e : Carrier) → a + (b + e) ≡ b + (a + e)
 lem-past a b e =
   trans (sym (+-assoc a b e))
         (trans (cong (_+ e) (+-comm a b)) (+-assoc b a e))

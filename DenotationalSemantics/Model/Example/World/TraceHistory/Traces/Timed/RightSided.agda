@@ -32,6 +32,8 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -48,9 +50,9 @@ open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Allowance Op costʰⁱ
+open import Syntax.Grades.Traces.Allowance ℕᵀ Op costʰⁱ
   using (_≼ᵃ_; ≼ᵃ-refl; ≼ᵃ-trans; mono-∙)
-open import Syntax.Grades.Traces.Allowance.Decidable Op costʰⁱ
+open import Syntax.Grades.Traces.Allowance.Decidable ℕᵀ Op costʰⁱ
   using (module DecAllowance)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided

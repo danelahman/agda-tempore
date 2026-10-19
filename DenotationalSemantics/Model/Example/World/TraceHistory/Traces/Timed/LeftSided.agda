@@ -30,6 +30,8 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
+open import Syntax.Durations.Nat using (ℕᵀ)
+
 module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.LeftSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
@@ -44,9 +46,9 @@ open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Coverage Op costˡᵒ
+open import Syntax.Grades.Traces.Coverage ℕᵀ Op costˡᵒ
   using (_≼ᶜ_; ≼ᶜ-refl; ≼ᶜ-trans; mono-∙)
-open import Syntax.Grades.Traces.Coverage.Decidable Op costˡᵒ
+open import Syntax.Grades.Traces.Coverage.Decidable ℕᵀ Op costˡᵒ
   using (module DecCoverage)
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided

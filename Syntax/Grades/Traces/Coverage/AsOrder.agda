@@ -20,17 +20,21 @@ open import Relation.Binary.Definitions
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
 module Syntax.Grades.Traces.Coverage.AsOrder
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  {D : Duration} (T : TimeDomain D) (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
-  (costˡᵒ : Op → ℕ) where
+  (costˡᵒ : Op → Duration.Carrier D) where
 
-open import Syntax.Grades.Traces.Order ℕᵀ Op
-open import Syntax.Grades.Traces.Coverage Op costˡᵒ
-open import Syntax.Grades.Traces.Coverage.Antisym Op costˡᵒ
+open import Syntax.Durations.Monus T as M
+  using (Carrier; 0ᴰ; +-∸-assoc; +-∸-comm; ∸-+-assoc)
+open M.Notation
+
+open import Syntax.Grades.Traces.Order T Op
+open import Syntax.Grades.Traces.Coverage T Op costˡᵒ
+open import Syntax.Grades.Traces.Coverage.Antisym T Op costˡᵒ
 
 open DecCoverage _≟ₒ_ using (_≼ᶜ?_)
 
@@ -39,7 +43,7 @@ coveragePartialOrder = record
   { _≼_       = _≼ᶜ_
   ; _≼?_      = _≼ᶜ?_
   ; ≼-refl    = ≼ᶜ-refl
-  ; ≼-trans   = ≼ᶜ-trans
+  ; ≼-trans   = λ p q → coe (+-identityʳ 0ᴰ) (≼ᶜ-trans p q)
   ; ≼-antisym = ≼ᶜ-antisym
   ; mono-∙    = mono-∙
   }

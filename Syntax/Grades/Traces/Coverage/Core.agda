@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
 -- The slack-indexed coverage relation, and its preorder structure.    --
 --                                                                     --
--- `s ≼ᶜ[ k ] t` reads: the run `t` covers the trace `s`, given `k`    --
--- units of slack already banked. Read as a guarantee `s` and an       --
+-- `s ≼ᶜ[ k ] t` reads: the run `t` covers the trace `s`, given a      --
+-- slack `k` already banked. Read as a guarantee `s` and an            --
 -- elapsed run `t`:                                                    --
 --                                                                     --
 --   * every operation `s` names must genuinely occur in `t`, in       --
@@ -26,30 +26,32 @@
 -- and the decision procedure -- lives in the sibling modules.         --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; zero; suc; _+_; _∸_; _≤_)
-open import Data.Nat.Properties
-  using (+-comm; +-assoc; +-identityʳ; ≤-trans; m≤m+n; m≤n+m; +-∸-comm;
-         m+[n∸m]≡n; m∸n+n≡m)
+open import Data.Nat.Base using (ℕ; zero; suc)
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
-module Syntax.Grades.Traces.Coverage.Core (Op : Set) (costˡᵒ : Op → ℕ) where
+module Syntax.Grades.Traces.Coverage.Core
+  {D : Duration} (T : TimeDomain D) (Op : Set) (costˡᵒ : Op → Duration.Carrier D) where
 
-open import Syntax.Grades.Traces.Base ℕᵀ Op
+open import Syntax.Durations.Monus T as M
+  using (Carrier; 0ᴰ; +-∸-assoc; +-∸-comm; ∸-+-assoc)
+open M.Notation
+
+open import Syntax.Grades.Traces.Base T Op
 
 -- the slack arithmetic and the size measure are shared with the other
 -- order on traces
 
-open import Syntax.Grades.Traces.Slack ℕᵀ Op public
+open import Syntax.Grades.Traces.Slack T Op public
 
 ------------------------------------------------------------------------
 -- The relation
 
 infix 4 _≼ᶜ[_]_
 
-data _≼ᶜ[_]_ : Trace → ℕ → Trace → Set where
+data _≼ᶜ[_]_ : Trace → Carrier → Trace → Set where
 
   -- the empty trace demands nothing, so anything meets it
   nil       : ∀ {k t}
@@ -59,7 +61,7 @@ data _≼ᶜ[_]_ : Trace → ℕ → Trace → Set where
   -- a demanded operation is met by the same operation occurring -- and
   -- the slack banked up to here does NOT cross the match
   keep      : ∀ {k o s t}
-            → s ≼ᶜ[ 0 ] t
+            → s ≼ᶜ[ 0ᴰ ] t
             --------------------------------------
             → operation o s ≼ᶜ[ k ] operation o t
 
@@ -87,7 +89,7 @@ data _≼ᶜ[_]_ : Trace → ℕ → Trace → Set where
 infix 4 _≼ᶜ_
 
 _≼ᶜ_ : Trace → Trace → Set
-s ≼ᶜ t = s ≼ᶜ[ 0 ] t
+s ≼ᶜ t = s ≼ᶜ[ 0ᴰ ] t
 
 -- rewriting the slack along an equation
 
@@ -120,7 +122,7 @@ mutual
 -- The `keep` case is now immediate: its premise does not mention the
 -- slack being weakened.
 
-weaken : ∀ {j s t} (m : ℕ) → s ≼ᶜ[ j ] t → s ≼ᶜ[ j + m ] t
+weaken : ∀ {j s t} (m : Carrier) → s ≼ᶜ[ j ] t → s ≼ᶜ[ j + m ] t
 weaken m nil                          = nil
 weaken m (keep d)                     = keep d
 weaken {j} m (pay-op {o = o} d)       =
@@ -148,7 +150,7 @@ del-op {k} {o} d = pay-op (weaken (costˡᵒ o) d)
 ≼ᶜ-trans nil _ = nil
 -- the demand keeps an operation, which the middle run has: both sides
 -- of the match are at slack zero, so the composite is too
-≼ᶜ-trans (keep d1) (keep d2) = keep (≼ᶜ-trans d1 d2)
+≼ᶜ-trans (keep d1) (keep d2) = keep (coe (+-identityʳ 0ᴰ) (≼ᶜ-trans d1 d2))
 ≼ᶜ-trans {j} {k} (keep d1) (pay-op {o = o} d2) =
   pay-op (coe (sym (+-assoc j k (costˡᵒ o))) (≼ᶜ-trans {j} (keep d1) d2))
 ≼ᶜ-trans {j} {k} (keep d1) (del-delay {e = e} d2) =

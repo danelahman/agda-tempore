@@ -25,20 +25,22 @@
 -- `_≼ᵃ_ = _≼ᵃ[ 0 ]_`, so it is the instance the grades need.          --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; zero; suc; _+_; _∸_; _≤_)
-open import Data.Nat.Properties
-  using (+-comm; +-assoc; +-identityʳ; ≤-trans; m≤m+n; m+[n∸m]≡n;
-         m∸n+n≡m; +-∸-comm)
+open import Data.Nat.Base using (ℕ; zero; suc)
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
+open import Syntax.Durations using (Duration; TimeDomain)
 
-module Syntax.Grades.Traces.Allowance.Moves (Op : Set) (costʰⁱ : Op → ℕ) where
+module Syntax.Grades.Traces.Allowance.Moves
+  {D : Duration} (T : TimeDomain D) (Op : Set) (costʰⁱ : Op → Duration.Carrier D) where
 
-open import Syntax.Grades.Traces.Base ℕᵀ Op
+open import Syntax.Durations.Monus T as M
+  using (Carrier; 0ᴰ; +-∸-assoc; +-∸-comm; ∸-+-assoc)
+open M.Notation
 
-open import Syntax.Grades.Traces.Allowance.Core Op costʰⁱ
+open import Syntax.Grades.Traces.Base T Op
+
+open import Syntax.Grades.Traces.Allowance.Core T Op costʰⁱ
 
 ------------------------------------------------------------------------
 -- Inversion of `bank-delay`
@@ -114,8 +116,8 @@ prepend-left t (use-delay {d = d} {s⁻ = operation⁻ o s} p d') =
 -- Monotonicity of the trace product, second budget pinned to zero
 
 mono-∙ : ∀ {j s s' t t'}
-       → s ≼ᵃ[ j ] s' → t ≼ᵃ[ 0 ] t' → (s ∙ t) ≼ᵃ[ j ] (s' ∙ t')
-mono-∙ {j} {s' = s'} nil D2 = pad-left s' (weaken j D2)
+       → s ≼ᵃ[ j ] s' → t ≼ᵃ[ 0ᴰ ] t' → (s ∙ t) ≼ᵃ[ j ] (s' ∙ t')
+mono-∙ {j} {s' = s'} nil D2 = pad-left s' (coe (+-identityˡ j) (weaken j D2))
 mono-∙ (keep d1)    D2 = keep    (mono-∙ d1 D2)
 mono-∙ (skip-op d1) D2 = skip-op (mono-∙ d1 D2)
 mono-∙ {j} (bank-delay {e = e} {t⁻ = ε⁻} d1) D2 =
@@ -123,6 +125,6 @@ mono-∙ {j} (bank-delay {e = e} {t⁻ = ε⁻} d1) D2 =
     (coe (+-identityʳ (j + ∣ e ∣⁺)) (≼ᵃ-trans (prepend-left _ d1) D2))
 mono-∙ (bank-delay {t⁻ = operation⁻ o s'''} d1) D2 = bank-delay (mono-∙ d1 D2)
 mono-∙ {j} {s' = s'} (use-delay {d = d} {s⁻ = ε⁻} p d1) D2 =
-  spendL d _ p (pad-left s' (weaken (j ∸ ∣ d ∣⁺) D2))
+  spendL d _ p (pad-left s' (coe (+-identityˡ (j ∸ ∣ d ∣⁺)) (weaken (j ∸ ∣ d ∣⁺) D2)))
 mono-∙ (use-delay {s⁻ = operation⁻ o s''} p d1) D2 = use-delay p (mono-∙ d1 D2)
 mono-∙ (use-op p d1) D2 = use-op p (mono-∙ d1 D2)
