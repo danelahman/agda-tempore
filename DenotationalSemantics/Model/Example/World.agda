@@ -36,6 +36,11 @@
 -- grade reaches exactly the worlds ahead. `Product.*` pairs frames   --
 -- componentwise (`DenotationalSemantics.Model.World.Product`).       --
 --                                                                    --
+-- The rigid interval-letter grades share one history frame           --
+-- (`DenotationalSemantics.Model.World.History`): a continuation is   --
+-- read in the grade, operations by their grades and delays by        --
+-- `of-dur`, and is admitted when its reading is below the grade.     --
+--                                                                    --
 -- The timed and finite-subset trace grades have a frame of either    --
 -- kind; the tick frames see a grade only through durations, and      --
 -- identify distinctions that the history frames keep.                --
@@ -206,3 +211,25 @@ import DenotationalSemantics.Model.Example.World.Product.RightSidedTimeEnergy
 -- membership outright, as for the finite subsets
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Regular.RightSided
+
+------------------------------------------------------------------------
+-- Trace-history frames for the rigid interval-letter grades
+--
+-- `w ⊑ʰ[ ρ ] w'` asks for a continuation `s` with `w ∙ s ≡ w'` whose
+-- reading in the grade is below `ρ`; at an interval one continuation
+-- answers to both endpoints.
+
+-- whole steps, regular expressions; every operation admits a whole
+-- number of steps
+
+import DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Regular.RightSided
+import DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Regular.LeftSided
+import DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Regular.TwoSided
+
+-- rationals, finite expressions; accessibility is shown to be the
+-- reading the order gives: every exact word of the continuation's run
+-- fits a word of the grade
+
+import DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Finite.RightSided
+import DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Finite.LeftSided
+import DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Finite.TwoSided
