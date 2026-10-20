@@ -98,3 +98,14 @@ import Syntax.Grades.Exact.NonRigid.Base
 import Syntax.Grades.Exact.NonRigid.Upper
 import Syntax.Grades.Exact.NonRigid.Lower
 import Syntax.Grades.Exact.NonRigid.Grades
+
+-- regular expressions over a common time unit: units and scaling,
+-- unbounded stretches unrolled, the words of an expression with star,
+-- and both readers complete against a family of grid words
+
+import Syntax.Grades.Exact.Grid
+import Syntax.Grades.Exact.Grid.NonNegativeRational
+import Syntax.Grades.Exact.Regular.Unroll
+import Syntax.Grades.Exact.Regular.Words
+import Syntax.Grades.Exact.Reader.Upper.Family
+import Syntax.Grades.Exact.Reader.Lower.Family

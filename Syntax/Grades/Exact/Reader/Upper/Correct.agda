@@ -118,45 +118,46 @@ boxes []           _         = []
 boxes (op o ∷ w)   vw        = (opk o , rt o) ∷ boxes w vw
 boxes (st S h ∷ w) (p , vw)  = (stk S , ⟪ 0ᴰ ∣ᶜ ⁺ , h ⟫ {fromWitness p}) ∷ boxes w vw
 
+sym-boxes : ∀ w vw → symP (boxes w vw) ≡ map symᵁ w
+sym-boxes []           _        = refl
+sym-boxes (op o ∷ w)   vw       = cong (_ ∷_) (sym-boxes w vw)
+sym-boxes (st S h ∷ w) (p , vw) = cong (_ ∷_) (sym-boxes w vw)
+
+conc : List (Kind × Interval) → List Carrier → List Pc
+conc = zipWith (λ kb θ → proj₁ kb , θ)
+
+conc-con : ∀ kb θs → map toHi (conc kb θs) ≡ conP kb θs
+conc-con []       []       = refl
+conc-con []       (_ ∷ _)  = refl
+conc-con (_ ∷ _)  []       = refl
+conc-con (k ∷ kb) (θ ∷ θs) = cong (_ ∷_) (conc-con kb θs)
+
 private
-  sym-boxes : ∀ w vw → symP (boxes w vw) ≡ map symᵁ w
-  sym-boxes []           _        = refl
-  sym-boxes (op o ∷ w)   vw       = cong (_ ∷_) (sym-boxes w vw)
-  sym-boxes (st S h ∷ w) (p , vw) = cong (_ ∷_) (sym-boxes w vw)
-
-  conc : List (Kind × Interval) → List Carrier → List Pc
-  conc = zipWith (λ kb θ → proj₁ kb , θ)
-
-  conc-con : ∀ kb θs → map toHi (conc kb θs) ≡ conP kb θs
-  conc-con []       []       = refl
-  conc-con []       (_ ∷ _)  = refl
-  conc-con (_ ∷ _)  []       = refl
-  conc-con (k ∷ kb) (θ ∷ θs) = cong (_ ∷_) (conc-con kb θs)
-
   sym-Z : ∀ kb θs → InBoxes θs kb → map π₁ (Z kb θs) ≡ symP kb
   sym-Z []       []       []       = refl
   sym-Z (k ∷ kb) (θ ∷ θs) (_ ∷ ib) = cong (_ ∷_) (sym-Z kb θs ib)
 
-  -- a length in a box with a positive lower end is positive
+-- a length in a box with a positive lower end is positive
+private
   pos-in : ∀ {θ b} → (0ᴰ ∣ᶜ ⁺) ⊑ᶜ lo b → θ ∈ⁱ b → 0ᴰ <ᴰ θ
   pos-in z (l , _) = ⊑⁻⇒< (⊑-trans z l) refl
 
-  -- the run with the chosen lengths
-  instance-of : ∀ w vw θs → InBoxes θs (boxes w vw)
-              → Σ[ x ∈ Word ] Shape w (conc (boxes w vw) θs) × WordOf (conc (boxes w vw) θs) x
-                              × pieces x ≡ conc (boxes w vw) θs
-  instance-of [] _ [] [] = [] , [] , [] , refl
-  instance-of (op o ∷ w) vw (θ ∷ θs) (m ∷ ib) with instance-of w vw θs ib
-  ... | x , sh , wo , e =
-    op o (pos⁺ θ (pos-in {b = rt o} (rt-positive o) m)) ∷ x , op sh , op m wo , cong (_ ∷_) e
-  instance-of (st S h ∷ w) (p , vw) (θ ∷ θs) (m ∷ ib) with instance-of w vw θs ib
-  ... | x , sh , wo , e =
-    stretch S θ ++ x , st (proj₂ m) sh , st wo ,
-    subst (λ z → pieces (z ++ x) ≡ (stk S , θ) ∷ conc (boxes w vw) θs)
-          (sym (stretch-pos S θ pos)) (cong (_ ∷_) e)
-    where
-      pos : 0ᴰ <ᴰ θ
-      pos = ⊑⁻⇒< (proj₁ m) refl
+-- the run with the chosen lengths
+instance-of : ∀ w vw θs → InBoxes θs (boxes w vw)
+            → Σ[ x ∈ Word ] Shape w (conc (boxes w vw) θs) × WordOf (conc (boxes w vw) θs) x
+                            × pieces x ≡ conc (boxes w vw) θs
+instance-of [] _ [] [] = [] , [] , [] , refl
+instance-of (op o ∷ w) vw (θ ∷ θs) (m ∷ ib) with instance-of w vw θs ib
+... | x , sh , wo , e =
+  op o (pos⁺ θ (pos-in {b = rt o} (rt-positive o) m)) ∷ x , op sh , op m wo , cong (_ ∷_) e
+instance-of (st S h ∷ w) (p , vw) (θ ∷ θs) (m ∷ ib) with instance-of w vw θs ib
+... | x , sh , wo , e =
+  stretch S θ ++ x , st (proj₂ m) sh , st wo ,
+  subst (λ z → pieces (z ++ x) ≡ (stk S , θ) ∷ conc (boxes w vw) θs)
+        (sym (stretch-pos S θ pos)) (cong (_ ∷_) e)
+  where
+    pos : 0ᴰ <ᴰ θ
+    pos = ⊑⁻⇒< (proj₁ m) refl
 
 ------------------------------------------------------------------------
 -- The reading at chosen lengths, against a bound

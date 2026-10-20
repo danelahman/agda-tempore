@@ -98,21 +98,21 @@ boxesᴸ []           = []
 boxesᴸ (op o ∷ w)   = (opk o , rt o) ∷ boxesᴸ w
 boxesᴸ (st S c ∷ w) = (stk S , ⟪ c , ∞ ⟫) ∷ boxesᴸ w
 
+sym-boxes : ∀ w → symPˡ (boxesᴸ w) ≡ map symᴸ w
+sym-boxes []           = refl
+sym-boxes (op o ∷ w)   = cong (_ ∷_) (sym-boxes w)
+sym-boxes (st S c ∷ w) = cong (_ ∷_) (sym-boxes w)
+
+conc : List (Kind × Interval) → List Carrier → List (Piece Carrier)
+conc = zipWith (λ kb θ → proj₁ kb , θ)
+
+conc-con : ∀ kb θs → map toLo (conc kb θs) ≡ conPˡ kb θs
+conc-con []       []       = refl
+conc-con []       (_ ∷ _)  = refl
+conc-con (_ ∷ _)  []       = refl
+conc-con (k ∷ kb) (θ ∷ θs) = cong (_ ∷_) (conc-con kb θs)
+
 private
-  sym-boxes : ∀ w → symPˡ (boxesᴸ w) ≡ map symᴸ w
-  sym-boxes []           = refl
-  sym-boxes (op o ∷ w)   = cong (_ ∷_) (sym-boxes w)
-  sym-boxes (st S c ∷ w) = cong (_ ∷_) (sym-boxes w)
-
-  conc : List (Kind × Interval) → List Carrier → List (Piece Carrier)
-  conc = zipWith (λ kb θ → proj₁ kb , θ)
-
-  conc-con : ∀ kb θs → map toLo (conc kb θs) ≡ conPˡ kb θs
-  conc-con []       []       = refl
-  conc-con []       (_ ∷ _)  = refl
-  conc-con (_ ∷ _)  []       = refl
-  conc-con (k ∷ kb) (θ ∷ θs) = cong (_ ∷_) (conc-con kb θs)
-
   sym-Z : ∀ kb θs → InBoxesˡ θs kb → map π₁ (Zˡ kb θs) ≡ symPˡ kb
   sym-Z []       []       []       = refl
   sym-Z (k ∷ kb) (θ ∷ θs) (_ ∷ ib) = cong (_ ∷_) (sym-Z kb θs ib)
@@ -120,21 +120,21 @@ private
   pos-in : ∀ {θ b} → 0⁺ ⊑ᶜ lo b → θ ∈ⁱ b → 0ᴰ <ᴰ θ
   pos-in z (l , _) = ⊑⁻⇒< (⊑ᶜ-trans z l) refl
 
-  instance-of : ∀ w → ValidL w → ∀ θs → InBoxesˡ θs (boxesᴸ w)
-              → Σ[ x ∈ Word ] Shape w (conc (boxesᴸ w) θs) × WordOf (conc (boxesᴸ w) θs) x
-                              × pieces x ≡ conc (boxesᴸ w) θs
-  instance-of [] _ [] [] = [] , [] , [] , refl
-  instance-of (op o ∷ w) vw (θ ∷ θs) (m ∷ ib) with instance-of w vw θs ib
-  ... | x , sh , wo , e =
-    op o (pos⁺ θ (pos-in {b = rt o} (rt-positive o) m)) ∷ x , op sh , op m wo , cong (_ ∷_) e
-  instance-of (st S c ∷ w) (z , vw) (θ ∷ θs) (m ∷ ib) with instance-of w vw θs ib
-  ... | x , sh , wo , e =
-    stretch S θ ++ x , st (proj₁ m) sh , st wo ,
-    subst (λ y → pieces (y ++ x) ≡ (stk S , θ) ∷ conc (boxesᴸ w) θs)
-          (sym (stretch-pos S θ pos)) (cong (_ ∷_) e)
-    where
-      pos : 0ᴰ <ᴰ θ
-      pos = ⊑⁻⇒< (⊑ᶜ-trans z (proj₁ m)) refl
+instance-of : ∀ w → ValidL w → ∀ θs → InBoxesˡ θs (boxesᴸ w)
+            → Σ[ x ∈ Word ] Shape w (conc (boxesᴸ w) θs) × WordOf (conc (boxesᴸ w) θs) x
+                            × pieces x ≡ conc (boxesᴸ w) θs
+instance-of [] _ [] [] = [] , [] , [] , refl
+instance-of (op o ∷ w) vw (θ ∷ θs) (m ∷ ib) with instance-of w vw θs ib
+... | x , sh , wo , e =
+  op o (pos⁺ θ (pos-in {b = rt o} (rt-positive o) m)) ∷ x , op sh , op m wo , cong (_ ∷_) e
+instance-of (st S c ∷ w) (z , vw) (θ ∷ θs) (m ∷ ib) with instance-of w vw θs ib
+... | x , sh , wo , e =
+  stretch S θ ++ x , st (proj₁ m) sh , st wo ,
+  subst (λ y → pieces (y ++ x) ≡ (stk S , θ) ∷ conc (boxesᴸ w) θs)
+        (sym (stretch-pos S θ pos)) (cong (_ ∷_) e)
+  where
+    pos : 0ᴰ <ᴰ θ
+    pos = ⊑⁻⇒< (⊑ᶜ-trans z (proj₁ m)) refl
 
 ------------------------------------------------------------------------
 -- The reading at chosen lengths, against a bound
