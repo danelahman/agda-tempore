@@ -173,6 +173,8 @@ open import Syntax.Grades
 ---- The product of two grades, and of two grade systems
 
 import Syntax.Grades.Product
+import Syntax.Grades.SemiDirect
+import Syntax.Grades.Indexed
 
 ---- The timed-trace toolkit of the trace-based grades
 
