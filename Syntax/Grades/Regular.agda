@@ -25,3 +25,5 @@ import Syntax.Grades.Regular.Grade         -- the Grade instance
 import Syntax.Grades.Regular.Literal       -- grade literals
 import Syntax.Grades.Regular.Closure       -- downward closure under a letter order
 import Syntax.Grades.Regular.Closed        -- the sub-grade of closed languages
+import Syntax.Grades.Regular.Determinise   -- automata with silent moves, determinised
+import Syntax.Grades.Regular.Coding        -- expressions over any letters, coded

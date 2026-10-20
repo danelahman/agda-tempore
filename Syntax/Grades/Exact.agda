@@ -109,3 +109,14 @@ import Syntax.Grades.Exact.Regular.Unroll
 import Syntax.Grades.Exact.Regular.Words
 import Syntax.Grades.Exact.Reader.Upper.Family
 import Syntax.Grades.Exact.Reader.Lower.Family
+
+-- the readers moved along maps of pieces and bounds; the gap of a
+-- chain in whole steps; the readers against a regular set of bounds as
+-- determinised automata of configurations; and the order on
+-- expressions with iteration, decided
+
+import Syntax.Grades.Exact.Reader.Rename
+import Syntax.Grades.Exact.Regular.Gap
+import Syntax.Grades.Exact.Regular.Upper
+import Syntax.Grades.Exact.Regular.Lower
+import Syntax.Grades.Exact.Regular.Decide

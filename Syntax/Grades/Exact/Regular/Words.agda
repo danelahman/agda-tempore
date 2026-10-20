@@ -157,3 +157,100 @@ fineᵂ (e ∣ f)   (inj₂ m) = fineᵂ f m
 fineᵂ {s} (e · f) (u , v , refl , mu , mv) = fine-++ s u v (fineᵂ e mu) (fineᵂ f mv)
 fineᵂ {s} (e *) stop = fine-[] s
 fineᵂ {s} (e *) (more {u} {v} mu mv) = fine-++ s u v (fineᵂ e mu) (fineᵂ (e *) mv)
+
+------------------------------------------------------------------------
+-- The words as a regular expression over letters
+
+open import Syntax.Grades.Regular.Coding as C using (Rx; ⟦_⟧ᴬ; StarA; AllLits)
+open import Data.List.Relation.Unary.Any using (here; there)
+
+private
+  wordRx : ∀ {s} → Word′ s → Rx (Letter (End s))
+  wordRx []      = C.ε
+  wordRx (ℓ ∷ w) = C.lit ℓ C.· wordRx w
+
+  unionRx : ∀ {s} → List (Word′ s) → Rx (Letter (End s))
+  unionRx []       = C.∅
+  unionRx (w ∷ ws) = wordRx w C.∣ unionRx ws
+
+  wordRx⇒ : ∀ {s} (w : Word′ s) {w′} → ⟦ wordRx w ⟧ᴬ w′ → w′ ≡ w
+  wordRx⇒ []      refl = refl
+  wordRx⇒ (ℓ ∷ w) (_ , v , refl , refl , x) = cong (ℓ ∷_) (wordRx⇒ w x)
+
+  ⇒wordRx : ∀ {s} (w : Word′ s) → ⟦ wordRx w ⟧ᴬ w
+  ⇒wordRx []      = refl
+  ⇒wordRx (ℓ ∷ w) = ℓ ∷ [] , w , refl , refl , ⇒wordRx w
+
+  unionRx⇒ : ∀ {s} (ws : List (Word′ s)) {w} → ⟦ unionRx ws ⟧ᴬ w → w ∈ˡ ws
+  unionRx⇒ (w′ ∷ ws) (inj₁ x) = here (wordRx⇒ w′ x)
+  unionRx⇒ (w′ ∷ ws) (inj₂ x) = there (unionRx⇒ ws x)
+
+  ⇒unionRx : ∀ {s} (ws : List (Word′ s)) {w} → w ∈ˡ ws → ⟦ unionRx ws ⟧ᴬ w
+  ⇒unionRx (w′ ∷ ws) (here refl) = inj₁ (⇒wordRx w′)
+  ⇒unionRx (w′ ∷ ws) (there m) = inj₂ (⇒unionRx ws m)
+
+toRx : ∀ {s} → Expr s → Rx (Letter (End s))
+toRx ε         = unionRx (words ε)
+toRx (ops A)   = unionRx (words (ops A))
+toRx (str S e) = unionRx (words (str S e))
+toRx (e ∣ f)   = toRx e C.∣ toRx f
+toRx (e · f)   = toRx e C.· toRx f
+toRx (e *)     = toRx e C.*
+
+toRx⇒ : ∀ {s} (e : Expr s) {w} → ⟦ toRx e ⟧ᴬ w → Wd e w
+toRx⇒ ε         x = unionRx⇒ (words ε) x
+toRx⇒ (ops A)   x = unionRx⇒ (words (ops A)) x
+toRx⇒ (str S e) x = unionRx⇒ (words (str S e)) x
+toRx⇒ (e ∣ f)   (inj₁ x) = inj₁ (toRx⇒ e x)
+toRx⇒ (e ∣ f)   (inj₂ x) = inj₂ (toRx⇒ f x)
+toRx⇒ (e · f)   (u , v , eq , x , y) = u , v , eq , toRx⇒ e x , toRx⇒ f y
+toRx⇒ (e *)     x = star x
+  where
+    star : ∀ {w} → StarA ⟦ toRx e ⟧ᴬ w → StarW (Wd e) w
+    star C.stop         = stop
+    star (C.more x₁ x₂) = more (toRx⇒ e x₁) (star x₂)
+
+⇒toRx : ∀ {s} (e : Expr s) {w} → Wd e w → ⟦ toRx e ⟧ᴬ w
+⇒toRx ε         m = ⇒unionRx (words ε) m
+⇒toRx (ops A)   m = ⇒unionRx (words (ops A)) m
+⇒toRx (str S e) m = ⇒unionRx (words (str S e)) m
+⇒toRx (e ∣ f)   (inj₁ m) = inj₁ (⇒toRx e m)
+⇒toRx (e ∣ f)   (inj₂ m) = inj₂ (⇒toRx f m)
+⇒toRx (e · f)   (u , v , eq , x , y) = u , v , eq , ⇒toRx e x , ⇒toRx f y
+⇒toRx (e *)     m = star m
+  where
+    star : ∀ {w} → StarW (Wd e) w → StarA ⟦ toRx e ⟧ᴬ w
+    star stop         = C.stop
+    star (more x₁ x₂) = C.more (⇒toRx e x₁) (star x₂)
+
+-- a property of every letter of every word of each letter of an
+-- expression holds of every letter of its regular expression
+
+open import Data.List.Relation.Unary.All as All using (All)
+
+private
+  allWord : ∀ {s} {P : Letter (End s) → Set} (w : Word′ s) → All P w → AllLits P (wordRx w)
+  allWord []      _          = _
+  allWord (ℓ ∷ w) (p All.∷ ps) = p , allWord w ps
+
+  allUnion : ∀ {s} {P : Letter (End s) → Set} (ws : List (Word′ s)) → All (All P) ws → AllLits P (unionRx ws)
+  allUnion []       _          = _
+  allUnion (w ∷ ws) (p All.∷ ps) = allWord w p , allUnion ws ps
+
+-- the letters of an expression's own letters
+
+Leaves : ∀ {s} → (Letter (End s) → Set) → Expr s → Set
+Leaves P ε         = All (All P) (words ε)
+Leaves P (ops A)   = All (All P) (words (ops A))
+Leaves P (str S e) = All (All P) (words (str S e))
+Leaves P (e ∣ f)   = Leaves P e × Leaves P f
+Leaves P (e · f)   = Leaves P e × Leaves P f
+Leaves P (e *)     = Leaves P e
+
+allLits : ∀ {s} {P : Letter (End s) → Set} (e : Expr s) → Leaves P e → AllLits P (toRx e)
+allLits ε         l = allUnion (words ε) l
+allLits (ops A)   l = allUnion (words (ops A)) l
+allLits (str S e) l = allUnion (words (str S e)) l
+allLits (e ∣ f)   (l , l′) = allLits e l , allLits f l′
+allLits (e · f)   (l , l′) = allLits e l , allLits f l′
+allLits (e *)     l = allLits e l
