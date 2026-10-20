@@ -7,6 +7,10 @@
 -- (`⊆ⁱ-sound`) and the sum of two intervals admits the sums of what   --
 -- they admit (`⊕-sound`).                                            --
 --                                                                    --
+-- An inhabited interval admits nothing below `inf` of its lower end  --
+-- or above `sup` of a finite upper end, these being the infimum and  --
+-- supremum of what it admits, admitted in a discrete time domain.    --
+--                                                                    --
 -- In a dense time domain with a positive duration both are exact:     --
 -- every interval admits some duration (`inhabited`), containment is   --
 -- the order of the ends (`⊆ⁱ-complete`), and whatever the sum admits  --
@@ -86,6 +90,67 @@ shift-∈ {w} {i} r = ⊕-sound {pointⁱ w} {i} (∈-pointⁱ w) r
 ... | tri< a = ⊏-by-pt a
 ... | tri≈ e = ⊏-by-side e
 ... | tri> a = ⊥-elim (a (0ᴰ-least w))
+
+------------------------------------------------------------------------
+-- The extreme durations an interval admits
+
+-- membership is decidable
+
+infix 4 _∈ⁱ?_
+
+_∈ⁱ?_ : ∀ x i → Dec (x ∈ⁱ i)
+x ∈ⁱ? i with lo i ⊑? (x ∣ ⁻) | fin (x ∣ ⁺) ⊑ʰ? hi i
+... | yes r | yes r' = yes (r , r')
+... | no ¬r | _      = no λ m → ¬r (proj₁ m)
+... | _     | no ¬r' = no λ m → ¬r' (proj₂ m)
+
+-- `inf` of the lower end is the infimum of what an inhabited interval
+-- admits, and its least element in a discrete time domain
+
+inf-lb : ∀ {i x} → x ∈ⁱ i → inf (lo i) ≤ᴰ x
+inf-lb (r , _) = inf-≤ r
+
+inf-∈ : Discrete T → ∀ {i x} → x ∈ⁱ i → inf (lo i) ∈ⁱ i
+inf-∈ δ {i} {x} (r , r') =
+  inf-admitted δ (lo i) ,
+  ⊑ʰ-trans {fin (inf (lo i) ∣ ⁺)} {fin (x ∣ ⁺)} {hi i} (≤⇒⁺⊑⁺ (inf-≤ r)) r'
+
+inf-glb : ∀ {i x₀ y} → x₀ ∈ⁱ i → (∀ {x} → x ∈ⁱ i → y ≤ᴰ x) → y ≤ᴰ inf (lo i)
+inf-glb {i} {x₀} {y} m₀ f with dense-or-discrete
+... | inj₂ δ = f (inf-∈ δ {i} m₀)
+... | inj₁ d with y ≤ᴰ? pt (lo i)
+...   | yes b = subst (y ≤ᴰ_) (sym (inf-dense d (lo i))) b
+...   | no ¬b with d ¬b
+...     | z , l<z , z<y = ⊥-elim (z<y (f z∈))
+  where
+    z∈ : z ∈ⁱ i
+    z∈ = by-pt l<z ,
+         ⊑ʰ-trans {fin (z ∣ ⁺)} {fin (x₀ ∣ ⁺)} {hi i}
+           (by-pt (<-≤-trans z<y (f m₀))) (proj₂ m₀)
+
+-- `sup` of a finite upper end is the supremum of what an inhabited
+-- interval admits, and its greatest element in a discrete time domain
+
+sup-ub : ∀ {i c x} → hi i ≡ fin c → x ∈ⁱ i → x ≤ᴰ sup c
+sup-ub e (_ , r') = ≤-sup (subst (fin _ ⊑ʰ_) e r')
+
+sup-∈ : Discrete T → ∀ {i c x} → hi i ≡ fin c → x ∈ⁱ i → sup c ∈ⁱ i
+sup-∈ δ {i} {c} {x} e m@(r , r') =
+  ⊑-trans r (≤⇒⁻⊑⁻ (sup-ub {i} e m)) ,
+  subst (fin (sup c ∣ ⁺) ⊑ʰ_) (sym e) (sup-admitted δ (subst (fin _ ⊑ʰ_) e r'))
+
+sup-lub : ∀ {i c x₀ y} → hi i ≡ fin c → x₀ ∈ⁱ i → (∀ {x} → x ∈ⁱ i → x ≤ᴰ y)
+        → sup c ≤ᴰ y
+sup-lub {i} {c} {x₀} {y} e m₀ f with dense-or-discrete
+... | inj₂ δ = f (sup-∈ δ {i} e m₀)
+... | inj₁ d with pt c ≤ᴰ? y
+...   | yes b = subst (_≤ᴰ y) (sym (sup-dense d c)) b
+...   | no ¬b with d ¬b
+...     | z , y<z , z<c = ⊥-elim (y<z (f z∈))
+  where
+    z∈ : z ∈ⁱ i
+    z∈ = ⊑-trans (proj₁ m₀) (by-pt (≤-<-trans (f m₀) y<z)) ,
+         subst (fin (z ∣ ⁺) ⊑ʰ_) (sym e) (by-pt z<c)
 
 ------------------------------------------------------------------------
 -- Arithmetic of differences

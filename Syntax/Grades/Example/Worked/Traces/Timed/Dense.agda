@@ -44,6 +44,7 @@ import Syntax.Grades.Example.Worked.Operations as Steps
 open import Syntax.Grades.Traces.RunningTimes ℚ≥0ᵀ Op
   using (RunningTimes; Bounded)
   renaming (fin to bounded)
+open import Syntax.Durations.Intervals.Dense ℚ≥0ᵀ using (_∈ⁱ?_)
 
 rt : Op → Interval
 rt read  = [ 1 / 2 , ↑ # 1 ]
@@ -57,6 +58,9 @@ running-times = record
   ; rt-positive   = λ { read  → toWitness {a? = 0⁺ ⊑? lo (rt read)} _
                       ; write → toWitness {a? = 0⁺ ⊑? lo (rt write)} _
                       ; send  → toWitness {a? = 0⁺ ⊑? lo (rt send)} _ }
+  ; rt-inhabited  = λ { read  → 1 / 2 , toWitness {a? = 1 / 2 ∈ⁱ? rt read} _
+                      ; write → 3 / 2 , toWitness {a? = 3 / 2 ∈ⁱ? rt write} _
+                      ; send  → # 1 , toWitness {a? = # 1 ∈ⁱ? rt send} _ }
   }
 
 open RunningTimes running-times using (costˡᵒ; costʰⁱ; costʰⁱ-pos)

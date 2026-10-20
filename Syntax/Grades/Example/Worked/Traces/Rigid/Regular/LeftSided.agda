@@ -19,6 +19,8 @@ open import Syntax.Durations.Nat using (ℕᵀ)
 open import Syntax.Durations.Intervals ℕᵀ using (⟪_,_⟫; fin; ⁻; ⁺; _⊑?_; 0⁺; lo)
   renaming (_∣_ to _∣ᶜ_)
 open import Syntax.Grades.Traces.RunningTimes ℕᵀ using (RunningTimes; Bounded)
+open import Syntax.Durations.Intervals.Dense ℕᵀ using (_∈ⁱ?_)
+open import Data.Product using (_,_)
 open import Relation.Nullary.Decidable using (toWitness)
 
 data Op : Set where
@@ -52,6 +54,9 @@ running = record
   ; rt-positive = λ { open′ → toWitness {a? = 0⁺ ⊑? (1 ∣ᶜ ⁻)} _
                     ; close′ → toWitness {a? = 0⁺ ⊑? (1 ∣ᶜ ⁻)} _
                     ; stir  → toWitness {a? = 0⁺ ⊑? (3 ∣ᶜ ⁻)} _ }
+  ; rt-inhabited = λ { open′  → 1 , toWitness {a? = 1 ∈ⁱ? ⟪ 1 ∣ᶜ ⁻ , fin (1 ∣ᶜ ⁺) ⟫} _
+                     ; close′ → 1 , toWitness {a? = 1 ∈ⁱ? ⟪ 1 ∣ᶜ ⁻ , fin (1 ∣ᶜ ⁺) ⟫} _
+                     ; stir   → 3 , toWitness {a? = 3 ∈ⁱ? ⟪ 3 ∣ᶜ ⁻ , fin (4 ∣ᶜ ⁺) ⟫} _ }
   }
 
 open import Syntax.Grades.Example.Traces.Rigid.Regular.LeftSided Op 3 code name name-code code-name running

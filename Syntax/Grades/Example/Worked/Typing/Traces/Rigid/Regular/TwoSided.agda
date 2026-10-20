@@ -28,6 +28,7 @@ open import Syntax.Durations.Nat using (ℕᵀ)
 open import Syntax.Durations.Intervals ℕᵀ using (⟪_,_⟫; fin; ⁻; ⁺; _⊑?_; 0⁺)
   renaming (_∣_ to _∣ᶜ_)
 open import Syntax.Grades.Traces.RunningTimes ℕᵀ using (RunningTimes; Bounded)
+open import Syntax.Durations.Intervals.Dense ℕᵀ using (_∈ⁱ?_)
 
 open import Syntax.Grades.Example.Worked.Operations using (Op; read; write; send)
 
@@ -64,6 +65,9 @@ running = record
   ; rt-positive = λ { read  → toWitness {a? = 0⁺ ⊑? (1 ∣ᶜ ⁻)} _
                     ; write → toWitness {a? = 0⁺ ⊑? (2 ∣ᶜ ⁻)} _
                     ; send  → toWitness {a? = 0⁺ ⊑? (4 ∣ᶜ ⁻)} _ }
+  ; rt-inhabited = λ { read  → 1 , toWitness {a? = 1 ∈ⁱ? ⟪ 1 ∣ᶜ ⁻ , fin (1 ∣ᶜ ⁺) ⟫} _
+                     ; write → 2 , toWitness {a? = 2 ∈ⁱ? ⟪ 2 ∣ᶜ ⁻ , fin (3 ∣ᶜ ⁺) ⟫} _
+                     ; send  → 4 , toWitness {a? = 4 ∈ⁱ? ⟪ 4 ∣ᶜ ⁻ , fin (6 ∣ᶜ ⁺) ⟫} _ }
   }
 
 import Syntax.Grades.Example.Traces.Rigid.Regular.LeftSided Op 3 code name name-code code-name running as L

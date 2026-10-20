@@ -29,6 +29,7 @@ open import Syntax.Durations.NonNegativeRational using (ℚ≥0ᵀ)
 open import Syntax.Grades.Example.Time.Dense.TwoSided
   using (Interval; [_,_]; ]_,_]; ↑_; _/_; #_; _⊑?_; 0⁺; lo)
 open import Syntax.Grades.Traces.RunningTimes ℚ≥0ᵀ using (RunningTimes) renaming (fin to bounded)
+open import Syntax.Durations.Intervals.Dense ℚ≥0ᵀ using (_∈ⁱ?_)
 
 open import Syntax.Grades.Example.Worked.Operations using (Op; read; write; send)
 
@@ -67,6 +68,9 @@ running = record
   ; rt-positive = λ { read  → toWitness {a? = 0⁺ ⊑? lo (rt read)} _
                     ; write → toWitness {a? = 0⁺ ⊑? lo (rt write)} _
                     ; send  → toWitness {a? = 0⁺ ⊑? lo (rt send)} _ }
+  ; rt-inhabited = λ { read  → 1 / 2 , toWitness {a? = 1 / 2 ∈ⁱ? rt read} _
+                     ; write → # 1 , toWitness {a? = # 1 ∈ⁱ? rt write} _
+                     ; send  → # 2 , toWitness {a? = # 2 ∈ⁱ? rt send} _ }
   }
 
 import Syntax.Grades.Example.Traces.Rigid.Finite.LeftSided Op 3 code name name-code code-name running as L

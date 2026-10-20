@@ -12,10 +12,11 @@ open import Syntax.Grades.Example.Time.Dense.NonNegativeRational
          +-identityʳ; +-assoc; +-comm; _≤_; *≤ᵈ*; _≤?_; ≤-refl; ≤-trans;
          ≤-antisym; ≤-irrelevant; p≤p+q)
 
-open import Data.Product using (Σ; _,_)
+open import Data.Product using (Σ; _,_; _×_)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 import Data.Rational.Base as ℚ
 import Data.Rational.Properties as ℚ
+open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable.Core using (fromWitness)
 
 open import Util.Equality
@@ -76,6 +77,15 @@ private
   ... | inj₁ r = inj₁ (*≤ᵈ* r)
   ... | inj₂ r = inj₂ (*≤ᵈ* r)
 
+  -- between two values lies a third
+
+  between : ∀ {p q} → ¬ (q ≤ p) → Σ ℚ≥0 (λ r → ¬ (r ≤ p) × ¬ (q ≤ r))
+  between {p} {q} q≰p with ℚ.<-dense (ℚ.≰⇒> (λ r → q≰p (*≤ᵈ* r)))
+  ... | r , p<r , r<q =
+    ⟨ r ⟩ {fromWitness (ℚ.≤-trans (nonneg p) (ℚ.<⇒≤ p<r))}
+    , (λ { (*≤ᵈ* r≤p) → ℚ.<-irrefl refl (ℚ.<-≤-trans p<r r≤p) })
+    , (λ { (*≤ᵈ* q≤r) → ℚ.<-irrefl refl (ℚ.<-≤-trans r<q q≤r) })
+
 ℚ≥0ᵀ : TimeDomain ℚ≥0ᴰ
 ℚ≥0ᵀ = record
   { +ᴰ-comm    = +-comm
@@ -89,13 +99,10 @@ private
   ; ≤ᴰ-irrelevant = ≤-irrelevant
   ; ≤ᴰ-+       = p≤p+q
   ; diff       = diff
+  ; grain      = dense between
   }
 
--- it is dense: between two values lies a third
+-- it is dense
 
 ℚ≥0-dense : Dense ℚ≥0ᵀ
-ℚ≥0-dense {p} {q} q≰p with ℚ.<-dense (ℚ.≰⇒> (λ r → q≰p (*≤ᵈ* r)))
-... | r , p<r , r<q =
-  ⟨ r ⟩ {fromWitness (ℚ.≤-trans (nonneg p) (ℚ.<⇒≤ p<r))}
-  , (λ { (*≤ᵈ* r≤p) → ℚ.<-irrefl refl (ℚ.<-≤-trans p<r r≤p) })
-  , (λ { (*≤ᵈ* q≤r) → ℚ.<-irrefl refl (ℚ.<-≤-trans r<q q≤r) })
+ℚ≥0-dense = between

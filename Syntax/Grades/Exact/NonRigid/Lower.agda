@@ -58,7 +58,7 @@ open import Syntax.Durations.Intervals T
   renaming (_∣_ to _∣ᶜ_; lo to loⁱ; ⊑-refl to ⊑ᶜ-refl)
 open import Syntax.Durations.Intervals.Dense T using (_∈ⁱ_)
 
-open RunningTimes.RunningTimes running using (rt; costˡᵒ)
+open RunningTimes.RunningTimes running using (rt; costˡᵒ; costˡᵒ-≤; costˡᵒ-dense)
 
 open import Syntax.Grades.Traces.Base T Op as Tr
   using (Trace; Trace⁻; operation; delay; operation⁻; inj⁻; prepend)
@@ -123,7 +123,7 @@ private
   -- a running time is at least the cost
 
   lo-≤ : ∀ o {τ} → τ ∈ⁱ rt o → costˡᵒ o ≤ᴰ τ
-  lo-≤ o (q , _) = ⊑⇒≤ q
+  lo-≤ = costˡᵒ-≤
 
 ------------------------------------------------------------------------
 -- Soundness
@@ -388,7 +388,9 @@ mutual
        → (ls : List (OpSet × Cut)) → cs ≡ map proj₂ ls → ChoiceL s (map stl ls ++ v)
        → Σˡ (wts pre) ≤ᴰ k → s ≼ᶜ[ k ] t
   chL⇒ {pre = pre} {k = k} (pour {p = p} a h) (opᵖ {o = o} pc) ls e c b =
-    pay-op (chL⇒ h pc ls e c (subst (_≤ᴰ k +ᴰ costˡᵒ o) (sym (Σˡ-∷ʳ pre p)) (+ᴰ-monoˡ-≤ (costˡᵒ o) b)))
+    pay-op (chL⇒ h pc ls e c (subst (_≤ᴰ k +ᴰ costˡᵒ o)
+                               (sym (trans (Σˡ-∷ʳ pre p) (cong (Σˡ (wts pre) +ᴰ_) (sym (costˡᵒ-dense dense o)))))
+                               (+ᴰ-monoˡ-≤ (costˡᵒ o) b)))
   chL⇒ {pre = pre} {k = k} (pour {p = p} a h) (delᵖ {d = d} pc) ls e c b =
     del-delay (chL⇒ h pc ls e c (subst (_≤ᴰ k +ᴰ ∣ d ∣⁺) (sym (Σˡ-∷ʳ pre p)) (+ᴰ-monoˡ-≤ ∣ d ∣⁺ b)))
   chL⇒ {cs = cs} (over {S′ = S′} {c = c₀} {v = v} a ¬f g h) pc ls e c b =

@@ -119,13 +119,24 @@ record Stepped (D : Duration) : Set where
                          (sym toℕ-0))
 
 
+-- The grain of a totally ordered set with a least element `0`: dense,
+-- a third element lying between any two distinct ones, or discrete,
+-- with a least element above `0`
+
+data Grain {C : Set₀} (_≤_ : C → C → Set₀) (0ᴰ : C) : Set₀ where
+  dense    : ({τ τ' : C} → ¬ (τ' ≤ τ) → Σ C (λ τ'' → ¬ (τ'' ≤ τ) × ¬ (τ' ≤ τ'')))
+           → Grain _≤_ 0ᴰ
+  discrete : (ε : C) → ¬ (ε ≤ 0ᴰ) → ((τ : C) → ¬ (τ ≤ 0ᴰ) → ε ≤ τ)
+           → Grain _≤_ 0ᴰ
+
+
 -- Time domains: durations that are compared and subtracted. A time
 -- domain is a commutative, cancellative monoid of durations with a
 -- decidable total order in which `τ ≤ τ'` exactly when `τ'` is `τ`
 -- followed by some further duration -- the positive cone of a totally
--- ordered abelian group. The difference, the truncated subtraction and
--- the extremal operations are derived from these fields in
--- `Durations.Monus`.
+-- ordered abelian group -- and which is dense or discrete. The
+-- difference, the truncated subtraction and the extremal operations
+-- are derived from these fields in `Durations.Monus`.
 
 record TimeDomain (D : Duration) : Set₁ where
   open Duration D
@@ -149,6 +160,8 @@ record TimeDomain (D : Duration) : Set₁ where
     ≤ᴰ-+       : (τ τ' : Carrier) → τ ≤ᴰ τ +ᴰ τ'
     diff       : {τ τ' : Carrier} → τ ≤ᴰ τ' → Σ Carrier (λ κ → τ +ᴰ κ ≡ τ')
 
+    grain      : Grain _≤ᴰ_ 0ᴰ
+
 
 -- Dense time domains: between two distinct durations lies a third
 
@@ -158,3 +171,18 @@ Dense {D} T = {τ τ' : Carrier} → ¬ (τ' ≤ᴰ τ)
   where
     open Duration D
     open TimeDomain T
+
+
+-- Discrete time domains: a least positive duration, a step
+
+Discrete : {D : Duration} → TimeDomain D → Set₀
+Discrete {D} T = Σ Carrier (λ ε → ¬ (ε ≤ᴰ 0ᴰ) × ((τ : Carrier) → ¬ (τ ≤ᴰ 0ᴰ) → ε ≤ᴰ τ))
+  where
+    open Duration D
+    open TimeDomain T
+
+-- no time domain is both
+
+dense-discrete : {D : Duration} {T : TimeDomain D} → Dense T → Discrete T → ⊥
+dense-discrete {D} {T} d (ε , ε-pos , ε-least) with d ε-pos
+... | τ , τ-pos , ε≰τ = ε≰τ (ε-least τ τ-pos)

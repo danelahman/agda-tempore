@@ -4,11 +4,13 @@
 
 module Syntax.Durations.Nat where
 
-open import Data.Nat.Base using (ℕ; _+_; _≤_; _∸_)
+open import Data.Empty using (⊥-elim)
+open import Data.Nat.Base using (ℕ; zero; suc; _+_; _≤_; _∸_; z≤n; s≤s)
 open import Data.Nat.Properties
   using (+-identityʳ; +-assoc; +-comm; +-cancelˡ-≡; _≤?_; ≤-refl; ≤-trans;
          ≤-antisym; ≤-total; ≤-irrelevant; m≤m+n; m+[n∸m]≡n)
 open import Data.Product using (_,_)
+open import Relation.Nullary using (¬_)
 
 open import Syntax.Durations
 
@@ -36,7 +38,13 @@ open import Util.Equality
   ; toℕ-+     = λ _ _ → refl
   }
 
--- the natural numbers under their usual order form a time domain
+-- the natural numbers under their usual order form a discrete time
+-- domain, the step being the least positive duration
+
+private
+  step-least : (n : ℕ) → ¬ (n ≤ 0) → 1 ≤ n
+  step-least zero    p = ⊥-elim (p z≤n)
+  step-least (suc n) _ = s≤s z≤n
 
 ℕᵀ : TimeDomain ℕᴰ
 ℕᵀ = record
@@ -51,4 +59,8 @@ open import Util.Equality
   ; ≤ᴰ-irrelevant = ≤-irrelevant
   ; ≤ᴰ-+       = m≤m+n
   ; diff       = λ {m} {n} p → n ∸ m , m+[n∸m]≡n p
+  ; grain      = discrete 1 (λ ()) step-least
   }
+
+ℕᵀ-discrete : Discrete ℕᵀ
+ℕᵀ-discrete = 1 , (λ ()) , step-least

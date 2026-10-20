@@ -12,26 +12,23 @@
 
 open import Data.Fin.Base using (Fin)
 open import Data.Nat.Base using (ℕ)
-open import Data.Product using (Σ; _,_)
+open import Data.Product using (_,_)
 
 open import Util.Equality
 
 open import Syntax.Durations.Nat using (ℕᵀ)
-open import Syntax.Durations.Intervals.Dense ℕᵀ using (_∈ⁱ_)
-open import Syntax.Grades.Traces.Positive ℕᵀ using (D⁺; ∣_∣⁺)
 import Syntax.Grades.Traces.RunningTimes as RunningTimes
 
 module DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Regular.TwoSided
   (Op : Set) (n : ℕ) (code : Op → Fin n) (name : Fin n → Op)
   (name-code : ∀ o → name (code o) ≡ o) (code-name : ∀ c → code (name c) ≡ c)
-  (running : RunningTimes.RunningTimes ℕᵀ Op)
-  (step : ∀ o → Σ D⁺ (λ d → ∣ d ∣⁺ ∈ⁱ RunningTimes.RunningTimes.rt running o)) where
+  (running : RunningTimes.RunningTimes ℕᵀ Op) where
 
 open import Syntax.Grades.Example.Traces.Rigid.Regular.TwoSided Op n code name name-code code-name running
   using (two-sided)
 
 open import DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Regular.Base
-  Op n code name name-code code-name running step
+  Op n code name name-code code-name running
   using (‵ᵍ)
 
 open import DenotationalSemantics.Model.World.History ℕᵀ Op two-sided (λ o → ‵ᵍ o , ‵ᵍ o) public

@@ -10,6 +10,7 @@
 module Syntax.Grades.Example.Worked.Traces.Rigid.Finite.Operations where
 
 open import Data.Fin.Base using (Fin; zero; suc)
+open import Data.Product using (_,_)
 open import Relation.Nullary.Decidable using (toWitness)
 
 open import Util.Equality
@@ -18,6 +19,7 @@ open import Syntax.Durations.NonNegativeRational using (ℚ≥0ᵀ)
 open import Syntax.Grades.Example.Time.Dense.TwoSided
   using (Interval; [_,_]; ]_,_]; ]_,_[; ↑_; _/_; #_; _⊑?_; 0⁺; lo)
 open import Syntax.Grades.Traces.RunningTimes ℚ≥0ᵀ using (RunningTimes) renaming (fin to bounded)
+open import Syntax.Durations.Intervals.Dense ℚ≥0ᵀ using (_∈ⁱ?_)
 
 data Op : Set where
   heat cool log : Op
@@ -54,4 +56,7 @@ running = record
   ; rt-positive = λ { heat → toWitness {a? = 0⁺ ⊑? lo (rt heat)} _
                     ; cool → toWitness {a? = 0⁺ ⊑? lo (rt cool)} _
                     ; log  → toWitness {a? = 0⁺ ⊑? lo (rt log)} _ }
+  ; rt-inhabited = λ { heat → # 2 , toWitness {a? = # 2 ∈ⁱ? rt heat} _
+                     ; cool → 3 / 2 , toWitness {a? = 3 / 2 ∈ⁱ? rt cool} _
+                     ; log  → 1 / 2 , toWitness {a? = 1 / 2 ∈ⁱ? rt log} _ }
   }

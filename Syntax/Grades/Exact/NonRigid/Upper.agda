@@ -53,11 +53,11 @@ open import Relation.Nullary using (yes; no)
 
 open import Syntax.Durations.Monus T
 open import Syntax.Durations.Intervals T
-  using (Cut; Hi; fin; ∞; ⁺; ⁻; 0⁺; pt; _⊑ʰ_; _+ʰ_; _∧ˢ_; ⊑⇒≤; ≤⇒⁺⊑⁺; ⊏-by-pt; hi; lo)
+  using (Cut; Hi; fin; ∞; ⁺; ⁻; 0⁺; pt; sup-dense; _⊑ʰ_; _+ʰ_; _∧ˢ_; ⊑⇒≤; ≤⇒⁺⊑⁺; ⊏-by-pt; hi; lo)
   renaming (_∣_ to _∣ᶜ_)
 open import Syntax.Durations.Intervals.Dense T using (_∈ⁱ_)
 
-open RunningTimes.RunningTimes running using (rt; rt-bounded; costʰⁱ)
+open RunningTimes.RunningTimes running using (rt; rt-bounded; costʰⁱ; ≤-costʰⁱ)
 
 open import Syntax.Grades.Traces.Base T Op as Tr
   using (Trace; Trace⁻; operation; delay; operation⁻; inj⁻; prepend)
@@ -122,8 +122,7 @@ private
   -- a running time is at most the cost
 
   rt-≤ : ∀ o {τ} → τ ∈ⁱ rt o → τ ≤ᴰ costʰⁱ o
-  rt-≤ o (_ , q) with hi (rt o) | rt-bounded o
-  ... | fin c | RunningTimes.fin .c = ⊑⇒≤ q
+  rt-≤ = ≤-costʰⁱ
 
 ------------------------------------------------------------------------
 -- Every translation has the empty run
@@ -354,7 +353,7 @@ private
 
   op-fin : ∀ o → IsFin (hi (rt o)) × ptʰ (hi (rt o)) ≡ costʰⁱ o
   op-fin o with hi (rt o) | rt-bounded o
-  ... | fin c | RunningTimes.fin .c = tt , refl
+  ... | fin c | RunningTimes.fin .c = tt , sym (sup-dense dense c)
 
   -- the budget arithmetic of a chain
 

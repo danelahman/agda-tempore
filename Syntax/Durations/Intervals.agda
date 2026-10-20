@@ -17,6 +17,10 @@
 -- (`_∪ⁱ_`), with the laws a grade asks for; the grade itself is      --
 -- `Grades.Example.Time.Intervals`.                                   --
 --                                                                    --
+-- A lower end admits durations from `inf`, an upper cut up to `sup`: --
+-- the point of the end, or, at an open end in a discrete time domain, --
+-- the adjacent step.                                                 --
+--                                                                    --
 -- What the ends say about the durations admitted (`_∈ⁱ_`) -- that    --
 -- the order is containment and the sum the Minkowski sum, in a dense --
 -- time domain -- is in `Durations.Intervals.Dense`.                  --
@@ -289,6 +293,112 @@ c ⊏ c' = ¬ (c' ⊑ c)
 0⁻⊏⇒0⁺⊑ {p ∣ s} r with ⊏-cases r
 ... | inj₁ a              = by-pt a
 ... | inj₂ (e , _ , refl) = by-side e ⁺≤⁺
+
+-- the extreme durations an end admits: a lower end `c` admits at
+-- least `inf c`, and an upper cut `c` at most `sup c`. An open end
+-- moves a step inward in a discrete time domain, and stays at its
+-- point in a dense one, where it is the infimum or supremum of what
+-- the end admits
+
+closeˡ closeʰ : Carrier → Cut → Carrier
+closeˡ ε (p ∣ ⁻) = p
+closeˡ ε (p ∣ ⁺) = ε +ᴰ p
+closeʰ ε (q ∣ ⁺) = q
+closeʰ ε (q ∣ ⁻) = q ∸ᴰ ε
+
+inf sup : Cut → Carrier
+inf c with grain
+... | dense _        = pt c
+... | discrete ε _ _ = closeˡ ε c
+sup c with grain
+... | dense _        = pt c
+... | discrete ε _ _ = closeʰ ε c
+
+-- the grain, as a proposition
+
+dense-or-discrete : Dense T ⊎ Discrete T
+dense-or-discrete with grain
+... | dense d                  = inj₁ d
+... | discrete ε ε-pos ε-least = inj₂ (ε , ε-pos , ε-least)
+
+-- in a dense time domain they are the points of the ends
+
+inf-dense : Dense T → ∀ c → inf c ≡ pt c
+inf-dense d c with grain
+... | dense _              = refl
+... | discrete ε ε-pos ε-least = ⊥-elim (dense-discrete {T = T} d (ε , ε-pos , ε-least))
+
+sup-dense : Dense T → ∀ c → sup c ≡ pt c
+sup-dense d c with grain
+... | dense _              = refl
+... | discrete ε ε-pos ε-least = ⊥-elim (dense-discrete {T = T} d (ε , ε-pos , ε-least))
+
+private
+  ⁺⊑⁻⇒< : ∀ {p q} → (p ∣ ⁺) ⊑ (q ∣ ⁻) → p <ᴰ q
+  ⁺⊑⁻⇒< {p} {q} r with q ≤ᴰ? p
+  ... | no ¬b = ¬b
+  ⁺⊑⁻⇒< (by-pt a)      | yes b = ⊥-elim-irr (a b)
+  ⁺⊑⁻⇒< (by-side _ ()) | yes b
+
+  -- with a least positive duration `ε`, a step
+  module Step (ε : Carrier) (ε-pos : 0ᴰ <ᴰ ε) (ε-least : ∀ τ → 0ᴰ <ᴰ τ → ε ≤ᴰ τ) where
+
+    -- above a duration is at least a step above it
+    <⇒step≤ : ∀ {p x} → p <ᴰ x → ε +ᴰ p ≤ᴰ x
+    <⇒step≤ {p} {x} a with diff (<⇒≤ a)
+    ... | κ , e = ≤ᴰ-trans (+ᴰ-monoˡ-≤ p (ε-least κ κ-pos))
+                           (≤ᴰ-reflexive (trans (+ᴰ-comm κ p) e))
+      where
+        κ-pos : 0ᴰ <ᴰ κ
+        κ-pos κ≤0 = a (≤ᴰ-reflexive
+          (trans (sym e) (trans (cong (p +ᴰ_) (≤0⇒≡0 κ≤0)) (+ᴰ-identityʳ p))))
+
+    -- below a duration is at least a step below it
+    <⇒≤∸step : ∀ {x q} → x <ᴰ q → x ≤ᴰ q ∸ᴰ ε
+    <⇒≤∸step {x} {q} a = +-≤-∸ (≤ᴰ-trans (≤ᴰ-+ ε x) (<⇒step≤ a)) (<⇒step≤ a)
+
+    ∸step-< : ∀ {q} → ε ≤ᴰ q → q ∸ᴰ ε <ᴰ q
+    ∸step-< {q} b = subst (q ∸ᴰ ε <ᴰ_) (∸-+ b) (<-+ ε-pos)
+
+-- every duration a lower end admits is at least `inf`, and every
+-- duration an upper cut admits at most `sup`
+
+inf-≤ : ∀ {c x} → c ⊑ (x ∣ ⁻) → inf c ≤ᴰ x
+inf-≤ {p ∣ ⁻} r with grain
+... | dense _        = ⊑⇒≤ r
+... | discrete _ _ _ = ⊑⇒≤ r
+inf-≤ {p ∣ ⁺} r with grain
+... | dense _                  = ⊑⇒≤ r
+... | discrete ε ε-pos ε-least = Step.<⇒step≤ ε ε-pos ε-least (⁺⊑⁻⇒< r)
+
+≤-sup : ∀ {c x} → (x ∣ ⁺) ⊑ c → x ≤ᴰ sup c
+≤-sup {q ∣ ⁺} r with grain
+... | dense _        = ⊑⇒≤ r
+... | discrete _ _ _ = ⊑⇒≤ r
+≤-sup {q ∣ ⁻} r with grain
+... | dense _                  = ⊑⇒≤ r
+... | discrete ε ε-pos ε-least = Step.<⇒≤∸step ε ε-pos ε-least (⁺⊑⁻⇒< r)
+
+-- in a discrete time domain an end admits `inf` and `sup`, an upper cut
+-- when it admits something
+
+inf-admitted : Discrete T → ∀ c → c ⊑ (inf c ∣ ⁻)
+inf-admitted δ (p ∣ ⁻) with grain
+... | dense _        = ⊑-refl
+... | discrete _ _ _ = ⊑-refl
+inf-admitted δ (p ∣ ⁺) with grain
+... | dense d            = ⊥-elim (dense-discrete {T = T} d δ)
+... | discrete ε ε-pos _ = by-pt (<-+ˡ ε-pos)
+
+sup-admitted : Discrete T → ∀ {c x} → (x ∣ ⁺) ⊑ c → (sup c ∣ ⁺) ⊑ c
+sup-admitted δ {q ∣ ⁺} _ with grain
+... | dense _        = ⊑-refl
+... | discrete _ _ _ = ⊑-refl
+sup-admitted δ {q ∣ ⁻} {x} r with grain
+... | dense d                  = ⊥-elim (dense-discrete {T = T} d δ)
+... | discrete ε ε-pos ε-least =
+  by-pt (Step.∸step-< ε ε-pos ε-least
+           (≤ᴰ-trans (≤ᴰ-+ ε x) (Step.<⇒step≤ ε ε-pos ε-least (⁺⊑⁻⇒< r))))
 
 -- the smaller and the larger cut
 

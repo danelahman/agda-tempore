@@ -4,8 +4,9 @@
 -- Heating takes two to four steps, cooling one or two, logging one.  --
 -- The cases are those of the formalisation findings (F4), the order  --
 -- of strict waits and budgets, the prototype's tests of the rigid    --
--- upper bounds, the window rule, and the delays. Each comparison is  --
--- established by running the inclusion test.                         --
+-- upper bounds, the window rule, the delays, and the costs of open   --
+-- ends. Each comparison is established by running the inclusion      --
+-- test.                                                              --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Traces.Rigid.Regular.RightSided where
@@ -14,13 +15,16 @@ open import Data.Fin.Base using (Fin; zero; suc)
 open import Data.Nat.Base using (ℕ)
 open import Relation.Nullary using (¬_)
 open import Data.Fin.Subset using (⁅_⁆; _∪_)
-open import Relation.Nullary.Decidable using (toWitness)
+open import Relation.Nullary.Decidable using (toWitness; toWitnessFalse)
+open import Data.Product using (Σ; _×_; _,_)
 
 open import Util.Equality
 
-open import Syntax.Durations.Nat using (ℕᵀ)
-open import Syntax.Durations.Intervals ℕᵀ using (Interval; ⟪_,_⟫; fin; ⁻; ⁺; _⊑?_; 0⁺; lo)
+open import Syntax.Durations.Nat using (ℕᵀ; ℕᵀ-discrete)
+open import Syntax.Durations.Intervals ℕᵀ
+  using (Interval; ⟪_,_⟫; fin; ⁻; ⁺; _⊑?_; 0⁺; lo; inf; sup)
   renaming (_∣_ to _∣ᶜ_)
+open import Syntax.Durations.Intervals.Dense ℕᵀ using (_∈ⁱ_; _∈ⁱ?_; inf-∈)
 open import Syntax.Grades.Traces.RunningTimes ℕᵀ using (RunningTimes; Bounded)
 
 data Op : Set where
@@ -59,6 +63,9 @@ running = record
   ; rt-positive = λ { heat → toWitness {a? = 0⁺ ⊑? lo (rt heat)} _
                     ; cool → toWitness {a? = 0⁺ ⊑? lo (rt cool)} _
                     ; log  → toWitness {a? = 0⁺ ⊑? lo (rt log)} _ }
+  ; rt-inhabited = λ { heat → 2 , toWitness {a? = 2 ∈ⁱ? rt heat} _
+                     ; cool → 1 , toWitness {a? = 1 ∈ⁱ? rt cool} _
+                     ; log  → 1 , toWitness {a? = 1 ∈ⁱ? rt log} _ }
   }
 
 open import Syntax.Grades.Example.Traces.Rigid.Regular.RightSided Op 3 code name name-code code-name running
@@ -183,3 +190,14 @@ of-dur-2′ = holds wait-two (of-dur 2) refl
 
 of-dur-1+1 : C._≾_ wait-two two-delays
 of-dur-1+1 = holds wait-two two-delays refl
+
+------------------------------------------------------------------------
+-- Costs in whole steps: an open end admits the adjacent step, so
+-- `]0,2[` costs one step at both ends, and `]1,2[` admits none
+
+open-costs : inf (0 ∣ᶜ ⁺) ≡ 1 × sup (2 ∣ᶜ ⁻) ≡ 1
+open-costs = refl , refl
+
+open-empty : ¬ Σ ℕ (_∈ⁱ ⟪ 1 ∣ᶜ ⁺ , fin (2 ∣ᶜ ⁻) ⟫)
+open-empty (_ , m) =
+  toWitnessFalse {a? = 2 ∈ⁱ? ⟪ 1 ∣ᶜ ⁺ , fin (2 ∣ᶜ ⁻) ⟫} _ (inf-∈ ℕᵀ-discrete m)
