@@ -111,3 +111,7 @@ import Syntax.Grades.Example.Traces.Rigid.Finite.Base
 import Syntax.Grades.Example.Traces.Rigid.Finite.RightSided
 import Syntax.Grades.Example.Traces.Rigid.Finite.LeftSided
 import Syntax.Grades.Example.Traces.Rigid.Finite.TwoSided
+
+-- the non-rigid timed trace grades read as finite-expression grades
+
+import Syntax.Grades.Example.Traces.Rigid.Finite.NonRigid

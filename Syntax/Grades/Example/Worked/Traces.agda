@@ -86,3 +86,8 @@ import Syntax.Grades.Example.Worked.Traces.Rigid.Finite.LeftSided
 -- sides
 
 import Syntax.Grades.Example.Worked.Traces.Rigid.Finite.TwoSided
+
+-- the non-rigid grades as finite-expression grades: the translations,
+-- both decisions agreeing, products, a delay read as a budget
+
+import Syntax.Grades.Example.Worked.Traces.Rigid.Finite.NonRigid

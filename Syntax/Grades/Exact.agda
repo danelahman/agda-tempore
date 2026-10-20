@@ -89,3 +89,12 @@ import Syntax.Grades.Exact.Reader.Lower.Correct
 
 import Syntax.Grades.Exact.Finite
 import Syntax.Grades.Exact.Finite.Grades
+
+-- the non-rigid timed trace grades as instances: allowances as upper
+-- expressions, guarantees as lower ones, the orders preserved and
+-- reflected, products and joins kept
+
+import Syntax.Grades.Exact.NonRigid.Base
+import Syntax.Grades.Exact.NonRigid.Upper
+import Syntax.Grades.Exact.NonRigid.Lower
+import Syntax.Grades.Exact.NonRigid.Grades
