@@ -132,3 +132,9 @@ import Syntax.Grades.Exact.Regular.Grades
 import Syntax.Grades.Exact.Durations
 import Syntax.Grades.Exact.Finite.Durations
 import Syntax.Grades.Exact.Finite.Interval
+
+-- interval grades of consistent pairs, for any lower and upper grades
+-- of sets of runs; those of expressions with iteration
+
+import Syntax.Grades.Exact.Interval
+import Syntax.Grades.Exact.Regular.Interval

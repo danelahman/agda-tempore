@@ -20,7 +20,9 @@
 module Syntax.Grades.Example.Worked.Typing.Traces.Rigid.Rational.TwoSided where
 
 open import Data.Fin.Base using (Fin; zero; suc)
+open import Data.List.Base using () renaming ([] to []ᴸ; _∷_ to _∷ᴸ_)
 open import Data.Product using (_×_; _,_)
+open import Syntax.Grades using (module Grade)
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable using (toWitness)
 
@@ -77,7 +79,7 @@ running = record
 import Syntax.Grades.Example.Traces.Rigid.Rational.LeftSided Op 3 code name name-code code-name running as L
 import Syntax.Grades.Example.Traces.Rigid.Rational.RightSided Op 3 code name name-code code-name running as U
 open import Syntax.Grades.Example.Traces.Rigid.Rational.TwoSided Op 3 code name name-code code-name running
-  using (two-sided)
+  using (two-sided; operation; [_,_]⟨_⟩; perform; delay)
 
 open L using (Proper′; ‵_; _·_; _*; ≥_; !≥_; upper; lower; _⁺ᵉ)
 open U using (≤_)
@@ -85,10 +87,8 @@ open U using (≤_)
 ------------------------------------------------------------------------
 -- The operations, graded by the operation at both endpoints
 
-opTime : Op → Proper′ lower × Proper′ upper
-opTime read  = L.⌜ ‵_ {lower} read ⌝  , U.⌜ ‵_ {upper} read ⌝
-opTime write = L.⌜ ‵_ {lower} write ⌝ , U.⌜ ‵_ {upper} write ⌝
-opTime send  = L.⌜ ‵_ {lower} send ⌝  , U.⌜ ‵_ {upper} send ⌝
+opTime : Op → Grade.Carrier two-sided
+opTime = operation
 
 open import Syntax.Grades.Example.System.Identity using (noWitnesses)
 open import Syntax.Grades.Example.Worked.Typing.Core two-sided opTime noWitnesses
@@ -104,8 +104,8 @@ paced : Proper′ upper
 paced = U.⌜ (‵ read · ≤ (# 2)) * ⌝
 
 contract contract-busy : R
-contract      = settling , paced
-contract-busy = settling-busy , paced
+contract      = [ settling      , paced ]⟨ perform read ∷ᴸ delay (# 1) ∷ᴸ []ᴸ ⟩
+contract-busy = [ settling-busy , paced ]⟨ perform read ∷ᴸ delay (# 1) ∷ᴸ []ᴸ ⟩
 
 ------------------------------------------------------------------------
 -- A box at the contract, opened after two readings and waits

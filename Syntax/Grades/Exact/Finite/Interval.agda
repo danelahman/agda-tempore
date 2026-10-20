@@ -6,10 +6,9 @@
 --                                                                    --
 --   Σ[ x ] (Σ[ y ∈ ⟦ L ⟧ ] x ⊑ y) × (Σ[ z ∈ ⟦ U ⟧ ] x ⊑ z)           --
 --                                                                    --
--- Consistency is closed upward and holds of the empty word and of    --
--- every delay; words concatenate. So consistent pairs are a          --
--- sub-grade of the product of the two grades (`Grades.Upward`),      --
--- compared componentwise, the word being data the order ignores.     --
+-- Consistent pairs are a sub-grade of the product of the two grades  --
+-- (`Exact.Interval`), compared componentwise, the word being data    --
+-- the order ignores.                                                 --
 --                                                                    --
 -- A literal names the consistency run as a sequence of operations    --
 -- and delays: `[ L , U ]⟨ r ⟩` checks, by the reader, that the hull  --
@@ -60,32 +59,12 @@ open import Syntax.Grades.Exact.Finite T Op n code code-injective name code-name
   dense κ κ-pos using (members; nonEmpty; Proper)
 open import Syntax.Grades.Exact.Finite.Grades T Op n code code-injective name code-name running
   dense κ κ-pos
-open import Syntax.Grades.Exact.Hull T Op n code code-injective running
-  using (Run; perform; delay; runᴸ; hullᴸ; hullᵁ; run⊆hullᴸ; run⊆hullᵁ) public
 open RunningTimes.RunningTimes running using (rt-inhabited⁺)
 
 ------------------------------------------------------------------------
--- Consistency
-
--- a word fitting a word of a set
-
-Fits : Word → Lang → Set
-Fits x X = Σ[ y ∈ Word ] X y × x ⊑ y
-
-Consistent : Proper′ lower × Proper′ upper → Set
-Consistent (L , U) = Σ[ x ∈ Word ] Fits x ⟦ expr L ⟧ × Fits x ⟦ expr U ⟧
+-- Consistency, and the interval grade (`Exact.Interval`)
 
 private
-  fits-up : ∀ {x X Y} → X ≾ᴸ Y → Fits x X → Fits x Y
-  fits-up le (y , y∈ , xy) with le y y∈
-  ... | z , z∈ , yz = z , z∈ , ⊑-trans xy yz
-
-  fits-· : ∀ {x x′ X Y} → Fits x X → Fits x′ Y → Fits (x ++ x′) (X ·ᴸ Y)
-  fits-· (y , y∈ , xy) (y′ , y′∈ , xy′) = y ++ y′ , (y , y′ , refl , y∈ , y′∈) , ⊑-++ xy xy′
-
-  fits-∈ : ∀ {x} {X : Lang} → X x → Fits x X
-  fits-∈ {x} x∈ = x , x∈ , ⊑-refl
-
   -- a wait lies in both its hulls
   wait-∈ᴸ : ∀ τ → ⟦ expr (waitᴸ τ) ⟧ ![ τ ]
   wait-∈ᴸ τ = case (0ᴰ <ᴰ? τ)
@@ -97,41 +76,15 @@ private
   wait-∈ᵁ : ∀ τ → ⟦ expr (waitᵁ τ) ⟧ ![ τ ]
   wait-∈ᵁ τ = τ , ⊑ᶜ-refl , refl
 
-consistent : Upward (lowerᵍ ×ᵍ upperᵍ) Consistent
-consistent = record
-  { up       = λ (le , le′) (x , fl , fu) →
-      x , fits-up (toWitness (by-reader le)) fl , fits-up (toWitness (by-reader le′)) fu
-  ; P-u      = [] , fits-∈ refl , fits-∈ refl
-  ; P-·      = λ (x , fl , fu) (x′ , fl′ , fu′) → x ++ x′ , fits-· fl fl′ , fits-· fu fu′
-  ; P-of-dur = λ τ → ![ τ ] , fits-∈ (wait-∈ᴸ τ) , fits-∈ (wait-∈ᵁ τ)
-  }
-
-intervalᵍ : Grade D
-intervalᵍ = (lowerᵍ ×ᵍ upperᵍ) ∣ᵍ consistent
+open import Syntax.Grades.Exact.Interval T Op n code code-injective running lowerᵍ upperᵍ
+  (λ c → ⟦ expr c ⟧) (λ c → ⟦ expr c ⟧)
+  (λ le → toWitness (by-reader le)) (λ le → toWitness (by-reader le))
+  refl refl
+  (λ x∈ y∈ → _ , _ , refl , x∈ , y∈) (λ x∈ y∈ → _ , _ , refl , x∈ , y∈)
+  wait-∈ᴸ wait-∈ᵁ public
 
 ------------------------------------------------------------------------
 -- Literals
-
-private
-  -- a run of a sequence of operations and delays, each operation
-  -- running for a time it admits
-  word : Run → Word
-  word []              = []
-  word (perform o ∷ r) = op o (proj₁ (rt-inhabited⁺ o)) ∷ word r
-  word (delay τ ∷ r)   = ![ τ ] ++ word r
-
-  word-∈ : ∀ r → runᴸ r (word r)
-  word-∈ []              = refl
-  word-∈ (perform o ∷ r) =
-    op o _ ∷ [] , word r , refl ,
-    (o , proj₁ (rt-inhabited⁺ o) , x∈⁅x⁆ (code o) , proj₂ (rt-inhabited⁺ o) , refl) , word-∈ r
-  word-∈ (delay τ ∷ r)   = ![ τ ] , word r , refl , refl , word-∈ r
-
-  run-consistent : ∀ r (L : Proper′ lower) (U : Proper′ upper)
-                 → ⟦ hullᴸ r ⟧ ≾ᴸ ⟦ expr L ⟧ → ⟦ hullᵁ r ⟧ ≾ᴸ ⟦ expr U ⟧ → Consistent (L , U)
-  run-consistent r L U l u =
-    word r , fits-up l (fits-∈ (run⊆hullᴸ r _ (word-∈ r))) ,
-             fits-up u (fits-∈ (run⊆hullᵁ r _ (word-∈ r)))
 
 -- a pair of literals, consistent by the run `r`
 
