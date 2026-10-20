@@ -21,9 +21,10 @@
 --   ⌈ read ⌉ ∙ ⌈ write ⌉                  3 ticks       4 ticks      --
 --   ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉           7 ticks       9 ticks      --
 --                                                                    --
--- The coherence field relates the two columns: some listed           --
--- guarantee, measured in the left column, is no greater than some    --
--- listed allowance, measured in the right.                           --
+-- The coherence field asks for a run that covers some listed         --
+-- guarantee and stays within some listed allowance. It implies that  --
+-- the guarantee, measured in the left column, is no greater than the --
+-- allowance, measured in the right, and asks more.                   --
 ------------------------------------------------------------------------
 
 open import Syntax.Durations.Nat using (ℕᵀ)
@@ -213,8 +214,8 @@ read-then-store-meets-the-contract = holds _ _
 
 -- what cannot be done is to put the two runs at the endpoints the other
 -- way round: guaranteeing the store under an allowance of a reading
--- alone is refused by the coherence field, three ticks guaranteed
--- being no less than the one tick budgeted
+-- alone is refused by the coherence field, no run that stores staying
+-- within a reading
 
 inverted-is-not-a-grade :
   ¬ (tracesˡᵒ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ˡᵒ ◇ˢ within ⟅ ⌈ read ⌉ ⟆)
@@ -247,7 +248,7 @@ branches = holds _ _
 ------------------------------------------------------------------------
 -- Sequencing, and the coherence field
 --
--- The field asks some listed guarantee to take no longer than some
+-- The field asks for a run consistent with a listed guarantee and a
 -- listed allowance. It holds of every grade above, is preserved by
 -- sequencing, and rules out pairs no run could satisfy.
 
@@ -262,6 +263,21 @@ sequencing = holds _ _
 no-such-interval :
   ¬ (tracesˡᵒ ⟅ ⟨ 10 ⟩ ⟆ˡᵒ ◇ˢ within ⟅ ⌈ read ⌉ ⟆)
 no-such-interval ()
+
+-- durations alone do not settle it: a store guaranteed in two ticks
+-- fits three readings' worth of budget, but a bound naming only
+-- readings, and no delay, leaves nothing to pay for a store with
+
+no-run-stores-within-readings :
+  ¬ (tracesˡᵒ ⟅ ⌈ write ⌉ ⟆ˡᵒ ◇ˢ within ⟅ ⌈ read ⌉ ∙ ⌈ read ⌉ ∙ ⌈ read ⌉ ⟆)
+no-run-stores-within-readings ()
+
+-- and a run may meet a guarantee of time with an operation the bound
+-- names: the store takes at least two ticks, so performing it covers
+-- two ticks of idling
+
+store-covers-two-ticks : TwoSided
+store-covers-two-ticks = [ ⟅ ⟨ 2 ⟩ ⟆ˡᵒ , within ⟅ ⌈ write ⌉ ⟆ ]
 
 ------------------------------------------------------------------------
 -- The greatest grade

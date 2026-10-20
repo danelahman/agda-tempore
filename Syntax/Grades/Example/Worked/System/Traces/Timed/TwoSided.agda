@@ -3,8 +3,8 @@
 --                                                                    --
 -- `System.Traces.Timed.TwoSided` is the pairing of the two timed     --
 -- projections. Its image is a time interval by the coherence field   --
--- of the grade, under which the fastest guarantee is no slower than  --
--- the slowest allowance.                                             --
+-- of the grade, run consistency, which puts the fastest guarantee no --
+-- slower than the slowest allowance.                                 --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.System.Traces.Timed.TwoSided where

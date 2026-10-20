@@ -15,9 +15,9 @@
 --                                                                    --
 -- The two witnesses are independent: the guarantee that fixes how    --
 -- far the advance reaches need not be the allowance that bounds it.  --
--- By the coherence field of the grade, some listed guarantee takes   --
--- no longer than some listed allowance, so the relation is           --
--- non-empty.                                                         --
+-- By the coherence field of the grade, some run covers a listed      --
+-- guarantee and stays within a listed allowance, so the guarantee    --
+-- takes no longer than the allowance and the relation is non-empty.  --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)

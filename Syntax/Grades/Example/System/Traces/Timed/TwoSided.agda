@@ -18,8 +18,8 @@
 -- `System.Traces.Timed.RightSided`, and every law is inherited from  --
 -- them.                                                              --
 --                                                                    --
--- The coherence field of the grade supplies the condition            --
--- `min ≤ max` of the target.                                         --
+-- The coherence field of the grade, run consistency, implies the     --
+-- condition `min ≤ max` of the target.                               --
 --                                                                    --
 -- The `unbounded` of the cap is measured by `∞`, so the two greatest --
 -- grades correspond, `[ u , unbounded ]` above and `[ 0 , ∞ ]`       --
@@ -60,7 +60,7 @@ open import Data.List.Base using (_++_)
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.Product using (_,_)
 
-open import Relation.Nullary.Decidable using (toWitness; fromWitness)
+open import Relation.Nullary.Decidable using (fromWitness)
 
 open import Syntax.Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Durations ℕᵀ Op
@@ -71,7 +71,7 @@ open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-tr
 open import Syntax.Grades.Example.Traces.Timed.TwoSided
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
   using (TwoSided; lo; hi; lo◇hi; _·ᵗˢ_; _⊔ᵗˢ_; ⊤ᵗˢ; of-durᵗˢ; two-sided;
-         _≾ᵗˢ_; _◇ˢ₀_)
+         _≾ᵗˢ_; _◇ˢ₀_; ◇ˢ₀-dur)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
@@ -104,13 +104,14 @@ open MaxDurations costʰⁱ
 ------------------------------------------------------------------------
 -- The coherence field gives the target's `min ≤ max`
 --
--- Some listed guarantee takes no longer than some listed allowance, and
--- the two aggregations sit on the outside of that pair.
+-- A run consistent with a listed guarantee and a listed allowance puts
+-- the guarantee's duration below the allowance's, and the two
+-- aggregations sit on the outside of that pair.
 
 coherent₀ : (P : Antichainˡᵒ) (Q : Antichainʰⁱ) → tracesˡᵒ P ◇ˢ₀ tracesʰⁱ Q
           → minSetDuration (tracesˡᵒ P) ≤ setDuration (tracesʰⁱ Q)
 coherent₀ P Q coh
-  with find (toWitness coh)
+  with find (◇ˢ₀-dur coh)
 ... | p , p∈P , hit
         with find hit
 ...     | q , q∈Q , p≤q =

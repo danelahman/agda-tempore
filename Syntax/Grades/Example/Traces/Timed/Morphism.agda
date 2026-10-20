@@ -40,6 +40,7 @@ import Syntax.Grades.Traces.Coverage as Coverage
 import Syntax.Grades.Traces.Coverage.AsOrder as CoverageOrder
 import Syntax.Grades.Traces.Allowance as Allowance
 import Syntax.Grades.Traces.Allowance.AsOrder as AllowanceOrder
+import Syntax.Grades.Traces.RunConsistency as RC
 import Syntax.Grades.Example.Traces.Lifted.Morphism as Morphism
 
 open _→ᴰ_ h using () renaming (map to hᴰ)
@@ -96,6 +97,6 @@ module Two (costˡᵒ costʰⁱ : Op → Duration.Carrier D₁)
     (Allowance.duration-≼ᵃ T₂ Op (λ o → hᴰ (costʰⁱ o)))
     (A.Coverage.mapᵀ-≼ᶜ₀ costˡᵒ)
     (A.Allowance.mapᵀ-≼ᵃ₀ costʰⁱ)
-    (A.Durations.duration-mapᵀ costˡᵒ)
-    (A.Durations.duration-mapᵀ costʰⁱ)
-    A.h-mono
+    (RC.DecConsistency._⋈?_ T₁ Op costˡᵒ costʰⁱ cost-≤ _≟ₒ_)
+    (RC.DecConsistency._⋈?_ T₂ Op (λ o → hᴰ (costˡᵒ o)) (λ o → hᴰ (costʰⁱ o))
+       (λ o → A.h-mono (cost-≤ o)) _≟ₒ_)

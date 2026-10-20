@@ -156,6 +156,15 @@ import Syntax.Grades.Traces.Coverage.Antisym
 import Syntax.Grades.Traces.Coverage.AsOrder
 
 ------------------------------------------------------------------------
+-- A guarantee and an allowance together
+--
+-- Run consistency: some run covers the guarantee and stays within the
+-- allowance. The run is eliminated by walking the two together, slack
+-- and budget in hand, which decides it.
+
+import Syntax.Grades.Traces.RunConsistency
+
+------------------------------------------------------------------------
 -- An order that carries no grade
 --
 -- The prefix order, and a checked proof that the language product is

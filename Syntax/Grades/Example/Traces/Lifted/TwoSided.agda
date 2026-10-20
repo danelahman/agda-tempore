@@ -20,12 +20,18 @@
 -- and `Example.Traces.Timed.TwoSided` instantiates them at the       --
 -- incomparable `Traces.Coverage` and `Traces.Allowance`, with the    --
 -- cost models `costˡᵒ` for a guarantee and `costʰⁱ` for an           --
--- allowance; the coherence field compares them by `cost-≤`.          --
+-- allowance.                                                         --
 --                                                                    --
--- The coherence field requires some listed guarantee to take no      --
--- longer than some listed allowance. The condition is necessary for  --
--- the grade to admit any run, and is the condition `min ≤ max`       --
--- required by the projection to time intervals.                      --
+-- The coherence field is run consistency: some run covers a listed   --
+-- guarantee and stays within a listed allowance,                     --
+--                                                                    --
+--   ∃ p ∈ P. ∃ q ∈ Q. ∃ x. p ≼ᶠ x × x ≼ᶜ q                           --
+--                                                                    --
+-- decided by `consistent?`, a parameter. The condition is necessary  --
+-- for the grade to admit any run. Durations being monotone along     --
+-- both orders, and a run's floor measure below its cap measure, it   --
+-- implies the condition `min ≤ max` required by the projection to    --
+-- time intervals (`◇ˢ₀-dur`).                                        --
 --                                                                    --
 -- The greatest grade is `[ u , unbounded ]`, the unit of the floor   --
 -- under the unbounded allowance of the cap. It is not absorbing.     --
@@ -42,6 +48,9 @@ open import Util.Equality
 import Syntax.Grades.Traces.Base as Base
 import Syntax.Grades.Traces.Durations as Dur
 import Syntax.Grades.Traces.Order as Order
+
+open import Data.Product using (Σ; _×_)
+open import Relation.Nullary using (Dec)
 
 open import Syntax.Durations using (Duration; TimeDomain)
 
@@ -60,17 +69,21 @@ module Syntax.Grades.Example.Traces.Lifted.TwoSided
         → Order.TraceOrder._≼_ Oᶜ s t
         → TimeDomain._≤ᴰ_ T (Dur.Durations.duration T Op costʰⁱ s)
                              (Dur.Durations.duration T Op costʰⁱ t))
+  -- whether a guarantee and an allowance admit a common run
+  (consistent? : (p q : Base.Trace T Op)
+               → Dec (Σ (Base.Trace T Op) (λ x → Order.TraceOrder._≼_ Oᶠ p x
+                                               × Order.TraceOrder._≼_ Oᶜ x q)))
   where
 
 open import Data.List.Base using (List; _++_)
 open import Data.Unit using (⊤; tt)
 open import Syntax.Durations.Monus T as M using (Carrier; 0ᴰ; _<ᴰ_)
-open M.Notation using (_+_; _≤_; _≤?_; ≤-refl; ≤-trans; ≤-reflexive; +-mono-≤)
+open M.Notation using (_≤_; ≤-trans)
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺; ∈-++⁺ˡ)
 open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
-open import Data.Product using (_×_; _,_; proj₁; proj₂)
+open import Data.Product using (_,_; proj₁; proj₂)
 
 open import Relation.Nullary using (¬_; Dec)
 open import Relation.Nullary.Decidable
@@ -132,10 +145,24 @@ open import Syntax.Grades.Example.Traces.Lifted.RightSided
 
 -- each endpoint is measured at its own cost model
 
+-- the two orders on traces
+
+open Order.TraceOrder Oᶠ using ()
+  renaming (_≼_ to _≼ᶠ_; ≼-refl to ≼ᶠ-refl; ≼-trans to ≼ᶠ-trans;
+            mono-∙ to ≼ᶠ-mono-∙)
+open Order.TraceOrder Oᶜ using ()
+  renaming (_≼_ to _≼ᶜ_; ≼-refl to ≼ᶜ-refl; ≼-trans to ≼ᶜ-trans;
+            mono-∙ to ≼ᶜ-mono-∙)
+
+-- a run that covers the guarantee `p` and stays within the allowance `q`
+
+Consistent : Trace → Trace → Set
+Consistent p q = Σ Trace (λ x → p ≼ᶠ x × x ≼ᶜ q)
+
 open Durations costˡᵒ using ()
-  renaming (duration to durationˡᵒ; duration-∙ to duration-∙ˡᵒ)
+  renaming (duration to durationˡᵒ)
 open Durations costʰⁱ using ()
-  renaming (duration to durationʰⁱ; duration-∙ to duration-∙ʰⁱ)
+  renaming (duration to durationʰⁱ)
 
 -- a trace's floor measure is below its cap measure
 
@@ -143,23 +170,55 @@ durationˡᵒ≤ʰⁱ : (t : Trace) → durationˡᵒ t ≤ durationʰⁱ t
 durationˡᵒ≤ʰⁱ = duration-mono costˡᵒ costʰⁱ cost-≤
 
 ------------------------------------------------------------------------
--- Coherence
+-- Run consistency
 --
--- `xs ◇ˢ ys` says some trace of `xs` takes no longer, at the floor's
--- cost model, than some trace of `ys` takes at the cap's. It is
--- decided, hence irrelevant.
+-- `xs ◇ˢ₀ ys` says some trace of `xs` and some trace of `ys` admit a
+-- common run: one that covers the first and stays within the second.
+-- It is decided, hence irrelevant.
 
 infix 5 _◇ˢ₀_
 
 _◇ˢ₀_ : List Trace → List Trace → Set
-xs ◇ˢ₀ ys = True (any? (λ p → any? (λ q → durationˡᵒ p ≤? durationʰⁱ q) ys) xs)
+xs ◇ˢ₀ ys = True (any? (λ p → any? (λ q → consistent? p q) ys) xs)
 
 ◇ˢ₀-irr : {xs ys : List Trace} → (p q : xs ◇ˢ₀ ys) → p ≡ q
-◇ˢ₀-irr {xs} {ys} =
-  True-irr (any? (λ p → any? (λ q → durationˡᵒ p ≤? durationʰⁱ q) ys) xs)
+◇ˢ₀-irr {xs} {ys} = True-irr (any? (λ p → any? (λ q → consistent? p q) ys) xs)
 
--- against `unbounded` there is nothing to ask: an unbounded allowance
--- takes at least as long as any guarantee
+-- introduced by a pair of members and a run, and eliminated into one
+
+◇ˢ₀-intro : {xs ys : List Trace} {p q : Trace}
+          → p ∈ xs → q ∈ ys → Consistent p q → xs ◇ˢ₀ ys
+◇ˢ₀-intro p∈ q∈ c =
+  fromWitness (Any.map (λ { refl → Any.map (λ { refl → c }) q∈ }) p∈)
+
+record Witness (xs ys : List Trace) : Set where
+  constructor witness
+  field
+    {wˡᵒ wʰⁱ} : Trace
+    wˡᵒ∈      : wˡᵒ ∈ xs
+    wʰⁱ∈      : wʰⁱ ∈ ys
+    run       : Consistent wˡᵒ wʰⁱ
+
+◇ˢ₀-elim : {xs ys : List Trace} → xs ◇ˢ₀ ys → Witness xs ys
+◇ˢ₀-elim p with find (toWitness p)
+... | _ , p∈ , hit with find hit
+...   | _ , q∈ , c = witness p∈ q∈ c
+
+-- the run's durations sit between the two, so the guarantee takes no
+-- longer than the allowance: run consistency gives `min ≤ max`
+
+consistent-dur : {p q : Trace} → Consistent p q → durationˡᵒ p ≤ durationʰⁱ q
+consistent-dur (x , px , xq) =
+  ≤-trans (durᶠ px) (≤-trans (durationˡᵒ≤ʰⁱ x) (durᶜ xq))
+
+◇ˢ₀-dur : {xs ys : List Trace} → xs ◇ˢ₀ ys
+        → Any (λ p → Any (λ q → durationˡᵒ p ≤ durationʰⁱ q) ys) xs
+◇ˢ₀-dur p with ◇ˢ₀-elim p
+... | witness p∈ q∈ c =
+      Any.map (λ { refl → Any.map (λ { refl → consistent-dur c }) q∈ }) p∈
+
+-- against `unbounded` there is nothing to ask beyond a guarantee, which
+-- every grade has: the guarantee itself is a run within no bound
 
 infix 5 _◇ˢ_
 
@@ -171,124 +230,56 @@ xs ◇ˢ unbounded  = ⊤
 ◇ˢ-irr {xs} {within Q}  = ◇ˢ₀-irr {xs} {tracesʰⁱ Q}
 ◇ˢ-irr {xs} {unbounded} tt tt = refl
 
--- a set is coherent with itself, at whichever member is to hand
+-- a set is consistent with itself under either reading, at whichever
+-- member is to hand: the member is its own run
 
 ◇ˢ₀-self : (xs : List Trace) → NonEmpty xs → xs ◇ˢ₀ xs
 ◇ˢ₀-self xs ne with neHead xs ne
-... | t , t∈xs =
-      fromWitness
-        (Any.map (λ eq → subst (λ z → Any (λ q → durationˡᵒ z ≤ durationʰⁱ q)
-                                            xs) eq inner) t∈xs)
-  where
-    inner : Any (λ q → durationˡᵒ t ≤ durationʰⁱ q) xs
-    inner =
-      Any.map (λ eq → subst (λ z → durationˡᵒ t ≤ durationʰⁱ z) eq
-                        (durationˡᵒ≤ʰⁱ t))
-              t∈xs
+... | t , t∈xs = ◇ˢ₀-intro t∈xs t∈xs (t , ≼ᶠ-refl t , ≼ᶜ-refl t)
 
--- and coherence survives the language product, durations adding along
--- sequencing
-
--- coherence only asks for one witnessing pair, so it travels along any
--- map that keeps the members -- normalisation in particular
+-- a witness travels along any map that keeps the members --
+-- normalisation in particular
 
 ◇ˢ₀-∈ : {xs xs' ys ys' : List Trace}
       → ({w : Trace} → w ∈ xs → w ∈ xs')
       → ({w : Trace} → w ∈ ys → w ∈ ys')
       → xs ◇ˢ₀ ys → xs' ◇ˢ₀ ys'
-◇ˢ₀-∈ {xs} {xs'} {ys} {ys'} f g p
-  with find (toWitness p)
-... | t , t∈xs , hit
-        with find hit
-...     | s , s∈ys , t≤s =
-          fromWitness
-            (Any.map
-              (λ eq → subst (λ z → Any (λ r → durationˡᵒ z ≤ durationʰⁱ r) ys')
-                            eq inner)
-              (f t∈xs))
-  where
-    inner : Any (λ r → durationˡᵒ t ≤ durationʰⁱ r) ys'
-    inner =
-      Any.map (λ eq → subst (λ z → durationˡᵒ t ≤ durationʰⁱ z) eq t≤s) (g s∈ys)
+◇ˢ₀-∈ f g p with ◇ˢ₀-elim p
+... | witness p∈ q∈ c = ◇ˢ₀-intro (f p∈) (g q∈) c
 
 -- reducing the floor keeps it: the witnessing guarantee is replaced by
--- one below it, which takes no longer
+-- one below it, which the run still covers
 
 ◇ˢ₀-nˡ : {xs ys : List Trace} → xs ◇ˢ₀ ys → nˡᵒ xs ◇ˢ₀ ys
-◇ˢ₀-nˡ {xs} {ys} p
-  with find (toWitness p)
-... | t , t∈xs , hit
-        with find hit
-...     | s , s∈ys , t≤s
-            with find (nˡᵒ-◃⁻ xs (◃ˡᵒ-∈ t∈xs))
-...         | t' , t'∈n , t'≼t =
-              fromWitness
-                (Any.map
-                  (λ eq → subst (λ z → Any (λ r → durationˡᵒ z ≤ durationʰⁱ r)
-                                            ys) eq inner)
-                  t'∈n)
-  where
-    inner : Any (λ r → durationˡᵒ t' ≤ durationʰⁱ r) ys
-    inner =
-      Any.map (λ eq → subst (λ z → durationˡᵒ t' ≤ durationʰⁱ z) eq
-                        (≤-trans (durᶠ t'≼t) t≤s))
-              s∈ys
+◇ˢ₀-nˡ {xs} p with ◇ˢ₀-elim p
+... | witness p∈ q∈ (x , px , xq)
+        with find (nˡᵒ-◃⁻ xs (◃ˡᵒ-∈ p∈))
+...     | _ , p'∈n , p'≼p = ◇ˢ₀-intro p'∈n q∈ (x , ≼ᶠ-trans p'≼p px , xq)
 
 -- reducing the cap keeps it too: the witnessing allowance is replaced
--- by one above it, which takes no less
+-- by one above it, which the run still stays within
 
 ◇ˢ₀-nʰⁱ : {xs ys : List Trace} → xs ◇ˢ₀ ys → xs ◇ˢ₀ nʰⁱ ys
-◇ˢ₀-nʰⁱ {xs} {ys} p
-  with find (toWitness p)
-... | t , t∈xs , hit
-        with find hit
-...     | s , s∈ys , t≤s
-            with find (nʰⁱ-◃⁻ ys (◃ʰⁱ-∈ s∈ys))
-...         | s' , s'∈n , s≼s' =
-              fromWitness
-                (Any.map
-                  (λ eq → subst (λ z → Any (λ r → durationˡᵒ z ≤ durationʰⁱ r)
-                                            (nʰⁱ ys)) eq inner)
-                  t∈xs)
-  where
-    inner : Any (λ r → durationˡᵒ t ≤ durationʰⁱ r) (nʰⁱ ys)
-    inner =
-      Any.map (λ eq → subst (λ z → durationˡᵒ t ≤ durationʰⁱ z) eq
-                        (≤-trans t≤s (durᶜ s≼s')))
-              s'∈n
+◇ˢ₀-nʰⁱ {xs} {ys} p with ◇ˢ₀-elim p
+... | witness p∈ q∈ (x , px , xq)
+        with find (nʰⁱ-◃⁻ ys (◃ʰⁱ-∈ q∈))
+...     | _ , q'∈n , q≼q' = ◇ˢ₀-intro p∈ q'∈n (x , px , ≼ᶜ-trans xq q≼q')
 
 -- both endpoints of a compound grade are reduced
 
 ◇ˢ₀-n-n : {xs ys : List Trace} → xs ◇ˢ₀ ys → nˡᵒ xs ◇ˢ₀ nʰⁱ ys
 ◇ˢ₀-n-n {xs} {ys} p = ◇ˢ₀-nʰⁱ {nˡᵒ xs} {ys} (◇ˢ₀-nˡ {xs} {ys} p)
 
+-- consistency survives the language product: the two runs are
+-- sequenced
+
 ◇ˢ₀-·ˢ : {xs xs' ys ys' : List Trace}
        → xs ◇ˢ₀ ys → xs' ◇ˢ₀ ys' → (xs ·ˢ xs') ◇ˢ₀ (ys ·ˢ ys')
-◇ˢ₀-·ˢ {xs} {xs'} {ys} {ys'} p q
-  with find (toWitness p)
-... | t , t∈xs , hit
-        with find hit
-...     | s , s∈ys , t≤s
-            with find (toWitness q)
-...         | t' , t'∈xs' , hit'
-                with find hit'
-...             | s' , s'∈ys' , t'≤s' =
-                  fromWitness
-                    (Any.map
-                      (λ eq → subst (λ z → Any (λ r → durationˡᵒ z ≤ durationʰⁱ r)
-                                                (ys ·ˢ ys')) eq inner)
-                      (∈-cartesianProductWith⁺ _∙_ t∈xs t'∈xs'))
-  where
-    bound : durationˡᵒ (t ∙ t') ≤ durationʰⁱ (s ∙ s')
-    bound =
-      ≤-trans (≤-reflexive (duration-∙ˡᵒ t t'))
-              (≤-trans (+-mono-≤ t≤s t'≤s')
-                       (≤-reflexive (sym (duration-∙ʰⁱ s s'))))
-
-    inner : Any (λ r → durationˡᵒ (t ∙ t') ≤ durationʰⁱ r) (ys ·ˢ ys')
-    inner =
-      Any.map (λ eq → subst (λ z → durationˡᵒ (t ∙ t') ≤ durationʰⁱ z) eq bound)
-              (∈-cartesianProductWith⁺ _∙_ s∈ys s'∈ys')
+◇ˢ₀-·ˢ p q with ◇ˢ₀-elim p | ◇ˢ₀-elim q
+... | witness p∈ q∈ (x , px , xq) | witness p'∈ q'∈ (x' , px' , xq') =
+      ◇ˢ₀-intro (∈-cartesianProductWith⁺ _∙_ p∈ p'∈)
+                (∈-cartesianProductWith⁺ _∙_ q∈ q'∈)
+                (x ∙ x' , ≼ᶠ-mono-∙ px px' , ≼ᶜ-mono-∙ xq xq')
 
 ◇ˢ-·ˢ : {xs xs' : List Trace} {Y Y' : Bounds}
       → xs ◇ˢ Y → xs' ◇ˢ Y' → nˡᵒ (xs ·ˢ xs') ◇ˢ (Y ·ᵇ Y')
@@ -323,8 +314,8 @@ record TwoSided : Set where
   field
     lo : Antichain
     hi : Bounds
-    -- some listed guarantee takes no longer than some listed allowance;
-    -- implicit, as it reduces to `⊤` at concrete endpoints
+    -- some run covers a listed guarantee and stays within a listed
+    -- allowance; implicit, as it reduces to `⊤` at concrete endpoints
     {lo◇hi} : tracesˡᵒ lo ◇ˢ hi
 
 open TwoSided public
@@ -400,7 +391,7 @@ i₁ ≾ᵗˢ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
 --
 -- Both endpoints are read disjunctively, so both join by union, and
 -- the coherence field of the joined pair is witnessed by the left
--- pair's own witnesses.
+-- pair's own witness.
 
 infixl 6 _⊔ᵗˢ_
 
@@ -436,34 +427,22 @@ i₁ ⊔ᵗˢ i₂ =
 ------------------------------------------------------------------------
 -- The coherence field travels along the order
 --
--- Weakening replaces the witnessing guarantee by an easier one, which
--- takes no longer, and the witnessing allowance by a larger one, which
--- takes no less. So nothing the order reaches is refused by the field.
+-- Weakening replaces the witnessing guarantee by one below it, which
+-- the run still covers, and the witnessing allowance by one above it,
+-- which the run still stays within. So nothing the order reaches is
+-- refused by the field.
 
 ◇ˢ₀-≾ : (P : Antichain) (Q : Antichainʰⁱ) (L : Antichain) (U : Antichainʰⁱ)
       → tracesˡᵒ P ◇ˢ₀ tracesʰⁱ Q
       → P ≾ˡᵒ L → Q ≾ʰⁱ₀ U
       → tracesˡᵒ L ◇ˢ₀ tracesʰⁱ U
-◇ˢ₀-≾ P Q L U coh l h
-  with find (toWitness coh)
-... | p , p∈L₁ , hit
-        with find hit
-...     | q , q∈U₁ , p≤q
-            with find (toWitness (l p (fromWitness p∈L₁)))
-...         | p' , p'∈L , p'≼p
-                with find (toWitness (h q (fromWitness q∈U₁)))
-...             | q' , q'∈U , q≼q' =
-                  fromWitness
-                    (Any.map
-                      (λ eq → subst (λ z → Any (λ r → durationˡᵒ z ≤ durationʰⁱ r)
-                                                (tracesʰⁱ U)) eq inner)
-                      p'∈L)
-  where
-    inner : Any (λ r → durationˡᵒ p' ≤ durationʰⁱ r) (tracesʰⁱ U)
-    inner =
-      Any.map (λ eq → subst (λ z → durationˡᵒ p' ≤ durationʰⁱ z) eq
-                        (≤-trans (durᶠ p'≼p) (≤-trans p≤q (durᶜ q≼q'))))
-              q'∈U
+◇ˢ₀-≾ P Q L U coh l h with ◇ˢ₀-elim coh
+... | witness p∈ q∈ (x , px , xq)
+        with find (toWitness (l _ (fromWitness p∈)))
+...     | _ , p'∈L , p'≼p
+            with find (toWitness (h _ (fromWitness q∈)))
+...         | _ , q'∈U , q≼q' =
+              ◇ˢ₀-intro p'∈L q'∈U (x , ≼ᶠ-trans p'≼p px , ≼ᶜ-trans xq q≼q')
 
 -- an unbounded allowance asks nothing, and a bounded one can only be
 -- reached from a bounded one

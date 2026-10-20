@@ -17,6 +17,9 @@
 -- take, and the cap charges it `costʰⁱ`, the most. Only the cap       --
 -- requires positive costs, under which an empty allowance permits     --
 -- only the empty run.                                                 --
+--                                                                     --
+-- The coherence field, run consistency, is decided by walking a       --
+-- guarantee and an allowance together (`Traces.RunConsistency`).      --
 -------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
@@ -49,6 +52,10 @@ open import Syntax.Grades.Traces.Allowance.AsOrder
   using (allowanceOrder)
 open import Syntax.Grades.Traces.Allowance T Op costʰⁱ using (duration-≼ᵃ)
 
+open import Syntax.Grades.Traces.RunConsistency T Op costˡᵒ costʰⁱ cost-≤
+  using (module DecConsistency)
+open DecConsistency _≟ₒ_ using (_⋈?_)
+
 open import Syntax.Grades.Example.Traces.Lifted.TwoSided
   T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤
-  coverageOrder allowanceOrder duration-≼ᶜ duration-≼ᵃ public
+  coverageOrder allowanceOrder duration-≼ᶜ duration-≼ᵃ _⋈?_ public

@@ -7,8 +7,7 @@
 -- between the lifted grades built over the two time domains, as soon --
 -- as it is monotone for the trace orders they are built at. The      --
 -- carriers are mapped through `Traces.Embedding`; the two-sided      --
--- grade also needs the durations its coherence reads to scale by a   --
--- monotone `h`.                                                      --
+-- grade's coherence field is carried by mapping the witnessing run.  --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
@@ -18,6 +17,9 @@ open import Relation.Binary.Definitions
   using (DecidableEquality; Transitive; Trichotomous)
 
 open import Util.Equality
+
+open import Data.Product using (Σ; _×_)
+open import Relation.Nullary using (Dec)
 
 open import Syntax.Durations using (Duration; TimeDomain; _→ᴰ_)
 
@@ -38,12 +40,9 @@ module Syntax.Grades.Example.Traces.Lifted.Morphism
   where
 
 open import Data.List.Base using (List; map)
-open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁺)
-open import Data.List.Relation.Unary.Any as Any using (Any)
-open import Data.Product using (_,_; proj₁; proj₂)
+open import Data.Product using (_,_)
 open import Data.Unit using (tt)
-open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Syntax.Grades using (strictᵍ; Grade; GradeMorphism; StrictMorphism)
 
@@ -52,8 +51,6 @@ import Syntax.Grades.Traces.Durations as Dur
 import Syntax.Grades.Example.Traces.Lifted.LeftSided as LeftSided
 import Syntax.Grades.Example.Traces.Lifted.RightSided as RightSided
 import Syntax.Grades.Example.Traces.Lifted.TwoSided as TwoSided
-
-open _→ᴰ_ h using () renaming (map to hᴰ)
 
 ------------------------------------------------------------------------
 -- Lower bounds
@@ -159,21 +156,19 @@ module Two
            → Order.TraceOrder._≼_ Oᶠ₁ s t → Order.TraceOrder._≼_ Oᶠ₂ (f s) (f t))
   (f-monoᶜ : {s t : Base.Trace T₁ Op}
            → Order.TraceOrder._≼_ Oᶜ₁ s t → Order.TraceOrder._≼_ Oᶜ₂ (f s) (f t))
-  -- the durations coherence reads scale by `h`, which is monotone
-  (f-durˡᵒ : (t : Base.Trace T₁ Op)
-           → Dur.Durations.duration T₂ Op costˡᵒ₂ (f t)
-           ≡ hᴰ (Dur.Durations.duration T₁ Op costˡᵒ₁ t))
-  (f-durʰⁱ : (t : Base.Trace T₁ Op)
-           → Dur.Durations.duration T₂ Op costʰⁱ₂ (f t)
-           ≡ hᴰ (Dur.Durations.duration T₁ Op costʰⁱ₁ t))
-  (h-mono : ∀ {τ κ} → TimeDomain._≤ᴰ_ T₁ τ κ → TimeDomain._≤ᴰ_ T₂ (hᴰ τ) (hᴰ κ))
+  (consistent?₁ : (p q : Base.Trace T₁ Op)
+                → Dec (Σ (Base.Trace T₁ Op) (λ x → Order.TraceOrder._≼_ Oᶠ₁ p x
+                                                × Order.TraceOrder._≼_ Oᶜ₁ x q)))
+  (consistent?₂ : (p q : Base.Trace T₂ Op)
+                → Dec (Σ (Base.Trace T₂ Op) (λ x → Order.TraceOrder._≼_ Oᶠ₂ p x
+                                                × Order.TraceOrder._≼_ Oᶜ₂ x q)))
   where
 
   private
     module W₁ = TwoSided T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ₁ costʰⁱ₁ cost-≤₁
-                  Oᶠ₁ Oᶜ₁ durᶠ₁ durᶜ₁
+                  Oᶠ₁ Oᶜ₁ durᶠ₁ durᶜ₁ consistent?₁
     module W₂ = TwoSided T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ₂ costʰⁱ₂ cost-≤₂
-                  Oᶠ₂ Oᶜ₂ durᶠ₂ durᶜ₂
+                  Oᶠ₂ Oᶜ₂ durᶠ₂ durᶜ₂ consistent?₂
     module ML = Left Oᶠ₁ Oᶠ₂ f-monoᶠ
     module MR = Right Oᶜ₁ Oᶜ₂ f-monoᶜ
     module EL = Embedding T₁ T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
@@ -182,31 +177,14 @@ module Two
                   (Order.flipᵖ T₁ Op (Order.TraceOrder.base Oᶜ₁))
                   (Order.flipᵖ T₂ Op (Order.TraceOrder.base Oᶜ₂)) f f-∙ f-monoᶜ
 
-  durˡᵒ₂ durʰⁱ₂ : Base.Trace T₂ Op → Duration.Carrier D₂
-  durˡᵒ₂ = Dur.Durations.duration T₂ Op costˡᵒ₂
-  durʰⁱ₂ = Dur.Durations.duration T₂ Op costʰⁱ₂
-
-  _≤₂_ : Duration.Carrier D₂ → Duration.Carrier D₂ → Set
-  _≤₂_ = TimeDomain._≤ᴰ_ T₂
-
-  -- coherence survives the map: the images of a witnessing pair witness
-  -- it, and normalising both sides keeps a witness
+  -- consistency survives the map: the image of the witnessing run
+  -- witnesses it between the images of the witnessing pair
 
   map-◇ˢ₀ : {xs ys : List (Base.Trace T₁ Op)}
           → xs W₁.◇ˢ₀ ys → map f xs W₂.◇ˢ₀ map f ys
-  map-◇ˢ₀ {xs} {ys} p with find (toWitness p)
-  ... | x , x∈ , q with find q
-  ...   | y , y∈ , le =
-          fromWitness
-            (Any.map (λ eq → subst (λ z → Any (λ q' → durˡᵒ₂ z ≤₂ durʰⁱ₂ q') (map f ys))
-                                   eq inner)
-                     (∈-map⁺ f x∈))
-    where
-      le' : durˡᵒ₂ (f x) ≤₂ durʰⁱ₂ (f y)
-      le' = subst₂ _≤₂_ (sym (f-durˡᵒ x)) (sym (f-durʰⁱ y)) (h-mono le)
-      inner : Any (λ q' → durˡᵒ₂ (f x) ≤₂ durʰⁱ₂ q') (map f ys)
-      inner = Any.map (λ eq → subst (λ z → durˡᵒ₂ (f x) ≤₂ durʰⁱ₂ z) eq le')
-                      (∈-map⁺ f y∈)
+  map-◇ˢ₀ p with W₁.◇ˢ₀-elim p
+  ... | W₁.witness p∈ q∈ (x , px , xq) =
+        W₂.◇ˢ₀-intro (∈-map⁺ f p∈) (∈-map⁺ f q∈) (f x , f-monoᶠ px , f-monoᶜ xq)
 
   map-◇ˢ : {xs : List (Base.Trace T₁ Op)} {Y : MR.R₁.Bounds}
          → xs W₁.◇ˢ Y → EL.R₂.n (map f xs) W₂.◇ˢ MR.mapᵇ Y
