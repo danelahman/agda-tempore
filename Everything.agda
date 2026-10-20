@@ -176,6 +176,7 @@ import Syntax.Grades.Product
 import Syntax.Grades.Upward
 import Syntax.Grades.SemiDirect
 import Syntax.Grades.Indexed
+import Syntax.Grades.Matrix
 
 ---- The timed-trace toolkit of the trace-based grades
 

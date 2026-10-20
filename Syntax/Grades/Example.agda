@@ -236,6 +236,11 @@ import Syntax.Grades.Example.SemiDirect.WindowedSchedules
 import Syntax.Grades.Example.SemiDirect.ExtendedInteger
 import Syntax.Grades.Example.SemiDirect.ResourceLevels
 
+-- the costs of switching between the modes of a device, as max-plus
+-- mode matrices
+
+import Syntax.Grades.Example.SemiDirect.ModeSwitchCosts
+
 ------------------------------------------------------------------------
 -- Worked instances
 --

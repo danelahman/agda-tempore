@@ -13,7 +13,7 @@
 -- peak by the earlier net change:                                    --
 --                                                                    --
 --   (t , [d₁ , d₂] , h) · (t' , [d₁' , d₂'] , h')                    --
---     = (min(t , d₁ + t') , [d₁ + d₁' , d₂ + d₂'] , max(h , d₂ + h')) --
+--    = (min(t , d₁ + t') , [d₁ + d₁' , d₂ + d₂'] , max(h , d₂ + h')) --
 --                                                                    --
 -- The upper side `(d₂ , h)` is the semidirect product of the net     --
 -- changes in `ℤ∞` acting on the peaks by shifting, cut down to the   --
@@ -23,8 +23,8 @@
 -- well. A grade is a lower and an upper side whose ranges are        --
 -- consistent, `d₁ ≤ d₂`.                                             --
 --                                                                    --
--- The order is `t ≥ t'`, `d₁ ≥ d₁'`, `d₂ ≤ d₂'` and `h ≤ h'`, and the --
--- join is the minimum or the maximum accordingly; `⊤` is             --
+-- The order is `t ≥ t'`, `d₁ ≥ d₁'`, `d₂ ≤ d₂'` and `h ≤ h'`, and    --
+-- the join is the minimum or the maximum accordingly; `⊤` is         --
 -- `(-∞ , (-∞ , ∞) , ∞)`. The unit `(0 , [0 , 0] , 0)` is the only    --
 -- grade below the unit, which gives the zero-product law: from       --
 -- `x · y ≾ u` the trough and peak of `x` are `0`, its range is       --
