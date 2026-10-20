@@ -230,6 +230,12 @@ import Syntax.Grades.Example.Counts.UpperBound
 import Syntax.Grades.Example.SemiDirect.FlowLevels
 import Syntax.Grades.Example.SemiDirect.WindowedSchedules
 
+-- the levels each resource reaches: a trough, a range of net changes
+-- and a peak, over the integers with infinities
+
+import Syntax.Grades.Example.SemiDirect.ExtendedInteger
+import Syntax.Grades.Example.SemiDirect.ResourceLevels
+
 ------------------------------------------------------------------------
 -- Worked instances
 --

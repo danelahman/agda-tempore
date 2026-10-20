@@ -68,8 +68,9 @@ import Syntax.Grades.Example.Worked.Counts
 
 import Syntax.Grades.Example.Worked.SemiDirect.FlowLevels
 import Syntax.Grades.Example.Worked.SemiDirect.WindowedSchedules
+import Syntax.Grades.Example.Worked.SemiDirect.ResourceLevels
 
--- Example computations typed against these grades, over identity grade
--- systems: what each grade lets a program do, and what it refuses.
+-- Example computations typed against these grades and grade systems:
+-- what each grade lets a program do, and what it refuses.
 
 import Syntax.Grades.Example.Worked.Typing
