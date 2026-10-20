@@ -5,12 +5,13 @@
 -- and types example computations in it, each at a value type and an  --
 -- effect grade.                                                      --
 --                                                                    --
--- Every instance uses an identity grade system, with effect and      --
+-- Most instances use an identity grade system, with effect and       --
 -- resource grades the same monoid and `∣_∣ᵉ` the identity, so `mapᵉ` --
 -- disappears: the lock a computation places on the context is its    --
 -- effect grade, and the premise of `unbox` compares what a           --
--- computation did with the grade of the box. The instances differ    --
--- only in the monoid.                                                --
+-- computation did with the grade of the box. These instances differ  --
+-- only in the monoid. The last group uses a genuine grade system,    --
+-- whose locks are the time `∣_∣ᵉ` measures of an effect grade.       --
 --                                                                    --
 -- The comments inside the programs state what each former appends to --
 -- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
@@ -23,7 +24,7 @@
 -- every side condition discharged where the rule imposes it by the   --
 -- decision procedure of the grade. In place of a program that the    --
 -- grade refuses stands a refutation of the bound it requires.        --
--- `Typing/Core.agda` contains the language, the three ways of        --
+-- `Typing/System.agda` contains the language, the three ways of      --
 -- meeting the bound of `var`, and the operation clauses passed to    --
 -- `handle`.                                                          --
 --                                                                    --
@@ -39,6 +40,7 @@ module Syntax.Grades.Example.Worked.Typing where
 -- signature, and the programs themselves, parameterised by the grade
 -- and by what it gives each operation.
 
+import Syntax.Grades.Example.Worked.Typing.System
 import Syntax.Grades.Example.Worked.Typing.Core
 
 ------------------------------------------------------------------------
@@ -135,3 +137,14 @@ import Syntax.Grades.Example.Worked.Typing.Counts.AtLeast
 import Syntax.Grades.Example.Worked.Typing.Counts.UpperBound
 import Syntax.Grades.Example.Worked.Typing.SemiDirect.FlowLevels
 import Syntax.Grades.Example.Worked.Typing.SemiDirect.WindowedSchedules
+
+------------------------------------------------------------------------
+-- Grade systems that measure effects by time
+
+-- the rigid finite-expression grades as effects, time intervals as
+-- resources, their duration hull between: a box opened once enough time
+-- has passed, and refused too soon or too late
+
+import Syntax.Grades.Example.Worked.Typing.System.Traces.Rigid.Finite.RightSided
+import Syntax.Grades.Example.Worked.Typing.System.Traces.Rigid.Finite.LeftSided
+import Syntax.Grades.Example.Worked.Typing.System.Traces.Rigid.Finite.TwoSided

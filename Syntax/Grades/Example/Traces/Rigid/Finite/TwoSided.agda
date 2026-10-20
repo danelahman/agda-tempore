@@ -3,8 +3,10 @@
 -- rationals, as intervals.                                           --
 --                                                                    --
 -- A grade `[ L , U ]` pairs a lower bound `L` with an upper bound    --
--- `U`, compared componentwise. A delay is graded by the waits of at  --
--- least and at most its length: together, a wait of exactly it.      --
+-- `U` that some exact run fits (`Exact.Finite.Interval`), compared   --
+-- componentwise. A delay is graded by the waits of at least and at   --
+-- most its length: together, a wait of exactly it. A literal         --
+-- `[ L , U ]⟨ r ⟩` names the run `r`.                                --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -12,7 +14,7 @@ open import Data.Nat.Base using (ℕ)
 
 open import Util.Equality
 
-open import Syntax.Durations.NonNegativeRational using (ℚ≥0ᴰ; ℚ≥0ᵀ)
+open import Syntax.Durations.NonNegativeRational using (ℚ≥0ᴰ; ℚ≥0ᵀ; ℚ≥0-dense)
 import Syntax.Grades.Traces.RunningTimes as RunningTimes
 
 module Syntax.Grades.Example.Traces.Rigid.Finite.TwoSided
@@ -20,15 +22,21 @@ module Syntax.Grades.Example.Traces.Rigid.Finite.TwoSided
   (name-code : ∀ o → name (code o) ≡ o) (code-name : ∀ c → code (name c) ≡ c)
   (running : RunningTimes.RunningTimes ℚ≥0ᵀ Op) where
 
-open import Data.Product using (_×_; _,_)
+open import Relation.Nullary.Decidable using (toWitnessFalse)
 
 open import Syntax.Grades using (Grade)
-open import Syntax.Grades.Product using (_×ᵍ_)
+open import Syntax.Durations.Monus ℚ≥0ᵀ using (0ᴰ; _<ᴰ_)
+open import Syntax.Grades.Example.Time.Dense.NonNegativeRational using (#_; _≤?_)
 
-open import Syntax.Grades.Example.Traces.Rigid.Finite.Base Op n code name name-code code-name running
+private
+  code-injective : ∀ {o o′} → code o ≡ code o′ → o ≡ o′
+  code-injective {o} {o′} e = trans (sym (name-code o)) (trans (cong name e) (name-code o′))
+
+  one-pos : 0ᴰ <ᴰ # 1
+  one-pos = toWitnessFalse {a? = # 1 ≤? 0ᴰ} _
+
+open import Syntax.Grades.Exact.Finite.Interval ℚ≥0ᵀ Op n code code-injective name code-name
+  running ℚ≥0-dense (# 1) one-pos public
 
 two-sided : Grade ℚ≥0ᴰ
-two-sided = lowerᵍ ×ᵍ upperᵍ
-
-[_,_] : Proper′ lower → Proper′ upper → Proper′ lower × Proper′ upper
-[ L , U ] = L , U
+two-sided = intervalᵍ

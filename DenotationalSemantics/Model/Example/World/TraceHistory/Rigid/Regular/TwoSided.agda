@@ -4,7 +4,7 @@
 --                                                                    --
 -- Worlds are timed traces, and a grade `[ L , U ]` reaches the       --
 -- histories extending the current one by one continuation that both --
--- endpoints admit (`World.History` at the product grade):            --
+-- endpoints admit (`World.History` at the interval grade):           --
 --                                                                    --
 --   w ⊑ʰ[ [ L , U ] ] w'   iff   Σ[ s ] w ∙ s ≡ w'                    --
 --                                  and  ⟦ s ⟧ ≾ L  and  ⟦ s ⟧ ≾ U     --
@@ -25,10 +25,6 @@ module DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Regular.TwoS
   (running : RunningTimes.RunningTimes ℕᵀ Op) where
 
 open import Syntax.Grades.Example.Traces.Rigid.Regular.TwoSided Op n code name name-code code-name running
-  using (two-sided)
+  using (two-sided; operation)
 
-open import DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Regular.Base
-  Op n code name name-code code-name running
-  using (‵ᵍ)
-
-open import DenotationalSemantics.Model.World.History ℕᵀ Op two-sided (λ o → ‵ᵍ o , ‵ᵍ o) public
+open import DenotationalSemantics.Model.World.History ℕᵀ Op two-sided operation public

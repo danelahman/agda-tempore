@@ -4,7 +4,7 @@
 --                                                                    --
 -- Worlds are timed traces, and a grade `[ L , U ]` reaches the       --
 -- histories extending the current one by one continuation that both --
--- endpoints admit (`World.History` at the product grade):            --
+-- endpoints admit (`World.History` at the interval grade):           --
 --                                                                    --
 --   w ⊑ʰ[ [ L , U ] ] w'   iff   Σ[ s ] w ∙ s ≡ w'                    --
 --                                  and  ⟦ s ⟧ ≾ L  and  ⟦ s ⟧ ≾ U     --
@@ -33,7 +33,7 @@ open import Syntax.Grades.Traces.Base ℚ≥0ᵀ Op
   using (Trace; Trace⁻; ε; operation; delay; ε⁻; operation⁻; _∙_; ∣_∣⁺)
 
 open import Syntax.Grades.Example.Traces.Rigid.Finite.TwoSided Op n code name name-code code-name running
-  using (two-sided)
+  using (two-sided; operation′)
 open import Syntax.Grades.Example.Traces.Rigid.Finite.Base Op n code name name-code code-name running
   using (expr; ⟦_⟧; _≾ᴳ_; waitᴸ; waitᵁ) renaming (_·ᵉ_ to _·ᵍ_)
 
@@ -50,14 +50,15 @@ import DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Finite.LeftS
 import DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Finite.RightSided
   Op n code name name-code code-name running as FU
 
-open import DenotationalSemantics.Model.World.History ℚ≥0ᵀ Op two-sided (λ o → ‵ᵍ o , ‵ᵍ o) public
+open import DenotationalSemantics.Model.World.History ℚ≥0ᵀ Op two-sided
+  (λ o → operation′ o (‵ᵍ o) (‵ᵍ o) refl refl) public
 
 ------------------------------------------------------------------------
 -- The reading at the interval is the pair of the readings
 
 private
-  ⟦⟧-pair  : ∀ s → ⟦ s ⟧ᵗ ≡ (FL.⟦ s ⟧ᵗ , FU.⟦ s ⟧ᵗ)
-  ⟦⟧-pair⁻ : ∀ s → ⟦ s ⟧⁻ ≡ (FL.⟦ s ⟧⁻ , FU.⟦ s ⟧⁻)
+  ⟦⟧-pair  : ∀ s → proj₁ ⟦ s ⟧ᵗ ≡ (FL.⟦ s ⟧ᵗ , FU.⟦ s ⟧ᵗ)
+  ⟦⟧-pair⁻ : ∀ s → proj₁ ⟦ s ⟧⁻ ≡ (FL.⟦ s ⟧⁻ , FU.⟦ s ⟧⁻)
 
   ⟦⟧-pair ε               = refl
   ⟦⟧-pair (operation o s) =
@@ -72,11 +73,11 @@ private
 -- so accessibility asks every exact word of the one run to fit a word
 -- of each endpoint
 
-reaches⇔ : ∀ {L U w w'}
-         → w ⊑ʰ[ (L , U) ] w'
+reaches⇔ : ∀ {L U c w w'}
+         → w ⊑ʰ[ ((L , U) , c) ] w'
          ⇔ (Σ[ s ∈ Trace ] w ∙ s ≡ w'
               × runᴸ (events s) ≾ ⟦ expr L ⟧ × runᴸ (events s) ≾ ⟦ expr U ⟧)
-reaches⇔ {L} {U} = mk⇔
+reaches⇔ {L} {U} {c} = mk⇔
   (λ (mkʰ s e (pL , pU)) →
      s , e ,
      Equivalence.to (FL.admits⇔ L s) (subst (_≾ᴳ L) (cong proj₁ (⟦⟧-pair s)) pL) ,

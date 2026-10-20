@@ -3,14 +3,15 @@
 -- interval grade, in dense time.                                     --
 --                                                                    --
 -- A grade `[ L , U ]` pairs a guarantee with a bound, each a finite  --
--- expression over interval letters. The guarantee below demands      --
--- a reading, then an undisturbed wait of at least one unit, with     --
--- anything before and after; the bound allows a reading and at most  --
--- six units of anything after it. A box at this grade may be         --
--- unboxed after a reading and a wait of one unit; after a reading    --
--- and a transmission instead it may not, the transmission filling    --
--- the wait the guarantee demands -- though it stays within the       --
--- bound, and within a guarantee asking only for a unit of anything.  --
+-- expression over interval letters, that a common run fits. The      --
+-- guarantee below demands a reading, then an undisturbed wait of at  --
+-- least one unit, with anything before and after; the bound allows a --
+-- reading and at most six units of anything after it. A box at this --
+-- grade may be unboxed after a reading and a wait of one unit; after --
+-- a reading and a transmission instead it may not, the transmission --
+-- filling the wait the guarantee demands -- though it stays within   --
+-- the bound, and within a guarantee asking only for a unit of        --
+-- anything.                                                          --
 --                                                                    --
 -- Reading takes more than a quarter and at most half a unit, writing --
 -- one to two units, sending two to four.                             --
@@ -19,7 +20,9 @@
 module Syntax.Grades.Example.Worked.Typing.Traces.Rigid.Finite.TwoSided where
 
 open import Data.Fin.Base using (Fin; zero; suc)
+open import Data.List.Base using () renaming ([] to []ᴸ; _∷_ to _∷ᴸ_)
 open import Data.Product using (_×_; _,_)
+open import Syntax.Grades using (module Grade)
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable using (toWitness)
 
@@ -76,7 +79,7 @@ running = record
 import Syntax.Grades.Example.Traces.Rigid.Finite.LeftSided Op 3 code name name-code code-name running as L
 import Syntax.Grades.Example.Traces.Rigid.Finite.RightSided Op 3 code name name-code code-name running as U
 open import Syntax.Grades.Example.Traces.Rigid.Finite.TwoSided Op 3 code name name-code code-name running
-  using (two-sided)
+  using (two-sided; operation; [_,_]⟨_⟩; perform; delay)
 
 open L using (Proper′; ‵_; _·_; ≥_; !≥_; upper; lower)
 open U using (≤_)
@@ -84,10 +87,8 @@ open U using (≤_)
 ------------------------------------------------------------------------
 -- The operations, graded by the operation at both endpoints
 
-opTime : Op → Proper′ lower × Proper′ upper
-opTime read  = L.⌜ ‵_ {lower} read ⌝  , U.⌜ ‵_ {upper} read ⌝
-opTime write = L.⌜ ‵_ {lower} write ⌝ , U.⌜ ‵_ {upper} write ⌝
-opTime send  = L.⌜ ‵_ {lower} send ⌝  , U.⌜ ‵_ {upper} send ⌝
+opTime : Op → Grade.Carrier two-sided
+opTime = operation
 
 open import Syntax.Grades.Example.System.Identity using (noWitnesses)
 open import Syntax.Grades.Example.Worked.Typing.Core two-sided opTime noWitnesses
@@ -103,8 +104,8 @@ within-six : Proper′ upper
 within-six = U.⌜ ‵ read · ≤ (# 6) ⌝
 
 contract contract-busy : R
-contract      = settling , within-six
-contract-busy = settling-busy , within-six
+contract      = [ settling      , within-six ]⟨ perform read ∷ᴸ delay (# 1) ∷ᴸ []ᴸ ⟩
+contract-busy = [ settling-busy , within-six ]⟨ perform read ∷ᴸ delay (# 1) ∷ᴸ []ᴸ ⟩
 
 ------------------------------------------------------------------------
 -- A box at the contract, opened after the wait

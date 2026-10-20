@@ -7,7 +7,7 @@
 --                                                                    --
 --   upper  `Timed.RightSided`  →  `upperᵍ`, `unbounded` to `≤∞`      --
 --   lower  `Timed.LeftSided`   →  `lowerᵍ`                           --
---   both   `Timed.TwoSided`    →  `lowerᵍ ×ᵍ upperᵍ`, end by end     --
+--   both   `Timed.TwoSided`    →  `intervalᵍ`, end by end            --
 --                                                                    --
 -- Each map preserves and reflects the order, and sends products and  --
 -- joins to products and joins. The upper map sends the unit to the   --
@@ -15,7 +15,9 @@
 -- a budget, so it is a grade morphism into `upperᵇ`, the upper grade --
 -- with delays read as budgets. The lower map sends the unit `{ ε }`, --
 -- the greatest guarantee, to the greatest grade `≥0`; the interval   --
--- map sends the unit to `(≥0 , ε)`.                                  --
+-- map sends the unit to `(≥0 , ε)`. A run consistent with both ends  --
+-- of a trace interval gives a word both translations admit, so the   --
+-- translated ends are consistent.                                    --
 --                                                                    --
 -- The grades' orders are decided, the interval-letter ones by the    --
 -- reader, so the decisions agree.                                    --
@@ -48,6 +50,7 @@ open import Data.Bool.Base using (Bool; true; false; _∧_) renaming (T to IsTru
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Fin.Base using (zero; suc)
 open import Data.Fin.Subset using (⁅_⁆) renaming (⊤ to all)
+open import Data.Fin.Subset.Properties using (x∈⁅x⁆)
 open import Data.List.Base using (List; []; _∷_; _++_; map; cartesianProductWith)
 open import Data.List.Properties using (++-identityʳ)
 open import Data.List.Membership.Propositional using (find; lose) renaming (_∈_ to _∈ˡ_)
@@ -63,7 +66,7 @@ open import Relation.Nullary.Decidable using (toWitness; fromWitness; isYes)
 import Data.Vec.Base as V
 
 open import Syntax.Durations.Monus T
-open import Syntax.Durations.Intervals T using (fin; ∞; ⁺; ⁻; ⊑⇒≤; ≤⇒⁺⊑⁺) renaming (_∣_ to _∣ᶜ_)
+open import Syntax.Durations.Intervals T using (fin; ∞; ⁺; ⁻; ⊑⇒≤; ≤⇒⁺⊑⁺) renaming (_∣_ to _∣ᶜ_; ⊑-refl to ⊑ᶜ-refl)
 
 open import Syntax.Grades using (Grade; GradeMorphism; _→ᵍ_)
 open import Syntax.Grades.Product using (_×ᵍ_)
@@ -86,7 +89,7 @@ import Syntax.Grades.Example.Traces.Timed.LeftSided
 import Syntax.Grades.Example.Traces.Timed.TwoSided
   T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos as N2
 
-open import Syntax.Grades.Exact.Base T Op n code code-injective using (Word; stretch; dur; dur-stretch)
+open import Syntax.Grades.Exact.Base T Op n code code-injective using (Word; stretch; dur; dur-stretch; op; ∣_∣⁺)
 open import Syntax.Grades.Exact.Order T Op n code code-injective using (_⊑_; ⊑-refl; ⊑-trans; ⊑-dur)
 open import Syntax.Grades.Exact.Lift T Op n code code-injective
   using (Lang; uᴸ; _·ᴸ_; _∪ᴸ_)
@@ -98,6 +101,9 @@ open import Syntax.Grades.Exact.Finite T Op n code code-injective name code-name
 open import Syntax.Grades.Exact.Finite.Grades T Op n code code-injective name code-name running dense κ κ-pos
   using (Proper′; ⌜_⌝; expr; _·ᵉ_; _∣ᵉ_; εᵉ; _≾ᵉ_; _≾ᵉ?_; _≾ᴳ_; decided; by-reader; upperᵍ; lowerᵍ)
 
+open import Syntax.Grades.Exact.Finite.Interval T Op n code code-injective name code-name running dense κ κ-pos
+  using (Consistent; intervalᵍ)
+open RunningTimes.RunningTimes running using (rt-inhabited⁺)
 import Syntax.Grades.Exact.Lift T Op n code code-injective as LiftM
 import Syntax.Grades.Exact.NonRigid.Upper T Op n code code-injective running dense κ κ-pos as U
 import Syntax.Grades.Exact.NonRigid.Lower T Op n code code-injective running dense κ κ-pos as L
@@ -494,12 +500,73 @@ lo-u = ↑² _ _ (≾ᴸ-refl , ≾ᴸ-refl)
 ------------------------------------------------------------------------
 -- Intervals: the two maps end by end
 
-two : N2.TwoSided → Proper′ lower × Proper′ upper
-two i = loᴬ (N2.lo i) , upᴮ (N2.hi i)
+-- a word both translations of a trace admit: each operation at a
+-- running time it admits, each delay a stretch of its length
+
+private
+  run  : Trace → Word
+  run⁻ : Trace⁻ → Word
+  run εᵗ              = []
+  run (operation o t) = op o (proj₁ (rt-inhabited⁺ o)) ∷ run t
+  run (delay d t⁻)    = stretch all ∣ d ∣⁺ ++ run⁻ t⁻
+  run⁻ ε⁻ᵗ              = []
+  run⁻ (operation⁻ o t) = op o (proj₁ (rt-inhabited⁺ o)) ∷ run t
+
+  op-∈ : ∀ {s} o → ⟦ ‵_ {s} o ⟧ (op o (proj₁ (rt-inhabited⁺ o)) ∷ [])
+  op-∈ o = o , proj₁ (rt-inhabited⁺ o) , x∈⁅x⁆ (code o) , proj₂ (rt-inhabited⁺ o) , refl
+
+  ≥0-∈ : ⟦ L.≥0 ⟧ []
+  ≥0-∈ = 0ᴰ , ⊑ᶜ-refl , sym (stretch-0 all)
+
+  run-lo  : ∀ t → ⟦ L.lo t ⟧ (run t)
+  run-lo⁻ : ∀ t → ⟦ L.lo⁻ t ⟧ (run⁻ t)
+  run-lo εᵗ              = ≥0-∈
+  run-lo (operation o t) = [] , _ , refl , ≥0-∈ , (_ , run t , refl , op-∈ {lower} o , run-lo t)
+  run-lo (delay d t⁻)    = _ , run⁻ t⁻ , refl , (∣ d ∣⁺ , ⊑ᶜ-refl , refl) , run-lo⁻ t⁻
+  run-lo⁻ ε⁻ᵗ              = ≥0-∈
+  run-lo⁻ (operation⁻ o t) = [] , _ , refl , ≥0-∈ , (_ , run t , refl , op-∈ {lower} o , run-lo t)
+
+  run-up  : ∀ t → ⟦ U.up t ⟧ (run t)
+  run-up⁻ : ∀ t → ⟦ U.up⁻ t ⟧ (run⁻ t)
+  run-up εᵗ              = refl
+  run-up (operation o t) = _ , run t , refl , inj₁ (op-∈ {upper} o) , run-up t
+  run-up (delay d t⁻)    = _ , run⁻ t⁻ , refl , (∣ d ∣⁺ , ≤⇒⁺⊑⁺ ≤ᴰ-refl , refl) , run-up⁻ t⁻
+  run-up⁻ ε⁻ᵗ              = refl
+  run-up⁻ (operation⁻ o t) = _ , run t , refl , inj₁ (op-∈ {upper} o) , run-up t
+
+  -- a run consistent with a guarantee and an allowance makes their
+  -- translations consistent
+  lo-fits : ∀ P {p x} → p ∈ˡ NL.traces P → p ≼ᶜ x
+          → Σ[ y ∈ Word ] ⟦ expr (loᴬ P) ⟧ y × run x ⊑ y
+  lo-fits P {p} {x} p∈ px with Equivalence.to (L.≼ᶜ⇔ p x) px (run x) (run-lo x)
+  ... | y , y∈ , xy = y , LL.sem← (NL.traces P) (NL.nonempty P) (lose p∈ y∈) , xy
+
+  up-fits : ∀ Q {q x} → q ∈ˡ NR.traces Q → x ≼ᵃ q
+          → Σ[ y ∈ Word ] ⟦ expr (upᴮ (NR.within Q)) ⟧ y × run x ⊑ y
+  up-fits Q {q} {x} q∈ xq with Equivalence.to (U.≼ᵃ⇔ x q) xq (run x) (run-up x)
+  ... | y , y∈ , xy = y , UL.sem← (NR.traces Q) (NR.nonempty Q) (lose q∈ y∈) , xy
+
+  -- every word fits the unbounded allowance
+  ⊤-fits : ∀ w → Σ[ y ∈ Word ] ⟦ expr ⊤ᵁ ⟧ y × w ⊑ y
+  ⊤-fits w = stretch all (dur w) , (dur w , tt , refl) , LiftM.⊑-all w
+
+  two-consistent : ∀ (P : NL.Antichain) (Y : NR.Bounds) → NL.traces P N2.◇ˢ Y
+                 → Consistent (loᴬ P , upᴮ Y)
+  two-consistent P (NR.within Q) c with N2.◇ˢ₀-elim c
+  ... | N2.witness p∈ q∈ (x , px , xq) = run x , lo-fits P p∈ px , up-fits Q q∈ xq
+  two-consistent P NR.unbounded _ = first (NL.traces P) (NL.nonempty P) (λ m → m)
+    where
+      first : ∀ xs → NonEmpty xs → (∀ {p} → p ∈ˡ xs → p ∈ˡ NL.traces P)
+            → Consistent (loᴬ P , ⊤ᵁ)
+      first (p ∷ _) _ f =
+        run p , lo-fits P (f (here refl)) (CC.≼ᶜ-refl p) , ⊤-fits (run p)
+
+two : N2.TwoSided → Grade.Carrier intervalᵍ
+two i = (loᴬ (N2.lo i) , upᴮ (N2.hi i)) , two-consistent (N2.lo i) (N2.hi i) (N2.lo◇hi i)
 
 private
   G₂ : Grade D
-  G₂ = lowerᵍ ×ᵍ upperᵍ
+  G₂ = intervalᵍ
 
 two-≾⇔ : ∀ i j → i N2.≾ᵗˢ j ⇔ Grade._≾_ G₂ (two i) (two j)
 two-≾⇔ i j = mk⇔
@@ -518,7 +585,7 @@ two-⊔ i j =
 
 -- the unit goes to the guarantee of nothing under the empty run
 
-two-u : Grade._≃_ G₂ (two N2.uᵗˢ) (Grade.⊤ lowerᵍ , εᵉ)
+two-u : Grade._≃_ G₂ (two N2.uᵗˢ) ((Grade.⊤ lowerᵍ , εᵉ) , [] , ([] , ≥0-∈ , ⊑-refl) , ([] , refl , ⊑-refl))
 two-u = (proj₁ lo-u , proj₁ up-u) , (proj₂ lo-u , proj₂ up-u)
 
 two-⊤ : Grade._≃_ G₂ (two N2.⊤ᵗˢ) (Grade.⊤ G₂)

@@ -187,6 +187,14 @@ import Syntax.Grades.Example.System.Traces.Timed.TwoSided
 
 import Syntax.Grades.Example.System.Traces.Subsets.RightSided
 
+-- the rigid finite-expression grades to time intervals by their
+-- duration hull: an upper bound to the longest run it admits, a lower
+-- bound to the shortest, an interval to the pair of its ends
+
+import Syntax.Grades.Example.System.Traces.Rigid.Finite.RightSided
+import Syntax.Grades.Example.System.Traces.Rigid.Finite.LeftSided
+import Syntax.Grades.Example.System.Traces.Rigid.Finite.TwoSided
+
 -- the subset cap to at-most counts: on each counter, the greatest
 -- count among the listed traces -- a quota that covers the run that
 -- draws on it most

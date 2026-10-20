@@ -125,3 +125,10 @@ import Syntax.Grades.Exact.Regular.Decide
 -- Kleene plus `e · e*`
 
 import Syntax.Grades.Exact.Regular.Grades
+
+-- the duration hull of an expression, and the intervals whose ends some
+-- run fits
+
+import Syntax.Grades.Exact.Durations
+import Syntax.Grades.Exact.Finite.Durations
+import Syntax.Grades.Exact.Finite.Interval
