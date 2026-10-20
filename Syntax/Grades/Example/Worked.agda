@@ -64,6 +64,11 @@ import Syntax.Grades.Example.Worked.Traces
 
 import Syntax.Grades.Example.Worked.Counts
 
+-- semidirect products: flow-sensitive levels, windowed schedules
+
+import Syntax.Grades.Example.Worked.SemiDirect.FlowLevels
+import Syntax.Grades.Example.Worked.SemiDirect.WindowedSchedules
+
 -- Example computations typed against these grades, over identity grade
 -- systems: what each grade lets a program do, and what it refuses.
 

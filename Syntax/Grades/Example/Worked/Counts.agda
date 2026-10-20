@@ -22,3 +22,4 @@ import Syntax.Grades.Example.Worked.Counts.AtMost
 -- "at least k of each operation"
 
 import Syntax.Grades.Example.Worked.Counts.AtLeast
+import Syntax.Grades.Example.Worked.Counts.UpperBound

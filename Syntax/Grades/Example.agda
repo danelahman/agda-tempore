@@ -215,6 +215,13 @@ import Syntax.Grades.Example.System.Counts.Timed.RightSided
 
 import Syntax.Grades.Example.System.Counts.Time
 
+-- upper bounds on counts by name, an indexed grade; flow-sensitive
+-- levels and windowed schedules, semidirect products
+
+import Syntax.Grades.Example.Counts.UpperBound
+import Syntax.Grades.Example.SemiDirect.FlowLevels
+import Syntax.Grades.Example.SemiDirect.WindowedSchedules
+
 ------------------------------------------------------------------------
 -- Worked instances
 --

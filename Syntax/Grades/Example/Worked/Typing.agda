@@ -127,3 +127,6 @@ import Syntax.Grades.Example.Worked.Typing.Counts.AtMost
 -- stand in for
 
 import Syntax.Grades.Example.Worked.Typing.Counts.AtLeast
+import Syntax.Grades.Example.Worked.Typing.Counts.UpperBound
+import Syntax.Grades.Example.Worked.Typing.SemiDirect.FlowLevels
+import Syntax.Grades.Example.Worked.Typing.SemiDirect.WindowedSchedules
