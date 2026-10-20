@@ -91,3 +91,25 @@ import Syntax.Grades.Example.Worked.Traces.Rigid.Finite.TwoSided
 -- both decisions agreeing, products, a delay read as a budget
 
 import Syntax.Grades.Example.Worked.Traces.Rigid.Finite.NonRigid
+
+------------------------------------------------------------------------
+-- Rigid timed regular-expression grades, in dense time
+
+-- upper bounds: open bounds adding up, unbounded stretches as
+-- iterations, iteration against open ends, the window rule, the plus,
+-- the hull
+
+import Syntax.Grades.Example.Worked.Traces.Rigid.Rational.RightSided
+
+-- lower bounds: iterated waits, flanks, open ends, the plus, the hull
+
+import Syntax.Grades.Example.Worked.Traces.Rigid.Rational.LeftSided
+
+-- intervals: a repeated cycle of work and rest
+
+import Syntax.Grades.Example.Worked.Traces.Rigid.Rational.TwoSided
+
+-- comparisons on which the decision and the reference reader of the
+-- design study agree
+
+import Syntax.Grades.Example.Worked.Traces.Rigid.Rational.CrossChecked

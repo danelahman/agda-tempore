@@ -17,9 +17,10 @@
 -- Each move of the reader is a move of the automaton, reading a      --
 -- piece when it pours or matches one, silent otherwise; so a word of --
 -- pieces is accepted exactly when the reader accepts it against some --
--- bound of M. The gaps the automaton meets are bounded by the        --
--- largest bound and weight, so finitely many configurations serve    --
--- and the automaton determinises (`Regular.Determinise`).            --
+-- bound of M. States of M from which M accepts nothing are left out. --
+-- The gaps the automaton meets are bounded by the largest bound and  --
+-- weight, so finitely many configurations serve and the automaton    --
+-- determinises (`Regular.Determinise`).                              --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -46,7 +47,9 @@ module Syntax.Grades.Exact.Regular.Upper
   (decY : Fin kY → Letters.Letter T Op n code code-injective running (Intervals.Hi ℕᵀ))
   (decX-fin : ∀ a → Σ ℕ λ j → Σ (Intervals.Side ℕᵀ) λ u → proj₂ (decX a) ≡ Intervals.fin (j Intervals.∣ u)) where
 
-open import Data.Bool.Base using (Bool; true; false; if_then_else_) renaming (T to IsTrue)
+open import Data.Bool.Base using (Bool; true; false; if_then_else_; not; _∧_) renaming (T to IsTrue)
+open import Data.Bool.Properties using (T?)
+open import Data.Bool.ListAction using (all)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Fin.Base using () renaming (zero to fzero)
 open import Data.Integer.Base as ℤ using (ℤ; +_; -[1+_]; +[1+_]; _⊖_; _-_)
@@ -205,19 +208,57 @@ private
   both′ (yes _) (no ¬y) = no λ { (_ , y) → ¬y y }
   both′ (no ¬x) _       = no λ { (x , _) → ¬x x }
 
+-- the states of M from which some word is accepted; a dead state is
+-- not final and has every letter loop on it
+
+dead : ℕ → Bool
+dead q = not (Y.isFinal M q) ∧ all (λ b → next q b ℕ.≡ᵇ q) ys
+
+Live : ℕ → Set
+Live q = IsTrue (not (dead q))
+
+live? : ∀ q → Dec (Live q)
+live? q = T? (not (dead q))
+
+private
+  all-∈ : ∀ (f : Fin kY → Bool) xs → IsTrue (all f xs) → ∀ {b} → b ∈ xs → IsTrue (f b)
+  all-∈ f (x ∷ xs) t (here refl) with f x
+  ... | true = tt
+  all-∈ f (x ∷ xs) t (there m) with f x
+  ... | true = all-∈ f xs t m
+
+  ∧-r : ∀ {x y} → IsTrue (x ∧ y) → IsTrue y
+  ∧-r {true} t = t
+
+  dead-run : ∀ q → IsTrue (dead q) → ∀ uY → Y.run M q uY ≡ q
+  dead-run q d []       = refl
+  dead-run q d (b ∷ uY) =
+    trans (cong (λ r → Y.run M r uY)
+                (ℕ.≡ᵇ⇒≡ _ _ (all-∈ (λ b → next q b ℕ.≡ᵇ q) ys (∧-r {not (Y.isFinal M q)} d) (∈-allFin b))))
+          (dead-run q d uY)
+
+live-of : ∀ q uY → IsTrue (Y.isFinal M (Y.run M q uY)) → Live q
+live-of q uY f with dead q in e
+... | false = tt
+... | true  = not-final (subst IsTrue (sym e) tt)
+                (subst (λ r → IsTrue (Y.isFinal M r)) (dead-run q (subst IsTrue (sym e) tt) uY) f)
+  where
+    not-final : ∀ {b c} → IsTrue (not b ∧ c) → IsTrue b → ⊥
+    not-final {true} () _
+
 -- stretch letters of the bound started, entered and passed; operation
 -- letters matched
 
 startOf : ℕ → Fin kY → Letter Hi → List Cfg
-startOf q b (st S c) = ch (next q b) S (init c) false ∷ []
+startOf q b (st S c) = when (live? (next q b)) (ch (next q b) S (init c) false ∷ [])
 startOf q b (op _)   = []
 
 enterOf : ℕ → Gᵁ → Fin kY → Letter Hi → List Cfg
-enterOf q g b (st S c) = ch (next q b) S (addcᵁ g c) true ∷ ov (next q b) g ∷ []
+enterOf q g b (st S c) = when (live? (next q b)) (ch (next q b) S (addcᵁ g c) true ∷ ov (next q b) g ∷ [])
 enterOf q g b (op _)   = []
 
 matchOf : P → ℕ → Fin kY → Letter Hi → List Cfg
-matchOf p q b (op o)   = when (proj₁ p ≟ᴷ opk o) (free (next q b) ∷ [])
+matchOf p q b (op o)   = when (live? (next q b)) (when (proj₁ p ≟ᴷ opk o) (free (next q b) ∷ []))
 matchOf p q b (st _ _) = []
 
 overOf : Maybe (Fin kX) → ℕ → OpSet → Gᵁ → List Cfg
@@ -271,24 +312,25 @@ private
           → Σ[ b ∈ Fin kY ] Σ[ S ∈ OpSet ] Σ[ h ∈ Hi ] decY b ≡ st S h × c ≡ ch (next q b) S (init h) false
   start-∈ q m with find (∈-concatMap⁻ (λ b → startOf q b (decY b)) {xs = ys} m)
   ... | b , _ , m′ with decY b in e
-  ...   | st S h with m′
-  ...     | here refl = b , S , h , e , refl
+  ...   | st S h with when-∈ (live? (next q b)) m′
+  ...     | _ , here refl = b , S , h , e , refl
 
   enter-∈ : ∀ q g {c} → c ∈ concatMap (λ b → enterOf q g b (decY b)) ys
           → Σ[ b ∈ Fin kY ] Σ[ S ∈ OpSet ] Σ[ h ∈ Hi ] decY b ≡ st S h
             × (c ≡ ch (next q b) S (addcᵁ g h) true ⊎ c ≡ ov (next q b) g)
   enter-∈ q g m with find (∈-concatMap⁻ (λ b → enterOf q g b (decY b)) {xs = ys} m)
   ... | b , _ , m′ with decY b in e
-  ...   | st S h with m′
-  ...     | here refl         = b , S , h , e , inj₁ refl
-  ...     | there (here refl) = b , S , h , e , inj₂ refl
+  ...   | st S h with when-∈ (live? (next q b)) m′
+  ...     | _ , here refl         = b , S , h , e , inj₁ refl
+  ...     | _ , there (here refl) = b , S , h , e , inj₂ refl
 
   match-∈ : ∀ a q {c} → c ∈ concatMap (λ b → matchOf (decX a) q b (decY b)) ys
           → Σ[ b ∈ Fin kY ] Σ[ o ∈ Op ] decY b ≡ op o × proj₁ (decX a) ≡ opk o × c ≡ free (next q b)
   match-∈ a q m with find (∈-concatMap⁻ (λ b → matchOf (decX a) q b (decY b)) {xs = ys} m)
   ... | b , _ , m′ with decY b in e
-  ...   | op o with when-∈ (proj₁ (decX a) ≟ᴷ opk o) m′
-  ...     | k , here refl = b , o , e , k , refl
+  ...   | op o with when-∈ (live? (next q b)) m′
+  ...     | _ , m″ with when-∈ (proj₁ (decX a) ≟ᴷ opk o) m″
+  ...       | k , here refl = b , o , e , k , refl
 
   pour-∈ : ∀ a q S g m {c} → c ∈ readsᶜ a (ch q S g m)
          → c ≡ ch q S (addpᵁ g (proj₂ (decX a))) false × AdmK (proj₁ (decX a)) S × fitsᵁ (addpᵁ g (proj₂ (decX a)))
@@ -297,23 +339,24 @@ private
 
   -- and building them
 
-  ∈-start : ∀ q b S h → decY b ≡ st S h → ch (next q b) S (init h) false ∈ concatMap (λ b → startOf q b (decY b)) ys
-  ∈-start q b S h e =
-    ∈-concatMap⁺ (λ b → startOf q b (decY b)) (lose (∈-allFin b) (subst (λ ℓ → _ ∈ startOf q b ℓ) (sym e) (here refl)))
+  ∈-start : ∀ q b S h → decY b ≡ st S h → Live (next q b) → ch (next q b) S (init h) false ∈ concatMap (λ b → startOf q b (decY b)) ys
+  ∈-start q b S h e l =
+    ∈-concatMap⁺ (λ b → startOf q b (decY b)) (lose (∈-allFin b) (subst (λ ℓ → _ ∈ startOf q b ℓ) (sym e) (∈-when (live? (next q b)) l (here refl))))
 
-  ∈-enter : ∀ q g b S h → decY b ≡ st S h → ch (next q b) S (addcᵁ g h) true ∈ concatMap (λ b → enterOf q g b (decY b)) ys
-  ∈-enter q g b S h e =
-    ∈-concatMap⁺ (λ b → enterOf q g b (decY b)) (lose (∈-allFin b) (subst (λ ℓ → _ ∈ enterOf q g b ℓ) (sym e) (here refl)))
+  ∈-enter : ∀ q g b S h → decY b ≡ st S h → Live (next q b) → ch (next q b) S (addcᵁ g h) true ∈ concatMap (λ b → enterOf q g b (decY b)) ys
+  ∈-enter q g b S h e l =
+    ∈-concatMap⁺ (λ b → enterOf q g b (decY b)) (lose (∈-allFin b) (subst (λ ℓ → _ ∈ enterOf q g b ℓ) (sym e) (∈-when (live? (next q b)) l (here refl))))
 
-  ∈-pass : ∀ q g b S h → decY b ≡ st S h → ov (next q b) g ∈ concatMap (λ b → enterOf q g b (decY b)) ys
-  ∈-pass q g b S h e =
-    ∈-concatMap⁺ (λ b → enterOf q g b (decY b)) (lose (∈-allFin b) (subst (λ ℓ → _ ∈ enterOf q g b ℓ) (sym e) (there (here refl))))
+  ∈-pass : ∀ q g b S h → decY b ≡ st S h → Live (next q b) → ov (next q b) g ∈ concatMap (λ b → enterOf q g b (decY b)) ys
+  ∈-pass q g b S h e l =
+    ∈-concatMap⁺ (λ b → enterOf q g b (decY b)) (lose (∈-allFin b) (subst (λ ℓ → _ ∈ enterOf q g b ℓ) (sym e) (∈-when (live? (next q b)) l (there (here refl)))))
 
-  ∈-match : ∀ a q b o → decY b ≡ op o → proj₁ (decX a) ≡ opk o
+  ∈-match : ∀ a q b o → decY b ≡ op o → proj₁ (decX a) ≡ opk o → Live (next q b)
           → free (next q b) ∈ concatMap (λ b → matchOf (decX a) q b (decY b)) ys
-  ∈-match a q b o e k =
+  ∈-match a q b o e k l =
     ∈-concatMap⁺ (λ b → matchOf (decX a) q b (decY b))
-      (lose (∈-allFin b) (subst (λ ℓ → _ ∈ matchOf (decX a) q b ℓ) (sym e) (∈-when (proj₁ (decX a) ≟ᴷ opk o) k (here refl))))
+      (lose (∈-allFin b) (subst (λ ℓ → _ ∈ matchOf (decX a) q b ℓ) (sym e)
+        (∈-when (live? (next q b)) l (∈-when (proj₁ (decX a) ≟ᴷ opk o) k (here refl)))))
 
 ------------------------------------------------------------------------
 -- What a configuration accepts
@@ -423,11 +466,11 @@ private
     comp-run (match {o = o} k r) u uY q eu ev f with map-∷ u eu | map-∷ uY ev
     ... | a , u′ , refl , ea , eu′ | b , uY′ , refl , eb , ev′ =
       free q , free (next q b) , Det.here ,
-      ∈-match a q b o eb (trans (cong proj₁ ea) k) ,
+      ∈-match a q b o eb (trans (cong proj₁ ea) k) (live-of (next q b) uY′ f) ,
       comp-run r u′ uY′ (next q b) eu′ ev′ f
     comp-run (start {S} {c} h) u uY q eu ev f with map-∷ uY ev
     ... | b , uY′ , refl , eb , ev′ =
-      acc-silent (free q) _ u (∈-start q b S c eb)
+      acc-silent (free q) _ u (∈-start q b S c eb (live-of (next q b) uY′ f))
         (subst (λ g → Acc reader (ch (next q b) S g false) u) (sm-start c)
           (comp-ch h u uY′ (next q b) eu ev′ f))
 
@@ -454,12 +497,12 @@ private
             → map decY uY ≡ v → Fin′ q uY → Acc reader (ov q (sm pre cs)) (a ∷ u)
     comp-ov {pre} {cs} (enter {S} {c} h) a u uY q ea eu ev f with map-∷ uY ev
     ... | b , uY′ , refl , eb , ev′ =
-      acc-silent (ov q (sm pre cs)) _ (a ∷ u) (∈-enter q (sm pre cs) b S c eb)
+      acc-silent (ov q (sm pre cs)) _ (a ∷ u) (∈-enter q (sm pre cs) b S c eb (live-of (next q b) uY′ f))
         (subst (λ g → Acc reader (ch (next q b) S g true) (a ∷ u)) (sm-enter pre cs c)
           (comp-ch h (a ∷ u) uY′ (next q b) (cong₂ _∷_ ea eu) ev′ f))
     comp-ov {pre} {cs} (pass {S} {c} o) a u uY q ea eu ev f with map-∷ uY ev
     ... | b , uY′ , refl , eb , ev′ =
-      acc-silent (ov q (sm pre cs)) _ (a ∷ u) (∈-pass q (sm pre cs) b S c eb)
+      acc-silent (ov q (sm pre cs)) _ (a ∷ u) (∈-pass q (sm pre cs) b S c eb (live-of (next q b) uY′ f))
         (comp-ov o a u uY′ (next q b) ea eu ev′ f)
 
 -- the automaton accepts a word of pieces exactly when the reader

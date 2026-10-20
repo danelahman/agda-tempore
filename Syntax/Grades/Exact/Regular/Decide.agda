@@ -495,7 +495,16 @@ module Up (e f : Expr upper) where
   decide⇔ = mk⇔ complete sound
 
   decide : Dec (⟦ e ⟧ ≾ ⟦ f ⟧)
-  decide = map′ sound complete (RD._⊆?_ kX {X} {A.determinised} (EX.elab-wf (codeRx rX)) A.determinised-wf)
+  -- the tables are arguments, so that each is computed once
+
+  inclusion : (X′ : Automaton.DFA kX) → Automaton.WellFormed kX X′
+            → (M′ : Automaton.DFA kY) (M′-wf : Automaton.WellFormed kY M′)
+            → Dec (Automaton._⊆_ kX X′ (UpperAutomaton.determinised T Op n code code-injective running kX kY M′ M′-wf decX decY decX-fin))
+  inclusion X′ X′-wf M′ M′-wf =
+    RD._⊆?_ kX {X′} {UpperAutomaton.determinised T Op n code code-injective running kX kY M′ M′-wf decX decY decX-fin}
+      X′-wf (UpperAutomaton.determinised-wf T Op n code code-injective running kX kY M′ M′-wf decX decY decX-fin)
+
+  decide = map′ sound complete (inclusion X (EX.elab-wf (codeRx rX)) M (EY.elab-wf (codeRx rY)))
 
 -- the upper order, decided
 
@@ -647,7 +656,16 @@ module Lo (e f : Expr lower) where
   decide⇔ = mk⇔ complete sound
 
   decide : Dec (⟦ e ⟧ ≾ ⟦ f ⟧)
-  decide = map′ sound complete (RD._⊆?_ kX {X} {A.determinised} (EX.elab-wf (codeRx rX)) A.determinised-wf)
+  -- the tables are arguments, so that each is computed once
+
+  inclusion : (X′ : Automaton.DFA kX) → Automaton.WellFormed kX X′
+            → (M′ : Automaton.DFA kY) (M′-wf : Automaton.WellFormed kY M′)
+            → Dec (Automaton._⊆_ kX X′ (LowerAutomaton.determinised T Op n code code-injective running kX kY M′ M′-wf decX decY))
+  inclusion X′ X′-wf M′ M′-wf =
+    RD._⊆?_ kX {X′} {LowerAutomaton.determinised T Op n code code-injective running kX kY M′ M′-wf decX decY}
+      X′-wf (LowerAutomaton.determinised-wf T Op n code code-injective running kX kY M′ M′-wf decX decY)
+
+  decide = map′ sound complete (inclusion X (EX.elab-wf (codeRx rX)) M (EY.elab-wf (codeRx rY)))
 
 -- the lower order, decided
 

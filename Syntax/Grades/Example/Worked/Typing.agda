@@ -99,6 +99,11 @@ import Syntax.Grades.Example.Worked.Typing.Traces.Rigid.Regular.TwoSided
 
 import Syntax.Grades.Example.Worked.Typing.Traces.Rigid.Finite.TwoSided
 
+-- the same over expressions with iteration: a box opened after repeated
+-- readings and waits, and refused after a transmission
+
+import Syntax.Grades.Example.Worked.Typing.Traces.Rigid.Rational.TwoSided
+
 ------------------------------------------------------------------------
 -- Grades that pair time with something else
 --

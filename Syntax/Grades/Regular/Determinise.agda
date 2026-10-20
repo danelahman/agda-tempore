@@ -14,8 +14,8 @@
 -- When a finite list of states contains the start and is closed      --
 -- under the moves, the subset construction is a lawful automaton     --
 -- accepting the same words: its states are lists of states compared  --
--- as sets, a step closes a set under silent moves (saturating it at  --
--- most once per listed state) and reads the letter.                  --
+-- as sets, a step closes a set under silent moves (adding, round by  --
+-- round, what one more move reaches) and reads the letter.           --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _+_; _^_; _≤_; _<_; z≤n; s≤s)
@@ -209,14 +209,22 @@ module Determinise {C : Set} (_≟_ : DecidableEquality C) (N : ENFA C)
   fresh : List C → List C → List C
   fresh S = filter (λ c → ¬? (c ∈? S))
 
-  saturate : Maybe Letter → ℕ → List C → List C
-  saturate x zero    S = S
-  saturate x (suc f) S with fresh S (concatMap (silent x) S)
-  ... | []    = S
-  ... | c ∷ _ = saturate x f (c ∷ S)
+  -- the states one silent move beyond a set, not yet in it
+
+  beyond : Maybe Letter → List C → List C
+  beyond x S = nub (fresh S (concatMap (silent x) S))
+
+  -- the fuel is a list, one round per element, so that it is used
+  -- only as far as the rounds go
+
+  saturate : Maybe Letter → List C → List C → List C
+  saturate x []      S = S
+  saturate x (_ ∷ f) S with beyond x S
+  ... | []     = S
+  ... | c ∷ cs = saturate x f ((c ∷ cs) ++ S)
 
   close : Maybe Letter → List C → List C
-  close x S = saturate x (suc (length univ)) (nub S)
+  close x S = saturate x (start ∷ univ) (nub S)
 
   private
     Closed : Maybe Letter → List C → Set
@@ -228,55 +236,71 @@ module Determinise {C : Set} (_≟_ : DecidableEquality C) (N : ENFA C)
     silent-∈ : ∀ x S {c′} → c′ ∈ concatMap (silent x) S → ∃ λ c → c ∈ S × c′ ∈ silent x c
     silent-∈ x S m = find (∈-concatMap⁻ (silent x) m)
 
+    -- what lies beyond is reached by one move from the set, and new
+    beyond-∈ : ∀ x S {c′} → c′ ∈ beyond x S → (∃ λ c → c ∈ S × c′ ∈ silent x c) × ¬ (c′ ∈ S)
+    beyond-∈ x S m with fresh-∈ S (concatMap (silent x) S) (nub⁻ _ m)
+    ... | m′ , ¬m = silent-∈ x S m′ , ¬m
+
+    distinct-++ : ∀ xs {ys} → Distinct xs → Distinct ys → (∀ {z} → z ∈ xs → ¬ (z ∈ ys)) → Distinct (xs ++ ys)
+    distinct-++ []       _          dy _  = dy
+    distinct-++ (x ∷ xs) (x∉ , dxs) dy dj =
+      (λ m → [ x∉ , dj (here refl) ]′ (∈-++⁻ xs m)) , distinct-++ xs dxs dy (λ m → dj (there m))
+      where open import Data.Sum.Base using ([_,_]′)
+
     -- saturation grows the set
     sat-⊇ : ∀ x f S {c} → c ∈ S → c ∈ saturate x f S
-    sat-⊇ x zero    S m = m
-    sat-⊇ x (suc f) S m with fresh S (concatMap (silent x) S)
-    ... | []    = m
-    ... | c ∷ _ = sat-⊇ x f (c ∷ S) (there m)
+    sat-⊇ x []      S m = m
+    sat-⊇ x (_ ∷ f) S m with beyond x S
+    ... | []     = m
+    ... | c ∷ cs = sat-⊇ x f ((c ∷ cs) ++ S) (∈-++⁺ʳ (c ∷ cs) m)
 
     -- and stays within what the silent moves reach
     sat-reach : ∀ x f S (P : C → Set) → (∀ {c c′} → P c → c′ ∈ silent x c → P c′)
               → All P S → All P (saturate x f S)
-    sat-reach x zero    S P step ps = ps
-    sat-reach x (suc f) S P step ps with fresh S (concatMap (silent x) S) in e
-    ... | []    = ps
-    ... | c ∷ _ = sat-reach x f (c ∷ S) P step (pc ∷ ps)
+    sat-reach x []      S P step ps = ps
+    sat-reach x (_ ∷ f) S P step ps with beyond x S in e
+    ... | []     = ps
+    ... | c ∷ cs = sat-reach x f ((c ∷ cs) ++ S) P step
+                     (All.++⁺ (All.tabulate (λ m → reach (subst (_ ∈_) (sym e) m))) ps)
       where
-        m : c ∈ fresh S (concatMap (silent x) S)
-        m = subst (c ∈_) (sym e) (here refl)
-        pc : P c
-        pc with silent-∈ x S (proj₁ (fresh-∈ S (concatMap (silent x) S) m))
+        open import Data.List.Relation.Unary.All.Properties as All using ()
+        reach : ∀ {c′} → c′ ∈ beyond x S → P c′
+        reach m with proj₁ (beyond-∈ x S m)
         ... | c₀ , c₀∈ , mv = step (All.lookup ps c₀∈) mv
 
     -- with fuel past the size of the universe, saturation closes
-    sat-closed : ∀ x f S → Distinct S → Good S → length univ < length S + f
+    sat-closed : ∀ x f S → Distinct S → Good S → length univ < length S + length f
                → Closed x (saturate x f S)
-    sat-closed x zero S dS gS r =
+    sat-closed x [] S dS gS r =
       ⊥-elim (ℕ.<-irrefl refl (ℕ.<-≤-trans (subst (length univ <_) (ℕ.+-identityʳ _) r)
                                             (pigeonhole S univ dS gS)))
-    sat-closed x (suc f) S dS gS r with fresh S (concatMap (silent x) S) in e
+    sat-closed x (_ ∷ f) S dS gS r with beyond x S in e
     ... | [] = λ c∈ mv → closed c∈ mv
       where
         closed : ∀ {c c′} → c ∈ S → c′ ∈ silent x c → c′ ∈ S
         closed {c} {c′} c∈ mv with c′ ∈? S
         ... | yes p = p
-        ... | no ¬p = case (subst (c′ ∈_) e (∈-filter⁺ (λ c → ¬? (c ∈? S))
-                             (∈-concatMap⁺ (silent x) (lose c∈ mv)) ¬p))
+        ... | no ¬p = case (subst (c′ ∈_) e (nub⁺ _ (∈-filter⁺ (λ c → ¬? (c ∈? S))
+                             (∈-concatMap⁺ (silent x) (lose c∈ mv)) ¬p)))
           where
             case : c′ ∈ [] → c′ ∈ S
             case ()
-    ... | c ∷ _ = sat-closed x f (c ∷ S) (¬c∈ , dS) good′
-                    (subst (length univ <_) (ℕ.+-suc (length S) f) r)
+    ... | c ∷ cs = sat-closed x f ((c ∷ cs) ++ S) distinct good′ longer
       where
-        m : c ∈ fresh S (concatMap (silent x) S)
-        m = subst (c ∈_) (sym e) (here refl)
-        ¬c∈ : ¬ (c ∈ S)
-        ¬c∈ = proj₂ (fresh-∈ S (concatMap (silent x) S) m)
-        good′ : Good (c ∷ S)
-        good′ (here refl) with silent-∈ x S (proj₁ (fresh-∈ S (concatMap (silent x) S) m))
-        ... | c₀ , c₀∈ , mv = silent-univ x (gS c₀∈) mv
-        good′ (there n) = gS n
+        new : ∀ {z} → z ∈ c ∷ cs → z ∈ beyond x S
+        new m = subst (_ ∈_) (sym e) m
+        distinct : Distinct ((c ∷ cs) ++ S)
+        distinct = distinct-++ (c ∷ cs) (subst Distinct e (nub-distinct (fresh S (concatMap (silent x) S)))) dS
+                     (λ m → proj₂ (beyond-∈ x S (new m)))
+        good′ : Good ((c ∷ cs) ++ S)
+        good′ m with ∈-++⁻ (c ∷ cs) m
+        ... | inj₂ m′ = gS m′
+        ... | inj₁ m′ with proj₁ (beyond-∈ x S (new m′))
+        ...   | c₀ , c₀∈ , mv = silent-univ x (gS c₀∈) mv
+        longer : length univ < length ((c ∷ cs) ++ S) + length f
+        longer = ℕ.≤-trans r (ℕ.≤-trans (ℕ.≤-reflexive (ℕ.+-suc (length S) (length f)))
+                   (ℕ.+-monoˡ-≤ (length f) (subst (suc (length S) ≤_) (sym (length-++ (c ∷ cs)))
+                                     (s≤s (ℕ.m≤n+m (length S) (length cs))))))
 
     reach-closed : ∀ {x R c c′} → Closed x R → c ∈ R → Silent* N x c c′ → c′ ∈ R
     reach-closed cl m here          = m
@@ -284,16 +308,16 @@ module Determinise {C : Set} (_≟_ : DecidableEquality C) (N : ENFA C)
 
   close-sound : ∀ x S {c′} → c′ ∈ close x S → ∃ λ c → c ∈ S × Silent* N x c c′
   close-sound x S m =
-    All.lookup (sat-reach x (suc (length univ)) (nub S) (λ c′ → ∃ λ c → c ∈ S × Silent* N x c c′)
+    All.lookup (sat-reach x (start ∷ univ) (nub S) (λ c′ → ∃ λ c → c ∈ S × Silent* N x c c′)
                  (λ { (c₀ , c₀∈ , s) mv → c₀ , c₀∈ , silent-snoc N s mv })
                  (All.tabulate (λ {c} c∈ → c , nub⁻ S c∈ , here))) m
 
   close-complete : ∀ x S → Good S → ∀ {c c′} → c ∈ S → Silent* N x c c′ → c′ ∈ close x S
   close-complete x S gS c∈ s =
-    reach-closed (sat-closed x (suc (length univ)) (nub S) (nub-distinct S)
+    reach-closed (sat-closed x (start ∷ univ) (nub S) (nub-distinct S)
                     (λ m → gS (nub⁻ S m))
                     (ℕ.m≤n+m (suc (length univ)) (length (nub S))))
-                 (sat-⊇ x _ (nub S) (nub⁺ S c∈)) s
+                 (sat-⊇ x (start ∷ univ) (nub S) (nub⁺ S c∈)) s
 
   close-good : ∀ x S → Good S → Good (close x S)
   close-good x S gS m with close-sound x S m

@@ -115,3 +115,16 @@ import Syntax.Grades.Example.Traces.Rigid.Finite.TwoSided
 -- the non-rigid timed trace grades read as finite-expression grades
 
 import Syntax.Grades.Example.Traces.Rigid.Finite.NonRigid
+
+------------------------------------------------------------------------
+-- Rigid timed regular-expression grades
+--
+-- Grades over the non-negative rationals: one-sided expressions with
+-- iteration over interval letters, compared by the runs they denote and
+-- decided by the automaton of the reader over a common unit
+-- (`Grades.Exact.Regular`); upper bounds, lower bounds, and their pairs.
+
+import Syntax.Grades.Example.Traces.Rigid.Rational.Base
+import Syntax.Grades.Example.Traces.Rigid.Rational.RightSided
+import Syntax.Grades.Example.Traces.Rigid.Rational.LeftSided
+import Syntax.Grades.Example.Traces.Rigid.Rational.TwoSided

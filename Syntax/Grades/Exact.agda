@@ -120,3 +120,8 @@ import Syntax.Grades.Exact.Regular.Gap
 import Syntax.Grades.Exact.Regular.Upper
 import Syntax.Grades.Exact.Regular.Lower
 import Syntax.Grades.Exact.Regular.Decide
+
+-- expressions with iteration as grades in each instance, with the
+-- Kleene plus `e · e*`
+
+import Syntax.Grades.Exact.Regular.Grades

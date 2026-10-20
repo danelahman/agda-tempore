@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
 -- The non-negative rationals are commensurable.                      --
 --                                                                    --
--- For a list of durations, the unit is one over the product `D` of   --
--- their denominators, and the count of `n / d` (in lowest terms) is  --
--- `n · (D / d)`. Both are computed by ℕ arithmetic, so on literals   --
--- they normalise to numerals.                                        --
+-- For a list of durations, the unit is one over the least common    --
+-- multiple `D` of their denominators, and the count of `n / d` (in   --
+-- lowest terms) is `n · (D / d)`. Both are computed by ℕ arithmetic, --
+-- so on literals they normalise to numerals.                         --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Exact.Grid.NonNegativeRational where
@@ -20,6 +20,8 @@ import Data.Nat.Properties as ℕ
 open import Data.Nat.Coprimality using (1-coprimeTo)
 open import Data.Nat.DivMod using (m/n*n≡m; n/n≡1)
 open import Data.Nat.Divisibility using (_∣_; ∣-trans; m∣m*n; n∣m*n)
+open import Data.Nat.LCM using (lcm; m∣lcm[m,n]; n∣lcm[m,n]; gcd*lcm)
+open import Data.Nat.GCD using (gcd)
 open import Data.Rational.Base as ℚ using (ℚ; mkℚ; normalize; ↥_; ↧ₙ_; 0ℚ)
 import Data.Rational.Properties as ℚ
 open import Data.Rational.Unnormalised.Base using (mkℚᵘ; *≡*)
@@ -79,19 +81,22 @@ private
 -- The unit of a list
 
 private
-  -- the product of the denominators
+  -- the least common multiple of the denominators
 
   den : List ℚ≥0 → ℕ
   den []       = 1
-  den (q ∷ qs) = ↧ₙ val q ℕ.* den qs
+  den (q ∷ qs) = lcm (↧ₙ val q) (den qs)
 
   den-nz : ∀ xs → ℕ.NonZero (den xs)
   den-nz []       = _
-  den-nz (q ∷ qs) = ℕ.m*n≢0 (↧ₙ val q) (den qs) {{_}} {{den-nz qs}}
+  den-nz (q ∷ qs) = ℕ.≢-nonZero λ e →
+    ℕ.≢-nonZero⁻¹ ((↧ₙ val q) ℕ.* den qs) {{ℕ.m*n≢0 (↧ₙ val q) (den qs) {{_}} {{den-nz qs}}}}
+      (trans (sym (gcd*lcm (↧ₙ val q) (den qs)))
+             (trans (cong (gcd (↧ₙ val q) (den qs) ℕ.*_) e) (ℕ.*-zeroʳ (gcd (↧ₙ val q) (den qs)))))
 
   den-∣ : ∀ {q xs} → q ∈ xs → ↧ₙ val q ∣ den xs
-  den-∣ {xs = q ∷ qs}  (here refl) = m∣m*n (den qs)
-  den-∣ {xs = q′ ∷ qs} (there p)   = ∣-trans (den-∣ p) (n∣m*n (↧ₙ val q′))
+  den-∣ {xs = q ∷ qs}  (here refl) = m∣lcm[m,n] (↧ₙ val q) (den qs)
+  den-∣ {xs = q′ ∷ qs} (there p)   = ∣-trans (den-∣ p) (n∣lcm[m,n] (↧ₙ val q′) (den qs))
 
   cnt : (D : ℕ) → ℚ≥0 → ℕ
   cnt D q = ℤ.∣ ↥ val q ∣ ℕ.* (D ℕ./ ↧ₙ val q)
@@ -130,8 +135,8 @@ private
 -- The unit and counts compute
 
 private
-  _ : Unit.count (ℚ≥0-commensurable (1 / 2 ∷ 3 / 4 ∷ [])) (3 / 4) ≡ 6
+  _ : Unit.count (ℚ≥0-commensurable (1 / 2 ∷ 3 / 4 ∷ [])) (3 / 4) ≡ 3
   _ = refl
 
-  _ : Unit.δ (ℚ≥0-commensurable (1 / 2 ∷ 3 / 4 ∷ [])) ≡ 1 / 8
+  _ : Unit.δ (ℚ≥0-commensurable (1 / 2 ∷ 3 / 4 ∷ [])) ≡ 1 / 4
   _ = refl
