@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Mode matrices as a grade.                                          --
+-- Mode matrices over an equivariant dioid as a grade.                --
 --                                                                    --
 -- A grade is a matrix over the modes that is total, having an entry  --
 -- other than `𝟘` from every mode, and whose entries between two      --
@@ -10,16 +10,19 @@
 -- product and the join, and the unit is the only one below the unit: --
 -- if `x · y ≾ u`, then `x` changes no mode and gets stuck from none, --
 -- for a change followed by a nonzero entry is not below `𝟙` and      --
--- `stuck` is never left, hence `x ≾ u` and `y ≾ u`. Delays keep the  --
--- mode at the unit. The dioid is to have no zero divisors, `𝟙` above --
--- `𝟘`, and products of nonzero entries below `𝟙` only from factors   --
--- below `𝟙` (`ModeEntries`).                                         --
+-- `stuck` is never left, hence `x ≾ u` and `y ≾ u`. The dioid is to  --
+-- have no zero divisors, `𝟙` above `𝟘`, and products of nonzero      --
+-- entries below `𝟙` only from factors below `𝟙`, the changes being   --
+-- kept by the action and by orbit joins (`ModeEntries`). Delays are  --
+-- a monoid morphism from the durations (`Delays`), the unit when     --
+-- they keep the mode and spend nothing (`mode-grade`).               --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades.Indexed using (Names)
 open import Syntax.Grades.Matrix.Dioid using (Dioid)
+open import Syntax.Grades.Matrix.Nominal using (Equivariant)
 
-module Syntax.Grades.Matrix.ModeGrade (𝒩 : Names) (S : Dioid) where
+module Syntax.Grades.Matrix.ModeGrade (𝒩 : Names) (S : Dioid) (Eq : Equivariant 𝒩 S) where
 
 open import Data.Empty using (⊥-elim)
 open import Data.List.Base using (List; []; _∷_) renaming (map to mapᴸ)
@@ -44,7 +47,8 @@ open import Util.Equality
 
 open Dioid S
 open import Syntax.Grades.Matrix.Modes 𝒩
-open import Syntax.Grades.Matrix.Matrices 𝒩 S
+open Equivariant Eq
+open import Syntax.Grades.Matrix.Matrices 𝒩 S Eq
 
 ------------------------------------------------------------------------
 -- What the entries are to satisfy
@@ -65,12 +69,16 @@ record ModeEntries : Set₁ where
     change-⊗ʳ       : ∀ {a b} → Change b → Change (a ⊗ b)
     -- a change followed by a nonzero entry is not below the unit
     change-not-unit : ∀ {a b} → Change a → ¬ (a ≤ 𝟘) → ¬ (b ≤ 𝟘) → ¬ (a ⊗ b ≤ 𝟙)
+    -- kept by the action and by orbit joins
+    change-act      : ∀ {a b x} → Change x → Change (act a b x)
+    change-orbit    : ∀ {A x} → Change x → Change (⟨ x ⟩ A)
 
 module _ (E : ModeEntries) where
 
   open ModeEntries E
 
   record ModeMatrix : Set where
+    no-eta-equality
     constructor mode-matrix
     field
       mat     : Matrix
@@ -109,37 +117,42 @@ module _ (E : ModeEntries) where
   ----------------------------------------------------------------------
   -- The operations
 
+  -- given by copatterns, unfolded only when a field is asked for
+
   uᵐ : ModeMatrix
-  uᵐ = mode-matrix Iᴹ
-    (λ n → ⌜ n ⌝ , subst (λ c → ¬ (c ≤ 𝟘)) (sym (Iᴹ-diag ⌜ n ⌝)) 𝟙≰𝟘)
-    (λ {p} {q} ne → change-𝟘 (≤-reflexive (Iᴹ-off (λ e → ne (⌜⌝-injective e)))))
+  mat uᵐ = Iᴹ
+  total uᵐ n = ⌜ n ⌝ , subst (λ c → ¬ (c ≤ 𝟘)) (sym (Iᴹ-diag ⌜ n ⌝)) 𝟙≰𝟘
+  changes uᵐ ne = change-𝟘 (≤-reflexive (Iᴹ-off (λ e → ne (⌜⌝-injective e))))
 
   ⊤ᵐ : ModeMatrix
-  ⊤ᵐ = mode-matrix ⊤ᴹ
-    (λ n → stuck , subst (λ c → ¬ (c ≤ 𝟘)) (sym (⊤ᴹ-entry n stuck)) ⊤≰𝟘)
-    (λ {p} {q} _ → subst Change (sym (⊤ᴹ-entry p ⌜ q ⌝)) change-⊤)
+  mat ⊤ᵐ = ⊤ᴹ
+  total ⊤ᵐ n = stuck , subst (λ c → ¬ (c ≤ 𝟘)) (sym (⊤ᴹ-entry n stuck)) ⊤≰𝟘
+  changes ⊤ᵐ {p} {q} _ = subst Change (sym (⊤ᴹ-entry p ⌜ q ⌝)) change-⊤
 
   infixl 7 _·ᵐ_
   infixl 6 _⊔ᵐ_
 
   _⊔ᵐ_ : ModeMatrix → ModeMatrix → ModeMatrix
-  x ⊔ᵐ y = mode-matrix (mat x ⊕ᴹ mat y)
-    (λ n → proj₁ (total x n) ,
-           nonzero-≤ (⊕ᴹ-ubˡ (mat x) (mat y) ⌜ n ⌝ (proj₁ (total x n))) (proj₂ (total x n)))
-    (λ {p} {q} ne → change-≈ (≈-sym (⊕ᴹ-entry (mat x) (mat y) ⌜ p ⌝ ⌜ q ⌝))
-                             (change-⊕ (changes x ne) (changes y ne)))
+  mat (x ⊔ᵐ y) = mat x ⊕ᴹ mat y
+  total (x ⊔ᵐ y) n =
+    proj₁ (total x n) , nonzero-≤ (⊕ᴹ-ubˡ (mat x) (mat y) ⌜ n ⌝ (proj₁ (total x n))) (proj₂ (total x n))
+  changes (x ⊔ᵐ y) ne = change-⊕ (changes x ne) (changes y ne)
 
-  _·ᵐ_ : ModeMatrix → ModeMatrix → ModeMatrix
-  x ·ᵐ y = mode-matrix (mat x ⊗ᴹ mat y) tot chg
-    where
+  private
+    product-total : ∀ x y n → ∃ λ r → ¬ (entry (mat x ⊗ᴹ mat y) ⌜ n ⌝ r ≤ 𝟘)
+    product-total x y n = tot n
+      where
       tot : ∀ n → ∃ λ r → ¬ (entry (mat x ⊗ᴹ mat y) ⌜ n ⌝ r ≤ 𝟘)
       tot n with total x n
       ... | q , xq with total′ y q
       ...   | r , yr = r , nonzero-≤ (⊗ᴹ-ub (mat x) (mat y) ⌜ n ⌝ r q) (nonzero-⊗ xq yr)
 
+    product-changes : ∀ x y {p r} → ¬ p ≡ r → Change (entry (mat x ⊗ᴹ mat y) ⌜ p ⌝ ⌜ r ⌝)
+    product-changes x y {p} {r} ne = chg ne
+      where
       chg : ∀ {p r} → ¬ p ≡ r → Change (entry (mat x ⊗ᴹ mat y) ⌜ p ⌝ ⌜ r ⌝)
       chg {p} {r} ne =
-        change-≈ (≈-sym (⊗ᴹ-entry (mat x) (mat y) ⌜ p ⌝ ⌜ r ⌝))
+        change-orbit
           (change-⨁ (mapᴸ (P.term ⌜ p ⌝ ⌜ r ⌝) (P.candidates ⌜ p ⌝ ⌜ r ⌝))
             (λ a∈ → case (∈-map⁻ (P.term ⌜ p ⌝ ⌜ r ⌝) a∈)))
         where
@@ -151,6 +164,11 @@ module _ (E : ModeEntries) where
           ... | no pm    = change-⊗ˡ (changes x pm)
           case : ∀ {a} → (∃ λ q → q ∈ᴸ P.candidates ⌜ p ⌝ ⌜ r ⌝ × a ≡ P.term ⌜ p ⌝ ⌜ r ⌝ q) → Change a
           case (q , _ , refl) = term-change q
+
+  _·ᵐ_ : ModeMatrix → ModeMatrix → ModeMatrix
+  mat (x ·ᵐ y) = mat x ⊗ᴹ mat y
+  total (x ·ᵐ y) = product-total x y
+  changes (x ·ᵐ y) = product-changes x y
 
   ----------------------------------------------------------------------
   -- The order
@@ -234,15 +252,34 @@ module _ (E : ModeEntries) where
   ----------------------------------------------------------------------
   -- The grade
 
-  mode-grade : {D : Duration} → Grade D
-  mode-grade = record
+  -- with delays given by a monoid morphism from the durations
+
+  record Delays (D : Duration) : Set where
+    private module D = Duration D
+    field
+      delay      : D.Carrier → ModeMatrix
+      delay-zero : (delay D.0ᴰ ≾ᵐ uᵐ) × (uᵐ ≾ᵐ delay D.0ᴰ)
+      delay-plus : ∀ τ τ' → (delay (τ D.+ᴰ τ') ≾ᵐ delay τ ·ᵐ delay τ')
+                          × (delay τ ·ᵐ delay τ' ≾ᵐ delay (τ D.+ᴰ τ'))
+
+  -- delays keeping the mode at the unit
+
+  unit-delays : ∀ {D} → Delays D
+  unit-delays = record
+    { delay      = λ _ → uᵐ
+    ; delay-zero = pw (λ _ _ → ≤-refl) , pw (λ _ _ → ≤-refl)
+    ; delay-plus = λ _ _ → pw (⊗ᴹ-identityˡ⁻ Iᴹ) , pw (⊗ᴹ-identityˡ Iᴹ)
+    }
+
+  mode-grade-with : {D : Duration} → Delays D → Grade D
+  mode-grade-with Δ = record
     { Carrier         = ModeMatrix
     ; _·_             = _·ᵐ_
     ; u               = uᵐ
     ; _≾_             = _≾ᵐ_
     ; ⊤               = ⊤ᵐ
     ; _⊔_             = _⊔ᵐ_
-    ; of-dur          = λ _ → uᵐ
+    ; of-dur          = Delays.delay Δ
     ; ·-identityˡ     = λ x → pw (⊗ᴹ-identityˡ (mat x)) , pw (⊗ᴹ-identityˡ⁻ (mat x))
     ; ·-identityʳ     = λ x → pw (⊗ᴹ-identityʳ (mat x)) , pw (⊗ᴹ-identityʳ⁻ (mat x))
     ; ·-assoc         = λ x y z → pw (⊗ᴹ-assoc (mat x) (mat y) (mat z))
@@ -262,8 +299,8 @@ module _ (E : ModeEntries) where
     ; ·-distribʳ-⊔-≾  = λ x y z → pw (⊗ᴹ-distribʳ (mat x) (mat y) (mat z))
     ; ≾-zero-productˡ = λ {x} {y} h → pw (zero-productˡ′ x y h)
     ; ≾-zero-productʳ = λ {x} {y} h → pw (zero-productʳ′ x y h)
-    ; of-dur-zero     = pw (λ _ _ → ≤-refl) , pw (λ _ _ → ≤-refl)
-    ; of-dur-plus     = pw (⊗ᴹ-identityˡ⁻ Iᴹ) , pw (⊗ᴹ-identityˡ Iᴹ)
+    ; of-dur-zero     = Delays.delay-zero Δ
+    ; of-dur-plus     = λ {τ} {τ'} → Delays.delay-plus Δ τ τ'
     ; antisym?        = nothing
     ; u-least?        = nothing
     ; ·-comm?         = nothing
@@ -278,14 +315,14 @@ module _ (E : ModeEntries) where
     private
       module R (M : Matrix) = Representatives (modes M)
 
-      row : Matrix → Mode → List Mode
-      row M x = stuck ∷ ⌜ R.o M ⌝ ∷ mapᴸ ⌜_⌝ (modes M)
+      rowModes : Matrix → Mode → List Mode
+      rowModes M x = stuck ∷ ⌜ R.o M ⌝ ∷ mapᴸ ⌜_⌝ (modes M)
 
       NonzeroIn : Matrix → Mode → Set
-      NonzeroIn M x = Any (λ y → ¬ (entry M x y ≤ 𝟘)) (row M x)
+      NonzeroIn M x = Any (λ y → ¬ (entry M x y ≤ 𝟘)) (rowModes M x)
 
       nonzero? : ∀ M x → Dec (NonzeroIn M x)
-      nonzero? M x = any? (λ y → ¬? (entry M x y ≤? 𝟘)) (row M x)
+      nonzero? M x = any? (λ y → ¬? (entry M x y ≤? 𝟘)) (rowModes M x)
 
     -- totality at the representatives: each named mode and a fresh one
 
@@ -333,14 +370,13 @@ module _ (E : ModeEntries) where
       total-from M (named , other) n with n ∈? modes M
       ... | yes n∈ = witness ⌜ n ⌝ (All.lookup named n∈)
         where
-          witness : ∀ x → Any (λ y → ¬ (entry M x y ≤ 𝟘)) (row M x) → ∃ λ y → ¬ (entry M x y ≤ 𝟘)
+          witness : ∀ x → Any (λ y → ¬ (entry M x y ≤ 𝟘)) (rowModes M x) → ∃ λ y → ¬ (entry M x y ≤ 𝟘)
           witness x a = let (y , _ , h) = find a in y , h
       ... | no n∉ with find other
       ...   | y , _ , h =
         swapᴹ o n y ,
-        subst (λ c → ¬ (c ≤ 𝟘))
-          (trans (sym (entry-swap M o∉ n∉ ⌜ o ⌝ y)) (cong (λ m → entry M ⌜ m ⌝ (swapᴹ o n y)) (swap-a o n)))
-          h
+        (λ z → h (act-≤𝟘⁻ (≤-trans (proj₂ (equivariant M o∉ n∉ o y))
+                                   (≤-trans (≤-reflexive (cong (λ m → row M m (swapᴹ o n y)) (swap-a o n))) z))))
         where open Representatives (modes M)
 
       changes-from : ∀ M → Changes M → ∀ {p q} → ¬ p ≡ q → Change (entry M ⌜ p ⌝ ⌜ q ⌝)
@@ -355,12 +391,16 @@ module _ (E : ModeEntries) where
           closed : ∀ {a b} → a ∉ modes M → b ∉ modes M → ∀ x y
                  → ChangeAt M x y → ChangeAt M (swapᴹ a b x) (swapᴹ a b y)
           closed a∉ b∉ ⌜ p' ⌝ ⌜ q' ⌝ c ne =
-            subst Change (sym (entry-swap M a∉ b∉ ⌜ p' ⌝ ⌜ q' ⌝))
-              (c (λ e → ne (cong (swap _ _) e)))
+            change-≈ (≈-sym (equivariant M a∉ b∉ p' ⌜ q' ⌝)) (change-act (c (λ e → ne (cong (swap _ _) e))))
           closed a∉ b∉ stuck   y       c = tt′
           closed a∉ b∉ ⌜ _ ⌝ stuck   c = tt′
 
     -- a matrix with its conditions decided
 
     decided : (M : Matrix) {t : True (total? M)} {c : True (changes? M)} → ModeMatrix
-    decided M {t} {c} = mode-matrix M (total-from M (toWitness t)) (changes-from M (toWitness c))
+    mat (decided M) = M
+    total (decided M {t}) = total-from M (toWitness t)
+    changes (decided M {c = c}) = changes-from M (toWitness c)
+
+  mode-grade : {D : Duration} → Grade D
+  mode-grade = mode-grade-with unit-delays

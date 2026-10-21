@@ -7,9 +7,10 @@
 -- no such trace. The costs form the max-plus dioid: no trace, below  --
 -- the natural numbers, below `∞`; the join is the maximum and the    --
 -- product the sum, `none` absorbing and then `∞`. A grade is a mode  --
--- matrix over it (`Matrix.ModeGrade`): total, its only trace from    --
--- `stuck` to `stuck` at cost 0, and each change between two distinct --
--- ordinary modes costing at least 1. Sequencing is the max-plus      --
+-- matrix over it, the costs naming no modes (the trivial action,     --
+-- `Matrix.ModeGrade`): total, its only trace from `stuck` to `stuck` --
+-- at cost 0, and each change between two distinct ordinary modes     --
+-- costing at least 1. Sequencing is the max-plus                     --
 -- product; the unit keeps every mode at cost 0 and is not least, the --
 -- product does not commute, and delays keep the mode at no cost.     --
 -- Modes are named by natural numbers.                                --
@@ -36,6 +37,7 @@ open import Syntax.Grades using (Grade)
 open import Syntax.Grades.Indexed using (ℕ-names)
 open import Syntax.Durations.Nat using (ℕᴰ)
 open import Syntax.Grades.Matrix.Dioid using (Dioid)
+open import Function.Base using (_$_)
 
 open import Util.Equality
 
@@ -277,7 +279,8 @@ private
   unit-reflects {unbounded} {cost _}    () _ _
   unit-reflects {unbounded} {unbounded} () _ _
 
-open import Syntax.Grades.Matrix.ModeGrade ℕ-names costs
+open import Syntax.Grades.Matrix.Nominal ℕ-names using (trivial)
+open import Syntax.Grades.Matrix.ModeGrade ℕ-names costs (trivial costs)
 
 cost-entries : ModeEntries
 cost-entries = record
@@ -298,6 +301,8 @@ cost-entries = record
                              inj₁ (≤ᶜ-trans (⊗ᶜ-mono (≤ᶜ-refl {a}) p) (≤ᶜ-trans (≤ᶜ-reflexive (⊗ᶜ-zeroʳ a)) none≤))
                          ; {a} {b} (inj₂ p) → subst Change (⊗ᶜ-comm b a) (change-⊗ a p) }
   ; change-not-unit  = not-unit
+  ; change-act       = λ c → c
+  ; change-orbit     = λ c → c
   }
   where
     ≤ᶜ-reflexive : ∀ {a b} → a ≡ b → a ≤ᶜ b
@@ -321,8 +326,9 @@ mode-switch-costs : {D : Duration} → Grade D
 mode-switch-costs = mode-grade cost-entries
 
 open Decided cost-entries change? public using (decided)
-open import Syntax.Grades.Matrix.Matrices ℕ-names costs public
-  using (Matrix; matrix; entry)
+open import Syntax.Grades.Matrix.Matrices ℕ-names costs (trivial costs) public
+  using (Matrix; entry)
+open import Syntax.Grades.Matrix.Fields ℕ-names costs using (fields; fromFields)
 open import Syntax.Grades.Matrix.Modes ℕ-names public using (Mode; stuck; ⌜_⌝)
 
 ------------------------------------------------------------------------
@@ -375,7 +381,7 @@ private
 -- the matrix of a list of entries, the others having no trace
 
 listing : List Entry → Matrix
-listing es = matrix (names es)
+listing es = fromFields $ fields (names es)
   (λ p q → find es ⟨ p ⟩ ⟨ q ⟩ none) (λ p → find es ⟨ p ⟩ ⋆ none)
   (λ q → find es ⋆ ⟨ q ⟩ none) (λ p → into-stuck es ⟨ p ⟩)
   (find es ⋆ ⋆ none) (find es ⋆ ⋆' none) (into-stuck es ⋆)

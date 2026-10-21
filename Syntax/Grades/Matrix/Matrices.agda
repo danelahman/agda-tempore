@@ -1,203 +1,87 @@
 ------------------------------------------------------------------------
--- Matrices over the modes, with entries in a dioid.                  --
+-- Matrices over the modes, with entries in an equivariant dioid.     --
 --                                                                    --
--- A matrix gives each pair of modes an entry of the dioid. It names  --
--- finitely many modes and treats all the others alike: its entries   --
--- are those between two named modes, from a named mode to one not    --
--- named and back, from a mode not named to itself and to another,    --
--- and into `stuck`. The row of `stuck` is that of the unit: `𝟙` into --
--- `stuck` and `𝟘` elsewhere, so that `stuck` is absorbing.           --
+-- A matrix gives each pair of modes an entry of the dioid, and names --
+-- finitely many modes `F`: exchanging two modes it does not name     --
+-- acts on its entries as on the dioid, the entry from `σ x` to `σ y` --
+-- being `σ` applied to the entry from `x` to `y` (equivariance). The --
+-- row of `stuck` is that of the unit, `𝟙` into `stuck` and `𝟘`       --
+-- elsewhere, so that `stuck` is absorbing.                           --
 --                                                                    --
--- The entries of a matrix are invariant under exchanging two modes   --
--- it does not name (`entry-swap`), and a matrix is given by its      --
--- entries at the representatives (`tabulate`, `tab-entry`). The      --
--- product is the matrix product, the entry from `x` to `y` the join  --
--- over the modes `q` of the entry from `x` to `q` followed by that   --
--- from `q` to `y`: the join over the named modes, `x`, `y`, `stuck`  --
--- and one fresh mode is the least upper bound over all modes         --
--- (`⊗ᴹ-ub`, `⊗ᴹ-lub`), the others all alike. The join, the order and --
--- `⊤ᴹ` are entrywise, the order decided at the representatives       --
--- (`≤ᴹ⇒pointwise`). The product is associative, has the unit `Iᴹ`,   --
--- is monotone and distributes over the join, entrywise.              --
+-- The product is the matrix product: the entry from `x` to `y` is    --
+-- the join over all modes `q` of the entry from `x` to `q` followed  --
+-- by that from `q` to `y`. The modes not named, other than `x` and   --
+-- `y`, form one orbit under the permutations fixing the named modes, --
+-- `x` and `y`, so the join is the orbit join of the finite join over --
+-- the named modes, `x`, `y`, `stuck` and one fresh mode (`⊗ᴹ-ub`,    --
+-- `⊗ᴹ-lub`). The join, the order and `⊤ᴹ` are entrywise, the order   --
+-- decided at the representatives (`≤ᴹ⇒pointwise`). The product is    --
+-- associative, has the unit `Iᴹ`, is monotone and distributes over   --
+-- the join, entrywise.                                               --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades.Indexed using (Names)
 open import Syntax.Grades.Matrix.Dioid using (Dioid)
+open import Syntax.Grades.Matrix.Nominal using (Equivariant)
 
-module Syntax.Grades.Matrix.Matrices (𝒩 : Names) (S : Dioid) where
+module Syntax.Grades.Matrix.Matrices (𝒩 : Names) (S : Dioid) (Eq : Equivariant 𝒩 S) where
 
 open import Data.Empty using (⊥-elim)
 open import Data.List.Base using (List; []; _∷_; _++_) renaming (map to mapᴸ)
 open import Data.List.Membership.Propositional using (_∈_; _∉_)
 open import Data.List.Membership.Propositional.Properties
-  using (∈-++⁺ˡ; ∈-++⁺ʳ; ∈-map⁺; ∈-map⁻)
-open import Data.List.Relation.Unary.All as All using (All)
+  using (∈-++⁺ˡ; ∈-++⁺ʳ; ∈-++⁻; ∈-map⁺; ∈-map⁻)
+open import Data.Sum.Base using (inj₁; inj₂)
+open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Product using (_×_; _,_; proj₁; proj₂; ∃)
+open import Function.Base using (_$_)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable using (_×-dec_; map′)
-
-open import Function.Base using (_$_)
 
 open import Util.Equality
 
 open Dioid S
+open Equivariant Eq
 open import Syntax.Grades.Matrix.Modes 𝒩
+open import Syntax.Grades.Matrix.Nominal 𝒩 using (Perm; Fixes; along)
+
+------------------------------------------------------------------------
+-- Equivariant functions on pairs of modes
+
+Equivariantᶠ : List Name → (Mode → Mode → Carrier) → Set
+Equivariantᶠ F f =
+  ∀ {a b} → a ∉ F → b ∉ F → ∀ x y → f (swapᴹ a b x) (swapᴹ a b y) ≈ act a b (f x y)
+
+Equivariantᶠ-⊆ : ∀ {F F' f} → (∀ {n} → n ∈ F → n ∈ F') → Equivariantᶠ F f → Equivariantᶠ F' f
+Equivariantᶠ-⊆ sub e a∉ b∉ = e (λ a∈ → a∉ (sub a∈)) (λ b∈ → b∉ (sub b∈))
 
 ------------------------------------------------------------------------
 -- Matrices
 
 record Matrix : Set where
+  no-eta-equality
   constructor matrix
   field
-    modes        : List Name
-    within       : Name → Name → Carrier   -- between named modes
-    leaving      : Name → Carrier          -- from a named mode to one not named
-    entering     : Name → Carrier          -- from a mode not named to a named one
-    toStuck      : Name → Carrier          -- from a named mode into `stuck`
-    staying      : Carrier                 -- from a mode not named to itself
-    moving       : Carrier                 -- from a mode not named to another
-    otherToStuck : Carrier                 -- from a mode not named into `stuck`
+    modes       : List Name
+    row         : Name → Mode → Carrier
+    equivariant : ∀ {a b} → a ∉ modes → b ∉ modes → ∀ p y
+                → row (swap a b p) (swapᴹ a b y) ≈ act a b (row p y)
 
 open Matrix public
 
 entry : Matrix → Mode → Mode → Carrier
 entry M stuck   stuck   = 𝟙
 entry M stuck   ⌜ _ ⌝ = 𝟘
-entry M ⌜ p ⌝ stuck with p ∈? modes M
-... | yes _ = toStuck M p
-... | no _  = otherToStuck M
-entry M ⌜ p ⌝ ⌜ q ⌝ with p ∈? modes M | q ∈? modes M
-... | yes _ | yes _ = within M p q
-... | yes _ | no _  = leaving M p
-... | no _  | yes _ = entering M q
-... | no _  | no _ with p ≟ᴺ q
-...   | yes _ = staying M
-...   | no _  = moving M
+entry M ⌜ p ⌝ y       = row M p y
 
--- the entries by the kind of the modes
+entry-equivariant : ∀ M → Equivariantᶠ (modes M) (entry M)
+entry-equivariant M {a} {b} a∉ b∉ stuck stuck   = ≈-sym (act-𝟙 a b)
+entry-equivariant M {a} {b} a∉ b∉ stuck ⌜ _ ⌝ = ≈-sym (act-𝟘 a b)
+entry-equivariant M a∉ b∉ ⌜ p ⌝ y       = equivariant M a∉ b∉ p y
 
-module _ (M : Matrix) where
-
-  private F = modes M
-
-  entry-yy : ∀ {p q} → p ∈ F → q ∈ F → entry M ⌜ p ⌝ ⌜ q ⌝ ≡ within M p q
-  entry-yy {p} {q} p∈ q∈ with p ∈? F | q ∈? F
-  ... | yes _ | yes _ = refl
-  ... | no p∉ | _     = ⊥-elim (p∉ p∈)
-  ... | yes _ | no q∉ = ⊥-elim (q∉ q∈)
-
-  entry-yn : ∀ {p q} → p ∈ F → q ∉ F → entry M ⌜ p ⌝ ⌜ q ⌝ ≡ leaving M p
-  entry-yn {p} {q} p∈ q∉ with p ∈? F | q ∈? F
-  ... | yes _ | no _  = refl
-  ... | no p∉ | _     = ⊥-elim (p∉ p∈)
-  ... | yes _ | yes q∈ = ⊥-elim (q∉ q∈)
-
-  entry-ny : ∀ {p q} → p ∉ F → q ∈ F → entry M ⌜ p ⌝ ⌜ q ⌝ ≡ entering M q
-  entry-ny {p} {q} p∉ q∈ with p ∈? F | q ∈? F
-  ... | no _   | yes _ = refl
-  ... | yes p∈ | _     = ⊥-elim (p∉ p∈)
-  ... | no _   | no q∉ = ⊥-elim (q∉ q∈)
-
-  entry-nn-≡ : ∀ {p} → p ∉ F → entry M ⌜ p ⌝ ⌜ p ⌝ ≡ staying M
-  entry-nn-≡ {p} p∉ with p ∈? F
-  ... | yes p∈ = ⊥-elim (p∉ p∈)
-  ... | no _ with p ≟ᴺ p
-  ...   | yes _ = refl
-  ...   | no ¬e = ⊥-elim (¬e refl)
-
-  entry-nn-≢ : ∀ {p q} → p ∉ F → q ∉ F → ¬ p ≡ q → entry M ⌜ p ⌝ ⌜ q ⌝ ≡ moving M
-  entry-nn-≢ {p} {q} p∉ q∉ p≢q with p ∈? F | q ∈? F
-  ... | yes p∈ | _      = ⊥-elim (p∉ p∈)
-  ... | no _   | yes q∈ = ⊥-elim (q∉ q∈)
-  ... | no _   | no _ with p ≟ᴺ q
-  ...   | yes e = ⊥-elim (p≢q e)
-  ...   | no _  = refl
-
-  entry-ys : ∀ {p} → p ∈ F → entry M ⌜ p ⌝ stuck ≡ toStuck M p
-  entry-ys {p} p∈ with p ∈? F
-  ... | yes _  = refl
-  ... | no p∉  = ⊥-elim (p∉ p∈)
-
-  entry-ns : ∀ {p} → p ∉ F → entry M ⌜ p ⌝ stuck ≡ otherToStuck M
-  entry-ns {p} p∉ with p ∈? F
-  ... | yes p∈ = ⊥-elim (p∉ p∈)
-  ... | no _   = refl
-
-  -- exchanging two modes not named keeps the entries
-
-  entry-swap : ∀ {a b} → a ∉ F → b ∉ F → ∀ x y
-             → entry M (swapᴹ a b x) (swapᴹ a b y) ≡ entry M x y
-  entry-swap a∉ b∉ stuck stuck   = refl
-  entry-swap a∉ b∉ stuck ⌜ q ⌝ = refl
-  entry-swap {a} {b} a∉ b∉ ⌜ p ⌝ stuck = ps (p ∈? F)
-    where
-      ps : Dec (p ∈ F) → entry M ⌜ swap a b p ⌝ stuck ≡ entry M ⌜ p ⌝ stuck
-      ps (yes p∈) = trans (entry-ys (subst (_∈ F) (sym (swap-∈ a∉ b∉ p∈)) p∈))
-                          (trans (cong (toStuck M) (swap-∈ a∉ b∉ p∈)) (sym (entry-ys p∈)))
-      ps (no p∉)  = trans (entry-ns (swap-∉ a∉ b∉ p∉)) (sym (entry-ns p∉))
-  entry-swap {a} {b} a∉ b∉ ⌜ p ⌝ ⌜ q ⌝ = pq (p ∈? F) (q ∈? F) (p ≟ᴺ q)
-    where
-      pq : Dec (p ∈ F) → Dec (q ∈ F) → Dec (p ≡ q)
-         → entry M ⌜ swap a b p ⌝ ⌜ swap a b q ⌝ ≡ entry M ⌜ p ⌝ ⌜ q ⌝
-      pq (yes p∈) (yes q∈) _ =
-        trans (cong₂ (λ m n → entry M ⌜ m ⌝ ⌜ n ⌝) (swap-∈ a∉ b∉ p∈) (swap-∈ a∉ b∉ q∈)) refl
-      pq (yes p∈) (no q∉) _ =
-        trans (cong (λ m → entry M ⌜ m ⌝ ⌜ swap a b q ⌝) (swap-∈ a∉ b∉ p∈))
-              (trans (entry-yn p∈ (swap-∉ a∉ b∉ q∉)) (sym (entry-yn p∈ q∉)))
-      pq (no p∉) (yes q∈) _ =
-        trans (cong (λ n → entry M ⌜ swap a b p ⌝ ⌜ n ⌝) (swap-∈ a∉ b∉ q∈))
-              (trans (entry-ny (swap-∉ a∉ b∉ p∉) q∈) (sym (entry-ny p∉ q∈)))
-      pq (no p∉) (no q∉) (yes refl) =
-        trans (entry-nn-≡ (swap-∉ a∉ b∉ p∉)) (sym (entry-nn-≡ p∉))
-      pq (no p∉) (no q∉) (no p≢q) =
-        trans (entry-nn-≢ (swap-∉ a∉ b∉ p∉) (swap-∉ a∉ b∉ q∉) (λ e → p≢q (swap-injective e)))
-              (sym (entry-nn-≢ p∉ q∉ p≢q))
-
-------------------------------------------------------------------------
--- Functions on pairs of modes alike outside a finite set of names
-
-Uniform : List Name → (Mode → Mode → Carrier) → Set
-Uniform F f = ∀ {a b} → a ∉ F → b ∉ F → ∀ x y → f (swapᴹ a b x) (swapᴹ a b y) ≈ f x y
-
--- with the row of `stuck` that of the unit
-
-StuckRow : (Mode → Mode → Carrier) → Set
-StuckRow f = (f stuck stuck ≈ 𝟙) × (∀ n → f stuck ⌜ n ⌝ ≈ 𝟘)
-
-entry-uniform : ∀ {F} M → (∀ {n} → n ∈ modes M → n ∈ F) → Uniform F (entry M)
-entry-uniform M sub a∉ b∉ x y =
-  ≈-reflexive (entry-swap M (λ a∈ → a∉ (sub a∈)) (λ b∈ → b∉ (sub b∈)) x y)
-
-entry-stuckRow : ∀ M → StuckRow (entry M)
-entry-stuckRow M = ≈-refl , λ _ → ≈-refl
-
--- the matrix with the entries of `f` at the representatives
-
-tabulate : List Name → (Mode → Mode → Carrier) → Matrix
-tabulate F f = matrix F
-  (λ p q → f ⌜ p ⌝ ⌜ q ⌝) (λ p → f ⌜ p ⌝ ⌜ o ⌝) (λ q → f ⌜ o ⌝ ⌜ q ⌝) (λ p → f ⌜ p ⌝ stuck)
-  (f ⌜ o ⌝ ⌜ o ⌝) (f ⌜ o ⌝ ⌜ o' ⌝) (f ⌜ o ⌝ stuck)
-  where open Representatives F
-
-tab-entry : ∀ {F f} → Uniform F f → StuckRow f → ∀ x y → entry (tabulate F f) x y ≈ f x y
-tab-entry {F} {f} uf (s₀ , s₁) stuck stuck   = ≈-sym s₀
-tab-entry {F} {f} uf (s₀ , s₁) stuck ⌜ n ⌝ = ≈-sym (s₁ n)
-tab-entry {F} {f} uf sr ⌜ p ⌝ y =
-  via-representatives (λ x y → entry T x y ≈ f x y)
-    (λ {a} {b} {x} {y} a∉ b∉ e →
-       ≈-trans (≈-reflexive (entry-swap T a∉ b∉ x y)) (≈-trans e (≈-sym (uf a∉ b∉ x y))))
-    (λ p∈ q∈ → ≈-reflexive (entry-yy T p∈ q∈))
-    (λ p∈ → ≈-reflexive (entry-yn T p∈ o∉))
-    (λ q∈ → ≈-reflexive (entry-ny T o∉ q∈))
-    (≈-reflexive (entry-nn-≡ T o∉))
-    (≈-reflexive (entry-nn-≢ T o∉ o'∉ o≢o'))
-    (λ p∈ → ≈-reflexive (entry-ys T p∈))
-    (≈-reflexive (entry-ns T o∉))
-    p y
-  where
-    open Representatives F
-    T = tabulate F f
+entry-equivariant-⊆ : ∀ {F} M → (∀ {n} → n ∈ modes M → n ∈ F) → Equivariantᶠ F (entry M)
+entry-equivariant-⊆ M sub = Equivariantᶠ-⊆ sub (entry-equivariant M)
 
 ------------------------------------------------------------------------
 -- The order, decided at the representatives
@@ -240,9 +124,8 @@ pointwise⇒≤ᴹ {M} {N} f = ≤ᴹ-at $ at-reps
 ≤ᴹ⇒pointwise {M} {N} (≤ᴹ-at (at-reps yy yo oy oo oo' ys os)) ⌜ p ⌝ y =
   via-representatives (λ x y → entry M x y ≤ entry N x y)
     (λ {a} {b} {x} {y} a∉ b∉ e →
-       subst₂ _≤_ (sym (entry-swap M (λ a∈ → a∉ (∈-++⁺ˡ a∈)) (λ b∈ → b∉ (∈-++⁺ˡ b∈)) x y))
-                  (sym (entry-swap N (λ a∈ → a∉ (∈-++⁺ʳ (modes M) a∈))
-                                     (λ b∈ → b∉ (∈-++⁺ʳ (modes M) b∈)) x y)) e)
+       ≤-trans (proj₁ (entry-equivariant-⊆ M ∈-++⁺ˡ a∉ b∉ x y))
+         (≤-trans (act-mono e) (proj₂ (entry-equivariant-⊆ N (∈-++⁺ʳ (modes M)) a∉ b∉ x y))))
     (λ p∈ q∈ → All.lookup (All.lookup yy p∈) q∈)
     (All.lookup yo) (All.lookup oy) oo oo' (All.lookup ys) os
     p y
@@ -279,21 +162,6 @@ M ≤ᴹ? N =
 ------------------------------------------------------------------------
 -- The unit, the greatest matrix and the join
 
-Iᴹ : Matrix
-Iᴹ = matrix [] (λ _ _ → 𝟘) (λ _ → 𝟘) (λ _ → 𝟘) (λ _ → 𝟘) 𝟙 𝟘 𝟘
-
-Iᴹ-diag : ∀ x → entry Iᴹ x x ≡ 𝟙
-Iᴹ-diag stuck   = refl
-Iᴹ-diag ⌜ p ⌝ = entry-nn-≡ Iᴹ {p} (λ ())
-
-Iᴹ-off : ∀ {x y} → ¬ x ≡ y → entry Iᴹ x y ≡ 𝟘
-Iᴹ-off {stuck}   {stuck}   ne = ⊥-elim (ne refl)
-Iᴹ-off {stuck}   {⌜ _ ⌝} ne = refl
-Iᴹ-off {⌜ p ⌝} {stuck}   ne = entry-ns Iᴹ {p} (λ ())
-Iᴹ-off {⌜ p ⌝} {⌜ q ⌝} ne = entry-nn-≢ Iᴹ (λ ()) (λ ()) (λ e → ne (cong ⌜_⌝ e))
-
--- every mode `stuck` or a name: decide equality of modes
-
 _≟ᴹ_ : (x y : Mode) → Dec (x ≡ y)
 stuck   ≟ᴹ stuck   = yes refl
 stuck   ≟ᴹ ⌜ _ ⌝ = no λ ()
@@ -302,39 +170,100 @@ stuck   ≟ᴹ ⌜ _ ⌝ = no λ ()
 ... | yes refl = yes refl
 ... | no ne    = no λ e → ne (⌜⌝-injective e)
 
+private
+  -- the entry of the unit
+  diag : Mode → Mode → Carrier
+  diag x y with x ≟ᴹ y
+  ... | yes _ = 𝟙
+  ... | no _  = 𝟘
+
+  diag-≡ : ∀ x → diag x x ≡ 𝟙
+  diag-≡ x with x ≟ᴹ x
+  ... | yes _ = refl
+  ... | no ne = ⊥-elim (ne refl)
+
+  diag-≢ : ∀ {x y} → ¬ x ≡ y → diag x y ≡ 𝟘
+  diag-≢ {x} {y} ne with x ≟ᴹ y
+  ... | yes e = ⊥-elim (ne e)
+  ... | no _  = refl
+
+  swapᴹ-injective : ∀ {a b x y} → swapᴹ a b x ≡ swapᴹ a b y → x ≡ y
+  swapᴹ-injective {a} {b} {x} {y} e =
+    trans (sym (swapᴹ-inv a b x)) (trans (cong (swapᴹ a b) e) (swapᴹ-inv a b y))
+
+  diag-swap : ∀ a b x y → diag (swapᴹ a b x) (swapᴹ a b y) ≈ act a b (diag x y)
+  diag-swap a b x y with x ≟ᴹ y
+  ... | yes refl = ≈-trans (≈-reflexive (diag-≡ (swapᴹ a b x))) (≈-sym (act-𝟙 a b))
+  ... | no ne    = ≈-trans (≈-reflexive (diag-≢ (λ e → ne (swapᴹ-injective e)))) (≈-sym (act-𝟘 a b))
+
+-- the operations are given by copatterns, so that a matrix term is
+-- unfolded only when its entries are asked for
+
+Iᴹ : Matrix
+modes Iᴹ = []
+row Iᴹ p y = diag ⌜ p ⌝ y
+equivariant Iᴹ _ _ p y = diag-swap _ _ ⌜ p ⌝ y
+
+Iᴹ-diag : ∀ x → entry Iᴹ x x ≡ 𝟙
+Iᴹ-diag stuck   = refl
+Iᴹ-diag ⌜ p ⌝ = diag-≡ ⌜ p ⌝
+
+Iᴹ-off : ∀ {x y} → ¬ x ≡ y → entry Iᴹ x y ≡ 𝟘
+Iᴹ-off {stuck}   {stuck}   ne = ⊥-elim (ne refl)
+Iᴹ-off {stuck}   {⌜ _ ⌝} ne = refl
+Iᴹ-off {⌜ p ⌝} {y}       ne = diag-≢ ne
+
 ⊤ᴹ : Matrix
-⊤ᴹ = matrix [] (λ _ _ → ⊤) (λ _ → ⊤) (λ _ → ⊤) (λ _ → ⊤) ⊤ ⊤ ⊤
+modes ⊤ᴹ = []
+row ⊤ᴹ _ _ = ⊤
+equivariant ⊤ᴹ {a} {b} _ _ _ _ = ≈-sym (act-⊤ a b)
 
 ⊤ᴹ-entry : ∀ p y → entry ⊤ᴹ ⌜ p ⌝ y ≡ ⊤
-⊤ᴹ-entry p stuck = entry-ns ⊤ᴹ {p} (λ ())
-⊤ᴹ-entry p ⌜ q ⌝ = case (p ≟ᴺ q)
-  where
-    case : Dec (p ≡ q) → entry ⊤ᴹ ⌜ p ⌝ ⌜ q ⌝ ≡ ⊤
-    case (yes refl) = entry-nn-≡ ⊤ᴹ {p} (λ ())
-    case (no ne)    = entry-nn-≢ ⊤ᴹ (λ ()) (λ ()) ne
+⊤ᴹ-entry p y = refl
 
 infixl 6 _⊕ᴹ_
 infixl 7 _⊗ᴹ_
 
 private
-  joinᶠ : Matrix → Matrix → Mode → Mode → Carrier
-  joinᶠ M N x y = entry M x y ⊕ entry N x y
-
-  joinᶠ-uniform : ∀ M N → Uniform (modes M ++ modes N) (joinᶠ M N)
-  joinᶠ-uniform M N a∉ b∉ x y =
-    ⊕-mono (proj₁ (u₁ x y)) (proj₁ (u₂ x y)) , ⊕-mono (proj₂ (u₁ x y)) (proj₂ (u₂ x y))
-    where
-      u₁ = entry-uniform M ∈-++⁺ˡ a∉ b∉
-      u₂ = entry-uniform N (∈-++⁺ʳ (modes M)) a∉ b∉
-
-  joinᶠ-stuckRow : ∀ M N → StuckRow (joinᶠ M N)
-  joinᶠ-stuckRow M N = (⊕-lub ≤-refl ≤-refl , ⊕-ubˡ 𝟙 𝟙) , λ _ → ⊕-lub ≤-refl ≤-refl , 𝟘-≤ _
+  ⊕-cong : ∀ {a a' b b'} → a ≈ a' → b ≈ b' → a ⊕ b ≈ a' ⊕ b'
+  ⊕-cong (p , p') (q , q') = ⊕-mono p q , ⊕-mono p' q'
 
 _⊕ᴹ_ : Matrix → Matrix → Matrix
-M ⊕ᴹ N = tabulate (modes M ++ modes N) (joinᶠ M N)
+modes (M ⊕ᴹ N) = modes M ++ modes N
+row (M ⊕ᴹ N) p y = row M p y ⊕ row N p y
+equivariant (M ⊕ᴹ N) {a} {b} a∉ b∉ p y =
+  ≈-trans (⊕-cong (equivariant M (λ a∈ → a∉ (∈-++⁺ˡ a∈)) (λ b∈ → b∉ (∈-++⁺ˡ b∈)) p y)
+                  (equivariant N (λ a∈ → a∉ (∈-++⁺ʳ (modes M) a∈))
+                                 (λ b∈ → b∉ (∈-++⁺ʳ (modes M) b∈)) p y))
+          (≈-sym (act-⊕ a b _ _))
 
 ⊕ᴹ-entry : ∀ M N x y → entry (M ⊕ᴹ N) x y ≈ entry M x y ⊕ entry N x y
-⊕ᴹ-entry M N = tab-entry (joinᶠ-uniform M N) (joinᶠ-stuckRow M N)
+⊕ᴹ-entry M N stuck stuck   = ⊕-ubˡ 𝟙 𝟙 , ⊕-lub ≤-refl ≤-refl
+⊕ᴹ-entry M N stuck ⌜ _ ⌝ = 𝟘-≤ _ , ⊕-lub ≤-refl ≤-refl
+⊕ᴹ-entry M N ⌜ p ⌝ y     = ≈-refl
+
+------------------------------------------------------------------------
+-- The action of permutations
+
+private
+  actᴾ-mono : ∀ π {x y} → x ≤ y → actᴾ π x ≤ actᴾ π y
+  actᴾ-mono []            p = p
+  actᴾ-mono ((a , b) ∷ π) p = act-mono (actᴾ-mono π p)
+
+  actᴾ-𝟘 : ∀ π → actᴾ π 𝟘 ≤ 𝟘
+  actᴾ-𝟘 []            = ≤-refl
+  actᴾ-𝟘 ((a , b) ∷ π) = ≤-trans (act-mono (actᴾ-𝟘 π)) (proj₁ (act-𝟘 a b))
+
+  actᴾ-⊕ : ∀ π x y → actᴾ π (x ⊕ y) ≤ actᴾ π x ⊕ actᴾ π y
+  actᴾ-⊕ []            x y = ≤-refl
+  actᴾ-⊕ ((a , b) ∷ π) x y = ≤-trans (act-mono (actᴾ-⊕ π x y)) (proj₁ (act-⊕ a b _ _))
+
+  actᴾ-⨁ : ∀ π as → actᴾ π (⨁ as) ≤ ⨁ (mapᴸ (actᴾ π) as)
+  actᴾ-⨁ π []       = actᴾ-𝟘 π
+  actᴾ-⨁ π (a ∷ as) = ≤-trans (actᴾ-⊕ π a (⨁ as)) (⊕-mono ≤-refl (actᴾ-⨁ π as))
+
+  swapsᴹ : Perm → Mode → Mode
+  swapsᴹ = along swapᴹ
 
 ------------------------------------------------------------------------
 -- The product
@@ -348,11 +277,13 @@ module Product (M N : Matrix) where
   names stuck   = []
   names ⌜ n ⌝ = n ∷ []
 
-  -- the modes the join runs over: those named, `x`, `y`, `stuck` and a
-  -- fresh one
+  -- the named modes, `x` and `y`, which the permutations of the orbit
+  -- of the modes not named fix
+  around : Mode → Mode → List Name
+  around x y = names x ++ names y ++ F
 
   fresh-for : Mode → Mode → Name
-  fresh-for x y = fresh (names x ++ names y ++ F)
+  fresh-for x y = fresh (around x y)
 
   candidates : Mode → Mode → List Mode
   candidates x y = stuck ∷ x ∷ y ∷ ⌜ fresh-for x y ⌝ ∷ mapᴸ ⌜_⌝ F
@@ -360,12 +291,24 @@ module Product (M N : Matrix) where
   term : Mode → Mode → Mode → Carrier
   term x y q = entry M x q ⊗ entry N q y
 
+  terms : Mode → Mode → List Carrier
+  terms x y = mapᴸ (term x y) (candidates x y)
+
+  joined : Mode → Mode → Carrier
+  joined x y = ⨁ (terms x y)
+
   prod : Mode → Mode → Carrier
-  prod x y = ⨁ (mapᴸ (term x y) (candidates x y))
+  prod x y = ⟨ joined x y ⟩ around x y
 
   private
-    fresh-∉F : ∀ x y → fresh-for x y ∉ F
-    fresh-∉F x y p = fresh-∉ _ (∈-++⁺ʳ (names x) (∈-++⁺ʳ (names y) p))
+    ∉M : ∀ {n} → n ∉ F → n ∉ modes M
+    ∉M n∉ n∈ = n∉ (∈-++⁺ˡ n∈)
+
+    ∉N : ∀ {n} → n ∉ F → n ∉ modes N
+    ∉N n∉ n∈ = n∉ (∈-++⁺ʳ (modes M) n∈)
+
+    ∉F : ∀ {n x y} → n ∉ around x y → n ∉ F
+    ∉F {x = x} {y} n∉ n∈ = n∉ (∈-++⁺ʳ (names x) (∈-++⁺ʳ (names y) n∈))
 
     fresh-≢ˡ : ∀ x y → ¬ x ≡ ⌜ fresh-for x y ⌝
     fresh-≢ˡ ⌜ n ⌝ y e = fresh-∉ _ (here (sym (⌜⌝-injective e)))
@@ -373,104 +316,152 @@ module Product (M N : Matrix) where
     fresh-≢ʳ : ∀ x y → ¬ y ≡ ⌜ fresh-for x y ⌝
     fresh-≢ʳ x ⌜ n ⌝ e = fresh-∉ _ (∈-++⁺ʳ (names x) (here (sym (⌜⌝-injective e))))
 
+    named-mode : ∀ x {n} → n ∈ names x → ⌜ n ⌝ ≡ x
+    named-mode ⌜ m ⌝ (here refl) = refl
+
     swap-fixᴹ : ∀ {a b x} → ¬ x ≡ ⌜ a ⌝ → ¬ x ≡ ⌜ b ⌝ → swapᴹ a b x ≡ x
     swap-fixᴹ {x = stuck}   _  _  = refl
     swap-fixᴹ {x = ⌜ n ⌝} na nb = cong ⌜_⌝ (swap-fix (λ e → na (cong ⌜_⌝ e)) (λ e → nb (cong ⌜_⌝ e)))
 
-    ∉M : ∀ {n} → n ∉ F → n ∉ modes M
-    ∉M n∉ n∈ = n∉ (∈-++⁺ˡ n∈)
+    -- a mode whose name is in a set is fixed by the swaps of names
+    -- outside it
+    fixed : ∀ {a b} x {A} → (∀ {n} → n ∈ names x → n ∈ A) → a ∉ A → b ∉ A → swapᴹ a b x ≡ x
+    fixed stuck   sub a∉ b∉ = refl
+    fixed ⌜ n ⌝ sub a∉ b∉ =
+      swap-fixᴹ (λ e → a∉ (subst (_∈ _) (⌜⌝-injective e) (sub (here refl))))
+                (λ e → b∉ (subst (_∈ _) (⌜⌝-injective e) (sub (here refl))))
 
-    ∉N : ∀ {n} → n ∉ F → n ∉ modes N
-    ∉N n∉ n∈ = n∉ (∈-++⁺ʳ (modes M) n∈)
+  -- a swap of modes not named acts on the terms through the modes
+
+  term-swap : ∀ {a b} → a ∉ F → b ∉ F → ∀ x y q
+            → act a b (term x y q) ≈ term (swapᴹ a b x) (swapᴹ a b y) (swapᴹ a b q)
+  term-swap {a} {b} a∉ b∉ x y q =
+    ≈-trans (act-⊗ a b _ _)
+      (⊗-cong (≈-sym (entry-equivariant-⊆ M ∈-++⁺ˡ a∉ b∉ x q))
+              (≈-sym (entry-equivariant-⊆ N (∈-++⁺ʳ (modes M)) a∉ b∉ q y)))
+
+  -- and the permutations fixing `around x y` keep `x` and `y`
+
+  term-perm : ∀ x y π → Fixes (around x y) π → ∀ q
+            → actᴾ π (term x y q) ≈ term x y (swapsᴹ π q)
+  term-perm x y []                    []               q = ≈-refl
+  term-perm x y ((a , b) ∷ π) ((a∉ , b∉) ∷ fix) q =
+    ≈-trans (act-cong (term-perm x y π fix q))
+      (subst₂ (λ x' y' → act a b (term x y (swapsᴹ π q)) ≈ term x' y' (swapᴹ a b (swapsᴹ π q)))
+              (fixed x ∈-++⁺ˡ a∉ b∉) (fixed y (λ n∈ → ∈-++⁺ʳ (names x) (∈-++⁺ˡ n∈)) a∉ b∉)
+              (term-swap (∉F {x = x} {y} a∉) (∉F {x = x} {y} b∉) x y (swapsᴹ π q)))
+
+  joined-ub : ∀ x y {q} → q ∈ candidates x y → term x y q ≤ joined x y
+  joined-ub x y q∈ = ⨁-ub (mapᴸ (term x y) (candidates x y)) (∈-map⁺ (term x y) q∈)
 
   prod-ub : ∀ x y q → term x y q ≤ prod x y
-  prod-ub x y stuck = ⨁-ub (mapᴸ (term x y) (candidates x y)) (here refl)
-  prod-ub x y ⌜ n ⌝ with ⌜ n ⌝ ≟ᴹ x | ⌜ n ⌝ ≟ᴹ y | n ∈? F
-  ... | yes refl | _ | _ = ⨁-ub (mapᴸ (term x y) (candidates x y)) (there (here refl))
-  ... | no _ | yes refl | _ = ⨁-ub (mapᴸ (term x y) (candidates x y)) (there (there (here refl)))
-  ... | no _ | no _ | yes n∈ = ⨁-ub (mapᴸ (term x y) (candidates x y)) (there (there (there (there (∈-map⁺ (term x y) (∈-map⁺ ⌜_⌝ n∈))))))
-  ... | no nx | no ny | no n∉ =
-    subst (_≤ prod x y) (sym same) (⨁-ub (mapᴸ (term x y) (candidates x y)) (there (there (there (here refl)))))
+  prod-ub x y q = ub q
     where
-      f = fresh-for x y
-      f∉ = fresh-∉F x y
-      -- exchanging `n` and the fresh mode fixes `x` and `y`
-      fx : swapᴹ n f x ≡ x
-      fx = swap-fixᴹ (λ e → nx (sym e)) (fresh-≢ˡ x y)
-      fy : swapᴹ n f y ≡ y
-      fy = swap-fixᴹ (λ e → ny (sym e)) (fresh-≢ʳ x y)
-      same : term x y ⌜ n ⌝ ≡ term x y ⌜ f ⌝
-      same = cong₂ _⊗_
-        (trans (sym (cong₂ (entry M) fx (cong ⌜_⌝ (swap-b n f))))
-               (entry-swap M (∉M n∉) (∉M f∉) x ⌜ f ⌝))
-        (trans (sym (cong₂ (entry N) (cong ⌜_⌝ (swap-b n f)) fy))
-               (entry-swap N (∉N n∉) (∉N f∉) ⌜ f ⌝ y))
+      ub-generic : ∀ n → n ∉ F → ¬ ⌜ n ⌝ ≡ x → ¬ ⌜ n ⌝ ≡ y → term x y ⌜ n ⌝ ≤ prod x y
+      ub-generic n n∉ nx ny =
+        ≤-trans (≤-reflexive (cong (term x y) (sym (cong ⌜_⌝ (swap-b n f)))))
+          (≤-trans (≤-reflexive (cong₂ (λ x' y' → term x' y' (swapᴹ n f ⌜ f ⌝)) (sym fx) (sym fy)))
+            (≤-trans (proj₂ (term-swap n∉ f∉F x y ⌜ f ⌝))
+              (≤-trans (act-mono (joined-ub x y (there (there (there (here refl))))))
+                       (orbit-ub ((n , f) ∷ []) ((n∉A , f∉A) ∷ [])))))
+        where
+          f = fresh-for x y
+          f∉A : f ∉ around x y
+          f∉A = fresh-∉ _
+          f∉F : f ∉ F
+          f∉F = ∉F {x = x} {y} f∉A
+          fx : swapᴹ n f x ≡ x
+          fx = swap-fixᴹ (λ e → nx (sym e)) (fresh-≢ˡ x y)
+          fy : swapᴹ n f y ≡ y
+          fy = swap-fixᴹ (λ e → ny (sym e)) (fresh-≢ʳ x y)
+          n∉A : n ∉ around x y
+          n∉A n∈ with ∈-++⁻ (names x) n∈
+          ... | inj₁ n∈x = nx (named-mode x n∈x)
+          ... | inj₂ n∈' with ∈-++⁻ (names y) n∈'
+          ...   | inj₁ n∈y = ny (named-mode y n∈y)
+          ...   | inj₂ n∈F = n∉ n∈F
+      ub : ∀ q → term x y q ≤ prod x y
+      ub stuck = ≤-trans (joined-ub x y (here refl)) (⟨⟩-ub (joined x y))
+      ub ⌜ n ⌝ with ⌜ n ⌝ ≟ᴹ x | ⌜ n ⌝ ≟ᴹ y | n ∈? F
+      ... | yes refl | _ | _ = ≤-trans (joined-ub x y (there (here refl))) (⟨⟩-ub (joined x y))
+      ... | no _ | yes refl | _ = ≤-trans (joined-ub x y (there (there (here refl)))) (⟨⟩-ub (joined x y))
+      ... | no _ | no _ | yes n∈ =
+        ≤-trans (joined-ub x y (there (there (there (there (∈-map⁺ ⌜_⌝ n∈)))))) (⟨⟩-ub (joined x y))
+      ... | no nx | no ny | no n∉ = ub-generic n n∉ nx ny
+
+  -- the joined terms, permuted, are terms
+
+  private
+    perm-joined : ∀ x y π → Fixes (around x y) π → ∀ {a}
+                → a ∈ mapᴸ (actᴾ π) (mapᴸ (term x y) (candidates x y))
+                → ∃ λ q → a ≈ term x y q
+    perm-joined x y π fix a∈ with ∈-map⁻ (actᴾ π) a∈
+    ... | b , b∈ , refl with ∈-map⁻ (term x y) b∈
+    ...   | q , _ , refl = swapsᴹ π q , term-perm x y π fix q
 
   prod-lub : ∀ x y {t} → (∀ q → term x y q ≤ t) → prod x y ≤ t
-  prod-lub x y f = ⨁-lub (mapᴸ (term x y) (candidates x y)) λ a∈ → case (∈-map⁻ (term x y) a∈)
-    where
-      case : ∀ {a} → (∃ λ q → q ∈ candidates x y × a ≡ term x y q) → a ≤ _
-      case (q , _ , refl) = f q
+  prod-lub x y f = orbit-lub λ π fix →
+    ≤-trans (actᴾ-⨁ π (terms x y))
+      (⨁-lub (mapᴸ (actᴾ π) (terms x y)) λ a∈ → let (q , e) = perm-joined x y π fix a∈ in ≤-trans (proj₁ e) (f q))
 
   prod-lub-⊗ʳ : ∀ x y {c t} → (∀ q → term x y q ⊗ c ≤ t) → prod x y ⊗ c ≤ t
-  prod-lub-⊗ʳ x y f = ⨁-lub-⊗ʳ (mapᴸ (term x y) (candidates x y)) λ a∈ → case (∈-map⁻ (term x y) a∈)
-    where
-      case : ∀ {a} → (∃ λ q → q ∈ candidates x y × a ≡ term x y q) → a ⊗ _ ≤ _
-      case (q , _ , refl) = f q
+  prod-lub-⊗ʳ x y f = orbit-⊗ʳ λ π fix →
+    ≤-trans (⊗-mono (actᴾ-⨁ π (terms x y)) ≤-refl)
+      (⨁-lub-⊗ʳ (mapᴸ (actᴾ π) (terms x y)) λ a∈ → let (q , e) = perm-joined x y π fix a∈ in
+                          ≤-trans (⊗-mono (proj₁ e) ≤-refl) (f q))
 
   prod-lub-⊗ˡ : ∀ x y {c t} → (∀ q → c ⊗ term x y q ≤ t) → c ⊗ prod x y ≤ t
-  prod-lub-⊗ˡ x y f = ⨁-lub-⊗ˡ (mapᴸ (term x y) (candidates x y)) λ a∈ → case (∈-map⁻ (term x y) a∈)
-    where
-      case : ∀ {a} → (∃ λ q → q ∈ candidates x y × a ≡ term x y q) → _ ⊗ a ≤ _
-      case (q , _ , refl) = f q
+  prod-lub-⊗ˡ x y f = orbit-⊗ˡ λ π fix →
+    ≤-trans (⊗-mono ≤-refl (actᴾ-⨁ π (terms x y)))
+      (⨁-lub-⊗ˡ (mapᴸ (actᴾ π) (terms x y)) λ a∈ → let (q , e) = perm-joined x y π fix a∈ in
+                          ≤-trans (⊗-mono ≤-refl (proj₁ e)) (f q))
 
-  prod-uniform : Uniform F prod
-  prod-uniform {a} {b} a∉ b∉ x y =
-      prod-lub (swapᴹ a b x) (swapᴹ a b y) (λ q → subst (_≤ prod x y) (sym (back q)) (prod-ub x y (swapᴹ a b q)))
-    , prod-lub x y (λ q → subst (_≤ prod (swapᴹ a b x) (swapᴹ a b y)) (forth q)
-                         (prod-ub (swapᴹ a b x) (swapᴹ a b y) (swapᴹ a b q)))
-    where
-      back : ∀ q → term (swapᴹ a b x) (swapᴹ a b y) q ≡ term x y (swapᴹ a b q)
-      back q = cong₂ _⊗_
-        (trans (cong (entry M (swapᴹ a b x)) (sym (swapᴹ-inv a b q)))
-               (entry-swap M (∉M a∉) (∉M b∉) x (swapᴹ a b q)))
-        (trans (cong (λ z → entry N z (swapᴹ a b y)) (sym (swapᴹ-inv a b q)))
-               (entry-swap N (∉N a∉) (∉N b∉) (swapᴹ a b q) y))
-      forth : ∀ q → term (swapᴹ a b x) (swapᴹ a b y) (swapᴹ a b q) ≡ term x y q
-      forth q = cong₂ _⊗_ (entry-swap M (∉M a∉) (∉M b∉) x q) (entry-swap N (∉N a∉) (∉N b∉) q y)
+  -- the product is equivariant
 
-  prod-stuckRow : StuckRow prod
-  prod-stuckRow =
-      ( prod-lub stuck stuck (λ { stuck → proj₁ (⊗-identityˡ 𝟙)
-                 ; ⌜ n ⌝ → ≤-trans (⊗-zeroˡ _) (𝟘-≤ 𝟙) })
-      , ≤-trans (proj₂ (⊗-identityˡ 𝟙)) (prod-ub stuck stuck stuck) )
-    , λ n → prod-lub stuck ⌜ n ⌝ (λ { stuck → ⊗-zeroʳ 𝟙
-                     ; ⌜ m ⌝ → ⊗-zeroˡ _ })
-          , 𝟘-≤ _
+  private
+    prod-swap-≤ : ∀ {a b} → a ∉ F → b ∉ F → ∀ x y
+                → prod (swapᴹ a b x) (swapᴹ a b y) ≤ act a b (prod x y)
+    prod-swap-≤ {a} {b} a∉ b∉ x y = prod-lub (swapᴹ a b x) (swapᴹ a b y) λ q →
+      ≤-trans (≤-reflexive (cong (term (swapᴹ a b x) (swapᴹ a b y)) (sym (swapᴹ-inv a b q))))
+        (≤-trans (proj₂ (term-swap a∉ b∉ x y (swapᴹ a b q)))
+                 (act-mono (prod-ub x y (swapᴹ a b q))))
+
+  prod-equivariant : Equivariantᶠ F prod
+  prod-equivariant {a} {b} a∉ b∉ x y =
+      prod-swap-≤ a∉ b∉ x y
+    , ≤-trans (act-mono (≤-trans (≤-reflexive (cong₂ prod (sym (swapᴹ-inv a b x)) (sym (swapᴹ-inv a b y))))
+                                 (prod-swap-≤ a∉ b∉ (swapᴹ a b x) (swapᴹ a b y))))
+              (proj₁ (act-inv a b _))
 
 _⊗ᴹ_ : Matrix → Matrix → Matrix
-M ⊗ᴹ N = tabulate (Product.F M N) (Product.prod M N)
+modes (M ⊗ᴹ N) = Product.F M N
+row (M ⊗ᴹ N) p y = Product.prod M N ⌜ p ⌝ y
+equivariant (M ⊗ᴹ N) a∉ b∉ p y = Product.prod-equivariant M N a∉ b∉ ⌜ p ⌝ y
 
 -- the entries of a product are the least upper bounds of the terms
 
-⊗ᴹ-entry : ∀ M N x y → entry (M ⊗ᴹ N) x y ≈ Product.prod M N x y
-⊗ᴹ-entry M N = tab-entry (Product.prod-uniform M N) (Product.prod-stuckRow M N)
-
 ⊗ᴹ-ub : ∀ M N x y q → entry M x q ⊗ entry N q y ≤ entry (M ⊗ᴹ N) x y
-⊗ᴹ-ub M N x y q = ≤-trans (Product.prod-ub M N x y q) (proj₂ (⊗ᴹ-entry M N x y))
+⊗ᴹ-ub M N ⌜ p ⌝ y     q       = Product.prod-ub M N ⌜ p ⌝ y q
+⊗ᴹ-ub M N stuck stuck   stuck   = proj₁ (⊗-identityˡ 𝟙)
+⊗ᴹ-ub M N stuck ⌜ _ ⌝ stuck   = proj₁ (⊗-identityˡ 𝟘)
+⊗ᴹ-ub M N stuck y       ⌜ _ ⌝ = ≤-trans (⊗-zeroˡ _) (𝟘-≤ _)
 
 ⊗ᴹ-lub : ∀ M N x y {t} → (∀ q → entry M x q ⊗ entry N q y ≤ t) → entry (M ⊗ᴹ N) x y ≤ t
-⊗ᴹ-lub M N x y f = ≤-trans (proj₁ (⊗ᴹ-entry M N x y)) (Product.prod-lub M N x y f)
+⊗ᴹ-lub M N ⌜ p ⌝ y     f = Product.prod-lub M N ⌜ p ⌝ y f
+⊗ᴹ-lub M N stuck stuck   f = ≤-trans (proj₂ (⊗-identityˡ 𝟙)) (f stuck)
+⊗ᴹ-lub M N stuck ⌜ _ ⌝ f = 𝟘-≤ _
 
 ⊗ᴹ-lub-⊗ʳ : ∀ M N x y {c t} → (∀ q → (entry M x q ⊗ entry N q y) ⊗ c ≤ t)
           → entry (M ⊗ᴹ N) x y ⊗ c ≤ t
-⊗ᴹ-lub-⊗ʳ M N x y f =
-  ≤-trans (⊗-mono (proj₁ (⊗ᴹ-entry M N x y)) ≤-refl) (Product.prod-lub-⊗ʳ M N x y f)
+⊗ᴹ-lub-⊗ʳ M N ⌜ p ⌝ y     f = Product.prod-lub-⊗ʳ M N ⌜ p ⌝ y f
+⊗ᴹ-lub-⊗ʳ M N stuck stuck   f = ≤-trans (⊗-mono (proj₂ (⊗-identityˡ 𝟙)) ≤-refl) (f stuck)
+⊗ᴹ-lub-⊗ʳ M N stuck ⌜ _ ⌝ f = ≤-trans (⊗-zeroˡ _) (𝟘-≤ _)
 
 ⊗ᴹ-lub-⊗ˡ : ∀ M N x y {c t} → (∀ q → c ⊗ (entry M x q ⊗ entry N q y) ≤ t)
           → c ⊗ entry (M ⊗ᴹ N) x y ≤ t
-⊗ᴹ-lub-⊗ˡ M N x y f =
-  ≤-trans (⊗-mono ≤-refl (proj₁ (⊗ᴹ-entry M N x y))) (Product.prod-lub-⊗ˡ M N x y f)
+⊗ᴹ-lub-⊗ˡ M N ⌜ p ⌝ y     f = Product.prod-lub-⊗ˡ M N ⌜ p ⌝ y f
+⊗ᴹ-lub-⊗ˡ M N stuck stuck   f = ≤-trans (⊗-mono ≤-refl (proj₂ (⊗-identityˡ 𝟙))) (f stuck)
+⊗ᴹ-lub-⊗ˡ M N stuck ⌜ _ ⌝ f = ≤-trans (⊗-zeroʳ _) (𝟘-≤ _)
 
 ------------------------------------------------------------------------
 -- The laws, entrywise
