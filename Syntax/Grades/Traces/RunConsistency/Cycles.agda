@@ -15,7 +15,9 @@
 -- `L` back to the same node can be replaced by the allowance's moves --
 -- alone, a match becoming a skip, at a pair at least as good         --
 -- (`dropᴸ`); and every walk is dominated, at the same pair of nodes, --
--- by one whose path through `L` repeats no node (`shorten`).         --
+-- by one whose path through `L` repeats no node (`shorten`). A walk  --
+-- with smaller delays of the guarantee and larger delays of the      --
+-- allowance does no worse (`Extremal.dominated`).                    --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)
@@ -52,6 +54,76 @@ record Graph : Set₁ where
     start  : Node
     _─d[_]→_ : Node → Carrier → Node → Set   -- a delay
     _─o[_]→_ : Node → Op → Node → Set        -- an operation
+
+------------------------------------------------------------------------
+-- Arithmetic
+
+private
+  ≰⇒≥ : {d k : Carrier} → ¬ (d ≤ k) → k ≤ d
+  ≰⇒≥ {d} {k} ¬le with compare k d
+  ... | tri< lt = <⇒≤ lt
+  ... | tri≈ eq = ≤-reflexive eq
+  ... | tri> gt = ⊥-elim (¬le (<⇒≤ gt))
+    where open import Data.Empty using (⊥-elim)
+
+  top-up : (k b d : Carrier) → k ≤ d → b ∸ (d ∸ k) ≡ (k + b) ∸ d
+  top-up k b d le =
+    sym (trans (cong ((k + b) ∸_) (sym (m+[n∸m]≡n le)))
+               (trans (sym (M.∸-+-assoc (k + b) k (d ∸ k)))
+                      (cong (_∸ (d ∸ k)) (M.m+n∸m k b))))
+
+  no-top-up : (b d k : Carrier) → d ≤ k → b ∸ (d ∸ k) ≡ b
+  no-top-up b d k le = trans (cong (b ∸_) (M.∸-≤ le)) (M.∸-0 b)
+
+  left-≤ : (k b d : Carrier) → b ∸ (d ∸ k) ≤ (k + b) ∸ d
+  left-≤ k b d = case (d ≤? k)
+    where
+      case : Dec (d ≤ k) → b ∸ (d ∸ k) ≤ (k + b) ∸ d
+      case (no ¬le) = ≤-reflexive (top-up k b d (≰⇒≥ ¬le))
+      case (yes le) =
+        subst (_≤ (k + b) ∸ d) (sym (no-top-up b d k le))
+              (M.+-≤-∸ (≤-trans le (m≤m+n k b)) (+-monoˡ-≤ b le))
+
+  left-sum : (k b d : Carrier) → (k ∸ d) + (b ∸ (d ∸ k)) ≡ (k + b) ∸ d
+  left-sum k b d = case (d ≤? k)
+    where
+      case : Dec (d ≤ k) → (k ∸ d) + (b ∸ (d ∸ k)) ≡ (k + b) ∸ d
+      case (yes le) = trans (cong ((k ∸ d) +_) (no-top-up b d k le)) (sym (M.+-∸-comm b le))
+      case (no ¬le) =
+        trans (cong₂ _+_ (M.∸-≤ (≰⇒≥ ¬le)) (top-up k b d (≰⇒≥ ¬le))) (+-identityˡ _)
+
+  sum-+ : {k₁ b₁ k₂ b₂ : Carrier} (e : Carrier)
+        → k₁ + b₁ ≤ k₂ + b₂ → k₁ + (b₁ + e) ≤ k₂ + (b₂ + e)
+  sum-+ {k₁} {b₁} {k₂} {b₂} e le =
+    subst₂ _≤_ (+-assoc k₁ b₁ e) (+-assoc k₂ b₂ e) (+-monoˡ-≤ e le)
+
+  -- a move of the guarantee spending `d` is monotone in the pair
+
+  spend-mono : ∀ {k₁ b₁ k₂ b₂} d → b₁ ≤ b₂ → k₁ + b₁ ≤ k₂ + b₂
+             → b₁ ∸ (d ∸ k₁) ≤ b₂ ∸ (d ∸ k₂)
+             × (k₁ ∸ d) + (b₁ ∸ (d ∸ k₁)) ≤ (k₂ ∸ d) + (b₂ ∸ (d ∸ k₂))
+  spend-mono {k₁} {b₁} {k₂} {b₂} d hb hs = hb′ (d ≤? k₂) , hs′
+    where
+      all≤ : (k₁ + b₁) ∸ d ≤ (k₂ + b₂) ∸ d
+      all≤ = M.∸-monoˡ-≤ d hs
+
+      hs′ : (k₁ ∸ d) + (b₁ ∸ (d ∸ k₁)) ≤ (k₂ ∸ d) + (b₂ ∸ (d ∸ k₂))
+      hs′ = subst₂ _≤_ (sym (left-sum k₁ b₁ d)) (sym (left-sum k₂ b₂ d)) all≤
+
+      hb′ : Dec (d ≤ k₂) → b₁ ∸ (d ∸ k₁) ≤ b₂ ∸ (d ∸ k₂)
+      hb′ (yes le′) = subst (b₁ ∸ (d ∸ k₁) ≤_) (sym (no-top-up b₂ d k₂ le′))
+                            (≤-trans (M.∸-≤-self b₁ (d ∸ k₁)) hb)
+      hb′ (no ¬le′) = subst (b₁ ∸ (d ∸ k₁) ≤_) (sym (top-up k₂ b₂ d (≰⇒≥ ¬le′)))
+                            (≤-trans (left-≤ k₁ b₁ d) all≤)
+
+  -- and antitone in what it spends
+
+  spend-anti : ∀ k b {d d′} → d′ ≤ d
+             → b ∸ (d ∸ k) ≤ b ∸ (d′ ∸ k)
+             × (k ∸ d) + (b ∸ (d ∸ k)) ≤ (k ∸ d′) + (b ∸ (d′ ∸ k))
+  spend-anti k b {d} {d′} le =
+    M.∸-monoʳ-≤ b (M.∸-monoˡ-≤ k le) ,
+    subst₂ _≤_ (sym (left-sum k b d)) (sym (left-sum k b d′)) (M.∸-monoʳ-≤ (k + b) le)
 
 module _ (L U : Graph) where
 
@@ -140,48 +212,7 @@ module _ (L U : Graph) where
   ≤ᵖ-trans : ∀ {s t r} → s ≤ᵖ t → t ≤ᵖ r → s ≤ᵖ r
   ≤ᵖ-trans (p , q) (p′ , q′) = ≤-trans p p′ , ≤-trans q q′
 
-  ----------------------------------------------------------------------
-  -- Arithmetic
-
   private
-    ≰⇒≥ : {d k : Carrier} → ¬ (d ≤ k) → k ≤ d
-    ≰⇒≥ {d} {k} ¬le with compare k d
-    ... | tri< lt = <⇒≤ lt
-    ... | tri≈ eq = ≤-reflexive eq
-    ... | tri> gt = ⊥-elim (¬le (<⇒≤ gt))
-      where open import Data.Empty using (⊥-elim)
-
-    top-up : (k b d : Carrier) → k ≤ d → b ∸ (d ∸ k) ≡ (k + b) ∸ d
-    top-up k b d le =
-      sym (trans (cong ((k + b) ∸_) (sym (m+[n∸m]≡n le)))
-                 (trans (sym (M.∸-+-assoc (k + b) k (d ∸ k)))
-                        (cong (_∸ (d ∸ k)) (M.m+n∸m k b))))
-
-    no-top-up : (b d k : Carrier) → d ≤ k → b ∸ (d ∸ k) ≡ b
-    no-top-up b d k le = trans (cong (b ∸_) (M.∸-≤ le)) (M.∸-0 b)
-
-    left-≤ : (k b d : Carrier) → b ∸ (d ∸ k) ≤ (k + b) ∸ d
-    left-≤ k b d = case (d ≤? k)
-      where
-        case : Dec (d ≤ k) → b ∸ (d ∸ k) ≤ (k + b) ∸ d
-        case (no ¬le) = ≤-reflexive (top-up k b d (≰⇒≥ ¬le))
-        case (yes le) =
-          subst (_≤ (k + b) ∸ d) (sym (no-top-up b d k le))
-                (M.+-≤-∸ (≤-trans le (m≤m+n k b)) (+-monoˡ-≤ b le))
-
-    left-sum : (k b d : Carrier) → (k ∸ d) + (b ∸ (d ∸ k)) ≡ (k + b) ∸ d
-    left-sum k b d = case (d ≤? k)
-      where
-        case : Dec (d ≤ k) → (k ∸ d) + (b ∸ (d ∸ k)) ≡ (k + b) ∸ d
-        case (yes le) = trans (cong ((k ∸ d) +_) (no-top-up b d k le)) (sym (M.+-∸-comm b le))
-        case (no ¬le) =
-          trans (cong₂ _+_ (M.∸-≤ (≰⇒≥ ¬le)) (top-up k b d (≰⇒≥ ¬le))) (+-identityˡ _)
-
-    sum-+ : {k₁ b₁ k₂ b₂ : Carrier} (e : Carrier)
-          → k₁ + b₁ ≤ k₂ + b₂ → k₁ + (b₁ + e) ≤ k₂ + (b₂ + e)
-    sum-+ {k₁} {b₁} {k₂} {b₂} e le =
-      subst₂ _≤_ (+-assoc k₁ b₁ e) (+-assoc k₂ b₂ e) (+-monoˡ-≤ e le)
-
     -- the pair left by a move of the guarantee is no better
 
     spend-≤ : ∀ {n m n′ m′} (k b d : Carrier) → ⟨ n , m , k ∸ d , b ∸ (d ∸ k) ⟩ ≤ᵖ ⟨ n′ , m′ , k , b ⟩
@@ -215,22 +246,8 @@ module _ (L U : Graph) where
         → Σ[ k₂ ∈ Carrier ] Σ[ b₂ ∈ Carrier ]
             Lᵐ ⟨ nL s , nU s , k′ , b′ ⟩ ⟨ nL r , nU r , k₂ , b₂ ⟩ × r ≤ᵖ ⟨ nL r , nU r , k₂ , b₂ ⟩
   monoᴸ (spend {k = k₁} {b₁} {d} x le) {k₂} {b₂} (hb , hs) =
-    k₂ ∸ d , b₂ ∸ (d ∸ k₂) , spend x (≤-trans le hs) , hb′ , hs′
-    where
-      all≤ : (k₁ + b₁) ∸ d ≤ (k₂ + b₂) ∸ d
-      all≤ = M.∸-monoˡ-≤ d hs
-
-      hs′ : (k₁ ∸ d) + (b₁ ∸ (d ∸ k₁)) ≤ (k₂ ∸ d) + (b₂ ∸ (d ∸ k₂))
-      hs′ = subst₂ _≤_ (sym (left-sum k₁ b₁ d)) (sym (left-sum k₂ b₂ d)) all≤
-
-      hb′ : b₁ ∸ (d ∸ k₁) ≤ b₂ ∸ (d ∸ k₂)
-      hb′ = case (d ≤? k₂)
-        where
-          case : Dec (d ≤ k₂) → b₁ ∸ (d ∸ k₁) ≤ b₂ ∸ (d ∸ k₂)
-          case (yes le′) = subst (b₁ ∸ (d ∸ k₁) ≤_) (sym (no-top-up b₂ d k₂ le′))
-                                 (≤-trans (M.∸-≤-self b₁ (d ∸ k₁)) hb)
-          case (no ¬le′) = subst (b₁ ∸ (d ∸ k₁) ≤_) (sym (top-up k₂ b₂ d (≰⇒≥ ¬le′)))
-                                 (≤-trans (left-≤ k₁ b₁ d) all≤)
+    k₂ ∸ d , b₂ ∸ (d ∸ k₂) , spend x (≤-trans le hs) ,
+    (proj₁ (spend-mono d hb hs) , proj₂ (spend-mono d hb hs))
   monoᴸ (pay {o = o} x le) {k′} {b′} (hb , hs) =
     0ᴰ , b′ ∸ costʰⁱ o , pay x (≤-trans le hb) ,
     M.∸-monoˡ-≤ (costʰⁱ o) hb , +-monoʳ-≤ 0ᴰ (M.∸-monoˡ-≤ (costʰⁱ o) hb)
@@ -317,3 +334,70 @@ module _ (L U : Graph) where
               Unique (path w) × final (nL t) × live (nU t)
   acyclic (t , w , f , l) with shorten w
   ... | k′ , b′ , w′ , q , _ = _ , w′ , q , f , l
+
+------------------------------------------------------------------------
+-- Smaller demands and larger resources are no worse
+--
+-- Two pairs of graphs on the same nodes, with the same operations: in
+-- the second, every delay of the guarantee is matched by one no larger
+-- and every delay of the allowance by one no smaller. Every walk of
+-- the first is dominated, at the same nodes, by a walk of the second.
+-- So reading the guarantee's delays at their least values and the
+-- allowance's at their greatest loses no walk.
+
+graph : (N : Set) → DecidableEquality N → N
+      → (N → Carrier → N → Set) → (N → Op → N → Set) → Graph
+graph N eq s dl ol = record { Node = N ; _≟_ = eq ; start = s ; _─d[_]→_ = dl ; _─o[_]→_ = ol }
+
+module Extremal
+  (NL NU : Set) (_≟ᴸ_ : DecidableEquality NL) (_≟ᵁ_ : DecidableEquality NU)
+  (sL : NL) (sU : NU)
+  (OL : NL → Op → NL → Set) (OU : NU → Op → NU → Set)
+  (DL DL′ : NL → Carrier → NL → Set) (DU DU′ : NU → Carrier → NU → Set)
+  (demand   : ∀ {n d n′} → DL n d n′ → Σ[ d′ ∈ Carrier ] DL′ n d′ n′ × d′ ≤ d)
+  (resource : ∀ {m e m′} → DU m e m′ → Σ[ e′ ∈ Carrier ] DU′ m e′ m′ × e ≤ e′) where
+
+  private
+    L  = graph NL _≟ᴸ_ sL DL  OL
+    L′ = graph NL _≟ᴸ_ sL DL′ OL
+    U  = graph NU _≟ᵁ_ sU DU  OU
+    U′ = graph NU _≟ᵁ_ sU DU′ OU
+
+    W  = Walk L U
+    W′ = Walk L′ U′
+
+  -- one move, replayed from a pair at least as good
+
+  step : ∀ {s t r k₂ b₂} → W′ s ⟨ nL t , nU t , k₂ , b₂ ⟩
+       → Move L U t r → b t ≤ b₂ → k t + b t ≤ k₂ + b₂
+       → Σ[ k₃ ∈ Carrier ] Σ[ b₃ ∈ Carrier ]
+           W′ s ⟨ nL r , nU r , k₃ , b₃ ⟩
+         × b r ≤ b₃ × k r + b r ≤ k₃ + b₃
+  step {k₂ = k₂} {b₂} w′ (uᵐ (bank {k = k₁} {b₁} {e} x)) hb hs with resource x
+  ... | e′ , x′ , le =
+    k₂ , b₂ + e′ , w′ ▸ uᵐ (bank x′) ,
+    ≤-trans (+-monoˡ-≤ e hb) (+-monoʳ-≤ b₂ le) ,
+    ≤-trans (subst₂ _≤_ (+-assoc k₁ b₁ e) (+-assoc k₂ b₂ e) (+-monoˡ-≤ e hs))
+            (+-monoʳ-≤ k₂ (+-monoʳ-≤ b₂ le))
+  step {k₂ = k₂} {b₂} w′ (uᵐ (skip x)) hb hs = k₂ , b₂ , w′ ▸ uᵐ (skip x) , hb , hs
+  step {k₂ = k₂} {b₂} w′ (uᵐ (fill {o = o} x)) hb hs =
+    (k₂ + b₂) + costˡᵒ o , 0ᴰ , w′ ▸ uᵐ (fill x) ,
+    ≤-refl , +-monoˡ-≤ 0ᴰ (+-monoˡ-≤ (costˡᵒ o) hs)
+  step {k₂ = k₂} {b₂} w′ (lᵐ (spend {k = k₁} {b₁} {d} x le)) hb hs with demand x
+  ... | d′ , x′ , le′ =
+    k₂ ∸ d′ , b₂ ∸ (d′ ∸ k₂) , w′ ▸ lᵐ (spend x′ (≤-trans le′ (≤-trans le hs))) ,
+    ≤-trans (proj₁ (spend-mono d hb hs)) (proj₁ (spend-anti k₂ b₂ le′)) ,
+    ≤-trans (proj₂ (spend-mono d hb hs)) (proj₂ (spend-anti k₂ b₂ le′))
+  step {k₂ = k₂} {b₂} w′ (lᵐ (pay {o = o} x le)) hb hs =
+    0ᴰ , b₂ ∸ costʰⁱ o , w′ ▸ lᵐ (pay x (≤-trans le hb)) ,
+    M.∸-monoˡ-≤ (costʰⁱ o) hb , +-monoʳ-≤ 0ᴰ (M.∸-monoˡ-≤ (costʰⁱ o) hb)
+  step {k₂ = k₂} {b₂} w′ (lᵐ (match x y)) hb hs = 0ᴰ , 0ᴰ , w′ ▸ lᵐ (match x y) , ≤-refl , ≤-refl
+
+  dominated : ∀ {n m k₀ b₀ t} → W ⟨ n , m , k₀ , b₀ ⟩ t
+            → ∀ {k′ b′} → b₀ ≤ b′ → k₀ + b₀ ≤ k′ + b′
+            → Σ[ k₂ ∈ Carrier ] Σ[ b₂ ∈ Carrier ]
+                W′ ⟨ n , m , k′ , b′ ⟩ ⟨ nL t , nU t , k₂ , b₂ ⟩
+              × b t ≤ b₂ × k t + b t ≤ k₂ + b₂
+  dominated [] {k′} {b′} hb hs = k′ , b′ , [] , hb , hs
+  dominated (w ▸ μ) hb hs with dominated w hb hs
+  ... | k₂ , b₂ , w′ , hb′ , hs′ = step w′ μ hb′ hs′
