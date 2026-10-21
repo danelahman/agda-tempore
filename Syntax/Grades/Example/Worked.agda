@@ -70,6 +70,7 @@ import Syntax.Grades.Example.Worked.SemiDirect.FlowLevels
 import Syntax.Grades.Example.Worked.SemiDirect.WindowedSchedules
 import Syntax.Grades.Example.Worked.SemiDirect.ResourceLevels
 import Syntax.Grades.Example.Worked.SemiDirect.ModeSwitchCosts
+import Syntax.Grades.Example.Worked.SemiDirect.ModeTimes
 
 -- Example computations typed against these grades and grade systems:
 -- what each grade lets a program do, and what it refuses.

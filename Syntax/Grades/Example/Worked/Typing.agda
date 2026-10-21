@@ -139,6 +139,7 @@ import Syntax.Grades.Example.Worked.Typing.SemiDirect.FlowLevels
 import Syntax.Grades.Example.Worked.Typing.SemiDirect.WindowedSchedules
 import Syntax.Grades.Example.Worked.Typing.SemiDirect.ResourceLevels
 import Syntax.Grades.Example.Worked.Typing.SemiDirect.ModeSwitchCosts
+import Syntax.Grades.Example.Worked.Typing.SemiDirect.ModeTimes
 
 ------------------------------------------------------------------------
 -- Grade systems that measure effects by time

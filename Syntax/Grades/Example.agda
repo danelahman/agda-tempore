@@ -247,6 +247,12 @@ import Syntax.Grades.Example.SemiDirect.ResourceLevels
 
 import Syntax.Grades.Example.SemiDirect.ModeSwitchCosts
 
+-- the time spent in each mode of a device, as mode matrices of
+-- realisable boxes of intervals
+
+import Syntax.Grades.Example.SemiDirect.ModeTimes.Boxes
+import Syntax.Grades.Example.SemiDirect.ModeTimes
+
 ------------------------------------------------------------------------
 -- Worked instances
 --
