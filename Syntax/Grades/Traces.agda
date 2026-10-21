@@ -186,3 +186,8 @@ import Syntax.Grades.Traces.Along
 -- and the costs read off their closed hull.
 
 import Syntax.Grades.Traces.RunningTimes
+
+-- Run consistency over graphs of guarantees and allowances: a walk
+-- through a cycle of the guarantee is dominated by one without it.
+
+import Syntax.Grades.Traces.RunConsistency.Cycles
