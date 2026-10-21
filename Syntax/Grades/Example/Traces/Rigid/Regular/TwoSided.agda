@@ -10,9 +10,12 @@
 -- componentwise, the word being data the order ignores. A delay      --
 -- advances both components.                                          --
 --                                                                    --
--- A literal names the consistency run as a sequence of operations    --
--- and delays: `[ L , U ]⟨ r ⟩` checks, by running the two automata,  --
--- that the encoding of the run lies in both languages.               --
+-- Consistency is decided: the two tables meet when the search of    --
+-- their pairs of states reachable together finds a pair of final     --
+-- states (`Regular.Meet`). A literal `[ L , U ]` checks it, the word --
+-- the search finds witnessing it; `[ L , U ]⟨ r ⟩` names the run     --
+-- instead, a sequence of operations and delays whose encoding the    --
+-- two automata accept.                                               --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -36,6 +39,8 @@ open import Data.Nat.Base using (zero; suc)
 import Data.Nat.Base
 import Data.Nat.Properties as ℕ
 open import Data.Product using (Σ; Σ-syntax; ∃; _×_; _,_; proj₁; proj₂)
+open import Relation.Nullary using (Dec)
+open import Relation.Nullary.Decidable using (True; toWitness; map′)
 
 open import Syntax.Grades using (Grade)
 open import Syntax.Grades.Product using (_×ᵍ_)
@@ -51,7 +56,8 @@ open U public using (Upper; !≤_; !<_; ≤_; <_; ≤∞)
 open L using (lang; k; tick; encᶠ; ⌜_⌝′; ∈-⌜⌝′⁺; ≤ᶠ-refl; str; lower; upper; ‵_;
               steps; Word; Expr; op; ![_]; stretch; ⟦_⟧)
 import Syntax.Grades.Regular.Automaton k as A
-open import Syntax.Grades.Regular.Grade k tick using (table; ∈·⁺; ∈u⁺; ≾⇒⊆)
+open import Syntax.Grades.Regular.Grade k tick using (table; wf′; ∈·⁺; ∈u⁺; ≾⇒⊆)
+open import Syntax.Grades.Regular.Meet k using (meet?)
 open L.C using (≾-lang)
 
 private
@@ -77,6 +83,13 @@ open Mem
 
 Consistent : Closed × Closed → Set
 Consistent (l , u) = Σ[ w ∈ List (Fin k) ] Mem (table (lang l)) w × Mem (table (lang u)) w
+
+-- consistency, decided
+
+consistent? : ∀ lu → Dec (Consistent lu)
+consistent? (l , u) =
+  map′ (λ (w , wl , wu) → w , mem wl , mem wu) (λ (w , wl , wu) → w , get wl , get wu)
+       (meet? {table (lang l)} {table (lang u)} (wf′ (lang l)) (wf′ (lang u)))
 
 private
   below-refl : ∀ w → L.Belowᶠ w w
@@ -149,6 +162,11 @@ word : Run → Word
 word []              = []
 word (perform o ∷ r) = op o (proj₁ (rt-inhabited⁺ o)) ∷ word r
 word (delay τ ∷ r)   = ![ τ ] ++ word r
+
+-- a pair of literals, decided consistent
+
+[_,_] : (l u : Closed) → {c : True (consistent? (l , u))} → Grade.Carrier two-sided
+[ l , u ] {c} = (l , u) , toWitness c
 
 -- a pair of literals, consistent by the run `r`, the two memberships
 -- found by running the automata

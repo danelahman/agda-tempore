@@ -22,7 +22,7 @@ open import Data.List.Base using () renaming ([] to []ᴸ; _∷_ to _∷ᴸ_)
 open import Data.Product using (_×_; _,_)
 open import Syntax.Grades using (module Grade)
 open import Relation.Nullary using (¬_)
-open import Relation.Nullary.Decidable using (toWitness)
+open import Relation.Nullary.Decidable using (toWitness; toWitnessFalse)
 
 open import Util.Equality
 
@@ -75,7 +75,7 @@ running = record
 import Syntax.Grades.Example.Traces.Rigid.Regular.LeftSided Op 3 code name name-code code-name running as L
 import Syntax.Grades.Example.Traces.Rigid.Regular.RightSided Op 3 code name name-code code-name running as U
 open import Syntax.Grades.Example.Traces.Rigid.Regular.TwoSided Op 3 code name name-code code-name running
-  using (two-sided; operation; [_,_]⟨_⟩; perform; delay)
+  using (two-sided; operation; Consistent; consistent?; [_,_]; [_,_]⟨_⟩; perform; delay)
 
 open L using (Closed; ‵_; _·_; ≥_; !≥_; upper; lower; holds′; fails′)
 open U using (≤_)
@@ -100,8 +100,17 @@ within-twelve : Closed
 within-twelve = U.⌜ ‵ read · ≤ 12 ⌝
 
 contract contract-busy : R
-contract      = [ settling      , within-twelve ]⟨ perform read ∷ᴸ delay 5 ∷ᴸ []ᴸ ⟩
+contract      = [ settling      , within-twelve ]
 contract-busy = [ settling-busy , within-twelve ]⟨ perform read ∷ᴸ delay 5 ∷ᴸ []ᴸ ⟩
+
+-- a wait of at least five steps within at most two: no run fits both
+
+waiting brief : Closed
+waiting = L.⌜ !≥ 5 ⌝
+brief   = U.⌜ ≤ 2 ⌝
+
+impatient : ¬ Consistent (waiting , brief)
+impatient = toWitnessFalse {a? = consistent? (waiting , brief)} _
 
 ------------------------------------------------------------------------
 -- A box at the contract, opened after the wait

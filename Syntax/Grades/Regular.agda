@@ -27,3 +27,4 @@ import Syntax.Grades.Regular.Closure       -- downward closure under a letter or
 import Syntax.Grades.Regular.Closed        -- the sub-grade of closed languages
 import Syntax.Grades.Regular.Determinise   -- automata with silent moves, determinised
 import Syntax.Grades.Regular.Coding        -- expressions over any letters, coded
+import Syntax.Grades.Regular.Meet          -- whether two languages meet
