@@ -204,13 +204,13 @@ rconst _   ≟ʳ ∣ _ ∣̂ᵉ     = no λ ()
 ∣ _ ∣̂ᵉ     ≟ʳ (_ ·̂ᵣ _)   = no λ ()
 ∣ _ ∣̂ᵉ     ≟ʳ (_ ⊔̂ᵣ _)   = no λ ()
 
--- Same expressions are equal where the grade declares its order
--- antisymmetric, and equality is decided where they are
+-- Same expressions are equal where the grade declares equivalent
+-- grades equal, and equality is decided where they are
 
 ≅ᵉ⇒≡? : ∀ {Θ} {ε ε' : EExp Θ} → ε ≅ᵉ ε' → Maybe (ε ≡ ε')
 ≅ᵉ⇒≡? evar≅ = just refl
-≅ᵉ⇒≡? (econst≅ e) with antisymₑ?
-... | just anti = just (cong econst (anti (proj₁ e) (proj₂ e)))
+≅ᵉ⇒≡? (econst≅ e) with ≃ₑ⇒≡?
+... | just eq = just (cong econst (eq e))
 ... | nothing   = nothing
 ≅ᵉ⇒≡? (·≅ p q) with ≅ᵉ⇒≡? p | ≅ᵉ⇒≡? q
 ... | just refl | just refl = just refl
@@ -221,8 +221,8 @@ rconst _   ≟ʳ ∣ _ ∣̂ᵉ     = no λ ()
 
 ≅ʳ⇒≡? : ∀ {Θ} {ρ ρ' : RExp Θ} → ρ ≅ʳ ρ' → Maybe (ρ ≡ ρ')
 ≅ʳ⇒≡? rvar≅ = just refl
-≅ʳ⇒≡? (rconst≅ e) with antisymᵣ?
-... | just anti = just (cong rconst (anti (proj₁ e) (proj₂ e)))
+≅ʳ⇒≡? (rconst≅ e) with ≃ᵣ⇒≡?
+... | just eq = just (cong rconst (eq e))
 ... | nothing   = nothing
 ≅ʳ⇒≡? (·≅ p q) with ≅ʳ⇒≡? p | ≅ʳ⇒≡? q
 ... | just refl | just refl = just refl

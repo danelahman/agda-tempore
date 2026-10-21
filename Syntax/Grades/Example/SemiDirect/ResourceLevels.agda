@@ -300,7 +300,7 @@ one-resource = record
   ; ≾-zero-productʳ = λ {x} {y} → zero-productʳ {x} {y}
   ; of-dur-zero     = (≤ˢ-refl , ≤ˢ-refl) , (≤ˢ-refl , ≤ˢ-refl)
   ; of-dur-plus     = pair (·ˢ-identityˡ uˢ) (·ˢ-identityˡ uˢ) .proj₂ , pair (·ˢ-identityˡ uˢ) (·ˢ-identityˡ uˢ) .proj₁
-  ; antisym?        = just λ ((a , b) , (c , d)) ((a' , b') , (c' , d')) →
+  ; ≃⇒≡?            = just λ (((a , b) , (c , d)) , ((a' , b') , (c' , d'))) →
       level-≡ (side-≡ (≤∞-antisym a a') (≤∞-antisym b b'))
               (side-≡ (≤∞-antisym c c') (≤∞-antisym d d'))
   ; u-least?        = nothing

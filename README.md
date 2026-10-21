@@ -96,7 +96,8 @@ operations.
   stated up to it, and so are the derived laws, both distributive laws and
   the idempotence, commutativity and associativity of the join and its
   absorption by `⊤`. A grade morphism preserves the structure up to `_≃_`.
-  Antisymmetry is optional (`antisym?`); `PosetGrade` and `StrictMorphism`
+  A grade may declare that `_≃_` implies `_≡_` (`≃⇒≡?`), informationally;
+  `PosetGrade` and `StrictMorphism`
   give, through `posetᵍ` and `strictᵍ`, the instances and morphisms whose laws
   hold on the nose. A branching
   construct is graded by the join of its branches, and type inference reports

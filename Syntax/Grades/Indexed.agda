@@ -13,8 +13,8 @@
 -- operation, the order included, pointwise, and every law holding    --
 -- pointwise; `of-dur τ` is constantly `of-dur τ`. The unit is least  --
 -- and `_·_` commutes where they do in the component; distinct        --
--- representations of one map are equivalent, so no antisymmetry is   --
--- declared, and no closures are declared.                            --
+-- representations of one map are equivalent but not equal, so        --
+-- `≃⇒≡?` is not declared, and no closures are declared.              --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Indexed where
@@ -237,7 +237,7 @@ module Maps (𝒩 : Names) where
       ; ∨-ubʳ        = λ m m' → pw λ s → subst ((m' ! s) ⊑_) (sym (!∨ m m' s)) (N.∨-ubʳ _ _)
       ; ∨-lub        = λ {m} {m'} p q → pw λ s →
                          subst (_⊑ _) (sym (!∨ m m' s)) (N.∨-lub (at p s) (at q s))
-      ; antisym?     = nothing
+      ; ≈⇒≡?         = nothing
       }
 
   ----------------------------------------------------------------------
@@ -360,7 +360,7 @@ module Maps (𝒩 : Names) where
       ; of-dur-zero     = pw≃ λ _ → G.of-dur-zero
       ; of-dur-plus     = λ {τ} {τ'} → pw≃ λ s →
           ≃-at refl (!· (everywhere (G.of-dur τ)) (everywhere (G.of-dur τ')) s) G.of-dur-plus
-      ; antisym?        = nothing
+      ; ≃⇒≡?            = nothing
       ; u-least?        = Maybe.map (λ l m → pw λ s → l (m ! s)) G.u-least?
       ; ·-comm?         = Maybe.map (λ c m m' → pw≃ λ s →
                             ≃-at (!· m m' s) (!· m' m s) (c (m ! s) (m' ! s))) G.·-comm?

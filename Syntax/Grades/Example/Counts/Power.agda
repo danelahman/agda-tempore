@@ -293,9 +293,10 @@ power n = record
   ; ·-monoʳ-≾       = λ {e} {c} {d} → ·ᵛ-monoʳ {e = e} {c} {d}
   ; ≾-refl          = λ {c} → ≾ᵛ-refl {c = c}
   ; ≾-trans         = λ {c} {d} {e} → ≾ᵛ-trans {c = c} {d} {e}
-  ; antisym?        = maybe′ (λ (anti : ∀ {a b} → a ≾ᴳ b → b ≾ᴳ a → a ≡ b)
-                                → just (λ {c} {d} → ≾ᵛ-antisym anti {c = c} {d}))
-                              nothing antisym?
+  ; ≃⇒≡?            = maybe′ (λ (eq : ∀ {a b} → a ≃ᴳ b → a ≡ b)
+                                → just (λ {c} {d} (p , q) →
+                                    ≾ᵛ-antisym (λ p q → eq (p , q)) {c = c} {d} p q))
+                              nothing ≃⇒≡?
   ; ≾-irrelevant    = λ {c} {d} → ≾ᵛ-irrelevant {c = c} {d}
   ; _≾?_            = _≾ᵛ?_
   ; ≾-zero-productˡ = λ {c} {d} → ≾ᵛ-zero-productˡ {c = c} {d}

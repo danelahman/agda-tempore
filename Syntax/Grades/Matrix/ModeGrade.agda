@@ -301,7 +301,7 @@ module _ (E : ModeEntries) where
     ; ≾-zero-productʳ = λ {x} {y} h → pw (zero-productʳ′ x y h)
     ; of-dur-zero     = Delays.delay-zero Δ
     ; of-dur-plus     = λ {τ} {τ'} → Delays.delay-plus Δ τ τ'
-    ; antisym?        = nothing
+    ; ≃⇒≡?            = nothing
     ; u-least?        = nothing
     ; ·-comm?         = nothing
     ; plus?           = λ _ → nothing

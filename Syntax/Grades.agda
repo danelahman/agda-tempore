@@ -113,8 +113,9 @@ record Grade (D : Duration) : Set₁ where
 
     -- optional declared properties
 
-    -- whether the order is antisymmetric, where the grade declares it
-    antisym? : Maybe (∀ {c d} → c ≾ d → d ≾ c → c ≡ d)
+    -- whether equivalent grades are equal, where the grade declares it;
+    -- informational: no law, theorem or solver result depends on it
+    ≃⇒≡? : Maybe (∀ {c d} → c ≃ d → c ≡ d)
 
     -- whether the unit is least, where the grade declares it
     u-least? : Maybe (Minimum _≾_ u)
@@ -274,7 +275,7 @@ posetᵍ G = record
   ; ≾-zero-productˡ = P.≾-zero-productˡ ; ≾-zero-productʳ = P.≾-zero-productʳ
   ; of-dur-zero = ≡⇒≃ P.of-dur-zero
   ; of-dur-plus = ≡⇒≃ P.of-dur-plus
-  ; antisym? = just P.≾-antisym
+  ; ≃⇒≡? = just λ e → P.≾-antisym (proj₁ e) (proj₂ e)
   ; u-least? = P.u-least?
   ; ·-comm? = Data.Maybe.Base.map (λ m c d → ≡⇒≃ (m c d)) P.·-comm?
   ; plus? = P.plus?
@@ -418,7 +419,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      ≾-zero-productʳ to ≾ᵣ-zero-productʳ;
      of-dur-zero to of-durʳ-zero;
      of-dur-plus to of-durʳ-plus;
-     antisym? to antisymᵣ?;
+     ≃⇒≡? to ≃ᵣ⇒≡?;
      u-least? to uᵣ-least?;
      ·-comm? to ·ᵣ-comm?;
      plus? to plusᵣ?;
@@ -469,7 +470,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-distribʳ-⊔-≾ to ·ₑ-distribʳ-⊔ₑ-≾ₑ;
      of-dur-zero to of-durᵉ-zero;
      of-dur-plus to of-durᵉ-plus;
-     antisym? to antisymₑ?;
+     ≃⇒≡? to ≃ₑ⇒≡?;
      u-least? to uₑ-least?;
      ·-comm? to ·ₑ-comm?;
      ≾-zero-productˡ to ≾ₑ-zero-productˡ;

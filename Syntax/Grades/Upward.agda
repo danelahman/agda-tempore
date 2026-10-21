@@ -99,7 +99,7 @@ module _ {D : Duration} (G : Grade D) {P : Grade.Carrier G → Set} (U : Upward 
     ; ≾-zero-productʳ = G.≾-zero-productʳ
     ; of-dur-zero     = G.of-dur-zero
     ; of-dur-plus     = G.of-dur-plus
-    ; antisym?        = nothing
+    ; ≃⇒≡?            = nothing
     ; u-least?        = Maybe.map (λ l a → l (proj₁ a)) G.u-least?
     ; ·-comm?         = Maybe.map (λ m a b → m (proj₁ a) (proj₁ b)) G.·-comm?
     ; plus?           = λ a → Maybe.map (plusᴾ (proj₂ a)) (G.plus? (proj₁ a))

@@ -80,8 +80,8 @@ module Over (L : LevelLattice) where
     ; ∨-lub        = λ { {nothing} _ q → q
                        ; {just _} {nothing} p _ → p
                        ; {just _} {just _} {just _} p q → L.∨-lub p q }
-    ; antisym?     = just λ { {nothing} {nothing} _ _ → refl
-                            ; {just _} {just _} p q → cong just (L.⊑-antisym p q) }
+    ; ≈⇒≡?         = just λ { {nothing} {nothing} _ → refl
+                            ; {just _} {just _} (p , q) → cong just (L.⊑-antisym p q) }
     }
     where
       refl⊥ : ∀ w → w ⊑⊥ w
