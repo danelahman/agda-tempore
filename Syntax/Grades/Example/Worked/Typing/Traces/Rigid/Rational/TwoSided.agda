@@ -79,7 +79,7 @@ running = record
 import Syntax.Grades.Example.Traces.Rigid.Rational.LeftSided Op 3 code name name-code code-name running as L
 import Syntax.Grades.Example.Traces.Rigid.Rational.RightSided Op 3 code name name-code code-name running as U
 open import Syntax.Grades.Example.Traces.Rigid.Rational.TwoSided Op 3 code name name-code code-name running
-  using (two-sided; operation; [_,_]⟨_⟩; perform; delay)
+  using (two-sided; operation; [_,_]⟨_⟩; perform; delay) renaming ([_,_] to [_,_]ᵍ)
 
 open L using (Proper′; ‵_; _·_; _*; ≥_; !≥_; upper; lower; _⁺ᵉ)
 open U using (≤_)
@@ -104,7 +104,7 @@ paced : Proper′ upper
 paced = U.⌜ (‵ read · ≤ (# 2)) * ⌝
 
 contract contract-busy : R
-contract      = [ settling      , paced ]⟨ perform read ∷ᴸ delay (# 1) ∷ᴸ []ᴸ ⟩
+contract      = [ settling      , paced ]ᵍ
 contract-busy = [ settling-busy , paced ]⟨ perform read ∷ᴸ delay (# 1) ∷ᴸ []ᴸ ⟩
 
 ------------------------------------------------------------------------

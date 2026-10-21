@@ -142,3 +142,13 @@ import Syntax.Grades.Exact.Regular.Interval
 -- the duration hull of the regular-expression grades
 
 import Syntax.Grades.Exact.Regular.Durations
+
+-- a lower and an upper end walked together: the walk, its zones, and
+-- the decision of whether they have a common run
+
+import Syntax.Grades.Exact.Joint
+import Syntax.Grades.Exact.Joint.Complete
+import Syntax.Grades.Exact.Joint.Zone
+import Syntax.Grades.Exact.Joint.Zoned
+import Syntax.Grades.Exact.Joint.Scale
+import Syntax.Grades.Exact.Joint.Decide

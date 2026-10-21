@@ -11,10 +11,12 @@
 -- (`Exact.Interval`), compared componentwise, the word being data    --
 -- the order ignores.                                                 --
 --                                                                    --
--- A literal names the consistency run as a sequence of operations    --
--- and delays: `[ L , U ]⟨ r ⟩` checks, by the automaton of the       --
--- reader, that the hull of `r` on each side (`Exact.Hull`) lies      --
--- below the endpoint.                                                --
+-- Consistency is decided (`Joint.Decide`): the two ends are walked   --
+-- together on zones of the time each piece in progress has run. A    --
+-- literal `[ L , U ]` checks it; `[ L , U ]⟨ r ⟩` names a run        --
+-- instead, a sequence of operations and delays whose hull on each    --
+-- side (`Exact.Hull`) the automaton of the reader puts below the     --
+-- endpoint.                                                          --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -87,8 +89,22 @@ open import Syntax.Grades.Exact.Interval T Op n code code-injective running lowe
   (λ x∈ y∈ → _ , _ , refl , x∈ , y∈) (λ x∈ y∈ → _ , _ , refl , x∈ , y∈)
   wait-∈ᴸ wait-∈ᵁ public
 
+-- consistency, decided
+
+consistent? : ∀ LU → Dec (Consistent LU)
+consistent? (L , U) = Joint.consistent? (expr L) (expr U)
+  where
+    import Syntax.Grades.Exact.Joint.Decide T Op n code code-injective name code-name running
+      dense κ κ-pos commensurable as Joint
+
 ------------------------------------------------------------------------
 -- Literals
+
+-- a pair of literals, decided consistent
+
+[_,_] : (L : Proper′ lower) (U : Proper′ upper) → {c : True (consistent? (L , U))}
+      → Grade.Carrier intervalᵍ
+[ L , U ] {c} = (L , U) , toWitness c
 
 -- a pair of literals, consistent by the run `r`
 

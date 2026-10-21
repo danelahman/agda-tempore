@@ -2,7 +2,7 @@
 -- Worked rigid timed finite-expression intervals in dense time.      --
 --                                                                    --
 -- An interval `[ L , U ]` pairs a lower and an upper bound that a    --
--- common run fits, named in the literal. The lower bound demanding a --
+-- common run fits, checked in a literal. The lower bound demanding a --
 -- wait is what separates the budgets of the upper one; a delay is    --
 -- graded by both hulls, a wait of exactly its length.                --
 ------------------------------------------------------------------------
@@ -12,6 +12,8 @@ module Syntax.Grades.Example.Worked.Traces.Rigid.Finite.TwoSided where
 open import Data.Bool.Base using (Bool; true; false; _∧_)
 open import Data.List.Base using ([]; _∷_)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
+open import Relation.Nullary using (¬_)
+open import Relation.Nullary.Decidable using (toWitnessFalse)
 
 open import Util.Equality
 
@@ -35,8 +37,7 @@ holds₂ ((l , u) , _) ((l′ , u′) , _) = holds l l′ ∧ holds u u′
 -- heating, then a wait of at least two, then logging, all within six
 
 bound : Carrier
-bound = [ ⌜ ‵ heat · L.!≥ (# 2) · ‵ log ⌝ , ⌜ ‵ heat · U.≤ (# 6) · ‵ log ⌝ ]⟨
-          perform heat ∷ delay (# 2) ∷ perform log ∷ [] ⟩
+bound = [ ⌜ ‵ heat · L.!≥ (# 2) · ‵ log ⌝ , ⌜ ‵ heat · U.≤ (# 6) · ‵ log ⌝ ]
 
 -- a delay of two and a half, between heating and logging, meets it
 
@@ -53,3 +54,8 @@ hurried-fails = refl
 
 waited-meets : holds₂ waited bound ≡ true
 waited-meets = refl
+
+-- a wait of at least five units within at most two: no run fits both
+
+impatient : ¬ Consistent (⌜ L.!≥ (# 5) ⌝ , ⌜ U.≤ (# 2) ⌝)
+impatient = toWitnessFalse {a? = consistent? (⌜ L.!≥ (# 5) ⌝ , ⌜ U.≤ (# 2) ⌝)} _

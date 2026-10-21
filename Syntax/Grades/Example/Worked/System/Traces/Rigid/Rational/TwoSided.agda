@@ -23,7 +23,7 @@ open _→ᵍ_ using (map)
 open import Syntax.Grades.Example.Time.Dense.TwoSided using ([_,_]; ]_,_]; ]_,_[; ↑_; ∞; _/_; #_)
 open import Syntax.Grades.Example.Worked.Traces.Rigid.Finite.Operations
 open import Syntax.Grades.Example.Traces.Rigid.Rational.TwoSided Op 3 code name name-code code-name running
-  using (two-sided; [_,_]⟨_⟩; perform; delay; operation)
+  using (two-sided; perform; delay; operation) renaming ([_,_] to [_,_]ᵍ)
 open import Syntax.Grades.Example.Traces.Rigid.Rational.Base Op 3 code name name-code code-name running
   using (⌜_⌝; holds; lower; ε; _·_; ‵_; _⁺ᵉ)
 import Syntax.Grades.Example.Traces.Rigid.Rational.LeftSided Op 3 code name name-code code-name running as L
@@ -39,15 +39,14 @@ open Grade two-sided using (u; of-dur) renaming (_·_ to _·ᵢ_)
 -- anything: more than four and a quarter units, at most ten and a half
 
 bound-measured :
-  ∣ [ ⌜ ‵ heat · L.!≥ (# 2) · ‵ log ⌝ , ⌜ ‵ heat · U.≤ (# 6) · ‵ log ⌝ ]⟨
-      perform heat ∷ delay (# 2) ∷ perform log ∷ [] ⟩ ∣
+  ∣ [ ⌜ ‵ heat · L.!≥ (# 2) · ‵ log ⌝ , ⌜ ‵ heat · U.≤ (# 6) · ‵ log ⌝ ]ᵍ ∣
   ≡ ] 17 / 4 , ↑ 21 / 2 ]
 bound-measured = refl
 
 -- cooling, then less than a unit: ends open at both sides
 
 cool-measured :
-  ∣ [ ⌜ ‵ cool ⌝ , ⌜ ‵ cool · U.< (# 1) ⌝ ]⟨ perform cool ∷ [] ⟩ ∣ ≡ ] # 1 , ↑ # 3 [
+  ∣ [ ⌜ ‵ cool ⌝ , ⌜ ‵ cool · U.< (# 1) ⌝ ]ᵍ ∣ ≡ ] # 1 , ↑ # 3 [
 cool-measured = refl
 
 -- a delay is measured by itself, both hulls together
@@ -65,7 +64,7 @@ run-measured = refl
 -- guarantee is above the empty one
 
 anything-measured :
-  ∣ [ ⌜ L.≥ (# 0) ⌝ , ⌜ ε ⌝ ]⟨ [] ⟩ ∣ ≡ ∣ u ∣
+  ∣ [ ⌜ L.≥ (# 0) ⌝ , ⌜ ε ⌝ ]ᵍ ∣ ≡ ∣ u ∣
 anything-measured = refl
 
 anything-above-unit : holds ⌜ L.≥ (# 0) ⌝ ⌜ ε {lower} ⌝ ≡ false
@@ -75,6 +74,6 @@ anything-above-unit = refl
 -- more than three units, unbounded above
 
 cycle-measured :
-  ∣ [ ⌜ ‵ heat · L.!≥ (# 1) ⌝ ⁺ᵉ , ⌜ ‵ heat · U.!≤ (# 3) ⌝ ⁺ᵉ ]⟨ perform heat ∷ delay (# 1) ∷ [] ⟩ ∣
+  ∣ [ ⌜ ‵ heat · L.!≥ (# 1) ⌝ ⁺ᵉ , ⌜ ‵ heat · U.!≤ (# 3) ⌝ ⁺ᵉ ]ᵍ ∣
   ≡ [ # 3 , ∞ ]
 cycle-measured = refl

@@ -2,7 +2,7 @@
 -- Worked rigid timed regular-expression intervals in dense time.     --
 --                                                                    --
 -- An interval `[ L , U ]` pairs a lower and an upper bound that a    --
--- common run fits, named in the literal. Here a cycle: heating, then --
+-- common run fits, checked in a literal. Here a cycle: heating, then --
 -- a rest of at least one unit and at most three, repeated at least   --
 -- once. Delays are graded by both hulls, a wait of exactly their     --
 -- length.                                                            --
@@ -13,6 +13,8 @@ module Syntax.Grades.Example.Worked.Traces.Rigid.Rational.TwoSided where
 open import Data.Bool.Base using (Bool; true; false; _∧_)
 open import Data.List.Base using ([]; _∷_)
 open import Data.Product using (_×_; _,_)
+open import Relation.Nullary using (¬_)
+open import Relation.Nullary.Decidable using (toWitnessFalse)
 
 open import Util.Equality
 
@@ -37,7 +39,7 @@ holds₂ ((l , u) , _) ((l′ , u′) , _) = holds l l′ ∧ holds u u′
 -- one cycle with a rest of one unit is a common run
 
 cycle : Carrier
-cycle = [ ⌜ ‵ heat · L.!≥ (# 1) ⌝ ⁺ᵉ , ⌜ ‵ heat · U.!≤ (# 3) ⌝ ⁺ᵉ ]⟨ perform heat ∷ delay (# 1) ∷ [] ⟩
+cycle = [ ⌜ ‵ heat · L.!≥ (# 1) ⌝ ⁺ᵉ , ⌜ ‵ heat · U.!≤ (# 3) ⌝ ⁺ᵉ ]
 
 -- two cycles with rests of one and a half and of two meet it
 
@@ -51,3 +53,8 @@ hurried = refl
 
 idle : holds₂ (operation heat ·ᵢ of-dur (# 4)) cycle ≡ false
 idle = refl
+
+-- a wait of at least five units within at most two: no run fits both
+
+impatient : ¬ Consistent (⌜ L.!≥ (# 5) ⌝ , ⌜ U.≤ (# 2) ⌝)
+impatient = toWitnessFalse {a? = consistent? (⌜ L.!≥ (# 5) ⌝ , ⌜ U.≤ (# 2) ⌝)} _

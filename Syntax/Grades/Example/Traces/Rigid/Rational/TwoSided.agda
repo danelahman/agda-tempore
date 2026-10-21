@@ -6,7 +6,8 @@
 -- `U` that some exact run fits (`Exact.Regular.Interval`), compared  --
 -- componentwise. A delay is graded by the waits of at least and at   --
 -- most its length: together, a wait of exactly it. A literal         --
--- `[ L , U ]⟨ r ⟩` names the run `r`.                                --
+-- `[ L , U ]` is decided consistent (`Exact.Joint.Decide`);          --
+-- `[ L , U ]⟨ r ⟩` names a common run `r` instead.                   --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)

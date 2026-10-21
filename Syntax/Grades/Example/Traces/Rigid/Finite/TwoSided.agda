@@ -6,7 +6,8 @@
 -- `U` that some exact run fits (`Exact.Finite.Interval`), compared   --
 -- componentwise. A delay is graded by the waits of at least and at   --
 -- most its length: together, a wait of exactly it. A literal         --
--- `[ L , U ]⟨ r ⟩` names the run `r`.                                --
+-- `[ L , U ]` is decided consistent (`Exact.Joint.Decide`);          --
+-- `[ L , U ]⟨ r ⟩` names a common run `r` instead.                   --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -27,6 +28,7 @@ open import Relation.Nullary.Decidable using (toWitnessFalse)
 open import Syntax.Grades using (Grade)
 open import Syntax.Durations.Monus ℚ≥0ᵀ using (0ᴰ; _<ᴰ_)
 open import Syntax.Grades.Example.Time.Dense.NonNegativeRational using (#_; _≤?_)
+open import Syntax.Grades.Exact.Grid.NonNegativeRational using (ℚ≥0-commensurable)
 
 private
   code-injective : ∀ {o o′} → code o ≡ code o′ → o ≡ o′
@@ -37,6 +39,7 @@ private
 
 open import Syntax.Grades.Exact.Finite.Interval ℚ≥0ᵀ Op n code code-injective name code-name
   running ℚ≥0-dense (# 1) one-pos public
+open Decided ℚ≥0-commensurable public
 
 two-sided : Grade ℚ≥0ᴰ
 two-sided = intervalᵍ

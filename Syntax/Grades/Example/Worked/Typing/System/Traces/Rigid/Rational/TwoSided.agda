@@ -35,7 +35,7 @@ open import Syntax.Grades.Example.Worked.Typing.Traces.Rigid.Finite.TwoSided
 import Syntax.Grades.Example.Traces.Rigid.Rational.LeftSided Op 3 code name name-code code-name running as L
 import Syntax.Grades.Example.Traces.Rigid.Rational.RightSided Op 3 code name name-code code-name running as U
 open import Syntax.Grades.Example.Traces.Rigid.Rational.TwoSided Op 3 code name name-code code-name running
-  using (two-sided; operation; [_,_]⟨_⟩; perform; delay)
+  using (two-sided; operation; perform; delay) renaming ([_,_] to [_,_]ᵍ)
 open import Syntax.Grades.Example.System.Traces.Rigid.Rational.TwoSided Op 3 code name name-code code-name running
   using (intervalRunsToIntervalsGradeSystem)
 
@@ -91,7 +91,7 @@ too-late = ⊈!
 run : E
 run = [ L.⌜ L.‵_ {L.lower} read L.· L.!≥ (# 1) L.· L.‵_ {L.lower} write ⌝
       , U.⌜ U.‵_ {U.upper} read U.· U.!≤ (# 1) U.· U.‵_ {U.upper} write ⌝
-      ]⟨ perform read ∷ᴸ delay (# 1) ∷ᴸ perform write ∷ᴸ []ᴸ ⟩
+      ]ᵍ
 
 run-measured : mapᵉ run ≡ ] 9 / 4 , ↑ 7 / 2 ]
 run-measured = refl

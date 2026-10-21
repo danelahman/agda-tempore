@@ -12,7 +12,10 @@
 --                                                                    --
 -- A literal names the consistency run as a sequence of operations    --
 -- and delays: `[ L , U ]⟨ r ⟩` checks, by the reader, that the hull  --
--- of `r` on each side (`Exact.Hull`) lies below the endpoint.        --
+-- of `r` on each side (`Exact.Hull`) lies below the endpoint. In a   --
+-- commensurable time domain consistency is decided (`Decided`), a    --
+-- finite expression being an expression with iteration that has      --
+-- none (`Joint.Decide`), and a literal `[ L , U ]` checks it.        --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -23,6 +26,7 @@ open import Util.Equality
 open import Syntax.Durations using (Duration; TimeDomain; Dense)
 import Syntax.Grades.Traces.RunningTimes as RunningTimes
 import Syntax.Durations.Monus as Monus
+import Syntax.Grades.Exact.Grid as Grid
 
 module Syntax.Grades.Exact.Finite.Interval
   {D : Duration} (T : TimeDomain D)
@@ -123,3 +127,20 @@ operation′ o l u el eu =
 
 operation : Op → Grade.Carrier intervalᵍ
 operation o = operation′ o (‵ᵍ o) (‵ᵍ o) refl refl
+
+------------------------------------------------------------------------
+-- Consistency decided, in a commensurable time domain
+
+module Decided (commensurable : Grid.Commensurable T) where
+
+  import Syntax.Grades.Exact.Joint.Decide T Op n code code-injective name code-name running
+    dense κ κ-pos commensurable as Joint
+
+  consistent? : ∀ LU → Dec (Consistent LU)
+  consistent? (L , U) = Joint.consistent? (expr L) (expr U)
+
+  -- a pair of literals, decided consistent
+
+  [_,_] : (L : Proper′ lower) (U : Proper′ upper) → {c : True (consistent? (L , U))}
+        → Grade.Carrier intervalᵍ
+  [ L , U ] {c} = (L , U) , toWitness c

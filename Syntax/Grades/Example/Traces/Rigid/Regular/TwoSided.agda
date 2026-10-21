@@ -10,7 +10,7 @@
 -- componentwise, the word being data the order ignores. A delay      --
 -- advances both components.                                          --
 --                                                                    --
--- Consistency is decided: the two tables meet when the search of    --
+-- Consistency is decided: the two tables meet when the search of     --
 -- their pairs of states reachable together finds a pair of final     --
 -- states (`Regular.Meet`). A literal `[ L , U ]` checks it, the word --
 -- the search finds witnessing it; `[ L , U ]⟨ r ⟩` names the run     --
