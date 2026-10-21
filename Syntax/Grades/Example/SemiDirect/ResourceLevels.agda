@@ -15,13 +15,14 @@
 --   (t , [d₁ , d₂] , h) · (t' , [d₁' , d₂'] , h')                    --
 --    = (min(t , d₁ + t') , [d₁ + d₁' , d₂ + d₂'] , max(h , d₂ + h')) --
 --                                                                    --
--- The upper side `(d₂ , h)` is the semidirect product of the net     --
--- changes in `ℤ∞` acting on the peaks by shifting, cut down to the   --
--- pairs `max(0 , d₂) ≤ h`, on which the unit is `(0 , 0)`: the       --
--- monoid of a net change and its greatest prefix (`Side`). The lower --
--- side is its mirror image, held negated: `(-d₁ , -t)` is a side as  --
--- well. A grade is a lower and an upper side whose ranges are        --
--- consistent, `d₁ ≤ d₂`.                                             --
+-- The upper side `(d₂ , h)` is a net change and its greatest prefix  --
+-- (`Side`). It multiplies as in the semidirect product of the net    --
+-- changes in `ℤ∞` acting on the peaks by shifting, but only the      --
+-- pairs `max(0 , d₂) ≤ h` are kept: a subsemigroup, with `(0 , 0)`   --
+-- as its own unit. `Side` is defined directly, not by                --
+-- `Grades.SemiDirect`. The lower side is its mirror image, held      --
+-- negated: `(-d₁ , -t)` is a side as well. A grade is a lower and an --
+-- upper side whose ranges are consistent, `d₁ ≤ d₂`.                 --
 --                                                                    --
 -- The order is `t ≥ t'`, `d₁ ≥ d₁'`, `d₂ ≤ d₂'` and `h ≤ h'`, and    --
 -- the join is the minimum or the maximum accordingly; `⊤` is         --
@@ -30,8 +31,8 @@
 -- `x · y ≾ u` the trough and peak of `x` are `0`, its range is       --
 -- `[0 , 0]` by consistency, and so `y ≾ u`. The unit is not least,   --
 -- `_·_` does not commute, and delays change no level. The resource   --
--- levels are the grade of one resource indexed by the resource       --
--- names.                                                             --
+-- levels are the grade of one resource indexed by the resource names --
+-- (`Grades.Indexed`).                                                --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.SemiDirect.ResourceLevels where

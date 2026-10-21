@@ -56,7 +56,8 @@ import Syntax.Grades.Example.Worked.System
 
 -- The trace grades: a floor, a cap and their pairing at the
 -- cost-sensitive orders, and a cap at the subset order, each read as an
--- effect grade and as a resource grade; and the regular cap.
+-- effect grade and as a resource grade; the regular cap; and the rigid
+-- regular, finite-expression and regular-expression grades.
 
 import Syntax.Grades.Example.Worked.Traces
 
@@ -64,7 +65,9 @@ import Syntax.Grades.Example.Worked.Traces
 
 import Syntax.Grades.Example.Worked.Counts
 
--- semidirect products: flow-sensitive levels, windowed schedules
+-- Flow-sensitive levels and windowed schedules, semidirect products;
+-- resource levels; and mode-switch costs and mode times, mode
+-- matrices.
 
 import Syntax.Grades.Example.Worked.SemiDirect.FlowLevels
 import Syntax.Grades.Example.Worked.SemiDirect.WindowedSchedules

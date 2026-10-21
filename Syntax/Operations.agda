@@ -17,7 +17,7 @@ open GradeSystemInterface Grades
 
 -- Bundle of the data describing an operation signature:
 -- the set of operation symbols `Op`, their parameter and
--- arity ground types, and their (maximal) execution durations.
+-- arity ground types, and the effect grade of performing each.
 
 record Operations : Set₁ where
   field
@@ -25,4 +25,4 @@ record Operations : Set₁ where
     _≟ₒ_     : DecidableEquality Op      -- operation names have decidable equality
     param    : Op → GType                -- parameter type of each operation
     arity    : Op → GType                -- arity type of each operation
-    op-grade : Op → E                    -- each operation's (maximal) duration
+    op-grade : Op → E                    -- effect grade of performing each operation

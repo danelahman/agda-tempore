@@ -1,19 +1,23 @@
 ------------------------------------------------------------------------
--- The timed-trace toolkit that the trace-based grades are built from. --
---                                                                     --
--- A timed trace records one run of a computation as it is observed     --
--- from outside: an alternation of delays and operations. A grade is a  --
--- non-empty finite *set* of such traces -- the runs a computation may  --
--- have -- and every trace-based grade in `Grades.Example.Traces`     --
--- has that same carrier and the same monoid on it. What distinguishes  --
--- them is the order, and the orders are built from the machinery       --
--- collected here.                                                      --
---                                                                     --
--- Nothing in this module is itself a grade; it is the shared layer     --
--- underneath. This module is only an index -- everything is           --
--- parameterised by the alphabet `Op`, and the trace layer also by the  --
--- time domain of its delays, so it lists the pieces rather than        --
--- re-exporting them.                                                   --
+-- The timed-trace toolkit that the trace-based grades are built      --
+-- from.                                                              --
+--                                                                    --
+-- A timed trace records one run of a computation as it is observed   --
+-- from outside: an alternation of delays and operations. The toolkit --
+-- supplies non-empty finite *sets* of such traces -- the runs a      --
+-- computation may have -- with the language product, the orders on   --
+-- traces, and the antichain normal forms a set is cut down to under  --
+-- an order. The `Timed.*` and `Subsets.*` grades of                  --
+-- `Grades.Example.Traces` are built on these sets, each with its own --
+-- carrier: antichains for a floor, antichains with an added greatest --
+-- point for a cap, and their consistent pairs; the subset cap is     --
+-- sets with an added greatest point. The regular and rigid grades    --
+-- are represented by automata and expressions.                       --
+--                                                                    --
+-- Nothing in this module is itself a grade. This module is only an   --
+-- index -- everything is parameterised by the alphabet `Op`, and the --
+-- trace layer also by the time domain of its delays, so it lists the --
+-- pieces rather than re-exporting them.                              --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Traces where
@@ -31,11 +35,11 @@ import Syntax.Grades.Traces.Positive
 
 import Syntax.Grades.Traces.Base
 
--- Non-empty finite sets of timed traces: the carrier every trace-based
--- grade shares, with the language product as its monoid and the subset
--- preorder on the underlying lists. A set is held canonically, as the
--- list of its members in increasing lexicographic order, so it is
--- determined by which traces it names.
+-- Non-empty finite sets of timed traces, which the timed and subset
+-- grades are built on, with the language product as their monoid and
+-- the subset preorder on the underlying lists. A set is held
+-- canonically, as the list of its members in increasing lexicographic
+-- order, so it is determined by which traces it names.
 
 import Syntax.Grades.Traces.Sets
 

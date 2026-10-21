@@ -1,47 +1,51 @@
 ------------------------------------------------------------------------
 -- Example grades, and example grade systems built from them.         --
 --                                                                    --
--- A `Grade` (see `Syntax.Grades`) is a partially ordered monoid with --
--- binary joins, a greatest element, and a monoid morphism `of-dur`   --
--- from a monoid of durations; here the durations are ℕ, read as a    --
--- number of time steps. A `GradeSystem` consists of two grades       --
--- (effect grades, recording what a computation may do, and resource  --
--- grades, recording what is thereby guaranteed about time) and a     --
--- grade morphism from the first to the second.                       --
+-- A `Grade` (see `Syntax.Grades`) is a preordered monoid, its        --
+-- equality the order's equivalence, with binary joins, a greatest    --
+-- element, and a monoid morphism `of-dur` from a monoid of           --
+-- durations. The durations are ℕ for the discrete time grades, the   --
+-- non-negative rationals ℚ≥0 for the dense ones, and an arbitrary    --
+-- time domain for `Time.Intervals` and the trace constructions; many --
+-- grades that do not measure time are stated over any monoid of      --
+-- durations. A `GradeSystem` consists of two grades (effect grades,  --
+-- recording what a computation may do, and resource grades,          --
+-- recording what is thereby guaranteed) and a grade morphism from    --
+-- the first to the second.                                           --
 --                                                                    --
--- The examples form four families:                                   --
+-- The examples form these families:                                  --
 --                                                                    --
 --   * `Time.*`: grades that measure elapsed time only, as a bound or --
---     a window of time steps, over ℕ or, in `Time.Dense.*`, over the --
---     non-negative rationals ℚ≥0; morphisms embed the discrete       --
+--     a window, over ℕ, over intervals of a time domain, or, in      --
+--     `Time.Dense.*`, over ℚ≥0; morphisms embed the discrete         --
 --     grades in the dense ones.                                      --
---                                                                    --
---   * `Traces.*`: grades that record *which runs* a computation may  --
---     have had, as a set of timed traces, differing in the order on  --
---     the sets.                                                      --
---                                                                    --
---   * `Counts.*`: grades that count, per operation (or per class of  --
---     operations, under an index into `Fin n`), how often a          --
---     computation draws on each; `AtMost`/`AtLeast` are quotas and   --
---     guarantees, and `Power` is the generic `n`-counter product.    --
 --                                                                    --
 --   * `SecurityLevel`: a decidable join-semilattice of levels,       --
 --     floating upward as data is touched; instances are the          --
 --     two-point `Low < High` and taint sets over `Fin n`.            --
 --                                                                    --
--- `Product.*` pairs members of these families by the product of      --
--- grades of `Syntax.Grades.Product`: left- and right-sided time with --
--- a security level, and right-sided time with an energy budget       --
--- (right-sided time read as expenditure rather than elapsed time).   --
+--   * `Product.*`: members of these families paired by the           --
+--     product of `Syntax.Grades.Product`.                            --
 --                                                                    --
--- The trace family has three parts: `Timed.*` over the               --
--- cost-sensitive orders on traces, with a floor, a cap and their     --
--- pairing; `Subsets.*` over equality, with a cap; and `Regular.*`, a --
--- cap at inclusion over regular sets.                                --
+--   * `Traces.*`: grades that record *which runs* a computation may  --
+--     have had: sets of timed traces (`Timed.*`, `Subsets.*`),       --
+--     regular sets (`Regular.*`), and rigid timed regular languages  --
+--     and expressions (`Rigid.*`).                                   --
+--                                                                    --
+--   * `Counts.*`: grades that count, per operation (or per class of  --
+--     operations, under an index into `Fin n`), how often a          --
+--     computation draws on each; `AtMost`/`AtLeast` are quotas and   --
+--     guarantees, `Power` is the generic `n`-counter product, and    --
+--     `UpperBound` an indexed grade of bounds by name.               --
+--                                                                    --
+--   * `SemiDirect.*`: flow-sensitive levels and windowed schedules,  --
+--     semidirect products (`Syntax.Grades.SemiDirect`); resource     --
+--     levels; and mode-switch costs and mode times, grades of mode   --
+--     matrices (`Syntax.Grades.Matrix`).                             --
 --                                                                    --
 -- `System.*` assembles grade systems; each projection determines     --
 -- what a resource grade forgets about the effect grade it comes      --
--- from.                                                              --
+-- from. `Worked` instantiates everything at one alphabet.            --
 --                                                                    --
 -- The module is an index: the trace-based examples are parameterised --
 -- by the alphabet `Op`, and are listed rather than re-exported.      --
@@ -228,6 +232,13 @@ import Syntax.Grades.Example.System.Counts.Timed.RightSided
 -- but the join when time is paired with the counts
 
 import Syntax.Grades.Example.System.Counts.Time
+
+------------------------------------------------------------------------
+-- Indexed, semidirect and matrix grades
+--
+-- Grades over maps from names (`Syntax.Grades.Indexed`), semidirect
+-- products (`Syntax.Grades.SemiDirect`) and mode matrices
+-- (`Syntax.Grades.Matrix`).
 
 -- upper bounds on counts by name, an indexed grade; flow-sensitive
 -- levels and windowed schedules, semidirect products

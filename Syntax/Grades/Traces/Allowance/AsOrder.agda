@@ -1,14 +1,14 @@
 ------------------------------------------------------------------------
--- The allowance preorder, packaged as a `TraceOrder`.                 --
+-- The allowance partial order, packaged as a `TraceOrder`.           --
 --                                                                    --
--- Everything the grade construction asks of an order on traces, in    --
--- one place: the comparison and its decision procedure, the preorder  --
--- laws, monotonicity for the trace product, and the two facts about   --
--- the unit.                                                          --
+-- Everything the grade construction asks of an order on traces, in   --
+-- one place: the comparison and its decision procedure, the          --
+-- partial-order laws, monotonicity for the trace product, and the    --
+-- two facts about the unit.                                          --
 --                                                                    --
--- Positivity of `costʰⁱ` is a parameter here rather than a hypothesis --
--- carried around: it is what makes the empty bound permit nothing but --
--- the empty run, and so what the grades' zero-product law rests on.   --
+-- Positivity of `costʰⁱ` is a parameter: it is what makes the order  --
+-- antisymmetric and the empty bound permit nothing but the empty     --
+-- run, and so what the grades' zero-product law rests on.            --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)
