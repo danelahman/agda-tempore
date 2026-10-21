@@ -41,6 +41,12 @@ import Syntax.Grades.Example.Worked.System.Traces.Rigid.Finite.RightSided
 import Syntax.Grades.Example.Worked.System.Traces.Rigid.Finite.LeftSided
 import Syntax.Grades.Example.Worked.System.Traces.Rigid.Finite.TwoSided
 
+-- the rigid regular-expression grades, measured by their duration hull
+
+import Syntax.Grades.Example.Worked.System.Traces.Rigid.Rational.RightSided
+import Syntax.Grades.Example.Worked.System.Traces.Rigid.Rational.LeftSided
+import Syntax.Grades.Example.Worked.System.Traces.Rigid.Rational.TwoSided
+
 -- left-sided time and a security level: timed declassification, an
 -- embargo alone, and a taint check alone
 

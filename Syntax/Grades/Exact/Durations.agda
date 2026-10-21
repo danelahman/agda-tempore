@@ -12,9 +12,11 @@
 -- duration it admits (`hull-sound`). In a dense one, for an          --
 -- expression without iteration, it is the least such interval        --
 -- (`hull-least`): every duration it admits lies between two          --
--- durations of words of `e` (`hull-reach`). Fitting preserves        --
--- durations, so the hull is monotone in the order on sets of words   --
--- (`hull-mono`).                                                     --
+-- durations of words of `e` (`hull-reach`); with iteration it is    --
+-- the least too once the domain is Archimedean, a word of positive   --
+-- duration repeated outlasting every duration (`Iterated`). Fitting  --
+-- preserves durations, so the hull is monotone in the order on sets  --
+-- of words (`hull-mono`, `hull-mono*`).                              --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -36,6 +38,7 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Fin.Subset using (_∈_)
 open import Data.Fin.Subset.Properties using (_∈?_)
 open import Data.List.Base using (List; []; _∷_; _++_; allFin)
+open import Data.Nat.Base using (zero; suc)
 open import Data.List.Membership.Propositional using () renaming (_∈_ to _∈ˡ_)
 open import Data.List.Membership.Propositional.Properties using (∈-allFin)
 open import Data.List.Relation.Unary.Any using (here; there)
@@ -57,6 +60,7 @@ open import Syntax.Grades.Exact.Lift T Op n code code-injective using (Lang; _�
 open import Syntax.Grades.Exact.Expression T Op n code code-injective running
 
 open RunningTimes.RunningTimes running using (rt; rt-pos)
+open import Syntax.Grades.Exact.Grid T using (Archimedean; _×ᴰ_)
 
 ------------------------------------------------------------------------
 -- Possibly empty intervals
@@ -385,24 +389,113 @@ module Least (dense : Dense T) (κ : Carrier) (κ-pos : 0ᴰ <ᴰ κ) where
              x ++ y , (x , y , refl , x∈ , y∈) , dur-++ x y })
       (⊕ʰ-reach (hull e) (hull f) (hull-reach e ne) (hull-reach f nf))
 
-  -- the hull lies within every interval admitting the durations
+  -- the hull lies within every interval admitting the durations, once
+  -- it reaches them
 
-  hull-least : ∀ {s} (e : Expr s) → NoStar e → ∀ {i} → hull e ≡ just i
-             → (j : Interval) → (∀ {x} → ⟦ e ⟧ x → dur x ∈ⁱ j) → i ⊆ⁱ j
-  hull-least e ne {i} eq j f = ⊆ⁱ-complete {i} {j} λ {t} t∈ → go (hull e) eq (hull-reach e ne) t∈
+  reach-least : ∀ {s} (e : Expr s) → Reaches (Durs ⟦ e ⟧) (hull e) → ∀ {i} → hull e ≡ just i
+              → (j : Interval) → (∀ {x} → ⟦ e ⟧ x → dur x ∈ⁱ j) → i ⊆ⁱ j
+  reach-least e r {i} eq j f = ⊆ⁱ-complete {i} {j} λ {t} t∈ → go (hull e) eq r t∈
     where
       go : ∀ m → m ≡ just i → Reaches (Durs ⟦ e ⟧) m → ∀ {t} → t ∈ⁱ i → t ∈ⁱ j
       go (just .i) refl (l , h) {t} t∈ with l (proj₁ t∈) | h (proj₂ t∈)
       ... | a , (x , x∈ , refl) , a≤ | b , (y , y∈ , refl) , ≤b =
         between-∈ {j} (f x∈) (f y∈) a≤ ≤b
 
-  -- the hull is monotone in the order on sets of words
+  hull-least : ∀ {s} (e : Expr s) → NoStar e → ∀ {i} → hull e ≡ just i
+             → (j : Interval) → (∀ {x} → ⟦ e ⟧ x → dur x ∈ⁱ j) → i ⊆ⁱ j
+  hull-least e ne = reach-least e (hull-reach e ne)
 
-  hull-mono : ∀ {s s′} (e : Expr s) (f : Expr s′) → NoStar e
-            → ⟦ e ⟧ ≾ ⟦ f ⟧ → ∀ {i j} → hull e ≡ just i → hull f ≡ just j → i ⊆ⁱ j
-  hull-mono e f ne le {i} {j} eqe eqf = hull-least e ne eqe j into
+  -- the hull is monotone in the order on sets of words, once it
+  -- reaches the durations of the lesser set
+
+  reach-mono-hull : ∀ {s s′} (e : Expr s) (f : Expr s′) → Reaches (Durs ⟦ e ⟧) (hull e)
+                  → ⟦ e ⟧ ≾ ⟦ f ⟧ → ∀ {i j} → hull e ≡ just i → hull f ≡ just j → i ⊆ⁱ j
+  reach-mono-hull e f r le {i} {j} eqe eqf = reach-least e r eqe j into
     where
       into : ∀ {x} → ⟦ e ⟧ x → dur x ∈ⁱ j
       into {x} x∈ with le x x∈
       ... | y , y∈ , x⊑y =
         subst (_∈ⁱ j) (sym (⊑-dur x⊑y)) (subst (dur y ∈ʰ_) eqf (hull-sound f y∈))
+
+  hull-mono : ∀ {s s′} (e : Expr s) (f : Expr s′) → NoStar e
+            → ⟦ e ⟧ ≾ ⟦ f ⟧ → ∀ {i j} → hull e ≡ just i → hull f ≡ just j → i ⊆ⁱ j
+  hull-mono e f ne = reach-mono-hull e f (hull-reach e ne)
+
+  --------------------------------------------------------------------
+  -- With iteration, in an Archimedean time domain: a word of positive
+  -- duration, repeated, outlasts every duration
+
+  module Iterated (archimedean : Archimedean) where
+
+    private
+      copies : ℕ → Word → Word
+      copies zero    y = []
+      copies (suc k) y = y ++ copies k y
+
+      copies-∈ : ∀ {X : Lang} {y} k → X y → Star X (copies k y)
+      copies-∈ zero    _  = stop
+      copies-∈ (suc k) y∈ = more y∈ (copies-∈ k y∈)
+
+      copies-dur : ∀ k y → dur (copies k y) ≡ k ×ᴰ dur y
+      copies-dur zero    y = refl
+      copies-dur (suc k) y = trans (dur-++ y (copies k y)) (cong (dur y +ᴰ_) (copies-dur k y))
+
+      -- a positive length reached below a positive upper end
+      positive : ∀ h → ¬ (h ⊑ʰ fin 0⁺) → Σ[ t ∈ Carrier ] 0ᴰ <ᴰ t × fin (t ∣ᶜ ⁺) ⊑ʰ h
+      positive ∞ _ = κ , κ-pos , tt
+      positive (fin (p ∣ᶜ s)) ¬h with dense {0ᴰ} {p} p-pos
+        where
+          p-pos : ¬ (p ≤ᴰ 0ᴰ)
+          p-pos p≤0 = ¬h (subst (λ z → (z ∣ᶜ s) ⊑ 0⁺) (sym (≤0⇒≡0 p≤0)) (by-side refl ≤ˢ-⁺))
+      ... | t , t-pos , t<p = t , t-pos , by-pt t<p
+
+      star-reach : ∀ {X : Lang} m → Reaches (Durs X) m → Reaches (Durs (Star X)) (starʰ m)
+      star-reach {X} nothing _ =
+        reach-mono (just 0ⁱ) (λ {t} t∈ → [] , stop , sym (pointⁱ-∈ t∈)) (interval-reach 0ⁱ)
+      star-reach {X} (just i) (_ , hr) = lo-part , hi-part
+        where
+          lo-part : LoReach (Durs (Star X)) (lo (0ⁱ ∪ⁱ i⁺ i))
+          lo-part {t} _ = 0ᴰ , ([] , stop , refl) , 0ᴰ-least t
+          unbounded : ¬ (hi i ⊑ʰ fin 0⁺) → ∀ t → Σ[ b ∈ Carrier ] Durs (Star X) b × t ≤ᴰ b
+          unbounded ¬h t with positive (hi i) ¬h
+          ... | t₀ , t₀-pos , r with hr r
+          ...   | b , (y , y∈ , refl) , t₀≤b with archimedean (dur y) t (<-≤-trans t₀-pos t₀≤b)
+          ...     | k , t≤ = k ×ᴰ dur y , (copies k y , copies-∈ k y∈ , copies-dur k y) , t≤
+          hi-part : HiReach (Durs (Star X)) (hi (0ⁱ ∪ⁱ i⁺ i))
+          hi-part {t} r with ⊔ʰ-sel (fin 0⁺) (plusʰ (hi i))
+          ... | inj₁ e = 0ᴰ , ([] , stop , refl) , ⊑⇒≤ (subst (fin (t ∣ᶜ ⁺) ⊑ʰ_) e r)
+          ... | inj₂ e with hi i in ehi
+          ...   | ∞ = unbounded (λ q → subst (_⊑ʰ fin 0⁺) ehi q) t
+          ...   | fin c with c ⊑? 0⁺
+          ...     | no ¬q = unbounded (λ q → ¬q (subst (_⊑ʰ fin 0⁺) ehi q)) t
+          ...     | yes _ with hr {t} (subst (fin (t ∣ᶜ ⁺) ⊑ʰ_) e r)
+          ...       | b , (y , y∈ , refl) , t≤ = dur y , (y ++ [] , more y∈ stop , dur-++-[] y) , t≤
+            where
+              dur-++-[] : ∀ y → dur (y ++ []) ≡ dur y
+              dur-++-[] y = trans (dur-++ y []) (+ᴰ-identityʳ (dur y))
+
+    -- the hull reaches the durations of every expression
+
+    hull-reach* : ∀ {s} (e : Expr s) → Reaches (Durs ⟦ e ⟧) (hull e)
+    hull-reach* ε =
+      reach-mono (just 0ⁱ) (λ {t} t∈ → [] , refl , sym (pointⁱ-∈ t∈)) (interval-reach 0ⁱ)
+    hull-reach* {s} (ops A) = ops-reach {s} A
+    hull-reach* (str S e) = str-reach S e
+    hull-reach* (e ∣ f) =
+      reach-mono (hull e ∪ʰ hull f)
+        (λ { (inj₁ (x , x∈ , d)) → x , inj₁ x∈ , d ; (inj₂ (x , x∈ , d)) → x , inj₂ x∈ , d })
+        (∪ʰ-reach (hull e) (hull f) (hull-reach* e) (hull-reach* f))
+    hull-reach* (e · f) =
+      reach-mono (hull e ⊕ʰ hull f)
+        (λ { (a , b , (x , x∈ , refl) , (y , y∈ , refl) , refl) →
+               x ++ y , (x , y , refl , x∈ , y∈) , dur-++ x y })
+        (⊕ʰ-reach (hull e) (hull f) (hull-reach* e) (hull-reach* f))
+    hull-reach* (e *) = star-reach (hull e) (hull-reach* e)
+
+    hull-least* : ∀ {s} (e : Expr s) → ∀ {i} → hull e ≡ just i
+                → (j : Interval) → (∀ {x} → ⟦ e ⟧ x → dur x ∈ⁱ j) → i ⊆ⁱ j
+    hull-least* e = reach-least e (hull-reach* e)
+
+    hull-mono* : ∀ {s s′} (e : Expr s) (f : Expr s′)
+               → ⟦ e ⟧ ≾ ⟦ f ⟧ → ∀ {i j} → hull e ≡ just i → hull f ≡ just j → i ⊆ⁱ j
+    hull-mono* e f = reach-mono-hull e f (hull-reach* e)

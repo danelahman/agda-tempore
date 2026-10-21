@@ -150,3 +150,9 @@ import Syntax.Grades.Example.Worked.Typing.SemiDirect.ModeSwitchCosts
 import Syntax.Grades.Example.Worked.Typing.System.Traces.Rigid.Finite.RightSided
 import Syntax.Grades.Example.Worked.Typing.System.Traces.Rigid.Finite.LeftSided
 import Syntax.Grades.Example.Worked.Typing.System.Traces.Rigid.Finite.TwoSided
+
+-- the same over the rigid regular-expression grades
+
+import Syntax.Grades.Example.Worked.Typing.System.Traces.Rigid.Rational.RightSided
+import Syntax.Grades.Example.Worked.Typing.System.Traces.Rigid.Rational.LeftSided
+import Syntax.Grades.Example.Worked.Typing.System.Traces.Rigid.Rational.TwoSided

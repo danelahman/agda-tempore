@@ -195,6 +195,12 @@ import Syntax.Grades.Example.System.Traces.Rigid.Finite.RightSided
 import Syntax.Grades.Example.System.Traces.Rigid.Finite.LeftSided
 import Syntax.Grades.Example.System.Traces.Rigid.Finite.TwoSided
 
+-- the same for the rigid regular-expression grades, iteration included
+
+import Syntax.Grades.Example.System.Traces.Rigid.Rational.RightSided
+import Syntax.Grades.Example.System.Traces.Rigid.Rational.LeftSided
+import Syntax.Grades.Example.System.Traces.Rigid.Rational.TwoSided
+
 -- the subset cap to at-most counts: on each counter, the greatest
 -- count among the listed traces -- a quota that covers the run that
 -- draws on it most

@@ -319,6 +319,14 @@ private
   _≾ᴳ?_ : ∀ {s} (c d : Proper′ s) → Dec (c ≾ᴳ d)
   c ≾ᴳ? d = map′ (↑ c d) (↓ c d) (c ≾ᵉ? d)
 
+-- the order from and to the runs, without unfolding the decision
+
+≾ᴳ-intro : ∀ {s} (c d : Proper′ s) → c ≾ᵉ d → c ≾ᴳ d
+≾ᴳ-intro = ↑
+
+≾ᴳ-elim : ∀ {s} (c d : Proper′ s) → c ≾ᴳ d → c ≾ᵉ d
+≾ᴳ-elim = ↓
+
 module Common (s : Instance) where
 
   ·-identityˡᵉ : ∀ (c : Proper′ s) → (εᵉ ·ᵉ c) ≾ᴳ c × c ≾ᴳ (εᵉ ·ᵉ c)

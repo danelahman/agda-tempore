@@ -138,3 +138,7 @@ import Syntax.Grades.Exact.Finite.Interval
 
 import Syntax.Grades.Exact.Interval
 import Syntax.Grades.Exact.Regular.Interval
+
+-- the duration hull of the regular-expression grades
+
+import Syntax.Grades.Exact.Regular.Durations
