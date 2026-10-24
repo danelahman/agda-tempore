@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
 -- A grade system in which the resource grades measure only time.     --
 --                                                                    --
--- The effect grades are the rigid regular-expression intervals of     --
--- `Traces.Rigid.Rational.TwoSided`: a lower bound `L` and an upper     --
+-- The effect grades are the rigid regular-expression intervals of    --
+-- `Traces.Rigid.Rational.TwoSided`: a lower bound `L` and an upper   --
 -- bound `U` that some run fits. The resource grades are the          --
 -- intervals of dense time, each end open or closed. The projection   --
 -- is the duration hull, read off each end                            --
@@ -13,8 +13,8 @@
 --                                                                    --
 -- The run both ends fit lasts a duration in both hulls, so the two   --
 -- ends bound a non-empty interval. Ends keep their sides: `> 1` and  --
--- `< 3` give `] 1 , 3 [`. A delay of `q`, graded by `!≥ q` and       --
--- `!≤ q`, is measured `[ q , q ]`.                                   --
+-- `< 3` give `] 1 , 3 [`. A delay of `q`, graded by `idle ≥ q` and   --
+-- `idle ≤ q`, is measured `[ q , q ]`.                               --
 --                                                                    --
 -- The unit is measured `[ 0 , 0 ]`, as is `[ ≥ 0 , ε ]`, which is    --
 -- not below the unit, so the projection does not reflect the order   --

@@ -25,13 +25,13 @@ L = ⁅ code log ⁆
 ------------------------------------------------------------------------
 -- Waits add up under iteration; iterating admits the empty word
 
-waits-iterated : holds ⌜ !≥ (# 1) · !≥ (# 1) ⌝ ⌜ (!≥ (# 1)) * ⌝ ≡ true
-               × holds ⌜ (!≥ (# 1)) * ⌝ ⌜ !≥ (# 1) ⌝ ≡ false
+waits-iterated : holds ⌜ idle ≥ (# 1) · idle ≥ (# 1) ⌝ ⌜ (idle ≥ (# 1)) * ⌝ ≡ true
+               × holds ⌜ (idle ≥ (# 1)) * ⌝ ⌜ idle ≥ (# 1) ⌝ ≡ false
 waits-iterated = refl , refl
 
 -- at least one wait of at least a unit is a wait of at least a unit
-waits-plus : holds (⌜ !≥ (# 1) ⌝ ⁺ᵉ) ⌜ !≥ (# 1) ⌝ ≡ true
-           × holds ⌜ !≥ (# 1) ⌝ (⌜ !≥ (# 1) ⌝ ⁺ᵉ) ≡ true
+waits-plus : holds (⌜ idle ≥ (# 1) ⌝ ⁺ᵉ) ⌜ idle ≥ (# 1) ⌝ ≡ true
+           × holds ⌜ idle ≥ (# 1) ⌝ (⌜ idle ≥ (# 1) ⌝ ⁺ᵉ) ≡ true
 waits-plus = refl , refl
 
 ------------------------------------------------------------------------
@@ -64,5 +64,5 @@ logs-plus-open = refl , refl
 delay-zero : holds (waitᴸ (# 0)) ⌜ ε ⌝ ≡ true × holds ⌜ ε ⌝ (waitᴸ (# 0)) ≡ true
 delay-zero = refl , refl
 
-delay-iterated : holds (waitᴸ (# 2)) ⌜ (!≥ (1 / 2)) * ⌝ ≡ true
+delay-iterated : holds (waitᴸ (# 2)) ⌜ (idle ≥ (1 / 2)) * ⌝ ≡ true
 delay-iterated = refl

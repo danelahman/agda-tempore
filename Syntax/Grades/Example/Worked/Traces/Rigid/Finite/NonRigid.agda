@@ -26,7 +26,7 @@ open import Syntax.Durations.NonNegativeRational using (ℚ≥0ᵀ)
 open import Syntax.Grades.Example.Time.Dense.TwoSided using (_/_; #_)
 open import Syntax.Grades.Example.Worked.Traces.Rigid.Finite.Operations
 open import Syntax.Grades.Example.Traces.Rigid.Finite.RightSided Op 3 code name name-code code-name running
-  using (Upper; ≤_; !≤_; ⌜_⌝; Proper′; upper; lower; holds; _·_; _？; ε; expr; _·ᵉ_)
+  using (Upper; ≤_; idle_; ⌜_⌝; Proper′; upper; lower; holds; _·_; _？; ε; expr; _·ᵉ_)
 open import Syntax.Grades.Example.Traces.Rigid.Finite.LeftSided Op 3 code name name-code code-name running
   using (≥_; ‵_)
 open import Syntax.Grades.Example.Traces.Rigid.Finite.NonRigid Op 3 code name name-code code-name running
@@ -158,5 +158,5 @@ product-commutes-lower = refl
 -- The upper map reads a delay as a budget, not as a strict wait: it is
 -- a grade morphism into `upperᵇ`, not into `upperᵍ`
 
-budget-not-wait : holds ⌜ ≤ (# 1) ⌝ ⌜ !≤ (# 1) ⌝ ≡ false
+budget-not-wait : holds ⌜ ≤ (# 1) ⌝ ⌜ idle ≤ (# 1) ⌝ ≡ false
 budget-not-wait = refl

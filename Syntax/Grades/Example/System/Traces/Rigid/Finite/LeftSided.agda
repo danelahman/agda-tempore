@@ -13,7 +13,7 @@
 -- The resource intervals have closed ends, so an open end of the     --
 -- hull is closed: `> 1` and `≥ 1` both measure `[ 1 ,+∞⟩`.           --
 --                                                                    --
--- A delay of `q` is graded by `!≥ q`, measured `[ q ,+∞⟩`; `≥ 0`     --
+-- A delay of `q` is graded by `idle ≥ q`, measured `[ q ,+∞⟩`; `≥ 0` --
 -- measures `[ 0 ,+∞⟩`, the greatest resource grade, which is also    --
 -- the unit, so the projection does not reflect the order there.      --
 ------------------------------------------------------------------------

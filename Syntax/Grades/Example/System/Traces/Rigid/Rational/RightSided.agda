@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
 -- A grade system in which the resource grades measure only time.     --
 --                                                                    --
--- The effect grades are the rigid regular-expression upper bounds of  --
--- `Traces.Rigid.Rational.RightSided`; the resource grades are the      --
--- right-sided intervals of dense time, "at most `q` time units".     --
--- The projection measures a grade by the supremum of the durations   --
--- of its runs, the upper end of its duration hull                    --
+-- The effect grades are the rigid regular-expression upper bounds of --
+-- `Traces.Rigid.Rational.RightSided`; the resource grades are the    --
+-- right-sided intervals of dense time, "at most `q` time units". The --
+-- projection measures a grade by the supremum of the durations of    --
+-- its runs, the upper end of its duration hull                       --
 -- (`Exact.Regular.Durations`):                                       --
 --                                                                    --
 --   ∣ U ∣ᵉ  =  [0, sup { dur x ∣ x a run of U } ]                    --
@@ -13,7 +13,7 @@
 -- The resource intervals have closed ends, so an open end of the     --
 -- hull is closed: `< 1` and `≤ 1` both measure `[0, ↑ 1 ]`.          --
 --                                                                    --
--- A delay of `q` is graded by `!≤ q`, measured `[0, ↑ q ]`; `≤∞`     --
+-- A delay of `q` is graded by `idle ≤ q`, measured `[0, ↑ q ]`; `≤∞` --
 -- measures `[0, ∞ ]`. A grade measured `[0, ↑ 0 ]` has only runs of  --
 -- no duration, the empty run, so the projection reflects the order   --
 -- at the unit.                                                       --

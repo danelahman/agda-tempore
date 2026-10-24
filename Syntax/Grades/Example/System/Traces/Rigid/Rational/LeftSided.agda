@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
 -- A grade system in which the resource grades measure only time.     --
 --                                                                    --
--- The effect grades are the rigid regular-expression lower bounds of  --
--- `Traces.Rigid.Rational.LeftSided`; the resource grades are the       --
--- left-sided intervals of dense time, "at least `q` time units".     --
--- The projection measures a grade by the infimum of the durations of --
--- its runs, the lower end of its duration hull                       --
+-- The effect grades are the rigid regular-expression lower bounds of --
+-- `Traces.Rigid.Rational.LeftSided`; the resource grades are the     --
+-- left-sided intervals of dense time, "at least `q` time units". The --
+-- projection measures a grade by the infimum of the durations of its --
+-- runs, the lower end of its duration hull                           --
 -- (`Exact.Regular.Durations`):                                       --
 --                                                                    --
 --   ∣ L ∣ᵉ  =  [ inf { dur x ∣ x a run of L } ,+∞⟩                   --
@@ -13,7 +13,7 @@
 -- The resource intervals have closed ends, so an open end of the     --
 -- hull is closed: `> 1` and `≥ 1` both measure `[ 1 ,+∞⟩`.           --
 --                                                                    --
--- A delay of `q` is graded by `!≥ q`, measured `[ q ,+∞⟩`; `≥ 0`     --
+-- A delay of `q` is graded by `idle ≥ q`, measured `[ q ,+∞⟩`; `≥ 0` --
 -- measures `[ 0 ,+∞⟩`, the greatest resource grade, which is also    --
 -- the unit, so the projection does not reflect the order there.      --
 ------------------------------------------------------------------------

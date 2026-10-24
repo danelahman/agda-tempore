@@ -22,11 +22,11 @@ open import Syntax.Grades.Example.Traces.Rigid.Finite.LeftSided Op 3 code name n
 ------------------------------------------------------------------------
 -- Strict waits add up, and undisturbed waits are kept
 
-waits-add : holds ⌜ !≥ (# 2) · !≥ (# 3) ⌝ ⌜ !≥ (# 5) ⌝ ≡ true
-          × holds ⌜ !≥ (# 5) ⌝ ⌜ !≥ (# 2) · !≥ (# 3) ⌝ ≡ true
+waits-add : holds ⌜ idle ≥ (# 2) · idle ≥ (# 3) ⌝ ⌜ idle ≥ (# 5) ⌝ ≡ true
+          × holds ⌜ idle ≥ (# 5) ⌝ ⌜ idle ≥ (# 2) · idle ≥ (# 3) ⌝ ≡ true
 waits-add = refl , refl
 
-interrupted : holds ⌜ ‵ heat · !≥ (# 2) · ‵ cool · !≥ (# 3) · ‵ log ⌝ ⌜ ‵ heat · !≥ (# 5) · ‵ log ⌝ ≡ false
+interrupted : holds ⌜ ‵ heat · idle ≥ (# 2) · ‵ cool · idle ≥ (# 3) · ‵ log ⌝ ⌜ ‵ heat · idle ≥ (# 5) · ‵ log ⌝ ≡ false
 interrupted = refl
 
 ------------------------------------------------------------------------
@@ -52,16 +52,16 @@ cool-short = refl
 ------------------------------------------------------------------------
 -- Open and closed ends
 
-open-below-closed : holds ⌜ !> (# 1) ⌝ ⌜ !≥ (# 1) ⌝ ≡ true
+open-below-closed : holds ⌜ idle > (# 1) ⌝ ⌜ idle ≥ (# 1) ⌝ ≡ true
 open-below-closed = refl
 
-closed-not-below-open : holds ⌜ !≥ (# 1) ⌝ ⌜ !> (# 1) ⌝ ≡ false
+closed-not-below-open : holds ⌜ idle ≥ (# 1) ⌝ ⌜ idle > (# 1) ⌝ ≡ false
 closed-not-below-open = refl
 
 -- distinct expressions with the same runs: the open wait before the
 -- budget can give it a little of its time
-same-runs : holds ⌜ !> (# 0) · (≥ (# 1) & ⁅ code log ⁆) ⌝ ⌜ !> (# 0) · (> (# 1) & ⁅ code log ⁆) ⌝ ≡ true
-          × holds ⌜ !> (# 0) · (> (# 1) & ⁅ code log ⁆) ⌝ ⌜ !> (# 0) · (≥ (# 1) & ⁅ code log ⁆) ⌝ ≡ true
+same-runs : holds ⌜ idle > (# 0) · (≥ (# 1) & ⁅ code log ⁆) ⌝ ⌜ idle > (# 0) · (> (# 1) & ⁅ code log ⁆) ⌝ ≡ true
+          × holds ⌜ idle > (# 0) · (> (# 1) & ⁅ code log ⁆) ⌝ ⌜ idle > (# 0) · (≥ (# 1) & ⁅ code log ⁆) ⌝ ≡ true
 same-runs = refl , refl
 
 ------------------------------------------------------------------------
@@ -70,8 +70,8 @@ same-runs = refl , refl
 delay-zero : holds (waitᴸ (# 0)) ⌜ ε ⌝ ≡ true × holds ⌜ ε ⌝ (waitᴸ (# 0)) ≡ true
 delay-zero = refl , refl
 
-delay-covers : holds (waitᴸ (1 / 2)) ⌜ !≥ (1 / 4) ⌝ ≡ true
+delay-covers : holds (waitᴸ (1 / 2)) ⌜ idle ≥ (1 / 4) ⌝ ≡ true
 delay-covers = refl
 
-delay-short : holds (waitᴸ (1 / 4)) ⌜ !> (1 / 4) ⌝ ≡ false
+delay-short : holds (waitᴸ (1 / 4)) ⌜ idle > (1 / 4) ⌝ ≡ false
 delay-short = refl

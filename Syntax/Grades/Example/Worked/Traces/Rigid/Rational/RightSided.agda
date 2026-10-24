@@ -32,10 +32,10 @@ C = ⁅ code cool ⁆ ∪ ⁅ code log ⁆
 -- less than one, may total more than one, though on the grid of
 -- halves every instance totals at most one
 
-open-sum : holds ⌜ !< (# 1) · (< (# 1) & L) ⌝ ⌜ ≤ (# 1) & L ⌝ ≡ false
+open-sum : holds ⌜ idle < (# 1) · (< (# 1) & L) ⌝ ⌜ ≤ (# 1) & L ⌝ ≡ false
 open-sum = refl
 
-open-sum-two : holds ⌜ !< (# 1) · (< (# 1) & L) ⌝ ⌜ < (# 2) & L ⌝ ≡ true
+open-sum-two : holds ⌜ idle < (# 1) · (< (# 1) & L) ⌝ ⌜ < (# 2) & L ⌝ ≡ true
 open-sum-two = refl
 
 ------------------------------------------------------------------------
@@ -80,5 +80,5 @@ logs-plus = refl , refl
 ------------------------------------------------------------------------
 -- The hull of a delay
 
-delay-within : holds (waitᵁ (3 / 2)) ⌜ (!≤ (1 / 2)) * ⌝ ≡ true
+delay-within : holds (waitᵁ (3 / 2)) ⌜ (idle ≤ (1 / 2)) * ⌝ ≡ true
 delay-within = refl

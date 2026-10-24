@@ -28,7 +28,7 @@ open import Syntax.Grades.Example.System.Traces.Rigid.Finite.LeftSided Op 3 code
 -- heating, an undisturbed wait of at least one, logging: at least three
 -- and a quarter units, the open end of logging closed
 
-heat-wait-log : ∣ ⌜ ‵ heat · !≥ (# 1) · ‵ log ⌝ ∣ ≡ [ 13 / 4 ,+∞⟩
+heat-wait-log : ∣ ⌜ ‵ heat · idle ≥ (# 1) · ‵ log ⌝ ∣ ≡ [ 13 / 4 ,+∞⟩
 heat-wait-log = refl
 
 -- flanks of activity add nothing to the least duration

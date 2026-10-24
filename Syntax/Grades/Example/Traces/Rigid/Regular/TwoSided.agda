@@ -50,11 +50,11 @@ open import Syntax.Durations.Intervals ℕᵀ using (fin; ⁻; ⁺; ≤⇒⁻⊑
 import Syntax.Grades.Example.Traces.Rigid.Regular.LeftSided Op n code name name-code code-name running as L
 import Syntax.Grades.Example.Traces.Rigid.Regular.RightSided Op n code name name-code code-name running as U
 
-open L public using (Closed; Lower; !≥_; !>_; ≥_; >_)
-open U public using (Upper; !≤_; !<_; ≤_; <_; ≤∞)
+open L public using (Closed; Lower; ≥_; >_)
+open U public using (Upper; ≤_; <_; ≤∞)
 
 open L using (lang; k; tick; encᶠ; ⌜_⌝′; ∈-⌜⌝′⁺; ≤ᶠ-refl; str; lower; upper; ‵_;
-              steps; Word; Expr; op; ![_]; stretch; ⟦_⟧)
+              steps; Word; Expr; op; stretch; ⟦_⟧)
 import Syntax.Grades.Regular.Automaton k as A
 open import Syntax.Grades.Regular.Grade k tick using (table; wf′; ∈·⁺; ∈u⁺; ≾⇒⊆)
 open import Syntax.Grades.Regular.Meet k using (meet?)
@@ -64,6 +64,7 @@ private
   code-injective : ∀ {o o′} → code o ≡ code o′ → o ≡ o′
   code-injective {o} {o′} e = trans (sym (name-code o)) (trans (cong name e) (name-code o′))
 
+open import Syntax.Grades.Exact.Base ℕᵀ Op n code code-injective using (idle)
 open import Syntax.Grades.Exact.Hull ℕᵀ Op n code code-injective running
   using (Run; perform; delay) public
 open RunningTimes.RunningTimes running using (rt-inhabited⁺)
@@ -161,7 +162,7 @@ two-sided = (left-sided ×ᵍ right-sided) ∣ᵍ consistent
 word : Run → Word
 word []              = []
 word (perform o ∷ r) = op o (proj₁ (rt-inhabited⁺ o)) ∷ word r
-word (delay τ ∷ r)   = ![ τ ] ++ word r
+word (delay τ ∷ r)   = idle τ ++ word r
 
 -- a pair of literals, decided consistent
 

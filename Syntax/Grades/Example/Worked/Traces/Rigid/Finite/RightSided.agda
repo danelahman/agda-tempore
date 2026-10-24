@@ -26,7 +26,7 @@ open import Syntax.Grades.Example.Traces.Rigid.Finite.RightSided Op 3 code name 
 
 two-halves separated : Proper′ upper
 two-halves = ⌜ ≤ (1 / 2) · ≤ (1 / 2) ⌝
-separated  = ⌜ ≤ (1 / 2) · !≤ (1 / 2) · ≤ (1 / 2) ⌝
+separated  = ⌜ ≤ (1 / 2) · idle ≤ (1 / 2) · ≤ (1 / 2) ⌝
 
 -- the strict wait is passed at length zero
 F4-product : holds two-halves separated ≡ true
@@ -36,25 +36,25 @@ F4-converse : holds separated two-halves ≡ false
 F4-converse = refl
 
 -- cooling, less than two units, spreads over both budgets past the wait
-cool-in-budgets : holds ⌜ ‵ cool ⌝ ⌜ ≤ (# 1) · !≤ (# 1) · ≤ (# 1) ⌝ ≡ true
+cool-in-budgets : holds ⌜ ‵ cool ⌝ ⌜ ≤ (# 1) · idle ≤ (# 1) · ≤ (# 1) ⌝ ≡ true
 cool-in-budgets = refl
 
-heat-too-long : holds ⌜ ‵ heat ⌝ ⌜ ≤ (# 1) · !≤ (# 1) · ≤ (# 1) ⌝ ≡ false
+heat-too-long : holds ⌜ ‵ heat ⌝ ⌜ ≤ (# 1) · idle ≤ (# 1) · ≤ (# 1) ⌝ ≡ false
 heat-too-long = refl
 
 ------------------------------------------------------------------------
 -- Open and closed ends
 
-open-below-closed : holds ⌜ !< (# 1) ⌝ ⌜ !≤ (# 1) ⌝ ≡ true
+open-below-closed : holds ⌜ idle < (# 1) ⌝ ⌜ idle ≤ (# 1) ⌝ ≡ true
 open-below-closed = refl
 
-closed-not-below-open : holds ⌜ !≤ (# 1) ⌝ ⌜ !< (# 1) ⌝ ≡ false
+closed-not-below-open : holds ⌜ idle ≤ (# 1) ⌝ ⌜ idle < (# 1) ⌝ ≡ false
 closed-not-below-open = refl
 
 -- distinct expressions with the same runs: the wait's last instant can
 -- be taken by the open budget after it, whose set includes the wait's
-same-runs : holds ⌜ !≤ (# 1) · (< (# 1) & ⁅ code log ⁆) ⌝ ⌜ !< (# 1) · (< (# 1) & ⁅ code log ⁆) ⌝ ≡ true
-          × holds ⌜ !< (# 1) · (< (# 1) & ⁅ code log ⁆) ⌝ ⌜ !≤ (# 1) · (< (# 1) & ⁅ code log ⁆) ⌝ ≡ true
+same-runs : holds ⌜ idle ≤ (# 1) · (< (# 1) & ⁅ code log ⁆) ⌝ ⌜ idle < (# 1) · (< (# 1) & ⁅ code log ⁆) ⌝ ≡ true
+          × holds ⌜ idle < (# 1) · (< (# 1) & ⁅ code log ⁆) ⌝ ⌜ idle ≤ (# 1) · (< (# 1) & ⁅ code log ⁆) ⌝ ≡ true
 same-runs = refl , refl
 
 ------------------------------------------------------------------------
@@ -63,7 +63,7 @@ same-runs = refl , refl
 log-across : holds ⌜ ‵ log ⌝ ⌜ (≤ (1 / 4) & ⁅ code log ⁆) · (≤ (1 / 4) & ⁅ code log ⁆) ⌝ ≡ true
 log-across = refl
 
-log-into-wait : holds ⌜ ‵ log ⌝ ⌜ (≤ (1 / 4) & ⁅ code log ⁆) · !≤ (1 / 4) ⌝ ≡ false
+log-into-wait : holds ⌜ ‵ log ⌝ ⌜ (≤ (1 / 4) & ⁅ code log ⁆) · idle ≤ (1 / 4) ⌝ ≡ false
 log-into-wait = refl
 
 ------------------------------------------------------------------------
@@ -88,5 +88,5 @@ maybe-log = refl
 delay-within : holds (waitᵁ (3 / 2)) ⌜ ≤ (# 2) ⌝ ≡ true
 delay-within = refl
 
-delay-past-open : holds (waitᵁ (3 / 2)) ⌜ !< (3 / 2) ⌝ ≡ false
+delay-past-open : holds (waitᵁ (3 / 2)) ⌜ idle < (3 / 2) ⌝ ≡ false
 delay-past-open = refl

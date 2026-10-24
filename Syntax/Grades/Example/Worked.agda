@@ -12,7 +12,7 @@
 -- reading to local memory (2–3), `send` one over the radio (4–6).    --
 -- Its runs are `poll` (a read), `logged` (read then write), `uplink` --
 -- (read, idle two ticks, send), which takes at most 9 ticks,         --
--- `logged-uplink`, `chatty-uplink` and `idle`.                       --
+-- `logged-uplink`, `chatty-uplink` and `pause`.                      --
 --                                                                    --
 -- Positive and negative claims are both discharged by running the    --
 -- relevant decision procedure, and the tables in the module headers  --

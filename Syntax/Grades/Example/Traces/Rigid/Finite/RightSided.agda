@@ -2,11 +2,13 @@
 -- Rigid timed finite-expression grades over the non-negative         --
 -- rationals, as upper bounds.                                        --
 --                                                                    --
--- Letters reach down to zero: `!≤ q` a strict wait of at most `q`,   --
--- `!< q` of less than `q`, `≤ q` and `< q` stretches in which any    --
--- operation may run, `≤∞` one of any length, `e & S` the stretch `e` --
--- admitting only the operations of `S`. A delay is graded by the     --
--- wait of at most its length, the hull of the delay on this side.    --
+-- Letters reach down to zero: `≤ q` and `< q` stretches of at most   --
+-- and of less than `q` in which any operation may run, `≤∞` one of   --
+-- any length, `e & S` the stretch `e` admitting only the operations  --
+-- of `S`, and `idle e` the stretch `e` admitting none, a strict      --
+-- wait: `idle ≤ q` of at most `q`, `idle < q` of less than `q`. A    --
+-- delay is graded by the wait of at most its length, the hull of the --
+-- delay on this side.                                                --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -36,20 +38,24 @@ open import Syntax.Grades.Example.Traces.Rigid.Finite.Base Op n code name name-c
 Upper : Set
 Upper = Expr upper
 
-!≤_ !<_ ≤_ <_ : Carrier → Upper
-!≤ d = str none (fin (d ∣ᶜ ⁺))
-!< d = str none (fin (d ∣ᶜ ⁻))
-≤ d  = str all (fin (d ∣ᶜ ⁺))
-< d  = str all (fin (d ∣ᶜ ⁻))
+≤_ <_ : Carrier → Upper
+≤ d = str all (fin (d ∣ᶜ ⁺))
+< d = str all (fin (d ∣ᶜ ⁻))
 
-infix 9 !≤_ !<_ ≤_ <_
-infix 8 _&_
+infix 9   ≤_ <_
+infix 8.5 idle_
+infix 8   _&_
 
 -- a stretch admitting only the operations of a set
 
 _&_ : Upper → OpSet → Upper
 str _ e & S = str S e
 e       & _ = e
+
+-- a strict wait, the stretch admitting no operation
+
+idle_ : Upper → Upper
+idle e = e & none
 
 ≤∞ : Upper
 ≤∞ = str all ∞

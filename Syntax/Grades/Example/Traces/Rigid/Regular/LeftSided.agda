@@ -2,14 +2,14 @@
 -- Rigid timed regular grades in whole steps, as lower bounds.        --
 --                                                                    --
 -- A grade is written with one-sided letters whose lengths reach up   --
--- to no bound: `!≥ d` a strict wait of at least `d`, `≥ d` a stretch --
--- of at least `d` in which any operation may run, `> d` one longer   --
--- than `d`, `≥ d & S` one in which only those of `S` may. Activity   --
--- before, between and after is admitted only where a stretch says   --
--- so -- `≥ 0` is the flank admitting anything -- so the empty word   --
--- is not the greatest grade. A delay of `d` steps is graded by `d`   --
--- strict waits of at least a step each, the hull of the delay on     --
--- this side (`Exact.Hull`).                                          --
+-- to no bound: `≥ d` a stretch of at least `d` in which any          --
+-- operation may run, `> d` one longer than `d`, `≥ d & S` one in     --
+-- which only those of `S` may, and `idle ≥ d` a strict wait of at    --
+-- least `d`, in which none may. Activity before, between and after   --
+-- is admitted only where a stretch says so -- `≥ 0` is the flank     --
+-- admitting anything -- so the empty word is not the greatest grade. --
+-- A delay of `d` steps is graded by `d` strict waits of at least a   --
+-- step each, the hull of the delay on this side (`Exact.Hull`).      --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -38,20 +38,24 @@ open import Syntax.Grades.Example.Traces.Rigid.Regular.Base Op n code name name-
 Lower : Set
 Lower = Expr lower
 
-!≥_ !>_ ≥_ >_ : ℕ → Lower
-!≥ d = str none (d ∣ᶜ ⁻)
-!> d = str none (d ∣ᶜ ⁺)
-≥ d  = str all (d ∣ᶜ ⁻)
-> d  = str all (d ∣ᶜ ⁺)
+≥_ >_ : ℕ → Lower
+≥ d = str all (d ∣ᶜ ⁻)
+> d = str all (d ∣ᶜ ⁺)
 
-infix 9 !≥_ !>_ ≥_ >_
-infix 8 _&_
+infix 9   ≥_ >_
+infix 8.5 idle_
+infix 8   _&_
 
 -- a stretch admitting only the operations of a set
 
 _&_ : Lower → OpSet → Lower
 str _ c & S = str S c
 e       & _ = e
+
+-- a strict wait, the stretch admitting no operation
+
+idle_ : Lower → Lower
+idle e = e & none
 
 ------------------------------------------------------------------------
 -- The grade

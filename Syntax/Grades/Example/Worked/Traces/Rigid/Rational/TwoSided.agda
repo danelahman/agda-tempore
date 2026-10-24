@@ -39,7 +39,7 @@ holds₂ ((l , u) , _) ((l′ , u′) , _) = holds l l′ ∧ holds u u′
 -- one cycle with a rest of one unit is a common run
 
 cycle : Carrier
-cycle = [ ⌜ ‵ heat · L.!≥ (# 1) ⌝ ⁺ᵉ , ⌜ ‵ heat · U.!≤ (# 3) ⌝ ⁺ᵉ ]
+cycle = [ ⌜ ‵ heat · L.idle L.≥ (# 1) ⌝ ⁺ᵉ , ⌜ ‵ heat · U.idle U.≤ (# 3) ⌝ ⁺ᵉ ]
 
 -- two cycles with rests of one and a half and of two meet it
 
@@ -51,10 +51,10 @@ twice = refl
 hurried : holds₂ (operation heat ·ᵢ of-dur (1 / 2)) cycle ≡ false
 hurried = refl
 
-idle : holds₂ (operation heat ·ᵢ of-dur (# 4)) cycle ≡ false
-idle = refl
+dawdling : holds₂ (operation heat ·ᵢ of-dur (# 4)) cycle ≡ false
+dawdling = refl
 
 -- a wait of at least five units within at most two: no run fits both
 
-impatient : ¬ Consistent (⌜ L.!≥ (# 5) ⌝ , ⌜ U.≤ (# 2) ⌝)
-impatient = toWitnessFalse {a? = consistent? (⌜ L.!≥ (# 5) ⌝ , ⌜ U.≤ (# 2) ⌝)} _
+impatient : ¬ Consistent (⌜ L.idle L.≥ (# 5) ⌝ , ⌜ U.≤ (# 2) ⌝)
+impatient = toWitnessFalse {a? = consistent? (⌜ L.idle L.≥ (# 5) ⌝ , ⌜ U.≤ (# 2) ⌝)} _

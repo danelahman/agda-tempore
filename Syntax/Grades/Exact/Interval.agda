@@ -41,8 +41,8 @@ module Syntax.Grades.Exact.Interval
   (unitᵘ : ⟦ Grade.u Uᵍ ⟧ᵘ Data.List.Base.[])
   (seqˡ : ∀ {c d x y} → ⟦ c ⟧ˡ x → ⟦ d ⟧ˡ y → ⟦ Grade._·_ Lᵍ c d ⟧ˡ (x Data.List.Base.++ y))
   (seqᵘ : ∀ {c d x y} → ⟦ c ⟧ᵘ x → ⟦ d ⟧ᵘ y → ⟦ Grade._·_ Uᵍ c d ⟧ᵘ (x Data.List.Base.++ y))
-  (delayˡ : ∀ τ → ⟦ Grade.of-dur Lᵍ τ ⟧ˡ (Base.![_] T Op n code code-injective τ))
-  (delayᵘ : ∀ τ → ⟦ Grade.of-dur Uᵍ τ ⟧ᵘ (Base.![_] T Op n code code-injective τ)) where
+  (delayˡ : ∀ τ → ⟦ Grade.of-dur Lᵍ τ ⟧ˡ (Base.idle T Op n code code-injective τ))
+  (delayᵘ : ∀ τ → ⟦ Grade.of-dur Uᵍ τ ⟧ᵘ (Base.idle T Op n code code-injective τ)) where
 
 open import Data.Fin.Subset.Properties using (x∈⁅x⁆)
 open import Data.List.Base using (List; []; _∷_; _++_)
@@ -51,7 +51,7 @@ open import Data.Product using (Σ; Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Syntax.Grades.Product using (_×ᵍ_)
 open import Syntax.Grades.Upward using (Upward; _∣ᵍ_)
 
-open import Syntax.Grades.Exact.Base T Op n code code-injective using (Word; op; ![_])
+open import Syntax.Grades.Exact.Base T Op n code code-injective using (Word; op; idle)
 open import Syntax.Grades.Exact.Order T Op n code code-injective using (_⊑_; ⊑-refl; ⊑-trans)
 open import Syntax.Grades.Exact.Lift T Op n code code-injective
   using (Lang; ⊑-++) renaming (_≾_ to _≾ᴸ_)
@@ -90,7 +90,7 @@ consistent = record
   { up       = λ (le , le′) (x , fl , fu) → x , fits-up (soundˡ le) fl , fits-up (soundᵘ le′) fu
   ; P-u      = [] , fits-∈ unitˡ , fits-∈ unitᵘ
   ; P-·      = λ (x , fl , fu) (x′ , fl′ , fu′) → x ++ x′ , fits-·ˡ fl fl′ , fits-·ᵘ fu fu′
-  ; P-of-dur = λ τ → ![ τ ] , fits-∈ (delayˡ τ) , fits-∈ (delayᵘ τ)
+  ; P-of-dur = λ τ → idle τ , fits-∈ (delayˡ τ) , fits-∈ (delayᵘ τ)
   }
 
 intervalᵍ : Grade D
@@ -105,14 +105,14 @@ intervalᵍ = (Lᵍ ×ᵍ Uᵍ) ∣ᵍ consistent
 word : Run → Word
 word []              = []
 word (perform o ∷ r) = op o (proj₁ (rt-inhabited⁺ o)) ∷ word r
-word (delay τ ∷ r)   = ![ τ ] ++ word r
+word (delay τ ∷ r)   = idle τ ++ word r
 
 word-∈ : ∀ r → runᴸ r (word r)
 word-∈ []              = refl
 word-∈ (perform o ∷ r) =
   op o _ ∷ [] , word r , refl ,
   (o , proj₁ (rt-inhabited⁺ o) , x∈⁅x⁆ (code o) , proj₂ (rt-inhabited⁺ o) , refl) , word-∈ r
-word-∈ (delay τ ∷ r)   = ![ τ ] , word r , refl , refl , word-∈ r
+word-∈ (delay τ ∷ r)   = idle τ , word r , refl , refl , word-∈ r
 
 run-consistent : ∀ r L U → ⟦ hullᴸ r ⟧ ≾ᴸ ⟦ L ⟧ˡ → ⟦ hullᵁ r ⟧ ≾ᴸ ⟦ U ⟧ᵘ → Consistent (L , U)
 run-consistent r L U l u =

@@ -13,7 +13,7 @@
 -- The resource intervals have closed ends, so an open end of the     --
 -- hull is closed: `< 1` and `≤ 1` both measure `[0, ↑ 1 ]`.          --
 --                                                                    --
--- A delay of `q` is graded by `!≤ q`, measured `[0, ↑ q ]`; `≤∞`     --
+-- A delay of `q` is graded by `idle ≤ q`, measured `[0, ↑ q ]`; `≤∞` --
 -- measures `[0, ∞ ]`. A grade measured `[0, ↑ 0 ]` has only runs of  --
 -- no duration, the empty run, so the projection reflects the order   --
 -- at the unit.                                                       --

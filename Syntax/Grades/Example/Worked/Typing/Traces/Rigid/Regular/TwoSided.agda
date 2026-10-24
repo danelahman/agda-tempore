@@ -77,7 +77,7 @@ import Syntax.Grades.Example.Traces.Rigid.Regular.RightSided Op 3 code name name
 open import Syntax.Grades.Example.Traces.Rigid.Regular.TwoSided Op 3 code name name-code code-name running
   using (two-sided; operation; Consistent; consistent?; [_,_]; [_,_]⟨_⟩; perform; delay)
 
-open L using (Closed; ‵_; _·_; ≥_; !≥_; upper; lower; holds′; fails′)
+open L using (Closed; ‵_; _·_; ≥_; idle_; upper; lower; holds′; fails′)
 open U using (≤_)
 
 ------------------------------------------------------------------------
@@ -93,7 +93,7 @@ open import Syntax.Grades.Example.Worked.Typing.Core two-sided opTime noWitnesse
 -- The contracts
 
 settling settling-busy : Closed
-settling      = L.⌜ ≥ 0 · ‵ read · !≥ 5 · ≥ 0 ⌝
+settling      = L.⌜ ≥ 0 · ‵ read · idle ≥ 5 · ≥ 0 ⌝
 settling-busy = L.⌜ ≥ 0 · ‵ read · ≥ 5 · ≥ 0 ⌝
 
 within-twelve : Closed
@@ -106,7 +106,7 @@ contract-busy = [ settling-busy , within-twelve ]⟨ perform read ∷ᴸ delay 5
 -- a wait of at least five steps within at most two: no run fits both
 
 waiting brief : Closed
-waiting = L.⌜ !≥ 5 ⌝
+waiting = L.⌜ idle ≥ 5 ⌝
 brief   = U.⌜ ≤ 2 ⌝
 
 impatient : ¬ Consistent (waiting , brief)

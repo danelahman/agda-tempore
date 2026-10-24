@@ -78,12 +78,12 @@ infixl 7 _·ᵍ_
 
 settle settle-busy one-wait one-then-wait wait-1 wait-5 budget-5
   settled-run stirred-run interrupted-run open-then-stir anything twice : Closed
-settle          = ⌜ ≥ 0 · ‵ open′ · !≥ 5 · ‵ close′ · ≥ 0 ⌝
+settle          = ⌜ ≥ 0 · ‵ open′ · idle ≥ 5 · ‵ close′ · ≥ 0 ⌝
 settle-busy     = ⌜ ≥ 0 · ‵ open′ · ≥ 5 · ‵ close′ · ≥ 0 ⌝
-one-wait        = ⌜ ≥ 1 · !≥ 2 ⌝
-one-then-wait   = ⌜ ≥ 1 · !≥ 1 ⌝
-wait-1          = ⌜ !≥ 1 ⌝
-wait-5          = ⌜ !≥ 5 ⌝
+one-wait        = ⌜ ≥ 1 · idle ≥ 2 ⌝
+one-then-wait   = ⌜ ≥ 1 · idle ≥ 1 ⌝
+wait-1          = ⌜ idle ≥ 1 ⌝
+wait-5          = ⌜ idle ≥ 5 ⌝
 budget-5        = ⌜ ≥ 5 ⌝
 settled-run     = ‵ᵍ open′ ·ᵍ of-dur 5 ·ᵍ ‵ᵍ close′
 stirred-run     = ‵ᵍ open′ ·ᵍ ‵ᵍ stir ·ᵍ ‵ᵍ stir ·ᵍ ‵ᵍ close′

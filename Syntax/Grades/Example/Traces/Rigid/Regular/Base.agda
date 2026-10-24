@@ -66,7 +66,7 @@ code-injective {o} {o′} e = trans (sym (name-code o)) (trans (cong name e) (na
 open RunningTimes.RunningTimes running using (rt; rt-bounded; rt-positive)
 open RunningTimes ℕᵀ Op using (Bounded)
 
-open import Syntax.Grades.Exact.Base ℕᵀ Op n code code-injective public
+open import Syntax.Grades.Exact.Base ℕᵀ Op n code code-injective public hiding (idle)
 open import Syntax.Grades.Exact.Order ℕᵀ Op n code code-injective public
 open import Syntax.Grades.Exact.Lift ℕᵀ Op n code code-injective public
 open import Syntax.Grades.Exact.Expression ℕᵀ Op n code code-injective running public

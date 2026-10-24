@@ -12,7 +12,7 @@ open import Syntax.Grades using (_→ᵍ_)
 
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; ⌈_⌉; ⟅_⟆; ⟅_∣_⟆; poll; uplink;
-         chatty-uplink; write; send; idle)
+         chatty-uplink; write; send; pause)
 open import Syntax.Grades.Example.Worked.Counts.Index using (index; ⟪_,_,_⟫ᵐ)
 open import Syntax.Grades.Example.Worked.Traces.Subsets.RightSided
   using (permitting_; any-run)
@@ -39,10 +39,10 @@ chatty = refl
 write-or-send : map (permitting ⟅ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆) ≡ ⟪ upto 0 , upto 1 , upto 1 ⟫ᵐ
 write-or-send = refl
 
--- idling draws on nothing, and any run at all needs no quota
+-- a pause draws on nothing, and any run at all needs no quota
 
-idling : map (permitting ⟅ idle ⟆) ≡ ⟪ upto 0 , upto 0 , upto 0 ⟫ᵐ
-idling = refl
+pausing : map (permitting ⟅ pause ⟆) ≡ ⟪ upto 0 , upto 0 , upto 0 ⟫ᵐ
+pausing = refl
 
 unrestricted : map any-run ≡ ⟪ unlimited , unlimited , unlimited ⟫ᵐ
 unrestricted = refl

@@ -12,7 +12,7 @@ open import Util.Equality
 open import Syntax.Grades using (_→ᵍ_)
 
 open import Syntax.Grades.Example.Worked.Operations
-  using (Op; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; costˡᵒ; logged; uplink; chatty-uplink; idle)
+  using (Op; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; costˡᵒ; logged; uplink; chatty-uplink; pause)
 open import Syntax.Grades.Example.Worked.Counts.Index using (index; ⟪_,_,_⟫ˡ)
 open import Syntax.Grades.Example.Worked.Traces.Timed.LeftSided
   using (⟅_⟆; ⟅_∣_⟆)
@@ -34,5 +34,5 @@ chatty = refl
 
 -- a guarantee of time alone makes no count certain
 
-idling : map ⟅ idle ⟆ ≡ ⟪ 0 , 0 , 0 ⟫ˡ
-idling = refl
+pausing : map ⟅ pause ⟆ ≡ ⟪ 0 , 0 , 0 ⟫ˡ
+pausing = refl

@@ -2,13 +2,15 @@
 -- Rigid timed regular-expression grades over the non-negative       --
 -- rationals, as lower bounds.                                        --
 --                                                                    --
--- Letters reach up without bound: `!≥ q` a strict wait of at least   --
--- `q`, `!> q` of more than `q`, `≥ q` and `> q` stretches in which   --
--- any operation may run, `e & S` the stretch `e` admitting only the  --
--- operations of `S`. Activity before, between and after operations  --
--- is allowed only by explicit stretches such as `≥ 0`, so the empty  --
--- word is not the greatest grade. A delay is graded by the wait of   --
--- at least its length, the delay zero by the empty word.             --
+-- Letters reach up without bound: `≥ q` and `> q` stretches of at    --
+-- least and of more than `q` in which any operation may run, `e & S` --
+-- the stretch `e` admitting only the operations of `S`, and `idle e` --
+-- the stretch `e` admitting none, a strict wait: `idle ≥ q` of at    --
+-- least `q`, `idle > q` of more than `q`. Activity before, between   --
+-- and after operations is allowed only by explicit stretches such as --
+-- `≥ 0`, so the empty word is not the greatest grade. A delay is     --
+-- graded by the wait of at least its length, the delay zero by the   --
+-- empty word.                                                        --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -38,18 +40,22 @@ open import Syntax.Grades.Example.Traces.Rigid.Rational.Base Op n code name name
 Lower : Set
 Lower = Expr lower
 
-!≥_ !>_ ≥_ >_ : Carrier → Lower
-!≥ d = str none (d ∣ᶜ ⁻)
-!> d = str none (d ∣ᶜ ⁺)
-≥ d  = str all (d ∣ᶜ ⁻)
-> d  = str all (d ∣ᶜ ⁺)
+≥_ >_ : Carrier → Lower
+≥ d = str all (d ∣ᶜ ⁻)
+> d = str all (d ∣ᶜ ⁺)
 
-infix 9 !≥_ !>_ ≥_ >_
-infix 8 _&_
+infix 9   ≥_ >_
+infix 8.5 idle_
+infix 8   _&_
 
 _&_ : Lower → OpSet → Lower
 str _ e & S = str S e
 e       & _ = e
+
+-- a strict wait, the stretch admitting no operation
+
+idle_ : Lower → Lower
+idle e = e & none
 
 ------------------------------------------------------------------------
 -- The grade

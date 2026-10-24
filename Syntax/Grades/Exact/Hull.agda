@@ -97,7 +97,7 @@ run⊆hullᴸ (perform o ∷ r) w (x , y , e , x∈ , y∈) = x , y , e , x∈ ,
 run⊆hullᴸ (delay τ ∷ r)   w (x , y , e , refl , y∈) =
   x , y , e , wait (0ᴰ <ᴰ? τ) , run⊆hullᴸ r y y∈
   where
-    wait : (c : Dec (0ᴰ <ᴰ τ)) → ⟦ at-least τ c ⟧ ![ τ ]
+    wait : (c : Dec (0ᴰ <ᴰ τ)) → ⟦ at-least τ c ⟧ (idle τ)
     wait (yes _) = τ , ⊑ᶜ-refl , refl
     wait (no ¬p) = stretch-zero none τ ¬p
 
@@ -133,7 +133,7 @@ hullᵁ-shrinks (perform o ∷ r) (_ , y , refl , (o′ , d , a , rt , refl) , y
 ... | x , x∈ , s = op o′ d ∷ x , (op o′ d ∷ [] , x , refl , (o′ , d , a , rt , refl) , x∈) , op s
 hullᵁ-shrinks (delay τ ∷ r)   (_ , y , refl , (τ′ , a , refl) , y∈)
   with hullᵁ-shrinks r y∈
-... | x , x∈ , s = ![ τ ] ++ x , (![ τ ] , x , refl , refl , x∈) , shrink-stretch none (⊑⇒≤ a) s
+... | x , x∈ , s = idle τ ++ x , (idle τ , x , refl , refl , x∈) , shrink-stretch none (⊑⇒≤ a) s
 
 hullᴸ-lengthens : ∀ r {h} → ⟦ hullᴸ r ⟧ h → Σ[ x ∈ Word ] runᴸ r x × Lengthens x h
 hullᴸ-lengthens []              refl = [] , refl , []
@@ -146,7 +146,7 @@ hullᴸ-lengthens (delay τ ∷ r) {h} (h₁ , y , refl , h₁∈ , y∈) with h
     case : (c : Dec (0ᴰ <ᴰ τ)) → ⟦ at-least τ c ⟧ h₁
          → Σ[ x′ ∈ Word ] runᴸ (delay τ ∷ r) x′ × Lengthens x′ (h₁ ++ y)
     case (yes p) (τ′ , a , refl) =
-      ![ τ ] ++ x , (![ τ ] , x , refl , refl , x∈) , lengthen-stretch none p (⊑⇒≤ a) s
+      idle τ ++ x , (idle τ , x , refl , refl , x∈) , lengthen-stretch none p (⊑⇒≤ a) s
     case (no ¬p) refl =
       x , ([] , x , refl , sym (stretch-zero none τ ¬p) , x∈) , s
 

@@ -37,7 +37,7 @@ holds₂ ((l , u) , _) ((l′ , u′) , _) = holds l l′ ∧ holds u u′
 -- heating, then a wait of at least two, then logging, all within six
 
 bound : Carrier
-bound = [ ⌜ ‵ heat · L.!≥ (# 2) · ‵ log ⌝ , ⌜ ‵ heat · U.≤ (# 6) · ‵ log ⌝ ]
+bound = [ ⌜ ‵ heat · L.idle L.≥ (# 2) · ‵ log ⌝ , ⌜ ‵ heat · U.≤ (# 6) · ‵ log ⌝ ]
 
 -- a delay of two and a half, between heating and logging, meets it
 
@@ -57,5 +57,5 @@ waited-meets = refl
 
 -- a wait of at least five units within at most two: no run fits both
 
-impatient : ¬ Consistent (⌜ L.!≥ (# 5) ⌝ , ⌜ U.≤ (# 2) ⌝)
-impatient = toWitnessFalse {a? = consistent? (⌜ L.!≥ (# 5) ⌝ , ⌜ U.≤ (# 2) ⌝)} _
+impatient : ¬ Consistent (⌜ L.idle L.≥ (# 5) ⌝ , ⌜ U.≤ (# 2) ⌝)
+impatient = toWitnessFalse {a? = consistent? (⌜ L.idle L.≥ (# 5) ⌝ , ⌜ U.≤ (# 2) ⌝)} _

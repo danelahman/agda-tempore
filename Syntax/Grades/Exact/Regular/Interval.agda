@@ -55,7 +55,7 @@ open import Syntax.Grades.Upward using (Upward; _∣ᵍ_)
 open import Syntax.Durations.Monus T using (Carrier; 0ᴰ; _<ᴰ_; _<ᴰ?_)
 open import Syntax.Durations.Intervals T using (fin; ⁻; ⁺) renaming (_∣_ to _∣ᶜ_; ⊑-refl to ⊑ᶜ-refl)
 
-open import Syntax.Grades.Exact.Base T Op n code code-injective using (Word; op; ![_]; stretch; stretch-zero)
+open import Syntax.Grades.Exact.Base T Op n code code-injective using (Word; op; idle; stretch; stretch-zero)
 open import Syntax.Grades.Exact.Order T Op n code code-injective using (_⊑_; ⊑-refl; ⊑-trans)
 open import Syntax.Grades.Exact.Lift T Op n code code-injective
   using (Lang; uᴸ; _·ᴸ_; ⊑-++) renaming (_≾_ to _≾ᴸ_)
@@ -72,14 +72,14 @@ open RunningTimes.RunningTimes running using (rt-inhabited⁺)
 
 private
   -- a wait lies in both its hulls
-  wait-∈ᴸ : ∀ τ → ⟦ expr (waitᴸ τ) ⟧ ![ τ ]
+  wait-∈ᴸ : ∀ τ → ⟦ expr (waitᴸ τ) ⟧ (idle τ)
   wait-∈ᴸ τ = case (0ᴰ <ᴰ? τ)
     where
-      case : (d : Dec (0ᴰ <ᴰ τ)) → ⟦ expr (at-least′ τ d) ⟧ ![ τ ]
+      case : (d : Dec (0ᴰ <ᴰ τ)) → ⟦ expr (at-least′ τ d) ⟧ (idle τ)
       case (yes _) = τ , ⊑ᶜ-refl , refl
       case (no ¬p) = stretch-zero Data.Fin.Subset.⊥ τ ¬p
 
-  wait-∈ᵁ : ∀ τ → ⟦ expr (waitᵁ τ) ⟧ ![ τ ]
+  wait-∈ᵁ : ∀ τ → ⟦ expr (waitᵁ τ) ⟧ (idle τ)
   wait-∈ᵁ τ = τ , ⊑ᶜ-refl , refl
 
 open import Syntax.Grades.Exact.Interval T Op n code code-injective running lowerᵍ upperᵍ

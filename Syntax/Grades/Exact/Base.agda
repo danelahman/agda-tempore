@@ -5,7 +5,7 @@
 -- grade can see: a sequence of operations, each with the exact time  --
 -- it ran for, and of stretches, each with an exact length and the    --
 -- set of operations that may happen inside it. A stretch with the    --
--- empty set is a strict wait, `![ t ]`: pure waiting. Lengths and    --
+-- empty set is a strict wait, `idle t`: pure waiting. Lengths and    --
 -- running times are positive durations of a time domain.             --
 --                                                                    --
 -- Sequencing merges adjacent stretches with the same set, adding     --
@@ -256,8 +256,8 @@ stretch S τ = stretch-of S τ (0ᴰ <ᴰ? τ)
 
 -- a strict wait admits no operation
 
-![_] : Carrier → Word
-![ τ ] = stretch Data.Fin.Subset.⊥ τ
+idle : Carrier → Word
+idle τ = stretch Data.Fin.Subset.⊥ τ
 
 stretch-pos : ∀ S τ (p : 0ᴰ <ᴰ τ) → stretch S τ ≡ st (pos⁺ τ p) S ∷ []
 stretch-pos S τ p = case (0ᴰ <ᴰ? τ)
@@ -287,11 +287,11 @@ stretch-normal S τ = case (0ᴰ <ᴰ? τ)
     case (yes _) = tt , tt
     case (no _)  = tt
 
-![]-normal : (τ : Carrier) → Normal ![ τ ]
-![]-normal = stretch-normal _
+idle-normal : (τ : Carrier) → Normal (idle τ)
+idle-normal = stretch-normal _
 
-![]-zero : ![ 0ᴰ ] ≡ []
-![]-zero = stretch-zero _ 0ᴰ (λ p → <⇒≢ p refl)
+idle-zero : idle 0ᴰ ≡ []
+idle-zero = stretch-zero _ 0ᴰ (λ p → <⇒≢ p refl)
 
 -- stretches with one set add up
 
@@ -315,5 +315,5 @@ stretch-hom S m n = hom (0ᴰ <ᴰ? m) (0ᴰ <ᴰ? n) (0ᴰ <ᴰ? (m +ᴰ n))
     hom (no _) (yes q) (no ¬r) = ⊥-elim (¬r (<-≤-trans q (≤ᴰ-+ˡ n m)))
     hom (no _) (no _) (no _) = refl
 
-![]-hom : (m n : Carrier) → ![ m +ᴰ n ] ≡ ![ m ] ∙ ![ n ]
-![]-hom = stretch-hom _
+idle-hom : (m n : Carrier) → idle (m +ᴰ n) ≡ idle m ∙ idle n
+idle-hom = stretch-hom _

@@ -144,7 +144,7 @@ anyᴸ w = Σ[ τ ∈ Carrier ] w ≡ stretch all τ
 -- the strict wait of a duration
 
 of-durᴸ : Carrier → Lang
-of-durᴸ τ w = w ≡ ![ τ ]
+of-durᴸ τ w = w ≡ idle τ
 
 ------------------------------------------------------------------------
 -- A preorder
@@ -240,36 +240,36 @@ zero-productʳ {X} {Y} (x , x∈) f y y∈ with f (x ++ y) (x , y , refl , x∈ 
 
 of-dur-zero : of-durᴸ 0ᴰ ≈ uᴸ
 of-dur-zero =
-  ⊆⇒≾ (λ w e → trans e ![]-zero) , ⊆⇒≾ (λ w e → trans e (sym ![]-zero))
+  ⊆⇒≾ (λ w e → trans e idle-zero) , ⊆⇒≾ (λ w e → trans e (sym idle-zero))
 
 of-dur-plus : ∀ m n → of-durᴸ (m +ᴰ n) ≈ of-durᴸ m ·ᴸ of-durᴸ n
 of-dur-plus m n =
-  (λ w e → ![ m ] ++ ![ n ] , (![ m ] , ![ n ] , refl , refl , refl) ,
-           subst (_⊑ ![ m ] ++ ![ n ]) (sym e) (sum⊑ m n)) ,
+  (λ w e → idle m ++ idle n , (idle m , idle n , refl , refl , refl) ,
+           subst (_⊑ idle m ++ idle n) (sym e) (sum⊑ m n)) ,
   (λ { w (x , y , refl , refl , refl) →
-         ![ m +ᴰ n ] , refl , sum⊒ m n })
+         idle (m +ᴰ n) , refl , sum⊒ m n })
   where
     -- the merged wait and the concatenated waits have the same labels
-    lab-waits : ∀ m n p → p <ᴰ m +ᴰ n → lab ![ m +ᴰ n ] p ≡ lab (![ m ] ++ ![ n ]) p
-    lab-waits m n p r = trans (lab-stretch none (m +ᴰ n) r) (sym (case (p <ᴰ? dur ![ m ])))
+    lab-waits : ∀ m n p → p <ᴰ m +ᴰ n → lab (idle (m +ᴰ n)) p ≡ lab (idle m ++ idle n) p
+    lab-waits m n p r = trans (lab-stretch none (m +ᴰ n) r) (sym (case (p <ᴰ? dur (idle m))))
       where
-        case : Dec (p <ᴰ dur ![ m ]) → lab (![ m ] ++ ![ n ]) p ≡ bud none
+        case : Dec (p <ᴰ dur (idle m)) → lab (idle m ++ idle n) p ≡ bud none
         case (yes s) =
-          trans (lab-++ˡ ![ m ] ![ n ] s)
+          trans (lab-++ˡ (idle m) (idle n) s)
                 (lab-stretch none m (subst (p <ᴰ_) (dur-stretch none m) s))
         case (no ¬s) =
-          trans (lab-++ʳ ![ m ] ![ n ] ¬s)
+          trans (lab-++ʳ (idle m) (idle n) ¬s)
                 (lab-stretch none n
                   (∸-<-intro (≮⇒≥ ¬s)
                     (subst (p <ᴰ_) (cong (_+ᴰ n) (sym (dur-stretch none m))) r)))
-    dur-waits : ∀ m n → dur ![ m +ᴰ n ] ≡ dur (![ m ] ++ ![ n ])
+    dur-waits : ∀ m n → dur (idle (m +ᴰ n)) ≡ dur (idle m ++ idle n)
     dur-waits m n = trans (dur-stretch none (m +ᴰ n))
-                     (sym (trans (dur-++ ![ m ] ![ n ])
+                     (sym (trans (dur-++ (idle m) (idle n))
                                  (cong₂ _+ᴰ_ (dur-stretch none m) (dur-stretch none n))))
-    sum⊑ : ∀ m n → ![ m +ᴰ n ] ⊑ ![ m ] ++ ![ n ]
+    sum⊑ : ∀ m n → idle (m +ᴰ n) ⊑ idle m ++ idle n
     sum⊑ m n = ≡ˡ⇒⊑ (dur-waits m n)
                  (λ p r → lab-waits m n p
                    (subst (p <ᴰ_) (trans (sym (dur-waits m n)) (dur-stretch none (m +ᴰ n))) r))
-    sum⊒ : ∀ m n → ![ m ] ++ ![ n ] ⊑ ![ m +ᴰ n ]
+    sum⊒ : ∀ m n → idle m ++ idle n ⊑ idle (m +ᴰ n)
     sum⊒ m n = ≡ˡ⇒⊑ (sym (dur-waits m n))
                  (λ p r → sym (lab-waits m n p (subst (p <ᴰ_) (dur-stretch none (m +ᴰ n)) r)))

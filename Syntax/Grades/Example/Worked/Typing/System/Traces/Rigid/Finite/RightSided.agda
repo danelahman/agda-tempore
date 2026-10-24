@@ -32,7 +32,7 @@ import Syntax.Grades.Example.Traces.Rigid.Finite.RightSided Op 3 code name name-
 open import Syntax.Grades.Example.System.Traces.Rigid.Finite.RightSided Op 3 code name name-code code-name running
   using (upperRunsToRightSidedIntervalsGradeSystem)
 
-open U using (Proper′; ‵_; _·_; !≤_; upper)
+open U using (Proper′; ‵_; _·_; idle_; ≤_; upper)
 
 -- comparisons of rationals, decided
 
@@ -82,7 +82,7 @@ too-late = ≰ᵈ!
 -- slowest instance: half a unit, a unit, two units
 
 run : E
-run = opTime read ·ₑ (U.⌜ !≤ (# 1) ⌝ ·ₑ opTime write)
+run = opTime read ·ₑ (U.⌜ idle ≤ (# 1) ⌝ ·ₑ opTime write)
 
 run-measured : mapᵉ run ≡ [0, ↑ 7 / 2 ]
 run-measured = refl

@@ -39,7 +39,7 @@ open Grade two-sided using (u; of-dur) renaming (_·_ to _·ᵢ_)
 -- anything: more than four and a quarter units, at most ten and a half
 
 bound-measured :
-  ∣ [ ⌜ ‵ heat · L.!≥ (# 2) · ‵ log ⌝ , ⌜ ‵ heat · U.≤ (# 6) · ‵ log ⌝ ]ᵍ ∣
+  ∣ [ ⌜ ‵ heat · L.idle L.≥ (# 2) · ‵ log ⌝ , ⌜ ‵ heat · U.≤ (# 6) · ‵ log ⌝ ]ᵍ ∣
   ≡ ] 17 / 4 , ↑ 21 / 2 ]
 bound-measured = refl
 

@@ -81,7 +81,7 @@ import Syntax.Grades.Example.Traces.Rigid.Rational.RightSided Op 3 code name nam
 open import Syntax.Grades.Example.Traces.Rigid.Rational.TwoSided Op 3 code name name-code code-name running
   using (two-sided; operation; [_,_]⟨_⟩; perform; delay) renaming ([_,_] to [_,_]ᵍ)
 
-open L using (Proper′; ‵_; _·_; _*; ≥_; !≥_; upper; lower; _⁺ᵉ)
+open L using (Proper′; ‵_; _·_; _*; ≥_; idle_; upper; lower; _⁺ᵉ)
 open U using (≤_)
 
 ------------------------------------------------------------------------
@@ -97,7 +97,7 @@ open import Syntax.Grades.Example.Worked.Typing.Core two-sided opTime noWitnesse
 -- The contracts
 
 settling settling-busy : Proper′ lower
-settling      = L.⌜ ≥ (# 0) ⌝ L.·ᵉ L.⌜ ‵ read · !≥ (# 1) ⌝ ⁺ᵉ L.·ᵉ L.⌜ ≥ (# 0) ⌝
+settling      = L.⌜ ≥ (# 0) ⌝ L.·ᵉ L.⌜ ‵ read · idle ≥ (# 1) ⌝ ⁺ᵉ L.·ᵉ L.⌜ ≥ (# 0) ⌝
 settling-busy = L.⌜ ≥ (# 0) ⌝ L.·ᵉ L.⌜ ‵ read · ≥ (# 1) ⌝ ⁺ᵉ L.·ᵉ L.⌜ ≥ (# 0) ⌝
 
 paced : Proper′ upper

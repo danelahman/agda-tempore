@@ -185,10 +185,10 @@ logged-uplink = ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉
 chatty-uplink : Trace
 chatty-uplink = uplink ∙ ⌈ send ⌉
 
--- idling for two ticks and doing nothing at all
+-- pausing for two ticks, doing nothing at all
 
-idle : Trace
-idle = ⟨ 2 ⟩
+pause : Trace
+pause = ⟨ 2 ⟩
 
 -- their best- and worst-case durations, by computation
 

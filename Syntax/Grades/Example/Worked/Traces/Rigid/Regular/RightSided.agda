@@ -98,21 +98,21 @@ one one·one wait-around budget-5 wait-5 heat-then-budget heat-wait-budget
   two-delays : Closed
 one                  = ⌜ ≤ 1 ⌝
 one·one              = one ·ᵍ one
-wait-around          = ⌜ ≤ 1 · !≤ 1 · ≤ 1 ⌝
+wait-around          = ⌜ ≤ 1 · idle ≤ 1 · ≤ 1 ⌝
 budget-5          = ⌜ ≤ 5 ⌝
-wait-5          = ⌜ !≤ 5 ⌝
+wait-5          = ⌜ idle ≤ 5 ⌝
 heat-then-budget     = ⌜ ‵ heat · ≤ 5 ⌝
-heat-wait-budget     = ⌜ ‵ heat · !≤ 2 · ≤ 3 ⌝
+heat-wait-budget     = ⌜ ‵ heat · idle ≤ 2 · ≤ 3 ⌝
 heat-budget-3        = ⌜ ‵ heat · ≤ 3 ⌝
 heat-then-cool       = ⌜ ‵ heat · ≤ 3 · ‵ cool ⌝
-heat-strict-cool     = ⌜ ‵ heat · !≤ 3 · ‵ cool ⌝
+heat-strict-cool     = ⌜ ‵ heat · idle ≤ 3 · ‵ cool ⌝
 across               = ‵ᵍ cool
 within-cool-and-log  = ⌜ (≤ 1 & ⁅ code cool ⁆) · (≤ 1 & (⁅ code cool ⁆ ∪ ⁅ code log ⁆)) ⌝
 within-cool-then-log = ⌜ (≤ 1 & ⁅ code cool ⁆) · (≤ 1 & ⁅ code log ⁆) ⌝
 logged-run           = ‵ᵍ heat ·ᵍ ‵ᵍ log ·ᵍ of-dur 2 ·ᵍ ‵ᵍ cool
 uncooled-run         = ‵ᵍ heat ·ᵍ of-dur 3
 stirred-run          = ‵ᵍ heat ·ᵍ of-dur 2 ·ᵍ ‵ᵍ log ·ᵍ ‵ᵍ cool
-wait-two             = ⌜ !≤ 2 ⌝
+wait-two             = ⌜ idle ≤ 2 ⌝
 two-delays           = of-dur 1 ·ᵍ of-dur 1
 
 ------------------------------------------------------------------------

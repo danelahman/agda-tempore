@@ -89,8 +89,8 @@ too-late = ⊈!
 -- the effect grade of the run is the run itself, at both ends
 
 run : E
-run = [ L.⌜ L.‵_ {L.lower} read L.· L.!≥ (# 1) L.· L.‵_ {L.lower} write ⌝
-      , U.⌜ U.‵_ {U.upper} read U.· U.!≤ (# 1) U.· U.‵_ {U.upper} write ⌝
+run = [ L.⌜ L.‵_ {L.lower} read L.· L.idle L.≥ (# 1) L.· L.‵_ {L.lower} write ⌝
+      , U.⌜ U.‵_ {U.upper} read U.· U.idle U.≤ (# 1) U.· U.‵_ {U.upper} write ⌝
       ]ᵍ
 
 run-measured : mapᵉ run ≡ ] 9 / 4 , ↑ 7 / 2 ]
