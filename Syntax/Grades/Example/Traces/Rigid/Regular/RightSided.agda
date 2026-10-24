@@ -22,7 +22,9 @@ module Syntax.Grades.Example.Traces.Rigid.Regular.RightSided
   (name-code : ∀ o → name (code o) ≡ o) (code-name : ∀ c → code (name c) ≡ c)
   (running : RunningTimes.RunningTimes ℕᵀ Op) where
 
+open import Data.Bool.Base using (Bool; true; false; _∧_; T)
 open import Data.Fin.Subset using () renaming (⊤ to all; ⊥ to none)
+open import Data.Vec.Base using (foldr′)
 
 open import Syntax.Grades using (Grade)
 open import Syntax.Durations.Intervals ℕᵀ using (fin; ∞; ⁻; ⁺) renaming (_∣_ to _∣ᶜ_)
@@ -49,9 +51,16 @@ _&_ : Upper → OpSet → Upper
 str _ e & S = str S e
 e       & _ = e
 
--- a strict wait, the stretch admitting no operation
+-- whether an expression is a budget letter: one stretch admitting
+-- every operation
 
-idle_ : Upper → Upper
+budget? : Upper → Bool
+budget? (str S _) = foldr′ _∧_ true S
+budget? _         = false
+
+-- a strict wait, a budget letter admitting no operation
+
+idle_ : (e : Upper) {_ : T (budget? e)} → Upper
 idle e = e & none
 
 ≤∞ : Upper

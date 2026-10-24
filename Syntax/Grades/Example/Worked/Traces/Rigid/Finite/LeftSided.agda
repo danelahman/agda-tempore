@@ -3,8 +3,8 @@
 --                                                                    --
 -- The operations of `Operations`. The cases: strict waits add up,    --
 -- undisturbed waits are kept, activity needs explicit flanks, open    --
--- against closed ends, an equivalence of distinct expressions, and   --
--- the hull of a delay.                                               --
+-- against closed ends, an equivalence of distinct expressions, the   --
+-- hull of a delay, and a strict wait made only from a budget letter. --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Traces.Rigid.Finite.LeftSided where
@@ -75,3 +75,10 @@ delay-covers = refl
 
 delay-short : holds (waitᴸ (1 / 4)) ⌜ idle > (1 / 4) ⌝ ≡ false
 delay-short = refl
+
+------------------------------------------------------------------------
+-- A strict wait is made only from a budget letter: `idle ‵ heat` is
+-- refused
+
+heat-not-budget : budget? (‵ heat) ≡ false
+heat-not-budget = refl

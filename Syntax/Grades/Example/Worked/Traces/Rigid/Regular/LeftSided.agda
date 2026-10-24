@@ -10,6 +10,7 @@
 
 module Syntax.Grades.Example.Worked.Traces.Rigid.Regular.LeftSided where
 
+open import Data.Bool.Base using (T)
 open import Data.Fin.Base using (Fin; zero; suc)
 open import Relation.Nullary using (¬_)
 
@@ -141,3 +142,10 @@ open-then-stir-anything = holds open-then-stir anything refl
 
 not-nothing : ¬ C._≾_ open-then-stir C.u
 not-nothing = fails open-then-stir C.u refl
+
+------------------------------------------------------------------------
+-- A strict wait is made only from a budget letter: `idle ‵ stir` is
+-- refused
+
+stir-not-budget : ¬ T (budget? (‵_ {lower} stir))
+stir-not-budget ()

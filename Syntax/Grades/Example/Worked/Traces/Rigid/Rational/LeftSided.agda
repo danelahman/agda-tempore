@@ -4,7 +4,8 @@
 -- The operations of `Rigid.Finite.Operations`. The cases: waits add  --
 -- up under iteration; the empty word is no wait; activity needs      --
 -- explicit flanks, here iterated; open against closed ends under     --
--- iteration; the Kleene plus; and the hull of a delay.               --
+-- iteration; the Kleene plus; the hull of a delay; and a strict wait --
+-- made only from a budget letter.                                    --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Traces.Rigid.Rational.LeftSided where
@@ -66,3 +67,10 @@ delay-zero = refl , refl
 
 delay-iterated : holds (waitᴸ (# 2)) ⌜ (idle ≥ (1 / 2)) * ⌝ ≡ true
 delay-iterated = refl
+
+------------------------------------------------------------------------
+-- A strict wait is made only from a budget letter: `idle ‵ heat` is
+-- refused
+
+heat-not-budget : budget? (‵ heat) ≡ false
+heat-not-budget = refl
