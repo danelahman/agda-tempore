@@ -57,3 +57,8 @@ import Syntax.Grades.Example.Worked.Time.Dense.RightSided
 -- both bounds at once, including the infinite upper endpoint
 
 import Syntax.Grades.Example.Worked.Time.Dense.TwoSided
+
+-- one-sided bounds with an open or closed end
+
+import Syntax.Grades.Example.Worked.Time.Dense.LeftSidedCut
+import Syntax.Grades.Example.Worked.Time.Dense.RightSidedCut

@@ -125,7 +125,11 @@ operations.
   `∞`), and `TwoSided.agda`, the intervals of `Time/Intervals.agda` at ℚ≥0:
   each end open or closed, written ISO style (`[ p , a ]`, `] p , a ]`,
   `[ p , a [`, `] p , a [`), the upper possibly `∞`; its closed intervals are
-  the sub-grade `TwoSidedClosed.agda` (`closed→strict`). Their durations are
+  the sub-grade `TwoSidedClosed.agda` (`closed→strict`). `LeftSidedCut.agda`
+  (`≥ p`, `> p`) and `RightSidedCut.agda` (`≤ ↑ a`, `< a`, `≤ ∞`) are the
+  one-sided bounds with an open or closed end; the closed bounds are their
+  sub-grades (`closed→cut`), and the intervals of `TwoSided.agda` map onto
+  either of their ends (`two-sided→cut`). Their durations are
   ℚ≥0 (`ℚ≥0ᴰ` in `Syntax/Durations/NonNegativeRational.agda`), and each
   receives its discrete counterpart by a grade morphism along the inclusion
   `ℕ→ℚ≥0ᴰ`, sending `n` time steps to `n` units of dense time. Over ℕ an open
