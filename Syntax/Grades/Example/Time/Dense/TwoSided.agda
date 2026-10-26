@@ -94,34 +94,38 @@ dense-two-sided-intervals-with-∞ = intervals
 ------------------------------------------------------------------------
 -- The closed intervals are a sub-grade
 
+-- the minimum and maximum of the rationals are those of the time
+-- domain
+
+⊓-⊓ᴰ : ∀ p q → p ⊓ q ≡ p ⊓ᴰ q
+⊓-⊓ᴰ p q with p ≤? q
+... | yes r = p≤q⇒p⊓q≡p r
+... | no ¬r = p≥q⇒p⊓q≡q (<⇒≤ ¬r)
+
+⊔-⊔ᴰ : ∀ p q → p ⊔ q ≡ p ⊔ᴰ q
+⊔-⊔ᴰ p q with p ≤? q
+... | yes r = p≤q⇒p⊔q≡q r
+... | no ¬r = p≥q⇒p⊔q≡p (<⇒≤ ¬r)
+
+-- an extended value read as a closed upper end preserves the order,
+-- the sum and the larger value
+
+⌈⌉-mono : ∀ {a b} → a ≤∞ b → ⌈ a ⌉ ⊑ʰ ⌈ b ⌉
+⌈⌉-mono {↑ _} {↑ _} r = ≤⇒⁺⊑⁺ r
+⌈⌉-mono {↑ _} {∞}   _ = tt
+⌈⌉-mono {∞}   {∞}   _ = tt
+
+⌈⌉-+ : ∀ a b → ⌈ a +∞ b ⌉ ≡ ⌈ a ⌉ +ʰ ⌈ b ⌉
+⌈⌉-+ (↑ _) (↑ _) = refl
+⌈⌉-+ (↑ _) ∞     = refl
+⌈⌉-+ ∞     _     = refl
+
+⌈⌉-⊔ : ∀ a b → ⌈ a ⊔∞ b ⌉ ≡ ⌈ a ⌉ ⊔ʰ ⌈ b ⌉
+⌈⌉-⊔ (↑ p) (↑ q) = cong fin (trans (cong (_∣ ⁺) (⊔-⊔ᴰ p q)) (sym (⊔ᶜ-⁺ p q)))
+⌈⌉-⊔ (↑ _) ∞     = refl
+⌈⌉-⊔ ∞     _     = refl
+
 private
-  -- the minimum and maximum of the rationals are those of the time
-  -- domain
-  ⊓-⊓ᴰ : ∀ p q → p ⊓ q ≡ p ⊓ᴰ q
-  ⊓-⊓ᴰ p q with p ≤? q
-  ... | yes r = p≤q⇒p⊓q≡p r
-  ... | no ¬r = p≥q⇒p⊓q≡q (<⇒≤ ¬r)
-
-  ⊔-⊔ᴰ : ∀ p q → p ⊔ q ≡ p ⊔ᴰ q
-  ⊔-⊔ᴰ p q with p ≤? q
-  ... | yes r = p≤q⇒p⊔q≡q r
-  ... | no ¬r = p≥q⇒p⊔q≡p (<⇒≤ ¬r)
-
-  ⌈⌉-mono : ∀ {a b} → a ≤∞ b → ⌈ a ⌉ ⊑ʰ ⌈ b ⌉
-  ⌈⌉-mono {↑ _} {↑ _} r = ≤⇒⁺⊑⁺ r
-  ⌈⌉-mono {↑ _} {∞}   _ = tt
-  ⌈⌉-mono {∞}   {∞}   _ = tt
-
-  ⌈⌉-+ : ∀ a b → ⌈ a +∞ b ⌉ ≡ ⌈ a ⌉ +ʰ ⌈ b ⌉
-  ⌈⌉-+ (↑ _) (↑ _) = refl
-  ⌈⌉-+ (↑ _) ∞     = refl
-  ⌈⌉-+ ∞     _     = refl
-
-  ⌈⌉-⊔ : ∀ a b → ⌈ a ⊔∞ b ⌉ ≡ ⌈ a ⌉ ⊔ʰ ⌈ b ⌉
-  ⌈⌉-⊔ (↑ p) (↑ q) = cong fin (trans (cong (_∣ ⁺) (⊔-⊔ᴰ p q)) (sym (⊔ᶜ-⁺ p q)))
-  ⌈⌉-⊔ (↑ _) ∞     = refl
-  ⌈⌉-⊔ ∞     _     = refl
-
   -- a closed interval is nonempty
   closed◁ : ∀ {p a} → ↑ p ≤∞ a → (p ∣ ⁻) ◁ ⌈ a ⌉
   closed◁ {p} {↑ q} r = ⊑-⊏-trans (≤⇒⁻⊑⁻ r) (⊏-by-side refl)

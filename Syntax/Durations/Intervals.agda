@@ -806,25 +806,23 @@ pointⁱ-+ p q = eqⁱ refl refl
 ∪ⁱ-lub : ∀ {i j k} → i ⊆ⁱ k → j ⊆ⁱ k → i ∪ⁱ j ⊆ⁱ k
 ∪ⁱ-lub (p , q) (p' , q') = ⊓ᶜ-glb p p' , ⊔ʰ-lub q q'
 
+-- the sums of ends distribute over the smaller lower end and the
+-- larger upper end
+
++ˡ-distrib-⊓ᶜ : ∀ c d e → (c +ˡ d) ⊓ᶜ (c +ˡ e) ⊑ c +ˡ (d ⊓ᶜ e)
++ˡ-distrib-⊓ᶜ c d e with ⊓ᶜ-sel d e
+... | inj₁ eq = subst (λ x → (c +ˡ d) ⊓ᶜ (c +ˡ e) ⊑ c +ˡ x) (sym eq) (⊓ᶜ-lbˡ (c +ˡ d) (c +ˡ e))
+... | inj₂ eq = subst (λ x → (c +ˡ d) ⊓ᶜ (c +ˡ e) ⊑ c +ˡ x) (sym eq) (⊓ᶜ-lbʳ (c +ˡ d) (c +ˡ e))
+
++ʰ-distrib-⊔ʰ : ∀ h k k' → h +ʰ (k ⊔ʰ k') ⊑ʰ (h +ʰ k) ⊔ʰ (h +ʰ k')
++ʰ-distrib-⊔ʰ h k k' with ⊔ʰ-sel k k'
+... | inj₁ eq = subst (λ x → h +ʰ x ⊑ʰ (h +ʰ k) ⊔ʰ (h +ʰ k')) (sym eq) (⊔ʰ-ubˡ (h +ʰ k) (h +ʰ k'))
+... | inj₂ eq = subst (λ x → h +ʰ x ⊑ʰ (h +ʰ k) ⊔ʰ (h +ʰ k')) (sym eq) (⊔ʰ-ubʳ (h +ʰ k) (h +ʰ k'))
+
 -- the sum distributes over the hull
 
 ⊕-distribˡ-∪ⁱ : ∀ i j k → i ⊕ (j ∪ⁱ k) ⊆ⁱ (i ⊕ j) ∪ⁱ (i ⊕ k)
-⊕-distribˡ-∪ⁱ i j k = lo-part , hi-part
-  where
-    l = lo i +ˡ lo j
-    l' = lo i +ˡ lo k
-    h = hi i +ʰ hi j
-    h' = hi i +ʰ hi k
-
-    lo-part : l ⊓ᶜ l' ⊑ lo i +ˡ (lo j ⊓ᶜ lo k)
-    lo-part with ⊓ᶜ-sel (lo j) (lo k)
-    ... | inj₁ e = subst (λ x → l ⊓ᶜ l' ⊑ lo i +ˡ x) (sym e) (⊓ᶜ-lbˡ l l')
-    ... | inj₂ e = subst (λ x → l ⊓ᶜ l' ⊑ lo i +ˡ x) (sym e) (⊓ᶜ-lbʳ l l')
-
-    hi-part : hi i +ʰ (hi j ⊔ʰ hi k) ⊑ʰ h ⊔ʰ h'
-    hi-part with ⊔ʰ-sel (hi j) (hi k)
-    ... | inj₁ e = subst (λ x → hi i +ʰ x ⊑ʰ h ⊔ʰ h') (sym e) (⊔ʰ-ubˡ h h')
-    ... | inj₂ e = subst (λ x → hi i +ʰ x ⊑ʰ h ⊔ʰ h') (sym e) (⊔ʰ-ubʳ h h')
+⊕-distribˡ-∪ⁱ i j k = +ˡ-distrib-⊓ᶜ (lo i) (lo j) (lo k) , +ʰ-distrib-⊔ʰ (hi i) (hi j) (hi k)
 
 ⊕-distribʳ-∪ⁱ : ∀ i j k → (j ∪ⁱ k) ⊕ i ⊆ⁱ (j ⊕ i) ∪ⁱ (k ⊕ i)
 ⊕-distribʳ-∪ⁱ i j k =
