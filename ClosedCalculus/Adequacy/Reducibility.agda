@@ -211,6 +211,20 @@ VRedL-sub : ∀ {St : 𝕊 []} {A A'} {P : toCtx St ⊢V⦂ A → Set}
 VRedL-sub p f red-nil          = red-nil
 VRedL-sub p f (red-cons pW pL) = red-cons (f _ pW) (VRedL-sub p f pL)
 
+-- Reducibility of sums and lists carried along an implication of the
+-- payloads' predicates.
+
+VRed⊎-map : ∀ {Γ A B} {P P' : Γ ⊢V⦂ A → Set} {Q Q' : Γ ⊢V⦂ B → Set}
+          → (∀ W → P W → P' W) → (∀ W → Q W → Q' W)
+          → ∀ {s} → VRed⊎ P Q s → VRed⊎ P' Q' s
+VRed⊎-map f g (red-inl p) = red-inl (f _ p)
+VRed⊎-map f g (red-inr q) = red-inr (g _ q)
+
+VRedL-map : ∀ {St : 𝕊 []} {A} {P Q : toCtx St ⊢V⦂ A → Set}
+          → (∀ W → P W → Q W) → ∀ {l} → VRedL P l → VRedL Q l
+VRedL-map f red-nil          = red-nil
+VRedL-map f (red-cons pW pL) = red-cons (f _ pW) (VRedL-map f pL)
+
 -- Ground types are the parameter and arity types of operations. They contain
 -- no arrows, so the arrow clause is vacuous and this needs nothing but itself.
 
@@ -219,8 +233,18 @@ VRedᵍˢ : (t : Shape) → {A : VType} → shapeᵛ A ≡ t
 
 VRedᵍˢ ⋆ˢ        e St V = ⊤
 VRedᵍˢ (t →ˢ t') e St V = ⊤
--- no ground type is a list
-VRedᵍˢ (Lˢ t)    e St V = ⊤
+
+VRedᵍˢ (Lˢ t) {|List| A}     e  St V =
+  VRedL (VRedᵍˢ t (Lˢ-inj e) St) (listᵛ V)
+VRedᵍˢ (Lˢ t) {Base b}      () St V
+VRedᵍˢ (Lˢ t) {Unit}        () St V
+VRedᵍˢ (Lˢ t) {Bool}        () St V
+VRedᵍˢ (Lˢ t) {Nat}         () St V
+VRedᵍˢ (Lˢ t) {A |×| B}     () St V
+VRedᵍˢ (Lˢ t) {A |+| B}     () St V
+VRedᵍˢ (Lˢ t) {Empty}       () St V
+VRedᵍˢ (Lˢ t) {A ⇒ (B ‼ ε)} () St V
+VRedᵍˢ (Lˢ t) {[ ρ ] A}     () St V
 
 VRedᵍˢ (t ×ˢ t') {A |×| B}     e  St V =
   VRedᵍˢ t (×ˢ-inj₁ e) St (fstᵛ V) × VRedᵍˢ t' (×ˢ-inj₂ e) St (sndᵛ V)
@@ -729,7 +753,33 @@ VRedˢ→VRedᵍˢ : (G : GType) → ∀ {A} {St : 𝕊 []}
 VRedˢ→VRedᵍˢ (Base b) e V p = tt
 VRedˢ→VRedᵍˢ Unit     e V p = tt
 VRedˢ→VRedᵍˢ Bool     e V p = tt
+VRedˢ→VRedᵍˢ Nat      e V p = tt
 VRedˢ→VRedᵍˢ Empty    e V p = tt
+
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {A |+| B}     e  V p =
+  VRed⊎-map (λ W → VRedˢ→VRedᵍˢ G₁ (+ˢ-inj₁ e) W)
+            (λ W → VRedˢ→VRedᵍˢ G₂ (+ˢ-inj₂ e) W) p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {Base b}      () V p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {Unit}        () V p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {Bool}        () V p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {Nat}         () V p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {|List| A}    () V p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {A |×| B}     () V p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {Empty}       () V p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {A ⇒ (B ‼ ε)} () V p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {[ ρ ] A}     () V p
+
+VRedˢ→VRedᵍˢ (|List|ᵍ G) {|List| A}    e  V p =
+  VRedL-map (λ W → VRedˢ→VRedᵍˢ G (Lˢ-inj e) W) p
+VRedˢ→VRedᵍˢ (|List|ᵍ G) {Base b}      () V p
+VRedˢ→VRedᵍˢ (|List|ᵍ G) {Unit}        () V p
+VRedˢ→VRedᵍˢ (|List|ᵍ G) {Bool}        () V p
+VRedˢ→VRedᵍˢ (|List|ᵍ G) {Nat}         () V p
+VRedˢ→VRedᵍˢ (|List|ᵍ G) {A |×| B}     () V p
+VRedˢ→VRedᵍˢ (|List|ᵍ G) {A |+| B}     () V p
+VRedˢ→VRedᵍˢ (|List|ᵍ G) {Empty}       () V p
+VRedˢ→VRedᵍˢ (|List|ᵍ G) {A ⇒ (B ‼ ε)} () V p
+VRedˢ→VRedᵍˢ (|List|ᵍ G) {[ ρ ] A}     () V p
 
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {A |×| B}     e  V (p₁ , p₂) =
     VRedˢ→VRedᵍˢ G₁ (×ˢ-inj₁ e) (fstᵛ V) p₁
@@ -765,7 +815,33 @@ VRedᵍˢ→VRedˢ : (G : GType) → ∀ {A} {St : 𝕊 []}
 VRedᵍˢ→VRedˢ (Base b) e V p = tt
 VRedᵍˢ→VRedˢ Unit     e V p = tt
 VRedᵍˢ→VRedˢ Bool     e V p = tt
+VRedᵍˢ→VRedˢ Nat      e V p = tt
 VRedᵍˢ→VRedˢ Empty    e V p = tt
+
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {A |+| B}     e  V p =
+  VRed⊎-map (λ W → VRedᵍˢ→VRedˢ G₁ (+ˢ-inj₁ e) W)
+            (λ W → VRedᵍˢ→VRedˢ G₂ (+ˢ-inj₂ e) W) p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {Base b}      () V p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {Unit}        () V p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {Bool}        () V p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {Nat}         () V p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {|List| A}    () V p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {A |×| B}     () V p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {Empty}       () V p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {A ⇒ (B ‼ ε)} () V p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {[ ρ ] A}     () V p
+
+VRedᵍˢ→VRedˢ (|List|ᵍ G) {|List| A}    e  V p =
+  VRedL-map (λ W → VRedᵍˢ→VRedˢ G (Lˢ-inj e) W) p
+VRedᵍˢ→VRedˢ (|List|ᵍ G) {Base b}      () V p
+VRedᵍˢ→VRedˢ (|List|ᵍ G) {Unit}        () V p
+VRedᵍˢ→VRedˢ (|List|ᵍ G) {Bool}        () V p
+VRedᵍˢ→VRedˢ (|List|ᵍ G) {Nat}         () V p
+VRedᵍˢ→VRedˢ (|List|ᵍ G) {A |×| B}     () V p
+VRedᵍˢ→VRedˢ (|List|ᵍ G) {A |+| B}     () V p
+VRedᵍˢ→VRedˢ (|List|ᵍ G) {Empty}       () V p
+VRedᵍˢ→VRedˢ (|List|ᵍ G) {A ⇒ (B ‼ ε)} () V p
+VRedᵍˢ→VRedˢ (|List|ᵍ G) {[ ρ ] A}     () V p
 
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {A |×| B}     e  V (p₁ , p₂) =
     VRedᵍˢ→VRedˢ G₁ (×ˢ-inj₁ e) (fstᵛ V) p₁

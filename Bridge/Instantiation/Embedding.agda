@@ -446,8 +446,11 @@ private
   ⌜type-of-gtype⌝ (Base b)   = refl
   ⌜type-of-gtype⌝ Unit       = refl
   ⌜type-of-gtype⌝ Bool       = refl
+  ⌜type-of-gtype⌝ Nat        = refl
   ⌜type-of-gtype⌝ Empty      = refl
   ⌜type-of-gtype⌝ (A |×|ᵍ B) = cong₂ _|×|_ (⌜type-of-gtype⌝ A) (⌜type-of-gtype⌝ B)
+  ⌜type-of-gtype⌝ (A |+|ᵍ B) = cong₂ _|+|_ (⌜type-of-gtype⌝ A) (⌜type-of-gtype⌝ B)
+  ⌜type-of-gtype⌝ (|List|ᵍ A) = cong |List| (⌜type-of-gtype⌝ A)
   ⌜type-of-gtype⌝ ([ ρ ]ᵍ A) = cong ([ rconst ρ ]_) (⌜type-of-gtype⌝ A)
 
   -- an embedded computation at a convertible effect

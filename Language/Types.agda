@@ -90,8 +90,11 @@ type-of-gtype : GType → VType
 type-of-gtype (Base B)   = Base B
 type-of-gtype Unit       = Unit
 type-of-gtype Bool       = Bool
+type-of-gtype Nat        = Nat
 type-of-gtype Empty      = Empty
 type-of-gtype (A |×|ᵍ B) = type-of-gtype A |×| type-of-gtype B
+type-of-gtype (A |+|ᵍ B) = type-of-gtype A |+| type-of-gtype B
+type-of-gtype (|List|ᵍ A) = |List| (type-of-gtype A)
 type-of-gtype ([ ρ ]ᵍ A) = [ ρ ] (type-of-gtype A)
 
 -- (Value) types are decidable, given decidable equality of the grades

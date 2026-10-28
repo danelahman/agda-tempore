@@ -18,7 +18,7 @@ module OpenCalculus.Syntax.Types (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Language.Types S using (BaseType; GType; Base; Unit; Bool; Empty; _|×|ᵍ_; [_]ᵍ_)
+open import Language.Types S using (BaseType; GType; Base; Unit; Bool; Nat; Empty; _|×|ᵍ_; _|+|ᵍ_; |List|ᵍ; [_]ᵍ_)
 
 open import OpenCalculus.Syntax.Grades S
 
@@ -53,8 +53,11 @@ mutual
 ⌜ Base b ⌝ᵍ    = Base b
 ⌜ Unit ⌝ᵍ      = Unit
 ⌜ Bool ⌝ᵍ      = Bool
+⌜ Nat ⌝ᵍ       = Nat
 ⌜ Empty ⌝ᵍ     = Empty
 ⌜ A |×|ᵍ B ⌝ᵍ  = ⌜ A ⌝ᵍ |×| ⌜ B ⌝ᵍ
+⌜ A |+|ᵍ B ⌝ᵍ  = ⌜ A ⌝ᵍ |+| ⌜ B ⌝ᵍ
+⌜ |List|ᵍ A ⌝ᵍ = |List| ⌜ A ⌝ᵍ
 ⌜ [ ρ ]ᵍ A ⌝ᵍ  = [ rconst ρ ] ⌜ A ⌝ᵍ
 
 -- Action of the scope extensions on types
