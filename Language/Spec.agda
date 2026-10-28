@@ -23,3 +23,9 @@ record LanguageSpec : Set₂ where
     Grades : GradeSystem
     BTs    : BaseTypes
     Ops    : Operations Grades BTs
+
+-- The language without base types, over a grade system and an operation
+-- signature
+
+withoutBaseTypes : (Grades : GradeSystem) → Operations Grades noBaseTypes → LanguageSpec
+withoutBaseTypes G O = record { Grades = G ; BTs = noBaseTypes ; Ops = O }

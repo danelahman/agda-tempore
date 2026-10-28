@@ -71,3 +71,9 @@ later-lt-reported = refl
 
 later-equal-reported : schemeOf (infer [] later-equal) ≡ just expected-later-equal
 later-equal-reported = refl
+
+------------------------------------------------------------------
+-- 7. A comparison inspected by `if`
+
+max-reported : schemeOf (infer [] max) ≡ just expected-max
+max-reported = refl

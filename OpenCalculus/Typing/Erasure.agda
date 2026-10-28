@@ -59,6 +59,7 @@ mutual
   ⌊ inr V ⌋ᵛ      = inr ⌊ V ⌋ᵛ
   ⌊ nil ⌋ᵛ        = nil
   ⌊ cons V W ⌋ᵛ   = cons ⌊ V ⌋ᵛ ⌊ W ⌋ᵛ
+  ⌊ cmp ⋈ V W _ ⌋ᵛ = cmp ⋈ ⌊ V ⌋ᵛ ⌊ W ⌋ᵛ
   ⌊ ⦉ V , W ⦊ ⌋ᵛ   = ⦉ ⌊ V ⌋ᵛ , ⌊ W ⌋ᵛ ⦊
   ⌊ lam M ⌋ᵛ      = lam ⌊ M ⌋ᶜ
   ⌊ annᵛ A V ⌋ᵛ   = ⌊ V ⌋ᵛ ⦂ᵛ A
@@ -79,7 +80,6 @@ mutual
   ⌊ match V `in M ⌋ᶜ            = match ⌊ V ⌋ᵛ `in ⌊ M ⌋ᶜ
   ⌊ absurd V ⌋ᶜ                 = absurd ⌊ V ⌋ᵛ
   ⌊ if V `then M `else N ⌋ᶜ     = if ⌊ V ⌋ᵛ `then ⌊ M ⌋ᶜ `else ⌊ N ⌋ᶜ
-  ⌊ cmp ⋈ V W _ ⌋ᶜ              = cmp ⋈ ⌊ V ⌋ᵛ ⌊ W ⌋ᵛ
   ⌊ caseℕ V `zero M `succ N ⌋ᶜ  = caseℕ ⌊ V ⌋ᵛ `zero ⌊ M ⌋ᶜ `succ ⌊ N ⌋ᶜ
   ⌊ case+ V `inl M `inr N ⌋ᶜ    = case+ ⌊ V ⌋ᵛ `inl ⌊ M ⌋ᶜ `inr ⌊ N ⌋ᶜ
   ⌊ recℕ V M N _ ⌋ᶜ             = recℕ ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ ⌊ N ⌋ᶜ

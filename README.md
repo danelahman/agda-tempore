@@ -50,16 +50,18 @@ end.
 ## Scope
 
 - Handlers are second class, `handle M with H to x in N`: there are no handler
-  types or handler values. Comparisons are computations. The language is
-  parameterised by base types.
+  types or handler values. The language is parameterised by base types, the
+  calculus being its instance without them (`withoutBaseTypes`).
 - Conditions on the variable of a handler clause are kept as obligations of a
   type scheme, apart from its hypotheses.
 - Unbox takes a variable.
 - Inference is for computations in open contexts; there are no top-level
   programs.
 - Instantiation, type safety and termination are for the closed calculus, whose
-  handler clauses are typed at every continuation grade; completeness of
-  inference is with respect to closed typings with uniform handlers.
+  handler clauses are typed at every continuation grade and whose comparisons
+  are computations, run by instantiation before the computation whose value
+  they occur in; completeness of inference is with respect to closed typings
+  with uniform handlers.
 - The denotational results assume uniform handlers, and some of their
   recursions are marked `TERMINATING`.
 

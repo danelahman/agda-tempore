@@ -72,8 +72,8 @@ module Syntax (S : LanguageSpec) where
   open import OpenCalculus.Syntax.Grades S public
     using () renaming (EExp to EffectGradeExpr; RExp to ResourceGradeExpr)
 
-  -- Ground types: unit, booleans, the empty type, products, graded modal
-  -- types and base types
+  -- Ground types: unit, booleans, natural numbers, the empty type,
+  -- products, sums, lists, graded modal types and base types
   open import Language.Types S public using () renaming (GType to GroundType)
 
   -- Value and computation types
@@ -90,8 +90,7 @@ module Syntax (S : LanguageSpec) where
     using (_⊩_≾̂ᵣ_; _⊩_≾̂ₑ_; _⊩ᴱ_; _∣_<:̂ᵛ_; _∣_<:̂ᶜ_; VarOK; _⊩ᴴ_[_])
     renaming (Hyps to Hypotheses)
 
-  -- Values and computations; handlers occur in `handle M with H to x in N`,
-  -- comparisons are computations
+  -- Values and computations; handlers occur in `handle M with H to x in N`
   open import OpenCalculus.Syntax.Raw S public
     using () renaming (RawV to Value; RawC to Computation)
 
@@ -160,12 +159,15 @@ module OperationalSemantics (S : LanguageSpec) where
 
 module InstantiationAndTypeSafety (S : LanguageSpec) (opEnum : OpEnum S) where
 
-  -- Erasure `⌊ M[δ] ⌋`: the raw term at an instance, without annotations
+  -- Erasure `⌊ M[δ] ⌋`: the raw term at an instance, its annotations
+  -- forgotten, its grades evaluated, and its comparisons, values here and
+  -- computations of the closed calculus, run before the computation
+  -- whose values they are in, each binding its outcome
   open import Bridge.Instantiation.Terms S public
-    using () renaming (⌊_⌋ᴿᵛ to erasureᵛ; ⌊_⌋ᴿᶜ to erasure)
+    using () renaming (⌊_⌋ᴿᶜ to erasure)
 
   -- Theorem (Instantiation), into the closed calculus, each handler clause
-  -- instantiated at every continuation grade
+  -- instantiated at every continuation grade; a value as `return V`
   open import Bridge.Instantiation.Terms S public
     using () renaming (instantiateᶜ to instantiation; instantiateᵛ to instantiationᵛ)
 
@@ -322,10 +324,11 @@ module CalculusWithGradeVariables (S : LanguageSpec) where
 
   -- Definition (Signatures). The comparisons are decided by a strict
   -- total order on the data of each eternal type (`compareᵈ`), from one
-  -- on each base type.
-  open import Language.Spec public using (LanguageSpec)
+  -- on each base type. The calculus is the instance without base types,
+  -- over a grade system and an operation signature.
+  open import Language.Spec public using (LanguageSpec; withoutBaseTypes)
   open import Language.Operations public using (Operations)
-  open import Language.BaseTypes public using (BaseTypes)
+  open import Language.BaseTypes public using (BaseTypes; noBaseTypes)
   open import Language.Comparisons public using () renaming (Cmp to Comparison)
   open import ClosedCalculus.Syntax.Data S public using (compareᵈ)
 
@@ -359,8 +362,8 @@ module CalculusWithGradeVariables (S : LanguageSpec) where
              ; _|×|ₛ_ to S-Prod ; _|+|ₛ_ to S-Sum ; |List|ₛ to S-List
              ; _⇒ₛ_ to S-Fun ; [_]ₛ_ to S-Box ; _‼ₛ_ to S-Comp )
 
-  -- The remaining typing rules. Cmp types a computation; Const-Base types
-  -- the constants of a base type.
+  -- The remaining typing rules. Const-Base types the constants of a base
+  -- type.
   open import OpenCalculus.Typing S public
     using ()
     renaming ( ⋆ to Unit ; true to True ; false to False ; zero to Zero ; succ to Succ
@@ -599,8 +602,6 @@ module FormalisedResults (S : LanguageSpec) (opEnum : OpEnum S) where
 --
 --   Handler types `C ⇛ D`, handler values `handler H` and `handle M with V`,
 --   with the rules Handler and Handle for them.
---   Comparisons `V ⋈ W` as values, and the ground types `nat`, `A + B` and
---   `list A`, in the calculus with grade variables.
 --   Quantified orderings `∀e. ε ≾ ε'` in hypotheses, with the rules Inst and
 --   Gen; solutions and type schemes without separate obligations.
 --   Program contexts, the rule Def, type schemes of values, and programs.

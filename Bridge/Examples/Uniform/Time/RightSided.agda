@@ -14,12 +14,16 @@
 -- its principal scheme factors `D` (`M-principal`) and, at the --
 -- factoring instance, types the program in `D`'s context below --
 -- `D`'s type (`M-below`).                                      --
+--                                                              --
+-- The same for a comparison, `return (2 < 3)`, whose typing    --
+-- runs the comparison first and returns its outcome (`D₂`).    --
 ------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Bool using (Bool; true; false; T)
 open import Data.Empty using (⊥-elim)
+open import Data.List.Relation.Unary.Any using (here)
 open import Data.Unit using (tt)
 
 open import Util.Equality
@@ -37,7 +41,10 @@ open import ClosedCalculus.Examples.Typing.Core right-sided-intervals opTime rig
   using (forwarding; uₑ; _·ₑ_)
 open import Grades.Examples.Worked.Operations using (Op)
 
-open import Language.Types                  spec using (CType; Unit; _‼_)
+open import Language.Types                  spec using (CType; Unit; Natₑ; _‼_)
+import Language.Types spec as Ty
+import ClosedCalculus.Syntax.Contexts spec as LC
+open import Language.Comparisons using (lt)
 open import ClosedCalculus.Syntax.Contexts  spec using (Ctx; [])
 open import ClosedCalculus.Syntax.Subtyping spec using (_<:ᶜ_)
 import ClosedCalculus.Syntax.Terms   spec as L
@@ -56,7 +63,6 @@ open import OpenCalculus.Examples.Variables
 open import Bridge.Instantiation.Types          spec
 open import Bridge.Instantiation.Judgements     spec
 open import Bridge.Instantiation.Correspondence spec
-open import Bridge.Instantiation.Terms          spec using (instᶜ-⌊⌋)
 open import Bridge.Instantiation.Embedding      spec
 open import Bridge.Instantiation.Completeness   spec enum
 
@@ -87,14 +93,12 @@ clauseᵒ op =
     (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (eqᵣ ≡̂ᵣ-identityˡ) (<:̂ᵛ-refl _)
       (var Hd ok₀ · var (Tl-∷ Hd) ok₀))
 
--- `D` is uniform: each member of `forwarding` is, up to erasure, the
--- instantiation of `clauseᵒ` at its continuation grade
+-- `D` is uniform: its clauses are typed by `clauseᵒ`, and it erases to
+-- the elaboration of `M`, each member of `forwarding` to that of the
+-- raw clause at its continuation grade
 
 uniform : UniformTyping [] ∅ᴰ M D
-uniform =
-  u-handle (u-return u-⋆) clauseᵒ (λ op → refl)
-    (λ op c → sym (instᶜ-⌊⌋ (∅ᴰ ,ᵉᴰ c) (⊨ᴰ-,ᵉ c ⊨ᴰ-∅) (clauseᵒ op)))
-    (u-return u-⋆)
+uniform = u-handle (u-return u-⋆) clauseᵒ (λ op → refl) (u-return u-⋆) , refl
 
 annFree : AnnFreeᶜ M
 annFree = tt , (λ op → tt , tt , tt) , tt
@@ -149,3 +153,25 @@ M-principal = principal [] M tt annFree ∅ᴰ D uniform
 M-below : Σ[ C' ∈ CType ] Σ[ D' ∈ [] L.⊢C⦂ C' ]
             ((C' <:ᶜ (Unit ‼ (uₑ ·ₑ uₑ))) × (CE.⌊ D' ⌋ᶜ ≡ CE.⌊ D ⌋ᶜ))
 M-below = below [] M tt annFree ∅ᴰ D uniform
+
+------------------------------------------------------------------------
+-- A comparison: its typing runs it before the `return`, which reads the
+-- outcome
+
+M₂ : RawC ∅ˢ 0
+M₂ = return (cmp lt (numeral 2) (numeral 3))
+
+D₂ : [] L.⊢C⦂ Ty.Bool ‼ (uₑ ·ₑ uₑ)
+D₂ = L.cmp lt (L.numeralᵛ 2) (L.numeralᵛ 3) Natₑ L.⨟ L.return (L.var (λ ¬et → ⊥-elim (¬et Ty.Boolₑ)) LC.Hd)
+
+uniform₂ : UniformTyping [] ∅ᴰ M₂ D₂
+uniform₂ =
+  u-hoist tt tt (u-succ (u-succ u-zero)) (u-succ (u-succ (u-succ u-zero)))
+          (u-return (u-out (here refl))) ,
+  refl
+
+M₂-verdict : Σ[ p ∈ PrincipalScheme [] M₂ ] (infer [] M₂ ≡ typed p)
+M₂-verdict = verdict [] M₂ tt
+
+M₂-principal : Principalᴰ (proj₁ (verdict [] M₂ tt)) ∅ᴰ (Ty.Bool ‼ (uₑ ·ₑ uₑ))
+M₂-principal = principal [] M₂ tt (tt , tt) ∅ᴰ D₂ uniform₂

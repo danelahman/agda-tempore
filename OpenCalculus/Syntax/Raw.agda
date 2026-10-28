@@ -115,6 +115,14 @@ mutual
               -------
             → RawV Θ n
 
+    -- comparison of two values by one of the relations of `Cmp`
+
+    cmp     : Cmp
+            → RawV Θ n
+            → RawV Θ n
+            ---------
+            → RawV Θ n
+
     -- lambda abstraction
 
     lam     : RawC Θ (suc n)
@@ -173,14 +181,6 @@ mutual
             : RawV Θ n
             → RawC Θ n
             → RawC Θ n
-            ---------
-            → RawC Θ n
-
-    -- comparison of two values by one of the relations of `Cmp`
-
-    cmp     : Cmp
-            → RawV Θ n
-            → RawV Θ n
             ---------
             → RawC Θ n
 
@@ -303,6 +303,7 @@ mutual
   HandlerFreeᵛ (inl V)      = HandlerFreeᵛ V
   HandlerFreeᵛ (inr V)      = HandlerFreeᵛ V
   HandlerFreeᵛ (cons V W)   = HandlerFreeᵛ V × HandlerFreeᵛ W
+  HandlerFreeᵛ (cmp ⋈ V W)  = HandlerFreeᵛ V × HandlerFreeᵛ W
   HandlerFreeᵛ (lam M)      = HandlerFreeᶜ M
   HandlerFreeᵛ (V ⦂ᵛ A)     = HandlerFreeᵛ V
   HandlerFreeᵛ _            = ⊤
@@ -314,7 +315,6 @@ mutual
   HandlerFreeᶜ (match V `in M)          = HandlerFreeᵛ V × HandlerFreeᶜ M
   HandlerFreeᶜ (absurd V)               = HandlerFreeᵛ V
   HandlerFreeᶜ (if V `then M `else N)   = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
-  HandlerFreeᶜ (cmp ⋈ V W)               = HandlerFreeᵛ V × HandlerFreeᵛ W
   HandlerFreeᶜ (caseℕ V `zero M `succ N) = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (case+ V `inl M `inr N)   = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (recℕ V M N)              = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N

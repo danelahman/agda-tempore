@@ -45,6 +45,7 @@ mutual
   inr V       [ σ ]ᴿᵛ = inr (V [ σ ]ᴿᵛ)
   nil          [ σ ]ᴿᵛ = nil
   cons V W     [ σ ]ᴿᵛ = cons (V [ σ ]ᴿᵛ) (W [ σ ]ᴿᵛ)
+  cmp ⋈ V W    [ σ ]ᴿᵛ = cmp ⋈ (V [ σ ]ᴿᵛ) (W [ σ ]ᴿᵛ)
   ⦉ V , W ⦊     [ σ ]ᴿᵛ = ⦉ (V [ σ ]ᴿᵛ) , (W [ σ ]ᴿᵛ) ⦊
   lam M        [ σ ]ᴿᵛ = lam (M [ σ ]ᴿᶜ)
   (V ⦂ᵛ A)     [ σ ]ᴿᵛ = (V [ σ ]ᴿᵛ) ⦂ᵛ (A [ σ ]ᵛ)
@@ -56,7 +57,6 @@ mutual
   (match V `in M)          [ σ ]ᴿᶜ = match (V [ σ ]ᴿᵛ) `in (M [ σ ]ᴿᶜ)
   absurd V                 [ σ ]ᴿᶜ = absurd (V [ σ ]ᴿᵛ)
   (if V `then M `else N)   [ σ ]ᴿᶜ = if (V [ σ ]ᴿᵛ) `then (M [ σ ]ᴿᶜ) `else (N [ σ ]ᴿᶜ)
-  cmp ⋈ V W                [ σ ]ᴿᶜ = cmp ⋈ (V [ σ ]ᴿᵛ) (W [ σ ]ᴿᵛ)
   (caseℕ V `zero M `succ N) [ σ ]ᴿᶜ = caseℕ (V [ σ ]ᴿᵛ) `zero (M [ σ ]ᴿᶜ) `succ (N [ σ ]ᴿᶜ)
   (case+ V `inl M `inr N) [ σ ]ᴿᶜ = case+ (V [ σ ]ᴿᵛ) `inl (M [ σ ]ᴿᶜ) `inr (N [ σ ]ᴿᶜ)
   recℕ V M N               [ σ ]ᴿᶜ = recℕ (V [ σ ]ᴿᵛ) (M [ σ ]ᴿᶜ) (N [ σ ]ᴿᶜ)
@@ -87,6 +87,7 @@ mutual
   [≐]ᴿᵛ p (inr V)     = cong inr ([≐]ᴿᵛ p V)
   [≐]ᴿᵛ p nil          = refl
   [≐]ᴿᵛ p (cons V W)   = cong₂ cons ([≐]ᴿᵛ p V) ([≐]ᴿᵛ p W)
+  [≐]ᴿᵛ p (cmp ⋈ V W)  = cong₂ (cmp ⋈) ([≐]ᴿᵛ p V) ([≐]ᴿᵛ p W)
   [≐]ᴿᵛ p ⦉ V , W ⦊     = cong₂ ⦉_,_⦊ ([≐]ᴿᵛ p V) ([≐]ᴿᵛ p W)
   [≐]ᴿᵛ p (lam M)      = cong lam ([≐]ᴿᶜ p M)
   [≐]ᴿᵛ p (V ⦂ᵛ A)     = cong₂ _⦂ᵛ_ ([≐]ᴿᵛ p V) ([≐]ᵛ p A)
@@ -100,7 +101,6 @@ mutual
   [≐]ᴿᶜ p (absurd V)               = cong absurd ([≐]ᴿᵛ p V)
   [≐]ᴿᶜ p (if V `then M `else N)   =
     cong₃ if_`then_`else_ ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M) ([≐]ᴿᶜ p N)
-  [≐]ᴿᶜ p (cmp ⋈ V W)              = cong₂ (cmp ⋈) ([≐]ᴿᵛ p V) ([≐]ᴿᵛ p W)
   [≐]ᴿᶜ p (caseℕ V `zero M `succ N) =
     cong₃ caseℕ_`zero_`succ_ ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M) ([≐]ᴿᶜ p N)
   [≐]ᴿᶜ p (case+ V `inl M `inr N) =
@@ -138,6 +138,7 @@ mutual
   [id]ᴿᵛ (inr V)     = cong inr ([id]ᴿᵛ V)
   [id]ᴿᵛ nil          = refl
   [id]ᴿᵛ (cons V W)   = cong₂ cons ([id]ᴿᵛ V) ([id]ᴿᵛ W)
+  [id]ᴿᵛ (cmp ⋈ V W)  = cong₂ (cmp ⋈) ([id]ᴿᵛ V) ([id]ᴿᵛ W)
   [id]ᴿᵛ ⦉ V , W ⦊     = cong₂ ⦉_,_⦊ ([id]ᴿᵛ V) ([id]ᴿᵛ W)
   [id]ᴿᵛ (lam M)      = cong lam ([id]ᴿᶜ M)
   [id]ᴿᵛ (V ⦂ᵛ A)     = cong₂ _⦂ᵛ_ ([id]ᴿᵛ V) ([id]ᵛ A)
@@ -150,7 +151,6 @@ mutual
   [id]ᴿᶜ (absurd V)               = cong absurd ([id]ᴿᵛ V)
   [id]ᴿᶜ (if V `then M `else N)   =
     cong₃ if_`then_`else_ ([id]ᴿᵛ V) ([id]ᴿᶜ M) ([id]ᴿᶜ N)
-  [id]ᴿᶜ (cmp ⋈ V W)              = cong₂ (cmp ⋈) ([id]ᴿᵛ V) ([id]ᴿᵛ W)
   [id]ᴿᶜ (caseℕ V `zero M `succ N) =
     cong₃ caseℕ_`zero_`succ_ ([id]ᴿᵛ V) ([id]ᴿᶜ M) ([id]ᴿᶜ N)
   [id]ᴿᶜ (case+ V `inl M `inr N) =
@@ -189,6 +189,7 @@ mutual
   [⨟]ᴿᵛ (inr V)     σ δ = cong inr ([⨟]ᴿᵛ V σ δ)
   [⨟]ᴿᵛ nil          σ δ = refl
   [⨟]ᴿᵛ (cons V W)   σ δ = cong₂ cons ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᵛ W σ δ)
+  [⨟]ᴿᵛ (cmp ⋈ V W)  σ δ = cong₂ (cmp ⋈) ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᵛ W σ δ)
   [⨟]ᴿᵛ ⦉ V , W ⦊     σ δ = cong₂ ⦉_,_⦊ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᵛ W σ δ)
   [⨟]ᴿᵛ (lam M)      σ δ = cong lam ([⨟]ᴿᶜ M σ δ)
   [⨟]ᴿᵛ (V ⦂ᵛ A)     σ δ = cong₂ _⦂ᵛ_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᵛ A σ δ)
@@ -202,7 +203,6 @@ mutual
   [⨟]ᴿᶜ (absurd V)               σ δ = cong absurd ([⨟]ᴿᵛ V σ δ)
   [⨟]ᴿᶜ (if V `then M `else N)   σ δ =
     cong₃ if_`then_`else_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᶜ N σ δ)
-  [⨟]ᴿᶜ (cmp ⋈ V W)              σ δ = cong₂ (cmp ⋈) ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᵛ W σ δ)
   [⨟]ᴿᶜ (caseℕ V `zero M `succ N) σ δ =
     cong₃ caseℕ_`zero_`succ_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᶜ N σ δ)
   [⨟]ᴿᶜ (case+ V `inl M `inr N) σ δ =
@@ -242,6 +242,7 @@ mutual
   handlerFree-[]ᴿᵛ (inr V)     h       = handlerFree-[]ᴿᵛ V h
   handlerFree-[]ᴿᵛ nil          h       = tt
   handlerFree-[]ᴿᵛ (cons V W)   (h , k) = handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᵛ W k
+  handlerFree-[]ᴿᵛ (cmp ⋈ V W)  (h , k) = handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᵛ W k
   handlerFree-[]ᴿᵛ ⦉ V , W ⦊     (h , k) = handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᵛ W k
   handlerFree-[]ᴿᵛ (lam M)      h       = handlerFree-[]ᴿᶜ M h
   handlerFree-[]ᴿᵛ (V ⦂ᵛ A)     h       = handlerFree-[]ᴿᵛ V h
@@ -258,8 +259,6 @@ mutual
   handlerFree-[]ᴿᶜ (absurd V)               h           = handlerFree-[]ᴿᵛ V h
   handlerFree-[]ᴿᶜ (if V `then M `else N)   (h , k , l) =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k , handlerFree-[]ᴿᶜ N l
-  handlerFree-[]ᴿᶜ (cmp ⋈ V W)              (h , k)     =
-    handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᵛ W k
   handlerFree-[]ᴿᶜ (caseℕ V `zero M `succ N) (h , k , l) =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k , handlerFree-[]ᴿᶜ N l
   handlerFree-[]ᴿᶜ (case+ V `inl M `inr N) (h , k , l) =
@@ -296,6 +295,8 @@ data InvV {Θ Θ' n} (σ : Subst Θ Θ') : RawV Θ n → RawV Θ' n → Set wher
   nil  : InvV σ nil nil
   cons : ∀ {V W V' W'} → V [ σ ]ᴿᵛ ≡ V' → W [ σ ]ᴿᵛ ≡ W'
        → InvV σ (cons V W) (cons V' W')
+  cmp  : ∀ {⋈ V W V' W'} → V [ σ ]ᴿᵛ ≡ V' → W [ σ ]ᴿᵛ ≡ W'
+       → InvV σ (cmp ⋈ V W) (cmp ⋈ V' W')
   ⦉_,_⦊  : ∀ {V W V' W'} → V [ σ ]ᴿᵛ ≡ V' → W [ σ ]ᴿᵛ ≡ W'
         → InvV σ ⦉ V , W ⦊ ⦉ V' , W' ⦊
   lam   : ∀ {M M'} → M [ σ ]ᴿᶜ ≡ M' → InvV σ (lam M) (lam M')
@@ -313,8 +314,6 @@ data InvC {Θ Θ' n} (σ : Subst Θ Θ') : RawC Θ n → RawC Θ' n → Set wher
   absurd  : ∀ {V V'} → V [ σ ]ᴿᵛ ≡ V' → InvC σ (absurd V) (absurd V')
   if      : ∀ {V M N V' M' N'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M' → N [ σ ]ᴿᶜ ≡ N'
           → InvC σ (if V `then M `else N) (if V' `then M' `else N')
-  cmp     : ∀ {⋈ V W V' W'} → V [ σ ]ᴿᵛ ≡ V' → W [ σ ]ᴿᵛ ≡ W'
-          → InvC σ (cmp ⋈ V W) (cmp ⋈ V' W')
   caseℕ   : ∀ {V M N V' M' N'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M' → N [ σ ]ᴿᶜ ≡ N'
           → InvC σ (caseℕ V `zero M `succ N) (caseℕ V' `zero M' `succ N')
   case+   : ∀ {V M N V' M' N'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M' → N [ σ ]ᴿᶜ ≡ N'
@@ -350,6 +349,7 @@ invV (inl V)     refl = inl refl
 invV (inr V)     refl = inr refl
 invV nil         refl = nil
 invV (cons V W)  refl = cons refl refl
+invV (cmp ⋈ V W) refl = cmp refl refl
 invV ⦉ V , W ⦊     refl = ⦉ refl , refl ⦊
 invV (lam M)      refl = lam refl
 invV (V ⦂ᵛ A)     refl = annᵛ refl refl
@@ -362,7 +362,6 @@ invC (V · W)                  refl = refl · refl
 invC (match V `in M)          refl = match refl refl
 invC (absurd V)               refl = absurd refl
 invC (if V `then M `else N)   refl = if refl refl refl
-invC (cmp ⋈ V W)              refl = cmp refl refl
 invC (caseℕ V `zero M `succ N) refl = caseℕ refl refl refl
 invC (case+ V `inl M `inr N) refl = case+ refl refl refl
 invC (recℕ V M N)             refl = recℕ refl refl refl
