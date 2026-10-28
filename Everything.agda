@@ -444,6 +444,7 @@ import ClosedCalculus.Examples.Typing
 import Bridge.Instantiation.Completeness
 import Bridge.Instantiation.Correspondence
 import Bridge.Instantiation.Embedding
+import Bridge.Instantiation.Hoisting
 import Bridge.Instantiation.Inference
 import Bridge.Instantiation.Judgements
 import Bridge.Instantiation.Terms

@@ -677,8 +677,11 @@ lookup-gr-subst (Γ ⟨ ρ ⟩) σ i       = cong (_·̂ᵣ ρ [ σ ]ʳ) (lookup
 ⌜⌝ᵍ-subst σ (Base b)   = refl
 ⌜⌝ᵍ-subst σ Unit       = refl
 ⌜⌝ᵍ-subst σ Bool       = refl
+⌜⌝ᵍ-subst σ Nat        = refl
 ⌜⌝ᵍ-subst σ Empty      = refl
 ⌜⌝ᵍ-subst σ (A |×|ᵍ B) = cong₂ _|×|_ (⌜⌝ᵍ-subst σ A) (⌜⌝ᵍ-subst σ B)
+⌜⌝ᵍ-subst σ (A |+|ᵍ B) = cong₂ _|+|_ (⌜⌝ᵍ-subst σ A) (⌜⌝ᵍ-subst σ B)
+⌜⌝ᵍ-subst σ (|List|ᵍ A) = cong |List| (⌜⌝ᵍ-subst σ A)
 ⌜⌝ᵍ-subst σ ([ ρ ]ᵍ A) = cong₂ [_]_ refl (⌜⌝ᵍ-subst σ A)
 
 -- Pointwise equality of substitutions is an equivalence, respected by

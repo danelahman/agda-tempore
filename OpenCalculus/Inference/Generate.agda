@@ -138,6 +138,19 @@ mutual
       A↑ = wkᵗ-v A
       Γ↑ = wkᵗ-ctx Γ
 
+  -- comparison
+  --
+  -- The operands' common type is ∃-bound and has to be eternal; the
+  -- result is a `Bool`, pinned as for the boolean constants.
+
+  genVˢ {Θ = Θ} ι Γ (cmp ⋈ V W) A =
+    ∃ᵗ ((Bool ≐ᵥ A↑) ∧̂ genVˢ ι↑ Γ↑ V α ∧̂ genVˢ ι↑ Γ↑ W α ∧̂ Etᶜ α)
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ
+      α  = tvar (newᵗ {Θ})
+      A↑ = wkᵗ-v A
+      Γ↑ = wkᵗ-ctx Γ
+
   -- lambda abstraction
   --
   -- The body is typed at the arrow the lambda synthesises, which is a
@@ -221,25 +234,6 @@ mutual
 
   genCˢ ι Γ (if V `then M₁ `else M₂) (A ‼ t) =
     genVˢ ι Γ V Bool ∧̂ genCˢ ι Γ M₁ (A ‼ t) ∧̂ genCˢ ι Γ M₂ (A ‼ t)
-
-  -- comparison
-  --
-  -- The operands' common type is ∃-bound and has to be eternal; the
-  -- result is a pure `Bool`, related to the expected type as for
-  -- `return`.
-
-  genCˢ {Θ = Θ} ι Γ (cmp ⋈ V W) (A ‼ t) =
-    ∃ᵗ (  genVˢ ι↑ Γ↑ V α
-        ∧̂ genVˢ ι↑ Γ↑ W α
-        ∧̂ Etᶜ α
-        ∧̂ (Bool ≾̂ᵥᶜ A↑)
-        ∧̂ (ûₑ ≾̂ₑᶜ t↑))
-    where
-      ι↑ = ι ⨟ˢ wkˢᵗ
-      α  = tvar (newᵗ {Θ})
-      A↑ = wkᵗ-v A
-      t↑ = wkᵗ-e t
-      Γ↑ = wkᵗ-ctx Γ
 
   -- natural-number elimination
 
@@ -440,6 +434,7 @@ mutual
   genVˢ-rigidFree (inr V)      h       = (tt , tt) , genVˢ-rigidFree V h
   genVˢ-rigidFree nil          h       = tt , tt
   genVˢ-rigidFree (cons V W)   (h , k) = (tt , tt) , genVˢ-rigidFree V h , genVˢ-rigidFree W k
+  genVˢ-rigidFree (cmp ⋈ V W)  (h , k) = (tt , tt) , genVˢ-rigidFree V h , genVˢ-rigidFree W k , tt
   genVˢ-rigidFree (lam M)      h       = tt , genCˢ-rigidFree M h
   genVˢ-rigidFree (V ⦂ᵛ B)     h       = genVˢ-rigidFree V h , tt
 
@@ -457,8 +452,6 @@ mutual
     genVˢ-rigidFree V h
   genCˢ-rigidFree (if V `then M₁ `else M₂) {A ‼ t} (h , k , l) =
     genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
-  genCˢ-rigidFree (cmp ⋈ V W)              {A ‼ t} (h , k)     =
-    genVˢ-rigidFree V h , genVˢ-rigidFree W k , tt , tt , tt
   genCˢ-rigidFree (caseℕ V `zero M₁ `succ M₂) {A ‼ t} (h , k , l) =
     genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
   genCˢ-rigidFree (case+ V `inl M₁ `inr M₂) {A ‼ t} (h , k , l) =

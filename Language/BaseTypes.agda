@@ -4,6 +4,7 @@
 
 module Language.BaseTypes where
 
+open import Data.Empty using (⊥; ⊥-elim)
 open import Relation.Binary.Definitions using (Decidable; Tri; tri<; tri≈; tri>)
 open import Relation.Binary.Structures using (IsStrictTotalOrder)
 open import Relation.Nullary
@@ -45,3 +46,16 @@ record BaseTypes : Set₁ where
 
   compareᵇ : ∀ {b} → .(EternalBaseType b) → BaseConstants b → BaseConstants b → Order
   compareᵇ eb c c' = order-of (IsStrictTotalOrder.compare (≺ᵇ-isStrictTotalOrder eb) c c')
+
+-- The signature without base types
+
+noBaseTypes : BaseTypes
+noBaseTypes = record
+  { BaseType              = ⊥
+  ; _≡ᵇ?_                 = λ ()
+  ; EternalBaseType       = λ ()
+  ; eternalBaseType?      = λ ()
+  ; BaseConstants         = λ ()
+  ; _≺ᵇ_                  = λ {b} → ⊥-elim b
+  ; ≺ᵇ-isStrictTotalOrder = λ {b} _ → ⊥-elim b
+  }

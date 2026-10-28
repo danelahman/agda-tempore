@@ -6,11 +6,12 @@
 -- open types and grade expressions, and with the side          --
 -- conditions entailed from the hypothesis set `Q`.             --
 --                                                              --
--- One rule deviates, as marked at its definition: `handle`     --
+-- Two rules deviate, as marked at their definitions: `handle`  --
 -- types its operation clauses over the extended scope `Θ +e`,  --
 -- the continuation grade, quantified at the meta level in      --
 -- `ClosedCalculus.Syntax.Terms`, being a rigid effect-grade    --
--- variable.                                                    --
+-- variable; and a comparison `cmp` is a value, where it is a   --
+-- computation in `ClosedCalculus.Syntax.Terms`.                --
 --                                                              --
 -- The rules `annᵛ` and `annᶜ` record a type annotation of the  --
 -- raw term, have no counterpart in                             --
@@ -127,6 +128,23 @@ mutual
             → Q ∣ Γ ⊢V⦂ |List| A
             --------------------
             → Q ∣ Γ ⊢V⦂ |List| A
+
+    -- comparison
+
+    -- One rule for the six relations of `Cmp`: both operands at one
+    -- type, which has to be eternal, and the result a `Bool`.
+
+    -- DEVIATION: a value, where the original's comparison is a
+    -- computation.
+
+    cmp     : {A : OVType Θ}
+            → (⋈ : Cmp)
+            → Q ∣ Γ ⊢V⦂ A
+            → Q ∣ Γ ⊢V⦂ A
+            → Q ⊩ᴱ A
+            --------------
+            → Q ∣ Γ ⊢V⦂ Bool
+
     -- lambda abstraction
 
     lam     : {A : OVType Θ}
@@ -207,19 +225,6 @@ mutual
             → Q ∣ Γ ⊢C⦂ C
             ----------------
             → Q ∣ Γ ⊢C⦂ C
-
-    -- comparison
-
-    -- One rule for the six relations of `Cmp`: both operands at one
-    -- type, which has to be eternal, and the result a pure `Bool`.
-
-    cmp     : {A : OVType Θ}
-            → (⋈ : Cmp)
-            → Q ∣ Γ ⊢V⦂ A
-            → Q ∣ Γ ⊢V⦂ A
-            → Q ⊩ᴱ A
-            -------------------
-            → Q ∣ Γ ⊢C⦂ Bool ‼ ûₑ
 
     -- natural-number elimination
 

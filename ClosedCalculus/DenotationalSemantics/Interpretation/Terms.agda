@@ -70,8 +70,11 @@ ty-gty : ∀ (G : GType) → ⟦ type-of-gtype G ⟧ᵛ ≡ ⟦ G ⟧ᵍ
 ty-gty (Base b)     = refl
 ty-gty Unit         = refl
 ty-gty Bool         = refl
+ty-gty Nat          = refl
 ty-gty Empty        = refl
 ty-gty (G₁ |×|ᵍ G₂) = cong₂ _×ᵐ_ (ty-gty G₁) (ty-gty G₂)
+ty-gty (G₁ |+|ᵍ G₂) = cong₂ _+ᵐ_ (ty-gty G₁) (ty-gty G₂)
+ty-gty (|List|ᵍ G)  = cong Listᵐ (ty-gty G)
 ty-gty ([ ρ ]ᵍ G)   = cong (λ O → [ ρ ]ᵒ O) (ty-gty G)
 
 -- Naturality of `×ᵐ-assoc⁻¹` in its third component, and commutation of

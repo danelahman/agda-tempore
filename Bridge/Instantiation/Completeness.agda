@@ -2,10 +2,11 @@
 -- Completeness of inference for the declarative system         --
 --                                                              --
 -- For uniform handlers and annotation-free terms. A uniform    --
--- declarative typing `D` of `M` at an instance `σ₀` of the     --
--- context's variables (`UniformTyping Γ σ₀ M D`) embeds in the --
--- open calculus at the empty scope                             --
--- (`Bridge.Instantiation.Embedding`) and so factors through a  --
+-- declarative typing `D` of the elaboration of `M` at an       --
+-- instance `σ₀` of the context's variables                     --
+-- (`UniformTyping Γ σ₀ M D`) embeds in the open calculus at    --
+-- the empty scope (`Bridge.Instantiation.Embedding`) and so    --
+-- factors through a                                            --
 -- principal scheme (`factor`): the factoring instance          --
 -- satisfies the scheme's hypotheses and obligations, agrees    --
 -- with `σ₀` on the context, and there the principal type is a  --
@@ -14,12 +15,14 @@
 -- typing (`infer-untypableᴰ`, `check-untypableᴰ`). Soundness   --
 -- is `Bridge.Instantiation.Inference`; the factoring instance  --
 -- meets its premises (`principal-premises`), so the scheme     --
--- there types the term of `D`, which is `M` at `σ₀`            --
--- (`uniform-erasure`), in `D`'s context below `D`'s type       --
+-- there types the term of `D`, the elaboration of `M` at `σ₀`, --
+-- in `D`'s context below `D`'s type                            --
 -- (`principal-typing`, `infer-principal-typing`).              --
 ------------------------------------------------------------------
 
 open import Data.List.Relation.Unary.All using () renaming ([] to []ᴬ)
+open import Data.List.Base using ([])
+open import Data.Unit using (tt)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Relation.Nullary using (¬_)
 
@@ -62,18 +65,21 @@ open import Bridge.Instantiation.Judgements     S
 open import Bridge.Instantiation.Correspondence S
 open import Bridge.Instantiation.Terms          S using (⌊_⌋ᴿᶜ; ⌊≗⌋ᴿᶜ; ⌊[]⌋ᴿᶜ; castᶜ; castᶜ-⌊⌋)
 open import Bridge.Instantiation.Embedding      S
+open import Bridge.Instantiation.Hoisting       S using (≼-refl; idᴿ)
 open import Bridge.Instantiation.Inference      S opEnum using (scheme-instantiate)
 import ClosedCalculus.Syntax.Erasure S as CE
 
 open PrincipalScheme
 
--- `D` is a uniform typing of `M` in `Γ` at `σ₀`: in the open context
--- `Γ [ ⌜ σ₀ ⌝ˢ ]ᶜᵗˣ`, whose meaning is `⟦ Γ ⟧ᶜᵗˣ σ₀`, of the raw term
--- with its box grades at `σ₀`
+-- `D` is a uniform typing of the elaboration of `M` in `Γ` at `σ₀`:
+-- it erases to the elaboration of `M` at `σ₀`, and it is uniform in the
+-- open context `Γ [ ⌜ σ₀ ⌝ˢ ]ᶜᵗˣ`, whose meaning is `⟦ Γ ⟧ᶜᵗˣ σ₀`, for
+-- the raw term with its box grades at `σ₀`
 
 UniformTyping : ∀ {Θ n} → (Γ : OCtx Θ n) → (σ₀ : DInst Θ) → RawC Θ n
               → ∀ {C} → ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C → Set
-UniformTyping Γ σ₀ M D = Uᶜ (Γ [ ⌜ σ₀ ⌝ˢ ]ᶜᵗˣ) (M [ ⌜ σ₀ ⌝ˢ ]ᴿᶜ) D
+UniformTyping Γ σ₀ M D =
+  Uᶜ (Γ [ ⌜ σ₀ ⌝ˢ ]ᶜᵗˣ) idᴿ [] (M [ ⌜ σ₀ ⌝ˢ ]ᴿᶜ) D × (CE.⌊ D ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ σ₀)
 
 module _ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} where
 
@@ -89,14 +95,8 @@ module _ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} where
                → UniformTyping Γ σ₀ M D
                → Σ[ D' ∈ ∅ᴴ ∣ Γ [ ⌜ σ₀ ⌝ˢ ]ᶜᵗˣ ⊢C⦂ ⌜ C ⌝ᶜ ]
                    (OE.⌊ D' ⌋ᶜ ≡ M [ ⌜ σ₀ ⌝ˢ ]ᴿᶜ)
-  embed-typing a σ₀ D u = embedᶜ u (annFree-[]ᶜ M ⌜ σ₀ ⌝ˢ a) (⌞Γ⌜σ₀⌝⌟ σ₀)
-
-  -- a uniform typing is of the term at `σ₀`
-
-  uniform-erasure : (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
-                  → UniformTyping Γ σ₀ M D → CE.⌊ D ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ σ₀
-  uniform-erasure σ₀ D u =
-    trans (uniform-⌊⌋ᶜ u) (trans (⌊[]⌋ᴿᶜ M ⌜ σ₀ ⌝ˢ ∅ᴰ) (⌊≗⌋ᴿᶜ ⌞⌜ σ₀ ⌝ˢ⌟ M))
+  embed-typing a σ₀ D (u , _) =
+    embedᶜ u (annFree-[]ᶜ M ⌜ σ₀ ⌝ˢ a) (⌞Γ⌜σ₀⌝⌟ σ₀) ≼-refl tt refl tt
 
   -- so `M` is typable
 
@@ -220,7 +220,7 @@ principal-typing {Γ = Γ} {M} p a σ₀ D u
   Principalᴰ.below P ,
   trans (castᶜ-⌊⌋ (Principalᴰ.ctx P) refl D')
         (trans e (trans (⌊≗⌋ᴿᶜ (Principalᴰ.agree P) M)
-                        (sym (uniform-erasure {Γ = Γ} {M} σ₀ D u))))
+                        (sym (proj₂ u))))
 
 infer-principal-typing : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalScheme Γ M}
                        → infer Γ M ≡ typed p
