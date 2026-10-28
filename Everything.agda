@@ -204,13 +204,15 @@ import Language.Examples.SensorNode.Identity
 ----------------
 
 ---- Scopes, open grade expressions, types and contexts, substitutions, raw
----- terms
+---- terms and run-time terms
 
 import OpenCalculus.Syntax.Contexts
 import OpenCalculus.Syntax.ContextsLemmas
 import OpenCalculus.Syntax.Grades
 import OpenCalculus.Syntax.Raw
 import OpenCalculus.Syntax.Raw.Subst
+import OpenCalculus.Syntax.Run
+import OpenCalculus.Syntax.Run.Substitution
 import OpenCalculus.Syntax.Scopes
 import OpenCalculus.Syntax.Subst
 import OpenCalculus.Syntax.Types
@@ -221,10 +223,27 @@ import OpenCalculus.Hypotheses
 import OpenCalculus.Hypotheses.Instances
 import OpenCalculus.Hypotheses.Obligations
 
----- The open type system, and erasure to raw terms
+---- The open type system, erasure to raw terms, substitution of grades and of
+---- variables, renaming, inversion, and instantiation
 
 import OpenCalculus.Typing
 import OpenCalculus.Typing.Erasure
+import OpenCalculus.Typing.GradeSubstitution
+import OpenCalculus.Typing.Instantiation
+import OpenCalculus.Typing.Inversion
+import OpenCalculus.Typing.Renaming
+import OpenCalculus.Typing.ScopeClosed
+import OpenCalculus.Typing.Substitution
+import OpenCalculus.Typing.Transport
+
+---- Operational semantics: states, state typings, the reduction, type safety
+---- and termination
+
+import OpenCalculus.Semantics.Reduction
+import OpenCalculus.Semantics.States
+import OpenCalculus.Semantics.Termination
+import OpenCalculus.Semantics.Termination.Reducibility
+import OpenCalculus.Semantics.TypeSafety
 
 ---- Constraints, their generation, soundness and completeness of
 ---- generation, solvers, principality, and the concrete solver
@@ -236,6 +255,7 @@ import OpenCalculus.Inference.Constraints.Syntax
 import OpenCalculus.Inference.Generate
 import OpenCalculus.Inference.Outcome
 import OpenCalculus.Inference.Principality
+import OpenCalculus.Inference.ScopeClosed
 import OpenCalculus.Inference.Solver
 import OpenCalculus.Inference.SolverImpl
 import OpenCalculus.Inference.SolverImpl.Canon
