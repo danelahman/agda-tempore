@@ -255,6 +255,7 @@ import OpenCalculus.Inference.Constraints.Syntax
 import OpenCalculus.Inference.Generate
 import OpenCalculus.Inference.Outcome
 import OpenCalculus.Inference.Principality
+import OpenCalculus.Inference.ScopeClosed
 import OpenCalculus.Inference.Solver
 import OpenCalculus.Inference.SolverImpl
 import OpenCalculus.Inference.SolverImpl.Canon

@@ -38,8 +38,8 @@ warning. The only postulate is function extensionality (`Util/Equality.agda`).
   in `Grades/Examples/`.
 - `Language/`: what both calculi share: base types, operations, types.
 - `OpenCalculus/`: the calculus with type and grade variables: hypotheses,
-  entailment, typing, the operational semantics and type safety, constraints,
-  the solver, inference.
+  entailment, typing, the operational semantics, type safety and termination,
+  constraints, the solver, inference.
 - `ClosedCalculus/`: the closed, intrinsically typed calculus: its operational
   and denotational semantics, equational theory and adequacy.
 - `Bridge/`: instantiation of open typings into closed ones, and completeness
@@ -66,7 +66,7 @@ end.
   The closed calculus types handler clauses at every continuation grade and
   has comparisons as computations; the instantiation into it covers the terms
   whose handlers are second class. Completeness of inference is with respect
-  to closed typings with uniform handlers, in contexts with no handler type.
+  to scope-closed typings.
 - The denotational results assume uniform handlers, and some of their
   recursions are marked `TERMINATING`.
 

@@ -232,12 +232,9 @@ module TypeInference (S : LanguageSpec) (opEnum : OpEnum S) where
   open import OpenCalculus.Inference.SolverImpl S opEnum public
     using (infer; infer-typed; infer-untypable; infer-handlerFree)
 
-  -- Corollary (Completeness), for annotation-free terms in contexts with
-  -- no handler type, with respect to closed typings whose handlers are
-  -- uniform, the handler of each `handle` a handler
-  open import Bridge.Instantiation.Types S public using (NoHandlerTypeᶜᵗˣ)
-  open import Bridge.Instantiation.Completeness S opEnum public
-    using (UniformTyping; infer-principal; infer-untypableᴰ)
+  -- Corollary (Completeness), for scope-closed typings of computations
+  -- in contexts over the empty scope
+  open import OpenCalculus.Inference.ScopeClosed S opEnum public using (completeness)
 
 
 ------------------------------------------------------------------------
@@ -634,10 +631,14 @@ module FormalisedResults (S : LanguageSpec) (opEnum : OpEnum S) where
   -- each; completeness and principality for the declarative system
   open import Bridge.Instantiation.Inference S opEnum public
     using (scheme-instantiate; infer-instantiate; check-instantiate; check-program)
+  -- for annotation-free terms in contexts with no handler type, with
+  -- respect to closed typings whose handlers are uniform, the handler of
+  -- each `handle` a handler
   open import Bridge.Instantiation.Embedding S public using (Uᶜ; embedᶜ; AnnFreeᶜ)
+  open import Bridge.Instantiation.Types S public using (NoHandlerTypeᶜᵗˣ)
   open import Bridge.Instantiation.Completeness S opEnum public
-    using ( principalᴰ ; infer-principal-typing ; check-principal
-          ; check-untypableᴰ )
+    using ( UniformTyping ; principalᴰ ; infer-principal ; infer-untypableᴰ
+          ; infer-principal-typing ; check-principal ; check-untypableᴰ )
 
 
 ------------------------------------------------------------------------
