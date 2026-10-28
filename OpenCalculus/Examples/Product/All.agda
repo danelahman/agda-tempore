@@ -1,7 +1,9 @@
-------------------------------------------------------------------
--- A grade of two components: the generic module and its        --
--- instances                                                    --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- A grade of two components, time paired with a security level: a box is
+-- an embargoed report or a session token, refused for being out of time
+-- or for being tainted. Exercises product grades and normal forms
+-- (`Product`, `Normal`, `Entail`).
+------------------------------------------------------------------------
 
 module OpenCalculus.Examples.Product.All where
 

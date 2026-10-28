@@ -145,7 +145,7 @@ data IsTyped {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} : Inference Γ M → Set wh
   is-typed : (p : PrincipalScheme Γ M) → IsTyped (typed p)
 
 ------------------------------------------------------------------
--- Schemes as a paper writes them
+-- Schemes in mathematical notation
 
 -- An atom of a hypothesis set, one former per field
 

@@ -165,12 +165,12 @@ Clause Γ' B op =
 -- A box grade is part of the program: the raw `box ρ V N` carries it,
 -- and the declarative box of a uniform typing is at its value `⌞ ρ ⌟ʳ`.
 --
--- Uniform handlers are the paper rule: one derivation per operation
--- clause, parametric in the continuation grade. The closed rule's
--- clause family, a function of that grade, encodes the quantifier; a
--- uniform family is the instantiation, at each grade, of one open
--- clause typing at a rigid grade variable, up to erasure. A handler-free
--- typing is uniform when it follows its term.
+-- Uniform handlers follow the rule of the open calculus: one derivation
+-- per operation clause, parametric in the continuation grade. The
+-- closed rule's clause family, a function of that grade, encodes the
+-- quantifier; a uniform family is the instantiation, at each grade, of
+-- one open clause typing at a rigid grade variable, up to erasure. A
+-- handler-free typing is uniform when it follows its term.
 
 mutual
 

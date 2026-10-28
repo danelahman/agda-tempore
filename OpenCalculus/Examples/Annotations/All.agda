@@ -1,6 +1,7 @@
-------------------------------------------------------------------
--- Annotations: the generic module and its instances            --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Annotated programs, at both annotation forms, each with the type the
+-- annotation forces. Exercises the annotations.
+------------------------------------------------------------------------
 
 module OpenCalculus.Examples.Annotations.All where
 

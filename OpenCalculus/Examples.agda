@@ -1,78 +1,9 @@
-------------------------------------------------------------------
--- Inference examples                                           --
---                                                              --
--- Set 1 consists of nine functions of the prototype's standard --
--- library. Over an arbitrary language, inference answers       --
--- `typed` for each (a theorem); at four grades, the reported   --
--- scheme is checked by `refl`. The four grades cover the       --
--- combinations of the two properties the solver reads from a   --
--- grade, `u-least?` and `·-comm?`.                             --
---                                                              --
--- Set 2 consists of annotated programs, at both annotation     --
--- forms, each with the type the annotation forces.             --
---                                                              --
--- Set 3 consists of handlers without annotations. Two leave    --
--- cycles of unknowns local to the clause, which `Localise`     --
--- identifies, and are typed at the four grades. Two are        --
--- typable at some grades only: one discards its continuation,  --
--- one resumes it twice; inference types each where it is       --
--- typable and refutes it elsewhere.                            --
---                                                              --
--- Set 4 consists of boxes and delays: claims made early, on    --
--- time and late, after operations, in branches and in a        --
--- handler clause, with the box's grade given or inferred; and  --
--- a box that escapes through `return` and is claimed out of    --
--- time, refuted through the ordering entailed by its two       --
--- bounds.                                                      --
---                                                              --
--- Set 5 is at a grade of two components, time paired with a    --
--- security level, on both sides of time: a box is an embargoed --
--- report or a session token, refused for being out of time or  --
--- for being tainted, and the schemes carry both components.    --
---                                                              --
--- Set 6 consists of two schemes that the report simplifies: a  --
--- var-rule disjunction entailed by another, and a product with --
--- the top absorbed. Both simplifications apply where the unit  --
--- is least; they are checked at the right-sided grades.        --
---                                                              --
--- Set 7 consists of tests of single solver stages on           --
--- hand-written constraints, each answer checked by `refl`, for --
--- steps on which the programs of the other sets do not depend, --
--- or depend only in part.                                      --
---                                                              --
--- Set 8 consists of boxes claimed after delays of rational     --
--- durations, and a box grade inferred over them, at dense      --
--- left- and right-sided time.                                  --
---                                                              --
--- Set 9 consists of programs whose conditions the solver       --
--- leaves open: the search refutes some at definitions, and the --
--- check of a run establishes, refutes or leaves unestablished  --
--- the others, at left- and right-sided time.                   --
---                                                              --
--- Set 10 consists of programs on natural numbers, sums and     --
--- lists: elimination by `caseℕ`, `case+` and `caseL`,          --
--- numerals, a `Nat`, an eternal sum or a list of naturals used --
--- under a lock where a function, a sum with a function summand --
--- or a list of functions is refused, subtyping through a sum,  --
--- and branches of different effects joined, at left- and       --
--- right-sided time.                                            --
---                                                              --
--- Set 11 consists of programs by primitive recursion on        --
--- natural numbers and lists: pure recursions using the         --
--- predecessor, the head and the recursive result, a countdown  --
--- and a tick per element whose effects absorb themselves, a    --
--- function refused in the step, a head usable after a pure     --
--- step and refused, as a box, after a tick, and recursion      --
--- inside an operation clause, at left- and right-sided time.   --
---                                                              --
--- Set 12 consists of comparisons: of natural numbers, lists,   --
--- pairs and sums, refused at functions and boxes, polymorphic  --
--- with the operands' type asked to be eternal, and after a     --
--- tick, at left- and right-sided time.                         --
---                                                              --
--- Completeness on a uniform handler typing relates the two     --
--- calculi, and is in `Bridge.Examples.Uniform`.                --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- The type-inference examples, in sets by what they test. Each set's
+-- index `OpenCalculus.Examples.<Set>.All` names the solver parts it
+-- exercises and can be checked alone. The completeness example relating
+-- the two calculi is `Bridge.Examples.Uniform.All`.
+------------------------------------------------------------------------
 
 module OpenCalculus.Examples where
 

@@ -1,6 +1,10 @@
-------------------------------------------------------------------
--- The standard library: the generic module and its instances   --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Nine functions of the prototype's standard library. Over any language
+-- inference answers `typed` for each; at four grades, the combinations
+-- of `u-least?` and `·-comm?`, the reported scheme is checked by `refl`.
+-- Exercises generation, subtyping and the report (`Generate`, `Solve`,
+-- `SolverImpl`).
+------------------------------------------------------------------------
 
 module OpenCalculus.Examples.Stdlib.All where
 

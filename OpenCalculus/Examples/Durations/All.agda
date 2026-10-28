@@ -1,6 +1,8 @@
-------------------------------------------------------------------
--- Durations: the generic module and its instances              --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Boxes claimed after delays of rational durations, and a box grade
+-- inferred over them, at dense time. Exercises durations other than
+-- ticks (`Entail`).
+------------------------------------------------------------------------
 
 module OpenCalculus.Examples.Durations.All where
 

@@ -1,60 +1,12 @@
---------------------------------------------------------------------------
--- Agda formalisation of the syntax and semantics of a core language    --
--- for programming with temporal resources using modal types.           --
---                                                                      --
--- The language has:                                                    --
---                                                                      --
---   - a modality on types that specifies that data might not yet be    --
---     available, but will be once a resource grade ρ has elapsed       --
---                                                                      --
---   - a modality on contexts describing that a resource grade has      --
---     elapsed (allowing new data to become available)                  --
---                                                                      --
---   - features facilitating the interaction of these two modalities    --
---     based on adjunctions (i.e., Fitch-style modal type systems)      --
---                                                                      --
---   - computational effects modelled using algebraic operations with   --
---     prescribed effect grades, whose execution makes those grades     --
---     elapse (both in the semantics and in the static typing rules)    --
---                                                                      --
--- The formalisation includes:                                          --
---                                                                      --
---   - syntax and type system of the language                           --
---                                                                      --
---   - actions of renamings and substitutions                           --
---                                                                      --
---   - small-step stateful time-aware operational semantics             --
---                                                                      --
---   - progress and preservation theorems                               --
---                                                                      --
---   - equational theory based on standard presentations of local state --
---                                                                      --
---   - a denotational semantics: an abstract model interface (worlds,   --
---     box and context modalities, their adjunction, and a graded       --
---     effect monad), a concrete model on presheaves over the worlds,   --
---     and the interpretation of the language in any such model         --
---                                                                      --
---   - soundness of the operational semantics with respect to the       --
---     denotational semantics                                           --
---                                                                      --
---   - soundness of the equational theory with respect to the           --
---     denotational semantics                                           --
---                                                                      --
---   - adequacy of the denotational semantics with respect to the       --
---     operational semantics, and for the equational theory             --
---                                                                      --
---   - constraint-based type inference: an open type system with type   --
---     and grade variables, constraint generation for raw terms and its --
---     soundness and completeness, principal type schemes relative to   --
---     an axiomatised constraint solver, and a concrete solver with a   --
---     simplified report of its solutions                               --
---                                                                      --
---   - the instantiation theorem: an open typing under hypotheses Q is  --
---     a family of declarative typings of the same term, one per        --
---     instance of its variables satisfying Q                           --
---------------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Every module of the development except the type-inference examples
+-- (`Examples`). `Results` is the overview of the main definitions and
+-- results.
+------------------------------------------------------------------------
 
 module Everything where
+
+import Results
 
 -- UTILITIES
 ------------
@@ -244,7 +196,6 @@ import Language.Types
 
 ---- Examples
 
-import Language.Examples.Spec
 import Language.Examples.SensorNode
 import Language.Examples.SensorNode.Identity
 
