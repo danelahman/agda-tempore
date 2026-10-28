@@ -6,7 +6,9 @@
 -- entails to be below the one in `Γ`. It acts on derivations   --
 -- (`rename-v`, `rename-c`), and on run-time erasures as the    --
 -- renaming of positions. A value of eternal type moves along   --
--- any map of positions preserving the types (`eternal-v`).     --
+-- any map of positions preserving the types (`eternal-v`). An  --
+-- extension `Ext Q Γ Γ' δ` makes each variable older by at     --
+-- most `δ`, and gives renamings behind locks (`ext-lock`).     --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)

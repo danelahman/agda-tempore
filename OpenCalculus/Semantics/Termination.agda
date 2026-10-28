@@ -13,8 +13,8 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Fin using (Fin; zero; suc)
 open import Data.List.Base using ([])
 open import Data.Nat using (ℕ; zero; suc)
-open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
-open import Data.Unit using (⊤; tt)
+open import Data.Product using (Σ-syntax; _×_; _,_)
+open import Data.Unit using (tt)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Bool.Base using () renaming (true to tt𝔹; false to ff𝔹)
 
@@ -44,9 +44,9 @@ open import OpenCalculus.Hypotheses.Instances     S using (_⊨_∣_)
 open import OpenCalculus.Typing                   S
 open import OpenCalculus.Typing.Erasure           S using (⌊_⌋ᶜ)
 open import OpenCalculus.Typing.Instantiation     S using (instantiation)
-open import OpenCalculus.Typing.GradeSubstitution S using (clause-ctx; clause-ty)
+open import OpenCalculus.Typing.GradeSubstitution S using (clause-ctx)
 open import OpenCalculus.Typing.Renaming          S using (∥_∥ᵛ; ∥_∥ᶜ)
-open import OpenCalculus.Typing.Inversion         S using (BoolView; is-true; is-false; is-cmp)
+open import OpenCalculus.Typing.Inversion         S using (is-true; is-false; is-cmp)
 open import OpenCalculus.Typing.ScopeClosed       S
 open import OpenCalculus.Syntax.Run               S
 open import OpenCalculus.Syntax.Run.Substitution  S

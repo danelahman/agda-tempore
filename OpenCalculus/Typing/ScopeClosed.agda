@@ -7,7 +7,6 @@
 -- of their own variable.                                       --
 ------------------------------------------------------------------
 
-open import Data.Nat using (ℕ)
 open import Data.Product using (Σ-syntax)
 
 open import Language.Spec

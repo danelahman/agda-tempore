@@ -5,8 +5,6 @@
 -- type erases to the same raw term.                            --
 ------------------------------------------------------------------
 
-open import Data.Nat using (ℕ)
-
 open import Language.Spec
 
 open import Util.Equality

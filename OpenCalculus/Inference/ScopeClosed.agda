@@ -12,7 +12,6 @@
 
 open import Data.List.Base using ([])
 open import Data.List.Relation.Unary.All using () renaming ([] to []ᴬ)
-open import Data.Nat using (ℕ)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Relation.Nullary using (¬_)
 

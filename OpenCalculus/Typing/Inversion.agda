@@ -12,16 +12,13 @@
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
-open import Data.Fin using (Fin)
 open import Data.Nat using (ℕ; suc)
-open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Unit using (⊤; tt)
+open import Data.Product using (Σ-syntax; _×_; _,_)
+open import Data.Unit using (⊤)
 
 open import Grades.Base
 open import Language.Spec
 open import Language.Operations
-open import Language.Comparisons using (Cmp)
 
 open import Util.Equality
 
@@ -32,8 +29,6 @@ module OpenCalculus.Typing.Inversion (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
-
-open import Language.Types S using (BaseType; BaseConstants)
 
 open import OpenCalculus.Syntax.Grades         S
 open import OpenCalculus.Syntax.Types          S

@@ -14,9 +14,9 @@
 -- variable that `V`, a value of box type, is.                  --
 ------------------------------------------------------------------
 
-open import Data.Fin using (Fin; zero; suc)
+open import Data.Fin using (zero; suc)
 open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.Product using (Σ-syntax; _×_; _,_)
+open import Data.Product using (Σ-syntax; _,_)
 
 open import Grades.Base
 open import Language.Spec

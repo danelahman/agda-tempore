@@ -14,10 +14,9 @@
 -- extends a state typing along `e`.                            --
 ------------------------------------------------------------------
 
-open import Data.Empty using (⊥)
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Nat using (ℕ; zero; suc)
-open import Data.Product using (Σ-syntax; _×_; _,_)
+open import Data.Product using (Σ-syntax; _,_)
 
 open import Grades.Base
 open import Language.Spec

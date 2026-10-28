@@ -15,10 +15,10 @@
 -- expansion, and preserved by sequencing and by handling.            --
 ------------------------------------------------------------------------
 
-open import Data.Empty using (⊥; ⊥-elim)
+open import Data.Empty using (⊥)
 open import Data.Fin using (Fin; zero; suc)
-open import Data.Nat using (ℕ; zero; suc)
-open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
+open import Data.Nat using (zero; suc)
+open import Data.Product using (Σ-syntax; _×_; _,_)
 open import Data.Unit using (⊤; tt)
 
 open import Grades.Base

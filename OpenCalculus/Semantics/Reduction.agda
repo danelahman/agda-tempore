@@ -17,7 +17,7 @@
 open import Data.Bool.Base using () renaming (Bool to 𝔹; true to tt𝔹; false to ff𝔹)
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Nat using (ℕ; zero; suc)
-open import Data.Product using (Σ-syntax; _×_; _,_)
+open import Data.Product using (Σ-syntax; _,_)
 
 open import Relation.Nullary using (yes; no)
 
