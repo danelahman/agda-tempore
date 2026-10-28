@@ -197,6 +197,12 @@ data Step {n} S where
   UNBOX      : ∀ {i N}
              → ⟨ S ∣ unbox (var i) N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ N [ lookupₛ S i ]₀ ⟩
 
+-- A finished computation: a returned value or an operation call
+
+data Final {n} : RunC n → Set where
+  is-return  : ∀ V → Final (return V)
+  is-perform : ∀ op V M → Final (perform op V M)
+
 -- A step, its extension of the state left implicit
 
 infix 3 ⟨_∣_⟩↝⟨_∣_⟩

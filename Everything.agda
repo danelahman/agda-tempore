@@ -212,6 +212,7 @@ import OpenCalculus.Syntax.Grades
 import OpenCalculus.Syntax.Raw
 import OpenCalculus.Syntax.Raw.Subst
 import OpenCalculus.Syntax.Run
+import OpenCalculus.Syntax.Run.Substitution
 import OpenCalculus.Syntax.Scopes
 import OpenCalculus.Syntax.Subst
 import OpenCalculus.Syntax.Types
@@ -236,9 +237,12 @@ import OpenCalculus.Typing.Substitution
 import OpenCalculus.Typing.Transport
 
 ---- Operational semantics: states, state typings, the reduction, type safety
+---- and termination
 
 import OpenCalculus.Semantics.Reduction
 import OpenCalculus.Semantics.States
+import OpenCalculus.Semantics.Termination
+import OpenCalculus.Semantics.Termination.Reducibility
 import OpenCalculus.Semantics.TypeSafety
 
 ---- Constraints, their generation, soundness and completeness of

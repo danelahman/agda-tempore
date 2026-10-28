@@ -190,19 +190,18 @@ module InstantiationAndTypeSafety (S : LanguageSpec) (opEnum : OpEnum S) where
 
   -- Theorem (Type safety): a finished term, or a step preserving the
   -- typing in an extension of the state typing
+  open import OpenCalculus.Semantics.Reduction S public using (Final)
   open import OpenCalculus.Semantics.TypeSafety S public
-    using (type-safety; Final; Preserved; progress; preservation)
+    using (type-safety; Preserved; progress; preservation)
 
-  -- Theorem (Termination), of the closed calculus
-  open import ClosedCalculus.Adequacy.Evaluation S public using (Halts)
-  open import ClosedCalculus.Adequacy.Normalization S public
-    using () renaming (halts to termination)
+  -- Theorem (Termination), from the empty state; the multi-step
+  -- reduction `⟨ S ∣ M ⟩↝*⟨ S' ∣ M' ⟩`
+  open import OpenCalculus.Semantics.Termination.Reducibility S public using (MultiStep)
+  open import OpenCalculus.Semantics.Termination S public using (Halts; termination)
 
-  -- Corollary (Programs): for a term whose handlers are second-class, an
-  -- established check gives a closed typing at an instance, and that
-  -- program halts
-  open import Bridge.Instantiation.Inference S opEnum public
-    using () renaming (check-program to programs)
+  -- Corollary (Programs), for terms typed in the empty context: the
+  -- instances are typed in the context of the empty state, and halt
+  open import OpenCalculus.Semantics.Termination S public using (programs)
 
 
 ------------------------------------------------------------------------
@@ -592,6 +591,12 @@ module FormalisedResults (S : LanguageSpec) (opEnum : OpEnum S) where
   open import OpenCalculus.Typing.Substitution S public using (Drop; sub-v; sub-c)
   open import OpenCalculus.Typing.Inversion S public using (invV; invC)
 
+  -- Reducibility: the logical relation on run-time terms over states,
+  -- and its fundamental lemma
+  open import OpenCalculus.Semantics.Termination.Reducibility S public
+    using (VRed; VRedᵍ; CRed; cred-seq; cred-handle)
+  open import OpenCalculus.Semantics.Termination S public using (fund-v; fund-c)
+
   -- Closed instances of the two kinds correspond
   open import Bridge.Instantiation.Correspondence S public using (⊨⇔⊨ᴰ)
 
@@ -625,9 +630,10 @@ module FormalisedResults (S : LanguageSpec) (opEnum : OpEnum S) where
           ; check-handlerFree )
 
   -- Inference yields closed typings at every instance satisfying the
-  -- scheme; completeness and principality for the declarative system
+  -- scheme, and a checked program, its handlers second-class, halts at
+  -- each; completeness and principality for the declarative system
   open import Bridge.Instantiation.Inference S opEnum public
-    using (scheme-instantiate; infer-instantiate; check-instantiate)
+    using (scheme-instantiate; infer-instantiate; check-instantiate; check-program)
   open import Bridge.Instantiation.Embedding S public using (Uᶜ; embedᶜ; AnnFreeᶜ)
   open import Bridge.Instantiation.Completeness S opEnum public
     using ( principalᴰ ; infer-principal-typing ; check-principal
@@ -646,5 +652,4 @@ module FormalisedResults (S : LanguageSpec) (opEnum : OpEnum S) where
 --   Program contexts, the rule Def, type schemes of values, and programs.
 --   Unbox on an annotated variable, and Lemma (Resource values are
 --   annotated variables) for the calculus with grade variables.
---   Termination of the reduction on run-time terms.
 ------------------------------------------------------------------------

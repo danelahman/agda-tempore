@@ -8,10 +8,10 @@ into scope. The calculus has Fitch-style graded modal types over a grade system
 algebraic effects and handlers whose operations take time, and a graded effect
 system. For the calculus with type and grade variables the development gives
 constraint-based type inference with principal type schemes, and proves that
-its typings instantiate to scope-closed typings, which are type safe for a
-reduction on raw terms; for the closed calculus it proves type safety and
-termination, and gives a denotational semantics, a sound equational theory and
-adequacy.
+its typings instantiate to scope-closed typings, which are type safe and
+terminating for a reduction on raw terms; for the closed calculus it proves
+type safety and termination, and gives a denotational semantics, a sound
+equational theory and adequacy.
 
 The development builds on two earlier formalisations, in which the passage of
 discrete time is the only means of specifying temporal properties of resources:
@@ -62,12 +62,11 @@ end.
   programs.
 - The reduction is on run-time terms, raw terms without grades and type
   annotations, with grade-free states; `unbox` there takes a value.
-  Instantiation and type safety are for the scope-closed typing. Termination
-  is for the closed calculus, whose handler clauses are typed at every
-  continuation grade and whose comparisons are computations; the
-  instantiation into it covers the terms whose handlers are second class.
-  Completeness of inference is with respect to closed typings with uniform
-  handlers, in contexts with no handler type.
+  Instantiation, type safety and termination are for the scope-closed typing.
+  The closed calculus types handler clauses at every continuation grade and
+  has comparisons as computations; the instantiation into it covers the terms
+  whose handlers are second class. Completeness of inference is with respect
+  to closed typings with uniform handlers, in contexts with no handler type.
 - The denotational results assume uniform handlers, and some of their
   recursions are marked `TERMINATING`.
 

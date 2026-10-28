@@ -82,6 +82,31 @@ wkₛ (≤ₛ-res e)  i = suc (wkₛ e i)
 δₛ (≤ₛ-lock {τ = τ} e) = δₛ e ·̂ᵣ rconst (of-durʳ τ)
 δₛ (≤ₛ-res e)          = δₛ e
 
+-- composition of extensions
+
+infixl 25 _⨾ₛ_
+
+_⨾ₛ_ : ∀ {n m k} {S : State n} {S' : State m} {S'' : State k}
+     → S ≤ₛ S' → S' ≤ₛ S'' → S ≤ₛ S''
+e ⨾ₛ ≤ₛ-refl     = e
+e ⨾ₛ ≤ₛ-lock e'  = ≤ₛ-lock (e ⨾ₛ e')
+e ⨾ₛ ≤ₛ-res e'   = ≤ₛ-res (e ⨾ₛ e')
+
+wkₛ-⨾ : ∀ {n m k} {S : State n} {S' : State m} {S'' : State k}
+      → (e : S ≤ₛ S') → (e' : S' ≤ₛ S'') → ∀ i → wkₛ (e ⨾ₛ e') i ≡ wkₛ e' (wkₛ e i)
+wkₛ-⨾ e ≤ₛ-refl      i = refl
+wkₛ-⨾ e (≤ₛ-lock e') i = wkₛ-⨾ e e' i
+wkₛ-⨾ e (≤ₛ-res e')  i = cong suc (wkₛ-⨾ e e' i)
+
+-- the resources of an extension are the old ones, weakened
+
+lookupₛ-wk : ∀ {n m} {S : State n} {S' : State m} → (e : S ≤ₛ S')
+           → ∀ i → lookupₛ S' (wkₛ e i) ≡ renᵛ (wkₛ e) (lookupₛ S i)
+lookupₛ-wk {S = S} ≤ₛ-refl i = sym (ren-idᵛ (λ j → refl) (lookupₛ S i))
+lookupₛ-wk (≤ₛ-lock e) i = lookupₛ-wk e i
+lookupₛ-wk {S = S} (≤ₛ-res e) i =
+  trans (cong wkᵛ (lookupₛ-wk e i)) (ren-fuseᵛ (λ j → refl) (lookupₛ S i))
+
 ------------------------------------------------------------------------
 -- State typings
 
@@ -107,7 +132,7 @@ data Types : ∀ {n} {S : State n} → StateTyping S → Set where
   ∅    : Types ∅
   _⟨⟩ˢ : ∀ {n} {S : State n} {τ} {Σ : StateTyping S}
        → Types Σ → Types (_⟨⟩ˢ {τ = τ} Σ)
-  _∷_  : ∀ {n} {S : State n} {Σ : StateTyping S} {ρ X V}
+  _∷ᵗ_ : ∀ {n} {S : State n} {Σ : StateTyping S} {ρ X V}
        → Types Σ → ctx Σ ⟨ ρ ⟩ ⊢ᵛ V ⦂ X → Types (_∷[_]_ {V = V} Σ ρ X)
 
 -- Extension of a state typing along an extension of its state
@@ -160,11 +185,11 @@ private
       epos e' = epos e
       ety  e' = ety e
       egr  e' i = transᵣ (egr e i) (eqᵣ ≡̂ᵣ-assoc)
-  lookup-ext {S = S ∷ₛ V} (T ∷ (D , refl)) Hd e le =
+  lookup-ext {S = S ∷ₛ V} (T ∷ᵗ (D , refl)) Hd e le =
     rename-v r D , trans (∥rename-v∥ r D) (sym (ren-fuseᵛ (λ i → refl) ∥ D ∥ᵛ))
     where
       r = ext-unlock (ext-∘ʳ e wk-ren) (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityˡ)) le)
-  lookup-ext {S = S ∷ₛ V} (T ∷ _) (Tl-∷ x) e le with lookup-ext T x (ext-∘ʳ e wk-ren) le
+  lookup-ext {S = S ∷ₛ V} (T ∷ᵗ _) (Tl-∷ x) e le with lookup-ext T x (ext-∘ʳ e wk-ren) le
   ... | D , p = D , trans p (sym (ren-fuseᵛ (λ i → refl) (lookupₛ S (var-pos x))))
 
 lookup-typed : ∀ {n} {S : State n} {Σ : StateTyping S} {ρ₀ ρ' A₀}

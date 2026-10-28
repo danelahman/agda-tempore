@@ -87,12 +87,6 @@ private
 ------------------------------------------------------------------------
 -- The statements
 
--- A finished computation: a returned value or an operation call
-
-data Final {n} : RunC n → Set where
-  is-return  : ∀ V → Final (return V)
-  is-perform : ∀ op V M → Final (perform op V M)
-
 -- A step from a configuration
 
 Steps : ∀ {n} → State n → RunC n → Set
@@ -403,7 +397,7 @@ preservation {Σ = Σ} T (D , eD) BOX with invC≡ D eD
 ... | _ , (ρ , A , (DV , eV) , (DN , eN)) , (p₀ ‼ₛ q₀) = record
   { Σ'      = Σ ∷[ ρ ] A
   ; extends = ⊆-res ⊆-refl
-  ; types   = T ∷ (DV , eV)
+  ; types   = T ∷ᵗ (DV , eV)
   ; X'      = _
   ; ε'      = _
   ; typed   = DN , eN
