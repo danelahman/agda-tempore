@@ -2,8 +2,9 @@
 -- Type formers and the variance of their parts                 --
 --                                                              --
 -- An open type other than a type variable is a former applied  --
--- to its parts: value types, the grade of a box and the effect --
--- of a function type. `Decomp A B ps` is the variance table:   --
+-- to its parts: value types, the grade of a box, the effect    --
+-- of a function type and the two effects of a handler type.    --
+-- `Decomp A B ps` is the variance table:                       --
 -- `A` and `B` have one former, and `ps` pairs their parts,     --
 -- left to right, each with its variance (`co`, `contra`,       --
 -- `inv`) and its sort (`ty`, `rg`, `eg`). `decompose` decides  --
@@ -107,6 +108,9 @@ data Decomp {Ψ : Scope} : OVType Ψ → OVType Ψ → List (Part Ψ) → Set wh
                   (ty contra A A' ∷ ty co B B' ∷ eg co ε ε' ∷ [])
   []ᴰ    : ∀ {ρ ρ' A A'}
          → Decomp ([ ρ ] A) ([ ρ' ] A') (rg contra ρ ρ' ∷ ty co A A' ∷ [])
+  ⇛ᴰ     : ∀ {A A' B B' ε η ε' η'}
+         → Decomp (A ‼ ε ⇛ B ‼ ε') (A' ‼ η ⇛ B' ‼ η')
+                  (ty contra A A' ∷ eg contra ε η ∷ ty co B B' ∷ eg co ε' η' ∷ [])
 
 -- Two types: a pair of type variables, one former, or a clash
 
@@ -129,6 +133,7 @@ decompose (A |+| B)      (A' |+| B')       = parts _ |+|ᴰ
 decompose (|List| A)     (|List| A')       = parts _ |List|ᴰ
 decompose (A ⇒ (B ‼ ε))  (A' ⇒ (B' ‼ ε'))  = parts _ ⇒ᴰ
 decompose ([ ρ ] A)      ([ ρ' ] A')       = parts _ []ᴰ
+decompose (A ‼ ε ⇛ B ‼ ε') (A' ‼ η ⇛ B' ‼ η') = parts _ ⇛ᴰ
 decompose _              _                 = clash
 
 -- One type: a type variable, or its former against itself, whose
@@ -155,6 +160,7 @@ self (A |+| B)     = form _ |+|ᴰ (refl ∷ refl ∷ [])
 self (|List| A)    = form _ |List|ᴰ (refl ∷ [])
 self (A ⇒ (B ‼ ε)) = form _ ⇒ᴰ (refl ∷ refl ∷ refl ∷ [])
 self ([ ρ ] A)     = form _ []ᴰ (refl ∷ refl ∷ [])
+self (A ‼ ε ⇛ B ‼ ε') = form _ ⇛ᴰ (refl ∷ refl ∷ refl ∷ refl ∷ [])
 
 -- The eternality column
 
@@ -169,6 +175,7 @@ eternal |+|ᴰ        = true
 eternal |List|ᴰ     = true
 eternal ⇒ᴰ          = false
 eternal []ᴰ         = false
+eternal ⇛ᴰ          = false
 
 -- The table is exact for subtyping, at every pair of instances
 
@@ -185,6 +192,7 @@ eternal []ᴰ         = false
 <:-intro |List|ᴰ σ τ (p ∷ [])        = |List|ₛ p
 <:-intro ⇒ᴰ     σ τ (p ∷ q ∷ e ∷ []) = p ⇒ₛ (q ‼ₛ e)
 <:-intro []ᴰ    σ τ (r ∷ p ∷ [])     = [ r ]ₛ p
+<:-intro ⇛ᴰ     σ τ (p ∷ e ∷ q ∷ e' ∷ []) = (p ‼ₛ e) ⇛ₛ (q ‼ₛ e')
 
 <:-elim : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {A B : OVType Ψ} {ps} → Decomp A B ps
         → (σ τ : Subst Ψ Ψ') → Q ∣ A [ σ ]ᵛ <:̂ᵛ B [ τ ]ᵛ
@@ -199,6 +207,7 @@ eternal []ᴰ         = false
 <:-elim |List|ᴰ σ τ (|List|ₛ p)      = p ∷ []
 <:-elim ⇒ᴰ     σ τ (p ⇒ₛ (q ‼ₛ e))  = p ∷ q ∷ e ∷ []
 <:-elim []ᴰ    σ τ ([ r ]ₛ p)       = r ∷ p ∷ []
+<:-elim ⇛ᴰ     σ τ ((p ‼ₛ e) ⇛ₛ (q ‼ₛ e')) = p ∷ e ∷ q ∷ e' ∷ []
 
 -- The table is exact for eternality, at every instance; a grade part
 -- demands nothing
@@ -272,6 +281,8 @@ accs (|List| A)    = (λ { |List|ᴰ → ≺-wf A ∷ [] }) , (λ { |List|ᴰ �
 accs (A ⇒ (B ‼ ε)) = (λ { ⇒ᴰ → ≺-wf A ∷ ≺-wf B ∷ tt ∷ [] })
                    , (λ { ⇒ᴰ → ≺-wf A ∷ ≺-wf B ∷ tt ∷ [] })
 accs ([ ρ ] A)     = (λ { []ᴰ → tt ∷ ≺-wf A ∷ [] }) , (λ { []ᴰ → tt ∷ ≺-wf A ∷ [] })
+accs (A ‼ ε ⇛ B ‼ ε') = (λ { ⇛ᴰ → ≺-wf A ∷ tt ∷ ≺-wf B ∷ tt ∷ [] })
+                     , (λ { ⇛ᴰ → ≺-wf A ∷ tt ∷ ≺-wf B ∷ tt ∷ [] })
 
 ≺-wf A = acc λ { (left g m)  → lookup (proj₁ (accs A) g) m
                ; (right g m) → lookup (proj₂ (accs A) g) m }

@@ -206,6 +206,7 @@ canonᵛ (A |+| B) = canonᵛ A |+| canonᵛ B
 canonᵛ (|List| A) = |List| (canonᵛ A)
 canonᵛ Empty     = Empty
 canonᵛ (A ⇒ C)   = canonᵛ A ⇒ canonᶜ C
+canonᵛ (C ⇛ D)   = canonᶜ C ⇛ canonᶜ D
 canonᵛ ([ ρ ] A) = [ canonᵣ ρ ] canonᵛ A
 
 canonᶜ (A ‼ ε) = canonᵛ A ‼ canonₑ ε
@@ -223,6 +224,7 @@ canonᵛ-≡̂ (A |+| B) = canonᵛ-≡̂ A |+|≡̂ canonᵛ-≡̂ B
 canonᵛ-≡̂ (|List| A) = |List|≡̂ (canonᵛ-≡̂ A)
 canonᵛ-≡̂ Empty     = Empty≡̂
 canonᵛ-≡̂ (A ⇒ C)   = canonᵛ-≡̂ A ⇒≡̂ canonᶜ-≡̂ C
+canonᵛ-≡̂ (C ⇛ D)   = canonᶜ-≡̂ C ⇛≡̂ canonᶜ-≡̂ D
 canonᵛ-≡̂ ([ ρ ] A) = [ canonᵣ-≡ ρ ]≡̂ canonᵛ-≡̂ A
 
 canonᶜ-≡̂ (A ‼ ε) = canonᵛ-≡̂ A ‼≡̂ canonₑ-≡ ε

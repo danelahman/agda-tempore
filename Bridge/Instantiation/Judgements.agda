@@ -196,6 +196,7 @@ sound-≡̂ᵛ σ (|List|≡̂ p) = |List|ₛ (proj₁ (sound-≡̂ᵛ σ p)) , 
 sound-≡̂ᵛ σ Empty≡̂      = Emptyₛ , Emptyₛ
 sound-≡̂ᵛ σ (p ⇒≡̂ q)    = proj₂ (sound-≡̂ᵛ σ p) ⇒ₛ proj₁ (sound-≡̂ᶜ σ q)
                         , proj₁ (sound-≡̂ᵛ σ p) ⇒ₛ proj₂ (sound-≡̂ᶜ σ q)
+sound-≡̂ᵛ σ (p ⇛≡̂ q)    = <:ᵛ-refl handlerᴰ , <:ᵛ-refl handlerᴰ
 sound-≡̂ᵛ σ ([ r ]≡̂ p)  = [ ≃ᵣ⇒≿ᵣ (sound-≡̂ᵣ σ r) ]ₛ proj₁ (sound-≡̂ᵛ σ p)
                         , [ ≃ᵣ⇒≾ᵣ (sound-≡̂ᵣ σ r) ]ₛ proj₂ (sound-≡̂ᵛ σ p)
 
@@ -235,6 +236,7 @@ module _ {Θ : Scope} {σ : DInst Θ} {Q : Hyps Θ} (s : σ ⊨ᴰ Q) where
   sound-<:ᵛ (|List|ₛ p) = |List|ₛ (sound-<:ᵛ p)
   sound-<:ᵛ Emptyₛ      = Emptyₛ
   sound-<:ᵛ (p ⇒ₛ q)    = sound-<:ᵛ p ⇒ₛ sound-<:ᶜ q
+  sound-<:ᵛ (p ⇛ₛ q)    = <:ᵛ-refl handlerᴰ
   sound-<:ᵛ ([ p ]ₛ q)  = [ sound-≾ᵣ s p ]ₛ sound-<:ᵛ q
 
   sound-<:ᶜ (p ‼ₛ q) = sound-<:ᵛ p ‼ₛ sound-≾ₑ s q

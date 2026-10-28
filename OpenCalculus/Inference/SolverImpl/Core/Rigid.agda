@@ -119,6 +119,7 @@ mutual
   strᵛ j (|List| A) = mmap |List| (strᵛ j A)
   strᵛ j Empty     = just Empty
   strᵛ j (A ⇒ C)   = zip₂ _⇒_ (strᵛ j A) (strᶜ j C)
+  strᵛ j (C ⇛ D)   = zip₂ _⇛_ (strᶜ j C) (strᶜ j D)
   strᵛ j ([ ρ ] A) = zip₂ [_]_ (strʳ j ρ) (strᵛ j A)
 
   strᶜ : ∀ {Ψ} → EVar (Ψ +e) → OCType (Ψ +e) → Maybe (OCType Ψ)
@@ -174,6 +175,8 @@ mutual
   ... | a , qa , refl = cong |List| (str-popᵛ j A qa)
   str-popᵛ j (A ⇒ C)   q with zip₂-just _⇒_ (strᵛ j A) (strᶜ j C) q
   ... | a , b , qa , qb , refl = cong₂ _⇒_ (str-popᵛ j A qa) (str-popᶜ j C qb)
+  str-popᵛ j (C ⇛ D)   q with zip₂-just _⇛_ (strᶜ j C) (strᶜ j D) q
+  ... | a , b , qa , qb , refl = cong₂ _⇛_ (str-popᶜ j C qa) (str-popᶜ j D qb)
   str-popᵛ j ([ ρ ] A) q with zip₂-just [_]_ (strʳ j ρ) (strᵛ j A) q
   ... | a , b , qa , qb , refl = cong₂ [_]_ (str-popʳ j ρ qa) (str-popᵛ j A qb)
 
@@ -208,6 +211,7 @@ mutual
   str-wkᵛ (A |+| B) = cong₂ (zip₂ _|+|_) (str-wkᵛ A) (str-wkᵛ B)
   str-wkᵛ (|List| A) = cong (mmap |List|) (str-wkᵛ A)
   str-wkᵛ (A ⇒ C)   = cong₂ (zip₂ _⇒_) (str-wkᵛ A) (str-wkᶜ C)
+  str-wkᵛ (C ⇛ D)   = cong₂ (zip₂ _⇛_) (str-wkᶜ C) (str-wkᶜ D)
   str-wkᵛ ([ ρ ] A) = cong₂ (zip₂ [_]_) (str-wkʳ ρ) (str-wkᵛ A)
 
   str-wkᶜ : ∀ {Ψ} → (C : OCType Ψ) → strᶜ (newᵉ {Ψ}) (wkᵉ-c C) ≡ just C
@@ -353,6 +357,9 @@ mutual
   escᵛ σ j k r (A ⇒ C)   q with ∨-true (occᵉ-v j A) (occᵉ-c j C) q
   ... | inj₁ s = ∨-left  (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-c k (C [ σ ]ᶜ)) (escᵛ σ j k r A s)
   ... | inj₂ s = ∨-right (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-c k (C [ σ ]ᶜ)) (escᶜ σ j k r C s)
+  escᵛ σ j k r (C ⇛ D)   q with ∨-true (occᵉ-c j C) (occᵉ-c j D) q
+  ... | inj₁ s = ∨-left  (occᵉ-c k (C [ σ ]ᶜ)) (occᵉ-c k (D [ σ ]ᶜ)) (escᶜ σ j k r C s)
+  ... | inj₂ s = ∨-right (occᵉ-c k (C [ σ ]ᶜ)) (occᵉ-c k (D [ σ ]ᶜ)) (escᶜ σ j k r D s)
   escᵛ σ j k r ([ ρ ] A) q with ∨-true (occᵉ-r j ρ) (occᵉ-v j A) q
   ... | inj₁ s = ∨-left  (occᵉ-r k (ρ [ σ ]ʳ)) (occᵉ-v k (A [ σ ]ᵛ)) (escʳ σ j k r ρ s)
   ... | inj₂ s = ∨-right (occᵉ-r k (ρ [ σ ]ʳ)) (occᵉ-v k (A [ σ ]ᵛ)) (escᵛ σ j k r A s)
@@ -404,6 +411,9 @@ mutual
   occ-wkᵛ {Ψ} (A ⇒ C)   q =
     [ occ-wkᵛ A , occ-wkᶜ C ]′
       (∨-true (occᵉ-v (newᵉ {Ψ}) (wkᵉ-v A)) (occᵉ-c (newᵉ {Ψ}) (wkᵉ-c C)) q)
+  occ-wkᵛ {Ψ} (C ⇛ D)   q =
+    [ occ-wkᶜ C , occ-wkᶜ D ]′
+      (∨-true (occᵉ-c (newᵉ {Ψ}) (wkᵉ-c C)) (occᵉ-c (newᵉ {Ψ}) (wkᵉ-c D)) q)
   occ-wkᵛ {Ψ} ([ ρ ] A) q =
     [ occ-wkʳ ρ , occ-wkᵛ A ]′
       (∨-true (occᵉ-r (newᵉ {Ψ}) (wkᵉ-r ρ)) (occᵉ-v (newᵉ {Ψ}) (wkᵉ-v A)) q)
@@ -457,6 +467,9 @@ mutual
   str-occᵛ j (A ⇒ C)   q with zip₂-nothing _⇒_ (strᵛ j A) (strᶜ j C) q
   ... | inj₁ s = ∨-left  (occᵉ-v j A) (occᵉ-c j C) (str-occᵛ j A s)
   ... | inj₂ s = ∨-right (occᵉ-v j A) (occᵉ-c j C) (str-occᶜ j C s)
+  str-occᵛ j (C ⇛ D)   q with zip₂-nothing _⇛_ (strᶜ j C) (strᶜ j D) q
+  ... | inj₁ s = ∨-left  (occᵉ-c j C) (occᵉ-c j D) (str-occᶜ j C s)
+  ... | inj₂ s = ∨-right (occᵉ-c j C) (occᵉ-c j D) (str-occᶜ j D s)
   str-occᵛ j ([ ρ ] A) q with zip₂-nothing [_]_ (strʳ j ρ) (strᵛ j A) q
   ... | inj₁ s = ∨-left  (occᵉ-r j ρ) (occᵉ-v j A) (str-occʳ j ρ s)
   ... | inj₂ s = ∨-right (occᵉ-r j ρ) (occᵉ-v j A) (str-occᵛ j A s)

@@ -51,7 +51,7 @@ open import OpenCalculus.Hypotheses           S using (∅ᴴ; ⊩ᴴ-∅)
 open import OpenCalculus.Hypotheses.Instances S
   using (Satisfiable; _⊩ᴼˢ_[_])
 open import OpenCalculus.Typing     S using (_∣_⊢C⦂_)
-open import OpenCalculus.Syntax.Raw S using (RawC)
+open import OpenCalculus.Syntax.Raw S using (RawC; SecondClassᶜ)
 import OpenCalculus.Typing.Erasure S as OE
 open import OpenCalculus.Syntax.Raw.Subst       S
 open import OpenCalculus.Inference.Principality S
@@ -81,7 +81,7 @@ UniformTyping : ∀ {Θ n} → (Γ : OCtx Θ n) → (σ₀ : DInst Θ) → RawC 
 UniformTyping Γ σ₀ M D =
   Uᶜ (Γ [ ⌜ σ₀ ⌝ˢ ]ᶜᵗˣ) idᴿ [] (M [ ⌜ σ₀ ⌝ˢ ]ᴿᶜ) D × (CE.⌊ D ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ σ₀)
 
-module _ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} where
+module _ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} (nh : NoHandlerTypeᶜᵗˣ Γ) where
 
   -- the meaning of the instantiated context
 
@@ -96,7 +96,9 @@ module _ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} where
                → Σ[ D' ∈ ∅ᴴ ∣ Γ [ ⌜ σ₀ ⌝ˢ ]ᶜᵗˣ ⊢C⦂ ⌜ C ⌝ᶜ ]
                    (OE.⌊ D' ⌋ᶜ ≡ M [ ⌜ σ₀ ⌝ˢ ]ᴿᶜ)
   embed-typing a σ₀ D (u , _) =
-    embedᶜ u (annFree-[]ᶜ M ⌜ σ₀ ⌝ˢ a) (⌞Γ⌜σ₀⌝⌟ σ₀) ≼-refl tt refl tt
+    embedᶜ u (annFree-[]ᶜ M ⌜ σ₀ ⌝ˢ a)
+           (noHandler-[]ᶜᵗˣ ⌜ σ₀ ⌝ˢ (λ α → ⌜⌝-noHandlerᵛ (ty σ₀ α)) Γ nh)
+           (⌞Γ⌜σ₀⌝⌟ σ₀) ≼-refl tt refl tt
 
   -- so `M` is typable
 
@@ -127,10 +129,11 @@ record Principalᴰ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n}
 -- factors through every principal scheme
 
 principalᴰ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalScheme Γ M)
-           → AnnFreeᶜ M → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
+           → AnnFreeᶜ M → NoHandlerTypeᶜᵗˣ Γ
+           → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
            → UniformTyping Γ σ₀ M D
            → Principalᴰ p σ₀ C
-principalᴰ {Γ = Γ} {M} p a σ₀ {C} D u with embed-typing {Γ = Γ} {M} a σ₀ D u
+principalᴰ {Γ = Γ} {M} p a nh σ₀ {C} D u with embed-typing {Γ = Γ} {M} nh a σ₀ D u
 ... | D' , e with factor p ⌜ σ₀ ⌝ˢ ∅ᴴ D' e idˢ (⊩ᴴ-∅ , []ᴬ)
 ... | δ , tri , (hQ , hR) , le = record
   { δ      = δ
@@ -156,7 +159,8 @@ principalᴰ {Γ = Γ} {M} p a σ₀ {C} D u with embed-typing {Γ = Γ} {M} a �
 
 infer-principal : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalScheme Γ M}
                 → infer Γ M ≡ typed p
-                → AnnFreeᶜ M → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
+                → AnnFreeᶜ M → NoHandlerTypeᶜᵗˣ Γ
+                → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
                 → UniformTyping Γ σ₀ M D
                 → Principalᴰ p σ₀ C
 infer-principal Γ M {p} _ = principalᴰ p
@@ -164,11 +168,11 @@ infer-principal Γ M {p} _ = principalᴰ p
 -- and an untypable verdict leaves no uniform typing
 
 infer-untypableᴰ : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-                 → infer Γ M ≡ untypable → AnnFreeᶜ M
+                 → infer Γ M ≡ untypable → AnnFreeᶜ M → NoHandlerTypeᶜᵗˣ Γ
                  → ¬ (Σ[ σ₀ ∈ DInst Θ ] Σ[ C ∈ CType ] Σ[ D ∈ ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C ]
                         UniformTyping Γ σ₀ M D)
-infer-untypableᴰ Γ M eq a (σ₀ , C , D , u) =
-  infer-untypable Γ M eq (uniform-typable {Γ = Γ} {M} a σ₀ D u)
+infer-untypableᴰ Γ M eq a nh (σ₀ , C , D , u) =
+  infer-untypable Γ M eq (uniform-typable {Γ = Γ} {M} nh a σ₀ D u)
 
 -- Checking: the same through an established check's scheme, and from an
 -- untypable verdict
@@ -176,17 +180,18 @@ infer-untypableᴰ Γ M eq a (σ₀ , C , D , u) =
 check-principal : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                 → {p : PrincipalScheme Γ M} → {e : Satisfiable (Q̃ p) (R̃ p)}
                 → check Γ M ≡ established p e
-                → AnnFreeᶜ M → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
+                → AnnFreeᶜ M → NoHandlerTypeᶜᵗˣ Γ
+                → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
                 → UniformTyping Γ σ₀ M D
                 → Principalᴰ p σ₀ C
 check-principal Γ M {p} _ = principalᴰ p
 
 check-untypableᴰ : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-                 → check Γ M ≡ untypable → AnnFreeᶜ M
+                 → check Γ M ≡ untypable → AnnFreeᶜ M → NoHandlerTypeᶜᵗˣ Γ
                  → ¬ (Σ[ σ₀ ∈ DInst Θ ] Σ[ C ∈ CType ] Σ[ D ∈ ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C ]
                         UniformTyping Γ σ₀ M D)
-check-untypableᴰ Γ M eq a (σ₀ , C , D , u) =
-  check-untypable Γ M eq (uniform-typable {Γ = Γ} {M} a σ₀ D u)
+check-untypableᴰ Γ M eq a nh (σ₀ , C , D , u) =
+  check-untypable Γ M eq (uniform-typable {Γ = Γ} {M} nh a σ₀ D u)
 
 ------------------------------------------------------------------------
 -- The round trip: the factoring instance of `principalᴰ`, read as
@@ -206,14 +211,15 @@ principal-premises P = sat-Q , ⊩ᴼˢ-⌜⌞⌟⌝ δ sat-R
 -- uniform typing `D` in `D`'s context, at a subtype of `D`'s type
 
 principal-typing : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalScheme Γ M)
-                 → AnnFreeᶜ M → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
+                 → SecondClassᶜ M → AnnFreeᶜ M → NoHandlerTypeᶜᵗˣ Γ
+                 → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
                  → UniformTyping Γ σ₀ M D
                  → Σ[ C' ∈ CType ] Σ[ D' ∈ ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C' ]
                      ((C' <:ᶜ C) × (CE.⌊ D' ⌋ᶜ ≡ CE.⌊ D ⌋ᶜ))
-principal-typing {Γ = Γ} {M} p a σ₀ D u
-  with principalᴰ p a σ₀ D u
+principal-typing {Γ = Γ} {M} p c a nh σ₀ D u
+  with principalᴰ p a nh σ₀ D u
 ... | P with principal-premises P
-...   | sQ , sR with scheme-instantiate p ⌞ Principalᴰ.δ P ⌟ˢ sQ sR
+...   | sQ , sR with scheme-instantiate p c ⌞ Principalᴰ.δ P ⌟ˢ sQ sR
 ...     | D' , e =
   ⟦ X̃ p ⟧ᶜ ⌞ Principalᴰ.δ P ⌟ˢ ,
   castᶜ (Principalᴰ.ctx P) refl D' ,
@@ -224,7 +230,8 @@ principal-typing {Γ = Γ} {M} p a σ₀ D u
 
 infer-principal-typing : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalScheme Γ M}
                        → infer Γ M ≡ typed p
-                       → AnnFreeᶜ M → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
+                       → SecondClassᶜ M → AnnFreeᶜ M → NoHandlerTypeᶜᵗˣ Γ
+                       → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
                        → UniformTyping Γ σ₀ M D
                        → Σ[ C' ∈ CType ] Σ[ D' ∈ ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C' ]
                            ((C' <:ᶜ C) × (CE.⌊ D' ⌋ᶜ ≡ CE.⌊ D ⌋ᶜ))

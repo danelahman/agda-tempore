@@ -321,7 +321,7 @@ data _⊩_≾̂ₑ_ {Θ} Q where
 -- Mirrors `Eternal` of `Language.Types`, plus rules for the eternality
 -- atoms of the hypothesis set and for transfer along an assumed
 -- subtyping in both directions; as in the original, no rule for `_⇒_`
--- and `[_]_`.
+-- and `[_]_`, and none for `_⇛_`.
 
 infix 4 _⊩ᴱ_
 
@@ -344,7 +344,7 @@ data _⊩ᴱ_ {Θ : Scope} (Q : Hyps Θ) : OVType Θ → Set where
 infix  4  _≡̂ᵛ_ _≡̂ᶜ_
 infix  37 [_]≡̂_
 infix  32 _|×|≡̂_ _|+|≡̂_
-infixr 30 _⇒≡̂_
+infixr 30 _⇒≡̂_ _⇛≡̂_
 infix  31 _‼≡̂_
 
 data _≡̂ᵛ_ {Θ : Scope} : OVType Θ → OVType Θ → Set
@@ -361,6 +361,7 @@ data _≡̂ᵛ_ {Θ} where
   |List|≡̂ : ∀ {A A'} → A ≡̂ᵛ A' → |List| A ≡̂ᵛ |List| A'
   Empty≡̂  : Empty ≡̂ᵛ Empty
   _⇒≡̂_    : ∀ {A A' C C'} → A ≡̂ᵛ A' → C ≡̂ᶜ C' → A ⇒ C ≡̂ᵛ A' ⇒ C'
+  _⇛≡̂_    : ∀ {C C' D D'} → C ≡̂ᶜ C' → D ≡̂ᶜ D' → C ⇛ D ≡̂ᵛ C' ⇛ D'
   [_]≡̂_   : ∀ {ρ ρ' A A'} → ρ ≡̂ᵣ ρ' → A ≡̂ᵛ A' → [ ρ ] A ≡̂ᵛ [ ρ' ] A'
 
 data _≡̂ᶜ_ {Θ} where
@@ -379,6 +380,7 @@ data _≡̂ᶜ_ {Θ} where
 ≡̂ᵛ-refl (|List| A) = |List|≡̂ (≡̂ᵛ-refl A)
 ≡̂ᵛ-refl Empty     = Empty≡̂
 ≡̂ᵛ-refl (A ⇒ C)   = ≡̂ᵛ-refl A ⇒≡̂ ≡̂ᶜ-refl C
+≡̂ᵛ-refl (C ⇛ D)   = ≡̂ᶜ-refl C ⇛≡̂ ≡̂ᶜ-refl D
 ≡̂ᵛ-refl ([ ρ ] A) = [ ≡̂ᵣ-refl ]≡̂ ≡̂ᵛ-refl A
 
 ≡̂ᶜ-refl (A ‼ ε) = ≡̂ᵛ-refl A ‼≡̂ ≡̂ₑ-refl
@@ -396,6 +398,7 @@ data _≡̂ᶜ_ {Θ} where
 ≡̂ᵛ-sym (|List|≡̂ p) = |List|≡̂ (≡̂ᵛ-sym p)
 ≡̂ᵛ-sym Empty≡̂      = Empty≡̂
 ≡̂ᵛ-sym (p ⇒≡̂ q)    = ≡̂ᵛ-sym p ⇒≡̂ ≡̂ᶜ-sym q
+≡̂ᵛ-sym (p ⇛≡̂ q)    = ≡̂ᶜ-sym p ⇛≡̂ ≡̂ᶜ-sym q
 ≡̂ᵛ-sym ([ r ]≡̂ p)  = [ ≡̂ᵣ-sym r ]≡̂ ≡̂ᵛ-sym p
 
 ≡̂ᶜ-sym (p ‼≡̂ e) = ≡̂ᵛ-sym p ‼≡̂ ≡̂ₑ-sym e
@@ -413,6 +416,7 @@ data _≡̂ᶜ_ {Θ} where
 ≡̂ᵛ-trans (|List|≡̂ p) (|List|≡̂ p') = |List|≡̂ (≡̂ᵛ-trans p p')
 ≡̂ᵛ-trans Empty≡̂     Empty≡̂      = Empty≡̂
 ≡̂ᵛ-trans (p ⇒≡̂ q)   (p' ⇒≡̂ q')   = ≡̂ᵛ-trans p p' ⇒≡̂ ≡̂ᶜ-trans q q'
+≡̂ᵛ-trans (p ⇛≡̂ q)   (p' ⇛≡̂ q')   = ≡̂ᶜ-trans p p' ⇛≡̂ ≡̂ᶜ-trans q q'
 ≡̂ᵛ-trans ([ r ]≡̂ p) ([ r' ]≡̂ p') = [ ≡̂ᵣ-trans r r' ]≡̂ ≡̂ᵛ-trans p p'
 
 ≡̂ᶜ-trans (p ‼≡̂ e) (p' ‼≡̂ e') = ≡̂ᵛ-trans p p' ‼≡̂ ≡̂ₑ-trans e e'
@@ -466,7 +470,7 @@ VarOK-≡̂ p q (hyp-ok m p' q') = hyp-ok m (≡̂ᵛ-trans p p') (transᵣ q q'
 infix  4  _∣_<:̂ᵛ_ _∣_<:̂ᶜ_
 infix  37 [_]ₛ_
 infix  32 _|×|ₛ_ _|+|ₛ_
-infixr 30 _⇒ₛ_
+infixr 30 _⇒ₛ_ _⇛ₛ_
 infix  31 _‼ₛ_
 
 data _∣_<:̂ᵛ_ {Θ : Scope} (Q : Hyps Θ) : OVType Θ → OVType Θ → Set
@@ -486,6 +490,8 @@ data _∣_<:̂ᵛ_ {Θ} Q where
   Emptyₛ : Q ∣ Empty <:̂ᵛ Empty
   _⇒ₛ_   : ∀ {A A' C C'} → Q ∣ A' <:̂ᵛ A → Q ∣ C <:̂ᶜ C'
          → Q ∣ (A ⇒ C) <:̂ᵛ (A' ⇒ C')
+  _⇛ₛ_   : ∀ {C C' D D'} → Q ∣ C' <:̂ᶜ C → Q ∣ D <:̂ᶜ D'
+         → Q ∣ (C ⇛ D) <:̂ᵛ (C' ⇛ D')
   [_]ₛ_  : ∀ {ρ ρ' A A'} → Q ⊩ ρ' ≾̂ᵣ ρ → Q ∣ A <:̂ᵛ A'
          → Q ∣ ([ ρ ] A) <:̂ᵛ ([ ρ' ] A')
 
@@ -508,6 +514,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-refl (|List| A) = |List|ₛ (<:̂ᵛ-refl A)
 <:̂ᵛ-refl Empty     = Emptyₛ
 <:̂ᵛ-refl (A ⇒ C)   = <:̂ᵛ-refl A ⇒ₛ <:̂ᶜ-refl C
+<:̂ᵛ-refl (C ⇛ D)   = <:̂ᶜ-refl C ⇛ₛ <:̂ᶜ-refl D
 <:̂ᵛ-refl ([ ρ ] A) = [ ⊩≾̂ᵣ-refl ]ₛ <:̂ᵛ-refl A
 
 <:̂ᶜ-refl (A ‼ ε) = <:̂ᵛ-refl A ‼ₛ ⊩≾̂ₑ-refl
@@ -529,6 +536,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-trans (|List|ₛ p) (|List|ₛ q) = |List|ₛ (<:̂ᵛ-trans p q)
 <:̂ᵛ-trans Emptyₛ     Emptyₛ     = Emptyₛ
 <:̂ᵛ-trans (p ⇒ₛ r)   (q ⇒ₛ s)   = <:̂ᵛ-trans q p ⇒ₛ <:̂ᶜ-trans r s
+<:̂ᵛ-trans (p ⇛ₛ r)   (q ⇛ₛ s)   = <:̂ᶜ-trans q p ⇛ₛ <:̂ᶜ-trans r s
 <:̂ᵛ-trans ([ p ]ₛ r) ([ q ]ₛ s) = [ transᵣ q p ]ₛ <:̂ᵛ-trans r s
 
 <:̂ᶜ-trans (p ‼ₛ r) (q ‼ₛ s) = <:̂ᵛ-trans p q ‼ₛ transₑ r s
@@ -548,6 +556,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 ≡̂ᵛ-<:̂ (|List|≡̂ p) = |List|ₛ (≡̂ᵛ-<:̂ p)
 ≡̂ᵛ-<:̂ Empty≡̂     = Emptyₛ
 ≡̂ᵛ-<:̂ (p ⇒≡̂ q)   = ≡̂ᵛ-<:̂ (≡̂ᵛ-sym p) ⇒ₛ ≡̂ᶜ-<:̂ q
+≡̂ᵛ-<:̂ (p ⇛≡̂ q)   = ≡̂ᶜ-<:̂ (≡̂ᶜ-sym p) ⇛ₛ ≡̂ᶜ-<:̂ q
 ≡̂ᵛ-<:̂ ([ r ]≡̂ p) = [ eqᵣ (≡̂ᵣ-sym r) ]ₛ ≡̂ᵛ-<:̂ p
 
 ≡̂ᶜ-<:̂ (p ‼≡̂ e) = ≡̂ᵛ-<:̂ p ‼ₛ eqₑ e
@@ -630,6 +639,15 @@ data _∣_<:̂ᶜ_ {Θ} Q where
          → Σ[ ρ₀ ∈ RExp Θ ] Σ[ A₀ ∈ OVType Θ ]
              (A ≡ [ ρ₀ ] A₀) × (Q ⊩ ρ ≾̂ᵣ ρ₀) × (Q ∣ A₀ <:̂ᵛ B)
 <:̂ᵛ-boxʳ ([ q ]ₛ p) = _ , _ , refl , q , p
+
+-- Inversion at a handler type: a supertype is a handler type,
+-- contravariantly in the handled computation type
+
+<:̂ᵛ-⇛ˡ : ∀ {Θ} {Q : Hyps Θ} {C D B}
+       → Q ∣ C ⇛ D <:̂ᵛ B
+       → Σ[ C' ∈ OCType Θ ] Σ[ D' ∈ OCType Θ ]
+           (B ≡ C' ⇛ D') × (Q ∣ C' <:̂ᶜ C) × (Q ∣ D <:̂ᶜ D')
+<:̂ᵛ-⇛ˡ (p ⇛ₛ q) = _ , _ , refl , p , q
 
 -- `Q' ⊩ᴴ Q [ σ ]` says `Q'` entails every hypothesis of `Q` transported
 -- along `σ`; there is no syntactic action of a substitution on `Hyps`,
@@ -778,6 +796,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ᵛ-subst σ (|List|≡̂ p) = |List|≡̂ (≡̂ᵛ-subst σ p)
 ≡̂ᵛ-subst σ Empty≡̂      = Empty≡̂
 ≡̂ᵛ-subst σ (p ⇒≡̂ q)    = ≡̂ᵛ-subst σ p ⇒≡̂ ≡̂ᶜ-subst σ q
+≡̂ᵛ-subst σ (p ⇛≡̂ q)    = ≡̂ᶜ-subst σ p ⇛≡̂ ≡̂ᶜ-subst σ q
 ≡̂ᵛ-subst σ ([ r ]≡̂ p)  = [ ≡̂ᵣ-subst σ r ]≡̂ ≡̂ᵛ-subst σ p
 
 ≡̂ᶜ-subst σ (p ‼≡̂ e) = ≡̂ᵛ-subst σ p ‼≡̂ ≡̂ₑ-subst σ e
@@ -799,6 +818,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩ᴱ-<:ˢ k (|List| A) (|List|ₑ et) = |List|ₑ (⊩ᴱ-<:ˢ k A et)
 ⊩ᴱ-<:ˢ k Empty     et           = et
 ⊩ᴱ-<:ˢ k (A ⇒ C)   ()
+⊩ᴱ-<:ˢ k (C ⇛ D)   ()
 ⊩ᴱ-<:ˢ k ([ ρ ] A) ()
 
 VarOK-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
@@ -823,6 +843,7 @@ VarOK-subst {σ = σ} h (hyp-ok m p q) = VarOK-≡̂ (≡̂ᵛ-subst σ p) (⊩-
 <:̂ᵛ-subst h (|List|ₛ p) = |List|ₛ (<:̂ᵛ-subst h p)
 <:̂ᵛ-subst h Emptyₛ     = Emptyₛ
 <:̂ᵛ-subst h (p ⇒ₛ r)   = <:̂ᵛ-subst h p ⇒ₛ <:̂ᶜ-subst h r
+<:̂ᵛ-subst h (p ⇛ₛ r)   = <:̂ᶜ-subst h p ⇛ₛ <:̂ᶜ-subst h r
 <:̂ᵛ-subst h ([ q ]ₛ p) = [ ⊩-substᵣ h q ]ₛ <:̂ᵛ-subst h p
 
 <:̂ᶜ-subst h (p ‼ₛ q) = <:̂ᵛ-subst h p ‼ₛ ⊩-substₑ h q

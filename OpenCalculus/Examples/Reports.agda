@@ -129,8 +129,8 @@ expected-reused-around-claim C ε =
 -- A box claimed in a clause built after a call
 --
 --   claimed-after-call f b = f ();
---     return (λ m. handle m () with op p k ↦ unbox b as y in
---                                 let a = op p in unbox k as k' in k' a)
+--     return (λ m. handle m () with handler {op p k ↦ unbox b as y in
+--                                 let a = op p in unbox k as k' in k' a})
 --
 -- The clause claims `b` after `f` and behind the clause's lock, so the
 -- least box grade is `∣ ε_f ∣ · ⊤ᵣ`: the top where the unit is least,
@@ -140,7 +140,7 @@ expected-reused-around-claim C ε =
 claimed-after-call : RawC ∅ˢ 0
 claimed-after-call =
   return (lam (return (lam
-    ((v₁ · ⋆) ⨟ return (lam (handle (v₀ · ⋆) `with clause-claim-after `in (return ⋆)))))))
+    ((v₁ · ⋆) ⨟ return (lam (handle (v₀ · ⋆) `with handler (return ⋆) clause-claim-after))))))
   where
     clause-claim-after : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc (suc (suc (suc n)))))
     clause-claim-after op =
@@ -153,12 +153,11 @@ claimed-after-call-typable =
     (return (lam (return (lam
       ((var (Tl-∷ Hd) ok₀ · ⋆)
        ⨟ return (lam (handle var Hd ok₀ · ⋆
-           `with (λ op →
+           `with handler (return ⋆) (λ op →
              unbox (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ Hd)))))) topᵣ (<:̂ᵛ-refl _)
                (perform op (var (Tl-∷ (Tl-∷ Hd)) ok₀)
                  (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) on-time (<:̂ᵛ-refl _)
-                   (var Hd ok₀ · var (Tl-∷ Hd) ok₀))))
-           `in (return ⋆))))))))
+                   (var Hd ok₀ · var (Tl-∷ Hd) ok₀)))))))))))
     refl
 
 expected-claimed-after-call : RExp (scope 3 0 2) → Scheme

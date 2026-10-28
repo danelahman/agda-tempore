@@ -76,9 +76,9 @@ module Syntax (S : LanguageSpec) where
   -- products, sums, lists, graded modal types and base types
   open import Language.Types S public using () renaming (GType to GroundType)
 
-  -- Value and computation types
+  -- Value and computation types, among them the handler types `C ⇛ D`
   open import OpenCalculus.Syntax.Types S public
-    using () renaming (OVType to ValueType; OCType to ComputationType)
+    using (_⇛_) renaming (OVType to ValueType; OCType to ComputationType)
 
   -- Contexts, and the lookup `x : X ∈_ρ Γ`
   open import OpenCalculus.Syntax.Contexts S public
@@ -90,9 +90,10 @@ module Syntax (S : LanguageSpec) where
     using (_⊩_≾̂ᵣ_; _⊩_≾̂ₑ_; _⊩ᴱ_; _∣_<:̂ᵛ_; _∣_<:̂ᶜ_; VarOK; _⊩ᴴ_[_])
     renaming (Hyps to Hypotheses)
 
-  -- Values and computations; handlers occur in `handle M with H to x in N`
+  -- Values and computations, among them the handlers `handler H` and
+  -- `handle M with V`
   open import OpenCalculus.Syntax.Raw S public
-    using () renaming (RawV to Value; RawC to Computation)
+    using (handler; handle_`with_) renaming (RawV to Value; RawC to Computation)
 
   -- Definition (Closed instances)
   open import Bridge.Instantiation.Types S public
@@ -117,7 +118,8 @@ module TypeSystem (S : LanguageSpec) where
   open import OpenCalculus.Typing S public
     using (_∣_⊢V⦂_; _∣_⊢C⦂_)
     renaming ( var to Var ; return to Return ; subC to Sub ; _⨟_ to Let
-             ; perform to Perform ; delay to Delay ; box to Box ; unbox to Unbox )
+             ; perform to Perform ; delay to Delay ; box to Box ; unbox to Unbox
+             ; handler to Handler ; handle_`with_ to Handle )
   open import OpenCalculus.Typing.Erasure S public using (⌊_⌋ᵛ; ⌊_⌋ᶜ)
 
   -- Definition (Type schemes): principal schemes of computations in open
@@ -160,14 +162,19 @@ module OperationalSemantics (S : LanguageSpec) where
 module InstantiationAndTypeSafety (S : LanguageSpec) (opEnum : OpEnum S) where
 
   -- Erasure `⌊ M[δ] ⌋`: the raw term at an instance, its annotations
-  -- forgotten, its grades evaluated, and its comparisons, values here and
+  -- forgotten, its grades evaluated, `handle M with handler H` the
+  -- closed calculus's one form, and its comparisons, values here and
   -- computations of the closed calculus, run before the computation
   -- whose values they are in, each binding its outcome
   open import Bridge.Instantiation.Terms S public
     using () renaming (⌊_⌋ᴿᶜ to erasure)
 
-  -- Theorem (Instantiation), into the closed calculus, each handler clause
-  -- instantiated at every continuation grade; a value as `return V`
+  -- Theorem (Instantiation), into the closed calculus, for terms whose
+  -- handlers are second-class, every handler being the handler of a
+  -- `handle` and every `handle`'s handler a handler; each handler
+  -- clause instantiated at every continuation grade; a value as
+  -- `return V`
+  open import OpenCalculus.Syntax.Raw S public using (SecondClassᶜ)
   open import Bridge.Instantiation.Terms S public
     using () renaming (instantiateᶜ to instantiation; instantiateᵛ to instantiationᵛ)
 
@@ -183,8 +190,9 @@ module InstantiationAndTypeSafety (S : LanguageSpec) (opEnum : OpEnum S) where
   open import ClosedCalculus.Adequacy.Normalization S public
     using () renaming (halts to termination)
 
-  -- Corollary (Programs): an established check gives a closed typing at an
-  -- instance, and that program halts
+  -- Corollary (Programs): for a term whose handlers are second-class, an
+  -- established check gives a closed typing at an instance, and that
+  -- program halts
   open import Bridge.Instantiation.Inference S opEnum public
     using () renaming (check-program to programs)
 
@@ -217,8 +225,10 @@ module TypeInference (S : LanguageSpec) (opEnum : OpEnum S) where
   open import OpenCalculus.Inference.SolverImpl S opEnum public
     using (infer; infer-typed; infer-untypable; infer-handlerFree)
 
-  -- Corollary (Completeness), for annotation-free terms, with respect to
-  -- closed typings whose handlers are uniform
+  -- Corollary (Completeness), for annotation-free terms in contexts with
+  -- no handler type, with respect to closed typings whose handlers are
+  -- uniform, the handler of each `handle` a handler
+  open import Bridge.Instantiation.Types S public using (NoHandlerTypeᶜᵗˣ)
   open import Bridge.Instantiation.Completeness S opEnum public
     using (UniformTyping; infer-principal; infer-untypableᴰ)
 
@@ -360,7 +370,7 @@ module CalculusWithGradeVariables (S : LanguageSpec) where
              ; Unitₛ to S-Unit ; Boolₛ to S-Bool ; Natₛ to S-Nat ; Emptyₛ to S-Empty
              ; Baseₛ to S-Base
              ; _|×|ₛ_ to S-Prod ; _|+|ₛ_ to S-Sum ; |List|ₛ to S-List
-             ; _⇒ₛ_ to S-Fun ; [_]ₛ_ to S-Box ; _‼ₛ_ to S-Comp )
+             ; _⇒ₛ_ to S-Fun ; [_]ₛ_ to S-Box ; _‼ₛ_ to S-Comp ; _⇛ₛ_ to S-Handler )
 
   -- The remaining typing rules. Const-Base types the constants of a base
   -- type.
@@ -600,8 +610,10 @@ module FormalisedResults (S : LanguageSpec) (opEnum : OpEnum S) where
 ------------------------------------------------------------------------
 -- Not yet formalised
 --
---   Handler types `C ⇛ D`, handler values `handler H` and `handle M with V`,
---   with the rules Handler and Handle for them.
+--   Handler types, handler values and `handle M with V` in the closed
+--   calculus, its semantics and equational theory, where handlers occur in
+--   `handle M with H to x in N`; instantiation for terms whose handlers
+--   are not second-class.
 --   Quantified orderings `∀e. ε ≾ ε'` in hypotheses, with the rules Inst and
 --   Gen; solutions and type schemes without separate obligations.
 --   Program contexts, the rule Def, type schemes of values, and programs.

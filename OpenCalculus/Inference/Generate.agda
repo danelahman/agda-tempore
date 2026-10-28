@@ -166,6 +166,37 @@ mutual
       A↑ = wkᵉ-v (wkᵗ-v (wkᵗ-v A))
       Γ↑ = wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
 
+  -- handlers
+  --
+  -- The handler is typed at the handler type it synthesises, a subtype
+  -- of the expected type. The result type, which occurs contravariantly
+  -- in the clause contexts inside the boxed continuation, is an ∃-bound
+  -- variable of its own, shared by the return clause and the clauses.
+  -- The clause's continuation grade is the rigid variable of its `∀ᵉ`.
+
+  genVˢ {Θ = Θ} ι Γ (handler N H) A =
+    ∃ᵗ (∃ᵗ (∃ᵉ (∃ᵉ (  ((α ‼ e₁) ⇛ (γ ‼ e₂) ≾̂ᵥᶜ A↑)
+                    ∧̂ genCˢ ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) N (γ ‼ e₂)
+                    ∧̂ ⋀ᵒᵖ (λ op →
+                         ∀ᵉ (genCˢ (ι↑ ↑ᵉ)
+                                  (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                                    ∷ [ rconst (mapᵉ (op-grade op)) ]
+                                        (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
+                                  (H op)
+                                  (γ⇑ ‼ (econst (op-grade op) ·̂ₑ e''))))))))
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ
+      α  = wkᵉ-v (wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ}))))
+      γ  = wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty})))
+      e₁ = wkᵉ-e (evar (newᵉ {Θ +ty +ty}))
+      e₂ = evar (newᵉ {Θ +ty +ty +e})
+      A↑ = wkᵉ-v (wkᵉ-v (wkᵗ-v (wkᵗ-v A)))
+      Γ↑ = wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))
+      -- and additionally under the rigid `∀ᵉ` of a clause
+      e'' = evar (newᵉ {Θ +ty +ty +e +e})
+      γ⇑  = wkᵉ-v (wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty}))))
+      Γ⇑  = wkᵉ-ctx (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))))
+
   -- type annotation
   --
   -- The value is checked against the annotation, read through `ι`, which
@@ -341,24 +372,15 @@ mutual
 
   -- effect handling
   --
-  -- The handled result type, which occurs contravariantly in the clause
-  -- contexts inside the boxed continuation, is an ∃-bound variable of its
-  -- own, a subtype of the expected type, shared by the clauses and the
-  -- continuation. The clause's continuation grade is the rigid variable
-  -- of its `∀ᵉ`.
+  -- The handled computation's type and the handler's result type are
+  -- ∃-bound; the handler is checked against the handler type they form,
+  -- whose result lies below the expected type and effect.
 
-  genCˢ {Θ = Θ} ι Γ (handle M `with H `in N) (A ‼ t) =
+  genCˢ {Θ = Θ} ι Γ (handle M `with V) (A ‼ t) =
     ∃ᵗ (∃ᵗ (∃ᵉ (∃ᵉ (  genCˢ ι↑ Γ↑ M (α ‼ e₁)
-                    ∧̂ genCˢ ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) N (γ ‼ e₂)
+                    ∧̂ genVˢ ι↑ Γ↑ V ((α ‼ e₁) ⇛ (γ ‼ e₂))
                     ∧̂ (γ ≾̂ᵥᶜ A↑)
-                    ∧̂ ((e₁ ·̂ₑ e₂) ≾̂ₑᶜ t↑)
-                    ∧̂ ⋀ᵒᵖ (λ op →
-                         ∀ᵉ (genCˢ (ι↑ ↑ᵉ)
-                                  (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                                    ∷ [ rconst (mapᵉ (op-grade op)) ]
-                                        (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
-                                  (H op)
-                                  (γ⇑ ‼ (econst (op-grade op) ·̂ₑ e''))))))))
+                    ∧̂ ((e₁ ·̂ₑ e₂) ≾̂ₑᶜ t↑)))))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ
       α  = wkᵉ-v (wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ}))))
@@ -368,10 +390,6 @@ mutual
       A↑ = wkᵉ-v (wkᵉ-v (wkᵗ-v (wkᵗ-v A)))
       t↑ = wkᵉ-e (wkᵉ-e (wkᵗ-e (wkᵗ-e t)))
       Γ↑ = wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))
-      -- and additionally under the rigid `∀ᵉ` of a clause
-      e'' = evar (newᵉ {Θ +ty +ty +e +e})
-      γ⇑  = wkᵉ-v (wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty}))))
-      Γ⇑  = wkᵉ-ctx (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))))
 
   -- unboxing a boxed variable
   --
@@ -436,6 +454,7 @@ mutual
   genVˢ-rigidFree (cons V W)   (h , k) = (tt , tt) , genVˢ-rigidFree V h , genVˢ-rigidFree W k
   genVˢ-rigidFree (cmp ⋈ V W)  (h , k) = (tt , tt) , genVˢ-rigidFree V h , genVˢ-rigidFree W k , tt
   genVˢ-rigidFree (lam M)      h       = tt , genCˢ-rigidFree M h
+  genVˢ-rigidFree (handler N H) ()
   genVˢ-rigidFree (V ⦂ᵛ B)     h       = genVˢ-rigidFree V h , tt
 
   genCˢ-rigidFree : ∀ {Θ₀ Θ n} {ι : Subst Θ₀ Θ} {Γ : OCtx Θ n} → (M : RawC Θ₀ n)
@@ -466,7 +485,8 @@ mutual
     genVˢ-rigidFree V h , genCˢ-rigidFree M k , tt
   genCˢ-rigidFree (delay τ M)              {A ‼ t} h           =
     genCˢ-rigidFree M h , tt
-  genCˢ-rigidFree (handle M `with H `in N) {A ‼ t} ()
+  genCˢ-rigidFree (handle M `with V)       {A ‼ t} (h , k)     =
+    genCˢ-rigidFree M h , genVˢ-rigidFree V k , tt , tt
   genCˢ-rigidFree (unbox i N)              {A ‼ t} h           =
     (tt , tt) , tt , tt , genCˢ-rigidFree N h
   genCˢ-rigidFree (box ρ V N)              {A ‼ t} (h , k)     =

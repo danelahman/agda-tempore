@@ -51,13 +51,15 @@ _▷ᵇ : Ctx → Ctx
 infixl 31 _▷ᵇ
 
 -- `Γ ≼ Δ`: the variables of `Γ` among those of `Δ`, which has bound
--- outcomes interleaved. `≼-drop` forgets a lock, which only a variable
--- of eternal type may cross.
+-- outcomes interleaved. `≼-≾` maps a lock to one at a grade below it,
+-- and `≼-drop` forgets a lock, which only a variable of eternal type
+-- may cross.
 
 data _≼_ : Ctx → Ctx → Set where
   ≼-refl : ∀ {Γ} → Γ ≼ Γ
   ≼-∷    : ∀ {Γ Δ A} → Γ ≼ Δ → Γ ∷ A ≼ Δ ∷ A
   ≼-⟨⟩   : ∀ {Γ Δ ρ} → Γ ≼ Δ → Γ ⟨ ρ ⟩ ≼ Δ ⟨ ρ ⟩
+  ≼-≾    : ∀ {Γ Δ ρ ρ'} → Γ ≼ Δ → ρ' ≾ᵣ ρ → Γ ⟨ ρ ⟩ ≼ Δ ⟨ ρ' ⟩
   ≼-▷    : ∀ {Γ Δ} → Γ ≼ Δ → Γ ≼ Δ ▷ᵇ
   ≼-drop : ∀ {Γ Δ ρ} → Γ ≼ Δ → Γ ⟨ ρ ⟩ ≼ Δ
 
@@ -69,8 +71,19 @@ Full : ∀ {Γ Δ} → Γ ≼ Δ → Set
 Full ≼-refl     = ⊤
 Full (≼-∷ ι)    = Full ι
 Full (≼-⟨⟩ ι)   = Full ι
+Full (≼-≾ ι p)  = Full ι
 Full (≼-▷ ι)    = Full ι
 Full (≼-drop ι) = ⊥
+
+-- A map that keeps every lock at its grade
+
+Exact : ∀ {Γ Δ} → Γ ≼ Δ → Set
+Exact ≼-refl     = ⊤
+Exact (≼-∷ ι)    = Exact ι
+Exact (≼-⟨⟩ ι)   = Exact ι
+Exact (≼-≾ ι p)  = ⊥
+Exact (≼-▷ ι)    = Exact ι
+Exact (≼-drop ι) = ⊥
 
 -- A variable through a map forgetting no lock, at a grade below its own
 
@@ -82,6 +95,10 @@ look (≼-∷ ι) f (Tl-∷ x)  = proj₁ l , Tl-∷ (proj₁ (proj₂ l)) , pro
   where l = look ι f x
 look (≼-⟨⟩ ι) f (Tl-⟨⟩ x) =
   proj₁ l ·ᵣ _ , Tl-⟨⟩ (proj₁ (proj₂ l)) , ·ᵣ-monoˡ-≾ᵣ (proj₂ (proj₂ l))
+  where l = look ι f x
+look (≼-≾ ι p) f (Tl-⟨⟩ x) =
+  proj₁ l ·ᵣ _ , Tl-⟨⟩ (proj₁ (proj₂ l)) ,
+  ≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ p) (·ᵣ-monoˡ-≾ᵣ (proj₂ (proj₂ l)))
   where l = look ι f x
 look (≼-▷ ι) f x =
   proj₁ l ·ᵣ mapᵉ uₑ , Tl-∷ (Tl-⟨⟩ (proj₁ (proj₂ l))) ,
@@ -97,6 +114,7 @@ lookᴱ ≼-refl     x         = _ , x
 lookᴱ (≼-∷ ι)    Hd        = _ , Hd
 lookᴱ (≼-∷ ι)    (Tl-∷ x)  = _ , Tl-∷ (proj₂ (lookᴱ ι x))
 lookᴱ (≼-⟨⟩ ι)   (Tl-⟨⟩ x) = _ , Tl-⟨⟩ (proj₂ (lookᴱ ι x))
+lookᴱ (≼-≾ ι p)  (Tl-⟨⟩ x) = _ , Tl-⟨⟩ (proj₂ (lookᴱ ι x))
 lookᴱ (≼-▷ ι)    x         = _ , Tl-∷ (Tl-⟨⟩ (proj₂ (lookᴱ ι x)))
 lookᴱ (≼-drop ι) (Tl-⟨⟩ x) = lookᴱ ι x
 
@@ -117,6 +135,7 @@ posᴿ (shᴿ r)  n       = suc (posᴿ r n)
 ⌊ ≼-refl ⌋ᵐ   = idᴿ
 ⌊ ≼-∷ ι ⌋ᵐ    = extᴿ ⌊ ι ⌋ᵐ
 ⌊ ≼-⟨⟩ ι ⌋ᵐ   = ⌊ ι ⌋ᵐ
+⌊ ≼-≾ ι p ⌋ᵐ  = ⌊ ι ⌋ᵐ
 ⌊ ≼-▷ ι ⌋ᵐ    = shᴿ ⌊ ι ⌋ᵐ
 ⌊ ≼-drop ι ⌋ᵐ = ⌊ ι ⌋ᵐ
 
@@ -126,6 +145,7 @@ look-pos ≼-refl   f x         = refl
 look-pos (≼-∷ ι)  f Hd        = refl
 look-pos (≼-∷ ι)  f (Tl-∷ x)  = cong suc (look-pos ι f x)
 look-pos (≼-⟨⟩ ι) f (Tl-⟨⟩ x) = look-pos ι f x
+look-pos (≼-≾ ι p) f (Tl-⟨⟩ x) = look-pos ι f x
 look-pos (≼-▷ ι)  f x         = cong suc (look-pos ι f x)
 
 lookᴱ-pos : ∀ {Γ Δ A ρ} → (ι : Γ ≼ Δ) → (x : A ∈[ ρ ] Γ)
@@ -134,6 +154,7 @@ lookᴱ-pos ≼-refl     x         = refl
 lookᴱ-pos (≼-∷ ι)    Hd        = refl
 lookᴱ-pos (≼-∷ ι)    (Tl-∷ x)  = cong suc (lookᴱ-pos ι x)
 lookᴱ-pos (≼-⟨⟩ ι)   (Tl-⟨⟩ x) = lookᴱ-pos ι x
+lookᴱ-pos (≼-≾ ι p)  (Tl-⟨⟩ x) = lookᴱ-pos ι x
 lookᴱ-pos (≼-▷ ι)    x         = cong suc (lookᴱ-pos ι x)
 lookᴱ-pos (≼-drop ι) (Tl-⟨⟩ x) = lookᴱ-pos ι x
 
@@ -266,6 +287,7 @@ wk▷ RawV.false          e  = tt
 wk▷ RawV.zero           e  = tt
 wk▷ RawV.nil            e  = tt
 wk▷ (RawV.lam M)        e  = tt
+wk▷ (RawV.handler N H)  e  = tt
 
 -- along a telescope
 
@@ -291,6 +313,7 @@ lockᴱ RawV.false          e  = tt
 lockᴱ RawV.zero           e  = tt
 lockᴱ RawV.nil            e  = tt
 lockᴱ (RawV.lam M)        e  = tt
+lockᴱ (RawV.handler N H)  e  = tt
 
 -- Raw outcomes: the positions of the variables
 
@@ -323,6 +346,7 @@ rightᴱ _         = ∅ᴿ
 ⌊ RawV.zero ⌋ᴱ         e  = ∅ᴿ
 ⌊ RawV.nil ⌋ᴱ          e  = ∅ᴿ
 ⌊ RawV.lam M ⌋ᴱ        e  = ∅ᴿ
+⌊ RawV.handler N H ⌋ᴱ  e  = ∅ᴿ
 
 shᴱ : Envᴿ → Envᴿ
 shᴱ ∅ᴿ        = ∅ᴿ
@@ -351,6 +375,7 @@ wkᴿ (T ▷ c) e = shᴱ (wkᴿ T e)
 ⌊wk▷⌋ RawV.zero           e  = refl
 ⌊wk▷⌋ RawV.nil            e  = refl
 ⌊wk▷⌋ (RawV.lam M)        e  = refl
+⌊wk▷⌋ (RawV.handler N H)  e  = refl
 
 ⌊wkᵀ⌋ : ∀ {Θ n Δ Δ'} → (V : RawV Θ n) → (T : Tel Δ Δ') → (e : Envᶜ Δ V)
       → ⌊ V ⌋ᴱ (wkᵀ V T e) ≡ wkᴿ ⌊ T ⌋ᵀ (⌊ V ⌋ᴱ e)
@@ -374,6 +399,7 @@ wkᴿ (T ▷ c) e = shᴱ (wkᴿ T e)
 ⌊lockᴱ⌋ RawV.zero           e  = refl
 ⌊lockᴱ⌋ RawV.nil            e  = refl
 ⌊lockᴱ⌋ (RawV.lam M)        e  = refl
+⌊lockᴱ⌋ (RawV.handler N H)  e  = refl
 
 ------------------------------------------------------------------------
 -- The comparisons hoisted from a value: a telescope, and the outcome

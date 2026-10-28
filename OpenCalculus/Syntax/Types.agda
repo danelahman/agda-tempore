@@ -2,10 +2,10 @@
 -- Open value and computation types                             --
 --                                                              --
 -- The types of `Language.Types` with grade expressions in      --
--- place of grades, and a former `tvar` for type variables,     --
--- which has no counterpart in `Language.Types`. The ground     --
--- types of the operation signature embed by `⌜_⌝ᵍ`; `Nat`,     --
--- sums and lists are not among them.                           --
+-- place of grades, and the formers `tvar` of type variables    --
+-- and `_⇛_` of handler types, which have no counterpart in     --
+-- `Language.Types`. The ground types of the operation          --
+-- signature embed by `⌜_⌝ᵍ`.                                   --
 ------------------------------------------------------------------
 
 open import Grades.Base
@@ -37,6 +37,7 @@ mutual
     |List| : OVType Θ → OVType Θ             -- list type
     Empty : OVType Θ                         -- empty type
     _⇒_   : OVType Θ → OCType Θ → OVType Θ   -- function type
+    _⇛_   : OCType Θ → OCType Θ → OVType Θ   -- handler type
     [_]_  : RExp Θ → OVType Θ → OVType Θ     -- box modality
 
   data OCType (Θ : Scope) : Set where
@@ -44,7 +45,7 @@ mutual
 
   infix  37 [_]_
   infix  32 _|×|_ _|+|_
-  infixr 30 _⇒_
+  infixr 30 _⇒_ _⇛_
   infix  31 _‼_
 
 -- Embedding ground types into open types (mirrors `type-of-gtype`)
@@ -75,6 +76,7 @@ mutual
   wkᵗ-v     (|List| A) = |List| (wkᵗ-v A)
   wkᵗ-v     Empty    = Empty
   wkᵗ-v     (A ⇒ C)  = wkᵗ-v A ⇒ wkᵗ-c C
+  wkᵗ-v     (C ⇛ D)  = wkᵗ-c C ⇛ wkᵗ-c D
   wkᵗ-v     ([ ρ ] A) = [ wkᵗ-r ρ ] wkᵗ-v A
 
   wkᵗ-c : ∀ {Θ} → OCType Θ → OCType (Θ +ty)
@@ -93,6 +95,7 @@ mutual
   wkʳ-v     (|List| A) = |List| (wkʳ-v A)
   wkʳ-v     Empty    = Empty
   wkʳ-v     (A ⇒ C)  = wkʳ-v A ⇒ wkʳ-c C
+  wkʳ-v     (C ⇛ D)  = wkʳ-c C ⇛ wkʳ-c D
   wkʳ-v     ([ ρ ] A) = [ wkʳ-r ρ ] wkʳ-v A
 
   wkʳ-c : ∀ {Θ} → OCType Θ → OCType (Θ +r)
@@ -111,6 +114,7 @@ mutual
   wkᵉ-v     (|List| A) = |List| (wkᵉ-v A)
   wkᵉ-v     Empty    = Empty
   wkᵉ-v     (A ⇒ C)  = wkᵉ-v A ⇒ wkᵉ-c C
+  wkᵉ-v     (C ⇛ D)  = wkᵉ-c C ⇛ wkᵉ-c D
   wkᵉ-v     ([ ρ ] A) = [ wkᵉ-r ρ ] wkᵉ-v A
 
   wkᵉ-c : ∀ {Θ} → OCType Θ → OCType (Θ +e)

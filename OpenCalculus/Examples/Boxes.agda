@@ -449,8 +449,8 @@ expected-nesting = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ econst (of-durᵉ ⌜ 1 ⌝
 -- 8. A box claimed inside an operation clause
 --
 --   claimed-in-clause ρ m = box[ρ] () as x in
---     handle m () with op p k ↦ unbox x as y in
---                               let a = op p in unbox k as k' in k' a
+--     handle m () with handler {op p k ↦ unbox x as y in
+--                               let a = op p in unbox k as k' in k' a}
 --
 -- A clause sees the ambient context behind the lock `⟨ ⊤ᵣ ⟩`, so the
 -- premise is `⊤ᵣ ≾ ρ`. At `ρ = ⊤ᵣ` it holds at every grade; at
@@ -464,7 +464,7 @@ clause-claim op =
 
 claimed-in-clause : RExp ∅ˢ → RawC ∅ˢ 0
 claimed-in-clause ρ =
-  return (lam (box ρ ⋆ (handle (v₁ · ⋆) `with clause-claim {∅ˢ} `in (return ⋆))))
+  return (lam (box ρ ⋆ (handle (v₁ · ⋆) `with handler (return ⋆) (clause-claim {∅ˢ}))))
 
 private
 
@@ -484,7 +484,7 @@ claimed-in-clause-D : ∀ {c} → ⊤ᵣ ≾ᴳ c
                     → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ Unit ‼ (ûₑ ·̂ₑ ûₑ)) ‼ ûₑ
 claimed-in-clause-D {c} p =
   return (lam (box (rconst c) ⋆
-    (handle var (Tl-∷ Hd) ok₀ · ⋆ `with clause-claim-D p `in (return ⋆))))
+    (handle var (Tl-∷ Hd) ok₀ · ⋆ `with handler (return ⋆) (clause-claim-D p))))
 
 claimed-in-clause-typable : ∀ c → True (⊤ᵣ ≾ᵣ? c) → Typable [] (claimed-in-clause (rconst c))
 claimed-in-clause-typable c p = closed (claimed-in-clause-D (toWitness p)) refl
@@ -501,17 +501,17 @@ expected-claimed-in-clause =
 -- The same clause claiming a box the caller hands in: its grade is
 -- inferred, and the least grade above `⊤ᵣ` is `⊤ᵣ`.
 --
---   handed-to-clause m b = handle m () with op p k ↦ unbox b as y in …
+--   handed-to-clause m b = handle m () with handler {op p k ↦ unbox b as y in …}
 
 handed-to-clause : RawC ∅ˢ 0
 handed-to-clause =
-  return (lam (return (lam (handle (v₁ · ⋆) `with clause-claim {∅ˢ} `in (return ⋆)))))
+  return (lam (return (lam (handle (v₁ · ⋆) `with handler (return ⋆) (clause-claim {∅ˢ})))))
 
 handed-to-clause-typable : Typable [] handed-to-clause
 handed-to-clause-typable =
   closed {C = (U⇒U ⇒ ([ rconst ⊤ᵣ ] Unit ⇒ Unit ‼ (ûₑ ·̂ₑ ûₑ)) ‼ ûₑ) ‼ ûₑ}
     (return (lam (return (lam
-      (handle var (Tl-∷ Hd) ok₀ · ⋆ `with clause-claim-D ≾ᵣ-refl `in (return ⋆))))))
+      (handle var (Tl-∷ Hd) ok₀ · ⋆ `with handler (return ⋆) (clause-claim-D ≾ᵣ-refl))))))
     refl
 
 expected-handed-to-clause : Scheme

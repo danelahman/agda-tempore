@@ -8,10 +8,15 @@
 -- structurally (`⟦_⟧ᵛ`, `⟦_⟧ᶜ`, `⟦_⟧ᶜᵗˣ`): a variable is       --
 -- looked up in `σ`, each former goes to its closed             --
 -- counterpart, and a grade expression is evaluated in the      --
--- carrier (`⟦_⟧ʳ`, `⟦_⟧ᵉ`).                                    --
+-- carrier (`⟦_⟧ʳ`, `⟦_⟧ᵉ`). A handler type, which has no       --
+-- closed counterpart, means the fixed non-eternal type         --
+-- `handlerᴰ`.                                                  --
 ------------------------------------------------------------------
 
+open import Data.Empty using (⊥)
 open import Data.Fin using (zero; suc)
+open import Data.Product using (_×_; _,_)
+open import Data.Unit using (⊤; tt)
 
 open import Grades.Base
 open import Language.Spec
@@ -54,6 +59,13 @@ _,ᵉᴰ_ : ∀ {Θ} → DInst Θ → E → DInst (Θ +e)
 ------------------------------------------------------------------------
 -- Interpretation
 
+-- The meaning of every handler type. Instantiation covers the terms
+-- whose handlers are second-class (`SecondClassᶜ`), where no handler is
+-- a value; the type is not eternal, as no handler type is.
+
+handlerᴰ : VType
+handlerᴰ = Unit ⇒ Unit ‼ uₑ
+
 ⟦_⟧ᵉ : ∀ {Θ} → EExp Θ → DInst Θ → E
 ⟦ evar i ⟧ᵉ    σ = eff σ i
 ⟦ econst c ⟧ᵉ  σ = c
@@ -80,6 +92,7 @@ mutual
   ⟦ |List| A ⟧ᵛ σ = |List| (⟦ A ⟧ᵛ σ)
   ⟦ Empty ⟧ᵛ    σ = Empty
   ⟦ A ⇒ C ⟧ᵛ    σ = ⟦ A ⟧ᵛ σ ⇒ ⟦ C ⟧ᶜ σ
+  ⟦ C ⇛ D ⟧ᵛ    σ = handlerᴰ
   ⟦ [ ρ ] A ⟧ᵛ  σ = [ ⟦ ρ ⟧ʳ σ ] ⟦ A ⟧ᵛ σ
 
   ⟦_⟧ᶜ : ∀ {Θ} → OCType Θ → DInst Θ → CType
@@ -102,6 +115,49 @@ mutual
 ⟦⌜ A |+|ᵍ B ⌝ᵍ⟧ σ  = cong₂ _|+|_ (⟦⌜ A ⌝ᵍ⟧ σ) (⟦⌜ B ⌝ᵍ⟧ σ)
 ⟦⌜ |List|ᵍ A ⌝ᵍ⟧ σ = cong |List| (⟦⌜ A ⌝ᵍ⟧ σ)
 ⟦⌜ [ ρ ]ᵍ A ⌝ᵍ⟧ σ  = cong ([ ρ ]_) (⟦⌜ A ⌝ᵍ⟧ σ)
+
+------------------------------------------------------------------------
+-- Types and contexts in which no handler type occurs: those whose
+-- meaning is their closed counterpart
+
+mutual
+
+  NoHandlerTypeᵛ : ∀ {Θ} → OVType Θ → Set
+  NoHandlerTypeᵛ (A |×| B)  = NoHandlerTypeᵛ A × NoHandlerTypeᵛ B
+  NoHandlerTypeᵛ (A |+| B)  = NoHandlerTypeᵛ A × NoHandlerTypeᵛ B
+  NoHandlerTypeᵛ (|List| A) = NoHandlerTypeᵛ A
+  NoHandlerTypeᵛ (A ⇒ C)    = NoHandlerTypeᵛ A × NoHandlerTypeᶜ C
+  NoHandlerTypeᵛ (C ⇛ D)    = ⊥
+  NoHandlerTypeᵛ ([ ρ ] A)  = NoHandlerTypeᵛ A
+  NoHandlerTypeᵛ _          = ⊤
+
+  NoHandlerTypeᶜ : ∀ {Θ} → OCType Θ → Set
+  NoHandlerTypeᶜ (A ‼ ε) = NoHandlerTypeᵛ A
+
+NoHandlerTypeᶜᵗˣ : ∀ {Θ n} → OCtx Θ n → Set
+NoHandlerTypeᶜᵗˣ []        = ⊤
+NoHandlerTypeᶜᵗˣ (Γ ∷ A)   = NoHandlerTypeᶜᵗˣ Γ × NoHandlerTypeᵛ A
+NoHandlerTypeᶜᵗˣ (Γ ⟨ ρ ⟩) = NoHandlerTypeᶜᵗˣ Γ
+
+-- the type of a variable of such a context, and a ground type, have no
+-- handler type
+
+∈̂-noHandler : ∀ {Θ n A ρ} {Γ : OCtx Θ n} → NoHandlerTypeᶜᵗˣ Γ → A ∈̂[ ρ ] Γ
+            → NoHandlerTypeᵛ A
+∈̂-noHandler (h , k) Hd        = k
+∈̂-noHandler (h , k) (Tl-∷ x)  = ∈̂-noHandler h x
+∈̂-noHandler h       (Tl-⟨⟩ x) = ∈̂-noHandler h x
+
+⌜⌝ᵍ-noHandler : ∀ {Θ} → (g : GType) → NoHandlerTypeᵛ {Θ} ⌜ g ⌝ᵍ
+⌜⌝ᵍ-noHandler (Base b)    = tt
+⌜⌝ᵍ-noHandler Unit        = tt
+⌜⌝ᵍ-noHandler Bool        = tt
+⌜⌝ᵍ-noHandler Nat         = tt
+⌜⌝ᵍ-noHandler Empty       = tt
+⌜⌝ᵍ-noHandler (A |×|ᵍ B)  = ⌜⌝ᵍ-noHandler A , ⌜⌝ᵍ-noHandler B
+⌜⌝ᵍ-noHandler (A |+|ᵍ B)  = ⌜⌝ᵍ-noHandler A , ⌜⌝ᵍ-noHandler B
+⌜⌝ᵍ-noHandler (|List|ᵍ A) = ⌜⌝ᵍ-noHandler A
+⌜⌝ᵍ-noHandler ([ ρ ]ᵍ A)  = ⌜⌝ᵍ-noHandler A
 
 ------------------------------------------------------------------------
 -- Weakening by an effect-grade variable, at an extended instance
@@ -134,6 +190,7 @@ module _ {Θ} (σ : DInst Θ) (c : E) where
     ⟦wkᵉ⟧ᵛ (|List| A) = cong |List| (⟦wkᵉ⟧ᵛ A)
     ⟦wkᵉ⟧ᵛ Empty      = refl
     ⟦wkᵉ⟧ᵛ (A ⇒ C)    = cong₂ _⇒_ (⟦wkᵉ⟧ᵛ A) (⟦wkᵉ⟧ᶜ C)
+    ⟦wkᵉ⟧ᵛ (C ⇛ D)    = refl
     ⟦wkᵉ⟧ᵛ ([ ρ ] A)  = cong₂ [_]_ (⟦wkᵉ⟧ʳ ρ) (⟦wkᵉ⟧ᵛ A)
 
     ⟦wkᵉ⟧ᶜ : (C : OCType Θ) → ⟦ wkᵉ-c C ⟧ᶜ (σ ,ᵉᴰ c) ≡ ⟦ C ⟧ᶜ σ

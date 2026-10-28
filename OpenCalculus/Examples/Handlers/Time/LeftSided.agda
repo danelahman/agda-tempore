@@ -38,6 +38,18 @@ relay-reported = refl
 relay-boxed-reported : schemeOf (infer [] relay-boxed) ≡ just expected-relay-boxed
 relay-boxed-reported = refl
 
+-- A handler as a value: bound by `let`, taken as an argument, and
+-- passed to a function
+
+bound-reported : schemeOf (infer [] bound) ≡ just expected-bound
+bound-reported = refl
+
+run-reported : schemeOf (infer [] run) ≡ just expected-run-commuted
+run-reported = refl
+
+run-forward-reported : schemeOf (infer [] run-forward) ≡ just expected-run-forward
+run-forward-reported = refl
+
 -- The unit is the top, so the continuation may be spent twice and
 -- nothing goes stale
 
@@ -59,7 +71,7 @@ discard-not-typable = infer-untypable [] discard discard-untypable-verdict
 -- A clause that delays the 4 ticks of `send` and drops its
 -- continuation:
 --
---   late-discard m = handle m () with op p k ↦ delay 4; return ()
+--   late-discard m = handle m () with handler {op p k ↦ delay 4; return ()}
 --
 -- The clause's grade `4` must be below `op · j` for every
 -- continuation grade `j`: at `send`, `j` is the unit, which is the
@@ -68,7 +80,7 @@ discard-not-typable = infer-untypable [] discard discard-untypable-verdict
 
 late-discard : RawC ∅ˢ 0
 late-discard =
-  return (lam (handle (v₀ · ⋆) `with (λ _ → delay 4 (return ⋆)) `in (return ⋆)))
+  return (lam (handle (v₀ · ⋆) `with handler (return ⋆) (λ _ → delay 4 (return ⋆))))
 
 late-discard-verdict : infer [] late-discard ≡ untypable
 late-discard-verdict = refl
@@ -78,10 +90,10 @@ late-discard-verdict = refl
 -- operation, handles a `send` with the clause above, and resumes.
 
 nested-reject : RawC ∅ˢ 0
-nested-reject = return (lam (handle (v₀ · ⋆) `with outer `in (return ⋆)))
+nested-reject = return (lam (handle (v₀ · ⋆) `with handler (return ⋆) outer))
   where
     inner : ∀ {Θ n} → RawC Θ n
-    inner = handle (perform send ⋆ (return ⋆)) `with (λ _ → delay 4 (return ⋆)) `in (return ⋆)
+    inner = handle (perform send ⋆ (return ⋆)) `with handler (return ⋆) (λ _ → delay 4 (return ⋆))
 
     outer : Op → RawC (∅ˢ +e) (suc (suc (suc 0)))
     outer op = perform op v₁ (inner ⨟ unbox (fsuc (fsuc fzero)) (v₀ · v₂))

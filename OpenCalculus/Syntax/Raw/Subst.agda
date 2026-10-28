@@ -48,6 +48,7 @@ mutual
   cmp ⋈ V W    [ σ ]ᴿᵛ = cmp ⋈ (V [ σ ]ᴿᵛ) (W [ σ ]ᴿᵛ)
   ⦉ V , W ⦊     [ σ ]ᴿᵛ = ⦉ (V [ σ ]ᴿᵛ) , (W [ σ ]ᴿᵛ) ⦊
   lam M        [ σ ]ᴿᵛ = lam (M [ σ ]ᴿᶜ)
+  handler N H  [ σ ]ᴿᵛ = handler (N [ σ ]ᴿᶜ) (λ op → H op [ σ ↑ᵉ ]ᴿᶜ)
   (V ⦂ᵛ A)     [ σ ]ᴿᵛ = (V [ σ ]ᴿᵛ) ⦂ᵛ (A [ σ ]ᵛ)
 
   _[_]ᴿᶜ : ∀ {Θ Θ' n} → RawC Θ n → Subst Θ Θ' → RawC Θ' n
@@ -64,8 +65,7 @@ mutual
   recL V M N               [ σ ]ᴿᶜ = recL (V [ σ ]ᴿᵛ) (M [ σ ]ᴿᶜ) (N [ σ ]ᴿᶜ)
   perform op V M           [ σ ]ᴿᶜ = perform op (V [ σ ]ᴿᵛ) (M [ σ ]ᴿᶜ)
   delay τ M                [ σ ]ᴿᶜ = delay τ (M [ σ ]ᴿᶜ)
-  (handle M `with H `in N) [ σ ]ᴿᶜ =
-    handle (M [ σ ]ᴿᶜ) `with (λ op → H op [ σ ↑ᵉ ]ᴿᶜ) `in (N [ σ ]ᴿᶜ)
+  (handle M `with V)       [ σ ]ᴿᶜ = handle (M [ σ ]ᴿᶜ) `with (V [ σ ]ᴿᵛ)
   unbox i N                [ σ ]ᴿᶜ = unbox i (N [ σ ]ᴿᶜ)
   box ρ V N                [ σ ]ᴿᶜ = box (ρ [ σ ]ʳ) (V [ σ ]ᴿᵛ) (N [ σ ]ᴿᶜ)
   (M ⦂ᶜ C)                 [ σ ]ᴿᶜ = (M [ σ ]ᴿᶜ) ⦂ᶜ (C [ σ ]ᶜ)
@@ -90,6 +90,8 @@ mutual
   [≐]ᴿᵛ p (cmp ⋈ V W)  = cong₂ (cmp ⋈) ([≐]ᴿᵛ p V) ([≐]ᴿᵛ p W)
   [≐]ᴿᵛ p ⦉ V , W ⦊     = cong₂ ⦉_,_⦊ ([≐]ᴿᵛ p V) ([≐]ᴿᵛ p W)
   [≐]ᴿᵛ p (lam M)      = cong lam ([≐]ᴿᶜ p M)
+  [≐]ᴿᵛ p (handler N H) =
+    cong₂ handler ([≐]ᴿᶜ p N) (fun-ext (λ op → [≐]ᴿᶜ (≐ˢ-↑ᵉ p) (H op)))
   [≐]ᴿᵛ p (V ⦂ᵛ A)     = cong₂ _⦂ᵛ_ ([≐]ᴿᵛ p V) ([≐]ᵛ p A)
 
   [≐]ᴿᶜ : ∀ {Θ Θ' n} {σ δ : Subst Θ Θ'} → σ ≐ˢ δ → (M : RawC Θ n)
@@ -113,11 +115,7 @@ mutual
     cong₃ recL ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M) ([≐]ᴿᶜ p N)
   [≐]ᴿᶜ p (perform op V M)         = cong₂ (perform op) ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M)
   [≐]ᴿᶜ p (delay τ M)              = cong (delay τ) ([≐]ᴿᶜ p M)
-  [≐]ᴿᶜ p (handle M `with H `in N) =
-    cong₃ (λ x y z → handle x `with y `in z)
-          ([≐]ᴿᶜ p M)
-          (fun-ext (λ op → [≐]ᴿᶜ (≐ˢ-↑ᵉ p) (H op)))
-          ([≐]ᴿᶜ p N)
+  [≐]ᴿᶜ p (handle M `with V)       = cong₂ handle_`with_ ([≐]ᴿᶜ p M) ([≐]ᴿᵛ p V)
   [≐]ᴿᶜ p (unbox i N)              = cong (unbox i) ([≐]ᴿᶜ p N)
   [≐]ᴿᶜ p (box ρ V N)              = cong₃ box ([≐]ʳ p ρ) ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p N)
   [≐]ᴿᶜ p (M ⦂ᶜ C)                 = cong₂ _⦂ᶜ_ ([≐]ᴿᶜ p M) ([≐]ᶜ p C)
@@ -141,6 +139,8 @@ mutual
   [id]ᴿᵛ (cmp ⋈ V W)  = cong₂ (cmp ⋈) ([id]ᴿᵛ V) ([id]ᴿᵛ W)
   [id]ᴿᵛ ⦉ V , W ⦊     = cong₂ ⦉_,_⦊ ([id]ᴿᵛ V) ([id]ᴿᵛ W)
   [id]ᴿᵛ (lam M)      = cong lam ([id]ᴿᶜ M)
+  [id]ᴿᵛ (handler N H) =
+    cong₂ handler ([id]ᴿᶜ N) (fun-ext (λ op → trans ([≐]ᴿᶜ ↑ᵉ-id (H op)) ([id]ᴿᶜ (H op))))
   [id]ᴿᵛ (V ⦂ᵛ A)     = cong₂ _⦂ᵛ_ ([id]ᴿᵛ V) ([id]ᵛ A)
 
   [id]ᴿᶜ : ∀ {Θ n} → (M : RawC Θ n) → M [ idˢ ]ᴿᶜ ≡ M
@@ -163,11 +163,7 @@ mutual
     cong₃ recL ([id]ᴿᵛ V) ([id]ᴿᶜ M) ([id]ᴿᶜ N)
   [id]ᴿᶜ (perform op V M)         = cong₂ (perform op) ([id]ᴿᵛ V) ([id]ᴿᶜ M)
   [id]ᴿᶜ (delay τ M)              = cong (delay τ) ([id]ᴿᶜ M)
-  [id]ᴿᶜ (handle M `with H `in N) =
-    cong₃ (λ x y z → handle x `with y `in z)
-          ([id]ᴿᶜ M)
-          (fun-ext (λ op → trans ([≐]ᴿᶜ ↑ᵉ-id (H op)) ([id]ᴿᶜ (H op))))
-          ([id]ᴿᶜ N)
+  [id]ᴿᶜ (handle M `with V)       = cong₂ handle_`with_ ([id]ᴿᶜ M) ([id]ᴿᵛ V)
   [id]ᴿᶜ (unbox i N)              = cong (unbox i) ([id]ᴿᶜ N)
   [id]ᴿᶜ (box ρ V N)              = cong₃ box ([id]ʳ ρ) ([id]ᴿᵛ V) ([id]ᴿᶜ N)
   [id]ᴿᶜ (M ⦂ᶜ C)                 = cong₂ _⦂ᶜ_ ([id]ᴿᶜ M) ([id]ᶜ C)
@@ -192,6 +188,9 @@ mutual
   [⨟]ᴿᵛ (cmp ⋈ V W)  σ δ = cong₂ (cmp ⋈) ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᵛ W σ δ)
   [⨟]ᴿᵛ ⦉ V , W ⦊     σ δ = cong₂ ⦉_,_⦊ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᵛ W σ δ)
   [⨟]ᴿᵛ (lam M)      σ δ = cong lam ([⨟]ᴿᶜ M σ δ)
+  [⨟]ᴿᵛ (handler N H) σ δ =
+    cong₂ handler ([⨟]ᴿᶜ N σ δ)
+          (fun-ext (λ op → trans ([⨟]ᴿᶜ (H op) (σ ↑ᵉ) (δ ↑ᵉ)) ([≐]ᴿᶜ (⨟-↑ᵉ σ δ) (H op))))
   [⨟]ᴿᵛ (V ⦂ᵛ A)     σ δ = cong₂ _⦂ᵛ_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᵛ A σ δ)
 
   [⨟]ᴿᶜ : ∀ {Θ Θ' Θ'' n} → (M : RawC Θ n) → (σ : Subst Θ Θ') → (δ : Subst Θ' Θ'')
@@ -215,12 +214,7 @@ mutual
     cong₃ recL ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᶜ N σ δ)
   [⨟]ᴿᶜ (perform op V M)         σ δ = cong₂ (perform op) ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ)
   [⨟]ᴿᶜ (delay τ M)              σ δ = cong (delay τ) ([⨟]ᴿᶜ M σ δ)
-  [⨟]ᴿᶜ (handle M `with H `in N) σ δ =
-    cong₃ (λ x y z → handle x `with y `in z)
-          ([⨟]ᴿᶜ M σ δ)
-          (fun-ext (λ op → trans ([⨟]ᴿᶜ (H op) (σ ↑ᵉ) (δ ↑ᵉ))
-                                 ([≐]ᴿᶜ (⨟-↑ᵉ σ δ) (H op))))
-          ([⨟]ᴿᶜ N σ δ)
+  [⨟]ᴿᶜ (handle M `with V)       σ δ = cong₂ handle_`with_ ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᵛ V σ δ)
   [⨟]ᴿᶜ (unbox i N)              σ δ = cong (unbox i) ([⨟]ᴿᶜ N σ δ)
   [⨟]ᴿᶜ (box ρ V N)              σ δ = cong₃ box ([⨟]ʳ ρ σ δ) ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ N σ δ)
   [⨟]ᴿᶜ (M ⦂ᶜ C)                 σ δ = cong₂ _⦂ᶜ_ ([⨟]ᴿᶜ M σ δ) ([⨟]ᶜ C σ δ)
@@ -245,6 +239,7 @@ mutual
   handlerFree-[]ᴿᵛ (cmp ⋈ V W)  (h , k) = handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᵛ W k
   handlerFree-[]ᴿᵛ ⦉ V , W ⦊     (h , k) = handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᵛ W k
   handlerFree-[]ᴿᵛ (lam M)      h       = handlerFree-[]ᴿᶜ M h
+  handlerFree-[]ᴿᵛ (handler N H) ()
   handlerFree-[]ᴿᵛ (V ⦂ᵛ A)     h       = handlerFree-[]ᴿᵛ V h
 
   handlerFree-[]ᴿᶜ : ∀ {Θ Θ' n} {σ : Subst Θ Θ'} → (M : RawC Θ n)
@@ -272,11 +267,82 @@ mutual
   handlerFree-[]ᴿᶜ (perform op V M)         (h , k)     =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k
   handlerFree-[]ᴿᶜ (delay τ M)              h           = handlerFree-[]ᴿᶜ M h
-  handlerFree-[]ᴿᶜ (handle M `with H `in N) ()
+  handlerFree-[]ᴿᶜ (handle M `with V)       (h , k)     =
+    handlerFree-[]ᴿᶜ M h , handlerFree-[]ᴿᵛ V k
   handlerFree-[]ᴿᶜ (unbox i N)              h           = handlerFree-[]ᴿᶜ N h
   handlerFree-[]ᴿᶜ (box ρ V N)              (h , k)     =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ N k
   handlerFree-[]ᴿᶜ (M ⦂ᶜ C)                 h           = handlerFree-[]ᴿᶜ M h
+
+-- A term with second-class handlers keeps them
+
+mutual
+
+  secondClass-[]ᴿᵛ : ∀ {Θ Θ' n} {σ : Subst Θ Θ'} → (V : RawV Θ n)
+                   → SecondClassᵛ V → SecondClassᵛ (V [ σ ]ᴿᵛ)
+  secondClass-[]ᴿᵛ (var i)       h       = tt
+  secondClass-[]ᴿᵛ (const B c)   h       = tt
+  secondClass-[]ᴿᵛ ⋆             h       = tt
+  secondClass-[]ᴿᵛ true          h       = tt
+  secondClass-[]ᴿᵛ false         h       = tt
+  secondClass-[]ᴿᵛ zero          h       = tt
+  secondClass-[]ᴿᵛ (succ V)      h       = secondClass-[]ᴿᵛ V h
+  secondClass-[]ᴿᵛ (inl V)       h       = secondClass-[]ᴿᵛ V h
+  secondClass-[]ᴿᵛ (inr V)       h       = secondClass-[]ᴿᵛ V h
+  secondClass-[]ᴿᵛ nil           h       = tt
+  secondClass-[]ᴿᵛ (cons V W)    (h , k) = secondClass-[]ᴿᵛ V h , secondClass-[]ᴿᵛ W k
+  secondClass-[]ᴿᵛ (cmp ⋈ V W)   (h , k) = secondClass-[]ᴿᵛ V h , secondClass-[]ᴿᵛ W k
+  secondClass-[]ᴿᵛ ⦉ V , W ⦊      (h , k) = secondClass-[]ᴿᵛ V h , secondClass-[]ᴿᵛ W k
+  secondClass-[]ᴿᵛ (lam M)       h       = secondClass-[]ᴿᶜ M h
+  secondClass-[]ᴿᵛ (handler N H) ()
+  secondClass-[]ᴿᵛ (V ⦂ᵛ A)      h       = secondClass-[]ᴿᵛ V h
+
+  secondClass-[]ᴿᶜ : ∀ {Θ Θ' n} {σ : Subst Θ Θ'} → (M : RawC Θ n)
+                   → SecondClassᶜ M → SecondClassᶜ (M [ σ ]ᴿᶜ)
+  secondClass-[]ᴿᶜ (return V)               h           = secondClass-[]ᴿᵛ V h
+  secondClass-[]ᴿᶜ (M ⨟ N)                  (h , k)     =
+    secondClass-[]ᴿᶜ M h , secondClass-[]ᴿᶜ N k
+  secondClass-[]ᴿᶜ (V · W)                  (h , k)     =
+    secondClass-[]ᴿᵛ V h , secondClass-[]ᴿᵛ W k
+  secondClass-[]ᴿᶜ (match V `in M)          (h , k)     =
+    secondClass-[]ᴿᵛ V h , secondClass-[]ᴿᶜ M k
+  secondClass-[]ᴿᶜ (absurd V)               h           = secondClass-[]ᴿᵛ V h
+  secondClass-[]ᴿᶜ (if V `then M `else N)   (h , k , l) =
+    secondClass-[]ᴿᵛ V h , secondClass-[]ᴿᶜ M k , secondClass-[]ᴿᶜ N l
+  secondClass-[]ᴿᶜ (caseℕ V `zero M `succ N) (h , k , l) =
+    secondClass-[]ᴿᵛ V h , secondClass-[]ᴿᶜ M k , secondClass-[]ᴿᶜ N l
+  secondClass-[]ᴿᶜ (case+ V `inl M `inr N) (h , k , l) =
+    secondClass-[]ᴿᵛ V h , secondClass-[]ᴿᶜ M k , secondClass-[]ᴿᶜ N l
+  secondClass-[]ᴿᶜ (recℕ V M N)             (h , k , l) =
+    secondClass-[]ᴿᵛ V h , secondClass-[]ᴿᶜ M k , secondClass-[]ᴿᶜ N l
+  secondClass-[]ᴿᶜ (caseL V `nil M `cons N) (h , k , l) =
+    secondClass-[]ᴿᵛ V h , secondClass-[]ᴿᶜ M k , secondClass-[]ᴿᶜ N l
+  secondClass-[]ᴿᶜ (recL V M N)             (h , k , l) =
+    secondClass-[]ᴿᵛ V h , secondClass-[]ᴿᶜ M k , secondClass-[]ᴿᶜ N l
+  secondClass-[]ᴿᶜ (perform op V M)         (h , k)     =
+    secondClass-[]ᴿᵛ V h , secondClass-[]ᴿᶜ M k
+  secondClass-[]ᴿᶜ (delay τ M)              h           = secondClass-[]ᴿᶜ M h
+  secondClass-[]ᴿᶜ (handle M `with handler N H) (h , k , l) =
+    secondClass-[]ᴿᶜ M h , secondClass-[]ᴿᶜ N k , (λ op → secondClass-[]ᴿᶜ (H op) (l op))
+  secondClass-[]ᴿᶜ (handle M `with (var i)) ()
+  secondClass-[]ᴿᶜ (handle M `with (const B c)) ()
+  secondClass-[]ᴿᶜ (handle M `with ⋆) ()
+  secondClass-[]ᴿᶜ (handle M `with true) ()
+  secondClass-[]ᴿᶜ (handle M `with false) ()
+  secondClass-[]ᴿᶜ (handle M `with zero) ()
+  secondClass-[]ᴿᶜ (handle M `with (succ U)) ()
+  secondClass-[]ᴿᶜ (handle M `with ⦉ U , U' ⦊) ()
+  secondClass-[]ᴿᶜ (handle M `with (inl U)) ()
+  secondClass-[]ᴿᶜ (handle M `with (inr U)) ()
+  secondClass-[]ᴿᶜ (handle M `with nil) ()
+  secondClass-[]ᴿᶜ (handle M `with (cons U U')) ()
+  secondClass-[]ᴿᶜ (handle M `with (cmp ⋈ U U')) ()
+  secondClass-[]ᴿᶜ (handle M `with (lam L)) ()
+  secondClass-[]ᴿᶜ (handle M `with (U ⦂ᵛ A)) ()
+  secondClass-[]ᴿᶜ (unbox i N)              h           = secondClass-[]ᴿᶜ N h
+  secondClass-[]ᴿᶜ (box ρ V N)              (h , k)     =
+    secondClass-[]ᴿᵛ V h , secondClass-[]ᴿᶜ N k
+  secondClass-[]ᴿᶜ (M ⦂ᶜ C)                 h           = secondClass-[]ᴿᶜ M h
 
 -- Inversion: a term whose instance has a given outermost former has that
 -- former itself, with the immediate subterms instantiating to those of the
@@ -300,6 +366,8 @@ data InvV {Θ Θ' n} (σ : Subst Θ Θ') : RawV Θ n → RawV Θ' n → Set wher
   ⦉_,_⦊  : ∀ {V W V' W'} → V [ σ ]ᴿᵛ ≡ V' → W [ σ ]ᴿᵛ ≡ W'
         → InvV σ ⦉ V , W ⦊ ⦉ V' , W' ⦊
   lam   : ∀ {M M'} → M [ σ ]ᴿᶜ ≡ M' → InvV σ (lam M) (lam M')
+  handler : ∀ {N H N' H'} → N [ σ ]ᴿᶜ ≡ N' → ((op : Op) → H op [ σ ↑ᵉ ]ᴿᶜ ≡ H' op)
+          → InvV σ (handler N H) (handler N' H')
   annᵛ  : ∀ {V A V' A'} → V [ σ ]ᴿᵛ ≡ V' → A [ σ ]ᵛ ≡ A'
         → InvV σ (V ⦂ᵛ A) (V' ⦂ᵛ A')
 
@@ -327,9 +395,8 @@ data InvC {Θ Θ' n} (σ : Subst Θ Θ') : RawC Θ n → RawC Θ' n → Set wher
   perform : ∀ {op V M V' M'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M'
           → InvC σ (perform op V M) (perform op V' M')
   delay   : ∀ {τ M M'} → M [ σ ]ᴿᶜ ≡ M' → InvC σ (delay τ M) (delay τ M')
-  handle  : ∀ {M H N M' H' N'} → M [ σ ]ᴿᶜ ≡ M'
-          → ((op : Op) → H op [ σ ↑ᵉ ]ᴿᶜ ≡ H' op) → N [ σ ]ᴿᶜ ≡ N'
-          → InvC σ (handle M `with H `in N) (handle M' `with H' `in N')
+  handle  : ∀ {M V M' V'} → M [ σ ]ᴿᶜ ≡ M' → V [ σ ]ᴿᵛ ≡ V'
+          → InvC σ (handle M `with V) (handle M' `with V')
   unbox   : ∀ {i N N'} → N [ σ ]ᴿᶜ ≡ N' → InvC σ (unbox i N) (unbox i N')
   box     : ∀ {ρ V N ρ' V' N'} → ρ [ σ ]ʳ ≡ ρ' → V [ σ ]ᴿᵛ ≡ V' → N [ σ ]ᴿᶜ ≡ N'
           → InvC σ (box ρ V N) (box ρ' V' N')
@@ -352,6 +419,7 @@ invV (cons V W)  refl = cons refl refl
 invV (cmp ⋈ V W) refl = cmp refl refl
 invV ⦉ V , W ⦊     refl = ⦉ refl , refl ⦊
 invV (lam M)      refl = lam refl
+invV (handler N H) refl = handler refl (λ op → refl)
 invV (V ⦂ᵛ A)     refl = annᵛ refl refl
 
 invC : ∀ {Θ Θ' n} {σ : Subst Θ Θ'} → (M : RawC Θ n) → {M' : RawC Θ' n}
@@ -369,7 +437,7 @@ invC (caseL V `nil M `cons N) refl = caseL refl refl refl
 invC (recL V M N)             refl = recL refl refl refl
 invC (perform op V M)         refl = perform refl refl
 invC (delay τ M)              refl = delay refl
-invC (handle M `with H `in N) refl = handle refl (λ op → refl) refl
+invC (handle M `with V)       refl = handle refl refl
 invC (unbox i N)              refl = unbox refl
 invC (box ρ V N)              refl = box refl refl refl
 invC (M ⦂ᶜ (A ‼ ε))           refl = annᶜ refl refl refl

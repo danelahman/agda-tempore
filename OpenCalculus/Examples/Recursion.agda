@@ -247,10 +247,10 @@ countdown-top-typable = closed countdown-top-D refl
 ------------------------------------------------------------------
 -- 5. Recursion inside an operation clause
 --
---   in-clause step = handle () with
+--   in-clause step = handle () with handler {
 --                      op p k ↦ recℕ 2 with zero ↦ () | succ p', r ↦ step;
---                               let a = op p in unbox k as k' in k' a
---                      return x ↦ ()
+--                               let a = op p in unbox k as k' in k' a;
+--                      return x ↦ ()}
 --
 -- The clause resumes after the recursion. The recursion's effect is
 -- an unknown of the clause, below `op · j` for the clause's rigid
@@ -263,7 +263,7 @@ rec-then-resume step op =
   ⨟ perform op v₂ (unbox (fsuc (fsuc fzero)) (v₀ · v₁))
 
 in-clause : (∀ {Θ n} → RawC (Θ +e) (suc (suc (suc (suc n))))) → RawC ∅ˢ 0
-in-clause step = handle (return ⋆) `with rec-then-resume step `in (return ⋆)
+in-clause step = handle (return ⋆) `with handler (return ⋆) (rec-then-resume step)
 
 -- a pure step, and a step of a tick
 
@@ -279,7 +279,7 @@ in-clause-tick = in-clause (delay ⌜ 1 ⌝ (return ⋆))
 in-clause-pure-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (ûₑ ·̂ₑ ûₑ)
 in-clause-pure-D =
   handle (return ⋆)
-  `with (λ op →
+  `with handler (return ⋆) (λ op →
     coerce (eqₑ ≡̂ₑ-identityˡ)
       (recℕ (numeralᵛ 2) (return ⋆) (return ⋆) pure
        ⨟ perform op (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) (≾ᵘ-ok u-passed))
@@ -287,7 +287,6 @@ in-clause-pure-D =
                   (transᵣ (monoᵣ u-passed ⊩≾̂ᵣ-refl) (eqᵣ ≡̂ᵣ-identityˡ))
                   (<:̂ᵛ-refl _)
                   (var Hd ok₀ · var (Tl-∷ Hd) ok₀))))
-  `in (return ⋆)
 
 in-clause-pure-typable : Typable [] in-clause-pure
 in-clause-pure-typable = closed in-clause-pure-D refl
@@ -295,16 +294,16 @@ in-clause-pure-typable = closed in-clause-pure-D refl
 ------------------------------------------------------------------
 -- 6. A clause that drops its continuation
 --
---   drop-clause = handle () with
---                   op p k ↦ recℕ 2 with zero ↦ () | succ p', r ↦ delay 1; ()
---                   return x ↦ ()
+--   drop-clause = handle () with handler {
+--                   op p k ↦ recℕ 2 with zero ↦ () | succ p', r ↦ delay 1; ();
+--                   return x ↦ ()}
 --
 -- The recursion's effect is the clause's: at least a tick, absorbing
 -- itself, and below the clause's bound `op · j` for every `j`.
 
 drop-clause : RawC ∅ˢ 0
 drop-clause =
-  handle (return ⋆) `with (λ op → recℕ (numeral 2) (return ⋆) (delay ⌜ 1 ⌝ (return ⋆))) `in (return ⋆)
+  handle (return ⋆) `with handler (return ⋆) (λ op → recℕ (numeral 2) (return ⋆) (delay ⌜ 1 ⌝ (return ⋆)))
 
 ------------------------------------------------------------------
 -- 7. Pure recursion on lists

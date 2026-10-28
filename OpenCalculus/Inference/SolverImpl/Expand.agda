@@ -58,7 +58,7 @@ open import OpenCalculus.Inference.SolverImpl.Core.Skel         S
 open import OpenCalculus.Inference.SolverImpl.Core.SkelUnify    S
 open import OpenCalculus.Inference.SolverImpl.Core.SkelUnifySound S using (unifyᵏ-sound)
 open import OpenCalculus.Inference.SolverImpl.Core.SkelUnifyMGU   S
-  using (unifyᵏ-max; unifyᵏ-fail; s×-inj; s+-inj; s⇒-inj; sBox-inj; sList-inj)
+  using (unifyᵏ-max; unifyᵏ-fail; s×-inj; s+-inj; s⇒-inj; s⇛-inj; sBox-inj; sList-inj)
 open import OpenCalculus.Inference.SolverImpl.Core.Decorate S
 open import OpenCalculus.Inference.SolverImpl.Core.Rigid    S using (zip₂)
 
@@ -81,6 +81,7 @@ mutual
   shapeᵛ (|List| A) = sList (shapeᵛ A)
   shapeᵛ Empty     = sEmpty
   shapeᵛ (A ⇒ C)   = shapeᵛ A s⇒ shapeᶜ C
+  shapeᵛ (C ⇛ D)   = shapeᶜ C s⇛ shapeᶜ D
   shapeᵛ ([ ρ ] A) = sBox shapeᵛ A
 
   shapeᶜ : ∀ {Ψ} → OCType Ψ → Skel 1
@@ -105,6 +106,7 @@ mutual
   shape-[]ᵛ (|List| A) δ = cong sList (shape-[]ᵛ A δ)
   shape-[]ᵛ Empty     δ = refl
   shape-[]ᵛ (A ⇒ C)   δ = cong₂ _s⇒_ (shape-[]ᵛ A δ) (shape-[]ᶜ C δ)
+  shape-[]ᵛ (C ⇛ D)   δ = cong₂ _s⇛_ (shape-[]ᶜ C δ) (shape-[]ᶜ D δ)
   shape-[]ᵛ ([ ρ ] A) δ = cong sBox_ (shape-[]ᵛ A δ)
 
   shape-[]ᶜ : ∀ {Ψ Ψ'} → (C : OCType Ψ) → (δ : Subst Ψ Ψ')
@@ -126,6 +128,7 @@ mutual
   <:̂ᵛ-shape (|List|ₛ p)  = cong sList (<:̂ᵛ-shape p)
   <:̂ᵛ-shape Emptyₛ       = refl
   <:̂ᵛ-shape (p ⇒ₛ q)     = cong₂ _s⇒_ (sym (<:̂ᵛ-shape p)) (<:̂ᶜ-shape q)
+  <:̂ᵛ-shape (p ⇛ₛ q)     = cong₂ _s⇛_ (sym (<:̂ᶜ-shape p)) (<:̂ᶜ-shape q)
   <:̂ᵛ-shape ([ r ]ₛ p)   = cong sBox_ (<:̂ᵛ-shape p)
 
   <:̂ᶜ-shape : ∀ {Θ} {Q : Hyps Θ} {C D} → Q ∣ C <:̂ᶜ D → shapeᶜ C ≡ shapeᶜ D
@@ -150,6 +153,7 @@ data _⊑ᵛ_ {Ψ} {n} where
   List⊑  : ∀ {t A} → t ⊑ᵛ A → sList t ⊑ᵛ (|List| A)
   Empty⊑ : sEmpty {n} ⊑ᵛ Empty {Ψ}
   _⇒⊑_   : ∀ {t u A C} → t ⊑ᵛ A → u ⊑ᶜ C → (t s⇒ u) ⊑ᵛ (A ⇒ C)
+  _⇛⊑_   : ∀ {t u C D} → t ⊑ᶜ C → u ⊑ᶜ D → (t s⇛ u) ⊑ᵛ (C ⇛ D)
   Box⊑   : ∀ {t A ρ} → t ⊑ᵛ A → sBox t ⊑ᵛ ([ ρ ] A)
 
 data _⊑ᶜ_ {Ψ} {n} where
@@ -171,6 +175,7 @@ mutual
   ⊑-from (sBase b) ζ (A |+| B)   ()
   ⊑-from (sBase b) ζ Empty       ()
   ⊑-from (sBase b) ζ (A ⇒ C)     ()
+  ⊑-from (sBase b) ζ (C ⇛ D)     ()
   ⊑-from (sBase b) ζ ([ ρ ] A)   ()
   ⊑-from (sBase b) ζ (|List| A)  ()
   ⊑-from sUnit     ζ (tvar α)    ()
@@ -182,6 +187,7 @@ mutual
   ⊑-from sUnit     ζ (A |+| B)   ()
   ⊑-from sUnit     ζ Empty       ()
   ⊑-from sUnit     ζ (A ⇒ C)     ()
+  ⊑-from sUnit     ζ (C ⇛ D)     ()
   ⊑-from sUnit     ζ ([ ρ ] A)   ()
   ⊑-from sUnit     ζ (|List| A)  ()
   ⊑-from sBool     ζ (tvar α)    ()
@@ -193,6 +199,7 @@ mutual
   ⊑-from sBool     ζ (A |+| B)   ()
   ⊑-from sBool     ζ Empty       ()
   ⊑-from sBool     ζ (A ⇒ C)     ()
+  ⊑-from sBool     ζ (C ⇛ D)     ()
   ⊑-from sBool     ζ ([ ρ ] A)   ()
   ⊑-from sBool     ζ (|List| A)  ()
   ⊑-from sNat      ζ (tvar α)    ()
@@ -204,6 +211,7 @@ mutual
   ⊑-from sNat      ζ (A |+| B)   ()
   ⊑-from sNat      ζ Empty       ()
   ⊑-from sNat      ζ (A ⇒ C)     ()
+  ⊑-from sNat      ζ (C ⇛ D)     ()
   ⊑-from sNat      ζ ([ ρ ] A)   ()
   ⊑-from sNat      ζ (|List| A)  ()
   ⊑-from (t s× u)  ζ (tvar α)    ()
@@ -216,6 +224,7 @@ mutual
   ⊑-from (t s× u)  ζ (A |+| B)   ()
   ⊑-from (t s× u)  ζ Empty       ()
   ⊑-from (t s× u)  ζ (A ⇒ C)     ()
+  ⊑-from (t s× u)  ζ (C ⇛ D)     ()
   ⊑-from (t s× u)  ζ ([ ρ ] A)   ()
   ⊑-from (t s× u)  ζ (|List| A)  ()
   ⊑-from (t s+ u)  ζ (tvar α)    ()
@@ -228,6 +237,7 @@ mutual
   ⊑-from (t s+ u)  ζ (A |×| B)   ()
   ⊑-from (t s+ u)  ζ Empty       ()
   ⊑-from (t s+ u)  ζ (A ⇒ C)     ()
+  ⊑-from (t s+ u)  ζ (C ⇛ D)     ()
   ⊑-from (t s+ u)  ζ ([ ρ ] A)   ()
   ⊑-from (t s+ u)  ζ (|List| A)  ()
   ⊑-from sEmpty    ζ (tvar α)    ()
@@ -239,6 +249,7 @@ mutual
   ⊑-from sEmpty    ζ (A |+| B)   ()
   ⊑-from sEmpty    ζ Empty       refl = Empty⊑
   ⊑-from sEmpty    ζ (A ⇒ C)     ()
+  ⊑-from sEmpty    ζ (C ⇛ D)     ()
   ⊑-from sEmpty    ζ ([ ρ ] A)   ()
   ⊑-from sEmpty    ζ (|List| A)  ()
   ⊑-from (t s⇒ u)  ζ (tvar α)    ()
@@ -253,6 +264,20 @@ mutual
     ⊑-from t ζ A (proj₁ (s⇒-inj eq)) ⇒⊑ ⊑-fromᶜ u ζ C (proj₂ (s⇒-inj eq))
   ⊑-from (t s⇒ u)  ζ ([ ρ ] A)   ()
   ⊑-from (t s⇒ u)  ζ (|List| A)  ()
+  ⊑-from (t s⇒ u)  ζ (C ⇛ D)     ()
+  ⊑-from (t s⇛ u)  ζ (tvar α)    ()
+  ⊑-from (t s⇛ u)  ζ (Base b')   ()
+  ⊑-from (t s⇛ u)  ζ Unit        ()
+  ⊑-from (t s⇛ u)  ζ Bool        ()
+  ⊑-from (t s⇛ u)  ζ Nat         ()
+  ⊑-from (t s⇛ u)  ζ (A |×| B)   ()
+  ⊑-from (t s⇛ u)  ζ (A |+| B)   ()
+  ⊑-from (t s⇛ u)  ζ Empty       ()
+  ⊑-from (t s⇛ u)  ζ (A ⇒ C)     ()
+  ⊑-from (t s⇛ u)  ζ (C ⇛ D)     eq   =
+    ⊑-fromᶜ t ζ C (proj₁ (s⇛-inj eq)) ⇛⊑ ⊑-fromᶜ u ζ D (proj₂ (s⇛-inj eq))
+  ⊑-from (t s⇛ u)  ζ ([ ρ ] A)   ()
+  ⊑-from (t s⇛ u)  ζ (|List| A)  ()
   ⊑-from (sBox t)  ζ (tvar α)    ()
   ⊑-from (sBox t)  ζ (Base b')   ()
   ⊑-from (sBox t)  ζ Unit        ()
@@ -262,6 +287,7 @@ mutual
   ⊑-from (sBox t)  ζ (A |+| B)   ()
   ⊑-from (sBox t)  ζ Empty       ()
   ⊑-from (sBox t)  ζ (A ⇒ C)     ()
+  ⊑-from (sBox t)  ζ (C ⇛ D)     ()
   ⊑-from (sBox t)  ζ ([ ρ ] A)   eq   = Box⊑ (⊑-from t ζ A (sBox-inj eq))
   ⊑-from (sBox t)  ζ (|List| A)  ()
   ⊑-from (sList t) ζ (tvar α)    ()
@@ -273,6 +299,7 @@ mutual
   ⊑-from (sList t) ζ (A |+| B)   ()
   ⊑-from (sList t) ζ Empty       ()
   ⊑-from (sList t) ζ (A ⇒ C)     ()
+  ⊑-from (sList t) ζ (C ⇛ D)     ()
   ⊑-from (sList t) ζ ([ ρ ] A)   ()
   ⊑-from (sList t) ζ (|List| A)  eq   = List⊑ (⊑-from t ζ A (sList-inj eq))
 
@@ -299,6 +326,7 @@ data _◃ᵛ_ {Ψ} {n} where
   List◃  : ∀ {t A} → t ◃ᵛ A → sList t ◃ᵛ (|List| A)
   Empty◃ : sEmpty {n} ◃ᵛ Empty {Ψ}
   _⇒◃_   : ∀ {t u A C} → t ◃ᵛ A → u ◃ᶜ C → (t s⇒ u) ◃ᵛ (A ⇒ C)
+  _⇛◃_   : ∀ {t u C D} → t ◃ᶜ C → u ◃ᶜ D → (t s⇛ u) ◃ᵛ (C ⇛ D)
   Box◃   : ∀ {t A ρ} → t ◃ᵛ A → sBox t ◃ᵛ ([ ρ ] A)
 
 data _◃ᶜ_ {Ψ} {n} where
@@ -320,6 +348,7 @@ data _◃ᶜ_ {Ψ} {n} where
 ◃-fits (p +◃ q)      (p' +◃ q')      = (_ , p , p') ∷ (_ , q , q') ∷ []
 ◃-fits (List◃ p)     (List◃ p')      = (_ , p , p') ∷ []
 ◃-fits (p ⇒◃ ‼◃ q)   (p' ⇒◃ ‼◃ q')   = (_ , p , p') ∷ (_ , q , q') ∷ tt ∷ []
+◃-fits (‼◃ p ⇛◃ ‼◃ q) (‼◃ p' ⇛◃ ‼◃ q') = (_ , p , p') ∷ tt ∷ (_ , q , q') ∷ tt ∷ []
 ◃-fits (Box◃ p)      (Box◃ p')       = tt ∷ (_ , p , p') ∷ []
 
 ◃-subDec : ∀ {Ψ n} {t : Skel n} {A B : OVType Ψ} → t ◃ᵛ A → t ◃ᵛ B
@@ -345,6 +374,7 @@ mutual
   ◃-skel (|List| A) k = List◃ (◃-skel A k)
   ◃-skel Empty     k = Empty◃
   ◃-skel (A ⇒ C)   k = ◃-skel A k ⇒◃ ◃-skelᶜ C k
+  ◃-skel (C ⇛ D)   k = ◃-skelᶜ C k ⇛◃ ◃-skelᶜ D k
   ◃-skel ([ ρ ] A) k = Box◃ (◃-skel A k)
 
   ◃-skelᶜ : ∀ {Ψ Ψ' n} → (C : OCType Ψ) → {τ : SSub (nTy Ψ) n} → {ω : Subst Ψ Ψ'}
@@ -395,6 +425,7 @@ mutual
   ◃-ren r (List◃ p) = List◃ (◃-ren r p)
   ◃-ren r Empty◃    = Empty◃
   ◃-ren r (p ⇒◃ q)  = ◃-ren r p ⇒◃ ◃-renᶜ r q
+  ◃-ren r (p ⇛◃ q)  = ◃-renᶜ r p ⇛◃ ◃-renᶜ r q
   ◃-ren r (Box◃ p)  = Box◃ (◃-ren r p)
 
   ◃-renᶜ : ∀ {Ψ Ψ' n} {t : Skel n} {C : OCType Ψ} {σ : Subst Ψ Ψ'}
@@ -433,6 +464,11 @@ decorate-◃ Ψ (t s⇒ u) with decorate Ψ t | decorate-◃ Ψ t
 ...   | Ψ₂ , w₂ , B | r₂ , d₂ =
         TyRen-⨟ (TyRen-⨟ r₁ r₂) TyRen-wkᵉ ,
         (◃-wkᵉ (◃-ren r₂ d₁) ⇒◃ ‼◃ (◃-wkᵉ d₂))
+decorate-◃ Ψ (t s⇛ u) with decorate Ψ t | decorate-◃ Ψ t
+... | Ψ₁ , w₁ , A | r₁ , d₁ with decorate Ψ₁ u | decorate-◃ Ψ₁ u
+...   | Ψ₂ , w₂ , B | r₂ , d₂ =
+        TyRen-⨟ (TyRen-⨟ (TyRen-⨟ r₁ r₂) TyRen-wkᵉ) TyRen-wkᵉ ,
+        (‼◃ (◃-wkᵉ (◃-wkᵉ (◃-ren r₂ d₁))) ⇛◃ ‼◃ (◃-wkᵉ (◃-wkᵉ d₂)))
 decorate-◃ Ψ (sBox t) with decorate Ψ t | decorate-◃ Ψ t
 ... | Ψ₁ , w₁ , A | r₁ , d₁ = TyRen-⨟ r₁ TyRen-wkʳ , Box◃ (◃-wkʳ d₁)
 
@@ -487,6 +523,23 @@ decorate-max Ψ (t s⇒ u) δ {_ ⇒ (_ ‼ ε)} (p ⇒⊑ ‼⊑ q)
           (trans (wkᵉ-inst (A [ w₂ ]ᵛ) δ₂ ε)
                  (trans ([⨟]ᵛ A w₂ δ₂) (trans ([≐]ᵛ tri₂ A) eq₁)))
           (cong (_‼ ε) (trans (wkᵉ-inst B δ₂ ε) eq₂))
+decorate-max Ψ (t s⇛ u) δ {(_ ‼ ε) ⇛ (_ ‼ ε')} (‼⊑ p ⇛⊑ ‼⊑ q)
+  with decorate Ψ t | decorate-max Ψ t δ p
+... | Ψ₁ , w₁ , A | δ₁ , tri₁ , eq₁ with decorate Ψ₁ u | decorate-max Ψ₁ u δ₁ q
+...   | Ψ₂ , w₂ , B | δ₂ , tri₂ , eq₂ =
+        (δ₂ ,ᵉ ε ,ᵉ ε') ,
+        ≐ˢ-trans (⨟-assoc (w₁ ⨟ˢ w₂ ⨟ˢ wkˢᵉ) wkˢᵉ (δ₂ ,ᵉ ε ,ᵉ ε'))
+          (≐ˢ-trans (⨟-congʳ (w₁ ⨟ˢ w₂ ⨟ˢ wkˢᵉ) (wkˢᵉ-,ᵉ (δ₂ ,ᵉ ε) ε'))
+            (≐ˢ-trans (⨟-assoc (w₁ ⨟ˢ w₂) wkˢᵉ (δ₂ ,ᵉ ε))
+              (≐ˢ-trans (⨟-congʳ (w₁ ⨟ˢ w₂) (wkˢᵉ-,ᵉ δ₂ ε))
+                (≐ˢ-trans (⨟-assoc w₁ w₂ δ₂) (≐ˢ-trans (⨟-congʳ w₁ tri₂) tri₁))))) ,
+        cong₂ _⇛_
+          (cong (_‼ ε)
+            (trans (wkᵉ-inst (wkᵉ-v (A [ w₂ ]ᵛ)) (δ₂ ,ᵉ ε) ε')
+              (trans (wkᵉ-inst (A [ w₂ ]ᵛ) δ₂ ε)
+                (trans ([⨟]ᵛ A w₂ δ₂) (trans ([≐]ᵛ tri₂ A) eq₁)))))
+          (cong (_‼ ε')
+            (trans (wkᵉ-inst (wkᵉ-v B) (δ₂ ,ᵉ ε) ε') (trans (wkᵉ-inst B δ₂ ε) eq₂)))
 decorate-max Ψ (sBox t) δ {[ ρ ] _} (Box⊑ p) with decorate Ψ t | decorate-max Ψ t δ p
 ... | Ψ₁ , w₁ , A | δ₁ , tri₁ , eq₁ =
       (δ₁ ,ʳ ρ) ,

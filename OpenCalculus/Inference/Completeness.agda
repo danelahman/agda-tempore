@@ -236,6 +236,68 @@ mutual
       ih = cmpC ι↑ (Γ↑ ∷ α₁) α₂ e₀ M D (reC pι M e)
                 (cong (_∷ A₁) (trans ceq (sym pΓ))) (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
 
+  -- handlers
+  --
+  -- The clause family is handled pointwise; only the clause context's
+  -- weakenings and the two ground-type embeddings need collapsing. The
+  -- handler's result type is its own witness, so clauses and return
+  -- clause are both typed at it and the slack sits in the one subtyping
+  -- atom.
+
+  cmpV {Θ = Θ} {Θ' = Θ'} {σ = σ} {Q = Q} ι Γ A _
+       (handler {A = A₁} {B = A₂} {ε = ε₁} {ε' = ε₂} D₂ H)
+       (handler {N = N} {H = R} eN eR) ceq st =
+    A₁ , A₂ , ε₁ , ε₂ , subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st , ih₂ , ihH
+    where
+      ι↑  = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ
+      σ'  = σ ,ᵗ A₁ ,ᵗ A₂ ,ᵉ ε₁ ,ᵉ ε₂
+      Γ↑  = wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))
+      α   = wkᵉ-v (wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ}))))
+      γ   = wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty})))
+      e₁  = wkᵉ-e (evar (newᵉ {Θ +ty +ty}))
+      e₂  = evar (newᵉ {Θ +ty +ty +e})
+      Γ⇑  = wkᵉ-ctx (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))))
+      γ⇑  = wkᵉ-v (wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty}))))
+      e'' = evar (newᵉ {Θ +ty +ty +e +e})
+
+      pΓ  = co²ᵗ²ᵉ-ctx  σ A₁ A₂ ε₁ ε₂ Γ
+      pA  = co²ᵗ²ᵉ-v    σ A₁ A₂ ε₁ ε₂ A
+      pΓ⇑ = co²ᵗ²ᵉ-ctx↑ σ A₁ A₂ ε₁ ε₂ Γ
+      pγ⇑ = wk-↑ᵉ-v σ' γ
+      pι  = co²ᵗ²ᵉ-ˢ    ι σ A₁ A₂ ε₁ ε₂
+      pι⇑ = co²ᵗ²ᵉ-ˢ↑   ι σ A₁ A₂ ε₁ ε₂
+
+      ih₂ = cmpC ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) γ e₂ N D₂ (reC pι N eN)
+                 (cong (λ G → G ⟨ ∣ ε₁ ∣̂ᵉ ⟩ ∷ A₁) (trans ceq (sym pΓ)))
+                 (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
+
+      cH : (op : Op)
+         → wkᵉ-ctx _ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+              ∷ [ rconst (mapᵉ (op-grade op)) ]
+                  (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v _ ‼ evar (newᵉ {Θ'}))
+           ≡ (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
+             [ σ' ↑ᵉ ]ᶜᵗˣ
+      cH op =
+        cong₂ _∷_
+              (cong₂ _∷_ (cong (_⟨ rconst ⊤ᵣ ⟩) (trans (cong wkᵉ-ctx ceq) (sym pΓ⇑)))
+                         (sym (⌜⌝ᵍ-subst (σ' ↑ᵉ) (param op))))
+              (cong₂ (λ X Y → [ rconst (mapᵉ (op-grade op)) ]
+                                (X ⇒ Y ‼ evar (newᵉ {Θ'})))
+                     (sym (⌜⌝ᵍ-subst (σ' ↑ᵉ) (arity op)))
+                     (sym pγ⇑))
+
+      ihH : (op : Op) → _
+      ihH op =
+        cmpC (ι↑ ↑ᵉ)
+             (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                 ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
+             γ⇑ (econst (op-grade op) ·̂ₑ e'')
+             (R op) (H op) (reC pι⇑ (R op) (eR op)) (cH op)
+             (subst (λ z → wkᵉ-H Q ∣ wkᵉ-v A₂ <:̂ᵛ z) (sym pγ⇑)
+                    (<:̂ᵛ-refl (wkᵉ-v A₂)))
+             ⊩≾̂ₑ-refl
+
   -- type annotation
   --
   -- The recorded annotation is the instance of the raw one: the body is
@@ -540,69 +602,32 @@ mutual
 
   -- effect handling
   --
-  -- The clause family is handled pointwise; only the clause context's
-  -- weakenings and the two ground-type embeddings need collapsing. The
-  -- handled result type is its own witness, so clauses and continuation
-  -- are both typed at it and the slack sits in the one subtyping atom.
+  -- The handled computation's type and the handler's result type are
+  -- their own witnesses; the slack sits in the subtyping atom.
 
-  cmpC {Θ = Θ} {Θ' = Θ'} {σ = σ} {Q = Q} ι Γ A t _
-       (handle_`with_`in {A = A₁} {B = A₂} {ε = ε₁} {ε' = ε₂} D₁ H D₂)
-       (handle {M = M} {H = R} {N = N} eM eR eN) ceq st le =
-    A₁ , A₂ , ε₁ , ε₂ , ih₁ , ih₂ ,
+  cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
+       (handle_`with_ {A = A₁} {B = A₂} {ε = ε₁} {ε' = ε₂} D₁ DV)
+       (handle {M = M} {V = V} eM eV) ceq st le =
+    A₁ , A₂ , ε₁ , ε₂ , ih₁ , ihV ,
     subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st ,
-    subst (λ z → Q ⊩ ε₁ ·̂ₑ ε₂ ≾̂ₑ z) (sym pt) le , ihH
+    subst (λ z → Q ⊩ ε₁ ·̂ₑ ε₂ ≾̂ₑ z) (sym pt) le
     where
       ι↑  = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ
-      σ'  = σ ,ᵗ A₁ ,ᵗ A₂ ,ᵉ ε₁ ,ᵉ ε₂
       Γ↑  = wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))
       α   = wkᵉ-v (wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ}))))
       γ   = wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty})))
       e₁  = wkᵉ-e (evar (newᵉ {Θ +ty +ty}))
       e₂  = evar (newᵉ {Θ +ty +ty +e})
-      Γ⇑  = wkᵉ-ctx (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))))
-      γ⇑  = wkᵉ-v (wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty}))))
-      e'' = evar (newᵉ {Θ +ty +ty +e +e})
 
       pΓ  = co²ᵗ²ᵉ-ctx  σ A₁ A₂ ε₁ ε₂ Γ
       pA  = co²ᵗ²ᵉ-v    σ A₁ A₂ ε₁ ε₂ A
       pt  = co²ᵗ²ᵉ-e    σ A₁ A₂ ε₁ ε₂ t
-      pΓ⇑ = co²ᵗ²ᵉ-ctx↑ σ A₁ A₂ ε₁ ε₂ Γ
-      pγ⇑ = wk-↑ᵉ-v σ' γ
       pι  = co²ᵗ²ᵉ-ˢ    ι σ A₁ A₂ ε₁ ε₂
-      pι⇑ = co²ᵗ²ᵉ-ˢ↑   ι σ A₁ A₂ ε₁ ε₂
 
       ih₁ = cmpC ι↑ Γ↑ α e₁ M D₁ (reC pι M eM) (trans ceq (sym pΓ))
                  (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
-      ih₂ = cmpC ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) γ e₂ N D₂ (reC pι N eN)
-                 (cong (λ G → G ⟨ ∣ ε₁ ∣̂ᵉ ⟩ ∷ A₁) (trans ceq (sym pΓ)))
-                 (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
-
-      cH : (op : Op)
-         → wkᵉ-ctx _ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-              ∷ [ rconst (mapᵉ (op-grade op)) ]
-                  (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v _ ‼ evar (newᵉ {Θ'}))
-           ≡ (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
-             [ σ' ↑ᵉ ]ᶜᵗˣ
-      cH op =
-        cong₂ _∷_
-              (cong₂ _∷_ (cong (_⟨ rconst ⊤ᵣ ⟩) (trans (cong wkᵉ-ctx ceq) (sym pΓ⇑)))
-                         (sym (⌜⌝ᵍ-subst (σ' ↑ᵉ) (param op))))
-              (cong₂ (λ X Y → [ rconst (mapᵉ (op-grade op)) ]
-                                (X ⇒ Y ‼ evar (newᵉ {Θ'})))
-                     (sym (⌜⌝ᵍ-subst (σ' ↑ᵉ) (arity op)))
-                     (sym pγ⇑))
-
-      ihH : (op : Op) → _
-      ihH op =
-        cmpC (ι↑ ↑ᵉ)
-             (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                 ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
-             γ⇑ (econst (op-grade op) ·̂ₑ e'')
-             (R op) (H op) (reC pι⇑ (R op) (eR op)) (cH op)
-             (subst (λ z → wkᵉ-H Q ∣ wkᵉ-v A₂ <:̂ᵛ z) (sym pγ⇑)
-                    (<:̂ᵛ-refl (wkᵉ-v A₂)))
-             ⊩≾̂ₑ-refl
+      ihV = cmpV ι↑ Γ↑ ((α ‼ e₁) ⇛ (γ ‼ e₂)) V DV (reV pι V eV) (trans ceq (sym pΓ))
+                 (<:̂ᵛ-refl _)
 
   -- unboxing a boxed variable
 

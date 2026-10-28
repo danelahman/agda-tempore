@@ -279,6 +279,7 @@ module _ {Θ : Scope} (M : Vars Θ) where
     strᵛ (|List| A) h = |List| (strᵛ A h)
     strᵛ Empty     h = Empty
     strᵛ (A ⇒ C)   h = strᵛ A (⊆-∪ˡ (fvᵛ A) (fvᶜ C) h) ⇒ strᶜ C (⊆-∪ʳ (fvᵛ A) (fvᶜ C) h)
+    strᵛ (C ⇛ D)   h = strᶜ C (⊆-∪ˡ (fvᶜ C) (fvᶜ D) h) ⇛ strᶜ D (⊆-∪ʳ (fvᶜ C) (fvᶜ D) h)
     strᵛ ([ ρ ] A) h = [ strʳ ρ (⊆-∪ˡ (fvʳ ρ) (fvᵛ A) h) ] strᵛ A (⊆-∪ʳ (fvʳ ρ) (fvᵛ A) h)
 
     strᶜ : (C : OCType Θ) → fvᶜ C ⊆ᵛ M → OCType kept
@@ -352,6 +353,7 @@ module _ {Θ : Scope} (M : Vars Θ) where
     strᵛ-ι (|List| A) h = cong |List| (strᵛ-ι A _)
     strᵛ-ι Empty     h = refl
     strᵛ-ι (A ⇒ C)   h = cong₂ _⇒_ (strᵛ-ι A _) (strᶜ-ι C _)
+    strᵛ-ι (C ⇛ D)   h = cong₂ _⇛_ (strᶜ-ι C _) (strᶜ-ι D _)
     strᵛ-ι ([ ρ ] A) h = cong₂ [_]_ (strʳ-ι ρ _) (strᵛ-ι A _)
 
     strᶜ-ι : (C : OCType Θ) → (h : fvᶜ C ⊆ᵛ M) → strᶜ C h [ ⌜ thin ⌝ʳ ]ᶜ ≡ C
