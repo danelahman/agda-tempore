@@ -8,9 +8,10 @@ into scope. The calculus has Fitch-style graded modal types over a grade system
 algebraic effects and handlers whose operations take time, and a graded effect
 system. For the calculus with type and grade variables the development gives
 constraint-based type inference with principal type schemes, and proves that
-its typings instantiate to closed typings; for the closed calculus it proves
-type safety and termination, and gives a denotational semantics, a sound
-equational theory and adequacy.
+its typings instantiate to scope-closed typings, which are type safe for a
+reduction on raw terms; for the closed calculus it proves type safety and
+termination, and gives a denotational semantics, a sound equational theory and
+adequacy.
 
 The development builds on two earlier formalisations, in which the passage of
 discrete time is the only means of specifying temporal properties of resources:
@@ -37,7 +38,8 @@ warning. The only postulate is function extensionality (`Util/Equality.agda`).
   in `Grades/Examples/`.
 - `Language/`: what both calculi share: base types, operations, types.
 - `OpenCalculus/`: the calculus with type and grade variables: hypotheses,
-  entailment, typing, constraints, the solver, inference.
+  entailment, typing, the operational semantics and type safety, constraints,
+  the solver, inference.
 - `ClosedCalculus/`: the closed, intrinsically typed calculus: its operational
   and denotational semantics, equational theory and adequacy.
 - `Bridge/`: instantiation of open typings into closed ones, and completeness
@@ -58,12 +60,14 @@ end.
 - Unbox takes a variable.
 - Inference is for computations in open contexts; there are no top-level
   programs.
-- Instantiation, type safety and termination are for the closed calculus, whose
-  handler clauses are typed at every continuation grade and whose comparisons
-  are computations, run by instantiation before the computation whose value
-  they occur in; instantiation covers the terms whose handlers are second
-  class. Completeness of inference is with respect to closed typings with
-  uniform handlers, in contexts with no handler type.
+- The reduction is on run-time terms, raw terms without grades and type
+  annotations, with grade-free states; `unbox` there takes a value.
+  Instantiation and type safety are for the scope-closed typing. Termination
+  is for the closed calculus, whose handler clauses are typed at every
+  continuation grade and whose comparisons are computations; the
+  instantiation into it covers the terms whose handlers are second class.
+  Completeness of inference is with respect to closed typings with uniform
+  handlers, in contexts with no handler type.
 - The denotational results assume uniform handlers, and some of their
   recursions are marked `TERMINATING`.
 

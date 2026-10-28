@@ -147,13 +147,30 @@ module OperationalSemantics (S : LanguageSpec) where
   ScopeClosedᶜ : ∀ {n} → OCtx ∅ˢ n → OCType ∅ˢ → Set
   ScopeClosedᶜ Γ C = ∅ᴴ ∣ Γ ⊢C⦂ C
 
-  -- States and the reduction rules for delays, resources and effect
-  -- handling, on the intrinsically typed configurations of the closed
-  -- calculus
-  open import ClosedCalculus.OperationalSemantics.State S public
-    using (toCtx) renaming (𝕊 to State)
-  open import ClosedCalculus.OperationalSemantics.PreservationTheorem S public
-    using (Config; _↝_; DELAY; BOX; UNBOX; SEQ-OP; HANDLE-RET; HANDLE-OP)
+  -- Run-time terms: raw terms without grades and type annotations, and
+  -- their scope-closed typing, a scope-closed derivation erasing to the
+  -- term
+  open import OpenCalculus.Syntax.Run S public using (RunV; RunC; eraseᵛ; eraseᶜ)
+  open import OpenCalculus.Typing.ScopeClosed S public using (_⊢ᵛ_⦂_; _⊢ᶜ_⦂_)
+
+  -- States and state typings: the context of a state, a state typing
+  -- typing its state, extensions of states and of state typings, and the
+  -- grade of the passages an extension adds
+  open import OpenCalculus.Semantics.States S public
+    using (State; StateTyping; ctx; Types; _≤ₛ_; δₛ; _⊆[_]_)
+
+  -- The reduction rules for delays, resources and effect handling, on
+  -- run-time terms; HANDLE-OP leaves the clause's grade variable
+  -- uninstantiated
+  open import OpenCalculus.Semantics.Reduction S public
+    using (Step; ⟨_∣_⟩↝⟨_∣_⟩; DELAY; BOX; UNBOX; SEQ-OP; HANDLE-RET; HANDLE-OP)
+
+  -- The remaining rules. CMP decides a comparison by the structural order
+  -- on the data its operands denote (`compareᴰ`).
+  open import OpenCalculus.Semantics.Reduction S public
+    using ( APP ; MATCH ; CMP ; IF-TRUE ; IF-FALSE ; CASEℕ-ZERO ; CASEℕ-SUCC
+          ; RECℕ-ZERO ; RECℕ-SUCC ; CASE-INL ; CASE-INR ; CASEL-NIL ; CASEL-CONS
+          ; RECL-NIL ; RECL-CONS ; SEQ-RET ; SEQ-STEP ; HANDLE-STEP ; compareᴰ )
 
 
 ------------------------------------------------------------------------
@@ -161,29 +178,20 @@ module OperationalSemantics (S : LanguageSpec) where
 
 module InstantiationAndTypeSafety (S : LanguageSpec) (opEnum : OpEnum S) where
 
-  -- Erasure `⌊ M[δ] ⌋`: the raw term at an instance, its annotations
-  -- forgotten, its grades evaluated, `handle M with handler H` the
-  -- closed calculus's one form, and its comparisons, values here and
-  -- computations of the closed calculus, run before the computation
-  -- whose values they are in, each binding its outcome
-  open import Bridge.Instantiation.Terms S public
-    using () renaming (⌊_⌋ᴿᶜ to erasure)
+  -- Erasure `⌊ M[δ] ⌋`: the run-time term of the raw term at an instance,
+  -- its annotations dropped
+  open import OpenCalculus.Syntax.Raw.Subst S public using (_[_]ᴿᶜ)
+  open import OpenCalculus.Syntax.Run S public using (eraseᶜ)
 
-  -- Theorem (Instantiation), into the closed calculus, for terms whose
-  -- handlers are second-class, every handler being the handler of a
-  -- `handle` and every `handle`'s handler a handler; each handler
-  -- clause instantiated at every continuation grade; a value as
-  -- `return V`
-  open import OpenCalculus.Syntax.Raw S public using (SecondClassᶜ)
-  open import Bridge.Instantiation.Terms S public
-    using () renaming (instantiateᶜ to instantiation; instantiateᵛ to instantiationᵛ)
+  -- Theorem (Instantiation), into the scope-closed typing, at the closed
+  -- instances `δ ⊨ Q ∣ []`; handler clauses stay typed at their variables
+  open import OpenCalculus.Typing.Instantiation S public
+    using (instantiation; instantiationᵛ)
 
-  -- Theorem (Type safety), as progress and preservation of the closed
-  -- calculus
-  open import ClosedCalculus.OperationalSemantics.ProgressTheorem S public
-    using (Progresses) renaming (progress to type-safety-progress)
-  open import ClosedCalculus.OperationalSemantics.PreservationTheorem S public
-    using () renaming (step-invariants to type-safety-preservation)
+  -- Theorem (Type safety): a finished term, or a step preserving the
+  -- typing in an extension of the state typing
+  open import OpenCalculus.Semantics.TypeSafety S public
+    using (type-safety; Final; Preserved; progress; preservation)
 
   -- Theorem (Termination), of the closed calculus
   open import ClosedCalculus.Adequacy.Evaluation S public using (Halts)
@@ -575,9 +583,28 @@ module FormalisedResults (S : LanguageSpec) (opEnum : OpEnum S) where
     using (⊩-substᵣ; ⊩-substₑ; ⊩ᴱ-subst; <:̂ᵛ-subst; VarOK-subst; ⊩-wkᵉᵣ; ⊩-wkᵉₑ)
   open import OpenCalculus.Hypotheses.Instances S public using (val-≡̂ᵣ; val-≾ᵣ)
 
+  -- Substitution of types and grades in typings, and the instance of a
+  -- handler clause at a grade for its variable; renaming and, under the
+  -- empty hypothesis set, substitution of term variables; inversion
+  open import OpenCalculus.Typing.GradeSubstitution S public
+    using (substᵛ; substᶜ; instantiate-clause)
+  open import OpenCalculus.Typing.Renaming S public using (Ren; rename-v; rename-c; eternal-v)
+  open import OpenCalculus.Typing.Substitution S public using (Drop; sub-v; sub-c)
+  open import OpenCalculus.Typing.Inversion S public using (invV; invC)
+
   -- Closed instances of the two kinds correspond
   open import Bridge.Instantiation.Correspondence S public using (⊨⇔⊨ᴰ)
-  open import Bridge.Instantiation.Terms S public using (instantiateˢᵛ; instantiateˢᶜ)
+
+  -- Instantiation into the closed calculus, for terms whose handlers are
+  -- second-class, every handler being the handler of a `handle` and every
+  -- `handle`'s handler a handler; each handler clause instantiated at
+  -- every continuation grade; a value as `return V`. The elaboration
+  -- `⌊_⌋ᴿᶜ` forgets annotations, evaluates box grades, and runs
+  -- comparisons, values here and computations there, before the
+  -- computation whose values they are in.
+  open import OpenCalculus.Syntax.Raw S public using (SecondClassᶜ)
+  open import Bridge.Instantiation.Terms S public
+    using (⌊_⌋ᴿᶜ; instantiateᵛ; instantiateᶜ; instantiateˢᵛ; instantiateˢᶜ)
 
   -- Open subtyping is a preorder and reflects eternality
   open import OpenCalculus.Hypotheses S public
@@ -619,6 +646,5 @@ module FormalisedResults (S : LanguageSpec) (opEnum : OpEnum S) where
 --   Program contexts, the rule Def, type schemes of values, and programs.
 --   Unbox on an annotated variable, and Lemma (Resource values are
 --   annotated variables) for the calculus with grade variables.
---   Grade-free states, state typings and the reduction on raw terms; type
---   safety, termination and instantiation for the scope-closed typing.
+--   Termination of the reduction on run-time terms.
 ------------------------------------------------------------------------
