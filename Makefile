@@ -7,10 +7,11 @@ time:
 	time agda Everything.agda
 
 examples:
-	agda TypeInference/Examples.agda
+	agda OpenCalculus/Examples.agda
+	agda Bridge/Examples/Uniform/All.agda
 
 # The example sets by the parts of the solver they exercise, for
-# checking a change under TypeInference/SolverImpl/ before a full
+# checking a change under OpenCalculus/Inference/SolverImpl/ before a full
 # `make examples`:
 #   generation, subtyping, the report (Generate, Solve, SolverImpl)
 #                                                        -> stdlib
@@ -42,46 +43,46 @@ examples:
 #     functions and boxes, eternality asked of an unknown
 #     (Generate, Solve)                                  -> compare
 #   completeness on a uniform handler typing
-#     (Localise, Instantiation/)                         -> uniform
+#     (Localise, Bridge/Instantiation/)                  -> uniform
 
 examples-stdlib:
-	agda TypeInference/Examples/Stdlib/All.agda
+	agda OpenCalculus/Examples/Stdlib/All.agda
 
 examples-annotations:
-	agda TypeInference/Examples/Annotations/All.agda
+	agda OpenCalculus/Examples/Annotations/All.agda
 
 examples-handlers:
-	agda TypeInference/Examples/Handlers/All.agda
+	agda OpenCalculus/Examples/Handlers/All.agda
 
 examples-boxes:
-	agda TypeInference/Examples/Boxes/All.agda
+	agda OpenCalculus/Examples/Boxes/All.agda
 
 examples-reports:
-	agda TypeInference/Examples/Reports/All.agda
+	agda OpenCalculus/Examples/Reports/All.agda
 
 examples-product:
-	agda TypeInference/Examples/Product/All.agda
+	agda OpenCalculus/Examples/Product/All.agda
 
 examples-stages:
-	agda TypeInference/Examples/Stages/All.agda
+	agda OpenCalculus/Examples/Stages/All.agda
 
 examples-durations:
-	agda TypeInference/Examples/Durations/All.agda
+	agda OpenCalculus/Examples/Durations/All.agda
 
 examples-runs:
-	agda TypeInference/Examples/Runs/All.agda
+	agda OpenCalculus/Examples/Runs/All.agda
 
 examples-data:
-	agda TypeInference/Examples/Data/All.agda
+	agda OpenCalculus/Examples/Data/All.agda
 
 examples-recursion:
-	agda TypeInference/Examples/Recursion/All.agda
+	agda OpenCalculus/Examples/Recursion/All.agda
 
 examples-compare:
-	agda TypeInference/Examples/Compare/All.agda
+	agda OpenCalculus/Examples/Compare/All.agda
 
 examples-uniform:
-	agda TypeInference/Examples/Uniform/All.agda
+	agda Bridge/Examples/Uniform/All.agda
 
 clean:
 	git clean -fx
