@@ -42,7 +42,7 @@ open import OpenCalculus.Inference.SolverImpl.Core.Rigid S using (zip₂)
 
 infix  37 sBox_
 infix  32 _s×_ _s+_
-infixr 30 _s⇒_
+infixr 30 _s⇒_ _s⇛_
 
 data Skel (n : ℕ) : Set where
   svar   : Fin n → Skel n                  -- skeleton variable
@@ -55,6 +55,7 @@ data Skel (n : ℕ) : Set where
   sList  : Skel n → Skel n                 -- list type
   sEmpty : Skel n                          -- empty type
   _s⇒_   : Skel n → Skel n → Skel n        -- function type, to its result's value part
+  _s⇛_   : Skel n → Skel n → Skel n        -- handler type, of the value parts
   sBox_  : Skel n → Skel n                 -- box modality
 
 -- A skeleton that is still a variable
@@ -71,6 +72,7 @@ svar?-just sBool     ()
 svar?-just sNat      ()
 svar?-just (t s× u)  ()
 svar?-just (t s+ u)  ()
+svar?-just (t s⇛ u)  ()
 svar?-just (sList t) ()
 svar?-just sEmpty    ()
 svar?-just (t s⇒ u)  ()
@@ -91,6 +93,7 @@ mutual
   skelᵛ (|List| A) = sList (skelᵛ A)
   skelᵛ Empty     = sEmpty
   skelᵛ (A ⇒ C)   = skelᵛ A s⇒ skelᶜ C
+  skelᵛ (C ⇛ D)   = skelᶜ C s⇛ skelᶜ D
   skelᵛ ([ ρ ] A) = sBox skelᵛ A
 
   skelᶜ : ∀ {Ψ} → OCType Ψ → Skel (nTy Ψ)
@@ -113,6 +116,7 @@ sBool     [ σ ]ᵏ = sBool
 sNat      [ σ ]ᵏ = sNat
 (t s× u)  [ σ ]ᵏ = t [ σ ]ᵏ s× u [ σ ]ᵏ
 (t s+ u)  [ σ ]ᵏ = t [ σ ]ᵏ s+ u [ σ ]ᵏ
+(t s⇛ u)  [ σ ]ᵏ = t [ σ ]ᵏ s⇛ u [ σ ]ᵏ
 (sList t) [ σ ]ᵏ = sList (t [ σ ]ᵏ)
 sEmpty    [ σ ]ᵏ = sEmpty
 (t s⇒ u)  [ σ ]ᵏ = t [ σ ]ᵏ s⇒ u [ σ ]ᵏ
@@ -137,6 +141,7 @@ _≐ᵏ_ : ∀ {n m} → SSub n m → SSub n m → Set
 [id]ᵏ sNat      = refl
 [id]ᵏ (t s× u)  = cong₂ _s×_ ([id]ᵏ t) ([id]ᵏ u)
 [id]ᵏ (t s+ u)  = cong₂ _s+_ ([id]ᵏ t) ([id]ᵏ u)
+[id]ᵏ (t s⇛ u)  = cong₂ _s⇛_ ([id]ᵏ t) ([id]ᵏ u)
 [id]ᵏ (sList t) = cong sList ([id]ᵏ t)
 [id]ᵏ sEmpty    = refl
 [id]ᵏ (t s⇒ u)  = cong₂ _s⇒_ ([id]ᵏ t) ([id]ᵏ u)
@@ -151,6 +156,7 @@ _≐ᵏ_ : ∀ {n m} → SSub n m → SSub n m → Set
 [⨟]ᵏ sNat      σ δ = refl
 [⨟]ᵏ (t s× u)  σ δ = cong₂ _s×_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
 [⨟]ᵏ (t s+ u)  σ δ = cong₂ _s+_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
+[⨟]ᵏ (t s⇛ u)  σ δ = cong₂ _s⇛_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
 [⨟]ᵏ (sList t) σ δ = cong sList ([⨟]ᵏ t σ δ)
 [⨟]ᵏ sEmpty    σ δ = refl
 [⨟]ᵏ (t s⇒ u)  σ δ = cong₂ _s⇒_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
@@ -164,6 +170,7 @@ _≐ᵏ_ : ∀ {n m} → SSub n m → SSub n m → Set
 [≐]ᵏ p sNat      = refl
 [≐]ᵏ p (t s× u)  = cong₂ _s×_ ([≐]ᵏ p t) ([≐]ᵏ p u)
 [≐]ᵏ p (t s+ u)  = cong₂ _s+_ ([≐]ᵏ p t) ([≐]ᵏ p u)
+[≐]ᵏ p (t s⇛ u)  = cong₂ _s⇛_ ([≐]ᵏ p t) ([≐]ᵏ p u)
 [≐]ᵏ p (sList t) = cong sList ([≐]ᵏ p t)
 [≐]ᵏ p sEmpty    = refl
 [≐]ᵏ p (t s⇒ u)  = cong₂ _s⇒_ ([≐]ᵏ p t) ([≐]ᵏ p u)
@@ -195,6 +202,7 @@ checkᵏ α sBool     = just sBool
 checkᵏ α sNat      = just sNat
 checkᵏ α (t s× u)  = zip₂ _s×_ (checkᵏ α t) (checkᵏ α u)
 checkᵏ α (t s+ u)  = zip₂ _s+_ (checkᵏ α t) (checkᵏ α u)
+checkᵏ α (t s⇛ u)  = zip₂ _s⇛_ (checkᵏ α t) (checkᵏ α u)
 checkᵏ α (sList t) = mmap sList (checkᵏ α t)
 checkᵏ α sEmpty    = just sEmpty
 checkᵏ α (t s⇒ u)  = zip₂ _s⇒_ (checkᵏ α t) (checkᵏ α u)

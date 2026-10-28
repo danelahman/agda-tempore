@@ -13,7 +13,8 @@
 -- variable of an `unbox`, the grade of a `box`, an expression  --
 -- over `Θ`, and the optional type annotations of a value and   --
 -- of a computation, open types over `Θ`.                       --
--- A handler's clauses are scoped over `Θ +e`, binding the      --
+-- A handler's return clause binds the returned value; its      --
+-- operation clauses are scoped over `Θ +e`, binding the        --
 -- clause's continuation grade, and over the full context,      --
 -- `2 + n`.                                                     --
 ------------------------------------------------------------------
@@ -127,6 +128,19 @@ mutual
 
     lam     : RawC Θ (suc n)
               ------------
+            → RawV Θ n
+
+    -- handlers
+
+    -- The return clause binds the returned value. The clause family is
+    -- indexed by the operation symbol, matching the open rule; each
+    -- clause is scoped over `Θ +e`, whose new variable is the
+    -- continuation grade, and over the ambient context extended by the
+    -- operation's parameter and the boxed continuation.
+
+    handler : RawC Θ (suc n)
+            → (Op → RawC (Θ +e) (suc (suc n)))
+            ---------------------------------
             → RawV Θ n
 
     -- type annotation
@@ -247,16 +261,10 @@ mutual
 
     -- effect handling
 
-    -- The clause family is indexed by the operation symbol, matching the
-    -- open rule; each clause is scoped over `Θ +e`, whose new variable
-    -- is the continuation grade, and over the ambient context extended by
-    -- the operation's parameter and the boxed continuation.
-
-    handle_`with_`in
+    handle_`with_
             : RawC Θ n
-            → (Op → RawC (Θ +e) (suc (suc n)))
-            → RawC Θ (suc n)
-            ---------------------------
+            → RawV Θ n
+            ---------
             → RawC Θ n
 
     -- unboxing a boxed variable
@@ -305,6 +313,7 @@ mutual
   HandlerFreeᵛ (cons V W)   = HandlerFreeᵛ V × HandlerFreeᵛ W
   HandlerFreeᵛ (cmp ⋈ V W)  = HandlerFreeᵛ V × HandlerFreeᵛ W
   HandlerFreeᵛ (lam M)      = HandlerFreeᶜ M
+  HandlerFreeᵛ (handler N H) = ⊥
   HandlerFreeᵛ (V ⦂ᵛ A)     = HandlerFreeᵛ V
   HandlerFreeᵛ _            = ⊤
 
@@ -322,7 +331,45 @@ mutual
   HandlerFreeᶜ (recL V M N)              = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (perform op V M)         = HandlerFreeᵛ V × HandlerFreeᶜ M
   HandlerFreeᶜ (delay τ M)              = HandlerFreeᶜ M
-  HandlerFreeᶜ (handle M `with H `in N) = ⊥
+  HandlerFreeᶜ (handle M `with V)      = HandlerFreeᶜ M × HandlerFreeᵛ V
   HandlerFreeᶜ (unbox i N)              = HandlerFreeᶜ N
   HandlerFreeᶜ (box ρ V N)              = HandlerFreeᵛ V × HandlerFreeᶜ N
   HandlerFreeᶜ (M ⦂ᶜ C)                 = HandlerFreeᶜ M
+
+-- A term whose handlers are second-class: every handler is the handler
+-- of a `handle`, and every `handle` has a handler as its handler
+
+mutual
+
+  SecondClassᵛ : ∀ {Θ n} → RawV Θ n → Set
+  SecondClassᵛ (succ V)      = SecondClassᵛ V
+  SecondClassᵛ ⦉ V , W ⦊      = SecondClassᵛ V × SecondClassᵛ W
+  SecondClassᵛ (inl V)       = SecondClassᵛ V
+  SecondClassᵛ (inr V)       = SecondClassᵛ V
+  SecondClassᵛ (cons V W)    = SecondClassᵛ V × SecondClassᵛ W
+  SecondClassᵛ (cmp ⋈ V W)   = SecondClassᵛ V × SecondClassᵛ W
+  SecondClassᵛ (lam M)       = SecondClassᶜ M
+  SecondClassᵛ (handler N H) = ⊥
+  SecondClassᵛ (V ⦂ᵛ A)      = SecondClassᵛ V
+  SecondClassᵛ _             = ⊤
+
+  SecondClassᶜ : ∀ {Θ n} → RawC Θ n → Set
+  SecondClassᶜ (return V)                = SecondClassᵛ V
+  SecondClassᶜ (M ⨟ N)                   = SecondClassᶜ M × SecondClassᶜ N
+  SecondClassᶜ (V · W)                   = SecondClassᵛ V × SecondClassᵛ W
+  SecondClassᶜ (match V `in M)           = SecondClassᵛ V × SecondClassᶜ M
+  SecondClassᶜ (absurd V)                = SecondClassᵛ V
+  SecondClassᶜ (if V `then M `else N)    = SecondClassᵛ V × SecondClassᶜ M × SecondClassᶜ N
+  SecondClassᶜ (caseℕ V `zero M `succ N) = SecondClassᵛ V × SecondClassᶜ M × SecondClassᶜ N
+  SecondClassᶜ (case+ V `inl M `inr N)   = SecondClassᵛ V × SecondClassᶜ M × SecondClassᶜ N
+  SecondClassᶜ (recℕ V M N)              = SecondClassᵛ V × SecondClassᶜ M × SecondClassᶜ N
+  SecondClassᶜ (caseL V `nil M `cons N)  = SecondClassᵛ V × SecondClassᶜ M × SecondClassᶜ N
+  SecondClassᶜ (recL V M N)              = SecondClassᵛ V × SecondClassᶜ M × SecondClassᶜ N
+  SecondClassᶜ (perform op V M)          = SecondClassᵛ V × SecondClassᶜ M
+  SecondClassᶜ (delay τ M)               = SecondClassᶜ M
+  SecondClassᶜ (handle M `with handler N H) =
+    SecondClassᶜ M × SecondClassᶜ N × ((op : Op) → SecondClassᶜ (H op))
+  SecondClassᶜ (handle M `with _)        = ⊥
+  SecondClassᶜ (unbox i N)               = SecondClassᶜ N
+  SecondClassᶜ (box ρ V N)               = SecondClassᵛ V × SecondClassᶜ N
+  SecondClassᶜ (M ⦂ᶜ C)                  = SecondClassᶜ M

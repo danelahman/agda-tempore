@@ -4,8 +4,9 @@
 -- A declarative typing `D : Δ ⊢C⦂ C` of the elaboration of a   --
 -- closed raw term `M` is uniform in an open context `Γ'`       --
 -- (`Uᶜ Γ' r P M D`) when it follows `M` former by former, each --
--- box at `M`'s grade, each handler's clauses typed by one open --
--- clause typing at a rigid continuation grade, and each        --
+-- box at `M`'s grade, each `handle` of `M` with a handler as   --
+-- its handler, the clauses typed by one open clause typing at  --
+-- a rigid continuation grade, and each                         --
 -- comparison of `M`'s values read off the outcome of a         --
 -- comparison run before it (`u-hoist`, `u-out`). The context   --
 -- of `D` has the outcomes interleaved with the meaning of      --
@@ -14,9 +15,10 @@
 -- Annotations of `M` are passed over; `AnnFreeᶜ M` says there  --
 -- are none.                                                    --
 --                                                              --
--- A uniform typing in a context `Γ'` meaning `Δ` embeds as an  --
--- open typing `∅ᴴ ∣ Γ' ⊢C⦂ ⌜ C ⌝ᶜ` at the empty scope erasing  --
--- to `M` (`embedᶜ`, `embedᵛ`). Grades of `Γ'` and `M` are      --
+-- A uniform typing in a context `Γ'` meaning `Δ`, with no      --
+-- handler type, embeds as an open typing                       --
+-- `∅ᴴ ∣ Γ' ⊢C⦂ ⌜ C ⌝ᶜ` at the empty scope erasing to `M`       --
+-- (`embedᶜ`, `embedᵛ`). Grades of `Γ'` and `M` are             --
 -- expressions, those of `D` their values; they meet through    --
 -- `⌞_⌟` and the conversion of a closed expression to its value.--
 ------------------------------------------------------------------
@@ -83,6 +85,7 @@ mutual
   AnnFreeᵛ (cons V W)  = AnnFreeᵛ V × AnnFreeᵛ W
   AnnFreeᵛ (cmp ⋈ V W) = AnnFreeᵛ V × AnnFreeᵛ W
   AnnFreeᵛ (lam M)     = AnnFreeᶜ M
+  AnnFreeᵛ (handler N H) = AnnFreeᶜ N × ((op : Op) → AnnFreeᶜ (H op))
   AnnFreeᵛ (V ⦂ᵛ A)    = ⊥
   AnnFreeᵛ _           = ⊤
 
@@ -100,7 +103,7 @@ mutual
   AnnFreeᶜ (recL V M N)              = AnnFreeᵛ V × AnnFreeᶜ M × AnnFreeᶜ N
   AnnFreeᶜ (perform op V M)          = AnnFreeᵛ V × AnnFreeᶜ M
   AnnFreeᶜ (delay τ M)               = AnnFreeᶜ M
-  AnnFreeᶜ (handle M `with H `in N)  = AnnFreeᶜ M × ((op : Op) → AnnFreeᶜ (H op)) × AnnFreeᶜ N
+  AnnFreeᶜ (handle M `with V)       = AnnFreeᶜ M × AnnFreeᵛ V
   AnnFreeᶜ (unbox i N)               = AnnFreeᶜ N
   AnnFreeᶜ (box ρ V N)               = AnnFreeᵛ V × AnnFreeᶜ N
   AnnFreeᶜ (M ⦂ᶜ C)                  = ⊥
@@ -125,6 +128,8 @@ mutual
   annFree-[]ᵛ (cons V W)  σ (a , b) = annFree-[]ᵛ V σ a , annFree-[]ᵛ W σ b
   annFree-[]ᵛ (cmp ⋈ V W) σ (a , b) = annFree-[]ᵛ V σ a , annFree-[]ᵛ W σ b
   annFree-[]ᵛ (lam M)     σ a       = annFree-[]ᶜ M σ a
+  annFree-[]ᵛ (handler N H) σ (a , h) =
+    annFree-[]ᶜ N σ a , (λ op → annFree-[]ᶜ (H op) (σ ↑ᵉ) (h op))
 
   annFree-[]ᶜ : ∀ {Θ Θ' n} → (M : RawC Θ n) → (σ : Subst Θ Θ')
               → AnnFreeᶜ M → AnnFreeᶜ (M [ σ ]ᴿᶜ)
@@ -147,8 +152,7 @@ mutual
     annFree-[]ᵛ V σ a , annFree-[]ᶜ M σ b , annFree-[]ᶜ N σ c
   annFree-[]ᶜ (perform op V M)          σ (a , b) = annFree-[]ᵛ V σ a , annFree-[]ᶜ M σ b
   annFree-[]ᶜ (delay τ M)               σ a = annFree-[]ᶜ M σ a
-  annFree-[]ᶜ (handle M `with H `in N)  σ (a , h , b) =
-    annFree-[]ᶜ M σ a , (λ op → annFree-[]ᶜ (H op) (σ ↑ᵉ) (h op)) , annFree-[]ᶜ N σ b
+  annFree-[]ᶜ (handle M `with V)       σ (a , b) = annFree-[]ᶜ M σ a , annFree-[]ᵛ V σ b
   annFree-[]ᶜ (unbox i N)               σ a = annFree-[]ᶜ N σ a
   annFree-[]ᶜ (box ρ V N)               σ (a , b) = annFree-[]ᵛ V σ a , annFree-[]ᶜ N σ b
 
@@ -157,7 +161,7 @@ mutual
 
 -- The open handler clause of operation `op` in `Γ'` with result type
 -- `B`, at the rigid continuation grade `evar newᵉ`: the premise of the
--- open `handle` rule
+-- open `handler` rule
 
 Clause : ∀ {n} → OCtx ∅ˢ n → VType → Op → Set
 Clause Γ' B op =
@@ -335,7 +339,8 @@ mutual
                {M : Δ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε}
              → Uᶜ (Γ' ⟨ rconst (of-durʳ τ) ⟩) r [] Mᴿ M → Uᶜ Γ' r P (delay τ Mᴿ) (delay τ M)
 
-    -- one open clause per operation, typing the raw clause
+    -- a `handle` whose handler is a handler, one open clause per
+    -- operation, typing the raw clause
 
     u-handle : ∀ {n} {Γ' : OCtx ∅ˢ n} {r Δ} {P : List (Pending Δ n)} {Mᴿ Hᴿ Nᴿ A B ε ε'}
                {M : Δ ⊢C⦂ A ‼ ε}
@@ -348,7 +353,7 @@ mutual
              → (Hᵒ : (op : Op) → Clause Γ' B op)
              → ((op : Op) → OE.⌊ Hᵒ op ⌋ᶜ ≡ Hᴿ op)
              → Uᶜ (Γ' ⟨ ∣ econst ε ∣̂ᵉ ⟩ ∷ ⌜ A ⌝ᵛ) (extᴿ r) [] Nᴿ N
-             → Uᶜ Γ' r P (handle Mᴿ `with Hᴿ `in Nᴿ) (handle M `with H `in N)
+             → Uᶜ Γ' r P (handle Mᴿ `with handler Nᴿ Hᴿ) (handle M `with H `in N)
 
     u-unbox  : ∀ {n} {Γ' : OCtx ∅ˢ n} {r Δ} {P : List (Pending Δ n)} {i : Fin n}
                {Nᴿ A A₀ C ρ₀ ρ'}
@@ -415,13 +420,14 @@ boxView (A |+| B)  ()
 boxView (|List| A) ()
 boxView Empty      ()
 boxView (A ⇒ C)    ()
+boxView (C ⇛ D)    ()
 boxView ([ r ] A)  refl = r , A , refl , refl , refl
 
 ------------------------------------------------------------------------
 -- A variable of the closed context, at a position the map gives to a
 -- variable of its source, is that variable, at a grade above its own
 
-unlook : ∀ {G Δ A ρ} → (ι : G ≼ Δ) → Full ι → (x : A ∈[ ρ ] Δ) → (k : ℕ)
+unlook : ∀ {G Δ A ρ} → (ι : G ≼ Δ) → Exact ι → (x : A ∈[ ρ ] Δ) → (k : ℕ)
        → CE.var-pos x ≡ posᴿ ⌊ ι ⌋ᵐ k
        → Σ[ ρ₀ ∈ R ] Σ[ x₀ ∈ A ∈[ ρ₀ ] G ] ((ρ₀ ≾ᵣ ρ) × (CE.var-pos x₀ ≡ k))
 unlook ≼-refl   f x         k       p = _ , x , ≾ᵣ-refl , p
@@ -467,6 +473,7 @@ mutual
   lockᵛ et (cmp ⋈ V W e)        = cmp ⋈ (lockᵛ e' V) (lockᵛ e' W) e
     where e' = sound-⊩ᴱ (⊨ᴰ-∅ {σ = ∅ᴰ}) e
   lockᵛ () (lam M)
+  lockᵛ () (handler N H)
   lockᵛ et (annᵛ A V)           = annᵛ A (lockᵛ et V)
   lockᵛ et (subV V p)           = subV (lockᵛ (<:ᵛ-eternalˡ (sound-<:ᵛ (⊨ᴰ-∅ {σ = ∅ᴰ}) p) et) V) p
 
@@ -488,6 +495,7 @@ mutual
   ⌊lockᵛ⌋ et (cmp ⋈ V W e)       = cong₂ (cmp ⋈) (⌊lockᵛ⌋ e' V) (⌊lockᵛ⌋ e' W)
     where e' = sound-⊩ᴱ (⊨ᴰ-∅ {σ = ∅ᴰ}) e
   ⌊lockᵛ⌋ () (lam M)
+  ⌊lockᵛ⌋ () (handler N H)
   ⌊lockᵛ⌋ et (annᵛ A V)          = cong (_⦂ᵛ A) (⌊lockᵛ⌋ et V)
   ⌊lockᵛ⌋ et (subV V p)          = ⌊lockᵛ⌋ (<:ᵛ-eternalˡ (sound-<:ᵛ (⊨ᴰ-∅ {σ = ∅ᴰ}) p) et) V
 
@@ -522,8 +530,9 @@ private
 
   -- a closed type meaning `A` is a subtype of `⌜ A ⌝ᵛ`
 
-  to-⌜⌝ : (A' : OVType ∅ˢ) → ∀ {A} → ⌞ A' ⌟ᵛ ≡ A → ∅ᴴ ∣ A' <:̂ᵛ ⌜ A ⌝ᵛ
-  to-⌜⌝ A' refl = ≡̂ᵛ-<:̂ ⌜⌞ A' ⌟⌝ᵛ
+  to-⌜⌝ : (A' : OVType ∅ˢ) → NoHandlerTypeᵛ A' → ∀ {A} → ⌞ A' ⌟ᵛ ≡ A
+         → ∅ᴴ ∣ A' <:̂ᵛ ⌜ A ⌝ᵛ
+  to-⌜⌝ A' h refl = ≡̂ᵛ-<:̂ (⌜⌞ A' ⌟⌝ᵛ h)
 
   -- the value of a closed grade expression is its meaning
 
@@ -566,110 +575,112 @@ private
 mutual
 
   embedᵛ : ∀ {n} {Γ' : OCtx ∅ˢ n} {r Δ P Vᴿ A} {V : Δ ⊢V⦂ A}
-         → Uᵛ Γ' r P Vᴿ V → AnnFreeᵛ Vᴿ
-         → ∀ {G} → ⌞ Γ' ⌟ᶜᵗˣ ≡ G → (ι : G ≼ Δ) → Full ι → ⌊ ι ⌋ᵐ ≡ r → EEnv Γ' P
+         → Uᵛ Γ' r P Vᴿ V → AnnFreeᵛ Vᴿ → NoHandlerTypeᶜᵗˣ Γ'
+         → ∀ {G} → ⌞ Γ' ⌟ᶜᵗˣ ≡ G → (ι : G ≼ Δ) → Exact ι → ⌊ ι ⌋ᵐ ≡ r → EEnv Γ' P
          → Σ[ V' ∈ ∅ᴴ ∣ Γ' ⊢V⦂ ⌜ A ⌝ᵛ ] (OE.⌊ V' ⌋ᵛ ≡ Vᴿ)
-  embedᵛ {Γ' = Γ'} (u-var {i = i} {A = A} {f = f} {x = x} p) _ eq ι fι er E
+  embedᵛ {Γ' = Γ'} (u-var {i = i} {A = A} {f = f} {x = x} p) _ nh eq ι fι er E
     with unlook ι fι x (toℕ i) (trans p (cong (λ r → posᴿ r (toℕ i)) (sym er)))
   ... | ρ₀ , x₀ , le , q with lookupˣ Γ' eq x₀
   ... | A' , ρ' , x' , eA , eρ , ep =
-    subV (var x' ok) (to-⌜⌝ A' eA) , cong var (toℕ-injective (trans ep q))
+    subV (var x' ok) (to-⌜⌝ A' (∈̂-noHandler nh x') eA) , cong var (toℕ-injective (trans ep q))
     where
       ok : VarOK ∅ᴴ A' ρ'
       ok with eternal? A
       ... | yes et = et-ok (⌞⌟-⊩ᴱ A' (subst Eternal (sym eA) et))
       ... | no ¬et =
         ≾ᵘ-ok (val-≾ᵣ⁻ (subst (_≾ᵣ uᵣ) (sym (valʳ-⌞⌟ ρ' eρ)) (≾ᵣ-trans le (f ¬et))))
-  embedᵛ (u-out m)    _ eq ι fι er E = entry E m
-  embedᵛ u-const      _ eq ι fι er E = const _ _ , refl
-  embedᵛ u-⋆          _ eq ι fι er E = ⋆ , refl
-  embedᵛ u-true       _ eq ι fι er E = true , refl
-  embedᵛ u-false      _ eq ι fι er E = false , refl
-  embedᵛ u-zero       _ eq ι fι er E = zero , refl
-  embedᵛ (u-succ u)   a eq ι fι er E with embedᵛ u a eq ι fι er E
+  embedᵛ (u-out m)    _ nh eq ι fι er E = entry E m
+  embedᵛ u-const      _ nh eq ι fι er E = const _ _ , refl
+  embedᵛ u-⋆          _ nh eq ι fι er E = ⋆ , refl
+  embedᵛ u-true       _ nh eq ι fι er E = true , refl
+  embedᵛ u-false      _ nh eq ι fι er E = false , refl
+  embedᵛ u-zero       _ nh eq ι fι er E = zero , refl
+  embedᵛ (u-succ u)   a nh eq ι fι er E with embedᵛ u a nh eq ι fι er E
   ... | V' , e = succ V' , cong succ e
-  embedᵛ (u-pair u v) (a , b) eq ι fι er E
-    with embedᵛ u a eq ι fι er E | embedᵛ v b eq ι fι er E
+  embedᵛ (u-pair u v) (a , b) nh eq ι fι er E
+    with embedᵛ u a nh eq ι fι er E | embedᵛ v b nh eq ι fι er E
   ... | V' , e | W' , e' = ⦉ V' , W' ⦊ , cong₂ ⦉_,_⦊ e e'
-  embedᵛ (u-inl u)    a eq ι fι er E with embedᵛ u a eq ι fι er E
+  embedᵛ (u-inl u)    a nh eq ι fι er E with embedᵛ u a nh eq ι fι er E
   ... | V' , e = inl V' , cong inl e
-  embedᵛ (u-inr u)    a eq ι fι er E with embedᵛ u a eq ι fι er E
+  embedᵛ (u-inr u)    a nh eq ι fι er E with embedᵛ u a nh eq ι fι er E
   ... | V' , e = inr V' , cong inr e
-  embedᵛ u-nil        _ eq ι fι er E = nil , refl
-  embedᵛ (u-cons u v) (a , b) eq ι fι er E
-    with embedᵛ u a eq ι fι er E | embedᵛ v b eq ι fι er E
+  embedᵛ u-nil        _ nh eq ι fι er E = nil , refl
+  embedᵛ (u-cons u v) (a , b) nh eq ι fι er E
+    with embedᵛ u a nh eq ι fι er E | embedᵛ v b nh eq ι fι er E
   ... | V' , e | W' , e' = cons V' W' , cong₂ cons e e'
-  embedᵛ (u-lam {A = A} u) a eq ι fι er E
-    with embedᶜ u a (ext eq A) (≼-∷ ι) fι (cong extᴿ er) tt
+  embedᵛ (u-lam {A = A} u) a nh eq ι fι er E
+    with embedᶜ u a (nh , ⌜⌝-noHandlerᵛ A) (ext eq A) (≼-∷ ι) fι (cong extᴿ er) tt
   ... | M' , e = lam M' , cong lam e
-  embedᵛ (u-subV {p = p} u) a eq ι fι er E with embedᵛ u a eq ι fι er E
+  embedᵛ (u-subV {p = p} u) a nh eq ι fι er E with embedᵛ u a nh eq ι fι er E
   ... | V' , e = subV V' (⌜⌝-<:ᵛ p) , e
-  embedᵛ (u-annᵛ u) () eq ι fι er E
+  embedᵛ (u-annᵛ u) () nh eq ι fι er E
 
   embedᶜ : ∀ {n} {Γ' : OCtx ∅ˢ n} {r Δ P Mᴿ C} {M : Δ ⊢C⦂ C}
-         → Uᶜ Γ' r P Mᴿ M → AnnFreeᶜ Mᴿ
-         → ∀ {G} → ⌞ Γ' ⌟ᶜᵗˣ ≡ G → (ι : G ≼ Δ) → Full ι → ⌊ ι ⌋ᵐ ≡ r → EEnv Γ' P
+         → Uᶜ Γ' r P Mᴿ M → AnnFreeᶜ Mᴿ → NoHandlerTypeᶜᵗˣ Γ'
+         → ∀ {G} → ⌞ Γ' ⌟ᶜᵗˣ ≡ G → (ι : G ≼ Δ) → Exact ι → ⌊ ι ⌋ᵐ ≡ r → EEnv Γ' P
          → Emb Γ' ⌜ C ⌝ᶜ Mᴿ
-  embedᶜ (u-hoist {P = P} {⋈ = ⋈} {B = B} {ε' = ε'} {et = et} aV aW u v w) a eq ι fι er E
-    with embedᵛ u aV eq ι fι er E | embedᵛ v aW eq ι fι er E
+  embedᶜ (u-hoist {P = P} {⋈ = ⋈} {B = B} {ε' = ε'} {et = et} aV aW u v w) a nh eq ι fι er E
+    with embedᵛ u aV nh eq ι fι er E | embedᵛ v aW nh eq ι fι er E
   ... | V' , e | W' , e'
-    with embedᶜ w a eq (≼-▷ ι) fι (cong shᴿ er)
+    with embedᶜ w a nh eq (≼-▷ ι) fι (cong shᴿ er)
                 ((cmp ⋈ V' W' (⌞⌟-⊩ᴱ ⌜ B ⌝ᵛ (subst Eternal (sym ⌞⌜ B ⌝⌟ᵛ) et)) ,
                   cong₂ (cmp ⋈) e e') ,
                  wk-env P E)
   ... | N' , e'' = coerce (atomₑ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε'))) N' , e''
-  embedᶜ (u-return u) a eq ι fι er E with embedᵛ u a eq ι fι er E
+  embedᶜ (u-return u) a nh eq ι fι er E with embedᵛ u a nh eq ι fι er E
   ... | V' , e = return V' , cong return e
-  embedᶜ (u-seq {A = A} {ε = ε} u v) (a , b) eq ι fι er E
-    with embedᶜ u a eq ι fι er tt
-       | embedᶜ v b (ext (cong (_⟨ mapᵉ ε ⟩) eq) A) (≼-∷ (≼-⟨⟩ ι)) fι (cong extᴿ er) tt
+  embedᶜ (u-seq {A = A} {ε = ε} u v) (a , b) nh eq ι fι er E
+    with embedᶜ u a nh eq ι fι er tt
+       | embedᶜ v b (nh , ⌜⌝-noHandlerᵛ A) (ext (cong (_⟨ mapᵉ ε ⟩) eq) A) (≼-∷ (≼-⟨⟩ ι)) fι (cong extᴿ er) tt
   ... | M' , e | N' , e' = const-· (M' ⨟ N' , cong₂ _⨟_ e e')
-  embedᶜ (u-app u v) (a , b) eq ι fι er E
-    with embedᵛ u a eq ι fι er E | embedᵛ v b eq ι fι er E
+  embedᶜ (u-app u v) (a , b) nh eq ι fι er E
+    with embedᵛ u a nh eq ι fι er E | embedᵛ v b nh eq ι fι er E
   ... | V' , e | W' , e' = V' · W' , cong₂ _·_ e e'
-  embedᶜ (u-match {A = A} {B = B} u v) (a , b) eq ι fι er E
-    with embedᵛ u a eq ι fι er E
-       | embedᶜ v b (ext (ext eq A) B) (≼-∷ (≼-∷ ι)) fι (cong (λ r → extᴿ (extᴿ r)) er) tt
+  embedᶜ (u-match {A = A} {B = B} u v) (a , b) nh eq ι fι er E
+    with embedᵛ u a nh eq ι fι er E
+       | embedᶜ v b ((nh , ⌜⌝-noHandlerᵛ A) , ⌜⌝-noHandlerᵛ B) (ext (ext eq A) B) (≼-∷ (≼-∷ ι)) fι (cong (λ r → extᴿ (extᴿ r)) er) tt
   ... | V' , e | M' , e' = match V' `in M' , cong₂ match_`in_ e e'
-  embedᶜ (u-absurd u) a eq ι fι er E with embedᵛ u a eq ι fι er E
+  embedᶜ (u-absurd u) a nh eq ι fι er E with embedᵛ u a nh eq ι fι er E
   ... | V' , e = absurd V' , cong absurd e
-  embedᶜ (u-if u v w) (a , b , c) eq ι fι er E
-    with embedᵛ u a eq ι fι er E | embedᶜ v b eq ι fι er tt | embedᶜ w c eq ι fι er tt
+  embedᶜ (u-if u v w) (a , b , c) nh eq ι fι er E
+    with embedᵛ u a nh eq ι fι er E | embedᶜ v b nh eq ι fι er tt | embedᶜ w c nh eq ι fι er tt
   ... | V' , e | M' , e' | N' , e'' =
     if V' `then M' `else N' , cong₃ if_`then_`else_ e e' e''
-  embedᶜ (u-caseℕ u v w) (a , b , c) eq ι fι er E
-    with embedᵛ u a eq ι fι er E | embedᶜ v b eq ι fι er tt
-       | embedᶜ w c (ext eq Nat) (≼-∷ ι) fι (cong extᴿ er) tt
+  embedᶜ (u-caseℕ u v w) (a , b , c) nh eq ι fι er E
+    with embedᵛ u a nh eq ι fι er E | embedᶜ v b nh eq ι fι er tt
+       | embedᶜ w c (nh , tt) (ext eq Nat) (≼-∷ ι) fι (cong extᴿ er) tt
   ... | V' , e | M' , e' | N' , e'' =
     caseℕ V' `zero M' `succ N' , cong₃ caseℕ_`zero_`succ_ e e' e''
-  embedᶜ (u-case+ {A = A} {B = B} u v w) (a , b , c) eq ι fι er E
-    with embedᵛ u a eq ι fι er E
-       | embedᶜ v b (ext eq A) (≼-∷ ι) fι (cong extᴿ er) tt
-       | embedᶜ w c (ext eq B) (≼-∷ ι) fι (cong extᴿ er) tt
+  embedᶜ (u-case+ {A = A} {B = B} u v w) (a , b , c) nh eq ι fι er E
+    with embedᵛ u a nh eq ι fι er E
+       | embedᶜ v b (nh , ⌜⌝-noHandlerᵛ A) (ext eq A) (≼-∷ ι) fι (cong extᴿ er) tt
+       | embedᶜ w c (nh , ⌜⌝-noHandlerᵛ B) (ext eq B) (≼-∷ ι) fι (cong extᴿ er) tt
   ... | V' , e | M' , e' | N' , e'' =
     case+ V' `inl M' `inr N' , cong₃ case+_`inl_`inr_ e e' e''
-  embedᶜ (u-caseL {A = A} u v w) (a , b , c) eq ι fι er E
-    with embedᵛ u a eq ι fι er E | embedᶜ v b eq ι fι er tt
-       | embedᶜ w c (ext (ext eq A) (|List| A)) (≼-∷ (≼-∷ ι)) fι
+  embedᶜ (u-caseL {A = A} u v w) (a , b , c) nh eq ι fι er E
+    with embedᵛ u a nh eq ι fι er E | embedᶜ v b nh eq ι fι er tt
+       | embedᶜ w c ((nh , ⌜⌝-noHandlerᵛ A) , ⌜⌝-noHandlerᵛ A) (ext (ext eq A) (|List| A)) (≼-∷ (≼-∷ ι)) fι
                 (cong (λ r → extᴿ (extᴿ r)) er) tt
   ... | V' , e | M' , e' | N' , e'' =
     caseL V' `nil M' `cons N' , cong₃ caseL_`nil_`cons_ e e' e''
-  embedᶜ (u-recℕ {B = B} {ε = ε} {p = p} u v w) (a , b , c) eq ι fι er E
-    with embedᵛ u a eq ι fι er E | embedᶜ v b eq ι fι er tt
-       | embedᶜ w c (ext (cong (_⟨ mapᵉ ε ⟩) (ext (lock eq ⊤ᵣ) Nat)) B)
+  embedᶜ (u-recℕ {B = B} {ε = ε} {p = p} u v w) (a , b , c) nh eq ι fι er E
+    with embedᵛ u a nh eq ι fι er E | embedᶜ v b nh eq ι fι er tt
+       | embedᶜ w c ((nh , tt) , ⌜⌝-noHandlerᵛ B) (ext (cong (_⟨ mapᵉ ε ⟩) (ext (lock eq ⊤ᵣ) Nat)) B)
                 (≼-∷ (≼-⟨⟩ (≼-∷ (≼-⟨⟩ ι)))) fι (cong (λ r → extᴿ (extᴿ r)) er) tt
   ... | V' , e | M' , e' | N' , e'' =
     recℕ V' M' N' (val-≾ₑ⁻ p) , cong₃ recℕ e e' e''
-  embedᶜ (u-recL {A = A} {B = B} {ε = ε} {p = p} u v w) (a , b , c) eq ι fι er E
-    with embedᵛ u a eq ι fι er E | embedᶜ v b eq ι fι er tt
-       | embedᶜ w c (ext (cong (_⟨ mapᵉ ε ⟩) (ext (ext (lock eq ⊤ᵣ) A) (|List| A))) B)
+  embedᶜ (u-recL {A = A} {B = B} {ε = ε} {p = p} u v w) (a , b , c) nh eq ι fι er E
+    with embedᵛ u a nh eq ι fι er E | embedᶜ v b nh eq ι fι er tt
+       | embedᶜ w c (((nh , ⌜⌝-noHandlerᵛ A) , ⌜⌝-noHandlerᵛ A) , ⌜⌝-noHandlerᵛ B)
+                (ext (cong (_⟨ mapᵉ ε ⟩) (ext (ext (lock eq ⊤ᵣ) A) (|List| A))) B)
                 (≼-∷ (≼-⟨⟩ (≼-∷ (≼-∷ (≼-⟨⟩ ι))))) fι
                 (cong (λ r → extᴿ (extᴿ (extᴿ r))) er) tt
   ... | V' , e | M' , e' | N' , e'' =
     recL V' M' N' (val-≾ₑ⁻ p) , cong₃ recL e e' e''
-  embedᶜ (u-perform {op = op} u v) (a , b) eq ι fι er E
-    with embedᵛ u a eq ι fι er E
-       | embedᶜ v b (cong₂ _∷_ (lock eq (mapᵉ (op-grade op))) (⟦⌜ arity op ⌝ᵍ⟧ ∅ᴰ))
+  embedᶜ (u-perform {op = op} u v) (a , b) nh eq ι fι er E
+    with embedᵛ u a nh eq ι fι er E
+       | embedᶜ v b (nh , ⌜⌝ᵍ-noHandler (arity op))
+                (cong₂ _∷_ (lock eq (mapᵉ (op-grade op))) (⟦⌜ arity op ⌝ᵍ⟧ ∅ᴰ))
                 (≼-∷ (≼-⟨⟩ ι)) fι (cong extᴿ er) tt
   ... | V' , e | M' , e' =
     const-· (perform op (ty-subst (⌜type-of-gtype⌝ (param op)) V') M' ,
@@ -678,31 +689,33 @@ mutual
       ⌊ty-subst⌋ : ∀ {n} {Γ' : OCtx ∅ˢ n} {A A'} → (q : A ≡ A') → (W : ∅ᴴ ∣ Γ' ⊢V⦂ A)
                  → OE.⌊ ty-subst q W ⌋ᵛ ≡ OE.⌊ W ⌋ᵛ
       ⌊ty-subst⌋ refl W = refl
-  embedᶜ (u-delay {τ = τ} u) a eq ι fι er E
-    with embedᶜ u a (lock eq (of-durʳ τ)) (≼-⟨⟩ ι) fι er tt
+  embedᶜ (u-delay {τ = τ} u) a nh eq ι fι er E
+    with embedᶜ u a nh (lock eq (of-durʳ τ)) (≼-⟨⟩ ι) fι er tt
   ... | M' , e = const-· (delay τ M' , cong (delay τ) e)
   -- the raw clauses are a function of the operation, compared by `fun-ext`
-  embedᶜ (u-handle {A = A} {ε = ε} u Hᵒ eH v) (a , _ , b) eq ι fι er E
-    with embedᶜ u a eq ι fι er tt
-       | embedᶜ v b (ext (cong (_⟨ mapᵉ ε ⟩) eq) A) (≼-∷ (≼-⟨⟩ ι)) fι (cong extᴿ er) tt
+  embedᶜ (u-handle {A = A} {ε = ε} u Hᵒ eH v) (a , b , _) nh eq ι fι er E
+    with embedᶜ u a nh eq ι fι er tt
+       | embedᶜ v b (nh , ⌜⌝-noHandlerᵛ A) (ext (cong (_⟨ mapᵉ ε ⟩) eq) A) (≼-∷ (≼-⟨⟩ ι)) fι
+                (cong extᴿ er) tt
   ... | M' , e | N' , e' =
-    const-· (handle M' `with Hᵒ `in N' ,
-             cong₃ (λ x y z → handle x `with y `in z) e (fun-ext eH) e')
-  embedᶜ {Γ' = Γ'} (u-unbox {i = i} {A = A} {x = x} {p = p} {q = q} ep u) a eq ι fι er E
+    const-· (handle M' `with handler N' Hᵒ ,
+             cong₂ handle_`with_ e (cong₂ handler e' (fun-ext eH)))
+  embedᶜ {Γ' = Γ'} (u-unbox {i = i} {A = A} {x = x} {p = p} {q = q} ep u) a nh eq ι fι er E
     with unlook ι fι x (toℕ i) (trans ep (cong (λ r → posᴿ r (toℕ i)) (sym er)))
   ... | ρ₀ , x₀ , le , q₀ with lookupˣ Γ' eq x₀
   ... | B' , ρ' , x' , eB , eρ , epos with boxView B' eB
   ... | r' , A₀' , refl , er' , eA₀
-    with embedᶜ u a (ext eq A) (≼-∷ ι) fι (cong extᴿ er) tt
+    with embedᶜ u a (nh , ⌜⌝-noHandlerᵛ A) (ext eq A) (≼-∷ ι) fι (cong extᴿ er) tt
   ... | N' , e =
     unbox x' (val-≾ᵣ⁻ (subst₂ _≾ᵣ_ (sym (valʳ-⌞⌟ ρ' eρ)) (sym (valʳ-⌞⌟ r' er'))
                                (≾ᵣ-trans le p)))
-             (⌞⌟-<:ᵛ A₀' ⌜ A ⌝ᵛ (subst₂ _<:ᵛ_ (sym eA₀) (sym ⌞⌜ A ⌝⌟ᵛ) q)) N' ,
+             (⌞⌟-<:ᵛ A₀' ⌜ A ⌝ᵛ (∈̂-noHandler nh x') (⌜⌝-noHandlerᵛ A)
+                     (subst₂ _<:ᵛ_ (sym eA₀) (sym ⌞⌜ A ⌝⌟ᵛ) q)) N' ,
     cong₂ unbox (toℕ-injective (trans epos q₀)) e
-  embedᶜ (u-box {P = P} {ρ = ρ} {A = A} u v) (a , b) eq ι fι er E
-    with embedᵛ u a (lock eq ⌞ ρ ⌟ʳ) (≼-⟨⟩ ι) fι er (lock-env P E)
-       | embedᶜ v b (cong₂ _∷_ eq (cong ([ ⌞ ρ ⌟ʳ ]_) ⌞⌜ A ⌝⌟ᵛ)) (≼-∷ ι) fι (cong extᴿ er) tt
+  embedᶜ (u-box {P = P} {ρ = ρ} {A = A} u v) (a , b) nh eq ι fι er E
+    with embedᵛ u a nh (lock eq ⌞ ρ ⌟ʳ) (≼-⟨⟩ ι) fι er (lock-env P E)
+       | embedᶜ v b (nh , ⌜⌝-noHandlerᵛ A) (cong₂ _∷_ eq (cong ([ ⌞ ρ ⌟ʳ ]_) ⌞⌜ A ⌝⌟ᵛ)) (≼-∷ ι) fι (cong extᴿ er) tt
   ... | V' , e | N' , e' = box ρ V' N' , cong₂ (box ρ) e e'
-  embedᶜ (u-subC {p = p} u) a eq ι fι er E with embedᶜ u a eq ι fι er E
+  embedᶜ (u-subC {p = p} u) a nh eq ι fι er E with embedᶜ u a nh eq ι fι er E
   ... | M' , e = subC M' (⌜⌝-<:ᶜ p) , e
-  embedᶜ (u-annᶜ u) () eq ι fι er E
+  embedᶜ (u-annᶜ u) () nh eq ι fι er E

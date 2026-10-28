@@ -223,6 +223,8 @@ mutual
   fix-v f (|List| A) h = cong |List| (fix-v f A h)
   fix-v f (A ⇒ C)   h = cong₂ _⇒_ (fix-v f A (⊆-∪ˡ (fvᵛ A) (fvᶜ C) h))
                                   (fix-c f C (⊆-∪ʳ (fvᵛ A) (fvᶜ C) h))
+  fix-v f (C ⇛ D)   h = cong₂ _⇛_ (fix-c f C (⊆-∪ˡ (fvᶜ C) (fvᶜ D) h))
+                                  (fix-c f D (⊆-∪ʳ (fvᶜ C) (fvᶜ D) h))
   fix-v f ([ ρ ] A) h = cong₂ [_]_ (fix-r f ρ (⊆-∪ˡ (fvʳ ρ) (fvᵛ A) h))
                                    (fix-v f A (⊆-∪ʳ (fvʳ ρ) (fvᵛ A) h))
 

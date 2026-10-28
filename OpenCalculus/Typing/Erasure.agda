@@ -62,6 +62,11 @@ mutual
   ⌊ cmp ⋈ V W _ ⌋ᵛ = cmp ⋈ ⌊ V ⌋ᵛ ⌊ W ⌋ᵛ
   ⌊ ⦉ V , W ⦊ ⌋ᵛ   = ⦉ ⌊ V ⌋ᵛ , ⌊ W ⌋ᵛ ⦊
   ⌊ lam M ⌋ᵛ      = lam ⌊ M ⌋ᶜ
+
+  -- the clause family is erased pointwise; `H op` is typed at `Θ +e` over a
+  -- context of arity `2 + n`, which is the raw clause's scope on the nose
+
+  ⌊ handler N H ⌋ᵛ = handler ⌊ N ⌋ᶜ (λ op → ⌊ H op ⌋ᶜ)
   ⌊ annᵛ A V ⌋ᵛ   = ⌊ V ⌋ᵛ ⦂ᵛ A
 
   -- subsumption is invisible
@@ -88,10 +93,7 @@ mutual
   ⌊ perform op V M ⌋ᶜ           = perform op ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ
   ⌊ delay τ M ⌋ᶜ                = delay τ ⌊ M ⌋ᶜ
 
-  -- the clause family is erased pointwise; `H op` is typed at `Θ +e` over a
-  -- context of arity `2 + n`, which is the raw clause's scope on the nose
-
-  ⌊ handle M `with H `in N ⌋ᶜ   = handle ⌊ M ⌋ᶜ `with (λ op → ⌊ H op ⌋ᶜ) `in ⌊ N ⌋ᶜ
+  ⌊ handle M `with V ⌋ᶜ         = handle ⌊ M ⌋ᶜ `with ⌊ V ⌋ᵛ
 
   ⌊ unbox x p q N ⌋ᶜ            = unbox (var-pos x) ⌊ N ⌋ᶜ
 

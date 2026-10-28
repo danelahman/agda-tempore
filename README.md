@@ -49,8 +49,9 @@ end.
 
 ## Scope
 
-- Handlers are second class, `handle M with H to x in N`: there are no handler
-  types or handler values. The language is parameterised by base types, the
+- Handlers are values of handler types, used by `handle M with V`, in the
+  calculus with grade variables; the closed calculus has second-class handlers,
+  `handle M with H to x in N`. The language is parameterised by base types, the
   calculus being its instance without them (`withoutBaseTypes`).
 - Conditions on the variable of a handler clause are kept as obligations of a
   type scheme, apart from its hypotheses.
@@ -60,8 +61,9 @@ end.
 - Instantiation, type safety and termination are for the closed calculus, whose
   handler clauses are typed at every continuation grade and whose comparisons
   are computations, run by instantiation before the computation whose value
-  they occur in; completeness of inference is with respect to closed typings
-  with uniform handlers.
+  they occur in; instantiation covers the terms whose handlers are second
+  class. Completeness of inference is with respect to closed typings with
+  uniform handlers, in contexts with no handler type.
 - The denotational results assume uniform handlers, and some of their
   recursions are marked `TERMINATING`.
 

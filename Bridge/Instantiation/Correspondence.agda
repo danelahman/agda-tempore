@@ -9,13 +9,14 @@
 -- Closed open syntax means its interpretation at the empty     --
 -- instance (`⌞_⌟`), on grades the value. Every closed type     --
 -- arises: `⌜_⌝ᵛ`, each grade a constant, is a section          --
--- (`⌞⌜_⌝⌟ᵛ`), and a closed open type is convertible to the     --
--- embedding of its meaning (`⌜⌞_⌟⌝ᵛ`).                         --
+-- (`⌞⌜_⌝⌟ᵛ`), and a closed open type with no handler type is   --
+-- convertible to the embedding of its meaning (`⌜⌞_⌟⌝ᵛ`).      --
 --                                                              --
 -- A closed instance `δ` determines the declarative instance    --
 -- `⌞ δ ⌟ˢ`, with `⌞ A [ δ ]ᵛ ⌟ᵛ ≡ ⟦ A ⟧ᵛ ⌞ δ ⌟ˢ` for grades,   --
 -- types, computation types and contexts (`⌞[]⌟ᵛ` and the       --
--- like), and `δ ⊨ Q ∣ []` exactly when `⌞ δ ⌟ˢ ⊨ᴰ Q` (`⊨⇔⊨ᴰ`). --
+-- like), and, when no handler type is among its types,         --
+-- `δ ⊨ Q ∣ []` exactly when `⌞ δ ⌟ˢ ⊨ᴰ Q` (`⊨⇔⊨ᴰ`).            --
 -- Every declarative instance `σ` arises so, from `⌜ σ ⌝ˢ`,     --
 -- which sends each variable to a constant: `⌞ ⌜ σ ⌝ˢ ⌟ˢ` is    --
 -- `σ` pointwise (`⌞⌜_⌝ˢ⌟`), and satisfies what `σ` satisfies   --
@@ -30,6 +31,7 @@ open import Data.Nat using (ℕ; zero; suc)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.All using (All) renaming ([] to []ᴬ; _∷_ to _∷ᴬ_)
 open import Data.Product using (_,_)
+open import Data.Unit using (tt)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂)
 open import Function.Bundles using (_⇔_; mk⇔)
 
@@ -101,6 +103,7 @@ module _ {Θ} {σ σ' : DInst Θ} (p : σ ≗ᴰ σ') where
     ⟦≗⟧ᵛ (|List| A) = cong |List| (⟦≗⟧ᵛ A)
     ⟦≗⟧ᵛ Empty      = refl
     ⟦≗⟧ᵛ (A ⇒ C)    = cong₂ _⇒_ (⟦≗⟧ᵛ A) (⟦≗⟧ᶜ C)
+    ⟦≗⟧ᵛ (C ⇛ D)    = refl
     ⟦≗⟧ᵛ ([ ρ ] A)  = cong₂ [_]_ (⟦≗⟧ʳ ρ) (⟦≗⟧ᵛ A)
 
     ⟦≗⟧ᶜ : (C : OCType Θ) → ⟦ C ⟧ᶜ σ ≡ ⟦ C ⟧ᶜ σ'
@@ -161,6 +164,7 @@ module _ {Θ Θ'} (δ : Subst Θ Θ') (σ : DInst Θ') where
     ⟦[]⟧ᵛ (|List| A) = cong |List| (⟦[]⟧ᵛ A)
     ⟦[]⟧ᵛ Empty      = refl
     ⟦[]⟧ᵛ (A ⇒ C)    = cong₂ _⇒_ (⟦[]⟧ᵛ A) (⟦[]⟧ᶜ C)
+    ⟦[]⟧ᵛ (C ⇛ D)    = refl
     ⟦[]⟧ᵛ ([ ρ ] A)  = cong₂ [_]_ (⟦[]⟧ʳ ρ) (⟦[]⟧ᵛ A)
 
     ⟦[]⟧ᶜ : (C : OCType Θ) → ⟦ C [ δ ]ᶜ ⟧ᶜ σ ≡ ⟦ C ⟧ᶜ (δ ⨟ᴰ σ)
@@ -253,7 +257,7 @@ sound-⊩ᵒ {δ = δ} {σ} h s = mk⊨ᴰᵒ
 ⌞⌟-valʳ ∣ ε ∣̂ᵉ     = cong mapᵉ (⌞⌟-valᵉ ε)
 
 -- Every closed type arises: the embedding, each grade a constant, is a
--- section of `⌞_⌟`
+-- section of `⌞_⌟`, and has no handler type
 
 mutual
 
@@ -289,26 +293,45 @@ mutual
   ⌞⌜_⌝⌟ᶜ : (C : CType) → ⌞ ⌜ C ⌝ᶜ ⌟ᶜ ≡ C
   ⌞⌜ A ‼ ε ⌝⌟ᶜ = cong (_‼ ε) ⌞⌜ A ⌝⌟ᵛ
 
--- and a closed open type is convertible to the embedding of its meaning
+mutual
+
+  ⌜⌝-noHandlerᵛ : (A : VType) → NoHandlerTypeᵛ ⌜ A ⌝ᵛ
+  ⌜⌝-noHandlerᵛ (Base b)   = tt
+  ⌜⌝-noHandlerᵛ Unit       = tt
+  ⌜⌝-noHandlerᵛ Bool       = tt
+  ⌜⌝-noHandlerᵛ Nat        = tt
+  ⌜⌝-noHandlerᵛ (A |×| B)  = ⌜⌝-noHandlerᵛ A , ⌜⌝-noHandlerᵛ B
+  ⌜⌝-noHandlerᵛ (A |+| B)  = ⌜⌝-noHandlerᵛ A , ⌜⌝-noHandlerᵛ B
+  ⌜⌝-noHandlerᵛ (|List| A) = ⌜⌝-noHandlerᵛ A
+  ⌜⌝-noHandlerᵛ Empty      = tt
+  ⌜⌝-noHandlerᵛ (A ⇒ C)    = ⌜⌝-noHandlerᵛ A , ⌜⌝-noHandlerᶜ C
+  ⌜⌝-noHandlerᵛ ([ ρ ] A)  = ⌜⌝-noHandlerᵛ A
+
+  ⌜⌝-noHandlerᶜ : (C : CType) → NoHandlerTypeᶜ ⌜ C ⌝ᶜ
+  ⌜⌝-noHandlerᶜ (A ‼ ε) = ⌜⌝-noHandlerᵛ A
+
+-- and a closed open type with no handler type is convertible to the
+-- embedding of its meaning
 
 mutual
 
-  ⌜⌞_⌟⌝ᵛ : (A : OVType ∅ˢ) → A ≡̂ᵛ ⌜ ⌞ A ⌟ᵛ ⌝ᵛ
+  ⌜⌞_⌟⌝ᵛ : (A : OVType ∅ˢ) → NoHandlerTypeᵛ A → A ≡̂ᵛ ⌜ ⌞ A ⌟ᵛ ⌝ᵛ
   ⌜⌞ tvar () ⌟⌝ᵛ
-  ⌜⌞ Base b ⌟⌝ᵛ   = Base≡̂
-  ⌜⌞ Unit ⌟⌝ᵛ     = Unit≡̂
-  ⌜⌞ Bool ⌟⌝ᵛ     = Bool≡̂
-  ⌜⌞ Nat ⌟⌝ᵛ      = Nat≡̂
-  ⌜⌞ A |×| B ⌟⌝ᵛ  = ⌜⌞ A ⌟⌝ᵛ |×|≡̂ ⌜⌞ B ⌟⌝ᵛ
-  ⌜⌞ A |+| B ⌟⌝ᵛ  = ⌜⌞ A ⌟⌝ᵛ |+|≡̂ ⌜⌞ B ⌟⌝ᵛ
-  ⌜⌞ |List| A ⌟⌝ᵛ = |List|≡̂ ⌜⌞ A ⌟⌝ᵛ
-  ⌜⌞ Empty ⌟⌝ᵛ    = Empty≡̂
-  ⌜⌞ A ⇒ C ⌟⌝ᵛ    = ⌜⌞ A ⌟⌝ᵛ ⇒≡̂ ⌜⌞ C ⌟⌝ᶜ
-  ⌜⌞ [ ρ ] A ⌟⌝ᵛ  =
-    [ subst (λ c → ρ ≡̂ᵣ rconst c) (sym (⌞⌟-valʳ ρ)) (valʳ-conv ρ) ]≡̂ ⌜⌞ A ⌟⌝ᵛ
+  ⌜⌞ Base b ⌟⌝ᵛ   h       = Base≡̂
+  ⌜⌞ Unit ⌟⌝ᵛ     h       = Unit≡̂
+  ⌜⌞ Bool ⌟⌝ᵛ     h       = Bool≡̂
+  ⌜⌞ Nat ⌟⌝ᵛ      h       = Nat≡̂
+  ⌜⌞ A |×| B ⌟⌝ᵛ  (h , k) = ⌜⌞ A ⌟⌝ᵛ h |×|≡̂ ⌜⌞ B ⌟⌝ᵛ k
+  ⌜⌞ A |+| B ⌟⌝ᵛ  (h , k) = ⌜⌞ A ⌟⌝ᵛ h |+|≡̂ ⌜⌞ B ⌟⌝ᵛ k
+  ⌜⌞ |List| A ⌟⌝ᵛ h       = |List|≡̂ (⌜⌞ A ⌟⌝ᵛ h)
+  ⌜⌞ Empty ⌟⌝ᵛ    h       = Empty≡̂
+  ⌜⌞ A ⇒ C ⌟⌝ᵛ    (h , k) = ⌜⌞ A ⌟⌝ᵛ h ⇒≡̂ ⌜⌞ C ⌟⌝ᶜ k
+  ⌜⌞ [ ρ ] A ⌟⌝ᵛ  h       =
+    [ subst (λ c → ρ ≡̂ᵣ rconst c) (sym (⌞⌟-valʳ ρ)) (valʳ-conv ρ) ]≡̂ ⌜⌞ A ⌟⌝ᵛ h
 
-  ⌜⌞_⌟⌝ᶜ : (C : OCType ∅ˢ) → C ≡̂ᶜ ⌜ ⌞ C ⌟ᶜ ⌝ᶜ
-  ⌜⌞ A ‼ ε ⌟⌝ᶜ = ⌜⌞ A ⌟⌝ᵛ ‼≡̂ subst (λ c → ε ≡̂ₑ econst c) (sym (⌞⌟-valᵉ ε)) (valᵉ-conv ε)
+  ⌜⌞_⌟⌝ᶜ : (C : OCType ∅ˢ) → NoHandlerTypeᶜ C → C ≡̂ᶜ ⌜ ⌞ C ⌟ᶜ ⌝ᶜ
+  ⌜⌞ A ‼ ε ⌟⌝ᶜ h =
+    ⌜⌞ A ⌟⌝ᵛ h ‼≡̂ subst (λ c → ε ≡̂ₑ econst c) (sym (⌞⌟-valᵉ ε)) (valᵉ-conv ε)
 
 ------------------------------------------------------------------------
 -- The two kinds of instance
@@ -380,17 +403,54 @@ module _ {Θ} (δ : Subst Θ ∅ˢ) where
 
 ⌜⌝-<:ᶜ (p ‼ₛ q) = ⌜⌝-<:ᵛ p ‼ₛ atomₑ q
 
--- subtyping between closed open types is subtyping of their meanings
+-- subtyping between closed open types with no handler type is
+-- subtyping of their meanings
 
-⌞⌟-<:ᵛ : (A B : OVType ∅ˢ) → ⌞ A ⌟ᵛ <:ᵛ ⌞ B ⌟ᵛ → ∅ᴴ ∣ A <:̂ᵛ B
-⌞⌟-<:ᵛ A B p =
-  <:̂ᵛ-trans (≡̂ᵛ-<:̂ ⌜⌞ A ⌟⌝ᵛ) (<:̂ᵛ-trans (⌜⌝-<:ᵛ p) (≡̂ᵛ-<:̂ (≡̂ᵛ-sym ⌜⌞ B ⌟⌝ᵛ)))
+⌞⌟-<:ᵛ : (A B : OVType ∅ˢ) → NoHandlerTypeᵛ A → NoHandlerTypeᵛ B
+       → ⌞ A ⌟ᵛ <:ᵛ ⌞ B ⌟ᵛ → ∅ᴴ ∣ A <:̂ᵛ B
+⌞⌟-<:ᵛ A B h k p =
+  <:̂ᵛ-trans (≡̂ᵛ-<:̂ (⌜⌞ A ⌟⌝ᵛ h)) (<:̂ᵛ-trans (⌜⌝-<:ᵛ p) (≡̂ᵛ-<:̂ (≡̂ᵛ-sym (⌜⌞ B ⌟⌝ᵛ k))))
+
+-- A substitution whose types have no handler type keeps a type, and a
+-- context, without one
+
+module _ {Θ Θ'} (δ : Subst Θ Θ') (hδ : ∀ α → NoHandlerTypeᵛ (sTy δ α)) where
+
+  mutual
+
+    noHandler-[]ᵛ : (A : OVType Θ) → NoHandlerTypeᵛ A → NoHandlerTypeᵛ (A [ δ ]ᵛ)
+    noHandler-[]ᵛ (tvar α)   h       = hδ α
+    noHandler-[]ᵛ (Base b)   h       = tt
+    noHandler-[]ᵛ Unit       h       = tt
+    noHandler-[]ᵛ Bool       h       = tt
+    noHandler-[]ᵛ Nat        h       = tt
+    noHandler-[]ᵛ (A |×| B)  (h , k) = noHandler-[]ᵛ A h , noHandler-[]ᵛ B k
+    noHandler-[]ᵛ (A |+| B)  (h , k) = noHandler-[]ᵛ A h , noHandler-[]ᵛ B k
+    noHandler-[]ᵛ (|List| A) h       = noHandler-[]ᵛ A h
+    noHandler-[]ᵛ Empty      h       = tt
+    noHandler-[]ᵛ (A ⇒ C)    (h , k) = noHandler-[]ᵛ A h , noHandler-[]ᶜ C k
+    noHandler-[]ᵛ ([ ρ ] A)  h       = noHandler-[]ᵛ A h
+
+    noHandler-[]ᶜ : (C : OCType Θ) → NoHandlerTypeᶜ C → NoHandlerTypeᶜ (C [ δ ]ᶜ)
+    noHandler-[]ᶜ (A ‼ ε) h = noHandler-[]ᵛ A h
+
+  noHandler-[]ᶜᵗˣ : ∀ {n} → (Γ : OCtx Θ n) → NoHandlerTypeᶜᵗˣ Γ
+                  → NoHandlerTypeᶜᵗˣ (Γ [ δ ]ᶜᵗˣ)
+  noHandler-[]ᶜᵗˣ []        h       = tt
+  noHandler-[]ᶜᵗˣ (Γ ∷ A)   (h , k) = noHandler-[]ᶜᵗˣ Γ h , noHandler-[]ᵛ A k
+  noHandler-[]ᶜᵗˣ (Γ ⟨ ρ ⟩) h       = noHandler-[]ᶜᵗˣ Γ h
+
+-- A closed instance whose types have no handler type
+
+NoHandlerTypeˢ : ∀ {Θ} → Subst Θ ∅ˢ → Set
+NoHandlerTypeˢ δ = ∀ α → NoHandlerTypeᵛ (sTy δ α)
 
 ⊨→⊨ᴰ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → δ ⊨ Q ∣ [] → ⌞ δ ⌟ˢ ⊨ᴰ Q
 ⊨→⊨ᴰ (h , []ᴬ) = sound-⊩ᴴ h ⊨ᴰ-∅
 
-⊨ᴰ→⊨ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → ⌞ δ ⌟ˢ ⊨ᴰ Q → δ ⊨ Q ∣ []
-⊨ᴰ→⊨ {Θ} {Q} {δ} s = mk⊩ᴴ ets' subᵥ' ordᵣ' ordₑ' disj' , []ᴬ
+⊨ᴰ→⊨ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → NoHandlerTypeˢ δ → ⌞ δ ⌟ˢ ⊨ᴰ Q
+     → δ ⊨ Q ∣ []
+⊨ᴰ→⊨ {Θ} {Q} {δ} h s = mk⊩ᴴ ets' subᵥ' ordᵣ' ordₑ' disj' , []ᴬ
   where
     eqʳ : (ρ : RExp Θ) → valʳ (ρ [ δ ]ʳ) ≡ ⟦ ρ ⟧ʳ ⌞ δ ⌟ˢ
     eqʳ ρ = trans (sym (⌞⌟-valʳ (ρ [ δ ]ʳ))) (⌞[]⌟ʳ δ ρ)
@@ -402,7 +462,7 @@ module _ {Θ} (δ : Subst Θ ∅ˢ) where
     ets' {α} m = ⌞⌟-⊩ᴱ (sTy δ α) (⊨ets s m)
 
     subᵥ' : ∀ {α β} → (α , β) ∈ subᵥ Q → ∅ᴴ ∣ sTy δ α <:̂ᵛ sTy δ β
-    subᵥ' {α} {β} m = ⌞⌟-<:ᵛ (sTy δ α) (sTy δ β) (⊨subᵥ s m)
+    subᵥ' {α} {β} m = ⌞⌟-<:ᵛ (sTy δ α) (sTy δ β) (h α) (h β) (⊨subᵥ s m)
 
     ordᵣ' : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → ∅ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
     ordᵣ' {ρ} {ρ'} m = val-≾ᵣ⁻ (subst₂ _≾ᵣ_ (sym (eqʳ ρ)) (sym (eqʳ ρ')) (⊨ordᵣ s m))
@@ -415,13 +475,14 @@ module _ {Θ} (δ : Subst Θ ∅ˢ) where
     ... | inj₁ et = et-ok (⌞⌟-⊩ᴱ (A [ δ ]ᵛ) (subst Eternal (sym (⌞[]⌟ᵛ δ A)) et))
     ... | inj₂ le = ≾ᵘ-ok (val-≾ᵣ⁻ (subst (_≾ᵣ uᵣ) (sym (eqʳ ρ)) le))
 
-⊨⇔⊨ᴰ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → δ ⊨ Q ∣ [] ⇔ ⌞ δ ⌟ˢ ⊨ᴰ Q
-⊨⇔⊨ᴰ = mk⇔ ⊨→⊨ᴰ ⊨ᴰ→⊨
+⊨⇔⊨ᴰ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → NoHandlerTypeˢ δ
+      → δ ⊨ Q ∣ [] ⇔ ⌞ δ ⌟ˢ ⊨ᴰ Q
+⊨⇔⊨ᴰ h = mk⇔ ⊨→⊨ᴰ (⊨ᴰ→⊨ h)
 
 -- so every declarative instance satisfying `Q` arises from a closed one
 
 ⌜⌝ˢ-⊨ : ∀ {Θ} {Q : Hyps Θ} {σ : DInst Θ} → σ ⊨ᴰ Q → ⌜ σ ⌝ˢ ⊨ Q ∣ []
-⌜⌝ˢ-⊨ {σ = σ} s = ⊨ᴰ→⊨ (⊨ᴰ-≗ (≗ᴰ-sym ⌞⌜ σ ⌝ˢ⌟) s)
+⌜⌝ˢ-⊨ {σ = σ} s = ⊨ᴰ→⊨ (λ α → ⌜⌝-noHandlerᵛ (ty σ α)) (⊨ᴰ-≗ (≗ᴰ-sym ⌞⌜ σ ⌝ˢ⌟) s)
 
 ------------------------------------------------------------------------
 -- Obligations: one held in the open syntax, its rigids kept as

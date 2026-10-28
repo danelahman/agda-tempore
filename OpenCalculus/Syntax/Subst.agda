@@ -77,6 +77,7 @@ mutual
   (|List| A) [ σ ]ᵛ = |List| (A [ σ ]ᵛ)
   Empty     [ σ ]ᵛ = Empty
   (A ⇒ C)   [ σ ]ᵛ = A [ σ ]ᵛ ⇒ C [ σ ]ᶜ
+  (C ⇛ D)   [ σ ]ᵛ = C [ σ ]ᶜ ⇛ D [ σ ]ᶜ
   ([ ρ ] A) [ σ ]ᵛ = [ ρ [ σ ]ʳ ] A [ σ ]ᵛ
 
   _[_]ᶜ : ∀ {Θ Θ'} → OCType Θ → Subst Θ Θ' → OCType Θ'
@@ -257,6 +258,7 @@ mutual
   [id]ᵛ (|List| A) = cong |List| ([id]ᵛ A)
   [id]ᵛ Empty     = refl
   [id]ᵛ (A ⇒ C)   = cong₂ _⇒_ ([id]ᵛ A) ([id]ᶜ C)
+  [id]ᵛ (C ⇛ D)   = cong₂ _⇛_ ([id]ᶜ C) ([id]ᶜ D)
   [id]ᵛ ([ ρ ] A) = cong₂ [_]_ ([id]ʳ ρ) ([id]ᵛ A)
 
   [id]ᶜ : ∀ {Θ} → (C : OCType Θ) → C [ idˢ ]ᶜ ≡ C
@@ -296,6 +298,7 @@ mutual
   [⨟]ᵛ (|List| A) σ δ = cong |List| ([⨟]ᵛ A σ δ)
   [⨟]ᵛ Empty     σ δ = refl
   [⨟]ᵛ (A ⇒ C)   σ δ = cong₂ _⇒_ ([⨟]ᵛ A σ δ) ([⨟]ᶜ C σ δ)
+  [⨟]ᵛ (C ⇛ D)   σ δ = cong₂ _⇛_ ([⨟]ᶜ C σ δ) ([⨟]ᶜ D σ δ)
   [⨟]ᵛ ([ ρ ] A) σ δ = cong₂ [_]_ ([⨟]ʳ ρ σ δ) ([⨟]ᵛ A σ δ)
 
   [⨟]ᶜ : ∀ {Θ Θ' Θ''} → (C : OCType Θ) → (σ : Subst Θ Θ') → (δ : Subst Θ' Θ'')
@@ -334,6 +337,7 @@ mutual
   [≐]ᵛ p (|List| A) = cong |List| ([≐]ᵛ p A)
   [≐]ᵛ p Empty     = refl
   [≐]ᵛ p (A ⇒ C)   = cong₂ _⇒_ ([≐]ᵛ p A) ([≐]ᶜ p C)
+  [≐]ᵛ p (C ⇛ D)   = cong₂ _⇛_ ([≐]ᶜ p C) ([≐]ᶜ p D)
   [≐]ᵛ p ([ ρ ] A) = cong₂ [_]_ ([≐]ʳ p ρ) ([≐]ᵛ p A)
 
   [≐]ᶜ : ∀ {Θ Θ'} {σ δ : Subst Θ Θ'} → σ ≐ˢ δ → (C : OCType Θ) → C [ σ ]ᶜ ≡ C [ δ ]ᶜ
@@ -397,6 +401,7 @@ mutual
   wkˢᵗ-v (|List| A) = cong |List| (wkˢᵗ-v A)
   wkˢᵗ-v Empty     = refl
   wkˢᵗ-v (A ⇒ C)   = cong₂ _⇒_ (wkˢᵗ-v A) (wkˢᵗ-c C)
+  wkˢᵗ-v (C ⇛ D)   = cong₂ _⇛_ (wkˢᵗ-c C) (wkˢᵗ-c D)
   wkˢᵗ-v ([ ρ ] A) = cong₂ [_]_ (wkˢᵗ-r ρ) (wkˢᵗ-v A)
 
   wkˢᵗ-c : ∀ {Θ} → (C : OCType Θ) → C [ wkˢᵗ ]ᶜ ≡ wkᵗ-c C
@@ -415,6 +420,7 @@ mutual
   wkˢʳ-v (|List| A) = cong |List| (wkˢʳ-v A)
   wkˢʳ-v Empty     = refl
   wkˢʳ-v (A ⇒ C)   = cong₂ _⇒_ (wkˢʳ-v A) (wkˢʳ-c C)
+  wkˢʳ-v (C ⇛ D)   = cong₂ _⇛_ (wkˢʳ-c C) (wkˢʳ-c D)
   wkˢʳ-v ([ ρ ] A) = cong₂ [_]_ (wkˢʳ-r ρ) (wkˢʳ-v A)
 
   wkˢʳ-c : ∀ {Θ} → (C : OCType Θ) → C [ wkˢʳ ]ᶜ ≡ wkʳ-c C
@@ -433,6 +439,7 @@ mutual
   wkˢᵉ-v (|List| A) = cong |List| (wkˢᵉ-v A)
   wkˢᵉ-v Empty     = refl
   wkˢᵉ-v (A ⇒ C)   = cong₂ _⇒_ (wkˢᵉ-v A) (wkˢᵉ-c C)
+  wkˢᵉ-v (C ⇛ D)   = cong₂ _⇛_ (wkˢᵉ-c C) (wkˢᵉ-c D)
   wkˢᵉ-v ([ ρ ] A) = cong₂ [_]_ (wkˢᵉ-r ρ) (wkˢᵉ-v A)
 
   wkˢᵉ-c : ∀ {Θ} → (C : OCType Θ) → C [ wkˢᵉ ]ᶜ ≡ wkᵉ-c C

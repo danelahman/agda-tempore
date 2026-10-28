@@ -3,9 +3,9 @@
 --                                                                --
 -- `decorate` builds the most general open type of a given shape: --
 -- the scope grows by one fresh resource-grade variable per box,  --
--- one fresh effect-grade variable per arrow, and one fresh type  --
--- variable per skeleton variable left. Fresh means fresh per     --
--- occurrence.                                                    --
+-- one fresh effect-grade variable per arrow and two per handler  --
+-- type, and one fresh type variable per skeleton variable left.  --
+-- Fresh means fresh per occurrence.                              --
 --                                                                --
 -- `expandSub` is what a subtyping demand asks for: a list of     --
 -- demands is first a unification problem on their skeletons,     --
@@ -71,6 +71,12 @@ decorate Ψ (t s⇒ u) with decorate Ψ t
 ...   | Ψ₂ , w₂ , B =
         Ψ₂ +e , (w₁ ⨟ˢ w₂ ⨟ˢ wkˢᵉ) ,
         (wkᵉ-v (A [ w₂ ]ᵛ) ⇒ (wkᵉ-v B ‼ evar (newᵉ {Ψ₂})))
+decorate Ψ (t s⇛ u) with decorate Ψ t
+... | Ψ₁ , w₁ , A with decorate Ψ₁ u
+...   | Ψ₂ , w₂ , B =
+        Ψ₂ +e +e , (w₁ ⨟ˢ w₂ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ) ,
+        (wkᵉ-v (wkᵉ-v (A [ w₂ ]ᵛ)) ‼ wkᵉ-e (evar (newᵉ {Ψ₂}))
+          ⇛ wkᵉ-v (wkᵉ-v B) ‼ evar (newᵉ {Ψ₂ +e}))
 decorate Ψ (sBox t) with decorate Ψ t
 ... | Ψ₁ , w₁ , A = Ψ₁ +r , (w₁ ⨟ˢ wkˢʳ) , ([ rvar (newʳ {Ψ₁}) ] wkʳ-v A)
 

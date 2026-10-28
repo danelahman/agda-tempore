@@ -31,6 +31,18 @@ relay-reported = refl
 relay-boxed-reported : schemeOf (infer [] relay-boxed) ≡ just expected-relay-boxed
 relay-boxed-reported = refl
 
+-- A handler as a value: bound by `let`, taken as an argument, and
+-- passed to a function
+
+bound-reported : schemeOf (infer [] bound) ≡ just expected-bound
+bound-reported = refl
+
+run-reported : schemeOf (infer [] run) ≡ just expected-run-commuted
+run-reported = refl
+
+run-forward-reported : schemeOf (infer [] run-forward) ≡ just expected-run-forward
+run-forward-reported = refl
+
 -- The unit is least, so the clause may drop its continuation
 
 discard-reported : schemeOf (infer [] discard) ≡ just expected-discard

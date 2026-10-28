@@ -275,6 +275,7 @@ _≡̂ₑ?_ : (ε ε' : EExp ∅ˢ) → Dec (ε ≡̂ₑ ε')
 ⊩ᴱ? (|List| A) = map′ |List|ₑ (λ { (|List|ₑ p) → p }) (⊩ᴱ? A)
 ⊩ᴱ? Empty     = yes Emptyₑ
 ⊩ᴱ? (A ⇒ C)   = no λ ()
+⊩ᴱ? (C ⇛ D)   = no λ ()
 ⊩ᴱ? ([ ρ ] A) = no λ ()
 
 -- The var-rule disjunction: eternality, or a value below the unit
@@ -311,6 +312,7 @@ former ([ _ ] _) = 7
 former Nat       = 8
 former (_ |+| _) = 9
 former (|List| _) = 10
+former (_ ⇛ _)   = 11
 
 <:̂ᵛ-former : ∀ {Θ} {Q : Hyps Θ} {A B : OVType Θ} → Q ∣ A <:̂ᵛ B → former A ≡ former B
 <:̂ᵛ-former (tvarₛ _)  = refl
@@ -324,6 +326,7 @@ former (|List| _) = 10
 <:̂ᵛ-former Emptyₛ     = refl
 <:̂ᵛ-former (_ ⇒ₛ _)   = refl
 <:̂ᵛ-former ([ _ ]ₛ _) = refl
+<:̂ᵛ-former (_ ⇛ₛ _)   = refl
 
 infix 4 _<:̂ᵛ?_ _<:̂ᶜ?_
 
@@ -346,6 +349,8 @@ same (|List| A) (|List| A') refl =
 same Empty     Empty      refl = yes Emptyₛ
 same (A ⇒ C)   (A' ⇒ C')  refl =
   map′ (λ (p , q) → p ⇒ₛ q) (λ { (p ⇒ₛ q) → p , q }) (A' <:̂ᵛ? A ×-dec C <:̂ᶜ? C')
+same (C ⇛ D)   (C' ⇛ D')  refl =
+  map′ (λ (p , q) → p ⇛ₛ q) (λ { (p ⇛ₛ q) → p , q }) (C' <:̂ᶜ? C ×-dec D <:̂ᶜ? D')
 same ([ ρ ] A) ([ ρ' ] A') refl =
   map′ (λ (p , q) → [ p ]ₛ q) (λ { ([ p ]ₛ q) → p , q }) (ρ' ≾̂ᵣ? ρ ×-dec A <:̂ᵛ? A')
 

@@ -3,8 +3,9 @@
 --                                                              --
 -- At right-sided intervals: the program                        --
 --                                                              --
---   handle return () with op p k ↦ perform op p (λ a. k a)     --
---                    in return ()                              --
+--   handle return () with                                      --
+--     handler {return x ↦ return ();                           --
+--              op p k ↦ perform op p (λ a. k a)}               --
 --                                                              --
 -- whose clause performs the operation again and resumes with   --
 -- its answer. Its declarative typing `D`, the clause family    --
@@ -73,7 +74,7 @@ clause : Op → RawC (∅ˢ +e) 2
 clause op = perform op v₁ (unbox (fsuc fzero) (v₀ · v₁))
 
 M : RawC ∅ˢ 0
-M = handle (return ⋆) `with clause `in (return ⋆)
+M = handle (return ⋆) `with handler (return ⋆) clause
 
 ------------------------------------------------------------------------
 -- Its declarative typing, the clauses by `forwarding`
@@ -101,7 +102,10 @@ uniform : UniformTyping [] ∅ᴰ M D
 uniform = u-handle (u-return u-⋆) clauseᵒ (λ op → refl) (u-return u-⋆) , refl
 
 annFree : AnnFreeᶜ M
-annFree = tt , (λ op → tt , tt , tt) , tt
+annFree = tt , tt , (λ op → tt , tt , tt)
+
+secondClass : SecondClassᶜ M
+secondClass = tt , tt , (λ op → tt , tt , tt)
 
 ------------------------------------------------------------------------
 -- Inference types it
@@ -127,14 +131,16 @@ module _ {Θ n} (Γ : OCtx Θ n) (N : RawC Θ n) (t : T (typed? (infer Γ N))) w
 
   -- the scheme factors every uniform typing
 
-  principal : AnnFreeᶜ N → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ L.⊢C⦂ C)
+  principal : AnnFreeᶜ N → NoHandlerTypeᶜᵗˣ Γ
+            → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ L.⊢C⦂ C)
             → UniformTyping Γ σ₀ N D → Principalᴰ (proj₁ verdict) σ₀ C
   principal = infer-principal Γ N (proj₂ verdict)
 
   -- and, at the factoring instance, types the term in the typing's
   -- context below its type
 
-  below : AnnFreeᶜ N → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ L.⊢C⦂ C)
+  below : SecondClassᶜ N → AnnFreeᶜ N → NoHandlerTypeᶜᵗˣ Γ
+        → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ L.⊢C⦂ C)
         → UniformTyping Γ σ₀ N D
         → Σ[ C' ∈ CType ] Σ[ D' ∈ ⟦ Γ ⟧ᶜᵗˣ σ₀ L.⊢C⦂ C' ]
             ((C' <:ᶜ C) × (CE.⌊ D' ⌋ᶜ ≡ CE.⌊ D ⌋ᶜ))
@@ -148,11 +154,11 @@ M-verdict : Σ[ p ∈ PrincipalScheme [] M ] (infer [] M ≡ typed p)
 M-verdict = verdict [] M tt
 
 M-principal : Principalᴰ (proj₁ (verdict [] M tt)) ∅ᴰ (Unit ‼ (uₑ ·ₑ uₑ))
-M-principal = principal [] M tt annFree ∅ᴰ D uniform
+M-principal = principal [] M tt annFree tt ∅ᴰ D uniform
 
 M-below : Σ[ C' ∈ CType ] Σ[ D' ∈ [] L.⊢C⦂ C' ]
             ((C' <:ᶜ (Unit ‼ (uₑ ·ₑ uₑ))) × (CE.⌊ D' ⌋ᶜ ≡ CE.⌊ D ⌋ᶜ))
-M-below = below [] M tt annFree ∅ᴰ D uniform
+M-below = below [] M tt secondClass annFree tt ∅ᴰ D uniform
 
 ------------------------------------------------------------------------
 -- A comparison: its typing runs it before the `return`, which reads the
@@ -174,4 +180,4 @@ M₂-verdict : Σ[ p ∈ PrincipalScheme [] M₂ ] (infer [] M₂ ≡ typed p)
 M₂-verdict = verdict [] M₂ tt
 
 M₂-principal : Principalᴰ (proj₁ (verdict [] M₂ tt)) ∅ᴰ (Ty.Bool ‼ (uₑ ·ₑ uₑ))
-M₂-principal = principal [] M₂ tt (tt , tt) ∅ᴰ D₂ uniform₂
+M₂-principal = principal [] M₂ tt (tt , tt) tt ∅ᴰ D₂ uniform₂

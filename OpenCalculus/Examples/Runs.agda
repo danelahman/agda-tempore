@@ -119,10 +119,10 @@ budget-top τ = budget τ (econst ⊤ₑ)
 ------------------------------------------------------------------
 -- 2. A handler calling the result of its resumption
 --
---   stretch τ = handle () with
+--   stretch τ = handle () with handler {
 --                 op p k ↦ let a = op p in unbox k as k' in
---                          let f = k' a in f (); (λ _. delay τ)
---                 return x ↦ λ _. delay τ
+--                          let f = k' a in f (); (λ _. delay τ);
+--                 return x ↦ λ _. delay τ}
 
 late : ∀ {Θ n} → 𝔻 → RawV Θ n
 late τ = lam (delay τ (return ⋆))
@@ -132,4 +132,4 @@ call-result τ op =
   perform op v₁ (unbox (fsuc fzero) ((v₀ · v₁) ⨟ ((v₀ · ⋆) ⨟ return (late τ))))
 
 stretch : 𝔻 → RawC ∅ˢ 0
-stretch τ = handle (return ⋆) `with call-result τ `in (return (late τ))
+stretch τ = handle (return ⋆) `with handler (return (late τ)) (call-result τ)

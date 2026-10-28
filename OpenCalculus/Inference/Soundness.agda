@@ -46,7 +46,7 @@ open import OpenCalculus.Inference.Constraints.Satisfaction S
 open import OpenCalculus.Inference.Generate S
 
 -- `OpenCalculus.Typing` transports annotations only;
--- the clause contexts of `handle`, and every context built under a
+-- the clause contexts of `handler`, and every context built under a
 -- generation binder, need the context transported too.
 
 ctx-substᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ Γ' : OCtx Θ n} {A : OVType Θ}
@@ -167,7 +167,7 @@ coᵗᵉ-e : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ε :
        → wkᵉ-e (wkᵗ-e ε₀) [ σ ,ᵗ B ,ᵉ ε ]ᵉ ≡ ε₀ [ σ ]ᵉ
 coᵗᵉ-e σ B ε ε₀ = trans (wk-,ᵉ-e (σ ,ᵗ B) ε (wkᵗ-e ε₀)) (wk-,ᵗ-e σ B ε₀)
 
--- `∃ᵗ∃ᵉ∃ᵉ` — sequencing, handling
+-- `∃ᵗ∃ᵉ∃ᵉ` — sequencing
 
 coᵗ²ᵉ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ε₁ ε₂ : EExp Θ')
           → (Γ : OCtx Θ n)
@@ -205,7 +205,7 @@ coᵗ²ᵉ-v↑ σ B ε₁ ε₂ A =
   trans (wk-↑ᵉ-v (σ ,ᵗ B ,ᵉ ε₁ ,ᵉ ε₂) (wkᵉ-v (wkᵉ-v (wkᵗ-v A))))
         (cong wkᵉ-v (coᵗ²ᵉ-v σ B ε₁ ε₂ A))
 
--- `∃ᵗ∃ᵗ∃ᵉ∃ᵉ` — handling
+-- `∃ᵗ∃ᵗ∃ᵉ∃ᵉ` — handlers, handling
 
 co²ᵗ²ᵉ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ')
            → (ε₁ ε₂ : EExp Θ') → (Γ : OCtx Θ n)
@@ -487,6 +487,66 @@ mutual
 
       q = cong lam (trans (⌊ctxᶜ⌋ (cong (_∷ _) pΓ) (proj₁ ih))
                           (trans (proj₂ ih) ([≐]ᴿᶜ pι M)))
+
+  -- handlers
+  --
+  -- The clause family is typed one `∀ᵉ` deeper; the clause equalities
+  -- hold pointwise, so the erasure of the family needs `fun-ext`.
+
+  soundVˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (handler N H) A
+          (B₁ , B₂ , ε₁ , ε₂ , st , s₂ , cls) =
+    D , q
+    where
+      ι↑  = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ
+      σ'  = σ ,ᵗ B₁ ,ᵗ B₂ ,ᵉ ε₁ ,ᵉ ε₂
+      Γ↑  = wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))
+      α   = wkᵉ-v (wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ}))))
+      γ   = wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty})))
+      e₁  = wkᵉ-e (evar (newᵉ {Θ +ty +ty}))
+      e₂  = evar (newᵉ {Θ +ty +ty +e})
+      Γ⇑  = wkᵉ-ctx (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))))
+      γ⇑  = wkᵉ-v (wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty}))))
+      e'' = evar (newᵉ {Θ +ty +ty +e +e})
+
+      pΓ  = co²ᵗ²ᵉ-ctx  σ B₁ B₂ ε₁ ε₂ Γ
+      pA  = co²ᵗ²ᵉ-v    σ B₁ B₂ ε₁ ε₂ A
+      pΓ⇑ = co²ᵗ²ᵉ-ctx↑ σ B₁ B₂ ε₁ ε₂ Γ
+      pγ⇑ = wk-↑ᵉ-v σ' γ
+      pι  = co²ᵗ²ᵉ-ˢ    ι σ B₁ B₂ ε₁ ε₂
+      pι⇑ = co²ᵗ²ᵉ-ˢ↑   ι σ B₁ B₂ ε₁ ε₂
+
+      ih₂ = soundCˢ ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) N γ e₂ s₂
+
+      c₂ = cong (λ Γ₀ → Γ₀ ⟨ ∣ ε₁ ∣̂ᵉ ⟩ ∷ B₁) pΓ
+
+      D₂ = ctx-substᶜ c₂ (proj₁ ih₂)
+
+      ihH : (op : Op) → _
+      ihH op =
+        soundCˢ (ι↑ ↑ᵉ)
+                (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                    ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
+                (H op) γ⇑ (econst (op-grade op) ·̂ₑ e'') (cls op)
+
+      cH : (op : Op) → _
+      cH op =
+        cong₂ _∷_
+              (cong₂ _∷_ (cong (_⟨ rconst ⊤ᵣ ⟩) pΓ⇑) (⌜⌝ᵍ-subst (σ' ↑ᵉ) (param op)))
+              (cong₂ (λ A₀ B₀ → [ rconst (mapᵉ (op-grade op)) ] (A₀ ⇒ B₀ ‼ _))
+                     (⌜⌝ᵍ-subst (σ' ↑ᵉ) (arity op))
+                     pγ⇑)
+
+      DH : (op : Op) → _
+      DH op = c-subst (cong (_‼ _) pγ⇑) (ctx-substᶜ (cH op) (proj₁ (ihH op)))
+
+      D = subV (handler D₂ DH) (subst (λ z → Q ∣ _ <:̂ᵛ z) pA st)
+
+      q = cong₂ handler
+                (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᶜ pι N)))
+                (fun-ext (λ op →
+                   trans (⌊c⌋ (cong (_‼ _) pγ⇑) (ctx-substᶜ (cH op) (proj₁ (ihH op))))
+                         (trans (⌊ctxᶜ⌋ (cH op) (proj₁ (ihH op)))
+                                (trans (proj₂ (ihH op)) ([≐]ᴿᶜ pι⇑ (H op))))))
 
   -- type annotation
   --
@@ -852,70 +912,36 @@ mutual
                              (trans (proj₂ ih) ([≐]ᴿᶜ pι M))))
 
   -- effect handling
-  --
-  -- The clause family is typed one `∀ᵉ` deeper; the clause equalities
-  -- hold pointwise, so the erasure of the family needs `fun-ext`.
 
-  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (handle M `with H `in N) A t
-          (B₁ , B₂ , ε₁ , ε₂ , s₁ , s₂ , st , le , cls) =
+  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (handle M `with V) A t
+          (B₁ , B₂ , ε₁ , ε₂ , s₁ , sV , st , le) =
     D , q
     where
       ι↑  = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ
-      σ'  = σ ,ᵗ B₁ ,ᵗ B₂ ,ᵉ ε₁ ,ᵉ ε₂
       Γ↑  = wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))
       α   = wkᵉ-v (wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ}))))
       γ   = wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty})))
       e₁  = wkᵉ-e (evar (newᵉ {Θ +ty +ty}))
       e₂  = evar (newᵉ {Θ +ty +ty +e})
-      Γ⇑  = wkᵉ-ctx (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))))
-      γ⇑  = wkᵉ-v (wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty}))))
-      e'' = evar (newᵉ {Θ +ty +ty +e +e})
 
       pΓ  = co²ᵗ²ᵉ-ctx  σ B₁ B₂ ε₁ ε₂ Γ
       pA  = co²ᵗ²ᵉ-v    σ B₁ B₂ ε₁ ε₂ A
       pt  = co²ᵗ²ᵉ-e    σ B₁ B₂ ε₁ ε₂ t
-      pΓ⇑ = co²ᵗ²ᵉ-ctx↑ σ B₁ B₂ ε₁ ε₂ Γ
-      pγ⇑ = wk-↑ᵉ-v σ' γ
       pι  = co²ᵗ²ᵉ-ˢ    ι σ B₁ B₂ ε₁ ε₂
-      pι⇑ = co²ᵗ²ᵉ-ˢ↑   ι σ B₁ B₂ ε₁ ε₂
 
       ih₁ = soundCˢ ι↑ Γ↑ M α e₁ s₁
-      ih₂ = soundCˢ ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) N γ e₂ s₂
-
-      c₂ = cong (λ Γ₀ → Γ₀ ⟨ ∣ ε₁ ∣̂ᵉ ⟩ ∷ B₁) pΓ
+      ihV = soundVˢ ι↑ Γ↑ V ((α ‼ e₁) ⇛ (γ ‼ e₂)) sV
 
       D₁ = ctx-substᶜ pΓ (proj₁ ih₁)
-      D₂ = ctx-substᶜ c₂ (proj₁ ih₂)
+      DV = ctx-substᵛ pΓ (proj₁ ihV)
 
-      ihH : (op : Op) → _
-      ihH op =
-        soundCˢ (ι↑ ↑ᵉ)
-                (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                    ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
-                (H op) γ⇑ (econst (op-grade op) ·̂ₑ e'') (cls op)
-
-      cH : (op : Op) → _
-      cH op =
-        cong₂ _∷_
-              (cong₂ _∷_ (cong (_⟨ rconst ⊤ᵣ ⟩) pΓ⇑) (⌜⌝ᵍ-subst (σ' ↑ᵉ) (param op)))
-              (cong₂ (λ A₀ B₀ → [ rconst (mapᵉ (op-grade op)) ] (A₀ ⇒ B₀ ‼ _))
-                     (⌜⌝ᵍ-subst (σ' ↑ᵉ) (arity op))
-                     pγ⇑)
-
-      DH : (op : Op) → _
-      DH op = c-subst (cong (_‼ _) pγ⇑) (ctx-substᶜ (cH op) (proj₁ (ihH op)))
-
-      D = subC (handle D₁ `with DH `in D₂)
+      D = subC (handle D₁ `with DV)
                (subst (λ z → Q ∣ _ <:̂ᵛ z) pA st
                   ‼ₛ subst (λ z → Q ⊩ _ ≾̂ₑ z) pt le)
 
-      q = cong₃ (λ x y z → handle x `with y `in z)
+      q = cong₂ handle_`with_
                 (trans (⌊ctxᶜ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᶜ pι M)))
-                (fun-ext (λ op →
-                   trans (⌊c⌋ (cong (_‼ _) pγ⇑) (ctx-substᶜ (cH op) (proj₁ (ihH op))))
-                         (trans (⌊ctxᶜ⌋ (cH op) (proj₁ (ihH op)))
-                                (trans (proj₂ (ihH op)) ([≐]ᴿᶜ pι⇑ (H op))))))
-                (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᶜ pι N)))
+                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ihV)) (trans (proj₂ ihV) ([≐]ᴿᵛ pι V)))
 
   -- unboxing a boxed variable
 

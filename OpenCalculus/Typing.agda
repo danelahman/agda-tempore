@@ -6,9 +6,12 @@
 -- open types and grade expressions, and with the side          --
 -- conditions entailed from the hypothesis set `Q`.             --
 --                                                              --
--- Two rules deviate, as marked at their definitions: `handle`  --
--- types its operation clauses over the extended scope `Θ +e`,  --
--- the continuation grade, quantified at the meta level in      --
+-- Three rules deviate, as marked at their definitions: a       --
+-- handler is a value, `handler`, of a handler type, used by    --
+-- `handle_`with_`, where `ClosedCalculus.Syntax.Terms` has     --
+-- one form taking the clauses; `handler` types its operation   --
+-- clauses over the extended scope `Θ +e`, the continuation     --
+-- grade, quantified at the meta level in                       --
 -- `ClosedCalculus.Syntax.Terms`, being a rigid effect-grade    --
 -- variable; and a comparison `cmp` is a value, where it is a   --
 -- computation in `ClosedCalculus.Syntax.Terms`.                --
@@ -152,6 +155,28 @@ mutual
             → Q ∣ Γ ∷ A ⊢C⦂ C
             -----------------
             → Q ∣ Γ ⊢V⦂ A ⇒ C
+
+    -- handlers
+
+    -- The return clause is typed as the continuation of `_⨟_` is, after
+    -- a lock at the handled effect. The operation clauses are typed
+    -- under a lock at `⊤ᵣ`, the greatest grade: a clause runs at a time
+    -- the handler does not fix.
+
+    -- DEVIATION: a value, where the original has one computation taking
+    -- the clauses; and the original's meta-level quantification over the
+    -- continuation grade is here the rigid variable `evar newᵉ`.
+
+    handler : {A B : OVType Θ}
+            → {ε ε' : EExp Θ}
+            → Q ∣ Γ ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'
+            → ((op : Op) →
+                 wkᵉ-H Q ∣ wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                             ∷ [ rconst (mapᵉ (op-grade op)) ]
+                                 (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ}))
+                   ⊢C⦂ wkᵉ-v B ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ})))
+            ---------------------------------------------------------------
+            → Q ∣ Γ ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε')
 
     -- type annotation
 
@@ -324,23 +349,12 @@ mutual
 
     -- effect handling
 
-    -- The operation clauses are typed under a lock at `⊤ᵣ`, the greatest
-    -- grade: a clause runs at a time the handler does not fix.
-
-    -- DEVIATION: the original's meta-level quantification over the
-    -- continuation grade is here the rigid variable `evar newᵉ`.
-
-    handle_`with_`in
+    handle_`with_
             : {A B : OVType Θ}
             → {ε ε' : EExp Θ}
             → Q ∣ Γ ⊢C⦂ A ‼ ε
-            → ((op : Op) →
-                 wkᵉ-H Q ∣ wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                             ∷ [ rconst (mapᵉ (op-grade op)) ]
-                                 (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ}))
-                   ⊢C⦂ wkᵉ-v B ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ})))
-            → Q ∣ Γ ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'
-            ---------------------------------------------------------------
+            → Q ∣ Γ ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε')
+            ------------------------------
             → Q ∣ Γ ⊢C⦂ B ‼ (ε ·̂ₑ ε')
 
     -- unboxing a boxed value/resource after enough time has passed for it to be ready

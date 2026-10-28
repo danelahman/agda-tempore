@@ -4,14 +4,17 @@
 -- An open typing under `Q` is a family of declarative typings, --
 -- one per instance satisfying `Q`: for every declarative       --
 -- instance `σ` of the type, resource-grade and effect-grade    --
--- variables with `σ ⊨ᴰ Q`, a derivation `Q ∣ Γ ⊢C⦂ C` gives a  --
--- derivation `⟦ Γ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ C ⟧ᶜ σ` of the term's           --
+-- variables with `σ ⊨ᴰ Q`, a derivation `Q ∣ Γ ⊢C⦂ C` of a     --
+-- term whose handlers are second-class (`SecondClassᶜ`) gives  --
+-- a derivation `⟦ Γ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ C ⟧ᶜ σ` of the term's         --
 -- elaboration in the declarative calculus (`instantiateᶜ`; a   --
 -- value `V` as `return V`, `instantiateᵛ`).                    --
 --                                                              --
 -- The typing is built rule by rule, each side condition by the --
 -- soundness of entailment and the annotation rules as their    --
--- subjects. A handler clause, typed at a rigid continuation    --
+-- subjects. `handle M with handler H` is the closed `handle`,  --
+-- the handler's subsumptions moved to `M` and to the result    --
+-- (`instʰ`). A handler clause, typed at a rigid continuation   --
 -- grade, is instantiated at every extension `σ ,ᵉᴰ c`, which   --
 -- gives the closed clause family. A comparison, a value here   --
 -- and a computation there, is hoisted: the comparisons of a    --
@@ -135,6 +138,7 @@ mutual
   hoistᴿ zero        σ = λ r → [] , ∅ᴿ
   hoistᴿ nil         σ = λ r → [] , ∅ᴿ
   hoistᴿ (lam M)     σ = λ r → [] , ∅ᴿ
+  hoistᴿ (handler N H) σ = λ r → [] , ∅ᴿ
 
   -- a value, its comparisons read off their outcome variables
 
@@ -153,10 +157,14 @@ mutual
   buildᴿ (cons V W)  σ r e = cons (buildᴿ V σ r (leftᴱ e)) (buildᴿ W σ r (rightᴱ e))
   buildᴿ (cmp ⋈ V W) σ r e = var (outᴱ e)
   buildᴿ (lam M)     σ r e = lam (elabᶜ M σ (extᴿ r))
+  buildᴿ (handler N H) σ r e = ⋆
   buildᴿ (V ⦂ᵛ A)    σ r e = buildᴿ V σ r e
 
-  -- a clause, over one more effect-grade variable, is taken at each
-  -- continuation grade
+  -- a handler has no closed counterpart of its own: `handle M with V`
+  -- elaborates to the closed `handle` when `V` is a handler, its clauses,
+  -- over one more effect-grade variable, taken at each continuation
+  -- grade; a handler elsewhere, and a `handle` whose handler is not one,
+  -- elaborate to `⋆` and to the handled computation
 
   elabᶜ : ∀ {Θ n} → RawC Θ n → DInst Θ → RMap → ErC
   elabᶜ (return V) σ =
@@ -189,14 +197,32 @@ mutual
   elabᶜ (perform op V M) σ =
     on₁ᴿ (hoistᴿ V σ) (λ r e → perform op (buildᴿ V σ r e) (elabᶜ M σ (extᴿ r)))
   elabᶜ (delay τ M) σ r = delay τ (elabᶜ M σ r)
-  elabᶜ (handle M `with H `in N) σ r =
-    handle elabᶜ M σ r
-      `with (λ op c → elabᶜ (H op) (σ ,ᵉᴰ c) (extᴿ (extᴿ r)))
-      `in (elabᶜ N σ (extᴿ r))
+  elabᶜ (handle M `with V) σ r = elabʰ M V σ r
   elabᶜ (unbox i N) σ r = unbox (posᴿ r (toℕ i)) (elabᶜ N σ (extᴿ r))
   elabᶜ (box ρ V N) σ =
     on₁ᴿ (hoistᴿ V σ) (λ r e → box (⟦ ρ ⟧ʳ σ) (buildᴿ V σ r e) (elabᶜ N σ (extᴿ r)))
   elabᶜ (M ⦂ᶜ C) σ r = elabᶜ M σ r
+
+  elabʰ : ∀ {Θ n} → RawC Θ n → RawV Θ n → DInst Θ → RMap → ErC
+  elabʰ M (handler N H) σ r =
+    handle elabᶜ M σ r
+      `with (λ op c → elabᶜ (H op) (σ ,ᵉᴰ c) (extᴿ (extᴿ r)))
+      `in (elabᶜ N σ (extᴿ r))
+  elabʰ M (var i) σ r = elabᶜ M σ r
+  elabʰ M (const B c) σ r = elabᶜ M σ r
+  elabʰ M ⋆ σ r = elabᶜ M σ r
+  elabʰ M true σ r = elabᶜ M σ r
+  elabʰ M false σ r = elabᶜ M σ r
+  elabʰ M zero σ r = elabᶜ M σ r
+  elabʰ M (succ U) σ r = elabᶜ M σ r
+  elabʰ M ⦉ U , U' ⦊ σ r = elabᶜ M σ r
+  elabʰ M (inl U) σ r = elabᶜ M σ r
+  elabʰ M (inr U) σ r = elabᶜ M σ r
+  elabʰ M nil σ r = elabᶜ M σ r
+  elabʰ M (cons U U') σ r = elabᶜ M σ r
+  elabʰ M (cmp ⋈ U U') σ r = elabᶜ M σ r
+  elabʰ M (lam L) σ r = elabᶜ M σ r
+  elabʰ M (U ⦂ᵛ A) σ r = elabᶜ M σ r
 
 -- The elaboration of a term
 
@@ -260,6 +286,7 @@ mutual
   ⌊≗⌋ʰ p zero        r = refl
   ⌊≗⌋ʰ p nil         r = refl
   ⌊≗⌋ʰ p (lam M)     r = refl
+  ⌊≗⌋ʰ p (handler N H) r = refl
 
   ⌊≗⌋ᵇ : ∀ {Θ n} {σ σ' : DInst Θ} → σ ≗ᴰ σ' → (V : RawV Θ n)
        → ∀ r e → buildᴿ V σ r e ≡ buildᴿ V σ' r e
@@ -277,6 +304,7 @@ mutual
   ⌊≗⌋ᵇ p (cons V W)  r e = cong₂ cons (⌊≗⌋ᵇ p V r (leftᴱ e)) (⌊≗⌋ᵇ p W r (rightᴱ e))
   ⌊≗⌋ᵇ p (cmp ⋈ V W) r e = refl
   ⌊≗⌋ᵇ p (lam M)     r e = cong lam (⌊≗⌋ᵉ p M (extᴿ r))
+  ⌊≗⌋ᵇ p (handler N H) r e = refl
   ⌊≗⌋ᵇ p (V ⦂ᵛ A)    r e = ⌊≗⌋ᵇ p V r e
 
   ⌊≗⌋ᵉ : ∀ {Θ n} {σ σ' : DInst Θ} → σ ≗ᴰ σ' → (M : RawC Θ n)
@@ -318,16 +346,35 @@ mutual
     on₁ᴿ-cong (⌊≗⌋ʰ p V)
               (λ r e → cong₂ (perform op) (⌊≗⌋ᵇ p V r e) (⌊≗⌋ᵉ p M (extᴿ r)))
   ⌊≗⌋ᵉ p (delay τ M) r = cong (delay τ) (⌊≗⌋ᵉ p M r)
-  ⌊≗⌋ᵉ p (handle M `with H `in N) r =
-    cong₃ (λ x y z → handle x `with y `in z)
-          (⌊≗⌋ᵉ p M r)
-          (fun-ext (λ op → fun-ext (λ c → ⌊≗⌋ᵉ (≗ᴰ-,ᵉ p c) (H op) (extᴿ (extᴿ r)))))
-          (⌊≗⌋ᵉ p N (extᴿ r))
+  ⌊≗⌋ᵉ p (handle M `with V) r = ⌊≗⌋ᵃ p M V r
   ⌊≗⌋ᵉ p (unbox i N) r = cong (unbox (posᴿ r (toℕ i))) (⌊≗⌋ᵉ p N (extᴿ r))
   ⌊≗⌋ᵉ p (box ρ V N) =
     on₁ᴿ-cong (⌊≗⌋ʰ p V)
               (λ r e → cong₃ box (⟦≗⟧ʳ p ρ) (⌊≗⌋ᵇ p V r e) (⌊≗⌋ᵉ p N (extᴿ r)))
   ⌊≗⌋ᵉ p (M ⦂ᶜ C) r = ⌊≗⌋ᵉ p M r
+
+  ⌊≗⌋ᵃ : ∀ {Θ n} {σ σ' : DInst Θ} → σ ≗ᴰ σ' → (M : RawC Θ n) → (V : RawV Θ n)
+       → ∀ r → elabʰ M V σ r ≡ elabʰ M V σ' r
+  ⌊≗⌋ᵃ p M (handler N H) r =
+    cong₃ (λ x y z → handle x `with y `in z)
+          (⌊≗⌋ᵉ p M r)
+          (fun-ext (λ op → fun-ext (λ c → ⌊≗⌋ᵉ (≗ᴰ-,ᵉ p c) (H op) (extᴿ (extᴿ r)))))
+          (⌊≗⌋ᵉ p N (extᴿ r))
+  ⌊≗⌋ᵃ p M (var i) r = ⌊≗⌋ᵉ p M r
+  ⌊≗⌋ᵃ p M (const B c) r = ⌊≗⌋ᵉ p M r
+  ⌊≗⌋ᵃ p M ⋆ r = ⌊≗⌋ᵉ p M r
+  ⌊≗⌋ᵃ p M true r = ⌊≗⌋ᵉ p M r
+  ⌊≗⌋ᵃ p M false r = ⌊≗⌋ᵉ p M r
+  ⌊≗⌋ᵃ p M zero r = ⌊≗⌋ᵉ p M r
+  ⌊≗⌋ᵃ p M (succ U) r = ⌊≗⌋ᵉ p M r
+  ⌊≗⌋ᵃ p M ⦉ U , U' ⦊ r = ⌊≗⌋ᵉ p M r
+  ⌊≗⌋ᵃ p M (inl U) r = ⌊≗⌋ᵉ p M r
+  ⌊≗⌋ᵃ p M (inr U) r = ⌊≗⌋ᵉ p M r
+  ⌊≗⌋ᵃ p M nil r = ⌊≗⌋ᵉ p M r
+  ⌊≗⌋ᵃ p M (cons U U') r = ⌊≗⌋ᵉ p M r
+  ⌊≗⌋ᵃ p M (cmp ⋈ U U') r = ⌊≗⌋ᵉ p M r
+  ⌊≗⌋ᵃ p M (lam L) r = ⌊≗⌋ᵉ p M r
+  ⌊≗⌋ᵃ p M (U ⦂ᵛ A) r = ⌊≗⌋ᵉ p M r
 
 ⌊≗⌋ᴿᶜ : ∀ {Θ n} {σ σ' : DInst Θ} → σ ≗ᴰ σ' → (M : RawC Θ n) → ⌊ M ⌋ᴿᶜ σ ≡ ⌊ M ⌋ᴿᶜ σ'
 ⌊≗⌋ᴿᶜ p M = ⌊≗⌋ᵉ p M idᴿ
@@ -355,6 +402,7 @@ mutual
   ⌊[]⌋ʰ zero        δ σ r = refl
   ⌊[]⌋ʰ nil         δ σ r = refl
   ⌊[]⌋ʰ (lam M)     δ σ r = refl
+  ⌊[]⌋ʰ (handler N H) δ σ r = refl
 
   ⌊[]⌋ᵇ : ∀ {Θ Θ' n} → (V : RawV Θ n) → (δ : Subst Θ Θ') → (σ : DInst Θ')
         → ∀ r e → buildᴿ (V [ δ ]ᴿᵛ) σ r e ≡ buildᴿ V (δ ⨟ᴰ σ) r e
@@ -372,6 +420,7 @@ mutual
   ⌊[]⌋ᵇ (cons V W)  δ σ r e = cong₂ cons (⌊[]⌋ᵇ V δ σ r (leftᴱ e)) (⌊[]⌋ᵇ W δ σ r (rightᴱ e))
   ⌊[]⌋ᵇ (cmp ⋈ V W) δ σ r e = refl
   ⌊[]⌋ᵇ (lam M)     δ σ r e = cong lam (⌊[]⌋ᵉ M δ σ (extᴿ r))
+  ⌊[]⌋ᵇ (handler N H) δ σ r e = refl
   ⌊[]⌋ᵇ (V ⦂ᵛ A)    δ σ r e = ⌊[]⌋ᵇ V δ σ r e
 
   ⌊[]⌋ᵉ : ∀ {Θ Θ' n} → (M : RawC Θ n) → (δ : Subst Θ Θ') → (σ : DInst Θ')
@@ -415,18 +464,38 @@ mutual
     on₁ᴿ-cong (⌊[]⌋ʰ V δ σ)
               (λ r e → cong₂ (perform op) (⌊[]⌋ᵇ V δ σ r e) (⌊[]⌋ᵉ M δ σ (extᴿ r)))
   ⌊[]⌋ᵉ (delay τ M) δ σ r = cong (delay τ) (⌊[]⌋ᵉ M δ σ r)
-  ⌊[]⌋ᵉ (handle M `with H `in N) δ σ r =
+  ⌊[]⌋ᵉ (handle M `with V) δ σ r = ⌊[]⌋ᵃ M V δ σ r
+  ⌊[]⌋ᵉ (unbox i N) δ σ r = cong (unbox (posᴿ r (toℕ i))) (⌊[]⌋ᵉ N δ σ (extᴿ r))
+  ⌊[]⌋ᵉ (box ρ V N) δ σ =
+    on₁ᴿ-cong (⌊[]⌋ʰ V δ σ)
+              (λ r e → cong₃ box (⟦[]⟧ʳ δ σ ρ) (⌊[]⌋ᵇ V δ σ r e) (⌊[]⌋ᵉ N δ σ (extᴿ r)))
+  ⌊[]⌋ᵉ (M ⦂ᶜ C) δ σ r = ⌊[]⌋ᵉ M δ σ r
+
+  ⌊[]⌋ᵃ : ∀ {Θ Θ' n} → (M : RawC Θ n) → (V : RawV Θ n) → (δ : Subst Θ Θ')
+        → (σ : DInst Θ')
+        → ∀ r → elabʰ (M [ δ ]ᴿᶜ) (V [ δ ]ᴿᵛ) σ r ≡ elabʰ M V (δ ⨟ᴰ σ) r
+  ⌊[]⌋ᵃ M (handler N H) δ σ r =
     cong₃ (λ x y z → handle x `with y `in z)
           (⌊[]⌋ᵉ M δ σ r)
           (fun-ext (λ op → fun-ext (λ c →
              trans (⌊[]⌋ᵉ (H op) (δ ↑ᵉ) (σ ,ᵉᴰ c) (extᴿ (extᴿ r)))
                    (⌊≗⌋ᵉ (↑ᵉ-⨟ᴰ δ σ c) (H op) (extᴿ (extᴿ r))))))
           (⌊[]⌋ᵉ N δ σ (extᴿ r))
-  ⌊[]⌋ᵉ (unbox i N) δ σ r = cong (unbox (posᴿ r (toℕ i))) (⌊[]⌋ᵉ N δ σ (extᴿ r))
-  ⌊[]⌋ᵉ (box ρ V N) δ σ =
-    on₁ᴿ-cong (⌊[]⌋ʰ V δ σ)
-              (λ r e → cong₃ box (⟦[]⟧ʳ δ σ ρ) (⌊[]⌋ᵇ V δ σ r e) (⌊[]⌋ᵉ N δ σ (extᴿ r)))
-  ⌊[]⌋ᵉ (M ⦂ᶜ C) δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M (var i) δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M (const B c) δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M ⋆ δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M true δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M false δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M zero δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M (succ U) δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M ⦉ U , U' ⦊ δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M (inl U) δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M (inr U) δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M nil δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M (cons U U') δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M (cmp ⋈ U U') δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M (lam L) δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M (U ⦂ᵛ A) δ σ r = ⌊[]⌋ᵉ M δ σ r
 
 ⌊[]⌋ᴿᶜ : ∀ {Θ Θ' n} → (M : RawC Θ n) → (δ : Subst Θ Θ') → (σ : DInst Θ')
        → ⌊ M [ δ ]ᴿᶜ ⌋ᴿᶜ σ ≡ ⌊ M ⌋ᴿᶜ (δ ⨟ᴰ σ)
@@ -537,38 +606,40 @@ mutual
 
   hoist : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ} {Δ}
         → (σ : DInst Θ) → σ ⊨ᴰ Q
-        → (V : Q ∣ Γ ⊢V⦂ A) → ⟦ Γ ⟧ᶜᵗˣ σ ≼ Δ
+        → (V : Q ∣ Γ ⊢V⦂ A) → ⟦ Γ ⟧ᶜᵗˣ σ ≼ Δ → SecondClassᵛ OE.⌊ V ⌋ᵛ
         → Hoisted Δ OE.⌊ V ⌋ᵛ
-  hoist σ s (succ V)    ι = hoisted (tel h) (env h) where h = hoist σ s V ι
-  hoist σ s ⦉ V , W ⦊    ι = hoist₂ σ s V W ι
-  hoist σ s (inl V)     ι = hoisted (tel h) (env h) where h = hoist σ s V ι
-  hoist σ s (inr V)     ι = hoisted (tel h) (env h) where h = hoist σ s V ι
-  hoist σ s (cons V W)  ι = hoisted (tel h) (env h) where h = hoist₂ σ s V W ι
-  hoist σ s (cmp ⋈ V W et) ι =
-    hoisted (tel h ▷ cmpᶜ ⋈ (build σ s V ι' (inj₁ et') (proj₁ (env h)))
-                            (build σ s W ι' (inj₁ et') (proj₂ (env h))) et')
+  hoist σ s (succ V)    ι c = hoisted (tel h) (env h) where h = hoist σ s V ι c
+  hoist σ s ⦉ V , W ⦊    ι c = hoist₂ σ s V W ι c
+  hoist σ s (inl V)     ι c = hoisted (tel h) (env h) where h = hoist σ s V ι c
+  hoist σ s (inr V)     ι c = hoisted (tel h) (env h) where h = hoist σ s V ι c
+  hoist σ s (cons V W)  ι c = hoisted (tel h) (env h) where h = hoist₂ σ s V W ι c
+  hoist σ s (cmp ⋈ V W et) ι c =
+    hoisted (tel h ▷ cmpᶜ ⋈ (build σ s V ι' (inj₁ et') (proj₁ (env h)) (proj₁ c))
+                            (build σ s W ι' (inj₁ et') (proj₂ (env h)) (proj₂ c)) et')
             (_ , Hd)
     where
-      h   = hoist₂ σ s V W ι
+      h   = hoist₂ σ s V W ι c
       ι'  = ι ⊕ tel h
       et' = sound-⊩ᴱ s et
-  hoist σ s (annᵛ A V)  ι = hoisted (tel h) (env h) where h = hoist σ s V ι
-  hoist σ s (subV V p)  ι = hoist σ s V ι
-  hoist σ s (var x ok)  ι = hoisted [] tt
-  hoist σ s (const B c) ι = hoisted [] tt
-  hoist σ s ⋆           ι = hoisted [] tt
-  hoist σ s true        ι = hoisted [] tt
-  hoist σ s false       ι = hoisted [] tt
-  hoist σ s zero        ι = hoisted [] tt
-  hoist σ s nil         ι = hoisted [] tt
-  hoist σ s (lam M)     ι = hoisted [] tt
+  hoist σ s (annᵛ A V)  ι c = hoisted (tel h) (env h) where h = hoist σ s V ι c
+  hoist σ s (subV V p)  ι c = hoist σ s V ι c
+  hoist σ s (var x ok)  ι c = hoisted [] tt
+  hoist σ s (const B c') ι c = hoisted [] tt
+  hoist σ s ⋆           ι c = hoisted [] tt
+  hoist σ s true        ι c = hoisted [] tt
+  hoist σ s false       ι c = hoisted [] tt
+  hoist σ s zero        ι c = hoisted [] tt
+  hoist σ s nil         ι c = hoisted [] tt
+  hoist σ s (lam M)     ι c = hoisted [] tt
+  hoist σ s (handler N H) ι ()
 
   hoist₂ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A B : OVType Θ} {Δ}
          → (σ : DInst Θ) → σ ⊨ᴰ Q
          → (V : Q ∣ Γ ⊢V⦂ A) → (W : Q ∣ Γ ⊢V⦂ B) → ⟦ Γ ⟧ᶜᵗˣ σ ≼ Δ
+         → SecondClassᵛ OE.⌊ V ⌋ᵛ × SecondClassᵛ OE.⌊ W ⌋ᵛ
          → Hoisted Δ ⦉ OE.⌊ V ⌋ᵛ , OE.⌊ W ⌋ᵛ ⦊
-  hoist₂ σ s V W ι = pairᴴ h (hoist σ s W (ι ⊕ tel h))
-    where h = hoist σ s V ι
+  hoist₂ σ s V W ι (c , c') = pairᴴ h (hoist σ s W (ι ⊕ tel h) c')
+    where h = hoist σ s V ι c
 
   -- a value at the end of its hoisted comparisons, each read off its
   -- outcome variable
@@ -576,131 +647,167 @@ mutual
   build : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ} {Δ}
         → (σ : DInst Θ) → σ ⊨ᴰ Q
         → (V : Q ∣ Γ ⊢V⦂ A) → (ι : ⟦ Γ ⟧ᶜᵗˣ σ ≼ Δ) → Buildable (⟦ A ⟧ᵛ σ) ι
-        → Envᶜ Δ OE.⌊ V ⌋ᵛ
+        → Envᶜ Δ OE.⌊ V ⌋ᵛ → SecondClassᵛ OE.⌊ V ⌋ᵛ
         → Δ ⊢V⦂ ⟦ A ⟧ᵛ σ
-  build σ s (var x ok) ι (inj₁ et) e =
+  build σ s (var x ok) ι (inj₁ et) e c =
     var (λ ¬et → ⊥-elim (¬et et)) (proj₂ (lookᴱ ι ⟦ x ⟧ˣ))
-  build σ s (var x ok) ι (inj₂ f) e =
+  build σ s (var x ok) ι (inj₂ f) e c =
     var (λ ¬et → ≾ᵣ-trans (proj₂ (proj₂ l)) (varOK (sound-VarOK s ok) ¬et))
         (proj₁ (proj₂ l))
     where l = look ι f ⟦ x ⟧ˣ
-  build σ s (const B c)    ι b e         = const c
-  build σ s ⋆              ι b e         = ⋆
-  build σ s true           ι b e         = true
-  build σ s false          ι b e         = false
-  build σ s zero           ι b e         = zero
-  build σ s (succ V)       ι b e         = succ (build σ s V ι b e)
-  build σ s ⦉ V , W ⦊       ι b (e , e')  =
-    ⦉ build σ s V ι (×-buildˡ {ι = ι} b) e , build σ s W ι (×-buildʳ {ι = ι} b) e' ⦊
-  build σ s (inl V)        ι b e         = inl (build σ s V ι (+-buildˡ {ι = ι} b) e)
-  build σ s (inr V)        ι b e         = inr (build σ s V ι (+-buildʳ {ι = ι} b) e)
-  build σ s nil            ι b e         = nil
-  build σ s (cons V W)     ι b (e , e')  =
-    cons (build σ s V ι (List-build {ι = ι} b) e) (build σ s W ι b e')
-  build σ s (cmp ⋈ V W et) ι b (_ , x)   = var (λ ¬et → ⊥-elim (¬et Boolₑ)) x
-  build σ s (lam M)        ι (inj₂ f) e  = lam (instᶜ σ s M (≼-∷ ι) f)
-  build σ s (annᵛ A V)     ι b e         = build σ s V ι b e
-  build σ s (subV V p)     ι b e         =
-    subV (build σ s V ι (sub-build {ι = ι} (sound-<:ᵛ s p) b) e) (sound-<:ᵛ s p)
+  build σ s (const B c')   ι b e c        = const c'
+  build σ s ⋆              ι b e c        = ⋆
+  build σ s true           ι b e c        = true
+  build σ s false          ι b e c        = false
+  build σ s zero           ι b e c        = zero
+  build σ s (succ V)       ι b e c        = succ (build σ s V ι b e c)
+  build σ s ⦉ V , W ⦊       ι b (e , e') c =
+    ⦉ build σ s V ι (×-buildˡ {ι = ι} b) e (proj₁ c)
+    , build σ s W ι (×-buildʳ {ι = ι} b) e' (proj₂ c) ⦊
+  build σ s (inl V)        ι b e c        = inl (build σ s V ι (+-buildˡ {ι = ι} b) e c)
+  build σ s (inr V)        ι b e c        = inr (build σ s V ι (+-buildʳ {ι = ι} b) e c)
+  build σ s nil            ι b e c        = nil
+  build σ s (cons V W)     ι b (e , e') c =
+    cons (build σ s V ι (List-build {ι = ι} b) e (proj₁ c)) (build σ s W ι b e' (proj₂ c))
+  build σ s (cmp ⋈ V W et) ι b (_ , x) c  = var (λ ¬et → ⊥-elim (¬et Boolₑ)) x
+  build σ s (lam M)        ι (inj₂ f) e c = lam (instᶜ σ s M (≼-∷ ι) f c)
+  build σ s (handler N H)  ι b e ()
+  build σ s (annᵛ A V)     ι b e c        = build σ s V ι b e c
+  build σ s (subV V p)     ι b e c        =
+    subV (build σ s V ι (sub-build {ι = ι} (sound-<:ᵛ s p) b) e c) (sound-<:ᵛ s p)
 
   instᶜ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ} {Δ}
         → (σ : DInst Θ) → σ ⊨ᴰ Q
-        → Q ∣ Γ ⊢C⦂ C → (ι : ⟦ Γ ⟧ᶜᵗˣ σ ≼ Δ) → Full ι
+        → (M : Q ∣ Γ ⊢C⦂ C) → (ι : ⟦ Γ ⟧ᶜᵗˣ σ ≼ Δ) → Full ι
+        → SecondClassᶜ OE.⌊ M ⌋ᶜ
         → Δ ⊢C⦂ ⟦ C ⟧ᶜ σ
-  instᶜ σ s (return V) ι f =
-    wrap (tel h) (return (build σ s V (ι ⊕ tel h) (inj₂ (Full-⊕ ι (tel h) f)) (env h)))
-    where h = hoist σ s V ι
-  instᶜ σ s (M ⨟ N) ι f = instᶜ σ s M ι f ⨟ instᶜ σ s N (≼-∷ (≼-⟨⟩ ι)) f
-  instᶜ σ s (V · W) ι f =
-    wrap (tel h) (build σ s V ι' (inj₂ f') (proj₁ (env h))
-                  · build σ s W ι' (inj₂ f') (proj₂ (env h)))
+  instᶜ σ s (return V) ι f c =
+    wrap (tel h) (return (build σ s V (ι ⊕ tel h) (inj₂ (Full-⊕ ι (tel h) f)) (env h) c))
+    where h = hoist σ s V ι c
+  instᶜ σ s (M ⨟ N) ι f (c , c') = instᶜ σ s M ι f c ⨟ instᶜ σ s N (≼-∷ (≼-⟨⟩ ι)) f c'
+  instᶜ σ s (V · W) ι f c =
+    wrap (tel h) (build σ s V ι' (inj₂ f') (proj₁ (env h)) (proj₁ c)
+                  · build σ s W ι' (inj₂ f') (proj₂ (env h)) (proj₂ c))
     where
-      h  = hoist₂ σ s V W ι
+      h  = hoist₂ σ s V W ι c
       ι' = ι ⊕ tel h
       f' = Full-⊕ ι (tel h) f
-  instᶜ σ s (match V `in M) ι f =
-    wrap (tel h) (match build σ s V ι' (inj₂ f') (env h) `in instᶜ σ s M (≼-∷ (≼-∷ ι')) f')
+  instᶜ σ s (match V `in M) ι f (c , c') =
+    wrap (tel h) (match build σ s V ι' (inj₂ f') (env h) c
+                  `in instᶜ σ s M (≼-∷ (≼-∷ ι')) f' c')
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       ι' = ι ⊕ tel h
       f' = Full-⊕ ι (tel h) f
-  instᶜ σ s (absurd V) ι f =
-    wrap (tel h) (absurd (build σ s V ι' (inj₂ f') (env h)))
+  instᶜ σ s (absurd V) ι f c =
+    wrap (tel h) (absurd (build σ s V ι' (inj₂ f') (env h) c))
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       ι' = ι ⊕ tel h
       f' = Full-⊕ ι (tel h) f
-  instᶜ σ s (if V `then M `else N) ι f =
-    wrap (tel h) (if build σ s V ι' (inj₂ f') (env h)
-                  `then instᶜ σ s M ι' f' `else instᶜ σ s N ι' f')
+  instᶜ σ s (if V `then M `else N) ι f (c , c' , c'') =
+    wrap (tel h) (if build σ s V ι' (inj₂ f') (env h) c
+                  `then instᶜ σ s M ι' f' c' `else instᶜ σ s N ι' f' c'')
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       ι' = ι ⊕ tel h
       f' = Full-⊕ ι (tel h) f
-  instᶜ σ s (caseℕ V `zero M `succ N) ι f =
-    wrap (tel h) (caseℕ build σ s V ι' (inj₂ f') (env h)
-                  `zero instᶜ σ s M ι' f' `succ instᶜ σ s N (≼-∷ ι') f')
+  instᶜ σ s (caseℕ V `zero M `succ N) ι f (c , c' , c'') =
+    wrap (tel h) (caseℕ build σ s V ι' (inj₂ f') (env h) c
+                  `zero instᶜ σ s M ι' f' c' `succ instᶜ σ s N (≼-∷ ι') f' c'')
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       ι' = ι ⊕ tel h
       f' = Full-⊕ ι (tel h) f
-  instᶜ σ s (case+ V `inl M `inr N) ι f =
-    wrap (tel h) (case+ build σ s V ι' (inj₂ f') (env h)
-                  `inl instᶜ σ s M (≼-∷ ι') f' `inr instᶜ σ s N (≼-∷ ι') f')
+  instᶜ σ s (case+ V `inl M `inr N) ι f (c , c' , c'') =
+    wrap (tel h) (case+ build σ s V ι' (inj₂ f') (env h) c
+                  `inl instᶜ σ s M (≼-∷ ι') f' c' `inr instᶜ σ s N (≼-∷ ι') f' c'')
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       ι' = ι ⊕ tel h
       f' = Full-⊕ ι (tel h) f
-  instᶜ σ s (caseL V `nil M `cons N) ι f =
-    wrap (tel h) (caseL build σ s V ι' (inj₂ f') (env h)
-                  `nil instᶜ σ s M ι' f' `cons instᶜ σ s N (≼-∷ (≼-∷ ι')) f')
+  instᶜ σ s (caseL V `nil M `cons N) ι f (c , c' , c'') =
+    wrap (tel h) (caseL build σ s V ι' (inj₂ f') (env h) c
+                  `nil instᶜ σ s M ι' f' c' `cons instᶜ σ s N (≼-∷ (≼-∷ ι')) f' c'')
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       ι' = ι ⊕ tel h
       f' = Full-⊕ ι (tel h) f
-  instᶜ σ s (recℕ V M N p) ι f =
-    wrap (tel h) (recℕ (build σ s V ι' (inj₂ f') (env h)) (instᶜ σ s M ι' f')
-                       (instᶜ σ s N (≼-∷ (≼-⟨⟩ (≼-∷ (≼-⟨⟩ ι')))) f') (sound-≾ₑ s p))
+  instᶜ σ s (recℕ V M N p) ι f (c , c' , c'') =
+    wrap (tel h) (recℕ (build σ s V ι' (inj₂ f') (env h) c) (instᶜ σ s M ι' f' c')
+                       (instᶜ σ s N (≼-∷ (≼-⟨⟩ (≼-∷ (≼-⟨⟩ ι')))) f' c'') (sound-≾ₑ s p))
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       ι' = ι ⊕ tel h
       f' = Full-⊕ ι (tel h) f
-  instᶜ σ s (recL V M N p) ι f =
-    wrap (tel h) (recL (build σ s V ι' (inj₂ f') (env h)) (instᶜ σ s M ι' f')
-                       (instᶜ σ s N (≼-∷ (≼-⟨⟩ (≼-∷ (≼-∷ (≼-⟨⟩ ι'))))) f') (sound-≾ₑ s p))
+  instᶜ σ s (recL V M N p) ι f (c , c' , c'') =
+    wrap (tel h) (recL (build σ s V ι' (inj₂ f') (env h) c) (instᶜ σ s M ι' f' c')
+                       (instᶜ σ s N (≼-∷ (≼-⟨⟩ (≼-∷ (≼-∷ (≼-⟨⟩ ι'))))) f' c'') (sound-≾ₑ s p))
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       ι' = ι ⊕ tel h
       f' = Full-⊕ ι (tel h) f
-  instᶜ σ s (perform op V M) ι f =
+  instᶜ σ s (perform op V M) ι f (c , c') =
     wrap (tel h)
-      (perform op (castᵛ refl (⟦⌜ param op ⌝ᵍ⟧ σ) (build σ s V ι' (inj₂ f') (env h)))
+      (perform op (castᵛ refl (⟦⌜ param op ⌝ᵍ⟧ σ) (build σ s V ι' (inj₂ f') (env h) c))
                   (castᶜ (cong (end h ⟨ mapᵉ (op-grade op) ⟩ ∷_) (⟦⌜ arity op ⌝ᵍ⟧ σ)) refl
-                         (instᶜ σ s M (≼-∷ (≼-⟨⟩ ι')) f')))
+                         (instᶜ σ s M (≼-∷ (≼-⟨⟩ ι')) f' c')))
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       ι' = ι ⊕ tel h
       f' = Full-⊕ ι (tel h) f
-  instᶜ σ s (delay τ M) ι f = delay τ (instᶜ σ s M (≼-⟨⟩ ι) f)
-  instᶜ {Γ = Γ} σ s (handle_`with_`in {B = B} M H N) ι f =
-    handle (instᶜ σ s M ι f)
-      `with (λ op c → castᶜ (clause-ctx Γ σ op B c) (clause-ty Γ σ op B c)
-                         (instᶜ (σ ,ᵉᴰ c) (⊨ᴰ-,ᵉ c s) (H op) (clause-map Γ σ op B c ι)
-                                (Full-subst (sym (⟦wkᵉ⟧ᶜᵗˣ σ c Γ)) ι f)))
-      `in (instᶜ σ s N (≼-∷ (≼-⟨⟩ ι)) f)
-  instᶜ σ s (unbox x p q N) ι f =
+  instᶜ σ s (delay τ M) ι f c = delay τ (instᶜ σ s M (≼-⟨⟩ ι) f c)
+  instᶜ σ s (handle M `with V) ι f c = instʰ σ s M V (<:̂ᵛ-refl _) ι f c
+  instᶜ σ s (unbox x p q N) ι f c =
     unbox (proj₁ (proj₂ l)) (≾ᵣ-trans (proj₂ (proj₂ l)) (sound-≾ᵣ s p)) (sound-<:ᵛ s q)
-          (instᶜ σ s N (≼-∷ ι) f)
+          (instᶜ σ s N (≼-∷ ι) f c)
     where l = look ι f ⟦ x ⟧ˣ
-  instᶜ σ s (box ρ V N) ι f =
-    wrap (tel h) (box (⟦ ρ ⟧ʳ σ) (build σ s V (≼-⟨⟩ ι') (inj₂ f') (lockᴱ OE.⌊ V ⌋ᵛ (env h)))
-                      (instᶜ σ s N (≼-∷ ι') f'))
+  instᶜ σ s (box ρ V N) ι f (c , c') =
+    wrap (tel h) (box (⟦ ρ ⟧ʳ σ) (build σ s V (≼-⟨⟩ ι') (inj₂ f') (lockᴱ OE.⌊ V ⌋ᵛ (env h)) c)
+                      (instᶜ σ s N (≼-∷ ι') f' c'))
     where
-      h  = hoist σ s V (≼-drop ι)
+      h  = hoist σ s V (≼-drop ι) c
       ι' = ι ⊕ tel h
       f' = Full-⊕ ι (tel h) f
-  instᶜ σ s (annᶜ C M) ι f = instᶜ σ s M ι f
-  instᶜ σ s (subC M p) ι f = subC (instᶜ σ s M ι f) (sound-<:ᶜ s p)
+  instᶜ σ s (annᶜ C M) ι f c = instᶜ σ s M ι f c
+  instᶜ σ s (subC M p) ι f c = subC (instᶜ σ s M ι f c) (sound-<:ᶜ s p)
+
+  -- `handle M with V`, `V` at a subtype of the handler type it is used
+  -- at: `V` is a handler under subsumptions. The handled computation is
+  -- taken to the handler's handled type, its effect kept; the handler's
+  -- return clause is typed under the lock of that effect, which lies
+  -- below its own; and the result is taken to the type used.
+
+  instʰ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A X Y : OVType Θ} {ε ε' : EExp Θ} {Δ}
+        → (σ : DInst Θ) → σ ⊨ᴰ Q
+        → (M : Q ∣ Γ ⊢C⦂ X ‼ ε) → (V : Q ∣ Γ ⊢V⦂ A) → Q ∣ A <:̂ᵛ (X ‼ ε) ⇛ (Y ‼ ε')
+        → (ι : ⟦ Γ ⟧ᶜᵗˣ σ ≼ Δ) → Full ι
+        → SecondClassᶜ (handle OE.⌊ M ⌋ᶜ `with OE.⌊ V ⌋ᵛ)
+        → Δ ⊢C⦂ ⟦ Y ‼ (ε ·̂ₑ ε') ⟧ᶜ σ
+  instʰ {Γ = Γ} σ s M (handler {B = B₀} N H) ((pX ‼ₛ pε) ⇛ₛ (pY ‼ₛ pε')) ι f
+        (c , c' , c'') =
+    subC (handle (subC (instᶜ σ s M ι f c) (sound-<:ᵛ s pX ‼ₛ ≾ₑ-refl))
+            `with (λ op e → castᶜ (clause-ctx Γ σ op B₀ e) (clause-ty Γ σ op B₀ e)
+                               (instᶜ (σ ,ᵉᴰ e) (⊨ᴰ-,ᵉ e s) (H op) (clause-map Γ σ op B₀ e ι)
+                                      (Full-subst (sym (⟦wkᵉ⟧ᶜᵗˣ σ e Γ)) ι f) (c'' op)))
+            `in (instᶜ σ s N (≼-∷ (≼-≾ ι (map-monotoneᵉ (sound-≾ₑ s pε)))) f c'))
+         (sound-<:ᵛ s pY ‼ₛ ·ₑ-monoʳ-≾ₑ (sound-≾ₑ s pε'))
+  instʰ σ s M (subV V p) q ι f c = instʰ σ s M V (<:̂ᵛ-trans p q) ι f c
+  instʰ σ s M (var x ok) q ι f ()
+  instʰ σ s M (const B c') q ι f ()
+  instʰ σ s M ⋆ q ι f ()
+  instʰ σ s M true q ι f ()
+  instʰ σ s M false q ι f ()
+  instʰ σ s M zero q ι f ()
+  instʰ σ s M (succ V) q ι f ()
+  instʰ σ s M ⦉ V , W ⦊ q ι f ()
+  instʰ σ s M (inl V) q ι f ()
+  instʰ σ s M (inr V) q ι f ()
+  instʰ σ s M nil q ι f ()
+  instʰ σ s M (cons V W) q ι f ()
+  instʰ σ s M (cmp ⋈ V W et) q ι f ()
+  instʰ σ s M (lam L) q ι f ()
+  instʰ σ s M (annᵛ A V) q ι f ()
 
 ------------------------------------------------------------------------
 -- The typing is of the elaboration
@@ -722,75 +829,81 @@ mutual
 
   hoist-⌊⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ} {Δ}
            → (σ : DInst Θ) → (s : σ ⊨ᴰ Q)
-           → (V : Q ∣ Γ ⊢V⦂ A) → (ι : ⟦ Γ ⟧ᶜᵗˣ σ ≼ Δ)
-           → ⌊ hoist σ s V ι ⌋ʰ ≡ hoistᴿ OE.⌊ V ⌋ᵛ σ ⌊ ι ⌋ᵐ
-  hoist-⌊⌋ σ s (succ V)    ι = hoist-⌊⌋ σ s V ι
-  hoist-⌊⌋ σ s ⦉ V , W ⦊    ι = hoist₂-⌊⌋ σ s V W ι
-  hoist-⌊⌋ σ s (inl V)     ι = hoist-⌊⌋ σ s V ι
-  hoist-⌊⌋ σ s (inr V)     ι = hoist-⌊⌋ σ s V ι
-  hoist-⌊⌋ σ s (cons V W)  ι = hoist₂-⌊⌋ σ s V W ι
-  hoist-⌊⌋ σ s (cmp ⋈ V W et) ι =
+           → (V : Q ∣ Γ ⊢V⦂ A) → (ι : ⟦ Γ ⟧ᶜᵗˣ σ ≼ Δ) → (c : SecondClassᵛ OE.⌊ V ⌋ᵛ)
+           → ⌊ hoist σ s V ι c ⌋ʰ ≡ hoistᴿ OE.⌊ V ⌋ᵛ σ ⌊ ι ⌋ᵐ
+  hoist-⌊⌋ σ s (succ V)    ι c = hoist-⌊⌋ σ s V ι c
+  hoist-⌊⌋ σ s ⦉ V , W ⦊    ι c = hoist₂-⌊⌋ σ s V W ι c
+  hoist-⌊⌋ σ s (inl V)     ι c = hoist-⌊⌋ σ s V ι c
+  hoist-⌊⌋ σ s (inr V)     ι c = hoist-⌊⌋ σ s V ι c
+  hoist-⌊⌋ σ s (cons V W)  ι c = hoist₂-⌊⌋ σ s V W ι c
+  hoist-⌊⌋ σ s (cmp ⋈ V W et) ι c =
     trans (cong₂ (λ y z → ⌊ tel h ⌋ᵀ ▷ cmpᴿ ⋈ y z , outᴿ 0) ea eb)
           (cong (cmpᵗ ⋈ (buildᴿ OE.⌊ V ⌋ᵛ σ) (buildᴿ OE.⌊ W ⌋ᵛ σ) ⌊ ι ⌋ᵐ)
-                (hoist₂-⌊⌋ σ s V W ι))
+                (hoist₂-⌊⌋ σ s V W ι c))
     where
-      h  = hoist₂ σ s V W ι
+      h  = hoist₂ σ s V W ι c
       ι' = ι ⊕ tel h
       b  = inj₁ (sound-⊩ᴱ s et)
-      ea = trans (build-⌊⌋ σ s V ι' b (proj₁ (env h)))
+      ea = trans (build-⌊⌋ σ s V ι' b (proj₁ (env h)) (proj₁ c))
                  (cong (λ r → buildᴿ OE.⌊ V ⌋ᵛ σ r (⌊ OE.⌊ V ⌋ᵛ ⌋ᴱ (proj₁ (env h))))
                        (⌊⊕⌋ᵐ ι (tel h)))
-      eb = trans (build-⌊⌋ σ s W ι' b (proj₂ (env h)))
+      eb = trans (build-⌊⌋ σ s W ι' b (proj₂ (env h)) (proj₂ c))
                  (cong (λ r → buildᴿ OE.⌊ W ⌋ᵛ σ r (⌊ OE.⌊ W ⌋ᵛ ⌋ᴱ (proj₂ (env h))))
                        (⌊⊕⌋ᵐ ι (tel h)))
-  hoist-⌊⌋ σ s (annᵛ A V)  ι = hoist-⌊⌋ σ s V ι
-  hoist-⌊⌋ σ s (subV V p)  ι = hoist-⌊⌋ σ s V ι
-  hoist-⌊⌋ σ s (var x ok)  ι = refl
-  hoist-⌊⌋ σ s (const B c) ι = refl
-  hoist-⌊⌋ σ s ⋆           ι = refl
-  hoist-⌊⌋ σ s true        ι = refl
-  hoist-⌊⌋ σ s false       ι = refl
-  hoist-⌊⌋ σ s zero        ι = refl
-  hoist-⌊⌋ σ s nil         ι = refl
-  hoist-⌊⌋ σ s (lam M)     ι = refl
+  hoist-⌊⌋ σ s (annᵛ A V)  ι c = hoist-⌊⌋ σ s V ι c
+  hoist-⌊⌋ σ s (subV V p)  ι c = hoist-⌊⌋ σ s V ι c
+  hoist-⌊⌋ σ s (var x ok)  ι c = refl
+  hoist-⌊⌋ σ s (const B c') ι c = refl
+  hoist-⌊⌋ σ s ⋆           ι c = refl
+  hoist-⌊⌋ σ s true        ι c = refl
+  hoist-⌊⌋ σ s false       ι c = refl
+  hoist-⌊⌋ σ s zero        ι c = refl
+  hoist-⌊⌋ σ s nil         ι c = refl
+  hoist-⌊⌋ σ s (lam M)     ι c = refl
+  hoist-⌊⌋ σ s (handler N H) ι ()
 
   hoist₂-⌊⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A B : OVType Θ} {Δ}
             → (σ : DInst Θ) → (s : σ ⊨ᴰ Q)
             → (V : Q ∣ Γ ⊢V⦂ A) → (W : Q ∣ Γ ⊢V⦂ B) → (ι : ⟦ Γ ⟧ᶜᵗˣ σ ≼ Δ)
-            → ⌊ hoist₂ σ s V W ι ⌋ʰ ≡ pairʰ (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoistᴿ OE.⌊ W ⌋ᵛ σ) ⌊ ι ⌋ᵐ
-  hoist₂-⌊⌋ σ s V W ι =
-    pairᴴ-⌊⌋ ι h (hoist σ s W (ι ⊕ tel h)) (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoistᴿ OE.⌊ W ⌋ᵛ σ)
-             (hoist-⌊⌋ σ s V ι)
-             (trans (hoist-⌊⌋ σ s W (ι ⊕ tel h)) (cong (hoistᴿ OE.⌊ W ⌋ᵛ σ) (⌊⊕⌋ᵐ ι (tel h))))
-    where h = hoist σ s V ι
+            → (c : SecondClassᵛ OE.⌊ V ⌋ᵛ × SecondClassᵛ OE.⌊ W ⌋ᵛ)
+            → ⌊ hoist₂ σ s V W ι c ⌋ʰ ≡ pairʰ (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoistᴿ OE.⌊ W ⌋ᵛ σ) ⌊ ι ⌋ᵐ
+  hoist₂-⌊⌋ σ s V W ι (c , c') =
+    pairᴴ-⌊⌋ ι h (hoist σ s W (ι ⊕ tel h) c') (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoistᴿ OE.⌊ W ⌋ᵛ σ)
+             (hoist-⌊⌋ σ s V ι c)
+             (trans (hoist-⌊⌋ σ s W (ι ⊕ tel h) c')
+                    (cong (hoistᴿ OE.⌊ W ⌋ᵛ σ) (⌊⊕⌋ᵐ ι (tel h))))
+    where h = hoist σ s V ι c
 
   build-⌊⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ} {Δ}
            → (σ : DInst Θ) → (s : σ ⊨ᴰ Q)
            → (V : Q ∣ Γ ⊢V⦂ A) → (ι : ⟦ Γ ⟧ᶜᵗˣ σ ≼ Δ) → (b : Buildable (⟦ A ⟧ᵛ σ) ι)
-           → (e : Envᶜ Δ OE.⌊ V ⌋ᵛ)
-           → CE.⌊ build σ s V ι b e ⌋ᵛ ≡ buildᴿ OE.⌊ V ⌋ᵛ σ ⌊ ι ⌋ᵐ (⌊ OE.⌊ V ⌋ᵛ ⌋ᴱ e)
-  build-⌊⌋ σ s (var x ok) ι (inj₁ et) e =
+           → (e : Envᶜ Δ OE.⌊ V ⌋ᵛ) → (c : SecondClassᵛ OE.⌊ V ⌋ᵛ)
+           → CE.⌊ build σ s V ι b e c ⌋ᵛ ≡ buildᴿ OE.⌊ V ⌋ᵛ σ ⌊ ι ⌋ᵐ (⌊ OE.⌊ V ⌋ᵛ ⌋ᴱ e)
+  build-⌊⌋ σ s (var x ok) ι (inj₁ et) e c =
     cong var (trans (lookᴱ-pos ι ⟦ x ⟧ˣ) (cong (posᴿ ⌊ ι ⌋ᵐ) (⟦⟧ˣ-pos x)))
-  build-⌊⌋ σ s (var x ok) ι (inj₂ f) e =
+  build-⌊⌋ σ s (var x ok) ι (inj₂ f) e c =
     cong var (trans (look-pos ι f ⟦ x ⟧ˣ) (cong (posᴿ ⌊ ι ⌋ᵐ) (⟦⟧ˣ-pos x)))
-  build-⌊⌋ σ s (const B c)    ι b e        = refl
-  build-⌊⌋ σ s ⋆              ι b e        = refl
-  build-⌊⌋ σ s true           ι b e        = refl
-  build-⌊⌋ σ s false          ι b e        = refl
-  build-⌊⌋ σ s zero           ι b e        = refl
-  build-⌊⌋ σ s (succ V)       ι b e        = cong succ (build-⌊⌋ σ s V ι b e)
-  build-⌊⌋ σ s ⦉ V , W ⦊       ι b (e , e') =
-    cong₂ ⦉_,_⦊ (build-⌊⌋ σ s V ι (×-buildˡ {ι = ι} b) e) (build-⌊⌋ σ s W ι (×-buildʳ {ι = ι} b) e')
-  build-⌊⌋ σ s (inl V)        ι b e        = cong inl (build-⌊⌋ σ s V ι (+-buildˡ {ι = ι} b) e)
-  build-⌊⌋ σ s (inr V)        ι b e        = cong inr (build-⌊⌋ σ s V ι (+-buildʳ {ι = ι} b) e)
-  build-⌊⌋ σ s nil            ι b e        = refl
-  build-⌊⌋ σ s (cons V W)     ι b (e , e') =
-    cong₂ cons (build-⌊⌋ σ s V ι (List-build {ι = ι} b) e) (build-⌊⌋ σ s W ι b e')
-  build-⌊⌋ σ s (cmp ⋈ V W et) ι b (_ , x)  = refl
-  build-⌊⌋ σ s (lam M)        ι (inj₂ f) e = cong lam (instᶜ-⌊⌋ σ s M (≼-∷ ι) f)
-  build-⌊⌋ σ s (annᵛ A V)     ι b e        = build-⌊⌋ σ s V ι b e
-  build-⌊⌋ σ s (subV V p)     ι b e        =
-    build-⌊⌋ σ s V ι (sub-build {ι = ι} (sound-<:ᵛ s p) b) e
+  build-⌊⌋ σ s (const B c')   ι b e c        = refl
+  build-⌊⌋ σ s ⋆              ι b e c        = refl
+  build-⌊⌋ σ s true           ι b e c        = refl
+  build-⌊⌋ σ s false          ι b e c        = refl
+  build-⌊⌋ σ s zero           ι b e c        = refl
+  build-⌊⌋ σ s (succ V)       ι b e c        = cong succ (build-⌊⌋ σ s V ι b e c)
+  build-⌊⌋ σ s ⦉ V , W ⦊       ι b (e , e') c =
+    cong₂ ⦉_,_⦊ (build-⌊⌋ σ s V ι (×-buildˡ {ι = ι} b) e (proj₁ c))
+                (build-⌊⌋ σ s W ι (×-buildʳ {ι = ι} b) e' (proj₂ c))
+  build-⌊⌋ σ s (inl V)        ι b e c        = cong inl (build-⌊⌋ σ s V ι (+-buildˡ {ι = ι} b) e c)
+  build-⌊⌋ σ s (inr V)        ι b e c        = cong inr (build-⌊⌋ σ s V ι (+-buildʳ {ι = ι} b) e c)
+  build-⌊⌋ σ s nil            ι b e c        = refl
+  build-⌊⌋ σ s (cons V W)     ι b (e , e') c =
+    cong₂ cons (build-⌊⌋ σ s V ι (List-build {ι = ι} b) e (proj₁ c))
+               (build-⌊⌋ σ s W ι b e' (proj₂ c))
+  build-⌊⌋ σ s (cmp ⋈ V W et) ι b (_ , x) c  = refl
+  build-⌊⌋ σ s (lam M)        ι (inj₂ f) e c = cong lam (instᶜ-⌊⌋ σ s M (≼-∷ ι) f c)
+  build-⌊⌋ σ s (handler N H)  ι b e ()
+  build-⌊⌋ σ s (annᵛ A V)     ι b e c        = build-⌊⌋ σ s V ι b e c
+  build-⌊⌋ σ s (subV V p)     ι b e c        =
+    build-⌊⌋ σ s V ι (sub-build {ι = ι} (sound-<:ᵛ s p) b) e c
 
   -- a computation after the comparisons hoisted from its values: the
   -- erasure of its typing at the end of the telescope
@@ -809,149 +922,178 @@ mutual
   instᶜ-⌊⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ} {Δ}
            → (σ : DInst Θ) → (s : σ ⊨ᴰ Q)
            → (M : Q ∣ Γ ⊢C⦂ C) → (ι : ⟦ Γ ⟧ᶜᵗˣ σ ≼ Δ) → (f : Full ι)
-           → CE.⌊ instᶜ σ s M ι f ⌋ᶜ ≡ elabᶜ OE.⌊ M ⌋ᶜ σ ⌊ ι ⌋ᵐ
-  instᶜ-⌊⌋ σ s (return V) ι f =
-    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι) _
+           → (c : SecondClassᶜ OE.⌊ M ⌋ᶜ)
+           → CE.⌊ instᶜ σ s M ι f c ⌋ᶜ ≡ elabᶜ OE.⌊ M ⌋ᶜ σ ⌊ ι ⌋ᵐ
+  instᶜ-⌊⌋ σ s (return V) ι f c =
+    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι c) _
       (λ r e → return (buildᴿ OE.⌊ V ⌋ᵛ σ r e))
-           (cong return (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h)))
+           (cong return (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h) c))
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       f' = Full-⊕ ι (tel h) f
-  instᶜ-⌊⌋ σ s (M ⨟ N) ι f = cong₂ _⨟_ (instᶜ-⌊⌋ σ s M ι f) (instᶜ-⌊⌋ σ s N (≼-∷ (≼-⟨⟩ ι)) f)
-  instᶜ-⌊⌋ σ s (V · W) ι f =
-    on₁-⌊⌋ ι h (pairʰ (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoistᴿ OE.⌊ W ⌋ᵛ σ)) (hoist₂-⌊⌋ σ s V W ι) _
+  instᶜ-⌊⌋ σ s (M ⨟ N) ι f (c , c') =
+    cong₂ _⨟_ (instᶜ-⌊⌋ σ s M ι f c) (instᶜ-⌊⌋ σ s N (≼-∷ (≼-⟨⟩ ι)) f c')
+  instᶜ-⌊⌋ σ s (V · W) ι f c =
+    on₁-⌊⌋ ι h (pairʰ (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoistᴿ OE.⌊ W ⌋ᵛ σ)) (hoist₂-⌊⌋ σ s V W ι c) _
       (λ r e → buildᴿ OE.⌊ V ⌋ᵛ σ r (leftᴱ e) · buildᴿ OE.⌊ W ⌋ᵛ σ r (rightᴱ e))
-           (cong₂ _·_ (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (proj₁ (env h)))
-                      (build-⌊⌋ σ s W (ι ⊕ tel h) (inj₂ f') (proj₂ (env h))))
+           (cong₂ _·_ (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (proj₁ (env h)) (proj₁ c))
+                      (build-⌊⌋ σ s W (ι ⊕ tel h) (inj₂ f') (proj₂ (env h)) (proj₂ c)))
     where
-      h  = hoist₂ σ s V W ι
+      h  = hoist₂ σ s V W ι c
       f' = Full-⊕ ι (tel h) f
-  instᶜ-⌊⌋ σ s (match V `in M) ι f =
-    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι) _
+  instᶜ-⌊⌋ σ s (match V `in M) ι f (c , c') =
+    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι c) _
       (λ r e → match buildᴿ OE.⌊ V ⌋ᵛ σ r e `in elabᶜ OE.⌊ M ⌋ᶜ σ (extᴿ (extᴿ r)))
-           (cong₂ match_`in_ (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h))
-                             (instᶜ-⌊⌋ σ s M (≼-∷ (≼-∷ (ι ⊕ tel h))) f'))
+           (cong₂ match_`in_ (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h) c)
+                             (instᶜ-⌊⌋ σ s M (≼-∷ (≼-∷ (ι ⊕ tel h))) f' c'))
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       f' = Full-⊕ ι (tel h) f
-  instᶜ-⌊⌋ σ s (absurd V) ι f =
-    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι) _
+  instᶜ-⌊⌋ σ s (absurd V) ι f c =
+    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι c) _
       (λ r e → absurd (buildᴿ OE.⌊ V ⌋ᵛ σ r e))
-           (cong absurd (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h)))
+           (cong absurd (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h) c))
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       f' = Full-⊕ ι (tel h) f
-  instᶜ-⌊⌋ σ s (if V `then M `else N) ι f =
-    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι) _
+  instᶜ-⌊⌋ σ s (if V `then M `else N) ι f (c , c' , c'') =
+    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι c) _
       (λ r e → if buildᴿ OE.⌊ V ⌋ᵛ σ r e `then elabᶜ OE.⌊ M ⌋ᶜ σ r `else elabᶜ OE.⌊ N ⌋ᶜ σ r)
-           (cong₃ if_`then_`else_ (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h))
-                                  (instᶜ-⌊⌋ σ s M (ι ⊕ tel h) f')
-                                  (instᶜ-⌊⌋ σ s N (ι ⊕ tel h) f'))
+           (cong₃ if_`then_`else_ (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h) c)
+                                  (instᶜ-⌊⌋ σ s M (ι ⊕ tel h) f' c')
+                                  (instᶜ-⌊⌋ σ s N (ι ⊕ tel h) f' c''))
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       f' = Full-⊕ ι (tel h) f
-  instᶜ-⌊⌋ σ s (caseℕ V `zero M `succ N) ι f =
-    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι) _
+  instᶜ-⌊⌋ σ s (caseℕ V `zero M `succ N) ι f (c , c' , c'') =
+    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι c) _
       (λ r e → caseℕ buildᴿ OE.⌊ V ⌋ᵛ σ r e `zero elabᶜ OE.⌊ M ⌋ᶜ σ r `succ elabᶜ OE.⌊ N ⌋ᶜ σ (extᴿ r))
-           (cong₃ caseℕ_`zero_`succ_ (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h))
-                                     (instᶜ-⌊⌋ σ s M (ι ⊕ tel h) f')
-                                     (instᶜ-⌊⌋ σ s N (≼-∷ (ι ⊕ tel h)) f'))
+           (cong₃ caseℕ_`zero_`succ_ (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h) c)
+                                     (instᶜ-⌊⌋ σ s M (ι ⊕ tel h) f' c')
+                                     (instᶜ-⌊⌋ σ s N (≼-∷ (ι ⊕ tel h)) f' c''))
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       f' = Full-⊕ ι (tel h) f
-  instᶜ-⌊⌋ σ s (case+ V `inl M `inr N) ι f =
-    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι) _
+  instᶜ-⌊⌋ σ s (case+ V `inl M `inr N) ι f (c , c' , c'') =
+    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι c) _
       (λ r e → case+ buildᴿ OE.⌊ V ⌋ᵛ σ r e `inl elabᶜ OE.⌊ M ⌋ᶜ σ (extᴿ r) `inr elabᶜ OE.⌊ N ⌋ᶜ σ (extᴿ r))
-           (cong₃ case+_`inl_`inr_ (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h))
-                                   (instᶜ-⌊⌋ σ s M (≼-∷ (ι ⊕ tel h)) f')
-                                   (instᶜ-⌊⌋ σ s N (≼-∷ (ι ⊕ tel h)) f'))
+           (cong₃ case+_`inl_`inr_ (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h) c)
+                                   (instᶜ-⌊⌋ σ s M (≼-∷ (ι ⊕ tel h)) f' c')
+                                   (instᶜ-⌊⌋ σ s N (≼-∷ (ι ⊕ tel h)) f' c''))
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       f' = Full-⊕ ι (tel h) f
-  instᶜ-⌊⌋ σ s (caseL V `nil M `cons N) ι f =
-    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι) _
+  instᶜ-⌊⌋ σ s (caseL V `nil M `cons N) ι f (c , c' , c'') =
+    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι c) _
       (λ r e → caseL buildᴿ OE.⌊ V ⌋ᵛ σ r e `nil elabᶜ OE.⌊ M ⌋ᶜ σ r `cons elabᶜ OE.⌊ N ⌋ᶜ σ (extᴿ (extᴿ r)))
-           (cong₃ caseL_`nil_`cons_ (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h))
-                                    (instᶜ-⌊⌋ σ s M (ι ⊕ tel h) f')
-                                    (instᶜ-⌊⌋ σ s N (≼-∷ (≼-∷ (ι ⊕ tel h))) f'))
+           (cong₃ caseL_`nil_`cons_ (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h) c)
+                                    (instᶜ-⌊⌋ σ s M (ι ⊕ tel h) f' c')
+                                    (instᶜ-⌊⌋ σ s N (≼-∷ (≼-∷ (ι ⊕ tel h))) f' c''))
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       f' = Full-⊕ ι (tel h) f
-  instᶜ-⌊⌋ σ s (recℕ V M N p) ι f =
-    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι) _
+  instᶜ-⌊⌋ σ s (recℕ V M N p) ι f (c , c' , c'') =
+    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι c) _
       (λ r e → recℕ (buildᴿ OE.⌊ V ⌋ᵛ σ r e) (elabᶜ OE.⌊ M ⌋ᶜ σ r) (elabᶜ OE.⌊ N ⌋ᶜ σ (extᴿ (extᴿ r))))
-           (cong₃ recℕ (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h))
-                       (instᶜ-⌊⌋ σ s M (ι ⊕ tel h) f')
-                       (instᶜ-⌊⌋ σ s N (≼-∷ (≼-⟨⟩ (≼-∷ (≼-⟨⟩ (ι ⊕ tel h))))) f'))
+           (cong₃ recℕ (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h) c)
+                       (instᶜ-⌊⌋ σ s M (ι ⊕ tel h) f' c')
+                       (instᶜ-⌊⌋ σ s N (≼-∷ (≼-⟨⟩ (≼-∷ (≼-⟨⟩ (ι ⊕ tel h))))) f' c''))
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       f' = Full-⊕ ι (tel h) f
-  instᶜ-⌊⌋ σ s (recL V M N p) ι f =
-    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι) _
+  instᶜ-⌊⌋ σ s (recL V M N p) ι f (c , c' , c'') =
+    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι c) _
       (λ r e → recL (buildᴿ OE.⌊ V ⌋ᵛ σ r e) (elabᶜ OE.⌊ M ⌋ᶜ σ r) (elabᶜ OE.⌊ N ⌋ᶜ σ (extᴿ (extᴿ (extᴿ r)))))
-           (cong₃ recL (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h))
-                       (instᶜ-⌊⌋ σ s M (ι ⊕ tel h) f')
-                       (instᶜ-⌊⌋ σ s N (≼-∷ (≼-⟨⟩ (≼-∷ (≼-∷ (≼-⟨⟩ (ι ⊕ tel h)))))) f'))
+           (cong₃ recL (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h) c)
+                       (instᶜ-⌊⌋ σ s M (ι ⊕ tel h) f' c')
+                       (instᶜ-⌊⌋ σ s N (≼-∷ (≼-⟨⟩ (≼-∷ (≼-∷ (≼-⟨⟩ (ι ⊕ tel h)))))) f' c''))
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       f' = Full-⊕ ι (tel h) f
-  instᶜ-⌊⌋ σ s (perform op V M) ι f =
-    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι) _
+  instᶜ-⌊⌋ σ s (perform op V M) ι f (c , c') =
+    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V ι c) _
       (λ r e → perform op (buildᴿ OE.⌊ V ⌋ᵛ σ r e) (elabᶜ OE.⌊ M ⌋ᶜ σ (extᴿ r)))
            (cong₂ (perform op)
                   (trans (castᵛ-⌊⌋ refl (⟦⌜ param op ⌝ᵍ⟧ σ) _)
-                         (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h)))
+                         (build-⌊⌋ σ s V (ι ⊕ tel h) (inj₂ f') (env h) c))
                   (trans (castᶜ-⌊⌋ (cong (end h ⟨ mapᵉ (op-grade op) ⟩ ∷_) (⟦⌜ arity op ⌝ᵍ⟧ σ))
                                    refl _)
-                         (instᶜ-⌊⌋ σ s M (≼-∷ (≼-⟨⟩ (ι ⊕ tel h))) f')))
+                         (instᶜ-⌊⌋ σ s M (≼-∷ (≼-⟨⟩ (ι ⊕ tel h))) f' c')))
     where
-      h  = hoist σ s V ι
+      h  = hoist σ s V ι c
       f' = Full-⊕ ι (tel h) f
-  instᶜ-⌊⌋ σ s (delay τ M) ι f = cong (delay τ) (instᶜ-⌊⌋ σ s M (≼-⟨⟩ ι) f)
-  instᶜ-⌊⌋ {Γ = Γ} σ s (handle_`with_`in {B = B} M H N) ι f =
-    cong₃ (λ x y z → handle x `with y `in z)
-          (instᶜ-⌊⌋ σ s M ι f)
-          (fun-ext λ op → fun-ext λ c →
-             trans (castᶜ-⌊⌋ (clause-ctx Γ σ op B c) (clause-ty Γ σ op B c)
-                             (instᶜ (σ ,ᵉᴰ c) (⊨ᴰ-,ᵉ c s) (H op) (clause-map Γ σ op B c ι)
-                                    (Full-subst (sym (⟦wkᵉ⟧ᶜᵗˣ σ c Γ)) ι f)))
-                   (trans (instᶜ-⌊⌋ (σ ,ᵉᴰ c) (⊨ᴰ-,ᵉ c s) (H op) (clause-map Γ σ op B c ι)
-                                    (Full-subst (sym (⟦wkᵉ⟧ᶜᵗˣ σ c Γ)) ι f))
-                          (cong (λ r → elabᶜ OE.⌊ H op ⌋ᶜ (σ ,ᵉᴰ c) (extᴿ (extᴿ r)))
-                                (⌊subst⌋ᵐ (sym (⟦wkᵉ⟧ᶜᵗˣ σ c Γ)) ι))))
-          (instᶜ-⌊⌋ σ s N (≼-∷ (≼-⟨⟩ ι)) f)
-  instᶜ-⌊⌋ σ s (unbox x p q N) ι f =
+  instᶜ-⌊⌋ σ s (delay τ M) ι f c = cong (delay τ) (instᶜ-⌊⌋ σ s M (≼-⟨⟩ ι) f c)
+  instᶜ-⌊⌋ σ s (handle M `with V) ι f c = instʰ-⌊⌋ σ s M V (<:̂ᵛ-refl _) ι f c
+  instᶜ-⌊⌋ σ s (unbox x p q N) ι f c =
     cong₂ unbox (trans (look-pos ι f ⟦ x ⟧ˣ) (cong (posᴿ ⌊ ι ⌋ᵐ) (⟦⟧ˣ-pos x)))
-                (instᶜ-⌊⌋ σ s N (≼-∷ ι) f)
-  instᶜ-⌊⌋ σ s (box ρ V N) ι f =
-    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V (≼-drop ι)) _
+                (instᶜ-⌊⌋ σ s N (≼-∷ ι) f c)
+  instᶜ-⌊⌋ σ s (box ρ V N) ι f (c , c') =
+    on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V (≼-drop ι) c) _
       (λ r e → box (⟦ ρ ⟧ʳ σ) (buildᴿ OE.⌊ V ⌋ᵛ σ r e) (elabᶜ OE.⌊ N ⌋ᶜ σ (extᴿ r)))
            (cong₂ (box (⟦ ρ ⟧ʳ σ))
-                  (trans (build-⌊⌋ σ s V (≼-⟨⟩ (ι ⊕ tel h)) (inj₂ f') (lockᴱ OE.⌊ V ⌋ᵛ (env h)))
+                  (trans (build-⌊⌋ σ s V (≼-⟨⟩ (ι ⊕ tel h)) (inj₂ f') (lockᴱ OE.⌊ V ⌋ᵛ (env h)) c)
                          (cong (buildᴿ OE.⌊ V ⌋ᵛ σ ⌊ ι ⊕ tel h ⌋ᵐ) (⌊lockᴱ⌋ OE.⌊ V ⌋ᵛ (env h))))
-                  (instᶜ-⌊⌋ σ s N (≼-∷ (ι ⊕ tel h)) f'))
+                  (instᶜ-⌊⌋ σ s N (≼-∷ (ι ⊕ tel h)) f' c'))
     where
-      h  = hoist σ s V (≼-drop ι)
+      h  = hoist σ s V (≼-drop ι) c
       f' = Full-⊕ ι (tel h) f
-  instᶜ-⌊⌋ σ s (annᶜ C M) ι f = instᶜ-⌊⌋ σ s M ι f
-  instᶜ-⌊⌋ σ s (subC M p) ι f = instᶜ-⌊⌋ σ s M ι f
+  instᶜ-⌊⌋ σ s (annᶜ C M) ι f c = instᶜ-⌊⌋ σ s M ι f c
+  instᶜ-⌊⌋ σ s (subC M p) ι f c = instᶜ-⌊⌋ σ s M ι f c
+
+  instʰ-⌊⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A X Y : OVType Θ} {ε ε' : EExp Θ} {Δ}
+           → (σ : DInst Θ) → (s : σ ⊨ᴰ Q)
+           → (M : Q ∣ Γ ⊢C⦂ X ‼ ε) → (V : Q ∣ Γ ⊢V⦂ A)
+           → (q : Q ∣ A <:̂ᵛ (X ‼ ε) ⇛ (Y ‼ ε'))
+           → (ι : ⟦ Γ ⟧ᶜᵗˣ σ ≼ Δ) → (f : Full ι)
+           → (c : SecondClassᶜ (handle OE.⌊ M ⌋ᶜ `with OE.⌊ V ⌋ᵛ))
+           → CE.⌊ instʰ σ s M V q ι f c ⌋ᶜ ≡ elabʰ OE.⌊ M ⌋ᶜ OE.⌊ V ⌋ᵛ σ ⌊ ι ⌋ᵐ
+  instʰ-⌊⌋ {Γ = Γ} σ s M (handler {B = B₀} N H) ((pX ‼ₛ pε) ⇛ₛ (pY ‼ₛ pε')) ι f
+           (c , c' , c'') =
+    cong₃ (λ x y z → handle x `with y `in z)
+          (instᶜ-⌊⌋ σ s M ι f c)
+          (fun-ext λ op → fun-ext λ e →
+             trans (castᶜ-⌊⌋ (clause-ctx Γ σ op B₀ e) (clause-ty Γ σ op B₀ e)
+                             (instᶜ (σ ,ᵉᴰ e) (⊨ᴰ-,ᵉ e s) (H op) (clause-map Γ σ op B₀ e ι)
+                                    (Full-subst (sym (⟦wkᵉ⟧ᶜᵗˣ σ e Γ)) ι f) (c'' op)))
+                   (trans (instᶜ-⌊⌋ (σ ,ᵉᴰ e) (⊨ᴰ-,ᵉ e s) (H op) (clause-map Γ σ op B₀ e ι)
+                                    (Full-subst (sym (⟦wkᵉ⟧ᶜᵗˣ σ e Γ)) ι f) (c'' op))
+                          (cong (λ r → elabᶜ OE.⌊ H op ⌋ᶜ (σ ,ᵉᴰ e) (extᴿ (extᴿ r)))
+                                (⌊subst⌋ᵐ (sym (⟦wkᵉ⟧ᶜᵗˣ σ e Γ)) ι))))
+          (instᶜ-⌊⌋ σ s N (≼-∷ (≼-≾ ι (map-monotoneᵉ (sound-≾ₑ s pε)))) f c')
+  instʰ-⌊⌋ σ s M (subV V p) q ι f c = instʰ-⌊⌋ σ s M V (<:̂ᵛ-trans p q) ι f c
+  instʰ-⌊⌋ σ s M (var x ok) q ι f ()
+  instʰ-⌊⌋ σ s M (const B c') q ι f ()
+  instʰ-⌊⌋ σ s M ⋆ q ι f ()
+  instʰ-⌊⌋ σ s M true q ι f ()
+  instʰ-⌊⌋ σ s M false q ι f ()
+  instʰ-⌊⌋ σ s M zero q ι f ()
+  instʰ-⌊⌋ σ s M (succ V) q ι f ()
+  instʰ-⌊⌋ σ s M ⦉ V , W ⦊ q ι f ()
+  instʰ-⌊⌋ σ s M (inl V) q ι f ()
+  instʰ-⌊⌋ σ s M (inr V) q ι f ()
+  instʰ-⌊⌋ σ s M nil q ι f ()
+  instʰ-⌊⌋ σ s M (cons V W) q ι f ()
+  instʰ-⌊⌋ σ s M (cmp ⋈ V W et) q ι f ()
+  instʰ-⌊⌋ σ s M (lam L) q ι f ()
+  instʰ-⌊⌋ σ s M (annᵛ A V) q ι f ()
 
 ------------------------------------------------------------------------
--- The instantiation theorem: an open typing under `Q` is, at every
--- declarative instance satisfying `Q`, a closed typing of the term's
--- elaboration; a value's, of the elaboration of `return V`
+-- The instantiation theorem: an open typing under `Q` of a term whose
+-- handlers are second-class is, at every declarative instance
+-- satisfying `Q`, a closed typing of the term's elaboration; a value's,
+-- of the elaboration of `return V`
 
 instantiateᶜ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ}
              → (σ : DInst Θ) → σ ⊨ᴰ Q
-             → (D : Q ∣ Γ ⊢C⦂ C)
+             → (D : Q ∣ Γ ⊢C⦂ C) → SecondClassᶜ OE.⌊ D ⌋ᶜ
              → Σ[ D' ∈ ⟦ Γ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ C ⟧ᶜ σ ] (CE.⌊ D' ⌋ᶜ ≡ ⌊ OE.⌊ D ⌋ᶜ ⌋ᴿᶜ σ)
-instantiateᶜ σ s D = instᶜ σ s D ≼-refl tt , instᶜ-⌊⌋ σ s D ≼-refl tt
+instantiateᶜ σ s D c = instᶜ σ s D ≼-refl tt c , instᶜ-⌊⌋ σ s D ≼-refl tt c
 
 instantiateᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ}
              → (σ : DInst Θ) → σ ⊨ᴰ Q
-             → (D : Q ∣ Γ ⊢V⦂ A)
+             → (D : Q ∣ Γ ⊢V⦂ A) → SecondClassᵛ OE.⌊ D ⌋ᵛ
              → Σ[ D' ∈ ⟦ Γ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ A ‼ ûₑ ⟧ᶜ σ ] (CE.⌊ D' ⌋ᶜ ≡ ⌊ return OE.⌊ D ⌋ᵛ ⌋ᴿᶜ σ)
-instantiateᵛ σ s D = instantiateᶜ σ s (return D)
+instantiateᵛ σ s D c = instantiateᶜ σ s (return D) c
 
 ------------------------------------------------------------------------
 -- The instantiation theorem in the open syntax: at every closed
@@ -960,10 +1102,10 @@ instantiateᵛ σ s D = instantiateᶜ σ s (return D)
 
 instantiateˢᶜ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ}
               → (δ : Subst Θ ∅ˢ) → δ ⊨ Q ∣ []
-              → (D : Q ∣ Γ ⊢C⦂ C)
+              → (D : Q ∣ Γ ⊢C⦂ C) → SecondClassᶜ OE.⌊ D ⌋ᶜ
               → Σ[ D' ∈ ⌞ Γ [ δ ]ᶜᵗˣ ⌟ᶜᵗˣ ⊢C⦂ ⌞ C [ δ ]ᶜ ⌟ᶜ ]
                   (CE.⌊ D' ⌋ᶜ ≡ ⌞ OE.⌊ D ⌋ᶜ [ δ ]ᴿᶜ ⌟ᴿᶜ)
-instantiateˢᶜ {Γ = Γ} {C = C} δ s D with instantiateᶜ ⌞ δ ⌟ˢ (⊨→⊨ᴰ s) D
+instantiateˢᶜ {Γ = Γ} {C = C} δ s D c with instantiateᶜ ⌞ δ ⌟ˢ (⊨→⊨ᴰ s) D c
 ... | D' , e = castᶜ p q D' , trans (castᶜ-⌊⌋ p q D') (trans e (sym (⌊[]⌋ᴿᶜ OE.⌊ D ⌋ᶜ δ ∅ᴰ)))
   where
     p = sym (⌞[]⌟ᶜᵗˣ δ Γ)
@@ -971,7 +1113,7 @@ instantiateˢᶜ {Γ = Γ} {C = C} δ s D with instantiateᶜ ⌞ δ ⌟ˢ (⊨�
 
 instantiateˢᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ}
               → (δ : Subst Θ ∅ˢ) → δ ⊨ Q ∣ []
-              → (D : Q ∣ Γ ⊢V⦂ A)
+              → (D : Q ∣ Γ ⊢V⦂ A) → SecondClassᵛ OE.⌊ D ⌋ᵛ
               → Σ[ D' ∈ ⌞ Γ [ δ ]ᶜᵗˣ ⌟ᶜᵗˣ ⊢C⦂ ⌞ (A ‼ ûₑ) [ δ ]ᶜ ⌟ᶜ ]
                   (CE.⌊ D' ⌋ᶜ ≡ ⌞ return OE.⌊ D ⌋ᵛ [ δ ]ᴿᶜ ⌟ᴿᶜ)
-instantiateˢᵛ δ s D = instantiateˢᶜ δ s (return D)
+instantiateˢᵛ δ s D c = instantiateˢᶜ δ s (return D) c

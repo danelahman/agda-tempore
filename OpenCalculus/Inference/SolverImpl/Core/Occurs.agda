@@ -50,6 +50,7 @@ mutual
   occᵗ-v α (|List| A) = occᵗ-v α A
   occᵗ-v α Empty     = false
   occᵗ-v α (A ⇒ C)   = occᵗ-v α A ∨ occᵗ-c α C
+  occᵗ-v α (C ⇛ D)   = occᵗ-c α C ∨ occᵗ-c α D
   occᵗ-v α ([ ρ ] A) = occᵗ-v α A
 
   occᵗ-c : ∀ {Θ} → TyVar Θ → OCType Θ → 𝔹
@@ -75,6 +76,7 @@ mutual
   occʳ-v i (|List| A) = occʳ-v i A
   occʳ-v i Empty     = false
   occʳ-v i (A ⇒ C)   = occʳ-v i A ∨ occʳ-c i C
+  occʳ-v i (C ⇛ D)   = occʳ-c i C ∨ occʳ-c i D
   occʳ-v i ([ ρ ] A) = occʳ-r i ρ ∨ occʳ-v i A
 
   occʳ-c : ∀ {Θ} → RVar Θ → OCType Θ → 𝔹
@@ -106,6 +108,7 @@ mutual
   occᵉ-v i (|List| A) = occᵉ-v i A
   occᵉ-v i Empty     = false
   occᵉ-v i (A ⇒ C)   = occᵉ-v i A ∨ occᵉ-c i C
+  occᵉ-v i (C ⇛ D)   = occᵉ-c i C ∨ occᵉ-c i D
   occᵉ-v i ([ ρ ] A) = occᵉ-r i ρ ∨ occᵉ-v i A
 
   occᵉ-c : ∀ {Θ} → EVar Θ → OCType Θ → 𝔹

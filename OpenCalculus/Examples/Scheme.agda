@@ -96,6 +96,7 @@ private
     walkᵛ (|List| A) = walkᵛ A
     walkᵛ Empty     = true
     walkᵛ (A ⇒ C)   = walkᵛ A && walkᶜ C
+    walkᵛ (C ⇛ D)   = walkᶜ C && walkᶜ D
     walkᵛ ([ ρ ] A) = walkʳ ρ && walkᵛ A
 
     walkᶜ : ∀ {Θ} → OCType Θ → 𝔹

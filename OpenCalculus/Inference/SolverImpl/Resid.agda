@@ -637,6 +637,7 @@ etDec-str j (|List| A) q with zip₂-just _++_ (etDec A) (just []) q
 ...   | A₀ , ra = |List| A₀ , cong (mmap |List|) ra
 etDec-str j (A ⇒ (B ‼ ε)) ()
 etDec-str j ([ ρ ] A)     ()
+etDec-str j ((A ‼ ε) ⇛ (B ‼ ε')) ()
 
 -- Conversely, every atom of a successful decomposition is entailed
 -- by the demand it came from.
