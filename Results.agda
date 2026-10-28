@@ -176,7 +176,7 @@ module OperationalSemantics (S : LanguageSpec) where
 ------------------------------------------------------------------------
 -- Instantiation and type safety
 
-module InstantiationAndTypeSafety (S : LanguageSpec) (opEnum : OpEnum S) where
+module InstantiationAndTypeSafety (S : LanguageSpec) where
 
   -- Erasure `⌊ M[δ] ⌋`: the run-time term of the raw term at an instance,
   -- its annotations dropped
