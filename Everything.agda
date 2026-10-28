@@ -54,471 +54,450 @@
 --     instance of its variables satisfying Q                           --
 --------------------------------------------------------------------------
 
-open import Syntax.LanguageSpec
-
 module Everything where
 
--- UTILS
---------
+-- UTILITIES
+------------
 
----- Equality
-
-open import Util.Equality
-
----- Monad helper
-
-open import Util.Monad
-
-
--- SYNTAX
----------
-
----- Base types, operations, and ground types
----- (the language specification `Syntax.LanguageSpec` is imported above)
-
-open import Syntax.BaseTypes
-open import Syntax.Operations
-open import Syntax.GroundTypes
-
----- Syntax of the language
-
-open import Syntax.Types
-open import Syntax.Contexts
-
----- Shape-preserving subtyping of value and computation types
-
-open import Syntax.Subtyping
-
----- Comparison relations and their outcomes
-
-open import Syntax.Comparisons
-
-open import Syntax.Language
-
----- The data of the eternal types, and their structural order
-
-open import Syntax.Data
-open import Syntax.Data.Order
-
----- Renamings and substitutions
-
-open import Syntax.Renamings
-open import Syntax.RenActions
-
----- Substitutions: the generating calculus, and replacing one variable as a
----- notation for it
-
-open import Syntax.Substitutions.Base
-open import Syntax.Substitutions.Lookup
-open import Syntax.Substitutions.Action
-open import Syntax.Substitutions
-
----- Equivalence of renamings, of terms, and coherence of the action
-
-open import Syntax.Renamings.Equivalence
-open import Syntax.Terms.Equivalence
-open import Syntax.Renamings.Coherence
-open import Syntax.Renamings.Category
-open import Syntax.Terms.Transport
-
----- Substitutions: composition, the quotient, and the laws
-
-open import Syntax.Substitutions.Equivalence
-open import Syntax.Substitutions.Chain
-open import Syntax.Substitutions.Interchange
-open import Syntax.Substitutions.ChainEquivalence
-open import Syntax.Substitutions.Laws
-
----- Subsumption for contexts
-
-open import Syntax.Substitutions.Subsumption
-
----- Substitution at a context's prefix boundary
-
-open import Syntax.Substitutions.Variables
-open import Syntax.Substitutions.At
-open import Syntax.Substitutions.Clauses
-
----- Computation term and evaluation contexts
-
-open import Syntax.CompContext
-
----- Erasure to raw terms, and the theorem that subsumption is confined to
----- the reconciliation points
-
-open import Syntax.Erasure
-open import Syntax.Normalisation
+import Util.Equality
+import Util.NonNegativeRational
 
 
 -- GRADES
 ---------
 
----- Durations: the monoid of delays, its morphisms, stepped durations,
----- time domains and their arithmetic, intervals of a time domain with
----- open or closed ends, and the natural numbers and the non-negative
----- rationals as durations
+---- Grade algebras, grade morphisms and grade systems
 
-open import Syntax.Durations
-import Syntax.Durations.Monus
-import Syntax.Durations.Solver
-import Syntax.Durations.Intervals
-import Syntax.Durations.Intervals.Dense
-open import Syntax.Durations.Nat
-open import Syntax.Durations.NonNegativeRational
+import Grades.Base
 
----- Grades, grade morphisms, and grade systems
+---- Durations: the monoid of delays, time domains, intervals
 
-open import Syntax.Grades
+import Grades.Durations
+import Grades.Durations.Intervals
+import Grades.Durations.Intervals.Dense
+import Grades.Durations.Monus
+import Grades.Durations.Nat
+import Grades.Durations.NonNegativeRational
+import Grades.Durations.Solver
 
----- The product of two grades, and of two grade systems
+---- Constructions on grades: products, upward closure, semidirect
+---- products, indexed families
 
-import Syntax.Grades.Product
-import Syntax.Grades.Upward
-import Syntax.Grades.SemiDirect
-import Syntax.Grades.Indexed
-import Syntax.Grades.Matrix
+import Grades.Product
+import Grades.Upward
+import Grades.SemiDirect
+import Grades.Indexed
+
+---- Mode matrices
+
+import Grades.Matrix
+import Grades.Matrix.Boxes
+import Grades.Matrix.Dioid
+import Grades.Matrix.Fields
+import Grades.Matrix.Matrices
+import Grades.Matrix.ModeGrade
+import Grades.Matrix.Modes
+import Grades.Matrix.Nominal
+import Grades.Matrix.Restrict
 
 ---- The timed-trace toolkit of the trace-based grades
 
-import Syntax.Grades.Traces
-
----- Regular languages as grades: canonical minimal automata, inclusion,
----- and extended regular-expression literals
-
-import Syntax.Grades.Regular
-
----- Exact timed words: operations with exact running times, stretches
----- admitting sets of operations, and the order of time-aligned fit
-
-import Syntax.Grades.Exact
-
----- Example grades and grade systems: time, sets of timed traces, counts,
----- security levels and their products, and the projections between them
-
-import Syntax.Grades.Example
-
--- OPERATIONAL SEMANTICS
-------------------------
-
----- States of operational semantics
-
-open import OperationalSemantics.State
-
----- Small-step operational semantics and preservation theorem
-
-open import OperationalSemantics.PreservationTheorem
-
----- Progress theorem
-
-open import OperationalSemantics.ProgressTheorem
-
----- Top-level operational semantics
-
-open import OperationalSemantics.TopLevelOpSemantics
-
----- Top-level preservation theorem
-
-open import OperationalSemantics.TopLevelPreservationTheorem
-
----- Top-level progress theorem
-
-open import OperationalSemantics.TopLevelProgressTheorem
-
-
--- EQUATIONAL THEORY
---------------------
-
-open import EquationalTheory.EquationalTheory
-
----- Naturality of subsumption, where the theory derives it
-
-open import EquationalTheory.Naturality
-
----- The syntactic equivalence is contained in the equational theory
-
-open import EquationalTheory.Alignment
-
----- Equational theory's soundness theorem
-
-open import EquationalTheory.Soundness
-
-
--- DENOTATIONAL SEMANTICS
--------------------------
-
----- Abstract model interface
-
-open import DenotationalSemantics.Model.Category
-open import DenotationalSemantics.Model.Comparison
-open import DenotationalSemantics.Model.World
-open import DenotationalSemantics.Model.Modality.Future
-open import DenotationalSemantics.Model.Modality.Past
-open import DenotationalSemantics.Model.Modality.Adjunction
-open import DenotationalSemantics.Model.Modality.Eternal
-open import DenotationalSemantics.Model.GroundTypes
-open import DenotationalSemantics.Model.GroundEternal
-open import DenotationalSemantics.Model.Monad
-open import DenotationalSemantics.Model.Monad.Enrichment
-open import DenotationalSemantics.Model.TickMonad
-open import DenotationalSemantics.Model.Implementation
-
----- Constructions on Kripke frames: products, reindexing, and the
----- action frame of a grade with its forward restriction
-
-import DenotationalSemantics.Model.World.Product
-import DenotationalSemantics.Model.World.Reindex
-import DenotationalSemantics.Model.World.Action
-import DenotationalSemantics.Model.World.History
-
----- Concrete model on setoid-valued presheaves over the worlds
-
-open import DenotationalSemantics.Model.Example.PSh.Base
-open import DenotationalSemantics.Model.Example.PSh.Modality.Future
-open import DenotationalSemantics.Model.Example.PSh.Modality.Past
-open import DenotationalSemantics.Model.Example.PSh.Modality.Adjunction
-open import DenotationalSemantics.Model.Example.PSh.Modality.Eternal
-open import DenotationalSemantics.Model.Example.PSh.GroundTypes
-open import DenotationalSemantics.Model.Example.PSh.Monad.Core
-open import DenotationalSemantics.Model.Example.PSh.Monad.Effects
-open import DenotationalSemantics.Model.Example.PSh.Monad.Handling
-open import DenotationalSemantics.Model.Example.PSh.Monad.Instance
-open import DenotationalSemantics.Model.Example.PSh.TickMonad
-open import DenotationalSemantics.Model.Example.PSh.Implementation
-open import DenotationalSemantics.Model.Example.PSh.TopLevelInstance
-
----- Interpretation of the calculus
-
-open import DenotationalSemantics.Interpretation.Types
-open import DenotationalSemantics.Interpretation.Subtyping
-open import DenotationalSemantics.Interpretation.Contexts
-open import DenotationalSemantics.Interpretation.Variables
-open import DenotationalSemantics.Interpretation.Comparisons
-open import DenotationalSemantics.Interpretation.Terms
-open import DenotationalSemantics.Interpretation.Data
-open import DenotationalSemantics.Interpretation.Renaming.Algebra
-open import DenotationalSemantics.Interpretation.Renaming.Extension
-open import DenotationalSemantics.Interpretation.Renaming.Structural
-open import DenotationalSemantics.Interpretation.Renaming
-open import DenotationalSemantics.Interpretation.RenamingCoherence
-open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Base
-open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Env
-open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Transport
-open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Core
-open import DenotationalSemantics.Interpretation.SubstitutionCoherence
-open import DenotationalSemantics.Interpretation.Recursion
-open import DenotationalSemantics.Interpretation.State
-
----- Soundness of the equational theory with respect to the interpretation
-
-open import EquationalTheory.Soundness.Base
-open import EquationalTheory.Soundness.Parametric
-open import EquationalTheory.Soundness.Values
-open import EquationalTheory.Soundness.Modal
-open import EquationalTheory.Soundness.Coerce
-open import EquationalTheory.Soundness.Seq
-open import EquationalTheory.Soundness.SeqAssoc
-open import EquationalTheory.Soundness.Delay
-open import EquationalTheory.Soundness.Fill
-open import EquationalTheory.Soundness.UnboxBeta
-open import EquationalTheory.Soundness.Comm
-open import EquationalTheory.Soundness.Handle
-open import EquationalTheory.Soundness.HandlePerform
-
----- Soundness of the operational semantics
-
-open import OperationalSemantics.Soundness.Preservation.Base
-open import OperationalSemantics.Soundness.Preservation.Unbox
-open import OperationalSemantics.Soundness.Preservation.Step
-open import OperationalSemantics.Soundness.Preservation.Handle
-open import OperationalSemantics.Soundness.Preservation
-
----- Soundness of the pure top-level operational semantics
-
-open import OperationalSemantics.Soundness.TickLemmas
-open import OperationalSemantics.Soundness.TopLevelPure
-
----- Adequacy of the interpretation with respect to the operational semantics
-
-open import OperationalSemantics.Adequacy.Evaluation
-open import OperationalSemantics.Adequacy.StateEquivalence.Core
-open import OperationalSemantics.Adequacy.StateEquivalence.Extensions
-open import OperationalSemantics.Adequacy.StateEquivalence.Bisimulation
-open import OperationalSemantics.Adequacy.StateEquivalence.Replay
-open import OperationalSemantics.Adequacy.StateEquivalence
-open import OperationalSemantics.Adequacy.GradedReach
-open import OperationalSemantics.Adequacy.Reducibility
-open import OperationalSemantics.Adequacy.Environment.Core
-open import OperationalSemantics.Adequacy.Environment.Action
-open import OperationalSemantics.Adequacy.Environment.Variables
-open import OperationalSemantics.Adequacy.Environment.Cell
-open import OperationalSemantics.Adequacy.Environment
-open import OperationalSemantics.Adequacy.Bind
-open import OperationalSemantics.Adequacy.Handle
-open import OperationalSemantics.Adequacy.Normalization
-open import OperationalSemantics.Adequacy.HeadFaithful
-open import OperationalSemantics.Adequacy.Adequacy
-
----- Adequacy for the equational theory
-
-open import OperationalSemantics.Adequacy.Equational
-
----- Head shapes of effect trees in the presheaf model
-
-open import OperationalSemantics.Adequacy.PSh.TreeShape
-open import OperationalSemantics.Adequacy.PSh.TreeHead
-open import OperationalSemantics.Adequacy.PSh.HeadFaithful
-open import OperationalSemantics.Adequacy.PSh.TickFrames
-
----- Concrete Kripke frames for the example grades: tick, tally, label and
----- trace-history worlds, and their products
-
-import DenotationalSemantics.Model.Example.World
-
-
--- TYPE INFERENCE
------------------
-
----- Scopes of type and grade variables
-
-open import TypeInference.Scopes
-
----- Open grade expressions, types and contexts
-
-open import TypeInference.OpenSyntax.Grades
-open import TypeInference.OpenSyntax.Types
-open import TypeInference.OpenSyntax.Contexts
-open import TypeInference.OpenSyntax.ContextsLemmas
-
----- Substitutions between scopes
-
-open import TypeInference.OpenSyntax.Subst
-
----- Hypothesis sets, entailment and subtyping of open types
-
-open import TypeInference.OpenSyntax.Hyps
-
----- Closed instances: values of closed grades, closed decisions
-
-open import TypeInference.OpenSyntax.Instances
-
----- The open type system
-
-open import TypeInference.OpenSyntax.Language
-
----- Raw terms and erasure
-
-open import TypeInference.Raw.Syntax
-open import TypeInference.Raw.Subst
-open import TypeInference.Erase
-
----- Constraints and their satisfaction
-
-open import TypeInference.Constraints.Syntax
-open import TypeInference.Constraints.Satisfaction
-open import TypeInference.Constraints.Properties
-
----- Constraint generation
-
-open import TypeInference.Generate
-
----- Soundness and completeness of constraint generation
-
-open import TypeInference.Soundness
-open import TypeInference.Completeness
-
----- Axiomatised constraint solvers, principal types and principal type
----- schemes
-
-open import TypeInference.Outcome
-open import TypeInference.Solver
-open import TypeInference.Principality
-
----- Type formers and the variance of their parts: the table every
----- decomposition, traversal and recursion along a type reads
-
-import TypeInference.SolverImpl.Former
-
----- Entailment of grade orderings from hypotheses at explicit strengths,
----- the closed check and refutation against the unit, and simplification
----- of reported hypothesis sets
-
-import TypeInference.SolverImpl.Normal
-import TypeInference.SolverImpl.Entail
-import TypeInference.SolverImpl.Simplify
-
----- Sets of variables, the value rules for an unknown, polarity-based
----- elimination of unknowns from a report, and normal forms of grade
----- expressions
-
-import TypeInference.SolverImpl.Vars
-import TypeInference.SolverImpl.Values
-import TypeInference.SolverImpl.Eliminate
-import TypeInference.SolverImpl.Product
-import TypeInference.SolverImpl.Canon
-
----- Reachability in a finite graph, by Warshall's algorithm, and cycle
----- elimination
-
-import TypeInference.SolverImpl.Reach
-
----- Deferred rigid conditions: the orderings of a clause that mention its
----- rigid and outer unknowns, kept under their binders
-
-import TypeInference.SolverImpl.Deferred
-
----- The rigid-binder-free fragment
-
-import TypeInference.SolverImpl.RigidFree
-
----- Properties of variable expansion: decomposability of every expanded
----- demand, most-generality of the expansion, and refutation
-
-import TypeInference.SolverImpl.Expand
-
----- The closure of the one-step localisation relation: a declarative
----- specification of localisation, not used by the solver
-
-import TypeInference.SolverImpl.Localise.Closure
-
----- The search of a solution for a refutation and for a closed instance
-
-import TypeInference.SolverImpl.Search
-
----- Principality and refutation for the driver, strengthening of the
----- report, and the solver and inference
-
-import TypeInference.SolverImpl.Principal
-import TypeInference.SolverImpl.Strengthen
-import TypeInference.SolverImpl
-
----- The inference examples are checked separately, with
----- `agda TypeInference/Examples.agda`
-
--- import TypeInference.Examples
-
-
--- INSTANTIATION
+import Grades.Traces
+import Grades.Traces.Allowance
+import Grades.Traces.Allowance.Antisym
+import Grades.Traces.Allowance.AsOrder
+import Grades.Traces.Allowance.Core
+import Grades.Traces.Allowance.Decidable
+import Grades.Traces.Allowance.Duration
+import Grades.Traces.Allowance.Moves
+import Grades.Traces.Allowance.ZeroCost
+import Grades.Traces.Along
+import Grades.Traces.Base
+import Grades.Traces.Coverage
+import Grades.Traces.Coverage.Antisym
+import Grades.Traces.Coverage.AsOrder
+import Grades.Traces.Coverage.Core
+import Grades.Traces.Coverage.Decidable
+import Grades.Traces.Coverage.Duration
+import Grades.Traces.Coverage.Moves
+import Grades.Traces.Durations
+import Grades.Traces.Embedding
+import Grades.Traces.Lexicographic
+import Grades.Traces.MaxDuration
+import Grades.Traces.MinDuration
+import Grades.Traces.Order
+import Grades.Traces.Positive
+import Grades.Traces.Prefix
+import Grades.Traces.Reduced
+import Grades.Traces.Restriction
+import Grades.Traces.RunConsistency
+import Grades.Traces.RunConsistency.Cycles
+import Grades.Traces.RunningTimes
+import Grades.Traces.Sets
+import Grades.Traces.Slack
+
+---- Regular languages as grades
+
+import Grades.Regular
+import Grades.Regular.Automaton
+import Grades.Regular.Basics
+import Grades.Regular.Boolean
+import Grades.Regular.Canonical
+import Grades.Regular.Canonicity
+import Grades.Regular.Closed
+import Grades.Regular.Closure
+import Grades.Regular.Coding
+import Grades.Regular.Constructions
+import Grades.Regular.Constructions.Base
+import Grades.Regular.Constructions.Basic
+import Grades.Regular.Constructions.Concatenation
+import Grades.Regular.Constructions.Iteration
+import Grades.Regular.Decide
+import Grades.Regular.Determinise
+import Grades.Regular.Explore
+import Grades.Regular.Expression
+import Grades.Regular.Grade
+import Grades.Regular.Inclusion
+import Grades.Regular.Literal
+import Grades.Regular.Meet
+import Grades.Regular.Moore
+import Grades.Regular.Operations
+import Grades.Regular.Plus
+import Grades.Regular.Properties
+import Grades.Regular.Reach
+
+---- Exact timed words and interval-letter grades
+
+import Grades.Exact
+import Grades.Exact.Base
+import Grades.Exact.Durations
+import Grades.Exact.Expression
+import Grades.Exact.Finite
+import Grades.Exact.Finite.Durations
+import Grades.Exact.Finite.Grades
+import Grades.Exact.Finite.Interval
+import Grades.Exact.Grid
+import Grades.Exact.Grid.NonNegativeRational
+import Grades.Exact.Hull
+import Grades.Exact.Interval
+import Grades.Exact.Joint
+import Grades.Exact.Joint.Complete
+import Grades.Exact.Joint.Decide
+import Grades.Exact.Joint.Scale
+import Grades.Exact.Joint.Zone
+import Grades.Exact.Joint.Zoned
+import Grades.Exact.Letters
+import Grades.Exact.Lift
+import Grades.Exact.NonRigid.Base
+import Grades.Exact.NonRigid.Lower
+import Grades.Exact.NonRigid.Upper
+import Grades.Exact.Offsets
+import Grades.Exact.Order
+import Grades.Exact.Positions
+import Grades.Exact.Pour
+import Grades.Exact.Reader
+import Grades.Exact.Reader.Lower
+import Grades.Exact.Reader.Lower.Build
+import Grades.Exact.Reader.Lower.Close
+import Grades.Exact.Reader.Lower.Correct
+import Grades.Exact.Reader.Lower.Family
+import Grades.Exact.Reader.Lower.Mimic
+import Grades.Exact.Reader.Lower.Read
+import Grades.Exact.Reader.Lower.Zone
+import Grades.Exact.Reader.Rename
+import Grades.Exact.Reader.Transfer
+import Grades.Exact.Reader.Upper
+import Grades.Exact.Reader.Upper.Build
+import Grades.Exact.Reader.Upper.Close
+import Grades.Exact.Reader.Upper.Correct
+import Grades.Exact.Reader.Upper.Family
+import Grades.Exact.Reader.Upper.Mimic
+import Grades.Exact.Reader.Upper.Read
+import Grades.Exact.Reader.Upper.Zone
+import Grades.Exact.Regular.Decide
+import Grades.Exact.Regular.Durations
+import Grades.Exact.Regular.Gap
+import Grades.Exact.Regular.Grades
+import Grades.Exact.Regular.Interval
+import Grades.Exact.Regular.Lower
+import Grades.Exact.Regular.Unroll
+import Grades.Exact.Regular.Upper
+import Grades.Exact.Regular.Words
+import Grades.Exact.Resize
+import Grades.Exact.Slots
+import Grades.Exact.Splice
+
+---- Examples
+
+import Grades.Examples
+
+
+-- LANGUAGE
+-----------
+
+import Language.BaseTypes
+import Language.Comparisons
+import Language.GroundTypes
+import Language.Operations
+import Language.Spec
+import Language.Types
+
+---- Examples
+
+import Language.Examples.Spec
+import Language.Examples.SensorNode
+import Language.Examples.SensorNode.Identity
+
+
+-- OPEN CALCULUS
 ----------------
 
----- Declarative instances, the meaning of open types and declarative
----- satisfaction of hypotheses
+---- Scopes, open grade expressions, types and contexts, substitutions, raw
+---- terms
 
-open import Instantiation.Types
-open import Instantiation.Judgements
-open import Instantiation.Correspondence
+import OpenCalculus.Syntax.Contexts
+import OpenCalculus.Syntax.ContextsLemmas
+import OpenCalculus.Syntax.Grades
+import OpenCalculus.Syntax.Raw
+import OpenCalculus.Syntax.Raw.Subst
+import OpenCalculus.Syntax.Scopes
+import OpenCalculus.Syntax.Subst
+import OpenCalculus.Syntax.Types
 
----- The instantiation theorem
+---- Hypotheses, entailment, obligations and closed instances
 
-open import Instantiation.Terms
+import OpenCalculus.Hypotheses
+import OpenCalculus.Hypotheses.Instances
+import OpenCalculus.Hypotheses.Obligations
 
----- Inference yields a family of declarative typings, one per instance
----- satisfying the scheme
+---- The open type system, and erasure to raw terms
 
-import Instantiation.Inference
+import OpenCalculus.Typing
+import OpenCalculus.Typing.Erasure
 
----- Soundness and completeness of inference for the declarative system,
----- for uniform handlers and annotation-free terms: uniform typings embed
----- in the open calculus and factor through the principal scheme
+---- Constraints, their generation, soundness and completeness of
+---- generation, solvers, principality, and the concrete solver
 
-open import Instantiation.Embedding
-import Instantiation.Completeness
+import OpenCalculus.Inference.Completeness
+import OpenCalculus.Inference.Constraints.Properties
+import OpenCalculus.Inference.Constraints.Satisfaction
+import OpenCalculus.Inference.Constraints.Syntax
+import OpenCalculus.Inference.Generate
+import OpenCalculus.Inference.Outcome
+import OpenCalculus.Inference.Principality
+import OpenCalculus.Inference.Solver
+import OpenCalculus.Inference.SolverImpl
+import OpenCalculus.Inference.SolverImpl.Canon
+import OpenCalculus.Inference.SolverImpl.Core.Decorate
+import OpenCalculus.Inference.SolverImpl.Core.For
+import OpenCalculus.Inference.SolverImpl.Core.Occurs
+import OpenCalculus.Inference.SolverImpl.Core.Rigid
+import OpenCalculus.Inference.SolverImpl.Core.Skel
+import OpenCalculus.Inference.SolverImpl.Core.SkelUnify
+import OpenCalculus.Inference.SolverImpl.Core.SkelUnifyMGU
+import OpenCalculus.Inference.SolverImpl.Core.SkelUnifySound
+import OpenCalculus.Inference.SolverImpl.Core.Thick
+import OpenCalculus.Inference.SolverImpl.Deferred
+import OpenCalculus.Inference.SolverImpl.Eliminate
+import OpenCalculus.Inference.SolverImpl.Entail
+import OpenCalculus.Inference.SolverImpl.Enum
+import OpenCalculus.Inference.SolverImpl.Expand
+import OpenCalculus.Inference.SolverImpl.Former
+import OpenCalculus.Inference.SolverImpl.Localise
+import OpenCalculus.Inference.SolverImpl.Localise.Closure
+import OpenCalculus.Inference.SolverImpl.Normal
+import OpenCalculus.Inference.SolverImpl.Polarity
+import OpenCalculus.Inference.SolverImpl.Principal
+import OpenCalculus.Inference.SolverImpl.Product
+import OpenCalculus.Inference.SolverImpl.Reach
+import OpenCalculus.Inference.SolverImpl.Resid
+import OpenCalculus.Inference.SolverImpl.RigidFree
+import OpenCalculus.Inference.SolverImpl.Search
+import OpenCalculus.Inference.SolverImpl.Simplify
+import OpenCalculus.Inference.SolverImpl.Solve
+import OpenCalculus.Inference.SolverImpl.State
+import OpenCalculus.Inference.SolverImpl.Strengthen
+import OpenCalculus.Inference.SolverImpl.Values
+import OpenCalculus.Inference.SolverImpl.Vars
+import OpenCalculus.Inference.Soundness
+
+
+-- CLOSED CALCULUS
+------------------
+
+---- Contexts, intrinsically typed terms, subtyping, renamings and
+---- substitutions, erasure and normal forms
+
+import ClosedCalculus.Syntax.CompContext
+import ClosedCalculus.Syntax.Contexts
+import ClosedCalculus.Syntax.Data
+import ClosedCalculus.Syntax.Data.Order
+import ClosedCalculus.Syntax.Erasure
+import ClosedCalculus.Syntax.Normalisation
+import ClosedCalculus.Syntax.RenActions
+import ClosedCalculus.Syntax.Renamings
+import ClosedCalculus.Syntax.Renamings.Base
+import ClosedCalculus.Syntax.Renamings.Category
+import ClosedCalculus.Syntax.Renamings.Coherence
+import ClosedCalculus.Syntax.Renamings.Equivalence
+import ClosedCalculus.Syntax.Substitutions
+import ClosedCalculus.Syntax.Substitutions.Action
+import ClosedCalculus.Syntax.Substitutions.At
+import ClosedCalculus.Syntax.Substitutions.Base
+import ClosedCalculus.Syntax.Substitutions.Chain
+import ClosedCalculus.Syntax.Substitutions.ChainEquivalence
+import ClosedCalculus.Syntax.Substitutions.Clauses
+import ClosedCalculus.Syntax.Substitutions.Equivalence
+import ClosedCalculus.Syntax.Substitutions.Interchange
+import ClosedCalculus.Syntax.Substitutions.Laws
+import ClosedCalculus.Syntax.Substitutions.Lookup
+import ClosedCalculus.Syntax.Substitutions.Subsumption
+import ClosedCalculus.Syntax.Substitutions.Variables
+import ClosedCalculus.Syntax.Subtyping
+import ClosedCalculus.Syntax.Terms
+import ClosedCalculus.Syntax.Terms.Equivalence
+import ClosedCalculus.Syntax.Terms.Transport
+
+---- Operational semantics: states, reduction, progress and preservation
+
+import ClosedCalculus.OperationalSemantics.PreservationTheorem
+import ClosedCalculus.OperationalSemantics.ProgressTheorem
+import ClosedCalculus.OperationalSemantics.Soundness.Preservation
+import ClosedCalculus.OperationalSemantics.Soundness.Preservation.Base
+import ClosedCalculus.OperationalSemantics.Soundness.Preservation.Handle
+import ClosedCalculus.OperationalSemantics.Soundness.Preservation.HandleOpClause
+import ClosedCalculus.OperationalSemantics.Soundness.Preservation.HandleOpCont
+import ClosedCalculus.OperationalSemantics.Soundness.Preservation.Step
+import ClosedCalculus.OperationalSemantics.Soundness.Preservation.Unbox
+import ClosedCalculus.OperationalSemantics.Soundness.TickLemmas
+import ClosedCalculus.OperationalSemantics.Soundness.TopLevelPure
+import ClosedCalculus.OperationalSemantics.State
+import ClosedCalculus.OperationalSemantics.TopLevelOpSemantics
+import ClosedCalculus.OperationalSemantics.TopLevelPreservationTheorem
+import ClosedCalculus.OperationalSemantics.TopLevelProgressTheorem
+
+---- Equational theory
+
+import ClosedCalculus.EquationalTheory.Alignment
+import ClosedCalculus.EquationalTheory.EquationalTheory
+import ClosedCalculus.EquationalTheory.Naturality
+import ClosedCalculus.EquationalTheory.Soundness
+import ClosedCalculus.EquationalTheory.Soundness.Base
+import ClosedCalculus.EquationalTheory.Soundness.Coerce
+import ClosedCalculus.EquationalTheory.Soundness.Comm
+import ClosedCalculus.EquationalTheory.Soundness.Delay
+import ClosedCalculus.EquationalTheory.Soundness.Fill
+import ClosedCalculus.EquationalTheory.Soundness.Handle
+import ClosedCalculus.EquationalTheory.Soundness.HandlePerform
+import ClosedCalculus.EquationalTheory.Soundness.Modal
+import ClosedCalculus.EquationalTheory.Soundness.Parametric
+import ClosedCalculus.EquationalTheory.Soundness.Seq
+import ClosedCalculus.EquationalTheory.Soundness.SeqAssoc
+import ClosedCalculus.EquationalTheory.Soundness.UnboxBeta
+import ClosedCalculus.EquationalTheory.Soundness.Values
+
+---- Denotational semantics: the abstract model, the presheaf model, the
+---- interpretation
+
+import ClosedCalculus.DenotationalSemantics.Interpretation.Comparisons
+import ClosedCalculus.DenotationalSemantics.Interpretation.Contexts
+import ClosedCalculus.DenotationalSemantics.Interpretation.Data
+import ClosedCalculus.DenotationalSemantics.Interpretation.Recursion
+import ClosedCalculus.DenotationalSemantics.Interpretation.Renaming
+import ClosedCalculus.DenotationalSemantics.Interpretation.Renaming.Algebra
+import ClosedCalculus.DenotationalSemantics.Interpretation.Renaming.Extension
+import ClosedCalculus.DenotationalSemantics.Interpretation.Renaming.Structural
+import ClosedCalculus.DenotationalSemantics.Interpretation.RenamingCoherence
+import ClosedCalculus.DenotationalSemantics.Interpretation.State
+import ClosedCalculus.DenotationalSemantics.Interpretation.SubstitutionCoherence
+import ClosedCalculus.DenotationalSemantics.Interpretation.SubstitutionCoherence.Base
+import ClosedCalculus.DenotationalSemantics.Interpretation.SubstitutionCoherence.Core
+import ClosedCalculus.DenotationalSemantics.Interpretation.SubstitutionCoherence.Env
+import ClosedCalculus.DenotationalSemantics.Interpretation.SubstitutionCoherence.Transport
+import ClosedCalculus.DenotationalSemantics.Interpretation.Subtyping
+import ClosedCalculus.DenotationalSemantics.Interpretation.Terms
+import ClosedCalculus.DenotationalSemantics.Interpretation.Types
+import ClosedCalculus.DenotationalSemantics.Interpretation.Variables
+import ClosedCalculus.DenotationalSemantics.Model.Category
+import ClosedCalculus.DenotationalSemantics.Model.Comparison
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Base
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.GroundTypes
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Implementation
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Modality.Adjunction
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Modality.Eternal
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Modality.Future
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Modality.Past
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Core
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Effects
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Handling
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Handling.Core
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Handling.Laws
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Handling.Mu
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Instance
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.TickMonad
+import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.TopLevelInstance
+import ClosedCalculus.DenotationalSemantics.Model.GroundEternal
+import ClosedCalculus.DenotationalSemantics.Model.GroundTypes
+import ClosedCalculus.DenotationalSemantics.Model.Implementation
+import ClosedCalculus.DenotationalSemantics.Model.Modality.Adjunction
+import ClosedCalculus.DenotationalSemantics.Model.Modality.Eternal
+import ClosedCalculus.DenotationalSemantics.Model.Modality.Future
+import ClosedCalculus.DenotationalSemantics.Model.Modality.Past
+import ClosedCalculus.DenotationalSemantics.Model.Monad
+import ClosedCalculus.DenotationalSemantics.Model.Monad.Enrichment
+import ClosedCalculus.DenotationalSemantics.Model.TickMonad
+import ClosedCalculus.DenotationalSemantics.Model.World
+import ClosedCalculus.DenotationalSemantics.Model.World.Action
+import ClosedCalculus.DenotationalSemantics.Model.World.History
+import ClosedCalculus.DenotationalSemantics.Model.World.Product
+import ClosedCalculus.DenotationalSemantics.Model.World.Reindex
+
+---- Adequacy of the denotational semantics
+
+import ClosedCalculus.Adequacy.Adequacy
+import ClosedCalculus.Adequacy.Bind
+import ClosedCalculus.Adequacy.Environment
+import ClosedCalculus.Adequacy.Environment.Action
+import ClosedCalculus.Adequacy.Environment.Cell
+import ClosedCalculus.Adequacy.Environment.Core
+import ClosedCalculus.Adequacy.Environment.Variables
+import ClosedCalculus.Adequacy.Equational
+import ClosedCalculus.Adequacy.Evaluation
+import ClosedCalculus.Adequacy.GradedReach
+import ClosedCalculus.Adequacy.Handle
+import ClosedCalculus.Adequacy.HeadFaithful
+import ClosedCalculus.Adequacy.Normalization
+import ClosedCalculus.Adequacy.PSh.HeadFaithful
+import ClosedCalculus.Adequacy.PSh.TickFrames
+import ClosedCalculus.Adequacy.PSh.TreeHead
+import ClosedCalculus.Adequacy.PSh.TreeShape
+import ClosedCalculus.Adequacy.Reducibility
+import ClosedCalculus.Adequacy.StateEquivalence
+import ClosedCalculus.Adequacy.StateEquivalence.Bisimulation
+import ClosedCalculus.Adequacy.StateEquivalence.Core
+import ClosedCalculus.Adequacy.StateEquivalence.Extensions
+import ClosedCalculus.Adequacy.StateEquivalence.Replay
+
+---- Examples
+
+import ClosedCalculus.DenotationalSemantics.Model.Example.World
+import ClosedCalculus.Examples.Typing
+
+
+-- BRIDGE BETWEEN THE CALCULI
+-----------------------------
+
+---- Instantiation: open typings as families of declarative typings, and
+---- soundness and completeness of inference for the declarative system
+
+import Bridge.Instantiation.Completeness
+import Bridge.Instantiation.Correspondence
+import Bridge.Instantiation.Embedding
+import Bridge.Instantiation.Inference
+import Bridge.Instantiation.Judgements
+import Bridge.Instantiation.Terms
+import Bridge.Instantiation.Types
+
+
+-- The inference examples, and the completeness example relating the two
+-- calculi, are checked separately (`make examples`).
