@@ -4,7 +4,8 @@
 -- A closed instance `δ : Subst Θ ∅ˢ` replaces the variables by --
 -- closed open types and grade expressions; a declarative       --
 -- instance `σ : DInst Θ` by closed types and grades. The two   --
--- correspond.                                                  --
+-- correspond, through `⌞_⌟`, `⌜_⌝ᵛ`, `⌞_⌟ˢ` and `⌜_⌝ˢ` of      --
+-- `Types`.                                                     --
 --                                                              --
 -- Closed open syntax means its interpretation at the empty     --
 -- instance (`⌞_⌟`), on grades the value. Every closed type     --
@@ -169,68 +170,7 @@ sound-⊩ᴴ {δ = δ} {σ} h s = mk⊨ᴰ
                         (sound-VarOK s (⊩disj h m)))
   (λ {O} m → sound-⊩ᴼ (rigids O) (⊩qhyps h m) s)
 
-------------------------------------------------------------------------
--- Closed open syntax: the interpretation at the empty instance
-
-⌞_⌟ᵉ : EExp ∅ˢ → E
-⌞ ε ⌟ᵉ = ⟦ ε ⟧ᵉ ∅ᴰ
-
-⌞_⌟ʳ : RExp ∅ˢ → R
-⌞ ρ ⌟ʳ = ⟦ ρ ⟧ʳ ∅ᴰ
-
-⌞_⌟ᵛ : OVType ∅ˢ → VType
-⌞ A ⌟ᵛ = ⟦ A ⟧ᵛ ∅ᴰ
-
-⌞_⌟ᶜ : OCType ∅ˢ → CType
-⌞ C ⌟ᶜ = ⟦ C ⟧ᶜ ∅ᴰ
-
-⌞_⌟ᶜᵗˣ : ∀ {n} → OCtx ∅ˢ n → Ctx
-⌞ Γ ⌟ᶜᵗˣ = ⟦ Γ ⟧ᶜᵗˣ ∅ᴰ
-
--- on grades, the values
-
-⌞⌟-valᵉ : (ε : EExp ∅ˢ) → ⌞ ε ⌟ᵉ ≡ valᵉ ε
-⌞⌟-valᵉ = ⟦⟧∅-valᵉ
-
-⌞⌟-valʳ : (ρ : RExp ∅ˢ) → ⌞ ρ ⌟ʳ ≡ valʳ ρ
-⌞⌟-valʳ = ⟦⟧∅-valʳ
-
--- Every closed type arises: the embedding, each grade a constant, is a
--- section of `⌞_⌟`, and has no handler type
-
-mutual
-
-  ⌜_⌝ᵛ : VType → OVType ∅ˢ
-  ⌜ Base b ⌝ᵛ     = Base b
-  ⌜ Unit ⌝ᵛ       = Unit
-  ⌜ Bool ⌝ᵛ       = Bool
-  ⌜ Nat ⌝ᵛ        = Nat
-  ⌜ A |×| B ⌝ᵛ    = ⌜ A ⌝ᵛ |×| ⌜ B ⌝ᵛ
-  ⌜ A |+| B ⌝ᵛ    = ⌜ A ⌝ᵛ |+| ⌜ B ⌝ᵛ
-  ⌜ |List| A ⌝ᵛ   = |List| ⌜ A ⌝ᵛ
-  ⌜ Empty ⌝ᵛ      = Empty
-  ⌜ A ⇒ C ⌝ᵛ      = ⌜ A ⌝ᵛ ⇒ ⌜ C ⌝ᶜ
-  ⌜ [ ρ ] A ⌝ᵛ    = [ rconst ρ ] ⌜ A ⌝ᵛ
-
-  ⌜_⌝ᶜ : CType → OCType ∅ˢ
-  ⌜ A ‼ ε ⌝ᶜ = ⌜ A ⌝ᵛ ‼ econst ε
-
-mutual
-
-  ⌞⌜_⌝⌟ᵛ : (A : VType) → ⌞ ⌜ A ⌝ᵛ ⌟ᵛ ≡ A
-  ⌞⌜ Base b ⌝⌟ᵛ   = refl
-  ⌞⌜ Unit ⌝⌟ᵛ     = refl
-  ⌞⌜ Bool ⌝⌟ᵛ     = refl
-  ⌞⌜ Nat ⌝⌟ᵛ      = refl
-  ⌞⌜ A |×| B ⌝⌟ᵛ  = cong₂ _|×|_ ⌞⌜ A ⌝⌟ᵛ ⌞⌜ B ⌝⌟ᵛ
-  ⌞⌜ A |+| B ⌝⌟ᵛ  = cong₂ _|+|_ ⌞⌜ A ⌝⌟ᵛ ⌞⌜ B ⌝⌟ᵛ
-  ⌞⌜ |List| A ⌝⌟ᵛ = cong |List| ⌞⌜ A ⌝⌟ᵛ
-  ⌞⌜ Empty ⌝⌟ᵛ    = refl
-  ⌞⌜ A ⇒ C ⌝⌟ᵛ    = cong₂ _⇒_ ⌞⌜ A ⌝⌟ᵛ ⌞⌜ C ⌝⌟ᶜ
-  ⌞⌜ [ ρ ] A ⌝⌟ᵛ  = cong ([ ρ ]_) ⌞⌜ A ⌝⌟ᵛ
-
-  ⌞⌜_⌝⌟ᶜ : (C : CType) → ⌞ ⌜ C ⌝ᶜ ⌟ᶜ ≡ C
-  ⌞⌜ A ‼ ε ⌝⌟ᶜ = cong (_‼ ε) ⌞⌜ A ⌝⌟ᵛ
+-- The embedding of a closed type has no handler type
 
 mutual
 
@@ -275,11 +215,8 @@ mutual
 ------------------------------------------------------------------------
 -- The two kinds of instance
 
--- A closed instance of the open syntax determines a declarative one,
--- interpreting at which is translating the instance
-
-⌞_⌟ˢ : ∀ {Θ} → Subst Θ ∅ˢ → DInst Θ
-⌞ δ ⌟ˢ = δ ⨟ᴰ ∅ᴰ
+-- Interpreting at the declarative instance a closed instance
+-- determines is translating the instance
 
 module _ {Θ} (δ : Subst Θ ∅ˢ) where
 
@@ -297,15 +234,6 @@ module _ {Θ} (δ : Subst Θ ∅ˢ) where
 
   ⌞[]⌟ᶜᵗˣ : ∀ {n} → (Γ : OCtx Θ n) → ⌞ Γ [ δ ]ᶜᵗˣ ⌟ᶜᵗˣ ≡ ⟦ Γ ⟧ᶜᵗˣ ⌞ δ ⌟ˢ
   ⌞[]⌟ᶜᵗˣ = ⟦[]⟧ᶜᵗˣ δ ∅ᴰ
-
--- Every declarative instance arises so, from the closed instance
--- sending each variable to a constant
-
-⌜_⌝ˢ : ∀ {Θ} → DInst Θ → Subst Θ ∅ˢ
-⌜ σ ⌝ˢ = sub (λ α → ⌜ ty σ α ⌝ᵛ) (λ i → rconst (res σ i)) (λ i → econst (eff σ i))
-
-⌞⌜_⌝ˢ⌟ : ∀ {Θ} → (σ : DInst Θ) → ⌞ ⌜ σ ⌝ˢ ⌟ˢ ≗ᴰ σ
-⌞⌜ σ ⌝ˢ⌟ = mk≗ᴰ (λ α → ⌞⌜ ty σ α ⌝⌟ᵛ) (λ _ → refl) (λ _ → refl)
 
 ------------------------------------------------------------------------
 -- Satisfaction: a closed instance satisfies `Q` exactly when the

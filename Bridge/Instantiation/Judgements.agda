@@ -9,10 +9,14 @@
 --                                                              --
 -- Entailment is sound for it: what `Q` entails holds at every  --
 -- instance satisfying `Q` (`sound-≾ᵣ`, `sound-≾ₑ`, `sound-⊩ᴱ`, --
--- `sound-<:ᵛ`, `sound-<:ᶜ`, `sound-VarOK`). A membership in an --
--- open context is one in its interpretation (`⟦_⟧ˣ`), and a    --
--- handler clause's weakened hypotheses hold at every extension --
--- of a satisfying instance (`⊨ᴰ-,ᵉ`).                          --
+-- `sound-<:ᵛ`, `sound-<:ᶜ`, `sound-VarOK`). Grade entailment   --
+-- being semantic consequence, its soundness is its definition  --
+-- at the closed instance `⌜ σ ⌝ˢ`, which satisfies the grade   --
+-- part of `Q` (`⌜⌝ˢ-⊨ᵍ`) and whose values are the meanings at  --
+-- `σ` (`⌜⌝ˢ-valʳ`, `⌜⌝ˢ-valᵉ`). A membership in an open        --
+-- context is one in its interpretation (`⟦_⟧ˣ`), and a handler --
+-- clause's weakened hypotheses hold at every extension of a    --
+-- satisfying instance (`⊨ᴰ-,ᵉ`).                               --
 ------------------------------------------------------------------
 
 open import Data.Fin using (toℕ)
@@ -20,7 +24,6 @@ open import Data.Nat using (ℕ; zero; suc)
 open import Data.List.Relation.Unary.All using (All)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁻)
-open import Data.Maybe using (to-witness)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Data.Vec.Base using (Vec) renaming (map to mapᵛ; [] to []ᵛ; _∷_ to _∷ᵛ_)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂)
@@ -128,132 +131,76 @@ open _⊨ᴰ_ public
 ------------------------------------------------------------------------
 -- Soundness of convertibility and entailed ordering
 
+-- A declarative instance is the meaning of the closed instance sending
+-- each variable to a constant: on grades, a value there is a meaning
+-- at it
+
+⌜⌝ˢ-valʳ : ∀ {Θ} → (σ : DInst Θ) → (ρ : RExp Θ) → valʳ (ρ [ ⌜ σ ⌝ˢ ]ʳ) ≡ ⟦ ρ ⟧ʳ σ
+⌜⌝ˢ-valʳ σ ρ = trans (sym (⟦⟧∅-valʳ (ρ [ ⌜ σ ⌝ˢ ]ʳ)))
+                     (trans (⟦[]⟧ʳ ⌜ σ ⌝ˢ ∅ᴰ ρ) (⟦≗⟧ʳ ⌞⌜ σ ⌝ˢ⌟ ρ))
+
+⌜⌝ˢ-valᵉ : ∀ {Θ} → (σ : DInst Θ) → (ε : EExp Θ) → valᵉ (ε [ ⌜ σ ⌝ˢ ]ᵉ) ≡ ⟦ ε ⟧ᵉ σ
+⌜⌝ˢ-valᵉ σ ε = trans (sym (⟦⟧∅-valᵉ (ε [ ⌜ σ ⌝ˢ ]ᵉ)))
+                     (trans (⟦[]⟧ᵉ ⌜ σ ⌝ˢ ∅ᴰ ε) (⟦≗⟧ᵉ ⌞⌜ σ ⌝ˢ⌟ ε))
+
+-- and satisfies the grade part of what the declarative instance
+-- satisfies, a quantified ordering at each closed instance of its
+-- rigids, their values
+
+⌜⌝ˢ-⊨ᵍ : ∀ {Θ} {σ : DInst Θ} {Q : Hyps Θ} → σ ⊨ᴰ Q → ⌜ σ ⌝ˢ ⊨ᵍ Q
+⌜⌝ˢ-⊨ᵍ {Θ} {σ} {Q} s = mk⊨ᵍ oR oE qh
+  where
+    oR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → valʳ (ρ [ ⌜ σ ⌝ˢ ]ʳ) ≾ᵣ valʳ (ρ' [ ⌜ σ ⌝ˢ ]ʳ)
+    oR {ρ} {ρ'} m = subst₂ _≾ᵣ_ (sym (⌜⌝ˢ-valʳ σ ρ)) (sym (⌜⌝ˢ-valʳ σ ρ')) (⊨ordᵣ s m)
+
+    oE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → valᵉ (ε [ ⌜ σ ⌝ˢ ]ᵉ) ≾ₑ valᵉ (ε' [ ⌜ σ ⌝ˢ ]ᵉ)
+    oE {ε} {ε'} m = subst₂ _≾ₑ_ (sym (⌜⌝ˢ-valᵉ σ ε)) (sym (⌜⌝ˢ-valᵉ σ ε')) (⊨ordₑ s m)
+
+    qh : ∀ {O} → O ∈ qhyps Q → (es : Vec (EExp ∅ˢ) (rigids O)) → (⌜ σ ⌝ˢ ,ᵉⁿ es) ⊨ᵒ body O
+    qh {O} m es = mk⊨ᵒ r e
+      where
+        cs = mapᵛ (λ x → ⟦ x ⟧ᵉ ∅ᴰ) es
+        d  = ⊨ᴰ⟨⟩-at (⊨qhyps s m) cs
+
+        p : ((⌜ σ ⌝ˢ ,ᵉⁿ es) ⨟ᴰ ∅ᴰ) ≗ᴰ (σ ,ᵉᴰⁿ cs)
+        p = ≗ᴰ-trans (,ᵉⁿ-⨟ᴰ ⌜ σ ⌝ˢ es ∅ᴰ) (≗ᴰ-,ᵉᴰⁿ ⌞⌜ σ ⌝ˢ⌟ cs)
+
+        valeqʳ : (x : RExp (Θ +eⁿ rigids O)) → valʳ (x [ ⌜ σ ⌝ˢ ,ᵉⁿ es ]ʳ) ≡ ⟦ x ⟧ʳ (σ ,ᵉᴰⁿ cs)
+        valeqʳ x = trans (sym (⟦⟧∅-valʳ (x [ ⌜ σ ⌝ˢ ,ᵉⁿ es ]ʳ)))
+                         (trans (⟦[]⟧ʳ (⌜ σ ⌝ˢ ,ᵉⁿ es) ∅ᴰ x) (⟦≗⟧ʳ p x))
+
+        valeqᵉ : (x : EExp (Θ +eⁿ rigids O)) → valᵉ (x [ ⌜ σ ⌝ˢ ,ᵉⁿ es ]ᵉ) ≡ ⟦ x ⟧ᵉ (σ ,ᵉᴰⁿ cs)
+        valeqᵉ x = trans (sym (⟦⟧∅-valᵉ (x [ ⌜ σ ⌝ˢ ,ᵉⁿ es ]ᵉ)))
+                         (trans (⟦[]⟧ᵉ (⌜ σ ⌝ˢ ,ᵉⁿ es) ∅ᴰ x) (⟦≗⟧ᵉ p x))
+
+        r : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors (body O)
+          → valʳ (ρ [ ⌜ σ ⌝ˢ ,ᵉⁿ es ]ʳ) ≾ᵣ valʳ (ρ' [ ⌜ σ ⌝ˢ ,ᵉⁿ es ]ʳ)
+        r {ρ} {ρ'} mφ = subst₂ _≾ᵣ_ (sym (valeqʳ ρ)) (sym (valeqʳ ρ')) (⊨ors d mφ)
+
+        e : ∀ {ε ε'} → (ε , ε') ∈ oes (body O)
+          → valᵉ (ε [ ⌜ σ ⌝ˢ ,ᵉⁿ es ]ᵉ) ≾ₑ valᵉ (ε' [ ⌜ σ ⌝ˢ ,ᵉⁿ es ]ᵉ)
+        e {ε} {ε'} mφ = subst₂ _≾ₑ_ (sym (valeqᵉ ε)) (sym (valeqᵉ ε')) (⊨oes d mφ)
+
+-- Entailment is semantic consequence, so it is sound at the closed
+-- instance a declarative one determines
+
 sound-≡̂ᵣ : ∀ {Θ} {ρ ρ' : RExp Θ} → (σ : DInst Θ) → ρ ≡̂ᵣ ρ' → ⟦ ρ ⟧ʳ σ ≃ᵣ ⟦ ρ' ⟧ʳ σ
+sound-≡̂ᵣ {ρ = ρ} {ρ'} σ p =
+  subst₂ _≃ᵣ_ (⌜⌝ˢ-valʳ σ ρ) (⌜⌝ˢ-valʳ σ ρ') (≡̂ᵣ-run p ⌜ σ ⌝ˢ)
+
 sound-≡̂ₑ : ∀ {Θ} {ε ε' : EExp Θ} → (σ : DInst Θ) → ε ≡̂ₑ ε' → ⟦ ε ⟧ᵉ σ ≃ₑ ⟦ ε' ⟧ᵉ σ
+sound-≡̂ₑ {ε = ε} {ε'} σ p =
+  subst₂ _≃ₑ_ (⌜⌝ˢ-valᵉ σ ε) (⌜⌝ˢ-valᵉ σ ε') (≡̂ₑ-run p ⌜ σ ⌝ˢ)
+
 sound-≾ᵣ : ∀ {Θ} {σ : DInst Θ} {Q : Hyps Θ} {ρ ρ' : RExp Θ}
          → σ ⊨ᴰ Q → Q ⊩ ρ ≾̂ᵣ ρ' → ⟦ ρ ⟧ʳ σ ≾ᵣ ⟦ ρ' ⟧ʳ σ
+sound-≾ᵣ {σ = σ} {ρ = ρ} {ρ'} s p =
+  subst₂ _≾ᵣ_ (⌜⌝ˢ-valʳ σ ρ) (⌜⌝ˢ-valʳ σ ρ') (runᵣ p ⌜ σ ⌝ˢ (⌜⌝ˢ-⊨ᵍ s))
+
 sound-≾ₑ : ∀ {Θ} {σ : DInst Θ} {Q : Hyps Θ} {ε ε' : EExp Θ}
          → σ ⊨ᴰ Q → Q ⊩ ε ≾̂ₑ ε' → ⟦ ε ⟧ᵉ σ ≾ₑ ⟦ ε' ⟧ᵉ σ
-
--- An instance of the rigids at `σ` means their values; a closed one
--- means the values of its constants
-
-private
-
-  ⟦inst⟧ : ∀ {Θ k} → (es : Vec (EExp Θ) k) → (σ : DInst Θ)
-         → ((idˢ ,ᵉⁿ es) ⨟ᴰ σ) ≗ᴰ (σ ,ᵉᴰⁿ mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)
-  ⟦inst⟧ es σ = ≗ᴰ-trans (,ᵉⁿ-⨟ᴰ idˢ es σ) (≗ᴰ-,ᵉᴰⁿ (idˢ-⨟ᴰ σ) (mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es))
-
-  ⟦fact⟧ : ∀ {Θ k} → (es : Vec (EExp Θ) k) → (σ : DInst Θ)
-         → ((from∅ ,ᵉⁿ mapᵛ econst (mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)) ⨟ᴰ ∅ᴰ)
-             ≗ᴰ ((from∅ ,ᵉⁿ es) ⨟ᴰ σ)
-  ⟦fact⟧ es σ =
-    ≗ᴰ-trans (,ᵉⁿ-⨟ᴰ from∅ (mapᵛ econst cs) ∅ᴰ)
-    (≗ᴰ-trans (subst (λ v → ((from∅ ⨟ᴰ ∅ᴰ) ,ᵉᴰⁿ mapᵛ (λ e → ⟦ e ⟧ᵉ ∅ᴰ) (mapᵛ econst cs))
-                             ≗ᴰ ((from∅ ⨟ᴰ σ) ,ᵉᴰⁿ v))
-                     (⟦consts⟧ cs)
-                     (≗ᴰ-,ᵉᴰⁿ {σ = from∅ ⨟ᴰ ∅ᴰ} {σ' = from∅ ⨟ᴰ σ} (mk≗ᴰ (λ ()) (λ ()) (λ ()))
-                              (mapᵛ (λ e → ⟦ e ⟧ᵉ ∅ᴰ) (mapᵛ econst cs))))
-              (≗ᴰ-sym (,ᵉⁿ-⨟ᴰ from∅ es σ)))
-    where
-      cs = mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es
-
-sound-≡̂ᵣ σ ≡̂ᵣ-refl          = ≃ᵣ-refl
-sound-≡̂ᵣ σ (≡̂ᵣ-sym p)       = ≃ᵣ-sym (sound-≡̂ᵣ σ p)
-sound-≡̂ᵣ σ (≡̂ᵣ-trans p q)   = ≃ᵣ-trans (sound-≡̂ᵣ σ p) (sound-≡̂ᵣ σ q)
-sound-≡̂ᵣ σ (≡̂ᵣ-cong p q)    = ·ᵣ-cong (sound-≡̂ᵣ σ p) (sound-≡̂ᵣ σ q)
-sound-≡̂ᵣ σ (≡̂ᵣ-const e)     = e
-sound-≡̂ᵣ σ ≡̂ᵣ-assoc         = ·ᵣ-assoc _ _ _
-sound-≡̂ᵣ σ ≡̂ᵣ-identityˡ     = ·ᵣ-identityˡ _
-sound-≡̂ᵣ σ ≡̂ᵣ-identityʳ     = ·ᵣ-identityʳ _
-sound-≡̂ᵣ σ ≡̂ᵣ-const-·       = ≃ᵣ-refl
-sound-≡̂ᵣ σ (≡̂ᵣ-comm ij)     = to-witness ij _ _
-sound-≡̂ᵣ σ (≡̂ᵣ-cong-⊔ p q)  = ⊔ᵣ-cong (sound-≡̂ᵣ σ p) (sound-≡̂ᵣ σ q)
-sound-≡̂ᵣ σ ≡̂ᵣ-const-⊔       = ≃ᵣ-refl
-sound-≡̂ᵣ σ ≡̂ᵣ-comm-⊔        = ⊔ᵣ-comm _ _
-sound-≡̂ᵣ σ ≡̂ᵣ-distribˡ-⊔    = ·ᵣ-distribˡ-⊔ᵣ _ _ _
-sound-≡̂ᵣ σ ≡̂ᵣ-distribʳ-⊔    = ·ᵣ-distribʳ-⊔ᵣ _ _ _
-sound-≡̂ᵣ σ ≡̂ᵣ-map-·         = map-·ᵉ
-sound-≡̂ᵣ σ ≡̂ᵣ-map-⊔         = map-⊔ᵉ
-sound-≡̂ᵣ σ ≡̂ᵣ-map-const     = ≃ᵣ-refl
-sound-≡̂ᵣ σ (≡̂ᵣ-map-cong p)  = map-≃ᵉ (sound-≡̂ₑ σ p)
-sound-≡̂ᵣ σ (≡̂ᵣ-absorb p)    = ⊔ᵣ-absorb (sound-≾ᵣ (⊨ᴰ-∅ {σ = σ}) p)
-
-sound-≡̂ₑ σ ≡̂ₑ-refl          = ≃ₑ-refl
-sound-≡̂ₑ σ (≡̂ₑ-sym p)       = ≃ₑ-sym (sound-≡̂ₑ σ p)
-sound-≡̂ₑ σ (≡̂ₑ-trans p q)   = ≃ₑ-trans (sound-≡̂ₑ σ p) (sound-≡̂ₑ σ q)
-sound-≡̂ₑ σ (≡̂ₑ-cong p q)    = ·ₑ-cong (sound-≡̂ₑ σ p) (sound-≡̂ₑ σ q)
-sound-≡̂ₑ σ (≡̂ₑ-const e)     = e
-sound-≡̂ₑ σ ≡̂ₑ-assoc         = ·ₑ-assoc _ _ _
-sound-≡̂ₑ σ ≡̂ₑ-identityˡ     = ·ₑ-identityˡ _
-sound-≡̂ₑ σ ≡̂ₑ-identityʳ     = ·ₑ-identityʳ _
-sound-≡̂ₑ σ ≡̂ₑ-const-·       = ≃ₑ-refl
-sound-≡̂ₑ σ (≡̂ₑ-comm ij)     = to-witness ij _ _
-sound-≡̂ₑ σ (≡̂ₑ-cong-⊔ p q)  = ⊔ₑ-cong (sound-≡̂ₑ σ p) (sound-≡̂ₑ σ q)
-sound-≡̂ₑ σ ≡̂ₑ-const-⊔       = ≃ₑ-refl
-sound-≡̂ₑ σ ≡̂ₑ-comm-⊔        = ⊔ₑ-comm _ _
-sound-≡̂ₑ σ ≡̂ₑ-distribˡ-⊔    = ·ₑ-distribˡ-⊔ₑ _ _ _
-sound-≡̂ₑ σ ≡̂ₑ-distribʳ-⊔    = ·ₑ-distribʳ-⊔ₑ _ _ _
-sound-≡̂ₑ σ (≡̂ₑ-absorb p)    = ⊔ₑ-absorb (sound-≾ₑ (⊨ᴰ-∅ {σ = σ}) p)
-
-sound-≾ᵣ s (hypᵣ m)     = ⊨ordᵣ s m
-sound-≾ᵣ s (atomᵣ p)    = p
-sound-≾ᵣ {σ = σ} s (eqᵣ p) = ≃ᵣ⇒≾ᵣ (sound-≡̂ᵣ σ p)
-sound-≾ᵣ s (transᵣ p q) = ≾ᵣ-trans (sound-≾ᵣ s p) (sound-≾ᵣ s q)
-sound-≾ᵣ s (monoᵣ p q)  = ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (sound-≾ᵣ s p)) (·ᵣ-monoʳ-≾ᵣ (sound-≾ᵣ s q))
-sound-≾ᵣ s (map-mono p) = map-monotoneᵉ (sound-≾ₑ s p)
-sound-≾ᵣ {σ = σ} s (⊔-ubˡᵣ {ρ₁} {ρ₂}) = ⊔ᵣ-ubˡ (⟦ ρ₁ ⟧ʳ σ) (⟦ ρ₂ ⟧ʳ σ)
-sound-≾ᵣ {σ = σ} s (⊔-ubʳᵣ {ρ₁} {ρ₂}) = ⊔ᵣ-ubʳ (⟦ ρ₁ ⟧ʳ σ) (⟦ ρ₂ ⟧ʳ σ)
-sound-≾ᵣ s (⊔-lubᵣ p q) = ⊔ᵣ-lub (sound-≾ᵣ s p) (sound-≾ᵣ s q)
-sound-≾ᵣ {σ = σ} s (topᵣ {ρ}) = ≾-⊤ᵣ (⟦ ρ ⟧ʳ σ)
-sound-≾ᵣ {σ = σ} {ρ' = ρ'} s (minᵣ ij) = to-witness ij (⟦ ρ' ⟧ʳ σ)
-sound-≾ᵣ s (zeroˡᵣ p)   = ≾ᵣ-zero-productˡ (sound-≾ᵣ s p)
-sound-≾ᵣ s (zeroʳᵣ p)   = ≾ᵣ-zero-productʳ (sound-≾ᵣ s p)
-sound-≾ᵣ s (plusᵣ p q r) = Plus.c⁺-least p (sound-≾ᵣ s q) (sound-≾ᵣ s r)
-sound-≾ᵣ s (indˡᵣ p q)  = Plus.⁺-indˡ p (sound-≾ᵣ s q)
-sound-≾ᵣ s (indʳᵣ p q)  = Plus.⁺-indʳ p (sound-≾ᵣ s q)
-sound-≾ᵣ {σ = σ} s (instᵣ {ρ = ρ} {ρ'} m mφ es) =
-  subst₂ _≾ᵣ_ (sym (eq ρ)) (sym (eq ρ')) (⊨ors (⊨ᴰ⟨⟩-at (⊨qhyps s m) (mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)) mφ)
-  where
-    eq : ∀ x → ⟦ x [ idˢ ,ᵉⁿ es ]ʳ ⟧ʳ σ ≡ ⟦ x ⟧ʳ (σ ,ᵉᴰⁿ mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)
-    eq x = trans (⟦[]⟧ʳ (idˢ ,ᵉⁿ es) σ x) (⟦≗⟧ʳ (⟦inst⟧ es σ) x)
-sound-≾ᵣ {σ = σ} s (factᵣ {ρ = ρ} {ρ'} H es) =
-  subst₂ _≾ᵣ_ (eq ρ) (eq ρ') (H es')
-  where
-    es' = mapᵛ econst (mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)
-    eq : ∀ x → valʳ (x [ from∅ ,ᵉⁿ es' ]ʳ) ≡ ⟦ x [ from∅ ,ᵉⁿ es ]ʳ ⟧ʳ σ
-    eq x = trans (sym (⟦⟧∅-valʳ (x [ from∅ ,ᵉⁿ es' ]ʳ)))
-           (trans (⟦[]⟧ʳ (from∅ ,ᵉⁿ es') ∅ᴰ x)
-           (trans (⟦≗⟧ʳ (⟦fact⟧ es σ) x) (sym (⟦[]⟧ʳ (from∅ ,ᵉⁿ es) σ x))))
-
-sound-≾ₑ s (hypₑ m)     = ⊨ordₑ s m
-sound-≾ₑ s (atomₑ p)    = p
-sound-≾ₑ {σ = σ} s (eqₑ p) = ≃ₑ⇒≾ₑ (sound-≡̂ₑ σ p)
-sound-≾ₑ s (transₑ p q) = ≾ₑ-trans (sound-≾ₑ s p) (sound-≾ₑ s q)
-sound-≾ₑ s (monoₑ p q)  = ≾ₑ-trans (·ₑ-monoˡ-≾ₑ (sound-≾ₑ s p)) (·ₑ-monoʳ-≾ₑ (sound-≾ₑ s q))
-sound-≾ₑ {σ = σ} s (⊔-ubˡₑ {ε₁} {ε₂}) = ⊔ₑ-ubˡ (⟦ ε₁ ⟧ᵉ σ) (⟦ ε₂ ⟧ᵉ σ)
-sound-≾ₑ {σ = σ} s (⊔-ubʳₑ {ε₁} {ε₂}) = ⊔ₑ-ubʳ (⟦ ε₁ ⟧ᵉ σ) (⟦ ε₂ ⟧ᵉ σ)
-sound-≾ₑ s (⊔-lubₑ p q) = ⊔ₑ-lub (sound-≾ₑ s p) (sound-≾ₑ s q)
-sound-≾ₑ {σ = σ} s (topₑ {ε}) = ≾-⊤ₑ (⟦ ε ⟧ᵉ σ)
-sound-≾ₑ {σ = σ} {ε' = ε'} s (minₑ ij) = to-witness ij (⟦ ε' ⟧ᵉ σ)
-sound-≾ₑ s (zeroˡₑ p)   = ≾ₑ-zero-productˡ (sound-≾ₑ s p)
-sound-≾ₑ s (zeroʳₑ p)   = ≾ₑ-zero-productʳ (sound-≾ₑ s p)
-sound-≾ₑ s (plusₑ p q r) = Plus.c⁺-least p (sound-≾ₑ s q) (sound-≾ₑ s r)
-sound-≾ₑ s (indˡₑ p q)  = Plus.⁺-indˡ p (sound-≾ₑ s q)
-sound-≾ₑ s (indʳₑ p q)  = Plus.⁺-indʳ p (sound-≾ₑ s q)
-sound-≾ₑ {σ = σ} s (instₑ {ε = ε} {ε'} m mφ es) =
-  subst₂ _≾ₑ_ (sym (eq ε)) (sym (eq ε')) (⊨oes (⊨ᴰ⟨⟩-at (⊨qhyps s m) (mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)) mφ)
-  where
-    eq : ∀ x → ⟦ x [ idˢ ,ᵉⁿ es ]ᵉ ⟧ᵉ σ ≡ ⟦ x ⟧ᵉ (σ ,ᵉᴰⁿ mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)
-    eq x = trans (⟦[]⟧ᵉ (idˢ ,ᵉⁿ es) σ x) (⟦≗⟧ᵉ (⟦inst⟧ es σ) x)
-sound-≾ₑ {σ = σ} s (factₑ {ε = ε} {ε'} H es) =
-  subst₂ _≾ₑ_ (eq ε) (eq ε') (H es')
-  where
-    es' = mapᵛ econst (mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)
-    eq : ∀ x → valᵉ (x [ from∅ ,ᵉⁿ es' ]ᵉ) ≡ ⟦ x [ from∅ ,ᵉⁿ es ]ᵉ ⟧ᵉ σ
-    eq x = trans (sym (⟦⟧∅-valᵉ (x [ from∅ ,ᵉⁿ es' ]ᵉ)))
-           (trans (⟦[]⟧ᵉ (from∅ ,ᵉⁿ es') ∅ᴰ x)
-           (trans (⟦≗⟧ᵉ (⟦fact⟧ es σ) x) (sym (⟦[]⟧ᵉ (from∅ ,ᵉⁿ es) σ x))))
+sound-≾ₑ {σ = σ} {ε = ε} {ε'} s p =
+  subst₂ _≾ₑ_ (⌜⌝ˢ-valᵉ σ ε) (⌜⌝ˢ-valᵉ σ ε') (runₑ p ⌜ σ ⌝ˢ (⌜⌝ˢ-⊨ᵍ s))
 
 ------------------------------------------------------------------------
 -- Soundness of the type-level judgements
