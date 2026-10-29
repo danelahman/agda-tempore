@@ -90,11 +90,6 @@ private
                      (λ { zero → refl ; (suc i) → wk-,ʳ-r σ ρ (sR δ i) })
                      (λ i → wk-,ʳ-e σ ρ (sE δ i))
 
-  ↑ᵉ-,ᵉ : ∀ {Θ Θ₁ Θ'} → (δ : Subst Θ Θ₁) → (σ : Subst Θ₁ Θ') → (ε : EExp Θ')
-        → ((δ ↑ᵉ) ⨟ˢ (σ ,ᵉ ε)) ≐ˢ ((δ ⨟ˢ σ) ,ᵉ ε)
-  ↑ᵉ-,ᵉ δ σ ε = mk≐ˢ (λ α → wk-,ᵉ-v σ ε (sTy δ α))
-                     (λ i → wk-,ᵉ-r σ ε (sR δ i))
-                     (λ { zero → refl ; (suc i) → wk-,ᵉ-e σ ε (sE δ i) })
 
 ⊨-mono : ∀ {Θ Θ' Θ''} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
            {δ : Subst Θ' Θ''} {Q' : Hyps Θ''}

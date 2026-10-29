@@ -2,16 +2,16 @@
 -- What inference reports, and notation for writing it          --
 --                                                              --
 -- `schemeOf` projects a `typed` verdict onto its scheme        --
--- `∀ Θ̃. Q̃ ∧ R̃ ⇒ X̃`: the scope, the hypotheses, the obligations --
--- and the type. `IsTyped` holds exactly of a `typed` verdict.  --
+-- `∀ Θ̃. Q̃ ⇒ X̃`: the scope, the hypotheses and the type.        --
+-- `IsTyped` holds exactly of a `typed` verdict.                --
 --                                                              --
 -- `schemeOf` returns its scheme fully evaluated (see `walk`);  --
 -- a `refl` check against a literal runs the solver once.       --
 --                                                              --
 -- Notation: `∀[ a , b , c ] C ⟹ X` is a scheme over `a` type,  --
 -- `b` resource-grade and `c` effect-grade variables, `C` a     --
--- conjunction `_∧_` of atoms (`⊤` the empty one), and          --
--- `∀[ a , b , c ] C & R ⟹ X` one with obligations `R`.         --
+-- conjunction `_∧_` of atoms (`⊤` the empty one), a quantified --
+-- one written `∀ᵉ k ∙ C'`.                                      --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹; _∧_ to _&&_)
@@ -41,17 +41,17 @@ open import OpenCalculus.Syntax.Grades   S
 open import OpenCalculus.Syntax.Types    S
 open import OpenCalculus.Syntax.Contexts S using (OCtx)
 open import OpenCalculus.Hypotheses      S
-  using (Hyps; hyps; ets; subᵥ; ordᵣ; ordₑ; disj; Ords; ords; Oblig; Obligs; oblig; _+eⁿ_)
+  using (Hyps; hyps; ets; subᵥ; ordᵣ; ordₑ; disj; qhyps; Ords; ords; Oblig; oblig; _+eⁿ_)
 open import OpenCalculus.Syntax.Raw             S
 open import OpenCalculus.Inference.Principality S
 
 ------------------------------------------------------------------
 -- Schemes
 
--- A scheme: its scope, hypotheses, obligations and type
+-- A scheme: its scope, hypotheses and type
 
 Scheme : Set
-Scheme = Σ Scope (λ Θ → Hyps Θ × Obligs Θ × OCType Θ)
+Scheme = Σ Scope (λ Θ → Hyps Θ × OCType Θ)
 
 -- Forcing a scheme
 --
@@ -65,6 +65,10 @@ private
   walkℕ : ℕ → 𝔹
   walkℕ zero    = true
   walkℕ (suc n) = walkℕ n
+
+  walk𝔹 : 𝔹 → 𝔹
+  walk𝔹 true  = true
+  walk𝔹 false = true
 
   walkᶠ : ∀ {n} → Fin n → 𝔹
   walkᶠ zero    = true
@@ -109,19 +113,18 @@ private
   walkᵖ : ∀ {A B : Set} → (A → 𝔹) → (B → 𝔹) → A × B → 𝔹
   walkᵖ f g (x , y) = f x && g y
 
-  walkᴴ : ∀ {Θ} → Hyps Θ → 𝔹
-  walkᴴ (hyps es ss rs fs ds) =
-    walkˡ walkᶠ es && walkˡ (walkᵖ walkᶠ walkᶠ) ss
-    && walkˡ (walkᵖ walkʳ walkʳ) rs && walkˡ (walkᵖ walkᵉ walkᵉ) fs
-    && walkˡ (walkᵖ walkᵛ walkʳ) ds
-
   walkᴼ : ∀ {Θ} → Ords Θ → 𝔹
   walkᴼ (ords rs fs) = walkˡ (walkᵖ walkʳ walkʳ) rs && walkˡ (walkᵖ walkᵉ walkᵉ) fs
 
+  walkᴴ : ∀ {Θ} → Hyps Θ → 𝔹
+  walkᴴ (hyps es ss rs fs ds qs t) =
+    walkˡ walkᶠ es && walkˡ (walkᵖ walkᶠ walkᶠ) ss
+    && walkˡ (walkᵖ walkʳ walkʳ) rs && walkˡ (walkᵖ walkᵉ walkᵉ) fs
+    && walkˡ (walkᵖ walkᵛ walkʳ) ds
+    && walkˡ (λ { (oblig _ k O) → walkℕ k && walkᴼ O }) qs && walk𝔹 t
+
   walk : Scheme → 𝔹
-  walk (scope a b c , Q , R , X) =
-    walkℕ a && walkℕ b && walkℕ c && walkᴴ Q
-    && walkˡ (λ { (oblig _ k O) → walkℕ k && walkᴼ O }) R && walkᶜ X
+  walk (scope a b c , Q , X) = walkℕ a && walkℕ b && walkℕ c && walkᴴ Q && walkᶜ X
 
   -- `x`, whatever `b` is; matching on `b` computes it first
 
@@ -135,8 +138,7 @@ private
   schemeOf! r = after (walk r) (just r)
 
 schemeOf : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → Inference Γ M → Maybe Scheme
-schemeOf (typed p) = schemeOf! (PrincipalScheme.Θ̃ p , PrincipalScheme.Q̃ p ,
-                                PrincipalScheme.R̃ p , PrincipalScheme.X̃ p)
+schemeOf (typed p) = schemeOf! (PrincipalScheme.Θ̃ p , PrincipalScheme.Q̃ p , PrincipalScheme.X̃ p)
 schemeOf untypable = nothing
 schemeOf stuck     = nothing
 
@@ -156,6 +158,7 @@ data Atom (Θ : Scope) : Set where
   ordʳ-atom : RExp Θ → RExp Θ → Atom Θ
   ordᵉ-atom : EExp Θ → EExp Θ → Atom Θ
   disj-atom : OVType Θ → RExp Θ → Atom Θ
+  qhyp-atom : Oblig Θ → Atom Θ
 
 -- A conjunction of atoms
 
@@ -204,35 +207,33 @@ eternal A ∨ ρ ≾ûᵣ = disj-atom A ρ ∷ []
 -- the solver reports them.
 
 hypsOf : ∀ {Θ} → Conj Θ → Hyps Θ
-hypsOf []                     = hyps [] [] [] [] []
+hypsOf []                     = hyps [] [] [] [] [] [] false
 hypsOf (et-atom α      ∷ C) = let Q = hypsOf C in record Q { ets  = α ∷ ets Q }
 hypsOf (sub-atom α β   ∷ C) = let Q = hypsOf C in record Q { subᵥ = (α , β) ∷ subᵥ Q }
 hypsOf (ordʳ-atom ρ ρ' ∷ C) = let Q = hypsOf C in record Q { ordᵣ = (ρ , ρ') ∷ ordᵣ Q }
 hypsOf (ordᵉ-atom ε ε' ∷ C) = let Q = hypsOf C in record Q { ordₑ = (ε , ε') ∷ ordₑ Q }
 hypsOf (disj-atom A ρ  ∷ C) = let Q = hypsOf C in record Q { disj = (A , ρ) ∷ disj Q }
+hypsOf (qhyp-atom O    ∷ C) = let Q = hypsOf C in record Q { qhyps = O ∷ qhyps Q }
 
--- Obligations: `∀ᵉ k ∙ C` binds `k` rigid effect variables over the
--- orderings of `C`, `∀ᵉ⟨ op ⟩ k ∙ C` is left by the clause for `op`
+-- Quantified hypotheses: `∀ᵉ k ∙ C` binds `k` rigid effect variables
+-- over the orderings of `C`, `∀ᵉ⟨ op ⟩ k ∙ C` is left by the clause for
+-- `op`
 
 ordsOf : ∀ {Θ} → Conj Θ → Ords Θ
 ordsOf C = let Q = hypsOf C in ords (ordᵣ Q) (ordₑ Q)
 
 infix 3 ∀ᵉ_∙_ ∀ᵉ⟨_⟩_∙_
 
-∀ᵉ_∙_ : ∀ {Θ} → (k : ℕ) → Conj (Θ +eⁿ k) → Oblig Θ
-∀ᵉ k ∙ C = oblig nothing k (ordsOf C)
+∀ᵉ_∙_ : ∀ {Θ} → (k : ℕ) → Conj (Θ +eⁿ k) → Conj Θ
+∀ᵉ k ∙ C = qhyp-atom (oblig nothing k (ordsOf C)) ∷ []
 
-∀ᵉ⟨_⟩_∙_ : ∀ {Θ} → Op → (k : ℕ) → Conj (Θ +eⁿ k) → Oblig Θ
-∀ᵉ⟨ op ⟩ k ∙ C = oblig (just op) k (ordsOf C)
+∀ᵉ⟨_⟩_∙_ : ∀ {Θ} → Op → (k : ℕ) → Conj (Θ +eⁿ k) → Conj Θ
+∀ᵉ⟨ op ⟩ k ∙ C = qhyp-atom (oblig (just op) k (ordsOf C)) ∷ []
 
 -- Schemes: `a` type, `b` resource-grade and `c` effect-grade
--- variables, hypotheses `C`, obligations `R`, type `X`
+-- variables, hypotheses `C`, type `X`
 
-infixr 2 ∀[_,_,_]_&_⟹_ ∀[_,_,_]_⟹_
-
-∀[_,_,_]_&_⟹_ : (a b c : ℕ) → Conj (scope a b c) → Obligs (scope a b c)
-              → OCType (scope a b c) → Scheme
-∀[ a , b , c ] C & R ⟹ X = scope a b c , hypsOf C , R , X
+infixr 2 ∀[_,_,_]_⟹_
 
 ∀[_,_,_]_⟹_ : (a b c : ℕ) → Conj (scope a b c) → OCType (scope a b c) → Scheme
-∀[ a , b , c ] C ⟹ X = ∀[ a , b , c ] C & [] ⟹ X
+∀[ a , b , c ] C ⟹ X = scope a b c , hypsOf C , X

@@ -5,12 +5,11 @@
 -- `⋀ᵒᵖ` are infinitary, and `∀ᵉ` requires an eigenvariable     --
 -- treatment.                                                   --
 --                                                              --
--- A solution is a substitution together with a residual        --
--- hypothesis set, itself a context of the open judgement, and  --
--- with obligations, the deferred rigid conditions; the         --
--- substitution solves the constraint at every instance meeting --
--- both. Principality is semantic, as in HM(X): it holds at     --
--- each closed instance.                                        --
+-- A solution is a substitution together with a residual      --
+-- hypothesis set, itself a context of the open judgement, its  --
+-- quantified hypotheses the deferred rigid conditions; the     --
+-- substitution solves the constraint under it. Principality is --
+-- semantic, as in HM(X): it holds at each closed instance.     --
 --                                                              --
 -- The outcome is a solution, a refutation, or stuck            --
 -- (`OpenCalculus.Inference.Outcome`). Soundness and            --
@@ -44,7 +43,7 @@ open Operations Ops
 open import OpenCalculus.Syntax.Types S
 open import OpenCalculus.Syntax.Subst S
 open import OpenCalculus.Hypotheses  S
-open import OpenCalculus.Hypotheses.Instances S using (Satisfiable; _⊨_∣_)
+open import OpenCalculus.Hypotheses.Instances S using (Satisfiable; _⊨_)
 
 open import OpenCalculus.Inference.Constraints.Syntax       S
 open import OpenCalculus.Inference.Constraints.Satisfaction S
@@ -56,40 +55,39 @@ record Solver : Set₁ where
   field
 
     -- A solution is a scope, a substitution into it, and the
-    -- hypotheses and obligations left over.
+    -- hypotheses left over.
 
-    solve : ∀ {Θ} → Constraint Θ
-          → Outcome (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ' × Obligs Θ'))
+    solve : ∀ {Θ} → Constraint Θ → Outcome (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ'))
 
     -- A solution solves the constraint
 
     solve-sound : ∀ {Θ} → (C : Constraint Θ)
-                → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
-                → solve C ≡ solved (Θ' , σ , Q , R)
+                → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
+                → solve C ≡ solved (Θ' , σ , Q)
                 ---------------------------------
-                → σ ⊨[ Q ∣ R ] C
+                → σ ⊨[ Q ] C
 
     -- A refutation means there is no solution under satisfiable
-    -- conditions
+    -- hypotheses
 
     solve-refutes : ∀ {Θ} → (C : Constraint Θ)
                   → solve C ≡ refuted
-                  → ∀ {Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ') → (R : Obligs Θ')
-                  → Satisfiable Q R
-                  ----------------------------------------------------------
-                  → ¬ (σ ⊨[ Q ∣ R ] C)
+                  → ∀ {Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ')
+                  → Satisfiable Q
+                  -----------------------------------------
+                  → ¬ (σ ⊨[ Q ] C)
 
     -- A solution is the most general one at each closed instance:
-    -- every solution, at a closed instance satisfying its conditions,
+    -- every solution, at a closed instance satisfying its hypotheses,
     -- factors through it, both in the substitution and in the
-    -- conditions
+    -- hypotheses
 
     solve-principal : ∀ {Θ} → (C : Constraint Θ)
-                    → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺} {R⁺ : Obligs Θ⁺}
-                    → solve C ≡ solved (Θ⁺ , σ⁺ , Q⁺ , R⁺)
-                    → ∀ {Θ''} → (σ : Subst Θ Θ'') → (Q : Hyps Θ'') → (R : Obligs Θ'')
-                    → σ ⊨[ Q ∣ R ] C
-                    → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ R
+                    → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺}
+                    → solve C ≡ solved (Θ⁺ , σ⁺ , Q⁺)
+                    → ∀ {Θ''} → (σ : Subst Θ Θ'') → (Q : Hyps Θ'')
+                    → σ ⊨[ Q ] C
+                    → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q
                     ---------------------------------------------------
                     → Σ[ δ ∈ Subst Θ⁺ ∅ˢ ]
-                        (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺ ∣ R⁺))
+                        (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺))

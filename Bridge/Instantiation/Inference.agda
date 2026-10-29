@@ -4,19 +4,13 @@
 -- For a term whose handlers are second-class, inference yields --
 -- a family of declarative typings, one per instance satisfying --
 -- the scheme: a typed verdict's principal                      --
--- scheme `∀ Θ̃. Q̃ ∧ R̃ ⇒ X̃` gives, for every declarative         --
--- instance `σ` of `Θ̃` with `σ ⊨ᴰ Q̃` and the obligations `R̃`    --
--- met at `⌜ σ ⌝ˢ`, a declarative typing                        --
+-- scheme `∀ Θ̃. Q̃ ⇒ X̃` gives, for every declarative instance   --
+-- `σ` of `Θ̃` with `σ ⊨ᴰ Q̃`, a declarative typing               --
 -- `⟦ Γ [ σ̃ ]ᶜᵗˣ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ X̃ ⟧ᶜ σ` of the term at the       --
 -- instance `σ̃ ⨟ᴰ σ` of its variables, box grades evaluated    --
 -- there (`infer-instantiate`); so does an established check,   --
 -- through its scheme alone (`check-instantiate`). No instance  --
 -- is chosen.                                                   --
---                                                              --
--- The obligations are met in the open entailment, their rigids --
--- kept as variables, which is what the scheme's instantiation  --
--- consumes; it implies their declarative reading `σ ⊨ᴰᴿ R̃`     --
--- (`⊩ᴼˢ→⊨ᴰᴿ`), not conversely.                                 --
 --                                                              --
 -- A checked program in the empty context is, at each such      --
 -- instance, a closed program of that term, and it halts        --
@@ -53,8 +47,8 @@ open import ClosedCalculus.Adequacy.Normalization                   S using (hal
 open import OpenCalculus.Syntax.Types           S using (OCType)
 open import OpenCalculus.Syntax.Contexts        S using (OCtx; [])
 open import OpenCalculus.Syntax.Subst           S
-open import OpenCalculus.Hypotheses             S using (∅ᴴ)
-open import OpenCalculus.Hypotheses.Instances   S using (Satisfiable; _⊩ᴼˢ_[_])
+open import OpenCalculus.Hypotheses             S using (⊤ᴴ)
+open import OpenCalculus.Hypotheses.Instances   S using (Satisfiable; ⊨⇒⊩ᴴ)
 open import OpenCalculus.Syntax.Raw             S using (RawC; SecondClassᶜ)
 open import OpenCalculus.Syntax.Raw.Subst       S using (secondClass-[]ᴿᶜ)
 import OpenCalculus.Typing.Erasure S as OE
@@ -71,21 +65,18 @@ open PrincipalScheme
 
 -- A principal type scheme of a term whose handlers are second-class is
 -- a family of declarative typings of its term, one per instance
--- satisfying the scheme. The hypotheses are read
--- declaratively; the obligations, whose rigids stay variables, in the
--- open entailment at the constant instance `⌜ σ ⌝ˢ`, which gives their
--- declarative reading (`⊩ᴼˢ→⊨ᴰᴿ`).
+-- satisfying the scheme: at the constant instance `⌜ σ ⌝ˢ` the truths
+-- entail the scheme's hypotheses, and the closed calculus types what
+-- the truths type.
 
 scheme-instantiate : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n}
                    → (p : PrincipalScheme Γ M) → SecondClassᶜ M
-                   → (σ : DInst (Θ̃ p)) → σ ⊨ᴰ Q̃ p → ∅ᴴ ⊩ᴼˢ R̃ p [ ⌜ σ ⌝ˢ ]
+                   → (σ : DInst (Θ̃ p)) → σ ⊨ᴰ Q̃ p
                    → Σ[ D ∈ ⟦ Γ [ σ̃ p ]ᶜᵗˣ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ X̃ p ⟧ᶜ σ ] (CE.⌊ D ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ (σ̃ p ⨟ᴰ σ))
-scheme-instantiate {Γ = Γ} {M} p c σ s r
-  with ⌜⌝ˢ-⊨ s
-... | h , _
-  with instantiate p ⌜ σ ⌝ˢ ∅ᴴ (h , r)
+scheme-instantiate {Γ = Γ} {M} p c σ s
+  with instantiate p ⌜ σ ⌝ˢ ⊤ᴴ (⊨⇒⊩ᴴ (⌜⌝ˢ-⊨ s))
 ... | D , e
-  with instantiateᶜ ∅ᴰ ⊨ᴰ-∅ D (subst SecondClassᶜ (sym e) (secondClass-[]ᴿᶜ M c))
+  with instantiateᶜ ∅ᴰ ⊨ᴰ-⊤ D (subst SecondClassᶜ (sym e) (secondClass-[]ᴿᶜ M c))
 ... | D' , e' =
   castᶜ pΓ pC D' ,
   trans (castᶜ-⌊⌋ pΓ pC D')
@@ -109,7 +100,7 @@ scheme-instantiate {Γ = Γ} {M} p c σ s r
 
 infer-instantiate : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalScheme Γ M}
                   → infer Γ M ≡ typed p → SecondClassᶜ M
-                  → (σ : DInst (Θ̃ p)) → σ ⊨ᴰ Q̃ p → ∅ᴴ ⊩ᴼˢ R̃ p [ ⌜ σ ⌝ˢ ]
+                  → (σ : DInst (Θ̃ p)) → σ ⊨ᴰ Q̃ p
                   → Σ[ D ∈ ⟦ Γ [ σ̃ p ]ᶜᵗˣ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ X̃ p ⟧ᶜ σ ] (CE.⌊ D ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ (σ̃ p ⨟ᴰ σ))
 infer-instantiate Γ M {p} _ = scheme-instantiate p
 
@@ -117,9 +108,9 @@ infer-instantiate Γ M {p} _ = scheme-instantiate p
 -- alone; the instance the check establishes is not used
 
 check-instantiate : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-                  → {p : PrincipalScheme Γ M} → {e : Satisfiable (Q̃ p) (R̃ p)}
+                  → {p : PrincipalScheme Γ M} → {e : Satisfiable (Q̃ p)}
                   → check Γ M ≡ established p e → SecondClassᶜ M
-                  → (σ : DInst (Θ̃ p)) → σ ⊨ᴰ Q̃ p → ∅ᴴ ⊩ᴼˢ R̃ p [ ⌜ σ ⌝ˢ ]
+                  → (σ : DInst (Θ̃ p)) → σ ⊨ᴰ Q̃ p
                   → Σ[ D ∈ ⟦ Γ [ σ̃ p ]ᶜᵗˣ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ X̃ p ⟧ᶜ σ ] (CE.⌊ D ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ (σ̃ p ⨟ᴰ σ))
 check-instantiate Γ M {p} _ = scheme-instantiate p
 
@@ -133,11 +124,11 @@ Halts∅ : (C : CType) → [] ⊢C⦂ C → Set
 Halts∅ (A ‼ ε) P = Halts ⟨ ∅ , P ⟩
 
 check-program : ∀ {Θ} → (M : RawC Θ 0)
-              → {p : PrincipalScheme [] M} → {e : Satisfiable (Q̃ p) (R̃ p)}
+              → {p : PrincipalScheme [] M} → {e : Satisfiable (Q̃ p)}
               → check [] M ≡ established p e → SecondClassᶜ M
-              → (σ : DInst (Θ̃ p)) → σ ⊨ᴰ Q̃ p → ∅ᴴ ⊩ᴼˢ R̃ p [ ⌜ σ ⌝ˢ ]
+              → (σ : DInst (Θ̃ p)) → σ ⊨ᴰ Q̃ p
               → Σ[ P ∈ [] ⊢C⦂ ⟦ X̃ p ⟧ᶜ σ ] ((CE.⌊ P ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ (σ̃ p ⨟ᴰ σ)) × Halts∅ _ P)
-check-program M {p} _ c σ s r with scheme-instantiate p c σ s r
+check-program M {p} _ c σ s with scheme-instantiate p c σ s
 ... | P , e = P , e , halts∅ (⟦ X̃ p ⟧ᶜ σ) P
   where
     halts∅ : (C : CType) → (P : [] ⊢C⦂ C) → Halts∅ C P

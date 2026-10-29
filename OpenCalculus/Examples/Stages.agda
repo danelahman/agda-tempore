@@ -110,12 +110,12 @@ module Deadline where
   -- ordering per alternative; a join on the right is kept
 
   split-left-r :
-    ordᵣ (canonᴴ (hyps [] [] ((x ⊔̂ᵣ y , z) ∷ (z , x ⊔̂ᵣ y) ∷ []) [] []))
+    ordᵣ (canonᴴ (hyps [] [] ((x ⊔̂ᵣ y , z) ∷ (z , x ⊔̂ᵣ y) ∷ []) [] [] [] false))
       ≡ (x , z) ∷ (y , z) ∷ (z , x ⊔̂ᵣ y) ∷ []
   split-left-r = refl
 
   split-left-e :
-    ordₑ (canonᴴ (hyps [] [] [] ((a ⊔̂ₑ b , c) ∷ (c , a ⊔̂ₑ b) ∷ []) []))
+    ordₑ (canonᴴ (hyps [] [] [] ((a ⊔̂ₑ b , c) ∷ (c , a ⊔̂ₑ b) ∷ []) [] [] false))
       ≡ (a , c) ∷ (b , c) ∷ (c , a ⊔̂ₑ b) ∷ []
   split-left-e = refl
 
@@ -125,7 +125,7 @@ module Deadline where
 
   prune-entailed :
     disj (walkᵈ (hyps [] [] ((x , y) ∷ []) []
-                      ((α , x) ∷ (α , y) ∷ (α , y) ∷ (α , x ⊔̂ᵣ z) ∷ [])))
+                      ((α , x) ∷ (α , y) ∷ (α , y) ∷ (α , x ⊔̂ᵣ z) ∷ []) [] false))
       ≡ (α , y) ∷ (α , x ⊔̂ᵣ z) ∷ []
   prune-entailed = refl
 
@@ -149,7 +149,7 @@ module Deadline where
   -- c ≾ b, d ≾ a ⊩ c · d ≾ a · b
 
   crossed-e :
-    is-just (decideₑ derive (hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) []) (c ·̂ₑ d) (a ·̂ₑ b))
+    is-just (decideₑ derive (hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) [] [] false) (c ·̂ₑ d) (a ·̂ₑ b))
       ≡ true
   crossed-e = refl
 
@@ -159,14 +159,14 @@ module Deadline where
   -- z ≾ y, w ≾ x ⊩ z · w ≾ x · y
 
   crossed-r :
-    is-just (decideᵣ derive (hyps [] [] ((z , y) ∷ (w , x) ∷ []) [] []) (z ·̂ᵣ w) (x ·̂ᵣ y))
+    is-just (decideᵣ derive (hyps [] [] ((z , y) ∷ (w , x) ∷ []) [] [] [] false) (z ·̂ᵣ w) (x ·̂ᵣ y))
       ≡ true
   crossed-r = refl
 
   -- with images of effect variables: z ≾ ∣a∣, ∣b∣ ≾ x ⊩ z · ∣b∣ ≾ x · ∣a∣
 
   crossed-images :
-    is-just (decideᵣ derive (hyps [] [] ((z , ∣ a ∣̂ᵉ) ∷ (∣ b ∣̂ᵉ , x) ∷ []) [] [])
+    is-just (decideᵣ derive (hyps [] [] ((z , ∣ a ∣̂ᵉ) ∷ (∣ b ∣̂ᵉ , x) ∷ []) [] [] [] false)
                       (z ·̂ᵣ ∣ b ∣̂ᵉ) (x ·̂ᵣ ∣ a ∣̂ᵉ))
       ≡ true
   crossed-images = refl
@@ -174,7 +174,7 @@ module Deadline where
   -- a constant: ⌜3⌝ ≾ b ⊩ ⌜3⌝ · a ≾ a · b
 
   crossed-constant :
-    is-just (decideₑ derive (hyps [] [] [] ((⌜ 3 ⌝ᵉ , b) ∷ []) []) (⌜ 3 ⌝ᵉ ·̂ₑ a) (a ·̂ₑ b))
+    is-just (decideₑ derive (hyps [] [] [] ((⌜ 3 ⌝ᵉ , b) ∷ []) [] [] false) (⌜ 3 ⌝ᵉ ·̂ₑ a) (a ·̂ₑ b))
       ≡ true
   crossed-constant = refl
 
@@ -185,24 +185,24 @@ module Deadline where
   -- `checkClosed`: two closed sides joined by a chain of
   -- orderings are compared, though no ordering of the set is closed
 
-  chain-late : checkClosed (hyps [] [] ((⌜ 3 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] []) ≡ nothing
+  chain-late : checkClosed (hyps [] [] ((⌜ 3 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [] [] false) ≡ nothing
   chain-late = refl
 
   chain-late-long :
-    checkClosed (hyps [] [] [] ((⌜ 5 ⌝ᵉ , a) ∷ (b , ⌜ 4 ⌝ᵉ) ∷ (a , c) ∷ (c , b) ∷ []) []) ≡ nothing
+    checkClosed (hyps [] [] [] ((⌜ 5 ⌝ᵉ , a) ∷ (b , ⌜ 4 ⌝ᵉ) ∷ (a , c) ∷ (c , b) ∷ []) [] [] false) ≡ nothing
   chain-late-long = refl
 
   chain-on-time :
-    checkClosed (hyps [] [] ((⌜ 2 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [])
-      ≡ just (hyps [] [] ((⌜ 2 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [])
+    checkClosed (hyps [] [] ((⌜ 2 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [] [] false)
+      ≡ just (hyps [] [] ((⌜ 2 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [] [] false)
   chain-on-time = refl
 
   -- a disjunction whose grade is below the unit from the orderings
   -- left is dropped: x ≾ y, y ≾ 0 ⊩ x ≾ 0
 
   drop-following :
-    checkClosed (hyps [] [] ((x , y) ∷ (y , ⌜ 0 ⌝ʳ) ∷ []) [] ((α , x) ∷ []))
-      ≡ just (hyps [] [] ((x , y) ∷ (y , ⌜ 0 ⌝ʳ) ∷ []) [] [])
+    checkClosed (hyps [] [] ((x , y) ∷ (y , ⌜ 0 ⌝ʳ) ∷ []) [] ((α , x) ∷ []) [] false)
+      ≡ just (hyps [] [] ((x , y) ∷ (y , ⌜ 0 ⌝ʳ) ∷ []) [] [] [] false)
   drop-following = refl
 
   ----------------------------------------------------------------
@@ -210,24 +210,24 @@ module Deadline where
   -- a ≾ b ⊔ d, b ⊔ d ≾ c ⊩ a ≾ c
 
   through-compound :
-    is-just (decideₑ full (hyps [] [] [] ((a , b ⊔̂ₑ d) ∷ (b ⊔̂ₑ d , c) ∷ []) []) a c) ≡ true
+    is-just (decideₑ full (hyps [] [] [] ((a , b ⊔̂ₑ d) ∷ (b ⊔̂ₑ d , c) ∷ []) [] [] false) a c) ≡ true
   through-compound = refl
 
   through-compound-derive :
-    is-just (decideₑ derive (hyps [] [] [] ((a , b ⊔̂ₑ d) ∷ (b ⊔̂ₑ d , c) ∷ []) []) a c)
+    is-just (decideₑ derive (hyps [] [] [] ((a , b ⊔̂ₑ d) ∷ (b ⊔̂ₑ d , c) ∷ []) [] [] false) a c)
       ≡ false
   through-compound-derive = refl
 
   -- along a chain from the left side: a · b ≾ c ⊩ a · b ≾ c ⊔ d
 
   along-vertex :
-    is-just (decideₑ full (hyps [] [] [] ((a ·̂ₑ b , c) ∷ []) []) (a ·̂ₑ b) (c ⊔̂ₑ d)) ≡ true
+    is-just (decideₑ full (hyps [] [] [] ((a ·̂ₑ b , c) ∷ []) [] [] false) (a ·̂ₑ b) (c ⊔̂ₑ d)) ≡ true
   along-vertex = refl
 
   -- a factor edge, the unit least: a · b ≾ c ⊩ a ≾ c
 
   factor-least :
-    is-just (decideₑ full (hyps [] [] [] ((a ·̂ₑ b , c) ∷ []) []) a c) ≡ true
+    is-just (decideₑ full (hyps [] [] [] ((a ·̂ₑ b , c) ∷ []) [] [] false) a c) ≡ true
   factor-least = refl
 
 ------------------------------------------------------------------
@@ -254,12 +254,12 @@ module Sequence where
   -- `decideₑ` at `derive`: the factors match in order only
 
   crossed-in-order :
-    is-just (decideₑ derive (hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) []) (c ·̂ₑ d) (a ·̂ₑ b))
+    is-just (decideₑ derive (hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) [] [] false) (c ·̂ₑ d) (a ·̂ₑ b))
       ≡ false
   crossed-in-order = refl
 
   crossed-in-order-swapped :
-    is-just (decideₑ derive (hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) []) (d ·̂ₑ c) (a ·̂ₑ b))
+    is-just (decideₑ derive (hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) [] [] false) (d ·̂ₑ c) (a ·̂ₑ b))
       ≡ true
   crossed-in-order-swapped = refl
 
@@ -312,19 +312,19 @@ module WithTop where
   -- unit, so it gives no evidence, and neither does nothing.
 
   factor-evidence :
-    is-just (decideₑ full (hyps [] [] [] ((⌜ 0 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) []) a c) ≡ true
+    is-just (decideₑ full (hyps [] [] [] ((⌜ 0 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) [] [] false) a c) ≡ true
   factor-evidence = refl
 
   factor-no-evidence :
-    is-just (decideₑ full (hyps [] [] [] ((⌜ 3 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) []) a c) ≡ false
+    is-just (decideₑ full (hyps [] [] [] ((⌜ 3 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) [] [] false) a c) ≡ false
   factor-no-evidence = refl
 
   factor-none :
-    is-just (decideₑ full (hyps [] [] [] ((a ·̂ₑ b , c) ∷ []) []) a c) ≡ false
+    is-just (decideₑ full (hyps [] [] [] ((a ·̂ₑ b , c) ∷ []) [] [] false) a c) ≡ false
   factor-none = refl
 
   factor-derive :
-    is-just (decideₑ derive (hyps [] [] [] ((⌜ 0 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) []) a c) ≡ false
+    is-just (decideₑ derive (hyps [] [] [] ((⌜ 0 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) [] [] false) a c) ≡ false
   factor-derive = refl
 
 ------------------------------------------------------------------
@@ -578,7 +578,7 @@ module Lowering where
     wait-value = refl
 
     wait-refuted :
-      checkClosed (hyps [] [] [] ((⌜ 1 ⌝ ·̂ₑ (ûₑ ⊔̂ₑ ∞̂ ·̂ₑ ûₑ) , ⌜ 1 ⌝) ∷ []) []) ≡ nothing
+      checkClosed (hyps [] [] [] ((⌜ 1 ⌝ ·̂ₑ (ûₑ ⊔̂ₑ ∞̂ ·̂ₑ ûₑ) , ⌜ 1 ⌝) ∷ []) [] [] false) ≡ nothing
     wait-refuted = refl
 
     -- its mirror, `ε · 1 ≾ ε ∧ ε · 1 ≾ 1`: `u ⊔ u · 1⁺`
@@ -588,7 +588,7 @@ module Lowering where
     wait-mirror-value = refl
 
     wait-mirror-refuted :
-      checkClosed (hyps [] [] [] (((ûₑ ⊔̂ₑ ûₑ ·̂ₑ ∞̂) ·̂ₑ ⌜ 1 ⌝ , ⌜ 1 ⌝) ∷ []) []) ≡ nothing
+      checkClosed (hyps [] [] [] (((ûₑ ⊔̂ₑ ûₑ ·̂ₑ ∞̂) ·̂ₑ ⌜ 1 ⌝ , ⌜ 1 ⌝) ∷ []) [] [] false) ≡ nothing
     wait-mirror-refuted = refl
 
     -- left-linear and quadratic: `(L ⊔ D⁺ · L)⁺`, here its own closure
@@ -626,7 +626,7 @@ module Lowering where
     interval-value = refl
 
     interval-holds :
-      checkClosed (hyps [] [] [] ((one-∞ , one-∞) ∷ []) []) ≡ just (hyps [] [] [] [] [])
+      checkClosed (hyps [] [] [] ((one-∞ , one-∞) ∷ []) [] [] false) ≡ just (hyps [] [] [] [] [] [] false)
     interval-holds = refl
 
     -- left-linear and quadratic: `(L ⊔ D⁺ · L)⁺`, here its own

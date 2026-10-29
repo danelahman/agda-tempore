@@ -151,7 +151,7 @@ data _⊆[_]_ {n} {S : State n} (Σ : StateTyping S)
 
 ⊆-ext : ∀ {n m} {S : State n} {S' : State m} {e : S ≤ₛ S'}
           {Σ : StateTyping S} {Σ' : StateTyping S'}
-      → Σ ⊆[ e ] Σ' → Ext ∅ᴴ (ctx Σ) (ctx Σ') (δₛ e)
+      → Σ ⊆[ e ] Σ' → Ext ⊤ᴴ (ctx Σ) (ctx Σ') (δₛ e)
 epos (⊆-ext {e = e} p) = wkₛ e
 ety  (⊆-ext ⊆-refl)     i = refl
 ety  (⊆-ext (⊆-lock p)) i = ety (⊆-ext p) i
@@ -174,13 +174,13 @@ ctx-box (Σ ∷[ ρ ] X) (Tl-∷ x)  = ctx-box Σ x
 private
 
   lookup-ext : ∀ {n m} {S : State n} {Σ : StateTyping S} {Γ : OCtx ∅ˢ m} {δ ρ₀ ρ' A₀}
-             → Types Σ → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] ctx Σ) → (e : Ext ∅ᴴ (ctx Σ) Γ δ)
-             → ∅ᴴ ⊩ ρ' ·̂ᵣ δ ≾̂ᵣ ρ₀
+             → Types Σ → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] ctx Σ) → (e : Ext ⊤ᴴ (ctx Σ) Γ δ)
+             → ⊤ᴴ ⊩ ρ' ·̂ᵣ δ ≾̂ᵣ ρ₀
              → Γ ⊢ᵛ renᵛ (epos e) (lookupₛ S (var-pos x)) ⦂ A₀
   lookup-ext (T ⟨⟩ˢ) (Tl-⟨⟩ x) e le =
     lookup-ext T x e' (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-assoc)) le)
     where
-      e' : Ext ∅ᴴ _ _ _
+      e' : Ext ⊤ᴴ _ _ _
       epos e' = epos e
       ety  e' = ety e
       egr  e' i = transᵣ (egr e i) (eqᵣ ≡̂ᵣ-assoc)
@@ -192,7 +192,7 @@ private
   ... | D , p = D , trans p (sym (ren-fuseᵛ (λ i → refl) (lookupₛ S (var-pos x))))
 
 lookup-typed : ∀ {n} {S : State n} {Σ : StateTyping S} {ρ₀ ρ' A₀}
-             → Types Σ → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] ctx Σ) → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ₀
+             → Types Σ → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] ctx Σ) → ⊤ᴴ ⊩ ρ' ≾̂ᵣ ρ₀
              → ctx Σ ⊢ᵛ lookupₛ S (var-pos x) ⦂ A₀
 lookup-typed {S = S} T x le with lookup-ext T x id-ext (transᵣ (eqᵣ ≡̂ᵣ-identityʳ) le)
 ... | D , p = D , trans p (ren-idᵛ (λ i → refl) (lookupₛ S (var-pos x)))

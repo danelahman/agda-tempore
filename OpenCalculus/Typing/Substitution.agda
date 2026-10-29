@@ -122,14 +122,14 @@ wkᵉ-drop (there⟨⟩ d) = there⟨⟩ (wkᵉ-drop d)
 -- a value weakened by an effect-grade variable
 
 wkᵉ-val : ∀ {Θ n} {Γ : OCtx Θ n} {A : OVType Θ}
-        → ∅ᴴ ∣ Γ ⊢V⦂ A → ∅ᴴ ∣ wkᵉ-ctx Γ ⊢V⦂ wkᵉ-v A
-wkᵉ-val {Γ = Γ} {A} V = ty-subst (wkˢᵉ-v A) (ctx-castᵛ (wkˢᵉ-ctx Γ) (substᵛ wkˢᵉ ⊩ᴴ-∅ V))
+        → ⊤ᴴ ∣ Γ ⊢V⦂ A → ⊤ᴴ ∣ wkᵉ-ctx Γ ⊢V⦂ wkᵉ-v A
+wkᵉ-val {Γ = Γ} {A} V = ty-subst (wkˢᵉ-v A) (ctx-castᵛ (wkˢᵉ-ctx Γ) (substᵛ wkˢᵉ ⊩ᴴ-wkᵉ V))
 
 ∥wkᵉ-val∥ : ∀ {Θ n} {Γ : OCtx Θ n} {A : OVType Θ}
-          → (V : ∅ᴴ ∣ Γ ⊢V⦂ A) → ∥ wkᵉ-val V ∥ᵛ ≡ ∥ V ∥ᵛ
+          → (V : ⊤ᴴ ∣ Γ ⊢V⦂ A) → ∥ wkᵉ-val V ∥ᵛ ≡ ∥ V ∥ᵛ
 ∥wkᵉ-val∥ {Γ = Γ} {A} V =
   trans (cong eraseᵛ (trans (⌊ty-subst⌋ (wkˢᵉ-v A) _)
-                            (trans (⌊ctx-castᵛ⌋ (wkˢᵉ-ctx Γ) _) (⌊substᵛ⌋ wkˢᵉ ⊩ᴴ-∅ V))))
+                            (trans (⌊ctx-castᵛ⌋ (wkˢᵉ-ctx Γ) _) (⌊substᵛ⌋ wkˢᵉ ⊩ᴴ-wkᵉ V))))
         (erase-substᵛ ⌊ V ⌋ᵛ wkˢᵉ)
 
 ------------------------------------------------------------------------
@@ -141,15 +141,15 @@ record BoxVar {Θ n} (Γ : OCtx Θ n) (ρ₀ : RExp Θ) (A₀ : OVType Θ) (U : 
     cell-type  : OVType Θ
     age        : RExp Θ
     cell       : [ cell-grade ] cell-type ∈̂[ age ] Γ
-    young      : ∅ᴴ ⊩ age ≾̂ᵣ ûᵣ
-    wider      : ∅ᴴ ⊩ ρ₀ ≾̂ᵣ cell-grade
-    narrower   : ∅ᴴ ∣ cell-type <:̂ᵛ A₀
+    young      : ⊤ᴴ ⊩ age ≾̂ᵣ ûᵣ
+    wider      : ⊤ᴴ ⊩ ρ₀ ≾̂ᵣ cell-grade
+    narrower   : ⊤ᴴ ∣ cell-type <:̂ᵛ A₀
     is-cell    : U ≡ var (var-pos cell)
 
 open BoxVar public
 
 box-var : ∀ {Θ n} {Γ : OCtx Θ n} {ρ₀ : RExp Θ} {A₀ : OVType Θ}
-        → (V : ∅ᴴ ∣ Γ ⊢V⦂ [ ρ₀ ] A₀) → BoxVar Γ ρ₀ A₀ ∥ V ∥ᵛ
+        → (V : ⊤ᴴ ∣ Γ ⊢V⦂ [ ρ₀ ] A₀) → BoxVar Γ ρ₀ A₀ ∥ V ∥ᵛ
 box-var (var x (≾ᵘ-ok le)) =
   record { cell = x ; young = le ; wider = ⊩≾̂ᵣ-refl ; narrower = <:̂ᵛ-refl _ ; is-cell = refl }
 box-var (var x (hyp-ok () _ _))
@@ -165,17 +165,17 @@ box-var (subV V ([ p ]ₛ q)) =
 -- The dropped variable, used behind locks of the grade it accumulates
 
 sub-var : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B ρ}
-        → (d : Drop Γ₀ A k Γ Γ⁻) → ∅ᴴ ∣ Γ₀ ⊢V⦂ A
-        → (x : B ∈̂[ ρ ] Γ) → VarOK ∅ᴴ B ρ → DropView d x
-        → ∅ᴴ ∣ Γ⁻ ⊢V⦂ B
+        → (d : Drop Γ₀ A k Γ Γ⁻) → ⊤ᴴ ∣ Γ₀ ⊢V⦂ A
+        → (x : B ∈̂[ ρ ] Γ) → VarOK ⊤ᴴ B ρ → DropView d x
+        → ⊤ᴴ ∣ Γ⁻ ⊢V⦂ B
 sub-var d U x p              (miss x' _)       = var x' p
 sub-var d U x (et-ok e)      (hit refl refl _) = eternal-v (dshift d) e U
 sub-var d U x (≾ᵘ-ok le)     (hit refl refl _) = rename-v (drop-ren d le) U
 sub-var d U x (hyp-ok () _ _) (hit refl refl _)
 
 ∥sub-var∥ : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B ρ}
-          → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢V⦂ A)
-          → (x : B ∈̂[ ρ ] Γ) → (p : VarOK ∅ᴴ B ρ) → (v : DropView d x)
+          → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ⊤ᴴ ∣ Γ₀ ⊢V⦂ A)
+          → (x : B ∈̂[ ρ ] Γ) → (p : VarOK ⊤ᴴ B ρ) → (v : DropView d x)
           → ∥ sub-var d U x p v ∥ᵛ ≡ subVar k ∥ U ∥ᵛ (var-pos x)
 ∥sub-var∥ d U x p          (miss x' q)       = sym (q _)
 ∥sub-var∥ d U x (et-ok e)  (hit refl refl q) = trans (∥eternal-v∥ (dshift d) e U) (sym (q _))
@@ -187,14 +187,14 @@ sub-var d U x (hyp-ok () _ _) (hit refl refl _)
 
 sub-unbox : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {A' A₀ : OVType Θ}
               {C : OCType Θ} {ρ₀ ρ'}
-          → (d : Drop Γ₀ A k Γ Γ⁻) → ∅ᴴ ∣ Γ₀ ⊢V⦂ A
-          → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] Γ) → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ₀ → ∅ᴴ ∣ A₀ <:̂ᵛ A'
-          → ∅ᴴ ∣ Γ⁻ ∷ A' ⊢C⦂ C → DropView d x
-          → ∅ᴴ ∣ Γ⁻ ⊢C⦂ C
+          → (d : Drop Γ₀ A k Γ Γ⁻) → ⊤ᴴ ∣ Γ₀ ⊢V⦂ A
+          → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] Γ) → ⊤ᴴ ⊩ ρ' ≾̂ᵣ ρ₀ → ⊤ᴴ ∣ A₀ <:̂ᵛ A'
+          → ⊤ᴴ ∣ Γ⁻ ∷ A' ⊢C⦂ C → DropView d x
+          → ⊤ᴴ ∣ Γ⁻ ⊢C⦂ C
 sub-unbox {Γ⁻ = Γ⁻} d U x p q N (hit refl refl _) =
   unbox (∈̂-ty-subst eq (lookup-var Γ⁻ j))
         (transᵣ (dshift-gr d i)
-          (transᵣ (monoᵣ (subst (λ z → ∅ᴴ ⊩ z ≾̂ᵣ ûᵣ) (sym (var-pos-gr (cell b))) (young b))
+          (transᵣ (monoᵣ (subst (λ z → ⊤ᴴ ⊩ z ≾̂ᵣ ûᵣ) (sym (var-pos-gr (cell b))) (young b))
                    ⊩≾̂ᵣ-refl)
             (transᵣ (eqᵣ ≡̂ᵣ-identityˡ) (transᵣ p (wider b)))))
         (<:̂ᵛ-trans (narrower b) q) N
@@ -207,9 +207,9 @@ sub-unbox d U x p q N (miss x' _) = unbox x' p q N
 
 ∥sub-unbox∥ : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {A' A₀ : OVType Θ}
                 {C : OCType Θ} {ρ₀ ρ'}
-            → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢V⦂ A)
-            → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] Γ) → (p : ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ₀) → (q : ∅ᴴ ∣ A₀ <:̂ᵛ A')
-            → (N : ∅ᴴ ∣ Γ⁻ ∷ A' ⊢C⦂ C) → (v : DropView d x)
+            → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ⊤ᴴ ∣ Γ₀ ⊢V⦂ A)
+            → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] Γ) → (p : ⊤ᴴ ⊩ ρ' ≾̂ᵣ ρ₀) → (q : ⊤ᴴ ∣ A₀ <:̂ᵛ A')
+            → (N : ⊤ᴴ ∣ Γ⁻ ∷ A' ⊢C⦂ C) → (v : DropView d x)
             → ∥ sub-unbox d U x p q N v ∥ᶜ ≡ unbox (subVar k ∥ U ∥ᵛ (var-pos x)) ∥ N ∥ᶜ
 ∥sub-unbox∥ {Γ⁻ = Γ⁻} d U x p q N (hit refl refl e) =
   cong (λ z → unbox z ∥ N ∥ᶜ)
@@ -225,7 +225,7 @@ sub-unbox d U x p q N (miss x' _) = unbox x' p q N
 mutual
 
   sub-v : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B : OVType Θ}
-        → Drop Γ₀ A k Γ Γ⁻ → ∅ᴴ ∣ Γ₀ ⊢V⦂ A → ∅ᴴ ∣ Γ ⊢V⦂ B → ∅ᴴ ∣ Γ⁻ ⊢V⦂ B
+        → Drop Γ₀ A k Γ Γ⁻ → ⊤ᴴ ∣ Γ₀ ⊢V⦂ A → ⊤ᴴ ∣ Γ ⊢V⦂ B → ⊤ᴴ ∣ Γ⁻ ⊢V⦂ B
   sub-v d U (var x p)      = sub-var d U x p (drop-view d x)
   sub-v d U (const B c)    = const B c
   sub-v d U ⋆              = ⋆
@@ -247,7 +247,7 @@ mutual
   sub-v d U (subV V p)     = subV (sub-v d U V) p
 
   sub-c : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {C : OCType Θ}
-        → Drop Γ₀ A k Γ Γ⁻ → ∅ᴴ ∣ Γ₀ ⊢V⦂ A → ∅ᴴ ∣ Γ ⊢C⦂ C → ∅ᴴ ∣ Γ⁻ ⊢C⦂ C
+        → Drop Γ₀ A k Γ Γ⁻ → ⊤ᴴ ∣ Γ₀ ⊢V⦂ A → ⊤ᴴ ∣ Γ ⊢C⦂ C → ⊤ᴴ ∣ Γ⁻ ⊢C⦂ C
   sub-c d U (return V)                = return (sub-v d U V)
   sub-c d U (M ⨟ N)                   = sub-c d U M ⨟ sub-c (there∷ (there⟨⟩ d)) U N
   sub-c d U (V · W)                   = sub-v d U V · sub-v d U W
@@ -278,7 +278,7 @@ mutual
 mutual
 
   ∥sub-v∥ : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B : OVType Θ}
-          → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢V⦂ A) → (V : ∅ᴴ ∣ Γ ⊢V⦂ B)
+          → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ⊤ᴴ ∣ Γ₀ ⊢V⦂ A) → (V : ⊤ᴴ ∣ Γ ⊢V⦂ B)
           → ∥ sub-v d U V ∥ᵛ ≡ subᵛ k ∥ U ∥ᵛ ∥ V ∥ᵛ
   ∥sub-v∥ d U (var x p)      = ∥sub-var∥ d U x p (drop-view d x)
   ∥sub-v∥ d U (const B c)    = refl
@@ -303,7 +303,7 @@ mutual
   ∥sub-v∥ d U (subV V p)     = ∥sub-v∥ d U V
 
   ∥sub-c∥ : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {C : OCType Θ}
-          → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢V⦂ A) → (M : ∅ᴴ ∣ Γ ⊢C⦂ C)
+          → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ⊤ᴴ ∣ Γ₀ ⊢V⦂ A) → (M : ⊤ᴴ ∣ Γ ⊢C⦂ C)
           → ∥ sub-c d U M ∥ᶜ ≡ subᶜ k ∥ U ∥ᵛ ∥ M ∥ᶜ
   ∥sub-c∥ d U (return V)                = cong return (∥sub-v∥ d U V)
   ∥sub-c∥ d U (M ⨟ N)                   =

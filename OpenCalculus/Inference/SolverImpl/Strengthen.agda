@@ -154,9 +154,10 @@ ext-str p a g i h =
 
 hyps-≡ : ∀ {Θ} {a a' : List (TyVar Θ)} {b b' : List (TyVar Θ × TyVar Θ)}
            {c c' : List (RExp Θ × RExp Θ)} {d d' : List (EExp Θ × EExp Θ)}
-           {e e' : List (OVType Θ × RExp Θ)}
-       → a ≡ a' → b ≡ b' → c ≡ c' → d ≡ d' → e ≡ e' → hyps a b c d e ≡ hyps a' b' c' d' e'
-hyps-≡ refl refl refl refl refl = refl
+           {e e' : List (OVType Θ × RExp Θ)} {f f' : List (Oblig Θ)} {g g' : 𝔹}
+       → a ≡ a' → b ≡ b' → c ≡ c' → d ≡ d' → e ≡ e' → f ≡ f' → g ≡ g'
+       → hyps a b c d e f g ≡ hyps a' b' c' d' e' f' g'
+hyps-≡ refl refl refl refl refl refl refl = refl
 
 ------------------------------------------------------------------------
 -- Renamings, and their action on hypothesis sets
@@ -181,6 +182,7 @@ Q [ r ]ᴴ = hyps (map (rTy r) (ets Q))
                 (map (mapᵖ (_[ ⌜ r ⌝ʳ ]ʳ)) (ordᵣ Q))
                 (map (mapᵖ (_[ ⌜ r ⌝ʳ ]ᵉ)) (ordₑ Q))
                 (map (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) (disj Q))
+                (map (_[ ⌜ r ⌝ʳ ]ᵒᵇ) (qhyps Q)) (truths Q)
 
 -- A renamed set entails the set along the renaming, and so its
 -- instances are instances of the set
@@ -192,6 +194,7 @@ Q [ r ]ᴴ = hyps (map (rTy r) (ets Q))
        (λ m → hypᵣ (∈-map⁺ (mapᵖ (_[ ⌜ r ⌝ʳ ]ʳ)) m))
        (λ m → hypₑ (∈-map⁺ (mapᵖ (_[ ⌜ r ⌝ʳ ]ᵉ)) m))
        (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) m))
+       (λ {O} m → ⊩ᴼ-hyp O (∈-map⁺ (_[ ⌜ r ⌝ʳ ]ᵒᵇ) m)) (λ t → t)
 
 ⊩ᴴ-ren⁻ : ∀ {Θ Θ' Θ''} {Q : Hyps Θ} {Q' : Hyps Θ''} → (r : Ren Θ Θ') → {δ : Subst Θ' Θ''}
         → Q' ⊩ᴴ Q [ r ]ᴴ [ δ ] → Q' ⊩ᴴ Q [ ⌜ r ⌝ʳ ⨟ˢ δ ]
@@ -199,7 +202,7 @@ Q [ r ]ᴴ = hyps (map (rTy r) (ets Q))
 
 ⊩ᴴ-ren⁺ : ∀ {Θ Θ' Θ''} {Q : Hyps Θ} {Q' : Hyps Θ''} → (r : Ren Θ Θ') → {δ : Subst Θ' Θ''}
         → Q' ⊩ᴴ Q [ ⌜ r ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᴴ Q [ r ]ᴴ [ δ ]
-⊩ᴴ-ren⁺ {Q = Q} {Q'} r {δ} h = mk⊩ᴴ et sb oR oE dj
+⊩ᴴ-ren⁺ {Q = Q} {Q'} r {δ} h = mk⊩ᴴ et sb oR oE dj qh (⊩truths h)
   where
     et : ∀ {α} → α ∈ map (rTy r) (ets Q) → Q' ⊩ᴱ sTy δ α
     et m with ∈-map⁻ (rTy r) m
@@ -228,6 +231,10 @@ Q [ r ]ᴴ = hyps (map (rTy r) (ets Q))
     dj m with ∈-map⁻ (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) m
     ... | (A , ρ) , m' , refl =
           subst₂ (VarOK Q') (sym ([⨟]ᵛ A ⌜ r ⌝ʳ δ)) (sym ([⨟]ʳ ρ ⌜ r ⌝ʳ δ)) (⊩disj h m')
+
+    qh : ∀ {O} → O ∈ map (_[ ⌜ r ⌝ʳ ]ᵒᵇ) (qhyps Q) → Q' ⊩ᴼ O [ δ ]
+    qh m with ∈-map⁻ (_[ ⌜ r ⌝ʳ ]ᵒᵇ) m
+    ... | O , m' , refl = ⊩ᴼ-subst⁻ O (⊩qhyps h m')
 
 ------------------------------------------------------------------------
 -- Strengthening along a mask
@@ -310,6 +317,7 @@ module _ {Θ : Scope} (M : Vars Θ) where
                   (strˡ fvʳʳ strʳʳ (ordᵣ Q) h₃)
                   (strˡ fvᵉᵉ strᵉᵉ (ordₑ Q) h₄)
                   (strˡ fvᵛʳ strᵛʳ (disj Q) h₅)
+                  [] false
     where
       V₁ = ⋃ᵛ fvᵗ (ets Q)
       V₂ = ⋃ᵛ fvᵗᵗ (subᵥ Q)
@@ -365,13 +373,14 @@ module _ {Θ : Scope} (M : Vars Θ) where
   strˡ-ι f s g e []       h = refl
   strˡ-ι f s g e (x ∷ xs) h = cong₂ _∷_ (e x _) (strˡ-ι f s g e xs _)
 
-  strᴴ-ι : (Q : Hyps Θ) → (h : fvᴴ Q ⊆ᵛ M) → strᴴ Q h [ thin ]ᴴ ≡ Q
-  strᴴ-ι Q h =
+  strᴴ-ι : (Q : Hyps Θ) → Unq Q → (h : fvᴴ Q ⊆ᵛ M) → strᴴ Q h [ thin ]ᴴ ≡ Q
+  strᴴ-ι Q u h =
     hyps-≡ (strˡ-ι fvᵗ  strᵗ  (rTy thin) strᵗ-ι (ets Q) _)
            (strˡ-ι fvᵗᵗ strᵗᵗ (mapᵖ (rTy thin)) eᵗᵗ (subᵥ Q) _)
            (strˡ-ι fvʳʳ strʳʳ (mapᵖ (_[ ⌜ thin ⌝ʳ ]ʳ)) eʳʳ (ordᵣ Q) _)
            (strˡ-ι fvᵉᵉ strᵉᵉ (mapᵖ (_[ ⌜ thin ⌝ʳ ]ᵉ)) eᵉᵉ (ordₑ Q) _)
            (strˡ-ι fvᵛʳ strᵛʳ (mapᵈ (_[ ⌜ thin ⌝ʳ ]ᵛ) (_[ ⌜ thin ⌝ʳ ]ʳ)) eᵛʳ (disj Q) _)
+           (sym (no-qhyps u)) (sym (no-truths u))
     where
       eᵗᵗ : ∀ x h → mapᵖ (rTy thin) (strᵗᵗ x h) ≡ x
       eᵗᵗ (α , β) h = cong₂ _,_ (strᵗ-ι α (⊆-∪ˡ (fvᵗ α) (fvᵗ β) h))
@@ -573,18 +582,18 @@ extⁱ-fix M =
 -- set, the image of `τ` and `V`
 
 strengthenAt : ∀ {Θ₀ Θ} → (τ : Subst Θ₀ Θ) → (X : OCType Θ) → (Q : Hyps Θ) → (V : Vars Θ)
-             → (M : Vars Θ) → fvᶜ X ⊆ᵛ M → fvᴴ Q ⊆ᵛ M → fvˢ τ ⊆ᵛ M → V ⊆ᵛ M
+             → (M : Vars Θ) → Unq Q → fvᶜ X ⊆ᵛ M → fvᴴ Q ⊆ᵛ M → fvˢ τ ⊆ᵛ M → V ⊆ᵛ M
              → Strengthened τ X Q V
-strengthenAt τ X Q V M hX hQ hτ hV =
+strengthenAt τ X Q V M u hX hQ hτ hV =
   strengthened (kept M) (thin M) (strˢ M τ hτ) (strᶜ M X hX) (strᴴ M Q hQ)
-               (strˢ-ι M τ hτ) (strᶜ-ι M X hX) (strᴴ-ι M Q hQ) (λ δ → extⁱ M δ , extⁱ-ι M δ)
+               (strˢ-ι M τ hτ) (strᶜ-ι M X hX) (strᴴ-ι M Q u hQ) (λ δ → extⁱ M δ , extⁱ-ι M δ)
                (extⁱ M idˢ) (fixes-⊆ hV (extⁱ-fix M))
 
 -- The mask is the variables occurring in the four
 
 strengthen : ∀ {Θ₀ Θ} → (τ : Subst Θ₀ Θ) → (X : OCType Θ) → (Q : Hyps Θ) → (V : Vars Θ)
-           → Strengthened τ X Q V
-strengthen τ X Q V = strengthenAt τ X Q V M hX hQ hτ hV
+           → Unq Q → Strengthened τ X Q V
+strengthen τ X Q V u = strengthenAt τ X Q V M u hX hQ hτ hV
   where
     M  = fvᶜ X ∪ᵛ fvᴴ Q ∪ᵛ fvˢ τ ∪ᵛ V
     hX = ⊆-∪ˡ (fvᶜ X) (fvᴴ Q ∪ᵛ fvˢ τ ∪ᵛ V) ⊆-refl
@@ -603,8 +612,8 @@ module _ {Θ₀ Θ : Scope} {τ : Subst Θ₀ Θ} {C : OCType Θ} {Q : Hyps Θ} 
   conv⁻ : X⁻ [ ⌜ ι ⌝ʳ ]ᶜ ≡̂ᶜ C [ η el ]ᶜ
   conv⁻ = subst (_≡̂ᶜ C [ η el ]ᶜ) (sym X-ι) (conv el)
 
-  inst⁻ : Q⁻ [ ι ]ᴴ ⊩ᴴ Q [ η el ]
-  inst⁻ = subst (_⊩ᴴ Q [ η el ]) (sym Q-ι) (inst el)
+  inst⁻ : Unq Q → Q⁻ [ ι ]ᴴ ⊩ᴴ Q [ η el ]
+  inst⁻ u = subst (_⊩ᴴ Q [ η el ]) (sym Q-ι) (inst el u)
 
   keep⁻ : (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ᴴ Q⁻ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]
   keep⁻ δ h = ⊩ᴴ-ren⁻ ι (subst (λ P → ∅ᴴ ⊩ᴴ P [ δ ]) (sym Q-ι) (keep el δ h))

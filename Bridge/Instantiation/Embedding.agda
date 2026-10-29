@@ -62,7 +62,7 @@ open import OpenCalculus.Syntax.Contexts      S
 open import OpenCalculus.Syntax.Subst         S
 open import OpenCalculus.Hypotheses           S
 open import OpenCalculus.Typing               S
-open import OpenCalculus.Hypotheses.Instances S using (valʳ; val-≾ᵣ⁻; val-≾ₑ⁻)
+open import OpenCalculus.Hypotheses.Instances S using (val-≾ᵣ⁻; val-≾ₑ⁻)
 open import OpenCalculus.Syntax.Raw           S
 open import OpenCalculus.Syntax.Raw.Subst     S
 import OpenCalculus.Typing.Erasure S as OE

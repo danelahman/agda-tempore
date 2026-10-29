@@ -45,24 +45,25 @@
 --                                                              --
 -- Contract (`Elim`). Every step is a substitution `η`: the new --
 -- type is the old one along `η`, up to convertibility          --
--- (`conv`), and the new hypotheses entail the old ones along   --
--- `η` (`inst`). Every closed instance of the old hypotheses is --
--- one of the new (`keep`), at which the new type is a subtype  --
--- of the old (`princ`). Steps compose (`_⨾ᴱ_`). The unknowns   --
--- of a given set are never eliminated, and `η` fixes them      --
--- (`Elimᶠ`). Which unknowns remain is not claimed: a step is   --
--- taken where its test succeeds. For a step against a bound,   --
--- the hypotheses it keeps on the unknown's sort are entailed   --
--- by `Values` (`lowerR`, `raiseL`); the type, the other sort   --
--- and the disjunctions are kept by polarity (`Monoᵉ`, `Raiseᵉ` --
--- and their counterparts, each an instance of `Lift`, which    --
--- relates the parts of a former at their variance). For a step --
--- by equality, the hypotheses bound `η` by the identity in     --
--- both directions, and it moves no type (`Equal`). A forced    --
--- unit is such a step under the hypotheses with the unknown    --
--- below the unit added, which every closed instance meets      --
--- (`unit-forcedᵣ`, `unit-forcedₑ`; through the image, by       --
--- reflection at the instance).                                 --
+-- (`conv`). Where the old hypotheses carry no quantified ones  --
+-- (`Unq`), neither do the new (`unqᴱ`), and the new entail the --
+-- old along `η` (`inst`). Every closed instance of the old     --
+-- hypotheses is one of the new (`keep`), at which the new type --
+-- is a subtype of the old (`princ`). Steps compose (`_⨾ᴱ_`).   --
+-- The unknowns of a given set are never eliminated, and `η`    --
+-- fixes them (`Elimᶠ`). Which unknowns remain is not claimed:  --
+-- a step is taken where its test succeeds. For a step against  --
+-- a bound, the hypotheses it keeps on the unknown's sort are   --
+-- entailed by `Values` (`lowerR`, `raiseL`); the type, the     --
+-- other sort and the disjunctions are kept by polarity         --
+-- (`Monoᵉ`, `Raiseᵉ` and their counterparts, each an instance  --
+-- of `Lift`, which relates the parts of a former at their      --
+-- variance). For a step by equality, the hypotheses bound `η`  --
+-- by the identity in both directions, and it moves no type     --
+-- (`Equal`). A forced unit is such a step under the hypotheses --
+-- with the unknown below the unit added, which every closed    --
+-- instance meets (`unit-forcedᵣ`, `unit-forcedₑ`; through the  --
+-- image, by reflection at the instance).                       --
 --                                                              --
 -- The polarity-based elimination follows Pottier's             --
 -- simplification of subtyping constraints (ICFP 1996); cycle   --
@@ -215,7 +216,8 @@ record Elim {Θ : Scope} (C : OCType Θ) (Q : Hyps Θ) : Set where
     Q̂     : Hyps Θ
     η     : Subst Θ Θ
     conv  : Ĉ ≡̂ᶜ C [ η ]ᶜ
-    inst  : Q̂ ⊩ᴴ Q [ η ]
+    inst  : Unq Q → Q̂ ⊩ᴴ Q [ η ]
+    unqᴱ  : Unq Q → Unq Q̂
     keep  : Q ⊨ᴴ Q̂
     princ : (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ∣ Ĉ [ δ ]ᶜ <:̂ᶜ C [ δ ]ᶜ
 
@@ -223,7 +225,7 @@ open Elim public
 
 idElim : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → Elim C Q
 idElim C Q =
-  mkElim C Q idˢ (subst (C ≡̂ᶜ_) (sym ([id]ᶜ C)) (≡̂ᶜ-refl C)) ⊩ᴴ-refl ⊨ᴴ-refl
+  mkElim C Q idˢ (subst (C ≡̂ᶜ_) (sym ([id]ᶜ C)) (≡̂ᶜ-refl C)) (λ _ → ⊩ᴴ-refl) (λ u → u) ⊨ᴴ-refl
          (λ δ h → <:̂ᶜ-refl (C [ δ ]ᶜ))
 
 infixl 5 _⨾ᴱ_
@@ -234,7 +236,8 @@ _⨾ᴱ_ {C = C} r s =
   mkElim (Ĉ s) (Q̂ s) (η r ⨟ˢ η s)
          (≡̂ᶜ-trans (conv s)
            (subst (Ĉ r [ η s ]ᶜ ≡̂ᶜ_) ([⨟]ᶜ C (η r) (η s)) (≡̂ᶜ-subst (η s) (conv r))))
-         (⊩ᴴ-⨟ (inst s) (inst r))
+         (λ u → ⊩ᴴ-⨟ (inst s (unqᴱ r u)) (inst r u))
+         (λ u → unqᴱ s (unqᴱ r u))
          (⊨ᴴ-trans (keep r) (keep s))
          (λ δ h → <:̂ᶜ-trans (princ s δ (keep r δ h)) (princ r δ h))
 
@@ -256,7 +259,7 @@ canonElim : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → Elim C Q
 canonElim C Q =
   mkElim (canonᶜ C) (canonᴴ Q) idˢ
          (subst (canonᶜ C ≡̂ᶜ_) (sym ([id]ᶜ C)) (≡̂ᶜ-sym (canonᶜ-≡̂ C)))
-         (canonᴴ-⊩ Q) (⊩ᴴ-⊨ᴴ (canonᴴ-⊩⁻ Q))
+         (λ _ → canonᴴ-⊩ Q) (λ u → unq (no-qhyps u) (no-truths u)) (⊩ᴴ-⊨ᴴ (canonᴴ-⊩⁻ Q))
          (λ δ h → <:̂ᶜ-subst h (≡̂ᶜ-<:̂ (≡̂ᶜ-sym (canonᶜ-≡̂ C))))
 
 ------------------------------------------------------------------------
@@ -564,7 +567,7 @@ oracleᵉ C Q i = record
 stepᵉ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
       → Vᵉ.ByLower {Θ} i (oracleᵉ C Q i) (ordₑ Q) → Elim C Q
 stepᵉ {Θ} C Q i (Vᵉ.byLower lw x xs e b to (cb , cR , cc)) =
-  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
+  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ (λ u → unq (no-qhyps u) (no-truths u)) keep₀
          (λ δ h → <:̂ᶜ-subst h (Monoᵉ.monoᵉ-c i b lowg ⁺ C cc))
   where
     η₀ : Subst Θ Θ
@@ -574,7 +577,7 @@ stepᵉ {Θ} C Q i (Vᵉ.byLower lw x xs e b to (cb , cR , cc)) =
     Q₀ = hyps (ets Q) (subᵥ Q)
               (map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q))
               (map (mapᵖ (_[ η₀ ]ᵉ)) (Vᵉ.rest lw))
-              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
+              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q)) (qhyps Q) (truths Q)
 
     lowg : Q ⊩ η₀ ≾ˢ idˢ
     lowg = ≾ˢ-idˡ (updᵉ-below i b idˢ
@@ -587,10 +590,10 @@ stepᵉ {Θ} C Q i (Vᵉ.byLower lw x xs e b to (cb , cR , cc)) =
     module Kⁱ = Vⁱ.Keep {Θ} i (Q ⊩_≾̂ᵣ_) ⊩≾̂ᵣ-refl transᵣ (λ ρ → ρ) (_[ η₀ ]ʳ)
                         (λ {ρ} → updᵉ-r i b ρ) (λ p → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
 
-    inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
-    inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
+    inst₀ : Unq Q → Q₀ ⊩ᴴ Q [ η₀ ]
+    inst₀ u = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
                  (λ m → hypᵣ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m)) ordE
-                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
+                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m)) (λ m → unq-qhyps u m) (λ t → t)
       where
         ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q₀ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ ε' [ η₀ ]ᵉ
         ordE {ε} m with Vᵉ.cls lw m
@@ -617,7 +620,7 @@ stepᵉ {Θ} C Q i (Vᵉ.byLower lw x xs e b to (cb , cR , cc)) =
           K.lowerR (Vᵉ.restR lw m₀) lowᵉ (hypₑ (Vᵉ.rest⊆ lw m₀))
 
     keep₀ : Q ⊨ᴴ Q₀
-    keep₀ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) keepR keepE keep-disj
+    keep₀ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) keepR keepE keep-disj (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
 
 stepᵉ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
        → vᵉ F i ≡ false → Maybe (Elimᶠ F C Q)
@@ -701,7 +704,7 @@ oracleʳ C Q i = record
 stepʳ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
       → Vʳ.ByLower {Θ} i (oracleʳ C Q i) (ordᵣ Q) → Elim C Q
 stepʳ {Θ} C Q i (Vʳ.byLower lw x xs e b to (cb , cc)) =
-  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
+  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ (λ u → unq (no-qhyps u) (no-truths u)) keep₀
          (λ δ h → <:̂ᶜ-subst h (Monoʳ.monoʳ-c i b lowg ⁺ C cc))
   where
     η₀ : Subst Θ Θ
@@ -711,7 +714,7 @@ stepʳ {Θ} C Q i (Vʳ.byLower lw x xs e b to (cb , cc)) =
     Q₀ = hyps (ets Q) (subᵥ Q)
               (map (mapᵖ (_[ η₀ ]ʳ)) (Vʳ.rest lw))
               (map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q))
-              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
+              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q)) (qhyps Q) (truths Q)
 
     lowg : Q ⊩ η₀ ≾ˢ idˢ
     lowg = ≾ˢ-idˡ (updʳ-below i b idˢ
@@ -722,10 +725,10 @@ stepʳ {Θ} C Q i (Vʳ.byLower lw x xs e b to (cb , cc)) =
     module K = Vʳ.Keep {Θ} i (Q ⊩_≾̂ᵣ_) ⊩≾̂ᵣ-refl transᵣ (λ ρ → ρ) (_[ η₀ ]ʳ)
                        (λ {ρ} → updʳ-r i b ρ) (λ p → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
 
-    inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
-    inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR
+    inst₀ : Unq Q → Q₀ ⊩ᴴ Q [ η₀ ]
+    inst₀ u = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR
                  (λ m → hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m))
-                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
+                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m)) (λ m → unq-qhyps u m) (λ t → t)
       where
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
         ordR {ρ} m with Vʳ.cls lw m
@@ -746,7 +749,7 @@ stepʳ {Θ} C Q i (Vʳ.byLower lw x xs e b to (cb , cc)) =
     keep₀ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) keepR
                  (keep-ordᵉ (ordₑ Q) (λ m → m)
                             (λ {ε} {ε'} m → fixedᵉ (updʳ-e i b ε')))
-                 keep-disj
+                 keep-disj (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
 
 stepʳ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
        → vʳ F i ≡ false → Maybe (Elimᶠ F C Q)
@@ -919,7 +922,7 @@ keep-disj⁺ {Q = Q} η₀ tv fr δ h m with ∈-map⁻ (mapᵈ (_[ η₀ ]ᵛ) 
 upᵉ-step : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
          → Vᵉ.ByRaise {Θ} i (oracleᵉ C Q i) (ordₑ Q) → Elim C Q
 upᵉ-step {Θ} C Q i (Vᵉ.byRaise up (cR , cD , cc)) =
-  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
+  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ (λ u → unq (no-qhyps u) (no-truths u)) keep₀
          (λ δ h → <:̂ᶜ-subst h (Raiseᵉ.raiseᵉ-c i b hig ⁺ C cc))
   where
     b : EExp Θ
@@ -934,7 +937,7 @@ upᵉ-step {Θ} C Q i (Vᵉ.byRaise up (cR , cD , cc)) =
     Q₀ = hyps (ets Q) (subᵥ Q)
               (map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q))
               (map (mapᵖ (_[ η₀ ]ᵉ)) rest)
-              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
+              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q)) (qhyps Q) (truths Q)
 
     hig : Q ⊩ idˢ ≾ˢ η₀
     hig = ≾ˢ-idʳ (updᵉ-above i b idˢ
@@ -950,10 +953,10 @@ upᵉ-step {Θ} C Q i (Vᵉ.byRaise up (cR , cD , cc)) =
     hit : sE η₀ i ≡ b [ η₀ ]ᵉ
     hit = trans (updᵉ-hit i b) (sym (updᵉ-e i b b (Vᵉ.capF up)))
 
-    inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
-    inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
+    inst₀ : Unq Q → Q₀ ⊩ᴴ Q [ η₀ ]
+    inst₀ u = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
                  (λ m → hypᵣ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m)) ordE
-                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
+                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m)) (λ m → unq-qhyps u m) (λ t → t)
       where
         ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q₀ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ ε' [ η₀ ]ᵉ
         ordE {ε' = ε'} m with Vᵉ.clsᵘ (Vᵉ.capd up) m
@@ -978,12 +981,12 @@ upᵉ-step {Θ} C Q i (Vᵉ.byRaise up (cR , cD , cc)) =
     keep₀ : Q ⊨ᴴ Q₀
     keep₀ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) keepR keepE
                  (keep-disj⁺ η₀ (λ β → refl)
-                    (λ {A} {ρ} m → absᵉ-r⁺ i b ρ (polsₑ-disj-∈⁺ i (disj Q) cD m)))
+                    (λ {A} {ρ} m → absᵉ-r⁺ i b ρ (polsₑ-disj-∈⁺ i (disj Q) cD m))) (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
 
 upʳ-step : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
          → Vʳ.ByRaise {Θ} i (oracleʳ C Q i) (ordᵣ Q) → Elim C Q
 upʳ-step {Θ} C Q i (Vʳ.byRaise up (cD , cc)) =
-  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
+  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ (λ u → unq (no-qhyps u) (no-truths u)) keep₀
          (λ δ h → <:̂ᶜ-subst h (Raiseʳ.raiseʳ-c i b hig ⁺ C cc))
   where
     b : RExp Θ
@@ -998,7 +1001,7 @@ upʳ-step {Θ} C Q i (Vʳ.byRaise up (cD , cc)) =
     Q₀ = hyps (ets Q) (subᵥ Q)
               (map (mapᵖ (_[ η₀ ]ʳ)) rest)
               (map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q))
-              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
+              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q)) (qhyps Q) (truths Q)
 
     hig : Q ⊩ idˢ ≾ˢ η₀
     hig = ≾ˢ-idʳ (updʳ-above i b idˢ
@@ -1011,10 +1014,10 @@ upʳ-step {Θ} C Q i (Vʳ.byRaise up (cD , cc)) =
     hit : sR η₀ i ≡ b [ η₀ ]ʳ
     hit = trans (updʳ-hit i b) (sym (updʳ-r i b b (Vʳ.capF up)))
 
-    inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
-    inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR
+    inst₀ : Unq Q → Q₀ ⊩ᴴ Q [ η₀ ]
+    inst₀ u = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR
                  (λ m → hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m))
-                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
+                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m)) (λ m → unq-qhyps u m) (λ t → t)
       where
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
         ordR {ρ' = ρ'} m with Vʳ.clsᵘ (Vʳ.capd up) m
@@ -1036,7 +1039,7 @@ upʳ-step {Θ} C Q i (Vʳ.byRaise up (cD , cc)) =
     keep₀ : Q ⊨ᴴ Q₀
     keep₀ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) keepR keepE
                  (keep-disj⁺ η₀ (λ β → refl)
-                    (λ {A} {ρ} m → absʳ-r⁺ i b ρ (polsᵣ-disj-∈⁺ i (disj Q) cD m)))
+                    (λ {A} {ρ} m → absʳ-r⁺ i b ρ (polsᵣ-disj-∈⁺ i (disj Q) cD m))) (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
 
 -- The searches
 
@@ -1159,7 +1162,7 @@ stepᵗ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (α : TyVar Θ)
       → below (polₜ-c α ⁺ C) ≡ false
       → Elim C Q
 stepᵗ {Θ} C Q α s cb cq cc =
-  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
+  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ (λ u → unq (no-qhyps u) (no-truths u)) keep₀
          (λ δ h → <:̂ᶜ-subst h (M.monoᵗ-c ⁺ C cc))
   where
     γ₀ : TyVar Θ
@@ -1173,7 +1176,7 @@ stepᵗ {Θ} C Q α s cb cq cc =
               (map (mapᵖ (upd α γ₀ idᶠ)) (restᵗ s))
               (map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q))
               (map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q))
-              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
+              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q)) (qhyps Q) (truths Q)
 
     α≢γ₀ : ¬ (α ≡ γ₀)
     α≢γ₀ = ⌊⌋-false cb
@@ -1185,11 +1188,11 @@ stepᵗ {Θ} C Q α s cb cq cc =
 
     open Lowering {Q = Q} η₀ M.lowg M.lowt
 
-    inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
-    inst₀ = mk⊩ᴴ (λ m → et-hyp (∈-map⁺ (upd α γ₀ idᶠ) m)) sb
+    inst₀ : Unq Q → Q₀ ⊩ᴴ Q [ η₀ ]
+    inst₀ u = mk⊩ᴴ (λ m → et-hyp (∈-map⁺ (upd α γ₀ idᶠ) m)) sb
                  (λ m → hypᵣ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m))
                  (λ m → hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m))
-                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
+                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m)) (λ m → unq-qhyps u m) (λ t → t)
       where
         sb : ∀ {β γ} → (β , γ) ∈ subᵥ Q → Q₀ ∣ sTy η₀ β <:̂ᵛ sTy η₀ γ
         sb m with casesᵗ s m
@@ -1205,7 +1208,7 @@ stepᵗ {Θ} C Q α s cb cq cc =
                             (λ {ρ} {ρ'} m → fixedʳ (fixᵗ-r (upd α γ₀ idᶠ) ρ')))
                  (keep-ordᵉ (ordₑ Q) (λ m → m)
                             (λ {ε} {ε'} m → fixedᵉ (fixᵗ-e (upd α γ₀ idᶠ) ε')))
-                 keep-disj
+                 keep-disj (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
       where
         et : ∀ {x} → x ∈ map (upd α γ₀ idᶠ) (ets Q) → Q ⊩ᴱ tvar x
         et m with ∈-map⁻ (upd α γ₀ idᶠ) m
@@ -1244,7 +1247,7 @@ stepᵗ? {Θ} F C Q α o with splitᵗ α (subᵥ Q)
 equateᵉ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ) → (b : EExp Θ)
         → Q ⊩ evar i ≡̂ₑ b → Elim C Q
 equateᵉ {Θ} C Q i b eq =
-  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
+  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ (λ u → unq (no-qhyps u) (no-truths u)) keep₀
          (λ δ h → <:̂ᶜ-subst h (sameᶜ ⁺ C))
   where
     η₀ : Subst Θ Θ
@@ -1254,16 +1257,16 @@ equateᵉ {Θ} C Q i b eq =
     Q₀ = hyps (ets Q) (subᵥ Q)
               (apart _≟ʳ_ (map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q)))
               (apart _≟ᵉ_ (map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q)))
-              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
+              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q)) (qhyps Q) (truths Q)
 
     open Equal {Q = Q} η₀
       (≾ˢ-idˡ (updᵉ-below i b idˢ (subst (λ y → Q ⊩ y ≾̂ₑ evar i) (sym ([id]ᵉ b)) (proj₂ eq))))
       (≾ˢ-idʳ (updᵉ-above i b idˢ (subst (λ y → Q ⊩ evar i ≾̂ₑ y) (sym ([id]ᵉ b)) (proj₁ eq))))
       (λ β → tvarₛ reflᵗᵛ) (λ β → tvarₛ reflᵗᵛ)
 
-    inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
-    inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE
-                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
+    inst₀ : Unq Q → Q₀ ⊩ᴴ Q [ η₀ ]
+    inst₀ u = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE
+                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m)) (λ m → unq-qhyps u m) (λ t → t)
       where
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
         ordR {ρ} m with apart-∈ _≟ʳ_ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m)
@@ -1281,14 +1284,14 @@ equateᵉ {Θ} C Q i b eq =
                                   (apart-⊆ _≟ʳ_ m))
                  (λ m → keep-ordᵉ (ordₑ Q) (λ q → q) (λ {ε} {ε'} _ → raiseᵉ ε')
                                   (apart-⊆ _≟ᵉ_ m))
-                 keep-disj
+                 keep-disj (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
 
 -- One step at a resource unknown
 
 equateʳ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ) → (b : RExp Θ)
         → Q ⊩ rvar i ≡̂ᵣ b → Elim C Q
 equateʳ {Θ} C Q i b eq =
-  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
+  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ (λ u → unq (no-qhyps u) (no-truths u)) keep₀
          (λ δ h → <:̂ᶜ-subst h (sameᶜ ⁺ C))
   where
     η₀ : Subst Θ Θ
@@ -1298,17 +1301,17 @@ equateʳ {Θ} C Q i b eq =
     Q₀ = hyps (ets Q) (subᵥ Q)
               (apart _≟ʳ_ (map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q)))
               (map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q))
-              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
+              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q)) (qhyps Q) (truths Q)
 
     open Equal {Q = Q} η₀
       (≾ˢ-idˡ (updʳ-below i b idˢ (subst (λ y → Q ⊩ y ≾̂ᵣ rvar i) (sym ([id]ʳ b)) (proj₂ eq))))
       (≾ˢ-idʳ (updʳ-above i b idˢ (subst (λ y → Q ⊩ rvar i ≾̂ᵣ y) (sym ([id]ʳ b)) (proj₁ eq))))
       (λ β → tvarₛ reflᵗᵛ) (λ β → tvarₛ reflᵗᵛ)
 
-    inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
-    inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR
+    inst₀ : Unq Q → Q₀ ⊩ᴴ Q [ η₀ ]
+    inst₀ u = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR
                  (λ m → hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m))
-                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
+                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m)) (λ m → unq-qhyps u m) (λ t → t)
       where
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
         ordR {ρ} m with apart-∈ _≟ʳ_ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m)
@@ -1320,7 +1323,7 @@ equateʳ {Θ} C Q i b eq =
                  (λ m → keep-ordʳ (ordᵣ Q) (λ q → q) (λ {ρ} {ρ'} _ → raiseʳ ρ')
                                   (apart-⊆ _≟ʳ_ m))
                  (keep-ordᵉ (ordₑ Q) (λ q → q) (λ {ε} {ε'} _ → raiseᵉ ε'))
-                 keep-disj
+                 keep-disj (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
 
 ------------------------------------------------------------------------
 -- Cycle elimination: the type variables of each strongly connected
@@ -1331,7 +1334,7 @@ equateʳ {Θ} C Q i b eq =
 collapseᵗ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (f : TyVar Θ → TyVar Θ)
           → (∀ β → (Q ⊩ᵗᵛ f β ≾ β) × (Q ⊩ᵗᵛ β ≾ f β)) → Elim C Q
 collapseᵗ {Θ} C Q f both =
-  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
+  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ (λ u → unq (no-qhyps u) (no-truths u)) keep₀
          (λ δ h → <:̂ᶜ-subst h (sameᶜ ⁺ C))
   where
     η₀ : Subst Θ Θ
@@ -1342,7 +1345,7 @@ collapseᵗ {Θ} C Q f both =
               (apart _≟ᶠ_ (map (mapᵖ f) (subᵥ Q)))
               (map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q))
               (map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q))
-              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
+              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q)) (qhyps Q) (truths Q)
 
     lowt : ∀ β → Q ∣ sTy η₀ β <:̂ᵛ tvar β
     lowt β = tvarₛ (proj₁ (both β))
@@ -1353,11 +1356,11 @@ collapseᵗ {Θ} C Q f both =
     open Equal {Q = Q} η₀ (mk≾ˢ (λ _ → ⊩≾̂ᵣ-refl) (λ _ → ⊩≾̂ₑ-refl))
                           (mk≾ˢ (λ _ → ⊩≾̂ᵣ-refl) (λ _ → ⊩≾̂ₑ-refl)) lowt hit
 
-    inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
-    inst₀ = mk⊩ᴴ (λ m → et-hyp (∈-map⁺ f m)) sb
+    inst₀ : Unq Q → Q₀ ⊩ᴴ Q [ η₀ ]
+    inst₀ u = mk⊩ᴴ (λ m → et-hyp (∈-map⁺ f m)) sb
                  (λ m → hypᵣ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m))
                  (λ m → hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m))
-                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
+                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m)) (λ m → unq-qhyps u m) (λ t → t)
       where
         sb : ∀ {β β'} → (β , β') ∈ subᵥ Q → Q₀ ∣ sTy η₀ β <:̂ᵛ sTy η₀ β'
         sb {β} m with apart-∈ _≟ᶠ_ (∈-map⁺ (mapᵖ f) m)
@@ -1368,7 +1371,7 @@ collapseᵗ {Θ} C Q f both =
     keep₀ = mk⊨ᴴ et sb
                  (keep-ordʳ (ordᵣ Q) (λ m → m) (λ {ρ} {ρ'} m → fixedʳ (fixᵗ-r f ρ')))
                  (keep-ordᵉ (ordₑ Q) (λ m → m) (λ {ε} {ε'} m → fixedᵉ (fixᵗ-e f ε')))
-                 keep-disj
+                 keep-disj (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
       where
         et : ∀ {x} → x ∈ map f (ets Q) → Q ⊩ᴱ tvar x
         et m with ∈-map⁻ f m
@@ -1454,9 +1457,10 @@ unit-forcedₑ l p = p , minₑ l
 
 forced : ∀ {Θ} → (C : OCType Θ) → (Q Q⁺ : Hyps Θ) → (η₀ : Subst Θ Θ)
        → Q⁺ ⊩ η₀ ≾ˢ idˢ → Q⁺ ⊩ idˢ ≾ˢ η₀ → (∀ β → sTy η₀ β ≡ tvar β)
-       → (Q̂ : Hyps Θ) → Q̂ ⊩ᴴ Q [ η₀ ] → Q⁺ ⊨ᴴ Q̂ → Q ⊨ᴴ Q⁺ → Elim C Q
-forced C Q Q⁺ η₀ lowg hig tv Q̂ inst₀ keep⁺ keep₁ =
-  mkElim (C [ η₀ ]ᶜ) Q̂ η₀ (≡̂ᶜ-refl _) inst₀ (⊨ᴴ-trans keep₁ keep⁺)
+       → (Q̂ : Hyps Θ) → (Unq Q → Q̂ ⊩ᴴ Q [ η₀ ]) → (Unq Q → Unq Q̂)
+       → Q⁺ ⊨ᴴ Q̂ → Q ⊨ᴴ Q⁺ → Elim C Q
+forced C Q Q⁺ η₀ lowg hig tv Q̂ inst₀ unq₀ keep⁺ keep₁ =
+  mkElim (C [ η₀ ]ᶜ) Q̂ η₀ (≡̂ᶜ-refl _) inst₀ unq₀ (⊨ᴴ-trans keep₁ keep⁺)
          (λ δ h → <:̂ᶜ-subst (keep₁ δ h) (E.sameᶜ ⁺ C))
   where
     module E = Equal {Q = Q⁺} η₀ lowg hig
@@ -1516,7 +1520,7 @@ module Retouch {Θ : Scope} (η₀ : Subst Θ Θ) (tᵣ : RExp Θ × RExp Θ →
 
   retouched : Hyps Θ
   retouched = hyps (ets Q) (subᵥ Q) (apart _≟ʳ_ (Split.out Sʳ))
-                   (apart _≟ᵉ_ (Split.out Sᵉ)) (map touchᵈ (disj Q))
+                   (apart _≟ᵉ_ (Split.out Sᵉ)) (map touchᵈ (disj Q)) (qhyps Q) (truths Q)
 
   instʳ : ∀ {x x'} → (x , x') ∈ rs → retouched ⊩ x [ η₀ ]ʳ ≾̂ᵣ x' [ η₀ ]ʳ
   instʳ m =
@@ -1564,7 +1568,8 @@ module Retouch {Θ : Scope} (η₀ : Subst Θ Θ) (tᵣ : RExp Θ × RExp Θ →
 unitʳ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
       → ∀ {a₀} → a₀ ∈ ordᵣ Q → Vʳ.Forces {Θ} i a₀ → Elim C Q
 unitʳ {Θ} C Q i {x₀ , c₀} m₀ f₀@(lst , _ , _) =
-  forced C Q Q⁺ η₀ lowg hig (λ β → refl) Q₁ inst₀ keep⁺ (⊩ᴴ-⊨ᴴ keep₁)
+  forced C Q Q⁺ η₀ lowg hig (λ β → refl) Q₁ inst₀ (λ u → unq (no-qhyps u) (no-truths u)) keep⁺
+         (⊩ᴴ-⊨ᴴ keep₁)
   where
     η₀ : Subst Θ Θ
     η₀ = updʳ i ûᵣ
@@ -1597,15 +1602,15 @@ unitʳ {Θ} C Q i {x₀ , c₀} m₀ f₀@(lst , _ , _) =
     lhs {x} (_ , e , _) = subst (x ≡̂ᵣ_) e (canonᵣ-≡ x)
 
     keep₁ : Q ⊩ᴴ Q⁺
-    keep₁ = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR hypₑ hyp-ok₀
+    keep₁ = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR hypₑ hyp-ok₀ (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
       where
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q⁺ → Q ⊩ ρ ≾̂ᵣ ρ'
         ordR (here refl) =
           transᵣ (eqᵣ (≡̂ᵣ-sym (lhs {x₀} f₀))) (transᵣ (hypᵣ m₀) (⊩ᴴ-≾ᵣ ∅ᴴ-⊩ᴴ (proj₂ (proj₂ f₀))))
         ordR (there m)   = hypᵣ m
 
-    inst₀ : Q₁ ⊩ᴴ Q [ η₀ ]
-    inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR instᵉ instᵈ
+    inst₀ : Unq Q → Q₁ ⊩ᴴ Q [ η₀ ]
+    inst₀ u = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR instᵉ instᵈ (λ m → unq-qhyps u m) (λ t → t)
       where
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₁ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
         ordR {ρ} m with which P m
@@ -1620,7 +1625,7 @@ unitʳ {Θ} C Q i {x₀ , c₀} m₀ f₀@(lst , _ , _) =
                  (keepʳ (λ {x} {x'} mk → transᵣ (lowʳ x)
                                            (transᵣ (hypᵣ (there (kept⊆ P mk))) (raiseʳ x'))))
                  (keepᵉ (λ {x} {x'} m → transₑ (lowᵉ x) (transₑ (hypₑ m) (raiseᵉ x'))))
-                 (λ δ h → keepᵈ δ (keep-disj δ h))
+                 (λ δ h → keepᵈ δ (keep-disj δ h)) (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
 
 -- An effect unknown forced by an ordering of effects, or by an ordering
 -- of resources through its image
@@ -1630,7 +1635,9 @@ data Forcedᵉ {Θ} (Q : Hyps Θ) (i : EVar Θ) : Set where
   byImg : ∀ {a} → a ∈ ordᵣ Q → Vⁱ.Forces {Θ} i a → Forcedᵉ Q i
 
 unitᵉ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ) → Forcedᵉ Q i → Elim C Q
-unitᵉ {Θ} C Q i w = forced C Q Q⁺ η₀ lowg hig (λ β → refl) Q₁ inst₀ keep⁺ (keep₁ w)
+unitᵉ {Θ} C Q i w =
+  forced C Q Q⁺ η₀ lowg hig (λ β → refl) Q₁ inst₀ (λ u → unq (no-qhyps u) (no-truths u)) keep⁺
+         (keep₁ w)
   where
     η₀ : Subst Θ Θ
     η₀ = updᵉ i ûₑ
@@ -1673,14 +1680,14 @@ unitᵉ {Θ} C Q i w = forced C Q Q⁺ η₀ lowg hig (λ β → refl) Q₁ inst
     -- ordering of effects, or by reflection at the instance
     keep₁ : Forcedᵉ Q i → Q ⊨ᴴ Q⁺
     keep₁ (byEff {x , c} m₀ f₀) =
-      ⊩ᴴ-⊨ᴴ (mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) hypᵣ ordE hyp-ok₀)
+      ⊩ᴴ-⊨ᴴ (mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) hypᵣ ordE hyp-ok₀ (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t))
       where
         ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q⁺ → Q ⊩ ε ≾̂ₑ ε'
         ordE (here refl) =
           transₑ (eqₑ (≡̂ₑ-sym (lhsₑ {x} f₀))) (transₑ (hypₑ m₀) (⊩ᴴ-≾ₑ ∅ᴴ-⊩ᴴ (proj₂ (proj₂ f₀))))
         ordE (there m)   = hypₑ m
     keep₁ (byImg {x , c} m₀ f₀@((_ , refl-u , _) , _ , below-u)) δ h =
-      mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) ordE (⊩disj h)
+      mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) ordE (⊩disj h) (⊩qhyps h) (⊩truths h)
       where
         image : ∅ᴴ ⊩ ∣ sE δ i ∣̂ᵉ ≾̂ᵣ ûᵣ
         image = transᵣ (eqᵣ (≡̂ᵣ-subst δ (≡̂ᵣ-sym (lhsᵣ {x} f₀))))
@@ -1690,8 +1697,8 @@ unitᵉ {Θ} C Q i w = forced C Q Q⁺ η₀ lowg hig (λ β → refl) Q₁ inst
         ordE (here refl) = val-≾ₑ⁻ (refl-u _ (val-≾ᵣ image))
         ordE (there m)   = ⊩ordₑ h m
 
-    inst₀ : Q₁ ⊩ᴴ Q [ η₀ ]
-    inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE instᵈ
+    inst₀ : Unq Q → Q₁ ⊩ᴴ Q [ η₀ ]
+    inst₀ u = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE instᵈ (λ m → unq-qhyps u m) (λ t → t)
       where
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₁ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
         ordR {ρ} m with which Pᵣ m
@@ -1716,7 +1723,7 @@ unitᵉ {Θ} C Q i w = forced C Q Q⁺ η₀ lowg hig (λ β → refl) Q₁ inst
                  (keepʳ (λ {x} {x'} mk → transᵣ (lowʳ x) (transᵣ (hypᵣ (kept⊆ Pᵣ mk)) (raiseʳ x'))))
                  (keepᵉ (λ {x} {x'} mk → transₑ (lowᵉ x)
                                            (transₑ (hypₑ (there (kept⊆ Pₑ mk))) (raiseᵉ x'))))
-                 (λ δ h → keepᵈ δ (keep-disj δ h))
+                 (λ δ h → keepᵈ δ (keep-disj δ h)) (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
 
 -- The searches: the first forcing ordering
 

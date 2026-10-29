@@ -4,9 +4,9 @@
 -- Generation runs at `Θ` extended by a type variable and an    --
 -- effect variable for the result type and effect, with the     --
 -- context and the term weakened into that scope (`C[_,_]`). A  --
--- solution of that constraint, with its residual hypotheses    --
--- and obligations, is principal (`PrincipalSolution Γ M`) when --
--- every instance meeting the residue types `M` (`instantiate`) --
+-- solution of that constraint, with its residual hypotheses,   --
+-- is principal (`PrincipalSolution Γ M`) when every instance   --
+-- meeting the residue types `M` (`instantiate`)                --
 -- and every typing of `M` factors through it at each closed    --
 -- instance, with type and effect bounded by the principal ones --
 -- (`factor`). A typing of `M` is a derivation erasing to an    --
@@ -16,7 +16,7 @@
 -- scope of its own: every instance types `M` (`instantiate`),  --
 -- and every typing of `M` factors through it at each closed    --
 -- instance (`factor`). `M` is typable (`Typable`) exactly when --
--- the scheme's conditions are satisfiable (`typable-⇔`).       --
+-- the scheme's hypotheses are satisfiable (`typable-⇔`).       --
 -- `Inference Γ M` is the outcome of inference, `Check Γ M`     --
 -- that of a check that exhibits a closed instance.             --
 --                                                              --
@@ -58,7 +58,7 @@ open import OpenCalculus.Syntax.Subst    S
 open import OpenCalculus.Hypotheses     S
 open import OpenCalculus.Typing S
 open import OpenCalculus.Hypotheses.Instances S
-  using (_⊩_∣_[_]; _⊨_∣_; Satisfiable; Satisfiable-∅)
+  using (_⊨_; ⊨⇒⊩ᴴ; Satisfiable; Satisfiable-∅)
 
 open import OpenCalculus.Syntax.Raw       S
 open import OpenCalculus.Syntax.Raw.Subst S
@@ -116,18 +116,17 @@ record PrincipalSolution {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n)
   constructor mkPrincipalSolution
   field
 
-    -- the principal solution, with its residue and obligations
+    -- the principal solution, with its residue
 
     Θ⁺ : Scope
     σ⁺ : Subst (Θ +ty +e) Θ⁺
     Q⁺ : Hyps Θ⁺
-    R⁺ : Obligs Θ⁺
 
     -- every instance meeting them types `M`, at the principal type
     -- `X̂ Θ [ σ⁺ ]ᵛ` and effect `t̂ Θ [ σ⁺ ]ᵉ`
 
     instantiate : ∀ {Θ''} → (δ : Subst Θ⁺ Θ'') → (Q : Hyps Θ'')
-                → Q ⊩ Q⁺ ∣ R⁺ [ δ ]
+                → Q ⊩ᴴ Q⁺ [ δ ]
                 -------------------------------------------------------
                 → Σ[ D ∈ (Q ∣ Γ₊ Γ [ σ⁺ ⨟ˢ δ ]ᶜᵗˣ
                             ⊢C⦂ (X̂ Θ [ σ⁺ ⨟ˢ δ ]ᵛ) ‼ (t̂ Θ [ σ⁺ ⨟ˢ δ ]ᵉ)) ]
@@ -142,26 +141,26 @@ record PrincipalSolution {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n)
         → ⌊ D ⌋ᶜ ≡ M₊ M [ σ ]ᴿᶜ
         → Q ∣ A₀ <:̂ᵛ X̂ Θ [ σ ]ᵛ
         → Q ⊩ ε₀ ≾̂ₑ t̂ Θ [ σ ]ᵉ
-        → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ []
+        → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q
         ----------------------------------------------------
         → Σ[ δ ∈ Subst Θ⁺ ∅ˢ ]
-            (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺ ∣ R⁺))
+            (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺))
 
 open PrincipalSolution
 
 principalSolution : (sv : Solver)
           → ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-          → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
-          → Solver.solve sv C[ Γ , M ] ≡ solved (Θ' , σ , Q , R)
+          → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'}
+          → Solver.solve sv C[ Γ , M ] ≡ solved (Θ' , σ , Q)
           ------------------------------------------------
           → PrincipalSolution Γ M
 
-principalSolution sv {Θ} Γ M {Θ'} {σ} {Q} {R} eq = mkPrincipalSolution
-  Θ' σ Q R
-  (λ δ Q' h → soundC (Γ₊ Γ) (M₊ M) (X̂ Θ) (t̂ Θ) (sat δ Q' h))
+principalSolution sv {Θ} Γ M {Θ'} {σ} {Q} eq = mkPrincipalSolution
+  Θ' σ Q
+  (λ δ Q' h → soundC (Γ₊ Γ) (M₊ M) (X̂ Θ) (t̂ Θ) (⊨-mono h C[ Γ , M ] sat))
   (λ σ' Q' D e st le δ₀ h →
-     Solver.solve-principal sv C[ Γ , M ] eq σ' Q' []
-       (⊨-∣ C[ Γ , M ] (completeC (Γ₊ Γ) (X̂ Θ) (t̂ Θ) (M₊ M) D e refl st le)) δ₀ h)
+     Solver.solve-principal sv C[ Γ , M ] eq σ' Q'
+       (completeC (Γ₊ Γ) (X̂ Θ) (t̂ Θ) (M₊ M) D e refl st le) δ₀ h)
   where
     sat = Solver.solve-sound sv C[ Γ , M ] eq
 
@@ -207,13 +206,13 @@ principal-inst : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalS
                → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
                → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ A₀ ‼ ε₀)
                → ⌊ D ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
-               → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ []
+               → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q
                ----------------------------------------------------------
                → Σ[ δ ∈ Subst (Θ⁺ p) ∅ˢ ]
                    ((wk₊ ⨟ˢ σ⁺ p ⨟ˢ δ ≐ˢ σ₀ ⨟ˢ δ₀)
                      × (X̂ _ [ σ⁺ p ]ᵛ [ δ ]ᵛ ≡ A₀ [ δ₀ ]ᵛ)
                      × (∅ᴴ ⊩ (t̂ _ [ σ⁺ p ]ᵉ [ δ ]ᵉ) ≾̂ₑ ε₀ [ δ₀ ]ᵉ)
-                     × (δ ⊨ Q⁺ p ∣ R⁺ p))
+                     × (δ ⊨ Q⁺ p))
 
 principal-inst {Θ} {Γ = Γ} {M = M} p {Θ''} σ₀ Q {A₀} {ε₀} D e δ₀ h₀ =
   δ , ceq , aeq , subst (λ x → ∅ᴴ ⊩ x ≾̂ₑ ε₀ [ δ₀ ]ᵉ) (sym teq) ⊩≾̂ₑ-refl , h
@@ -242,13 +241,12 @@ principal-inst {Θ} {Γ = Γ} {M = M} p {Θ''} σ₀ Q {A₀} {ε₀} D e δ₀ 
     teq = trans ([⨟]ᵉ (t̂ Θ) (σ⁺ p) δ) ([≐]ᵉ tri (t̂ Θ))
 
 -- A principal type scheme of `M` in `Γ`: an instantiation `σ̃` of the
--- program's variables, hypotheses `Q̃`, obligations `R̃` and a type
--- `X̃` over a scope `Θ̃`, the scheme `∀ Θ̃. Q̃ ∧ R̃ ⇒ X̃`. Every instance
--- meeting `Q̃` and `R̃` types `M` (`instantiate`), and every typing of
--- `M` factors through it at each closed instance satisfying its
--- hypotheses (`factor`): the instantiations agree, the factoring
--- instance satisfies `Q̃` and `R̃`, and there `X̃` is a subtype of the
--- typing's type. Entailment is by closed instances, as in HM(X)
+-- program's variables, hypotheses `Q̃` and a type `X̃` over a scope
+-- `Θ̃`, the scheme `∀ Θ̃. Q̃ ⇒ X̃`. Every instance entailing `Q̃` types
+-- `M` (`instantiate`), and every typing of `M` factors through it at
+-- each closed instance satisfying its hypotheses (`factor`): the
+-- instantiations agree, the factoring instance satisfies `Q̃`, and
+-- there `X̃` is a subtype of the typing's type. Entailment is by closed instances, as in HM(X)
 -- (Odersky, Sulzmann and Wehr, TAPOS 1999).
 
 record PrincipalScheme {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
@@ -257,11 +255,10 @@ record PrincipalScheme {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) :
     Θ̃ : Scope
     σ̃ : Subst Θ Θ̃
     Q̃ : Hyps Θ̃
-    R̃ : Obligs Θ̃
     X̃ : OCType Θ̃
 
     instantiate : ∀ {Θ''} → (δ : Subst Θ̃ Θ'') → (Q : Hyps Θ'')
-                → Q ⊩ Q̃ ∣ R̃ [ δ ]
+                → Q ⊩ᴴ Q̃ [ δ ]
                 --------------------------------------------------
                 → Σ[ D ∈ (Q ∣ Γ [ σ̃ ⨟ˢ δ ]ᶜᵗˣ ⊢C⦂ X̃ [ δ ]ᶜ) ]
                     (⌊ D ⌋ᶜ ≡ M [ σ̃ ⨟ˢ δ ]ᴿᶜ)
@@ -269,11 +266,11 @@ record PrincipalScheme {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) :
     factor : ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q₀ : Hyps Θ'') → {C₀ : OCType Θ''}
            → (D₀ : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ C₀)
            → ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
-           → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀ ∣ []
+           → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀
            ---------------------------------------------------
            → Σ[ δ ∈ Subst Θ̃ ∅ˢ ]
                ((σ̃ ⨟ˢ δ ≐ˢ σ₀ ⨟ˢ δ₀)
-                 × (δ ⊨ Q̃ ∣ R̃)
+                 × (δ ⊨ Q̃)
                  × (∅ᴴ ∣ X̃ [ δ ]ᶜ <:̂ᶜ C₀ [ δ₀ ]ᶜ))
 
 open PrincipalScheme
@@ -290,31 +287,31 @@ record Typable {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set whe
     C₀     : OCType Θ₀
     D₀     : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ C₀
     erases : ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
-    sat    : Satisfiable Q₀ []
+    sat    : Satisfiable Q₀
 
--- `M` is typable exactly when the conditions of its principal type
+-- `M` is typable exactly when the hypotheses of its principal type
 -- scheme are satisfiable: a satisfying instance instantiates the scheme,
--- and a typing factors through it.
+-- the truths entailing its hypotheses there, and a typing factors
+-- through it.
 
 typable-⇔ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalScheme Γ M)
-          → Typable Γ M ⇔ Satisfiable (Q̃ p) (R̃ p)
+          → Typable Γ M ⇔ Satisfiable (Q̃ p)
 typable-⇔ {Γ = Γ} {M} p = mk⇔ to from
   where
-    to : Typable Γ M → Satisfiable (Q̃ p) (R̃ p)
+    to : Typable Γ M → Satisfiable (Q̃ p)
     to (typable Θ₀ σ₀ Q₀ C₀ D₀ e (δ₀ , h₀)) with factor p σ₀ Q₀ D₀ e δ₀ h₀
     ... | δ , _ , h , _ = δ , h
 
-    from : Satisfiable (Q̃ p) (R̃ p) → Typable Γ M
-    from (δ , h) with instantiate p δ ∅ᴴ h
-    ... | D , e = typable ∅ˢ (σ̃ p ⨟ˢ δ) ∅ᴴ (X̃ p [ δ ]ᶜ) D e (idˢ , ⊩ᴴ-∅ , All.[])
+    from : Satisfiable (Q̃ p) → Typable Γ M
+    from (δ , h) with instantiate p δ ⊤ᴴ (⊨⇒⊩ᴴ h)
+    ... | D , e = typable ∅ˢ (σ̃ p ⨟ˢ δ) ⊤ᴴ (X̃ p [ δ ]ᶜ) D e (idˢ , ⊩ᴵ-⊤)
 
--- A term whose principal type scheme has no hypotheses and no
--- obligations is typable
+-- A term whose principal type scheme has no hypotheses is typable
 
 typable-unconditional : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalScheme Γ M)
-                       → Q̃ p ≡ ∅ᴴ → R̃ p ≡ [] → Typable Γ M
-typable-unconditional p eq-Q eq-R =
-  Equivalence.from (typable-⇔ p) (subst₂ Satisfiable (sym eq-Q) (sym eq-R) Satisfiable-∅)
+                       → Q̃ p ≡ ∅ᴴ → Typable Γ M
+typable-unconditional p eq-Q =
+  Equivalence.from (typable-⇔ p) (subst Satisfiable (sym eq-Q) Satisfiable-∅)
 
 -- The outcome of inference: a principal type scheme, a refutation, or stuck
 
@@ -324,11 +321,11 @@ data Inference {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set whe
   stuck     : Inference Γ M
 
 -- The outcome of a check of a closed program: a principal type scheme
--- with a closed instance of its conditions, a refutation, a principal
+-- with a closed instance of its hypotheses, a refutation, a principal
 -- type scheme for which no instance was found, or stuck
 
 data Check {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
-  established   : (p : PrincipalScheme Γ M) → Satisfiable (Q̃ p) (R̃ p) → Check Γ M
+  established   : (p : PrincipalScheme Γ M) → Satisfiable (Q̃ p) → Check Γ M
   untypable     : Check Γ M
   unestablished : PrincipalScheme Γ M → Check Γ M
   stuck         : Check Γ M

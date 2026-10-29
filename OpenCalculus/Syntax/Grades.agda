@@ -243,3 +243,18 @@ _≡ʳ?_ : ∀ {Θ} → (ρ ρ' : RExp Θ) → Maybe (ρ ≡ ρ')
 ρ ≡ʳ? ρ' with ρ ≟ʳ ρ'
 ... | yes p = ≅ʳ⇒≡? p
 ... | no _  = nothing
+
+-- Values of closed grade expressions
+
+valᵉ : EExp ∅ˢ → E
+valᵉ (evar ())
+valᵉ (econst c) = c
+valᵉ (ε ·̂ₑ ε')  = valᵉ ε ·ₑ valᵉ ε'
+valᵉ (ε ⊔̂ₑ ε')  = valᵉ ε ⊔ₑ valᵉ ε'
+
+valʳ : RExp ∅ˢ → R
+valʳ (rvar ())
+valʳ (rconst c) = c
+valʳ (ρ ·̂ᵣ ρ')  = valʳ ρ ·ᵣ valʳ ρ'
+valʳ (ρ ⊔̂ᵣ ρ')  = valʳ ρ ⊔ᵣ valʳ ρ'
+valʳ ∣ ε ∣̂ᵉ     = mapᵉ (valᵉ ε)
