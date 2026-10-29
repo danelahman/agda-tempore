@@ -23,7 +23,9 @@
 -- Eternality, subtyping and the var-rule disjunction (`_⊩ᴱ_`,  --
 -- `_∣_<:̂ᵛ_`, `VarOK`) are inductive, with premises in grade    --
 -- entailment. A set entails a quantified ordering when it      --
--- entails its orderings at fresh rigids (`_⊩ᴼ_[_]`: rule Gen). --
+-- entails its orderings at fresh rigids (`_⊩ᴼ_[_]`: rule Gen), --
+-- which is semantic consequence for quantified orderings       --
+-- (`⊩ᴼ⇒⊨ᴼ`, `⊨ᴼ⇒⊩ᴼ`).                                          --
 -- Substitution is stable along an instance map (`_⊩ᴵ_[_]`, a   --
 -- quantified hypothesis at every instance of its rigids),      --
 -- which entailment gives (`⊩ᴴ⇒ᴵ`); an instance map carries     --
@@ -2002,3 +2004,76 @@ Q ⊩ ε ≡̂ₑ ε' = (Q ⊩ ε ≾̂ₑ ε') × (Q ⊩ ε' ≾̂ₑ ε)
 
 ⊩≡̂ₑ-∅ : ∀ {Θ} {ε ε' : EExp Θ} → ∅ᴴ ⊩ ε ≡̂ₑ ε' → ε ≡̂ₑ ε'
 ⊩≡̂ₑ-∅ (p , q) = ≡̂ₑ-antisym-∅ p q
+
+-- Rule Gen is semantic consequence for quantified orderings: a set
+-- entails a quantified ordering along `σ` exactly when the ordering
+-- holds at every closed instance of its rigids, after `σ`, at every
+-- closed instance satisfying the grade part of the set
+
+infix 4 _⊨ᴼ_[_]
+
+_⊨ᴼ_[_] : ∀ {Θ Ξ} → Hyps Ξ → QOrd Θ → Subst Θ Ξ → Set
+_⊨ᴼ_[_] {Ξ = Ξ} Q O σ = (δ : Subst Ξ ∅ˢ) → δ ⊨ᵍ Q
+                      → (es : Vec (EExp ∅ˢ) (rigids O)) → ((σ ⨟ˢ δ) ,ᵉⁿ es) ⊨ᵒ body O
+
+⊩ᴼ⇒⊨ᴼ : ∀ {Θ Ξ} {Q : Hyps Ξ} {σ : Subst Θ Ξ} → (O : QOrd Θ) → Q ⊩ᴼ O [ σ ] → Q ⊨ᴼ O [ σ ]
+⊩ᴼ⇒⊨ᴼ {Θ} {Ξ} {Q} {σ} O h δ hδ es = mk⊨ᵒ r e
+  where
+    k   = rigids O
+    es' = mapᵛ (_[ from∅ {Ξ} ]ᵉ) es
+
+    h' : ((idˢ ,ᵉⁿ es') ⨟ˢ δ) ⊨ᵍ wkᵉⁿ-H k Q
+    h' = ⊨ᵍ-⨟ (⊩ᴵ-,ᵉⁿ ⊩ᴵ-refl es') hδ
+
+    p : ((σ ↑ᵉⁿ k) ⨟ˢ ((idˢ ,ᵉⁿ es') ⨟ˢ δ)) ≐ˢ ((σ ⨟ˢ δ) ,ᵉⁿ es)
+    p = ≐ˢ-trans (⨟-congʳ (σ ↑ᵉⁿ k)
+                   (subst (λ v → ((idˢ ,ᵉⁿ es') ⨟ˢ δ) ≐ˢ (δ ,ᵉⁿ v)) (closed-backs δ es)
+                          (inst-⨟ es' δ)))
+                 (↑ᵉⁿ-,ᵉⁿ σ δ k es)
+
+    r : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors (body O)
+      → valʳ (ρ [ (σ ⨟ˢ δ) ,ᵉⁿ es ]ʳ) ≾ᵣ valʳ (ρ' [ (σ ⨟ˢ δ) ,ᵉⁿ es ]ʳ)
+    r {ρ} {ρ'} mφ =
+      subst₂ _≾ᵣ_ (cong valʳ (trans ([⨟]ʳ ρ (σ ↑ᵉⁿ k) _) ([≐]ʳ p ρ)))
+                  (cong valʳ (trans ([⨟]ʳ ρ' (σ ↑ᵉⁿ k) _) ([≐]ʳ p ρ')))
+             (runᵣ (⊩ors h mφ) ((idˢ ,ᵉⁿ es') ⨟ˢ δ) h')
+
+    e : ∀ {ε ε'} → (ε , ε') ∈ oes (body O)
+      → valᵉ (ε [ (σ ⨟ˢ δ) ,ᵉⁿ es ]ᵉ) ≾ₑ valᵉ (ε' [ (σ ⨟ˢ δ) ,ᵉⁿ es ]ᵉ)
+    e {ε} {ε'} mφ =
+      subst₂ _≾ₑ_ (cong valᵉ (trans ([⨟]ᵉ ε (σ ↑ᵉⁿ k) _) ([≐]ᵉ p ε)))
+                  (cong valᵉ (trans ([⨟]ᵉ ε' (σ ↑ᵉⁿ k) _) ([≐]ᵉ p ε')))
+             (runₑ (⊩oes h mφ) ((idˢ ,ᵉⁿ es') ⨟ˢ δ) h')
+
+⊨ᴼ⇒⊩ᴼ : ∀ {Θ Ξ} {Q : Hyps Ξ} {σ : Subst Θ Ξ} → (O : QOrd Θ) → Q ⊨ᴼ O [ σ ] → Q ⊩ᴼ O [ σ ]
+⊨ᴼ⇒⊩ᴼ {Θ} {Ξ} {Q} {σ} O H = mk⊩ᵒ r e
+  where
+    k = rigids O
+
+    -- a closed instance of the scope under the rigids is one of the
+    -- scope, extended by one of the rigids
+    δ₀ : Subst (Ξ +eⁿ k) ∅ˢ → Subst Ξ ∅ˢ
+    δ₀ δ = wkˢⁿ k ⨟ˢ δ
+
+    es : Subst (Ξ +eⁿ k) ∅ˢ → Vec (EExp ∅ˢ) k
+    es δ = mapᵛ (_[ δ ]ᵉ) (varsⁿ k)
+
+    s : (δ : Subst (Ξ +eⁿ k) ∅ˢ) → δ ⊨ᵍ wkᵉⁿ-H k Q → ((σ ⨟ˢ δ₀ δ) ,ᵉⁿ es δ) ⊨ᵒ body O
+    s δ h = H (δ₀ δ) (⊨ᵍ-⨟ (↪⇒⊩ᴵ (↪-wkᵉⁿ k)) h) (es δ)
+
+    p : (δ : Subst (Ξ +eⁿ k) ∅ˢ) → ((σ ↑ᵉⁿ k) ⨟ˢ δ) ≐ˢ ((σ ⨟ˢ δ₀ δ) ,ᵉⁿ es δ)
+    p δ = ≐ˢ-trans (⨟-congʳ (σ ↑ᵉⁿ k) (wkˢⁿ-split k δ)) (↑ᵉⁿ-,ᵉⁿ σ (δ₀ δ) k (es δ))
+
+    r : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors (body O)
+      → wkᵉⁿ-H k Q ⊩ ρ [ σ ↑ᵉⁿ k ]ʳ ≾̂ᵣ ρ' [ σ ↑ᵉⁿ k ]ʳ
+    r {ρ} {ρ'} mφ = semᵣ λ δ h →
+      subst₂ _≾ᵣ_ (cong valʳ (sym (trans ([⨟]ʳ ρ (σ ↑ᵉⁿ k) δ) ([≐]ʳ (p δ) ρ))))
+                  (cong valʳ (sym (trans ([⨟]ʳ ρ' (σ ↑ᵉⁿ k) δ) ([≐]ʳ (p δ) ρ'))))
+             (⊨ᵒʳ (s δ h) mφ)
+
+    e : ∀ {ε ε'} → (ε , ε') ∈ oes (body O)
+      → wkᵉⁿ-H k Q ⊩ ε [ σ ↑ᵉⁿ k ]ᵉ ≾̂ₑ ε' [ σ ↑ᵉⁿ k ]ᵉ
+    e {ε} {ε'} mφ = semₑ λ δ h →
+      subst₂ _≾ₑ_ (cong valᵉ (sym (trans ([⨟]ᵉ ε (σ ↑ᵉⁿ k) δ) ([≐]ᵉ (p δ) ε))))
+                  (cong valᵉ (sym (trans ([⨟]ᵉ ε' (σ ↑ᵉⁿ k) δ) ([≐]ᵉ (p δ) ε'))))
+             (⊨ᵒᵉ (s δ h) mφ)

@@ -114,6 +114,15 @@ wkˢⁿ-varsⁿ {Θ} (suc k) =
     step = ≐ˢ-trans (≐ˢ-sym (,ᵉ-⨟ (wkˢᵉ {Θ}) (evar (newᵉ {Θ})) (wkˢⁿ k)))
                     (≐ˢ-trans (⨟-congˡ (wkˢᵉ-,ᵉ-new {Θ}) (wkˢⁿ {Θ +e} k)) (⨟-idˡ (wkˢⁿ {Θ +e} k)))
 
+-- A substitution out of the scope under the rigids is its restriction
+-- to the scope, extended by the images of the rigids
+
+wkˢⁿ-split : ∀ {Θ Ψ} → (k : ℕ) → (δ : Subst (Θ +eⁿ k) Ψ)
+           → δ ≐ˢ ((wkˢⁿ k ⨟ˢ δ) ,ᵉⁿ mapᵛ (_[ δ ]ᵉ) (varsⁿ k))
+wkˢⁿ-split k δ =
+  ≐ˢ-trans (≐ˢ-sym (⨟-idˡ δ))
+  (≐ˢ-trans (≐ˢ-sym (⨟-congˡ (wkˢⁿ-varsⁿ k) δ)) (,ᵉⁿ-⨟ (wkˢⁿ k) (varsⁿ k) δ))
+
 wkˢⁿ-↑ᵉⁿ : ∀ {Θ Θ'} → (k : ℕ) → (σ : Subst Θ Θ')
          → (wkˢⁿ k ⨟ˢ (σ ↑ᵉⁿ k)) ≐ˢ (σ ⨟ˢ wkˢⁿ k)
 wkˢⁿ-↑ᵉⁿ zero    σ = ≐ˢ-trans (⨟-idˡ σ) (≐ˢ-sym (⨟-idʳ σ))

@@ -317,15 +317,11 @@ _⊨_ : ∀ {Θ} → Subst Θ ∅ˢ → Hyps Θ → Set
 ↑ᵉⁿ-⨟-closed : ∀ {Θ} → (k : ℕ) → (δ : Subst Θ ∅ˢ) → (δ' : Subst (∅ˢ +eⁿ k) ∅ˢ)
              → ((δ ↑ᵉⁿ k) ⨟ˢ δ') ≐ˢ (δ ,ᵉⁿ mapᵛ (_[ δ' ]ᵉ) (varsⁿ k))
 ↑ᵉⁿ-⨟-closed k δ δ' =
-  ≐ˢ-trans (⨟-congʳ (δ ↑ᵉⁿ k) split)
+  ≐ˢ-trans (⨟-congʳ (δ ↑ᵉⁿ k) (wkˢⁿ-split k δ'))
   (≐ˢ-trans (↑ᵉⁿ-,ᵉⁿ δ (wkˢⁿ k ⨟ˢ δ') k es)
             (≐ˢ-,ᵉⁿ (≐ˢ-trans (⨟-congʳ δ (mk≐ˢ (λ ()) (λ ()) (λ ()))) (⨟-idʳ δ)) es))
   where
     es = mapᵛ (_[ δ' ]ᵉ) (varsⁿ k)
-
-    split : δ' ≐ˢ ((wkˢⁿ k ⨟ˢ δ') ,ᵉⁿ es)
-    split = ≐ˢ-trans (≐ˢ-sym (⨟-idˡ δ'))
-            (≐ˢ-trans (≐ˢ-sym (⨟-congˡ (wkˢⁿ-varsⁿ k) δ')) (,ᵉⁿ-⨟ (wkˢⁿ k) (varsⁿ k) δ'))
 
 -- At a satisfying instance no hypotheses entail the set: a quantified
 -- hypothesis holds at every instance of its rigids
