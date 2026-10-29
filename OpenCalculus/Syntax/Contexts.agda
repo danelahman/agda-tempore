@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- Program contexts, variables and contexts of the open        --
+-- Program contexts, variables and contexts of the open         --
 -- calculus                                                     --
 --                                                              --
 -- A program context binds the top-level definitions to closed  --

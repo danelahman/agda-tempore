@@ -17,7 +17,7 @@
 -- `⌞ δ ⌟ˢ`, with `⌞ A [ δ ]ᵛ ⌟ᵛ ≡ ⟦ A ⟧ᵛ ⌞ δ ⌟ˢ` for grades,   --
 -- types, computation types and contexts (`⌞[]⌟ᵛ` and the       --
 -- like), and, when no handler type is among its types,         --
--- `δ ⊨ Q` exactly when `⌞ δ ⌟ˢ ⊨ᴰ Q` (`⊨⇔⊨ᴰ`).                --
+-- `δ ⊨ Q` exactly when `⌞ δ ⌟ˢ ⊨ᴰ Q` (`⊨⇔⊨ᴰ`).                 --
 -- Every declarative instance `σ` arises so, from `⌜ σ ⌝ˢ`,     --
 -- which sends each variable to a constant: `⌞ ⌜ σ ⌝ˢ ⌟ˢ` is    --
 -- `σ` pointwise (`⌞⌜_⌝ˢ⌟`), and satisfies what `σ` satisfies   --

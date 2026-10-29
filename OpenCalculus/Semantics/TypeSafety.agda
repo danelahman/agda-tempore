@@ -7,7 +7,7 @@
 -- steps (`progress`). A step extends the state by passages of  --
 -- grade `δₛ e`, and an extension `Σ'` of `Σ` types the new     --
 -- state, the new term being typed at `X' ‼ ε'` with `X' <: X`  --
--- and `δₛ e · ∣ ε' ∣ ≾ ∣ ε ∣` (`preservation`). A handled       --
+-- and `δₛ e · ∣ ε' ∣ ≾ ∣ ε ∣` (`preservation`). A handled      --
 -- operation call runs its clause at the grade `ε_M · ε'` of    --
 -- the rest of the handled computation followed by the return   --
 -- clause.                                                      --

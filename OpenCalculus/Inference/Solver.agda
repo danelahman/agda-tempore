@@ -5,7 +5,7 @@
 -- `⋀ᵒᵖ` are infinitary, and `∀ᵉ` requires an eigenvariable     --
 -- treatment.                                                   --
 --                                                              --
--- A solution is a substitution together with a residual      --
+-- A solution is a substitution together with a residual        --
 -- hypothesis set, itself a context of the open judgement, its  --
 -- quantified hypotheses the deferred rigid conditions; the     --
 -- substitution solves the constraint under it. Principality is --

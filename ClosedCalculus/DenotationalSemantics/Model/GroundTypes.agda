@@ -3,9 +3,9 @@
 --                                                                    --
 -- A `GroundTypes` structure supplies an interpretation `⟦_⟧ᵇ` of the  --
 -- base types as objects; the interpretation `⟦_⟧ᵍ` of ground types is  --
--- then determined by the structure of the model (unit, booleans,      --
--- naturals, empty, products, coproducts, lists) and the box `[ ρ ]ᵒ`   --
--- (for the ground box modality `[ ρ ]ᵍ`).                              --
+-- then determined by the structure of the model (unit, booleans,     --
+-- naturals, empty, products, coproducts, lists) and the box `[ ρ ]ᵒ` --
+-- (for the ground box modality `[ ρ ]ᵍ`).                            --
 ------------------------------------------------------------------------
 
 open import Language.BaseTypes

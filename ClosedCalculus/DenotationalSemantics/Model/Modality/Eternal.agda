@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 -- Objects interpreting *eternal* types.                                --
 --                                                                      --
--- An eternal type (`Language.Types.Eternal`) is available at any         --
+-- An eternal type (`Language.Types.Eternal`) is available at any       --
 -- grade, not only below the unit `u`; concretely (`Example.PSh`)       --
 -- these are the constant presheaves.                                   --
 --                                                                      --
