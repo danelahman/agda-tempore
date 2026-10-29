@@ -385,13 +385,13 @@ NoHandlerTypeˢ : ∀ {Θ} → Subst Θ ∅ˢ → Set
 NoHandlerTypeˢ δ = ∀ α → NoHandlerTypeᵛ (sTy δ α)
 
 ⊨→⊨ᴰ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → δ ⊨ Q → ⌞ δ ⌟ˢ ⊨ᴰ Q
-⊨→⊨ᴰ h = sound-⊩ᴴ (⊨⇒⊩ᴴ h) ⊨ᴰ-⊤
+⊨→⊨ᴰ h = sound-⊩ᴴ (⊨⇒⊩ᴴ h) ⊨ᴰ-∅
 
 -- a declaratively satisfying instance satisfies, a quantified
 -- hypothesis at each closed instance of its rigids, their values
 
 ⊨ᴰ→⊨ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → NoHandlerTypeˢ δ → ⌞ δ ⌟ˢ ⊨ᴰ Q → δ ⊨ Q
-⊨ᴰ→⊨ {Θ} {Q} {δ} h s = mk⊩ᴵ ets' subᵥ' ordᵣ' ordₑ' disj' qhyps' (λ _ → tt)
+⊨ᴰ→⊨ {Θ} {Q} {δ} h s = mk⊩ᴵ ets' subᵥ' ordᵣ' ordₑ' disj' qhyps'
   where
     eqʳ : (ρ : RExp Θ) → valʳ (ρ [ δ ]ʳ) ≡ ⟦ ρ ⟧ʳ ⌞ δ ⌟ˢ
     eqʳ ρ = trans (sym (⌞⌟-valʳ (ρ [ δ ]ʳ))) (⌞[]⌟ʳ δ ρ)
@@ -399,24 +399,24 @@ NoHandlerTypeˢ δ = ∀ α → NoHandlerTypeᵛ (sTy δ α)
     eqᵉ : (ε : EExp Θ) → valᵉ (ε [ δ ]ᵉ) ≡ ⟦ ε ⟧ᵉ ⌞ δ ⌟ˢ
     eqᵉ ε = trans (sym (⌞⌟-valᵉ (ε [ δ ]ᵉ))) (⌞[]⌟ᵉ δ ε)
 
-    ets' : ∀ {α} → α ∈ ets Q → ⊤ᴴ ⊩ᴱ sTy δ α
+    ets' : ∀ {α} → α ∈ ets Q → ∅ᴴ ⊩ᴱ sTy δ α
     ets' {α} m = ∅⇒⊩ᴱ (⌞⌟-⊩ᴱ (sTy δ α) (⊨ets s m))
 
-    subᵥ' : ∀ {α β} → (α , β) ∈ subᵥ Q → ⊤ᴴ ∣ sTy δ α <:̂ᵛ sTy δ β
+    subᵥ' : ∀ {α β} → (α , β) ∈ subᵥ Q → ∅ᴴ ∣ sTy δ α <:̂ᵛ sTy δ β
     subᵥ' {α} {β} m = ∅⇒<:̂ᵛ (⌞⌟-<:ᵛ (sTy δ α) (sTy δ β) (h α) (h β) (⊨subᵥ s m))
 
-    ordᵣ' : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → ⊤ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
+    ordᵣ' : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → ∅ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
     ordᵣ' {ρ} {ρ'} m = val-≾ᵣ⁻ (subst₂ _≾ᵣ_ (sym (eqʳ ρ)) (sym (eqʳ ρ')) (⊨ordᵣ s m))
 
-    ordₑ' : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → ⊤ᴴ ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
+    ordₑ' : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → ∅ᴴ ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
     ordₑ' {ε} {ε'} m = val-≾ₑ⁻ (subst₂ _≾ₑ_ (sym (eqᵉ ε)) (sym (eqᵉ ε')) (⊨ordₑ s m))
 
-    disj' : ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK ⊤ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+    disj' : ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
     disj' {A} {ρ} m with ⊨disj s m
     ... | inj₁ et = et-ok (∅⇒⊩ᴱ (⌞⌟-⊩ᴱ (A [ δ ]ᵛ) (subst Eternal (sym (⌞[]⌟ᵛ δ A)) et)))
     ... | inj₂ le = ≾ᵘ-ok (val-≾ᵣ⁻ (subst (_≾ᵣ uᵣ) (sym (eqʳ ρ)) le))
 
-    qhyps' : ∀ {O} → O ∈ qhyps Q → (es : Vec (EExp ∅ˢ) (rigids O)) → ⊤ᴴ ⊩ᵒ body O [ δ ,ᵉⁿ es ]
+    qhyps' : ∀ {O} → O ∈ qhyps Q → (es : Vec (EExp ∅ˢ) (rigids O)) → ∅ᴴ ⊩ᵒ body O [ δ ,ᵉⁿ es ]
     qhyps' {O} m es = mk⊩ᵒ r e
       where
         cs = mapᵛ (λ x → ⟦ x ⟧ᵉ ∅ᴰ) es
@@ -430,10 +430,10 @@ NoHandlerTypeˢ δ = ∀ α → NoHandlerTypeᵛ (sTy δ α)
         valeqᵉ x = trans (sym (⌞⌟-valᵉ (x [ δ ,ᵉⁿ es ]ᵉ)))
                          (trans (⟦[]⟧ᵉ (δ ,ᵉⁿ es) ∅ᴰ x) (⟦≗⟧ᵉ (,ᵉⁿ-⨟ᴰ δ es ∅ᴰ) x))
 
-        r : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors (body O) → ⊤ᴴ ⊩ ρ [ δ ,ᵉⁿ es ]ʳ ≾̂ᵣ ρ' [ δ ,ᵉⁿ es ]ʳ
+        r : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors (body O) → ∅ᴴ ⊩ ρ [ δ ,ᵉⁿ es ]ʳ ≾̂ᵣ ρ' [ δ ,ᵉⁿ es ]ʳ
         r {ρ} {ρ'} mφ = val-≾ᵣ⁻ (subst₂ _≾ᵣ_ (sym (valeqʳ ρ)) (sym (valeqʳ ρ')) (⊨ors d mφ))
 
-        e : ∀ {ε ε'} → (ε , ε') ∈ oes (body O) → ⊤ᴴ ⊩ ε [ δ ,ᵉⁿ es ]ᵉ ≾̂ₑ ε' [ δ ,ᵉⁿ es ]ᵉ
+        e : ∀ {ε ε'} → (ε , ε') ∈ oes (body O) → ∅ᴴ ⊩ ε [ δ ,ᵉⁿ es ]ᵉ ≾̂ₑ ε' [ δ ,ᵉⁿ es ]ᵉ
         e {ε} {ε'} mφ = val-≾ₑ⁻ (subst₂ _≾ₑ_ (sym (valeqᵉ ε)) (sym (valeqᵉ ε')) (⊨oes d mφ))
 
 ⊨⇔⊨ᴰ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → NoHandlerTypeˢ δ

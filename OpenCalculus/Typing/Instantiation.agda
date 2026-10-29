@@ -6,7 +6,8 @@
 -- instantiated term, its annotations dropped, is typed at the  --
 -- instantiated context and type (`instantiation`). Handler     --
 -- clauses stay typed at their own grade variables: a quantified --
--- hypothesis, holding at every grade, is one of the truths.    --
+-- hypothesis, holding at every grade, is an instance of rule   --
+-- Truth, the theory of the grade system.                       --
 ------------------------------------------------------------------
 
 open import Data.List.Base using ([])

@@ -61,7 +61,6 @@ open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Nat.Base using (ℕ; _+_; _⊔_) renaming (zero to nzero; suc to nsuc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
-open import Data.Unit using (tt)
 
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable using (does; ⌊_⌋)
@@ -122,10 +121,10 @@ asResid-⊩ {Q' = Q'} {Q} {δ = δ} h g =
     ... | (α , β) , m₀ , refl = ⊩subᵥ h m₀
 
 ⊩-asResid : ∀ {Ψ Ψ'} {Q : Hyps Ψ} {D : List (QOrd Ψ)} {δ : Subst Ψ Ψ'}
-          → ⊤ᴴ ⊩ᴿ asResid Q D [ δ ] → ⊤ᴴ ⊩ᴴ Q [ δ ] × (∀ {E} → E ∈ D → ⊤ᴴ ⊩ᴼ E [ δ ])
+          → ∅ᴴ ⊩ᴿ asResid Q D [ δ ] → ∅ᴴ ⊩ᴴ Q [ δ ] × (∀ {E} → E ∈ D → ∅ᴴ ⊩ᴼ E [ δ ])
 ⊩-asResid {Q = Q} h =
   mk⊩ᴴ (λ m → ⊩ts h (∈-map⁺ tvar m)) (λ m → ⊩ss h (∈-map⁺ (mapᵖ tvar) m))
-       (⊩rs h) (⊩es h) (⊩ds h) (λ m → ⊩dfs h (∈-++⁺ˡ m)) (λ _ → tt) ,
+       (⊩rs h) (⊩es h) (⊩ds h) (λ m → ⊩dfs h (∈-++⁺ˡ m)) ,
   (λ m → ⊩dfs h (∈-++⁺ʳ (qhyps Q) m))
 
 asResid-atomic : ∀ {Ψ} {Q : Hyps Ψ} {D : List (QOrd Ψ)} → Atomicˢ (ss (asResid Q D))
@@ -161,18 +160,18 @@ entry δ = idˢ , mk≐ˢ (λ ()) (λ ()) (λ { zero → refl })
 -- the unit
 
 closedᴸ : ∀ {Ψ} {R : Resid Ψ} → (L : Localised (rigid {Ψ}) (R [ wkˢᵉ ]ᴿ)) → (δ : Subst Ψ ∅ˢ)
-        → ⊤ᴴ ⊩ᴿ R [ δ ] → ⊤ᴴ ⊩ᴿ lR L [ δ ↑ᵉ ⨟ˢ κ⟨ ûₑ ⟩ ]
+        → ∅ᴴ ⊩ᴿ R [ δ ] → ∅ᴴ ⊩ᴿ lR L [ δ ↑ᵉ ⨟ˢ κ⟨ ûₑ ⟩ ]
 closedᴸ L δ h =
-  ⊩ᴿ-⨟ ⊩ᴴ-⊤
+  ⊩ᴿ-⨟ ⊩ᴴ-∅
     (lcpl L (δ ↑ᵉ) (entry δ)
-      (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wkˢᵉ-↑ᵉ δ)) (⊩ᴿ-⨟ ⊩ᴴ-⊤ h))))
+      (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wkˢᵉ-↑ᵉ δ)) (⊩ᴿ-⨟ ⊩ᴴ-∅ h))))
 
 -- A closed instance of the localised residual is one of the residual,
 -- through the values
 
 openᴸ : ∀ {Ψ} {R : Resid Ψ} → (L : Localised (rigid {Ψ}) (R [ wkˢᵉ ]ᴿ))
-      → (τ : Subst (Ψ +e) ∅ˢ) → ⊤ᴴ ⊩ᴿ lR L [ τ ] → ⊤ᴴ ⊩ᴿ R [ wkˢᵉ ⨟ˢ (lσ L ⨟ˢ τ) ]
-openᴸ L τ h = ⊩ᴿ-subst (lsnd L τ ⊤ᴴ h)
+      → (τ : Subst (Ψ +e) ∅ˢ) → ∅ᴴ ⊩ᴿ lR L [ τ ] → ∅ᴴ ⊩ᴿ R [ wkˢᵉ ⨟ˢ (lσ L ⨟ˢ τ) ]
+openᴸ L τ h = ⊩ᴿ-subst (lsnd L τ ∅ᴴ h)
 
 ------------------------------------------------------------------------
 -- The search
@@ -180,7 +179,7 @@ openᴸ L τ h = ⊩ᴿ-subst (lsnd L τ ⊤ᴴ h)
 data Search {Ψ} (Q : Hyps Ψ) (D : List (QOrd Ψ)) : Set where
   refutedˢ : ¬ Satisfiable (Q ++ᵠ D) → Search Q D
   openˢ    : (R : Resid (Ψ +e))
-           → ((τ : Subst (Ψ +e) ∅ˢ) → ⊤ᴴ ⊩ᴿ R [ τ ] → Satisfiable (Q ++ᵠ D))
+           → ((τ : Subst (Ψ +e) ∅ˢ) → ∅ᴴ ⊩ᴿ R [ τ ] → Satisfiable (Q ++ᵠ D))
            → Search Q D
 
 -- A subtyping demand between type variables always reads back
@@ -196,15 +195,15 @@ searchᴸ {Ψ} Q D L = retried (retryᴰ (ordsOf (lR L)) (dfs (lR L)))
   where
     -- a closed instance of the solution, of the localised residual
 
-    inst : Satisfiable (Q ++ᵠ D) → Σ[ τ ∈ Subst (Ψ +e) ∅ˢ ] (⊤ᴴ ⊩ᴿ lR L [ τ ])
+    inst : Satisfiable (Q ++ᵠ D) → Σ[ τ ∈ Subst (Ψ +e) ∅ˢ ] (∅ᴴ ⊩ᴿ lR L [ τ ])
     inst (δ , h) with ⊨++ᵠ⇒ {R = D} h
-    ... | hQ , hD = δ ↑ᵉ ⨟ˢ κ⟨ ûₑ ⟩ , closedᴸ L δ (asResid-⊩ hQ (⊩ᴼˢ→⊩ᴰ {Q = ⊤ᴴ} {δ = δ} D hD))
+    ... | hQ , hD = δ ↑ᵉ ⨟ˢ κ⟨ ûₑ ⟩ , closedᴸ L δ (asResid-⊩ hQ (⊩ᴼˢ→⊩ᴰ {Q = ∅ᴴ} {δ = δ} D hD))
 
     -- and back
 
-    sat : (τ : Subst (Ψ +e) ∅ˢ) → ⊤ᴴ ⊩ᴿ lR L [ τ ] → Satisfiable (Q ++ᵠ D)
+    sat : (τ : Subst (Ψ +e) ∅ˢ) → ∅ᴴ ⊩ᴿ lR L [ τ ] → Satisfiable (Q ++ᵠ D)
     sat τ h = wkˢᵉ ⨟ˢ (lσ L ⨟ˢ τ) ,
-              ⊨++ᵠ⇐ (proj₁ hs , ⊩ᴰ→⊩ᴼˢ {Q = ⊤ᴴ} {δ = wkˢᵉ ⨟ˢ (lσ L ⨟ˢ τ)} D (proj₂ hs))
+              ⊨++ᵠ⇐ (proj₁ hs , ⊩ᴰ→⊩ᴼˢ {Q = ∅ᴴ} {δ = wkˢᵉ ⨟ˢ (lσ L ⨟ˢ τ)} D (proj₂ hs))
       where
         hs = ⊩-asResid {Q = Q} {D = D} (openᴸ L τ h)
 
@@ -218,14 +217,14 @@ searchᴸ {Ψ} Q D L = retried (retryᴰ (ordsOf (lR L)) (dfs (lR L)))
       where
         R' = withDfs (lR L) D'
 
-        fwd : ∀ {τ} → ⊤ᴴ ⊩ᴿ lR L [ τ ] → ⊤ᴴ ⊩ᴿ R' [ τ ]
+        fwd : ∀ {τ} → ∅ᴴ ⊩ᴿ lR L [ τ ] → ∅ᴴ ⊩ᴿ R' [ τ ]
         fwd {τ} h = mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (⊩ss h) (⊩ds h) (f τ (⊩dfs h))
 
-        bwd : ∀ {τ} → ⊤ᴴ ⊩ᴿ R' [ τ ] → ⊤ᴴ ⊩ᴿ lR L [ τ ]
+        bwd : ∀ {τ} → ∅ᴴ ⊩ᴿ R' [ τ ] → ∅ᴴ ⊩ᴿ lR L [ τ ]
         bwd {τ} h = mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (⊩ss h) (⊩ds h)
                          (b τ (ordsOf-⊩ h) (⊩dfs h))
 
-        inst' : Satisfiable (Q ++ᵠ D) → Σ[ τ ∈ Subst (Ψ +e) ∅ˢ ] (⊤ᴴ ⊩ᴿ R' [ τ ])
+        inst' : Satisfiable (Q ++ᵠ D) → Σ[ τ ∈ Subst (Ψ +e) ∅ˢ ] (∅ᴴ ⊩ᴿ R' [ τ ])
         inst' s = proj₁ (inst s) , fwd (proj₂ (inst s))
 
         opened : Search Q D
@@ -268,9 +267,9 @@ setʳ k c τ = sub (sTy τ) (λ i → if ⌊ i ≟ᶠ k ⌋ then rconst c else s
 -- A deferred condition holds at a closed instance when its retry from
 -- no hypotheses leaves nothing
 
-dischargedAt : ∀ {Ψ} → (τ : Subst Ψ ∅ˢ) → (E : QOrd Ψ) → Maybe (⊤ᴴ ⊩ᴼ E [ τ ])
+dischargedAt : ∀ {Ψ} → (τ : Subst Ψ ∅ˢ) → (E : QOrd Ψ) → Maybe (∅ᴴ ⊩ᴼ E [ τ ])
 dischargedAt τ E with retryᵈ ∅ᴴ (E [ τ ]ᵠ)
-... | keptᵈ [] b f = just (⊩ᴼ-resp-≐ˢ E (⨟-idʳ τ) (⊩ᴼ-subst E (b {Q = ⊤ᴴ} idˢ ⊩ᴴ-∅ (λ ()))))
+... | keptᵈ [] b f = just (⊩ᴼ-resp-≐ˢ E (⨟-idʳ τ) (⊩ᴼ-subst E (b {Q = ∅ᴴ} idˢ ⊩ᴴ-∅ (λ ()))))
 ... | _            = nothing
 
 decToMaybe : ∀ {X : Set} → Dec X → Maybe X
@@ -279,16 +278,16 @@ decToMaybe (no _)  = nothing
 
 -- Every atom of a residual decided at a closed instance
 
-verify : ∀ {Ψ} → (R : Resid Ψ) → (τ : Subst Ψ ∅ˢ) → Maybe (⊤ᴴ ⊩ᴿ R [ τ ])
+verify : ∀ {Ψ} → (R : Resid Ψ) → (τ : Subst Ψ ∅ˢ) → Maybe (∅ᴴ ⊩ᴿ R [ τ ])
 verify R τ
-  with allOf {P = λ { (x , y) → ⊤ᴴ ⊩ x [ τ ]ʳ ≾̂ᵣ y [ τ ]ʳ }}
+  with allOf {P = λ { (x , y) → ∅ᴴ ⊩ x [ τ ]ʳ ≾̂ᵣ y [ τ ]ʳ }}
              (λ { (x , y) → decToMaybe (x [ τ ]ʳ ≾̂ᵣ? y [ τ ]ʳ) }) (rs R)
-     | allOf {P = λ { (x , y) → ⊤ᴴ ⊩ x [ τ ]ᵉ ≾̂ₑ y [ τ ]ᵉ }}
+     | allOf {P = λ { (x , y) → ∅ᴴ ⊩ x [ τ ]ᵉ ≾̂ₑ y [ τ ]ᵉ }}
              (λ { (x , y) → decToMaybe (x [ τ ]ᵉ ≾̂ₑ? y [ τ ]ᵉ) }) (es R)
-     | allOf {P = λ A → ⊤ᴴ ⊩ᴱ A [ τ ]ᵛ} (λ A → decToMaybe (⊩ᴱ? (A [ τ ]ᵛ))) (ts R)
-     | allOf {P = λ { (A , B) → ⊤ᴴ ∣ A [ τ ]ᵛ <:̂ᵛ B [ τ ]ᵛ }}
+     | allOf {P = λ A → ∅ᴴ ⊩ᴱ A [ τ ]ᵛ} (λ A → decToMaybe (⊩ᴱ? (A [ τ ]ᵛ))) (ts R)
+     | allOf {P = λ { (A , B) → ∅ᴴ ∣ A [ τ ]ᵛ <:̂ᵛ B [ τ ]ᵛ }}
              (λ { (A , B) → decToMaybe (A [ τ ]ᵛ <:̂ᵛ? B [ τ ]ᵛ) }) (ss R)
-     | allOf {P = λ { (A , ρ) → VarOK ⊤ᴴ (A [ τ ]ᵛ) (ρ [ τ ]ʳ) }}
+     | allOf {P = λ { (A , ρ) → VarOK ∅ᴴ (A [ τ ]ᵛ) (ρ [ τ ]ʳ) }}
              (λ { (A , ρ) → decToMaybe (VarOK? (A [ τ ]ᵛ) (ρ [ τ ]ʳ)) }) (ds R)
      | allOf (dischargedAt τ) (dfs R)
 ... | just a | just b | just c | just d | just e | just f = just (mk⊩ᴿ a b c d e f)

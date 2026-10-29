@@ -686,11 +686,11 @@ etDec-refute : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (A : OVType Ψ) → etDec A ≡ n
              → (δ : Subst Ψ Ψ') → ¬ (Q ⊩ᴱ A [ δ ]ᵛ)
 etDec-refute A = etDec-refuteᵃ A (≺-wf A)
 
--- So a disjunction on such a type is met, from the truths, exactly by
+-- So a disjunction on such a type is met, from no hypotheses, exactly by
 -- its grade side
 
 etDec-grade : ∀ {Ψ Ψ'} → (A : OVType Ψ) → etDec A ≡ nothing → (δ : Subst Ψ Ψ')
-            → {ρ : RExp Ψ'} → VarOK ⊤ᴴ (A [ δ ]ᵛ) ρ → ⊤ᴴ ⊩ ρ ≾̂ᵣ ûᵣ
+            → {ρ : RExp Ψ'} → VarOK ∅ᴴ (A [ δ ]ᵛ) ρ → ∅ᴴ ⊩ ρ ≾̂ᵣ ûᵣ
 etDec-grade A e δ (et-ok et)      = ⊥-elim (etDec-refute A e δ et)
 etDec-grade A e δ (≾ᵘ-ok le)      = le
 etDec-grade A e δ (hyp-ok () _ _)
@@ -846,7 +846,7 @@ toHyps R with etsDec (ts R) | subsList (ss R)
     a = atomsOfˢ d
 
     Q : Hyps _
-    Q = hyps (varsOf t) (asubᵥ a) (rs R ++ aordᵣ a) (es R ++ aordₑ a) (ds R) [] false
+    Q = hyps (varsOf t) (asubᵥ a) (rs R ++ aordᵣ a) (es R ++ aordₑ a) (ds R) []
 
     hyps' : Holds Q idˢ a
     hyps' =
@@ -878,14 +878,14 @@ toHyps R with etsDec (ts R) | subsList (ss R)
     disj' {A} {ρ} m =
       subst₂ (VarOK Q) (sym ([id]ᵛ A)) (sym ([id]ʳ ρ)) (hyp-ok₀ m)
 
--- The read-back has no quantified hypotheses and no truths
+-- The read-back has no quantified hypotheses
 
 toHyps-unq : ∀ {Ψ} → (R : Resid Ψ) → {p : Σ[ Q₀ ∈ Hyps Ψ ] (Q₀ ⊩ᴿ bareᴿ R [ idˢ ])}
            → toHyps R ≡ just p → Unq (proj₁ p)
 toHyps-unq R eq with etsDec (ts R) | subsList (ss R)
 toHyps-unq R () | nothing | _
 toHyps-unq R () | just _  | nothing
-toHyps-unq R refl | just t  | just d = unq refl refl
+toHyps-unq R refl | just t  | just d = unq refl
 
 -- The same, for a whole residual
 
@@ -909,7 +909,7 @@ toHyps-compl R eq δ h with etsDec (ts R) | subsList (ss R)
 toHyps-compl R () δ h | nothing | _
 toHyps-compl R () δ h | just _  | nothing
 toHyps-compl R eq δ h | just t  | just d with eq
-... | refl = mk⊩ᴴ (elimᵗ t δ (⊩ts h)) (hv hs) ordᵣ' ordₑ' (⊩ds h) (λ ()) (λ ())
+... | refl = mk⊩ᴴ (elimᵗ t δ (⊩ts h)) (hv hs) ordᵣ' ordₑ' (⊩ds h) (λ ())
   where
     hs : Holds _ δ (atomsOfˢ d)
     hs = elimˢ d δ (⊩ss h)

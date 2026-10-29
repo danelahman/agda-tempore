@@ -66,10 +66,6 @@ private
   walkℕ zero    = true
   walkℕ (suc n) = walkℕ n
 
-  walk𝔹 : 𝔹 → 𝔹
-  walk𝔹 true  = true
-  walk𝔹 false = true
-
   walkᶠ : ∀ {n} → Fin n → 𝔹
   walkᶠ zero    = true
   walkᶠ (suc i) = walkᶠ i
@@ -117,11 +113,11 @@ private
   walkᴼ (ords rs fs) = walkˡ (walkᵖ walkʳ walkʳ) rs && walkˡ (walkᵖ walkᵉ walkᵉ) fs
 
   walkᴴ : ∀ {Θ} → Hyps Θ → 𝔹
-  walkᴴ (hyps es ss rs fs ds qs t) =
+  walkᴴ (hyps es ss rs fs ds qs) =
     walkˡ walkᶠ es && walkˡ (walkᵖ walkᶠ walkᶠ) ss
     && walkˡ (walkᵖ walkʳ walkʳ) rs && walkˡ (walkᵖ walkᵉ walkᵉ) fs
     && walkˡ (walkᵖ walkᵛ walkʳ) ds
-    && walkˡ (λ { (qord _ k O) → walkℕ k && walkᴼ O }) qs && walk𝔹 t
+    && walkˡ (λ { (qord _ k O) → walkℕ k && walkᴼ O }) qs
 
   walk : Scheme → 𝔹
   walk (scope a b c , Q , X) = walkℕ a && walkℕ b && walkℕ c && walkᴴ Q && walkᶜ X
@@ -207,7 +203,7 @@ eternal A ∨ ρ ≾ûᵣ = disj-atom A ρ ∷ []
 -- the solver reports them.
 
 hypsOf : ∀ {Θ} → Conj Θ → Hyps Θ
-hypsOf []                     = hyps [] [] [] [] [] [] false
+hypsOf []                     = hyps [] [] [] [] [] []
 hypsOf (et-atom α      ∷ C) = let Q = hypsOf C in record Q { ets  = α ∷ ets Q }
 hypsOf (sub-atom α β   ∷ C) = let Q = hypsOf C in record Q { subᵥ = (α , β) ∷ subᵥ Q }
 hypsOf (ordʳ-atom ρ ρ' ∷ C) = let Q = hypsOf C in record Q { ordᵣ = (ρ , ρ') ∷ ordᵣ Q }

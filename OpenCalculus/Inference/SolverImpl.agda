@@ -133,7 +133,7 @@ open import OpenCalculus.Syntax.Subst     S
 open import OpenCalculus.Hypotheses      S
 open import OpenCalculus.Hypotheses.Instances S
   using (Satisfiable; Satisfiable-∅; _⊨ᴴ_; _⊩ᴼˢ_[_]; ⊩ᴼˢ-≐; _⊩_∣_[_]; _⊨_∣_; _⊨_; ⊨⇒⊩ᴴ; ⊩ᴴ⇒⊨;
-         ++ᵠ⇒; ++ᵠ⇐; ⊨++ᵠ⇒; ⊨++ᵠ⇐; ⊩ᴴ-⊤∅; ⊩ᴴ-∅⊤)
+         ++ᵠ⇒; ++ᵠ⇐; ⊨++ᵠ⇒; ⊨++ᵠ⇐)
 open import OpenCalculus.Typing  S
 
 open import OpenCalculus.Syntax.Raw S using (RawC; HandlerFreeᶜ)
@@ -211,7 +211,7 @@ runSolver-++ᵠ C eq with runSolverᴰ C
 ... | solved _ with eq
 ...   | refl = refl
 
--- The residual read back has no quantified hypotheses and no truths
+-- The residual read back has no quantified hypotheses
 
 runSolverᴰ-unq : ∀ {Θ} → (C : Constraint Θ)
                → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (QOrd Θ')}
@@ -265,7 +265,7 @@ runSolver-sound C eq with runSolverᴰ C in e
 
 runSolverᴰ-refutes : ∀ {Θ} → (C : Constraint Θ)
                    → runSolverᴰ C ≡ refuted
-                   → (τ : Subst Θ ∅ˢ) → ¬ (τ ⊨[ ⊤ᴴ ] C)
+                   → (τ : Subst Θ ∅ˢ) → ¬ (τ ⊨[ ∅ᴴ ] C)
 runSolverᴰ-refutes C eq τ sat with solve init C in e
 ... | refuted = solve-fail init C e τ (Fixing-[] τ) ⊩ᴿ-empty sat
 ... | stuck   = ⊥stuck-refuted eq
@@ -275,7 +275,7 @@ runSolverᴰ-refutes C eq τ sat with solve init C in e
     fac = solve-principal init C e τ sat ⊩ᴿ-empty
 ...   | just (s₁ , m₁) with reexpand s₁ in e₂
 ...     | nothing =
-          reexpand-fail s₁ e₂ (proj₁ fac₁) ⊤ᴴ (proj₁ (proj₂ (proj₂ fac₁)))
+          reexpand-fail s₁ e₂ (proj₁ fac₁) ∅ᴴ (proj₁ (proj₂ (proj₂ fac₁)))
   where
     fac  = solve-principal init C e τ sat ⊩ᴿ-empty
     fac₁ = retry-princ s' e₁ (proj₁ fac) (proj₁ (proj₂ (proj₂ fac)))
@@ -288,7 +288,7 @@ runSolverᴰ-refutes C eq τ sat with solve init C in e
   where
     fac  = solve-principal init C e τ sat ⊩ᴿ-empty
     fac₁ = retry-princ s' e₁ (proj₁ fac) (proj₁ (proj₂ (proj₂ fac)))
-    fac₂ = reexpand-princ s₁ e₂ (proj₁ fac₁) ⊤ᴴ (proj₁ (proj₂ (proj₂ fac₁)))
+    fac₂ = reexpand-princ s₁ e₂ (proj₁ fac₁) ∅ᴴ (proj₁ (proj₂ (proj₂ fac₁)))
 runSolverᴰ-refutes C eq τ sat | solved (s' , m , w) | just (s₁ , m₁) | just (s₂ , m₂) | nothing
   with toHyps-nothing (res s₂) e'
 ...         | inj₁ (A , mem , q) =
@@ -296,13 +296,13 @@ runSolverᴰ-refutes C eq τ sat | solved (s' , m , w) | just (s₁ , m₁) | ju
   where
     fac  = solve-principal init C e τ sat ⊩ᴿ-empty
     fac₁ = retry-princ s' e₁ (proj₁ fac) (proj₁ (proj₂ (proj₂ fac)))
-    fac₂ = reexpand-princ s₁ e₂ (proj₁ fac₁) ⊤ᴴ (proj₁ (proj₂ (proj₂ fac₁)))
+    fac₂ = reexpand-princ s₁ e₂ (proj₁ fac₁) ∅ᴴ (proj₁ (proj₂ (proj₂ fac₁)))
 ...         | inj₂ (A , B , mem , q) =
               ⊥nothing (trans (sym (proj₂ (reexpand-dec s₁ e₂ mem))) q)
 
 runSolver-refutes : ∀ {Θ} → (C : Constraint Θ)
                   → runSolver C ≡ refuted
-                  → (τ : Subst Θ ∅ˢ) → ¬ (τ ⊨[ ⊤ᴴ ] C)
+                  → (τ : Subst Θ ∅ˢ) → ¬ (τ ⊨[ ∅ᴴ ] C)
 runSolver-refutes C eq with runSolverᴰ C in e
 ... | refuted        = runSolverᴰ-refutes C e
 ... | stuck          = ⊥stuck-refuted eq
@@ -372,7 +372,7 @@ runSolverᴰ-principal C eq σ Q sat δ₀ h₀ with solve init C in e
     tri₁ = proj₁ (proj₂ fac₁)
     h₁   = proj₁ (proj₂ (proj₂ fac₁))
 
-    fac₂ = reexpand-princ s₁ e₂ δ₁ ⊤ᴴ h₁
+    fac₂ = reexpand-princ s₁ e₂ δ₁ ∅ᴴ h₁
     δ₂   = proj₁ fac₂
     tri₂ = proj₁ (proj₂ fac₂)
     h₂   = proj₂ (proj₂ fac₂)
@@ -453,7 +453,7 @@ record Reported {Θ₀ Θ : Scope} (w : Subst Θ₀ Θ) (X : OCType Θ) (C : Con
     instᴿ  : ∀ {Ξ} → (δ : Subst Θ' Ξ) → (Q' : Hyps Ξ)
            → Q' ⊩ᴼˢ R̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᴼˢ R [ η ⨟ˢ δ ]
     to-Q̃   : (δ : Subst Θ' ∅ˢ) → ∅ᴴ ⊩ᴴ Q̂ [ δ ] → ∅ᴴ ⊩ᴴ Q̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]
-    to-R̃   : (δ : Subst Θ' ∅ˢ) → δ ⊨ Q̂ ∣ R → ⊤ᴴ ⊩ᴼˢ R̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]
+    to-R̃   : (δ : Subst Θ' ∅ˢ) → δ ⊨ Q̂ ∣ R → ∅ᴴ ⊩ᴼˢ R̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]
     princ  : (δ : Subst Θ' ∅ˢ) → ∅ᴴ ⊩ᴴ Q̂ [ δ ]
            → ∅ᴴ ∣ X̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]ᶜ <:̂ᶜ X [ σ ]ᶜ [ δ ]ᶜ
     ext-ι  : ∀ {Ψ} → (δ : Subst Θ̃ Ψ) → Σ[ δ' ∈ Subst Θ' Ψ ] (⌜ ι ⌝ʳ ⨟ˢ δ' ≐ˢ δ)
@@ -559,12 +559,12 @@ reportSolved w X C {Θ'} {σ} {Q} {D} e =
                            (⊩ᴼˢ→⊩ᴰ {Q = Q'} {δ = ⌜ ι sr ⌝ʳ ⨟ˢ δ} D̃ h (∈-map⁺ read m))))
 
         to-R̃' : (δ : Subst Θ' ∅ˢ) → δ ⊨ simplify Q ∣ D
-              → ⊤ᴴ ⊩ᴼˢ D̃ [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]
+              → ∅ᴴ ⊩ᴼˢ D̃ [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]
         to-R̃' δ h =
-          ⊩ᴰ→⊩ᴼˢ {Q = ⊤ᴴ} {δ = ⌜ ι sr ⌝ʳ ⨟ˢ δ} D̃
-            (∈-map-elim read {P = λ E → ⊤ᴴ ⊩ᴼ E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]}
-              (λ m₀ → fwd {Q' = ⊤ᴴ} {δ = δ} m₀
-                        (⊩ᴼˢ→⊩ᴰ {Q = ⊤ᴴ} {δ = δ} D (proj₂ h) m₀)))
+          ⊩ᴰ→⊩ᴼˢ {Q = ∅ᴴ} {δ = ⌜ ι sr ⌝ʳ ⨟ˢ δ} D̃
+            (∈-map-elim read {P = λ E → ∅ᴴ ⊩ᴼ E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]}
+              (λ m₀ → fwd {Q' = ∅ᴴ} {δ = δ} m₀
+                        (⊩ᴼˢ→⊩ᴰ {Q = ∅ᴴ} {δ = δ} D (proj₂ h) m₀)))
 
     -- The report from an elimination fixing `F`, and its strengthening
 
@@ -675,7 +675,7 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ (Q̃ ++ᵠ R̃) X̃ inst' fac
         → Σ[ δ ∈ Subst Θ̃ ∅ˢ ]
             ((σ̃ ⨟ˢ δ ≐ˢ σ₀ ⨟ˢ δ₀) × (δ ⊨ Q̃ ++ᵠ R̃) × (∅ᴴ ∣ X̃ [ δ ]ᶜ <:̂ᶜ C₀ [ δ₀ ]ᶜ))
     fac σ₀ Q₀ {A₀ ‼ ε₀} D₀ e₀ δ₀ h₀ =
-      ⌜ ι ⌝ʳ ⨟ˢ δ' , agree , ⊨++ᵠ⇐ (⊩ᴴ-∅⊤ (to-Q̃ δ' hQ̂) , to-R̃ δ' (⊩ᴴ-∅⊤ hQ̂ , proj₂ hq)) ,
+      ⌜ ι ⌝ʳ ⨟ˢ δ' , agree , ⊨++ᵠ⇐ (to-Q̃ δ' hQ̂ , to-R̃ δ' (hQ̂ , proj₂ hq)) ,
       <:̂ᶜ-trans (princ δ' hQ̂) below
       where
         pi   = principal-inst p σ₀ Q₀ D₀ e₀ δ₀ h₀
@@ -686,7 +686,7 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ (Q̃ ++ᵠ R̃) X̃ inst' fac
         hq   = ⊨++ᵠ⇒ (proj₂ (proj₂ (proj₂ (proj₂ pi))))
 
         hQ̂ : ∅ᴴ ⊩ᴴ Q̂ [ δ' ]
-        hQ̂ = to-Q̂ δ' (⊩ᴴ-⊤∅ (runSolverᴰ-unq C[ Γ , M ] sol) (proj₁ hq))
+        hQ̂ = to-Q̂ δ' (proj₁ hq)
 
         agree : σ̃ ⨟ˢ (⌜ ι ⌝ʳ ⨟ˢ δ') ≐ˢ σ₀ ⨟ˢ δ₀
         agree =
@@ -706,11 +706,11 @@ answer-typable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D)
                → Satisfiable (Q ++ᵠ D) → Typable Γ M
 answer-typable Γ M {σ = σ} e (δ , h) =
-  typable ∅ˢ (wk₊ ⨟ˢ (σ ⨟ˢ δ)) ⊤ᴴ _ (ctx-substᶜ ceq D₀)
-          (trans (⌊ctxᶜ⌋ ceq D₀) (trans (proj₂ i) meq)) (idˢ , ⊩ᴵ-⊤)
+  typable ∅ˢ (wk₊ ⨟ˢ (σ ⨟ˢ δ)) ∅ᴴ _ (ctx-substᶜ ceq D₀)
+          (trans (⌊ctxᶜ⌋ ceq D₀) (trans (proj₂ i) meq)) (idˢ , ⊩ᴵ-∅)
   where
     i  = PrincipalSolution.instantiate
-           (principalSolution solver Γ M (runSolver-++ᵠ C[ Γ , M ] e)) δ ⊤ᴴ (⊨⇒⊩ᴴ h)
+           (principalSolution solver Γ M (runSolver-++ᵠ C[ Γ , M ] e)) δ ∅ᴴ (⊨⇒⊩ᴴ h)
     D₀ = proj₁ i
 
     ceq : Γ₊ Γ [ σ ⨟ˢ δ ]ᶜᵗˣ ≡ Γ [ wk₊ ⨟ˢ (σ ⨟ˢ δ) ]ᶜᵗˣ

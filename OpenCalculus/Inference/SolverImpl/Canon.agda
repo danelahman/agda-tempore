@@ -351,7 +351,7 @@ canonᴴ Q = hyps (ets Q) (subᵥ Q)
                 (Split.out (splits piecesʳ (ordᵣ Q)))
                 (Split.out (splits piecesᵉ (ordₑ Q)))
                 (map (mapᵈ canonᵛ canonᵣ) (disj Q))
-                (qhyps Q) (truths Q)
+                (qhyps Q)
 
 -- A set and its normal form entail each other
 
@@ -370,7 +370,7 @@ private
   ⊩-idₑ⁻ {Q = Q} {ε} {ε'} = subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([id]ᵉ ε)) (sym ([id]ᵉ ε'))
 
 canonᴴ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → canonᴴ Q ⊩ᴴ Q
-canonᴴ-⊩ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE dsj (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
+canonᴴ-⊩ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE dsj (λ m → ⊩ᴼ-hyp⁼ m)
   where
     ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → canonᴴ Q ⊩ ρ ≾̂ᵣ ρ'
     ordR m = ⊩-idʳ (Split.back (splits piecesʳ (ordᵣ Q)) idˢ (λ m' → ⊩-idʳ⁻ (hypᵣ m')) m)
@@ -383,7 +383,7 @@ canonᴴ-⊩ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE d
       hyp-ok (∈-map⁺ (mapᵈ canonᵛ canonᵣ) m) (canonᵛ-≡̂ A) (eqᵣ (canonᵣ-≡ ρ))
 
 canonᴴ-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ canonᴴ Q
-canonᴴ-⊩⁻ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE dsj (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
+canonᴴ-⊩⁻ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE dsj (λ m → ⊩ᴼ-hyp⁼ m)
   where
     ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ Split.out (splits piecesʳ (ordᵣ Q)) → Q ⊩ ρ ≾̂ᵣ ρ'
     ordR m = ⊩-idʳ (Split.fwd (splits piecesʳ (ordᵣ Q)) idˢ (λ m' → ⊩-idʳ⁻ (hypᵣ m')) m)

@@ -310,10 +310,10 @@ wit-⨟ δ (suc k) cs =
     κ : ∀ {Φ} → Subst (Φ +e) Φ
     κ = κ⟨ econst (hdᵂ cs) ⟩
 
--- The truths entail the truths at the witnesses
+-- No hypotheses entail the empty set at the witnesses
 
-⊩ᴴ-wit : ∀ {Ψ} → (k : ℕ) → (cs : List E) → ⊤ᴴ ⊩ᴴ wkᵉⁿ-H k (⊤ᴴ {Ψ}) [ wit k cs ]
-⊩ᴴ-wit {Ψ} k cs = subst (λ H → ⊤ᴴ ⊩ᴴ H [ wit k cs ]) (sym (wkᵉⁿ-⊤ᴴ {Ψ} k)) ⊩ᴴ-⊤
+⊩ᴴ-wit : ∀ {Ψ} → (k : ℕ) → (cs : List E) → ∅ᴴ ⊩ᴴ wkᵉⁿ-H k (∅ᴴ {Ψ}) [ wit k cs ]
+⊩ᴴ-wit {Ψ} k cs = subst (λ H → ∅ᴴ ⊩ᴴ H [ wit k cs ]) (sym (wkᵉⁿ-∅ᴴ {Ψ} k)) ⊩ᴴ-∅
 
 ------------------------------------------------------------------------
 -- Closing an entry over one more rigid, the newest variable of its
