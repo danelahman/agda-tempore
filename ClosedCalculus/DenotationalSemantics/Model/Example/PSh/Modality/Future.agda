@@ -11,7 +11,8 @@
 --                                                                    --
 -- The modality is a lax graded comonad (counit `ε`, comultiplication    --
 -- `δ`), packaged as an instance of                                       --
--- `ClosedCalculus.DenotationalSemantics.Model.Modality.Future`. Every coherence law is  --
+-- `ClosedCalculus.DenotationalSemantics.Model.Modality.Future`.          --
+-- Every coherence law is                                                 --
 -- a pointwise `≈` goal; the two sides feed `A` two witnesses of the      --
 -- *same* accessibility fact, reconciled by `[]-fun-irr` (proof           --
 -- irrelevance of the witnesses) and, where a transport is crossed, by    --

@@ -218,7 +218,7 @@ inner₀-≡ᶜ {Γ} {B₁} {B₂} Θ M W₁ =
         (trans (sym (C-sub₀-⌜⌝ (eq-ren (assocᴮ⁻ Γ B₂ Θ)) _))
                (C-sub-≐ˢ (assoc-≐ˢ Θ W₁) M))))
 
--- `sub-swap`: both orders are now `cong-sub₀ (val-sub _)` composites; the
+-- `sub-swap`: both orders are `cong-sub₀ (val-sub _)` composites; the
 -- theorem is `sub-swap-at-≡ᶜ` with the outer value read back by `sub-wk`:
 -- substituting `W₁` into `W₂` weakened past `B₁` gives `W₂` again.
 

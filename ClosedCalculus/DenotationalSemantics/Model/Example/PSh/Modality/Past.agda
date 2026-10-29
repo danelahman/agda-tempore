@@ -21,7 +21,8 @@
 --                                                                    --
 -- The modality is a lax graded monad (unit `η`, multiplication `μ` with   --
 -- reversed grade order), packaged as an instance of                       --
--- `ClosedCalculus.DenotationalSemantics.Model.Modality.Past`. Because transport of a     --
+-- `ClosedCalculus.DenotationalSemantics.Model.Modality.Past`.             --
+-- Because transport of a                                                  --
 -- bundle only readjusts the witness, keeping the past world and value     --
 -- fixed, almost every coherence law is either definitional (`≈-refl`) or  --
 -- a single generating step for witness-irrelevance (`≈-mk-irr`). The one  --

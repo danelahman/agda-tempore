@@ -1,9 +1,9 @@
 ------------------------------------------------------------------
 -- The constraint solver, axiomatised                           --
 --                                                              --
--- `Solver` is an assumption, not a construction: `∀ᵉ` and      --
--- `⋀ᵒᵖ` are infinitary, and `∀ᵉ` requires an eigenvariable     --
--- treatment.                                                   --
+-- `Solver` is the interface of a principal solver; `solver` in --
+-- `OpenCalculus.Inference.SolverImpl` meets it for an          --
+-- enumerated set of operations.                                --
 --                                                              --
 -- A solution is a substitution together with a residual        --
 -- hypothesis set, itself a context of the open judgement, its  --

@@ -7,7 +7,8 @@
 -- latter three given comparisons on the components), built from the    --
 -- copairings, `ifᵐ`, iteration, folds and the exponentials. Each comes --
 -- with its laws at points: compared at the points of data, it returns  --
--- the outcome of the structural order on the data (`ClosedCalculus.Syntax.Data`).     --
+-- the outcome of the structural order on the data                      --
+-- (`ClosedCalculus.Syntax.Data`).                                      --
 ------------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)

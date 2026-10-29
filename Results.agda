@@ -7,14 +7,17 @@
 -- its semantics. The items not yet formalised are listed at the end.
 --
 -- The calculus is parameterised by a `LanguageSpec` (a grade system, base
--- types and an operation signature); inference also takes hints for the
--- grade system (`SystemHints`), which only the solver reads, and an
+-- types and an operation signature), the calculus without base types
+-- being its instance `withoutBaseTypes`; inference also takes hints for
+-- the grade system (`SystemHints`), which only the solver reads, and an
 -- enumeration of the operations (`OpEnum`).
 ------------------------------------------------------------------------
 
 module Results where
 
-open import Language.Spec using (LanguageSpec)
+-- The language: a grade system, base types and an operation signature;
+-- the calculus without base types is the instance `withoutBaseTypes`
+open import Language.Spec public using (LanguageSpec; withoutBaseTypes)
 open import Grades.Hints using (SystemHints)
 open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
@@ -96,17 +99,30 @@ module Syntax (S : LanguageSpec) where
   -- Typing hypotheses, among them quantified orderings. Definition
   -- (Entailment): grade orderings, semantic consequence in the grade
   -- system, an ordering entailed when it holds by value at every closed
-  -- instance satisfying the grade part of the hypotheses; eternality,
-  -- subtyping, the disjunction of the variable rule, and `Q ⊩ Q'[δ]`.
-  -- Rule Inst, at any instance of the quantified hypothesis's rigids,
-  -- and rule Truth, at any instance of a closed ordering's variables,
-  -- are properties of grade entailment; rule Gen is at fresh rigids.
+  -- instance satisfying the grade part of the hypotheses; a quantified
+  -- ordering, entailed at fresh rigids (rule Gen); eternality,
+  -- subtyping, the disjunction of the variable rule, and `Q ⊩ Q'[δ]`
+  -- and `Q ⊩ Q'`.
   open import OpenCalculus.Hypotheses S public
-    using (_⊩_≾̂ᵣ_; _⊩_≾̂ₑ_; _⊨ᵍ_; _⊩ᴱ_; _∣_<:̂ᵛ_; _∣_<:̂ᶜ_; VarOK; _⊩ᴴ_[_])
-    renaming ( Hyps to Hypotheses; instₑ to Inst; instᵣ to Instʳ
-             ; factₑ to Truth; factᵣ to Truthʳ; _⊩ᴼ_[_] to Gen )
+    using (_⊩_≾̂ᵣ_; _⊩_≾̂ₑ_; _⊨ᵍ_; _⊩ᴱ_; _∣_<:̂ᵛ_; _∣_<:̂ᶜ_; VarOK; _⊩ᴴ_[_]; _⊩ᴴ_)
+    renaming (Hyps to Hypotheses; _⊩ᴼ_[_] to Gen)
   open import OpenCalculus.Hypotheses.Quantified S public
     using () renaming (QOrd to QuantifiedOrdering)
+
+  -- Proposition (Grade entailment): grade entailment holds of the grade
+  -- hypotheses; it is closed under the laws of the grade algebras
+  -- (convertibility, transitivity, monotonicity, the morphism, the
+  -- joins, the top and the zero-product laws); it contains every true
+  -- ordering, at any instance of its effect-grade variables (rule
+  -- Truth); it instantiates a quantified hypothesis at any instance of
+  -- its rigids (rule Inst); it is stable under substitution; and a
+  -- quantified ordering is entailed exactly when it is a semantic
+  -- consequence
+  open import OpenCalculus.Hypotheses S public
+    using ( hypₑ ; hypᵣ ; eqₑ ; eqᵣ ; transₑ ; transᵣ ; monoₑ ; monoᵣ ; map-mono
+          ; ⊔-lubₑ ; ⊔-lubᵣ ; ⊔-ubˡₑ ; ⊔-ubˡᵣ ; ⊔-ubʳₑ ; ⊔-ubʳᵣ ; topₑ ; topᵣ
+          ; zeroˡₑ ; zeroʳₑ ; zeroˡᵣ ; zeroʳᵣ ; ⊩-substₑ ; ⊩-substᵣ ; ⊩ᴼ⇒⊨ᴼ ; ⊨ᴼ⇒⊩ᴼ )
+    renaming (instₑ to Inst; instᵣ to Instʳ; factₑ to Truth; factᵣ to Truthʳ)
 
   -- Values and computations, among them the handlers `handler H` and
   -- `handle M with V`, and the uses `def k` of top-level definitions
@@ -125,9 +141,13 @@ module Syntax (S : LanguageSpec) where
   open import Bridge.Instantiation.Judgements S public using (_⊨ᴰ_)
 
   -- Lemma (Soundness of entailment): at a satisfying closed instance, an
-  -- entailed ordering holds in the carrier; at declarative instances,
-  -- each judgement
-  open import OpenCalculus.Hypotheses.Instances S public using (sound-≾ᵣ⁰; sound-≾ₑ⁰)
+  -- entailed ordering holds in the carrier, and an entailed eternality,
+  -- subtyping or variable condition holds as the closed relation,
+  -- entailment from no hypotheses; at declarative instances, each
+  -- judgement
+  open import OpenCalculus.Hypotheses.Instances S public
+    using (sound-≾ᵣ⁰; sound-≾ₑ⁰; ⊨⇒⊩ᴴ)
+  open import OpenCalculus.Hypotheses S public using (⊩ᴱ-subst; <:̂ᵛ-subst; VarOK-subst)
   open import Bridge.Instantiation.Judgements S public
     using (sound-≾ᵣ; sound-≾ₑ; sound-⊩ᴱ; sound-<:ᵛ; sound-<:ᶜ; sound-VarOK)
 

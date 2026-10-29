@@ -2,7 +2,7 @@
 -- Raw (well-scoped, untyped) syntax                            --
 --                                                              --
 -- The input of inference: one former for each former of        --
--- `OpenCalculus.Typing` except `coerce`, without               --
+-- `OpenCalculus.Typing` except `subV` and `subC`, without      --
 -- the typing data except the annotations below. `RawV Θ n` and --
 -- `RawC Θ n` are scoped by the grade and type variables `Θ` of --
 -- the context and by `n` term variables, de Bruijn indices     --
