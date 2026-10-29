@@ -13,7 +13,7 @@
 -- whose greater (smaller) sides it leaves fixed (`keepᵈ`). A     --
 -- closed witness per rigid instantiates the rigids (`wit`), each --
 -- drawn from the candidates of an ordering: the unit, the top    --
--- and the grade system's `witnesses` (`candidates`, `grid`).     --
+-- and the `witnesses` of the hints (`candidates`, `grid`).       --
 --                                                                --
 -- Contract. Closing an entry over one more rigid (`closeᵈ`)      --
 -- holds exactly where the entry does at a fresh rigid            --
@@ -39,6 +39,7 @@ open import Relation.Nullary.Decidable using (_×-dec_)
 open import Relation.Binary.Definitions using (Decidable)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; module SystemHintsInterface)
 open import Language.Spec
 open import Language.Operations
 
@@ -46,10 +47,12 @@ open import Util.Equality
 
 open import OpenCalculus.Syntax.Scopes
 
-module OpenCalculus.Inference.SolverImpl.Deferred (S : LanguageSpec) where
+module OpenCalculus.Inference.SolverImpl.Deferred (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
+open SystemHintsInterface hints
 open Operations Ops using (Op)
 
 open import OpenCalculus.Syntax.Grades        S

@@ -48,6 +48,7 @@ open import Grades.Durations.Intervals T
   renaming (_∣_ to _∣ᶜ_; _⊑_ to _⊑ᶜ_)
 
 open import Grades.Base using (Grade; Plus; plus)
+open import Grades.Hints using (GradeHints)
 open import Grades.Exact.Base T Op n code code-injective
 open import Grades.Exact.Order T Op n code code-injective using (_⊑_; ⊑-refl; ⊑-trans)
 open import Grades.Exact.Lift T Op n code code-injective as L
@@ -414,10 +415,12 @@ upperᵍ = record
   ; of-dur-zero = ↑² (waitᵁ 0ᴰ) εᵉ upper-zero
   ; of-dur-plus = λ {m} {n} → ↑² (waitᵁ (m +ᴰ n)) (waitᵁ m ·ᵉ waitᵁ n) (upper-split m n)
   ; ≃⇒≡? = nothing
-  ; u-least? = nothing
-  ; ·-comm?  = nothing
-  ; plus?    = λ c → just (plusᵉ upper c)
   }
+
+-- its hints: Kleene's plus at every grade
+
+upperʰ : GradeHints upperᵍ
+upperʰ = record { u-least? = nothing ; ·-comm? = nothing ; plus? = λ c → just (plusᵉ upper c) }
 
 -- the lower instance: left-sided grades
 
@@ -450,12 +453,14 @@ lowerᵍ = record
   ; of-dur-zero = ↑² (waitᴸ 0ᴰ) εᵉ (lower-zero (0ᴰ <ᴰ? 0ᴰ))
   ; of-dur-plus = λ {m} {n} → ↑² (waitᴸ (m +ᴰ n)) (waitᴸ m ·ᵉ waitᴸ n) (lower-hom m n (0ᴰ <ᴰ? m) (0ᴰ <ᴰ? n) (0ᴰ <ᴰ? (m +ᴰ n)))
   ; ≃⇒≡? = nothing
-  ; u-least? = nothing
-  ; ·-comm?  = nothing
-  ; plus?    = λ c → just (plusᵉ lower c)
   }
   where
     ⊤-proper : IsTrue (Fin′.nonEmpty (Fin′.words {lower} (str all (0ᴰ ∣ᶜ ⁻))))
     ⊤-proper with 0ᴰ <ᴰ? 0ᴰ
     ... | yes _ = tt
     ... | no _  = tt
+
+-- its hints: Kleene's plus at every grade
+
+lowerʰ : GradeHints lowerᵍ
+lowerʰ = record { u-least? = nothing ; ·-comm? = nothing ; plus? = λ c → just (plusᵉ lower c) }

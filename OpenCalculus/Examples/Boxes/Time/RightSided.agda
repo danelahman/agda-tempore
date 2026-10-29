@@ -24,15 +24,15 @@ open import OpenCalculus.Examples.Specs using (module Time-RightSided)
 
 module OpenCalculus.Examples.Boxes.Time.RightSided where
 
-open Time-RightSided using (spec; enum)
+open Time-RightSided using (spec; hints; enum)
 open LanguageSpec spec using (Grades)
 open GradeSystemInterface Grades using (uᵣ; ⊤ᵣ)
 
 open import OpenCalculus.Syntax.Grades   spec using (rconst; ∣_∣̂ᵉ; _·̂ᵣ_; _·̂ₑ_)
 open import OpenCalculus.Syntax.Contexts spec using ([])
 open import OpenCalculus.Inference.Principality spec using (Typable; untypable)
-open import OpenCalculus.Inference.SolverImpl spec enum using (infer-untypable)
-open import OpenCalculus.Examples.Boxes spec enum ℕᴰ-stepped
+open import OpenCalculus.Inference.SolverImpl spec hints enum using (infer-untypable)
+open import OpenCalculus.Examples.Boxes spec hints enum ℕᴰ-stepped
 open import OpenCalculus.Examples.Variables
 
 ------------------------------------------------------------------

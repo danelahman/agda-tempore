@@ -31,14 +31,14 @@
 --     bounds; the annotated `wait` of the prototype is refuted --
 --     at the value.                                            --
 --                                                              --
--- The grades differ in the properties the stages read,         --
--- `u-least?` and `·-comm?`: right-sided intervals (both hold), --
--- timed traces under the allowance order (the unit least, `·`  --
--- not commutative), left-sided intervals with an adjoined top  --
--- (`·` commutative, the unit not least, the top distinct from  --
--- the unit), both sides of time for the collapse, left-sided   --
--- time for the retry, and right-sided time and two-sided       --
--- intervals for lowering.                                      --
+-- The grades differ in the properties the stages read from     --
+-- their hints, `u-least?` and `·-comm?`: right-sided intervals --
+-- (both hold), timed traces under the allowance order (the     --
+-- unit least, `·` not commutative), left-sided intervals with  --
+-- an adjoined top (`·` commutative, the unit not least, the    --
+-- top distinct from the unit), both sides of time for the      --
+-- collapse, left-sided time for the retry, and right-sided     --
+-- time and two-sided intervals for lowering.                   --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; not; _∧_) renaming (Bool to 𝔹)
@@ -54,6 +54,7 @@ open import Util.Equality
 
 open import Grades.Base
 open import Language.Spec
+open import Grades.Hints using (SystemHints)
 import Grades.Examples.Worked.Operations.Grading as Grading
 
 open import OpenCalculus.Syntax.Scopes
@@ -69,16 +70,16 @@ module Deadline where
 
   open import Grades.Examples.Time.RightSided using ([0,_]; ↑_)
   open import OpenCalculus.Examples.Specs using (module Time-RightSided)
-  open Time-RightSided using (spec)
+  open Time-RightSided using (spec; hints)
   open LanguageSpec spec using (Grades)
   open GradeSystemInterface Grades using (⊤ᵣ; ⊤ₑ)
 
   open import OpenCalculus.Syntax.Grades                 spec
   open import OpenCalculus.Syntax.Types                  spec using (OVType; tvar)
   open import OpenCalculus.Hypotheses                    spec using (hyps; ∅ᴴ; ordᵣ; ordₑ; disj)
-  open import OpenCalculus.Inference.SolverImpl.Canon    spec using (canonᴴ; canonᵣ; canonₑ)
-  open import OpenCalculus.Inference.SolverImpl.Simplify spec using (walkᵈ)
-  open import OpenCalculus.Inference.SolverImpl.Entail   spec
+  open import OpenCalculus.Inference.SolverImpl.Canon    spec hints using (canonᴴ; canonᵣ; canonₑ)
+  open import OpenCalculus.Inference.SolverImpl.Simplify spec hints using (walkᵈ)
+  open import OpenCalculus.Inference.SolverImpl.Entail   spec hints
     using (decideₑ; decideᵣ; derive; full; checkClosed)
 
   Θ : Scope
@@ -236,11 +237,11 @@ module Deadline where
 module Sequence where
 
   open import OpenCalculus.Examples.Specs using (module Traces-Timed-RightSided)
-  open Traces-Timed-RightSided using (spec)
+  open Traces-Timed-RightSided using (spec; hints)
 
   open import OpenCalculus.Syntax.Grades               spec
   open import OpenCalculus.Hypotheses                  spec using (hyps)
-  open import OpenCalculus.Inference.SolverImpl.Entail spec using (decideₑ; derive)
+  open import OpenCalculus.Inference.SolverImpl.Entail spec hints using (decideₑ; derive)
 
   Θ : Scope
   Θ = scope 0 0 4
@@ -270,14 +271,19 @@ module Sequence where
 module WithTop where
 
   open import Grades.Examples.Time.LeftSided
-    using (untimed; timed_; [_,+∞⟩; left-sided-intervals-with-⊤; left-sided-witnesses-with-⊤)
+    using (untimed; timed_; [_,+∞⟩; left-sided-intervals-with-⊤; left-sided-intervals-with-⊤ʰ;
+           left-sided-witnesses-with-⊤)
+  open import Grades.Examples.System.Identity using (identityʰ)
   open import Language.Examples.SensorNode.Identity
-    left-sided-intervals-with-⊤ (λ _ → timed [ 1 ,+∞⟩) left-sided-witnesses-with-⊤ using (spec)
+    left-sided-intervals-with-⊤ (λ _ → timed [ 1 ,+∞⟩) using (spec)
+
+  hints : SystemHints (LanguageSpec.Grades spec)
+  hints = identityʰ left-sided-intervals-with-⊤ʰ left-sided-witnesses-with-⊤
 
   open import OpenCalculus.Syntax.Grades               spec
   open import OpenCalculus.Hypotheses                  spec using (hyps; ∅ᴴ)
-  open import OpenCalculus.Inference.SolverImpl.Entail spec using (decideₑ; derive; full)
-  open import OpenCalculus.Inference.SolverImpl.Canon  spec using (canonₑ)
+  open import OpenCalculus.Inference.SolverImpl.Entail spec hints using (decideₑ; derive; full)
+  open import OpenCalculus.Inference.SolverImpl.Canon  spec hints using (canonₑ)
 
   Θ : Scope
   Θ = scope 0 0 3
@@ -343,13 +349,14 @@ module WithTop where
 -- right-sided time no step moves the bound; at left-sided time it holds
 -- at every instance and bounds nothing. Checked at both sides of time.
 
-module Cycle (S : LanguageSpec) (opEnum : OpEnum S) where
+module Cycle (S : LanguageSpec) (hints : SystemHints (LanguageSpec.Grades S))
+             (opEnum : OpEnum S) where
 
   open import OpenCalculus.Syntax.Grades                 S
   open import OpenCalculus.Syntax.Subst                  S using (Subst; wkˢᵉ; _⨟ˢ_; sE)
   open import OpenCalculus.Inference.SolverImpl.Resid    S using (Resid; resid)
-  open import OpenCalculus.Inference.SolverImpl.Localise S using (collapse; Collapse; stepᵉ; module Find)
-  open import OpenCalculus.Inference.SolverImpl.Solve    S opEnum using (splitᴿ)
+  open import OpenCalculus.Inference.SolverImpl.Localise S hints using (collapse; Collapse; stepᵉ; module Find)
+  open import OpenCalculus.Inference.SolverImpl.Solve    S hints opEnum using (splitᴿ)
 
   Θ Φ : Scope
   Θ = scope 0 0 1
@@ -412,7 +419,7 @@ module Cycle (S : LanguageSpec) (opEnum : OpEnum S) where
 
 module Cycle-RightSided where
   open import OpenCalculus.Examples.Specs using (module Time-RightSided)
-  open Cycle Time-RightSided.spec Time-RightSided.enum
+  open Cycle Time-RightSided.spec Time-RightSided.hints Time-RightSided.enum
 
   with-collapse-closes : with-collapse ≡ true
   with-collapse-closes = refl
@@ -429,7 +436,7 @@ module Cycle-RightSided where
 
 module Cycle-LeftSided where
   open import OpenCalculus.Examples.Specs using (module Time-LeftSided)
-  open Cycle Time-LeftSided.spec Time-LeftSided.enum
+  open Cycle Time-LeftSided.spec Time-LeftSided.hints Time-LeftSided.enum
 
   with-collapse-closes : with-collapse ≡ true
   with-collapse-closes = refl
@@ -454,15 +461,15 @@ module Witness where
 
   open import Grades.Examples.Time.LeftSided using (𝕀; [_,+∞⟩)
   open import OpenCalculus.Examples.Specs using (module Time-LeftSided)
-  open Time-LeftSided using (spec; enum)
+  open Time-LeftSided using (spec; hints; enum)
   open LanguageSpec spec using (Grades)
   open GradeSystemInterface Grades using (uₑ; ⊤ₑ)
 
   open import OpenCalculus.Syntax.Grades                 spec
   open import OpenCalculus.Hypotheses                    spec using (Hyps; ∅ᴴ; _+eⁿ_; ords; qord)
   open import OpenCalculus.Syntax.Subst                  spec using (Subst)
-  open import OpenCalculus.Inference.SolverImpl.Deferred spec using (grid; candidatesₑ)
-  open import OpenCalculus.Inference.SolverImpl.Solve    spec enum
+  open import OpenCalculus.Inference.SolverImpl.Deferred spec hints using (grid; candidatesₑ)
+  open import OpenCalculus.Inference.SolverImpl.Solve    spec hints enum
     using (Retried; refutedᵈ; keptᵈ; retryᵈ; Verdict; settled; refuted; undecided; witnessᵉ)
 
   Ψ : Scope
@@ -509,11 +516,11 @@ module Lowering where
   open import Data.Maybe.Base using (Maybe) renaming (map to mapᴹ)
   open import Data.Product using (proj₁)
 
-  module Values (S : LanguageSpec) where
+  module Values (S : LanguageSpec) (hints : SystemHints (LanguageSpec.Grades S)) where
 
     open import OpenCalculus.Syntax.Grades                 S
     open import OpenCalculus.Inference.SolverImpl.Resid    S using (resid)
-    open import OpenCalculus.Inference.SolverImpl.Localise S using (stepᵉ)
+    open import OpenCalculus.Inference.SolverImpl.Localise S hints using (stepᵉ)
 
     Θ : Scope
     Θ = scope 0 0 1
@@ -532,12 +539,12 @@ module Lowering where
 
     open import Grades.Examples.Time.RightSided using ([0,_]; ↑_; ∞)
     open import OpenCalculus.Examples.Specs using (module Time-RightSided)
-    open Time-RightSided using (spec)
+    open Time-RightSided using (spec; hints)
 
     open import OpenCalculus.Syntax.Grades               spec
     open import OpenCalculus.Hypotheses                  spec using (hyps)
-    open import OpenCalculus.Inference.SolverImpl.Entail spec using (checkClosed)
-    open Values spec
+    open import OpenCalculus.Inference.SolverImpl.Entail spec hints using (checkClosed)
+    open Values spec hints
 
     ⌜_⌝ : ℕ → EExp Θ
     ⌜ n ⌝ = econst [0, ↑ n ]
@@ -602,16 +609,20 @@ module Lowering where
   module TwoSided where
 
     open import Grades.Examples.Time.TwoSidedWithInfinity
-      using (↑_; ∞; two-sided-intervals-with-∞) renaming ([_,_] to ⌈_,_⌉)
+      using (↑_; ∞; two-sided-intervals-with-∞; two-sided-intervals-with-∞ʰ)
+      renaming ([_,_] to ⌈_,_⌉)
     open Grading.Time-TwoSided using (opTime)
-    open import Grades.Examples.System.Identity using (noWitnesses)
+    open import Grades.Examples.System.Identity using (identityʰ; noWitnesses)
     open import Language.Examples.SensorNode.Identity
-      two-sided-intervals-with-∞ opTime noWitnesses using (spec)
+      two-sided-intervals-with-∞ opTime using (spec)
+
+    hints : SystemHints (LanguageSpec.Grades spec)
+    hints = identityʰ two-sided-intervals-with-∞ʰ noWitnesses
 
     open import OpenCalculus.Syntax.Grades               spec
     open import OpenCalculus.Hypotheses                  spec using (hyps)
-    open import OpenCalculus.Inference.SolverImpl.Entail spec using (checkClosed)
-    open Values spec
+    open import OpenCalculus.Inference.SolverImpl.Entail spec hints using (checkClosed)
+    open Values spec hints
 
     -- `1 ≾ v ∧ v · v ≾ v ∧ v ≾ [1,∞]`: `v = [1,1]⁺ = [1,∞]`, and the
     -- upper bound holds there

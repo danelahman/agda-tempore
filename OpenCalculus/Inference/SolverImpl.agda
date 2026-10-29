@@ -90,6 +90,11 @@
 -- (`check-established`), an untypable one is not               --
 -- (`check-untypable`), and an unestablished one carries no     --
 -- claim.                                                       --
+--                                                              --
+-- The solver is parameterised by hints for the grade system    --
+-- (`Grades.Hints`): properties of its grades and candidate     --
+-- values, which let it decide more. No declarative judgement   --
+-- depends on them.                                             --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
@@ -107,6 +112,7 @@ open import Relation.Nullary using (¬_)
 open import Function.Bundles using (_⇔_; Equivalence)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints)
 open import Language.Spec
 open import Language.Operations
 
@@ -119,6 +125,7 @@ open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
 module OpenCalculus.Inference.SolverImpl
   (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S))
   (opEnum : OpEnum S)
   where
 
@@ -148,27 +155,27 @@ open import OpenCalculus.Inference.Constraints.Properties   S using (⊨-resp-�
 open import OpenCalculus.Inference.Principality      S
 open import OpenCalculus.Inference.Solver            S
 
-open import OpenCalculus.Inference.SolverImpl.Deferred  S
+open import OpenCalculus.Inference.SolverImpl.Deferred  S hints
   using (⊩ᴰ→⊩ᴼˢ; ⊩ᴼˢ→⊩ᴰ)
 open import OpenCalculus.Inference.SolverImpl.Resid     S
-open import OpenCalculus.Inference.SolverImpl.Entail    S
+open import OpenCalculus.Inference.SolverImpl.Entail    S hints
   using (checkClosed; checkClosed-⊩; checkClosed-⊆; checkClosed-fail; checkClosed-unq)
 open import OpenCalculus.Inference.SolverImpl.State     S
-open import OpenCalculus.Inference.SolverImpl.Solve     S opEnum
-open import OpenCalculus.Inference.SolverImpl.Principal S opEnum
-open import OpenCalculus.Inference.SolverImpl.RigidFree S opEnum using (solve-rigidFree)
-open import OpenCalculus.Inference.SolverImpl.Search    S opEnum
+open import OpenCalculus.Inference.SolverImpl.Solve     S hints opEnum
+open import OpenCalculus.Inference.SolverImpl.Principal S hints opEnum
+open import OpenCalculus.Inference.SolverImpl.RigidFree S hints opEnum using (solve-rigidFree)
+open import OpenCalculus.Inference.SolverImpl.Search    S hints opEnum
   using (Search; refutedˢ; openˢ; search; Establish; refutedᵉ; foundᵉ; undecidedᵉ; exhaustedᵉ;
          establish)
-open import OpenCalculus.Inference.SolverImpl.Simplify  S
+open import OpenCalculus.Inference.SolverImpl.Simplify  S hints
   using (simplify; simplify-⊩; simplify-⊨; simplify-unq; trimElim)
-open import OpenCalculus.Inference.SolverImpl.Eliminate S
+open import OpenCalculus.Inference.SolverImpl.Eliminate S hints
   using (Elim; Elimᶠ; eliminate; _⨾ᴱ_; canonElim)
-open import OpenCalculus.Inference.SolverImpl.Canon     S
+open import OpenCalculus.Inference.SolverImpl.Canon     S hints
   using (canonₑ; canonᵣ; canonₑ-≡; canonᵣ-≡)
 open import OpenCalculus.Inference.SolverImpl.Vars       S
   using (Vars; _∪ᵛ_; ⊆-refl; ⊆-∪ˡ; ⊆-∪ʳ; fvˢ; Fixes; fixes-id; fixes-⨟)
-open import OpenCalculus.Inference.SolverImpl.Strengthen S
+open import OpenCalculus.Inference.SolverImpl.Strengthen S hints
   using (Ren; Strengthened; strengthen; ⌜_⌝ʳ; _[_]ᴴ; ⊩ᴴ-ren⁺; fixes-≐; fixes-⊆; fvᴰ;
          fix-⊩ᴼ; fix-⊩ᴼ⁻; conv⁻; inst⁻; keep⁻; princ⁻)
 

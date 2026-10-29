@@ -64,6 +64,7 @@ open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Relation.Nullary using (¬_; yes; no)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints)
 open import Language.Spec
 
 open import Util.Equality
@@ -72,6 +73,7 @@ open import OpenCalculus.Syntax.Scopes
 
 module OpenCalculus.Inference.SolverImpl.Simplify
   (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S))
   where
 
 open LanguageSpec S
@@ -89,11 +91,11 @@ open BaseTypes BTs using (_≡ᵇ?_)
 
 open import OpenCalculus.Inference.SolverImpl.Core.Rigid S using (zip₂-just)
 
-open import OpenCalculus.Inference.SolverImpl.Canon  S using (canonᴴ; canonᴴ-⊩; canonᴴ-⊩⁻)
-open import OpenCalculus.Inference.SolverImpl.Eliminate S using (Elim; mkElim)
-open import OpenCalculus.Inference.SolverImpl.Product S using (_≺ᵣ_; _≺ₑ_)
+open import OpenCalculus.Inference.SolverImpl.Canon  S hints using (canonᴴ; canonᴴ-⊩; canonᴴ-⊩⁻)
+open import OpenCalculus.Inference.SolverImpl.Eliminate S hints using (Elim; mkElim)
+open import OpenCalculus.Inference.SolverImpl.Product S hints using (_≺ᵣ_; _≺ₑ_)
 open import OpenCalculus.Inference.SolverImpl.Resid  S using (etDec; etDec-sound; etDec-compl; etDec-refute)
-open import OpenCalculus.Inference.SolverImpl.Entail S
+open import OpenCalculus.Inference.SolverImpl.Entail S hints
   using (decideᵣ; decideₑ; full; memʳ?; memᵉ?; memʳ-⊩; memᵉ-⊩; refute≾u)
 
 -- Derivations reading only a list of subtyping hypotheses and a list

@@ -16,12 +16,12 @@ open import OpenCalculus.Examples.Specs using (module Traces-Timed-LeftSided)
 
 module OpenCalculus.Examples.Handlers.Traces.Timed.LeftSided where
 
-open Traces-Timed-LeftSided using (spec; enum)
+open Traces-Timed-LeftSided using (spec; hints; enum)
 
 open import OpenCalculus.Syntax.Contexts spec using ([])
 open import OpenCalculus.Inference.Principality spec using (Typable; untypable)
-open import OpenCalculus.Inference.SolverImpl spec enum using (infer-untypable)
-open import OpenCalculus.Examples.Handlers spec enum
+open import OpenCalculus.Inference.SolverImpl spec hints enum using (infer-untypable)
+open import OpenCalculus.Examples.Handlers spec hints enum
 
 relay-reported : schemeOf (infer [] relay) ≡ just expected-relay
 relay-reported = refl

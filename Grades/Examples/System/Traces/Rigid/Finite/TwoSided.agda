@@ -43,6 +43,7 @@ open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (toWitnessFalse; fromWitness)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; noGradeHints)
 open import Grades.Durations.Monus ℚ≥0ᵀ using (Carrier; 0ᴰ; _<ᴰ_; _<ᴰ?_; ≮0⇒≡0)
 open import Grades.Durations.Intervals ℚ≥0ᵀ
   using (Cut; Hi; fin; ⁻; ⁺; 0⁻; _⊑_; _⊑ʰ_; _◁_; _◁?_; ⊑-trans; 0⁻-least;
@@ -50,7 +51,8 @@ open import Grades.Durations.Intervals ℚ≥0ᵀ
   renaming (_∣_ to _∣ᶜ_; ∞ to ∞ʰ)
 open import Grades.Durations.Intervals.Dense ℚ≥0ᵀ using (⁺⋢⁻)
 open import Util.NonNegativeRational using (#_; _≤?_)
-open import Grades.Examples.Time.Dense.TwoSided using (dense-two-sided-intervals-with-∞)
+open import Grades.Examples.Time.Dense.TwoSided
+  using (dense-two-sided-intervals-with-∞; dense-two-sided-intervals-with-∞ʰ)
 
 open import Grades.Examples.Traces.Rigid.Finite.TwoSided Op n code name name-code code-name running
   using (two-sided; Consistent)
@@ -142,6 +144,14 @@ intervalRunsToIntervalsGradeSystem = record
   { RGrade = dense-two-sided-intervals-with-∞
   ; EGrade = two-sided
   ; ∣_∣ᵉ   = interval-runs→intervals
+  }
+
+-- its hints
+
+intervalRunsToIntervalsGradeSystemʰ : SystemHints intervalRunsToIntervalsGradeSystem
+intervalRunsToIntervalsGradeSystemʰ = record
+  { RHints      = dense-two-sided-intervals-with-∞ʰ
+  ; EHints      = noGradeHints
   ; reflects-u? = nothing
   ; witnesses   = λ _ _ _ → []
   }

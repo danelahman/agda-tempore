@@ -11,10 +11,10 @@
 --                                                                    --
 -- A semilattice, an action and a grade lift to maps, with every      --
 -- operation, the order included, pointwise, and every law holding    --
--- pointwise; `of-dur τ` is constantly `of-dur τ`. The unit is least  --
--- and `_·_` commutes where they do in the component; distinct        --
+-- pointwise; `of-dur τ` is constantly `of-dur τ`. Distinct           --
 -- representations of one map are equivalent but not equal, so        --
--- `≃⇒≡?` is not declared, and no closures are declared.              --
+-- `≃⇒≡?` is not declared. Its hints declare the unit least and `_·_` --
+-- commutative where those of the component do, and no closures.      --
 ------------------------------------------------------------------------
 
 module Grades.Indexed where
@@ -39,6 +39,7 @@ open import Relation.Nullary.Decidable using (_×-dec_; map′)
 
 open import Grades.Durations using (Duration)
 open import Grades.Base
+open import Grades.Hints
 open import Grades.SemiDirect using (Semilattice; Action)
 
 open import Util.Equality
@@ -361,10 +362,16 @@ module Maps (𝒩 : Names) where
       ; of-dur-plus     = λ {τ} {τ'} → pw≃ λ s →
           ≃-at refl (!· (everywhere (G.of-dur τ)) (everywhere (G.of-dur τ')) s) G.of-dur-plus
       ; ≃⇒≡?            = nothing
-      ; u-least?        = Maybe.map (λ l m → pw λ s → l (m ! s)) G.u-least?
-      ; ·-comm?         = Maybe.map (λ c m m' → pw≃ λ s →
-                            ≃-at (!· m m' s) (!· m' m s) (c (m ! s) (m' ! s))) G.·-comm?
-      ; plus?           = λ _ → nothing
+      }
+
+    -- its hints, from those of `G`
+
+    indexedʰ : GradeHints G → GradeHints indexedᵍ
+    indexedʰ H = record
+      { u-least? = Maybe.map (λ l m → pw λ s → l (m ! s)) (GradeHints.u-least? H)
+      ; ·-comm?  = Maybe.map (λ c m m' → pw≃ λ s →
+                     ≃-at (!· m m' s) (!· m' m s) (c (m ! s) (m' ! s))) (GradeHints.·-comm? H)
+      ; plus?    = λ _ → nothing
       }
 
     -- evaluation at a name is a grade morphism onto `G`

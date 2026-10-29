@@ -51,7 +51,7 @@ open import Data.Unit using (tt)
 open import Util.Equality
 
 open import Grades.Examples.Time.RightSided
-  using (𝕀ᵣ; ℕ∞; ↑_; ∞; right-sided-intervals; right-sided-witnesses)
+  using (𝕀ᵣ; ℕ∞; ↑_; ∞; right-sided-intervals)
   renaming ([0,_] to ⌈0,_⌉)
 
 -- every deadline written below is finite, and `⌈0, ∞ ⌉` is the greatest
@@ -72,7 +72,6 @@ open import Grades.Examples.Worked.Operations.Grading using (module Time-RightSi
 open Time-RightSided using (opTime) public
 
 open import ClosedCalculus.Examples.Typing.Core right-sided-intervals opTime
-  right-sided-witnesses
 
 open import Language.Comparisons using (Cmp; eq; ne; lt; le; gt; ge; less; equal; greater; holds)
 open import ClosedCalculus.Syntax.Data spec using (compareᵈ)

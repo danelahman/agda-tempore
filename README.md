@@ -34,8 +34,8 @@ warning. The only postulate is function extensionality (`Util/Equality.agda`).
 ## Layout
 
 - `Util/`: equality and the non-negative rationals.
-- `Grades/`: grade algebras, grade systems and durations; the concrete grades
-  in `Grades/Examples/`.
+- `Grades/`: grade algebras, grade systems and durations, and the hints the
+  solver reads (`Grades/Hints.agda`); the concrete grades in `Grades/Examples/`.
 - `Language/`: what both calculi share: base types, operations, types.
 - `OpenCalculus/`: the calculus with type and grade variables: hypotheses,
   entailment, typing, the operational semantics, type safety and termination,

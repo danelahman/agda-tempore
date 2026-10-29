@@ -40,6 +40,7 @@ open import Relation.Binary.Definitions
   using (DecidableEquality; Transitive; Trichotomous)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; noGradeHints)
 open import Grades.Examples.Time.TwoSidedWithInfinity
 
 open import Util.Equality
@@ -209,6 +210,14 @@ tracesToTwoSidedIntervalsGradeSystem = record
   { RGrade = two-sided-intervals-with-∞
   ; EGrade = two-sided
   ; ∣_∣ᵉ   = two-sided-traces→intervals
+  }
+
+-- its hints
+
+tracesToTwoSidedIntervalsGradeSystemʰ : SystemHints tracesToTwoSidedIntervalsGradeSystem
+tracesToTwoSidedIntervalsGradeSystemʰ = record
+  { RHints      = two-sided-intervals-with-∞ʰ
+  ; EHints      = noGradeHints
   ; reflects-u? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

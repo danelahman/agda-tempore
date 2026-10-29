@@ -26,6 +26,7 @@ module Grades.Examples.Traces.Rigid.Rational.TwoSided
 open import Relation.Nullary.Decidable using (toWitnessFalse)
 
 open import Grades.Base using (Grade)
+open import Grades.Hints using (GradeHints)
 open import Grades.Durations.Monus ℚ≥0ᵀ using (0ᴰ; _<ᴰ_)
 open import Util.NonNegativeRational using (#_; _≤?_)
 open import Grades.Exact.Grid.NonNegativeRational using (ℚ≥0-commensurable)
@@ -39,6 +40,11 @@ private
 
 open import Grades.Exact.Regular.Interval ℚ≥0ᵀ Op n code code-injective name code-name
   running ℚ≥0-dense (# 1) one-pos ℚ≥0-commensurable public
+open import Grades.Exact.Regular.Grades ℚ≥0ᵀ Op n code code-injective name code-name
+  running ℚ≥0-dense (# 1) one-pos ℚ≥0-commensurable using (lowerʰ; upperʰ)
 
 two-sided : Grade ℚ≥0ᴰ
 two-sided = intervalᵍ
+
+two-sidedʰ : GradeHints two-sided
+two-sidedʰ = intervalʰ lowerʰ upperʰ

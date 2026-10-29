@@ -7,7 +7,7 @@
 -- whether the unit is least, which expressions may replace     --
 -- `v`, an expression with `v` sent to a value (`put`), the     --
 -- product and a product's factors, and the closure of an       --
--- expression where the grade declares it (`Closure`; none      --
+-- expression where the hints declare it (`Closure`; none       --
 -- through the image of an effect unknown). An ordering is      --
 -- valid when it is reflexive or decided (`Valid`); it bounds   --
 -- `v` on neither side. An oracle (`Oracle`) says whether `v`   --
@@ -90,24 +90,27 @@ open import Relation.Binary.Definitions using (DecidableEquality; Decidable)
 open import Relation.Nullary using (Dec; yes; no)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; module SystemHintsInterface)
 open import Language.Spec
 
 open import Util.Equality
 
 open import OpenCalculus.Syntax.Scopes
 
-module OpenCalculus.Inference.SolverImpl.Values (S : LanguageSpec) where
+module OpenCalculus.Inference.SolverImpl.Values (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
+open SystemHintsInterface hints
 
 open import OpenCalculus.Syntax.Grades S
 open import OpenCalculus.Syntax.Subst  S
 open import OpenCalculus.Hypotheses    S
 
 open import OpenCalculus.Inference.SolverImpl.Core.Occurs S using (occᵉ-e; occᵉ-r; occʳ-r)
-open import OpenCalculus.Inference.SolverImpl.Entail      S using (decideᵣ; decideₑ; full)
-open import OpenCalculus.Inference.SolverImpl.Canon       S using (canonᵣ; canonₑ)
+open import OpenCalculus.Inference.SolverImpl.Entail      S hints using (decideᵣ; decideₑ; full)
+open import OpenCalculus.Inference.SolverImpl.Canon       S hints using (canonᵣ; canonₑ)
 
 isFalse : (b : 𝔹) → Maybe (b ≡ false)
 isFalse false = just refl
@@ -368,8 +371,8 @@ module Rules {X : Set} (s : Sort X) where
         byFactors sh y z e (y ≟ self) (z ≟ self) (isFalse (occ y)) (isFalse (occ z))
 
   -- The closure `x⁺` of an expression: `x` where it absorbs its own
-  -- iteration, decided; else the closure of its value, where the grade
-  -- declares it
+  -- iteration, decided; else the closure of its value, where the hints
+  -- declare it
 
   data Clo (x : X) : X → Set where
     idem  : mul x x ≤ x → Clo x x
@@ -823,8 +826,8 @@ evalᵣ ∣ ε ∣̂ᵉ with evalₑ ε
 ... | just (c , p) = just (mapᵉ c , ≡̂ᵣ-trans (≡̂ᵣ-map-cong p) ≡̂ᵣ-map-const)
 ... | nothing      = nothing
 
--- The closure of an expression: that of its value, where the grade
--- declares it
+-- The closure of an expression: that of its value, where the hints
+-- declare it
 
 Closureₑ : ∀ {Ψ} → EExp Ψ → EExp Ψ → Set
 Closureₑ L L⁺ = Σ[ c ∈ E ] Σ[ p ∈ Plus _·ₑ_ _≾ₑ_ c ] ((L ≡̂ₑ econst c) × (L⁺ ≡ econst (Plus.c⁺ p)))

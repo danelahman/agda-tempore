@@ -44,7 +44,6 @@ open import Grades.Examples.SemiDirect.ModeTimes
   renaming (decided to grade)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
   renaming (opTime to running)
-open import Grades.Examples.System.Identity using (noWitnesses)
 
 open Maps ℕ-names using (_∣_)
 
@@ -60,7 +59,7 @@ opTime read  = occurrence ((⋆ , ⋆) L.∷ L.[]) (running read)
 opTime write = occurrence ((Idle , Idle) L.∷ L.[]) (running write)
 opTime send  = occurrence ((Idle , Radio) L.∷ (Radio , Radio) L.∷ L.[]) (running send)
 
-open import ClosedCalculus.Examples.Typing.Core mode-times opTime noWitnesses
+open import ClosedCalculus.Examples.Typing.Core mode-times opTime
 
 decided : (c d : R) {p : True (c ≾ᵣ? d)} → c ≾ᵣ d
 decided c d {p} = toWitness p

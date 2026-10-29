@@ -36,7 +36,7 @@ module ClosedCalculus.Examples.Typing.Time.LeftSided where
 open import Relation.Nullary using (¬_)
 
 open import Grades.Examples.Time.LeftSided
-  using (𝕀; [_,+∞⟩; left-sided-intervals; left-sided-witnesses)
+  using (𝕀; [_,+∞⟩; left-sided-intervals)
 
 open import Grades.Examples.Worked.Operations
   using (Op; read; write; send)
@@ -50,7 +50,6 @@ open import Grades.Examples.Worked.Operations.Grading using (module Time-LeftSid
 open Time-LeftSided using (opTime) public
 
 open import ClosedCalculus.Examples.Typing.Core left-sided-intervals opTime
-  left-sided-witnesses
 
 ------------------------------------------------------------------------
 -- Effectful computations

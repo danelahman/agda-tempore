@@ -38,7 +38,8 @@ open import Relation.Nullary using (¬_; Dec; yes; no; ¬?)
 open import Relation.Nullary.Decidable using (_×-dec_)
 
 open import Grades.Indexed using (module Maps)
-open import Grades.Product using (_×ᵍ_)
+open import Grades.Product using (_×ᵍ_; _×ʰ_)
+open import Grades.Hints using (GradeHints)
 open import Grades.Matrix.Dioid using (Dioid)
 open import Grades.Matrix.Nominal 𝒩 using (Equivariant; Perm; Fixes; along)
 open import Grades.Matrix.Modes 𝒩 using (swap; swap-inv; swap-a; swap-b; swap-fix; swap-injective)
@@ -143,6 +144,9 @@ Box = Map G.Carrier × G.Carrier
 
 box-grade : Grade D
 box-grade = Maps.indexedᵍ 𝒩 G ×ᵍ G
+
+box-gradeʰ : GradeHints G → GradeHints box-grade
+box-gradeʰ H = Maps.indexedʰ 𝒩 G H ×ʰ H
 
 boxes : Dioid
 boxes = adjoin-zero box-grade

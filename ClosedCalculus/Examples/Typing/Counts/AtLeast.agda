@@ -53,8 +53,7 @@ opTime read  = ⟪ 1 , 0 , 0 ⟫ˡ
 opTime write = ⟪ 0 , 1 , 0 ⟫ˡ
 opTime send  = ⟪ 0 , 0 , 1 ⟫ˡ
 
-open import Grades.Examples.System.Identity using (noWitnesses)
-open import ClosedCalculus.Examples.Typing.Core (at-least-counts 3) opTime noWitnesses
+open import ClosedCalculus.Examples.Typing.Core (at-least-counts 3) opTime
 
 ------------------------------------------------------------------------
 -- Effectful computations

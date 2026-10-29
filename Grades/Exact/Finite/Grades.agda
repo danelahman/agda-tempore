@@ -333,9 +333,6 @@ upperᵍ = record
   ; of-dur-zero = ↑² (waitᵁ 0ᴰ) εᵉ upper-zero
   ; of-dur-plus = λ {m} {n} → ↑² (waitᵁ (m +ᴰ n)) (waitᵁ m ·ᵉ waitᵁ n) (upper-split m n)
   ; ≃⇒≡? = nothing
-  ; u-least? = nothing
-  ; ·-comm?  = nothing
-  ; plus?    = λ _ → nothing
   }
 
 -- the lower instance: left-sided grades
@@ -391,7 +388,4 @@ lowerᵍ = record
   ; of-dur-zero = ↑² (waitᴸ 0ᴰ) εᵉ (lower-zero (0ᴰ <ᴰ? 0ᴰ))
   ; of-dur-plus = λ {m} {n} → ↑² (waitᴸ (m +ᴰ n)) (waitᴸ m ·ᵉ waitᴸ n) (lower-hom m n (0ᴰ <ᴰ? m) (0ᴰ <ᴰ? n) (0ᴰ <ᴰ? (m +ᴰ n)))
   ; ≃⇒≡? = nothing
-  ; u-least? = nothing
-  ; ·-comm?  = nothing
-  ; plus?    = λ _ → nothing
   }

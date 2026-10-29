@@ -31,6 +31,7 @@ open import Data.Maybe.Base using (just; nothing)
 
 open import Grades.Durations.NonNegativeRational using (ℚ≥0ᴰ; ℕ→ℚ≥0ᴰ)
 open import Grades.Base
+open import Grades.Hints using (GradeHints; comm-≡)
 
 open import Util.Equality
 
@@ -190,9 +191,6 @@ dense-left-sided-intervals = posetᵍ record
   ; _≾_               = _≾ₒ_
   ; ⊤                 = uₒ
   ; ≾-⊤               = ≾ₒ-⊤
-  ; u-least?          = nothing
-  ; ·-comm?           = just ·ₒ-comm
-  ; plus?             = λ i → just (plus-self (≾ₒ-refl {i}) (·ₒ-iter i))
   ; _⊔_               = _⊔ₒ_
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
   ; ⊔-ubʳ             = ⊔ₒ-ubʳ
@@ -211,6 +209,15 @@ dense-left-sided-intervals = posetᵍ record
   ; of-dur            = λ q → [ q ,+∞⟩
   ; of-dur-zero       = refl
   ; of-dur-plus       = refl
+  }
+
+-- its hints
+
+dense-left-sided-intervalsʰ : GradeHints dense-left-sided-intervals
+dense-left-sided-intervalsʰ = record
+  { u-least? = nothing
+  ; ·-comm?  = just (comm-≡ dense-left-sided-intervals ·ₒ-comm)
+  ; plus?    = λ i → just (plus-self (≾ₒ-refl {i}) (·ₒ-iter i))
   }
 
 ------------------------------------------------------------------------

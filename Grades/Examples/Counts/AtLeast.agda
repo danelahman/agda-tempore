@@ -25,9 +25,11 @@ open import Relation.Nullary using (¬_)
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
+open import Grades.Hints using (GradeHints)
 
 open import Grades.Examples.Time.LeftSided
-  using (left-sided-intervals; left-sided-intervals-with-⊤;
+  using (left-sided-intervals; left-sided-intervals-with-⊤; left-sided-intervalsʰ;
+         left-sided-intervals-with-⊤ʰ;
          𝕀; [_,+∞⟩; uₒ-not-least; 𝕀⊤; timed_; untimed)
 
 open import Grades.Examples.Counts.Power left-sided-intervals public
@@ -36,6 +38,9 @@ open import Grades.Examples.Counts.Power left-sided-intervals public
 
 at-least-counts : ℕ → Grade ℕᴰ
 at-least-counts = power
+
+at-least-countsʰ : (n : ℕ) → GradeHints (at-least-counts n)
+at-least-countsʰ = powerʰ left-sided-intervalsʰ
 
 -- one coordinate
 
@@ -62,6 +67,9 @@ module WithTop = Power left-sided-intervals-with-⊤
 
 at-least-counts-with-⊤ : ℕ → Grade ℕᴰ
 at-least-counts-with-⊤ = WithTop.power
+
+at-least-counts-with-⊤ʰ : (n : ℕ) → GradeHints (at-least-counts-with-⊤ n)
+at-least-counts-with-⊤ʰ = WithTop.powerʰ left-sided-intervals-with-⊤ʰ
 
 -- one coordinate
 

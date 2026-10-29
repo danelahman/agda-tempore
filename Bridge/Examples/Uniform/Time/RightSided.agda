@@ -34,11 +34,11 @@ open import OpenCalculus.Examples.Specs using (module Time-RightSided)
 
 module Bridge.Examples.Uniform.Time.RightSided where
 
-open Time-RightSided using (spec; enum)
+open Time-RightSided using (spec; hints; enum)
 
-open import Grades.Examples.Time.RightSided using (right-sided-intervals; right-sided-witnesses)
+open import Grades.Examples.Time.RightSided using (right-sided-intervals)
 open import ClosedCalculus.Examples.Typing.Time.RightSided using (opTime)
-open import ClosedCalculus.Examples.Typing.Core right-sided-intervals opTime right-sided-witnesses
+open import ClosedCalculus.Examples.Typing.Core right-sided-intervals opTime
   using (forwarding; uₑ; _·ₑ_)
 open import Grades.Examples.Worked.Operations using (Op)
 
@@ -57,7 +57,7 @@ open import OpenCalculus.Syntax.Contexts        spec using (OCtx; []; _∷_; _�
 open import OpenCalculus.Hypotheses             spec
 open import OpenCalculus.Typing                 spec
 open import OpenCalculus.Syntax.Raw             spec
-open import OpenCalculus.Inference.SolverImpl   spec enum using (infer)
+open import OpenCalculus.Inference.SolverImpl   spec hints enum using (infer)
 open import OpenCalculus.Inference.Principality spec using (PrincipalScheme; Inference; typed; untypable; stuck)
 open import OpenCalculus.Examples.Variables
 
@@ -65,7 +65,7 @@ open import Bridge.Instantiation.Types          spec
 open import Bridge.Instantiation.Judgements     spec
 open import Bridge.Instantiation.Correspondence spec
 open import Bridge.Instantiation.Embedding      spec
-open import Bridge.Instantiation.Completeness   spec enum
+open import Bridge.Instantiation.Completeness   spec hints enum
 
 ------------------------------------------------------------------------
 -- The program

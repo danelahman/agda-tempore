@@ -24,6 +24,7 @@ open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
 open import Data.Nat using (ℕ; suc)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints)
 open import Language.Spec
 open import Language.Operations
 
@@ -32,7 +33,8 @@ open import Util.Equality
 open import OpenCalculus.Syntax.Scopes
 open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
-module OpenCalculus.Examples.Reports (S : LanguageSpec) (opEnum : OpEnum S) where
+module OpenCalculus.Examples.Reports (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) (opEnum : OpEnum S) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades using (⊤ᵣ)
@@ -49,10 +51,10 @@ open import OpenCalculus.Syntax.Raw             S
 open import OpenCalculus.Syntax.Raw.Subst       S using (_[_]ᴿᶜ)
 open import OpenCalculus.Typing.Erasure         S using (⌊_⌋ᶜ)
 open import OpenCalculus.Inference.Principality S
-open import OpenCalculus.Inference.SolverImpl   S opEnum
+open import OpenCalculus.Inference.SolverImpl   S hints opEnum
   using (infer-complete; infer-handlerFree)
 
-open import OpenCalculus.Inference.SolverImpl S opEnum using (infer) public
+open import OpenCalculus.Inference.SolverImpl S hints opEnum using (infer) public
 open import OpenCalculus.Examples.Scheme S public
 open import OpenCalculus.Examples.Variables
 

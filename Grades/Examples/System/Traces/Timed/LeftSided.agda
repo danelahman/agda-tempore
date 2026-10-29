@@ -38,6 +38,7 @@ open import Relation.Binary.Definitions
   using (DecidableEquality; Transitive; Trichotomous)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; noGradeHints)
 open import Grades.Examples.Time.LeftSided
 
 open import Util.Equality
@@ -148,6 +149,14 @@ tracesToLeftSidedIntervalsGradeSystem = record
   { RGrade = left-sided-intervals
   ; EGrade = left-sided
   ; ∣_∣ᵉ   = traces→left-sided-intervals
+  }
+
+-- its hints
+
+tracesToLeftSidedIntervalsGradeSystemʰ : SystemHints tracesToLeftSidedIntervalsGradeSystem
+tracesToLeftSidedIntervalsGradeSystemʰ = record
+  { RHints      = left-sided-intervalsʰ
+  ; EHints      = noGradeHints
   ; reflects-u? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

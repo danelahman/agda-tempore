@@ -5,8 +5,8 @@
 -- a sort as vertices. Its edges (`Edgeₑ`, `Edgeᵣ`) are the       --
 -- orderings of `Q` (`hyp`), the sameness of expressions         --
 -- (`same`), the grade's order between constants (`cst`), the     --
--- links to the top (`top`) and from the unit when the grade      --
--- declares it least (`unit`), on the resource side the           --
+-- links to the top (`top`) and from the unit when the hints      --
+-- declare it least (`unit`), on the resource side the            --
 -- images of the chains between effect atoms (`img`), and the     --
 -- factor edges (`factor`): from the product of some atoms of a   --
 -- side of `Q` whose normal form is one product to that side,     --
@@ -79,16 +79,19 @@ open import Relation.Nullary using (¬_; yes; no)
 open import Relation.Nullary.Decidable using (does)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; module SystemHintsInterface)
 open import Language.Spec
 
 open import Util.Equality
 
 open import OpenCalculus.Syntax.Scopes
 
-module OpenCalculus.Inference.SolverImpl.Entail (S : LanguageSpec) where
+module OpenCalculus.Inference.SolverImpl.Entail (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
+open SystemHintsInterface hints
 
 open import OpenCalculus.Syntax.Grades        S
 open import OpenCalculus.Syntax.Types         S
@@ -97,7 +100,7 @@ open import OpenCalculus.Hypotheses           S
 open import OpenCalculus.Hypotheses.Instances S
   using (Satisfiable; ⊨⇒⊩ᴴ; VarOK-∅; inst-≡̂ᵣ; inst-≾ᵣ; val-≾ᵣ⁻; closed-≾ᵣ; closed-≾ₑ)
 
-open import OpenCalculus.Inference.SolverImpl.Normal S
+open import OpenCalculus.Inference.SolverImpl.Normal S hints
 open import OpenCalculus.Inference.SolverImpl.Resid  S using (etDec; etDec-refute)
 import OpenCalculus.Inference.SolverImpl.Reach as Reachability
 
@@ -240,7 +243,7 @@ mutual
   edgeₑ-sound (same p) = eqₑ (≅ᵉ⇒≡̂ p)
   edgeₑ-sound (cst p)  = atomₑ p
   edgeₑ-sound top      = topₑ
-  edgeₑ-sound (unit q) = minₑ q
+  edgeₑ-sound (unit q) = minₑ (to-witness q)
   edgeₑ-sound (factor {ε = ε} _ eq k c) =
     transₑ (eqₑ c) (transₑ (keepₑ-sound k)
                            (eqₑ (≡̂ₑ-sym (subst (λ s → ε ≡̂ₑ ⟦ s ⟧ᵉˢ⁺) eq (nrmₑ-≡ ε)))))
@@ -255,7 +258,7 @@ mutual
 
   aboveₑ-sound : ∀ {Θ} {Q : Hyps Θ} {a} → Aboveₑ Q a → Q ⊩ ûₑ ≾̂ₑ ⟦ a ⟧ᵉᵃ
   aboveₑ-sound (const p)                  = atomₑ p
-  aboveₑ-sound (least q)                  = minₑ q
+  aboveₑ-sound (least q)                  = minₑ (to-witness q)
   aboveₑ-sound (reached {ε = ε} eq p ch) =
     transₑ (atomₑ p) (transₑ (eqₑ (≡̂ₑ-sym (convᵉ ε eq))) (chainₑ-sound ch))
 
@@ -270,7 +273,7 @@ mutual
   edgeᵣ-sound (same p) = eqᵣ (≅ʳ⇒≡̂ p)
   edgeᵣ-sound (cst p)  = atomᵣ p
   edgeᵣ-sound top      = topᵣ
-  edgeᵣ-sound (unit q) = minᵣ q
+  edgeᵣ-sound (unit q) = minᵣ (to-witness q)
   edgeᵣ-sound (img {a} {b} ch) =
     transᵣ (eqᵣ (≡̂ᵣ-sym ∣⟦ a ⟧∣)) (transᵣ (map-mono (chainₑ-sound ch)) (eqᵣ ∣⟦ b ⟧∣))
   edgeᵣ-sound (factor {ρ = ρ} _ eq k c) =
@@ -285,8 +288,8 @@ mutual
 
   aboveᵣ-sound : ∀ {Θ} {Q : Hyps Θ} {a} → Aboveᵣ Q a → Q ⊩ ûᵣ ≾̂ᵣ ⟦ a ⟧ʳᵃ
   aboveᵣ-sound (const p)                  = atomᵣ p
-  aboveᵣ-sound (least q)                  = minᵣ q
-  aboveᵣ-sound (image q)                  = transᵣ (eqᵣ ∣û∣ₑ) (map-mono (minₑ q))
+  aboveᵣ-sound (least q)                  = minᵣ (to-witness q)
+  aboveᵣ-sound (image q)                  = transᵣ (eqᵣ ∣û∣ₑ) (map-mono (minₑ (to-witness q)))
   aboveᵣ-sound (reached {ρ = ρ} eq p ch) =
     transᵣ (atomᵣ p) (transᵣ (eqᵣ (≡̂ᵣ-sym (convʳ ρ eq))) (chainᵣ-sound ch))
 

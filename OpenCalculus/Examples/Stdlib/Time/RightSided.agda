@@ -13,12 +13,12 @@ open import OpenCalculus.Examples.Specs using (module Time-RightSided)
 
 module OpenCalculus.Examples.Stdlib.Time.RightSided where
 
-open Time-RightSided using (spec; enum)
+open Time-RightSided using (spec; hints; enum)
 
 open import OpenCalculus.Syntax.Grades   spec
 open import OpenCalculus.Syntax.Types    spec
 open import OpenCalculus.Syntax.Contexts spec using ([])
-open import OpenCalculus.Examples.Stdlib spec enum
+open import OpenCalculus.Examples.Stdlib spec hints enum
 open import OpenCalculus.Examples.Variables
 
 id-reported : schemeOf (infer [] id) ≡ just expected-id

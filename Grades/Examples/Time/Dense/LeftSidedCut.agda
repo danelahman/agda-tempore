@@ -29,6 +29,7 @@ open import Relation.Nullary.Negation.Core using (¬_)
 open import Grades.Durations using (idᴰ)
 open import Grades.Durations.NonNegativeRational using (ℚ≥0ᴰ; ℚ≥0ᵀ; ℕ→ℚ≥0ᴰ)
 open import Grades.Base
+open import Grades.Hints using (GradeHints; comm-≡)
 
 open import Util.Equality
 
@@ -114,9 +115,15 @@ dense-left-sided-cut-intervals = posetᵍ record
   ; ≾-zero-productʳ = λ {_} {d} _ → 0⁻-least d
   ; of-dur-zero     = refl
   ; of-dur-plus     = refl
-  ; u-least?        = nothing
-  ; ·-comm?         = just +ˡ-comm
-  ; plus?           = λ c → just (plus-self ⊑-refl (+ˡ-inflate c c))
+  }
+
+-- its hints
+
+dense-left-sided-cut-intervalsʰ : GradeHints dense-left-sided-cut-intervals
+dense-left-sided-cut-intervalsʰ = record
+  { u-least? = nothing
+  ; ·-comm?  = just (comm-≡ dense-left-sided-cut-intervals +ˡ-comm)
+  ; plus?    = λ c → just (plus-self ⊑-refl (+ˡ-inflate c c))
   }
 
 ------------------------------------------------------------------------

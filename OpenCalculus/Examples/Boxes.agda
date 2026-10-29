@@ -35,6 +35,7 @@ open import Relation.Nullary.Decidable using (True; toWitness)
 
 open import Grades.Durations using (Stepped)
 open import Grades.Base
+open import Grades.Hints using (SystemHints)
 open import Language.Spec
 open import Language.Operations
 
@@ -43,7 +44,8 @@ open import Util.Equality
 open import OpenCalculus.Syntax.Scopes
 open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
-module OpenCalculus.Examples.Boxes (S : LanguageSpec) (opEnum : OpEnum S)
+module OpenCalculus.Examples.Boxes (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) (opEnum : OpEnum S)
   (st : Stepped (GradeSystem.Dur (LanguageSpec.Grades S))) where
 
 open LanguageSpec S
@@ -63,10 +65,10 @@ open import OpenCalculus.Syntax.Raw             S
 open import OpenCalculus.Syntax.Raw.Subst       S using (_[_]ᴿᶜ)
 open import OpenCalculus.Typing.Erasure         S using (⌊_⌋ᶜ)
 open import OpenCalculus.Inference.Principality S
-open import OpenCalculus.Inference.SolverImpl   S opEnum
+open import OpenCalculus.Inference.SolverImpl   S hints opEnum
   using (infer-complete; infer-handlerFree)
 
-open import OpenCalculus.Inference.SolverImpl S opEnum using (infer) public
+open import OpenCalculus.Inference.SolverImpl S hints opEnum using (infer) public
 open import OpenCalculus.Examples.Scheme S public
 open import OpenCalculus.Examples.Variables
 

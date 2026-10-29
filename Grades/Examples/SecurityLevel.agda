@@ -4,8 +4,8 @@
 -- A decidable bounded join-semilattice of levels is a grade: `_·_`   --
 -- and `_⊔_` are both the join, the unit is the least level and `⊤`   --
 -- the greatest. `of-dur` is constantly the least level, for any      --
--- durations. The unit is least and `_·_` commutes, and both are      --
--- declared.                                                          --
+-- durations. The unit is least and `_·_` commutes, and its hints     --
+-- declare both.                                                      --
 --                                                                    --
 -- The level is a floating label, as in LIO. The effect grade of a    --
 -- computation is the highest level it has touched (for taint sets,   --
@@ -39,6 +39,7 @@ open import Relation.Nullary using (¬_; yes; no)
 
 open import Grades.Durations using (Duration)
 open import Grades.Base using (posetᵍ; Grade)
+open import Grades.Hints using (GradeHints; comm-≡)
 
 open import Util.Equality
 
@@ -142,9 +143,13 @@ module _ (L : LevelLattice) where
     ; ≾-zero-productʳ = λ {a} {b} p → ⊑-trans (∨-ubʳ a b) p
     ; of-dur-zero     = refl
     ; of-dur-plus     = sym (∨-identityˡ bot)
-    ; u-least?        = just bot-⊑
-    ; plus?           = λ _ → nothing
-    ; ·-comm?         = just ∨-comm
+    }
+
+  level-gradeʰ : {D : Duration} → GradeHints (level-grade {D})
+  level-gradeʰ {D} = record
+    { u-least? = just bot-⊑
+    ; ·-comm?  = just (comm-≡ (level-grade {D}) ∨-comm)
+    ; plus?    = λ _ → nothing
     }
 
 ------------------------------------------------------------------------
@@ -189,6 +194,9 @@ low-high = record
 
 two-point-levels : {D : Duration} → Grade D
 two-point-levels = level-grade low-high
+
+two-point-levelsʰ : {D : Duration} → GradeHints (two-point-levels {D})
+two-point-levelsʰ = level-gradeʰ low-high
 
 ------------------------------------------------------------------------
 -- Powers: `n`-tuples of levels, ordered and joined pointwise
@@ -289,6 +297,9 @@ taint-lattice = Power.power low-high
 
 taint-sets : {D : Duration} → ℕ → Grade D
 taint-sets n = level-grade (taint-lattice n)
+
+taint-setsʰ : {D : Duration} → (n : ℕ) → GradeHints (taint-sets {D} n)
+taint-setsʰ n = level-gradeʰ (taint-lattice n)
 
 -- the empty set and the singletons
 

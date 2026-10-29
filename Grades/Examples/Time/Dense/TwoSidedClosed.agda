@@ -32,6 +32,7 @@ open import Data.Maybe.Base using (just; nothing)
 
 open import Grades.Durations.NonNegativeRational using (ℚ≥0ᴰ; ℕ→ℚ≥0ᴰ)
 open import Grades.Base
+open import Grades.Hints using (GradeHints; comm-≡)
 
 open import Util.Equality
 
@@ -264,9 +265,6 @@ dense-closed-two-sided-intervals-with-∞ = posetᵍ record
   ; _≾_              = _≾ᵢ_
   ; ⊤                = ⊤ᵢ
   ; ≾-⊤              = ≾ᵢ-⊤
-  ; u-least?         = nothing
-  ; ·-comm?          = just ·ᵢ-comm
-  ; plus?            = λ i → just (plusᵢ i)
   ; _⊔_              = _⊔ᵢ_
   ; ⊔-ubˡ            = ⊔ᵢ-ubˡ
   ; ⊔-ubʳ            = ⊔ᵢ-ubʳ
@@ -290,6 +288,15 @@ dense-closed-two-sided-intervals-with-∞ = posetᵍ record
   ; of-dur            = λ q → [ q , ↑ q ] {fromWitness ≤-refl}
   ; of-dur-zero       = eqᵢ refl refl
   ; of-dur-plus       = eqᵢ refl refl
+  }
+
+-- its hints
+
+dense-closed-two-sided-intervals-with-∞ʰ : GradeHints dense-closed-two-sided-intervals-with-∞
+dense-closed-two-sided-intervals-with-∞ʰ = record
+  { u-least? = nothing
+  ; ·-comm?  = just (comm-≡ dense-closed-two-sided-intervals-with-∞ ·ᵢ-comm)
+  ; plus?    = λ i → just (plusᵢ i)
   }
 
 ------------------------------------------------------------------------

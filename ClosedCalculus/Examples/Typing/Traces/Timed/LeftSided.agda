@@ -46,8 +46,7 @@ open import Grades.Examples.Worked.Traces.Timed.LeftSided
 open import Grades.Examples.Worked.Operations.Grading using (module Traces-Timed-LeftSided)
 open Traces-Timed-LeftSided using (opTime) public
 
-open import Grades.Examples.System.Identity using (noWitnesses)
-open import ClosedCalculus.Examples.Typing.Core left-sided opTime noWitnesses
+open import ClosedCalculus.Examples.Typing.Core left-sided opTime
 
 ------------------------------------------------------------------------
 -- Effectful computations

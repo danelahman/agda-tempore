@@ -7,8 +7,8 @@
 -- position being the unit, an atom matched against nothing on    --
 -- the right when the unit is below it and on the left when it is --
 -- below the unit, and an atom above the top on the right         --
--- standing for any run of atoms on the left. Where the grade     --
--- declares `_·_` commutative, products compare as multisets:     --
+-- standing for any run of atoms on the left. Where the hints     --
+-- declare `_·_` commutative, products compare as multisets:      --
 -- some permutation of the left embeds in order into the right.   --
 --                                                                --
 -- `Chains` is the reachability table along a list of edges       --
@@ -50,6 +50,7 @@ open import Relation.Nullary.Decidable using (map′)
 open import Relation.Binary.Definitions using (Decidable)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints)
 open import Language.Spec
 
 open import Util.Equality
@@ -58,6 +59,7 @@ open import OpenCalculus.Syntax.Scopes
 
 module OpenCalculus.Inference.SolverImpl.Normal
   (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S))
   where
 
 open LanguageSpec S
@@ -66,7 +68,7 @@ open GradeSystemInterface Grades
 open import OpenCalculus.Syntax.Grades S
 open import OpenCalculus.Hypotheses    S
 
-open import OpenCalculus.Inference.SolverImpl.Product S public
+open import OpenCalculus.Inference.SolverImpl.Product S hints public
 
 ------------------------------------------------------------------
 -- Chains between atoms
