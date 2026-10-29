@@ -38,7 +38,7 @@ open import OpenCalculus.Syntax.Grades   S
 open import OpenCalculus.Syntax.Types    S
 open import OpenCalculus.Syntax.Contexts S
 open import OpenCalculus.Syntax.Subst    S
-open import OpenCalculus.Hypotheses.Obligations S using (_+eⁿ_; _,ᵉⁿ_)
+open import OpenCalculus.Hypotheses.Quantified S using (_+eⁿ_; _,ᵉⁿ_)
 
 ------------------------------------------------------------------------
 -- Declarative instances

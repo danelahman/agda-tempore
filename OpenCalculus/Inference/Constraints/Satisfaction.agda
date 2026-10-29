@@ -9,9 +9,9 @@
 -- constraints.                                                 --
 --                                                              --
 -- `σ ⊨[ Q ∣ R ] C` states that `σ` solves `C` relative to `Q`  --
--- and the obligations `R`: along every substitution `δ`, under --
--- any hypotheses entailing `Q` and `R` along `δ`, `σ ⨟ δ`      --
--- solves `C`.                                                  --
+-- and further quantified orderings `R`: along every            --
+-- substitution `δ`, under any hypotheses entailing `Q` and `R` --
+-- along `δ`, `σ ⨟ δ` solves `C`.                               --
 --                                                              --
 -- Constraint satisfaction follows Pottier and Rémy, The        --
 -- Essence of ML Type Inference (ATTAPL, 2005), here            --
@@ -65,11 +65,11 @@ _⊨[_]_ {Θ' = Θ'} σ Q (∃ᵉ C)      = Σ[ ε ∈ EExp Θ' ]   ((σ ,ᵉ ε
 σ ⊨[ Q ] (∀ᵉ C)                  = (σ ↑ᵉ) ⊨[ wkᵉ-H Q ] C
 σ ⊨[ Q ] ⋀ᵒᵖ f                   = (op : Op) → σ ⊨[ Q ] f op
 
--- Relative to hypotheses and obligations
+-- Relative to hypotheses and further quantified orderings
 
 infix 4 _⊨[_∣_]_
 
-_⊨[_∣_]_ : ∀ {Θ Θ'} → Subst Θ Θ' → Hyps Θ' → Obligs Θ' → Constraint Θ → Set
+_⊨[_∣_]_ : ∀ {Θ Θ'} → Subst Θ Θ' → Hyps Θ' → QOrds Θ' → Constraint Θ → Set
 _⊨[_∣_]_ {Θ' = Θ'} σ Q R C =
   ∀ {Ξ} → (δ : Subst Θ' Ξ) → (Q' : Hyps Ξ) → Q' ⊩ Q ∣ R [ δ ] → (σ ⨟ˢ δ) ⊨[ Q' ] C
 

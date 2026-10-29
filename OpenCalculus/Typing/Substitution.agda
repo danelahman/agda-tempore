@@ -1,7 +1,7 @@
 ------------------------------------------------------------------
 -- Substitution of a value for a term variable                  --
 --                                                              --
--- Under the empty hypothesis set: a variable `x : A` at depth  --
+-- Under the truths: a variable `x : A` at depth               --
 -- `k` of `Γ` (`Drop Γ₀ A k Γ Γ⁻`, with `Γ₀` the context before --
 -- `x` and `Γ⁻` the context without it), and a value of type    --
 -- `A` in `Γ₀`, give `Γ⁻ ⊢ M[V/x]` from `Γ ⊢ M` (`sub-v`,       --

@@ -22,8 +22,8 @@
 --     (`Localised`, `localise-princ`), `splitᴿ`                --
 --     (`splitᴿ-princ`/`-fail`), `popᵉ`                         --
 --     (`popᵉ-princ`/`-escape`/`-fail`).                        --
---   * Deferred conditions, obligations (`Deferred`), retried   --
---     after each close (`retry-princ`/`-fail`).                --
+--   * Deferred conditions, quantified orderings (`Deferred`),  --
+--     retried after each close (`retry-princ`/`-fail`).        --
 --   * Read-back: `toHyps` (`toHyps-compl`, `etDec-refute`),    --
 --     then `checkClosed`, which decides the closed atoms and   --
 --     the closed orderings joined by chains of hypotheses and  --
@@ -79,7 +79,7 @@
 -- point: the solver's answer is searched for a refutation      --
 -- (`Search.search`), then reported and the report checked      --
 -- (`closedReport`); `scheme` is a principal                    --
--- type scheme whose conditions are satisfiable exactly when    --
+-- type scheme whose hypotheses are satisfiable exactly when    --
 -- the term is typable (`infer-typed`); a refutation, by the    --
 -- solver, the search or the report's closed check, means that  --
 -- the term is untypable                                        --
@@ -143,7 +143,7 @@ open import OpenCalculus.Inference.Soundness  S using (ctx-substᶜ; ⌊ctxᶜ�
 
 open import OpenCalculus.Inference.Constraints.Syntax       S
 open import OpenCalculus.Inference.Constraints.Satisfaction S
-open import OpenCalculus.Inference.Constraints.Properties   S using (⊨-resp-≐ˢ; ⊨-mono; ⊨-∣)
+open import OpenCalculus.Inference.Constraints.Properties   S using (⊨-resp-≐ˢ; ⊨-mono)
 
 open import OpenCalculus.Inference.Principality      S
 open import OpenCalculus.Inference.Solver            S
@@ -179,7 +179,7 @@ Fixing-[] σ = fixing (λ i ()) (λ i i' ())
 -- as hypotheses, and the deferred conditions, retried once more
 
 Answer : Scope → Scope → Set
-Answer Θ Θ' = Subst Θ Θ' × Hyps Θ' × Obligs Θ'
+Answer Θ Θ' = Subst Θ Θ' × Hyps Θ' × QOrds Θ'
 
 runSolverᴰ : ∀ {Θ} → Constraint Θ → Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ')
 runSolverᴰ C with solve init C
@@ -205,7 +205,7 @@ runSolver C with runSolverᴰ C
 ... | solved (Θ' , σ , Q , D) = solved (Θ' , σ , Q ++ᵠ D)
 
 runSolver-++ᵠ : ∀ {Θ} → (C : Constraint Θ)
-            → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
+            → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (QOrd Θ')}
             → runSolverᴰ C ≡ solved (Θ' , σ , Q , D) → runSolver C ≡ solved (Θ' , σ , Q ++ᵠ D)
 runSolver-++ᵠ C eq with runSolverᴰ C
 ... | solved _ with eq
@@ -214,7 +214,7 @@ runSolver-++ᵠ C eq with runSolverᴰ C
 -- The residual read back has no quantified hypotheses and no truths
 
 runSolverᴰ-unq : ∀ {Θ} → (C : Constraint Θ)
-               → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
+               → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (QOrd Θ')}
                → runSolverᴰ C ≡ solved (Θ' , σ , Q , D) → Unq Q
 runSolverᴰ-unq C eq with solve init C
 ... | refuted = ⊥refuted eq
@@ -231,7 +231,7 @@ runSolverᴰ-unq C eq with solve init C
 ...           | refl = checkClosed-unq Q₀ e'' (toHyps-unq (res s₂) e')
 
 runSolverᴰ-sound : ∀ {Θ} → (C : Constraint Θ)
-                 → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
+                 → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (QOrd Θ')}
                  → runSolverᴰ C ≡ solved (Θ' , σ , Q , D)
                  → σ ⊨[ Q ∣ D ] C
 runSolverᴰ-sound C eq with solve init C
@@ -339,7 +339,7 @@ runSolver-rigidFree C p with runSolverᴰ C in e
 ... | solved _ = λ ()
 
 runSolverᴰ-principal : ∀ {Θ} → (C : Constraint Θ)
-                     → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺} {D⁺ : List (Oblig Θ⁺)}
+                     → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺} {D⁺ : List (QOrd Θ⁺)}
                      → runSolverᴰ C ≡ solved (Θ⁺ , σ⁺ , Q⁺ , D⁺)
                      → ∀ {Θ''} → (σ : Subst Θ Θ'') → (Q : Hyps Θ'')
                      → σ ⊨[ Q ] C
@@ -422,9 +422,11 @@ solver = record
 -- unknowns of their image. It is stated over the scope `Θ̃` of the
 -- variables occurring in it or in that image, embedded in the
 -- solution's by the renaming `ι`, the caller's variables instantiated
--- by `σ̃`; an instance of `Θ̃` extends along `ι`. The obligations `R`
--- follow: `R̃` along `ι` entails them along `η`, and each closed
--- instance meeting the simplified residue and `R` meets `R̃`.
+-- by `σ̃`; an instance of `Θ̃` extends along `ι`. The deferred
+-- conditions `R` follow: `R̃` along `ι` entails them along `η`, and
+-- each closed instance meeting the simplified residue and `R` meets
+-- `R̃`. The scheme's hypotheses are `Q̃` with `R̃` as quantified
+-- hypotheses (`scheme`).
 
 record Reported {Θ₀ Θ : Scope} (w : Subst Θ₀ Θ) (X : OCType Θ) (C : Constraint Θ) : Set where
   constructor reported
@@ -432,14 +434,14 @@ record Reported {Θ₀ Θ : Scope} (w : Subst Θ₀ Θ) (X : OCType Θ) (C : Con
     Θ'     : Scope
     σ      : Subst Θ Θ'
     Q      : Hyps Θ'
-    R      : Obligs Θ'
+    R      : QOrds Θ'
     Q̂      : Hyps Θ'
     Θ̃      : Scope
     ι      : Ren Θ̃ Θ'
     σ̃      : Subst Θ₀ Θ̃
     X̃      : OCType Θ̃
     Q̃      : Hyps Θ̃
-    R̃      : Obligs Θ̃
+    R̃      : QOrds Θ̃
     η      : Subst Θ' Θ'
     sol    : runSolverᴰ C ≡ solved (Θ' , σ , Q , R)
     to-Q̂   : Q ⊨ᴴ Q̂
@@ -458,12 +460,12 @@ record Reported {Θ₀ Θ : Scope} (w : Subst Θ₀ Θ) (X : OCType Θ) (C : Con
 
 -- An entry with its grade expressions in canonical form means the same
 
-canonᵈ : ∀ {Θ} → Oblig Θ → Oblig Θ
-canonᵈ (oblig l k o) = oblig l k (ords (map (mapᵖ canonᵣ) (ors o)) (map (mapᵖ canonₑ) (oes o)))
+canonᵈ : ∀ {Θ} → QOrd Θ → QOrd Θ
+canonᵈ (qord l k o) = qord l k (ords (map (mapᵖ canonᵣ) (ors o)) (map (mapᵖ canonₑ) (oes o)))
 
-canonᵈ-⊩ : ∀ {Θ Ξ} {Q : Hyps Ξ} {δ : Subst Θ Ξ} → (E : Oblig Θ)
+canonᵈ-⊩ : ∀ {Θ Ξ} {Q : Hyps Ξ} {δ : Subst Θ Ξ} → (E : QOrd Θ)
          → Q ⊩ᴼ E [ δ ] → Q ⊩ᴼ canonᵈ E [ δ ]
-canonᵈ-⊩ {δ = δ} (oblig l k o) h = mk⊩ᵒ r e
+canonᵈ-⊩ {δ = δ} (qord l k o) h = mk⊩ᵒ r e
   where
     r : ∀ {x y} → (x , y) ∈ map (mapᵖ canonᵣ) (ors o)
       → wkᵉⁿ-H k _ ⊩ x [ δ ↑ᵉⁿ k ]ʳ ≾̂ᵣ y [ δ ↑ᵉⁿ k ]ʳ
@@ -479,9 +481,9 @@ canonᵈ-⊩ {δ = δ} (oblig l k o) h = mk⊩ᵒ r e
       transₑ (eqₑ (≡̂ₑ-sym (≡̂ₑ-subst (δ ↑ᵉⁿ k) (canonₑ-≡ x))))
              (transₑ (⊩oes h m₀) (eqₑ (≡̂ₑ-subst (δ ↑ᵉⁿ k) (canonₑ-≡ y))))
 
-canonᵈ-⊩⁻ : ∀ {Θ Ξ} {Q : Hyps Ξ} {δ : Subst Θ Ξ} → (E : Oblig Θ)
+canonᵈ-⊩⁻ : ∀ {Θ Ξ} {Q : Hyps Ξ} {δ : Subst Θ Ξ} → (E : QOrd Θ)
           → Q ⊩ᴼ canonᵈ E [ δ ] → Q ⊩ᴼ E [ δ ]
-canonᵈ-⊩⁻ {δ = δ} (oblig l k o) h =
+canonᵈ-⊩⁻ {δ = δ} (qord l k o) h =
   mk⊩ᵒ (λ {x} {y} m → transᵣ (eqᵣ (≡̂ᵣ-subst (δ ↑ᵉⁿ k) (canonᵣ-≡ x)))
                         (transᵣ (⊩ors h (∈-map⁺ (mapᵖ canonᵣ) m))
                                 (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst (δ ↑ᵉⁿ k) (canonᵣ-≡ y))))))
@@ -500,7 +502,7 @@ canonᵈ-⊩⁻ {δ = δ} (oblig l k o) h =
 -- strengthening's retraction, in canonical form.
 
 reportSolved : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
-             → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
+             → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (QOrd Θ')}
              → runSolverᴰ C ≡ solved (Θ' , σ , Q , D) → Reported w X C
 reportSolved w X C {Θ'} {σ} {Q} {D} e =
   reportElim (eliminate F (X [ σ ]ᶜ) (simplify Q))
@@ -528,10 +530,10 @@ reportSolved w X C {Θ'} {σ} {Q} {D} e =
         fxᴰ : Fixes (fvᴰ D) (Elim.η el)
         fxᴰ = fixes-⊆ (⊆-∪ʳ (fvˢ (w ⨟ˢ σ)) (fvᴰ D) ⊆-refl) fx
 
-        read : Oblig Θ' → Oblig (Θ⁻ sr)
-        read E = canonᵈ (E [ π sr ]ᵒᵇ)
+        read : QOrd Θ' → QOrd (Θ⁻ sr)
+        read E = canonᵈ (E [ π sr ]ᵠ)
 
-        D̃ : List (Oblig (Θ⁻ sr))
+        D̃ : List (QOrd (Θ⁻ sr))
         D̃ = map read D
 
         -- read back along `ι`, an entry is itself
@@ -540,12 +542,12 @@ reportSolved w X C {Θ'} {σ} {Q} {D} e =
         back {δ = δ} {E} m h =
           fix-⊩ᴼ⁻ (π-fix sr) ⊆-refl m
             (⊩ᴼ-resp-≐ˢ E (≐ˢ-sym (⨟-assoc (π sr) ⌜ ι sr ⌝ʳ δ))
-              (⊩ᴼ-subst E (canonᵈ-⊩⁻ (E [ π sr ]ᵒᵇ) h)))
+              (⊩ᴼ-subst E (canonᵈ-⊩⁻ (E [ π sr ]ᵠ) h)))
 
         fwd : ∀ {Ξ} {Q' : Hyps Ξ} {δ : Subst Θ' Ξ}
             → ∀ {E} → E ∈ D → Q' ⊩ᴼ E [ δ ] → Q' ⊩ᴼ read E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]
         fwd {δ = δ} {E} m h =
-          canonᵈ-⊩ (E [ π sr ]ᵒᵇ)
+          canonᵈ-⊩ (E [ π sr ]ᵠ)
             (⊩ᴼ-subst⁻ E (⊩ᴼ-resp-≐ˢ E (⨟-assoc (π sr) ⌜ ι sr ⌝ʳ δ) (fix-⊩ᴼ (π-fix sr) ⊆-refl m h)))
 
         instᴿ' : ∀ {Ξ} → (δ : Subst Θ' Ξ) → (Q' : Hyps Ξ)
@@ -611,7 +613,8 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ (Q̃ ++ᵠ R̃) X̃ inst' fac
     hQ : Q̃ ⊩ᴴ Q [ η ⨟ˢ π ]
     hQ = ⊩ᴴ-⨟ (⊩ᴴ-ren⁺ ι (⊩ᴴ-≐ (≐ˢ-sym πι) ⊩ᴴ-refl)) (⊩ᴴ-⨟ inst to-Q)
 
-    -- and the reported obligations the solver's, at each instance
+    -- and the reported deferred conditions the solver's, at each
+    -- instance
 
     hR : ∀ {Θ''} → (δ : Subst Θ̃ Θ'') → (Q' : Hyps Θ'')
        → Q' ⊩ᴼˢ R̃ [ δ ] → Q' ⊩ᴼˢ Reported.R r [ η ⨟ˢ π ⨟ˢ δ ]
@@ -699,7 +702,7 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ (Q̃ ++ᵠ R̃) X̃ inst' fac
 -- gives an instance
 
 answer-typable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-               → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
+               → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (QOrd Θ')}
                → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D)
                → Satisfiable (Q ++ᵠ D) → Typable Γ M
 answer-typable Γ M {σ = σ} e (δ , h) =
@@ -717,7 +720,7 @@ answer-typable Γ M {σ = σ} e (δ , h) =
     meq = M₊-[] M (σ ⨟ˢ δ)
 
 answer-untypable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-                 → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
+                 → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (QOrd Θ')}
                  → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D)
                  → ¬ Satisfiable (Q ++ᵠ D) → ¬ Typable Γ M
 answer-untypable Γ M e n (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e₀ (δ₀ , h₀)) =
@@ -737,13 +740,13 @@ refuted-untypable Γ M e (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e₀ (�
 -- The scheme reported from the solver's answer
 
 answerScheme : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-             → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
+             → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (QOrd Θ')}
              → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D) → PrincipalScheme Γ M
 answerScheme {Θ} Γ M e = scheme Γ M (reportSolved wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ] e)
 
 -- The closed check of a reported scheme: `checkClosed` on its
 -- hypotheses. Elimination can make an ordering closed; a failure means
--- that the scheme's conditions are unsatisfiable.
+-- that the scheme's hypotheses are unsatisfiable.
 
 data ClosedReport {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} (p : PrincipalScheme Γ M) : Set where
   refutedᶜ : ¬ Satisfiable (PrincipalScheme.Q̃ p) → ClosedReport p
@@ -773,7 +776,7 @@ inferReported p (refutedᶜ _) = untypable
 inferReported p passedᶜ      = typed p
 
 inferSearched : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-              → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
+              → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (QOrd Θ')}
               → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D) → Search Q D → Inference Γ M
 inferSearched Γ M e (refutedˢ _) = untypable
 inferSearched Γ M e (openˢ _ _)  = inferReported (answerScheme Γ M e) (closedReport _)
@@ -832,8 +835,8 @@ inferFrom-stuck Γ M (solved (Θ' , σ , Q , D)) e eq = ⊥-elim (searched (sear
 
 ------------------------------------------------------------------------
 -- The check of a closed program: inference, then establishment
--- (`Search.establish`). A closed instance found is one of the scheme's
--- conditions; a refutation, by establishment or by the report's closed
+-- (`Search.establish`). A closed instance found satisfies the scheme's
+-- hypotheses; a refutation, by establishment or by the report's closed
 -- check, means that `M` is untypable; nothing is claimed of an
 -- unestablished verdict.
 
@@ -843,7 +846,7 @@ checkReported p (refutedᶜ _) = untypable
 checkReported p passedᶜ      = unestablished p
 
 checkEstablished : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-                 → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (Oblig Θ')}
+                 → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (QOrd Θ')}
                  → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D) → Establish Q D → Check Γ M
 checkEstablished Γ M e (refutedᵉ _) = untypable
 checkEstablished Γ M e (foundᵉ s)   =
@@ -902,13 +905,13 @@ checkFrom-stuck Γ M (solved (Θ' , σ , Q , D)) e eq = ⊥-elim (established' (
 -- The end-to-end theorem
 --
 -- A typed verdict is a principal type scheme, and `M` is typable exactly
--- when its conditions are satisfiable; an untypable verdict means `M`
+-- when its hypotheses are satisfiable; an untypable verdict means `M`
 -- is not typable. Inference is therefore complete up to `stuck`: a
 -- typable `M` is never declared untypable. A handler-free `M` is never
--- stuck. A typed verdict with no hypotheses and no obligations is
--- typable outright. The check is sound the same way, and an
--- established verdict carries a closed instance of the scheme's
--- conditions, so `M` is typable.
+-- stuck. A typed verdict with no hypotheses is typable outright. The
+-- check is sound the same way, and an established verdict carries a
+-- closed instance satisfying the scheme's hypotheses, so `M` is
+-- typable.
 
 infer-typed : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalScheme Γ M}
             → infer Γ M ≡ typed p

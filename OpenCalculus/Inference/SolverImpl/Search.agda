@@ -104,11 +104,11 @@ open import OpenCalculus.Inference.SolverImpl.Strengthen S using (fvᵈ)
 ------------------------------------------------------------------------
 -- A hypothesis set and deferred conditions as a residual
 
-asResid : ∀ {Ψ} → Hyps Ψ → List (Oblig Ψ) → Resid Ψ
+asResid : ∀ {Ψ} → Hyps Ψ → List (QOrd Ψ) → Resid Ψ
 asResid Q D = resid (ordᵣ Q) (ordₑ Q) (map tvar (ets Q)) (map (mapᵖ tvar) (subᵥ Q)) (disj Q)
                     (qhyps Q ++ D)
 
-asResid-⊩ : ∀ {Ψ Ψ'} {Q' : Hyps Ψ'} {Q : Hyps Ψ} {D : List (Oblig Ψ)} {δ : Subst Ψ Ψ'}
+asResid-⊩ : ∀ {Ψ Ψ'} {Q' : Hyps Ψ'} {Q : Hyps Ψ} {D : List (QOrd Ψ)} {δ : Subst Ψ Ψ'}
           → Q' ⊩ᴴ Q [ δ ] → (∀ {E} → E ∈ D → Q' ⊩ᴼ E [ δ ]) → Q' ⊩ᴿ asResid Q D [ δ ]
 asResid-⊩ {Q' = Q'} {Q} {δ = δ} h g =
   mk⊩ᴿ (⊩ordᵣ h) (⊩ordₑ h) ts' ss' (⊩disj h) (λ m → [ ⊩qhyps h , g ]′ (∈-++⁻ (qhyps Q) m))
@@ -121,14 +121,14 @@ asResid-⊩ {Q' = Q'} {Q} {δ = δ} h g =
     ss' m with ∈-map⁻ (mapᵖ tvar) m
     ... | (α , β) , m₀ , refl = ⊩subᵥ h m₀
 
-⊩-asResid : ∀ {Ψ Ψ'} {Q : Hyps Ψ} {D : List (Oblig Ψ)} {δ : Subst Ψ Ψ'}
+⊩-asResid : ∀ {Ψ Ψ'} {Q : Hyps Ψ} {D : List (QOrd Ψ)} {δ : Subst Ψ Ψ'}
           → ⊤ᴴ ⊩ᴿ asResid Q D [ δ ] → ⊤ᴴ ⊩ᴴ Q [ δ ] × (∀ {E} → E ∈ D → ⊤ᴴ ⊩ᴼ E [ δ ])
 ⊩-asResid {Q = Q} h =
   mk⊩ᴴ (λ m → ⊩ts h (∈-map⁺ tvar m)) (λ m → ⊩ss h (∈-map⁺ (mapᵖ tvar) m))
        (⊩rs h) (⊩es h) (⊩ds h) (λ m → ⊩dfs h (∈-++⁺ˡ m)) (λ _ → tt) ,
   (λ m → ⊩dfs h (∈-++⁺ʳ (qhyps Q) m))
 
-asResid-atomic : ∀ {Ψ} {Q : Hyps Ψ} {D : List (Oblig Ψ)} → Atomicˢ (ss (asResid Q D))
+asResid-atomic : ∀ {Ψ} {Q : Hyps Ψ} {D : List (QOrd Ψ)} → Atomicˢ (ss (asResid Q D))
 asResid-atomic m with ∈-map⁻ (mapᵖ tvar) m
 ... | (α , β) , m₀ , refl = α , β , refl , refl
 
@@ -177,7 +177,7 @@ openᴸ L τ h = ⊩ᴿ-subst (lsnd L τ ⊤ᴴ h)
 ------------------------------------------------------------------------
 -- The search
 
-data Search {Ψ} (Q : Hyps Ψ) (D : List (Oblig Ψ)) : Set where
+data Search {Ψ} (Q : Hyps Ψ) (D : List (QOrd Ψ)) : Set where
   refutedˢ : ¬ Satisfiable (Q ++ᵠ D) → Search Q D
   openˢ    : (R : Resid (Ψ +e))
            → ((τ : Subst (Ψ +e) ∅ˢ) → ⊤ᴴ ⊩ᴿ R [ τ ] → Satisfiable (Q ++ᵠ D))
@@ -190,7 +190,7 @@ subDec-vars α β ()
 
 -- The search from a localisation of the solution's residual
 
-searchᴸ : ∀ {Ψ} → (Q : Hyps Ψ) → (D : List (Oblig Ψ))
+searchᴸ : ∀ {Ψ} → (Q : Hyps Ψ) → (D : List (QOrd Ψ))
         → Localised (rigid {Ψ}) (asResid Q D [ wkˢᵉ ]ᴿ) → Search Q D
 searchᴸ {Ψ} Q D L = retried (retryᴰ (ordsOf (lR L)) (dfs (lR L)))
   where
@@ -250,7 +250,7 @@ searchᴸ {Ψ} Q D L = retried (retryᴰ (ordsOf (lR L)) (dfs (lR L)))
 -- Matching on the deferred conditions first leaves the search
 -- unevaluated on unknown ones.
 
-search : ∀ {Ψ} → (Q : Hyps Ψ) → (D : List (Oblig Ψ)) → Search Q D
+search : ∀ {Ψ} → (Q : Hyps Ψ) → (D : List (QOrd Ψ)) → Search Q D
 search Q []      = searchᴸ Q [] (localiseAll (asResid Q []))
 search Q (E ∷ D) = searchᴸ Q (E ∷ D) (localiseAll (asResid Q (E ∷ D)))
 
@@ -268,8 +268,8 @@ setʳ k c τ = sub (sTy τ) (λ i → if ⌊ i ≟ᶠ k ⌋ then rconst c else s
 -- A deferred condition holds at a closed instance when its retry from
 -- no hypotheses leaves nothing
 
-dischargedAt : ∀ {Ψ} → (τ : Subst Ψ ∅ˢ) → (E : Oblig Ψ) → Maybe (⊤ᴴ ⊩ᴼ E [ τ ])
-dischargedAt τ E with retryᵈ ∅ᴴ (E [ τ ]ᵒᵇ)
+dischargedAt : ∀ {Ψ} → (τ : Subst Ψ ∅ˢ) → (E : QOrd Ψ) → Maybe (⊤ᴴ ⊩ᴼ E [ τ ])
+dischargedAt τ E with retryᵈ ∅ᴴ (E [ τ ]ᵠ)
 ... | keptᵈ [] b f = just (⊩ᴼ-resp-≐ˢ E (⨟-idʳ τ) (⊩ᴼ-subst E (b {Q = ⊤ᴴ} idˢ ⊩ᴴ-∅ (λ ()))))
 ... | _            = nothing
 
@@ -300,7 +300,7 @@ verify R τ
 data Item (Ψ : Scope) : Set where
   ordʳ : RExp Ψ → RExp Ψ → Item Ψ
   ordᵉ : EExp Ψ → EExp Ψ → Item Ψ
-  cond : Oblig Ψ → Item Ψ
+  cond : QOrd Ψ → Item Ψ
 
 items : ∀ {Ψ} → Resid Ψ → List (Item Ψ)
 items R = map (λ { (x , y) → ordʳ x y }) (rs R) ++ map (λ { (x , y) → ordᵉ x y }) (es R)
@@ -379,7 +379,7 @@ maxOver f = foldr (λ x n → f x ⊔ n) 0
 degreeOf : ∀ {Ψ} → Vars Ψ → Item Ψ → ℕ
 degreeOf V (ordʳ x y) = countᵣ (vʳ V) (vᵉ V) x ⊔ countᵣ (vʳ V) (vᵉ V) y
 degreeOf V (ordᵉ x y) = countₑ (vᵉ V) x ⊔ countₑ (vᵉ V) y
-degreeOf V (cond (oblig _ k o)) =
+degreeOf V (cond (qord _ k o)) =
   maxOver (λ { (x , y) → countᵣ mr me x ⊔ countᵣ mr me y }) (ors o)
   ⊔ maxOver (λ { (x , y) → countₑ me x ⊔ countₑ me y }) (oes o)
   where
@@ -391,7 +391,7 @@ degreeOf V (cond (oblig _ k o)) =
 constsOf : ∀ {Ψ} → Item Ψ → List R × List E
 constsOf (ordʳ x y)         = constsᵣ x ++² constsᵣ y
 constsOf (ordᵉ x y)         = [] , constsₑ x ++ constsₑ y
-constsOf (cond (oblig _ k o)) =
+constsOf (cond (qord _ k o)) =
   foldr (λ { (x , y) c → (constsᵣ x ++² constsᵣ y) ++² c }) ([] , []) (ors o)
   ++² foldr (λ { (x , y) c → ([] , constsₑ x ++ constsₑ y) ++² c }) ([] , []) (oes o)
 
@@ -441,7 +441,7 @@ searchAll (c ∷ cs) τ with searchClass c τ
 ------------------------------------------------------------------------
 -- Establishment
 
-data Establish {Ψ} (Q : Hyps Ψ) (D : List (Oblig Ψ)) : Set where
+data Establish {Ψ} (Q : Hyps Ψ) (D : List (QOrd Ψ)) : Set where
   refutedᵉ   : ¬ Satisfiable (Q ++ᵠ D) → Establish Q D
   foundᵉ     : Satisfiable (Q ++ᵠ D) → Establish Q D
   undecidedᵉ : Establish Q D
@@ -449,7 +449,7 @@ data Establish {Ψ} (Q : Hyps Ψ) (D : List (Oblig Ψ)) : Set where
 
 -- From the outcome of the search
 
-establishˢ : ∀ {Ψ} {Q : Hyps Ψ} {D : List (Oblig Ψ)} → Search Q D → Establish Q D
+establishˢ : ∀ {Ψ} {Q : Hyps Ψ} {D : List (QOrd Ψ)} → Search Q D → Establish Q D
 establishˢ (refutedˢ n) = refutedᵉ n
 establishˢ (openˢ R sat) with any (λ E → noGrades (fvᵈ E)) (dfs R)
 ... | true  = undecidedᵉ
@@ -459,5 +459,5 @@ establishˢ (openˢ R sat) with any (λ E → noGrades (fvᵈ E)) (dfs R)
 ...     | just h  = foundᵉ (sat τ h)
 ...     | nothing = exhaustedᵉ
 
-establish : ∀ {Ψ} → (Q : Hyps Ψ) → (D : List (Oblig Ψ)) → Establish Q D
+establish : ∀ {Ψ} → (Q : Hyps Ψ) → (D : List (QOrd Ψ)) → Establish Q D
 establish Q D = establishˢ (search Q D)

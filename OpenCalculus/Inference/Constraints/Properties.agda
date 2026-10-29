@@ -169,13 +169,6 @@ private
   ⊨-resp-≐ˢ (⨟-↑ᵉ δ σ) C (⊨-subst⁻ C s)
 ⊨-subst⁻ (⋀ᵒᵖ f) s = λ op → ⊨-subst⁻ (f op) (s op)
 
--- A solution relative to hypotheses is one relative to them and any
--- obligations
-
-⊨-∣ : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
-    → (C : Constraint Θ) → σ ⊨[ Q ] C → σ ⊨[ Q ∣ R ] C
-⊨-∣ C s δ Q' (h , _) = ⊨-mono h C s
-
 -- Types equal along a substitution solve a type equation
 
 ⊨-≐ᵥ : ∀ {Θ Θ'} {Q : Hyps Θ'} → (σ : Subst Θ Θ') → (A B : OVType Θ)

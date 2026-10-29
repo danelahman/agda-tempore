@@ -493,7 +493,7 @@ normal-ds (a ∷ l) = cong nsuc (normal-ds l)
 -- strength `full` from the orderings, or whose type is eternal at every
 -- instance, is dropped; each whose type is eternal at no instance
 -- becomes its grade side, which is what it means at every instance
--- solving the scope from no hypotheses, the rigid a parameter
+-- solving the scope from the truths, the rigid a parameter
 
 ordsᴴ : ∀ {Ψ} → Resid Ψ → Hyps Ψ
 ordsᴴ R = hyps [] [] (rs R) (es R) [] [] false

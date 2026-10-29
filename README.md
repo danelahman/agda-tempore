@@ -55,8 +55,8 @@ end.
   calculus with grade variables; the closed calculus has second-class handlers,
   `handle M with H to x in N`. The language is parameterised by base types, the
   calculus being its instance without them (`withoutBaseTypes`).
-- Conditions on the variable of a handler clause are kept as obligations of a
-  type scheme, apart from its hypotheses.
+- Hypotheses include quantified orderings, which bind several rigid grade
+  variables of either sort.
 - Unbox takes a variable.
 - Inference is for computations in open contexts; there are no top-level
   programs.

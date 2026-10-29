@@ -94,7 +94,7 @@ record Resid (Ψ : Scope) : Set where
     ts : List (OVType Ψ)                   -- open eternality demands, on type variables
     ss : List (OVType Ψ × OVType Ψ)        -- open subtyping demands
     ds : List (OVType Ψ × RExp Ψ)          -- open var-rule disjunctions
-    dfs : List (Oblig Ψ)                     -- deferred rigid conditions
+    dfs : List (QOrd Ψ)                     -- deferred rigid conditions
 
 open Resid public
 
@@ -110,7 +110,7 @@ R [ σ ]ᴿ = resid (map (mapᵖ (_[ σ ]ʳ)) (rs R))
                  (map (_[ σ ]ᵛ) (ts R))
                  (map (mapᵖ (_[ σ ]ᵛ)) (ss R))
                  (map (mapᵈ (_[ σ ]ᵛ) (_[ σ ]ʳ)) (ds R))
-                 (map (_[ σ ]ᵒᵇ) (dfs R))
+                 (map (_[ σ ]ᵠ) (dfs R))
 
 -- Subtyping demands that are pairs of type variables, which a
 -- substitution fixing every type variable keeps
@@ -187,7 +187,7 @@ open _⊩ᴿ_[_] public
                               (⊩ss h (∈-map⁺ (mapᵖ (_[ σ ]ᵛ)) m)))
        (λ {A} {ρ}  m → subst₂ (VarOK Q) ([⨟]ᵛ A σ δ) ([⨟]ʳ ρ σ δ)
                               (⊩ds h (∈-map⁺ (mapᵈ (_[ σ ]ᵛ) (_[ σ ]ʳ)) m)))
-       (λ {E}      m → ⊩ᴼ-subst E (⊩dfs h (∈-map⁺ (_[ σ ]ᵒᵇ) m)))
+       (λ {E}      m → ⊩ᴼ-subst E (⊩dfs h (∈-map⁺ (_[ σ ]ᵠ) m)))
 
 -- The converse of `⊩ᴿ-subst`
 
@@ -221,7 +221,7 @@ open _⊩ᴿ_[_] public
       subst₂ (VarOK Q) (sym ([⨟]ᵛ A₀ σ δ)) (sym ([⨟]ʳ ρ₀ σ δ)) (⊩ds h m₀)
 
     dfs' : ∀ {E} → E ∈ dfs (R [ σ ]ᴿ) → Q ⊩ᴼ E [ δ ]
-    dfs' m with ∈-map⁻ (_[ σ ]ᵒᵇ) m
+    dfs' m with ∈-map⁻ (_[ σ ]ᵠ) m
     ... | E₀ , m₀ , refl = ⊩ᴼ-subst⁻ E₀ (⊩dfs h m₀)
 
 -- A discharge followed by a strengthening of the hypotheses

@@ -459,7 +459,7 @@ module Witness where
   open GradeSystemInterface Grades using (uₑ; ⊤ₑ)
 
   open import OpenCalculus.Syntax.Grades                 spec
-  open import OpenCalculus.Hypotheses                    spec using (Hyps; ∅ᴴ; _+eⁿ_; ords; oblig)
+  open import OpenCalculus.Hypotheses                    spec using (Hyps; ∅ᴴ; _+eⁿ_; ords; qord)
   open import OpenCalculus.Syntax.Subst                  spec using (Subst)
   open import OpenCalculus.Inference.SolverImpl.Deferred spec using (grid; candidatesₑ)
   open import OpenCalculus.Inference.SolverImpl.Solve    spec enum
@@ -489,7 +489,7 @@ module Witness where
   candidates-0…7 = refl
 
   refuted-at-one :
-    refutedᴿ (retryᵈ ∅ᴴ (oblig nothing 1 (ords [] ((⌜ 3 ⌝ , ⌜ 3 ⌝ ·̂ₑ j) ∷ [])))) ≡ true
+    refutedᴿ (retryᵈ ∅ᴴ (qord nothing 1 (ords [] ((⌜ 3 ⌝ , ⌜ 3 ⌝ ·̂ₑ j) ∷ [])))) ≡ true
   refuted-at-one = refl
 
   unit-top-undecided :

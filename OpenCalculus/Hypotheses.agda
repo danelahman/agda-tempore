@@ -3,12 +3,20 @@
 --                                                              --
 -- A hypothesis set `Hyps Θ` consists of eternality atoms on    --
 -- type variables, subtyping atoms between type variables,      --
--- orderings between open grade expressions, and var-rule       --
--- disjunctions. Entailment (`_⊩ᵗᵛ_≾_`, `_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`,     --
--- `_⊩ᴱ_`, `_∣_<:̂ᵛ_`, `VarOK`) is inductive, and sound at every --
--- closed instance. Entailed ordering includes the zero-product --
--- laws of the grades: a product below the unit has both        --
--- factors below it.                                            --
+-- orderings between open grade expressions, var-rule           --
+-- disjunctions, quantified orderings (`Quantified`), and a     --
+-- flag for the closed quantified orderings that hold in the    --
+-- grade algebra (`truths`; `⊤ᴴ` has them and nothing else).    --
+-- Entailment (`_⊩ᵗᵛ_≾_`, `_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`, `_⊩ᴱ_`,          --
+-- `_∣_<:̂ᵛ_`, `VarOK`) is inductive. Entailed ordering includes --
+-- the zero-product laws of the grades, a quantified hypothesis --
+-- at any instance of its rigids (`instᵣ`, `instₑ`: rule Inst), --
+-- and, under the flag, a closed quantified ordering that holds --
+-- (`factᵣ`, `factₑ`). A set entails a quantified ordering when --
+-- it entails its orderings at fresh rigids (`_⊩ᴼ_[_]`: rule    --
+-- Gen). Substitution is stable along an instance map           --
+-- (`_⊩ᴵ_[_]`, a quantified hypothesis at every instance of its --
+-- rigids), which entailment gives (`⊩ᴴ⇒ᴵ`).                    --
 --                                                              --
 -- The module also defines convertibility of open types         --
 -- (`_≡̂ᵛ_`), which `VarOK` uses, and open subtyping with its    --
@@ -58,7 +66,7 @@ open import Language.Types S using (EternalBaseType)
 open import OpenCalculus.Syntax.Grades S
 open import OpenCalculus.Syntax.Types  S
 open import OpenCalculus.Syntax.Subst  S
-open import OpenCalculus.Hypotheses.Obligations S public
+open import OpenCalculus.Hypotheses.Quantified S public
 
 -- Deciding a `Maybe` carries the trivial witness of `Is-just` along with it
 
@@ -81,7 +89,7 @@ record Hyps (Θ : Scope) : Set where
     ordᵣ : List (RExp Θ × RExp Θ)             -- assumed resource-grade orderings
     ordₑ : List (EExp Θ × EExp Θ)             -- assumed effect-grade orderings
     disj : List (OVType Θ × RExp Θ)           -- assumed var-rule disjunctions
-    qhyps  : List (Oblig Θ)                   -- assumed quantified orderings
+    qhyps  : List (QOrd Θ)                   -- assumed quantified orderings
     truths : 𝔹                                -- the closed quantified orderings that hold
 
 open Hyps public
@@ -127,7 +135,7 @@ mapᵈ f g (A , ρ) = f A , g ρ
 
 infixl 5 _++ᵠ_
 
-_++ᵠ_ : ∀ {Θ} → Hyps Θ → List (Oblig Θ) → Hyps Θ
+_++ᵠ_ : ∀ {Θ} → Hyps Θ → List (QOrd Θ) → Hyps Θ
 Q ++ᵠ R = record Q { qhyps = qhyps Q ++ R }
 
 -- Action of the scope extensions on hypothesis sets
@@ -138,7 +146,7 @@ wkᵗ-H {Θ} Q = hyps (map (wkᵗ-tv Θ) (ets Q))
                    (map (mapᵖ wkᵗ-r) (ordᵣ Q))
                    (map (mapᵖ wkᵗ-e) (ordₑ Q))
                    (map (mapᵈ wkᵗ-v wkᵗ-r) (disj Q))
-                   (map (_[ wkˢᵗ ]ᵒᵇ) (qhyps Q))
+                   (map (_[ wkˢᵗ ]ᵠ) (qhyps Q))
                    (truths Q)
 
 wkʳ-H : ∀ {Θ} → Hyps Θ → Hyps (Θ +r)
@@ -147,7 +155,7 @@ wkʳ-H {Θ} Q = hyps (map (wkʳ-tv Θ) (ets Q))
                    (map (mapᵖ wkʳ-r) (ordᵣ Q))
                    (map (mapᵖ wkʳ-e) (ordₑ Q))
                    (map (mapᵈ wkʳ-v wkʳ-r) (disj Q))
-                   (map (_[ wkˢʳ ]ᵒᵇ) (qhyps Q))
+                   (map (_[ wkˢʳ ]ᵠ) (qhyps Q))
                    (truths Q)
 
 wkᵉ-H : ∀ {Θ} → Hyps Θ → Hyps (Θ +e)
@@ -156,10 +164,10 @@ wkᵉ-H {Θ} Q = hyps (map (wkᵉ-tv Θ) (ets Q))
                    (map (mapᵖ wkᵉ-r) (ordᵣ Q))
                    (map (mapᵖ wkᵉ-e) (ordₑ Q))
                    (map (mapᵈ wkᵉ-v wkᵉ-r) (disj Q))
-                   (map (_[ wkˢᵉ ]ᵒᵇ) (qhyps Q))
+                   (map (_[ wkˢᵉ ]ᵠ) (qhyps Q))
                    (truths Q)
 
--- Weakening by the rigids of an obligation
+-- Weakening by the rigids of a quantified ordering
 
 wkᵉⁿ-H : ∀ {Θ} → (k : ℕ) → Hyps Θ → Hyps (Θ +eⁿ k)
 wkᵉⁿ-H zero    Q = Q
@@ -763,20 +771,20 @@ open _⊩ᵒ_[_] public
 -- A quantified ordering is entailed along a substitution when its
 -- orderings are, at fresh rigids, by the hypotheses weakened to them
 
-_⊩ᴼ_[_] : ∀ {Θ Ξ} → Hyps Ξ → Oblig Θ → Subst Θ Ξ → Set
+_⊩ᴼ_[_] : ∀ {Θ Ξ} → Hyps Ξ → QOrd Θ → Subst Θ Ξ → Set
 Q ⊩ᴼ O [ δ ] = wkᵉⁿ-H (rigids O) Q ⊩ᵒ body O [ δ ↑ᵉⁿ rigids O ]
 
-⊩ᴼ-resp-≐ˢ : ∀ {Θ Ξ} {Q : Hyps Ξ} {δ δ' : Subst Θ Ξ} → (O : Oblig Θ)
+⊩ᴼ-resp-≐ˢ : ∀ {Θ Ξ} {Q : Hyps Ξ} {δ δ' : Subst Θ Ξ} → (O : QOrd Θ)
            → δ ≐ˢ δ' → Q ⊩ᴼ O [ δ ] → Q ⊩ᴼ O [ δ' ]
-⊩ᴼ-resp-≐ˢ (oblig l k o) p h = ⊩ᵒ-resp-≐ˢ (≐ˢ-↑ᵉⁿ p k) h
+⊩ᴼ-resp-≐ˢ (qord l k o) p h = ⊩ᵒ-resp-≐ˢ (≐ˢ-↑ᵉⁿ p k) h
 
-⊩ᴼ-subst : ∀ {Θ Θ₁ Ξ} {Q : Hyps Ξ} {σ : Subst Θ Θ₁} {δ : Subst Θ₁ Ξ} → (O : Oblig Θ)
-         → Q ⊩ᴼ O [ σ ]ᵒᵇ [ δ ] → Q ⊩ᴼ O [ σ ⨟ˢ δ ]
-⊩ᴼ-subst {σ = σ} {δ} (oblig l k o) h = ⊩ᵒ-resp-≐ˢ (⨟-↑ᵉⁿ σ δ k) (⊩ᵒ-subst h)
+⊩ᴼ-subst : ∀ {Θ Θ₁ Ξ} {Q : Hyps Ξ} {σ : Subst Θ Θ₁} {δ : Subst Θ₁ Ξ} → (O : QOrd Θ)
+         → Q ⊩ᴼ O [ σ ]ᵠ [ δ ] → Q ⊩ᴼ O [ σ ⨟ˢ δ ]
+⊩ᴼ-subst {σ = σ} {δ} (qord l k o) h = ⊩ᵒ-resp-≐ˢ (⨟-↑ᵉⁿ σ δ k) (⊩ᵒ-subst h)
 
-⊩ᴼ-subst⁻ : ∀ {Θ Θ₁ Ξ} {Q : Hyps Ξ} {σ : Subst Θ Θ₁} {δ : Subst Θ₁ Ξ} → (O : Oblig Θ)
-          → Q ⊩ᴼ O [ σ ⨟ˢ δ ] → Q ⊩ᴼ O [ σ ]ᵒᵇ [ δ ]
-⊩ᴼ-subst⁻ {σ = σ} {δ} (oblig l k o) h =
+⊩ᴼ-subst⁻ : ∀ {Θ Θ₁ Ξ} {Q : Hyps Ξ} {σ : Subst Θ Θ₁} {δ : Subst Θ₁ Ξ} → (O : QOrd Θ)
+          → Q ⊩ᴼ O [ σ ⨟ˢ δ ] → Q ⊩ᴼ O [ σ ]ᵠ [ δ ]
+⊩ᴼ-subst⁻ {σ = σ} {δ} (qord l k o) h =
   ⊩ᵒ-subst⁻ (⊩ᵒ-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉⁿ σ δ k)) h)
 
 -- `Q' ⊩ᴴ Q [ σ ]` says `Q'` entails every hypothesis of `Q` transported
@@ -834,7 +842,7 @@ record _↪ᴴ_[_] {Θ Θ' : Scope} (Q : Hyps Θ) (Q' : Hyps Θ') (σ : Subst Θ
     ↪ordᵣ   : ∀ {p} → p ∈ ordᵣ Q → mapᵖ (_[ σ ]ʳ) p ∈ ordᵣ Q'
     ↪ordₑ   : ∀ {p} → p ∈ ordₑ Q → mapᵖ (_[ σ ]ᵉ) p ∈ ordₑ Q'
     ↪disj   : ∀ {p} → p ∈ disj Q → mapᵈ (_[ σ ]ᵛ) (_[ σ ]ʳ) p ∈ disj Q'
-    ↪qhyps  : ∀ {O} → O ∈ qhyps Q → O [ σ ]ᵒᵇ ∈ qhyps Q'
+    ↪qhyps  : ∀ {O} → O ∈ qhyps Q → O [ σ ]ᵠ ∈ qhyps Q'
     ↪truths : T (truths Q) → T (truths Q')
 
 open _↪ᴴ_[_] public
@@ -1119,7 +1127,7 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
        (λ { {x , y} m → subst (_∈ ordᵣ Q) (sym (cong₂ _,_ ([id]ʳ x) ([id]ʳ y))) m })
        (λ { {x , y} m → subst (_∈ ordₑ Q) (sym (cong₂ _,_ ([id]ᵉ x) ([id]ᵉ y))) m })
        (λ { {A , ρ} m → subst (_∈ disj Q) (sym (cong₂ _,_ ([id]ᵛ A) ([id]ʳ ρ))) m })
-       (λ {O} m → subst (_∈ qhyps Q) (sym ([id]ᵒᵇ O)) m)
+       (λ {O} m → subst (_∈ qhyps Q) (sym ([id]ᵠ O)) m)
        (λ t → t)
 
 ↪-⨟ : ∀ {Θ₀ Θ₁ Θ₂} {Q₀ : Hyps Θ₀} {Q₁ : Hyps Θ₁} {Q₂ : Hyps Θ₂}
@@ -1150,8 +1158,8 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
     dj {A , ρ} m = subst (_∈ disj Q₂) (cong₂ _,_ ([⨟]ᵛ A σ τ) ([⨟]ʳ ρ σ τ))
                          (↪disj e₂ (↪disj e₁ m))
 
-    qh : ∀ {O} → O ∈ qhyps Q₀ → O [ σ ⨟ˢ τ ]ᵒᵇ ∈ qhyps Q₂
-    qh {O} m = subst (_∈ qhyps Q₂) ([⨟]ᵒᵇ O σ τ) (↪qhyps e₂ (↪qhyps e₁ m))
+    qh : ∀ {O} → O ∈ qhyps Q₀ → O [ σ ⨟ˢ τ ]ᵠ ∈ qhyps Q₂
+    qh {O} m = subst (_∈ qhyps Q₂) ([⨟]ᵠ O σ τ) (↪qhyps e₂ (↪qhyps e₁ m))
 
 ↪-wkᵗ : ∀ {Θ} {Q : Hyps Θ} → Q ↪ᴴ wkᵗ-H Q [ wkˢᵗ ]
 ↪-wkᵗ {Θ} {Q} =
@@ -1163,7 +1171,7 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
                               (∈-map⁺ (mapᵖ wkᵗ-e) m) })
        (λ { {A , ρ} m → subst (_∈ disj (wkᵗ-H Q)) (sym (cong₂ _,_ (wkˢᵗ-v A) (wkˢᵗ-r ρ)))
                               (∈-map⁺ (mapᵈ wkᵗ-v wkᵗ-r) m) })
-       (λ m → ∈-map⁺ (_[ wkˢᵗ ]ᵒᵇ) m)
+       (λ m → ∈-map⁺ (_[ wkˢᵗ ]ᵠ) m)
        (λ t → t)
 
 ↪-wkʳ : ∀ {Θ} {Q : Hyps Θ} → Q ↪ᴴ wkʳ-H Q [ wkˢʳ ]
@@ -1176,7 +1184,7 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
                               (∈-map⁺ (mapᵖ wkʳ-e) m) })
        (λ { {A , ρ} m → subst (_∈ disj (wkʳ-H Q)) (sym (cong₂ _,_ (wkˢʳ-v A) (wkˢʳ-r ρ)))
                               (∈-map⁺ (mapᵈ wkʳ-v wkʳ-r) m) })
-       (λ m → ∈-map⁺ (_[ wkˢʳ ]ᵒᵇ) m)
+       (λ m → ∈-map⁺ (_[ wkˢʳ ]ᵠ) m)
        (λ t → t)
 
 ↪-wkᵉ : ∀ {Θ} {Q : Hyps Θ} → Q ↪ᴴ wkᵉ-H Q [ wkˢᵉ ]
@@ -1189,7 +1197,7 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
                               (∈-map⁺ (mapᵖ wkᵉ-e) m) })
        (λ { {A , ρ} m → subst (_∈ disj (wkᵉ-H Q)) (sym (cong₂ _,_ (wkˢᵉ-v A) (wkˢᵉ-r ρ)))
                               (∈-map⁺ (mapᵈ wkᵉ-v wkᵉ-r) m) })
-       (λ m → ∈-map⁺ (_[ wkˢᵉ ]ᵒᵇ) m)
+       (λ m → ∈-map⁺ (_[ wkˢᵉ ]ᵠ) m)
        (λ t → t)
 
 ↪-wkᵉⁿ : ∀ {Θ} {Q : Hyps Θ} → (k : ℕ) → Q ↪ᴴ wkᵉⁿ-H k Q [ wkˢⁿ k ]
@@ -1230,13 +1238,13 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
       subst (_∈ disj (wkᵉ-H Q')) (sym (cong₂ _,_ (wk-↑ᵉ-v σ A) (wk-↑ᵉ-r σ ρ)))
             (∈-map⁺ (mapᵈ wkᵉ-v wkᵉ-r) (↪disj e m₀))
 
-    qh : ∀ {O} → O ∈ qhyps (wkᵉ-H Q) → O [ σ ↑ᵉ ]ᵒᵇ ∈ qhyps (wkᵉ-H Q')
-    qh m with ∈-map⁻ (_[ wkˢᵉ ]ᵒᵇ) m
+    qh : ∀ {O} → O ∈ qhyps (wkᵉ-H Q) → O [ σ ↑ᵉ ]ᵠ ∈ qhyps (wkᵉ-H Q')
+    qh m with ∈-map⁻ (_[ wkˢᵉ ]ᵠ) m
     ... | O₀ , m₀ , refl =
       subst (_∈ qhyps (wkᵉ-H Q'))
-            (trans ([⨟]ᵒᵇ O₀ σ wkˢᵉ)
-                   (trans (sym ([≐]ᵒᵇ (wkˢᵉ-↑ᵉ σ) O₀)) (sym ([⨟]ᵒᵇ O₀ wkˢᵉ (σ ↑ᵉ)))))
-            (∈-map⁺ (_[ wkˢᵉ ]ᵒᵇ) (↪qhyps e m₀))
+            (trans ([⨟]ᵠ O₀ σ wkˢᵉ)
+                   (trans (sym ([≐]ᵠ (wkˢᵉ-↑ᵉ σ) O₀)) (sym ([⨟]ᵠ O₀ wkˢᵉ (σ ↑ᵉ)))))
+            (∈-map⁺ (_[ wkˢᵉ ]ᵠ) (↪qhyps e m₀))
 
 ↪-↑ᵉⁿ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} → (k : ℕ)
       → Q ↪ᴴ Q' [ σ ] → wkᵉⁿ-H k Q ↪ᴴ wkᵉⁿ-H k Q' [ σ ↑ᵉⁿ k ]
@@ -1273,10 +1281,10 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
     ... | (A , ρ) , m₀ , refl =
       subst (_∈ disj Q') (sym (cong₂ _,_ (wk-,ᵉ-v τ ε A) (wk-,ᵉ-r τ ε ρ))) (↪disj e m₀)
 
-    qh : ∀ {O} → O ∈ qhyps (wkᵉ-H Q) → O [ τ ,ᵉ ε ]ᵒᵇ ∈ qhyps Q'
-    qh m with ∈-map⁻ (_[ wkˢᵉ ]ᵒᵇ) m
+    qh : ∀ {O} → O ∈ qhyps (wkᵉ-H Q) → O [ τ ,ᵉ ε ]ᵠ ∈ qhyps Q'
+    qh m with ∈-map⁻ (_[ wkˢᵉ ]ᵠ) m
     ... | O₀ , m₀ , refl =
-      subst (_∈ qhyps Q') (sym (trans ([⨟]ᵒᵇ O₀ wkˢᵉ (τ ,ᵉ ε)) ([≐]ᵒᵇ (wkˢᵉ-,ᵉ τ ε) O₀)))
+      subst (_∈ qhyps Q') (sym (trans ([⨟]ᵠ O₀ wkˢᵉ (τ ,ᵉ ε)) ([≐]ᵠ (wkˢᵉ-,ᵉ τ ε) O₀)))
             (↪qhyps e m₀)
 
 -- Instance maps: the identity, and instantiating fresh variables
@@ -1313,7 +1321,7 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
 
     qh : ∀ {O} → O ∈ qhyps (wkᵉ-H Q) → (es : Vec (EExp Θ') (rigids O))
        → Q' ⊩ᵒ body O [ (τ ,ᵉ ε) ,ᵉⁿ es ]
-    qh m es with ∈-map⁻ (_[ wkˢᵉ ]ᵒᵇ) m
+    qh m es with ∈-map⁻ (_[ wkˢᵉ ]ᵠ) m
     ... | O₀ , m₀ , refl =
       ⊩ᵒ-subst⁻ (⊩ᵒ-resp-≐ˢ eq (⊩qhypsᴵ h m₀ es))
       where
@@ -1376,14 +1384,14 @@ VarOK-subst h = VarOK-substᴵ (⊩ᴴ⇒ᴵ h)
 -- A hypothesis is entailed: a quantified one by its instance at the
 -- fresh rigids
 
-⊩ᴼ-hyp : ∀ {Θ Θ'} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} → (O : Oblig Θ)
-       → O [ σ ]ᵒᵇ ∈ qhyps Q' → Q' ⊩ᴼ O [ σ ]
+⊩ᴼ-hyp : ∀ {Θ Θ'} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} → (O : QOrd Θ)
+       → O [ σ ]ᵠ ∈ qhyps Q' → Q' ⊩ᴼ O [ σ ]
 ⊩ᴼ-hyp {Θ' = Θ'} {Q'} {σ} O m = mk⊩ᵒ r e
   where
     k = rigids O
 
-    m' : O [ σ ⨟ˢ wkˢⁿ k ]ᵒᵇ ∈ qhyps (wkᵉⁿ-H k Q')
-    m' = subst (_∈ qhyps (wkᵉⁿ-H k Q')) ([⨟]ᵒᵇ O σ (wkˢⁿ k)) (↪qhyps (↪-wkᵉⁿ k) m)
+    m' : O [ σ ⨟ˢ wkˢⁿ k ]ᵠ ∈ qhyps (wkᵉⁿ-H k Q')
+    m' = subst (_∈ qhyps (wkᵉⁿ-H k Q')) ([⨟]ᵠ O σ (wkˢⁿ k)) (↪qhyps (↪-wkᵉⁿ k) m)
 
     eq : (((σ ⨟ˢ wkˢⁿ k) ↑ᵉⁿ k) ⨟ˢ (idˢ ,ᵉⁿ varsⁿ k)) ≐ˢ (σ ↑ᵉⁿ k)
     eq = ≐ˢ-trans (↑-inst (σ ⨟ˢ wkˢⁿ k) k (varsⁿ k)) (↑ᵉⁿ-vars σ k)
@@ -1442,8 +1450,8 @@ VarOK-subst h = VarOK-substᴵ (⊩ᴴ⇒ᴵ h)
 
 -- A quantified hypothesis of the set itself
 
-⊩ᴼ-hyp⁼ : ∀ {Θ} {Q : Hyps Θ} {O : Oblig Θ} → O ∈ qhyps Q → Q ⊩ᴼ O [ idˢ ]
-⊩ᴼ-hyp⁼ {Q = Q} {O} m = ⊩ᴼ-hyp O (subst (_∈ qhyps Q) (sym ([id]ᵒᵇ O)) m)
+⊩ᴼ-hyp⁼ : ∀ {Θ} {Q : Hyps Θ} {O : QOrd Θ} → O ∈ qhyps Q → Q ⊩ᴼ O [ idˢ ]
+⊩ᴼ-hyp⁼ {Q = Q} {O} m = ⊩ᴼ-hyp O (subst (_∈ qhyps Q) (sym ([id]ᵠ O)) m)
 
 -- Entailment between sets over one scope, field by field
 
@@ -1632,7 +1640,7 @@ VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
              (VarOK-wkᵉ (⊩disj h m₀))
 
     qhyps↑ : ∀ {O} → O ∈ qhyps (wkᵉ-H Q) → wkᵉ-H Q' ⊩ᴼ O [ δ ↑ᵉ ]
-    qhyps↑ m with ∈-map⁻ (_[ wkˢᵉ ]ᵒᵇ) m
+    qhyps↑ m with ∈-map⁻ (_[ wkˢᵉ ]ᵠ) m
     ... | O₀ , m₀ , refl =
       ⊩ᵒ-subst⁻ (⊩ᵒ-resp-≐ˢ eq (⊩ᵒ-⨟ᴵ (↪⇒⊩ᴵ (↪-↑ᵉⁿ k ↪-wkᵉ)) (⊩qhyps h m₀)))
       where
@@ -1648,8 +1656,8 @@ VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
 ⊩ᴴ-↑ᵉⁿ (suc k) h = ⊩ᴴ-↑ᵉⁿ k (⊩ᴴ-↑ᵉ h)
 
 ⊩ᴼ-⨟ : ∀ {Θ Ξ Ξ'} {Q : Hyps Ξ} {Q' : Hyps Ξ'} {δ : Subst Θ Ξ} {δ' : Subst Ξ Ξ'}
-     → (O : Oblig Θ) → Q' ⊩ᴴ Q [ δ' ] → Q ⊩ᴼ O [ δ ] → Q' ⊩ᴼ O [ δ ⨟ˢ δ' ]
-⊩ᴼ-⨟ {δ = δ} {δ'} (oblig l k o) g h =
+     → (O : QOrd Θ) → Q' ⊩ᴴ Q [ δ' ] → Q ⊩ᴼ O [ δ ] → Q' ⊩ᴼ O [ δ ⨟ˢ δ' ]
+⊩ᴼ-⨟ {δ = δ} {δ'} (qord l k o) g h =
   ⊩ᵒ-resp-≐ˢ (⨟-↑ᵉⁿ δ δ' k) (⊩ᵒ-⨟ (⊩ᴴ-↑ᵉⁿ k g) h)
 
 ⊩ᴴ-⨟ : ∀ {Θ Θ' Θ''} {Q : Hyps Θ} {Q' : Hyps Θ'} {Q'' : Hyps Θ''}

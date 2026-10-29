@@ -1,11 +1,12 @@
 ------------------------------------------------------------------
--- Obligations                                                  --
+-- Quantified orderings                                         --
 --                                                              --
--- An obligation `∀ᵉ j₁ … jₖ. O` is a list `O` of grade         --
+-- A quantified ordering `∀ᵉ j₁ … jₖ. O` is a list `O` of grade --
 -- orderings over the scope extended by `k` rigid effect-grade  --
 -- variables, `j₁` outermost, labelled with the operation whose --
 -- handler clause left it (for reading only). Substitution acts --
--- on an obligation under its rigids.                           --
+-- under its rigids; a vector of expressions instantiates them  --
+-- (`_,ᵉⁿ_`).                                                   --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; map)
@@ -24,7 +25,7 @@ open import Util.Equality
 
 open import OpenCalculus.Syntax.Scopes
 
-module OpenCalculus.Hypotheses.Obligations (S : LanguageSpec) where
+module OpenCalculus.Hypotheses.Quantified (S : LanguageSpec) where
 
 open LanguageSpec S
 open Operations Ops using (Op)
@@ -193,36 +194,36 @@ o [ σ ]ᴼ = ords (map (mapᵖ (_[ σ ]ʳ)) (ors o)) (map (mapᵖ (_[ σ ]ᵉ))
              (trans (map-cong (λ { (x , y) → cong₂ _,_ ([id]ᵉ x) ([id]ᵉ y) }) e) (map-id e))
 
 ------------------------------------------------------------------------
--- Obligations
+-- Quantified orderings
 
-record Oblig (Θ : Scope) : Set where
-  constructor oblig
+record QOrd (Θ : Scope) : Set where
+  constructor qord
   field
     label  : Maybe Op
     rigids : ℕ
     body   : Ords (Θ +eⁿ rigids)
 
-open Oblig public
+open QOrd public
 
-Obligs : Scope → Set
-Obligs Θ = List (Oblig Θ)
+QOrds : Scope → Set
+QOrds Θ = List (QOrd Θ)
 
-infixl 50 _[_]ᵒᵇ
+infixl 50 _[_]ᵠ
 
-_[_]ᵒᵇ : ∀ {Θ Θ'} → Oblig Θ → Subst Θ Θ' → Oblig Θ'
-O [ σ ]ᵒᵇ = oblig (label O) (rigids O) (body O [ σ ↑ᵉⁿ rigids O ]ᴼ)
+_[_]ᵠ : ∀ {Θ Θ'} → QOrd Θ → Subst Θ Θ' → QOrd Θ'
+O [ σ ]ᵠ = qord (label O) (rigids O) (body O [ σ ↑ᵉⁿ rigids O ]ᴼ)
 
-[≐]ᵒᵇ : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} → σ ≐ˢ σ' → (O : Oblig Θ) → O [ σ ]ᵒᵇ ≡ O [ σ' ]ᵒᵇ
-[≐]ᵒᵇ p (oblig l k o) = cong (oblig l k) ([≐]ᴼ (≐ˢ-↑ᵉⁿ p k) o)
+[≐]ᵠ : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} → σ ≐ˢ σ' → (O : QOrd Θ) → O [ σ ]ᵠ ≡ O [ σ' ]ᵠ
+[≐]ᵠ p (qord l k o) = cong (qord l k) ([≐]ᴼ (≐ˢ-↑ᵉⁿ p k) o)
 
-[⨟]ᵒᵇ : ∀ {Θ Θ₁ Θ₂} → (O : Oblig Θ) → (σ : Subst Θ Θ₁) → (δ : Subst Θ₁ Θ₂)
-      → O [ σ ]ᵒᵇ [ δ ]ᵒᵇ ≡ O [ σ ⨟ˢ δ ]ᵒᵇ
-[⨟]ᵒᵇ (oblig l k o) σ δ =
-  cong (oblig l k) (trans ([⨟]ᴼ o (σ ↑ᵉⁿ k) (δ ↑ᵉⁿ k)) ([≐]ᴼ (⨟-↑ᵉⁿ σ δ k) o))
+[⨟]ᵠ : ∀ {Θ Θ₁ Θ₂} → (O : QOrd Θ) → (σ : Subst Θ Θ₁) → (δ : Subst Θ₁ Θ₂)
+      → O [ σ ]ᵠ [ δ ]ᵠ ≡ O [ σ ⨟ˢ δ ]ᵠ
+[⨟]ᵠ (qord l k o) σ δ =
+  cong (qord l k) (trans ([⨟]ᴼ o (σ ↑ᵉⁿ k) (δ ↑ᵉⁿ k)) ([≐]ᴼ (⨟-↑ᵉⁿ σ δ k) o))
 
 ↑ᵉⁿ-id : ∀ {Θ} → (k : ℕ) → (idˢ {Θ} ↑ᵉⁿ k) ≐ˢ idˢ
 ↑ᵉⁿ-id zero    = ≐ˢ-refl
 ↑ᵉⁿ-id (suc k) = ≐ˢ-trans (≐ˢ-↑ᵉⁿ ↑ᵉ-id k) (↑ᵉⁿ-id k)
 
-[id]ᵒᵇ : ∀ {Θ} → (O : Oblig Θ) → O [ idˢ ]ᵒᵇ ≡ O
-[id]ᵒᵇ (oblig l k o) = cong (oblig l k) (trans ([≐]ᴼ (↑ᵉⁿ-id k) o) ([id]ᴼ o))
+[id]ᵠ : ∀ {Θ} → (O : QOrd Θ) → O [ idˢ ]ᵠ ≡ O
+[id]ᵠ (qord l k o) = cong (qord l k) (trans ([≐]ᴼ (↑ᵉⁿ-id k) o) ([id]ᴼ o))

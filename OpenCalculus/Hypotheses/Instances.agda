@@ -6,17 +6,21 @@
 -- calculus at closed instances, each rigid of a clause kept a  --
 -- parameter.                                                   --
 --                                                              --
--- A closed instance satisfies hypotheses and obligations      --
--- (`Obligations`) when the empty hypothesis set entails them   --
--- (`_⊨_∣_`, by `_⊩ᴴ_[_]` and `_⊩ᴼ_[_]`). Semantic entailment   --
--- `Q ⊨ᴴ Q'` holds when every closed instance of `Q` is one of  --
+-- A closed instance satisfies hypotheses (`_⊨_`) when each     --
+-- holds at it, a quantified ordering at every grade for its    --
+-- rigids. A satisfying instance is exactly one at which the    --
+-- truths entail the hypotheses (`⊨⇒⊩ᴴ`, `⊩ᴴ⇒⊨`); entailment is  --
+-- sound for satisfaction (`sound-≾ᵣ⁰`, `sound-≾ₑ⁰`).          --
+-- Semantic entailment `Q ⊨ᴴ Q'` holds when every closed        --
+-- instance of `Q` at which no hypotheses entail it is one of   --
 -- `Q'`; open entailment implies it.                            --
 --                                                              --
 -- A closed grade expression has a value in the carrier.        --
--- Entailed ordering between closed expressions is the          --
--- carrier's ordering of their values, and convertibility is    --
--- equivalence of values. Closed subtyping, closed eternality and  --
--- the closed var-rule disjunction are decidable.               --
+-- Entailed ordering between closed expressions, from no        --
+-- hypotheses or from the truths, is the carrier's ordering of  --
+-- their values, and convertibility is equivalence of values.   --
+-- Closed subtyping, closed eternality and the closed var-rule  --
+-- disjunction are decidable.                                   --
 ------------------------------------------------------------------
 
 open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)
@@ -59,34 +63,34 @@ open import OpenCalculus.Syntax.Subst  S
 open import OpenCalculus.Hypotheses    S
 
 ------------------------------------------------------------------------
--- Obligations
+-- Lists of quantified orderings
 
-_⊩ᴼˢ_[_] : ∀ {Θ Ξ} → Hyps Ξ → Obligs Θ → Subst Θ Ξ → Set
+_⊩ᴼˢ_[_] : ∀ {Θ Ξ} → Hyps Ξ → QOrds Θ → Subst Θ Ξ → Set
 Q' ⊩ᴼˢ R [ δ ] = All (λ O → Q' ⊩ᴼ O [ δ ]) R
 
-⊩ᴼˢ-≐ : ∀ {Θ Ξ} {Q' : Hyps Ξ} {R : Obligs Θ} {δ δ' : Subst Θ Ξ}
+⊩ᴼˢ-≐ : ∀ {Θ Ξ} {Q' : Hyps Ξ} {R : QOrds Θ} {δ δ' : Subst Θ Ξ}
       → δ ≐ˢ δ' → Q' ⊩ᴼˢ R [ δ ] → Q' ⊩ᴼˢ R [ δ' ]
 ⊩ᴼˢ-≐ p []       = []
 ⊩ᴼˢ-≐ {R = O ∷ R} p (h ∷ hs) = ⊩ᴼ-resp-≐ˢ O p h ∷ ⊩ᴼˢ-≐ p hs
 
--- Hypotheses and obligations together
+-- Hypotheses and further quantified orderings, held apart
 
 infix 4 _⊩_∣_[_] _⊩ᴼˢ_[_] _⊨_∣_
 
-_⊩_∣_[_] : ∀ {Θ Ξ} → Hyps Ξ → Hyps Θ → Obligs Θ → Subst Θ Ξ → Set
+_⊩_∣_[_] : ∀ {Θ Ξ} → Hyps Ξ → Hyps Θ → QOrds Θ → Subst Θ Ξ → Set
 Q' ⊩ Q ∣ R [ δ ] = (Q' ⊩ᴴ Q [ δ ]) × (Q' ⊩ᴼˢ R [ δ ])
 
 -- A set with quantified hypotheses added is entailed exactly when the
 -- set and each of them are
 
-++ᵠ⇒ : ∀ {Θ Ξ} {Q' : Hyps Ξ} {Q : Hyps Θ} {R : List (Oblig Θ)} {δ : Subst Θ Ξ}
+++ᵠ⇒ : ∀ {Θ Ξ} {Q' : Hyps Ξ} {Q : Hyps Θ} {R : List (QOrd Θ)} {δ : Subst Θ Ξ}
    → Q' ⊩ᴴ Q ++ᵠ R [ δ ] → Q' ⊩ Q ∣ R [ δ ]
 ++ᵠ⇒ {Q = Q} {R} h =
   mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (⊩disj h)
        (λ m → ⊩qhyps h (∈-++⁺ˡ m)) (⊩truths h) ,
   tabulate (λ m → ⊩qhyps h (∈-++⁺ʳ (qhyps Q) m))
 
-++ᵠ⇐ : ∀ {Θ Ξ} {Q' : Hyps Ξ} {Q : Hyps Θ} {R : List (Oblig Θ)} {δ : Subst Θ Ξ}
+++ᵠ⇐ : ∀ {Θ Ξ} {Q' : Hyps Ξ} {Q : Hyps Θ} {R : List (QOrd Θ)} {δ : Subst Θ Ξ}
    → Q' ⊩ Q ∣ R [ δ ] → Q' ⊩ᴴ Q ++ᵠ R [ δ ]
 ++ᵠ⇐ {Q = Q} (h , hs) =
   mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (⊩disj h)
@@ -95,7 +99,7 @@ Q' ⊩ Q ∣ R [ δ ] = (Q' ⊩ᴴ Q [ δ ]) × (Q' ⊩ᴼˢ R [ δ ])
 -- At a closed instance, hypotheses and quantified hypotheses held
 -- apart, entailed by the truths
 
-_⊨_∣_ : ∀ {Θ} → Subst Θ ∅ˢ → Hyps Θ → Obligs Θ → Set
+_⊨_∣_ : ∀ {Θ} → Subst Θ ∅ˢ → Hyps Θ → QOrds Θ → Set
 δ ⊨ Q ∣ R = ⊤ᴴ ⊩ Q ∣ R [ δ ]
 
 ------------------------------------------------------------------------
@@ -480,9 +484,16 @@ private
 ⊩ᴴ⇒⊨ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → ⊤ᴴ ⊩ᴴ Q [ δ ] → δ ⊨ Q
 ⊩ᴴ⇒⊨ = ⊩ᴴ⇒ᴵ
 
-inst-⊩ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} {δ : Subst Θ ∅ˢ}
-        → Q ⊩ᴴ Q' → ⊤ᴴ ⊩ᴴ Q [ δ ] → ⊤ᴴ ⊩ᴴ Q' [ δ ]
-inst-⊩ᴴ e h = ⊩ᴴ-⨟ h e
+-- Soundness of entailment: at a satisfying closed instance, an
+-- entailed ordering holds in the carrier
+
+sound-≾ᵣ⁰ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {ρ ρ' : RExp Θ}
+          → Q ⊩ ρ ≾̂ᵣ ρ' → δ ⊨ Q → valʳ (ρ [ δ ]ʳ) ≾ᵣ valʳ (ρ' [ δ ]ʳ)
+sound-≾ᵣ⁰ p h = val-≾ᵣᵀ (⊩-substᴵᵣ h p)
+
+sound-≾ₑ⁰ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {ε ε' : EExp Θ}
+          → Q ⊩ ε ≾̂ₑ ε' → δ ⊨ Q → valᵉ (ε [ δ ]ᵉ) ≾ₑ valᵉ (ε' [ δ ]ᵉ)
+sound-≾ₑ⁰ p h = val-≾ₑᵀ (⊩-substᴵₑ h p)
 
 ------------------------------------------------------------------------
 -- At a closed instance, what the truths entail of a set without
@@ -557,15 +568,12 @@ Satisfiable {Θ} Q = Σ[ δ ∈ Subst Θ ∅ˢ ] (δ ⊨ Q)
 Satisfiable-∅ : ∀ {Θ} → Satisfiable {Θ} ∅ᴴ
 Satisfiable-∅ = groundˢ , ⊩ᴵ-∅
 
-Satisfiable-⊩ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} → Q ⊩ᴴ Q' → Satisfiable Q → Satisfiable Q'
-Satisfiable-⊩ᴴ e (δ , h) = δ , ⊩ᴴ⇒⊨ (inst-⊩ᴴ e (⊨⇒⊩ᴴ h))
-
 -- Satisfaction of a set with quantified hypotheses added, held apart
 
-⊨++ᵠ⇒ : ∀ {Θ} {Q : Hyps Θ} {R : List (Oblig Θ)} {δ : Subst Θ ∅ˢ} → δ ⊨ Q ++ᵠ R → δ ⊨ Q ∣ R
+⊨++ᵠ⇒ : ∀ {Θ} {Q : Hyps Θ} {R : List (QOrd Θ)} {δ : Subst Θ ∅ˢ} → δ ⊨ Q ++ᵠ R → δ ⊨ Q ∣ R
 ⊨++ᵠ⇒ h = ++ᵠ⇒ (⊨⇒⊩ᴴ h)
 
-⊨++ᵠ⇐ : ∀ {Θ} {Q : Hyps Θ} {R : List (Oblig Θ)} {δ : Subst Θ ∅ˢ} → δ ⊨ Q ∣ R → δ ⊨ Q ++ᵠ R
+⊨++ᵠ⇐ : ∀ {Θ} {Q : Hyps Θ} {R : List (QOrd Θ)} {δ : Subst Θ ∅ˢ} → δ ⊨ Q ∣ R → δ ⊨ Q ++ᵠ R
 ⊨++ᵠ⇐ h = ⊩ᴴ⇒⊨ (++ᵠ⇐ h)
 
 -- Semantic entailment: every closed instance of the first set is one

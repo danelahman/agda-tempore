@@ -55,7 +55,7 @@ open import Bridge.Instantiation.Types S
 
 -- Grade orderings hold when each does in the grade's order
 
-infix 4 _⊨ᴰᵒ_ _⊨ᴰ⟨_⟩_ _⊨ᴰᴼ_ _⊨ᴰᴿ_ _⊨ᴰ_
+infix 4 _⊨ᴰᵒ_ _⊨ᴰ⟨_⟩_ _⊨ᴰᴼ_ _⊨ᴰ_
 
 record _⊨ᴰᵒ_ {Θ : Scope} (σ : DInst Θ) (o : Ords Θ) : Set where
   constructor mk⊨ᴰᵒ
@@ -72,11 +72,8 @@ _⊨ᴰ⟨_⟩_ : ∀ {Θ} → DInst Θ → (k : ℕ) → Ords (Θ +eⁿ k) → 
 σ ⊨ᴰ⟨ zero ⟩  B = σ ⊨ᴰᵒ B
 σ ⊨ᴰ⟨ suc k ⟩ B = (c : E) → (σ ,ᵉᴰ c) ⊨ᴰ⟨ k ⟩ B
 
-_⊨ᴰᴼ_ : ∀ {Θ} → DInst Θ → Oblig Θ → Set
+_⊨ᴰᴼ_ : ∀ {Θ} → DInst Θ → QOrd Θ → Set
 σ ⊨ᴰᴼ O = σ ⊨ᴰ⟨ rigids O ⟩ body O
-
-_⊨ᴰᴿ_ : ∀ {Θ} → DInst Θ → Obligs Θ → Set
-σ ⊨ᴰᴿ R = All (σ ⊨ᴰᴼ_) R
 
 -- A satisfying instance: each hypothesis holds, a quantified one at
 -- every grade for its rigids; the truths hold at every instance
@@ -391,6 +388,6 @@ module _ {Θ : Scope} {σ : DInst Θ} {Q : Hyps Θ} (s : σ ⊨ᴰ Q) where
              (⊨disj s m₀)
 
     qhyps' : ∀ {O} → O ∈ qhyps (wkᵉ-H Q) → (σ ,ᵉᴰ c) ⊨ᴰᴼ O
-    qhyps' m with ∈-map⁻ (_[ wkˢᵉ ]ᵒᵇ) m
+    qhyps' m with ∈-map⁻ (_[ wkˢᵉ ]ᵠ) m
     ... | O₀ , m₀ , refl =
       ⊨ᴰ⟨⟩-[] (rigids O₀) wkˢᵉ (σ ,ᵉᴰ c) (⊨ᴰ⟨⟩-≗ (rigids O₀) ≗ᴰ-refl (⊨qhyps s m₀))

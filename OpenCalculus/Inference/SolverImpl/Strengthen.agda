@@ -154,7 +154,7 @@ ext-str p a g i h =
 
 hyps-≡ : ∀ {Θ} {a a' : List (TyVar Θ)} {b b' : List (TyVar Θ × TyVar Θ)}
            {c c' : List (RExp Θ × RExp Θ)} {d d' : List (EExp Θ × EExp Θ)}
-           {e e' : List (OVType Θ × RExp Θ)} {f f' : List (Oblig Θ)} {g g' : 𝔹}
+           {e e' : List (OVType Θ × RExp Θ)} {f f' : List (QOrd Θ)} {g g' : 𝔹}
        → a ≡ a' → b ≡ b' → c ≡ c' → d ≡ d' → e ≡ e' → f ≡ f' → g ≡ g'
        → hyps a b c d e f g ≡ hyps a' b' c' d' e' f' g'
 hyps-≡ refl refl refl refl refl refl refl = refl
@@ -182,7 +182,7 @@ Q [ r ]ᴴ = hyps (map (rTy r) (ets Q))
                 (map (mapᵖ (_[ ⌜ r ⌝ʳ ]ʳ)) (ordᵣ Q))
                 (map (mapᵖ (_[ ⌜ r ⌝ʳ ]ᵉ)) (ordₑ Q))
                 (map (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) (disj Q))
-                (map (_[ ⌜ r ⌝ʳ ]ᵒᵇ) (qhyps Q)) (truths Q)
+                (map (_[ ⌜ r ⌝ʳ ]ᵠ) (qhyps Q)) (truths Q)
 
 -- A renamed set entails the set along the renaming, and so its
 -- instances are instances of the set
@@ -194,7 +194,7 @@ Q [ r ]ᴴ = hyps (map (rTy r) (ets Q))
        (λ m → hypᵣ (∈-map⁺ (mapᵖ (_[ ⌜ r ⌝ʳ ]ʳ)) m))
        (λ m → hypₑ (∈-map⁺ (mapᵖ (_[ ⌜ r ⌝ʳ ]ᵉ)) m))
        (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) m))
-       (λ {O} m → ⊩ᴼ-hyp O (∈-map⁺ (_[ ⌜ r ⌝ʳ ]ᵒᵇ) m)) (λ t → t)
+       (λ {O} m → ⊩ᴼ-hyp O (∈-map⁺ (_[ ⌜ r ⌝ʳ ]ᵠ) m)) (λ t → t)
 
 ⊩ᴴ-ren⁻ : ∀ {Θ Θ' Θ''} {Q : Hyps Θ} {Q' : Hyps Θ''} → (r : Ren Θ Θ') → {δ : Subst Θ' Θ''}
         → Q' ⊩ᴴ Q [ r ]ᴴ [ δ ] → Q' ⊩ᴴ Q [ ⌜ r ⌝ʳ ⨟ˢ δ ]
@@ -232,8 +232,8 @@ Q [ r ]ᴴ = hyps (map (rTy r) (ets Q))
     ... | (A , ρ) , m' , refl =
           subst₂ (VarOK Q') (sym ([⨟]ᵛ A ⌜ r ⌝ʳ δ)) (sym ([⨟]ʳ ρ ⌜ r ⌝ʳ δ)) (⊩disj h m')
 
-    qh : ∀ {O} → O ∈ map (_[ ⌜ r ⌝ʳ ]ᵒᵇ) (qhyps Q) → Q' ⊩ᴼ O [ δ ]
-    qh m with ∈-map⁻ (_[ ⌜ r ⌝ʳ ]ᵒᵇ) m
+    qh : ∀ {O} → O ∈ map (_[ ⌜ r ⌝ʳ ]ᵠ) (qhyps Q) → Q' ⊩ᴼ O [ δ ]
+    qh m with ∈-map⁻ (_[ ⌜ r ⌝ʳ ]ᵠ) m
     ... | O , m' , refl = ⊩ᴼ-subst⁻ O (⊩qhyps h m')
 
 ------------------------------------------------------------------------
@@ -501,10 +501,10 @@ map-fix g (a ∷ l) p = cong₂ _∷_ (p (here refl)) (map-fix g l (λ m → p (
 fvᵒ : ∀ {Θ} → Ords Θ → Vars Θ
 fvᵒ o = ⋃ᵛ fvʳʳ (ors o) ∪ᵛ ⋃ᵛ fvᵉᵉ (oes o)
 
-fvᵈ : ∀ {Θ} → Oblig Θ → Vars Θ
+fvᵈ : ∀ {Θ} → QOrd Θ → Vars Θ
 fvᵈ E = unliftᵛⁿ (rigids E) (fvᵒ (body E))
 
-fvᴰ : ∀ {Θ} → List (Oblig Θ) → Vars Θ
+fvᴰ : ∀ {Θ} → List (QOrd Θ) → Vars Θ
 fvᴰ = ⋃ᵛ fvᵈ
 
 fixᵒ : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ → (o : Ords Θ) → fvᵒ o ⊆ᵛ F
@@ -523,22 +523,22 @@ fixᵒ {ρ = ρ} f o h =
     e {x , y} m = cong₂ _,_ (fix-e f x (⊆-∪ˡ (fvᵉ x) (fvᵉ y) (⋃ᵛ-∈ fvᵉᵉ he m)))
                             (fix-e f y (⊆-∪ʳ (fvᵉ x) (fvᵉ y) (⋃ᵛ-∈ fvᵉᵉ he m)))
 
-fixᵈ : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ → (E : Oblig Θ) → fvᵈ E ⊆ᵛ F
-     → E [ ρ ]ᵒᵇ ≡ E
-fixᵈ f (oblig l k o) h =
-  cong (oblig l k) (fixᵒ (fixes-liftᵛⁿ k f) o (⊆-trans (⊆-liftᵛⁿ k (fvᵒ o)) (liftᵛⁿ-mono k h)))
+fixᵈ : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ → (E : QOrd Θ) → fvᵈ E ⊆ᵛ F
+     → E [ ρ ]ᵠ ≡ E
+fixᵈ f (qord l k o) h =
+  cong (qord l k) (fixᵒ (fixes-liftᵛⁿ k f) o (⊆-trans (⊆-liftᵛⁿ k (fvᵒ o)) (liftᵛⁿ-mono k h)))
 
 -- a substitution fixing their variables leaves the conditions' meaning
 -- unchanged
 
 fix-⊩ᴼ : ∀ {Θ Ψ} {Q : Hyps Ψ} {F : Vars Θ} {ρ : Subst Θ Θ} {δ : Subst Θ Ψ}
-       → Fixes F ρ → {D : List (Oblig Θ)} → fvᴰ D ⊆ᵛ F
+       → Fixes F ρ → {D : List (QOrd Θ)} → fvᴰ D ⊆ᵛ F
        → ∀ {E} → E ∈ D → Q ⊩ᴼ E [ δ ] → Q ⊩ᴼ E [ ρ ⨟ˢ δ ]
 fix-⊩ᴼ {Q = Q} {δ = δ} f h {E} m p =
   ⊩ᴼ-subst E (subst (λ E' → Q ⊩ᴼ E' [ δ ]) (sym (fixᵈ f E (⋃ᵛ-∈ fvᵈ h m))) p)
 
 fix-⊩ᴼ⁻ : ∀ {Θ Ψ} {Q : Hyps Ψ} {F : Vars Θ} {ρ : Subst Θ Θ} {δ : Subst Θ Ψ}
-        → Fixes F ρ → {D : List (Oblig Θ)} → fvᴰ D ⊆ᵛ F
+        → Fixes F ρ → {D : List (QOrd Θ)} → fvᴰ D ⊆ᵛ F
         → ∀ {E} → E ∈ D → Q ⊩ᴼ E [ ρ ⨟ˢ δ ] → Q ⊩ᴼ E [ δ ]
 fix-⊩ᴼ⁻ {Q = Q} {δ = δ} f h {E} m p =
   subst (λ E' → Q ⊩ᴼ E' [ δ ]) (fixᵈ f E (⋃ᵛ-∈ fvᵈ h m)) (⊩ᴼ-subst⁻ E p)

@@ -41,7 +41,7 @@ open import OpenCalculus.Syntax.Grades   S
 open import OpenCalculus.Syntax.Types    S
 open import OpenCalculus.Syntax.Contexts S using (OCtx)
 open import OpenCalculus.Hypotheses      S
-  using (Hyps; hyps; ets; subᵥ; ordᵣ; ordₑ; disj; qhyps; Ords; ords; Oblig; oblig; _+eⁿ_)
+  using (Hyps; hyps; ets; subᵥ; ordᵣ; ordₑ; disj; qhyps; Ords; ords; QOrd; qord; _+eⁿ_)
 open import OpenCalculus.Syntax.Raw             S
 open import OpenCalculus.Inference.Principality S
 
@@ -121,7 +121,7 @@ private
     walkˡ walkᶠ es && walkˡ (walkᵖ walkᶠ walkᶠ) ss
     && walkˡ (walkᵖ walkʳ walkʳ) rs && walkˡ (walkᵖ walkᵉ walkᵉ) fs
     && walkˡ (walkᵖ walkᵛ walkʳ) ds
-    && walkˡ (λ { (oblig _ k O) → walkℕ k && walkᴼ O }) qs && walk𝔹 t
+    && walkˡ (λ { (qord _ k O) → walkℕ k && walkᴼ O }) qs && walk𝔹 t
 
   walk : Scheme → 𝔹
   walk (scope a b c , Q , X) = walkℕ a && walkℕ b && walkℕ c && walkᴴ Q && walkᶜ X
@@ -158,7 +158,7 @@ data Atom (Θ : Scope) : Set where
   ordʳ-atom : RExp Θ → RExp Θ → Atom Θ
   ordᵉ-atom : EExp Θ → EExp Θ → Atom Θ
   disj-atom : OVType Θ → RExp Θ → Atom Θ
-  qhyp-atom : Oblig Θ → Atom Θ
+  qhyp-atom : QOrd Θ → Atom Θ
 
 -- A conjunction of atoms
 
@@ -225,10 +225,10 @@ ordsOf C = let Q = hypsOf C in ords (ordᵣ Q) (ordₑ Q)
 infix 3 ∀ᵉ_∙_ ∀ᵉ⟨_⟩_∙_
 
 ∀ᵉ_∙_ : ∀ {Θ} → (k : ℕ) → Conj (Θ +eⁿ k) → Conj Θ
-∀ᵉ k ∙ C = qhyp-atom (oblig nothing k (ordsOf C)) ∷ []
+∀ᵉ k ∙ C = qhyp-atom (qord nothing k (ordsOf C)) ∷ []
 
 ∀ᵉ⟨_⟩_∙_ : ∀ {Θ} → Op → (k : ℕ) → Conj (Θ +eⁿ k) → Conj Θ
-∀ᵉ⟨ op ⟩ k ∙ C = qhyp-atom (oblig (just op) k (ordsOf C)) ∷ []
+∀ᵉ⟨ op ⟩ k ∙ C = qhyp-atom (qord (just op) k (ordsOf C)) ∷ []
 
 -- Schemes: `a` type, `b` resource-grade and `c` effect-grade
 -- variables, hypotheses `C`, type `X`

@@ -217,11 +217,11 @@ import OpenCalculus.Syntax.Scopes
 import OpenCalculus.Syntax.Subst
 import OpenCalculus.Syntax.Types
 
----- Hypotheses, entailment, obligations and closed instances
+---- Hypotheses, entailment, quantified orderings and closed instances
 
 import OpenCalculus.Hypotheses
 import OpenCalculus.Hypotheses.Instances
-import OpenCalculus.Hypotheses.Obligations
+import OpenCalculus.Hypotheses.Quantified
 
 ---- The open type system, erasure to raw terms, substitution of grades and of
 ---- variables, renaming, inversion, and instantiation

@@ -3,11 +3,11 @@
 -- satisfaction.                                                --
 --                                                              --
 -- `Princ s s' m C`: every instance of `s` that solves `C` from --
--- no hypotheses and discharges the residual of `s` factors     --
+-- the truths and discharges the residual of `s` factors        --
 -- through `m` into one discharging the residual of `s'`, a     --
 -- rigid-fixing instance staying so. `Refut s C`: no            --
 -- rigid-fixing instance discharging the residual of `s` solves --
--- `C`. `solve-principal` and `solve-fail` prove them for       --
+-- `C` from the truths. `solve-principal` and `solve-fail` prove them for       --
 -- `solve`, from the same facts for each stage:                 --
 -- `solveEt-princ`/`-fail`, `solveDisj-princ`/`-fail`,          --
 -- `reexpand-princ`/`reexpand-fail`, `localise-princ`,          --
@@ -751,10 +751,10 @@ agree-≡ᵉ {O = O} {X₁} {X₂} eq x o =
 -- An entry mentioning only such unknowns, under its binders, holds
 -- after the one when it holds after the other
 
-⊩ᴼ-agree : ∀ {Θ Φ Ψ} {Q : Hyps Ψ} {O : Subst Θ Φ} {X₁ X₂ : Subst Φ Ψ} → (E : Oblig Φ)
+⊩ᴼ-agree : ∀ {Θ Φ Ψ} {Q : Hyps Ψ} {O : Subst Θ Φ} {X₁ X₂ : Subst Φ Ψ} → (E : QOrd Φ)
          → Outerᵒ (O ↑ᵉⁿ rigids E) (body E) → (O ⨟ˢ X₁) ≐ˢ (O ⨟ˢ X₂)
          → Q ⊩ᴼ E [ X₁ ] → Q ⊩ᴼ E [ X₂ ]
-⊩ᴼ-agree {Q = Q} {O} {X₁} {X₂} (oblig l k o) (or , oe) eq h = mk⊩ᵒ r e
+⊩ᴼ-agree {Q = Q} {O} {X₁} {X₂} (qord l k o) (or , oe) eq h = mk⊩ᵒ r e
   where
     eq' : ((O ↑ᵉⁿ k) ⨟ˢ (X₁ ↑ᵉⁿ k)) ≐ˢ ((O ↑ᵉⁿ k) ⨟ˢ (X₂ ↑ᵉⁿ k))
     eq' = ≐ˢ-trans (⨟-↑ᵉⁿ O X₁ k) (≐ˢ-trans (≐ˢ-↑ᵉⁿ eq k) (≐ˢ-sym (⨟-↑ᵉⁿ O X₂ k)))
@@ -916,12 +916,12 @@ listᵈ-princ j ((A , ρ) ∷ l) eq γ hγ k | nothing | _       = ⊥just eq
 -- binder it is the inner entry at the inner instance, read the same
 
 liftᵈ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O⁺ : Subst (Θ +e) (Φ +e)) → (j : EVar (Φ +e))
-            → (γ : Subst (Φ +e) (Φ' +e)) → (δ : Subst Φ Φ') → (E : Oblig (Φ +e))
+            → (γ : Subst (Φ +e) (Φ' +e)) → (δ : Subst Φ Φ') → (E : QOrd (Φ +e))
             → Outerᵒ (O⁺ ↑ᵉⁿ rigids E) (body E)
             → (O⁺ ⨟ˢ (popˢ j ⨟ˢ γ)) ≐ˢ (O⁺ ⨟ˢ (popˢ j ⨟ˢ (δ ↑ᵉ)))
             → wkᵉ-H Q ⊩ᴼ E [ popˢ j ⨟ˢ γ ] → Q ⊩ᴼ liftᵈ j E [ δ ]
 liftᵈ-princ O⁺ j γ δ E oo eqO h =
-  closeᵈ-princ (E [ popˢ j ]ᵒᵇ) (⊩ᴼ-subst⁻ E (⊩ᴼ-agree E oo eqO h))
+  closeᵈ-princ (E [ popˢ j ]ᵠ) (⊩ᴼ-subst⁻ E (⊩ᴼ-agree E oo eqO h))
 
 splitᴿ-princ : ∀ {Θ Φ Φ'} → (O : Subst Θ (Φ +e)) → (O⁺ : Subst (Θ +e) (Φ +e))
              → (j : EVar (Φ +e)) → (R : Resid (Φ +e))
@@ -941,7 +941,7 @@ splitᴿ-princ O O⁺ j R eq γ hγ u eqO h
                     (listᵗ-princ j (ts R) e₃ γ (⊩ts h))
                     (listˢ-princ j (ss R) e₄ γ (⊩ss h))
                     (listᵈ-princ j (ds R) e₅ γ hγ (⊩ds h))
-                    (λ { (here refl) → closeᵈ-princ (oblig nothing 0 (ords dr de))
+                    (λ { (here refl) → closeᵈ-princ (qord nothing 0 (ords dr de))
                                                     (mk⊩ᵒ (proj₂ pr) (proj₂ pe))
                        ; (there m) → lifted m })
   where
@@ -1118,10 +1118,10 @@ thenRetry-princ {C = C} (solved (s₁ , m₁ , w₁)) p eq δ₀ sat h with retr
 
 -- Labelling changes no meaning
 
-relabel-⊩⁻ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (op : Op) → (E : Oblig Ψ)
+relabel-⊩⁻ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (op : Op) → (E : QOrd Ψ)
            → Q ⊩ᴼ E [ δ ] → Q ⊩ᴼ relabel op E [ δ ]
-relabel-⊩⁻ op (oblig nothing  k o) h = h
-relabel-⊩⁻ op (oblig (just l) k o) h = h
+relabel-⊩⁻ op (qord nothing  k o) h = h
+relabel-⊩⁻ op (qord (just l) k o) h = h
 
 labelled-princ : ∀ {Θ} {s : St Θ} {C : Constraint Θ} → (op : Op)
                → (x : Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C)))

@@ -75,14 +75,14 @@
 -- They hold wherever those orderings do and bound nothing. A   --
 -- disjunction whose type a substitution has made eternal at no --
 -- instance becomes its grade side, which is what it means at   --
--- every instance solving the scope from no hypotheses, the     --
--- rigid a parameter.                                           --
+-- every instance solving the scope from the truths, the rigid  --
+-- a parameter.                                                 --
 --                                                              --
 -- Contract (`Localised`). `lσ` fixes the images of the outer   --
 -- unknowns (`lfix`); a discharge of the new residual along `δ` --
 -- is one of the old along `lσ ⨟ δ` (`lsnd`); an instance       --
--- entering the scope that discharges the old residual from no  --
--- hypotheses discharges the new one (`lcpl`); each step        --
+-- entering the scope that discharges the old residual from the --
+-- truths discharges the new one (`lcpl`); each step            --
 -- assigns grade unknowns only, so subtyping demands between    --
 -- type variables stay so (`latom`); the type of each           --
 -- disjunction left is eternal at some instance                 --
@@ -1216,7 +1216,7 @@ stepʳ {Ψ} k R with cleanʳ? k R
 
 ------------------------------------------------------------------------
 -- A disjunction whose type is eternal at no instance (`etDec` refutes
--- it) is met, from no hypotheses, exactly by its grade side
+-- it) is met, from the truths, exactly by its grade side
 
 record Refined {Ψ} (l : List (OVType Ψ × RExp Ψ)) : Set where
   constructor refined
@@ -1810,9 +1810,9 @@ edgesʳ {Ψ} l = go (withMem l)
 -- A deferred condition survives a substitution equivalent to the one
 -- it moves
 
-keep⇕ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {σ : Subst Ψ Ψ} {τ : Subst Ψ Ψ'} → (E : Oblig Ψ)
+keep⇕ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {σ : Subst Ψ Ψ} {τ : Subst Ψ Ψ'} → (E : QOrd Ψ)
       → Q ⊩ (σ ⨟ˢ τ) ≾ˢ τ → Q ⊩ τ ≾ˢ (σ ⨟ˢ τ) → Q ⊩ᴼ E [ τ ] → Q ⊩ᴼ E [ σ ⨟ˢ τ ]
-keep⇕ (oblig l k o) le ge h =
+keep⇕ (qord l k o) le ge h =
   mk⊩ᵒ (λ {x} {y} m → transᵣ (mono-substᵣ (≾ˢ-↑ᵉⁿ k le) x)
                              (transᵣ (⊩ors h m) (mono-substᵣ (≾ˢ-↑ᵉⁿ k ge) y)))
        (λ {x} {y} m → transₑ (mono-substₑ (≾ˢ-↑ᵉⁿ k le) x)
