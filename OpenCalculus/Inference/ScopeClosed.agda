@@ -25,7 +25,7 @@ module OpenCalculus.Inference.ScopeClosed (S : LanguageSpec)
   (hints : SystemHints (LanguageSpec.Grades S)) (opEnum : OpEnum S) where
 
 open import OpenCalculus.Syntax.Types         S using (OCType)
-open import OpenCalculus.Syntax.Contexts      S using (OCtx)
+open import OpenCalculus.Syntax.Contexts      S using (OCtx; _[_]ᶜᵗˣ; [id]ᶜᵗˣ)
 open import OpenCalculus.Syntax.Subst         S
 open import OpenCalculus.Hypotheses           S using (∅ᴴ; ⊩ᴵ-∅; _∣_<:̂ᶜ_)
 open import OpenCalculus.Hypotheses.Instances S using (_⊨_)

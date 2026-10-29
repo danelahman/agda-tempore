@@ -19,6 +19,7 @@
 -- schemes by `refl` at right- and left-sided time.               --
 --------------------------------------------------------------------
 
+open import Data.Unit using (tt)
 open import Data.Empty using (⊥-elim)
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
 open import Data.List.Base using ([]; _∷_)
@@ -45,7 +46,7 @@ open Operations Ops using (Op; op-grade)
 
 open import OpenCalculus.Syntax.Grades          S
 open import OpenCalculus.Syntax.Types           S
-open import OpenCalculus.Syntax.Contexts        S
+open import OpenCalculus.Syntax.Contexts        S hiding (Scheme)
 open import OpenCalculus.Syntax.Subst           S using (idˢ)
 open import OpenCalculus.Hypotheses             S
 open import OpenCalculus.Hypotheses.Instances   S using (Satisfiable-∅)
@@ -85,7 +86,7 @@ closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 -- Typable and handler-free: inference answers `typed`
 
 typed-of : (M : RawC ∅ˢ 0) → Typable [] M → HandlerFreeᶜ M → IsTyped (infer [] M)
-typed-of M t h with infer [] M | infer-complete [] M t | infer-handlerFree [] M h
+typed-of M t h with infer [] M | infer-complete [] M t | infer-handlerFree [] M tt h
 ... | typed p   | _  | _  = is-typed p
 ... | untypable | nu | _  = ⊥-elim (nu refl)
 ... | stuck     | _  | ns = ⊥-elim (ns refl)

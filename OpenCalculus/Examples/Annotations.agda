@@ -9,6 +9,7 @@
 -- annotation forces.                                             --
 --------------------------------------------------------------------
 
+open import Data.Unit using (tt)
 open import Data.Empty using (⊥-elim)
 
 open import Grades.Base
@@ -28,7 +29,7 @@ open GradeSystemInterface Grades using (≃ᵣ⇒≾ᵣ; map-uᵉ)
 
 open import OpenCalculus.Syntax.Grades          S
 open import OpenCalculus.Syntax.Types           S
-open import OpenCalculus.Syntax.Contexts        S hiding (_∷_)
+open import OpenCalculus.Syntax.Contexts        S hiding (Scheme; _∷_)
 open import OpenCalculus.Syntax.Subst           S using (idˢ)
 open import OpenCalculus.Hypotheses             S
 open import OpenCalculus.Hypotheses.Instances   S using (Satisfiable-∅)
@@ -48,7 +49,7 @@ open import OpenCalculus.Examples.Variables
 -- Typable and handler-free: inference answers `typed`
 
 typed-of : (M : RawC ∅ˢ 0) → Typable [] M → HandlerFreeᶜ M → IsTyped (infer [] M)
-typed-of M t h with infer [] M | infer-complete [] M t | infer-handlerFree [] M h
+typed-of M t h with infer [] M | infer-complete [] M t | infer-handlerFree [] M tt h
 ... | typed p   | _  | _  = is-typed p
 ... | untypable | nu | _  = ⊥-elim (nu refl)
 ... | stuck     | _  | ns = ⊥-elim (ns refl)

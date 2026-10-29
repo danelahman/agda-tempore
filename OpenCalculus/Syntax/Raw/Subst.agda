@@ -35,6 +35,7 @@ mutual
 
   _[_]ᴿᵛ : ∀ {Θ Θ' n} → RawV Θ n → Subst Θ Θ' → RawV Θ' n
   var i        [ σ ]ᴿᵛ = var i
+  def k        [ σ ]ᴿᵛ = def k
   const B c    [ σ ]ᴿᵛ = const B c
   ⋆            [ σ ]ᴿᵛ = ⋆
   true         [ σ ]ᴿᵛ = true
@@ -77,6 +78,7 @@ mutual
   [≐]ᴿᵛ : ∀ {Θ Θ' n} {σ δ : Subst Θ Θ'} → σ ≐ˢ δ → (V : RawV Θ n)
         → V [ σ ]ᴿᵛ ≡ V [ δ ]ᴿᵛ
   [≐]ᴿᵛ p (var i)      = refl
+  [≐]ᴿᵛ p (def k)      = refl
   [≐]ᴿᵛ p (const B c)  = refl
   [≐]ᴿᵛ p ⋆            = refl
   [≐]ᴿᵛ p true         = refl
@@ -126,6 +128,7 @@ mutual
 
   [id]ᴿᵛ : ∀ {Θ n} → (V : RawV Θ n) → V [ idˢ ]ᴿᵛ ≡ V
   [id]ᴿᵛ (var i)      = refl
+  [id]ᴿᵛ (def k)      = refl
   [id]ᴿᵛ (const B c)  = refl
   [id]ᴿᵛ ⋆            = refl
   [id]ᴿᵛ true         = refl
@@ -175,6 +178,7 @@ mutual
   [⨟]ᴿᵛ : ∀ {Θ Θ' Θ'' n} → (V : RawV Θ n) → (σ : Subst Θ Θ') → (δ : Subst Θ' Θ'')
         → V [ σ ]ᴿᵛ [ δ ]ᴿᵛ ≡ V [ σ ⨟ˢ δ ]ᴿᵛ
   [⨟]ᴿᵛ (var i)      σ δ = refl
+  [⨟]ᴿᵛ (def k)      σ δ = refl
   [⨟]ᴿᵛ (const B c)  σ δ = refl
   [⨟]ᴿᵛ ⋆            σ δ = refl
   [⨟]ᴿᵛ true         σ δ = refl
@@ -226,6 +230,7 @@ mutual
   handlerFree-[]ᴿᵛ : ∀ {Θ Θ' n} {σ : Subst Θ Θ'} → (V : RawV Θ n)
                    → HandlerFreeᵛ V → HandlerFreeᵛ (V [ σ ]ᴿᵛ)
   handlerFree-[]ᴿᵛ (var i)      h       = tt
+  handlerFree-[]ᴿᵛ (def k)      h       = tt
   handlerFree-[]ᴿᵛ (const B c)  h       = tt
   handlerFree-[]ᴿᵛ ⋆            h       = tt
   handlerFree-[]ᴿᵛ true         h       = tt
@@ -281,6 +286,7 @@ mutual
   secondClass-[]ᴿᵛ : ∀ {Θ Θ' n} {σ : Subst Θ Θ'} → (V : RawV Θ n)
                    → SecondClassᵛ V → SecondClassᵛ (V [ σ ]ᴿᵛ)
   secondClass-[]ᴿᵛ (var i)       h       = tt
+  secondClass-[]ᴿᵛ (def k)       ()
   secondClass-[]ᴿᵛ (const B c)   h       = tt
   secondClass-[]ᴿᵛ ⋆             h       = tt
   secondClass-[]ᴿᵛ true          h       = tt
@@ -350,6 +356,7 @@ mutual
 
 data InvV {Θ Θ' n} (σ : Subst Θ Θ') : RawV Θ n → RawV Θ' n → Set where
   var   : ∀ {i} → InvV σ (var i) (var i)
+  def   : ∀ {k} → InvV σ (def k) (def k)
   const : ∀ {B c} → InvV σ (const B c) (const B c)
   ⋆     : InvV σ ⋆ ⋆
   true  : InvV σ true true
@@ -406,6 +413,7 @@ data InvC {Θ Θ' n} (σ : Subst Θ Θ') : RawC Θ n → RawC Θ' n → Set wher
 invV : ∀ {Θ Θ' n} {σ : Subst Θ Θ'} → (V : RawV Θ n) → {V' : RawV Θ' n}
      → V [ σ ]ᴿᵛ ≡ V' → InvV σ V V'
 invV (var i)      refl = var
+invV (def k)      refl = def
 invV (const B c)  refl = const
 invV ⋆            refl = ⋆
 invV true         refl = true

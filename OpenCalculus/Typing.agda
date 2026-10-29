@@ -19,6 +19,8 @@
 -- The rules `annᵛ` and `annᶜ` record a type annotation of the  --
 -- raw term, have no counterpart in                             --
 -- `ClosedCalculus.Syntax.Terms`, and are identities on typing. --
+-- Nor has the rule `def` of the top-level definitions of the   --
+-- program context.                                             --
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ; suc)
@@ -46,6 +48,7 @@ open import Language.Types S using (BaseType; BaseConstants)
 open import OpenCalculus.Syntax.Grades    S
 open import OpenCalculus.Syntax.Types     S
 open import OpenCalculus.Syntax.Contexts  S
+open import OpenCalculus.Syntax.Subst     S using (Subst; _[_]ᵛ)
 open import OpenCalculus.Hypotheses      S
 
 infix 26 _∣_⊢V⦂_
@@ -62,6 +65,22 @@ mutual
             → (x : A ∈̂[ ρ ] Γ)
             → VarOK Q A ρ
             -------------
+            → Q ∣ Γ ⊢V⦂ A
+
+    -- top-level definitions
+
+    -- The definition at position `k` of the program context, at an
+    -- instance `δ` of its scheme along which `Q` entails the scheme's
+    -- hypotheses. There is no lock condition: a definition is closed.
+    -- The type is given by an equation, so that it is a variable of
+    -- the rule.
+
+    def     : ∀ {k} {s : Scheme} {A : OVType Θ}
+            → s ∈ᵖ[ k ] defs Γ
+            → (δ : Subst (Θˢ s) Θ)
+            → Q ⊩ᴴ Qˢ s [ δ ]
+            → A ≡ Xˢ s [ δ ]ᵛ
+            -----------------
             → Q ∣ Γ ⊢V⦂ A
 
     -- base-typed constants

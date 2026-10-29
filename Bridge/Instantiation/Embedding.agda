@@ -115,6 +115,7 @@ mutual
   annFree-[]ᵛ : ∀ {Θ Θ' n} → (V : RawV Θ n) → (σ : Subst Θ Θ')
               → AnnFreeᵛ V → AnnFreeᵛ (V [ σ ]ᴿᵛ)
   annFree-[]ᵛ (var i)     σ a       = tt
+  annFree-[]ᵛ (def k)     σ a       = tt
   annFree-[]ᵛ (const B c) σ a       = tt
   annFree-[]ᵛ ⋆           σ a       = tt
   annFree-[]ᵛ true        σ a       = tt
@@ -459,6 +460,7 @@ mutual
   lockᵛ : ∀ {n} {Γ' : OCtx ∅ˢ n} {A} {ρ : RExp ∅ˢ}
         → Eternal ⌞ A ⌟ᵛ → ∅ᴴ ∣ Γ' ⊢V⦂ A → ∅ᴴ ∣ Γ' ⟨ ρ ⟩ ⊢V⦂ A
   lockᵛ {A = A} et (var x ok)   = var (Tl-⟨⟩ x) (et-ok (⌞⌟-⊩ᴱ A et))
+  lockᵛ et (def f δ h e)        = def f δ h e
   lockᵛ et (const B c)          = const B c
   lockᵛ et ⋆                    = ⋆
   lockᵛ et true                 = true
@@ -481,6 +483,7 @@ mutual
           → (et : Eternal ⌞ A ⌟ᵛ) → (V : ∅ᴴ ∣ Γ' ⊢V⦂ A)
           → OE.⌊ lockᵛ {ρ = ρ} et V ⌋ᵛ ≡ OE.⌊ V ⌋ᵛ
   ⌊lockᵛ⌋ et (var x ok)          = refl
+  ⌊lockᵛ⌋ et (def f δ h e)       = refl
   ⌊lockᵛ⌋ et (const B c)         = refl
   ⌊lockᵛ⌋ et ⋆                   = refl
   ⌊lockᵛ⌋ et true                = refl

@@ -46,7 +46,7 @@ open import ClosedCalculus.Syntax.Terms     S using (_⊢C⦂_)
 open import ClosedCalculus.Syntax.Subtyping S using (_<:ᶜ_)
 
 open import OpenCalculus.Syntax.Types         S using (OCType)
-open import OpenCalculus.Syntax.Contexts      S using (OCtx)
+open import OpenCalculus.Syntax.Contexts      S using (OCtx; _[_]ᶜᵗˣ)
 open import OpenCalculus.Syntax.Subst         S
 open import OpenCalculus.Hypotheses           S using (∅ᴴ; ⊩ᴵ-∅)
 open import OpenCalculus.Hypotheses.Instances S

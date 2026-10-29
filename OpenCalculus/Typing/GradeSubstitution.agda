@@ -76,6 +76,9 @@ mutual
          → Q' ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ
 
   substᵛ σ h (var x p)       = var (∈̂-subst σ x) (VarOK-subst h p)
+  substᵛ {Γ = Γ} σ h (def {s = s} f δ h' e) =
+    def (subst (_ ∈ᵖ[ _ ]_) (sym (defs-subst Γ σ)) f) (δ ⨟ˢ σ) (⊩ᴴ-⨟ h h')
+        (trans (cong (_[ σ ]ᵛ) e) ([⨟]ᵛ (Xˢ s) δ σ))
   substᵛ σ h (const B c)     = const B c
   substᵛ σ h ⋆               = ⋆
   substᵛ σ h true            = true
@@ -153,6 +156,7 @@ mutual
            → ⌊ substᵛ σ h V ⌋ᵛ ≡ ⌊ V ⌋ᵛ [ σ ]ᴿᵛ
 
   ⌊substᵛ⌋ σ h (var x p)      = cong var (var-pos-∈̂-subst σ x)
+  ⌊substᵛ⌋ σ h (def f δ h' e)  = refl
   ⌊substᵛ⌋ σ h (const B c)    = refl
   ⌊substᵛ⌋ σ h ⋆              = refl
   ⌊substᵛ⌋ σ h true           = refl

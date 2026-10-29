@@ -33,6 +33,7 @@ mutual
 
   psubᵛ : ∀ {n m} → (Fin n → RunV m) → RunV n → RunV m
   psubᵛ σ (var i) = σ i
+  psubᵛ σ (def k) = def k
   psubᵛ σ (const B c) = const B c
   psubᵛ σ ⋆ = ⋆
   psubᵛ σ true = true
@@ -83,6 +84,7 @@ mutual
              → (V : RunV n)
              → psubᵛ σ V ≡ psubᵛ τ V
   psub-congᵛ p (var i) = p i
+  psub-congᵛ p (def k) = refl
   psub-congᵛ p (const B c) = refl
   psub-congᵛ p ⋆ = refl
   psub-congᵛ p true = refl
@@ -146,6 +148,7 @@ mutual
             → (V : RunV n)
             → renᵛ f (psubᵛ σ V) ≡ psubᵛ τ V
   ren-psubᵛ p (var i) = p i
+  ren-psubᵛ p (def k) = refl
   ren-psubᵛ p (const B c) = refl
   ren-psubᵛ p ⋆ = refl
   ren-psubᵛ p true = refl
@@ -204,6 +207,7 @@ mutual
             → (V : RunV n)
             → psubᵛ σ (renᵛ f V) ≡ psubᵛ τ V
   psub-renᵛ p (var i) = p i
+  psub-renᵛ p (def k) = refl
   psub-renᵛ p (const B c) = refl
   psub-renᵛ p ⋆ = refl
   psub-renᵛ p true = refl
@@ -264,6 +268,7 @@ mutual
              → (V : RunV n)
              → psubᵛ σ (psubᵛ τ V) ≡ psubᵛ υ V
   psub-psubᵛ p (var i) = p i
+  psub-psubᵛ p (def k) = refl
   psub-psubᵛ p (const B c) = refl
   psub-psubᵛ p ⋆ = refl
   psub-psubᵛ p true = refl
@@ -325,6 +330,7 @@ mutual
             → (V : RunV n)
             → psubᵛ σ V ≡ renᵛ f V
   psub-varᵛ p (var i) = p i
+  psub-varᵛ p (def k) = refl
   psub-varᵛ p (const B c) = refl
   psub-varᵛ p ⋆ = refl
   psub-varᵛ p true = refl
@@ -403,6 +409,7 @@ mutual
   sub-psubᵛ : ∀ {n} (k : ℕ) (U : RunV n) (V : RunV (k + suc n))
             → subᵛ k U V ≡ psubᵛ (subVar k U) V
   sub-psubᵛ k U (var i) = refl
+  sub-psubᵛ k U (def j) = refl
   sub-psubᵛ k U (const B c) = refl
   sub-psubᵛ k U ⋆ = refl
   sub-psubᵛ k U true = refl

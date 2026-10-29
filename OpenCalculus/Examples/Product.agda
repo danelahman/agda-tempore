@@ -49,7 +49,7 @@ open Operations Ops using (Op; param; arity; op-grade)
 
 open import OpenCalculus.Syntax.Grades          S
 open import OpenCalculus.Syntax.Types           S
-open import OpenCalculus.Syntax.Contexts        S renaming (_∷_ to _▸_)
+open import OpenCalculus.Syntax.Contexts        S hiding (Scheme) renaming (_∷_ to _▸_)
 open import OpenCalculus.Syntax.Subst           S using (idˢ)
 open import OpenCalculus.Hypotheses             S
 open import OpenCalculus.Hypotheses.Instances   S using (Satisfiable-∅)

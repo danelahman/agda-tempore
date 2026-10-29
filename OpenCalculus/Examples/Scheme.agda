@@ -3,7 +3,9 @@
 --                                                              --
 -- `schemeOf` projects a `typed` verdict onto its scheme        --
 -- `∀ Θ̃. Q̃ ⇒ X̃`: the scope, the hypotheses and the type.        --
--- `IsTyped` holds exactly of a `typed` verdict.                --
+-- `IsTyped` holds exactly of a `typed` verdict. The type       --
+-- schemes of values, of the definitions of a program, are      --
+-- `ValueScheme`s, forced by `forceᵛ`.                          --
 --                                                              --
 -- `schemeOf` returns its scheme fully evaluated (see `walk`);  --
 -- a `refl` check against a literal runs the solver once.       --
@@ -11,7 +13,8 @@
 -- Notation: `∀[ a , b , c ] C ⟹ X` is a scheme over `a` type,  --
 -- `b` resource-grade and `c` effect-grade variables, `C` a     --
 -- conjunction `_∧_` of atoms (`⊤` the empty one), a quantified --
--- one written `∀ᵉ k ∙ C'`.                                      --
+-- one written `∀ᵉ k ∙ C'`; `∀ᵛ[ a , b , c ] C ⟹ X` is a value  --
+-- scheme.                                                      --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹; _∧_ to _&&_)
@@ -52,6 +55,9 @@ open import OpenCalculus.Inference.Principality S
 
 Scheme : Set
 Scheme = Σ Scope (λ Θ → Hyps Θ × OCType Θ)
+
+ValueScheme : Set
+ValueScheme = Σ Scope (λ Θ → Hyps Θ × OVType Θ)
 
 -- Forcing a scheme
 --
@@ -132,6 +138,14 @@ private
 
   schemeOf! : Scheme → Maybe Scheme
   schemeOf! r = after (walk r) (just r)
+
+  walkᵛˢ : ValueScheme → 𝔹
+  walkᵛˢ (scope a b c , Q , X) = walkℕ a && walkℕ b && walkℕ c && walkᴴ Q && walkᵛ X
+
+-- A list of value schemes, evaluated in full
+
+forceᵛ : List ValueScheme → Maybe (List ValueScheme)
+forceᵛ rs = after (walkˡ walkᵛˢ rs) (just rs)
 
 schemeOf : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → Inference Γ M → Maybe Scheme
 schemeOf (typed p) = schemeOf! (PrincipalScheme.Θ̃ p , PrincipalScheme.Q̃ p , PrincipalScheme.X̃ p)
@@ -233,3 +247,8 @@ infixr 2 ∀[_,_,_]_⟹_
 
 ∀[_,_,_]_⟹_ : (a b c : ℕ) → Conj (scope a b c) → OCType (scope a b c) → Scheme
 ∀[ a , b , c ] C ⟹ X = scope a b c , hypsOf C , X
+
+infixr 2 ∀ᵛ[_,_,_]_⟹_
+
+∀ᵛ[_,_,_]_⟹_ : (a b c : ℕ) → Conj (scope a b c) → OVType (scope a b c) → ValueScheme
+∀ᵛ[ a , b , c ] C ⟹ X = scope a b c , hypsOf C , X

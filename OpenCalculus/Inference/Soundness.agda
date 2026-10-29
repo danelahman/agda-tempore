@@ -10,7 +10,9 @@
 -- (University of Tartu, 2025).                                 --
 ------------------------------------------------------------------
 
+open import Data.Empty using (⊥-elim)
 open import Data.Fin using (Fin; zero; suc)
+open import Data.Maybe.Base using (just; nothing)
 open import Data.Nat using (ℕ; suc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 
@@ -42,6 +44,7 @@ open import OpenCalculus.Typing.Erasure   S
 
 open import OpenCalculus.Inference.Constraints.Syntax       S
 open import OpenCalculus.Inference.Constraints.Satisfaction S
+open import OpenCalculus.Inference.Constraints.Schemes      S using (instᶜ-sound)
 
 open import OpenCalculus.Inference.Generate S
 
@@ -293,6 +296,20 @@ co²ᵗ²ᵉ-ˢ↑ ι σ B₁ B₂ ε₁ ε₂ =
   ≐ˢ-trans (⨟-↑ᵉ (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ) (σ ,ᵗ B₁ ,ᵗ B₂ ,ᵉ ε₁ ,ᵉ ε₂))
            (≐ˢ-↑ᵉ (co²ᵗ²ᵉ-ˢ ι σ B₁ B₂ ε₁ ε₂))
 
+-- A use of a definition: the position is bound to a scheme in the
+-- program context, which the substituted context keeps, and the
+-- instance solving the constraint is the instance of the rule
+
+soundDef : ∀ {Θ n Θ'} → (σ : Subst Θ Θ') → {Q : Hyps Θ'}
+         → (Γ : OCtx Θ n) → (k : ℕ) → (A : OVType Θ)
+         → σ ⊨[ Q ] defConstraint (lookupᵖ (defs Γ) k) A
+         → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ def k)
+soundDef σ Γ k A s with lookupᵖ (defs Γ) k in eq
+... | nothing = ⊥-elim s
+... | just sc with instᶜ-sound sc A s
+...   | δ , st , h =
+  subV (def (subst (sc ∈ᵖ[ k ]_) (sym (defs-subst Γ σ)) (lookupᵖ-∈ (defs Γ) eq)) δ h refl) st , refl
+
 mutual
 
   soundVˢ : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
@@ -321,6 +338,10 @@ mutual
       D₀ = var x ok₁
 
       st' = subst (λ z → Q ∣ z <:̂ᵛ A [ σ ]ᵛ) (sym (lookup-ty-subst Γ σ i)) st
+
+  -- top-level definitions
+
+  soundVˢ {σ = σ} ι Γ (def k) A s = soundDef σ Γ k A s
 
   -- base-typed constants, unit, booleans
 

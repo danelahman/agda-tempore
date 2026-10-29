@@ -20,6 +20,10 @@
 -- `Inference Γ M` is the outcome of inference, `Check Γ M`     --
 -- that of a check that exhibits a closed instance.             --
 --                                                              --
+-- `PrincipalSchemeᵛ Δ V` is a principal type scheme of a       --
+-- closed value in a program context, which has no variables to --
+-- instantiate; that of `return V` gives it (`valueScheme`).    --
+--                                                              --
 -- Principal types with constraint sets follow Pretnar (LMCS    --
 -- 2014); "residual constraint" is the term of OutsideIn(X)     --
 -- (Vytiniotis et al., JFP 2011). The context is fixed up to    --
@@ -106,11 +110,13 @@ M₊-[] M σ = [⨟]ᴿᶜ M wk₊ σ
 C[_,_] : ∀ {Θ n} → OCtx Θ n → RawC Θ n → Constraint (Θ +ty +e)
 C[_,_] {Θ} Γ M = genC (Γ₊ Γ) (M₊ M) (X̂ Θ ‼ t̂ Θ)
 
--- A handler-free term's constraint has no rigid binder
+-- The constraint of a term without handlers, using no definition with
+-- quantified hypotheses, has no rigid binder
 
 C[]-rigidFree : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-              → HandlerFreeᶜ M → RigidFree C[ Γ , M ]
-C[]-rigidFree Γ M h = genCˢ-rigidFree (M₊ M) (handlerFree-[]ᴿᶜ M h)
+              → NoRigidᶜ (defs Γ) M → RigidFree C[ Γ , M ]
+C[]-rigidFree Γ M h =
+  genCˢ-rigidFree (trans (defs-wkᵉ (wkᵗ-ctx Γ)) (defs-wkᵗ Γ)) (M₊ M) (noRigid-[]ᴿᶜ M h)
 
 record PrincipalSolution {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
   constructor mkPrincipalSolution
@@ -329,3 +335,149 @@ data Check {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
   untypable     : Check Γ M
   unestablished : PrincipalScheme Γ M → Check Γ M
   stuck         : Check Γ M
+
+------------------------------------------------------------------------
+-- Principal type schemes of values in program contexts
+
+-- A program context is closed: it is a context at every scope, kept by
+-- every substitution
+
+⌜⌝ᵖ-subst : ∀ {Θ Θ'} → (Δ : PCtx) → (σ : Subst Θ Θ') → ⌜ Δ ⌝ᵖ [ σ ]ᶜᵗˣ ≡ ⌜ Δ ⌝ᵖ
+⌜⌝ᵖ-subst ∅ᵖ       σ = refl
+⌜⌝ᵖ-subst (Δ ∷ᵖ s) σ = refl
+
+-- Substitutions out of the empty scope agree
+
+from∅-≐ : ∀ {Θ} → (σ σ' : Subst ∅ˢ Θ) → σ ≐ˢ σ'
+from∅-≐ σ σ' = mk≐ˢ (λ ()) (λ ()) (λ ())
+
+-- A principal type scheme `∀ Θ̃. Q̃ ⇒ X̃` of a closed raw value `V` in a
+-- program context `Δ`, which has no free variables to instantiate:
+-- every instance entailing `Q̃` types `V` at `X̃` (`instantiate`), and
+-- every typing of `V` has, at each closed instance satisfying its
+-- hypotheses, a closed instance satisfying `Q̃` at which `X̃` is a
+-- subtype of the typing's type (`factor`).
+
+record PrincipalSchemeᵛ (Δ : PCtx) (V : RawV ∅ˢ 0) : Set where
+  constructor mkPrincipalSchemeᵛ
+  field
+    Θ̃ : Scope
+    Q̃ : Hyps Θ̃
+    X̃ : OVType Θ̃
+
+    instantiate : ∀ {Θ''} → (δ : Subst Θ̃ Θ'') → (Q : Hyps Θ'')
+                → Q ⊩ᴴ Q̃ [ δ ]
+                -------------------------------------------------------------
+                → Σ[ D ∈ (Q ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X̃ [ δ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ)
+
+    factor : ∀ {Θ''} → (Q₀ : Hyps Θ'') → {X₀ : OVType Θ''}
+           → (D₀ : Q₀ ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X₀)
+           → ⌊ D₀ ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
+           → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀
+           ---------------------------------------------------------------
+           → Σ[ δ ∈ Subst Θ̃ ∅ˢ ] (δ ⊨ Q̃) × (∅ᴴ ∣ X̃ [ δ ]ᵛ <:̂ᵛ X₀ [ δ₀ ]ᵛ)
+
+-- A typing of `V` in `Δ`, under hypotheses some closed instance satisfies
+
+record Typableᵛ (Δ : PCtx) (V : RawV ∅ˢ 0) : Set where
+  constructor typableᵛ
+  field
+    Θ₀     : Scope
+    Q₀     : Hyps Θ₀
+    X₀     : OVType Θ₀
+    D₀     : Q₀ ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X₀
+    erases : ⌊ D₀ ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
+    sat    : Satisfiable Q₀
+
+-- `V` is typable in `Δ` exactly when the hypotheses of its principal
+-- type scheme are satisfiable
+
+typableᵛ-⇔ : ∀ {Δ V} → (p : PrincipalSchemeᵛ Δ V) → Typableᵛ Δ V ⇔ Satisfiable (PrincipalSchemeᵛ.Q̃ p)
+typableᵛ-⇔ {Δ} {V} p = mk⇔ to from
+  where
+    module P = PrincipalSchemeᵛ p
+
+    to : Typableᵛ Δ V → Satisfiable P.Q̃
+    to (typableᵛ Θ₀ Q₀ X₀ D₀ e (δ₀ , h₀)) with P.factor Q₀ D₀ e δ₀ h₀
+    ... | δ , h , _ = δ , h
+
+    from : Satisfiable P.Q̃ → Typableᵛ Δ V
+    from (δ , h) with P.instantiate δ ∅ᴴ (⊨⇒⊩ᴴ h)
+    ... | D , e = typableᵛ ∅ˢ ∅ᴴ (P.X̃ [ δ ]ᵛ) D e (idˢ , ⊩ᴵ-∅)
+
+-- A typing of a value is one of the computation returning it
+
+returnᵛ : ∀ {Θ} {Q : Hyps Θ} {Δ : PCtx} {V : RawV ∅ˢ 0} {X : OVType Θ}
+        → (D : Q ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X) → ⌊ D ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
+        → Σ[ D' ∈ (Q ∣ ⌜ Δ ⌝ᵖ [ from∅ ]ᶜᵗˣ ⊢C⦂ X ‼ ûₑ) ] (⌊ D' ⌋ᶜ ≡ return V [ from∅ ]ᴿᶜ)
+returnᵛ {Δ = Δ} D e =
+  return (ctx-substᵛ (sym (⌜⌝ᵖ-subst Δ from∅)) D) ,
+  cong return (trans (⌊ctxᵛ⌋ (sym (⌜⌝ᵖ-subst Δ from∅)) D) e)
+
+typableᵛ→typable : ∀ {Δ V} → Typableᵛ Δ V → Typable ⌜ Δ ⌝ᵖ (return V)
+typableᵛ→typable (typableᵛ Θ₀ Q₀ X₀ D₀ e s) =
+  typable Θ₀ from∅ Q₀ (X₀ ‼ ûₑ) (proj₁ (returnᵛ D₀ e)) (proj₂ (returnᵛ D₀ e)) s
+
+-- The value of a derivation erasing to `return W`, at a subtype
+
+returned : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {X : OVType Θ} {ε : EExp Θ} {W : RawV Θ n}
+         → (D : Q ∣ Γ ⊢C⦂ X ‼ ε) → ⌊ D ⌋ᶜ ≡ return W
+         → Σ[ X' ∈ OVType Θ ] Σ[ D' ∈ (Q ∣ Γ ⊢V⦂ X') ] (⌊ D' ⌋ᵛ ≡ W) × (Q ∣ X' <:̂ᵛ X)
+returned (return D) refl = _ , D , refl , <:̂ᵛ-refl _
+returned (subC D (p ‼ₛ q)) e with returned D e
+... | X' , D' , e' , p' = X' , D' , e' , <:̂ᵛ-trans p' p
+returned (M ⨟ N)                   ()
+returned (V · W)                   ()
+returned (match V `in M)           ()
+returned (absurd V)                ()
+returned (if V `then M `else N)    ()
+returned (caseℕ V `zero M `succ N) ()
+returned (case+ V `inl M `inr N)   ()
+returned (caseL V `nil M `cons N)  ()
+returned (recℕ V M N p)            ()
+returned (recL V M N p)            ()
+returned (perform op V M)          ()
+returned (delay τ M)               ()
+returned (handle M `with V)        ()
+returned (unbox x p q N)           ()
+returned (box ρ V N)               ()
+returned (annᶜ C M)                ()
+
+-- The principal type scheme of `return V` gives that of `V`: its
+-- result type, which every typing of `V` returned bounds
+
+resultᵛ : ∀ {Θ} → OCType Θ → OVType Θ
+resultᵛ (A ‼ ε) = A
+
+private
+
+  returnedᶜ : ∀ {Θ Θ' n} {Q : Hyps Θ'} {Γ : OCtx Θ' n} {W : RawV Θ' n}
+            → (C : OCType Θ) → (δ : Subst Θ Θ')
+            → (D : Q ∣ Γ ⊢C⦂ C [ δ ]ᶜ) → ⌊ D ⌋ᶜ ≡ return W
+            → Σ[ X' ∈ OVType Θ' ] Σ[ D' ∈ (Q ∣ Γ ⊢V⦂ X') ] (⌊ D' ⌋ᵛ ≡ W)
+                × (Q ∣ X' <:̂ᵛ resultᵛ C [ δ ]ᵛ)
+  returnedᶜ (A ‼ ε) δ D e = returned D e
+
+  resultᵛ-<: : ∀ {Θ Θ'} {Q : Hyps Θ'} {B : OVType Θ'} {ε' : EExp Θ'}
+             → (C : OCType Θ) → (δ : Subst Θ Θ')
+             → Q ∣ C [ δ ]ᶜ <:̂ᶜ B ‼ ε' → Q ∣ resultᵛ C [ δ ]ᵛ <:̂ᵛ B
+  resultᵛ-<: (A ‼ ε) δ (st ‼ₛ _) = st
+
+valueScheme : ∀ {Δ V} → PrincipalScheme {∅ˢ} {0} ⌜ Δ ⌝ᵖ (return V) → PrincipalSchemeᵛ Δ V
+valueScheme {Δ} {V} p = mkPrincipalSchemeᵛ (Θ̃ p) (Q̃ p) (resultᵛ (X̃ p)) inst' fac'
+  where
+    inst' : ∀ {Θ''} → (δ : Subst (Θ̃ p) Θ'') → (Q : Hyps Θ'') → Q ⊩ᴴ Q̃ p [ δ ]
+          → Σ[ D ∈ (Q ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ resultᵛ (X̃ p) [ δ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ)
+    inst' δ Q h with instantiate p δ Q h
+    ... | D , e with returnedᶜ (X̃ p) δ D e
+    ...   | X' , D' , e' , st =
+      subV (ctx-substᵛ c D') st ,
+      trans (⌊ctxᵛ⌋ c D') (trans e' ([≐]ᴿᵛ (from∅-≐ _ _) V))
+      where c = ⌜⌝ᵖ-subst Δ (σ̃ p ⨟ˢ δ)
+
+    fac' : ∀ {Θ''} → (Q₀ : Hyps Θ'') → {X₀ : OVType Θ''}
+         → (D₀ : Q₀ ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X₀) → ⌊ D₀ ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
+         → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀
+         → Σ[ δ ∈ Subst (Θ̃ p) ∅ˢ ] (δ ⊨ Q̃ p) × (∅ᴴ ∣ resultᵛ (X̃ p) [ δ ]ᵛ <:̂ᵛ X₀ [ δ₀ ]ᵛ)
+    fac' Q₀ D₀ e δ₀ h₀ with factor p from∅ Q₀ (proj₁ (returnᵛ D₀ e)) (proj₂ (returnᵛ D₀ e)) δ₀ h₀
+    ... | δ , _ , h , st = δ , h , resultᵛ-<: (X̃ p) δ st

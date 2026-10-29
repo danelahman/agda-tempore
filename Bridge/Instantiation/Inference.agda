@@ -47,7 +47,7 @@ open import ClosedCalculus.Adequacy.Evaluation                      S using (Hal
 open import ClosedCalculus.Adequacy.Normalization                   S using (halts)
 
 open import OpenCalculus.Syntax.Types           S using (OCType)
-open import OpenCalculus.Syntax.Contexts        S using (OCtx; [])
+open import OpenCalculus.Syntax.Contexts        S using (OCtx; []; _[_]ᶜᵗˣ; [⨟]ᶜᵗˣ)
 open import OpenCalculus.Syntax.Subst           S
 open import OpenCalculus.Hypotheses             S using (∅ᴴ)
 open import OpenCalculus.Hypotheses.Instances   S using (Satisfiable; ⊨⇒⊩ᴴ)

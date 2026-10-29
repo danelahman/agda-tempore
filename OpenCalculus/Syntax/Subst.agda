@@ -3,15 +3,16 @@
 --                                                              --
 -- A substitution maps the three sorts of variables of one      --
 -- scope to open types, resource expressions and effect         --
--- expressions over another scope. Its action on contexts       --
--- preserves the number of bound variables.                     --
+-- expressions over another scope. A scope extended by the      --
+-- variables of another (`Θ ⊹ Ψ`) is substituted by a pair of   --
+-- substitutions (`σ ⊕ˢ δ`).                                    --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_; true; false)
 open import Data.Empty using (⊥; ⊥-elim)
-open import Data.Fin using (Fin; zero; suc)
+open import Data.Fin using (Fin; zero; suc; _↑ˡ_; _↑ʳ_)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
-open import Data.Nat using (ℕ)
+open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.Vec.Base using (Vec; tabulate) renaming (lookup to lookupᵛ)
 open import Data.Vec.Properties using (lookup∘tabulate)
 
@@ -34,7 +35,6 @@ open import Language.Types S
 
 open import OpenCalculus.Syntax.Grades   S
 open import OpenCalculus.Syntax.Types    S
-open import OpenCalculus.Syntax.Contexts S
 
 -- Substitutions
 
@@ -49,7 +49,7 @@ open Subst public
 
 -- Action of a substitution on the four syntactic categories
 
-infixl 50 _[_]ᵉ _[_]ʳ _[_]ᵛ _[_]ᶜ _[_]ᶜᵗˣ
+infixl 50 _[_]ᵉ _[_]ʳ _[_]ᵛ _[_]ᶜ
 
 _[_]ᵉ : ∀ {Θ Θ'} → EExp Θ → Subst Θ Θ' → EExp Θ'
 evar i    [ σ ]ᵉ = sE σ i
@@ -82,11 +82,6 @@ mutual
 
   _[_]ᶜ : ∀ {Θ Θ'} → OCType Θ → Subst Θ Θ' → OCType Θ'
   (A ‼ ε) [ σ ]ᶜ = A [ σ ]ᵛ ‼ ε [ σ ]ᵉ
-
-_[_]ᶜᵗˣ : ∀ {Θ Θ' n} → OCtx Θ n → Subst Θ Θ' → OCtx Θ' n
-[]        [ σ ]ᶜᵗˣ = []
-(Γ ∷ A)   [ σ ]ᶜᵗˣ = Γ [ σ ]ᶜᵗˣ ∷ A [ σ ]ᵛ
-(Γ ⟨ ρ ⟩) [ σ ]ᶜᵗˣ = Γ [ σ ]ᶜᵗˣ ⟨ ρ [ σ ]ʳ ⟩
 
 -- Identity and composition (apply the first, then substitute with the second)
 
@@ -264,11 +259,6 @@ mutual
   [id]ᶜ : ∀ {Θ} → (C : OCType Θ) → C [ idˢ ]ᶜ ≡ C
   [id]ᶜ (A ‼ ε) = cong₂ _‼_ ([id]ᵛ A) ([id]ᵉ ε)
 
-[id]ᶜᵗˣ : ∀ {Θ n} → (Γ : OCtx Θ n) → Γ [ idˢ ]ᶜᵗˣ ≡ Γ
-[id]ᶜᵗˣ []        = refl
-[id]ᶜᵗˣ (Γ ∷ A)   = cong₂ _∷_ ([id]ᶜᵗˣ Γ) ([id]ᵛ A)
-[id]ᶜᵗˣ (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ ([id]ᶜᵗˣ Γ) ([id]ʳ ρ)
-
 [⨟]ᵉ : ∀ {Θ Θ' Θ''} → (ε : EExp Θ) → (σ : Subst Θ Θ') → (δ : Subst Θ' Θ'')
      → ε [ σ ]ᵉ [ δ ]ᵉ ≡ ε [ σ ⨟ˢ δ ]ᵉ
 [⨟]ᵉ (evar i)   σ δ = refl
@@ -305,12 +295,6 @@ mutual
        → C [ σ ]ᶜ [ δ ]ᶜ ≡ C [ σ ⨟ˢ δ ]ᶜ
   [⨟]ᶜ (A ‼ ε) σ δ = cong₂ _‼_ ([⨟]ᵛ A σ δ) ([⨟]ᵉ ε σ δ)
 
-[⨟]ᶜᵗˣ : ∀ {Θ Θ' Θ'' n} → (Γ : OCtx Θ n) → (σ : Subst Θ Θ') → (δ : Subst Θ' Θ'')
-       → Γ [ σ ]ᶜᵗˣ [ δ ]ᶜᵗˣ ≡ Γ [ σ ⨟ˢ δ ]ᶜᵗˣ
-[⨟]ᶜᵗˣ []        σ δ = refl
-[⨟]ᶜᵗˣ (Γ ∷ A)   σ δ = cong₂ _∷_ ([⨟]ᶜᵗˣ Γ σ δ) ([⨟]ᵛ A σ δ)
-[⨟]ᶜᵗˣ (Γ ⟨ ρ ⟩) σ δ = cong₂ _⟨_⟩ ([⨟]ᶜᵗˣ Γ σ δ) ([⨟]ʳ ρ σ δ)
-
 [≐]ᵉ : ∀ {Θ Θ'} {σ δ : Subst Θ Θ'} → σ ≐ˢ δ → (ε : EExp Θ) → ε [ σ ]ᵉ ≡ ε [ δ ]ᵉ
 [≐]ᵉ p (evar i)   = ≐ᵉ p i
 [≐]ᵉ p (econst ε) = refl
@@ -342,12 +326,6 @@ mutual
 
   [≐]ᶜ : ∀ {Θ Θ'} {σ δ : Subst Θ Θ'} → σ ≐ˢ δ → (C : OCType Θ) → C [ σ ]ᶜ ≡ C [ δ ]ᶜ
   [≐]ᶜ p (A ‼ ε) = cong₂ _‼_ ([≐]ᵛ p A) ([≐]ᵉ p ε)
-
-[≐]ᶜᵗˣ : ∀ {Θ Θ' n} {σ δ : Subst Θ Θ'} → σ ≐ˢ δ → (Γ : OCtx Θ n)
-       → Γ [ σ ]ᶜᵗˣ ≡ Γ [ δ ]ᶜᵗˣ
-[≐]ᶜᵗˣ p []        = refl
-[≐]ᶜᵗˣ p (Γ ∷ A)   = cong₂ _∷_ ([≐]ᶜᵗˣ p Γ) ([≐]ᵛ p A)
-[≐]ᶜᵗˣ p (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ ([≐]ᶜᵗˣ p Γ) ([≐]ʳ p ρ)
 
 wkˢᵗ-e : ∀ {Θ} → (ε : EExp Θ) → ε [ wkˢᵗ ]ᵉ ≡ wkᵗ-e ε
 wkˢᵗ-e (evar i)   = refl
@@ -445,21 +423,6 @@ mutual
   wkˢᵉ-c : ∀ {Θ} → (C : OCType Θ) → C [ wkˢᵉ ]ᶜ ≡ wkᵉ-c C
   wkˢᵉ-c (A ‼ ε) = cong₂ _‼_ (wkˢᵉ-v A) (wkˢᵉ-e ε)
 
-wkˢᵗ-ctx : ∀ {Θ n} → (Γ : OCtx Θ n) → Γ [ wkˢᵗ ]ᶜᵗˣ ≡ wkᵗ-ctx Γ
-wkˢᵗ-ctx []        = refl
-wkˢᵗ-ctx (Γ ∷ A)   = cong₂ _∷_ (wkˢᵗ-ctx Γ) (wkˢᵗ-v A)
-wkˢᵗ-ctx (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (wkˢᵗ-ctx Γ) (wkˢᵗ-r ρ)
-
-wkˢʳ-ctx : ∀ {Θ n} → (Γ : OCtx Θ n) → Γ [ wkˢʳ ]ᶜᵗˣ ≡ wkʳ-ctx Γ
-wkˢʳ-ctx []        = refl
-wkˢʳ-ctx (Γ ∷ A)   = cong₂ _∷_ (wkˢʳ-ctx Γ) (wkˢʳ-v A)
-wkˢʳ-ctx (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (wkˢʳ-ctx Γ) (wkˢʳ-r ρ)
-
-wkˢᵉ-ctx : ∀ {Θ n} → (Γ : OCtx Θ n) → Γ [ wkˢᵉ ]ᶜᵗˣ ≡ wkᵉ-ctx Γ
-wkˢᵉ-ctx []        = refl
-wkˢᵉ-ctx (Γ ∷ A)   = cong₂ _∷_ (wkˢᵉ-ctx Γ) (wkˢᵉ-v A)
-wkˢᵉ-ctx (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (wkˢᵉ-ctx Γ) (wkˢᵉ-r ρ)
-
 wkˢᵗ-,ᵗ : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ') → wkˢᵗ ⨟ˢ (σ ,ᵗ B) ≐ˢ σ
 wkˢᵗ-,ᵗ σ B = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
 
@@ -506,11 +469,6 @@ wk-,ᵗ-c : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ') → (C : O
 wk-,ᵗ-c σ B C = trans (cong (_[ σ ,ᵗ B ]ᶜ) (sym (wkˢᵗ-c C)))
                 (trans ([⨟]ᶜ C wkˢᵗ (σ ,ᵗ B)) ([≐]ᶜ (wkˢᵗ-,ᵗ σ B) C))
 
-wk-,ᵗ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (B : OVType Θ') → (Γ : OCtx Θ n)
-          → wkᵗ-ctx Γ [ σ ,ᵗ B ]ᶜᵗˣ ≡ Γ [ σ ]ᶜᵗˣ
-wk-,ᵗ-ctx σ B Γ = trans (cong (_[ σ ,ᵗ B ]ᶜᵗˣ) (sym (wkˢᵗ-ctx Γ)))
-                  (trans ([⨟]ᶜᵗˣ Γ wkˢᵗ (σ ,ᵗ B)) ([≐]ᶜᵗˣ (wkˢᵗ-,ᵗ σ B) Γ))
-
 wk-,ʳ-e : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (ρ' : RExp Θ') → (ε : EExp Θ)
         → wkʳ-e ε [ σ ,ʳ ρ' ]ᵉ ≡ ε [ σ ]ᵉ
 wk-,ʳ-e σ ρ' ε = trans (cong (_[ σ ,ʳ ρ' ]ᵉ) (sym (wkˢʳ-e ε)))
@@ -531,11 +489,6 @@ wk-,ʳ-c : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (ρ' : RExp Θ') → (C : OC
 wk-,ʳ-c σ ρ' C = trans (cong (_[ σ ,ʳ ρ' ]ᶜ) (sym (wkˢʳ-c C)))
                  (trans ([⨟]ᶜ C wkˢʳ (σ ,ʳ ρ')) ([≐]ᶜ (wkˢʳ-,ʳ σ ρ') C))
 
-wk-,ʳ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (ρ' : RExp Θ') → (Γ : OCtx Θ n)
-          → wkʳ-ctx Γ [ σ ,ʳ ρ' ]ᶜᵗˣ ≡ Γ [ σ ]ᶜᵗˣ
-wk-,ʳ-ctx σ ρ' Γ = trans (cong (_[ σ ,ʳ ρ' ]ᶜᵗˣ) (sym (wkˢʳ-ctx Γ)))
-                   (trans ([⨟]ᶜᵗˣ Γ wkˢʳ (σ ,ʳ ρ')) ([≐]ᶜᵗˣ (wkˢʳ-,ʳ σ ρ') Γ))
-
 wk-,ᵉ-e : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (ε' : EExp Θ') → (ε : EExp Θ)
         → wkᵉ-e ε [ σ ,ᵉ ε' ]ᵉ ≡ ε [ σ ]ᵉ
 wk-,ᵉ-e σ ε' ε = trans (cong (_[ σ ,ᵉ ε' ]ᵉ) (sym (wkˢᵉ-e ε)))
@@ -555,11 +508,6 @@ wk-,ᵉ-c : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (ε' : EExp Θ') → (C : O
         → wkᵉ-c C [ σ ,ᵉ ε' ]ᶜ ≡ C [ σ ]ᶜ
 wk-,ᵉ-c σ ε' C = trans (cong (_[ σ ,ᵉ ε' ]ᶜ) (sym (wkˢᵉ-c C)))
                  (trans ([⨟]ᶜ C wkˢᵉ (σ ,ᵉ ε')) ([≐]ᶜ (wkˢᵉ-,ᵉ σ ε') C))
-
-wk-,ᵉ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (ε' : EExp Θ') → (Γ : OCtx Θ n)
-          → wkᵉ-ctx Γ [ σ ,ᵉ ε' ]ᶜᵗˣ ≡ Γ [ σ ]ᶜᵗˣ
-wk-,ᵉ-ctx σ ε' Γ = trans (cong (_[ σ ,ᵉ ε' ]ᶜᵗˣ) (sym (wkˢᵉ-ctx Γ)))
-                   (trans ([⨟]ᶜᵗˣ Γ wkˢᵉ (σ ,ᵉ ε')) ([≐]ᶜᵗˣ (wkˢᵉ-,ᵉ σ ε') Γ))
 
 -- `wk-↑`: a lift commutes with a weakening.
 
@@ -591,13 +539,6 @@ wk-↑ᵗ-c σ C = trans (cong (_[ σ ↑ᵗ ]ᶜ) (sym (wkˢᵗ-c C)))
               (trans ([≐]ᶜ (wkˢᵗ-↑ᵗ σ) C)
               (trans (sym ([⨟]ᶜ C σ wkˢᵗ)) (wkˢᵗ-c (C [ σ ]ᶜ)))))
 
-wk-↑ᵗ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (Γ : OCtx Θ n)
-          → wkᵗ-ctx Γ [ σ ↑ᵗ ]ᶜᵗˣ ≡ wkᵗ-ctx (Γ [ σ ]ᶜᵗˣ)
-wk-↑ᵗ-ctx σ Γ = trans (cong (_[ σ ↑ᵗ ]ᶜᵗˣ) (sym (wkˢᵗ-ctx Γ)))
-                (trans ([⨟]ᶜᵗˣ Γ wkˢᵗ (σ ↑ᵗ))
-                (trans ([≐]ᶜᵗˣ (wkˢᵗ-↑ᵗ σ) Γ)
-                (trans (sym ([⨟]ᶜᵗˣ Γ σ wkˢᵗ)) (wkˢᵗ-ctx (Γ [ σ ]ᶜᵗˣ)))))
-
 wk-↑ʳ-e : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (ε : EExp Θ)
         → wkʳ-e ε [ σ ↑ʳ ]ᵉ ≡ wkʳ-e (ε [ σ ]ᵉ)
 wk-↑ʳ-e σ ε = trans (cong (_[ σ ↑ʳ ]ᵉ) (sym (wkˢʳ-e ε)))
@@ -626,13 +567,6 @@ wk-↑ʳ-c σ C = trans (cong (_[ σ ↑ʳ ]ᶜ) (sym (wkˢʳ-c C)))
               (trans ([≐]ᶜ (wkˢʳ-↑ʳ σ) C)
               (trans (sym ([⨟]ᶜ C σ wkˢʳ)) (wkˢʳ-c (C [ σ ]ᶜ)))))
 
-wk-↑ʳ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (Γ : OCtx Θ n)
-          → wkʳ-ctx Γ [ σ ↑ʳ ]ᶜᵗˣ ≡ wkʳ-ctx (Γ [ σ ]ᶜᵗˣ)
-wk-↑ʳ-ctx σ Γ = trans (cong (_[ σ ↑ʳ ]ᶜᵗˣ) (sym (wkˢʳ-ctx Γ)))
-                (trans ([⨟]ᶜᵗˣ Γ wkˢʳ (σ ↑ʳ))
-                (trans ([≐]ᶜᵗˣ (wkˢʳ-↑ʳ σ) Γ)
-                (trans (sym ([⨟]ᶜᵗˣ Γ σ wkˢʳ)) (wkˢʳ-ctx (Γ [ σ ]ᶜᵗˣ)))))
-
 wk-↑ᵉ-e : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (ε : EExp Θ)
         → wkᵉ-e ε [ σ ↑ᵉ ]ᵉ ≡ wkᵉ-e (ε [ σ ]ᵉ)
 wk-↑ᵉ-e σ ε = trans (cong (_[ σ ↑ᵉ ]ᵉ) (sym (wkˢᵉ-e ε)))
@@ -660,25 +594,6 @@ wk-↑ᵉ-c σ C = trans (cong (_[ σ ↑ᵉ ]ᶜ) (sym (wkˢᵉ-c C)))
               (trans ([⨟]ᶜ C wkˢᵉ (σ ↑ᵉ))
               (trans ([≐]ᶜ (wkˢᵉ-↑ᵉ σ) C)
               (trans (sym ([⨟]ᶜ C σ wkˢᵉ)) (wkˢᵉ-c (C [ σ ]ᶜ)))))
-
-wk-↑ᵉ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (Γ : OCtx Θ n)
-          → wkᵉ-ctx Γ [ σ ↑ᵉ ]ᶜᵗˣ ≡ wkᵉ-ctx (Γ [ σ ]ᶜᵗˣ)
-wk-↑ᵉ-ctx σ Γ = trans (cong (_[ σ ↑ᵉ ]ᶜᵗˣ) (sym (wkˢᵉ-ctx Γ)))
-                (trans ([⨟]ᶜᵗˣ Γ wkˢᵉ (σ ↑ᵉ))
-                (trans ([≐]ᶜᵗˣ (wkˢᵉ-↑ᵉ σ) Γ)
-                (trans (sym ([⨟]ᶜᵗˣ Γ σ wkˢᵉ)) (wkˢᵉ-ctx (Γ [ σ ]ᶜᵗˣ)))))
-
-lookup-ty-subst : ∀ {Θ Θ' n} → (Γ : OCtx Θ n) → (σ : Subst Θ Θ') → (i : Fin n)
-                → lookup-ty (Γ [ σ ]ᶜᵗˣ) i ≡ lookup-ty Γ i [ σ ]ᵛ
-lookup-ty-subst (Γ ∷ A)   σ zero    = refl
-lookup-ty-subst (Γ ∷ A)   σ (suc i) = lookup-ty-subst Γ σ i
-lookup-ty-subst (Γ ⟨ ρ ⟩) σ i       = lookup-ty-subst Γ σ i
-
-lookup-gr-subst : ∀ {Θ Θ' n} → (Γ : OCtx Θ n) → (σ : Subst Θ Θ') → (i : Fin n)
-                → lookup-gr (Γ [ σ ]ᶜᵗˣ) i ≡ lookup-gr Γ i [ σ ]ʳ
-lookup-gr-subst (Γ ∷ A)   σ zero    = refl
-lookup-gr-subst (Γ ∷ A)   σ (suc i) = lookup-gr-subst Γ σ i
-lookup-gr-subst (Γ ⟨ ρ ⟩) σ i       = cong (_·̂ᵣ ρ [ σ ]ʳ) (lookup-gr-subst Γ σ i)
 
 ⌜⌝ᵍ-subst : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (A : GType) → ⌜ A ⌝ᵍ [ σ ]ᵛ ≡ ⌜ A ⌝ᵍ
 ⌜⌝ᵍ-subst σ (Base b)   = refl
@@ -782,3 +697,124 @@ memo {Θ} {Θ'} σ = fromTables (tabulate (sTy σ)) (tabulate (sR σ)) (tabulate
 
 memo-≐ : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → memo σ ≐ˢ σ
 memo-≐ σ = mk≐ˢ (lookup∘tabulate (sTy σ)) (lookup∘tabulate (sR σ)) (lookup∘tabulate (sE σ))
+
+------------------------------------------------------------------------
+-- Juxtaposition of scopes
+
+-- `Θ ⊹ Ψ` extends `Θ` by the variables of `Ψ`, the new ones innermost;
+-- `wkˢ⊹` and `newˢ⊹` inject the two scopes.
+
+infixl 30 _⊹_
+
+_⊹_ : Scope → Scope → Scope
+Θ ⊹ Ψ = scope (nTy Ψ + nTy Θ) (nR Ψ + nR Θ) (nE Ψ + nE Θ)
+
+wkˢ⊹ : ∀ {Θ} → (Ψ : Scope) → Subst Θ (Θ ⊹ Ψ)
+wkˢ⊹ Ψ = sub (λ α → tvar (nTy Ψ ↑ʳ α)) (λ i → rvar (nR Ψ ↑ʳ i)) (λ i → evar (nE Ψ ↑ʳ i))
+
+newˢ⊹ : ∀ {Θ} → (Ψ : Scope) → Subst Ψ (Θ ⊹ Ψ)
+newˢ⊹ {Θ} Ψ = sub (λ α → tvar (α ↑ˡ nTy Θ)) (λ i → rvar (i ↑ˡ nR Θ)) (λ i → evar (i ↑ˡ nE Θ))
+
+-- Extending a substitution by images for the variables of one sort,
+-- the innermost first
+
+_⊕ᵗ_ : ∀ {Θ Θ' a} → Subst Θ Θ' → (Fin a → OVType Θ')
+     → Subst (scope (a + nTy Θ) (nR Θ) (nE Θ)) Θ'
+_⊕ᵗ_ {a = zero}  σ ts = σ
+_⊕ᵗ_ {a = suc a} σ ts = (σ ⊕ᵗ (λ α → ts (suc α))) ,ᵗ ts zero
+
+_⊕ʳ_ : ∀ {Θ Θ' b} → Subst Θ Θ' → (Fin b → RExp Θ')
+     → Subst (scope (nTy Θ) (b + nR Θ) (nE Θ)) Θ'
+_⊕ʳ_ {b = zero}  σ rs = σ
+_⊕ʳ_ {b = suc b} σ rs = (σ ⊕ʳ (λ i → rs (suc i))) ,ʳ rs zero
+
+_⊕ᵉ_ : ∀ {Θ Θ' c} → Subst Θ Θ' → (Fin c → EExp Θ')
+     → Subst (scope (nTy Θ) (nR Θ) (c + nE Θ)) Θ'
+_⊕ᵉ_ {c = zero}  σ es = σ
+_⊕ᵉ_ {c = suc c} σ es = (σ ⊕ᵉ (λ i → es (suc i))) ,ᵉ es zero
+
+-- The pair of substitutions of the two scopes
+
+infixl 28 _⊕ˢ_
+
+_⊕ˢ_ : ∀ {Θ Ψ Θ'} → Subst Θ Θ' → Subst Ψ Θ' → Subst (Θ ⊹ Ψ) Θ'
+σ ⊕ˢ δ = ((σ ⊕ᵗ sTy δ) ⊕ʳ sR δ) ⊕ᵉ sE δ
+
+private
+
+  -- each extension acts on its own sort and leaves the others alone
+
+  ⊕ᵗ-old : ∀ {Θ Θ' a} (σ : Subst Θ Θ') (ts : Fin a → OVType Θ') (α : TyVar Θ)
+         → sTy (σ ⊕ᵗ ts) (a ↑ʳ α) ≡ sTy σ α
+  ⊕ᵗ-old {a = zero}  σ ts α = refl
+  ⊕ᵗ-old {a = suc a} σ ts α = ⊕ᵗ-old σ (λ β → ts (suc β)) α
+
+  ⊕ᵗ-new : ∀ {Θ Θ' a} (σ : Subst Θ Θ') (ts : Fin a → OVType Θ') (α : Fin a)
+         → sTy (σ ⊕ᵗ ts) (α ↑ˡ nTy Θ) ≡ ts α
+  ⊕ᵗ-new {a = suc a} σ ts zero    = refl
+  ⊕ᵗ-new {a = suc a} σ ts (suc α) = ⊕ᵗ-new σ (λ β → ts (suc β)) α
+
+  ⊕ᵗ-R : ∀ {Θ Θ' a} (σ : Subst Θ Θ') (ts : Fin a → OVType Θ') (i : RVar Θ)
+       → sR (σ ⊕ᵗ ts) i ≡ sR σ i
+  ⊕ᵗ-R {a = zero}  σ ts i = refl
+  ⊕ᵗ-R {a = suc a} σ ts i = ⊕ᵗ-R σ (λ β → ts (suc β)) i
+
+  ⊕ᵗ-E : ∀ {Θ Θ' a} (σ : Subst Θ Θ') (ts : Fin a → OVType Θ') (i : EVar Θ)
+       → sE (σ ⊕ᵗ ts) i ≡ sE σ i
+  ⊕ᵗ-E {a = zero}  σ ts i = refl
+  ⊕ᵗ-E {a = suc a} σ ts i = ⊕ᵗ-E σ (λ β → ts (suc β)) i
+
+  ⊕ʳ-old : ∀ {Θ Θ' b} (σ : Subst Θ Θ') (rs : Fin b → RExp Θ') (i : RVar Θ)
+         → sR (σ ⊕ʳ rs) (b ↑ʳ i) ≡ sR σ i
+  ⊕ʳ-old {b = zero}  σ rs i = refl
+  ⊕ʳ-old {b = suc b} σ rs i = ⊕ʳ-old σ (λ j → rs (suc j)) i
+
+  ⊕ʳ-new : ∀ {Θ Θ' b} (σ : Subst Θ Θ') (rs : Fin b → RExp Θ') (i : Fin b)
+         → sR (σ ⊕ʳ rs) (i ↑ˡ nR Θ) ≡ rs i
+  ⊕ʳ-new {b = suc b} σ rs zero    = refl
+  ⊕ʳ-new {b = suc b} σ rs (suc i) = ⊕ʳ-new σ (λ j → rs (suc j)) i
+
+  ⊕ʳ-T : ∀ {Θ Θ' b} (σ : Subst Θ Θ') (rs : Fin b → RExp Θ') (α : TyVar Θ)
+       → sTy (σ ⊕ʳ rs) α ≡ sTy σ α
+  ⊕ʳ-T {b = zero}  σ rs α = refl
+  ⊕ʳ-T {b = suc b} σ rs α = ⊕ʳ-T σ (λ j → rs (suc j)) α
+
+  ⊕ʳ-E : ∀ {Θ Θ' b} (σ : Subst Θ Θ') (rs : Fin b → RExp Θ') (i : EVar Θ)
+       → sE (σ ⊕ʳ rs) i ≡ sE σ i
+  ⊕ʳ-E {b = zero}  σ rs i = refl
+  ⊕ʳ-E {b = suc b} σ rs i = ⊕ʳ-E σ (λ j → rs (suc j)) i
+
+  ⊕ᵉ-old : ∀ {Θ Θ' c} (σ : Subst Θ Θ') (es : Fin c → EExp Θ') (i : EVar Θ)
+         → sE (σ ⊕ᵉ es) (c ↑ʳ i) ≡ sE σ i
+  ⊕ᵉ-old {c = zero}  σ es i = refl
+  ⊕ᵉ-old {c = suc c} σ es i = ⊕ᵉ-old σ (λ j → es (suc j)) i
+
+  ⊕ᵉ-new : ∀ {Θ Θ' c} (σ : Subst Θ Θ') (es : Fin c → EExp Θ') (i : Fin c)
+         → sE (σ ⊕ᵉ es) (i ↑ˡ nE Θ) ≡ es i
+  ⊕ᵉ-new {c = suc c} σ es zero    = refl
+  ⊕ᵉ-new {c = suc c} σ es (suc i) = ⊕ᵉ-new σ (λ j → es (suc j)) i
+
+  ⊕ᵉ-T : ∀ {Θ Θ' c} (σ : Subst Θ Θ') (es : Fin c → EExp Θ') (α : TyVar Θ)
+       → sTy (σ ⊕ᵉ es) α ≡ sTy σ α
+  ⊕ᵉ-T {c = zero}  σ es α = refl
+  ⊕ᵉ-T {c = suc c} σ es α = ⊕ᵉ-T σ (λ j → es (suc j)) α
+
+  ⊕ᵉ-R : ∀ {Θ Θ' c} (σ : Subst Θ Θ') (es : Fin c → EExp Θ') (i : RVar Θ)
+       → sR (σ ⊕ᵉ es) i ≡ sR σ i
+  ⊕ᵉ-R {c = zero}  σ es i = refl
+  ⊕ᵉ-R {c = suc c} σ es i = ⊕ᵉ-R σ (λ j → es (suc j)) i
+
+-- The pair restricts to each of its components
+
+wkˢ⊹-⊕ˢ : ∀ {Θ Ψ Θ'} → (σ : Subst Θ Θ') → (δ : Subst Ψ Θ') → (wkˢ⊹ Ψ ⨟ˢ (σ ⊕ˢ δ)) ≐ˢ σ
+wkˢ⊹-⊕ˢ {Ψ = Ψ} σ δ =
+  mk≐ˢ (λ α → trans (⊕ᵉ-T _ (sE δ) _) (trans (⊕ʳ-T _ (sR δ) _) (⊕ᵗ-old σ (sTy δ) α)))
+       (λ i → trans (⊕ᵉ-R _ (sE δ) _) (trans (⊕ʳ-old _ (sR δ) i) (⊕ᵗ-R σ (sTy δ) i)))
+       (λ i → trans (⊕ᵉ-old _ (sE δ) i) (trans (⊕ʳ-E _ (sR δ) i) (⊕ᵗ-E σ (sTy δ) i)))
+
+newˢ⊹-⊕ˢ : ∀ {Θ Ψ Θ'} → (σ : Subst Θ Θ') → (δ : Subst Ψ Θ') → (newˢ⊹ Ψ ⨟ˢ (σ ⊕ˢ δ)) ≐ˢ δ
+newˢ⊹-⊕ˢ {Ψ = Ψ} σ δ =
+  mk≐ˢ (λ α → trans (⊕ᵉ-T _ (sE δ) _) (trans (⊕ʳ-T _ (sR δ) _) (⊕ᵗ-new σ (sTy δ) α)))
+       (λ i → trans (⊕ᵉ-R _ (sE δ) _) (⊕ʳ-new _ (sR δ) i))
+       (λ i → ⊕ᵉ-new _ (sE δ) i)
+

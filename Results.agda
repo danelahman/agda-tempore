@@ -85,9 +85,13 @@ module Syntax (S : LanguageSpec) where
   open import OpenCalculus.Syntax.Types S public
     using (_⇛_) renaming (OVType to ValueType; OCType to ComputationType)
 
-  -- Contexts, and the lookup `x : X ∈_ρ Γ`
+  -- Program contexts `Δ` of closed type schemes `∀ Θ. Q ⇒ X`, a
+  -- definition named by its position; contexts, starting with a
+  -- program context (`[]` the empty one, `Δ ▶ s` a nonempty one), and
+  -- the lookup `x : X ∈_ρ Γ`
   open import OpenCalculus.Syntax.Contexts S public
-    using (_∈̂[_]_) renaming (OCtx to Context)
+    using (Scheme; ∀ˢ; _∈ᵖ[_]_; ⌜_⌝ᵖ; defs; _∈̂[_]_)
+    renaming (PCtx to ProgramContext; OCtx to Context)
 
   -- Typing hypotheses, among them quantified orderings. Definition
   -- (Entailment): grade orderings, semantic consequence in the grade
@@ -105,9 +109,12 @@ module Syntax (S : LanguageSpec) where
     using () renaming (QOrd to QuantifiedOrdering)
 
   -- Values and computations, among them the handlers `handler H` and
-  -- `handle M with V`
+  -- `handle M with V`, and the uses `def k` of top-level definitions
   open import OpenCalculus.Syntax.Raw S public
-    using (handler; handle_`with_) renaming (RawV to Value; RawC to Computation)
+    using (handler; handle_`with_; def) renaming (RawV to Value; RawC to Computation)
+
+  -- Programs: sequences of top-level definitions `f = V`
+  open import OpenCalculus.Programs.Syntax S public using (Program; ∅ᴾ; _∷ᴾ_)
 
   -- Definition (Closed instances): closed substitutions, satisfaction,
   -- a quantified ordering at every grade, and satisfiability; the
@@ -133,18 +140,26 @@ module TypeSystem (S : LanguageSpec) where
   -- Typing judgements `Q | Γ ⊢ V : X` and `Q | Γ ⊢ M : C`, as intrinsically
   -- typed derivations; a typing of a raw term is a derivation erasing to it
   -- (`⌊_⌋ᵛ`, `⌊_⌋ᶜ`). The typing rules in which grades play a role; Unbox
-  -- takes a variable.
+  -- takes a variable. Rule Def instantiates a scheme of the program
+  -- context, with no lock condition.
   open import OpenCalculus.Typing S public
     using (_∣_⊢V⦂_; _∣_⊢C⦂_)
-    renaming ( var to Var ; return to Return ; subC to Sub ; _⨟_ to Let
+    renaming ( var to Var ; def to Def ; return to Return ; subC to Sub ; _⨟_ to Let
              ; perform to Perform ; delay to Delay ; box to Box ; unbox to Unbox
              ; handler to Handler ; handle_`with_ to Handle )
   open import OpenCalculus.Typing.Erasure S public using (⌊_⌋ᵛ; ⌊_⌋ᶜ)
 
-  -- Definition (Type schemes): principal schemes of computations in open
-  -- contexts, with a substitution of the context's variables
+  -- Definition (Type schemes): principal type schemes of values in
+  -- program contexts, and typability; those of computations in open
+  -- contexts, with a substitution of the context's variables, from which
+  -- the former are derived
   open import OpenCalculus.Inference.Principality S public
-    using (Typable) renaming (PrincipalScheme to PrincipalTypeScheme)
+    using (Typable; Typableᵛ; valueScheme)
+    renaming (PrincipalSchemeᵛ to PrincipalTypeScheme; PrincipalScheme to PrincipalTypeSchemeᶜ)
+
+  -- Programs: each definition typable in the program context of those
+  -- before it, which binds it to its principal type scheme there
+  open import OpenCalculus.Programs.Typing S public using (⊢ᴾ_⦂_; Accepted)
 
 
 ------------------------------------------------------------------------
@@ -198,13 +213,17 @@ module OperationalSemantics (S : LanguageSpec) where
 module InstantiationAndTypeSafety (S : LanguageSpec) where
 
   -- Erasure `⌊ M[δ] ⌋`: the run-time term of the raw term at an instance,
-  -- its annotations dropped
+  -- its annotations dropped and the definitions of the program
+  -- substituted (`⟦_⟧ᴾ`), in the context without its program context
   open import OpenCalculus.Syntax.Raw.Subst S public using (_[_]ᴿᶜ)
   open import OpenCalculus.Syntax.Run S public using (eraseᶜ)
+  open import OpenCalculus.Programs.Syntax S public using (⟦_⟧ᴾ; ⌊_⌋ᴾᵛ; ⌊_⌋ᴾᶜ)
+  open import OpenCalculus.Programs.Substitution S public using (local)
 
   -- Theorem (Instantiation), into the scope-closed typing, at the closed
-  -- instances `δ ⊨ Q`; handler clauses stay typed at their variables
-  open import OpenCalculus.Typing.Instantiation S public
+  -- instances `δ ⊨ Q`, in a typed program; handler clauses stay typed
+  -- at their variables
+  open import OpenCalculus.Programs.Instantiation S public
     using (instantiation; instantiationᵛ)
 
   -- Theorem (Type safety): a finished term, or a step preserving the
@@ -218,9 +237,10 @@ module InstantiationAndTypeSafety (S : LanguageSpec) where
   open import OpenCalculus.Semantics.Termination.Reducibility S public using (MultiStep)
   open import OpenCalculus.Semantics.Termination S public using (Halts; termination)
 
-  -- Corollary (Programs), for terms typed in the empty context: the
-  -- instances are typed in the context of the empty state, and halt
-  open import OpenCalculus.Semantics.Termination S public using (programs)
+  -- Corollary (Programs): the instances of a term typed in the program
+  -- context of a typed program are typed in the context of the empty
+  -- state, and halt
+  open import OpenCalculus.Programs.Instantiation S public using (programs)
 
 
 ------------------------------------------------------------------------
@@ -245,15 +265,32 @@ module TypeInference (S : LanguageSpec) (hints : SystemHints (LanguageSpec.Grade
   open import OpenCalculus.Inference.SolverImpl S hints opEnum public
     using () renaming (solver to solving; runSolver-rigidFree to solving-not-stuck)
 
-  -- Theorem (Type inference), for computations in open contexts
+  -- Theorem (Type inference), for values in program contexts; `stuck`
+  -- only for values with handlers or using a definition whose scheme has
+  -- quantified hypotheses (`NoRigidᵛ`)
+  open import OpenCalculus.Inference.Principality S public using (typableᵛ-⇔)
+  open import OpenCalculus.Inference.Generate S public using (NoRigidᵛ; NoRigidᶜ)
+  open import OpenCalculus.Inference.Values S hints opEnum public
+    using ( Inferenceᵛ; inferᵛ; inferᵛ-typed; inferᵛ-untypable; inferᵛ-noRigid
+          ; inferᵛ-handlerFree )
+
+  -- The same for computations in open contexts
   open import OpenCalculus.Inference.Principality S public
     using (Inference; typable-⇔)
   open import OpenCalculus.Inference.SolverImpl S hints opEnum public
-    using (infer; infer-typed; infer-untypable; infer-handlerFree)
+    using (infer; infer-typed; infer-untypable; infer-noRigid; infer-handlerFree)
 
-  -- Corollary (Completeness), for scope-closed typings of computations
-  -- in contexts over the empty scope
+  -- Corollary (Completeness), for scope-closed typings of values in any
+  -- program context, the empty one among them
+  open import OpenCalculus.Inference.Values S hints opEnum public using (completenessᵛ)
+
+  -- The same for computations in contexts over the empty scope
   open import OpenCalculus.Inference.ScopeClosed S hints opEnum public using (completeness)
+
+  -- Checking a program: each definition inferred in the program context
+  -- of those before it, its scheme added to it
+  open import OpenCalculus.Programs.Checking S hints opEnum public
+    using (Checked; checkProgram)
 
 
 ------------------------------------------------------------------------
@@ -609,6 +646,14 @@ module FormalisedResults (S : LanguageSpec) (hints : SystemHints (LanguageSpec.G
   open import OpenCalculus.Typing.Substitution S public using (Drop; sub-v; sub-c)
   open import OpenCalculus.Typing.Inversion S public using (invV; invC)
 
+  -- Instantiation of the scope alone, keeping the program context; the
+  -- substitution of closed typings of the definitions for their uses
+  -- (the substitution lemma for Def), which a typed program provides
+  open import OpenCalculus.Typing.Instantiation S public
+    using (scope-instantiation; scope-instantiationᵛ)
+  open import OpenCalculus.Programs.Substitution S public using (DefsEnv; sdef-v; sdef-c)
+  open import OpenCalculus.Programs.Typing S public using (programEnv)
+
   -- Reducibility: the logical relation on run-time terms over states,
   -- and its fundamental lemma
   open import OpenCalculus.Semantics.Termination.Reducibility S public
@@ -633,9 +678,12 @@ module FormalisedResults (S : LanguageSpec) (hints : SystemHints (LanguageSpec.G
   open import OpenCalculus.Hypotheses S public
     using (<:̂ᵛ-refl; <:̂ᵛ-trans; <:̂ᵛ-eternalˡ; <:̂ᵛ-eternalʳ)
 
-  -- Constraint generation is sound and complete
+  -- Constraint generation is sound and complete; a use of a definition
+  -- generates an instance of its scheme, its hypotheses as a constraint
   open import OpenCalculus.Inference.Soundness S public using (soundV; soundC)
   open import OpenCalculus.Inference.Completeness S public using (completeV; completeC)
+  open import OpenCalculus.Inference.Constraints.Schemes S public
+    using (hypsᶜ; instᶜ; instᶜ-sound; instᶜ-complete)
 
   -- A solver meeting the interface gives principal solutions; the solver
   -- meets it
@@ -669,7 +717,6 @@ module FormalisedResults (S : LanguageSpec) (hints : SystemHints (LanguageSpec.G
 --   calculus, its semantics and equational theory, where handlers occur in
 --   `handle M with H to x in N`; instantiation for terms whose handlers
 --   are not second-class.
---   Program contexts, the rule Def, type schemes of values, and programs.
 --   Unbox on an annotated variable, and Lemma (Resource values are
 --   annotated variables) for the calculus with grade variables.
 ------------------------------------------------------------------------

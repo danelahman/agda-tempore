@@ -8,8 +8,9 @@
 --                                                              --
 -- Erasure is index-preserving: a derivation over `Θ` erases to --
 -- a raw term over `Θ`, a handler clause to a                   --
--- `RawC (Θ +e) (2+n)`, and a variable to its full-context      --
--- position `var-pos`. It is not injective: `subV` and `subC`   --
+-- `RawC (Θ +e) (2+n)`, a variable to its full-context         --
+-- position `var-pos`, and a definition to its position in the  --
+-- program context. It is not injective: `subV` and `subC`      --
 -- erase to their subjects. The annotation rules `annᵛ` and     --
 -- `annᶜ` erase to the annotated raw forms.                     --
 ------------------------------------------------------------------
@@ -49,6 +50,7 @@ mutual
   -- the raw index of a variable is its full-context position
 
   ⌊ var x p ⌋ᵛ    = var (var-pos x)
+  ⌊ def {k = k} f δ h e ⌋ᵛ = def k
   ⌊ const B c ⌋ᵛ  = const B c
   ⌊ ⋆ ⌋ᵛ          = ⋆
   ⌊ true ⌋ᵛ       = true

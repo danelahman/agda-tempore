@@ -48,7 +48,7 @@ open Operations Ops using (Op; param; arity; op-grade)
 
 open import OpenCalculus.Syntax.Grades          S
 open import OpenCalculus.Syntax.Types           S
-open import OpenCalculus.Syntax.Contexts        S hiding (_∷_)
+open import OpenCalculus.Syntax.Contexts        S hiding (Scheme; _∷_)
 open import OpenCalculus.Syntax.Contexts        S using () renaming (_∷_ to _∷ᶜ_)
 open import OpenCalculus.Syntax.Subst           S using (idˢ)
 open import OpenCalculus.Hypotheses             S
