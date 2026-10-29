@@ -1104,11 +1104,11 @@ fullᵣ Q ρ ρ' = embedᵣ es ρ ρ' <∣> alongᵣ g es ρ ρ'
 
 data Closedₑ {Θ : Scope} (ε ε' : EExp Θ) : Set where
   holdsₑ : (∀ {Q : Hyps Θ} → Q ⊩ ε ≾̂ₑ ε') → Closedₑ ε ε'
-  failsₑ : ((δ : Subst Θ ∅ˢ) → ¬ (⊤ᴴ ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ)) → Closedₑ ε ε'
+  failsₑ : ((δ : Subst Θ ∅ˢ) → ¬ (∅ᴴ ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ)) → Closedₑ ε ε'
 
 data Closedᵣ {Θ : Scope} (ρ ρ' : RExp Θ) : Set where
   holdsᵣ : (∀ {Q : Hyps Θ} → Q ⊩ ρ ≾̂ᵣ ρ') → Closedᵣ ρ ρ'
-  failsᵣ : ((δ : Subst Θ ∅ˢ) → ¬ (⊤ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ)) → Closedᵣ ρ ρ'
+  failsᵣ : ((δ : Subst Θ ∅ˢ) → ¬ (∅ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ)) → Closedᵣ ρ ρ'
 
 closedₑ? : ∀ {Θ} → (ε ε' : EExp Θ) → Maybe (Closedₑ ε ε')
 closedₑ? ε ε' with valᵉ? ε in q | valᵉ? ε' in q'
@@ -1252,7 +1252,7 @@ refute-⊩ (δ , h) ref d = ref δ (inst-≾ᵣ (⊨⇒⊩ᴴ h) d)
 
 -- Satisfiability is essential: a hypothesis names any ordering at all
 
-hyp-derives : ∀ {Ψ} → (ρ : RExp Ψ) → hyps [] [] ((ρ , ûᵣ) ∷ []) [] [] [] false ⊩ ρ ≾̂ᵣ ûᵣ
+hyp-derives : ∀ {Ψ} → (ρ : RExp Ψ) → hyps [] [] ((ρ , ûᵣ) ∷ []) [] [] [] ⊩ ρ ≾̂ᵣ ûᵣ
 hyp-derives ρ = hypᵣ (here refl)
 
 -- The scan is structural over the alternatives of the sum and over
@@ -1300,11 +1300,11 @@ refute≾u ρ with scan-sum (nrmᵣ ρ)
 
 Falseʳ : ∀ {Θ} → List (RExp Θ × RExp Θ) → Set
 Falseʳ {Θ} l = Σ[ ρ ∈ RExp Θ ] Σ[ ρ' ∈ RExp Θ ]
-                 ((ρ , ρ') ∈ l × ((δ : Subst Θ ∅ˢ) → ¬ (⊤ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ)))
+                 ((ρ , ρ') ∈ l × ((δ : Subst Θ ∅ˢ) → ¬ (∅ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ)))
 
 Falseᵉ : ∀ {Θ} → List (EExp Θ × EExp Θ) → Set
 Falseᵉ {Θ} l = Σ[ ε ∈ EExp Θ ] Σ[ ε' ∈ EExp Θ ]
-                 ((ε , ε') ∈ l × ((δ : Subst Θ ∅ˢ) → ¬ (⊤ᴴ ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ)))
+                 ((ε , ε') ∈ l × ((δ : Subst Θ ∅ˢ) → ¬ (∅ᴴ ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ)))
 
 -- The orderings left once the closed ones that hold are dropped
 
@@ -1384,11 +1384,11 @@ closedᵉ ((ε , ε') ∷ l) with closedᵉ l
 -- A failing closed ordering holds at no closed instance
 
 falseʳ : ∀ {Θ} {l : List (RExp Θ × RExp Θ)} → Falseʳ l → (δ : Subst Θ ∅ˢ)
-       → (∀ {ρ ρ'} → (ρ , ρ') ∈ l → ⊤ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ) → ⊥
+       → (∀ {ρ ρ'} → (ρ , ρ') ∈ l → ∅ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ) → ⊥
 falseʳ (ρ , ρ' , m , n) δ k = n δ (k m)
 
 falseᵉ : ∀ {Θ} {l : List (EExp Θ × EExp Θ)} → Falseᵉ l → (δ : Subst Θ ∅ˢ)
-       → (∀ {ε ε'} → (ε , ε') ∈ l → ⊤ᴴ ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ) → ⊥
+       → (∀ {ε ε'} → (ε , ε') ∈ l → ∅ᴴ ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ) → ⊥
 falseᵉ (ε , ε' , m , n) δ k = n δ (k m)
 
 -- Var-rule disjunctions: one whose grade has a value above the unit,
@@ -1397,7 +1397,7 @@ falseᵉ (ε , ε' , m , n) δ k = n δ (k m)
 Falseᵈ : ∀ {Θ} → List (OVType Θ × RExp Θ) → Set
 Falseᵈ {Θ} l = Σ[ A ∈ OVType Θ ] Σ[ ρ ∈ RExp Θ ]
                  ((A , ρ) ∈ l × etDec A ≡ nothing
-                  × ((δ : Subst Θ ∅ˢ) → ¬ (⊤ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ûᵣ)))
+                  × ((δ : Subst Θ ∅ˢ) → ¬ (∅ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ûᵣ)))
 
 record Keptᵈ {Θ : Scope} (l : List (OVType Θ × RExp Θ)) : Set where
   constructor keptᵈ
@@ -1439,7 +1439,7 @@ closedᵈ ((A , ρ) ∷ l) with closedᵈ l
 ...     | just _  = inj₂ (consᵈ k)
 
 falseᵈ : ∀ {Θ} {l : List (OVType Θ × RExp Θ)} → Falseᵈ l → (δ : Subst Θ ∅ˢ)
-       → (∀ {A ρ} → (A , ρ) ∈ l → VarOK ⊤ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ)) → ⊥
+       → (∀ {A ρ} → (A , ρ) ∈ l → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ)) → ⊥
 falseᵈ (A , ρ , m , e , n) δ k with VarOK-∅ (k m)
 ... | inj₁ et = etDec-refute A e δ et
 ... | inj₂ le = n δ (val-≾ᵣ⁻ le)
@@ -1583,7 +1583,7 @@ follows? H ((A , ρ) ∷ l) with follows? H l | decideᵣ full H ρ ûᵣ
 -- The orderings of two lists, as a set
 
 ordsᴴ : ∀ {Θ} → List (RExp Θ × RExp Θ) → List (EExp Θ × EExp Θ) → Hyps Θ
-ordsᴴ lʳ lᵉ = hyps [] [] lʳ lᵉ [] [] false
+ordsᴴ lʳ lᵉ = hyps [] [] lʳ lᵉ [] []
 
 ------------------------------------------------------------------------
 -- The closed orderings of a hypothesis set decided, then the
@@ -1593,14 +1593,14 @@ checkClosed : ∀ {Θ} → Hyps Θ → Maybe (Hyps Θ)
 checkClosed Q with closedʳ (withChainsʳ (ordᵣ Q)) | closedᵉ (withChainsᵉ (ordₑ Q)) | closedᵈ (disj Q)
 ... | inj₂ kʳ | inj₂ kᵉ | inj₂ kᵈ =
       just (hyps (ets Q) (subᵥ Q) (lʳ kʳ) (lᵉ kᵉ) (lᶠ (follows? (ordsᴴ (lʳ kʳ) (lᵉ kᵉ)) (lᵈ kᵈ)))
-                 (qhyps Q) (truths Q))
+                 (qhyps Q))
 ... | _       | _       | _       = nothing
 
--- It keeps the quantified hypotheses and truths
+-- It keeps the quantified hypotheses
 
 checkClosed-unq : ∀ {Θ} → (Q : Hyps Θ) → {Q₁ : Hyps Θ} → checkClosed Q ≡ just Q₁ → Unq Q → Unq Q₁
 checkClosed-unq Q eq u with closedʳ (withChainsʳ (ordᵣ Q)) | closedᵉ (withChainsᵉ (ordₑ Q)) | closedᵈ (disj Q)
-checkClosed-unq Q refl u | inj₂ kʳ | inj₂ kᵉ | inj₂ kᵈ = unq (no-qhyps u) (no-truths u)
+checkClosed-unq Q refl u | inj₂ kʳ | inj₂ kᵉ | inj₂ kᵈ = unq (no-qhyps u)
 checkClosed-unq Q () u | inj₁ _ | _      | _
 checkClosed-unq Q () u | inj₂ _ | inj₁ _ | _
 checkClosed-unq Q () u | inj₂ _ | inj₂ _ | inj₁ _
@@ -1612,17 +1612,17 @@ checkClosed-⊩ Q eq with closedʳ (withChainsʳ (ordᵣ Q)) | closedᵉ (withCh
 checkClosed-⊩ Q refl | inj₂ kʳ | inj₂ kᵉ | inj₂ kᵈ =
   mk⊩ᴴ (⊩ets r) (⊩subᵥ r) (λ m → entʳ kʳ idˢ (⊩ordᵣ r) (∈-++⁺ˡ m))
        (λ m → entᵉ kᵉ idˢ (⊩ordₑ r) (∈-++⁺ˡ m)) (entᵈ kᵈ idˢ dsj)
-       (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
+       (λ m → ⊩ᴼ-hyp⁼ m)
   where
     H = ordsᴴ (lʳ kʳ) (lᵉ kᵉ)
     F = follows? H (lᵈ kᵈ)
-    r = ⊩ᴴ-refl {Q = hyps (ets Q) (subᵥ Q) (lʳ kʳ) (lᵉ kᵉ) (lᶠ F) (qhyps Q) (truths Q)}
+    r = ⊩ᴴ-refl {Q = hyps (ets Q) (subᵥ Q) (lʳ kʳ) (lᵉ kᵉ) (lᶠ F) (qhyps Q)}
 
     dsj : ∀ {A ρ} → (A , ρ) ∈ lᵈ kᵈ
-        → VarOK (hyps (ets Q) (subᵥ Q) (lʳ kʳ) (lᵉ kᵉ) (lᶠ F) (qhyps Q) (truths Q)) (A [ idˢ ]ᵛ) (ρ [ idˢ ]ʳ)
+        → VarOK (hyps (ets Q) (subᵥ Q) (lʳ kʳ) (lᵉ kᵉ) (lᶠ F) (qhyps Q)) (A [ idˢ ]ᵛ) (ρ [ idˢ ]ʳ)
     dsj m with entᶠ F m
     ... | inj₁ m' = ⊩disj r m'
-    ... | inj₂ d  = ≾ᵘ-ok (⊩-substᵣ (mk⊩ᴴ (λ ()) (λ ()) (⊩ordᵣ r) (⊩ordₑ r) (λ ()) (λ ()) (λ ())) d)
+    ... | inj₂ d  = ≾ᵘ-ok (⊩-substᵣ (mk⊩ᴴ (λ ()) (λ ()) (⊩ordᵣ r) (⊩ordₑ r) (λ ()) (λ ())) d)
 checkClosed-⊩ Q () | inj₁ _ | _      | _
 checkClosed-⊩ Q () | inj₂ _ | inj₁ _ | _
 checkClosed-⊩ Q () | inj₂ _ | inj₂ _ | inj₁ _
@@ -1638,7 +1638,7 @@ checkClosed-⊆ Q refl h | inj₂ kʳ | inj₂ kᵉ | inj₂ kᵈ =
        (λ m → withChainsʳ-⊩ (ordᵣ Q) (λ m' → ⊩-substᵣ h (edgeᵣ-sound (hyp m'))) (subʳ kʳ m))
        (λ m → withChainsᵉ-⊩ (ordₑ Q) (λ m' → ⊩-substₑ h (edgeₑ-sound (hyp m'))) (subᵉ kᵉ m))
        (λ m → ⊩disj h (subᵈ kᵈ (subᶠ (follows? (ordsᴴ (lʳ kʳ) (lᵉ kᵉ)) (lᵈ kᵈ)) m)))
-       (⊩qhyps h) (⊩truths h)
+       (⊩qhyps h)
 checkClosed-⊆ Q () h | inj₁ _ | _      | _
 checkClosed-⊆ Q () h | inj₂ _ | inj₁ _ | _
 checkClosed-⊆ Q () h | inj₂ _ | inj₂ _ | inj₁ _

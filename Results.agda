@@ -145,16 +145,16 @@ module OperationalSemantics (S : LanguageSpec) where
   open import OpenCalculus.Syntax.Scopes using (∅ˢ)
   open import OpenCalculus.Syntax.Types S using (OVType; OCType)
   open import OpenCalculus.Syntax.Contexts S using (OCtx)
-  open import OpenCalculus.Hypotheses S using (⊤ᴴ)
+  open import OpenCalculus.Hypotheses S using (∅ᴴ)
   open import OpenCalculus.Typing S using (_∣_⊢V⦂_; _∣_⊢C⦂_)
 
   -- Scope-closed typing `Γ ⊢ V : X` and `Γ ⊢ M : C`, over the empty
-  -- scope, its hypotheses the closed quantified orderings that hold
+  -- scope and under no hypotheses
   ScopeClosedᵛ : ∀ {n} → OCtx ∅ˢ n → OVType ∅ˢ → Set
-  ScopeClosedᵛ Γ X = ⊤ᴴ ∣ Γ ⊢V⦂ X
+  ScopeClosedᵛ Γ X = ∅ᴴ ∣ Γ ⊢V⦂ X
 
   ScopeClosedᶜ : ∀ {n} → OCtx ∅ˢ n → OCType ∅ˢ → Set
-  ScopeClosedᶜ Γ C = ⊤ᴴ ∣ Γ ⊢C⦂ C
+  ScopeClosedᶜ Γ C = ∅ᴴ ∣ Γ ⊢C⦂ C
 
   -- Run-time terms: raw terms without grades and type annotations, and
   -- their scope-closed typing, a scope-closed derivation erasing to the
@@ -588,8 +588,8 @@ module FormalisedResults (S : LanguageSpec) (opEnum : OpEnum S) where
   open import OpenCalculus.Hypotheses.Instances S public using (val-≡̂ᵣ; val-≾ᵣ)
 
   -- Substitution of types and grades in typings, and the instance of a
-  -- handler clause at a grade for its variable; renaming and, under the
-  -- truths, substitution of term variables; inversion
+  -- handler clause at a grade for its variable; renaming and, under no
+  -- hypotheses, substitution of term variables; inversion
   open import OpenCalculus.Typing.GradeSubstitution S public
     using (substᵛ; substᶜ; instantiate-clause)
   open import OpenCalculus.Typing.Renaming S public using (Ren; rename-v; rename-c; eternal-v)

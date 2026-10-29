@@ -291,7 +291,7 @@ record Typable {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set whe
 
 -- `M` is typable exactly when the hypotheses of its principal type
 -- scheme are satisfiable: a satisfying instance instantiates the scheme,
--- the truths entailing its hypotheses there, and a typing factors
+-- no hypotheses entailing its hypotheses there, and a typing factors
 -- through it.
 
 typable-⇔ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalScheme Γ M)
@@ -303,8 +303,8 @@ typable-⇔ {Γ = Γ} {M} p = mk⇔ to from
     ... | δ , _ , h , _ = δ , h
 
     from : Satisfiable (Q̃ p) → Typable Γ M
-    from (δ , h) with instantiate p δ ⊤ᴴ (⊨⇒⊩ᴴ h)
-    ... | D , e = typable ∅ˢ (σ̃ p ⨟ˢ δ) ⊤ᴴ (X̃ p [ δ ]ᶜ) D e (idˢ , ⊩ᴵ-⊤)
+    from (δ , h) with instantiate p δ ∅ᴴ (⊨⇒⊩ᴴ h)
+    ... | D , e = typable ∅ˢ (σ̃ p ⨟ˢ δ) ∅ᴴ (X̃ p [ δ ]ᶜ) D e (idˢ , ⊩ᴵ-∅)
 
 -- A term whose principal type scheme has no hypotheses is typable
 

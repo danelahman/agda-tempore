@@ -47,7 +47,7 @@ open import ClosedCalculus.Adequacy.Normalization                   S using (hal
 open import OpenCalculus.Syntax.Types           S using (OCType)
 open import OpenCalculus.Syntax.Contexts        S using (OCtx; [])
 open import OpenCalculus.Syntax.Subst           S
-open import OpenCalculus.Hypotheses             S using (⊤ᴴ)
+open import OpenCalculus.Hypotheses             S using (∅ᴴ)
 open import OpenCalculus.Hypotheses.Instances   S using (Satisfiable; ⊨⇒⊩ᴴ)
 open import OpenCalculus.Syntax.Raw             S using (RawC; SecondClassᶜ)
 open import OpenCalculus.Syntax.Raw.Subst       S using (secondClass-[]ᴿᶜ)
@@ -65,18 +65,18 @@ open PrincipalScheme
 
 -- A principal type scheme of a term whose handlers are second-class is
 -- a family of declarative typings of its term, one per instance
--- satisfying the scheme: at the constant instance `⌜ σ ⌝ˢ` the truths
--- entail the scheme's hypotheses, and the closed calculus types what
--- the truths type.
+-- satisfying the scheme: at the constant instance `⌜ σ ⌝ˢ` no
+-- hypotheses entail the scheme's hypotheses, and the closed calculus
+-- types what the empty hypotheses type.
 
 scheme-instantiate : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n}
                    → (p : PrincipalScheme Γ M) → SecondClassᶜ M
                    → (σ : DInst (Θ̃ p)) → σ ⊨ᴰ Q̃ p
                    → Σ[ D ∈ ⟦ Γ [ σ̃ p ]ᶜᵗˣ ⟧ᶜᵗˣ σ ⊢C⦂ ⟦ X̃ p ⟧ᶜ σ ] (CE.⌊ D ⌋ᶜ ≡ ⌊ M ⌋ᴿᶜ (σ̃ p ⨟ᴰ σ))
 scheme-instantiate {Γ = Γ} {M} p c σ s
-  with instantiate p ⌜ σ ⌝ˢ ⊤ᴴ (⊨⇒⊩ᴴ (⌜⌝ˢ-⊨ s))
+  with instantiate p ⌜ σ ⌝ˢ ∅ᴴ (⊨⇒⊩ᴴ (⌜⌝ˢ-⊨ s))
 ... | D , e
-  with instantiateᶜ ∅ᴰ ⊨ᴰ-⊤ D (subst SecondClassᶜ (sym e) (secondClass-[]ᴿᶜ M c))
+  with instantiateᶜ ∅ᴰ ⊨ᴰ-∅ D (subst SecondClassᶜ (sym e) (secondClass-[]ᴿᶜ M c))
 ... | D' , e' =
   castᶜ pΓ pC D' ,
   trans (castᶜ-⌊⌋ pΓ pC D')

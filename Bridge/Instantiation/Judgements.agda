@@ -76,7 +76,7 @@ _⊨ᴰᴼ_ : ∀ {Θ} → DInst Θ → QOrd Θ → Set
 σ ⊨ᴰᴼ O = σ ⊨ᴰ⟨ rigids O ⟩ body O
 
 -- A satisfying instance: each hypothesis holds, a quantified one at
--- every grade for its rigids; the truths hold at every instance
+-- every grade for its rigids
 
 record _⊨ᴰ_ {Θ : Scope} (σ : DInst Θ) (Q : Hyps Θ) : Set where
   constructor mk⊨ᴰ
@@ -92,9 +92,6 @@ open _⊨ᴰ_ public
 
 ⊨ᴰ-∅ : ∀ {Θ} {σ : DInst Θ} → σ ⊨ᴰ ∅ᴴ
 ⊨ᴰ-∅ = mk⊨ᴰ (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
-
-⊨ᴰ-⊤ : ∀ {Θ} {σ : DInst Θ} → σ ⊨ᴰ ⊤ᴴ
-⊨ᴰ-⊤ = mk⊨ᴰ (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
 
 -- Grade orderings along pointwise equal instances, at an instance of
 -- the rigids, and along a substitution
@@ -220,7 +217,7 @@ sound-≾ᵣ {σ = σ} s (instᵣ {ρ = ρ} {ρ'} m mφ es) =
   where
     eq : ∀ x → ⟦ x [ idˢ ,ᵉⁿ es ]ʳ ⟧ʳ σ ≡ ⟦ x ⟧ʳ (σ ,ᵉᴰⁿ mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)
     eq x = trans (⟦[]⟧ʳ (idˢ ,ᵉⁿ es) σ x) (⟦≗⟧ʳ (⟦inst⟧ es σ) x)
-sound-≾ᵣ {σ = σ} s (factᵣ {ρ = ρ} {ρ'} _ H es) =
+sound-≾ᵣ {σ = σ} s (factᵣ {ρ = ρ} {ρ'} H es) =
   subst₂ _≾ᵣ_ (eq ρ) (eq ρ') (H es')
   where
     es' = mapᵛ econst (mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)
@@ -249,7 +246,7 @@ sound-≾ₑ {σ = σ} s (instₑ {ε = ε} {ε'} m mφ es) =
   where
     eq : ∀ x → ⟦ x [ idˢ ,ᵉⁿ es ]ᵉ ⟧ᵉ σ ≡ ⟦ x ⟧ᵉ (σ ,ᵉᴰⁿ mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)
     eq x = trans (⟦[]⟧ᵉ (idˢ ,ᵉⁿ es) σ x) (⟦≗⟧ᵉ (⟦inst⟧ es σ) x)
-sound-≾ₑ {σ = σ} s (factₑ {ε = ε} {ε'} _ H es) =
+sound-≾ₑ {σ = σ} s (factₑ {ε = ε} {ε'} H es) =
   subst₂ _≾ₑ_ (eq ε) (eq ε') (H es')
   where
     es' = mapᵛ econst (mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)

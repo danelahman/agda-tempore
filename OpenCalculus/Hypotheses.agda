@@ -4,17 +4,17 @@
 -- A hypothesis set `Hyps Θ` consists of eternality atoms on    --
 -- type variables, subtyping atoms between type variables,      --
 -- orderings between open grade expressions, var-rule           --
--- disjunctions, quantified orderings (`Quantified`), and a     --
--- flag for the closed quantified orderings that hold in the    --
--- grade algebra (`truths`; `⊤ᴴ` has them and nothing else).    --
+-- disjunctions and quantified orderings (`Quantified`).        --
 -- Entailment (`_⊩ᵗᵛ_≾_`, `_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`, `_⊩ᴱ_`,          --
 -- `_∣_<:̂ᵛ_`, `VarOK`) is inductive. Entailed ordering includes --
 -- the zero-product laws of the grades, a quantified hypothesis --
 -- at any instance of its rigids (`instᵣ`, `instₑ`: rule Inst), --
--- and, under the flag, a closed quantified ordering that holds --
--- (`factᵣ`, `factₑ`). A set entails a quantified ordering when --
--- it entails its orderings at fresh rigids (`_⊩ᴼ_[_]`: rule    --
--- Gen). Substitution is stable along an instance map           --
+-- and the theory of the grade system: a closed quantified      --
+-- ordering that holds at every closed instance of its rigids,  --
+-- at any instance of them (`factᵣ`, `factₑ`: rule Truth). A    --
+-- set entails a quantified ordering when it entails its        --
+-- orderings at fresh rigids (`_⊩ᴼ_[_]`: rule Gen).             --
+-- Substitution is stable along an instance map                 --
 -- (`_⊩ᴵ_[_]`, a quantified hypothesis at every instance of its --
 -- rigids), which entailment gives (`⊩ᴴ⇒ᴵ`).                    --
 --                                                              --
@@ -30,7 +30,6 @@
 -- JFP 2011).                                                   --
 ------------------------------------------------------------------
 
-open import Data.Bool.Base using (true; false; T) renaming (Bool to 𝔹)
 open import Data.List.Base using (List; []; _∷_; map; _++_)
 open import Data.Nat.Base using (ℕ; zero; suc)
 open import Data.Vec.Base using (Vec; []; _∷_) renaming (map to mapᵛ)
@@ -89,41 +88,29 @@ record Hyps (Θ : Scope) : Set where
     ordᵣ : List (RExp Θ × RExp Θ)             -- assumed resource-grade orderings
     ordₑ : List (EExp Θ × EExp Θ)             -- assumed effect-grade orderings
     disj : List (OVType Θ × RExp Θ)           -- assumed var-rule disjunctions
-    qhyps  : List (QOrd Θ)                   -- assumed quantified orderings
-    truths : 𝔹                                -- the closed quantified orderings that hold
+    qhyps : List (QOrd Θ)                     -- assumed quantified orderings
 
 open Hyps public
 
 -- Empty hypothesis set
 
 ∅ᴴ : ∀ {Θ} → Hyps Θ
-∅ᴴ = hyps [] [] [] [] [] [] false
+∅ᴴ = hyps [] [] [] [] [] []
 
--- A set without quantified hypotheses and truths
+-- A set without quantified hypotheses
 
 record Unq {Θ : Scope} (Q : Hyps Θ) : Set where
   constructor unq
   field
-    no-qhyps  : qhyps Q ≡ []
-    no-truths : truths Q ≡ false
+    no-qhyps : qhyps Q ≡ []
 
 open Unq public
 
--- A quantified hypothesis or a truth of such a set, absurd
+-- A quantified hypothesis of such a set, absurd
 
 unq-qhyps : ∀ {Θ} {Q : Hyps Θ} {O} {X : Set} → Unq Q → O ∈ qhyps Q → X
 unq-qhyps {Q = Q} {O} u m with qhyps Q | no-qhyps u
 unq-qhyps u () | _ | refl
-
-unq-truths : ∀ {Θ} {Q : Hyps Θ} {X : Set} → Unq Q → T (truths Q) → X
-unq-truths {Q = Q} u t with truths Q | no-truths u
-unq-truths u () | _ | refl
-
--- The hypothesis set of the closed quantified orderings that hold in
--- the grade algebra, and no others
-
-⊤ᴴ : ∀ {Θ} → Hyps Θ
-⊤ᴴ = hyps [] [] [] [] [] [] true
 
 -- Componentwise action on a type-and-grade pair
 
@@ -147,7 +134,6 @@ wkᵗ-H {Θ} Q = hyps (map (wkᵗ-tv Θ) (ets Q))
                    (map (mapᵖ wkᵗ-e) (ordₑ Q))
                    (map (mapᵈ wkᵗ-v wkᵗ-r) (disj Q))
                    (map (_[ wkˢᵗ ]ᵠ) (qhyps Q))
-                   (truths Q)
 
 wkʳ-H : ∀ {Θ} → Hyps Θ → Hyps (Θ +r)
 wkʳ-H {Θ} Q = hyps (map (wkʳ-tv Θ) (ets Q))
@@ -156,7 +142,6 @@ wkʳ-H {Θ} Q = hyps (map (wkʳ-tv Θ) (ets Q))
                    (map (mapᵖ wkʳ-e) (ordₑ Q))
                    (map (mapᵈ wkʳ-v wkʳ-r) (disj Q))
                    (map (_[ wkˢʳ ]ᵠ) (qhyps Q))
-                   (truths Q)
 
 wkᵉ-H : ∀ {Θ} → Hyps Θ → Hyps (Θ +e)
 wkᵉ-H {Θ} Q = hyps (map (wkᵉ-tv Θ) (ets Q))
@@ -165,7 +150,6 @@ wkᵉ-H {Θ} Q = hyps (map (wkᵉ-tv Θ) (ets Q))
                    (map (mapᵖ wkᵉ-e) (ordₑ Q))
                    (map (mapᵈ wkᵉ-v wkᵉ-r) (disj Q))
                    (map (_[ wkˢᵉ ]ᵠ) (qhyps Q))
-                   (truths Q)
 
 -- Weakening by the rigids of a quantified ordering
 
@@ -293,7 +277,7 @@ data _⊩_≾̂ᵣ_ {Θ} Q where
            → (es : Vec (EExp Θ) (rigids O))
            → Q ⊩ ρ [ idˢ ,ᵉⁿ es ]ʳ ≾̂ᵣ ρ' [ idˢ ,ᵉⁿ es ]ʳ
   -- a closed quantified ordering that holds, at an instance of its rigids
-  factᵣ    : ∀ {k ρ ρ'} → T (truths Q) → Holdsʳ k ρ ρ' → (es : Vec (EExp Θ) k)
+  factᵣ    : ∀ {k ρ ρ'} → Holdsʳ k ρ ρ' → (es : Vec (EExp Θ) k)
            → Q ⊩ ρ [ from∅ ,ᵉⁿ es ]ʳ ≾̂ᵣ ρ' [ from∅ ,ᵉⁿ es ]ʳ
 
 data _⊩_≾̂ₑ_ {Θ} Q where
@@ -329,7 +313,7 @@ data _⊩_≾̂ₑ_ {Θ} Q where
          → (es : Vec (EExp Θ) (rigids O))
          → Q ⊩ ε [ idˢ ,ᵉⁿ es ]ᵉ ≾̂ₑ ε' [ idˢ ,ᵉⁿ es ]ᵉ
   -- a closed quantified ordering that holds, at an instance of its rigids
-  factₑ  : ∀ {k ε ε'} → T (truths Q) → Holdsᵉ k ε ε' → (es : Vec (EExp Θ) k)
+  factₑ  : ∀ {k ε ε'} → Holdsᵉ k ε ε' → (es : Vec (EExp Θ) k)
          → Q ⊩ ε [ from∅ ,ᵉⁿ es ]ᵉ ≾̂ₑ ε' [ from∅ ,ᵉⁿ es ]ᵉ
 
 -- Entailed ordering is reflexive
@@ -803,7 +787,6 @@ record _⊩ᴴ_[_] {Θ Θ' : Scope} (Q' : Hyps Θ') (Q : Hyps Θ) (σ : Subst Θ
     ⊩ordₑ   : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q' ⊩ ε [ σ ]ᵉ ≾̂ₑ ε' [ σ ]ᵉ
     ⊩disj   : ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK Q' (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
     ⊩qhyps  : ∀ {O} → O ∈ qhyps Q → Q' ⊩ᴼ O [ σ ]
-    ⊩truths : T (truths Q) → T (truths Q')
 
 open _⊩ᴴ_[_] public
 
@@ -825,7 +808,6 @@ record _⊩ᴵ_[_] {Θ Θ' : Scope} (Q' : Hyps Θ') (Q : Hyps Θ) (σ : Subst Θ
     ⊩disjᴵ   : ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK Q' (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
     ⊩qhypsᴵ  : ∀ {O} → O ∈ qhyps Q → (es : Vec (EExp Θ') (rigids O))
              → Q' ⊩ᵒ body O [ σ ,ᵉⁿ es ]
-    ⊩truthsᴵ : T (truths Q) → T (truths Q')
 
 open _⊩ᴵ_[_] public
 
@@ -843,31 +825,18 @@ record _↪ᴴ_[_] {Θ Θ' : Scope} (Q : Hyps Θ) (Q' : Hyps Θ') (σ : Subst Θ
     ↪ordₑ   : ∀ {p} → p ∈ ordₑ Q → mapᵖ (_[ σ ]ᵉ) p ∈ ordₑ Q'
     ↪disj   : ∀ {p} → p ∈ disj Q → mapᵈ (_[ σ ]ᵛ) (_[ σ ]ʳ) p ∈ disj Q'
     ↪qhyps  : ∀ {O} → O ∈ qhyps Q → O [ σ ]ᵠ ∈ qhyps Q'
-    ↪truths : T (truths Q) → T (truths Q')
 
 open _↪ᴴ_[_] public
 
 -- Every set entails the empty one, along any substitution
 
 ⊩ᴴ-∅ : ∀ {Θ Θ'} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} → Q' ⊩ᴴ ∅ᴴ [ σ ]
-⊩ᴴ-∅ = mk⊩ᴴ (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
+⊩ᴴ-∅ = mk⊩ᴴ (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
 
 ⊩ᴵ-∅ : ∀ {Θ Θ'} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} → Q' ⊩ᴵ ∅ᴴ [ σ ]
-⊩ᴵ-∅ = mk⊩ᴵ (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
+⊩ᴵ-∅ = mk⊩ᴵ (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
 
--- The truths entail the truths, along any substitution
-
-⊩ᴴ-⊤ : ∀ {Θ Θ'} {σ : Subst Θ Θ'} → ⊤ᴴ ⊩ᴴ ⊤ᴴ [ σ ]
-⊩ᴴ-⊤ = mk⊩ᴴ (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ t → t)
-
-⊩ᴵ-⊤ : ∀ {Θ Θ'} {σ : Subst Θ Θ'} → ⊤ᴴ ⊩ᴵ ⊤ᴴ [ σ ]
-⊩ᴵ-⊤ = mk⊩ᴵ (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ t → t)
-
--- The truths at the fresh rigids
-
-wkᵉⁿ-⊤ᴴ : ∀ {Θ} → (k : ℕ) → wkᵉⁿ-H {Θ} k ⊤ᴴ ≡ ⊤ᴴ
-wkᵉⁿ-⊤ᴴ zero    = refl
-wkᵉⁿ-⊤ᴴ (suc k) = wkᵉⁿ-⊤ᴴ k
+-- The empty set at the fresh rigids
 
 wkᵉⁿ-∅ᴴ : ∀ {Θ} → (k : ℕ) → wkᵉⁿ-H {Θ} k ∅ᴴ ≡ ∅ᴴ
 wkᵉⁿ-∅ᴴ zero    = refl
@@ -944,11 +913,11 @@ wkᵉⁿ-∅ᴴ (suc k) = wkᵉⁿ-∅ᴴ k
          (sym (trans ([⨟]ʳ ρ (idˢ ,ᵉⁿ es) σ) ([≐]ʳ (inst-⨟ es σ) ρ)))
          (sym (trans ([⨟]ʳ ρ' (idˢ ,ᵉⁿ es) σ) ([≐]ʳ (inst-⨟ es σ) ρ')))
          (⊩ors (⊩qhypsᴵ h m (mapᵛ (_[ σ ]ᵉ) es)) mφ)
-⊩-substᴵᵣ {Q' = Q'} {σ = σ} h (factᵣ {ρ = ρ} {ρ'} t H es) =
+⊩-substᴵᵣ {Q' = Q'} {σ = σ} h (factᵣ {ρ = ρ} {ρ'} H es) =
   subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y)
          (sym (trans ([⨟]ʳ ρ (from∅ ,ᵉⁿ es) σ) ([≐]ʳ (fact-⨟ es σ) ρ)))
          (sym (trans ([⨟]ʳ ρ' (from∅ ,ᵉⁿ es) σ) ([≐]ʳ (fact-⨟ es σ) ρ')))
-         (factᵣ {ρ = ρ} {ρ'} (⊩truthsᴵ h t) H (mapᵛ (_[ σ ]ᵉ) es))
+         (factᵣ {ρ = ρ} {ρ'} H (mapᵛ (_[ σ ]ᵉ) es))
 
 ⊩-substᴵₑ         h (hypₑ m)     = ⊩ordₑᴵ h m
 ⊩-substᴵₑ         h (atomₑ p)    = atomₑ p
@@ -970,11 +939,11 @@ wkᵉⁿ-∅ᴴ (suc k) = wkᵉⁿ-∅ᴴ k
          (sym (trans ([⨟]ᵉ ε (idˢ ,ᵉⁿ es) σ) ([≐]ᵉ (inst-⨟ es σ) ε)))
          (sym (trans ([⨟]ᵉ ε' (idˢ ,ᵉⁿ es) σ) ([≐]ᵉ (inst-⨟ es σ) ε')))
          (⊩oes (⊩qhypsᴵ h m (mapᵛ (_[ σ ]ᵉ) es)) mφ)
-⊩-substᴵₑ {Q' = Q'} {σ = σ} h (factₑ {ε = ε} {ε'} t H es) =
+⊩-substᴵₑ {Q' = Q'} {σ = σ} h (factₑ {ε = ε} {ε'} H es) =
   subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y)
          (sym (trans ([⨟]ᵉ ε (from∅ ,ᵉⁿ es) σ) ([≐]ᵉ (fact-⨟ es σ) ε)))
          (sym (trans ([⨟]ᵉ ε' (from∅ ,ᵉⁿ es) σ) ([≐]ᵉ (fact-⨟ es σ) ε')))
-         (factₑ {ε = ε} {ε'} (⊩truthsᴵ h t) H (mapᵛ (_[ σ ]ᵉ) es))
+         (factₑ {ε = ε} {ε'} H (mapᵛ (_[ σ ]ᵉ) es))
 
 -- A type variable's image is an arbitrary open type, so an assumed
 -- subtyping transports to a subtyping derivation at those images.
@@ -1079,7 +1048,7 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
 
 ↪⇒⊩ᴵ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
      → Q ↪ᴴ Q' [ σ ] → Q' ⊩ᴵ Q [ σ ]
-↪⇒⊩ᴵ {Θ' = Θ'} {Q} {Q'} {σ} e = mk⊩ᴵ et sb oR oE dj qh (↪truths e)
+↪⇒⊩ᴵ {Θ' = Θ'} {Q} {Q'} {σ} e = mk⊩ᴵ et sb oR oE dj qh
   where
     et : ∀ {α} → α ∈ ets Q → Q' ⊩ᴱ sTy σ α
     et m with ↪ets e m
@@ -1128,12 +1097,11 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
        (λ { {x , y} m → subst (_∈ ordₑ Q) (sym (cong₂ _,_ ([id]ᵉ x) ([id]ᵉ y))) m })
        (λ { {A , ρ} m → subst (_∈ disj Q) (sym (cong₂ _,_ ([id]ᵛ A) ([id]ʳ ρ))) m })
        (λ {O} m → subst (_∈ qhyps Q) (sym ([id]ᵠ O)) m)
-       (λ t → t)
 
 ↪-⨟ : ∀ {Θ₀ Θ₁ Θ₂} {Q₀ : Hyps Θ₀} {Q₁ : Hyps Θ₁} {Q₂ : Hyps Θ₂}
         {σ : Subst Θ₀ Θ₁} {τ : Subst Θ₁ Θ₂}
     → Q₀ ↪ᴴ Q₁ [ σ ] → Q₁ ↪ᴴ Q₂ [ τ ] → Q₀ ↪ᴴ Q₂ [ σ ⨟ˢ τ ]
-↪-⨟ {Θ₂ = Θ₂} {Q₀} {Q₁} {Q₂} {σ} {τ} e₁ e₂ = mk↪ᴴ et sb oR oE dj qh (λ t → ↪truths e₂ (↪truths e₁ t))
+↪-⨟ {Θ₂ = Θ₂} {Q₀} {Q₁} {Q₂} {σ} {τ} e₁ e₂ = mk↪ᴴ et sb oR oE dj qh
   where
     et : ∀ {α} → α ∈ ets Q₀ → Σ[ γ ∈ TyVar Θ₂ ] ((sTy (σ ⨟ˢ τ) α ≡ tvar γ) × (γ ∈ ets Q₂))
     et m with ↪ets e₁ m
@@ -1172,7 +1140,6 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
        (λ { {A , ρ} m → subst (_∈ disj (wkᵗ-H Q)) (sym (cong₂ _,_ (wkˢᵗ-v A) (wkˢᵗ-r ρ)))
                               (∈-map⁺ (mapᵈ wkᵗ-v wkᵗ-r) m) })
        (λ m → ∈-map⁺ (_[ wkˢᵗ ]ᵠ) m)
-       (λ t → t)
 
 ↪-wkʳ : ∀ {Θ} {Q : Hyps Θ} → Q ↪ᴴ wkʳ-H Q [ wkˢʳ ]
 ↪-wkʳ {Θ} {Q} =
@@ -1185,7 +1152,6 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
        (λ { {A , ρ} m → subst (_∈ disj (wkʳ-H Q)) (sym (cong₂ _,_ (wkˢʳ-v A) (wkˢʳ-r ρ)))
                               (∈-map⁺ (mapᵈ wkʳ-v wkʳ-r) m) })
        (λ m → ∈-map⁺ (_[ wkˢʳ ]ᵠ) m)
-       (λ t → t)
 
 ↪-wkᵉ : ∀ {Θ} {Q : Hyps Θ} → Q ↪ᴴ wkᵉ-H Q [ wkˢᵉ ]
 ↪-wkᵉ {Θ} {Q} =
@@ -1198,7 +1164,6 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
        (λ { {A , ρ} m → subst (_∈ disj (wkᵉ-H Q)) (sym (cong₂ _,_ (wkˢᵉ-v A) (wkˢᵉ-r ρ)))
                               (∈-map⁺ (mapᵈ wkᵉ-v wkᵉ-r) m) })
        (λ m → ∈-map⁺ (_[ wkˢᵉ ]ᵠ) m)
-       (λ t → t)
 
 ↪-wkᵉⁿ : ∀ {Θ} {Q : Hyps Θ} → (k : ℕ) → Q ↪ᴴ wkᵉⁿ-H k Q [ wkˢⁿ k ]
 ↪-wkᵉⁿ zero    = ↪-refl
@@ -1206,7 +1171,7 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
 
 ↪-↑ᵉ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
      → Q ↪ᴴ Q' [ σ ] → wkᵉ-H Q ↪ᴴ wkᵉ-H Q' [ σ ↑ᵉ ]
-↪-↑ᵉ {Θ} {Θ'} {Q} {Q'} {σ} e = mk↪ᴴ et sb oR oE dj qh (↪truths e)
+↪-↑ᵉ {Θ} {Θ'} {Q} {Q'} {σ} e = mk↪ᴴ et sb oR oE dj qh
   where
     et : ∀ {α} → α ∈ ets (wkᵉ-H Q) → Σ[ β ∈ TyVar (Θ' +e) ] ((sTy (σ ↑ᵉ) α ≡ tvar β) × (β ∈ ets (wkᵉ-H Q')))
     et m with ∈-map⁻ (wkᵉ-tv Θ) m
@@ -1256,7 +1221,7 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
 
 ↪-,ᵉ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {τ : Subst Θ Θ'} {ε : EExp Θ'}
      → Q ↪ᴴ Q' [ τ ] → wkᵉ-H Q ↪ᴴ Q' [ τ ,ᵉ ε ]
-↪-,ᵉ {Θ} {Θ'} {Q} {Q'} {τ} {ε} e = mk↪ᴴ et sb oR oE dj qh (↪truths e)
+↪-,ᵉ {Θ} {Θ'} {Q} {Q'} {τ} {ε} e = mk↪ᴴ et sb oR oE dj qh
   where
     et : ∀ {α} → α ∈ ets (wkᵉ-H Q) → Σ[ β ∈ TyVar Θ' ] ((sTy (τ ,ᵉ ε) α ≡ tvar β) × (β ∈ ets Q'))
     et m with ∈-map⁻ (wkᵉ-tv Θ) m
@@ -1294,7 +1259,7 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
 
 ⊩ᴵ-,ᵉ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {τ : Subst Θ Θ'} {ε : EExp Θ'}
       → Q' ⊩ᴵ Q [ τ ] → Q' ⊩ᴵ wkᵉ-H Q [ τ ,ᵉ ε ]
-⊩ᴵ-,ᵉ {Θ} {Θ'} {Q} {Q'} {τ} {ε} h = mk⊩ᴵ et sb oR oE dj qh (⊩truthsᴵ h)
+⊩ᴵ-,ᵉ {Θ} {Θ'} {Q} {Q'} {τ} {ε} h = mk⊩ᴵ et sb oR oE dj qh
   where
     et : ∀ {α} → α ∈ ets (wkᵉ-H Q) → Q' ⊩ᴱ sTy (τ ,ᵉ ε) α
     et m with ∈-map⁻ (wkᵉ-tv Θ) m
@@ -1343,7 +1308,6 @@ VarOK-substᴵ {σ = σ} h (hyp-ok m p q) =
   mk⊩ᴵ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (⊩disj h)
        (λ {O} m es → ⊩ᵒ-resp-≐ˢ (↑-inst σ (rigids O) es)
                                 (⊩ᵒ-⨟ᴵ (⊩ᴵ-,ᵉⁿ ⊩ᴵ-refl es) (⊩qhyps h m)))
-       (⊩truths h)
 
 -- Substitution along entailment
 
@@ -1418,7 +1382,7 @@ VarOK-subst h = VarOK-substᴵ (⊩ᴴ⇒ᴵ h)
      → Q ↪ᴴ Q' [ σ ] → Q' ⊩ᴴ Q [ σ ]
 ↪⇒⊩ᴴ e = let h = ↪⇒⊩ᴵ e in
   mk⊩ᴴ (⊩etsᴵ h) (⊩subᵥᴵ h) (⊩ordᵣᴵ h) (⊩ordₑᴵ h) (⊩disjᴵ h)
-       (λ {O} m → ⊩ᴼ-hyp O (↪qhyps e m)) (↪truths e)
+       (λ {O} m → ⊩ᴼ-hyp O (↪qhyps e m))
 
 ⊩ᴴ-refl : ∀ {Θ} {Q : Hyps Θ} → Q ⊩ᴴ Q [ idˢ ]
 ⊩ᴴ-refl = ↪⇒⊩ᴴ ↪-refl
@@ -1462,16 +1426,15 @@ mk⊩ᴴ⁼ : ∀ {Θ} {Q Q' : Hyps Θ}
       → (∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q' ⊩ ε ≾̂ₑ ε')
       → (∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK Q' A ρ)
       → (∀ {O} → O ∈ qhyps Q → Q' ⊩ᴼ O [ idˢ ])
-      → (T (truths Q) → T (truths Q'))
       → Q' ⊩ᴴ Q
-mk⊩ᴴ⁼ {Q' = Q'} et sb oR oE dj qh tr =
+mk⊩ᴴ⁼ {Q' = Q'} et sb oR oE dj qh =
   mk⊩ᴴ et sb
        (λ {ρ} {ρ'} m →
           subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y) (sym ([id]ʳ ρ)) (sym ([id]ʳ ρ')) (oR m))
        (λ {ε} {ε'} m →
           subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) (sym ([id]ᵉ ε)) (sym ([id]ᵉ ε')) (oE m))
        (λ {A} {ρ} m → subst₂ (VarOK Q') (sym ([id]ᵛ A)) (sym ([id]ʳ ρ)) (dj m))
-       qh tr
+       qh
 
 ⊩ordᵣ⁼ : ∀ {Θ} {Q Q' : Hyps Θ} → Q' ⊩ᴴ Q
        → ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q' ⊩ ρ ≾̂ᵣ ρ'
@@ -1512,14 +1475,13 @@ record _⊆ᴴ_ {Θ : Scope} (Q Q' : Hyps Θ) : Set where
     ⊆ordₑ   : ∀ {p} → p ∈ ordₑ Q → p ∈ ordₑ Q'
     ⊆disj   : ∀ {p} → p ∈ disj Q → p ∈ disj Q'
     ⊆qhyps  : ∀ {O} → O ∈ qhyps Q → O ∈ qhyps Q'
-    ⊆truths : T (truths Q) → T (truths Q')
 
 open _⊆ᴴ_ public
 
 ⊆ᴴ-⊩ : ∀ {Θ} {Q Q' : Hyps Θ} → Q ⊆ᴴ Q' → Q' ⊩ᴴ Q
 ⊆ᴴ-⊩ s = mk⊩ᴴ⁼ (λ m → et-hyp (⊆ets s m)) (λ m → tvarₛ (hypᵗᵛ (⊆subᵥ s m)))
                 (λ m → hypᵣ (⊆ordᵣ s m)) (λ m → hypₑ (⊆ordₑ s m))
-                (λ m → hyp-ok₀ (⊆disj s m)) (λ m → ⊩ᴼ-hyp⁼ (⊆qhyps s m)) (⊆truths s)
+                (λ m → hyp-ok₀ (⊆disj s m)) (λ m → ⊩ᴼ-hyp⁼ (⊆qhyps s m))
 
 -- Weakening a hypothesis set is the action of the weakening substitution,
 -- so entailment is stable under it.
@@ -1604,7 +1566,7 @@ VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
 
 ⊩ᴴ-↑ᵉ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {δ : Subst Θ Θ'}
       → Q' ⊩ᴴ Q [ δ ] → wkᵉ-H Q' ⊩ᴴ (wkᵉ-H Q) [ δ ↑ᵉ ]
-⊩ᴴ-↑ᵉ {Θ} {Θ'} {Q} {Q'} {δ} h = mk⊩ᴴ ets↑ subᵥ↑ ordᵣ↑ ordₑ↑ disj↑ qhyps↑ (⊩truths h)
+⊩ᴴ-↑ᵉ {Θ} {Θ'} {Q} {Q'} {δ} h = mk⊩ᴴ ets↑ subᵥ↑ ordᵣ↑ ordₑ↑ disj↑ qhyps↑
   where
     ets↑ : ∀ {α} → α ∈ ets (wkᵉ-H Q) → wkᵉ-H Q' ⊩ᴱ sTy (δ ↑ᵉ) α
     ets↑ m with ∈-map⁻ (wkᵉ-tv Θ) m
@@ -1676,7 +1638,6 @@ VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
           subst₂ (VarOK Q'') ([⨟]ᵛ A σ δ) ([⨟]ʳ ρ σ δ)
                  (VarOK-subst h' (⊩disj h m)))
        (λ {O} m → ⊩ᴼ-⨟ O h' (⊩qhyps h m))
-       (λ t → ⊩truths h' (⊩truths h t))
 
 ⊩ᴴ-trans : ∀ {Θ} {Q Q' Q'' : Hyps Θ} → Q'' ⊩ᴴ Q' → Q' ⊩ᴴ Q → Q'' ⊩ᴴ Q
 ⊩ᴴ-trans h' h = ⊩ᴴ-⨟ h' h
@@ -1692,7 +1653,6 @@ VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
        (λ {ε} {ε'} m → subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([≐]ᵉ p ε) ([≐]ᵉ p ε') (⊩ordₑ h m))
        (λ {A} {ρ} m → subst₂ (VarOK Q') ([≐]ᵛ p A) ([≐]ʳ p ρ) (⊩disj h m))
        (λ {O} m → ⊩ᴼ-resp-≐ˢ O p (⊩qhyps h m))
-       (⊩truths h)
 
 
 -- Grade expressions are monotone in their variables: every former is,
