@@ -5,18 +5,30 @@
 -- type variables, subtyping atoms between type variables,      --
 -- orderings between open grade expressions, var-rule           --
 -- disjunctions and quantified orderings (`Quantified`).        --
--- Entailment (`_⊩ᵗᵛ_≾_`, `_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`, `_⊩ᴱ_`,          --
--- `_∣_<:̂ᵛ_`, `VarOK`) is inductive. Entailed ordering includes --
--- the zero-product laws of the grades, a quantified hypothesis --
--- at any instance of its rigids (`instᵣ`, `instₑ`: rule Inst), --
--- and the theory of the grade system: a closed quantified      --
--- ordering that holds at every closed instance of its rigids,  --
--- at any instance of them (`factᵣ`, `factₑ`: rule Truth). A    --
--- set entails a quantified ordering when it entails its        --
--- orderings at fresh rigids (`_⊩ᴼ_[_]`: rule Gen).             --
--- Substitution is stable along an instance map                 --
--- (`_⊩ᴵ_[_]`, a quantified hypothesis at every instance of its --
--- rigids), which entailment gives (`⊩ᴴ⇒ᴵ`).                    --
+--                                                              --
+-- Grade entailment (`_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`) is semantic            --
+-- consequence in the grade system: an ordering is entailed     --
+-- when it holds by value at every closed instance satisfying   --
+-- the grade part of the set (`_⊨ᵍ_`), its orderings, and its   --
+-- quantified orderings at every closed instance of their       --
+-- rigids. Convertibility (`_≡̂ᵣ_`, `_≡̂ₑ_`) is entailment from   --
+-- no hypotheses both ways. The rules of grade entailment are   --
+-- its properties: the laws of the grade algebras, the          --
+-- zero-product laws, a quantified hypothesis at any instance   --
+-- of its rigids (`instᵣ`, `instₑ`: rule Inst), and a closed    --
+-- quantified ordering entailed by no hypotheses, at any        --
+-- instance of its rigids (`factᵣ`, `factₑ`: rule Truth). The   --
+-- solver decides grade entailment soundly and incompletely.    --
+--                                                              --
+-- Eternality, subtyping and the var-rule disjunction (`_⊩ᴱ_`,  --
+-- `_∣_<:̂ᵛ_`, `VarOK`) are inductive, with premises in grade    --
+-- entailment. A set entails a quantified ordering when it      --
+-- entails its orderings at fresh rigids (`_⊩ᴼ_[_]`: rule Gen). --
+-- Substitution is stable along an instance map (`_⊩ᴵ_[_]`, a   --
+-- quantified hypothesis at every instance of its rigids),      --
+-- which entailment gives (`⊩ᴴ⇒ᴵ`); an instance map carries     --
+-- closed instances satisfying the grades of its source back    --
+-- (`⊨ᵍ-⨟`).                                                    --
 --                                                              --
 -- The module also defines convertibility of open types         --
 -- (`_≡̂ᵛ_`), which `VarOK` uses, and open subtyping with its    --
@@ -38,9 +50,9 @@ open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁺; ∈-map⁻)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.Maybe.Base using (Maybe; just; nothing)
-open import Data.Maybe using (Is-just)
+open import Data.Maybe using (Is-just; to-witness)
 open import Data.Maybe.Relation.Unary.Any using () renaming (just to Any-just)
-open import Data.Product using (Σ-syntax; _×_; _,_)
+open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Unit using (tt)
 
 open import Relation.Nullary using (yes; no)
@@ -167,154 +179,361 @@ data _⊩ᵗᵛ_≾_ {Θ : Scope} (Q : Hyps Θ) : TyVar Θ → TyVar Θ → Set 
   hypᵗᵛ   : ∀ {α β} → (α , β) ∈ subᵥ Q → Q ⊩ᵗᵛ α ≾ β
   transᵗᵛ : ∀ {α β γ} → Q ⊩ᵗᵛ α ≾ β → Q ⊩ᵗᵛ β ≾ γ → Q ⊩ᵗᵛ α ≾ γ
 
--- Convertibility: the monoid laws, commutativity of multiplication
--- where the grade declares it, commutativity of the join,
--- distributivity of multiplication over the join, the constants'
--- equivalence and arithmetic, `∣_∣̂ᵉ` being a monoid morphism, and absorption of a join
--- by an upper bound. Idempotence, the top's absorption, antisymmetry at
--- the empty hypothesis set and associativity of the join are derived
--- below.
---
--- Convertibility carries no hypotheses: the ordering premise of
--- absorption is entailed by the empty set, and convertibility and
--- entailed ordering form one mutual definition, the latter occurring
--- positively.
+------------------------------------------------------------------------
+-- Grade entailment: semantic consequence in the grade system
 
-infix 4 _≡̂ᵣ_ _≡̂ₑ_ _⊩_≾̂ᵣ_ _⊩_≾̂ₑ_
+-- A closed instance satisfies grade orderings when each holds by value
 
--- A closed quantified ordering holds when it holds at every closed
+infix 4 _⊨ᵒ_ _⊨ᵍ_
+
+record _⊨ᵒ_ {Ψ : Scope} (δ : Subst Ψ ∅ˢ) (o : Ords Ψ) : Set where
+  constructor mk⊨ᵒ
+  field
+    ⊨ᵒʳ : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors o → valʳ (ρ [ δ ]ʳ) ≾ᵣ valʳ (ρ' [ δ ]ʳ)
+    ⊨ᵒᵉ : ∀ {ε ε'} → (ε , ε') ∈ oes o → valᵉ (ε [ δ ]ᵉ) ≾ₑ valᵉ (ε' [ δ ]ᵉ)
+
+open _⊨ᵒ_ public
+
+-- A closed instance satisfies the grade part of a set when its
+-- orderings hold by value, and each quantified ordering at every closed
 -- instance of its rigids; every grade is the value of a closed
 -- expression
 
-Holdsᵉ : (k : ℕ) → EExp (∅ˢ +eⁿ k) → EExp (∅ˢ +eⁿ k) → Set
-Holdsᵉ k ε ε' = (es : Vec (EExp ∅ˢ) k)
-              → valᵉ (ε [ from∅ ,ᵉⁿ es ]ᵉ) ≾ₑ valᵉ (ε' [ from∅ ,ᵉⁿ es ]ᵉ)
+record _⊨ᵍ_ {Θ : Scope} (δ : Subst Θ ∅ˢ) (Q : Hyps Θ) : Set where
+  constructor mk⊨ᵍ
+  field
+    ⊨ᵍʳ : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → valʳ (ρ [ δ ]ʳ) ≾ᵣ valʳ (ρ' [ δ ]ʳ)
+    ⊨ᵍᵉ : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → valᵉ (ε [ δ ]ᵉ) ≾ₑ valᵉ (ε' [ δ ]ᵉ)
+    ⊨ᵍᵠ : ∀ {O} → O ∈ qhyps Q → (es : Vec (EExp ∅ˢ) (rigids O)) → (δ ,ᵉⁿ es) ⊨ᵒ body O
 
-Holdsʳ : (k : ℕ) → RExp (∅ˢ +eⁿ k) → RExp (∅ˢ +eⁿ k) → Set
-Holdsʳ k ρ ρ' = (es : Vec (EExp ∅ˢ) k)
-              → valʳ (ρ [ from∅ ,ᵉⁿ es ]ʳ) ≾ᵣ valʳ (ρ' [ from∅ ,ᵉⁿ es ]ʳ)
+open _⊨ᵍ_ public
 
-data _≡̂ᵣ_ {Θ : Scope} : RExp Θ → RExp Θ → Set
-data _≡̂ₑ_ {Θ : Scope} : EExp Θ → EExp Θ → Set
-data _⊩_≾̂ᵣ_ {Θ : Scope} (Q : Hyps Θ) : RExp Θ → RExp Θ → Set
-data _⊩_≾̂ₑ_ {Θ : Scope} (Q : Hyps Θ) : EExp Θ → EExp Θ → Set
+⊨ᵍ-∅ : ∀ {Θ} {δ : Subst Θ ∅ˢ} → δ ⊨ᵍ ∅ᴴ
+⊨ᵍ-∅ = mk⊨ᵍ (λ ()) (λ ()) (λ ())
 
-data _≡̂ᵣ_ {Θ} where
-  ≡̂ᵣ-refl       : ∀ {ρ} → ρ ≡̂ᵣ ρ
-  ≡̂ᵣ-sym        : ∀ {ρ ρ'} → ρ ≡̂ᵣ ρ' → ρ' ≡̂ᵣ ρ
-  ≡̂ᵣ-trans      : ∀ {ρ ρ' ρ''} → ρ ≡̂ᵣ ρ' → ρ' ≡̂ᵣ ρ'' → ρ ≡̂ᵣ ρ''
-  ≡̂ᵣ-cong       : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≡̂ᵣ ρ₁' → ρ₂ ≡̂ᵣ ρ₂'
-                → ρ₁ ·̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ·̂ᵣ ρ₂'
-  ≡̂ᵣ-assoc      : ∀ {ρ₁ ρ₂ ρ₃} → (ρ₁ ·̂ᵣ ρ₂) ·̂ᵣ ρ₃ ≡̂ᵣ ρ₁ ·̂ᵣ (ρ₂ ·̂ᵣ ρ₃)
-  ≡̂ᵣ-identityˡ  : ∀ {ρ} → ûᵣ ·̂ᵣ ρ ≡̂ᵣ ρ
-  ≡̂ᵣ-identityʳ  : ∀ {ρ} → ρ ·̂ᵣ ûᵣ ≡̂ᵣ ρ
-  ≡̂ᵣ-const     : ∀ {ρ ρ'} → ρ ≃ᵣ ρ' → rconst ρ ≡̂ᵣ rconst ρ'
-  ≡̂ᵣ-const-·    : ∀ {ρ ρ'} → rconst ρ ·̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ·ᵣ ρ')
-  ≡̂ᵣ-comm       : ∀ {ρ₁ ρ₂} → Is-just ·ᵣ-comm? → ρ₁ ·̂ᵣ ρ₂ ≡̂ᵣ ρ₂ ·̂ᵣ ρ₁
-  ≡̂ᵣ-cong-⊔     : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≡̂ᵣ ρ₁' → ρ₂ ≡̂ᵣ ρ₂'
-                → ρ₁ ⊔̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ⊔̂ᵣ ρ₂'
-  ≡̂ᵣ-const-⊔    : ∀ {ρ ρ'} → rconst ρ ⊔̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ⊔ᵣ ρ')
-  ≡̂ᵣ-comm-⊔     : ∀ {ρ₁ ρ₂} → ρ₁ ⊔̂ᵣ ρ₂ ≡̂ᵣ ρ₂ ⊔̂ᵣ ρ₁
-  ≡̂ᵣ-distribˡ-⊔ : ∀ {ρ ρ₁ ρ₂} → ρ ·̂ᵣ (ρ₁ ⊔̂ᵣ ρ₂) ≡̂ᵣ ρ ·̂ᵣ ρ₁ ⊔̂ᵣ ρ ·̂ᵣ ρ₂
-  ≡̂ᵣ-distribʳ-⊔ : ∀ {ρ ρ₁ ρ₂} → (ρ₁ ⊔̂ᵣ ρ₂) ·̂ᵣ ρ ≡̂ᵣ ρ₁ ·̂ᵣ ρ ⊔̂ᵣ ρ₂ ·̂ᵣ ρ
-  ≡̂ᵣ-map-·      : ∀ {ε ε'} → ∣ ε ·̂ₑ ε' ∣̂ᵉ ≡̂ᵣ ∣ ε ∣̂ᵉ ·̂ᵣ ∣ ε' ∣̂ᵉ
-  ≡̂ᵣ-map-⊔      : ∀ {ε ε'} → ∣ ε ⊔̂ₑ ε' ∣̂ᵉ ≡̂ᵣ ∣ ε ∣̂ᵉ ⊔̂ᵣ ∣ ε' ∣̂ᵉ
-  ≡̂ᵣ-map-const  : ∀ {e} → ∣ econst e ∣̂ᵉ ≡̂ᵣ rconst (mapᵉ e)
-  ≡̂ᵣ-map-cong   : ∀ {ε ε'} → ε ≡̂ₑ ε' → ∣ ε ∣̂ᵉ ≡̂ᵣ ∣ ε' ∣̂ᵉ
-  ≡̂ᵣ-absorb     : ∀ {ρ ρ'} → ∅ᴴ ⊩ ρ ≾̂ᵣ ρ' → ρ ⊔̂ᵣ ρ' ≡̂ᵣ ρ'
+-- Entailed ordering: the ordering holds by value at every closed
+-- instance satisfying the grade part of the set
 
-data _≡̂ₑ_ {Θ} where
-  ≡̂ₑ-refl       : ∀ {ε} → ε ≡̂ₑ ε
-  ≡̂ₑ-sym        : ∀ {ε ε'} → ε ≡̂ₑ ε' → ε' ≡̂ₑ ε
-  ≡̂ₑ-trans      : ∀ {ε ε' ε''} → ε ≡̂ₑ ε' → ε' ≡̂ₑ ε'' → ε ≡̂ₑ ε''
-  ≡̂ₑ-cong       : ∀ {ε₁ ε₁' ε₂ ε₂'} → ε₁ ≡̂ₑ ε₁' → ε₂ ≡̂ₑ ε₂'
-                → ε₁ ·̂ₑ ε₂ ≡̂ₑ ε₁' ·̂ₑ ε₂'
-  ≡̂ₑ-assoc      : ∀ {ε₁ ε₂ ε₃} → (ε₁ ·̂ₑ ε₂) ·̂ₑ ε₃ ≡̂ₑ ε₁ ·̂ₑ (ε₂ ·̂ₑ ε₃)
-  ≡̂ₑ-identityˡ  : ∀ {ε} → ûₑ ·̂ₑ ε ≡̂ₑ ε
-  ≡̂ₑ-identityʳ  : ∀ {ε} → ε ·̂ₑ ûₑ ≡̂ₑ ε
-  ≡̂ₑ-const     : ∀ {ε ε'} → ε ≃ₑ ε' → econst ε ≡̂ₑ econst ε'
-  ≡̂ₑ-const-·    : ∀ {ε ε'} → econst ε ·̂ₑ econst ε' ≡̂ₑ econst (ε ·ₑ ε')
-  ≡̂ₑ-comm       : ∀ {ε₁ ε₂} → Is-just ·ₑ-comm? → ε₁ ·̂ₑ ε₂ ≡̂ₑ ε₂ ·̂ₑ ε₁
-  ≡̂ₑ-cong-⊔     : ∀ {ε₁ ε₁' ε₂ ε₂'} → ε₁ ≡̂ₑ ε₁' → ε₂ ≡̂ₑ ε₂'
-                → ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₁' ⊔̂ₑ ε₂'
-  ≡̂ₑ-const-⊔    : ∀ {ε ε'} → econst ε ⊔̂ₑ econst ε' ≡̂ₑ econst (ε ⊔ₑ ε')
-  ≡̂ₑ-comm-⊔     : ∀ {ε₁ ε₂} → ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₂ ⊔̂ₑ ε₁
-  ≡̂ₑ-distribˡ-⊔ : ∀ {ε ε₁ ε₂} → ε ·̂ₑ (ε₁ ⊔̂ₑ ε₂) ≡̂ₑ ε ·̂ₑ ε₁ ⊔̂ₑ ε ·̂ₑ ε₂
-  ≡̂ₑ-distribʳ-⊔ : ∀ {ε ε₁ ε₂} → (ε₁ ⊔̂ₑ ε₂) ·̂ₑ ε ≡̂ₑ ε₁ ·̂ₑ ε ⊔̂ₑ ε₂ ·̂ₑ ε
-  ≡̂ₑ-absorb     : ∀ {ε ε'} → ∅ᴴ ⊩ ε ≾̂ₑ ε' → ε ⊔̂ₑ ε' ≡̂ₑ ε'
+infix 4 _≡̂ᵣ_ _≡̂ₑ_ _⊩_≾̂ᵣ_ _⊩_≾̂ₑ_
 
-data _⊩_≾̂ᵣ_ {Θ} Q where
-  hypᵣ     : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q ⊩ ρ ≾̂ᵣ ρ'
-  atomᵣ    : ∀ {ρ ρ'} → ρ ≾ᵣ ρ' → Q ⊩ rconst ρ ≾̂ᵣ rconst ρ'
-  eqᵣ      : ∀ {ρ ρ'} → ρ ≡̂ᵣ ρ' → Q ⊩ ρ ≾̂ᵣ ρ'
-  transᵣ   : ∀ {ρ ρ' ρ''} → Q ⊩ ρ ≾̂ᵣ ρ' → Q ⊩ ρ' ≾̂ᵣ ρ'' → Q ⊩ ρ ≾̂ᵣ ρ''
-  monoᵣ    : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → Q ⊩ ρ₁ ≾̂ᵣ ρ₁' → Q ⊩ ρ₂ ≾̂ᵣ ρ₂'
-           → Q ⊩ ρ₁ ·̂ᵣ ρ₂ ≾̂ᵣ ρ₁' ·̂ᵣ ρ₂'
+record _⊩_≾̂ᵣ_ {Θ : Scope} (Q : Hyps Θ) (ρ ρ' : RExp Θ) : Set where
+  constructor semᵣ
+  field
+    runᵣ : (δ : Subst Θ ∅ˢ) → δ ⊨ᵍ Q → valʳ (ρ [ δ ]ʳ) ≾ᵣ valʳ (ρ' [ δ ]ʳ)
+
+open _⊩_≾̂ᵣ_ public
+
+record _⊩_≾̂ₑ_ {Θ : Scope} (Q : Hyps Θ) (ε ε' : EExp Θ) : Set where
+  constructor semₑ
+  field
+    runₑ : (δ : Subst Θ ∅ˢ) → δ ⊨ᵍ Q → valᵉ (ε [ δ ]ᵉ) ≾ₑ valᵉ (ε' [ δ ]ᵉ)
+
+open _⊩_≾̂ₑ_ public
+
+-- Convertibility: entailment from no hypotheses, both ways
+
+record _≡̂ᵣ_ {Θ : Scope} (ρ ρ' : RExp Θ) : Set where
+  constructor mk≡̂ᵣ
+  field
+    ≡̂ᵣ⇒≾ : ∅ᴴ ⊩ ρ ≾̂ᵣ ρ'
+    ≡̂ᵣ⇒≿ : ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ
+
+open _≡̂ᵣ_ public
+
+record _≡̂ₑ_ {Θ : Scope} (ε ε' : EExp Θ) : Set where
+  constructor mk≡̂ₑ
+  field
+    ≡̂ₑ⇒≾ : ∅ᴴ ⊩ ε ≾̂ₑ ε'
+    ≡̂ₑ⇒≿ : ∅ᴴ ⊩ ε' ≾̂ₑ ε
+
+open _≡̂ₑ_ public
+
+-- Convertible expressions have equivalent values at every closed
+-- instance, and expressions with equivalent values there are
+-- convertible
+
+≡̂ᵣ-run : ∀ {Θ} {ρ ρ' : RExp Θ} → ρ ≡̂ᵣ ρ' → (δ : Subst Θ ∅ˢ)
+       → valʳ (ρ [ δ ]ʳ) ≃ᵣ valʳ (ρ' [ δ ]ʳ)
+≡̂ᵣ-run p δ = runᵣ (≡̂ᵣ⇒≾ p) δ ⊨ᵍ-∅ , runᵣ (≡̂ᵣ⇒≿ p) δ ⊨ᵍ-∅
+
+≡̂ₑ-run : ∀ {Θ} {ε ε' : EExp Θ} → ε ≡̂ₑ ε' → (δ : Subst Θ ∅ˢ)
+       → valᵉ (ε [ δ ]ᵉ) ≃ₑ valᵉ (ε' [ δ ]ᵉ)
+≡̂ₑ-run p δ = runₑ (≡̂ₑ⇒≾ p) δ ⊨ᵍ-∅ , runₑ (≡̂ₑ⇒≿ p) δ ⊨ᵍ-∅
+
+≡̂ᵣ-val : ∀ {Θ} {ρ ρ' : RExp Θ}
+       → ((δ : Subst Θ ∅ˢ) → valʳ (ρ [ δ ]ʳ) ≃ᵣ valʳ (ρ' [ δ ]ʳ)) → ρ ≡̂ᵣ ρ'
+≡̂ᵣ-val f = mk≡̂ᵣ (semᵣ λ δ _ → proj₁ (f δ)) (semᵣ λ δ _ → proj₂ (f δ))
+
+≡̂ₑ-val : ∀ {Θ} {ε ε' : EExp Θ}
+       → ((δ : Subst Θ ∅ˢ) → valᵉ (ε [ δ ]ᵉ) ≃ₑ valᵉ (ε' [ δ ]ᵉ)) → ε ≡̂ₑ ε'
+≡̂ₑ-val f = mk≡̂ₑ (semₑ λ δ _ → proj₁ (f δ)) (semₑ λ δ _ → proj₂ (f δ))
+
+-- Properties of convertibility: an equivalence and a congruence, the
+-- monoid laws, commutativity of multiplication where the grade declares
+-- it, commutativity of the join, distributivity of multiplication over
+-- the join, the constants' equivalence and arithmetic, `∣_∣̂ᵉ` a monoid
+-- morphism, and absorption of a join by an upper bound
+
+module _ {Θ : Scope} where
+
+  ≡̂ᵣ-refl : ∀ {ρ : RExp Θ} → ρ ≡̂ᵣ ρ
+  ≡̂ᵣ-refl = ≡̂ᵣ-val λ _ → ≃ᵣ-refl
+
+  ≡̂ᵣ-sym : ∀ {ρ ρ' : RExp Θ} → ρ ≡̂ᵣ ρ' → ρ' ≡̂ᵣ ρ
+  ≡̂ᵣ-sym p = mk≡̂ᵣ (≡̂ᵣ⇒≿ p) (≡̂ᵣ⇒≾ p)
+
+  ≡̂ᵣ-trans : ∀ {ρ ρ' ρ'' : RExp Θ} → ρ ≡̂ᵣ ρ' → ρ' ≡̂ᵣ ρ'' → ρ ≡̂ᵣ ρ''
+  ≡̂ᵣ-trans p q = ≡̂ᵣ-val λ δ → ≃ᵣ-trans (≡̂ᵣ-run p δ) (≡̂ᵣ-run q δ)
+
+  ≡̂ᵣ-cong : ∀ {ρ₁ ρ₁' ρ₂ ρ₂' : RExp Θ} → ρ₁ ≡̂ᵣ ρ₁' → ρ₂ ≡̂ᵣ ρ₂'
+          → ρ₁ ·̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ·̂ᵣ ρ₂'
+  ≡̂ᵣ-cong p q = ≡̂ᵣ-val λ δ → ·ᵣ-cong (≡̂ᵣ-run p δ) (≡̂ᵣ-run q δ)
+
+  ≡̂ᵣ-assoc : ∀ {ρ₁ ρ₂ ρ₃ : RExp Θ} → (ρ₁ ·̂ᵣ ρ₂) ·̂ᵣ ρ₃ ≡̂ᵣ ρ₁ ·̂ᵣ (ρ₂ ·̂ᵣ ρ₃)
+  ≡̂ᵣ-assoc = ≡̂ᵣ-val λ _ → ·ᵣ-assoc _ _ _
+
+  ≡̂ᵣ-identityˡ : ∀ {ρ : RExp Θ} → ûᵣ ·̂ᵣ ρ ≡̂ᵣ ρ
+  ≡̂ᵣ-identityˡ = ≡̂ᵣ-val λ _ → ·ᵣ-identityˡ _
+
+  ≡̂ᵣ-identityʳ : ∀ {ρ : RExp Θ} → ρ ·̂ᵣ ûᵣ ≡̂ᵣ ρ
+  ≡̂ᵣ-identityʳ = ≡̂ᵣ-val λ _ → ·ᵣ-identityʳ _
+
+  ≡̂ᵣ-const : ∀ {ρ ρ'} → ρ ≃ᵣ ρ' → rconst {Θ} ρ ≡̂ᵣ rconst ρ'
+  ≡̂ᵣ-const e = ≡̂ᵣ-val λ _ → e
+
+  ≡̂ᵣ-const-· : ∀ {ρ ρ'} → rconst {Θ} ρ ·̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ·ᵣ ρ')
+  ≡̂ᵣ-const-· = ≡̂ᵣ-val λ _ → ≃ᵣ-refl
+
+  ≡̂ᵣ-comm : ∀ {ρ₁ ρ₂ : RExp Θ} → Is-just ·ᵣ-comm? → ρ₁ ·̂ᵣ ρ₂ ≡̂ᵣ ρ₂ ·̂ᵣ ρ₁
+  ≡̂ᵣ-comm ij = ≡̂ᵣ-val λ _ → to-witness ij _ _
+
+  ≡̂ᵣ-cong-⊔ : ∀ {ρ₁ ρ₁' ρ₂ ρ₂' : RExp Θ} → ρ₁ ≡̂ᵣ ρ₁' → ρ₂ ≡̂ᵣ ρ₂'
+            → ρ₁ ⊔̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ⊔̂ᵣ ρ₂'
+  ≡̂ᵣ-cong-⊔ p q = ≡̂ᵣ-val λ δ → ⊔ᵣ-cong (≡̂ᵣ-run p δ) (≡̂ᵣ-run q δ)
+
+  ≡̂ᵣ-const-⊔ : ∀ {ρ ρ'} → rconst {Θ} ρ ⊔̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ⊔ᵣ ρ')
+  ≡̂ᵣ-const-⊔ = ≡̂ᵣ-val λ _ → ≃ᵣ-refl
+
+  ≡̂ᵣ-comm-⊔ : ∀ {ρ₁ ρ₂ : RExp Θ} → ρ₁ ⊔̂ᵣ ρ₂ ≡̂ᵣ ρ₂ ⊔̂ᵣ ρ₁
+  ≡̂ᵣ-comm-⊔ = ≡̂ᵣ-val λ _ → ⊔ᵣ-comm _ _
+
+  ≡̂ᵣ-distribˡ-⊔ : ∀ {ρ ρ₁ ρ₂ : RExp Θ} → ρ ·̂ᵣ (ρ₁ ⊔̂ᵣ ρ₂) ≡̂ᵣ ρ ·̂ᵣ ρ₁ ⊔̂ᵣ ρ ·̂ᵣ ρ₂
+  ≡̂ᵣ-distribˡ-⊔ = ≡̂ᵣ-val λ _ → ·ᵣ-distribˡ-⊔ᵣ _ _ _
+
+  ≡̂ᵣ-distribʳ-⊔ : ∀ {ρ ρ₁ ρ₂ : RExp Θ} → (ρ₁ ⊔̂ᵣ ρ₂) ·̂ᵣ ρ ≡̂ᵣ ρ₁ ·̂ᵣ ρ ⊔̂ᵣ ρ₂ ·̂ᵣ ρ
+  ≡̂ᵣ-distribʳ-⊔ = ≡̂ᵣ-val λ _ → ·ᵣ-distribʳ-⊔ᵣ _ _ _
+
+  ≡̂ᵣ-map-· : ∀ {ε ε' : EExp Θ} → ∣ ε ·̂ₑ ε' ∣̂ᵉ ≡̂ᵣ ∣ ε ∣̂ᵉ ·̂ᵣ ∣ ε' ∣̂ᵉ
+  ≡̂ᵣ-map-· = ≡̂ᵣ-val λ _ → map-·ᵉ
+
+  ≡̂ᵣ-map-⊔ : ∀ {ε ε' : EExp Θ} → ∣ ε ⊔̂ₑ ε' ∣̂ᵉ ≡̂ᵣ ∣ ε ∣̂ᵉ ⊔̂ᵣ ∣ ε' ∣̂ᵉ
+  ≡̂ᵣ-map-⊔ = ≡̂ᵣ-val λ _ → map-⊔ᵉ
+
+  ≡̂ᵣ-map-const : ∀ {e} → ∣ econst {Θ} e ∣̂ᵉ ≡̂ᵣ rconst (mapᵉ e)
+  ≡̂ᵣ-map-const = ≡̂ᵣ-val λ _ → ≃ᵣ-refl
+
+  ≡̂ᵣ-map-cong : ∀ {ε ε' : EExp Θ} → ε ≡̂ₑ ε' → ∣ ε ∣̂ᵉ ≡̂ᵣ ∣ ε' ∣̂ᵉ
+  ≡̂ᵣ-map-cong p = ≡̂ᵣ-val λ δ → map-≃ᵉ (≡̂ₑ-run p δ)
+
+  ≡̂ᵣ-absorb : ∀ {ρ ρ' : RExp Θ} → ∅ᴴ ⊩ ρ ≾̂ᵣ ρ' → ρ ⊔̂ᵣ ρ' ≡̂ᵣ ρ'
+  ≡̂ᵣ-absorb p = ≡̂ᵣ-val λ δ → ⊔ᵣ-absorb (runᵣ p δ ⊨ᵍ-∅)
+
+  ≡̂ₑ-refl : ∀ {ε : EExp Θ} → ε ≡̂ₑ ε
+  ≡̂ₑ-refl = ≡̂ₑ-val λ _ → ≃ₑ-refl
+
+  ≡̂ₑ-sym : ∀ {ε ε' : EExp Θ} → ε ≡̂ₑ ε' → ε' ≡̂ₑ ε
+  ≡̂ₑ-sym p = mk≡̂ₑ (≡̂ₑ⇒≿ p) (≡̂ₑ⇒≾ p)
+
+  ≡̂ₑ-trans : ∀ {ε ε' ε'' : EExp Θ} → ε ≡̂ₑ ε' → ε' ≡̂ₑ ε'' → ε ≡̂ₑ ε''
+  ≡̂ₑ-trans p q = ≡̂ₑ-val λ δ → ≃ₑ-trans (≡̂ₑ-run p δ) (≡̂ₑ-run q δ)
+
+  ≡̂ₑ-cong : ∀ {ε₁ ε₁' ε₂ ε₂' : EExp Θ} → ε₁ ≡̂ₑ ε₁' → ε₂ ≡̂ₑ ε₂'
+          → ε₁ ·̂ₑ ε₂ ≡̂ₑ ε₁' ·̂ₑ ε₂'
+  ≡̂ₑ-cong p q = ≡̂ₑ-val λ δ → ·ₑ-cong (≡̂ₑ-run p δ) (≡̂ₑ-run q δ)
+
+  ≡̂ₑ-assoc : ∀ {ε₁ ε₂ ε₃ : EExp Θ} → (ε₁ ·̂ₑ ε₂) ·̂ₑ ε₃ ≡̂ₑ ε₁ ·̂ₑ (ε₂ ·̂ₑ ε₃)
+  ≡̂ₑ-assoc = ≡̂ₑ-val λ _ → ·ₑ-assoc _ _ _
+
+  ≡̂ₑ-identityˡ : ∀ {ε : EExp Θ} → ûₑ ·̂ₑ ε ≡̂ₑ ε
+  ≡̂ₑ-identityˡ = ≡̂ₑ-val λ _ → ·ₑ-identityˡ _
+
+  ≡̂ₑ-identityʳ : ∀ {ε : EExp Θ} → ε ·̂ₑ ûₑ ≡̂ₑ ε
+  ≡̂ₑ-identityʳ = ≡̂ₑ-val λ _ → ·ₑ-identityʳ _
+
+  ≡̂ₑ-const : ∀ {ε ε'} → ε ≃ₑ ε' → econst {Θ} ε ≡̂ₑ econst ε'
+  ≡̂ₑ-const e = ≡̂ₑ-val λ _ → e
+
+  ≡̂ₑ-const-· : ∀ {ε ε'} → econst {Θ} ε ·̂ₑ econst ε' ≡̂ₑ econst (ε ·ₑ ε')
+  ≡̂ₑ-const-· = ≡̂ₑ-val λ _ → ≃ₑ-refl
+
+  ≡̂ₑ-comm : ∀ {ε₁ ε₂ : EExp Θ} → Is-just ·ₑ-comm? → ε₁ ·̂ₑ ε₂ ≡̂ₑ ε₂ ·̂ₑ ε₁
+  ≡̂ₑ-comm ij = ≡̂ₑ-val λ _ → to-witness ij _ _
+
+  ≡̂ₑ-cong-⊔ : ∀ {ε₁ ε₁' ε₂ ε₂' : EExp Θ} → ε₁ ≡̂ₑ ε₁' → ε₂ ≡̂ₑ ε₂'
+            → ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₁' ⊔̂ₑ ε₂'
+  ≡̂ₑ-cong-⊔ p q = ≡̂ₑ-val λ δ → ⊔ₑ-cong (≡̂ₑ-run p δ) (≡̂ₑ-run q δ)
+
+  ≡̂ₑ-const-⊔ : ∀ {ε ε'} → econst {Θ} ε ⊔̂ₑ econst ε' ≡̂ₑ econst (ε ⊔ₑ ε')
+  ≡̂ₑ-const-⊔ = ≡̂ₑ-val λ _ → ≃ₑ-refl
+
+  ≡̂ₑ-comm-⊔ : ∀ {ε₁ ε₂ : EExp Θ} → ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₂ ⊔̂ₑ ε₁
+  ≡̂ₑ-comm-⊔ = ≡̂ₑ-val λ _ → ⊔ₑ-comm _ _
+
+  ≡̂ₑ-distribˡ-⊔ : ∀ {ε ε₁ ε₂ : EExp Θ} → ε ·̂ₑ (ε₁ ⊔̂ₑ ε₂) ≡̂ₑ ε ·̂ₑ ε₁ ⊔̂ₑ ε ·̂ₑ ε₂
+  ≡̂ₑ-distribˡ-⊔ = ≡̂ₑ-val λ _ → ·ₑ-distribˡ-⊔ₑ _ _ _
+
+  ≡̂ₑ-distribʳ-⊔ : ∀ {ε ε₁ ε₂ : EExp Θ} → (ε₁ ⊔̂ₑ ε₂) ·̂ₑ ε ≡̂ₑ ε₁ ·̂ₑ ε ⊔̂ₑ ε₂ ·̂ₑ ε
+  ≡̂ₑ-distribʳ-⊔ = ≡̂ₑ-val λ _ → ·ₑ-distribʳ-⊔ₑ _ _ _
+
+  ≡̂ₑ-absorb : ∀ {ε ε' : EExp Θ} → ∅ᴴ ⊩ ε ≾̂ₑ ε' → ε ⊔̂ₑ ε' ≡̂ₑ ε'
+  ≡̂ₑ-absorb p = ≡̂ₑ-val λ δ → ⊔ₑ-absorb (runₑ p δ ⊨ᵍ-∅)
+
+-- Properties of entailed ordering: the hypotheses, the constants'
+-- ordering, convertibility, a preorder, monotonicity of the formers,
+-- the join a least upper bound, the top, the unit least where the
+-- grade declares it, the zero-product laws, the closure of a grade
+-- where the grade declares it, and the instances of quantified
+-- hypotheses (rule Inst) and of closed orderings valid at no
+-- hypotheses (rule Truth)
+
+module _ {Θ : Scope} {Q : Hyps Θ} where
+
+  hypᵣ : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q ⊩ ρ ≾̂ᵣ ρ'
+  hypᵣ m = semᵣ λ δ h → ⊨ᵍʳ h m
+
+  atomᵣ : ∀ {ρ ρ'} → ρ ≾ᵣ ρ' → Q ⊩ rconst ρ ≾̂ᵣ rconst ρ'
+  atomᵣ p = semᵣ λ _ _ → p
+
+  eqᵣ : ∀ {ρ ρ'} → ρ ≡̂ᵣ ρ' → Q ⊩ ρ ≾̂ᵣ ρ'
+  eqᵣ p = semᵣ λ δ _ → runᵣ (≡̂ᵣ⇒≾ p) δ ⊨ᵍ-∅
+
+  transᵣ : ∀ {ρ ρ' ρ''} → Q ⊩ ρ ≾̂ᵣ ρ' → Q ⊩ ρ' ≾̂ᵣ ρ'' → Q ⊩ ρ ≾̂ᵣ ρ''
+  transᵣ p q = semᵣ λ δ h → ≾ᵣ-trans (runᵣ p δ h) (runᵣ q δ h)
+
+  monoᵣ : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → Q ⊩ ρ₁ ≾̂ᵣ ρ₁' → Q ⊩ ρ₂ ≾̂ᵣ ρ₂'
+        → Q ⊩ ρ₁ ·̂ᵣ ρ₂ ≾̂ᵣ ρ₁' ·̂ᵣ ρ₂'
+  monoᵣ p q = semᵣ λ δ h → ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (runᵣ p δ h)) (·ᵣ-monoʳ-≾ᵣ (runᵣ q δ h))
+
   map-mono : ∀ {ε ε'} → Q ⊩ ε ≾̂ₑ ε' → Q ⊩ ∣ ε ∣̂ᵉ ≾̂ᵣ ∣ ε' ∣̂ᵉ
-  -- the join is the least upper bound; monotonicity of `_⊔̂ᵣ_` is derivable
-  ⊔-ubˡᵣ   : ∀ {ρ₁ ρ₂} → Q ⊩ ρ₁ ≾̂ᵣ ρ₁ ⊔̂ᵣ ρ₂
-  ⊔-ubʳᵣ   : ∀ {ρ₁ ρ₂} → Q ⊩ ρ₂ ≾̂ᵣ ρ₁ ⊔̂ᵣ ρ₂
-  ⊔-lubᵣ   : ∀ {ρ₁ ρ₂ ρ} → Q ⊩ ρ₁ ≾̂ᵣ ρ → Q ⊩ ρ₂ ≾̂ᵣ ρ → Q ⊩ ρ₁ ⊔̂ᵣ ρ₂ ≾̂ᵣ ρ
-  -- every grade is below the top
-  topᵣ     : ∀ {ρ} → Q ⊩ ρ ≾̂ᵣ rconst ⊤ᵣ
-  -- the unit is below every grade when the grade declares it least
-  minᵣ     : ∀ {ρ} → Is-just uᵣ-least? → Q ⊩ ûᵣ ≾̂ᵣ ρ
-  -- zero-product: a product below the unit has both factors below it
-  zeroˡᵣ   : ∀ {ρ ρ'} → Q ⊩ ρ ·̂ᵣ ρ' ≾̂ᵣ ûᵣ → Q ⊩ ρ ≾̂ᵣ ûᵣ
-  zeroʳᵣ   : ∀ {ρ ρ'} → Q ⊩ ρ ·̂ᵣ ρ' ≾̂ᵣ ûᵣ → Q ⊩ ρ' ≾̂ᵣ ûᵣ
-  -- the closure of a grade lies below every grade above it that
-  -- absorbs its own iteration
-  plusᵣ    : ∀ {c ρ} → (p : Plus _·ᵣ_ _≾ᵣ_ c) → Q ⊩ rconst c ≾̂ᵣ ρ → Q ⊩ ρ ·̂ᵣ ρ ≾̂ᵣ ρ
-           → Q ⊩ rconst (Plus.c⁺ p) ≾̂ᵣ ρ
-  -- a grade that a grade does not move, on either side, its closure
-  -- does not move either
-  indˡᵣ    : ∀ {c ρ} → (p : Plus _·ᵣ_ _≾ᵣ_ c) → Q ⊩ rconst c ·̂ᵣ ρ ≾̂ᵣ ρ
-           → Q ⊩ rconst (Plus.c⁺ p) ·̂ᵣ ρ ≾̂ᵣ ρ
-  indʳᵣ    : ∀ {c ρ} → (p : Plus _·ᵣ_ _≾ᵣ_ c) → Q ⊩ ρ ·̂ᵣ rconst c ≾̂ᵣ ρ
-           → Q ⊩ ρ ·̂ᵣ rconst (Plus.c⁺ p) ≾̂ᵣ ρ
-  -- a quantified hypothesis at an instance of its rigids
-  instᵣ    : ∀ {O ρ ρ'} → O ∈ qhyps Q → (ρ , ρ') ∈ ors (body O)
-           → (es : Vec (EExp Θ) (rigids O))
-           → Q ⊩ ρ [ idˢ ,ᵉⁿ es ]ʳ ≾̂ᵣ ρ' [ idˢ ,ᵉⁿ es ]ʳ
-  -- a closed quantified ordering that holds, at an instance of its rigids
-  factᵣ    : ∀ {k ρ ρ'} → Holdsʳ k ρ ρ' → (es : Vec (EExp Θ) k)
-           → Q ⊩ ρ [ from∅ ,ᵉⁿ es ]ʳ ≾̂ᵣ ρ' [ from∅ ,ᵉⁿ es ]ʳ
+  map-mono p = semᵣ λ δ h → map-monotoneᵉ (runₑ p δ h)
 
-data _⊩_≾̂ₑ_ {Θ} Q where
-  hypₑ   : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q ⊩ ε ≾̂ₑ ε'
-  atomₑ  : ∀ {ε ε'} → ε ≾ₑ ε' → Q ⊩ econst ε ≾̂ₑ econst ε'
-  eqₑ    : ∀ {ε ε'} → ε ≡̂ₑ ε' → Q ⊩ ε ≾̂ₑ ε'
+  ⊔-ubˡᵣ : ∀ {ρ₁ ρ₂} → Q ⊩ ρ₁ ≾̂ᵣ ρ₁ ⊔̂ᵣ ρ₂
+  ⊔-ubˡᵣ {ρ₁} {ρ₂} = semᵣ λ δ _ → ⊔ᵣ-ubˡ (valʳ (ρ₁ [ δ ]ʳ)) (valʳ (ρ₂ [ δ ]ʳ))
+
+  ⊔-ubʳᵣ : ∀ {ρ₁ ρ₂} → Q ⊩ ρ₂ ≾̂ᵣ ρ₁ ⊔̂ᵣ ρ₂
+  ⊔-ubʳᵣ {ρ₁} {ρ₂} = semᵣ λ δ _ → ⊔ᵣ-ubʳ (valʳ (ρ₁ [ δ ]ʳ)) (valʳ (ρ₂ [ δ ]ʳ))
+
+  ⊔-lubᵣ : ∀ {ρ₁ ρ₂ ρ} → Q ⊩ ρ₁ ≾̂ᵣ ρ → Q ⊩ ρ₂ ≾̂ᵣ ρ → Q ⊩ ρ₁ ⊔̂ᵣ ρ₂ ≾̂ᵣ ρ
+  ⊔-lubᵣ p q = semᵣ λ δ h → ⊔ᵣ-lub (runᵣ p δ h) (runᵣ q δ h)
+
+  topᵣ : ∀ {ρ} → Q ⊩ ρ ≾̂ᵣ rconst ⊤ᵣ
+  topᵣ {ρ} = semᵣ λ δ _ → ≾-⊤ᵣ (valʳ (ρ [ δ ]ʳ))
+
+  minᵣ : ∀ {ρ} → Is-just uᵣ-least? → Q ⊩ ûᵣ ≾̂ᵣ ρ
+  minᵣ {ρ} ij = semᵣ λ δ _ → to-witness ij (valʳ (ρ [ δ ]ʳ))
+
+  zeroˡᵣ : ∀ {ρ ρ'} → Q ⊩ ρ ·̂ᵣ ρ' ≾̂ᵣ ûᵣ → Q ⊩ ρ ≾̂ᵣ ûᵣ
+  zeroˡᵣ p = semᵣ λ δ h → ≾ᵣ-zero-productˡ (runᵣ p δ h)
+
+  zeroʳᵣ : ∀ {ρ ρ'} → Q ⊩ ρ ·̂ᵣ ρ' ≾̂ᵣ ûᵣ → Q ⊩ ρ' ≾̂ᵣ ûᵣ
+  zeroʳᵣ p = semᵣ λ δ h → ≾ᵣ-zero-productʳ (runᵣ p δ h)
+
+  plusᵣ : ∀ {c ρ} → (p : Plus _·ᵣ_ _≾ᵣ_ c) → Q ⊩ rconst c ≾̂ᵣ ρ → Q ⊩ ρ ·̂ᵣ ρ ≾̂ᵣ ρ
+        → Q ⊩ rconst (Plus.c⁺ p) ≾̂ᵣ ρ
+  plusᵣ p q r = semᵣ λ δ h → Plus.c⁺-least p (runᵣ q δ h) (runᵣ r δ h)
+
+  indˡᵣ : ∀ {c ρ} → (p : Plus _·ᵣ_ _≾ᵣ_ c) → Q ⊩ rconst c ·̂ᵣ ρ ≾̂ᵣ ρ
+        → Q ⊩ rconst (Plus.c⁺ p) ·̂ᵣ ρ ≾̂ᵣ ρ
+  indˡᵣ p q = semᵣ λ δ h → Plus.⁺-indˡ p (runᵣ q δ h)
+
+  indʳᵣ : ∀ {c ρ} → (p : Plus _·ᵣ_ _≾ᵣ_ c) → Q ⊩ ρ ·̂ᵣ rconst c ≾̂ᵣ ρ
+        → Q ⊩ ρ ·̂ᵣ rconst (Plus.c⁺ p) ≾̂ᵣ ρ
+  indʳᵣ p q = semᵣ λ δ h → Plus.⁺-indʳ p (runᵣ q δ h)
+
+  instᵣ : ∀ {O ρ ρ'} → O ∈ qhyps Q → (ρ , ρ') ∈ ors (body O)
+        → (es : Vec (EExp Θ) (rigids O))
+        → Q ⊩ ρ [ idˢ ,ᵉⁿ es ]ʳ ≾̂ᵣ ρ' [ idˢ ,ᵉⁿ es ]ʳ
+  instᵣ {O} {ρ} {ρ'} m mφ es = semᵣ λ δ h →
+    subst₂ _≾ᵣ_ (cong valʳ (eq δ ρ)) (cong valʳ (eq δ ρ'))
+           (⊨ᵒʳ (⊨ᵍᵠ h m (mapᵛ (_[ δ ]ᵉ) es)) mφ)
+    where
+      eq : (δ : Subst Θ ∅ˢ) → (x : RExp (Θ +eⁿ rigids O))
+         → x [ δ ,ᵉⁿ mapᵛ (_[ δ ]ᵉ) es ]ʳ ≡ x [ idˢ ,ᵉⁿ es ]ʳ [ δ ]ʳ
+      eq δ x = sym (trans ([⨟]ʳ x (idˢ ,ᵉⁿ es) δ) ([≐]ʳ (inst-⨟ es δ) x))
+
+  factᵣ : ∀ {k ρ ρ'} → ∅ᴴ ⊩ ρ ≾̂ᵣ ρ' → (es : Vec (EExp Θ) k)
+        → Q ⊩ ρ [ from∅ ,ᵉⁿ es ]ʳ ≾̂ᵣ ρ' [ from∅ ,ᵉⁿ es ]ʳ
+  factᵣ {ρ = ρ} {ρ'} H es = semᵣ λ δ _ →
+    subst₂ _≾ᵣ_ (cong valʳ (sym ([⨟]ʳ ρ (from∅ ,ᵉⁿ es) δ)))
+                (cong valʳ (sym ([⨟]ʳ ρ' (from∅ ,ᵉⁿ es) δ)))
+           (runᵣ H ((from∅ ,ᵉⁿ es) ⨟ˢ δ) ⊨ᵍ-∅)
+
+  hypₑ : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q ⊩ ε ≾̂ₑ ε'
+  hypₑ m = semₑ λ δ h → ⊨ᵍᵉ h m
+
+  atomₑ : ∀ {ε ε'} → ε ≾ₑ ε' → Q ⊩ econst ε ≾̂ₑ econst ε'
+  atomₑ p = semₑ λ _ _ → p
+
+  eqₑ : ∀ {ε ε'} → ε ≡̂ₑ ε' → Q ⊩ ε ≾̂ₑ ε'
+  eqₑ p = semₑ λ δ _ → runₑ (≡̂ₑ⇒≾ p) δ ⊨ᵍ-∅
+
   transₑ : ∀ {ε ε' ε''} → Q ⊩ ε ≾̂ₑ ε' → Q ⊩ ε' ≾̂ₑ ε'' → Q ⊩ ε ≾̂ₑ ε''
-  monoₑ  : ∀ {ε₁ ε₁' ε₂ ε₂'} → Q ⊩ ε₁ ≾̂ₑ ε₁' → Q ⊩ ε₂ ≾̂ₑ ε₂'
-         → Q ⊩ ε₁ ·̂ₑ ε₂ ≾̂ₑ ε₁' ·̂ₑ ε₂'
-  -- the join is the least upper bound; monotonicity of `_⊔̂ₑ_` is derivable
+  transₑ p q = semₑ λ δ h → ≾ₑ-trans (runₑ p δ h) (runₑ q δ h)
+
+  monoₑ : ∀ {ε₁ ε₁' ε₂ ε₂'} → Q ⊩ ε₁ ≾̂ₑ ε₁' → Q ⊩ ε₂ ≾̂ₑ ε₂'
+        → Q ⊩ ε₁ ·̂ₑ ε₂ ≾̂ₑ ε₁' ·̂ₑ ε₂'
+  monoₑ p q = semₑ λ δ h → ≾ₑ-trans (·ₑ-monoˡ-≾ₑ (runₑ p δ h)) (·ₑ-monoʳ-≾ₑ (runₑ q δ h))
+
   ⊔-ubˡₑ : ∀ {ε₁ ε₂} → Q ⊩ ε₁ ≾̂ₑ ε₁ ⊔̂ₑ ε₂
+  ⊔-ubˡₑ {ε₁} {ε₂} = semₑ λ δ _ → ⊔ₑ-ubˡ (valᵉ (ε₁ [ δ ]ᵉ)) (valᵉ (ε₂ [ δ ]ᵉ))
+
   ⊔-ubʳₑ : ∀ {ε₁ ε₂} → Q ⊩ ε₂ ≾̂ₑ ε₁ ⊔̂ₑ ε₂
+  ⊔-ubʳₑ {ε₁} {ε₂} = semₑ λ δ _ → ⊔ₑ-ubʳ (valᵉ (ε₁ [ δ ]ᵉ)) (valᵉ (ε₂ [ δ ]ᵉ))
+
   ⊔-lubₑ : ∀ {ε₁ ε₂ ε} → Q ⊩ ε₁ ≾̂ₑ ε → Q ⊩ ε₂ ≾̂ₑ ε → Q ⊩ ε₁ ⊔̂ₑ ε₂ ≾̂ₑ ε
-  -- every grade is below the top
-  topₑ   : ∀ {ε} → Q ⊩ ε ≾̂ₑ econst ⊤ₑ
-  -- the unit is below every grade when the grade declares it least
-  minₑ   : ∀ {ε} → Is-just uₑ-least? → Q ⊩ ûₑ ≾̂ₑ ε
-  -- zero-product: a product below the unit has both factors below it
+  ⊔-lubₑ p q = semₑ λ δ h → ⊔ₑ-lub (runₑ p δ h) (runₑ q δ h)
+
+  topₑ : ∀ {ε} → Q ⊩ ε ≾̂ₑ econst ⊤ₑ
+  topₑ {ε} = semₑ λ δ _ → ≾-⊤ₑ (valᵉ (ε [ δ ]ᵉ))
+
+  minₑ : ∀ {ε} → Is-just uₑ-least? → Q ⊩ ûₑ ≾̂ₑ ε
+  minₑ {ε} ij = semₑ λ δ _ → to-witness ij (valᵉ (ε [ δ ]ᵉ))
+
   zeroˡₑ : ∀ {ε ε'} → Q ⊩ ε ·̂ₑ ε' ≾̂ₑ ûₑ → Q ⊩ ε ≾̂ₑ ûₑ
+  zeroˡₑ p = semₑ λ δ h → ≾ₑ-zero-productˡ (runₑ p δ h)
+
   zeroʳₑ : ∀ {ε ε'} → Q ⊩ ε ·̂ₑ ε' ≾̂ₑ ûₑ → Q ⊩ ε' ≾̂ₑ ûₑ
-  -- the closure of a grade lies below every grade above it that
-  -- absorbs its own iteration
-  plusₑ  : ∀ {c ε} → (p : Plus _·ₑ_ _≾ₑ_ c) → Q ⊩ econst c ≾̂ₑ ε → Q ⊩ ε ·̂ₑ ε ≾̂ₑ ε
-         → Q ⊩ econst (Plus.c⁺ p) ≾̂ₑ ε
-  -- a grade that a grade does not move, on either side, its closure
-  -- does not move either
-  indˡₑ  : ∀ {c ε} → (p : Plus _·ₑ_ _≾ₑ_ c) → Q ⊩ econst c ·̂ₑ ε ≾̂ₑ ε
-         → Q ⊩ econst (Plus.c⁺ p) ·̂ₑ ε ≾̂ₑ ε
-  indʳₑ  : ∀ {c ε} → (p : Plus _·ₑ_ _≾ₑ_ c) → Q ⊩ ε ·̂ₑ econst c ≾̂ₑ ε
-         → Q ⊩ ε ·̂ₑ econst (Plus.c⁺ p) ≾̂ₑ ε
-  -- a quantified hypothesis at an instance of its rigids
-  instₑ  : ∀ {O ε ε'} → O ∈ qhyps Q → (ε , ε') ∈ oes (body O)
-         → (es : Vec (EExp Θ) (rigids O))
-         → Q ⊩ ε [ idˢ ,ᵉⁿ es ]ᵉ ≾̂ₑ ε' [ idˢ ,ᵉⁿ es ]ᵉ
-  -- a closed quantified ordering that holds, at an instance of its rigids
-  factₑ  : ∀ {k ε ε'} → Holdsᵉ k ε ε' → (es : Vec (EExp Θ) k)
-         → Q ⊩ ε [ from∅ ,ᵉⁿ es ]ᵉ ≾̂ₑ ε' [ from∅ ,ᵉⁿ es ]ᵉ
+  zeroʳₑ p = semₑ λ δ h → ≾ₑ-zero-productʳ (runₑ p δ h)
+
+  plusₑ : ∀ {c ε} → (p : Plus _·ₑ_ _≾ₑ_ c) → Q ⊩ econst c ≾̂ₑ ε → Q ⊩ ε ·̂ₑ ε ≾̂ₑ ε
+        → Q ⊩ econst (Plus.c⁺ p) ≾̂ₑ ε
+  plusₑ p q r = semₑ λ δ h → Plus.c⁺-least p (runₑ q δ h) (runₑ r δ h)
+
+  indˡₑ : ∀ {c ε} → (p : Plus _·ₑ_ _≾ₑ_ c) → Q ⊩ econst c ·̂ₑ ε ≾̂ₑ ε
+        → Q ⊩ econst (Plus.c⁺ p) ·̂ₑ ε ≾̂ₑ ε
+  indˡₑ p q = semₑ λ δ h → Plus.⁺-indˡ p (runₑ q δ h)
+
+  indʳₑ : ∀ {c ε} → (p : Plus _·ₑ_ _≾ₑ_ c) → Q ⊩ ε ·̂ₑ econst c ≾̂ₑ ε
+        → Q ⊩ ε ·̂ₑ econst (Plus.c⁺ p) ≾̂ₑ ε
+  indʳₑ p q = semₑ λ δ h → Plus.⁺-indʳ p (runₑ q δ h)
+
+  instₑ : ∀ {O ε ε'} → O ∈ qhyps Q → (ε , ε') ∈ oes (body O)
+        → (es : Vec (EExp Θ) (rigids O))
+        → Q ⊩ ε [ idˢ ,ᵉⁿ es ]ᵉ ≾̂ₑ ε' [ idˢ ,ᵉⁿ es ]ᵉ
+  instₑ {O} {ε} {ε'} m mφ es = semₑ λ δ h →
+    subst₂ _≾ₑ_ (cong valᵉ (eq δ ε)) (cong valᵉ (eq δ ε'))
+           (⊨ᵒᵉ (⊨ᵍᵠ h m (mapᵛ (_[ δ ]ᵉ) es)) mφ)
+    where
+      eq : (δ : Subst Θ ∅ˢ) → (x : EExp (Θ +eⁿ rigids O))
+         → x [ δ ,ᵉⁿ mapᵛ (_[ δ ]ᵉ) es ]ᵉ ≡ x [ idˢ ,ᵉⁿ es ]ᵉ [ δ ]ᵉ
+      eq δ x = sym (trans ([⨟]ᵉ x (idˢ ,ᵉⁿ es) δ) ([≐]ᵉ (inst-⨟ es δ) x))
+
+  factₑ : ∀ {k ε ε'} → ∅ᴴ ⊩ ε ≾̂ₑ ε' → (es : Vec (EExp Θ) k)
+        → Q ⊩ ε [ from∅ ,ᵉⁿ es ]ᵉ ≾̂ₑ ε' [ from∅ ,ᵉⁿ es ]ᵉ
+  factₑ {ε = ε} {ε'} H es = semₑ λ δ _ →
+    subst₂ _≾ₑ_ (cong valᵉ (sym ([⨟]ᵉ ε (from∅ ,ᵉⁿ es) δ)))
+                (cong valᵉ (sym ([⨟]ᵉ ε' (from∅ ,ᵉⁿ es) δ)))
+           (runₑ H ((from∅ ,ᵉⁿ es) ⨟ˢ δ) ⊨ᵍ-∅)
 
 -- Entailed ordering is reflexive
 
@@ -358,27 +577,21 @@ data _⊩_≾̂ₑ_ {Θ} Q where
 
 ≡̂ᵣ-antisym-∅ : ∀ {Θ} {ρ ρ' : RExp Θ}
              → ∅ᴴ ⊩ ρ ≾̂ᵣ ρ' → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ → ρ ≡̂ᵣ ρ'
-≡̂ᵣ-antisym-∅ p q =
-  ≡̂ᵣ-trans (≡̂ᵣ-sym (≡̂ᵣ-absorb q)) (≡̂ᵣ-trans ≡̂ᵣ-comm-⊔ (≡̂ᵣ-absorb p))
+≡̂ᵣ-antisym-∅ = mk≡̂ᵣ
 
 ≡̂ₑ-antisym-∅ : ∀ {Θ} {ε ε' : EExp Θ}
              → ∅ᴴ ⊩ ε ≾̂ₑ ε' → ∅ᴴ ⊩ ε' ≾̂ₑ ε → ε ≡̂ₑ ε'
-≡̂ₑ-antisym-∅ p q =
-  ≡̂ₑ-trans (≡̂ₑ-sym (≡̂ₑ-absorb q)) (≡̂ₑ-trans ≡̂ₑ-comm-⊔ (≡̂ₑ-absorb p))
+≡̂ₑ-antisym-∅ = mk≡̂ₑ
 
 -- Associativity of the join
 
 ≡̂ᵣ-assoc-⊔ : ∀ {Θ} {ρ₁ ρ₂ ρ₃ : RExp Θ}
            → (ρ₁ ⊔̂ᵣ ρ₂) ⊔̂ᵣ ρ₃ ≡̂ᵣ ρ₁ ⊔̂ᵣ (ρ₂ ⊔̂ᵣ ρ₃)
-≡̂ᵣ-assoc-⊔ =
-  ≡̂ᵣ-antisym-∅ (⊔-lubᵣ (⊔-lubᵣ ⊔-ubˡᵣ (transᵣ ⊔-ubˡᵣ ⊔-ubʳᵣ)) (transᵣ ⊔-ubʳᵣ ⊔-ubʳᵣ))
-               (⊔-lubᵣ (transᵣ ⊔-ubˡᵣ ⊔-ubˡᵣ) (⊔-lubᵣ (transᵣ ⊔-ubʳᵣ ⊔-ubˡᵣ) ⊔-ubʳᵣ))
+≡̂ᵣ-assoc-⊔ = ≡̂ᵣ-val λ _ → ⊔ᵣ-assoc _ _ _
 
 ≡̂ₑ-assoc-⊔ : ∀ {Θ} {ε₁ ε₂ ε₃ : EExp Θ}
            → (ε₁ ⊔̂ₑ ε₂) ⊔̂ₑ ε₃ ≡̂ₑ ε₁ ⊔̂ₑ (ε₂ ⊔̂ₑ ε₃)
-≡̂ₑ-assoc-⊔ =
-  ≡̂ₑ-antisym-∅ (⊔-lubₑ (⊔-lubₑ ⊔-ubˡₑ (transₑ ⊔-ubˡₑ ⊔-ubʳₑ)) (transₑ ⊔-ubʳₑ ⊔-ubʳₑ))
-               (⊔-lubₑ (transₑ ⊔-ubˡₑ ⊔-ubˡₑ) (⊔-lubₑ (transₑ ⊔-ubʳₑ ⊔-ubˡₑ) ⊔-ubʳₑ))
+≡̂ₑ-assoc-⊔ = ≡̂ₑ-val λ _ → ⊔ₑ-assoc _ _ _
 
 -- Mirrors `Eternal` of `Language.Types`, plus rules for the eternality
 -- atoms of the hypothesis set and for transfer along an assumed
@@ -842,108 +1055,87 @@ wkᵉⁿ-∅ᴴ : ∀ {Θ} → (k : ℕ) → wkᵉⁿ-H {Θ} k ∅ᴴ ≡ ∅ᴴ
 wkᵉⁿ-∅ᴴ zero    = refl
 wkᵉⁿ-∅ᴴ (suc k) = wkᵉⁿ-∅ᴴ k
 
--- Convertibility and entailment are stable under substitution along an
--- instance map, the premise of absorption at the empty set
+-- A closed expression, weakened into a scope and instantiated back out
+-- of it, is itself
+
+private
+
+  from∅-id : from∅ {∅ˢ} ≐ˢ idˢ
+  from∅-id = mk≐ˢ (λ ()) (λ ()) (λ ())
+
+  closed-back : ∀ {Θ} → (δ : Subst Θ ∅ˢ) → (e : EExp ∅ˢ) → e [ from∅ {Θ} ]ᵉ [ δ ]ᵉ ≡ e
+  closed-back {Θ} δ e = trans ([⨟]ᵉ e (from∅ {Θ}) δ)
+                          (trans ([≐]ᵉ (≐ˢ-trans (from∅-⨟ δ) from∅-id) e) ([id]ᵉ e))
+
+  closed-backs : ∀ {Θ k} → (δ : Subst Θ ∅ˢ) → (es : Vec (EExp ∅ˢ) k)
+               → mapᵛ (_[ δ ]ᵉ) (mapᵛ (_[ from∅ {Θ} ]ᵉ) es) ≡ es
+  closed-backs δ []       = refl
+  closed-backs δ (e ∷ es) = cong₂ _∷_ (closed-back δ e) (closed-backs δ es)
+
+-- An instance map carries a closed instance satisfying the grade part
+-- of its source back to one satisfying the grade part of its target
+
+⊨ᵍ-⨟ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {δ : Subst Θ' ∅ˢ}
+     → Q' ⊩ᴵ Q [ σ ] → δ ⊨ᵍ Q' → (σ ⨟ˢ δ) ⊨ᵍ Q
+⊨ᵍ-⨟ {Θ} {Θ'} {Q} {Q'} {σ} {δ} g h = mk⊨ᵍ oR oE qh
+  where
+    oR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → valʳ (ρ [ σ ⨟ˢ δ ]ʳ) ≾ᵣ valʳ (ρ' [ σ ⨟ˢ δ ]ʳ)
+    oR {ρ} {ρ'} m = subst₂ _≾ᵣ_ (cong valʳ ([⨟]ʳ ρ σ δ)) (cong valʳ ([⨟]ʳ ρ' σ δ))
+                           (runᵣ (⊩ordᵣᴵ g m) δ h)
+
+    oE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → valᵉ (ε [ σ ⨟ˢ δ ]ᵉ) ≾ₑ valᵉ (ε' [ σ ⨟ˢ δ ]ᵉ)
+    oE {ε} {ε'} m = subst₂ _≾ₑ_ (cong valᵉ ([⨟]ᵉ ε σ δ)) (cong valᵉ ([⨟]ᵉ ε' σ δ))
+                           (runₑ (⊩ordₑᴵ g m) δ h)
+
+    qh : ∀ {O} → O ∈ qhyps Q → (es : Vec (EExp ∅ˢ) (rigids O))
+       → ((σ ⨟ˢ δ) ,ᵉⁿ es) ⊨ᵒ body O
+    qh {O} m es = mk⊨ᵒ r e
+      where
+        es' = mapᵛ (_[ from∅ {Θ'} ]ᵉ) es
+        d   = ⊩qhypsᴵ g m es'
+
+        p : ((σ ,ᵉⁿ es') ⨟ˢ δ) ≐ˢ ((σ ⨟ˢ δ) ,ᵉⁿ es)
+        p = subst (λ v → ((σ ,ᵉⁿ es') ⨟ˢ δ) ≐ˢ ((σ ⨟ˢ δ) ,ᵉⁿ v)) (closed-backs δ es)
+                  (,ᵉⁿ-⨟ σ es' δ)
+
+        eqʳ : (x : RExp (Θ +eⁿ rigids O)) → x [ σ ,ᵉⁿ es' ]ʳ [ δ ]ʳ ≡ x [ (σ ⨟ˢ δ) ,ᵉⁿ es ]ʳ
+        eqʳ x = trans ([⨟]ʳ x (σ ,ᵉⁿ es') δ) ([≐]ʳ p x)
+
+        eqᵉ : (x : EExp (Θ +eⁿ rigids O)) → x [ σ ,ᵉⁿ es' ]ᵉ [ δ ]ᵉ ≡ x [ (σ ⨟ˢ δ) ,ᵉⁿ es ]ᵉ
+        eqᵉ x = trans ([⨟]ᵉ x (σ ,ᵉⁿ es') δ) ([≐]ᵉ p x)
+
+        r : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors (body O)
+          → valʳ (ρ [ (σ ⨟ˢ δ) ,ᵉⁿ es ]ʳ) ≾ᵣ valʳ (ρ' [ (σ ⨟ˢ δ) ,ᵉⁿ es ]ʳ)
+        r {ρ} {ρ'} mφ = subst₂ _≾ᵣ_ (cong valʳ (eqʳ ρ)) (cong valʳ (eqʳ ρ'))
+                               (runᵣ (⊩ors d mφ) δ h)
+
+        e : ∀ {ε ε'} → (ε , ε') ∈ oes (body O)
+          → valᵉ (ε [ (σ ⨟ˢ δ) ,ᵉⁿ es ]ᵉ) ≾ₑ valᵉ (ε' [ (σ ⨟ˢ δ) ,ᵉⁿ es ]ᵉ)
+        e {ε} {ε'} mφ = subst₂ _≾ₑ_ (cong valᵉ (eqᵉ ε)) (cong valᵉ (eqᵉ ε'))
+                               (runₑ (⊩oes d mφ) δ h)
+
+-- Entailment and convertibility are stable under substitution along an
+-- instance map
+
+⊩-substᴵᵣ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {ρ ρ' : RExp Θ}
+          → Q' ⊩ᴵ Q [ σ ] → Q ⊩ ρ ≾̂ᵣ ρ' → Q' ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
+⊩-substᴵᵣ {σ = σ} {ρ} {ρ'} g p = semᵣ λ δ h →
+  subst₂ _≾ᵣ_ (cong valʳ (sym ([⨟]ʳ ρ σ δ))) (cong valʳ (sym ([⨟]ʳ ρ' σ δ)))
+         (runᵣ p (σ ⨟ˢ δ) (⊨ᵍ-⨟ g h))
+
+⊩-substᴵₑ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {ε ε' : EExp Θ}
+          → Q' ⊩ᴵ Q [ σ ] → Q ⊩ ε ≾̂ₑ ε' → Q' ⊩ ε [ σ ]ᵉ ≾̂ₑ ε' [ σ ]ᵉ
+⊩-substᴵₑ {σ = σ} {ε} {ε'} g p = semₑ λ δ h →
+  subst₂ _≾ₑ_ (cong valᵉ (sym ([⨟]ᵉ ε σ δ))) (cong valᵉ (sym ([⨟]ᵉ ε' σ δ)))
+         (runₑ p (σ ⨟ˢ δ) (⊨ᵍ-⨟ g h))
 
 ≡̂ᵣ-subst : ∀ {Θ Θ'} {ρ ρ' : RExp Θ} → (σ : Subst Θ Θ')
          → ρ ≡̂ᵣ ρ' → ρ [ σ ]ʳ ≡̂ᵣ ρ' [ σ ]ʳ
+≡̂ᵣ-subst σ p = mk≡̂ᵣ (⊩-substᴵᵣ (⊩ᴵ-∅ {σ = σ}) (≡̂ᵣ⇒≾ p)) (⊩-substᴵᵣ (⊩ᴵ-∅ {σ = σ}) (≡̂ᵣ⇒≿ p))
+
 ≡̂ₑ-subst : ∀ {Θ Θ'} {ε ε' : EExp Θ} → (σ : Subst Θ Θ')
          → ε ≡̂ₑ ε' → ε [ σ ]ᵉ ≡̂ₑ ε' [ σ ]ᵉ
-⊩-substᴵᵣ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {ρ ρ' : RExp Θ}
-          → Q' ⊩ᴵ Q [ σ ] → Q ⊩ ρ ≾̂ᵣ ρ' → Q' ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
-⊩-substᴵₑ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {ε ε' : EExp Θ}
-          → Q' ⊩ᴵ Q [ σ ] → Q ⊩ ε ≾̂ₑ ε' → Q' ⊩ ε [ σ ]ᵉ ≾̂ₑ ε' [ σ ]ᵉ
-
-≡̂ᵣ-subst σ ≡̂ᵣ-refl          = ≡̂ᵣ-refl
-≡̂ᵣ-subst σ (≡̂ᵣ-sym p)       = ≡̂ᵣ-sym (≡̂ᵣ-subst σ p)
-≡̂ᵣ-subst σ (≡̂ᵣ-trans p q)   = ≡̂ᵣ-trans (≡̂ᵣ-subst σ p) (≡̂ᵣ-subst σ q)
-≡̂ᵣ-subst σ (≡̂ᵣ-cong p q)    = ≡̂ᵣ-cong (≡̂ᵣ-subst σ p) (≡̂ᵣ-subst σ q)
-≡̂ᵣ-subst σ ≡̂ᵣ-assoc         = ≡̂ᵣ-assoc
-≡̂ᵣ-subst σ ≡̂ᵣ-identityˡ     = ≡̂ᵣ-identityˡ
-≡̂ᵣ-subst σ ≡̂ᵣ-identityʳ     = ≡̂ᵣ-identityʳ
-≡̂ᵣ-subst σ (≡̂ᵣ-const e)     = ≡̂ᵣ-const e
-≡̂ᵣ-subst σ ≡̂ᵣ-const-·       = ≡̂ᵣ-const-·
-≡̂ᵣ-subst σ (≡̂ᵣ-comm ij)     = ≡̂ᵣ-comm ij
-≡̂ᵣ-subst σ (≡̂ᵣ-cong-⊔ p q)  = ≡̂ᵣ-cong-⊔ (≡̂ᵣ-subst σ p) (≡̂ᵣ-subst σ q)
-≡̂ᵣ-subst σ ≡̂ᵣ-const-⊔       = ≡̂ᵣ-const-⊔
-≡̂ᵣ-subst σ ≡̂ᵣ-comm-⊔        = ≡̂ᵣ-comm-⊔
-≡̂ᵣ-subst σ ≡̂ᵣ-distribˡ-⊔    = ≡̂ᵣ-distribˡ-⊔
-≡̂ᵣ-subst σ ≡̂ᵣ-distribʳ-⊔    = ≡̂ᵣ-distribʳ-⊔
-≡̂ᵣ-subst σ ≡̂ᵣ-map-·         = ≡̂ᵣ-map-·
-≡̂ᵣ-subst σ ≡̂ᵣ-map-⊔         = ≡̂ᵣ-map-⊔
-≡̂ᵣ-subst σ ≡̂ᵣ-map-const     = ≡̂ᵣ-map-const
-≡̂ᵣ-subst σ (≡̂ᵣ-map-cong p)  = ≡̂ᵣ-map-cong (≡̂ₑ-subst σ p)
-≡̂ᵣ-subst σ (≡̂ᵣ-absorb p)    = ≡̂ᵣ-absorb (⊩-substᴵᵣ (⊩ᴵ-∅ {σ = σ}) p)
-
-≡̂ₑ-subst σ ≡̂ₑ-refl          = ≡̂ₑ-refl
-≡̂ₑ-subst σ (≡̂ₑ-sym p)       = ≡̂ₑ-sym (≡̂ₑ-subst σ p)
-≡̂ₑ-subst σ (≡̂ₑ-trans p q)   = ≡̂ₑ-trans (≡̂ₑ-subst σ p) (≡̂ₑ-subst σ q)
-≡̂ₑ-subst σ (≡̂ₑ-cong p q)    = ≡̂ₑ-cong (≡̂ₑ-subst σ p) (≡̂ₑ-subst σ q)
-≡̂ₑ-subst σ ≡̂ₑ-assoc         = ≡̂ₑ-assoc
-≡̂ₑ-subst σ ≡̂ₑ-identityˡ     = ≡̂ₑ-identityˡ
-≡̂ₑ-subst σ ≡̂ₑ-identityʳ     = ≡̂ₑ-identityʳ
-≡̂ₑ-subst σ (≡̂ₑ-const e)     = ≡̂ₑ-const e
-≡̂ₑ-subst σ ≡̂ₑ-const-·       = ≡̂ₑ-const-·
-≡̂ₑ-subst σ (≡̂ₑ-comm ij)     = ≡̂ₑ-comm ij
-≡̂ₑ-subst σ (≡̂ₑ-cong-⊔ p q)  = ≡̂ₑ-cong-⊔ (≡̂ₑ-subst σ p) (≡̂ₑ-subst σ q)
-≡̂ₑ-subst σ ≡̂ₑ-const-⊔       = ≡̂ₑ-const-⊔
-≡̂ₑ-subst σ ≡̂ₑ-comm-⊔        = ≡̂ₑ-comm-⊔
-≡̂ₑ-subst σ ≡̂ₑ-distribˡ-⊔    = ≡̂ₑ-distribˡ-⊔
-≡̂ₑ-subst σ ≡̂ₑ-distribʳ-⊔    = ≡̂ₑ-distribʳ-⊔
-≡̂ₑ-subst σ (≡̂ₑ-absorb p)    = ≡̂ₑ-absorb (⊩-substᴵₑ (⊩ᴵ-∅ {σ = σ}) p)
-
-⊩-substᴵᵣ            h (hypᵣ m)     = ⊩ordᵣᴵ h m
-⊩-substᴵᵣ            h (atomᵣ p)    = atomᵣ p
-⊩-substᴵᵣ {σ = σ}    h (eqᵣ p)      = eqᵣ (≡̂ᵣ-subst σ p)
-⊩-substᴵᵣ            h (transᵣ p q) = transᵣ (⊩-substᴵᵣ h p) (⊩-substᴵᵣ h q)
-⊩-substᴵᵣ            h (monoᵣ p q)  = monoᵣ (⊩-substᴵᵣ h p) (⊩-substᴵᵣ h q)
-⊩-substᴵᵣ            h (map-mono p) = map-mono (⊩-substᴵₑ h p)
-⊩-substᴵᵣ            h ⊔-ubˡᵣ       = ⊔-ubˡᵣ
-⊩-substᴵᵣ            h ⊔-ubʳᵣ       = ⊔-ubʳᵣ
-⊩-substᴵᵣ            h (⊔-lubᵣ p q) = ⊔-lubᵣ (⊩-substᴵᵣ h p) (⊩-substᴵᵣ h q)
-⊩-substᴵᵣ            h topᵣ         = topᵣ
-⊩-substᴵᵣ            h (minᵣ eq)    = minᵣ eq
-⊩-substᴵᵣ            h (zeroˡᵣ p)   = zeroˡᵣ (⊩-substᴵᵣ h p)
-⊩-substᴵᵣ            h (zeroʳᵣ p)   = zeroʳᵣ (⊩-substᴵᵣ h p)
-⊩-substᴵᵣ            h (plusᵣ p q r) = plusᵣ p (⊩-substᴵᵣ h q) (⊩-substᴵᵣ h r)
-⊩-substᴵᵣ            h (indˡᵣ p q)  = indˡᵣ p (⊩-substᴵᵣ h q)
-⊩-substᴵᵣ            h (indʳᵣ p q)  = indʳᵣ p (⊩-substᴵᵣ h q)
-⊩-substᴵᵣ {Q' = Q'} {σ = σ} h (instᵣ {ρ = ρ} {ρ'} m mφ es) =
-  subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y)
-         (sym (trans ([⨟]ʳ ρ (idˢ ,ᵉⁿ es) σ) ([≐]ʳ (inst-⨟ es σ) ρ)))
-         (sym (trans ([⨟]ʳ ρ' (idˢ ,ᵉⁿ es) σ) ([≐]ʳ (inst-⨟ es σ) ρ')))
-         (⊩ors (⊩qhypsᴵ h m (mapᵛ (_[ σ ]ᵉ) es)) mφ)
-⊩-substᴵᵣ {Q' = Q'} {σ = σ} h (factᵣ {ρ = ρ} {ρ'} H es) =
-  subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y)
-         (sym (trans ([⨟]ʳ ρ (from∅ ,ᵉⁿ es) σ) ([≐]ʳ (fact-⨟ es σ) ρ)))
-         (sym (trans ([⨟]ʳ ρ' (from∅ ,ᵉⁿ es) σ) ([≐]ʳ (fact-⨟ es σ) ρ')))
-         (factᵣ {ρ = ρ} {ρ'} H (mapᵛ (_[ σ ]ᵉ) es))
-
-⊩-substᴵₑ         h (hypₑ m)     = ⊩ordₑᴵ h m
-⊩-substᴵₑ         h (atomₑ p)    = atomₑ p
-⊩-substᴵₑ {σ = σ} h (eqₑ p)      = eqₑ (≡̂ₑ-subst σ p)
-⊩-substᴵₑ         h (transₑ p q) = transₑ (⊩-substᴵₑ h p) (⊩-substᴵₑ h q)
-⊩-substᴵₑ         h (monoₑ p q)  = monoₑ (⊩-substᴵₑ h p) (⊩-substᴵₑ h q)
-⊩-substᴵₑ         h ⊔-ubˡₑ       = ⊔-ubˡₑ
-⊩-substᴵₑ         h ⊔-ubʳₑ       = ⊔-ubʳₑ
-⊩-substᴵₑ         h (⊔-lubₑ p q) = ⊔-lubₑ (⊩-substᴵₑ h p) (⊩-substᴵₑ h q)
-⊩-substᴵₑ         h topₑ         = topₑ
-⊩-substᴵₑ         h (minₑ eq)    = minₑ eq
-⊩-substᴵₑ         h (zeroˡₑ p)   = zeroˡₑ (⊩-substᴵₑ h p)
-⊩-substᴵₑ         h (zeroʳₑ p)   = zeroʳₑ (⊩-substᴵₑ h p)
-⊩-substᴵₑ         h (plusₑ p q r) = plusₑ p (⊩-substᴵₑ h q) (⊩-substᴵₑ h r)
-⊩-substᴵₑ         h (indˡₑ p q)  = indˡₑ p (⊩-substᴵₑ h q)
-⊩-substᴵₑ         h (indʳₑ p q)  = indʳₑ p (⊩-substᴵₑ h q)
-⊩-substᴵₑ {Q' = Q'} {σ = σ} h (instₑ {ε = ε} {ε'} m mφ es) =
-  subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y)
-         (sym (trans ([⨟]ᵉ ε (idˢ ,ᵉⁿ es) σ) ([≐]ᵉ (inst-⨟ es σ) ε)))
-         (sym (trans ([⨟]ᵉ ε' (idˢ ,ᵉⁿ es) σ) ([≐]ᵉ (inst-⨟ es σ) ε')))
-         (⊩oes (⊩qhypsᴵ h m (mapᵛ (_[ σ ]ᵉ) es)) mφ)
-⊩-substᴵₑ {Q' = Q'} {σ = σ} h (factₑ {ε = ε} {ε'} H es) =
-  subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y)
-         (sym (trans ([⨟]ᵉ ε (from∅ ,ᵉⁿ es) σ) ([≐]ᵉ (fact-⨟ es σ) ε)))
-         (sym (trans ([⨟]ᵉ ε' (from∅ ,ᵉⁿ es) σ) ([≐]ᵉ (fact-⨟ es σ) ε')))
-         (factₑ {ε = ε} {ε'} H (mapᵛ (_[ σ ]ᵉ) es))
+≡̂ₑ-subst σ p = mk≡̂ₑ (⊩-substᴵₑ (⊩ᴵ-∅ {σ = σ}) (≡̂ₑ⇒≾ p)) (⊩-substᴵₑ (⊩ᴵ-∅ {σ = σ}) (≡̂ₑ⇒≿ p))
 
 -- A type variable's image is an arbitrary open type, so an assumed
 -- subtyping transports to a subtyping derivation at those images.

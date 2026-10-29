@@ -85,12 +85,17 @@ module Syntax (S : LanguageSpec) where
     using (_∈̂[_]_) renaming (OCtx to Context)
 
   -- Typing hypotheses, among them quantified orderings. Definition
-  -- (Entailment): orderings, eternality, subtyping, the disjunction of
-  -- the variable rule, and `Q ⊩ Q'[δ]`; rule Inst, at any instance of the
-  -- quantified hypothesis's rigids, and rule Gen, at fresh rigids.
+  -- (Entailment): grade orderings, semantic consequence in the grade
+  -- system, an ordering entailed when it holds by value at every closed
+  -- instance satisfying the grade part of the hypotheses; eternality,
+  -- subtyping, the disjunction of the variable rule, and `Q ⊩ Q'[δ]`.
+  -- Rule Inst, at any instance of the quantified hypothesis's rigids,
+  -- and rule Truth, at any instance of a closed ordering's variables,
+  -- are properties of grade entailment; rule Gen is at fresh rigids.
   open import OpenCalculus.Hypotheses S public
-    using (_⊩_≾̂ᵣ_; _⊩_≾̂ₑ_; _⊩ᴱ_; _∣_<:̂ᵛ_; _∣_<:̂ᶜ_; VarOK; _⊩ᴴ_[_])
-    renaming (Hyps to Hypotheses; instₑ to Inst; instᵣ to Instʳ; _⊩ᴼ_[_] to Gen)
+    using (_⊩_≾̂ᵣ_; _⊩_≾̂ₑ_; _⊨ᵍ_; _⊩ᴱ_; _∣_<:̂ᵛ_; _∣_<:̂ᶜ_; VarOK; _⊩ᴴ_[_])
+    renaming ( Hyps to Hypotheses; instₑ to Inst; instᵣ to Instʳ
+             ; factₑ to Truth; factᵣ to Truthʳ; _⊩ᴼ_[_] to Gen )
   open import OpenCalculus.Hypotheses.Quantified S public
     using () renaming (QOrd to QuantifiedOrdering)
 
@@ -357,9 +362,10 @@ module CalculusWithGradeVariables (S : LanguageSpec) where
   -- Raw values and computations
   open import OpenCalculus.Syntax.Raw S public using (RawV; RawC)
 
-  -- Entailment: convertibility and the rules. The rules are named for
-  -- effect grades; the resource rules carry a subscript `ᵣ`. Var-Et has one
-  -- rule per disjunct.
+  -- Entailment: convertibility, entailment from no hypotheses both ways,
+  -- and the rules, those of grade entailment its properties. The rules
+  -- are named for effect grades; the resource rules carry a subscript
+  -- `ᵣ`. Var-Et has one rule per disjunct.
   open import OpenCalculus.Hypotheses S public
     using (_≡̂ₑ_; _≡̂ᵣ_; _≡̂ᵛ_; _⊩ᵗᵛ_≾_)
     renaming ( hypₑ to Hyp ; hypᵣ to Hypᵣ ; eqₑ to Conv ; eqᵣ to Convᵣ

@@ -11,6 +11,15 @@
 -- carrier (`⟦_⟧ʳ`, `⟦_⟧ᵉ`). A handler type, which has no       --
 -- closed counterpart, means the fixed non-eternal type         --
 -- `handlerᴰ`.                                                  --
+--                                                              --
+-- Closed open syntax means its interpretation at the empty     --
+-- instance (`⌞_⌟`), on grades the value; the embedding of a    --
+-- closed type, each grade a constant, is a section of it       --
+-- (`⌜_⌝ᵛ`, `⌞⌜_⌝⌟ᵛ`). A closed instance `δ : Subst Θ ∅ˢ`       --
+-- determines the declarative instance `⌞ δ ⌟ˢ`, and every      --
+-- declarative instance `σ` is pointwise the one determined by  --
+-- `⌜ σ ⌝ˢ`, which sends each variable to a constant            --
+-- (`⌞⌜_⌝ˢ⌟`).                                                  --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
@@ -319,8 +328,80 @@ _,ᵉᴰⁿ_ : ∀ {Θ k} → DInst Θ → Vec E k → DInst (Θ +eⁿ k)
 ⟦⟧∅-valʳ (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (⟦⟧∅-valʳ ρ) (⟦⟧∅-valʳ ρ')
 ⟦⟧∅-valʳ ∣ ε ∣̂ᵉ     = cong mapᵉ (⟦⟧∅-valᵉ ε)
 
--- constants mean themselves
+------------------------------------------------------------------------
+-- Closed open syntax: the interpretation at the empty instance
 
-⟦consts⟧ : ∀ {k} → (cs : Vec E k) → mapᵛ (λ e → ⟦ e ⟧ᵉ ∅ᴰ) (mapᵛ econst cs) ≡ cs
-⟦consts⟧ []ᵛ        = refl
-⟦consts⟧ (c ∷ᵛ cs) = cong (c ∷ᵛ_) (⟦consts⟧ cs)
+⌞_⌟ᵉ : EExp ∅ˢ → E
+⌞ ε ⌟ᵉ = ⟦ ε ⟧ᵉ ∅ᴰ
+
+⌞_⌟ʳ : RExp ∅ˢ → R
+⌞ ρ ⌟ʳ = ⟦ ρ ⟧ʳ ∅ᴰ
+
+⌞_⌟ᵛ : OVType ∅ˢ → VType
+⌞ A ⌟ᵛ = ⟦ A ⟧ᵛ ∅ᴰ
+
+⌞_⌟ᶜ : OCType ∅ˢ → CType
+⌞ C ⌟ᶜ = ⟦ C ⟧ᶜ ∅ᴰ
+
+⌞_⌟ᶜᵗˣ : ∀ {n} → OCtx ∅ˢ n → Ctx
+⌞ Γ ⌟ᶜᵗˣ = ⟦ Γ ⟧ᶜᵗˣ ∅ᴰ
+
+-- on grades, the values
+
+⌞⌟-valᵉ : (ε : EExp ∅ˢ) → ⌞ ε ⌟ᵉ ≡ valᵉ ε
+⌞⌟-valᵉ = ⟦⟧∅-valᵉ
+
+⌞⌟-valʳ : (ρ : RExp ∅ˢ) → ⌞ ρ ⌟ʳ ≡ valʳ ρ
+⌞⌟-valʳ = ⟦⟧∅-valʳ
+
+-- Every closed type arises: the embedding, each grade a constant, is a
+-- section of `⌞_⌟`
+
+
+mutual
+
+  ⌜_⌝ᵛ : VType → OVType ∅ˢ
+  ⌜ Base b ⌝ᵛ     = Base b
+  ⌜ Unit ⌝ᵛ       = Unit
+  ⌜ Bool ⌝ᵛ       = Bool
+  ⌜ Nat ⌝ᵛ        = Nat
+  ⌜ A |×| B ⌝ᵛ    = ⌜ A ⌝ᵛ |×| ⌜ B ⌝ᵛ
+  ⌜ A |+| B ⌝ᵛ    = ⌜ A ⌝ᵛ |+| ⌜ B ⌝ᵛ
+  ⌜ |List| A ⌝ᵛ   = |List| ⌜ A ⌝ᵛ
+  ⌜ Empty ⌝ᵛ      = Empty
+  ⌜ A ⇒ C ⌝ᵛ      = ⌜ A ⌝ᵛ ⇒ ⌜ C ⌝ᶜ
+  ⌜ [ ρ ] A ⌝ᵛ    = [ rconst ρ ] ⌜ A ⌝ᵛ
+
+  ⌜_⌝ᶜ : CType → OCType ∅ˢ
+  ⌜ A ‼ ε ⌝ᶜ = ⌜ A ⌝ᵛ ‼ econst ε
+
+mutual
+
+  ⌞⌜_⌝⌟ᵛ : (A : VType) → ⌞ ⌜ A ⌝ᵛ ⌟ᵛ ≡ A
+  ⌞⌜ Base b ⌝⌟ᵛ   = refl
+  ⌞⌜ Unit ⌝⌟ᵛ     = refl
+  ⌞⌜ Bool ⌝⌟ᵛ     = refl
+  ⌞⌜ Nat ⌝⌟ᵛ      = refl
+  ⌞⌜ A |×| B ⌝⌟ᵛ  = cong₂ _|×|_ ⌞⌜ A ⌝⌟ᵛ ⌞⌜ B ⌝⌟ᵛ
+  ⌞⌜ A |+| B ⌝⌟ᵛ  = cong₂ _|+|_ ⌞⌜ A ⌝⌟ᵛ ⌞⌜ B ⌝⌟ᵛ
+  ⌞⌜ |List| A ⌝⌟ᵛ = cong |List| ⌞⌜ A ⌝⌟ᵛ
+  ⌞⌜ Empty ⌝⌟ᵛ    = refl
+  ⌞⌜ A ⇒ C ⌝⌟ᵛ    = cong₂ _⇒_ ⌞⌜ A ⌝⌟ᵛ ⌞⌜ C ⌝⌟ᶜ
+  ⌞⌜ [ ρ ] A ⌝⌟ᵛ  = cong ([ ρ ]_) ⌞⌜ A ⌝⌟ᵛ
+
+  ⌞⌜_⌝⌟ᶜ : (C : CType) → ⌞ ⌜ C ⌝ᶜ ⌟ᶜ ≡ C
+  ⌞⌜ A ‼ ε ⌝⌟ᶜ = cong (_‼ ε) ⌞⌜ A ⌝⌟ᵛ
+
+-- A closed instance of the open syntax determines a declarative one
+
+⌞_⌟ˢ : ∀ {Θ} → Subst Θ ∅ˢ → DInst Θ
+⌞ δ ⌟ˢ = δ ⨟ᴰ ∅ᴰ
+
+-- Every declarative instance arises so, from the closed instance
+-- sending each variable to a constant
+
+⌜_⌝ˢ : ∀ {Θ} → DInst Θ → Subst Θ ∅ˢ
+⌜ σ ⌝ˢ = sub (λ α → ⌜ ty σ α ⌝ᵛ) (λ i → rconst (res σ i)) (λ i → econst (eff σ i))
+
+⌞⌜_⌝ˢ⌟ : ∀ {Θ} → (σ : DInst Θ) → ⌞ ⌜ σ ⌝ˢ ⌟ˢ ≗ᴰ σ
+⌞⌜ σ ⌝ˢ⌟ = mk≗ᴰ (λ α → ⌞⌜ ty σ α ⌝⌟ᵛ) (λ _ → refl) (λ _ → refl)
