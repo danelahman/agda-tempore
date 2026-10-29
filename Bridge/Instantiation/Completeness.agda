@@ -8,19 +8,18 @@
 -- the empty scope (`Bridge.Instantiation.Embedding`) and so    --
 -- factors through a                                            --
 -- principal scheme (`factor`): the factoring instance          --
--- satisfies the scheme's hypotheses and obligations, agrees    --
--- with `σ₀` on the context, and there the principal type is a  --
+-- satisfies the scheme's hypotheses, agrees with `σ₀` on the   --
+-- context, and there the principal type is a                   --
 -- subtype of that of `D` (`principalᴰ`, `infer-principal`,     --
 -- `check-principal`). An untypable verdict leaves no such      --
 -- typing (`infer-untypableᴰ`, `check-untypableᴰ`). Soundness   --
 -- is `Bridge.Instantiation.Inference`; the factoring instance  --
--- meets its premises (`principal-premises`), so the scheme     --
+-- meets its premise (`Principalᴰ.sat-Q`), so the scheme       --
 -- there types the term of `D`, the elaboration of `M` at `σ₀`, --
 -- in `D`'s context below `D`'s type                            --
 -- (`principal-typing`, `infer-principal-typing`).              --
 ------------------------------------------------------------------
 
-open import Data.List.Relation.Unary.All using () renaming ([] to []ᴬ)
 open import Data.List.Base using ([])
 open import Data.Unit using (tt)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
@@ -47,9 +46,9 @@ open import ClosedCalculus.Syntax.Subtyping S using (_<:ᶜ_)
 open import OpenCalculus.Syntax.Types         S using (OCType)
 open import OpenCalculus.Syntax.Contexts      S using (OCtx)
 open import OpenCalculus.Syntax.Subst         S
-open import OpenCalculus.Hypotheses           S using (∅ᴴ; ⊩ᴴ-∅)
+open import OpenCalculus.Hypotheses           S using (∅ᴴ; ⊩ᴵ-∅)
 open import OpenCalculus.Hypotheses.Instances S
-  using (Satisfiable; _⊩ᴼˢ_[_])
+  using (Satisfiable)
 open import OpenCalculus.Typing     S using (_∣_⊢C⦂_)
 open import OpenCalculus.Syntax.Raw S using (RawC; SecondClassᶜ)
 import OpenCalculus.Typing.Erasure S as OE
@@ -105,22 +104,19 @@ module _ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} (nh : NoHandlerTypeᶜᵗˣ Γ)
   uniform-typable : AnnFreeᶜ M → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
                   → UniformTyping Γ σ₀ M D → Typable Γ M
   uniform-typable a σ₀ {C} D u with embed-typing a σ₀ D u
-  ... | D' , e = typable ∅ˢ ⌜ σ₀ ⌝ˢ ∅ᴴ ⌜ C ⌝ᶜ D' e (idˢ , ⊩ᴴ-∅ , []ᴬ)
+  ... | D' , e = typable ∅ˢ ⌜ σ₀ ⌝ˢ ∅ᴴ ⌜ C ⌝ᶜ D' e (idˢ , ⊩ᴵ-∅)
 
 -- The principal scheme's instance factoring a declarative typing: the
 -- closed instance `δ` that `factor` yields from the embedded typing, read
--- declaratively as `⌞ δ ⌟ˢ`. It satisfies the hypotheses, and the
--- obligations in `factor`'s reading, the open entailment at `δ`, and so
--- pointwise; it agrees with `σ₀` on the context's variables; and there
--- the principal type is a subtype of the typing's.
+-- declaratively as `⌞ δ ⌟ˢ`. It satisfies the hypotheses; it agrees
+-- with `σ₀` on the context's variables; and there the principal type is
+-- a subtype of the typing's.
 
 record Principalᴰ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n}
                   (p : PrincipalScheme Γ M) (σ₀ : DInst Θ) (C : CType) : Set where
   field
     δ      : Subst (Θ̃ p) ∅ˢ
     sat-Q  : ⌞ δ ⌟ˢ ⊨ᴰ Q̃ p
-    sat-R  : ∅ᴴ ⊩ᴼˢ R̃ p [ δ ]
-    sat-Rᴰ : ⌞ δ ⌟ˢ ⊨ᴰᴿ R̃ p
     agree  : (σ̃ p ⨟ᴰ ⌞ δ ⌟ˢ) ≗ᴰ σ₀
     ctx    : ⟦ Γ [ σ̃ p ]ᶜᵗˣ ⟧ᶜᵗˣ ⌞ δ ⌟ˢ ≡ ⟦ Γ ⟧ᶜᵗˣ σ₀
     below  : ⟦ X̃ p ⟧ᶜ ⌞ δ ⌟ˢ <:ᶜ C
@@ -134,12 +130,10 @@ principalᴰ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalSch
            → UniformTyping Γ σ₀ M D
            → Principalᴰ p σ₀ C
 principalᴰ {Γ = Γ} {M} p a nh σ₀ {C} D u with embed-typing {Γ = Γ} {M} nh a σ₀ D u
-... | D' , e with factor p ⌜ σ₀ ⌝ˢ ∅ᴴ D' e idˢ (⊩ᴴ-∅ , []ᴬ)
-... | δ , tri , (hQ , hR) , le = record
+... | D' , e with factor p ⌜ σ₀ ⌝ˢ ∅ᴴ D' e idˢ ⊩ᴵ-∅
+... | δ , tri , hQ , le = record
   { δ      = δ
-  ; sat-Q  = ⊨→⊨ᴰ (hQ , []ᴬ)
-  ; sat-R  = hR
-  ; sat-Rᴰ = ⊩ᴼˢ→⊨ᴰᴿ hR
+  ; sat-Q  = ⊨→⊨ᴰ hQ
   ; agree  = agree
   ; ctx    = trans (⟦[]⟧ᶜᵗˣ (σ̃ p) ⌞ δ ⌟ˢ Γ) (⟦≗⟧ᶜᵗˣ agree Γ)
   ; below  = subst₂ _<:ᶜ_ (⌞[]⌟ᶜ δ (X̃ p))
@@ -178,7 +172,7 @@ infer-untypableᴰ Γ M eq a nh (σ₀ , C , D , u) =
 -- untypable verdict
 
 check-principal : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-                → {p : PrincipalScheme Γ M} → {e : Satisfiable (Q̃ p) (R̃ p)}
+                → {p : PrincipalScheme Γ M} → {e : Satisfiable (Q̃ p)}
                 → check Γ M ≡ established p e
                 → AnnFreeᶜ M → NoHandlerTypeᶜᵗˣ Γ
                 → (σ₀ : DInst Θ) → ∀ {C} → (D : ⟦ Γ ⟧ᶜᵗˣ σ₀ ⊢C⦂ C)
@@ -195,17 +189,8 @@ check-untypableᴰ Γ M eq a nh (σ₀ , C , D , u) =
 
 ------------------------------------------------------------------------
 -- The round trip: the factoring instance of `principalᴰ`, read as
--- `⌞ δ ⌟ˢ`, meets the premises of the scheme's instantiation
--- (`Bridge.Instantiation.Inference`), its obligations through the
--- convertibility of `δ` and `⌜ ⌞ δ ⌟ˢ ⌝ˢ`
-
-principal-premises : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} {p : PrincipalScheme Γ M}
-                       {σ₀ : DInst Θ} {C : CType}
-                   → (P : Principalᴰ p σ₀ C)
-                   → (⌞ Principalᴰ.δ P ⌟ˢ ⊨ᴰ Q̃ p)
-                   × (∅ᴴ ⊩ᴼˢ R̃ p [ ⌜ ⌞ Principalᴰ.δ P ⌟ˢ ⌝ˢ ])
-principal-premises P = sat-Q , ⊩ᴼˢ-⌜⌞⌟⌝ δ sat-R
-  where open Principalᴰ P
+-- `⌞ δ ⌟ˢ`, meets the premise of the scheme's instantiation
+-- (`Bridge.Instantiation.Inference`)
 
 -- so the principal scheme, at that instance, types the term of a
 -- uniform typing `D` in `D`'s context, at a subtype of `D`'s type
@@ -218,9 +203,8 @@ principal-typing : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : Principa
                      ((C' <:ᶜ C) × (CE.⌊ D' ⌋ᶜ ≡ CE.⌊ D ⌋ᶜ))
 principal-typing {Γ = Γ} {M} p c a nh σ₀ D u
   with principalᴰ p a nh σ₀ D u
-... | P with principal-premises P
-...   | sQ , sR with scheme-instantiate p c ⌞ Principalᴰ.δ P ⌟ˢ sQ sR
-...     | D' , e =
+... | P with scheme-instantiate p c ⌞ Principalᴰ.δ P ⌟ˢ (Principalᴰ.sat-Q P)
+...   | D' , e =
   ⟦ X̃ p ⟧ᶜ ⌞ Principalᴰ.δ P ⌟ˢ ,
   castᶜ (Principalᴰ.ctx P) refl D' ,
   Principalᴰ.below P ,

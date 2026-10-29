@@ -6,26 +6,34 @@
 -- calculus at closed instances, each rigid of a clause kept a  --
 -- parameter.                                                   --
 --                                                              --
--- A closed instance satisfies hypotheses and obligations      --
--- (`Obligations`) when the empty hypothesis set entails them   --
--- (`_⊨_∣_`, by `_⊩ᴴ_[_]` and `_⊩ᴼ_[_]`). Semantic entailment   --
--- `Q ⊨ᴴ Q'` holds when every closed instance of `Q` is one of  --
+-- A closed instance satisfies hypotheses (`_⊨_`) when each     --
+-- holds at it, a quantified ordering at every grade for its    --
+-- rigids. A satisfying instance is exactly one at which the    --
+-- truths entail the hypotheses (`⊨⇒⊩ᴴ`, `⊩ᴴ⇒⊨`); entailment is  --
+-- sound for satisfaction (`sound-≾ᵣ⁰`, `sound-≾ₑ⁰`).          --
+-- Semantic entailment `Q ⊨ᴴ Q'` holds when every closed        --
+-- instance of `Q` at which no hypotheses entail it is one of   --
 -- `Q'`; open entailment implies it.                            --
 --                                                              --
 -- A closed grade expression has a value in the carrier.        --
--- Entailed ordering between closed expressions is the          --
--- carrier's ordering of their values, and convertibility is    --
--- equivalence of values. Closed subtyping, closed eternality and  --
--- the closed var-rule disjunction are decidable.               --
+-- Entailed ordering between closed expressions, from no        --
+-- hypotheses or from the truths, is the carrier's ordering of  --
+-- their values, and convertibility is equivalence of values.   --
+-- Closed subtyping, closed eternality and the closed var-rule  --
+-- disjunction are decidable.                                   --
 ------------------------------------------------------------------
 
 open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)
+open import Data.Bool.Base using (T)
 open import Data.Nat.Base using (ℕ; zero; suc)
 open import Data.List.Base using (List; []; _∷_)
-open import Data.List.Relation.Unary.All using (All; []; _∷_)
+open import Data.List.Relation.Unary.All using (All; []; _∷_; tabulate; lookup)
+open import Data.List.Membership.Propositional.Properties using (∈-++⁺ˡ; ∈-++⁺ʳ; ∈-++⁻)
 open import Data.Nat.Properties using () renaming (_≟_ to _≟ℕ_)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
+open import Data.Vec.Base using (Vec)
+open import Data.Unit using (tt)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Data.Maybe.Base using (Maybe; nothing)
 open import Data.Maybe using (to-witness)
@@ -55,56 +63,47 @@ open import OpenCalculus.Syntax.Subst  S
 open import OpenCalculus.Hypotheses    S
 
 ------------------------------------------------------------------------
--- Obligations
+-- Lists of quantified orderings
 
-_⊩ᴼˢ_[_] : ∀ {Θ Ξ} → Hyps Ξ → Obligs Θ → Subst Θ Ξ → Set
+_⊩ᴼˢ_[_] : ∀ {Θ Ξ} → Hyps Ξ → QOrds Θ → Subst Θ Ξ → Set
 Q' ⊩ᴼˢ R [ δ ] = All (λ O → Q' ⊩ᴼ O [ δ ]) R
 
-⊩ᴼˢ-≐ : ∀ {Θ Ξ} {Q' : Hyps Ξ} {R : Obligs Θ} {δ δ' : Subst Θ Ξ}
+⊩ᴼˢ-≐ : ∀ {Θ Ξ} {Q' : Hyps Ξ} {R : QOrds Θ} {δ δ' : Subst Θ Ξ}
       → δ ≐ˢ δ' → Q' ⊩ᴼˢ R [ δ ] → Q' ⊩ᴼˢ R [ δ' ]
 ⊩ᴼˢ-≐ p []       = []
 ⊩ᴼˢ-≐ {R = O ∷ R} p (h ∷ hs) = ⊩ᴼ-resp-≐ˢ O p h ∷ ⊩ᴼˢ-≐ p hs
 
--- Hypotheses and obligations together
+-- Hypotheses and further quantified orderings, held apart
 
 infix 4 _⊩_∣_[_] _⊩ᴼˢ_[_] _⊨_∣_
 
-_⊩_∣_[_] : ∀ {Θ Ξ} → Hyps Ξ → Hyps Θ → Obligs Θ → Subst Θ Ξ → Set
+_⊩_∣_[_] : ∀ {Θ Ξ} → Hyps Ξ → Hyps Θ → QOrds Θ → Subst Θ Ξ → Set
 Q' ⊩ Q ∣ R [ δ ] = (Q' ⊩ᴴ Q [ δ ]) × (Q' ⊩ᴼˢ R [ δ ])
 
--- Satisfaction: a closed instance meets hypotheses and obligations
--- when no hypotheses entail them
+-- A set with quantified hypotheses added is entailed exactly when the
+-- set and each of them are
 
-_⊨_∣_ : ∀ {Θ} → Subst Θ ∅ˢ → Hyps Θ → Obligs Θ → Set
-δ ⊨ Q ∣ R = ∅ᴴ ⊩ Q ∣ R [ δ ]
+++ᵠ⇒ : ∀ {Θ Ξ} {Q' : Hyps Ξ} {Q : Hyps Θ} {R : List (QOrd Θ)} {δ : Subst Θ Ξ}
+   → Q' ⊩ᴴ Q ++ᵠ R [ δ ] → Q' ⊩ Q ∣ R [ δ ]
+++ᵠ⇒ {Q = Q} {R} h =
+  mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (⊩disj h)
+       (λ m → ⊩qhyps h (∈-++⁺ˡ m)) (⊩truths h) ,
+  tabulate (λ m → ⊩qhyps h (∈-++⁺ʳ (qhyps Q) m))
 
-------------------------------------------------------------------------
--- Satisfiability: some closed instance satisfies them
+++ᵠ⇐ : ∀ {Θ Ξ} {Q' : Hyps Ξ} {Q : Hyps Θ} {R : List (QOrd Θ)} {δ : Subst Θ Ξ}
+   → Q' ⊩ Q ∣ R [ δ ] → Q' ⊩ᴴ Q ++ᵠ R [ δ ]
+++ᵠ⇐ {Q = Q} (h , hs) =
+  mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (⊩disj h)
+       (λ m → [ ⊩qhyps h , lookup hs ]′ (∈-++⁻ (qhyps Q) m)) (⊩truths h)
 
-Satisfiable : ∀ {Θ} → Hyps Θ → Obligs Θ → Set
-Satisfiable {Θ} Q R = Σ[ δ ∈ Subst Θ ∅ˢ ] (δ ⊨ Q ∣ R)
+-- At a closed instance, hypotheses and quantified hypotheses held
+-- apart, entailed by the truths
 
--- The empty hypotheses and obligations are satisfiable, by the ground
--- instance
-
-Satisfiable-∅ : ∀ {Θ} → Satisfiable {Θ} ∅ᴴ []
-Satisfiable-∅ = groundˢ , ⊩ᴴ-∅ , []
+_⊨_∣_ : ∀ {Θ} → Subst Θ ∅ˢ → Hyps Θ → QOrds Θ → Set
+δ ⊨ Q ∣ R = ⊤ᴴ ⊩ Q ∣ R [ δ ]
 
 ------------------------------------------------------------------------
 -- Values of closed grade expressions
-
-valᵉ : EExp ∅ˢ → E
-valᵉ (evar ())
-valᵉ (econst c) = c
-valᵉ (ε ·̂ₑ ε')  = valᵉ ε ·ₑ valᵉ ε'
-valᵉ (ε ⊔̂ₑ ε')  = valᵉ ε ⊔ₑ valᵉ ε'
-
-valʳ : RExp ∅ˢ → R
-valʳ (rvar ())
-valʳ (rconst c) = c
-valʳ (ρ ·̂ᵣ ρ')  = valʳ ρ ·ᵣ valʳ ρ'
-valʳ (ρ ⊔̂ᵣ ρ')  = valʳ ρ ⊔ᵣ valʳ ρ'
-valʳ ∣ ε ∣̂ᵉ     = mapᵉ (valᵉ ε)
 
 -- A closed expression is convertible to its value
 
@@ -186,6 +185,8 @@ val-≾ᵣ (zeroʳᵣ p)   = ≾ᵣ-zero-productʳ (val-≾ᵣ p)
 val-≾ᵣ (plusᵣ p q r) = Plus.c⁺-least p (val-≾ᵣ q) (val-≾ᵣ r)
 val-≾ᵣ (indˡᵣ p q)  = Plus.⁺-indˡ p (val-≾ᵣ q)
 val-≾ᵣ (indʳᵣ p q)  = Plus.⁺-indʳ p (val-≾ᵣ q)
+val-≾ᵣ (instᵣ () _ _)
+val-≾ᵣ (factᵣ () _ _)
 
 val-≾ₑ (hypₑ ())
 val-≾ₑ (atomₑ p)    = p
@@ -202,6 +203,51 @@ val-≾ₑ (zeroʳₑ p)   = ≾ₑ-zero-productʳ (val-≾ₑ p)
 val-≾ₑ (plusₑ p q r) = Plus.c⁺-least p (val-≾ₑ q) (val-≾ₑ r)
 val-≾ₑ (indˡₑ p q)  = Plus.⁺-indˡ p (val-≾ₑ q)
 val-≾ₑ (indʳₑ p q)  = Plus.⁺-indʳ p (val-≾ₑ q)
+val-≾ₑ (instₑ () _ _)
+val-≾ₑ (factₑ () _ _)
+
+-- and of entailment from the truths, a fact holding at its closed
+-- instance
+
+val-≾ᵣᵀ : {ρ ρ' : RExp ∅ˢ} → ⊤ᴴ ⊩ ρ ≾̂ᵣ ρ' → valʳ ρ ≾ᵣ valʳ ρ'
+val-≾ₑᵀ : {ε ε' : EExp ∅ˢ} → ⊤ᴴ ⊩ ε ≾̂ₑ ε' → valᵉ ε ≾ₑ valᵉ ε'
+
+val-≾ᵣᵀ (hypᵣ ())
+val-≾ᵣᵀ (atomᵣ p)    = p
+val-≾ᵣᵀ (eqᵣ p)      = ≃ᵣ⇒≾ᵣ (val-≡̂ᵣ p)
+val-≾ᵣᵀ (transᵣ p q) = ≾ᵣ-trans (val-≾ᵣᵀ p) (val-≾ᵣᵀ q)
+val-≾ᵣᵀ (monoᵣ p q)  = ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (val-≾ᵣᵀ p)) (·ᵣ-monoʳ-≾ᵣ (val-≾ᵣᵀ q))
+val-≾ᵣᵀ (map-mono p) = map-monotoneᵉ (val-≾ₑᵀ p)
+val-≾ᵣᵀ (⊔-ubˡᵣ {ρ₁} {ρ₂}) = ⊔ᵣ-ubˡ (valʳ ρ₁) (valʳ ρ₂)
+val-≾ᵣᵀ (⊔-ubʳᵣ {ρ₁} {ρ₂}) = ⊔ᵣ-ubʳ (valʳ ρ₁) (valʳ ρ₂)
+val-≾ᵣᵀ (⊔-lubᵣ p q) = ⊔ᵣ-lub (val-≾ᵣᵀ p) (val-≾ᵣᵀ q)
+val-≾ᵣᵀ (topᵣ {ρ})   = ≾-⊤ᵣ (valʳ ρ)
+val-≾ᵣᵀ {ρ' = ρ'} (minᵣ ij) = to-witness ij (valʳ ρ')
+val-≾ᵣᵀ (zeroˡᵣ p)   = ≾ᵣ-zero-productˡ (val-≾ᵣᵀ p)
+val-≾ᵣᵀ (zeroʳᵣ p)   = ≾ᵣ-zero-productʳ (val-≾ᵣᵀ p)
+val-≾ᵣᵀ (plusᵣ p q r) = Plus.c⁺-least p (val-≾ᵣᵀ q) (val-≾ᵣᵀ r)
+val-≾ᵣᵀ (indˡᵣ p q)  = Plus.⁺-indˡ p (val-≾ᵣᵀ q)
+val-≾ᵣᵀ (indʳᵣ p q)  = Plus.⁺-indʳ p (val-≾ᵣᵀ q)
+val-≾ᵣᵀ (instᵣ () _ _)
+val-≾ᵣᵀ (factᵣ _ H es) = H es
+
+val-≾ₑᵀ (hypₑ ())
+val-≾ₑᵀ (atomₑ p)    = p
+val-≾ₑᵀ (eqₑ p)      = ≃ₑ⇒≾ₑ (val-≡̂ₑ p)
+val-≾ₑᵀ (transₑ p q) = ≾ₑ-trans (val-≾ₑᵀ p) (val-≾ₑᵀ q)
+val-≾ₑᵀ (monoₑ p q)  = ≾ₑ-trans (·ₑ-monoˡ-≾ₑ (val-≾ₑᵀ p)) (·ₑ-monoʳ-≾ₑ (val-≾ₑᵀ q))
+val-≾ₑᵀ (⊔-ubˡₑ {ε₁} {ε₂}) = ⊔ₑ-ubˡ (valᵉ ε₁) (valᵉ ε₂)
+val-≾ₑᵀ (⊔-ubʳₑ {ε₁} {ε₂}) = ⊔ₑ-ubʳ (valᵉ ε₁) (valᵉ ε₂)
+val-≾ₑᵀ (⊔-lubₑ p q) = ⊔ₑ-lub (val-≾ₑᵀ p) (val-≾ₑᵀ q)
+val-≾ₑᵀ (topₑ {ε})   = ≾-⊤ₑ (valᵉ ε)
+val-≾ₑᵀ {ε' = ε'} (minₑ ij) = to-witness ij (valᵉ ε')
+val-≾ₑᵀ (zeroˡₑ p)   = ≾ₑ-zero-productˡ (val-≾ₑᵀ p)
+val-≾ₑᵀ (zeroʳₑ p)   = ≾ₑ-zero-productʳ (val-≾ₑᵀ p)
+val-≾ₑᵀ (plusₑ p q r) = Plus.c⁺-least p (val-≾ₑᵀ q) (val-≾ₑᵀ r)
+val-≾ₑᵀ (indˡₑ p q)  = Plus.⁺-indˡ p (val-≾ₑᵀ q)
+val-≾ₑᵀ (indʳₑ p q)  = Plus.⁺-indʳ p (val-≾ₑᵀ q)
+val-≾ₑᵀ (instₑ () _ _)
+val-≾ₑᵀ (factₑ _ H es) = H es
 
 ------------------------------------------------------------------------
 -- The key lemma: completeness, under any closed hypotheses, through
@@ -227,11 +273,11 @@ val-≡̂ₑ⁻ {ε} {ε'} p =
 
 -- and so is equality from no hypotheses, the order's equivalence
 
-val-⊩≡̂ᵣ : {ρ ρ' : RExp ∅ˢ} → ∅ᴴ ⊩ ρ ≡̂ᵣ ρ' → valʳ ρ ≃ᵣ valʳ ρ'
-val-⊩≡̂ᵣ (p , q) = val-≾ᵣ p , val-≾ᵣ q
+val-⊩≡̂ᵣ : {ρ ρ' : RExp ∅ˢ} → ⊤ᴴ ⊩ ρ ≡̂ᵣ ρ' → valʳ ρ ≃ᵣ valʳ ρ'
+val-⊩≡̂ᵣ (p , q) = val-≾ᵣᵀ p , val-≾ᵣᵀ q
 
-val-⊩≡̂ₑ : {ε ε' : EExp ∅ˢ} → ∅ᴴ ⊩ ε ≡̂ₑ ε' → valᵉ ε ≃ₑ valᵉ ε'
-val-⊩≡̂ₑ (p , q) = val-≾ₑ p , val-≾ₑ q
+val-⊩≡̂ₑ : {ε ε' : EExp ∅ˢ} → ⊤ᴴ ⊩ ε ≡̂ₑ ε' → valᵉ ε ≃ₑ valᵉ ε'
+val-⊩≡̂ₑ (p , q) = val-≾ₑᵀ p , val-≾ₑᵀ q
 
 val-⊩≡̂ᵣ⁻ : {Q : Hyps ∅ˢ} {ρ ρ' : RExp ∅ˢ} → valʳ ρ ≃ᵣ valʳ ρ' → Q ⊩ ρ ≡̂ᵣ ρ'
 val-⊩≡̂ᵣ⁻ p = val-≾ᵣ⁻ (proj₁ p) , val-≾ᵣ⁻ (proj₂ p)
@@ -243,11 +289,11 @@ val-⊩≡̂ₑ⁻ p = val-≾ₑ⁻ (proj₁ p) , val-≾ₑ⁻ (proj₂ p)
 
 infix 4 _≾̂ᵣ?_ _≾̂ₑ?_ _≡̂ᵣ?_ _≡̂ₑ?_
 
-_≾̂ᵣ?_ : (ρ ρ' : RExp ∅ˢ) → Dec (∅ᴴ ⊩ ρ ≾̂ᵣ ρ')
-ρ ≾̂ᵣ? ρ' = map′ val-≾ᵣ⁻ val-≾ᵣ (valʳ ρ ≾ᵣ? valʳ ρ')
+_≾̂ᵣ?_ : (ρ ρ' : RExp ∅ˢ) → Dec (⊤ᴴ ⊩ ρ ≾̂ᵣ ρ')
+ρ ≾̂ᵣ? ρ' = map′ val-≾ᵣ⁻ val-≾ᵣᵀ (valʳ ρ ≾ᵣ? valʳ ρ')
 
-_≾̂ₑ?_ : (ε ε' : EExp ∅ˢ) → Dec (∅ᴴ ⊩ ε ≾̂ₑ ε')
-ε ≾̂ₑ? ε' = map′ val-≾ₑ⁻ val-≾ₑ (valᵉ ε ≾ₑ? valᵉ ε')
+_≾̂ₑ?_ : (ε ε' : EExp ∅ˢ) → Dec (⊤ᴴ ⊩ ε ≾̂ₑ ε')
+ε ≾̂ₑ? ε' = map′ val-≾ₑ⁻ val-≾ₑᵀ (valᵉ ε ≾ₑ? valᵉ ε')
 
 _≡̂ᵣ?_ : (ρ ρ' : RExp ∅ˢ) → Dec (ρ ≡̂ᵣ ρ')
 ρ ≡̂ᵣ? ρ' = map′ val-≡̂ᵣ⁻ val-≡̂ᵣ (valʳ ρ ≃ᵣ? valʳ ρ')
@@ -260,7 +306,7 @@ _≡̂ₑ?_ : (ε ε' : EExp ∅ˢ) → Dec (ε ≡̂ₑ ε')
 
 -- Eternality
 
-⊩ᴱ? : (A : OVType ∅ˢ) → Dec (∅ᴴ ⊩ᴱ A)
+⊩ᴱ? : (A : OVType ∅ˢ) → Dec (⊤ᴴ ⊩ᴱ A)
 ⊩ᴱ? (tvar ())
 ⊩ᴱ? (Base b) with eternalBaseType? b
 ... | yes p = yes (Baseₑ p)
@@ -281,17 +327,17 @@ _≡̂ₑ?_ : (ε ε' : EExp ∅ˢ) → Dec (ε ≡̂ₑ ε')
 -- The var-rule disjunction: eternality, or a value below the unit
 
 VarOK-∅ : {A : OVType ∅ˢ} {ρ : RExp ∅ˢ}
-        → VarOK ∅ᴴ A ρ → (∅ᴴ ⊩ᴱ A) ⊎ (valʳ ρ ≾ᵣ uᵣ)
+        → VarOK ⊤ᴴ A ρ → (⊤ᴴ ⊩ᴱ A) ⊎ (valʳ ρ ≾ᵣ uᵣ)
 VarOK-∅ (et-ok et) = inj₁ et
-VarOK-∅ (≾ᵘ-ok le) = inj₂ (val-≾ᵣ le)
+VarOK-∅ (≾ᵘ-ok le) = inj₂ (val-≾ᵣᵀ le)
 VarOK-∅ (hyp-ok () _ _)
 
 VarOK-∅⁻ : {A : OVType ∅ˢ} {ρ : RExp ∅ˢ}
-         → (∅ᴴ ⊩ᴱ A) ⊎ (valʳ ρ ≾ᵣ uᵣ) → VarOK ∅ᴴ A ρ
+         → (⊤ᴴ ⊩ᴱ A) ⊎ (valʳ ρ ≾ᵣ uᵣ) → VarOK ⊤ᴴ A ρ
 VarOK-∅⁻ (inj₁ et) = et-ok et
 VarOK-∅⁻ (inj₂ le) = ≾ᵘ-ok (val-≾ᵣ⁻ le)
 
-VarOK? : (A : OVType ∅ˢ) → (ρ : RExp ∅ˢ) → Dec (VarOK ∅ᴴ A ρ)
+VarOK? : (A : OVType ∅ˢ) → (ρ : RExp ∅ˢ) → Dec (VarOK ⊤ᴴ A ρ)
 VarOK? A ρ with ⊩ᴱ? A | valʳ ρ ≾ᵣ? uᵣ
 ... | yes et | _      = yes (et-ok et)
 ... | no  _  | yes le = yes (≾ᵘ-ok (val-≾ᵣ⁻ le))
@@ -330,11 +376,11 @@ former (_ ⇛ _)   = 11
 
 infix 4 _<:̂ᵛ?_ _<:̂ᶜ?_
 
-_<:̂ᵛ?_ : (A B : OVType ∅ˢ) → Dec (∅ᴴ ∣ A <:̂ᵛ B)
-_<:̂ᶜ?_ : (C D : OCType ∅ˢ) → Dec (∅ᴴ ∣ C <:̂ᶜ D)
+_<:̂ᵛ?_ : (A B : OVType ∅ˢ) → Dec (⊤ᴴ ∣ A <:̂ᵛ B)
+_<:̂ᶜ?_ : (C D : OCType ∅ˢ) → Dec (⊤ᴴ ∣ C <:̂ᶜ D)
 
 -- Types with the same outermost former
-same : (A B : OVType ∅ˢ) → former A ≡ former B → Dec (∅ᴴ ∣ A <:̂ᵛ B)
+same : (A B : OVType ∅ˢ) → former A ≡ former B → Dec (⊤ᴴ ∣ A <:̂ᵛ B)
 same (tvar ()) _ _
 same (Base b)  (Base b')  refl = map′ Baseₛ (λ { (Baseₛ p) → p }) (b ≡ᵇ? b')
 same Unit      Unit       refl = yes Unitₛ
@@ -366,12 +412,169 @@ A <:̂ᵛ? B with former A ≟ℕ former B
 
 -- An instance of a set is an instance of every set it entails
 
-inst-⊩ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} {δ : Subst Θ ∅ˢ}
-        → Q ⊩ᴴ Q' → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ᴴ Q' [ δ ]
-inst-⊩ᴴ e h = ⊩ᴴ-⨟ h e
+------------------------------------------------------------------------
+-- Satisfaction at closed instances: a closed instance satisfies `Q`
+-- when each hypothesis holds at it, a quantified one at every instance
+-- of its rigids. An instance of the rigids is a vector of closed
+-- expressions, every grade being the value of one; a closed ordering
+-- holds when the truths entail it, which is the ordering of its values
+-- (`val-≾ᵣᵀ`, `val-≾ᵣ⁻`).
 
-Satisfiable-⊩ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} → Q ⊩ᴴ Q' → Satisfiable Q [] → Satisfiable Q' []
-Satisfiable-⊩ᴴ e (δ , h , []) = δ , inst-⊩ᴴ e h , []
+infix 4 _⊨_
+
+_⊨_ : ∀ {Θ} → Subst Θ ∅ˢ → Hyps Θ → Set
+δ ⊨ Q = ⊤ᴴ ⊩ᴵ Q [ δ ]
+
+private
+
+  from∅-id : (from∅ {∅ˢ}) ≐ˢ idˢ
+  from∅-id = mk≐ˢ (λ ()) (λ ()) (λ ())
+
+  ⨟-from∅ : ∀ {Θ} → (δ : Subst Θ ∅ˢ) → (δ ⨟ˢ from∅) ≐ˢ δ
+  ⨟-from∅ δ = ≐ˢ-trans (⨟-congʳ δ from∅-id) (⨟-idʳ δ)
+
+  from∅-vars : (k : ℕ) → (from∅ ,ᵉⁿ varsⁿ k) ≐ˢ idˢ {∅ˢ +eⁿ k}
+  from∅-vars k = ≐ˢ-trans (≐ˢ-,ᵉⁿ (mk≐ˢ (λ ()) (λ ()) (λ ())) (varsⁿ k)) (wkˢⁿ-varsⁿ k)
+
+-- A satisfying instance is one of the truths: a quantified hypothesis,
+-- holding at every instance of its rigids, is a truth at its image
+
+⊨⇒⊩ᴴ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → δ ⊨ Q → ⊤ᴴ ⊩ᴴ Q [ δ ]
+⊨⇒⊩ᴴ {Θ} {Q} {δ} h =
+  mk⊩ᴴ (⊩etsᴵ h) (⊩subᵥᴵ h) (⊩ordᵣᴵ h) (⊩ordₑᴵ h) (⊩disjᴵ h) qh (λ _ → tt)
+  where
+    qh : ∀ {O} → O ∈ qhyps Q → ⊤ᴴ ⊩ᴼ O [ δ ]
+    qh {O} m = subst (λ H → H ⊩ᵒ body O [ δ ↑ᵉⁿ k ]) (sym (wkᵉⁿ-⊤ᴴ k)) (mk⊩ᵒ r e)
+      where
+        k = rigids O
+
+        inst : (es : Vec (EExp ∅ˢ) k) → ((δ ↑ᵉⁿ k) ⨟ˢ (from∅ ,ᵉⁿ es)) ≐ˢ (δ ,ᵉⁿ es)
+        inst es = ≐ˢ-trans (↑ᵉⁿ-,ᵉⁿ δ from∅ k es) (≐ˢ-,ᵉⁿ (⨟-from∅ δ) es)
+
+        eqʳ : (x : RExp (Θ +eⁿ k)) → (es : Vec (EExp ∅ˢ) k)
+            → x [ δ ,ᵉⁿ es ]ʳ ≡ x [ δ ↑ᵉⁿ k ]ʳ [ from∅ ,ᵉⁿ es ]ʳ
+        eqʳ x es = sym (trans ([⨟]ʳ x (δ ↑ᵉⁿ k) (from∅ ,ᵉⁿ es)) ([≐]ʳ (inst es) x))
+
+        eqᵉ : (x : EExp (Θ +eⁿ k)) → (es : Vec (EExp ∅ˢ) k)
+            → x [ δ ,ᵉⁿ es ]ᵉ ≡ x [ δ ↑ᵉⁿ k ]ᵉ [ from∅ ,ᵉⁿ es ]ᵉ
+        eqᵉ x es = sym (trans ([⨟]ᵉ x (δ ↑ᵉⁿ k) (from∅ ,ᵉⁿ es)) ([≐]ᵉ (inst es) x))
+
+        idʳ : (x : RExp (∅ˢ +eⁿ k)) → x [ from∅ ,ᵉⁿ varsⁿ k ]ʳ ≡ x
+        idʳ x = trans ([≐]ʳ (from∅-vars k) x) ([id]ʳ x)
+
+        idᵉ : (x : EExp (∅ˢ +eⁿ k)) → x [ from∅ ,ᵉⁿ varsⁿ k ]ᵉ ≡ x
+        idᵉ x = trans ([≐]ᵉ (from∅-vars k) x) ([id]ᵉ x)
+
+        r : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors (body O) → ⊤ᴴ ⊩ ρ [ δ ↑ᵉⁿ k ]ʳ ≾̂ᵣ ρ' [ δ ↑ᵉⁿ k ]ʳ
+        r {ρ} {ρ'} mφ =
+          subst₂ (λ x y → ⊤ᴴ ⊩ x ≾̂ᵣ y) (idʳ (ρ [ δ ↑ᵉⁿ k ]ʳ)) (idʳ (ρ' [ δ ↑ᵉⁿ k ]ʳ))
+                 (factᵣ {ρ = ρ [ δ ↑ᵉⁿ k ]ʳ} {ρ' [ δ ↑ᵉⁿ k ]ʳ} tt
+                        (λ es → subst₂ _≾ᵣ_ (cong valʳ (eqʳ ρ es)) (cong valʳ (eqʳ ρ' es))
+                                         (val-≾ᵣᵀ (⊩ors (⊩qhypsᴵ h m es) mφ)))
+                        (varsⁿ k))
+
+        e : ∀ {ε ε'} → (ε , ε') ∈ oes (body O) → ⊤ᴴ ⊩ ε [ δ ↑ᵉⁿ k ]ᵉ ≾̂ₑ ε' [ δ ↑ᵉⁿ k ]ᵉ
+        e {ε} {ε'} mφ =
+          subst₂ (λ x y → ⊤ᴴ ⊩ x ≾̂ₑ y) (idᵉ (ε [ δ ↑ᵉⁿ k ]ᵉ)) (idᵉ (ε' [ δ ↑ᵉⁿ k ]ᵉ))
+                 (factₑ {ε = ε [ δ ↑ᵉⁿ k ]ᵉ} {ε' [ δ ↑ᵉⁿ k ]ᵉ} tt
+                        (λ es → subst₂ _≾ₑ_ (cong valᵉ (eqᵉ ε es)) (cong valᵉ (eqᵉ ε' es))
+                                         (val-≾ₑᵀ (⊩oes (⊩qhypsᴵ h m es) mφ)))
+                        (varsⁿ k))
+
+⊩ᴴ⇒⊨ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → ⊤ᴴ ⊩ᴴ Q [ δ ] → δ ⊨ Q
+⊩ᴴ⇒⊨ = ⊩ᴴ⇒ᴵ
+
+-- Soundness of entailment: at a satisfying closed instance, an
+-- entailed ordering holds in the carrier
+
+sound-≾ᵣ⁰ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {ρ ρ' : RExp Θ}
+          → Q ⊩ ρ ≾̂ᵣ ρ' → δ ⊨ Q → valʳ (ρ [ δ ]ʳ) ≾ᵣ valʳ (ρ' [ δ ]ʳ)
+sound-≾ᵣ⁰ p h = val-≾ᵣᵀ (⊩-substᴵᵣ h p)
+
+sound-≾ₑ⁰ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {ε ε' : EExp Θ}
+          → Q ⊩ ε ≾̂ₑ ε' → δ ⊨ Q → valᵉ (ε [ δ ]ᵉ) ≾ₑ valᵉ (ε' [ δ ]ᵉ)
+sound-≾ₑ⁰ p h = val-≾ₑᵀ (⊩-substᴵₑ h p)
+
+------------------------------------------------------------------------
+-- At a closed instance, what the truths entail of a set without
+-- quantified hypotheses and truths, no hypotheses entail
+
+⊩ᵗᵛ-⊤∅ : ∀ {Θ} {α β : TyVar Θ} → ⊤ᴴ {Θ} ⊩ᵗᵛ α ≾ β → ∅ᴴ {Θ} ⊩ᵗᵛ α ≾ β
+⊩ᵗᵛ-⊤∅ reflᵗᵛ        = reflᵗᵛ
+⊩ᵗᵛ-⊤∅ (hypᵗᵛ ())
+⊩ᵗᵛ-⊤∅ (transᵗᵛ p q) = transᵗᵛ (⊩ᵗᵛ-⊤∅ p) (⊩ᵗᵛ-⊤∅ q)
+
+⊩ᴱ-⊤∅ : ∀ {Θ} {A : OVType Θ} → ⊤ᴴ ⊩ᴱ A → ∅ᴴ ⊩ᴱ A
+⊩ᴱ-⊤∅ (et-hyp ())
+⊩ᴱ-⊤∅ (et-subˡ p et) = et-subˡ (⊩ᵗᵛ-⊤∅ p) (⊩ᴱ-⊤∅ et)
+⊩ᴱ-⊤∅ (et-subʳ p et) = et-subʳ (⊩ᵗᵛ-⊤∅ p) (⊩ᴱ-⊤∅ et)
+⊩ᴱ-⊤∅ (Baseₑ p)      = Baseₑ p
+⊩ᴱ-⊤∅ Unitₑ          = Unitₑ
+⊩ᴱ-⊤∅ Boolₑ          = Boolₑ
+⊩ᴱ-⊤∅ Natₑ           = Natₑ
+⊩ᴱ-⊤∅ (p |×|ₑ q)     = ⊩ᴱ-⊤∅ p |×|ₑ ⊩ᴱ-⊤∅ q
+⊩ᴱ-⊤∅ (p |+|ₑ q)     = ⊩ᴱ-⊤∅ p |+|ₑ ⊩ᴱ-⊤∅ q
+⊩ᴱ-⊤∅ (|List|ₑ p)    = |List|ₑ (⊩ᴱ-⊤∅ p)
+⊩ᴱ-⊤∅ Emptyₑ         = Emptyₑ
+
+≾ᵣ-⊤∅ : {ρ ρ' : RExp ∅ˢ} → ⊤ᴴ ⊩ ρ ≾̂ᵣ ρ' → ∅ᴴ ⊩ ρ ≾̂ᵣ ρ'
+≾ᵣ-⊤∅ p = val-≾ᵣ⁻ (val-≾ᵣᵀ p)
+
+≾ₑ-⊤∅ : {ε ε' : EExp ∅ˢ} → ⊤ᴴ ⊩ ε ≾̂ₑ ε' → ∅ᴴ ⊩ ε ≾̂ₑ ε'
+≾ₑ-⊤∅ p = val-≾ₑ⁻ (val-≾ₑᵀ p)
+
+<:̂ᵛ-⊤∅ : {A B : OVType ∅ˢ} → ⊤ᴴ ∣ A <:̂ᵛ B → ∅ᴴ ∣ A <:̂ᵛ B
+<:̂ᶜ-⊤∅ : {C D : OCType ∅ˢ} → ⊤ᴴ ∣ C <:̂ᶜ D → ∅ᴴ ∣ C <:̂ᶜ D
+
+<:̂ᵛ-⊤∅ (tvarₛ p)   = tvarₛ (⊩ᵗᵛ-⊤∅ p)
+<:̂ᵛ-⊤∅ (Baseₛ p)   = Baseₛ p
+<:̂ᵛ-⊤∅ Unitₛ       = Unitₛ
+<:̂ᵛ-⊤∅ Boolₛ       = Boolₛ
+<:̂ᵛ-⊤∅ Natₛ        = Natₛ
+<:̂ᵛ-⊤∅ (p |×|ₛ q)  = <:̂ᵛ-⊤∅ p |×|ₛ <:̂ᵛ-⊤∅ q
+<:̂ᵛ-⊤∅ (p |+|ₛ q)  = <:̂ᵛ-⊤∅ p |+|ₛ <:̂ᵛ-⊤∅ q
+<:̂ᵛ-⊤∅ (|List|ₛ p) = |List|ₛ (<:̂ᵛ-⊤∅ p)
+<:̂ᵛ-⊤∅ Emptyₛ      = Emptyₛ
+<:̂ᵛ-⊤∅ (p ⇒ₛ q)    = <:̂ᵛ-⊤∅ p ⇒ₛ <:̂ᶜ-⊤∅ q
+<:̂ᵛ-⊤∅ (p ⇛ₛ q)    = <:̂ᶜ-⊤∅ p ⇛ₛ <:̂ᶜ-⊤∅ q
+<:̂ᵛ-⊤∅ ([ r ]ₛ p)  = [ ≾ᵣ-⊤∅ r ]ₛ <:̂ᵛ-⊤∅ p
+
+<:̂ᶜ-⊤∅ (p ‼ₛ q) = <:̂ᵛ-⊤∅ p ‼ₛ ≾ₑ-⊤∅ q
+
+VarOK-⊤∅ : {A : OVType ∅ˢ} {ρ : RExp ∅ˢ} → VarOK ⊤ᴴ A ρ → VarOK ∅ᴴ A ρ
+VarOK-⊤∅ (et-ok et)      = et-ok (⊩ᴱ-⊤∅ et)
+VarOK-⊤∅ (≾ᵘ-ok le)      = ≾ᵘ-ok (≾ᵣ-⊤∅ le)
+VarOK-⊤∅ (hyp-ok () _ _)
+
+⊩ᴴ-⊤∅ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → Unq Q → ⊤ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ᴴ Q [ δ ]
+⊩ᴴ-⊤∅ u h =
+  mk⊩ᴴ (λ m → ⊩ᴱ-⊤∅ (⊩ets h m)) (λ m → <:̂ᵛ-⊤∅ (⊩subᵥ h m))
+       (λ m → ≾ᵣ-⊤∅ (⊩ordᵣ h m)) (λ m → ≾ₑ-⊤∅ (⊩ordₑ h m)) (λ m → VarOK-⊤∅ (⊩disj h m))
+       (λ m → unq-qhyps u m) (λ t → unq-truths u t)
+
+-- and what no hypotheses entail, the truths entail
+
+⊩ᴴ-∅⊤ : ∀ {Θ Θ'} {Q : Hyps Θ} {δ : Subst Θ Θ'} → ∅ᴴ ⊩ᴴ Q [ δ ] → ⊤ᴴ ⊩ᴴ Q [ δ ]
+⊩ᴴ-∅⊤ {δ = δ} h = ⊩ᴴ-≐ (⨟-idʳ δ) (⊩ᴴ-⨟ (⊩ᴴ-∅ {σ = idˢ}) h)
+
+------------------------------------------------------------------------
+-- Satisfiability: some closed instance satisfies the set
+
+Satisfiable : ∀ {Θ} → Hyps Θ → Set
+Satisfiable {Θ} Q = Σ[ δ ∈ Subst Θ ∅ˢ ] (δ ⊨ Q)
+
+-- The empty set is satisfiable, by the ground instance
+
+Satisfiable-∅ : ∀ {Θ} → Satisfiable {Θ} ∅ᴴ
+Satisfiable-∅ = groundˢ , ⊩ᴵ-∅
+
+-- Satisfaction of a set with quantified hypotheses added, held apart
+
+⊨++ᵠ⇒ : ∀ {Θ} {Q : Hyps Θ} {R : List (QOrd Θ)} {δ : Subst Θ ∅ˢ} → δ ⊨ Q ++ᵠ R → δ ⊨ Q ∣ R
+⊨++ᵠ⇒ h = ++ᵠ⇒ (⊨⇒⊩ᴴ h)
+
+⊨++ᵠ⇐ : ∀ {Θ} {Q : Hyps Θ} {R : List (QOrd Θ)} {δ : Subst Θ ∅ˢ} → δ ⊨ Q ∣ R → δ ⊨ Q ++ᵠ R
+⊨++ᵠ⇐ h = ⊩ᴴ⇒⊨ (++ᵠ⇐ h)
 
 -- Semantic entailment: every closed instance of the first set is one
 -- of the second
@@ -388,10 +591,7 @@ _⊨ᴴ_ {Θ} Q Q' = (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ
 ⊨ᴴ-trans e e' δ h = e' δ (e δ h)
 
 ⊩ᴴ-⊨ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} → Q ⊩ᴴ Q' → Q ⊨ᴴ Q'
-⊩ᴴ-⊨ᴴ e δ h = inst-⊩ᴴ e h
-
-Satisfiable-⊨ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} → Q ⊨ᴴ Q' → Satisfiable Q [] → Satisfiable Q' []
-Satisfiable-⊨ᴴ e (δ , h , []) = δ , e δ h , []
+⊩ᴴ-⊨ᴴ e δ h = ⊩ᴴ-⨟ h e
 
 -- Semantic entailment from open entailment of the atoms and, at each
 -- instance, of the var-rule disjunctions
@@ -403,10 +603,13 @@ mk⊨ᴴ : ∀ {Θ} {Q Q' : Hyps Θ}
      → (∀ {ε ε'} → (ε , ε') ∈ ordₑ Q' → Q ⊩ ε ≾̂ₑ ε')
      → ((δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ]
         → ∀ {A ρ} → (A , ρ) ∈ disj Q' → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ))
+     → (∀ {O} → O ∈ qhyps Q' → Q ⊩ᴼ O [ idˢ ])
+     → (T (truths Q') → T (truths Q))
      → Q ⊨ᴴ Q'
-mk⊨ᴴ et sb oR oE dj δ h =
+mk⊨ᴴ et sb oR oE dj qh tr δ h =
   mk⊩ᴴ (λ m → ⊩ᴱ-subst h (et m)) (λ m → <:̂ᵛ-subst h (sb m))
        (λ m → ⊩-substᵣ h (oR m)) (λ m → ⊩-substₑ h (oE m)) (dj δ h)
+       (λ {O} m → ⊩ᴼ-resp-≐ˢ O (⨟-idˡ δ) (⊩ᴼ-⨟ O h (qh m))) (λ t → ⊩truths h (tr t))
 
 -- The closed var-rule disjunction is met at a type eternal whenever
 -- the given one is, and at a grade below the given one
@@ -420,19 +623,19 @@ VarOK-∅-mono f q (hyp-ok () _ _)
 -- What a set entails holds by value at each of its instances
 
 inst-≾ᵣ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {ρ ρ' : RExp Θ}
-        → ∅ᴴ ⊩ᴴ Q [ δ ] → Q ⊩ ρ ≾̂ᵣ ρ' → valʳ (ρ [ δ ]ʳ) ≾ᵣ valʳ (ρ' [ δ ]ʳ)
-inst-≾ᵣ h p = val-≾ᵣ (⊩-substᵣ h p)
+        → ⊤ᴴ ⊩ᴴ Q [ δ ] → Q ⊩ ρ ≾̂ᵣ ρ' → valʳ (ρ [ δ ]ʳ) ≾ᵣ valʳ (ρ' [ δ ]ʳ)
+inst-≾ᵣ h p = val-≾ᵣᵀ (⊩-substᵣ h p)
 
 inst-≾ₑ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {ε ε' : EExp Θ}
-        → ∅ᴴ ⊩ᴴ Q [ δ ] → Q ⊩ ε ≾̂ₑ ε' → valᵉ (ε [ δ ]ᵉ) ≾ₑ valᵉ (ε' [ δ ]ᵉ)
-inst-≾ₑ h p = val-≾ₑ (⊩-substₑ h p)
+        → ⊤ᴴ ⊩ᴴ Q [ δ ] → Q ⊩ ε ≾̂ₑ ε' → valᵉ (ε [ δ ]ᵉ) ≾ₑ valᵉ (ε' [ δ ]ᵉ)
+inst-≾ₑ h p = val-≾ₑᵀ (⊩-substₑ h p)
 
 inst-⊩≡̂ᵣ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {ρ ρ' : RExp Θ}
-         → ∅ᴴ ⊩ᴴ Q [ δ ] → Q ⊩ ρ ≡̂ᵣ ρ' → valʳ (ρ [ δ ]ʳ) ≃ᵣ valʳ (ρ' [ δ ]ʳ)
+         → ⊤ᴴ ⊩ᴴ Q [ δ ] → Q ⊩ ρ ≡̂ᵣ ρ' → valʳ (ρ [ δ ]ʳ) ≃ᵣ valʳ (ρ' [ δ ]ʳ)
 inst-⊩≡̂ᵣ h (p , q) = inst-≾ᵣ h p , inst-≾ᵣ h q
 
 inst-⊩≡̂ₑ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {ε ε' : EExp Θ}
-         → ∅ᴴ ⊩ᴴ Q [ δ ] → Q ⊩ ε ≡̂ₑ ε' → valᵉ (ε [ δ ]ᵉ) ≃ₑ valᵉ (ε' [ δ ]ᵉ)
+         → ⊤ᴴ ⊩ᴴ Q [ δ ] → Q ⊩ ε ≡̂ₑ ε' → valᵉ (ε [ δ ]ᵉ) ≃ₑ valᵉ (ε' [ δ ]ᵉ)
 inst-⊩≡̂ₑ h (p , q) = inst-≾ₑ h p , inst-≾ₑ h q
 
 inst-≡̂ᵣ : ∀ {Θ} {ρ ρ' : RExp Θ} → (δ : Subst Θ ∅ˢ)
@@ -444,8 +647,8 @@ inst-≡̂ₑ : ∀ {Θ} {ε ε' : EExp Θ} → (δ : Subst Θ ∅ˢ)
 inst-≡̂ₑ δ p = val-≡̂ₑ (≡̂ₑ-subst δ p)
 
 inst-VarOK : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {A : OVType Θ} {ρ : RExp Θ}
-           → ∅ᴴ ⊩ᴴ Q [ δ ] → VarOK Q A ρ
-           → (∅ᴴ ⊩ᴱ A [ δ ]ᵛ) ⊎ (valʳ (ρ [ δ ]ʳ) ≾ᵣ uᵣ)
+           → ⊤ᴴ ⊩ᴴ Q [ δ ] → VarOK Q A ρ
+           → (⊤ᴴ ⊩ᴱ A [ δ ]ᵛ) ⊎ (valʳ (ρ [ δ ]ʳ) ≾ᵣ uᵣ)
 inst-VarOK h ok = VarOK-∅ (VarOK-subst h ok)
 
 -- An atom between expressions convertible to constants holds at an
@@ -453,9 +656,9 @@ inst-VarOK h ok = VarOK-∅ (VarOK-subst h ok)
 
 closed-≾ᵣ : ∀ {Θ} {ρ ρ' : RExp Θ} {c c' : R}
           → ρ ≡̂ᵣ rconst c → ρ' ≡̂ᵣ rconst c' → (δ : Subst Θ ∅ˢ)
-          → ∅ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ → c ≾ᵣ c'
+          → ⊤ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ → c ≾ᵣ c'
 closed-≾ᵣ q q' δ p =
-  ≾ᵣ-trans (proj₂ (inst-≡̂ᵣ δ q)) (≾ᵣ-trans (val-≾ᵣ p) (proj₁ (inst-≡̂ᵣ δ q')))
+  ≾ᵣ-trans (proj₂ (inst-≡̂ᵣ δ q)) (≾ᵣ-trans (val-≾ᵣᵀ p) (proj₁ (inst-≡̂ᵣ δ q')))
 
 closed-≾ᵣ⁻ : ∀ {Θ Θ'} {Q : Hyps Θ'} {ρ ρ' : RExp Θ} {c c' : R}
            → ρ ≡̂ᵣ rconst c → ρ' ≡̂ᵣ rconst c' → (σ : Subst Θ Θ')
@@ -465,9 +668,9 @@ closed-≾ᵣ⁻ q q' σ p =
 
 closed-≾ₑ : ∀ {Θ} {ε ε' : EExp Θ} {c c' : E}
           → ε ≡̂ₑ econst c → ε' ≡̂ₑ econst c' → (δ : Subst Θ ∅ˢ)
-          → ∅ᴴ ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ → c ≾ₑ c'
+          → ⊤ᴴ ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ → c ≾ₑ c'
 closed-≾ₑ q q' δ p =
-  ≾ₑ-trans (proj₂ (inst-≡̂ₑ δ q)) (≾ₑ-trans (val-≾ₑ p) (proj₁ (inst-≡̂ₑ δ q')))
+  ≾ₑ-trans (proj₂ (inst-≡̂ₑ δ q)) (≾ₑ-trans (val-≾ₑᵀ p) (proj₁ (inst-≡̂ₑ δ q')))
 
 closed-≾ₑ⁻ : ∀ {Θ Θ'} {Q : Hyps Θ'} {ε ε' : EExp Θ} {c c' : E}
            → ε ≡̂ₑ econst c → ε' ≡̂ₑ econst c' → (σ : Subst Θ Θ')

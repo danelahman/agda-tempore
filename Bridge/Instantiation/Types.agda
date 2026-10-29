@@ -16,6 +16,7 @@
 open import Data.Empty using (⊥)
 open import Data.Fin using (zero; suc)
 open import Data.Product using (_×_; _,_)
+open import Data.Vec.Base using (Vec) renaming (map to mapᵛ; [] to []ᵛ; _∷_ to _∷ᵛ_)
 open import Data.Unit using (⊤; tt)
 
 open import Grades.Base
@@ -36,6 +37,8 @@ open import ClosedCalculus.Syntax.Contexts S
 open import OpenCalculus.Syntax.Grades   S
 open import OpenCalculus.Syntax.Types    S
 open import OpenCalculus.Syntax.Contexts S
+open import OpenCalculus.Syntax.Subst    S
+open import OpenCalculus.Hypotheses.Quantified S using (_+eⁿ_; _,ᵉⁿ_)
 
 ------------------------------------------------------------------------
 -- Declarative instances
@@ -200,3 +203,124 @@ module _ {Θ} (σ : DInst Θ) (c : E) where
   ⟦wkᵉ⟧ᶜᵗˣ []        = refl
   ⟦wkᵉ⟧ᶜᵗˣ (Γ ∷ A)   = cong₂ _∷_ (⟦wkᵉ⟧ᶜᵗˣ Γ) (⟦wkᵉ⟧ᵛ A)
   ⟦wkᵉ⟧ᶜᵗˣ (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (⟦wkᵉ⟧ᶜᵗˣ Γ) (⟦wkᵉ⟧ʳ ρ)
+
+------------------------------------------------------------------------
+-- Pointwise equal instances interpret grades alike
+
+infix 4 _≗ᴰ_
+
+record _≗ᴰ_ {Θ} (σ σ' : DInst Θ) : Set where
+  constructor mk≗ᴰ
+  field
+    ty≗  : ∀ α → ty σ α ≡ ty σ' α
+    res≗ : ∀ i → res σ i ≡ res σ' i
+    eff≗ : ∀ i → eff σ i ≡ eff σ' i
+
+open _≗ᴰ_ public
+
+module _ {Θ} {σ σ' : DInst Θ} (p : σ ≗ᴰ σ') where
+
+  ⟦≗⟧ᵉ : (ε : EExp Θ) → ⟦ ε ⟧ᵉ σ ≡ ⟦ ε ⟧ᵉ σ'
+  ⟦≗⟧ᵉ (evar i)   = eff≗ p i
+  ⟦≗⟧ᵉ (econst c) = refl
+  ⟦≗⟧ᵉ (ε ·̂ₑ ε')  = cong₂ _·ₑ_ (⟦≗⟧ᵉ ε) (⟦≗⟧ᵉ ε')
+  ⟦≗⟧ᵉ (ε ⊔̂ₑ ε')  = cong₂ _⊔ₑ_ (⟦≗⟧ᵉ ε) (⟦≗⟧ᵉ ε')
+
+  ⟦≗⟧ʳ : (ρ : RExp Θ) → ⟦ ρ ⟧ʳ σ ≡ ⟦ ρ ⟧ʳ σ'
+  ⟦≗⟧ʳ (rvar i)   = res≗ p i
+  ⟦≗⟧ʳ (rconst c) = refl
+  ⟦≗⟧ʳ (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (⟦≗⟧ʳ ρ) (⟦≗⟧ʳ ρ')
+  ⟦≗⟧ʳ (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (⟦≗⟧ʳ ρ) (⟦≗⟧ʳ ρ')
+  ⟦≗⟧ʳ ∣ ε ∣̂ᵉ     = cong mapᵉ (⟦≗⟧ᵉ ε)
+
+≗ᴰ-refl : ∀ {Θ} {σ : DInst Θ} → σ ≗ᴰ σ
+≗ᴰ-refl = mk≗ᴰ (λ α → refl) (λ i → refl) (λ i → refl)
+
+≗ᴰ-sym : ∀ {Θ} {σ σ' : DInst Θ} → σ ≗ᴰ σ' → σ' ≗ᴰ σ
+≗ᴰ-sym p = mk≗ᴰ (λ α → sym (ty≗ p α)) (λ i → sym (res≗ p i)) (λ i → sym (eff≗ p i))
+
+≗ᴰ-trans : ∀ {Θ} {σ σ' σ'' : DInst Θ} → σ ≗ᴰ σ' → σ' ≗ᴰ σ'' → σ ≗ᴰ σ''
+≗ᴰ-trans p q = mk≗ᴰ (λ α → trans (ty≗ p α) (ty≗ q α)) (λ i → trans (res≗ p i) (res≗ q i))
+                    (λ i → trans (eff≗ p i) (eff≗ q i))
+
+≗ᴰ-,ᵉ : ∀ {Θ} {σ σ' : DInst Θ} → σ ≗ᴰ σ' → (c : E) → (σ ,ᵉᴰ c) ≗ᴰ (σ' ,ᵉᴰ c)
+≗ᴰ-,ᵉ p c = mk≗ᴰ (ty≗ p) (res≗ p) (λ { zero → refl ; (suc i) → eff≗ p i })
+
+------------------------------------------------------------------------
+-- Substitution: interpreting a grade expression `X [ δ ]` at `σ` is
+-- interpreting `X` at the composite `δ ⨟ᴰ σ`
+
+infixl 25 _⨟ᴰ_
+
+_⨟ᴰ_ : ∀ {Θ Θ'} → Subst Θ Θ' → DInst Θ' → DInst Θ
+δ ⨟ᴰ σ = dinst (λ α → ⟦ sTy δ α ⟧ᵛ σ) (λ i → ⟦ sR δ i ⟧ʳ σ) (λ i → ⟦ sE δ i ⟧ᵉ σ)
+
+module _ {Θ Θ'} (δ : Subst Θ Θ') (σ : DInst Θ') where
+
+  ⟦[]⟧ᵉ : (ε : EExp Θ) → ⟦ ε [ δ ]ᵉ ⟧ᵉ σ ≡ ⟦ ε ⟧ᵉ (δ ⨟ᴰ σ)
+  ⟦[]⟧ᵉ (evar i)   = refl
+  ⟦[]⟧ᵉ (econst c) = refl
+  ⟦[]⟧ᵉ (ε ·̂ₑ ε')  = cong₂ _·ₑ_ (⟦[]⟧ᵉ ε) (⟦[]⟧ᵉ ε')
+  ⟦[]⟧ᵉ (ε ⊔̂ₑ ε')  = cong₂ _⊔ₑ_ (⟦[]⟧ᵉ ε) (⟦[]⟧ᵉ ε')
+
+  ⟦[]⟧ʳ : (ρ : RExp Θ) → ⟦ ρ [ δ ]ʳ ⟧ʳ σ ≡ ⟦ ρ ⟧ʳ (δ ⨟ᴰ σ)
+  ⟦[]⟧ʳ (rvar i)   = refl
+  ⟦[]⟧ʳ (rconst c) = refl
+  ⟦[]⟧ʳ (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (⟦[]⟧ʳ ρ) (⟦[]⟧ʳ ρ')
+  ⟦[]⟧ʳ (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (⟦[]⟧ʳ ρ) (⟦[]⟧ʳ ρ')
+  ⟦[]⟧ʳ ∣ ε ∣̂ᵉ     = cong mapᵉ (⟦[]⟧ᵉ ε)
+
+↑ᵉ-⨟ᴰ : ∀ {Θ Θ'} → (δ : Subst Θ Θ') → (τ : DInst Θ') → (c : E)
+      → ((δ ↑ᵉ) ⨟ᴰ (τ ,ᵉᴰ c)) ≗ᴰ ((δ ⨟ᴰ τ) ,ᵉᴰ c)
+↑ᵉ-⨟ᴰ δ τ c = mk≗ᴰ (λ α → ⟦wkᵉ⟧ᵛ τ c (sTy δ α)) (λ i → ⟦wkᵉ⟧ʳ τ c (sR δ i))
+                   (λ { zero → refl ; (suc i) → ⟦wkᵉ⟧ᵉ τ c (sE δ i) })
+
+idˢ-⨟ᴰ : ∀ {Θ} → (σ : DInst Θ) → (idˢ ⨟ᴰ σ) ≗ᴰ σ
+idˢ-⨟ᴰ σ = ≗ᴰ-refl
+
+-- Extension by grades for the rigids, the outermost first
+
+infixl 30 _,ᵉᴰⁿ_
+
+_,ᵉᴰⁿ_ : ∀ {Θ k} → DInst Θ → Vec E k → DInst (Θ +eⁿ k)
+σ ,ᵉᴰⁿ []ᵛ        = σ
+σ ,ᵉᴰⁿ (c ∷ᵛ cs) = (σ ,ᵉᴰ c) ,ᵉᴰⁿ cs
+
+≗ᴰ-,ᵉᴰⁿ : ∀ {Θ k} {σ σ' : DInst Θ} → σ ≗ᴰ σ' → (cs : Vec E k) → (σ ,ᵉᴰⁿ cs) ≗ᴰ (σ' ,ᵉᴰⁿ cs)
+≗ᴰ-,ᵉᴰⁿ p []ᵛ        = p
+≗ᴰ-,ᵉᴰⁿ p (c ∷ᵛ cs) = ≗ᴰ-,ᵉᴰⁿ (≗ᴰ-,ᵉ p c) cs
+
+,ᵉ-⨟ᴰ : ∀ {Θ Θ'} → (τ : Subst Θ Θ') → (ε : EExp Θ') → (σ : DInst Θ')
+      → ((τ ,ᵉ ε) ⨟ᴰ σ) ≗ᴰ ((τ ⨟ᴰ σ) ,ᵉᴰ ⟦ ε ⟧ᵉ σ)
+,ᵉ-⨟ᴰ τ ε σ = mk≗ᴰ (λ α → refl) (λ i → refl) (λ { zero → refl ; (suc i) → refl })
+
+,ᵉⁿ-⨟ᴰ : ∀ {Θ Θ' k} → (τ : Subst Θ Θ') → (es : Vec (EExp Θ') k) → (σ : DInst Θ')
+       → ((τ ,ᵉⁿ es) ⨟ᴰ σ) ≗ᴰ ((τ ⨟ᴰ σ) ,ᵉᴰⁿ mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)
+,ᵉⁿ-⨟ᴰ τ []ᵛ        σ = ≗ᴰ-refl
+,ᵉⁿ-⨟ᴰ τ (ε ∷ᵛ es) σ =
+  ≗ᴰ-trans (,ᵉⁿ-⨟ᴰ (τ ,ᵉ ε) es σ) (≗ᴰ-,ᵉᴰⁿ (,ᵉ-⨟ᴰ τ ε σ) (mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es))
+
+------------------------------------------------------------------------
+-- The empty instance; a closed grade expression means its value
+
+∅ᴰ : DInst ∅ˢ
+∅ᴰ = dinst (λ ()) (λ ()) (λ ())
+
+⟦⟧∅-valᵉ : (ε : EExp ∅ˢ) → ⟦ ε ⟧ᵉ ∅ᴰ ≡ valᵉ ε
+⟦⟧∅-valᵉ (evar ())
+⟦⟧∅-valᵉ (econst c) = refl
+⟦⟧∅-valᵉ (ε ·̂ₑ ε')  = cong₂ _·ₑ_ (⟦⟧∅-valᵉ ε) (⟦⟧∅-valᵉ ε')
+⟦⟧∅-valᵉ (ε ⊔̂ₑ ε')  = cong₂ _⊔ₑ_ (⟦⟧∅-valᵉ ε) (⟦⟧∅-valᵉ ε')
+
+⟦⟧∅-valʳ : (ρ : RExp ∅ˢ) → ⟦ ρ ⟧ʳ ∅ᴰ ≡ valʳ ρ
+⟦⟧∅-valʳ (rvar ())
+⟦⟧∅-valʳ (rconst c) = refl
+⟦⟧∅-valʳ (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (⟦⟧∅-valʳ ρ) (⟦⟧∅-valʳ ρ')
+⟦⟧∅-valʳ (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (⟦⟧∅-valʳ ρ) (⟦⟧∅-valʳ ρ')
+⟦⟧∅-valʳ ∣ ε ∣̂ᵉ     = cong mapᵉ (⟦⟧∅-valᵉ ε)
+
+-- constants mean themselves
+
+⟦consts⟧ : ∀ {k} → (cs : Vec E k) → mapᵛ (λ e → ⟦ e ⟧ᵉ ∅ᴰ) (mapᵛ econst cs) ≡ cs
+⟦consts⟧ []ᵛ        = refl
+⟦consts⟧ (c ∷ᵛ cs) = cong (c ∷ᵛ_) (⟦consts⟧ cs)

@@ -103,8 +103,8 @@ record Preserved {n m} {S : State n} {S' : State m} (e : S ≤ₛ S') (Σ : Stat
     X'      : OVType ∅ˢ
     ε'      : EExp ∅ˢ
     typed   : ctx Σ' ⊢ᶜ M' ⦂ X' ‼ ε'
-    subtype : ∅ᴴ ∣ X' <:̂ᵛ X
-    grade   : ∅ᴴ ⊩ δₛ e ·̂ᵣ ∣ ε' ∣̂ᵉ ≾̂ᵣ ∣ ε ∣̂ᵉ
+    subtype : ⊤ᴴ ∣ X' <:̂ᵛ X
+    grade   : ⊤ᴴ ⊩ δₛ e ·̂ᵣ ∣ ε' ∣̂ᵉ ≾̂ᵣ ∣ ε ∣̂ᵉ
 
 open Preserved
 
@@ -116,7 +116,7 @@ private
   -- the state unchanged
 
   stay : ∀ {n} {S : State n} {Σ : StateTyping S} {M' C₁ X ε}
-       → Types Σ → (D : ∅ᴴ ∣ ctx Σ ⊢C⦂ C₁) → ∥ D ∥ᶜ ≡ M' → ∅ᴴ ∣ C₁ <:̂ᶜ X ‼ ε
+       → Types Σ → (D : ⊤ᴴ ∣ ctx Σ ⊢C⦂ C₁) → ∥ D ∥ᶜ ≡ M' → ⊤ᴴ ∣ C₁ <:̂ᶜ X ‼ ε
        → Preserved ≤ₛ-refl Σ M' X ε
   stay {Σ = Σ} T D eq (p ‼ₛ q) = record
     { Σ' = Σ ; extends = ⊆-refl ; types = T ; typed = D , eq ; subtype = p
@@ -126,10 +126,10 @@ private
   -- the extension's grade does not push above the original's
 
   retype : ∀ {n m} {Γ : OCtx ∅ˢ n} {Γ' : OCtx ∅ˢ m} {δ A B ε ε₁ ε'}
-         → (e : Ext ∅ᴴ Γ Γ' δ) → ∅ᴴ ⊩ δ ·̂ᵣ ∣ ε₁ ∣̂ᵉ ≾̂ᵣ ∣ ε ∣̂ᵉ
-         → (N : ∅ᴴ ∣ Γ ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
-         → (H : (op : Op) → wkᵉ-H ∅ᴴ ∣ clause-ctx Γ B op ⊢C⦂ clause-ty B op)
-         → Σ[ D ∈ ∅ᴴ ∣ Γ' ⊢V⦂ (A ‼ ε₁) ⇛ (B ‼ ε') ]
+         → (e : Ext ⊤ᴴ Γ Γ' δ) → ⊤ᴴ ⊩ δ ·̂ᵣ ∣ ε₁ ∣̂ᵉ ≾̂ᵣ ∣ ε ∣̂ᵉ
+         → (N : ⊤ᴴ ∣ Γ ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
+         → (H : (op : Op) → wkᵉ-H ⊤ᴴ ∣ clause-ctx Γ B op ⊢C⦂ clause-ty B op)
+         → Σ[ D ∈ ⊤ᴴ ∣ Γ' ⊢V⦂ (A ‼ ε₁) ⇛ (B ‼ ε') ]
              ∥ D ∥ᵛ ≡ renᵛ (epos e) (handler ∥ N ∥ᶜ (λ op → ∥ H op ∥ᶜ))
   retype e le N H =
     handler (rename-c (ext-lock e le ⇑ʳ) N) (λ op → rename-c (ext-clause e) (H op)) ,
@@ -204,7 +204,7 @@ preservation {Σ = Σ} T (D , eD) RECℕ-SUCC with invC≡ D eD
                                    (trans (ren-idᶜ (ext-id (ext-id (λ i → refl))) ∥ DN ∥ᶜ) eN)))))
        q₀
   where
-    r : Ren ∅ᴴ ((ctx Σ ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B) ((ctx Σ ∷ Nat) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B)
+    r : Ren ⊤ᴴ ((ctx Σ ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B) ((ctx Σ ∷ Nat) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B)
     r = lockʳ ∣ ε₀ ∣̂ᵉ (lock-remove topᵣ ⇑ʳ) ⇑ʳ
     N₁ = sub-c (there∷ (there⟨⟩ here)) D₁ (rename-c r DN)
 
@@ -251,7 +251,7 @@ preservation {Σ = Σ} T (D , eD) RECL-CONS with invC≡ D eD
                                                         eN)))))))
        q₀
   where
-    r : Ren ∅ᴴ ((ctx Σ ⟨ rconst ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B)
+    r : Ren ⊤ᴴ ((ctx Σ ⟨ rconst ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B)
                ((ctx Σ ∷ A ∷ |List| A) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B)
     r = lockʳ ∣ ε₀ ∣̂ᵉ ((lock-remove topᵣ ⇑ʳ) ⇑ʳ) ⇑ʳ
     N₀ = rename-c r DN
@@ -277,9 +277,9 @@ preservation {Σ = Σ} T (D , eD) (SEQ-OP {op}) with invC≡ D eD
        (cong₂ (perform op) eV (cong₂ _⨟_ eM (trans (∥rename-c∥ r DN) (cong (renᶜ (ext suc)) eN))))
        (<:̂ᶜ-trans (<:̂ᵛ-refl B ‼ₛ transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-assoc)) (monoₑ q₃ ⊩≾̂ₑ-refl)) q₀)
   where
-    le : ∅ᴴ ⊩ rconst (mapᵉ (op-grade op)) ·̂ᵣ ∣ ε₃ ∣̂ᵉ ≾̂ᵣ ∣ ε₁ ∣̂ᵉ
+    le : ⊤ᴴ ⊩ rconst (mapᵉ (op-grade op)) ·̂ᵣ ∣ ε₃ ∣̂ᵉ ≾̂ᵣ ∣ ε₁ ∣̂ᵉ
     le = transᵣ (monoᵣ ∣const∣ ⊩≾̂ᵣ-refl) (transᵣ ∣·∣ (map-mono q₃))
-    r : Ren ∅ᴴ (ctx Σ ⟨ ∣ ε₁ ∣̂ᵉ ⟩ ∷ A)
+    r : Ren ⊤ᴴ (ctx Σ ⟨ ∣ ε₁ ∣̂ᵉ ⟩ ∷ A)
                ((ctx Σ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ) ⟨ ∣ ε₃ ∣̂ᵉ ⟩ ∷ A)
     r = ext-lock (wk-ext lock-ext) le ⇑ʳ
 
@@ -315,7 +315,7 @@ preservation {Σ = Σ} {ε = ε} T (D , eD) (DELAY {τ}) with invC≡ D eD
                      (transᵣ ∣·∣ (map-mono q₀))
   }
   where
-    dur : ∅ᴴ ⊩ rconst (of-durʳ τ) ≾̂ᵣ ∣ econst (of-durᵉ τ) ∣̂ᵉ
+    dur : ⊤ᴴ ⊩ rconst (of-durʳ τ) ≾̂ᵣ ∣ econst (of-durᵉ τ) ∣̂ᵉ
     dur = eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-const (≃ᵣ-sym map-of-durᵉ)) (≡̂ᵣ-sym ≡̂ᵣ-map-const))
 
 -- effect handling
@@ -346,14 +346,14 @@ preservation {Σ = Σ} T (D , eD) (HANDLE-OP {op} {V} {M} {N} {H}) with invC≡ 
                   eMop)
        (<:̂ᶜ-trans (pB ‼ₛ transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-assoc)) (monoₑ q₃ pε')) q₀)
   where
-    e₀ : Ext ∅ᴴ (ctx Σ) (ctx Σ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ)
+    e₀ : Ext ⊤ᴴ (ctx Σ) (ctx Σ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ)
              (rconst (mapᵉ (op-grade op)))
     e₀ = wk-ext lock-ext
-    le : ∅ᴴ ⊩ rconst (mapᵉ (op-grade op)) ·̂ᵣ ∣ ε₃ ∣̂ᵉ ≾̂ᵣ ∣ ε₄ ∣̂ᵉ
+    le : ⊤ᴴ ⊩ rconst (mapᵉ (op-grade op)) ·̂ᵣ ∣ ε₃ ∣̂ᵉ ≾̂ᵣ ∣ ε₄ ∣̂ᵉ
     le = transᵣ (monoᵣ ∣const∣ ⊩≾̂ᵣ-refl) (transᵣ ∣·∣ (map-mono (transₑ q₃ pε)))
     H' = retype {ε₁ = ε₃} e₀ le DN DHs
     Cl = instantiate-clause (ε₃ ·̂ₑ ε₄') (DHs op)
-    r : Ren ∅ᴴ (ctx Σ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+    r : Ren ⊤ᴴ (ctx Σ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                  ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ B₄ ‼ (ε₃ ·̂ₑ ε₄')))
                (ctx Σ ∷ ⌜ param op ⌝ᵍ
                  ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ B₄ ‼ (ε₃ ·̂ₑ ε₄')))

@@ -40,7 +40,7 @@ open import OpenCalculus.Syntax.ContextsLemmas    S
 open import OpenCalculus.Syntax.Subst             S using (Subst; _[_]ᶜ)
 open import OpenCalculus.Syntax.Raw.Subst         S using (_[_]ᴿᶜ)
 open import OpenCalculus.Hypotheses               S
-open import OpenCalculus.Hypotheses.Instances     S using (_⊨_∣_)
+open import OpenCalculus.Hypotheses.Instances     S using (_⊨_)
 open import OpenCalculus.Typing                   S
 open import OpenCalculus.Typing.Erasure           S using (⌊_⌋ᶜ)
 open import OpenCalculus.Typing.Instantiation     S using (instantiation)
@@ -441,6 +441,6 @@ termination {M} (D , refl) =
 -- halts.
 
 programs : ∀ {Θ} {Q : Hyps Θ} {C : OCType Θ} {δ : Subst Θ ∅ˢ}
-         → (D : Q ∣ [] ⊢C⦂ C) → δ ⊨ Q ∣ []
+         → (D : Q ∣ [] ⊢C⦂ C) → δ ⊨ Q
          → ctx ∅ ⊢ᶜ eraseᶜ (⌊ D ⌋ᶜ [ δ ]ᴿᶜ) ⦂ C [ δ ]ᶜ × Halts ∅ (eraseᶜ (⌊ D ⌋ᶜ [ δ ]ᴿᶜ))
 programs D h = instantiation D h , termination (instantiation D h)

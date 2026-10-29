@@ -75,7 +75,7 @@ open import OpenCalculus.Typing           S
 open import OpenCalculus.Syntax.Raw       S
 open import OpenCalculus.Syntax.Raw.Subst S
 import OpenCalculus.Typing.Erasure S as OE
-open import OpenCalculus.Hypotheses.Instances S using (_⊨_∣_)
+open import OpenCalculus.Hypotheses.Instances S using (_⊨_)
 
 open import Bridge.Instantiation.Types          S
 open import Bridge.Instantiation.Judgements     S
@@ -1101,7 +1101,7 @@ instantiateᵛ σ s D c = instantiateᶜ σ s (return D) c
 -- the instantiated context and type, through `⌞ δ ⌟ˢ`
 
 instantiateˢᶜ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ}
-              → (δ : Subst Θ ∅ˢ) → δ ⊨ Q ∣ []
+              → (δ : Subst Θ ∅ˢ) → δ ⊨ Q
               → (D : Q ∣ Γ ⊢C⦂ C) → SecondClassᶜ OE.⌊ D ⌋ᶜ
               → Σ[ D' ∈ ⌞ Γ [ δ ]ᶜᵗˣ ⌟ᶜᵗˣ ⊢C⦂ ⌞ C [ δ ]ᶜ ⌟ᶜ ]
                   (CE.⌊ D' ⌋ᶜ ≡ ⌞ OE.⌊ D ⌋ᶜ [ δ ]ᴿᶜ ⌟ᴿᶜ)
@@ -1112,7 +1112,7 @@ instantiateˢᶜ {Γ = Γ} {C = C} δ s D c with instantiateᶜ ⌞ δ ⌟ˢ (�
     q = sym (⌞[]⌟ᶜ δ C)
 
 instantiateˢᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ}
-              → (δ : Subst Θ ∅ˢ) → δ ⊨ Q ∣ []
+              → (δ : Subst Θ ∅ˢ) → δ ⊨ Q
               → (D : Q ∣ Γ ⊢V⦂ A) → SecondClassᵛ OE.⌊ D ⌋ᵛ
               → Σ[ D' ∈ ⌞ Γ [ δ ]ᶜᵗˣ ⌟ᶜᵗˣ ⊢C⦂ ⌞ (A ‼ ûₑ) [ δ ]ᶜ ⌟ᶜ ]
                   (CE.⌊ D' ⌋ᶜ ≡ ⌞ return OE.⌊ D ⌋ᵛ [ δ ]ᴿᶜ ⌟ᴿᶜ)

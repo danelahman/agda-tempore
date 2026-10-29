@@ -2,11 +2,12 @@
 -- Deferred rigid conditions                                      --
 --                                                                --
 -- A clause's grade orderings that mix its rigid with outer       --
--- unknowns are deferred as an obligation `∀ᵉ j₁ … jₖ. O`         --
--- (`Obligations`), labelled with the operation of the clause     --
--- that left them, and discharged along a substitution when its   --
--- orderings are, at fresh rigids, by the hypotheses weakened to  --
--- them (`_⊩ᴼ_[_]`).                                              --
+-- unknowns are deferred as a quantified ordering                 --
+-- `∀ᵉ j₁ … jₖ. O` (`Quantified`), labelled with the operation of --
+-- the clause that left them, and discharged along a substitution --
+-- when its orderings are, at fresh rigids, by the hypotheses     --
+-- weakened to them (`_⊩ᴼ_[_]`); the solver's answer returns them --
+-- as quantified hypotheses.                                      --
 --                                                                --
 -- A substitution below (above) the one it moves keeps an entry   --
 -- whose greater (smaller) sides it leaves fixed (`keepᵈ`). A     --
@@ -70,26 +71,22 @@ open import OpenCalculus.Hypotheses.Instances S using (_⊩ᴼˢ_[_])
 ≾ˢ-↑ᵉⁿ zero    p = p
 ≾ˢ-↑ᵉⁿ (suc k) p = ≾ˢ-↑ᵉⁿ k (≾ˢ-↑ᵉ p)
 
-wkᵉⁿ-∅ : ∀ {Θ} → (k : ℕ) → wkᵉⁿ-H k (∅ᴴ {Θ}) ≡ ∅ᴴ
-wkᵉⁿ-∅ zero    = refl
-wkᵉⁿ-∅ (suc k) = wkᵉⁿ-∅ k
-
 ------------------------------------------------------------------------
 -- Entries
 
 -- An entry over the scope extended by one rigid binds it outermost
 
-bindᵈ : ∀ {Ψ} → Oblig (Ψ +e) → Oblig Ψ
-bindᵈ (oblig l k o) = oblig l (suc k) o
+bindᵈ : ∀ {Ψ} → QOrd (Ψ +e) → QOrd Ψ
+bindᵈ (qord l k o) = qord l (suc k) o
 
 -- A list of entries, discharged member by member
 
-⊩ᴰ→⊩ᴼˢ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (D : List (Oblig Ψ))
+⊩ᴰ→⊩ᴼˢ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (D : List (QOrd Ψ))
        → (∀ {E} → E ∈ D → Q ⊩ᴼ E [ δ ]) → Q ⊩ᴼˢ D [ δ ]
 ⊩ᴰ→⊩ᴼˢ []      h = []
 ⊩ᴰ→⊩ᴼˢ (E ∷ D) h = h (here refl) ∷ ⊩ᴰ→⊩ᴼˢ D (λ m → h (there m))
 
-⊩ᴼˢ→⊩ᴰ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (D : List (Oblig Ψ))
+⊩ᴼˢ→⊩ᴰ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (D : List (QOrd Ψ))
        → Q ⊩ᴼˢ D [ δ ] → ∀ {E} → E ∈ D → Q ⊩ᴼ E [ δ ]
 ⊩ᴼˢ→⊩ᴰ (E ∷ D) (h ∷ hs) (here refl) = h
 ⊩ᴼˢ→⊩ᴰ (E ∷ D) (h ∷ hs) (there m)   = ⊩ᴼˢ→⊩ᴰ D hs m
@@ -140,25 +137,25 @@ allOf f (a ∷ l) with f a | allOf f l
 ... | just p | just g = just (λ { (here refl) → p ; (there m) → g m })
 ... | _      | _      = nothing
 
-record Still {Ψ} (d : Dir) (σ : Subst Ψ Ψ) (E : Oblig Ψ) : Set where
+record Still {Ψ} (d : Dir) (σ : Subst Ψ Ψ) (E : QOrd Ψ) : Set where
   constructor still
   field
     stʳ : ∀ {a} → a ∈ ors (body E) → Fixedʳ d (σ ↑ᵉⁿ rigids E) a
     stᵉ : ∀ {a} → a ∈ oes (body E) → Fixedᵉ d (σ ↑ᵉⁿ rigids E) a
 
-still? : ∀ {Ψ} → (d : Dir) → (σ : Subst Ψ Ψ) → (E : Oblig Ψ) → Maybe (Still d σ E)
+still? : ∀ {Ψ} → (d : Dir) → (σ : Subst Ψ Ψ) → (E : QOrd Ψ) → Maybe (Still d σ E)
 still? d σ E with allOf (fixedʳ? d (σ ↑ᵉⁿ rigids E)) (ors (body E))
                 | allOf (fixedᵉ? d (σ ↑ᵉⁿ rigids E)) (oes (body E))
 ... | just r | just e = just (still r e)
 ... | _      | _      = nothing
 
-stills? : ∀ {Ψ} → (d : Dir) → (σ : Subst Ψ Ψ) → (D : List (Oblig Ψ))
+stills? : ∀ {Ψ} → (d : Dir) → (σ : Subst Ψ Ψ) → (D : List (QOrd Ψ))
         → Maybe (∀ {E} → E ∈ D → Still d σ E)
 stills? d σ = allOf (still? d σ)
 
-keepᵈ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {σ : Subst Ψ Ψ} {τ : Subst Ψ Ψ'} → (d : Dir) → (E : Oblig Ψ)
+keepᵈ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {σ : Subst Ψ Ψ} {τ : Subst Ψ Ψ'} → (d : Dir) → (E : QOrd Ψ)
       → Still d σ E → Moves d Q σ τ → Q ⊩ᴼ E [ τ ] → Q ⊩ᴼ E [ σ ⨟ˢ τ ]
-keepᵈ {Q = Q} {σ} {τ} d (oblig l k o) (still sr se) mv h = mk⊩ᵒ (r d sr mv) (e d se mv)
+keepᵈ {Q = Q} {σ} {τ} d (qord l k o) (still sr se) mv h = mk⊩ᵒ (r d sr mv) (e d se mv)
   where
     Q' = wkᵉⁿ-H k Q
 
@@ -216,41 +213,8 @@ wk-κ b = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
 -- Every weakened hypothesis is entailed back by the original set
 
 ⊩ᴴ-κ : ∀ {Ψ} {Q : Hyps Ψ} → (b : EExp Ψ) → Q ⊩ᴴ (wkᵉ-H Q) [ κ⟨ b ⟩ ]
-⊩ᴴ-κ {Ψ} {Q} b = mk⊩ᴴ ets' subᵥ' ordᵣ' ordₑ' disj'
-  where
-    ets' : ∀ {α} → α ∈ ets (wkᵉ-H Q) → Q ⊩ᴱ sTy κ⟨ b ⟩ α
-    ets' m with ∈-map⁻ (wkᵉ-tv Ψ) m
-    ... | α₀ , m₀ , refl = et-hyp m₀
-
-    subᵥ' : ∀ {α β} → (α , β) ∈ subᵥ (wkᵉ-H Q) → Q ∣ sTy κ⟨ b ⟩ α <:̂ᵛ sTy κ⟨ b ⟩ β
-    subᵥ' m with ∈-map⁻ (mapᵖ (wkᵉ-tv Ψ)) m
-    ... | (α₀ , β₀) , m₀ , refl = tvarₛ (hypᵗᵛ m₀)
-
-    wkʳ' : (ρ : RExp Ψ) → ρ ≡ wkᵉ-r ρ [ κ⟨ b ⟩ ]ʳ
-    wkʳ' ρ = sym (trans (cong (_[ κ⟨ b ⟩ ]ʳ) (sym (wkˢᵉ-r ρ))) (κ-wkʳ b ρ))
-
-    wkᵉ' : (ε : EExp Ψ) → ε ≡ wkᵉ-e ε [ κ⟨ b ⟩ ]ᵉ
-    wkᵉ' ε = sym (trans (cong (_[ κ⟨ b ⟩ ]ᵉ) (sym (wkˢᵉ-e ε))) (κ-wkᵉ b ε))
-
-    wkᵛ' : (A : OVType Ψ) → A ≡ wkᵉ-v A [ κ⟨ b ⟩ ]ᵛ
-    wkᵛ' A = sym (trans (cong (_[ κ⟨ b ⟩ ]ᵛ) (sym (wkˢᵉ-v A))) (κ-wkᵛ b A))
-
-    ordᵣ' : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ (wkᵉ-H Q)
-          → Q ⊩ ρ [ κ⟨ b ⟩ ]ʳ ≾̂ᵣ ρ' [ κ⟨ b ⟩ ]ʳ
-    ordᵣ' m with ∈-map⁻ (mapᵖ wkᵉ-r) m
-    ... | (ρ₀ , ρ₀') , m₀ , refl =
-      subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) (wkʳ' ρ₀) (wkʳ' ρ₀') (hypᵣ m₀)
-
-    ordₑ' : ∀ {ε ε'} → (ε , ε') ∈ ordₑ (wkᵉ-H Q)
-          → Q ⊩ ε [ κ⟨ b ⟩ ]ᵉ ≾̂ₑ ε' [ κ⟨ b ⟩ ]ᵉ
-    ordₑ' m with ∈-map⁻ (mapᵖ wkᵉ-e) m
-    ... | (ε₀ , ε₀') , m₀ , refl =
-      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (wkᵉ' ε₀) (wkᵉ' ε₀') (hypₑ m₀)
-
-    disj' : ∀ {A ρ} → (A , ρ) ∈ disj (wkᵉ-H Q) → VarOK Q (A [ κ⟨ b ⟩ ]ᵛ) (ρ [ κ⟨ b ⟩ ]ʳ)
-    disj' m with ∈-map⁻ (mapᵈ wkᵉ-v wkᵉ-r) m
-    ... | (A₀ , ρ₀) , m₀ , refl =
-      subst₂ (VarOK Q) (wkᵛ' A₀) (wkʳ' ρ₀) (hyp-ok₀ m₀)
+⊩ᴴ-κ b = ⊩ᴴ-≐ (mk≐ˢ (λ α → refl) (λ i → refl) (λ { zero → refl ; (suc i) → refl }))
+               (⊩ᴴ-wkᵉ-,ᵉ b)
 
 -- A constant commutes with a lift
 
@@ -346,10 +310,10 @@ wit-⨟ δ (suc k) cs =
     κ : ∀ {Φ} → Subst (Φ +e) Φ
     κ = κ⟨ econst (hdᵂ cs) ⟩
 
--- No hypotheses entail no hypotheses at the witnesses
+-- The truths entail the truths at the witnesses
 
-⊩ᴴ-wit : ∀ {Ψ} → (k : ℕ) → (cs : List E) → ∅ᴴ ⊩ᴴ wkᵉⁿ-H k (∅ᴴ {Ψ}) [ wit k cs ]
-⊩ᴴ-wit {Ψ} k cs = subst (λ H → ∅ᴴ ⊩ᴴ H [ wit k cs ]) (sym (wkᵉⁿ-∅ {Ψ} k)) ⊩ᴴ-∅
+⊩ᴴ-wit : ∀ {Ψ} → (k : ℕ) → (cs : List E) → ⊤ᴴ ⊩ᴴ wkᵉⁿ-H k (⊤ᴴ {Ψ}) [ wit k cs ]
+⊩ᴴ-wit {Ψ} k cs = subst (λ H → ⊤ᴴ ⊩ᴴ H [ wit k cs ]) (sym (wkᵉⁿ-⊤ᴴ {Ψ} k)) ⊩ᴴ-⊤
 
 ------------------------------------------------------------------------
 -- Closing an entry over one more rigid, the newest variable of its
@@ -392,14 +356,14 @@ pw-∈ (r ∷ rs) (there m) with pw-∈ rs m
           transₑ (eqₑ (≡̂ₑ-subst δ (≡̂ₑ-sym (≅ᵉ⇒≡̂ p))))
                  (transₑ (⊩oes h m₀) (eqₑ (≡̂ₑ-subst δ (≅ᵉ⇒≡̂ q))))
 
-closeᵈ : ∀ {Ψ} → Oblig (Ψ +e) → Oblig Ψ
-closeᵈ (oblig l k o) with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
-... | yes _ = oblig l k (o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ)
-... | no _  = bindᵈ (oblig l k o)
+closeᵈ : ∀ {Ψ} → QOrd (Ψ +e) → QOrd Ψ
+closeᵈ (qord l k o) with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
+... | yes _ = qord l k (o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ)
+... | no _  = bindᵈ (qord l k o)
 
-closeᵈ-sound : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (E : Oblig (Ψ +e))
+closeᵈ-sound : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (E : QOrd (Ψ +e))
              → Q ⊩ᴼ closeᵈ E [ δ ] → wkᵉ-H Q ⊩ᴼ E [ δ ↑ᵉ ]
-closeᵈ-sound {Q = Q} {δ} (oblig l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
+closeᵈ-sound {Q = Q} {δ} (qord l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
 ... | no _  = h
 ... | yes q =
       ⊩ᵒ-same q
@@ -409,9 +373,9 @@ closeᵈ-sound {Q = Q} {δ} (oblig l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k
     eq = ≐ˢ-trans (⨟-↑ᵉⁿ δ wkˢᵉ k)
          (≐ˢ-trans (≐ˢ-↑ᵉⁿ (≐ˢ-sym (wkˢᵉ-↑ᵉ δ)) k) (≐ˢ-sym (⨟-↑ᵉⁿ wkˢᵉ (δ ↑ᵉ) k)))
 
-closeᵈ-princ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (E : Oblig (Ψ +e))
+closeᵈ-princ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (E : QOrd (Ψ +e))
              → wkᵉ-H Q ⊩ᴼ E [ δ ↑ᵉ ] → Q ⊩ᴼ closeᵈ E [ δ ]
-closeᵈ-princ {Q = Q} {δ} (oblig l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
+closeᵈ-princ {Q = Q} {δ} (qord l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
 ... | no _  = h
 ... | yes _ = ⊩ᵒ-subst⁻ (⊩ᵒ-resp-≐ˢ eq (⊩ᵒ-⨟ (⊩ᴴ-↑ᵉⁿ k (⊩ᴴ-κ ûₑ)) h))
   where

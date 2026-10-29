@@ -90,11 +90,6 @@ private
                      (λ { zero → refl ; (suc i) → wk-,ʳ-r σ ρ (sR δ i) })
                      (λ i → wk-,ʳ-e σ ρ (sE δ i))
 
-  ↑ᵉ-,ᵉ : ∀ {Θ Θ₁ Θ'} → (δ : Subst Θ Θ₁) → (σ : Subst Θ₁ Θ') → (ε : EExp Θ')
-        → ((δ ↑ᵉ) ⨟ˢ (σ ,ᵉ ε)) ≐ˢ ((δ ⨟ˢ σ) ,ᵉ ε)
-  ↑ᵉ-,ᵉ δ σ ε = mk≐ˢ (λ α → wk-,ᵉ-v σ ε (sTy δ α))
-                     (λ i → wk-,ᵉ-r σ ε (sR δ i))
-                     (λ { zero → refl ; (suc i) → wk-,ᵉ-e σ ε (sE δ i) })
 
 ⊨-mono : ∀ {Θ Θ' Θ''} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
            {δ : Subst Θ' Θ''} {Q' : Hyps Θ''}
@@ -173,13 +168,6 @@ private
 ⊨-subst⁻ {δ = δ} {σ = σ} (∀ᵉ C) s =
   ⊨-resp-≐ˢ (⨟-↑ᵉ δ σ) C (⊨-subst⁻ C s)
 ⊨-subst⁻ (⋀ᵒᵖ f) s = λ op → ⊨-subst⁻ (f op) (s op)
-
--- A solution relative to hypotheses is one relative to them and any
--- obligations
-
-⊨-∣ : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
-    → (C : Constraint Θ) → σ ⊨[ Q ] C → σ ⊨[ Q ∣ R ] C
-⊨-∣ C s δ Q' (h , _) = ⊨-mono h C s
 
 -- Types equal along a substitution solve a type equation
 

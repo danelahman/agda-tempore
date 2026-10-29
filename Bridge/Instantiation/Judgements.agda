@@ -22,6 +22,7 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁻)
 open import Data.Maybe using (to-witness)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
+open import Data.Vec.Base using (Vec) renaming (map to mapᵛ; [] to []ᵛ; _∷_ to _∷ᵛ_)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂)
 
 open import Grades.Base
@@ -44,6 +45,7 @@ import ClosedCalculus.Syntax.Erasure S as CE
 open import OpenCalculus.Syntax.Grades   S
 open import OpenCalculus.Syntax.Types    S
 open import OpenCalculus.Syntax.Contexts S
+open import OpenCalculus.Syntax.Subst    S
 open import OpenCalculus.Hypotheses      S
 
 open import Bridge.Instantiation.Types S
@@ -51,25 +53,9 @@ open import Bridge.Instantiation.Types S
 ------------------------------------------------------------------------
 -- Satisfaction
 
-infix 4 _⊨ᴰ_
-
-record _⊨ᴰ_ {Θ : Scope} (σ : DInst Θ) (Q : Hyps Θ) : Set where
-  constructor mk⊨ᴰ
-  field
-    ⊨ets  : ∀ {α} → α ∈ ets Q → Eternal (ty σ α)
-    ⊨subᵥ : ∀ {α β} → (α , β) ∈ subᵥ Q → ty σ α <:ᵛ ty σ β
-    ⊨ordᵣ : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → ⟦ ρ ⟧ʳ σ ≾ᵣ ⟦ ρ' ⟧ʳ σ
-    ⊨ordₑ : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → ⟦ ε ⟧ᵉ σ ≾ₑ ⟦ ε' ⟧ᵉ σ
-    ⊨disj : ∀ {A ρ} → (A , ρ) ∈ disj Q → Eternal (⟦ A ⟧ᵛ σ) ⊎ (⟦ ρ ⟧ʳ σ ≾ᵣ uᵣ)
-
-open _⊨ᴰ_ public
-
-⊨ᴰ-∅ : ∀ {Θ} {σ : DInst Θ} → σ ⊨ᴰ ∅ᴴ
-⊨ᴰ-∅ = mk⊨ᴰ (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
-
 -- Grade orderings hold when each does in the grade's order
 
-infix 4 _⊨ᴰᵒ_ _⊨ᴰ⟨_⟩_ _⊨ᴰᴼ_ _⊨ᴰᴿ_
+infix 4 _⊨ᴰᵒ_ _⊨ᴰ⟨_⟩_ _⊨ᴰᴼ_ _⊨ᴰ_
 
 record _⊨ᴰᵒ_ {Θ : Scope} (σ : DInst Θ) (o : Ords Θ) : Set where
   constructor mk⊨ᴰᵒ
@@ -79,18 +65,68 @@ record _⊨ᴰᵒ_ {Θ : Scope} (σ : DInst Θ) (o : Ords Θ) : Set where
 
 open _⊨ᴰᵒ_ public
 
--- An obligation `∀ᵉ j₁ … jₖ. O` holds when `O` does at every extension
--- by grades for its rigids
+-- A quantified ordering `∀ᵉ j₁ … jₖ. O` holds when `O` does at every
+-- extension by grades for its rigids
 
 _⊨ᴰ⟨_⟩_ : ∀ {Θ} → DInst Θ → (k : ℕ) → Ords (Θ +eⁿ k) → Set
 σ ⊨ᴰ⟨ zero ⟩  B = σ ⊨ᴰᵒ B
 σ ⊨ᴰ⟨ suc k ⟩ B = (c : E) → (σ ,ᵉᴰ c) ⊨ᴰ⟨ k ⟩ B
 
-_⊨ᴰᴼ_ : ∀ {Θ} → DInst Θ → Oblig Θ → Set
+_⊨ᴰᴼ_ : ∀ {Θ} → DInst Θ → QOrd Θ → Set
 σ ⊨ᴰᴼ O = σ ⊨ᴰ⟨ rigids O ⟩ body O
 
-_⊨ᴰᴿ_ : ∀ {Θ} → DInst Θ → Obligs Θ → Set
-σ ⊨ᴰᴿ R = All (σ ⊨ᴰᴼ_) R
+-- A satisfying instance: each hypothesis holds, a quantified one at
+-- every grade for its rigids; the truths hold at every instance
+
+record _⊨ᴰ_ {Θ : Scope} (σ : DInst Θ) (Q : Hyps Θ) : Set where
+  constructor mk⊨ᴰ
+  field
+    ⊨ets  : ∀ {α} → α ∈ ets Q → Eternal (ty σ α)
+    ⊨subᵥ : ∀ {α β} → (α , β) ∈ subᵥ Q → ty σ α <:ᵛ ty σ β
+    ⊨ordᵣ : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → ⟦ ρ ⟧ʳ σ ≾ᵣ ⟦ ρ' ⟧ʳ σ
+    ⊨ordₑ : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → ⟦ ε ⟧ᵉ σ ≾ₑ ⟦ ε' ⟧ᵉ σ
+    ⊨disj : ∀ {A ρ} → (A , ρ) ∈ disj Q → Eternal (⟦ A ⟧ᵛ σ) ⊎ (⟦ ρ ⟧ʳ σ ≾ᵣ uᵣ)
+    ⊨qhyps : ∀ {O} → O ∈ qhyps Q → σ ⊨ᴰᴼ O
+
+open _⊨ᴰ_ public
+
+⊨ᴰ-∅ : ∀ {Θ} {σ : DInst Θ} → σ ⊨ᴰ ∅ᴴ
+⊨ᴰ-∅ = mk⊨ᴰ (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
+
+⊨ᴰ-⊤ : ∀ {Θ} {σ : DInst Θ} → σ ⊨ᴰ ⊤ᴴ
+⊨ᴰ-⊤ = mk⊨ᴰ (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
+
+-- Grade orderings along pointwise equal instances, at an instance of
+-- the rigids, and along a substitution
+
+⊨ᴰᵒ-≗ : ∀ {Θ} {σ σ' : DInst Θ} {o : Ords Θ} → σ ≗ᴰ σ' → σ ⊨ᴰᵒ o → σ' ⊨ᴰᵒ o
+⊨ᴰᵒ-≗ p s = mk⊨ᴰᵒ
+  (λ {ρ} {ρ'} m → subst₂ _≾ᵣ_ (⟦≗⟧ʳ p ρ) (⟦≗⟧ʳ p ρ') (⊨ors s m))
+  (λ {ε} {ε'} m → subst₂ _≾ₑ_ (⟦≗⟧ᵉ p ε) (⟦≗⟧ᵉ p ε') (⊨oes s m))
+
+⊨ᴰ⟨⟩-≗ : ∀ {Θ} {σ σ' : DInst Θ} → (k : ℕ) → {B : Ords (Θ +eⁿ k)}
+       → σ ≗ᴰ σ' → σ ⊨ᴰ⟨ k ⟩ B → σ' ⊨ᴰ⟨ k ⟩ B
+⊨ᴰ⟨⟩-≗ zero    p s = ⊨ᴰᵒ-≗ p s
+⊨ᴰ⟨⟩-≗ (suc k) p s = λ c → ⊨ᴰ⟨⟩-≗ k (≗ᴰ-,ᵉ p c) (s c)
+
+⊨ᴰ⟨⟩-at : ∀ {Θ k} {σ : DInst Θ} {B : Ords (Θ +eⁿ k)}
+        → σ ⊨ᴰ⟨ k ⟩ B → (cs : Vec E k) → (σ ,ᵉᴰⁿ cs) ⊨ᴰᵒ B
+⊨ᴰ⟨⟩-at s []ᵛ        = s
+⊨ᴰ⟨⟩-at s (c ∷ᵛ cs) = ⊨ᴰ⟨⟩-at (s c) cs
+
+⊨ᴰ⟨⟩-[] : ∀ {Θ Θ'} → (k : ℕ) → (τ : Subst Θ Θ') → (σ : DInst Θ') → {B : Ords (Θ +eⁿ k)}
+        → (τ ⨟ᴰ σ) ⊨ᴰ⟨ k ⟩ B → σ ⊨ᴰ⟨ k ⟩ (B [ τ ↑ᵉⁿ k ]ᴼ)
+⊨ᴰ⟨⟩-[] zero τ σ {B} s = mk⊨ᴰᵒ rd ed
+  where
+    rd : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors (B [ τ ]ᴼ) → ⟦ ρ ⟧ʳ σ ≾ᵣ ⟦ ρ' ⟧ʳ σ
+    rd m with ∈-map⁻ (mapᵖ (_[ τ ]ʳ)) m
+    ... | (x , y) , m₀ , refl = subst₂ _≾ᵣ_ (sym (⟦[]⟧ʳ τ σ x)) (sym (⟦[]⟧ʳ τ σ y)) (⊨ors s m₀)
+
+    ed : ∀ {ε ε'} → (ε , ε') ∈ oes (B [ τ ]ᴼ) → ⟦ ε ⟧ᵉ σ ≾ₑ ⟦ ε' ⟧ᵉ σ
+    ed m with ∈-map⁻ (mapᵖ (_[ τ ]ᵉ)) m
+    ... | (x , y) , m₀ , refl = subst₂ _≾ₑ_ (sym (⟦[]⟧ᵉ τ σ x)) (sym (⟦[]⟧ᵉ τ σ y)) (⊨oes s m₀)
+⊨ᴰ⟨⟩-[] (suc k) τ σ s c =
+  ⊨ᴰ⟨⟩-[] k (τ ↑ᵉ) (σ ,ᵉᴰ c) (⊨ᴰ⟨⟩-≗ k (≗ᴰ-sym (↑ᵉ-⨟ᴰ τ σ c)) (s c))
 
 ------------------------------------------------------------------------
 -- Soundness of convertibility and entailed ordering
@@ -101,6 +137,29 @@ sound-≾ᵣ : ∀ {Θ} {σ : DInst Θ} {Q : Hyps Θ} {ρ ρ' : RExp Θ}
          → σ ⊨ᴰ Q → Q ⊩ ρ ≾̂ᵣ ρ' → ⟦ ρ ⟧ʳ σ ≾ᵣ ⟦ ρ' ⟧ʳ σ
 sound-≾ₑ : ∀ {Θ} {σ : DInst Θ} {Q : Hyps Θ} {ε ε' : EExp Θ}
          → σ ⊨ᴰ Q → Q ⊩ ε ≾̂ₑ ε' → ⟦ ε ⟧ᵉ σ ≾ₑ ⟦ ε' ⟧ᵉ σ
+
+-- An instance of the rigids at `σ` means their values; a closed one
+-- means the values of its constants
+
+private
+
+  ⟦inst⟧ : ∀ {Θ k} → (es : Vec (EExp Θ) k) → (σ : DInst Θ)
+         → ((idˢ ,ᵉⁿ es) ⨟ᴰ σ) ≗ᴰ (σ ,ᵉᴰⁿ mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)
+  ⟦inst⟧ es σ = ≗ᴰ-trans (,ᵉⁿ-⨟ᴰ idˢ es σ) (≗ᴰ-,ᵉᴰⁿ (idˢ-⨟ᴰ σ) (mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es))
+
+  ⟦fact⟧ : ∀ {Θ k} → (es : Vec (EExp Θ) k) → (σ : DInst Θ)
+         → ((from∅ ,ᵉⁿ mapᵛ econst (mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)) ⨟ᴰ ∅ᴰ)
+             ≗ᴰ ((from∅ ,ᵉⁿ es) ⨟ᴰ σ)
+  ⟦fact⟧ es σ =
+    ≗ᴰ-trans (,ᵉⁿ-⨟ᴰ from∅ (mapᵛ econst cs) ∅ᴰ)
+    (≗ᴰ-trans (subst (λ v → ((from∅ ⨟ᴰ ∅ᴰ) ,ᵉᴰⁿ mapᵛ (λ e → ⟦ e ⟧ᵉ ∅ᴰ) (mapᵛ econst cs))
+                             ≗ᴰ ((from∅ ⨟ᴰ σ) ,ᵉᴰⁿ v))
+                     (⟦consts⟧ cs)
+                     (≗ᴰ-,ᵉᴰⁿ {σ = from∅ ⨟ᴰ ∅ᴰ} {σ' = from∅ ⨟ᴰ σ} (mk≗ᴰ (λ ()) (λ ()) (λ ()))
+                              (mapᵛ (λ e → ⟦ e ⟧ᵉ ∅ᴰ) (mapᵛ econst cs))))
+              (≗ᴰ-sym (,ᵉⁿ-⨟ᴰ from∅ es σ)))
+    where
+      cs = mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es
 
 sound-≡̂ᵣ σ ≡̂ᵣ-refl          = ≃ᵣ-refl
 sound-≡̂ᵣ σ (≡̂ᵣ-sym p)       = ≃ᵣ-sym (sound-≡̂ᵣ σ p)
@@ -156,6 +215,19 @@ sound-≾ᵣ s (zeroʳᵣ p)   = ≾ᵣ-zero-productʳ (sound-≾ᵣ s p)
 sound-≾ᵣ s (plusᵣ p q r) = Plus.c⁺-least p (sound-≾ᵣ s q) (sound-≾ᵣ s r)
 sound-≾ᵣ s (indˡᵣ p q)  = Plus.⁺-indˡ p (sound-≾ᵣ s q)
 sound-≾ᵣ s (indʳᵣ p q)  = Plus.⁺-indʳ p (sound-≾ᵣ s q)
+sound-≾ᵣ {σ = σ} s (instᵣ {ρ = ρ} {ρ'} m mφ es) =
+  subst₂ _≾ᵣ_ (sym (eq ρ)) (sym (eq ρ')) (⊨ors (⊨ᴰ⟨⟩-at (⊨qhyps s m) (mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)) mφ)
+  where
+    eq : ∀ x → ⟦ x [ idˢ ,ᵉⁿ es ]ʳ ⟧ʳ σ ≡ ⟦ x ⟧ʳ (σ ,ᵉᴰⁿ mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)
+    eq x = trans (⟦[]⟧ʳ (idˢ ,ᵉⁿ es) σ x) (⟦≗⟧ʳ (⟦inst⟧ es σ) x)
+sound-≾ᵣ {σ = σ} s (factᵣ {ρ = ρ} {ρ'} _ H es) =
+  subst₂ _≾ᵣ_ (eq ρ) (eq ρ') (H es')
+  where
+    es' = mapᵛ econst (mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)
+    eq : ∀ x → valʳ (x [ from∅ ,ᵉⁿ es' ]ʳ) ≡ ⟦ x [ from∅ ,ᵉⁿ es ]ʳ ⟧ʳ σ
+    eq x = trans (sym (⟦⟧∅-valʳ (x [ from∅ ,ᵉⁿ es' ]ʳ)))
+           (trans (⟦[]⟧ʳ (from∅ ,ᵉⁿ es') ∅ᴰ x)
+           (trans (⟦≗⟧ʳ (⟦fact⟧ es σ) x) (sym (⟦[]⟧ʳ (from∅ ,ᵉⁿ es) σ x))))
 
 sound-≾ₑ s (hypₑ m)     = ⊨ordₑ s m
 sound-≾ₑ s (atomₑ p)    = p
@@ -172,6 +244,19 @@ sound-≾ₑ s (zeroʳₑ p)   = ≾ₑ-zero-productʳ (sound-≾ₑ s p)
 sound-≾ₑ s (plusₑ p q r) = Plus.c⁺-least p (sound-≾ₑ s q) (sound-≾ₑ s r)
 sound-≾ₑ s (indˡₑ p q)  = Plus.⁺-indˡ p (sound-≾ₑ s q)
 sound-≾ₑ s (indʳₑ p q)  = Plus.⁺-indʳ p (sound-≾ₑ s q)
+sound-≾ₑ {σ = σ} s (instₑ {ε = ε} {ε'} m mφ es) =
+  subst₂ _≾ₑ_ (sym (eq ε)) (sym (eq ε')) (⊨oes (⊨ᴰ⟨⟩-at (⊨qhyps s m) (mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)) mφ)
+  where
+    eq : ∀ x → ⟦ x [ idˢ ,ᵉⁿ es ]ᵉ ⟧ᵉ σ ≡ ⟦ x ⟧ᵉ (σ ,ᵉᴰⁿ mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)
+    eq x = trans (⟦[]⟧ᵉ (idˢ ,ᵉⁿ es) σ x) (⟦≗⟧ᵉ (⟦inst⟧ es σ) x)
+sound-≾ₑ {σ = σ} s (factₑ {ε = ε} {ε'} _ H es) =
+  subst₂ _≾ₑ_ (eq ε) (eq ε') (H es')
+  where
+    es' = mapᵛ econst (mapᵛ (λ e → ⟦ e ⟧ᵉ σ) es)
+    eq : ∀ x → valᵉ (x [ from∅ ,ᵉⁿ es' ]ᵉ) ≡ ⟦ x [ from∅ ,ᵉⁿ es ]ᵉ ⟧ᵉ σ
+    eq x = trans (sym (⟦⟧∅-valᵉ (x [ from∅ ,ᵉⁿ es' ]ᵉ)))
+           (trans (⟦[]⟧ᵉ (from∅ ,ᵉⁿ es') ∅ᴰ x)
+           (trans (⟦≗⟧ᵉ (⟦fact⟧ es σ) x) (sym (⟦[]⟧ᵉ (from∅ ,ᵉⁿ es) σ x))))
 
 ------------------------------------------------------------------------
 -- Soundness of the type-level judgements
@@ -273,7 +358,7 @@ module _ {Θ : Scope} {σ : DInst Θ} {Q : Hyps Θ} (s : σ ⊨ᴰ Q) where
 -- an instance satisfying `Q` satisfies
 
 ⊨ᴰ-,ᵉ : ∀ {Θ} {σ : DInst Θ} {Q : Hyps Θ} → (c : E) → σ ⊨ᴰ Q → (σ ,ᵉᴰ c) ⊨ᴰ wkᵉ-H Q
-⊨ᴰ-,ᵉ {Θ} {σ} {Q} c s = mk⊨ᴰ ets' subᵥ' ordᵣ' ordₑ' disj'
+⊨ᴰ-,ᵉ {Θ} {σ} {Q} c s = mk⊨ᴰ ets' subᵥ' ordᵣ' ordₑ' disj' qhyps'
   where
     ets' : ∀ {α} → α ∈ ets (wkᵉ-H Q) → Eternal (ty (σ ,ᵉᴰ c) α)
     ets' m with ∈-map⁻ (wkᵉ-tv Θ) m
@@ -301,3 +386,8 @@ module _ {Θ : Scope} {σ : DInst Θ} {Q : Hyps Θ} (s : σ ⊨ᴰ Q) where
     ... | (A₀ , ρ₀) , m₀ , refl =
       subst₂ (λ X r → Eternal X ⊎ (r ≾ᵣ uᵣ)) (sym (⟦wkᵉ⟧ᵛ σ c A₀)) (sym (⟦wkᵉ⟧ʳ σ c ρ₀))
              (⊨disj s m₀)
+
+    qhyps' : ∀ {O} → O ∈ qhyps (wkᵉ-H Q) → (σ ,ᵉᴰ c) ⊨ᴰᴼ O
+    qhyps' m with ∈-map⁻ (_[ wkˢᵉ ]ᵠ) m
+    ... | O₀ , m₀ , refl =
+      ⊨ᴰ⟨⟩-[] (rigids O₀) wkˢᵉ (σ ,ᵉᴰ c) (⊨ᴰ⟨⟩-≗ (rigids O₀) ≗ᴰ-refl (⊨qhyps s m₀))
