@@ -23,8 +23,8 @@ and [rzgdmqt/temporal-resources](https://github.com/rzgdmqt/temporal-resources).
 Agda 2.8.0 with the Agda standard library 2.3, registered as
 `standard-library-2.3` (see `tempore-formalisation.agda-lib`).
 
-    agda Everything.agda    # the development: about 50 minutes from scratch
-    agda Examples.agda      # the type-inference examples: about 5 minutes more
+    agda Everything.agda    # the development: about 90 minutes from scratch
+    agda Examples.agda      # the type-inference examples: about 20 minutes more
 
 A set of examples is checked alone by its index,
 `agda OpenCalculus/Examples/<Set>/All.agda`, whose header names the parts of
