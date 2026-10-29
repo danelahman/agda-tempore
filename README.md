@@ -60,8 +60,7 @@ end.
 - Unbox takes a variable.
 - A top-level definition is named by its position in the program context.
   Inference is for values in program contexts, and for computations in open
-  contexts; it is not stuck on a term without handlers when the schemes of
-  the program context have no quantified hypotheses.
+  contexts.
 - The reduction is on run-time terms, raw terms without grades and type
   annotations, with grade-free states; `unbox` there takes a value.
   Instantiation, type safety and termination are for the scope-closed typing.

@@ -7,8 +7,8 @@
 -- scheme, `V` typable exactly when its hypotheses are          --
 -- satisfiable (`inferᵛ-typed`); `untypable` only for untypable --
 -- values (`inferᵛ-untypable`); `stuck` only for values with    --
--- handlers or in program contexts with quantified hypotheses   --
--- (`inferᵛ-handlerFree`). A typing under no hypotheses is a     --
+-- handlers or using a definition whose scheme has quantified   --
+-- hypotheses (`inferᵛ-noRigid`). A typing under no hypotheses is a     --
 -- typing with satisfiable hypotheses, so inference misses none --
 -- of them (`completenessᵛ`).                                   --
 ------------------------------------------------------------------
@@ -39,8 +39,9 @@ open import OpenCalculus.Typing.Erasure       S
 open import OpenCalculus.Syntax.Raw           S using (RawV; return; HandlerFreeᵛ)
 open import OpenCalculus.Syntax.Raw.Subst     S
 open import OpenCalculus.Inference.Principality S
+open import OpenCalculus.Inference.Generate S using (NoRigidᵛ; handlerFree-noRigidᵛ)
 open import OpenCalculus.Inference.SolverImpl S hints opEnum
-  using (infer; check; infer-untypable; infer-handlerFree; check-untypable; check-handlerFree)
+  using (infer; check; infer-untypable; infer-noRigid; check-untypable; check-noRigid)
 
 ------------------------------------------------------------------------
 -- Outcomes
@@ -85,8 +86,8 @@ private
                   → fromCheck c ≡ stuck → c ≡ stuck
   fromCheck-stuck stuck refl = refl
 
-  unquantified-⌜⌝ : ∀ {Δ} → Unquantified Δ → Unquantified (defs (⌜_⌝ᵖ {∅ˢ} Δ))
-  unquantified-⌜⌝ {Δ} = subst Unquantified (sym (defs-⌜⌝ Δ))
+  noRigid-⌜⌝ : ∀ {Δ} {V : RawV ∅ˢ 0} → NoRigidᵛ Δ V → NoRigidᵛ (defs (⌜_⌝ᵖ {∅ˢ} Δ)) V
+  noRigid-⌜⌝ {Δ} {V} = subst (λ Δ' → NoRigidᵛ Δ' V) (sym (defs-⌜⌝ Δ))
 
 inferᵛ : (Δ : PCtx) → (V : RawV ∅ˢ 0) → Inferenceᵛ Δ V
 inferᵛ Δ V = fromInference (infer ⌜ Δ ⌝ᵖ (return V))
@@ -105,9 +106,12 @@ inferᵛ-untypable : ∀ Δ V → inferᵛ Δ V ≡ untypable → ¬ Typableᵛ 
 inferᵛ-untypable Δ V e t =
   infer-untypable ⌜ Δ ⌝ᵖ (return V) (fromInference-untypable _ e) (typableᵛ→typable t)
 
+inferᵛ-noRigid : ∀ Δ V → NoRigidᵛ Δ V → inferᵛ Δ V ≢ stuck
+inferᵛ-noRigid Δ V h e =
+  infer-noRigid ⌜ Δ ⌝ᵖ (return V) (noRigid-⌜⌝ {Δ} {V} h) (fromInference-stuck _ e)
+
 inferᵛ-handlerFree : ∀ Δ V → Unquantified Δ → HandlerFreeᵛ V → inferᵛ Δ V ≢ stuck
-inferᵛ-handlerFree Δ V u h e =
-  infer-handlerFree ⌜ Δ ⌝ᵖ (return V) (unquantified-⌜⌝ u) h (fromInference-stuck _ e)
+inferᵛ-handlerFree Δ V u h = inferᵛ-noRigid Δ V (handlerFree-noRigidᵛ u V h)
 
 checkᵛ-established : ∀ Δ V {p : PrincipalSchemeᵛ Δ V} {s}
                    → checkᵛ Δ V ≡ established p s → Typableᵛ Δ V
@@ -117,9 +121,12 @@ checkᵛ-untypable : ∀ Δ V → checkᵛ Δ V ≡ untypable → ¬ Typableᵛ 
 checkᵛ-untypable Δ V e t =
   check-untypable ⌜ Δ ⌝ᵖ (return V) (fromCheck-untypable _ e) (typableᵛ→typable t)
 
+checkᵛ-noRigid : ∀ Δ V → NoRigidᵛ Δ V → checkᵛ Δ V ≢ stuck
+checkᵛ-noRigid Δ V h e =
+  check-noRigid ⌜ Δ ⌝ᵖ (return V) (noRigid-⌜⌝ {Δ} {V} h) (fromCheck-stuck _ e)
+
 checkᵛ-handlerFree : ∀ Δ V → Unquantified Δ → HandlerFreeᵛ V → checkᵛ Δ V ≢ stuck
-checkᵛ-handlerFree Δ V u h e =
-  check-handlerFree ⌜ Δ ⌝ᵖ (return V) (unquantified-⌜⌝ u) h (fromCheck-stuck _ e)
+checkᵛ-handlerFree Δ V u h = checkᵛ-noRigid Δ V (handlerFree-noRigidᵛ u V h)
 
 ------------------------------------------------------------------------
 -- Corollary (Completeness)

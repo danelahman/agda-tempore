@@ -152,6 +152,7 @@ open import OpenCalculus.Inference.Constraints.Syntax       S
 open import OpenCalculus.Inference.Constraints.Satisfaction S
 open import OpenCalculus.Inference.Constraints.Properties   S using (⊨-resp-≐ˢ; ⊨-mono)
 
+open import OpenCalculus.Inference.Generate S using (NoRigidᶜ; handlerFree-noRigidᶜ)
 open import OpenCalculus.Inference.Principality      S
 open import OpenCalculus.Inference.Solver            S
 
@@ -934,11 +935,15 @@ infer-complete : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                → Typable Γ M → infer Γ M ≢ untypable
 infer-complete Γ M t eq = infer-untypable Γ M eq t
 
+infer-noRigid : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+              → NoRigidᶜ (defs Γ) M → infer Γ M ≢ stuck
+infer-noRigid Γ M h eq =
+  runSolverᴰ-rigidFree C[ Γ , M ] (C[]-rigidFree Γ M h)
+    (inferFrom-stuck Γ M (runSolverᴰ C[ Γ , M ]) refl eq)
+
 infer-handlerFree : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                   → Unquantified (defs Γ) → HandlerFreeᶜ M → infer Γ M ≢ stuck
-infer-handlerFree Γ M u h eq =
-  runSolverᴰ-rigidFree C[ Γ , M ] (C[]-rigidFree Γ M u h)
-    (inferFrom-stuck Γ M (runSolverᴰ C[ Γ , M ]) refl eq)
+infer-handlerFree Γ M u h = infer-noRigid Γ M (handlerFree-noRigidᶜ u M h)
 
 check-established : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                   → {p : PrincipalScheme Γ M} {s : Satisfiable (PrincipalScheme.Q̃ p)}
@@ -953,8 +958,12 @@ check-complete : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                → Typable Γ M → check Γ M ≢ untypable
 check-complete Γ M t eq = check-untypable Γ M eq t
 
+check-noRigid : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+              → NoRigidᶜ (defs Γ) M → check Γ M ≢ stuck
+check-noRigid Γ M h eq =
+  runSolverᴰ-rigidFree C[ Γ , M ] (C[]-rigidFree Γ M h)
+    (checkFrom-stuck Γ M (runSolverᴰ C[ Γ , M ]) refl eq)
+
 check-handlerFree : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                   → Unquantified (defs Γ) → HandlerFreeᶜ M → check Γ M ≢ stuck
-check-handlerFree Γ M u h eq =
-  runSolverᴰ-rigidFree C[ Γ , M ] (C[]-rigidFree Γ M u h)
-    (checkFrom-stuck Γ M (runSolverᴰ C[ Γ , M ]) refl eq)
+check-handlerFree Γ M u h = check-noRigid Γ M (handlerFree-noRigidᶜ u M h)

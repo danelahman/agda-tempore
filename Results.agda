@@ -266,17 +266,19 @@ module TypeInference (S : LanguageSpec) (hints : SystemHints (LanguageSpec.Grade
     using () renaming (solver to solving; runSolver-rigidFree to solving-not-stuck)
 
   -- Theorem (Type inference), for values in program contexts; `stuck`
-  -- only for values with handlers or in program contexts whose schemes
-  -- have quantified hypotheses
+  -- only for values with handlers or using a definition whose scheme has
+  -- quantified hypotheses (`NoRigidᵛ`)
   open import OpenCalculus.Inference.Principality S public using (typableᵛ-⇔)
+  open import OpenCalculus.Inference.Generate S public using (NoRigidᵛ; NoRigidᶜ)
   open import OpenCalculus.Inference.Values S hints opEnum public
-    using (Inferenceᵛ; inferᵛ; inferᵛ-typed; inferᵛ-untypable; inferᵛ-handlerFree)
+    using ( Inferenceᵛ; inferᵛ; inferᵛ-typed; inferᵛ-untypable; inferᵛ-noRigid
+          ; inferᵛ-handlerFree )
 
   -- The same for computations in open contexts
   open import OpenCalculus.Inference.Principality S public
     using (Inference; typable-⇔)
   open import OpenCalculus.Inference.SolverImpl S hints opEnum public
-    using (infer; infer-typed; infer-untypable; infer-handlerFree)
+    using (infer; infer-typed; infer-untypable; infer-noRigid; infer-handlerFree)
 
   -- Corollary (Completeness), for scope-closed typings of values in any
   -- program context, the empty one among them
