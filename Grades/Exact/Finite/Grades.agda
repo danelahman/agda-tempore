@@ -34,7 +34,6 @@ open import Data.List.Base using (List; []; _∷_; _++_; cartesianProductWith)
 open import Data.Product using (Σ; Σ-syntax; ∃; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
-open import Data.Maybe.Base using (nothing)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness; map′)
 
@@ -332,7 +331,6 @@ upperᵍ = record
   ; ≾-zero-productʳ = λ {c} {d} → zero-ʳ upper {c} {d}
   ; of-dur-zero = ↑² (waitᵁ 0ᴰ) εᵉ upper-zero
   ; of-dur-plus = λ {m} {n} → ↑² (waitᵁ (m +ᴰ n)) (waitᵁ m ·ᵉ waitᵁ n) (upper-split m n)
-  ; ≃⇒≡? = nothing
   }
 
 -- the lower instance: left-sided grades
@@ -387,5 +385,4 @@ lowerᵍ = record
   ; ≾-zero-productʳ = λ {c} {d} → zero-ʳ lower {c} {d}
   ; of-dur-zero = ↑² (waitᴸ 0ᴰ) εᵉ (lower-zero (0ᴰ <ᴰ? 0ᴰ))
   ; of-dur-plus = λ {m} {n} → ↑² (waitᴸ (m +ᴰ n)) (waitᴸ m ·ᵉ waitᴸ n) (lower-hom m n (0ᴰ <ᴰ? m) (0ᴰ <ᴰ? n) (0ᴰ <ᴰ? (m +ᴰ n)))
-  ; ≃⇒≡? = nothing
   }

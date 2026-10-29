@@ -249,9 +249,30 @@ module _ {Θ : Scope} {σ : DInst Θ} {Q : Hyps Θ} (s : σ ⊨ᴰ Q) where
               → Eternal (⟦ A ⟧ᵛ σ) ⊎ (⟦ ρ ⟧ʳ σ ≾ᵣ uᵣ)
   sound-VarOK (et-ok et) = inj₁ (sound-⊩ᴱ et)
   sound-VarOK (≾ᵘ-ok le) = inj₂ (sound-≾ᵣ s le)
-  sound-VarOK (hyp-ok m p p' q) with ⊨disj s m
-  ... | inj₁ et = inj₁ (<:ᵛ-eternalˡ (sound-<:ᵛ p) et)
+  sound-VarOK (hyp-ok m q) with ⊨disj s m
+  ... | inj₁ et = inj₁ et
   ... | inj₂ le = inj₂ (≾ᵣ-trans (sound-≾ᵣ s q) le)
+  sound-VarOK (subˡ-ok p ok) with sound-VarOK ok
+  ... | inj₁ et = inj₁ (<:ᵛ-eternalˡ (sound-<:ᵛ p) et)
+  ... | inj₂ le = inj₂ le
+  sound-VarOK (subʳ-ok p ok) with sound-VarOK ok
+  ... | inj₁ et = inj₁ (<:ᵛ-eternalʳ (sound-<:ᵛ p) et)
+  ... | inj₂ le = inj₂ le
+  sound-VarOK (ok₁ |×|-ok ok₂) with sound-VarOK ok₁ | sound-VarOK ok₂
+  ... | inj₁ et₁ | inj₁ et₂ = inj₁ (et₁ |×|ₑ et₂)
+  ... | inj₂ le  | _        = inj₂ le
+  ... | inj₁ _   | inj₂ le  = inj₂ le
+  sound-VarOK (ok₁ |+|-ok ok₂) with sound-VarOK ok₁ | sound-VarOK ok₂
+  ... | inj₁ et₁ | inj₁ et₂ = inj₁ (et₁ |+|ₑ et₂)
+  ... | inj₂ le  | _        = inj₂ le
+  ... | inj₁ _   | inj₂ le  = inj₂ le
+  sound-VarOK (|List|-ok ok) with sound-VarOK ok
+  ... | inj₁ et = inj₁ (|List|ₑ et)
+  ... | inj₂ le = inj₂ le
+  sound-VarOK (⊔-ok q ok₁ ok₂) with sound-VarOK ok₁ | sound-VarOK ok₂
+  ... | inj₁ et  | _        = inj₁ et
+  ... | inj₂ _   | inj₁ et  = inj₁ et
+  ... | inj₂ le₁ | inj₂ le₂ = inj₂ (≾ᵣ-trans (sound-≾ᵣ s q) (⊔ᵣ-lub le₁ le₂))
 
 ------------------------------------------------------------------------
 -- Memberships

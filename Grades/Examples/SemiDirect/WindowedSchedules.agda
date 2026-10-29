@@ -32,7 +32,6 @@ open import Data.Empty using (⊥-elim)
 open import Data.Fin.Base using (Fin; zero)
 open import Data.List.Base using (List; []; _∷_; _++_; replicate)
 open import Data.List.Properties using (++-assoc)
-open import Data.Maybe.Base using (nothing)
 open import Data.Nat.Base using (ℕ)
 open import Data.Product using (_×_; _,_; proj₁; proj₂; ∃₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
@@ -164,7 +163,6 @@ times-semilattice = record
   ; ∨-ubˡ        = ∪ₜ-ubˡ
   ; ∨-ubʳ        = ∪ₜ-ubʳ
   ; ∨-lub        = λ {E} {E'} {E''} → ∪ₜ-lub {E} {E'} {E''}
-  ; ≈⇒≡?         = nothing
   }
 
 ------------------------------------------------------------------------

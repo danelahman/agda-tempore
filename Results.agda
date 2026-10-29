@@ -440,7 +440,10 @@ module CalculusWithGradeVariables (S : LanguageSpec) where
   -- and the rules, those of grade entailment its properties. The rules
   -- are named for effect grades; the resource rules carry a subscript
   -- `ᵣ`. Var-Et has one rule per disjunct; Var-Hyp meets a disjunction
-  -- hypothesis at a type equivalent to it, a subtype and a supertype.
+  -- hypothesis at a grade below its own; the variable condition is
+  -- closed under subtyping in both directions (Var-Sub-L, Var-Sub-R),
+  -- products, sums and lists (Var-Prod, Var-Sum, Var-List), and joins
+  -- of grades (Var-Join).
   open import OpenCalculus.Hypotheses S public
     using (_≡̂ₑ_; _≡̂ᵣ_; _≡̂ᵛ_; _⊩ᵗᵛ_≾_)
     renaming ( hypₑ to Hyp ; hypᵣ to Hypᵣ ; eqₑ to Conv ; eqᵣ to Convᵣ
@@ -449,6 +452,9 @@ module CalculusWithGradeVariables (S : LanguageSpec) where
              ; zeroˡᵣ to Id-Prodˡᵣ ; zeroʳᵣ to Id-Prodʳᵣ
              ; tvarₛ to Sub-Var
              ; et-ok to Var-Etˡ ; ≾ᵘ-ok to Var-Etʳ ; hyp-ok to Var-Hyp
+             ; subˡ-ok to Var-Sub-L ; subʳ-ok to Var-Sub-R
+             ; _|×|-ok_ to Var-Prod ; _|+|-ok_ to Var-Sum ; |List|-ok to Var-List
+             ; ⊔-ok to Var-Join
              ; atomₑ to Const ; atomᵣ to Constᵣ
              ; transₑ to Trans ; transᵣ to Transᵣ
              ; ⊔-lubₑ to Lub ; ⊔-lubᵣ to Lubᵣ

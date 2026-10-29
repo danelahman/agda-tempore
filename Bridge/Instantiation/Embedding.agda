@@ -718,7 +718,7 @@ mutual
     where
       -- the continuation, narrowed from the supertype to the payload
 
-      N'' = conv-last narrowing refl
+      N'' = conv-last narrowing
               (⌞⌟-<:ᵛ A₀' ⌜ A ⌝ᵛ (∈̂-noHandler nh x') (⌜⌝-noHandlerᵛ A)
                       (subst₂ _<:ᵛ_ (sym eA₀) (sym ⌞⌜ A ⌝⌟ᵛ) q)) N'
   embedᶜ (u-box {P = P} {ρ = ρ} {A = A} u v) (a , b) nh eq ι fι er E

@@ -414,7 +414,6 @@ upperᵍ = record
   ; ≾-zero-productʳ = λ {c} {d} → zero-ʳ upper {c} {d}
   ; of-dur-zero = ↑² (waitᵁ 0ᴰ) εᵉ upper-zero
   ; of-dur-plus = λ {m} {n} → ↑² (waitᵁ (m +ᴰ n)) (waitᵁ m ·ᵉ waitᵁ n) (upper-split m n)
-  ; ≃⇒≡? = nothing
   }
 
 -- its hints: Kleene's plus at every grade
@@ -452,7 +451,6 @@ lowerᵍ = record
   ; ≾-zero-productʳ = λ {c} {d} → zero-ʳ lower {c} {d}
   ; of-dur-zero = ↑² (waitᴸ 0ᴰ) εᵉ (lower-zero (0ᴰ <ᴰ? 0ᴰ))
   ; of-dur-plus = λ {m} {n} → ↑² (waitᴸ (m +ᴰ n)) (waitᴸ m ·ᵉ waitᴸ n) (lower-hom m n (0ᴰ <ᴰ? m) (0ᴰ <ᴰ? n) (0ᴰ <ᴰ? (m +ᴰ n)))
-  ; ≃⇒≡? = nothing
   }
   where
     ⊤-proper : IsTrue (Fin′.nonEmpty (Fin′.words {lower} (str all (0ᴰ ∣ᶜ ⁻))))

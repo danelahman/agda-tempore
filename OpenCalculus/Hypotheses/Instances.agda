@@ -211,9 +211,7 @@ _≡̂ₑ?_ : (ε ε' : EExp ∅ˢ) → Dec (ε ≡̂ₑ ε')
 
 VarOK-∅ : {A : OVType ∅ˢ} {ρ : RExp ∅ˢ}
         → VarOK ∅ᴴ A ρ → (∅ᴴ ⊩ᴱ A) ⊎ (valʳ ρ ≾ᵣ uᵣ)
-VarOK-∅ (et-ok et) = inj₁ et
-VarOK-∅ (≾ᵘ-ok le) = inj₂ (val-≾ᵣ le)
-VarOK-∅ (hyp-ok () _ _ _)
+VarOK-∅ ok = [ inj₁ , (λ le → inj₂ (val-≾ᵣ le)) ]′ (VarOK-∅ᴴ ok)
 
 VarOK-∅⁻ : {A : OVType ∅ˢ} {ρ : RExp ∅ˢ}
          → (∅ᴴ ⊩ᴱ A) ⊎ (valʳ ρ ≾ᵣ uᵣ) → VarOK ∅ᴴ A ρ
@@ -424,9 +422,7 @@ mk⊨ᴴ et sb oR oE dj qh δ h =
 
 VarOK-∅-mono : {A A' : OVType ∅ˢ} {ρ ρ' : RExp ∅ˢ}
              → (∅ᴴ ⊩ᴱ A → ∅ᴴ ⊩ᴱ A') → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ → VarOK ∅ᴴ A ρ → VarOK ∅ᴴ A' ρ'
-VarOK-∅-mono f q (et-ok et)     = et-ok (f et)
-VarOK-∅-mono f q (≾ᵘ-ok le)     = ≾ᵘ-ok (transᵣ q le)
-VarOK-∅-mono f q (hyp-ok () _ _ _)
+VarOK-∅-mono f q ok = [ (λ et → et-ok (f et)) , (λ le → ≾ᵘ-ok (transᵣ q le)) ]′ (VarOK-∅ᴴ ok)
 
 -- What a set entails holds by value at each of its instances
 

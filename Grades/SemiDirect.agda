@@ -35,7 +35,7 @@
 
 module Grades.SemiDirect where
 
-open import Data.Maybe.Base using (Maybe; just; nothing; zipWith)
+open import Data.Maybe.Base using (nothing)
 import Data.Maybe.Base as Maybe
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
@@ -84,11 +84,6 @@ record Semilattice : Set₁ where
   -- the order's equivalence
   _≈_ : Rel Carrier 0ℓ
   n ≈ n' = (n ⊑ n') × (n' ⊑ n)
-
-  field
-    -- whether equivalent elements are equal, where declared;
-    -- informational, as for grades
-    ≈⇒≡? : Maybe (∀ {n n'} → n ≈ n' → n ≡ n')
 
   ≈-refl : ∀ {n} → n ≈ n
   ≈-refl = ⊑-refl , ⊑-refl
@@ -246,8 +241,6 @@ semidirect M N A = record
       , act-reflects-bot (M.≾-zero-productˡ p) (N.⊑-trans (N.∨-ubʳ _ _) q)
   ; of-dur-zero     = pair M.of-dur-zero N.≈-refl
   ; of-dur-plus     = pair M.of-dur-plus (N.bot-⊑ _ , N.∨-lub N.⊑-refl (act-bot _))
-  ; ≃⇒≡?            = zipWith (λ a₁ a₂ ((p , q) , (p' , q')) → cong₂ _,_ (a₁ (p , p')) (a₂ (q , q')))
-                              M.≃⇒≡? N.≈⇒≡?
   }
   where
     module M = Grade M

@@ -38,7 +38,6 @@
 module Grades.Examples.SemiDirect.ResourceLevels where
 
 open import Data.Integer.Base as ℤ using (ℤ)
-open import Data.Maybe.Base using (just)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (_×-dec_; True; toWitness; map′)
@@ -162,10 +161,6 @@ private
            (≤∞-trans (+∞-distribʳ-⊔∞ (ext s) (net s') (net s''))
                      (⊔∞-mono (⊔∞-ubʳ (ext s') _) (⊔∞-ubʳ (ext s'') _)))
 
-side-≡ : ∀ {s s'} → net s ≡ net s' → ext s ≡ ext s' → s ≡ s'
-side-≡ {side _ _ p q} {side _ _ p' q'} refl refl =
-  cong₂ (side _ _) (≤∞-irrelevant p p') (≤∞-irrelevant q q')
-
 ------------------------------------------------------------------------
 -- The levels of one resource: a lower side, held negated, and an
 -- upper side, with consistent net changes
@@ -264,9 +259,6 @@ zero-productʳ {x} {y} p@(pl , pu) =
 ------------------------------------------------------------------------
 -- The grade of one resource
 
-level-≡ : ∀ {x y} → lower x ≡ lower y → upper x ≡ upper y → x ≡ y
-level-≡ {level _ _ c} {level _ _ c'} refl refl = cong (level _ _) (≤∞-irrelevant c c')
-
 one-resource : {D : Duration} → Grade D
 one-resource = record
   { Carrier         = Level
@@ -300,9 +292,6 @@ one-resource = record
   ; ≾-zero-productʳ = λ {x} {y} → zero-productʳ {x} {y}
   ; of-dur-zero     = (≤ˢ-refl , ≤ˢ-refl) , (≤ˢ-refl , ≤ˢ-refl)
   ; of-dur-plus     = pair (·ˢ-identityˡ uˢ) (·ˢ-identityˡ uˢ) .proj₂ , pair (·ˢ-identityˡ uˢ) (·ˢ-identityˡ uˢ) .proj₁
-  ; ≃⇒≡?            = just λ (((a , b) , (c , d)) , ((a' , b') , (c' , d'))) →
-      level-≡ (side-≡ (≤∞-antisym a a') (≤∞-antisym b b'))
-              (side-≡ (≤∞-antisym c c') (≤∞-antisym d d'))
   }
   where
     pair : ∀ {a b c d : Side} → a ≤ˢ b × b ≤ˢ a → c ≤ˢ d × d ≤ˢ c

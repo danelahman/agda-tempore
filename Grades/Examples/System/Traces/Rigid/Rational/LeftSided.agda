@@ -41,7 +41,7 @@ open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (toWitnessFalse)
 
 open import Grades.Base
-open import Grades.Hints using (SystemHints; noGradeHints)
+open import Grades.Hints using (SystemHints)
 open import Grades.Durations.Monus ℚ≥0ᵀ using (Carrier; 0ᴰ; _<ᴰ_; _<ᴰ?_; ≮0⇒≡0)
 open import Grades.Durations.Intervals ℚ≥0ᵀ
   using (Cut; pt; ⁻; _⊑_; ⊑⇒≤; _⊓ᶜ_; ⊓ᶜ-sel; ⊓ᶜ-lbˡ; ⊓ᶜ-lbʳ; _+ˡ_; lo; ⟪_,_⟫)
