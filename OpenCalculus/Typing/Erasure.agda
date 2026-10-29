@@ -8,7 +8,7 @@
 --                                                              --
 -- Erasure is index-preserving: a derivation over `Θ` erases to --
 -- a raw term over `Θ`, a handler clause to a                   --
--- `RawC (Θ +e) (2+n)`, a variable to its full-context         --
+-- `RawC (Θ +e) (2+n)`, a variable to its full-context          --
 -- position `var-pos`, a resource value to that of its variable --
 -- under its annotations (`⌊_⌋ʳ`), and a definition to its      --
 -- position in the program context. It is not injective: `subV` --

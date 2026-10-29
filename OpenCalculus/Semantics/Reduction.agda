@@ -1,7 +1,7 @@
 ------------------------------------------------------------------
 -- The reduction of configurations                              --
 --                                                              --
--- `⟨ S ∣ M ⟩ ↝[ e ] ⟨ S' ∣ M' ⟩`: the small-step semantics of   --
+-- `⟨ S ∣ M ⟩ ↝[ e ] ⟨ S' ∣ M' ⟩`: the small-step semantics of  --
 -- run-time terms, typed or not, with `e : S ≤ₛ S'` the         --
 -- extension of the state. A delay adds a passage, a `box` a    --
 -- resource, an `unbox` reads one; a congruence weakens the     --

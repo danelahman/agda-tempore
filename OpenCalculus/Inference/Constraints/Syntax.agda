@@ -9,8 +9,8 @@
 -- effect-grade quantifier, and a conjunction indexed by        --
 -- operation symbols.                                           --
 --                                                              --
--- Derived forms: conjunctions over a list, existential          --
--- quantification over the variables of a scope (`∃ˢ`), and      --
+-- Derived forms: conjunctions over a list, existential         --
+-- quantification over the variables of a scope (`∃ˢ`), and     --
 -- rigid quantification over several effect-grade variables     --
 -- (`∀ᵉⁿ`).                                                     --
 --                                                              --

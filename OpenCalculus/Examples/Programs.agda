@@ -1,5 +1,5 @@
 --------------------------------------------------------------------
--- Checking programs of several top-level definitions               --
+-- Checking programs of several top-level definitions             --
 --                                                                --
 -- Each definition is inferred in the program context of those    --
 -- before it and added to it with its principal type scheme       --

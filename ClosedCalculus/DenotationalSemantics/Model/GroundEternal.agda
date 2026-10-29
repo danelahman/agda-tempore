@@ -5,7 +5,8 @@
 -- grade, so the interpretation of an eternal type must carry an         --
 -- `Eternalᵒ` structure (in particular the extraction `extᵉ`).           --
 --                                                                    --
--- The structure is supplied for each *former* of `Language.Types.Eternal`: --
+-- The structure is supplied for each *former* of                         --
+-- `Language.Types.Eternal`:                                              --
 -- the eternal base types, and closure under `Unit`, `Bool`, `Nat`,      --
 -- `Empty`, products, sums and lists. `Interpretation.Variables` then     --
 -- assembles an `Eternalᵒ` for every eternal type by recursion on the     --

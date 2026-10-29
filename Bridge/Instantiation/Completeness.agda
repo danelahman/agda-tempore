@@ -14,7 +14,7 @@
 -- `check-principal`). An untypable verdict leaves no such      --
 -- typing (`infer-untypableᴰ`, `check-untypableᴰ`). Soundness   --
 -- is `Bridge.Instantiation.Inference`; the factoring instance  --
--- meets its premise (`Principalᴰ.sat-Q`), so the scheme       --
+-- meets its premise (`Principalᴰ.sat-Q`), so the scheme        --
 -- there types the term of `D`, the elaboration of `M` at `σ₀`, --
 -- in `D`'s context below `D`'s type                            --
 -- (`principal-typing`, `infer-principal-typing`).              --

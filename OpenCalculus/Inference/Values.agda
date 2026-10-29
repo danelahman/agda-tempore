@@ -8,9 +8,9 @@
 -- satisfiable (`inferᵛ-typed`); `untypable` only for untypable --
 -- values (`inferᵛ-untypable`); `stuck` only for values with    --
 -- handlers or using a definition whose scheme has quantified   --
--- hypotheses (`inferᵛ-noRigid`). A typing under no hypotheses is a     --
--- typing with satisfiable hypotheses, so inference misses none --
--- of them (`completenessᵛ`).                                   --
+-- hypotheses (`inferᵛ-noRigid`). A typing under no hypotheses  --
+-- is a typing with satisfiable hypotheses, so inference misses --
+-- none of them (`completenessᵛ`).                              --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)

@@ -119,7 +119,7 @@ mutual
 ------------------------------------------------------------------------
 -- Weakening: more slack is always fine
 --
--- The `keep` case is now immediate: its premise does not mention the
+-- The `keep` case is immediate: its premise does not mention the
 -- slack being weakened.
 
 weaken : ∀ {j s t} (m : Carrier) → s ≼ᶜ[ j ] t → s ≼ᶜ[ j + m ] t

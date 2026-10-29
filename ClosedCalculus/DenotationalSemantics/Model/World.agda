@@ -4,7 +4,8 @@
 --                                                                    --
 -- The frame carries *no* monoid structure on its carrier of worlds.   --
 -- A presheaf is indexed by the worlds `W` monotonely in the *unit*     --
--- grade only (see `ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Base`);     --
+-- grade only (see                                                      --
+-- `ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Base`);      --
 -- the graded order enters through the modalities and the monad.        --
 -- Accordingly, the only structure the frame provides is a single       --
 -- family of preorders on worlds:                                       --

@@ -6,7 +6,7 @@
 -- open types and grade expressions, and with the side          --
 -- conditions entailed from the hypothesis set `Q`.             --
 --                                                              --
--- Four rules deviate, as marked at their definitions: a        --
+-- Five rules deviate, as marked at their definitions: a        --
 -- handler is a value, `handler`, of a handler type, used by    --
 -- `handle_`with_`, where `ClosedCalculus.Syntax.Terms` has     --
 -- one form taking the clauses; `handler` types its operation   --
@@ -14,11 +14,12 @@
 -- grade, quantified at the meta level in                       --
 -- `ClosedCalculus.Syntax.Terms`, being a rigid effect-grade    --
 -- variable; a comparison `cmp` is a value, where it is a       --
--- computation in `ClosedCalculus.Syntax.Terms`; and `unbox`    --
+-- computation in `ClosedCalculus.Syntax.Terms`; `unbox`        --
 -- takes a resource value, a variable under annotations         --
 -- (`_∣_⊢↪[_]_⦂[_]_`), and binds the payload, where             --
 -- `ClosedCalculus.Syntax.Terms` takes a variable and binds any --
--- supertype of the payload.                                    --
+-- supertype of the payload; and `const` takes its base type    --
+-- explicitly, as the raw term carries it.                      --
 --                                                              --
 -- The rules `annᵛ` and `annᶜ` record a type annotation of the  --
 -- raw term, have no counterpart in                             --

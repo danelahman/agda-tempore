@@ -4,7 +4,7 @@
 -- A renaming `Ren Q Γ Γ'` sends each variable of `Γ` to one of --
 -- `Γ'` of the same type, at an accumulated grade that `Q`      --
 -- entails to be below the one in `Γ`, and keeps the program    --
--- context. It acts on derivations   --
+-- context. It acts on derivations                              --
 -- (`rename-v`, `rename-c`), and on run-time erasures as the    --
 -- renaming of positions. A value of eternal type moves along   --
 -- any map of positions preserving the types (`eternal-v`). An  --
