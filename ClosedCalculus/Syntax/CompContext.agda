@@ -12,11 +12,11 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import ClosedCalculus.Syntax.Contexts   S
-open import ClosedCalculus.Syntax.Terms      S
-open import ClosedCalculus.Syntax.RenActions S
-open import ClosedCalculus.Syntax.Renamings  S
-open import Language.Types                   S
+open import ClosedCalculus.Syntax.Contexts        S
+open import ClosedCalculus.Syntax.Terms           S
+open import ClosedCalculus.Syntax.Renaming.Action S
+open import ClosedCalculus.Syntax.Renaming        S
+open import ClosedCalculus.Syntax.Types           S
 
 -- Computation term context flags. They characterise whether
 -- it is an arbitrary term context, an evaluation context, or

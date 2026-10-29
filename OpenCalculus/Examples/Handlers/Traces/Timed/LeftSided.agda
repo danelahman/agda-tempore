@@ -50,8 +50,7 @@ resume-twice-reported = refl
 resume-twice-derivable : Typable [] resume-twice
 resume-twice-derivable = resume-twice-typable _
 
--- Returning at once is not below `op-grade read`: `no-discarding` in
--- `ClosedCalculus/Examples/Typing/Traces/Timed/LeftSided.agda`
+-- Returning at once is not below `op-grade read`
 
 discard-untypable-verdict : infer [] discard ≡ untypable
 discard-untypable-verdict = refl

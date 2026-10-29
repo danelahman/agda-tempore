@@ -110,8 +110,7 @@ branches-reported = refl
 
 ------------------------------------------------------------------
 -- 6. A promise of two is due after a store, `[ 2 ,+∞⟩`, or a
--- transmission, `[ 4 ,+∞⟩`, not after a reading, `[ 1 ,+∞⟩`:
--- `claim-after-sampling-fails` of `ClosedCalculus/Examples/Typing/Time/LeftSided.agda`
+-- transmission, `[ 4 ,+∞⟩`, not after a reading, `[ 1 ,+∞⟩`
 
 read-too-early-verdict : infer [] (op-licensed read) ≡ untypable
 read-too-early-verdict = refl

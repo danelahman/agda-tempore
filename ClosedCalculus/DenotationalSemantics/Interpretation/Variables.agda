@@ -44,7 +44,7 @@ module ClosedCalculus.DenotationalSemantics.Interpretation.Variables
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Language.Types S
+open import ClosedCalculus.Syntax.Types S
 open import ClosedCalculus.Syntax.Contexts S
 
 open Category Cat
@@ -104,7 +104,7 @@ eternalᵛ-extᵉ-μ : ∀ {A} → (et : Eternal A) → ∀ {ρ₁ ρ₂}
 eternalᵛ-extᵉ-μ et = Eternalᵒ.extᵉ-μ (eternalᵛ-Eternalᵒ et)
 
 -- Eternal extraction does not depend on how eternality was established
--- (`Eternal` is a property — see `Language.Types.eternal-irrelevant`).
+-- (`Eternal` is a property — see `ClosedCalculus.Syntax.Types.eternal-irrelevant`).
 
 eternalᵛ-extᵉ-irr : ∀ {A} → (et et' : Eternal A) → ∀ {ρ}
                   → eternalᵛ-extᵉ et {ρ} ≈ᵐ eternalᵛ-extᵉ et' {ρ}

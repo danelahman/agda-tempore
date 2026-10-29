@@ -1,7 +1,9 @@
 ------------------------------------------------------------------------
--- Every module of the development except the type-inference examples
--- (`Examples`). `Results` is the overview of the main definitions and
--- results.
+-- Every module of the calculus with type and grade variables and its
+-- type inference, with the grades, the language and the utilities they
+-- share with the closed calculus (`ClosedCalculus/Everything.agda`).
+-- `Results` is the overview of the main definitions and results. The
+-- inference examples are checked apart, by `Examples.agda`.
 ------------------------------------------------------------------------
 
 module Everything where
@@ -196,7 +198,6 @@ import Language.Comparisons
 import Language.GroundTypes
 import Language.Operations
 import Language.Spec
-import Language.Types
 
 ---- Examples
 
@@ -211,14 +212,14 @@ import Language.Examples.SensorNode.Identity
 ---- substitutions, raw terms and run-time terms
 
 import OpenCalculus.Syntax.Contexts
-import OpenCalculus.Syntax.ContextsLemmas
+import OpenCalculus.Syntax.Contexts.Properties
 import OpenCalculus.Syntax.Grades
 import OpenCalculus.Syntax.Raw
-import OpenCalculus.Syntax.Raw.Subst
+import OpenCalculus.Syntax.Raw.GradeSubstitution
 import OpenCalculus.Syntax.Run
 import OpenCalculus.Syntax.Run.Substitution
 import OpenCalculus.Syntax.Scopes
-import OpenCalculus.Syntax.Subst
+import OpenCalculus.Syntax.GradeSubstitution
 import OpenCalculus.Syntax.Types
 
 ---- Hypotheses, entailment, quantified orderings and closed instances
@@ -246,11 +247,11 @@ import OpenCalculus.Typing.Transport
 ---- Operational semantics: states, state typings, the reduction, type safety
 ---- and termination
 
-import OpenCalculus.Semantics.Reduction
-import OpenCalculus.Semantics.States
-import OpenCalculus.Semantics.Termination
-import OpenCalculus.Semantics.Termination.Reducibility
-import OpenCalculus.Semantics.TypeSafety
+import OpenCalculus.OperationalSemantics.Reduction
+import OpenCalculus.OperationalSemantics.State
+import OpenCalculus.OperationalSemantics.Termination
+import OpenCalculus.OperationalSemantics.Termination.Reducibility
+import OpenCalculus.OperationalSemantics.TypeSafety
 
 ---- Constraints, their generation, soundness and completeness of
 ---- generation, solvers, principality, the concrete solver, and inference
@@ -310,185 +311,3 @@ import OpenCalculus.Programs.Instantiation
 import OpenCalculus.Programs.Substitution
 import OpenCalculus.Programs.Syntax
 import OpenCalculus.Programs.Typing
-
-
--- CLOSED CALCULUS
-------------------
-
----- Contexts, intrinsically typed terms, subtyping, renamings and
----- substitutions, erasure and normal forms
-
-import ClosedCalculus.Syntax.CompContext
-import ClosedCalculus.Syntax.Contexts
-import ClosedCalculus.Syntax.Data
-import ClosedCalculus.Syntax.Data.Order
-import ClosedCalculus.Syntax.Erasure
-import ClosedCalculus.Syntax.Normalisation
-import ClosedCalculus.Syntax.RenActions
-import ClosedCalculus.Syntax.Renamings
-import ClosedCalculus.Syntax.Renamings.Base
-import ClosedCalculus.Syntax.Renamings.Category
-import ClosedCalculus.Syntax.Renamings.Coherence
-import ClosedCalculus.Syntax.Renamings.Equivalence
-import ClosedCalculus.Syntax.Substitutions
-import ClosedCalculus.Syntax.Substitutions.Action
-import ClosedCalculus.Syntax.Substitutions.At
-import ClosedCalculus.Syntax.Substitutions.Base
-import ClosedCalculus.Syntax.Substitutions.Chain
-import ClosedCalculus.Syntax.Substitutions.ChainEquivalence
-import ClosedCalculus.Syntax.Substitutions.Clauses
-import ClosedCalculus.Syntax.Substitutions.Equivalence
-import ClosedCalculus.Syntax.Substitutions.Interchange
-import ClosedCalculus.Syntax.Substitutions.Laws
-import ClosedCalculus.Syntax.Substitutions.Lookup
-import ClosedCalculus.Syntax.Substitutions.Subsumption
-import ClosedCalculus.Syntax.Substitutions.Variables
-import ClosedCalculus.Syntax.Subtyping
-import ClosedCalculus.Syntax.Terms
-import ClosedCalculus.Syntax.Terms.Equivalence
-import ClosedCalculus.Syntax.Terms.Transport
-
----- Operational semantics: states, reduction, progress and preservation
-
-import ClosedCalculus.OperationalSemantics.PreservationTheorem
-import ClosedCalculus.OperationalSemantics.ProgressTheorem
-import ClosedCalculus.OperationalSemantics.Soundness.Preservation
-import ClosedCalculus.OperationalSemantics.Soundness.Preservation.Base
-import ClosedCalculus.OperationalSemantics.Soundness.Preservation.Handle
-import ClosedCalculus.OperationalSemantics.Soundness.Preservation.HandleOpClause
-import ClosedCalculus.OperationalSemantics.Soundness.Preservation.HandleOpCont
-import ClosedCalculus.OperationalSemantics.Soundness.Preservation.Step
-import ClosedCalculus.OperationalSemantics.Soundness.Preservation.Unbox
-import ClosedCalculus.OperationalSemantics.Soundness.TickLemmas
-import ClosedCalculus.OperationalSemantics.Soundness.TopLevelPure
-import ClosedCalculus.OperationalSemantics.State
-import ClosedCalculus.OperationalSemantics.TopLevelOpSemantics
-import ClosedCalculus.OperationalSemantics.TopLevelPreservationTheorem
-import ClosedCalculus.OperationalSemantics.TopLevelProgressTheorem
-
----- Equational theory
-
-import ClosedCalculus.EquationalTheory.Alignment
-import ClosedCalculus.EquationalTheory.EquationalTheory
-import ClosedCalculus.EquationalTheory.Naturality
-import ClosedCalculus.EquationalTheory.Soundness
-import ClosedCalculus.EquationalTheory.Soundness.Base
-import ClosedCalculus.EquationalTheory.Soundness.Coerce
-import ClosedCalculus.EquationalTheory.Soundness.Comm
-import ClosedCalculus.EquationalTheory.Soundness.Delay
-import ClosedCalculus.EquationalTheory.Soundness.Fill
-import ClosedCalculus.EquationalTheory.Soundness.Handle
-import ClosedCalculus.EquationalTheory.Soundness.HandlePerform
-import ClosedCalculus.EquationalTheory.Soundness.Modal
-import ClosedCalculus.EquationalTheory.Soundness.Parametric
-import ClosedCalculus.EquationalTheory.Soundness.Seq
-import ClosedCalculus.EquationalTheory.Soundness.SeqAssoc
-import ClosedCalculus.EquationalTheory.Soundness.UnboxBeta
-import ClosedCalculus.EquationalTheory.Soundness.Values
-
----- Denotational semantics: the abstract model, the presheaf model, the
----- interpretation
-
-import ClosedCalculus.DenotationalSemantics.Interpretation.Comparisons
-import ClosedCalculus.DenotationalSemantics.Interpretation.Contexts
-import ClosedCalculus.DenotationalSemantics.Interpretation.Data
-import ClosedCalculus.DenotationalSemantics.Interpretation.Recursion
-import ClosedCalculus.DenotationalSemantics.Interpretation.Renaming
-import ClosedCalculus.DenotationalSemantics.Interpretation.Renaming.Algebra
-import ClosedCalculus.DenotationalSemantics.Interpretation.Renaming.Extension
-import ClosedCalculus.DenotationalSemantics.Interpretation.Renaming.Structural
-import ClosedCalculus.DenotationalSemantics.Interpretation.RenamingCoherence
-import ClosedCalculus.DenotationalSemantics.Interpretation.State
-import ClosedCalculus.DenotationalSemantics.Interpretation.SubstitutionCoherence
-import ClosedCalculus.DenotationalSemantics.Interpretation.SubstitutionCoherence.Base
-import ClosedCalculus.DenotationalSemantics.Interpretation.SubstitutionCoherence.Core
-import ClosedCalculus.DenotationalSemantics.Interpretation.SubstitutionCoherence.Env
-import ClosedCalculus.DenotationalSemantics.Interpretation.SubstitutionCoherence.Transport
-import ClosedCalculus.DenotationalSemantics.Interpretation.Subtyping
-import ClosedCalculus.DenotationalSemantics.Interpretation.Terms
-import ClosedCalculus.DenotationalSemantics.Interpretation.Types
-import ClosedCalculus.DenotationalSemantics.Interpretation.Variables
-import ClosedCalculus.DenotationalSemantics.Model.Category
-import ClosedCalculus.DenotationalSemantics.Model.Comparison
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Base
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.GroundTypes
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Implementation
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Modality.Adjunction
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Modality.Eternal
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Modality.Future
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Modality.Past
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Core
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Effects
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Handling
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Handling.Core
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Handling.Laws
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Handling.Mu
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Instance
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.TickMonad
-import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.TopLevelInstance
-import ClosedCalculus.DenotationalSemantics.Model.GroundEternal
-import ClosedCalculus.DenotationalSemantics.Model.GroundTypes
-import ClosedCalculus.DenotationalSemantics.Model.Implementation
-import ClosedCalculus.DenotationalSemantics.Model.Modality.Adjunction
-import ClosedCalculus.DenotationalSemantics.Model.Modality.Eternal
-import ClosedCalculus.DenotationalSemantics.Model.Modality.Future
-import ClosedCalculus.DenotationalSemantics.Model.Modality.Past
-import ClosedCalculus.DenotationalSemantics.Model.Monad
-import ClosedCalculus.DenotationalSemantics.Model.Monad.Enrichment
-import ClosedCalculus.DenotationalSemantics.Model.TickMonad
-import ClosedCalculus.DenotationalSemantics.Model.World
-import ClosedCalculus.DenotationalSemantics.Model.World.Action
-import ClosedCalculus.DenotationalSemantics.Model.World.History
-import ClosedCalculus.DenotationalSemantics.Model.World.Product
-import ClosedCalculus.DenotationalSemantics.Model.World.Reindex
-
----- Adequacy of the denotational semantics
-
-import ClosedCalculus.Adequacy.Adequacy
-import ClosedCalculus.Adequacy.Bind
-import ClosedCalculus.Adequacy.Environment
-import ClosedCalculus.Adequacy.Environment.Action
-import ClosedCalculus.Adequacy.Environment.Cell
-import ClosedCalculus.Adequacy.Environment.Core
-import ClosedCalculus.Adequacy.Environment.Variables
-import ClosedCalculus.Adequacy.Equational
-import ClosedCalculus.Adequacy.Evaluation
-import ClosedCalculus.Adequacy.GradedReach
-import ClosedCalculus.Adequacy.Handle
-import ClosedCalculus.Adequacy.HeadFaithful
-import ClosedCalculus.Adequacy.Normalization
-import ClosedCalculus.Adequacy.PSh.HeadFaithful
-import ClosedCalculus.Adequacy.PSh.TickFrames
-import ClosedCalculus.Adequacy.PSh.TreeHead
-import ClosedCalculus.Adequacy.PSh.TreeShape
-import ClosedCalculus.Adequacy.Reducibility
-import ClosedCalculus.Adequacy.StateEquivalence
-import ClosedCalculus.Adequacy.StateEquivalence.Bisimulation
-import ClosedCalculus.Adequacy.StateEquivalence.Core
-import ClosedCalculus.Adequacy.StateEquivalence.Extensions
-import ClosedCalculus.Adequacy.StateEquivalence.Replay
-
----- Examples
-
-import ClosedCalculus.DenotationalSemantics.Model.Example.World
-import ClosedCalculus.Examples.Typing
-
-
--- BRIDGE BETWEEN THE CALCULI
------------------------------
-
----- Instantiation: open typings as families of declarative typings, and
----- soundness and completeness of inference for the declarative system
-
-import Bridge.Instantiation.Completeness
-import Bridge.Instantiation.Correspondence
-import Bridge.Instantiation.Embedding
-import Bridge.Instantiation.Hoisting
-import Bridge.Instantiation.Inference
-import Bridge.Instantiation.Judgements
-import Bridge.Instantiation.Terms
-import Bridge.Instantiation.Types
-
-
--- The inference examples, and the completeness example relating the two
--- calculi, are checked separately (`make examples`).

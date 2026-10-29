@@ -58,15 +58,15 @@ open Operations Ops
 open import OpenCalculus.Syntax.Grades   S
 open import OpenCalculus.Syntax.Types    S
 open import OpenCalculus.Syntax.Contexts S
-open import OpenCalculus.Syntax.Subst    S
+open import OpenCalculus.Syntax.GradeSubstitution S
 open import OpenCalculus.Hypotheses     S
 open import OpenCalculus.Typing S
 open import OpenCalculus.Hypotheses.Instances S
   using (_⊨_; ⊨⇒⊩ᴴ; Satisfiable; Satisfiable-∅)
 
-open import OpenCalculus.Syntax.Raw       S
-open import OpenCalculus.Syntax.Raw.Subst S
-open import OpenCalculus.Typing.Erasure   S
+open import OpenCalculus.Syntax.Raw                   S
+open import OpenCalculus.Syntax.Raw.GradeSubstitution S
+open import OpenCalculus.Typing.Erasure               S
 
 open import OpenCalculus.Inference.Constraints.Syntax       S
 open import OpenCalculus.Inference.Constraints.Satisfaction S

@@ -36,12 +36,12 @@ open GradeSystemInterface Grades
 open import Data.Product using (_,_)
 open import Data.Unit using (tt)
 
-open import Language.Types                      S
-open import ClosedCalculus.Syntax.Contexts      S
-open import ClosedCalculus.Syntax.Terms         S
-open import ClosedCalculus.Syntax.Renamings     S
-open import ClosedCalculus.Syntax.RenActions    S using (V-rename; C-rename)
-open import ClosedCalculus.Syntax.Substitutions S
+open import ClosedCalculus.Syntax.Types           S
+open import ClosedCalculus.Syntax.Contexts        S
+open import ClosedCalculus.Syntax.Terms           S
+open import ClosedCalculus.Syntax.Renaming        S
+open import ClosedCalculus.Syntax.Renaming.Action S using (V-rename; C-rename)
+open import ClosedCalculus.Syntax.Substitution    S
 
 open Category Cat
 open Future Fut using ([_]ᶠ)

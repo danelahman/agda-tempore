@@ -39,7 +39,7 @@ module ClosedCalculus.Examples.Typing.System
 
 open import Language.Examples.SensorNode S opTime public
 
-open import Language.Types                 spec public
+open import ClosedCalculus.Syntax.Types    spec public
 open import ClosedCalculus.Syntax.Contexts spec public
 open import ClosedCalculus.Syntax.Terms    spec public
 

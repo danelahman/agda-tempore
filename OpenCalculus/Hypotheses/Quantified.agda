@@ -30,8 +30,8 @@ module OpenCalculus.Hypotheses.Quantified (S : LanguageSpec) where
 open LanguageSpec S
 open Operations Ops using (Op)
 
-open import OpenCalculus.Syntax.Grades S
-open import OpenCalculus.Syntax.Subst  S
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.GradeSubstitution S
 
 ------------------------------------------------------------------------
 -- Rigid binders

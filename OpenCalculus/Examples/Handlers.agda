@@ -46,19 +46,19 @@ open GradeSystemInterface Grades
   using (≃ᵣ⇒≾ᵣ; map-uᵉ; EGrade; uₑ; ⊤ₑ; ⊤ᵣ; _≾ₑ?_; mapᵉ)
 open Operations Ops using (Op; param; arity; op-grade)
 
-open import OpenCalculus.Syntax.Grades          S
-open import OpenCalculus.Syntax.Types           S
-open import OpenCalculus.Syntax.Contexts        S hiding (Scheme; _∷_)
-open import OpenCalculus.Syntax.Contexts        S using () renaming (_∷_ to _∷ᶜ_)
-open import OpenCalculus.Syntax.Subst           S using (idˢ)
-open import OpenCalculus.Hypotheses             S
-open import OpenCalculus.Hypotheses.Instances   S using (Satisfiable-∅)
-open import OpenCalculus.Typing                 S
-open import OpenCalculus.Syntax.Raw             S
-open import OpenCalculus.Syntax.Raw.Subst       S using (_[_]ᴿᶜ)
-open import OpenCalculus.Typing.Erasure         S using (⌊_⌋ᶜ)
-open import OpenCalculus.Inference.Principality S
-open import OpenCalculus.Inference.SolverImpl   S hints opEnum using (infer-complete)
+open import OpenCalculus.Syntax.Grades                S
+open import OpenCalculus.Syntax.Types                 S
+open import OpenCalculus.Syntax.Contexts              S hiding (Scheme; _∷_)
+open import OpenCalculus.Syntax.Contexts              S using () renaming (_∷_ to _∷ᶜ_)
+open import OpenCalculus.Syntax.GradeSubstitution     S using (idˢ)
+open import OpenCalculus.Hypotheses                   S
+open import OpenCalculus.Hypotheses.Instances         S using (Satisfiable-∅)
+open import OpenCalculus.Typing                       S
+open import OpenCalculus.Syntax.Raw                   S
+open import OpenCalculus.Syntax.Raw.GradeSubstitution S using (_[_]ᴿᶜ)
+open import OpenCalculus.Typing.Erasure               S using (⌊_⌋ᶜ)
+open import OpenCalculus.Inference.Principality       S
+open import OpenCalculus.Inference.SolverImpl         S hints opEnum using (infer-complete)
 
 open import OpenCalculus.Inference.SolverImpl S hints opEnum using (infer) public
 open import OpenCalculus.Examples.Scheme S public
@@ -219,8 +219,7 @@ expected-relay-boxed = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ 
 --   discard m = handle m () with handler {op p k ↦ return ()}
 --
 -- The clause's grade `ûₑ` must be below `op · j` for the rigid `j`,
--- so for every continuation grade: the condition of `discarding` in
--- `ClosedCalculus/Examples/Typing/Core.agda`. It holds where the unit is least
+-- so for every continuation grade. It holds where the unit is least
 -- (`nothing-fits` at the right-sided grades), and fails at `j = ûₑ`
 -- where the unit is not below `op-grade read` (`no-discarding` at
 -- the left-sided grades).

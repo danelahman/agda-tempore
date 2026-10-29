@@ -49,9 +49,9 @@ open Operations Ops
 
 open import ClosedCalculus.Syntax.Contexts Spec
 open import ClosedCalculus.Syntax.Terms    Spec
-open import Language.Types                 Spec
+open import ClosedCalculus.Syntax.Types    Spec
 
-open import ClosedCalculus.OperationalSemantics.PreservationTheorem Spec
+open import ClosedCalculus.OperationalSemantics.Reduction           Spec
 open import ClosedCalculus.OperationalSemantics.State               Spec
 
 open Category Cat
@@ -68,7 +68,7 @@ open import ClosedCalculus.DenotationalSemantics.Interpretation.State    Spec Ca
 
 open import ClosedCalculus.OperationalSemantics.Soundness.Preservation   Spec Cat Fut Pst Adj GTy Mon GE
 
-open import ClosedCalculus.Adequacy.Evaluation Spec
+open import ClosedCalculus.OperationalSemantics.Evaluation Spec
 
 -- The class of morphisms `stepsᵀ` builds: `ηᵀ`, and a `DELAY`'s tick bound
 -- into a further transition, indexed by the tick total. Closed under `_≈ᵐ_`.

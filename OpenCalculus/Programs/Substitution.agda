@@ -33,7 +33,7 @@ open Operations Ops
 open import OpenCalculus.Syntax.Grades            S
 open import OpenCalculus.Syntax.Types             S
 open import OpenCalculus.Syntax.Contexts          S
-open import OpenCalculus.Syntax.Subst             S
+open import OpenCalculus.Syntax.GradeSubstitution S
 open import OpenCalculus.Hypotheses               S
 open import OpenCalculus.Typing                   S
 open import OpenCalculus.Typing.Erasure           S
@@ -128,11 +128,11 @@ private
   ∥use∥ : ∀ {Θ n} {Q : Hyps Θ} (Γ : OCtx Θ n) {ρ : Defs} {s k}
         → (r : DefsEnv ρ (defs Γ)) → (f : s ∈ᵖ[ k ] defs Γ) → (δ : Subst (Θˢ s) Θ)
         → (h : Q ⊩ᴴ Qˢ s [ δ ])
-        → ∥ use Γ r f δ h ∥ᵛ ≡ def k [ ρ ]ᵈᵛ
+        → ∥ use Γ r f δ h ∥ᵛ ≡ usedef k [ ρ ]ᵈᵛ
   ∥use∥ Γ {k = k} r f δ h =
     trans (∥rename-v∥ (ren₀ Γ) (substᵛ δ h D₀))
       (trans (cong wk₀ (trans (cong eraseᵛ (⌊substᵛ⌋ δ h D₀)) (erase-substᵛ ⌊ D₀ ⌋ᵛ δ)))
-             (cong (maybe′ wk₀ (def k)) (sym (proj₂ (closed r f)))))
+             (cong (maybe′ wk₀ (usedef k)) (sym (proj₂ (closed r f)))))
     where D₀ = proj₁ (closed r f)
 
 mutual
@@ -140,7 +140,7 @@ mutual
   sdef-v : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ} {ρ : Defs}
          → DefsEnv ρ (defs Γ) → Q ∣ Γ ⊢V⦂ A → Q ∣ local Γ ⊢V⦂ A
   sdef-v r (var x p)       = var (∈̂-local x) p
-  sdef-v {Γ = Γ} r (def f δ h e) = ty-subst (sym e) (use Γ r f δ h)
+  sdef-v {Γ = Γ} r (usedef f δ h e) = ty-subst (sym e) (use Γ r f δ h)
   sdef-v r (const B c)     = const B c
   sdef-v r ⋆               = ⋆
   sdef-v r true            = true
@@ -190,7 +190,7 @@ mutual
            → (r : DefsEnv ρ (defs Γ)) → (V : Q ∣ Γ ⊢V⦂ A)
            → ∥ sdef-v r V ∥ᵛ ≡ ∥ V ∥ᵛ [ ρ ]ᵈᵛ
   ∥sdef-v∥ r (var x p)       = cong var (var-pos-local x)
-  ∥sdef-v∥ {Γ = Γ} r (def f δ h e) =
+  ∥sdef-v∥ {Γ = Γ} r (usedef f δ h e) =
     trans (cong eraseᵛ (⌊ty-subst⌋ (sym e) _)) (∥use∥ Γ r f δ h)
   ∥sdef-v∥ r (const B c)     = refl
   ∥sdef-v∥ r ⋆               = refl

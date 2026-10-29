@@ -23,7 +23,7 @@ module ClosedCalculus.Syntax.Subtyping (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Language.Types S
+open import ClosedCalculus.Syntax.Types S
 
 infix  4  _<:ᵛ_ _<:ᶜ_
 infix  37 [_]ₛ_

@@ -31,8 +31,8 @@ module ClosedCalculus.Syntax.Data.Order (S : LanguageSpec) where
 
 open LanguageSpec S
 
-open import Language.Types             S
-open import ClosedCalculus.Syntax.Data S
+open import ClosedCalculus.Syntax.Types S
+open import ClosedCalculus.Syntax.Data  S
 
 flipᵒ : Order → Order
 flipᵒ less    = greater

@@ -67,7 +67,7 @@ mutual
 
   _[_]ᵈᵛ : ∀ {n} → RunV n → Defs → RunV n
   var i         [ ρ ]ᵈᵛ = var i
-  def k         [ ρ ]ᵈᵛ = maybe′ wk₀ (def k) (ρ k)
+  usedef k      [ ρ ]ᵈᵛ = maybe′ wk₀ (usedef k) (ρ k)
   const B c     [ ρ ]ᵈᵛ = const B c
   ⋆             [ ρ ]ᵈᵛ = ⋆
   true          [ ρ ]ᵈᵛ = true

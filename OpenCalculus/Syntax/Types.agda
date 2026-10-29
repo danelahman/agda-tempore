@@ -1,14 +1,14 @@
 ------------------------------------------------------------------
 -- Open value and computation types                             --
 --                                                              --
--- The types of `Language.Types` with grade expressions in      --
--- place of grades, and the formers `tvar` of type variables    --
--- and `_⇛_` of handler types, which have no counterpart in     --
--- `Language.Types`. The ground types of the operation          --
+-- Value and computation types with grade expressions as        --
+-- grades, among them the type variables `tvar` and the         --
+-- handler types `_⇛_`. The ground types of the operation       --
 -- signature embed by `⌜_⌝ᵍ`.                                   --
 ------------------------------------------------------------------
 
 open import Grades.Base
+open import Language.BaseTypes using (module BaseTypes)
 open import Language.Spec
 
 open import OpenCalculus.Syntax.Scopes
@@ -18,7 +18,8 @@ module OpenCalculus.Syntax.Types (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Language.Types S using (BaseType; GType; Base; Unit; Bool; Nat; Empty; _|×|ᵍ_; _|+|ᵍ_; |List|ᵍ; [_]ᵍ_)
+open BaseTypes BTs using (BaseType)
+open import Language.GroundTypes Grades BTs using (GType; Base; Unit; Bool; Nat; Empty; _|×|ᵍ_; _|+|ᵍ_; |List|ᵍ; [_]ᵍ_)
 
 open import OpenCalculus.Syntax.Grades S
 
@@ -48,7 +49,7 @@ mutual
   infixr 30 _⇒_ _⇛_
   infix  31 _‼_
 
--- Embedding ground types into open types (mirrors `type-of-gtype`)
+-- Embedding ground types into open types
 
 ⌜_⌝ᵍ : ∀ {Θ} → GType → OVType Θ
 ⌜ Base b ⌝ᵍ    = Base b

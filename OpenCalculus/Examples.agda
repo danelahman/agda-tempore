@@ -1,8 +1,7 @@
 ------------------------------------------------------------------------
 -- The type-inference examples, in sets by what they test. Each set's
 -- index `OpenCalculus.Examples.<Set>.All` names the solver parts it
--- exercises and can be checked alone. The completeness example relating
--- the two calculi is `Bridge.Examples.Uniform.All`.
+-- exercises and can be checked alone.
 ------------------------------------------------------------------------
 
 module OpenCalculus.Examples where

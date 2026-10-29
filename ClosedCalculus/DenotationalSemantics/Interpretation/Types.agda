@@ -34,7 +34,7 @@ module ClosedCalculus.DenotationalSemantics.Interpretation.Types
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Language.Types S
+open import ClosedCalculus.Syntax.Types S
 
 open Category Cat
 open Future Fut

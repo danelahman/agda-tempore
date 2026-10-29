@@ -40,7 +40,7 @@ open import Data.Sum using (inj₁; inj₂)
 open LanguageSpec S
 
 open import Language.Comparisons
-open import Language.Types                  S
+open import ClosedCalculus.Syntax.Types     S
 open import ClosedCalculus.Syntax.Subtyping S
 open import ClosedCalculus.Syntax.Data      S
 

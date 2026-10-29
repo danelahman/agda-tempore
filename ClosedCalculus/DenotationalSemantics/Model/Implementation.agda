@@ -4,8 +4,7 @@
 -- An external implementation `op-semᵐ` of each operation: from the      --
 -- parameter, seen from `mapᵉ (op-grade op)` in its future (where the    --
 -- continuation runs), the arity value. It is the semantic counterpart   --
--- of `ClosedCalculus.OperationalSemantics.TopLevelOpSemantics.op-sem`,  --
--- and being a                                                           --
+-- of `ClosedCalculus.OperationalSemantics.TopLevel.op-sem`, and being a --
 -- single morphism it is uniform in the state.                           --
 --                                                                       --
 -- Running the operations against it is a graded monad morphism from     --

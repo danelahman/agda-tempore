@@ -40,13 +40,13 @@ open GradeSystemInterface Grades using (𝔻; of-durʳ; of-durᵉ)
 open import OpenCalculus.Syntax.Grades      S
 open import OpenCalculus.Syntax.Types       S
 open import OpenCalculus.Syntax.Contexts    S hiding (Scheme)
-open import OpenCalculus.Syntax.Subst       S using (idˢ)
+open import OpenCalculus.Syntax.GradeSubstitution S using (idˢ)
 open import OpenCalculus.Hypotheses        S
 open import OpenCalculus.Hypotheses.Instances   S using (Satisfiable-∅)
 open import Language.Comparisons using (Cmp; eq; ne; lt; le; gt; ge)
 open import OpenCalculus.Typing    S
 open import OpenCalculus.Syntax.Raw             S
-open import OpenCalculus.Syntax.Raw.Subst              S using (_[_]ᴿᶜ)
+open import OpenCalculus.Syntax.Raw.GradeSubstitution  S using (_[_]ᴿᶜ)
 open import OpenCalculus.Typing.Erasure                  S using (⌊_⌋ᶜ)
 open import OpenCalculus.Inference.Principality           S
 open import OpenCalculus.Inference.SolverImpl             S hints opEnum

@@ -353,7 +353,7 @@ module Cycle (S : LanguageSpec) (hints : SystemHints (LanguageSpec.Grades S))
              (opEnum : OpEnum S) where
 
   open import OpenCalculus.Syntax.Grades                 S
-  open import OpenCalculus.Syntax.Subst                  S using (Subst; wkˢᵉ; _⨟ˢ_; sE)
+  open import OpenCalculus.Syntax.GradeSubstitution      S using (Subst; wkˢᵉ; _⨟ˢ_; sE)
   open import OpenCalculus.Inference.SolverImpl.Resid    S using (Resid; resid)
   open import OpenCalculus.Inference.SolverImpl.Localise S hints using (collapse; Collapse; stepᵉ; module Find)
   open import OpenCalculus.Inference.SolverImpl.Solve    S hints opEnum using (splitᴿ)
@@ -467,7 +467,7 @@ module Witness where
 
   open import OpenCalculus.Syntax.Grades                 spec
   open import OpenCalculus.Hypotheses                    spec using (Hyps; ∅ᴴ; _+eⁿ_; ords; qord)
-  open import OpenCalculus.Syntax.Subst                  spec using (Subst)
+  open import OpenCalculus.Syntax.GradeSubstitution      spec using (Subst)
   open import OpenCalculus.Inference.SolverImpl.Deferred spec hints using (grid; candidatesₑ)
   open import OpenCalculus.Inference.SolverImpl.Solve    spec hints enum
     using (Retried; refutedᵈ; keptᵈ; retryᵈ; Verdict; settled; refuted; undecided; witnessᵉ)

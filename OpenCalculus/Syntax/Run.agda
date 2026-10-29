@@ -17,6 +17,7 @@ open import Data.Nat using (ℕ; zero; suc; _+_)
 
 open import Grades.Base
 open import Language.Comparisons using (Cmp)
+open import Language.BaseTypes using (module BaseTypes)
 open import Language.Spec
 open import Language.Operations
 
@@ -30,11 +31,11 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import Language.Types S using (BaseType; BaseConstants)
+open BaseTypes BTs using (BaseType; BaseConstants)
 
-open import OpenCalculus.Syntax.Subst      S using (Subst)
-open import OpenCalculus.Syntax.Raw        S
-open import OpenCalculus.Syntax.Raw.Subst  S
+open import OpenCalculus.Syntax.GradeSubstitution     S using (Subst)
+open import OpenCalculus.Syntax.Raw                   S
+open import OpenCalculus.Syntax.Raw.GradeSubstitution S
 
 ------------------------------------------------------------------------
 -- Syntax
@@ -43,7 +44,7 @@ mutual
 
   data RunV (n : ℕ) : Set where
     var     : Fin n → RunV n
-    def     : ℕ → RunV n
+    usedef  : ℕ → RunV n
     const   : (B : BaseType) → BaseConstants B → RunV n
     ⋆       : RunV n
     true    : RunV n
@@ -84,7 +85,7 @@ mutual
 
   eraseᵛ : ∀ {Θ n} → RawV Θ n → RunV n
   eraseᵛ (var i)       = var i
-  eraseᵛ (def k)       = def k
+  eraseᵛ (usedef k)    = usedef k
   eraseᵛ (const B c)   = const B c
   eraseᵛ ⋆             = ⋆
   eraseᵛ true          = true
@@ -127,7 +128,7 @@ mutual
   erase-substᵛ : ∀ {Θ Θ' n} → (V : RawV Θ n) → (σ : Subst Θ Θ')
                → eraseᵛ (V [ σ ]ᴿᵛ) ≡ eraseᵛ V
   erase-substᵛ (var i)       σ = refl
-  erase-substᵛ (def k)       σ = refl
+  erase-substᵛ (usedef k)    σ = refl
   erase-substᵛ (const B c)   σ = refl
   erase-substᵛ ⋆             σ = refl
   erase-substᵛ true          σ = refl
@@ -185,7 +186,7 @@ mutual
 
   renᵛ : ∀ {n m} → (Fin n → Fin m) → RunV n → RunV m
   renᵛ f (var i)       = var (f i)
-  renᵛ f (def k)       = def k
+  renᵛ f (usedef k)    = usedef k
   renᵛ f (const B c)   = const B c
   renᵛ f ⋆             = ⋆
   renᵛ f true          = true
@@ -240,7 +241,7 @@ mutual
   ren-fuseᵛ : ∀ {n m k} {f : Fin m → Fin k} {g : Fin n → Fin m} {h : Fin n → Fin k}
             → (∀ i → f (g i) ≡ h i) → (V : RunV n) → renᵛ f (renᵛ g V) ≡ renᵛ h V
   ren-fuseᵛ p (var i)       = cong var (p i)
-  ren-fuseᵛ p (def k)       = refl
+  ren-fuseᵛ p (usedef k)    = refl
   ren-fuseᵛ p (const B c)   = refl
   ren-fuseᵛ p ⋆             = refl
   ren-fuseᵛ p true          = refl
@@ -298,7 +299,7 @@ mutual
 
   ren-idᵛ : ∀ {n} {f : Fin n → Fin n} → (∀ i → f i ≡ i) → (V : RunV n) → renᵛ f V ≡ V
   ren-idᵛ p (var i)       = cong var (p i)
-  ren-idᵛ p (def k)       = refl
+  ren-idᵛ p (usedef k)    = refl
   ren-idᵛ p (const B c)   = refl
   ren-idᵛ p ⋆             = refl
   ren-idᵛ p true          = refl
@@ -356,7 +357,7 @@ mutual
 
   subᵛ : ∀ {n} → (k : ℕ) → RunV n → RunV (k + suc n) → RunV (k + n)
   subᵛ k U (var i)       = subVar k U i
-  subᵛ k U (def j)       = def j
+  subᵛ k U (usedef j)    = usedef j
   subᵛ k U (const B c)   = const B c
   subᵛ k U ⋆             = ⋆
   subᵛ k U true          = true

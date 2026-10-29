@@ -56,7 +56,7 @@ open Operations Ops
 open World Wld
 open Stepped st using (toℕ; toℕ-injective; 1ᴰ)
 
-open import Language.Types Spec
+open import ClosedCalculus.Syntax.Types Spec
 
 open import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Base Grades Wld
 open import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Modality.Future Grades Wld

@@ -27,6 +27,7 @@ open import Data.Product using (_×_)
 open import Data.Unit using (⊤)
 
 open import Grades.Base
+open import Language.BaseTypes using (module BaseTypes)
 open import Language.Spec
 open import Language.Operations
 
@@ -39,7 +40,7 @@ open Operations Ops
 -- Only the base-type signature is needed; the type formers of the closed
 -- language play no role in raw terms.
 
-open import Language.Types S using (BaseType; BaseConstants)
+open BaseTypes BTs using (BaseType; BaseConstants)
 
 open import OpenCalculus.Syntax.Scopes
 open import Language.Comparisons using (Cmp)
@@ -56,9 +57,9 @@ mutual
               -------
             → RawV Θ n
 
-    -- top-level definitions
+    -- uses of top-level definitions
 
-    def     : ℕ
+    usedef  : ℕ
               -------
             → RawV Θ n
 
@@ -344,43 +345,3 @@ mutual
   HandlerFreeᶜ (unbox V N)              = HandlerFreeᵛ V × HandlerFreeᶜ N
   HandlerFreeᶜ (box ρ V N)              = HandlerFreeᵛ V × HandlerFreeᶜ N
   HandlerFreeᶜ (M ⦂ᶜ C)                 = HandlerFreeᶜ M
-
--- A term whose handlers are second-class: every handler is the handler
--- of a `handle`, and every `handle` has a handler as its handler; and
--- which uses no top-level definition
-
-mutual
-
-  SecondClassᵛ : ∀ {Θ n} → RawV Θ n → Set
-  SecondClassᵛ (succ V)      = SecondClassᵛ V
-  SecondClassᵛ ⦉ V , W ⦊      = SecondClassᵛ V × SecondClassᵛ W
-  SecondClassᵛ (inl V)       = SecondClassᵛ V
-  SecondClassᵛ (inr V)       = SecondClassᵛ V
-  SecondClassᵛ (cons V W)    = SecondClassᵛ V × SecondClassᵛ W
-  SecondClassᵛ (cmp ⋈ V W)   = SecondClassᵛ V × SecondClassᵛ W
-  SecondClassᵛ (lam M)       = SecondClassᶜ M
-  SecondClassᵛ (handler N H) = ⊥
-  SecondClassᵛ (def k)       = ⊥
-  SecondClassᵛ (V ⦂ᵛ A)      = SecondClassᵛ V
-  SecondClassᵛ _             = ⊤
-
-  SecondClassᶜ : ∀ {Θ n} → RawC Θ n → Set
-  SecondClassᶜ (return V)                = SecondClassᵛ V
-  SecondClassᶜ (M ⨟ N)                   = SecondClassᶜ M × SecondClassᶜ N
-  SecondClassᶜ (V · W)                   = SecondClassᵛ V × SecondClassᵛ W
-  SecondClassᶜ (match V `in M)           = SecondClassᵛ V × SecondClassᶜ M
-  SecondClassᶜ (absurd V)                = SecondClassᵛ V
-  SecondClassᶜ (if V `then M `else N)    = SecondClassᵛ V × SecondClassᶜ M × SecondClassᶜ N
-  SecondClassᶜ (caseℕ V `zero M `succ N) = SecondClassᵛ V × SecondClassᶜ M × SecondClassᶜ N
-  SecondClassᶜ (case+ V `inl M `inr N)   = SecondClassᵛ V × SecondClassᶜ M × SecondClassᶜ N
-  SecondClassᶜ (recℕ V M N)              = SecondClassᵛ V × SecondClassᶜ M × SecondClassᶜ N
-  SecondClassᶜ (caseL V `nil M `cons N)  = SecondClassᵛ V × SecondClassᶜ M × SecondClassᶜ N
-  SecondClassᶜ (recL V M N)              = SecondClassᵛ V × SecondClassᶜ M × SecondClassᶜ N
-  SecondClassᶜ (perform op V M)          = SecondClassᵛ V × SecondClassᶜ M
-  SecondClassᶜ (delay τ M)               = SecondClassᶜ M
-  SecondClassᶜ (handle M `with handler N H) =
-    SecondClassᶜ M × SecondClassᶜ N × ((op : Op) → SecondClassᶜ (H op))
-  SecondClassᶜ (handle M `with _)        = ⊥
-  SecondClassᶜ (unbox V N)               = SecondClassᵛ V × SecondClassᶜ N
-  SecondClassᶜ (box ρ V N)               = SecondClassᵛ V × SecondClassᶜ N
-  SecondClassᶜ (M ⦂ᶜ C)                  = SecondClassᶜ M

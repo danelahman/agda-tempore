@@ -4,10 +4,10 @@
 -- `A forᵗ α` is the substitution that eliminates the type      --
 -- variable `α`, sending it to `A` and every other variable of  --
 -- its sort to its thickening. It is a `Subst`, subject to the  --
--- substitution algebra of `OpenCalculus.Syntax.Subst`;         --
--- its components at the two other sorts are the variable       --
--- constructors, the extension `_+ty` leaving their counters    --
--- unchanged.                                                   --
+-- substitution algebra of                                      --
+-- `OpenCalculus.Syntax.GradeSubstitution`; its components at   --
+-- the two other sorts are the variable constructors, the       --
+-- extension `_+ty` leaving their counters unchanged.           --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (Maybe; just; nothing; maybe′)
@@ -24,9 +24,9 @@ module OpenCalculus.Inference.SolverImpl.Core.For (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import OpenCalculus.Syntax.Grades S
-open import OpenCalculus.Syntax.Types  S
-open import OpenCalculus.Syntax.Subst  S
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.GradeSubstitution S
 
 open import OpenCalculus.Inference.SolverImpl.Core.Thick
 

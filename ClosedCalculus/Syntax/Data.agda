@@ -27,7 +27,7 @@ module ClosedCalculus.Syntax.Data (S : LanguageSpec) where
 
 open LanguageSpec S
 
-open import Language.Types                  S
+open import ClosedCalculus.Syntax.Types     S
 open import ClosedCalculus.Syntax.Subtyping S
 open import ClosedCalculus.Syntax.Contexts  S using (Ctx)
 open import ClosedCalculus.Syntax.Terms     S

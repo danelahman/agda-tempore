@@ -136,7 +136,7 @@ open Operations Ops
 open import OpenCalculus.Syntax.Grades    S
 open import OpenCalculus.Syntax.Types     S
 open import OpenCalculus.Syntax.Contexts  S hiding (_∷_)
-open import OpenCalculus.Syntax.Subst     S
+open import OpenCalculus.Syntax.GradeSubstitution S
 open import OpenCalculus.Hypotheses      S
 open import OpenCalculus.Hypotheses.Instances S
   using (Satisfiable; Satisfiable-∅; _⊨ᴴ_; _⊩ᴼˢ_[_]; ⊩ᴼˢ-≐; _⊩_∣_[_]; _⊨_∣_; _⊨_; ⊨⇒⊩ᴴ; ⊩ᴴ⇒⊨;
@@ -144,7 +144,7 @@ open import OpenCalculus.Hypotheses.Instances S
 open import OpenCalculus.Typing  S
 
 open import OpenCalculus.Syntax.Raw S using (RawC; HandlerFreeᶜ)
-open import OpenCalculus.Syntax.Raw.Subst  S using (_[_]ᴿᶜ; [≐]ᴿᶜ)
+open import OpenCalculus.Syntax.Raw.GradeSubstitution S using (_[_]ᴿᶜ; [≐]ᴿᶜ)
 open import OpenCalculus.Typing.Erasure      S using (⌊_⌋ᶜ)
 open import OpenCalculus.Inference.Soundness  S using (ctx-substᶜ; ⌊ctxᶜ⌋; ⌊c⌋)
 

@@ -52,11 +52,11 @@ open Operations Ops
 
 open import ClosedCalculus.Syntax.Contexts Spec
 open import ClosedCalculus.Syntax.Terms    Spec
-open import Language.Types                 Spec
+open import ClosedCalculus.Syntax.Types    Spec
 
 open import ClosedCalculus.EquationalTheory.EquationalTheory Spec
 
-open import ClosedCalculus.OperationalSemantics.PreservationTheorem Spec
+open import ClosedCalculus.OperationalSemantics.Reduction           Spec
 open import ClosedCalculus.OperationalSemantics.State               Spec
 
 open Category Cat
@@ -74,9 +74,9 @@ open import ClosedCalculus.EquationalTheory.Soundness            Spec Cat Fut Ps
 open import ClosedCalculus.EquationalTheory.Soundness.Parametric Spec Cat Fut Pst Adj GTy Mon GE
        using (Midᶜ)
 
-open import ClosedCalculus.Adequacy.Adequacy      Spec Cat Fut Pst Adj GTy Mon GE hf bf
-open import ClosedCalculus.Adequacy.Evaluation    Spec
-open import ClosedCalculus.Adequacy.Normalization Spec
+open import ClosedCalculus.Adequacy.Adequacy                Spec Cat Fut Pst Adj GTy Mon GE hf bf
+open import ClosedCalculus.OperationalSemantics.Evaluation  Spec
+open import ClosedCalculus.OperationalSemantics.Termination Spec
 
 -- Soundness of the equational theory, read at closed programs: the two sides
 -- of a derivable equation are the same global point of `Tᵒ ⟦ A ⟧ᵛ ε`. This is

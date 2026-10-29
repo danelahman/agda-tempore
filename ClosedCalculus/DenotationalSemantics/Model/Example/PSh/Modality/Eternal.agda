@@ -11,7 +11,7 @@
 -- `𝟙ᵖ-eternalᵒ` (Unit), `𝔹ᵖ-eternalᵒ` (Bool), `ℕᵖ-eternalᵒ` (Nat),      --
 -- `𝟘ᵖ-eternalᵒ` (Empty), `×ᵖ-eternalᵒ` (products), `+ᵖ-eternalᵒ` (sums) --
 -- and `Listᵖ-eternalᵒ` (lists), for any eternal objects. Together they   --
--- cover exactly the `Language.Types.Eternal` formers.                --
+-- cover exactly the formers of `ClosedCalculus.Syntax.Types.Eternal`.--
 --                                                                    --
 -- For the constant presheaves the `⟨ ⊤ ⟩`-algebra `α` is the mate         --
 -- `ε⊣ ∘ᵖ ⟨ ⊤ ⟩ᶠ nec` of a necessitation `nec`, and its two laws hold by   --

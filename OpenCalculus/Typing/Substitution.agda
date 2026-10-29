@@ -36,19 +36,19 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import OpenCalculus.Syntax.Grades         S
-open import OpenCalculus.Syntax.Types          S
-open import OpenCalculus.Syntax.Contexts       S
-open import OpenCalculus.Syntax.ContextsLemmas S
-open import OpenCalculus.Syntax.Subst          S
-open import OpenCalculus.Hypotheses            S
-open import OpenCalculus.Typing                S
-open import OpenCalculus.Typing.Erasure        S
-open import OpenCalculus.Typing.Transport      S
+open import OpenCalculus.Syntax.Grades              S
+open import OpenCalculus.Syntax.Types               S
+open import OpenCalculus.Syntax.Contexts            S
+open import OpenCalculus.Syntax.Contexts.Properties S
+open import OpenCalculus.Syntax.GradeSubstitution   S
+open import OpenCalculus.Hypotheses                 S
+open import OpenCalculus.Typing                     S
+open import OpenCalculus.Typing.Erasure             S
+open import OpenCalculus.Typing.Transport           S
 open import OpenCalculus.Typing.GradeSubstitution S
-open import OpenCalculus.Typing.Renaming       S
-open import OpenCalculus.Typing.Resources      S
-open import OpenCalculus.Syntax.Run            S
+open import OpenCalculus.Typing.Renaming            S
+open import OpenCalculus.Typing.Resources           S
+open import OpenCalculus.Syntax.Run                 S
 
 ------------------------------------------------------------------------
 -- Dropping the variable at depth `k`
@@ -242,7 +242,7 @@ mutual
   sub-v : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B : OVType Θ}
         → Drop Γ₀ A k Γ Γ⁻ → ∅ᴴ ∣ Γ₀ ⊢V⦂ A → ∅ᴴ ∣ Γ ⊢V⦂ B → ∅ᴴ ∣ Γ⁻ ⊢V⦂ B
   sub-v d U (var x p)      = sub-var d U x p (drop-view d x)
-  sub-v d U (def f δ h e)  = def (subst (_ ∈ᵖ[ _ ]_) (sym (drop-dfs d)) f) δ h e
+  sub-v d U (usedef f δ h e) = usedef (subst (_ ∈ᵖ[ _ ]_) (sym (drop-dfs d)) f) δ h e
   sub-v d U (const B c)    = const B c
   sub-v d U ⋆              = ⋆
   sub-v d U true           = true
@@ -297,7 +297,7 @@ mutual
           → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢V⦂ A) → (V : ∅ᴴ ∣ Γ ⊢V⦂ B)
           → ∥ sub-v d U V ∥ᵛ ≡ subᵛ k ∥ U ∥ᵛ ∥ V ∥ᵛ
   ∥sub-v∥ d U (var x p)      = ∥sub-var∥ d U x p (drop-view d x)
-  ∥sub-v∥ d U (def f δ h e)  = refl
+  ∥sub-v∥ d U (usedef f δ h e) = refl
   ∥sub-v∥ d U (const B c)    = refl
   ∥sub-v∥ d U ⋆              = refl
   ∥sub-v∥ d U true           = refl

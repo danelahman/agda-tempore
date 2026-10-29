@@ -24,7 +24,7 @@ open GradeSystemInterface Grades
 open Operations Ops
 
 open import ClosedCalculus.Syntax.Contexts S
-open import Language.Types                 S
+open import ClosedCalculus.Syntax.Types    S
 
 -- Re-exported because the typing rules' own premises mention `_<:ᵛ_`: anything
 -- that builds a term needs the relation in scope.

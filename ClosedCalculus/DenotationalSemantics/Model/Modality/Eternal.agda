@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 -- Objects interpreting *eternal* types.                                --
 --                                                                      --
--- An eternal type (`Language.Types.Eternal`) is available at any       --
--- grade, not only below the unit `u`; concretely (`Example.PSh`)       --
--- these are the constant presheaves.                                   --
+-- An eternal type (`ClosedCalculus.Syntax.Types.Eternal`) is available --
+-- at any grade, not only below the unit `u`; concretely                --
+-- (`Example.PSh`) these are the constant presheaves.                   --
 --                                                                      --
 -- `Eternalᵒ A` is an Eilenberg–Moore algebra `α : ⟨ ⊤ ⟩ᵒ A →ᵐ A`       --
 -- for the monad `⟨⊤⟩` the context modality collapses to at the         --

@@ -25,19 +25,19 @@ open import OpenCalculus.Syntax.Scopes
 
 module OpenCalculus.Programs.Typing (S : LanguageSpec) where
 
-open import OpenCalculus.Syntax.Types            S
-open import OpenCalculus.Syntax.Contexts         S
-open import OpenCalculus.Syntax.Subst            S
-open import OpenCalculus.Hypotheses              S
-open import OpenCalculus.Hypotheses.Instances    S using (Satisfiable)
-open import OpenCalculus.Typing                  S
-open import OpenCalculus.Typing.Erasure          S
-open import OpenCalculus.Typing.Transport        S
-open import OpenCalculus.Typing.Renaming         S using (∥_∥ᵛ)
-open import OpenCalculus.Typing.Resources        S
-open import OpenCalculus.Syntax.Raw              S using (RawV)
-open import OpenCalculus.Syntax.Run              S using (eraseᵛ; erase-substᵛ)
-open import OpenCalculus.Inference.Principality  S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.Contexts          S
+open import OpenCalculus.Syntax.GradeSubstitution S
+open import OpenCalculus.Hypotheses               S
+open import OpenCalculus.Hypotheses.Instances     S using (Satisfiable)
+open import OpenCalculus.Typing                   S
+open import OpenCalculus.Typing.Erasure           S
+open import OpenCalculus.Typing.Transport         S
+open import OpenCalculus.Typing.Renaming          S using (∥_∥ᵛ)
+open import OpenCalculus.Typing.Resources         S
+open import OpenCalculus.Syntax.Raw               S using (RawV)
+open import OpenCalculus.Syntax.Run               S using (eraseᵛ; erase-substᵛ)
+open import OpenCalculus.Inference.Principality   S
   using (PrincipalSchemeᵛ; module PrincipalSchemeᵛ)
 open import OpenCalculus.Programs.Syntax         S
 open import OpenCalculus.Programs.Substitution   S

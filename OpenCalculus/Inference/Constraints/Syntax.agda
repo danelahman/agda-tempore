@@ -42,9 +42,9 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import OpenCalculus.Syntax.Grades S
-open import OpenCalculus.Syntax.Types  S
-open import OpenCalculus.Syntax.Subst  S
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.GradeSubstitution S
 open import OpenCalculus.Hypotheses.Quantified S using (_+eⁿ_)
 
 -- Constraints
@@ -108,7 +108,7 @@ infix  2 ∃ᵗ_ ∃ʳ_ ∃ᵉ_ ∀ᵉ_
 ∀ᵉⁿ (suc k) C = ∀ᵉ (∀ᵉⁿ k C)
 
 -- Binders are traversed with the lifts `_↑ᵗ`/`_↑ʳ`/`_↑ᵉ` of
--- `OpenCalculus.Syntax.Subst`; weakening is a substitution
+-- `OpenCalculus.Syntax.GradeSubstitution`; weakening is a substitution
 -- like any other.
 
 infixl 50 _[_]ᶜⁿ

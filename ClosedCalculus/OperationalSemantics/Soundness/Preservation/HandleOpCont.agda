@@ -42,11 +42,11 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import Language.Types                   S
-open import ClosedCalculus.Syntax.Contexts   S
-open import ClosedCalculus.Syntax.Terms      S
-open import ClosedCalculus.Syntax.Renamings  S
-open import ClosedCalculus.Syntax.RenActions S using (C-rename)
+open import ClosedCalculus.Syntax.Types           S
+open import ClosedCalculus.Syntax.Contexts        S
+open import ClosedCalculus.Syntax.Terms           S
+open import ClosedCalculus.Syntax.Renaming        S
+open import ClosedCalculus.Syntax.Renaming.Action S using (C-rename)
 
 open Category Cat
 open Future Fut

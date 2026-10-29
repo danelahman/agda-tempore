@@ -40,11 +40,11 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import Language.Types                   S
-open import ClosedCalculus.Syntax.Contexts   S
-open import ClosedCalculus.Syntax.Terms      S
-open import ClosedCalculus.Syntax.Renamings  S
-open import ClosedCalculus.Syntax.RenActions S using (C-rename)
+open import ClosedCalculus.Syntax.Types           S
+open import ClosedCalculus.Syntax.Contexts        S
+open import ClosedCalculus.Syntax.Terms           S
+open import ClosedCalculus.Syntax.Renaming        S
+open import ClosedCalculus.Syntax.Renaming.Action S using (C-rename)
 
 open import ClosedCalculus.EquationalTheory.EquationalTheory S
 
@@ -66,7 +66,7 @@ open import ClosedCalculus.DenotationalSemantics.Interpretation.RenamingCoherenc
 open import ClosedCalculus.DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (⟨⊤⟩-eternalᵒ)
 
-open import ClosedCalculus.Syntax.Substitutions.Subsumption S using (subCtx)
+open import ClosedCalculus.Syntax.Substitution.Subsumption  S using (subCtx)
 open import ClosedCalculus.OperationalSemantics.Soundness.Preservation.Base S Cat Fut Pst Adj GTy Mon GE
        using (subCtxᴾ; subCtx-nat)
 open import ClosedCalculus.OperationalSemantics.Soundness.Preservation.Step S Cat Fut Pst Adj GTy Mon GE

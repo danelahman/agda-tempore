@@ -31,11 +31,11 @@ open import Data.Product using (_,_; proj₁; proj₂)
 open import Relation.Nullary using (¬_; yes; no)
 
 
-open import Language.Types      S
+open import ClosedCalculus.Syntax.Types S
 open import ClosedCalculus.Syntax.Contexts   S
-open import ClosedCalculus.Syntax.Renamings  S
-open import ClosedCalculus.Syntax.RenActions S using (var-rename)
-open import ClosedCalculus.Syntax.Renamings.Equivalence S using (eternal?-yes)
+open import ClosedCalculus.Syntax.Renaming   S
+open import ClosedCalculus.Syntax.Renaming.Action S using (var-rename)
+open import ClosedCalculus.Syntax.Renaming.Equivalence  S using (eternal?-yes)
 
 open Category Cat
 open Past Pst

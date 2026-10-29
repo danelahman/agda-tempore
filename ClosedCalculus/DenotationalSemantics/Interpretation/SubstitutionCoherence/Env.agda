@@ -43,16 +43,16 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import Language.Types                      S
-open import ClosedCalculus.Syntax.Contexts      S
-open import ClosedCalculus.Syntax.Terms         S
-open import ClosedCalculus.Syntax.Renamings     S
-open import ClosedCalculus.Syntax.RenActions    S
-open import ClosedCalculus.Syntax.Substitutions S
+open import ClosedCalculus.Syntax.Types           S
+open import ClosedCalculus.Syntax.Contexts        S
+open import ClosedCalculus.Syntax.Terms           S
+open import ClosedCalculus.Syntax.Renaming        S
+open import ClosedCalculus.Syntax.Renaming.Action S
+open import ClosedCalculus.Syntax.Substitution    S
 
-open import ClosedCalculus.Syntax.Substitutions.Base   S
-open import ClosedCalculus.Syntax.Substitutions.Lookup S
-open import ClosedCalculus.Syntax.Substitutions.Action S
+open import ClosedCalculus.Syntax.Substitution.Base    S
+open import ClosedCalculus.Syntax.Substitution.Lookup  S
+open import ClosedCalculus.Syntax.Substitution.Action  S
 
 open Category Cat
 open Future Fut

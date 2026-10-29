@@ -33,14 +33,14 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import OpenCalculus.Syntax.Grades         S
-open import OpenCalculus.Syntax.Types          S
-open import OpenCalculus.Syntax.Contexts       S
-open import OpenCalculus.Syntax.ContextsLemmas S
-open import OpenCalculus.Hypotheses            S
-open import OpenCalculus.Typing                S
-open import OpenCalculus.Typing.Erasure        S
-open import OpenCalculus.Syntax.Raw            S
+open import OpenCalculus.Syntax.Grades              S
+open import OpenCalculus.Syntax.Types               S
+open import OpenCalculus.Syntax.Contexts            S
+open import OpenCalculus.Syntax.Contexts.Properties S
+open import OpenCalculus.Hypotheses                 S
+open import OpenCalculus.Typing                     S
+open import OpenCalculus.Typing.Erasure             S
+open import OpenCalculus.Syntax.Raw                 S
 
 ------------------------------------------------------------------------
 -- Conversions
@@ -208,7 +208,7 @@ module _ (𝒞 : Conversion) where
     conv-v c (var x ok)      =
       subV (var (mem' i) (rel-ok (rel' i) ok)) (rel-sub (rel' i))
       where i = image c x
-    conv-v c (def f δ h e)   = def (subst (_ ∈ᵖ[ _ ]_) (sym (crel-defs c)) f) δ h e
+    conv-v c (usedef f δ h e) = usedef (subst (_ ∈ᵖ[ _ ]_) (sym (crel-defs c)) f) δ h e
     conv-v c (const B k)     = const B k
     conv-v c ⋆               = ⋆
     conv-v c true            = true
@@ -268,7 +268,7 @@ module _ (𝒞 : Conversion) where
              → (c : CtxRel Q Γ' Γ) → (V : Q ∣ Γ ⊢V⦂ A)
              → ⌊ conv-v c V ⌋ᵛ ≡ ⌊ V ⌋ᵛ
     ⌊conv-v⌋ c (var x ok)      = cong var (pos' (image c x))
-    ⌊conv-v⌋ c (def f δ h e)   = refl
+    ⌊conv-v⌋ c (usedef f δ h e) = refl
     ⌊conv-v⌋ c (const B k)     = refl
     ⌊conv-v⌋ c ⋆               = refl
     ⌊conv-v⌋ c true            = refl

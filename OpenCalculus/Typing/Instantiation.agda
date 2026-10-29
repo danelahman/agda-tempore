@@ -23,17 +23,17 @@ open import OpenCalculus.Syntax.Scopes
 
 module OpenCalculus.Typing.Instantiation (S : LanguageSpec) where
 
-open import OpenCalculus.Syntax.Types             S
-open import OpenCalculus.Syntax.Contexts          S
-open import OpenCalculus.Syntax.Subst             S
-open import OpenCalculus.Hypotheses               S
-open import OpenCalculus.Hypotheses.Instances     S using (_⊨_; ⊨⇒⊩ᴴ)
-open import OpenCalculus.Typing                   S
-open import OpenCalculus.Typing.Erasure           S
-open import OpenCalculus.Typing.GradeSubstitution S
-open import OpenCalculus.Typing.ScopeClosed       S
-open import OpenCalculus.Syntax.Raw.Subst         S
-open import OpenCalculus.Syntax.Run               S
+open import OpenCalculus.Syntax.Types                 S
+open import OpenCalculus.Syntax.Contexts              S
+open import OpenCalculus.Syntax.GradeSubstitution     S
+open import OpenCalculus.Hypotheses                   S
+open import OpenCalculus.Hypotheses.Instances         S using (_⊨_; ⊨⇒⊩ᴴ)
+open import OpenCalculus.Typing                       S
+open import OpenCalculus.Typing.Erasure               S
+open import OpenCalculus.Typing.GradeSubstitution     S
+open import OpenCalculus.Typing.ScopeClosed           S
+open import OpenCalculus.Syntax.Raw.GradeSubstitution S
+open import OpenCalculus.Syntax.Run                   S
 
 scope-instantiationᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {X : OVType Θ} {δ : Subst Θ ∅ˢ}
                → (V : Q ∣ Γ ⊢V⦂ X) → δ ⊨ Q

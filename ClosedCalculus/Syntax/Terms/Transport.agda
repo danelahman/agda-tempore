@@ -28,16 +28,16 @@ open LanguageSpec Spec
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import ClosedCalculus.Syntax.Contexts      Spec
-open import ClosedCalculus.Syntax.Terms         Spec
-open import ClosedCalculus.Syntax.RenActions    Spec
-open import ClosedCalculus.Syntax.Renamings     Spec
-open import ClosedCalculus.Syntax.Substitutions Spec
-open import Language.Types                      Spec
+open import ClosedCalculus.Syntax.Contexts        Spec
+open import ClosedCalculus.Syntax.Terms           Spec
+open import ClosedCalculus.Syntax.Renaming.Action Spec
+open import ClosedCalculus.Syntax.Renaming        Spec
+open import ClosedCalculus.Syntax.Substitution    Spec
+open import ClosedCalculus.Syntax.Types           Spec
 
-open import ClosedCalculus.Syntax.Renamings.Equivalence Spec
+open import ClosedCalculus.Syntax.Renaming.Equivalence  Spec
 open import ClosedCalculus.Syntax.Terms.Equivalence     Spec
-open import ClosedCalculus.Syntax.Renamings.Coherence   Spec
+open import ClosedCalculus.Syntax.Renaming.Coherence    Spec
 
 -- Defined by matching on the proof, not as `subst`: the head stays rigid for
 -- the unifier and for the inversion lemmas below to match off.

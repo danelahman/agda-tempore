@@ -31,9 +31,9 @@ module OpenCalculus.Inference.SolverImpl.RigidFree
 open LanguageSpec S
 open Operations Ops
 
-open import OpenCalculus.Syntax.Grades S
-open import OpenCalculus.Syntax.Subst  S
-open import OpenCalculus.Hypotheses    S
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.GradeSubstitution S
+open import OpenCalculus.Hypotheses               S
 
 open import OpenCalculus.Inference.Constraints.Syntax S
 

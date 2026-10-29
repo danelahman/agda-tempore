@@ -39,7 +39,7 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import Language.Types                 S
+open import ClosedCalculus.Syntax.Types    S
 open import ClosedCalculus.Syntax.Contexts S
 open import ClosedCalculus.Syntax.Terms    S
 

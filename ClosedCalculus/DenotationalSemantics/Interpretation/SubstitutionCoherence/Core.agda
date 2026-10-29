@@ -35,12 +35,12 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import Language.Types                      S
-open import ClosedCalculus.Syntax.Contexts      S
-open import ClosedCalculus.Syntax.Terms         S
-open import ClosedCalculus.Syntax.Renamings     S using (wk-ren)
-open import ClosedCalculus.Syntax.RenActions    S using (V-rename)
-open import ClosedCalculus.Syntax.Substitutions S
+open import ClosedCalculus.Syntax.Types           S
+open import ClosedCalculus.Syntax.Contexts        S
+open import ClosedCalculus.Syntax.Terms           S
+open import ClosedCalculus.Syntax.Renaming        S using (wk-ren)
+open import ClosedCalculus.Syntax.Renaming.Action S using (V-rename)
+open import ClosedCalculus.Syntax.Substitution    S
 
 open Category Cat
 open GroundTypes GTy

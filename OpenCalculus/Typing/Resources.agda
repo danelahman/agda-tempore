@@ -28,14 +28,14 @@ open import OpenCalculus.Syntax.Scopes
 
 module OpenCalculus.Typing.Resources (S : LanguageSpec) where
 
-open import OpenCalculus.Syntax.Grades   S
-open import OpenCalculus.Syntax.Types    S
-open import OpenCalculus.Syntax.Contexts S
-open import OpenCalculus.Syntax.Subst    S using (Subst; _[_]ᵛ)
-open import OpenCalculus.Hypotheses      S
-open import OpenCalculus.Typing          S
-open import OpenCalculus.Typing.Erasure  S
-open import OpenCalculus.Syntax.Raw      S using (RawV; _⦂ᵛ_)
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.Contexts          S
+open import OpenCalculus.Syntax.GradeSubstitution S using (Subst; _[_]ᵛ)
+open import OpenCalculus.Hypotheses               S
+open import OpenCalculus.Typing                   S
+open import OpenCalculus.Typing.Erasure           S
+open import OpenCalculus.Syntax.Raw               S using (RawV; _⦂ᵛ_)
 
 ------------------------------------------------------------------------
 -- Non-resource types
@@ -85,10 +85,10 @@ nonResource-<: (_ ⇛ₛ _)    _ = tt
 
 -- A definition's type is an instance of its scheme's
 
-nonResource-def : ∀ {Θ} {Δ : PCtx} {s k} {A : OVType Θ}
-                → NonResourceDefs Δ → s ∈ᵖ[ k ] Δ
-                → (δ : Subst (Θˢ s) Θ) → A ≡ Xˢ s [ δ ]ᵛ → NonResource A
-nonResource-def {s = s} nr f δ refl = nonResource-subst (Xˢ s) δ (nr f)
+nonResource-usedef : ∀ {Θ} {Δ : PCtx} {s k} {A : OVType Θ}
+                   → NonResourceDefs Δ → s ∈ᵖ[ k ] Δ
+                   → (δ : Subst (Θˢ s) Θ) → A ≡ Xˢ s [ δ ]ᵛ → NonResource A
+nonResource-usedef {s = s} nr f δ refl = nonResource-subst (Xˢ s) δ (nr f)
 
 -- A value in a context with no variables has a non-resource type
 
@@ -96,7 +96,7 @@ nonResource-closed : ∀ {Θ} {Q : Hyps Θ} {Γ : OCtx Θ 0} {A : OVType Θ}
                    → NonResourceDefs (defs Γ) → Q ∣ Γ ⊢V⦂ A → NonResource A
 nonResource-closed nr (var x p) with var-pos x
 ... | ()
-nonResource-closed nr (def f δ h e) = nonResource-def nr f δ e
+nonResource-closed nr (usedef f δ h e) = nonResource-usedef nr f δ e
 nonResource-closed nr (const B c)   = tt
 nonResource-closed nr ⋆             = tt
 nonResource-closed nr true          = tt
@@ -144,7 +144,7 @@ resource-value : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ'' : RExp Θ} {X''
 resource-value nr (var x ok) =
   record { res-z = x ; usable = ok ; chain = res-var ; erases = refl
          ; grade = ⊩≾̂ᵣ-refl ; payload = <:̂ᵛ-refl _ }
-resource-value nr (def f δ h e) = ⊥-elim (nonResource-def nr f δ e)
+resource-value nr (usedef f δ h e) = ⊥-elim (nonResource-usedef nr f δ e)
 resource-value {ρ'' = ρ''} {X''} nr (annᵛ _ V) =
   record { res-z = res-z r ; usable = usable r
          ; chain = res-ann ρ'' X'' (chain r) (grade r) (payload r)

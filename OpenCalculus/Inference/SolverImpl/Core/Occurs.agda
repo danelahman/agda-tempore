@@ -31,9 +31,9 @@ module OpenCalculus.Inference.SolverImpl.Core.Occurs (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import OpenCalculus.Syntax.Grades S
-open import OpenCalculus.Syntax.Types  S
-open import OpenCalculus.Syntax.Subst  S
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.GradeSubstitution S
 
 open import OpenCalculus.Inference.SolverImpl.Core.For S
 
