@@ -136,14 +136,6 @@ lookup-⊤ᵛ i = lookup-replicate i ⊤ᴳ
 ≾ᵛ-trans {c = _ ∷ _} {_ ∷ _} {_ ∷ _} (p , ps) (q , qs) =
   ≾ᴳ-trans p q , ≾ᵛ-trans ps qs
 
--- antisymmetric where `G`'s order is
-
-≾ᵛ-antisym : (∀ {a b} → a ≾ᴳ b → b ≾ᴳ a → a ≡ b)
-           → ∀ {n} {c d : Vec C n} → c ≾ᵛ d → d ≾ᵛ c → c ≡ d
-≾ᵛ-antisym anti {c = []}    {[]}    _       _       = refl
-≾ᵛ-antisym anti {c = _ ∷ _} {_ ∷ _} (p , ps) (q , qs) =
-  cong₂ _∷_ (anti p q) (≾ᵛ-antisym anti ps qs)
-
 ≾ᵛ-irrelevant : ∀ {n} {c d : Vec C n} → (p q : c ≾ᵛ d) → p ≡ q
 ≾ᵛ-irrelevant {c = []}    {[]}    tt       tt       = refl
 ≾ᵛ-irrelevant {c = _ ∷ _} {_ ∷ _} (p , ps) (q , qs) =
@@ -291,10 +283,6 @@ power n = record
   ; ·-monoʳ-≾       = λ {e} {c} {d} → ·ᵛ-monoʳ {e = e} {c} {d}
   ; ≾-refl          = λ {c} → ≾ᵛ-refl {c = c}
   ; ≾-trans         = λ {c} {d} {e} → ≾ᵛ-trans {c = c} {d} {e}
-  ; ≃⇒≡?            = maybe′ (λ (eq : ∀ {a b} → a ≃ᴳ b → a ≡ b)
-                                → just (λ {c} {d} (p , q) →
-                                    ≾ᵛ-antisym (λ p q → eq (p , q)) {c = c} {d} p q))
-                              nothing ≃⇒≡?
   ; ≾-irrelevant    = λ {c} {d} → ≾ᵛ-irrelevant {c = c} {d}
   ; _≾?_            = _≾ᵛ?_
   ; ≾-zero-productˡ = λ {c} {d} → ≾ᵛ-zero-productˡ {c = c} {d}

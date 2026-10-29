@@ -21,7 +21,7 @@
 module Grades.Product where
 
 open import Data.List.Base using (List; concatMap) renaming (map to mapᴸ)
-open import Data.Maybe.Base using (Maybe; just; nothing; zipWith)
+open import Data.Maybe.Base using (zipWith)
 open import Data.Nat.Base using (ℕ)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
@@ -96,8 +96,6 @@ G₁ ×ᵍ G₂ = record
   ; ≾-zero-productʳ = λ (p₁ , p₂) → G₁.≾-zero-productʳ p₁ , G₂.≾-zero-productʳ p₂
   ; of-dur-zero     = pair≃ G₁.of-dur-zero G₂.of-dur-zero
   ; of-dur-plus     = pair≃ G₁.of-dur-plus G₂.of-dur-plus
-  ; ≃⇒≡?            = zipWith (λ a₁ a₂ ((p₁ , p₂) , (q₁ , q₂)) → cong₂ _,_ (a₁ (p₁ , q₁)) (a₂ (p₂ , q₂)))
-                              G₁.≃⇒≡? G₂.≃⇒≡?
   }
   where
     module G₁ = Grade G₁

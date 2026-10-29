@@ -20,7 +20,7 @@ open import Data.Product
 open import Data.Maybe.Base using (nothing)
 
 open import Grades.Base
-open import Grades.Hints using (SystemHints; noGradeHints)
+open import Grades.Hints using (SystemHints)
 open import Grades.Examples.Time.LeftSided
 open import Grades.Examples.Time.TwoSidedWithInfinity
 

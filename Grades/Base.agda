@@ -5,7 +5,6 @@
 module Grades.Base where
 
 open import Data.Empty
-open import Data.Maybe.Base using (Maybe; just)
 open import Data.Product hiding (map)
 open import Data.Sum hiding (map)
 
@@ -108,10 +107,6 @@ record Grade (D : Duration) : Set₁ where
     -- `of-dur τ` the grade of the delay `τ`
     of-dur-zero : of-dur D.0ᴰ ≃ u
     of-dur-plus : ∀ {τ τ'} → of-dur (τ D.+ᴰ τ') ≃ of-dur τ · of-dur τ'
-
-    -- whether equivalent grades are equal, where the grade declares it;
-    -- informational: no law, theorem or solver result depends on it
-    ≃⇒≡? : Maybe (∀ {c d} → c ≃ d → c ≡ d)
 
   -- _≡_ is included in _≾_
   ≾-reflexive  : _≡_ ⇒ _≾_
@@ -257,7 +252,6 @@ posetᵍ G = record
   ; ≾-zero-productˡ = P.≾-zero-productˡ ; ≾-zero-productʳ = P.≾-zero-productʳ
   ; of-dur-zero = ≡⇒≃ P.of-dur-zero
   ; of-dur-plus = ≡⇒≃ P.of-dur-plus
-  ; ≃⇒≡? = just λ e → P.≾-antisym (proj₁ e) (proj₂ e)
   }
   where
     module P = PosetGrade G
@@ -387,7 +381,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      ≾-zero-productʳ to ≾ᵣ-zero-productʳ;
      of-dur-zero to of-durʳ-zero;
      of-dur-plus to of-durʳ-plus;
-     ≃⇒≡? to ≃ᵣ⇒≡?;
      ≾-reflexive to ≾ᵣ-reflexive;
      ≃-refl to ≃ᵣ-refl;
      ≃-sym to ≃ᵣ-sym;
@@ -435,7 +428,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-distribʳ-⊔-≾ to ·ₑ-distribʳ-⊔ₑ-≾ₑ;
      of-dur-zero to of-durᵉ-zero;
      of-dur-plus to of-durᵉ-plus;
-     ≃⇒≡? to ≃ₑ⇒≡?;
      ≾-zero-productˡ to ≾ₑ-zero-productˡ;
      ≾-zero-productʳ to ≾ₑ-zero-productʳ;
      ≾-reflexive to ≾ₑ-reflexive;

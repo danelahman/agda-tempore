@@ -204,14 +204,11 @@ rconst _   ≟ʳ ∣ _ ∣̂ᵉ     = no λ ()
 ∣ _ ∣̂ᵉ     ≟ʳ (_ ·̂ᵣ _)   = no λ ()
 ∣ _ ∣̂ᵉ     ≟ʳ (_ ⊔̂ᵣ _)   = no λ ()
 
--- Same expressions are equal where the grade declares equivalent
--- grades equal, and equality is decided where they are
+-- Same expressions are equal where they compare no constants
 
 ≅ᵉ⇒≡? : ∀ {Θ} {ε ε' : EExp Θ} → ε ≅ᵉ ε' → Maybe (ε ≡ ε')
 ≅ᵉ⇒≡? evar≅ = just refl
-≅ᵉ⇒≡? (econst≅ e) with ≃ₑ⇒≡?
-... | just eq = just (cong econst (eq e))
-... | nothing   = nothing
+≅ᵉ⇒≡? (econst≅ e) = nothing
 ≅ᵉ⇒≡? (·≅ p q) with ≅ᵉ⇒≡? p | ≅ᵉ⇒≡? q
 ... | just refl | just refl = just refl
 ... | _         | _         = nothing
@@ -221,9 +218,7 @@ rconst _   ≟ʳ ∣ _ ∣̂ᵉ     = no λ ()
 
 ≅ʳ⇒≡? : ∀ {Θ} {ρ ρ' : RExp Θ} → ρ ≅ʳ ρ' → Maybe (ρ ≡ ρ')
 ≅ʳ⇒≡? rvar≅ = just refl
-≅ʳ⇒≡? (rconst≅ e) with ≃ᵣ⇒≡?
-... | just eq = just (cong rconst (eq e))
-... | nothing   = nothing
+≅ʳ⇒≡? (rconst≅ e) = nothing
 ≅ʳ⇒≡? (·≅ p q) with ≅ʳ⇒≡? p | ≅ʳ⇒≡? q
 ... | just refl | just refl = just refl
 ... | _         | _         = nothing

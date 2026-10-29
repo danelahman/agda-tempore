@@ -19,7 +19,6 @@
 
 module Grades.Upward where
 
-open import Data.Maybe.Base using (Maybe; just; nothing)
 import Data.Maybe.Base as Maybe
 open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 
@@ -101,7 +100,6 @@ module _ {D : Duration} (G : Grade D) {P : Grade.Carrier G → Set} (U : Upward 
     ; ≾-zero-productʳ = G.≾-zero-productʳ
     ; of-dur-zero     = G.of-dur-zero
     ; of-dur-plus     = G.of-dur-plus
-    ; ≃⇒≡?            = nothing
     }
 
   -- its hints, those of `G`

@@ -11,10 +11,9 @@
 --                                                                    --
 -- A semilattice, an action and a grade lift to maps, with every      --
 -- operation, the order included, pointwise, and every law holding    --
--- pointwise; `of-dur τ` is constantly `of-dur τ`. Distinct           --
--- representations of one map are equivalent but not equal, so        --
--- `≃⇒≡?` is not declared. Its hints declare the unit least and `_·_` --
--- commutative where those of the component do, and no closures.      --
+-- pointwise; `of-dur τ` is constantly `of-dur τ`. Its hints declare --
+-- the unit least and `_·_` commutative where those of the component  --
+-- do, and no closures.                                               --
 ------------------------------------------------------------------------
 
 module Grades.Indexed where
@@ -26,7 +25,7 @@ open import Data.List.Membership.Propositional.Properties using (∈-++⁺ˡ; �
 import Data.List.Membership.DecPropositional as DecMembership
 open import Data.List.Relation.Unary.All as All using (All)
 open import Data.List.Relation.Unary.Any using (here; there)
-open import Data.Maybe.Base using (Maybe; just; nothing)
+open import Data.Maybe.Base using (nothing)
 import Data.Maybe.Base as Maybe
 open import Data.Nat.Base using (ℕ; suc; _≤_; _+_; z≤n; s≤s)
 open import Data.Nat.Properties using (≤-trans; m≤m+n; m≤n+m; n≮n; ≤-refl; _≟_)
@@ -238,7 +237,6 @@ module Maps (𝒩 : Names) where
       ; ∨-ubʳ        = λ m m' → pw λ s → subst ((m' ! s) ⊑_) (sym (!∨ m m' s)) (N.∨-ubʳ _ _)
       ; ∨-lub        = λ {m} {m'} p q → pw λ s →
                          subst (_⊑ _) (sym (!∨ m m' s)) (N.∨-lub (at p s) (at q s))
-      ; ≈⇒≡?         = nothing
       }
 
   ----------------------------------------------------------------------
@@ -361,7 +359,6 @@ module Maps (𝒩 : Names) where
       ; of-dur-zero     = pw≃ λ _ → G.of-dur-zero
       ; of-dur-plus     = λ {τ} {τ'} → pw≃ λ s →
           ≃-at refl (!· (everywhere (G.of-dur τ)) (everywhere (G.of-dur τ')) s) G.of-dur-plus
-      ; ≃⇒≡?            = nothing
       }
 
     -- its hints, from those of `G`

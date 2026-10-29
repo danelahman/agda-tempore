@@ -58,7 +58,6 @@ energy = record
   ; ≾-zero-productʳ = λ {c} {d} → R.≾-zero-productʳ {c} {d}
   ; of-dur-zero     = R.≃-refl
   ; of-dur-plus     = R.≃-refl
-  ; ≃⇒≡?            = R.≃⇒≡?
   }
   where module R = Grade right-sided-intervals
 
