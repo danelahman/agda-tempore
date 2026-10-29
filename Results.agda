@@ -140,14 +140,16 @@ module TypeSystem (S : LanguageSpec) where
   -- Typing judgements `Q | Γ ⊢ V : X` and `Q | Γ ⊢ M : C`, as intrinsically
   -- typed derivations; a typing of a raw term is a derivation erasing to it
   -- (`⌊_⌋ᵛ`, `⌊_⌋ᶜ`). The typing rules in which grades play a role; Unbox
-  -- takes a variable. Rule Def instantiates a scheme of the program
-  -- context, with no lock condition.
+  -- takes a resource value, a variable under annotations, of the judgement
+  -- `Q | Γ ⊢ V ↪[ρ'] z : [ρ]X`, which erases to the value (`⌊_⌋ʳ`). Rule
+  -- Def instantiates a scheme of the program context, with no lock
+  -- condition.
   open import OpenCalculus.Typing S public
-    using (_∣_⊢V⦂_; _∣_⊢C⦂_)
+    using (_∣_⊢V⦂_; _∣_⊢C⦂_; _∣_⊢↪[_]_⦂[_]_)
     renaming ( var to Var ; def to Def ; return to Return ; subC to Sub ; _⨟_ to Let
              ; perform to Perform ; delay to Delay ; box to Box ; unbox to Unbox
              ; handler to Handler ; handle_`with_ to Handle )
-  open import OpenCalculus.Typing.Erasure S public using (⌊_⌋ᵛ; ⌊_⌋ᶜ)
+  open import OpenCalculus.Typing.Erasure S public using (⌊_⌋ᵛ; ⌊_⌋ᶜ; ⌊_⌋ʳ)
 
   -- Definition (Type schemes): principal type schemes of values in
   -- program contexts, and typability; those of computations in open
@@ -160,6 +162,15 @@ module TypeSystem (S : LanguageSpec) where
   -- Programs: each definition typable in the program context of those
   -- before it, which binds it to its principal type scheme there
   open import OpenCalculus.Programs.Typing S public using (⊢ᴾ_⦂_; Accepted)
+
+  -- Lemma (Resource values are annotated variables): in a context whose
+  -- program context is that of a program, a value of type `[ρ'']X''` is a
+  -- resource value reaching `[ρ]X` with `ρ'' ≾ ρ` and `X <: X''`, and with
+  -- the value's erasure. Part (1), the inversion of subtyping at a box
+  -- type, is `<:̂ᵛ-boxʳ` and `<:̂ᵛ-boxˡ`.
+  open import OpenCalculus.Programs.Typing S public using (program-resource-value)
+  open import OpenCalculus.Typing.Resources S public using (ResourceValue)
+  open import OpenCalculus.Hypotheses S public using (<:̂ᵛ-boxʳ; <:̂ᵛ-boxˡ)
 
 
 ------------------------------------------------------------------------
@@ -408,7 +419,8 @@ module CalculusWithGradeVariables (S : LanguageSpec) where
   -- Entailment: convertibility, entailment from no hypotheses both ways,
   -- and the rules, those of grade entailment its properties. The rules
   -- are named for effect grades; the resource rules carry a subscript
-  -- `ᵣ`. Var-Et has one rule per disjunct.
+  -- `ᵣ`. Var-Et has one rule per disjunct; Var-Hyp meets a disjunction
+  -- hypothesis at a type equivalent to it, a subtype and a supertype.
   open import OpenCalculus.Hypotheses S public
     using (_≡̂ₑ_; _≡̂ᵣ_; _≡̂ᵛ_; _⊩ᵗᵛ_≾_)
     renaming ( hypₑ to Hyp ; hypᵣ to Hypᵣ ; eqₑ to Conv ; eqᵣ to Convᵣ
@@ -631,10 +643,11 @@ module EquationalTheoryAndDenotationalSemantics (S : LanguageSpec) where
 module FormalisedResults (S : LanguageSpec) (hints : SystemHints (LanguageSpec.Grades S))
                          (opEnum : OpEnum S) where
 
-  -- Entailment is stable under substitution and weakening; convertible
-  -- expressions have equivalent values
+  -- Entailment is stable under substitution and weakening, and the side
+  -- condition of the variable rule under equivalence of the type;
+  -- convertible expressions have equivalent values
   open import OpenCalculus.Hypotheses S public
-    using (⊩-substᵣ; ⊩-substₑ; ⊩ᴱ-subst; <:̂ᵛ-subst; VarOK-subst; ⊩-wkᵉᵣ; ⊩-wkᵉₑ)
+    using (⊩-substᵣ; ⊩-substₑ; ⊩ᴱ-subst; <:̂ᵛ-subst; VarOK-subst; ⊩-wkᵉᵣ; ⊩-wkᵉₑ; VarOK-≃)
   open import OpenCalculus.Hypotheses.Instances S public using (val-≡̂ᵣ; val-≾ᵣ)
 
   -- Substitution of types and grades in typings, and the instance of a
@@ -645,6 +658,16 @@ module FormalisedResults (S : LanguageSpec) (hints : SystemHints (LanguageSpec.G
   open import OpenCalculus.Typing.Renaming S public using (Ren; rename-v; rename-c; eternal-v)
   open import OpenCalculus.Typing.Substitution S public using (Drop; sub-v; sub-c)
   open import OpenCalculus.Typing.Inversion S public using (invV; invC)
+
+  -- Conversion of a context's types: under any hypotheses, to equivalent
+  -- types; under hypotheses with no disjunction, to subtypes
+  open import OpenCalculus.Typing.Conversion S public
+    using (Conversion; equivalence; narrowing; CtxRel; conv-v; conv-c)
+
+  -- Resource values: under a program context whose schemes have
+  -- non-resource types, a value of box type is a resource value
+  open import OpenCalculus.Typing.Resources S public
+    using (NonResourceDefs; resource-value; res-collapse)
 
   -- Instantiation of the scope alone, keeping the program context; the
   -- substitution of closed typings of the definitions for their uses
@@ -717,6 +740,4 @@ module FormalisedResults (S : LanguageSpec) (hints : SystemHints (LanguageSpec.G
 --   calculus, its semantics and equational theory, where handlers occur in
 --   `handle M with H to x in N`; instantiation for terms whose handlers
 --   are not second-class.
---   Unbox on an annotated variable, and Lemma (Resource values are
---   annotated variables) for the calculus with grade variables.
 ------------------------------------------------------------------------

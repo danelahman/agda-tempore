@@ -1537,7 +1537,7 @@ module Retouch {Θ : Scope} (η₀ : Subst Θ Θ) (tᵣ : RExp Θ × RExp Θ →
 
   instᵈ : ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK retouched (A [ η₀ ]ᵛ) (ρ [ η₀ ]ʳ)
   instᵈ {A} {ρ} m =
-    hyp-ok (∈-map⁺ touchᵈ m) (proj₁ (touchᵈ-≡̂ (A , ρ))) (eqᵣ (proj₂ (touchᵈ-≡̂ (A , ρ))))
+    hyp-ok-≡̂ (∈-map⁺ touchᵈ m) (proj₁ (touchᵈ-≡̂ (A , ρ))) (eqᵣ (proj₂ (touchᵈ-≡̂ (A , ρ))))
 
   keepʳ : ∀ {Q⁺} → (∀ {x x'} → (x , x') ∈ rs → Q⁺ ⊩ x [ η₀ ]ʳ ≾̂ᵣ x' [ η₀ ]ʳ)
         → ∀ {y y'} → (y , y') ∈ ordᵣ retouched → Q⁺ ⊩ y ≾̂ᵣ y'

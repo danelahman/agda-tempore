@@ -15,6 +15,7 @@ open import Data.Fin using (Fin; zero; suc)
 open import Data.Maybe.Base using (just; nothing)
 open import Data.Nat using (ℕ; suc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
+open import Data.Unit using (tt)
 
 open import Grades.Base
 open import Language.Spec
@@ -41,6 +42,7 @@ open import OpenCalculus.Typing                S
 open import OpenCalculus.Syntax.Raw       S
 open import OpenCalculus.Syntax.Raw.Subst S
 open import OpenCalculus.Typing.Erasure   S
+open import OpenCalculus.Typing.Conversion S using (equivalence; conv-last)
 
 open import OpenCalculus.Inference.Constraints.Syntax       S
 open import OpenCalculus.Inference.Constraints.Satisfaction S
@@ -127,31 +129,22 @@ co²ᵗᵉ-e : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ')
 co²ᵗᵉ-e σ B₁ B₂ ε ε₀ =
   trans (wk-,ᵉ-e (σ ,ᵗ B₁ ,ᵗ B₂) ε (wkᵗ-e (wkᵗ-e ε₀))) (co²ᵗ-e σ B₁ B₂ ε₀)
 
--- `∃ᵗ∃ᵗ∃ʳ` — unboxing
+-- `∃ᵗ∃ʳ` — unboxing
 
-co²ᵗʳ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ') → (ρ : RExp Θ')
-          → (Γ : OCtx Θ n)
-          → wkʳ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)) [ σ ,ᵗ B₁ ,ᵗ B₂ ,ʳ ρ ]ᶜᵗˣ ≡ Γ [ σ ]ᶜᵗˣ
-co²ᵗʳ-ctx σ B₁ B₂ ρ Γ =
-  trans (wk-,ʳ-ctx (σ ,ᵗ B₁ ,ᵗ B₂) ρ (wkᵗ-ctx (wkᵗ-ctx Γ))) (co²ᵗ-ctx σ B₁ B₂ Γ)
+coᵗʳ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ρ : RExp Θ')
+         → (Γ : OCtx Θ n)
+         → wkʳ-ctx (wkᵗ-ctx Γ) [ σ ,ᵗ B ,ʳ ρ ]ᶜᵗˣ ≡ Γ [ σ ]ᶜᵗˣ
+coᵗʳ-ctx σ B ρ Γ = trans (wk-,ʳ-ctx (σ ,ᵗ B) ρ (wkᵗ-ctx Γ)) (wk-,ᵗ-ctx σ B Γ)
 
-co²ᵗʳ-v : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ') → (ρ : RExp Θ')
-        → (A : OVType Θ)
-        → wkʳ-v (wkᵗ-v (wkᵗ-v A)) [ σ ,ᵗ B₁ ,ᵗ B₂ ,ʳ ρ ]ᵛ ≡ A [ σ ]ᵛ
-co²ᵗʳ-v σ B₁ B₂ ρ A =
-  trans (wk-,ʳ-v (σ ,ᵗ B₁ ,ᵗ B₂) ρ (wkᵗ-v (wkᵗ-v A))) (co²ᵗ-v σ B₁ B₂ A)
+coᵗʳ-v : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ρ : RExp Θ')
+       → (A : OVType Θ)
+       → wkʳ-v (wkᵗ-v A) [ σ ,ᵗ B ,ʳ ρ ]ᵛ ≡ A [ σ ]ᵛ
+coᵗʳ-v σ B ρ A = trans (wk-,ʳ-v (σ ,ᵗ B) ρ (wkᵗ-v A)) (wk-,ᵗ-v σ B A)
 
-co²ᵗʳ-e : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ') → (ρ : RExp Θ')
-        → (ε : EExp Θ)
-        → wkʳ-e (wkᵗ-e (wkᵗ-e ε)) [ σ ,ᵗ B₁ ,ᵗ B₂ ,ʳ ρ ]ᵉ ≡ ε [ σ ]ᵉ
-co²ᵗʳ-e σ B₁ B₂ ρ ε =
-  trans (wk-,ʳ-e (σ ,ᵗ B₁ ,ᵗ B₂) ρ (wkᵗ-e (wkᵗ-e ε))) (co²ᵗ-e σ B₁ B₂ ε)
-
-co²ᵗʳ-r : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ') → (ρ : RExp Θ')
-        → (ρ₀ : RExp Θ)
-        → wkʳ-r (wkᵗ-r (wkᵗ-r ρ₀)) [ σ ,ᵗ B₁ ,ᵗ B₂ ,ʳ ρ ]ʳ ≡ ρ₀ [ σ ]ʳ
-co²ᵗʳ-r σ B₁ B₂ ρ ρ₀ =
-  trans (wk-,ʳ-r (σ ,ᵗ B₁ ,ᵗ B₂) ρ (wkᵗ-r (wkᵗ-r ρ₀))) (co²ᵗ-r σ B₁ B₂ ρ₀)
+coᵗʳ-e : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ρ : RExp Θ')
+       → (ε : EExp Θ)
+       → wkʳ-e (wkᵗ-e ε) [ σ ,ᵗ B ,ʳ ρ ]ᵉ ≡ ε [ σ ]ᵉ
+coᵗʳ-e σ B ρ ε = trans (wk-,ʳ-e (σ ,ᵗ B) ρ (wkᵗ-e ε)) (wk-,ᵗ-e σ B ε)
 
 -- `∃ᵗ∃ᵉ` — a prefix of the `∃ᵗ∃ᵉ∃ᵉ` pattern below
 
@@ -259,11 +252,10 @@ co²ᵗᵉ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ 
 co²ᵗᵉ-ˢ ι σ B₁ B₂ ε =
   ≐ˢ-trans (wk-,ᵉ-ˢ (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ) (σ ,ᵗ B₁ ,ᵗ B₂) ε) (co²ᵗ-ˢ ι σ B₁ B₂)
 
-co²ᵗʳ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ')
-        → (ρ : RExp Θ')
-        → (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ) ⨟ˢ (σ ,ᵗ B₁ ,ᵗ B₂ ,ʳ ρ) ≐ˢ ι ⨟ˢ σ
-co²ᵗʳ-ˢ ι σ B₁ B₂ ρ =
-  ≐ˢ-trans (wk-,ʳ-ˢ (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ) (σ ,ᵗ B₁ ,ᵗ B₂) ρ) (co²ᵗ-ˢ ι σ B₁ B₂)
+coᵗʳ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B : OVType Θ')
+       → (ρ : RExp Θ')
+       → (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ) ⨟ˢ (σ ,ᵗ B ,ʳ ρ) ≐ˢ ι ⨟ˢ σ
+coᵗʳ-ˢ ι σ B ρ = ≐ˢ-trans (wk-,ʳ-ˢ (ι ⨟ˢ wkˢᵗ) (σ ,ᵗ B) ρ) (wk-,ᵗ-ˢ ι σ B)
 
 coᵗᵉ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B : OVType Θ')
        → (ε : EExp Θ')
@@ -309,6 +301,58 @@ soundDef σ Γ k A s with lookupᵖ (defs Γ) k in eq
 ... | just sc with instᶜ-sound sc A s
 ...   | δ , st , h =
   subV (def (subst (sc ∈ᵖ[ k ]_) (sym (defs-subst Γ σ)) (lookupᵖ-∈ (defs Γ) eq)) δ h refl) st , refl
+
+-- A resource value: its constraint, at a solution under which the type
+-- it reaches is a box type, gives a resource value reaching that type,
+-- the membership witness of its variable being `lookup-var`
+
+private
+
+  mem-cast : ∀ {Θ n} {A A' : OVType Θ} {ρ ρ' : RExp Θ} {Γ : OCtx Θ n}
+           → A ≡ A' → ρ ≡ ρ' → A ∈̂[ ρ ] Γ → A' ∈̂[ ρ' ] Γ
+  mem-cast refl refl x = x
+
+  var-pos-cast : ∀ {Θ n} {A A' : OVType Θ} {ρ ρ' : RExp Θ} {Γ : OCtx Θ n}
+               → (e : A ≡ A') → (e' : ρ ≡ ρ') → (x : A ∈̂[ ρ ] Γ)
+               → var-pos (mem-cast e e' x) ≡ var-pos x
+  var-pos-cast refl refl x = refl
+
+soundR : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : OCtx Θ' n}
+       → (ι : Subst Θ₀ Θ) → (Γ : OCtx Θ n) → (V : RawV Θ₀ n)
+       → Γ [ σ ]ᶜᵗˣ ≡ Γ₀
+       → σ ⊨[ Q ] resC ι Γ V
+       → {ρ : RExp Θ'} {X : OVType Θ'} → resTy ι Γ V [ σ ]ᵛ ≡ [ ρ ] X
+       --------------------------------------------------------------------
+       → Σ[ ρ₀ ∈ RExp Θ' ] Σ[ X₀ ∈ OVType Θ' ]
+         Σ[ z ∈ [ ρ₀ ] X₀ ∈̂[ resGr Γ V [ σ ]ʳ ] Γ₀ ]
+         Σ[ R ∈ Q ∣ Γ₀ ⊢↪[ resGr Γ V [ σ ]ʳ ] z ⦂[ ρ ] X ] (⌊ R ⌋ʳ ≡ V [ ι ⨟ˢ σ ]ᴿᵛ)
+soundR {σ = σ} ι Γ (var i) refl s {ρ} {X} e =
+  ρ , X , z , res-var , cong var (trans (var-pos-cast ety egr x) (var-pos-lookup (Γ [ σ ]ᶜᵗˣ) i))
+  where
+    ety = trans (lookup-ty-subst Γ σ i) e
+    egr = lookup-gr-subst Γ σ i
+    x   = lookup-var (Γ [ σ ]ᶜᵗˣ) i
+    z   = mem-cast ety egr x
+soundR {σ = σ} {Q = Q} ι Γ (V ⦂ᵛ B) ceq (s , sa) {ρ} {X} e
+  with <:̂ᵛ-boxʳ (subst (Q ∣ resTy ι Γ V [ σ ]ᵛ <:̂ᵛ_) e sa)
+... | ρ₁ , X₁ , e₁ , q , p with soundR ι Γ V ceq s e₁
+...   | ρ₀ , X₀ , z , R , er =
+  ρ₀ , X₀ , z , res-ann ρ X R q p , cong₂ _⦂ᵛ_ er (trans (sym e) ([⨟]ᵛ B ι σ))
+soundR ι Γ (def k)       ceq () e
+soundR ι Γ (const B c)   ceq () e
+soundR ι Γ ⋆             ceq () e
+soundR ι Γ true          ceq () e
+soundR ι Γ false         ceq () e
+soundR ι Γ zero          ceq () e
+soundR ι Γ (succ V)      ceq () e
+soundR ι Γ ⦉ V , W ⦊      ceq () e
+soundR ι Γ (inl V)       ceq () e
+soundR ι Γ (inr V)       ceq () e
+soundR ι Γ nil           ceq () e
+soundR ι Γ (cons V W)    ceq () e
+soundR ι Γ (cmp ⋈ V W)   ceq () e
+soundR ι Γ (lam M)       ceq () e
+soundR ι Γ (handler N H) ceq () e
 
 mutual
 
@@ -964,64 +1008,34 @@ mutual
                 (trans (⌊ctxᶜ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᶜ pι M)))
                 (trans (⌊ctxᵛ⌋ pΓ (proj₁ ihV)) (trans (proj₂ ihV) ([≐]ᴿᵛ pι V)))
 
-  -- unboxing a boxed variable
+  -- unboxing a resource value
+  --
+  -- The `∃ᵗ` witness is equivalent to the payload the value reaches, and
+  -- the continuation is converted to the payload; the `∃ʳ` witness is a
+  -- grade between the one accumulated at the variable and the one the
+  -- value reaches.
 
-  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (unbox i N) A t (B₁ , B₂ , ρ , (sb , _) , le , st , s') =
-    D , q
+  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (unbox V N) A t (B , ρ , sR , (sb , sb') , le , s')
+    with <:̂ᵛ-boxʳ sb
+  ... | ρ₁ , X₁ , e₁ , q₁ , p₁
+    with soundR (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ) (wkʳ-ctx (wkᵗ-ctx Γ)) V (coᵗʳ-ctx σ B ρ Γ) sR e₁
+  ...   | _ , _ , z , R , er = D , q
     where
-      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
-      σ' = σ ,ᵗ B₁ ,ᵗ B₂ ,ʳ ρ
-      Γ↑ = wkʳ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
-      A↑ = wkʳ-v (wkᵗ-v (wkᵗ-v A))
-      t↑ = wkʳ-e (wkᵗ-e (wkᵗ-e t))
-      β  = wkʳ-v (tvar (newᵗ {Θ +ty}))
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
+      σ' = σ ,ᵗ B ,ʳ ρ
+      Γ↑ = wkʳ-ctx (wkᵗ-ctx Γ)
+      A↑ = wkʳ-v (wkᵗ-v A)
+      t↑ = wkʳ-e (wkᵗ-e t)
+      β  = wkʳ-v (tvar (newᵗ {Θ}))
 
-      pΓ = co²ᵗʳ-ctx σ B₁ B₂ ρ Γ
-      pA = co²ᵗʳ-v   σ B₁ B₂ ρ A
-      pt = co²ᵗʳ-e   σ B₁ B₂ ρ t
-      pι = co²ᵗʳ-ˢ   ι σ B₁ B₂ ρ
+      pΓ = coᵗʳ-ctx σ B ρ Γ
+      pA = coᵗʳ-v   σ B ρ A
+      pt = coᵗʳ-e   σ B ρ t
+      pι = coᵗʳ-ˢ   ι σ B ρ
 
-      -- the `∃ᵗ`-bound variables are the payload `B₁` and the binder `B₂`
+      -- the `∃ᵗ`-bound variable is the binder `B`
 
-      pα = trans (wk-,ʳ-v (σ ,ᵗ B₁ ,ᵗ B₂) ρ (wkᵗ-v (tvar (newᵗ {Θ}))))
-                 (wk-,ᵗ-v (σ ,ᵗ B₁) B₂ (tvar (newᵗ {Θ})))
-
-      pβ = wk-,ʳ-v (σ ,ᵗ B₁ ,ᵗ B₂) ρ (tvar (newᵗ {Θ +ty}))
-
-      -- lookup in the weakened context, instantiated, is lookup in the
-      -- substituted one
-
-      lty = trans (cong (_[ σ' ]ᵛ)
-                        (trans (lookup-ty-wkʳ (wkᵗ-ctx (wkᵗ-ctx Γ)) i)
-                               (cong wkʳ-v
-                                     (trans (lookup-ty-wkᵗ (wkᵗ-ctx Γ) i)
-                                            (cong wkᵗ-v (lookup-ty-wkᵗ Γ i))))))
-                  (trans (co²ᵗʳ-v σ B₁ B₂ ρ (lookup-ty Γ i))
-                         (sym (lookup-ty-subst Γ σ i)))
-
-      lgr = trans (cong (_[ σ' ]ʳ)
-                        (trans (lookup-gr-wkʳ (wkᵗ-ctx (wkᵗ-ctx Γ)) i)
-                               (cong wkʳ-r
-                                     (trans (lookup-gr-wkᵗ (wkᵗ-ctx Γ) i)
-                                            (cong wkᵗ-r (lookup-gr-wkᵗ Γ i))))))
-                  (trans (co²ᵗʳ-r σ B₁ B₂ ρ (lookup-gr Γ i))
-                         (sym (lookup-gr-subst Γ σ i)))
-
-      -- the looked-up type is a subtype of the box type, so a box type
-      -- whose grade is above and whose payload is below
-
-      sb' = subst₂ (Q ∣_<:̂ᵛ_) lty (cong [ ρ ]_ pα) sb
-
-      bx  = <:̂ᵛ-boxʳ sb'
-      ρ₀  = proj₁ bx
-      A₀  = proj₁ (proj₂ bx)
-      eq' = proj₁ (proj₂ (proj₂ bx))
-      gr  = proj₁ (proj₂ (proj₂ (proj₂ bx)))
-      ty  = proj₂ (proj₂ (proj₂ (proj₂ bx)))
-
-      x = ∈̂-ty-subst eq' (lookup-var (Γ [ σ ]ᶜᵗˣ) i)
-
-      ok = transᵣ (subst (λ z → Q ⊩ z ≾̂ᵣ ρ) lgr le) gr
+      pβ = wk-,ʳ-v (σ ,ᵗ B) ρ (tvar (newᵗ {Θ}))
 
       ih = soundCˢ ι↑ (Γ↑ ∷ β) N A↑ t↑ s'
 
@@ -1029,14 +1043,21 @@ mutual
 
       D₀ = c-subst (cong₂ _‼_ pA pt) (ctx-substᶜ c₀ (proj₁ ih))
 
-      D = unbox x ok (<:̂ᵛ-trans ty (subst₂ (Q ∣_<:̂ᵛ_) pα pβ st)) D₀
+      -- the payload and the binder are equivalent
+
+      eqv = subst (Q ∣ X₁ <:̂ᵛ_) pβ p₁
+          , subst (Q ∣_<:̂ᵛ X₁) pβ (<:̂ᵛ-box-type (subst (Q ∣ [ ρ ] _ <:̂ᵛ_) e₁ sb'))
+
+      D₁ = conv-last equivalence tt eqv D₀
+
+      D = unbox R (transᵣ le q₁) (proj₁ D₁)
 
       q = cong₂ unbox
-                (trans (var-pos-ty-subst eq' (lookup-var (Γ [ σ ]ᶜᵗˣ) i))
-                       (var-pos-lookup (Γ [ σ ]ᶜᵗˣ) i))
+                (trans er ([≐]ᴿᵛ pι V))
+                (trans (proj₂ D₁)
                 (trans (⌊c⌋ (cong₂ _‼_ pA pt) (ctx-substᶜ c₀ (proj₁ ih)))
                        (trans (⌊ctxᶜ⌋ c₀ (proj₁ ih))
-                              (trans (proj₂ ih) ([≐]ᴿᶜ pι N))))
+                              (trans (proj₂ ih) ([≐]ᴿᶜ pι N)))))
 
   -- boxing up a value
   --
@@ -1142,16 +1163,30 @@ private
   ex-var-erase : ⌊ ex-var ⌋ᵛ ≡ var zero
   ex-var-erase = refl
 
-  -- unboxing a boxed variable: the `∃ᵗ∃ᵗ∃ʳ` witnesses are the payload, the
-  -- continuation's binder, and the grade
+  -- unboxing a variable: the `∃ᵗ∃ʳ` witnesses are the continuation's
+  -- binder and the grade
 
   ex-unbox : ∅ᴴ ∣ ∅ᶜ ∷ [ ûᵣ ] Unit ⊢C⦂ Unit ‼ ûₑ
-  ex-unbox = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} (∅ᶜ ∷ [ ûᵣ ] Unit) (unbox zero (return ⋆)) Unit ûₑ
-                           (Unit , Unit , ûᵣ , ([ ⊩≾̂ᵣ-refl ]ₛ Unitₛ , [ ⊩≾̂ᵣ-refl ]ₛ Unitₛ) , ⊩≾̂ᵣ-refl ,
-                             Unitₛ , (Unitₛ , Unitₛ) , ⊩≾̂ₑ-refl))
+  ex-unbox = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} (∅ᶜ ∷ [ ûᵣ ] Unit) (unbox (var zero) (return ⋆))
+                           Unit ûₑ
+                           (Unit , ûᵣ , tt , ([ ⊩≾̂ᵣ-refl ]ₛ Unitₛ , [ ⊩≾̂ᵣ-refl ]ₛ Unitₛ) ,
+                             ⊩≾̂ᵣ-refl ,
+                             (Unitₛ , Unitₛ) , ⊩≾̂ₑ-refl))
 
-  ex-unbox-erase : ⌊ ex-unbox ⌋ᶜ ≡ unbox zero (return ⋆)
+  ex-unbox-erase : ⌊ ex-unbox ⌋ᶜ ≡ unbox (var zero) (return ⋆)
   ex-unbox-erase = refl
+
+  -- unboxing an annotated variable: the annotation's atom is solved too
+
+  ex-unbox-ann : ∅ᴴ ∣ ∅ᶜ ∷ [ ûᵣ ] Unit ⊢C⦂ Unit ‼ ûₑ
+  ex-unbox-ann = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} (∅ᶜ ∷ [ ûᵣ ] Unit)
+                               (unbox (var zero ⦂ᵛ [ ûᵣ ] Unit) (return ⋆)) Unit ûₑ
+                               (Unit , ûᵣ , (tt , [ ⊩≾̂ᵣ-refl ]ₛ Unitₛ) ,
+                                 ([ ⊩≾̂ᵣ-refl ]ₛ Unitₛ , [ ⊩≾̂ᵣ-refl ]ₛ Unitₛ) ,
+                                 ⊩≾̂ᵣ-refl , (Unitₛ , Unitₛ) , ⊩≾̂ₑ-refl))
+
+  ex-unbox-ann-erase : ⌊ ex-unbox-ann ⌋ᶜ ≡ unbox (var zero ⦂ᵛ [ ûᵣ ] Unit) (return ⋆)
+  ex-unbox-ann-erase = refl
 
   -- boxing a value: the `∃ᵗ` witness is the payload's type, the grade is the
   -- annotation

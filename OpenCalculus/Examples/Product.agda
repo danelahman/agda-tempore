@@ -109,11 +109,11 @@ private
 -- touches nothing, so what is weighed is the time.
 
 embargoed : RExp ∅ˢ → ℕ → RawC ∅ˢ 0
-embargoed c d = box c ⋆ (delay ⌜ d ⌝ (unbox fzero (return v₀)))
+embargoed c d = box c ⋆ (delay ⌜ d ⌝ (unbox (var fzero) (return v₀)))
 
 embargoed-D : ∀ c d → of-durʳ ⌜ d ⌝ ≾ᴳ c → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (⌜ d ⌝ᵉ ·̂ₑ ûₑ)
 embargoed-D c d p =
-  box (rconst c) ⋆ (delay ⌜ d ⌝ (unbox (Tl-⟨⟩ Hd) (after p) (<:̂ᵛ-refl _) (return (var Hd ok₀))))
+  box (rconst c) ⋆ (delay ⌜ d ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) (after p) (return (var Hd ok₀))))
 
 embargoed-typable : ∀ c d → True (of-durʳ ⌜ d ⌝ ≾ᵣ? c) → Typable [] (embargoed (rconst c) d)
 embargoed-typable c d p = closed (embargoed-D c d (toWitness p)) refl
@@ -132,7 +132,7 @@ expected-embargoed d = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ⌜ d ⌝ᵉ
 
 transmitted : RExp ∅ˢ → Op → ℕ → RawC ∅ˢ 0
 transmitted c op d =
-  return (lam (box c ⋆ (perform op v₁ (delay ⌜ d ⌝ (unbox (fsuc fzero) (return v₀))))))
+  return (lam (box c ⋆ (perform op v₁ (delay ⌜ d ⌝ (unbox (var (fsuc fzero)) (return v₀))))))
 
 transmitted-D : ∀ c op d → mapᵉ (op-grade op) ·ᵣ of-durʳ ⌜ d ⌝ ≾ᴳ c
               → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂
@@ -140,7 +140,7 @@ transmitted-D : ∀ c op d → mapᵉ (op-grade op) ·ᵣ of-durʳ ⌜ d ⌝ ≾
 transmitted-D c op d p =
   return (lam (box (rconst c) ⋆
     (perform op (var (Tl-∷ Hd) ok₀)
-      (delay ⌜ d ⌝ (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) (after₂ p) (<:̂ᵛ-refl _)
+      (delay ⌜ d ⌝ (unbox (res-var {z = Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))}) (after₂ p)
                   (return (var Hd ok₀)))))))
 
 transmitted-typable : ∀ c op d → True ((mapᵉ (op-grade op) ·ᵣ of-durʳ ⌜ d ⌝) ≾ᵣ? c)
@@ -167,7 +167,7 @@ joined-claim op₀ op₁ op₂ =
   return (lam (return (lam
     (perform op₀ ⋆
       ((if v₁ `then perform op₁ v₀ (return ⋆) `else perform op₂ v₀ (return ⋆))
-       ⨟ unbox (fsuc (fsuc (fsuc fzero))) (return v₀))))))
+       ⨟ unbox (var (fsuc (fsuc (fsuc fzero)))) (return v₀))))))
 
 expected-joined-claim : Op → Op → Op → Scheme
 expected-joined-claim op₀ op₁ op₂ =
@@ -189,7 +189,7 @@ expected-joined-claim op₀ op₁ op₂ =
 publish : Op → RawC ∅ˢ 0
 publish op =
   return (lam (return (lam
-    ((v₁ · ⋆) ⨟ perform op v₀ (unbox (fsuc (fsuc fzero)) (return v₀))))))
+    ((v₁ · ⋆) ⨟ perform op v₀ (unbox (var (fsuc (fsuc fzero))) (return v₀))))))
 
 expected-publish : Op → Scheme
 expected-publish op =

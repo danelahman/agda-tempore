@@ -116,7 +116,7 @@ mutual
   eraseᶜ (perform op V M)          = perform op (eraseᵛ V) (eraseᶜ M)
   eraseᶜ (delay τ M)               = delay τ (eraseᶜ M)
   eraseᶜ (handle M `with V)        = handle eraseᶜ M `with eraseᵛ V
-  eraseᶜ (unbox i N)               = unbox (var i) (eraseᶜ N)
+  eraseᶜ (unbox V N)               = unbox (eraseᵛ V) (eraseᶜ N)
   eraseᶜ (box ρ V N)               = box (eraseᵛ V) (eraseᶜ N)
   eraseᶜ (M ⦂ᶜ C)                  = eraseᶜ M
 
@@ -170,7 +170,7 @@ mutual
   erase-substᶜ (delay τ M)               σ = cong (delay τ) (erase-substᶜ M σ)
   erase-substᶜ (handle M `with V)        σ =
     cong₂ handle_`with_ (erase-substᶜ M σ) (erase-substᵛ V σ)
-  erase-substᶜ (unbox i N)               σ = cong (unbox (var i)) (erase-substᶜ N σ)
+  erase-substᶜ (unbox V N)               σ = cong₂ unbox (erase-substᵛ V σ) (erase-substᶜ N σ)
   erase-substᶜ (box ρ V N)               σ = cong₂ box (erase-substᵛ V σ) (erase-substᶜ N σ)
   erase-substᶜ (M ⦂ᶜ C)                  σ = erase-substᶜ M σ
 

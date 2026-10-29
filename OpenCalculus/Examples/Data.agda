@@ -241,12 +241,12 @@ expected-function-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ⌜ 1 ⌝ᵉ
 -- The claim is on time at every grade.
 
 boxed-numeral : RawC ∅ˢ 0
-boxed-numeral = box ⌜ 2 ⌝ʳ (numeral 3) (delay ⌜ 2 ⌝ (unbox fzero (return (succ v₀))))
+boxed-numeral = box ⌜ 2 ⌝ʳ (numeral 3) (delay ⌜ 2 ⌝ (unbox (var fzero) (return (succ v₀))))
 
 boxed-numeral-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Nat ‼ (⌜ 2 ⌝ᵉ ·̂ₑ ûₑ)
 boxed-numeral-D =
   box ⌜ 2 ⌝ʳ (numeralᵛ 3)
-    (delay ⌜ 2 ⌝ (unbox (Tl-⟨⟩ Hd) on-time (<:̂ᵛ-refl _) (return (succ (var Hd ok₀)))))
+    (delay ⌜ 2 ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) on-time (return (succ (var Hd ok₀)))))
 
 boxed-numeral-typed : IsTyped (infer [] boxed-numeral)
 boxed-numeral-typed = typed-of boxed-numeral (closed boxed-numeral-D refl) _

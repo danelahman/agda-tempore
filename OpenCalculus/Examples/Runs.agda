@@ -131,7 +131,7 @@ late τ = lam (delay τ (return ⋆))
 
 call-result : ∀ {Θ n} → 𝔻 → Op → RawC (Θ +e) (suc (suc n))
 call-result τ op =
-  perform op v₁ (unbox (fsuc fzero) ((v₀ · v₁) ⨟ ((v₀ · ⋆) ⨟ return (late τ))))
+  perform op v₁ (unbox (var (fsuc fzero)) ((v₀ · v₁) ⨟ ((v₀ · ⋆) ⨟ return (late τ))))
 
 stretch : 𝔻 → RawC ∅ˢ 0
 stretch τ = handle (return ⋆) `with handler (return (late τ)) (call-result τ)

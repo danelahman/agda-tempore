@@ -9,10 +9,11 @@
 -- Erasure is index-preserving: a derivation over `Θ` erases to --
 -- a raw term over `Θ`, a handler clause to a                   --
 -- `RawC (Θ +e) (2+n)`, a variable to its full-context         --
--- position `var-pos`, and a definition to its position in the  --
--- program context. It is not injective: `subV` and `subC`      --
--- erase to their subjects. The annotation rules `annᵛ` and     --
--- `annᶜ` erase to the annotated raw forms.                     --
+-- position `var-pos`, a resource value to that of its variable --
+-- under its annotations (`⌊_⌋ʳ`), and a definition to its      --
+-- position in the program context. It is not injective: `subV` --
+-- and `subC` erase to their subjects. The annotation rules     --
+-- `annᵛ` and `annᶜ` erase to the annotated raw forms.          --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero)
@@ -39,6 +40,16 @@ open import OpenCalculus.Hypotheses      S
 open import OpenCalculus.Typing          S
 
 open import OpenCalculus.Syntax.Raw    S
+
+-- A resource value erases to its variable under its annotations
+
+⌊_⌋ʳ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ}
+       {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
+     → Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X
+     ---------------------------
+     → RawV Θ n
+⌊_⌋ʳ {z = z} res-var    = var (var-pos z)
+⌊ res-ann ρₐ Xₐ R _ _ ⌋ʳ = ⌊ R ⌋ʳ ⦂ᵛ [ ρₐ ] Xₐ
 
 mutual
 
@@ -97,7 +108,7 @@ mutual
 
   ⌊ handle M `with V ⌋ᶜ         = handle ⌊ M ⌋ᶜ `with ⌊ V ⌋ᵛ
 
-  ⌊ unbox x p q N ⌋ᶜ            = unbox (var-pos x) ⌊ N ⌋ᶜ
+  ⌊ unbox R p N ⌋ᶜ              = unbox ⌊ R ⌋ʳ ⌊ N ⌋ᶜ
 
   ⌊ box ρ V N ⌋ᶜ                = box ρ ⌊ V ⌋ᵛ ⌊ N ⌋ᶜ
 
@@ -145,10 +156,18 @@ private
   -- unboxing a boxed variable
 
   ex-unbox : ∅ᴴ ∣ (∅ᶜ ∷ [ ûᵣ ] Unit) ⊢C⦂ Unit ‼ ûₑ
-  ex-unbox = unbox Hd ⊩≾̂ᵣ-refl (<:̂ᵛ-refl Unit) (return ⋆)
+  ex-unbox = unbox (res-var {z = Hd}) ⊩≾̂ᵣ-refl (return ⋆)
 
-  ex-unbox-erase : ⌊ ex-unbox ⌋ᶜ ≡ unbox zero (return ⋆)
+  ex-unbox-erase : ⌊ ex-unbox ⌋ᶜ ≡ unbox (var zero) (return ⋆)
   ex-unbox-erase = refl
+
+  -- unboxing an annotated variable: the annotation is kept
+
+  ex-unbox-ann : ∅ᴴ ∣ (∅ᶜ ∷ [ ûᵣ ] Unit) ⊢C⦂ Unit ‼ ûₑ
+  ex-unbox-ann = unbox (res-ann ûᵣ Unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl Unitₛ) ⊩≾̂ᵣ-refl (return ⋆)
+
+  ex-unbox-ann-erase : ⌊ ex-unbox-ann ⌋ᶜ ≡ unbox (var zero ⦂ᵛ [ ûᵣ ] Unit) (return ⋆)
+  ex-unbox-ann-erase = refl
 
   -- coerce-invisibility: a sub-effecting step leaves the raw term untouched
 

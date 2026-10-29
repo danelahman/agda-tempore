@@ -105,7 +105,7 @@ U⇒U = Unit ⇒ Unit ‼ ûₑ
 
 resume-through : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc n))
 resume-through op =
-  perform op v₁ (unbox (fsuc fzero)
+  perform op v₁ (unbox (var (fsuc fzero))
     (return (lam (return v₀)) ⨟ ((v₀ · lam (v₂ · v₃)) ⨟ ((v₁ · v₀) ⨟ (v₀ · ⋆)))))
 
 relay : RawC ∅ˢ 0
@@ -129,7 +129,7 @@ private
     return (lam (handle var Hd ok₀ · ⋆
       `with handler (return ⋆) (λ op →
         perform op (var (Tl-∷ Hd) ok₀)
-          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (eqᵣ ≡̂ᵣ-identityˡ) (<:̂ᵛ-refl _)
+          (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) (eqᵣ ≡̂ᵣ-identityˡ)
             (coerce (eqₑ u³)
               (return H
                ⨟ ((var Hd ok₀ · lam (var (Tl-∷ (Tl-∷ (Tl-⟨⟩ Hd))) ok₁
@@ -166,7 +166,7 @@ expected-relay = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit �
 through-box : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc n))
 through-box op =
   return (lam (return v₀)) ⨟ ((v₀ · v₁) ⨟ ((v₁ · v₀) ⨟
-    perform op v₄ (unbox (fsuc fzero) (v₀ · v₁))))
+    perform op v₄ (unbox (var (fsuc fzero)) (v₀ · v₁))))
 
 relay-boxed : RawC ∅ˢ 0
 relay-boxed = return (lam (handle (v₀ · ⋆) `with handler (return ⋆) through-box))
@@ -198,7 +198,7 @@ private
            ⨟ ((var Hd ok₀ · var (Tl-∷ (Tl-⟨⟩ Hd)) ok₁)
               ⨟ ((var (Tl-∷ (Tl-⟨⟩ Hd)) ok₁ · var Hd ok₀)
                  ⨟ perform op (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))))) ok₃)
-                     (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (eqᵣ ≡̂ᵣ-identityˡ) (<:̂ᵛ-refl _)
+                     (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) (eqᵣ ≡̂ᵣ-identityˡ)
                        (var Hd ok₀ · var (Tl-∷ Hd) ok₀))))))))
 
 relay-boxed-typable : Typable [] relay-boxed
@@ -262,7 +262,7 @@ expected-discard = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit
 
 resume-twice-clause : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc n))
 resume-twice-clause op =
-  perform op v₁ (unbox (fsuc fzero) ((v₀ · v₁) ⨟ (v₁ · v₂)))
+  perform op v₁ (unbox (var (fsuc fzero)) ((v₀ · v₁) ⨟ (v₁ · v₂)))
 
 resume-twice : RawC ∅ˢ 0
 resume-twice =
@@ -277,7 +277,7 @@ resume-twice-D top =
     `with handler (return ⋆) (λ op →
       coerce (monoₑ ⊩≾̂ₑ-refl twice≾once)
         (perform op (var (Tl-∷ Hd) ok₀)
-          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (eqᵣ ≡̂ᵣ-identityˡ) (<:̂ᵛ-refl _)
+          (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) (eqᵣ ≡̂ᵣ-identityˡ)
             ((var Hd ok₀ · var (Tl-∷ Hd) ok₀)
              ⨟ (var (Tl-∷ (Tl-⟨⟩ Hd)) okʲ · var (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) okʲ)))))))
   where
@@ -317,7 +317,7 @@ expected-resume-twice = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒
 -- so all three are typable over an arbitrary language.
 
 forward : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc n))
-forward op = perform op v₁ (unbox (fsuc fzero) (v₀ · v₁))
+forward op = perform op v₁ (unbox (var (fsuc fzero)) (v₀ · v₁))
 
 forwarder : ∀ {Θ n} → RawV Θ n
 forwarder = handler (return v₀) forward
@@ -341,7 +341,7 @@ private
               ⊢C⦂ Unit ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {∅ˢ}))
   forward-D op =
     perform op (var (Tl-∷ Hd) ok₀)
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (eqᵣ ≡̂ᵣ-identityˡ) (<:̂ᵛ-refl _)
+      (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) (eqᵣ ≡̂ᵣ-identityˡ)
         (var Hd ok₀ · var (Tl-∷ Hd) ok₀))
 
   bound-D : ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ Unit ‼ (ûₑ ·̂ₑ (ûₑ ·̂ₑ ûₑ))) ‼ ûₑ

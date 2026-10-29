@@ -75,6 +75,7 @@ open import OpenCalculus.Typing           S
 open import OpenCalculus.Syntax.Raw       S
 open import OpenCalculus.Syntax.Raw.Subst S
 import OpenCalculus.Typing.Erasure S as OE
+open import OpenCalculus.Typing.Resources S using (res-collapse)
 open import OpenCalculus.Hypotheses.Instances S using (_⊨_)
 
 open import Bridge.Instantiation.Types          S
@@ -119,6 +120,43 @@ on₁ᴿ f K r = on₁ᵗ K r (f r)
 outᴱ : Envᴿ → ℕ
 outᴱ (outᴿ k) = k
 outᴱ _        = 0
+
+-- The position of the variable of a resource value, a variable under
+-- annotations
+
+resᴿ : ∀ {Θ n} → RawV Θ n → RMap → ℕ
+resᴿ (var i)  r = posᴿ r (toℕ i)
+resᴿ (V ⦂ᵛ A) r = resᴿ V r
+resᴿ _        r = 0
+
+-- A resource value's erasure is at its variable's position
+
+resᴿ-⌊⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ}
+            {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
+        → (R : Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X) → ∀ r → resᴿ OE.⌊ R ⌋ʳ r ≡ posᴿ r (toℕ (var-pos z))
+resᴿ-⌊⌋ res-var             r = refl
+resᴿ-⌊⌋ (res-ann _ _ R _ _) r = resᴿ-⌊⌋ R r
+
+-- Substitution leaves the position
+
+resᴿ-[] : ∀ {Θ Θ' n} → (V : RawV Θ n) → (δ : Subst Θ Θ') → ∀ r → resᴿ (V [ δ ]ᴿᵛ) r ≡ resᴿ V r
+resᴿ-[] (var i)       δ r = refl
+resᴿ-[] (V ⦂ᵛ A)      δ r = resᴿ-[] V δ r
+resᴿ-[] (def k)       δ r = refl
+resᴿ-[] (const B c)   δ r = refl
+resᴿ-[] ⋆             δ r = refl
+resᴿ-[] true          δ r = refl
+resᴿ-[] false         δ r = refl
+resᴿ-[] zero          δ r = refl
+resᴿ-[] (succ V)      δ r = refl
+resᴿ-[] ⦉ V , W ⦊      δ r = refl
+resᴿ-[] (inl V)       δ r = refl
+resᴿ-[] (inr V)       δ r = refl
+resᴿ-[] nil           δ r = refl
+resᴿ-[] (cons V W)    δ r = refl
+resᴿ-[] (cmp ⋈ V W)   δ r = refl
+resᴿ-[] (lam M)       δ r = refl
+resᴿ-[] (handler N H) δ r = refl
 
 mutual
 
@@ -200,7 +238,7 @@ mutual
     on₁ᴿ (hoistᴿ V σ) (λ r e → perform op (buildᴿ V σ r e) (elabᶜ M σ (extᴿ r)))
   elabᶜ (delay τ M) σ r = delay τ (elabᶜ M σ r)
   elabᶜ (handle M `with V) σ r = elabʰ M V σ r
-  elabᶜ (unbox i N) σ r = unbox (posᴿ r (toℕ i)) (elabᶜ N σ (extᴿ r))
+  elabᶜ (unbox V N) σ r = unbox (resᴿ V r) (elabᶜ N σ (extᴿ r))
   elabᶜ (box ρ V N) σ =
     on₁ᴿ (hoistᴿ V σ) (λ r e → box (⟦ ρ ⟧ʳ σ) (buildᴿ V σ r e) (elabᶜ N σ (extᴿ r)))
   elabᶜ (M ⦂ᶜ C) σ r = elabᶜ M σ r
@@ -352,7 +390,7 @@ mutual
               (λ r e → cong₂ (perform op) (⌊≗⌋ᵇ p V r e) (⌊≗⌋ᵉ p M (extᴿ r)))
   ⌊≗⌋ᵉ p (delay τ M) r = cong (delay τ) (⌊≗⌋ᵉ p M r)
   ⌊≗⌋ᵉ p (handle M `with V) r = ⌊≗⌋ᵃ p M V r
-  ⌊≗⌋ᵉ p (unbox i N) r = cong (unbox (posᴿ r (toℕ i))) (⌊≗⌋ᵉ p N (extᴿ r))
+  ⌊≗⌋ᵉ p (unbox V N) r = cong (unbox (resᴿ V r)) (⌊≗⌋ᵉ p N (extᴿ r))
   ⌊≗⌋ᵉ p (box ρ V N) =
     on₁ᴿ-cong (⌊≗⌋ʰ p V)
               (λ r e → cong₃ box (⟦≗⟧ʳ p ρ) (⌊≗⌋ᵇ p V r e) (⌊≗⌋ᵉ p N (extᴿ r)))
@@ -473,7 +511,7 @@ mutual
               (λ r e → cong₂ (perform op) (⌊[]⌋ᵇ V δ σ r e) (⌊[]⌋ᵉ M δ σ (extᴿ r)))
   ⌊[]⌋ᵉ (delay τ M) δ σ r = cong (delay τ) (⌊[]⌋ᵉ M δ σ r)
   ⌊[]⌋ᵉ (handle M `with V) δ σ r = ⌊[]⌋ᵃ M V δ σ r
-  ⌊[]⌋ᵉ (unbox i N) δ σ r = cong (unbox (posᴿ r (toℕ i))) (⌊[]⌋ᵉ N δ σ (extᴿ r))
+  ⌊[]⌋ᵉ (unbox V N) δ σ r = cong₂ unbox (resᴿ-[] V δ r) (⌊[]⌋ᵉ N δ σ (extᴿ r))
   ⌊[]⌋ᵉ (box ρ V N) δ σ =
     on₁ᴿ-cong (⌊[]⌋ʰ V δ σ)
               (λ r e → cong₃ box (⟦[]⟧ʳ δ σ ρ) (⌊[]⌋ᵇ V δ σ r e) (⌊[]⌋ᵉ N δ σ (extᴿ r)))
@@ -769,8 +807,10 @@ mutual
       f' = Full-⊕ ι (tel h) f
   instᶜ σ s (delay τ M) ι f c = delay τ (instᶜ σ s M (≼-⟨⟩ ι) f c)
   instᶜ σ s (handle M `with V) ι f c = instʰ σ s M V (<:̂ᵛ-refl _) ι f c
-  instᶜ σ s (unbox x p q N) ι f c =
-    unbox (proj₁ (proj₂ l)) (≾ᵣ-trans (proj₂ (proj₂ l)) (sound-≾ᵣ s p)) (sound-<:ᵛ s q)
+  instᶜ σ s (unbox {z = x} R p N) ι f (_ , c) =
+    unbox (proj₁ (proj₂ l))
+          (≾ᵣ-trans (proj₂ (proj₂ l)) (sound-≾ᵣ s (transᵣ p (proj₁ (res-collapse R)))))
+          (sound-<:ᵛ s (proj₂ (res-collapse R)))
           (instᶜ σ s N (≼-∷ ι) f c)
     where l = look ι f ⟦ x ⟧ˣ
   instᶜ σ s (box ρ V N) ι f (c , c') =
@@ -1038,8 +1078,9 @@ mutual
       f' = Full-⊕ ι (tel h) f
   instᶜ-⌊⌋ σ s (delay τ M) ι f c = cong (delay τ) (instᶜ-⌊⌋ σ s M (≼-⟨⟩ ι) f c)
   instᶜ-⌊⌋ σ s (handle M `with V) ι f c = instʰ-⌊⌋ σ s M V (<:̂ᵛ-refl _) ι f c
-  instᶜ-⌊⌋ σ s (unbox x p q N) ι f c =
-    cong₂ unbox (trans (look-pos ι f ⟦ x ⟧ˣ) (cong (posᴿ ⌊ ι ⌋ᵐ) (⟦⟧ˣ-pos x)))
+  instᶜ-⌊⌋ σ s (unbox {z = x} R p N) ι f (_ , c) =
+    cong₂ unbox (trans (look-pos ι f ⟦ x ⟧ˣ)
+                       (trans (cong (posᴿ ⌊ ι ⌋ᵐ) (⟦⟧ˣ-pos x)) (sym (resᴿ-⌊⌋ R ⌊ ι ⌋ᵐ))))
                 (instᶜ-⌊⌋ σ s N (≼-∷ ι) f c)
   instᶜ-⌊⌋ σ s (box ρ V N) ι f (c , c') =
     on₁-⌊⌋ ι h (hoistᴿ OE.⌊ V ⌋ᵛ σ) (hoist-⌊⌋ σ s V (≼-drop ι) c) _

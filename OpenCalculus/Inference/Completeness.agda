@@ -13,7 +13,8 @@
 
 open import Data.Fin using (zero)
 open import Data.Nat using (ℕ)
-open import Data.Product using (Σ-syntax; _,_)
+open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
+open import Data.Unit using (tt)
 
 open import Function.Bundles using (_⇔_; mk⇔)
 
@@ -75,6 +76,33 @@ cmpDef : ∀ {Θ n Θ'} → (σ : Subst Θ Θ') → {Q : Hyps Θ'}
        → Q ∣ Xˢ sc [ δ ]ᵛ <:̂ᵛ A [ σ ]ᵛ
        → σ ⊨[ Q ] defConstraint (lookupᵖ (defs Γ) k) A
 cmpDef σ Γ k A sc f δ h st rewrite ∈-lookupᵖ f = instᶜ-complete sc A δ st h
+
+-- A resource value: the variable and the annotations of the raw value
+-- are those of the judgement, which meets each annotation's atom
+
+cmpR : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : OCtx Θ' n}
+         {ρ' ρ₀ ρ : RExp Θ'} {X₀ X : OVType Θ'} {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ₀}
+     → (ι : Subst Θ₀ Θ) → (Γ : OCtx Θ n) → (V : RawV Θ₀ n)
+     → (R : Q ∣ Γ₀ ⊢↪[ ρ' ] z ⦂[ ρ ] X)
+     → InvV (ι ⨟ˢ σ) V ⌊ R ⌋ʳ
+     → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
+     ---------------------------------------------------------------------
+     → (σ ⊨[ Q ] resC ι Γ V) × (resTy ι Γ V [ σ ]ᵛ ≡ [ ρ ] X) × (resGr Γ V [ σ ]ʳ ≡ ρ')
+cmpR {σ = σ} {z = z} ι Γ _ res-var var ceq = tt , lty , lgr
+  where
+    i = var-pos z
+
+    lty = trans (sym (lookup-ty-subst Γ σ i))
+                (trans (cong (λ G → lookup-ty G i) (sym ceq)) (var-pos-ty z))
+
+    lgr = trans (sym (lookup-gr-subst Γ σ i))
+                (trans (cong (λ G → lookup-gr G i) (sym ceq)) (var-pos-gr z))
+cmpR {σ = σ} {Q = Q} ι Γ _ (res-ann ρₐ Xₐ R p q) (annᵛ {V = V} {A = B} eV eB) ceq =
+  (proj₁ c , subst₂ (Q ∣_<:̂ᵛ_) (sym (proj₁ (proj₂ c))) (sym eB') ([ p ]ₛ q)) ,
+  eB' , proj₂ (proj₂ c)
+  where
+    c   = cmpR ι Γ V R (invV V eV) ceq
+    eB' = trans ([⨟]ᵛ B ι σ) eB
 
 mutual
 
@@ -646,52 +674,37 @@ mutual
       ihV = cmpV ι↑ Γ↑ ((α ‼ e₁) ⇛ (γ ‼ e₂)) V DV (reV pι V eV) (trans ceq (sym pΓ))
                  (<:̂ᵛ-refl _)
 
-  -- unboxing a boxed variable
+  -- unboxing a resource value
+  --
+  -- The witnesses are the payload and the grade the value reaches.
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
-       (unbox {A = A₂} {A₀ = A₁} {ρ₀ = ρ₀} {ρ' = ρ'} x ok sb D) (unbox {N = N} e')
+       (unbox {X = A₂} {ρ = ρ₁} R ok D) (unbox {V = V} {N = N} eV eN)
        ceq st le =
-    A₁ , A₂ , ρ₀ , ⊨-≐ᵥ σ' (lookup-ty Γ↑ i) ([ r ] α) lty ,
-    subst (λ z → Q ⊩ z ≾̂ᵣ ρ₀) (sym lgr) ok , sb , ih
+    A₂ , ρ₁ , sres ,
+    ⊨-≐ᵥ σ' (resTy ι↑ Γ↑ V) ([ r ] β) ety ,
+    subst (λ g → Q ⊩ g ≾̂ᵣ ρ₁) (sym egr) ok , ih
     where
-      i  = var-pos x
-      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
-      α  = wkʳ-v (wkᵗ-v (tvar (newᵗ {Θ})))
-      r  = rvar (newʳ {Θ +ty +ty})
-      σ' = σ ,ᵗ A₁ ,ᵗ A₂ ,ʳ ρ₀
-      Γ↑ = wkʳ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
-      A↑ = wkʳ-v (wkᵗ-v (wkᵗ-v A))
-      t↑ = wkʳ-e (wkᵗ-e (wkᵗ-e t))
-      β  = wkʳ-v (tvar (newᵗ {Θ +ty}))
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
+      σ' = σ ,ᵗ A₂ ,ʳ ρ₁
+      Γ↑ = wkʳ-ctx (wkᵗ-ctx Γ)
+      A↑ = wkʳ-v (wkᵗ-v A)
+      t↑ = wkʳ-e (wkᵗ-e t)
+      β  = wkʳ-v (tvar (newᵗ {Θ}))
+      r  = rvar (newʳ {Θ +ty})
 
-      pΓ = co²ᵗʳ-ctx σ A₁ A₂ ρ₀ Γ
-      pA = co²ᵗʳ-v   σ A₁ A₂ ρ₀ A
-      pt = co²ᵗʳ-e   σ A₁ A₂ ρ₀ t
-      pι = co²ᵗʳ-ˢ   ι σ A₁ A₂ ρ₀
+      pΓ = coᵗʳ-ctx σ A₂ ρ₁ Γ
+      pA = coᵗʳ-v   σ A₂ ρ₁ A
+      pt = coᵗʳ-e   σ A₂ ρ₁ t
+      pι = coᵗʳ-ˢ   ι σ A₂ ρ₁
 
-      -- lookup in the weakened context, instantiated, is lookup in `Γ₀`
+      c = cmpR {σ = σ'} ι↑ Γ↑ V R (reV pι V eV) (trans ceq (sym pΓ))
 
-      lty : lookup-ty Γ↑ i [ σ' ]ᵛ ≡ [ ρ₀ ] A₁
-      lty = trans (cong (_[ σ' ]ᵛ)
-                        (trans (lookup-ty-wkʳ (wkᵗ-ctx (wkᵗ-ctx Γ)) i)
-                               (cong wkʳ-v
-                                     (trans (lookup-ty-wkᵗ (wkᵗ-ctx Γ) i)
-                                            (cong wkᵗ-v (lookup-ty-wkᵗ Γ i))))))
-            (trans (co²ᵗʳ-v σ A₁ A₂ ρ₀ (lookup-ty Γ i))
-            (trans (sym (lookup-ty-subst Γ σ i))
-            (trans (cong (λ G → lookup-ty G i) (sym ceq)) (var-pos-ty x))))
+      sres = proj₁ c
+      ety = proj₁ (proj₂ c)
+      egr = proj₂ (proj₂ c)
 
-      lgr : lookup-gr Γ↑ i [ σ' ]ʳ ≡ ρ'
-      lgr = trans (cong (_[ σ' ]ʳ)
-                        (trans (lookup-gr-wkʳ (wkᵗ-ctx (wkᵗ-ctx Γ)) i)
-                               (cong wkʳ-r
-                                     (trans (lookup-gr-wkᵗ (wkᵗ-ctx Γ) i)
-                                            (cong wkᵗ-r (lookup-gr-wkᵗ Γ i))))))
-            (trans (co²ᵗʳ-r σ A₁ A₂ ρ₀ (lookup-gr Γ i))
-            (trans (sym (lookup-gr-subst Γ σ i))
-            (trans (cong (λ G → lookup-gr G i) (sym ceq)) (var-pos-gr x))))
-
-      ih = cmpC ι↑ (Γ↑ ∷ β) A↑ t↑ N D (reC pι N e')
+      ih = cmpC ι↑ (Γ↑ ∷ β) A↑ t↑ N D (reC pι N eN)
                 (cong (_∷ A₂) (trans ceq (sym pΓ)))
                 (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st)
                 (subst (λ z → Q ⊩ _ ≾̂ₑ z) (sym pt) le)
@@ -862,11 +875,20 @@ private
 
   -- unboxing a boxed variable: the gate is `false`, the row is inhabited
 
-  ex-unbox : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ [ ûᵣ ] Unit) (unbox zero (return ⋆))
+  ex-unbox : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ [ ûᵣ ] Unit) (unbox (var zero) (return ⋆))
                               (Unit ‼ ûₑ)
-  ex-unbox = completeC {σ = idˢ} (∅ᶜ ∷ [ ûᵣ ] Unit) Unit ûₑ (unbox zero (return ⋆))
-                       (unbox Hd ⊩≾̂ᵣ-refl (<:̂ᵛ-refl Unit) (return ⋆))
+  ex-unbox = completeC {σ = idˢ} (∅ᶜ ∷ [ ûᵣ ] Unit) Unit ûₑ (unbox (var zero) (return ⋆))
+                       (unbox (res-var {z = Hd}) ⊩≾̂ᵣ-refl (return ⋆))
                        refl refl Unitₛ ⊩≾̂ₑ-refl
+
+  -- unboxing an annotated variable: the annotation's atom is the step's
+
+  ex-unbox-ann : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ [ ûᵣ ] Unit)
+                                  (unbox (var zero ⦂ᵛ [ ûᵣ ] Unit) (return ⋆)) (Unit ‼ ûₑ)
+  ex-unbox-ann =
+    completeC {σ = idˢ} (∅ᶜ ∷ [ ûᵣ ] Unit) Unit ûₑ (unbox (var zero ⦂ᵛ [ ûᵣ ] Unit) (return ⋆))
+              (unbox (res-ann ûᵣ Unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl Unitₛ) ⊩≾̂ᵣ-refl (return ⋆))
+              refl refl Unitₛ ⊩≾̂ₑ-refl
 
   -- boxing a value: the annotation needs no witness, only the payload's type
 

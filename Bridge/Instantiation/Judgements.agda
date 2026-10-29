@@ -205,33 +205,6 @@ sound-≾ₑ {σ = σ} {ε = ε} {ε'} s p =
 ------------------------------------------------------------------------
 -- Soundness of the type-level judgements
 
--- Convertible types are subtypes of each other
-
-sound-≡̂ᵛ : ∀ {Θ} {A A' : OVType Θ} → (σ : DInst Θ) → A ≡̂ᵛ A'
-         → (⟦ A ⟧ᵛ σ <:ᵛ ⟦ A' ⟧ᵛ σ) × (⟦ A' ⟧ᵛ σ <:ᵛ ⟦ A ⟧ᵛ σ)
-sound-≡̂ᶜ : ∀ {Θ} {C C' : OCType Θ} → (σ : DInst Θ) → C ≡̂ᶜ C'
-         → (⟦ C ⟧ᶜ σ <:ᶜ ⟦ C' ⟧ᶜ σ) × (⟦ C' ⟧ᶜ σ <:ᶜ ⟦ C ⟧ᶜ σ)
-
-sound-≡̂ᵛ σ (tvar≡̂ {α}) = <:ᵛ-refl (ty σ α) , <:ᵛ-refl (ty σ α)
-sound-≡̂ᵛ σ Base≡̂       = Baseₛ refl , Baseₛ refl
-sound-≡̂ᵛ σ Unit≡̂       = Unitₛ , Unitₛ
-sound-≡̂ᵛ σ Bool≡̂       = Boolₛ , Boolₛ
-sound-≡̂ᵛ σ Nat≡̂        = Natₛ , Natₛ
-sound-≡̂ᵛ σ (p |×|≡̂ q)  = proj₁ (sound-≡̂ᵛ σ p) |×|ₛ proj₁ (sound-≡̂ᵛ σ q)
-                        , proj₂ (sound-≡̂ᵛ σ p) |×|ₛ proj₂ (sound-≡̂ᵛ σ q)
-sound-≡̂ᵛ σ (p |+|≡̂ q)  = proj₁ (sound-≡̂ᵛ σ p) |+|ₛ proj₁ (sound-≡̂ᵛ σ q)
-                        , proj₂ (sound-≡̂ᵛ σ p) |+|ₛ proj₂ (sound-≡̂ᵛ σ q)
-sound-≡̂ᵛ σ (|List|≡̂ p) = |List|ₛ (proj₁ (sound-≡̂ᵛ σ p)) , |List|ₛ (proj₂ (sound-≡̂ᵛ σ p))
-sound-≡̂ᵛ σ Empty≡̂      = Emptyₛ , Emptyₛ
-sound-≡̂ᵛ σ (p ⇒≡̂ q)    = proj₂ (sound-≡̂ᵛ σ p) ⇒ₛ proj₁ (sound-≡̂ᶜ σ q)
-                        , proj₁ (sound-≡̂ᵛ σ p) ⇒ₛ proj₂ (sound-≡̂ᶜ σ q)
-sound-≡̂ᵛ σ (p ⇛≡̂ q)    = <:ᵛ-refl handlerᴰ , <:ᵛ-refl handlerᴰ
-sound-≡̂ᵛ σ ([ r ]≡̂ p)  = [ ≃ᵣ⇒≿ᵣ (sound-≡̂ᵣ σ r) ]ₛ proj₁ (sound-≡̂ᵛ σ p)
-                        , [ ≃ᵣ⇒≾ᵣ (sound-≡̂ᵣ σ r) ]ₛ proj₂ (sound-≡̂ᵛ σ p)
-
-sound-≡̂ᶜ σ (p ‼≡̂ e) = proj₁ (sound-≡̂ᵛ σ p) ‼ₛ ≃ₑ⇒≾ₑ (sound-≡̂ₑ σ e)
-                    , proj₂ (sound-≡̂ᵛ σ p) ‼ₛ ≃ₑ⇒≿ₑ (sound-≡̂ₑ σ e)
-
 module _ {Θ : Scope} {σ : DInst Θ} {Q : Hyps Θ} (s : σ ⊨ᴰ Q) where
 
   sound-⊩ᵗᵛ : ∀ {α β} → Q ⊩ᵗᵛ α ≾ β → ty σ α <:ᵛ ty σ β
@@ -276,8 +249,8 @@ module _ {Θ : Scope} {σ : DInst Θ} {Q : Hyps Θ} (s : σ ⊨ᴰ Q) where
               → Eternal (⟦ A ⟧ᵛ σ) ⊎ (⟦ ρ ⟧ʳ σ ≾ᵣ uᵣ)
   sound-VarOK (et-ok et) = inj₁ (sound-⊩ᴱ et)
   sound-VarOK (≾ᵘ-ok le) = inj₂ (sound-≾ᵣ s le)
-  sound-VarOK (hyp-ok m p q) with ⊨disj s m
-  ... | inj₁ et = inj₁ (<:ᵛ-eternalˡ (proj₁ (sound-≡̂ᵛ σ p)) et)
+  sound-VarOK (hyp-ok m p p' q) with ⊨disj s m
+  ... | inj₁ et = inj₁ (<:ᵛ-eternalˡ (sound-<:ᵛ p) et)
   ... | inj₂ le = inj₂ (≾ᵣ-trans (sound-≾ᵣ s q) le)
 
 ------------------------------------------------------------------------

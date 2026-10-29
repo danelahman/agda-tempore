@@ -167,3 +167,25 @@ claimed-at-⊤-reported = refl
 handed-to-clause-reported : schemeOf (infer [] handed-to-clause) ≡ just expected-handed-to-clause
 handed-to-clause-reported = refl
 
+
+------------------------------------------------------------------
+-- 9. An annotated box: claimed at the annotation's grade; a promise
+-- of three re-annotated as a promise of four is claimable after four
+-- ticks, not after three
+
+annotated-claim-reported :
+  schemeOf (infer [] annotated-claim) ≡ just expected-annotated-claim
+annotated-claim-reported = refl
+
+relabelled-on-time-reported :
+  schemeOf (infer [] (relabelled 4 4)) ≡ just (expected-relabelled 4)
+relabelled-on-time-reported = refl
+
+relabelled-on-time-derivable : Typable [] (relabelled 4 4)
+relabelled-on-time-derivable = relabelled-typable 4 4 _ _
+
+relabelled-early-verdict : infer [] (relabelled 4 3) ≡ untypable
+relabelled-early-verdict = refl
+
+relabelled-early-not-typable : ¬ Typable [] (relabelled 4 3)
+relabelled-early-not-typable = infer-untypable [] (relabelled 4 3) relabelled-early-verdict

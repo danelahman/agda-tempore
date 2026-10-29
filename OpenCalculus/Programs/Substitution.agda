@@ -176,7 +176,7 @@ mutual
   sdef-c r (perform op V M)          = perform op (sdef-v r V) (sdef-c r M)
   sdef-c r (delay τ M)               = delay τ (sdef-c r M)
   sdef-c r (handle M `with V)        = handle sdef-c r M `with sdef-v r V
-  sdef-c r (unbox x p q N)           = unbox (∈̂-local x) p q (sdef-c r N)
+  sdef-c r (unbox {z = z} R p N)    = unbox (res-move (∈̂-local z) R) p (sdef-c r N)
   sdef-c r (box ρ V N)               = box ρ (sdef-v r V) (sdef-c r N)
   sdef-c r (annᶜ C M)                = annᶜ C (sdef-c r M)
   sdef-c r (subC M p)                = subC (sdef-c r M) p
@@ -233,8 +233,10 @@ mutual
   ∥sdef-c∥ r (perform op V M)          = cong₂ (perform op) (∥sdef-v∥ r V) (∥sdef-c∥ r M)
   ∥sdef-c∥ r (delay τ M)               = cong (delay τ) (∥sdef-c∥ r M)
   ∥sdef-c∥ r (handle M `with V)        = cong₂ handle_`with_ (∥sdef-c∥ r M) (∥sdef-v∥ r V)
-  ∥sdef-c∥ r (unbox x p q N)           =
-    cong₂ unbox (cong var (var-pos-local x)) (∥sdef-c∥ r N)
+  ∥sdef-c∥ r (unbox {z = z} R p N)    =
+    cong₂ unbox (trans (∥res∥ (res-move (∈̂-local z) R))
+                       (trans (cong var (var-pos-local z)) (cong (_[ _ ]ᵈᵛ) (sym (∥res∥ R)))))
+                (∥sdef-c∥ r N)
   ∥sdef-c∥ r (box ρ V N)               = cong₂ box (∥sdef-v∥ r V) (∥sdef-c∥ r N)
   ∥sdef-c∥ r (annᶜ C M)                = ∥sdef-c∥ r M
   ∥sdef-c∥ r (subC M p)                = ∥sdef-c∥ r M

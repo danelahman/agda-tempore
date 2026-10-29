@@ -11,9 +11,9 @@
 --                                                              --
 -- The annotations are the base type of a constant, the         --
 -- operation of a `perform`, the duration of a `delay`, the     --
--- variable of an `unbox`, the grade of a `box`, an expression  --
--- over `Θ`, and the optional type annotations of a value and   --
--- of a computation, open types over `Θ`.                       --
+-- grade of a `box`, an expression over `Θ`, and the optional   --
+-- type annotations of a value and of a computation, open types --
+-- over `Θ`.                                                    --
 -- A handler's return clause binds the returned value; its      --
 -- operation clauses are scoped over `Θ +e`, binding the        --
 -- clause's continuation grade, and over the full context,      --
@@ -274,9 +274,11 @@ mutual
             ---------
             → RawC Θ n
 
-    -- unboxing a boxed variable
+    -- unboxing a resource
 
-    unbox   : Fin n
+    -- The value is typable only as a variable under annotations.
+
+    unbox   : RawV Θ n
             → RawC Θ (suc n)
             --------------
             → RawC Θ n
@@ -339,7 +341,7 @@ mutual
   HandlerFreeᶜ (perform op V M)         = HandlerFreeᵛ V × HandlerFreeᶜ M
   HandlerFreeᶜ (delay τ M)              = HandlerFreeᶜ M
   HandlerFreeᶜ (handle M `with V)      = HandlerFreeᶜ M × HandlerFreeᵛ V
-  HandlerFreeᶜ (unbox i N)              = HandlerFreeᶜ N
+  HandlerFreeᶜ (unbox V N)              = HandlerFreeᵛ V × HandlerFreeᶜ N
   HandlerFreeᶜ (box ρ V N)              = HandlerFreeᵛ V × HandlerFreeᶜ N
   HandlerFreeᶜ (M ⦂ᶜ C)                 = HandlerFreeᶜ M
 
@@ -379,6 +381,6 @@ mutual
   SecondClassᶜ (handle M `with handler N H) =
     SecondClassᶜ M × SecondClassᶜ N × ((op : Op) → SecondClassᶜ (H op))
   SecondClassᶜ (handle M `with _)        = ⊥
-  SecondClassᶜ (unbox i N)               = SecondClassᶜ N
+  SecondClassᶜ (unbox V N)               = SecondClassᵛ V × SecondClassᶜ N
   SecondClassᶜ (box ρ V N)               = SecondClassᵛ V × SecondClassᶜ N
   SecondClassᶜ (M ⦂ᶜ C)                  = SecondClassᶜ M

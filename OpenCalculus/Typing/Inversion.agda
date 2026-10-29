@@ -141,10 +141,11 @@ module _ {Θ : Scope} (Q : Hyps Θ) where
       × (Σ[ D ∈ Q ∣ Γ ⊢C⦂ A ‼ ε ] ∥ D ∥ᶜ ≡ M)
       × (Σ[ E ∈ Q ∣ Γ ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε') ] ∥ E ∥ᵛ ≡ V)
   HeadC Γ (unbox V N)               C =
-    Σ[ ρ₀ ∈ RExp Θ ] Σ[ A₀ ∈ OVType Θ ] Σ[ ρ' ∈ RExp Θ ] Σ[ A ∈ OVType Θ ]
-      Σ[ x ∈ [ ρ₀ ] A₀ ∈̂[ ρ' ] Γ ] (V ≡ var (var-pos x))
-      × (Q ⊩ ρ' ≾̂ᵣ ρ₀) × (Q ∣ A₀ <:̂ᵛ A)
-      × (Σ[ D ∈ Q ∣ Γ ∷ A ⊢C⦂ C ] ∥ D ∥ᶜ ≡ N)
+    Σ[ ρ₀ ∈ RExp Θ ] Σ[ X₀ ∈ OVType Θ ] Σ[ ρ' ∈ RExp Θ ] Σ[ ρ ∈ RExp Θ ]
+      Σ[ X ∈ OVType Θ ] Σ[ z ∈ [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ ]
+      (Σ[ R ∈ Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X ] eraseᵛ ⌊ R ⌋ʳ ≡ V)
+      × (Q ⊩ ρ' ≾̂ᵣ ρ)
+      × (Σ[ D ∈ Q ∣ Γ ∷ X ⊢C⦂ C ] ∥ D ∥ᶜ ≡ N)
   HeadC Γ (box V N)                 C =
     Σ[ ρ ∈ RExp Θ ] Σ[ A ∈ OVType Θ ]
       (Σ[ D ∈ Q ∣ Γ ⟨ ρ ⟩ ⊢V⦂ A ] ∥ D ∥ᵛ ≡ V) × (Σ[ E ∈ Q ∣ Γ ∷ [ ρ ] A ⊢C⦂ C ] ∥ E ∥ᶜ ≡ N)
@@ -194,7 +195,8 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
   invC (delay τ M)               = _ , (_ , _ , refl , (M , refl)) , <:̂ᶜ-refl _
   invC (handle M `with V)        =
     _ , (_ , _ , _ , _ , refl , (M , refl) , (V , refl)) , <:̂ᶜ-refl _
-  invC (unbox x p q N)           = _ , (_ , _ , _ , _ , x , refl , p , q , (N , refl)) , <:̂ᶜ-refl _
+  invC (unbox R p N)             =
+    _ , (_ , _ , _ , _ , _ , _ , (R , refl) , p , (N , refl)) , <:̂ᶜ-refl _
   invC (box ρ V N)               = _ , (_ , _ , (V , refl) , (N , refl)) , <:̂ᶜ-refl _
   invC (annᶜ C M)                = invC M
   invC (subC M p) with invC M

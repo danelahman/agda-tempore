@@ -171,3 +171,25 @@ claimed-at-⊤-reported = refl
 
 handed-to-clause-reported : schemeOf (infer [] handed-to-clause) ≡ just expected-handed-to-clause
 handed-to-clause-reported = refl
+
+------------------------------------------------------------------
+-- 9. An annotated box: claimed at the annotation's grade; a lease
+-- of three re-annotated as a lease of two is claimable after two
+-- ticks, not after three
+
+annotated-claim-reported :
+  schemeOf (infer [] annotated-claim) ≡ just expected-annotated-claim
+annotated-claim-reported = refl
+
+relabelled-on-time-reported :
+  schemeOf (infer [] (relabelled 2 2)) ≡ just (expected-relabelled 2)
+relabelled-on-time-reported = refl
+
+relabelled-on-time-derivable : Typable [] (relabelled 2 2)
+relabelled-on-time-derivable = relabelled-typable 2 2 _ _
+
+relabelled-late-verdict : infer [] (relabelled 2 3) ≡ untypable
+relabelled-late-verdict = refl
+
+relabelled-late-not-typable : ¬ Typable [] (relabelled 2 3)
+relabelled-late-not-typable = infer-untypable [] (relabelled 2 3) relabelled-late-verdict

@@ -74,13 +74,13 @@ closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 -- the constants.
 
 claim-after : 𝔻 → 𝔻 → 𝔻 → RawC ∅ˢ 0
-claim-after ρ τ τ' = box ⌜ ρ ⌝ʳ ⋆ (delay τ (delay τ' (unbox fzero (return v₀))))
+claim-after ρ τ τ' = box ⌜ ρ ⌝ʳ ⋆ (delay τ (delay τ' (unbox (var fzero) (return v₀))))
 
 claim-after-D : ∀ ρ τ τ' → uᵣ ·ᵣ of-durʳ τ ·ᵣ of-durʳ τ' ≾ᴳ of-durʳ ρ
               → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (⌜ τ ⌝ᵉ ·̂ₑ (⌜ τ' ⌝ᵉ ·̂ₑ ûₑ))
 claim-after-D ρ τ τ' p =
   box ⌜ ρ ⌝ʳ ⋆
-    (delay τ (delay τ' (unbox (Tl-⟨⟩ (Tl-⟨⟩ Hd)) elapsed (<:̂ᵛ-refl _) (return (var Hd ok₀)))))
+    (delay τ (delay τ' (unbox (res-var {z = Tl-⟨⟩ (Tl-⟨⟩ Hd)}) elapsed (return (var Hd ok₀)))))
   where
     elapsed : ∅ᴴ ⊩ ûᵣ ·̂ᵣ ⌜ τ ⌝ʳ ·̂ᵣ ⌜ τ' ⌝ʳ ≾̂ᵣ ⌜ ρ ⌝ʳ
     elapsed = transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-const-· ≡̂ᵣ-refl) ≡̂ᵣ-const-·)) (atomᵣ p)
@@ -107,7 +107,7 @@ expected-claim-after τ = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ⌜ τ ⌝ᵉ
 -- principal scheme takes a box at that grade.
 
 inferred-grade : 𝔻 → 𝔻 → RawC ∅ˢ 0
-inferred-grade τ τ' = return (lam (delay τ (delay τ' (unbox fzero (return v₀)))))
+inferred-grade τ τ' = return (lam (delay τ (delay τ' (unbox (var fzero) (return v₀)))))
 
 -- the scheme at the total duration `τ`
 

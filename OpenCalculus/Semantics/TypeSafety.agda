@@ -44,6 +44,7 @@ open import OpenCalculus.Typing.Erasure           S
 open import OpenCalculus.Typing.GradeSubstitution S
 open import OpenCalculus.Typing.Renaming          S
 open import OpenCalculus.Typing.Substitution      S
+open import OpenCalculus.Typing.Resources         S using (res-collapse)
 open import OpenCalculus.Typing.Inversion         S
 open import OpenCalculus.Typing.ScopeClosed       S
 open import OpenCalculus.Syntax.Run               S
@@ -406,10 +407,14 @@ preservation {Σ = Σ} T (D , eD) BOX with invC≡ D eD
   }
 
 preservation T (D , eD) UNBOX with invC≡ D eD
-... | _ , (ρ₀ , A₀ , ρ' , A , x , refl , p , q , (DN , eN)) , q₀ =
-  stay T (sub-c (here (types-defs T)) (subV (proj₁ L) q) DN)
-       (trans (∥sub-c∥ (here (types-defs T)) (subV (proj₁ L) q) DN) (cong₂ (subᶜ 0) (proj₂ L) eN)) q₀
-  where L = lookup-typed T x p
+... | _ , (_ , _ , _ , _ , _ , x , (R , eR) , p , (DN , eN)) , q₀
+    with trans (sym (∥res∥ R)) eR
+... | refl =
+  stay T (sub-c (here (types-defs T)) (subV (proj₁ L) q') DN)
+       (trans (∥sub-c∥ (here (types-defs T)) (subV (proj₁ L) q') DN) (cong₂ (subᶜ 0) (proj₂ L) eN)) q₀
+  where
+    L  = lookup-typed T x (transᵣ p (proj₁ (res-collapse R)))
+    q' = proj₂ (res-collapse R)
 
 ------------------------------------------------------------------------
 -- Progress
@@ -484,7 +489,8 @@ progress {Σ = Σ} {M = handle M `with V} (D , eD) with invC≡ D eD
 ... | inj₂ (_ , _ , _ , _ , s)  | _              = step (HANDLE-STEP s)
 
 progress {M = unbox V N} (D , eD) with invC≡ D eD
-... | _ , (ρ₀ , A₀ , ρ' , A , x , refl , _) , _ = step UNBOX
+... | _ , (_ , _ , _ , _ , _ , z , (R , eR) , _) , _
+    rewrite trans (sym eR) (∥res∥ R) = step UNBOX
 
 progress {M = box V N} _ = step BOX
 

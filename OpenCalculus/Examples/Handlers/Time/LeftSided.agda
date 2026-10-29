@@ -96,7 +96,7 @@ nested-reject = return (lam (handle (v₀ · ⋆) `with handler (return ⋆) out
     inner = handle (perform send ⋆ (return ⋆)) `with handler (return ⋆) (λ _ → delay 4 (return ⋆))
 
     outer : Op → RawC (∅ˢ +e) (suc (suc (suc 0)))
-    outer op = perform op v₁ (inner ⨟ unbox (fsuc (fsuc fzero)) (v₀ · v₂))
+    outer op = perform op v₁ (inner ⨟ unbox (var (fsuc (fsuc fzero))) (v₀ · v₂))
 
 nested-reject-verdict : infer [] nested-reject ≡ untypable
 nested-reject-verdict = refl

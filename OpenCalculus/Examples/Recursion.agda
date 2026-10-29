@@ -263,7 +263,7 @@ rec-then-resume : ∀ {Θ n} → RawC (Θ +e) (suc (suc (suc (suc n)))) → Op
                 → RawC (Θ +e) (suc (suc n))
 rec-then-resume step op =
   recℕ (numeral 2) (return ⋆) step
-  ⨟ perform op v₂ (unbox (fsuc (fsuc fzero)) (v₀ · v₁))
+  ⨟ perform op v₂ (unbox (var (fsuc (fsuc fzero))) (v₀ · v₁))
 
 in-clause : (∀ {Θ n} → RawC (Θ +e) (suc (suc (suc (suc n))))) → RawC ∅ˢ 0
 in-clause step = handle (return ⋆) `with handler (return ⋆) (rec-then-resume step)
@@ -286,9 +286,8 @@ in-clause-pure-D =
     coerce (eqₑ ≡̂ₑ-identityˡ)
       (recℕ (numeralᵛ 2) (return ⋆) (return ⋆) pure
        ⨟ perform op (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) (≾ᵘ-ok u-passed))
-           (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))))
+           (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))})
                   (transᵣ (monoᵣ u-passed ⊩≾̂ᵣ-refl) (eqᵣ ≡̂ᵣ-identityˡ))
-                  (<:̂ᵛ-refl _)
                   (var Hd ok₀ · var (Tl-∷ Hd) ok₀))))
 
 in-clause-pure-typable : Typable [] in-clause-pure
@@ -385,12 +384,12 @@ last-box =
 
 latest : RawC ∅ˢ 0
 latest =
-  return (lam (recL v₀ (return zero) (delay ⌜ 1 ⌝ (unbox (fsuc (fsuc fzero)) (return v₀)))))
+  return (lam (recL v₀ (return zero) (delay ⌜ 1 ⌝ (unbox (var (fsuc (fsuc fzero))) (return v₀)))))
 
 latest-ready : RawC ∅ˢ 0
 latest-ready =
   return (lam (recL (v₀ ⦂ᵛ |List| ([ ⌜ 1 ⌝ʳ ] Nat)) (return zero)
-                    (delay ⌜ 1 ⌝ (unbox (fsuc (fsuc fzero)) (return v₀)))))
+                    (delay ⌜ 1 ⌝ (unbox (var (fsuc (fsuc fzero))) (return v₀)))))
 
 ------------------------------------------------------------------
 -- 9. A tick per element
@@ -443,14 +442,14 @@ twice-base = box (rconst ⊤ᵣ) (lam (delay ⌜ 1 ⌝ (return ⋆))) (return v�
 twice-step : ∀ {Θ n} → RawC Θ (suc (suc n))
 twice-step =
   box (rconst ⊤ᵣ)
-      (lam (unbox (fsuc fzero) (v₀ · v₁) ⨟ unbox (fsuc (fsuc fzero)) (v₀ · v₂)))
+      (lam (unbox (var (fsuc fzero)) (v₀ · v₁) ⨟ unbox (var (fsuc (fsuc fzero))) (v₀ · v₂)))
       (return v₀)
 
 twice : RawC ∅ˢ 0
 twice = return (lam (recℕ v₀ twice-base twice-step))
 
 twice-run : RawC ∅ˢ 0
-twice-run = recℕ (numeral 2) twice-base twice-step ⨟ unbox fzero (v₀ · ⋆)
+twice-run = recℕ (numeral 2) twice-base twice-step ⨟ unbox (var fzero) (v₀ · ⋆)
 
 -- annotated at `k` ticks
 

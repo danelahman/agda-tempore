@@ -71,7 +71,7 @@ open import Bridge.Instantiation.Completeness   spec hints enum
 -- The program
 
 clause : Op → RawC (∅ˢ +e) 2
-clause op = perform op v₁ (unbox (fsuc fzero) (v₀ · v₁))
+clause op = perform op v₁ (unbox (var (fsuc fzero)) (v₀ · v₁))
 
 M : RawC ∅ˢ 0
 M = handle (return ⋆) `with handler (return ⋆) clause
@@ -91,7 +91,7 @@ ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 clauseᵒ : (op : Op) → Clause [] Unit op
 clauseᵒ op =
   perform op (var (Tl-∷ Hd) ok₀)
-    (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (eqᵣ ≡̂ᵣ-identityˡ) (<:̂ᵛ-refl _)
+    (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) (eqᵣ ≡̂ᵣ-identityˡ)
       (var Hd ok₀ · var (Tl-∷ Hd) ok₀))
 
 -- `D` is uniform: its clauses are typed by `clauseᵒ`, and it erases to
@@ -102,10 +102,10 @@ uniform : UniformTyping [] ∅ᴰ M D
 uniform = u-handle (u-return u-⋆) clauseᵒ (λ op → refl) (u-return u-⋆) , refl
 
 annFree : AnnFreeᶜ M
-annFree = tt , tt , (λ op → tt , tt , tt)
+annFree = tt , tt , (λ op → tt , tt , tt , tt)
 
 secondClass : SecondClassᶜ M
-secondClass = tt , tt , (λ op → tt , tt , tt)
+secondClass = tt , tt , (λ op → tt , tt , tt , tt)
 
 ------------------------------------------------------------------------
 -- Inference types it
