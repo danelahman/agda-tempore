@@ -365,7 +365,7 @@ settle-inst A ρ Q δ d h with decideᵣ full Q ρ ûᵣ
             from : VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ) → ∅ᴴ ⊩ᴱ A [ δ ]ᵛ
             from (et-ok et)     = et
             from (≾ᵘ-ok le)     = ⊥-elim (ref δ (val-≾ᵣ le))
-            from (hyp-ok () _ _)
+            from (hyp-ok () _ _ _)
 
         et' : ∀ {β} → β ∈ (αs ++ ets Q) → ∅ᴴ ⊩ᴱ sTy δ β
         et' m = [ etDec-compl A e δ etA , ⊩ets h ]′ (∈-++⁻ αs m)
@@ -486,7 +486,7 @@ aboveᵈ? Q A ρ ((A' , ρ') ∷ l) with sameᵛ? A A'
 testᵈ : ∀ {Θ} → (Q : Hyps Θ) → (seen rest : List (OVType Θ × RExp Θ))
       → (p : OVType Θ × RExp Θ) → Maybe (Okᵈ Q seen rest p)
 testᵈ Q seen rest (A , ρ) with aboveᵈ? (Hᵈ Q (seen ++ rest)) A ρ (seen ++ rest)
-... | just (A' , ρ' , m , e , d) = just (hyp-ok m e d)
+... | just (A' , ρ' , m , e , d) = just (hyp-ok-≡̂ m e d)
 ... | nothing           = nothing
 
 walkᵈ : ∀ {Θ} → Hyps Θ → Hyps Θ

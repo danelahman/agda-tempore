@@ -6,15 +6,19 @@
 -- open types and grade expressions, and with the side          --
 -- conditions entailed from the hypothesis set `Q`.             --
 --                                                              --
--- Three rules deviate, as marked at their definitions: a       --
+-- Four rules deviate, as marked at their definitions: a        --
 -- handler is a value, `handler`, of a handler type, used by    --
 -- `handle_`with_`, where `ClosedCalculus.Syntax.Terms` has     --
 -- one form taking the clauses; `handler` types its operation   --
 -- clauses over the extended scope `Θ +e`, the continuation     --
 -- grade, quantified at the meta level in                       --
 -- `ClosedCalculus.Syntax.Terms`, being a rigid effect-grade    --
--- variable; and a comparison `cmp` is a value, where it is a   --
--- computation in `ClosedCalculus.Syntax.Terms`.                --
+-- variable; a comparison `cmp` is a value, where it is a       --
+-- computation in `ClosedCalculus.Syntax.Terms`; and `unbox`    --
+-- takes a resource value, a variable under annotations         --
+-- (`_∣_⊢↪[_]_⦂[_]_`), and binds the payload, where             --
+-- `ClosedCalculus.Syntax.Terms` takes a variable and binds any --
+-- supertype of the payload.                                    --
 --                                                              --
 -- The rules `annᵛ` and `annᶜ` record a type annotation of the  --
 -- raw term, have no counterpart in                             --
@@ -53,6 +57,35 @@ open import OpenCalculus.Hypotheses      S
 
 infix 26 _∣_⊢V⦂_
 infix 26 _∣_⊢C⦂_
+infix 26 _∣_⊢↪[_]_⦂[_]_
+
+-- Resource values
+
+-- `Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X`: a variable `z`, at its declared box type
+-- and accumulated grade `ρ'`, under annotations, each a box type and a
+-- supertype of the one inside it, reaching `[ ρ ] X`. The annotations
+-- follow `[_]ₛ_`: the grade of each is below the grade inside it and
+-- the payload above. The variable carries no `VarOK`; `unbox` checks
+-- the grade.
+
+data _∣_⊢↪[_]_⦂[_]_ {Θ : Scope} {n : ℕ} (Q : Hyps Θ) (Γ : OCtx Θ n) (ρ' : RExp Θ)
+     {ρ₀ : RExp Θ} {X₀ : OVType Θ} (z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ)
+     : RExp Θ → OVType Θ → Set where
+
+  -- the variable at its declared type
+
+  res-var : -------------------------------
+            Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ₀ ] X₀
+
+  -- an annotation
+
+  res-ann : {ρ : RExp Θ} {X : OVType Θ}
+          → (ρₐ : RExp Θ) (Xₐ : OVType Θ)
+          → Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X
+          → Q ⊩ ρₐ ≾̂ᵣ ρ
+          → Q ∣ X <:̂ᵛ Xₐ
+          -------------------------------
+          → Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρₐ ] Xₐ
 
 mutual
 
@@ -378,18 +411,23 @@ mutual
 
     -- unboxing a boxed value/resource after enough time has passed for it to be ready
 
-    -- As in the original, the value being unboxed is a variable, named at its
-    -- *declared* box type `[ ρ₀ ] A₀`, the time that has passed since it was
-    -- brought into scope is the grade `ρ'` read off the context, and the
-    -- continuation may bind any supertype `A` of the payload.
+    -- The value being unboxed is a resource value: a variable `z`, under
+    -- annotations, reaching `[ ρ ] X`. The time that has passed since `z`
+    -- was brought into scope is the grade `ρ'` read off the context, and
+    -- the continuation binds the payload `X`.
 
-    unbox   : {A A₀ : OVType Θ}
+    -- DEVIATION: a resource value, where the original names a variable;
+    -- and the continuation binds the payload, where the original binds
+    -- any supertype of it.
+
+    unbox   : {X : OVType Θ}
             → {C : OCType Θ}
-            → {ρ₀ ρ' : RExp Θ}
-            → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] Γ)
-            → Q ⊩ ρ' ≾̂ᵣ ρ₀
-            → Q ∣ A₀ <:̂ᵛ A
-            → Q ∣ Γ ∷ A ⊢C⦂ C
+            → {ρ₀ ρ' ρ : RExp Θ}
+            → {X₀ : OVType Θ}
+            → {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
+            → Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X
+            → Q ⊩ ρ' ≾̂ᵣ ρ
+            → Q ∣ Γ ∷ X ⊢C⦂ C
             -----------------
             → Q ∣ Γ ⊢C⦂ C
 
@@ -497,4 +535,9 @@ private
   -- unboxing a boxed variable, no time having passed since it came into scope
 
   ex-unbox : ∅ᴴ ∣ (∅ᶜ ∷ [ ûᵣ ] Unit) ⊢C⦂ Unit ‼ ûₑ
-  ex-unbox = unbox Hd ⊩≾̂ᵣ-refl (<:̂ᵛ-refl Unit) (return ⋆)
+  ex-unbox = unbox (res-var {z = Hd}) ⊩≾̂ᵣ-refl (return ⋆)
+
+  -- unboxing an annotated variable
+
+  ex-unbox-ann : ∅ᴴ ∣ (∅ᶜ ∷ [ ûᵣ ] Unit) ⊢C⦂ Unit ‼ ûₑ
+  ex-unbox-ann = unbox (res-ann ûᵣ Unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl Unitₛ) ⊩≾̂ᵣ-refl (return ⋆)

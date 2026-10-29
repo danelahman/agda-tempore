@@ -57,7 +57,8 @@ end.
   calculus being its instance without them (`withoutBaseTypes`).
 - Hypotheses include quantified orderings, which bind several rigid
   effect-grade variables.
-- Unbox takes a variable.
+- Unbox takes a resource value, a variable under annotations, and binds its
+  payload; the closed calculus's unbox takes a variable.
 - A top-level definition is named by its position in the program context.
   Inference is for values in program contexts, and for computations in open
   contexts.

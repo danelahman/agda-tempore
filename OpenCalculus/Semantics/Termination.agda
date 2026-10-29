@@ -11,7 +11,7 @@
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Nat using (ℕ; zero; suc)
-open import Data.Product using (Σ-syntax; _×_; _,_)
+open import Data.Product using (Σ-syntax; _×_; _,_; proj₂)
 open import Data.Unit using (tt)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Bool.Base using () renaming (true to tt𝔹; false to ff𝔹)
@@ -38,7 +38,8 @@ open import OpenCalculus.Syntax.ContextsLemmas    S
 open import OpenCalculus.Hypotheses               S
 open import OpenCalculus.Typing                   S
 open import OpenCalculus.Typing.GradeSubstitution S using (clause-ctx)
-open import OpenCalculus.Typing.Renaming          S using (∥_∥ᵛ; ∥_∥ᶜ)
+open import OpenCalculus.Typing.Renaming          S using (∥_∥ᵛ; ∥_∥ᶜ; ∥res∥)
+open import OpenCalculus.Typing.Resources         S using (res-collapse)
 open import OpenCalculus.Typing.Inversion         S using (is-true; is-false; is-cmp)
 open import OpenCalculus.Typing.ScopeClosed       S
 open import OpenCalculus.Syntax.Run               S
@@ -399,14 +400,17 @@ mutual
           (ren-idᵛ (λ i → refl) (handler N H))
           (f ≤ₛ-refl _ (fund-c M r))
 
-  fund-c {Γ = Γ} {S = S} {σ} (unbox {C = C} x p q N) r
+  fund-c {Γ = Γ} {S = S} {σ} (unbox {C = C} {z = x} R p N) r
+    rewrite ∥res∥ R
     with σ (var-pos x)
        | box-red? (σ (var-pos x))
                   (subst (λ T → VRed (shapeᵛ T) S (σ (var-pos x))) (var-pos-ty x) (at r (var-pos x)))
   ... | _ | box-red {j} w =
     cred-back (UNBOX ▸ done)
               (subst (CRed (VRed (shapeᶜ C)) S) (sym (sub₀ σ (lookupₛ S j) ∥ N ∥ᶜ))
-                     (fund-c N (env-∙ r (subst (λ s → VRed s S (lookupₛ S j)) (<:-shapeᵛ q) w))))
+                     (fund-c N (env-∙ r (subst (λ s → VRed s S (lookupₛ S j))
+                                               (<:-shapeᵛ (proj₂ (res-collapse R)))
+                                               w))))
 
   fund-c {Γ = Γ} {S = S} {σ} (box {A = A} ρ V N) r = cred-back (BOX ▸ done) (fund-c N r')
     where

@@ -48,6 +48,25 @@ open import OpenCalculus.Syntax.Run            S
 ∥_∥ᶜ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ} → Q ∣ Γ ⊢C⦂ C → RunC n
 ∥ M ∥ᶜ = eraseᶜ ⌊ M ⌋ᶜ
 
+-- A resource value erases to its variable
+
+∥res∥ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ}
+        {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
+      → (R : Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X) → eraseᵛ ⌊ R ⌋ʳ ≡ var (var-pos z)
+∥res∥ res-var                = refl
+∥res∥ (res-ann _ _ R _ _)    = ∥res∥ R
+
+-- The annotations of a resource value, over another variable of the
+-- same declared type
+
+res-move : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m}
+             {ρ' ρ'' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ}
+             {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
+         → (z' : [ ρ₀ ] X₀ ∈̂[ ρ'' ] Γ')
+         → Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X → Q ∣ Γ' ⊢↪[ ρ'' ] z' ⦂[ ρ ] X
+res-move z' res-var               = res-var
+res-move z' (res-ann ρₐ Xₐ R p q) = res-ann ρₐ Xₐ (res-move z' R) p q
+
 ------------------------------------------------------------------------
 -- Renamings
 
@@ -173,8 +192,8 @@ mutual
     perform op (rename-v r V) (rename-c (lockʳ (rconst (mapᵉ (op-grade op))) r ⇑ʳ) M)
   rename-c r (delay τ M)               = delay τ (rename-c (lockʳ (rconst (of-durʳ τ)) r) M)
   rename-c r (handle M `with V)        = handle rename-c r M `with rename-v r V
-  rename-c r (unbox x p q N)           =
-    unbox (mem (image r x)) (transᵣ (lower (image r x)) p) q (rename-c (r ⇑ʳ) N)
+  rename-c r (unbox {z = z} R p N)    =
+    unbox (res-move (mem (image r z)) R) (transᵣ (lower (image r z)) p) (rename-c (r ⇑ʳ) N)
   rename-c r (box ρ V N)               = box ρ (rename-v (lockʳ ρ r) V) (rename-c (r ⇑ʳ) N)
   rename-c r (annᶜ C M)                = annᶜ C (rename-c r M)
   rename-c r (subC M p)                = subC (rename-c r M) p
@@ -236,8 +255,10 @@ mutual
     cong (delay τ) (∥rename-c∥ (lockʳ (rconst (of-durʳ τ)) r) M)
   ∥rename-c∥ r (handle M `with V)        =
     cong₂ handle_`with_ (∥rename-c∥ r M) (∥rename-v∥ r V)
-  ∥rename-c∥ r (unbox x p q N)           =
-    cong₂ unbox (cong var (at-pos (image r x))) (∥rename-c∥ (r ⇑ʳ) N)
+  ∥rename-c∥ r (unbox {z = z} R p N)    =
+    cong₂ unbox (trans (∥res∥ (res-move (mem (image r z)) R))
+                       (trans (cong var (at-pos (image r z))) (cong (renᵛ (pos r)) (sym (∥res∥ R)))))
+                (∥rename-c∥ (r ⇑ʳ) N)
   ∥rename-c∥ r (box ρ V N)               =
     cong₂ box (∥rename-v∥ (lockʳ ρ r) V) (∥rename-c∥ (r ⇑ʳ) N)
   ∥rename-c∥ r (annᶜ C M)                = ∥rename-c∥ r M

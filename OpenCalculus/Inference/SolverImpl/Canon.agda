@@ -383,7 +383,7 @@ canonᴴ-⊩ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE d
 
     dsj : ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK (canonᴴ Q) A ρ
     dsj {A} {ρ} m =
-      hyp-ok (∈-map⁺ (mapᵈ canonᵛ canonᵣ) m) (canonᵛ-≡̂ A) (eqᵣ (canonᵣ-≡ ρ))
+      hyp-ok-≡̂ (∈-map⁺ (mapᵈ canonᵛ canonᵣ) m) (canonᵛ-≡̂ A) (eqᵣ (canonᵣ-≡ ρ))
 
 canonᴴ-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ canonᴴ Q
 canonᴴ-⊩⁻ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE dsj (λ m → ⊩ᴼ-hyp⁼ m)
@@ -397,4 +397,4 @@ canonᴴ-⊩⁻ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ord
     dsj : ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ canonᵛ canonᵣ) (disj Q) → VarOK Q A ρ
     dsj m with ∈-map⁻ (mapᵈ canonᵛ canonᵣ) m
     ... | (A₀ , ρ₀) , m₀ , refl =
-          hyp-ok m₀ (≡̂ᵛ-sym (canonᵛ-≡̂ A₀)) (eqᵣ (≡̂ᵣ-sym (canonᵣ-≡ ρ₀)))
+          hyp-ok-≡̂ m₀ (≡̂ᵛ-sym (canonᵛ-≡̂ A₀)) (eqᵣ (≡̂ᵣ-sym (canonᵣ-≡ ρ₀)))

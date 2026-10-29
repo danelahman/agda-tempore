@@ -62,6 +62,7 @@ open import OpenCalculus.Syntax.Contexts      S
 open import OpenCalculus.Syntax.Subst         S
 open import OpenCalculus.Hypotheses           S
 open import OpenCalculus.Typing               S
+open import OpenCalculus.Typing.Conversion    S using (narrowing; conv-last)
 open import OpenCalculus.Hypotheses.Instances S using (val-≾ᵣ⁻; val-≾ₑ⁻)
 open import OpenCalculus.Syntax.Raw           S
 open import OpenCalculus.Syntax.Raw.Subst     S
@@ -104,7 +105,7 @@ mutual
   AnnFreeᶜ (perform op V M)          = AnnFreeᵛ V × AnnFreeᶜ M
   AnnFreeᶜ (delay τ M)               = AnnFreeᶜ M
   AnnFreeᶜ (handle M `with V)       = AnnFreeᶜ M × AnnFreeᵛ V
-  AnnFreeᶜ (unbox i N)               = AnnFreeᶜ N
+  AnnFreeᶜ (unbox V N)               = AnnFreeᵛ V × AnnFreeᶜ N
   AnnFreeᶜ (box ρ V N)               = AnnFreeᵛ V × AnnFreeᶜ N
   AnnFreeᶜ (M ⦂ᶜ C)                  = ⊥
 
@@ -154,7 +155,7 @@ mutual
   annFree-[]ᶜ (perform op V M)          σ (a , b) = annFree-[]ᵛ V σ a , annFree-[]ᶜ M σ b
   annFree-[]ᶜ (delay τ M)               σ a = annFree-[]ᶜ M σ a
   annFree-[]ᶜ (handle M `with V)       σ (a , b) = annFree-[]ᶜ M σ a , annFree-[]ᵛ V σ b
-  annFree-[]ᶜ (unbox i N)               σ a = annFree-[]ᶜ N σ a
+  annFree-[]ᶜ (unbox V N)               σ (a , b) = annFree-[]ᵛ V σ a , annFree-[]ᶜ N σ b
   annFree-[]ᶜ (box ρ V N)               σ (a , b) = annFree-[]ᵛ V σ a , annFree-[]ᶜ N σ b
 
 ------------------------------------------------------------------------
@@ -361,7 +362,7 @@ mutual
                {x : [ ρ₀ ] A₀ ∈[ ρ' ] Δ} {p : ρ' ≾ᵣ ρ₀} {q : A₀ <:ᵛ A} {N : Δ ∷ A ⊢C⦂ C}
              → CE.var-pos x ≡ posᴿ r (toℕ i)
              → Uᶜ (Γ' ∷ ⌜ A ⌝ᵛ) (extᴿ r) [] Nᴿ N
-             → Uᶜ Γ' r P (unbox i Nᴿ) (unbox x p q N)
+             → Uᶜ Γ' r P (unbox (var i) Nᴿ) (unbox x p q N)
 
     -- the box at the program's grade; the boxed value reads the pending
     -- outcomes across the box's lock
@@ -703,18 +704,23 @@ mutual
   ... | M' , e | N' , e' =
     const-· (handle M' `with handler N' Hᵒ ,
              cong₂ handle_`with_ e (cong₂ handler e' (fun-ext eH)))
-  embedᶜ {Γ' = Γ'} (u-unbox {i = i} {A = A} {x = x} {p = p} {q = q} ep u) a nh eq ι fι er E
+  embedᶜ {Γ' = Γ'} (u-unbox {i = i} {A = A} {x = x} {p = p} {q = q} ep u) (_ , a) nh eq ι fι er E
     with unlook ι fι x (toℕ i) (trans ep (cong (λ r → posᴿ r (toℕ i)) (sym er)))
   ... | ρ₀ , x₀ , le , q₀ with lookupˣ Γ' eq x₀
   ... | B' , ρ' , x' , eB , eρ , epos with boxView B' eB
   ... | r' , A₀' , refl , er' , eA₀
     with embedᶜ u a (nh , ⌜⌝-noHandlerᵛ A) (ext eq A) (≼-∷ ι) fι (cong extᴿ er) tt
   ... | N' , e =
-    unbox x' (val-≾ᵣ⁻ (subst₂ _≾ᵣ_ (sym (valʳ-⌞⌟ ρ' eρ)) (sym (valʳ-⌞⌟ r' er'))
+    unbox (res-var {z = x'}) (val-≾ᵣ⁻ (subst₂ _≾ᵣ_ (sym (valʳ-⌞⌟ ρ' eρ)) (sym (valʳ-⌞⌟ r' er'))
                                (≾ᵣ-trans le p)))
-             (⌞⌟-<:ᵛ A₀' ⌜ A ⌝ᵛ (∈̂-noHandler nh x') (⌜⌝-noHandlerᵛ A)
-                     (subst₂ _<:ᵛ_ (sym eA₀) (sym ⌞⌜ A ⌝⌟ᵛ) q)) N' ,
-    cong₂ unbox (toℕ-injective (trans epos q₀)) e
+          (proj₁ N'') ,
+    cong₂ unbox (cong var (toℕ-injective (trans epos q₀))) (trans (proj₂ N'') e)
+    where
+      -- the continuation, narrowed from the supertype to the payload
+
+      N'' = conv-last narrowing refl
+              (⌞⌟-<:ᵛ A₀' ⌜ A ⌝ᵛ (∈̂-noHandler nh x') (⌜⌝-noHandlerᵛ A)
+                      (subst₂ _<:ᵛ_ (sym eA₀) (sym ⌞⌜ A ⌝⌟ᵛ) q)) N'
   embedᶜ (u-box {P = P} {ρ = ρ} {A = A} u v) (a , b) nh eq ι fι er E
     with embedᵛ u a nh (lock eq ⌞ ρ ⌟ʳ) (≼-⟨⟩ ι) fι er (lock-env P E)
        | embedᶜ v b (nh , ⌜⌝-noHandlerᵛ A) (cong₂ _∷_ eq (cong ([ ⌞ ρ ⌟ʳ ]_) ⌞⌜ A ⌝⌟ᵛ)) (≼-∷ ι) fι (cong extᴿ er) tt

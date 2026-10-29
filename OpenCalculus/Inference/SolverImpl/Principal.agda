@@ -721,7 +721,7 @@ atomᵈ-princ j A ρ eq γ hγ p with strᵛ⁺ j A | strʳ⁺ j (ρ [ updᵉ j 
          → VarOK ∅ᴴ (A₀ [ W ⨟ˢ κᵉ ]ᵛ) (ρ₀ [ W ⨟ˢ κᵉ ]ʳ)
     kept (et-ok et)      = et-ok (bndᵗ j A e₁ γ et)
     kept (≾ᵘ-ok le)      = ≾ᵘ-ok (transᵣ lhs (⊩-substᵣ {σ = κ⊤} (⊩ᴴ-κ (econst ⊤ₑ)) le))
-    kept (hyp-ok () _ _)
+    kept (hyp-ok () _ _ _)
 atomᵈ-princ j A ρ eq γ hγ p | just _  | nothing = ⊥just eq
 atomᵈ-princ j A ρ eq γ hγ p | nothing | _       = ⊥just eq
 

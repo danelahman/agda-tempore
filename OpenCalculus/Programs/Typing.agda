@@ -5,7 +5,10 @@
 -- typable in the program context of the definitions before it, --
 -- and `Δ` binds it to the principal type scheme of `V` there.  --
 -- The definitions of a typed program have closed typings at    --
--- their schemes (`programEnv`).                                   --
+-- their schemes (`programEnv`), and its schemes have           --
+-- non-resource types, so that in a context with its program    --
+-- context a value of box type is a resource value              --
+-- (`program-resource-value`).                                  --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -31,6 +34,7 @@ open import OpenCalculus.Typing                  S
 open import OpenCalculus.Typing.Erasure          S
 open import OpenCalculus.Typing.Transport        S
 open import OpenCalculus.Typing.Renaming         S using (∥_∥ᵛ)
+open import OpenCalculus.Typing.Resources        S
 open import OpenCalculus.Syntax.Raw              S using (RawV)
 open import OpenCalculus.Syntax.Run              S using (eraseᵛ; erase-substᵛ)
 open import OpenCalculus.Inference.Principality  S
@@ -99,3 +103,28 @@ closed (programEnv (_∷ᴾ_ {P} {Δ} {V} t a)) here =
 closed (programEnv (_∷ᴾ_ {P} {Δ} {V} t a)) (there m) =
   proj₁ c , trans (⟦∷⟧-there P V (λ e → <⇒≢ (∈ᵖ-< m) (trans e (lenᴾ-⊢ t)))) (proj₂ c)
   where c = closed (programEnv t) m
+
+------------------------------------------------------------------------
+-- Resource values
+
+-- The schemes of a typed program have non-resource types: a
+-- definition's principal type types it in the program context before
+-- it, which has no variables
+
+program-nonResource : ∀ {P Δ} → ⊢ᴾ P ⦂ Δ → NonResourceDefs Δ
+program-nonResource (_∷ᴾ_ {Δ = Δ} t a) here =
+  subst NonResource ([id]ᵛ (X̃ p))
+        (nonResource-closed (subst NonResourceDefs (sym (defs-⌜⌝ Δ)) (program-nonResource t))
+                            (proj₁ (instantiate p idˢ (Q̃ p) ⊩ᴴ-refl)))
+  where p = principal a
+program-nonResource (t ∷ᴾ a) (there m) = program-nonResource t m
+
+-- Lemma (Resource values are annotated variables): in a context whose
+-- program context is that of a program, a value of type `[ ρ'' ] X''`
+-- is a variable under annotations, reaching `[ ρ ] X` with
+-- `ρ'' ≾ ρ` and `X <: X''`, and erasing to the value's erasure
+
+program-resource-value : ∀ {P Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ'' X''}
+                       → ⊢ᴾ P ⦂ defs Γ → (V : Q ∣ Γ ⊢V⦂ [ ρ'' ] X'')
+                       → ResourceValue Q Γ ρ'' X'' ⌊ V ⌋ᵛ
+program-resource-value t V = resource-value (program-nonResource t) V

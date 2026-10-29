@@ -228,14 +228,17 @@ import OpenCalculus.Hypotheses.Instances
 import OpenCalculus.Hypotheses.Quantified
 
 ---- The open type system, erasure to raw terms, substitution of grades and of
----- variables, renaming, inversion, and instantiation
+---- variables, renaming, conversion of context types, resource values,
+---- inversion, and instantiation
 
 import OpenCalculus.Typing
+import OpenCalculus.Typing.Conversion
 import OpenCalculus.Typing.Erasure
 import OpenCalculus.Typing.GradeSubstitution
 import OpenCalculus.Typing.Instantiation
 import OpenCalculus.Typing.Inversion
 import OpenCalculus.Typing.Renaming
+import OpenCalculus.Typing.Resources
 import OpenCalculus.Typing.ScopeClosed
 import OpenCalculus.Typing.Substitution
 import OpenCalculus.Typing.Transport

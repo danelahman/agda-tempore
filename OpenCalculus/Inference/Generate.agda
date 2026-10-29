@@ -76,6 +76,26 @@ defConstraint : ∀ {Θ} → Maybe Scheme → OVType Θ → Constraint Θ
 defConstraint nothing  A = ⊥̂
 defConstraint (just s) A = instᶜ s A
 
+-- An `unbox` of a resource value, a variable under annotations: the
+-- type it reaches, the grade accumulated at its variable, and the
+-- subtyping atom of each annotation, as `_∣_⊢↪[_]_⦂[_]_`; any other
+-- value owes the unsatisfiable constraint
+
+resTy : ∀ {Θ₀ Θ n} → Subst Θ₀ Θ → OCtx Θ n → RawV Θ₀ n → OVType Θ
+resTy ι Γ (var i)  = lookup-ty Γ i
+resTy ι Γ (V ⦂ᵛ B) = B [ ι ]ᵛ
+resTy ι Γ _        = Unit
+
+resGr : ∀ {Θ₀ Θ n} → OCtx Θ n → RawV Θ₀ n → RExp Θ
+resGr Γ (var i)  = lookup-gr Γ i
+resGr Γ (V ⦂ᵛ B) = resGr Γ V
+resGr Γ _        = ûᵣ
+
+resC : ∀ {Θ₀ Θ n} → Subst Θ₀ Θ → OCtx Θ n → RawV Θ₀ n → Constraint Θ
+resC ι Γ (var i)  = ⊤̂
+resC ι Γ (V ⦂ᵛ B) = resC ι Γ V ∧̂ (resTy ι Γ V ≾̂ᵥᶜ B [ ι ]ᵛ)
+resC ι Γ _        = ⊥̂
+
 -- `genVˢ ι` and `genCˢ ι` generate for a raw term whose type and grade
 -- variables `ι` interprets in the generation scope. Under a binder, `ι`
 -- is composed with the binder's weakening; the recursion is structural
@@ -411,24 +431,24 @@ mutual
       t↑ = wkᵉ-e (wkᵉ-e (wkᵗ-e (wkᵗ-e t)))
       Γ↑ = wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))
 
-  -- unboxing a boxed variable
+  -- unboxing a resource value
   --
-  -- The declared box type is pinned, being read off the context; the
-  -- continuation binds a supertype of the payload.
+  -- The type the resource value reaches is a box type of the ∃-bound
+  -- grade and payload, the grade above the one accumulated at its
+  -- variable, and the continuation binds the payload.
 
-  genCˢ {Θ = Θ} ι Γ (unbox i N) (A ‼ t) =
-    ∃ᵗ (∃ᵗ (∃ʳ (  (lookup-ty Γ↑ i ≐ᵥ [ r ] α)
-                ∧̂ (lookup-gr Γ↑ i ≾̂ᵣᶜ r)
-                ∧̂ (α ≾̂ᵥᶜ β)
-                ∧̂ genCˢ ι↑ (Γ↑ ∷ β) N (A↑ ‼ t↑))))
+  genCˢ {Θ = Θ} ι Γ (unbox V N) (A ‼ t) =
+    ∃ᵗ (∃ʳ (  resC ι↑ Γ↑ V
+            ∧̂ (resTy ι↑ Γ↑ V ≐ᵥ [ r ] β)
+            ∧̂ (resGr Γ↑ V ≾̂ᵣᶜ r)
+            ∧̂ genCˢ ι↑ (Γ↑ ∷ β) N (A↑ ‼ t↑)))
     where
-      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
-      α  = wkʳ-v (wkᵗ-v (tvar (newᵗ {Θ})))
-      β  = wkʳ-v (tvar (newᵗ {Θ +ty}))
-      r  = rvar (newʳ {Θ +ty +ty})
-      A↑ = wkʳ-v (wkᵗ-v (wkᵗ-v A))
-      t↑ = wkʳ-e (wkᵗ-e (wkᵗ-e t))
-      Γ↑ = wkʳ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
+      β  = wkʳ-v (tvar (newᵗ {Θ}))
+      r  = rvar (newʳ {Θ +ty})
+      A↑ = wkʳ-v (wkᵗ-v A)
+      t↑ = wkʳ-e (wkᵗ-e t)
+      Γ↑ = wkʳ-ctx (wkᵗ-ctx Γ)
 
   -- boxing up a value
   --
@@ -493,7 +513,7 @@ mutual
   NoRigidᶜ Δ (perform op V M)          = NoRigidᵛ Δ V × NoRigidᶜ Δ M
   NoRigidᶜ Δ (delay τ M)               = NoRigidᶜ Δ M
   NoRigidᶜ Δ (handle M `with V)        = NoRigidᶜ Δ M × NoRigidᵛ Δ V
-  NoRigidᶜ Δ (unbox i N)               = NoRigidᶜ Δ N
+  NoRigidᶜ Δ (unbox V N)               = NoRigidᵛ Δ V × NoRigidᶜ Δ N
   NoRigidᶜ Δ (box ρ V N)               = NoRigidᵛ Δ V × NoRigidᶜ Δ N
   NoRigidᶜ Δ (M ⦂ᶜ C)                  = NoRigidᶜ Δ M
 
@@ -552,7 +572,8 @@ mutual
   handlerFree-noRigidᶜ u (delay τ M)              h           = handlerFree-noRigidᶜ u M h
   handlerFree-noRigidᶜ u (handle M `with V)       (h , k)     =
     handlerFree-noRigidᶜ u M h , handlerFree-noRigidᵛ u V k
-  handlerFree-noRigidᶜ u (unbox i N)              h           = handlerFree-noRigidᶜ u N h
+  handlerFree-noRigidᶜ u (unbox V N)              (h , k)     =
+    handlerFree-noRigidᵛ u V h , handlerFree-noRigidᶜ u N k
   handlerFree-noRigidᶜ u (box ρ V N)              (h , k)     =
     handlerFree-noRigidᵛ u V h , handlerFree-noRigidᶜ u N k
   handlerFree-noRigidᶜ u (M ⦂ᶜ C)                 h           = handlerFree-noRigidᶜ u M h
@@ -603,7 +624,7 @@ mutual
   noRigid-[]ᴿᶜ (perform op V M)         (h , k)     = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ M k
   noRigid-[]ᴿᶜ (delay τ M)              h           = noRigid-[]ᴿᶜ M h
   noRigid-[]ᴿᶜ (handle M `with V)       (h , k)     = noRigid-[]ᴿᶜ M h , noRigid-[]ᴿᵛ V k
-  noRigid-[]ᴿᶜ (unbox i N)              h           = noRigid-[]ᴿᶜ N h
+  noRigid-[]ᴿᶜ (unbox V N)              (h , k)     = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ N k
   noRigid-[]ᴿᶜ (box ρ V N)              (h , k)     = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ N k
   noRigid-[]ᴿᶜ (M ⦂ᶜ C)                 h           = noRigid-[]ᴿᶜ M h
 
@@ -639,9 +660,28 @@ private
         → defs (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))) ≡ Δ
   eᵗᵗᵉᵉ Γ e = eᵉ (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))) (eᵗᵗᵉ Γ e)
 
-  eᵗᵗʳ : ∀ {Θ n Δ} → (Γ : OCtx Θ n) → defs Γ ≡ Δ
-       → defs (wkʳ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))) ≡ Δ
-  eᵗᵗʳ Γ e = eʳ (wkᵗ-ctx (wkᵗ-ctx Γ)) (eᵗᵗ Γ e)
+  eᵗʳ : ∀ {Θ n Δ} → (Γ : OCtx Θ n) → defs Γ ≡ Δ → defs (wkʳ-ctx (wkᵗ-ctx Γ)) ≡ Δ
+  eᵗʳ Γ e = eʳ (wkᵗ-ctx Γ) (eᵗ Γ e)
+
+  resC-rigidFree : ∀ {Θ₀ Θ n} {ι : Subst Θ₀ Θ} {Γ : OCtx Θ n} → (V : RawV Θ₀ n)
+                 → RigidFree (resC ι Γ V)
+  resC-rigidFree (var i)       = tt
+  resC-rigidFree (V ⦂ᵛ B)      = resC-rigidFree V , tt
+  resC-rigidFree (def k)       = tt
+  resC-rigidFree (const B c)   = tt
+  resC-rigidFree ⋆             = tt
+  resC-rigidFree true          = tt
+  resC-rigidFree false         = tt
+  resC-rigidFree zero          = tt
+  resC-rigidFree (succ V)      = tt
+  resC-rigidFree ⦉ V , W ⦊      = tt
+  resC-rigidFree (inl V)       = tt
+  resC-rigidFree (inr V)       = tt
+  resC-rigidFree nil           = tt
+  resC-rigidFree (cons V W)    = tt
+  resC-rigidFree (cmp ⋈ V W)   = tt
+  resC-rigidFree (lam M)       = tt
+  resC-rigidFree (handler N H) = tt
 
   defConstraint-rigidFree : ∀ {Θ} → (Δ : PCtx) → (k : ℕ) → UnquantifiedAt Δ k
                           → (A : OVType Θ) → RigidFree (defConstraint (lookupᵖ Δ k) A)
@@ -710,8 +750,8 @@ mutual
     genCˢ-rigidFree (eᵉ Γ e) M h , tt
   genCˢ-rigidFree {Γ = Γ} e (handle M `with V) {A ‼ t} (h , k)   =
     genCˢ-rigidFree (eᵗᵗᵉᵉ Γ e) M h , genVˢ-rigidFree (eᵗᵗᵉᵉ Γ e) V k , tt , tt
-  genCˢ-rigidFree {Γ = Γ} e (unbox i N)      {A ‼ t} h           =
-    (tt , tt) , tt , tt , genCˢ-rigidFree (eᵗᵗʳ Γ e) N h
+  genCˢ-rigidFree {Γ = Γ} e (unbox V N)      {A ‼ t} (h , k)     =
+    resC-rigidFree V , (tt , tt) , tt , genCˢ-rigidFree (eᵗʳ Γ e) N k
   genCˢ-rigidFree {Γ = Γ} e (box ρ V N)      {A ‼ t} (h , k)     =
     genVˢ-rigidFree (eᵗ Γ e) V h , genCˢ-rigidFree (eᵗ Γ e) N k
   genCˢ-rigidFree e (M ⦂ᶜ (B ‼ u'))          {A ‼ t} h           =

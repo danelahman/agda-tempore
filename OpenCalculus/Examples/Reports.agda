@@ -109,7 +109,7 @@ U⇒U = Unit ⇒ Unit ‼ ûₑ
 reused-around-claim : RawC ∅ˢ 0
 reused-around-claim =
   return (lam (return (lam (return (lam
-    ((v₁ · ⋆) ⨟ unbox (fsuc fzero) ((v₀ · v₄) ⨟ return v₅)))))))
+    ((v₁ · ⋆) ⨟ unbox (var (fsuc fzero)) ((v₀ · v₄) ⨟ return v₅)))))))
 
 reused-around-claim-typed : IsTyped (infer [] reused-around-claim)
 reused-around-claim-typed =
@@ -117,7 +117,7 @@ reused-around-claim-typed =
     (closed {C = (Unit ⇒ (U⇒U ⇒ ([ ∣ ûₑ ∣̂ᵉ ] U⇒U ⇒ Unit ‼ (ûₑ ·̂ₑ (ûₑ ·̂ₑ ûₑ))) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ}
       (return (lam (return (lam (return (lam
         ((var (Tl-∷ Hd) ok₀ · ⋆)
-         ⨟ unbox (Tl-∷ (Tl-⟨⟩ Hd)) on-time (<:̂ᵛ-refl _)
+         ⨟ unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) on-time
              ((var Hd ok₀ · var (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ Hd))))) (et-ok Unitₑ))
               ⨟ return (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ Hd)))))))
                             (et-ok Unitₑ))))))))))
@@ -147,8 +147,8 @@ claimed-after-call =
   where
     clause-claim-after : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc (suc (suc (suc n)))))
     clause-claim-after op =
-      unbox (fsuc (fsuc (fsuc (fsuc fzero))))
-        (perform op v₂ (unbox (fsuc (fsuc fzero)) (v₀ · v₁)))
+      unbox (var (fsuc (fsuc (fsuc (fsuc fzero)))))
+        (perform op v₂ (unbox (var (fsuc (fsuc fzero))) (v₀ · v₁)))
 
 claimed-after-call-typable : Typable [] claimed-after-call
 claimed-after-call-typable =
@@ -157,9 +157,9 @@ claimed-after-call-typable =
       ((var (Tl-∷ Hd) ok₀ · ⋆)
        ⨟ return (lam (handle var Hd ok₀ · ⋆
            `with handler (return ⋆) (λ op →
-             unbox (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ Hd)))))) topᵣ (<:̂ᵛ-refl _)
+             unbox (res-var {z = Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ Hd)))))}) topᵣ
                (perform op (var (Tl-∷ (Tl-∷ Hd)) ok₀)
-                 (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) on-time (<:̂ᵛ-refl _)
+                 (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))}) on-time
                    (var Hd ok₀ · var (Tl-∷ Hd) ok₀)))))))))))
     refl
 

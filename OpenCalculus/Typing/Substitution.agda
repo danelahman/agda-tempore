@@ -12,13 +12,14 @@
 -- condition: `A` is eternal, and `V` moves past the locks as   --
 -- an eternal value, or `ρ` is below the unit, and `V` moves    --
 -- past them by a renaming. An `unbox` of `x` unboxes the       --
--- variable that `V`, a value of box type, is.                  --
+-- resource value that `V`, a value of box type, is, annotated  --
+-- at `x`'s declared type, under the `unbox`'s annotations.     --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
 open import Data.Fin using (zero; suc)
 open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.Product using (Σ-syntax; _,_)
+open import Data.Product using (Σ-syntax; _,_; proj₁; proj₂)
 
 open import Grades.Base
 open import Language.Spec
@@ -45,6 +46,7 @@ open import OpenCalculus.Typing.Erasure        S
 open import OpenCalculus.Typing.Transport      S
 open import OpenCalculus.Typing.GradeSubstitution S
 open import OpenCalculus.Typing.Renaming       S
+open import OpenCalculus.Typing.Resources      S
 open import OpenCalculus.Syntax.Run            S
 
 ------------------------------------------------------------------------
@@ -154,33 +156,14 @@ wkᵉ-val {Γ = Γ} {A} V = ty-subst (wkˢᵉ-v A) (ctx-castᵛ (wkˢᵉ-ctx Γ)
         (erase-substᵛ ⌊ V ⌋ᵛ wkˢᵉ)
 
 ------------------------------------------------------------------------
--- A value of box type in a context without definitions is a
--- variable, under subsumptions
+-- A variable of box type meets `VarOK` under no hypotheses only below
+-- the unit
 
-record BoxVar {Θ n} (Γ : OCtx Θ n) (ρ₀ : RExp Θ) (A₀ : OVType Θ) (U : RunV n) : Set where
-  field
-    cell-grade : RExp Θ
-    cell-type  : OVType Θ
-    age        : RExp Θ
-    cell       : [ cell-grade ] cell-type ∈̂[ age ] Γ
-    young      : ∅ᴴ ⊩ age ≾̂ᵣ ûᵣ
-    wider      : ∅ᴴ ⊩ ρ₀ ≾̂ᵣ cell-grade
-    narrower   : ∅ᴴ ∣ cell-type <:̂ᵛ A₀
-    is-cell    : U ≡ var (var-pos cell)
-
-open BoxVar public
-
-box-var : ∀ {Θ n} {Γ : OCtx Θ n} {ρ₀ : RExp Θ} {A₀ : OVType Θ}
-        → defs Γ ≡ ∅ᵖ → (V : ∅ᴴ ∣ Γ ⊢V⦂ [ ρ₀ ] A₀) → BoxVar Γ ρ₀ A₀ ∥ V ∥ᵛ
-box-var nd (var x (≾ᵘ-ok le)) =
-  record { cell = x ; young = le ; wider = ⊩≾̂ᵣ-refl ; narrower = <:̂ᵛ-refl _ ; is-cell = refl }
-box-var nd (var x (hyp-ok () _ _))
-box-var nd (def f δ h e) = ⊥-elim (∅ᵖ-∌ (subst (_ ∈ᵖ[ _ ]_) nd f))
-box-var nd (annᵛ _ V) = box-var nd V
-box-var nd (subV V ([ p ]ₛ q)) =
-  record { cell = cell b ; young = young b ; wider = transᵣ p (wider b)
-         ; narrower = <:̂ᵛ-trans (narrower b) q ; is-cell = is-cell b }
-  where b = box-var nd V
+box-young : ∀ {Θ} {ρ ρ' : RExp Θ} {A : OVType Θ}
+          → VarOK ∅ᴴ ([ ρ ] A) ρ' → ∅ᴴ ⊩ ρ' ≾̂ᵣ ûᵣ
+box-young (et-ok ())
+box-young (≾ᵘ-ok le)       = le
+box-young (hyp-ok () _ _ _)
 
 ------------------------------------------------------------------------
 -- The substitution lemma
@@ -194,7 +177,7 @@ sub-var : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B ρ}
 sub-var d U x p              (miss x' _)       = var x' p
 sub-var d U x (et-ok e)      (hit refl refl _) = eternal-v (dshift d) e U
 sub-var d U x (≾ᵘ-ok le)     (hit refl refl _) = rename-v (drop-ren d le) U
-sub-var d U x (hyp-ok () _ _) (hit refl refl _)
+sub-var d U x (hyp-ok () _ _ _) (hit refl refl _)
 
 ∥sub-var∥ : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B ρ}
           → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢V⦂ A)
@@ -203,47 +186,55 @@ sub-var d U x (hyp-ok () _ _) (hit refl refl _)
 ∥sub-var∥ d U x p          (miss x' q)       = sym (q _)
 ∥sub-var∥ d U x (et-ok e)  (hit refl refl q) = trans (∥eternal-v∥ (dshift d) e U) (sym (q _))
 ∥sub-var∥ d U x (≾ᵘ-ok le) (hit refl refl q) = trans (∥rename-v∥ (drop-ren d le) U) (sym (q _))
-∥sub-var∥ d U x (hyp-ok () _ _) (hit refl refl q)
+∥sub-var∥ d U x (hyp-ok () _ _ _) (hit refl refl q)
 
--- An `unbox` of the dropped variable unboxes the variable that the
--- substituted value is
+-- An `unbox` of the dropped variable unboxes the resource value that
+-- the substituted value is, annotated at the variable's declared type,
+-- under the `unbox`'s annotations
 
-sub-unbox : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {A' A₀ : OVType Θ}
-              {C : OCType Θ} {ρ₀ ρ'}
+sub-unbox : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {X X₀ : OVType Θ}
+              {C : OCType Θ} {ρ₀ ρ' ρ} {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
           → (d : Drop Γ₀ A k Γ Γ⁻) → ∅ᴴ ∣ Γ₀ ⊢V⦂ A
-          → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] Γ) → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ₀ → ∅ᴴ ∣ A₀ <:̂ᵛ A'
-          → ∅ᴴ ∣ Γ⁻ ∷ A' ⊢C⦂ C → DropView d x
+          → ∅ᴴ ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ
+          → ∅ᴴ ∣ Γ⁻ ∷ X ⊢C⦂ C → DropView d z
           → ∅ᴴ ∣ Γ⁻ ⊢C⦂ C
-sub-unbox {Γ⁻ = Γ⁻} d U x p q N (hit refl refl _) =
-  unbox (∈̂-ty-subst eq (lookup-var Γ⁻ j))
+sub-unbox {Γ⁻ = Γ⁻} {X₀ = X₀} {ρ₀ = ρ₀} d U R p N (hit refl refl _) =
+  unbox (res-rebase (res-ann ρ₀ X₀ (res-move z' (chain b)) (grade b) (payload b)) R)
         (transᵣ (dshift-gr d i)
-          (transᵣ (monoᵣ (subst (λ z → ∅ᴴ ⊩ z ≾̂ᵣ ûᵣ) (sym (var-pos-gr (cell b))) (young b))
-                   ⊩≾̂ᵣ-refl)
-            (transᵣ (eqᵣ ≡̂ᵣ-identityˡ) (transᵣ p (wider b)))))
-        (<:̂ᵛ-trans (narrower b) q) N
+          (transᵣ (monoᵣ (subst (λ w → ∅ᴴ ⊩ w ≾̂ᵣ ûᵣ) (sym (var-pos-gr (res-z b)))
+                                (box-young (usable b)))
+                         ⊩≾̂ᵣ-refl)
+            (transᵣ (eqᵣ ≡̂ᵣ-identityˡ) p)))
+        N
   where
-    b  = box-var (drop-defs d) U
-    i  = var-pos (cell b)
+    b  = resource-value (subst NonResourceDefs (sym (drop-defs d)) nonResource-∅) U
+    i  = var-pos (res-z b)
     j  = shift (dshift d) i
-    eq = trans (shift-ty (dshift d) i) (var-pos-ty (cell b))
-sub-unbox d U x p q N (miss x' _) = unbox x' p q N
+    eq = trans (shift-ty (dshift d) i) (var-pos-ty (res-z b))
+    z' = ∈̂-ty-subst eq (lookup-var Γ⁻ j)
+sub-unbox d U R p N (miss x' _) = unbox (res-move x' R) p N
 
-∥sub-unbox∥ : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {A' A₀ : OVType Θ}
-                {C : OCType Θ} {ρ₀ ρ'}
+∥sub-unbox∥ : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {X X₀ : OVType Θ}
+                {C : OCType Θ} {ρ₀ ρ' ρ} {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
             → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢V⦂ A)
-            → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] Γ) → (p : ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ₀) → (q : ∅ᴴ ∣ A₀ <:̂ᵛ A')
-            → (N : ∅ᴴ ∣ Γ⁻ ∷ A' ⊢C⦂ C) → (v : DropView d x)
-            → ∥ sub-unbox d U x p q N v ∥ᶜ ≡ unbox (subVar k ∥ U ∥ᵛ (var-pos x)) ∥ N ∥ᶜ
-∥sub-unbox∥ {Γ⁻ = Γ⁻} d U x p q N (hit refl refl e) =
-  cong (λ z → unbox z ∥ N ∥ᶜ)
-       (trans (cong var (trans (var-pos-ty-subst eq _) (var-pos-lookup Γ⁻ j)))
-              (sym (trans (e ∥ U ∥ᵛ) (cong (renᵛ (shift (dshift d))) (is-cell b)))))
+            → (R : ∅ᴴ ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X) → (p : ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ)
+            → (N : ∅ᴴ ∣ Γ⁻ ∷ X ⊢C⦂ C) → (v : DropView d z)
+            → ∥ sub-unbox d U R p N v ∥ᶜ ≡ unbox (subVar k ∥ U ∥ᵛ (var-pos z)) ∥ N ∥ᶜ
+∥sub-unbox∥ {Γ⁻ = Γ⁻} {X₀ = X₀} {ρ₀ = ρ₀} d U R p N (hit refl refl e) =
+  cong (λ w → unbox w ∥ N ∥ᶜ)
+       (trans (∥res∥ (res-rebase (res-ann ρ₀ X₀ (res-move z' (chain b)) (grade b) (payload b)) R))
+         (trans (cong var (trans (var-pos-ty-subst eq _) (var-pos-lookup Γ⁻ j)))
+                (sym (trans (e ∥ U ∥ᵛ)
+                            (cong (renᵛ (shift (dshift d)))
+                                  (trans (cong eraseᵛ (sym (erases b))) (∥res∥ (chain b))))))))
   where
-    b  = box-var (drop-defs d) U
-    i  = var-pos (cell b)
+    b  = resource-value (subst NonResourceDefs (sym (drop-defs d)) nonResource-∅) U
+    i  = var-pos (res-z b)
     j  = shift (dshift d) i
-    eq = trans (shift-ty (dshift d) i) (var-pos-ty (cell b))
-∥sub-unbox∥ d U x p q N (miss x' e) = cong (λ z → unbox z ∥ N ∥ᶜ) (sym (e _))
+    eq = trans (shift-ty (dshift d) i) (var-pos-ty (res-z b))
+    z' = ∈̂-ty-subst eq (lookup-var Γ⁻ j)
+∥sub-unbox∥ d U R p N (miss x' e) =
+  cong (λ w → unbox w ∥ N ∥ᶜ) (trans (∥res∥ (res-move x' R)) (sym (e _)))
 
 mutual
 
@@ -292,7 +283,7 @@ mutual
   sub-c d U (perform op V M)          = perform op (sub-v d U V) (sub-c (there∷ (there⟨⟩ d)) U M)
   sub-c d U (delay τ M)               = delay τ (sub-c (there⟨⟩ d) U M)
   sub-c d U (handle M `with V)        = handle sub-c d U M `with sub-v d U V
-  sub-c d U (unbox x p q N)           = sub-unbox d U x p q (sub-c (there∷ d) U N) (drop-view d x)
+  sub-c d U (unbox {z = z} R p N)    = sub-unbox d U R p (sub-c (there∷ d) U N) (drop-view d z)
   sub-c d U (box ρ V N)               = box ρ (sub-v (there⟨⟩ d) U V) (sub-c (there∷ d) U N)
   sub-c d U (annᶜ C M)                = annᶜ C (sub-c d U M)
   sub-c d U (subC M p)                = subC (sub-c d U M) p
@@ -356,9 +347,9 @@ mutual
   ∥sub-c∥ d U (delay τ M)               = cong (delay τ) (∥sub-c∥ (there⟨⟩ d) U M)
   ∥sub-c∥ d U (handle M `with V)        =
     cong₂ handle_`with_ (∥sub-c∥ d U M) (∥sub-v∥ d U V)
-  ∥sub-c∥ d U (unbox x p q N)           =
-    trans (∥sub-unbox∥ d U x p q (sub-c (there∷ d) U N) (drop-view d x))
-          (cong (unbox _) (∥sub-c∥ (there∷ d) U N))
+  ∥sub-c∥ d U (unbox {z = z} R p N)    =
+    trans (∥sub-unbox∥ d U R p (sub-c (there∷ d) U N) (drop-view d z))
+          (cong₂ unbox (cong (subᵛ _ ∥ U ∥ᵛ) (sym (∥res∥ R))) (∥sub-c∥ (there∷ d) U N))
   ∥sub-c∥ d U (box ρ V N)               =
     cong₂ box (∥sub-v∥ (there⟨⟩ d) U V) (∥sub-c∥ (there∷ d) U N)
   ∥sub-c∥ d U (annᶜ C M)                = ∥sub-c∥ d U M

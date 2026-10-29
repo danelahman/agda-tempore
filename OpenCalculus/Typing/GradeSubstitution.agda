@@ -67,6 +67,26 @@ clause-ty-↑ σ B op = cong (_‼ _) (wk-↑ᵉ-v σ B)
 ------------------------------------------------------------------------
 -- The substitution lemma
 
+-- at a resource value
+
+substʳ : ∀ {Θ Θ' n} {Q : Hyps Θ} {Q' : Hyps Θ'} {Γ : OCtx Θ n}
+           {ρ' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ} {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
+       → (σ : Subst Θ Θ') → Q' ⊩ᴴ Q [ σ ]
+       → Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X
+       → Q' ∣ Γ [ σ ]ᶜᵗˣ ⊢↪[ ρ' [ σ ]ʳ ] ∈̂-subst σ z ⦂[ ρ [ σ ]ʳ ] X [ σ ]ᵛ
+substʳ σ h res-var               = res-var
+substʳ σ h (res-ann ρₐ Xₐ R p q) =
+  res-ann (ρₐ [ σ ]ʳ) (Xₐ [ σ ]ᵛ) (substʳ σ h R) (⊩-substᵣ h p) (<:̂ᵛ-subst h q)
+
+⌊substʳ⌋ : ∀ {Θ Θ' n} {Q : Hyps Θ} {Q' : Hyps Θ'} {Γ : OCtx Θ n}
+             {ρ' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ} {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
+         → (σ : Subst Θ Θ') → (h : Q' ⊩ᴴ Q [ σ ])
+         → (R : Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X)
+         → ⌊ substʳ σ h R ⌋ʳ ≡ ⌊ R ⌋ʳ [ σ ]ᴿᵛ
+⌊substʳ⌋ {z = z} σ h res-var = cong var (var-pos-∈̂-subst σ z)
+⌊substʳ⌋ σ h (res-ann ρₐ Xₐ R p q) =
+  cong (_⦂ᵛ [ ρₐ [ σ ]ʳ ] (Xₐ [ σ ]ᵛ)) (⌊substʳ⌋ σ h R)
+
 mutual
 
   substᵛ : ∀ {Θ Θ' n} {Q : Hyps Θ} {Q' : Hyps Θ'} {Γ : OCtx Θ n} {A : OVType Θ}
@@ -140,8 +160,8 @@ mutual
                           (substᶜ σ h M))
   substᶜ σ h (delay τ M)               = delay τ (substᶜ σ h M)
   substᶜ σ h (handle M `with V)        = handle substᶜ σ h M `with substᵛ σ h V
-  substᶜ σ h (unbox x p q N)           =
-    unbox (∈̂-subst σ x) (⊩-substᵣ h p) (<:̂ᵛ-subst h q) (substᶜ σ h N)
+  substᶜ σ h (unbox R p N)             =
+    unbox (substʳ σ h R) (⊩-substᵣ h p) (substᶜ σ h N)
   substᶜ σ h (box ρ V N)               = box (ρ [ σ ]ʳ) (substᵛ σ h V) (substᶜ σ h N)
   substᶜ σ h (annᶜ C M)                = annᶜ (C [ σ ]ᶜ) (substᶜ σ h M)
   substᶜ σ h (subC M p)                = subC (substᶜ σ h M) (<:̂ᶜ-subst h p)
@@ -216,8 +236,8 @@ mutual
   ⌊substᶜ⌋ σ h (delay τ M)               = cong (delay τ) (⌊substᶜ⌋ σ h M)
   ⌊substᶜ⌋ σ h (handle M `with V)        =
     cong₂ handle_`with_ (⌊substᶜ⌋ σ h M) (⌊substᵛ⌋ σ h V)
-  ⌊substᶜ⌋ σ h (unbox x p q N)           =
-    cong₂ unbox (var-pos-∈̂-subst σ x) (⌊substᶜ⌋ σ h N)
+  ⌊substᶜ⌋ σ h (unbox R p N)             =
+    cong₂ unbox (⌊substʳ⌋ σ h R) (⌊substᶜ⌋ σ h N)
   ⌊substᶜ⌋ σ h (box ρ V N)               =
     cong₂ (box (ρ [ σ ]ʳ)) (⌊substᵛ⌋ σ h V) (⌊substᶜ⌋ σ h N)
   ⌊substᶜ⌋ σ h (annᶜ C M)                = cong (_⦂ᶜ C [ σ ]ᶜ) (⌊substᶜ⌋ σ h M)
