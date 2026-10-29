@@ -14,7 +14,9 @@
 -- rigids. Convertibility (`_≡̂ᵣ_`, `_≡̂ₑ_`) is entailment from   --
 -- no hypotheses both ways. The rules of grade entailment are   --
 -- its properties: the laws of the grade algebras, the          --
--- zero-product laws, a quantified hypothesis at any instance   --
+-- zero-product laws, the properties a grade may have (a least  --
+-- unit, commutativity, closures), each taking the property as  --
+-- an argument, a quantified hypothesis at any instance         --
 -- of its rigids (`instᵣ`, `instₑ`: rule Inst), and a closed    --
 -- quantified ordering entailed by no hypotheses, at any        --
 -- instance of its rigids (`factᵣ`, `factₑ`: rule Truth). The   --
@@ -52,11 +54,13 @@ open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁺; ∈-map⁻)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.Maybe.Base using (Maybe; just; nothing)
-open import Data.Maybe using (Is-just; to-witness)
+open import Data.Maybe using (Is-just)
 open import Data.Maybe.Relation.Unary.Any using () renaming (just to Any-just)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Unit using (tt)
 
+open import Algebra.Definitions using (Commutative)
+open import Relation.Binary.Definitions using (Minimum)
 open import Relation.Nullary using (yes; no)
 
 open import Grades.Base
@@ -271,8 +275,8 @@ open _≡̂ₑ_ public
 ≡̂ₑ-val f = mk≡̂ₑ (semₑ λ δ _ → proj₁ (f δ)) (semₑ λ δ _ → proj₂ (f δ))
 
 -- Properties of convertibility: an equivalence and a congruence, the
--- monoid laws, commutativity of multiplication where the grade declares
--- it, commutativity of the join, distributivity of multiplication over
+-- monoid laws, commutativity of multiplication where the grade is
+-- commutative, commutativity of the join, distributivity of multiplication over
 -- the join, the constants' equivalence and arithmetic, `∣_∣̂ᵉ` a monoid
 -- morphism, and absorption of a join by an upper bound
 
@@ -306,8 +310,8 @@ module _ {Θ : Scope} where
   ≡̂ᵣ-const-· : ∀ {ρ ρ'} → rconst {Θ} ρ ·̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ·ᵣ ρ')
   ≡̂ᵣ-const-· = ≡̂ᵣ-val λ _ → ≃ᵣ-refl
 
-  ≡̂ᵣ-comm : ∀ {ρ₁ ρ₂ : RExp Θ} → Is-just ·ᵣ-comm? → ρ₁ ·̂ᵣ ρ₂ ≡̂ᵣ ρ₂ ·̂ᵣ ρ₁
-  ≡̂ᵣ-comm ij = ≡̂ᵣ-val λ _ → to-witness ij _ _
+  ≡̂ᵣ-comm : ∀ {ρ₁ ρ₂ : RExp Θ} → Commutative _≃ᵣ_ _·ᵣ_ → ρ₁ ·̂ᵣ ρ₂ ≡̂ᵣ ρ₂ ·̂ᵣ ρ₁
+  ≡̂ᵣ-comm comm = ≡̂ᵣ-val λ _ → comm _ _
 
   ≡̂ᵣ-cong-⊔ : ∀ {ρ₁ ρ₁' ρ₂ ρ₂' : RExp Θ} → ρ₁ ≡̂ᵣ ρ₁' → ρ₂ ≡̂ᵣ ρ₂'
             → ρ₁ ⊔̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ⊔̂ᵣ ρ₂'
@@ -368,8 +372,8 @@ module _ {Θ : Scope} where
   ≡̂ₑ-const-· : ∀ {ε ε'} → econst {Θ} ε ·̂ₑ econst ε' ≡̂ₑ econst (ε ·ₑ ε')
   ≡̂ₑ-const-· = ≡̂ₑ-val λ _ → ≃ₑ-refl
 
-  ≡̂ₑ-comm : ∀ {ε₁ ε₂ : EExp Θ} → Is-just ·ₑ-comm? → ε₁ ·̂ₑ ε₂ ≡̂ₑ ε₂ ·̂ₑ ε₁
-  ≡̂ₑ-comm ij = ≡̂ₑ-val λ _ → to-witness ij _ _
+  ≡̂ₑ-comm : ∀ {ε₁ ε₂ : EExp Θ} → Commutative _≃ₑ_ _·ₑ_ → ε₁ ·̂ₑ ε₂ ≡̂ₑ ε₂ ·̂ₑ ε₁
+  ≡̂ₑ-comm comm = ≡̂ₑ-val λ _ → comm _ _
 
   ≡̂ₑ-cong-⊔ : ∀ {ε₁ ε₁' ε₂ ε₂' : EExp Θ} → ε₁ ≡̂ₑ ε₁' → ε₂ ≡̂ₑ ε₂'
             → ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₁' ⊔̂ₑ ε₂'
@@ -392,9 +396,9 @@ module _ {Θ : Scope} where
 
 -- Properties of entailed ordering: the hypotheses, the constants'
 -- ordering, convertibility, a preorder, monotonicity of the formers,
--- the join a least upper bound, the top, the unit least where the
--- grade declares it, the zero-product laws, the closure of a grade
--- where the grade declares it, and the instances of quantified
+-- the join a least upper bound, the top, the unit least where it is
+-- least, the zero-product laws, the closure of a grade where it has
+-- one, and the instances of quantified
 -- hypotheses (rule Inst) and of closed orderings valid at no
 -- hypotheses (rule Truth)
 
@@ -431,8 +435,8 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
   topᵣ : ∀ {ρ} → Q ⊩ ρ ≾̂ᵣ rconst ⊤ᵣ
   topᵣ {ρ} = semᵣ λ δ _ → ≾-⊤ᵣ (valʳ (ρ [ δ ]ʳ))
 
-  minᵣ : ∀ {ρ} → Is-just uᵣ-least? → Q ⊩ ûᵣ ≾̂ᵣ ρ
-  minᵣ {ρ} ij = semᵣ λ δ _ → to-witness ij (valʳ (ρ [ δ ]ʳ))
+  minᵣ : ∀ {ρ} → Minimum _≾ᵣ_ uᵣ → Q ⊩ ûᵣ ≾̂ᵣ ρ
+  minᵣ {ρ} least = semᵣ λ δ _ → least (valʳ (ρ [ δ ]ʳ))
 
   zeroˡᵣ : ∀ {ρ ρ'} → Q ⊩ ρ ·̂ᵣ ρ' ≾̂ᵣ ûᵣ → Q ⊩ ρ ≾̂ᵣ ûᵣ
   zeroˡᵣ p = semᵣ λ δ h → ≾ᵣ-zero-productˡ (runᵣ p δ h)
@@ -498,8 +502,8 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
   topₑ : ∀ {ε} → Q ⊩ ε ≾̂ₑ econst ⊤ₑ
   topₑ {ε} = semₑ λ δ _ → ≾-⊤ₑ (valᵉ (ε [ δ ]ᵉ))
 
-  minₑ : ∀ {ε} → Is-just uₑ-least? → Q ⊩ ûₑ ≾̂ₑ ε
-  minₑ {ε} ij = semₑ λ δ _ → to-witness ij (valᵉ (ε [ δ ]ᵉ))
+  minₑ : ∀ {ε} → Minimum _≾ₑ_ uₑ → Q ⊩ ûₑ ≾̂ₑ ε
+  minₑ {ε} least = semₑ λ δ _ → least (valᵉ (ε [ δ ]ᵉ))
 
   zeroˡₑ : ∀ {ε ε'} → Q ⊩ ε ·̂ₑ ε' ≾̂ₑ ûₑ → Q ⊩ ε ≾̂ₑ ûₑ
   zeroˡₑ p = semₑ λ δ h → ≾ₑ-zero-productˡ (runₑ p δ h)

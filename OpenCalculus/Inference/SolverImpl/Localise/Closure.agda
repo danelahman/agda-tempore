@@ -51,6 +51,7 @@ open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints)
 open import Language.Spec
 
 open import Util.Equality
@@ -59,6 +60,7 @@ open import OpenCalculus.Syntax.Scopes
 
 module OpenCalculus.Inference.SolverImpl.Localise.Closure
   (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S))
   where
 
 open LanguageSpec S
@@ -74,19 +76,19 @@ open import OpenCalculus.Inference.SolverImpl.Core.Occurs S
 open import OpenCalculus.Inference.SolverImpl.Core.Rigid S
   using (∨-true; ∨-left; ∨-right; dec-true; true-dec)
 
-open import OpenCalculus.Inference.SolverImpl.Deferred  S
+open import OpenCalculus.Inference.SolverImpl.Deferred  S hints
   using (≾ˢ-↑ᵉⁿ; Dir; dir↓; dir↑; Still; stills?; keepᵈ; allOf; κ⟨_⟩; wk-κ; κ-wkᵛ; κ-wkʳ; κ-wkᵉ; ⊩ᴴ-κ)
 open import OpenCalculus.Inference.SolverImpl.Resid  S
-open import OpenCalculus.Inference.SolverImpl.Values S
+open import OpenCalculus.Inference.SolverImpl.Values S hints
   using (module Vᵉ; module Vʳ; module Vⁱ; isFalse; equal-keeps; updᵉ-e; updᵉ-r; updʳ-r;
          joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩; joinᵣ-ub⊩; joinᵣ-lub⊩)
 open import OpenCalculus.Inference.SolverImpl.Vars      S
   using (Vars; vᵉ; vʳ; Fixes; mkFixes; fvᵛ; fvʳ; fvᵉ; ⊆-refl; fix-v; fix-r; fix-e; ∨-inʳ)
 import OpenCalculus.Inference.SolverImpl.Reach as Reachability
-open import OpenCalculus.Inference.SolverImpl.Entail S using (decideᵣ; decideₑ; full)
-open import OpenCalculus.Inference.SolverImpl.Canon  S
+open import OpenCalculus.Inference.SolverImpl.Entail S hints using (decideᵣ; decideₑ; full)
+open import OpenCalculus.Inference.SolverImpl.Canon  S hints
   using (canonᵣ; canonᵣ-≡; Ordʳ; Ordᵉ; Pieces; pieces; Split; splits; piecesʳ; piecesᵉ)
-open import OpenCalculus.Inference.SolverImpl.Localise S
+open import OpenCalculus.Inference.SolverImpl.Localise S hints
   hiding (Raised; raised; module Find; Collapse; collapsed; collapse; Mvᵉ; Mvʳ;
           module Cᵉ; module Cʳ; loc-normal; loc-settle; localise; localise-ds)
 

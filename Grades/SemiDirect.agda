@@ -28,9 +28,9 @@
 -- holds where the unit of `M` is least (`A6-of-u-least`) and where   --
 -- every `act m` reflects `⊥`.                                        --
 --                                                                    --
--- The unit is least where it is in `M`; `_·_` is not declared to     --
--- commute, and no closures are declared. The first projection is a   --
--- grade morphism onto `M`.                                           --
+-- Its hints declare the unit least where those of `M` do; `_·_` is   --
+-- not declared to commute, and no closures are declared. The first   --
+-- projection is a grade morphism onto `M`.                           --
 ------------------------------------------------------------------------
 
 module Grades.SemiDirect where
@@ -48,6 +48,7 @@ open import Relation.Nullary.Decidable using (_×-dec_)
 
 open import Grades.Durations using (Duration)
 open import Grades.Base
+open import Grades.Hints
 
 open import Util.Equality
 
@@ -247,9 +248,6 @@ semidirect M N A = record
   ; of-dur-plus     = pair M.of-dur-plus (N.bot-⊑ _ , N.∨-lub N.⊑-refl (act-bot _))
   ; ≃⇒≡?            = zipWith (λ a₁ a₂ ((p , q) , (p' , q')) → cong₂ _,_ (a₁ (p , p')) (a₂ (q , q')))
                               M.≃⇒≡? N.≈⇒≡?
-  ; u-least?        = Maybe.map (λ l (m , n) → l m , N.bot-⊑ n) M.u-least?
-  ; ·-comm?         = nothing
-  ; plus?           = λ _ → nothing
   }
   where
     module M = Grade M
@@ -259,6 +257,16 @@ semidirect M N A = record
     pair : ∀ {m m' n n'} → m M.≃ m' → n N.≈ n'
          → ((m M.≾ m') × (n N.⊑ n')) × ((m' M.≾ m) × (n' N.⊑ n))
     pair (p , p') (q , q') = (p , q) , (p' , q')
+
+-- its hints, from those of `M`
+
+semidirectʰ : {D : Duration} {M : Grade D} → GradeHints M
+            → (N : Semilattice) (A : Action M N) → GradeHints (M ⋉⟨ A ⟩ N)
+semidirectʰ H N A = record
+  { u-least? = Maybe.map (λ l (m , n) → l m , Semilattice.bot-⊑ N n) (GradeHints.u-least? H)
+  ; ·-comm?  = nothing
+  ; plus?    = λ _ → nothing
+  }
 
 ------------------------------------------------------------------------
 -- The first projection

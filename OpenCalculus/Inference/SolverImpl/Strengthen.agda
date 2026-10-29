@@ -32,13 +32,15 @@ open import Data.Product using (Σ-syntax; _×_; _,_)
 open import Data.List.Relation.Unary.Any using (here; there)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints)
 open import Language.Spec
 
 open import Util.Equality
 
 open import OpenCalculus.Syntax.Scopes
 
-module OpenCalculus.Inference.SolverImpl.Strengthen (S : LanguageSpec) where
+module OpenCalculus.Inference.SolverImpl.Strengthen (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -49,9 +51,9 @@ open import OpenCalculus.Syntax.Subst  S
 open import OpenCalculus.Hypotheses    S
 
 open import OpenCalculus.Inference.SolverImpl.Vars      S
-open import OpenCalculus.Inference.SolverImpl.Eliminate S using (Elim; Ĉ; Q̂; η; conv; inst; keep; princ)
+open import OpenCalculus.Inference.SolverImpl.Eliminate S hints using (Elim; Ĉ; Q̂; η; conv; inst; keep; princ)
 open import OpenCalculus.Inference.SolverImpl.Core.Occurs S using (occᵉ-v)
-open import OpenCalculus.Inference.SolverImpl.Deferred    S
+open import OpenCalculus.Inference.SolverImpl.Deferred    S hints
 
 ------------------------------------------------------------------------
 -- Thinning by a mask

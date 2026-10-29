@@ -21,6 +21,7 @@ open import Data.Maybe.Base using (just; nothing)
 open import Data.Product using (_,_)
 
 open import Grades.Base
+open import Grades.Hints using (GradeHints; comm-≡)
 
 open import Util.Equality
 
@@ -66,7 +67,13 @@ intervals = posetᵍ record
   ; ≾-zero-productʳ = λ {i} {j} → ⊆ⁱ-0ⁱ-sumʳ i j
   ; of-dur-zero     = refl
   ; of-dur-plus     = λ {τ} {τ'} → pointⁱ-+ τ τ'
-  ; u-least?        = nothing
-  ; ·-comm?         = just ⊕-comm
-  ; plus?           = λ i → just (plusⁱ i)
+  }
+
+-- its hints
+
+intervalsʰ : GradeHints intervals
+intervalsʰ = record
+  { u-least? = nothing
+  ; ·-comm?  = just (comm-≡ intervals ⊕-comm)
+  ; plus?    = λ i → just (plusⁱ i)
   }

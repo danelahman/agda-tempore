@@ -4,12 +4,8 @@
 
 module Grades.Base where
 
-open import Algebra.Definitions using (Commutative)
 open import Data.Empty
-open import Data.List.Base using (List)
 open import Data.Maybe.Base using (Maybe; just)
-import Data.Maybe.Base
-open import Data.Nat.Base using (ℕ)
 open import Data.Product hiding (map)
 open import Data.Sum hiding (map)
 
@@ -48,7 +44,9 @@ plus-self {c = c} refl' it = plus c refl' it (λ cv _ → cv) (λ q → q) (λ q
 --
 --   c ≃ d   =   c ≾ d × d ≾ c
 --
--- and the monoid laws and the inclusion of durations hold up to it.
+-- and the monoid laws and the inclusion of durations hold up to it. A
+-- grade is its structure and laws; the solver's hints for a grade are
+-- in `Grades.Hints`.
 
 record Grade (D : Duration) : Set₁ where
   private
@@ -111,21 +109,9 @@ record Grade (D : Duration) : Set₁ where
     of-dur-zero : of-dur D.0ᴰ ≃ u
     of-dur-plus : ∀ {τ τ'} → of-dur (τ D.+ᴰ τ') ≃ of-dur τ · of-dur τ'
 
-    -- optional declared properties
-
     -- whether equivalent grades are equal, where the grade declares it;
     -- informational: no law, theorem or solver result depends on it
     ≃⇒≡? : Maybe (∀ {c d} → c ≃ d → c ≡ d)
-
-    -- whether the unit is least, where the grade declares it
-    u-least? : Maybe (Minimum _≾_ u)
-
-    -- commutativity of `_·_`, where the grade declares it; the trace
-    -- grades leave it out, as there it depends on whether `Op` is empty
-    ·-comm? : Maybe (Commutative _≃_ _·_)
-
-    -- the closure of a grade, where the grade declares it
-    plus? : (c : Carrier) → Maybe (Plus _·_ _≾_ c)
 
   -- _≡_ is included in _≾_
   ≾-reflexive  : _≡_ ⇒ _≾_
@@ -256,10 +242,6 @@ record PosetGrade (D : Duration) : Set₁ where
     of-dur-zero : of-dur D.0ᴰ ≡ u
     of-dur-plus : ∀ {τ τ'} → of-dur (τ D.+ᴰ τ') ≡ (of-dur τ · of-dur τ')
 
-    u-least? : Maybe (Minimum _≾_ u)
-    ·-comm?  : Maybe (Commutative _≡_ _·_)
-    plus?    : (c : Carrier) → Maybe (Plus _·_ _≾_ c)
-
 posetᵍ : {D : Duration} → PosetGrade D → Grade D
 posetᵍ G = record
   { Carrier = P.Carrier ; _·_ = P._·_ ; u = P.u ; _≾_ = P._≾_ ; ⊤ = P.⊤
@@ -276,9 +258,6 @@ posetᵍ G = record
   ; of-dur-zero = ≡⇒≃ P.of-dur-zero
   ; of-dur-plus = ≡⇒≃ P.of-dur-plus
   ; ≃⇒≡? = just λ e → P.≾-antisym (proj₁ e) (proj₂ e)
-  ; u-least? = P.u-least?
-  ; ·-comm? = Data.Maybe.Base.map (λ m c d → ≡⇒≃ (m c d)) P.·-comm?
-  ; plus? = P.plus?
   }
   where
     module P = PosetGrade G
@@ -359,7 +338,8 @@ module _→ᵍ_ {D : Duration} {G₁ G₂ : Grade D} (f : G₁ →ᵍ G₂) =
   GradeMorphism f
 
 
--- Grade systems
+-- Grade systems: resource and effect grades over the same durations,
+-- and the image `∣_∣ᵉ` of effects in resources
 
 record GradeSystem : Set₂ where
 
@@ -369,18 +349,6 @@ record GradeSystem : Set₂ where
     RGrade : Grade Dur
     EGrade : Grade Dur
     ∣_∣ᵉ : EGrade →ᵍ RGrade
-
-    -- whether `∣_∣ᵉ` reflects the order at the unit, `∣ e ∣ ≾ u` giving
-    -- `e ≾ u`, where the system declares it
-    reflects-u? : Maybe ((e : Carrier EGrade)
-                         → _≾_ RGrade (GradeMorphism.map ∣_∣ᵉ e) (u RGrade)
-                         → _≾_ EGrade e (u EGrade))
-
-    -- candidate values of an effect rigid of a deferred condition, from
-    -- the number of occurrences of the rigids on a side of an ordering
-    -- (the degree) and the condition's resource and effect constants;
-    -- any list is sound, the candidates serving only to refute
-    witnesses : ℕ → List (Carrier RGrade) → List (Carrier EGrade) → List (Carrier EGrade)
 
 
 -- Helpful module exporting effect and resource grade fields with different names
@@ -420,9 +388,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      of-dur-zero to of-durʳ-zero;
      of-dur-plus to of-durʳ-plus;
      ≃⇒≡? to ≃ᵣ⇒≡?;
-     u-least? to uᵣ-least?;
-     ·-comm? to ·ᵣ-comm?;
-     plus? to plusᵣ?;
      ≾-reflexive to ≾ᵣ-reflexive;
      ≃-refl to ≃ᵣ-refl;
      ≃-sym to ≃ᵣ-sym;
@@ -471,11 +436,8 @@ module GradeSystemInterface (GS : GradeSystem) where
      of-dur-zero to of-durᵉ-zero;
      of-dur-plus to of-durᵉ-plus;
      ≃⇒≡? to ≃ₑ⇒≡?;
-     u-least? to uₑ-least?;
-     ·-comm? to ·ₑ-comm?;
      ≾-zero-productˡ to ≾ₑ-zero-productˡ;
      ≾-zero-productʳ to ≾ₑ-zero-productʳ;
-     plus? to plusₑ?;
      ≾-reflexive to ≾ₑ-reflexive;
      ≃-refl to ≃ₑ-refl;
      ≃-sym to ≃ₑ-sym;

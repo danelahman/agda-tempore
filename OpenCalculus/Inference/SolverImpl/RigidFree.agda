@@ -12,6 +12,7 @@ open import Data.Maybe.Base using (just; nothing)
 open import Data.Product using (_,_)
 
 open import Language.Spec
+open import Grades.Hints using (SystemHints)
 open import Language.Operations
 
 open import Util.Equality
@@ -23,6 +24,7 @@ open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
 module OpenCalculus.Inference.SolverImpl.RigidFree
   (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S))
   (opEnum : OpEnum S)
   where
 
@@ -38,8 +40,8 @@ open import OpenCalculus.Inference.Constraints.Syntax S
 open import OpenCalculus.Inference.SolverImpl.Core.Decorate S using (expandSub)
 open import OpenCalculus.Inference.SolverImpl.Resid  S
 open import OpenCalculus.Inference.SolverImpl.State  S
-open import OpenCalculus.Inference.SolverImpl.Entail S using (decideᵣ; full)
-open import OpenCalculus.Inference.SolverImpl.Solve  S opEnum
+open import OpenCalculus.Inference.SolverImpl.Entail S hints using (decideᵣ; full)
+open import OpenCalculus.Inference.SolverImpl.Solve  S hints opEnum
 
 open OpEnum opEnum
 

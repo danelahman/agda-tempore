@@ -32,6 +32,7 @@ open import Relation.Nullary.Decidable.Core using (True; toWitness; fromWitness)
 open import Grades.Durations using (idᴰ)
 open import Grades.Durations.NonNegativeRational using (ℚ≥0ᴰ; ℚ≥0ᵀ; ℕ→ℚ≥0ᴰ)
 open import Grades.Base
+open import Grades.Hints using (GradeHints; comm-≡)
 
 open import Util.Equality
 
@@ -164,9 +165,15 @@ dense-right-sided-cut-intervals = posetᵍ record
                       (+ʰ-inflate (bound y) (admits0 x))) r
   ; of-dur-zero     = eqᵘ refl
   ; of-dur-plus     = eqᵘ refl
-  ; u-least?        = just admits0
-  ; ·-comm?         = just λ x y → eqᵘ (+ʰ-comm (bound x) (bound y))
-  ; plus?           = λ x → just (plusᵘ x)
+  }
+
+-- its hints
+
+dense-right-sided-cut-intervalsʰ : GradeHints dense-right-sided-cut-intervals
+dense-right-sided-cut-intervalsʰ = record
+  { u-least? = just admits0
+  ; ·-comm?  = just (comm-≡ dense-right-sided-cut-intervals (λ x y → eqᵘ (+ʰ-comm (bound x) (bound y))))
+  ; plus?    = λ x → just (plusᵘ x)
   }
 
 ------------------------------------------------------------------------

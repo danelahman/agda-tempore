@@ -37,7 +37,6 @@ open import Grades.Base using (Grade)
 open import Grades.Examples.SemiDirect.ModeSwitchCosts
   renaming (decided to grade)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
-open import Grades.Examples.System.Identity using (noWitnesses)
 
 Idle Radio : Point
 Idle  = ⟨ 0 ⟩
@@ -51,7 +50,7 @@ opTime read  = Grade.u (mode-switch-costs {ℕᴰ})
 opTime write = grade (listing ((Idle , Idle , cost 0) L.∷ L.[]))
 opTime send  = grade (listing ((Idle , Radio , cost 1) L.∷ (Radio , Radio , cost 0) L.∷ L.[]))
 
-open import ClosedCalculus.Examples.Typing.Core (mode-switch-costs {ℕᴰ}) opTime noWitnesses
+open import ClosedCalculus.Examples.Typing.Core (mode-switch-costs {ℕᴰ}) opTime
 
 decided : (c d : R) {p : True (c ≾ᵣ? d)} → c ≾ᵣ d
 decided c d {p} = toWitness p

@@ -15,12 +15,14 @@ open import Relation.Nullary using (¬_)
 
 open import Language.Spec
 
+open import Grades.Hints using (SystemHints)
 open import Util.Equality
 
 open import OpenCalculus.Syntax.Scopes
 open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
-module OpenCalculus.Inference.ScopeClosed (S : LanguageSpec) (opEnum : OpEnum S) where
+module OpenCalculus.Inference.ScopeClosed (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) (opEnum : OpEnum S) where
 
 open import OpenCalculus.Syntax.Types         S using (OCType)
 open import OpenCalculus.Syntax.Contexts      S using (OCtx)
@@ -33,7 +35,7 @@ open import OpenCalculus.Syntax.Raw           S using (RawC)
 open import OpenCalculus.Syntax.Raw.Subst     S using (_[_]ᴿᶜ; [id]ᴿᶜ)
 open import OpenCalculus.Inference.Principality S
   using (PrincipalScheme; module PrincipalScheme; Typable; typable; typed; untypable)
-open import OpenCalculus.Inference.SolverImpl S opEnum using (infer; infer-complete)
+open import OpenCalculus.Inference.SolverImpl S hints opEnum using (infer; infer-complete)
 
 open PrincipalScheme
 

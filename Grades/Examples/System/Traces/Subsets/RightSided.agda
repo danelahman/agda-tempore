@@ -34,6 +34,7 @@ open import Relation.Binary.Definitions
   using (DecidableEquality; Transitive; Trichotomous)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; noGradeHints)
 open import Grades.Examples.Time.RightSided
 
 open import Util.Equality
@@ -113,6 +114,14 @@ subsetsToRightSidedIntervalsGradeSystem = record
   { RGrade = right-sided-intervals
   ; EGrade = right-sided
   ; ∣_∣ᵉ   = subsets→right-sided-intervals
+  }
+
+-- its hints
+
+subsetsToRightSidedIntervalsGradeSystemʰ : SystemHints subsetsToRightSidedIntervalsGradeSystem
+subsetsToRightSidedIntervalsGradeSystemʰ = record
+  { RHints      = right-sided-intervalsʰ
+  ; EHints      = noGradeHints
   ; reflects-u? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

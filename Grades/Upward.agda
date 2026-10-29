@@ -9,8 +9,9 @@
 --   * `⊤` and `c ⊔ d` have `P`, being above a grade that has it;     --
 --   * the order, and with it `≃`, is that of `G`, the witness being  --
 --     data the order ignores;                                        --
---   * every law is inherited, and so is Kleene's plus, the closure   --
---     lying above the grade it closes.                               --
+--   * every law is inherited, and so are the hints (`_∣ʰ_`),         --
+--     Kleene's plus included, the closure lying above the grade      --
+--     it closes.                                                     --
 --                                                                    --
 -- The inclusion `G ∣ P → G` is a grade morphism, preserving the      --
 -- structure on the nose.                                             --
@@ -24,6 +25,7 @@ open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
 
 open import Grades.Durations
 open import Grades.Base
+open import Grades.Hints
 
 open import Util.Equality
 
@@ -100,10 +102,17 @@ module _ {D : Duration} (G : Grade D) {P : Grade.Carrier G → Set} (U : Upward 
     ; of-dur-zero     = G.of-dur-zero
     ; of-dur-plus     = G.of-dur-plus
     ; ≃⇒≡?            = nothing
-    ; u-least?        = Maybe.map (λ l a → l (proj₁ a)) G.u-least?
-    ; ·-comm?         = Maybe.map (λ m a b → m (proj₁ a) (proj₁ b)) G.·-comm?
-    ; plus?           = λ a → Maybe.map (plusᴾ (proj₂ a)) (G.plus? (proj₁ a))
     }
+
+  -- its hints, those of `G`
+
+  upwardʰ : GradeHints G → GradeHints _∣ᵍ_
+  upwardʰ H = record
+    { u-least? = Maybe.map (λ l a → l (proj₁ a)) H.u-least?
+    ; ·-comm?  = Maybe.map (λ m a b → m (proj₁ a) (proj₁ b)) H.·-comm?
+    ; plus?    = λ a → Maybe.map (plusᴾ (proj₂ a)) (H.plus? (proj₁ a))
+    }
+    where module H = GradeHints H
 
   -- the inclusion
 
@@ -117,3 +126,9 @@ module _ {D : Duration} (G : Grade D) {P : Grade.Carrier G → Set} (U : Upward 
     ; map-⊔        = G.≃-refl
     ; map-of-dur   = G.≃-refl
     }
+
+infix 5 _∣ʰ_
+
+_∣ʰ_ : {D : Duration} {G : Grade D} {P : Grade.Carrier G → Set}
+     → GradeHints G → (U : Upward G P) → GradeHints (G ∣ᵍ U)
+H ∣ʰ U = upwardʰ _ U H

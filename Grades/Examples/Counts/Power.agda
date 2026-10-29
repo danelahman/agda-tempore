@@ -13,6 +13,7 @@
 
 open import Grades.Durations using (Duration)
 open import Grades.Base
+open import Grades.Hints using (GradeHints)
 
 module Grades.Examples.Counts.Power {D : Duration} (G : Grade D) where
 
@@ -260,7 +261,7 @@ tabulate-≾ᵛ {zero}  p = tt
 tabulate-≾ᵛ {suc n} p = p zero , tabulate-≾ᵛ (λ i → p (suc i))
 
 ------------------------------------------------------------------------
--- The declared properties carry over
+-- Leastness of the unit carries over
 
 uᵛ-least : Minimum _≾ᴳ_ uᴳ → ∀ {n} → Minimum (_≾ᵛ_ {n}) uᵛ
 uᵛ-least least []       = tt
@@ -280,9 +281,6 @@ power n = record
   ; _≾_             = _≾ᵛ_
   ; ⊤               = ⊤ᵛ
   ; ≾-⊤             = ≾ᵛ-⊤
-  ; u-least?        = maybe′ (λ least → just (uᵛ-least least)) nothing u-least?
-  ; plus?           = λ _ → nothing
-  ; ·-comm?         = maybe′ (λ comm → just (·ᵛ-comm comm)) nothing ·-comm?
   ; _⊔_             = _⊔ᵛ_
   ; ⊔-ubˡ           = ⊔ᵛ-ubˡ
   ; ⊔-ubʳ           = ⊔ᵛ-ubʳ
@@ -304,4 +302,13 @@ power n = record
   ; of-dur          = λ _ → uᵛ
   ; of-dur-zero     = ≾ᵛ-refl , ≾ᵛ-refl
   ; of-dur-plus     = proj₂ (·ᵛ-identityˡ uᵛ) , proj₁ (·ᵛ-identityˡ uᵛ)
+  }
+
+-- its hints: the unit is least and `_·_` commutes where they do in `G`
+
+powerʰ : GradeHints G → (n : ℕ) → GradeHints (power n)
+powerʰ H n = record
+  { u-least? = maybe′ (λ least → just (uᵛ-least least)) nothing (GradeHints.u-least? H)
+  ; ·-comm?  = maybe′ (λ comm → just (·ᵛ-comm comm)) nothing (GradeHints.·-comm? H)
+  ; plus?    = λ _ → nothing
   }

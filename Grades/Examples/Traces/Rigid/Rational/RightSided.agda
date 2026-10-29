@@ -29,6 +29,7 @@ open import Data.Fin.Subset using () renaming (⊤ to all; ⊥ to none)
 open import Data.Vec.Base using (foldr′)
 
 open import Grades.Base using (Grade)
+open import Grades.Hints using (GradeHints)
 open import Grades.Durations.Monus ℚ≥0ᵀ using (Carrier)
 open import Grades.Durations.Intervals ℚ≥0ᵀ using (fin; ∞; ⁻; ⁺) renaming (_∣_ to _∣ᶜ_)
 
@@ -74,3 +75,6 @@ idle e = e & none
 
 right-sided : Grade ℚ≥0ᴰ
 right-sided = upperᵍ
+
+right-sidedʰ : GradeHints right-sided
+right-sidedʰ = upperʰ

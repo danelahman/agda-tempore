@@ -24,11 +24,11 @@
 --     bounded above by an expression decided below the unit,   --
 --     the unit being least, is sent to the unit, whatever its  --
 --     occurrences; for an effect unknown also through its      --
---     image, where the grade system reflects the order at the  --
---     unit (`reflects-u?`). The bounding orderings are         --
---     removed, the atoms the unknown occurs in are written     --
---     canonically, each ordering split into one per            --
---     alternative of its left side, and the orderings made     --
+--     image, where the hints declare that the image reflects   --
+--     the order at the unit (`reflects-u?`). The bounding      --
+--     orderings are removed, the atoms the unknown occurs in   --
+--     are written canonically, each ordering split into one    --
+--     per alternative of its left side, and the orderings made --
 --     reflexive are removed;                                   --
 --   * cycle elimination (`collapseᵗ`): the type variables of   --
 --     each strongly connected component of the subtyping atoms --
@@ -84,7 +84,7 @@ open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.List.Relation.Unary.All using (All; lookup; tabulate)
 open import Data.Maybe.Base using (Maybe; just; nothing)
 import Data.Maybe.Base as Maybe
-open import Data.Maybe using (Is-just)
+open import Data.Maybe using (Is-just; to-witness)
 open import Data.Nat.Base using (ℕ; zero; suc; _+_)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
@@ -98,16 +98,19 @@ open import Relation.Binary.Definitions using (Decidable)
 open import Relation.Binary.Construct.Closure.ReflexiveTransitive using (Star; fold) renaming (ε to ε⋆)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; module SystemHintsInterface)
 open import Language.Spec
 
 open import Util.Equality
 
 open import OpenCalculus.Syntax.Scopes
 
-module OpenCalculus.Inference.SolverImpl.Eliminate (S : LanguageSpec) where
+module OpenCalculus.Inference.SolverImpl.Eliminate (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
+open SystemHintsInterface hints
 
 open import OpenCalculus.Syntax.Grades        S
 open import OpenCalculus.Syntax.Types         S
@@ -123,13 +126,13 @@ open import OpenCalculus.Inference.SolverImpl.Vars     S
 open import OpenCalculus.Inference.SolverImpl.Core.Occurs S
   using (occᵉ-e; occᵉ-r; occᵉ-v; occʳ-r; occʳ-v)
 open import OpenCalculus.Inference.SolverImpl.Resid  S using (∅ᴴ-⊩ᴴ)
-open import OpenCalculus.Inference.SolverImpl.Entail S using (decideᵣ; decideₑ; atomic)
+open import OpenCalculus.Inference.SolverImpl.Entail S hints using (decideᵣ; decideₑ; atomic)
 import OpenCalculus.Inference.SolverImpl.Reach as Reachability
-open import OpenCalculus.Inference.SolverImpl.Values      S
+open import OpenCalculus.Inference.SolverImpl.Values      S hints
   using (module Vᵉ; module Vʳ; module Vⁱ; isFalse; Parts; partition; kept; kept⊆; which;
          updᵉ-e; updᵉ-r; updʳ-r;
          joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩; joinᵣ-ub⊩; joinᵣ-lub⊩; module LowToₑ; module LowToᵣ)
-open import OpenCalculus.Inference.SolverImpl.Canon       S
+open import OpenCalculus.Inference.SolverImpl.Canon       S hints
   using (canonₑ; canonᵣ; canonₑ-≡; canonᵣ-≡; canonᵛ; canonᵛ-≡̂; canonᶜ; canonᶜ-≡̂;
          canonᴴ; canonᴴ-⊩; canonᴴ-⊩⁻; Ordʳ; Ordᵉ; Pieces; whole; Split; splitsBy;
          piecesʳ; piecesᵉ)
@@ -1446,11 +1449,11 @@ equateʳ? {Θ} F C Q i o =
 
 unit-forcedᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ}
              → Is-just uᵣ-least? → Q ⊩ ρ ≾̂ᵣ ûᵣ → Q ⊩ ρ ≡̂ᵣ ûᵣ
-unit-forcedᵣ l p = p , minᵣ l
+unit-forcedᵣ l p = p , minᵣ (to-witness l)
 
 unit-forcedₑ : ∀ {Θ} {Q : Hyps Θ} {ε : EExp Θ}
              → Is-just uₑ-least? → Q ⊩ ε ≾̂ₑ ûₑ → Q ⊩ ε ≡̂ₑ ûₑ
-unit-forcedₑ l p = p , minₑ l
+unit-forcedₑ l p = p , minₑ (to-witness l)
 
 -- A step equal to the identity under hypotheses `Q⁺` that every closed
 -- instance of `Q` meets: at those instances the type does not move
@@ -1617,7 +1620,7 @@ unitʳ {Θ} C Q i {x₀ , c₀} m₀ f₀@(lst , _ , _) =
         ... | inj₁ f  =
               transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-subst η₀ (lhs {ρ} f))
                                     (subst (_≡̂ᵣ ûᵣ) (sym (updʳ-hit i ûᵣ)) ≡̂ᵣ-refl)))
-                     (minᵣ (proj₁ f))
+                     (minᵣ (to-witness (proj₁ f)))
         ... | inj₂ mk = instʳ mk
 
     keep⁺ : Q⁺ ⊨ᴴ Q₁
@@ -1707,7 +1710,7 @@ unitᵉ {Θ} C Q i w =
                                     (≡̂ᵣ-trans (subst (λ z → ∣ z ∣̂ᵉ ≡̂ᵣ ∣ ûₑ ∣̂ᵉ)
                                                      (sym (updᵉ-hit i ûₑ)) ≡̂ᵣ-refl)
                                               (≡̂ᵣ-trans ≡̂ᵣ-map-const (≡̂ᵣ-const map-uᵉ)))))
-                     (minᵣ lstᵣ)
+                     (minᵣ (to-witness lstᵣ))
         ... | inj₂ mk = instʳ mk
 
         ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q₁ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ ε' [ η₀ ]ᵉ
@@ -1715,7 +1718,7 @@ unitᵉ {Θ} C Q i w =
         ... | inj₁ f  =
               transₑ (eqₑ (≡̂ₑ-trans (≡̂ₑ-subst η₀ (lhsₑ {ε} f))
                                     (subst (_≡̂ₑ ûₑ) (sym (updᵉ-hit i ûₑ)) ≡̂ₑ-refl)))
-                     (minₑ (proj₁ f))
+                     (minₑ (to-witness (proj₁ f)))
         ... | inj₂ mk = instᵉ mk
 
     keep⁺ : Q⁺ ⊨ᴴ Q₁

@@ -57,7 +57,7 @@ open import Grades.Examples.Worked.Operations
 
 open import Grades.Examples.Traces.Timed.RightSided
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
-  using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_; _≾?_;
+  using (right-sided; right-sidedʰ; Bounds; within_; unbounded; _·ᵇ_; _≾_; _≾?_;
          ≾-antisym; ≾-⊥; Antichain; acSet)
   public
 

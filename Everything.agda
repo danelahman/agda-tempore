@@ -22,6 +22,10 @@ import Util.NonNegativeRational
 
 import Grades.Base
 
+---- The hints the solver reads
+
+import Grades.Hints
+
 ---- Durations: the monoid of delays, time domains, intervals
 
 import Grades.Durations

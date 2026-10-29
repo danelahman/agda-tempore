@@ -40,13 +40,14 @@ open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (toWitnessFalse)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; noGradeHints)
 open import Grades.Durations.Monus ℚ≥0ᵀ using (Carrier; 0ᴰ; _<ᴰ_; _<ᴰ?_; ≮0⇒≡0)
 open import Grades.Durations.Intervals ℚ≥0ᵀ
   using (Cut; pt; ⁻; _⊑_; ⊑⇒≤; _⊓ᶜ_; ⊓ᶜ-sel; ⊓ᶜ-lbˡ; ⊓ᶜ-lbʳ; _+ˡ_; lo; ⟪_,_⟫)
   renaming (_∣_ to _∣ᶜ_; ∞ to ∞ʰ)
 open import Grades.Examples.Time.Dense.LeftSided
   using (#_; _≤_; _≤?_; ≤-refl; _⊓_; ⊓-lbˡ; ⊓-lbʳ; ⊓-glb;
-         𝕀; [_,+∞⟩; dense-left-sided-intervals)
+         𝕀; [_,+∞⟩; dense-left-sided-intervals; dense-left-sided-intervalsʰ)
 
 open import Grades.Examples.Traces.Rigid.Finite.LeftSided Op n code name name-code code-name running
   using (left-sided; Proper′; ⌜_⌝; expr; εᵉ; at-least′; waitᴸ; lower; str)
@@ -111,6 +112,14 @@ lowerRunsToLeftSidedIntervalsGradeSystem = record
   { RGrade = dense-left-sided-intervals
   ; EGrade = left-sided
   ; ∣_∣ᵉ   = lower-runs→left-sided-intervals
+  }
+
+-- its hints
+
+lowerRunsToLeftSidedIntervalsGradeSystemʰ : SystemHints lowerRunsToLeftSidedIntervalsGradeSystem
+lowerRunsToLeftSidedIntervalsGradeSystemʰ = record
+  { RHints      = dense-left-sided-intervalsʰ
+  ; EHints      = noGradeHints
   ; reflects-u? = nothing
   ; witnesses   = λ _ _ _ → []
   }

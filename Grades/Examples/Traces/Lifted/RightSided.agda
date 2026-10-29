@@ -74,6 +74,7 @@ open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 open import Data.Maybe.Base using (just; nothing)
 
 open import Grades.Base
+open import Grades.Hints using (GradeHints; comm-≡)
 
 open Order.TraceOrder O using (_≼_; ≼-trans; ≼-nil; ≼-ε-inv)
 
@@ -375,9 +376,6 @@ right-sided = posetᵍ record
   ; _≾_             = _≾_
   ; ⊤               = unbounded
   ; ≾-⊤             = ≾-⊤
-  ; u-least?        = just ≾-⊥
-  ; plus?           = λ _ → nothing
-  ; ·-comm?         = nothing
   ; _⊔_             = _⊔ᵇ_
   ; ⊔-ubˡ           = ⊔ᵇ-ubˡ
   ; ⊔-ubʳ           = ⊔ᵇ-ubʳ
@@ -396,4 +394,13 @@ right-sided = posetᵍ record
   ; of-dur          = of-durᵇ
   ; of-dur-zero     = of-durᵇ-zero
   ; of-dur-plus     = λ {m} {n} → of-durᵇ-plus {m} {n}
+  }
+
+-- its hints
+
+right-sidedʰ : GradeHints right-sided
+right-sidedʰ = record
+  { u-least? = just ≾-⊥
+  ; ·-comm?  = nothing
+  ; plus?    = λ _ → nothing
   }

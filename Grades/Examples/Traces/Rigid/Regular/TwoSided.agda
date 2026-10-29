@@ -43,8 +43,9 @@ open import Relation.Nullary using (Dec)
 open import Relation.Nullary.Decidable using (True; toWitness; map′)
 
 open import Grades.Base using (Grade)
-open import Grades.Product using (_×ᵍ_)
-open import Grades.Upward using (Upward; _∣ᵍ_)
+open import Grades.Hints using (GradeHints)
+open import Grades.Product using (_×ᵍ_; _×ʰ_)
+open import Grades.Upward using (Upward; _∣ᵍ_; _∣ʰ_)
 open import Grades.Durations.Intervals ℕᵀ using (fin; ⁻; ⁺; ≤⇒⁻⊑⁻; ≤⇒⁺⊑⁺) renaming (_∣_ to _∣ᶜ_)
 
 import Grades.Examples.Traces.Rigid.Regular.LeftSided Op n code name name-code code-name running as L
@@ -137,6 +138,14 @@ private
   right-sided = L.C.WithDurations.closed-grade (steps (⌜ e≤ ⌝′ i≤)) refl
                   (λ {m} {n} → L.steps-plus (⌜ e≤ ⌝′ i≤) {m} {n})
 
+  left-sidedʰ : GradeHints left-sided
+  left-sidedʰ = L.C.WithDurations.closed-gradeʰ (steps (⌜ e≥ ⌝′ i≥)) refl
+                  (λ {m} {n} → L.steps-plus (⌜ e≥ ⌝′ i≥) {m} {n})
+
+  right-sidedʰ : GradeHints right-sided
+  right-sidedʰ = L.C.WithDurations.closed-gradeʰ (steps (⌜ e≤ ⌝′ i≤)) refl
+                  (λ {m} {n} → L.steps-plus (⌜ e≤ ⌝′ i≤) {m} {n})
+
 consistent : Upward (left-sided ×ᵍ right-sided) Consistent
 consistent = record
   { up       = λ {(l , u)} {(l′ , u′)} (p , q) (w , wl , wu) →
@@ -152,6 +161,9 @@ consistent = record
 
 two-sided : Grade ℕᴰ
 two-sided = (left-sided ×ᵍ right-sided) ∣ᵍ consistent
+
+two-sidedʰ : GradeHints two-sided
+two-sidedʰ = (left-sidedʰ ×ʰ right-sidedʰ) ∣ʰ consistent
 
 ------------------------------------------------------------------------
 -- Literals

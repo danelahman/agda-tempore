@@ -48,8 +48,9 @@ open import Data.Fin.Subset.Properties using (x∈⁅x⁆)
 open import Data.List.Base using (List; []; _∷_; _++_)
 open import Data.Product using (Σ; Σ-syntax; _×_; _,_; proj₁; proj₂)
 
-open import Grades.Product using (_×ᵍ_)
-open import Grades.Upward using (Upward; _∣ᵍ_)
+open import Grades.Hints using (GradeHints)
+open import Grades.Product using (_×ᵍ_; _×ʰ_)
+open import Grades.Upward using (Upward; _∣ᵍ_; _∣ʰ_)
 
 open import Grades.Exact.Base T Op n code code-injective using (Word; op; idle)
 open import Grades.Exact.Order T Op n code code-injective using (_⊑_; ⊑-refl; ⊑-trans)
@@ -95,6 +96,11 @@ consistent = record
 
 intervalᵍ : Grade D
 intervalᵍ = (Lᵍ ×ᵍ Uᵍ) ∣ᵍ consistent
+
+-- its hints, from those of the ends
+
+intervalʰ : GradeHints Lᵍ → GradeHints Uᵍ → GradeHints intervalᵍ
+intervalʰ Hˡ Hᵘ = (Hˡ ×ʰ Hᵘ) ∣ʰ consistent
 
 ------------------------------------------------------------------------
 -- Consistency witnessed by a run

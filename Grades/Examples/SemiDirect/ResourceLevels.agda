@@ -38,7 +38,7 @@
 module Grades.Examples.SemiDirect.ResourceLevels where
 
 open import Data.Integer.Base as ℤ using (ℤ)
-open import Data.Maybe.Base using (just; nothing)
+open import Data.Maybe.Base using (just)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (_×-dec_; True; toWitness; map′)
@@ -303,9 +303,6 @@ one-resource = record
   ; ≃⇒≡?            = just λ (((a , b) , (c , d)) , ((a' , b') , (c' , d'))) →
       level-≡ (side-≡ (≤∞-antisym a a') (≤∞-antisym b b'))
               (side-≡ (≤∞-antisym c c') (≤∞-antisym d d'))
-  ; u-least?        = nothing
-  ; ·-comm?         = nothing
-  ; plus?           = λ _ → nothing
   }
   where
     pair : ∀ {a b c d : Side} → a ≤ˢ b × b ≤ˢ a → c ≤ˢ d × d ≤ˢ c

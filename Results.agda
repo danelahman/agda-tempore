@@ -7,13 +7,15 @@
 -- its semantics. The items not yet formalised are listed at the end.
 --
 -- The calculus is parameterised by a `LanguageSpec` (a grade system, base
--- types and an operation signature); inference also takes an enumeration
--- of the operations (`OpEnum`).
+-- types and an operation signature); inference also takes hints for the
+-- grade system (`SystemHints`), which only the solver reads, and an
+-- enumeration of the operations (`OpEnum`).
 ------------------------------------------------------------------------
 
 module Results where
 
 open import Language.Spec using (LanguageSpec)
+open import Grades.Hints using (SystemHints)
 open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
 
@@ -29,6 +31,9 @@ module GradeSystems where
   open import Grades.Base public
     using (GradeSystem; Plus)
     renaming (Grade to GradeAlgebra; GradeMorphism to GradeAlgebraMorphism)
+
+  -- The solver's hints for a grade algebra and a grade system
+  open import Grades.Hints public using (GradeHints; SystemHints)
 
   -- The grade algebras of time, counts and lattices
   open import Grades.Examples.Time.LeftSided public
@@ -221,7 +226,8 @@ module InstantiationAndTypeSafety (S : LanguageSpec) where
 ------------------------------------------------------------------------
 -- Type inference
 
-module TypeInference (S : LanguageSpec) (opEnum : OpEnum S) where
+module TypeInference (S : LanguageSpec) (hints : SystemHints (LanguageSpec.Grades S))
+                     (opEnum : OpEnum S) where
 
   -- Definition (Constraints): constraints, solutions, and generation
   open import OpenCalculus.Inference.Constraints.Syntax S public using (Constraint)
@@ -236,18 +242,18 @@ module TypeInference (S : LanguageSpec) (opEnum : OpEnum S) where
   -- Theorem (Solving): the interface of a principal solver, the solver, and
   -- that it is not stuck on constraints without `∀`
   open import OpenCalculus.Inference.Solver S public using (Solver)
-  open import OpenCalculus.Inference.SolverImpl S opEnum public
+  open import OpenCalculus.Inference.SolverImpl S hints opEnum public
     using () renaming (solver to solving; runSolver-rigidFree to solving-not-stuck)
 
   -- Theorem (Type inference), for computations in open contexts
   open import OpenCalculus.Inference.Principality S public
     using (Inference; typable-⇔)
-  open import OpenCalculus.Inference.SolverImpl S opEnum public
+  open import OpenCalculus.Inference.SolverImpl S hints opEnum public
     using (infer; infer-typed; infer-untypable; infer-handlerFree)
 
   -- Corollary (Completeness), for scope-closed typings of computations
   -- in contexts over the empty scope
-  open import OpenCalculus.Inference.ScopeClosed S opEnum public using (completeness)
+  open import OpenCalculus.Inference.ScopeClosed S hints opEnum public using (completeness)
 
 
 ------------------------------------------------------------------------
@@ -585,7 +591,8 @@ module EquationalTheoryAndDenotationalSemantics (S : LanguageSpec) where
 ------------------------------------------------------------------------
 -- Further results
 
-module FormalisedResults (S : LanguageSpec) (opEnum : OpEnum S) where
+module FormalisedResults (S : LanguageSpec) (hints : SystemHints (LanguageSpec.Grades S))
+                         (opEnum : OpEnum S) where
 
   -- Entailment is stable under substitution and weakening; convertible
   -- expressions have equivalent values
@@ -634,7 +641,7 @@ module FormalisedResults (S : LanguageSpec) (opEnum : OpEnum S) where
   -- meets it
   open import OpenCalculus.Inference.Principality S public
     using (principalSolution; principal-inst; typable-unconditional)
-  open import OpenCalculus.Inference.SolverImpl S opEnum public
+  open import OpenCalculus.Inference.SolverImpl S hints opEnum public
     using ( runSolver-sound ; runSolver-principal ; runSolver-complete
           ; runSolver-refutes ; infer-unconditional ; infer-complete
           ; check ; check-established ; check-untypable ; check-complete
@@ -643,14 +650,14 @@ module FormalisedResults (S : LanguageSpec) (opEnum : OpEnum S) where
   -- Inference yields closed typings at every instance satisfying the
   -- scheme, and a checked program, its handlers second-class, halts at
   -- each; completeness and principality for the declarative system
-  open import Bridge.Instantiation.Inference S opEnum public
+  open import Bridge.Instantiation.Inference S hints opEnum public
     using (scheme-instantiate; infer-instantiate; check-instantiate; check-program)
   -- for annotation-free terms in contexts with no handler type, with
   -- respect to closed typings whose handlers are uniform, the handler of
   -- each `handle` a handler
   open import Bridge.Instantiation.Embedding S public using (Uᶜ; embedᶜ; AnnFreeᶜ)
   open import Bridge.Instantiation.Types S public using (NoHandlerTypeᶜᵗˣ)
-  open import Bridge.Instantiation.Completeness S opEnum public
+  open import Bridge.Instantiation.Completeness S hints opEnum public
     using ( UniformTyping ; principalᴰ ; infer-principal ; infer-untypableᴰ
           ; infer-principal-typing ; check-principal ; check-untypableᴰ )
 

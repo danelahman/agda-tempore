@@ -78,6 +78,7 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; module SystemHintsInterface)
 open import Language.Spec
 open import Language.Operations
 
@@ -90,11 +91,13 @@ open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
 module OpenCalculus.Inference.SolverImpl.Solve
   (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S))
   (opEnum : OpEnum S)
   where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
+open SystemHintsInterface hints
 open Operations Ops
 
 open import OpenCalculus.Syntax.Grades S
@@ -114,13 +117,13 @@ open import OpenCalculus.Inference.SolverImpl.Core.Occurs   S using (occᵉ-e; o
 open import OpenCalculus.Inference.SolverImpl.Core.Decorate S using (expandSub)
 open import OpenCalculus.Inference.SolverImpl.Core.Rigid    S
 
-open import OpenCalculus.Inference.SolverImpl.Deferred S
+open import OpenCalculus.Inference.SolverImpl.Deferred S hints
 open import OpenCalculus.Inference.SolverImpl.Resid  S
 open import OpenCalculus.Inference.SolverImpl.State  S
-open import OpenCalculus.Inference.SolverImpl.Normal S
-open import OpenCalculus.Inference.SolverImpl.Entail S
+open import OpenCalculus.Inference.SolverImpl.Normal S hints
+open import OpenCalculus.Inference.SolverImpl.Entail S hints
   using (decideᵣ; decideₑ; derive; full; closedᵣ?; closedₑ?; holdsᵣ; failsᵣ; holdsₑ; failsₑ)
-open import OpenCalculus.Inference.SolverImpl.Localise S
+open import OpenCalculus.Inference.SolverImpl.Localise S hints
   using (Localised; localise; lσ; lR; lsnd; freeᵉ; freeʳ; Outerₑ; Outerᵣ; outerₑ?; outerᵣ?;
          evar?)
 
@@ -226,7 +229,7 @@ stripʳ-unit (just ij)  j ρ ρ' ρ₀ e₁ with strʳ⁺ j (ρ' [ updᵉ j û�
                                      (trans (sym (pop⨟ʳ j (ρ' [ updᵉ j ûₑ ]ʳ) e₂ δ))
                                             ([⨟]ʳ ρ' (updᵉ j ûₑ) (popˢ j ⨟ˢ (δ ↑ᵉ))))
                                      (⊩-wkᵉᵣ (k (here refl))))
-                             (mono-substᵣ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ ij)) ρ'))
+                             (mono-substᵣ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ (to-witness ij))) ρ'))
 
 stripᵉ-unit : ∀ {Φ} → Maybe (Is-just uₑ-least?)
             → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
@@ -241,7 +244,7 @@ stripᵉ-unit (just ij)  j ε ε' ε₀ e₁ with strᵉ⁺ j (ε' [ updᵉ j û
                                      (trans (sym (pop⨟ᵉ j (ε' [ updᵉ j ûₑ ]ᵉ) e₂ δ))
                                             ([⨟]ᵉ ε' (updᵉ j ûₑ) (popˢ j ⨟ˢ (δ ↑ᵉ))))
                                      (⊩-wkᵉₑ (k (here refl))))
-                             (mono-substₑ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ ij)) ε'))
+                             (mono-substₑ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ (to-witness ij))) ε'))
 
 stripʳ-top : ∀ {Θ Φ} → Subst Θ (Φ +e) → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
            → (ρ₀' : RExp Φ) → ρ' [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀' → Maybe (Stripʳ j ρ ρ')

@@ -90,8 +90,7 @@ open U using (≤_)
 opTime : Op → Grade.Carrier two-sided
 opTime = operation
 
-open import Grades.Examples.System.Identity using (noWitnesses)
-open import ClosedCalculus.Examples.Typing.Core two-sided opTime noWitnesses
+open import ClosedCalculus.Examples.Typing.Core two-sided opTime
 
 ------------------------------------------------------------------------
 -- The contracts

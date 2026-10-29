@@ -42,6 +42,7 @@ open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (toWitnessFalse; fromWitness)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; noGradeHints)
 open import Grades.Durations.Monus ℚ≥0ᵀ using (0ᴰ; _<ᴰ_)
 open import Grades.Durations.Intervals ℚ≥0ᵀ
   using (Hi; fin; Cut; pt; _⊑ʰ_; ⁻; ⁺; 0⁻; _◁_; _◁?_; 0⁻-least; ⊑-trans; ⊑⇒≤;
@@ -51,7 +52,7 @@ open import Grades.Durations.Intervals.Dense ℚ≥0ᵀ using (⁺⋢⁻)
 open import Util.NonNegativeRational using (#_; _≤_; _≤?_; ≤-trans)
 open import Grades.Examples.Time.Dense.RightSided
   using (ℚ∞; ↑_; ∞; _≤∞_; ≤∞-refl; _+∞_; _⊔∞_; ⊔∞-ubˡ; ⊔∞-ubʳ; ⊔∞-lub;
-         𝕀ᵣ; [0,_]; _≾ₒ_; uₒ; dense-right-sided-intervals)
+         𝕀ᵣ; [0,_]; _≾ₒ_; uₒ; dense-right-sided-intervals; dense-right-sided-intervalsʰ)
 
 open import Grades.Examples.Traces.Rigid.Finite.RightSided Op n code name name-code code-name running
   using (right-sided; Proper′; ⌜_⌝; expr; _≾ᴳ_; decided; εᵉ; waitᵁ; _≾ᵉ?_; ⟦_⟧; upper; str)
@@ -159,6 +160,14 @@ upperRunsToRightSidedIntervalsGradeSystem = record
   { RGrade = dense-right-sided-intervals
   ; EGrade = right-sided
   ; ∣_∣ᵉ   = upper-runs→right-sided-intervals
+  }
+
+-- its hints: the projection reflects the order at the unit
+
+upperRunsToRightSidedIntervalsGradeSystemʰ : SystemHints upperRunsToRightSidedIntervalsGradeSystem
+upperRunsToRightSidedIntervalsGradeSystemʰ = record
+  { RHints      = dense-right-sided-intervalsʰ
+  ; EHints      = noGradeHints
   ; reflects-u? = just reflects
   ; witnesses   = λ _ _ _ → []
   }

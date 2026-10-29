@@ -38,7 +38,6 @@ open import Grades.Indexed using (ℕ-names; module Maps)
 open import Grades.Examples.SecurityLevel using (LowHigh; Low; High; Low⊑)
 open import Grades.Examples.SemiDirect.FlowLevels using (two-point-flow-levels)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
-open import Grades.Examples.System.Identity using (noWitnesses)
 
 import Data.List.Base as L
 
@@ -69,7 +68,7 @@ opTime read  = touches High
 opTime write = writes memory Low
 opTime send  = writes radio Low
 
-open import ClosedCalculus.Examples.Typing.Core flow opTime noWitnesses
+open import ClosedCalculus.Examples.Typing.Core flow opTime
 
 decided : ∀ {c d : R} {p : True (c ≾ᵣ? d)} → c ≾ᵣ d
 decided {p = p} = toWitness p

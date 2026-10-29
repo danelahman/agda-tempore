@@ -19,7 +19,7 @@
 -- searched in turn over every assignment of candidates to its    --
 -- unknowns, the earlier classes' values kept: for an effect      --
 -- unknown the unit, the top, the effect constants of the class   --
--- and the grade system's witnesses for its degree and constants; --
+-- and the witnesses of the hints for its degree and constants;   --
 -- for a resource unknown the unit, the top, the resource         --
 -- constants and the images of the effect candidates (`candsₑ`,   --
 -- `candsᵣ`). An assignment is kept when every member of the      --
@@ -66,6 +66,7 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable using (does; ⌊_⌋)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; module SystemHintsInterface)
 open import Language.Spec
 
 open import Util.Equality
@@ -76,11 +77,13 @@ open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
 module OpenCalculus.Inference.SolverImpl.Search
   (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S))
   (opEnum : OpEnum S)
   where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
+open SystemHintsInterface hints
 
 open import OpenCalculus.Syntax.Grades        S
 open import OpenCalculus.Syntax.Types         S
@@ -89,16 +92,16 @@ open import OpenCalculus.Hypotheses           S
 open import OpenCalculus.Hypotheses.Instances S
   using (Satisfiable; _≾̂ᵣ?_; _≾̂ₑ?_; ⊩ᴱ?; _<:̂ᵛ?_; VarOK?; ⊨++ᵠ⇒; ⊨++ᵠ⇐; ⊩ᴴ⇒⊨)
 
-open import OpenCalculus.Inference.SolverImpl.Deferred  S
+open import OpenCalculus.Inference.SolverImpl.Deferred  S hints
   using (⊩ᴰ→⊩ᴼˢ; ⊩ᴼˢ→⊩ᴰ; κ⟨_⟩; allOf; constsₑ; constsᵣ; _++²_)
 open import OpenCalculus.Inference.SolverImpl.Resid    S
-open import OpenCalculus.Inference.SolverImpl.Entail   S using (checkClosed; checkClosed-fail; failingChain)
-open import OpenCalculus.Inference.SolverImpl.Localise S using (Localised; localise; lσ; lR; lsnd; lcpl; latom;
+open import OpenCalculus.Inference.SolverImpl.Entail   S hints using (checkClosed; checkClosed-fail; failingChain)
+open import OpenCalculus.Inference.SolverImpl.Localise S hints using (Localised; localise; lσ; lR; lsnd; lcpl; latom;
                                                          Entry; anyᶠ)
-open import OpenCalculus.Inference.SolverImpl.Solve     S opEnum
+open import OpenCalculus.Inference.SolverImpl.Solve     S hints opEnum
   using (ordsOf; ordsOf-⊩; withDfs; retryᴰ; retryᵈ; retriedL; keptᵈ)
 open import OpenCalculus.Inference.SolverImpl.Vars      S using (Vars; vʳ; vᵉ; _∪ᵛ_; fvʳ; fvᵉ)
-open import OpenCalculus.Inference.SolverImpl.Strengthen S using (fvᵈ)
+open import OpenCalculus.Inference.SolverImpl.Strengthen S hints using (fvᵈ)
 
 ------------------------------------------------------------------------
 -- A hypothesis set and deferred conditions as a residual

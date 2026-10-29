@@ -12,24 +12,32 @@
 -- greatest, so time alone never makes a variable stale; touching     --
 -- `High` does.                                                       --
 --                                                                    --
--- The unit is not least, as for left-sided time; `_·_` commutes.     --
+-- The unit is not least, as for left-sided time; `_·_` commutes, as  --
+-- its hints declare.                                                 --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Product.LeftSidedTimeLevel where
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
-open import Grades.Product using (_×ᵍ_)
-open import Grades.Examples.Time.LeftSided using (left-sided-intervals)
+open import Grades.Hints using (GradeHints)
+open import Grades.Product using (_×ᵍ_; _×ʰ_)
+open import Grades.Examples.Time.LeftSided using (left-sided-intervals; left-sided-intervalsʰ)
 open import Grades.Examples.SecurityLevel
-  using (LevelLattice; level-grade; low-high)
+  using (LevelLattice; level-grade; level-gradeʰ; low-high)
 
 -- left-sided time and a lattice of levels
 
 left-sided-time×level : LevelLattice → Grade ℕᴰ
 left-sided-time×level L = left-sided-intervals ×ᵍ level-grade L
 
+left-sided-time×levelʰ : (L : LevelLattice) → GradeHints (left-sided-time×level L)
+left-sided-time×levelʰ L = left-sided-intervalsʰ ×ʰ level-gradeʰ L
+
 -- at the two-point lattice
 
 left-sided-time×low-high : Grade ℕᴰ
 left-sided-time×low-high = left-sided-time×level low-high
+
+left-sided-time×low-highʰ : GradeHints left-sided-time×low-high
+left-sided-time×low-highʰ = left-sided-time×levelʰ low-high

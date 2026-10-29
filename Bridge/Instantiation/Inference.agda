@@ -22,6 +22,7 @@
 open import Data.Product using (Σ-syntax; _×_; _,_)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints)
 open import Language.Spec
 
 open import Util.Equality
@@ -29,7 +30,8 @@ open import Util.Equality
 open import OpenCalculus.Syntax.Scopes
 open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
-module Bridge.Instantiation.Inference (S : LanguageSpec) (opEnum : OpEnum S) where
+module Bridge.Instantiation.Inference (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) (opEnum : OpEnum S) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -54,7 +56,7 @@ open import OpenCalculus.Syntax.Raw.Subst       S using (secondClass-[]ᴿᶜ)
 import OpenCalculus.Typing.Erasure S as OE
 open import OpenCalculus.Inference.Principality S
   using (PrincipalScheme; module PrincipalScheme; typed; established)
-open import OpenCalculus.Inference.SolverImpl           S opEnum using (infer; check)
+open import OpenCalculus.Inference.SolverImpl           S hints opEnum using (infer; check)
 
 open import Bridge.Instantiation.Types          S
 open import Bridge.Instantiation.Judgements     S

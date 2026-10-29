@@ -6,15 +6,16 @@
 -- `(of-dur τ , of-dur τ)`, a delay advancing both components; the    --
 -- components share their durations.                                  --
 -- Every law holds componentwise, the zero-product laws included, and --
--- the order is decided componentwise. `u-least?` and `·-comm?` are   --
--- declared when both components declare them.                        --
+-- the order is decided componentwise. The hints of the product       --
+-- declare the unit least, `_·_` commutative and closures where both  --
+-- components' hints do.                                              --
 --                                                                    --
 -- Both projections are grade morphisms, each field of `_→ᵍ_` holding --
 -- by `refl`, and pairing of morphisms `⟨ f , g ⟩ᵍ` has the universal --
 -- property. The product of two grade systems over the same           --
 -- durations pairs the effect grades and the resource grades, with    --
 -- the componentwise projection, and its two projections are maps of  --
--- grade systems.                                                     --
+-- grade systems; its hints are the components', paired.              --
 ------------------------------------------------------------------------
 
 module Grades.Product where
@@ -28,6 +29,7 @@ open import Relation.Nullary.Decidable using (_×-dec_)
 
 open import Grades.Durations
 open import Grades.Base
+open import Grades.Hints
 
 open import Util.Equality
 
@@ -96,12 +98,6 @@ G₁ ×ᵍ G₂ = record
   ; of-dur-plus     = pair≃ G₁.of-dur-plus G₂.of-dur-plus
   ; ≃⇒≡?            = zipWith (λ a₁ a₂ ((p₁ , p₂) , (q₁ , q₂)) → cong₂ _,_ (a₁ (p₁ , q₁)) (a₂ (p₂ , q₂)))
                               G₁.≃⇒≡? G₂.≃⇒≡?
-  ; u-least?        = zipWith (λ l₁ l₂ (c₁ , c₂) → l₁ c₁ , l₂ c₂)
-                              G₁.u-least? G₂.u-least?
-  ; ·-comm?         = zipWith (λ m₁ m₂ (c₁ , c₂) (d₁ , d₂) →
-                                 pair≃ (m₁ c₁ d₁) (m₂ c₂ d₂))
-                              G₁.·-comm? G₂.·-comm?
-  ; plus?           = λ (c₁ , c₂) → zipWith plus× (G₁.plus? c₁) (G₂.plus? c₂)
   }
   where
     module G₁ = Grade G₁
@@ -113,6 +109,23 @@ G₁ ×ᵍ G₂ = record
       _≾_ to _≾₁_; ⊤ to ⊤₁; _⊔_ to _⊔₁_; of-dur to of-dur₁)
     open Grade G₂ using () renaming (Carrier to C₂; _·_ to _·₂_; u to u₂;
       _≾_ to _≾₂_; ⊤ to ⊤₂; _⊔_ to _⊔₂_; of-dur to of-dur₂)
+
+-- its hints, componentwise
+
+infixr 2 _×ʰ_
+
+_×ʰ_ : {D : Duration} {G₁ G₂ : Grade D} → GradeHints G₁ → GradeHints G₂ → GradeHints (G₁ ×ᵍ G₂)
+_×ʰ_ {G₁ = G₁} {G₂} H₁ H₂ = record
+  { u-least? = zipWith (λ l₁ l₂ (c₁ , c₂) → l₁ c₁ , l₂ c₂) H₁.u-least? H₂.u-least?
+  ; ·-comm?  = zipWith (λ m₁ m₂ (c₁ , c₂) (d₁ , d₂) → pairᵐ (m₁ c₁ d₁) (m₂ c₂ d₂))
+                       H₁.·-comm? H₂.·-comm?
+  ; plus?    = λ (c₁ , c₂) → zipWith plus× (H₁.plus? c₁) (H₂.plus? c₂)
+  }
+  where
+    module H₁ = GradeHints H₁
+    module H₂ = GradeHints H₂
+    open Grade G₁ using () renaming (_·_ to _·₁_; _≾_ to _≾₁_)
+    open Grade G₂ using () renaming (_·_ to _·₂_; _≾_ to _≾₂_)
 
     -- the closure, componentwise
     plus× : ∀ {c₁ c₂} → Plus _·₁_ _≾₁_ c₁ → Plus _·₂_ _≾₂_ c₂
@@ -229,24 +242,37 @@ _×ʷ_ : {A B : Set} → (ℕ → List A → List A) → (ℕ → List B → Lis
 (w₁ ×ʷ w₂) d cs = pairs (w₁ d (mapᴸ proj₁ cs)) (w₂ d (mapᴸ proj₂ cs))
 
 ------------------------------------------------------------------------
--- The product of two grade systems over the same durations; it reflects
--- the order at the unit where both components do, and its candidates
--- are pairs of the components'
+-- The product of two grade systems over the same durations
 
 infixr 2 _×ˢ_⟨_⟩
 
 _×ˢ_⟨_⟩ : (S₁ S₂ : GradeSystem)
         → GradeSystem.Dur S₁ ≡ GradeSystem.Dur S₂ → GradeSystem
-record { Dur = D ; RGrade = R₁ ; EGrade = E₁ ; ∣_∣ᵉ = p₁ ; reflects-u? = r₁ ; witnesses = w₁ }
-  ×ˢ record { RGrade = R₂ ; EGrade = E₂ ; ∣_∣ᵉ = p₂ ; reflects-u? = r₂ ; witnesses = w₂ } ⟨ refl ⟩ = record
+record { Dur = D ; RGrade = R₁ ; EGrade = E₁ ; ∣_∣ᵉ = p₁ }
+  ×ˢ record { RGrade = R₂ ; EGrade = E₂ ; ∣_∣ᵉ = p₂ } ⟨ refl ⟩ = record
   { Dur    = D
   ; RGrade = R₁ ×ᵍ R₂
   ; EGrade = E₁ ×ᵍ E₂
   ; ∣_∣ᵉ   = p₁ ×ᵐ p₂
-  ; reflects-u? = zipWith (λ f g (e₁ , e₂) (q₁ , q₂) → f e₁ q₁ , g e₂ q₂) r₁ r₂
-  ; witnesses   = λ d rcs ecs → pairs (w₁ d (mapᴸ proj₁ rcs) (mapᴸ proj₁ ecs))
-                                      (w₂ d (mapᴸ proj₂ rcs) (mapᴸ proj₂ ecs))
   }
+
+-- its hints: it reflects the order at the unit where both components
+-- do, and its candidates are pairs of the components'
+
+infixr 2 _×ʰˢ_⟨_⟩
+
+_×ʰˢ_⟨_⟩ : {S₁ S₂ : GradeSystem} → SystemHints S₁ → SystemHints S₂
+         → (e : GradeSystem.Dur S₁ ≡ GradeSystem.Dur S₂) → SystemHints (S₁ ×ˢ S₂ ⟨ e ⟩)
+_×ʰˢ_⟨_⟩ {record { Dur = D }} {record {}} H₁ H₂ refl = record
+  { RHints      = H₁.RHints ×ʰ H₂.RHints
+  ; EHints      = H₁.EHints ×ʰ H₂.EHints
+  ; reflects-u? = zipWith (λ f g (e₁ , e₂) (q₁ , q₂) → f e₁ q₁ , g e₂ q₂) H₁.reflects-u? H₂.reflects-u?
+  ; witnesses   = λ d rcs ecs → pairs (H₁.witnesses d (mapᴸ proj₁ rcs) (mapᴸ proj₁ ecs))
+                                      (H₂.witnesses d (mapᴸ proj₂ rcs) (mapᴸ proj₂ ecs))
+  }
+  where
+    module H₁ = SystemHints H₁
+    module H₂ = SystemHints H₂
 
 -- its projections are maps of grade systems, the squares commuting on
 -- the nose

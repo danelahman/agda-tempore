@@ -17,13 +17,13 @@ open import OpenCalculus.Examples.Specs using (module Time-RightSided)
 
 module OpenCalculus.Examples.Reports.Time.RightSided where
 
-open Time-RightSided using (spec; enum)
+open Time-RightSided using (spec; hints; enum)
 open LanguageSpec spec using (Grades)
 open GradeSystemInterface Grades using (⊤ᵣ)
 
 open import OpenCalculus.Syntax.Grades   spec using (rconst; ∣_∣̂ᵉ; _·̂ᵣ_; _·̂ₑ_)
 open import OpenCalculus.Syntax.Contexts spec using ([])
-open import OpenCalculus.Examples.Reports spec enum
+open import OpenCalculus.Examples.Reports spec hints enum
 open import OpenCalculus.Examples.Variables
 
 ------------------------------------------------------------------

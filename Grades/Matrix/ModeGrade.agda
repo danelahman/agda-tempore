@@ -302,9 +302,6 @@ module _ (E : ModeEntries) where
     ; of-dur-zero     = Delays.delay-zero Δ
     ; of-dur-plus     = λ {τ} {τ'} → Delays.delay-plus Δ τ τ'
     ; ≃⇒≡?            = nothing
-    ; u-least?        = nothing
-    ; ·-comm?         = nothing
-    ; plus?           = λ _ → nothing
     }
 
   ----------------------------------------------------------------------

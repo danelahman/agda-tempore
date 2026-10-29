@@ -35,6 +35,7 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; module SystemHintsInterface)
 open import Language.Spec
 open import Language.Operations
 
@@ -47,11 +48,13 @@ open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
 module OpenCalculus.Inference.SolverImpl.Principal
   (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S))
   (opEnum : OpEnum S)
   where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
+open SystemHintsInterface hints
 open Operations Ops
 
 open import OpenCalculus.Syntax.Grades S
@@ -75,13 +78,13 @@ open import OpenCalculus.Inference.SolverImpl.Core.Decorate S using (expandSub)
 open import OpenCalculus.Inference.SolverImpl.Expand S
   using (ExpMax; ExpDec; expandSub-max; expandSub-dec)
 
-open import OpenCalculus.Inference.SolverImpl.Deferred S
+open import OpenCalculus.Inference.SolverImpl.Deferred S hints
 open import OpenCalculus.Inference.SolverImpl.Resid  S
 open import OpenCalculus.Inference.SolverImpl.State  S
-open import OpenCalculus.Inference.SolverImpl.Normal S
-open import OpenCalculus.Inference.SolverImpl.Entail S using (decideᵣ; decideₑ; full)
-open import OpenCalculus.Inference.SolverImpl.Solve  S opEnum
-open import OpenCalculus.Inference.SolverImpl.Localise S
+open import OpenCalculus.Inference.SolverImpl.Normal S hints
+open import OpenCalculus.Inference.SolverImpl.Entail S hints using (decideᵣ; decideₑ; full)
+open import OpenCalculus.Inference.SolverImpl.Solve  S hints opEnum
+open import OpenCalculus.Inference.SolverImpl.Localise S hints
   using (Localised; localise; lσ; lfix; lcpl; latom; localise-ds; updᵉ-absorb; freeᵉ; freeʳ; anyᶠ; anyᶠ-true;
          outerₑ?; outerᵣ?; Outerₑ; Outerᵣ; κᵉ; κ⊤; ⊩ᴴ-κᵉ; κᵉ≾κ⊤;
          Agree; agreeₑ; agreeᵣ; agree-out; evar?)

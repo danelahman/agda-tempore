@@ -63,8 +63,6 @@ open import Data.List.Properties using (∷-injectiveˡ)
 open import Grades.Durations.Monus T using (Carrier; 0ᴰ; _<ᴰ_)
 open import Relation.Nullary.Decidable using (fromWitness)
 
-open import Data.Maybe.Base using (nothing)
-
 open import Grades.Base
 
 open Order.TraceOrder O using (≼-nil)
@@ -148,9 +146,6 @@ left-sided = posetᵍ record
   ; _≾_             = _≾_
   ; ⊤               = u
   ; ≾-⊤             = ≾-⊤
-  ; u-least?        = nothing
-  ; plus?           = λ _ → nothing
-  ; ·-comm?         = nothing
   ; _⊔_             = _⊔_
   ; ⊔-ubˡ           = ⊔-ubˡ
   ; ⊔-ubʳ           = ⊔-ubʳ

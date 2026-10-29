@@ -69,9 +69,8 @@ open LevelLattice low-high using (_⊑?_)
 open import Grades.Examples.Worked.Operations.Grading using (module Product-LeftSidedTimeLevel)
 open Product-LeftSidedTimeLevel using (opTime) public
 
-open import Grades.Examples.System.Identity using (noWitnesses)
 open import ClosedCalculus.Examples.Typing.Core
-  left-sided-time×low-high opTime noWitnesses
+  left-sided-time×low-high opTime
 
 ------------------------------------------------------------------------
 -- Effectful computations

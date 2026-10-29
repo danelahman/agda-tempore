@@ -33,7 +33,6 @@ open import Grades.Base using (Grade)
 open import Grades.Examples.SemiDirect.ResourceLevels using (Level; one-resource)
 open import Grades.Examples.Worked.SemiDirect.ResourceLevels using (res)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
-open import Grades.Examples.System.Identity using (noWitnesses)
 
 ------------------------------------------------------------------------
 -- The operations
@@ -43,7 +42,7 @@ opTime read  = Grade.u (one-resource {ℕᴰ})
 opTime write = res 0 (+ 1) (+ 1) 1
 opTime send  = res 1 (ℤ.- + 1) (ℤ.- + 1) 0
 
-open import ClosedCalculus.Examples.Typing.Core (one-resource {ℕᴰ}) opTime noWitnesses
+open import ClosedCalculus.Examples.Typing.Core (one-resource {ℕᴰ}) opTime
 
 decided : (c d : R) {p : True (c ≾ᵣ? d)} → c ≾ᵣ d
 decided c d {p} = toWitness p

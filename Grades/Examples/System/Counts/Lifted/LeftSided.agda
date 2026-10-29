@@ -56,6 +56,7 @@ open import Data.Vec.Base using (Vec; tabulate)
 open import Data.Vec.Properties using (tabulate-cong)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; noGradeHints)
 
 open import Grades.Examples.Traces.Lifted.LeftSided
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O
@@ -164,6 +165,14 @@ leftSidedToAtLeastCountsGradeSystem = record
   { RGrade = at-least-counts n
   ; EGrade = left-sided
   ; ∣_∣ᵉ   = left-sided→at-least-counts
+  }
+
+-- its hints
+
+leftSidedToAtLeastCountsGradeSystemʰ : SystemHints leftSidedToAtLeastCountsGradeSystem
+leftSidedToAtLeastCountsGradeSystemʰ = record
+  { RHints      = (at-least-countsʰ n)
+  ; EHints      = noGradeHints
   ; reflects-u? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

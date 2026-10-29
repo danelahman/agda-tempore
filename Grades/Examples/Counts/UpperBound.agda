@@ -26,9 +26,10 @@ open import Grades.Durations using (Duration)
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base
 open import Grades.Indexed using (ℕ-names; module Maps)
-open Maps ℕ-names using (indexedᵍ; Map; _∣_; _!_; !-map₂; pointwise⁻)
+open import Grades.Hints using (GradeHints)
+open Maps ℕ-names using (indexedᵍ; indexedʰ; Map; _∣_; _!_; !-map₂; pointwise⁻)
 
-open import Grades.Examples.Time.RightSided using (right-sided-intervals; 𝕀ᵣ)
+open import Grades.Examples.Time.RightSided using (right-sided-intervals; right-sided-intervalsʰ; 𝕀ᵣ)
 open import Grades.Examples.Counts.AtMost using (at-most-counts)
 import Grades.Examples.Counts.Power right-sided-intervals as P
 
@@ -45,11 +46,18 @@ untimed G = record G
   }
   where open Grade G
 
+untimedʰ : {D : Duration} {G : Grade D} → GradeHints G → GradeHints (untimed G)
+untimedʰ H = record { u-least? = H.u-least? ; ·-comm? = H.·-comm? ; plus? = H.plus? }
+  where module H = GradeHints H
+
 ------------------------------------------------------------------------
 -- The grade
 
 counts-upper-bound : Grade ℕᴰ
 counts-upper-bound = indexedᵍ (untimed right-sided-intervals)
+
+counts-upper-boundʰ : GradeHints counts-upper-bound
+counts-upper-boundʰ = indexedʰ (untimed right-sided-intervals) (untimedʰ right-sided-intervalsʰ)
 
 -- "at most `k` of the operation `s`", none of the others
 

@@ -27,6 +27,7 @@ open import Data.Fin.Subset using () renaming (⊤ to all; ⊥ to none)
 open import Data.Vec.Base using (foldr′)
 
 open import Grades.Base using (Grade)
+open import Grades.Hints using (GradeHints)
 open import Grades.Durations.Intervals ℕᵀ using (fin; ∞; ⁻; ⁺) renaming (_∣_ to _∣ᶜ_)
 
 open import Grades.Examples.Traces.Rigid.Regular.Base Op n code name name-code code-name running public
@@ -75,3 +76,7 @@ of-dur = steps wait≤1
 right-sided : Grade ℕᴰ
 right-sided =
   C.WithDurations.closed-grade of-dur refl (λ {m} {n} → steps-plus wait≤1 {m} {n})
+
+right-sidedʰ : GradeHints right-sided
+right-sidedʰ =
+  C.WithDurations.closed-gradeʰ of-dur refl (λ {m} {n} → steps-plus wait≤1 {m} {n})

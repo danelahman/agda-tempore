@@ -8,7 +8,7 @@
 -- join, and repeated alternatives are merged. A sum with the top  --
 -- among its alternatives is the top, `⊤` absorbing the join. A    --
 -- sum is nonempty, the join having no unit; a product may be      --
--- empty, and is then the unit itself. Where the grade declares    --
+-- empty, and is then the unit itself. Where the hints declare     --
 -- `_·_` commutative, each product is then put in one order, its   --
 -- constants multiplied into one in front of its variables, these  --
 -- by index. The normal form is certified by `≡̂ᵣ`/`≡̂ₑ`, so one     --
@@ -45,7 +45,7 @@ open import Data.List.Base using (List; []; _∷_; _++_; map)
 open import Data.List.Properties using () renaming (≡-dec to ≡-decᴸ)
 open import Data.List.Relation.Unary.Any using (Any; here; there; _─_)
 import Data.List.Relation.Unary.Any as Any
-open import Data.Maybe using (Maybe; just; nothing; Is-just)
+open import Data.Maybe using (Maybe; just; nothing; Is-just; to-witness)
 open import Data.Nat.Base using (ℕ; zero; suc; _<ᵇ_)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 
@@ -53,16 +53,19 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary using (Dec; yes; no)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; module SystemHintsInterface)
 open import Language.Spec
 
 open import Util.Equality
 
 open import OpenCalculus.Syntax.Scopes
 
-module OpenCalculus.Inference.SolverImpl.Product (S : LanguageSpec) where
+module OpenCalculus.Inference.SolverImpl.Product (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
+open SystemHintsInterface hints
 
 open import OpenCalculus.Syntax.Grades S
 open import OpenCalculus.Hypotheses    S
@@ -965,7 +968,7 @@ flatᵣ-≡ ∣ ε ∣̂ᵉ     = flatᵐ-≡ ε
 ------------------------------------------------------------------
 -- Commuting products
 --
--- Where the grade declares `_·_` commutative (`·ₑ-comm?`/`·ᵣ-comm?`),
+-- Where the hints declare `_·_` commutative (`·ₑ-comm?`/`·ᵣ-comm?`),
 -- each product of the flattening is put in one order: the product of
 -- its constants, then its variables by index. Products that differ
 -- only in the order of their factors then coincide, and repeats are
@@ -994,7 +997,7 @@ module Commuteₑ (ij : Is-just ·ₑ-comm?) where
 
   swapₑ : ∀ {Θ} {a b x : EExp Θ} → a ·̂ₑ (b ·̂ₑ x) ≡̂ₑ b ·̂ₑ (a ·̂ₑ x)
   swapₑ = ≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-assoc)
-                   (≡̂ₑ-trans (≡̂ₑ-cong (≡̂ₑ-comm ij) ≡̂ₑ-refl) ≡̂ₑ-assoc)
+                   (≡̂ₑ-trans (≡̂ₑ-cong (≡̂ₑ-comm (to-witness ij)) ≡̂ₑ-refl) ≡̂ₑ-assoc)
 
   insert-≡ : ∀ {Θ} → (a : EAtom Θ) → (bs : List (EAtom Θ))
            → ⟦ insertBy _<ᵉᵃ_ a bs ⟧ᵉˢ ≡̂ₑ ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ bs ⟧ᵉˢ
@@ -1072,7 +1075,7 @@ module Commuteᵣ (ij : Is-just ·ᵣ-comm?) where
 
   swapᵣ : ∀ {Θ} {a b x : RExp Θ} → a ·̂ᵣ (b ·̂ᵣ x) ≡̂ᵣ b ·̂ᵣ (a ·̂ᵣ x)
   swapᵣ = ≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-assoc)
-                   (≡̂ᵣ-trans (≡̂ᵣ-cong (≡̂ᵣ-comm ij) ≡̂ᵣ-refl) ≡̂ᵣ-assoc)
+                   (≡̂ᵣ-trans (≡̂ᵣ-cong (≡̂ᵣ-comm (to-witness ij)) ≡̂ᵣ-refl) ≡̂ᵣ-assoc)
 
   insert-≡ : ∀ {Θ} → (a : RAtom Θ) → (bs : List (RAtom Θ))
            → ⟦ insertBy _<ʳᵃ_ a bs ⟧ʳˢ ≡̂ᵣ ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ bs ⟧ʳˢ

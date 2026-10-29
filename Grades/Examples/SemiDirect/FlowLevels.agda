@@ -12,8 +12,9 @@
 -- where `raise l` sends `⊥` to `⊥` and a level `l'` to `l ∨ l'`.     --
 -- Keeping `⊥` apart from "written at the least level" makes `raise   --
 -- l` preserve `⊥`, and every `raise l` reflects it. The unit         --
--- `(⊥ , ⊥)` is least, `_·_` is not declared to commute, and delays   --
--- touch no level. Sinks are named by natural numbers.                --
+-- `(⊥ , ⊥)` is least, as its hints declare; they do not declare      --
+-- `_·_` commutative. Delays touch no level. Sinks are named by       --
+-- natural numbers.                                                   --
 ------------------------------------------------------------------------
 
 module Grades.Examples.SemiDirect.FlowLevels where
@@ -28,11 +29,12 @@ open import Relation.Nullary using (yes; no)
 
 open import Grades.Durations using (Duration)
 open import Grades.Base using (Grade)
+open import Grades.Hints using (GradeHints)
 open import Grades.Examples.SecurityLevel
-  using (LevelLattice; level-grade; low-high; LowHigh; Low; High)
+  using (LevelLattice; level-grade; level-gradeʰ; low-high; LowHigh; Low; High)
 open import Grades.Indexed using (ℕ-names; module Maps)
 open Maps ℕ-names using (indexedˢ; indexedᵃ; Map)
-open import Grades.SemiDirect using (Semilattice; Action; semidirect)
+open import Grades.SemiDirect using (Semilattice; Action; semidirect; semidirectʰ)
 
 open import Util.Equality
 
@@ -142,9 +144,12 @@ module Over (L : LevelLattice) where
   flow-levels {D} =
     semidirect (level-grade L) outputs (indexedᵃ (raise-action {D}))
 
+  flow-levelsʰ : {D : Duration} → GradeHints (flow-levels {D})
+  flow-levelsʰ {D} = semidirectʰ (level-gradeʰ L) outputs (indexedᵃ (raise-action {D}))
+
 ------------------------------------------------------------------------
 -- At the two-point lattice `Low < High`
 
 open Over low-high public
   using (written-at; outputs; raise; raise-action)
-  renaming (flow-levels to two-point-flow-levels)
+  renaming (flow-levels to two-point-flow-levels; flow-levelsʰ to two-point-flow-levelsʰ)

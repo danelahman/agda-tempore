@@ -51,6 +51,7 @@ open import Data.Vec.Properties using (tabulate-cong)
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; noGradeHints)
 
 open import Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
   using (Trace; traces; nonempty; nf; nf-∈⁺; nf-∈⁻; ⟨_⟩)
@@ -163,6 +164,14 @@ subsetsToAtMostCountsGradeSystem = record
   { RGrade = at-most-counts n
   ; EGrade = right-sided
   ; ∣_∣ᵉ   = subsets→at-most-counts
+  }
+
+-- its hints
+
+subsetsToAtMostCountsGradeSystemʰ : SystemHints subsetsToAtMostCountsGradeSystem
+subsetsToAtMostCountsGradeSystemʰ = record
+  { RHints      = (at-most-countsʰ n)
+  ; EHints      = noGradeHints
   ; reflects-u? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }
