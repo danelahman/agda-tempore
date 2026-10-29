@@ -9,6 +9,11 @@
 -- effect-grade quantifier, and a conjunction indexed by        --
 -- operation symbols.                                           --
 --                                                              --
+-- Derived forms: conjunctions over a list, existential          --
+-- quantification over the variables of a scope (`∃ˢ`), and      --
+-- rigid quantification over several effect-grade variables     --
+-- (`∀ᵉⁿ`).                                                     --
+--                                                              --
 -- Computation-type subtyping is not a former: `C ≾̂ᶜ C'` is     --
 -- `(A ≾̂ᵥᶜ A') ∧̂ (ε ≾̂ₑᶜ ε')`. A type equation `A ≐ᵥ B` is       --
 -- mutual subtyping, `(A ≾̂ᵥᶜ B) ∧̂ (B ≾̂ᵥᶜ A)`; subtyping being   --
@@ -20,6 +25,8 @@
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
+open import Data.List.Base using (List; []; _∷_)
+open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.Product using (_×_)
 open import Data.Unit using (⊤)
 
@@ -38,6 +45,7 @@ open Operations Ops
 open import OpenCalculus.Syntax.Grades S
 open import OpenCalculus.Syntax.Types  S
 open import OpenCalculus.Syntax.Subst  S
+open import OpenCalculus.Hypotheses.Quantified S using (_+eⁿ_)
 
 -- Constraints
 
@@ -64,6 +72,40 @@ A ≐ᵥ B = (A ≾̂ᵥᶜ B) ∧̂ (B ≾̂ᵥᶜ A)
 infixr 6 _∧̂_
 infix  4 _≐ᵥ_ _≾̂ᵥᶜ_ _≾̂ᵣᶜ_ _≾̂ₑᶜ_
 infix  2 ∃ᵗ_ ∃ʳ_ ∃ᵉ_ ∀ᵉ_
+
+-- A conjunction over a list
+
+⋀ᴸ : ∀ {Θ} {A : Set} → List A → (A → Constraint Θ) → Constraint Θ
+⋀ᴸ []       f = ⊤̂
+⋀ᴸ (x ∷ xs) f = f x ∧̂ ⋀ᴸ xs f
+
+-- Existential quantification over fresh variables of one sort, the
+-- innermost first, and over the variables of a scope
+
+∃ᵗ* : ∀ {Θ} → (a : ℕ) → Constraint (scope (a + nTy Θ) (nR Θ) (nE Θ)) → Constraint Θ
+∃ᵗ* zero        C = C
+∃ᵗ* {Θ} (suc a) C = ∃ᵗ* a (∃ᵗ_ {Θ = scope (a + nTy Θ) (nR Θ) (nE Θ)} C)
+
+∃ʳ* : ∀ {Θ} → (b : ℕ) → Constraint (scope (nTy Θ) (b + nR Θ) (nE Θ)) → Constraint Θ
+∃ʳ* zero        C = C
+∃ʳ* {Θ} (suc b) C = ∃ʳ* b (∃ʳ_ {Θ = scope (nTy Θ) (b + nR Θ) (nE Θ)} C)
+
+∃ᵉ* : ∀ {Θ} → (c : ℕ) → Constraint (scope (nTy Θ) (nR Θ) (c + nE Θ)) → Constraint Θ
+∃ᵉ* zero        C = C
+∃ᵉ* {Θ} (suc c) C = ∃ᵉ* c (∃ᵉ_ {Θ = scope (nTy Θ) (nR Θ) (c + nE Θ)} C)
+
+∃ˢ : ∀ {Θ} → (Ψ : Scope) → Constraint (Θ ⊹ Ψ) → Constraint Θ
+∃ˢ {Θ} Ψ C =
+  ∃ᵗ* (nTy Ψ)
+    (∃ʳ* {Θ = scope (nTy Ψ + nTy Θ) (nR Θ) (nE Θ)} (nR Ψ)
+      (∃ᵉ* {Θ = scope (nTy Ψ + nTy Θ) (nR Ψ + nR Θ) (nE Θ)} (nE Ψ) C))
+
+-- Rigid quantification over several effect-grade variables, the
+-- outermost first
+
+∀ᵉⁿ : ∀ {Θ} → (k : ℕ) → Constraint (Θ +eⁿ k) → Constraint Θ
+∀ᵉⁿ zero    C = C
+∀ᵉⁿ (suc k) C = ∀ᵉ (∀ᵉⁿ k C)
 
 -- Binders are traversed with the lifts `_↑ᵗ`/`_↑ʳ`/`_↑ᵉ` of
 -- `OpenCalculus.Syntax.Subst`; weakening is a substitution

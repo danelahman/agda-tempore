@@ -23,7 +23,7 @@ open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 module OpenCalculus.Inference.ScopeClosed (S : LanguageSpec) (opEnum : OpEnum S) where
 
 open import OpenCalculus.Syntax.Types         S using (OCType)
-open import OpenCalculus.Syntax.Contexts      S using (OCtx)
+open import OpenCalculus.Syntax.Contexts      S using (OCtx; _[_]ᶜᵗˣ; [id]ᶜᵗˣ)
 open import OpenCalculus.Syntax.Subst         S
 open import OpenCalculus.Hypotheses           S using (∅ᴴ; ⊤ᴴ; ⊩ᴵ-⊤; _∣_<:̂ᶜ_)
 open import OpenCalculus.Hypotheses.Instances S using (_⊨_)

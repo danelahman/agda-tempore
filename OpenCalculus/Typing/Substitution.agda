@@ -3,9 +3,10 @@
 --                                                              --
 -- Under the truths: a variable `x : A` at depth               --
 -- `k` of `Γ` (`Drop Γ₀ A k Γ Γ⁻`, with `Γ₀` the context before --
--- `x` and `Γ⁻` the context without it), and a value of type    --
--- `A` in `Γ₀`, give `Γ⁻ ⊢ M[V/x]` from `Γ ⊢ M` (`sub-v`,       --
--- `sub-c`), erasing to the run-time substitution `subᶜ k`.     --
+-- `x`, which has no definitions, and `Γ⁻` the context without  --
+-- it), and a value of type `A` in `Γ₀`, give `Γ⁻ ⊢ M[V/x]`     --
+-- from `Γ ⊢ M` (`sub-v`, `sub-c`), erasing to the run-time     --
+-- substitution `subᶜ k`.                                       --
 --                                                              --
 -- A use of `x` behind locks of grade `ρ` meets `x`'s side      --
 -- condition: `A` is eternal, and `V` moves past the locks as   --
@@ -14,6 +15,7 @@
 -- variable that `V`, a value of box type, is.                  --
 ------------------------------------------------------------------
 
+open import Data.Empty using (⊥-elim)
 open import Data.Fin using (zero; suc)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.Product using (Σ-syntax; _,_)
@@ -50,7 +52,7 @@ open import OpenCalculus.Syntax.Run            S
 
 data Drop {Θ : Scope} {n : ℕ} (Γ₀ : OCtx Θ n) (A : OVType Θ)
      : (k : ℕ) → OCtx Θ (k + suc n) → OCtx Θ (k + n) → Set where
-  here    : Drop Γ₀ A 0 (Γ₀ ∷ A) Γ₀
+  here    : defs Γ₀ ≡ ∅ᵖ → Drop Γ₀ A 0 (Γ₀ ∷ A) Γ₀
   there∷  : ∀ {k Γ Γ⁻ B} → Drop Γ₀ A k Γ Γ⁻ → Drop Γ₀ A (suc k) (Γ ∷ B) (Γ⁻ ∷ B)
   there⟨⟩ : ∀ {k Γ Γ⁻ ρ} → Drop Γ₀ A k Γ Γ⁻ → Drop Γ₀ A k (Γ ⟨ ρ ⟩) (Γ⁻ ⟨ ρ ⟩)
 
@@ -59,23 +61,41 @@ module _ {Θ : Scope} {n : ℕ} {Γ₀ : OCtx Θ n} {A : OVType Θ} where
   -- the grade accumulated at the dropped variable
 
   dgrade : ∀ {k Γ Γ⁻} → Drop Γ₀ A k Γ Γ⁻ → RExp Θ
-  dgrade here                    = ûᵣ
+  dgrade (here _)                = ûᵣ
   dgrade (there∷ d)              = dgrade d
   dgrade (there⟨⟩ {ρ = ρ} d)     = dgrade d ·̂ᵣ ρ
 
   -- the variables before the dropped one, in the context without it
 
   dshift : ∀ {k Γ Γ⁻} → Drop Γ₀ A k Γ Γ⁻ → Shift Γ₀ Γ⁻
-  shift    (dshift here)        i = i
-  shift-ty (dshift here)        i = refl
-  shift    (dshift (there∷ d))  i = suc (shift (dshift d) i)
-  shift-ty (dshift (there∷ d))  i = shift-ty (dshift d) i
-  shift    (dshift (there⟨⟩ d)) i = shift (dshift d) i
-  shift-ty (dshift (there⟨⟩ d)) i = shift-ty (dshift d) i
+  shift     (dshift (here _))     i = i
+  shift-ty  (dshift (here _))     i = refl
+  shift-dfs (dshift (here _))       = refl
+  shift     (dshift (there∷ d))  i = suc (shift (dshift d) i)
+  shift-ty  (dshift (there∷ d))  i = shift-ty (dshift d) i
+  shift-dfs (dshift (there∷ d))    = shift-dfs (dshift d)
+  shift     (dshift (there⟨⟩ d)) i = shift (dshift d) i
+  shift-ty  (dshift (there⟨⟩ d)) i = shift-ty (dshift d) i
+  shift-dfs (dshift (there⟨⟩ d))   = shift-dfs (dshift d)
+
+  -- the context before the dropped variable has no definitions
+
+  drop-defs : ∀ {k Γ Γ⁻} → Drop Γ₀ A k Γ Γ⁻ → defs Γ₀ ≡ ∅ᵖ
+  drop-defs (here nd)   = nd
+  drop-defs (there∷ d)  = drop-defs d
+  drop-defs (there⟨⟩ d) = drop-defs d
+
+  -- the context with the dropped variable has the definitions of the
+  -- one without it
+
+  drop-dfs : ∀ {k Γ Γ⁻} → Drop Γ₀ A k Γ Γ⁻ → defs Γ⁻ ≡ defs Γ
+  drop-dfs (here _)    = refl
+  drop-dfs (there∷ d)  = drop-dfs d
+  drop-dfs (there⟨⟩ d) = drop-dfs d
 
   dshift-gr : ∀ {k Γ Γ⁻} {Q : Hyps Θ} → (d : Drop Γ₀ A k Γ Γ⁻) → ∀ i
             → Q ⊩ lookup-gr Γ⁻ (shift (dshift d) i) ≾̂ᵣ lookup-gr Γ₀ i ·̂ᵣ dgrade d
-  dshift-gr here        i = eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)
+  dshift-gr (here _)    i = eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)
   dshift-gr (there∷ d)  i = dshift-gr d i
   dshift-gr (there⟨⟩ d) i = transᵣ (monoᵣ (dshift-gr d i) ⊩≾̂ᵣ-refl) (eqᵣ ≡̂ᵣ-assoc)
 
@@ -87,6 +107,7 @@ module _ {Θ : Scope} {n : ℕ} {Γ₀ : OCtx Θ n} {A : OVType Θ} where
   ty  (drop-ren d le) = shift-ty (dshift d)
   gr  (drop-ren d le) i =
     transᵣ (dshift-gr d i) (transᵣ (monoᵣ ⊩≾̂ᵣ-refl le) (eqᵣ ≡̂ᵣ-identityʳ))
+  dfs (drop-ren d le)   = shift-dfs (dshift d)
 
   -- A variable of the context is the dropped one or one of the context
   -- without it
@@ -101,8 +122,8 @@ module _ {Θ : Scope} {n : ℕ} {Γ₀ : OCtx Θ n} {A : OVType Θ} where
          → DropView d x
 
   drop-view : ∀ {k Γ Γ⁻} {B ρ} → (d : Drop Γ₀ A k Γ Γ⁻) → (x : B ∈̂[ ρ ] Γ) → DropView d x
-  drop-view here        Hd        = hit refl refl (λ U → sym (ren-idᵛ (λ i → refl) U))
-  drop-view here        (Tl-∷ x)  = miss x (λ U → refl)
+  drop-view (here _)    Hd        = hit refl refl (λ U → sym (ren-idᵛ (λ i → refl) U))
+  drop-view (here _)    (Tl-∷ x)  = miss x (λ U → refl)
   drop-view (there∷ d)  Hd        = miss Hd (λ U → refl)
   drop-view (there∷ d)  (Tl-∷ x)  with drop-view d x
   ... | hit eB eρ e  = hit eB eρ (λ U → trans (cong wkᵛ (e U)) (ren-fuseᵛ (λ i → refl) U))
@@ -115,7 +136,7 @@ module _ {Θ : Scope} {n : ℕ} {Γ₀ : OCtx Θ n} {A : OVType Θ} where
 
 wkᵉ-drop : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻}
          → Drop Γ₀ A k Γ Γ⁻ → Drop (wkᵉ-ctx Γ₀) (wkᵉ-v A) k (wkᵉ-ctx Γ) (wkᵉ-ctx Γ⁻)
-wkᵉ-drop here        = here
+wkᵉ-drop {Γ₀ = Γ₀} (here nd) = here (trans (defs-wkᵉ Γ₀) nd)
 wkᵉ-drop (there∷ d)  = there∷ (wkᵉ-drop d)
 wkᵉ-drop (there⟨⟩ d) = there⟨⟩ (wkᵉ-drop d)
 
@@ -133,7 +154,8 @@ wkᵉ-val {Γ = Γ} {A} V = ty-subst (wkˢᵉ-v A) (ctx-castᵛ (wkˢᵉ-ctx Γ)
         (erase-substᵛ ⌊ V ⌋ᵛ wkˢᵉ)
 
 ------------------------------------------------------------------------
--- A value of box type is a variable, under subsumptions
+-- A value of box type in a context without definitions is a
+-- variable, under subsumptions
 
 record BoxVar {Θ n} (Γ : OCtx Θ n) (ρ₀ : RExp Θ) (A₀ : OVType Θ) (U : RunV n) : Set where
   field
@@ -149,15 +171,16 @@ record BoxVar {Θ n} (Γ : OCtx Θ n) (ρ₀ : RExp Θ) (A₀ : OVType Θ) (U : 
 open BoxVar public
 
 box-var : ∀ {Θ n} {Γ : OCtx Θ n} {ρ₀ : RExp Θ} {A₀ : OVType Θ}
-        → (V : ⊤ᴴ ∣ Γ ⊢V⦂ [ ρ₀ ] A₀) → BoxVar Γ ρ₀ A₀ ∥ V ∥ᵛ
-box-var (var x (≾ᵘ-ok le)) =
+        → defs Γ ≡ ∅ᵖ → (V : ⊤ᴴ ∣ Γ ⊢V⦂ [ ρ₀ ] A₀) → BoxVar Γ ρ₀ A₀ ∥ V ∥ᵛ
+box-var nd (var x (≾ᵘ-ok le)) =
   record { cell = x ; young = le ; wider = ⊩≾̂ᵣ-refl ; narrower = <:̂ᵛ-refl _ ; is-cell = refl }
-box-var (var x (hyp-ok () _ _))
-box-var (annᵛ _ V) = box-var V
-box-var (subV V ([ p ]ₛ q)) =
+box-var nd (var x (hyp-ok () _ _))
+box-var nd (def f δ h e) = ⊥-elim (∅ᵖ-∌ (subst (_ ∈ᵖ[ _ ]_) nd f))
+box-var nd (annᵛ _ V) = box-var nd V
+box-var nd (subV V ([ p ]ₛ q)) =
   record { cell = cell b ; young = young b ; wider = transᵣ p (wider b)
          ; narrower = <:̂ᵛ-trans (narrower b) q ; is-cell = is-cell b }
-  where b = box-var V
+  where b = box-var nd V
 
 ------------------------------------------------------------------------
 -- The substitution lemma
@@ -199,7 +222,7 @@ sub-unbox {Γ⁻ = Γ⁻} d U x p q N (hit refl refl _) =
             (transᵣ (eqᵣ ≡̂ᵣ-identityˡ) (transᵣ p (wider b)))))
         (<:̂ᵛ-trans (narrower b) q) N
   where
-    b  = box-var U
+    b  = box-var (drop-defs d) U
     i  = var-pos (cell b)
     j  = shift (dshift d) i
     eq = trans (shift-ty (dshift d) i) (var-pos-ty (cell b))
@@ -216,7 +239,7 @@ sub-unbox d U x p q N (miss x' _) = unbox x' p q N
        (trans (cong var (trans (var-pos-ty-subst eq _) (var-pos-lookup Γ⁻ j)))
               (sym (trans (e ∥ U ∥ᵛ) (cong (renᵛ (shift (dshift d))) (is-cell b)))))
   where
-    b  = box-var U
+    b  = box-var (drop-defs d) U
     i  = var-pos (cell b)
     j  = shift (dshift d) i
     eq = trans (shift-ty (dshift d) i) (var-pos-ty (cell b))
@@ -227,6 +250,7 @@ mutual
   sub-v : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B : OVType Θ}
         → Drop Γ₀ A k Γ Γ⁻ → ⊤ᴴ ∣ Γ₀ ⊢V⦂ A → ⊤ᴴ ∣ Γ ⊢V⦂ B → ⊤ᴴ ∣ Γ⁻ ⊢V⦂ B
   sub-v d U (var x p)      = sub-var d U x p (drop-view d x)
+  sub-v d U (def f δ h e)  = def (subst (_ ∈ᵖ[ _ ]_) (sym (drop-dfs d)) f) δ h e
   sub-v d U (const B c)    = const B c
   sub-v d U ⋆              = ⋆
   sub-v d U true           = true
@@ -281,6 +305,7 @@ mutual
           → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ⊤ᴴ ∣ Γ₀ ⊢V⦂ A) → (V : ⊤ᴴ ∣ Γ ⊢V⦂ B)
           → ∥ sub-v d U V ∥ᵛ ≡ subᵛ k ∥ U ∥ᵛ ∥ V ∥ᵛ
   ∥sub-v∥ d U (var x p)      = ∥sub-var∥ d U x p (drop-view d x)
+  ∥sub-v∥ d U (def f δ h e)  = refl
   ∥sub-v∥ d U (const B c)    = refl
   ∥sub-v∥ d U ⋆              = refl
   ∥sub-v∥ d U true           = refl

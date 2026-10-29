@@ -157,19 +157,19 @@ preservation : ∀ {n m} {S : State n} {S' : State m} {e : S ≤ₛ S'} {Σ : St
 preservation T (D , eD) APP with invC≡ D eD
 ... | _ , (A , (DV , eV) , (DW , eW)) , q₀ with invV≡ DV eV
 ... | _ , (_ , _ , refl , (DM , eM)) , (p₁ ⇒ₛ q₁) =
-  stay T (sub-c here (subV DW p₁) DM)
-       (trans (∥sub-c∥ here (subV DW p₁) DM) (cong₂ (subᶜ 0) eW eM))
+  stay T (sub-c (here (types-defs T)) (subV DW p₁) DM)
+       (trans (∥sub-c∥ (here (types-defs T)) (subV DW p₁) DM) (cong₂ (subᶜ 0) eW eM))
        (<:̂ᶜ-trans q₁ q₀)
 
 preservation T (D , eD) MATCH with invC≡ D eD
 ... | _ , (A , B , (DV , eV) , (DM , eM)) , q₀ with invV≡ DV eV
 ... | _ , (_ , _ , refl , (D₁ , e₁) , (D₂ , e₂)) , (p₁ |×|ₛ p₂) =
-  stay T (sub-c here (subV D₂ p₂) M₁)
-       (trans (∥sub-c∥ here (subV D₂ p₂) M₁)
-              (cong₂ (subᶜ 0) e₂ (trans (∥sub-c∥ (there∷ here) (subV D₁ p₁) DM)
+  stay T (sub-c (here (types-defs T)) (subV D₂ p₂) M₁)
+       (trans (∥sub-c∥ (here (types-defs T)) (subV D₂ p₂) M₁)
+              (cong₂ (subᶜ 0) e₂ (trans (∥sub-c∥ (there∷ (here (types-defs T))) (subV D₁ p₁) DM)
                                         (cong₂ (subᶜ 1) e₁ eM))))
        q₀
-  where M₁ = sub-c (there∷ here) (subV D₁ p₁) DM
+  where M₁ = sub-c (there∷ (here (types-defs T))) (subV D₁ p₁) DM
 
 preservation T (D , eD) (CMP {⋈} {V} {W}) with invC≡ D eD
 ... | _ , ((DV , eV) , (DM , eM) , (DN , eN)) , q₀ =
@@ -188,7 +188,7 @@ preservation T (D , eD) CASEℕ-ZERO with invC≡ D eD
 preservation T (D , eD) CASEℕ-SUCC with invC≡ D eD
 ... | _ , ((DV , eV) , (DM , eM) , (DN , eN)) , q₀ with invV≡ DV eV
 ... | _ , (refl , (D₁ , e₁)) , _ =
-  stay T (sub-c here D₁ DN) (trans (∥sub-c∥ here D₁ DN) (cong₂ (subᶜ 0) e₁ eN)) q₀
+  stay T (sub-c (here (types-defs T)) D₁ DN) (trans (∥sub-c∥ (here (types-defs T)) D₁ DN) (cong₂ (subᶜ 0) e₁ eN)) q₀
 
 preservation T (D , eD) RECℕ-ZERO with invC≡ D eD
 ... | _ , (B , ε₀ , refl , (DV , eV) , (DM , eM) , (DN , eN) , pε) , q₀ = stay T DM eM q₀
@@ -198,7 +198,7 @@ preservation {Σ = Σ} T (D , eD) RECℕ-SUCC with invC≡ D eD
 ... | _ , (refl , (D₁ , e₁)) , _ =
   stay T (subC (recℕ D₁ DM DN pε ⨟ N₁) (<:̂ᵛ-refl B ‼ₛ pε))
        (cong₂ _⨟_ (cong₃ recℕ e₁ eM eN)
-              (trans (∥sub-c∥ (there∷ (there⟨⟩ here)) D₁ (rename-c r DN))
+              (trans (∥sub-c∥ (there∷ (there⟨⟩ (here (types-defs T)))) D₁ (rename-c r DN))
                      (cong₂ (subᶜ 1) e₁
                             (trans (∥rename-c∥ r DN)
                                    (trans (ren-idᶜ (ext-id (ext-id (λ i → refl))) ∥ DN ∥ᶜ) eN)))))
@@ -206,19 +206,19 @@ preservation {Σ = Σ} T (D , eD) RECℕ-SUCC with invC≡ D eD
   where
     r : Ren ⊤ᴴ ((ctx Σ ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B) ((ctx Σ ∷ Nat) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B)
     r = lockʳ ∣ ε₀ ∣̂ᵉ (lock-remove topᵣ ⇑ʳ) ⇑ʳ
-    N₁ = sub-c (there∷ (there⟨⟩ here)) D₁ (rename-c r DN)
+    N₁ = sub-c (there∷ (there⟨⟩ (here (types-defs T)))) D₁ (rename-c r DN)
 
 preservation T (D , eD) CASE-INL with invC≡ D eD
 ... | _ , (A , B , (DV , eV) , (DM , eM) , (DN , eN)) , q₀ with invV≡ DV eV
 ... | _ , (_ , _ , refl , (D₁ , e₁)) , (p₁ |+|ₛ p₂) =
-  stay T (sub-c here (subV D₁ p₁) DM)
-       (trans (∥sub-c∥ here (subV D₁ p₁) DM) (cong₂ (subᶜ 0) e₁ eM)) q₀
+  stay T (sub-c (here (types-defs T)) (subV D₁ p₁) DM)
+       (trans (∥sub-c∥ (here (types-defs T)) (subV D₁ p₁) DM) (cong₂ (subᶜ 0) e₁ eM)) q₀
 
 preservation T (D , eD) CASE-INR with invC≡ D eD
 ... | _ , (A , B , (DV , eV) , (DM , eM) , (DN , eN)) , q₀ with invV≡ DV eV
 ... | _ , (_ , _ , refl , (D₁ , e₁)) , (p₁ |+|ₛ p₂) =
-  stay T (sub-c here (subV D₁ p₂) DN)
-       (trans (∥sub-c∥ here (subV D₁ p₂) DN) (cong₂ (subᶜ 0) e₁ eN)) q₀
+  stay T (sub-c (here (types-defs T)) (subV D₁ p₂) DN)
+       (trans (∥sub-c∥ (here (types-defs T)) (subV D₁ p₂) DN) (cong₂ (subᶜ 0) e₁ eN)) q₀
 
 preservation T (D , eD) CASEL-NIL with invC≡ D eD
 ... | _ , (A , (DV , eV) , (DM , eM) , (DN , eN)) , q₀ = stay T DM eM q₀
@@ -226,12 +226,12 @@ preservation T (D , eD) CASEL-NIL with invC≡ D eD
 preservation T (D , eD) CASEL-CONS with invC≡ D eD
 ... | _ , (A , (DV , eV) , (DM , eM) , (DN , eN)) , q₀ with invV≡ DV eV
 ... | _ , (_ , refl , (D₁ , e₁) , (D₂ , e₂)) , (|List|ₛ p₁) =
-  stay T (sub-c here (subV D₂ (|List|ₛ p₁)) N₁)
-       (trans (∥sub-c∥ here (subV D₂ (|List|ₛ p₁)) N₁)
-              (cong₂ (subᶜ 0) e₂ (trans (∥sub-c∥ (there∷ here) (subV D₁ p₁) DN)
+  stay T (sub-c (here (types-defs T)) (subV D₂ (|List|ₛ p₁)) N₁)
+       (trans (∥sub-c∥ (here (types-defs T)) (subV D₂ (|List|ₛ p₁)) N₁)
+              (cong₂ (subᶜ 0) e₂ (trans (∥sub-c∥ (there∷ (here (types-defs T))) (subV D₁ p₁) DN)
                                         (cong₂ (subᶜ 1) e₁ eN))))
        q₀
-  where N₁ = sub-c (there∷ here) (subV D₁ p₁) DN
+  where N₁ = sub-c (there∷ (here (types-defs T))) (subV D₁ p₁) DN
 
 preservation T (D , eD) RECL-NIL with invC≡ D eD
 ... | _ , (A , B , ε₀ , refl , (DV , eV) , (DM , eM) , (DN , eN) , pε) , q₀ = stay T DM eM q₀
@@ -241,9 +241,9 @@ preservation {Σ = Σ} T (D , eD) RECL-CONS with invC≡ D eD
 ... | _ , (_ , refl , (D₁ , e₁) , (D₂ , e₂)) , (|List|ₛ p₁) =
   stay T (subC (recL (subV D₂ (|List|ₛ p₁)) DM DN pε ⨟ N₂) (<:̂ᵛ-refl B ‼ₛ pε))
        (cong₂ _⨟_ (cong₃ recL e₂ eM eN)
-              (trans (∥sub-c∥ (there∷ (there⟨⟩ here)) (subV D₂ (|List|ₛ p₁)) N₁)
+              (trans (∥sub-c∥ (there∷ (there⟨⟩ (here (types-defs T)))) (subV D₂ (|List|ₛ p₁)) N₁)
                      (cong₂ (subᶜ 1) e₂
-                            (trans (∥sub-c∥ (there∷ (there⟨⟩ (there∷ here))) (subV D₁ p₁) N₀)
+                            (trans (∥sub-c∥ (there∷ (there⟨⟩ (there∷ (here (types-defs T))))) (subV D₁ p₁) N₀)
                                    (cong₂ (subᶜ 2) e₁
                                           (trans (∥rename-c∥ r DN)
                                                  (trans (ren-idᶜ (ext-id (ext-id (ext-id
@@ -255,16 +255,16 @@ preservation {Σ = Σ} T (D , eD) RECL-CONS with invC≡ D eD
                ((ctx Σ ∷ A ∷ |List| A) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B)
     r = lockʳ ∣ ε₀ ∣̂ᵉ ((lock-remove topᵣ ⇑ʳ) ⇑ʳ) ⇑ʳ
     N₀ = rename-c r DN
-    N₁ = sub-c (there∷ (there⟨⟩ (there∷ here))) (subV D₁ p₁) N₀
-    N₂ = sub-c (there∷ (there⟨⟩ here)) (subV D₂ (|List|ₛ p₁)) N₁
+    N₁ = sub-c (there∷ (there⟨⟩ (there∷ (here (types-defs T))))) (subV D₁ p₁) N₀
+    N₂ = sub-c (there∷ (there⟨⟩ (here (types-defs T)))) (subV D₂ (|List|ₛ p₁)) N₁
 
 -- sequencing
 
 preservation T (D , eD) SEQ-RET with invC≡ D eD
 ... | _ , (A , B , ε₁ , ε₂ , refl , (DR , eR) , (DN , eN)) , q₀ with invC≡ DR eR
 ... | _ , (A₃ , refl , (DV , eV)) , (p₃ ‼ₛ q₃) =
-  stay T (sub-c here (subV DV p₃) (rename-c r DN))
-       (trans (∥sub-c∥ here (subV DV p₃) (rename-c r DN))
+  stay T (sub-c (here (types-defs T)) (subV DV p₃) (rename-c r DN))
+       (trans (∥sub-c∥ (here (types-defs T)) (subV DV p₃) (rename-c r DN))
               (cong₂ (subᶜ 0) eV (trans (∥rename-c∥ r DN)
                                         (trans (ren-idᶜ (ext-id (λ i → refl)) ∥ DN ∥ᶜ) eN))))
        (<:̂ᶜ-trans (<:̂ᵛ-refl B ‼ₛ ≾-·ˡ q₃) q₀)
@@ -325,8 +325,8 @@ preservation T (D , eD) HANDLE-RET with invC≡ D eD
     with invC≡ DR eR | invV≡ DH eH
 ... | _ , (A₃ , refl , (DV , eV)) , (p₃ ‼ₛ q₃)
     | _ , (A₄ , B₄ , ε₄ , ε₄' , refl , (DN , eN) , _) , ((pA ‼ₛ pε) ⇛ₛ (pB ‼ₛ pε')) =
-  stay T (sub-c here (subV DV (<:̂ᵛ-trans p₃ pA)) (rename-c r DN))
-       (trans (∥sub-c∥ here (subV DV (<:̂ᵛ-trans p₃ pA)) (rename-c r DN))
+  stay T (sub-c (here (types-defs T)) (subV DV (<:̂ᵛ-trans p₃ pA)) (rename-c r DN))
+       (trans (∥sub-c∥ (here (types-defs T)) (subV DV (<:̂ᵛ-trans p₃ pA)) (rename-c r DN))
               (cong₂ (subᶜ 0) eV (trans (∥rename-c∥ r DN)
                                         (trans (ren-idᶜ (ext-id (λ i → refl)) ∥ DN ∥ᶜ) eN))))
        (<:̂ᶜ-trans (pB ‼ₛ transₑ pε' (≾-·ˡ q₃)) q₀)
@@ -358,10 +358,10 @@ preservation {Σ = Σ} T (D , eD) (HANDLE-OP {op} {V} {M} {N} {H}) with invC≡ 
                (ctx Σ ∷ ⌜ param op ⌝ᵍ
                  ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ B₄ ‼ (ε₃ ·̂ₑ ε₄')))
     r = (lock-remove topᵣ ⇑ʳ) ⇑ʳ
-    Mop = sub-c (there∷ here) DV (rename-c r Cl)
+    Mop = sub-c (there∷ (here (types-defs T))) DV (rename-c r Cl)
     eMop : ∥ Mop ∥ᶜ ≡ H op [ V ]₁
     eMop =
-      trans (∥sub-c∥ (there∷ here) DV (rename-c r Cl))
+      trans (∥sub-c∥ (there∷ (here (types-defs T))) DV (rename-c r Cl))
             (cong₂ (subᶜ 1) eV
                    (trans (∥rename-c∥ r Cl)
                           (trans (ren-idᶜ (ext-id (ext-id (λ i → refl))) ∥ Cl ∥ᶜ)
@@ -407,8 +407,8 @@ preservation {Σ = Σ} T (D , eD) BOX with invC≡ D eD
 
 preservation T (D , eD) UNBOX with invC≡ D eD
 ... | _ , (ρ₀ , A₀ , ρ' , A , x , refl , p , q , (DN , eN)) , q₀ =
-  stay T (sub-c here (subV (proj₁ L) q) DN)
-       (trans (∥sub-c∥ here (subV (proj₁ L) q) DN) (cong₂ (subᶜ 0) (proj₂ L) eN)) q₀
+  stay T (sub-c (here (types-defs T)) (subV (proj₁ L) q) DN)
+       (trans (∥sub-c∥ (here (types-defs T)) (subV (proj₁ L) q) DN) (cong₂ (subᶜ 0) (proj₂ L) eN)) q₀
   where L = lookup-typed T x p
 
 ------------------------------------------------------------------------

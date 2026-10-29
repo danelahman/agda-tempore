@@ -6,7 +6,8 @@
 -- the typing data except the annotations below. `RawV Θ n` and --
 -- `RawC Θ n` are scoped by the grade and type variables `Θ` of --
 -- the context and by `n` term variables, de Bruijn indices     --
--- into the full context.                                       --
+-- into the full context. A top-level definition is named by    --
+-- its position in the program context, counted from the first. --
 --                                                              --
 -- The annotations are the base type of a constant, the         --
 -- operation of a `perform`, the duration of a `delay`, the     --
@@ -52,6 +53,12 @@ mutual
     -- variables
 
     var     : Fin n
+              -------
+            → RawV Θ n
+
+    -- top-level definitions
+
+    def     : ℕ
               -------
             → RawV Θ n
 
@@ -337,7 +344,8 @@ mutual
   HandlerFreeᶜ (M ⦂ᶜ C)                 = HandlerFreeᶜ M
 
 -- A term whose handlers are second-class: every handler is the handler
--- of a `handle`, and every `handle` has a handler as its handler
+-- of a `handle`, and every `handle` has a handler as its handler; and
+-- which uses no top-level definition
 
 mutual
 
@@ -350,6 +358,7 @@ mutual
   SecondClassᵛ (cmp ⋈ V W)   = SecondClassᵛ V × SecondClassᵛ W
   SecondClassᵛ (lam M)       = SecondClassᶜ M
   SecondClassᵛ (handler N H) = ⊥
+  SecondClassᵛ (def k)       = ⊥
   SecondClassᵛ (V ⦂ᵛ A)      = SecondClassᵛ V
   SecondClassᵛ _             = ⊤
 

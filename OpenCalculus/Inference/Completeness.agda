@@ -12,6 +12,7 @@
 ------------------------------------------------------------------
 
 open import Data.Fin using (zero)
+open import Data.Nat using (ℕ)
 open import Data.Product using (Σ-syntax; _,_)
 
 open import Function.Bundles using (_⇔_; mk⇔)
@@ -44,6 +45,7 @@ open import OpenCalculus.Typing.Erasure   S
 
 open import OpenCalculus.Inference.Constraints.Syntax       S
 open import OpenCalculus.Inference.Constraints.Satisfaction S
+open import OpenCalculus.Inference.Constraints.Schemes      S using (instᶜ-complete)
 open import OpenCalculus.Inference.Constraints.Properties   S using (⊨-≐ᵥ)
 
 open import OpenCalculus.Inference.Generate  S
@@ -63,6 +65,16 @@ private
   reC : ∀ {Θ₀ Θ' n} {τ₁ τ : Subst Θ₀ Θ'} → τ₁ ≐ˢ τ → (M : RawC Θ₀ n)
       → {M' : RawC Θ' n} → M [ τ ]ᴿᶜ ≡ M' → InvC τ₁ M M'
   reC p M e = invC M (trans ([≐]ᴿᶜ p M) e)
+
+-- A use of a definition: its position is bound to the scheme of the
+-- rule, and the instance of the rule solves the constraint
+
+cmpDef : ∀ {Θ n Θ'} → (σ : Subst Θ Θ') → {Q : Hyps Θ'}
+       → (Γ : OCtx Θ n) → (k : ℕ) → (A : OVType Θ) → (sc : Scheme)
+       → sc ∈ᵖ[ k ] defs Γ → (δ : Subst (Θˢ sc) Θ') → Q ⊩ᴴ Qˢ sc [ δ ]
+       → Q ∣ Xˢ sc [ δ ]ᵛ <:̂ᵛ A [ σ ]ᵛ
+       → σ ⊨[ Q ] defConstraint (lookupᵖ (defs Γ) k) A
+cmpDef σ Γ k A sc f δ h st rewrite ∈-lookupᵖ f = instᶜ-complete sc A δ st h
 
 mutual
 
@@ -96,6 +108,11 @@ mutual
 
       ok' : VarOK Q (lookup-ty Γ i [ σ ]ᵛ) (lookup-gr Γ i [ σ ]ʳ)
       ok' = subst₂ (VarOK Q) (sym lty) (sym lgr) ok
+
+  -- top-level definitions
+
+  cmpV {σ = σ} ι Γ A _ (def {k = k} {s = sc} f δ h refl) def ceq st =
+    cmpDef σ Γ k A sc (subst (sc ∈ᵖ[ k ]_) (trans (cong defs ceq) (defs-subst Γ σ)) f) δ h st
 
   -- base-typed constants, unit, booleans
   --

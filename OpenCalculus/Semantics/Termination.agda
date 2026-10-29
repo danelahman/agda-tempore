@@ -5,13 +5,11 @@
 -- reducible (`fund-v`, `fund-c`); a term typed in the empty    --
 -- context, run from the empty state, reduces in finitely many  --
 -- steps to a returned value or an operation call               --
--- (`termination`), so do the instances of a typing in the      --
--- empty context (`programs`).                                  --
+-- (`termination`).                                             --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Fin using (Fin; zero; suc)
-open import Data.List.Base using ([])
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product using (Σ-syntax; _×_; _,_)
 open import Data.Unit using (tt)
@@ -37,13 +35,8 @@ open import OpenCalculus.Syntax.Grades            S
 open import OpenCalculus.Syntax.Types             S
 open import OpenCalculus.Syntax.Contexts          S
 open import OpenCalculus.Syntax.ContextsLemmas    S
-open import OpenCalculus.Syntax.Subst             S using (Subst; _[_]ᶜ)
-open import OpenCalculus.Syntax.Raw.Subst         S using (_[_]ᴿᶜ)
 open import OpenCalculus.Hypotheses               S
-open import OpenCalculus.Hypotheses.Instances     S using (_⊨_)
 open import OpenCalculus.Typing                   S
-open import OpenCalculus.Typing.Erasure           S using (⌊_⌋ᶜ)
-open import OpenCalculus.Typing.Instantiation     S using (instantiation)
 open import OpenCalculus.Typing.GradeSubstitution S using (clause-ctx)
 open import OpenCalculus.Typing.Renaming          S using (∥_∥ᵛ; ∥_∥ᶜ)
 open import OpenCalculus.Typing.Inversion         S using (is-true; is-false; is-cmp)
@@ -129,10 +122,13 @@ private
 
 ------------------------------------------------------------------------
 -- Environments: reducible values for the variables of a context
+-- without definitions
 
 record Env {Θ n m} (Γ : OCtx Θ n) (S : State m) (σ : Fin n → RunV m) : Set where
   constructor env
-  field at : ∀ i → VRed (shapeᵛ (lookup-ty Γ i)) S (σ i)
+  field
+    at     : ∀ i → VRed (shapeᵛ (lookup-ty Γ i)) S (σ i)
+    nodefs : defs Γ ≡ ∅ᵖ
 
 open Env
 
@@ -141,15 +137,18 @@ private
   env-mono : ∀ {Θ n m k} {Γ : OCtx Θ n} {S : State m} {S' : State k} {σ}
            → Env Γ S σ → (e : S ≤ₛ S') → Env Γ S' (λ i → renᵛ (wkₛ e) (σ i))
   at (env-mono {Γ = Γ} {σ = σ} r e) i = VRed-mono (shapeᵛ (lookup-ty Γ i)) e (σ i) (at r i)
+  nodefs (env-mono r e) = nodefs r
 
   ⟨⟩ᵉ : ∀ {Θ n m} {Γ : OCtx Θ n} {ρ : RExp Θ} {S : State m} {σ}
       → Env Γ S σ → Env (Γ ⟨ ρ ⟩) S σ
   at (⟨⟩ᵉ r) = at r
+  nodefs (⟨⟩ᵉ r) = nodefs r
 
   env-∙ : ∀ {Θ n m} {Γ : OCtx Θ n} {A : OVType Θ} {S : State m} {σ W}
         → Env Γ S σ → VRed (shapeᵛ A) S W → Env (Γ ∷ A) S (σ ∙ W)
   at (env-∙ r w) zero    = w
   at (env-∙ r w) (suc i) = at r i
+  nodefs (env-∙ r w) = nodefs r
 
   -- views of the reducible values of a shape
 
@@ -266,6 +265,8 @@ mutual
                           (cong shapeᵛ (sym (lookup-ty-wkᵉ Γ i))))
                    (sym (ren-⨾ᵛ e (res₁ {V = kv}) (σ i)))
                    (at (env-mono r (e ⨾ₛ res₁ {V = kv})) i)
+          nodefs env-cl = trans (defs-wkᵉ Γ) (nodefs r)
+  fund-v (def f δ h e)   r = ⊥-elim (∅ᵖ-∌ (subst (_ ∈ᵖ[ _ ]_) (nodefs r) f))
   fund-v (annᵛ A V)      r = fund-v V r
   fund-v {S = S} (subV V p) r = subst (λ s → VRed s S _) (<:-shapeᵛ p) (fund-v V r)
 
@@ -389,6 +390,7 @@ mutual
       r' : Env (Γ ⟨ rconst (of-durʳ τ) ⟩) (S ⟨ τ ⟩ₛ) σ
       at r' i = subst (VRed (shapeᵛ (lookup-ty Γ i)) (S ⟨ τ ⟩ₛ)) (ren-idᵛ (λ j → refl) (σ i))
                       (VRed-mono (shapeᵛ (lookup-ty Γ i)) (≤ₛ-lock ≤ₛ-refl) (σ i) (at r i))
+      nodefs r' = nodefs r
 
   fund-c {S = S} {σ} (handle_`with_ {B = B} M V) r
     with psubᵛ σ ∥ V ∥ᵛ | handler-red? (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
@@ -411,6 +413,7 @@ mutual
       r' : Env (Γ ∷ [ ρ ] A) (S ∷ₛ psubᵛ σ ∥ V ∥ᵛ) (exts σ)
       at r' zero    = VRed-mono (shapeᵛ A) res₁ _ (fund-v V (⟨⟩ᵉ r))
       at r' (suc i) = VRed-mono (shapeᵛ (lookup-ty Γ i)) res₁ (σ i) (at r i)
+      nodefs r' = nodefs r
 
   fund-c (annᶜ C M) r = fund-c M r
   fund-c {S = S} (subC M p) r = subst (λ s → CRed (VRed s) S _) (<:-shapeᶜ p) (fund-c M r)
@@ -430,17 +433,4 @@ halts (cred-op ms _ _) = _ , _ , _ , ms , is-perform _ _ _
 termination : ∀ {M : RunC 0} {C : OCType ∅ˢ} → [] ⊢ᶜ M ⦂ C → Halts ∅ M
 termination {M} (D , refl) =
   halts (subst (CRed _ ∅) (trans (psub-varᶜ {f = λ i → i} (λ ()) M) (ren-idᶜ (λ ()) M))
-               (fund-c {σ = λ ()} D (env (λ ()))))
-
-------------------------------------------------------------------------
--- The instances of a typing in the empty context
-
--- At every closed instance satisfying its hypotheses, the run-time
--- erasure of the instantiated term is typed in the context of the empty
--- state, so that type safety applies, and its run from the empty state
--- halts.
-
-programs : ∀ {Θ} {Q : Hyps Θ} {C : OCType Θ} {δ : Subst Θ ∅ˢ}
-         → (D : Q ∣ [] ⊢C⦂ C) → δ ⊨ Q
-         → ctx ∅ ⊢ᶜ eraseᶜ (⌊ D ⌋ᶜ [ δ ]ᴿᶜ) ⦂ C [ δ ]ᶜ × Halts ∅ (eraseᶜ (⌊ D ⌋ᶜ [ δ ]ᴿᶜ))
-programs D h = instantiation D h , termination (instantiation D h)
+               (fund-c {σ = λ ()} D (env (λ ()) refl)))

@@ -19,6 +19,10 @@
 -- are weakened; the constraints are built under the innermost  --
 -- binder.                                                      --
 --                                                              --
+-- A top-level definition at position `k` owes the constraint   --
+-- of a use of its scheme (`instᶜ`), and an unbound position    --
+-- the unsatisfiable one.                                       --
+--                                                              --
 -- Contract. `σ ⊨[ Q ] genC Γ M (A ‼ t)` holds exactly when     --
 -- some derivation of `Q ∣ Γ [ σ ] ⊢C⦂ (A ‼ t) [ σ ]` erases to --
 -- `M [ σ ]` (`charV`, `charC`, from `soundV`/`soundC` in       --
@@ -26,6 +30,7 @@
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero)
+open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Nat using (ℕ)
 open import Data.Product using (_,_)
 open import Data.Unit using (tt)
@@ -51,7 +56,8 @@ open import OpenCalculus.Syntax.Subst    S
 
 open import OpenCalculus.Syntax.Raw S
 
-open import OpenCalculus.Inference.Constraints.Syntax S
+open import OpenCalculus.Inference.Constraints.Syntax  S
+open import OpenCalculus.Inference.Constraints.Schemes S using (instᶜ; instᶜ-rigidFree)
 
 -- The looked-up type subtypes into the expected one, and its grade owes
 -- `VarOK`'s disjunction.
@@ -59,6 +65,12 @@ open import OpenCalculus.Inference.Constraints.Syntax S
 varConstraint : ∀ {Θ n} → OCtx Θ n → Fin n → OVType Θ → Constraint Θ
 varConstraint Γ i A =
   (lookup-ty Γ i ≾̂ᵥᶜ A) ∧̂ Et∨≾ᵘ (lookup-ty Γ i) (lookup-gr Γ i)
+
+-- A use of a definition: of its scheme, if there is one
+
+defConstraint : ∀ {Θ} → Maybe Scheme → OVType Θ → Constraint Θ
+defConstraint nothing  A = ⊥̂
+defConstraint (just s) A = instᶜ s A
 
 -- `genVˢ ι` and `genCˢ ι` generate for a raw term whose type and grade
 -- variables `ι` interprets in the generation scope. Under a binder, `ι`
@@ -72,6 +84,10 @@ mutual
   -- variables
 
   genVˢ ι Γ (var i) A = varConstraint Γ i A
+
+  -- top-level definitions
+
+  genVˢ ι Γ (def k) A = defConstraint (lookupᵖ (defs Γ) k) A
 
   -- base-typed constants, unit, booleans
 
@@ -434,65 +450,117 @@ mutual
       B' = B [ ι ]ᵛ
       u' = u [ ι ]ᵉ
 
--- A handler-free term generates a constraint with no rigid binder
+-- A handler-free term, in a context whose definitions have no
+-- quantified hypotheses, generates a constraint with no rigid binder
+
+private
+
+  uᵗ : ∀ {Θ n} → (Γ : OCtx Θ n) → Unquantified (defs Γ) → Unquantified (defs (wkᵗ-ctx Γ))
+  uᵗ Γ = subst Unquantified (sym (defs-wkᵗ Γ))
+
+  uʳ : ∀ {Θ n} → (Γ : OCtx Θ n) → Unquantified (defs Γ) → Unquantified (defs (wkʳ-ctx Γ))
+  uʳ Γ = subst Unquantified (sym (defs-wkʳ Γ))
+
+  uᵉ : ∀ {Θ n} → (Γ : OCtx Θ n) → Unquantified (defs Γ) → Unquantified (defs (wkᵉ-ctx Γ))
+  uᵉ Γ = subst Unquantified (sym (defs-wkᵉ Γ))
+
+  uᵗᵗ : ∀ {Θ n} → (Γ : OCtx Θ n) → Unquantified (defs Γ)
+      → Unquantified (defs (wkᵗ-ctx (wkᵗ-ctx Γ)))
+  uᵗᵗ Γ u = uᵗ (wkᵗ-ctx Γ) (uᵗ Γ u)
+
+  uᵗᵉ : ∀ {Θ n} → (Γ : OCtx Θ n) → Unquantified (defs Γ)
+      → Unquantified (defs (wkᵉ-ctx (wkᵗ-ctx Γ)))
+  uᵗᵉ Γ u = uᵉ (wkᵗ-ctx Γ) (uᵗ Γ u)
+
+  uᵗᵗᵉ : ∀ {Θ n} → (Γ : OCtx Θ n) → Unquantified (defs Γ)
+       → Unquantified (defs (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))))
+  uᵗᵗᵉ Γ u = uᵉ (wkᵗ-ctx (wkᵗ-ctx Γ)) (uᵗᵗ Γ u)
+
+  uᵗᵉᵉ : ∀ {Θ n} → (Γ : OCtx Θ n) → Unquantified (defs Γ)
+       → Unquantified (defs (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx Γ))))
+  uᵗᵉᵉ Γ u = uᵉ (wkᵉ-ctx (wkᵗ-ctx Γ)) (uᵗᵉ Γ u)
+
+  uᵗᵗᵉᵉ : ∀ {Θ n} → (Γ : OCtx Θ n) → Unquantified (defs Γ)
+        → Unquantified (defs (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))))
+  uᵗᵗᵉᵉ Γ u = uᵉ (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))) (uᵗᵗᵉ Γ u)
+
+  uᵗᵗʳ : ∀ {Θ n} → (Γ : OCtx Θ n) → Unquantified (defs Γ)
+       → Unquantified (defs (wkʳ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))))
+  uᵗᵗʳ Γ u = uʳ (wkᵗ-ctx (wkᵗ-ctx Γ)) (uᵗᵗ Γ u)
+
+  defConstraint-rigidFree : ∀ {Θ} → (Δ : PCtx) → Unquantified Δ → (k : ℕ) → (A : OVType Θ)
+                          → RigidFree (defConstraint (lookupᵖ Δ k) A)
+  defConstraint-rigidFree Δ u k A with lookupᵖ Δ k in eq
+  ... | nothing = tt
+  ... | just s  = instᶜ-rigidFree s A (unquantified-∈ u (lookupᵖ-∈ Δ eq))
 
 mutual
 
-  genVˢ-rigidFree : ∀ {Θ₀ Θ n} {ι : Subst Θ₀ Θ} {Γ : OCtx Θ n} → (V : RawV Θ₀ n)
-                  → {A : OVType Θ} → HandlerFreeᵛ V → RigidFree (genVˢ ι Γ V A)
-  genVˢ-rigidFree (var i)      h       = tt , tt
-  genVˢ-rigidFree (const B c)  h       = tt , tt
-  genVˢ-rigidFree ⋆            h       = tt , tt
-  genVˢ-rigidFree true         h       = tt , tt
-  genVˢ-rigidFree false        h       = tt , tt
-  genVˢ-rigidFree zero         h       = tt , tt
-  genVˢ-rigidFree (succ V)     h       = (tt , tt) , genVˢ-rigidFree V h
-  genVˢ-rigidFree ⦉ V₁ , V₂ ⦊   (h , k) = (tt , tt) , genVˢ-rigidFree V₁ h , genVˢ-rigidFree V₂ k
-  genVˢ-rigidFree (inl V)      h       = (tt , tt) , genVˢ-rigidFree V h
-  genVˢ-rigidFree (inr V)      h       = (tt , tt) , genVˢ-rigidFree V h
-  genVˢ-rigidFree nil          h       = tt , tt
-  genVˢ-rigidFree (cons V W)   (h , k) = (tt , tt) , genVˢ-rigidFree V h , genVˢ-rigidFree W k
-  genVˢ-rigidFree (cmp ⋈ V W)  (h , k) = (tt , tt) , genVˢ-rigidFree V h , genVˢ-rigidFree W k , tt
-  genVˢ-rigidFree (lam M)      h       = tt , genCˢ-rigidFree M h
-  genVˢ-rigidFree (handler N H) ()
-  genVˢ-rigidFree (V ⦂ᵛ B)     h       = genVˢ-rigidFree V h , tt
+  genVˢ-rigidFree : ∀ {Θ₀ Θ n} {ι : Subst Θ₀ Θ} {Γ : OCtx Θ n} → Unquantified (defs Γ)
+                  → (V : RawV Θ₀ n) → {A : OVType Θ} → HandlerFreeᵛ V
+                  → RigidFree (genVˢ ι Γ V A)
+  genVˢ-rigidFree u (var i)      h       = tt , tt
+  genVˢ-rigidFree {Γ = Γ} u (def k) {A} h = defConstraint-rigidFree (defs Γ) u k A
+  genVˢ-rigidFree u (const B c)  h       = tt , tt
+  genVˢ-rigidFree u ⋆            h       = tt , tt
+  genVˢ-rigidFree u true         h       = tt , tt
+  genVˢ-rigidFree u false        h       = tt , tt
+  genVˢ-rigidFree u zero         h       = tt , tt
+  genVˢ-rigidFree u (succ V)     h       = (tt , tt) , genVˢ-rigidFree u V h
+  genVˢ-rigidFree {Γ = Γ} u ⦉ V₁ , V₂ ⦊ (h , k) =
+    (tt , tt) , genVˢ-rigidFree (uᵗᵗ Γ u) V₁ h , genVˢ-rigidFree (uᵗᵗ Γ u) V₂ k
+  genVˢ-rigidFree {Γ = Γ} u (inl V) h = (tt , tt) , genVˢ-rigidFree (uᵗᵗ Γ u) V h
+  genVˢ-rigidFree {Γ = Γ} u (inr V) h = (tt , tt) , genVˢ-rigidFree (uᵗᵗ Γ u) V h
+  genVˢ-rigidFree u nil          h       = tt , tt
+  genVˢ-rigidFree {Γ = Γ} u (cons V W) (h , k) =
+    (tt , tt) , genVˢ-rigidFree (uᵗ Γ u) V h , genVˢ-rigidFree (uᵗ Γ u) W k
+  genVˢ-rigidFree {Γ = Γ} u (cmp ⋈ V W) (h , k) =
+    (tt , tt) , genVˢ-rigidFree (uᵗ Γ u) V h , genVˢ-rigidFree (uᵗ Γ u) W k , tt
+  genVˢ-rigidFree {Γ = Γ} u (lam M) h = tt , genCˢ-rigidFree (uᵗᵗᵉ Γ u) M h
+  genVˢ-rigidFree u (handler N H) ()
+  genVˢ-rigidFree u (V ⦂ᵛ B)     h       = genVˢ-rigidFree u V h , tt
 
-  genCˢ-rigidFree : ∀ {Θ₀ Θ n} {ι : Subst Θ₀ Θ} {Γ : OCtx Θ n} → (M : RawC Θ₀ n)
-                  → {C : OCType Θ} → HandlerFreeᶜ M → RigidFree (genCˢ ι Γ M C)
-  genCˢ-rigidFree (return V)               {A ‼ t} h           =
-    genVˢ-rigidFree V h , tt
-  genCˢ-rigidFree (M₁ ⨟ M₂)                {A ‼ t} (h , k)     =
-    genCˢ-rigidFree M₁ h , genCˢ-rigidFree M₂ k , tt
-  genCˢ-rigidFree (V₁ · V₂)                {A ‼ t} (h , k)     =
-    genVˢ-rigidFree V₁ h , genVˢ-rigidFree V₂ k , tt , tt
-  genCˢ-rigidFree (match V `in M)          {A ‼ t} (h , k)     =
-    genVˢ-rigidFree V h , genCˢ-rigidFree M k
-  genCˢ-rigidFree (absurd V)               {A ‼ t} h           =
-    genVˢ-rigidFree V h
-  genCˢ-rigidFree (if V `then M₁ `else M₂) {A ‼ t} (h , k , l) =
-    genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
-  genCˢ-rigidFree (caseℕ V `zero M₁ `succ M₂) {A ‼ t} (h , k , l) =
-    genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
-  genCˢ-rigidFree (case+ V `inl M₁ `inr M₂) {A ‼ t} (h , k , l) =
-    genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
-  genCˢ-rigidFree (recℕ V M₁ M₂)           {A ‼ t} (h , k , l) =
-    genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l , tt , tt , tt
-  genCˢ-rigidFree (caseL V `nil M₁ `cons M₂) {A ‼ t} (h , k , l) =
-    genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
-  genCˢ-rigidFree (recL V M₁ M₂)           {A ‼ t} (h , k , l) =
-    genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l , tt , tt , tt
-  genCˢ-rigidFree (perform op V M)        {A ‼ t} (h , k)     =
-    genVˢ-rigidFree V h , genCˢ-rigidFree M k , tt
-  genCˢ-rigidFree (delay τ M)              {A ‼ t} h           =
-    genCˢ-rigidFree M h , tt
-  genCˢ-rigidFree (handle M `with V)       {A ‼ t} (h , k)     =
-    genCˢ-rigidFree M h , genVˢ-rigidFree V k , tt , tt
-  genCˢ-rigidFree (unbox i N)              {A ‼ t} h           =
-    (tt , tt) , tt , tt , genCˢ-rigidFree N h
-  genCˢ-rigidFree (box ρ V N)              {A ‼ t} (h , k)     =
-    genVˢ-rigidFree V h , genCˢ-rigidFree N k
-  genCˢ-rigidFree (M ⦂ᶜ (B ‼ u))           {A ‼ t} h           =
-    genCˢ-rigidFree M h , tt , tt
+  genCˢ-rigidFree : ∀ {Θ₀ Θ n} {ι : Subst Θ₀ Θ} {Γ : OCtx Θ n} → Unquantified (defs Γ)
+                  → (M : RawC Θ₀ n) → {C : OCType Θ} → HandlerFreeᶜ M
+                  → RigidFree (genCˢ ι Γ M C)
+  genCˢ-rigidFree u (return V)               {A ‼ t} h           =
+    genVˢ-rigidFree u V h , tt
+  genCˢ-rigidFree {Γ = Γ} u (M₁ ⨟ M₂)        {A ‼ t} (h , k)     =
+    genCˢ-rigidFree (uᵗᵉᵉ Γ u) M₁ h , genCˢ-rigidFree (uᵗᵉᵉ Γ u) M₂ k , tt
+  genCˢ-rigidFree {Γ = Γ} u (V₁ · V₂)        {A ‼ t} (h , k)     =
+    genVˢ-rigidFree (uᵗᵗᵉ Γ u) V₁ h , genVˢ-rigidFree (uᵗᵗᵉ Γ u) V₂ k , tt , tt
+  genCˢ-rigidFree {Γ = Γ} u (match V `in M)  {A ‼ t} (h , k)     =
+    genVˢ-rigidFree (uᵗᵗ Γ u) V h , genCˢ-rigidFree (uᵗᵗ Γ u) M k
+  genCˢ-rigidFree u (absurd V)               {A ‼ t} h           =
+    genVˢ-rigidFree u V h
+  genCˢ-rigidFree u (if V `then M₁ `else M₂) {A ‼ t} (h , k , l) =
+    genVˢ-rigidFree u V h , genCˢ-rigidFree u M₁ k , genCˢ-rigidFree u M₂ l
+  genCˢ-rigidFree u (caseℕ V `zero M₁ `succ M₂) {A ‼ t} (h , k , l) =
+    genVˢ-rigidFree u V h , genCˢ-rigidFree u M₁ k , genCˢ-rigidFree u M₂ l
+  genCˢ-rigidFree {Γ = Γ} u (case+ V `inl M₁ `inr M₂) {A ‼ t} (h , k , l) =
+    genVˢ-rigidFree (uᵗᵗ Γ u) V h , genCˢ-rigidFree (uᵗᵗ Γ u) M₁ k
+    , genCˢ-rigidFree (uᵗᵗ Γ u) M₂ l
+  genCˢ-rigidFree {Γ = Γ} u (recℕ V M₁ M₂)   {A ‼ t} (h , k , l) =
+    genVˢ-rigidFree (uᵗᵉ Γ u) V h , genCˢ-rigidFree (uᵗᵉ Γ u) M₁ k
+    , genCˢ-rigidFree (uᵗᵉ Γ u) M₂ l , tt , tt , tt
+  genCˢ-rigidFree {Γ = Γ} u (caseL V `nil M₁ `cons M₂) {A ‼ t} (h , k , l) =
+    genVˢ-rigidFree (uᵗ Γ u) V h , genCˢ-rigidFree (uᵗ Γ u) M₁ k
+    , genCˢ-rigidFree (uᵗ Γ u) M₂ l
+  genCˢ-rigidFree {Γ = Γ} u (recL V M₁ M₂)   {A ‼ t} (h , k , l) =
+    genVˢ-rigidFree (uᵗᵗᵉ Γ u) V h , genCˢ-rigidFree (uᵗᵗᵉ Γ u) M₁ k
+    , genCˢ-rigidFree (uᵗᵗᵉ Γ u) M₂ l , tt , tt , tt
+  genCˢ-rigidFree {Γ = Γ} u (perform op V M) {A ‼ t} (h , k)     =
+    genVˢ-rigidFree (uᵉ Γ u) V h , genCˢ-rigidFree (uᵉ Γ u) M k , tt
+  genCˢ-rigidFree {Γ = Γ} u (delay τ M)      {A ‼ t} h           =
+    genCˢ-rigidFree (uᵉ Γ u) M h , tt
+  genCˢ-rigidFree {Γ = Γ} u (handle M `with V) {A ‼ t} (h , k)   =
+    genCˢ-rigidFree (uᵗᵗᵉᵉ Γ u) M h , genVˢ-rigidFree (uᵗᵗᵉᵉ Γ u) V k , tt , tt
+  genCˢ-rigidFree {Γ = Γ} u (unbox i N)      {A ‼ t} h           =
+    (tt , tt) , tt , tt , genCˢ-rigidFree (uᵗᵗʳ Γ u) N h
+  genCˢ-rigidFree {Γ = Γ} u (box ρ V N)      {A ‼ t} (h , k)     =
+    genVˢ-rigidFree (uᵗ Γ u) V h , genCˢ-rigidFree (uᵗ Γ u) N k
+  genCˢ-rigidFree u (M ⦂ᶜ (B ‼ u'))          {A ‼ t} h           =
+    genCˢ-rigidFree u M h , tt , tt
 
 -- Generation for a raw term over the scope of the context
 

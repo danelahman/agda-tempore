@@ -103,6 +103,7 @@ mutual
 
 ⟦_⟧ᶜᵗˣ : ∀ {Θ n} → OCtx Θ n → DInst Θ → Ctx
 ⟦ [] ⟧ᶜᵗˣ      σ = []
+⟦ Δ ▶ s ⟧ᶜᵗˣ   σ = []
 ⟦ Γ ∷ A ⟧ᶜᵗˣ   σ = ⟦ Γ ⟧ᶜᵗˣ σ ∷ ⟦ A ⟧ᵛ σ
 ⟦ Γ ⟨ ρ ⟩ ⟧ᶜᵗˣ σ = ⟦ Γ ⟧ᶜᵗˣ σ ⟨ ⟦ ρ ⟧ʳ σ ⟩
 
@@ -139,6 +140,7 @@ mutual
 
 NoHandlerTypeᶜᵗˣ : ∀ {Θ n} → OCtx Θ n → Set
 NoHandlerTypeᶜᵗˣ []        = ⊤
+NoHandlerTypeᶜᵗˣ (Δ ▶ s)   = ⊤
 NoHandlerTypeᶜᵗˣ (Γ ∷ A)   = NoHandlerTypeᶜᵗˣ Γ × NoHandlerTypeᵛ A
 NoHandlerTypeᶜᵗˣ (Γ ⟨ ρ ⟩) = NoHandlerTypeᶜᵗˣ Γ
 
@@ -201,6 +203,7 @@ module _ {Θ} (σ : DInst Θ) (c : E) where
 
   ⟦wkᵉ⟧ᶜᵗˣ : ∀ {n} → (Γ : OCtx Θ n) → ⟦ wkᵉ-ctx Γ ⟧ᶜᵗˣ (σ ,ᵉᴰ c) ≡ ⟦ Γ ⟧ᶜᵗˣ σ
   ⟦wkᵉ⟧ᶜᵗˣ []        = refl
+  ⟦wkᵉ⟧ᶜᵗˣ (Δ ▶ s)   = refl
   ⟦wkᵉ⟧ᶜᵗˣ (Γ ∷ A)   = cong₂ _∷_ (⟦wkᵉ⟧ᶜᵗˣ Γ) (⟦wkᵉ⟧ᵛ A)
   ⟦wkᵉ⟧ᶜᵗˣ (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (⟦wkᵉ⟧ᶜᵗˣ Γ) (⟦wkᵉ⟧ʳ ρ)
 

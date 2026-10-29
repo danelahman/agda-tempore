@@ -7,13 +7,14 @@
 -- derivation's (`HeadV`, `HeadC`), the premises' erasures      --
 -- being the term's parts.                                      --
 --                                                              --
--- In a context of box-typed variables, a value of a data,      --
--- function or handler type is an introduction form (`canon-*`).--
+-- In a context of box-typed variables and no definitions, a    --
+-- value of a data, function or handler type is an introduction --
+-- form (`canon-*`).                                            --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Nat using (ℕ; suc)
-open import Data.Product using (Σ-syntax; _×_; _,_)
+open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Unit using (⊤)
 
 open import Grades.Base
@@ -33,6 +34,7 @@ open Operations Ops
 open import OpenCalculus.Syntax.Grades         S
 open import OpenCalculus.Syntax.Types          S
 open import OpenCalculus.Syntax.Contexts       S
+open import OpenCalculus.Syntax.Subst          S using (Subst; _[_]ᵛ)
 open import OpenCalculus.Hypotheses            S
 open import OpenCalculus.Typing                S
 open import OpenCalculus.Typing.Erasure        S
@@ -46,6 +48,9 @@ module _ {Θ : Scope} (Q : Hyps Θ) where
 
   HeadV : ∀ {n} → OCtx Θ n → RunV n → OVType Θ → Set
   HeadV Γ (var i)       T = Σ[ ρ ∈ RExp Θ ] Σ[ x ∈ T ∈̂[ ρ ] Γ ] (var-pos x ≡ i) × VarOK Q T ρ
+  HeadV Γ (def k)       T =
+    Σ[ s ∈ Scheme ] Σ[ f ∈ s ∈ᵖ[ k ] defs Γ ] Σ[ δ ∈ Subst (Θˢ s) Θ ]
+      (Q ⊩ᴴ Qˢ s [ δ ]) × (T ≡ Xˢ s [ δ ]ᵛ)
   HeadV Γ (const B c)   T = T ≡ Base B
   HeadV Γ ⋆             T = T ≡ Unit
   HeadV Γ true          T = T ≡ Bool
@@ -151,6 +156,7 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
 
   invV : ∀ {n} {Γ : OCtx Θ n} {T : OVType Θ} → (D : Q ∣ Γ ⊢V⦂ T) → InvV Q Γ ∥ D ∥ᵛ T
   invV {T = T} (var x p)        = T , (_ , x , refl , p) , <:̂ᵛ-refl T
+  invV {T = T} (def f δ h e)    = T , (_ , f , δ , h , e) , <:̂ᵛ-refl T
   invV (const B c)              = _ , refl , <:̂ᵛ-refl _
   invV ⋆                        = _ , refl , <:̂ᵛ-refl _
   invV true                     = _ , refl , <:̂ᵛ-refl _
@@ -245,35 +251,43 @@ module _ {n : ℕ} where
   handler-form (is-handler N H) = N , H , refl
 
 BoxCtx : ∀ {Θ n} → OCtx Θ n → Set
-BoxCtx {Θ} Γ = ∀ {A ρ} → A ∈̂[ ρ ] Γ → Σ[ ρ₀ ∈ RExp Θ ] Σ[ A₀ ∈ OVType Θ ] A ≡ [ ρ₀ ] A₀
+BoxCtx {Θ} Γ =
+  (∀ {A ρ} → A ∈̂[ ρ ] Γ → Σ[ ρ₀ ∈ RExp Θ ] Σ[ A₀ ∈ OVType Θ ] A ≡ [ ρ₀ ] A₀) × (defs Γ ≡ ∅ᵖ)
 
 module _ {Θ : Scope} {n : ℕ} {Q : Hyps Θ} {Γ : OCtx Θ n} (bx : BoxCtx Γ) where
 
   private
     no-var : ∀ {A ρ} {P : Set} → A ∈̂[ ρ ] Γ → (∀ {ρ₀ A₀} → A ≡ [ ρ₀ ] A₀ → ⊥) → P
-    no-var x f with bx x
+    no-var x f with proj₁ bx x
     ... | _ , _ , e = ⊥-elim (f e)
+
+    no-def : ∀ {s k} {P : Set} → s ∈ᵖ[ k ] defs Γ → P
+    no-def f = ⊥-elim (∅ᵖ-∌ (subst (_ ∈ᵖ[ _ ]_) (proj₂ bx) f))
 
   canon-⇒ : ∀ {A C} → (D : Q ∣ Γ ⊢V⦂ A ⇒ C) → LamView ∥ D ∥ᵛ
   canon-⇒ (var x p)          = no-var x (λ ())
+  canon-⇒ (def f δ h e)      = no-def f
   canon-⇒ (lam M)            = is-lam _
   canon-⇒ (annᵛ _ D)         = canon-⇒ D
   canon-⇒ (subV D (p ⇒ₛ q))  = canon-⇒ D
 
   canon-⇛ : ∀ {C D'} → (D : Q ∣ Γ ⊢V⦂ C ⇛ D') → HandlerView ∥ D ∥ᵛ
   canon-⇛ (var x p)          = no-var x (λ ())
+  canon-⇛ (def f δ h e)      = no-def f
   canon-⇛ (handler N H)      = is-handler _ _
   canon-⇛ (annᵛ _ D)         = canon-⇛ D
   canon-⇛ (subV D (p ⇛ₛ q))  = canon-⇛ D
 
   canon-× : ∀ {A B} → (D : Q ∣ Γ ⊢V⦂ A |×| B) → PairView ∥ D ∥ᵛ
   canon-× (var x p)          = no-var x (λ ())
+  canon-× (def f δ h e)      = no-def f
   canon-× ⦉ V , W ⦊           = is-pair _ _
   canon-× (annᵛ _ D)         = canon-× D
   canon-× (subV D (p |×|ₛ q)) = canon-× D
 
   canon-+ : ∀ {A B} → (D : Q ∣ Γ ⊢V⦂ A |+| B) → SumView ∥ D ∥ᵛ
   canon-+ (var x p)          = no-var x (λ ())
+  canon-+ (def f δ h e)      = no-def f
   canon-+ (inl V)            = is-inl _
   canon-+ (inr V)            = is-inr _
   canon-+ (annᵛ _ D)         = canon-+ D
@@ -281,6 +295,7 @@ module _ {Θ : Scope} {n : ℕ} {Q : Hyps Θ} {Γ : OCtx Θ n} (bx : BoxCtx Γ) 
 
   canon-List : ∀ {A} → (D : Q ∣ Γ ⊢V⦂ |List| A) → ListView ∥ D ∥ᵛ
   canon-List (var x p)          = no-var x (λ ())
+  canon-List (def f δ h e)      = no-def f
   canon-List nil                = is-nil
   canon-List (cons V W)         = is-cons _ _
   canon-List (annᵛ _ D)         = canon-List D
@@ -288,6 +303,7 @@ module _ {Θ : Scope} {n : ℕ} {Q : Hyps Θ} {Γ : OCtx Θ n} (bx : BoxCtx Γ) 
 
   canon-Nat : (D : Q ∣ Γ ⊢V⦂ Nat) → NatView ∥ D ∥ᵛ
   canon-Nat (var x p)        = no-var x (λ ())
+  canon-Nat (def f δ h e)    = no-def f
   canon-Nat zero             = is-zero
   canon-Nat (succ V)         = is-succ _
   canon-Nat (annᵛ _ D)       = canon-Nat D
@@ -295,6 +311,7 @@ module _ {Θ : Scope} {n : ℕ} {Q : Hyps Θ} {Γ : OCtx Θ n} (bx : BoxCtx Γ) 
 
   canon-Bool : (D : Q ∣ Γ ⊢V⦂ Bool) → BoolView ∥ D ∥ᵛ
   canon-Bool (var x p)        = no-var x (λ ())
+  canon-Bool (def f δ h e)    = no-def f
   canon-Bool true             = is-true
   canon-Bool false            = is-false
   canon-Bool (cmp ⋈ V W et)   = is-cmp _ _ _
@@ -303,11 +320,13 @@ module _ {Θ : Scope} {n : ℕ} {Q : Hyps Θ} {Γ : OCtx Θ n} (bx : BoxCtx Γ) 
 
   canon-Empty : (D : Q ∣ Γ ⊢V⦂ Empty) → ⊥
   canon-Empty (var x p)       = no-var x (λ ())
+  canon-Empty (def f δ h e)   = no-def f
   canon-Empty (annᵛ _ D)      = canon-Empty D
   canon-Empty (subV D Emptyₛ) = canon-Empty D
 
 canon-box : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ A}
-          → (D : Q ∣ Γ ⊢V⦂ [ ρ ] A) → VarView ∥ D ∥ᵛ
-canon-box (var x p)          = is-var _
-canon-box (annᵛ _ D)         = canon-box D
-canon-box (subV D ([ p ]ₛ q)) = canon-box D
+          → defs Γ ≡ ∅ᵖ → (D : Q ∣ Γ ⊢V⦂ [ ρ ] A) → VarView ∥ D ∥ᵛ
+canon-box nd (var x p)          = is-var _
+canon-box nd (def f δ h e)      = ⊥-elim (∅ᵖ-∌ (subst (_ ∈ᵖ[ _ ]_) nd f))
+canon-box nd (annᵛ _ D)         = canon-box nd D
+canon-box nd (subV D ([ p ]ₛ q)) = canon-box nd D

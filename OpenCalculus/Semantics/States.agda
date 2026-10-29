@@ -124,6 +124,11 @@ ctx ∅                     = []
 ctx (_⟨⟩ˢ {τ = τ} Σ)      = ctx Σ ⟨ rconst (of-durʳ τ) ⟩
 ctx (Σ ∷[ ρ ] X)          = ctx Σ ∷ [ ρ ] X
 
+ctx-defs : ∀ {n} {S : State n} → (Σ : StateTyping S) → defs (ctx Σ) ≡ ∅ᵖ
+ctx-defs ∅            = refl
+ctx-defs (Σ ⟨⟩ˢ)      = ctx-defs Σ
+ctx-defs (Σ ∷[ ρ ] X) = ctx-defs Σ
+
 -- A state typing types a state when each resource has its type, behind
 -- a lock at its grade, in the context of the state before it
 
@@ -133,6 +138,9 @@ data Types : ∀ {n} {S : State n} → StateTyping S → Set where
        → Types Σ → Types (_⟨⟩ˢ {τ = τ} Σ)
   _∷ᵗ_ : ∀ {n} {S : State n} {Σ : StateTyping S} {ρ X V}
        → Types Σ → ctx Σ ⟨ ρ ⟩ ⊢ᵛ V ⦂ X → Types (_∷[_]_ {V = V} Σ ρ X)
+
+types-defs : ∀ {n} {S : State n} {Σ : StateTyping S} → Types Σ → defs (ctx Σ) ≡ ∅ᵖ
+types-defs {Σ = Σ} _ = ctx-defs Σ
 
 -- Extension of a state typing along an extension of its state
 
@@ -160,13 +168,21 @@ egr  (⊆-ext ⊆-refl)     i = eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)
 egr  (⊆-ext (⊆-lock p)) i =
   transᵣ (monoᵣ (egr (⊆-ext p) i) ⊩≾̂ᵣ-refl) (eqᵣ ≡̂ᵣ-assoc)
 egr  (⊆-ext (⊆-res p))  i = egr (⊆-ext p) i
+edfs (⊆-ext ⊆-refl)       = refl
+edfs (⊆-ext (⊆-lock p))   = edfs (⊆-ext p)
+edfs (⊆-ext (⊆-res p))    = edfs (⊆-ext p)
 
--- The variables of the context of a state are resources
+-- The variables of the context of a state are resources, and it has
+-- no definitions
 
 ctx-box : ∀ {n} {S : State n} → (Σ : StateTyping S) → BoxCtx (ctx Σ)
-ctx-box (Σ ⟨⟩ˢ)      (Tl-⟨⟩ x) = ctx-box Σ x
-ctx-box (Σ ∷[ ρ ] X) Hd        = ρ , X , refl
-ctx-box (Σ ∷[ ρ ] X) (Tl-∷ x)  = ctx-box Σ x
+ctx-box Σ = boxed Σ , ctx-defs Σ
+  where
+    boxed : ∀ {n} {S : State n} → (Σ : StateTyping S) → ∀ {A ρ} → A ∈̂[ ρ ] ctx Σ
+          → Σ[ ρ₀ ∈ RExp ∅ˢ ] Σ[ A₀ ∈ OVType ∅ˢ ] A ≡ [ ρ₀ ] A₀
+    boxed (Σ ⟨⟩ˢ)      (Tl-⟨⟩ x) = boxed Σ x
+    boxed (Σ ∷[ ρ ] X) Hd        = ρ , X , refl
+    boxed (Σ ∷[ ρ ] X) (Tl-∷ x)  = boxed Σ x
 
 -- A resource used within its grade has its type in the context of the
 -- whole state
@@ -184,6 +200,7 @@ private
       epos e' = epos e
       ety  e' = ety e
       egr  e' i = transᵣ (egr e i) (eqᵣ ≡̂ᵣ-assoc)
+      edfs e'   = edfs e
   lookup-ext {S = S ∷ₛ V} (T ∷ᵗ (D , refl)) Hd e le =
     rename-v r D , trans (∥rename-v∥ r D) (sym (ren-fuseᵛ (λ i → refl) ∥ D ∥ᵛ))
     where

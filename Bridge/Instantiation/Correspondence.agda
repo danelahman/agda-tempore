@@ -86,6 +86,7 @@ module _ {Θ} {σ σ' : DInst Θ} (p : σ ≗ᴰ σ') where
 
   ⟦≗⟧ᶜᵗˣ : ∀ {n} → (Γ : OCtx Θ n) → ⟦ Γ ⟧ᶜᵗˣ σ ≡ ⟦ Γ ⟧ᶜᵗˣ σ'
   ⟦≗⟧ᶜᵗˣ []        = refl
+  ⟦≗⟧ᶜᵗˣ (Δ ▶ s)   = refl
   ⟦≗⟧ᶜᵗˣ (Γ ∷ A)   = cong₂ _∷_ (⟦≗⟧ᶜᵗˣ Γ) (⟦≗⟧ᵛ A)
   ⟦≗⟧ᶜᵗˣ (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (⟦≗⟧ᶜᵗˣ Γ) (⟦≗⟧ʳ p ρ)
 
@@ -125,6 +126,7 @@ module _ {Θ Θ'} (δ : Subst Θ Θ') (σ : DInst Θ') where
 
   ⟦[]⟧ᶜᵗˣ : ∀ {n} → (Γ : OCtx Θ n) → ⟦ Γ [ δ ]ᶜᵗˣ ⟧ᶜᵗˣ σ ≡ ⟦ Γ ⟧ᶜᵗˣ (δ ⨟ᴰ σ)
   ⟦[]⟧ᶜᵗˣ []        = refl
+  ⟦[]⟧ᶜᵗˣ (Δ ▶ s)   = refl
   ⟦[]⟧ᶜᵗˣ (Γ ∷ A)   = cong₂ _∷_ (⟦[]⟧ᶜᵗˣ Γ) (⟦[]⟧ᵛ A)
   ⟦[]⟧ᶜᵗˣ (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (⟦[]⟧ᶜᵗˣ Γ) (⟦[]⟧ʳ δ σ ρ)
 
@@ -376,6 +378,7 @@ module _ {Θ Θ'} (δ : Subst Θ Θ') (hδ : ∀ α → NoHandlerTypeᵛ (sTy δ
   noHandler-[]ᶜᵗˣ : ∀ {n} → (Γ : OCtx Θ n) → NoHandlerTypeᶜᵗˣ Γ
                   → NoHandlerTypeᶜᵗˣ (Γ [ δ ]ᶜᵗˣ)
   noHandler-[]ᶜᵗˣ []        h       = tt
+  noHandler-[]ᶜᵗˣ (Δ ▶ s)   h       = tt
   noHandler-[]ᶜᵗˣ (Γ ∷ A)   (h , k) = noHandler-[]ᶜᵗˣ Γ h , noHandler-[]ᵛ A k
   noHandler-[]ᶜᵗˣ (Γ ⟨ ρ ⟩) h       = noHandler-[]ᶜᵗˣ Γ h
 

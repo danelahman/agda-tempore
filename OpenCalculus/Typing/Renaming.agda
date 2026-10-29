@@ -3,7 +3,8 @@
 --                                                              --
 -- A renaming `Ren Q Γ Γ'` sends each variable of `Γ` to one of --
 -- `Γ'` of the same type, at an accumulated grade that `Q`      --
--- entails to be below the one in `Γ`. It acts on derivations   --
+-- entails to be below the one in `Γ`, and keeps the program    --
+-- context. It acts on derivations   --
 -- (`rename-v`, `rename-c`), and on run-time erasures as the    --
 -- renaming of positions. A value of eternal type moves along   --
 -- any map of positions preserving the types (`eternal-v`). An  --
@@ -55,6 +56,7 @@ record Ren {Θ : Scope} {n m : ℕ} (Q : Hyps Θ) (Γ : OCtx Θ n) (Γ' : OCtx �
     pos : Fin n → Fin m
     ty  : ∀ i → lookup-ty Γ' (pos i) ≡ lookup-ty Γ i
     gr  : ∀ i → Q ⊩ lookup-gr Γ' (pos i) ≾̂ᵣ lookup-gr Γ i
+    dfs : defs Γ' ≡ defs Γ
 
 open Ren public
 
@@ -91,12 +93,14 @@ ty  (r ⇑ʳ) zero    = refl
 ty  (r ⇑ʳ) (suc i) = ty r i
 gr  (r ⇑ʳ) zero    = ⊩≾̂ᵣ-refl
 gr  (r ⇑ʳ) (suc i) = gr r i
+dfs (r ⇑ʳ)         = dfs r
 
 lockʳ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m}
       → (ρ : RExp Θ) → Ren Q Γ Γ' → Ren Q (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ ⟩)
 pos (lockʳ ρ r) = pos r
 ty  (lockʳ ρ r) = ty r
 gr  (lockʳ ρ r) i = monoᵣ (gr r i) ⊩≾̂ᵣ-refl
+dfs (lockʳ ρ r)   = dfs r
 
 wkᵉʳ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m}
      → Ren Q Γ Γ' → Ren (wkᵉ-H Q) (wkᵉ-ctx Γ) (wkᵉ-ctx Γ')
@@ -107,6 +111,7 @@ gr  (wkᵉʳ {Q = Q} {Γ} {Γ'} r) i =
   subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ᵣ y)
          (sym (lookup-gr-wkᵉ Γ' (pos r i))) (sym (lookup-gr-wkᵉ Γ i))
          (⊩-wkᵉᵣ (gr r i))
+dfs (wkᵉʳ {Γ = Γ} {Γ'} r) = trans (defs-wkᵉ Γ') (trans (dfs r) (sym (defs-wkᵉ Γ)))
 
 -- the renaming of a handler clause's context
 
@@ -124,6 +129,7 @@ mutual
            → Ren Q Γ Γ' → Q ∣ Γ ⊢V⦂ A → Q ∣ Γ' ⊢V⦂ A
   rename-v r (var x p)       =
     var (mem (image r x)) (VarOK-≡̂ (≡̂ᵛ-refl _) (lower (image r x)) p)
+  rename-v r (def f δ h e)   = def (subst (_ ∈ᵖ[ _ ]_) (sym (dfs r)) f) δ h e
   rename-v r (const B c)     = const B c
   rename-v r ⋆               = ⋆
   rename-v r true            = true
@@ -180,6 +186,7 @@ mutual
   ∥rename-v∥ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {A : OVType Θ}
              → (r : Ren Q Γ Γ') → (V : Q ∣ Γ ⊢V⦂ A) → ∥ rename-v r V ∥ᵛ ≡ renᵛ (pos r) ∥ V ∥ᵛ
   ∥rename-v∥ r (var x p)       = cong var (at-pos (image r x))
+  ∥rename-v∥ r (def f δ h e)   = refl
   ∥rename-v∥ r (const B c)     = refl
   ∥rename-v∥ r ⋆               = refl
   ∥rename-v∥ r true            = refl
@@ -243,17 +250,20 @@ id-ren : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} → Ren Q Γ Γ
 pos id-ren i = i
 ty  id-ren i = refl
 gr  id-ren i = ⊩≾̂ᵣ-refl
+dfs id-ren   = refl
 
 _∘ʳ_ : ∀ {Θ n m k} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {Γ'' : OCtx Θ k}
      → Ren Q Γ' Γ'' → Ren Q Γ Γ' → Ren Q Γ Γ''
 pos (s ∘ʳ r) i = pos s (pos r i)
 ty  (s ∘ʳ r) i = trans (ty s (pos r i)) (ty r i)
 gr  (s ∘ʳ r) i = transᵣ (gr s (pos r i)) (gr r i)
+dfs (s ∘ʳ r)   = trans (dfs s) (dfs r)
 
 wk-ren : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ} → Ren Q Γ (Γ ∷ A)
 pos wk-ren = suc
 ty  wk-ren i = refl
 gr  wk-ren i = ⊩≾̂ᵣ-refl
+dfs wk-ren   = refl
 
 -- A lock above the unit may be removed; one below it inserted
 
@@ -262,12 +272,14 @@ lock-remove : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ : RExp Θ}
 pos (lock-remove le) i = i
 ty  (lock-remove le) i = refl
 gr  (lock-remove le) i = transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)) (monoᵣ ⊩≾̂ᵣ-refl le)
+dfs (lock-remove le)   = refl
 
 lock-insert : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ : RExp Θ}
             → Q ⊩ ρ ≾̂ᵣ ûᵣ → Ren Q Γ (Γ ⟨ ρ ⟩)
 pos (lock-insert le) i = i
 ty  (lock-insert le) i = refl
 gr  (lock-insert le) i = transᵣ (monoᵣ ⊩≾̂ᵣ-refl le) (eqᵣ ≡̂ᵣ-identityʳ)
+dfs (lock-insert le)   = refl
 
 -- A lock may be lowered; two adjacent locks are their product
 
@@ -276,18 +288,21 @@ lock-lower : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ ρ' : RExp Θ}
 pos (lock-lower le) i = i
 ty  (lock-lower le) i = refl
 gr  (lock-lower le) i = monoᵣ ⊩≾̂ᵣ-refl le
+dfs (lock-lower le)   = refl
 
 lock-merge : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ ρ' : RExp Θ}
            → Ren Q (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Γ ⟨ ρ ·̂ᵣ ρ' ⟩)
 pos lock-merge i = i
 ty  lock-merge i = refl
 gr  lock-merge i = eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-assoc)
+dfs lock-merge   = refl
 
 lock-split : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ ρ' : RExp Θ}
            → Ren Q (Γ ⟨ ρ ·̂ᵣ ρ' ⟩) (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩)
 pos lock-split i = i
 ty  lock-split i = refl
 gr  lock-split i = eqᵣ ≡̂ᵣ-assoc
+dfs lock-split   = refl
 
 ------------------------------------------------------------------------
 -- Values of eternal type
@@ -298,12 +313,14 @@ record Shift {Θ : Scope} {n m : ℕ} (Γ : OCtx Θ n) (Γ' : OCtx Θ m) : Set w
   field
     shift    : Fin n → Fin m
     shift-ty : ∀ i → lookup-ty Γ' (shift i) ≡ lookup-ty Γ i
+    shift-dfs : defs Γ' ≡ defs Γ
 
 open Shift public
 
 ren-shift : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} → Ren Q Γ Γ' → Shift Γ Γ'
 shift    (ren-shift r) = pos r
 shift-ty (ren-shift r) = ty r
+shift-dfs (ren-shift r) = dfs r
 
 mutual
 
@@ -313,6 +330,7 @@ mutual
     var (∈̂-ty-subst (trans (shift-ty f (var-pos x)) (var-pos-ty x))
                     (lookup-var Γ' (shift f (var-pos x))))
         (et-ok e)
+  eternal-v f e (def g δ h q)            = def (subst (_ ∈ᵖ[ _ ]_) (sym (shift-dfs f)) g) δ h q
   eternal-v f e (const B c)              = const B c
   eternal-v f e ⋆                        = ⋆
   eternal-v f e true                     = true
@@ -334,6 +352,7 @@ mutual
   ∥eternal-v∥ {Γ' = Γ'} f e (var x p) =
     cong var (trans (var-pos-ty-subst (trans (shift-ty f (var-pos x)) (var-pos-ty x)) _)
                     (var-pos-lookup Γ' (shift f (var-pos x))))
+  ∥eternal-v∥ f e (def g δ h q)        = refl
   ∥eternal-v∥ f e (const B c)          = refl
   ∥eternal-v∥ f e ⋆                    = refl
   ∥eternal-v∥ f e true                 = refl
@@ -359,6 +378,7 @@ record Ext {Θ : Scope} {n m : ℕ} (Q : Hyps Θ) (Γ : OCtx Θ n) (Γ' : OCtx �
     epos : Fin n → Fin m
     ety  : ∀ i → lookup-ty Γ' (epos i) ≡ lookup-ty Γ i
     egr  : ∀ i → Q ⊩ lookup-gr Γ' (epos i) ≾̂ᵣ lookup-gr Γ i ·̂ᵣ δ
+    edfs : defs Γ' ≡ defs Γ
 
 open Ext public
 
@@ -370,6 +390,7 @@ pos (ext-lock e le) = epos e
 ty  (ext-lock e le) = ety e
 gr  (ext-lock e le) i =
   transᵣ (monoᵣ (egr e i) ⊩≾̂ᵣ-refl) (transᵣ (eqᵣ ≡̂ᵣ-assoc) (monoᵣ ⊩≾̂ᵣ-refl le))
+dfs (ext-lock e le) = edfs e
 
 -- in place of a lock of grade `ρ` above `δ`
 
@@ -378,6 +399,7 @@ ext-unlock : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {δ �
 pos (ext-unlock e le) = epos e
 ty  (ext-unlock e le) = ety e
 gr  (ext-unlock e le) i = transᵣ (egr e i) (monoᵣ ⊩≾̂ᵣ-refl le)
+dfs (ext-unlock e le)   = edfs e
 
 -- behind a lock at the top
 
@@ -400,11 +422,13 @@ ext-∘ʳ : ∀ {Θ n m k} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {Γ'
 epos (ext-∘ʳ e r) i = epos e (pos r i)
 ety  (ext-∘ʳ e r) i = trans (ety e (pos r i)) (ty r i)
 egr  (ext-∘ʳ e r) i = transᵣ (egr e (pos r i)) (monoᵣ (gr r i) ⊩≾̂ᵣ-refl)
+edfs (ext-∘ʳ e r)   = trans (edfs e) (dfs r)
 
 id-ext : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} → Ext Q Γ Γ ûᵣ
 epos id-ext i = i
 ety  id-ext i = refl
 egr  id-ext i = eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)
+edfs id-ext   = refl
 
 -- a lock, followed by variables
 
@@ -412,9 +436,11 @@ lock-ext : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ : RExp Θ} → Ext Q Γ
 epos lock-ext i = i
 ety  lock-ext i = refl
 egr  lock-ext i = ⊩≾̂ᵣ-refl
+edfs lock-ext   = refl
 
 wk-ext : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {δ : RExp Θ} {A : OVType Θ}
        → Ext Q Γ Γ' δ → Ext Q Γ (Γ' ∷ A) δ
 epos (wk-ext e) i = suc (epos e i)
 ety  (wk-ext e) i = ety e i
 egr  (wk-ext e) i = egr e i
+edfs (wk-ext e)   = edfs e

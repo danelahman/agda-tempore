@@ -928,9 +928,9 @@ infer-complete : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
 infer-complete Γ M t eq = infer-untypable Γ M eq t
 
 infer-handlerFree : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-                  → HandlerFreeᶜ M → infer Γ M ≢ stuck
-infer-handlerFree Γ M h eq =
-  runSolverᴰ-rigidFree C[ Γ , M ] (C[]-rigidFree Γ M h)
+                  → Unquantified (defs Γ) → HandlerFreeᶜ M → infer Γ M ≢ stuck
+infer-handlerFree Γ M u h eq =
+  runSolverᴰ-rigidFree C[ Γ , M ] (C[]-rigidFree Γ M u h)
     (inferFrom-stuck Γ M (runSolverᴰ C[ Γ , M ]) refl eq)
 
 check-established : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
@@ -947,7 +947,7 @@ check-complete : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
 check-complete Γ M t eq = check-untypable Γ M eq t
 
 check-handlerFree : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-                  → HandlerFreeᶜ M → check Γ M ≢ stuck
-check-handlerFree Γ M h eq =
-  runSolverᴰ-rigidFree C[ Γ , M ] (C[]-rigidFree Γ M h)
+                  → Unquantified (defs Γ) → HandlerFreeᶜ M → check Γ M ≢ stuck
+check-handlerFree Γ M u h eq =
+  runSolverᴰ-rigidFree C[ Γ , M ] (C[]-rigidFree Γ M u h)
     (checkFrom-stuck Γ M (runSolverᴰ C[ Γ , M ]) refl eq)
