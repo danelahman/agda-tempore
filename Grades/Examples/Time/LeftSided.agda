@@ -27,6 +27,7 @@ open import Data.Maybe.Base using (just; nothing)
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base
+open import Grades.Hints using (GradeHints; comm-≡)
 
 open import Util.Equality
 
@@ -184,9 +185,6 @@ left-sided-intervals = posetᵍ record
   ; _≾_               = _≾ₒ_
   ; ⊤                 = uₒ
   ; ≾-⊤               = ≾ₒ-⊤
-  ; u-least?          = nothing
-  ; ·-comm?           = just ·ₒ-comm
-  ; plus?             = λ i → just (plus-self (≾ₒ-refl {i}) (·ₒ-iter i))
   ; _⊔_               = _⊔ₒ_
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
   ; ⊔-ubʳ             = ⊔ₒ-ubʳ
@@ -205,6 +203,15 @@ left-sided-intervals = posetᵍ record
   ; of-dur            = [_,+∞⟩
   ; of-dur-zero       = refl
   ; of-dur-plus       = refl
+  }
+
+-- its hints
+
+left-sided-intervalsʰ : GradeHints left-sided-intervals
+left-sided-intervalsʰ = record
+  { u-least? = nothing
+  ; ·-comm?  = just (comm-≡ left-sided-intervals ·ₒ-comm)
+  ; plus?    = λ i → just (plus-self (≾ₒ-refl {i}) (·ₒ-iter i))
   }
 
 ------------------------------------------------------------------------
@@ -411,9 +418,6 @@ left-sided-intervals-with-⊤ = posetᵍ record
   ; _≾_               = _≾ᵗ_
   ; ⊤                 = untimed
   ; ≾-⊤               = ≾ᵗ-⊤
-  ; u-least?          = nothing
-  ; ·-comm?           = just ·ᵗ-comm
-  ; plus?             = λ i → just (plus-self (≾ᵗ-refl {i}) (·ᵗ-iter i))
   ; _⊔_               = _⊔ᵗ_
   ; ⊔-ubˡ             = ⊔ᵗ-ubˡ
   ; ⊔-ubʳ             = ⊔ᵗ-ubʳ
@@ -432,6 +436,15 @@ left-sided-intervals-with-⊤ = posetᵍ record
   ; of-dur            = λ n → timed [ n ,+∞⟩
   ; of-dur-zero       = refl
   ; of-dur-plus       = refl
+  }
+
+-- its hints
+
+left-sided-intervals-with-⊤ʰ : GradeHints left-sided-intervals-with-⊤
+left-sided-intervals-with-⊤ʰ = record
+  { u-least? = nothing
+  ; ·-comm?  = just (comm-≡ left-sided-intervals-with-⊤ ·ᵗ-comm)
+  ; plus?    = λ i → just (plus-self (≾ᵗ-refl {i}) (·ᵗ-iter i))
   }
 
 ------------------------------------------------------------------------

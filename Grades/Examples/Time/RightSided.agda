@@ -29,6 +29,7 @@ open import Data.Maybe.Base using (just)
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base
+open import Grades.Hints using (GradeHints; comm-≡)
 
 open import Util.Equality
 
@@ -199,9 +200,6 @@ right-sided-intervals = posetᵍ record
   ; _≾_               = _≾ₒ_
   ; ⊤                 = ⊤ₒ
   ; ≾-⊤               = ≾ₒ-⊤
-  ; u-least?          = just uₒ-least
-  ; ·-comm?           = just ·ₒ-comm
-  ; plus?             = λ i → just (plusₒ i)
   ; _⊔_               = _⊔ₒ_
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
   ; ⊔-ubʳ             = ⊔ₒ-ubʳ
@@ -220,6 +218,15 @@ right-sided-intervals = posetᵍ record
   ; of-dur            = λ n → [0, ↑ n ]
   ; of-dur-zero       = refl
   ; of-dur-plus       = refl
+  }
+
+-- its hints
+
+right-sided-intervalsʰ : GradeHints right-sided-intervals
+right-sided-intervalsʰ = record
+  { u-least? = just uₒ-least
+  ; ·-comm?  = just (comm-≡ right-sided-intervals ·ₒ-comm)
+  ; plus?    = λ i → just (plusₒ i)
   }
 
 ------------------------------------------------------------------------

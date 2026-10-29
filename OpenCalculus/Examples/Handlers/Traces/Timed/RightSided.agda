@@ -7,23 +7,22 @@
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
-open import Data.Maybe.Relation.Unary.Any using () renaming (just to is-just)
-open import Data.Unit using (tt)
 
 open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
+open import Grades.Examples.Worked.Traces.Timed.RightSided using (≾-⊥)
 open import OpenCalculus.Examples.Specs using (module Traces-Timed-RightSided)
 
 module OpenCalculus.Examples.Handlers.Traces.Timed.RightSided where
 
-open Traces-Timed-RightSided using (spec; enum)
+open Traces-Timed-RightSided using (spec; hints; enum)
 
 open import OpenCalculus.Syntax.Contexts spec using ([])
 open import OpenCalculus.Inference.Principality spec using (Typable; untypable)
-open import OpenCalculus.Inference.SolverImpl spec enum using (infer-untypable)
-open import OpenCalculus.Examples.Handlers spec enum
+open import OpenCalculus.Inference.SolverImpl spec hints enum using (infer-untypable)
+open import OpenCalculus.Examples.Handlers spec hints enum
 
 relay-reported : schemeOf (infer [] relay) ≡ just expected-relay
 relay-reported = refl
@@ -49,7 +48,7 @@ discard-reported : schemeOf (infer [] discard) ≡ just expected-discard
 discard-reported = refl
 
 discard-derivable : Typable [] discard
-discard-derivable = discard-typable (is-just tt)
+discard-derivable = discard-typable ≾-⊥
 
 -- A continuation grade above the unit is spent twice, and `k'` and
 -- `a` go stale across it

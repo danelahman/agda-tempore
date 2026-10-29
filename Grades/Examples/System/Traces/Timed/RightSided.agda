@@ -40,6 +40,7 @@ open import Relation.Binary.Definitions
   using (DecidableEquality; Transitive; Trichotomous)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; noGradeHints)
 open import Grades.Examples.Time.RightSided
 
 open import Util.Equality
@@ -67,7 +68,7 @@ open import Grades.Traces.Allowance ℕᵀ Op costʰⁱ using (duration-≼ᵃ)
 
 open import Grades.Examples.Traces.Timed.RightSided
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
-  using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _⊔ᵇ_; _≾_; _≾₀_;
+  using (right-sided; right-sidedʰ; Bounds; within_; unbounded; _·ᵇ_; _⊔ᵇ_; _≾_; _≾₀_;
          Antichain; traces; nonempty; Trace; n; n-∈⁻; n-◃⁻; ◃-∈;
          _·ˢ_; _∙_; ⟨_⟩)
 
@@ -168,6 +169,14 @@ tracesToRightSidedIntervalsGradeSystem = record
   { RGrade = right-sided-intervals
   ; EGrade = right-sided
   ; ∣_∣ᵉ   = traces→right-sided-intervals
+  }
+
+-- its hints
+
+tracesToRightSidedIntervalsGradeSystemʰ : SystemHints tracesToRightSidedIntervalsGradeSystem
+tracesToRightSidedIntervalsGradeSystemʰ = record
+  { RHints      = right-sided-intervalsʰ
+  ; EHints      = right-sidedʰ
   ; reflects-u? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

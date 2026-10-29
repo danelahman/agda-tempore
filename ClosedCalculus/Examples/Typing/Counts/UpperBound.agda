@@ -30,7 +30,6 @@ open import Grades.Examples.Counts.AtMost using (upto; unlimited)
 open import Grades.Examples.Counts.UpperBound using (counts-upper-bound)
 open import Grades.Examples.Worked.Counts.UpperBound using (single)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
-open import Grades.Examples.System.Identity using (noWitnesses)
 
 open Maps ℕ-names using (pointwise⁺; _!_)
 
@@ -42,7 +41,7 @@ opTime read  = single read (upto 1) (upto 0)
 opTime write = single write (upto 1) (upto 0)
 opTime send  = single send (upto 1) (upto 0)
 
-open import ClosedCalculus.Examples.Typing.Core counts-upper-bound opTime noWitnesses
+open import ClosedCalculus.Examples.Typing.Core counts-upper-bound opTime
 
 -- side conditions, decided
 

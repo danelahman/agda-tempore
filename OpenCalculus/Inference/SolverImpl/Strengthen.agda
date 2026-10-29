@@ -32,13 +32,15 @@ open import Data.Product using (Σ-syntax; _×_; _,_)
 open import Data.List.Relation.Unary.Any using (here; there)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints)
 open import Language.Spec
 
 open import Util.Equality
 
 open import OpenCalculus.Syntax.Scopes
 
-module OpenCalculus.Inference.SolverImpl.Strengthen (S : LanguageSpec) where
+module OpenCalculus.Inference.SolverImpl.Strengthen (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -49,9 +51,9 @@ open import OpenCalculus.Syntax.Subst  S
 open import OpenCalculus.Hypotheses    S
 
 open import OpenCalculus.Inference.SolverImpl.Vars      S
-open import OpenCalculus.Inference.SolverImpl.Eliminate S using (Elim; Ĉ; Q̂; η; conv; inst; keep; princ)
+open import OpenCalculus.Inference.SolverImpl.Eliminate S hints using (Elim; Ĉ; Q̂; η; conv; inst; keep; princ)
 open import OpenCalculus.Inference.SolverImpl.Core.Occurs S using (occᵉ-v)
-open import OpenCalculus.Inference.SolverImpl.Deferred    S
+open import OpenCalculus.Inference.SolverImpl.Deferred    S hints
 
 ------------------------------------------------------------------------
 -- Thinning by a mask
@@ -154,10 +156,10 @@ ext-str p a g i h =
 
 hyps-≡ : ∀ {Θ} {a a' : List (TyVar Θ)} {b b' : List (TyVar Θ × TyVar Θ)}
            {c c' : List (RExp Θ × RExp Θ)} {d d' : List (EExp Θ × EExp Θ)}
-           {e e' : List (OVType Θ × RExp Θ)} {f f' : List (QOrd Θ)} {g g' : 𝔹}
-       → a ≡ a' → b ≡ b' → c ≡ c' → d ≡ d' → e ≡ e' → f ≡ f' → g ≡ g'
-       → hyps a b c d e f g ≡ hyps a' b' c' d' e' f' g'
-hyps-≡ refl refl refl refl refl refl refl = refl
+           {e e' : List (OVType Θ × RExp Θ)} {f f' : List (QOrd Θ)}
+       → a ≡ a' → b ≡ b' → c ≡ c' → d ≡ d' → e ≡ e' → f ≡ f'
+       → hyps a b c d e f ≡ hyps a' b' c' d' e' f'
+hyps-≡ refl refl refl refl refl refl = refl
 
 ------------------------------------------------------------------------
 -- Renamings, and their action on hypothesis sets
@@ -182,7 +184,7 @@ Q [ r ]ᴴ = hyps (map (rTy r) (ets Q))
                 (map (mapᵖ (_[ ⌜ r ⌝ʳ ]ʳ)) (ordᵣ Q))
                 (map (mapᵖ (_[ ⌜ r ⌝ʳ ]ᵉ)) (ordₑ Q))
                 (map (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) (disj Q))
-                (map (_[ ⌜ r ⌝ʳ ]ᵠ) (qhyps Q)) (truths Q)
+                (map (_[ ⌜ r ⌝ʳ ]ᵠ) (qhyps Q))
 
 -- A renamed set entails the set along the renaming, and so its
 -- instances are instances of the set
@@ -194,7 +196,7 @@ Q [ r ]ᴴ = hyps (map (rTy r) (ets Q))
        (λ m → hypᵣ (∈-map⁺ (mapᵖ (_[ ⌜ r ⌝ʳ ]ʳ)) m))
        (λ m → hypₑ (∈-map⁺ (mapᵖ (_[ ⌜ r ⌝ʳ ]ᵉ)) m))
        (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) m))
-       (λ {O} m → ⊩ᴼ-hyp O (∈-map⁺ (_[ ⌜ r ⌝ʳ ]ᵠ) m)) (λ t → t)
+       (λ {O} m → ⊩ᴼ-hyp O (∈-map⁺ (_[ ⌜ r ⌝ʳ ]ᵠ) m))
 
 ⊩ᴴ-ren⁻ : ∀ {Θ Θ' Θ''} {Q : Hyps Θ} {Q' : Hyps Θ''} → (r : Ren Θ Θ') → {δ : Subst Θ' Θ''}
         → Q' ⊩ᴴ Q [ r ]ᴴ [ δ ] → Q' ⊩ᴴ Q [ ⌜ r ⌝ʳ ⨟ˢ δ ]
@@ -202,7 +204,7 @@ Q [ r ]ᴴ = hyps (map (rTy r) (ets Q))
 
 ⊩ᴴ-ren⁺ : ∀ {Θ Θ' Θ''} {Q : Hyps Θ} {Q' : Hyps Θ''} → (r : Ren Θ Θ') → {δ : Subst Θ' Θ''}
         → Q' ⊩ᴴ Q [ ⌜ r ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᴴ Q [ r ]ᴴ [ δ ]
-⊩ᴴ-ren⁺ {Q = Q} {Q'} r {δ} h = mk⊩ᴴ et sb oR oE dj qh (⊩truths h)
+⊩ᴴ-ren⁺ {Q = Q} {Q'} r {δ} h = mk⊩ᴴ et sb oR oE dj qh
   where
     et : ∀ {α} → α ∈ map (rTy r) (ets Q) → Q' ⊩ᴱ sTy δ α
     et m with ∈-map⁻ (rTy r) m
@@ -317,7 +319,7 @@ module _ {Θ : Scope} (M : Vars Θ) where
                   (strˡ fvʳʳ strʳʳ (ordᵣ Q) h₃)
                   (strˡ fvᵉᵉ strᵉᵉ (ordₑ Q) h₄)
                   (strˡ fvᵛʳ strᵛʳ (disj Q) h₅)
-                  [] false
+                  []
     where
       V₁ = ⋃ᵛ fvᵗ (ets Q)
       V₂ = ⋃ᵛ fvᵗᵗ (subᵥ Q)
@@ -380,7 +382,7 @@ module _ {Θ : Scope} (M : Vars Θ) where
            (strˡ-ι fvʳʳ strʳʳ (mapᵖ (_[ ⌜ thin ⌝ʳ ]ʳ)) eʳʳ (ordᵣ Q) _)
            (strˡ-ι fvᵉᵉ strᵉᵉ (mapᵖ (_[ ⌜ thin ⌝ʳ ]ᵉ)) eᵉᵉ (ordₑ Q) _)
            (strˡ-ι fvᵛʳ strᵛʳ (mapᵈ (_[ ⌜ thin ⌝ʳ ]ᵛ) (_[ ⌜ thin ⌝ʳ ]ʳ)) eᵛʳ (disj Q) _)
-           (sym (no-qhyps u)) (sym (no-truths u))
+           (sym (no-qhyps u))
     where
       eᵗᵗ : ∀ x h → mapᵖ (rTy thin) (strᵗᵗ x h) ≡ x
       eᵗᵗ (α , β) h = cong₂ _,_ (strᵗ-ι α (⊆-∪ˡ (fvᵗ α) (fvᵗ β) h))

@@ -34,8 +34,8 @@ warning. The only postulate is function extensionality (`Util/Equality.agda`).
 ## Layout
 
 - `Util/`: equality and the non-negative rationals.
-- `Grades/`: grade algebras, grade systems and durations; the concrete grades
-  in `Grades/Examples/`.
+- `Grades/`: grade algebras, grade systems and durations, and the hints the
+  solver reads (`Grades/Hints.agda`); the concrete grades in `Grades/Examples/`.
 - `Language/`: what both calculi share: base types, operations, types.
 - `OpenCalculus/`: the calculus with type and grade variables: hypotheses,
   entailment, typing, the operational semantics, type safety and termination,
@@ -55,11 +55,13 @@ end.
   calculus with grade variables; the closed calculus has second-class handlers,
   `handle M with H to x in N`. The language is parameterised by base types, the
   calculus being its instance without them (`withoutBaseTypes`).
-- Hypotheses include quantified orderings, which bind several rigid grade
-  variables of either sort.
+- Hypotheses include quantified orderings, which bind several rigid
+  effect-grade variables.
 - Unbox takes a variable.
-- Inference is for computations in open contexts; there are no top-level
-  programs.
+- A top-level definition is named by its position in the program context.
+  Inference is for values in program contexts, and for computations in open
+  contexts; it is not stuck on a term without handlers when the schemes of
+  the program context have no quantified hypotheses.
 - The reduction is on run-time terms, raw terms without grades and type
   annotations, with grade-free states; `unbox` there takes a value.
   Instantiation, type safety and termination are for the scope-closed typing.

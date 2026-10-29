@@ -14,12 +14,12 @@ open import OpenCalculus.Examples.Specs using (module Time-LeftSided)
 
 module OpenCalculus.Examples.Compare.Time.LeftSided where
 
-open Time-LeftSided using (spec; enum)
+open Time-LeftSided using (spec; hints; enum)
 
 open import OpenCalculus.Syntax.Contexts spec using ([])
 open import OpenCalculus.Inference.Principality spec using (Typable; untypable)
-open import OpenCalculus.Inference.SolverImpl spec enum using (infer-untypable)
-open import OpenCalculus.Examples.Compare spec enum ℕᴰ-stepped
+open import OpenCalculus.Inference.SolverImpl spec hints enum using (infer-untypable)
+open import OpenCalculus.Examples.Compare spec hints enum ℕᴰ-stepped
 
 ------------------------------------------------------------------
 -- 1.–3. Natural numbers, lists, pairs and sums

@@ -34,7 +34,7 @@ open import OpenCalculus.Examples.Specs using (module Product-RightSidedTimeLeve
 
 module OpenCalculus.Examples.Product.RightSidedTimeLevel where
 
-open Product-RightSidedTimeLevel using (spec; enum)
+open Product-RightSidedTimeLevel using (spec; hints; enum)
 open LanguageSpec spec using (Grades; Ops)
 open GradeSystemInterface Grades using (_·ₑ_; _⊔ₑ_)
 open Operations Ops using (op-grade)
@@ -42,8 +42,8 @@ open Operations Ops using (op-grade)
 open import OpenCalculus.Syntax.Grades   spec using (RExp; rconst)
 open import OpenCalculus.Syntax.Contexts spec using ([])
 open import OpenCalculus.Inference.Principality spec using (Typable; untypable)
-open import OpenCalculus.Inference.SolverImpl spec enum using (infer-untypable)
-open import OpenCalculus.Examples.Product spec enum ℕᴰ-stepped
+open import OpenCalculus.Inference.SolverImpl spec hints enum using (infer-untypable)
+open import OpenCalculus.Examples.Product spec hints enum ℕᴰ-stepped
 
 -- the token
 

@@ -46,6 +46,7 @@ open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Grades.Durations using (Duration)
 open import Grades.Base
+open import Grades.Hints using (SystemHints; noGradeHints)
 
 open import Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
   using (Trace; traces; nonempty; nf; nf-ne; nf-∈⁺; nf-∈⁻; ⟨_⟩; ·ˢ-ne; ++-ne)
@@ -58,7 +59,7 @@ open import Grades.Examples.Traces.Subsets.RightSided
 open import Grades.Examples.Time.LeftSided using (𝕀⊤; timed_; untimed; _·ᵗ_; ≾ᵗ-antisym)
 
 open import Grades.Examples.Counts.AtLeast
-  using (at-least-counts; at-least-counts-with-⊤; certainly; module WithTop)
+  using (at-least-counts; at-least-counts-with-⊤; at-least-counts-with-⊤ʰ; certainly; module WithTop)
 open WithTop
 open import Grades.Examples.Counts.Extrema
 open import Grades.Examples.Counts.Occurrences Op index
@@ -174,6 +175,14 @@ subsetsToAtLeastCountsGradeSystem = record
   { RGrade = at-least-counts-with-⊤ n
   ; EGrade = right-sided
   ; ∣_∣ᵉ   = subsets→at-least-counts-with-⊤
+  }
+
+-- its hints
+
+subsetsToAtLeastCountsGradeSystemʰ : SystemHints subsetsToAtLeastCountsGradeSystem
+subsetsToAtLeastCountsGradeSystemʰ = record
+  { RHints      = (at-least-counts-with-⊤ʰ n)
+  ; EHints      = noGradeHints
   ; reflects-u? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

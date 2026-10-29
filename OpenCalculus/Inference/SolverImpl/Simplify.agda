@@ -64,6 +64,7 @@ open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Relation.Nullary using (¬_; yes; no)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints)
 open import Language.Spec
 
 open import Util.Equality
@@ -72,6 +73,7 @@ open import OpenCalculus.Syntax.Scopes
 
 module OpenCalculus.Inference.SolverImpl.Simplify
   (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S))
   where
 
 open LanguageSpec S
@@ -89,11 +91,11 @@ open BaseTypes BTs using (_≡ᵇ?_)
 
 open import OpenCalculus.Inference.SolverImpl.Core.Rigid S using (zip₂-just)
 
-open import OpenCalculus.Inference.SolverImpl.Canon  S using (canonᴴ; canonᴴ-⊩; canonᴴ-⊩⁻)
-open import OpenCalculus.Inference.SolverImpl.Eliminate S using (Elim; mkElim)
-open import OpenCalculus.Inference.SolverImpl.Product S using (_≺ᵣ_; _≺ₑ_)
+open import OpenCalculus.Inference.SolverImpl.Canon  S hints using (canonᴴ; canonᴴ-⊩; canonᴴ-⊩⁻)
+open import OpenCalculus.Inference.SolverImpl.Eliminate S hints using (Elim; mkElim)
+open import OpenCalculus.Inference.SolverImpl.Product S hints using (_≺ᵣ_; _≺ₑ_)
 open import OpenCalculus.Inference.SolverImpl.Resid  S using (etDec; etDec-sound; etDec-compl; etDec-refute)
-open import OpenCalculus.Inference.SolverImpl.Entail S
+open import OpenCalculus.Inference.SolverImpl.Entail S hints
   using (decideᵣ; decideₑ; full; memʳ?; memᵉ?; memʳ-⊩; memᵉ-⊩; refute≾u)
 
 -- Derivations reading only a list of subtyping hypotheses and a list
@@ -307,13 +309,13 @@ settle A ρ Q with decideᵣ full Q ρ ûᵣ
 ... | just _  = Q
 ... | nothing with etDec A
 ...   | nothing = hyps (ets Q) (subᵥ Q) (ordᵣ Q ++ (ρ , ûᵣ) ∷ []) (ordₑ Q) (disj Q)
-                       (qhyps Q) (truths Q)
+                       (qhyps Q)
 ...   | just αs with ets? Q αs
 ...     | just _  = Q
 ...     | nothing with refute≾u ρ
-...       | just _  = hyps (αs ++ ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) (disj Q) (qhyps Q) (truths Q)
+...       | just _  = hyps (αs ++ ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) (disj Q) (qhyps Q)
 ...       | nothing = hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) ((A , ρ) ∷ disj Q)
-                             (qhyps Q) (truths Q)
+                             (qhyps Q)
 
 -- A settled disjunction is entailed by the set it leaves, which entails
 -- the set it came from
@@ -324,17 +326,16 @@ settle-⊩ A ρ Q with decideᵣ full Q ρ ûᵣ
 ... | just d  = ⊩ᴴ-refl , ≾ᵘ-ok d
 ... | nothing with etDec A in e
 ...   | nothing =
-        ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m) ∈-++⁺ˡ (λ m → m) (λ m → m) (λ m → m) (λ t → t))
+        ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m) ∈-++⁺ˡ (λ m → m) (λ m → m) (λ m → m))
         , ≾ᵘ-ok (hypᵣ (∈-++⁺ʳ (ordᵣ Q) (here refl)))
 ...   | just αs with ets? Q αs
 ...     | just k  = ⊩ᴴ-refl , et-ok (etDec-sound A e k)
 ...     | nothing with refute≾u ρ
 ...       | just _  =
-            ⊆ᴴ-⊩ (mk⊆ᴴ (∈-++⁺ʳ αs) (λ m → m) (λ m → m) (λ m → m) (λ m → m) (λ m → m)
-                       (λ t → t))
+            ⊆ᴴ-⊩ (mk⊆ᴴ (∈-++⁺ʳ αs) (λ m → m) (λ m → m) (λ m → m) (λ m → m) (λ m → m))
             , et-ok (etDec-sound A e (λ m → et-hyp (∈-++⁺ˡ m)))
 ...       | nothing =
-            ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m) (λ m → m) (λ m → m) there (λ m → m) (λ t → t))
+            ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m) (λ m → m) (λ m → m) there (λ m → m))
             , hyp-ok₀ (here refl)
 
 -- At an instance meeting the disjunction, an instance of the set is one
@@ -346,7 +347,7 @@ settle-inst : ∀ {Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ) 
 settle-inst A ρ Q δ d h with decideᵣ full Q ρ ûᵣ
 ... | just _  = h
 ... | nothing with etDec A in e
-...   | nothing = mk⊩ᴴ (⊩ets h) (⊩subᵥ h) ordR (⊩ordₑ h) (⊩disj h) (⊩qhyps h) (⊩truths h)
+...   | nothing = mk⊩ᴴ (⊩ets h) (⊩subᵥ h) ordR (⊩ordₑ h) (⊩disj h) (⊩qhyps h)
       where
         ordR : ∀ {ρ₀ ρ₀'} → (ρ₀ , ρ₀') ∈ ordᵣ Q ++ (ρ , ûᵣ) ∷ []
              → ∅ᴴ ⊩ ρ₀ [ δ ]ʳ ≾̂ᵣ ρ₀' [ δ ]ʳ
@@ -356,7 +357,7 @@ settle-inst A ρ Q δ d h with decideᵣ full Q ρ ûᵣ
 ...   | just αs with ets? Q αs
 ...     | just _  = h
 ...     | nothing with refute≾u ρ
-...       | just ref = mk⊩ᴴ et' (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (⊩disj h) (⊩qhyps h) (⊩truths h)
+...       | just ref = mk⊩ᴴ et' (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (⊩disj h) (⊩qhyps h)
       where
         etA : ∅ᴴ ⊩ᴱ A [ δ ]ᵛ
         etA = from d
@@ -368,7 +369,7 @@ settle-inst A ρ Q δ d h with decideᵣ full Q ρ ûᵣ
 
         et' : ∀ {β} → β ∈ (αs ++ ets Q) → ∅ᴴ ⊩ᴱ sTy δ β
         et' m = [ etDec-compl A e δ etA , ⊩ets h ]′ (∈-++⁻ αs m)
-...       | nothing = mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) dsj' (⊩qhyps h) (⊩truths h)
+...       | nothing = mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) dsj' (⊩qhyps h)
       where
         dsj' : ∀ {A₀ ρ₀} → (A₀ , ρ₀) ∈ ((A , ρ) ∷ disj Q)
              → VarOK ∅ᴴ (A₀ [ δ ]ᵛ) (ρ₀ [ δ ]ʳ)
@@ -394,18 +395,18 @@ settleAll-inst ((A , ρ) ∷ l) Q₀ δ k h =
   settle-inst A ρ (settleAll l Q₀) δ (k (here refl))
               (settleAll-inst l Q₀ δ (λ m → k (there m)) h)
 
--- Settling keeps the quantified hypotheses and the truths
+-- Settling keeps the quantified hypotheses
 
 settle-unq : ∀ {Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ) → Unq Q → Unq (settle A ρ Q)
 settle-unq A ρ Q u with decideᵣ full Q ρ ûᵣ
 ... | just _  = u
 ... | nothing with etDec A
-...   | nothing = unq (no-qhyps u) (no-truths u)
+...   | nothing = unq (no-qhyps u)
 ...   | just αs with ets? Q αs
 ...     | just _  = u
 ...     | nothing with refute≾u ρ
-...       | just _  = unq (no-qhyps u) (no-truths u)
-...       | nothing = unq (no-qhyps u) (no-truths u)
+...       | just _  = unq (no-qhyps u)
+...       | nothing = unq (no-qhyps u)
 
 settleAll-unq : ∀ {Θ} → (l : List (OVType Θ × RExp Θ)) → (Q₀ : Hyps Θ)
               → Unq Q₀ → Unq (settleAll l Q₀)
@@ -415,7 +416,7 @@ settleAll-unq ((A , ρ) ∷ l) Q₀ u = settle-unq A ρ (settleAll l Q₀) (sett
 -- The set with its disjunctions taken out, to be settled one at a time
 
 split : ∀ {Θ} → Hyps Θ → Hyps Θ
-split Q₀ = hyps (ets Q₀) (subᵥ Q₀) (ordᵣ Q₀) (ordₑ Q₀) [] (qhyps Q₀) (truths Q₀)
+split Q₀ = hyps (ets Q₀) (subᵥ Q₀) (ordᵣ Q₀) (ordₑ Q₀) [] (qhyps Q₀)
 
 -- Types the same up to the sameness of their grades, which makes them
 -- convertible
@@ -460,7 +461,7 @@ sameᶜ? (A ‼ ε) (A' ‼ ε') with sameᵛ? A A' | ε ≟ᵉ ε'
 -- other, the walk keeps the later.
 
 Hᵈ : ∀ {Θ} → Hyps Θ → List (OVType Θ × RExp Θ) → Hyps Θ
-Hᵈ Q ds = hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) ds (qhyps Q) (truths Q)
+Hᵈ Q ds = hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) ds (qhyps Q)
 
 Okᵈ : ∀ {Θ} → Hyps Θ → (seen rest : List (OVType Θ × RExp Θ)) → OVType Θ × RExp Θ → Set
 Okᵈ Q seen rest (A , ρ) = VarOK (Hᵈ Q (seen ++ rest)) A ρ
@@ -494,20 +495,20 @@ walkᵈ Q = Hᵈ Q (Walk.walk (Okᵈ Q) (testᵈ Q) [] (disj Q))
 walkᵈ-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ walkᵈ Q
 walkᵈ-⊩⁻ Q =
   ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m) (λ m → m) (λ m → m)
-             (Walk.walk-⊆ (Okᵈ Q) (testᵈ Q) [] (disj Q)) (λ m → m) (λ t → t))
+             (Walk.walk-⊆ (Okᵈ Q) (testᵈ Q) [] (disj Q)) (λ m → m))
 
 walkᵈ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → walkᵈ Q ⊩ᴴ Q
 walkᵈ-⊩ {Θ} Q =
   mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) hypᵣ hypₑ
         (Walk.walk-⊨ (Okᵈ Q) (testᵈ Q) (λ p → VarOK (walkᵈ Q) (proj₁ p) (proj₂ p))
                      close [] (disj Q) (λ ()) hyp-ok₀)
-        (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
+        (λ m → ⊩ᴼ-hyp⁼ m)
   where
     close : ∀ (seen rest : List (OVType Θ × RExp Θ)) {p} → Okᵈ Q seen rest p
           → (∀ {q} → q ∈ seen ++ rest → VarOK (walkᵈ Q) (proj₁ q) (proj₂ q))
           → VarOK (walkᵈ Q) (proj₁ p) (proj₂ p)
     close seen rest ok hs =
-      ⊩ᴴ-VarOK (mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) hypᵣ hypₑ hs (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)) ok
+      ⊩ᴴ-VarOK (mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) hypᵣ hypₑ hs (λ m → ⊩ᴼ-hyp⁼ m)) ok
 
 -- Every disjunction of the set settled, then those entailed by the
 -- others dropped
@@ -519,12 +520,12 @@ settleᴴ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → settleᴴ Q ⊩ᴴ Q
 settleᴴ-⊩ Q with settleAll-⊩ (disj Q) (split Q)
 ... | h , k =
       ⊩ᴴ-trans (walkᵈ-⊩ (settleAll (disj Q) (split Q)))
-               (mk⊩ᴴ⁼ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ⁼ h) (⊩ordₑ⁼ h) k (⊩qhyps h) (⊩truths h))
+               (mk⊩ᴴ⁼ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ⁼ h) (⊩ordₑ⁼ h) k (⊩qhyps h))
 
 settleᴴ-⊨ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊨ᴴ settleᴴ Q
 settleᴴ-⊨ Q =
   ⊨ᴴ-trans (λ δ h → settleAll-inst (disj Q) (split Q) δ (⊩disj h)
-                      (mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (λ ()) (⊩qhyps h) (⊩truths h)))
+                      (mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (λ ()) (⊩qhyps h)))
            (⊩ᴴ-⊨ᴴ (walkᵈ-⊩⁻ (settleAll (disj Q) (split Q))))
 
 -- A subtyping or eternality atom entailed by the atoms kept before it
@@ -557,7 +558,7 @@ pruneᴱ l = Walk.walk (Okᴱ l) (etᴱ? l) []
 -- along them, the rest untouched
 
 pruneᵀ-at : ∀ {Θ} → Hyps Θ → List (TyVar Θ × TyVar Θ) → Hyps Θ
-pruneᵀ-at Q l = hyps (pruneᴱ l (ets Q)) l (ordᵣ Q) (ordₑ Q) (disj Q) (qhyps Q) (truths Q)
+pruneᵀ-at Q l = hyps (pruneᴱ l (ets Q)) l (ordᵣ Q) (ordₑ Q) (disj Q) (qhyps Q)
 
 pruneᵀ-at-⊩ : ∀ {Θ} → (Q : Hyps Θ) → (l : List (TyVar Θ × TyVar Θ))
             → (∀ {α β} → (α , β) ∈ subᵥ Q → pruneᵀ-at Q l ⊩ᵗᵛ α ≾ β)
@@ -565,7 +566,7 @@ pruneᵀ-at-⊩ : ∀ {Θ} → (Q : Hyps Θ) → (l : List (TyVar Θ × TyVar Θ
 pruneᵀ-at-⊩ {Θ} Q l k =
   mk⊩ᴴ⁼ (Walk.walk-⊨ (Okᴱ l) (etᴱ? l) (λ α → pruneᵀ-at Q l ⊩ᴱ tvar α) close
                      [] (ets Q) (λ ()) et-hyp)
-        (λ m → tvarₛ (k m)) hypᵣ hypₑ hyp-ok₀ (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
+        (λ m → tvarₛ (k m)) hypᵣ hypₑ hyp-ok₀ (λ m → ⊩ᴼ-hyp⁼ m)
   where
     close : ∀ (seen rest : List (TyVar Θ)) {α} → Okᴱ l seen rest α
           → (∀ {β} → β ∈ seen ++ rest → pruneᵀ-at Q l ⊩ᴱ tvar β)
@@ -576,7 +577,7 @@ pruneᵀ-at-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → (l : List (TyVar Θ × TyVar
              → (∀ {p} → p ∈ l → p ∈ subᵥ Q) → Q ⊩ᴴ pruneᵀ-at Q l
 pruneᵀ-at-⊩⁻ Q l k =
   ⊆ᴴ-⊩ (mk⊆ᴴ (Walk.walk-⊆ (Okᴱ l) (etᴱ? l) [] (ets Q)) k (λ m → m) (λ m → m) (λ m → m)
-             (λ m → m) (λ t → t))
+             (λ m → m))
 
 -- Both kinds of atom pruned
 
@@ -624,19 +625,19 @@ reachᵛ? seen rest (α , β) = reach? (seen ++ rest) α β
 
 walkᵛ : ∀ {Θ} → Hyps Θ → Hyps Θ
 walkᵛ Q = hyps (ets Q) (Walk.walk Okᵛ reachᵛ? [] (subᵥ Q)) (ordᵣ Q) (ordₑ Q) (disj Q)
-                (qhyps Q) (truths Q)
+                (qhyps Q)
 
 walkᵛ-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ walkᵛ Q
 walkᵛ-⊩⁻ Q =
   ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (Walk.walk-⊆ Okᵛ reachᵛ? [] (subᵥ Q)) (λ m → m) (λ m → m) (λ m → m)
-             (λ m → m) (λ t → t))
+             (λ m → m))
 
 walkᵛ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → walkᵛ Q ⊩ᴴ Q
 walkᵛ-⊩ {Θ} Q =
   mk⊩ᴴ⁼ et-hyp
         (λ m → tvarₛ (Walk.walk-⊨ Okᵛ reachᵛ? (λ p → walkᵛ Q ⊩ᵗᵛ proj₁ p ≾ proj₂ p) close
                                   [] (subᵥ Q) (λ ()) hypᵗᵛ m))
-        hypᵣ hypₑ hyp-ok₀ (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
+        hypᵣ hypₑ hyp-ok₀ (λ m → ⊩ᴼ-hyp⁼ m)
   where
     close : ∀ (seen rest : List (TyVar Θ × TyVar Θ)) {p} → Okᵛ seen rest p
           → (∀ {q} → q ∈ seen ++ rest → walkᵛ Q ⊩ᵗᵛ proj₁ q ≾ proj₂ q)
@@ -650,10 +651,10 @@ walkᵛ-⊩ {Θ} Q =
 -- The set of the grade orderings `seen`, with the effect orderings `lₑ`
 
 Hʳ : ∀ {Θ} → List (EExp Θ × EExp Θ) → List (RExp Θ × RExp Θ) → Hyps Θ
-Hʳ lₑ seen = hyps [] [] seen lₑ [] [] false
+Hʳ lₑ seen = hyps [] [] seen lₑ [] []
 
 Hᵉ : ∀ {Θ} → List (EExp Θ × EExp Θ) → Hyps Θ
-Hᵉ seen = hyps [] [] [] seen [] [] false
+Hᵉ seen = hyps [] [] [] seen [] []
 
 -- An ordering entailed by the orderings the test sees
 
@@ -712,7 +713,7 @@ module Pruneᴼ (testʳ : Testʳ) (testᵉ : Testᵉ) where
   -- pruned against them.
 
   pruneᴼ-at : ∀ {Θ} → Hyps Θ → List (EExp Θ × EExp Θ) → Hyps Θ
-  pruneᴼ-at Q lₑ = hyps (ets Q) (subᵥ Q) (pruneᴼʳ lₑ (ordᵣ Q)) lₑ (disj Q) (qhyps Q) (truths Q)
+  pruneᴼ-at Q lₑ = hyps (ets Q) (subᵥ Q) (pruneᴼʳ lₑ (ordᵣ Q)) lₑ (disj Q) (qhyps Q)
 
   pruneᴼ : ∀ {Θ} → Hyps Θ → Hyps Θ
   pruneᴼ Q = pruneᴼ-at Q (pruneᴼᵉ (ordₑ Q))
@@ -721,7 +722,7 @@ module Pruneᴼ (testʳ : Testʳ) (testᵉ : Testᵉ) where
   pruneᴼ-⊩⁻ Q =
     ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m)
                (Walk.walk-⊆ (Okʳ lₑ) (testʳ lₑ) [] (ordᵣ Q))
-               (Walk.walk-⊆ Okᵉ testᵉ [] (ordₑ Q)) (λ m → m) (λ m → m) (λ t → t))
+               (Walk.walk-⊆ Okᵉ testᵉ [] (ordₑ Q)) (λ m → m) (λ m → m))
     where lₑ = pruneᴼᵉ (ordₑ Q)
 
   pruneᴼ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → pruneᴼ Q ⊩ᴴ Q
@@ -731,7 +732,7 @@ module Pruneᴼ (testʳ : Testʳ) (testᵉ : Testᵉ) where
                        closeʳ [] (ordᵣ Q) (λ ()) hypᵣ)
           (Walk.walk-⊨ Okᵉ testᵉ (λ p → pruneᴼ Q ⊩ proj₁ p ≾̂ₑ proj₂ p)
                        closeᵉ [] (ordₑ Q) (λ ()) hypₑ)
-          hyp-ok₀ (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
+          hyp-ok₀ (λ m → ⊩ᴼ-hyp⁼ m)
     where
       lₑ = pruneᴼᵉ (ordₑ Q)
 
@@ -739,13 +740,13 @@ module Pruneᴼ (testʳ : Testʳ) (testᵉ : Testᵉ) where
              → (∀ {q} → q ∈ seen ++ rest → pruneᴼ Q ⊩ proj₁ q ≾̂ᵣ proj₂ q)
              → pruneᴼ Q ⊩ proj₁ p ≾̂ᵣ proj₂ p
       closeʳ seen rest d hs =
-        ⊩ᴴ-≾ᵣ (mk⊩ᴴ⁼ (λ ()) (λ ()) hs hypₑ (λ ()) (λ ()) (λ ())) d
+        ⊩ᴴ-≾ᵣ (mk⊩ᴴ⁼ (λ ()) (λ ()) hs hypₑ (λ ()) (λ ())) d
 
       closeᵉ : ∀ (seen rest : List (EExp Θ × EExp Θ)) {p} → Okᵉ seen rest p
              → (∀ {q} → q ∈ seen ++ rest → pruneᴼ Q ⊩ proj₁ q ≾̂ₑ proj₂ q)
              → pruneᴼ Q ⊩ proj₁ p ≾̂ₑ proj₂ p
       closeᵉ seen rest d hs =
-        ⊩ᴴ-≾ₑ (mk⊩ᴴ⁼ (λ ()) (λ ()) (λ ()) hs (λ ()) (λ ()) (λ ())) d
+        ⊩ᴴ-≾ₑ (mk⊩ᴴ⁼ (λ ()) (λ ()) (λ ()) hs (λ ()) (λ ())) d
 
 module Repeats  = Pruneᴼ repeatʳ?  repeatᵉ?
 module Entailed = Pruneᴼ entailsʳ? entailsᵉ?
@@ -761,17 +762,17 @@ prune-⊩⁻ Q = ⊩ᴴ-trans (pruneᵀ-⊩⁻ Q) (Repeats.pruneᴼ-⊩⁻ (prun
 
 order : ∀ {Θ} → Hyps Θ → Hyps Θ
 order Q = hyps (ets Q) (subᵥ Q) (sortᴼ _≺ᵣ_ (ordᵣ Q)) (sortᴼ _≺ₑ_ (ordₑ Q)) (disj Q)
-                (qhyps Q) (truths Q)
+                (qhyps Q)
 
 order-⊩ : ∀ {Θ} → (Q : Hyps Θ) → order Q ⊩ᴴ Q
 order-⊩ Q =
   ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m) (sortᴼ-⊇ _≺ᵣ_ (ordᵣ Q)) (sortᴼ-⊇ _≺ₑ_ (ordₑ Q)) (λ m → m)
-             (λ m → m) (λ t → t))
+             (λ m → m))
 
 order-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ order Q
 order-⊩⁻ Q =
   ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m) (sortᴼ-⊆ _≺ᵣ_ (ordᵣ Q)) (sortᴼ-⊆ _≺ₑ_ (ordₑ Q)) (λ m → m)
-             (λ m → m) (λ t → t))
+             (λ m → m))
 
 simplify : ∀ {Θ} → Hyps Θ → Hyps Θ
 simplify Q = order (prune (settleᴴ (canonᴴ Q)))
@@ -786,8 +787,8 @@ simplify-⊩ Q =
       (⊩ᴴ-trans (settleᴴ-⊩ (canonᴴ Q)) (canonᴴ-⊩ Q)))
 
 simplify-unq : ∀ {Θ} {Q : Hyps Θ} → Unq Q → Unq (simplify Q)
-simplify-unq {Q = Q} u = unq (no-qhyps v) (no-truths v)
-  where v = settleAll-unq (disj (canonᴴ Q)) (split (canonᴴ Q)) (unq (no-qhyps u) (no-truths u))
+simplify-unq {Q = Q} u = unq (no-qhyps v)
+  where v = settleAll-unq (disj (canonᴴ Q)) (split (canonᴴ Q)) (unq (no-qhyps u))
 
 simplify-⊨ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊨ᴴ simplify Q
 simplify-⊨ Q =
@@ -821,8 +822,8 @@ trim-⊨ Q =
 -- no unknown
 
 trim-unq : ∀ {Θ} {Q : Hyps Θ} → Unq Q → Unq (trim Q)
-trim-unq {Q = Q} u = unq (no-qhyps v) (no-truths v)
-  where v = settleAll-unq (disj Q) (split Q) (unq (no-qhyps u) (no-truths u))
+trim-unq {Q = Q} u = unq (no-qhyps v)
+  where v = settleAll-unq (disj Q) (split Q) (unq (no-qhyps u))
 
 trimElim : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → Elim C Q
 trimElim C Q =

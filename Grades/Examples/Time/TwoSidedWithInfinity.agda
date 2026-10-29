@@ -29,6 +29,7 @@ open import Data.Maybe.Base using (just; nothing)
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base
+open import Grades.Hints using (GradeHints; comm-≡)
 
 open import Util.Equality
 
@@ -285,9 +286,6 @@ two-sided-intervals-with-∞ = posetᵍ record
   ; _≾_              = _≾ᵢ_
   ; ⊤                = ⊤ᵢ
   ; ≾-⊤              = ≾ᵢ-⊤
-  ; u-least?         = nothing
-  ; ·-comm?          = just ·ᵢ-comm
-  ; plus?            = λ i → just (plusᵢ i)
   ; _⊔_              = _⊔ᵢ_
   ; ⊔-ubˡ            = ⊔ᵢ-ubˡ
   ; ⊔-ubʳ            = ⊔ᵢ-ubʳ
@@ -310,6 +308,15 @@ two-sided-intervals-with-∞ = posetᵍ record
   ; of-dur            = λ n → [ n , ↑ n ] {fromWitness ≤-refl}
   ; of-dur-zero       = eqᵢ refl refl
   ; of-dur-plus       = eqᵢ refl refl
+  }
+
+-- its hints
+
+two-sided-intervals-with-∞ʰ : GradeHints two-sided-intervals-with-∞
+two-sided-intervals-with-∞ʰ = record
+  { u-least? = nothing
+  ; ·-comm?  = just (comm-≡ two-sided-intervals-with-∞ ·ᵢ-comm)
+  ; plus?    = λ i → just (plusᵢ i)
   }
 
 ------------------------------------------------------------------------
@@ -550,9 +557,6 @@ two-sided-intervals-with-⊤ = posetᵍ record
   ; _≾_               = _≾ʷ_
   ; ⊤                 = no-window
   ; ≾-⊤               = ≾ʷ-⊤
-  ; u-least?          = nothing
-  ; ·-comm?           = just ·ʷ-comm
-  ; plus?             = λ i → just (plusʷ i)
   ; _⊔_               = _⊔ʷ_
   ; ⊔-ubˡ             = ⊔ʷ-ubˡ
   ; ⊔-ubʳ             = ⊔ʷ-ubʳ
@@ -571,4 +575,13 @@ two-sided-intervals-with-⊤ = posetᵍ record
   ; of-dur            = λ n → window [ n , ↑ n ] {fromWitness ≤-refl}
   ; of-dur-zero       = cong window_ (eqᵢ refl refl)
   ; of-dur-plus       = cong window_ (eqᵢ refl refl)
+  }
+
+-- its hints
+
+two-sided-intervals-with-⊤ʰ : GradeHints two-sided-intervals-with-⊤
+two-sided-intervals-with-⊤ʰ = record
+  { u-least? = nothing
+  ; ·-comm?  = just (comm-≡ two-sided-intervals-with-⊤ ·ʷ-comm)
+  ; plus?    = λ i → just (plusʷ i)
   }

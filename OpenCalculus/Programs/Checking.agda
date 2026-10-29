@@ -9,22 +9,22 @@
 -- first definition not established.                            --
 ------------------------------------------------------------------
 
-open import Data.Bool.Base using (true; false)
 open import Data.Nat using (ℕ)
 
 open import Language.Spec
 
 open import Util.Equality
 
+open import Grades.Hints using (SystemHints)
 open import OpenCalculus.Syntax.Scopes
 open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
-module OpenCalculus.Programs.Checking (S : LanguageSpec) (opEnum : OpEnum S) where
+module OpenCalculus.Programs.Checking (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) (opEnum : OpEnum S) where
 
 open import OpenCalculus.Syntax.Contexts        S
-open import OpenCalculus.Hypotheses             S using (truths)
 open import OpenCalculus.Inference.Principality S using (module PrincipalSchemeᵛ)
-open import OpenCalculus.Inference.Values       S opEnum
+open import OpenCalculus.Inference.Values       S hints opEnum
 open import OpenCalculus.Programs.Syntax        S
 open import OpenCalculus.Programs.Typing        S
 
@@ -40,6 +40,4 @@ checkProgram (P ∷ᴾ V) with checkProgram P
 ...   | untypable       = rejected (lenᴾ P)
 ...   | unestablished p = rejected (lenᴾ P)
 ...   | stuck           = rejected (lenᴾ P)
-...   | established p s with truths (PrincipalSchemeᵛ.Q̃ p) in e
-...     | true  = rejected (lenᴾ P)
-...     | false = accepted (Δ ∷ᵖ _) (t ∷ᴾ accepted p s e)
+...   | established p s = accepted (Δ ∷ᵖ _) (t ∷ᴾ accepted p s)

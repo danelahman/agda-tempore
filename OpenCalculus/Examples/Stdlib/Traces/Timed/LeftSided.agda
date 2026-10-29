@@ -14,12 +14,12 @@ open import OpenCalculus.Examples.Specs using (module Traces-Timed-LeftSided)
 
 module OpenCalculus.Examples.Stdlib.Traces.Timed.LeftSided where
 
-open Traces-Timed-LeftSided using (spec; enum)
+open Traces-Timed-LeftSided using (spec; hints; enum)
 
 open import OpenCalculus.Syntax.Grades   spec
 open import OpenCalculus.Syntax.Types    spec
 open import OpenCalculus.Syntax.Contexts spec using ([])
-open import OpenCalculus.Examples.Stdlib spec enum
+open import OpenCalculus.Examples.Stdlib spec hints enum
 open import OpenCalculus.Examples.Variables
 
 id-reported : schemeOf (infer [] id) ≡ just expected-id

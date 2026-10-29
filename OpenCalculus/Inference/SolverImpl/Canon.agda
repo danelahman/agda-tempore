@@ -40,13 +40,14 @@ open import Data.List.Membership.Propositional.Properties
   using (∈-map⁺; ∈-map⁻; ∈-++⁺ˡ; ∈-++⁺ʳ; ∈-++⁻)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing)
-open import Data.Maybe using (Is-just)
+open import Data.Maybe using (Is-just; to-witness)
 open import Data.Product using (_×_; _,_)
 open import Data.Sum.Base using ([_,_]′)
 
 open import Relation.Nullary using (yes; no)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; module SystemHintsInterface)
 open import Language.Spec
 
 open import Util.Equality
@@ -55,18 +56,20 @@ open import OpenCalculus.Syntax.Scopes
 
 module OpenCalculus.Inference.SolverImpl.Canon
   (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S))
   where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
+open SystemHintsInterface hints
 
 open import OpenCalculus.Syntax.Grades S
 open import OpenCalculus.Syntax.Types  S
 open import OpenCalculus.Syntax.Subst  S
 open import OpenCalculus.Hypotheses    S
 
-open import OpenCalculus.Inference.SolverImpl.Normal S
-open import OpenCalculus.Inference.SolverImpl.Entail S using (decideᵣ; decideₑ; derive)
+open import OpenCalculus.Inference.SolverImpl.Normal S hints
+open import OpenCalculus.Inference.SolverImpl.Entail S hints using (decideᵣ; decideₑ; derive)
 
 -- Grouping with pruning, two alternatives being compared by the
 -- decider at the empty hypothesis set, whose verdict convertibility
@@ -90,16 +93,16 @@ module Mᵣ {Θ : Scope} =
 -- which then absorbs the join.
 
 ⊤-·ₑ : Is-just uₑ-least? → ∀ {Θ} {ε : EExp Θ} → econst ⊤ₑ ·̂ₑ ε ≡̂ₑ econst ⊤ₑ
-⊤-·ₑ ij = ≡̂ₑ-antisym-∅ topₑ (transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-identityʳ)) (monoₑ ⊩≾̂ₑ-refl (minₑ ij)))
+⊤-·ₑ ij = ≡̂ₑ-antisym-∅ topₑ (transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-identityʳ)) (monoₑ ⊩≾̂ₑ-refl (minₑ (to-witness ij))))
 
 ·-⊤ₑ : Is-just uₑ-least? → ∀ {Θ} {ε : EExp Θ} → ε ·̂ₑ econst ⊤ₑ ≡̂ₑ econst ⊤ₑ
-·-⊤ₑ ij = ≡̂ₑ-antisym-∅ topₑ (transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-identityˡ)) (monoₑ (minₑ ij) ⊩≾̂ₑ-refl))
+·-⊤ₑ ij = ≡̂ₑ-antisym-∅ topₑ (transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-identityˡ)) (monoₑ (minₑ (to-witness ij)) ⊩≾̂ₑ-refl))
 
 ⊤-·ᵣ : Is-just uᵣ-least? → ∀ {Θ} {ρ : RExp Θ} → rconst ⊤ᵣ ·̂ᵣ ρ ≡̂ᵣ rconst ⊤ᵣ
-⊤-·ᵣ ij = ≡̂ᵣ-antisym-∅ topᵣ (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)) (monoᵣ ⊩≾̂ᵣ-refl (minᵣ ij)))
+⊤-·ᵣ ij = ≡̂ᵣ-antisym-∅ topᵣ (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)) (monoᵣ ⊩≾̂ᵣ-refl (minᵣ (to-witness ij))))
 
 ·-⊤ᵣ : Is-just uᵣ-least? → ∀ {Θ} {ρ : RExp Θ} → ρ ·̂ᵣ rconst ⊤ᵣ ≡̂ᵣ rconst ⊤ᵣ
-·-⊤ᵣ ij = ≡̂ᵣ-antisym-∅ topᵣ (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityˡ)) (monoᵣ (minᵣ ij) ⊩≾̂ᵣ-refl))
+·-⊤ᵣ ij = ≡̂ᵣ-antisym-∅ topᵣ (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityˡ)) (monoᵣ (minᵣ (to-witness ij)) ⊩≾̂ᵣ-refl))
 
 topProdₑ? : ∀ {Θ} → Is-just uₑ-least? → (P : List (EAtom Θ)) → Maybe (⟦ P ⟧ᵉˢ ≡̂ₑ econst ⊤ₑ)
 topProdₑ? ij []      = nothing
@@ -351,7 +354,7 @@ canonᴴ Q = hyps (ets Q) (subᵥ Q)
                 (Split.out (splits piecesʳ (ordᵣ Q)))
                 (Split.out (splits piecesᵉ (ordₑ Q)))
                 (map (mapᵈ canonᵛ canonᵣ) (disj Q))
-                (qhyps Q) (truths Q)
+                (qhyps Q)
 
 -- A set and its normal form entail each other
 
@@ -370,7 +373,7 @@ private
   ⊩-idₑ⁻ {Q = Q} {ε} {ε'} = subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([id]ᵉ ε)) (sym ([id]ᵉ ε'))
 
 canonᴴ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → canonᴴ Q ⊩ᴴ Q
-canonᴴ-⊩ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE dsj (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
+canonᴴ-⊩ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE dsj (λ m → ⊩ᴼ-hyp⁼ m)
   where
     ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → canonᴴ Q ⊩ ρ ≾̂ᵣ ρ'
     ordR m = ⊩-idʳ (Split.back (splits piecesʳ (ordᵣ Q)) idˢ (λ m' → ⊩-idʳ⁻ (hypᵣ m')) m)
@@ -383,7 +386,7 @@ canonᴴ-⊩ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE d
       hyp-ok (∈-map⁺ (mapᵈ canonᵛ canonᵣ) m) (canonᵛ-≡̂ A) (eqᵣ (canonᵣ-≡ ρ))
 
 canonᴴ-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ canonᴴ Q
-canonᴴ-⊩⁻ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE dsj (λ m → ⊩ᴼ-hyp⁼ m) (λ t → t)
+canonᴴ-⊩⁻ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE dsj (λ m → ⊩ᴼ-hyp⁼ m)
   where
     ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ Split.out (splits piecesʳ (ordᵣ Q)) → Q ⊩ ρ ≾̂ᵣ ρ'
     ordR m = ⊩-idʳ (Split.fwd (splits piecesʳ (ordᵣ Q)) idˢ (λ m' → ⊩-idʳ⁻ (hypᵣ m')) m)

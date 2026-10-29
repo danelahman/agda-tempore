@@ -10,7 +10,6 @@
 -- `instᶜ-complete`).                                           --
 ------------------------------------------------------------------
 
-open import Data.Bool.Base using (T; false)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Fin using (Fin; zero; suc)
 open import Data.List.Base using (List; []; _∷_)
@@ -35,7 +34,7 @@ open GradeSystemInterface Grades
 open import OpenCalculus.Syntax.Grades   S
 open import OpenCalculus.Syntax.Types    S
 open import OpenCalculus.Syntax.Subst    S
-open import OpenCalculus.Syntax.Contexts S using (Scheme; Θˢ; Qˢ; Xˢ; no-truths)
+open import OpenCalculus.Syntax.Contexts S using (Scheme; Θˢ; Qˢ; Xˢ)
 open import OpenCalculus.Hypotheses      S
 
 open import OpenCalculus.Inference.Constraints.Syntax       S
@@ -157,11 +156,10 @@ module _ {Θ Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} where
   ordsᶜ-complete o h = ⋀ᴸ-intro (ors o) (⊩ors h) , ⋀ᴸ-intro (oes o) (⊩oes h)
 
 hypsᶜ-sound : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} (Q' : Hyps Θ)
-            → truths Q' ≡ false → σ ⊨[ Q ] hypsᶜ Q' → Q ⊩ᴴ Q' [ σ ]
-hypsᶜ-sound Q' nt (h₁ , h₂ , h₃ , h₄ , h₅ , h₆) =
+            → σ ⊨[ Q ] hypsᶜ Q' → Q ⊩ᴴ Q' [ σ ]
+hypsᶜ-sound Q' (h₁ , h₂ , h₃ , h₄ , h₅ , h₆) =
   mk⊩ᴴ (⋀ᴸ-elim h₁) (⋀ᴸ-elim h₂) (⋀ᴸ-elim h₃) (⋀ᴸ-elim h₄) (⋀ᴸ-elim h₅)
        (λ {O} m → ordsᶜ-sound (body O) (∀ᵉⁿ-elim (rigids O) (⋀ᴸ-elim h₆ m)))
-       (λ t → ⊥-elim (subst T nt t))
 
 hypsᶜ-complete : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} (Q' : Hyps Θ)
                → Q ⊩ᴴ Q' [ σ ] → σ ⊨[ Q ] hypsᶜ Q'
@@ -179,7 +177,7 @@ instᶜ-sound : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} (s : Scheme) (A 
 instᶜ-sound {σ = σ} {Q} s A h with ∃ˢ-elim {Ψ = Θˢ s} {σ = σ} {Q = Q} {C = instᶜ-body s A} h
 ... | δ , (st , hq) =
   δ , subst₂ (Q ∣_<:̂ᵛ_) eX eA st ,
-  hypsᶜ-sound (Qˢ s) (no-truths s)
+  hypsᶜ-sound (Qˢ s)
     (⊨-resp-≐ˢ (newˢ⊹-⊕ˢ σ δ) (hypsᶜ (Qˢ s)) (⊨-subst⁻ (hypsᶜ (Qˢ s)) hq))
   where
     eX : Xˢ s [ newˢ⊹ (Θˢ s) ]ᵛ [ σ ⊕ˢ δ ]ᵛ ≡ Xˢ s [ δ ]ᵛ
@@ -241,7 +239,7 @@ instᶜ-complete {σ = σ} {Q} s A δ st hq =
 []ᶜⁿ-rigidFree (⋀ᵒᵖ f)     σ r       = λ op → []ᶜⁿ-rigidFree (f op) σ (r op)
 
 hypsᶜ-rigidFree : ∀ {Θ} (Q : Hyps Θ) → qhyps Q ≡ [] → RigidFree (hypsᶜ Q)
-hypsᶜ-rigidFree (hyps et sb oR oE dj [] tr) refl =
+hypsᶜ-rigidFree (hyps et sb oR oE dj []) refl =
   ⋀ᴸ-rigidFree et (λ _ → tt) , ⋀ᴸ-rigidFree sb (λ _ → tt) , ⋀ᴸ-rigidFree oR (λ _ → tt)
   , ⋀ᴸ-rigidFree oE (λ _ → tt) , ⋀ᴸ-rigidFree dj (λ _ → tt) , tt
 

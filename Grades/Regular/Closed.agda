@@ -7,8 +7,8 @@
 -- grade -- concatenation, union, iteration, the empty word and the   --
 -- set of all words -- so they form a sub-grade of it, ordered by     --
 -- inclusion, once a monoid morphism from durations is chosen among   --
--- them. The literal of a language is its downward closure. Kleene's  --
--- plus is declared for every grade.                                  --
+-- them. The literal of a language is its downward closure. Its       --
+-- hints declare Kleene's plus for every grade.                       --
 ------------------------------------------------------------------------
 
 open import Data.Bool.Base using (Bool; T)
@@ -33,6 +33,7 @@ open import Relation.Nullary.Decidable using (True; toWitness; T?; recompute; ma
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (posetᵍ; Grade; Plus; plus)
+open import Grades.Hints using (GradeHints)
 open import Grades.Regular.Automaton k
 open import Grades.Regular.Inclusion k using (_⊆ᵇ_)
 open import Grades.Regular.Decide k using (⊆ᵇ-sound; ⊆ᵇ-complete; nonempty?)
@@ -267,7 +268,13 @@ module WithDurations
     ; ≾-zero-productʳ = λ {c} {d} p → ≾-intro (G.≾-zero-productʳ {lang c} {lang d} (≾-lang p))
     ; of-dur-zero     = of-dur-zero
     ; of-dur-plus     = λ {m} {n} → of-dur-plus {m} {n}
-    ; u-least?        = nothing
-    ; plus?           = λ c → just (plusᶜ c)
-    ; ·-comm?         = nothing
+    }
+
+  -- its hints: Kleene's plus at every grade
+
+  closed-gradeʰ : GradeHints closed-grade
+  closed-gradeʰ = record
+    { u-least? = nothing
+    ; ·-comm?  = nothing
+    ; plus?    = λ c → just (plusᶜ c)
     }

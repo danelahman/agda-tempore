@@ -9,9 +9,9 @@
 
 module Grades.Examples.Worked.Product.LeftSidedTimeLevel where
 
-open import Data.Maybe.Base using (nothing)
 open import Data.Product using (_,_)
 
+open import Relation.Binary.Definitions using (Minimum)
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable
   using (True; False; toWitness; toWitnessFalse)
@@ -81,7 +81,7 @@ seq = refl
 join : node write ⊔ node send ≡ ([ 2 ,+∞⟩ , High)
 join = refl
 
--- the unit is not declared least
+-- the unit is not least: it is not below an embargo
 
-unit-not-least : u-least? ≡ nothing
-unit-not-least = refl
+unit-not-least : ¬ Minimum _≾_ u
+unit-not-least least = ⋠! u ([ 1 ,+∞⟩ , Low) (least ([ 1 ,+∞⟩ , Low))

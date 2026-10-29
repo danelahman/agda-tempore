@@ -22,6 +22,10 @@ import Util.NonNegativeRational
 
 import Grades.Base
 
+---- The hints the solver reads
+
+import Grades.Hints
+
 ---- Durations: the monoid of delays, time domains, intervals
 
 import Grades.Durations
@@ -203,8 +207,8 @@ import Language.Examples.SensorNode.Identity
 -- OPEN CALCULUS
 ----------------
 
----- Scopes, open grade expressions, types and contexts, substitutions, raw
----- terms and run-time terms
+---- Scopes, open grade expressions, types, program contexts and contexts,
+---- substitutions, raw terms and run-time terms
 
 import OpenCalculus.Syntax.Contexts
 import OpenCalculus.Syntax.ContextsLemmas
@@ -246,11 +250,13 @@ import OpenCalculus.Semantics.Termination.Reducibility
 import OpenCalculus.Semantics.TypeSafety
 
 ---- Constraints, their generation, soundness and completeness of
----- generation, solvers, principality, and the concrete solver
+---- generation, solvers, principality, the concrete solver, and inference
+---- for values in program contexts
 
 import OpenCalculus.Inference.Completeness
 import OpenCalculus.Inference.Constraints.Properties
 import OpenCalculus.Inference.Constraints.Satisfaction
+import OpenCalculus.Inference.Constraints.Schemes
 import OpenCalculus.Inference.Constraints.Syntax
 import OpenCalculus.Inference.Generate
 import OpenCalculus.Inference.Outcome
@@ -291,6 +297,16 @@ import OpenCalculus.Inference.SolverImpl.Strengthen
 import OpenCalculus.Inference.SolverImpl.Values
 import OpenCalculus.Inference.SolverImpl.Vars
 import OpenCalculus.Inference.Soundness
+import OpenCalculus.Inference.Values
+
+---- Programs: their erasure, the substitution of definitions, the program
+---- judgement, instantiation and the corollary for programs, and checking
+
+import OpenCalculus.Programs.Checking
+import OpenCalculus.Programs.Instantiation
+import OpenCalculus.Programs.Substitution
+import OpenCalculus.Programs.Syntax
+import OpenCalculus.Programs.Typing
 
 
 -- CLOSED CALCULUS

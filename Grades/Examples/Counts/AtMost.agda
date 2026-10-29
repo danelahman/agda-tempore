@@ -24,9 +24,10 @@ open import Data.Nat.Base using (ℕ)
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
+open import Grades.Hints using (GradeHints)
 
 open import Grades.Examples.Time.RightSided
-  using (right-sided-intervals; 𝕀ᵣ; [0,_]; ↑_; ∞)
+  using (right-sided-intervals; right-sided-intervalsʰ; 𝕀ᵣ; [0,_]; ↑_; ∞)
 
 open import Grades.Examples.Counts.Power right-sided-intervals public
 
@@ -34,6 +35,9 @@ open import Grades.Examples.Counts.Power right-sided-intervals public
 
 at-most-counts : ℕ → Grade ℕᴰ
 at-most-counts = power
+
+at-most-countsʰ : (n : ℕ) → GradeHints (at-most-counts n)
+at-most-countsʰ = powerʰ right-sided-intervalsʰ
 
 -- one coordinate
 

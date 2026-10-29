@@ -8,7 +8,7 @@
 -- satisfiable (`inferᵛ-typed`); `untypable` only for untypable --
 -- values (`inferᵛ-untypable`); `stuck` only for values with    --
 -- handlers or in program contexts with quantified hypotheses   --
--- (`inferᵛ-handlerFree`). A typing under the truths is a       --
+-- (`inferᵛ-handlerFree`). A typing under no hypotheses is a     --
 -- typing with satisfiable hypotheses, so inference misses none --
 -- of them (`completenessᵛ`).                                   --
 ------------------------------------------------------------------
@@ -22,10 +22,12 @@ open import Language.Spec
 
 open import Util.Equality
 
+open import Grades.Hints using (SystemHints)
 open import OpenCalculus.Syntax.Scopes
 open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
-module OpenCalculus.Inference.Values (S : LanguageSpec) (opEnum : OpEnum S) where
+module OpenCalculus.Inference.Values (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) (opEnum : OpEnum S) where
 
 open import OpenCalculus.Syntax.Types         S
 open import OpenCalculus.Syntax.Contexts      S
@@ -37,7 +39,7 @@ open import OpenCalculus.Typing.Erasure       S
 open import OpenCalculus.Syntax.Raw           S using (RawV; return; HandlerFreeᵛ)
 open import OpenCalculus.Syntax.Raw.Subst     S
 open import OpenCalculus.Inference.Principality S
-open import OpenCalculus.Inference.SolverImpl S opEnum
+open import OpenCalculus.Inference.SolverImpl S hints opEnum
   using (infer; check; infer-untypable; infer-handlerFree; check-untypable; check-handlerFree)
 
 ------------------------------------------------------------------------
@@ -122,19 +124,19 @@ checkᵛ-handlerFree Δ V u h e =
 ------------------------------------------------------------------------
 -- Corollary (Completeness)
 
--- A typing of `V` in `Δ` over the empty scope, under the truths: no
+-- A typing of `V` in `Δ` over the empty scope, under no hypotheses: no
 -- refutation, and every principal scheme answered has a closed
 -- instance satisfying its hypotheses at which its type is a subtype
 -- of the typing's
 
 completenessᵛ : ∀ {Δ} {V : RawV ∅ˢ 0} {X : OVType ∅ˢ}
-              → (D : ⊤ᴴ ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X) → ⌊ D ⌋ᵛ ≡ V
+              → (D : ∅ᴴ ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X) → ⌊ D ⌋ᵛ ≡ V
               → (¬ inferᵛ Δ V ≡ untypable)
                 × (∀ {p} → inferᵛ Δ V ≡ typed p
                    → Σ[ δ ∈ Subst (PrincipalSchemeᵛ.Θ̃ p) ∅ˢ ]
                        (δ ⊨ PrincipalSchemeᵛ.Q̃ p) × (∅ᴴ ∣ PrincipalSchemeᵛ.X̃ p [ δ ]ᵛ <:̂ᵛ X))
 completenessᵛ {Δ} {V} {X} D e =
-  (λ u → inferᵛ-untypable Δ V u (typableᵛ ∅ˢ ⊤ᴴ X D e' (idˢ , ⊩ᴵ-⊤))) ,
+  (λ u → inferᵛ-untypable Δ V u (typableᵛ ∅ˢ ∅ᴴ X D e' (idˢ , ⊩ᴵ-∅))) ,
   λ {p} _ → scheme p
   where
     e' : ⌊ D ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
@@ -143,5 +145,5 @@ completenessᵛ {Δ} {V} {X} D e =
     scheme : (p : PrincipalSchemeᵛ Δ V)
            → Σ[ δ ∈ Subst (PrincipalSchemeᵛ.Θ̃ p) ∅ˢ ]
                (δ ⊨ PrincipalSchemeᵛ.Q̃ p) × (∅ᴴ ∣ PrincipalSchemeᵛ.X̃ p [ δ ]ᵛ <:̂ᵛ X)
-    scheme p with PrincipalSchemeᵛ.factor p ⊤ᴴ D e' idˢ ⊩ᴵ-⊤
+    scheme p with PrincipalSchemeᵛ.factor p ∅ᴴ D e' idˢ ⊩ᴵ-∅
     ... | δ , h , st = δ , h , subst (λ X' → ∅ᴴ ∣ _ <:̂ᵛ X') ([id]ᵛ X) st

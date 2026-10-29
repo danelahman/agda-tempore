@@ -20,6 +20,10 @@
 -- `Inference Γ M` is the outcome of inference, `Check Γ M`     --
 -- that of a check that exhibits a closed instance.             --
 --                                                              --
+-- `PrincipalSchemeᵛ Δ V` is a principal type scheme of a       --
+-- closed value in a program context, which has no variables to --
+-- instantiate; that of `return V` gives it (`valueScheme`).    --
+--                                                              --
 -- Principal types with constraint sets follow Pretnar (LMCS    --
 -- 2014); "residual constraint" is the term of OutsideIn(X)     --
 -- (Vytiniotis et al., JFP 2011). The context is fixed up to    --
@@ -294,7 +298,7 @@ record Typable {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set whe
 
 -- `M` is typable exactly when the hypotheses of its principal type
 -- scheme are satisfiable: a satisfying instance instantiates the scheme,
--- the truths entailing its hypotheses there, and a typing factors
+-- no hypotheses entailing its hypotheses there, and a typing factors
 -- through it.
 
 typable-⇔ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalScheme Γ M)
@@ -306,8 +310,8 @@ typable-⇔ {Γ = Γ} {M} p = mk⇔ to from
     ... | δ , _ , h , _ = δ , h
 
     from : Satisfiable (Q̃ p) → Typable Γ M
-    from (δ , h) with instantiate p δ ⊤ᴴ (⊨⇒⊩ᴴ h)
-    ... | D , e = typable ∅ˢ (σ̃ p ⨟ˢ δ) ⊤ᴴ (X̃ p [ δ ]ᶜ) D e (idˢ , ⊩ᴵ-⊤)
+    from (δ , h) with instantiate p δ ∅ᴴ (⊨⇒⊩ᴴ h)
+    ... | D , e = typable ∅ˢ (σ̃ p ⨟ˢ δ) ∅ᴴ (X̃ p [ δ ]ᶜ) D e (idˢ , ⊩ᴵ-∅)
 
 -- A term whose principal type scheme has no hypotheses is typable
 
@@ -399,8 +403,8 @@ typableᵛ-⇔ {Δ} {V} p = mk⇔ to from
     ... | δ , h , _ = δ , h
 
     from : Satisfiable P.Q̃ → Typableᵛ Δ V
-    from (δ , h) with P.instantiate δ ⊤ᴴ (⊨⇒⊩ᴴ h)
-    ... | D , e = typableᵛ ∅ˢ ⊤ᴴ (P.X̃ [ δ ]ᵛ) D e (idˢ , ⊩ᴵ-⊤)
+    from (δ , h) with P.instantiate δ ∅ᴴ (⊨⇒⊩ᴴ h)
+    ... | D , e = typableᵛ ∅ˢ ∅ᴴ (P.X̃ [ δ ]ᵛ) D e (idˢ , ⊩ᴵ-∅)
 
 -- A typing of a value is one of the computation returning it
 

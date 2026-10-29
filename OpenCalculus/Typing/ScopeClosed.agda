@@ -2,11 +2,10 @@
 -- Scope-closed typing of run-time terms                        --
 --                                                              --
 -- `Γ ⊢ᵛ V ⦂ X` and `Γ ⊢ᶜ M ⦂ C`: a derivation over the empty    --
--- scope whose run-time erasure is the term, its hypotheses the --
--- closed quantified orderings that hold (`⊤ᴴ`). Handler        --
--- clauses in it are typed over the scope of their own          --
--- variable, an ordering at it entailed by an instance of one   --
--- of those hypotheses.                                         --
+-- scope whose run-time erasure is the term, under no           --
+-- hypotheses (`∅ᴴ`). Handler clauses in it are typed over the  --
+-- scope of their own variable, an ordering at it entailed by   --
+-- rule Truth, the theory of the grade system.                  --
 ------------------------------------------------------------------
 
 open import Data.Product using (Σ-syntax)
@@ -29,7 +28,7 @@ open import OpenCalculus.Syntax.Run      S
 infix 4 _⊢ᵛ_⦂_ _⊢ᶜ_⦂_
 
 _⊢ᵛ_⦂_ : ∀ {n} → OCtx ∅ˢ n → RunV n → OVType ∅ˢ → Set
-Γ ⊢ᵛ V ⦂ X = Σ[ D ∈ ⊤ᴴ ∣ Γ ⊢V⦂ X ] ∥ D ∥ᵛ ≡ V
+Γ ⊢ᵛ V ⦂ X = Σ[ D ∈ ∅ᴴ ∣ Γ ⊢V⦂ X ] ∥ D ∥ᵛ ≡ V
 
 _⊢ᶜ_⦂_ : ∀ {n} → OCtx ∅ˢ n → RunC n → OCType ∅ˢ → Set
-Γ ⊢ᶜ M ⦂ C = Σ[ D ∈ ⊤ᴴ ∣ Γ ⊢C⦂ C ] ∥ D ∥ᶜ ≡ M
+Γ ⊢ᶜ M ⦂ C = Σ[ D ∈ ∅ᴴ ∣ Γ ⊢C⦂ C ] ∥ D ∥ᶜ ≡ M

@@ -51,6 +51,7 @@ open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints)
 open import Language.Spec
 
 open import Util.Equality
@@ -59,6 +60,7 @@ open import OpenCalculus.Syntax.Scopes
 
 module OpenCalculus.Inference.SolverImpl.Localise.Closure
   (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S))
   where
 
 open LanguageSpec S
@@ -74,19 +76,19 @@ open import OpenCalculus.Inference.SolverImpl.Core.Occurs S
 open import OpenCalculus.Inference.SolverImpl.Core.Rigid S
   using (∨-true; ∨-left; ∨-right; dec-true; true-dec)
 
-open import OpenCalculus.Inference.SolverImpl.Deferred  S
+open import OpenCalculus.Inference.SolverImpl.Deferred  S hints
   using (≾ˢ-↑ᵉⁿ; Dir; dir↓; dir↑; Still; stills?; keepᵈ; allOf; κ⟨_⟩; wk-κ; κ-wkᵛ; κ-wkʳ; κ-wkᵉ; ⊩ᴴ-κ)
 open import OpenCalculus.Inference.SolverImpl.Resid  S
-open import OpenCalculus.Inference.SolverImpl.Values S
+open import OpenCalculus.Inference.SolverImpl.Values S hints
   using (module Vᵉ; module Vʳ; module Vⁱ; isFalse; equal-keeps; updᵉ-e; updᵉ-r; updʳ-r;
          joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩; joinᵣ-ub⊩; joinᵣ-lub⊩)
 open import OpenCalculus.Inference.SolverImpl.Vars      S
   using (Vars; vᵉ; vʳ; Fixes; mkFixes; fvᵛ; fvʳ; fvᵉ; ⊆-refl; fix-v; fix-r; fix-e; ∨-inʳ)
 import OpenCalculus.Inference.SolverImpl.Reach as Reachability
-open import OpenCalculus.Inference.SolverImpl.Entail S using (decideᵣ; decideₑ; full)
-open import OpenCalculus.Inference.SolverImpl.Canon  S
+open import OpenCalculus.Inference.SolverImpl.Entail S hints using (decideᵣ; decideₑ; full)
+open import OpenCalculus.Inference.SolverImpl.Canon  S hints
   using (canonᵣ; canonᵣ-≡; Ordʳ; Ordᵉ; Pieces; pieces; Split; splits; piecesʳ; piecesᵉ)
-open import OpenCalculus.Inference.SolverImpl.Localise S
+open import OpenCalculus.Inference.SolverImpl.Localise S hints
   hiding (Raised; raised; module Find; Collapse; collapsed; collapse; Mvᵉ; Mvʳ;
           module Cᵉ; module Cʳ; loc-normal; loc-settle; localise; localise-ds)
 
@@ -493,10 +495,10 @@ normal-ds (a ∷ l) = cong nsuc (normal-ds l)
 -- strength `full` from the orderings, or whose type is eternal at every
 -- instance, is dropped; each whose type is eternal at no instance
 -- becomes its grade side, which is what it means at every instance
--- solving the scope from the truths, the rigid a parameter
+-- solving the scope from no hypotheses, the rigid a parameter
 
 ordsᴴ : ∀ {Ψ} → Resid Ψ → Hyps Ψ
-ordsᴴ R = hyps [] [] (rs R) (es R) [] [] false
+ordsᴴ R = hyps [] [] (rs R) (es R) [] []
 
 settledOf : ∀ {Ψ} → (R : Resid Ψ) → Unsettled (Under (ordsᴴ R) Disj) (ds R)
 settledOf R = unsettled (settledᵈ (ordsᴴ R)) (ds R)
@@ -521,7 +523,7 @@ loc-settle (loc σ R₀ fx sn cp la) =
                                                    (λ m'' → ⊩rs h (∈-++⁺ʳ (rs R₀) m''))
                                                    m')
                                        m
-                                       (mk⊩ᴴ (λ ()) (λ ()) (λ m' → ⊩rs h (∈-++⁺ˡ m')) (⊩es h) (λ ()) (λ ()) (λ ())))
+                                       (mk⊩ᴴ (λ ()) (λ ()) (λ m' → ⊩rs h (∈-++⁺ˡ m')) (⊩es h) (λ ()) (λ ())))
                               (⊩dfs h)))
       (λ τ en h → let h' = cp τ en h in
                  mk⊩ᴿ (λ m → [ ⊩rs h' , Refined.fwd F τ (λ m' → ⊩ds h' (Unsettled.kept⊆ Uᵈ m')) ]′
@@ -709,18 +711,18 @@ module Steps {Θ Φ} (O : Subst (Θ +e) Φ) where
 
   step-loc : ∀ {R₀ c c'} → LocAt R₀ (proj₂ c) → c ⟶ˡ c' → LocAt R₀ (proj₂ c')
   step-loc {c = P , _} (L , refl) (collapseˡ _) =
-    loc-canon (loc-ext L (cσ C) (cfix C) (λ τ en → ckeep C τ ⊤ᴴ) keepAll (cty C)) , refl
+    loc-canon (loc-ext L (cσ C) (cfix C) (λ τ en → ckeep C τ ∅ᴴ) keepAll (cty C)) , refl
     where C = collapse O P (lR L)
   step-loc {c = P , _} (L , refl) (valueᵉ {k = k} {b} {st} {dr} o _) =
-    loc-canon (loc-ext L (updᵉ k b) (freeᵉ-fix k O (oᵉ-lc P k o) b) (λ τ en → st τ ⊤ᴴ) dr (λ α → refl)) ,
+    loc-canon (loc-ext L (updᵉ k b) (freeᵉ-fix k O (oᵉ-lc P k o) b) (λ τ en → st τ ∅ᴴ) dr (λ α → refl)) ,
     refl
   step-loc {c = P , _} (L , refl) (valueʳ {k = k} {b} {st} {dr} o _) =
-    loc-canon (loc-ext L (updʳ k b) (freeʳ-fix k O (oʳ-lc P k o) b) (λ τ en → st τ ⊤ᴴ) dr (λ α → refl)) ,
+    loc-canon (loc-ext L (updʳ k b) (freeʳ-fix k O (oʳ-lc P k o) b) (λ τ en → st τ ∅ᴴ) dr (λ α → refl)) ,
     refl
   step-loc (L , refl) (settleˡ _) = loc-canon (loc-settle L) , refl
   step-loc (L , refl) (raiseˡ {eqj = eqj} {r = raised l rc ue ur cl sd fx _} _ _ _) =
     loc-canon (loc-ext L (tops l) (freeᴹ-fix l O fx)
-                       (λ τ en h → raise-⊩ {Q₀ = ⊤ᴴ} O eqj l rc ue ur cl sd τ en h)
+                       (λ τ en h → raise-⊩ {Q₀ = ∅ᴴ} O eqj l rc ue ur cl sd τ en h)
                        keepAll (λ α → refl)) ,
     refl
 

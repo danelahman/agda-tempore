@@ -8,7 +8,6 @@
 -- their schemes (`programEnv`).                                   --
 ------------------------------------------------------------------
 
-open import Data.Bool.Base using (false)
 open import Data.Empty using (⊥-elim)
 open import Data.Maybe.Base using (just)
 open import Data.Nat using (ℕ; suc)
@@ -52,14 +51,13 @@ record Accepted (Δ : PCtx) (V : RawV ∅ˢ 0) : Set where
   field
     principal : PrincipalSchemeᵛ Δ V
     typable   : Satisfiable (Q̃ principal)
-    no-truths : truths (Q̃ principal) ≡ false
 
 open Accepted public
 
 -- The scheme it adds to the program context
 
 schemeᴬ : ∀ {Δ V} → Accepted Δ V → Scheme
-schemeᴬ a = ∀ˢ (Θ̃ (principal a)) (Q̃ (principal a)) (X̃ (principal a)) (no-truths a)
+schemeᴬ a = ∀ˢ (Θ̃ (principal a)) (Q̃ (principal a)) (X̃ (principal a))
 
 infix 4 ⊢ᴾ_⦂_
 

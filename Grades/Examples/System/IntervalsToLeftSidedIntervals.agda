@@ -20,6 +20,7 @@ open import Data.Product
 open import Data.Maybe.Base using (nothing)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; noGradeHints)
 open import Grades.Examples.Time.LeftSided
 open import Grades.Examples.Time.TwoSidedWithInfinity
 
@@ -41,6 +42,14 @@ twoSidedIntervalsToLeftSidedIntervalsGradeSystem = record
   { RGrade = left-sided-intervals
   ; EGrade = two-sided-intervals-with-∞
   ; ∣_∣ᵉ   = tsi→lsi
+  }
+
+-- its hints
+
+twoSidedIntervalsToLeftSidedIntervalsGradeSystemʰ : SystemHints twoSidedIntervalsToLeftSidedIntervalsGradeSystem
+twoSidedIntervalsToLeftSidedIntervalsGradeSystemʰ = record
+  { RHints      = left-sided-intervalsʰ
+  ; EHints      = two-sided-intervals-with-∞ʰ
   ; reflects-u? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

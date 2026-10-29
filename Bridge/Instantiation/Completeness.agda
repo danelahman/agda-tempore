@@ -26,6 +26,7 @@ open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Relation.Nullary using (¬_)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints)
 open import Language.Spec
 
 open import Util.Equality
@@ -33,7 +34,8 @@ open import Util.Equality
 open import OpenCalculus.Syntax.Scopes
 open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
-module Bridge.Instantiation.Completeness (S : LanguageSpec) (opEnum : OpEnum S) where
+module Bridge.Instantiation.Completeness (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) (opEnum : OpEnum S) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -44,7 +46,7 @@ open import ClosedCalculus.Syntax.Terms     S using (_⊢C⦂_)
 open import ClosedCalculus.Syntax.Subtyping S using (_<:ᶜ_)
 
 open import OpenCalculus.Syntax.Types         S using (OCType)
-open import OpenCalculus.Syntax.Contexts      S using (OCtx)
+open import OpenCalculus.Syntax.Contexts      S using (OCtx; _[_]ᶜᵗˣ)
 open import OpenCalculus.Syntax.Subst         S
 open import OpenCalculus.Hypotheses           S using (∅ᴴ; ⊩ᴵ-∅)
 open import OpenCalculus.Hypotheses.Instances S
@@ -56,7 +58,7 @@ open import OpenCalculus.Syntax.Raw.Subst       S
 open import OpenCalculus.Inference.Principality S
   using (PrincipalScheme; module PrincipalScheme; Typable; typable;
          typed; established; untypable)
-open import OpenCalculus.Inference.SolverImpl           S opEnum
+open import OpenCalculus.Inference.SolverImpl           S hints opEnum
   using (infer; check; infer-untypable; check-untypable)
 
 open import Bridge.Instantiation.Types          S
@@ -65,7 +67,7 @@ open import Bridge.Instantiation.Correspondence S
 open import Bridge.Instantiation.Terms          S using (⌊_⌋ᴿᶜ; ⌊≗⌋ᴿᶜ; ⌊[]⌋ᴿᶜ; castᶜ; castᶜ-⌊⌋)
 open import Bridge.Instantiation.Embedding      S
 open import Bridge.Instantiation.Hoisting       S using (≼-refl; idᴿ)
-open import Bridge.Instantiation.Inference      S opEnum using (scheme-instantiate)
+open import Bridge.Instantiation.Inference      S hints opEnum using (scheme-instantiate)
 import ClosedCalculus.Syntax.Erasure S as CE
 
 open PrincipalScheme

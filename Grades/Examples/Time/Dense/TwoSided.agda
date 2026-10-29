@@ -30,6 +30,7 @@ open import Grades.Durations using (_→ᴰ_)
 open import Grades.Durations.NonNegativeRational
   using (ℚ≥0ᴰ; ℚ≥0ᵀ; ℕ→ℚ≥0ᴰ)
 open import Grades.Base using (strictᵍ; Grade; GradeMorphism)
+open import Grades.Hints using (GradeHints)
 
 open import Util.Equality
 
@@ -90,6 +91,9 @@ _⊔ᵢ_ = _∪ⁱ_
 
 dense-two-sided-intervals-with-∞ : Grade ℚ≥0ᴰ
 dense-two-sided-intervals-with-∞ = intervals
+
+dense-two-sided-intervals-with-∞ʰ : GradeHints dense-two-sided-intervals-with-∞
+dense-two-sided-intervals-with-∞ʰ = intervalsʰ
 
 ------------------------------------------------------------------------
 -- The closed intervals are a sub-grade

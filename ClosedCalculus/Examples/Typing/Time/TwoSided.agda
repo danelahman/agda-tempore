@@ -64,9 +64,8 @@ open import Grades.Examples.Worked.Time.Decide using (≤!; ≰!)
 open import Grades.Examples.Worked.Operations.Grading using (module Time-TwoSided)
 open Time-TwoSided using (opTime) public
 
-open import Grades.Examples.System.Identity using (noWitnesses)
 open import ClosedCalculus.Examples.Typing.Core
-  two-sided-intervals-with-∞ opTime noWitnesses
+  two-sided-intervals-with-∞ opTime
 
 ------------------------------------------------------------------------
 -- Effectful computations

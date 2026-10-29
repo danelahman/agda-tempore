@@ -31,14 +31,14 @@
 --     bounds; the annotated `wait` of the prototype is refuted --
 --     at the value.                                            --
 --                                                              --
--- The grades differ in the properties the stages read,         --
--- `u-least?` and `·-comm?`: right-sided intervals (both hold), --
--- timed traces under the allowance order (the unit least, `·`  --
--- not commutative), left-sided intervals with an adjoined top  --
--- (`·` commutative, the unit not least, the top distinct from  --
--- the unit), both sides of time for the collapse, left-sided   --
--- time for the retry, and right-sided time and two-sided       --
--- intervals for lowering.                                      --
+-- The grades differ in the properties the stages read from     --
+-- their hints, `u-least?` and `·-comm?`: right-sided intervals --
+-- (both hold), timed traces under the allowance order (the     --
+-- unit least, `·` not commutative), left-sided intervals with  --
+-- an adjoined top (`·` commutative, the unit not least, the    --
+-- top distinct from the unit), both sides of time for the      --
+-- collapse, left-sided time for the retry, and right-sided     --
+-- time and two-sided intervals for lowering.                   --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; not; _∧_) renaming (Bool to 𝔹)
@@ -54,6 +54,7 @@ open import Util.Equality
 
 open import Grades.Base
 open import Language.Spec
+open import Grades.Hints using (SystemHints)
 import Grades.Examples.Worked.Operations.Grading as Grading
 
 open import OpenCalculus.Syntax.Scopes
@@ -69,16 +70,16 @@ module Deadline where
 
   open import Grades.Examples.Time.RightSided using ([0,_]; ↑_)
   open import OpenCalculus.Examples.Specs using (module Time-RightSided)
-  open Time-RightSided using (spec)
+  open Time-RightSided using (spec; hints)
   open LanguageSpec spec using (Grades)
   open GradeSystemInterface Grades using (⊤ᵣ; ⊤ₑ)
 
   open import OpenCalculus.Syntax.Grades                 spec
   open import OpenCalculus.Syntax.Types                  spec using (OVType; tvar)
   open import OpenCalculus.Hypotheses                    spec using (hyps; ∅ᴴ; ordᵣ; ordₑ; disj)
-  open import OpenCalculus.Inference.SolverImpl.Canon    spec using (canonᴴ; canonᵣ; canonₑ)
-  open import OpenCalculus.Inference.SolverImpl.Simplify spec using (walkᵈ)
-  open import OpenCalculus.Inference.SolverImpl.Entail   spec
+  open import OpenCalculus.Inference.SolverImpl.Canon    spec hints using (canonᴴ; canonᵣ; canonₑ)
+  open import OpenCalculus.Inference.SolverImpl.Simplify spec hints using (walkᵈ)
+  open import OpenCalculus.Inference.SolverImpl.Entail   spec hints
     using (decideₑ; decideᵣ; derive; full; checkClosed)
 
   Θ : Scope
@@ -110,12 +111,12 @@ module Deadline where
   -- ordering per alternative; a join on the right is kept
 
   split-left-r :
-    ordᵣ (canonᴴ (hyps [] [] ((x ⊔̂ᵣ y , z) ∷ (z , x ⊔̂ᵣ y) ∷ []) [] [] [] false))
+    ordᵣ (canonᴴ (hyps [] [] ((x ⊔̂ᵣ y , z) ∷ (z , x ⊔̂ᵣ y) ∷ []) [] [] []))
       ≡ (x , z) ∷ (y , z) ∷ (z , x ⊔̂ᵣ y) ∷ []
   split-left-r = refl
 
   split-left-e :
-    ordₑ (canonᴴ (hyps [] [] [] ((a ⊔̂ₑ b , c) ∷ (c , a ⊔̂ₑ b) ∷ []) [] [] false))
+    ordₑ (canonᴴ (hyps [] [] [] ((a ⊔̂ₑ b , c) ∷ (c , a ⊔̂ₑ b) ∷ []) [] []))
       ≡ (a , c) ∷ (b , c) ∷ (c , a ⊔̂ₑ b) ∷ []
   split-left-e = refl
 
@@ -125,7 +126,7 @@ module Deadline where
 
   prune-entailed :
     disj (walkᵈ (hyps [] [] ((x , y) ∷ []) []
-                      ((α , x) ∷ (α , y) ∷ (α , y) ∷ (α , x ⊔̂ᵣ z) ∷ []) [] false))
+                      ((α , x) ∷ (α , y) ∷ (α , y) ∷ (α , x ⊔̂ᵣ z) ∷ []) []))
       ≡ (α , y) ∷ (α , x ⊔̂ᵣ z) ∷ []
   prune-entailed = refl
 
@@ -149,7 +150,7 @@ module Deadline where
   -- c ≾ b, d ≾ a ⊩ c · d ≾ a · b
 
   crossed-e :
-    is-just (decideₑ derive (hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) [] [] false) (c ·̂ₑ d) (a ·̂ₑ b))
+    is-just (decideₑ derive (hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) [] []) (c ·̂ₑ d) (a ·̂ₑ b))
       ≡ true
   crossed-e = refl
 
@@ -159,14 +160,14 @@ module Deadline where
   -- z ≾ y, w ≾ x ⊩ z · w ≾ x · y
 
   crossed-r :
-    is-just (decideᵣ derive (hyps [] [] ((z , y) ∷ (w , x) ∷ []) [] [] [] false) (z ·̂ᵣ w) (x ·̂ᵣ y))
+    is-just (decideᵣ derive (hyps [] [] ((z , y) ∷ (w , x) ∷ []) [] [] []) (z ·̂ᵣ w) (x ·̂ᵣ y))
       ≡ true
   crossed-r = refl
 
   -- with images of effect variables: z ≾ ∣a∣, ∣b∣ ≾ x ⊩ z · ∣b∣ ≾ x · ∣a∣
 
   crossed-images :
-    is-just (decideᵣ derive (hyps [] [] ((z , ∣ a ∣̂ᵉ) ∷ (∣ b ∣̂ᵉ , x) ∷ []) [] [] [] false)
+    is-just (decideᵣ derive (hyps [] [] ((z , ∣ a ∣̂ᵉ) ∷ (∣ b ∣̂ᵉ , x) ∷ []) [] [] [])
                       (z ·̂ᵣ ∣ b ∣̂ᵉ) (x ·̂ᵣ ∣ a ∣̂ᵉ))
       ≡ true
   crossed-images = refl
@@ -174,7 +175,7 @@ module Deadline where
   -- a constant: ⌜3⌝ ≾ b ⊩ ⌜3⌝ · a ≾ a · b
 
   crossed-constant :
-    is-just (decideₑ derive (hyps [] [] [] ((⌜ 3 ⌝ᵉ , b) ∷ []) [] [] false) (⌜ 3 ⌝ᵉ ·̂ₑ a) (a ·̂ₑ b))
+    is-just (decideₑ derive (hyps [] [] [] ((⌜ 3 ⌝ᵉ , b) ∷ []) [] []) (⌜ 3 ⌝ᵉ ·̂ₑ a) (a ·̂ₑ b))
       ≡ true
   crossed-constant = refl
 
@@ -185,24 +186,24 @@ module Deadline where
   -- `checkClosed`: two closed sides joined by a chain of
   -- orderings are compared, though no ordering of the set is closed
 
-  chain-late : checkClosed (hyps [] [] ((⌜ 3 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [] [] false) ≡ nothing
+  chain-late : checkClosed (hyps [] [] ((⌜ 3 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [] []) ≡ nothing
   chain-late = refl
 
   chain-late-long :
-    checkClosed (hyps [] [] [] ((⌜ 5 ⌝ᵉ , a) ∷ (b , ⌜ 4 ⌝ᵉ) ∷ (a , c) ∷ (c , b) ∷ []) [] [] false) ≡ nothing
+    checkClosed (hyps [] [] [] ((⌜ 5 ⌝ᵉ , a) ∷ (b , ⌜ 4 ⌝ᵉ) ∷ (a , c) ∷ (c , b) ∷ []) [] []) ≡ nothing
   chain-late-long = refl
 
   chain-on-time :
-    checkClosed (hyps [] [] ((⌜ 2 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [] [] false)
-      ≡ just (hyps [] [] ((⌜ 2 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [] [] false)
+    checkClosed (hyps [] [] ((⌜ 2 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [] [])
+      ≡ just (hyps [] [] ((⌜ 2 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [] [])
   chain-on-time = refl
 
   -- a disjunction whose grade is below the unit from the orderings
   -- left is dropped: x ≾ y, y ≾ 0 ⊩ x ≾ 0
 
   drop-following :
-    checkClosed (hyps [] [] ((x , y) ∷ (y , ⌜ 0 ⌝ʳ) ∷ []) [] ((α , x) ∷ []) [] false)
-      ≡ just (hyps [] [] ((x , y) ∷ (y , ⌜ 0 ⌝ʳ) ∷ []) [] [] [] false)
+    checkClosed (hyps [] [] ((x , y) ∷ (y , ⌜ 0 ⌝ʳ) ∷ []) [] ((α , x) ∷ []) [])
+      ≡ just (hyps [] [] ((x , y) ∷ (y , ⌜ 0 ⌝ʳ) ∷ []) [] [] [])
   drop-following = refl
 
   ----------------------------------------------------------------
@@ -210,24 +211,24 @@ module Deadline where
   -- a ≾ b ⊔ d, b ⊔ d ≾ c ⊩ a ≾ c
 
   through-compound :
-    is-just (decideₑ full (hyps [] [] [] ((a , b ⊔̂ₑ d) ∷ (b ⊔̂ₑ d , c) ∷ []) [] [] false) a c) ≡ true
+    is-just (decideₑ full (hyps [] [] [] ((a , b ⊔̂ₑ d) ∷ (b ⊔̂ₑ d , c) ∷ []) [] []) a c) ≡ true
   through-compound = refl
 
   through-compound-derive :
-    is-just (decideₑ derive (hyps [] [] [] ((a , b ⊔̂ₑ d) ∷ (b ⊔̂ₑ d , c) ∷ []) [] [] false) a c)
+    is-just (decideₑ derive (hyps [] [] [] ((a , b ⊔̂ₑ d) ∷ (b ⊔̂ₑ d , c) ∷ []) [] []) a c)
       ≡ false
   through-compound-derive = refl
 
   -- along a chain from the left side: a · b ≾ c ⊩ a · b ≾ c ⊔ d
 
   along-vertex :
-    is-just (decideₑ full (hyps [] [] [] ((a ·̂ₑ b , c) ∷ []) [] [] false) (a ·̂ₑ b) (c ⊔̂ₑ d)) ≡ true
+    is-just (decideₑ full (hyps [] [] [] ((a ·̂ₑ b , c) ∷ []) [] []) (a ·̂ₑ b) (c ⊔̂ₑ d)) ≡ true
   along-vertex = refl
 
   -- a factor edge, the unit least: a · b ≾ c ⊩ a ≾ c
 
   factor-least :
-    is-just (decideₑ full (hyps [] [] [] ((a ·̂ₑ b , c) ∷ []) [] [] false) a c) ≡ true
+    is-just (decideₑ full (hyps [] [] [] ((a ·̂ₑ b , c) ∷ []) [] []) a c) ≡ true
   factor-least = refl
 
 ------------------------------------------------------------------
@@ -236,11 +237,11 @@ module Deadline where
 module Sequence where
 
   open import OpenCalculus.Examples.Specs using (module Traces-Timed-RightSided)
-  open Traces-Timed-RightSided using (spec)
+  open Traces-Timed-RightSided using (spec; hints)
 
   open import OpenCalculus.Syntax.Grades               spec
   open import OpenCalculus.Hypotheses                  spec using (hyps)
-  open import OpenCalculus.Inference.SolverImpl.Entail spec using (decideₑ; derive)
+  open import OpenCalculus.Inference.SolverImpl.Entail spec hints using (decideₑ; derive)
 
   Θ : Scope
   Θ = scope 0 0 4
@@ -254,12 +255,12 @@ module Sequence where
   -- `decideₑ` at `derive`: the factors match in order only
 
   crossed-in-order :
-    is-just (decideₑ derive (hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) [] [] false) (c ·̂ₑ d) (a ·̂ₑ b))
+    is-just (decideₑ derive (hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) [] []) (c ·̂ₑ d) (a ·̂ₑ b))
       ≡ false
   crossed-in-order = refl
 
   crossed-in-order-swapped :
-    is-just (decideₑ derive (hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) [] [] false) (d ·̂ₑ c) (a ·̂ₑ b))
+    is-just (decideₑ derive (hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) [] []) (d ·̂ₑ c) (a ·̂ₑ b))
       ≡ true
   crossed-in-order-swapped = refl
 
@@ -270,14 +271,19 @@ module Sequence where
 module WithTop where
 
   open import Grades.Examples.Time.LeftSided
-    using (untimed; timed_; [_,+∞⟩; left-sided-intervals-with-⊤; left-sided-witnesses-with-⊤)
+    using (untimed; timed_; [_,+∞⟩; left-sided-intervals-with-⊤; left-sided-intervals-with-⊤ʰ;
+           left-sided-witnesses-with-⊤)
+  open import Grades.Examples.System.Identity using (identityʰ)
   open import Language.Examples.SensorNode.Identity
-    left-sided-intervals-with-⊤ (λ _ → timed [ 1 ,+∞⟩) left-sided-witnesses-with-⊤ using (spec)
+    left-sided-intervals-with-⊤ (λ _ → timed [ 1 ,+∞⟩) using (spec)
+
+  hints : SystemHints (LanguageSpec.Grades spec)
+  hints = identityʰ left-sided-intervals-with-⊤ʰ left-sided-witnesses-with-⊤
 
   open import OpenCalculus.Syntax.Grades               spec
   open import OpenCalculus.Hypotheses                  spec using (hyps; ∅ᴴ)
-  open import OpenCalculus.Inference.SolverImpl.Entail spec using (decideₑ; derive; full)
-  open import OpenCalculus.Inference.SolverImpl.Canon  spec using (canonₑ)
+  open import OpenCalculus.Inference.SolverImpl.Entail spec hints using (decideₑ; derive; full)
+  open import OpenCalculus.Inference.SolverImpl.Canon  spec hints using (canonₑ)
 
   Θ : Scope
   Θ = scope 0 0 3
@@ -312,19 +318,19 @@ module WithTop where
   -- unit, so it gives no evidence, and neither does nothing.
 
   factor-evidence :
-    is-just (decideₑ full (hyps [] [] [] ((⌜ 0 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) [] [] false) a c) ≡ true
+    is-just (decideₑ full (hyps [] [] [] ((⌜ 0 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) [] []) a c) ≡ true
   factor-evidence = refl
 
   factor-no-evidence :
-    is-just (decideₑ full (hyps [] [] [] ((⌜ 3 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) [] [] false) a c) ≡ false
+    is-just (decideₑ full (hyps [] [] [] ((⌜ 3 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) [] []) a c) ≡ false
   factor-no-evidence = refl
 
   factor-none :
-    is-just (decideₑ full (hyps [] [] [] ((a ·̂ₑ b , c) ∷ []) [] [] false) a c) ≡ false
+    is-just (decideₑ full (hyps [] [] [] ((a ·̂ₑ b , c) ∷ []) [] []) a c) ≡ false
   factor-none = refl
 
   factor-derive :
-    is-just (decideₑ derive (hyps [] [] [] ((⌜ 0 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) [] [] false) a c) ≡ false
+    is-just (decideₑ derive (hyps [] [] [] ((⌜ 0 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) [] []) a c) ≡ false
   factor-derive = refl
 
 ------------------------------------------------------------------
@@ -343,13 +349,14 @@ module WithTop where
 -- right-sided time no step moves the bound; at left-sided time it holds
 -- at every instance and bounds nothing. Checked at both sides of time.
 
-module Cycle (S : LanguageSpec) (opEnum : OpEnum S) where
+module Cycle (S : LanguageSpec) (hints : SystemHints (LanguageSpec.Grades S))
+             (opEnum : OpEnum S) where
 
   open import OpenCalculus.Syntax.Grades                 S
   open import OpenCalculus.Syntax.Subst                  S using (Subst; wkˢᵉ; _⨟ˢ_; sE)
   open import OpenCalculus.Inference.SolverImpl.Resid    S using (Resid; resid)
-  open import OpenCalculus.Inference.SolverImpl.Localise S using (collapse; Collapse; stepᵉ; module Find)
-  open import OpenCalculus.Inference.SolverImpl.Solve    S opEnum using (splitᴿ)
+  open import OpenCalculus.Inference.SolverImpl.Localise S hints using (collapse; Collapse; stepᵉ; module Find)
+  open import OpenCalculus.Inference.SolverImpl.Solve    S hints opEnum using (splitᴿ)
 
   Θ Φ : Scope
   Θ = scope 0 0 1
@@ -412,7 +419,7 @@ module Cycle (S : LanguageSpec) (opEnum : OpEnum S) where
 
 module Cycle-RightSided where
   open import OpenCalculus.Examples.Specs using (module Time-RightSided)
-  open Cycle Time-RightSided.spec Time-RightSided.enum
+  open Cycle Time-RightSided.spec Time-RightSided.hints Time-RightSided.enum
 
   with-collapse-closes : with-collapse ≡ true
   with-collapse-closes = refl
@@ -429,7 +436,7 @@ module Cycle-RightSided where
 
 module Cycle-LeftSided where
   open import OpenCalculus.Examples.Specs using (module Time-LeftSided)
-  open Cycle Time-LeftSided.spec Time-LeftSided.enum
+  open Cycle Time-LeftSided.spec Time-LeftSided.hints Time-LeftSided.enum
 
   with-collapse-closes : with-collapse ≡ true
   with-collapse-closes = refl
@@ -454,15 +461,15 @@ module Witness where
 
   open import Grades.Examples.Time.LeftSided using (𝕀; [_,+∞⟩)
   open import OpenCalculus.Examples.Specs using (module Time-LeftSided)
-  open Time-LeftSided using (spec; enum)
+  open Time-LeftSided using (spec; hints; enum)
   open LanguageSpec spec using (Grades)
   open GradeSystemInterface Grades using (uₑ; ⊤ₑ)
 
   open import OpenCalculus.Syntax.Grades                 spec
   open import OpenCalculus.Hypotheses                    spec using (Hyps; ∅ᴴ; _+eⁿ_; ords; qord)
   open import OpenCalculus.Syntax.Subst                  spec using (Subst)
-  open import OpenCalculus.Inference.SolverImpl.Deferred spec using (grid; candidatesₑ)
-  open import OpenCalculus.Inference.SolverImpl.Solve    spec enum
+  open import OpenCalculus.Inference.SolverImpl.Deferred spec hints using (grid; candidatesₑ)
+  open import OpenCalculus.Inference.SolverImpl.Solve    spec hints enum
     using (Retried; refutedᵈ; keptᵈ; retryᵈ; Verdict; settled; refuted; undecided; witnessᵉ)
 
   Ψ : Scope
@@ -509,11 +516,11 @@ module Lowering where
   open import Data.Maybe.Base using (Maybe) renaming (map to mapᴹ)
   open import Data.Product using (proj₁)
 
-  module Values (S : LanguageSpec) where
+  module Values (S : LanguageSpec) (hints : SystemHints (LanguageSpec.Grades S)) where
 
     open import OpenCalculus.Syntax.Grades                 S
     open import OpenCalculus.Inference.SolverImpl.Resid    S using (resid)
-    open import OpenCalculus.Inference.SolverImpl.Localise S using (stepᵉ)
+    open import OpenCalculus.Inference.SolverImpl.Localise S hints using (stepᵉ)
 
     Θ : Scope
     Θ = scope 0 0 1
@@ -532,12 +539,12 @@ module Lowering where
 
     open import Grades.Examples.Time.RightSided using ([0,_]; ↑_; ∞)
     open import OpenCalculus.Examples.Specs using (module Time-RightSided)
-    open Time-RightSided using (spec)
+    open Time-RightSided using (spec; hints)
 
     open import OpenCalculus.Syntax.Grades               spec
     open import OpenCalculus.Hypotheses                  spec using (hyps)
-    open import OpenCalculus.Inference.SolverImpl.Entail spec using (checkClosed)
-    open Values spec
+    open import OpenCalculus.Inference.SolverImpl.Entail spec hints using (checkClosed)
+    open Values spec hints
 
     ⌜_⌝ : ℕ → EExp Θ
     ⌜ n ⌝ = econst [0, ↑ n ]
@@ -578,7 +585,7 @@ module Lowering where
     wait-value = refl
 
     wait-refuted :
-      checkClosed (hyps [] [] [] ((⌜ 1 ⌝ ·̂ₑ (ûₑ ⊔̂ₑ ∞̂ ·̂ₑ ûₑ) , ⌜ 1 ⌝) ∷ []) [] [] false) ≡ nothing
+      checkClosed (hyps [] [] [] ((⌜ 1 ⌝ ·̂ₑ (ûₑ ⊔̂ₑ ∞̂ ·̂ₑ ûₑ) , ⌜ 1 ⌝) ∷ []) [] []) ≡ nothing
     wait-refuted = refl
 
     -- its mirror, `ε · 1 ≾ ε ∧ ε · 1 ≾ 1`: `u ⊔ u · 1⁺`
@@ -588,7 +595,7 @@ module Lowering where
     wait-mirror-value = refl
 
     wait-mirror-refuted :
-      checkClosed (hyps [] [] [] (((ûₑ ⊔̂ₑ ûₑ ·̂ₑ ∞̂) ·̂ₑ ⌜ 1 ⌝ , ⌜ 1 ⌝) ∷ []) [] [] false) ≡ nothing
+      checkClosed (hyps [] [] [] (((ûₑ ⊔̂ₑ ûₑ ·̂ₑ ∞̂) ·̂ₑ ⌜ 1 ⌝ , ⌜ 1 ⌝) ∷ []) [] []) ≡ nothing
     wait-mirror-refuted = refl
 
     -- left-linear and quadratic: `(L ⊔ D⁺ · L)⁺`, here its own closure
@@ -602,16 +609,20 @@ module Lowering where
   module TwoSided where
 
     open import Grades.Examples.Time.TwoSidedWithInfinity
-      using (↑_; ∞; two-sided-intervals-with-∞) renaming ([_,_] to ⌈_,_⌉)
+      using (↑_; ∞; two-sided-intervals-with-∞; two-sided-intervals-with-∞ʰ)
+      renaming ([_,_] to ⌈_,_⌉)
     open Grading.Time-TwoSided using (opTime)
-    open import Grades.Examples.System.Identity using (noWitnesses)
+    open import Grades.Examples.System.Identity using (identityʰ; noWitnesses)
     open import Language.Examples.SensorNode.Identity
-      two-sided-intervals-with-∞ opTime noWitnesses using (spec)
+      two-sided-intervals-with-∞ opTime using (spec)
+
+    hints : SystemHints (LanguageSpec.Grades spec)
+    hints = identityʰ two-sided-intervals-with-∞ʰ noWitnesses
 
     open import OpenCalculus.Syntax.Grades               spec
     open import OpenCalculus.Hypotheses                  spec using (hyps)
-    open import OpenCalculus.Inference.SolverImpl.Entail spec using (checkClosed)
-    open Values spec
+    open import OpenCalculus.Inference.SolverImpl.Entail spec hints using (checkClosed)
+    open Values spec hints
 
     -- `1 ≾ v ∧ v · v ≾ v ∧ v ≾ [1,∞]`: `v = [1,1]⁺ = [1,∞]`, and the
     -- upper bound holds there
@@ -626,7 +637,7 @@ module Lowering where
     interval-value = refl
 
     interval-holds :
-      checkClosed (hyps [] [] [] ((one-∞ , one-∞) ∷ []) [] [] false) ≡ just (hyps [] [] [] [] [] [] false)
+      checkClosed (hyps [] [] [] ((one-∞ , one-∞) ∷ []) [] []) ≡ just (hyps [] [] [] [] [] [])
     interval-holds = refl
 
     -- left-linear and quadratic: `(L ⊔ D⁺ · L)⁺`, here its own

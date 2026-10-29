@@ -15,12 +15,12 @@ open import OpenCalculus.Examples.Specs using (module Time-LeftSided)
 
 module OpenCalculus.Examples.Runs.Time.LeftSided where
 
-open Time-LeftSided using (spec; enum)
+open Time-LeftSided using (spec; hints; enum)
 
 open import OpenCalculus.Syntax.Contexts spec using ([])
 open import OpenCalculus.Inference.Principality spec using (Typable; untypable)
-open import OpenCalculus.Inference.SolverImpl spec enum using (infer-untypable)
-open import OpenCalculus.Examples.Runs spec enum
+open import OpenCalculus.Inference.SolverImpl spec hints enum using (infer-untypable)
+open import OpenCalculus.Examples.Runs spec hints enum
 
 ------------------------------------------------------------------
 -- 1. Budgets

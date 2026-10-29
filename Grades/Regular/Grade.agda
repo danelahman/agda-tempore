@@ -32,6 +32,7 @@ open import Relation.Nullary.Decidable using (T?; recompute)
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (posetᵍ; Grade; Plus; plus)
+open import Grades.Hints using (GradeHints)
 import Grades.Regular.Plus
 open import Grades.Regular.Constructions k using (_∈*_; none; more)
 open import Grades.Regular.Automaton k
@@ -438,7 +439,13 @@ regular-grade = posetᵍ record
   ; ≾-zero-productʳ = λ {c} {d} → ≾-zero-productʳ {c} {d}
   ; of-dur-zero     = of-dur-zero
   ; of-dur-plus     = λ {m} {n} → of-dur-plus {m} {n}
-  ; u-least?        = nothing
-  ; plus?           = λ c → just (plusᴿ c)
-  ; ·-comm?         = nothing
+  }
+
+-- its hints: Kleene's plus at every grade
+
+regular-gradeʰ : GradeHints regular-grade
+regular-gradeʰ = record
+  { u-least? = nothing
+  ; ·-comm?  = nothing
+  ; plus?    = λ c → just (plusᴿ c)
   }

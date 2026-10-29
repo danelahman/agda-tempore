@@ -63,3 +63,7 @@ import OpenCalculus.Examples.Recursion.All
 -- Comparisons: the generic module and its instances
 
 import OpenCalculus.Examples.Compare.All
+
+-- Programs of several definitions: the generic module and its instances
+
+import OpenCalculus.Examples.Programs.All

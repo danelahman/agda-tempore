@@ -131,6 +131,7 @@ mutual
   hoistᴿ (cmp ⋈ V W) σ = cmpʰ ⋈ (hoistᴿ V σ) (hoistᴿ W σ) (buildᴿ V σ) (buildᴿ W σ)
   hoistᴿ (V ⦂ᵛ A)    σ = hoistᴿ V σ
   hoistᴿ (var i)     σ = λ r → [] , ∅ᴿ
+  hoistᴿ (def k)     σ = λ r → [] , ∅ᴿ
   hoistᴿ (const B c) σ = λ r → [] , ∅ᴿ
   hoistᴿ ⋆           σ = λ r → [] , ∅ᴿ
   hoistᴿ true        σ = λ r → [] , ∅ᴿ
@@ -144,6 +145,7 @@ mutual
 
   buildᴿ : ∀ {Θ n} → RawV Θ n → DInst Θ → RMap → Envᴿ → ErV
   buildᴿ (var i)     σ r e = var (posᴿ r (toℕ i))
+  buildᴿ (def k)     σ r e = ⋆
   buildᴿ (const B c) σ r e = const B c
   buildᴿ ⋆           σ r e = ⋆
   buildᴿ true        σ r e = true
@@ -209,6 +211,7 @@ mutual
       `with (λ op c → elabᶜ (H op) (σ ,ᵉᴰ c) (extᴿ (extᴿ r)))
       `in (elabᶜ N σ (extᴿ r))
   elabʰ M (var i) σ r = elabᶜ M σ r
+  elabʰ M (def k) σ r = elabᶜ M σ r
   elabʰ M (const B c) σ r = elabᶜ M σ r
   elabʰ M ⋆ σ r = elabᶜ M σ r
   elabʰ M true σ r = elabᶜ M σ r
@@ -279,6 +282,7 @@ mutual
   ⌊≗⌋ʰ p (cmp ⋈ V W) = cmpʰ-cong (⌊≗⌋ʰ p V) (⌊≗⌋ʰ p W) (⌊≗⌋ᵇ p V) (⌊≗⌋ᵇ p W)
   ⌊≗⌋ʰ p (V ⦂ᵛ A)    = ⌊≗⌋ʰ p V
   ⌊≗⌋ʰ p (var i)     r = refl
+  ⌊≗⌋ʰ p (def k)     r = refl
   ⌊≗⌋ʰ p (const B c) r = refl
   ⌊≗⌋ʰ p ⋆           r = refl
   ⌊≗⌋ʰ p true        r = refl
@@ -291,6 +295,7 @@ mutual
   ⌊≗⌋ᵇ : ∀ {Θ n} {σ σ' : DInst Θ} → σ ≗ᴰ σ' → (V : RawV Θ n)
        → ∀ r e → buildᴿ V σ r e ≡ buildᴿ V σ' r e
   ⌊≗⌋ᵇ p (var i)     r e = refl
+  ⌊≗⌋ᵇ p (def k)     r e = refl
   ⌊≗⌋ᵇ p (const B c) r e = refl
   ⌊≗⌋ᵇ p ⋆           r e = refl
   ⌊≗⌋ᵇ p true        r e = refl
@@ -361,6 +366,7 @@ mutual
           (fun-ext (λ op → fun-ext (λ c → ⌊≗⌋ᵉ (≗ᴰ-,ᵉ p c) (H op) (extᴿ (extᴿ r)))))
           (⌊≗⌋ᵉ p N (extᴿ r))
   ⌊≗⌋ᵃ p M (var i) r = ⌊≗⌋ᵉ p M r
+  ⌊≗⌋ᵃ p M (def k) r = ⌊≗⌋ᵉ p M r
   ⌊≗⌋ᵃ p M (const B c) r = ⌊≗⌋ᵉ p M r
   ⌊≗⌋ᵃ p M ⋆ r = ⌊≗⌋ᵉ p M r
   ⌊≗⌋ᵃ p M true r = ⌊≗⌋ᵉ p M r
@@ -395,6 +401,7 @@ mutual
     cmpʰ-cong (⌊[]⌋ʰ V δ σ) (⌊[]⌋ʰ W δ σ) (⌊[]⌋ᵇ V δ σ) (⌊[]⌋ᵇ W δ σ)
   ⌊[]⌋ʰ (V ⦂ᵛ A)    δ σ = ⌊[]⌋ʰ V δ σ
   ⌊[]⌋ʰ (var i)     δ σ r = refl
+  ⌊[]⌋ʰ (def k)     δ σ r = refl
   ⌊[]⌋ʰ (const B c) δ σ r = refl
   ⌊[]⌋ʰ ⋆           δ σ r = refl
   ⌊[]⌋ʰ true        δ σ r = refl
@@ -407,6 +414,7 @@ mutual
   ⌊[]⌋ᵇ : ∀ {Θ Θ' n} → (V : RawV Θ n) → (δ : Subst Θ Θ') → (σ : DInst Θ')
         → ∀ r e → buildᴿ (V [ δ ]ᴿᵛ) σ r e ≡ buildᴿ V (δ ⨟ᴰ σ) r e
   ⌊[]⌋ᵇ (var i)     δ σ r e = refl
+  ⌊[]⌋ᵇ (def k)     δ σ r e = refl
   ⌊[]⌋ᵇ (const B c) δ σ r e = refl
   ⌊[]⌋ᵇ ⋆           δ σ r e = refl
   ⌊[]⌋ᵇ true        δ σ r e = refl
@@ -482,6 +490,7 @@ mutual
                    (⌊≗⌋ᵉ (↑ᵉ-⨟ᴰ δ σ c) (H op) (extᴿ (extᴿ r))))))
           (⌊[]⌋ᵉ N δ σ (extᴿ r))
   ⌊[]⌋ᵃ M (var i) δ σ r = ⌊[]⌋ᵉ M δ σ r
+  ⌊[]⌋ᵃ M (def k) δ σ r = ⌊[]⌋ᵉ M δ σ r
   ⌊[]⌋ᵃ M (const B c) δ σ r = ⌊[]⌋ᵉ M δ σ r
   ⌊[]⌋ᵃ M ⋆ δ σ r = ⌊[]⌋ᵉ M δ σ r
   ⌊[]⌋ᵃ M true δ σ r = ⌊[]⌋ᵉ M δ σ r
@@ -624,6 +633,7 @@ mutual
   hoist σ s (annᵛ A V)  ι c = hoisted (tel h) (env h) where h = hoist σ s V ι c
   hoist σ s (subV V p)  ι c = hoist σ s V ι c
   hoist σ s (var x ok)  ι c = hoisted [] tt
+  hoist σ s (def _ _ _ _) ι ()
   hoist σ s (const B c') ι c = hoisted [] tt
   hoist σ s ⋆           ι c = hoisted [] tt
   hoist σ s true        ι c = hoisted [] tt
@@ -655,6 +665,7 @@ mutual
     var (λ ¬et → ≾ᵣ-trans (proj₂ (proj₂ l)) (varOK (sound-VarOK s ok) ¬et))
         (proj₁ (proj₂ l))
     where l = look ι f ⟦ x ⟧ˣ
+  build σ s (def _ _ _ _)  ι b e ()
   build σ s (const B c')   ι b e c        = const c'
   build σ s ⋆              ι b e c        = ⋆
   build σ s true           ι b e c        = true
@@ -794,6 +805,7 @@ mutual
          (sound-<:ᵛ s pY ‼ₛ ·ₑ-monoʳ-≾ₑ (sound-≾ₑ s pε'))
   instʰ σ s M (subV V p) q ι f c = instʰ σ s M V (<:̂ᵛ-trans p q) ι f c
   instʰ σ s M (var x ok) q ι f ()
+  instʰ σ s M (def _ _ _ _) q ι f ()
   instʰ σ s M (const B c') q ι f ()
   instʰ σ s M ⋆ q ι f ()
   instʰ σ s M true q ι f ()
@@ -853,6 +865,7 @@ mutual
   hoist-⌊⌋ σ s (annᵛ A V)  ι c = hoist-⌊⌋ σ s V ι c
   hoist-⌊⌋ σ s (subV V p)  ι c = hoist-⌊⌋ σ s V ι c
   hoist-⌊⌋ σ s (var x ok)  ι c = refl
+  hoist-⌊⌋ σ s (def _ _ _ _) ι ()
   hoist-⌊⌋ σ s (const B c') ι c = refl
   hoist-⌊⌋ σ s ⋆           ι c = refl
   hoist-⌊⌋ σ s true        ι c = refl
@@ -883,6 +896,7 @@ mutual
     cong var (trans (lookᴱ-pos ι ⟦ x ⟧ˣ) (cong (posᴿ ⌊ ι ⌋ᵐ) (⟦⟧ˣ-pos x)))
   build-⌊⌋ σ s (var x ok) ι (inj₂ f) e c =
     cong var (trans (look-pos ι f ⟦ x ⟧ˣ) (cong (posᴿ ⌊ ι ⌋ᵐ) (⟦⟧ˣ-pos x)))
+  build-⌊⌋ σ s (def _ _ _ _)  ι b e ()
   build-⌊⌋ σ s (const B c')   ι b e c        = refl
   build-⌊⌋ σ s ⋆              ι b e c        = refl
   build-⌊⌋ σ s true           ι b e c        = refl
@@ -1062,6 +1076,7 @@ mutual
           (instᶜ-⌊⌋ σ s N (≼-∷ (≼-≾ ι (map-monotoneᵉ (sound-≾ₑ s pε)))) f c')
   instʰ-⌊⌋ σ s M (subV V p) q ι f c = instʰ-⌊⌋ σ s M V (<:̂ᵛ-trans p q) ι f c
   instʰ-⌊⌋ σ s M (var x ok) q ι f ()
+  instʰ-⌊⌋ σ s M (def _ _ _ _) q ι f ()
   instʰ-⌊⌋ σ s M (const B c') q ι f ()
   instʰ-⌊⌋ σ s M ⋆ q ι f ()
   instʰ-⌊⌋ σ s M true q ι f ()

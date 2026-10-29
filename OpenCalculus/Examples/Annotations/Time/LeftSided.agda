@@ -12,10 +12,10 @@ open import OpenCalculus.Examples.Specs using (module Time-LeftSided)
 
 module OpenCalculus.Examples.Annotations.Time.LeftSided where
 
-open Time-LeftSided using (spec; enum)
+open Time-LeftSided using (spec; hints; enum)
 
 open import OpenCalculus.Syntax.Contexts spec using ([])
-open import OpenCalculus.Examples.Annotations spec enum
+open import OpenCalculus.Examples.Annotations spec hints enum
 
 id-bool-reported : schemeOf (infer [] id-bool) ≡ just expected-id-bool
 id-bool-reported = refl

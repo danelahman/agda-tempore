@@ -75,14 +75,14 @@
 -- They hold wherever those orderings do and bound nothing. A   --
 -- disjunction whose type a substitution has made eternal at no --
 -- instance becomes its grade side, which is what it means at   --
--- every instance solving the scope from the truths, the rigid  --
--- a parameter.                                                 --
+-- every instance solving the scope from no hypotheses, the     --
+-- rigid a parameter.                                           --
 --                                                              --
 -- Contract (`Localised`). `lσ` fixes the images of the outer   --
 -- unknowns (`lfix`); a discharge of the new residual along `δ` --
 -- is one of the old along `lσ ⨟ δ` (`lsnd`); an instance       --
--- entering the scope that discharges the old residual from the --
--- truths discharges the new one (`lcpl`); each step            --
+-- entering the scope that discharges the old residual from no  --
+-- hypotheses discharges the new one (`lcpl`); each step        --
 -- assigns grade unknowns only, so subtyping demands between    --
 -- type variables stay so (`latom`); the type of each           --
 -- disjunction left is eternal at some instance                 --
@@ -120,7 +120,7 @@
 -- bound under several upper bounds, none decided below the     --
 -- others, which in a program comes only from `absurd`; a cycle --
 -- `p ≾ v` not closing at the value, or needing a closure the   --
--- grade does not declare, under an upper bound.                --
+-- hints do not declare, under an upper bound.                  --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; _∧_; not; true; false; if_then_else_) renaming (Bool to 𝔹)
@@ -133,7 +133,7 @@ open import Data.List.Membership.Propositional.Properties using (∈-map⁻; ∈
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing)
 import Data.Maybe.Base as Maybe
-open import Data.Maybe using (Is-just)
+open import Data.Maybe using (Is-just; to-witness)
 open import Data.Nat.Base using (ℕ; _+_) renaming (zero to nzero; suc to nsuc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
@@ -143,6 +143,7 @@ open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; module SystemHintsInterface)
 open import Language.Spec
 
 open import Util.Equality
@@ -151,10 +152,12 @@ open import OpenCalculus.Syntax.Scopes
 
 module OpenCalculus.Inference.SolverImpl.Localise
   (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S))
   where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
+open SystemHintsInterface hints
 
 open import OpenCalculus.Syntax.Grades S
 open import OpenCalculus.Syntax.Types  S
@@ -166,17 +169,17 @@ open import OpenCalculus.Inference.SolverImpl.Core.Occurs S
 open import OpenCalculus.Inference.SolverImpl.Core.Rigid S
   using (∨-true; ∨-left; ∨-right; dec-true; true-dec)
 
-open import OpenCalculus.Inference.SolverImpl.Deferred  S
+open import OpenCalculus.Inference.SolverImpl.Deferred  S hints
   using (≾ˢ-↑ᵉⁿ; Dir; dir↓; dir↑; Still; stills?; keepᵈ; allOf; κ⟨_⟩; wk-κ; κ-wkᵛ; κ-wkʳ; κ-wkᵉ; ⊩ᴴ-κ)
 open import OpenCalculus.Inference.SolverImpl.Resid  S
-open import OpenCalculus.Inference.SolverImpl.Values S
+open import OpenCalculus.Inference.SolverImpl.Values S hints
   using (module Vᵉ; module Vʳ; module Vⁱ; isFalse; equal-keeps; updᵉ-e; updᵉ-r; updʳ-r;
          joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩; joinᵣ-ub⊩; joinᵣ-lub⊩; module LowToₑ; module LowToᵣ)
 open import OpenCalculus.Inference.SolverImpl.Vars      S
   using (Vars; vᵉ; vʳ; Fixes; mkFixes; fvᵛ; fvʳ; fvᵉ; ⊆-refl; fix-v; fix-r; fix-e)
 import OpenCalculus.Inference.SolverImpl.Reach as Reachability
-open import OpenCalculus.Inference.SolverImpl.Entail S using (decideᵣ; decideₑ; full)
-open import OpenCalculus.Inference.SolverImpl.Canon  S
+open import OpenCalculus.Inference.SolverImpl.Entail S hints using (decideᵣ; decideₑ; full)
+open import OpenCalculus.Inference.SolverImpl.Canon  S hints
   using (canonᵣ; canonᵣ-≡; Ordʳ; Ordᵉ; Pieces; pieces; Split; splits; piecesʳ; piecesᵉ)
 
 -- Equal unknowns, joined by the empty chain
@@ -1173,7 +1176,7 @@ stepᵉ {Ψ} k R with cleanᵉ? k R
     least : Vᵉ.ByLeast {Ψ} k o (es R) → Σ[ b ∈ EExp Ψ ] Step (updᵉ k b) R
     least (Vᵉ.byLeast lw nob ij b to (fr , sd)) =
       b , (λ τ Q h → lowerᵉ-⊩ lw fr cl b sd (Vᵉ.lowTo-closes {Ψ} k to) τ
-                       (LowToₑ.least k lw to τ (minₑ ij) (⊩es h))
+                       (LowToₑ.least k lw to τ (minₑ (to-witness ij)) (⊩es h))
                        (λ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) h) ,
       loweredᵉ lw b (λ δ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) (Vᵉ.lowTo-closes {Ψ} k to)
 
@@ -1206,7 +1209,7 @@ stepʳ {Ψ} k R with cleanʳ? k R
     least : Vʳ.ByLeast {Ψ} k o (rs R) → Σ[ b ∈ RExp Ψ ] Step (updʳ k b) R
     least (Vʳ.byLeast lw nob ij b to sd) =
       b , (λ τ Q h → lowerʳ-⊩ lw cl b sd (Vʳ.lowTo-closes {Ψ} k to) τ
-                       (LowToᵣ.least k lw to τ (minᵣ ij) (⊩rs h))
+                       (LowToᵣ.least k lw to τ (minᵣ (to-witness ij)) (⊩rs h))
                        (λ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) h) ,
       loweredʳ lw b (λ δ m → ⊥-elim (∉[] (subst (_ ∈_) nob m))) (Vʳ.lowTo-closes {Ψ} k to)
 
@@ -1216,7 +1219,7 @@ stepʳ {Ψ} k R with cleanʳ? k R
 
 ------------------------------------------------------------------------
 -- A disjunction whose type is eternal at no instance (`etDec` refutes
--- it) is met, from the truths, exactly by its grade side
+-- it) is met, from no hypotheses, exactly by its grade side
 
 record Refined {Ψ} (l : List (OVType Ψ × RExp Ψ)) : Set where
   constructor refined
@@ -1228,7 +1231,7 @@ record Refined {Ψ} (l : List (OVType Ψ × RExp Ψ)) : Set where
           → (∀ {a} → a ∈ rest → Disj Q δ a) → (∀ {a} → a ∈ orders → Ordʳ Q δ a)
           → ∀ {a} → a ∈ l → Disj Q δ a
     fwd   : ∀ {Ψ'} → (δ : Subst Ψ Ψ')
-          → (∀ {a} → a ∈ l → Disj ⊤ᴴ δ a) → ∀ {a} → a ∈ orders → Ordʳ ⊤ᴴ δ a
+          → (∀ {a} → a ∈ l → Disj ∅ᴴ δ a) → ∀ {a} → a ∈ orders → Ordʳ ∅ᴴ δ a
     restᴱ : ∀ {A ρ} → (A , ρ) ∈ rest → Σ[ αs ∈ List (TyVar Ψ) ] (etDec A ≡ just αs)
 
 -- One disjunction, by the verdict of `etDec` on its type
@@ -1974,7 +1977,7 @@ record Localised {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) : Set where
     lfix : (O ⨟ˢ lσ) ≐ˢ O
     lsnd : ∀ {Ψ'} → (δ : Subst Φ Ψ') → (Q : Hyps Ψ') → Q ⊩ᴿ lR [ δ ] → Q ⊩ᴿ R [ lσ ⨟ˢ δ ]
     lcpl : ∀ {Ψ''} → (τ : Subst Φ (Ψ'' +e)) → Entry O τ
-         → ⊤ᴴ ⊩ᴿ R [ τ ] → ⊤ᴴ ⊩ᴿ lR [ τ ]
+         → ∅ᴴ ⊩ᴿ R [ τ ] → ∅ᴴ ⊩ᴿ lR [ τ ]
     latom : Atomicˢ (ss R) → Atomicˢ (ss lR)
 
 open Localised public
@@ -1983,7 +1986,7 @@ open Localised public
 
 KeepsAt : ∀ {Θ Φ} → Subst (Θ +e) Φ → Subst Φ Φ → Resid Φ → Set
 KeepsAt {Φ = Φ} O σ R = ∀ {Ψ''} → (τ : Subst Φ (Ψ'' +e)) → Entry O τ
-                      → ⊤ᴴ ⊩ᴿ R [ τ ] → ⊤ᴴ ⊩ᴿ R [ σ ⨟ˢ τ ]
+                      → ∅ᴴ ⊩ᴿ R [ τ ] → ∅ᴴ ⊩ᴿ R [ σ ⨟ˢ τ ]
 
 -- Nothing assigned
 
@@ -2003,7 +2006,7 @@ loc-≐ p (loc σ R' fx sn cp la) =
 
 settleᴴ : ∀ {Ψ} → Resid Ψ → Hyps Ψ
 settleᴴ R = hyps [] [] (Unsettled.kept (unsettled settledʳ (rs R)))
-                       (Unsettled.kept (unsettled settledᵉ (es R))) [] [] false
+                       (Unsettled.kept (unsettled settledᵉ (es R))) [] []
 
 -- The settled atoms dropped, and each disjunction whose type is never
 -- eternal replaced by its grade side: the instances from no
@@ -2020,7 +2023,7 @@ loc-settle (loc σ R₀ fx sn cp la) =
                                                    (λ m'' → ⊩rs h (∈-++⁺ʳ (Unsettled.kept Uʳ) m''))
                                                    m')
                                        m
-                                       (mk⊩ᴴ (λ ()) (λ ()) (λ m' → ⊩rs h (∈-++⁺ˡ m')) (⊩es h) (λ ()) (λ ()) (λ ())))
+                                       (mk⊩ᴴ (λ ()) (λ ()) (λ m' → ⊩rs h (∈-++⁺ˡ m')) (⊩es h) (λ ()) (λ ())))
                               (⊩dfs h)))
       (λ τ en h → let h' = cp τ en h in
                  mk⊩ᴿ (λ m → [ (λ m' → ⊩rs h' (Unsettled.kept⊆ Uʳ m'))
@@ -2086,14 +2089,14 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
   passᵉ ((k , q) ∷ ks) L with stepᵉ k (lR L)
   ... | nothing      = passᵉ ks L
   ... | just (b , st , dr) =
-        proj₁ (passᵉ ks (loc-ext L (updᵉ k b) (freeᵉ-fix k O q b) (λ τ en → st τ ⊤ᴴ) dr (λ α → refl))) , true
+        proj₁ (passᵉ ks (loc-ext L (updᵉ k b) (freeᵉ-fix k O q b) (λ τ en → st τ ∅ᴴ) dr (λ α → refl))) , true
 
   passʳ : List (Σ[ k ∈ RVar Φ ] (freeʳ k O ≡ false)) → Localised O R → Localised O R × 𝔹
   passʳ []             L = L , false
   passʳ ((k , q) ∷ ks) L with stepʳ k (lR L)
   ... | nothing      = passʳ ks L
   ... | just (b , st , dr) =
-        proj₁ (passʳ ks (loc-ext L (updʳ k b) (freeʳ-fix k O q b) (λ τ en → st τ ⊤ᴴ) dr (λ α → refl))) , true
+        proj₁ (passʳ ks (loc-ext L (updʳ k b) (freeʳ-fix k O q b) (λ τ en → st τ ∅ᴴ) dr (λ α → refl))) , true
 
   -- The local unknowns of each component identified at once
 
@@ -2102,7 +2105,7 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
     where
       go : Collapse O (lR L) → Localised O R × 𝔹
       go (collapsed σ false ty fx st) = L , false
-      go (collapsed σ true  ty fx st) = loc-ext L σ fx (λ τ en → st τ ⊤ᴴ) keepAll ty , true
+      go (collapsed σ true  ty fx st) = loc-ext L σ fx (λ τ en → st τ ∅ᴴ) keepAll ty , true
 
   -- Where no step gives an unknown a value of its own, a set of them
   -- bounded below by the rigid is sent to the top
@@ -2114,7 +2117,7 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
   ...   | nothing = nothing
   ...   | just (raised l rc ue ur cl sd fx) =
           just (loc-ext L (tops l) (freeᴹ-fix l O fx)
-                        (λ τ en h → raise-⊩ {Q₀ = ⊤ᴴ} O eqj l rc ue ur cl sd τ en h)
+                        (λ τ en h → raise-⊩ {Q₀ = ∅ᴴ} O eqj l rc ue ur cl sd τ en h)
                         keepAll (λ α → refl))
 
   -- A round writes the atoms in normal form, splitting the joins on

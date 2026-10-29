@@ -13,7 +13,7 @@
 -- whose greater (smaller) sides it leaves fixed (`keepᵈ`). A     --
 -- closed witness per rigid instantiates the rigids (`wit`), each --
 -- drawn from the candidates of an ordering: the unit, the top    --
--- and the grade system's `witnesses` (`candidates`, `grid`).     --
+-- and the `witnesses` of the hints (`candidates`, `grid`).       --
 --                                                                --
 -- Contract. Closing an entry over one more rigid (`closeᵈ`)      --
 -- holds exactly where the entry does at a fresh rigid            --
@@ -39,6 +39,7 @@ open import Relation.Nullary.Decidable using (_×-dec_)
 open import Relation.Binary.Definitions using (Decidable)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints; module SystemHintsInterface)
 open import Language.Spec
 open import Language.Operations
 
@@ -46,10 +47,12 @@ open import Util.Equality
 
 open import OpenCalculus.Syntax.Scopes
 
-module OpenCalculus.Inference.SolverImpl.Deferred (S : LanguageSpec) where
+module OpenCalculus.Inference.SolverImpl.Deferred (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
+open SystemHintsInterface hints
 open Operations Ops using (Op)
 
 open import OpenCalculus.Syntax.Grades        S
@@ -310,10 +313,10 @@ wit-⨟ δ (suc k) cs =
     κ : ∀ {Φ} → Subst (Φ +e) Φ
     κ = κ⟨ econst (hdᵂ cs) ⟩
 
--- The truths entail the truths at the witnesses
+-- No hypotheses entail the empty set at the witnesses
 
-⊩ᴴ-wit : ∀ {Ψ} → (k : ℕ) → (cs : List E) → ⊤ᴴ ⊩ᴴ wkᵉⁿ-H k (⊤ᴴ {Ψ}) [ wit k cs ]
-⊩ᴴ-wit {Ψ} k cs = subst (λ H → ⊤ᴴ ⊩ᴴ H [ wit k cs ]) (sym (wkᵉⁿ-⊤ᴴ {Ψ} k)) ⊩ᴴ-⊤
+⊩ᴴ-wit : ∀ {Ψ} → (k : ℕ) → (cs : List E) → ∅ᴴ ⊩ᴴ wkᵉⁿ-H k (∅ᴴ {Ψ}) [ wit k cs ]
+⊩ᴴ-wit {Ψ} k cs = subst (λ H → ∅ᴴ ⊩ᴴ H [ wit k cs ]) (sym (wkᵉⁿ-∅ᴴ {Ψ} k)) ⊩ᴴ-∅
 
 ------------------------------------------------------------------------
 -- Closing an entry over one more rigid, the newest variable of its

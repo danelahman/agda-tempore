@@ -12,7 +12,6 @@
 -- barrier former.                                              --
 ------------------------------------------------------------------
 
-open import Data.Bool.Base using (false)
 open import Data.Empty using (⊥-elim)
 open import Data.Fin using (Fin; zero; suc)
 open import Data.List.Base using (List; [])
@@ -38,14 +37,13 @@ open GradeSystemInterface Grades
 open import OpenCalculus.Syntax.Grades S
 open import OpenCalculus.Syntax.Types  S
 open import OpenCalculus.Syntax.Subst  S
-open import OpenCalculus.Hypotheses    S using (Hyps; truths; qhyps)
+open import OpenCalculus.Hypotheses    S using (Hyps; qhyps)
 
 ------------------------------------------------------------------------
 -- Type schemes and program contexts
 
 -- A closed type scheme `∀ Θ. Q ⇒ X`: a scope of its own, hypotheses
--- over it, and a value type over it. Its hypotheses have no truths,
--- the closed quantified orderings of the scope-closed typing.
+-- over it, and a value type over it.
 
 record Scheme : Set where
   constructor ∀ˢ
@@ -53,7 +51,6 @@ record Scheme : Set where
     Θˢ        : Scope
     Qˢ        : Hyps Θˢ
     Xˢ        : OVType Θˢ
-    no-truths : truths Qˢ ≡ false
 
 open Scheme public
 

@@ -29,6 +29,7 @@ open import Relation.Binary.PropositionalEquality using (subst; sym; trans)
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
+open import Grades.Hints using (GradeHints)
 open import Grades.Examples.Traces.Regular.Base Op n code code-injective
   using (Word; DFA; _∈_; tick; op; enc; enc-∙; enc-⟨⟩)
 open import Grades.Traces.Base ℕᵀ Op using (Trace; _∙_; ⟨_⟩)
@@ -86,3 +87,6 @@ delay m = tick ^ m
 
 right-sided : Grade ℕᴰ
 right-sided = regular-grade
+
+right-sidedʰ : GradeHints right-sided
+right-sidedʰ = regular-gradeʰ

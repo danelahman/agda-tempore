@@ -26,6 +26,7 @@
 -- `refl` at the four example grades.                             --
 --------------------------------------------------------------------
 
+open import Data.Unit using (tt)
 open import Data.Empty using (⊥-elim)
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
 open import Data.List.Base using ([]; _∷_)
@@ -35,6 +36,7 @@ open import Relation.Nullary.Decidable using (True; toWitness)
 
 open import Grades.Durations using (Stepped)
 open import Grades.Base
+open import Grades.Hints using (SystemHints)
 open import Language.Spec
 open import Language.Operations
 
@@ -43,7 +45,8 @@ open import Util.Equality
 open import OpenCalculus.Syntax.Scopes
 open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
-module OpenCalculus.Examples.Boxes (S : LanguageSpec) (opEnum : OpEnum S)
+module OpenCalculus.Examples.Boxes (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) (opEnum : OpEnum S)
   (st : Stepped (GradeSystem.Dur (LanguageSpec.Grades S))) where
 
 open LanguageSpec S
@@ -54,7 +57,7 @@ open Operations Ops using (Op; param; arity; op-grade)
 
 open import OpenCalculus.Syntax.Grades          S
 open import OpenCalculus.Syntax.Types           S
-open import OpenCalculus.Syntax.Contexts        S renaming (_∷_ to _▸_)
+open import OpenCalculus.Syntax.Contexts        S hiding (Scheme) renaming (_∷_ to _▸_)
 open import OpenCalculus.Syntax.Subst           S using (idˢ)
 open import OpenCalculus.Hypotheses             S
 open import OpenCalculus.Hypotheses.Instances   S using (Satisfiable-∅)
@@ -63,10 +66,10 @@ open import OpenCalculus.Syntax.Raw             S
 open import OpenCalculus.Syntax.Raw.Subst       S using (_[_]ᴿᶜ)
 open import OpenCalculus.Typing.Erasure         S using (⌊_⌋ᶜ)
 open import OpenCalculus.Inference.Principality S
-open import OpenCalculus.Inference.SolverImpl   S opEnum
+open import OpenCalculus.Inference.SolverImpl   S hints opEnum
   using (infer-complete; infer-handlerFree)
 
-open import OpenCalculus.Inference.SolverImpl S opEnum using (infer) public
+open import OpenCalculus.Inference.SolverImpl S hints opEnum using (infer) public
 open import OpenCalculus.Examples.Scheme S public
 open import OpenCalculus.Examples.Variables
 
@@ -94,7 +97,7 @@ closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 -- Typable and handler-free: inference answers `typed`
 
 typed-of : (M : RawC ∅ˢ 0) → Typable [] M → HandlerFreeᶜ M → IsTyped (infer [] M)
-typed-of M t h with infer [] M | infer-complete [] M t | infer-handlerFree [] M h
+typed-of M t h with infer [] M | infer-complete [] M t | infer-handlerFree [] M tt h
 ... | typed p   | _  | _  = is-typed p
 ... | untypable | nu | _  = ⊥-elim (nu refl)
 ... | stuck     | _  | ns = ⊥-elim (ns refl)

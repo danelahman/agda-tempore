@@ -34,13 +34,14 @@ open import Data.Maybe.Base using (nothing)
 open import Grades.Durations using (idᴰ)
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (GradeSystem)
-open import Grades.Product using (π₁ᵍ; π₂ᵍ; _→ˢ_; _×ˢ_⟨_⟩; π₁ˢ)
+open import Grades.Hints using (SystemHints)
+open import Grades.Product using (π₁ᵍ; π₂ᵍ; _→ˢ_; _×ˢ_⟨_⟩; _×ʰˢ_⟨_⟩; π₁ˢ)
 open import Grades.Examples.System.Identity
-  using (idᵍ; identityGradeSystem; noWitnesses)
-open import Grades.Examples.Time.LeftSided using (left-sided-intervals)
-open import Grades.Examples.SecurityLevel using (two-point-levels)
+  using (idᵍ; identityGradeSystem; identityʰ; noWitnesses)
+open import Grades.Examples.Time.LeftSided using (left-sided-intervals; left-sided-intervalsʰ)
+open import Grades.Examples.SecurityLevel using (two-point-levels; two-point-levelsʰ)
 open import Grades.Examples.Product.LeftSidedTimeLevel
-  using (left-sided-time×low-high)
+  using (left-sided-time×low-high; left-sided-time×low-highʰ)
 
 open import Util.Equality
 
@@ -50,7 +51,10 @@ open import Util.Equality
 -- timed declassification: embargo and taint check
 
 embargo-and-taint : GradeSystem
-embargo-and-taint = identityGradeSystem left-sided-time×low-high noWitnesses
+embargo-and-taint = identityGradeSystem left-sided-time×low-high
+
+embargo-and-taintʰ : SystemHints embargo-and-taint
+embargo-and-taintʰ = identityʰ left-sided-time×low-highʰ noWitnesses
 
 -- embargo only
 
@@ -60,6 +64,12 @@ embargo = record
   ; RGrade = left-sided-intervals
   ; EGrade = left-sided-time×low-high
   ; ∣_∣ᵉ   = π₁ᵍ {G₁ = left-sided-intervals} {two-point-levels}
+  }
+
+embargoʰ : SystemHints embargo
+embargoʰ = record
+  { RHints      = left-sided-intervalsʰ
+  ; EHints      = left-sided-time×low-highʰ
   ; reflects-u? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }
@@ -72,6 +82,12 @@ taint = record
   ; RGrade = two-point-levels
   ; EGrade = left-sided-time×low-high
   ; ∣_∣ᵉ   = π₂ᵍ {G₁ = left-sided-intervals} {two-point-levels}
+  }
+
+taintʰ : SystemHints taint
+taintʰ = record
+  { RHints      = two-point-levelsʰ
+  ; EHints      = left-sided-time×low-highʰ
   ; reflects-u? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }
@@ -95,7 +111,7 @@ embargo-and-taint→taint = record
   ; square = λ _ → refl
   }
 
-embargo→time : embargo →ˢ identityGradeSystem left-sided-intervals noWitnesses
+embargo→time : embargo →ˢ identityGradeSystem left-sided-intervals
 embargo→time = record
   { mapᴰ   = idᴰ
   ; mapᴱ   = π₁ᵍ {G₁ = left-sided-intervals} {two-point-levels}
@@ -103,7 +119,7 @@ embargo→time = record
   ; square = λ _ → refl
   }
 
-taint→level : taint →ˢ identityGradeSystem two-point-levels noWitnesses
+taint→level : taint →ˢ identityGradeSystem two-point-levels
 taint→level = record
   { mapᴰ   = idᴰ
   ; mapᴱ   = π₂ᵍ {G₁ = left-sided-intervals} {two-point-levels}
@@ -116,8 +132,12 @@ taint→level = record
 -- level
 
 identities : GradeSystem
-identities = identityGradeSystem left-sided-intervals noWitnesses
-          ×ˢ identityGradeSystem two-point-levels noWitnesses ⟨ refl ⟩
+identities = identityGradeSystem left-sided-intervals
+          ×ˢ identityGradeSystem two-point-levels ⟨ refl ⟩
+
+identitiesʰ : SystemHints identities
+identitiesʰ = identityʰ left-sided-intervalsʰ noWitnesses
+           ×ʰˢ identityʰ two-point-levelsʰ noWitnesses ⟨ refl ⟩
 
 embargo-and-taint→identities : embargo-and-taint →ˢ identities
 embargo-and-taint→identities = record
@@ -127,7 +147,7 @@ embargo-and-taint→identities = record
   ; square = λ _ → refl
   }
 
-identities→time : identities →ˢ identityGradeSystem left-sided-intervals noWitnesses
-identities→time = π₁ˢ (identityGradeSystem left-sided-intervals noWitnesses)
-                      (identityGradeSystem two-point-levels noWitnesses) refl
+identities→time : identities →ˢ identityGradeSystem left-sided-intervals
+identities→time = π₁ˢ (identityGradeSystem left-sided-intervals)
+                      (identityGradeSystem two-point-levels) refl
 

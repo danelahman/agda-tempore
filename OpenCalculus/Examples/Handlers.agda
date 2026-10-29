@@ -23,12 +23,13 @@
 --------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
-open import Data.Maybe using (Is-just)
+open import Relation.Binary.Definitions using (Minimum)
 open import Data.Nat using (suc)
 
 open import Relation.Nullary.Decidable using (True; toWitness)
 
 open import Grades.Base
+open import Grades.Hints using (SystemHints)
 open import Language.Spec
 open import Language.Operations
 
@@ -37,16 +38,17 @@ open import Util.Equality
 open import OpenCalculus.Syntax.Scopes
 open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
-module OpenCalculus.Examples.Handlers (S : LanguageSpec) (opEnum : OpEnum S) where
+module OpenCalculus.Examples.Handlers (S : LanguageSpec)
+  (hints : SystemHints (LanguageSpec.Grades S)) (opEnum : OpEnum S) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
-  using (≃ᵣ⇒≾ᵣ; map-uᵉ; uₑ; ⊤ₑ; ⊤ᵣ; _≾ₑ?_; uₑ-least?; mapᵉ)
+  using (≃ᵣ⇒≾ᵣ; map-uᵉ; EGrade; uₑ; ⊤ₑ; ⊤ᵣ; _≾ₑ?_; mapᵉ)
 open Operations Ops using (Op; param; arity; op-grade)
 
 open import OpenCalculus.Syntax.Grades          S
 open import OpenCalculus.Syntax.Types           S
-open import OpenCalculus.Syntax.Contexts        S hiding (_∷_)
+open import OpenCalculus.Syntax.Contexts        S hiding (Scheme; _∷_)
 open import OpenCalculus.Syntax.Contexts        S using () renaming (_∷_ to _∷ᶜ_)
 open import OpenCalculus.Syntax.Subst           S using (idˢ)
 open import OpenCalculus.Hypotheses             S
@@ -56,9 +58,9 @@ open import OpenCalculus.Syntax.Raw             S
 open import OpenCalculus.Syntax.Raw.Subst       S using (_[_]ᴿᶜ)
 open import OpenCalculus.Typing.Erasure         S using (⌊_⌋ᶜ)
 open import OpenCalculus.Inference.Principality S
-open import OpenCalculus.Inference.SolverImpl   S opEnum using (infer-complete)
+open import OpenCalculus.Inference.SolverImpl   S hints opEnum using (infer-complete)
 
-open import OpenCalculus.Inference.SolverImpl S opEnum using (infer) public
+open import OpenCalculus.Inference.SolverImpl S hints opEnum using (infer) public
 open import OpenCalculus.Examples.Scheme S public
 open import OpenCalculus.Examples.Variables
 
@@ -228,12 +230,12 @@ discard = return (lam (handle (v₀ · ⋆) `with handler (return ⋆) (λ _ →
 
 -- It is typable where the unit is least
 
-discard-D : Is-just uₑ-least? → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ Unit ‼ (ûₑ ·̂ₑ ûₑ)) ‼ ûₑ
+discard-D : Minimum (Grade._≾_ EGrade) uₑ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ Unit ‼ (ûₑ ·̂ₑ ûₑ)) ‼ ûₑ
 discard-D least =
   return (lam (handle var Hd ok₀ · ⋆
                 `with handler (return ⋆) (λ _ → coerce (minₑ least) (return ⋆))))
 
-discard-typable : Is-just uₑ-least? → Typable [] discard
+discard-typable : Minimum (Grade._≾_ EGrade) uₑ → Typable [] discard
 discard-typable least = closed (discard-D least) refl
 
 expected-discard : Scheme

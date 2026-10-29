@@ -19,12 +19,12 @@ open import OpenCalculus.Examples.Specs using (module Dense-Time-RightSided)
 
 module OpenCalculus.Examples.Durations.Time.RightSided where
 
-open Dense-Time-RightSided using (spec; enum)
+open Dense-Time-RightSided using (spec; hints; enum)
 
 open import OpenCalculus.Syntax.Contexts spec using ([])
 open import OpenCalculus.Inference.Principality spec using (Typable; untypable)
-open import OpenCalculus.Inference.SolverImpl spec enum using (infer-untypable)
-open import OpenCalculus.Examples.Durations spec enum
+open import OpenCalculus.Inference.SolverImpl spec hints enum using (infer-untypable)
+open import OpenCalculus.Examples.Durations spec hints enum
 
 ------------------------------------------------------------------
 -- 1. A lease of one unit: claimed after two half units and after

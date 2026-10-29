@@ -14,16 +14,17 @@
 -- drifts with time and with use. A variable that is not eternal goes --
 -- stale after any step or any expenditure of energy.                 --
 --                                                                    --
--- The unit is least and `_·_` commutes; both are declared.           --
+-- The unit is least and `_·_` commutes; its hints declare both.      --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Product.RightSidedTimeEnergy where
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (posetᵍ; Grade)
-open import Grades.Product using (_×ᵍ_)
+open import Grades.Hints using (GradeHints)
+open import Grades.Product using (_×ᵍ_; _×ʰ_)
 open import Grades.Examples.Time.RightSided
-  using ([0,_]; ↑_; right-sided-intervals)
+  using ([0,_]; ↑_; right-sided-intervals; right-sided-intervalsʰ)
 
 open import Util.Equality
 
@@ -58,11 +59,17 @@ energy = record
   ; of-dur-zero     = R.≃-refl
   ; of-dur-plus     = R.≃-refl
   ; ≃⇒≡?            = R.≃⇒≡?
-  ; u-least?        = R.u-least?
-  ; ·-comm?         = R.·-comm?
-  ; plus?           = R.plus?
   }
   where module R = Grade right-sided-intervals
 
+-- its hints, those of right-sided time
+
+energyʰ : GradeHints energy
+energyʰ = record { u-least? = R.u-least? ; ·-comm? = R.·-comm? ; plus? = R.plus? }
+  where module R = GradeHints right-sided-intervalsʰ
+
 right-sided-time×energy : Grade ℕᴰ
 right-sided-time×energy = right-sided-intervals ×ᵍ energy
+
+right-sided-time×energyʰ : GradeHints right-sided-time×energy
+right-sided-time×energyʰ = right-sided-intervalsʰ ×ʰ energyʰ

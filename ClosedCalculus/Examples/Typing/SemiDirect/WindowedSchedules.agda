@@ -39,7 +39,6 @@ open import Grades.Examples.SemiDirect.WindowedSchedules
 open import Grades.Examples.Worked.SemiDirect.WindowedSchedules
   using (name; span; window)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
-open import Grades.Examples.System.Identity using (noWitnesses)
 
 open Maps ℕ-names using (Map; _∣_)
 open Grade durations using (of-dur)
@@ -57,7 +56,7 @@ opTime read  = at (of-dur 1)  read  ⟪ 0 ⟫ₜ
 opTime write = at (span 2 1)  write ⟪ 0 ⟫ₜ
 opTime send  = at (span 4 2)  send  ⟪ 0 ⟫ₜ
 
-open import ClosedCalculus.Examples.Typing.Core windowed-schedules opTime noWitnesses
+open import ClosedCalculus.Examples.Typing.Core windowed-schedules opTime
 
 -- the grades are given: a meta for one would be eta-expanded into its
 -- table before the decision could run
