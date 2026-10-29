@@ -3,25 +3,21 @@
 --                                                              --
 -- A conversion relates a type `A'` that may replace a context  --
 -- type `A`: `A'` is a subtype of `A`, meets the side condition --
--- of `var` wherever `A` does, under admissible hypotheses, and --
--- relates the payloads of box types. Contexts related          --
--- pointwise (`CtxRel`) type the same terms, with the same      --
--- erasure (`conv-v`, `conv-c`): a variable is used at its new  --
--- type under a `subV`, and an `unbox` of a variable whose      --
--- type changes binds the new payload when the resource value   --
--- has no annotation.                                           --
+-- of `var` wherever `A` does, and relates the payloads of box  --
+-- types. Contexts related pointwise (`CtxRel`) type the same   --
+-- terms, with the same erasure (`conv-v`, `conv-c`): a         --
+-- variable is used at its new type under a `subV`, and an      --
+-- `unbox` of a variable whose type changes binds the new       --
+-- payload when the resource value has no annotation.           --
 --                                                              --
--- Two conversions: equivalence, mutual subtyping, under any    --
--- hypotheses (`equivalence`); and narrowing, subtyping, under  --
--- hypotheses with no `disj` hypothesis (`narrowing`).          --
+-- Two conversions, under any hypotheses: equivalence, mutual   --
+-- subtyping (`equivalence`); and narrowing, subtyping          --
+-- (`narrowing`).                                               --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
-open import Data.List.Base using (List; []; map)
-open import Data.List.Membership.Propositional using (_∈_)
 open import Data.Fin using (suc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
-open import Data.Unit using (⊤; tt)
 
 open import Grades.Base
 open import Language.Spec
@@ -51,11 +47,9 @@ open import OpenCalculus.Syntax.Raw            S
 
 record Conversion : Set₁ where
   field
-    Adm      : ∀ {Θ} → Hyps Θ → Set
-    adm-wkᵉ  : ∀ {Θ} {Q : Hyps Θ} → Adm Q → Adm (wkᵉ-H Q)
     Rel      : ∀ {Θ} → Hyps Θ → OVType Θ → OVType Θ → Set
     rel-sub  : ∀ {Θ} {Q : Hyps Θ} {A' A} → Rel Q A' A → Q ∣ A' <:̂ᵛ A
-    rel-ok   : ∀ {Θ} {Q : Hyps Θ} {A' A ρ} → Adm Q → Rel Q A' A → VarOK Q A ρ → VarOK Q A' ρ
+    rel-ok   : ∀ {Θ} {Q : Hyps Θ} {A' A ρ} → Rel Q A' A → VarOK Q A ρ → VarOK Q A' ρ
     rel-box  : ∀ {Θ} {Q : Hyps Θ} {ρ' ρ X' X} → Rel Q ([ ρ' ] X') ([ ρ ] X) → Rel Q X' X
     rel-refl : ∀ {Θ} {Q : Hyps Θ} → (A : OVType Θ) → Rel Q A A
     rel-wkᵉ  : ∀ {Θ} {Q : Hyps Θ} {A' A} → Rel Q A' A → Rel (wkᵉ-H Q) (wkᵉ-v A') (wkᵉ-v A)
@@ -64,36 +58,25 @@ record Conversion : Set₁ where
 
 equivalence : Conversion
 equivalence = record
-  { Adm      = λ _ → ⊤
-  ; adm-wkᵉ  = λ _ → tt
-  ; Rel      = λ Q A' A → (Q ∣ A' <:̂ᵛ A) × (Q ∣ A <:̂ᵛ A')
+  { Rel      = λ Q A' A → (Q ∣ A' <:̂ᵛ A) × (Q ∣ A <:̂ᵛ A')
   ; rel-sub  = proj₁
-  ; rel-ok   = λ _ r → VarOK-≃ (proj₁ r) (proj₂ r) ⊩≾̂ᵣ-refl
+  ; rel-ok   = λ r → VarOK-≃ (proj₁ r) (proj₂ r) ⊩≾̂ᵣ-refl
   ; rel-box  = λ r → <:̂ᵛ-box-type (proj₁ r) , <:̂ᵛ-box-type (proj₂ r)
   ; rel-refl = λ A → <:̂ᵛ-refl A , <:̂ᵛ-refl A
   ; rel-wkᵉ  = λ r → <:̂ᵛ-wkᵉ (proj₁ r) , <:̂ᵛ-wkᵉ (proj₂ r)
   }
 
--- Subtyping, under hypotheses with no `disj` hypothesis, where the side
--- condition of `var` reads the type only through eternality
+-- Subtyping, the side condition of `var` being closed under it
 
 narrowing : Conversion
 narrowing = record
-  { Adm      = λ Q → disj Q ≡ []
-  ; adm-wkᵉ  = λ e → cong (map _) e
-  ; Rel      = λ Q A' A → Q ∣ A' <:̂ᵛ A
+  { Rel      = λ Q A' A → Q ∣ A' <:̂ᵛ A
   ; rel-sub  = λ p → p
-  ; rel-ok   = ok
+  ; rel-ok   = subˡ-ok
   ; rel-box  = <:̂ᵛ-box-type
   ; rel-refl = <:̂ᵛ-refl
   ; rel-wkᵉ  = <:̂ᵛ-wkᵉ
   }
-  where
-    ok : ∀ {Θ} {Q : Hyps Θ} {A' A ρ} → disj Q ≡ [] → Q ∣ A' <:̂ᵛ A → VarOK Q A ρ → VarOK Q A' ρ
-    ok e p (et-ok et)         = et-ok (<:̂ᵛ-eternalˡ p et)
-    ok e p (≾ᵘ-ok le)         = ≾ᵘ-ok le
-    ok e p (hyp-ok m _ _ _) with subst (_ ∈_) e m
-    ... | ()
 
 ------------------------------------------------------------------------
 -- Converting a derivation
@@ -221,132 +204,132 @@ module _ (𝒞 : Conversion) where
   mutual
 
     conv-v : ∀ {Θ n} {Q : Hyps Θ} {Γ' Γ : OCtx Θ n} {A : OVType Θ}
-           → Adm Q → CtxRel Q Γ' Γ → Q ∣ Γ ⊢V⦂ A → Q ∣ Γ' ⊢V⦂ A
-    conv-v a c (var x ok)      =
-      subV (var (mem' i) (rel-ok a (rel' i) ok)) (rel-sub (rel' i))
+           → CtxRel Q Γ' Γ → Q ∣ Γ ⊢V⦂ A → Q ∣ Γ' ⊢V⦂ A
+    conv-v c (var x ok)      =
+      subV (var (mem' i) (rel-ok (rel' i) ok)) (rel-sub (rel' i))
       where i = image c x
-    conv-v a c (def f δ h e)   = def (subst (_ ∈ᵖ[ _ ]_) (sym (crel-defs c)) f) δ h e
-    conv-v a c (const B k)     = const B k
-    conv-v a c ⋆               = ⋆
-    conv-v a c true            = true
-    conv-v a c false           = false
-    conv-v a c zero            = zero
-    conv-v a c (succ V)        = succ (conv-v a c V)
-    conv-v a c ⦉ V , W ⦊        = ⦉ conv-v a c V , conv-v a c W ⦊
-    conv-v a c (inl V)         = inl (conv-v a c V)
-    conv-v a c (inr V)         = inr (conv-v a c V)
-    conv-v a c nil             = nil
-    conv-v a c (cons V W)      = cons (conv-v a c V) (conv-v a c W)
-    conv-v a c (cmp ⋈ V W et)  = cmp ⋈ (conv-v a c V) (conv-v a c W) et
-    conv-v a c (lam {A = A} M) = lam (conv-c a (c ∷≡ A) M)
-    conv-v a c (handler {A = A} N H) =
-      handler (conv-c a (lockʳ c ∷≡ A) N)
-              (λ op → conv-c (adm-wkᵉ a) (lockʳ (crel-wkᵉ c) ∷≡ _ ∷≡ _) (H op))
-    conv-v a c (annᵛ A V)      = annᵛ A (conv-v a c V)
-    conv-v a c (subV V p)      = subV (conv-v a c V) p
+    conv-v c (def f δ h e)   = def (subst (_ ∈ᵖ[ _ ]_) (sym (crel-defs c)) f) δ h e
+    conv-v c (const B k)     = const B k
+    conv-v c ⋆               = ⋆
+    conv-v c true            = true
+    conv-v c false           = false
+    conv-v c zero            = zero
+    conv-v c (succ V)        = succ (conv-v c V)
+    conv-v c ⦉ V , W ⦊        = ⦉ conv-v c V , conv-v c W ⦊
+    conv-v c (inl V)         = inl (conv-v c V)
+    conv-v c (inr V)         = inr (conv-v c V)
+    conv-v c nil             = nil
+    conv-v c (cons V W)      = cons (conv-v c V) (conv-v c W)
+    conv-v c (cmp ⋈ V W et)  = cmp ⋈ (conv-v c V) (conv-v c W) et
+    conv-v c (lam {A = A} M) = lam (conv-c (c ∷≡ A) M)
+    conv-v c (handler {A = A} N H) =
+      handler (conv-c (lockʳ c ∷≡ A) N)
+              (λ op → conv-c (lockʳ (crel-wkᵉ c) ∷≡ _ ∷≡ _) (H op))
+    conv-v c (annᵛ A V)      = annᵛ A (conv-v c V)
+    conv-v c (subV V p)      = subV (conv-v c V) p
 
     conv-c : ∀ {Θ n} {Q : Hyps Θ} {Γ' Γ : OCtx Θ n} {C : OCType Θ}
-           → Adm Q → CtxRel Q Γ' Γ → Q ∣ Γ ⊢C⦂ C → Q ∣ Γ' ⊢C⦂ C
-    conv-c a c (return V)                = return (conv-v a c V)
-    conv-c a c (_⨟_ {A = A} M N)         = conv-c a c M ⨟ conv-c a (lockʳ c ∷≡ A) N
-    conv-c a c (V · W)                   = conv-v a c V · conv-v a c W
-    conv-c a c (match_`in_ {A = A} {B} V M) = match conv-v a c V `in conv-c a (c ∷≡ A ∷≡ B) M
-    conv-c a c (absurd V)                = absurd (conv-v a c V)
-    conv-c a c (if V `then M `else N)    = if conv-v a c V `then conv-c a c M `else conv-c a c N
-    conv-c a c (caseℕ V `zero M `succ N) =
-      caseℕ conv-v a c V `zero conv-c a c M `succ conv-c a (c ∷≡ Nat) N
-    conv-c a c (case+_`inl_`inr_ {A = A} {B} V M N) =
-      case+ conv-v a c V `inl conv-c a (c ∷≡ A) M `inr conv-c a (c ∷≡ B) N
-    conv-c a c (caseL_`nil_`cons_ {A = A} V M N) =
-      caseL conv-v a c V `nil conv-c a c M `cons conv-c a (c ∷≡ A ∷≡ |List| A) N
-    conv-c a c (recℕ {B = B} V M N p)    =
-      recℕ (conv-v a c V) (conv-c a c M) (conv-c a (lockʳ (lockʳ c ∷≡ Nat) ∷≡ B) N) p
-    conv-c a c (recL {A = A} {B} V M N p) =
-      recL (conv-v a c V) (conv-c a c M)
-           (conv-c a (lockʳ (lockʳ c ∷≡ A ∷≡ |List| A) ∷≡ B) N) p
-    conv-c a c (perform op V M)          = perform op (conv-v a c V) (conv-c a (lockʳ c ∷≡ _) M)
-    conv-c a c (delay τ M)               = delay τ (conv-c a (lockʳ c) M)
-    conv-c a c (handle M `with V)        = handle conv-c a c M `with conv-v a c V
-    conv-c a c (unbox {z = z} R p N)     =
+           → CtxRel Q Γ' Γ → Q ∣ Γ ⊢C⦂ C → Q ∣ Γ' ⊢C⦂ C
+    conv-c c (return V)                = return (conv-v c V)
+    conv-c c (_⨟_ {A = A} M N)         = conv-c c M ⨟ conv-c (lockʳ c ∷≡ A) N
+    conv-c c (V · W)                   = conv-v c V · conv-v c W
+    conv-c c (match_`in_ {A = A} {B} V M) = match conv-v c V `in conv-c (c ∷≡ A ∷≡ B) M
+    conv-c c (absurd V)                = absurd (conv-v c V)
+    conv-c c (if V `then M `else N)    = if conv-v c V `then conv-c c M `else conv-c c N
+    conv-c c (caseℕ V `zero M `succ N) =
+      caseℕ conv-v c V `zero conv-c c M `succ conv-c (c ∷≡ Nat) N
+    conv-c c (case+_`inl_`inr_ {A = A} {B} V M N) =
+      case+ conv-v c V `inl conv-c (c ∷≡ A) M `inr conv-c (c ∷≡ B) N
+    conv-c c (caseL_`nil_`cons_ {A = A} V M N) =
+      caseL conv-v c V `nil conv-c c M `cons conv-c (c ∷≡ A ∷≡ |List| A) N
+    conv-c c (recℕ {B = B} V M N p)    =
+      recℕ (conv-v c V) (conv-c c M) (conv-c (lockʳ (lockʳ c ∷≡ Nat) ∷≡ B) N) p
+    conv-c c (recL {A = A} {B} V M N p) =
+      recL (conv-v c V) (conv-c c M)
+           (conv-c (lockʳ (lockʳ c ∷≡ A ∷≡ |List| A) ∷≡ B) N) p
+    conv-c c (perform op V M)          = perform op (conv-v c V) (conv-c (lockʳ c ∷≡ _) M)
+    conv-c c (delay τ M)               = delay τ (conv-c (lockʳ c) M)
+    conv-c c (handle M `with V)        = handle conv-c c M `with conv-v c V
+    conv-c c (unbox {z = z} R p N)     =
       unbox (chain* r) (transᵣ p (<:̂ᵛ-box-grade (rel-sub (rel* r))))
-            (conv-c a (c ∷ʳ rel-box (rel* r)) N)
+            (conv-c (c ∷ʳ rel-box (rel* r)) N)
       where
         b = box-image c z
         r = res-image {z' = z' b} (zpos b) (zrel b) R
-    conv-c a c (box {A = A} ρ V N)       = box ρ (conv-v a (lockʳ c) V) (conv-c a (c ∷≡ [ ρ ] A) N)
-    conv-c a c (annᶜ C M)                = annᶜ C (conv-c a c M)
-    conv-c a c (subC M p)                = subC (conv-c a c M) p
+    conv-c c (box {A = A} ρ V N)       = box ρ (conv-v (lockʳ c) V) (conv-c (c ∷≡ [ ρ ] A) N)
+    conv-c c (annᶜ C M)                = annᶜ C (conv-c c M)
+    conv-c c (subC M p)                = subC (conv-c c M) p
 
   -- The converted derivation has the same erasure
 
   mutual
 
     ⌊conv-v⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ' Γ : OCtx Θ n} {A : OVType Θ}
-             → (a : Adm Q) → (c : CtxRel Q Γ' Γ) → (V : Q ∣ Γ ⊢V⦂ A)
-             → ⌊ conv-v a c V ⌋ᵛ ≡ ⌊ V ⌋ᵛ
-    ⌊conv-v⌋ a c (var x ok)      = cong var (pos' (image c x))
-    ⌊conv-v⌋ a c (def f δ h e)   = refl
-    ⌊conv-v⌋ a c (const B k)     = refl
-    ⌊conv-v⌋ a c ⋆               = refl
-    ⌊conv-v⌋ a c true            = refl
-    ⌊conv-v⌋ a c false           = refl
-    ⌊conv-v⌋ a c zero            = refl
-    ⌊conv-v⌋ a c (succ V)        = cong succ (⌊conv-v⌋ a c V)
-    ⌊conv-v⌋ a c ⦉ V , W ⦊        = cong₂ ⦉_,_⦊ (⌊conv-v⌋ a c V) (⌊conv-v⌋ a c W)
-    ⌊conv-v⌋ a c (inl V)         = cong inl (⌊conv-v⌋ a c V)
-    ⌊conv-v⌋ a c (inr V)         = cong inr (⌊conv-v⌋ a c V)
-    ⌊conv-v⌋ a c nil             = refl
-    ⌊conv-v⌋ a c (cons V W)      = cong₂ cons (⌊conv-v⌋ a c V) (⌊conv-v⌋ a c W)
-    ⌊conv-v⌋ a c (cmp ⋈ V W et)  = cong₂ (cmp ⋈) (⌊conv-v⌋ a c V) (⌊conv-v⌋ a c W)
-    ⌊conv-v⌋ a c (lam {A = A} M) = cong lam (⌊conv-c⌋ a (c ∷≡ A) M)
-    ⌊conv-v⌋ a c (handler {A = A} N H) =
-      cong₂ handler (⌊conv-c⌋ a (lockʳ c ∷≡ A) N)
-            (fun-ext (λ op → ⌊conv-c⌋ (adm-wkᵉ a) (lockʳ (crel-wkᵉ c) ∷≡ _ ∷≡ _) (H op)))
-    ⌊conv-v⌋ a c (annᵛ A V)      = cong (_⦂ᵛ A) (⌊conv-v⌋ a c V)
-    ⌊conv-v⌋ a c (subV V p)      = ⌊conv-v⌋ a c V
+             → (c : CtxRel Q Γ' Γ) → (V : Q ∣ Γ ⊢V⦂ A)
+             → ⌊ conv-v c V ⌋ᵛ ≡ ⌊ V ⌋ᵛ
+    ⌊conv-v⌋ c (var x ok)      = cong var (pos' (image c x))
+    ⌊conv-v⌋ c (def f δ h e)   = refl
+    ⌊conv-v⌋ c (const B k)     = refl
+    ⌊conv-v⌋ c ⋆               = refl
+    ⌊conv-v⌋ c true            = refl
+    ⌊conv-v⌋ c false           = refl
+    ⌊conv-v⌋ c zero            = refl
+    ⌊conv-v⌋ c (succ V)        = cong succ (⌊conv-v⌋ c V)
+    ⌊conv-v⌋ c ⦉ V , W ⦊        = cong₂ ⦉_,_⦊ (⌊conv-v⌋ c V) (⌊conv-v⌋ c W)
+    ⌊conv-v⌋ c (inl V)         = cong inl (⌊conv-v⌋ c V)
+    ⌊conv-v⌋ c (inr V)         = cong inr (⌊conv-v⌋ c V)
+    ⌊conv-v⌋ c nil             = refl
+    ⌊conv-v⌋ c (cons V W)      = cong₂ cons (⌊conv-v⌋ c V) (⌊conv-v⌋ c W)
+    ⌊conv-v⌋ c (cmp ⋈ V W et)  = cong₂ (cmp ⋈) (⌊conv-v⌋ c V) (⌊conv-v⌋ c W)
+    ⌊conv-v⌋ c (lam {A = A} M) = cong lam (⌊conv-c⌋ (c ∷≡ A) M)
+    ⌊conv-v⌋ c (handler {A = A} N H) =
+      cong₂ handler (⌊conv-c⌋ (lockʳ c ∷≡ A) N)
+            (fun-ext (λ op → ⌊conv-c⌋ (lockʳ (crel-wkᵉ c) ∷≡ _ ∷≡ _) (H op)))
+    ⌊conv-v⌋ c (annᵛ A V)      = cong (_⦂ᵛ A) (⌊conv-v⌋ c V)
+    ⌊conv-v⌋ c (subV V p)      = ⌊conv-v⌋ c V
 
     ⌊conv-c⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ' Γ : OCtx Θ n} {C : OCType Θ}
-             → (a : Adm Q) → (c : CtxRel Q Γ' Γ) → (M : Q ∣ Γ ⊢C⦂ C)
-             → ⌊ conv-c a c M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
-    ⌊conv-c⌋ a c (return V)                = cong return (⌊conv-v⌋ a c V)
-    ⌊conv-c⌋ a c (_⨟_ {A = A} M N)         =
-      cong₂ _⨟_ (⌊conv-c⌋ a c M) (⌊conv-c⌋ a (lockʳ c ∷≡ A) N)
-    ⌊conv-c⌋ a c (V · W)                   = cong₂ _·_ (⌊conv-v⌋ a c V) (⌊conv-v⌋ a c W)
-    ⌊conv-c⌋ a c (match_`in_ {A = A} {B} V M) =
-      cong₂ match_`in_ (⌊conv-v⌋ a c V) (⌊conv-c⌋ a (c ∷≡ A ∷≡ B) M)
-    ⌊conv-c⌋ a c (absurd V)                = cong absurd (⌊conv-v⌋ a c V)
-    ⌊conv-c⌋ a c (if V `then M `else N)    =
-      cong₃ if_`then_`else_ (⌊conv-v⌋ a c V) (⌊conv-c⌋ a c M) (⌊conv-c⌋ a c N)
-    ⌊conv-c⌋ a c (caseℕ V `zero M `succ N) =
-      cong₃ caseℕ_`zero_`succ_ (⌊conv-v⌋ a c V) (⌊conv-c⌋ a c M) (⌊conv-c⌋ a (c ∷≡ Nat) N)
-    ⌊conv-c⌋ a c (case+_`inl_`inr_ {A = A} {B} V M N) =
-      cong₃ case+_`inl_`inr_ (⌊conv-v⌋ a c V) (⌊conv-c⌋ a (c ∷≡ A) M) (⌊conv-c⌋ a (c ∷≡ B) N)
-    ⌊conv-c⌋ a c (caseL_`nil_`cons_ {A = A} V M N) =
-      cong₃ caseL_`nil_`cons_ (⌊conv-v⌋ a c V) (⌊conv-c⌋ a c M)
-            (⌊conv-c⌋ a (c ∷≡ A ∷≡ |List| A) N)
-    ⌊conv-c⌋ a c (recℕ {B = B} V M N p)    =
-      cong₃ recℕ (⌊conv-v⌋ a c V) (⌊conv-c⌋ a c M) (⌊conv-c⌋ a (lockʳ (lockʳ c ∷≡ Nat) ∷≡ B) N)
-    ⌊conv-c⌋ a c (recL {A = A} {B} V M N p) =
-      cong₃ recL (⌊conv-v⌋ a c V) (⌊conv-c⌋ a c M)
-            (⌊conv-c⌋ a (lockʳ (lockʳ c ∷≡ A ∷≡ |List| A) ∷≡ B) N)
-    ⌊conv-c⌋ a c (perform op V M)          =
-      cong₂ (perform op) (⌊conv-v⌋ a c V) (⌊conv-c⌋ a (lockʳ c ∷≡ _) M)
-    ⌊conv-c⌋ a c (delay τ M)               = cong (delay τ) (⌊conv-c⌋ a (lockʳ c) M)
-    ⌊conv-c⌋ a c (handle M `with V)        =
-      cong₂ handle_`with_ (⌊conv-c⌋ a c M) (⌊conv-v⌋ a c V)
-    ⌊conv-c⌋ a c (unbox {z = z} R p N)     =
-      cong₂ unbox (erase* r) (⌊conv-c⌋ a (c ∷ʳ rel-box (rel* r)) N)
+             → (c : CtxRel Q Γ' Γ) → (M : Q ∣ Γ ⊢C⦂ C)
+             → ⌊ conv-c c M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
+    ⌊conv-c⌋ c (return V)                = cong return (⌊conv-v⌋ c V)
+    ⌊conv-c⌋ c (_⨟_ {A = A} M N)         =
+      cong₂ _⨟_ (⌊conv-c⌋ c M) (⌊conv-c⌋ (lockʳ c ∷≡ A) N)
+    ⌊conv-c⌋ c (V · W)                   = cong₂ _·_ (⌊conv-v⌋ c V) (⌊conv-v⌋ c W)
+    ⌊conv-c⌋ c (match_`in_ {A = A} {B} V M) =
+      cong₂ match_`in_ (⌊conv-v⌋ c V) (⌊conv-c⌋ (c ∷≡ A ∷≡ B) M)
+    ⌊conv-c⌋ c (absurd V)                = cong absurd (⌊conv-v⌋ c V)
+    ⌊conv-c⌋ c (if V `then M `else N)    =
+      cong₃ if_`then_`else_ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M) (⌊conv-c⌋ c N)
+    ⌊conv-c⌋ c (caseℕ V `zero M `succ N) =
+      cong₃ caseℕ_`zero_`succ_ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M) (⌊conv-c⌋ (c ∷≡ Nat) N)
+    ⌊conv-c⌋ c (case+_`inl_`inr_ {A = A} {B} V M N) =
+      cong₃ case+_`inl_`inr_ (⌊conv-v⌋ c V) (⌊conv-c⌋ (c ∷≡ A) M) (⌊conv-c⌋ (c ∷≡ B) N)
+    ⌊conv-c⌋ c (caseL_`nil_`cons_ {A = A} V M N) =
+      cong₃ caseL_`nil_`cons_ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M)
+            (⌊conv-c⌋ (c ∷≡ A ∷≡ |List| A) N)
+    ⌊conv-c⌋ c (recℕ {B = B} V M N p)    =
+      cong₃ recℕ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M) (⌊conv-c⌋ (lockʳ (lockʳ c ∷≡ Nat) ∷≡ B) N)
+    ⌊conv-c⌋ c (recL {A = A} {B} V M N p) =
+      cong₃ recL (⌊conv-v⌋ c V) (⌊conv-c⌋ c M)
+            (⌊conv-c⌋ (lockʳ (lockʳ c ∷≡ A ∷≡ |List| A) ∷≡ B) N)
+    ⌊conv-c⌋ c (perform op V M)          =
+      cong₂ (perform op) (⌊conv-v⌋ c V) (⌊conv-c⌋ (lockʳ c ∷≡ _) M)
+    ⌊conv-c⌋ c (delay τ M)               = cong (delay τ) (⌊conv-c⌋ (lockʳ c) M)
+    ⌊conv-c⌋ c (handle M `with V)        =
+      cong₂ handle_`with_ (⌊conv-c⌋ c M) (⌊conv-v⌋ c V)
+    ⌊conv-c⌋ c (unbox {z = z} R p N)     =
+      cong₂ unbox (erase* r) (⌊conv-c⌋ (c ∷ʳ rel-box (rel* r)) N)
       where
         b = box-image c z
         r = res-image {z' = z' b} (zpos b) (zrel b) R
-    ⌊conv-c⌋ a c (box {A = A} ρ V N)       =
-      cong₂ (box ρ) (⌊conv-v⌋ a (lockʳ c) V) (⌊conv-c⌋ a (c ∷≡ [ ρ ] A) N)
-    ⌊conv-c⌋ a c (annᶜ C M)                = cong (_⦂ᶜ C) (⌊conv-c⌋ a c M)
-    ⌊conv-c⌋ a c (subC M p)                = ⌊conv-c⌋ a c M
+    ⌊conv-c⌋ c (box {A = A} ρ V N)       =
+      cong₂ (box ρ) (⌊conv-v⌋ (lockʳ c) V) (⌊conv-c⌋ (c ∷≡ [ ρ ] A) N)
+    ⌊conv-c⌋ c (annᶜ C M)                = cong (_⦂ᶜ C) (⌊conv-c⌋ c M)
+    ⌊conv-c⌋ c (subC M p)                = ⌊conv-c⌋ c M
 
   -- The type of the last variable converted
 
   conv-last : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A' A : OVType Θ} {C : OCType Θ}
-            → Adm Q → Rel Q A' A → (M : Q ∣ Γ ∷ A ⊢C⦂ C)
+            → Rel Q A' A → (M : Q ∣ Γ ∷ A ⊢C⦂ C)
             → Σ[ M' ∈ Q ∣ Γ ∷ A' ⊢C⦂ C ] ⌊ M' ⌋ᶜ ≡ ⌊ M ⌋ᶜ
-  conv-last {Γ = Γ} a r M = conv-c a (crel-refl Γ ∷ʳ r) M , ⌊conv-c⌋ a (crel-refl Γ ∷ʳ r) M
+  conv-last {Γ = Γ} r M = conv-c (crel-refl Γ ∷ʳ r) M , ⌊conv-c⌋ (crel-refl Γ ∷ʳ r) M

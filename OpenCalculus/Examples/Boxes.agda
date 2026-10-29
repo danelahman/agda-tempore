@@ -31,6 +31,7 @@ open import Data.Unit using (tt)
 open import Data.Empty using (⊥-elim)
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
 open import Data.List.Base using ([]; _∷_)
+open import Data.List.Relation.Unary.Any using (here)
 open import Data.Nat using (ℕ; suc)
 
 open import Relation.Nullary.Decidable using (True; toWitness)
@@ -216,6 +217,20 @@ expected-boxing-an-eternal =
 expected-boxing-anything : Scheme
 expected-boxing-anything =
   ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ [ ⌜ 1 ⌝ʳ ] α₀ ‼ ûₑ) ‼ ûₑ
+
+-- Under a hypothesis `eternal α₀ ∨ ρ₀ ≾ûᵣ`, a pair of type `α₀ |×| α₀`
+-- is boxed for `ρ₀`: the var-rule disjunction holds at the pair
+-- because it holds at each component (`_|×|-ok_`), each by the
+-- hypothesis. No other rule derives it: neither disjunct is entailed,
+-- and no hypothesis is at the pair's type.
+--
+--   boxing-a-pair p = box[ρ₀] p as b in b
+
+boxing-a-pair-D : hypsOf {scope 1 1 0} (eternal α₀ ∨ ρ₀ ≾ûᵣ)
+                  ∣ [] ⊢C⦂ (α₀ |×| α₀ ⇒ [ ρ₀ ] (α₀ |×| α₀) ‼ ûₑ) ‼ ûₑ
+boxing-a-pair-D =
+  return (lam (box ρ₀ (var (Tl-⟨⟩ Hd) (hyp-ok (here refl) on-time |×|-ok hyp-ok (here refl) on-time))
+                      (return (var Hd ok₀))))
 
 ------------------------------------------------------------------
 -- 2. Claiming early, on time, late

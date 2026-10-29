@@ -1048,7 +1048,7 @@ mutual
       eqv = subst (Q ∣ X₁ <:̂ᵛ_) pβ p₁
           , subst (Q ∣_<:̂ᵛ X₁) pβ (<:̂ᵛ-box-type (subst (Q ∣ [ ρ ] _ <:̂ᵛ_) e₁ sb'))
 
-      D₁ = conv-last equivalence tt eqv D₀
+      D₁ = conv-last equivalence eqv D₀
 
       D = unbox R (transᵣ le q₁) (proj₁ D₁)
 

@@ -20,6 +20,7 @@ open import Data.Empty using (⊥-elim)
 open import Data.Fin using (zero; suc)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.Product using (Σ-syntax; _,_; proj₁; proj₂)
+open import Data.Sum.Base using (inj₁; inj₂)
 
 open import Grades.Base
 open import Language.Spec
@@ -161,9 +162,9 @@ wkᵉ-val {Γ = Γ} {A} V = ty-subst (wkˢᵉ-v A) (ctx-castᵛ (wkˢᵉ-ctx Γ)
 
 box-young : ∀ {Θ} {ρ ρ' : RExp Θ} {A : OVType Θ}
           → VarOK ∅ᴴ ([ ρ ] A) ρ' → ∅ᴴ ⊩ ρ' ≾̂ᵣ ûᵣ
-box-young (et-ok ())
-box-young (≾ᵘ-ok le)       = le
-box-young (hyp-ok () _ _ _)
+box-young ok with VarOK-∅ᴴ ok
+... | inj₁ ()
+... | inj₂ le = le
 
 ------------------------------------------------------------------------
 -- The substitution lemma
@@ -175,18 +176,18 @@ sub-var : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B ρ}
         → (x : B ∈̂[ ρ ] Γ) → VarOK ∅ᴴ B ρ → DropView d x
         → ∅ᴴ ∣ Γ⁻ ⊢V⦂ B
 sub-var d U x p              (miss x' _)       = var x' p
-sub-var d U x (et-ok e)      (hit refl refl _) = eternal-v (dshift d) e U
-sub-var d U x (≾ᵘ-ok le)     (hit refl refl _) = rename-v (drop-ren d le) U
-sub-var d U x (hyp-ok () _ _ _) (hit refl refl _)
+sub-var d U x p              (hit refl refl _) with VarOK-∅ᴴ p
+... | inj₁ e  = eternal-v (dshift d) e U
+... | inj₂ le = rename-v (drop-ren d le) U
 
 ∥sub-var∥ : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B ρ}
           → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢V⦂ A)
           → (x : B ∈̂[ ρ ] Γ) → (p : VarOK ∅ᴴ B ρ) → (v : DropView d x)
           → ∥ sub-var d U x p v ∥ᵛ ≡ subVar k ∥ U ∥ᵛ (var-pos x)
 ∥sub-var∥ d U x p          (miss x' q)       = sym (q _)
-∥sub-var∥ d U x (et-ok e)  (hit refl refl q) = trans (∥eternal-v∥ (dshift d) e U) (sym (q _))
-∥sub-var∥ d U x (≾ᵘ-ok le) (hit refl refl q) = trans (∥rename-v∥ (drop-ren d le) U) (sym (q _))
-∥sub-var∥ d U x (hyp-ok () _ _ _) (hit refl refl q)
+∥sub-var∥ d U x p          (hit refl refl q) with VarOK-∅ᴴ p
+... | inj₁ e  = trans (∥eternal-v∥ (dshift d) e U) (sym (q _))
+... | inj₂ le = trans (∥rename-v∥ (drop-ren d le) U) (sym (q _))
 
 -- An `unbox` of the dropped variable unboxes the resource value that
 -- the substituted value is, annotated at the variable's declared type,

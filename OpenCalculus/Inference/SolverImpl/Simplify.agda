@@ -363,9 +363,7 @@ settle-inst A ρ Q δ d h with decideᵣ full Q ρ ûᵣ
         etA = from d
           where
             from : VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ) → ∅ᴴ ⊩ᴱ A [ δ ]ᵛ
-            from (et-ok et)     = et
-            from (≾ᵘ-ok le)     = ⊥-elim (ref δ (val-≾ᵣ le))
-            from (hyp-ok () _ _ _)
+            from ok = [ (λ et → et) , (λ le → ⊥-elim (ref δ (val-≾ᵣ le))) ]′ (VarOK-∅ᴴ ok)
 
         et' : ∀ {β} → β ∈ (αs ++ ets Q) → ∅ᴴ ⊩ᴱ sTy δ β
         et' m = [ etDec-compl A e δ etA , ⊩ets h ]′ (∈-++⁻ αs m)

@@ -36,10 +36,9 @@
 --                                                              --
 -- The module also defines convertibility of open types         --
 -- (`_≡̂ᵛ_`), and open subtyping with its inversion and          --
--- stability lemmas, which `VarOK` uses: a var-rule disjunction --
--- hypothesis meets it at an equivalent type, a subtype and a   --
--- supertype, so that it is closed under equivalence            --
--- (`VarOK-≃`), and so under convertibility (`VarOK-≡̂`).        --
+-- stability lemmas, which `VarOK` uses: it is closed under     --
+-- subtyping in both directions, so under equivalence           --
+-- (`VarOK-≃`) and convertibility (`VarOK-≡̂`).                  --
 --                                                              --
 -- Judgements under a hypothesis set are the constrained types  --
 -- of HM(X) (Odersky, Sulzmann and Wehr, 1999) and the          --
@@ -59,6 +58,7 @@ open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Maybe using (Is-just)
 open import Data.Maybe.Relation.Unary.Any using () renaming (just to Any-just)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
+open import Data.Sum.Base using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (tt)
 
 open import Algebra.Definitions using (Commutative)
@@ -846,41 +846,93 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-eternalʳ Emptyₛ       et          = et
 
 -- The side condition of the `var` rule: `Eternal` is undecided at open
--- types, so the original's `¬ Eternal A → ρ ≾ᵣ uᵣ` becomes a disjunction,
--- met by eternality, by the ordering, or by a `disj` hypothesis at an
--- equivalent type, a subtype and a supertype of it, and a grade above.
+-- types, so the original's `¬ Eternal A → ρ ≾ᵣ uᵣ` becomes a judgement
+-- `VarOK Q A ρ`, meaning that `A` is eternal or `ρ ≾ u` at every
+-- instance. It is met by eternality, by the ordering, or by a `disj`
+-- hypothesis at a grade above; and it is closed under subtyping in both
+-- directions, under the type formers that preserve eternality, and
+-- under joins of grades, each up to lowering the grade.
 
-data VarOK {Θ : Scope} (Q : Hyps Θ) (A : OVType Θ) (ρ : RExp Θ) : Set where
-  et-ok  : Q ⊩ᴱ A → VarOK Q A ρ
-  ≾ᵘ-ok  : Q ⊩ ρ ≾̂ᵣ ûᵣ → VarOK Q A ρ
-  hyp-ok : ∀ {A' ρ'} → (A' , ρ') ∈ disj Q → Q ∣ A <:̂ᵛ A' → Q ∣ A' <:̂ᵛ A → Q ⊩ ρ ≾̂ᵣ ρ'
-         → VarOK Q A ρ
+data VarOK {Θ : Scope} (Q : Hyps Θ) : OVType Θ → RExp Θ → Set where
+  et-ok     : ∀ {A ρ} → Q ⊩ᴱ A → VarOK Q A ρ
+  ≾ᵘ-ok     : ∀ {A ρ} → Q ⊩ ρ ≾̂ᵣ ûᵣ → VarOK Q A ρ
+  hyp-ok    : ∀ {A ρ ρ'} → (A , ρ') ∈ disj Q → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A ρ
+  subˡ-ok   : ∀ {A B ρ} → Q ∣ A <:̂ᵛ B → VarOK Q B ρ → VarOK Q A ρ
+  subʳ-ok   : ∀ {A B ρ} → Q ∣ B <:̂ᵛ A → VarOK Q B ρ → VarOK Q A ρ
+  _|×|-ok_  : ∀ {A₁ A₂ ρ} → VarOK Q A₁ ρ → VarOK Q A₂ ρ → VarOK Q (A₁ |×| A₂) ρ
+  _|+|-ok_  : ∀ {A₁ A₂ ρ} → VarOK Q A₁ ρ → VarOK Q A₂ ρ → VarOK Q (A₁ |+| A₂) ρ
+  |List|-ok : ∀ {A ρ} → VarOK Q A ρ → VarOK Q (|List| A) ρ
+  ⊔-ok      : ∀ {A ρ ρ₁ ρ₂} → Q ⊩ ρ ≾̂ᵣ ρ₁ ⊔̂ᵣ ρ₂ → VarOK Q A ρ₁ → VarOK Q A ρ₂
+            → VarOK Q A ρ
 
 -- A `disj` hypothesis met as it stands
 
 hyp-ok₀ : ∀ {Θ} {Q : Hyps Θ} {A ρ} → (A , ρ) ∈ disj Q → VarOK Q A ρ
-hyp-ok₀ {A = A} m = hyp-ok m (<:̂ᵛ-refl A) (<:̂ᵛ-refl A) (eqᵣ ≡̂ᵣ-refl)
+hyp-ok₀ m = hyp-ok m ⊩≾̂ᵣ-refl
 
--- The side condition is closed under equivalence of the type and under
--- lowering the grade
+-- The side condition is closed under lowering the grade
+
+VarOK-≾ : ∀ {Θ} {Q : Hyps Θ} {A ρ ρ'} → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A ρ' → VarOK Q A ρ
+VarOK-≾ q (et-ok et)      = et-ok et
+VarOK-≾ q (≾ᵘ-ok le)      = ≾ᵘ-ok (transᵣ q le)
+VarOK-≾ q (hyp-ok m q')   = hyp-ok m (transᵣ q q')
+VarOK-≾ q (subˡ-ok p ok)  = subˡ-ok p (VarOK-≾ q ok)
+VarOK-≾ q (subʳ-ok p ok)  = subʳ-ok p (VarOK-≾ q ok)
+VarOK-≾ q (ok₁ |×|-ok ok₂) = VarOK-≾ q ok₁ |×|-ok VarOK-≾ q ok₂
+VarOK-≾ q (ok₁ |+|-ok ok₂) = VarOK-≾ q ok₁ |+|-ok VarOK-≾ q ok₂
+VarOK-≾ q (|List|-ok ok)  = |List|-ok (VarOK-≾ q ok)
+VarOK-≾ q (⊔-ok q' ok₁ ok₂) = ⊔-ok (transᵣ q q') ok₁ ok₂
+
+-- and so under equivalence of the type and lowering the grade
 
 VarOK-≃ : ∀ {Θ} {Q : Hyps Θ} {A A' ρ ρ'}
         → Q ∣ A <:̂ᵛ A' → Q ∣ A' <:̂ᵛ A → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A' ρ' → VarOK Q A ρ
-VarOK-≃ p p' q (et-ok et)           = et-ok (<:̂ᵛ-eternalˡ p et)
-VarOK-≃ p p' q (≾ᵘ-ok le)           = ≾ᵘ-ok (transᵣ q le)
-VarOK-≃ p p' q (hyp-ok m r r' q')   = hyp-ok m (<:̂ᵛ-trans p r) (<:̂ᵛ-trans r' p') (transᵣ q q')
+VarOK-≃ p _ q ok = subˡ-ok p (VarOK-≾ q ok)
 
 -- A `disj` hypothesis met at a convertible type
 
 hyp-ok-≡̂ : ∀ {Θ} {Q : Hyps Θ} {A A' ρ ρ'}
          → (A' , ρ') ∈ disj Q → A ≡̂ᵛ A' → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A ρ
-hyp-ok-≡̂ m p = hyp-ok m (≡̂ᵛ-<:̂ p) (≡̂ᵛ-<:̂ (≡̂ᵛ-sym p))
+hyp-ok-≡̂ m p q = subˡ-ok (≡̂ᵛ-<:̂ p) (hyp-ok m q)
 
 -- The side condition is closed under convertibility
 
 VarOK-≡̂ : ∀ {Θ} {Q : Hyps Θ} {A A' ρ ρ'}
         → A ≡̂ᵛ A' → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A' ρ' → VarOK Q A ρ
 VarOK-≡̂ p = VarOK-≃ (≡̂ᵛ-<:̂ p) (≡̂ᵛ-<:̂ (≡̂ᵛ-sym p))
+
+-- Under no `disj` hypothesis the side condition is its two disjuncts
+
+VarOK-split : ∀ {Θ} {Q : Hyps Θ} {A ρ}
+            → disj Q ≡ [] → VarOK Q A ρ → (Q ⊩ᴱ A) ⊎ (Q ⊩ ρ ≾̂ᵣ ûᵣ)
+VarOK-split e (et-ok et)  = inj₁ et
+VarOK-split e (≾ᵘ-ok le)  = inj₂ le
+VarOK-split e (hyp-ok m _) with subst (_ ∈_) e m
+... | ()
+VarOK-split e (subˡ-ok p ok) with VarOK-split e ok
+... | inj₁ et = inj₁ (<:̂ᵛ-eternalˡ p et)
+... | inj₂ le = inj₂ le
+VarOK-split e (subʳ-ok p ok) with VarOK-split e ok
+... | inj₁ et = inj₁ (<:̂ᵛ-eternalʳ p et)
+... | inj₂ le = inj₂ le
+VarOK-split e (ok₁ |×|-ok ok₂) with VarOK-split e ok₁ | VarOK-split e ok₂
+... | inj₁ et₁ | inj₁ et₂ = inj₁ (et₁ |×|ₑ et₂)
+... | inj₂ le  | _        = inj₂ le
+... | inj₁ _   | inj₂ le  = inj₂ le
+VarOK-split e (ok₁ |+|-ok ok₂) with VarOK-split e ok₁ | VarOK-split e ok₂
+... | inj₁ et₁ | inj₁ et₂ = inj₁ (et₁ |+|ₑ et₂)
+... | inj₂ le  | _        = inj₂ le
+... | inj₁ _   | inj₂ le  = inj₂ le
+VarOK-split e (|List|-ok ok) with VarOK-split e ok
+... | inj₁ et = inj₁ (|List|ₑ et)
+... | inj₂ le = inj₂ le
+VarOK-split e (⊔-ok q ok₁ ok₂) with VarOK-split e ok₁ | VarOK-split e ok₂
+... | inj₁ et  | _        = inj₁ et
+... | inj₂ _   | inj₁ et  = inj₁ et
+... | inj₂ le₁ | inj₂ le₂ = inj₂ (transᵣ q (⊔-lubᵣ le₁ le₂))
+
+VarOK-∅ᴴ : ∀ {Θ} {A : OVType Θ} {ρ} → VarOK ∅ᴴ A ρ → (∅ᴴ ⊩ᴱ A) ⊎ (∅ᴴ ⊩ ρ ≾̂ᵣ ûᵣ)
+VarOK-∅ᴴ = VarOK-split refl
 
 -- Inversion at the formers with no proper supertype
 
@@ -1250,10 +1302,16 @@ private
 VarOK-substᴵ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
                  {A : OVType Θ} {ρ : RExp Θ}
              → Q' ⊩ᴵ Q [ σ ] → VarOK Q A ρ → VarOK Q' (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
-VarOK-substᴵ h (et-ok et)  = et-ok (⊩ᴱ-substᴵ h et)
-VarOK-substᴵ h (≾ᵘ-ok le)  = ≾ᵘ-ok (⊩-substᴵᵣ h le)
-VarOK-substᴵ h (hyp-ok m p p' q) =
-  VarOK-≃ (<:̂ᵛ-substᴵ h p) (<:̂ᵛ-substᴵ h p') (⊩-substᴵᵣ h q) (⊩disjᴵ h m)
+VarOK-substᴵ h (et-ok et)         = et-ok (⊩ᴱ-substᴵ h et)
+VarOK-substᴵ h (≾ᵘ-ok le)         = ≾ᵘ-ok (⊩-substᴵᵣ h le)
+VarOK-substᴵ h (hyp-ok m q)       = VarOK-≾ (⊩-substᴵᵣ h q) (⊩disjᴵ h m)
+VarOK-substᴵ h (subˡ-ok p ok)     = subˡ-ok (<:̂ᵛ-substᴵ h p) (VarOK-substᴵ h ok)
+VarOK-substᴵ h (subʳ-ok p ok)     = subʳ-ok (<:̂ᵛ-substᴵ h p) (VarOK-substᴵ h ok)
+VarOK-substᴵ h (ok₁ |×|-ok ok₂)   = VarOK-substᴵ h ok₁ |×|-ok VarOK-substᴵ h ok₂
+VarOK-substᴵ h (ok₁ |+|-ok ok₂)   = VarOK-substᴵ h ok₁ |+|-ok VarOK-substᴵ h ok₂
+VarOK-substᴵ h (|List|-ok ok)     = |List|-ok (VarOK-substᴵ h ok)
+VarOK-substᴵ h (⊔-ok q ok₁ ok₂)   =
+  ⊔-ok (⊩-substᴵᵣ h q) (VarOK-substᴵ h ok₁) (VarOK-substᴵ h ok₂)
 
 ⊩ᵒ-⨟ᴵ : ∀ {Ψ Ψ' Ψ''} {Q : Hyps Ψ'} {Q' : Hyps Ψ''} {o : Ords Ψ}
           {δ : Subst Ψ Ψ'} {δ' : Subst Ψ' Ψ''}
