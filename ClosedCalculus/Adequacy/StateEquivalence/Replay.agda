@@ -1,0 +1,220 @@
+------------------------------------------------------------------------
+-- Replaying an extension across the equivalence.
+------------------------------------------------------------------------
+
+open import Data.Product
+
+open import Grades.Base
+open import Language.Spec
+open import Language.Operations
+
+open import Relation.Nullary using (¬_)
+
+open import Util.Equality
+
+module ClosedCalculus.Adequacy.StateEquivalence.Replay (Spec : LanguageSpec) where
+open LanguageSpec Spec
+open GradeSystemInterface Grades
+open Operations Ops
+
+open import ClosedCalculus.OperationalSemantics.PreservationTheorem Spec
+open import ClosedCalculus.OperationalSemantics.State               Spec
+
+open import ClosedCalculus.Syntax.Contexts      Spec
+open import ClosedCalculus.Syntax.Terms         Spec
+open import ClosedCalculus.Syntax.RenActions    Spec
+open import ClosedCalculus.Syntax.Renamings     Spec
+open import ClosedCalculus.Syntax.Substitutions Spec
+open import Language.Types                      Spec
+
+open import ClosedCalculus.Syntax.Renamings.Equivalence Spec
+open import ClosedCalculus.Syntax.Renamings.Coherence   Spec
+open import ClosedCalculus.Syntax.Terms.Equivalence     Spec
+open import ClosedCalculus.Syntax.Terms.Transport       Spec
+open import ClosedCalculus.Syntax.Substitutions.Variables Spec
+open import ClosedCalculus.Adequacy.GradedReach          Spec
+open import ClosedCalculus.Syntax.Substitutions.Equivalence Spec
+
+open import ClosedCalculus.Adequacy.StateEquivalence.Core Spec
+open import ClosedCalculus.Adequacy.StateEquivalence.Extensions Spec
+open import ClosedCalculus.Adequacy.StateEquivalence.Bisimulation Spec
+
+-- `VRed`'s Kripke clauses quantify over extensions of the state, so
+-- transporting one along `_≐ˢ_` means replaying its extension on the other
+-- state: the shape is copied, and each cell's value is transported along the
+-- contexts' equality.
+
+castᵛ-castᵛ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ) → (V : Γ ⊢V⦂ A)
+            → castᵛ e' (castᵛ e V) ≡ V
+castᵛ-castᵛ refl e' V = cong (λ z → castᵛ z V) (uip {p = e'} {q = refl})
+
+castᶜ-castᶜ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ) → (M : Γ ⊢C⦂ C)
+            → castᶜ e' (castᶜ e M) ≡ M
+castᶜ-castᶜ refl e' M = cong (λ z → castᶜ z M) (uip {p = e'} {q = refl})
+
+replay : ∀ {St St' St₂ : 𝕊 []} → (es : St ≐ˢ St') → (q : St ≤ₛ St₂)
+       → Σ[ St₂' ∈ 𝕊 [] ] Σ[ q' ∈ St' ≤ₛ St₂' ] Σ[ es₂ ∈ St₂ ≐ˢ St₂' ]
+           (q ≤≐ q')
+
+replay {St' = St'} es id-suc = St' , id-suc , es , id-≤≐
+
+replay es (⟨⟩-suc ρ q) with replay es q
+... | St₂' , q' , es₂ , h =
+  St₂' ⟨ ρ ⟩ₛ , ⟨⟩-suc ρ q' , ⟨⟩-≐ˢ ρ es₂ , ⟨⟩-≤≐ ρ h
+
+replay es (∷-suc {ρ = ρ} V q) with replay es q
+... | St₂' , q' , es₂ , h =
+    St₂' ∷ₛ V'
+  , ∷-suc V' q'
+  , ∷-≐ˢ es₂ (subst (λ z → V ≡ z)
+                    (sym (castᵛ-castᵛ
+                           (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩) (toCtx-≐ˢ es₂))
+                           (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩) (sym (toCtx-≐ˢ es₂)))
+                           V))
+                    (refl {x = V}))
+  , ∷-≤≐ h
+  where
+    V' = castᵛ (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩) (toCtx-≐ˢ es₂)) V
+
+-- The same at the reach level: the grade bound transports along the shape's
+-- grade equality (`≤ₛ-grade-≤≐`).
+
+reach-replay : ∀ {St St' St₂ : 𝕊 []} {ρ : R}
+             → (es : St ≐ˢ St') → (q : St ⊑ₛ[ ρ ] St₂)
+             → Σ[ St₂' ∈ 𝕊 [] ] Σ[ q' ∈ St' ⊑ₛ[ ρ ] St₂' ]
+               Σ[ es₂ ∈ St₂ ≐ˢ St₂' ]
+                 (ext q ≤≐ ext q')
+reach-replay es (reach e b) with replay es e
+... | St₂' , e' , es₂ , h =
+    St₂' , reach e' (subst (_≾ᵣ _) (≤ₛ-grade-≤≐ h) b) , es₂ , h
+
+-- What a replayed reach does to an `unbox`: the two consulted renamings agree,
+-- up to the two states' context equalities. This is `suc-comp-ren-≐ʳ` with the
+-- `⟨⟩-η-ren` that `unbox-ren` puts in front pushed through the cast.
+
+⟨⟩-η-ren-cast : ∀ {Γ Γ'} → (e : Γ' ≡ Γ)
+              → ⟨⟩-η-ren {Δ = Γ}
+              ≐ʳ castʳ² (cong (_⟨ uᵣ ⟩) e) e ⟨⟩-η-ren
+⟨⟩-η-ren-cast refl = ≐ʳ-refl
+
+unbox-ren-≐ˢ : ∀ {ρ} {St St' St₂ St₂' : 𝕊 []}
+             → (es : St ≐ˢ St') → (es₂ : St₂ ≐ˢ St₂')
+             → {q : St ⊑ₛ[ ρ ] St₂} → {q' : St' ⊑ₛ[ ρ ] St₂'}
+             → ext q ≤≐ ext q'
+             -------------------------------------------------------------
+             → unbox-ren q
+             ≐ʳ castʳ² (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es)))
+                       (sym (toCtx-≐ˢ es₂)) (unbox-ren q')
+
+unbox-ren-≐ˢ {ρ} es es₂ {q} {q'} h =
+  ≐ʳ-trans
+    (∘ʳ-≐ʳ (suc-comp-ren-≐ʳ h es es₂ (reach-bound q) (reach-bound q'))
+          (⟨⟩-η-ren-cast (sym (toCtx-≐ˢ es₂))))
+    (≐ʳ-sym
+      (castʳ²-∘ʳ (sym (toCtx-≐ˢ es₂))
+                 (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
+                 (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es)))
+                 (suc-comp-ren (ext q') (reach-bound q')) ⟨⟩-η-ren))
+
+-- The form the Kripke clauses use. A clause transported along `_≐ˢ_` moves its
+-- boxed value to the other state too, so the renaming consulted there is
+-- precomposed with that context equality — which cancels against the source
+-- cast the bridge introduces.
+
+castʳ²-cancel : ∀ {Γ Γ' Δ Δ' ρ} → (a : Γ ≡ Γ') → (b : Δ ≡ Δ')
+              → (r : Ren [] Δ (Γ ⟨ ρ ⟩))
+              → (cong-⟨⟩-ren (eq-ren a) ∘ʳ castʳ² (cong (_⟨ ρ ⟩) a) b r)
+              ≐ʳ castʳ b r
+castʳ²-cancel refl refl r = ∘ʳ-idˡ-≐ʳ r (cong-⟨⟩-ren-id-≐ʳ ≐ʳ-refl)
+
+unbox-ren-bridge : ∀ {ρ} {St St' St'' St₂ : 𝕊 []}
+                 → (es : St ≐ˢ St') → (es₂ : St'' ≐ˢ St₂)
+                 → {q' : St' ⊑ₛ[ ρ ] St''} → {q : St ⊑ₛ[ ρ ] St₂}
+                 → ext q' ≤≐ ext q
+                 -------------------------------------------------------------
+                 → (cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es)) ∘ʳ unbox-ren q')
+                 ≐ʳ castʳ (sym (toCtx-≐ˢ es₂)) (unbox-ren q)
+
+unbox-ren-bridge {ρ} es es₂ {q'} {q} h
+  rewrite uip {p = toCtx-≐ˢ es} {q = sym (toCtx-≐ˢ (≐ˢ-sym es))} =
+  ≐ʳ-trans
+    (∘ʳ-≐ʳ ≐ʳ-refl (unbox-ren-≐ˢ (≐ˢ-sym es) es₂ h))
+    (castʳ²-cancel (sym (toCtx-≐ˢ (≐ˢ-sym es))) (sym (toCtx-≐ˢ es₂))
+                   (unbox-ren q))
+
+-- The unit-reach analogue: a replayed reach renames the state's own context
+-- the same way, up to the two states' context equalities. As `unbox-ren-≐ˢ`,
+-- with the two `⟨⟩-η` renamings pushed through the cast.
+
+⟨⟩-η⁻¹-ren-cast : ∀ {Γ Γ'} → (e : Γ' ≡ Γ)
+                → ⟨⟩-η⁻¹-ren {Δ = Γ}
+                ≐ʳ castʳ² e (cong (_⟨ uᵣ ⟩) e) ⟨⟩-η⁻¹-ren
+⟨⟩-η⁻¹-ren-cast refl = ≐ʳ-refl
+
+reach-renᵘ-≐ˢ : ∀ {St St' St₂ St₂' : 𝕊 []}
+              → (es : St ≐ˢ St') → (es₂ : St₂ ≐ˢ St₂')
+              → {q : St ⊑ₛ[ uᵣ ] St₂} → {q' : St' ⊑ₛ[ uᵣ ] St₂'}
+              → ext q ≤≐ ext q'
+              -------------------------------------------------------------
+              → reach-renᵘ q
+              ≐ʳ castʳ² (sym (toCtx-≐ˢ es)) (sym (toCtx-≐ˢ es₂)) (reach-renᵘ q')
+
+reach-renᵘ-≐ˢ es es₂ {q} {q'} h =
+  ≐ʳ-trans
+    (∘ʳ-≐ʳ (⟨⟩-η⁻¹-ren-cast (sym (toCtx-≐ˢ es)))
+      (∘ʳ-≐ʳ (suc-comp-ren-≐ʳ h es es₂ (reach-bound q) (reach-bound q'))
+            (⟨⟩-η-ren-cast (sym (toCtx-≐ˢ es₂)))))
+    (≐ʳ-trans
+      (∘ʳ-≐ʳ ≐ʳ-refl
+        (≐ʳ-sym
+          (castʳ²-∘ʳ (sym (toCtx-≐ˢ es₂))
+                     (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
+                     (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es)))
+                     (suc-comp-ren (ext q') (reach-bound q')) ⟨⟩-η-ren)))
+      (≐ʳ-sym
+        (castʳ²-∘ʳ (sym (toCtx-≐ˢ es₂))
+                   (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es)))
+                   (sym (toCtx-≐ˢ es))
+                   ⟨⟩-η⁻¹-ren
+                   (suc-comp-ren (ext q') (reach-bound q') ∘ʳ ⟨⟩-η-ren))))
+
+-- The `≤ₛ`-level counterpart of `unbox-ren-bridge`.
+
+var-img-castʳ : ∀ {Γ Γ' Δ ρ A σ} → (e : Γ' ≡ Γ) → (r : Ren [] Γ' (Δ ⟨ ρ ⟩))
+              → (y : A ∈[ σ ] (Δ ⟨ ρ ⟩))
+              → var-img (castʳ e r) y ≡ Var-cast e (var-img r y)
+var-img-castʳ refl r y = refl
+
+cong-⟨⟩-eq-img : ∀ {Γ Γ' ρ A σ} → (e : Γ ≡ Γ') → (x : A ∈[ σ ] Γ)
+               → var-img (cong-⟨⟩-ren {ρ = ρ} (eq-ren e)) (Tl-⟨⟩ x)
+               ≡ (σ ·ᵣ ρ , Tl-⟨⟩ (subst (λ Γ₀ → A ∈[ σ ] Γ₀) e x))
+cong-⟨⟩-eq-img refl x = refl
+
+≤ₛ-embed-≐ˢ : ∀ {A σ} {St St' St'' St₂ : 𝕊 []}
+            → (es : St ≐ˢ St') → (es₂ : St'' ≐ˢ St₂)
+            → {e' : St' ≤ₛ St''} → {e : St ≤ₛ St₂}
+            → (h : e' ≤≐ e)
+            → (x : A ∈[ σ ] toCtx St)
+            -------------------------------------------------------------
+            → ≤ₛ-embed e' (subst (λ Γ₀ → A ∈[ σ ] Γ₀) (toCtx-≐ˢ es) x)
+            ≡ Var-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e x)
+
+≤ₛ-embed-≐ˢ {σ = σ} es es₂ {e'} {e} h x =
+  trans (sym stepL) (trans (at (unbox-ren-bridge es es₂ {q'} {q} h) (Tl-⟨⟩ x))
+                           stepR)
+  where
+    q' = reach e' (≾ᵣ-refl {≤ₛ-grade e'})
+    q  = reach e  (≾ᵣ-reflexive (sym (≤ₛ-grade-≤≐ h)))
+
+    stepL : var-img (cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es)) ∘ʳ unbox-ren q')
+                    (Tl-⟨⟩ x)
+          ≡ ≤ₛ-embed e' (subst (λ Γ₀ → _ ∈[ σ ] Γ₀) (toCtx-≐ˢ es) x)
+    stepL =
+      trans (cong (var-img′ (unbox-ren q')) (cong-⟨⟩-eq-img (toCtx-≐ˢ es) x))
+            (unbox-ren-img q' (subst (λ Γ₀ → _ ∈[ σ ] Γ₀) (toCtx-≐ˢ es) x))
+
+    stepR : var-img (castʳ (sym (toCtx-≐ˢ es₂)) (unbox-ren q)) (Tl-⟨⟩ x)
+          ≡ Var-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e x)
+    stepR =
+      trans (var-img-castʳ (sym (toCtx-≐ˢ es₂)) (unbox-ren q) (Tl-⟨⟩ x))
+            (cong (Var-cast (sym (toCtx-≐ˢ es₂))) (unbox-ren-img q x))
