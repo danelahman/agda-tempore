@@ -103,8 +103,6 @@ private
                      (trans (psub-wk (λ j → refl) (σ i))
                             (sym (ren-fuseᵛ (λ j → refl) (σ i)))))
 
-  -- renaming after a lifted substitution
-
   ren-exts₁ : ∀ {n m k} → (f : Fin m → Fin k) → (σ : Fin n → RunV m) → (M : RunC (suc n))
             → renᶜ (ext f) (psubᶜ (exts σ) M) ≡ psubᶜ (exts (λ i → renᵛ f (σ i))) M
   ren-exts₁ f σ M = ren-psubᶜ (ren-exts (λ i → refl)) M
@@ -123,7 +121,6 @@ private
 
 ------------------------------------------------------------------------
 -- Environments: reducible values for the variables of a context
--- without definitions
 
 record Env {Θ n m} (Γ : OCtx Θ n) (S : State m) (σ : Fin n → RunV m) : Set where
   constructor env
@@ -200,8 +197,6 @@ private
 
   box-red? : ∀ {n A} {S : State n} V → VRed (□ˢ A) S V → BoxRed A S V
   box-red? (var i) r = box-red r
-
-  -- a decided comparison
 
   decided : ∀ {n} → (⋈ : Cmp) → (V W : RunV n) → decide ⋈ V W ≡ true ⊎ decide ⋈ V W ≡ false
   decided ⋈ V W with holds ⋈ (compareᴰ (datum V) (datum W))
@@ -424,8 +419,6 @@ mutual
 
 ------------------------------------------------------------------------
 -- Termination
-
--- A run that finishes
 
 Halts : ∀ {n} → State n → RunC n → Set
 Halts S M = Σ[ m ∈ ℕ ] Σ[ S' ∈ State m ] Σ[ M' ∈ RunC m ] ⟨ S ∣ M ⟩↝*⟨ S' ∣ M' ⟩ × Final M'

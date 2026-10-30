@@ -2,15 +2,11 @@
 -- States and state typings                                     --
 --                                                              --
 -- A state `S ::= ∅ | S ⟨ τ ⟩ₛ | S ∷ₛ V` records the passages   --
--- of time and the resources of a run, without grades; `State   --
--- n` has `n` resources. A state typing `Σ` gives each resource --
--- a type `[ ρ ] X`; `Σ` types `S` (`Types Σ`) when each        --
--- resource `V` has type `X` in the context `ctx Σ'` of the     --
--- state typing before it, behind `ρ`.                          --
---                                                              --
--- `S ≤ₛ S'` when `S'` extends `S`; `δₛ` is the grade of the    --
--- passages added, and `Σ ⊆[ e ] Σ'` extends a state typing     --
--- along `e`.                                                   --
+-- of time and the resources of a run; `State n` has `n`        --
+-- resources. A state typing `Σ` types `S` (`Types Σ`) when     --
+-- each resource has its type `[ ρ ] X` in the context before   --
+-- it, behind `ρ`. `S ≤ₛ S'` extends a state; `δₛ` is the grade --
+-- of the passages added.                                       --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)
@@ -66,21 +62,15 @@ data _≤ₛ_ {n} (S : State n) : ∀ {m} → State m → Set where
   ≤ₛ-lock : ∀ {m} {S' : State m} {τ} → S ≤ₛ S' → S ≤ₛ S' ⟨ τ ⟩ₛ
   ≤ₛ-res  : ∀ {m} {S' : State m} {V} → S ≤ₛ S' → S ≤ₛ S' ∷ₛ V
 
--- the positions of the old resources in the extension
-
 wkₛ : ∀ {n m} {S : State n} {S' : State m} → S ≤ₛ S' → Fin n → Fin m
 wkₛ ≤ₛ-refl     i = i
 wkₛ (≤ₛ-lock e) i = wkₛ e i
 wkₛ (≤ₛ-res e)  i = suc (wkₛ e i)
 
--- the grade of the passages added
-
 δₛ : ∀ {n m} {S : State n} {S' : State m} → S ≤ₛ S' → RExp ∅ˢ
 δₛ ≤ₛ-refl             = ûᵣ
 δₛ (≤ₛ-lock {τ = τ} e) = δₛ e ·̂ᵣ rconst (of-durʳ τ)
 δₛ (≤ₛ-res e)          = δₛ e
-
--- composition of extensions
 
 infixl 25 _⨾ₛ_
 
@@ -95,8 +85,6 @@ wkₛ-⨾ : ∀ {n m k} {S : State n} {S' : State m} {S'' : State k}
 wkₛ-⨾ e ≤ₛ-refl      i = refl
 wkₛ-⨾ e (≤ₛ-lock e') i = wkₛ-⨾ e e' i
 wkₛ-⨾ e (≤ₛ-res e')  i = cong suc (wkₛ-⨾ e e' i)
-
--- the resources of an extension are the old ones, weakened
 
 lookupₛ-wk : ∀ {n m} {S : State n} {S' : State m} → (e : S ≤ₛ S')
            → ∀ i → lookupₛ S' (wkₛ e i) ≡ renᵛ (wkₛ e) (lookupₛ S i)
@@ -116,8 +104,6 @@ data StateTyping : ∀ {n} → State n → Set where
   _∷[_]_ : ∀ {n} {S : State n} {V} → StateTyping S → RExp ∅ˢ → OVType ∅ˢ
          → StateTyping (S ∷ₛ V)
 
--- The context of a state
-
 ctx : ∀ {n} {S : State n} → StateTyping S → OCtx ∅ˢ n
 ctx ∅                     = []
 ctx (_⟨⟩ˢ {τ = τ} Σ)      = ctx Σ ⟨ rconst (of-durʳ τ) ⟩
@@ -127,9 +113,6 @@ ctx-defs : ∀ {n} {S : State n} → (Σ : StateTyping S) → defs (ctx Σ) ≡ 
 ctx-defs ∅            = refl
 ctx-defs (Σ ⟨⟩ˢ)      = ctx-defs Σ
 ctx-defs (Σ ∷[ ρ ] X) = ctx-defs Σ
-
--- A state typing types a state when each resource has its type, behind
--- a lock at its grade, in the context of the state before it
 
 data Types : ∀ {n} {S : State n} → StateTyping S → Set where
   ∅    : Types ∅
@@ -153,8 +136,7 @@ data _⊆[_]_ {n} {S : State n} (Σ : StateTyping S)
   ⊆-res  : ∀ {m} {S' : State m} {e : S ≤ₛ S'} {Σ' : StateTyping S'} {V ρ X}
          → Σ ⊆[ e ] Σ' → Σ ⊆[ ≤ₛ-res {V = V} e ] (Σ' ∷[ ρ ] X)
 
--- The context of the extension extends the context by the grade of
--- the passages added
+-- The extended context makes each variable older by the passages added
 
 ⊆-ext : ∀ {n m} {S : State n} {S' : State m} {e : S ≤ₛ S'}
           {Σ : StateTyping S} {Σ' : StateTyping S'}
@@ -171,9 +153,6 @@ edfs (⊆-ext ⊆-refl)       = refl
 edfs (⊆-ext (⊆-lock p))   = edfs (⊆-ext p)
 edfs (⊆-ext (⊆-res p))    = edfs (⊆-ext p)
 
--- The variables of the context of a state are resources, and it has
--- no definitions
-
 ctx-box : ∀ {n} {S : State n} → (Σ : StateTyping S) → BoxCtx (ctx Σ)
 ctx-box Σ = boxed Σ , ctx-defs Σ
   where
@@ -183,8 +162,7 @@ ctx-box Σ = boxed Σ , ctx-defs Σ
     boxed (Σ ∷[ ρ ] X) Hd        = ρ , X , refl
     boxed (Σ ∷[ ρ ] X) (Tl-∷ x)  = boxed Σ x
 
--- A resource used within its grade has its type in the context of the
--- whole state
+-- A resource used within its grade is typed in the whole state's context
 
 private
 

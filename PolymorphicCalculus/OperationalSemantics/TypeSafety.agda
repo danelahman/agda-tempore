@@ -1,12 +1,11 @@
 ------------------------------------------------------------------
 -- Type safety of the reduction                                 --
 --                                                              --
--- A configuration whose state a state typing `Σ` types, and    --
--- whose term has type `X ‼ ε` in the context of the state, has --
--- finished or steps (`progress`). A step extends the state by  --
--- passages of grade `δₛ e`, and an extension `Σ'` of `Σ` types --
--- the new state, the new term being typed at `X' ‼ ε'` with    --
--- `X' <: X` and `δₛ e · ∣ ε' ∣ ≾ ∣ ε ∣` (`preservation`).      --
+-- A configuration typed at `X ‼ ε` over a typed state has      --
+-- finished or steps (`progress`). After a step `e`, an         --
+-- extension of the state typing types the new state and the    --
+-- new term has a type `X' ‼ ε'` with `X' <: X` and             --
+-- `δₛ e · ∣ ε' ∣ ≾ ∣ ε ∣` (`preservation`).                    --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using () renaming (true to tt𝔹; false to ff𝔹)
@@ -67,8 +66,6 @@ private
     ∣const∣ : ∀ {g} → Q ⊩ rconst (mapᵉ g) ≾̂ᵣ ∣ econst g ∣̂ᵉ
     ∣const∣ = eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-map-const)
 
-    -- an effect above the unit followed by another is above the other
-
     ≾-·ˡ : ∀ {ε₁ ε₂} → Q ⊩ ûₑ ≾̂ₑ ε₁ → Q ⊩ ε₂ ≾̂ₑ ε₁ ·̂ₑ ε₂
     ≾-·ˡ p = transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-identityˡ)) (monoₑ p ⊩≾̂ₑ-refl)
 
@@ -83,8 +80,6 @@ private
 
 ------------------------------------------------------------------------
 -- The statements
-
--- A step from a configuration
 
 Steps : ∀ {n} → State n → RunC n → Set
 Steps S M = Σ[ m ∈ ℕ ] Σ[ S' ∈ State m ] Σ[ M' ∈ RunC m ] ⟨ S ∣ M ⟩↝⟨ S' ∣ M' ⟩
@@ -110,8 +105,6 @@ open Preserved
 
 private
 
-  -- the state unchanged
-
   stay : ∀ {n} {S : State n} {Σ : StateTyping S} {M' C₁ X ε}
        → Types Σ → (D : ∅ᴴ ∣ ctx Σ ⊢C⦂ C₁) → ∥ D ∥ᶜ ≡ M' → ∅ᴴ ∣ C₁ <:̂ᶜ X ‼ ε
        → Preserved ≤ₛ-refl Σ M' X ε
@@ -119,8 +112,7 @@ private
     { Σ' = Σ ; extends = ⊆-refl ; types = T ; typed = D , eq ; subtype = p
     ; grade = transᵣ (eqᵣ ≡̂ᵣ-identityˡ) (map-mono q) }
 
-  -- a handler, in an extended context, at an input grade whose image
-  -- the extension's grade does not push above the original's
+  -- a handler in an extended context, at a lower input grade
 
   retype : ∀ {n m} {Γ : OCtx ∅ˢ n} {Γ' : OCtx ∅ˢ m} {δ A B ε ε₁ ε'}
          → (e : Ext ∅ᴴ Γ Γ' δ) → ∅ᴴ ⊩ δ ·̂ᵣ ∣ ε₁ ∣̂ᵉ ≾̂ᵣ ∣ ε ∣̂ᵉ
@@ -132,8 +124,6 @@ private
     handler (rename-c (ext-lock e le ⇑ʳ) N) (λ op → rename-c (ext-clause e) (H op)) ,
     cong₂ handler (∥rename-c∥ (ext-lock e le ⇑ʳ) N)
                   (fun-ext (λ op → ∥rename-c∥ (ext-clause e) (H op)))
-
-  -- a decided comparison is a boolean
 
   decide-typed : ∀ {n} {Γ : OCtx ∅ˢ n} → (⋈ : Cmp) → (V W : RunV n)
                → Γ ⊢ᵛ decide ⋈ V W ⦂ Bool
