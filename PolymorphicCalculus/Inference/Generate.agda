@@ -2,31 +2,18 @@
 -- Constraint generation                                        --
 --                                                              --
 -- `genV Γ V A` and `genC Γ M C` map a raw term and an expected --
--- open type to a constraint over the same scope. They are      --
--- structural on the raw term and follow the rules of           --
--- `PolymorphicCalculus.Typing` former by former: every         --
--- type a rule leaves undetermined is an ∃-bound variable, and  --
--- every side condition is a constraint atom.                   --
---                                                              --
--- The expected type is an upper bound. Where a rule meets two  --
--- types that generation does not determine, the expected type  --
--- is the right-hand side of a `_≾̂ᵥᶜ_` or `_≾̂ₑᶜ_` atom;         --
--- elsewhere the shape is fixed by `_≐ᵥ_`, and the bound is     --
--- passed to the subterms.                                      --
---                                                              --
--- Under a binder, the arguments of the recursive calls and the --
--- interpretation of the raw term's type and grade variables    --
--- are weakened; the constraints are built under the innermost  --
--- binder.                                                      --
---                                                              --
--- A top-level definition at position `k` owes the constraint   --
--- of a use of its scheme (`instᶜ`), and an unbound position    --
--- the unsatisfiable one.                                       --
+-- open type to a constraint, structurally on the term and rule --
+-- by rule: each type a rule leaves undetermined is ∃-bound,    --
+-- each side condition an atom. The expected type is an upper   --
+-- bound: where a rule meets two undetermined types it is the   --
+-- right side of a `_≾̂ᵥᶜ_` or `_≾̂ₑᶜ_` atom; elsewhere `_≐ᵥ_`  --
+-- fixes its shape. A use of a definition owes the constraint   --
+-- of its scheme (`instᶜ`), an unbound position the             --
+-- unsatisfiable one.                                           --
 --                                                              --
 -- Contract. `σ ⊨[ Q ] genC Γ M (A ‼ t)` holds exactly when     --
 -- some derivation of `Q ∣ Γ [ σ ] ⊢C⦂ (A ‼ t) [ σ ]` erases to --
--- `M [ σ ]` (`charV`, `charC`, from `soundV`/`soundC` in       --
--- `Soundness` and `completeV`/`completeC` in `Completeness`).  --
+-- `M [ σ ]` (`charV`, `charC`).                                --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero)
@@ -63,8 +50,8 @@ open import PolymorphicCalculus.Hypotheses S using (qhyps)
 open import PolymorphicCalculus.Inference.Constraints.Syntax  S
 open import PolymorphicCalculus.Inference.Constraints.Schemes S using (instᶜ; instᶜ-rigidFree)
 
--- The looked-up type subtypes into the expected one, and its grade owes
--- `VarOK`'s disjunction.
+-- The looked-up type subtypes into the expected one; its grade owes `VarOK`'s
+-- disjunction
 
 varConstraint : ∀ {Θ n} → OCtx Θ n → Fin n → OVType Θ → Constraint Θ
 varConstraint Γ i A =
@@ -76,10 +63,8 @@ useDefConstraint : ∀ {Θ} → Maybe Scheme → OVType Θ → Constraint Θ
 useDefConstraint nothing  A = ⊥̂
 useDefConstraint (just s) A = instᶜ s A
 
--- An `unbox` of a resource value, a variable under annotations: the
--- type it reaches, the grade accumulated at its variable, and the
--- subtyping atom of each annotation, as `_∣_⊢↪[_]_⦂[_]_`; any other
--- value owes the unsatisfiable constraint
+-- An `unbox` of a variable under annotations: the type it reaches, its grade,
+-- and each annotation's subtyping atom; any other value is unsatisfiable
 
 resTy : ∀ {Θ₀ Θ n} → Subst Θ₀ Θ → OCtx Θ n → RawV Θ₀ n → OVType Θ
 resTy ι Γ (var i)  = lookup-ty Γ i
@@ -96,10 +81,8 @@ resC ι Γ (var i)  = ⊤̂
 resC ι Γ (V ⦂ᵛ B) = resC ι Γ V ∧̂ (resTy ι Γ V ≾̂ᵥᶜ B [ ι ]ᵛ)
 resC ι Γ _        = ⊥̂
 
--- `genVˢ ι` and `genCˢ ι` generate for a raw term whose type and grade
--- variables `ι` interprets in the generation scope. Under a binder, `ι`
--- is composed with the binder's weakening; the recursion is structural
--- on the raw term.
+-- `genVˢ ι` and `genCˢ ι` generate for a raw term whose type and grade variables
+-- `ι` interprets; under a binder `ι` is composed with the weakening
 
 mutual
 
@@ -109,7 +92,7 @@ mutual
 
   genVˢ ι Γ (var i) A = varConstraint Γ i A
 
-  -- uses of top-level definitions
+  -- uses of definitions
 
   genVˢ ι Γ (usedef k) A = useDefConstraint (lookupᵖ (defs Γ) k) A
 
@@ -136,10 +119,7 @@ mutual
       A↑ = wkᵗ-v (wkᵗ-v A)
       Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
 
-  -- injections into a sum
-  --
-  -- As for pairing, both summands are ∃-bound and the sum they form is
-  -- the expected type; the injected value is checked against its own.
+  -- injections into a sum: both summands ∃-bound, their sum the expected type
 
   genVˢ {Θ = Θ} ι Γ (inl V) A =
     ∃ᵗ (∃ᵗ ((α₁ |+| α₂ ≐ᵥ A↑) ∧̂ genVˢ ι↑ Γ↑ V α₁))
@@ -159,11 +139,7 @@ mutual
       A↑ = wkᵗ-v (wkᵗ-v A)
       Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
 
-  -- lists
-  --
-  -- The element type is ∃-bound and the list type it forms is the
-  -- expected type; the head is checked against the element type and the
-  -- tail against the list type.
+  -- lists: the element type ∃-bound, its list type the expected type
 
   genVˢ {Θ = Θ} ι Γ nil A =
     ∃ᵗ (|List| α ≐ᵥ wkᵗ-v A)
@@ -178,10 +154,7 @@ mutual
       A↑ = wkᵗ-v A
       Γ↑ = wkᵗ-ctx Γ
 
-  -- comparison
-  --
-  -- The operands' common type is ∃-bound and has to be eternal; the
-  -- result is a `Bool`, pinned as for the boolean constants.
+  -- comparison: the operands' type ∃-bound and eternal, the result `Bool`
 
   genVˢ {Θ = Θ} ι Γ (cmp ⋈ V W) A =
     ∃ᵗ ((Bool ≐ᵥ A↑) ∧̂ genVˢ ι↑ Γ↑ V α ∧̂ genVˢ ι↑ Γ↑ W α ∧̂ Etᶜ α)
@@ -191,10 +164,7 @@ mutual
       A↑ = wkᵗ-v A
       Γ↑ = wkᵗ-ctx Γ
 
-  -- lambda abstraction
-  --
-  -- The body is typed at the arrow the lambda synthesises, which is a
-  -- subtype of the expected type.
+  -- lambda abstraction: the body at the synthesised arrow, below the expected type
 
   genVˢ {Θ = Θ} ι Γ (lam M) A =
     ∃ᵗ (∃ᵗ (∃ᵉ ((α₁ ⇒ (α₂ ‼ e) ≾̂ᵥᶜ A↑) ∧̂ genCˢ ι↑ (Γ↑ ∷ α₁) M (α₂ ‼ e))))
@@ -206,13 +176,9 @@ mutual
       A↑ = wkᵉ-v (wkᵗ-v (wkᵗ-v A))
       Γ↑ = wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
 
-  -- handlers
-  --
-  -- The handler is typed at the handler type it synthesises, a subtype
-  -- of the expected type. The result type, which occurs contravariantly
-  -- in the clause contexts inside the boxed continuation, is an ∃-bound
-  -- variable of its own, shared by the return clause and the clauses.
-  -- The clause's continuation grade is the rigid variable of its `∀ᵉ`.
+  -- handlers: at the synthesised handler type, below the expected one; the
+  -- result type is ∃-bound and shared by all clauses, and a clause's
+  -- continuation grade is the rigid of its `∀ᵉ`
 
   genVˢ {Θ = Θ} ι Γ (handler N H) A =
     ∃ᵗ (∃ᵗ (∃ᵉ (∃ᵉ (  ((α ‼ e₁) ⇛ (γ ‼ e₂) ≾̂ᵥᶜ A↑)
@@ -237,10 +203,8 @@ mutual
       γ⇑  = wkᵉ-v (wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty}))))
       Γ⇑  = wkᵉ-ctx (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))))
 
-  -- type annotation
-  --
-  -- The value is checked against the annotation, read through `ι`, which
-  -- subtypes into the expected type.
+  -- type annotation: the value checked against the annotation, below the
+  -- expected type
 
   genVˢ ι Γ (V ⦂ᵛ B) A = genVˢ ι Γ V (B [ ι ]ᵛ) ∧̂ (B [ ι ]ᵛ ≾̂ᵥᶜ A)
 
@@ -266,10 +230,7 @@ mutual
       t↑ = wkᵉ-e (wkᵉ-e (wkᵗ-e t))
       Γ↑ = wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx Γ))
 
-  -- function application
-  --
-  -- The function's result type is a subtype of the expected type, and
-  -- its latent effect lies below the expected effect.
+  -- function application: the result type and latent effect below the expected
 
   genCˢ {Θ = Θ} ι Γ (V₁ · V₂) (A ‼ t) =
     ∃ᵗ (∃ᵗ (∃ᵉ (  genVˢ ι↑ Γ↑ V₁ (α ⇒ (β ‼ e))
@@ -311,10 +272,7 @@ mutual
   genCˢ ι Γ (caseℕ V `zero M₁ `succ M₂) (A ‼ t) =
     genVˢ ι Γ V Nat ∧̂ genCˢ ι Γ M₁ (A ‼ t) ∧̂ genCˢ ι (Γ ∷ Nat) M₂ (A ‼ t)
 
-  -- sum elimination
-  --
-  -- The summands are ∃-bound, as the components are for `match`; both
-  -- branches are checked against the expected type, as for `if`.
+  -- sum elimination: the summands ∃-bound, both branches at the expected type
 
   genCˢ {Θ = Θ} ι Γ (case+ V `inl M₁ `inr M₂) (A ‼ t) =
     ∃ᵗ (∃ᵗ (  genVˢ ι↑ Γ↑ V (α₁ |+| α₂)
@@ -328,11 +286,8 @@ mutual
       t↑ = wkᵗ-e (wkᵗ-e t)
       Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
 
-  -- primitive recursion on natural numbers
-  --
-  -- The result type, which the step also binds, and the effect are
-  -- ∃-bound, below the expected type and effect, shared by the base and
-  -- the step; the effect absorbs its own iteration.
+  -- primitive recursion on natural numbers: the result type and effect
+  -- ∃-bound below the expected ones, the effect absorbing its own iteration
 
   genCˢ {Θ = Θ} ι Γ (recℕ V M₁ M₂) (A ‼ t) =
     ∃ᵗ (∃ᵉ (  genVˢ ι↑ Γ↑ V Nat
@@ -349,10 +304,7 @@ mutual
       t↑ = wkᵉ-e (wkᵗ-e t)
       Γ↑ = wkᵉ-ctx (wkᵗ-ctx Γ)
 
-  -- list elimination
-  --
-  -- The element type is ∃-bound; both branches are checked against the
-  -- expected type, as for `if`.
+  -- list elimination: the element type ∃-bound, both branches at the expected type
 
   genCˢ {Θ = Θ} ι Γ (caseL V `nil M₁ `cons M₂) (A ‼ t) =
     ∃ᵗ (  genVˢ ι↑ Γ↑ V (|List| α)
@@ -365,9 +317,7 @@ mutual
       t↑ = wkᵗ-e t
       Γ↑ = wkᵗ-ctx Γ
 
-  -- primitive recursion on lists
-  --
-  -- As for `recℕ`, with the element type ∃-bound in addition.
+  -- primitive recursion on lists: as for `recℕ`, the element type ∃-bound too
 
   genCˢ {Θ = Θ} ι Γ (recL V M₁ M₂) (A ‼ t) =
     ∃ᵗ (∃ᵗ (∃ᵉ (  genVˢ ι↑ Γ↑ V (|List| α)
@@ -410,11 +360,8 @@ mutual
       t↑ = wkᵉ-e t
       Γ↑ = wkᵉ-ctx Γ
 
-  -- effect handling
-  --
-  -- The handled computation's type and the handler's result type are
-  -- ∃-bound; the handler is checked against the handler type they form,
-  -- whose result lies below the expected type and effect.
+  -- effect handling: the handled type and the handler's result type ∃-bound,
+  -- the result below the expected type and effect
 
   genCˢ {Θ = Θ} ι Γ (handle M `with V) (A ‼ t) =
     ∃ᵗ (∃ᵗ (∃ᵉ (∃ᵉ (  genCˢ ι↑ Γ↑ M (α ‼ e₁)
@@ -431,11 +378,8 @@ mutual
       t↑ = wkᵉ-e (wkᵉ-e (wkᵗ-e (wkᵗ-e t)))
       Γ↑ = wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))
 
-  -- unboxing a resource value
-  --
-  -- The type the resource value reaches is a box type of the ∃-bound
-  -- grade and payload, the grade above the one accumulated at its
-  -- variable, and the continuation binds the payload.
+  -- unboxing a resource value: it reaches a box of ∃-bound grade and payload,
+  -- the grade above the one accumulated at its variable
 
   genCˢ {Θ = Θ} ι Γ (unbox V N) (A ‼ t) =
     ∃ᵗ (∃ʳ (  resC ι↑ Γ↑ V
@@ -450,9 +394,7 @@ mutual
       t↑ = wkʳ-e (wkᵗ-e t)
       Γ↑ = wkʳ-ctx (wkᵗ-ctx Γ)
 
-  -- boxing up a value
-  --
-  -- The grade is the term's annotation; only the payload's type is fresh.
+  -- boxing up a value: the grade is the annotation, only the payload's type fresh
 
   genCˢ {Θ = Θ} ι Γ (box ρ V N) (A ‼ t) =
     ∃ᵗ (genVˢ ι↑ (Γ↑ ⟨ r ⟩) V α ∧̂ genCˢ ι↑ (Γ↑ ∷ [ r ] α) N (A↑ ‼ t↑))
@@ -464,9 +406,7 @@ mutual
       t↑ = wkᵗ-e t
       Γ↑ = wkᵗ-ctx Γ
 
-  -- type annotation
-  --
-  -- As for values, the subtyping split into its value and effect atoms.
+  -- type annotation: as for values, split into value and effect atoms
 
   genCˢ ι Γ (M ⦂ᶜ (B ‼ u)) (A ‼ t) =
     genCˢ ι Γ M (B' ‼ u') ∧̂ (B' ≾̂ᵥᶜ A) ∧̂ (u' ≾̂ₑᶜ t)
@@ -474,9 +414,8 @@ mutual
       B' = B [ ι ]ᵛ
       u' = u [ ι ]ᵉ
 
--- A term with no handler, using no definition whose scheme has
--- quantified hypotheses (`NoRigidᵛ Δ V`), generates a constraint with
--- no rigid binder
+-- A handler-free term using no definition with quantified hypotheses
+-- (`NoRigidᵛ Δ V`) generates a constraint with no rigid binder
 
 -- The definition at a position has no quantified hypotheses
 
@@ -628,8 +567,7 @@ mutual
   noRigid-[]ᴿᶜ (box ρ V N)              (h , k)     = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ N k
   noRigid-[]ᴿᶜ (M ⦂ᶜ C)                 h           = noRigid-[]ᴿᶜ M h
 
--- The constraint has no rigid binder, the context's program context
--- being the one of the hypothesis
+-- The constraint has no rigid binder, the program context being the hypothesis's
 
 private
 
@@ -791,8 +729,8 @@ private
            ≡ (α₀ ≾̂ᵥᶜ α₀) ∧̂ Et∨≾ᵘ α₀ (ûᵣ ·̂ᵣ rconst ⊤ᵣ)
   ex-var-⊤ = refl
 
-  -- boxing a value: the annotation is the box's grade, in the payload's
-  -- context lock and in the continuation's box type
+  -- boxing a value: the annotation is the box's grade, in the payload's context
+  -- lock and the continuation's box type
 
   ∅ᶜ : OCtx ∅ˢ 0
   ∅ᶜ = []

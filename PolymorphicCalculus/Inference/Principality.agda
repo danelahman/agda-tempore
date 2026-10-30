@@ -1,35 +1,24 @@
 ------------------------------------------------------------------
 -- Principal types                                              --
 --                                                              --
--- Generation runs at `Θ` extended by a type variable and an    --
--- effect variable for the result type and effect, with the     --
--- context and the term weakened into that scope (`C[_,_]`). A  --
--- solution of that constraint, with its residual hypotheses,   --
+-- Generation runs at `Θ` extended by the result type and       --
+-- effect (`C[_,_]`). A solution with its residual hypotheses   --
 -- is principal (`PrincipalSolution Γ M`) when every instance   --
--- meeting the residue types `M` (`instantiate`)                --
--- and every typing of `M` factors through it at each closed    --
--- instance, with type and effect bounded by the principal ones --
--- (`factor`). A typing of `M` is a derivation erasing to an    --
--- instance of `M`, annotations included.                       --
+-- meeting the residue types `M` (`instantiate`) and every      --
+-- typing of `M` factors through it at each closed instance     --
+-- (`factor`). A typing is a derivation erasing to an instance  --
+-- of `M`, annotations included.                                --
 --                                                              --
 -- `PrincipalScheme Γ M` is a principal type scheme over a      --
--- scope of its own: every instance types `M` (`instantiate`),  --
--- and every typing of `M` factors through it at each closed    --
--- instance (`factor`). `M` is typable (`Typable`) exactly when --
--- the scheme's hypotheses are satisfiable (`typable-⇔`).       --
--- `Inference Γ M` is the outcome of inference, `Check Γ M`     --
--- that of a check that exhibits a closed instance.             --
+-- scope of its own; `M` is `Typable` exactly when its          --
+-- hypotheses are satisfiable (`typable-⇔`). `Inference` and    --
+-- `Check` are the outcomes of inference and of a check.        --
+-- `PrincipalSchemeᵛ Δ V` is the scheme of a closed value,      --
+-- given by that of `return V` (`valueScheme`).                 --
 --                                                              --
--- `PrincipalSchemeᵛ Δ V` is a principal type scheme of a       --
--- closed value in a program context, which has no variables to --
--- instantiate; that of `return V` gives it (`valueScheme`).    --
---                                                              --
--- Principal types with constraint sets follow Pretnar (LMCS    --
--- 2014); "residual constraint" is the term of OutsideIn(X)     --
--- (Vytiniotis et al., JFP 2011). The context is fixed up to    --
--- the instantiation of its variables, so the principal object  --
--- is a type scheme in the sense of Damas and Milner (1982),    --
--- not a principal typing in the sense of Wells (2002).         --
+-- Principal types with constraints follow Pretnar; the context --
+-- being fixed, the principal object is a type scheme (Damas    --
+-- and Milner), not a principal typing (Wells).                 --
 ------------------------------------------------------------------
 
 open import Data.List.Base using ([])
@@ -77,8 +66,8 @@ open import PolymorphicCalculus.Inference.Soundness    S
 open import PolymorphicCalculus.Inference.Completeness S
 open import PolymorphicCalculus.Inference.Solver       S
 
--- `Θ +ty +e` binds the unknown result type and effect; the context and
--- the term are weakened into that scope.
+-- `Θ +ty +e` binds the unknown result type and effect, the context and term
+-- weakened into it
 
 X̂ : (Θ : Scope) → OVType (Θ +ty +e)
 X̂ Θ = tvar (newᵗ {Θ})
@@ -138,8 +127,8 @@ record PrincipalSolution {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n)
                             ⊢C⦂ (X̂ Θ [ σ⁺ ⨟ˢ δ ]ᵛ) ‼ (t̂ Θ [ σ⁺ ⨟ˢ δ ]ᵉ)) ]
                     (⌊ D ⌋ᶜ ≡ M₊ M [ σ⁺ ⨟ˢ δ ]ᴿᶜ)
 
-    -- every typing of `M` factors through the principal one at each
-    -- closed instance satisfying its hypotheses
+    -- every typing of `M` factors through the principal one at each closed
+    -- instance satisfying its hypotheses
 
     factor : ∀ {Θ''} → (σ : Subst (Θ +ty +e) Θ'') → (Q : Hyps Θ'')
         → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
@@ -170,9 +159,8 @@ principalSolution sv {Θ} Γ M {Θ'} {σ} {Q} eq = mkPrincipalSolution
   where
     sat = Solver.solve-sound sv C[ Γ , M ] eq
 
--- A typing of `M` in `Γ` at a type and effect is one of `M₊ M` in
--- `Γ₊ Γ`, the result unknowns sent to them, and so satisfies the
--- constraint of `M`
+-- A typing of `M` in `Γ` at a type and effect is one of `M₊ M` in `Γ₊ Γ`, so
+-- satisfies the constraint of `M`
 
 typing₊ : ∀ {Θ n Θ''} {Γ : OCtx Θ n} {M : RawC Θ n} → (σ₀ : Subst Θ Θ'') → {Q : Hyps Θ''}
         → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
@@ -201,11 +189,8 @@ typing-sat {Θ} {Γ = Γ} {M} σ₀ {A₀ = A₀} D e =
   where
     D' = typing₊ σ₀ D e
 
--- A typing of `M` at an arbitrary type and effect is, at each closed
--- instance satisfying its hypotheses, an instance of the principal
--- one: the principal solution instantiates to it on the program's
--- variables, the principal type exactly, the principal effect up to
--- entailment.
+-- At each closed instance satisfying its hypotheses, a typing of `M` is an
+-- instance of the principal one: the type exactly, the effect up to entailment
 
 principal-inst : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalSolution Γ M)
                → ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q : Hyps Θ'')
@@ -246,14 +231,11 @@ principal-inst {Θ} {Γ = Γ} {M = M} p {Θ''} σ₀ Q {A₀} {ε₀} D e δ₀ 
     teq : t̂ Θ [ σ⁺ p ]ᵉ [ δ ]ᵉ ≡ ε₀ [ δ₀ ]ᵉ
     teq = trans ([⨟]ᵉ (t̂ Θ) (σ⁺ p) δ) ([≐]ᵉ tri (t̂ Θ))
 
--- A principal type scheme of `M` in `Γ`: an instantiation `σ̃` of the
--- program's variables, hypotheses `Q̃` and a type `X̃` over a scope
--- `Θ̃`, the scheme `∀ Θ̃. Q̃ ⇒ X̃`. Every instance entailing `Q̃` types
--- `M` (`instantiate`), and every typing of `M` factors through it at
--- each closed instance satisfying its hypotheses (`factor`): the
--- instantiations agree, the factoring instance satisfies `Q̃`, and
--- there `X̃` is a subtype of the typing's type. Entailment is by closed instances, as in HM(X)
--- (Odersky, Sulzmann and Wehr, TAPOS 1999).
+-- A principal type scheme `∀ Θ̃. Q̃ ⇒ X̃` of `M` in `Γ`, with an instantiation `σ̃`
+-- of the program's variables. Every instance entailing `Q̃` types `M`
+-- (`instantiate`); every typing factors through it at each closed instance,
+-- where `X̃` is a subtype of its type (`factor`). Entailment is by closed
+-- instances, as in HM(X).
 
 record PrincipalScheme {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
   constructor mkPrincipalScheme
@@ -295,10 +277,8 @@ record Typable {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set whe
     erases : ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
     sat    : Satisfiable Q₀
 
--- `M` is typable exactly when the hypotheses of its principal type
--- scheme are satisfiable: a satisfying instance instantiates the scheme,
--- no hypotheses entailing its hypotheses there, and a typing factors
--- through it.
+-- `M` is typable exactly when the hypotheses of its principal type scheme are
+-- satisfiable
 
 typable-⇔ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalScheme Γ M)
           → Typable Γ M ⇔ Satisfiable (Q̃ p)
@@ -326,9 +306,8 @@ data Inference {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set whe
   untypable : Inference Γ M
   stuck     : Inference Γ M
 
--- The outcome of a check of a closed program: a principal type scheme
--- with a closed instance of its hypotheses, a refutation, a principal
--- type scheme for which no instance was found, or stuck
+-- The outcome of a check of a closed program: a scheme with a closed instance,
+-- a refutation, a scheme with no instance found, or stuck
 
 data Check {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
   established   : (p : PrincipalScheme Γ M) → Satisfiable (Q̃ p) → Check Γ M
@@ -339,8 +318,7 @@ data Check {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
 ------------------------------------------------------------------------
 -- Principal type schemes of values in program contexts
 
--- A program context is closed: it is a context at every scope, kept by
--- every substitution
+-- A program context is closed: a context at every scope, kept by substitution
 
 ⌜⌝ᵖ-subst : ∀ {Θ Θ'} → (Δ : PCtx) → (σ : Subst Θ Θ') → ⌜ Δ ⌝ᵖ [ σ ]ᶜᵗˣ ≡ ⌜ Δ ⌝ᵖ
 ⌜⌝ᵖ-subst ∅ᵖ       σ = refl
@@ -351,12 +329,9 @@ data Check {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
 from∅-≐ : ∀ {Θ} → (σ σ' : Subst ∅ˢ Θ) → σ ≐ˢ σ'
 from∅-≐ σ σ' = mk≐ˢ (λ ()) (λ ()) (λ ())
 
--- A principal type scheme `∀ Θ̃. Q̃ ⇒ X̃` of a closed raw value `V` in a
--- program context `Δ`, which has no free variables to instantiate:
--- every instance entailing `Q̃` types `V` at `X̃` (`instantiate`), and
--- every typing of `V` has, at each closed instance satisfying its
--- hypotheses, a closed instance satisfying `Q̃` at which `X̃` is a
--- subtype of the typing's type (`factor`).
+-- A principal type scheme `∀ Θ̃. Q̃ ⇒ X̃` of a closed raw value `V` in a program
+-- context `Δ`: every instance entailing `Q̃` types `V` at `X̃`, and every typing
+-- has, at each closed instance, one satisfying `Q̃` where `X̃` is a subtype of its type
 
 record PrincipalSchemeᵛ (Δ : PCtx) (V : RawV ∅ˢ 0) : Set where
   constructor mkPrincipalSchemeᵛ
@@ -389,8 +364,7 @@ record Typableᵛ (Δ : PCtx) (V : RawV ∅ˢ 0) : Set where
     erases : ⌊ D₀ ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
     sat    : Satisfiable Q₀
 
--- `V` is typable in `Δ` exactly when the hypotheses of its principal
--- type scheme are satisfiable
+-- `V` is typable in `Δ` exactly when its scheme's hypotheses are satisfiable
 
 typableᵛ-⇔ : ∀ {Δ V} → (p : PrincipalSchemeᵛ Δ V) → Typableᵛ Δ V ⇔ Satisfiable (PrincipalSchemeᵛ.Q̃ p)
 typableᵛ-⇔ {Δ} {V} p = mk⇔ to from
@@ -443,8 +417,8 @@ returned (unbox R p N)             ()
 returned (box ρ V N)               ()
 returned (annᶜ C M)                ()
 
--- The principal type scheme of `return V` gives that of `V`: its
--- result type, which every typing of `V` returned bounds
+-- The principal type scheme of `return V` gives that of `V`: its result type,
+-- which every typing of `V` returned bounds
 
 resultᵛ : ∀ {Θ} → OCType Θ → OVType Θ
 resultᵛ (A ‼ ε) = A

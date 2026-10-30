@@ -2,9 +2,8 @@
 -- The outcome of solving                                       --
 --                                                              --
 -- A solution, a refutation, or `stuck`, of which nothing is    --
--- claimed. The concrete solver is stuck only at the close of a --
--- rigid scope, on an unknown local to it that `Localise`       --
--- assigns no value (`SolverImpl.Solve`).                       --
+-- claimed. The solver is stuck only at the close of a rigid    --
+-- scope, on a local unknown `Localise` assigns no value.       --
 ------------------------------------------------------------------
 
 module PolymorphicCalculus.Inference.Outcome where

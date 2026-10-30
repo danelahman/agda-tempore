@@ -3,12 +3,9 @@
 --                                                              --
 -- A derivation erasing to an instance of a raw term satisfies, --
 -- along that instance, the constraint generated from the term  --
--- (`completeV`, `completeC`). The expected type is an upper    --
--- bound: the derivation's type is a subtype of the             --
--- instantiated expected type, and its effect lies below the    --
--- instantiated expected effect. `charV` and `charC` combine    --
--- completeness with soundness into a characterisation of the   --
--- solutions.                                                   --
+-- (`completeV`, `completeC`), the expected type being an upper --
+-- bound. `charV` and `charC` combine this with soundness into  --
+-- a characterisation of the solutions.                         --
 ------------------------------------------------------------------
 
 open import Data.Fin using (zero)
@@ -52,10 +49,8 @@ open import PolymorphicCalculus.Inference.Constraints.Properties   S using (⊨-
 open import PolymorphicCalculus.Inference.Generate  S
 open import PolymorphicCalculus.Inference.Soundness S
 
--- The recursion is on the derivation; the raw term is read off by
--- inversion, `InvV`/`InvC`, which a subsumption passes on untouched.
--- Under a binder the inversion is re-established at the weakened
--- interpretation and the extended solution.
+-- By recursion on the derivation; the raw term is read off by inversion
+-- (`InvV`, `InvC`), which a subsumption passes on untouched.
 
 private
 
@@ -67,8 +62,8 @@ private
       → {M' : RawC Θ' n} → M [ τ ]ᴿᶜ ≡ M' → InvC τ₁ M M'
   reC p M e = invC M (trans ([≐]ᴿᶜ p M) e)
 
--- A use of a definition: its position is bound to the scheme of the
--- rule, and the instance of the rule solves the constraint
+-- A use of a definition: its position is bound to the rule's scheme, whose
+-- instance solves the constraint
 
 cmpUseDef : ∀ {Θ n Θ'} → (σ : Subst Θ Θ') → {Q : Hyps Θ'}
           → (Γ : OCtx Θ n) → (k : ℕ) → (A : OVType Θ) → (sc : Scheme)
@@ -77,8 +72,7 @@ cmpUseDef : ∀ {Θ n Θ'} → (σ : Subst Θ Θ') → {Q : Hyps Θ'}
           → σ ⊨[ Q ] useDefConstraint (lookupᵖ (defs Γ) k) A
 cmpUseDef σ Γ k A sc f δ h st rewrite ∈-lookupᵖ f = instᶜ-complete sc A δ st h
 
--- A resource value: the variable and the annotations of the raw value
--- are those of the judgement, which meets each annotation's atom
+-- A resource value: the raw variable and annotations are the judgement's
 
 cmpR : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : OCtx Θ' n}
          {ρ' ρ₀ ρ : RExp Θ'} {X₀ X : OVType Θ'} {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ₀}
@@ -116,10 +110,7 @@ mutual
        --------------------------
        → σ ⊨[ Q ] genVˢ ι Γ V A
 
-  -- variables
-  --
-  -- The raw index is `var-pos x`, at which the two lookups agree with the
-  -- type and the grade of `x` itself.
+  -- variables: at `var-pos x` the two lookups agree with `x`'s type and grade
 
   cmpV {σ = σ} {Q = Q} ι Γ A _ (var {A = A₁} {ρ = ρ₁} x ok) var ceq st =
     subst (λ z → Q ∣ z <:̂ᵛ A [ σ ]ᵛ) (sym lty) st , ok'
@@ -142,9 +133,8 @@ mutual
   cmpV {σ = σ} ι Γ A _ (usedef {k = k} {s = sc} f δ h refl) usedef ceq st =
     cmpUseDef σ Γ k A sc (subst (sc ∈ᵖ[ k ]_) (trans (cong defs ceq) (defs-subst Γ σ)) f) δ h st
 
-  -- base-typed constants, unit, booleans
-  --
-  -- None has a proper supertype, so the pin is recovered by inversion.
+  -- base-typed constants, unit, booleans: no proper supertype, so inversion
+  -- recovers the pin
 
   cmpV {σ = σ} ι Γ A _ (const B c) const ceq st = ⊨-≐ᵥ σ (Base B) A (sym (<:̂ᵛ-Baseˡ st))
   cmpV {σ = σ} ι Γ A _ ⋆           ⋆     ceq st = ⊨-≐ᵥ σ Unit A (sym (<:̂ᵛ-Unitˡ st))
@@ -157,10 +147,7 @@ mutual
   cmpV {σ = σ} ι Γ A _ (succ D) (succ {V = V} e) ceq st =
     ⊨-≐ᵥ σ Nat A (sym (<:̂ᵛ-Natˡ st)) , cmpV ι Γ Nat V D (invV V e) ceq Natₛ
 
-  -- pairing
-  --
-  -- A supertype of a product is a product, so the slack splits between
-  -- the two components.
+  -- pairing: a supertype of a product is a product; the slack splits
 
   cmpV {Θ = Θ} {σ = σ} ι Γ A _ (⦉_,_⦊ {A = A₁} {B = A₂} D₁ D₂)
        (⦉_,_⦊ {V = V₁} {W = V₂} e₁ e₂) ceq st
@@ -181,10 +168,8 @@ mutual
       ih₁ = cmpV ι↑ Γ↑ α₁ V₁ D₁ (reV pι V₁ e₁) (trans ceq (sym pΓ)) st₁
       ih₂ = cmpV ι↑ Γ↑ α₂ V₂ D₂ (reV pι V₂ e₂) (trans ceq (sym pΓ)) st₂
 
-  -- injections into a sum
-  --
-  -- A supertype of a sum is a sum; the injected summand carries its
-  -- slack, the other is the supertype's own.
+  -- injections into a sum: the supertype is a sum; the injected summand
+  -- carries the slack
 
   cmpV {Θ = Θ} {σ = σ} ι Γ A _ (inl D₁) (inl {V = V} e) ceq st
     with <:̂ᵛ-+ˡ st
@@ -216,10 +201,8 @@ mutual
       pA = co²ᵗ-v   σ B₁ B₂ A
       pι = co²ᵗ-ˢ   ι σ B₁ B₂
 
-  -- lists
-  --
-  -- A supertype of a list type is a list type; its element type is the
-  -- witness, the head carrying the slack and the tail its lifting.
+  -- lists: the supertype is a list type, the head carrying the slack and the
+  -- tail its lifting
 
   cmpV {Θ = Θ} {σ = σ} ι Γ A _ nil nil ceq st
     with <:̂ᵛ-Listˡ st
@@ -241,10 +224,7 @@ mutual
       pA = wk-,ᵗ-v   σ B A
       pι = wk-,ᵗ-ˢ   ι σ B
 
-  -- comparison
-  --
-  -- The operands' type is its own witness; the result is pinned as for
-  -- the boolean constants.
+  -- comparison: the operands' type is its own witness
 
   cmpV {Θ = Θ} {σ = σ} {Q = Q} ι Γ A _
        (cmp {A = A₁} ⋈ D₁ D₂ et) (cmp {V = V} {W = W} e₁ e₂) ceq st =
@@ -281,13 +261,8 @@ mutual
       ih = cmpC ι↑ (Γ↑ ∷ α₁) α₂ e₀ M D (reC pι M e)
                 (cong (_∷ A₁) (trans ceq (sym pΓ))) (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
 
-  -- handlers
-  --
-  -- The clause family is handled pointwise; only the clause context's
-  -- weakenings and the two ground-type embeddings need collapsing. The
-  -- handler's result type is its own witness, so clauses and return
-  -- clause are both typed at it and the slack sits in the one subtyping
-  -- atom.
+  -- handlers: pointwise over the clauses; the result type is its own witness,
+  -- the slack in the one subtyping atom
 
   cmpV {Θ = Θ} {Θ' = Θ'} {σ = σ} {Q = Q} ι Γ A _
        (handler {A = A₁} {B = A₂} {ε = ε₁} {ε' = ε₂} D₂ H)
@@ -343,10 +318,8 @@ mutual
                     (<:̂ᵛ-refl (wkᵉ-v A₂)))
              ⊩≾̂ₑ-refl
 
-  -- type annotation
-  --
-  -- The recorded annotation is the instance of the raw one: the body is
-  -- checked against it, and the slack sits in the subtyping atom.
+  -- type annotation: the recorded annotation is the raw one's instance, the
+  -- slack in the subtyping atom
 
   cmpV {σ = σ} {Q = Q} ι Γ A _ (annᵛ A₁ D) (annᵛ {V = V} {A = B} eV eB) ceq st =
     cmpV ι Γ (B [ ι ]ᵛ) V D (invV V eV) ceq
@@ -356,9 +329,7 @@ mutual
       pB : B [ ι ]ᵛ [ σ ]ᵛ ≡ A₁
       pB = trans ([⨟]ᵛ B ι σ) eB
 
-  -- subsumption
-  --
-  -- Invisible to erasure; its witness composes with the slack.
+  -- subsumption: invisible to erasure, its witness composed with the slack
 
   cmpV ι Γ A V (subV D p) inv ceq st = cmpV ι Γ A V D inv ceq (<:̂ᵛ-trans p st)
 
@@ -380,10 +351,8 @@ mutual
   cmpC ι Γ A t _ (return D) (return {V = V} e) ceq st le =
     cmpV ι Γ A V D (invV V e) ceq st , le
 
-  -- sequential composition
-  --
-  -- The witnesses make the continuation's context an instance of the
-  -- generated one on the nose: `∣ e₁ ∣̂ᵉ` instantiates to `∣ ε₁ ∣̂ᵉ`.
+  -- sequential composition: the continuation's context is the generated one's
+  -- instance on the nose (`∣ e₁ ∣̂ᵉ` instantiates to `∣ ε₁ ∣̂ᵉ`)
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
        (_⨟_ {A = A₁} {ε' = ε₂} {ε = ε₁} D₁ D₂) (_⨟_ {M = M₁} {N = M₂} e₁' e₂') ceq st le =
@@ -476,9 +445,7 @@ mutual
     cmpC ι Γ A t M₁ D₁ (invC M₁ e₁) ceq st le ,
     cmpC ι (Γ ∷ Nat) A t M₂ D₂ (invC M₂ e₂) (cong (_∷ Nat) ceq) st le
 
-  -- sum elimination
-  --
-  -- The summands are the scrutinee's own; the branches inherit the slack.
+  -- sum elimination: the scrutinee's summands; the branches inherit the slack
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
        (case+_`inl_`inr_ {A = A₁} {B = A₂} D₀ D₁ D₂)
@@ -507,10 +474,8 @@ mutual
       ih₂ = cmpC ι↑ (Γ↑ ∷ α₂) A↑ t↑ M₂ D₂ (reC pι M₂ e₂)
                  (cong (_∷ A₂) (trans ceq (sym pΓ))) st↑ le↑
 
-  -- primitive recursion on natural numbers
-  --
-  -- The result type and the effect are their own witnesses; the slack
-  -- sits in the two atoms against the expected type and effect.
+  -- primitive recursion on natural numbers: the result type and effect their
+  -- own witnesses, the slack in the atoms against the expected ones
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
        (recℕ {B = B} {ε = ε} D₀ D₁ D₂ it) (recℕ {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂)
@@ -536,10 +501,7 @@ mutual
                  (cong (λ G → (G ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B) (trans ceq (sym pΓ)))
                  (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
 
-  -- list elimination
-  --
-  -- The element type is the scrutinee's own; the branches inherit the
-  -- slack.
+  -- list elimination: the scrutinee's element type; the branches inherit the slack
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
        (caseL_`nil_`cons_ {A = A₁} D₀ D₁ D₂)
@@ -566,10 +528,7 @@ mutual
       ih₂ = cmpC ι↑ (Γ↑ ∷ α ∷ |List| α) A↑ t↑ M₂ D₂ (reC pι M₂ e₂)
                  (cong (λ G → G ∷ A₁ ∷ |List| A₁) (trans ceq (sym pΓ))) st↑ le↑
 
-  -- primitive recursion on lists
-  --
-  -- As for `recℕ`, with the scrutinee's element type as a further
-  -- witness.
+  -- primitive recursion on lists: as for `recℕ`, the element type a witness too
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
        (recL {A = A₁} {B = B} {ε = ε} D₀ D₁ D₂ it) (recL {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂)
@@ -645,10 +604,7 @@ mutual
                 (cong (_⟨ rconst (of-durʳ τ) ⟩) (trans ceq (sym pΓ)))
                 (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st) ⊩≾̂ₑ-refl
 
-  -- effect handling
-  --
-  -- The handled computation's type and the handler's result type are
-  -- their own witnesses; the slack sits in the subtyping atom.
+  -- effect handling: the two types their own witnesses, the slack in the atom
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
        (handle_`with_ {A = A₁} {B = A₂} {ε = ε₁} {ε' = ε₂} D₁ DV)
@@ -674,9 +630,7 @@ mutual
       ihV = cmpV ι↑ Γ↑ ((α ‼ e₁) ⇛ (γ ‼ e₂)) V DV (reV pι V eV) (trans ceq (sym pΓ))
                  (<:̂ᵛ-refl _)
 
-  -- unboxing a resource value
-  --
-  -- The witnesses are the payload and the grade the value reaches.
+  -- unboxing a resource value: the witnesses are the payload and the grade
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
        (unbox {X = A₂} {ρ = ρ₁} R ok D) (unbox {V = V} {N = N} eV eN)
@@ -709,10 +663,8 @@ mutual
                 (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st)
                 (subst (λ z → Q ⊩ _ ≾̂ₑ z) (sym pt) le)
 
-  -- boxing up a value
-  --
-  -- The grade is the annotation's instance; only the payload's type is a
-  -- witness.
+  -- boxing up a value: the grade is the annotation's instance, the payload's
+  -- type the only witness
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _ (box {A = A₁} ρ D₁ D₂)
        (box {ρ = ρ₀} {V = V} {N = N} eρ eV eN) ceq st le =
@@ -741,9 +693,7 @@ mutual
                  (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st)
                  (subst (λ z → Q ⊩ _ ≾̂ₑ z) (sym pt) le)
 
-  -- type annotation
-  --
-  -- As for values, the slack sits in the two atoms.
+  -- type annotation: as for values, the slack in the two atoms
 
   cmpC {σ = σ} {Q = Q} ι Γ A t _ {A₀ = A₀} {ε₀ = ε₀} (annᶜ _ D)
        (annᶜ {M = M} {A = B} {ε = u} eM eB eu) ceq st le =
@@ -759,15 +709,13 @@ mutual
       pu : u [ ι ]ᵉ [ σ ]ᵉ ≡ ε₀
       pu = trans ([⨟]ᵉ u ι σ) eu
 
-  -- subsumption
-  --
-  -- Invisible to erasure; its two witnesses compose with the slack.
+  -- subsumption: invisible to erasure, its two witnesses composed with the slack
 
   cmpC ι Γ A t M (subC D (p ‼ₛ q)) inv ceq st le =
     cmpC ι Γ A t M D inv ceq (<:̂ᵛ-trans p st) (transₑ q le)
 
--- Completeness: a derivation erasing to an instance of the raw term
--- satisfies the constraint generated from the term.
+-- Completeness: a derivation erasing to an instance of the raw term satisfies
+-- the generated constraint
 
 completeVˢ : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : OCtx Θ' n}
            → (ι : Subst Θ₀ Θ) → (Γ : OCtx Θ n) → (A : OVType Θ) → (V : RawV Θ₀ n)
@@ -824,8 +772,8 @@ completeC : ∀ {Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : OCtx Θ' 
 completeC {σ = σ} Γ A t M D e =
   completeCˢ idˢ Γ A t M D (trans e (sym ([≐]ᴿᶜ (⨟-idˡ σ) M)))
 
--- Satisfying the generated constraint is equivalent to erasing, from a
--- derivation, to the instance of the raw term.
+-- Satisfying the generated constraint is equivalent to erasure from a derivation
+-- to the instance of the raw term
 
 charV : ∀ {Θ n Θ'} → (Γ : OCtx Θ n) → (V : RawV Θ n) → (A : OVType Θ)
       → (σ : Subst Θ Θ') → (Q : Hyps Θ')
