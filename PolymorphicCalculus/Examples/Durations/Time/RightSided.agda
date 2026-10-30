@@ -1,9 +1,8 @@
 ------------------------------------------------------------------
 -- Durations at right-sided intervals of dense time             --
 --                                                              --
--- "At most `q` units": a box is a lease, claimable while the   --
--- elapsed time is at most its grade. Two half-unit delays fill --
--- a lease of one unit; a half and three quarters overrun it.   --
+-- A box is a lease: two half-unit delays fill a lease of one   --
+-- unit; a half and three quarters overrun it.                  --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)

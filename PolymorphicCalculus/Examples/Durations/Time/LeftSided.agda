@@ -1,9 +1,8 @@
 ------------------------------------------------------------------
 -- Durations at left-sided intervals of dense time              --
 --                                                              --
--- "At least `q` units": a box is a promise, claimable once the --
--- elapsed time is at least its grade. Two half-unit delays     --
--- meet a promise of one unit; a half and a quarter fall short. --
+-- A box is a promise: two half-unit delays meet a promise of   --
+-- one unit; a half and a quarter fall short.                   --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)

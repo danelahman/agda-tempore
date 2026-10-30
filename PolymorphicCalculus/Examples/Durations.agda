@@ -1,16 +1,9 @@
 --------------------------------------------------------------------
 -- Inference with durations that are not whole ticks              --
 --                                                                --
--- Programs exercising `delay τ` at an arbitrary duration monoid, --
--- each taking its durations as arguments. None has an            --
--- annotation. A box is claimed after two consecutive delays: the --
--- premise of `unbox` compares the grade elapsed over both with   --
--- the box's grade, and inference decides it on the grade's       --
--- constants. Where the box's grade is inferred, the scheme asks  --
--- for a box at the grade of the two delays together.             --
---                                                                --
--- The instances under `Durations/` check the verdicts and        --
--- schemes by `refl` at dense time, with rational durations.      --
+-- A box claimed after two delays of arbitrary durations, and a   --
+-- box grade inferred over them. The instances under              --
+-- `Durations/` check each answer by `refl` at dense time.        --
 --------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero)
@@ -70,8 +63,7 @@ closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 --
 --   claim-after ρ τ τ' = box[ρ] () as x in delay τ; delay τ'; unbox x as y in y
 --
--- The premise is `uᵣ · of-dur τ · of-dur τ' ≾ of-dur ρ`, decided on
--- the constants.
+-- `uᵣ · of-dur τ · of-dur τ' ≾ of-dur ρ`, decided on the constants.
 
 claim-after : 𝔻 → 𝔻 → 𝔻 → RawC ∅ˢ 0
 claim-after ρ τ τ' = box ⌜ ρ ⌝ʳ ⋆ (delay τ (delay τ' (unbox (var fzero) (return v₀))))
@@ -102,9 +94,7 @@ expected-claim-after τ = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ⌜ τ ⌝ᵉ
 --
 --   inferred-grade τ τ' b = delay τ; delay τ'; unbox b as y in y
 --
--- The claim asks for the grade of the two delays below the
--- argument's grade, and the argument sits contravariantly: the
--- principal scheme takes a box at that grade.
+-- The principal scheme takes a box at the grade of both delays.
 
 inferred-grade : 𝔻 → 𝔻 → RawC ∅ˢ 0
 inferred-grade τ τ' = return (lam (delay τ (delay τ' (unbox (var fzero) (return v₀)))))
