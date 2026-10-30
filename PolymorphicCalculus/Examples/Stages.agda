@@ -1,44 +1,13 @@
 ------------------------------------------------------------------
 -- Solver stages on hand-written constraints                    --
 --                                                              --
--- Each test applies one stage of the solver to a hypothesis    --
--- set, a pair of grade expressions or a residual written out   --
--- by hand, and checks its answer by `refl`. The stages tested: --
---   * `canonᴴ`: an ordering with a join on its left is one     --
---     ordering per alternative. No example program depends on  --
---     it.                                                      --
---   * `walkᵈ`: a var-rule disjunction entailed by another is   --
---     pruned (also `Reports`).                                 --
---   * `canonᵣ`/`canonₑ`: a product with the top is the top     --
---     where the unit is least (also `Reports`).                --
---   * `decideᵣ`/`decideₑ` at `derive`: products compare as     --
---     multisets where `·` commutes. No example program depends --
---     on it.                                                   --
---   * `decideᵣ`/`decideₑ` at `full`: chains through compound   --
---     sides, a chain from the left side to a vertex below the  --
---     right side, and factor edges, with the evidence of the   --
---     unit below a co-factor reached from a constant above it. --
---   * `checkClosed`: closed sides joined by a chain of         --
---     orderings are compared (also `Boxes`); a disjunction     --
---     whose grade is below the unit from the orderings left is --
---     dropped.                                                 --
---   * `collapse`: a cycle of unknowns local to a clause is one --
---     unknown; without it, the clause's close is stuck.        --
---   * `retry`: a deferred condition is refuted at a candidate  --
---     value the grade supplies for its rigid.                  --
---   * `stepᵉ`, lowering: the value `B* · L · C*`, and its      --
---     closure, at each shape of cycle, with and without lower  --
---     bounds; the annotated `wait` of the prototype is refuted --
---     at the value.                                            --
---                                                              --
--- The grades differ in the properties the stages read from     --
--- their hints, `u-least?` and `·-comm?`: right-sided intervals --
--- (both hold), timed traces under the allowance order (the     --
--- unit least, `·` not commutative), left-sided intervals with  --
--- an adjoined top (`·` commutative, the unit not least, the    --
--- top distinct from the unit), both sides of time for the      --
--- collapse, left-sided time for the retry, and right-sided     --
--- time and two-sided intervals for lowering.                   --
+-- Each test applies one solver stage to hand-written           --
+-- hypotheses, grade expressions or a residual, and checks its  --
+-- answer by `refl`: `canonᴴ`, `walkᵈ`, `canonᵣ`/`canonₑ`,      --
+-- `decideᵣ`/`decideₑ` at `derive` and `full`, `checkClosed`,   --
+-- `collapse`, `retry` and lowering (`stepᵉ`). The grades are   --
+-- chosen for the hint properties the stages read, `u-least?`   --
+-- and `·-comm?`.                                               --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; not; _∧_) renaming (Bool to 𝔹)
@@ -107,7 +76,7 @@ module Deadline where
   ⌜ n ⌝ᵉ = econst [0, ↑ n ]
 
   ----------------------------------------------------------------
-  -- `canonᴴ`: an ordering with a join on its left is one
+  -- `canonᴴ`, tested only here: a join on the left splits into one
   -- ordering per alternative; a join on the right is kept
 
   split-left-r :
@@ -131,8 +100,7 @@ module Deadline where
   prune-entailed = refl
 
   ----------------------------------------------------------------
-  -- `canonᵣ`/`canonₑ`: a product with the top among its
-  -- factors is the top, which absorbs the join
+  -- `canonᵣ`/`canonₑ`: a product with the top as a factor is the top
 
   top-product-r : canonᵣ (x ·̂ᵣ rconst ⊤ᵣ) ≡ rconst ⊤ᵣ
   top-product-r = refl
@@ -144,8 +112,8 @@ module Deadline where
   top-product-join = refl
 
   ----------------------------------------------------------------
-  -- `decideₑ`/`decideᵣ` at `derive`: products compare as multisets,
-  -- matching the factors crosswise
+  -- `decideₑ`/`decideᵣ` at `derive`, tested only here: products compare
+  -- as multisets, matching the factors crosswise
 
   -- c ≾ b, d ≾ a ⊩ c · d ≾ a · b
 
@@ -183,8 +151,8 @@ module Deadline where
   crossed-constant-∅ = refl
 
   ----------------------------------------------------------------
-  -- `checkClosed`: two closed sides joined by a chain of
-  -- orderings are compared, though no ordering of the set is closed
+  -- `checkClosed`: closed sides joined by a chain of orderings are
+  -- compared
 
   chain-late : checkClosed (hyps [] [] ((⌜ 3 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [] []) ≡ nothing
   chain-late = refl
@@ -198,8 +166,7 @@ module Deadline where
       ≡ just (hyps [] [] ((⌜ 2 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] [] [])
   chain-on-time = refl
 
-  -- a disjunction whose grade is below the unit from the orderings
-  -- left is dropped: x ≾ y, y ≾ 0 ⊩ x ≾ 0
+  -- a disjunct entailed by the orderings is dropped: x ≾ y, y ≾ 0 ⊩ x ≾ 0
 
   drop-following :
     checkClosed (hyps [] [] ((x , y) ∷ (y , ⌜ 0 ⌝ʳ) ∷ []) [] ((α , x) ∷ []) [])
@@ -297,8 +264,7 @@ module WithTop where
   ⌜_⌝ : ℕ → EExp Θ
   ⌜ n ⌝ = econst (timed [ n ,+∞⟩)
 
-  -- `decideₑ` at `derive`: ⊩ a · b ≾ ⊤ · a, the top matching `b`
-  -- after the factors are matched crosswise; the converse fails
+  -- `decideₑ` at `derive`: ⊩ a · b ≾ ⊤ · a crosswise; the converse fails
 
   top-crossed : is-just (decideₑ derive ∅ᴴ (a ·̂ₑ b) (⊤̂ ·̂ₑ a)) ≡ true
   top-crossed = refl
@@ -306,16 +272,13 @@ module WithTop where
   top-crossed-converse : is-just (decideₑ derive ∅ᴴ (⊤̂ ·̂ₑ a) (a ·̂ₑ b)) ≡ false
   top-crossed-converse = refl
 
-  -- `canonₑ`: with the unit not least, a product with the
-  -- top is kept
+  -- `canonₑ`: with the unit not least, a product with the top is kept
 
   top-product-kept : canonₑ (a ·̂ₑ ⊤̂) ≡ ⊤̂ ·̂ₑ a
   top-product-kept = refl
 
-  -- `decideₑ` at `full`: a factor edge from `a` into `a · b` needs
-  -- the unit below `b`, here reached from the constant unit `⌜0⌝`:
-  -- ⌜0⌝ ≾ b, a · b ≾ c ⊩ a ≾ c. The constant `⌜3⌝` lies below the
-  -- unit, so it gives no evidence, and neither does nothing.
+  -- `decideₑ` at `full`: a factor edge needs the unit below `b`:
+  -- ⌜0⌝ ≾ b, a · b ≾ c ⊩ a ≾ c; `⌜3⌝ ≾ b`, or nothing, is no evidence
 
   factor-evidence :
     is-just (decideₑ full (hyps [] [] [] ((⌜ 0 ⌝ , b) ∷ (a ·̂ₑ b , c) ∷ []) [] []) a c) ≡ true
@@ -336,18 +299,13 @@ module WithTop where
 ------------------------------------------------------------------
 -- `collapse`: a cycle of unknowns local to a clause
 --
--- A clause entered with the outer unknown `w` and the rigid `j`, its
--- local unknowns `m`, `t`, `e₂`, and the residual
+-- Outer unknown `w`, rigid `j`, local unknowns `m`, `t`, `e₂`:
 --
 --   R : m ≾ t, t ≾ m, m ≾ j, j ≾ m, m · e₂ ≾ t, w ≾ e₂
 --
--- The collapse sends `m` and `t` to `j`; lowering `e₂ := w` then
--- leaves `Rc`, `j · w ≾ j`, which the close defers. Without the
--- collapse, lowering `m := t ⊔ j` (or `t := m ⊔ m · e₂`) and
--- `e₂ := w` leaves `Rm` (or `Rt`), with a self-referential lower
--- bound `t · w ≾ t` (or `m · w ≾ m`), and the close is stuck. At
--- right-sided time no step moves the bound; at left-sided time it holds
--- at every instance and bounds nothing. Checked at both sides of time.
+-- Collapsing `m`, `t` to `j` leaves `j · w ≾ j`, deferred. Without it,
+-- lowering leaves a self-referential bound (`Rm`, `Rt`) and the close is
+-- stuck. Checked at both sides of time.
 
 module Cycle (S : LanguageSpec) (hints : SystemHints (LanguageSpec.Grades S))
              (opEnum : OpEnum S) where
@@ -404,9 +362,7 @@ module Cycle (S : LanguageSpec) (hints : SystemHints (LanguageSpec.Grades S))
   blocked : Fin (nE Φ) → Resid Φ → 𝔹
   blocked k R' = not (is-just (stepᵉ k R')) ∧ not (is-just (Find.raise? O R' (suc (suc (suc zero)))))
 
-  -- with the collapse the close goes through; without it, the close is
-  -- stuck, and so are `t` in `Rm` and `m` in `Rt` where their
-  -- self-referential bounds are not valid
+  -- with the collapse the close goes through; without it, it is stuck
 
   with-collapse : 𝔹
   with-collapse = collapses ∧ closes Rc
@@ -430,9 +386,8 @@ module Cycle-RightSided where
   without-collapse-blocked : blocked-without ≡ true
   without-collapse-blocked = refl
 
--- At left-sided time `t · w ≾ t` and `m · w ≾ m` hold at every
--- instance and bound nothing, so `t` and `m` are lowered; the close is
--- stuck all the same
+-- At left-sided time the self-referential bounds hold everywhere, so
+-- `t` and `m` are lowered; the close is stuck all the same
 
 module Cycle-LeftSided where
   open import PolymorphicCalculus.Examples.Specs using (module Time-LeftSided)
@@ -448,14 +403,9 @@ module Cycle-LeftSided where
   without-collapse-unblocked = refl
 
 ------------------------------------------------------------------
--- `retry`: a deferred condition refuted at a candidate the grade
--- supplies
---
--- At left-sided time, `∀ j. 3 ≾ 3 · j` holds only at `j = 0`, which is
--- both the unit and the top. The candidates for its constants are the
--- bounds `0, …, 7` (`left-sided-witnesses`); at `j = 1` the condition
--- fails, and the entry is refuted. The unit and the top alone leave it
--- undecided.
+-- `retry`: at left-sided time `∀ j. 3 ≾ 3 · j` holds at the unit (also
+-- the top) but fails at the candidate `j = 1` (`left-sided-witnesses`);
+-- the unit and the top alone leave it undecided.
 
 module Witness where
 
@@ -504,12 +454,10 @@ module Witness where
   unit-top-undecided = refl
 
 ------------------------------------------------------------------
--- `stepᵉ`, lowering: the value `V = B* · L · C*`, and its closure
--- `(B* · L · C*)⁺` where there is a cycle `v · v ≾ v`. `L` is the
--- join of the lower bounds, or the unit where there is none and it
--- is least; `B` and `C` are the joins of the left and right
--- multipliers of the cycles `b · v ≾ v` and `v · c ≾ v`, and
--- `X* · y` is `y ⊔ X⁺ · y`. Each instance is shown by its value.
+-- `stepᵉ`, lowering: `B* · L · C*`, closed under `⁺` given `v · v ≾ v`.
+-- `L` joins the lower bounds (the unit if none and it is least); `B`,
+-- `C` join the multipliers of `b · v ≾ v`, `v · c ≾ v`; `X* · y` is
+-- `y ⊔ X⁺ · y`.
 
 module Lowering where
 
@@ -577,9 +525,8 @@ module Lowering where
     left-stays : value ((⌜ 1 ⌝ , v) ∷ (⌜ 0 ⌝ ·̂ₑ v , v) ∷ []) ≡ just ⌜ 1 ⌝
     left-stays = refl
 
-    -- the annotated `wait`, `1 · ε ≾ ε ∧ 1 · ε ≾ 1`: no lower bound,
-    -- the unit least, so `u ⊔ 1⁺ · u`, the top; `1 · ⊤ ≾ 1` is then
-    -- closed and false
+    -- Tempore's annotated `wait`, `1 · ε ≾ ε ∧ 1 · ε ≾ 1`: the top, and
+    -- `1 · ⊤ ≾ 1` is false
 
     wait-value : value ((⌜ 1 ⌝ ·̂ₑ v , v) ∷ (⌜ 1 ⌝ ·̂ₑ v , ⌜ 1 ⌝) ∷ []) ≡ just (ûₑ ⊔̂ₑ ∞̂ ·̂ₑ ûₑ)
     wait-value = refl
@@ -624,8 +571,7 @@ module Lowering where
     open import PolymorphicCalculus.Inference.SolverImpl.Entail spec hints using (checkClosed)
     open Values spec hints
 
-    -- `1 ≾ v ∧ v · v ≾ v ∧ v ≾ [1,∞]`: `v = [1,1]⁺ = [1,∞]`, and the
-    -- upper bound holds there
+    -- `1 ≾ v ∧ v · v ≾ v ∧ v ≾ [1,∞]`: `v = [1,1]⁺ = [1,∞]`, within bound
 
     one : EExp Θ
     one = econst ⌈ 1 , ↑ 1 ⌉
@@ -640,8 +586,7 @@ module Lowering where
       checkClosed (hyps [] [] [] ((one-∞ , one-∞) ∷ []) [] []) ≡ just (hyps [] [] [] [] [] [])
     interval-holds = refl
 
-    -- left-linear and quadratic: `(L ⊔ D⁺ · L)⁺`, here its own
-    -- closure, `[1,∞]`
+    -- left-linear and quadratic: `(L ⊔ D⁺ · L)⁺ = [1,∞]`
 
     two : EExp Θ
     two = econst ⌈ 2 , ↑ 2 ⌉
