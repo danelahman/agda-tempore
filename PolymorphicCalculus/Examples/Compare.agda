@@ -1,17 +1,11 @@
 --------------------------------------------------------------------
 -- Inference on comparisons                                       --
 --                                                                --
--- Programs exercising the value `cmp ⋈ V W`, one rule for the    --
--- six relations of `Cmp`. Both operands are typed at one type,   --
--- which has to be eternal, and the comparison is a `Bool`.       --
--- Natural numbers, lists of them, pairs and sums of eternal      --
--- types compare; functions and boxes are never eternal and do    --
--- not. An unknown operand type is asked to be eternal at every   --
--- grade: unlike the variable rule's, the condition is not a      --
--- disjunction with a grade bound.                                --
---                                                                --
--- The instances under `Compare/` check the verdicts and schemes  --
--- by `refl` at right- and left-sided time.                       --
+-- `cmp ⋈ V W` compares two operands of one eternal type: natural --
+-- numbers, lists, pairs and sums compare, functions and boxes    --
+-- do not. An unknown operand type is asked to be eternal         --
+-- outright, with no grade disjunct. The instances under          --
+-- `Compare/` check each answer by `refl` at both time grades.    --
 --------------------------------------------------------------------
 
 open import Data.Unit using (tt)
@@ -77,7 +71,7 @@ closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢C⦂ C)
        → ⌊ D ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ → Typable [] M
 closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
--- Typable and handler-free: inference answers `typed`
+-- Typable and handler-free: `typed`
 
 typed-of : (M : RawC ∅ˢ 0) → Typable [] M → HandlerFreeᶜ M → IsTyped (infer [] M)
 typed-of M t h with infer [] M | infer-complete [] M t | infer-handlerFree [] M tt h
@@ -100,7 +94,7 @@ private
 --
 --   lt-nats = 2 < 3
 --
--- `Nat` is eternal; typed at every grade, with no type variable.
+-- Typed at every grade.
 
 lt-nats : RawC ∅ˢ 0
 lt-nats = return (cmp lt (numeral 2) (numeral 3))
@@ -160,10 +154,9 @@ ne-sums-typed = typed-of ne-sums (closed ne-sums-D refl) _
 expected-ne-sums : Scheme
 expected-ne-sums = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ ûₑ
 
--- Unannotated, the sum's other summands are unknowns: `inl 0` and
--- `inr true` meet at `Nat + Bool`.
---
 --   ne-sums' = inl 0 ≠ inr true
+--
+-- Unannotated, the summands meet at `Nat + Bool`.
 
 ne-sums' : RawC ∅ˢ 0
 ne-sums' = return (cmp ne (inl zero) (inr true))
@@ -176,8 +169,7 @@ expected-ne-sums' = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ ûₑ
 --
 --   equal x y = x = y
 --
--- The operands' types are unknowns with a common eternal supertype,
--- asked for at every grade.
+-- The operands get a common eternal supertype.
 
 equal : RawC ∅ˢ 0
 equal = return (lam (return (lam (return (cmp eq v₁ v₀)))))
@@ -222,8 +214,7 @@ eq-boxes = box ûᵣ ⋆ (box ûᵣ ⋆ (return (cmp eq v₁ v₀)))
 --
 --   later-lt = let n = 2 in delay 1; n < 3
 --
--- `n` is used under the lock `⟨ ⌜ 1 ⌝ʳ ⟩`, which `Nat` survives;
--- typed at every grade.
+-- `Nat` survives the lock; typed at every grade.
 
 later-lt : RawC ∅ˢ 0
 later-lt = return (numeral 2) ⨟ delay ⌜ 1 ⌝ (return (cmp lt v₀ (numeral 3)))
@@ -239,10 +230,9 @@ later-lt-typed = typed-of later-lt (closed later-lt-D refl) _
 expected-later-lt : Scheme
 expected-later-lt = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ ⌜ 1 ⌝ᵉ
 
--- A polymorphic comparison after a tick: the eternality the
--- comparison asks for is the one the variable rule needs.
---
 --   later-equal x y = delay 1; x = y
+--
+-- The eternality the comparison asks for meets the variable rule.
 
 later-equal : RawC ∅ˢ 0
 later-equal = return (lam (return (lam (delay ⌜ 1 ⌝ (return (cmp eq v₁ v₀))))))
@@ -257,8 +247,7 @@ expected-later-equal =
 --
 --   max x y = if x < y then y else x
 --
--- The comparison is the scrutinee itself; the result is a common
--- supertype of `x` and `y`.
+-- The result is a common supertype of `x` and `y`.
 
 max : RawC ∅ˢ 0
 max = return (lam (return (lam (if cmp lt v₁ v₀ `then return v₀ `else return v₁))))
