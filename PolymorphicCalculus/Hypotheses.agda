@@ -1,32 +1,15 @@
 ------------------------------------------------------------------
 -- Hypotheses and entailment of the polymorphic calculus        --
 --                                                              --
--- A hypothesis set `Hyps Θ` holds eternality atoms and         --
--- subtyping atoms on type variables, orderings between open    --
--- grade expressions, var-rule disjunctions and quantified      --
--- orderings (`Quantified`).                                    --
---                                                              --
--- Grade entailment (`_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`) is semantic          --
--- consequence in the grade system: an ordering holds by value  --
--- at every closed instance satisfying the grade part of the    --
--- set (`_⊨ᵍ_`). Convertibility (`_≡̂ᵣ_`, `_≡̂ₑ_`) is           --
--- entailment both ways from no hypotheses. The rules of grade  --
--- entailment are its properties: the laws of the grade         --
--- algebras and the zero-product laws, instances of quantified  --
--- hypotheses (`instᵣ`, `instₑ`: rule Inst) and of closed       --
--- orderings valid at no hypotheses (`factᵣ`, `factₑ`: rule     --
--- Truth).                                                      --
---                                                              --
--- Eternality, subtyping and the var-rule disjunction (`_⊩ᴱ_`,  --
--- `_∣_<:̂ᵛ_`, `VarOK`) are inductive over grade entailment. A  --
--- quantified ordering is entailed at fresh rigids (`_⊩ᴼ_[_]`:  --
--- rule Gen), which is semantic consequence (`⊩ᴼ⇒⊨ᴼ`, `⊨ᴼ⇒⊩ᴼ`). --
--- Entailment is stable under substitution along an instance    --
--- map (`_⊩ᴵ_[_]`).                                             --
---                                                              --
--- Judgements under a hypothesis set are the constrained types  --
--- of HM(X) (Odersky, Sulzmann and Wehr); the set plays the     --
--- role of the givens of OutsideIn(X).                          --
+-- A hypothesis set `Hyps Θ` holds eternality and subtyping     --
+-- atoms on type variables, grade orderings, var-rule           --
+-- disjunctions and quantified orderings. Grade entailment is   --
+-- semantic consequence: the ordering holds at every closed     --
+-- instance satisfying the set. Eternality, subtyping and       --
+-- `VarOK` are inductive over it; entailment is stable under    --
+-- instance maps (`_⊩ᴵ_[_]`). The sets are the constraints of   --
+-- HM(X) (Odersky, Sulzmann and Wehr) and the givens of         --
+-- OutsideIn(X).                                                --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_; map; _++_)
@@ -60,8 +43,6 @@ module PolymorphicCalculus.Hypotheses (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
--- The eternal base types
-
 open BaseTypes BTs using (EternalBaseType)
 
 open import PolymorphicCalculus.Syntax.Grades            S
@@ -69,18 +50,14 @@ open import PolymorphicCalculus.Syntax.Types             S
 open import PolymorphicCalculus.Syntax.GradeSubstitution S
 open import PolymorphicCalculus.Hypotheses.Quantified S public
 
--- Deciding a `Maybe` carries the trivial witness of `Is-just` along with it
+-- Decides `Is-just`, with its trivial witness
 
 Is-just? : ∀ {A : Set} → (m : Maybe A) → Maybe (Is-just m)
 Is-just? (just _) = just (Any-just tt)
 Is-just? nothing  = nothing
 
--- An equation identifying a `Maybe` as `just` carries the same witness
-
 ≡-Is-just : ∀ {A : Set} {m : Maybe A} {x : A} → m ≡ just x → Is-just m
 ≡-Is-just refl = Any-just tt
-
--- Hypothesis sets
 
 record Hyps (Θ : Scope) : Set where
   constructor hyps
@@ -93,8 +70,6 @@ record Hyps (Θ : Scope) : Set where
     qhyps : List (QOrd Θ)                     -- assumed quantified orderings
 
 open Hyps public
-
--- Empty hypothesis set
 
 ∅ᴴ : ∀ {Θ} → Hyps Θ
 ∅ᴴ = hyps [] [] [] [] [] []
@@ -113,8 +88,6 @@ open Unq public
 unq-qhyps : ∀ {Θ} {Q : Hyps Θ} {O} {X : Set} → Unq Q → O ∈ qhyps Q → X
 unq-qhyps {Q = Q} {O} u m with qhyps Q | no-qhyps u
 unq-qhyps u () | _ | refl
-
--- Componentwise action on a type-and-grade pair
 
 mapᵈ : ∀ {Θ Θ'} → (OVType Θ → OVType Θ') → (RExp Θ → RExp Θ')
      → OVType Θ × RExp Θ → OVType Θ' × RExp Θ'
@@ -159,8 +132,7 @@ wkᵉⁿ-H : ∀ {Θ} → (k : ℕ) → Hyps Θ → Hyps (Θ +eⁿ k)
 wkᵉⁿ-H zero    Q = Q
 wkᵉⁿ-H (suc k) Q = wkᵉⁿ-H k (wkᵉ-H Q)
 
--- Assumed subtyping between type variables, closed under reflexivity
--- and transitivity
+-- Assumed subtyping between type variables, reflexive and transitive
 
 infix 4 _⊩ᵗᵛ_≾_
 
@@ -184,9 +156,8 @@ record _⊨ᵒ_ {Ψ : Scope} (δ : Subst Ψ ∅ˢ) (o : Ords Ψ) : Set where
 
 open _⊨ᵒ_ public
 
--- A closed instance satisfies the grade part of a set when its
--- orderings hold by value and its quantified orderings at every instance
--- of their rigids
+-- The grade part of a set holds at a closed instance; quantified
+-- orderings at every instance of their rigids
 
 record _⊨ᵍ_ {Θ : Scope} (δ : Subst Θ ∅ˢ) (Q : Hyps Θ) : Set where
   constructor mk⊨ᵍ
@@ -200,8 +171,7 @@ open _⊨ᵍ_ public
 ⊨ᵍ-∅ : ∀ {Θ} {δ : Subst Θ ∅ˢ} → δ ⊨ᵍ ∅ᴴ
 ⊨ᵍ-∅ = mk⊨ᵍ (λ ()) (λ ()) (λ ())
 
--- Entailed ordering: the ordering holds by value at every closed
--- instance satisfying the grade part of the set
+-- Entailed ordering: it holds at every closed instance satisfying the set
 
 infix 4 _≡̂ᵣ_ _≡̂ₑ_ _⊩_≾̂ᵣ_ _⊩_≾̂ₑ_
 
@@ -237,8 +207,7 @@ record _≡̂ₑ_ {Θ : Scope} (ε ε' : EExp Θ) : Set where
 
 open _≡̂ₑ_ public
 
--- Convertible expressions have equivalent values at every closed
--- instance, and conversely
+-- Convertibility is equivalence of values at every closed instance
 
 ≡̂ᵣ-run : ∀ {Θ} {ρ ρ' : RExp Θ} → ρ ≡̂ᵣ ρ' → (δ : Subst Θ ∅ˢ)
        → valʳ (ρ [ δ ]ʳ) ≃ᵣ valʳ (ρ' [ δ ]ʳ)
@@ -256,8 +225,7 @@ open _≡̂ₑ_ public
        → ((δ : Subst Θ ∅ˢ) → valᵉ (ε [ δ ]ᵉ) ≃ₑ valᵉ (ε' [ δ ]ᵉ)) → ε ≡̂ₑ ε'
 ≡̂ₑ-val f = mk≡̂ₑ (semₑ λ δ _ → proj₁ (f δ)) (semₑ λ δ _ → proj₂ (f δ))
 
--- Properties of convertibility: a congruence, the monoid, join and
--- distributivity laws, the constants' arithmetic, `∣_∣̂ᵉ` a monoid morphism
+-- Convertibility is a congruence satisfying the grade-algebra laws
 
 module _ {Θ : Scope} where
 
@@ -373,9 +341,8 @@ module _ {Θ : Scope} where
   ≡̂ₑ-absorb : ∀ {ε ε' : EExp Θ} → ∅ᴴ ⊩ ε ≾̂ₑ ε' → ε ⊔̂ₑ ε' ≡̂ₑ ε'
   ≡̂ₑ-absorb p = ≡̂ₑ-val λ δ → ⊔ₑ-absorb (runₑ p δ ⊨ᵍ-∅)
 
--- Properties of entailed ordering: hypotheses, constants, convertibility,
--- preorder, monotonicity, joins, top, zero-product laws, quantified
--- hypotheses (rule Inst) and closed orderings (rule Truth)
+-- The rules of entailed ordering, among them Inst (`instᵣ`) and
+-- Truth (`factᵣ`)
 
 module _ {Θ : Scope} {Q : Hyps Θ} where
 
@@ -516,15 +483,11 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
                 (cong valᵉ (sym ([⨟]ᵉ ε' (from∅ ,ᵉⁿ es) δ)))
            (runₑ H ((from∅ ,ᵉⁿ es) ⨟ˢ δ) ⊨ᵍ-∅)
 
--- Entailed ordering is reflexive
-
 ⊩≾̂ᵣ-refl : ∀ {Θ} {Q : Hyps Θ} {ρ} → Q ⊩ ρ ≾̂ᵣ ρ
 ⊩≾̂ᵣ-refl = eqᵣ ≡̂ᵣ-refl
 
 ⊩≾̂ₑ-refl : ∀ {Θ} {Q : Hyps Θ} {ε} → Q ⊩ ε ≾̂ₑ ε
 ⊩≾̂ₑ-refl = eqₑ ≡̂ₑ-refl
-
--- Same expressions are convertible
 
 ≅ᵉ⇒≡̂ : ∀ {Θ} {ε ε' : EExp Θ} → ε ≅ᵉ ε' → ε ≡̂ₑ ε'
 ≅ᵉ⇒≡̂ evar≅       = ≡̂ₑ-refl
@@ -539,8 +502,7 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
 ≅ʳ⇒≡̂ (⊔≅ p q)    = ≡̂ᵣ-cong-⊔ (≅ʳ⇒≡̂ p) (≅ʳ⇒≡̂ q)
 ≅ʳ⇒≡̂ (∣∣≅ p)     = ≡̂ᵣ-map-cong (≅ᵉ⇒≡̂ p)
 
--- Idempotence of the join and absorption by the top: instances of
--- absorption, as in `Grades.Base`
+-- Idempotence of the join and absorption by the top, by absorption
 
 ≡̂ᵣ-idem-⊔ : ∀ {Θ} {ρ : RExp Θ} → ρ ⊔̂ᵣ ρ ≡̂ᵣ ρ
 ≡̂ᵣ-idem-⊔ = ≡̂ᵣ-absorb ⊩≾̂ᵣ-refl
@@ -554,8 +516,6 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
 ≡̂ₑ-⊤-⊔ : ∀ {Θ} {ε : EExp Θ} → ε ⊔̂ₑ econst ⊤ₑ ≡̂ₑ econst ⊤ₑ
 ≡̂ₑ-⊤-⊔ = ≡̂ₑ-absorb topₑ
 
--- Antisymmetry at the empty hypothesis set
-
 ≡̂ᵣ-antisym-∅ : ∀ {Θ} {ρ ρ' : RExp Θ}
              → ∅ᴴ ⊩ ρ ≾̂ᵣ ρ' → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ → ρ ≡̂ᵣ ρ'
 ≡̂ᵣ-antisym-∅ = mk≡̂ᵣ
@@ -563,8 +523,6 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
 ≡̂ₑ-antisym-∅ : ∀ {Θ} {ε ε' : EExp Θ}
              → ∅ᴴ ⊩ ε ≾̂ₑ ε' → ∅ᴴ ⊩ ε' ≾̂ₑ ε → ε ≡̂ₑ ε'
 ≡̂ₑ-antisym-∅ = mk≡̂ₑ
-
--- Associativity of the join
 
 ≡̂ᵣ-assoc-⊔ : ∀ {Θ} {ρ₁ ρ₂ ρ₃ : RExp Θ}
            → (ρ₁ ⊔̂ᵣ ρ₂) ⊔̂ᵣ ρ₃ ≡̂ᵣ ρ₁ ⊔̂ᵣ (ρ₂ ⊔̂ᵣ ρ₃)
@@ -574,8 +532,8 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
            → (ε₁ ⊔̂ₑ ε₂) ⊔̂ₑ ε₃ ≡̂ₑ ε₁ ⊔̂ₑ (ε₂ ⊔̂ₑ ε₃)
 ≡̂ₑ-assoc-⊔ = ≡̂ₑ-val λ _ → ⊔ₑ-assoc _ _ _
 
--- Eternality: a rule for each eternal type former, for the eternality
--- atoms of the set, and for transfer along an assumed subtyping
+-- Eternality: the eternal formers, the atoms of the set, and transfer
+-- along an assumed subtyping
 
 infix 4 _⊩ᴱ_
 
@@ -592,8 +550,7 @@ data _⊩ᴱ_ {Θ : Scope} (Q : Hyps Θ) : OVType Θ → Set where
   |List|ₑ : ∀ {A} → Q ⊩ᴱ A → Q ⊩ᴱ |List| A
   Emptyₑ  : Q ⊩ᴱ Empty
 
--- Convertibility of open types: the same shape, the grades related
--- by `_≡̂ᵣ_` and `_≡̂ₑ_`
+-- Convertibility of open types: the same shape, convertible grades
 
 infix  4  _≡̂ᵛ_ _≡̂ᶜ_
 infix  37 [_]≡̂_
@@ -688,9 +645,8 @@ data _≡̂ᶜ_ {Θ} where
 ⊩ᴱ-≡̂ (|List|≡̂ p) (|List|ₑ et) = |List|ₑ (⊩ᴱ-≡̂ p et)
 ⊩ᴱ-≡̂ Empty≡̂     et           = et
 
--- Shape-preserving subtyping of open types: a constructor per pair of
--- matching formers, grade slots entailed from `Q`, a type variable
--- related only by an assumed subtyping
+-- Shape-preserving subtyping of open types, grade slots entailed from
+-- `Q`; type variables related only by an assumed subtyping
 
 infix  4  _∣_<:̂ᵛ_ _∣_<:̂ᶜ_
 infix  37 [_]ₛ_
@@ -724,8 +680,6 @@ data _∣_<:̂ᶜ_ {Θ} Q where
   _‼ₛ_ : ∀ {A A' ε ε'} → Q ∣ A <:̂ᵛ A' → Q ⊩ ε ≾̂ₑ ε'
        → Q ∣ (A ‼ ε) <:̂ᶜ (A' ‼ ε')
 
--- Reflexivity
-
 <:̂ᵛ-refl : ∀ {Θ} {Q : Hyps Θ} → (A : OVType Θ) → Q ∣ A <:̂ᵛ A
 <:̂ᶜ-refl : ∀ {Θ} {Q : Hyps Θ} → (C : OCType Θ) → Q ∣ C <:̂ᶜ C
 
@@ -743,8 +697,6 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-refl ([ ρ ] A) = [ ⊩≾̂ᵣ-refl ]ₛ <:̂ᵛ-refl A
 
 <:̂ᶜ-refl (A ‼ ε) = <:̂ᵛ-refl A ‼ₛ ⊩≾̂ₑ-refl
-
--- Transitivity; the contravariant positions compose in the opposite order
 
 <:̂ᵛ-trans : ∀ {Θ} {Q : Hyps Θ} {A B C}
           → Q ∣ A <:̂ᵛ B → Q ∣ B <:̂ᵛ C → Q ∣ A <:̂ᵛ C
@@ -766,8 +718,6 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 
 <:̂ᶜ-trans (p ‼ₛ r) (q ‼ₛ s) = <:̂ᵛ-trans p q ‼ₛ transₑ r s
 
--- Convertible types are subtypes of each other
-
 ≡̂ᵛ-<:̂ : ∀ {Θ} {Q : Hyps Θ} {A A'} → A ≡̂ᵛ A' → Q ∣ A <:̂ᵛ A'
 ≡̂ᶜ-<:̂ : ∀ {Θ} {Q : Hyps Θ} {C C'} → C ≡̂ᶜ C' → Q ∣ C <:̂ᶜ C'
 
@@ -786,8 +736,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 
 ≡̂ᶜ-<:̂ (p ‼≡̂ e) = ≡̂ᵛ-<:̂ p ‼ₛ eqₑ e
 
--- Eternality lives on the shared skeleton, so it transfers along
--- `_∣_<:̂ᵛ_` in both directions.
+-- Eternality transfers along subtyping both ways
 
 <:̂ᵛ-eternalˡ : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ∣ A <:̂ᵛ B → Q ⊩ᴱ B → Q ⊩ᴱ A
 <:̂ᵛ-eternalˡ (tvarₛ p)    et          = et-subˡ p et
@@ -811,10 +760,8 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-eternalʳ (|List|ₛ p)  (|List|ₑ et) = |List|ₑ (<:̂ᵛ-eternalʳ p et)
 <:̂ᵛ-eternalʳ Emptyₛ       et          = et
 
--- The side condition of the `var` rule, `VarOK Q A ρ`: `A` is eternal or
--- `ρ ≾ u` at every instance. Met by eternality, by the ordering, or by a
--- `disj` hypothesis at a grade above; closed under subtyping, the
--- eternality-preserving formers and joins, up to lowering the grade
+-- Side condition of the `var` rule: `A` is eternal or `ρ ≾ u` at every
+-- instance, directly or by a `disj` hypothesis at a grade above
 
 data VarOK {Θ : Scope} (Q : Hyps Θ) : OVType Θ → RExp Θ → Set where
   et-ok     : ∀ {A ρ} → Q ⊩ᴱ A → VarOK Q A ρ
@@ -833,8 +780,6 @@ data VarOK {Θ : Scope} (Q : Hyps Θ) : OVType Θ → RExp Θ → Set where
 hyp-ok₀ : ∀ {Θ} {Q : Hyps Θ} {A ρ} → (A , ρ) ∈ disj Q → VarOK Q A ρ
 hyp-ok₀ m = hyp-ok m ⊩≾̂ᵣ-refl
 
--- The side condition is closed under lowering the grade
-
 VarOK-≾ : ∀ {Θ} {Q : Hyps Θ} {A ρ ρ'} → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A ρ' → VarOK Q A ρ
 VarOK-≾ q (et-ok et)      = et-ok et
 VarOK-≾ q (≾ᵘ-ok le)      = ≾ᵘ-ok (transᵣ q le)
@@ -846,8 +791,6 @@ VarOK-≾ q (ok₁ |+|-ok ok₂) = VarOK-≾ q ok₁ |+|-ok VarOK-≾ q ok₂
 VarOK-≾ q (|List|-ok ok)  = |List|-ok (VarOK-≾ q ok)
 VarOK-≾ q (⊔-ok q' ok₁ ok₂) = ⊔-ok (transᵣ q q') ok₁ ok₂
 
--- and so under equivalence of the type and lowering the grade
-
 VarOK-≃ : ∀ {Θ} {Q : Hyps Θ} {A A' ρ ρ'}
         → Q ∣ A <:̂ᵛ A' → Q ∣ A' <:̂ᵛ A → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A' ρ' → VarOK Q A ρ
 VarOK-≃ p _ q ok = subˡ-ok p (VarOK-≾ q ok)
@@ -857,8 +800,6 @@ VarOK-≃ p _ q ok = subˡ-ok p (VarOK-≾ q ok)
 hyp-ok-≡̂ : ∀ {Θ} {Q : Hyps Θ} {A A' ρ ρ'}
          → (A' , ρ') ∈ disj Q → A ≡̂ᵛ A' → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A ρ
 hyp-ok-≡̂ m p q = subˡ-ok (≡̂ᵛ-<:̂ p) (hyp-ok m q)
-
--- The side condition is closed under convertibility
 
 VarOK-≡̂ : ∀ {Θ} {Q : Hyps Θ} {A A' ρ ρ'}
         → A ≡̂ᵛ A' → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A' ρ' → VarOK Q A ρ
@@ -897,7 +838,7 @@ VarOK-split e (⊔-ok q ok₁ ok₂) with VarOK-split e ok₁ | VarOK-split e ok
 VarOK-∅ᴴ : ∀ {Θ} {A : OVType Θ} {ρ} → VarOK ∅ᴴ A ρ → (∅ᴴ ⊩ᴱ A) ⊎ (∅ᴴ ⊩ ρ ≾̂ᵣ ûᵣ)
 VarOK-∅ᴴ = VarOK-split refl
 
--- Inversion at the formers with no proper supertype
+-- Inversion of subtyping at each former
 
 <:̂ᵛ-Baseˡ : ∀ {Θ} {Q : Hyps Θ} {b A} → Q ∣ Base b <:̂ᵛ A → A ≡ Base b
 <:̂ᵛ-Baseˡ (Baseₛ refl) = refl
@@ -910,15 +851,11 @@ VarOK-∅ᴴ = VarOK-split refl
 <:̂ᵛ-Natˡ : ∀ {Θ} {Q : Hyps Θ} {A} → Q ∣ Nat <:̂ᵛ A → A ≡ Nat
 <:̂ᵛ-Natˡ Natₛ = refl
 
--- Inversion at a product: a supertype is a product, componentwise
-
 <:̂ᵛ-×ˡ : ∀ {Θ} {Q : Hyps Θ} {A₁ A₂ B}
        → Q ∣ A₁ |×| A₂ <:̂ᵛ B
        → Σ[ B₁ ∈ OVType Θ ] Σ[ B₂ ∈ OVType Θ ]
            (B ≡ B₁ |×| B₂) × (Q ∣ A₁ <:̂ᵛ B₁) × (Q ∣ A₂ <:̂ᵛ B₂)
 <:̂ᵛ-×ˡ (p |×|ₛ q) = _ , _ , refl , p , q
-
--- Inversion at a sum: a supertype is a sum, componentwise
 
 <:̂ᵛ-+ˡ : ∀ {Θ} {Q : Hyps Θ} {A₁ A₂ B}
        → Q ∣ A₁ |+| A₂ <:̂ᵛ B
@@ -926,14 +863,10 @@ VarOK-∅ᴴ = VarOK-split refl
            (B ≡ B₁ |+| B₂) × (Q ∣ A₁ <:̂ᵛ B₁) × (Q ∣ A₂ <:̂ᵛ B₂)
 <:̂ᵛ-+ˡ (p |+|ₛ q) = _ , _ , refl , p , q
 
--- Inversion at a list type: a supertype is a list type
-
 <:̂ᵛ-Listˡ : ∀ {Θ} {Q : Hyps Θ} {A B}
           → Q ∣ |List| A <:̂ᵛ B
           → Σ[ B₁ ∈ OVType Θ ] (B ≡ |List| B₁) × (Q ∣ A <:̂ᵛ B₁)
 <:̂ᵛ-Listˡ (|List|ₛ p) = _ , refl , p
-
--- Inversion at box type
 
 <:̂ᵛ-box-grade : ∀ {Θ} {Q : Hyps Θ} {ρ ρ' A A'}
               → Q ∣ ([ ρ ] A) <:̂ᵛ ([ ρ' ] A') → Q ⊩ ρ' ≾̂ᵣ ρ
@@ -943,24 +876,17 @@ VarOK-∅ᴴ = VarOK-split refl
              → Q ∣ ([ ρ ] A) <:̂ᵛ ([ ρ' ] A') → Q ∣ A <:̂ᵛ A'
 <:̂ᵛ-box-type ([ _ ]ₛ p) = p
 
--- A subtype of a box type is a box type
-
 <:̂ᵛ-boxʳ : ∀ {Θ} {Q : Hyps Θ} {A ρ B}
          → Q ∣ A <:̂ᵛ [ ρ ] B
          → Σ[ ρ₀ ∈ RExp Θ ] Σ[ A₀ ∈ OVType Θ ]
              (A ≡ [ ρ₀ ] A₀) × (Q ⊩ ρ ≾̂ᵣ ρ₀) × (Q ∣ A₀ <:̂ᵛ B)
 <:̂ᵛ-boxʳ ([ q ]ₛ p) = _ , _ , refl , q , p
 
--- A supertype of a box type is a box type
-
 <:̂ᵛ-boxˡ : ∀ {Θ} {Q : Hyps Θ} {ρ A B}
          → Q ∣ [ ρ ] A <:̂ᵛ B
          → Σ[ ρ₁ ∈ RExp Θ ] Σ[ B₁ ∈ OVType Θ ]
              (B ≡ [ ρ₁ ] B₁) × (Q ⊩ ρ₁ ≾̂ᵣ ρ) × (Q ∣ A <:̂ᵛ B₁)
 <:̂ᵛ-boxˡ ([ q ]ₛ p) = _ , _ , refl , q , p
-
--- Inversion at a handler type: a supertype is a handler type,
--- contravariantly in the handled computation type
 
 <:̂ᵛ-⇛ˡ : ∀ {Θ} {Q : Hyps Θ} {C D B}
        → Q ∣ C ⇛ D <:̂ᵛ B
@@ -1009,8 +935,8 @@ open _⊩ᵒ_[_] public
     ... | (ε₀ , ε₀') , m₀ , refl =
       subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([⨟]ᵉ ε₀ σ δ)) (sym ([⨟]ᵉ ε₀' σ δ)) (⊩oes h m₀)
 
--- A quantified ordering is entailed along a substitution when its
--- orderings are, at fresh rigids, by the hypotheses weakened to them
+-- Rule Gen: a quantified ordering is entailed when its body is, at
+-- fresh rigids
 
 _⊩ᴼ_[_] : ∀ {Θ Ξ} → Hyps Ξ → QOrd Θ → Subst Θ Ξ → Set
 Q ⊩ᴼ O [ δ ] = wkᵉⁿ-H (rigids O) Q ⊩ᵒ body O [ δ ↑ᵉⁿ rigids O ]
@@ -1028,8 +954,7 @@ Q ⊩ᴼ O [ δ ] = wkᵉⁿ-H (rigids O) Q ⊩ᵒ body O [ δ ↑ᵉⁿ rigids 
 ⊩ᴼ-subst⁻ {σ = σ} {δ} (qord l k o) h =
   ⊩ᵒ-subst⁻ (⊩ᵒ-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉⁿ σ δ k)) h)
 
--- `Q' ⊩ᴴ Q [ σ ]`: `Q'` entails every hypothesis of `Q` transported
--- along `σ`, a quantified one at fresh rigids (`_⊩ᴼ_[_]`)
+-- `Q'` entails each hypothesis of `Q` transported along `σ`
 
 infix 4 _⊩ᴴ_[_] _⊩ᴴ_ _⊩ᴵ_[_] _↪ᴴ_[_]
 
@@ -1045,13 +970,11 @@ record _⊩ᴴ_[_] {Θ Θ' : Scope} (Q' : Hyps Θ') (Q : Hyps Θ) (σ : Subst Θ
 
 open _⊩ᴴ_[_] public
 
--- Entailment between hypothesis sets over the same scope
-
 _⊩ᴴ_ : ∀ {Θ} → Hyps Θ → Hyps Θ → Set
 Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 
--- An instance map: `Q'` entails every hypothesis of `Q` transported
--- along `σ`, a quantified one at every instance of its rigids
+-- An instance map: as `_⊩ᴴ_[_]`, a quantified hypothesis at every
+-- instance of its rigids
 
 record _⊩ᴵ_[_] {Θ Θ' : Scope} (Q' : Hyps Θ') (Q : Hyps Θ) (σ : Subst Θ Θ') : Set where
   constructor mk⊩ᴵ
@@ -1066,8 +989,7 @@ record _⊩ᴵ_[_] {Θ Θ' : Scope} (Q' : Hyps Θ') (Q : Hyps Θ) (σ : Subst Θ
 
 open _⊩ᴵ_[_] public
 
--- An embedding: every hypothesis of `Q` transported along `σ` is one of
--- `Q'`
+-- An embedding: each hypothesis of `Q` transported along `σ` is in `Q'`
 
 record _↪ᴴ_[_] {Θ Θ' : Scope} (Q : Hyps Θ) (Q' : Hyps Θ') (σ : Subst Θ Θ') : Set where
   constructor mk↪ᴴ
@@ -1083,22 +1005,17 @@ record _↪ᴴ_[_] {Θ Θ' : Scope} (Q : Hyps Θ) (Q' : Hyps Θ') (σ : Subst Θ
 
 open _↪ᴴ_[_] public
 
--- Every set entails the empty one, along any substitution
-
 ⊩ᴴ-∅ : ∀ {Θ Θ'} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} → Q' ⊩ᴴ ∅ᴴ [ σ ]
 ⊩ᴴ-∅ = mk⊩ᴴ (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
 
 ⊩ᴵ-∅ : ∀ {Θ Θ'} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} → Q' ⊩ᴵ ∅ᴴ [ σ ]
 ⊩ᴵ-∅ = mk⊩ᴵ (λ ()) (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
 
--- The empty set at the fresh rigids
-
 wkᵉⁿ-∅ᴴ : ∀ {Θ} → (k : ℕ) → wkᵉⁿ-H {Θ} k ∅ᴴ ≡ ∅ᴴ
 wkᵉⁿ-∅ᴴ zero    = refl
 wkᵉⁿ-∅ᴴ (suc k) = wkᵉⁿ-∅ᴴ k
 
--- A closed expression, weakened into a scope and instantiated back out
--- of it, is itself
+-- A closed expression weakened into a scope and instantiated back
 
 private
 
@@ -1114,8 +1031,7 @@ private
   closed-backs δ []       = refl
   closed-backs δ (e ∷ es) = cong₂ _∷_ (closed-back δ e) (closed-backs δ es)
 
--- An instance map carries a closed instance satisfying the grade part
--- of its source back to one satisfying the grade part of its target
+-- Instance maps pull back closed instances satisfying the grade part
 
 ⊨ᵍ-⨟ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {δ : Subst Θ' ∅ˢ}
      → Q' ⊩ᴵ Q [ σ ] → δ ⊨ᵍ Q' → (σ ⨟ˢ δ) ⊨ᵍ Q
@@ -1156,8 +1072,7 @@ private
         e {ε} {ε'} mφ = subst₂ _≾ₑ_ (cong valᵉ (eqᵉ ε)) (cong valᵉ (eqᵉ ε'))
                                (runₑ (⊩oes d mφ) δ h)
 
--- Entailment and convertibility are stable under substitution along an
--- instance map
+-- Entailment and convertibility are stable under instance maps
 
 ⊩-substᴵᵣ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {ρ ρ' : RExp Θ}
           → Q' ⊩ᴵ Q [ σ ] → Q ⊩ ρ ≾̂ᵣ ρ' → Q' ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
@@ -1179,8 +1094,7 @@ private
          → ε ≡̂ₑ ε' → ε [ σ ]ᵉ ≡̂ₑ ε' [ σ ]ᵉ
 ≡̂ₑ-subst σ p = mk≡̂ₑ (⊩-substᴵₑ (⊩ᴵ-∅ {σ = σ}) (≡̂ₑ⇒≾ p)) (⊩-substᴵₑ (⊩ᴵ-∅ {σ = σ}) (≡̂ₑ⇒≿ p))
 
--- A type variable's image is an arbitrary open type, so an assumed
--- subtyping transports to a subtyping derivation at those images.
+-- and so are assumed subtyping, eternality and convertibility of types
 
 ⊩ᵗᵛ-substᴵ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {α β}
            → Q' ⊩ᴵ Q [ σ ] → Q ⊩ᵗᵛ α ≾ β → Q' ∣ sTy σ α <:̂ᵛ sTy σ β
@@ -1219,9 +1133,6 @@ private
 ≡̂ᵛ-subst σ ([ r ]≡̂ p)  = [ ≡̂ᵣ-subst σ r ]≡̂ ≡̂ᵛ-subst σ p
 
 ≡̂ᶜ-subst σ (p ‼≡̂ e) = ≡̂ᵛ-subst σ p ‼≡̂ ≡̂ₑ-subst σ e
-
--- Eternality moves between the images of a type under substitutions
--- related by subtyping at every type variable
 
 ⊩ᴱ-<:ˢ : ∀ {Θ Θ'} {Q : Hyps Θ'} {σ τ : Subst Θ Θ'}
        → (∀ α → Q ∣ sTy σ α <:̂ᵛ sTy τ α) → (A : OVType Θ)
@@ -1281,9 +1192,6 @@ VarOK-substᴵ h (⊔-ok q ok₁ ok₂)   =
                               (⊩-substᴵᵣ g (⊩ors h m)))
        (λ {ε} {ε'} m → subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε δ δ') ([⨟]ᵉ ε' δ δ')
                               (⊩-substᴵₑ g (⊩oes h m)))
-
--- An embedding is an instance map: a quantified hypothesis is
--- instantiated at its image
 
 ↪⇒⊩ᴵ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
      → Q ↪ᴴ Q' [ σ ] → Q' ⊩ᴵ Q [ σ ]
@@ -1455,8 +1363,7 @@ VarOK-substᴵ h (⊔-ok q ok₁ ok₂)   =
 ↪-↑ᵉⁿ zero    e = e
 ↪-↑ᵉⁿ (suc k) e = ↪-↑ᵉⁿ k (↪-↑ᵉ e)
 
--- Instantiating a fresh variable: the weakened set embeds along an
--- extension
+-- The weakened set embeds along an instantiation of the fresh variable
 
 ↪-,ᵉ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {τ : Subst Θ Θ'} {ε : EExp Θ'}
      → Q ↪ᴴ Q' [ τ ] → wkᵉ-H Q ↪ᴴ Q' [ τ ,ᵉ ε ]
@@ -1538,17 +1445,12 @@ VarOK-substᴵ h (⊔-ok q ok₁ ok₂)   =
 ⊩ᴵ-,ᵉⁿ h []       = h
 ⊩ᴵ-,ᵉⁿ h (ε ∷ es) = ⊩ᴵ-,ᵉⁿ (⊩ᴵ-,ᵉ h) es
 
--- Entailment gives an instance map: a quantified hypothesis, entailed
--- at fresh rigids, is instantiated there
-
 ⊩ᴴ⇒ᴵ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
      → Q' ⊩ᴴ Q [ σ ] → Q' ⊩ᴵ Q [ σ ]
 ⊩ᴴ⇒ᴵ {σ = σ} h =
   mk⊩ᴵ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (⊩disj h)
        (λ {O} m es → ⊩ᵒ-resp-≐ˢ (↑-inst σ (rigids O) es)
                                 (⊩ᵒ-⨟ᴵ (⊩ᴵ-,ᵉⁿ ⊩ᴵ-refl es) (⊩qhyps h m)))
-
--- Substitution along entailment
 
 ⊩-substᵣ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {ρ ρ' : RExp Θ}
          → Q' ⊩ᴴ Q [ σ ] → Q ⊩ ρ ≾̂ᵣ ρ' → Q' ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
@@ -1584,9 +1486,6 @@ VarOK-subst h = VarOK-substᴵ (⊩ᴴ⇒ᴵ h)
      → Q' ⊩ᴴ Q [ δ' ] → Q ⊩ᵒ o [ δ ] → Q' ⊩ᵒ o [ δ ⨟ˢ δ' ]
 ⊩ᵒ-⨟ g = ⊩ᵒ-⨟ᴵ (⊩ᴴ⇒ᴵ g)
 
--- A hypothesis is entailed: a quantified one by its instance at the
--- fresh rigids
-
 ⊩ᴼ-hyp : ∀ {Θ Θ'} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} → (O : QOrd Θ)
        → O [ σ ]ᵠ ∈ qhyps Q' → Q' ⊩ᴼ O [ σ ]
 ⊩ᴼ-hyp {Θ' = Θ'} {Q'} {σ} O m = mk⊩ᵒ r e
@@ -1615,8 +1514,6 @@ VarOK-subst h = VarOK-substᴵ (⊩ᴴ⇒ᴵ h)
              (trans ([⨟]ᵉ ε' ((σ ⨟ˢ wkˢⁿ k) ↑ᵉⁿ k) (idˢ ,ᵉⁿ varsⁿ k)) ([≐]ᵉ eq ε'))
              (instₑ m' (∈-map⁺ (mapᵖ (_[ (σ ⨟ˢ wkˢⁿ k) ↑ᵉⁿ k ]ᵉ)) mφ) (varsⁿ k))
 
--- An embedding gives entailment
-
 ↪⇒⊩ᴴ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
      → Q ↪ᴴ Q' [ σ ] → Q' ⊩ᴴ Q [ σ ]
 ↪⇒⊩ᴴ e = let h = ↪⇒⊩ᴵ e in
@@ -1625,8 +1522,6 @@ VarOK-subst h = VarOK-substᴵ (⊩ᴴ⇒ᴵ h)
 
 ⊩ᴴ-refl : ∀ {Θ} {Q : Hyps Θ} → Q ⊩ᴴ Q [ idˢ ]
 ⊩ᴴ-refl = ↪⇒⊩ᴴ ↪-refl
-
--- What the empty set entails, every set entails
 
 ∅⇒≾ᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → ∅ᴴ ⊩ ρ ≾̂ᵣ ρ' → Q ⊩ ρ ≾̂ᵣ ρ'
 ∅⇒≾ᵣ {Q = Q} {ρ} {ρ'} p =
@@ -1650,8 +1545,6 @@ VarOK-subst h = VarOK-substᴵ (⊩ᴴ⇒ᴵ h)
 ∅⇒VarOK : ∀ {Θ} {Q : Hyps Θ} {A ρ} → VarOK ∅ᴴ A ρ → VarOK Q A ρ
 ∅⇒VarOK {Q = Q} {A} {ρ} ok =
   subst₂ (VarOK Q) ([id]ᵛ A) ([id]ʳ ρ) (VarOK-substᴵ (⊩ᴵ-∅ {σ = idˢ}) ok)
-
--- A quantified hypothesis of the set itself
 
 ⊩ᴼ-hyp⁼ : ∀ {Θ} {Q : Hyps Θ} {O : QOrd Θ} → O ∈ qhyps Q → Q ⊩ᴼ O [ idˢ ]
 ⊩ᴼ-hyp⁼ {Q = Q} {O} m = ⊩ᴼ-hyp O (subst (_∈ qhyps Q) (sym ([id]ᵠ O)) m)
@@ -1689,8 +1582,6 @@ mk⊩ᴴ⁼ {Q' = Q'} et sb oR oE dj qh =
        → ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK Q' A ρ
 ⊩disj⁼ {Q' = Q'} h {A} {ρ} m = subst₂ (VarOK Q') ([id]ᵛ A) ([id]ʳ ρ) (⊩disj h m)
 
--- What a set entails, a set entailing it entails
-
 ⊩ᴴ-≾ᵣ : ∀ {Θ} {Q Q' : Hyps Θ} {ρ ρ'} → Q' ⊩ᴴ Q → Q ⊩ ρ ≾̂ᵣ ρ' → Q' ⊩ ρ ≾̂ᵣ ρ'
 ⊩ᴴ-≾ᵣ {Q' = Q'} {ρ} {ρ'} h p =
   subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y) ([id]ʳ ρ) ([id]ʳ ρ') (⊩-substᵣ h p)
@@ -1722,8 +1613,7 @@ open _⊆ᴴ_ public
                 (λ m → hypᵣ (⊆ordᵣ s m)) (λ m → hypₑ (⊆ordₑ s m))
                 (λ m → hyp-ok₀ (⊆disj s m)) (λ m → ⊩ᴼ-hyp⁼ (⊆qhyps s m))
 
--- Weakening a hypothesis set is the action of the weakening substitution,
--- so entailment is stable under it.
+-- Weakening a set is the action of the weakening substitution
 
 ⊩ᴴ-wkᵗ : ∀ {Θ} {Q : Hyps Θ} → wkᵗ-H Q ⊩ᴴ Q [ wkˢᵗ ]
 ⊩ᴴ-wkᵗ = ↪⇒⊩ᴴ ↪-wkᵗ
@@ -1733,9 +1623,6 @@ open _⊆ᴴ_ public
 
 ⊩ᴴ-wkᵉ : ∀ {Θ} {Q : Hyps Θ} → wkᵉ-H Q ⊩ᴴ Q [ wkˢᵉ ]
 ⊩ᴴ-wkᵉ = ↪⇒⊩ᴴ ↪-wkᵉ
-
--- A weakened set, its fresh variable instantiated, is entailed by the
--- set itself
 
 ⊩ᴴ-wkᵉ-,ᵉ : ∀ {Θ} {Q : Hyps Θ} → (ε : EExp Θ) → Q ⊩ᴴ wkᵉ-H Q [ idˢ ,ᵉ ε ]
 ⊩ᴴ-wkᵉ-,ᵉ ε = ↪⇒⊩ᴴ (↪-,ᵉ ↪-refl)
@@ -1797,8 +1684,6 @@ VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
         → Q ∣ A <:̂ᵛ A' → wkᵉ-H Q ∣ wkᵉ-v A <:̂ᵛ wkᵉ-v A'
 <:̂ᵛ-wkᵉ {Q = Q} {A} {A'} p =
   subst₂ (wkᵉ-H Q ∣_<:̂ᵛ_) (wkˢᵉ-v A) (wkˢᵉ-v A') (<:̂ᵛ-substᴵ (↪⇒⊩ᴵ ↪-wkᵉ) p)
-
--- Entailment is stable under lifting over an effect-grade variable
 
 ⊩ᴴ-↑ᵉ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {δ : Subst Θ Θ'}
       → Q' ⊩ᴴ Q [ δ ] → wkᵉ-H Q' ⊩ᴴ (wkᵉ-H Q) [ δ ↑ᵉ ]
@@ -1926,8 +1811,6 @@ mono-substᵣ p (ρ ·̂ᵣ ρ')  = monoᵣ (mono-substᵣ p ρ) (mono-substᵣ 
 mono-substᵣ p (ρ ⊔̂ᵣ ρ')  = ⊩-⊔̂ᵣ-mono (mono-substᵣ p ρ) (mono-substᵣ p ρ')
 mono-substᵣ p ∣ ε ∣̂ᵉ     = map-mono (mono-substₑ p ε)
 
--- Composing with the identity changes no image
-
 ≾ˢ-idˡ : ∀ {Θ Θ'} {Q : Hyps Θ'} {σ τ : Subst Θ Θ'} → Q ⊩ (σ ⨟ˢ idˢ) ≾ˢ τ → Q ⊩ σ ≾ˢ τ
 ≾ˢ-idˡ {Q = Q} {σ} {τ} p =
   mk≾ˢ (λ i → subst (λ x → Q ⊩ x ≾̂ᵣ sR τ i) ([id]ʳ (sR σ i)) (≾ˢʳ p i))
@@ -1938,8 +1821,7 @@ mono-substᵣ p ∣ ε ∣̂ᵉ     = map-mono (mono-substₑ p ε)
   mk≾ˢ (λ i → subst (λ x → Q ⊩ sR τ i ≾̂ᵣ x) ([id]ʳ (sR σ i)) (≾ˢʳ p i))
        (λ i → subst (λ x → Q ⊩ sE τ i ≾̂ₑ x) ([id]ᵉ (sE σ i)) (≾ˢᵉ p i))
 
--- An assignment below (above) the unknown's own value lowers (raises)
--- the substitution pointwise
+-- Assigning below (above) the unknown's value lowers (raises) the substitution
 
 updᵉ-below : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (k : EVar Ψ) → (b : EExp Ψ) → (τ : Subst Ψ Ψ')
            → Q ⊩ b [ τ ]ᵉ ≾̂ₑ sE τ k → Q ⊩ (updᵉ k b ⨟ˢ τ) ≾ˢ τ
@@ -2007,8 +1889,6 @@ Q ⊩ ε ≡̂ₑ ε' = (Q ⊩ ε ≾̂ₑ ε') × (Q ⊩ ε' ≾̂ₑ ε)
            → Q ⊩ ε ≡̂ₑ ε' → Q ⊩ ε' ≡̂ₑ ε'' → Q ⊩ ε ≡̂ₑ ε''
 ⊩≡̂ₑ-trans (p , q) (p' , q') = transₑ p p' , transₑ q' q
 
--- Congruence for the formers
-
 ⊩≡̂ᵣ-cong : ∀ {Θ} {Q : Hyps Θ} {ρ₁ ρ₁' ρ₂ ρ₂'}
           → Q ⊩ ρ₁ ≡̂ᵣ ρ₁' → Q ⊩ ρ₂ ≡̂ᵣ ρ₂' → Q ⊩ ρ₁ ·̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ·̂ᵣ ρ₂'
 ⊩≡̂ᵣ-cong (p , q) (p' , q') = monoᵣ p p' , monoᵣ q q'
@@ -2029,15 +1909,11 @@ Q ⊩ ε ≡̂ₑ ε' = (Q ⊩ ε ≾̂ₑ ε') × (Q ⊩ ε' ≾̂ₑ ε)
             → Q ⊩ ε₁ ≡̂ₑ ε₁' → Q ⊩ ε₂ ≡̂ₑ ε₂' → Q ⊩ ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₁' ⊔̂ₑ ε₂'
 ⊩≡̂ₑ-cong-⊔ (p , q) (p' , q') = ⊩-⊔̂ₑ-mono p p' , ⊩-⊔̂ₑ-mono q q'
 
--- Convertibility is equality under any hypotheses
-
 ⊩≡̂ᵣ-reflexive : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → ρ ≡̂ᵣ ρ' → Q ⊩ ρ ≡̂ᵣ ρ'
 ⊩≡̂ᵣ-reflexive p = eqᵣ p , eqᵣ (≡̂ᵣ-sym p)
 
 ⊩≡̂ₑ-reflexive : ∀ {Θ} {Q : Hyps Θ} {ε ε'} → ε ≡̂ₑ ε' → Q ⊩ ε ≡̂ₑ ε'
 ⊩≡̂ₑ-reflexive p = eqₑ p , eqₑ (≡̂ₑ-sym p)
-
--- Under the empty set, equality is convertibility
 
 ⊩≡̂ᵣ-∅ : ∀ {Θ} {ρ ρ' : RExp Θ} → ∅ᴴ ⊩ ρ ≡̂ᵣ ρ' → ρ ≡̂ᵣ ρ'
 ⊩≡̂ᵣ-∅ (p , q) = ≡̂ᵣ-antisym-∅ p q
@@ -2045,8 +1921,8 @@ Q ⊩ ε ≡̂ₑ ε' = (Q ⊩ ε ≾̂ₑ ε') × (Q ⊩ ε' ≾̂ₑ ε)
 ⊩≡̂ₑ-∅ : ∀ {Θ} {ε ε' : EExp Θ} → ∅ᴴ ⊩ ε ≡̂ₑ ε' → ε ≡̂ₑ ε'
 ⊩≡̂ₑ-∅ (p , q) = ≡̂ₑ-antisym-∅ p q
 
--- Rule Gen is semantic consequence: a set entails a quantified ordering
--- along `σ` exactly when it holds at every instance of its rigids
+-- Rule Gen is semantic consequence: entailed at fresh rigids iff true
+-- at every instance of them
 
 infix 4 _⊨ᴼ_[_]
 
@@ -2088,8 +1964,7 @@ _⊨ᴼ_[_] {Ξ = Ξ} Q O σ = (δ : Subst Ξ ∅ˢ) → δ ⊨ᵍ Q
   where
     k = rigids O
 
-    -- a closed instance of the scope under the rigids is one of the
-    -- scope, extended by one of the rigids
+    -- the part of a closed instance outside the rigids
     δ₀ : Subst (Ξ +eⁿ k) ∅ˢ → Subst Ξ ∅ˢ
     δ₀ δ = wkˢⁿ k ⨟ˢ δ
 

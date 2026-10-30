@@ -38,8 +38,7 @@ open import PolymorphicCalculus.Syntax.GradeSubstitution S
 
 infixl 30 _+eⁿ_ _↑ᵉⁿ_
 
--- The rigids are bound outermost first: the scope extended by `k + 1`
--- rigids is the scope extended by one, then by `k`.
+-- The rigids are bound outermost first
 
 _+eⁿ_ : Scope → ℕ → Scope
 Θ +eⁿ zero  = Θ
@@ -114,8 +113,7 @@ wkˢⁿ-varsⁿ {Θ} (suc k) =
     step = ≐ˢ-trans (≐ˢ-sym (,ᵉ-⨟ (wkˢᵉ {Θ}) (evar (newᵉ {Θ})) (wkˢⁿ k)))
                     (≐ˢ-trans (⨟-congˡ (wkˢᵉ-,ᵉ-new {Θ}) (wkˢⁿ {Θ +e} k)) (⨟-idˡ (wkˢⁿ {Θ +e} k)))
 
--- A substitution out of the scope under the rigids is its restriction
--- to the scope, extended by the images of the rigids
+-- A substitution under the rigids: its restriction, then their images
 
 wkˢⁿ-split : ∀ {Θ Ψ} → (k : ℕ) → (δ : Subst (Θ +eⁿ k) Ψ)
            → δ ≐ˢ ((wkˢⁿ k ⨟ˢ δ) ,ᵉⁿ mapᵛ (_[ δ ]ᵉ) (varsⁿ k))
@@ -133,16 +131,11 @@ wkˢⁿ-↑ᵉⁿ (suc k) σ =
   (≐ˢ-trans (⨟-congˡ (wkˢᵉ-↑ᵉ σ) (wkˢⁿ k))
             (⨟-assoc σ wkˢᵉ (wkˢⁿ k)))))
 
--- The substitution out of the empty scope
-
 from∅ : ∀ {Θ} → Subst ∅ˢ Θ
 from∅ = sub (λ ()) (λ ()) (λ ())
 
 from∅-⨟ : ∀ {Θ Θ'} → (δ : Subst Θ Θ') → (from∅ ⨟ˢ δ) ≐ˢ from∅
 from∅-⨟ δ = mk≐ˢ (λ ()) (λ ()) (λ ())
-
--- Instantiating the rigids of an image, at the rigids themselves, out
--- of the empty scope
 
 ↑-inst : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (k : ℕ) → (es : Vec (EExp Θ') k)
        → ((σ ↑ᵉⁿ k) ⨟ˢ (idˢ ,ᵉⁿ es)) ≐ˢ (σ ,ᵉⁿ es)
@@ -165,8 +158,6 @@ fact-⨟ es σ = ≐ˢ-trans (,ᵉⁿ-⨟ from∅ es σ) (≐ˢ-,ᵉⁿ (from∅
 
 ------------------------------------------------------------------------
 -- Grade orderings
-
--- Pairwise action of a function on a homogeneous pair
 
 mapᵖ : ∀ {A B : Set} → (A → B) → A × A → B × B
 mapᵖ f (x , y) = f x , f y

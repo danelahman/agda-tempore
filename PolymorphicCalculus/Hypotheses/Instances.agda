@@ -1,20 +1,15 @@
 ------------------------------------------------------------------
 -- Closed instances of the polymorphic calculus                 --
 --                                                              --
--- A closed instance of a scope `Θ` is a substitution `δ :      --
--- Subst Θ ∅ˢ`. It satisfies hypotheses (`_⊨_`) when each holds --
--- at it, a quantified ordering at every grade for its rigids;  --
--- a satisfying instance is one at which no hypotheses entail   --
--- them (`⊨⇒⊩ᴴ`, `⊩ᴴ⇒⊨`), so grade entailment holds there by    --
--- definition (`sound-≾ᵣ⁰`, `sound-≾ₑ⁰`). Semantic entailment   --
--- `Q ⊨ᴴ Q'` holds when every closed instance of `Q` is one of  --
--- `Q'`.                                                        --
---                                                              --
--- A closed grade expression has a value in the carrier;        --
--- entailment between closed expressions from no hypotheses is  --
--- the carrier's ordering of their values, and convertibility   --
--- is equivalence of values. Closed subtyping, eternality and   --
--- the var-rule disjunction are decidable.                      --
+-- A closed instance of a scope is a substitution into the      --
+-- empty scope. It satisfies a set (`_⊨_`) when each hypothesis --
+-- holds at it, a quantified one at every instance of its       --
+-- rigids: exactly when no hypotheses entail the set there      --
+-- (`⊨⇒⊩ᴴ`, `⊩ᴴ⇒⊨`). Semantic entailment `Q ⊨ᴴ Q'`: every       --
+-- closed instance of `Q` is one of `Q'`. Between closed        --
+-- expressions, entailment is the carrier's ordering of values; --
+-- closed subtyping, eternality and the var-rule disjunction    --
+-- are decidable.                                               --
 ------------------------------------------------------------------
 
 open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)
@@ -71,8 +66,7 @@ infix 4 _⊩_∣_[_] _⊩ᴼˢ_[_] _⊨_∣_
 _⊩_∣_[_] : ∀ {Θ Ξ} → Hyps Ξ → Hyps Θ → QOrds Θ → Subst Θ Ξ → Set
 Q' ⊩ Q ∣ R [ δ ] = (Q' ⊩ᴴ Q [ δ ]) × (Q' ⊩ᴼˢ R [ δ ])
 
--- A set with quantified hypotheses added is entailed exactly when the
--- set and each of them are
+-- Entailing `Q ++ᵠ R` is entailing `Q` and each of `R`
 
 ++ᵠ⇒ : ∀ {Θ Ξ} {Q' : Hyps Ξ} {Q : Hyps Θ} {R : List (QOrd Θ)} {δ : Subst Θ Ξ}
    → Q' ⊩ᴴ Q ++ᵠ R [ δ ] → Q' ⊩ Q ∣ R [ δ ]
@@ -87,8 +81,7 @@ Q' ⊩ Q ∣ R [ δ ] = (Q' ⊩ᴴ Q [ δ ]) × (Q' ⊩ᴼˢ R [ δ ])
   mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (⊩disj h)
        (λ m → [ ⊩qhyps h , lookup hs ]′ (∈-++⁻ (qhyps Q) m))
 
--- At a closed instance, hypotheses and quantified hypotheses held
--- apart, entailed by no hypotheses
+-- Satisfaction of the two, held apart
 
 _⊨_∣_ : ∀ {Θ} → Subst Θ ∅ˢ → Hyps Θ → QOrds Θ → Set
 δ ⊨ Q ∣ R = ∅ᴴ ⊩ Q ∣ R [ δ ]
@@ -104,8 +97,7 @@ closed-[]ᵉ δ ε = trans ([≐]ᵉ (mk≐ˢ (λ ()) (λ ()) (λ ())) ε) ([id]
 closed-[]ʳ : (δ : Subst ∅ˢ ∅ˢ) → (ρ : RExp ∅ˢ) → ρ [ δ ]ʳ ≡ ρ
 closed-[]ʳ δ ρ = trans ([≐]ʳ (mk≐ˢ (λ ()) (λ ()) (λ ())) ρ) ([id]ʳ ρ)
 
--- Soundness: entailed ordering from no hypotheses, and convertibility,
--- between closed expressions hold by value
+-- Soundness: closed entailment and convertibility hold by value
 
 val-≾ᵣ : {ρ ρ' : RExp ∅ˢ} → ∅ᴴ ⊩ ρ ≾̂ᵣ ρ' → valʳ ρ ≾ᵣ valʳ ρ'
 val-≾ᵣ {ρ} {ρ'} p =
@@ -131,23 +123,17 @@ val-≾ₑ⁻ : {Q : Hyps ∅ˢ} {ε ε' : EExp ∅ˢ} → valᵉ ε ≾ₑ val�
 val-≾ₑ⁻ {ε = ε} {ε'} p = semₑ λ δ _ →
   subst₂ _≾ₑ_ (cong valᵉ (sym (closed-[]ᵉ δ ε))) (cong valᵉ (sym (closed-[]ᵉ δ ε'))) p
 
--- Convertibility of closed expressions is equality of values
-
 val-≡̂ᵣ⁻ : {ρ ρ' : RExp ∅ˢ} → valʳ ρ ≃ᵣ valʳ ρ' → ρ ≡̂ᵣ ρ'
 val-≡̂ᵣ⁻ p = mk≡̂ᵣ (val-≾ᵣ⁻ (proj₁ p)) (val-≾ᵣ⁻ (proj₂ p))
 
 val-≡̂ₑ⁻ : {ε ε' : EExp ∅ˢ} → valᵉ ε ≃ₑ valᵉ ε' → ε ≡̂ₑ ε'
 val-≡̂ₑ⁻ p = mk≡̂ₑ (val-≾ₑ⁻ (proj₁ p)) (val-≾ₑ⁻ (proj₂ p))
 
--- A closed expression is convertible to its value
-
 valᵉ-conv : (ε : EExp ∅ˢ) → ε ≡̂ₑ econst (valᵉ ε)
 valᵉ-conv ε = val-≡̂ₑ⁻ ≃ₑ-refl
 
 valʳ-conv : (ρ : RExp ∅ˢ) → ρ ≡̂ᵣ rconst (valʳ ρ)
 valʳ-conv ρ = val-≡̂ᵣ⁻ ≃ᵣ-refl
-
--- and so is equality from no hypotheses, the order's equivalence
 
 val-⊩≡̂ᵣ : {ρ ρ' : RExp ∅ˢ} → ∅ᴴ ⊩ ρ ≡̂ᵣ ρ' → valʳ ρ ≃ᵣ valʳ ρ'
 val-⊩≡̂ᵣ (p , q) = val-≾ᵣ p , val-≾ᵣ q
@@ -179,8 +165,6 @@ _≡̂ₑ?_ : (ε ε' : EExp ∅ˢ) → Dec (ε ≡̂ₑ ε')
 
 ------------------------------------------------------------------------
 -- Closed types
-
--- Eternality
 
 ⊩ᴱ? : (A : OVType ∅ˢ) → Dec (∅ᴴ ⊩ᴱ A)
 ⊩ᴱ? (tvar ())
@@ -217,8 +201,7 @@ VarOK? A ρ with ⊩ᴱ? A | valʳ ρ ≾ᵣ? uᵣ
 ... | no  _  | yes le = yes (≾ᵘ-ok (val-≾ᵣ⁻ le))
 ... | no ¬et | no ¬le = no λ ok → [ ¬et , ¬le ]′ (VarOK-∅ ok)
 
--- Subtyping. Every rule relates types with the same outermost former,
--- so types with different formers are unrelated.
+-- Subtyping preserves the outermost former
 
 former : ∀ {Θ} → OVType Θ → ℕ
 former (tvar _)  = 0
@@ -283,16 +266,12 @@ A <:̂ᵛ? B with former A ≟ℕ former B
 
 ------------------------------------------------------------------------
 -- Satisfaction at closed instances: each hypothesis holds, a quantified
--- one at every instance of its rigids, a vector of closed expressions.
--- A closed ordering holds when no hypotheses entail it, which is the
--- ordering of its values (`val-≾ᵣ`, `val-≾ᵣ⁻`).
+-- one at every instance of its rigids
 
 infix 4 _⊨_
 
 _⊨_ : ∀ {Θ} → Subst Θ ∅ˢ → Hyps Θ → Set
 δ ⊨ Q = ∅ᴴ ⊩ᴵ Q [ δ ]
-
--- A satisfying instance satisfies the grade part
 
 ⊨⇒⊨ᵍ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → δ ⊨ Q → δ ⊨ᵍ Q
 ⊨⇒⊨ᵍ h =
@@ -300,8 +279,7 @@ _⊨_ : ∀ {Θ} → Subst Θ ∅ˢ → Hyps Θ → Set
        (λ m es → mk⊨ᵒ (λ mφ → val-≾ᵣ (⊩ors (⊩qhypsᴵ h m es) mφ))
                       (λ mφ → val-≾ₑ (⊩oes (⊩qhypsᴵ h m es) mφ)))
 
--- A closed instance of the scope under the rigids is an instance of
--- the rigids
+-- A closed instance after `δ ↑ᵉⁿ k` instantiates the rigids
 
 ↑ᵉⁿ-⨟-closed : ∀ {Θ} → (k : ℕ) → (δ : Subst Θ ∅ˢ) → (δ' : Subst (∅ˢ +eⁿ k) ∅ˢ)
              → ((δ ↑ᵉⁿ k) ⨟ˢ δ') ≐ˢ (δ ,ᵉⁿ mapᵛ (_[ δ' ]ᵉ) (varsⁿ k))
@@ -312,8 +290,7 @@ _⊨_ : ∀ {Θ} → Subst Θ ∅ˢ → Hyps Θ → Set
   where
     es = mapᵛ (_[ δ' ]ᵉ) (varsⁿ k)
 
--- At a satisfying instance no hypotheses entail the set: a quantified
--- hypothesis holds at every instance of its rigids
+-- Satisfaction is entailment from no hypotheses
 
 ⊨⇒⊩ᴴ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → δ ⊨ Q → ∅ᴴ ⊩ᴴ Q [ δ ]
 ⊨⇒⊩ᴴ {Θ} {Q} {δ} h =
@@ -344,8 +321,7 @@ _⊨_ : ∀ {Θ} → Subst Θ ∅ˢ → Hyps Θ → Set
 ⊩ᴴ⇒⊨ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} → ∅ᴴ ⊩ᴴ Q [ δ ] → δ ⊨ Q
 ⊩ᴴ⇒⊨ = ⊩ᴴ⇒ᴵ
 
--- Soundness of entailment: at a satisfying closed instance, an
--- entailed ordering holds in the carrier
+-- Soundness: entailed orderings hold at satisfying instances
 
 sound-≾ᵣ⁰ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {ρ ρ' : RExp Θ}
           → Q ⊩ ρ ≾̂ᵣ ρ' → δ ⊨ Q → valʳ (ρ [ δ ]ʳ) ≾ᵣ valʳ (ρ' [ δ ]ʳ)
@@ -374,8 +350,7 @@ Satisfiable-∅ = groundˢ , ⊩ᴵ-∅
 ⊨++ᵠ⇐ : ∀ {Θ} {Q : Hyps Θ} {R : List (QOrd Θ)} {δ : Subst Θ ∅ˢ} → δ ⊨ Q ∣ R → δ ⊨ Q ++ᵠ R
 ⊨++ᵠ⇐ h = ⊩ᴴ⇒⊨ (++ᵠ⇐ h)
 
--- Semantic entailment: every closed instance of the first set is one
--- of the second
+-- Semantic entailment
 
 infix 4 _⊨ᴴ_
 
@@ -391,8 +366,7 @@ _⊨ᴴ_ {Θ} Q Q' = (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ
 ⊩ᴴ-⊨ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} → Q ⊩ᴴ Q' → Q ⊨ᴴ Q'
 ⊩ᴴ-⊨ᴴ e δ h = ⊩ᴴ-⨟ h e
 
--- Semantic entailment from open entailment of the atoms and, at each
--- instance, of the var-rule disjunctions
+-- From entailment of the atoms and, per instance, the disjunctions
 
 mk⊨ᴴ : ∀ {Θ} {Q Q' : Hyps Θ}
      → (∀ {α} → α ∈ ets Q' → Q ⊩ᴱ tvar α)
@@ -407,9 +381,6 @@ mk⊨ᴴ et sb oR oE dj qh δ h =
   mk⊩ᴴ (λ m → ⊩ᴱ-subst h (et m)) (λ m → <:̂ᵛ-subst h (sb m))
        (λ m → ⊩-substᵣ h (oR m)) (λ m → ⊩-substₑ h (oE m)) (dj δ h)
        (λ {O} m → ⊩ᴼ-resp-≐ˢ O (⨟-idˡ δ) (⊩ᴼ-⨟ O h (qh m)))
-
--- The closed var-rule disjunction is met at a type eternal whenever
--- the given one is, and at a grade below the given one
 
 VarOK-∅-mono : {A A' : OVType ∅ˢ} {ρ ρ' : RExp ∅ˢ}
              → (∅ᴴ ⊩ᴱ A → ∅ᴴ ⊩ᴱ A') → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ → VarOK ∅ᴴ A ρ → VarOK ∅ᴴ A' ρ'
@@ -446,8 +417,7 @@ inst-VarOK : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {A : OVType Θ} {ρ : 
            → (∅ᴴ ⊩ᴱ A [ δ ]ᵛ) ⊎ (valʳ (ρ [ δ ]ʳ) ≾ᵣ uᵣ)
 inst-VarOK h ok = VarOK-∅ (VarOK-subst h ok)
 
--- An atom between expressions convertible to constants holds at an
--- instance exactly when it holds by value
+-- An ordering between expressions convertible to constants is theirs
 
 closed-≾ᵣ : ∀ {Θ} {ρ ρ' : RExp Θ} {c c' : R}
           → ρ ≡̂ᵣ rconst c → ρ' ≡̂ᵣ rconst c' → (δ : Subst Θ ∅ˢ)
