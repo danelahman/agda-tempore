@@ -1,14 +1,12 @@
 ------------------------------------------------------------------
 -- Substitution of the definitions of a program context         --
 --                                                              --
--- Given, for each definition of the program context of `Γ`, a  --
--- closed typing of a run-time value at its scheme (`DefsEnv`), --
--- a typing in `Γ` gives one in `local Γ`, the context without  --
--- its program context (`sdef-v`, `sdef-c`): each use of a      --
--- definition at an instance `δ` is the definition's typing     --
--- instantiated at `δ`, which the hypotheses of the use entail. --
--- The erasure is the run-time substitution of the definitions  --
--- (`∥sdef-v∥`, `∥sdef-c∥`).                                    --
+-- Given closed typings at their schemes of run-time values for --
+-- the definitions of the program context of `Γ` (`DefsEnv`), a --
+-- typing in `Γ` gives one in `local Γ`, the context without    --
+-- its program context (`sdef-v`, `sdef-c`), each use of a      --
+-- definition instantiated. Its erasure is the run-time         --
+-- substitution of the definitions (`∥sdef-v∥`, `∥sdef-c∥`).    --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; suc)
@@ -79,8 +77,6 @@ var-pos-local Hd        = refl
 var-pos-local (Tl-∷ x)  = cong suc (var-pos-local x)
 var-pos-local (Tl-⟨⟩ x) = var-pos-local x
 
--- The empty context renames into a context without definitions
-
 ren₀ : ∀ {Θ n} {Q : Hyps Θ} → (Γ : OCtx Θ n) → Ren Q [] (local Γ)
 pos (ren₀ Γ) = from0
 ty  (ren₀ Γ) ()
@@ -89,9 +85,6 @@ dfs (ren₀ Γ) = defs-local Γ
 
 ------------------------------------------------------------------------
 -- Closed typings of the definitions
-
--- For each definition of `Δ`, a typing at its scheme, in the empty
--- context, of the value `ρ` gives it
 
 record DefsEnv (ρ : Defs) (Δ : PCtx) : Set where
   constructor defsEnv
@@ -117,8 +110,7 @@ private
           → DefsEnv ρ (defs (wkᵉ-ctx Γ))
   env-wkᵉ Γ r = subst (DefsEnv _) (sym (defs-wkᵉ Γ)) r
 
-  -- the definition used, instantiated, in the context without
-  -- definitions
+  -- a use of a definition, instantiated
 
   use : ∀ {Θ n} {Q : Hyps Θ} (Γ : OCtx Θ n) {ρ : Defs} {s k}
       → DefsEnv ρ (defs Γ) → s ∈ᵖ[ k ] defs Γ → (δ : Subst (Θˢ s) Θ) → Q ⊩ᴴ Qˢ s [ δ ]
@@ -181,8 +173,7 @@ mutual
   sdef-c r (annᶜ C M)                = annᶜ C (sdef-c r M)
   sdef-c r (subC M p)                = subC (sdef-c r M) p
 
--- The erasure of the substituted derivation substitutes the
--- definitions in the erasure
+-- The erasure of the substituted derivation
 
 mutual
 
