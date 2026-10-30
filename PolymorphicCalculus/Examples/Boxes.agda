@@ -1,30 +1,14 @@
 --------------------------------------------------------------------
 -- Inference on boxes and delays                                  --
 --                                                                --
--- Programs exercising `box`, `unbox` and `delay`. Only those of  --
--- section 9 have an annotation, on the box an `unbox` claims.    --
--- `box ρ V as x in N` types `V` under the lock `⟨ ρ ⟩`, and      --
--- `unbox x as y in N` asks that the grade elapsed since `x` was  --
--- bound be below the box's grade: at the right-sided grades the  --
--- box is a lease, claimable up to `ρ`; at the left-sided ones a  --
--- promise, claimable from `ρ` on.                                --
---                                                                --
--- The durations are stepped: `⌜ n ⌝` is the duration of `n`      --
--- ticks, and `⌜ n ⌝ʳ` and `⌜ n ⌝ᵉ` its grades. A box type is     --
--- contravariant in its grade, so a box argument that is only     --
--- claimed is reported at the least grade the claims need, a      --
--- constant; a grade variable appears only where the box also     --
--- flows out (`kept-and-claimed`).                                --
---                                                                --
--- A `typed` verdict is a principal scheme, and the term is       --
--- typable exactly when the scheme's conditions are satisfiable.  --
--- An `unbox` refused at a box of a constant grade is             --
--- `untypable`: the unbox's grade unknown lies between the        --
--- elapsed grade and the box's, and the ordering this entails     --
--- between the two is decided false (`checkClosed`).              --
---                                                                --
--- The instances under `Boxes/` check the verdicts and schemes by --
--- `refl` at the four example grades.                             --
+-- `unbox` asks that the grade elapsed since the box was bound be --
+-- below the box's grade: at the right-sided grades a box is a    --
+-- lease, claimable up to `ρ`; at the left-sided ones a promise,  --
+-- claimable from `ρ` on. `⌜ n ⌝` is the duration of `n` ticks.   --
+-- A box argument that is only claimed is reported at the least   --
+-- grade its claims need, a constant. A claim refused at a        --
+-- constant grade is `untypable` (`checkClosed`). The instances   --
+-- under `Boxes/` check each answer by `refl` at four grades.     --
 --------------------------------------------------------------------
 
 open import Data.Unit using (tt)
@@ -96,7 +80,7 @@ closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢C⦂ C)
        → ⌊ D ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ → Typable [] M
 closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
--- Typable and handler-free: inference answers `typed`
+-- Typable and handler-free: `typed`
 
 typed-of : (M : RawC ∅ˢ 0) → Typable [] M → HandlerFreeᶜ M → IsTyped (infer [] M)
 typed-of M t h with infer [] M | infer-complete [] M t | infer-handlerFree [] M tt h
@@ -130,14 +114,10 @@ U⇒U = Unit ⇒ Unit ‼ ûₑ
 ------------------------------------------------------------------
 -- 1. Boxing to survive time
 --
--- Calling a function argument after a tick:
---
 --   stale-call f = delay 1; f ()
 --
--- `f` is used under the lock `⟨ ⌜ 1 ⌝ʳ ⟩` and its type, a function
--- type, is never eternal, so `var` asks for `⌜ 1 ⌝ʳ ≾ uᵣ`. It holds
--- where the unit is the top (the left-sided grades) and fails where
--- the unit is least (the right-sided ones).
+-- A function is not eternal, so `var` asks `⌜ 1 ⌝ʳ ≾ uᵣ`: typed at the
+-- left-sided grades, refuted at the right-sided ones.
 
 stale-call : RawC ∅ˢ 0
 stale-call = return (lam (delay ⌜ 1 ⌝ (v₀ · ⋆)))
@@ -152,14 +132,10 @@ expected-stale-call : Scheme
 expected-stale-call =
   ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ α₀ ‼ (⌜ 1 ⌝ᵉ ·̂ₑ ε₀)) ‼ ûₑ
 
--- Boxing `f` first does not help:
---
 --   boxed-call f = box[1] f as g in delay 1; unbox g as g' in g' ()
 --
--- `box` types its payload under the lock `⟨ ⌜ 1 ⌝ʳ ⟩`, so `f` meets
--- the same `var` condition there. The claim itself is on time at
--- every grade. The verdicts are those of `stale-call`, and so is the
--- scheme where it is typed.
+-- `box` types `f` under `⟨ ⌜ 1 ⌝ʳ ⟩`: the same condition and verdicts
+-- as `stale-call`.
 
 boxed-call : RawC ∅ˢ 0
 boxed-call = return (lam (box ⌜ 1 ⌝ʳ v₀ (delay ⌜ 1 ⌝ (unbox (var fzero) (v₀ · ⋆)))))
@@ -172,11 +148,9 @@ boxed-call-D q =
 boxed-call-typable : True (of-durʳ ⌜ 1 ⌝ ≾ᵣ? uᵣ) → Typable [] boxed-call
 boxed-call-typable q = closed (boxed-call-D (toWitness q)) refl
 
--- What survives the tick is a box the caller made: the argument is
--- claimed, not used, so `var` asks for nothing, and it is typed at
--- every grade.
---
 --   handed-box-call b = delay 1; unbox b as g in g ()
+--
+-- The caller's box is claimed, not used: typed at every grade.
 
 handed-box-call : RawC ∅ˢ 0
 handed-box-call = return (lam (delay ⌜ 1 ⌝ (unbox (var fzero) (v₀ · ⋆))))
@@ -193,12 +167,10 @@ expected-handed-box-call =
   ∀[ 1 , 0 , 1 ] ⊤ ⟹
     ([ ⌜ 1 ⌝ʳ ] (Unit ⇒ α₀ ‼ ε₀) ⇒ α₀ ‼ (⌜ 1 ⌝ᵉ ·̂ₑ ε₀)) ‼ ûₑ
 
--- Boxing an argument of unknown type: the payload is used under
--- `⟨ ⌜ 1 ⌝ʳ ⟩`, and the var-rule disjunction `eternal α ∨ ⌜ 1 ⌝ʳ ≾ uᵣ`
--- is decided on its grade: dropped at the left-sided grades, left as
--- `eternal α` at the right-sided ones.
---
 --   boxing-an-argument x = box[1] x as b in b
+--
+-- `eternal α ∨ ⌜ 1 ⌝ʳ ≾ uᵣ` is decided on its grade: dropped at the
+-- left-sided grades, `eternal α` at the right-sided ones.
 
 boxing-an-argument : RawC ∅ˢ 0
 boxing-an-argument = return (lam (box ⌜ 1 ⌝ʳ v₀ (return v₀)))
@@ -218,13 +190,10 @@ expected-boxing-anything : Scheme
 expected-boxing-anything =
   ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ [ ⌜ 1 ⌝ʳ ] α₀ ‼ ûₑ) ‼ ûₑ
 
--- Under a hypothesis `eternal α₀ ∨ ρ₀ ≾ûᵣ`, a pair of type `α₀ |×| α₀`
--- is boxed for `ρ₀`: the var-rule disjunction holds at the pair
--- because it holds at each component (`_|×|-ok_`), each by the
--- hypothesis. No other rule derives it: neither disjunct is entailed,
--- and no hypothesis is at the pair's type.
---
 --   boxing-a-pair p = box[ρ₀] p as b in b
+--
+-- Under `eternal α₀ ∨ ρ₀ ≾ûᵣ`, the pair `α₀ |×| α₀` meets the var rule
+-- only componentwise (`_|×|-ok_`).
 
 boxing-a-pair-D : hypsOf {scope 1 1 0} (eternal α₀ ∨ ρ₀ ≾ûᵣ)
                   ∣ [] ⊢C⦂ (α₀ |×| α₀ ⇒ [ ρ₀ ] (α₀ |×| α₀) ‼ ûₑ) ‼ ûₑ
@@ -237,9 +206,8 @@ boxing-a-pair-D =
 --
 --   claim-after d = box[3] () as x in delay d; unbox x as y in y
 --
--- The premise is `⌜ d ⌝ʳ ≾ ⌜ 3 ⌝ʳ`. On time (`d = 3`) it holds at
--- every grade. A lease refuses a late claim (`d = 4`), a promise an
--- early one (`d = 2`).
+-- `⌜ d ⌝ʳ ≾ ⌜ 3 ⌝ʳ`: on time (`d = 3`) typed everywhere; a lease refuses
+-- `d = 4`, a promise `d = 2`.
 
 claim-after : ℕ → RawC ∅ˢ 0
 claim-after d = box ⌜ 3 ⌝ʳ ⋆ (delay ⌜ d ⌝ (unbox (var fzero) (return v₀)))
@@ -262,12 +230,8 @@ expected-claim-after d = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ⌜ d ⌝ᵉ
 --
 --   inferred-grade b = delay 2; unbox b as y in y
 --
--- The claim asks for `⌜ 2 ⌝ʳ ≾ ρ` of the argument's grade `ρ`, and
--- the argument sits contravariantly, so the least such grade is the
--- principal one: the scheme has `[ ⌜ 2 ⌝ʳ ] α₀`, with no grade
--- variable. At the right-sided grades the function accepts any lease
--- of at least two ticks, at the left-sided ones any promise due
--- within two.
+-- The least grade with `⌜ 2 ⌝ʳ ≾ ρ` is principal: `[ ⌜ 2 ⌝ʳ ] α₀`, no
+-- grade variable.
 
 inferred-grade : RawC ∅ˢ 0
 inferred-grade = return (lam (delay ⌜ 2 ⌝ (unbox (var fzero) (return v₀))))
@@ -283,12 +247,10 @@ expected-inferred-grade : Scheme
 expected-inferred-grade =
   ∀[ 1 , 0 , 0 ] ⊤ ⟹ ([ ⌜ 2 ⌝ʳ ] α₀ ⇒ α₀ ‼ ⌜ 2 ⌝ᵉ) ‼ ûₑ
 
--- Handing the box back as well as claiming it: the argument's grade
--- also flows out, so it is quantified. The scheme takes a box at
--- `⌜ 2 ⌝ʳ ⊔̂ᵣ ρ₀` and hands it back at `ρ₀`, the join being the
--- least grade both below `ρ₀`'s box and claimable after two ticks.
---
 --   kept-and-claimed b = (b , λ _. delay 2; unbox b as y in y)
+--
+-- The grade also flows out, so it is quantified: a box at
+-- `⌜ 2 ⌝ʳ ⊔̂ᵣ ρ₀`, handed back at `ρ₀`.
 
 kept-and-claimed : RawC ∅ˢ 0
 kept-and-claimed =
@@ -316,14 +278,9 @@ expected-kept-and-claimed =
 --     let mk () = box[2] () as x in x in
 --     let r = mk () in delay d; unbox r as y in y
 --
--- The box is bound by the caller, when `mk` returns it, and claimed
--- `d` ticks later: the premise is `⌜ d ⌝ʳ ≾ ⌜ 2 ⌝ʳ`, on time at every
--- grade at `d = 2`. The unbox's grade is bounded by the box's only
--- through the subtyping of `mk`'s result, so a refused claim is
--- refuted by the ordering the two bounds entail, the transitive
--- closure of the closed orderings (`checkClosed`): late at the
--- right-sided grades (`d = 4`), early at the left-sided ones
--- (`d = 1`).
+-- `⌜ d ⌝ʳ ≾ ⌜ 2 ⌝ʳ`, reached only through `mk`'s result type, so a
+-- refused claim is refuted by chained closed orderings (`checkClosed`):
+-- typed at `d = 2`; refused late (`d = 4`) or early (`d = 1`).
 
 escaping-after : ℕ → RawC ∅ˢ 0
 escaping-after d =
@@ -352,11 +309,8 @@ expected-escaping d = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ⌜ d ⌝ᵉ
 --   branches c b = if c then (delay 1; unbox b as y in y)
 --                       else (delay 3; unbox b as y in y)
 --
--- Each branch asks the argument's grade to be above what it waited,
--- so the least grade is the join `⌜ 1 ⌝ ⊔ ⌜ 3 ⌝`, and so is the
--- conditional's effect: three ticks at the right-sided grades, one at
--- the left-sided ones. Each branch returns the payload it binds, so
--- the payload is the result.
+-- The box's grade and the effect are the join `⌜ 1 ⌝ ⊔ ⌜ 3 ⌝`: three
+-- ticks at the right-sided grades, one at the left-sided ones.
 
 branches : RawC ∅ˢ 0
 branches =
@@ -389,10 +343,7 @@ expected-branches =
 --
 --   op-licensed op p = box[2] () as x in op p; unbox x as y in y
 --
--- The premise is `op-grade op ≾ ⌜ 2 ⌝ʳ`: the operation's time is all
--- that has elapsed. At the time grades `read` takes one tick, `write`
--- two or three and `send` four or six; at the trace grades the
--- operation is weighed at its cost.
+-- `op-grade op ≾ ⌜ 2 ⌝ʳ`: the operation's time is all that elapsed.
 
 op-licensed : Op → RawC ∅ˢ 0
 op-licensed op =
@@ -418,10 +369,7 @@ expected-op-licensed op =
 --
 --   nested b = delay 1; unbox b as c in delay 2; unbox c as z in z
 --
--- Each claim is weighed against what elapsed since its own binding:
--- the outer box after one tick, the inner one after two more. The
--- delays multiply, `⌜ 1 ⌝ᵉ ·ₑ ⌜ 2 ⌝ᵉ`, into the effect; typed at every
--- grade.
+-- Each claim counts from its own binding; typed at every grade.
 
 nested : RawC ∅ˢ 0
 nested = return (lam (delay ⌜ 1 ⌝ (unbox (var fzero) (delay ⌜ 2 ⌝ (unbox (var fzero) (return v₀))))))
@@ -439,13 +387,10 @@ expected-nested =
   ∀[ 1 , 0 , 0 ] ⊤ ⟹
     ([ ⌜ 1 ⌝ʳ ] ([ ⌜ 2 ⌝ʳ ] α₀) ⇒ α₀ ‼ econst (of-durᵉ ⌜ 1 ⌝ ·ₑ of-durᵉ ⌜ 2 ⌝)) ‼ ûₑ
 
--- Building the nesting in place:
---
 --   nesting = box[2] () as x in box[1] x as y in
 --             delay 1; unbox y as x' in delay 2; unbox x' as z in z
 --
--- The outer payload `x` is used under `⟨ ⌜ 1 ⌝ʳ ⟩`, and a box type is
--- never eternal, so `var` asks for `⌜ 1 ⌝ʳ ≾ uᵣ`, as in `stale-call`.
+-- A box is not eternal, so boxing `x` asks `⌜ 1 ⌝ʳ ≾ uᵣ`, as `stale-call`.
 
 nesting : RawC ∅ˢ 0
 nesting =
@@ -471,10 +416,8 @@ expected-nesting = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ econst (of-durᵉ ⌜ 1 ⌝
 --     handle m () with handler {op p k ↦ unbox x as y in
 --                               let a = op p in unbox k as k' in k' a}
 --
--- A clause sees the ambient context behind the lock `⟨ ⊤ᵣ ⟩`, so the
--- premise is `⊤ᵣ ≾ ρ`. At `ρ = ⊤ᵣ` it holds at every grade; at
--- `ρ = uᵣ` exactly where the unit is the top (the left-sided grades);
--- at `ρ = ⌜ 1 ⌝ʳ` nowhere.
+-- A clause sees the context behind `⟨ ⊤ᵣ ⟩`, so `⊤ᵣ ≾ ρ`: typed at
+-- `ρ = ⊤ᵣ`, at `ρ = uᵣ` where the unit is the top, at `⌜ 1 ⌝ʳ` nowhere.
 
 clause-claim : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc (suc n)))
 clause-claim op =
@@ -508,8 +451,6 @@ claimed-in-clause-D {c} p =
 claimed-in-clause-typable : ∀ c → True (⊤ᵣ ≾ᵣ? c) → Typable [] (claimed-in-clause (rconst c))
 claimed-in-clause-typable c p = closed (claimed-in-clause-D (toWitness p)) refl
 
--- at the top it is typable at every grade
-
 claimed-at-⊤-typable : Typable [] (claimed-in-clause (rconst ⊤ᵣ))
 claimed-at-⊤-typable = closed (claimed-in-clause-D {⊤ᵣ} ≾ᵣ-refl) refl
 
@@ -517,10 +458,9 @@ expected-claimed-in-clause : Scheme
 expected-claimed-in-clause =
   ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ûₑ
 
--- The same clause claiming a box the caller hands in: its grade is
--- inferred, and the least grade above `⊤ᵣ` is `⊤ᵣ`.
---
 --   handed-to-clause m b = handle m () with handler {op p k ↦ unbox b as y in …}
+--
+-- The caller's box is inferred at `⊤ᵣ`.
 
 handed-to-clause : RawC ∅ˢ 0
 handed-to-clause =
@@ -543,11 +483,8 @@ expected-handed-to-clause =
 --
 --   annotated-claim b = delay 2; unbox (b : [2] ()) as y in y
 --
--- The annotation is a supertype of the argument's type, so the
--- argument is a box of a grade the annotation's is below; the claim
--- is weighed against the annotation's grade. The argument sits
--- contravariantly, so the least grade, the annotation's, is the
--- principal one; typed at every grade.
+-- The claim is weighed against the annotation's grade, which is the
+-- argument's principal grade; typed at every grade.
 
 annotated-claim : RawC ∅ˢ 0
 annotated-claim =
@@ -566,12 +503,10 @@ expected-annotated-claim : Scheme
 expected-annotated-claim =
   ∀[ 0 , 0 , 0 ] ⊤ ⟹ ([ ⌜ 2 ⌝ʳ ] Unit ⇒ Unit ‼ ⌜ 2 ⌝ᵉ) ‼ ûₑ
 
--- Re-annotating a box of three narrows its window: the annotation at
--- `a` asks for `⌜ a ⌝ʳ ≾ ⌜ 3 ⌝ʳ`, and the claim is weighed against
--- `⌜ a ⌝ʳ`. A lease of three can be re-annotated as a lease of two, a
--- promise of three as a promise of four.
---
 --   relabelled a d = box[3] () as x in delay d; unbox (x : [a] ()) as y in y
+--
+-- Needs `⌜ a ⌝ʳ ≾ ⌜ 3 ⌝ʳ` and `⌜ d ⌝ʳ ≾ ⌜ a ⌝ʳ`: a lease of three narrows
+-- to two, a promise of three to four.
 
 relabelled : ℕ → ℕ → RawC ∅ˢ 0
 relabelled a d =

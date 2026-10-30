@@ -1,10 +1,8 @@
 --------------------------------------------------------------------
 -- Boxes at left-sided intervals                                  --
 --                                                                --
--- "At least `n` ticks": a box is a promise, claimable once the   --
--- elapsed time is at least its grade, and `var`'s bound          --
--- `ρ ≾ uᵣ` holds at every grade, so nothing goes stale. An early --
--- claim is refused; there is no late one.                        --
+-- A box is a promise, claimable once its grade has elapsed;      --
+-- nothing goes stale. Early claims are refused.                  --
 --------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -34,8 +32,8 @@ open import PolymorphicCalculus.Inference.SolverImpl spec hints enum using (infe
 open import PolymorphicCalculus.Examples.Boxes spec hints enum ℕᴰ-stepped
 
 ------------------------------------------------------------------
--- 1. Surviving time: nothing goes stale, so a function argument
--- may be called after a tick, boxed or not
+-- 1. Nothing goes stale: a function argument may be called after a
+-- tick, boxed or not
 
 stale-call-reported : schemeOf (infer [] stale-call) ≡ just expected-stale-call
 stale-call-reported = refl
@@ -59,8 +57,7 @@ boxing-an-argument-reported :
 boxing-an-argument-reported = refl
 
 ------------------------------------------------------------------
--- 2. A promise of three: claimable after three and after four
--- ticks, not after two
+-- 2. A promise of three: claimable after three or four ticks, not two
 
 -- the early claim fails its premise `[ 2 ,+∞⟩ ≾ [ 3 ,+∞⟩`
 
@@ -90,8 +87,7 @@ kept-and-claimed-reported :
 kept-and-claimed-reported = refl
 
 ------------------------------------------------------------------
--- 4. A box escaping through `return`: claimed on time; claimed
--- early, it is refuted by the ordering its two bounds entail
+-- 4. A box escaping through `return`: typed on time, refuted early
 
 escaping-reported : schemeOf (infer [] (escaping-after 2)) ≡ just (expected-escaping 2)
 escaping-reported = refl
@@ -143,8 +139,8 @@ nesting-derivable : Typable [] nesting
 nesting-derivable = nesting-typable _
 
 ------------------------------------------------------------------
--- 8. Inside a clause `⊤ᵣ = [ 0 ,+∞⟩` has elapsed, the unit: a box
--- due at once may be claimed there, one due in a tick may not
+-- 8. Inside a clause the unit `⊤ᵣ = [ 0 ,+∞⟩` has elapsed: a box due
+-- at once may be claimed, one due in a tick may not
 
 claimed-at-u-reported :
   schemeOf (infer [] (claimed-in-clause (rconst uᵣ))) ≡ just expected-claimed-in-clause
@@ -168,9 +164,8 @@ handed-to-clause-reported = refl
 
 
 ------------------------------------------------------------------
--- 9. An annotated box: claimed at the annotation's grade; a promise
--- of three re-annotated as a promise of four is claimable after four
--- ticks, not after three
+-- 9. An annotated box; a promise of three re-annotated as one of four
+-- is claimable after four ticks, not three
 
 annotated-claim-reported :
   schemeOf (infer [] annotated-claim) ≡ just expected-annotated-claim

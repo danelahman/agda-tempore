@@ -1,12 +1,10 @@
 -------------------------------------------------------------------
 -- Boxes at timed traces, allowance order                        --
 --                                                               --
--- A box is a permit, claimable while the run that elapsed stays --
--- within its grade; `n` ticks are a budget of `n`, operations   --
--- paid at `costʰⁱ` (read 1, write 3, send 6). The unit permits  --
--- only the empty run, so no non-eternal variable survives a     --
--- tick. As at the right-sided intervals, a late claim is        --
--- refused and there is no early one.                            --
+-- A box is a permit, claimable while the elapsed run stays      --
+-- within it; operations cost `costʰⁱ` (read 1, write 3,         --
+-- send 6). No non-eternal variable survives a tick. Late        --
+-- claims are refused.                                           --
 -------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -37,10 +35,8 @@ open import PolymorphicCalculus.Examples.Boxes spec hints enum ℕᴰ-stepped
 open import PolymorphicCalculus.Examples.Variables
 
 ------------------------------------------------------------------
--- 1. Boxing to survive time
---
--- A function argument used after a tick fails `var`'s bound
--- `⟨ 1 ⟩ ≾ uᵣ`, boxed or not.
+-- 1. A function argument used after a tick fails `⟨ 1 ⟩ ≾ uᵣ`, boxed
+-- or not
 
 stale-call-verdict : infer [] stale-call ≡ untypable
 stale-call-verdict = refl
@@ -64,8 +60,7 @@ boxing-an-argument-reported :
 boxing-an-argument-reported = refl
 
 ------------------------------------------------------------------
--- 2. A lease of three: claimable after two and after three ticks,
--- not after four
+-- 2. A permit of three: claimable after two or three ticks, not four
 
 claim-early-reported : schemeOf (infer [] (claim-after 2)) ≡ just (expected-claim-after 2)
 claim-early-reported = refl
@@ -95,8 +90,7 @@ kept-and-claimed-reported :
 kept-and-claimed-reported = refl
 
 ------------------------------------------------------------------
--- 4. A box escaping through `return`: claimed on time; claimed
--- late, it is refuted by the ordering its two bounds entail
+-- 4. A box escaping through `return`: typed on time, refuted late
 
 escaping-reported : schemeOf (infer [] (escaping-after 2)) ≡ just (expected-escaping 2)
 escaping-reported = refl
@@ -114,8 +108,8 @@ branches-reported : schemeOf (infer [] branches) ≡ just expected-branches
 branches-reported = refl
 
 ------------------------------------------------------------------
--- 6. A budget of two pays for a reading, at 1; a store, at 3, and a
--- transmission, at 6, overrun it
+-- 6. A budget of two pays for a reading (1), not a store (3) or a
+-- transmission (6)
 
 read-licenses-reported : schemeOf (infer [] (op-licensed read)) ≡ just (expected-op-licensed read)
 read-licenses-reported = refl
@@ -149,8 +143,8 @@ nesting-not-typable : ¬ Typable [] nesting
 nesting-not-typable = infer-untypable [] nesting nesting-verdict
 
 ------------------------------------------------------------------
--- 8. Inside a clause `⊤ᵣ = unbounded` has elapsed: only a permit
--- of `unbounded` is still open.
+-- 8. Inside a clause `⊤ᵣ = unbounded` has elapsed: only an unbounded
+-- permit is open
 
 claimed-at-u-verdict : infer [] (claimed-in-clause (rconst uᵣ)) ≡ untypable
 claimed-at-u-verdict = refl
@@ -172,9 +166,8 @@ handed-to-clause-reported : schemeOf (infer [] handed-to-clause) ≡ just expect
 handed-to-clause-reported = refl
 
 ------------------------------------------------------------------
--- 9. An annotated box: claimed at the annotation's grade; a lease
--- of three re-annotated as a lease of two is claimable after two
--- ticks, not after three
+-- 9. An annotated box; a permit of three re-annotated as one of two
+-- is claimable after two ticks, not three
 
 annotated-claim-reported :
   schemeOf (infer [] annotated-claim) ≡ just expected-annotated-claim
