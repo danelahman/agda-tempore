@@ -30,21 +30,25 @@ Agda 2.8.0 with the Agda standard library 2.3, registered as
 `standard-library-2.3` (see `graded-temporal-resources.agda-lib`).
 
 The two calculi do not import each other; both build on `Grades/`,
-`Language/` and `Util/`. There are three roots, with approximate cold build
-times on an unloaded machine:
+`Language/` and `Util/`. `Everything.agda` checks every module; each
+calculus also has its own root. Approximate cold build times on an unloaded
+machine:
 
-    agda Everything.agda                      # polymorphic calculus, ~30 min
-    agda Examples.agda                        # inference examples, ~10 min more
-    agda MonomorphicCalculus/Everything.agda  # monomorphic calculus, ~10 min
+    agda Everything.agda                          # everything, ~40 min
+    agda PolymorphicCalculus/Everything.agda      # polymorphic calculus, ~30 min
+    agda MonomorphicCalculus/Everything.agda      # monomorphic calculus, ~10 min
+    agda PolymorphicCalculus/Examples.agda        # inference examples, ~10 min more
 
-A set of examples is checked alone by its index,
+The inference examples are not in `Everything.agda`. A set of them is
+checked alone by its index,
 `agda PolymorphicCalculus/Examples/<Set>/All.agda`, whose header names the
 parts of the solver it exercises. A check passes when Agda exits with 0 and
 prints no warning. The only postulate is function extensionality
 (`Util/Equality.agda`).
 
-`Results.agda` and `MonomorphicCalculus/Results.agda` are the overviews to
-read first: one entry per main definition, rule and theorem, under its title.
+`PolymorphicCalculus/Results.agda` and `MonomorphicCalculus/Results.agda`
+are the overviews to read first: one entry per main definition, rule and
+theorem, under its title.
 
 ## Layout
 
