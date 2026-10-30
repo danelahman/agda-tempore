@@ -4,7 +4,7 @@
 -- One entry per main definition, rule, lemma and theorem, under its
 -- title: grade systems, the type system, the operational semantics,
 -- instantiation and type safety, and type inference. Check it with
--- `agda Results.agda`; `Everything.agda` checks every module.
+-- `agda PolymorphicCalculus/Results.agda`.
 --
 -- The calculus is parameterised by a `LanguageSpec` (a grade system, base
 -- types and an operation signature); `withoutBaseTypes` is the instance
@@ -12,7 +12,7 @@
 -- system, read only by the solver, and an `OpEnum` of the operations.
 ------------------------------------------------------------------------
 
-module Results where
+module PolymorphicCalculus.Results where
 
 -- The language: a grade system, base types and an operation signature
 open import Language.Spec public using (LanguageSpec; withoutBaseTypes)
