@@ -88,6 +88,11 @@ module _ (op-semᵐ : OpSemᵐ) where
 
   mutual
 
+    -- `TERMINATING`: every call is at subtrees or witnesses stored in the matched
+    -- tree or proof (or in the trees it relates), possibly joined by `≈ᵗ-trans`, or
+    -- is `implˢ-nat`'s call at its own tree; the checker cannot see that
+    -- `transportᵗ r (k q)` (from a stored `kn`) is no larger than `k q`.
+
     {-# TERMINATING #-}
 
     implˢ : ∀ {A ε w} → Tˢ A ε w → Tᵏˢ A ε w

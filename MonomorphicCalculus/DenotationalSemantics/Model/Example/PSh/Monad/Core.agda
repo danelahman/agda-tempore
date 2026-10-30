@@ -421,11 +421,12 @@ sub-ε-substᵗ refl refl q q' t = sub-≈ (≈ᵗ-refl t)
 
 -- The functorial action rebuilds each node's continuation coherence from
 -- the mapped continuation, using the map's congruence and naturality.
---
--- `{-# TERMINATING #-}`: the function-valued continuations hide the
--- structural recursion from the checker (also for `μˢ` and `strˢ` below).
 
 mutual
+
+  -- `TERMINATING`: every call is at a subtree or witness stored in the matched
+  -- node or proof, or is a lemma's call at its own tree; the checker cannot see
+  -- that `transportᵗ r (k q)` (from a stored `kn`) is no larger than `k q`.
 
   {-# TERMINATING #-}
 
@@ -604,6 +605,8 @@ delay-plus-out {w = w} {τ₁ = τ₁} {τ₂} p k' kn₂ kn₁ k kn hk P P' =
                (≈ᵗ-trans (≡→≈ᵗ (cong k (⊑-irrelevant _ _))) (≈ᵗ-sym (hk _ _))))
 
 mutual
+
+  -- `TERMINATING`: as for `Tˢᶠ`.
 
   {-# TERMINATING #-}
 
@@ -820,6 +823,9 @@ box▸ A q box = mk[]
   (λ r s → ≈-trans A ([]-fun-irr box _ _) (fun-nat box (⊑-mono (≃ᵣ⇒≿ᵣ map-·ᵉ) (⊑-trans q r)) s))
 
 mutual
+
+  -- `TERMINATING`: as for `Tˢᶠ`; `strˢ-congᵗ` also recurses on `≈ᵗ-refl u` for a
+  -- subtree `u` of the matched proof, which meets only the congruence cases.
 
   {-# TERMINATING #-}
 

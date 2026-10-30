@@ -240,10 +240,10 @@ recL-stepᵗ-nat {A = A} {B = B} {ε = ε} p n n' h e =
 
 mutual
 
-  -- `TERMINATING`: the recursion is structural on the term, but it passes
-  -- through the simultaneously-defined naturality lemma (the `handle` case of
-  -- `renᶜ` appeals to `C-rename-nat` on the clauses), which masks that from the
-  -- termination checker.
+  -- `TERMINATING`: every call descends to a subterm, except that the naturality
+  -- lemmas call `renᵛ`/`renᶜ` at their own term, and those reach the lemmas only
+  -- below it. The checker loses the descent from `handle` to its clauses, which
+  -- passes through `ren-clauses-uniform` with the whole clause family.
 
   {-# TERMINATING #-}
 
