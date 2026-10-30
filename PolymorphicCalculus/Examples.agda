@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
--- The type-inference examples, in sets by what they test. Each set's
--- index `PolymorphicCalculus.Examples.<Set>.All` names the solver parts
--- it exercises and can be checked alone.
+-- The type-inference examples, in sets. Each set's index
+-- `PolymorphicCalculus.Examples.<Set>.All` names the solver parts it
+-- exercises and can be checked alone.
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Examples where
@@ -15,31 +15,31 @@ import PolymorphicCalculus.Examples.Variables
 
 import PolymorphicCalculus.Examples.Specs
 
--- The standard library: the generic module and its instances
+-- Tempore's standard library
 
 import PolymorphicCalculus.Examples.Stdlib.All
 
--- Annotations: the generic module and its instances
+-- Annotations
 
 import PolymorphicCalculus.Examples.Annotations.All
 
--- Handlers: the generic module and its instances
+-- Handlers
 
 import PolymorphicCalculus.Examples.Handlers.All
 
--- Boxes: the generic module and its instances
+-- Boxes
 
 import PolymorphicCalculus.Examples.Boxes.All
 
--- A grade of two components: the generic module and its instances
+-- A grade of two components
 
 import PolymorphicCalculus.Examples.Product.All
 
--- Report simplification: the generic module and its instances
+-- Report simplification
 
 import PolymorphicCalculus.Examples.Reports.All
 
--- Durations other than ticks: the generic module and its instances
+-- Durations other than ticks
 
 import PolymorphicCalculus.Examples.Durations.All
 
@@ -51,18 +51,18 @@ import PolymorphicCalculus.Examples.Stages.All
 
 import PolymorphicCalculus.Examples.Runs.All
 
--- Natural numbers: the generic module and its instances
+-- Natural numbers
 
 import PolymorphicCalculus.Examples.Data.All
 
--- Primitive recursion: the generic module and its instances
+-- Primitive recursion
 
 import PolymorphicCalculus.Examples.Recursion.All
 
--- Comparisons: the generic module and its instances
+-- Comparisons
 
 import PolymorphicCalculus.Examples.Compare.All
 
--- Programs of several definitions: the generic module and its instances
+-- Programs of several definitions
 
 import PolymorphicCalculus.Examples.Programs.All
