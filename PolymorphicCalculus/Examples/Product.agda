@@ -1,24 +1,11 @@
 -------------------------------------------------------------------
 -- Inference at a grade of two components                        --
 --                                                               --
--- Programs for a grade pairing time with a security level: a    --
--- box is an embargoed report, claimable once enough time has    --
--- passed and only while nothing above its level has been        --
--- touched since it was boxed. None has an annotation.           --
---                                                               --
--- The durations are stepped, `⌜ n ⌝` the duration of `n` ticks. --
--- `embargoed c d` claims a report boxed at `c` after `d` ticks, --
--- `transmitted c op d` after `op` and `d` ticks; `joined-claim` --
--- claims a box handed in after a branch performing one of two   --
--- operations, so its grade is inferred as a join; `publish`     --
--- claims one after calling a function argument and an           --
--- operation, so its scheme's grades mix a variable and a        --
--- constant; `twice op` uses a reading after `op` has run.       --
---                                                               --
--- Every program is written over an arbitrary language; which    --
--- ones are typable, and at which grades, is read off at the     --
--- instance under `Product/`, where the verdicts and schemes are --
--- checked by `refl`.                                            --
+-- A grade pairing time with a security level: a box is          --
+-- claimable once enough time has passed and only while nothing  --
+-- above its level has been touched since it was boxed. `⌜ n ⌝`  --
+-- is the duration of `n` ticks. The instances under `Product/`  --
+-- check each answer by `refl`.                                  --
 -------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
@@ -105,8 +92,7 @@ private
 --
 --   embargoed c d = box[c] () as x in delay d; unbox x as y in y
 --
--- The premise is `⌜ d ⌝ʳ ≾ c`: only time has passed, and a tick
--- touches nothing, so what is weighed is the time.
+-- `⌜ d ⌝ʳ ≾ c`: a tick touches no level.
 
 embargoed : RExp ∅ˢ → ℕ → RawC ∅ˢ 0
 embargoed c d = box c ⋆ (delay ⌜ d ⌝ (unbox (var fzero) (return v₀)))
@@ -126,9 +112,7 @@ expected-embargoed d = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ⌜ d ⌝ᵉ
 --
 --   transmitted c op d p = box[c] () as x in op p; delay d; unbox x as y in y
 --
--- The premise is `op-grade op · ⌜ d ⌝ʳ ≾ c`, both components at
--- once: the operation's time and the ticks against the embargo, the
--- level the operation touches against the report's.
+-- `op-grade op · ⌜ d ⌝ʳ ≾ c`, in time and in level at once.
 
 transmitted : RExp ∅ˢ → Op → ℕ → RawC ∅ˢ 0
 transmitted c op d =
@@ -158,9 +142,7 @@ expected-transmitted op d =
 --   joined-claim op₀ op₁ op₂ b c =
 --     let r = op₀ () in (if c then op₁ r else op₂ r); unbox b as y in y
 --
--- The claim waits for `op₀` and then for either branch, so the
--- least box grade is `op₀ · (op₁ ⊔ op₂)`, and so is the effect: the
--- join keeps the shorter time and the higher level.
+-- The box's grade and the effect are `op₀ · (op₁ ⊔ op₂)`.
 
 joined-claim : Op → Op → Op → RawC ∅ˢ 0
 joined-claim op₀ op₁ op₂ =
@@ -181,10 +163,8 @@ expected-joined-claim op₀ op₁ op₂ =
 --
 --   publish op f b = let r = f () in op r; unbox b as y in y
 --
--- The box is claimed after whatever `f` does and after `op`, so its
--- least grade is `op-grade op · ∣ ε₀ ∣`, `ε₀` being `f`'s effect:
--- the scheme asks for a report that outlasts, in both components,
--- the function it is handed and the operation.
+-- The box's grade is `op-grade op · ∣ ε₀ ∣`, `ε₀` being `f`'s effect:
+-- a variable mixed with a constant.
 
 publish : Op → RawC ∅ˢ 0
 publish op =
@@ -203,8 +183,7 @@ expected-publish op =
 --
 --   twice op r = op r; op r
 --
--- The second `op r` uses `r` under the lock `⟨ op-grade op ⟩`, and a
--- reading is not eternal, so `var` asks for `op-grade op ≾ uᵣ`.
+-- A reading is not eternal: `var` asks `op-grade op ≾ uᵣ`.
 
 twice : Op → RawC ∅ˢ 0
 twice op = return (lam (perform op v₀ (perform op v₁ (return ⋆))))
