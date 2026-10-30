@@ -1,12 +1,11 @@
 ------------------------------------------------------------------
 -- The constraint of a use of a type scheme                     --
 --                                                              --
--- `hypsᶜ Q` states the hypotheses `Q` as a constraint, a       --
--- quantified ordering under rigid binders; a substitution      --
--- solves it exactly when the residual hypotheses entail `Q`    --
--- along it (`hypsᶜ-sound`, `hypsᶜ-complete`). `instᶜ s A`      --
--- states that some instance of the scheme `s` has a type below --
--- `A` and its hypotheses entailed (`instᶜ-sound`,              --
+-- `hypsᶜ Q` states the hypotheses `Q` as a constraint; a       --
+-- substitution solves it exactly when the residual hypotheses  --
+-- entail `Q` along it (`hypsᶜ-sound`, `hypsᶜ-complete`).       --
+-- `instᶜ s A` states that some instance of the scheme `s` has  --
+-- a type below `A` and its hypotheses entailed (`instᶜ-sound`, --
 -- `instᶜ-complete`).                                           --
 ------------------------------------------------------------------
 
@@ -56,8 +55,8 @@ hypsᶜ Q =
   ∧̂ ⋀ᴸ (disj Q) (λ { (A , ρ) → Et∨≾ᵘ A ρ })
   ∧̂ ⋀ᴸ (qhyps Q) (λ O → ∀ᵉⁿ (rigids O) (ordsᶜ (body O)))
 
--- The use of a scheme: an instance of its variables at which its type
--- is below the expected one and its hypotheses hold
+-- The use of a scheme: an instance at which its type is below the expected one
+-- and its hypotheses hold
 
 instᶜ-body : ∀ {Θ} → (s : Scheme) → OVType Θ → Constraint (Θ ⊹ Θˢ s)
 instᶜ-body s A =
