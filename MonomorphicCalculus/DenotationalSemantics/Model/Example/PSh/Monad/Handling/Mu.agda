@@ -131,7 +131,6 @@ necᵉ-box▸ {P = P} bc pv q r =
 -- after folding each inner one. By induction on the tree — at each node the
 -- fold and the multiplication agree, so the two transports coincide.
 
-{-# TERMINATING #-}
 T-alg-of-handlerˢ-μˢ : ∀ {P A ε ε' ε'' w} → (bc : Eternalᵒ P) → (h : Handlerˢ P A)
                      → (pv : carrier P w)
                      → (t : Tˢ (Tᵒ (Tᵒ A ε'') ε') ε w)
