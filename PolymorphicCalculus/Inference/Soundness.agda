@@ -2,12 +2,10 @@
 -- Soundness of constraint generation                           --
 --                                                              --
 -- A solution of a generated constraint elaborates to a         --
--- derivation of the polymorphic calculus that erases to the    --
--- raw term it was generated from, with its annotations         --
--- instantiated by the solution (`soundV`, `soundC`).           --
---                                                              --
--- The proof follows the soundness proof of Tavits's MSc thesis --
--- (University of Tartu, 2025).                                 --
+-- derivation of the polymorphic calculus erasing to the raw    --
+-- term, its annotations instantiated by the solution           --
+-- (`soundV`, `soundC`). The proof follows that of Tavits's MSc --
+-- thesis.                                                      --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -50,9 +48,8 @@ open import PolymorphicCalculus.Inference.Constraints.Schemes      S using (inst
 
 open import PolymorphicCalculus.Inference.Generate S
 
--- `PolymorphicCalculus.Typing` transports annotations only;
--- the clause contexts of `handler`, and every context built under a
--- generation binder, need the context transported too.
+-- The typing judgement transports annotations only; handler clause contexts,
+-- and contexts built under a generation binder, need the context transported too.
 
 ctx-substᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ Γ' : OCtx Θ n} {A : OVType Θ}
            → Γ ≡ Γ'
@@ -86,10 +83,8 @@ ctx-substᶜ refl M = M
        → (e : Γ ≡ Γ') → (M : Q ∣ Γ ⊢C⦂ C) → ⌊ ctx-substᶜ e M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
 ⌊ctxᶜ⌋ refl M = refl
 
--- Generation weakens its arguments into the scope of the `∃`s it
--- introduces; satisfaction instantiates those `∃`s by extending `σ`.
--- Each pair cancels (`wk-,*`), one lemma per binder pattern below; a
--- single `∃ᵗ` (lists, list elimination) by `wk-,ᵗ-*` itself.
+-- Generation weakens into the scope of its `∃`s and satisfaction extends `σ`;
+-- each pair cancels (`wk-,*`), one lemma per binder pattern, `wk-,ᵗ-*` for one `∃ᵗ`.
 
 -- `∃ᵗ∃ᵗ` — pairing, injections, pattern-matching, sum elimination
 
@@ -238,9 +233,8 @@ co²ᵗ²ᵉ-ctx↑ σ B₁ B₂ ε₁ ε₂ Γ =
                    (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))))
         (cong wkᵉ-ctx (co²ᵗ²ᵉ-ctx σ B₁ B₂ ε₁ ε₂ Γ))
 
--- The interpretation of the raw term's variables, weakened under
--- the binders and composed with the extended solution, is the
--- interpretation composed with the solution.
+-- The raw term's interpretation, weakened under the binders and composed with
+-- the extended solution, is the interpretation composed with the solution.
 
 co²ᵗ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ')
        → (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ) ⨟ˢ (σ ,ᵗ B₁ ,ᵗ B₂) ≐ˢ ι ⨟ˢ σ
@@ -288,9 +282,8 @@ co²ᵗ²ᵉ-ˢ↑ ι σ B₁ B₂ ε₁ ε₂ =
   ≐ˢ-trans (⨟-↑ᵉ (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ) (σ ,ᵗ B₁ ,ᵗ B₂ ,ᵉ ε₁ ,ᵉ ε₂))
            (≐ˢ-↑ᵉ (co²ᵗ²ᵉ-ˢ ι σ B₁ B₂ ε₁ ε₂))
 
--- A use of a definition: the position is bound to a scheme in the
--- program context, which the substituted context keeps, and the
--- instance solving the constraint is the instance of the rule
+-- A use of a definition: the position is bound to a scheme the substituted
+-- context keeps, its instance solving the constraint
 
 soundUseDef : ∀ {Θ n Θ'} → (σ : Subst Θ Θ') → {Q : Hyps Θ'}
             → (Γ : OCtx Θ n) → (k : ℕ) → (A : OVType Θ)
@@ -302,9 +295,8 @@ soundUseDef σ Γ k A s with lookupᵖ (defs Γ) k in eq
 ...   | δ , st , h =
   subV (usedef (subst (sc ∈ᵖ[ k ]_) (sym (defs-subst Γ σ)) (lookupᵖ-∈ (defs Γ) eq)) δ h refl) st , refl
 
--- A resource value: its constraint, at a solution under which the type
--- it reaches is a box type, gives a resource value reaching that type,
--- the membership witness of its variable being `lookup-var`
+-- A resource value: its constraint, where the type reached is a box type, gives
+-- a resource value reaching it, the variable's witness being `lookup-var`
 
 private
 
@@ -362,12 +354,8 @@ mutual
           --------------------------------------------------------------------
           → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ ι ⨟ˢ σ ]ᴿᵛ)
 
-  -- variables
-  --
-  -- The membership witness is `lookup-var` in the substituted context, so
-  -- its position is `i` on the nose; the `Et∨≾ᵘ` conjunct is `VarOK`
-  -- once the type and the grade are aligned, and the subtyping atom is
-  -- the `subV` that carries the declared type to the expected one.
+  -- variables: the witness is `lookup-var`, at position `i`; the `Et∨≾ᵘ`
+  -- conjunct is `VarOK`, the subtyping atom the `subV` to the expected type
 
   soundVˢ {σ = σ} {Q = Q} ι Γ (var i) A (st , ok) =
     subV D₀ st' , cong var (var-pos-lookup (Γ [ σ ]ᶜᵗˣ) i)
@@ -383,15 +371,12 @@ mutual
 
       st' = subst (λ z → Q ∣ z <:̂ᵛ A [ σ ]ᵛ) (sym (lookup-ty-subst Γ σ i)) st
 
-  -- uses of top-level definitions
+  -- uses of definitions
 
   soundVˢ {σ = σ} ι Γ (usedef k) A s = soundUseDef σ Γ k A s
 
-  -- base-typed constants, unit, booleans
-
-  --
-  -- The first half of the type equation is the `subV` into the expected
-  -- type.
+  -- base-typed constants, unit, booleans: the type equation's first half is
+  -- the `subV` into the expected type
 
   soundVˢ ι Γ (const B c) A (st , _) = subV (const B c) st , refl
   soundVˢ ι Γ ⋆           A (st , _) = subV ⋆ st           , refl
@@ -500,11 +485,8 @@ mutual
                 (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V)))
                 (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᵛ pι W)))
 
-  -- comparison
-  --
-  -- The witness is the operands' type, eternal by the `Etᶜ` conjunct;
-  -- the first half of the type equation is the `subV` into the expected
-  -- type.
+  -- comparison: the witness is the operands' type, eternal by `Etᶜ`; the type
+  -- equation's first half is the `subV` into the expected type
 
   soundVˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (cmp ⋈ V W) A (B , (st , _) , s₁ , s₂ , et) =
     D , q
@@ -553,10 +535,7 @@ mutual
       q = cong lam (trans (⌊ctxᶜ⌋ (cong (_∷ _) pΓ) (proj₁ ih))
                           (trans (proj₂ ih) ([≐]ᴿᶜ pι M)))
 
-  -- handlers
-  --
-  -- The clause family is typed one `∀ᵉ` deeper; the clause equalities
-  -- hold pointwise, so the erasure of the family needs `fun-ext`.
+  -- handlers: the clause family one `∀ᵉ` deeper; its erasure needs `fun-ext`
 
   soundVˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (handler N H) A
           (B₁ , B₂ , ε₁ , ε₂ , st , s₂ , cls) =
@@ -613,10 +592,8 @@ mutual
                          (trans (⌊ctxᶜ⌋ (cH op) (proj₁ (ihH op)))
                                 (trans (proj₂ (ihH op)) ([≐]ᴿᶜ pι⇑ (H op))))))
 
-  -- type annotation
-  --
-  -- The recording rule at the instantiated annotation, then the subtyping
-  -- atom as a `subV`.
+  -- type annotation: the recording rule at the instantiated annotation, then
+  -- the atom as a `subV`
 
   soundVˢ {σ = σ} ι Γ (V ⦂ᵛ B) A (s , st) =
     subV (annᵛ (B [ ι ]ᵛ [ σ ]ᵛ) (proj₁ ih)) st ,
@@ -1008,12 +985,8 @@ mutual
                 (trans (⌊ctxᶜ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᶜ pι M)))
                 (trans (⌊ctxᵛ⌋ pΓ (proj₁ ihV)) (trans (proj₂ ihV) ([≐]ᴿᵛ pι V)))
 
-  -- unboxing a resource value
-  --
-  -- The `∃ᵗ` witness is equivalent to the payload the value reaches, and
-  -- the continuation is converted to the payload; the `∃ʳ` witness is a
-  -- grade between the one accumulated at the variable and the one the
-  -- value reaches.
+  -- unboxing a resource value: the `∃ᵗ` witness is equivalent to the payload,
+  -- the `∃ʳ` one between the variable's grade and the grade reached
 
   soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (unbox V N) A t (B , ρ , sR , (sb , sb') , le , s')
     with <:̂ᵛ-boxʳ sb
@@ -1059,10 +1032,8 @@ mutual
                        (trans (⌊ctxᶜ⌋ c₀ (proj₁ ih))
                               (trans (proj₂ ih) ([≐]ᴿᶜ pι N)))))
 
-  -- boxing up a value
-  --
-  -- The grade is the annotation, instantiated; only the payload's type is
-  -- a witness.
+  -- boxing up a value: the grade is the instantiated annotation, the payload's
+  -- type the only witness
 
   soundCˢ {Θ = Θ} {σ = σ} ι Γ (box ρ V N) A t (B , s₁ , s₂) =
     D , q
@@ -1101,9 +1072,7 @@ mutual
                        (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂))
                               (trans (proj₂ ih₂) ([≐]ᴿᶜ pι N))))
 
-  -- type annotation
-  --
-  -- As for values, the two atoms making up the `subC`.
+  -- type annotation: as for values, the two atoms making up the `subC`
 
   soundCˢ {σ = σ} ι Γ (M ⦂ᶜ (B ‼ u)) A t (s , st , le) =
     subC (annᶜ (B [ ι ]ᵛ [ σ ]ᵛ ‼ u [ ι ]ᵉ [ σ ]ᵉ) (proj₁ ih)) (st ‼ₛ le) ,
@@ -1111,8 +1080,8 @@ mutual
     where
       ih = soundCˢ ι Γ M (B [ ι ]ᵛ) (u [ ι ]ᵉ) s
 
--- Generation for a raw term over the scope of the context: the program's
--- annotations are instantiated by the solution.
+-- Generation for a raw term over the context's scope, the program's annotations
+-- instantiated by the solution
 
 soundV : ∀ {Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
        → (Γ : OCtx Θ n) → (V : RawV Θ n) → (A : OVType Θ)
@@ -1136,9 +1105,8 @@ soundC {σ = σ} Γ M A t s =
   where
     ih = soundCˢ idˢ Γ M A t s
 
--- Sanity checks: four closed examples, solved by the identity
--- substitution and the empty hypothesis set, elaborated and erased
--- back.
+-- Sanity checks: four closed examples, solved by the identity substitution from
+-- no hypotheses, elaborated and erased back
 
 private
 

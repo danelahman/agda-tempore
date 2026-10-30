@@ -97,7 +97,6 @@ T-alg-of-handlerᵀ-opᵀ {P = P} op bc h (pv , (v , boxk)) =
 -- `op`, where the matching clause is applied (`heq`) and the folded continuations
 -- agree by the inductive hypothesis.
 
-{-# TERMINATING #-}
 T-alg-of-handlerˢ-congʰ : ∀ {P A ε ε' w} (bc : Eternalᵒ P) {h h' : Handlerˢ P A}
                           (heq : ∀ op ε'' → clause h op ε'' ≈ᵖ clause h' op ε'')
                           (pv : carrier P w) (t : Tˢ (Tᵒ A ε') ε w)
@@ -139,7 +138,6 @@ reindexʰ f h =
     (λ op ε'' → clause h op ε'' ∘ᵖ mapˣᵐ f idᵖ)
   , (λ op q x → clause-mono′ h op q (app f (proj₁ x) , proj₂ x))
 
-{-# TERMINATING #-}
 T-alg-of-handlerˢ-natᴾ : ∀ {P P' A ε ε' w} (bc : Eternalᵒ P) (bc' : Eternalᵒ P')
                          (f : P' →ᵖ P)
                          (fcomm : ∀ {ρ} → [ ρ ]ᶠ f ∘ᵖ Eternalᵒ.necᵉ bc' {ρ}
@@ -201,7 +199,6 @@ T-alg-of-handlerᵀ-natᴾ′ {P} {P'} {A} {ε} {ε'} bc bc' f fcomm h h' ceq x 
 -- shared with the other cases. Leaves / delays / subs commute the coercion
 -- through the `sub`/`ε-subst` machinery (`sub-ε-substᵗ`, `sub-delay`, `sub-∘`).
 
-{-# TERMINATING #-}
 T-alg-of-handlerˢ-≤ⁱ : ∀ {P A ε ε₁' ε₂' w} (bc : Eternalᵒ P) (h : Handlerˢ P A)
                        (p : ε₁' ≾ₑ ε₂')
                        (pv : carrier P w) (t : Tˢ (Tᵒ A ε₁') ε w)

@@ -2,14 +2,9 @@
 -- Inference at right-sided time paired with a security level     --
 --                                                                --
 -- `([0, n ] , ℓ)`: at most `n` ticks, touching nothing above     --
--- `ℓ`. The sensor node's operations are graded by the time they  --
--- may take at worst: `read` 1 and `write` 3 at `Low`, `send` 6   --
--- at `High` (`Specs`). The unit is least and `_·_` commutes.     --
---                                                                --
--- A box at `([0, 8 ] , Low)` is a session token: claimable while --
--- at most eight ticks have passed and nothing above `Low` has    --
--- been touched since it was boxed. A claim is refused for being  --
--- late or for being tainted; there is no early one.              --
+-- `ℓ`; `read` 1 and `write` 3 at `Low`, `send` 6 at `High`. A    --
+-- box at `([0, 8 ] , Low)` is a session token, refused when      --
+-- late or tainted.                                               --
 --------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -51,8 +46,7 @@ token : RExp ∅ˢ
 token = rconst ([0, ↑ 8 ] , Low)
 
 ------------------------------------------------------------------
--- 1. Claimed early and on time; late is refused, `[0, 9 ]` not
--- being below `[0, 8 ]`
+-- 1. Claimed early and on time; refused late
 
 early-reported : schemeOf (infer [] (embargoed token 2)) ≡ just (expected-embargoed 2)
 early-reported = refl
@@ -70,9 +64,8 @@ late-not-typable : ¬ Typable [] (embargoed token 9)
 late-not-typable = infer-untypable [] (embargoed token 9) late-verdict
 
 ------------------------------------------------------------------
--- 2. After a store and three ticks, `([0, 6 ] , Low)`, the claim is
--- in time and clean; right after a transmission, `([0, 6 ] , High)`,
--- it is in time and tainted
+-- 2. Clean after a store and three ticks, `([0, 6 ] , Low)`; tainted
+-- after a transmission, `([0, 6 ] , High)`
 
 stored : op-grade write ·ₑ ([0, ↑ 3 ] , Low) ≡ ([0, ↑ 6 ] , Low)
 stored = refl
@@ -105,15 +98,13 @@ joined-claim-reported :
 joined-claim-reported = refl
 
 ------------------------------------------------------------------
--- 4. Publishing after a transmission: the token must outlast `f` and
--- `([0, 6 ] , High)`
+-- 4. The token must outlast `f` and `([0, 6 ] , High)`
 
 publish-reported : schemeOf (infer [] (publish send)) ≡ just (expected-publish send)
 publish-reported = refl
 
 ------------------------------------------------------------------
--- 5. A reading goes stale after any operation: a store takes time,
--- `[0, 3 ] ≾ [0, 0 ]` failing, and a transmission time and `High`
+-- 5. A reading goes stale after any operation
 
 twice-write-verdict : infer [] (twice write) ≡ untypable
 twice-write-verdict = refl

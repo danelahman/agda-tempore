@@ -1,9 +1,8 @@
 ------------------------------------------------------------------
 -- Natural numbers, sums and lists at left-sided intervals      --
 --                                                              --
--- "At least `n` ticks": `var`'s bound `ρ ≾ uᵣ` holds at every  --
--- grade, so nothing goes stale and eternality is never asked   --
--- for. A join of delays is the shorter.                        --
+-- Nothing goes stale and eternality is never asked for; a join --
+-- of delays is the shorter.                                    --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -80,8 +79,8 @@ swap-reported = refl
 choose-reported : schemeOf (infer [] choose) ≡ just expected-choose
 choose-reported = refl
 
-widen-reported : schemeOf (infer [] widen) ≡ just expected-widen
-widen-reported = refl
+subsume-sum-reported : schemeOf (infer [] subsume-sum) ≡ just expected-subsume-sum
+subsume-sum-reported = refl
 
 sum-later-reported : schemeOf (infer [] sum-later) ≡ just expected-sum-later
 sum-later-reported = refl

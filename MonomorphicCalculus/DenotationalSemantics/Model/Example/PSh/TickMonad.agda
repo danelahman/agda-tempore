@@ -301,6 +301,10 @@ Tᵏ A ε = record
 
 mutual
 
+  -- `TERMINATING`: every call is at a subtree or witness stored in the matched
+  -- node or proof, or is a lemma's call at its own tree; the checker cannot see
+  -- that `transportᵏ r (k q)` (from a stored `kn`) is no larger than `k q`.
+
   {-# TERMINATING #-}
 
   Tᵏˢᶠ : ∀ {A B ε w} → A →ᵖ B → Tᵏˢ A ε w → Tᵏˢ B ε w
@@ -390,6 +394,8 @@ T-≤ᵏ-≡ refl t = ≈ᵏ-sym sub-u
 ηᵏ-nat f x = ≈ᵏ-refl _
 
 mutual
+
+  -- `TERMINATING`: as for `Tᵏˢᶠ`.
 
   {-# TERMINATING #-}
 

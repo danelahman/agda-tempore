@@ -2,21 +2,17 @@
 -- First-order unification of skeletons                           --
 --                                                                --
 -- Solves a list of skeleton equations by eliminating one         --
--- skeleton variable at a time. `amguᵏ` descends through the      --
--- store one binding at a time, and the scope of skeleton         --
--- variables is a bare `ℕ`, so the descent is structural.         --
---                                                                --
--- No skeleton variable is rigid: the rigid effect-grade          --
--- variables sit in grade slots, which a skeleton does not have.  --
+-- skeleton variable at a time; `amguᵏ` descends through the      --
+-- store one binding at a time over a bare `ℕ` scope, so the      --
+-- recursion is structural. No skeleton variable is rigid:        --
+-- skeletons have no grade slots.                                 --
 --                                                                --
 -- Contract. A success returns a store whose substitution unifies --
--- the equations (`unifyᵏ-sound`, `Core.SkelUnifySound`) and      --
--- through which every unifier factors (`unifyᵏ-max`,             --
--- `Core.SkelUnifyMGU`); a failure refutes them at every          --
--- substitution (`unifyᵏ-fail`).                                  --
+-- the equations (`unifyᵏ-sound`) and through which every unifier --
+-- factors (`unifyᵏ-max`); a failure refutes them                 --
+-- (`unifyᵏ-fail`).                                               --
 --                                                                --
--- Follows McBride's structural-recursion unifier (JFP 2003);     --
--- "rigid"/"flexible" are Huet's (1975).                          --
+-- Follows McBride's unification by structural recursion.         --
 --------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_) renaming (Bool to 𝔹)
@@ -48,8 +44,8 @@ open BaseTypes BTs using (_≡ᵇ?_)
 open import PolymorphicCalculus.Inference.SolverImpl.Core.Thick
 open import PolymorphicCalculus.Inference.SolverImpl.Core.Skel S
 
--- A substitution unifies a list of equations when it makes both
--- sides of every one of them literally equal.
+-- A substitution unifies a list of equations when it makes both sides of each
+-- literally equal
 
 SEqn : ℕ → Set
 SEqn n = Skel n × Skel n
@@ -64,8 +60,7 @@ Unifiesᵏ : ∀ {n m} → SEqns n → SSub n m → Set
 Unifiesᵏ []       σ = ⊤
 Unifiesᵏ (e ∷ es) σ = Unifies¹ᵏ e σ × Unifiesᵏ es σ
 
--- Triangular substitutions: each binding eliminates one skeleton
--- variable of the scope it is read in.
+-- Triangular substitutions: each binding eliminates one variable of its scope
 
 infixr 20 _/ᵏ_∷_
 
@@ -97,8 +92,7 @@ Solᵏ n = Σ[ m ∈ ℕ ] SAList n m
 consᵏ : ∀ {n} → Skel n → Fin (suc n) → Solᵏ n → Solᵏ (suc n)
 consᵏ t α (m , τ) = m , t /ᵏ α ∷ τ
 
--- Binding a variable, and the two-variable case in which equal
--- variables need no binding
+-- Binding a variable, and the case of two variables, equal ones needing no binding
 
 flexᵏ : ∀ {n} → Fin n → Skel n → Maybe (Solᵏ n)
 flexᵏ {zero}  ()

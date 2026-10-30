@@ -1,13 +1,9 @@
 ------------------------------------------------------------------
 -- Lookup and membership under weakening and substitution       --
 --                                                              --
--- Commutation of lookup and membership with the three scope    --
--- extensions, and the actions of a substitution and of a type  --
--- equation on membership witnesses, as used by the `var` and   --
--- `unbox` cases of the soundness and completeness proofs.      --
--- Generation looks a variable up in a weakened context; the    --
--- open rules take their membership witness in a substituted    --
--- one.                                                         --
+-- Lookup and membership commute with the three scope           --
+-- extensions; a substitution or a type equation acts on        --
+-- membership witnesses, keeping the position.                  --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)
@@ -29,8 +25,6 @@ open import PolymorphicCalculus.Syntax.Grades            S
 open import PolymorphicCalculus.Syntax.Types             S
 open import PolymorphicCalculus.Syntax.Contexts          S
 open import PolymorphicCalculus.Syntax.GradeSubstitution S
-
--- Lookup commutes with the three scope extensions.
 
 lookup-ty-wkᵗ : ∀ {Θ n} → (Γ : OCtx Θ n) → (i : Fin n)
               → lookup-ty (wkᵗ-ctx Γ) i ≡ wkᵗ-v (lookup-ty Γ i)
@@ -68,9 +62,6 @@ lookup-gr-wkᵉ (Γ ∷ A)   zero    = refl
 lookup-gr-wkᵉ (Γ ∷ A)   (suc i) = lookup-gr-wkᵉ Γ i
 lookup-gr-wkᵉ (Γ ⟨ ρ ⟩) i       = cong (_·̂ᵣ wkᵉ-r ρ) (lookup-gr-wkᵉ Γ i)
 
--- Substitution on a membership witness is index-preserving, as `_[_]ᶜᵗˣ`
--- is.
-
 ∈̂-subst : ∀ {Θ Θ' n} {A : OVType Θ} {ρ : RExp Θ} {Γ : OCtx Θ n}
         → (σ : Subst Θ Θ')
         → A ∈̂[ ρ ] Γ
@@ -86,9 +77,6 @@ var-pos-∈̂-subst : ∀ {Θ Θ' n} {A : OVType Θ} {ρ : RExp Θ} {Γ : OCtx �
 var-pos-∈̂-subst σ Hd        = refl
 var-pos-∈̂-subst σ (Tl-∷ x)  = cong suc (var-pos-∈̂-subst σ x)
 var-pos-∈̂-subst σ (Tl-⟨⟩ x) = var-pos-∈̂-subst σ x
-
--- Transporting a membership witness along a type equation is `J`, so
--- the position cannot change.
 
 ∈̂-ty-subst : ∀ {Θ n} {A A' : OVType Θ} {ρ : RExp Θ} {Γ : OCtx Θ n}
            → A ≡ A' → A ∈̂[ ρ ] Γ → A' ∈̂[ ρ ] Γ

@@ -2,26 +2,16 @@
 -- The constraint language                                      --
 --                                                              --
 -- A constraint over a scope `Θ` is a first-order formula over  --
--- the open types and grade expressions of `Θ`, built from      --
--- value-type subtyping, grade orderings, eternality atoms,     --
--- var-rule disjunctions, existential quantification over the   --
--- three sorts of variables, a rigid (eigenvariable)            --
+-- its open types and grade expressions: value-type subtyping,  --
+-- grade orderings, eternality atoms, var-rule disjunctions,    --
+-- existentials over the three sorts, a rigid (eigenvariable)   --
 -- effect-grade quantifier, and a conjunction indexed by        --
--- operation symbols.                                           --
+-- operation symbols. Computation-type subtyping `C ≾̂ᶜ C'` is  --
+-- the conjunction of its value and effect atoms; a type        --
+-- equation `A ≐ᵥ B` is mutual subtyping.                       --
 --                                                              --
--- Derived forms: conjunctions over a list, existential         --
--- quantification over the variables of a scope (`∃ˢ`), and     --
--- rigid quantification over several effect-grade variables     --
--- (`∀ᵉⁿ`).                                                     --
---                                                              --
--- Computation-type subtyping is not a former: `C ≾̂ᶜ C'` is     --
--- `(A ≾̂ᵥᶜ A') ∧̂ (ε ≾̂ₑᶜ ε')`. A type equation `A ≐ᵥ B` is       --
--- mutual subtyping, `(A ≾̂ᵥᶜ B) ∧̂ (B ≾̂ᵥᶜ A)`; subtyping being   --
--- structural, it fixes the shape and makes the grades and type --
--- variables equal up to mutual ordering.                       --
---                                                              --
--- Constraints with binders follow Pottier and Rémy, The        --
--- Essence of ML Type Inference (ATTAPL, 2005).                 --
+-- Constraints with binders follow Pottier and Rémy's Essence   --
+-- of ML Type Inference.                                        --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
@@ -79,8 +69,8 @@ infix  2 ∃ᵗ_ ∃ʳ_ ∃ᵉ_ ∀ᵉ_
 ⋀ᴸ []       f = ⊤̂
 ⋀ᴸ (x ∷ xs) f = f x ∧̂ ⋀ᴸ xs f
 
--- Existential quantification over fresh variables of one sort, the
--- innermost first, and over the variables of a scope
+-- Existential quantification over fresh variables of one sort, innermost first,
+-- and over the variables of a scope
 
 ∃ᵗ* : ∀ {Θ} → (a : ℕ) → Constraint (scope (a + nTy Θ) (nR Θ) (nE Θ)) → Constraint Θ
 ∃ᵗ* zero        C = C
@@ -100,16 +90,14 @@ infix  2 ∃ᵗ_ ∃ʳ_ ∃ᵉ_ ∀ᵉ_
     (∃ʳ* {Θ = scope (nTy Ψ + nTy Θ) (nR Θ) (nE Θ)} (nR Ψ)
       (∃ᵉ* {Θ = scope (nTy Ψ + nTy Θ) (nR Ψ + nR Θ) (nE Θ)} (nE Ψ) C))
 
--- Rigid quantification over several effect-grade variables, the
--- outermost first
+-- Rigid quantification over several effect-grade variables, outermost first
 
 ∀ᵉⁿ : ∀ {Θ} → (k : ℕ) → Constraint (Θ +eⁿ k) → Constraint Θ
 ∀ᵉⁿ zero    C = C
 ∀ᵉⁿ (suc k) C = ∀ᵉ (∀ᵉⁿ k C)
 
--- Binders are traversed with the lifts `_↑ᵗ`/`_↑ʳ`/`_↑ᵉ` of
--- `PolymorphicCalculus.Syntax.GradeSubstitution`; weakening is a
--- substitution like any other.
+-- Binders are traversed with the lifts `_↑ᵗ`, `_↑ʳ`, `_↑ᵉ`; weakening is a
+-- substitution like any other
 
 infixl 50 _[_]ᶜⁿ
 

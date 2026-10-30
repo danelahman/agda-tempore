@@ -368,8 +368,8 @@ private
                                (≤ᴰ-reflexive (+ᴰ-assoc W (C ∸ᴰ W) d))))
              (+ᴰ-monoˡ-≤ d b)
 
-  widen : ∀ {W C k d} → C ∸ᴰ W ≤ᴰ k → C ∸ᴰ W ≤ᴰ k +ᴰ d
-  widen {k = k} {d} b = ≤ᴰ-trans b (≤ᴰ-+ k d)
+  loosen : ∀ {W C k d} → C ∸ᴰ W ≤ᴰ k → C ∸ᴰ W ≤ᴰ k +ᴰ d
+  loosen {k = k} {d} b = ≤ᴰ-trans b (≤ᴰ-+ k d)
 
   -- a piece poured into a chain is paid out of its budget
 
@@ -418,7 +418,7 @@ mutual
   overU⇒ {pre = pre} {cs} (enter h) pc (delᶜ {d = d} c) fw fc b =
     bank-delay (chU⇒ h pc c fw (allFin-∷ʳ cs fc tt)
       (subst (λ z → z ∸ᴰ Σʰ (wts pre) ≤ᴰ _) (sym (Σʰ-∷ʳ cs _)) (bank b)))
-  overU⇒ (pass o) pc (delᶜ c) fw fc b = bank-delay (overU⇒ o pc c fw fc (widen b))
+  overU⇒ (pass o) pc (delᶜ c) fw fc b = bank-delay (overU⇒ o pc c fw fc (loosen b))
   overU⇒ () pc nilᶜ fw fc b
   overU⇒ () pc (keepᶜ c) fw fc b
 

@@ -1,18 +1,11 @@
 ------------------------------------------------------------------
 -- Conversion of the types of a context                         --
 --                                                              --
--- A conversion relates a type `A'` that may replace a context  --
--- type `A`: `A'` is a subtype of `A`, meets the side condition --
--- of `var` wherever `A` does, and relates the payloads of box  --
--- types. Contexts related pointwise (`CtxRel`) type the same   --
--- terms, with the same erasure (`conv-v`, `conv-c`): a         --
--- variable is used at its new type under a `subV`, and an      --
--- `unbox` of a variable whose type changes binds the new       --
--- payload when the resource value has no annotation.           --
---                                                              --
--- Two conversions, under any hypotheses: equivalence, mutual   --
--- subtyping (`equivalence`); and narrowing, subtyping          --
--- (`narrowing`).                                               --
+-- A conversion lets `A'` replace a context type `A`: a subtype --
+-- meeting the side condition of `var` wherever `A` does,       --
+-- relating box payloads. Pointwise related contexts type the   --
+-- same terms with the same erasure (`conv-v`, `conv-c`).       --
+-- Instances: `equivalence` and `narrowing`.                    --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -54,7 +47,7 @@ record Conversion : Set₁ where
     rel-refl : ∀ {Θ} {Q : Hyps Θ} → (A : OVType Θ) → Rel Q A A
     rel-wkᵉ  : ∀ {Θ} {Q : Hyps Θ} {A' A} → Rel Q A' A → Rel (wkᵉ-H Q) (wkᵉ-v A') (wkᵉ-v A)
 
--- Mutual subtyping, under any hypotheses
+-- Mutual subtyping
 
 equivalence : Conversion
 equivalence = record
@@ -66,7 +59,7 @@ equivalence = record
   ; rel-wkᵉ  = λ r → <:̂ᵛ-wkᵉ (proj₁ r) , <:̂ᵛ-wkᵉ (proj₂ r)
   }
 
--- Subtyping, the side condition of `var` being closed under it
+-- Subtyping
 
 narrowing : Conversion
 narrowing = record
@@ -148,8 +141,7 @@ module _ (𝒞 : Conversion) where
     record { ty' = ty' i ; mem' = Tl-⟨⟩ (mem' i) ; rel' = rel' i ; pos' = pos' i }
     where i = image c x
 
-  -- A resource value over a variable of a related box type, reaching a
-  -- related box type, with the same erasure
+  -- A resource value over a related variable, with the same erasure
 
   record ResImage {Θ n} (Q : Hyps Θ) (Γ' : OCtx Θ n) (ρ' : RExp Θ) {ρ₀ X₀}
                   (z' : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ') (ρ : RExp Θ) (X : OVType Θ) (V : RawV Θ n)

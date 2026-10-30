@@ -23,8 +23,6 @@ open import Language.GroundTypes Grades BTs using (GType; Base; Unit; Bool; Nat;
 
 open import PolymorphicCalculus.Syntax.Grades S
 
--- Open value and computation types
-
 mutual
 
   data OVType (Θ : Scope) : Set where
@@ -48,8 +46,6 @@ mutual
   infix  32 _|×|_ _|+|_
   infixr 30 _⇒_ _⇛_
   infix  31 _‼_
-
--- Embedding ground types into open types
 
 ⌜_⌝ᵍ : ∀ {Θ} → GType → OVType Θ
 ⌜ Base b ⌝ᵍ    = Base b

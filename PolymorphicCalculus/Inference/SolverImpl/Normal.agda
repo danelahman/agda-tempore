@@ -1,28 +1,20 @@
 --------------------------------------------------------------------
 -- The engine of entailment: normal forms, chains, embedding      --
 --                                                                --
--- Both sides of an ordering are put in the sum-of-products       --
--- normal form of `SolverImpl.Product`. Two products are compared --
--- by `_⊑ᵖ_`: the left embeds into the right in order, a missing  --
--- position being the unit, an atom matched against nothing on    --
--- the right when the unit is below it and on the left when it is --
--- below the unit, and an atom above the top on the right         --
--- standing for any run of atoms on the left. Where the hints     --
--- declare `_·_` commutative, products compare as multisets:      --
--- some permutation of the left embeds in order into the right.   --
---                                                                --
--- `Chains` is the reachability table along a list of edges       --
--- between atoms, and `Embedding` the comparison of products with --
--- its atom comparisons as parameters. `SolverImpl.Entail`        --
--- instantiates both at the edges of a hypothesis graph.          --
+-- Both sides of an ordering are put in the normal form of        --
+-- `SolverImpl.Product`. Products are compared by `_⊑ᵖ_`: the     --
+-- left embeds into the right in order, units filling gaps and an --
+-- atom above the top absorbing a run; where `_·_` commutes, as   --
+-- multisets. `Chains` is the reachability table along edges      --
+-- between atoms, `Embedding` the comparison with its atom        --
+-- comparisons as parameters; `SolverImpl.Entail` instantiates    --
+-- both.                                                          --
 --                                                                --
 -- Contract. `_⊑ᵖ?_` decides `_⊑ᵖ_` (`steps-complete`,            --
--- `step-shrinks`), `prodˢ≾` returns a reading exactly when       --
--- `_⊑ᵖ_` holds (`prodˢ≾-complete`, `prodˢ≾-exact`), and          --
--- `⊑ᵖ-sound` reads a derivation into any relation closed under   --
--- the steps. A table entry is a composite of the edges' proofs   --
--- (`reach?`). What the search does not find is listed under      --
--- Products below.                                                --
+-- `step-shrinks`); `prodˢ≾` returns a reading exactly when       --
+-- `_⊑ᵖ_` holds (`prodˢ≾-complete`, `prodˢ≾-exact`), sound by     --
+-- `⊑ᵖ-sound`; a table entry composes the edges' proofs           --
+-- (`reach?`).                                                    --
 --------------------------------------------------------------------
 
 
@@ -73,19 +65,10 @@ open import PolymorphicCalculus.Inference.SolverImpl.Product S hints public
 ------------------------------------------------------------------
 -- Chains between atoms
 --
--- Two atoms are linked by `link?`. `a` reaches `b` along a chain of
--- edges when `a` is linked to the first source, each target to the
--- next source, and the last target to `b`; `a` reaches `b` when they
--- are linked, or `a` is linked to a source that reaches `b`.
---
--- The table holds one entry per source `c`, sources the same by `_≟_`
--- counted once, in order of first occurrence among the edges: the
--- atoms `d` that `c` reaches, each with the derivation of `c ⊑ d`
--- composed along its chain. An entry is saturated by at most one
--- round per edge, stopping at the first round that reaches nothing
--- new. An entry depends on its source alone, and `reach?` answers
--- with the first entry that answers, so a repeated entry could not
--- change an answer.
+-- `a` reaches `b` when they are linked (`link?`), or `a` is linked to a source
+-- that reaches `b`. The table has one entry per distinct source: the atoms it
+-- reaches, each with the derivation along its chain, saturated in at most one
+-- round per edge.
 
 module Chains {A : Set} (_⊑_ : A → A → Set)
               (refl⊑  : ∀ {a} → a ⊑ a)
@@ -192,8 +175,7 @@ is-just? : ∀ {X : Set} → (m : Maybe X) → Dec (Is-just m)
 is-just? (just _) = yes (Any-just tt)
 is-just? nothing  = no λ ()
 
--- Every position at which a decided predicate holds; each position
--- is listed up to what removing its element leaves
+-- Every position at which a decided predicate holds, with what removing it leaves
 
 anys : ∀ {A : Set} {P : A → Set} → (∀ x → Dec (P x)) → (xs : List A) → List (Any P xs)
 anys P? []       = []
@@ -213,51 +195,22 @@ anys-complete P? {x ∷ xs} (there p) with P? x
 ------------------------------------------------------------------
 -- Products
 --
--- Two products are compared as sequences whose missing positions
--- are the unit, by `_⊑ᵖ_`: `as ⊑ᵖ bs` when steps lead from the pair
--- `(as , bs)` to `([] , [])`. A step consumes an atom from at least
--- one side:
+-- `as ⊑ᵖ bs` when steps lead from `(as , bs)` to `([] , [])`, missing
+-- positions being the unit. A step consumes an atom from one side or both:
 --
 --   * `match`: the two heads, the left below the right;
---   * `skipʳ`: the right head, the unit being below it;
---   * `skipˡ`: the left head, it being below the unit;
---   * `absorb`: the left head, into a right head that the top is
---     below, which stays to absorb more, as `a · ⊤ ≾ ⊤`;
---   * `mergeʳ`: the atom after a constant head on the right, the unit
---     being below it, the constant then consed onto what follows it
---     (`consₑ`/`consᵣ`, which multiply adjacent constants);
---   * `mergeˡ`: the same on the left, the atom being below the unit;
+--   * `skipʳ`: the right head, the unit below it;
+--   * `skipˡ`: the left head, below the unit;
+--   * `absorb`: the left head, into a right head the top is below, which stays
+--     (`a · ⊤ ≾ ⊤`);
+--   * `mergeʳ`, `mergeˡ`: the atom after a constant head, as `skipʳ`, `skipˡ`,
+--     the constant consed onto what follows;
+--   * `pick`, `absorbAt`: `match` and `absorb` at any right position, where
+--     `_·_` commutes (`Comm`).
 --
--- and, where `_·_` commutes (`Comm`, decided):
---
---   * `pick`: the left head and a right atom at any position, the
---     left below the right;
---   * `absorbAt`: the left head, into a right atom at any position
---     that the top is below, which stays.
---
--- So the left side embeds into the right in order: each left atom
--- matched, absorbed or below the unit, each right atom matched,
--- absorbing a run, or above the unit, constants on either side of an
--- atom passed over multiplied. Where `_·_` commutes, products compare
--- as multisets: some permutation of the left embeds in order into the
--- right. The atom comparisons (`_≤ᵃ_`, `u≤_`, `_≤u`, `⊤≤_`) are
--- parameters, decided.
---
--- `_⊑ᵖ?_` decides `_⊑ᵖ_` by depth-first search over the steps out of
--- a pair (`steps`, listing every step, `steps-complete`), on the
--- total length, which each step shortens (`step-shrinks`). Within
--- `Sound`, `⊑ᵖ-sound` reads a derivation into any relation closed
--- under the steps, and `prodˢ≾` returns such a reading exactly when
--- `_⊑ᵖ_` holds (`prodˢ≾-complete`, `prodˢ≾-exact`). `steps` lists
--- `pick` and `absorbAt` past the right head only, at the positions
--- `anys` finds; at the head they reach what `match` and `absorb` do.
--- The search is backtracking bipartite matching, exponential in the
--- length of a product.
---
--- Not found: a left alternative below the join of right alternatives only
--- jointly is found when those alternatives form a group that the
--- fold makes one; not when they have different skeletons, or form a
--- group that varies in more than one slot.
+-- `_⊑ᵖ?_` is a depth-first search on the total length: backtracking bipartite
+-- matching, exponential in a product's length. Not found: a left alternative
+-- below a join of right ones only jointly, unless the fold makes them one group.
 
 module Embedding
   {A K : Set}
@@ -343,8 +296,7 @@ module Embedding
   mergesˡ (a ∷ b ∷ as) bs = mergeˡ-at a b as bs (const? a) refl
   mergesˡ _            bs = []
 
-  -- `pick` and `absorbAt` past the right head, which `match` and
-  -- `absorb` cover
+  -- `pick` and `absorbAt` past the right head; `match` and `absorb` cover it
 
   picks absorbsAt : ∀ as bs → List (Next as bs)
 

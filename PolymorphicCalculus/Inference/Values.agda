@@ -2,15 +2,13 @@
 -- Type inference for values in program contexts                --
 --                                                              --
 -- Inference for a closed raw value `V` in a program context    --
--- `Δ` is inference for `return V` there, its principal scheme  --
--- giving that of `V` (`inferᵛ`, `checkᵛ`): a principal type    --
--- scheme, `V` typable exactly when its hypotheses are          --
--- satisfiable (`inferᵛ-typed`); `untypable` only for untypable --
--- values (`inferᵛ-untypable`); `stuck` only for values with    --
--- handlers or using a definition whose scheme has quantified   --
--- hypotheses (`inferᵛ-noRigid`). A typing under no hypotheses  --
--- is a typing with satisfiable hypotheses, so inference misses --
--- none of them (`completenessᵛ`).                              --
+-- `Δ` is inference for `return V` (`inferᵛ`, `checkᵛ`). A      --
+-- scheme is principal, `V` typable exactly when its hypotheses --
+-- are satisfiable (`inferᵛ-typed`); `untypable` only for       --
+-- untypable values (`inferᵛ-untypable`); `stuck` only with     --
+-- handlers or a definition with quantified hypotheses          --
+-- (`inferᵛ-noRigid`). Inference misses no typing under no      --
+-- hypotheses (`completenessᵛ`).                                --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -131,10 +129,8 @@ checkᵛ-handlerFree Δ V u h = checkᵛ-noRigid Δ V (handlerFree-noRigidᵛ u 
 ------------------------------------------------------------------------
 -- Corollary (Completeness)
 
--- A typing of `V` in `Δ` over the empty scope, under no hypotheses: no
--- refutation, and every principal scheme answered has a closed
--- instance satisfying its hypotheses at which its type is a subtype
--- of the typing's
+-- A typing of `V` in `Δ` over the empty scope from no hypotheses: no refutation,
+-- and every scheme answered has a closed instance where its type is below the typing's
 
 completenessᵛ : ∀ {Δ} {V : RawV ∅ˢ 0} {X : OVType ∅ˢ}
               → (D : ∅ᴴ ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X) → ⌊ D ⌋ᵛ ≡ V

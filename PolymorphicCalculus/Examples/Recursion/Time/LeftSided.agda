@@ -1,14 +1,11 @@
 ------------------------------------------------------------------
 -- Primitive recursion at left-sided intervals                  --
 --                                                              --
--- "At least `n` ticks": the unit is the top, so `ε · ε ≾ ε`    --
--- always holds, and the base's `u ≾ ε` makes every recursion's --
--- effect the unit. A countdown on three is refuted at three    --
--- ticks, although each of its runs takes three. A function is  --
--- usable in the step, `⊤ᵣ ≾ uᵣ` holding. Recursion inside an   --
--- operation clause is typed, but a clause dropping its         --
--- continuation after a countdown is refuted. On lists the      --
--- same: a head is usable whatever its type, a box among them.  --
+-- The unit is the top, so every recursion's effect is the unit --
+-- and a countdown on three is refuted at three ticks.          --
+-- Functions and heads of any type are usable in the step. A    --
+-- clause dropping its continuation after a countdown is        --
+-- refuted.                                                     --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -131,8 +128,7 @@ inc-all-reported :
 inc-all-reported = refl
 
 ------------------------------------------------------------------
--- 8. The head in the step: `∣ ε ∣ ≾ uᵣ` holds at every grade, so
--- the head is usable whatever its type, a box among them
+-- 8. The head in the step: usable whatever its type
 
 copy-reported :
   schemeOf (infer [] copy) ≡ just (∀[ 1 , 0 , 0 ] ⊤ ⟹ (|List| α₀ ⇒ |List| α₀ ‼ ûₑ) ‼ ûₑ)
@@ -168,8 +164,7 @@ latest-ready-reported : schemeOf (infer [] latest-ready) ≡ just expected-lates
 latest-ready-reported = refl
 
 ------------------------------------------------------------------
--- 9. A tick per element: the effect is the unit, so three ticks is
--- refuted
+-- 9. A tick per element: the unit, so three ticks is refuted
 
 ticks-reported :
   schemeOf (infer [] ticks) ≡ just (∀[ 1 , 0 , 0 ] ⊤ ⟹ (|List| α₀ ⇒ Unit ‼ ûₑ) ‼ ûₑ)

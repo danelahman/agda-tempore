@@ -1,99 +1,38 @@
 ------------------------------------------------------------------
 -- The solver: solving, then reporting                          --
 --                                                              --
--- The stages, each with the lemmas stating its contract:       --
+-- The stages, each with its contract:                          --
+--   * generation (`Generate`): the solutions of `C[ Γ , M ]`   --
+--     are the derivations erasing to `M` (`charC`);            --
+--   * the driver (`Solve`): subtyping demands expanded and     --
+--     decomposed along the variance table (`Former`),          --
+--     eternality decided along its eternality column           --
+--     (`etDec`), other atoms residualised; a solution is       --
+--     principal (`solve-principal`), a refutation sound        --
+--     (`solve-fail`);                                          --
+--   * the close of a rigid scope: `reexpand`, `localise`,      --
+--     `splitᴿ`, `popᵉ`, then the deferred conditions retried   --
+--     (`Deferred`);                                            --
+--   * read-back: `toHyps`, then `checkClosed`;                 --
+--   * the report (`reportSolved`): `simplify`, elimination of  --
+--     unknowns (`Eliminate`), normal forms, `trim`,            --
+--     strengthening, keeping the caller's unknowns and those   --
+--     of the deferred conditions;                              --
+--   * the report's closed check (`closedReport`).              --
+-- Entailment is decided by `Entail` at explicit strengths.     --
 --                                                              --
---   * Generation (`Generate`): the solutions of `C[ Γ , M ]`   --
---     are the derivations erasing to `M` (`charC`).            --
---   * The driver (`Solve`): subtyping demands, type equations  --
---     included, are expanded (`expandSub-dec`,                 --
---     `expandSub-max`) and decomposed exactly along the        --
---     variance table of the type formers (`Former`: `Decomp`,  --
---     `<:-intro`/`<:-elim`; `SubDec`'s `intro`/`elim`,         --
---     `atomiseᴿ-sound`/`atomiseᴿ-compl`); eternality demands   --
---     and the type side of var-rule disjunctions are decided   --
---     when pushed, along its eternality column                 --
---     (`etDec-intro`/`-compl`/`-refute`, `etDec-grade`); other --
---     atoms are residualised. A solution carries its witness   --
---     (`Wit`) and is principal (`solve-principal`); a          --
---     refutation is sound (`solve-fail`).                      --
---   * The close of a clause's rigid scope: `reexpand`          --
---     (`reexpand-princ`/`-fail`), `Localise.localise`          --
---     (`Localised`, `localise-princ`), `splitᴿ`                --
---     (`splitᴿ-princ`/`-fail`), `popᵉ`                         --
---     (`popᵉ-princ`/`-escape`/`-fail`).                        --
---   * Deferred conditions, quantified orderings (`Deferred`),  --
---     retried after each close (`retry-princ`/`-fail`).        --
---   * Read-back: `toHyps` (`toHyps-compl`, `etDec-refute`),    --
---     then `checkClosed`, which decides the closed atoms and   --
---     the closed orderings joined by chains of hypotheses and  --
---     drops the disjunctions that follow from the orderings    --
---     left (`checkClosed-⊩`/`-⊆`/`-fail`).                     --
---   * The report (`reportSolved`, `Reported`): `simplify`      --
---     (`simplify-⊩`/`-⊨`), which normalises the set, splits    --
---     each join on a left side and drops each var-rule         --
---     disjunction entailed by another; elimination of unknowns --
---     (`Elim`) by the value rules of `Values` in the           --
---     prototype's order: equating, lowering and raising under  --
---     a polarity oracle, the polarities read along the         --
---     variance table (`polᵛ`, `Lift`), the forced unit         --
---     (`unitᵉ`, `unitʳ`), cycle elimination on the type        --
---     variables of subtyping cycles (`collapseᵗ`, by `Reach`'s --
---     `Collapse`), and lowering a type variable; normal forms  --
---     again (`canonElim`); `trim` (`trimElim`); strengthening  --
---     (`Strengthened`). The unknowns of the image of the       --
---     caller's variables and those of the deferred conditions  --
---     are neither eliminated nor dropped (`fix`, `instᴿ`).     --
---   * The report's closed check (`closedReport`):              --
---     `checkClosed` on the reported hypotheses, of which       --
---     elimination can make orderings closed                    --
---     (`closed-untypable`).                                    --
+-- `runSolver` instantiates the `Solver` interface and is not   --
+-- stuck without rigid binders (`runSolver-rigidFree`). `infer` --
+-- is the reference entry point: a scheme is principal and its  --
+-- hypotheses are satisfiable exactly when the term is typable  --
+-- (`infer-typed`); a refutation means the term is untypable    --
+-- (`infer-untypable`); a handler-free term is never stuck      --
+-- (`infer-handlerFree`). `check` also searches for a closed    --
+-- instance (`check-established`).                              --
 --                                                              --
--- Entailed orderings are decided by one module, `Entail`, at   --
--- explicit strengths: `closed` (variable-free sides, the       --
--- grade's order; the closed check and the witnesses of         --
--- `retry`), `derive` (the embedding of normal forms along the  --
--- chains of the hypotheses between atoms; at no hypotheses in  --
--- `Canon`), `atomic` (an ordering of the set itself, or        --
--- `derive`; equating in the report), and `full` (`closed`, or  --
--- the embedding along the chains between atoms of the whole    --
--- hypothesis graph with its factor edges; at no hypotheses in  --
--- the driver's disjunctions, localisation's settled orderings  --
--- and raise, and `Values`; at the orderings of the scope in    --
--- localisation's settled disjunctions and the split's          --
--- discharge; at the residual's orderings in `retry`; at the    --
--- orderings left by the closed check for its disjunctions; in  --
--- the report's settling, disjunctions and trim). Every edge of --
--- the graph holds where its hypotheses do (`edgeᵣ-sound`), and --
--- each decision is a derivation composed of edges, sound by    --
--- its type; no completeness is claimed. Products are compared  --
--- by `prodˢ≾`, which decides the embedding `_⊑ᵖ_`              --
--- (`prodˢ≾-complete`, `prodˢ≾-exact`), sound for entailment    --
--- (`⊑ᵖ-sound`).                                                --
---                                                              --
--- `runSolver` instantiates                                     --
--- `PolymorphicCalculus.Inference.Solver.Solver`                --
--- (`runSolver-sound`, `runSolver-principal`,                   --
--- `runSolver-complete`) and is not stuck on a constraint       --
--- without rigid binders (`runSolver-rigidFree`). `infer` is    --
--- the reference entry point: the solver's answer is searched   --
--- for a refutation (`Search.search`), then reported and the    --
--- report checked (`closedReport`); `scheme` is a principal     --
--- type scheme whose hypotheses are satisfiable exactly when    --
--- the term is typable (`infer-typed`); a refutation, by the    --
--- solver, the search or the report's closed check, means that  --
--- the term is untypable (`infer-untypable`, `infer-complete`); --
--- a handler-free term is never stuck (`infer-handlerFree`);    --
--- `stuck` carries no claim. `check` also searches for a closed --
--- instance (`Search.establish`): an established term is        --
--- typable (`check-established`), an untypable one is not       --
--- (`check-untypable`), and an unestablished one carries no     --
--- claim.                                                       --
---                                                              --
--- The solver is parameterised by hints for the grade system    --
--- (`Grades.Hints`): properties of its grades and candidate     --
--- values, which let it decide more. No declarative judgement   --
--- depends on them.                                             --
+-- The hints for the grade system (`Grades.Hints`) let the      --
+-- solver decide more; no declarative judgement depends on      --
+-- them.                                                        --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
@@ -415,25 +354,12 @@ solver = record
   ; solve-principal = runSolver-principal
   }
 
--- A solution, its residue as the solver returns it, and the residue
--- simplified, which entails the residue and holds at each of its
--- closed instances. The unknowns the simplified residue fixes are then
--- eliminated from it and from the reported type `X` by a substitution
--- `η`: the reported type is `X` along `η` up to convertibility, the
--- reported hypotheses entail the simplified residue along `η`, each
--- closed instance of the simplified residue is one of them, and there
--- the reported type is a subtype of `X`. Normalisation of the grade
--- expressions and `trim` run as the last two elimination steps.
---
--- The report is relative to the caller's variables `w`: `η` fixes the
--- unknowns of their image. It is stated over the scope `Θ̃` of the
--- variables occurring in it or in that image, embedded in the
--- solution's by the renaming `ι`, the caller's variables instantiated
--- by `σ̃`; an instance of `Θ̃` extends along `ι`. The deferred
--- conditions `R` follow: `R̃` along `ι` entails them along `η`, and
--- each closed instance meeting the simplified residue and `R` meets
--- `R̃`. The scheme's hypotheses are `Q̃` with `R̃` as quantified
--- hypotheses (`scheme`).
+-- A solution, its residue, and the residue simplified. Elimination by `η`
+-- fixing the caller's unknowns (`w`): the reported type is `X` along `η`, the
+-- reported hypotheses entail the simplified residue along `η` and keep its
+-- closed instances, where the reported type is a subtype of `X`. The report
+-- lives over the scope `Θ̃` of its variables, embedded by `ι`; the deferred
+-- conditions `R` become `R̃`, the scheme's quantified hypotheses.
 
 record Reported {Θ₀ Θ : Scope} (w : Subst Θ₀ Θ) (X : OCType Θ) (C : Constraint Θ) : Set where
   constructor reported
@@ -503,10 +429,8 @@ canonᵈ-⊩⁻ {δ = δ} (qord l k o) h =
 ∈-map-elim f {P} p m with ∈-map⁻ f m
 ... | a , m₀ , refl = p m₀
 
--- The report of what `runSolverᴰ` returns. The variables of the deferred
--- conditions are frozen for elimination and kept by the strengthening:
--- the conditions are read over the report's scope along the
--- strengthening's retraction, in canonical form.
+-- The report of what `runSolverᴰ` returns; the unknowns of the deferred
+-- conditions are frozen for elimination and kept by the strengthening
 
 reportSolved : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
              → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (QOrd Θ')}
@@ -589,11 +513,8 @@ reportSolved w X C {Θ'} {σ} {Q} {D} e =
 ------------------------------------------------------------------------
 -- The reference entry point
 --
--- A report on the constraint of `M` in `Γ`, relative to the program's
--- variables, is a principal type scheme of `M` in `Γ`: its derivation is the
--- principal one instantiated along `η` and retracted along `ι`, and a
--- typing factors through the principal one and then through the report
--- at each closed instance.
+-- A report is a principal type scheme of `M` in `Γ`: every typing factors
+-- through the principal derivation and then the report, at each closed instance.
 
 scheme : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
        → Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ] → PrincipalScheme Γ M
@@ -751,9 +672,8 @@ answerScheme : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
              → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D) → PrincipalScheme Γ M
 answerScheme {Θ} Γ M e = scheme Γ M (reportSolved wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ] e)
 
--- The closed check of a reported scheme: `checkClosed` on its
--- hypotheses. Elimination can make an ordering closed; a failure means
--- that the scheme's hypotheses are unsatisfiable.
+-- The closed check of a reported scheme: `checkClosed` on its hypotheses, which
+-- elimination can make closed; a failure makes them unsatisfiable
 
 data ClosedReport {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} (p : PrincipalScheme Γ M) : Set where
   refutedᶜ : ¬ Satisfiable (PrincipalScheme.Q̃ p) → ClosedReport p
@@ -769,13 +689,9 @@ closed-untypable : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : Principa
 closed-untypable p n t = n (Equivalence.to (typable-⇔ p) t)
 
 ------------------------------------------------------------------------
--- Inference: a principal type scheme, a refutation, or `stuck`. The
--- solver's answer is searched for a refutation (`Search.search`); an
--- open residual is reported, and the report's closed check
--- (`closedReport`) refutes it or leaves the scheme. Inference is stuck only where a
--- handler clause's scope closes with a local unknown to which
--- `Localise` assigns no value; `SolverImpl.Localise` lists the known
--- cases.
+-- Inference: a principal type scheme, a refutation, or `stuck`, only where a
+-- handler clause's scope closes with a local unknown `Localise` assigns no
+-- value (see `SolverImpl.Localise`)
 
 inferReported : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n}
               → (p : PrincipalScheme Γ M) → ClosedReport p → Inference Γ M
@@ -841,11 +757,8 @@ inferFrom-stuck Γ M (solved (Θ' , σ , Q , D)) e eq = ⊥-elim (searched (sear
     searched (openˢ _ _)  = closed (closedReport _)
 
 ------------------------------------------------------------------------
--- The check of a closed program: inference, then establishment
--- (`Search.establish`). A closed instance found satisfies the scheme's
--- hypotheses; a refutation, by establishment or by the report's closed
--- check, means that `M` is untypable; nothing is claimed of an
--- unestablished verdict.
+-- The check of a closed program: inference, then `Search.establish`. A closed
+-- instance found satisfies the scheme; a refutation makes `M` untypable.
 
 checkReported : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n}
               → (p : PrincipalScheme Γ M) → ClosedReport p → Check Γ M
@@ -911,14 +824,9 @@ checkFrom-stuck Γ M (solved (Θ' , σ , Q , D)) e eq = ⊥-elim (established' (
 ------------------------------------------------------------------------
 -- The end-to-end theorem
 --
--- A typed verdict is a principal type scheme, and `M` is typable exactly
--- when its hypotheses are satisfiable; an untypable verdict means `M`
--- is not typable. Inference is therefore complete up to `stuck`: a
--- typable `M` is never declared untypable. A handler-free `M` is never
--- stuck. A typed verdict with no hypotheses is typable outright. The
--- check is sound the same way, and an established verdict carries a
--- closed instance satisfying the scheme's hypotheses, so `M` is
--- typable.
+-- A typed verdict is a principal scheme, satisfiable exactly when `M` is
+-- typable; an untypable verdict is sound, so inference is complete up to
+-- `stuck`, and a handler-free `M` is never stuck. An established check is typable.
 
 infer-typed : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalScheme Γ M}
             → infer Γ M ≡ typed p

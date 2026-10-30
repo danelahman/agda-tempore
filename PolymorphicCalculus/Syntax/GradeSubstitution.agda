@@ -36,8 +36,6 @@ open import Language.GroundTypes Grades BTs using (GType; Base; Unit; Bool; Nat;
 open import PolymorphicCalculus.Syntax.Grades   S
 open import PolymorphicCalculus.Syntax.Types    S
 
--- Substitutions
-
 record Subst (Θ Θ' : Scope) : Set where
   constructor sub
   field
@@ -83,7 +81,7 @@ mutual
   _[_]ᶜ : ∀ {Θ Θ'} → OCType Θ → Subst Θ Θ' → OCType Θ'
   (A ‼ ε) [ σ ]ᶜ = A [ σ ]ᵛ ‼ ε [ σ ]ᵉ
 
--- Identity and composition (apply the first, then substitute with the second)
+-- Identity and composition, the first applied first
 
 infixl 25 _⨟ˢ_
 
@@ -95,14 +93,12 @@ _⨟ˢ_ : ∀ {Θ Θ' Θ''} → Subst Θ Θ' → Subst Θ' Θ'' → Subst Θ Θ'
              (λ i → sR σ i [ δ ]ʳ)
              (λ i → sE σ i [ δ ]ᵉ)
 
--- A closed instance of any scope: type variables to `Unit`,
--- resource-grade variables to the unit resource grade, effect-grade
--- variables to the unit effect grade
+-- The ground instance: type variables to `Unit`, grades to the units
 
 groundˢ : ∀ {Θ} → Subst Θ ∅ˢ
 groundˢ = sub (λ _ → Unit) (λ _ → ûᵣ) (λ _ → ûₑ)
 
--- Weakening substitutions: every variable goes to its injected self
+-- Weakening substitutions
 
 wkˢᵗ : ∀ {Θ} → Subst Θ (Θ +ty)
 wkˢᵗ {Θ} = sub (λ α → tvar (wkᵗ-tv Θ α))
@@ -119,9 +115,7 @@ wkˢᵉ {Θ} = sub (λ α → tvar (wkᵉ-tv Θ α))
                (λ i → rvar (wkᵉ-rv Θ i))
                (λ i → evar (wkᵉ-ev Θ i))
 
--- Lifting a substitution over a newly bound variable.
--- The target scope is named in the `zero` clauses: `newᵗ` and friends
--- do not determine it (`TyVar` is `Fin` of a projection).
+-- Lifting over a new variable; the `zero` clauses name the target scope
 
 infixl 32 _↑ᵗ _↑ʳ _↑ᵉ
 
@@ -143,7 +137,7 @@ sR  (σ ↑ᵉ)            i       = wkᵉ-r (sR σ i)
 sE  (_↑ᵉ {Θ' = Θ'} σ) zero    = evar (newᵉ {Θ'})
 sE  (σ ↑ᵉ)            (suc i) = wkᵉ-e (sE σ i)
 
--- Extending a substitution: the newly bound variable goes to the given image
+-- Extending a substitution by an image for a new variable
 
 infixl 28 _,ᵗ_ _,ʳ_ _,ᵉ_
 
@@ -182,8 +176,6 @@ private
   ... | yes _ = refl
   ... | no ¬p = ⊥-elim (¬p refl)
 
--- The updated variable goes to the new image, every other one to itself
-
 updᵉ-hit : ∀ {Ψ} → (k : EVar Ψ) → (b : EExp Ψ) → sE (updᵉ k b) k ≡ b
 updᵉ-hit k b with k ≟ᶠ k
 ... | yes _ = refl
@@ -205,8 +197,6 @@ updʳ-miss : ∀ {Ψ} → (k : RVar Ψ) → (b : RExp Ψ) → (i : RVar Ψ)
 updʳ-miss k b i q with i ≟ᶠ k
 ... | no _     = refl
 ... | yes refl = ⊥-elim (true≢false (trans (sym (≟-refl k)) q))
-
--- A resource update leaves every effect expression alone
 
 updʳ-e : ∀ {Ψ} → (k : RVar Ψ) → (b : RExp Ψ) → (ε : EExp Ψ) → ε [ updʳ k b ]ᵉ ≡ ε
 updʳ-e k b (evar i)   = refl
@@ -606,8 +596,7 @@ wk-↑ᵉ-c σ C = trans (cong (_[ σ ↑ᵉ ]ᶜ) (sym (wkˢᵉ-c C)))
 ⌜⌝ᵍ-subst σ (|List|ᵍ A) = cong |List| (⌜⌝ᵍ-subst σ A)
 ⌜⌝ᵍ-subst σ ([ ρ ]ᵍ A) = cong₂ [_]_ refl (⌜⌝ᵍ-subst σ A)
 
--- Pointwise equality of substitutions is an equivalence, respected by
--- composition, extension and lifting; composition is associative and unital.
+-- Pointwise equality is a congruence; composition is associative and unital
 
 ≐ˢ-refl : ∀ {Θ Θ'} {σ : Subst Θ Θ'} → σ ≐ˢ σ
 ≐ˢ-refl = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
@@ -672,8 +661,6 @@ wk-↑ᵉ-c σ C = trans (cong (_[ σ ↑ᵉ ]ᶜ) (sym (wkˢᵉ-c C)))
                 (λ i → wk-↑ᵉ-r δ (sR σ i))
                 (λ { zero → refl ; (suc i) → wk-↑ᵉ-e δ (sE σ i) })
 
--- A weakening followed by an extension cancels, after any substitution
-
 wk-,ᵗ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B : OVType Θ')
         → ((ι ⨟ˢ wkˢᵗ) ⨟ˢ (σ ,ᵗ B)) ≐ˢ (ι ⨟ˢ σ)
 wk-,ᵗ-ˢ ι σ B = ≐ˢ-trans (⨟-assoc ι wkˢᵗ (σ ,ᵗ B)) (⨟-congʳ ι (wkˢᵗ-,ᵗ σ B))
@@ -701,8 +688,7 @@ memo-≐ σ = mk≐ˢ (lookup∘tabulate (sTy σ)) (lookup∘tabulate (sR σ)) (
 ------------------------------------------------------------------------
 -- Juxtaposition of scopes
 
--- `Θ ⊹ Ψ` extends `Θ` by the variables of `Ψ`, the new ones innermost;
--- `wkˢ⊹` and `newˢ⊹` inject the two scopes.
+-- `Θ ⊹ Ψ` extends `Θ` by the variables of `Ψ`, the new ones innermost
 
 infixl 30 _⊹_
 
@@ -715,8 +701,7 @@ wkˢ⊹ Ψ = sub (λ α → tvar (nTy Ψ ↑ʳ α)) (λ i → rvar (nR Ψ ↑ʳ 
 newˢ⊹ : ∀ {Θ} → (Ψ : Scope) → Subst Ψ (Θ ⊹ Ψ)
 newˢ⊹ {Θ} Ψ = sub (λ α → tvar (α ↑ˡ nTy Θ)) (λ i → rvar (i ↑ˡ nR Θ)) (λ i → evar (i ↑ˡ nE Θ))
 
--- Extending a substitution by images for the variables of one sort,
--- the innermost first
+-- Extending by images for the new variables of one sort, innermost first
 
 _⊕ᵗ_ : ∀ {Θ Θ' a} → Subst Θ Θ' → (Fin a → OVType Θ')
      → Subst (scope (a + nTy Θ) (nR Θ) (nE Θ)) Θ'
@@ -733,16 +718,12 @@ _⊕ᵉ_ : ∀ {Θ Θ' c} → Subst Θ Θ' → (Fin c → EExp Θ')
 _⊕ᵉ_ {c = zero}  σ es = σ
 _⊕ᵉ_ {c = suc c} σ es = (σ ⊕ᵉ (λ i → es (suc i))) ,ᵉ es zero
 
--- The pair of substitutions of the two scopes
-
 infixl 28 _⊕ˢ_
 
 _⊕ˢ_ : ∀ {Θ Ψ Θ'} → Subst Θ Θ' → Subst Ψ Θ' → Subst (Θ ⊹ Ψ) Θ'
 σ ⊕ˢ δ = ((σ ⊕ᵗ sTy δ) ⊕ʳ sR δ) ⊕ᵉ sE δ
 
 private
-
-  -- each extension acts on its own sort and leaves the others alone
 
   ⊕ᵗ-old : ∀ {Θ Θ' a} (σ : Subst Θ Θ') (ts : Fin a → OVType Θ') (α : TyVar Θ)
          → sTy (σ ⊕ᵗ ts) (a ↑ʳ α) ≡ sTy σ α

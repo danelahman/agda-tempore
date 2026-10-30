@@ -3,17 +3,21 @@
 An Agda formalisation of the core calculus of Tempore, a language for
 programming with temporal resources: resources that become available only
 after some time, some events, or similar has elapsed since they were brought
-into scope. The calculus has Fitch-style graded modal types over a grade system
-(a grade algebra for effects, one for resources, and a morphism between them),
-algebraic effects and handlers whose operations take time, and a graded effect
-system. The development has two calculi. The polymorphic calculus has type
-and grade variables and quantified type schemes; for it the development gives
-constraint-based type inference with principal type schemes, and proves that
-its typings instantiate to scope-closed typings, which are type safe and
-terminating for a reduction on raw terms. No type of the monomorphic calculus
-contains a variable or a quantifier; for it the development proves type safety
-and termination, and gives a denotational semantics, a sound equational theory
-and adequacy.
+into scope. The calculus has Fitch-style graded modal types over a grade
+system (a grade algebra for effects, one for resources, and a morphism between
+them), algebraic effects and handlers whose operations take time, and a graded
+effect system.
+
+There are two calculi.
+
+- The polymorphic calculus has type and grade variables and quantified type
+  schemes. The development gives constraint-based type inference with
+  principal type schemes for it, and proves that its typings instantiate to
+  scope-closed typings, which are type safe and terminating for a reduction on
+  raw terms.
+- No type of the monomorphic calculus contains a variable or a quantifier. The
+  development proves type safety and termination for it, and gives a
+  denotational semantics, a sound equational theory and adequacy.
 
 The development builds on two earlier formalisations, in which the passage of
 discrete time is the only means of specifying temporal properties of resources:
@@ -39,42 +43,42 @@ parts of the solver it exercises. A check passes when Agda exits with 0 and
 prints no warning. The only postulate is function extensionality
 (`Util/Equality.agda`).
 
+`Results.agda` and `MonomorphicCalculus/Results.agda` are the overviews to
+read first: one entry per main definition, rule and theorem, under its title.
+
 ## Layout
 
 - `Util/`: equality and the non-negative rationals.
-- `Grades/`: grade algebras, grade systems and durations, and the hints the
-  solver reads (`Grades/Hints.agda`); the concrete grades in `Grades/Examples/`.
-- `Language/`: what both calculi share: base types, ground types,
-  comparisons and operation signatures.
-- `PolymorphicCalculus/`: the polymorphic calculus: hypotheses, entailment,
-  typing, the operational semantics, type safety and termination,
-  constraints, the solver, inference.
-- `MonomorphicCalculus/`: the monomorphic, intrinsically typed calculus: its
-  operational and denotational semantics, equational theory and adequacy.
-
-`Results.agda` and `MonomorphicCalculus/Results.agda` are the overviews: one
-entry per main definition, rule and theorem, named by its title; the
-monomorphic one lists the items not yet formalised at the end.
+- `Grades/`: grade algebras, grade systems and durations, the hints the solver
+  reads, and the concrete grades in `Grades/Examples/`.
+- `Language/`: what both calculi share: base types, ground types, comparisons
+  and operation signatures.
+- `PolymorphicCalculus/`: syntax, hypotheses and entailment, typing, the
+  operational semantics, type safety and termination, constraints, the solver,
+  inference, programs and examples.
+- `MonomorphicCalculus/`: the intrinsically typed calculus, its operational and
+  denotational semantics, equational theory and adequacy.
 
 ## Scope
 
-- Handlers are values of handler types, used by `handle M with V`, in the
-  polymorphic calculus; the monomorphic calculus has second-class handlers,
-  `handle M with H to x in N`. The language is parameterised by base types, the
-  calculus being its instance without them (`withoutBaseTypes`).
+- The language is parameterised by base types; the calculus without them is
+  its instance `withoutBaseTypes`.
+- The polymorphic calculus has handlers as values of handler types, used by
+  `handle M with V`; the monomorphic calculus has second-class handlers,
+  `handle M with H to x in N`.
 - Hypotheses include quantified orderings, which bind several rigid
   effect-grade variables.
-- Unbox takes a resource value, a variable under annotations, and binds its
-  payload; the monomorphic calculus's unbox takes a variable.
-- A top-level definition is named by its position in the program context.
-  Inference is for values in program contexts, and for computations in open
-  contexts.
-- The reduction is on run-time terms, raw terms without grades and type
-  annotations, with grade-free states; `unbox` there takes a value.
-  Instantiation, type safety and termination are for the scope-closed typing.
-  The monomorphic calculus types handler clauses at every continuation grade
-  and has comparisons as computations. Completeness of inference is with
-  respect to scope-closed typings.
+- In the polymorphic calculus `unbox` takes a resource value, a variable under
+  annotations, and binds its payload; in the monomorphic calculus it takes a
+  variable.
+- A definition is named by its position in the program context. Inference is
+  for values in program contexts and for computations in open contexts, and is
+  complete with respect to scope-closed typings.
+- The reduction of the polymorphic calculus is on run-time terms, raw terms
+  without grades and type annotations, with grade-free states. Instantiation,
+  type safety and termination are for the scope-closed typing.
+- The monomorphic calculus types handler clauses at every continuation grade
+  and has comparisons as computations.
 - The denotational results assume uniform handlers, and some of their
   recursions are marked `TERMINATING`.
 

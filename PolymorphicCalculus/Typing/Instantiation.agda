@@ -1,15 +1,11 @@
 ------------------------------------------------------------------
 -- Instantiation of the scope                                   --
 --                                                              --
--- A typing under `Q` is a family of typings over the empty     --
--- scope under no hypotheses: at every closed instance          --
--- `δ ⊨ Q`, the run-time erasure of the instantiated term, its  --
--- annotations dropped, is typed at the instantiated context,   --
--- which keeps its program context, and type                    --
+-- At every closed instance `δ ⊨ Q`, a typing under `Q` gives a --
+-- scope-closed typing of the run-time erasure of the           --
+-- instantiated term, at the instantiated context and type      --
 -- (`scope-instantiation`). Handler clauses stay typed at their --
--- own grade variables: a quantified hypothesis, holding at     --
--- every grade, is an instance of rule Truth, the theory of the --
--- grade system.                                                --
+-- own grade variables.                                         --
 ------------------------------------------------------------------
 
 open import Data.List.Base using ([])

@@ -1,12 +1,9 @@
 --------------------------------------------------------------------
 -- Inference on annotated programs                                --
 --                                                                --
--- An annotation fixes a shape: of a value (`⦂ᵛ`) or of a         --
--- computation (`⦂ᶜ`). Each program has one annotation and no     --
--- handler, and is typable at a closed instance, so inference     --
--- answers `typed` for each at every grade (a theorem over an     --
--- arbitrary language); the scheme it reports is the shape the    --
--- annotation forces.                                             --
+-- Annotations of a value (`⦂ᵛ`) and of a computation (`⦂ᶜ`).     --
+-- Each program is handler-free and typable, so inference answers --
+-- `typed` at every grade, with the shape the annotation forces.  --
 --------------------------------------------------------------------
 
 open import Data.Unit using (tt)
@@ -46,7 +43,7 @@ open import PolymorphicCalculus.Examples.Scheme S public
 open import PolymorphicCalculus.Examples.Variables
 
 ------------------------------------------------------------------
--- Typable and handler-free: inference answers `typed`
+-- Typable and handler-free: `typed`
 
 typed-of : (M : RawC ∅ˢ 0) → Typable [] M → HandlerFreeᶜ M → IsTyped (infer [] M)
 typed-of M t h with infer [] M | infer-complete [] M t | infer-handlerFree [] M tt h
@@ -75,10 +72,8 @@ U⇒U : ∀ {Θ} → OVType Θ
 U⇒U = Unit ⇒ Unit ‼ ûₑ
 
 ------------------------------------------------------------------
--- An argument annotation
---
--- The identity at `Bool`, its argument annotated where it is first
--- returned: the argument's type is `Bool`, not a variable.
+-- An argument annotation: the identity with its argument annotated
+-- `Bool` where returned, so its type is `Bool`, not a variable.
 
 id-bool : RawC ∅ˢ 0
 id-bool = return (lam (return (v₀ ⦂ᵛ Bool) ⨟ return v₁))
@@ -93,10 +88,8 @@ expected-id-bool : Scheme
 expected-id-bool = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Bool ⇒ Bool ‼ ûₑ) ‼ ûₑ
 
 ------------------------------------------------------------------
--- A computation annotation
---
--- The standard library's `id`, annotated as a computation returning
--- a function on `Unit`: the reported type is the annotation.
+-- A computation annotation: `id` annotated as a function on `Unit`,
+-- the reported type.
 
 id-unit : RawC ∅ˢ 0
 id-unit = return (lam (return v₀)) ⦂ᶜ (U⇒U ‼ ûₑ)
@@ -109,15 +102,8 @@ expected-id-unit : Scheme
 expected-id-unit = ∀[ 0 , 0 , 0 ] ⊤ ⟹ U⇒U ‼ ûₑ
 
 ------------------------------------------------------------------
--- A value annotation at an application's function position
---
--- The standard library's `compose f g x = f (g x)`, with `g`
--- annotated where it is applied as taking no time. `f` is used
--- after `g x` has run, so without the annotation `var` asks for
--- `∣ ε₁ ∣ ≾ uᵣ` (`compose` in `Stdlib`); with it, `g`'s
--- effect is the unit and nothing is asked. `g`'s argument and result
--- are `Unit`, the annotation being closed; `f`'s type stays
--- polymorphic, and the product `ûₑ ·̂ₑ ε₀` is reported as `ε₀`.
+-- `compose f g x = f (g x)` with `g` annotated as taking no time where
+-- applied: `f`'s use asks nothing, and `f` stays polymorphic.
 
 compose-g : RawC ∅ˢ 0
 compose-g =

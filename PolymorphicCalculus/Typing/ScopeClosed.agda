@@ -1,11 +1,10 @@
 ------------------------------------------------------------------
 -- Scope-closed typing of run-time terms                        --
 --                                                              --
--- `Γ ⊢ᵛ V ⦂ X` and `Γ ⊢ᶜ M ⦂ C`: a derivation over the empty    --
--- scope whose run-time erasure is the term, under no           --
--- hypotheses (`∅ᴴ`). Handler clauses in it are typed over the  --
--- scope of their own variable, an ordering at it entailed by   --
--- rule Truth, the theory of the grade system.                  --
+-- `Γ ⊢ᵛ V ⦂ X` and `Γ ⊢ᶜ M ⦂ C`: a derivation over the empty   --
+-- scope under no hypotheses whose run-time erasure is the      --
+-- term. Its handler clauses are typed over the scope of their  --
+-- own variable.                                                --
 ------------------------------------------------------------------
 
 open import Data.Product using (Σ-syntax)

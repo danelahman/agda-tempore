@@ -1,13 +1,11 @@
 ------------------------------------------------------------------
 -- Completeness of inference for scope-closed typings           --
 --                                                              --
--- A scope-closed typing of a raw term over the empty scope,    --
--- under no hypotheses, is a typing whose hypotheses are        --
--- satisfiable: inference does not refute the term, and every   --
--- principal scheme it answers has a closed instance satisfying --
--- its hypotheses at which the principal type is a subtype of   --
--- the typing's (`completeness`), by the completeness clause    --
--- (`factor`) of the scheme.                                    --
+-- A scope-closed typing over the empty scope from no           --
+-- hypotheses has satisfiable hypotheses, so inference does not --
+-- refute the term, and every scheme it answers has a closed    --
+-- instance at which the principal type is below the typing's   --
+-- (`completeness`), by the scheme's `factor`.                  --
 ------------------------------------------------------------------
 
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)

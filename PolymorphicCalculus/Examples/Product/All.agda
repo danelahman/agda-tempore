@@ -1,7 +1,6 @@
 ------------------------------------------------------------------------
--- A grade of two components, time paired with a security level: a box is
--- an embargoed report or a session token, refused for being out of time
--- or for being tainted. Exercises product grades and normal forms
+-- Time paired with a security level: boxes refused for being out of
+-- time or tainted. Exercises product grades and normal forms
 -- (`Product`, `Normal`, `Entail`).
 ------------------------------------------------------------------------
 

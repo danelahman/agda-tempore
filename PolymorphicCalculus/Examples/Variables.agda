@@ -1,12 +1,10 @@
 ------------------------------------------------------------------
 -- Named variables for the inference examples                   --
 --                                                              --
--- `α₀ α₁ …` are type variables, `ρ₀ ρ₁ …` resource-grade and   --
--- `ε₀ ε₁ …` effect-grade variables, and `v₀ v₁ …` raw term     --
--- variables, de Bruijn indices from zero. Agda displays them   --
--- by these names. The module is not parameterised: display     --
--- forms apply only to constructors named through a             --
--- non-parameterised module.                                    --
+-- `α₀ α₁ …` type, `ρ₀ ρ₁ …` resource-grade, `ε₀ ε₁ …`          --
+-- effect-grade and `v₀ v₁ …` raw term variables, de Bruijn     --
+-- indices from zero, with display forms. The module is not     --
+-- parameterised, as display forms require.                     --
 ------------------------------------------------------------------
 
 import Data.Fin as Fin

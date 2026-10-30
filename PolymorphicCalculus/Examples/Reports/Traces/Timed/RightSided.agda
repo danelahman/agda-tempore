@@ -1,9 +1,7 @@
 ------------------------------------------------------------------
 -- Report simplification at timed traces, allowance order       --
 --                                                              --
--- The unit is least, so a var-rule disjunction entailed by     --
--- another is pruned, and a product with the top among its      --
--- factors is absorbed into it.                                 --
+-- Both simplifications apply, the unit being least.            --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -27,8 +25,7 @@ open import PolymorphicCalculus.Examples.Reports spec hints enum
 open import PolymorphicCalculus.Examples.Variables
 
 ------------------------------------------------------------------
--- The disjunction owed after `f` is entailed by the one owed after
--- `f` and `g`, and only the latter is reported
+-- Only the disjunction owed after `f` and `g` is reported
 
 reused-around-claim-reported :
   schemeOf (infer [] reused-around-claim)
@@ -36,8 +33,7 @@ reused-around-claim-reported :
 reused-around-claim-reported = refl
 
 ------------------------------------------------------------------
--- The clause's lock, the unbounded budget, absorbs `f`'s grade:
--- the box is asked for at the top
+-- The box is asked for at the top
 
 claimed-after-call-reported :
   schemeOf (infer [] claimed-after-call) ≡ just (expected-claimed-after-call (rconst ⊤ᵣ))

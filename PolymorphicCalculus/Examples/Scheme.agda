@@ -2,19 +2,13 @@
 -- What inference reports, and notation for writing it          --
 --                                                              --
 -- `schemeOf` projects a `typed` verdict onto its scheme        --
--- `∀ Θ̃. Q̃ ⇒ X̃`: the scope, the hypotheses and the type.        --
--- `IsTyped` holds exactly of a `typed` verdict. The type       --
--- schemes of values, of the definitions of a program, are      --
--- `ValueScheme`s, forced by `forceᵛ`.                          --
---                                                              --
--- `schemeOf` returns its scheme fully evaluated (see `walk`);  --
--- a `refl` check against a literal runs the solver once.       --
---                                                              --
--- Notation: `∀[ a , b , c ] C ⟹ X` is a scheme over `a` type,  --
--- `b` resource-grade and `c` effect-grade variables, `C` a     --
--- conjunction `_∧_` of atoms (`⊤` the empty one), a quantified --
--- one written `∀ᵉ k ∙ C'`; `∀ᵛ[ a , b , c ] C ⟹ X` is a value  --
--- scheme.                                                      --
+-- (scope, hypotheses, type), fully evaluated, so a `refl`      --
+-- check against a literal runs the solver once; `forceᵛ`       --
+-- does the same for the value schemes of a program.            --
+-- Notation: `∀[ a , b , c ] C ⟹ X` over `a` type, `b`          --
+-- resource-grade and `c` effect-grade variables, `C` a         --
+-- conjunction `_∧_` of atoms (`⊤` empty);                      --
+-- `∀ᵛ[ a , b , c ] C ⟹ X` is a value scheme.                   --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹; _∧_ to _&&_)
@@ -61,10 +55,8 @@ ValueScheme = Σ Scope (λ Θ → Hyps Θ × OVType Θ)
 
 -- Forcing a scheme
 --
--- `walk` visits every constructor of a scheme and answers `true`, an
--- answer that is never used. Computing it evaluates the whole scheme in
--- one reduction, in which all parts share one run of the solver. A
--- grade constant is forced by the carrier's decision procedure.
+-- `walk` visits every constructor, so computing its unused answer
+-- evaluates the whole scheme in one reduction, sharing one solver run.
 
 private
 
@@ -152,7 +144,7 @@ schemeOf (typed p) = schemeOf! (PrincipalScheme.Θ̃ p , PrincipalScheme.Q̃ p ,
 schemeOf untypable = nothing
 schemeOf stuck     = nothing
 
--- A data type: stating it does not run inference
+-- A data type, so stating it does not run inference
 
 data IsTyped {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} : Inference Γ M → Set where
   is-typed : (p : PrincipalScheme Γ M) → IsTyped (typed p)
@@ -212,9 +204,8 @@ _≾ₑ_ : ∀ {Θ} → EExp Θ → EExp Θ → Conj Θ
 eternal_∨_≾ûᵣ : ∀ {Θ} → OVType Θ → RExp Θ → Conj Θ
 eternal A ∨ ρ ≾ûᵣ = disj-atom A ρ ∷ []
 
--- A conjunction is the hypothesis set with each atom in its field,
--- in order: an expected scheme lists each field's atoms in the order
--- the solver reports them.
+-- The hypothesis set with each atom in its field, in order: an expected
+-- scheme lists them in the order the solver reports them.
 
 hypsOf : ∀ {Θ} → Conj Θ → Hyps Θ
 hypsOf []                     = hyps [] [] [] [] [] []
@@ -225,9 +216,8 @@ hypsOf (ordᵉ-atom ε ε' ∷ C) = let Q = hypsOf C in record Q { ordₑ = (ε 
 hypsOf (disj-atom A ρ  ∷ C) = let Q = hypsOf C in record Q { disj = (A , ρ) ∷ disj Q }
 hypsOf (qhyp-atom O    ∷ C) = let Q = hypsOf C in record Q { qhyps = O ∷ qhyps Q }
 
--- Quantified hypotheses: `∀ᵉ k ∙ C` binds `k` rigid effect variables
--- over the orderings of `C`, `∀ᵉ⟨ op ⟩ k ∙ C` is left by the clause for
--- `op`
+-- `∀ᵉ k ∙ C` binds `k` rigid effect variables over the orderings of
+-- `C`; `∀ᵉ⟨ op ⟩ k ∙ C` is left by the clause for `op`
 
 ordsOf : ∀ {Θ} → Conj Θ → Ords Θ
 ordsOf C = let Q = hypsOf C in ords (ordᵣ Q) (ordₑ Q)
@@ -240,8 +230,7 @@ infix 3 ∀ᵉ_∙_ ∀ᵉ⟨_⟩_∙_
 ∀ᵉ⟨_⟩_∙_ : ∀ {Θ} → Op → (k : ℕ) → Conj (Θ +eⁿ k) → Conj Θ
 ∀ᵉ⟨ op ⟩ k ∙ C = qhyp-atom (qord (just op) k (ordsOf C)) ∷ []
 
--- Schemes: `a` type, `b` resource-grade and `c` effect-grade
--- variables, hypotheses `C`, type `X`
+-- Schemes over `a` type, `b` resource and `c` effect variables
 
 infixr 2 ∀[_,_,_]_⟹_
 

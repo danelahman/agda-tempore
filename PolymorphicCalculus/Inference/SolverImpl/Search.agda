@@ -1,50 +1,26 @@
 --------------------------------------------------------------------
 -- The search for a closed instance of a solution                 --
 --                                                                --
--- A solution's hypotheses and deferred conditions are read as a  --
--- residual (`asResid`) over the scope extended by one rigid that --
--- occurs nowhere, so that every unknown is local to it, and      --
--- `Localise.localise` gives the unknowns values (`localiseAll`). --
--- The deferred conditions are then retried from the orderings    --
--- left (`retry`), the atoms read back as hypotheses (`toHyps`),  --
--- and the closed check run, followed by the failing chains of    --
--- the whole graph, factor edges included (`checkClosed`,         --
--- `failingChain`). Each step can refute; otherwise the residual  --
--- left is open (`search`, `Search`).                             --
+-- `search` reads a solution as a residual (`asResid`) under one  --
+-- fresh rigid, so that every unknown is local, localises it      --
+-- (`localiseAll`), retries the deferred conditions, reads the    --
+-- atoms back and runs the closed check and the failing chains.   --
+-- Each step can refute; otherwise the residual left is open.     --
 --                                                                --
--- Establishment (`establish`) goes on from an open residual. A   --
--- deferred condition left that mentions no unknown besides its   --
--- rigids is undecided. Otherwise each class of the orderings and --
--- deferred conditions sharing unknowns (`components`) is         --
--- searched in turn over every assignment of candidates to its    --
--- unknowns, the earlier classes' values kept: for an effect      --
--- unknown the unit, the top, the effect constants of the class   --
--- and the witnesses of the hints for its degree and constants;   --
--- for a resource unknown the unit, the top, the resource         --
--- constants and the images of the effect candidates (`candsₑ`,   --
--- `candsᵣ`). An assignment is kept when every member of the      --
--- class holds at it, an ordering by the carrier's order, a       --
--- condition by its retry from no hypotheses. Each type unknown   --
--- is sent to the unit type. The instance assembled is verified   --
--- by the closed decisions of `Instances` (`verify`); exhausting  --
--- the candidates of a class leaves the residual unestablished.   --
+-- `establish` searches an open residual one class of shared      --
+-- unknowns at a time (`components`), over the candidates of each --
+-- unknown (`candsₑ`, `candsᵣ`: the unit, the top, the class's    --
+-- constants, the hints' witnesses), type unknowns at the unit    --
+-- type, and verifies the instance found (`verify`).              --
 --                                                                --
 -- Contract. A refutation leaves the solution unsatisfiable       --
--- (`refutedˢ`): a closed instance of the solution enters the     --
--- scope, and localisation keeps it (`lcpl`), then at the unit    --
--- for the rigid it is a closed instance of the localised         --
--- residual, against which retry (`retry-fail`), the read-back    --
--- (`toHyps-compl`), the closed check (`checkClosed-fail`) and    --
--- the failing chains are each sound. A closed instance of an     --
--- open residual is one of the solution (`openˢ`), through the    --
--- localisation's values (`lsnd`) and the retry (`backᴰ`). An     --
--- instance found is verified, so establishment exhibits a closed --
--- instance of the solution (`foundᵉ`). Nothing is claimed of an  --
--- open residual, nor of an undecided or exhausted search.        --
+-- (`refutedˢ`); a closed instance of an open residual is one of  --
+-- the solution (`openˢ`); an instance found is one of the        --
+-- solution (`foundᵉ`). An undecided or exhausted search claims   --
+-- nothing.                                                       --
 --                                                                --
--- Backtracking search over a finite domain per unknown (Golomb   --
--- and Baumert, JACM 1965), one class of the constraint graph at  --
--- a time.                                                        --
+-- Backtracking over a finite domain per unknown (Golomb and      --
+-- Baumert).                                                      --
 --------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; _∨_; _∧_; not; if_then_else_) renaming (Bool to 𝔹)
@@ -145,8 +121,8 @@ atomic-wkᵉ at m with ∈-map⁻ (mapᵖ (_[ wkˢᵉ ]ᵛ)) m
 ------------------------------------------------------------------------
 -- Every unknown local
 --
--- The scope is extended by one rigid, the only image of the scope's
--- entry; the residual, weakened past it, does not mention it.
+-- The scope extended by one rigid, the only image of its entry; the weakened
+-- residual does not mention it
 
 rigid : ∀ {Ψ} → Subst (∅ˢ +e) (Ψ +e)
 rigid = sub (λ ()) (λ ()) (λ { zero → evar zero })
@@ -159,8 +135,7 @@ localiseAll R = localise rigid (R [ wkˢᵉ ]ᴿ)
 entry : ∀ {Ψ} → (δ : Subst Ψ ∅ˢ) → Entry (rigid {Ψ}) (δ ↑ᵉ)
 entry δ = idˢ , mk≐ˢ (λ ()) (λ ()) (λ { zero → refl })
 
--- and is a closed instance of the localised residual, the rigid sent to
--- the unit
+-- and is a closed instance of the localised residual, the rigid at the unit
 
 closedᴸ : ∀ {Ψ} {R : Resid Ψ} → (L : Localised (rigid {Ψ}) (R [ wkˢᵉ ]ᴿ)) → (δ : Subst Ψ ∅ˢ)
         → ∅ᴴ ⊩ᴿ R [ δ ] → ∅ᴴ ⊩ᴿ lR L [ δ ↑ᵉ ⨟ˢ κ⟨ ûₑ ⟩ ]
@@ -169,8 +144,7 @@ closedᴸ L δ h =
     (lcpl L (δ ↑ᵉ) (entry δ)
       (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wkˢᵉ-↑ᵉ δ)) (⊩ᴿ-⨟ ⊩ᴴ-∅ h))))
 
--- A closed instance of the localised residual is one of the residual,
--- through the values
+-- A closed instance of the localised residual is one of the residual
 
 openᴸ : ∀ {Ψ} {R : Resid Ψ} → (L : Localised (rigid {Ψ}) (R [ wkˢᵉ ]ᴿ))
       → (τ : Subst (Ψ +e) ∅ˢ) → ∅ᴴ ⊩ᴿ lR L [ τ ] → ∅ᴴ ⊩ᴿ R [ wkˢᵉ ⨟ˢ (lσ L ⨟ˢ τ) ]
@@ -249,8 +223,8 @@ searchᴸ {Ψ} Q D L = retried (retryᴰ (ordsOf (lR L)) (dfs (lR L)))
                 refutedˢ (λ s → n (proj₁ (inst' s) , ⊩ᴴ⇒⊨ (toHyps-compl R' e (proj₁ (inst' s)) (proj₂ (inst' s)))))
         ...   | nothing = opened
 
--- Matching on the deferred conditions first leaves the search
--- unevaluated on unknown ones.
+-- Matching on the deferred conditions first keeps the search unevaluated on
+-- unknown ones
 
 search : ∀ {Ψ} → (Q : Hyps Ψ) → (D : List (QOrd Ψ)) → Search Q D
 search Q []      = searchᴸ Q [] (localiseAll (asResid Q []))
@@ -267,8 +241,8 @@ setᵉ k c τ = sub (sTy τ) (sR τ) (λ i → if ⌊ i ≟ᶠ k ⌋ then econst
 setʳ : ∀ {Ψ} → RVar Ψ → R → Subst Ψ ∅ˢ → Subst Ψ ∅ˢ
 setʳ k c τ = sub (sTy τ) (λ i → if ⌊ i ≟ᶠ k ⌋ then rconst c else sR τ i) (sE τ)
 
--- A deferred condition holds at a closed instance when its retry from
--- no hypotheses leaves nothing
+-- A deferred condition holds at a closed instance when its retry from no
+-- hypotheses leaves nothing
 
 dischargedAt : ∀ {Ψ} → (τ : Subst Ψ ∅ˢ) → (E : QOrd Ψ) → Maybe (∅ᴴ ⊩ᴼ E [ τ ])
 dischargedAt τ E with retryᵈ ∅ᴴ (E [ τ ]ᵠ)
@@ -328,8 +302,7 @@ meets V W = anyᶠ (λ i → vʳ V i ∧ vʳ W i) ∨ anyᶠ (λ i → vᵉ V i 
 noGrades : ∀ {Ψ} → Vars Ψ → 𝔹
 noGrades V = not (anyᶠ (vʳ V) ∨ anyᶠ (vᵉ V))
 
--- The classes of items sharing unknowns: each item joins the classes it
--- meets
+-- The classes of items sharing unknowns, each item joining those it meets
 
 Class : Scope → Set
 Class Ψ = Vars Ψ × List (Item Ψ)
@@ -375,8 +348,7 @@ liftʳ {Ψ} (nsuc k) m = liftʳ {Ψ +e} k m
 maxOver : ∀ {X : Set} → (X → ℕ) → List X → ℕ
 maxOver f = foldr (λ x n → f x ⊔ n) 0
 
--- The degree of an item in a set of unknowns: their most occurrences on
--- one side of an ordering
+-- The degree of an item in a set of unknowns: their most occurrences on one side
 
 degreeOf : ∀ {Ψ} → Vars Ψ → Item Ψ → ℕ
 degreeOf V (ordʳ x y) = countᵣ (vʳ V) (vᵉ V) x ⊔ countᵣ (vʳ V) (vᵉ V) y

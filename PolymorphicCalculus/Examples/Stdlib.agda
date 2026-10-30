@@ -1,16 +1,11 @@
 ------------------------------------------------------------------
--- Inference on the prototype's standard library                --
+-- Inference on Tempore's standard library                      --
 --                                                              --
--- Nine functions of tempore-lang's standard library            --
--- (`src/06-user-interface/core/stdlib.tpe`), written as raw    --
--- terms. None has a handler, and each is typable at a closed   --
--- instance, so at every grade inference neither gets stuck nor --
--- refuses: `infer [] p` is `typed` (`p-typed`), a theorem over --
--- an arbitrary language.                                       --
---                                                              --
--- `expected-p` is the scheme inference reports, written once   --
--- over the language; the instances under `Stdlib/` check it by --
--- `refl` at concrete grades.                                   --
+-- Nine functions of Tempore's standard library as raw terms.   --
+-- Each is handler-free and typable at a closed instance, so    --
+-- inference answers `typed` at every grade (`p-typed`).        --
+-- `expected-p` is the reported scheme, checked by `refl` at    --
+-- the instances under `Stdlib/`.                               --
 ------------------------------------------------------------------
 
 open import Data.Unit using (tt)
@@ -49,7 +44,7 @@ open import PolymorphicCalculus.Examples.Scheme S public
 open import PolymorphicCalculus.Examples.Variables
 
 ------------------------------------------------------------------
--- Typable and handler-free: inference answers `typed`
+-- Typable and handler-free: `typed`
 
 typed-of : (M : RawC ∅ˢ 0) → Typable [] M → HandlerFreeᶜ M → IsTyped (infer [] M)
 typed-of M t h with infer [] M | infer-complete [] M t | infer-handlerFree [] M tt h
@@ -73,8 +68,7 @@ U⇒U = Unit ⇒ Unit ‼ ûₑ
 
 ------------------------------------------------------------------
 -- let id x = x
--- prototype: [α] α → α
---
+-- Tempore's scheme: [α] α → α
 -- A type variable, and a value's unit effect.
 
 id : RawC ∅ˢ 0
@@ -88,8 +82,7 @@ expected-id = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ α₀ ‼ ûₑ) ‼ ûₑ
 
 ------------------------------------------------------------------
 -- let ignore _ = ()
--- prototype: [α] α → unit
---
+-- Tempore's scheme: [α] α → unit
 -- An argument nothing constrains.
 
 ignore : RawC ∅ˢ 0
@@ -103,9 +96,7 @@ expected-ignore = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ Unit ‼ ûₑ) ‼ ûₑ
 
 ------------------------------------------------------------------
 -- let fst (x, _) = x
--- prototype: [α,β] β × α → β
---
--- Matching a pair.
+-- Tempore's scheme: [α,β] β × α → β
 
 fst : RawC ∅ˢ 0
 fst = return (lam (match v₀ `in return v₁))
@@ -120,9 +111,7 @@ expected-fst = ∀[ 2 , 0 , 0 ] ⊤ ⟹ (α₁ |×| α₀ ⇒ α₁ ‼ ûₑ) �
 
 ------------------------------------------------------------------
 -- let snd (_, y) = y
--- prototype: [α,β] β × α → α
---
--- Matching a pair.
+-- Tempore's scheme: [α,β] β × α → α
 
 snd : RawC ∅ˢ 0
 snd = return (lam (match v₀ `in return v₀))
@@ -137,9 +126,8 @@ expected-snd = ∀[ 2 , 0 , 0 ] ⊤ ⟹ (α₁ |×| α₀ ⇒ α₀ ‼ ûₑ) �
 
 ------------------------------------------------------------------
 -- let not x = if x then false else true
--- prototype: bool → bool
---
--- A closed scheme: nothing to generalise.
+-- Tempore's scheme: bool → bool
+-- A closed scheme.
 
 not : RawC ∅ˢ 0
 not = return (lam (if v₀ `then return false `else return true))
@@ -154,10 +142,8 @@ expected-not = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Bool ⇒ Bool ‼ ûₑ) ‼ ûₑ
 
 ------------------------------------------------------------------
 -- let absurd void = (match void with)
--- prototype: [α,β],[ρ₀] α → β # ρ₀
---
--- An effect variable. The argument is `Empty`, the one type `absurd`
--- eliminates.
+-- Tempore's scheme: [α,β],[ρ₀] α → β # ρ₀
+-- An effect variable; the argument is `Empty`, which `absurd` eliminates.
 
 absurd′ : RawC ∅ˢ 0
 absurd′ = return (lam (absurd v₀))
@@ -172,8 +158,7 @@ expected-absurd′ = ∀[ 1 , 0 , 1 ] ⊤ ⟹ (Empty ⇒ α₀ ‼ ε₀) ‼ û
 
 ------------------------------------------------------------------
 -- let (|>) x f = f x
--- prototype: [α,β],[ρ₀] α → (α → β # ρ₀) → β # ρ₀
---
+-- Tempore's scheme: [α,β],[ρ₀] α → (α → β # ρ₀) → β # ρ₀
 -- An application has the effect of the function applied.
 
 pipe : RawC ∅ˢ 0
@@ -189,15 +174,9 @@ expected-pipe = ∀[ 2 , 0 , 1 ] ⊤ ⟹ (α₁ ⇒ ((α₁ ⇒ α₀ ‼ ε₀)
 
 ------------------------------------------------------------------
 -- let compose f g x = f (g x)
--- prototype: [α,β,γ],[ρ₀,ρ₁] (β → γ # ρ₁) → (α → β # ρ₀) → α → γ # ρ₀ + ρ₁
---
--- Effects multiply in the order the calls run, `g`'s then `f`'s.
--- The condition: `f` is an ordinary variable, not eternal, used after
--- `g x` has run, so `var` asks that `g` take no time,
--- `∣ ε₁ ∣̂ᵉ ≾ uᵣ`. Where the unit is least and the grade system
--- reflects the order at the unit, the condition forces `ε₁` to the
--- unit: `g` is pure, and the effect is `f`'s (`expected-compose`);
--- the grades where nothing goes stale report no condition.
+-- Tempore's scheme: [α,β,γ],[ρ₀,ρ₁] (β → γ # ρ₁) → (α → β # ρ₀) → α → γ # ρ₀ + ρ₁
+-- `f` is used after `g x`, so `var` asks `∣ ε₁ ∣̂ᵉ ≾ uᵣ`; where the unit
+-- is least this forces `g` pure (`expected-compose`).
 
 compose : RawC ∅ˢ 0
 compose = return (lam (return (lam (return (lam ((v₁ · v₀) ⨟ (v₃ · v₀)))))))
@@ -221,15 +200,9 @@ expected-compose =
 
 ------------------------------------------------------------------
 -- let min x y = if x < y then x else y
--- prototype: [α] α → α → α
---
--- The comparison is passed in as a function, at any type; `cmp`
--- would require an eternal one.
--- The result is a common supertype of `x` and `y` (`α₀ <: α₁`,
--- `α₂ <: α₁`). The conditions: `x` and `y` are used after the
--- comparison has run, so each is eternal or the comparison takes no
--- time, two var-rule disjunctions (the prototype's
--- `{eternal α ∨ ρ <= 0}`).
+-- Tempore's scheme: [α] α → α → α, with `{eternal α ∨ ρ <= 0}`
+-- The comparison is a function argument. The result is a common supertype
+-- of `x` and `y`, each used after the comparison: eternal or no time passed.
 
 min : RawC ∅ˢ 0
 min = return (lam (return (lam (return (lam

@@ -2,15 +2,9 @@
 -- Inference at left-sided time paired with a security level      --
 --                                                                --
 -- `([ n ,+∞⟩ , ℓ)`: at least `n` ticks, touching nothing above   --
--- `ℓ`. The sensor node's operations are graded `read` 1 and      --
--- `write` 2 at `Low`, `send` 4 at `High`. The unit is not least  --
--- and `_·_` commutes.                                            --
---                                                                --
--- A box at `([ 5 ,+∞⟩ , Low)` is an embargoed report: claimable  --
--- once five ticks have passed and only from code that has not    --
--- touched `High` since it was boxed. A claim is refused for      --
--- being early or for being tainted, and every refusal is decided --
--- componentwise.                                                 --
+-- `ℓ`; `read` 1 and `write` 2 at `Low`, `send` 4 at `High`. A    --
+-- box at `([ 5 ,+∞⟩ , Low)` is an embargoed report, refused      --
+-- when early or tainted.                                         --
 --------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -52,8 +46,7 @@ embargo : RExp ∅ˢ
 embargo = rconst ([ 5 ,+∞⟩ , Low)
 
 ------------------------------------------------------------------
--- 1. Claimed on time and late; early is refused, `[ 4 ,+∞⟩` not
--- being below `[ 5 ,+∞⟩`
+-- 1. Claimed on time and late; refused early
 
 on-time-reported : schemeOf (infer [] (embargoed embargo 5)) ≡ just (expected-embargoed 5)
 on-time-reported = refl
@@ -71,10 +64,8 @@ early-not-typable : ¬ Typable [] (embargoed embargo 4)
 early-not-typable = infer-untypable [] (embargoed embargo 4) early-verdict
 
 ------------------------------------------------------------------
--- 2. After a store and three ticks, `([ 5 ,+∞⟩ , Low)`, the claim is
--- on time and clean; after a transmission and three ticks,
--- `([ 7 ,+∞⟩ , High)`, it is late enough and tainted, and no delay
--- clears the level
+-- 2. Clean after a store and three ticks, `([ 5 ,+∞⟩ , Low)`; tainted
+-- after a transmission, `([ 7 ,+∞⟩ , High)`, whatever the delay
 
 stored : op-grade write ·ₑ ([ 3 ,+∞⟩ , Low) ≡ ([ 5 ,+∞⟩ , Low)
 stored = refl
@@ -96,8 +87,8 @@ sent-not-typable : ¬ Typable [] (transmitted embargo send 3)
 sent-not-typable = infer-untypable [] (transmitted embargo send 3) sent-verdict
 
 ------------------------------------------------------------------
--- 3. Reading, then storing or transmitting: the box handed in is
--- asked for at the join, three ticks and `High`
+-- 3. Reading, then storing or transmitting: the join, three ticks and
+-- `High`
 
 joined : op-grade read ·ₑ (op-grade write ⊔ₑ op-grade send) ≡ ([ 3 ,+∞⟩ , High)
 joined = refl
@@ -107,15 +98,13 @@ joined-claim-reported :
 joined-claim-reported = refl
 
 ------------------------------------------------------------------
--- 4. Publishing after a transmission: the report must outlast `f`
--- and `([ 4 ,+∞⟩ , High)`
+-- 4. The report must outlast `f` and `([ 4 ,+∞⟩ , High)`
 
 publish-reported : schemeOf (infer [] (publish send)) ≡ just (expected-publish send)
 publish-reported = refl
 
 ------------------------------------------------------------------
--- 5. A reading survives a store, `Low`, and not a transmission,
--- `High`
+-- 5. A reading survives a store, not a transmission
 
 twice-write-reported : schemeOf (infer [] (twice write)) ≡ just (expected-twice write)
 twice-write-reported = refl

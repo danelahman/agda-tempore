@@ -1,19 +1,12 @@
 ------------------------------------------------------------------
 -- Substitution of a value for a term variable                  --
 --                                                              --
--- Under no hypotheses: a variable `x : A` at depth             --
--- `k` of `Γ` (`Drop Γ₀ A k Γ Γ⁻`, with `Γ₀` the context before --
--- `x`, which has no definitions, and `Γ⁻` the context without  --
--- it), and a value of type `A` in `Γ₀`, give `Γ⁻ ⊢ M[V/x]`     --
--- from `Γ ⊢ M` (`sub-v`, `sub-c`), erasing to the run-time     --
--- substitution `subᶜ k`.                                       --
---                                                              --
--- A use of `x` behind locks of grade `ρ` meets `x`'s side      --
--- condition: `A` is eternal, and `V` moves past the locks as   --
--- an eternal value, or `ρ` is below the unit, and `V` moves    --
--- past them by a renaming. An `unbox` of `x` unboxes the       --
--- resource value that `V`, a value of box type, is, annotated  --
--- at `x`'s declared type, under the `unbox`'s annotations.     --
+-- Under no hypotheses, a variable `x : A` at depth `k` of `Γ`  --
+-- (`Drop Γ₀ A k Γ Γ⁻`) and a value of type `A` in `Γ₀`, the    --
+-- context before `x`, give `Γ⁻ ⊢ M[V/x]` from `Γ ⊢ M`          --
+-- (`sub-v`, `sub-c`), erasing to `subᶜ k`. A use of `x` behind --
+-- locks meets its side condition: `V` moves past them as an    --
+-- eternal value, or by a renaming below the unit.              --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -61,8 +54,6 @@ data Drop {Θ : Scope} {n : ℕ} (Γ₀ : OCtx Θ n) (A : OVType Θ)
 
 module _ {Θ : Scope} {n : ℕ} {Γ₀ : OCtx Θ n} {A : OVType Θ} where
 
-  -- the grade accumulated at the dropped variable
-
   dgrade : ∀ {k Γ Γ⁻} → Drop Γ₀ A k Γ Γ⁻ → RExp Θ
   dgrade (here _)                = ûᵣ
   dgrade (there∷ d)              = dgrade d
@@ -81,15 +72,10 @@ module _ {Θ : Scope} {n : ℕ} {Γ₀ : OCtx Θ n} {A : OVType Θ} where
   shift-ty  (dshift (there⟨⟩ d)) i = shift-ty (dshift d) i
   shift-dfs (dshift (there⟨⟩ d))   = shift-dfs (dshift d)
 
-  -- the context before the dropped variable has no definitions
-
   drop-defs : ∀ {k Γ Γ⁻} → Drop Γ₀ A k Γ Γ⁻ → defs Γ₀ ≡ ∅ᵖ
   drop-defs (here nd)   = nd
   drop-defs (there∷ d)  = drop-defs d
   drop-defs (there⟨⟩ d) = drop-defs d
-
-  -- the context with the dropped variable has the definitions of the
-  -- one without it
 
   drop-dfs : ∀ {k Γ Γ⁻} → Drop Γ₀ A k Γ Γ⁻ → defs Γ⁻ ≡ defs Γ
   drop-dfs (here _)    = refl
@@ -102,7 +88,7 @@ module _ {Θ : Scope} {n : ℕ} {Γ₀ : OCtx Θ n} {A : OVType Θ} where
   dshift-gr (there∷ d)  i = dshift-gr d i
   dshift-gr (there⟨⟩ d) i = transᵣ (monoᵣ (dshift-gr d i) ⊩≾̂ᵣ-refl) (eqᵣ ≡̂ᵣ-assoc)
 
-  -- below the unit, a renaming
+  -- below the unit, `dshift` is a renaming
 
   drop-ren : ∀ {k Γ Γ⁻} {Q : Hyps Θ} → (d : Drop Γ₀ A k Γ Γ⁻) → Q ⊩ dgrade d ≾̂ᵣ ûᵣ
            → Ren Q Γ₀ Γ⁻
@@ -112,8 +98,7 @@ module _ {Θ : Scope} {n : ℕ} {Γ₀ : OCtx Θ n} {A : OVType Θ} where
     transᵣ (dshift-gr d i) (transᵣ (monoᵣ ⊩≾̂ᵣ-refl le) (eqᵣ ≡̂ᵣ-identityʳ))
   dfs (drop-ren d le)   = shift-dfs (dshift d)
 
-  -- A variable of the context is the dropped one or one of the context
-  -- without it
+  -- A variable is the dropped one or one of the context without it
 
   data DropView {k Γ Γ⁻} (d : Drop Γ₀ A k Γ Γ⁻) {B : OVType Θ} {ρ : RExp Θ}
        (x : B ∈̂[ ρ ] Γ) : Set where
@@ -135,15 +120,11 @@ module _ {Θ : Scope} {n : ℕ} {Γ₀ : OCtx Θ n} {A : OVType Θ} where
   ... | hit eB eρ e  = hit eB (cong (_·̂ᵣ ρ) eρ) e
   ... | miss x' e    = miss (Tl-⟨⟩ x') e
 
--- Lifting a dropped variable over an effect-grade variable
-
 wkᵉ-drop : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻}
          → Drop Γ₀ A k Γ Γ⁻ → Drop (wkᵉ-ctx Γ₀) (wkᵉ-v A) k (wkᵉ-ctx Γ) (wkᵉ-ctx Γ⁻)
 wkᵉ-drop {Γ₀ = Γ₀} (here nd) = here (trans (defs-wkᵉ Γ₀) nd)
 wkᵉ-drop (there∷ d)  = there∷ (wkᵉ-drop d)
 wkᵉ-drop (there⟨⟩ d) = there⟨⟩ (wkᵉ-drop d)
-
--- a value weakened by an effect-grade variable
 
 wkᵉ-val : ∀ {Θ n} {Γ : OCtx Θ n} {A : OVType Θ}
         → ∅ᴴ ∣ Γ ⊢V⦂ A → ∅ᴴ ∣ wkᵉ-ctx Γ ⊢V⦂ wkᵉ-v A
@@ -157,8 +138,7 @@ wkᵉ-val {Γ = Γ} {A} V = ty-subst (wkˢᵉ-v A) (ctx-castᵛ (wkˢᵉ-ctx Γ)
         (erase-substᵛ ⌊ V ⌋ᵛ wkˢᵉ)
 
 ------------------------------------------------------------------------
--- A variable of box type meets `VarOK` under no hypotheses only below
--- the unit
+-- Under no hypotheses a box-typed variable meets `VarOK` only below the unit
 
 box-young : ∀ {Θ} {ρ ρ' : RExp Θ} {A : OVType Θ}
           → VarOK ∅ᴴ ([ ρ ] A) ρ' → ∅ᴴ ⊩ ρ' ≾̂ᵣ ûᵣ
@@ -168,8 +148,6 @@ box-young ok with VarOK-∅ᴴ ok
 
 ------------------------------------------------------------------------
 -- The substitution lemma
-
--- The dropped variable, used behind locks of the grade it accumulates
 
 sub-var : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B ρ}
         → (d : Drop Γ₀ A k Γ Γ⁻) → ∅ᴴ ∣ Γ₀ ⊢V⦂ A
@@ -189,9 +167,7 @@ sub-var d U x p              (hit refl refl _) with VarOK-∅ᴴ p
 ... | inj₁ e  = trans (∥eternal-v∥ (dshift d) e U) (sym (q _))
 ... | inj₂ le = trans (∥rename-v∥ (drop-ren d le) U) (sym (q _))
 
--- An `unbox` of the dropped variable unboxes the resource value that
--- the substituted value is, annotated at the variable's declared type,
--- under the `unbox`'s annotations
+-- An `unbox` of the dropped variable unboxes the substituted resource value
 
 sub-unbox : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {X X₀ : OVType Θ}
               {C : OCType Θ} {ρ₀ ρ' ρ} {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}

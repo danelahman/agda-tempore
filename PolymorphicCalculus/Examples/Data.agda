@@ -1,27 +1,12 @@
 --------------------------------------------------------------------
 -- Inference on natural numbers, sums and lists                   --
 --                                                                --
--- Programs exercising `zero`, `succ` and `caseℕ`, and numerals   --
--- written with `numeral`. None has an annotation. `caseℕ V       --
--- `zero M `succ N` types both branches at one computation type,  --
--- `N` with the predecessor bound; `Nat` has no proper subtype    --
--- or supertype, and is eternal, so a natural number is usable    --
--- under any lock, where a function is not.                       --
---                                                                --
--- Programs exercising `inl`, `inr` and `case+`. A sum is         --
--- covariant in both summands and eternal exactly when both are;  --
--- `case+ V `inl M `inr N` types both branches at one             --
--- computation type, each with the injected value bound.          --
---                                                                --
--- Programs exercising `nil`, `cons` and `caseL`. A list type is  --
--- covariant and eternal exactly when its element type is;        --
--- `caseL V `nil M `cons N` binds the head and the tail in `N`.   --
---                                                                --
--- The durations are stepped: `⌜ n ⌝` is the duration of `n`      --
--- ticks, and `⌜ n ⌝ʳ` and `⌜ n ⌝ᵉ` its grades.                   --
---                                                                --
--- The instances under `Data/` check the verdicts and schemes by  --
--- `refl` at right- and left-sided time.                          --
+-- `caseℕ`, `case+` and `caseL` with their constructors. `Nat` is --
+-- eternal; sums and lists are covariant, and eternal exactly     --
+-- when their components are, so they survive a lock where a      --
+-- function does not. `⌜ n ⌝` is the duration of `n` ticks. The   --
+-- instances under `Data/` check each answer by `refl` at both    --
+-- time grades.                                                   --
 --------------------------------------------------------------------
 
 open import Data.Unit using (tt)
@@ -90,7 +75,7 @@ closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢C⦂ C)
        → ⌊ D ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ → Typable [] M
 closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
--- Typable and handler-free: inference answers `typed`
+-- Typable and handler-free: `typed`
 
 typed-of : (M : RawC ∅ˢ 0) → Typable [] M → HandlerFreeᶜ M → IsTyped (infer [] M)
 typed-of M t h with infer [] M | infer-complete [] M t | infer-handlerFree [] M tt h
@@ -124,8 +109,7 @@ private
 --   is-zero n = caseℕ n of zero ↦ true | succ m ↦ false
 --   pred n    = caseℕ n of zero ↦ 0    | succ m ↦ m
 --
--- The scrutinee is a `Nat`, and so is the predecessor. Typed at
--- every grade, with no type variable.
+-- Typed at every grade.
 
 is-zero : RawC ∅ˢ 0
 is-zero = return (lam (caseℕ v₀ `zero return true `succ return false))
@@ -151,10 +135,9 @@ pred-typed = typed-of pred (closed pred-D refl) _
 expected-pred : Scheme
 expected-pred = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat ⇒ Nat ‼ ûₑ) ‼ ûₑ
 
--- The scrutinee has to be a natural number: `Bool` is not a subtype
--- of `Nat`.
---
 --   case-of-bool = caseℕ true of zero ↦ () | succ m ↦ ()
+--
+-- Refused: `Bool` is not `Nat`.
 
 case-of-bool : RawC ∅ˢ 0
 case-of-bool = caseℕ true `zero return ⋆ `succ return ⋆
@@ -164,8 +147,7 @@ case-of-bool = caseℕ true `zero return ⋆ `succ return ⋆
 --
 --   later-succ n = delay 1; succ n
 --
--- `n` is used under the lock `⟨ ⌜ 1 ⌝ʳ ⟩`; its type is `Nat`,
--- which is eternal, so `var` asks for nothing. Typed at every grade.
+-- `Nat` is eternal: typed at every grade.
 
 later-succ : RawC ∅ˢ 0
 later-succ = return (lam (delay ⌜ 1 ⌝ (return (succ v₀))))
@@ -179,11 +161,10 @@ later-succ-typed = typed-of later-succ (closed later-succ-D refl) _
 expected-later-succ : Scheme
 expected-later-succ = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat ⇒ Nat ‼ ⌜ 1 ⌝ᵉ) ‼ ûₑ
 
--- The same argument at an unknown type: the var-rule disjunction
--- `eternal α ∨ ⌜ 1 ⌝ʳ ≾ uᵣ` is decided on its grade, dropped at the
--- left-sided grades, left as `eternal α` at the right-sided ones.
---
 --   later-id x = delay 1; x
+--
+-- `eternal α ∨ ⌜ 1 ⌝ʳ ≾ uᵣ`: dropped at the left-sided grades,
+-- `eternal α` at the right-sided ones.
 
 later-id : RawC ∅ˢ 0
 later-id = return (lam (delay ⌜ 1 ⌝ (return v₀)))
@@ -195,10 +176,9 @@ expected-later-id-eternal =
 expected-later-id : Scheme
 expected-later-id = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ α₀ ‼ ⌜ 1 ⌝ᵉ) ‼ ûₑ
 
--- A numeral bound before a tick and used after it: typed at every
--- grade.
---
 --   numeral-later = let n = 2 in delay 1; succ n
+--
+-- Typed at every grade.
 
 numeral-later : RawC ∅ˢ 0
 numeral-later = return (numeral 2) ⨟ delay ⌜ 1 ⌝ (return (succ v₀))
@@ -213,11 +193,9 @@ numeral-later-typed = typed-of numeral-later (closed numeral-later-D refl) _
 expected-numeral-later : Scheme
 expected-numeral-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Nat ‼ ⌜ 1 ⌝ᵉ
 
--- A function bound before a tick and called after it: a function type
--- is never eternal, so `var` asks for `⌜ 1 ⌝ʳ ≾ uᵣ`, which holds at
--- the left-sided grades only.
---
 --   function-later = let f = (λ _. ()) in delay 1; f ()
+--
+-- A function is not eternal: typed at the left-sided grades only.
 
 function-later : RawC ∅ˢ 0
 function-later = return (lam (return ⋆)) ⨟ delay ⌜ 1 ⌝ (v₀ · ⋆)
@@ -259,9 +237,8 @@ expected-boxed-numeral = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Nat ‼ ⌜ 2 ⌝ᵉ
 --
 --   joined n = caseℕ n of zero ↦ delay 1; 0 | succ m ↦ delay 3; m
 --
--- The effect is the join `⌜ 1 ⌝ ⊔ ⌜ 3 ⌝`: three ticks at the
--- right-sided grades, one at the left-sided ones. The predecessor is
--- used under the lock `⟨ ⌜ 3 ⌝ʳ ⟩`, which its type survives.
+-- The effect is the join: three ticks at the right-sided grades, one
+-- at the left-sided ones.
 
 joined : RawC ∅ˢ 0
 joined =
@@ -288,7 +265,7 @@ expected-joined =
 --
 --   swap s = case+ s of inl x ↦ inr x | inr y ↦ inl y
 --
--- Both summands are type variables; typed at every grade.
+-- Typed at every grade.
 
 swap : RawC ∅ˢ 0
 swap = return (lam (case+ v₀ `inl return (inr v₀) `inr return (inl v₀)))
@@ -304,11 +281,9 @@ swap-typed = typed-of swap (closed swap-D refl) _
 expected-swap : Scheme
 expected-swap = ∀[ 2 , 0 , 0 ] ⊤ ⟹ (α₁ |+| α₀ ⇒ α₀ |+| α₁ ‼ ûₑ) ‼ ûₑ
 
--- Branches of different effects, joined as for `caseℕ`; the left
--- summand is used under the lock `⟨ ⌜ 1 ⌝ʳ ⟩`, which `Nat` survives,
--- and the right summand is unconstrained.
---
 --   choose s = case+ s of inl n ↦ delay 1; succ n | inr _ ↦ delay 3; 0
+--
+-- The effects are joined as for `caseℕ`.
 
 choose : RawC ∅ˢ 0
 choose =
@@ -330,11 +305,9 @@ expected-choose =
   ∀[ 1 , 0 , 0 ] ⊤ ⟹
     (Nat |+| α₀ ⇒ Nat ‼ econst (of-durᵉ ⌜ 1 ⌝ ⊔ₑ of-durᵉ ⌜ 3 ⌝)) ‼ ûₑ
 
--- Subtyping through the covariance of `_|+|_`: a value of type
--- `Nat + (Unit ⇒ Unit ‼ ⌜ 1 ⌝)` is passed where the function's latent
--- effect may be up to `⌜ 1 ⌝ ⊔ ⌜ 3 ⌝`. Typed at every grade.
+-- Subtyping in a summand; typed at every grade.
 --
---   widen = let f = (λ s. case+ s of inl _ ↦ delay 3; ()
+--   subsume-sum = let f = (λ s. case+ s of inl _ ↦ delay 3; ()
 --                                  | inr g ↦ g ())
 --                   : Nat + (Unit ⇒ Unit ‼ 1 ⊔ 3) ⇒ Unit ‼ 1 ⊔ 3
 --           in f (inr (λ _. delay 1; ()) : Nat + (Unit ⇒ Unit ‼ 1))
@@ -348,14 +321,14 @@ private
   Wide   = Nat |+| (Unit ⇒ Unit ‼ j₁₃)
   Narrow = Nat |+| (Unit ⇒ Unit ‼ ⌜ 1 ⌝ᵉ)
 
-widen : RawC ∅ˢ 0
-widen =
+subsume-sum : RawC ∅ˢ 0
+subsume-sum =
   return (lam (case+ v₀ `inl delay ⌜ 3 ⌝ (return ⋆) `inr (v₀ · ⋆))
             ⦂ᵛ (Wide ⇒ Unit ‼ j₁₃))
   ⨟ (v₀ · (inr (lam (delay ⌜ 1 ⌝ (return ⋆))) ⦂ᵛ Narrow))
 
-widen-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (ûₑ ·̂ₑ j₁₃)
-widen-D =
+subsume-sum-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (ûₑ ·̂ₑ j₁₃)
+subsume-sum-D =
   return (annᵛ (Wide ⇒ Unit ‼ j₁₃)
            (lam (case+ var Hd ok₀
                   `inl coerce (transₑ (eqₑ ≡̂ₑ-identityʳ) ⊔-ubʳₑ) (delay ⌜ 3 ⌝ (return ⋆))
@@ -364,16 +337,15 @@ widen-D =
                            (inr (lam (coerce (eqₑ ≡̂ₑ-identityʳ) (delay ⌜ 1 ⌝ (return ⋆))))))
                          (Natₛ |+|ₛ (Unitₛ ⇒ₛ (Unitₛ ‼ₛ ⊔-ubˡₑ))))
 
-widen-typed : IsTyped (infer [] widen)
-widen-typed = typed-of widen (closed widen-D refl) _
+subsume-sum-typed : IsTyped (infer [] subsume-sum)
+subsume-sum-typed = typed-of subsume-sum (closed subsume-sum-D refl) _
 
-expected-widen : Scheme
-expected-widen = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ econst (of-durᵉ ⌜ 1 ⌝ ⊔ₑ of-durᵉ ⌜ 3 ⌝)
+expected-subsume-sum : Scheme
+expected-subsume-sum = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ econst (of-durᵉ ⌜ 1 ⌝ ⊔ₑ of-durᵉ ⌜ 3 ⌝)
 
--- A sum used under a lock: `Nat + Bool` is eternal, so it survives a
--- tick at every grade.
---
 --   sum-later = let s = (inl 2 : Nat + Bool) in delay 1; s
+--
+-- `Nat + Bool` is eternal: typed at every grade.
 
 sum-later : RawC ∅ˢ 0
 sum-later = return (inl (numeral 2) ⦂ᵛ (Nat |+| Bool)) ⨟ delay ⌜ 1 ⌝ (return v₀)
@@ -389,11 +361,9 @@ sum-later-typed = typed-of sum-later (closed sum-later-D refl) _
 expected-sum-later : Scheme
 expected-sum-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat |+| Bool) ‼ ⌜ 1 ⌝ᵉ
 
--- Unannotated, the right summand is an unknown: the eternality of the
--- sum is that of its unknown summand, asked for at the right-sided
--- grades only.
---
 --   inl-later = let s = inl 2 in delay 1; s
+--
+-- The unknown summand is asked to be eternal at the right-sided grades.
 
 inl-later : RawC ∅ˢ 0
 inl-later = return (inl (numeral 2)) ⨟ delay ⌜ 1 ⌝ (return v₀)
@@ -404,11 +374,10 @@ expected-inl-later-eternal = ∀[ 1 , 0 , 0 ] eternal α₀ ⟹ (Nat |+| α₀) 
 expected-inl-later : Scheme
 expected-inl-later = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (Nat |+| α₀) ‼ ⌜ 1 ⌝ᵉ
 
--- A sum with a function summand is not eternal: after a tick it is
--- usable only where `⌜ 1 ⌝ʳ ≾ uᵣ`, at the left-sided grades.
---
 --   fun-sum-later = let s = (inr (λ _. delay 1; ()) : Nat + (Unit ⇒ Unit ‼ 1))
 --                   in delay 1; s
+--
+-- A function summand is not eternal: typed at the left-sided grades only.
 
 fun-sum-later : RawC ∅ˢ 0
 fun-sum-later =
@@ -426,9 +395,9 @@ expected-fun-sum-later : Scheme
 expected-fun-sum-later =
   ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat |+| (Unit ⇒ Unit ‼ ⌜ 1 ⌝ᵉ)) ‼ ⌜ 1 ⌝ᵉ
 
--- The scrutinee has to be a sum: `Bool` is not one.
---
 --   case-of-bool+ = case+ true of inl _ ↦ () | inr _ ↦ ()
+--
+-- Refused: `Bool` is not a sum.
 
 case-of-bool+ : RawC ∅ˢ 0
 case-of-bool+ = case+ true `inl return ⋆ `inr return ⋆
@@ -438,8 +407,7 @@ case-of-bool+ = case+ true `inl return ⋆ `inr return ⋆
 --
 --   head-or d l = caseL l of nil ↦ d | cons h t ↦ h
 --
--- The element type is a type variable, and the result a common
--- supertype of the default and the element; typed at every grade.
+-- The result is a common supertype of `d` and `h`; typed everywhere.
 
 head-or : RawC ∅ˢ 0
 head-or = return (lam (return (lam (caseL v₀ `nil return v₁ `cons return v₁))))
@@ -456,10 +424,9 @@ expected-head-or : Scheme
 expected-head-or =
   ∀[ 3 , 0 , 0 ] α₂ <: α₁ ∧ α₀ <: α₁ ⟹ (α₂ ⇒ (|List| α₀ ⇒ α₁ ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
 
--- A list used under a lock: `List Nat` is eternal, so it survives a
--- tick at every grade.
---
 --   list-later = let l = ([2] : List Nat) in delay 1; l
+--
+-- `List Nat` is eternal: typed at every grade.
 
 list-later : RawC ∅ˢ 0
 list-later = return (cons (numeral 2) nil ⦂ᵛ |List| Nat) ⨟ delay ⌜ 1 ⌝ (return v₀)
@@ -475,10 +442,10 @@ list-later-typed = typed-of list-later (closed list-later-D refl) _
 expected-list-later : Scheme
 expected-list-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ |List| Nat ‼ ⌜ 1 ⌝ᵉ
 
--- Unannotated, the empty list's element type is an unknown, whose
--- eternality is asked for at the right-sided grades only.
---
 --   nil-later = let l = [] in delay 1; l
+--
+-- The unknown element type is asked to be eternal at the right-sided
+-- grades.
 
 nil-later : RawC ∅ˢ 0
 nil-later = return nil ⨟ delay ⌜ 1 ⌝ (return v₀)
@@ -489,10 +456,9 @@ expected-nil-later-eternal = ∀[ 1 , 0 , 0 ] eternal α₀ ⟹ |List| α₀ ‼
 expected-nil-later : Scheme
 expected-nil-later = ∀[ 1 , 0 , 0 ] ⊤ ⟹ |List| α₀ ‼ ⌜ 1 ⌝ᵉ
 
--- A list of functions is not eternal: after a tick it is usable only
--- where `⌜ 1 ⌝ʳ ≾ uᵣ`, at the left-sided grades.
---
 --   fun-list-later = let l = ([λ _. ()] : List (Unit ⇒ Unit)) in delay 1; l
+--
+-- Not eternal: typed at the left-sided grades only.
 
 private
 
@@ -514,9 +480,9 @@ fun-list-later-typable q = closed (fun-list-later-D (toWitness q)) refl
 expected-fun-list-later : Scheme
 expected-fun-list-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ |List| Fn ‼ ⌜ 1 ⌝ᵉ
 
--- The scrutinee has to be a list: `Nat` is not one.
---
 --   case-of-nat = caseL 0 of nil ↦ () | cons h t ↦ ()
+--
+-- Refused: `Nat` is not a list.
 
 case-of-nat : RawC ∅ˢ 0
 case-of-nat = caseL zero `nil return ⋆ `cons return ⋆

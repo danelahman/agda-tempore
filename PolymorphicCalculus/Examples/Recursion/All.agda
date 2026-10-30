@@ -1,9 +1,7 @@
 ------------------------------------------------------------------------
--- Primitive recursion on natural numbers and lists: pure recursions; a
--- countdown and a tick per element, whose effects absorb themselves (`ε
--- · ε ≾ ε`); a function refused in the step; a head usable after a pure
--- step and refused, as a box, after a tick; recursion inside an
--- operation clause (`Generate`, `Localise`, `Search`).
+-- Primitive recursion on natural numbers and lists: pure and ticking
+-- steps (`ε · ε ≾ ε`), outer variables and heads in the step, recursion
+-- in a clause. Exercises `Generate`, `Localise` and `Search`.
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Examples.Recursion.All where

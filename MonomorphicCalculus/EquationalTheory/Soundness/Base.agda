@@ -70,8 +70,6 @@ _∙_ = ≈ᵐ-trans
 
 mutual
 
-  {-# TERMINATING #-}
-
   ⟦⟧ᵛᵗ-irr : ∀ {Γ A} → (V : Γ ⊢V⦂ A) → (p p' : Paramᵛ V)
            → ⟦ V ⟧ᵛᵗ p ≈ᵐ ⟦ V ⟧ᵛᵗ p'
   ⟦⟧ᵛᵗ-irr (var f x)  _ _ = ≈ᵐ-refl

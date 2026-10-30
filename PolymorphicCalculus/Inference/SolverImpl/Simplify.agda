@@ -1,50 +1,21 @@
 ------------------------------------------------------------------
 -- Normalising, settling and pruning a reported hypothesis set  --
 --                                                              --
--- `simplify` proceeds in four steps.                           --
---   * It writes the set in canonical form (`canonᴴ`): every    --
---     grade expression canonical, and an ordering with a join  --
---     on its left side split into one ordering per             --
---     alternative.                                             --
---   * It settles every `disj` entry one of whose sides is      --
---     settled: a met eternality demand or an entailed grade    --
---     ordering drops the entry, a refuted eternality demand    --
---     leaves the grade ordering, and a refuted grade leaves    --
---     the eternality atoms, in skeleton order.                 --
---   * It drops each disjunction entailed by the others, namely --
---     one with the type of another whose grade is entailed     --
---     above its own; of two that entail each other, the later  --
---     is kept (`walkᵈ`).                                       --
---   * It prunes: a subtyping or eternality atom entailed by    --
---     the atoms kept before it is dropped, entailment there    --
---     being reachability in a finite digraph, and a grade      --
---     ordering is dropped when its two sides coincide or it    --
---     repeats one kept before it; the atoms kept stay in       --
---     place. The grade orderings are finally listed by the     --
---     skeletons of their two sides.                            --
---                                                              --
--- `trim` settles the disjunctions again and drops those        --
--- entailed by the others, drops every subtyping atom entailed  --
--- by those kept and those not yet examined, the atom itself    --
--- left out, prunes the eternality atoms along the subtyping    --
--- atoms left, then drops every grade ordering entailed by      --
--- those kept and those not yet examined, and every ordering    --
--- that holds outright.                                         --
---                                                              --
--- For settling, for the disjunctions and for `trim`, an        --
--- ordering is decided at the strength `full` of `Entail` from  --
--- the orderings of the set read, and refuted against the unit  --
--- by `refute≾u`; two types are compared up to the sameness of --
--- their grades (`sameᵛ?`).                                     --
+-- `simplify` writes the set in canonical form (`canonᴴ`),      --
+-- splitting each join on a left side; settles each disjunction --
+-- one of whose sides is settled; drops each disjunction        --
+-- entailed by another of the same type (`walkᵈ`); and prunes   --
+-- subtyping and eternality atoms entailed by those kept before --
+-- (reachability in a finite digraph) and repeated grade        --
+-- orderings. `trim` settles the disjunctions again and drops   --
+-- every atom entailed by the others. Orderings are decided at  --
+-- the strength `full` and refuted against the unit by          --
+-- `refute≾u`.                                                  --
 --                                                              --
 -- Contract. `simplify Q` and `trim Q` entail `Q`               --
 -- (`simplify-⊩`, `trim-⊩`), and every closed instance of `Q`   --
--- is one of each (`simplify-⊨`, `trim-⊨`); settling a          --
--- disjunction by a refutation holds only at the instances.     --
--- That the result is irredundant is not claimed: an atom is    --
--- dropped only where a test proves it entailed. The            --
--- simplification applies to the report only; the solver and    --
--- `solve-principal` are unaffected.                            --
+-- is one of each (`simplify-⊨`, `trim-⊨`). Irredundancy is not --
+-- claimed. Only the report is simplified.                      --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)
@@ -98,10 +69,8 @@ open import PolymorphicCalculus.Inference.SolverImpl.Resid  S using (etDec; etDe
 open import PolymorphicCalculus.Inference.SolverImpl.Entail S hints
   using (decideᵣ; decideₑ; full; memʳ?; memᵉ?; memʳ-⊩; memᵉ-⊩; refute≾u)
 
--- Derivations reading only a list of subtyping hypotheses and a list
--- of eternality atoms: `_⊢ᵖ_≾_` mirrors `_⊩ᵗᵛ_≾_`, `Etᴾ` mirrors
--- `_⊩ᴱ_` at a type variable. Eternality moves along a hypothesis in
--- both directions, subtyping only forwards.
+-- Derivations from a list of subtyping hypotheses and one of eternality atoms,
+-- mirroring `_⊩ᵗᵛ_≾_` and `_⊩ᴱ_`: eternality moves both ways, subtyping forwards
 
 infix 4 _⊢ᵖ_≾_
 
@@ -219,9 +188,8 @@ ets? Q (α ∷ as) with etᴾ? (subᵥ Q) (ets Q) α | ets? Q as
                                 ; (there m)   → k m })
 ... | _      | _      = nothing
 
--- Insertion into a list ordered by `_≺_`, after every entry below the
--- one inserted, and the sort built from it, which only permutes the
--- list
+-- Insertion into a list ordered by `_≺_`, after every entry below the one
+-- inserted, and the sort built from it, a permutation
 
 module _ {A : Set} (_≺_ : A → A → 𝔹) where
 
@@ -261,9 +229,8 @@ module _ {A : Set} (_≺_ : A → A → 𝔹) where
   sortᴼ-⊇ (p ∷ l) (here refl) = insertᴼ-⊇ p (sortᴼ l) (here refl)
   sortᴼ-⊇ (p ∷ l) (there m)   = insertᴼ-⊇ p (sortᴼ l) (there (sortᴼ-⊇ l m))
 
--- A walk down a list dropping every entry a test settles, those kept
--- staying in place. The test sees the entries kept so far and those
--- not yet examined.
+-- A walk down a list dropping every entry a test settles, the rest in place;
+-- the test sees the entries kept and those not yet examined
 
 module Walk {A : Set} (Ok : List A → List A → A → Set)
             (test : (seen rest : List A) → (p : A) → Maybe (Ok seen rest p))
@@ -281,9 +248,8 @@ module Walk {A : Set} (Ok : List A → List A → A → Set)
   walk-⊆ seen (p₀ ∷ l) (here refl) | nothing = here refl
   walk-⊆ seen (p₀ ∷ l) (there m)   | nothing = there (walk-⊆ (p₀ ∷ seen) l m)
 
-  -- A property that a settled entry has whenever everything its test
-  -- saw has it, and that holds of the entries seen and those kept,
-  -- holds of every entry
+  -- A property a settled entry has whenever what its test saw has it holds of
+  -- every entry, given that it holds of those seen and kept
 
   walk-⊨ : (P : A → Set)
          → (∀ seen rest {p} → Ok seen rest p → (∀ {q} → q ∈ seen ++ rest → P q) → P p)
@@ -338,9 +304,8 @@ settle-⊩ A ρ Q with decideᵣ full Q ρ ûᵣ
             ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m) (λ m → m) (λ m → m) there (λ m → m))
             , hyp-ok₀ (here refl)
 
--- At an instance meeting the disjunction, an instance of the set is one
--- of the set it leaves: a type `etDec` refutes is eternal at no
--- instance, and a refuted grade is below the unit at none.
+-- At an instance meeting the disjunction, an instance of the set is one of the
+-- set it leaves
 
 settle-inst : ∀ {Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ) → (δ : Subst Θ ∅ˢ)
             → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ᴴ settle A ρ Q [ δ ]
@@ -416,8 +381,7 @@ settleAll-unq ((A , ρ) ∷ l) Q₀ u = settle-unq A ρ (settleAll l Q₀) (sett
 split : ∀ {Θ} → Hyps Θ → Hyps Θ
 split Q₀ = hyps (ets Q₀) (subᵥ Q₀) (ordᵣ Q₀) (ordₑ Q₀) [] (qhyps Q₀)
 
--- Types the same up to the sameness of their grades, which makes them
--- convertible
+-- Types the same up to the sameness of their grades, so convertible
 
 sameᵛ? : ∀ {Θ} → (A A' : OVType Θ) → Maybe (A ≡̂ᵛ A')
 sameᶜ? : ∀ {Θ} → (C C' : OCType Θ) → Maybe (C ≡̂ᶜ C')
@@ -453,10 +417,8 @@ sameᶜ? (A ‼ ε) (A' ‼ ε') with sameᵛ? A A' | ε ≟ᵉ ε'
 ... | just p | yes e = just (p ‼≡̂ ≅ᵉ⇒≡̂ e)
 ... | _      | _     = nothing
 
--- A disjunction entailed by another: the same type, up to the
--- sameness of grades, and a grade
--- entailed (at the strength `full`) above its own. Of two each entailing the
--- other, the walk keeps the later.
+-- A disjunction entailed by another: the same type, and a grade entailed above
+-- its own; of two each entailing the other, the walk keeps the later
 
 Hᵈ : ∀ {Θ} → Hyps Θ → List (OVType Θ × RExp Θ) → Hyps Θ
 Hᵈ Q ds = hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) ds (qhyps Q)
@@ -526,9 +488,8 @@ settleᴴ-⊨ Q =
                       (mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (λ ()) (⊩qhyps h)))
            (⊩ᴴ-⊨ᴴ (walkᵈ-⊩⁻ (settleAll (disj Q) (split Q))))
 
--- A subtyping or eternality atom entailed by the atoms kept before it
--- is dropped, those kept staying in place: entailment of such atoms is
--- reachability in a finite digraph.
+-- A subtyping or eternality atom entailed by the atoms kept before it is
+-- dropped, those kept staying in place
 
 Okᵖ : ∀ {n} → (seen rest : List (Fin n × Fin n)) → Fin n × Fin n → Set
 Okᵖ seen rest p = seen ⊢ᵖ proj₁ p ≾ proj₂ p
@@ -552,8 +513,7 @@ etᴱ? l seen rest α = etᴾ? l seen α
 pruneᴱ : ∀ {n} → List (Fin n × Fin n) → List (Fin n) → List (Fin n)
 pruneᴱ l = Walk.walk (Okᴱ l) (etᴱ? l) []
 
--- The set with its subtyping atoms `l` and its eternality atoms pruned
--- along them, the rest untouched
+-- The set with its subtyping atoms `l` and its eternality atoms pruned along them
 
 pruneᵀ-at : ∀ {Θ} → Hyps Θ → List (TyVar Θ × TyVar Θ) → Hyps Θ
 pruneᵀ-at Q l = hyps (pruneᴱ l (ets Q)) l (ordᵣ Q) (ordₑ Q) (disj Q) (qhyps Q)
@@ -609,8 +569,7 @@ pruneᴱᵀ-⊩ Q = pruneᵀ-at-⊩ Q (subᵥ Q) hypᵗᵛ
 pruneᴱᵀ-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ pruneᴱᵀ Q
 pruneᴱᵀ-⊩⁻ Q = pruneᵀ-at-⊩⁻ Q (subᵥ Q) (λ m → m)
 
--- A subtyping atom reachable from the atoms kept and those not yet
--- examined
+-- A subtyping atom reachable from the atoms kept and those not yet examined
 
 Okᵛ : ∀ {n} → (seen rest : List (Fin n × Fin n)) → Fin n × Fin n → Set
 Okᵛ seen rest p = seen ++ rest ⊢ᵖ proj₁ p ≾ proj₂ p
@@ -642,9 +601,8 @@ walkᵛ-⊩ {Θ} Q =
           → walkᵛ Q ⊩ᵗᵛ proj₁ p ≾ proj₂ p
     close seen rest w hs = ⊢ᵖ-⊩' hs w
 
--- Grade orderings are pruned by a walk against a test of entailment:
--- one the test proves is dropped. The effect orderings are pruned
--- first, and the resource ones read with the effect ones kept.
+-- Grade orderings are pruned by a walk against a test of entailment, the effect
+-- orderings first, the resource ones read with the effect ones kept
 
 -- The set of the grade orderings `seen`, with the effect orderings `lₑ`
 
@@ -671,8 +629,7 @@ Testᵉ : Set
 Testᵉ = ∀ {Θ} → (seen rest : List (EExp Θ × EExp Θ))
       → (p : EExp Θ × EExp Θ) → Maybe (Okᵉ seen rest p)
 
--- An ordering whose two sides are the same, or a repeat of one kept,
--- up to the sameness of its sides
+-- An ordering whose sides are the same, or a repeat of one kept
 
 repeatʳ? : Testʳ
 repeatʳ? lₑ seen rest (ρ , ρ') with ρ ≟ʳ ρ'
@@ -688,8 +645,7 @@ repeatᵉ? seen rest (ε , ε') with ε ≟ᵉ ε'
 ...   | just m  = just (memᵉ-⊩ (λ m' → hypₑ (∈-++⁺ˡ m')) m)
 ...   | nothing = nothing
 
--- An ordering entailed at the strength `full` by those kept and
--- those not yet examined
+-- An ordering entailed at `full` by those kept and those not yet examined
 
 entailsʳ? : Testʳ
 entailsʳ? lₑ seen rest (ρ , ρ') = decideᵣ full (Hʳ lₑ (seen ++ rest)) ρ ρ'
@@ -706,9 +662,8 @@ module Pruneᴼ (testʳ : Testʳ) (testᵉ : Testᵉ) where
           → List (RExp Θ × RExp Θ)
   pruneᴼʳ lₑ = Walk.walk (Okʳ lₑ) (testʳ lₑ) []
 
-  -- The grade orderings pruned, the rest untouched. `pruneᴼ-at Q lₑ` is
-  -- the set with its effect orderings `lₑ` and its resource orderings
-  -- pruned against them.
+  -- The grade orderings pruned, the rest untouched; `pruneᴼ-at Q lₑ` prunes
+  -- the resource orderings against the effect orderings `lₑ`
 
   pruneᴼ-at : ∀ {Θ} → Hyps Θ → List (EExp Θ × EExp Θ) → Hyps Θ
   pruneᴼ-at Q lₑ = hyps (ets Q) (subᵥ Q) (pruneᴼʳ lₑ (ordᵣ Q)) lₑ (disj Q) (qhyps Q)
@@ -795,10 +750,8 @@ simplify-⊨ Q =
       (⊩ᴴ-⊨ᴴ (⊩ᴴ-trans (prune-⊩⁻ (settleᴴ (canonᴴ Q)))
                        (order-⊩⁻ (prune (settleᴴ (canonᴴ Q)))))))
 
--- The disjunctions settled, then every subtyping atom entailed by
--- those kept and those not yet examined dropped, the eternality atoms
--- pruned along those left, and every grade ordering entailed by those
--- kept and those not yet examined dropped
+-- The disjunctions settled, then every atom entailed by those kept and those
+-- not yet examined dropped, the eternality atoms along the subtyping ones left
 
 trim : ∀ {Θ} → Hyps Θ → Hyps Θ
 trim Q = Entailed.pruneᴼ (pruneᴱᵀ (walkᵛ (settleᴴ Q)))
@@ -816,8 +769,7 @@ trim-⊨ Q =
              (⊩ᴴ-trans (pruneᴱᵀ-⊩⁻ (walkᵛ (settleᴴ Q)))
                        (Entailed.pruneᴼ-⊩⁻ (pruneᴱᵀ (walkᵛ (settleᴴ Q)))))))
 
--- Trimming a whole report, as an elimination step that instantiates
--- no unknown
+-- Trimming a whole report, as an elimination step instantiating no unknown
 
 trim-unq : ∀ {Θ} {Q : Hyps Θ} → Unq Q → Unq (trim Q)
 trim-unq {Q = Q} u = unq (no-qhyps v)

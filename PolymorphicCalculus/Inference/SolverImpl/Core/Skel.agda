@@ -1,19 +1,15 @@
 --------------------------------------------------------------------
 -- Skeletons: open types with every grade slot deleted            --
 --                                                                --
--- A skeleton records the shape of an open type and nothing else: --
--- the box grade, the arrow's effect grade and the effect grade   --
--- of a computation type are dropped, so a computation type       --
--- contributes the skeleton of its value part alone.              --
---                                                                --
--- Skeleton variables are a sort of their own, drawn from a bare  --
--- `Fin`; `skelᵛ` sends each type variable to the skeleton        --
--- variable of the same index, so unifying two skeleton variables --
--- records that two type variables have the same shape without    --
--- identifying them.                                              --
+-- A skeleton records the shape of an open type; a computation    --
+-- type contributes the skeleton of its value part. Skeleton      --
+-- variables are a sort of their own over a bare `Fin`; `skelᵛ`   --
+-- sends each type variable to the skeleton variable of its       --
+-- index, so unifying two records that they have one shape        --
+-- without identifying them.                                      --
 --                                                                --
 -- Substitution, `_forᵏ_` and `checkᵏ` follow McBride's           --
--- structural unification (JFP 2003), here at one sort.           --
+-- structural unification, at one sort.                           --
 --------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin; punchIn)
@@ -191,9 +187,8 @@ for-missᵏ : ∀ {n} → (t : Skel n) → (α : Fin (suc n)) → (β : Fin n)
           → (t forᵏ α) (punchIn α β) ≡ svar β
 for-missᵏ t α β = cong (maybe′ svar t) (thick-thin α β)
 
--- The occurrence check, combined with the renaming into the smaller
--- scope: a skeleton in which the variable does not occur is one of
--- the scope with the variable removed.
+-- The occurrence check with the renaming into the smaller scope: a skeleton the
+-- variable does not occur in is one of the scope without it
 
 checkᵏ : ∀ {n} → Fin (suc n) → Skel (suc n) → Maybe (Skel n)
 checkᵏ α (svar β)  = mmap svar (thick α β)

@@ -280,6 +280,11 @@ module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
 
   mutual
 
+    -- `TERMINATING`: lexicographic in the bisimulation proof, then the `Head`
+    -- derivation, where the `≈ᵗ-trans`/`≈ᵗ-sym` wrappers that `plus-fwd`, `plus-bwd`
+    -- and `headᵏ-cast` put around a subproof count as that subproof and a
+    -- reflexivity proof counts as least; the checker cannot see through the wrappers.
+
     {-# TERMINATING #-}
 
     head-≈ᵗ : ∀ {ε w we n} {t t' : Tˢ A ε w} {p : Path w we}

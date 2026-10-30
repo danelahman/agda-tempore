@@ -1,12 +1,9 @@
 -------------------------------------------------------------------
 -- Handlers at left-sided intervals                              --
 --                                                               --
--- Every scheme is the one written in `Handlers`.                --
--- `resume-twice` is typed, the unit being the top; `discard` is --
--- refuted. Two handlers whose clause delays and drops its       --
--- continuation, alone and nested in another clause, are refuted --
--- by retry at a candidate the grade supplies: the condition     --
--- holds at the unit, which is the top, and fails at later ones. --
+-- The shared schemes; `resume-twice` typed, `discard` refuted.  --
+-- A clause that delays and drops its continuation, alone and    --
+-- nested, is refuted by retry at a candidate after the unit.    --
 -------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
@@ -38,8 +35,7 @@ relay-reported = refl
 relay-boxed-reported : schemeOf (infer [] relay-boxed) ≡ just expected-relay-boxed
 relay-boxed-reported = refl
 
--- A handler as a value: bound by `let`, taken as an argument, and
--- passed to a function
+-- Handlers as values
 
 bound-reported : schemeOf (infer [] bound) ≡ just expected-bound
 bound-reported = refl
@@ -50,8 +46,7 @@ run-reported = refl
 run-forward-reported : schemeOf (infer [] run-forward) ≡ just expected-run-forward
 run-forward-reported = refl
 
--- The unit is the top, so the continuation may be spent twice and
--- nothing goes stale
+-- The unit is the top: spending `j` twice costs nothing
 
 resume-twice-reported : schemeOf (infer [] resume-twice) ≡ just expected-resume-twice
 resume-twice-reported = refl
@@ -67,15 +62,12 @@ discard-untypable-verdict = refl
 discard-not-typable : ¬ Typable [] discard
 discard-not-typable = infer-untypable [] discard discard-untypable-verdict
 ------------------------------------------------------------------
--- A clause that delays the 4 ticks of `send` and drops its
--- continuation:
+-- A clause that delays and drops its continuation
 --
 --   late-discard m = handle m () with handler {op p k ↦ delay 4; return ()}
 --
--- The clause's grade `4` must be below `op · j` for every
--- continuation grade `j`: at `send`, `j` is the unit, which is the
--- top. The condition is deferred, and retry refutes it at `j = 1`, a
--- candidate of the constants `4` and `op` (`left-sided-witnesses`).
+-- `4 ≾ op · j` holds at `j = u` but retry refutes it at the candidate
+-- `j = 1` (`left-sided-witnesses`).
 
 late-discard : RawC ∅ˢ 0
 late-discard =
@@ -84,9 +76,7 @@ late-discard =
 late-discard-verdict : infer [] late-discard ≡ untypable
 late-discard-verdict = refl
 
--- The same clause nested, as in the prototype's
--- `examples/handlers/nested_reject.tpe`: an outer clause performs its
--- operation, handles a `send` with the clause above, and resumes.
+-- The same clause nested in an outer clause, which then resumes
 
 nested-reject : RawC ∅ˢ 0
 nested-reject = return (lam (handle (v₀ · ⋆) `with handler (return ⋆) outer))

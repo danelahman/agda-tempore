@@ -2,17 +2,12 @@
 -- Reducible values and computations                                  --
 --                                                                    --
 -- A unary logical relation on run-time terms over states, by the     --
--- shape of a type, its grades forgotten. A computation is reducible  --
--- (`CRed`) when it reduces in finitely many steps to a returned      --
--- reducible value, or to an operation call with a reducible          --
--- parameter whose continuation is reducible at every extension of    --
--- the state and every reducible result; `CRed` is an inductive       --
--- family over the value predicate. Values of ground type are         --
--- reducible by `VRedᵍ`, which `CRed` uses, and every value by        --
--- `VRed`, which instantiates `CRed` at the smaller shapes.           --
---                                                                    --
--- Reducibility is stable under extension of the state, closed under  --
--- expansion, and preserved by sequencing and by handling.            --
+-- shape of a type. A computation is reducible (`CRed`) when it       --
+-- reduces to a returned reducible value, or to an operation call     --
+-- with a reducible parameter and a continuation reducible at every   --
+-- extension of the state and reducible result. Reducibility is       --
+-- stable under extension of the state, closed under expansion, and   --
+-- preserved by sequencing and handling.                              --
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
@@ -60,8 +55,6 @@ data MultiStep {n} S M where
 
 infixr 5 _▸_ _++*_
 
--- the extension of the state along a run
-
 ext* : ∀ {n m} {S : State n} {M} {S' : State m} {M'} → ⟨ S ∣ M ⟩↝*⟨ S' ∣ M' ⟩ → S ≤ₛ S'
 ext* done                 = ≤ₛ-refl
 ext* (_▸_ {e = e} s ms)   = e ⨾ₛ ext* ms
@@ -70,8 +63,6 @@ _++*_ : ∀ {n k m} {S : State n} {M} {S₁ : State k} {M₁} {S' : State m} {M'
       → ⟨ S ∣ M ⟩↝*⟨ S₁ ∣ M₁ ⟩ → ⟨ S₁ ∣ M₁ ⟩↝*⟨ S' ∣ M' ⟩ → ⟨ S ∣ M ⟩↝*⟨ S' ∣ M' ⟩
 done     ++* ms' = ms'
 (s ▸ ms) ++* ms' = s ▸ (ms ++* ms')
-
--- renaming along composed extensions
 
 ren-⨾ᶜ : ∀ {n m k} {S : State n} {S' : State m} {S'' : State k}
        → (e : S ≤ₛ S') → (e' : S' ≤ₛ S'') → (M : RunC (suc n))
@@ -154,8 +145,7 @@ shape-⌜⌝ (A |+|ᵍ B)  = cong₂ _+ˢ_ (shape-⌜⌝ A) (shape-⌜⌝ B)
 shape-⌜⌝ (|List|ᵍ A) = cong listˢ (shape-⌜⌝ A)
 shape-⌜⌝ ([ ρ ]ᵍ A)  = cong □ˢ (shape-⌜⌝ A)
 
--- Subtyping preserves the shape; so does the weakening by an
--- effect-grade variable
+-- Subtyping and weakening preserve the shape
 
 mutual
 
@@ -414,13 +404,8 @@ cred-seq {A = A} {P = P} {N = N} (cred-op {op = op} {K = K} ms r k) kN =
 
 module _ {A B : Shape} {n₀} {S₀ : State n₀} {N : RunC (suc n₀)} {H : Op → RunC (suc (suc n₀))}
 
-  -- the return clause, at every reducible value
-
   (hyp-ret : ∀ {m} {S' : State m} (e : S₀ ≤ₛ S') V → VRed A S' V
            → CRed (VRed B) S' (renᶜ (ext (wkₛ e)) N [ V ]₀))
-
-  -- each operation clause, at every reducible parameter and resource for
-  -- the continuation
 
   (hyp-op : ∀ op {m} {S' : State m} (e : S₀ ≤ₛ S') V kv
           → VRedᵍ (param op) S' V

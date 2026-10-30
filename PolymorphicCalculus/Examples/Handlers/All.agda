@@ -1,10 +1,7 @@
 ------------------------------------------------------------------------
--- Handlers without annotations: two leave cycles of unknowns local to
--- the clause, typed at four grades; one discards its continuation and
--- one resumes it twice, each typed where it is typable and refuted
--- elsewhere; three use a handler as a value, bound, taken as an argument
--- and passed. Exercises clause-local unknowns and handlers (`Localise`),
--- and the decomposition of handler types.
+-- Handlers without annotations: cycles of clause-local unknowns, a
+-- discarded and a twice-resumed continuation, handlers as values.
+-- Exercises clause-local unknowns (`Localise`) and handler types.
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Examples.Handlers.All where

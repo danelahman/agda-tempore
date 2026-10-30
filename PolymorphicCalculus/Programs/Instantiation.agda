@@ -1,14 +1,13 @@
 ------------------------------------------------------------------
 -- Instantiation, and the corollary for programs                --
 --                                                              --
--- In a program `P` typed at the program context of `Γ`, a      --
--- typing under `Q` in `Γ` is a family of scope-closed typings: --
--- at every closed instance `δ ⊨ Q`, the erasure of the         --
--- instantiated term, the definitions of `P` substituted, is    --
--- typed at the instance of `Γ` without its program context     --
--- (`instantiation`). For a term typed in a program context, it --
--- is typed in the context of the empty state, so that type     --
--- safety applies, and it halts (`programs`).                   --
+-- In a program `P` typed at the program context of `Γ`, at     --
+-- every closed instance `δ ⊨ Q`, a typing under `Q` gives a    --
+-- scope-closed typing of the erasure of the instantiated term, --
+-- the definitions of `P` substituted, at the instance of `Γ`   --
+-- without its program context (`instantiation`). A term typed  --
+-- in a program context is then typed in the empty state, and   --
+-- halts (`programs`).                                          --
 ------------------------------------------------------------------
 
 open import Data.Product using (_×_; _,_)

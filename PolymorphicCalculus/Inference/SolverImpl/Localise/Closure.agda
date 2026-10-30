@@ -1,27 +1,16 @@
 ------------------------------------------------------------------
 -- The closure of the one-step localisation relation            --
 --                                                              --
--- A declarative specification of localisation. A state of a    --
--- scope is its open unknowns, the local ones without a value   --
--- (`Open`), and its residual, kept in canonical form           --
--- (`canonᴿ`). A step (`Steps._⟶ˡ_`) is the collapse of the     --
--- cycles (`collapseˡ`), a value rule at one open unknown       --
--- (`valueᵉ`, `valueʳ`), the settling of the disjunctions       --
--- (`settleˡ`), or, where no other step applies (`Stuck`), the  --
--- raising of a set (`raiseˡ`), each followed by the canonical  --
--- form of the whole residual; every step keeps the contract    --
--- `Localised` (`Steps.step-loc`, `Steps.along`).               --
+-- A declarative specification of localisation. A state is the  --
+-- open unknowns (`Open`: local, without a value) and the       --
+-- residual in canonical form (`canonᴿ`). A step (`Steps._⟶ˡ_`) --
+-- collapses cycles, applies a value rule at one open unknown,  --
+-- settles disjunctions, or, where none applies, raises a set;  --
+-- each keeps `Localised` (`Steps.step-loc`). A fixed selection --
+-- reaches an irreducible state by well-founded recursion       --
+-- (`Steps.Closure`, `localise`, `localise-ds`).                --
 --                                                              --
--- A fixed selection (`Steps.select`: the collapse; the value   --
--- rules at the open effect unknowns, then the resource ones,   --
--- each sort least index first; the settling; the raising) with --
--- well-founded recursion on the number of open unknowns, then  --
--- of disjunctions (`Steps.decreases`), reaches an irreducible  --
--- state along a path of steps (`Steps.Closure`, `localiseᶜ`,   --
--- `localise`, `localise-ds`).                                  --
---                                                              --
--- The solver localises by the rounds of `SolverImpl.Localise`, --
--- not by this module.                                          --
+-- The solver uses the rounds of `SolverImpl.Localise` instead. --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; _∧_; not; true; false; if_then_else_) renaming (Bool to 𝔹)
@@ -188,8 +177,8 @@ module Find {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) (j : EVar Φ)
   ... | just _  = failsᵣ l as
   ... | nothing = a ∷ failsᵣ l as
 
-  -- a member is dropped when it is on the left of a failing ordering,
-  -- or occurs in a type or a disjunction's grade
+  -- a member is dropped when on the left of a failing ordering, or in a type or
+  -- a disjunction's grade
 
   badᵉ : List (Mem Φ) → EVar Φ → 𝔹
   badᵉ l k = inᴱ k l ∧ (anyL (λ { (x , _) → occᵉ-e k x }) (failsₑ l (es R))
@@ -228,8 +217,7 @@ module Find {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) (j : EVar Φ)
   raise? = select (nsuc (nE Φ + nR Φ)) oe₀ or₀
 
 ------------------------------------------------------------------------
--- The local unknowns without a value (open): each step gives a value
--- to at least one, and to none twice
+-- The open unknowns: each step gives a value to one at least, and to none twice
 
 -- The number of indices a test accepts
 
@@ -316,10 +304,8 @@ allOpen O = opened (λ k → not (freeᵉ k O)) (λ k → not (freeʳ k O))
                    (λ k → not-true) (λ k → not-true)
 
 ------------------------------------------------------------------------
--- The local unknowns identified, of both sorts at once: `cσ` sends each
--- that may move, being open and absent from every type, to its
--- representative, and keeps every instance; the members moved are shut
--- (`cP`), and there is one where `cmove` holds
+-- The open unknowns absent from every type sent to their representatives by
+-- `cσ`, keeping every instance; those moved are shut (`cP`)
 
 record Collapse {Θ Φ} (O : Subst (Θ +e) Φ) (P : Open O) (R : Resid Φ) : Set where
   constructor collapsed
@@ -343,7 +329,7 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (P : Open O) (R : Resid Φ) where
   Mvʳ k = (oʳ P k ≡ true) × Cleanʳ k R
 
   -- Each sort's components (`Reach`): outer unknowns preferred as
-  -- representatives, the open ones absent from every type movable
+  -- representatives, open ones absent from every type movable
 
   module Cᵉ = Reachability.Collapse (λ a b → (evar a , evar b) ∈ es R) sameᶠ? (edgesᵉ (es R))
                 (bothEnds (edgesᵉ (es R))) _≟ᶠ_ (λ k → freeᵉ k O) Mvᵉ
@@ -438,10 +424,8 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (P : Open O) (R : Resid Φ) where
               ge = mk≾ˢ (λ i → proj₂ (eʳ i)) (λ i → proj₂ (eᵉ i))
 
 ------------------------------------------------------------------------
--- Canonical form: each atom written in normal form, an ordering with a
--- join of alternatives on its left made one ordering per alternative
--- (`normalᴿ`), then the orderings decided true from no hypotheses
--- dropped (`dropᴿ`). The instances are unchanged.
+-- Canonical form: atoms in normal form, joins on left sides split
+-- (`normalᴿ`), orderings decided true dropped (`dropᴿ`); instances unchanged
 
 normalᴿ : ∀ {Ψ} → Resid Ψ → Resid Ψ
 normalᴿ R = resid (Split.out (splits piecesʳ (rs R))) (Split.out (splits piecesᵉ (es R)))
@@ -491,11 +475,8 @@ normal-ds []      = refl
 normal-ds (a ∷ l) = cong nsuc (normal-ds l)
 
 ------------------------------------------------------------------------
--- Settling the disjunctions: each whose grade is below the unit at the
--- strength `full` from the orderings, or whose type is eternal at every
--- instance, is dropped; each whose type is eternal at no instance
--- becomes its grade side, which is what it means at every instance
--- solving the scope from no hypotheses, the rigid a parameter
+-- Settling the disjunctions: those below the unit at `full` or always eternal
+-- dropped, those never eternal reduced to their grade side
 
 ordsᴴ : ∀ {Ψ} → Resid Ψ → Hyps Ψ
 ordsᴴ R = hyps [] [] (rs R) (es R) [] []
@@ -536,8 +517,7 @@ loc-settle (loc σ R₀ fx sn cp la) =
     Uᵈ = settledOf R₀
     F  = refinedOf R₀
 
--- With no disjunction settled, the type of each is eternal at some
--- instance
+-- With no disjunction settled, each one's type is eternal at some instance
 
 unsettled-≤ : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set}
             → (set : (a : X) → Maybe (Every P a)) → (l : List X)
@@ -589,12 +569,8 @@ settled-none R ns m =
     ds≤ = ≮⇒≥ ns
 
 ------------------------------------------------------------------------
--- The one-step relation on the states of a scope: the open unknowns
--- and the residual. A step is a value rule at one open unknown
--- (`valueᵉ`, `valueʳ`), the collapse of the cycles (`collapseˡ`), the
--- settling of the disjunctions (`settleˡ`), or, where no other step
--- applies, the raising of a set (`raiseˡ`); each is followed by the
--- canonical form of the whole residual.
+-- The one-step relation on states: a value rule at an open unknown, the collapse,
+-- the settling, or the raising where none applies; then the canonical form
 
 -- The first index at which a partial function is defined, or none
 
@@ -644,8 +620,7 @@ module Steps {Θ Φ} (O : Subst (Θ +e) Φ) where
   shutᴹ : Open O → List (Mem Φ) → Open O
   shutᴹ P l = shut P (λ k → inᴱ k l) (λ k → inᴿ k l)
 
-  -- No value rule applies at an open unknown, no cycle collapses and no
-  -- disjunction is settled
+  -- No value rule, collapse or settling applies
 
   record Stuck (P : Open O) (R : Resid Φ) : Set where
     constructor stuck
@@ -672,9 +647,8 @@ module Steps {Θ Φ} (O : Subst (Θ +e) Φ) where
   Irreducible : Cfg → Set
   Irreducible c = ∀ {c'} → ¬ (c ⟶ˡ c')
 
-  -- The measure, ordered lexicographically: the open unknowns, then the
-  -- disjunctions. Every step but the settling shuts an open unknown;
-  -- the settling keeps them and drops or refines a disjunction.
+  -- The measure: open unknowns, then disjunctions, lexicographically; the
+  -- settling alone keeps the open unknowns
 
   μ : Cfg → ℕ
   μ (P , _) = μᴼ P
@@ -730,9 +704,8 @@ module Steps {Θ Φ} (O : Subst (Θ +e) Φ) where
   along L ε⋆       = L
   along L (s ◅ ss) = along (step-loc L s) ss
 
-  -- The fixed selection: the collapse; the value rules at the open
-  -- effect unknowns, then the resource ones, each sort latest created
-  -- (least index) first; the settling; the raising
+  -- The fixed selection: collapse; value rules at open effect, then resource
+  -- unknowns, least index first; settling; raising
 
   select : (c : Cfg) → (Σ[ c' ∈ Cfg ] (c ⟶ˡ c')) ⊎ Irreducible c
   select (P , R) with cmove (collapse O P R) in ec
@@ -788,8 +761,7 @@ module Steps {Θ Φ} (O : Subst (Θ +e) Φ) where
   run c (acc rμ) aν | inj₁ (c' , s@(valueʳ _ _))   = s ◅ᶜ run c' (rμ (shut-μ s tt)) (<-wellFounded-fast _)
   run c (acc rμ) aν | inj₁ (c' , s@(raiseˡ _ _ _)) = s ◅ᶜ run c' (rμ (shut-μ s tt)) (<-wellFounded-fast _)
 
-  -- The initial state: every local unknown open, the residual in
-  -- canonical form
+  -- The initial state: every local unknown open, the residual canonical
 
   initial : Resid Φ → Cfg
   initial R = allOpen O , canonᴿ R
@@ -797,14 +769,13 @@ module Steps {Θ Φ} (O : Subst (Θ +e) Φ) where
   closureOf : (R : Resid Φ) → Closure (initial R)
   closureOf R = from (μ (initial R)) refl
     where
-      -- by cases on the measure first: at a scope of unknown size the
-      -- closure does not unfold
+      -- by cases on the measure first: at a scope of unknown size the closure
+      -- does not unfold
       from : (n : ℕ) → μ (initial R) ≡ n → Closure (initial R)
       from nzero    _ = run (initial R) (<-wellFounded-fast _) (<-wellFounded-fast _)
       from (nsuc _) _ = run (initial R) (<-wellFounded-fast _) (<-wellFounded-fast _)
 
--- Localisation: the irreducible state the fixed selection reaches, the
--- images of `O` read from `memo O`
+-- Localisation: the irreducible state the selection reaches, `O` read from `memo O`
 
 localiseᶜ : ∀ {Θ Φ} → (O : Subst (Θ +e) Φ) → (R : Resid Φ) → Steps.Closure (memo O) (Steps.initial (memo O) R)
 localiseᶜ O R = Steps.closureOf (memo O) R
@@ -816,8 +787,7 @@ localiseᴸ O R = Steps.along (memo O) (loc-canon loc-id , refl) (Steps.Closure.
 localise : ∀ {Θ Φ} → (O : Subst (Θ +e) Φ) → (R : Resid Φ) → Localised O R
 localise O R = loc-≐ (memo-≐ O) (proj₁ (localiseᴸ O R))
 
--- After localisation, the type of each disjunction left is eternal at
--- some instance: the state is irreducible, so no disjunction settles
+-- After localisation, each disjunction's type is eternal at some instance
 
 localise-ds : ∀ {Θ Φ} → (O : Subst (Θ +e) Φ) → (R : Resid Φ)
             → ∀ {A ρ} → (A , ρ) ∈ ds (lR (localise O R))

@@ -1,9 +1,7 @@
 ------------------------------------------------------------------------
--- Nine functions of the prototype's standard library. Over any language
--- inference answers `typed` for each; at four grades, the combinations
--- of `u-least?` and `·-comm?`, the reported scheme is checked by `refl`.
--- Exercises generation, subtyping and the report (`Generate`, `Solve`,
--- `SolverImpl`).
+-- Nine functions of Tempore's standard library, `typed` over any
+-- language, with schemes checked at the four combinations of `u-least?`
+-- and `·-comm?`. Exercises `Generate`, `Solve` and `SolverImpl`.
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Examples.Stdlib.All where

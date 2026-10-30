@@ -1,11 +1,9 @@
 --------------------------------------------------------------------
 -- The languages the inference examples run in                    --
 --                                                                --
--- The sensor node's language (`Language.Examples.SensorNode`) at --
--- four grades, each with its `opTime` of                         --
--- `Grades.Examples.Worked.Operations.Grading`, as in the typing  --
--- examples, together covering the four combinations of the two   --
--- properties the solver reads from a grade's hints:              --
+-- The sensor node's language (`Language.Examples.SensorNode`)    --
+-- with the operation times of `Worked.Operations.Grading`, at    --
+-- four grades covering the hint properties the solver reads:     --
 --                                                                --
 --   grade                      u-least?   ·-comm?                --
 --   Time/RightSided            yes        yes                    --
@@ -13,26 +11,11 @@
 --   Traces/Timed/RightSided    yes        no                     --
 --   Traces/Timed/LeftSided     no         no                     --
 --                                                                --
--- and at the two products of time with a security level, each    --
--- operation graded by its time and the level it touches          --
--- (`Worked/Operations/Footprint.agda`): at least `fast` ticks on --
--- the left, as in `Grading.Product-LeftSidedTimeLevel`, at most  --
--- `slow` on the right.                                           --
---                                                                --
--- At dense time, the right-sided grade takes the measured        --
--- figures of `Grading.Time-Dense-RightSided`, and the left-sided --
--- one the figures of `Grading.Time-LeftSided` read in dense      --
--- time.                                                          --
---                                                                --
--- The operations are the same at every grade, and so is their    --
--- enumeration.                                                   --
---                                                                --
--- The solver's hints are those of the identity system on the     --
--- grade (`identityʰ`), its candidate values of a rigid those     --
--- that retry tries: at time, the bounds `0, …, s+1` for          --
--- constants summing to `s` (at dense time, a grid of fractions); --
--- at the products, the pairs of the time candidates with both    --
--- levels; at the timed traces, none.                             --
+-- and at time paired with a security level (`Footprint`) and at  --
+-- dense time on both sides. Hints are `identityʰ`; retry's       --
+-- candidates are, at time, the bounds `0, …, s+1` for constants  --
+-- summing to `s` (a grid at dense time), at the products these   --
+-- paired with both levels, at the timed traces none.             --
 --------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_)

@@ -1,16 +1,13 @@
 ------------------------------------------------------------------
 -- The solver state                                             --
 --                                                              --
--- A state `St Θ` consists of a scope `Ψ` of the variables      --
--- still unknown, the substitution `θ : Subst Θ Ψ` found so     --
--- far, the residual over `Ψ` still to be discharged, and the   --
--- effect-grade variables of `Ψ` that are rigid.                --
---                                                              --
--- A morphism `s ⟶ s'` is a move of the driver: a further       --
--- substitution `δ` such that the old substitution followed by  --
--- `δ` is the new one, along which a discharge of the new       --
--- residual is a discharge of the old. Morphisms compose;       --
--- composition threads a conjunction.                           --
+-- A state `St Θ` is a scope `Ψ` of the variables still         --
+-- unknown, the substitution `θ : Subst Θ Ψ` found so far, the  --
+-- residual over `Ψ`, and the rigid effect-grade variables of   --
+-- `Ψ`. A morphism `s ⟶ s'` is a move of the driver: a          --
+-- substitution `δ` extending `θ` to the new one, along which a --
+-- discharge of the new residual is one of the old. Morphisms   --
+-- compose.                                                     --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
@@ -41,8 +38,8 @@ open import PolymorphicCalculus.Hypotheses               S
 
 open import PolymorphicCalculus.Inference.SolverImpl.Resid S
 
--- A substitution out of an extended scope is its own restriction
--- extended by the image of the new variable.
+-- A substitution out of an extended scope is its restriction extended by the
+-- image of the new variable
 
 ↑-,ᵗ : ∀ {Θ Θ'} → (γ : Subst (Θ +ty) Θ')
      → ((wkˢᵗ ⨟ˢ γ) ,ᵗ sTy γ (newᵗ {Θ})) ≐ˢ γ
@@ -67,8 +64,7 @@ _∈ᶠ_ : ∀ {n} → Fin n → List (Fin n) → 𝔹
 i ∈ᶠ []       = false
 i ∈ᶠ (j ∷ js) = ⌊ i ≟ᶠ j ⌋ ∨ (i ∈ᶠ js)
 
--- A substitution fixes the rigids when it sends each to a variable,
--- and two distinct ones to distinct variables.
+-- A substitution fixes the rigids when it sends them to distinct variables
 
 record Fixing {Θ Ψ : Scope} (rg : Rig Θ) (σ : Subst Θ Ψ) : Set where
   constructor fixing
@@ -78,8 +74,8 @@ record Fixing {Θ Ψ : Scope} (rg : Rig Θ) (σ : Subst Θ Ψ) : Set where
 
 open Fixing public
 
--- A rigid is never bound, so its image under any substitution the
--- driver builds is again a variable.
+-- A rigid is never bound, so its image under the driver's substitutions is a
+-- variable
 
 varᵉ? : ∀ {Ψ} → EExp Ψ → Maybe (EVar Ψ)
 varᵉ? (evar i)  = just i
@@ -126,9 +122,8 @@ open _⟶_ public
       (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc (mδ m) (mδ m') δ))
                             (mres m (mδ m' ⨟ˢ δ) Q (mres m' δ Q h)))
 
--- An existential allocates a fresh unknown; the rigid lift
--- additionally declares it rigid and starts the scope with a fresh
--- residual.
+-- An existential allocates a fresh unknown; the rigid lift also declares it
+-- rigid and starts the scope with a fresh residual
 
 infixl 32 _↑ᵗˢ _↑ʳˢ _↑ᵉˢ
 

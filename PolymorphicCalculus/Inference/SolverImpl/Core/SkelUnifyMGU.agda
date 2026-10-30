@@ -2,13 +2,13 @@
 -- Most general unifiers of skeletons                            --
 --                                                               --
 -- A successful run of `unifyᵏ` returns a most general unifier:  --
--- every substitution unifying the equations factors through the --
--- returned store. A failure refutes the equations for every     --
--- substitution. No skeleton variable is rigid, so maximality    --
--- relative to the empty store already is most-generality.       --
+-- every unifier of the equations factors through the returned   --
+-- store. A failure refutes the equations at every substitution. --
+-- No skeleton variable is rigid, so maximality relative to the  --
+-- empty store is most-generality.                               --
 --                                                               --
--- Follows McBride's `Max` characterisation of most general      --
--- unifiers and the optimist's lemma (JFP 2003).                 --
+-- Follows McBride's `Max` characterisation and optimist's       --
+-- lemma.                                                        --
 -------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_)
@@ -94,8 +94,7 @@ sBox-inj refl = refl
 sList-inj : ∀ {n} {t t' : Skel n} → sList t ≡ sList t' → t ≡ t'
 sList-inj refl = refl
 
--- Substitutions unifying an equation are closed under pointwise
--- equality
+-- Unifiers of an equation are closed under pointwise equality
 
 Unifies¹ᵏ-resp≐ : ∀ {n m} {σ δ : SSub n m} → σ ≐ᵏ δ → (e : SEqn n)
                 → Unifies¹ᵏ e σ → Unifies¹ᵏ e δ
@@ -184,8 +183,8 @@ occ≤ᵏ α σ (occ-⇒ʳ o)  = m≤n⇒m≤1+n (≤-trans (occ≤ᵏ α σ o) 
 occ≤ᵏ α σ (occ-box o) = m≤n⇒m≤1+n (occ≤ᵏ α σ o)
 occ≤ᵏ α σ (occ-list o) = m≤n⇒m≤1+n (occ≤ᵏ α σ o)
 
--- A variable occurring in a skeleton other than itself is never sent
--- to that skeleton's instance
+-- A variable occurring in a skeleton other than itself is never sent to that
+-- skeleton's instance
 
 no-cycleᵏ : ∀ {n m} {t : Skel n} → (α : Fin n) → (σ : SSub n m) → ¬ (t ≡ svar α)
           → Occᵏ α t → ¬ (σ α ≡ t [ σ ]ᵏ)
@@ -219,8 +218,7 @@ no-cycleᵏ α σ nv (occ-box o) u =
 no-cycleᵏ α σ nv (occ-list o) u =
   1+n≰n (subst (suc (sizeᵏ (σ α)) ≤_) (sym (cong sizeᵏ u)) (s≤s (occ≤ᵏ α σ o)))
 
--- A skeleton that passes the occurrence check is the thinning of the
--- skeleton the check returns
+-- A skeleton passing the occurrence check thins the skeleton the check returns
 
 thinᵏ : ∀ {n} → Fin (suc n) → SSub n (suc n)
 thinᵏ α β = svar (punchIn α β)
@@ -272,9 +270,8 @@ Uniᵏ e = propᵏ (Unifies¹ᵏ e) (λ q p → Unifies¹ᵏ-resp≐ q e p)
 Unisᵏ : ∀ {n} → SEqns n → Propertyᵏ n
 Unisᵏ es = propᵏ (Unifiesᵏ es) (λ q ps → Unifiesᵏ-resp≐ q es ps)
 
--- Maximality relative to the store the call starts from: every
--- solution of the property extending that store is an instance of the
--- returned store.
+-- Maximality relative to the starting store: every solution extending it is an
+-- instance of the returned store
 
 record Maxᵏ {n m l : ℕ} (P : Propertyᵏ n) (τ : SAList n m) (τ'' : SAList n l) : Set where
   constructor maxᵏ
@@ -324,8 +321,8 @@ Specᵏ-map : ∀ {n m} {P P' : Propertyᵏ n} {τ : SAList n m} {x : Maybe (Sol
           → (∀ {k} {σ : SSub n k} → at P' σ → at P σ) → Specᵏ P τ x → Specᵏ P' τ x
 Specᵏ-map f (specᵏ j nc) = specᵏ (λ q → Maxᵏ-map f (j q)) (λ q δ p → nc q δ (f p))
 
--- Two calls in sequence: the second starts from the store the first
--- returned, and the factorisations compose.
+-- Two calls in sequence, the second from the first's store; the factorisations
+-- compose
 
 seq-specᵏ : ∀ {n m} {P P₁ P₂ : Propertyᵏ n} {τ : SAList n m}
           → (x : Maybe (Solᵏ n)) → (f : Solᵏ n → Maybe (Solᵏ n))
@@ -382,8 +379,8 @@ descᵏ-spec {n} {m} r α t u τ {x} s = specᵏ yes' no'
         → ¬ Unifies¹ᵏ (t , u) (⟦ r /ᵏ α ∷ τ ⟧ᴷ ⨟ᵏ δ)
     no' q δ p = onNothing s (map-nothing (consᵏ r α) x q) δ (down δ p)
 
--- A solution of the binding is recovered from the store by restricting
--- it along the thinning of the bound variable
+-- A solution of the binding is recovered from the store, restricted along the
+-- thinning of the bound variable
 
 bindᵏ-max : ∀ {n} → (α : Fin (suc n)) → (t : Skel (suc n)) → {u : Skel n}
           → checkᵏ α t ≡ just u

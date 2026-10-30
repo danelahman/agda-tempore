@@ -355,9 +355,10 @@ unbox-subst-natˢ s p y rel w M ih =
 
 mutual
 
-  -- `{-# TERMINATING #-}`: the recursion is structural on the term, but it
-  -- passes through the mutually-defined naturality lemma, which hides that
-  -- from the checker.
+  -- `TERMINATING`: every call descends to a subterm, except that the naturality
+  -- lemmas call `subᵛˢ`/`subᶜˢ` at their own term, and those reach the lemmas only
+  -- below it. The checker loses the descent from `handle` to its clauses, which
+  -- passes through `sub-clauses-uniformˢ` with the whole clause family.
 
   {-# TERMINATING #-}
 

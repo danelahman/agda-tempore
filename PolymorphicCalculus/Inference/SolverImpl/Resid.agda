@@ -1,49 +1,26 @@
 ------------------------------------------------------------------
 -- Residual constraints                                         --
 --                                                              --
--- A `Resid Ψ` is the list of grade orderings, eternality       --
--- demands, subtyping demands and var-rule disjunctions that    --
--- the driver leaves open over the current scope, together with --
--- the deferred rigid conditions of the clauses closed so far   --
--- (`Deferred`). A residual, unlike a `Hyps`, is closed under   --
--- substitution; the driver pushes it through the substitutions --
--- of an expansion and of a scope's close.                      --
+-- A `Resid Ψ` holds the grade orderings, eternality demands    --
+-- (on type variables), subtyping demands and var-rule          --
+-- disjunctions the driver leaves open, with the deferred       --
+-- conditions of the clauses closed so far (`Deferred`). Unlike --
+-- `Hyps`, it is closed under substitution. `Q ⊩ᴿ R [ δ ]`      --
+-- discharges it along `δ`. `toHyps` reads it back as a         --
+-- hypothesis set, decomposing subtyping demands (`subDec`) and --
+-- eternality demands (`etDec`) along the variance table and    --
+-- its eternality column (`Former`).                            --
 --                                                              --
--- Its eternality demands are on type variables: a demand is    --
--- decomposed by `etDec` when it is pushed, and again after     --
--- each expansion (`atomiseᴿ`), which may instantiate its       --
--- variables.                                                   --
+-- Contract. `subDec` and `etDec` are exact at every instance   --
+-- (`Exact`: `intro`, `elim`); `subDec` does not fail after an  --
+-- expansion (`expandSub-dec`, `reexpand-dec`), and a failure   --
+-- of `etDec` refutes the demand (`etDec-refute`). `atomiseᴿ`   --
+-- keeps the instances (`atomiseᴿ-sound`, `atomiseᴿ-compl`).    --
+-- `toHyps R` entails `R`, is entailed by it (`toHyps-compl`),  --
+-- and fails only on an undecomposable demand                   --
+-- (`toHyps-nothing`).                                          --
 --                                                              --
--- `Q ⊩ᴿ R [ δ ]` discharges a residual: `Q` entails every atom --
--- and every deferred condition, instantiated along `δ`.        --
--- `toHyps` reads the atoms back as a hypothesis set,           --
--- decomposing the eternality demands (`etsDec`) and the        --
--- subtyping demands (`subDec`) into atoms on type variables    --
--- and keeping the rest unchanged. `subDec` and `etDec` read    --
--- the variance table and its eternality column (`Former`),     --
--- by recursion on the parts of a type. `subDec` stops at a     --
--- pair of type variables; a type variable against a former,    --
--- or two clashing formers, have no decomposition.              --
---                                                              --
--- Contract. A decomposition `subDec A B` is exact (`Exact`) at --
--- every instance and under any hypotheses: its atoms entail    --
--- the demand (`intro`) and are entailed by it (`elim`), and    --
--- likewise for a list (`subsList`: `introˢ`/`elimˢ`). A        --
--- failure claims nothing by itself; after an expansion none    --
--- occurs (`expandSub-dec`, `reexpand-dec`), as `subDec`        --
--- succeeds on the pairs of a symmetric relation that pairs     --
--- types of one former part by part (`SubDecJust`). `etDec` is  --
--- exact likewise (`etDec-intro`, `etDec-compl`; for a list,    --
--- `etsDec`: `introᵗ`/`elimᵗ`); its failure refutes the demand  --
--- at every instance (`etDec-refute`) and reduces a disjunction --
--- to its grade side (`etDec-grade`). `atomiseᴿ` has the same   --
--- instances as the original, in both directions                --
--- (`atomiseᴿ-sound`, `atomiseᴿ-compl`). `toHyps R` entails the --
--- atoms of `R` (by its type), is entailed by them at every     --
--- instance (`toHyps-compl`), and fails only on a demand on     --
--- which `subDec` or `etDec` fails (`toHyps-nothing`).          --
---                                                              --
--- The name follows OutsideIn(X) (Vytiniotis et al., JFP 2011). --
+-- The name follows OutsideIn(X).                               --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false)
@@ -282,8 +259,8 @@ tailᵈ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {A : OVType Ψ} {ρ : RExp 
       → Q ⊩ᴿ (pushᵈ A ρ R) [ δ ] → Q ⊩ᴿ R [ δ ]
 tailᵈ h = mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (⊩ss h) (λ m → ⊩ds h (there m)) (⊩dfs h)
 
--- The empty hypothesis set entails nothing, so every decision taken
--- against it transports to any hypothesis set and any substitution
+-- The empty hypothesis set entails nothing, so a decision against it holds
+-- under any hypotheses and substitution
 
 ∅ᴴ-⊩ᴴ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → Q ⊩ᴴ ∅ᴴ [ δ ]
 ∅ᴴ-⊩ᴴ = ⊩ᴴ-∅
@@ -358,8 +335,7 @@ holdsᵉ p = holds (λ ()) (λ ()) (λ { (here refl) → p })
                      (λ m → hr h (∈-++⁺ʳ (aordᵣ a) m))
                      (λ m → he h (∈-++⁺ʳ (aordₑ a) m))
 
--- The atoms as a residual of their own: the variable pairs become
--- subtyping demands between variable types.
+-- The atoms as a residual, the variable pairs as subtyping demands
 
 atomsᴿ : ∀ {Ψ} → SubAtoms Ψ → Resid Ψ
 atomsᴿ a = resid (aordᵣ a) (aordₑ a) [] (map (mapᵖ tvar) (asubᵥ a)) [] []
@@ -396,9 +372,8 @@ SubDec A B = Exact (λ Q δ → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ)
 PartDec : ∀ {Ψ} → Part Ψ → Set
 PartDec p = Exact (λ Q δ → Holdsᴾ Q (p [ δ ∣ δ ]ᴾ))
 
--- Exact decompositions combine: a conjunction, a demand at a variance
--- from the decompositions of the demand and its converse, and the
--- demands of every member of a list
+-- Exact decompositions combine: conjunction, a demand at a variance from the
+-- demand and its converse, and every member of a list
 
 infixr 4 _∧ᴱ_
 
@@ -442,10 +417,8 @@ fromParts : ∀ {Ψ} {A B : OVType Ψ} {ps} → Decomp A B ps
 fromParts g d = exact (atomsOf d) (λ δ h → <:-intro g δ δ (intro d δ h))
                       (λ δ p → elim d δ (<:-elim g δ δ p))
 
--- A demand reduces along the variance table to atoms on pairs of type
--- variables and grade orderings, or has no decomposition: a type
--- variable against a former, or two formers that clash. The recursion
--- is on the parts (`≺-wf`).
+-- A demand reduces along the variance table to pairs of type variables and grade
+-- orderings, or fails on a variable against a former or clashing formers
 
 subDecᵃ : ∀ {Ψ} → (A B : OVType Ψ) → Acc _≺_ A → Acc _≺_ B → Maybe (SubDec A B)
 partDec : ∀ {Ψ} {A B : OVType Ψ} {ps} → Decomp A B ps
@@ -466,9 +439,8 @@ partDec g ra rb {eg v ε ε'} m = atVarᴱ v (just (ordᵉᴱ ε ε')) (just (or
 subDec : ∀ {Ψ} → (A B : OVType Ψ) → Maybe (SubDec A B)
 subDec A B = subDecᵃ A B (≺-wf A) (≺-wf B)
 
--- `subDec` succeeds on every pair of a symmetric relation that relates
--- only pairs of type variables and types of one former whose
--- value-type parts it relates (`Fitsᴰ`)
+-- `subDec` succeeds on every pair of a symmetric relation relating only pairs of
+-- type variables and types of one former part by part (`Fitsᴰ`)
 
 Fits : ∀ {Ψ} → (OVType Ψ → OVType Ψ → Set) → Part Ψ → Set
 Fits S (ty _ X Y) = S X Y
@@ -531,8 +503,7 @@ nothing≢just ()
 false≢true : false ≡ true → ⊥
 false≢true ()
 
--- The concatenation of the lists given to the members of a list, if
--- every member is given one
+-- The concatenation of the lists given to the members, if each is given one
 
 concatᴹ : ∀ {X Y : Set} → (xs : List X) → (∀ {x} → x ∈ xs → Maybe (List Y)) → Maybe (List Y)
 concatᴹ []       f = just []
@@ -565,9 +536,8 @@ concatᴹ-nothing (x ∷ xs) {f} e
 ... | inj₂ e₂ with concatᴹ-nothing xs {λ m' → f (there m')} e₂
 ...   | x' , m , e₃ = x' , there m , e₃
 
--- An eternality demand reduces along the eternality column to demands
--- on type variables, or is refuted. The recursion is on the parts
--- (`≺-wf`).
+-- An eternality demand reduces along the eternality column to demands on type
+-- variables, or is refuted
 
 etDecᵃ : ∀ {Ψ} → (A : OVType Ψ) → Acc _≺_ A → Maybe (List (TyVar Ψ))
 etPart : ∀ {Ψ} {A B : OVType Ψ} {ps} → Decomp A B ps → WfRec _≺_ (Acc _≺_) A
@@ -665,9 +635,8 @@ etDec-compl : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (A : OVType Ψ) → {αs : List (T
             → ∀ {α} → α ∈ αs → Q ⊩ᴱ tvar α [ δ ]ᵛ
 etDec-compl A = etDec-complᵃ A (≺-wf A)
 
--- A failed decomposition refutes the demand, at every instance:
--- substitution preserves the former, which the column refuses, or a
--- part that is refuted.
+-- A failed decomposition refutes the demand at every instance: substitution
+-- keeps the former, which the column refuses, or a refuted part
 
 etDec-refuteᵃ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (A : OVType Ψ) → (a : Acc _≺_ A)
               → etDecᵃ A a ≡ nothing → (δ : Subst Ψ Ψ') → ¬ (Q ⊩ᴱ A [ δ ]ᵛ)
@@ -709,8 +678,7 @@ record EtsDec {Ψ : Scope} (l : List (OVType Ψ)) : Set where
 
 open EtsDec public
 
--- One demand onto a list, its decomposition paired with the equation
--- naming it
+-- One demand onto a list, its decomposition paired with its equation
 
 etsCons : ∀ {Ψ} → (A : OVType Ψ) → (l : List (OVType Ψ))
         → (x : Maybe (List (TyVar Ψ))) → etDec A ≡ x → Maybe (EtsDec l)
@@ -790,10 +758,8 @@ subsList-nothing ((A , B) ∷ l) eq | just _ | nothing with subsList-nothing l e
 ... | A' , B' , m , q = A' , B' , there m , q
 subsList-nothing ((A , B) ∷ l) eq | nothing | _ = A , B , here refl , e₀
 
--- A residual with its subtyping and eternality demands decomposed: the
--- pairs of type variables stay demands, the grade orderings join the
--- others, the eternality demands are on type variables. It has the
--- instances of the original.
+-- A residual with its subtyping and eternality demands decomposed onto type
+-- variables, the grade orderings joining the others; it keeps the instances
 
 atomiseᴿ : ∀ {Ψ} → (R : Resid Ψ) → SubsDec (ss R) → EtsDec (ts R) → Resid Ψ
 atomiseᴿ R d t = resid (rs R ++ aordᵣ (atomsOfˢ d)) (es R ++ aordₑ (atomsOfˢ d))
@@ -897,8 +863,7 @@ toHyps-nothing R eq with etsDec (ts R) in e | subsList (ss R) in e'
 ... | just _  | nothing = inj₂ (subsList-nothing (ss R) e')
 toHyps-nothing R () | just _ | just _
 
--- Every atom the read-back raised is entailed by the demands it
--- came from, at every instance
+-- Every atom of the read-back is entailed by its demand at every instance
 
 toHyps-compl : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (R : Resid Ψ)
              → {p : Σ[ Q₀ ∈ Hyps Ψ ] (Q₀ ⊩ᴿ bareᴿ R [ idˢ ])}

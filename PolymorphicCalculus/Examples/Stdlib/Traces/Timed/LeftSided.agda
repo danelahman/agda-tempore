@@ -1,9 +1,8 @@
 --------------------------------------------------------------------
 -- The standard library at timed traces, coverage order           --
 --                                                                --
--- The unit is the top, and multiplication does not commute.      --
--- Nothing goes stale, so `compose` and `min` report no condition --
--- on time.                                                       --
+-- The unit is the top: `compose` and `min` report no time        --
+-- condition.                                                     --
 --------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -43,8 +42,7 @@ absurd′-reported = refl
 pipe-reported : schemeOf (infer [] pipe) ≡ just expected-pipe
 pipe-reported = refl
 
--- `⊤ = u`: every grade is below the unit, so the disjunction for
--- `f` is met by its grade ordering and no condition is left
+-- `⊤ = u` meets `f`'s disjunction
 
 expected-compose-top : Scheme
 expected-compose-top =
@@ -54,8 +52,7 @@ expected-compose-top =
 compose-reported : schemeOf (infer [] compose) ≡ just expected-compose-top
 compose-reported = refl
 
--- `⊤ = u`: every grade is below the unit, so both disjunctions are
--- met by their grade orderings and only the subtyping is left
+-- `⊤ = u` meets both disjunctions; only the subtyping is left
 
 expected-min-top : Scheme
 expected-min-top =

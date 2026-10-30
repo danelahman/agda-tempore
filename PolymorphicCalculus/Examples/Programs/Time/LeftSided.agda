@@ -1,9 +1,8 @@
 ------------------------------------------------------------------
 -- Programs at left-sided intervals                             --
 --                                                              --
--- "At least `n` ticks": nothing goes stale, so `keep`'s scheme --
--- has no hypothesis, and `late`, keeping a function, is        --
--- accepted.                                                    --
+-- Nothing goes stale: `keep`'s scheme has no hypothesis, and   --
+-- `late` is accepted.                                          --
 ------------------------------------------------------------------
 
 open import Data.List.Base using ([]; _∷_)

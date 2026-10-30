@@ -1,9 +1,7 @@
 ------------------------------------------------------------------
 -- Handlers at right-sided intervals                            --
 --                                                              --
--- Every scheme is the one written in `Handlers`.               --
--- `discard` is typed, the unit being least; `resume-twice` is  --
--- refuted.                                                     --
+-- The shared schemes; `discard` typed, `resume-twice` refuted. --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -30,8 +28,7 @@ relay-reported = refl
 relay-boxed-reported : schemeOf (infer [] relay-boxed) ≡ just expected-relay-boxed
 relay-boxed-reported = refl
 
--- A handler as a value: bound by `let`, taken as an argument, and
--- passed to a function
+-- Handlers as values
 
 bound-reported : schemeOf (infer [] bound) ≡ just expected-bound
 bound-reported = refl
@@ -50,8 +47,7 @@ discard-reported = refl
 discard-derivable : Typable [] discard
 discard-derivable = discard-typable uₒ-least
 
--- A continuation grade above the unit is spent twice, and `k'` and
--- `a` go stale across it
+-- `j` above the unit is spent twice, and `k'` and `a` go stale
 
 resume-twice-untypable-verdict : infer [] resume-twice ≡ untypable
 resume-twice-untypable-verdict = refl

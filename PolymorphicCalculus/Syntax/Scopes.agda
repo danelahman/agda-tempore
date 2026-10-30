@@ -11,8 +11,6 @@ open import Data.Nat using (ℕ; zero; suc)
 
 module PolymorphicCalculus.Syntax.Scopes where
 
--- Scopes
-
 record Scope : Set where
   constructor scope
   field
@@ -33,13 +31,10 @@ RVar Θ = Fin (nR Θ)
 EVar : Scope → Set
 EVar Θ = Fin (nE Θ)
 
--- Empty scope
-
 ∅ˢ : Scope
 ∅ˢ = scope 0 0 0
 
--- Scope extensions, each incrementing one counter; `nE (Θ +e)` and the
--- like reduce definitionally.
+-- Scope extensions, each incrementing one counter
 
 _+ty : Scope → Scope
 Θ +ty = scope (suc (nTy Θ)) (nR Θ) (nE Θ)
@@ -52,7 +47,7 @@ _+e : Scope → Scope
 
 infixl 30 _+ty _+r _+e
 
--- The newly bound variable of an extension is `zero`, de Bruijn style
+-- The newly bound variable
 
 newᵗ : ∀ {Θ} → TyVar (Θ +ty)
 newᵗ = zero
@@ -63,12 +58,8 @@ newʳ = zero
 newᵉ : ∀ {Θ} → EVar (Θ +e)
 newᵉ = zero
 
--- Injections of the variables of a scope into an extension. The name
--- `wk<sort of the extension>-<sort of the variable>` gives both sorts;
--- only the matching sort shifts, the other two are the identity.
-
--- The scope is an explicit argument: `TyVar` and the like are `Fin` of a
--- projection, which does not determine the scope.
+-- Injections into an extension, `wk<extension>-<variable sort>`; the scope
+-- is explicit, as `Fin` of a projection does not determine it
 
 wkᵗ-tv : (Θ : Scope) → TyVar Θ → TyVar (Θ +ty)
 wkᵗ-tv Θ i = suc i

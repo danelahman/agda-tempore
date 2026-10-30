@@ -81,8 +81,6 @@ open import MonomorphicCalculus.EquationalTheory.Soundness.HandlePerform S Cat F
 
 mutual
 
-  {-# TERMINATING #-}
-
   soundᵛ : ∀ {Γ A} {V W : Γ ⊢V⦂ A} → (p : Γ ⊢V⦂ V == W) → Midᵛ p → Soundᵛ== p
   -- setoid structure
   soundᵛ (V-refl {V = V})     _            pV pW = ⟦⟧ᵛᵗ-irr V pV pW

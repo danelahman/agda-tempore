@@ -1,15 +1,11 @@
 ------------------------------------------------------------------
 -- Run-time terms                                               --
 --                                                              --
--- The raw terms of `PolymorphicCalculus.Syntax.Raw` without    --
--- grades and type annotations: a box keeps no grade, a handler --
--- clause no grade variable, and annotations are dropped        --
--- (`eraseᵛ`, `eraseᶜ`). `RunV n` and `RunC n` are scoped by    --
--- `n` term variables, de Bruijn indices. `unbox` takes a       --
--- value, which a typing makes a variable.                      --
---                                                              --
--- Renaming, and substitution of a value for the variable at    --
--- depth `k` (`subᶜ k`).                                        --
+-- Raw terms without grades and annotations (`eraseᵛ`,          --
+-- `eraseᶜ`): a box keeps no grade, a handler clause no grade   --
+-- variable. `RunV n` and `RunC n` are scoped by `n` term       --
+-- variables, de Bruijn indices. Renaming, and substitution of  --
+-- a value for the variable at depth `k` (`subᶜ k`).            --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)
@@ -342,10 +338,8 @@ mutual
   ren-idᶜ p (box V N)                 = cong₂ box (ren-idᵛ p V) (ren-idᶜ (ext-id p) N)
 
 ------------------------------------------------------------------------
--- Substitution of a value for the variable at depth `k`
-
--- The variable at depth `k` becomes the value, weakened past the `k`
--- variables bound below it; those below stay, those above move down.
+-- Substitution of a value for the variable at depth `k`, the value
+-- weakened past the `k` variables below it
 
 subVar : ∀ {n} → (k : ℕ) → RunV n → Fin (k + suc n) → RunV (k + n)
 subVar zero    V zero    = V

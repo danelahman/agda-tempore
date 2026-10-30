@@ -2,33 +2,9 @@
 -- Satisfiability at definitions and establishment at runs        --
 --                                                                --
 -- Programs whose qualifier inference leaves open: `infer`        --
--- searches it for a refutation (`SolverImpl.Search`), and        --
--- `check` also for a closed instance.                            --
---                                                                --
--- `budget τ c` is a function annotated to take as long as its    --
--- argument and `τ` more, `ε₀ = ε₀ · τ` up to the order, applied  --
--- to a function taking no time, the whole annotated at `c`. The  --
--- program's effect variable `ε₀` is one of its variables. Where  --
--- the unit is least, the solver leaves `τ · ε₀ ≾ ε₀ ∧ ε₀ ≾ c`.   --
--- Where `τ` is not below `c`, the chain `τ → τ · ε₀ → ε₀ → c`    --
--- through the factor edge refutes it; where `c` is the top, the  --
--- top is a closed instance; otherwise, at right-sided time,      --
--- lowering sends `ε₀` to `u ⊔ τ⁺ · u`, the top, and `⊤ ≾ c`      --
--- refutes it. At left-sided time the argument adds `u ≾ ε₀`,     --
--- which with `ε₀ ≾ c` refutes every `c` but the top.             --
---                                                                --
--- `stretch τ` is a handler whose clauses resume and then call    --
--- the resumption's result, a function its return clause makes    --
--- take `τ`. Each clause leaves `∀ j. op · j · ε ≾ op · j` with   --
--- `ε` the result's latent effect, at least `τ`: the condition    --
--- mentions `ε`, so solving keeps it; localising `ε` to `τ` makes --
--- it a condition on the rigid alone. At right-sided time it is   --
--- refuted at a witness where `op · j · τ ≾ op · j` fails; at     --
--- left-sided time it holds at every `j`, and the check           --
--- establishes the program.                                       --
---                                                                --
--- The instances under `Runs/` check the verdicts by `refl`, and  --
--- derive typability or its refutation from them.                 --
+-- searches it for a refutation (`Search`), and `check` also for  --
+-- a closed instance. The instances under `Runs/` check the       --
+-- verdicts by `refl` and derive typability or its refutation.    --
 --------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
@@ -94,6 +70,11 @@ check-typable Γ M () | Check.stuck
 --
 --   budget τ c = (let f = (λ g. g (); delay τ) : (U → U ! ε₀) → U ! ε₀
 --                 in f (λ _. ())) : U ! c
+--
+-- Where the unit is least this leaves `τ · ε₀ ≾ ε₀ ∧ ε₀ ≾ c`: refuted
+-- through the factor edge if `τ` is not below `c`, else by lowering
+-- `ε₀` to the top unless `c` is the top. At left-sided time `u ≾ ε₀`
+-- refutes every `c` but the top.
 
 -- The scope of the program's variables: one effect variable
 
@@ -125,6 +106,9 @@ budget-top τ = budget τ (econst ⊤ₑ)
 --                 op p k ↦ let a = op p in unbox k as k' in
 --                          let f = k' a in f (); (λ _. delay τ);
 --                 return x ↦ λ _. delay τ}
+--
+-- Each clause leaves `∀ j. op · j · ε ≾ op · j`, `ε` localised to `τ`:
+-- refuted at a witness at right-sided time, established at left-sided.
 
 late : ∀ {Θ n} → 𝔻 → RawV Θ n
 late τ = lam (delay τ (return ⋆))

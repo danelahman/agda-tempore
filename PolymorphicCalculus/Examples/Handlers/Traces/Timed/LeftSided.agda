@@ -1,9 +1,7 @@
 -------------------------------------------------------------------
 -- Handlers at timed traces, coverage order                      --
 --                                                               --
--- Every scheme is the one written in `Handlers`.                --
--- `resume-twice` is typed, the unit being the top; `discard` is --
--- refuted.                                                      --
+-- The shared schemes; `resume-twice` typed, `discard` refuted.  --
 -------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -29,8 +27,7 @@ relay-reported = refl
 relay-boxed-reported : schemeOf (infer [] relay-boxed) ≡ just expected-relay-boxed
 relay-boxed-reported = refl
 
--- A handler as a value: bound by `let`, taken as an argument, and
--- passed to a function
+-- Handlers as values
 
 bound-reported : schemeOf (infer [] bound) ≡ just expected-bound
 bound-reported = refl
@@ -41,8 +38,7 @@ run-reported = refl
 run-forward-reported : schemeOf (infer [] run-forward) ≡ just expected-run-forward
 run-forward-reported = refl
 
--- The unit is the top, so the continuation may be spent twice and
--- nothing goes stale
+-- The unit is the top: spending `j` twice costs nothing
 
 resume-twice-reported : schemeOf (infer [] resume-twice) ≡ just expected-resume-twice
 resume-twice-reported = refl

@@ -1,18 +1,12 @@
 ------------------------------------------------------------------
 -- Resource values are annotated variables                      --
 --                                                              --
--- A type is a non-resource type if it is neither a type        --
--- variable nor a box type. When every scheme of the program    --
--- context has a non-resource type, a value of box type is a    --
--- resource value: a variable under annotations, reaching a box --
--- type below the value's own (`resource-value`). A value typed --
--- in a context with no variables has a non-resource type       --
--- (`nonResource-closed`).                                      --
---                                                              --
--- A resource value collapses by transitivity to a bound on its --
--- variable's declared type (`res-collapse`), and its           --
--- annotations go over another resource value reaching that     --
--- type (`res-rebase`).                                         --
+-- A non-resource type is neither a type variable nor a box     --
+-- type. When every scheme of the program context has one, a    --
+-- value of box type is a variable under annotations            --
+-- (`resource-value`). Its annotations collapse to one bound    --
+-- (`res-collapse`) and rebase onto another resource value      --
+-- (`res-rebase`).                                              --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
@@ -45,15 +39,11 @@ NonResource (tvar α)  = ⊥
 NonResource ([ ρ ] A) = ⊥
 NonResource _         = ⊤
 
--- The types of the schemes of a program context
-
 NonResourceDefs : PCtx → Set
 NonResourceDefs Δ = ∀ {s k} → s ∈ᵖ[ k ] Δ → NonResource (Xˢ s)
 
 nonResource-∅ : NonResourceDefs ∅ᵖ
 nonResource-∅ ()
-
--- Instances of a non-resource type are non-resource types
 
 nonResource-subst : ∀ {Θ Θ'} → (A : OVType Θ) → (δ : Subst Θ Θ')
                   → NonResource A → NonResource (A [ δ ]ᵛ)
@@ -68,9 +58,6 @@ nonResource-subst Empty      δ _ = tt
 nonResource-subst (A ⇒ C)    δ _ = tt
 nonResource-subst (C ⇛ D)    δ _ = tt
 
--- A supertype of a non-resource type is one: subtyping relates type
--- variables only to type variables, and box types only to box types
-
 nonResource-<: : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ∣ A <:̂ᵛ B → NonResource A → NonResource B
 nonResource-<: (Baseₛ _)   _ = tt
 nonResource-<: Unitₛ       _ = tt
@@ -82,8 +69,6 @@ nonResource-<: (|List|ₛ _) _ = tt
 nonResource-<: Emptyₛ      _ = tt
 nonResource-<: (_ ⇒ₛ _)    _ = tt
 nonResource-<: (_ ⇛ₛ _)    _ = tt
-
--- A definition's type is an instance of its scheme's
 
 nonResource-usedef : ∀ {Θ} {Δ : PCtx} {s k} {A : OVType Θ}
                    → NonResourceDefs Δ → s ∈ᵖ[ k ] Δ
@@ -117,9 +102,8 @@ nonResource-closed nr (subV V p)    = nonResource-<: p (nonResource-closed nr V)
 ------------------------------------------------------------------------
 -- Resource values
 
--- `V`, of type `[ ρ'' ] X''`, is the variable `z` under annotations,
--- reaching `[ ρ ] X` with `ρ'' ≾ ρ` and `X <: X''`; the variable meets
--- the side condition of `var` at its accumulated grade.
+-- `V : [ ρ'' ] X''` is a variable meeting `VarOK` under annotations
+-- reaching `[ ρ ] X`, with `ρ'' ≾ ρ` and `X <: X''`
 
 record ResourceValue {Θ n} (Q : Hyps Θ) (Γ : OCtx Θ n) (ρ'' : RExp Θ) (X'' : OVType Θ)
                      (V : RawV Θ n) : Set where
@@ -134,8 +118,6 @@ record ResourceValue {Θ n} (Q : Hyps Θ) (Γ : OCtx Θ n) (ρ'' : RExp Θ) (X''
     payload   : Q ∣ res-X <:̂ᵛ X''
 
 open ResourceValue public
-
--- Lemma (Resource values are annotated variables)
 
 resource-value : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ'' : RExp Θ} {X'' : OVType Θ}
                → NonResourceDefs (defs Γ)
@@ -160,9 +142,6 @@ resource-value nr (subV V p) with <:̂ᵛ-boxʳ p
 ------------------------------------------------------------------------
 -- Collapsing and grafting
 
--- A resource value's annotations compose to one bound on the variable's
--- declared type
-
 res-collapse : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ}
                  {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
              → Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X
@@ -170,9 +149,6 @@ res-collapse : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ' ρ₀ ρ : RExp Θ
 res-collapse res-var = ⊩≾̂ᵣ-refl , <:̂ᵛ-refl _
 res-collapse (res-ann _ _ R p q) with res-collapse R
 ... | p' , q' = transᵣ p p' , <:̂ᵛ-trans q' q
-
--- The annotations of a resource value over `z`, of declared type
--- `[ ρ₀ ] X₀`, put over a resource value reaching that type
 
 res-rebase : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m}
                {ρ' ρ₀ ρ σ' σ₀ : RExp Θ} {X₀ X Y₀ : OVType Θ}

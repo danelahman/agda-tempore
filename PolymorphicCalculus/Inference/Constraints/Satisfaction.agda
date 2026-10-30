@@ -1,23 +1,16 @@
 ------------------------------------------------------------------
 -- Satisfaction of constraints                                  --
 --                                                              --
--- `σ ⊨[ Q ] C` states that the substitution `σ`, together with --
--- the residual hypothesis set `Q`, solves the constraint `C`.  --
--- It is proof-relevant: the ∃-clauses carry their witnesses,   --
--- from which elaboration reads a derivation. `σ` need not be   --
--- ground, so a pair `(σ , Q)` is a solution with residual      --
--- constraints.                                                 --
+-- `σ ⊨[ Q ] C`: the substitution `σ` solves `C` under the      --
+-- residual hypotheses `Q`, proof-relevantly, the ∃-clauses     --
+-- carrying the witnesses elaboration reads. `σ` need not be    --
+-- ground. `σ ⊨[ Q ∣ R ] C`: along every `δ`, under hypotheses  --
+-- entailing `Q` and the quantified orderings `R`, `σ ⨟ δ`      --
+-- solves `C`.                                                  --
 --                                                              --
--- `σ ⊨[ Q ∣ R ] C` states that `σ` solves `C` relative to `Q`  --
--- and further quantified orderings `R`: along every            --
--- substitution `δ`, under any hypotheses entailing `Q` and `R` --
--- along `δ`, `σ ⨟ δ` solves `C`.                               --
---                                                              --
--- Constraint satisfaction follows Pottier and Rémy, The        --
--- Essence of ML Type Inference (ATTAPL, 2005), here            --
--- proof-relevant; "residual constraint" is the term of         --
--- OutsideIn(X) (Vytiniotis et al., JFP 2011); cf. Pretnar,     --
--- Inferring Algebraic Effects (LMCS 2014).                     --
+-- Follows Pottier and Rémy, proof-relevantly; "residual        --
+-- constraint" is the term of OutsideIn(X); cf. Pretnar's       --
+-- inference of algebraic effects.                              --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
@@ -77,9 +70,8 @@ _⊨[_∣_]_ {Θ' = Θ'} σ Q R C =
 
 private
 
-  -- An existential over types is solved by any witness; the `∃`-clause's
-  -- `Σ` and the extension `_,ᵗ_` compute as expected, and a type
-  -- equation is read as subtyping both ways.
+  -- An existential over types is solved by any witness, and a type equation
+  -- is read as subtyping both ways
 
   ex-∃ᵗ : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
         → σ ⊨[ Q ] (∃ᵗ (tvar (newᵗ {Θ}) ≐ᵥ tvar (newᵗ {Θ})))

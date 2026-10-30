@@ -2,14 +2,12 @@
 -- Renaming of term variables in open derivations               --
 --                                                              --
 -- A renaming `Ren Q Γ Γ'` sends each variable of `Γ` to one of --
--- `Γ'` of the same type, at an accumulated grade that `Q`      --
--- entails to be below the one in `Γ`, and keeps the program    --
--- context. It acts on derivations                              --
--- (`rename-v`, `rename-c`), and on run-time erasures as the    --
--- renaming of positions. A value of eternal type moves along   --
--- any map of positions preserving the types (`eternal-v`). An  --
--- extension `Ext Q Γ Γ' δ` makes each variable older by at     --
--- most `δ`, and gives renamings behind locks (`ext-lock`).     --
+-- `Γ'` of the same type at a grade entailed below, keeping the --
+-- program context. It acts on derivations (`rename-v`,         --
+-- `rename-c`) and on erasures as a renaming of positions. A    --
+-- value of eternal type moves along any type-preserving map of --
+-- positions (`eternal-v`). An extension `Ext Q Γ Γ' δ` makes   --
+-- each variable older by at most `δ`.                          --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)
@@ -48,16 +46,13 @@ open import PolymorphicCalculus.Syntax.Run                 S
 ∥_∥ᶜ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ} → Q ∣ Γ ⊢C⦂ C → RunC n
 ∥ M ∥ᶜ = eraseᶜ ⌊ M ⌋ᶜ
 
--- A resource value erases to its variable
-
 ∥res∥ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ}
         {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
       → (R : Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X) → eraseᵛ ⌊ R ⌋ʳ ≡ var (var-pos z)
 ∥res∥ res-var                = refl
 ∥res∥ (res-ann _ _ R _ _)    = ∥res∥ R
 
--- The annotations of a resource value, over another variable of the
--- same declared type
+-- A resource value's annotations over another variable of its type
 
 res-move : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m}
              {ρ' ρ'' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ}
@@ -131,8 +126,6 @@ gr  (wkᵉʳ {Q = Q} {Γ} {Γ'} r) i =
          (sym (lookup-gr-wkᵉ Γ' (pos r i))) (sym (lookup-gr-wkᵉ Γ i))
          (⊩-wkᵉᵣ (gr r i))
 dfs (wkᵉʳ {Γ = Γ} {Γ'} r) = trans (defs-wkᵉ Γ') (trans (dfs r) (sym (defs-wkᵉ Γ)))
-
--- the renaming of a handler clause's context
 
 clauseʳ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {A B : OVType (Θ +e)}
         → Ren Q Γ Γ'
@@ -403,7 +396,7 @@ record Ext {Θ : Scope} {n m : ℕ} (Q : Hyps Θ) (Γ : OCtx Θ n) (Γ' : OCtx �
 
 open Ext public
 
--- behind a lock of grade `ρ'` where `δ · ρ'` stays below the lock `ρ`
+-- The renamings an extension gives behind and in place of locks
 
 ext-lock : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {δ ρ ρ' : RExp Θ}
          → Ext Q Γ Γ' δ → Q ⊩ δ ·̂ᵣ ρ' ≾̂ᵣ ρ → Ren Q (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ' ⟩)
@@ -413,8 +406,6 @@ gr  (ext-lock e le) i =
   transᵣ (monoᵣ (egr e i) ⊩≾̂ᵣ-refl) (transᵣ (eqᵣ ≡̂ᵣ-assoc) (monoᵣ ⊩≾̂ᵣ-refl le))
 dfs (ext-lock e le) = edfs e
 
--- in place of a lock of grade `ρ` above `δ`
-
 ext-unlock : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {δ ρ : RExp Θ}
            → Ext Q Γ Γ' δ → Q ⊩ δ ≾̂ᵣ ρ → Ren Q (Γ ⟨ ρ ⟩) Γ'
 pos (ext-unlock e le) = epos e
@@ -422,21 +413,15 @@ ty  (ext-unlock e le) = ety e
 gr  (ext-unlock e le) i = transᵣ (egr e i) (monoᵣ ⊩≾̂ᵣ-refl le)
 dfs (ext-unlock e le)   = edfs e
 
--- behind a lock at the top
-
 ext-top : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {δ : RExp Θ}
         → Ext Q Γ Γ' δ → Ren Q (Γ ⟨ rconst ⊤ᵣ ⟩) (Γ' ⟨ rconst ⊤ᵣ ⟩)
 ext-top e = ext-lock e topᵣ
-
--- the clauses of a handler, behind their lock at the top
 
 ext-clause : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {δ : RExp Θ}
                {A B : OVType (Θ +e)}
            → Ext Q Γ Γ' δ
            → Ren (wkᵉ-H Q) (wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩ ∷ A ∷ B) (wkᵉ-ctx Γ' ⟨ rconst ⊤ᵣ ⟩ ∷ A ∷ B)
 ext-clause e = (wkᵉʳ (ext-top e) ⇑ʳ) ⇑ʳ
-
--- composition with a renaming before it, and a weakening after it
 
 ext-∘ʳ : ∀ {Θ n m k} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {Γ'' : OCtx Θ k} {δ : RExp Θ}
        → Ext Q Γ' Γ'' δ → Ren Q Γ Γ' → Ext Q Γ Γ'' δ
@@ -450,8 +435,6 @@ epos id-ext i = i
 ety  id-ext i = refl
 egr  id-ext i = eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)
 edfs id-ext   = refl
-
--- a lock, followed by variables
 
 lock-ext : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ : RExp Θ} → Ext Q Γ (Γ ⟨ ρ ⟩) ρ
 epos lock-ext i = i

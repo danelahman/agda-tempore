@@ -1,11 +1,9 @@
 --------------------------------------------------------------------
 -- Boxes at timed traces, coverage order                          --
 --                                                                --
--- A box is a demand, claimable once the run that elapsed covers  --
--- it; `n` ticks are covered by idling or by operations at        --
--- `costˡᵒ` (read 1, write 2, send 4). Every run covers the unit, --
--- so nothing goes stale. As at the left-sided intervals, an      --
--- early claim is refused and there is no late one.               --
+-- A box is a demand, claimable once the elapsed run covers it;   --
+-- operations count at `costˡᵒ` (read 1, write 2, send 4).        --
+-- Nothing goes stale. Early claims are refused.                  --
 --------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -35,8 +33,8 @@ open import PolymorphicCalculus.Inference.SolverImpl spec hints enum using (infe
 open import PolymorphicCalculus.Examples.Boxes spec hints enum ℕᴰ-stepped
 
 ------------------------------------------------------------------
--- 1. Surviving time: nothing goes stale, so a function argument
--- may be called after a tick, boxed or not
+-- 1. Nothing goes stale: a function argument may be called after a
+-- tick, boxed or not
 
 stale-call-reported : schemeOf (infer [] stale-call) ≡ just expected-stale-call
 stale-call-reported = refl
@@ -60,8 +58,7 @@ boxing-an-argument-reported :
 boxing-an-argument-reported = refl
 
 ------------------------------------------------------------------
--- 2. A promise of three: claimable after three and after four
--- ticks, not after two
+-- 2. A demand of three: claimable after three or four ticks, not two
 
 -- the early claim fails its premise `⟨ 2 ⟩ ≾ ⟨ 3 ⟩`
 
@@ -91,8 +88,7 @@ kept-and-claimed-reported :
 kept-and-claimed-reported = refl
 
 ------------------------------------------------------------------
--- 4. A box escaping through `return`: claimed on time; claimed
--- early, it is refuted by the ordering its two bounds entail
+-- 4. A box escaping through `return`: typed on time, refuted early
 
 escaping-reported : schemeOf (infer [] (escaping-after 2)) ≡ just (expected-escaping 2)
 escaping-reported = refl
@@ -110,8 +106,8 @@ branches-reported : schemeOf (infer [] branches) ≡ just expected-branches
 branches-reported = refl
 
 ------------------------------------------------------------------
--- 6. A demand for two ticks is covered by a store, at 2, or a
--- transmission, at 4, not by a reading, at 1
+-- 6. A demand of two is covered by a store (2) or a transmission (4),
+-- not a reading (1)
 
 read-too-early-verdict : infer [] (op-licensed read) ≡ untypable
 read-too-early-verdict = refl
@@ -144,8 +140,8 @@ nesting-derivable : Typable [] nesting
 nesting-derivable = nesting-typable _
 
 ------------------------------------------------------------------
--- 8. Inside a clause `⊤ᵣ` has elapsed, the unit: a box demanding
--- nothing may be claimed there, one demanding a tick may not
+-- 8. Inside a clause the unit `⊤ᵣ` has elapsed: a box demanding
+-- nothing may be claimed, one demanding a tick may not
 
 claimed-at-u-reported :
   schemeOf (infer [] (claimed-in-clause (rconst uᵣ))) ≡ just expected-claimed-in-clause
@@ -169,9 +165,8 @@ handed-to-clause-reported = refl
 
 
 ------------------------------------------------------------------
--- 9. An annotated box: claimed at the annotation's grade; a promise
--- of three re-annotated as a promise of four is claimable after four
--- ticks, not after three
+-- 9. An annotated box; a demand of three re-annotated as one of four
+-- is claimable after four ticks, not three
 
 annotated-claim-reported :
   schemeOf (infer [] annotated-claim) ≡ just expected-annotated-claim

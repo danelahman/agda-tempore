@@ -1,17 +1,12 @@
 ------------------------------------------------------------------
 -- The reduction of configurations                              --
 --                                                              --
--- `⟨ S ∣ M ⟩ ↝[ e ] ⟨ S' ∣ M' ⟩`: the small-step semantics of  --
--- run-time terms, typed or not, with `e : S ≤ₛ S'` the         --
--- extension of the state. A delay adds a passage, a `box` a    --
--- resource, an `unbox` reads one; a congruence weakens the     --
--- context's other parts into the extended state. A handled     --
--- operation call runs the clause with the rest of the handled  --
--- computation as a resource at the operation's grade; the      --
--- clause's grade variable is not instantiated.                 --
---                                                              --
--- A comparison is decided by the structural order on the data  --
--- the values denote (`compareᴰ`).                              --
+-- `⟨ S ∣ M ⟩ ↝[ e ] ⟨ S' ∣ M' ⟩`: small-step reduction of      --
+-- run-time terms, `e : S ≤ₛ S'` extending the state. A delay   --
+-- adds a passage, a `box` a resource, an `unbox` reads one. A  --
+-- handled operation call runs the clause, its grade variable   --
+-- uninstantiated, with the rest of the handled computation as  --
+-- a resource at the operation's grade.                         --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using () renaming (Bool to 𝔹; true to tt𝔹; false to ff𝔹)
@@ -42,9 +37,7 @@ open import PolymorphicCalculus.Syntax.Run                 S
 open import PolymorphicCalculus.OperationalSemantics.State S
 
 ------------------------------------------------------------------------
--- Comparison of values
-
--- The data a value denotes; `other` for a value that is not data
+-- Comparison of values, by the structural order of the data they denote
 
 data Datum : Set where
   base       : (b : BaseType) → BaseConstants b → Datum
@@ -95,8 +88,6 @@ datum (inr V)      = right (datum V)
 datum nil          = nilᵈ
 datum (cons V W)   = consᵈ (datum V) (datum W)
 datum _            = other
-
--- The boolean a comparison decides, as a value
 
 decide : ∀ {n} → Cmp → RunV n → RunV n → RunV n
 decide ⋈ V W with holds ⋈ (compareᴰ (datum V) (datum W))

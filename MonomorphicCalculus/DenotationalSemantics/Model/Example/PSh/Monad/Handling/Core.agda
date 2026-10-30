@@ -159,12 +159,13 @@ necᵉ-pt-· {P} bc m pv q₁ q₂ =
 -- exponential's `fun-cong`/`fun-nat` come from `k-cong`/`k-nat` (advanced
 -- across the fold's own congruence/naturality), and the box's `fun-nat`
 -- from the proof-irrelevance of accessibility.
---
--- `TERMINATING`: the fold recurses through the function-valued
--- continuations, structurally smaller trees masked by the mutual
--- `-cong`/`-nat` (as for `μˢ`, `strˢ`).
 
 mutual
+
+  -- `TERMINATING`: every call is at subtrees or witnesses stored in the matched
+  -- tree or proof (possibly joined by `≈ᵗ-trans`, or as `≡→≈ᵗ` of a subtree), or
+  -- is a lemma's call at its own tree; the checker cannot see that
+  -- `transportᵗ r (k q)` (from a stored `kn`) is no larger than `k q`.
 
   {-# TERMINATING #-}
 

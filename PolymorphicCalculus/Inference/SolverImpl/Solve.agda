@@ -1,61 +1,28 @@
 ------------------------------------------------------------------
 -- The solver driver                                            --
 --                                                              --
--- The driver traverses a constraint, threading a state. A      --
--- subtyping atom is expanded and decomposed at matching        --
--- formers and residualised at a pair of type variables; grade  --
--- orderings are residualised; binders extend the state. A type --
--- equation is the pair of its subtyping atoms                  --
--- (`Constraints.Syntax`) and has no case of its own. An        --
--- eternality demand is decided by `etDec` when it is pushed:   --
--- it is refuted, or residualised as its atoms on type          --
--- variables (`solveEt`). A var-rule disjunction is dropped     --
--- where its grade is below the unit at the strength `full`     --
--- from no hypotheses; otherwise its type is decided: if never  --
--- eternal, the grade side is residualised as an ordering; if   --
--- eternal with no atom, the disjunction is dropped; otherwise  --
--- it is residualised (`solveDisj`). An expansion of the type   --
--- unknowns is followed by a second decomposition of the      --
--- residual's subtyping and eternality demands, which puts them --
--- on type variables and residualises their grade orderings     --
--- with the others.                                             --
+-- The driver traverses a constraint, threading a state.        --
+-- Subtyping atoms are expanded and decomposed at matching      --
+-- formers; eternality demands are decided by `etDec` when      --
+-- pushed (`solveEt`); var-rule disjunctions are dropped,       --
+-- reduced to their grade side, or residualised (`solveDisj`);  --
+-- other atoms are residualised. A type equation is its two     --
+-- subtyping atoms. A success's witness is read at the state a  --
+-- later component leaves.                                      --
 --                                                              --
--- The witness of a success is deferred: it is read at the      --
--- state that a later component leaves, not transported along   --
--- it.                                                          --
+-- A rigid binder opens a fresh residual. At its close the      --
+-- residual is re-expanded (`reexpand`), its local unknowns     --
+-- given values (`Localise`), and its atoms split (`splitᴿ`):   --
+-- kept free of the rigid, discharged, kept at the unit or top  --
+-- rigid, or deferred as a new entry; then the deferred entries --
+-- are retried. An atom that is neither kept nor deferred and   --
+-- mentions a local unknown leaves the close `stuck`.           --
 --                                                              --
--- At a rigid binder the state is extended with a fresh         --
--- residual. Before the scope closes, its subtyping demands are --
--- expanded and its demands decomposed again (`reexpand`), the  --
--- atoms decided true are dropped, and the unknowns local to    --
--- the scope are assigned values that keep every instance       --
--- entering it (`Localise`). Then an atom free of the rigid is  --
--- kept; one that mentions the rigid is discharged where it     --
--- follows, at the strength `full`, from the orderings free of  --
--- the rigid; otherwise one whose right side alone mentions the --
--- rigid is kept at the unit rigid where the unit is least, one --
--- whose left side alone mentions it is kept at the top rigid,  --
--- and any other, when it mentions only the rigid and outer     --
--- unknowns, is deferred as a new entry. The                    --
--- scope's own entries are carried outward under the rigid, and --
--- the image of an outer unknown must remain free of it. After  --
--- each close the entries are retried.                          --
---                                                              --
--- The outcome is a solution, a refutation, or `stuck`: a close --
--- at which an atom that is neither kept nor deferred, or an    --
--- inner entry, mentions an unknown local to the scope.         --
---                                                              --
--- Contract. A solution carries its witness `Wit s' C`: every   --
--- instance discharging the new residual solves `C` (soundness, --
--- by construction, each move being a `_⟶_`). Every instance    --
--- that solves `C` from no hypotheses and discharges the old    --
--- residual factors through the new state and discharges its    --
--- residual, the rigids remaining variables (`solve-principal`, --
--- `PrincipalSolution`). A refutation leaves no instance that   --
--- solves `C`, discharges the residual and keeps the rigids     --
--- distinct variables (`solve-fail`). `stuck` carries no claim; --
--- it does not occur without a rigid binder (`solve-rigidFree`, --
--- `RigidFree`).                                                --
+-- Contract. A solution carries its witness `Wit s' C`, each    --
+-- move being a `_⟶_`, and is principal (`solve-principal`); a  --
+-- refutation leaves no instance keeping the rigids distinct    --
+-- variables (`solve-fail`); `stuck` needs a rigid binder       --
+-- (`solve-rigidFree`).                                         --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
@@ -140,9 +107,8 @@ wit-mono {s = s} m C w δ Q h =
   ⊨-resp-≐ˢ (⨟-congˡ (mtri m) δ) C
     (⊨-resp-≐ˢ (≐ˢ-sym (⨟-assoc (θ s) (mδ m) δ)) C (w (mδ m ⨟ˢ δ) Q (mres m δ Q h)))
 
--- An atom either strengthens away from the rigid and is kept, or must
--- be discharged where the rigid is still in scope; a decision against
--- hypotheses transports to any instance of them.
+-- An atom strengthens away from the rigid and is kept, or is discharged with
+-- the rigid in scope; a decision against hypotheses holds at their instances
 
 pop⨟ʳ : ∀ {Φ Φ'} → (j : EVar (Φ +e)) → (ρ : RExp (Φ +e)) → {ρ₀ : RExp Φ}
       → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → (δ : Subst Φ Φ')
@@ -200,21 +166,14 @@ Atomᵈ {Φ} j A ρ =
        → (∀ {B τ} → (B , τ) ∈ l₀ → VarOK Q (B [ δ ]ᵛ) (τ [ δ ]ʳ))
        → VarOK (wkᵉ-H Q) (A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ) (ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ))
 
--- An ordering with the rigid on one side only holds for every rigid
--- exactly when it holds at the extreme grade on that side, the side
--- being monotone in the rigid:
+-- An ordering with the rigid on one side only holds for every rigid exactly
+-- when it holds at the extreme grade on that side:
 --
 --   ∀j. lhs ≾ rhs(j)  ⟺  lhs ≾ rhs(u)   (`stripᵉ-unit`, the unit least)
 --   ∀j. lhs(j) ≾ rhs  ⟺  lhs(⊤) ≾ rhs   (`stripᵉ-top`)
 --
--- The rigid is sent to that grade, and what is left is kept. The top is
--- a grade of every monoid, the unit is least only in some, so only the
--- first reads the grade's `uₑ-least?`. An unknown local to the scope stands for a
--- function of the rigid, and is kept at the unit rigid; so the side
--- that `stripᵉ-top` keeps free of the rigid must mention no local
--- unknown either, only those the scope was entered with (`Outerₑ`).
--- Right to left is each rule's type (`Stripʳ`/`Stripᵉ`); left to right
--- is `stripʳ-unit-princ` and its siblings (`PrincipalSolution`).
+-- A local unknown stands for a function of the rigid, so the side `stripᵉ-top`
+-- keeps mentions outer unknowns only (`Outerₑ`).
 
 stripʳ-unit : ∀ {Φ} → Maybe (Is-just uₑ-least?)
             → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
@@ -272,11 +231,9 @@ stripᵉ-top O j ε ε' ε₀' e₁ with outerₑ? O ε' | strᵉ⁺ j (ε [ upd
                                      (⊩-wkᵉₑ (k (here refl)))))
 ... | _      | _                = nothing
 
--- An ordering that mentions the rigid is discharged where it follows,
--- at the strength `full`, from the hypotheses `H`, the orderings of the
--- scope free of the rigid; otherwise it is kept as `stripʳ-unit` or
--- `stripʳ-top` keeps it. The discharge holds for every rigid, the
--- hypotheses not mentioning it.
+-- An ordering mentioning the rigid is discharged where it follows at `full`
+-- from the scope's orderings free of the rigid, else kept as `stripʳ-unit` or
+-- `stripʳ-top` keeps it
 
 Atomʳ : ∀ {Φ} → EVar (Φ +e) → Hyps (Φ +e) → RExp (Φ +e) → RExp (Φ +e) → Set
 Atomʳ {Φ} j H ρ ρ' =
@@ -385,9 +342,8 @@ freesᵉ-∈ j ((x , y) ∷ l) m           | no _   =
 freeᴴ : ∀ {Φ} → EVar (Φ +e) → Resid (Φ +e) → Hyps (Φ +e)
 freeᴴ j R = hyps [] [] (freesʳ j (rs R)) (freesᵉ j (es R)) [] []
 
--- An eternality demand is kept when its type strengthens away from the
--- rigid. A type that does not mentions a grade, so is eternal at no
--- instance (`atomᵗ-fail`).
+-- An eternality demand is kept when its type strengthens away from the rigid;
+-- otherwise the type mentions a grade and is eternal at no instance (`atomᵗ-fail`)
 
 atomᵗ : ∀ {Φ} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → Maybe (Atomᵗ j A)
 atomᵗ j A with strᵛ⁺ j A
@@ -397,8 +353,7 @@ atomᵗ j A with strᵛ⁺ j A
                             (⊩ᴱ-wkᵉ (k (here refl))))
 ... | nothing = nothing
 
--- A subtyping demand is kept only when both sides strengthen away
--- from the rigid.
+-- A subtyping demand is kept only when both sides strengthen away from the rigid
 
 atomˢ : ∀ {Φ} → (j : EVar (Φ +e)) → (A B : OVType (Φ +e)) → Maybe (Atomˢ j A B)
 atomˢ j A B with strᵛ⁺ j A | strᵛ⁺ j B
@@ -410,14 +365,10 @@ atomˢ j A B with strᵛ⁺ j A | strᵛ⁺ j B
 ... | just _         | nothing = nothing
 ... | nothing        | _       = nothing
 
--- A disjunction is kept when its type and its grade both strengthen
--- away from the rigid. With the rigid in the grade only, it is kept
--- with the rigid at the top: the type does not depend on the rigid and
--- the disjunction is antitone in its grade, so
+-- A disjunction is kept when its type and grade strengthen away from the rigid,
+-- or, with the rigid in the grade only, at the top rigid (antitone in its grade):
 --
 --   ∀j. Et A ∨ ρ(j) ≾ u  ⟺  Et A ∨ ρ(⊤) ≾ u.
---
--- A type mentioning the rigid is declined.
 
 atomᵈ : ∀ {Φ} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → (ρ : RExp (Φ +e))
       → Maybe (Atomᵈ j A ρ)
@@ -434,13 +385,9 @@ atomᵈ j A ρ with strᵛ⁺ j A | strʳ⁺ j (ρ [ updᵉ j (econst ⊤ₑ) ]�
 ... | just _         | nothing = nothing
 ... | nothing        | _       = nothing
 
--- An ordering free of the rigid is kept; one that mentions it is
--- decided by `atomʳ`. An ordering neither kept nor discharged is
--- deferred when it mentions only the rigid and the unknowns the scope
--- was entered with (`O⁺`, the rigid among them), none local to the
--- scope. It is read with the rigid newest, and holds at a substitution
--- lifted over the rigid. The orderings free of the rigid hold from
--- those kept alone.
+-- An ordering free of the rigid is kept, one mentioning it decided by `atomʳ`;
+-- one neither kept nor discharged is deferred when it mentions only the rigid
+-- and the outer unknowns (`O⁺`), read with the rigid newest.
 
 Listʳ : ∀ {Φ} → EVar (Φ +e) → Hyps (Φ +e) → List (RExp (Φ +e) × RExp (Φ +e)) → Set
 Listʳ {Φ} j H l =
@@ -626,16 +573,11 @@ liftᵈ-sound : ∀ {Φ Φ'} {Q : Hyps Φ'} {δ : Subst Φ Φ'} → (j : EVar (�
             → Q ⊩ᴼ liftᵈ j E [ δ ] → wkᵉ-H Q ⊩ᴼ E [ popˢ j ⨟ˢ (δ ↑ᵉ) ]
 liftᵈ-sound j E h = ⊩ᴼ-subst E (closeᵈ-sound (E [ popˢ j ]ᵠ) h)
 
--- The atoms are split three ways: those strengthened away from the
--- rigid, kept outside; those deferred, one new entry; and the inner
--- entries, each closed over the rigid: bound as a new outermost
--- binder where it occurs. An eternality demand, a subtyping demand or
--- a disjunction that cannot be kept refutes the scope; an ordering
--- that can be neither kept nor deferred, or an inner entry, that
--- mentions an unknown local to the scope leaves it stuck. What is kept
--- and deferred entails the scope's residual at a fresh rigid (its
--- type), is met by every instance entering the scope (`splitᴿ-princ`),
--- and a refusal is met by none (`splitᴿ-fail`).
+-- The atoms are split three ways: kept outside, free of the rigid; deferred as
+-- one new entry; and the inner entries, closed over the rigid. An unkeepable
+-- eternality, subtyping or disjunction atom refutes the scope; a local unknown
+-- left in an ordering or inner entry leaves it stuck (`splitᴿ-princ`,
+-- `splitᴿ-fail`).
 
 splitᴿ : ∀ {Θ Φ} → Subst Θ (Φ +e) → Subst (Θ +e) (Φ +e) → (j : EVar (Φ +e))
        → (R : Resid (Φ +e))
@@ -704,12 +646,9 @@ pop-key γ {j} eqj {δ₀} pδ =
        (λ { zero    → trans (cong (_[ popˢ j ]ᵉ) eqj) (popˢ-hit j)
           ; (suc i) → trans (≐ᵉ pδ i) (wkˢᵉ-e (sE δ₀ i)) })
 
--- Closing the scope: the first two refusals cannot happen, the third
--- is an escape, and the rest are `splitᴿ`'s. Every instance entering
--- the scope factors through the closed state (`popᵉ-princ`); an escape
--- refutes every instance keeping the rigid an eigenvariable
--- (`popᵉ-escape`, `strSub-escape`), and so does every refusal
--- (`popᵉ-fail`).
+-- Closing the scope: every instance entering it factors through the closed
+-- state (`popᵉ-princ`); an escape (`popᵉ-escape`) or a refusal (`popᵉ-fail`)
+-- refutes every instance keeping the rigid an eigenvariable.
 
 popᵉ : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e))
      → (Φ : Scope) → (θ'' : Subst (Θ +e) Φ) → (R'' : Resid Φ) → (rg'' : Rig Φ)
@@ -743,17 +682,11 @@ popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
 ------------------------------------------------------------------------
 -- Retrying the deferred conditions
 --
--- An ordering of an entry is dropped when it is decided at the
--- strength `full`, the rigids opaque, from the residual's
--- orderings: a derivation at fresh rigids under the hypotheses
--- weakened to them. It refutes when a closed witness per rigid makes it
--- an ordering that fails at the strength `closed`, each rigid ranging
--- over the unit, the top and the grade system's candidates for the
--- ordering's degree and constants (`candidatesᵣ`, `candidatesₑ`). An
--- entry left with no ordering is dropped.
--- A retry keeps every instance (`retry-princ`), and a refusal refutes
--- every one (`retry-fail`). An entry kept claims nothing: with a rigid
--- on both sides, the witnesses decide nothing in general.
+-- An ordering of an entry is dropped when decided at `full`, the rigids opaque,
+-- from the residual's orderings; it refutes when, the rigids ranging over the
+-- unit, the top and the grade's candidates (`candidatesᵣ`, `candidatesₑ`), it
+-- fails at `closed`. A retry keeps every instance (`retry-princ`), a refusal
+-- refutes all (`retry-fail`); a kept entry claims nothing.
 
 -- The residual's orderings as hypotheses
 
@@ -970,10 +903,8 @@ labelled {C = C} op (solved (s₁ , m₁ , w₁)) =
                           (mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (⊩ss h) (⊩ds h)
                                 (λ {E} m → relabel-⊩ op E (⊩dfs h (∈-map⁺ (relabel op) m)))))
 
--- Before a rigid scope closes, the atoms decided true are dropped, and
--- the unknowns local to it, those free in no image of the unknowns the
--- scope was entered with, are sent to values that keep every instance
--- entering the scope (`localise-princ`, `PrincipalSolution`).
+-- Before a rigid scope closes, the atoms decided true are dropped and its local
+-- unknowns sent to values keeping every instance entering it (`localise-princ`)
 
 localiseˢ : ∀ {Θ} → (s : St Θ) → {s'' : St (Θ +e)} → ⇑ᵉˢ s ⟶ s''
           → Σ[ s₃ ∈ St (Θ +e) ] (s'' ⟶ s₃)
@@ -994,12 +925,9 @@ chain₂ᵛ : ∀ {Θ Ψ Ψ₁ Ψ₂} → (X : OVType Θ) → (σ : Subst Θ Ψ)
         → (δ' : Subst Ψ₁ Ψ₂) → X [ σ ]ᵛ [ δ ]ᵛ [ δ' ]ᵛ ≡ X [ (σ ⨟ˢ δ) ⨟ˢ δ' ]ᵛ
 chain₂ᵛ X σ δ δ' = trans (cong (_[ δ' ]ᵛ) ([⨟]ᵛ X σ δ)) ([⨟]ᵛ X (σ ⨟ˢ δ) δ')
 
--- Reading a residual back as a hypothesis set asks every subtyping
--- demand to decompose; one expansion of what is left, and the
--- decomposition that follows it, make it so (`reexpand-dec`,
--- `reexpand-atomic`). Every instance factors through it
--- (`reexpand-princ`), and a failure refutes every instance
--- (`reexpand-fail`).
+-- One expansion and decomposition make every subtyping demand of a residual
+-- decompose (`reexpand-dec`, `reexpand-atomic`); every instance factors through
+-- it (`reexpand-princ`), and a failure refutes all (`reexpand-fail`).
 
 reexpand : ∀ {Θ} → (s : St Θ) → Maybe (Σ[ s' ∈ St Θ ] (s ⟶ s'))
 reexpand s with expandSub (ss (res s))
@@ -1011,9 +939,8 @@ reexpand s with expandSub (ss (res s))
         just (st Ψ' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e t) (transRig δ (rig s)) ,
               mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (atomiseᴿ-sound _ e t h)))
 
--- An eternality demand is decided by `etDec` when it is pushed: it is
--- refuted, or its atoms on type variables are pushed. The verdict is
--- passed with the equation naming it.
+-- An eternality demand is decided by `etDec` when pushed: refuted, or its atoms
+-- on type variables pushed
 
 solveEt : ∀ {Θ} → (s : St Θ) → (A : OVType Θ)
         → (x : Maybe (List (TyVar (Ψ s)))) → etDec (A [ θ s ]ᵛ) ≡ x
@@ -1026,9 +953,8 @@ solveEt s A (just αs) e =
                         (etDec-intro (A [ θ s ]ᵛ) e δ
                                      (λ m → ⊩ts h (∈-++⁺ˡ (∈-map⁺ tvar m)))))
 
--- A var-rule disjunction whose grade is not decided below the unit has
--- its type decided likewise: never eternal, its grade side is pushed;
--- eternal with no atom, it is dropped; otherwise it is pushed.
+-- A var-rule disjunction not below the unit: if its type is never eternal its
+-- grade side is pushed, if eternal with no atom it is dropped, else it is pushed
 
 solveDisj : ∀ {Θ} → (s : St Θ) → (A : OVType Θ) → (ρ : RExp Θ)
           → (x : Maybe (List (TyVar (Ψ s)))) → etDec (A [ θ s ]ᵛ) ≡ x

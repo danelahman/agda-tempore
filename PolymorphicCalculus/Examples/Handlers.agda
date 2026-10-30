@@ -1,25 +1,11 @@
 --------------------------------------------------------------------
 -- Inference on handlers                                          --
 --                                                                --
--- A handler whose clause leaves unknowns local to the clause's   --
--- rigid scope, which `Localise` gives values, and handlers whose --
--- typability depends on the grade. None has an annotation.       --
---                                                                --
--- `relay` resumes through the identity applied to its own        --
--- result: a cycle of two clause-local unknowns. `relay-boxed`    --
--- passes the boxed continuation through the identity twice:      --
--- cycles of box grades and of latent effects. Both are typable   --
--- over an arbitrary language, so inference never refutes them.   --
---                                                                --
--- `discard` drops its continuation, and is typable where the     --
--- unit is least; `resume-twice` calls it twice, and is typable   --
--- where the unit is the top.                                     --
---                                                                --
--- `bound`, `run` and `run-forward` use a handler as a value.     --
---                                                                --
--- The instances under `Handlers/` check by `refl`, at the four   --
--- example grades, that inference types each program where it is  --
--- typable and refutes it elsewhere.                              --
+-- Handlers without annotations. `relay` and `relay-boxed` leave  --
+-- cycles of clause-local unknowns for `Localise`; `discard` and  --
+-- `resume-twice` are typable only at some grades; `bound`, `run` --
+-- and `run-forward` use a handler as a value. The instances      --
+-- under `Handlers/` check each answer by `refl` at four grades.  --
 --------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
@@ -86,22 +72,14 @@ U⇒U : ∀ {Θ} → OVType Θ
 U⇒U = Unit ⇒ Unit ‼ ûₑ
 
 ------------------------------------------------------------------
--- A handler resuming through a helper
---
--- A handler, as a function of the thunk it handles, whose clause
--- forwards the operation and resumes through a helper `h` applied
--- to its own result:
+-- A handler resuming through a helper `h`
 --
 --   relay m = handle m () with handler {
 --     op p k ↦ let a = op p in
 --              let h = λ x. x in h (h (λ _. k a)) ()}
 --
--- `h` is monomorphic, so the latent effects of its argument and of
--- its result bound each other: a cycle of two clause-local unknowns,
--- entered from below by the resumption's grade `j`, the clause's
--- rigid, and bounded above by the clause's grade `op · j`. The two
--- are identified, and then sent to `j`: `h` is typed at
--- `Unit ⇒ Unit ‼ j`.
+-- `h`'s argument and result effects form a cycle of clause-local
+-- unknowns, collapsed and sent to the rigid `j`.
 
 resume-through : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc n))
 resume-through op =
@@ -111,7 +89,7 @@ resume-through op =
 relay : RawC ∅ˢ 0
 relay = return (lam (handle (v₀ · ⋆) `with handler (return ⋆) resume-through))
 
--- It is typable, `h` at `Unit ⇒ Unit ‼ j`
+-- Typable, `h` at `Unit ⇒ Unit ‼ j`, so never refuted
 
 private
 
@@ -140,8 +118,6 @@ private
 relay-typable : Typable [] relay
 relay-typable = closed relay-D refl
 
--- so inference never refutes it
-
 relay-unrefuted : infer [] relay ≢ untypable
 relay-unrefuted = infer-complete [] relay relay-typable
 
@@ -149,19 +125,14 @@ expected-relay : Scheme
 expected-relay = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ûₑ
 
 ------------------------------------------------------------------
--- A handler resuming through a helper on boxes
---
--- The same helper applied twice to the boxed continuation itself:
+-- The helper applied twice to the boxed continuation
 --
 --   relay-boxed m = handle m () with handler {
 --     op p k ↦ let h = λ x. x in let k₁ = h k in let k₂ = h k₁ in
 --              let a = op p in unbox k₂ as k' in k' a}
 --
--- `h`'s argument and result are boxes, so two cycles of
--- clause-local unknowns form, one per sort: the box grades of `h`'s
--- argument and result, and the latent effects of the functions
--- inside them, each entered from below by the continuation's type.
--- Both are identified, and `h` is typed at the continuation's type.
+-- Two cycles form, of box grades and of latent effects; both collapse
+-- to the continuation's type.
 
 through-box : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc n))
 through-box op =
@@ -171,7 +142,7 @@ through-box op =
 relay-boxed : RawC ∅ˢ 0
 relay-boxed = return (lam (handle (v₀ · ⋆) `with handler (return ⋆) through-box))
 
--- It is typable, `h` at the continuation's type
+-- Typable, `h` at the continuation's type
 
 private
 
@@ -213,21 +184,13 @@ expected-relay-boxed = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ 
 ------------------------------------------------------------------
 -- A handler that drops its continuation
 --
--- A handler, as a function of the thunk it handles, whose clause
--- returns at once:
---
 --   discard m = handle m () with handler {op p k ↦ return ()}
 --
--- The clause's grade `ûₑ` must be below `op · j` for the rigid `j`,
--- so for every continuation grade. It holds where the unit is least
--- (`nothing-fits` at the right-sided grades), and fails at `j = ûₑ`
--- where the unit is not below `op-grade read` (`no-discarding` at
--- the left-sided grades).
+-- Needs `ûₑ ≾ op · j` for the rigid `j`: typable where the unit is
+-- least, refuted at the left-sided grades.
 
 discard : RawC ∅ˢ 0
 discard = return (lam (handle (v₀ · ⋆) `with handler (return ⋆) (λ _ → return ⋆)))
-
--- It is typable where the unit is least
 
 discard-D : Minimum (Grade._≾_ EGrade) uₑ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ Unit ‼ (ûₑ ·̂ₑ ûₑ)) ‼ ûₑ
 discard-D least =
@@ -243,21 +206,11 @@ expected-discard = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit
 ------------------------------------------------------------------
 -- A handler that resumes twice
 --
--- A handler, as a function of the thunk it handles, whose clause
--- forwards the operation and calls the continuation twice on its
--- result:
---
 --   resume-twice m = handle m () with handler {
 --     op p k ↦ let a = op p in let k' = unbox k in (k' a ; k' a)}
 --
--- Performing the operation gives an argument of its arity, and the
--- lock under which `k` is unboxed, at every operation. The clause's
--- grade is `op · (j · j)`, against `op · j`; and the second call
--- uses `k'` and `a` after `∣ j ∣` has passed, neither type being
--- eternal (`a` is a reading at `read`), so `var` asks for
--- `∣ j ∣ ≾ uᵣ`. Both hold for every `j` where the unit is the top
--- effect grade: the left-sided grades. At the right-sided grades
--- neither does, `j` being above the unit.
+-- Needs `op · (j · j) ≾ op · j` and, for the second call, `∣ j ∣ ≾ uᵣ`:
+-- typable where the unit is the top, refuted at the right-sided grades.
 
 resume-twice-clause : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc n))
 resume-twice-clause op =
@@ -266,8 +219,6 @@ resume-twice-clause op =
 resume-twice : RawC ∅ˢ 0
 resume-twice =
   return (lam (handle (v₀ · ⋆) `with handler (return ⋆) resume-twice-clause))
-
--- It is typable where the unit is the top
 
 resume-twice-D : True (⊤ₑ ≾ₑ? uₑ)
                → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ Unit ‼ (ûₑ ·̂ₑ ûₑ)) ‼ ûₑ
@@ -300,11 +251,6 @@ expected-resume-twice = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒
 ------------------------------------------------------------------
 -- Handlers as values
 --
--- A handler is a value of a handler type: it can be bound by `let`,
--- passed to a function and returned, and `handle` takes any value of
--- a handler type. `forwarder` returns what it handles and forwards
--- each operation, resuming with the answer:
---
 --   forwarder = handler {return x ↦ return x;
 --                        op p k ↦ let a = op p in unbox k as k' in k' a}
 --
@@ -312,8 +258,7 @@ expected-resume-twice = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒
 --   run h m     = handle m () with h
 --   run-forward = run forwarder
 --
--- The clause's grade is `op · j` for the rigid `j`, as the rule asks,
--- so all three are typable over an arbitrary language.
+-- All three are typable over any language.
 
 forward : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc n))
 forward op = perform op v₁ (unbox (var (fsuc fzero)) (v₀ · v₁))
@@ -357,9 +302,8 @@ bound-unrefuted = infer-complete [] bound bound-typable
 expected-bound : Scheme
 expected-bound = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ α₀ ‼ ε₀) ‼ ûₑ
 
--- `run` is typed at a handler type, its result at the handled
--- effect followed by the handler's; where the product commutes, the
--- canonical form lists the two the other way round
+-- The handled effect, then the handler's; sorted the other way round
+-- where the product commutes
 
 expected-run : Scheme
 expected-run =

@@ -1,13 +1,11 @@
 ------------------------------------------------------------------
 -- Programs and their erasure                                   --
 --                                                              --
--- A program is a sequence of top-level definitions `f = V`,    --
--- the first outermost, each a closed raw value naming the      --
--- definitions before it by their positions. Its definitions    --
--- have closed run-time values, the uses of earlier definitions --
--- substituted (`⟦_⟧ᴾ`). The erasure of a raw term in a program --
--- drops grades and annotations and substitutes the             --
--- definitions (`⌊_⌋ᴾᵛ`, `⌊_⌋ᴾᶜ`).                              --
+-- A program is a sequence of definitions `f = V`, the first    --
+-- outermost, each a closed raw value naming earlier            --
+-- definitions by position. `⟦_⟧ᴾ` gives the definitions closed --
+-- run-time values; erasure in a program drops grades and       --
+-- annotations and substitutes them (`⌊_⌋ᴾᵛ`, `⌊_⌋ᴾᶜ`).         --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin)
@@ -41,8 +39,6 @@ data Program : Set where
 
 infixl 31 _∷ᴾ_
 
--- The number of definitions
-
 lenᴾ : Program → ℕ
 lenᴾ ∅ᴾ       = 0
 lenᴾ (P ∷ᴾ V) = suc (lenᴾ P)
@@ -50,12 +46,8 @@ lenᴾ (P ∷ᴾ V) = suc (lenᴾ P)
 ------------------------------------------------------------------------
 -- Substitution of closed run-time values for the definitions
 
--- Closed run-time values for some positions
-
 Defs : Set
 Defs = ℕ → Maybe (RunV 0)
-
--- A closed run-time term in any scope
 
 from0 : ∀ {n} → Fin 0 → Fin n
 from0 ()

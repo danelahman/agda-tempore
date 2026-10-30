@@ -2,21 +2,16 @@
 -- Properties of variable expansion                             --
 --                                                              --
 -- The shape of an open type is its skeleton with all type      --
--- variables identified. Subtyping relates only types of equal  --
--- shape, and `subDec` succeeds exactly on a pair of            --
--- decorations of one skeleton.                                 --
---                                                              --
--- `_◃ᵛ_` states that an open type decorates a skeleton: a type --
--- variable at each skeleton variable and the same former       --
--- everywhere else. `_⊑ᵛ_` relaxes it to an arbitrary type at   --
--- each skeleton variable. `decorate` produces a decoration     --
--- (`decorate-◃`) that is most general among the relaxed ones   --
+-- variables identified; subtyping relates only types of equal  --
+-- shape, and `subDec` succeeds exactly on two decorations of   --
+-- one skeleton (`_◃ᵛ_`). `decorate` produces a decoration      --
+-- (`decorate-◃`), most general among the refinements `_⊑ᵛ_`    --
 -- (`decorate-max`).                                            --
 --                                                              --
--- `expandSub` makes every demand of its list decomposable      --
--- (`expandSub-dec`); its substitution is most general among    --
--- those that satisfy the demands, and its failure refutes them --
--- (`expandSub-max`).                                           --
+-- Contract. `expandSub` makes every demand of its list         --
+-- decomposable (`expandSub-dec`); its substitution is most     --
+-- general among those satisfying the demands, and its failure  --
+-- refutes them (`expandSub-max`).                              --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
@@ -66,8 +61,7 @@ open import PolymorphicCalculus.Inference.SolverImpl.Core.Rigid    S using (zip�
 open import PolymorphicCalculus.Inference.SolverImpl.Former S using (decompose)
 open import PolymorphicCalculus.Inference.SolverImpl.Resid S
 
--- Shapes: skeletons over a single variable, in which all type variables
--- are identified.
+-- Shapes: skeletons over a single variable, all type variables identified
 
 mutual
 
@@ -135,8 +129,8 @@ mutual
   <:̂ᶜ-shape : ∀ {Θ} {Q : Hyps Θ} {C D} → Q ∣ C <:̂ᶜ D → shapeᶜ C ≡ shapeᶜ D
   <:̂ᶜ-shape (p ‼ₛ r) = <:̂ᵛ-shape p
 
--- An open type refines a skeleton when it has the same formers
--- outside the skeleton's variables
+-- An open type refines a skeleton when it has the same formers outside the
+-- skeleton's variables
 
 infix 4 _⊑ᵛ_ _⊑ᶜ_
 
@@ -308,8 +302,8 @@ mutual
           → t [ ζ ]ᵏ ≡ shapeᶜ C → t ⊑ᶜ C
   ⊑-fromᶜ t ζ (A ‼ ε) eq = ‼⊑ (⊑-from t ζ A eq)
 
--- An open type decorates a skeleton when it refines it with a type
--- variable at every skeleton variable
+-- An open type decorates a skeleton when it refines it with a type variable at
+-- every skeleton variable
 
 infix 4 _◃ᵛ_ _◃ᶜ_
 
@@ -548,8 +542,7 @@ decorate-max Ψ (sBox t) δ {[ ρ ] _} (Box⊑ p) with decorate Ψ t | decorate-
                (≐ˢ-trans (⨟-congʳ w₁ (wkˢʳ-,ʳ δ₁ ρ)) tri₁) ,
       cong ([ ρ ]_) (trans (wkʳ-inst A δ₁ ρ) eq₁)
 
--- The same, for a whole vector: an entry left undecorated is one
--- whose skeleton is still a variable.
+-- The same, for a whole vector; an entry left undecorated has a variable skeleton
 
 Ent◃ : ∀ {Ψ' m} → Skel m → Maybe (OVType Ψ') → Set
 Ent◃ {m = m} t nothing  = Σ[ γ ∈ Fin m ] (t ≡ svar γ)
@@ -649,8 +642,7 @@ unifies⁺ : ∀ {Ψ n} → (l : List (OVType Ψ × OVType Ψ)) → (σ : SSub (
 unifies⁺ []             σ k = tt
 unifies⁺ ((A , B) ∷ l) σ k = k (here refl) , unifies⁺ l σ (λ m → k (there m))
 
--- The shapes of a substitution satisfying every demand unify the
--- demands' skeletons
+-- The shapes of a substitution satisfying every demand unify their skeletons
 
 shape-unifies : ∀ {Ψ Ψ''} {Q : Hyps Ψ''} → (l : List (OVType Ψ × OVType Ψ))
               → (δ₀ : Subst Ψ Ψ'')
@@ -692,8 +684,8 @@ ExpMax : ∀ {Ψ Ψ''} → Subst Ψ Ψ''
        → Maybe (Σ[ Ψ' ∈ Scope ] (Subst Ψ Ψ')) → Set
 ExpMax {Ψ} δ₀ = maybe′ (λ x → Σ[ δ' ∈ Subst (proj₁ x) _ ] ((proj₂ x ⨟ˢ δ') ≐ˢ δ₀)) ⊥
 
--- The expansion is most general among the substitutions that satisfy
--- the demands, and its failure refutes them
+-- The expansion is most general among the substitutions satisfying the demands,
+-- and its failure refutes them
 
 expandSub-max : ∀ {Ψ Ψ''} {Q : Hyps Ψ''} → (l : List (OVType Ψ × OVType Ψ))
               → (δ₀ : Subst Ψ Ψ'')

@@ -1,21 +1,20 @@
 ------------------------------------------------------------------------
--- Overview of the main definitions and results
+-- Overview of the polymorphic calculus
 --
--- One entry per construct, rule, definition, lemma and theorem, named
--- by its title: grade systems; the polymorphic calculus, its type
--- system, semantics and type inference.
+-- One entry per main definition, rule, lemma and theorem, under its
+-- title: grade systems, the type system, the operational semantics,
+-- instantiation and type safety, and type inference. Check it with
+-- `agda Results.agda`; `Everything.agda` checks every module.
 --
 -- The calculus is parameterised by a `LanguageSpec` (a grade system, base
--- types and an operation signature), the calculus without base types
--- being its instance `withoutBaseTypes`; inference also takes hints for
--- the grade system (`SystemHints`), which only the solver reads, and an
--- enumeration of the operations (`OpEnum`).
+-- types and an operation signature); `withoutBaseTypes` is the instance
+-- without base types. Inference also takes `SystemHints` for the grade
+-- system, read only by the solver, and an `OpEnum` of the operations.
 ------------------------------------------------------------------------
 
 module Results where
 
--- The language: a grade system, base types and an operation signature;
--- the calculus without base types is the instance `withoutBaseTypes`
+-- The language: a grade system, base types and an operation signature
 open import Language.Spec public using (LanguageSpec; withoutBaseTypes)
 open import Grades.Hints using (SystemHints)
 open import PolymorphicCalculus.Inference.SolverImpl.Enum using (OpEnum)
@@ -125,11 +124,11 @@ module Syntax (S : LanguageSpec) where
     renaming (instₑ to Inst; instᵣ to Instʳ; factₑ to Truth; factᵣ to Truthʳ)
 
   -- Values and computations, among them the handlers `handler H` and
-  -- `handle M with V`, and the uses `usedef k` of top-level definitions
+  -- `handle M with V`, and the uses `usedef k` of definitions
   open import PolymorphicCalculus.Syntax.Raw S public
     using (handler; handle_`with_; usedef) renaming (RawV to Value; RawC to Computation)
 
-  -- Programs: sequences of top-level definitions `f = V`
+  -- Programs: sequences of definitions `f = V`
   open import PolymorphicCalculus.Programs.Syntax S public using (Program; ∅ᴾ; _∷ᴾ_)
 
   -- Definition (Closed instances): closed substitutions, satisfaction,
@@ -416,10 +415,10 @@ module GradeAlgebraExamples where
 
 module CalculusWithGradeVariables (S : LanguageSpec) where
 
-  -- Definition (Signatures). The comparisons are decided by the
-  -- structural order on the data the operands denote (`compareᴰ`), from
-  -- a strict total order on each eternal base type. The calculus is the instance without base types,
-  -- over a grade system and an operation signature.
+  -- Definition (Signatures): a grade system, base types and operations.
+  -- Comparisons are decided by the structural order on the data the
+  -- operands denote (`compareᴰ`), from a strict total order on each
+  -- eternal base type.
   open import Language.Spec public using (LanguageSpec; withoutBaseTypes)
   open import Language.Operations public using (Operations)
   open import Language.BaseTypes public using (BaseTypes; noBaseTypes)

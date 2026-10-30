@@ -2,13 +2,11 @@
 -- Program contexts, variables and contexts of the polymorphic  --
 -- calculus                                                     --
 --                                                              --
--- A program context binds the top-level definitions to closed  --
--- type schemes `∀ Θ. Q ⇒ X`, named by their position from the  --
--- first. A context starts with a program context and extends   --
--- it by variables and locks, indexed by the number of          --
--- variables it binds, with open grade expressions as grades.   --
--- A handler clause is typed under an ordinary lock at the      --
--- constant `⊤ᵣ`; there is no separate barrier former.          --
+-- A program context binds definitions, named by position from  --
+-- the first, to closed type schemes `∀ Θ. Q ⇒ X`. A context    --
+-- extends a program context by variables and locks, indexed by --
+-- its number of variables, with open grade expressions as      --
+-- grades.                                                      --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -41,8 +39,7 @@ open import PolymorphicCalculus.Hypotheses               S using (Hyps; qhyps)
 ------------------------------------------------------------------------
 -- Type schemes and program contexts
 
--- A closed type scheme `∀ Θ. Q ⇒ X`: a scope of its own, hypotheses
--- over it, and a value type over it.
+-- A closed type scheme `∀ Θ. Q ⇒ X`
 
 record Scheme : Set where
   constructor ∀ˢ
@@ -61,14 +58,11 @@ data PCtx : Set where
 
 infixl 31 _∷ᵖ_
 
--- The number of definitions
-
 len : PCtx → ℕ
 len ∅ᵖ       = 0
 len (Δ ∷ᵖ s) = suc (len Δ)
 
--- `s ∈ᵖ[ k ] Δ`: the definition at position `k` of `Δ`, counted from
--- the first, has the scheme `s`
+-- The definition at position `k` of `Δ` has the scheme `s`
 
 data _∈ᵖ[_]_ (s : Scheme) : ℕ → PCtx → Set where
   here  : ∀ {Δ}      → s ∈ᵖ[ len Δ ] Δ ∷ᵖ s
@@ -82,8 +76,6 @@ infix 27 _∈ᵖ[_]_
 ∈ᵖ-< : ∀ {s k Δ} → s ∈ᵖ[ k ] Δ → k < len Δ
 ∈ᵖ-< here      = n<1+n _
 ∈ᵖ-< (there m) = <-trans (∈ᵖ-< m) (n<1+n _)
-
--- Lookup by position
 
 lookupᵖ : PCtx → ℕ → Maybe Scheme
 lookupᵖ ∅ᵖ       k = nothing
@@ -117,9 +109,7 @@ unquantified-∈ (u , _) (there m) = unquantified-∈ u m
 ------------------------------------------------------------------------
 -- Contexts
 
--- Structured open contexts, indexed by the number of variables bound;
--- `[]` is the empty program context, `Δ ▶ s` the program context
--- `Δ ∷ᵖ s`
+-- `[]` is the empty program context, `Δ ▶ s` is `Δ ∷ᵖ s`
 
 data OCtx (Θ : Scope) : ℕ → Set where
   []   : OCtx Θ 0                                     -- empty context
@@ -130,8 +120,6 @@ data OCtx (Θ : Scope) : ℕ → Set where
 infixl 31 _∷_
 infix  32 _⟨_⟩
 infix  30 _▶_
-
--- A program context as a context
 
 ⌜_⌝ᵖ : ∀ {Θ} → PCtx → OCtx Θ 0
 ⌜ ∅ᵖ ⌝ᵖ     = []
@@ -149,7 +137,7 @@ defs-⌜⌝ : ∀ {Θ} → (Δ : PCtx) → defs (⌜_⌝ᵖ {Θ} Δ) ≡ Δ
 defs-⌜⌝ ∅ᵖ       = refl
 defs-⌜⌝ (Δ ∷ᵖ s) = refl
 
--- Variable in an open context (under ρ-amount of time-passage)
+-- A variable, at the grade accumulated by the locks after it
 
 data _∈̂[_]_ {Θ : Scope} (A : OVType Θ) : RExp Θ → {n : ℕ} → OCtx Θ n → Set where
   Hd    : ∀ {n} {Γ : OCtx Θ n}          → A ∈̂[ ûᵣ ] Γ ∷ A
@@ -158,8 +146,7 @@ data _∈̂[_]_ {Θ : Scope} (A : OVType Θ) : RExp Θ → {n : ℕ} → OCtx Θ
 
 infix 27 _∈̂[_]_
 
--- Lookup by position: the type and the accumulated grade. Each recurses
--- exactly as the corresponding membership constructor acts.
+-- Lookup of the type and the accumulated grade by position
 
 lookup-ty : ∀ {Θ n} → OCtx Θ n → Fin n → OVType Θ
 lookup-ty (Γ ∷ A)   zero    = A
@@ -171,14 +158,10 @@ lookup-gr (Γ ∷ A)   zero    = ûᵣ
 lookup-gr (Γ ∷ A)   (suc i) = lookup-gr Γ i
 lookup-gr (Γ ⟨ ρ ⟩) i       = lookup-gr Γ i ·̂ᵣ ρ
 
--- Lookup produces a membership witness
-
 lookup-var : ∀ {Θ n} → (Γ : OCtx Θ n) → (i : Fin n) → lookup-ty Γ i ∈̂[ lookup-gr Γ i ] Γ
 lookup-var (Γ ∷ A)   zero    = Hd
 lookup-var (Γ ∷ A)   (suc i) = Tl-∷ (lookup-var Γ i)
 lookup-var (Γ ⟨ ρ ⟩) i       = Tl-⟨⟩ (lookup-var Γ i)
-
--- The position a membership witness points at
 
 var-pos : ∀ {Θ n} {A : OVType Θ} {ρ} {Γ : OCtx Θ n} → A ∈̂[ ρ ] Γ → Fin n
 var-pos Hd        = zero
@@ -224,8 +207,6 @@ wkᵉ-ctx (Δ ▶ s)   = Δ ▶ s
 wkᵉ-ctx (Γ ∷ A)   = wkᵉ-ctx Γ ∷ wkᵉ-v A
 wkᵉ-ctx (Γ ⟨ ρ ⟩) = wkᵉ-ctx Γ ⟨ wkᵉ-r ρ ⟩
 
--- Weakening keeps the program context
-
 defs-wkᵗ : ∀ {Θ n} → (Γ : OCtx Θ n) → defs (wkᵗ-ctx Γ) ≡ defs Γ
 defs-wkᵗ []        = refl
 defs-wkᵗ (Δ ▶ s)   = refl
@@ -245,8 +226,7 @@ defs-wkᵉ (Γ ∷ A)   = defs-wkᵉ Γ
 defs-wkᵉ (Γ ⟨ ρ ⟩) = defs-wkᵉ Γ
 
 ------------------------------------------------------------------------
--- Action of a substitution on contexts, which keeps the program
--- context and the number of bound variables
+-- Action of a substitution on contexts
 
 infixl 50 _[_]ᶜᵗˣ
 

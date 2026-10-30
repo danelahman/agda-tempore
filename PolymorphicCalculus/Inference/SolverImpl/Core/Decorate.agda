@@ -1,25 +1,20 @@
 --------------------------------------------------------------------
 -- Decoration: a skeleton back into an open type                  --
 --                                                                --
--- `decorate` builds the most general open type of a given shape: --
--- the scope grows by one fresh resource-grade variable per box,  --
--- one fresh effect-grade variable per arrow and two per handler  --
--- type, and one fresh type variable per skeleton variable left.  --
--- Fresh means fresh per occurrence.                              --
+-- `decorate` builds the most general open type of a given shape, --
+-- with a fresh grade variable per grade slot (one per box and    --
+-- arrow, two per handler type) and a fresh type variable per     --
+-- skeleton variable left. `expandSub` unifies the skeletons of a --
+-- list of subtyping demands and refines each type variable whose --
+-- shape the solution determines.                                 --
 --                                                                --
--- `expandSub` is what a subtyping demand asks for: a list of     --
--- demands is first a unification problem on their skeletons,     --
--- whose solution then refines every type variable whose shape it --
--- has determined, leaving the others alone.                      --
---                                                                --
--- Contract (proved in `SolverImpl.Expand`): after the expansion  --
--- every demand of the list decomposes (`expandSub-dec`); every   --
--- substitution meeting the demands, under any hypotheses,        --
--- factors through it, and a failure refutes the demands at every --
--- substitution (`expandSub-max`).                                --
+-- Contract (`SolverImpl.Expand`): afterwards every demand        --
+-- decomposes (`expandSub-dec`); every substitution meeting the   --
+-- demands factors through it, and a failure refutes them         --
+-- (`expandSub-max`).                                             --
 --                                                                --
 -- Match-then-decompose, as in Fuh and Mishra's structural        --
--- subtyping inference (TCS 1990).                                --
+-- subtyping inference.                                           --
 --------------------------------------------------------------------
 
 open import Data.List.Base using (List; map)
@@ -47,8 +42,8 @@ open import PolymorphicCalculus.Syntax.GradeSubstitution S
 open import PolymorphicCalculus.Inference.SolverImpl.Core.Skel      S
 open import PolymorphicCalculus.Inference.SolverImpl.Core.SkelUnify S
 
--- The extension a decoration performs is recorded as the
--- substitution that renames the old scope into the new one.
+-- The extension a decoration performs, as the renaming of the old scope into
+-- the new
 
 decorate : ∀ {m} → (Ψ : Scope) → Skel m
          → Σ[ Ψ' ∈ Scope ] (Subst Ψ Ψ' × OVType Ψ')
@@ -80,9 +75,8 @@ decorate Ψ (t s⇛ u) with decorate Ψ t
 decorate Ψ (sBox t) with decorate Ψ t
 ... | Ψ₁ , w₁ , A = Ψ₁ +r , (w₁ ⨟ˢ wkˢʳ) , ([ rvar (newʳ {Ψ₁}) ] wkʳ-v A)
 
--- A whole vector of skeletons, sharing one scope extension. A
--- skeleton that is still a variable determines no shape, and its
--- type variable is kept rather than renamed.
+-- A whole vector of skeletons, sharing one scope extension; a variable skeleton
+-- determines no shape, and its type variable is kept
 
 decorate* : ∀ {m k} → (Ψ : Scope) → Vec (Skel m) k
           → Σ[ Ψ' ∈ Scope ] (Subst Ψ Ψ' × Vec (Maybe (OVType Ψ')) k)
@@ -94,8 +88,7 @@ decorate* Ψ (t ∷ ts) | nothing with decorate Ψ t
 ... | Ψ₁ , w₁ , A with decorate* Ψ₁ ts
 ...   | Ψ₂ , w₂ , As = Ψ₂ , w₁ ⨟ˢ w₂ , (just (A [ w₂ ]ᵛ) ∷ As)
 
--- Refining every type variable to the shape a skeleton solution
--- gives it
+-- Refining every type variable to the shape a skeleton solution gives it
 
 expandᵏ : ∀ {m} → (Ψ : Scope) → SSub (nTy Ψ) m → Σ[ Ψ' ∈ Scope ] (Subst Ψ Ψ')
 expandᵏ Ψ σ with decorate* Ψ (tabulate σ)
