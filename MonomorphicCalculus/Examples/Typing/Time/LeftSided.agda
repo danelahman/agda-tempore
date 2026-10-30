@@ -491,6 +491,64 @@ no-discarding : ¬ (uₑ ≾ₑ op-grade read ·ₑ uₑ)
 no-discarding = ≰!
 
 ------------------------------------------------------------------------
+-- Handler values
+--
+-- A handler is a value of type `C ⇛ D`, its return clause locked by the
+-- handled grade. The type is contravariant in that grade: a handler for
+-- computations taking at least `n` ticks handles any computation
+-- guaranteed more, and the result is graded by that computation.
+
+-- forward every operation, and on return claim a resource promised in
+-- one tick: the handled computation has taken at least that long
+
+claiming : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢V⦂ (Unit ‼ [ 1 ,+∞⟩) ⇛ (Reading ‼ uₑ)
+claiming =
+  handler                            -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Unit
+    (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
+                                     -- ∷ Reading
+      (return here))
+    forwarding
+
+-- the handler bound once and handling two computations, a reading and
+-- an idle tick
+
+handled-twice : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢C⦂ Reading |×| Reading ‼ [ 2 ,+∞⟩
+handled-twice =
+  return claiming                    -- ⟨ [ 0 ,+∞⟩ ⟩ ∷ handler
+    ⨟ ((handle perform read ⋆ (return ⋆) `with here)
+                                     -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
+        ⨟ ((handle delay 1 (return ⋆) `with fresh-var ≤! (Tl-∷ (Tl-⟨⟩ Hd)))
+                                     -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
+            ⨟ return ⦉ fresh-var ≤! (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊))
+
+-- the handler at a computation guaranteed three ticks, by subsumption
+-- at its type; the result keeps all three
+
+handled-longer : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢C⦂ Reading ‼ [ 3 ,+∞⟩
+handled-longer =
+  handle perform read ⋆ (perform write here (return ⋆))
+    `with subV claiming ((<:ᵛ-refl _ ‼ₛ ≤!) ⇛ₛ <:ᶜ-refl _)
+
+-- coercing the computation to the handler's grade instead keeps one
+
+coerced-longer : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢C⦂ Reading ‼ [ 1 ,+∞⟩
+coerced-longer =
+  handle coerce ≤! (perform read ⋆ (perform write here (return ⋆)))
+    `with claiming
+
+-- a function taking the handler as its argument
+
+handling-a-reading :
+  [] ∷ [ [ 1 ,+∞⟩ ] Reading
+    ⊢V⦂ ((Unit ‼ [ 1 ,+∞⟩) ⇛ (Reading ‼ uₑ)) ⇒ Reading ‼ [ 1 ,+∞⟩
+handling-a-reading =
+  lam                                -- ∷ handler
+    (handle perform read ⋆ (return ⋆) `with here)
+
+handled-by-argument : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢C⦂ Reading ‼ [ 1 ,+∞⟩
+handled-by-argument = handling-a-reading · claiming
+
+------------------------------------------------------------------------
 -- The greatest grade
 --
 -- Here it is the unit: "at least 0 ticks" claims nothing, so every

@@ -49,6 +49,7 @@ mutual
     nil   : ErV
     cons  : ErV → ErV → ErV
     lam   : ErC → ErV
+    handler : ErC → (Op → E → ErC) → ErV
 
   data ErC : Set where
     return            : ErV → ErC
@@ -65,7 +66,7 @@ mutual
     recL              : ErV → ErC → ErC → ErC
     perform           : Op → ErV → ErC → ErC
     delay             : 𝔻 → ErC → ErC
-    handle_`with_`in  : ErC → (Op → E → ErC) → ErC → ErC
+    handle_`with_     : ErC → ErV → ErC
     unbox             : ℕ → ErC → ErC
     box               : R → ErV → ErC → ErC
 
@@ -95,6 +96,7 @@ mutual
   ⌊ nil ⌋ᵛ       = nil
   ⌊ cons V W ⌋ᵛ  = cons ⌊ V ⌋ᵛ ⌊ W ⌋ᵛ
   ⌊ lam M ⌋ᵛ     = lam ⌊ M ⌋ᶜ
+  ⌊ handler N H ⌋ᵛ = handler ⌊ N ⌋ᶜ (λ op ε'' → ⌊ H op ε'' ⌋ᶜ)
   ⌊ subV V p ⌋ᵛ  = ⌊ V ⌋ᵛ
 
   ⌊_⌋ᶜ : ∀ {Γ C} → Γ ⊢C⦂ C → ErC
@@ -113,8 +115,7 @@ mutual
   ⌊ recL V M N p ⌋ᶜ            = recL ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ ⌊ N ⌋ᶜ
   ⌊ perform op V M ⌋ᶜ         = perform op ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ
   ⌊ delay τ M ⌋ᶜ              = delay τ ⌊ M ⌋ᶜ
-  ⌊ handle M `with H `in N ⌋ᶜ =
-    handle ⌊ M ⌋ᶜ `with (λ op ε'' → ⌊ H op ε'' ⌋ᶜ) `in ⌊ N ⌋ᶜ
+  ⌊ handle M `with V ⌋ᶜ       = handle ⌊ M ⌋ᶜ `with ⌊ V ⌋ᵛ
   ⌊ unbox x rel p N ⌋ᶜ        = unbox (var-pos x) ⌊ N ⌋ᶜ
   ⌊ box ρ V N ⌋ᶜ              = box ρ ⌊ V ⌋ᵛ ⌊ N ⌋ᶜ
   ⌊ subC M p ⌋ᶜ               = ⌊ M ⌋ᶜ

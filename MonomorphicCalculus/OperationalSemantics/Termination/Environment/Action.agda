@@ -1927,7 +1927,7 @@ env-Hˢ : ∀ {St Γ B} → (γ : Env St Γ) → (Δ : Ctx)
        → Fam B ((Γ ++ᶜ Δ) ⟨ ⊤ᵣ ⟩) → Fam B ((toCtx St ++ᶜ Δ) ⟨ ⊤ᵣ ⟩)
 env-Hˢ {B = B} γ Δ K op ε = env-Cˢ γ (Δ ++ᶜ Dcl B op ε) (K op ε)
 
--- The clause transport `cast-handle` produces and the one the suffix
+-- The clause transport `cast-handler` produces and the one the suffix
 -- `Δ ++ᶜ Dcl` asks for prove the same equation.
 
 Cl-cast-irr : ∀ {Γ₀ Γ₀' B} {op : Op} {ε : E} → (e : Γ₀ ≡ Γ₀')
@@ -1942,32 +1942,29 @@ Cl-cast-irr : ∀ {Γ₀ Γ₀' B} {op : Op} {ε : E} → (e : Γ₀ ≡ Γ₀')
 Cl-cast-irr e e' X = castᶜ-irr _ e' X
 
 -- Every zone acts on the clauses exactly as it acts under any other suffix;
--- what is left is that its transports and the ones `cast-handle` produces are
+-- what is left is that its transports and the ones `cast-handler` produces are
 -- the same by `uip`.
 
-env-Cˢ-handle : ∀ {St Γ A B ε ε'} → (γ : Env St Γ) → (Δ : Ctx)
-              → (M : (Γ ++ᶜ Δ) ⊢C⦂ A ‼ ε)
-              → (H : Fam B ((Γ ++ᶜ Δ) ⟨ ⊤ᵣ ⟩))
-              → (N : (Γ ++ᶜ Δ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε')
-              → env-Cˢ γ Δ (handle M `with H `in N)
-              ≡ handle (env-Cˢ γ Δ M)
-                 `with env-Hˢ γ Δ H
-                 `in (env-Cˢ γ (Δ ⟨ mapᵉ ε ⟩ ∷ A) N)
+env-Vˢ-handler : ∀ {St Γ A B ε ε'} → (γ : Env St Γ) → (Δ : Ctx)
+               → (N : (Γ ++ᶜ Δ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε')
+               → (H : Fam B ((Γ ++ᶜ Δ) ⟨ ⊤ᵣ ⟩))
+               → env-Vˢ γ Δ (handler N H)
+               ≡ handler (env-Cˢ γ (Δ ⟨ mapᵉ ε ⟩ ∷ A) N) (env-Hˢ γ Δ H)
 
-env-Cˢ-handle ⌊ St ⌋ Δ M H N = refl
-env-Cˢ-handle (reachᵉ γ q) Δ M H N =
-  cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-handle γ Δ M H N)
+env-Vˢ-handler ⌊ St ⌋ Δ N H = refl
+env-Vˢ-handler (reachᵉ γ q) Δ N H =
+  cong (V-rename (cong-ren (reach-renᵘ q))) (env-Vˢ-handler γ Δ N H)
 
-env-Cˢ-handle {A = A} {B = B} {ε = ε}
-              (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M H N =
-  cong (C-rename (cong-ren (unbox-ren q)))
-    (trans (cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-handle ei))
-      (trans (cong (λ z → castᶜ eo (env-Cˢ γ Δ' (handle Mi `with Hi `in z)))
+env-Vˢ-handler {A = A} {B = B} {ε = ε}
+              (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ N H =
+  cong (V-rename (cong-ren (unbox-ren q)))
+    (trans (cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-handler ei))
+      (trans (cong (λ z → castᵛ eo (env-Vˢ γ Δ' (handler z Hi)))
                    (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) ei) ei₂ N))
-        (trans (cong (castᶜ eo) (env-Cˢ-handle γ Δ' _ _ _))
-          (trans (cast-handle eo)
-                 (handle-≡ refl cl
-                   (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) eo) eo₂ _))))))
+        (trans (cong (castᵛ eo) (env-Vˢ-handler γ Δ' _ _))
+          (trans (cast-handler eo)
+                 (handler-≡ (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) eo) eo₂ _)
+                            cl)))))
   where
     Δ'  = [] ⟨ ρ ⟩ ++ᶜ Δ
     eo  = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
@@ -1975,7 +1972,6 @@ env-Cˢ-handle {A = A} {B = B} {ε = ε}
     eo₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) (Δ ⟨ mapᵉ ε ⟩ ∷ A))
     ei₂ = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) (Δ ⟨ mapᵉ ε ⟩ ∷ A)
 
-    Mi  = castᶜ ei M
     Hi  = λ op ε₀ → Cl-cast op ε₀ ei (H op ε₀)
 
     cl : ∀ op ε₀
@@ -1992,15 +1988,15 @@ env-Cˢ-handle {A = A} {B = B} {ε = ε}
       where
         D = Δ ++ᶜ Dcl B op ε₀
 
-env-Cˢ-handle {A = A} {B = B} {ε = ε}
-              (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ} V γ) Δ M H N =
-  trans (cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-handle ei))
-    (trans (cong (λ z → castᶜ eo (env-Cˢ γ Δ' (handle Mi `with Hi `in z)))
+env-Vˢ-handler {A = A} {B = B} {ε = ε}
+              (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ} V γ) Δ N H =
+  trans (cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-handler ei))
+    (trans (cong (λ z → castᵛ eo (env-Vˢ γ Δ' (handler z Hi)))
                  (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) ei) ei₂ N))
-      (trans (cong (castᶜ eo) (env-Cˢ-handle γ Δ' _ _ _))
-        (trans (cast-handle eo)
-               (handle-≡ refl cl
-                 (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) eo) eo₂ _)))))
+      (trans (cong (castᵛ eo) (env-Vˢ-handler γ Δ' _ _))
+        (trans (cast-handler eo)
+               (handler-≡ (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) eo) eo₂ _)
+                          cl))))
   where
     Δ₁  = [] ∷ [ ρ ] A₀
     Δ'  = Δ₁ ++ᶜ Δ
@@ -2009,7 +2005,6 @@ env-Cˢ-handle {A = A} {B = B} {ε = ε}
     eo₂ = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ⟨ mapᵉ ε ⟩ ∷ A))
     ei₂ = ++ᶜ-assoc Γ Δ₁ (Δ ⟨ mapᵉ ε ⟩ ∷ A)
 
-    Mi  = castᶜ ei M
     Hi  = λ op ε₀ → Cl-cast op ε₀ ei (H op ε₀)
 
     cl : ∀ op ε₀
@@ -2024,20 +2019,21 @@ env-Cˢ-handle {A = A} {B = B} {ε = ε}
       where
         D = Δ ++ᶜ Dcl B op ε₀
 
-env-Cˢ-handle {A = A} {B = B} {ε = ε}
-              (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ M H N =
-  trans (cong (λ z → sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ' z)) W)
-              (cast-handle eA))
-    (trans (cong (λ z → sub-atᶜ Δ
-                          (castᶜ eIn (env-Cˢ γ Δ' (handle Mi `with Hi `in z))) W)
+env-Vˢ-handler {A = A} {B = B} {ε = ε}
+              (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ N H =
+  trans (cong (λ z → sub-atᵛ Δ (castᵛ eIn (env-Vˢ γ Δ' z)) W)
+              (cast-handler eA))
+    (trans (cong (λ z → sub-atᵛ Δ
+                          (castᵛ eIn (env-Vˢ γ Δ' (handler z Hi))) W)
                  (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) eA) eA₂ N))
-      (trans (cong (λ z → sub-atᶜ Δ (castᶜ eIn z) W)
-                   (env-Cˢ-handle γ Δ' _ _ _))
-        (trans (cong (λ z → sub-atᶜ Δ z W) (cast-handle eIn))
-               (handle-≡ refl cl
+      (trans (cong (λ z → sub-atᵛ Δ (castᵛ eIn z) W)
+                   (env-Vˢ-handler γ Δ' _ _))
+        (trans (cong (λ z → sub-atᵛ Δ z W) (cast-handler eIn))
+               (handler-≡
                  (cong (λ z → sub-atᶜ (Δ ⟨ mapᵉ ε ⟩ ∷ A) z W)
                        (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) eIn)
-                                  eIn₂ Nγ))))))
+                                  eIn₂ Nγ))
+                 cl))))
   where
     Δ₁   = [] ∷ A₀
     Δ'   = Δ₁ ++ᶜ Δ
@@ -2046,7 +2042,6 @@ env-Cˢ-handle {A = A} {B = B} {ε = ε}
     eIn₂ = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ⟨ mapᵉ ε ⟩ ∷ A))
     eA₂  = ++ᶜ-assoc Γ Δ₁ (Δ ⟨ mapᵉ ε ⟩ ∷ A)
 
-    Mi  = castᶜ eA M
     Hi  = λ op ε₀ → Cl-cast op ε₀ eA (H op ε₀)
     Nγ  = env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ eA₂ N)
 
@@ -2064,4 +2059,44 @@ env-Cˢ-handle {A = A} {B = B} {ε = ε}
                      (Cl-cast-irr eA (++ᶜ-assoc Γ Δ₁ D) (H op ε₀))))
       where
         D = Δ ++ᶜ Dcl B op ε₀
+
+env-Cˢ-handle : ∀ {St Γ A B ε ε'} → (γ : Env St Γ) → (Δ : Ctx)
+              → (M : (Γ ++ᶜ Δ) ⊢C⦂ A ‼ ε)
+              → (V : (Γ ++ᶜ Δ) ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε'))
+              → env-Cˢ γ Δ (handle M `with V)
+              ≡ handle (env-Cˢ γ Δ M) `with (env-Vˢ γ Δ V)
+
+env-Cˢ-handle ⌊ St ⌋ Δ M V = refl
+env-Cˢ-handle (reachᵉ γ q) Δ M V =
+  cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-handle γ Δ M V)
+
+env-Cˢ-handle (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M V =
+  cong (C-rename (cong-ren (unbox-ren q)))
+    (trans (cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-handle ei))
+      (trans (cong (castᶜ eo) (env-Cˢ-handle γ Δ' (castᶜ ei M) (castᵛ ei V)))
+             (cast-handle eo)))
+  where
+    Δ' = [] ⟨ ρ ⟩ ++ᶜ Δ
+    eo = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
+    ei = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
+
+env-Cˢ-handle (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ} V₀ γ) Δ M V =
+  trans (cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-handle ei))
+    (trans (cong (castᶜ eo) (env-Cˢ-handle γ Δ' (castᶜ ei M) (castᵛ ei V)))
+           (cast-handle eo))
+  where
+    Δ₁ = [] ∷ [ ρ ] A₀
+    Δ' = Δ₁ ++ᶜ Δ
+    eo = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
+    ei = ++ᶜ-assoc Γ Δ₁ Δ
+
+env-Cˢ-handle (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ M V =
+  trans (cong (λ z → sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ z)) W) (cast-handle eA))
+    (trans (cong (λ z → sub-atᶜ Δ (castᶜ eIn z) W)
+                 (env-Cˢ-handle γ Δ₁ (castᶜ eA M) (castᵛ eA V)))
+           (cong (λ z → sub-atᶜ Δ z W) (cast-handle eIn)))
+  where
+    Δ₁   = [] ∷ A₀ ++ᶜ Δ
+    eIn  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
+    eA   = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
 

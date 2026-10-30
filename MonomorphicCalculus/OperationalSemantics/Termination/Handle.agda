@@ -670,3 +670,59 @@ env-Hˢ-fired : ∀ {St Γ B} → (γ : Env St Γ) → {St₁ : 𝕊 []}
              ≡ env-C (liftᵉ V₀ ((γ ⟨ q ⟩ᵉ) ∷ᵉ W)) (H op ε)
 
 env-Hˢ-fired γ q H V₀ W = refl
+
+-- The sequel premise survives the return clause's subsumption at `SUB-HANDLE`:
+-- a reach at the smaller lock is one at the larger, and the value is subsumed.
+
+Seq-Prem-sub : ∀ {A A₀ B ε₀ ε₁ ε₂} {St : 𝕊 []}
+             → {N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂}
+             → (p : A₀ <:ᵛ A) → (pε : ε₀ ≾ₑ ε₁)
+             → Seq-Prem N
+             → Seq-Prem (subCtx p (C-rename (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε))) N))
+Seq-Prem-sub {N = N} p pε hN q V pV =
+  CRed-≡ᶜ (sym eq) (hN q' (subV V p) (VRed-sub p V pV))
+  where
+    mono = map-monotoneᵉ pε
+    L    = ⟨⟩-≤-ren mono
+    q'   = reach-≤ q mono
+
+    lower : (L ∘ʳ unbox-ren q) ≐ʳ unbox-ren q'
+    lower =
+      ≐ʳ-sym
+        (≐ʳ-trans
+          (∘ʳ-≐ʳ (suc-comp-ren-≤ˡ (ext q) (reach-bound q') (reach-bound q) mono)
+                 ≐ʳ-refl)
+          (∘ʳ-assoc-≐ʳ L (suc-comp-ren (ext q) (reach-bound q)) ⟨⟩-η-ren))
+
+    eq : (C-rename (cong-∷-ren (unbox-ren q)) (subCtx p (C-rename (cong-∷-ren L) N)))
+           [ split-[] ↦ V ]c
+       ≡ (C-rename (cong-∷-ren (unbox-ren q')) N) [ split-[] ↦ subV V p ]c
+    eq =
+      trans (cong (_[ split-[] ↦ V ]c) (subCtx-ren (unbox-ren q) p _))
+        (trans (subCtx-sub p _ V)
+          (cong (_[ split-[] ↦ subV V p ]c)
+            (trans (sym (C-rename-∘ (cong-∷-ren L) (cong-∷-ren (unbox-ren q)) N))
+                   (C-rename-≡ (≐ʳ-trans (≐ʳ-sym (cong-∷-ren-∘-≐ʳ L (unbox-ren q)))
+                                         (cong-∷-ren-≐ʳ lower)) N))))
+
+-- A literal handler whose clauses and sequel satisfy the premises handles
+-- every reducible computation at every use: as itself by `handle-CRed`, and
+-- through a subsumption by `SUB-HANDLE` and then `handle-CRed`.
+
+handler-CRed : ∀ {s A B ε ε'} {St : 𝕊 []}
+             → {H : Fam B (toCtx St ⟨ ⊤ᵣ ⟩)}
+             → {N : toCtx St ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+             → Clause-Prem B St H
+             → Seq-Prem N
+             → ∀ {A₀ ε₀ B₀ ε₀'} {U : toCtx St ⊢V⦂ (A₀ ‼ ε₀) ⇛ (B₀ ‼ ε₀')}
+             → Use (handler N H) U
+             → {e : shapeᵛ A₀ ≡ s} → {M : toCtx St ⊢C⦂ A₀ ‼ ε₀}
+             → CRedˢ' s e ε₀ St M
+             ------------------------------------------------------
+             → CRed' B₀ (ε₀ ·ₑ ε₀') St (handle M `with U)
+
+handler-CRed {H = H} {N = N} hH hN use-id pM = handle-CRed H N pM hH hN
+handler-CRed {H = H} {N = N} hH hN (use-sub ((p ‼ₛ pε) ⇛ₛ (o ‼ₛ _))) pM =
+  CRed-expand SUB-HANDLE
+    (CRedˢ'-≡ˢ {e' = <:ᵛ-shape o}
+      (handle-CRed H _ pM hH (Seq-Prem-sub p pε hN)))

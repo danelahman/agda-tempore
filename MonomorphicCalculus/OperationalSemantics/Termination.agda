@@ -8,7 +8,7 @@
 -- syntactically. Reducibility is needed, since substitution can grow --
 -- a term.                                                            --
 --                                                                    --
--- The `handle` case is an induction on the scrutinee's `CRed`        --
+-- A handler's case is an induction on the scrutinee's `CRed`         --
 -- derivation: each `HANDLE-OP` consumes one resumption premise.      --
 ------------------------------------------------------------------------
 
@@ -269,8 +269,8 @@ FL-recL {St = St} {A = A} {B = B} {ε = ε} γ pγ V M N p pV pM pN =
             (pN (((((γ ⟨ barrier-reach ⟩ᵉ) ∷ᵉ W) ∷ᵉ L) ⟨ q ⟩ᵉ) ∷ᵉ U)
                 (((pγ , pW) , pL) , pU))
 
--- Handling: `env-Cˢ-handle` splits the action, `handle-CRed` runs the scrutinee
--- and then the clauses and the sequel.
+-- Handlers: `env-Vˢ-handler` splits the action, and `handler-CRed` runs the
+-- handling at the use it is given, from the clause and sequel premises.
 --
 -- The sequel premise is `FL-C`'s at `(γ ⟨ q ⟩ᵉ) ∷ᵉ V`, as for sequencing.
 --
@@ -278,25 +278,26 @@ FL-recL {St = St} {A = A} {B = B} {ε = ε} γ pγ V M N p pV pM pN =
 -- the fresh cell: the environment `liftᵉ V₀ ((γ ⟨ q ⟩ᵉ) ∷ᵉ W)`, with
 -- `Rel-Env` `((pγ , pW) , bv)`.
 
-FL-handle : ∀ {St Γ A B ε₁ ε₂} → (γ : Env St Γ) → Rel-Env γ
-          → (M : Γ ⊢C⦂ A ‼ ε₁)
-          → (H : Fam B (Γ ⟨ ⊤ᵣ ⟩))
-          → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-          → CRed' A ε₁ St (env-C γ M)
-          → (∀ {St'} {op : Op} {ε₃ : E}
-               → (γ' : Env St' (Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                                  ∷ [ mapᵉ (op-grade op) ]
-                                      (type-of-gtype (arity op) ⇒ B ‼ ε₃)))
-               → Rel-Env γ'
-               → CRed' B (op-grade op ·ₑ ε₃) St' (env-C γ' (H op ε₃)))
-          → (∀ {St'} → (γ' : Env St' (Γ ⟨ mapᵉ ε₁ ⟩ ∷ A)) → Rel-Env γ'
-               → CRed' B ε₂ St' (env-C γ' N))
-          --------------------------------------------------------------
-          → CRed' B (ε₁ ·ₑ ε₂) St (env-C γ (handle M `with H `in N))
+FL-handler : ∀ {St Γ A B ε₁ ε₂} → (γ : Env St Γ) → Rel-Env γ
+           → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+           → (H : Fam B (Γ ⟨ ⊤ᵣ ⟩))
+           → (∀ {St'} {op : Op} {ε₃ : E}
+                → (γ' : Env St' (Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                                   ∷ [ mapᵉ (op-grade op) ]
+                                       (type-of-gtype (arity op) ⇒ B ‼ ε₃)))
+                → Rel-Env γ'
+                → CRed' B (op-grade op ·ₑ ε₃) St' (env-C γ' (H op ε₃)))
+           → (∀ {St'} → (γ' : Env St' (Γ ⟨ mapᵉ ε₁ ⟩ ∷ A)) → Rel-Env γ'
+                → CRed' B ε₂ St' (env-C γ' N))
+           → ∀ {s A₀ ε₀ B₀ ε₀'} {U : toCtx St ⊢V⦂ (A₀ ‼ ε₀) ⇛ (B₀ ‼ ε₀')}
+           → Use (env-V γ (handler N H)) U
+           → {e : shapeᵛ A₀ ≡ s} → {M : toCtx St ⊢C⦂ A₀ ‼ ε₀}
+           → CRedˢ' s e ε₀ St M
+           --------------------------------------------------------------
+           → CRed' B₀ (ε₀ ·ₑ ε₀') St (handle M `with U)
 
-FL-handle {St = St} {Γ = Γ} {A = A} {B = B} {ε₁ = ε₁} γ pγ M H N pM pH pN =
-  subst (CRed' _ _ St) (sym (env-Cˢ-handle γ [] M H N))
-    (handle-CRed Hγ (env-Cˢ γ ([] ⟨ mapᵉ ε₁ ⟩ ∷ A) N) pM clause sequel)
+FL-handler {St = St} {Γ = Γ} {A = A} {B = B} {ε₁ = ε₁} γ pγ N H pH pN u pM =
+  handler-CRed clause sequel (subst (λ z → Use z _) (env-Vˢ-handler γ [] N H) u) pM
   where
     Hγ : Fam B (toCtx St ⟨ ⊤ᵣ ⟩)
     Hγ = env-Hˢ γ [] H
@@ -440,6 +441,14 @@ mutual
     subst (λ z → CRed' B ε _ (reach-val q z · W)) (sym (env-Vˢ-lam γ [] M))
       (CRed-expand APP (FL-C (reachᵉ γ q ∷ᵉ W) (pγ , pW) M))
 
+  -- At a handler the environment moves to the state the Kripke clause offers,
+  -- and `FL-handler` handles at the use.
+
+  FL-V {A = (A ‼ ε) ⇛ (B ‼ ε')} γ pγ (handler N H) q u M pM =
+    CRedˢ'-≡ˢ
+      (FL-handler (reachᵉ γ q) pγ N H
+        (λ γ' pγ' → FL-C γ' pγ' (H _ _)) (λ γ' pγ' → FL-C γ' pγ' N) u pM)
+
   FL-V {A = A} γ pγ (subV V p) =
     VRed-≡ᵛ A (sym (env-Vˢ-sub γ [] V)) (VRed-sub p (env-V γ V) (FL-V γ pγ V))
 
@@ -528,9 +537,16 @@ mutual
            subst (CRed' _ _ _) (sym (env-Cˢ-head (γ ⟨ q ⟩ᵉ) N V))
                  (FL-C ((γ ⟨ q ⟩ᵉ) ∷ᵉ V) (pγ , pV) N)))
 
-  FL-C γ pγ (handle M `with H `in N) =
-    FL-handle γ pγ M H N (FL-C γ pγ M)
-      (λ γ' pγ' → FL-C γ' pγ' (H _ _)) (λ γ' pγ' → FL-C γ' pγ' N)
+  -- Handling: the handler's Kripke clause at the state it already stands in,
+  -- used as itself.
+
+  FL-C γ pγ (handle M `with V) =
+    subst (CRed' _ _ _) (sym (env-Cˢ-handle γ [] M V))
+      (CRedˢ'-≡ˢ
+        (FL-V γ pγ V reach-id
+          (subst (λ z → Use z (env-V γ V))
+                 (sym (V-rename-id-≡ reach-renᵘ-id-≐ʳ (env-V γ V))) use-id)
+          (env-C γ M) (CRedˢ'-≡ˢ (FL-C γ pγ M))))
 
   FL-C γ pγ (recℕ V M N p) =
     FL-recℕ γ pγ V M N p (FL-C γ pγ M) (λ γ' pγ' → FL-C γ' pγ' N)

@@ -167,6 +167,8 @@ T-≤-stepᵀ B HANDLE-OP   g q = ηᵀ-case g q
 T-≤-stepᵀ B BOX         g q = ηᵀ-case g q
 T-≤-stepᵀ B UNBOX       g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB-APP     g q = ηᵀ-case g q
+T-≤-stepᵀ B SUB-HANDLE  g q = ηᵀ-case g q
+T-≤-stepᵀ B SUB-HANDLE-TRANS g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB-IF      g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB-CASEℕ   g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB-RECℕ    g q = ηᵀ-case g q
@@ -232,6 +234,8 @@ Uniform↝ HANDLE-RET          _            = ⊤
 Uniform↝ BOX                 _            = ⊤
 Uniform↝ UNBOX               _            = ⊤
 Uniform↝ SUB-APP             _            = ⊤
+Uniform↝ SUB-HANDLE          _            = ⊤
+Uniform↝ SUB-HANDLE-TRANS    _            = ⊤
 Uniform↝ SUB-IF              _            = ⊤
 Uniform↝ SUB-CASEℕ           _            = ⊤
 Uniform↝ SUB-RECℕ            _            = ⊤
@@ -296,6 +300,12 @@ stepᴾᶜ BOX                              pS (pV , pM)  = pM
 stepᴾᶜ (UNBOX {S = S} {z = z} {rel = rel} {p = p} {M = M}) pS pM =
   subᶜ M split-[] (subV (unbox-lookup S z rel) p) pM (unbox-lookupᴾ S z rel pS)
 stepᴾᶜ SUB-APP                          pS pM         = pM
+stepᴾᶜ (SUB-HANDLE {N = N} {p = p} {pε = pε}) pS (pM , pN , pH , uH) =
+    pM
+  , subCtxᴾ p (C-rename (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε))) N)
+      (renᶜ (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε))) N pN)
+  , pH , uH
+stepᴾᶜ SUB-HANDLE-TRANS                 pS pM         = pM
 stepᴾᶜ SUB-IF                           pS pM         = pM
 stepᴾᶜ SUB-CASEℕ                        pS pM         = pM
 stepᴾᶜ SUB-RECℕ                         pS pM         = pM
@@ -391,6 +401,15 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
      ∙ ∘ᵐ-assoc _ _ _
      ∙ ∘ᵐ-congˡ (T-≤-nat ⟦ p ⟧<:ᵛ s)
      ∙ ∘ᵐ-assoc _ _ _)
+↝-sound r@(SUB-HANDLE {M = M} {N = N} {H = H} {p = p} {pε = pε} {q = q ‼ₛ s})
+        pS (pM , pN , pH , uH) _ =
+  pure-step<: (step-≾ r) q (·ₑ-monoʳ-≾ₑ s)
+    (∘ᵐ-congˡ (sound-SUB-HANDLE M N H p pε q s pM pN pH uH)
+     ∙ ∘ᵐ-assoc _ _ _
+     ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+↝-sound {A = A} r@(SUB-HANDLE-TRANS {M = M} {V = V} {p = p} {p' = p'}) pS (pM , pV) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SUB-HANDLE-TRANS M V p p' pM pV))
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ↝-sound {A = A} r@(SUB-IF {V = V} {M = M} {N = N}) pS (pV , pM , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SUB-IF V M N pV pM pN))
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))

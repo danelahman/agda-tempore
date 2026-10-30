@@ -422,6 +422,8 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     T-≤ᵏ-implstep B BOX        g q = ηᵀ-step g q
     T-≤ᵏ-implstep B UNBOX      g q = ηᵀ-step g q
     T-≤ᵏ-implstep B SUB-APP    g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SUB-HANDLE g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SUB-HANDLE-TRANS g q = ηᵀ-step g q
     T-≤ᵏ-implstep B SUB-IF     g q = ηᵀ-step g q
     T-≤ᵏ-implstep B SUB-CASEℕ  g q = ηᵀ-step g q
     T-≤ᵏ-implstep B SUB-RECℕ   g q = ηᵀ-step g q

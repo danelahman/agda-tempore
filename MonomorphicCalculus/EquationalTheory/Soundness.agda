@@ -107,6 +107,10 @@ mutual
   soundᵛ (cons-cong p q)      (mp , mq)    (pV , pW) (pV' , pW') =
     ∘ᵐ-congʳ ⟨ soundᵛ p mp pV pV' , soundᵛ q mq pW pW' ⟩ᵐ-cong
   soundᵛ (lam-cong p)         mp           pM pM' = curryᵐ-cong (soundᶜ p mp pM pM')
+  soundᵛ (handler-cong {N = N} {N'} {H} {H'} q hs) (mq , mhs)
+         (pN , pH , uH) (pN' , pH' , uH') =
+    handler-≈ {N = N} {N'} {H} {H'} pN pH uH pN' pH' uH' (soundᶜ q mq pN pN')
+      (λ op ε'' → soundᶜ (hs op ε'') (mhs op ε'') (pH op ε'') (pH' op ε''))
   soundᵛ (subV-cong {w = w} {w' = w'} p) mp pV pW =
     ∘ᵐ-cong (⟦⟧<:ᵛ-irr w w') (soundᵛ p mp pV pW)
   -- eta
@@ -181,15 +185,8 @@ mutual
                   (substᵈ-≈ (ty-gty (arity _)) (soundᶜ q mq pM pM')))) ⟩ᵐ-cong)
   soundᶜ (delay-cong p)       mp           pM pM' =
     ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (soundᶜ p mp pM pM')))
-  soundᶜ (handle-cong {H = H} {H' = H'} p hs q) (mp , mhs , mq)
-         (pM , pN , pH , uH) (pM' , pN' , pH' , uH') =
-    ∘ᵐ-cong (T-alg-of-handlerᵀ-cong _
-              (λ op ε'' → ∘ᵐ-congˡ
-                            (soundᶜ (hs op ε'') (mhs op ε'')
-                                    (pH op ε'') (pH' op ε''))))
-            (⟨ ≈ᵐ-refl
-             , ∘ᵐ-cong (T-congᶠ (soundᶜ q mq pN pN'))
-                       (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , soundᶜ p mp pM pM' ⟩ᵐ-cong)) ⟩ᵐ-cong)
+  soundᶜ (handle-cong p q)    (mp , mq)    (pM , pV) (pM' , pV') =
+    ∘ᵐ-congʳ ⟨ soundᵛ q mq pV pV' , soundᶜ p mp pM pM' ⟩ᵐ-cong
   -- The two nodes name the same variable and differ only in an irrelevant
   -- bound (`unbox-cell-≈`); only the body needs the recursive call.
   soundᶜ (unbox-cong {x = x} {rel = rel} {rel' = rel'} {w = w} {w' = w'}
@@ -238,8 +235,8 @@ mutual
   soundᶜ (handle-return V H N)   _ = sound-handle-return V H N
   soundᶜ (handle-perform V M H N) _ = sound-handle-perform V M H N
   soundᶜ (handle-delay M H N)    _ = sound-handle-delay M H N
-  soundᶜ (handle-box V M H N)    _ = sound-handle-box V M H N
-  soundᶜ (handle-unbox x rel w M H N) _ = sound-handle-unbox x rel w M H N
+  soundᶜ (handle-box V M W)      _ = sound-handle-box V M W
+  soundᶜ (handle-unbox x rel w M V) _ = sound-handle-unbox x rel w M V
   -- axioms — modal
   soundᶜ (unbox-beta V K p w N)  m = sound-unbox-beta V K p w N (proj₁ m) (proj₂ m)
   soundᶜ (unbox-comm x₁ rel₁ w₁ x₂ rel₂ w₂ M) _ =
@@ -254,11 +251,11 @@ mutual
   soundᶜ (subC-perform w rel V M) _ = sound-subC-perform w rel V M
   soundᶜ (subC-delay w rel M)    _ = sound-subC-delay w rel M
   soundᶜ (subC-seq w rel M N)    _ = sound-subC-seq w rel M N
-  soundᶜ (subC-handle w rel M H N) _ = sound-subC-handle w rel M H N
+  soundᶜ (subC-handle w rel M V) _ = sound-subC-handle w rel M V
   soundᶜ (subC-box w V M)        _ = sound-subC-box w V M
   soundᶜ (subC-unbox x rel v w M) _ = sound-subC-unbox x rel v w M
   soundᶜ (coerce-seq-in rel M N) _ = sound-coerce-seq-in rel M N
-  soundᶜ (coerce-handle-in rel M H N) _ = sound-coerce-handle-in rel M H N
+  soundᶜ (subV-handle p pε q s M V) _ = sound-subV-handle p pε q s M V
   -- axioms — delay
   soundᶜ (delay-zero M)          _ = sound-delay-zero M
   soundᶜ (delay-delay M)         m = sound-delay-delay M m

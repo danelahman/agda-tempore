@@ -45,6 +45,7 @@ open import MonomorphicCalculus.Syntax.Terms     S
 ⟪ |List| A  ⟫ = List ⟪ A ⟫
 ⟪ Empty     ⟫ = ⊥
 ⟪ A ⇒ C     ⟫ = ⊤
+⟪ C ⇛ D     ⟫ = ⊤
 ⟪ [ ρ ] A   ⟫ = ⊤
 
 -- The action of a subtyping on data
@@ -59,6 +60,7 @@ open import MonomorphicCalculus.Syntax.Terms     S
 ⟪ |List|ₛ p  ⟫ˢ xs      = map ⟪ p ⟫ˢ xs
 ⟪ Emptyₛ     ⟫ˢ x       = x
 ⟪ p ⇒ₛ q     ⟫ˢ _       = tt
+⟪ p ⇛ₛ q     ⟫ˢ _       = tt
 ⟪ [ q ]ₛ p   ⟫ˢ _       = tt
 
 -- The order on data

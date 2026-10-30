@@ -235,17 +235,10 @@ recL-stepᵗ-nat {A = A} {B = B} {ε = ε} p n n' h e =
 
 -- Renaming preserves parametricity, and the interpretation is natural in the
 -- renaming. The two are defined simultaneously: transporting a handler's
--- clause-uniformity across a renaming (`renᶜ`'s `handle` case) needs the
+-- clause-uniformity across a renaming (`renᵛ`'s `handler` case) needs the
 -- naturality lemma for the clauses themselves.
 
 mutual
-
-  -- `TERMINATING`: every call descends to a subterm, except that the naturality
-  -- lemmas call `renᵛ`/`renᶜ` at their own term, and those reach the lemmas only
-  -- below it. The checker loses the descent from `handle` to its clauses, which
-  -- passes through `ren-clauses-uniform` with the whole clause family.
-
-  {-# TERMINATING #-}
 
   renᵛ : ∀ {Γ Γ' A} → (r : Ren [] Γ' Γ) → (V : Γ ⊢V⦂ A) → Paramᵛ V → Paramᵛ (V-rename r V)
   renᵛ r (var f x) _ = tt
@@ -261,6 +254,12 @@ mutual
   renᵛ r (inl V)   pV = renᵛ r V pV
   renᵛ r (inr V)   pV = renᵛ r V pV
   renᵛ r (lam M)   pM = renᶜ (cong-∷-ren r) M pM
+  -- the clauses' uniformity transports by `ren-clauses-uniform`
+  renᵛ r (handler N H) (pN , pH , uH) =
+      renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN
+    , (λ op ε'' → renᶜ (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r)))
+                     (H op ε'') (pH op ε''))
+    , ren-clauses-uniform (cong-⟨⟩-ren r) H pH uH
   renᵛ r (subV V p) pV = renᵛ r V pV
 
   renᶜ : ∀ {Γ Γ' C} → (r : Ren [] Γ' Γ) → (M : Γ ⊢C⦂ C) → Paramᶜ M → Paramᶜ (C-rename r M)
@@ -293,13 +292,7 @@ mutual
   renᶜ r (box _ V M)        (pV , pM) =
     renᵛ (cong-⟨⟩-ren r) V pV , renᶜ (cong-∷-ren r) M pM
   renᶜ r (subC M p)       pM        = renᶜ r M pM
-  -- the clauses' uniformity transports by `ren-clauses-uniform`
-  renᶜ r (handle_`with_`in M H N) (pM , pN , pH , uH) =
-      renᶜ r M pM
-    , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN
-    , (λ op ε'' → renᶜ (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r)))
-                     (H op ε'') (pH op ε''))
-    , ren-clauses-uniform (cong-⟨⟩-ren r) H pH uH
+  renᶜ r (handle M `with V) (pM , pV) = renᶜ r M pM , renᵛ r V pV
 
   -- Renaming a clause family's ambient context preserves the clauses'
   -- uniformity in the residual grade: the renaming acts on the ambient context
@@ -365,6 +358,32 @@ mutual
   V-rename-nat r (lam M) pM =
     ≈ᵐ-trans (curryᵐ-cong (C-rename-nat (cong-∷-ren r) M pM))
              (curryᵐ-nat ⟦ r ⟧ʳ (⟦ M ⟧ᶜᵗ pM))
+  -- the denoted family is natural in the context (`handler-famᵗ-reindex`): the
+  -- clauses are renamed under the barrier lock, the return clause under the
+  -- lock of the handled effect
+  V-rename-nat {Γ} {Γ'} r (handler N H) (pN , pH , uH) =
+    ≈ᵐ-trans (curryʰ-cong _ _ λ p →
+               handler-famᵗ-reindex ⟦ r ⟧ʳ h _ ⟦⟧ʰᵗ-nat _ _
+                 (C-rename-nat (cong-∷-ren (cong-⟨⟩-ren r)) N pN) p)
+             (≈ᵐ-sym (curryʰ-nat (handler-famᵗ h (⟦ N ⟧ᶜᵗ pN))
+                                 (handler-famᵗ-nat h (⟦ N ⟧ᶜᵗ pN)) ⟦ r ⟧ʳ))
+    where
+      h = ⟦_⟧ʰᵗ {Γ} H pH uH
+      ⟦⟧ʰᵗ-nat : ∀ op ε''
+               → clauseᵀ (⟦_⟧ʰᵗ {Γ'}
+                    (λ op ε'' → C-rename (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r)))
+                                  (H op ε''))
+                    (λ op ε'' →
+                       renᶜ (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r)))
+                         (H op ε'') (pH op ε''))
+                    (ren-clauses-uniform (cong-⟨⟩-ren r) H pH uH)) op ε''
+               ≈ᵐ clauseᵀ h op ε'' ∘ᵐ mapˣᵐ ⟦ cong-⟨⟩-ren {ρ = ⊤ᵣ} r ⟧ʳ idᵐ
+      ⟦⟧ʰᵗ-nat op ε'' =
+        ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r)))
+                              (H op ε'') (pH op ε'')))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (adapt-commute _ _ _))
+                  (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
   V-rename-nat r (subV V p) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
 
@@ -490,55 +509,10 @@ mutual
       (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))))
                 (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ
                   (≈ᵐ-sym (C-rename-nat (cong-⟨⟩-ren r) M pM))))))))))
-  C-rename-nat {Γ} {Γ'} r (handle_`with_`in {A} {B} {ε} {ε'} M H N)
-               (pM , pN , pH , uH) =
-    ≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , seq-nat ⟩ᵐ-cong))
-    (≈ᵐ-trans (∘ᵐ-congˡ alg-nat)
-    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨ ⟨⊤⟩-η-nat ⟦ r ⟧ʳ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+  C-rename-nat r (handle M `with V) (pM , pV) =
+    ≈ᵐ-trans (∘ᵐ-congʳ (⟨ V-rename-nat r V pV , C-rename-nat r M pM ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
-              (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
-    where
-      f : ⟦ Γ' ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
-      f = ⟦ cong-⟨⟩-ren r ⟧ʳ
-      seq-nat : Tᶠ (⟦ C-rename (cong-∷-ren (cong-⟨⟩-ren r)) N ⟧ᶜᵗ
-                      (renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN)) ∘ᵐ strᵀ
-                  ∘ᵐ ⟨ η⊣ , ⟦ C-rename r M ⟧ᶜᵗ (renᶜ r M pM) ⟩ᵐ
-              ≈ᵐ (Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ) ∘ᵐ ⟦ r ⟧ʳ
-      seq-nat =
-        ≈ᵐ-trans (∘ᵐ-congˡ (T-congᶠ (C-rename-nat (cong-∷-ren (cong-⟨⟩-ren r)) N pN)))
-        (≈ᵐ-trans (∘ᵐ-congˡ (T-∘ᵐ _ _))
-        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-        (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (strᵀ-natˡ _)))
-        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)))
-        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ
-                    (⟨ η⊣-nat ⟦ r ⟧ʳ
-                     , ≈ᵐ-trans (∘ᵐ-identityˡ _) (C-rename-nat r M pM) ⟩ᵐ-cong)))
-        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
-        (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-                  (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
-      ⟦⟧ʰᵗ-nat : ∀ op ε''
-               → clauseᵀ (⟦_⟧ʰᵗ {Γ'}
-                    (λ op ε'' → C-rename (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r)))
-                                  (H op ε''))
-                    (λ op ε'' →
-                       renᶜ (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r)))
-                         (H op ε'') (pH op ε''))
-                    -- the uniformity component of `renᶜ`'s handle tuple
-                    (proj₂ (proj₂ (proj₂ (renᶜ r (handle M `with H `in N)
-                                            (pM , pN , pH , uH)))))) op ε''
-               ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
-      ⟦⟧ʰᵗ-nat op ε'' =
-        ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r)))
-                              (H op ε'') (pH op ε'')))
-        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-        (≈ᵐ-trans (∘ᵐ-congʳ (adapt-commute _ _ _))
-                  (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-      alg-nat = T-alg-of-handlerᵀ-natᴾ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) (⟨⊤⟩-eternalᵒ ⟦ Γ' ⟧ᶜᵗˣ)
-                  f (⟨⊤⟩-free-necᵉ-nat ⟦ r ⟧ʳ) (⟦_⟧ʰᵗ {Γ} H pH uH) _ ⟦⟧ʰᵗ-nat
+              (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
   C-rename-nat r (unbox x rel p M) pM =
     ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren r) M pM))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)

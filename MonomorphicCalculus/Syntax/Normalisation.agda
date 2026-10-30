@@ -6,8 +6,8 @@
 -- not itself determine: an application's argument, a `perform`'s      --
 -- parameter, the head and tail of a `cons`, the operands of a `cmp`,  --
 -- the branches of `if`, `caseℕ`, `case+` and `caseL`, the base and    --
--- step of `recℕ` and `recL`, a handler's clauses and its              --
--- continuation, and the root.                                         --
+-- step of `recℕ` and `recL`, a handler's clauses and its return      --
+-- clause, the handler of a `handle`, and the root.                    --
 -- `NfV`/`NfC` pin those positions and `C-normal-form` is the theorem. --
 --                                                                     --
 -- The tool is context subsumption along `_≼ᶜ_`, which lowers binder   --
@@ -123,6 +123,23 @@ data NfV where
 
   lamⁿ   : ∀ {Γ A B ε} {M : Γ ∷ A ⊢C⦂ B ‼ ε} → NfC M → NfV (lam M)
 
+  -- the clauses and the return clause meet at the handler's result type;
+  -- the clauses' effects are fixed by the rule, the return clause's is not
+
+  handlerⁿ : ∀ {Γ A B ε ε₁ B₁}
+               {Bh : Op → E → VType} {εh : Op → E → E}
+               {H : (op : Op) → (ε'' : E) →
+                      Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                        ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                      ⊢C⦂ Bh op ε'' ‼ εh op ε''}
+               {p : (op : Op) → (ε'' : E) →
+                      (Bh op ε'' ‼ εh op ε'') <:ᶜ (B ‼ (op-grade op ·ₑ ε''))}
+               {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B₁ ‼ ε₁} {q : B₁ <:ᵛ B}
+           → NfC N
+           → ((op : Op) → (ε'' : E) → NfC (H op ε''))
+           → NfV (handler (subC N (q ‼ₛ ≾ₑ-refl))
+                          (λ op ε'' → subC (H op ε'') (p op ε'')))
+
 data NfC where
 
   returnⁿ  : ∀ {Γ A} {V : Γ ⊢V⦂ A} → NfV V → NfC (return V)
@@ -201,24 +218,11 @@ data NfC where
 
   delayⁿ   : ∀ {Γ A ε τ} {M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε} → NfC M → NfC (delay τ M)
 
-  -- the clauses and the continuation meet at the handler's result type; the
-  -- clauses' effects are fixed by the rule, the continuation's is not
+  -- the handler meets the type of the handled computation
 
-  handleⁿ  : ∀ {Γ A B ε ε₁ B₁}
-               {M : Γ ⊢C⦂ A ‼ ε}
-               {Bh : Op → E → VType} {εh : Op → E → E}
-               {H : (op : Op) → (ε'' : E) →
-                      Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                        ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                      ⊢C⦂ Bh op ε'' ‼ εh op ε''}
-               {p : (op : Op) → (ε'' : E) →
-                      (Bh op ε'' ‼ εh op ε'') <:ᶜ (B ‼ (op-grade op ·ₑ ε''))}
-               {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B₁ ‼ ε₁} {q : B₁ <:ᵛ B}
-           → NfC M
-           → ((op : Op) → (ε'' : E) → NfC (H op ε''))
-           → NfC N
-           → NfC (handle M `with (λ op ε'' → subC (H op ε'') (p op ε''))
-                           `in (subC N (q ‼ₛ ≾ₑ-refl)))
+  handleⁿ  : ∀ {Γ A ε C B ε'} {M : Γ ⊢C⦂ A ‼ ε} {V : Γ ⊢V⦂ C ⇛ (B ‼ ε')}
+               {p : (A ‼ ε) <:ᶜ C}
+           → NfC M → NfV V → NfC (handle M `with subV V (p ⇛ₛ <:ᶜ-refl (B ‼ ε')))
 
   -- the continuation binds the payload at its declared type
 
@@ -298,6 +302,20 @@ V-subCtx c (consⁿ {p = p} {q = q} nV nW) with V-subCtx c nV | V-subCtx c nW
 V-subCtx c (lamⁿ {A = A} nM) with C-subCtx (≼-∷ c (<:ᵛ-refl A)) nM
 ... | nfc M' sv se n e =
   nfv (lam M') (<:ᵛ-refl A ⇒ₛ (sv ‼ₛ se)) (lamⁿ n) (cong lam e)
+V-subCtx c (handlerⁿ {A = A} {p = p} {q = q} nN nH)
+  with C-subCtx (≼-∷ (≼-⟨⟩ c ≾ᵣ-refl) (<:ᵛ-refl A)) nN
+... | nfc N' sB sε₁ nN' eN =
+  nfv (handler (subC N' (<:ᵛ-trans sB q ‼ₛ ≾ₑ-refl))
+               (λ op ε'' →
+                  subC (rtm (hr op ε''))
+                       (<:ᶜ-trans (rsubv (hr op ε'') ‼ₛ rsube (hr op ε'')) (p op ε''))))
+      (<:ᶜ-refl _ ⇛ₛ (<:ᵛ-refl _ ‼ₛ sε₁))
+      (handlerⁿ nN' (λ op ε'' → rnf (hr op ε'')))
+      (cong₂ handler eN (fun-ext (λ op → fun-ext (λ ε'' → rer (hr op ε'')))))
+  where
+    hr : (op : Op) → (ε'' : E) → NfResC _ _
+    hr op ε'' =
+      C-subCtx (≼-∷ (≼-∷ (≼-⟨⟩ c ≾ᵣ-refl) (<:ᵛ-refl _)) (<:ᵛ-refl _)) (nH op ε'')
 
 C-subCtx c (returnⁿ nV) with V-subCtx c nV
 ... | nfv V' s n e =
@@ -381,22 +399,10 @@ C-subCtx c (performⁿ {op = op} {p = p} nV nM) with V-subCtx c nV
 C-subCtx c (delayⁿ {τ = τ} nM) with C-subCtx (≼-⟨⟩ c ≾ᵣ-refl) nM
 ... | nfc M' sv se nM' eM =
   nfc (delay τ M') sv (·ₑ-monoʳ-≾ₑ se) (delayⁿ nM') (cong (delay τ) eM)
-C-subCtx c (handleⁿ {p = p} {q = q} nM nH nN) with C-subCtx c nM
-... | nfc M' sA sε nM' eM
-      with C-subCtx (≼-∷ (≼-⟨⟩ c (map-monotoneᵉ sε)) sA) nN
-...   | nfc N' sB sε₁ nN' eN =
-  nfc (handle M' `with (λ op ε'' →
-         subC (rtm (hr op ε''))
-              (<:ᶜ-trans (rsubv (hr op ε'') ‼ₛ rsube (hr op ε'')) (p op ε'')))
-                 `in (subC N' (<:ᵛ-trans sB q ‼ₛ ≾ₑ-refl)))
-      (<:ᵛ-refl _) (·ₑ-mono sε sε₁)
-      (handleⁿ nM' (λ op ε'' → rnf (hr op ε'')) nN')
-      (cong₃ (λ a b d → handle a `with b `in d) eM
-             (fun-ext (λ op → fun-ext (λ ε'' → rer (hr op ε'')))) eN)
-  where
-    hr : (op : Op) → (ε'' : E) → NfResC _ _
-    hr op ε'' =
-      C-subCtx (≼-∷ (≼-∷ (≼-⟨⟩ c ≾ᵣ-refl) (<:ᵛ-refl _)) (<:ᵛ-refl _)) (nH op ε'')
+C-subCtx c (handleⁿ {p = p} nM nV) with C-subCtx c nM | V-subCtx c nV
+... | nfc M' sA sε nM' eM | nfv V' (sC ⇛ₛ (sB ‼ₛ sε')) nV' eV =
+  nfc (handle M' `with subV V' (<:ᶜ-trans (sA ‼ₛ sε) (<:ᶜ-trans p sC) ⇛ₛ <:ᶜ-refl _))
+      sB (·ₑ-mono sε sε') (handleⁿ nM' nV') (cong₂ handle_`with_ eM eV)
 C-subCtx c (unboxⁿ {x = x} {rel = rel} nN) with ≼ᶜ-lookup c x
 ... | lkp y ([ g ]ₛ sp) b e with C-subCtx (≼-∷ c sp) nN
 ...   | nfc N' sv se nN' eN =
@@ -446,6 +452,16 @@ V-normalise (cons V W) with V-normalise V | V-normalise W
 V-normalise (lam {A = A} {C = B ‼ ε} M) with C-normalise M
 ... | nfc M' sv se n e =
   nfv (lam M') (<:ᵛ-refl A ⇒ₛ (sv ‼ₛ se)) (lamⁿ n) (cong lam e)
+V-normalise (handler N H) with C-normalise N
+... | nfc N' sB sε₁ nN eN =
+  nfv (handler (subC N' (sB ‼ₛ ≾ₑ-refl))
+               (λ op ε'' → subC (rtm (hr op ε'')) (rsubv (hr op ε'') ‼ₛ rsube (hr op ε''))))
+      (<:ᶜ-refl _ ⇛ₛ (<:ᵛ-refl _ ‼ₛ sε₁))
+      (handlerⁿ nN (λ op ε'' → rnf (hr op ε'')))
+      (cong₂ handler eN (fun-ext (λ op → fun-ext (λ ε'' → rer (hr op ε'')))))
+  where
+    hr : (op : Op) → (ε'' : E) → NfResC _ _
+    hr op ε'' = C-normalise (H op ε'')
 V-normalise (subV V p) with V-normalise V
 ... | nfv V' s n e =
   nfv V' (<:ᵛ-trans s p) n e
@@ -531,23 +547,10 @@ C-normalise (perform op V M) with V-normalise V
 C-normalise (delay τ M) with C-normalise M
 ... | nfc M' sv se nM eM =
   nfc (delay τ M') sv (·ₑ-monoʳ-≾ₑ se) (delayⁿ nM) (cong (delay τ) eM)
-C-normalise (handle_`with_`in M H N) with C-normalise M
-... | nfc M' sA sε nM eM with C-normalise N
-...   | nfc N₁ sB sε₁ nN eN
-        with C-subCtx (≼-∷ (≼-⟨⟩ (≼ᶜ-refl _) (map-monotoneᵉ sε)) sA) nN
-...     | nfc N' sB' sε₂ nN' eN' =
-  nfc (handle M' `with (λ op ε'' →
-         subC (rtm (hr op ε''))
-              (rsubv (hr op ε'') ‼ₛ rsube (hr op ε'')))
-                 `in (subC N' (<:ᵛ-trans sB' sB ‼ₛ ≾ₑ-refl)))
-      (<:ᵛ-refl _) (·ₑ-mono sε (≾ₑ-trans sε₂ sε₁))
-      (handleⁿ nM (λ op ε'' → rnf (hr op ε'')) nN')
-      (cong₃ (λ a b d → handle a `with b `in d) eM
-             (fun-ext (λ op → fun-ext (λ ε'' → rer (hr op ε''))))
-             (trans eN' eN))
-  where
-    hr : (op : Op) → (ε'' : E) → NfResC _ _
-    hr op ε'' = C-normalise (H op ε'')
+C-normalise (handle M `with V) with C-normalise M | V-normalise V
+... | nfc M' sA sε nM eM | nfv V' (sC ⇛ₛ (sB ‼ₛ sε')) nV eV =
+  nfc (handle M' `with subV V' (<:ᶜ-trans (sA ‼ₛ sε) sC ⇛ₛ <:ᶜ-refl _))
+      sB (·ₑ-mono sε sε') (handleⁿ nM nV) (cong₂ handle_`with_ eM eV)
 C-normalise (unbox x rel p N) with C-normalise N
 ... | nfc N₁ sv se nN eN with C-subCtx (≼-∷ (≼ᶜ-refl _) p) nN
 ...   | nfc N' sv' se' nN' eN' =

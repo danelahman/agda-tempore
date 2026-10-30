@@ -4,7 +4,8 @@
 -- Value types are interpreted as objects: base types via the           --
 -- `GroundTypes` interpretation, the finite-product/-coproduct and       --
 -- function-type formers via the cartesian closed structure, and the     --
--- box modality `[ ρ ] A` via `[ ρ ]ᵒ`. A computation type               --
+-- box modality `[ ρ ] A` via `[ ρ ]ᵒ`, a handler type via `Hᵒ`. A     --
+-- computation type                                                    --
 -- `A ‼ ε` is the graded monad applied to the value type, `Tᵒ ⟦ A ⟧ ε`.  --
 --                                                                    --
 -- The two interpretations are mutually recursive: a function type       --
@@ -55,6 +56,7 @@ mutual
   ⟦ |List| A ⟧ᵛ = Listᵐ ⟦ A ⟧ᵛ
   ⟦ Empty    ⟧ᵛ = 𝟘ᵐ
   ⟦ A ⇒ C    ⟧ᵛ = ⟦ A ⟧ᵛ ⇒ᵐ ⟦ C ⟧ᶜ
+  ⟦ (A ‼ ε) ⇛ (B ‼ ε') ⟧ᵛ = Hᵒ ⟦ A ⟧ᵛ ε ⟦ B ⟧ᵛ ε'
   ⟦ [ ρ ] A  ⟧ᵛ = [ ρ ]ᵒ ⟦ A ⟧ᵛ
 
   ⟦_⟧ᶜ : CType → Obj

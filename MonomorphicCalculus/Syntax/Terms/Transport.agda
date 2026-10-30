@@ -181,23 +181,26 @@ cast-box : ∀ {Γ Γ' A C ρ} → (e : Γ ≡ Γ')
          ≡ box _ (castᵛ (cong (_⟨ ρ ⟩) e) V) (castᶜ (cong (_∷ [ ρ ] A) e) M)
 cast-box refl = refl
 
+cast-handler : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
+             → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+             → {H : (op : Op) → (ε'' : E) →
+                      Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                        ∷ [ mapᵉ (op-grade op) ]
+                            (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                      ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
+             → castᵛ e (handler N H)
+             ≡ handler (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) e) N)
+                       (λ op ε'' →
+                          castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                                                ∷ [ mapᵉ (op-grade op) ]
+                                                    (type-of-gtype (arity op) ⇒ B ‼ ε''))
+                                 e)
+                                (H op ε''))
+cast-handler refl = refl
+
 cast-handle : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
-            → {M : Γ ⊢C⦂ A ‼ ε}
-            → {H : (op : Op) → (ε'' : E) →
-                     Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                       ∷ [ mapᵉ (op-grade op) ]
-                           (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                     ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
-            → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
-            → castᶜ e (handle M `with H `in N)
-            ≡ handle (castᶜ e M)
-              `with (λ op ε'' →
-                       castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                                             ∷ [ mapᵉ (op-grade op) ]
-                                                 (type-of-gtype (arity op) ⇒ B ‼ ε''))
-                              e)
-                             (H op ε''))
-              `in (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) e) N)
+            → {M : Γ ⊢C⦂ A ‼ ε} → {V : Γ ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε')}
+            → castᶜ e (handle M `with V) ≡ handle (castᶜ e M) `with (castᵛ e V)
 cast-handle refl = refl
 
 -- The same, for a caller that has the transported splitting in hand rather than
@@ -269,7 +272,7 @@ Fam : VType → Ctx → Set
 Fam B Γ₀ = (op : Op) → (ε : E) → Cl B op ε Γ₀
 
 -- Relocating a clause along an equality of the context it is barred from.
--- Written in exactly the shape `cast-handle` produces, so that the two agree on
+-- Written in exactly the shape `cast-handler` produces, so that the two agree on
 -- the nose and no `castᶜ-irr` is needed at any use site.
 
 Cl-cast : ∀ {Γ Γ' B} → (op : Op) → (ε : E) → Γ ≡ Γ'

@@ -122,6 +122,22 @@ mutual
             -------------
             → Γ ⊢V⦂ A ⇒ C
 
+    -- handlers: the return clause binds the handled computation's result
+    -- behind the lock of its effect, as the continuation of `_⨟_`. An
+    -- operation clause runs at a time the handler does not fix, so its view
+    -- of the ambient context `Γ` is barred by the `≾ᵣ`-greatest lock
+    -- `⟨ ⊤ᵣ ⟩`; the parameter and boxed continuation are added on top.
+
+    handler : {A B : VType}
+            → {ε ε' : E}
+            → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'
+            → ((op : Op) → (ε'' : E) →
+                 Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                   ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                 ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+            ---------------------------------------------------------------------
+            → Γ ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε')
+
     -- subsumption
     --
     -- Erased: a value is retyped, never transformed, so no coercion is
@@ -296,20 +312,12 @@ mutual
 
     -- effect handling
 
-    -- A clause runs at a time the handler does not fix, so its view of the
-    -- ambient context `Γ` is barred by the `≾ᵣ`-greatest lock `⟨ ⊤ᵣ ⟩`; the
-    -- parameter and boxed continuation are added on top.
-
-    handle_`with_`in
+    handle_`with_
             : {A B : VType}
             → {ε ε' : E}
             → Γ ⊢C⦂ A ‼ ε
-            → ((op : Op) → (ε'' : E) →
-                 Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                   ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                 ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-            → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'
-            ---------------------------------------------------------------------
+            → Γ ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε')
+            --------------------------
             → Γ ⊢C⦂ B ‼ (ε ·ₑ ε')
 
     -- unboxing a boxed value/resource after enough time has passed for it to be ready
@@ -347,6 +355,20 @@ mutual
             → C <:ᶜ C'
             -----------
             → Γ ⊢C⦂ C'
+
+-- Handling with a handler written in place
+
+handle_`with_`in_ : ∀ {Γ A B ε ε'}
+                  → Γ ⊢C⦂ A ‼ ε
+                  → ((op : Op) → (ε'' : E) →
+                       Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                         ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                       ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+                  → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'
+                  ---------------------------------------------------------------------
+                  → Γ ⊢C⦂ B ‼ (ε ·ₑ ε')
+
+handle M `with H `in N = handle M `with handler N H
 
 -- Sub-effecting, recovered as subsumption at an effect-only derivation
 

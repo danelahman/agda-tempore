@@ -82,7 +82,8 @@ sound-handle-return : ∀ {Γ A B ε}
   → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
   → Soundᶜ== (handle-return V H N)
 sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
-    ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
+    handle-in-β (return V) H N pV pN pH uH
+  ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
               ,   ∘ᵐ-congʳ (  ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
                                                 ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
                             ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -190,97 +191,50 @@ module Reindex
       T-alg-of-handlerᵀ-natᴾ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) (⟨⊤⟩-eternalᵒ ⟦ Γ' ⟧ᶜᵗˣ)
         f f-necᵉ (⟦_⟧ʰᵗ {Γ} H pH uH) (⟦_⟧ʰᵗ {Γ'} Hᵣ pH' uH') clause-nat
 
--- Crossing a binder: weakening under the barrier is the free-algebra morphism
--- induced by the barrier itself.
+-- `handle-box`, `handle-unbox`: a binder commutes with handling by any
+-- handler value, which is weakened past it.
 
-wk-free : ∀ {Γ A}
-        → ⟦ cong-⟨⟩-ren {[]} {Γ ∷ A} {Γ} {⊤ᵣ} wk-ren ⟧ʳ
-        ≈ᵐ ⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ (⟨⊤⟩-η ∘ᵐ fstᵐ)
-wk-free =
-  ≈ᵐ-sym (  ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)
-          ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-          ∙ ∘ᵐ-congˡ ⟨⊤⟩-μ∘Tη≡id
-          ∙ ∘ᵐ-identityˡ _)
-
--- `handle-box`: a `box` binder commutes with handling.
+handle-wk : ∀ {Γ A B C ε ε'}
+          → (W : Γ ⊢V⦂ (B ‼ ε) ⇛ (C ‼ ε')) → (pW : Paramᵛ W)
+          → (pW' : Paramᵛ (V-rename (wk-ren {Δ = Γ} {A = A}) W))
+          → (m : ⟦ Γ ∷ A ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ B ⟧ᵛ ε)
+          → (g : ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ∷ A ⟧ᶜᵗˣ) → fstᵐ ∘ᵐ g ≈ᵐ idᵐ
+          → appʰ ≾ₑ-refl ∘ᵐ ⟨ ⟦ W ⟧ᵛᵗ pW , m ∘ᵐ g ⟩ᵐ
+          ≈ᵐ (appʰ ≾ₑ-refl ∘ᵐ ⟨ ⟦ V-rename wk-ren W ⟧ᵛᵗ pW' , m ⟩ᵐ) ∘ᵐ g
+handle-wk W pW pW' m g fg =
+  ≈ᵐ-sym (  ∘ᵐ-assoc _ _ _
+          ∙ ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _
+                      ∙ ⟨   ∘ᵐ-congˡ (  ⟦⟧ᵛᵗ-irr (V-rename wk-ren W) pW' (renᵛ wk-ren W pW)
+                                      ∙ V-rename-nat wk-ren W pW)
+                          ∙ ∘ᵐ-assoc _ _ _
+                          ∙ ∘ᵐ-congʳ fg
+                          ∙ ∘ᵐ-identityʳ _
+                        , ≈ᵐ-refl ⟩ᵐ-cong))
 
 sound-handle-box : ∀ {Γ A B C ρ ε ε'}
   → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
   → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
-  → (H : (op : Op) → (ε'' : E)
-       → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
-         ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
-  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
-  → Soundᶜ== (handle-box V M H N)
-sound-handle-box {Γ} {A} {B} {C} {ρ} V M H N ((pV , pM) , pN , pH , uH)
-                 (pV₂ , pM₂ , pN₂ , pH₂ , uH₂) =
-  ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (box _ V (handle M `with R.Hᵣ `in (C-rename r N)))
-              (pV₂ , (pM₂ , pN₂ , pH₂ , uH₂))
-              (pV , (pM , renᶜ r N pN , pH₂ , uH₂))
-          ∙ ∘ᵐ-congˡ (  ∘ᵐ-congˡ (R.alg-nat pH₂ uH₂)
-                      ∙ ∘ᵐ-assoc _ _ _
-                      ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
-                                  ∙ ⟨ R.barrier , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
-          ∙ ∘ᵐ-assoc _ _ _
-          ∙ ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _
-                      ∙ ⟨   ∘ᵐ-assoc _ _ _
-                          ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
-                          ∙ ∘ᵐ-identityʳ _
-                        ,   ∘ᵐ-congˡ (∘ᵐ-congˡ (T-congᶠ (C-rename-nat r N pN)))
-                          ∙ ∘ᵐ-assoc _ _ _
-                          ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-                          ∙ str-extend (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) gb fstᵐ
-                              (⟨⟩ᵐ-fstᵐ _ _) ⟩ᵐ-cong))
+  → (W : Γ ⊢V⦂ (B ‼ ε) ⇛ (C ‼ ε'))
+  → Soundᶜ== (handle-box V M W)
+sound-handle-box {ρ = ρ} V M W ((pV , pM) , pW) (pV₂ , pM₂ , pW₂) =
+    handle-wk W pW pW₂ (⟦ M ⟧ᶜᵗ pM) gb (⟨⟩ᵐ-fstᵐ _ _)
+  ∙ ∘ᵐ-cong (∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ⟦⟧ᶜᵗ-irr M pM pM₂ ⟩ᵐ-cong)
+            ⟨ ≈ᵐ-refl , ∘ᵐ-congˡ ([]-congᶠ (⟦⟧ᵛᵗ-irr V pV pV₂)) ⟩ᵐ-cong
   where
-    r  = cong-∷-ren (cong-⟨⟩-ren wk-ren)
     gb = ⟨ idᵐ , [ ρ ]ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ η⊣ ⟩ᵐ
-
-    module R = Reindex (cong-⟨⟩-ren (wk-ren {Δ = Γ} {A = [ ρ ] A}))
-                       (⟨⊤⟩-η ∘ᵐ fstᵐ) (wk-free {Γ} {[ ρ ] A}) H pH uH
-
--- `handle-unbox`: the same for an `unbox` binder.
 
 sound-handle-unbox : ∀ {Γ A A₀ B C ρ₀ ρ' ε ε'}
   → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ)
   → (rel : ρ' ≾ᵣ ρ₀)
   → (w : A₀ <:ᵛ A)
   → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
-  → (H : (op : Op) → (ε'' : E)
-       → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
-         ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
-  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
-  → Soundᶜ== (handle-unbox x rel w M H N)
-sound-handle-unbox {Γ} {A} {A₀} {B} {C} {ρ₀} {ρ'} {ε} {ε'} x rel w M H N
-                   (pM , pN , pH , uH)
-                   (pM₂ , pN₂ , pH₂ , uH₂) =
-  ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x rel w (handle M `with R.Hᵣ `in (C-rename r N)))
-              (pM₂ , pN₂ , pH₂ , uH₂)
-              (pM , renᶜ r N pN , pH₂ , uH₂)
-          ∙ unbox-def x rel w (handle M `with R.Hᵣ `in (C-rename r N))
-              (pM , renᶜ r N pN , pH₂ , uH₂)
-          ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (R.alg-nat pH₂ uH₂))
-          ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
-          ∙ ∘ᵐ-assoc _ _ _
-          ∙ ∘ᵐ-congʳ (  ∘ᵐ-congˡ (mapˣᵐ-∘⟨⟩ _ _ _ _)
-                      ∙ ⟨⟩ᵐ-∘ _ _ _
-                      ∙ ⟨   ∘ᵐ-congˡ R.barrier
-                          ∙ ∘ᵐ-assoc _ _ _
-                          ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
-                          ∙ ∘ᵐ-identityʳ _
-                        ,   ∘ᵐ-congˡ (  ∘ᵐ-identityˡ _
-                                      ∙ ∘ᵐ-congˡ (T-congᶠ (C-rename-nat r N pN)))
-                          ∙ ∘ᵐ-assoc _ _ _
-                          ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-                          ∙ str-extend (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) gu fstᵐ
-                              (⟨⟩ᵐ-fstᵐ _ _) ⟩ᵐ-cong))
+  → (V : Γ ⊢V⦂ (B ‼ ε) ⇛ (C ‼ ε'))
+  → Soundᶜ== (handle-unbox x rel w M V)
+sound-handle-unbox x rel w M V (pM , pV) (pM₂ , pV₂) =
+    handle-wk V pV pV₂ (⟦ M ⟧ᶜᵗ pM) gu (⟨⟩ᵐ-fstᵐ _ _)
+  ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ⟦⟧ᶜᵗ-irr M pM pM₂ ⟩ᵐ-cong)
   where
-    r  = cong-∷-ren (cong-⟨⟩-ren wk-ren)
     gu = ⟨ idᵐ , ⟦ w ⟧<:ᵛ ∘ᵐ ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
-
-    module R = Reindex (cong-⟨⟩-ren (wk-ren {Δ = Γ} {A = A}))
-                       (⟨⊤⟩-η ∘ᵐ fstᵐ) (wk-free {Γ} {A}) H pH uH
 
 -- `handle-delay`: the handled computation's `delay` becomes a `delay` of the
 -- handled computation.
@@ -294,7 +248,8 @@ sound-handle-delay : ∀ {Γ A B τ ε ε'}
   → (N : Γ ⟨ mapᵉ (of-durᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
   → Soundᶜ== (handle-delay M H N)
 sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
-    ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , str-delay τ (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) ⟩ᵐ-cong)
+    handle-in-β (delay τ M) H N pM pN pH uH
+  ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , str-delay τ (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong
               ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -337,7 +292,9 @@ sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
                       ∙ ∘ᵐ-congˡ (≈ᵐ-sym (R.alg-nat R.pHᵣ R.uHᵣ))))))
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ e (delay τ (handle M `with R.Hᵣ `in (C-rename r N))))
                 pR pRc
-            ∙ sound-ε-≃ e (delay τ (handle M `with R.Hᵣ `in (C-rename r N))) pRc)
+            ∙ sound-ε-≃ e (delay τ (handle M `with R.Hᵣ `in (C-rename r N))) pRc
+            ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ
+                (handle-in-β M R.Hᵣ (C-rename r N) pM (renᶜ r N pN) R.pHᵣ R.uHᵣ)))))
   where
     e = ≃ₑ-sym (·ₑ-assoc (of-durᵉ τ) ε ε')
     r   = cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))

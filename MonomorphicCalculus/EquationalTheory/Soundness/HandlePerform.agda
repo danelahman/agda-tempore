@@ -200,7 +200,8 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
       ∙ ∘ᵐ-congˡ ([]-congᶠ (cont-collapse _ _ _))
 
     assembly =
-        ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
+        handle-in-β (perform op V M) H N (pV , pM) pN pH uH
+      ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
                   , str-op op (ty-gty (arity op)) Vp (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
                       ⟦ ren ⟧ʳ ern ⟩ᵐ-cong)
       ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong

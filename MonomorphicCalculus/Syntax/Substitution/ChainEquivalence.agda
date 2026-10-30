@@ -429,21 +429,25 @@ C-sub-delay : ∀ {Γ Γ' A ε} → (σ : Sub [] Γ Γ') → (τ : 𝔻)
 C-sub-delay []ˢ      τ M = refl
 C-sub-delay (s ◅ σ) τ M = cong (C-sub₀ s) (C-sub-delay σ τ M)
 
+V-sub-handler : ∀ {Γ Γ' A B ε ε'} → (σ : Sub [] Γ Γ')
+              → (N : Γ' ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε')
+              → (H : (op : Op) → (ε'' : E)
+                   → Γ' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                         ∷ [ mapᵉ (op-grade op) ]
+                             (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                     ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+              → V-sub σ (handler N H)
+              ≡ handler (C-sub (cong-∷-subˢ (cong-⟨⟩-subˢ σ)) N)
+                        (λ op ε'' →
+                           C-sub (cong-∷-subˢ (cong-∷-subˢ (cong-⟨⟩-subˢ σ))) (H op ε''))
+V-sub-handler []ˢ      N H = refl
+V-sub-handler (s ◅ σ) N H = cong (V-sub₀ s) (V-sub-handler σ N H)
+
 C-sub-handle : ∀ {Γ Γ' A B ε ε'} → (σ : Sub [] Γ Γ')
-             → (M : Γ' ⊢C⦂ A ‼ ε)
-             → (H : (op : Op) → (ε'' : E)
-                  → Γ' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                        ∷ [ mapᵉ (op-grade op) ]
-                            (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                    ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-             → (N : Γ' ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε')
-             → C-sub σ (handle M `with H `in N)
-             ≡ handle C-sub σ M
-               `with (λ op ε'' →
-                        C-sub (cong-∷-subˢ (cong-∷-subˢ (cong-⟨⟩-subˢ σ))) (H op ε''))
-               `in (C-sub (cong-∷-subˢ (cong-⟨⟩-subˢ σ)) N)
-C-sub-handle []ˢ      M H N = refl
-C-sub-handle (s ◅ σ) M H N = cong (C-sub₀ s) (C-sub-handle σ M H N)
+             → (M : Γ' ⊢C⦂ A ‼ ε) → (V : Γ' ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε'))
+             → C-sub σ (handle M `with V) ≡ handle C-sub σ M `with V-sub σ V
+C-sub-handle []ˢ      M V = refl
+C-sub-handle (s ◅ σ) M V = cong (C-sub₀ s) (C-sub-handle σ M V)
 
 C-sub-unbox : ∀ {Γ Γ' A A₀ C ρ₀ ρ'} → (σ : Sub [] Γ Γ')
             → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ') → (rel : ρ' ≾ᵣ ρ₀) → (p : A₀ <:ᵛ A)
@@ -517,6 +521,13 @@ mutual
     trans (V-sub-lam σ M)
       (trans (cong lam (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) M))
              (sym (V-sub-lam σ' M)))
+  V-sub-≐ˢ {σ = σ} {σ' = σ'} h (handler N H) =
+    trans (V-sub-handler σ N H)
+      (trans (handler-≡ (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h)) N)
+                (λ op ε'' →
+                   C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h)))
+                            (H op ε'')))
+             (sym (V-sub-handler σ' N H)))
   V-sub-≐ˢ {σ = σ} {σ' = σ'} h (subV V p) =
     trans (V-sub-subV σ p V)
       (trans (subV-≡ (V-sub-≐ˢ h V)) (sym (V-sub-subV σ' p V)))
@@ -588,14 +599,10 @@ mutual
     trans (C-sub-delay σ τ M)
       (trans (cong (delay τ) (C-sub-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h) M))
              (sym (C-sub-delay σ' τ M)))
-  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (handle M `with H `in N) =
-    trans (C-sub-handle σ M H N)
-      (trans (handle-≡ (C-sub-≐ˢ h M)
-                (λ op ε'' →
-                   C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h)))
-                            (H op ε''))
-                (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h)) N))
-             (sym (C-sub-handle σ' M H N)))
+  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (handle M `with V) =
+    trans (C-sub-handle σ M V)
+      (trans (cong₂ handle_`with_ (C-sub-≐ˢ h M) (V-sub-≐ˢ h V))
+             (sym (C-sub-handle σ' M V)))
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (unbox x rel p M) =
     trans (proj₂ (proj₂ (C-sub-unbox σ x rel p M)))
       (trans (unbox-≡ (atᵗ h x) (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) M))

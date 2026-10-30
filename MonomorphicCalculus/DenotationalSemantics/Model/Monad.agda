@@ -11,6 +11,8 @@
 -- the monoid laws of `·ₑ`, and `T-≤` for sub-effecting along `≾ₑ`.   --
 -- Strength coherence is stated for the lax box. Effect handling      --
 -- folds a handler, whose clauses are morphisms, into a `T`-algebra.  --
+-- A handler value is an element of `Hᵒ`, the object of families of   --
+-- maps `T A ε₀ → T B (ε₀ ·ₑ ε')` over `ε₀ ≾ₑ ε`, natural along `T-≤`. --
 ------------------------------------------------------------------------
 
 open import Grades.Base
@@ -407,6 +409,55 @@ record Monad : Set₁ where
                            → T-alg-of-handlerᵀ {P} {A} {ε} {ε'} bc h
                            ≈ᵐ T-alg-of-handlerᵀ {P} {A} {ε} {ε'} bc h'
 
+  -- HANDLER VALUES
+
+  -- A handler value from `A` at `ε` to `B` at `ε'` handles a computation of
+  -- every grade `ε₀ ≾ₑ ε`, landing at `ε₀ ·ₑ ε'`, naturally in `ε₀` along
+  -- `T-≤`. `Hᵒ` is the object of such families: `appʰ` applies one at an
+  -- index, `curryʰ` abstracts a natural family over a parameter `X`.
+
+  Familyʰ : Obj → Obj → E → Obj → E → Set
+  Familyʰ X A ε B ε' = ∀ {ε₀} → ε₀ ≾ₑ ε → X ×ᵐ Tᵒ A ε₀ →ᵐ Tᵒ B (ε₀ ·ₑ ε')
+
+  Naturalʰ : ∀ {X A ε B ε'} → Familyʰ X A ε B ε' → Set
+  Naturalʰ {ε = ε} f =
+    ∀ {ε₀ ε₁} → (p₀ : ε₀ ≾ₑ ε) → (p₁ : ε₁ ≾ₑ ε) → (q : ε₀ ≾ₑ ε₁)
+    → f p₁ ∘ᵐ mapˣᵐ idᵐ (T-≤ q) ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ f p₀
+
+  -- Reindexing the parameter preserves naturality.
+
+  Naturalʰ-∘ : ∀ {X Y A ε B ε'} {f : Familyʰ X A ε B ε'} → Naturalʰ f
+             → (g : Y →ᵐ X) → Naturalʰ (λ p → f p ∘ᵐ mapˣᵐ g idᵐ)
+  Naturalʰ-∘ nf g p₀ p₁ q =
+    ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-comm g (T-≤ q)))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (nf p₀ p₁ q))
+              (∘ᵐ-assoc _ _ _))))
+
+  field
+
+    Hᵒ : Obj → E → Obj → E → Obj
+
+    appʰ : ∀ {A ε B ε'} → Familyʰ (Hᵒ A ε B ε') A ε B ε'
+
+    appʰ-nat : ∀ {A ε B ε'} → Naturalʰ (appʰ {A} {ε} {B} {ε'})
+
+    curryʰ : ∀ {X A ε B ε'} → (f : Familyʰ X A ε B ε') → Naturalʰ f
+           → X →ᵐ Hᵒ A ε B ε'
+
+    curryʰ-cong : ∀ {X A ε B ε'} {f g : Familyʰ X A ε B ε'}
+                → (nf : Naturalʰ f) → (ng : Naturalʰ g)
+                → (∀ {ε₀} → (p : ε₀ ≾ₑ ε) → f p ≈ᵐ g p)
+                → curryʰ f nf ≈ᵐ curryʰ g ng
+
+    curryʰ-β : ∀ {X A ε B ε' ε₀} → (f : Familyʰ X A ε B ε') → (nf : Naturalʰ f)
+             → (p : ε₀ ≾ₑ ε)
+             → appʰ p ∘ᵐ mapˣᵐ (curryʰ f nf) idᵐ ≈ᵐ f p
+
+    curryʰ-η : ∀ {X A ε B ε'} → (h : X →ᵐ Hᵒ A ε B ε')
+             → curryʰ (λ p → appʰ p ∘ᵐ mapˣᵐ h idᵐ) (Naturalʰ-∘ appʰ-nat h) ≈ᵐ h
+
   -- DERIVED PROPERTIES
 
   -- Naturality of the strength in its boxed component alone (the monadic
@@ -419,3 +470,129 @@ record Monad : Set₁ where
   strᵀ-natˡ f =
     ≈ᵐ-trans (≈ᵐ-sym (strᵀ-nat f idᵐ))
              (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ∘ᵐ-congˡ T-idᵐ ⟩ᵐ-cong))
+
+  -- Handler values: application ignores the index's witness, `curryʰ` is
+  -- natural in the parameter, and morphisms into `Hᵒ` are determined by
+  -- their applications.
+
+  appʰ-irr : ∀ {A ε B ε' ε₀} → (p p' : ε₀ ≾ₑ ε)
+           → appʰ {A} {ε} {B} {ε'} p ≈ᵐ appʰ p'
+  appʰ-irr p p' = subst (λ w → appʰ p ≈ᵐ appʰ w) (≾ₑ-irrelevant p p') ≈ᵐ-refl
+
+  Hᵒ-ext : ∀ {X A ε B ε'} → (h h' : X →ᵐ Hᵒ A ε B ε')
+         → (∀ {ε₀} → (p : ε₀ ≾ₑ ε)
+              → appʰ p ∘ᵐ mapˣᵐ h idᵐ ≈ᵐ appʰ p ∘ᵐ mapˣᵐ h' idᵐ)
+         → h ≈ᵐ h'
+  Hᵒ-ext h h' e =
+    ≈ᵐ-trans (≈ᵐ-sym (curryʰ-η h))
+    (≈ᵐ-trans (curryʰ-cong _ _ e) (curryʰ-η h'))
+
+  curryʰ-nat : ∀ {X Y A ε B ε'} → (f : Familyʰ X A ε B ε') → (nf : Naturalʰ f)
+             → (g : Y →ᵐ X)
+             → curryʰ f nf ∘ᵐ g
+             ≈ᵐ curryʰ (λ p → f p ∘ᵐ mapˣᵐ g idᵐ) (Naturalʰ-∘ nf g)
+  curryʰ-nat f nf g =
+    Hᵒ-ext _ _ λ p →
+      ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (mapˣᵐ-cong ≈ᵐ-refl (≈ᵐ-sym (∘ᵐ-identityˡ _)))
+                                   (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _))))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (curryʰ-β f nf p))
+                (≈ᵐ-sym (curryʰ-β (λ p → f p ∘ᵐ mapˣᵐ g idᵐ) (Naturalʰ-∘ nf g) p))))
+
+  -- The functorial action on handler values: restrict the handled grade,
+  -- coerce the handled computation's values in, and the result out.
+
+  mapʰ-fam : ∀ {A A' ε ε₂ B B' ε' ε₂'}
+           → A' →ᵐ A → B →ᵐ B' → ε₂ ≾ₑ ε → ε' ≾ₑ ε₂'
+           → Familyʰ (Hᵒ A ε B ε') A' ε₂ B' ε₂'
+  mapʰ-fam a b r s p =
+    Tᶠ b ∘ᵐ T-≤ (·ₑ-monoʳ-≾ₑ s) ∘ᵐ appʰ (≾ₑ-trans p r) ∘ᵐ mapˣᵐ idᵐ (Tᶠ a)
+
+  mapʰ-fam-nat : ∀ {A A' ε ε₂ B B' ε' ε₂'}
+               → (a : A' →ᵐ A) → (b : B →ᵐ B') → (r : ε₂ ≾ₑ ε) → (s : ε' ≾ₑ ε₂')
+               → Naturalʰ (mapʰ-fam a b r s)
+  mapʰ-fam-nat a b r s p₀ p₁ q =
+    ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+                (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                (≈ᵐ-trans (mapˣᵐ-cong ≈ᵐ-refl (T-≤-nat a q))
+                          (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _)))))))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ
+                (appʰ-nat (≾ₑ-trans p₀ r) (≾ₑ-trans p₁ r) q))))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ
+                (≈ᵐ-trans (T-≤-trans _ _ (≾ₑ-trans (·ₑ-monoˡ-≾ₑ q) (·ₑ-monoʳ-≾ₑ s)))
+                          (≈ᵐ-sym (T-≤-trans _ _ _)))))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (T-≤-nat b _))
+              (∘ᵐ-assoc _ _ _))))))))))))
+
+  mapʰ : ∀ {A A' ε ε₂ B B' ε' ε₂'}
+       → A' →ᵐ A → B →ᵐ B' → ε₂ ≾ₑ ε → ε' ≾ₑ ε₂'
+       → Hᵒ A ε B ε' →ᵐ Hᵒ A' ε₂ B' ε₂'
+  mapʰ a b r s = curryʰ (mapʰ-fam a b r s) (mapʰ-fam-nat a b r s)
+
+  mapʰ-cong : ∀ {A A' ε ε₂ B B' ε' ε₂'} {a a' : A' →ᵐ A} {b b' : B →ᵐ B'}
+            → (r : ε₂ ≾ₑ ε) → (s : ε' ≾ₑ ε₂')
+            → a ≈ᵐ a' → b ≈ᵐ b' → mapʰ a b r s ≈ᵐ mapʰ a' b' r s
+  mapʰ-cong r s ea eb =
+    curryʰ-cong _ _ λ p →
+      ∘ᵐ-cong (T-congᶠ eb) (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-cong ≈ᵐ-refl (T-congᶠ ea))))
+
+  mapʰ-id : ∀ {A ε B ε'} → (r : ε ≾ₑ ε) → (s : ε' ≾ₑ ε')
+          → mapʰ {A} {A} {ε} {ε} {B} {B} idᵐ idᵐ r s ≈ᵐ idᵐ
+  mapʰ-id r s =
+    Hᵒ-ext _ _ λ p →
+      ≈ᵐ-trans (curryʰ-β (mapʰ-fam idᵐ idᵐ r s) (mapʰ-fam-nat idᵐ idᵐ r s) p)
+      (≈ᵐ-trans (∘ᵐ-congˡ T-idᵐ)
+      (≈ᵐ-trans (∘ᵐ-identityˡ _)
+      (≈ᵐ-trans (∘ᵐ-congˡ (T-≤-refl _))
+      (≈ᵐ-trans (∘ᵐ-identityˡ _)
+      (∘ᵐ-cong (appʰ-irr _ _)
+               (≈ᵐ-trans (mapˣᵐ-cong ≈ᵐ-refl T-idᵐ)
+               (≈ᵐ-trans mapˣᵐ-idᵐ (≈ᵐ-sym mapˣᵐ-idᵐ))))))))
+
+  mapʰ-∘ : ∀ {A A₁ A₂ ε ε₁ ε₂ B B₁ B₂ ε' ε₁' ε₂'}
+         → (a₁ : A₁ →ᵐ A) → (b₁ : B →ᵐ B₁) → (r₁ : ε₁ ≾ₑ ε) → (s₁ : ε' ≾ₑ ε₁')
+         → (a₂ : A₂ →ᵐ A₁) → (b₂ : B₁ →ᵐ B₂) → (r₂ : ε₂ ≾ₑ ε₁) → (s₂ : ε₁' ≾ₑ ε₂')
+         → (r : ε₂ ≾ₑ ε) → (s : ε' ≾ₑ ε₂')
+         → mapʰ a₂ b₂ r₂ s₂ ∘ᵐ mapʰ a₁ b₁ r₁ s₁ ≈ᵐ mapʰ (a₁ ∘ᵐ a₂) (b₂ ∘ᵐ b₁) r s
+  mapʰ-∘ a₁ b₁ r₁ s₁ a₂ b₂ r₂ s₂ r s =
+    Hᵒ-ext _ _ λ p →
+      ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (mapˣᵐ-cong ≈ᵐ-refl (≈ᵐ-sym (∘ᵐ-identityˡ _)))
+                                   (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _))))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (curryʰ-β (mapʰ-fam a₂ b₂ r₂ s₂) (mapʰ-fam-nat a₂ b₂ r₂ s₂) p))
+      -- push the outer application's input coercion past the inner handler
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-comm _ _)))))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (curryʰ-β (mapʰ-fam a₁ b₁ r₁ s₁) (mapʰ-fam-nat a₁ b₁ r₁ s₁) (≾ₑ-trans p r₂)))))
+      -- the inner application, then collect the coercions
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                          (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                                    (∘ᵐ-congʳ ins))))))))
+      (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-≤-nat b₁ _))))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _)))
+      (≈ᵐ-trans (∘ᵐ-congʳ
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (∘ᵐ-cong (T-≤-trans _ _ _)
+                 (∘ᵐ-cong (appʰ-irr _ _) ≈ᵐ-refl))))
+                (≈ᵐ-sym (curryʰ-β (mapʰ-fam (a₁ ∘ᵐ a₂) (b₂ ∘ᵐ b₁) r s)
+                                  (mapʰ-fam-nat (a₁ ∘ᵐ a₂) (b₂ ∘ᵐ b₁) r s) p)))))))))))))))))
+      where
+        ins : ∀ {Y e} → mapˣᵐ (idᵐ {Y}) (Tᶠ {ε = e} a₁) ∘ᵐ mapˣᵐ idᵐ (Tᶠ a₂)
+                       ≈ᵐ mapˣᵐ idᵐ (Tᶠ (a₁ ∘ᵐ a₂))
+        ins = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                (mapˣᵐ-cong (∘ᵐ-identityˡ _) (≈ᵐ-sym (T-∘ᵐ _ _)))

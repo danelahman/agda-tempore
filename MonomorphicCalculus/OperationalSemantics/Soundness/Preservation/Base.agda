@@ -121,6 +121,8 @@ stepᴾˢ (BOX {V = V})       pS (pV , _)       =
   pS , renᵛ (eq-ren (sym ++ᶜ-identityˡ)) V pV
 stepᴾˢ UNBOX               pS _              = pS
 stepᴾˢ SUB-APP             pS _              = pS
+stepᴾˢ SUB-HANDLE          pS _              = pS
+stepᴾˢ SUB-HANDLE-TRANS    pS _              = pS
 stepᴾˢ SUB-IF              pS _              = pS
 stepᴾˢ SUB-CASEℕ           pS _              = pS
 stepᴾˢ SUB-RECℕ            pS _              = pS
@@ -168,6 +170,8 @@ step-grade HANDLE-OP            = uₑ
 step-grade BOX                  = uₑ
 step-grade UNBOX                = uₑ
 step-grade SUB-APP              = uₑ
+step-grade SUB-HANDLE           = uₑ
+step-grade SUB-HANDLE-TRANS     = uₑ
 step-grade SUB-IF               = uₑ
 step-grade SUB-CASEℕ            = uₑ
 step-grade SUB-RECℕ             = uₑ
@@ -203,6 +207,8 @@ stepᵀ HANDLE-OP         = ηᵀ
 stepᵀ BOX               = ηᵀ
 stepᵀ UNBOX             = ηᵀ
 stepᵀ SUB-APP           = ηᵀ
+stepᵀ SUB-HANDLE        = ηᵀ
+stepᵀ SUB-HANDLE-TRANS  = ηᵀ
 stepᵀ SUB-IF            = ηᵀ
 stepᵀ SUB-CASEℕ         = ηᵀ
 stepᵀ SUB-RECℕ          = ηᵀ
@@ -246,6 +252,9 @@ step-≾ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op}) =
 step-≾ {ε = ε} BOX    = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} UNBOX   = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ (SUB-APP {r = _ ‼ₛ s}) = ≾ₑ-trans (≃ₑ⇒≾ₑ (·ₑ-identityˡ _)) s
+step-≾ (SUB-HANDLE {q = _ ‼ₛ s}) =
+  ≾ₑ-trans (≃ₑ⇒≾ₑ (·ₑ-identityˡ _)) (·ₑ-monoʳ-≾ₑ s)
+step-≾ {ε = ε} SUB-HANDLE-TRANS = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} SUB-IF  = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} SUB-CASEℕ = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} SUB-RECℕ = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
@@ -1008,6 +1017,7 @@ sound-HANDLE-RET : ∀ {Γ A B ε}
                     ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
                            [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 sound-HANDLE-RET {Γ} V H N pV pN pH uH =
-  ret-step-P ⟨⊤⟩-η (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH))
+    handle-in-β (return V) H N pV pN pH uH
+  ∙ ret-step-P ⟨⊤⟩-η (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH))
              (T-alg-of-handlerᵀ-ηᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH)) V N pV pN
 

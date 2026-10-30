@@ -115,6 +115,20 @@ mutual
              -------------------------
              → Γ ⊢V⦂ lam M == lam N
 
+    handler-cong : ∀ {A B ε ε'}
+                 → {N N' : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+                 → {H H' : ((op : Op) → (ε'' : E) →
+                              Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                              ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))}
+                 → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ N == N'
+                 → ((op : Op) → (ε'' : E) →
+                      Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                          ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                      ⊢C⦂ H op ε'' == H' op ε'')
+                 ---------------------------------------------------
+                 → Γ ⊢V⦂ handler N H == handler N' H'
+
     -- eta equations
 
     unit-eta : (V : Γ ⊢V⦂ Unit)
@@ -361,19 +375,11 @@ mutual
 
     handle-cong : ∀ {A B ε ε'}
                 → {M M' : Γ ⊢C⦂ A ‼ ε}
-                → {H H' : ((op : Op) → (ε'' : E) →
-                             Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                             ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))}
-                → {N N' : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+                → {V V' : Γ ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε')}
                 → Γ ⊢C⦂ M == M'
-                → ((op : Op) → (ε'' : E) →
-                     Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                         ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                     ⊢C⦂ H op ε'' == H' op ε'')
-                → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ N == N'
-                --------------------------------------------------------------------
-                → Γ ⊢C⦂ handle M `with H `in N == handle M' `with H' `in N'
+                → Γ ⊢V⦂ V == V'
+                -----------------------------------------------
+                → Γ ⊢C⦂ handle M `with V == handle M' `with V'
 
     -- The grade bound and the payload subsumption an `unbox` stores are both
     -- irrelevant, so the two nodes are compared at the resource variable they
@@ -700,7 +706,10 @@ mutual
 
     -- computational/beta-equations for effect handling
     --
-    -- Each equation re-bars the clause family across the binder or lock the handle moves under.
+    -- `return`, `perform` and `delay` are handled by a handler literal, whose
+    -- clause family is re-barred across the binder or lock the handle moves
+    -- under. The binders `box` and `unbox` commute with handling by any
+    -- handler value, weakened past them. Handler values have no η-law.
 
     handle-return : ∀ {A B ε}
                   → (V : Γ ⊢V⦂ A)
@@ -710,7 +719,7 @@ mutual
                            ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                   → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
                   ----------------------------------------------------------------
-                  → Γ ⊢C⦂ handle return V `with H `in N
+                  → Γ ⊢C⦂ handle return V `with handler N H
                       == ε-≃ (≃ₑ-sym (·ₑ-identityˡ ε))
                            ((C-rename
                               (cong-∷-ren
@@ -727,22 +736,23 @@ mutual
                             ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                    → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
                    ----------------------------------------------------------------
-                   → Γ ⊢C⦂ handle perform op V M `with H `in N
+                   → Γ ⊢C⦂ handle perform op V M `with handler N H
                        == ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
                             (box _ (lam
                                    (handle M
-                                   `with (λ op' ε'' →
-                                            C-rename
-                                              (cong-∷-ren (cong-∷-ren
-                                                (barrier-wk-ren {Γ} (mapᵉ (op-grade op))
-                                                                (type-of-gtype (arity op)))))
-                                              (H op' ε''))
-                                   `in (C-rename
-                                         (cong-∷-ren
-                                           ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)
-                                            ∘ʳ ⟨⟩-μ-ren)
-                                            ∘ʳ cong-⟨⟩-ren wk-ren))
-                                         N)))
+                                   `with handler
+                                           (C-rename
+                                             (cong-∷-ren
+                                               ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)
+                                                ∘ʳ ⟨⟩-μ-ren)
+                                                ∘ʳ cong-⟨⟩-ren wk-ren))
+                                             N)
+                                           (λ op' ε'' →
+                                              C-rename
+                                                (cong-∷-ren (cong-∷-ren
+                                                  (barrier-wk-ren {Γ} (mapᵉ (op-grade op))
+                                                                  (type-of-gtype (arity op)))))
+                                                (H op' ε''))))
                                   (C-rename (cong-∷-ren (cong-∷-ren barrier-ren))
                                     (H op (ε ·ₑ ε'))
                                    [ split-∷ split-[] ↦ V ]c))
@@ -755,58 +765,38 @@ mutual
                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ (of-durᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
                  ------------------------------------------------------------------------------
-                 → Γ ⊢C⦂ handle delay τ M `with H `in N
+                 → Γ ⊢C⦂ handle delay τ M `with handler N H
                      == ε-≃ (≃ₑ-sym (·ₑ-assoc (of-durᵉ τ) ε ε'))
                           (delay τ
                             (handle M
-                            `with (λ op' ε'' →
-                                     C-rename (cong-∷-ren (cong-∷-ren
-                                       (⟨⟩-≤-ren (≾-⊤ᵣ _) ∘ʳ ⟨⟩-μ-ren)))
-                                       (H op' ε''))
-                            `in (C-rename
-                                  (cong-∷-ren
-                                    (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))
-                                     ∘ʳ ⟨⟩-μ-ren))
-                                  N)))
+                            `with handler
+                                    (C-rename
+                                      (cong-∷-ren
+                                        (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))
+                                         ∘ʳ ⟨⟩-μ-ren))
+                                      N)
+                                    (λ op' ε'' →
+                                       C-rename (cong-∷-ren (cong-∷-ren
+                                         (⟨⟩-≤-ren (≾-⊤ᵣ _) ∘ʳ ⟨⟩-μ-ren)))
+                                         (H op' ε''))))
 
     handle-box : ∀ {A B C ρ ε ε'}
-                 → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
-                 → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
-                 → (H : (op : Op) → (ε'' : E) →
-                          Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
-                          ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
-                 → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
-                 ------------------------------------------------------------------------------
-                 → Γ ⊢C⦂ handle box _ V M `with H `in N
-                     == box _ V
-                        (handle M
-                        `with (λ op' ε'' →
-                                 C-rename (cong-∷-ren (cong-∷-ren
-                                   (cong-⟨⟩-ren (wk-ren {Δ = Γ} {A = [ ρ ] A}))))
-                                   (H op' ε''))
-                        `in (C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N))
-
+               → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
+               → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
+               → (W : Γ ⊢V⦂ (B ‼ ε) ⇛ (C ‼ ε'))
+               ------------------------------------------------------------
+               → Γ ⊢C⦂ handle box _ V M `with W
+                   == box _ V (handle M `with V-rename wk-ren W)
 
     handle-unbox : ∀ {A A₀ B C ρ₀ ρ' ε ε'}
                  → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ)
                  → (rel : ρ' ≾ᵣ ρ₀)
                  → (w : A₀ <:ᵛ A)
                  → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
-                 → (H : (op : Op) → (ε'' : E) →
-                          Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
-                          ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
-                 → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
-                 -----------------------------------------------------------------
-                 → Γ ⊢C⦂ handle unbox x rel w M `with H `in N
-                     == unbox x rel w
-                        (handle M
-                        `with (λ op' ε'' →
-                                 C-rename (cong-∷-ren (cong-∷-ren
-                                   (cong-⟨⟩-ren (wk-ren {Δ = Γ} {A = A}))))
-                                   (H op' ε''))
-                        `in (C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N))
+                 → (V : Γ ⊢V⦂ (B ‼ ε) ⇛ (C ‼ ε'))
+                 ------------------------------------------------------------
+                 → Γ ⊢C⦂ handle unbox x rel w M `with V
+                     == unbox x rel w (handle M `with V-rename wk-ren V)
 
     -- beta rule for unbox
 
@@ -931,8 +921,8 @@ mutual
 
     -- Moving a scrutinee's subsumption outwards relaxes the continuation's
     -- lock along the effect half and subsumes its binder along the value half.
-    -- Neither `_⨟_` nor `handle_`with_`in` carries a payload witness of its
-    -- own, as `unbox` does.
+    -- For `handle` both halves move onto the handler value. Neither `_⨟_` nor
+    -- `handle_`with_` carries a payload witness of its own, as `unbox` does.
 
     subC-seq : ∀ {A A' B ε₁ ε₂ ε'}
              → (w : A <:ᵛ A')
@@ -950,18 +940,11 @@ mutual
                 → (w : A <:ᵛ A')
                 → (rel : ε₁ ≾ₑ ε₂)
                 → (M : Γ ⊢C⦂ A ‼ ε₁)
-                → (H : (op : Op) → (ε₀ : E) →
-                         Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
-                         ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
-                → (N : Γ ⟨ mapᵉ ε₂ ⟩ ∷ A' ⊢C⦂ B ‼ ε')
+                → (V : Γ ⊢V⦂ (A' ‼ ε₂) ⇛ (B ‼ ε'))
                 ----------------------------------------------------------------
-                → Γ ⊢C⦂ handle (subC M (w ‼ₛ rel)) `with H `in N
+                → Γ ⊢C⦂ handle (subC M (w ‼ₛ rel)) `with V
                      == coerce (·ₑ-monoˡ-≾ₑ rel)
-                          (handle M `with H
-                             `in (subCtx w
-                                    (C-rename
-                                      (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))) N)))
+                          (handle M `with subV V ((w ‼ₛ rel) ⇛ₛ <:ᶜ-refl (B ‼ ε')))
 
     -- `box` and `unbox` bind but compute nothing, so a subsumption of the
     -- node is a subsumption of the body, at an unrestricted witness.
@@ -994,22 +977,19 @@ mutual
                   ----------------------------------------------------------
                   → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (M ⨟ N) == M ⨟ coerce rel N
 
-    -- Sub-effecting the answer of a `handle` is sub-effecting its return
-    -- clause. Only the effect half moves: the handler's clauses are typed at
-    -- the answer type, and their boxed continuation argument is contravariant
-    -- in it.
+    -- Handling with a coerced handler value coerces the handled computation
+    -- in and the answer out. The handled grade stays fixed: restricting it
+    -- would leave the answer's grade above the coerced handler's.
 
-    coerce-handle-in : ∀ {A B ε ε₁' ε₂'}
-                     → (rel : ε₁' ≾ₑ ε₂')
-                     → (M : Γ ⊢C⦂ A ‼ ε)
-                     → (H : (op : Op) → (ε₀ : E) →
-                              Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
-                              ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
-                     → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
-                     ----------------------------------------------------------
-                     → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (handle M `with H `in N)
-                          == handle M `with H `in (coerce rel N)
+    subV-handle : ∀ {A A₁ B B₁ ε ε' ε₁'}
+                → (p : A <:ᵛ A₁) → (pε : ε ≾ₑ ε)
+                → (q : B₁ <:ᵛ B) → (s : ε₁' ≾ₑ ε')
+                → (M : Γ ⊢C⦂ A ‼ ε)
+                → (V : Γ ⊢V⦂ (A₁ ‼ ε) ⇛ (B₁ ‼ ε₁'))
+                ----------------------------------------------------------------
+                → Γ ⊢C⦂ handle M `with subV V ((p ‼ₛ pε) ⇛ₛ (q ‼ₛ s))
+                     == subC (handle (subC M (p ‼ₛ pε)) `with V)
+                             (q ‼ₛ ·ₑ-monoʳ-≾ₑ s)
 
     -- equations for collapsing successive delays
 

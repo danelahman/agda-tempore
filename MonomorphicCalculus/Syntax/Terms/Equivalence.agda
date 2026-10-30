@@ -9,7 +9,7 @@
 --                                                                    --
 -- Equality of terms is therefore `_≡_`, and the congruence at each    --
 -- former is `cong`/`cong₂`. Named here are only the five that are     --
--- not: the four irrelevance laws, and `handle-≡`, whose clause        --
+-- not: the four irrelevance laws, and `handler-≡`, whose clause       --
 -- family is compared pointwise and so needs `fun-ext`.                --
 ------------------------------------------------------------------------
 
@@ -74,17 +74,15 @@ unbox-≡ {x = x} {rel = rel} {rel' = rel'} {p = p} {p' = p'} {M = M} refl refl 
 -- The clause family is a function of the operation and its effect, so its
 -- congruence goes through `fun-ext`.
 
-handle-≡ : ∀ {Γ A B ε ε'} {M M' : Γ ⊢C⦂ A ‼ ε}
-             {H H' : (op : Op) → (ε'' : E) →
-                       Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                         ∷ [ mapᵉ (op-grade op) ]
-                             (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                       ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
-             {N N' : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
-         → M ≡ M'
-         → (∀ op ε'' → H op ε'' ≡ H' op ε'')
-         → N ≡ N'
-         → (handle M `with H `in N) ≡ (handle M' `with H' `in N')
-handle-≡ {M = M} {N = N} refl eH refl =
-  cong (λ H₀ → handle M `with H₀ `in N)
-       (fun-ext (λ op → fun-ext (λ ε'' → eH op ε'')))
+handler-≡ : ∀ {Γ A B ε ε'}
+              {N N' : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+              {H H' : (op : Op) → (ε'' : E) →
+                        Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                          ∷ [ mapᵉ (op-grade op) ]
+                              (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                        ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
+          → N ≡ N'
+          → (∀ op ε'' → H op ε'' ≡ H' op ε'')
+          → handler N H ≡ handler N' H'
+handler-≡ {N = N} refl eH =
+  cong (handler N) (fun-ext (λ op → fun-ext (λ ε'' → eH op ε'')))

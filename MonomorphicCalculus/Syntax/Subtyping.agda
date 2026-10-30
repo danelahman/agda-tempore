@@ -6,9 +6,10 @@
 -- so reflexivity, transitivity and proof irrelevance are lemmas  --
 -- and mismatched shapes are uninhabited.                         --
 --                                                                --
--- A function's domain and a box's grade are contravariant, a     --
--- computation's effect covariant. The box direction agrees with  --
--- `unbox`'s premise: a larger box grade is the weaker obligation. --
+-- A function's domain, a handler's handled computation and a    --
+-- box's grade are contravariant, a computation's effect          --
+-- covariant. The box direction agrees with `unbox`'s premise: a  --
+-- larger box grade is the weaker obligation.                     --
 -------------------------------------------------------------------
 
 open import Grades.Base
@@ -28,7 +29,7 @@ open import MonomorphicCalculus.Syntax.Types S
 infix  4  _<:ᵛ_ _<:ᶜ_
 infix  37 [_]ₛ_
 infix  32 _|×|ₛ_ _|+|ₛ_
-infixr 30 _⇒ₛ_
+infixr 30 _⇒ₛ_ _⇛ₛ_
 infix  31 _‼ₛ_
 
 -- The relation
@@ -46,6 +47,7 @@ data _<:ᵛ_ where
   |List|ₛ : ∀ {A A'} → A <:ᵛ A' → (|List| A) <:ᵛ (|List| A')
   Emptyₛ : Empty <:ᵛ Empty
   _⇒ₛ_   : ∀ {A A' C C'} → A' <:ᵛ A → C <:ᶜ C' → (A ⇒ C) <:ᵛ (A' ⇒ C')
+  _⇛ₛ_   : ∀ {C C' D D'} → C' <:ᶜ C → D <:ᶜ D' → (C ⇛ D) <:ᵛ (C' ⇛ D')
   [_]ₛ_  : ∀ {ρ ρ' A A'} → ρ' ≾ᵣ ρ → A <:ᵛ A' → ([ ρ ] A) <:ᵛ ([ ρ' ] A')
 
 data _<:ᶜ_ where
@@ -74,6 +76,7 @@ data _<:ᶜ_ where
 <:ᵛ-refl (|List| A) = |List|ₛ (<:ᵛ-refl A)
 <:ᵛ-refl Empty     = Emptyₛ
 <:ᵛ-refl (A ⇒ C)   = <:ᵛ-refl A ⇒ₛ <:ᶜ-refl C
+<:ᵛ-refl (C ⇛ D)   = <:ᶜ-refl C ⇛ₛ <:ᶜ-refl D
 <:ᵛ-refl ([ ρ ] A) = [ ≾ᵣ-refl ]ₛ <:ᵛ-refl A
 
 <:ᶜ-refl (A ‼ ε) = <:ᵛ-refl A ‼ₛ ≾ₑ-refl
@@ -92,6 +95,7 @@ data _<:ᶜ_ where
 <:ᵛ-trans (|List|ₛ p) (|List|ₛ q) = |List|ₛ (<:ᵛ-trans p q)
 <:ᵛ-trans Emptyₛ     Emptyₛ     = Emptyₛ
 <:ᵛ-trans (p ⇒ₛ r)   (q ⇒ₛ s)   = <:ᵛ-trans q p ⇒ₛ <:ᶜ-trans r s
+<:ᵛ-trans (p ⇛ₛ r)   (q ⇛ₛ s)   = <:ᶜ-trans q p ⇛ₛ <:ᶜ-trans r s
 <:ᵛ-trans ([ p ]ₛ r) ([ q ]ₛ s) = [ ≾ᵣ-trans q p ]ₛ <:ᵛ-trans r s
 
 <:ᶜ-trans (p ‼ₛ r) (q ‼ₛ s) = <:ᵛ-trans p q ‼ₛ ≾ₑ-trans r s
@@ -119,6 +123,8 @@ module _ (≾ᵣ-antisym : ∀ {c d} → c ≾ᵣ d → d ≾ᵣ c → c ≡ d)
   <:ᵛ-antisym Emptyₛ     Emptyₛ     = refl
   <:ᵛ-antisym (p ⇒ₛ r)   (q ⇒ₛ s)   =
     cong₂ _⇒_ (<:ᵛ-antisym q p) (<:ᶜ-antisym r s)
+  <:ᵛ-antisym (p ⇛ₛ r)   (q ⇛ₛ s)   =
+    cong₂ _⇛_ (<:ᶜ-antisym q p) (<:ᶜ-antisym r s)
   <:ᵛ-antisym ([ p ]ₛ r) ([ q ]ₛ s) =
     cong₂ [_]_ (≾ᵣ-antisym q p) (<:ᵛ-antisym r s)
 
@@ -142,14 +148,16 @@ module _ (≾ᵣ-antisym : ∀ {c d} → c ≾ᵣ d → d ≾ᵣ c → c ≡ d)
 <:ᵛ-irrelevant Emptyₛ     Emptyₛ     = refl
 <:ᵛ-irrelevant (p ⇒ₛ r)   (q ⇒ₛ s)   =
   cong₂ _⇒ₛ_ (<:ᵛ-irrelevant p q) (<:ᶜ-irrelevant r s)
+<:ᵛ-irrelevant (p ⇛ₛ r)   (q ⇛ₛ s)   =
+  cong₂ _⇛ₛ_ (<:ᶜ-irrelevant p q) (<:ᶜ-irrelevant r s)
 <:ᵛ-irrelevant ([ p ]ₛ r) ([ q ]ₛ s) =
   cong₂ [_]ₛ_ (≾ᵣ-irrelevant p q) (<:ᵛ-irrelevant r s)
 
 <:ᶜ-irrelevant (p ‼ₛ r) (q ‼ₛ s) =
   cong₂ _‼ₛ_ (<:ᵛ-irrelevant p q) (≾ₑ-irrelevant r s)
 
--- Eternality lives on the shared skeleton — `Eternal` has no `_⇒_` and
--- no `[_]_` clause, and the only grade it could see is a box's — so it
+-- Eternality lives on the shared skeleton — `Eternal` has no `_⇒_`, `_⇛_`
+-- or `[_]_` clause, and the only grade it could see is a box's — so it
 -- transfers along `_<:ᵛ_` in both directions.
 
 <:ᵛ-eternalˡ : ∀ {A B} → A <:ᵛ B → Eternal B → Eternal A
@@ -183,12 +191,12 @@ module _ (≾ᵣ-antisym : ∀ {c d} → c ≾ᵣ d → d ≾ᵣ c → c ≡ d)
 -- type is read off structurally.                                 --
 --                                                                --
 -- The relation is partial, and deliberately so: a function's     --
--- domain and a box's grade are contravariant, so joining them    --
--- would ask for *meets* of value types and of resource grades,   --
--- neither of which is available. Those two positions are         --
--- therefore pinned — one shared domain, one shared grade — and   --
--- the only component genuinely joined is a computation's effect, --
--- where `_⊔ₑ_` always exists.                                    --
+-- domain, a handler's handled computation and a box's grade are  --
+-- contravariant, so joining them would ask for *meets* of types  --
+-- and of grades, neither of which is available. Those positions  --
+-- are therefore pinned — one shared domain, one shared grade —   --
+-- and the only component genuinely joined is a computation's     --
+-- effect, where `_⊔ₑ_` always exists.                            --
 --                                                                --
 -- The constructors and their premises are instances: the         --
 -- relation is syntax-directed on its two input types, so a       --
@@ -222,6 +230,9 @@ data _⊔ᵛ_≡_ where
     ⇒ⱼ     : ∀ {A C₁ C₂ C}
            → {{C₁ ⊔ᶜ C₂ ≡ C}}
            → (A ⇒ C₁) ⊔ᵛ (A ⇒ C₂) ≡ (A ⇒ C)
+    ⇛ⱼ     : ∀ {C D₁ D₂ D}
+           → {{D₁ ⊔ᶜ D₂ ≡ D}}
+           → (C ⇛ D₁) ⊔ᵛ (C ⇛ D₂) ≡ (C ⇛ D)
     []ⱼ    : ∀ {ρ A₁ A₂ A}
            → {{A₁ ⊔ᵛ A₂ ≡ A}}
            → ([ ρ ] A₁) ⊔ᵛ ([ ρ ] A₂) ≡ ([ ρ ] A)
@@ -246,6 +257,7 @@ data _⊔ᶜ_≡_ where
 ⊔ᵛ-ubˡ (|+|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubˡ j |+|ₛ ⊔ᵛ-ubˡ k
 ⊔ᵛ-ubˡ (|List|ⱼ {{j}})    = |List|ₛ (⊔ᵛ-ubˡ j)
 ⊔ᵛ-ubˡ (⇒ⱼ {{j}})         = <:ᵛ-refl _ ⇒ₛ ⊔ᶜ-ubˡ j
+⊔ᵛ-ubˡ (⇛ⱼ {{j}})         = <:ᶜ-refl _ ⇛ₛ ⊔ᶜ-ubˡ j
 ⊔ᵛ-ubˡ ([]ⱼ {{j}})        = [ ≾ᵣ-refl ]ₛ ⊔ᵛ-ubˡ j
 
 ⊔ᶜ-ubˡ (‼ⱼ {{j}}) = ⊔ᵛ-ubˡ j ‼ₛ ⊔ₑ-ubˡ _ _
@@ -262,6 +274,7 @@ data _⊔ᶜ_≡_ where
 ⊔ᵛ-ubʳ (|+|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubʳ j |+|ₛ ⊔ᵛ-ubʳ k
 ⊔ᵛ-ubʳ (|List|ⱼ {{j}})    = |List|ₛ (⊔ᵛ-ubʳ j)
 ⊔ᵛ-ubʳ (⇒ⱼ {{j}})         = <:ᵛ-refl _ ⇒ₛ ⊔ᶜ-ubʳ j
+⊔ᵛ-ubʳ (⇛ⱼ {{j}})         = <:ᶜ-refl _ ⇛ₛ ⊔ᶜ-ubʳ j
 ⊔ᵛ-ubʳ ([]ⱼ {{j}})        = [ ≾ᵣ-refl ]ₛ ⊔ᵛ-ubʳ j
 
 ⊔ᶜ-ubʳ (‼ⱼ {{j}}) = ⊔ᵛ-ubʳ j ‼ₛ ⊔ₑ-ubʳ _ _
@@ -287,6 +300,7 @@ data _⊔ᶜ_≡_ where
   ⊔ᵛ-lub j p q |+|ₛ ⊔ᵛ-lub k r s
 ⊔ᵛ-lub (|List|ⱼ {{j}}) (|List|ₛ p) (|List|ₛ q) = |List|ₛ (⊔ᵛ-lub j p q)
 ⊔ᵛ-lub (⇒ⱼ {{j}})  (p ⇒ₛ r)   (_ ⇒ₛ s)   = p ⇒ₛ ⊔ᶜ-lub j r s
+⊔ᵛ-lub (⇛ⱼ {{j}})  (p ⇛ₛ r)   (_ ⇛ₛ s)   = p ⇛ₛ ⊔ᶜ-lub j r s
 ⊔ᵛ-lub ([]ⱼ {{j}}) ([ p ]ₛ r) ([ _ ]ₛ s) = [ p ]ₛ ⊔ᵛ-lub j r s
 
 ⊔ᶜ-lub (‼ⱼ {{j}}) (p ‼ₛ r) (q ‼ₛ s) = ⊔ᵛ-lub j p q ‼ₛ ⊔ₑ-lub r s
@@ -307,6 +321,7 @@ data _⊔ᶜ_≡_ where
   cong₂ _|+|_ (⊔ᵛ-det j j') (⊔ᵛ-det k k')
 ⊔ᵛ-det (|List|ⱼ {{j}}) (|List|ⱼ {{j'}}) = cong |List| (⊔ᵛ-det j j')
 ⊔ᵛ-det (⇒ⱼ {{j}})  (⇒ⱼ {{j'}})  = cong (_ ⇒_) (⊔ᶜ-det j j')
+⊔ᵛ-det (⇛ⱼ {{j}})  (⇛ⱼ {{j'}})  = cong (_ ⇛_) (⊔ᶜ-det j j')
 ⊔ᵛ-det ([]ⱼ {{j}}) ([]ⱼ {{j'}}) = cong ([ _ ]_) (⊔ᵛ-det j j')
 
 ⊔ᶜ-det (‼ⱼ {{j}}) (‼ⱼ {{j'}}) = cong (_‼ _) (⊔ᵛ-det j j')
@@ -333,6 +348,7 @@ module _ (≾ₑ-antisym : ∀ {c d} → c ≾ₑ d → d ≾ₑ c → c ≡ d) 
   ⊔ᵛ-idem (|List| A) = |List|ⱼ {{⊔ᵛ-idem A}}
   ⊔ᵛ-idem Empty     = Emptyⱼ
   ⊔ᵛ-idem (A ⇒ C)   = ⇒ⱼ {{⊔ᶜ-idem C}}
+  ⊔ᵛ-idem (C ⇛ D)   = ⇛ⱼ {{⊔ᶜ-idem D}}
   ⊔ᵛ-idem ([ ρ ] A) = []ⱼ {{⊔ᵛ-idem A}}
 
   ⊔ᶜ-idem (A ‼ ε) =

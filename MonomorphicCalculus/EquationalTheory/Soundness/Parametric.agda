@@ -70,6 +70,8 @@ mutual
   Midᵛ (inr-cong p)                      = Midᵛ p
   Midᵛ (cons-cong p q)                   = Midᵛ p × Midᵛ q
   Midᵛ (lam-cong p)                      = Midᶜ p
+  Midᵛ (handler-cong q hs)               =
+    Midᶜ q × ((op : Op) → (ε'' : E) → Midᶜ (hs op ε''))
   Midᵛ (subV-cong p)                     = Midᵛ p
   Midᵛ _                                 = ⊤
 
@@ -92,8 +94,7 @@ mutual
   Midᶜ (recL-cong p q r)                 = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (perform-cong p q)                = Midᵛ p × Midᶜ q
   Midᶜ (delay-cong p)                    = Midᶜ p
-  Midᶜ (handle-cong p hs q)              =
-    Midᶜ p × ((op : Op) → (ε'' : E) → Midᶜ (hs op ε'')) × Midᶜ q
+  Midᶜ (handle-cong p q)                 = Midᶜ p × Midᵛ q
   Midᶜ (unbox-cong q)                    = Midᶜ q
   Midᶜ (box-cong p q)                    = Midᵛ p × Midᶜ q
   Midᶜ (subC-cong p)                     = Midᶜ p

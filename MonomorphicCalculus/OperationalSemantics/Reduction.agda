@@ -263,7 +263,7 @@ mutual
                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε')}
                    → {N : toCtx S ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε}
                      --------------------------------------------------------------------------
-                   → ⟨ S , handle return V `with H `in N ⟩ ↝
+                   → ⟨ S , handle return V `with handler N H ⟩ ↝
                      ⟨ S , (C-rename
                              (cong-∷-ren
                                (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren))
@@ -283,17 +283,18 @@ mutual
                     → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
                     → (δε₁'≾ε₁ : ≤ₛ-grade (step-extends-state M↝M') ·ᵣ mapᵉ ε₁' ≾ᵣ mapᵉ ε₁)
                       -----------------------------------------------------------------------
-                    → ⟨ S  , handle M `with H `in N ⟩ ↝
+                    → ⟨ S  , handle M `with handler N H ⟩ ↝
                       ⟨ S' , handle M'
-                            `with (λ op ε₃ →
-                                     C-rename
-                                       (cong-∷-ren (cong-∷-ren
-                                         (suc-comp-ren (step-extends-state M↝M') (≾-⊤ᵣ _))))
-                                       (H op ε₃))
-                            `in (subCtx (step-refines-type M↝M')
-                                  (C-rename
-                                    (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') δε₁'≾ε₁))
-                                    N))⟩
+                            `with handler
+                                    (subCtx (step-refines-type M↝M')
+                                      (C-rename
+                                        (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') δε₁'≾ε₁))
+                                        N))
+                                    (λ op ε₃ →
+                                       C-rename
+                                         (cong-∷-ren (cong-∷-ren
+                                           (suc-comp-ren (step-extends-state M↝M') (≾-⊤ᵣ _))))
+                                         (H op ε₃)) ⟩
 
         -- handling an operation: apply its clause, with the rest of the handled
         -- computation boxed up, so that its resources are not used before enough
@@ -309,20 +310,21 @@ mutual
                                    ⊢C⦂ B ‼ (op-grade op' ·ₑ ε')}
                     → {N : toCtx S ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε''}
                       --------------------------------------------------------------------------
-                    → ⟨ S , handle perform op V M `with H `in N ⟩ ↝
+                    → ⟨ S , handle perform op V M `with handler N H ⟩ ↝
                       ⟨ S , box _ (lam
                               (handle M
-                              `with (λ op' ε' →
-                                       C-rename
-                                         (cong-∷-ren (cong-∷-ren
-                                           (barrier-wk-ren (mapᵉ (op-grade op))
-                                                           (type-of-gtype (arity op)))))
-                                         (H op' ε'))
-                              `in (C-rename
-                                    (  cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)
-                                    ∘ʳ ⟨⟩-μ-ren)
-                                    ∘ʳ cong-⟨⟩-ren wk-ren))
-                                    N)))
+                              `with handler
+                                      (C-rename
+                                        (  cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)
+                                        ∘ʳ ⟨⟩-μ-ren)
+                                        ∘ʳ cong-⟨⟩-ren wk-ren))
+                                        N)
+                                      (λ op' ε' →
+                                         C-rename
+                                           (cong-∷-ren (cong-∷-ren
+                                             (barrier-wk-ren (mapᵉ (op-grade op))
+                                                             (type-of-gtype (arity op)))))
+                                           (H op' ε'))))
                              -- the clause is included into the context reached
                              -- when the operation is handled
                              (C-rename (cong-∷-ren (cong-∷-ren barrier-ren))
@@ -361,6 +363,45 @@ mutual
                     → {r : C₁ <:ᶜ C}
                       ------------------------------------------------------
                     → ⟨ S , subV V (q ⇒ₛ r) · W ⟩ ↝ ⟨ S , V · subV W q ⟩
+
+        -- subsumption at a handler literal: the coercion splits, the input
+        -- half moving into the return clause (its lock lowered to the smaller
+        -- handled effect, its binder subsumed) and the output half becoming
+        -- the step's own refinement; the operation clauses do not mention the
+        -- handled computation
+        SUB-HANDLE  : ∀ {A A₁ B B₁ ε ε₁ ε' ε₁'}
+                    → {S : 𝕊 []}
+                    → {M : toCtx S ⊢C⦂ A ‼ ε}
+                    → {N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A₁ ⊢C⦂ B₁ ‼ ε₁'}
+                    → {H : (op : Op) → (ε₃ : E) →
+                         toCtx S ⟨ ⊤ᵣ ⟩
+                                 ∷ type-of-gtype (param op)
+                                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B₁ ‼ ε₃)
+                               ⊢C⦂ B₁ ‼ (op-grade op ·ₑ ε₃)}
+                    → {p : A <:ᵛ A₁}
+                    → {pε : ε ≾ₑ ε₁}
+                    → {q : (B₁ ‼ ε₁') <:ᶜ (B ‼ ε')}
+                      ------------------------------------------------------------
+                    → ⟨ S , handle M `with subV (handler N H) ((p ‼ₛ pε) ⇛ₛ q) ⟩ ↝
+                      ⟨ S , handle M
+                            `with handler
+                                    (subCtx p
+                                      (C-rename
+                                        (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε)))
+                                        N))
+                                    H ⟩
+
+        -- nested subsumption at a handler: the two coercions compose
+        SUB-HANDLE-TRANS
+                    : ∀ {A₀ A' A B ε ε'}
+                    → {S : 𝕊 []}
+                    → {M : toCtx S ⊢C⦂ A ‼ ε}
+                    → {V : toCtx S ⊢V⦂ A₀}
+                    → {p : A₀ <:ᵛ A'}
+                    → {p' : A' <:ᵛ (A ‼ ε) ⇛ (B ‼ ε')}
+                      ------------------------------------------------------------
+                    → ⟨ S , handle M `with subV (subV V p) p' ⟩ ↝
+                      ⟨ S , handle M `with subV V (<:ᵛ-trans p p') ⟩
 
         -- subsumption at a scrutinised boolean: `Bool <:ᵛ Bool` is the
         -- identity, so it is simply dropped
@@ -438,6 +479,8 @@ mutual
     step-extends-state BOX                  = ∷-suc (V-rename (eq-ren (sym ++ᶜ-identityˡ)) _) id-suc
     step-extends-state UNBOX                = id-suc
     step-extends-state SUB-APP              = id-suc
+    step-extends-state SUB-HANDLE           = id-suc
+    step-extends-state SUB-HANDLE-TRANS     = id-suc
     step-extends-state SUB-IF               = id-suc
     step-extends-state SUB-CASEℕ            = id-suc
     step-extends-state SUB-RECℕ             = id-suc
@@ -474,6 +517,8 @@ mutual
     step-refines-type {A = A} BOX               = <:ᵛ-refl A
     step-refines-type {A = A} UNBOX             = <:ᵛ-refl A
     step-refines-type (SUB-APP {r = p ‼ₛ _})    = p
+    step-refines-type (SUB-HANDLE {q = p ‼ₛ _}) = p
+    step-refines-type {A = A} SUB-HANDLE-TRANS  = <:ᵛ-refl A
     step-refines-type {A = A} SUB-IF            = <:ᵛ-refl A
     step-refines-type {A = A} SUB-CASEℕ         = <:ᵛ-refl A
     step-refines-type {A = A} SUB-RECℕ          = <:ᵛ-refl A
@@ -534,6 +579,9 @@ step-grade-≾ BOX     = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ UNBOX   = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ (SUB-APP {r = _ ‼ₛ s}) =
   ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)) (map-monotoneᵉ s)
+step-grade-≾ (SUB-HANDLE {q = _ ‼ₛ s}) =
+  ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)) (map-monotoneᵉ (·ₑ-monoʳ-≾ₑ s))
+step-grade-≾ SUB-HANDLE-TRANS = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ SUB-IF  = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ SUB-CASEℕ = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ SUB-RECℕ = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
