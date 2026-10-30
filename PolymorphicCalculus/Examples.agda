@@ -1,6 +1,8 @@
 ------------------------------------------------------------------------
--- The type-inference examples, in sets. Each set's index
--- `PolymorphicCalculus.Examples.<Set>.All` names the solver parts it
+-- The type-inference examples, in sets. They run the solver and take
+-- minutes, so `PolymorphicCalculus/Everything.agda` does not include them.
+-- Check with `agda PolymorphicCalculus/Examples.agda`; each set's index
+-- `PolymorphicCalculus/Examples/<Set>/All.agda` names the solver parts it
 -- exercises and can be checked alone.
 ------------------------------------------------------------------------
 
