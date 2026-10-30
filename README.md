@@ -67,9 +67,9 @@ theorem, under its title.
 
 - The language is parameterised by base types; the calculus without them is
   its instance `withoutBaseTypes`.
-- The polymorphic calculus has handlers as values of handler types, used by
-  `handle M with V`; the monomorphic calculus has second-class handlers,
-  `handle M with H to x in N`.
+- Both calculi have handlers as values of handler types, used by
+  `handle M with V`. The monomorphic calculus also writes
+  `handle M with H to x in N` for `handle M with handler N H`.
 - Hypotheses include quantified orderings, which bind several rigid
   effect-grade variables.
 - In the polymorphic calculus `unbox` takes a resource value, a variable under
