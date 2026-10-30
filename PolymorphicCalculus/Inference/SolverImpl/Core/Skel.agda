@@ -1,0 +1,205 @@
+--------------------------------------------------------------------
+-- Skeletons: open types with every grade slot deleted            --
+--                                                                --
+-- A skeleton records the shape of an open type; a computation    --
+-- type contributes the skeleton of its value part. Skeleton      --
+-- variables are a sort of their own over a bare `Fin`; `skelᵛ`   --
+-- sends each type variable to the skeleton variable of its       --
+-- index, so unifying two records that they have one shape        --
+-- without identifying them.                                      --
+--                                                                --
+-- Substitution, `_forᵏ_` and `checkᵏ` follow McBride's           --
+-- structural unification, at one sort.                           --
+--------------------------------------------------------------------
+
+open import Data.Fin.Base using (Fin; punchIn)
+open import Data.Maybe.Base using (Maybe; just; nothing; maybe′) renaming (map to mmap)
+open import Data.Nat.Base using (ℕ; suc)
+
+open import Grades.Base
+open import Language.BaseTypes using (module BaseTypes)
+open import Language.Spec
+
+open import Util.Equality
+
+open import PolymorphicCalculus.Syntax.Scopes
+
+module PolymorphicCalculus.Inference.SolverImpl.Core.Skel (S : LanguageSpec) where
+
+open LanguageSpec S
+open GradeSystemInterface Grades
+
+open BaseTypes BTs using (BaseType)
+
+open import PolymorphicCalculus.Syntax.Grades S
+open import PolymorphicCalculus.Syntax.Types  S
+
+open import PolymorphicCalculus.Inference.SolverImpl.Core.Thick
+open import PolymorphicCalculus.Inference.SolverImpl.Core.Rigid S using (zip₂)
+
+infix  37 sBox_
+infix  32 _s×_ _s+_
+infixr 30 _s⇒_ _s⇛_
+
+data Skel (n : ℕ) : Set where
+  svar   : Fin n → Skel n                  -- skeleton variable
+  sBase  : BaseType → Skel n               -- base types
+  sUnit  : Skel n                          -- unit type
+  sBool  : Skel n                          -- boolean type
+  sNat   : Skel n                          -- natural-number type
+  _s×_   : Skel n → Skel n → Skel n        -- product type
+  _s+_   : Skel n → Skel n → Skel n        -- sum type
+  sList  : Skel n → Skel n                 -- list type
+  sEmpty : Skel n                          -- empty type
+  _s⇒_   : Skel n → Skel n → Skel n        -- function type, to its result's value part
+  _s⇛_   : Skel n → Skel n → Skel n        -- handler type, of the value parts
+  sBox_  : Skel n → Skel n                 -- box modality
+
+-- A skeleton that is still a variable
+
+svar? : ∀ {n} → Skel n → Maybe (Fin n)
+svar? (svar γ) = just γ
+svar? _        = nothing
+
+svar?-just : ∀ {n} → (t : Skel n) → {γ : Fin n} → svar? t ≡ just γ → t ≡ svar γ
+svar?-just (svar γ)  refl = refl
+svar?-just (sBase b) ()
+svar?-just sUnit     ()
+svar?-just sBool     ()
+svar?-just sNat      ()
+svar?-just (t s× u)  ()
+svar?-just (t s+ u)  ()
+svar?-just (t s⇛ u)  ()
+svar?-just (sList t) ()
+svar?-just sEmpty    ()
+svar?-just (t s⇒ u)  ()
+svar?-just (sBox t)  ()
+
+-- The skeleton of an open type
+
+mutual
+
+  skelᵛ : ∀ {Ψ} → OVType Ψ → Skel (nTy Ψ)
+  skelᵛ (tvar α)  = svar α
+  skelᵛ (Base b)  = sBase b
+  skelᵛ Unit      = sUnit
+  skelᵛ Bool      = sBool
+  skelᵛ Nat       = sNat
+  skelᵛ (A |×| B) = skelᵛ A s× skelᵛ B
+  skelᵛ (A |+| B) = skelᵛ A s+ skelᵛ B
+  skelᵛ (|List| A) = sList (skelᵛ A)
+  skelᵛ Empty     = sEmpty
+  skelᵛ (A ⇒ C)   = skelᵛ A s⇒ skelᶜ C
+  skelᵛ (C ⇛ D)   = skelᶜ C s⇛ skelᶜ D
+  skelᵛ ([ ρ ] A) = sBox skelᵛ A
+
+  skelᶜ : ∀ {Ψ} → OCType Ψ → Skel (nTy Ψ)
+  skelᶜ (A ‼ ε) = skelᵛ A
+
+-- Substitutions of skeleton variables
+
+SSub : ℕ → ℕ → Set
+SSub n m = Fin n → Skel m
+
+infixl 50 _[_]ᵏ
+infixl 25 _⨟ᵏ_
+infix  20 _≐ᵏ_
+
+_[_]ᵏ : ∀ {n m} → Skel n → SSub n m → Skel m
+svar α    [ σ ]ᵏ = σ α
+sBase b   [ σ ]ᵏ = sBase b
+sUnit     [ σ ]ᵏ = sUnit
+sBool     [ σ ]ᵏ = sBool
+sNat      [ σ ]ᵏ = sNat
+(t s× u)  [ σ ]ᵏ = t [ σ ]ᵏ s× u [ σ ]ᵏ
+(t s+ u)  [ σ ]ᵏ = t [ σ ]ᵏ s+ u [ σ ]ᵏ
+(t s⇛ u)  [ σ ]ᵏ = t [ σ ]ᵏ s⇛ u [ σ ]ᵏ
+(sList t) [ σ ]ᵏ = sList (t [ σ ]ᵏ)
+sEmpty    [ σ ]ᵏ = sEmpty
+(t s⇒ u)  [ σ ]ᵏ = t [ σ ]ᵏ s⇒ u [ σ ]ᵏ
+(sBox t)  [ σ ]ᵏ = sBox t [ σ ]ᵏ
+
+idᵏ : ∀ {n} → SSub n n
+idᵏ = svar
+
+_⨟ᵏ_ : ∀ {n m l} → SSub n m → SSub m l → SSub n l
+(σ ⨟ᵏ δ) α = σ α [ δ ]ᵏ
+
+-- Pointwise equality of substitutions (avoids function extensionality)
+
+_≐ᵏ_ : ∀ {n m} → SSub n m → SSub n m → Set
+σ ≐ᵏ δ = ∀ α → σ α ≡ δ α
+
+[id]ᵏ : ∀ {n} → (t : Skel n) → t [ idᵏ ]ᵏ ≡ t
+[id]ᵏ (svar α)  = refl
+[id]ᵏ (sBase b) = refl
+[id]ᵏ sUnit     = refl
+[id]ᵏ sBool     = refl
+[id]ᵏ sNat      = refl
+[id]ᵏ (t s× u)  = cong₂ _s×_ ([id]ᵏ t) ([id]ᵏ u)
+[id]ᵏ (t s+ u)  = cong₂ _s+_ ([id]ᵏ t) ([id]ᵏ u)
+[id]ᵏ (t s⇛ u)  = cong₂ _s⇛_ ([id]ᵏ t) ([id]ᵏ u)
+[id]ᵏ (sList t) = cong sList ([id]ᵏ t)
+[id]ᵏ sEmpty    = refl
+[id]ᵏ (t s⇒ u)  = cong₂ _s⇒_ ([id]ᵏ t) ([id]ᵏ u)
+[id]ᵏ (sBox t)  = cong sBox_ ([id]ᵏ t)
+
+[⨟]ᵏ : ∀ {n m l} → (t : Skel n) → (σ : SSub n m) → (δ : SSub m l)
+     → t [ σ ]ᵏ [ δ ]ᵏ ≡ t [ σ ⨟ᵏ δ ]ᵏ
+[⨟]ᵏ (svar α)  σ δ = refl
+[⨟]ᵏ (sBase b) σ δ = refl
+[⨟]ᵏ sUnit     σ δ = refl
+[⨟]ᵏ sBool     σ δ = refl
+[⨟]ᵏ sNat      σ δ = refl
+[⨟]ᵏ (t s× u)  σ δ = cong₂ _s×_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
+[⨟]ᵏ (t s+ u)  σ δ = cong₂ _s+_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
+[⨟]ᵏ (t s⇛ u)  σ δ = cong₂ _s⇛_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
+[⨟]ᵏ (sList t) σ δ = cong sList ([⨟]ᵏ t σ δ)
+[⨟]ᵏ sEmpty    σ δ = refl
+[⨟]ᵏ (t s⇒ u)  σ δ = cong₂ _s⇒_ ([⨟]ᵏ t σ δ) ([⨟]ᵏ u σ δ)
+[⨟]ᵏ (sBox t)  σ δ = cong sBox_ ([⨟]ᵏ t σ δ)
+
+[≐]ᵏ : ∀ {n m} {σ δ : SSub n m} → σ ≐ᵏ δ → (t : Skel n) → t [ σ ]ᵏ ≡ t [ δ ]ᵏ
+[≐]ᵏ p (svar α)  = p α
+[≐]ᵏ p (sBase b) = refl
+[≐]ᵏ p sUnit     = refl
+[≐]ᵏ p sBool     = refl
+[≐]ᵏ p sNat      = refl
+[≐]ᵏ p (t s× u)  = cong₂ _s×_ ([≐]ᵏ p t) ([≐]ᵏ p u)
+[≐]ᵏ p (t s+ u)  = cong₂ _s+_ ([≐]ᵏ p t) ([≐]ᵏ p u)
+[≐]ᵏ p (t s⇛ u)  = cong₂ _s⇛_ ([≐]ᵏ p t) ([≐]ᵏ p u)
+[≐]ᵏ p (sList t) = cong sList ([≐]ᵏ p t)
+[≐]ᵏ p sEmpty    = refl
+[≐]ᵏ p (t s⇒ u)  = cong₂ _s⇒_ ([≐]ᵏ p t) ([≐]ᵏ p u)
+[≐]ᵏ p (sBox t)  = cong sBox_ ([≐]ᵏ p t)
+
+-- The substitution that eliminates one skeleton variable
+
+infix 40 _forᵏ_
+
+_forᵏ_ : ∀ {n} → Skel n → Fin (suc n) → SSub (suc n) n
+(t forᵏ α) β = maybe′ svar t (thick α β)
+
+for-hitᵏ : ∀ {n} → (t : Skel n) → (α : Fin (suc n)) → (t forᵏ α) α ≡ t
+for-hitᵏ t α = cong (maybe′ svar t) (thick-refl α)
+
+for-missᵏ : ∀ {n} → (t : Skel n) → (α : Fin (suc n)) → (β : Fin n)
+          → (t forᵏ α) (punchIn α β) ≡ svar β
+for-missᵏ t α β = cong (maybe′ svar t) (thick-thin α β)
+
+-- The occurrence check with the renaming into the smaller scope: a skeleton the
+-- variable does not occur in is one of the scope without it
+
+checkᵏ : ∀ {n} → Fin (suc n) → Skel (suc n) → Maybe (Skel n)
+checkᵏ α (svar β)  = mmap svar (thick α β)
+checkᵏ α (sBase b) = just (sBase b)
+checkᵏ α sUnit     = just sUnit
+checkᵏ α sBool     = just sBool
+checkᵏ α sNat      = just sNat
+checkᵏ α (t s× u)  = zip₂ _s×_ (checkᵏ α t) (checkᵏ α u)
+checkᵏ α (t s+ u)  = zip₂ _s+_ (checkᵏ α t) (checkᵏ α u)
+checkᵏ α (t s⇛ u)  = zip₂ _s⇛_ (checkᵏ α t) (checkᵏ α u)
+checkᵏ α (sList t) = mmap sList (checkᵏ α t)
+checkᵏ α sEmpty    = just sEmpty
+checkᵏ α (t s⇒ u)  = zip₂ _s⇒_ (checkᵏ α t) (checkᵏ α u)
+checkᵏ α (sBox t)  = mmap sBox_ (checkᵏ α t)

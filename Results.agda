@@ -1,25 +1,23 @@
 ------------------------------------------------------------------------
--- Overview of the main definitions and results
+-- Overview of the polymorphic calculus
 --
--- One entry per construct, rule, definition, lemma and theorem, named by
--- its title: grade systems; the calculus with type and grade variables,
--- its type system, semantics and type inference; the closed calculus and
--- its semantics. The items not yet formalised are listed at the end.
+-- One entry per main definition, rule, lemma and theorem, under its
+-- title: grade systems, the type system, the operational semantics,
+-- instantiation and type safety, and type inference. Check it with
+-- `agda Results.agda`; `Everything.agda` checks every module.
 --
 -- The calculus is parameterised by a `LanguageSpec` (a grade system, base
--- types and an operation signature), the calculus without base types
--- being its instance `withoutBaseTypes`; inference also takes hints for
--- the grade system (`SystemHints`), which only the solver reads, and an
--- enumeration of the operations (`OpEnum`).
+-- types and an operation signature); `withoutBaseTypes` is the instance
+-- without base types. Inference also takes `SystemHints` for the grade
+-- system, read only by the solver, and an `OpEnum` of the operations.
 ------------------------------------------------------------------------
 
 module Results where
 
--- The language: a grade system, base types and an operation signature;
--- the calculus without base types is the instance `withoutBaseTypes`
+-- The language: a grade system, base types and an operation signature
 open import Language.Spec public using (LanguageSpec; withoutBaseTypes)
 open import Grades.Hints using (SystemHints)
-open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
+open import PolymorphicCalculus.Inference.SolverImpl.Enum using (OpEnum)
 
 
 ------------------------------------------------------------------------
@@ -76,23 +74,24 @@ module GradeSystems where
 module Syntax (S : LanguageSpec) where
 
   -- Scopes and grade expressions
-  open import OpenCalculus.Syntax.Scopes public using (Scope; TyVar; RVar; EVar)
-  open import OpenCalculus.Syntax.Grades S public
+  open import PolymorphicCalculus.Syntax.Scopes public using (Scope; TyVar; RVar; EVar)
+  open import PolymorphicCalculus.Syntax.Grades S public
     using () renaming (EExp to EffectGradeExpr; RExp to ResourceGradeExpr)
 
   -- Ground types: unit, booleans, natural numbers, the empty type,
   -- products, sums, lists, graded modal types and base types
-  open import Language.Types S public using () renaming (GType to GroundType)
+  open import Language.GroundTypes (LanguageSpec.Grades S) (LanguageSpec.BTs S) public
+    using () renaming (GType to GroundType)
 
   -- Value and computation types, among them the handler types `C ⇛ D`
-  open import OpenCalculus.Syntax.Types S public
+  open import PolymorphicCalculus.Syntax.Types S public
     using (_⇛_) renaming (OVType to ValueType; OCType to ComputationType)
 
   -- Program contexts `Δ` of closed type schemes `∀ Θ. Q ⇒ X`, a
   -- definition named by its position; contexts, starting with a
   -- program context (`[]` the empty one, `Δ ▶ s` a nonempty one), and
   -- the lookup `x : X ∈_ρ Γ`
-  open import OpenCalculus.Syntax.Contexts S public
+  open import PolymorphicCalculus.Syntax.Contexts S public
     using (Scheme; ∀ˢ; _∈ᵖ[_]_; ⌜_⌝ᵖ; defs; _∈̂[_]_)
     renaming (PCtx to ProgramContext; OCtx to Context)
 
@@ -103,10 +102,10 @@ module Syntax (S : LanguageSpec) where
   -- ordering, entailed at fresh rigids (rule Gen); eternality,
   -- subtyping, the disjunction of the variable rule, and `Q ⊩ Q'[δ]`
   -- and `Q ⊩ Q'`.
-  open import OpenCalculus.Hypotheses S public
+  open import PolymorphicCalculus.Hypotheses S public
     using (_⊩_≾̂ᵣ_; _⊩_≾̂ₑ_; _⊨ᵍ_; _⊩ᴱ_; _∣_<:̂ᵛ_; _∣_<:̂ᶜ_; VarOK; _⊩ᴴ_[_]; _⊩ᴴ_)
     renaming (Hyps to Hypotheses; _⊩ᴼ_[_] to Gen)
-  open import OpenCalculus.Hypotheses.Quantified S public
+  open import PolymorphicCalculus.Hypotheses.Quantified S public
     using () renaming (QOrd to QuantifiedOrdering)
 
   -- Proposition (Grade entailment): grade entailment holds of the grade
@@ -118,38 +117,31 @@ module Syntax (S : LanguageSpec) where
   -- its rigids (rule Inst); it is stable under substitution; and a
   -- quantified ordering is entailed exactly when it is a semantic
   -- consequence
-  open import OpenCalculus.Hypotheses S public
+  open import PolymorphicCalculus.Hypotheses S public
     using ( hypₑ ; hypᵣ ; eqₑ ; eqᵣ ; transₑ ; transᵣ ; monoₑ ; monoᵣ ; map-mono
           ; ⊔-lubₑ ; ⊔-lubᵣ ; ⊔-ubˡₑ ; ⊔-ubˡᵣ ; ⊔-ubʳₑ ; ⊔-ubʳᵣ ; topₑ ; topᵣ
           ; zeroˡₑ ; zeroʳₑ ; zeroˡᵣ ; zeroʳᵣ ; ⊩-substₑ ; ⊩-substᵣ ; ⊩ᴼ⇒⊨ᴼ ; ⊨ᴼ⇒⊩ᴼ )
     renaming (instₑ to Inst; instᵣ to Instʳ; factₑ to Truth; factᵣ to Truthʳ)
 
   -- Values and computations, among them the handlers `handler H` and
-  -- `handle M with V`, and the uses `def k` of top-level definitions
-  open import OpenCalculus.Syntax.Raw S public
-    using (handler; handle_`with_; def) renaming (RawV to Value; RawC to Computation)
+  -- `handle M with V`, and the uses `usedef k` of definitions
+  open import PolymorphicCalculus.Syntax.Raw S public
+    using (handler; handle_`with_; usedef) renaming (RawV to Value; RawC to Computation)
 
-  -- Programs: sequences of top-level definitions `f = V`
-  open import OpenCalculus.Programs.Syntax S public using (Program; ∅ᴾ; _∷ᴾ_)
+  -- Programs: sequences of definitions `f = V`
+  open import PolymorphicCalculus.Programs.Syntax S public using (Program; ∅ᴾ; _∷ᴾ_)
 
   -- Definition (Closed instances): closed substitutions, satisfaction,
-  -- a quantified ordering at every grade, and satisfiability; the
-  -- declarative instances of the closed calculus
-  open import OpenCalculus.Hypotheses.Instances S public using (_⊨_; Satisfiable)
-  open import Bridge.Instantiation.Types S public
-    using () renaming (DInst to ClosedInstance)
-  open import Bridge.Instantiation.Judgements S public using (_⊨ᴰ_)
+  -- a quantified ordering at every grade, and satisfiability
+  open import PolymorphicCalculus.Hypotheses.Instances S public using (_⊨_; Satisfiable)
 
   -- Lemma (Soundness of entailment): at a satisfying closed instance, an
   -- entailed ordering holds in the carrier, and an entailed eternality,
   -- subtyping or variable condition holds as the closed relation,
-  -- entailment from no hypotheses; at declarative instances, each
-  -- judgement
-  open import OpenCalculus.Hypotheses.Instances S public
+  -- entailment from no hypotheses
+  open import PolymorphicCalculus.Hypotheses.Instances S public
     using (sound-≾ᵣ⁰; sound-≾ₑ⁰; ⊨⇒⊩ᴴ)
-  open import OpenCalculus.Hypotheses S public using (⊩ᴱ-subst; <:̂ᵛ-subst; VarOK-subst)
-  open import Bridge.Instantiation.Judgements S public
-    using (sound-≾ᵣ; sound-≾ₑ; sound-⊩ᴱ; sound-<:ᵛ; sound-<:ᶜ; sound-VarOK)
+  open import PolymorphicCalculus.Hypotheses S public using (⊩ᴱ-subst; <:̂ᵛ-subst; VarOK-subst)
 
 
 ------------------------------------------------------------------------
@@ -162,35 +154,35 @@ module TypeSystem (S : LanguageSpec) where
   -- (`⌊_⌋ᵛ`, `⌊_⌋ᶜ`). The typing rules in which grades play a role; Unbox
   -- takes a resource value, a variable under annotations, of the judgement
   -- `Q | Γ ⊢ V ↪[ρ'] z : [ρ]X`, which erases to the value (`⌊_⌋ʳ`). Rule
-  -- Def instantiates a scheme of the program context, with no lock
+  -- UseDef instantiates a scheme of the program context, with no lock
   -- condition.
-  open import OpenCalculus.Typing S public
+  open import PolymorphicCalculus.Typing S public
     using (_∣_⊢V⦂_; _∣_⊢C⦂_; _∣_⊢↪[_]_⦂[_]_)
-    renaming ( var to Var ; def to Def ; return to Return ; subC to Sub ; _⨟_ to Let
+    renaming ( var to Var ; usedef to UseDef ; return to Return ; subC to Sub ; _⨟_ to Let
              ; perform to Perform ; delay to Delay ; box to Box ; unbox to Unbox
              ; handler to Handler ; handle_`with_ to Handle )
-  open import OpenCalculus.Typing.Erasure S public using (⌊_⌋ᵛ; ⌊_⌋ᶜ; ⌊_⌋ʳ)
+  open import PolymorphicCalculus.Typing.Erasure S public using (⌊_⌋ᵛ; ⌊_⌋ᶜ; ⌊_⌋ʳ)
 
   -- Definition (Type schemes): principal type schemes of values in
   -- program contexts, and typability; those of computations in open
   -- contexts, with a substitution of the context's variables, from which
   -- the former are derived
-  open import OpenCalculus.Inference.Principality S public
+  open import PolymorphicCalculus.Inference.Principality S public
     using (Typable; Typableᵛ; valueScheme)
     renaming (PrincipalSchemeᵛ to PrincipalTypeScheme; PrincipalScheme to PrincipalTypeSchemeᶜ)
 
   -- Programs: each definition typable in the program context of those
   -- before it, which binds it to its principal type scheme there
-  open import OpenCalculus.Programs.Typing S public using (⊢ᴾ_⦂_; Accepted)
+  open import PolymorphicCalculus.Programs.Typing S public using (⊢ᴾ_⦂_; Accepted)
 
   -- Lemma (Resource values are annotated variables): in a context whose
   -- program context is that of a program, a value of type `[ρ'']X''` is a
   -- resource value reaching `[ρ]X` with `ρ'' ≾ ρ` and `X <: X''`, and with
   -- the value's erasure. Part (1), the inversion of subtyping at a box
   -- type, is `<:̂ᵛ-boxʳ` and `<:̂ᵛ-boxˡ`.
-  open import OpenCalculus.Programs.Typing S public using (program-resource-value)
-  open import OpenCalculus.Typing.Resources S public using (ResourceValue)
-  open import OpenCalculus.Hypotheses S public using (<:̂ᵛ-boxʳ; <:̂ᵛ-boxˡ)
+  open import PolymorphicCalculus.Programs.Typing S public using (program-resource-value)
+  open import PolymorphicCalculus.Typing.Resources S public using (ResourceValue)
+  open import PolymorphicCalculus.Hypotheses S public using (<:̂ᵛ-boxʳ; <:̂ᵛ-boxˡ)
 
 
 ------------------------------------------------------------------------
@@ -198,11 +190,11 @@ module TypeSystem (S : LanguageSpec) where
 
 module OperationalSemantics (S : LanguageSpec) where
 
-  open import OpenCalculus.Syntax.Scopes using (∅ˢ)
-  open import OpenCalculus.Syntax.Types S using (OVType; OCType)
-  open import OpenCalculus.Syntax.Contexts S using (OCtx)
-  open import OpenCalculus.Hypotheses S using (∅ᴴ)
-  open import OpenCalculus.Typing S using (_∣_⊢V⦂_; _∣_⊢C⦂_)
+  open import PolymorphicCalculus.Syntax.Scopes using (∅ˢ)
+  open import PolymorphicCalculus.Syntax.Types S using (OVType; OCType)
+  open import PolymorphicCalculus.Syntax.Contexts S using (OCtx)
+  open import PolymorphicCalculus.Hypotheses S using (∅ᴴ)
+  open import PolymorphicCalculus.Typing S using (_∣_⊢V⦂_; _∣_⊢C⦂_)
 
   -- Scope-closed typing `Γ ⊢ V : X` and `Γ ⊢ M : C`, over the empty
   -- scope and under no hypotheses
@@ -215,24 +207,24 @@ module OperationalSemantics (S : LanguageSpec) where
   -- Run-time terms: raw terms without grades and type annotations, and
   -- their scope-closed typing, a scope-closed derivation erasing to the
   -- term
-  open import OpenCalculus.Syntax.Run S public using (RunV; RunC; eraseᵛ; eraseᶜ)
-  open import OpenCalculus.Typing.ScopeClosed S public using (_⊢ᵛ_⦂_; _⊢ᶜ_⦂_)
+  open import PolymorphicCalculus.Syntax.Run S public using (RunV; RunC; eraseᵛ; eraseᶜ)
+  open import PolymorphicCalculus.Typing.ScopeClosed S public using (_⊢ᵛ_⦂_; _⊢ᶜ_⦂_)
 
   -- States and state typings: the context of a state, a state typing
   -- typing its state, extensions of states and of state typings, and the
   -- grade of the passages an extension adds
-  open import OpenCalculus.Semantics.States S public
+  open import PolymorphicCalculus.OperationalSemantics.State S public
     using (State; StateTyping; ctx; Types; _≤ₛ_; δₛ; _⊆[_]_)
 
   -- The reduction rules for delays, resources and effect handling, on
   -- run-time terms; HANDLE-OP leaves the clause's grade variable
   -- uninstantiated
-  open import OpenCalculus.Semantics.Reduction S public
+  open import PolymorphicCalculus.OperationalSemantics.Reduction S public
     using (Step; ⟨_∣_⟩↝⟨_∣_⟩; DELAY; BOX; UNBOX; SEQ-OP; HANDLE-RET; HANDLE-OP)
 
   -- The remaining rules. CMP decides a comparison by the structural order
   -- on the data its operands denote (`compareᴰ`).
-  open import OpenCalculus.Semantics.Reduction S public
+  open import PolymorphicCalculus.OperationalSemantics.Reduction S public
     using ( APP ; MATCH ; CMP ; IF-TRUE ; IF-FALSE ; CASEℕ-ZERO ; CASEℕ-SUCC
           ; RECℕ-ZERO ; RECℕ-SUCC ; CASE-INL ; CASE-INR ; CASEL-NIL ; CASEL-CONS
           ; RECL-NIL ; RECL-CONS ; SEQ-RET ; SEQ-STEP ; HANDLE-STEP ; compareᴰ )
@@ -246,32 +238,32 @@ module InstantiationAndTypeSafety (S : LanguageSpec) where
   -- Erasure `⌊ M[δ] ⌋`: the run-time term of the raw term at an instance,
   -- its annotations dropped and the definitions of the program
   -- substituted (`⟦_⟧ᴾ`), in the context without its program context
-  open import OpenCalculus.Syntax.Raw.Subst S public using (_[_]ᴿᶜ)
-  open import OpenCalculus.Syntax.Run S public using (eraseᶜ)
-  open import OpenCalculus.Programs.Syntax S public using (⟦_⟧ᴾ; ⌊_⌋ᴾᵛ; ⌊_⌋ᴾᶜ)
-  open import OpenCalculus.Programs.Substitution S public using (local)
+  open import PolymorphicCalculus.Syntax.Raw.GradeSubstitution S public using (_[_]ᴿᶜ)
+  open import PolymorphicCalculus.Syntax.Run S public using (eraseᶜ)
+  open import PolymorphicCalculus.Programs.Syntax S public using (⟦_⟧ᴾ; ⌊_⌋ᴾᵛ; ⌊_⌋ᴾᶜ)
+  open import PolymorphicCalculus.Programs.Substitution S public using (local)
 
   -- Theorem (Instantiation), into the scope-closed typing, at the closed
   -- instances `δ ⊨ Q`, in a typed program; handler clauses stay typed
   -- at their variables
-  open import OpenCalculus.Programs.Instantiation S public
+  open import PolymorphicCalculus.Programs.Instantiation S public
     using (instantiation; instantiationᵛ)
 
   -- Theorem (Type safety): a finished term, or a step preserving the
   -- typing in an extension of the state typing
-  open import OpenCalculus.Semantics.Reduction S public using (Final)
-  open import OpenCalculus.Semantics.TypeSafety S public
+  open import PolymorphicCalculus.OperationalSemantics.Reduction S public using (Final)
+  open import PolymorphicCalculus.OperationalSemantics.TypeSafety S public
     using (type-safety; Preserved; progress; preservation)
 
   -- Theorem (Termination), from the empty state; the multi-step
   -- reduction `⟨ S ∣ M ⟩↝*⟨ S' ∣ M' ⟩`
-  open import OpenCalculus.Semantics.Termination.Reducibility S public using (MultiStep)
-  open import OpenCalculus.Semantics.Termination S public using (Halts; termination)
+  open import PolymorphicCalculus.OperationalSemantics.Termination.Reducibility S public using (MultiStep)
+  open import PolymorphicCalculus.OperationalSemantics.Termination S public using (Halts; termination)
 
   -- Corollary (Programs): the instances of a term typed in the program
   -- context of a typed program are typed in the context of the empty
   -- state, and halt
-  open import OpenCalculus.Programs.Instantiation S public using (programs)
+  open import PolymorphicCalculus.Programs.Instantiation S public using (programs)
 
 
 ------------------------------------------------------------------------
@@ -281,46 +273,46 @@ module TypeInference (S : LanguageSpec) (hints : SystemHints (LanguageSpec.Grade
                      (opEnum : OpEnum S) where
 
   -- Definition (Constraints): constraints, solutions, and generation
-  open import OpenCalculus.Inference.Constraints.Syntax S public using (Constraint)
-  open import OpenCalculus.Inference.Constraints.Satisfaction S public
+  open import PolymorphicCalculus.Inference.Constraints.Syntax S public using (Constraint)
+  open import PolymorphicCalculus.Inference.Constraints.Satisfaction S public
     using (_⊨[_]_)
-  open import OpenCalculus.Inference.Generate S public using (genV; genC)
+  open import PolymorphicCalculus.Inference.Generate S public using (genV; genC)
 
   -- Theorem (Constraint generation)
-  open import OpenCalculus.Inference.Completeness S public
+  open import PolymorphicCalculus.Inference.Completeness S public
     using () renaming (charC to constraint-generation; charV to constraint-generationᵛ)
 
   -- Theorem (Solving): the interface of a principal solver, the solver, and
   -- that it is not stuck on constraints without `∀`
-  open import OpenCalculus.Inference.Solver S public using (Solver)
-  open import OpenCalculus.Inference.SolverImpl S hints opEnum public
+  open import PolymorphicCalculus.Inference.Solver S public using (Solver)
+  open import PolymorphicCalculus.Inference.SolverImpl S hints opEnum public
     using () renaming (solver to solving; runSolver-rigidFree to solving-not-stuck)
 
   -- Theorem (Type inference), for values in program contexts; `stuck`
   -- only for values with handlers or using a definition whose scheme has
   -- quantified hypotheses (`NoRigidᵛ`)
-  open import OpenCalculus.Inference.Principality S public using (typableᵛ-⇔)
-  open import OpenCalculus.Inference.Generate S public using (NoRigidᵛ; NoRigidᶜ)
-  open import OpenCalculus.Inference.Values S hints opEnum public
+  open import PolymorphicCalculus.Inference.Principality S public using (typableᵛ-⇔)
+  open import PolymorphicCalculus.Inference.Generate S public using (NoRigidᵛ; NoRigidᶜ)
+  open import PolymorphicCalculus.Inference.Values S hints opEnum public
     using ( Inferenceᵛ; inferᵛ; inferᵛ-typed; inferᵛ-untypable; inferᵛ-noRigid
           ; inferᵛ-handlerFree )
 
   -- The same for computations in open contexts
-  open import OpenCalculus.Inference.Principality S public
+  open import PolymorphicCalculus.Inference.Principality S public
     using (Inference; typable-⇔)
-  open import OpenCalculus.Inference.SolverImpl S hints opEnum public
+  open import PolymorphicCalculus.Inference.SolverImpl S hints opEnum public
     using (infer; infer-typed; infer-untypable; infer-noRigid; infer-handlerFree)
 
   -- Corollary (Completeness), for scope-closed typings of values in any
   -- program context, the empty one among them
-  open import OpenCalculus.Inference.Values S hints opEnum public using (completenessᵛ)
+  open import PolymorphicCalculus.Inference.Values S hints opEnum public using (completenessᵛ)
 
   -- The same for computations in contexts over the empty scope
-  open import OpenCalculus.Inference.ScopeClosed S hints opEnum public using (completeness)
+  open import PolymorphicCalculus.Inference.ScopeClosed S hints opEnum public using (completeness)
 
   -- Checking a program: each definition inferred in the program context
   -- of those before it, its scheme added to it
-  open import OpenCalculus.Programs.Checking S hints opEnum public
+  open import PolymorphicCalculus.Programs.Checking S hints opEnum public
     using (Checked; checkProgram)
 
 
@@ -423,25 +415,28 @@ module GradeAlgebraExamples where
 
 module CalculusWithGradeVariables (S : LanguageSpec) where
 
-  -- Definition (Signatures). The comparisons are decided by a strict
-  -- total order on the data of each eternal type (`compareᵈ`), from one
-  -- on each base type. The calculus is the instance without base types,
-  -- over a grade system and an operation signature.
+  -- Definition (Signatures): a grade system, base types and operations.
+  -- Comparisons are decided by the structural order on the data the
+  -- operands denote (`compareᴰ`), from a strict total order on each
+  -- eternal base type.
   open import Language.Spec public using (LanguageSpec; withoutBaseTypes)
   open import Language.Operations public using (Operations)
   open import Language.BaseTypes public using (BaseTypes; noBaseTypes)
   open import Language.Comparisons public using () renaming (Cmp to Comparison)
-  open import ClosedCalculus.Syntax.Data S public using (compareᵈ)
+  open import PolymorphicCalculus.OperationalSemantics.Reduction S public using (compareᴰ)
 
   -- Raw values and computations
-  open import OpenCalculus.Syntax.Raw S public using (RawV; RawC)
+  open import PolymorphicCalculus.Syntax.Raw S public using (RawV; RawC)
 
   -- Entailment: convertibility, entailment from no hypotheses both ways,
   -- and the rules, those of grade entailment its properties. The rules
   -- are named for effect grades; the resource rules carry a subscript
   -- `ᵣ`. Var-Et has one rule per disjunct; Var-Hyp meets a disjunction
-  -- hypothesis at a type equivalent to it, a subtype and a supertype.
-  open import OpenCalculus.Hypotheses S public
+  -- hypothesis at a grade below its own; the variable condition is
+  -- closed under subtyping in both directions (Var-Sub-L, Var-Sub-R),
+  -- products, sums and lists (Var-Prod, Var-Sum, Var-List), and joins
+  -- of grades (Var-Join).
+  open import PolymorphicCalculus.Hypotheses S public
     using (_≡̂ₑ_; _≡̂ᵣ_; _≡̂ᵛ_; _⊩ᵗᵛ_≾_)
     renaming ( hypₑ to Hyp ; hypᵣ to Hypᵣ ; eqₑ to Conv ; eqᵣ to Convᵣ
              ; monoₑ to Mono ; monoᵣ to Monoᵣ ; map-mono to Map
@@ -449,6 +444,9 @@ module CalculusWithGradeVariables (S : LanguageSpec) where
              ; zeroˡᵣ to Id-Prodˡᵣ ; zeroʳᵣ to Id-Prodʳᵣ
              ; tvarₛ to Sub-Var
              ; et-ok to Var-Etˡ ; ≾ᵘ-ok to Var-Etʳ ; hyp-ok to Var-Hyp
+             ; subˡ-ok to Var-Sub-L ; subʳ-ok to Var-Sub-R
+             ; _|×|-ok_ to Var-Prod ; _|+|-ok_ to Var-Sum ; |List|-ok to Var-List
+             ; ⊔-ok to Var-Join
              ; atomₑ to Const ; atomᵣ to Constᵣ
              ; transₑ to Trans ; transᵣ to Transᵣ
              ; ⊔-lubₑ to Lub ; ⊔-lubᵣ to Lubᵣ
@@ -467,7 +465,7 @@ module CalculusWithGradeVariables (S : LanguageSpec) where
 
   -- The remaining typing rules. Const-Base types the constants of a base
   -- type.
-  open import OpenCalculus.Typing S public
+  open import PolymorphicCalculus.Typing S public
     using ()
     renaming ( ⋆ to Unit ; true to True ; false to False ; zero to Zero ; succ to Succ
              ; ⦉_,_⦊ to Pair ; inl to Inl ; inr to Inr ; nil to Nil ; cons to Cons
@@ -479,185 +477,6 @@ module CalculusWithGradeVariables (S : LanguageSpec) where
 
 
 ------------------------------------------------------------------------
--- The closed calculus
-
-module TheClosedCalculus (S : LanguageSpec) where
-
-  -- Closed types, contexts, eternal types, the grade of a context, and
-  -- variables under locks
-  open import Language.Types S public
-    using (GType; VType; CType; Eternal; type-of-gtype)
-    renaming ( Unitₑ to Et-Unit ; Boolₑ to Et-Bool ; Natₑ to Et-Nat ; Emptyₑ to Et-Empty
-             ; Baseₑ to Et-Base
-             ; _|×|ₑ_ to Et-Prod ; _|+|ₑ_ to Et-Sum ; |List|ₑ to Et-List )
-  open import ClosedCalculus.Syntax.Contexts S public
-    using (Ctx; ctx-grade; _∈[_]_; Hd; Tl-∷; Tl-⟨⟩)
-
-  -- Subtyping
-  open import ClosedCalculus.Syntax.Subtyping S public
-    using (_<:ᵛ_; _<:ᶜ_)
-    renaming ( Unitₛ to S-Unit ; Boolₛ to S-Bool ; Natₛ to S-Nat ; Emptyₛ to S-Empty
-             ; Baseₛ to S-Base
-             ; _|×|ₛ_ to S-Prod ; _|+|ₛ_ to S-Sum ; |List|ₛ to S-List
-             ; _⇒ₛ_ to S-Fun ; [_]ₛ_ to S-Box ; _‼ₛ_ to S-Comp )
-
-  -- Closed typing of values and of computations
-  open import ClosedCalculus.Syntax.Terms S public
-    using (_⊢V⦂_; _⊢C⦂_)
-    renaming ( var to Var ; ⋆ to Unit ; true to True ; false to False ; zero to Zero
-             ; succ to Succ ; ⦉_,_⦊ to Pair ; inl to Inl ; inr to Inr ; nil to Nil
-             ; cons to Cons ; lam to Fun ; subV to Sub-V ; const to Const-Base
-             ; return to Return ; _⨟_ to Let ; _·_ to App ; match_`in_ to Match
-             ; absurd to Absurd ; cmp to Cmp ; if_`then_`else_ to If
-             ; caseℕ_`zero_`succ_ to Case-Nat ; recℕ to Rec-Nat
-             ; case+_`inl_`inr_ to Case-Sum ; caseL_`nil_`cons_ to Case-List
-             ; recL to Rec-List ; perform to Perform ; delay to Delay
-             ; handle_`with_`in to Handle ; box to Box ; unbox to Unbox ; subC to Sub-C )
-
-  -- Lemma (Subtyping): a preorder, antisymmetric where the grade orders
-  -- are, reflecting eternality
-  open import ClosedCalculus.Syntax.Subtyping S public
-    using (<:ᵛ-refl; <:ᵛ-trans; <:ᵛ-antisym; <:ᵛ-irrelevant; <:ᵛ-eternalˡ)
-
-  -- Definition (Renamings)
-  open import ClosedCalculus.Syntax.Renamings.Base S public
-    using ( Ren ; EternalCtx ; id-ren ; _∘ʳ_ ; wk-ren ; var-ren ; ⟨⟩-η-ren ; ⟨⟩-η⁻¹-ren
-          ; ⟨⟩-μ-ren ; ⟨⟩-≤-ren ; ⟨⟩-ext-ctx ; cong-∷-ren ; cong-⟨⟩-ren ; exch-ren )
-
-  -- Theorem (Renaming); Corollary (Structural rules) is its instances at
-  -- the generators. Lemma (Values under locks), part 3 (Unbox-Val).
-  open import ClosedCalculus.Syntax.RenActions S public
-    using (V-rename; C-rename; unbox-val)
-
-  -- Lemma (Values under locks), parts 1 and 2
-  open import ClosedCalculus.Syntax.Terms S public
-    using (eternal-val-ext; grad-typ⇒var<:)
-
-  -- Theorem (Substitution)
-  open import ClosedCalculus.Syntax.Substitutions S public using (_[_↦_]v; _[_↦_]c)
-
-  -- Lemma (Context subsumption)
-  open import ClosedCalculus.Syntax.Substitutions.Subsumption S public using (subCtx)
-
-  -- Lemma (Subsumption at reconciliation points)
-  open import ClosedCalculus.Syntax.Normalisation S public
-    using (V-normal-form; C-normal-form)
-
-
-------------------------------------------------------------------------
--- Operational semantics and type safety of the closed calculus
-
-module OperationalSemanticsAndTypeSafety (S : LanguageSpec) where
-
-  -- Definition (States)
-  open import ClosedCalculus.OperationalSemantics.State S public
-    using (𝕊; ∅; _⟨_⟩ₛ; _∷ₛ_; toCtx; state-grade; _≤ₛ_; ≤ₛ-grade; state-grade-≤ₛ)
-
-  -- Definition (Configurations), and the small-step operational semantics.
-  -- CMP reduces a comparison to its boolean; SUB, SUB-APP, SUB-IF,
-  -- SUB-CASEℕ and SUB-RECℕ move a subsumption and erase to the identity on
-  -- raw terms.
-  open import ClosedCalculus.OperationalSemantics.PreservationTheorem S public
-    using ( Config ; _↝_
-          ; APP ; MATCH ; CMP ; IF-TRUE ; IF-FALSE ; CASEℕ-ZERO ; CASEℕ-SUCC
-          ; RECℕ-ZERO ; RECℕ-SUCC ; CASE+ ; CASE-INL ; CASE-INR ; CASEL ; CASEL-NIL
-          ; CASEL-CONS ; RECL ; RECL-NIL ; RECL-CONS ; SEQ-RET ; SEQ-OP ; DELAY
-          ; HANDLE-RET ; HANDLE-OP ; BOX ; UNBOX ; SEQ-STEP ; HANDLE-STEP
-          ; SUB ; SUB-APP ; SUB-IF ; SUB-CASEℕ ; SUB-RECℕ )
-
-  -- Theorem (Preservation)
-  open import ClosedCalculus.OperationalSemantics.PreservationTheorem S public
-    using (step-extends-state; step-refines-type; step-grade-≾; step-invariants)
-
-  -- Theorem (Progress)
-  open import ClosedCalculus.OperationalSemantics.ProgressTheorem S public
-    using (Progresses; progress; finality-value; finality-op)
-
-  -- Theorem (Termination)
-  open import ClosedCalculus.Adequacy.Evaluation S public using (Halts)
-  open import ClosedCalculus.Adequacy.Normalization S public using (halts)
-
-  -- Definition (Top-level semantics); Theorem (Top-level preservation and
-  -- progress)
-  open import ClosedCalculus.OperationalSemantics.TopLevelOpSemantics S public
-    using (TopLevelOpSemantics)
-  open import ClosedCalculus.OperationalSemantics.TopLevelPreservationTheorem S public
-    using (module PureTopLevelPreservationTheorem)
-  open import ClosedCalculus.OperationalSemantics.TopLevelProgressTheorem S public
-    using (module PureTopLevelProgressTheorem)
-
-
-------------------------------------------------------------------------
--- Equational theory and denotational semantics
---
--- The entries over a model take the model's components (`Cat`, `Fut`,
--- `Pst`, `Adj`, `GTy`, `Mon`, `GE`) as their first arguments.
-
-module EquationalTheoryAndDenotationalSemantics (S : LanguageSpec) where
-
-  -- Definition (Equational theory), and its axioms
-  open import ClosedCalculus.EquationalTheory.EquationalTheory S public
-    using ( _⊢V⦂_==_ ; _⊢C⦂_==_
-          ; seq-return ; seq-perform ; seq-delay ; seq-box ; seq-unbox ; seq-eta
-          ; seq-assoc ; fun-beta ; fun-eta ; unit-eta ; handle-return ; handle-perform
-          ; handle-delay ; handle-box ; handle-unbox ; delay-zero ; delay-delay
-          ; unbox-beta ; boxed-not-used ; unbox-not-used ; box-comm ; unbox-comm
-          ; box-unbox-comm )
-
-  -- Definition (Models)
-  open import ClosedCalculus.DenotationalSemantics.Model.Category public using (Category)
-  open import ClosedCalculus.DenotationalSemantics.Model.Modality.Future public
-    using (Future)
-  open import ClosedCalculus.DenotationalSemantics.Model.Modality.Past public using (Past)
-  open import ClosedCalculus.DenotationalSemantics.Model.Modality.Adjunction public
-    using (Adjunction)
-  open import ClosedCalculus.DenotationalSemantics.Model.Modality.Eternal public
-    using (Eternalᵒ)
-  open import ClosedCalculus.DenotationalSemantics.Model.GroundTypes S public
-    using (GroundTypes)
-  open import ClosedCalculus.DenotationalSemantics.Model.GroundEternal public
-    using (GroundEternal)
-  open import ClosedCalculus.DenotationalSemantics.Model.Monad public using (Monad)
-
-  -- Definition (Interpretation), for derivations whose handlers are uniform
-  -- (`Paramᶜ`)
-  open import ClosedCalculus.DenotationalSemantics.Interpretation.Types public
-    using (⟦_⟧ᵛ; ⟦_⟧ᶜ)
-  open import ClosedCalculus.DenotationalSemantics.Interpretation.Contexts public
-    using (⟦_⟧ᶜᵗˣ)
-  open import ClosedCalculus.DenotationalSemantics.Interpretation.Terms public
-    using (⟦_⟧ᵛᵗ; ⟦_⟧ᶜᵗ; Paramᵛ; Paramᶜ)
-
-  -- Theorem (Coherence with renaming and substitution)
-  open import ClosedCalculus.DenotationalSemantics.Interpretation.RenamingCoherence public
-    using (V-rename-nat; C-rename-nat)
-  open import ClosedCalculus.DenotationalSemantics.Interpretation.SubstitutionCoherence.Core public
-    using (V-subst-nat; C-subst-nat)
-
-  -- Theorem (Soundness of the equational theory)
-  open import ClosedCalculus.EquationalTheory.Soundness public using (soundᵛ; soundᶜ)
-
-  -- Theorem (Soundness of the operational semantics)
-  open import ClosedCalculus.OperationalSemantics.Soundness.Preservation public
-    using (↝*-⊳)
-
-  -- Definition (Kripke frames and the presheaf model)
-  open import ClosedCalculus.DenotationalSemantics.Model.World public using (World)
-  open import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Base public
-    using (PShCat)
-  open import ClosedCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Instance public
-    using (PShMonad)
-
-  -- Theorem (Adequacy), for head-faithful models; the presheaf model is
-  -- one (`PShHeadFaithful` in `ClosedCalculus.Adequacy.PSh.HeadFaithful`);
-  -- the observational corollary is `ClosedCalculus.Adequacy.Equational`.
-  open import ClosedCalculus.Adequacy.HeadFaithful public using (HeadFaithful)
-  open import ClosedCalculus.Adequacy.Adequacy public using (adequacy)
-  import ClosedCalculus.Adequacy.PSh.HeadFaithful
-  import ClosedCalculus.Adequacy.Equational
-
-
-------------------------------------------------------------------------
 -- Further results
 
 module FormalisedResults (S : LanguageSpec) (hints : SystemHints (LanguageSpec.Grades S))
@@ -666,98 +485,61 @@ module FormalisedResults (S : LanguageSpec) (hints : SystemHints (LanguageSpec.G
   -- Entailment is stable under substitution and weakening, and the side
   -- condition of the variable rule under equivalence of the type;
   -- convertible expressions have equivalent values
-  open import OpenCalculus.Hypotheses S public
+  open import PolymorphicCalculus.Hypotheses S public
     using (⊩-substᵣ; ⊩-substₑ; ⊩ᴱ-subst; <:̂ᵛ-subst; VarOK-subst; ⊩-wkᵉᵣ; ⊩-wkᵉₑ; VarOK-≃)
-  open import OpenCalculus.Hypotheses.Instances S public using (val-≡̂ᵣ; val-≾ᵣ)
+  open import PolymorphicCalculus.Hypotheses.Instances S public using (val-≡̂ᵣ; val-≾ᵣ)
 
   -- Substitution of types and grades in typings, and the instance of a
   -- handler clause at a grade for its variable; renaming and, under no
   -- hypotheses, substitution of term variables; inversion
-  open import OpenCalculus.Typing.GradeSubstitution S public
+  open import PolymorphicCalculus.Typing.GradeSubstitution S public
     using (substᵛ; substᶜ; instantiate-clause)
-  open import OpenCalculus.Typing.Renaming S public using (Ren; rename-v; rename-c; eternal-v)
-  open import OpenCalculus.Typing.Substitution S public using (Drop; sub-v; sub-c)
-  open import OpenCalculus.Typing.Inversion S public using (invV; invC)
+  open import PolymorphicCalculus.Typing.Renaming S public using (Ren; rename-v; rename-c; eternal-v)
+  open import PolymorphicCalculus.Typing.Substitution S public using (Drop; sub-v; sub-c)
+  open import PolymorphicCalculus.Typing.Inversion S public using (invV; invC)
 
   -- Conversion of a context's types: under any hypotheses, to equivalent
   -- types; under hypotheses with no disjunction, to subtypes
-  open import OpenCalculus.Typing.Conversion S public
+  open import PolymorphicCalculus.Typing.Conversion S public
     using (Conversion; equivalence; narrowing; CtxRel; conv-v; conv-c)
 
   -- Resource values: under a program context whose schemes have
   -- non-resource types, a value of box type is a resource value
-  open import OpenCalculus.Typing.Resources S public
+  open import PolymorphicCalculus.Typing.Resources S public
     using (NonResourceDefs; resource-value; res-collapse)
 
   -- Instantiation of the scope alone, keeping the program context; the
   -- substitution of closed typings of the definitions for their uses
-  -- (the substitution lemma for Def), which a typed program provides
-  open import OpenCalculus.Typing.Instantiation S public
+  -- (the substitution lemma for UseDef), which a typed program provides
+  open import PolymorphicCalculus.Typing.Instantiation S public
     using (scope-instantiation; scope-instantiationᵛ)
-  open import OpenCalculus.Programs.Substitution S public using (DefsEnv; sdef-v; sdef-c)
-  open import OpenCalculus.Programs.Typing S public using (programEnv)
+  open import PolymorphicCalculus.Programs.Substitution S public using (DefsEnv; sdef-v; sdef-c)
+  open import PolymorphicCalculus.Programs.Typing S public using (programEnv)
 
   -- Reducibility: the logical relation on run-time terms over states,
   -- and its fundamental lemma
-  open import OpenCalculus.Semantics.Termination.Reducibility S public
+  open import PolymorphicCalculus.OperationalSemantics.Termination.Reducibility S public
     using (VRed; VRedᵍ; CRed; cred-seq; cred-handle)
-  open import OpenCalculus.Semantics.Termination S public using (fund-v; fund-c)
-
-  -- Closed instances of the two kinds correspond
-  open import Bridge.Instantiation.Correspondence S public using (⊨⇔⊨ᴰ)
-
-  -- Instantiation into the closed calculus, for terms whose handlers are
-  -- second-class, every handler being the handler of a `handle` and every
-  -- `handle`'s handler a handler; each handler clause instantiated at
-  -- every continuation grade; a value as `return V`. The elaboration
-  -- `⌊_⌋ᴿᶜ` forgets annotations, evaluates box grades, and runs
-  -- comparisons, values here and computations there, before the
-  -- computation whose values they are in.
-  open import OpenCalculus.Syntax.Raw S public using (SecondClassᶜ)
-  open import Bridge.Instantiation.Terms S public
-    using (⌊_⌋ᴿᶜ; instantiateᵛ; instantiateᶜ; instantiateˢᵛ; instantiateˢᶜ)
+  open import PolymorphicCalculus.OperationalSemantics.Termination S public using (fund-v; fund-c)
 
   -- Open subtyping is a preorder and reflects eternality
-  open import OpenCalculus.Hypotheses S public
+  open import PolymorphicCalculus.Hypotheses S public
     using (<:̂ᵛ-refl; <:̂ᵛ-trans; <:̂ᵛ-eternalˡ; <:̂ᵛ-eternalʳ)
 
   -- Constraint generation is sound and complete; a use of a definition
   -- generates an instance of its scheme, its hypotheses as a constraint
-  open import OpenCalculus.Inference.Soundness S public using (soundV; soundC)
-  open import OpenCalculus.Inference.Completeness S public using (completeV; completeC)
-  open import OpenCalculus.Inference.Constraints.Schemes S public
+  open import PolymorphicCalculus.Inference.Soundness S public using (soundV; soundC)
+  open import PolymorphicCalculus.Inference.Completeness S public using (completeV; completeC)
+  open import PolymorphicCalculus.Inference.Constraints.Schemes S public
     using (hypsᶜ; instᶜ; instᶜ-sound; instᶜ-complete)
 
   -- A solver meeting the interface gives principal solutions; the solver
   -- meets it
-  open import OpenCalculus.Inference.Principality S public
+  open import PolymorphicCalculus.Inference.Principality S public
     using (principalSolution; principal-inst; typable-unconditional)
-  open import OpenCalculus.Inference.SolverImpl S hints opEnum public
+  open import PolymorphicCalculus.Inference.SolverImpl S hints opEnum public
     using ( runSolver-sound ; runSolver-principal ; runSolver-complete
           ; runSolver-refutes ; infer-unconditional ; infer-complete
           ; check ; check-established ; check-untypable ; check-complete
           ; check-handlerFree )
 
-  -- Inference yields closed typings at every instance satisfying the
-  -- scheme, and a checked program, its handlers second-class, halts at
-  -- each; completeness and principality for the declarative system
-  open import Bridge.Instantiation.Inference S hints opEnum public
-    using (scheme-instantiate; infer-instantiate; check-instantiate; check-program)
-  -- for annotation-free terms in contexts with no handler type, with
-  -- respect to closed typings whose handlers are uniform, the handler of
-  -- each `handle` a handler
-  open import Bridge.Instantiation.Embedding S public using (Uᶜ; embedᶜ; AnnFreeᶜ)
-  open import Bridge.Instantiation.Types S public using (NoHandlerTypeᶜᵗˣ)
-  open import Bridge.Instantiation.Completeness S hints opEnum public
-    using ( UniformTyping ; principalᴰ ; infer-principal ; infer-untypableᴰ
-          ; infer-principal-typing ; check-principal ; check-untypableᴰ )
-
-
-------------------------------------------------------------------------
--- Not yet formalised
---
---   Handler types, handler values and `handle M with V` in the closed
---   calculus, its semantics and equational theory, where handlers occur in
---   `handle M with H to x in N`; instantiation for terms whose handlers
---   are not second-class.
-------------------------------------------------------------------------

@@ -1,0 +1,3 @@
+name: graded-temporal-resources
+depend: standard-library-2.3
+include: .

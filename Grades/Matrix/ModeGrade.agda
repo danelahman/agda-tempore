@@ -29,7 +29,6 @@ open import Data.List.Base using (List; []; _∷_) renaming (map to mapᴸ)
 open import Data.List.Membership.Propositional using () renaming (_∈_ to _∈ᴸ_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁻)
 open import Data.List.Relation.Unary.Any using (here; there)
-open import Data.Maybe.Base using (nothing)
 open import Data.Product using (_×_; _,_; proj₁; proj₂; ∃)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂)
 open import Relation.Nullary using (¬_; Dec; yes; no; ¬?)
@@ -301,7 +300,6 @@ module _ (E : ModeEntries) where
     ; ≾-zero-productʳ = λ {x} {y} h → pw (zero-productʳ′ x y h)
     ; of-dur-zero     = Delays.delay-zero Δ
     ; of-dur-plus     = λ {τ} {τ'} → Delays.delay-plus Δ τ τ'
-    ; ≃⇒≡?            = nothing
     }
 
   ----------------------------------------------------------------------

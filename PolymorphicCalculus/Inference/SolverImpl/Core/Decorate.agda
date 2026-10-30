@@ -1,0 +1,105 @@
+--------------------------------------------------------------------
+-- Decoration: a skeleton back into an open type                  --
+--                                                                --
+-- `decorate` builds the most general open type of a given shape, --
+-- with a fresh grade variable per grade slot (one per box and    --
+-- arrow, two per handler type) and a fresh type variable per     --
+-- skeleton variable left. `expandSub` unifies the skeletons of a --
+-- list of subtyping demands and refines each type variable whose --
+-- shape the solution determines.                                 --
+--                                                                --
+-- Contract (`SolverImpl.Expand`): afterwards every demand        --
+-- decomposes (`expandSub-dec`); every substitution meeting the   --
+-- demands factors through it, and a failure refutes them         --
+-- (`expandSub-max`).                                             --
+--                                                                --
+-- Match-then-decompose, as in Fuh and Mishra's structural        --
+-- subtyping inference.                                           --
+--------------------------------------------------------------------
+
+open import Data.List.Base using (List; map)
+open import Data.Maybe.Base using (Maybe; just; nothing; maybe′) renaming (map to mmap)
+open import Data.Nat.Base using (ℕ)
+open import Data.Product using (Σ-syntax; _×_; _,_)
+open import Data.Vec.Base using (Vec; []; _∷_; lookup; tabulate)
+
+open import Grades.Base
+open import Language.Spec
+
+open import Util.Equality
+
+open import PolymorphicCalculus.Syntax.Scopes
+
+module PolymorphicCalculus.Inference.SolverImpl.Core.Decorate (S : LanguageSpec) where
+
+open LanguageSpec S
+open GradeSystemInterface Grades
+
+open import PolymorphicCalculus.Syntax.Grades            S
+open import PolymorphicCalculus.Syntax.Types             S
+open import PolymorphicCalculus.Syntax.GradeSubstitution S
+
+open import PolymorphicCalculus.Inference.SolverImpl.Core.Skel      S
+open import PolymorphicCalculus.Inference.SolverImpl.Core.SkelUnify S
+
+-- The extension a decoration performs, as the renaming of the old scope into
+-- the new
+
+decorate : ∀ {m} → (Ψ : Scope) → Skel m
+         → Σ[ Ψ' ∈ Scope ] (Subst Ψ Ψ' × OVType Ψ')
+decorate Ψ (svar γ)  = Ψ +ty , wkˢᵗ , tvar (newᵗ {Ψ})
+decorate Ψ (sBase b) = Ψ , idˢ , Base b
+decorate Ψ sUnit     = Ψ , idˢ , Unit
+decorate Ψ sBool     = Ψ , idˢ , Bool
+decorate Ψ sNat      = Ψ , idˢ , Nat
+decorate Ψ sEmpty    = Ψ , idˢ , Empty
+decorate Ψ (t s× u) with decorate Ψ t
+... | Ψ₁ , w₁ , A with decorate Ψ₁ u
+...   | Ψ₂ , w₂ , B = Ψ₂ , w₁ ⨟ˢ w₂ , (A [ w₂ ]ᵛ |×| B)
+decorate Ψ (t s+ u) with decorate Ψ t
+... | Ψ₁ , w₁ , A with decorate Ψ₁ u
+...   | Ψ₂ , w₂ , B = Ψ₂ , w₁ ⨟ˢ w₂ , (A [ w₂ ]ᵛ |+| B)
+decorate Ψ (sList t) with decorate Ψ t
+... | Ψ₁ , w₁ , A = Ψ₁ , w₁ , |List| A
+decorate Ψ (t s⇒ u) with decorate Ψ t
+... | Ψ₁ , w₁ , A with decorate Ψ₁ u
+...   | Ψ₂ , w₂ , B =
+        Ψ₂ +e , (w₁ ⨟ˢ w₂ ⨟ˢ wkˢᵉ) ,
+        (wkᵉ-v (A [ w₂ ]ᵛ) ⇒ (wkᵉ-v B ‼ evar (newᵉ {Ψ₂})))
+decorate Ψ (t s⇛ u) with decorate Ψ t
+... | Ψ₁ , w₁ , A with decorate Ψ₁ u
+...   | Ψ₂ , w₂ , B =
+        Ψ₂ +e +e , (w₁ ⨟ˢ w₂ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ) ,
+        (wkᵉ-v (wkᵉ-v (A [ w₂ ]ᵛ)) ‼ wkᵉ-e (evar (newᵉ {Ψ₂}))
+          ⇛ wkᵉ-v (wkᵉ-v B) ‼ evar (newᵉ {Ψ₂ +e}))
+decorate Ψ (sBox t) with decorate Ψ t
+... | Ψ₁ , w₁ , A = Ψ₁ +r , (w₁ ⨟ˢ wkˢʳ) , ([ rvar (newʳ {Ψ₁}) ] wkʳ-v A)
+
+-- A whole vector of skeletons, sharing one scope extension; a variable skeleton
+-- determines no shape, and its type variable is kept
+
+decorate* : ∀ {m k} → (Ψ : Scope) → Vec (Skel m) k
+          → Σ[ Ψ' ∈ Scope ] (Subst Ψ Ψ' × Vec (Maybe (OVType Ψ')) k)
+decorate* Ψ []       = Ψ , idˢ , []
+decorate* Ψ (t ∷ ts) with svar? t
+... | just γ  with decorate* Ψ ts
+...   | Ψ' , w , As = Ψ' , w , (nothing ∷ As)
+decorate* Ψ (t ∷ ts) | nothing with decorate Ψ t
+... | Ψ₁ , w₁ , A with decorate* Ψ₁ ts
+...   | Ψ₂ , w₂ , As = Ψ₂ , w₁ ⨟ˢ w₂ , (just (A [ w₂ ]ᵛ) ∷ As)
+
+-- Refining every type variable to the shape a skeleton solution gives it
+
+expandᵏ : ∀ {m} → (Ψ : Scope) → SSub (nTy Ψ) m → Σ[ Ψ' ∈ Scope ] (Subst Ψ Ψ')
+expandᵏ Ψ σ with decorate* Ψ (tabulate σ)
+... | Ψ' , w , As =
+      Ψ' , sub (λ α → maybe′ (λ A → A) (sTy w α) (lookup As α)) (sR w) (sE w)
+
+-- The expansion a list of subtyping demands calls for
+
+skelEqns : ∀ {Ψ} → List (OVType Ψ × OVType Ψ) → SEqns (nTy Ψ)
+skelEqns = map (λ { (A , B) → skelᵛ A , skelᵛ B })
+
+expandSub : ∀ {Ψ} → List (OVType Ψ × OVType Ψ)
+          → Maybe (Σ[ Ψ' ∈ Scope ] (Subst Ψ Ψ'))
+expandSub {Ψ} l = mmap (λ { (m , τ) → expandᵏ Ψ ⟦ τ ⟧ᴷ }) (unifyᵏ (skelEqns l))

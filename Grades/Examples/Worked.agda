@@ -4,9 +4,10 @@
 -- `Grades.Examples` gives the constructions; this subtree            --
 -- instantiates them at one alphabet and exhibits, as checked Agda    --
 -- terms, the orderings between grades and the action of each grade   --
--- morphism on them. `ClosedCalculus.Examples.Typing` writes example  --
--- computations in a language over that alphabet and types them at    --
--- these grades; the type-inference examples use the same language.   --
+-- morphism on them. The typing examples of the monomorphic calculus  --
+-- write computations in a language over that alphabet and type them  --
+-- at these grades; the type-inference examples use the same          --
+-- language.                                                          --
 --                                                                    --
 -- The alphabet is a sensor node: `read` a sensor (1 tick), `write` a --
 -- reading to local memory (2–3), `send` one over the radio (4–6).    --
