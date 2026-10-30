@@ -1,9 +1,8 @@
 ------------------------------------------------------------------
 -- Natural numbers, sums and lists at left-sided intervals      --
 --                                                              --
--- "At least `n` ticks": `var`'s bound `ρ ≾ uᵣ` holds at every  --
--- grade, so nothing goes stale and eternality is never asked   --
--- for. A join of delays is the shorter.                        --
+-- Nothing goes stale and eternality is never asked for; a join --
+-- of delays is the shorter.                                    --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)

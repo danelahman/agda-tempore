@@ -1,10 +1,8 @@
 ------------------------------------------------------------------
 -- Natural numbers, sums and lists at right-sided intervals     --
 --                                                              --
--- "At most `n` ticks": `var`'s bound `ρ ≾ uᵣ` holds only at    --
--- `[0, 0 ]`, so after a tick only a variable of eternal type,  --
--- such as `Nat`, `Nat + Bool` or `List Nat`, is usable. A join --
--- of delays is the longer.                                     --
+-- After a tick only variables of eternal type are usable; a    --
+-- join of delays is the longer.                                --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
