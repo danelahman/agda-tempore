@@ -162,6 +162,8 @@ step-pv bc HANDLE-OP         pv = pv
 step-pv bc BOX               pv = pv
 step-pv bc UNBOX             pv = pv
 step-pv bc SUB-APP           pv = pv
+step-pv bc SUB-HANDLE        pv = pv
+step-pv bc SUB-HANDLE-TRANS  pv = pv
 step-pv bc SUB-IF            pv = pv
 step-pv bc SUB-CASEℕ         pv = pv
 step-pv bc SUB-RECℕ          pv = pv
@@ -216,6 +218,8 @@ alg-stepᵀ bc alg alg-≤ alg-delay HANDLE-OP  pv f = alg-ηᵀ alg alg-≤ pv 
 alg-stepᵀ bc alg alg-≤ alg-delay BOX        pv f = alg-ηᵀ alg alg-≤ pv f
 alg-stepᵀ bc alg alg-≤ alg-delay UNBOX      pv f = alg-ηᵀ alg alg-≤ pv f
 alg-stepᵀ bc alg alg-≤ alg-delay SUB-APP    pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay SUB-HANDLE pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay SUB-HANDLE-TRANS pv f = alg-ηᵀ alg alg-≤ pv f
 alg-stepᵀ bc alg alg-≤ alg-delay SUB-IF     pv f = alg-ηᵀ alg alg-≤ pv f
 alg-stepᵀ bc alg alg-≤ alg-delay SUB-CASEℕ  pv f = alg-ηᵀ alg alg-≤ pv f
 alg-stepᵀ bc alg alg-≤ alg-delay SUB-RECℕ   pv f = alg-ηᵀ alg alg-≤ pv f
@@ -418,6 +422,8 @@ step-pv-state HANDLE-RET pS pM = id-suc-step _ _
 step-pv-state HANDLE-OP  pS pM = id-suc-step _ _
 step-pv-state UNBOX      pS pM = id-suc-step _ _
 step-pv-state SUB-APP    pS pM = id-suc-step _ _
+step-pv-state SUB-HANDLE pS pM = id-suc-step _ _
+step-pv-state SUB-HANDLE-TRANS pS pM = id-suc-step _ _
 step-pv-state SUB-IF     pS pM = id-suc-step _ _
 step-pv-state SUB-CASEℕ  pS pM = id-suc-step _ _
 step-pv-state SUB-RECℕ   pS pM = id-suc-step _ _
@@ -486,7 +492,8 @@ sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {S S' : 𝕊 []}
                  ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
               (stepᵀ r)
 sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} H N {M'} r c pS pM pN pM' pH uH ih =
-    seq-step-core alg alg-≤ ⟨⊤⟩-η N r c pS pM pN mt ih'
+    ∘ᵐ-congˡ (handle-in-β M H N pM pN pH uH)
+  ∙ seq-step-core alg alg-≤ ⟨⊤⟩-η N r c pS pM pN mt ih'
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
       ,   ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
               (⟨ box-merge _ _ (seq-g r) _ _ , ≈ᵐ-refl ⟩ᵐ-cong)))))
@@ -531,7 +538,15 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} H N {M'} r
               η⊣ (⟦ M' ⟧ᶜᵗ pM') ⟩ᵐ-cong))))))))
   -- … and `seq-coe` fixes the grade
   ∙ seq-coe (step-≾ r) (step-≾ (HANDLE-STEP {H = H} {N = N} r c)) _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (∘ᵐ-congˡ
+      (≈ᵐ-sym (handle-in-β M' H' N' pM' pN' pH' uH'))))))
   where
+    N' = subCtx (step-refines-type r)
+           (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N)
+    pN' = subCtxᴾ (step-refines-type r)
+            (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N)
+            (renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN)
+
     mt : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε₃
     mt = (Tᶠ ⟦ step-refines-type r ⟧<:ᵛ ∘ᵐ ⟦ M' ⟧ᶜᵗ pM')
            ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)
@@ -1039,8 +1054,9 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
                                   (H op (ε ·ₑ ε'')) (pH op (ε ·ₑ ε'')))
                             pV )
 sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} op V M H N pV pM pN pH uH =
+    handle-in-β (perform op V M) H N (pV , pM) pN pH uH
   -- `str-op` moves the sequel `N` into the operation's boxed continuation
-    ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
+  ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
               , str-op op (ty-gty (arity op)) Vp (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
                   ⟦ ren ⟧ʳ ern ⟩ᵐ-cong)
   -- re-form `mapˣᵐ idᵐ (opᵀ op)` and apply the fold's operation law

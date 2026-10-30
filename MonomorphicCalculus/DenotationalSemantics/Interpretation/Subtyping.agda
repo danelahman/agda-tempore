@@ -4,7 +4,8 @@
 -- A witness `A <:ᵛ A'` denotes a morphism `⟦ A ⟧ᵛ →ᵐ ⟦ A' ⟧ᵛ`, built   --
 -- by recursion on the witness: products and the box act functorially,   --
 -- a function by `map⇒ᵐ` (contravariant in the domain), a box's grade    --
--- by `[]-≤` and a computation's effect by `T-≤`.                        --
+-- by `[]-≤`, a computation's effect by `T-≤`, and a handler by `mapʰ`  --
+-- (restricting the handled grade, contravariant in the handled type).  --
 --                                                                    --
 -- The assignment is functorial and witness-irrelevant: `⟦ <:ᵛ-refl ⟧`   --
 -- is the identity, `⟦ <:ᵛ-trans p q ⟧` the composite, and any two       --
@@ -44,7 +45,8 @@ open Future Fut using ([_]ᵒ; [_]ᶠ; []-≤; []-idᵐ; []-∘ᵐ; []-congᶠ;
                        []-≤-refl; []-≤-trans; []-≤-nat)
 open GroundTypes GTy
 open Monad Mon using (Tᵒ; Tᶠ; T-≤; T-idᵐ; T-∘ᵐ; T-congᶠ;
-                      T-≤-refl; T-≤-trans; T-≤-nat)
+                      T-≤-refl; T-≤-trans; T-≤-nat;
+                      mapʰ; mapʰ-cong; mapʰ-id; mapʰ-∘)
 
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 
@@ -62,6 +64,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types S Cat
 ⟦ |List|ₛ p  ⟧<:ᵛ = mapListᵐ ⟦ p ⟧<:ᵛ
 ⟦ Emptyₛ     ⟧<:ᵛ = idᵐ
 ⟦ p ⇒ₛ q     ⟧<:ᵛ = map⇒ᵐ ⟦ p ⟧<:ᵛ ⟦ q ⟧<:ᶜ
+⟦ (p ‼ₛ r) ⇛ₛ (q ‼ₛ s) ⟧<:ᵛ = mapʰ ⟦ p ⟧<:ᵛ ⟦ q ⟧<:ᵛ r s
 ⟦ [_]ₛ_ {ρ' = ρ'} q p ⟧<:ᵛ = [ ρ' ]ᶠ ⟦ p ⟧<:ᵛ ∘ᵐ []-≤ q
 
 ⟦ p ‼ₛ q ⟧<:ᶜ = Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ T-≤ q
@@ -92,6 +95,8 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types S Cat
 ⟦⟧<:ᵛ-refl Empty     = ≈ᵐ-refl
 ⟦⟧<:ᵛ-refl (A ⇒ C)   =
   ≈ᵐ-trans (map⇒ᵐ-cong (⟦⟧<:ᵛ-refl A) (⟦⟧<:ᶜ-refl C)) map⇒ᵐ-idᵐ
+⟦⟧<:ᵛ-refl ((A ‼ ε) ⇛ (B ‼ ε')) =
+  ≈ᵐ-trans (mapʰ-cong _ _ (⟦⟧<:ᵛ-refl A) (⟦⟧<:ᵛ-refl B)) (mapʰ-id _ _)
 ⟦⟧<:ᵛ-refl ([ ρ ] A) =
   ≈ᵐ-trans (∘ᵐ-cong ([]-congᶠ (⟦⟧<:ᵛ-refl A)) []-≤-refl)
            (≈ᵐ-trans (∘ᵐ-congˡ []-idᵐ) (∘ᵐ-identityˡ _))
@@ -121,6 +126,9 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types S Cat
 ⟦⟧<:ᵛ-trans (p ⇒ₛ r)     (q ⇒ₛ s)     =
   ≈ᵐ-trans (map⇒ᵐ-cong (⟦⟧<:ᵛ-trans q p) (⟦⟧<:ᶜ-trans r s))
            (map⇒ᵐ-∘ _ _ _ _)
+⟦⟧<:ᵛ-trans ((p ‼ₛ r) ⇛ₛ (p' ‼ₛ r')) ((q ‼ₛ s) ⇛ₛ (q' ‼ₛ s')) =
+  ≈ᵐ-trans (mapʰ-cong _ _ (⟦⟧<:ᵛ-trans q p) (⟦⟧<:ᵛ-trans p' q'))
+           (≈ᵐ-sym (mapʰ-∘ _ _ _ _ _ _ _ _ _ _))
 -- the two grade relaxations meet after the inner coercion crosses the
 -- outer one (`[]-≤-nat`), and then compose
 ⟦⟧<:ᵛ-trans ([ p ]ₛ r)   ([ q ]ₛ s)   =

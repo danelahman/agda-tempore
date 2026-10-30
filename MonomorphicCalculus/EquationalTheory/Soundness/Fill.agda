@@ -72,9 +72,7 @@ Paramᵏ (perform[ p ]ₖ op V K)     = Paramᵛ V × Paramᵏ K
 Paramᵏ (delay[ p ]ₖ τ K)          = Paramᵏ K
 Paramᵏ (unbox[ p ]ₖ x rel w K)    = Paramᵏ K
 Paramᵏ (box[ p ]ₖ V K)            = Paramᵛ V × Paramᵏ K
-Paramᵏ {Γ} (handle[_]ₖ_`with_`in {B = B} p K H N) =
-  Paramᵏ K × Paramᶜ N ×
-  Σ[ pH ∈ (∀ op ε'' → Paramᶜ (H op ε'')) ] EffUniformʰ {Γ} {B} H pH
+Paramᵏ (handle[ p ]ₖ K `with V)   = Paramᵏ K × Paramᵛ V
 
 -- The filled term's certificate.
 
@@ -88,8 +86,7 @@ fillᴾ (perform[ p ]ₖ op V K) (pV , pK)  N pN = pV , fillᴾ K pK _ (renᶜ _
 fillᴾ (delay[ p ]ₖ τ K)      pK         N pN = fillᴾ K pK _ (renᶜ _ N pN)
 fillᴾ (unbox[ p ]ₖ x rel w K) pK        N pN = fillᴾ K pK _ (renᶜ _ N pN)
 fillᴾ (box[ p ]ₖ V K)        (pV , pK)  N pN = pV , fillᴾ K pK _ (renᶜ _ N pN)
-fillᴾ (handle[ p ]ₖ K `with H `in M) (pK , pM , pH , uH) N pN =
-  fillᴾ K pK N pN , pM , pH , uH
+fillᴾ (handle[ p ]ₖ K `with V) (pK , pV) N pN = fillᴾ K pK N pN , pV
 
 -- The two coercions `_[_]` inserts at a binder, combined.
 
@@ -174,20 +171,10 @@ fill-cong-env Γ (K ₖ[ p ]⨟ M) (pK , pM) N N' pN pN' g eq =
               ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
-fill-cong-env Γ (handle[ p ]ₖ K `with H `in M) (pK , pM , pH , uH)
-              N N' pN pN' g eq =
+fill-cong-env Γ (handle[ p ]ₖ K `with V) (pK , pV) N N' pN pN' g eq =
     ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _
-              ∙ ⟨ ≈ᵐ-refl
-                ,   ∘ᵐ-assoc _ _ _
-                  ∙ ∘ᵐ-congʳ (  ∘ᵐ-assoc _ _ _
-                              ∙ ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _
-                                          ∙ ⟨ ≈ᵐ-refl
-                                            , fill-cong-env Γ K pK N N' pN pN' g eq
-                                            ⟩ᵐ-cong
-                                          ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
-                              ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-                  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ⟩ᵐ-cong
+              ∙ ⟨ ≈ᵐ-refl , fill-cong-env Γ K pK N N' pN pN' g eq ⟩ᵐ-cong
               ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 

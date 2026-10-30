@@ -74,6 +74,10 @@ mutual
   V-rename-≡ h nil        = refl
   V-rename-≡ h (cons V W) = cong₂ cons (V-rename-≡ h V) (V-rename-≡ h W)
   V-rename-≡ h (lam M)    = cong lam (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
+  V-rename-≡ h (handler N H) =
+    handler-≡ (C-rename-≡ (cong-ren-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) N)
+      (λ op ε'' →
+         C-rename-≡ (cong-ren-≐ʳ (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
   V-rename-≡ h (subV V p) = subV-≡ (V-rename-≡ h V)
 
   C-rename-≡ : ∀ {Γ Γ' C} {r r' : Ren [] Γ Γ'} → r ≐ʳ r'
@@ -115,11 +119,8 @@ mutual
     cong₂ (perform _) (V-rename-≡ h V) (C-rename-≡ (cong-ren-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) M)
   C-rename-≡ h (delay τ M) =
     cong (delay _) (C-rename-≡ (cong-ren-≐ʳ ([] ⟨ _ ⟩) h) M)
-  C-rename-≡ h (handle M `with H `in N) =
-    handle-≡ (C-rename-≡ h M)
-      (λ op ε'' →
-         C-rename-≡ (cong-ren-≐ʳ (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
-      (C-rename-≡ (cong-ren-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) N)
+  C-rename-≡ h (handle M `with V) =
+    cong₂ handle_`with_ (C-rename-≡ h M) (V-rename-≡ h V)
   C-rename-≡ h (unbox x rel p M) =
     unbox-≡ (rvar-≡ (at h x)) (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
   C-rename-≡ h (box _ V M) =
@@ -181,6 +182,10 @@ mutual
   V-rename-id-≡ h nil       = refl
   V-rename-id-≡ h (cons V W) = cong₂ cons (V-rename-id-≡ h V) (V-rename-id-≡ h W)
   V-rename-id-≡ h (lam M)   = cong lam (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) M)
+  V-rename-id-≡ h (handler N H) =
+    handler-≡ (C-rename-id-≡ (cong-ren-id-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) N)
+      (λ op ε'' →
+         C-rename-id-≡ (cong-ren-id-≐ʳ (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
   V-rename-id-≡ h (subV V p) = subV-≡ (V-rename-id-≡ h V)
 
   C-rename-id-≡ : ∀ {Γ C} {r : Ren [] Γ Γ} → r ≐ʳ id-ren
@@ -223,11 +228,8 @@ mutual
               (C-rename-id-≡ (cong-ren-id-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) M)
   C-rename-id-≡ h (delay τ M) =
     cong (delay _) (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ⟨ _ ⟩) h) M)
-  C-rename-id-≡ h (handle M `with H `in N) =
-    handle-≡ (C-rename-id-≡ h M)
-      (λ op ε'' →
-         C-rename-id-≡ (cong-ren-id-≐ʳ (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
-      (C-rename-id-≡ (cong-ren-id-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) N)
+  C-rename-id-≡ h (handle M `with V) =
+    cong₂ handle_`with_ (C-rename-id-≡ h M) (V-rename-id-≡ h V)
   C-rename-id-≡ h (unbox x rel p M) =
     unbox-≡ (rvar-≡ (at h x)) (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) M)
   C-rename-id-≡ h (box _ V M) =
@@ -341,6 +343,15 @@ mutual
   V-rename-∘ r₂ r₁ (lam M)   =
     cong lam (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _) r₂ r₁) M)
                     (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
+  V-rename-∘ r₂ r₁ (handler N H) =
+    handler-≡ (trans (C-rename-≡ (cong-ren-∘-≐ʳ (_ ⟨ _ ⟩ ∷ _) r₂ r₁) N)
+                     (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))
+      (λ op ε'' →
+         trans
+           (C-rename-≡ (cong-ren-∘-≐ʳ (_ ⟨ _ ⟩ ∷ _ ∷ _) r₂ r₁) (H op ε''))
+           (C-rename-∘ (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r₂)))
+                       (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r₁)))
+                       (H op ε'')))
   V-rename-∘ r₂ r₁ (subV V p) = subV-≡ (V-rename-∘ r₂ r₁ V)
 
   C-rename-∘ : ∀ {Γ Γ' Γ'' C} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
@@ -392,16 +403,8 @@ mutual
   C-rename-∘ r₂ r₁ (delay τ M) =
     cong (delay _) (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ⟨ _ ⟩) r₂ r₁) M)
                       (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
-  C-rename-∘ r₂ r₁ (handle M `with H `in N) =
-    handle-≡ (C-rename-∘ r₂ r₁ M)
-      (λ op ε'' →
-         trans
-           (C-rename-≡ (cong-ren-∘-≐ʳ (_ ⟨ _ ⟩ ∷ _ ∷ _) r₂ r₁) (H op ε''))
-           (C-rename-∘ (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r₂)))
-                       (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r₁)))
-                       (H op ε'')))
-      (trans (C-rename-≡ (cong-ren-∘-≐ʳ (_ ⟨ _ ⟩ ∷ _) r₂ r₁) N)
-                (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))
+  C-rename-∘ r₂ r₁ (handle M `with V) =
+    cong₂ handle_`with_ (C-rename-∘ r₂ r₁ M) (V-rename-∘ r₂ r₁ V)
   C-rename-∘ r₂ r₁ (unbox x rel p M) with var-rename r₂ x
   ... | _ , _ , y with var-rename r₁ y
   ...   | _ , _ , z =

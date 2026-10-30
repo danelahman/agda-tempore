@@ -355,13 +355,6 @@ unbox-subst-natˢ s p y rel w M ih =
 
 mutual
 
-  -- `TERMINATING`: every call descends to a subterm, except that the naturality
-  -- lemmas call `subᵛˢ`/`subᶜˢ` at their own term, and those reach the lemmas only
-  -- below it. The checker loses the descent from `handle` to its clauses, which
-  -- passes through `sub-clauses-uniformˢ` with the whole clause family.
-
-  {-# TERMINATING #-}
-
   subᵛˢ : ∀ {Γ Γ' A} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
         → (V : Γ' ⊢V⦂ A) → Paramᵛ V → Paramᵛ (V-sub₀ s V)
   subᵛˢ s p (var f x)   _         = sub-varᴾ s p x f
@@ -377,6 +370,13 @@ mutual
   subᵛˢ s p (inl V)     pV        = subᵛˢ s p V pV
   subᵛˢ s p (inr V)     pV        = subᵛˢ s p V pV
   subᵛˢ s p (lam M)     pM        = subᶜˢ (cong-∷-sub s) p M pM
+  -- the clauses are substituted into under the barrier lock, which acts on the
+  -- ambient context only, so the clauses' uniformity transports
+  subᵛˢ s p (handler N H) (pN , pH , uH) =
+      subᶜˢ (cong-∷-sub (cong-⟨⟩-sub s)) p N pN
+    , (λ op ε'' → subᶜˢ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s)))
+                    p (H op ε'') (pH op ε''))
+    , sub-clauses-uniformˢ (cong-⟨⟩-sub s) p H pH uH
   subᵛˢ s p (subV V q)  pV        = subᵛˢ s p V pV
 
   subᶜˢ : ∀ {Γ Γ' C} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
@@ -410,14 +410,7 @@ mutual
   subᶜˢ s p (box _ V M)        (pV , pM) =
     subᵛˢ (cong-⟨⟩-sub s) p V pV , subᶜˢ (cong-∷-sub s) p M pM
   subᶜˢ s p (subC M q)       pM        = subᶜˢ s p M pM
-  -- the clauses are substituted into under the barrier lock, which acts on the
-  -- ambient context only, so the clauses' uniformity transports
-  subᶜˢ s p (handle M `with H `in N) (pM , pN , pH , uH) =
-      subᶜˢ s p M pM
-    , subᶜˢ (cong-∷-sub (cong-⟨⟩-sub s)) p N pN
-    , (λ op ε'' → subᶜˢ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s)))
-                    p (H op ε'') (pH op ε''))
-    , sub-clauses-uniformˢ (cong-⟨⟩-sub s) p H pH uH
+  subᶜˢ s p (handle M `with V) (pM , pV) = subᶜˢ s p M pM , subᵛˢ s p V pV
 
   -- Substituting in a clause family's ambient context preserves the clauses'
   -- uniformity in the residual grade: the substitution acts on the ambient
@@ -483,6 +476,33 @@ mutual
   V-subst-natˢ s p (lam M) pM =
     ≈ᵐ-trans (curryᵐ-cong (C-subst-natˢ (cong-∷-sub s) p M pM))
              (curryᵐ-nat (⟦ s ⟧ˢ₀ p) (⟦ M ⟧ᶜᵗ pM))
+  -- the denoted family is natural in the context (`handler-famᵗ-reindex`); the
+  -- clause family is substituted into uniformly, so `⟦⟧ʰᵗ-nat` is the clauses'
+  -- own naturality with the adapter moved past it (`adapt-commute`)
+  V-subst-natˢ {Γ} {Γ'} s p (handler N H) (pN , pH , uH) =
+    ≈ᵐ-trans (curryʰ-cong _ _ λ q →
+               handler-famᵗ-reindex (⟦ s ⟧ˢ₀ p) h _ ⟦⟧ʰᵗ-nat _ _
+                 (C-subst-natˢ (cong-∷-sub (cong-⟨⟩-sub s)) p N pN) q)
+             (≈ᵐ-sym (curryʰ-nat (handler-famᵗ h (⟦ N ⟧ᶜᵗ pN))
+                                 (handler-famᵗ-nat h (⟦ N ⟧ᶜᵗ pN)) (⟦ s ⟧ˢ₀ p)))
+    where
+      h = ⟦_⟧ʰᵗ {Γ'} H pH uH
+      ⟦⟧ʰᵗ-nat : ∀ op ε''
+               → clauseᵀ (⟦_⟧ʰᵗ {Γ}
+                    (λ op ε'' → C-sub₀ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s)))
+                                  (H op ε''))
+                    (λ op ε'' →
+                       subᶜˢ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s)))
+                         p (H op ε'') (pH op ε''))
+                    (sub-clauses-uniformˢ (cong-⟨⟩-sub s) p H pH uH)) op ε''
+               ≈ᵐ clauseᵀ h op ε'' ∘ᵐ mapˣᵐ (⟦ cong-⟨⟩-sub {ρ = ⊤ᵣ} s ⟧ˢ₀ p) idᵐ
+      ⟦⟧ʰᵗ-nat op ε'' =
+        ≈ᵐ-trans (∘ᵐ-congˡ (C-subst-natˢ
+                    (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s)))
+                    p (H op ε'') (pH op ε'')))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (adapt-commute _ _ _))
+                  (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
   V-subst-natˢ s p (subV V q) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-natˢ s p V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
 
@@ -634,57 +654,7 @@ mutual
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
   C-subst-natˢ s p (subC M q) pM =
     ≈ᵐ-trans (∘ᵐ-congʳ (C-subst-natˢ s p M pM)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  -- The environment-threading second component commutes as for `⨟`
-  -- (`seq-nat`), and the handler algebra is reindexed by the substitution under
-  -- the barrier lock (`alg-nat`, via `T-alg-of-handlerᵀ`'s naturality-in-P). The
-  -- clause family is substituted into uniformly, so `⟦⟧ʰᵗ-nat` is the clauses'
-  -- own naturality with the adapter moved past it (`adapt-commute`).
-  C-subst-natˢ {Γ} {Γ'} s p (handle_`with_`in {A} {B} {ε} {ε'} M H N)
-               (pM , pN , pH , uH) =
-    ≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , seq-nat ⟩ᵐ-cong))
-    (≈ᵐ-trans (∘ᵐ-congˡ alg-nat)
-    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨ ⟨⊤⟩-η-nat (⟦ s ⟧ˢ₀ p) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+  C-subst-natˢ s p (handle M `with V) (pM , pV) =
+    ≈ᵐ-trans (∘ᵐ-congʳ (⟨ V-subst-natˢ s p V pV , C-subst-natˢ s p M pM ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
-              (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
-    where
-      f : ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
-      f = ⟦ cong-⟨⟩-sub {ρ = ⊤ᵣ} s ⟧ˢ₀ p
-      seq-nat : Tᶠ (⟦ C-sub₀ (cong-∷-sub (cong-⟨⟩-sub s)) N ⟧ᶜᵗ
-                      (subᶜˢ (cong-∷-sub (cong-⟨⟩-sub s)) p N pN)) ∘ᵐ strᵀ
-                  ∘ᵐ ⟨ η⊣ , ⟦ C-sub₀ s M ⟧ᶜᵗ (subᶜˢ s p M pM) ⟩ᵐ
-              ≈ᵐ (Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ) ∘ᵐ ⟦ s ⟧ˢ₀ p
-      seq-nat =
-        ≈ᵐ-trans (∘ᵐ-congˡ (T-congᶠ
-                    (C-subst-natˢ (cong-∷-sub (cong-⟨⟩-sub s)) p N pN)))
-        (≈ᵐ-trans (∘ᵐ-congˡ (T-∘ᵐ _ _))
-        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-        (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (strᵀ-natˡ _)))
-        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)))
-        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ
-                    (⟨ η⊣-nat (⟦ s ⟧ˢ₀ p)
-                     , ≈ᵐ-trans (∘ᵐ-identityˡ _) (C-subst-natˢ s p M pM) ⟩ᵐ-cong)))
-        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
-        (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-                  (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
-      ⟦⟧ʰᵗ-nat : ∀ op ε''
-               → clauseᵀ (⟦_⟧ʰᵗ {Γ}
-                    (λ op ε'' → C-sub₀ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s)))
-                                  (H op ε''))
-                    (λ op ε'' →
-                       subᶜˢ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s)))
-                         p (H op ε'') (pH op ε''))
-                    (sub-clauses-uniformˢ (cong-⟨⟩-sub s) p H pH uH)) op ε''
-               ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ'} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
-      ⟦⟧ʰᵗ-nat op ε'' =
-        ≈ᵐ-trans (∘ᵐ-congˡ (C-subst-natˢ
-                    (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s)))
-                    p (H op ε'') (pH op ε'')))
-        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-        (≈ᵐ-trans (∘ᵐ-congʳ (adapt-commute _ _ _))
-                  (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-      alg-nat = T-alg-of-handlerᵀ-natᴾ (⟨⊤⟩-eternalᵒ ⟦ Γ' ⟧ᶜᵗˣ) (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ)
-                  f (⟨⊤⟩-free-necᵉ-nat (⟦ s ⟧ˢ₀ p)) (⟦_⟧ʰᵗ {Γ'} H pH uH) _ ⟦⟧ʰᵗ-nat
+              (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))

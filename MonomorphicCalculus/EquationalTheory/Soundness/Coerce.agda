@@ -280,35 +280,47 @@ sound-coerce-seq-in {B = B} rel M N (pM , pN) (pM' , pN') =
               ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ⟦⟧ᶜᵗ-irr M pM pM' ⟩ᵐ-cong)))
 
 
--- Sub-effecting the answer of a `handle` is the fold's inner-grade law.
+-- Applying a coerced handler value: `curryʰ-nat`, then `curryʰ-β`.
 
-sound-coerce-handle-in : ∀ {Γ A B ε ε₁' ε₂'}
-                       → (rel : ε₁' ≾ₑ ε₂')
-                       → (M : Γ ⊢C⦂ A ‼ ε)
-                       → (H : (op : Op) → (ε₀ : E) →
-                                Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
-                                ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
-                       → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
-                       → Soundᶜ== (coerce-handle-in rel M H N)
-sound-coerce-handle-in {Γ = Γ} {B = B} rel M H N
-                       (pM , pN , pH , uH) (pM' , pN' , pH' , uH') =
-    ≈ᵐ-sym (coe-refl-≈ B (·ₑ-monoʳ-≾ₑ rel) _)
+app-mapʰ : ∀ {X A A' ε ε₂ B B' ε' ε₂' ε₀}
+         → (p : ε₀ ≾ₑ ε₂) → (a : A' →ᵐ A) → (b : B →ᵐ B')
+         → (r : ε₂ ≾ₑ ε) → (s : ε' ≾ₑ ε₂')
+         → (k : X →ᵐ Hᵒ A ε B ε') → (m : X →ᵐ Tᵒ A' ε₀)
+         → appʰ p ∘ᵐ ⟨ mapʰ a b r s ∘ᵐ k , m ⟩ᵐ
+         ≈ᵐ Tᶠ b ∘ᵐ T-≤ (·ₑ-monoʳ-≾ₑ s) ∘ᵐ appʰ (≾ₑ-trans p r)
+              ∘ᵐ ⟨ k , Tᶠ a ∘ᵐ m ⟩ᵐ
+app-mapʰ p a b r s k m =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (T-alg-of-handlerᵀ-≤ⁱ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) _ rel))
+  ∙ ∘ᵐ-congˡ
+      ( ∘ᵐ-congʳ (mapˣᵐ-cong (curryʰ-nat (mapʰ-fam a b r s) (mapʰ-fam-nat a b r s) k)
+                             ≈ᵐ-refl)
+      ∙ curryʰ-β (λ e → mapʰ-fam a b r s e ∘ᵐ mapˣᵐ k idᵐ)
+                 (Naturalʰ-∘ (mapʰ-fam-nat a b r s) k) p)
   ∙ ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ ∘ᵐ-identityˡ _
-                ,   ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-                  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _)) ⟩ᵐ-cong)
-  ∙ ∘ᵐ-cong (T-alg-of-handlerᵀ-cong (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ)
-              (λ op ε₀ → ∘ᵐ-congˡ
-                           (⟦⟧ᶜᵗ-irr (H op ε₀) (pH op ε₀) (pH' op ε₀))))
-            (⟨ ≈ᵐ-refl
-             , ∘ᵐ-cong (T-congᶠ (  ∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr N pN pN')
-                                 ∙ coe-refl-≈ B rel (⟦ N ⟧ᶜᵗ pN')))
-                       (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ⟦⟧ᶜᵗ-irr M pM pM' ⟩ᵐ-cong)) ⟩ᵐ-cong)
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ ( ∘ᵐ-assoc _ _ _
+             ∙ ∘ᵐ-congʳ ( ∘ᵐ-assoc _ _ _
+                        ∙ ∘ᵐ-congʳ ( mapˣᵐ-∘⟨⟩ _ _ _ _
+                                   ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))
 
+-- Handling with a coerced handler value is `app-mapʰ` at the reflexive index.
+
+sound-subV-handle : ∀ {Γ A A₁ B B₁ ε ε' ε₁'}
+                  → (p : A <:ᵛ A₁) → (pε : ε ≾ₑ ε)
+                  → (q : B₁ <:ᵛ B) → (s : ε₁' ≾ₑ ε')
+                  → (M : Γ ⊢C⦂ A ‼ ε)
+                  → (V : Γ ⊢V⦂ (A₁ ‼ ε) ⇛ (B₁ ‼ ε₁'))
+                  → Soundᶜ== (subV-handle p pε q s M V)
+sound-subV-handle p pε q s M V (pM , pV) (pM' , pV') =
+    app-mapʰ ≾ₑ-refl ⟦ p ⟧<:ᵛ ⟦ q ⟧<:ᵛ pε s (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM)
+  ∙ ≈ᵐ-sym (  ∘ᵐ-assoc _ _ _
+            ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ
+                (∘ᵐ-cong (appʰ-irr _ _)
+                         ⟨ ⟦⟧ᵛᵗ-irr V pV' pV
+                         ,   ∘ᵐ-congˡ (∘ᵐ-congʳ (T-≤-refl _) ∙ ∘ᵐ-identityʳ _)
+                           ∙ ∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr M pM' pM) ⟩ᵐ-cong)))
 
 -- Commutation with the effect formers
 
@@ -407,38 +419,28 @@ sound-subC-seq {B = B} w rel M N (pM , pN) (pM' , pR) =
   where
     r = cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))
 
+-- Moving the handled computation's subsumption onto the handler value: both
+-- sides are the application at the smaller index (`appʰ-nat`).
+
 sound-subC-handle : ∀ {Γ A A' B ε₁ ε₂ ε'}
                   → (w : A <:ᵛ A')
                   → (rel : ε₁ ≾ₑ ε₂)
                   → (M : Γ ⊢C⦂ A ‼ ε₁)
-                  → (H : (op : Op) → (ε₀ : E) →
-                           Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
-                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
-                  → (N : Γ ⟨ mapᵉ ε₂ ⟩ ∷ A' ⊢C⦂ B ‼ ε')
-                  → Soundᶜ== (subC-handle w rel M H N)
-sound-subC-handle {Γ = Γ} {B = B} w rel M H N
-                  (pM , pN , pH , uH) (pM' , pR , pH' , uH') =
-    ∘ᵐ-cong (T-alg-of-handlerᵀ-cong (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ)
-              (λ op ε'' → ∘ᵐ-congˡ
-                            (⟦⟧ᶜᵗ-irr (H op ε'') (pH op ε'') (pH' op ε''))))
-            (⟨ ≈ᵐ-refl
-             ,   ∘ᵐ-congʳ (∘ᵐ-congʳ
-                   (⟨ ≈ᵐ-refl
-                    ,   ∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr M pM pM')
-                      ∙ ∘ᵐ-congˡ (T-≤-nat ⟦ w ⟧<:ᵛ rel)
-                      ∙ ∘ᵐ-assoc _ _ _ ⟩ᵐ-cong))
-               ∙ coe-str rel N pN (Tᶠ ⟦ w ⟧<:ᵛ ∘ᵐ ⟦ M ⟧ᶜᵗ pM')
-               ∙ ∘ᵐ-congʳ (≈ᵐ-sym (subCtx-str {t = w} (C-rename r N)
-                                    (renᶜ r N pN) η⊣ (⟦ M ⟧ᶜᵗ pM'))) ⟩ᵐ-cong)
-  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
-                      ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
+                  → (V : Γ ⊢V⦂ (A' ‼ ε₂) ⇛ (B ‼ ε'))
+                  → Soundᶜ== (subC-handle w rel M V)
+sound-subC-handle {B = B} {ε' = ε'} w rel M V (pM , pV) (pM' , pV') =
+    ∘ᵐ-congʳ (  ⟨ ≈ᵐ-refl , ∘ᵐ-congˡ (T-≤-nat ⟦ w ⟧<:ᵛ rel) ∙ ∘ᵐ-assoc _ _ _ ⟩ᵐ-cong
+              ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-≤ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) _ rel)
+  ∙ ∘ᵐ-congˡ (appʰ-nat rel ≾ₑ-refl rel)
   ∙ ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ∘ᵐ-congˡ (T-congᶠ
-      (⟦⟧ᶜᵗ-irr (subCtx w (C-rename r N))
-                (subCtxᴾ w (C-rename r N) (renᶜ r N pN)) pR)) ⟩ᵐ-cong))
-  ∙ coe-refl-≈ B (·ₑ-monoˡ-≾ₑ rel) _
-  where
-    r = cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))
+  ∙ ≈ᵐ-sym (  ≈ᵐ-sym (coe-refl-≈ B (·ₑ-monoˡ-≾ₑ rel) _)
+            ∙ ∘ᵐ-congʳ (  app-mapʰ ≾ₑ-refl ⟦ w ⟧<:ᵛ ⟦ <:ᵛ-refl B ⟧<:ᵛ rel ≾ₑ-refl
+                            (⟦ V ⟧ᵛᵗ pV') (⟦ M ⟧ᶜᵗ pM')
+                        ∙ ∘ᵐ-congˡ (T-congᶠ (⟦⟧<:ᵛ-refl B) ∙ T-idᵐ)
+                        ∙ ∘ᵐ-identityˡ _
+                        ∙ ∘ᵐ-congˡ (T-≤-refl _)
+                        ∙ ∘ᵐ-identityˡ _
+                        ∙ ∘ᵐ-cong (appʰ-irr _ _)
+                            ⟨ ⟦⟧ᵛᵗ-irr V pV' pV
+                            , ∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr M pM' pM) ⟩ᵐ-cong))

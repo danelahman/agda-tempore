@@ -133,6 +133,12 @@ mutual
   V-sub₀-⌜⌝ r (lam M)   =
     cong lam (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
                     (C-sub₀-⌜⌝ (cong-ren r) M))
+  V-sub₀-⌜⌝ r (handler N H) =
+    handler-≡ (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (_ ⟨ _ ⟩ ∷ _) r) N)
+                     (C-sub₀-⌜⌝ (cong-ren r) N))
+      (λ op ε'' →
+         trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (_ ⟨ _ ⟩ ∷ _ ∷ _) r) (H op ε''))
+               (C-sub₀-⌜⌝ (cong-ren r) (H op ε'')))
   V-sub₀-⌜⌝ r (subV V p) = subV-≡ (V-sub₀-⌜⌝ r V)
 
   C-sub₀-⌜⌝ : ∀ {Γ Γ' C} → (r : Ren [] Γ Γ') → (M : Γ' ⊢C⦂ C)
@@ -183,13 +189,8 @@ mutual
   C-sub₀-⌜⌝ r (delay τ M) =
     cong (delay _) (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ⟨ _ ⟩) r) M)
                           (C-sub₀-⌜⌝ (cong-ren r) M))
-  C-sub₀-⌜⌝ r (handle M `with H `in N) =
-    handle-≡ (C-sub₀-⌜⌝ r M)
-      (λ op ε'' →
-         trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (_ ⟨ _ ⟩ ∷ _ ∷ _) r) (H op ε''))
-               (C-sub₀-⌜⌝ (cong-ren r) (H op ε'')))
-      (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (_ ⟨ _ ⟩ ∷ _) r) N)
-             (C-sub₀-⌜⌝ (cong-ren r) N))
+  C-sub₀-⌜⌝ r (handle M `with V) =
+    cong₂ handle_`with_ (C-sub₀-⌜⌝ r M) (V-sub₀-⌜⌝ r V)
   C-sub₀-⌜⌝ r (unbox x rel q M) =
     unbox-≡ refl
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
@@ -312,6 +313,9 @@ mutual
   V-sub₀-ren h nil       = refl
   V-sub₀-ren h (cons V W) = cong₂ cons (V-sub₀-ren h V) (V-sub₀-ren h W)
   V-sub₀-ren h (lam M)   = cong lam (C-sub₀-ren (⋈-cong ([] ∷ _) h) M)
+  V-sub₀-ren h (handler N H) =
+    handler-≡ (C-sub₀-ren (⋈-cong (_ ⟨ _ ⟩ ∷ _) h) N)
+      (λ op ε'' → C-sub₀-ren (⋈-cong (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
   V-sub₀-ren h (subV V p) = subV-≡ (V-sub₀-ren h V)
 
   C-sub₀-ren : ∀ {Δ Δ' Γ Γ' C} {s' : Sub₀ [] Δ Δ'} {r : Ren [] Δ' Γ'}
@@ -350,10 +354,8 @@ mutual
     cong₂ (perform _) (V-sub₀-ren h V) (C-sub₀-ren (⋈-cong (_ ⟨ _ ⟩ ∷ _) h) M)
   C-sub₀-ren h (delay τ M) =
     cong (delay _) (C-sub₀-ren (⋈-cong ([] ⟨ _ ⟩) h) M)
-  C-sub₀-ren h (handle M `with H `in N) =
-    handle-≡ (C-sub₀-ren h M)
-      (λ op ε'' → C-sub₀-ren (⋈-cong (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
-      (C-sub₀-ren (⋈-cong (_ ⟨ _ ⟩ ∷ _) h) N)
+  C-sub₀-ren h (handle M `with V) =
+    cong₂ handle_`with_ (C-sub₀-ren h M) (V-sub₀-ren h V)
   C-sub₀-ren h (unbox x rel q M) =
     unbox-≡ (atᵗ h x) (C-sub₀-ren (⋈-cong ([] ∷ _) h) M)
   C-sub₀-ren h (box _ V M) =

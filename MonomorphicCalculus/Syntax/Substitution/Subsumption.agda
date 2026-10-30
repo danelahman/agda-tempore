@@ -42,8 +42,8 @@ open import MonomorphicCalculus.Syntax.Substitution.Laws    S
 
 -- Subsuming the top binder. The two sequencing congruences of the
 -- operational semantics need it: a step refines the bound value's type,
--- while `_⨟_` and `handle_`with_`in`, unlike `unbox`, carry no witness of
--- their own.
+-- while `_⨟_` and a handler's return clause, unlike `unbox`, carry no
+-- witness of their own.
 
 subCtx : ∀ {Γ A A₀ C} → A₀ <:ᵛ A → Γ ∷ A ⊢C⦂ C → Γ ∷ A₀ ⊢C⦂ C
 subCtx p N =

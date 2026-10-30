@@ -43,6 +43,7 @@ mutual
     |List| : VType → VType                   -- list type
     Empty : VType                            -- empty type
     _⇒_   : VType → CType → VType            -- function type
+    _⇛_   : CType → CType → VType            -- handler type
     [_]_  : R → VType → VType                -- box modality: values of type `[ ρ ] A`
                                              -- become available in at most `ρ` steps
   data CType : Set where
@@ -50,7 +51,7 @@ mutual
 
   infix  37 [_]_
   infix  32 _|×|_ _|+|_
-  infixr 30 _⇒_
+  infixr 30 _⇒_ _⇛_
   infix  31 _‼_
 
 data Eternal : VType → Set where
@@ -119,4 +120,5 @@ eternal? (|List| A)  with eternal? A
 ... | no ¬p = no λ { (|List|ₑ x) → ¬p x }
 eternal? Empty       = yes Emptyₑ
 eternal? (_ ⇒ _)     = no λ ()
+eternal? (_ ⇛ _)     = no λ ()
 eternal? ([ _ ] _)   = no λ ()

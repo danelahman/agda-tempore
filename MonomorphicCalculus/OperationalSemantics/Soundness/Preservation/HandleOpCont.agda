@@ -124,7 +124,9 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
           ,   Tᶠ (⟦ N ⟧ᶜᵗ pN ∘ᵐ mapˣᵐ ⟦ ren ⟧ʳ idᵐ)
             ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ ⟩ᵐ
   handle-op-cont =
-      ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , seq-eq ⟩ᵐ-cong)
+      handle-in-β M H' (C-rename (cong-∷-ren ren) N) pM (renᶜ (cong-∷-ren ren) N pN)
+        pH' uH'
+    ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , seq-eq ⟩ᵐ-cong)
     ∙ ∘ᵐ-congˡ alg-nat
     ∙ ∘ᵐ-assoc _ _ _
     ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)

@@ -301,25 +301,39 @@ cast-subV⁻ : ∀ {Γ Γ' A A'} → (e : Γ' ≡ Γ) → {p : A <:ᵛ A'}
                (W' ≡ subV V' p') × (V ≡ castᵛ e V')
 cast-subV⁻ refl _ refl = _ , _ , refl , refl
 
+-- the same, keeping the coercion
+
+cast-subV-at⁻ : ∀ {Γ Γ' A A'} → (e : Γ' ≡ Γ) → {p : A <:ᵛ A'}
+              → {V : Γ ⊢V⦂ A}
+              → (W' : Γ' ⊢V⦂ A')
+              → subV V p ≡ castᵛ e W'
+              → Σ[ V' ∈ (Γ' ⊢V⦂ A) ] (W' ≡ subV V' p) × (V ≡ castᵛ e V')
+cast-subV-at⁻ refl _ refl = _ , refl , refl
+
 cast-handle⁻ : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
-          → {M : Γ ⊢C⦂ A ‼ ε}
+          → {M : Γ ⊢C⦂ A ‼ ε} → {V : Γ ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε')}
+          → (P' : Γ' ⊢C⦂ B ‼ (ε ·ₑ ε'))
+          → (handle M `with V) ≡ castᶜ e P'
+          → Σ[ M' ∈ (Γ' ⊢C⦂ A ‼ ε) ] Σ[ V' ∈ (Γ' ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε')) ]
+              (P' ≡ (handle M' `with V')) × (M ≡ castᶜ e M') × (V ≡ castᵛ e V')
+cast-handle⁻ refl _ refl = _ , _ , refl , refl , refl
+
+cast-handler⁻ : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
           → {H : (op : Op) → (ε'' : E) →
                    Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                      ∷ [ mapᵉ (op-grade op) ]
                          (type-of-gtype (arity op) ⇒ B ‼ ε'')
                    ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
           → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
-          → (P' : Γ' ⊢C⦂ B ‼ (ε ·ₑ ε'))
-          → (handle M `with H `in N) ≡ castᶜ e P'
-          → Σ[ M' ∈ (Γ' ⊢C⦂ A ‼ ε) ]
-            Σ[ H' ∈ ((op : Op) → (ε'' : E) →
+          → (W' : Γ' ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε'))
+          → handler N H ≡ castᵛ e W'
+          → Σ[ H' ∈ ((op : Op) → (ε'' : E) →
                        Γ' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                          ∷ [ mapᵉ (op-grade op) ]
                              (type-of-gtype (arity op) ⇒ B ‼ ε'')
                        ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')) ]
             Σ[ N' ∈ (Γ' ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε') ]
-              (P' ≡ (handle M' `with H' `in N'))
-            × (M ≡ castᶜ e M')
+              (W' ≡ handler N' H')
             × (∀ op ε'' → H op ε''
                  ≡ castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                                           ∷ [ mapᵉ (op-grade op) ]
@@ -327,7 +341,7 @@ cast-handle⁻ : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
                                 e)
                           (H' op ε''))
             × (N ≡ castᶜ (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) e) N')
-cast-handle⁻ refl _ refl = _ , _ , _ , refl , refl , (λ op ε'' → refl) , refl
+cast-handler⁻ refl _ refl = _ , _ , refl , (λ op ε'' → refl) , refl
 
 cast-unbox⁻ : ∀ {Γ Γ' A A₀ C ρ ρ'} → (e : Γ' ≡ Γ)
          → {x : [ ρ ] A₀ ∈[ ρ' ] Γ} → {rel : ρ' ≾ᵣ ρ} → {p : A₀ <:ᵛ A}

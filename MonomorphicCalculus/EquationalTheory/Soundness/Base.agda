@@ -60,11 +60,41 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Contexts S 
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
 
+open import MonomorphicCalculus.DenotationalSemantics.Model.Modality.Eternal
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (⟨⊤⟩-eternalᵒ)
+
 infixr 3 _∙_
 
 _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
 _∙_ = ≈ᵐ-trans
 
+
+-- A handler literal's denotation is a congruence in its return clause and
+-- clauses, whatever their certificates.
+
+handler-≈ : ∀ {Γ A B ε ε'}
+          → {N N' : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+          → {H H' : (op : Op) → (ε'' : E)
+                  → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                       ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                    ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
+          → (pN : Paramᶜ N) → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
+          → (uH : EffUniformʰ {Γ} {B} H pH)
+          → (pN' : Paramᶜ N') → (pH' : ∀ op ε'' → Paramᶜ (H' op ε''))
+          → (uH' : EffUniformʰ {Γ} {B} H' pH')
+          → ⟦ N ⟧ᶜᵗ pN ≈ᵐ ⟦ N' ⟧ᶜᵗ pN'
+          → (∀ op ε'' → ⟦ H op ε'' ⟧ᶜᵗ (pH op ε'') ≈ᵐ ⟦ H' op ε'' ⟧ᶜᵗ (pH' op ε''))
+          → ⟦ handler N H ⟧ᵛᵗ (pN , pH , uH) ≈ᵐ ⟦ handler N' H' ⟧ᵛᵗ (pN' , pH' , uH')
+handler-≈ {Γ} {N = N} {N'} {H} {H'} pN pH uH pN' pH' uH' eN eH =
+  curryʰ-cong (handler-famᵗ-nat h n) (handler-famᵗ-nat h' n') λ p →
+    ∘ᵐ-cong (T-alg-of-handlerᵀ-cong (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) {h} {h'}
+               (λ op ε'' → ∘ᵐ-congˡ (eH op ε'')))
+            ⟨ ≈ᵐ-refl , ∘ᵐ-congˡ (T-congᶠ (∘ᵐ-congˡ eN)) ⟩ᵐ-cong
+  where
+    h  = ⟦_⟧ʰᵗ {Γ} H pH uH
+    h' = ⟦_⟧ʰᵗ {Γ} H' pH' uH'
+    n  = ⟦ N ⟧ᶜᵗ pN
+    n' = ⟦ N' ⟧ᶜᵗ pN'
 
 -- Only the handler clause family uses the certificate; the fold is a congruence in it.
 
@@ -87,6 +117,9 @@ mutual
   ⟦⟧ᵛᵗ-irr (cons V W) (pV , pW) (pV' , pW') =
     ∘ᵐ-congʳ ⟨ ⟦⟧ᵛᵗ-irr V pV pV' , ⟦⟧ᵛᵗ-irr W pW pW' ⟩ᵐ-cong
   ⟦⟧ᵛᵗ-irr (lam M)   pM pM' = curryᵐ-cong (⟦⟧ᶜᵗ-irr M pM pM')
+  ⟦⟧ᵛᵗ-irr (handler N H) (pN , pH , uH) (pN' , pH' , uH') =
+    handler-≈ {N = N} {N} {H} {H} pN pH uH pN' pH' uH' (⟦⟧ᶜᵗ-irr N pN pN')
+      (λ op ε'' → ⟦⟧ᶜᵗ-irr (H op ε'') (pH op ε'') (pH' op ε''))
   ⟦⟧ᵛᵗ-irr (subV V w) pV pV' = ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
 
   ⟦⟧ᶜᵗ-irr : ∀ {Γ C} → (M : Γ ⊢C⦂ C) → (p p' : Paramᶜ M)
@@ -126,14 +159,8 @@ mutual
                   (substᵈ-≈ (ty-gty (arity op)) (⟦⟧ᶜᵗ-irr M pM pM')))) ⟩ᵐ-cong)
   ⟦⟧ᶜᵗ-irr (delay τ M) pM pM' =
     ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (⟦⟧ᶜᵗ-irr M pM pM')))
-  ⟦⟧ᶜᵗ-irr (handle M `with H `in N)
-           (pM , pN , pH , uH) (pM' , pN' , pH' , uH') =
-    ∘ᵐ-cong (T-alg-of-handlerᵀ-cong _
-              (λ op ε'' → ∘ᵐ-congˡ
-                            (⟦⟧ᶜᵗ-irr (H op ε'') (pH op ε'') (pH' op ε''))))
-            (⟨ ≈ᵐ-refl
-             , ∘ᵐ-cong (T-congᶠ (⟦⟧ᶜᵗ-irr N pN pN'))
-                       (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ⟦⟧ᶜᵗ-irr M pM pM' ⟩ᵐ-cong)) ⟩ᵐ-cong)
+  ⟦⟧ᶜᵗ-irr (handle M `with V) (pM , pV) (pM' , pV') =
+    ∘ᵐ-congʳ ⟨ ⟦⟧ᵛᵗ-irr V pV pV' , ⟦⟧ᶜᵗ-irr M pM pM' ⟩ᵐ-cong
   ⟦⟧ᶜᵗ-irr (unbox x rel w M) pM pM' = ∘ᵐ-congˡ (⟦⟧ᶜᵗ-irr M pM pM')
   ⟦⟧ᶜᵗ-irr (box _ V M) (pV , pM) (pV' , pM') =
     ∘ᵐ-cong (⟦⟧ᶜᵗ-irr M pM pM')

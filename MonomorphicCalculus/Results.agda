@@ -3,9 +3,8 @@
 --
 -- One entry per main definition, rule, lemma and theorem, under its
 -- title: the calculus, its operational semantics and type safety, the
--- equational theory, the denotational semantics and adequacy. The items
--- not yet formalised are listed at the end. Check it with
--- `agda MonomorphicCalculus/Results.agda`.
+-- equational theory, the denotational semantics and adequacy. Check it
+-- with `agda MonomorphicCalculus/Results.agda`.
 --
 -- The calculus is parameterised by a `LanguageSpec` (a grade system, base
 -- types and an operation signature).
@@ -31,13 +30,17 @@ module TheMonomorphicCalculus (S : LanguageSpec) where
   open import MonomorphicCalculus.Syntax.Contexts S public
     using (Ctx; ctx-grade; _∈[_]_; Hd; Tl-∷; Tl-⟨⟩)
 
+  -- Handler types `C ⇛ D`: handlers from computations of type `C` to
+  -- computations of type `D`
+  open import MonomorphicCalculus.Syntax.Types S public using (_⇛_)
+
   -- Subtyping
   open import MonomorphicCalculus.Syntax.Subtyping S public
     using (_<:ᵛ_; _<:ᶜ_)
     renaming ( Unitₛ to S-Unit ; Boolₛ to S-Bool ; Natₛ to S-Nat ; Emptyₛ to S-Empty
              ; Baseₛ to S-Base
              ; _|×|ₛ_ to S-Prod ; _|+|ₛ_ to S-Sum ; |List|ₛ to S-List
-             ; _⇒ₛ_ to S-Fun ; [_]ₛ_ to S-Box ; _‼ₛ_ to S-Comp )
+             ; _⇒ₛ_ to S-Fun ; _⇛ₛ_ to S-Handler ; [_]ₛ_ to S-Box ; _‼ₛ_ to S-Comp )
 
   -- Typing of values and of computations
   open import MonomorphicCalculus.Syntax.Terms S public
@@ -50,7 +53,13 @@ module TheMonomorphicCalculus (S : LanguageSpec) where
              ; caseℕ_`zero_`succ_ to Case-Nat ; recℕ to Rec-Nat
              ; case+_`inl_`inr_ to Case-Sum ; caseL_`nil_`cons_ to Case-List
              ; recL to Rec-List ; perform to Perform ; delay to Delay
-             ; handle_`with_`in to Handle ; box to Box ; unbox to Unbox ; subC to Sub-C )
+             ; handler to Handler ; handle_`with_ to Handle
+             ; box to Box ; unbox to Unbox ; subC to Sub-C )
+
+  -- Handling with a handler written in place, `handle M with H in N`, is
+  -- `handle M with handler N H`
+  open import MonomorphicCalculus.Syntax.Terms S public
+    using (handle_`with_`in_)
 
   -- Lemma (Subtyping): a preorder, antisymmetric where the grade orders
   -- are, reflecting eternality
@@ -92,16 +101,20 @@ module OperationalSemanticsAndTypeSafety (S : LanguageSpec) where
     using (𝕊; ∅; _⟨_⟩ₛ; _∷ₛ_; toCtx; state-grade; _≤ₛ_; ≤ₛ-grade; state-grade-≤ₛ)
 
   -- Definition (Configurations), and the small-step operational semantics.
-  -- CMP reduces a comparison to its boolean; SUB, SUB-APP, SUB-IF,
-  -- SUB-CASEℕ and SUB-RECℕ move a subsumption and erase to the identity on
-  -- raw terms.
+  -- CMP reduces a comparison to its boolean; SUB, SUB-APP, SUB-HANDLE,
+  -- SUB-HANDLE-TRANS, SUB-IF, SUB-CASEℕ and SUB-RECℕ move a subsumption and
+  -- erase to the identity on raw terms. HANDLE-RET, HANDLE-OP and
+  -- HANDLE-STEP fire on a handler literal; SUB-HANDLE moves the input half
+  -- of a coercion at a literal into its return clause, and SUB-HANDLE-TRANS
+  -- composes nested coercions.
   open import MonomorphicCalculus.OperationalSemantics.Reduction S public
     using ( Config ; _↝_
           ; APP ; MATCH ; CMP ; IF-TRUE ; IF-FALSE ; CASEℕ-ZERO ; CASEℕ-SUCC
           ; RECℕ-ZERO ; RECℕ-SUCC ; CASE+ ; CASE-INL ; CASE-INR ; CASEL ; CASEL-NIL
           ; CASEL-CONS ; RECL ; RECL-NIL ; RECL-CONS ; SEQ-RET ; SEQ-OP ; DELAY
           ; HANDLE-RET ; HANDLE-OP ; BOX ; UNBOX ; SEQ-STEP ; HANDLE-STEP
-          ; SUB ; SUB-APP ; SUB-IF ; SUB-CASEℕ ; SUB-RECℕ )
+          ; SUB ; SUB-APP ; SUB-HANDLE ; SUB-HANDLE-TRANS ; SUB-IF ; SUB-CASEℕ
+          ; SUB-RECℕ )
 
   -- Theorem (Preservation)
   open import MonomorphicCalculus.OperationalSemantics.Reduction S public
@@ -138,7 +151,8 @@ module EquationalTheoryAndDenotationalSemantics (S : LanguageSpec) where
     using ( _⊢V⦂_==_ ; _⊢C⦂_==_
           ; seq-return ; seq-perform ; seq-delay ; seq-box ; seq-unbox ; seq-eta
           ; seq-assoc ; fun-beta ; fun-eta ; unit-eta ; handle-return ; handle-perform
-          ; handle-delay ; handle-box ; handle-unbox ; delay-zero ; delay-delay
+          ; handle-delay ; handle-box ; handle-unbox ; subC-handle ; subV-handle
+          ; delay-zero ; delay-delay
           ; unbox-beta ; boxed-not-used ; unbox-not-used ; box-comm ; unbox-comm
           ; box-unbox-comm )
 
@@ -157,6 +171,11 @@ module EquationalTheoryAndDenotationalSemantics (S : LanguageSpec) where
     using (GroundEternal)
   open import MonomorphicCalculus.DenotationalSemantics.Model.Monad public using (Monad)
 
+  -- Definition (Handler values in a model): the object `Hᵒ`, application
+  -- at a handled grade below the declared one, abstraction of a natural
+  -- family with its β and η laws, and the action of subtyping
+  open Monad public using (Hᵒ; appʰ; appʰ-nat; curryʰ; curryʰ-β; curryʰ-η; mapʰ)
+
   -- Definition (Interpretation), for derivations whose handlers are uniform
   -- (`Paramᶜ`)
   open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types public
@@ -165,6 +184,11 @@ module EquationalTheoryAndDenotationalSemantics (S : LanguageSpec) where
     using (⟦_⟧ᶜᵗˣ)
   open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Terms public
     using (⟦_⟧ᵛᵗ; ⟦_⟧ᶜᵗ; Paramᵛ; Paramᶜ)
+
+  -- Lemma (Handling with a handler written in place): the denotation is the
+  -- fold of the clauses after the return clause
+  open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Terms public
+    using (handle-in-β)
 
   -- Theorem (Coherence with renaming and substitution)
   open import MonomorphicCalculus.DenotationalSemantics.Interpretation.RenamingCoherence public
@@ -186,6 +210,11 @@ module EquationalTheoryAndDenotationalSemantics (S : LanguageSpec) where
   open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Instance public
     using (PShMonad)
 
+  -- Handler values in the presheaf model: families of Kripke functions over
+  -- the handled grades, natural along sub-effecting
+  open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Monad.HandlerValues
+    public using (Hᵖ; appʰᵖ; curryʰᵖ; curryʰᵖ-β; curryʰᵖ-η)
+
   -- Theorem (Adequacy), for head-faithful models; the presheaf model is
   -- one (`PShHeadFaithful` in `MonomorphicCalculus.Adequacy.PSh.HeadFaithful`);
   -- the observational corollary is `MonomorphicCalculus.Adequacy.Equational`.
@@ -194,11 +223,3 @@ module EquationalTheoryAndDenotationalSemantics (S : LanguageSpec) where
   import MonomorphicCalculus.Adequacy.PSh.HeadFaithful
   import MonomorphicCalculus.Adequacy.Equational
 
-
-------------------------------------------------------------------------
--- Not yet formalised
---
---   Handler types, handler values and `handle M with V` in the
---   monomorphic calculus, its semantics and equational theory, where
---   handlers occur in `handle M with H to x in N`.
-------------------------------------------------------------------------

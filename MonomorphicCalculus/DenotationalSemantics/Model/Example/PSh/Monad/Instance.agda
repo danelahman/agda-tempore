@@ -23,6 +23,7 @@ module MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Instanc
 open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Core S Wld GTy
 open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Effects S Wld GTy
 open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Handling S Wld GTy
+open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Monad.HandlerValues S Wld GTy
 
 open import MonomorphicCalculus.DenotationalSemantics.Model.Monad S
              (B.PShCat (LanguageSpec.Grades S) Wld)
@@ -84,4 +85,12 @@ PShMonad = record
   ; T-alg-of-handlerᵀ-μᵀ     = T-alg-of-handlerᵀ-μᵀ
   ; T-alg-of-handlerᵀ-natᴾ   = T-alg-of-handlerᵀ-natᴾ′
   ; T-alg-of-handlerᵀ-cong   = T-alg-of-handlerᵀ-cong
+  ; Hᵒ                       = Hᵖ
+  ; appʰ                     = appʰᵖ
+  ; appʰ-nat                 = λ {A} {ε} {B} {ε'} → appʰᵖ-nat {A} {ε} {B} {ε'}
+  ; curryʰ                   = curryʰᵖ
+  ; curryʰ-cong              = λ {X} {A} {ε} {B} {ε'} {f} {g} →
+                                 curryʰᵖ-cong {X} {A} {ε} {B} {ε'} {f} {g}
+  ; curryʰ-β                 = curryʰᵖ-β
+  ; curryʰ-η                 = λ h → curryʰᵖ-η h (appʰᵖ-∘-nat h)
   }

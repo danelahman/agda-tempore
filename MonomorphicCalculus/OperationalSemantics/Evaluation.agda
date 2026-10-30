@@ -103,6 +103,8 @@ step-ticks HANDLE-OP           = 0ᴰ
 step-ticks BOX                 = 0ᴰ
 step-ticks UNBOX               = 0ᴰ
 step-ticks SUB-APP             = 0ᴰ
+step-ticks SUB-HANDLE          = 0ᴰ
+step-ticks SUB-HANDLE-TRANS    = 0ᴰ
 step-ticks SUB-IF              = 0ᴰ
 step-ticks SUB-CASEℕ           = 0ᴰ
 step-ticks SUB-RECℕ            = 0ᴰ
@@ -196,16 +198,16 @@ seq-step : ∀ {A B ε₁ ε₂} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ ε�
 seq-step N (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , _ , SEQ-STEP r (step-grade-≾ r)
 
 handle-step : ∀ {A B ε₁ ε₂} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ ε₁}
+            → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
             → (H : (op : Op) → (ε₃ : E) →
                      toCtx St ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                              ∷ [ mapᵉ (op-grade op) ]
                                  (type-of-gtype (arity op) ⇒ B ‼ ε₃)
                            ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃))
-            → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
             → Step-from (⟨ St , M ⟩)
-            ------------------------------------------------
-            → Step-from (⟨ St , handle M `with H `in N ⟩)
-handle-step H N (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) =
+            ------------------------------------------------------
+            → Step-from (⟨ St , handle M `with handler N H ⟩)
+handle-step N H (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) =
   _ , _ , _ , HANDLE-STEP r (step-grade-≾ r)
 
 ↝-det : ∀ {A A₁ A₂ ε ε₁ ε₂} {cf : Config (A ‼ ε)}
@@ -233,6 +235,8 @@ handle-step H N (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) =
 ↝-det BOX        BOX        = refl
 ↝-det UNBOX      UNBOX      = refl
 ↝-det SUB-APP    SUB-APP    = refl
+↝-det SUB-HANDLE SUB-HANDLE = refl
+↝-det SUB-HANDLE-TRANS SUB-HANDLE-TRANS = refl
 ↝-det SUB-IF     SUB-IF     = refl
 ↝-det SUB-CASEℕ  SUB-CASEℕ  = refl
 ↝-det SUB-RECℕ   SUB-RECℕ   = refl
@@ -247,7 +251,7 @@ handle-step H N (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) =
   cong (seq-step N) (↝-det r r')
 ↝-det (HANDLE-STEP {H = H} {N = N} r p) (HANDLE-STEP r' p')
   rewrite ≾ᵣ-irrelevant p (step-grade-≾ r) | ≾ᵣ-irrelevant p' (step-grade-≾ r') =
-  cong (handle-step H N) (↝-det r r')
+  cong (handle-step N H) (↝-det r r')
 -- a congruence against a whnf scrutinee cannot happen
 ↝-det (SEQ-STEP r _)    SEQ-RET          = ⊥-elim (finality-ret r)
 ↝-det SEQ-RET           (SEQ-STEP r _)   = ⊥-elim (finality-ret r)

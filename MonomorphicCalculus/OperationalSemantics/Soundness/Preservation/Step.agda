@@ -772,6 +772,26 @@ step-box SUB-APP c g pS pM =
               ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
+step-box SUB-HANDLE c g pS pM =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ηᵀ-nat _
+
+step-box SUB-HANDLE-TRANS c g pS pM =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ηᵀ-nat _
+
 step-box SUB-IF c g pS pM =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
@@ -1093,3 +1113,141 @@ sound-SUB p q pS pM =
   ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+
+-- `SUB-HANDLE`: a coerced handler literal, applied at its own grade, is the
+-- literal applied at the restricted index (`curryʰ-nat`, `curryʰ-β`). The
+-- input coercion enters the return clause, the output coercion stays in
+-- front and becomes the step's refinement.
+
+-- Applying a morphism into `Hᵒ` at a pairing.
+
+appʰ-⟨⟩ : ∀ {X A ε B ε' ε₀} → (p : ε₀ ≾ₑ ε) → (k : X →ᵐ Hᵒ A ε B ε')
+        → (m : X →ᵐ Tᵒ A ε₀)
+        → appʰ p ∘ᵐ ⟨ k , m ⟩ᵐ ≈ᵐ (appʰ p ∘ᵐ mapˣᵐ k idᵐ) ∘ᵐ ⟨ idᵐ , m ⟩ᵐ
+appʰ-⟨⟩ p k m =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+-- The fold reads a coercion of the handled values through its return clause.
+
+handle-foldᵗ-Tᶠ : ∀ {X A A' B ε ε'} → (h : Handlerᵀ (⟨ ⊤ᵣ ⟩ᵒ X) B)
+                → (n : ⟨ mapᵉ ε ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε') → (a : A' →ᵐ A)
+                → handle-foldᵗ h n ∘ᵐ mapˣᵐ idᵐ (Tᶠ a)
+                ≈ᵐ handle-foldᵗ h (n ∘ᵐ mapˣᵐ idᵐ a)
+handle-foldᵗ-Tᶠ h n a =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ ( ⟨⟩ᵐ-∘ _ _ _
+             ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _ ∙ ∘ᵐ-identityˡ _)
+               ,   ∘ᵐ-assoc _ _ _
+                 ∙ ∘ᵐ-congʳ ( ∘ᵐ-assoc _ _ _
+                            ∙ ∘ᵐ-congʳ (mapˣᵐ-comm _ _)
+                            ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                            ∙ ∘ᵐ-congˡ (strᵀ-natʳ a)
+                            ∙ ∘ᵐ-assoc _ _ _)
+                 ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                 ∙ ∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _)) ⟩ᵐ-cong)
+
+-- A relaxed return clause, coerced on its binder.
+
+relax-coe : ∀ {X A A' C ρ₀ ρ} → (n : ⟨ ρ ⟩ᵒ X ×ᵐ A →ᵐ C) → (c : ρ₀ ≾ᵣ ρ)
+          → (a : A' →ᵐ A)
+          → (n ∘ᵐ mapˣᵐ (⟨⟩-≤ c) idᵐ) ∘ᵐ mapˣᵐ idᵐ a ≈ᵐ n ∘ᵐ mapˣᵐ (⟨⟩-≤ c) a
+relax-coe n c a =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘ _ _ _ _ ∙ mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _))
+
+sound-SUB-HANDLE : ∀ {Γ A A₁ B B₁ ε ε₁ ε' ε₁'}
+  → (M : Γ ⊢C⦂ A ‼ ε) → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A₁ ⊢C⦂ B₁ ‼ ε₁')
+  → (H : (op : Op) → (ε'' : E)
+       → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B₁ ‼ ε'')
+         ⊢C⦂ B₁ ‼ (op-grade op ·ₑ ε''))
+  → (p : A <:ᵛ A₁) → (pε : ε ≾ₑ ε₁) → (q : B₁ <:ᵛ B) → (s : ε₁' ≾ₑ ε')
+  → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+  → (pH : ∀ op ε'' → Paramᶜ (H op ε'')) → (uH : EffUniformʰ {Γ} {B₁} H pH)
+  → ⟦ handle M `with subV (handler N H) ((p ‼ₛ pε) ⇛ₛ (q ‼ₛ s)) ⟧ᶜᵗ
+      (pM , pN , pH , uH)
+  ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ s) ∘ᵐ Tᶠ ⟦ q ⟧<:ᵛ
+     ∘ᵐ ⟦ handle M
+          `with handler
+                  (subCtx p (C-rename (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε))) N))
+                  H ⟧ᶜᵗ
+          ( pM
+          , subCtxᴾ p (C-rename (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε))) N)
+              (renᶜ (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε))) N pN)
+          , pH , uH)
+sound-SUB-HANDLE {Γ} M N H p pε q s pM pN pH uH = lhs ∙ ≈ᵐ-sym rhs
+  where
+    a = ⟦ p ⟧<:ᵛ
+    b = ⟦ q ⟧<:ᵛ
+    h = ⟦_⟧ʰᵗ {Γ} H pH uH
+    n = ⟦ N ⟧ᶜᵗ pN
+    m = ⟦ M ⟧ᶜᵗ pM
+    k = curryʰ (handler-famᵗ h n) (handler-famᵗ-nat h n)
+
+    Nr = C-rename (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε))) N
+    pNr = renᶜ (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε))) N pN
+    n' = ⟦ subCtx p Nr ⟧ᶜᵗ (subCtxᴾ p Nr pNr)
+
+    -- the common core: the fold, its return clause relaxed and coerced
+    G = handle-foldᵗ h (n ∘ᵐ mapˣᵐ (⟨⟩-≤ (map-monotoneᵉ pε)) a)
+
+    n'≈ : n' ≈ᵐ n ∘ᵐ mapˣᵐ (⟨⟩-≤ (map-monotoneᵉ pε)) a
+    n'≈ = subCtx-nat p Nr pNr
+        ∙ ∘ᵐ-congˡ (C-rename-nat (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε))) N pN)
+        ∙ relax-coe n (map-monotoneᵉ pε) a
+
+    lhs : ⟦ handle M `with subV (handler N H) ((p ‼ₛ pε) ⇛ₛ (q ‼ₛ s)) ⟧ᶜᵗ
+            (pM , pN , pH , uH)
+        ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ s) ∘ᵐ Tᶠ b ∘ᵐ G ∘ᵐ ⟨ idᵐ , m ⟩ᵐ
+    lhs =
+        appʰ-⟨⟩ ≾ₑ-refl _ m
+      ∙ ∘ᵐ-congˡ
+          ( ∘ᵐ-congʳ (mapˣᵐ-cong (curryʰ-nat (mapʰ-fam a b pε s) (mapʰ-fam-nat a b pε s) k)
+                                 ≈ᵐ-refl)
+          ∙ curryʰ-β (λ e → mapʰ-fam a b pε s e ∘ᵐ mapˣᵐ k idᵐ)
+                     (Naturalʰ-∘ (mapʰ-fam-nat a b pε s) k) ≾ₑ-refl
+          ∙ ∘ᵐ-assoc _ _ _
+          ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+          -- the input coercion passes the handler value, which is applied
+          ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ
+              ( ∘ᵐ-assoc _ _ _
+              ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-comm _ _))
+              ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+              ∙ ∘ᵐ-congˡ (curryʰ-β (handler-famᵗ h n) (handler-famᵗ-nat h n) _)
+              ∙ handle-foldᵗ-Tᶠ h _ a
+              ∙ handle-foldᵗ-cong h
+                  ( relax-coe n _ a
+                  ∙ ∘ᵐ-congʳ (mapˣᵐ-cong (⟨⟩-≤-irr _ _) ≈ᵐ-refl))))
+          ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+          ∙ ∘ᵐ-congˡ (T-≤-nat b _)
+          ∙ ∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+
+    rhs : T-≤ (·ₑ-monoʳ-≾ₑ s) ∘ᵐ Tᶠ b
+            ∘ᵐ ⟦ handle M `with handler (subCtx p Nr) H ⟧ᶜᵗ
+                 (pM , subCtxᴾ p Nr pNr , pH , uH)
+        ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ s) ∘ᵐ Tᶠ b ∘ᵐ G ∘ᵐ ⟨ idᵐ , m ⟩ᵐ
+    rhs =
+      ∘ᵐ-congʳ (∘ᵐ-congʳ
+        ( appʰ-⟨⟩ ≾ₑ-refl _ m
+        ∙ ∘ᵐ-congˡ
+            ( curryʰ-β (handler-famᵗ h n') (handler-famᵗ-nat h n') ≾ₑ-refl
+            ∙ handle-foldᵗ-cong h
+                ( ∘ᵐ-congʳ ( mapˣᵐ-cong (⟨⟩-≤-irr _ _ ∙ ⟨⟩-≤-refl) ≈ᵐ-refl
+                           ∙ mapˣᵐ-idᵐ)
+                ∙ ∘ᵐ-identityʳ _
+                ∙ n'≈))))
+
+-- `SUB-HANDLE-TRANS`: nested coercions denote their composite.
+
+sound-SUB-HANDLE-TRANS : ∀ {Γ A₀ A' A B ε ε'}
+  → (M : Γ ⊢C⦂ A ‼ ε) → (V : Γ ⊢V⦂ A₀)
+  → (p : A₀ <:ᵛ A') → (p' : A' <:ᵛ (A ‼ ε) ⇛ (B ‼ ε'))
+  → (pM : Paramᶜ M) → (pV : Paramᵛ V)
+  → ⟦ handle M `with subV (subV V p) p' ⟧ᶜᵗ (pM , pV)
+  ≈ᵐ ⟦ handle M `with subV V (<:ᵛ-trans p p') ⟧ᶜᵗ (pM , pV)
+sound-SUB-HANDLE-TRANS M V p p' pM pV =
+  ∘ᵐ-congʳ ⟨ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟦⟧<:ᵛ-trans p p'))
+           , ≈ᵐ-refl ⟩ᵐ-cong

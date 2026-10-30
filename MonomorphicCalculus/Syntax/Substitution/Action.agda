@@ -57,6 +57,10 @@ mutual
   V-sub₀ s nil         = nil
   V-sub₀ s (cons V W)  = cons (V-sub₀ s V) (V-sub₀ s W)
   V-sub₀ s (lam M)     = lam (C-sub₀ (cong-sub₀ s) M)
+  V-sub₀ s (handler N H) =
+    handler (C-sub₀ (cong-sub₀ s) N)
+            (λ op ε'' →
+               C-sub₀ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s))) (H op ε''))
   V-sub₀ s (subV V p)  = subV (V-sub₀ s V) p
 
   C-sub₀ : ∀ {Γ Γ' C}
@@ -87,11 +91,7 @@ mutual
     case+ V-sub₀ s V `inl C-sub₀ (cong-sub₀ s) M `inr C-sub₀ (cong-sub₀ s) N
   C-sub₀ s (perform op V M) = perform op (V-sub₀ s V) (C-sub₀ (cong-sub₀ s) M)
   C-sub₀ s (delay τ M)      = delay τ (C-sub₀ (cong-sub₀ s) M)
-  C-sub₀ s (handle M `with H `in N) =
-    handle C-sub₀ s M
-    `with (λ op ε'' →
-             C-sub₀ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s))) (H op ε''))
-    `in (C-sub₀ (cong-sub₀ s) N)
+  C-sub₀ s (handle M `with V) = handle C-sub₀ s M `with V-sub₀ s V
   -- The unboxed resource variable is taken to another resource variable by
   -- `sub-tgt₀`, at a grade that drops and at a declared payload type the named
   -- one only bounds; both witnesses compose into the node's own. Read off with

@@ -97,10 +97,15 @@ progress (recℕ (succ V) M N p)            = step-progress RECℕ-SUCC
 progress (recℕ (subV V Natₛ) M N p)       = step-progress SUB-RECℕ
 progress (perform op V M)          = is-op
 progress (delay τ M)               = step-progress DELAY
-progress (handle M `with H `in N) with progress M
-progress (handle (return V) `with H `in N) | is-value = step-progress HANDLE-RET
+progress (handle M `with var _ x)  = ⊥-elim (⇛-not-in-toCtx x)
+progress (handle M `with handler N H) with progress M
+progress (handle (return V) `with handler N H) | is-value = step-progress HANDLE-RET
 ... | is-op                     = step-progress HANDLE-OP
 ... | steps M↝M' p _            = step-progress (HANDLE-STEP M↝M' p)
+progress (handle M `with subV (var _ x) (_ ⇛ₛ _)) = ⊥-elim (⇛-not-in-toCtx x)
+progress (handle M `with subV (handler N H) ((_ ‼ₛ _) ⇛ₛ _)) =
+  step-progress SUB-HANDLE
+progress (handle M `with subV (subV V p) p') = step-progress SUB-HANDLE-TRANS
 progress (unbox _ _ _ _) = step-progress UNBOX
 progress (box _ _ _)       = step-progress BOX
 progress (subC M (_ ‼ₛ _)) = step-progress SUB
