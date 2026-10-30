@@ -2,23 +2,19 @@
 -- Type formers and the variance of their parts                 --
 --                                                              --
 -- An open type other than a type variable is a former applied  --
--- to its parts: value types, the grade of a box, the effect    --
--- of a function type and the two effects of a handler type.    --
--- `Decomp A B ps` is the variance table:                       --
--- `A` and `B` have one former, and `ps` pairs their parts,     --
--- left to right, each with its variance (`co`, `contra`,       --
--- `inv`) and its sort (`ty`, `rg`, `eg`). `decompose` decides  --
--- it on two types, `self` reads it off one type, and           --
--- `eternal` is the eternality column: a former is never        --
--- eternal, or eternal exactly when its value-type parts are.   --
+-- to its parts: value types, box grades and effects. The       --
+-- variance table `Decomp A B ps` says `A` and `B` have one     --
+-- former and pairs their parts with variance (`co`, `contra`,  --
+-- `inv`) and sort (`ty`, `rg`, `eg`); `decompose` decides it,  --
+-- `self` reads it off one type, and `eternal` is the           --
+-- eternality column.                                           --
 --                                                              --
--- The table is exact at every pair of instances: `A [ σ ]` is  --
--- a subtype of `B [ τ ]` exactly when every pair of parts      --
--- holds at its variance (`<:-intro`, `<:-elim`), and `A [ δ ]` --
--- is eternal exactly when the column admits the former and     --
--- every value-type part is eternal (`⊩ᴱ-intro`, `⊩ᴱ-elim`).    --
--- The value-type parts of a type are smaller than it (`_≺_`,   --
--- `≺-wf`), so recursion along the table is well founded.       --
+-- The table is exact at every pair of instances: subtyping     --
+-- holds exactly when every pair of parts holds at its variance --
+-- (`<:-intro`, `<:-elim`), eternality exactly when the column  --
+-- admits the former and every value-type part is eternal       --
+-- (`⊩ᴱ-intro`, `⊩ᴱ-elim`). Recursion along the table is well   --
+-- founded (`_≺_`, `≺-wf`).                                     --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)
@@ -53,8 +49,8 @@ open import PolymorphicCalculus.Syntax.Types             S
 open import PolymorphicCalculus.Syntax.GradeSubstitution S
 open import PolymorphicCalculus.Hypotheses               S
 
--- How the parts at one position of two types of one former are
--- related by a subtyping demand between the two
+-- How the parts at one position of two types of one former are related by a
+-- subtyping demand between them
 
 data Variance : Set where
   co contra inv : Variance
@@ -137,8 +133,7 @@ decompose ([ ρ ] A)      ([ ρ' ] A')       = parts _ []ᴰ
 decompose (A ‼ ε ⇛ B ‼ ε') (A' ‼ η ⇛ B' ‼ η') = parts _ ⇛ᴰ
 decompose _              _                 = clash
 
--- One type: a type variable, or its former against itself, whose
--- pairs of parts are diagonal
+-- One type: a type variable, or its former against itself, its pairs diagonal
 
 Diag : ∀ {Ψ} → Part Ψ → Set
 Diag (ty _ A B)  = A ≡ B
@@ -210,8 +205,7 @@ eternal ⇛ᴰ          = false
 <:-elim []ᴰ    σ τ ([ r ]ₛ p)       = r ∷ p ∷ []
 <:-elim ⇛ᴰ     σ τ ((p ‼ₛ e) ⇛ₛ (q ‼ₛ e')) = p ∷ e ∷ q ∷ e' ∷ []
 
--- The table is exact for eternality, at every instance; a grade part
--- demands nothing
+-- The table is exact for eternality, at every instance; a grade part demands nothing
 
 Etᴾ : ∀ {Ψ} → Hyps Ψ → Part Ψ → Set
 Etᴾ Q (ty _ A _) = Q ⊩ᴱ A

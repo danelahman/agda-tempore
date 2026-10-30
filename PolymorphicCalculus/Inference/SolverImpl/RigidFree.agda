@@ -1,9 +1,8 @@
 ------------------------------------------------------------------
 -- The rigid-binder-free fragment                               --
 --                                                              --
--- The driver is stuck only at the close of a rigid scope; it   --
--- is therefore never stuck, from any state, on a constraint    --
--- with no rigid binder.                                        --
+-- The driver is stuck only at the close of a rigid scope, so   --
+-- never on a constraint with no rigid binder.                  --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)

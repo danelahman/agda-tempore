@@ -1,11 +1,10 @@
 ------------------------------------------------------------------
 -- Finiteness of the operation signature                        --
 --                                                              --
--- The concrete solver assumes an enumeration of the operation  --
--- symbols, by which it discharges the infinitary conjunction   --
--- `⋀ᵒᵖ`. The list-indexed `All` and its lookup turn the        --
--- solutions at the listed operations into the function         --
--- `(op : Op) → …` that satisfaction requires.                  --
+-- The solver assumes an enumeration of the operation symbols,  --
+-- to discharge the infinitary conjunction `⋀ᵒᵖ`: `All` over    --
+-- the list turns the solutions at the listed operations into   --
+-- the function `(op : Op) → …` satisfaction requires.          --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_)

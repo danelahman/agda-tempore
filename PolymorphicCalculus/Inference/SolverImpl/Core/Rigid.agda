@@ -2,10 +2,9 @@
 -- Strengthening away a rigid variable                          --
 --                                                              --
 -- A rigid effect-grade variable is strengthened away when its  --
--- scope is left. `popˢ` and `unpopˢ` move the rigid to the     --
--- newest position. The escape lemma states that a failed       --
--- strengthening refutes every instance that keeps the rigid an --
--- eigenvariable.                                               --
+-- scope is left; `popˢ` and `unpopˢ` move it to the newest     --
+-- position. A failed strengthening refutes every instance      --
+-- keeping the rigid an eigenvariable (the escape lemma).       --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
@@ -217,8 +216,8 @@ mutual
   str-wkᶜ : ∀ {Ψ} → (C : OCType Ψ) → strᶜ (newᵉ {Ψ}) (wkᵉ-c C) ≡ just C
   str-wkᶜ (A ‼ ε) = cong₂ (zip₂ _‼_) (str-wkᵛ A) (str-wkᵉ ε)
 
--- Assembles the pointwise partial results of the three finite sorts by
--- a finite traversal. The auxiliaries take the scrutinee explicitly.
+-- The pointwise partial results of the three sorts assembled by a finite
+-- traversal; the auxiliaries take the scrutinee explicitly
 
 seqFinᵃ : ∀ {n} {X : Set} → (P : Fin (nsuc n) → X → Set)
         → Maybe (Σ[ x ∈ X ] P zero x)
@@ -309,9 +308,8 @@ pop-unpop {Ψ} j = mk≐ˢ (λ α → refl) (λ i → refl) sE'
     ... | just k₀  = cong evar (sym (thick-just {nE Ψ} j k k₀ r))
     ... | nothing  = cong evar (sym (thick-nothing {nE Ψ} j k r))
 
--- An occurrence of a variable whose image is again a variable is
--- renamed, not removed — Miller's mixed-prefix discipline (1992), the
--- rigid playing Gentzen's eigenvariable.
+-- An occurrence of a variable whose image is a variable is renamed, not
+-- removed: Miller's mixed prefix, the rigid as Gentzen's eigenvariable
 
 escᵉ : ∀ {Φ Ψ} → (σ : Subst Φ Ψ) → (j : EVar Φ) → (k : EVar Ψ) → sE σ j ≡ evar k
      → (ε : EExp Φ) → occᵉ-e j ε ≡ true → occᵉ-e k (ε [ σ ]ᵉ) ≡ true
@@ -480,8 +478,8 @@ mutual
   ... | inj₁ s = ∨-left  (occᵉ-v j A) (occᵉ-e j ε) (str-occᵛ j A s)
   ... | inj₂ s = ∨-right (occᵉ-v j A) (occᵉ-e j ε) (str-occᵉ j ε s)
 
--- Contrapositive: a `strSub` that fails refutes every instance that
--- keeps the rigid an eigenvariable.
+-- Contrapositive: a failed `strSub` refutes every instance keeping the rigid
+-- an eigenvariable
 
 strᵉ-just : ∀ {Ψ Ξ} → (j : EVar (Ψ +e)) → (ε : EExp (Ψ +e))
           → (δ : Subst (Ψ +e) (Ξ +e)) → sE δ j ≡ evar (newᵉ {Ξ})
@@ -583,8 +581,8 @@ strSubᵃ-just j γ .(just (fT , pT)) (fT , pT) refl
                  .(just (fR , pR)) (fR , pR) refl
                  .(just (fE , pE)) (fE , pE) refl = _ , refl
 
--- The escape check, complete: if the check fails, no instance that
--- keeps the rigid an eigenvariable can free the images of it
+-- The escape check is complete: if it fails, no instance keeping the rigid an
+-- eigenvariable frees the images of it
 
 strSub-escape : ∀ {Θ Ψ Ξ} → (j : EVar (Ψ +e)) → (γ : Subst Θ (Ψ +e))
               → (δ : Subst (Ψ +e) (Ξ +e)) → sE δ j ≡ evar (newᵉ {Ξ})
@@ -623,8 +621,7 @@ strSub-escape {Θ} {Ψ} {Ξ} j γ δ r γ₀ p q = ⊥just (trans (sym q) (proj�
                             _ (proj₁ tR) (proj₂ tR)
                             _ (proj₁ tE) (proj₂ tE)
 
--- With the rigid sent to a constant, an expression strengthens away
--- from it
+-- With the rigid sent to a constant, an expression strengthens away from it
 
 strᵉ-upd : ∀ {Ψ} → (j : EVar (Ψ +e)) → (c : E) → (ε : EExp (Ψ +e))
          → Σ[ ε₀ ∈ EExp Ψ ] (strᵉ j (ε [ updᵉ j (econst c) ]ᵉ) ≡ just ε₀)

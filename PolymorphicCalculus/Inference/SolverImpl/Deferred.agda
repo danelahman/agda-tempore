@@ -2,23 +2,19 @@
 -- Deferred rigid conditions                                      --
 --                                                                --
 -- A clause's grade orderings that mix its rigid with outer       --
--- unknowns are deferred as a quantified ordering                 --
--- `∀ᵉ j₁ … jₖ. O` (`Quantified`), labelled with the operation of --
--- the clause that left them, and discharged along a substitution --
--- when its orderings are, at fresh rigids, by the hypotheses     --
--- weakened to them (`_⊩ᴼ_[_]`); the solver's answer returns them --
--- as quantified hypotheses.                                      --
+-- unknowns are deferred as a quantified ordering `∀ᵉ j₁ … jₖ. O` --
+-- (`Quantified`), labelled with the clause's operation. One is   --
+-- discharged along a substitution when its orderings are, at     --
+-- fresh rigids (`_⊩ᴼ_[_]`); the answer returns them as           --
+-- quantified hypotheses. Closed witnesses for the rigids are     --
+-- drawn from the unit, the top and the hints' `witnesses`        --
+-- (`candidates`).                                                --
 --                                                                --
--- A substitution below (above) the one it moves keeps an entry   --
--- whose greater (smaller) sides it leaves fixed (`keepᵈ`). A     --
--- closed witness per rigid instantiates the rigids (`wit`), each --
--- drawn from the candidates of an ordering: the unit, the top    --
--- and the `witnesses` of the hints (`candidates`, `grid`).       --
---                                                                --
--- Contract. Closing an entry over one more rigid (`closeᵈ`)      --
--- holds exactly where the entry does at a fresh rigid            --
--- (`closeᵈ-sound`, `closeᵈ-princ`). Retrying the entries is the  --
--- driver's (`retry`, `SolverImpl.Solve`).                        --
+-- Contract. A move down (up) keeps an entry whose greater        --
+-- (smaller) sides it fixes (`keepᵈ`). Closing an entry over one  --
+-- more rigid holds exactly where the entry does at a fresh rigid --
+-- (`closeᵈ-sound`, `closeᵈ-princ`). The driver retries the       --
+-- entries (`retry`).                                             --
 --------------------------------------------------------------------
 
 open import Data.Fin.Base using (zero; suc)
@@ -106,8 +102,8 @@ Moves : ∀ {Ψ Ψ'} → Dir → Hyps Ψ' → Subst Ψ Ψ → Subst Ψ Ψ' → S
 Moves dir↓ Q σ τ = Q ⊩ (σ ⨟ˢ τ) ≾ˢ τ
 Moves dir↑ Q σ τ = Q ⊩ τ ≾ˢ (σ ⨟ˢ τ)
 
--- The side an ordering keeps fixed: the greater side under a move
--- down, the smaller under a move up
+-- The side an ordering keeps fixed: the greater under a move down, the smaller
+-- under a move up
 
 Fixedʳ : ∀ {Ψ} → Dir → Subst Ψ Ψ → RExp Ψ × RExp Ψ → Set
 Fixedʳ dir↓ σ (x , y) = y [ σ ]ʳ ≅ʳ y
@@ -195,8 +191,7 @@ keepᵈ {Q = Q} {σ} {τ} d (qord l k o) (still sr se) mv h = mk⊩ᵒ (r d sr m
 ------------------------------------------------------------------------
 -- The rigids at closed witnesses
 
--- `κ⟨ b ⟩` sends the newest effect-grade variable to `b`, fixing the
--- rest
+-- `κ⟨ b ⟩` sends the newest effect-grade variable to `b`, fixing the rest
 
 κ⟨_⟩ : ∀ {Ψ} → EExp Ψ → Subst (Ψ +e) Ψ
 κ⟨ b ⟩ = sub tvar rvar (λ { zero → b ; (suc i) → evar i })
@@ -252,15 +247,14 @@ grid : List E → ℕ → List (List E)
 grid cs zero    = [] ∷ []
 grid cs (suc k) = concatMap (λ c → map (c ∷_) (grid cs k)) cs
 
--- The candidates for the rigids of an ordering of degree `d` with
--- constants `rcs` and `ecs`: the unit, the top and the grade system's
--- own (`witnesses`), without repetition
+-- The candidates for the rigids of an ordering of degree `d` with constants `rcs`
+-- and `ecs`: the unit, the top and the hints' `witnesses`, without repetition
 
 candidates : ℕ → List R → List E → List E
 candidates d rcs ecs = deduplicate _≃ₑ?_ (uₑ ∷ ⊤ₑ ∷ witnesses d rcs ecs)
 
--- The constants of an expression, and its occurrences of effect
--- variables: those of the rigids where its ordering can be refuted
+-- The constants of an expression, and its occurrences of the rigids where its
+-- ordering can be refuted
 
 constsₑ : ∀ {Ψ} → EExp Ψ → List E
 constsₑ (evar _)   = []
@@ -319,9 +313,8 @@ wit-⨟ δ (suc k) cs =
 ⊩ᴴ-wit {Ψ} k cs = subst (λ H → ∅ᴴ ⊩ᴴ H [ wit k cs ]) (sym (wkᵉⁿ-∅ᴴ {Ψ} k)) ⊩ᴴ-∅
 
 ------------------------------------------------------------------------
--- Closing an entry over one more rigid, the newest variable of its
--- scope: bound outermost where the entry mentions it, and dropped
--- otherwise
+-- Closing an entry over the newest variable: bound outermost where the entry
+-- mentions it, dropped otherwise
 
 -- Orderings the same pair by pair, both sides the same
 

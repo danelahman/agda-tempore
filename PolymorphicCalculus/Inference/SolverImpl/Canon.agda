@@ -1,37 +1,20 @@
 ------------------------------------------------------------------
 -- Normal forms of the grade expressions of a report            --
 --                                                              --
--- Every grade expression of a reported type and of a reported  --
--- hypothesis set is replaced by its canonical form: the        --
--- sum-of-products normal form, grouped, folded and ordered by  --
--- skeleton, with every alternative that the decider places     --
--- below another dropped. Where the unit is least, a product    --
--- with the top among its factors is replaced by the top, since --
--- `u ≾ x` gives `x · ⊤ = ⊤ = ⊤ · x`, and the top then absorbs  --
--- the join. The canonical form is relative to what the decider --
--- proves, and hence to whether each grade's unit is least and  --
--- whether its multiplication commutes.                         --
---                                                              --
--- In a hypothesis set, an ordering whose left side has two or  --
--- more alternatives becomes one ordering per alternative       --
--- (`splits`, `piecesʳ`, `piecesᵉ`); a right side is never      --
--- split. `Localise` writes a clause's residual in the same     --
--- form.                                                        --
---                                                              --
--- A hypothesis set and its canonical form entail each other;   --
--- the canonical form is the set stored. A type is convertible  --
--- to its canonical form.                                       --
+-- Every grade expression of a reported type and hypothesis set --
+-- is put in canonical form: the normal form of `Product`,      --
+-- grouped, folded and ordered by skeleton, each alternative    --
+-- the decider places below another dropped, and, where the     --
+-- unit is least, a product with a top factor made the top. In  --
+-- a hypothesis set, an ordering with several alternatives on   --
+-- the left becomes one per alternative (`splits`); a right     --
+-- side is never split.                                         --
 --                                                              --
 -- Contract. An expression is convertible to its canonical form --
--- (`canonᵣ-≡`, `canonₑ-≡`; a product with the top to the top,  --
--- by the leastness of the unit, monotonicity and the greatest  --
--- element, `topProdᵣ?`, `topProdₑ?`), a type likewise          --
--- (`canonᵛ-≡̂`, `canonᶜ-≡̂`), and a hypothesis set and its       --
--- canonical form entail each other (`canonᴴ-⊩`, `canonᴴ-⊩⁻`),  --
--- an ordering and its pieces holding at the same instances     --
--- (`Split.back`, `Split.fwd`). That convertible expressions    --
--- have one canonical form is not claimed: it depends on what   --
--- the decider proves.                                          --
+-- (`canonᵣ-≡`, `canonₑ-≡`), a type likewise (`canonᵛ-≡̂`,      --
+-- `canonᶜ-≡̂`), and a hypothesis set and its canonical form    --
+-- entail each other (`canonᴴ-⊩`, `canonᴴ-⊩⁻`). Uniqueness is   --
+-- not claimed: it depends on what the decider proves.          --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_; _++_; map)
@@ -71,13 +54,8 @@ open import PolymorphicCalculus.Hypotheses               S
 open import PolymorphicCalculus.Inference.SolverImpl.Normal S hints
 open import PolymorphicCalculus.Inference.SolverImpl.Entail S hints using (decideᵣ; decideₑ; derive)
 
--- Grouping with pruning, two alternatives being compared by the
--- decider at the empty hypothesis set, whose verdict convertibility
--- turns into absorption.
---
--- Pruning subsumes the top's absorption of the join: a top
--- alternative is a constant, so it heads the skeleton order and wins
--- every tie, and the decider places every product below it.
+-- Grouping with pruning, alternatives compared by the decider from no
+-- hypotheses; a top alternative heads the skeleton order and absorbs the join
 
 module Mₑ {Θ : Scope} =
   Gₑ.Pruning {Θ} (∅ᴴ ⊩_≾̂ₑ_) ≡̂ₑ-absorb
@@ -87,10 +65,8 @@ module Mᵣ {Θ : Scope} =
   Gᵣ.Pruning {Θ} (∅ᴴ ⊩_≾̂ᵣ_) ≡̂ᵣ-absorb
              (λ P P' → decideᵣ derive ∅ᴴ Gᵣ.⟦ P ⟧ᵖ Gᵣ.⟦ P' ⟧ᵖ)
 
--- At a grade whose unit is least, a product with the top among its
--- factors is the top: it lies below the top, and above the top
--- multiplied by the unit. Such a product is replaced by the top,
--- which then absorbs the join.
+-- Where the unit is least, a product with a top factor is the top: below the
+-- top, and above the top times the unit
 
 ⊤-·ₑ : Is-just uₑ-least? → ∀ {Θ} {ε : EExp Θ} → econst ⊤ₑ ·̂ₑ ε ≡̂ₑ econst ⊤ₑ
 ⊤-·ₑ ij = ≡̂ₑ-antisym-∅ topₑ (transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-identityʳ)) (monoₑ ⊩≾̂ₑ-refl (minₑ (to-witness ij))))
@@ -174,9 +150,8 @@ canonSumᵣ-≡ s =
   (≡̂ᵣ-trans (Mᵣ.maximal-≈ (toProdsᵣ s')) (≡̂ᵣ-trans (toProdsᵣ-≡ s') (absorbProdsᵣ-≡ s)))
   where s' = mapᴬ absorbProdᵣ s
 
--- The canonical form of an expression: a join of right-nested
--- products of atoms, a lone alternative standing for itself and the
--- empty product for the unit.
+-- The canonical form: a join of right-nested products of atoms, a lone
+-- alternative for itself, the empty product for the unit
 
 canonₑ : ∀ {Θ} → EExp Θ → EExp Θ
 canonₑ ε = ⟦ canonSumₑ (nrmₑ ε) ⟧ᵉᵖ⁺
@@ -233,10 +208,8 @@ canonᵛ-≡̂ ([ ρ ] A) = [ canonᵣ-≡ ρ ]≡̂ canonᵛ-≡̂ A
 canonᶜ-≡̂ (A ‼ ε) = canonᵛ-≡̂ A ‼≡̂ canonₑ-≡ ε
 
 ------------------------------------------------------------------------
--- Splitting an ordering: its left side's alternatives, each below its
--- right side, both sides in canonical form. The join is the least upper
--- bound, so the pieces and the ordering hold at the same instances. A
--- right side is never split.
+-- Splitting an ordering into its left side's alternatives, each below the
+-- right side: the join being least, they hold at the same instances
 
 Ordʳ : ∀ {Ψ Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → RExp Ψ × RExp Ψ → Set
 Ordʳ Q δ (ρ , ρ') = Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
@@ -244,8 +217,7 @@ Ordʳ Q δ (ρ , ρ') = Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
 Ordᵉ : ∀ {Ψ Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → EExp Ψ × EExp Ψ → Set
 Ordᵉ Q δ (ε , ε') = Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
 
--- The orderings an atom is replaced by, equivalent to it at every
--- instance
+-- The orderings an atom is replaced by, equivalent to it at every instance
 
 record Pieces {Ψ} {X : Set} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) (a : X) : Set where
   constructor pieces
@@ -346,8 +318,7 @@ piecesᵉ (x , y) =
   where
     s = canonSumₑ (nrmₑ x)
 
--- Hypothesis sets: each ordering split, each disjunction's type and
--- grade in canonical form
+-- Hypothesis sets: orderings split, disjunctions in canonical form
 
 canonᴴ : ∀ {Θ} → Hyps Θ → Hyps Θ
 canonᴴ Q = hyps (ets Q) (subᵥ Q)

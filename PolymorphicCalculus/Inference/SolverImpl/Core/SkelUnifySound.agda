@@ -2,11 +2,10 @@
 -- Soundness of skeleton unification                             --
 --                                                               --
 -- A successful run of `unifyᵏ` returns a store whose denotation --
--- makes both sides of every equation it was given equal. The    --
--- proof mirrors the unifier, along the store extension `_++ᴷ_`, --
--- which acts on equations through `mono++ᵏ`.                    --
+-- makes both sides of every equation equal. The proof mirrors   --
+-- the unifier, along the store extension `_++ᴷ_` (`mono++ᵏ`).   --
 --                                                               --
--- Follows McBride's structural unification (JFP 2003).          --
+-- Follows McBride's structural unification.                     --
 -------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_)
@@ -53,8 +52,8 @@ dec-if : ∀ {P X : Set} → (d : Dec P) → (m m' : Maybe X) → {y : X}
 dec-if (yes r) m m' q = inj₁ (r , q)
 dec-if (no  _) m m' q = inj₂ q
 
--- A skeleton that passes the occurrence check is left unchanged by
--- every binding of the checked variable.
+-- A skeleton passing the occurrence check is fixed by every binding of the
+-- checked variable
 
 checkᵏ-forᵏ : ∀ {n} → (α : Fin (suc n)) → (t : Skel (suc n)) → {u : Skel n}
             → checkᵏ α t ≡ just u → (s : Skel n) → t [ s forᵏ α ]ᵏ ≡ u
@@ -108,8 +107,8 @@ Unifies¹ᵏ-[]ᵏ : ∀ {n m l} → (t u : Skel n) → (σ : SSub n m) → (δ 
               → Unifies¹ᵏ (t [ σ ]ᵏ , u [ σ ]ᵏ) δ → Unifies¹ᵏ (t , u) (σ ⨟ᵏ δ)
 Unifies¹ᵏ-[]ᵏ t u σ δ p = trans (sym ([⨟]ᵏ t σ δ)) (trans p ([⨟]ᵏ u σ δ))
 
--- The returned store extends the given one and solves the equation;
--- the equation is an index of the record type.
+-- The returned store extends the given one and solves the equation, an index
+-- of the record type
 
 record Soundᵏ {n m l : ℕ} (e : SEqn n) (τ : SAList n m) (τ'' : SAList n l) : Set where
   constructor soundᵏ
@@ -134,8 +133,8 @@ descᵏ : ∀ {n m l} → (t u : Skel (suc n)) → (r : Skel n) → (α : Fin (s
 descᵏ t u r α τ τ' (soundᵏ τ⁺ p q) =
   soundᵏ τ⁺ (cong (r /ᵏ α ∷_) p) (Unifies¹ᵏ-[]ᵏ t u (r forᵏ α) ⟦ τ' ⟧ᴷ q)
 
--- Two calls in sequence: the extensions compose, and the equation of
--- the first call is transported along the extension of the second
+-- Two calls in sequence: the extensions compose, the first equation transported
+-- along the second extension
 
 seq-soundᵏ : ∀ {n m l} {t₁ u₁ t₂ u₂ t u : Skel n}
                {τ : SAList n m} {τ'' : SAList n l}

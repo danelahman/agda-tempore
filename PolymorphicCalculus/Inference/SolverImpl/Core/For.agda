@@ -1,14 +1,10 @@
 ------------------------------------------------------------------
 -- Single-binding substitutions                                 --
 --                                                              --
--- `A forᵗ α` is the substitution that eliminates the type      --
--- variable `α`, sending it to `A` and every other variable of  --
--- its sort to its thickening. It is a `Subst`, subject to the  --
--- substitution algebra of                                      --
--- `PolymorphicCalculus.Syntax.GradeSubstitution`; its          --
--- components at the two other sorts are the variable           --
--- constructors, the extension `_+ty` leaving their counters    --
--- unchanged.                                                   --
+-- `A forᵗ α` eliminates the type variable `α`, sending it to   --
+-- `A` and every other type variable to its thickening. It is a --
+-- `Subst`, subject to the grade substitution algebra; at the   --
+-- two other sorts it is the variable constructors.             --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (Maybe; just; nothing; maybe′)

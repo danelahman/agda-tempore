@@ -1,29 +1,20 @@
 --------------------------------------------------------------------
 -- Reachability in a finite graph                                 --
 --                                                                --
--- Over a list of vertices `vs` and a list of edges, the          --
--- reflexive-transitive closure by Warshall's algorithm. It holds --
--- an entry for each pair of vertices, starting from the edges    --
--- and the chains `same?` gives between vertices it identifies    --
--- (the diagonal); for each vertex `k` in turn, a pair joined     --
--- through `k`, the first to `k` and `k` to the second, gains an  --
--- entry. An entry is a chain of edges (`Star`). The              --
--- representative of a vertex in a given order is the first       --
--- vertex joined to it in both directions (`rep`).                --
+-- The reflexive-transitive closure over vertices `vs` by         --
+-- Warshall's algorithm, each entry a chain of edges (`Star`),    --
+-- starting from the edges and the chains `same?` gives on the    --
+-- diagonal. The representative of a vertex is the first vertex   --
+-- in a given order joined to it both ways (`rep`). Cycle         --
+-- elimination (`Collapse`; Fähndrich, Foster, Su and Aiken)      --
+-- sends each movable vertex to its component's representative,   --
+-- preferring the preferred vertices, then the immovable ones.    --
 --                                                                --
--- Cycle elimination (`Collapse`; Fähndrich, Foster, Su and       --
--- Aiken, PLDI 1998) pairs each vertex that may move with the     --
--- representative of its strongly connected component where that  --
--- is another vertex, the order being the preferred vertices,     --
--- then those neither preferred nor movable, then the movable     --
--- ones, each in the order of `vs`.                               --
---                                                                --
--- Contract. Sound by type: an entry for `a`, `b` is a chain of   --
--- edges from `a` to `b` (`reach`), a representative comes with a --
--- chain each way (`rep`), and so does each pair of a collapse    --
--- (`Ident`); along any relation each edge implies, a vertex and  --
--- its target are related both ways (`equal`). Completeness is    --
--- not proved.                                                    --
+-- Contract. Sound by type: an entry is a chain (`reach`), a      --
+-- representative and each pair of a collapse come with a chain   --
+-- each way (`rep`, `Ident`), so along any relation the edges     --
+-- imply, a vertex and its target are related both ways           --
+-- (`equal`). Completeness is not proved.                         --
 --------------------------------------------------------------------
 
 open import Data.Bool.Base using (Bool; not; _∨_)
@@ -59,8 +50,8 @@ Row a = All (λ b → Maybe (Chain a b)) vs
 Closure : Set
 Closure = All Row vs
 
--- The chain `same?` gives on the diagonal, else an edge between
--- vertices it joins to the ends
+-- The chain `same?` gives on the diagonal, else an edge between vertices it
+-- joins to the ends
 
 start : (a b : V) → Maybe (Chain a b)
 start a b with same? a b
@@ -105,8 +96,7 @@ rep C ((v , mv) ∷ ord) ma with reach C ma mv | reach C mv ma
 ... | _      | _      = rep C ord ma
 
 ------------------------------------------------------------------------
--- Cycle elimination over a policy: the preferred vertices, and those
--- that may move (`Mv`)
+-- Cycle elimination over a policy: preferred vertices, and those that may move (`Mv`)
 
 module Collapse (_≟_ : DecidableEquality V) (preferred : V → Bool) (Mv : V → Set) (mv? : (v : V) → Maybe (Mv v)) where
 
@@ -174,9 +164,8 @@ module Collapse (_≟_ : DecidableEquality V) (preferred : V → Bool) (Mv : V �
       go nothing  = inj₁ refl
       go (just i) = inj₂ (Ident.mv i)
 
-  -- The members of a component are equal: along any relation each edge
-  -- implies, a vertex and its target are related both ways (for
-  -- orderings, equal at every instance by antisymmetry)
+  -- The members of a component are equal: along any relation the edges imply,
+  -- a vertex and its target are related both ways
 
   equal : (P : V → V → Set) → (∀ {a} → P a a) → (∀ {a b c} → Edge a b → P b c → P a c)
         → (ms : Moves) → (k : V) → P (target ms k) k × P k (target ms k)

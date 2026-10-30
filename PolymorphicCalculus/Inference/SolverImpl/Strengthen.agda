@@ -1,23 +1,16 @@
 --------------------------------------------------------------------
 -- Strengthening a report to the variables occurring in it        --
 --                                                                --
--- A mask keeps some variables of each sort. The kept ones form a --
--- smaller scope, embedded back in order by a renaming `ι`, and   --
--- an expression all of whose variables are kept is strengthened  --
--- along it: renaming the result along `ι` gives the expression   --
--- back on the nose. An instance of the smaller scope extends     --
--- along `ι`, by closed values on the variables dropped.          --
+-- A mask keeps some variables of each sort; the kept ones form a --
+-- smaller scope, embedded back in order by a renaming `ι`.       --
+-- `strengthen` takes the mask of the variables of a type, a      --
+-- hypothesis set, the image of a substitution and a further set  --
+-- (the variables of the deferred conditions, `fvᴰ`), and         --
+-- strengthens the first three along it.                          --
 --                                                                --
--- `strengthen` takes the mask of the variables occurring in a    --
--- type, a hypothesis set, the image of a substitution, or a      --
--- further set, and strengthens the three along it; the further   --
--- set is carried by a retraction of `ι` fixing it. The variables --
--- of deferred conditions, outside their binders, form such a     --
--- set (`fvᴰ`), and a substitution fixing it fixes them.          --
---                                                                --
--- Contract (`Strengthened`). The substitution, the type and the  --
--- hypothesis set, renamed back along `ι`, are the originals on   --
--- the nose (`τ-ι`, `X-ι`, `Q-ι`); every instance of the smaller  --
+-- Contract (`Strengthened`). Renamed back along `ι`, the         --
+-- substitution, type and hypothesis set are the originals on the --
+-- nose (`τ-ι`, `X-ι`, `Q-ι`); every instance of the smaller      --
 -- scope extends along `ι` (`ext-ι`); the retraction `π` fixes    --
 -- the further set (`π-fix`).                                     --
 --------------------------------------------------------------------
@@ -58,9 +51,8 @@ open import PolymorphicCalculus.Inference.SolverImpl.Deferred    S hints
 ------------------------------------------------------------------------
 -- Thinning by a mask
 --
--- `count p` variables are kept, `emb p` embeds them in order, `str p`
--- finds a kept variable among them, and `ext p` extends a family on the
--- kept variables by a default on the others.
+-- `count p` variables are kept, `emb p` embeds them, `str p` finds a kept one
+-- among them, and `ext p` extends a family on them by a default
 
 count : ∀ {n} → (Fin n → 𝔹) → ℕ
 count {zero}  p = zero
@@ -186,8 +178,7 @@ Q [ r ]ᴴ = hyps (map (rTy r) (ets Q))
                 (map (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) (disj Q))
                 (map (_[ ⌜ r ⌝ʳ ]ᵠ) (qhyps Q))
 
--- A renamed set entails the set along the renaming, and so its
--- instances are instances of the set
+-- A renamed set entails the set along the renaming, so its instances are the set's
 
 ⊩ᴴ-ren : ∀ {Θ Θ'} {Q : Hyps Θ} → (r : Ren Θ Θ') → Q [ r ]ᴴ ⊩ᴴ Q [ ⌜ r ⌝ʳ ]
 ⊩ᴴ-ren r =
@@ -414,8 +405,7 @@ module _ {Θ : Scope} (M : Vars Θ) where
   strˢ-ι τ h = mk≐ˢ (λ α → strᵛ-ι (sTy τ α) _) (λ i → strʳ-ι (sR τ i) _)
                     (λ i → strᵉ-ι (sE τ i) _)
 
-  -- an instance of the kept variables, extended by closed constants on
-  -- the others
+  -- an instance of the kept variables, extended by closed constants
 
   extⁱ : ∀ {Ψ} → Subst kept Ψ → Subst Θ Ψ
   extⁱ δ = sub (ext (vᵗ M) Unit (sTy δ)) (ext (vʳ M) ûᵣ (sR δ)) (ext (vᵉ M) ûₑ (sE δ))
@@ -424,8 +414,7 @@ module _ {Θ : Scope} (M : Vars Θ) where
   extⁱ-ι δ = mk≐ˢ (ext-emb (vᵗ M) Unit (sTy δ)) (ext-emb (vʳ M) ûᵣ (sR δ))
                   (ext-emb (vᵉ M) ûₑ (sE δ))
 
--- A substitution fixing a set fixes every substitution whose image
--- lies in it
+-- A substitution fixing a set fixes every substitution whose image lies in it
 
 fixes-≐ : ∀ {Θ₀ Θ} {F : Vars Θ} {η : Subst Θ Θ} → Fixes F η
         → (τ : Subst Θ₀ Θ) → fvˢ τ ⊆ᵛ F → τ ⨟ˢ η ≐ˢ τ
@@ -530,8 +519,7 @@ fixᵈ : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ → (E : QOrd 
 fixᵈ f (qord l k o) h =
   cong (qord l k) (fixᵒ (fixes-liftᵛⁿ k f) o (⊆-trans (⊆-liftᵛⁿ k (fvᵒ o)) (liftᵛⁿ-mono k h)))
 
--- a substitution fixing their variables leaves the conditions' meaning
--- unchanged
+-- a substitution fixing their variables keeps the conditions' meaning
 
 fix-⊩ᴼ : ∀ {Θ Ψ} {Q : Hyps Ψ} {F : Vars Θ} {ρ : Subst Θ Θ} {δ : Subst Θ Ψ}
        → Fixes F ρ → {D : List (QOrd Θ)} → fvᴰ D ⊆ᵛ F
@@ -546,9 +534,8 @@ fix-⊩ᴼ⁻ {Q = Q} {δ = δ} f h {E} m p =
   subst (λ E' → Q ⊩ᴼ E' [ δ ]) (fixᵈ f E (⋃ᵛ-∈ fvᵈ h m)) (⊩ᴼ-subst⁻ E p)
 
 ------------------------------------------------------------------------
--- The step: a type, a hypothesis set and a substitution, stated over
--- the variables occurring in them and in a further set `V`, which a
--- retraction `π` of `ι` fixes
+-- The step: a type, a hypothesis set and a substitution, over the variables
+-- occurring in them and in a set `V` that a retraction `π` of `ι` fixes
 
 record Strengthened {Θ₀ Θ : Scope} (τ : Subst Θ₀ Θ) (X : OCType Θ) (Q : Hyps Θ) (V : Vars Θ)
        : Set where
@@ -580,8 +567,7 @@ extⁱ-fix M =
     _⊚_ : ∀ {A : Set} {x y z : A} → x ≡ y → y ≡ z → x ≡ z
     _⊚_ = trans
 
--- Strengthening along a mask `M` that covers the type, the hypothesis
--- set, the image of `τ` and `V`
+-- Strengthening along a mask `M` covering the type, the set, the image of `τ` and `V`
 
 strengthenAt : ∀ {Θ₀ Θ} → (τ : Subst Θ₀ Θ) → (X : OCType Θ) → (Q : Hyps Θ) → (V : Vars Θ)
              → (M : Vars Θ) → Unq Q → fvᶜ X ⊆ᵛ M → fvᴴ Q ⊆ᵛ M → fvˢ τ ⊆ᵛ M → V ⊆ᵛ M

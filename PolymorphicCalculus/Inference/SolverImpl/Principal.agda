@@ -1,19 +1,16 @@
 ------------------------------------------------------------------
--- Principality and refutation for the driver, against plain    --
--- satisfaction.                                                --
+-- Principality and refutation for the driver                   --
 --                                                              --
--- `Princ s s' m C`: every instance of `s` that solves `C` from --
--- no hypotheses and discharges the residual of `s` factors     --
--- through `m` into one discharging the residual of `s'`, a     --
--- rigid-fixing instance staying so. `Refut s C`: no            --
--- rigid-fixing instance discharging the residual of `s` solves --
--- `C` from no hypotheses. `solve-principal` and `solve-fail`   --
--- prove them for `solve`, from the same facts for each stage:  --
--- `solveEt-princ`/`-fail`, `solveDisj-princ`/`-fail`,          --
--- `reexpand-princ`/`reexpand-fail`, `localise-princ`,          --
--- `splitᴿ-princ`/`splitᴿ-fail`,                                --
--- `popᵉ-princ`/`popᵉ-escape`/`popᵉ-fail`,                      --
--- `retry-princ`/`retry-fail`.                                  --
+-- `Princ s s' m C`: every instance of `s` solving `C` from no  --
+-- hypotheses and discharging the residual of `s` factors       --
+-- through `m` into one discharging the residual of `s'`,       --
+-- rigids staying fixed. `Refut s C`: no rigid-fixing instance  --
+-- discharging the residual of `s` solves `C`.                  --
+-- `solve-principal` and `solve-fail` prove them for `solve`    --
+-- from the same facts for each stage (`solveEt-princ`,         --
+-- `solveDisj-princ`, `reexpand-princ`, `localise-princ`,       --
+-- `splitᴿ-princ`, `popᵉ-princ`, `retry-princ`, and their       --
+-- `-fail` and `-escape` counterparts).                         --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true) renaming (Bool to 𝔹)
@@ -130,11 +127,9 @@ wk-,ᵉ δ ε = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
                    (λ i → wk-,ᵉ-r σ ε (sR δ i))
                    (λ { zero → refl ; (suc i) → wk-,ᵉ-e σ ε (sE δ i) })
 
--- A substitution is uniform on the unknowns `O` mentions when, at each
--- of them, its image reads the same with the eigenvariable at the unit
--- as at the top. The images of an outer scope's unknowns are
--- weakenings, so it is (`uniform-out`); an unknown local to the scope
--- may stand for a function of the eigenvariable, and is excluded.
+-- A substitution is uniform on the unknowns `O` mentions when each image reads
+-- the same with the eigenvariable at the unit as at the top; the outer images
+-- are weakenings, so it is (`uniform-out`)
 
 Uniform : ∀ {Θ Φ Ψ} → Subst Θ Φ → Subst Φ (Ψ +e) → Set
 Uniform O X = Agree O X κ⊤ κᵉ
@@ -270,8 +265,7 @@ transRig-total : ∀ {Ψ Ψ₁} → (σ : Subst Ψ Ψ₁) → (rg : Rig Ψ) → 
 transRig-total σ rg fx i m with fixᵉ fx i m
 ... | k , rk = k , rk , ∈-transRig⁺ σ rg i m k rk
 
--- A rigid lift fixes the rigid it declares — by computation — as well
--- as the ones it transports
+-- A rigid lift fixes the rigid it declares, by computation, and those it transports
 
 Fixing-⇑ᵉ : ∀ {Ψ Ψ''} {rg : Rig Ψ} → (δ₀ : Subst Ψ Ψ'')
           → Fixing rg δ₀ → Fixing (newᵉ {Ψ} ∷ transRig (wkˢᵉ {Ψ}) rg) (δ₀ ↑ᵉ)
@@ -326,10 +320,8 @@ varᵉ-inst (evar j)   δ q = j , refl
 varᵉ-inst (econst c) δ ()
 varᵉ-inst (ε ·̂ₑ ε')  δ ()
 
--- Principality and refutation are semantic: they concern the
--- instances solving the constraint from no hypotheses (`∅ᴴ`), every
--- rigid a parameter. Under hypotheses a var-rule disjunction could be
--- met by one assumed; from none it is met by one of its sides.
+-- Principality and refutation concern the instances solving a constraint from
+-- no hypotheses (`∅ᴴ`), where a var-rule disjunction is met by one of its sides
 
 PrincAt : ∀ {Θ Ψ''} → (s s' : St Θ) → s ⟶ s' → Constraint Θ → Subst (Ψ s) Ψ'' → Set
 PrincAt {Ψ'' = Ψ''} s s' m C δ₀ =
@@ -354,9 +346,8 @@ Refut s C =
   → Fixing (rig s) δ₀ → ∅ᴴ ⊩ᴿ (res s) [ δ₀ ]
   → ¬ ((θ s ⨟ˢ δ₀) ⊨[ ∅ᴴ ] C)
 
--- An atom kept at the boundary is the strengthening of an inner one; its
--- instance along the factorisation is the inner instance with the
--- eigenvariable sent to the unit.
+-- An atom kept at the boundary is the strengthening of an inner one, its
+-- instance the inner instance with the eigenvariable at the unit
 
 keyʳ : ∀ {Φ Φ'} → (j : EVar (Φ +e)) → (ρ : RExp (Φ +e)) → {ρ₀ : RExp Φ}
      → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → (γ : Subst (Φ +e) (Φ' +e))
@@ -434,12 +425,9 @@ bndᵈ {Q = Q} j A ρ {A₀} {ρ₀} q q' γ p =
          (VarOK-subst ⊩ᴴ-κᵉ
            (subst₂ (VarOK (wkᵉ-H Q)) (keyᵛ j A q γ) (keyʳ j ρ q' γ) p))
 
--- A stripped ordering. With the rigid on the right, the inner instance
--- with the eigenvariable sent to the unit is the instance of the kept
--- one. With the rigid on the left, it is the inner instance with the
--- eigenvariable sent to the top that bounds the kept one: from below,
--- by monotonicity, the unit being below the top; from above, by
--- equality, the right side mentioning only outer unknowns.
+-- A stripped ordering. With the rigid on the right, its instance is the inner
+-- one with the eigenvariable at the unit; with the rigid on the left, the inner
+-- one with the eigenvariable at the top bounds it.
 
 stripʳ-unit-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (ij? : Maybe (Is-just uₑ-least?))
              → (j : EVar (Φ +e))
@@ -683,10 +671,8 @@ atomˢ-princ j A B eq γ p with strᵛ⁺ j A | strᵛ⁺ j B
 atomˢ-princ j A B eq γ p | just _  | nothing = ⊥just eq
 atomˢ-princ j A B eq γ p | nothing | _       = ⊥just eq
 
--- A kept disjunction, from no hypotheses: an eternal type is the
--- instance's with the eigenvariable at the unit; a grade below the unit
--- bounds, as for `stripʳ-top`, the kept grade from above, with the
--- eigenvariable at the top.
+-- A kept disjunction: an eternal type is the instance's with the eigenvariable
+-- at the unit; a grade below the unit is bounded as for `stripʳ-top`
 
 atomᵈ-princ : ∀ {Φ Φ'} → (j : EVar (Φ +e)) → (A : OVType (Φ +e))
             → (ρ : RExp (Φ +e))
@@ -772,10 +758,8 @@ agree-≡ᵉ {O = O} {X₁} {X₂} eq x o =
                          (agree-≡ᵉ {O = O ↑ᵉⁿ k} eq' x (proj₁ (oe m))) (agree-≡ᵉ {O = O ↑ᵉⁿ k} eq' y (proj₂ (oe m)))
                          (⊩oes h m)
 
--- The kept orderings hold at the instance of the outer scope; the
--- deferred ones, which mention only the rigid and outer unknowns, at
--- that instance lifted over the rigid, the outer unknowns' images
--- being uniform in it (`eqO`)
+-- The kept orderings hold at the outer instance; the deferred ones at it lifted
+-- over the rigid, the outer images being uniform in it (`eqO`)
 
 listʳ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (O⁺ : Subst (Θ +e) (Φ +e))
             → (H : Hyps (Φ +e)) → (j : EVar (Φ +e)) → (l : List (RExp (Φ +e) × RExp (Φ +e)))
@@ -961,9 +945,8 @@ splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | just _  | just _  | just _  | noth
 splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | just _  | just _  | just _  | just _ | nothing | _      = ⊥stuck eq
 splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | just _  | just _  | just _  | just _ | just _ | nothing = ⊥stuck eq
 
--- The rigid's image under the inner factorisation is the outer
--- scope's own eigenvariable, and the outer unknowns' images are those
--- the outer substitution gives, weakened
+-- Under the inner factorisation the rigid's image is the outer eigenvariable,
+-- and the outer unknowns' images are the outer ones, weakened
 
 bnd-var : ∀ {Ψ Φ Ψ''} → (γ : Subst (Ψ +e) Φ) → (δ : Subst Φ (Ψ'' +e))
         → {δ₀ : Subst Ψ Ψ''} → (γ ⨟ˢ δ) ≐ˢ (δ₀ ↑ᵉ)
@@ -977,9 +960,8 @@ bnd-out : ∀ {Ψ Φ Ψ''} → (γ : Subst (Ψ +e) Φ) → (δ : Subst Φ (Ψ'' 
 bnd-out γ δ δ₀ tri =
   ≐ˢ-trans (⨟-assoc wkˢᵉ γ δ) (≐ˢ-trans (⨟-congʳ wkˢᵉ tri) (wkˢᵉ-↑ᵉ δ₀))
 
--- The inner run is entered at `δ₀ ↑ᵉ`; what comes back is turned into a
--- substitution out of the outer scope by undoing the rigid's move and
--- sending the rigid to the unit.
+-- The inner run is entered at `δ₀ ↑ᵉ`; its result is undone at the rigid,
+-- which is sent to the unit
 
 popᵉ-princ : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e))
            → (Φ : Scope) → (θ'' : Subst (Θ +e) Φ) → (R'' : Resid Φ) → (rg'' : Rig Φ)
@@ -1047,10 +1029,8 @@ popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ sat h
 popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ sat h
   | just (j , eqj) | nothing | _ = ⊥refuted eq
 
--- Localisation keeps every instance entering the scope: the factor
--- found for the inner state serves the localised one, the local
--- unknowns being in no image of the outer ones, and each step keeping
--- the residual.
+-- Localisation keeps every instance entering the scope: the local unknowns are
+-- in no outer image, and each step keeps the residual
 
 localise-princ : ∀ {Θ} {s : St Θ} {s'' : St (Θ +e)} {m : ⇑ᵉˢ s ⟶ s''} {C : Constraint (Θ +e)}
                → Princ⇑ s s'' m C
@@ -1067,8 +1047,7 @@ localise-princ {s'' = s''} {m} ip δ₀ sat h =
     hres = proj₁ (proj₂ (proj₂ f))
     fx   = proj₂ (proj₂ (proj₂ f))
 
--- A retry keeps every instance: it drops only orderings and entries
--- that one discharging the residual discharges
+-- A retry keeps every instance: it drops only what such an instance discharges
 
 retry-princ : ∀ {Θ} → (s : St Θ) → {s' : St Θ} {m : s ⟶ s'} → retry s ≡ just (s' , m)
             → ∀ {Ψ''} → (δ₀ : Subst (Ψ s) Ψ'') → ∅ᴴ ⊩ᴿ (res s) [ δ₀ ]
@@ -1488,15 +1467,9 @@ solve-principal s (⋀ᵒᵖ f) eq
                                (λ s' op e' → labelled-princ op (solve s' (f op))
                                                (solve-principal s' (f op)) e') ops s e
 
--- Refutation, for every constraint: a refused constraint has no
--- solution at an instance that keeps the rigids distinct variables
--- and meets the residual. At a rigid binder, the refusals are an
--- escape, an outer unknown whose image keeps the rigid; an eternality
--- demand naming the rigid, eternal at no instance; and a failed
--- retry. The subtyping demands and the disjunctions that the scope
--- close meets cannot be refused: the first are pairs of type
--- variables, the second have types eternal at some instance, hence
--- free of the rigid.
+-- Refutation: a refused constraint has no solution at an instance keeping the
+-- rigids distinct variables and meeting the residual. A rigid binder refuses
+-- on an escape, an eternality demand naming the rigid, or a failed retry.
 
 popᵉ-escape : ∀ {Θ Φ} → (s : St Θ) → (C : Constraint (Θ +e))
             → (θ'' : Subst (Θ +e) (Φ +e)) → (R'' : Resid (Φ +e)) → (rg'' : Rig (Φ +e))

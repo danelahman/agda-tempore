@@ -2,15 +2,13 @@
 -- Polarity of an unknown in a hypothesis set                   --
 --                                                              --
 -- A demand bounds an unknown above, below, both, or not at     --
--- all. An ordering is read from left to right; a type is       --
--- traversed along the variance table (`Former`), a             --
--- contravariant position reversing the sign and an invariant   --
--- one reading both. An eternality demand and the type side of  --
--- a var-rule disjunction depend only on the skeleton and bound --
--- nothing.                                                     --
---                                                              --
--- At the reporting boundary, lowering an unknown that no       --
--- demand bounds below preserves every hypothesis.              --
+-- all. An ordering is read left to right; a type along the     --
+-- variance table (`Former`), a contravariant position          --
+-- reversing the sign, an invariant one reading both.           --
+-- Eternality demands and the type side of var-rule             --
+-- disjunctions read only the skeleton and bound nothing.       --
+-- Lowering an unknown no demand bounds below keeps every       --
+-- hypothesis.                                                  --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
@@ -83,8 +81,8 @@ unionᴾ : ∀ {X : Set} → (xs : List X) → (∀ {x} → x ∈ xs → Pol) �
 unionᴾ []       f = noᴾ
 unionᴾ (x ∷ xs) f = f (here refl) ∪ᴾ unionᴾ xs (λ m → f (there m))
 
--- The occurrences at the leaves of a value type, each read at the sign
--- of its position, and at the parts of a former
+-- The occurrences at the leaves of a value type, each at the sign of its
+-- position, and at the parts of a former
 
 polᵛᵃ : ∀ {Ψ} → (Sign → TyVar Ψ → Pol) → (Sign → RExp Ψ → Pol) → (Sign → EExp Ψ → Pol)
       → Sign → (A : OVType Ψ) → Acc _≺_ A → Pol
@@ -119,8 +117,8 @@ polᵣ-v i = polᵛ (λ _ _ → noᴾ) (polᵣ-r i) (λ _ _ → noᴾ)
 polᵣ-c : ∀ {Ψ} → RVar Ψ → Sign → OCType Ψ → Pol
 polᵣ-c i s (A ‼ _) = polᵣ-v i s A
 
--- Occurrences of one effect-grade unknown; a resource expression
--- reaches them through the monotone `∣_∣̂ᵉ`
+-- Occurrences of one effect-grade unknown, reached in resource expressions
+-- through the monotone `∣_∣̂ᵉ`
 
 polₑ-e : ∀ {Ψ} → EVar Ψ → Sign → EExp Ψ → Pol
 polₑ-e i s (evar j)   = atˢ s ⌊ i ≟ᶠ j ⌋
@@ -155,9 +153,8 @@ polsₑ-disj : ∀ {Ψ} → EVar Ψ → List (OVType Ψ × RExp Ψ) → Pol
 polsₑ-disj i []            = noᴾ
 polsₑ-disj i ((_ , ρ) ∷ l) = polₑ-r i ⁺ ρ ∪ᴾ polsₑ-disj i l
 
--- Occurrences of one type variable. An eternality atom and the type
--- side of a var-rule disjunction read only the skeleton, which a
--- subtyping hypothesis preserves, so neither bounds the variable.
+-- Occurrences of one type variable; eternality atoms and the type side of
+-- var-rule disjunctions read only the skeleton, so bound nothing
 
 polₜ-v : ∀ {Ψ} → TyVar Ψ → Sign → OVType Ψ → Pol
 polₜ-v α = polᵛ (λ s β → atˢ s ⌊ α ≟ᶠ β ⌋) (λ _ _ → noᴾ) (λ _ _ → noᴾ)
