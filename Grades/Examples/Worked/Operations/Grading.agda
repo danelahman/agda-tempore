@@ -2,9 +2,8 @@
 -- The operations of the sensor node, graded at example grades.       --
 --                                                                    --
 -- Each submodule gives `opTime`, the effect grade of each operation  --
--- at one grade, as the typing examples                               --
--- (`ClosedCalculus.Examples.Typing`) and the inference examples      --
--- (`OpenCalculus.Examples.Specs`) use it.                            --
+-- at one grade, for the typing examples of the monomorphic calculus  --
+-- and the inference examples of the polymorphic calculus.            --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Worked.Operations.Grading where

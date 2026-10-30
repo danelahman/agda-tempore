@@ -5,4 +5,4 @@
 
 module Examples where
 
-import OpenCalculus.Examples
+import PolymorphicCalculus.Examples

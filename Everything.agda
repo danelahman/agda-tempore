@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
--- Every module of the calculus with type and grade variables and its
--- type inference, with the grades, the language and the utilities they
--- share with the closed calculus (`ClosedCalculus/Everything.agda`).
+-- Every module of the polymorphic calculus and its type inference, with
+-- the grades, the language and the utilities they share with the
+-- monomorphic calculus (`MonomorphicCalculus/Everything.agda`).
 -- `Results` is the overview of the main definitions and results. The
 -- inference examples are checked apart, by `Examples.agda`.
 ------------------------------------------------------------------------
@@ -205,109 +205,109 @@ import Language.Examples.SensorNode
 import Language.Examples.SensorNode.Identity
 
 
--- OPEN CALCULUS
-----------------
+-- POLYMORPHIC CALCULUS
+-----------------------
 
 ---- Scopes, open grade expressions, types, program contexts and contexts,
 ---- substitutions, raw terms and run-time terms
 
-import OpenCalculus.Syntax.Contexts
-import OpenCalculus.Syntax.Contexts.Properties
-import OpenCalculus.Syntax.Grades
-import OpenCalculus.Syntax.Raw
-import OpenCalculus.Syntax.Raw.GradeSubstitution
-import OpenCalculus.Syntax.Run
-import OpenCalculus.Syntax.Run.Substitution
-import OpenCalculus.Syntax.Scopes
-import OpenCalculus.Syntax.GradeSubstitution
-import OpenCalculus.Syntax.Types
+import PolymorphicCalculus.Syntax.Contexts
+import PolymorphicCalculus.Syntax.Contexts.Properties
+import PolymorphicCalculus.Syntax.Grades
+import PolymorphicCalculus.Syntax.Raw
+import PolymorphicCalculus.Syntax.Raw.GradeSubstitution
+import PolymorphicCalculus.Syntax.Run
+import PolymorphicCalculus.Syntax.Run.Substitution
+import PolymorphicCalculus.Syntax.Scopes
+import PolymorphicCalculus.Syntax.GradeSubstitution
+import PolymorphicCalculus.Syntax.Types
 
 ---- Hypotheses, entailment, quantified orderings and closed instances
 
-import OpenCalculus.Hypotheses
-import OpenCalculus.Hypotheses.Instances
-import OpenCalculus.Hypotheses.Quantified
+import PolymorphicCalculus.Hypotheses
+import PolymorphicCalculus.Hypotheses.Instances
+import PolymorphicCalculus.Hypotheses.Quantified
 
 ---- The open type system, erasure to raw terms, substitution of grades and of
 ---- variables, renaming, conversion of context types, resource values,
 ---- inversion, and instantiation
 
-import OpenCalculus.Typing
-import OpenCalculus.Typing.Conversion
-import OpenCalculus.Typing.Erasure
-import OpenCalculus.Typing.GradeSubstitution
-import OpenCalculus.Typing.Instantiation
-import OpenCalculus.Typing.Inversion
-import OpenCalculus.Typing.Renaming
-import OpenCalculus.Typing.Resources
-import OpenCalculus.Typing.ScopeClosed
-import OpenCalculus.Typing.Substitution
-import OpenCalculus.Typing.Transport
+import PolymorphicCalculus.Typing
+import PolymorphicCalculus.Typing.Conversion
+import PolymorphicCalculus.Typing.Erasure
+import PolymorphicCalculus.Typing.GradeSubstitution
+import PolymorphicCalculus.Typing.Instantiation
+import PolymorphicCalculus.Typing.Inversion
+import PolymorphicCalculus.Typing.Renaming
+import PolymorphicCalculus.Typing.Resources
+import PolymorphicCalculus.Typing.ScopeClosed
+import PolymorphicCalculus.Typing.Substitution
+import PolymorphicCalculus.Typing.Transport
 
 ---- Operational semantics: states, state typings, the reduction, type safety
 ---- and termination
 
-import OpenCalculus.OperationalSemantics.Reduction
-import OpenCalculus.OperationalSemantics.State
-import OpenCalculus.OperationalSemantics.Termination
-import OpenCalculus.OperationalSemantics.Termination.Reducibility
-import OpenCalculus.OperationalSemantics.TypeSafety
+import PolymorphicCalculus.OperationalSemantics.Reduction
+import PolymorphicCalculus.OperationalSemantics.State
+import PolymorphicCalculus.OperationalSemantics.Termination
+import PolymorphicCalculus.OperationalSemantics.Termination.Reducibility
+import PolymorphicCalculus.OperationalSemantics.TypeSafety
 
 ---- Constraints, their generation, soundness and completeness of
 ---- generation, solvers, principality, the concrete solver, and inference
 ---- for values in program contexts
 
-import OpenCalculus.Inference.Completeness
-import OpenCalculus.Inference.Constraints.Properties
-import OpenCalculus.Inference.Constraints.Satisfaction
-import OpenCalculus.Inference.Constraints.Schemes
-import OpenCalculus.Inference.Constraints.Syntax
-import OpenCalculus.Inference.Generate
-import OpenCalculus.Inference.Outcome
-import OpenCalculus.Inference.Principality
-import OpenCalculus.Inference.ScopeClosed
-import OpenCalculus.Inference.Solver
-import OpenCalculus.Inference.SolverImpl
-import OpenCalculus.Inference.SolverImpl.Canon
-import OpenCalculus.Inference.SolverImpl.Core.Decorate
-import OpenCalculus.Inference.SolverImpl.Core.For
-import OpenCalculus.Inference.SolverImpl.Core.Occurs
-import OpenCalculus.Inference.SolverImpl.Core.Rigid
-import OpenCalculus.Inference.SolverImpl.Core.Skel
-import OpenCalculus.Inference.SolverImpl.Core.SkelUnify
-import OpenCalculus.Inference.SolverImpl.Core.SkelUnifyMGU
-import OpenCalculus.Inference.SolverImpl.Core.SkelUnifySound
-import OpenCalculus.Inference.SolverImpl.Core.Thick
-import OpenCalculus.Inference.SolverImpl.Deferred
-import OpenCalculus.Inference.SolverImpl.Eliminate
-import OpenCalculus.Inference.SolverImpl.Entail
-import OpenCalculus.Inference.SolverImpl.Enum
-import OpenCalculus.Inference.SolverImpl.Expand
-import OpenCalculus.Inference.SolverImpl.Former
-import OpenCalculus.Inference.SolverImpl.Localise
-import OpenCalculus.Inference.SolverImpl.Localise.Closure
-import OpenCalculus.Inference.SolverImpl.Normal
-import OpenCalculus.Inference.SolverImpl.Polarity
-import OpenCalculus.Inference.SolverImpl.Principal
-import OpenCalculus.Inference.SolverImpl.Product
-import OpenCalculus.Inference.SolverImpl.Reach
-import OpenCalculus.Inference.SolverImpl.Resid
-import OpenCalculus.Inference.SolverImpl.RigidFree
-import OpenCalculus.Inference.SolverImpl.Search
-import OpenCalculus.Inference.SolverImpl.Simplify
-import OpenCalculus.Inference.SolverImpl.Solve
-import OpenCalculus.Inference.SolverImpl.State
-import OpenCalculus.Inference.SolverImpl.Strengthen
-import OpenCalculus.Inference.SolverImpl.Values
-import OpenCalculus.Inference.SolverImpl.Vars
-import OpenCalculus.Inference.Soundness
-import OpenCalculus.Inference.Values
+import PolymorphicCalculus.Inference.Completeness
+import PolymorphicCalculus.Inference.Constraints.Properties
+import PolymorphicCalculus.Inference.Constraints.Satisfaction
+import PolymorphicCalculus.Inference.Constraints.Schemes
+import PolymorphicCalculus.Inference.Constraints.Syntax
+import PolymorphicCalculus.Inference.Generate
+import PolymorphicCalculus.Inference.Outcome
+import PolymorphicCalculus.Inference.Principality
+import PolymorphicCalculus.Inference.ScopeClosed
+import PolymorphicCalculus.Inference.Solver
+import PolymorphicCalculus.Inference.SolverImpl
+import PolymorphicCalculus.Inference.SolverImpl.Canon
+import PolymorphicCalculus.Inference.SolverImpl.Core.Decorate
+import PolymorphicCalculus.Inference.SolverImpl.Core.For
+import PolymorphicCalculus.Inference.SolverImpl.Core.Occurs
+import PolymorphicCalculus.Inference.SolverImpl.Core.Rigid
+import PolymorphicCalculus.Inference.SolverImpl.Core.Skel
+import PolymorphicCalculus.Inference.SolverImpl.Core.SkelUnify
+import PolymorphicCalculus.Inference.SolverImpl.Core.SkelUnifyMGU
+import PolymorphicCalculus.Inference.SolverImpl.Core.SkelUnifySound
+import PolymorphicCalculus.Inference.SolverImpl.Core.Thick
+import PolymorphicCalculus.Inference.SolverImpl.Deferred
+import PolymorphicCalculus.Inference.SolverImpl.Eliminate
+import PolymorphicCalculus.Inference.SolverImpl.Entail
+import PolymorphicCalculus.Inference.SolverImpl.Enum
+import PolymorphicCalculus.Inference.SolverImpl.Expand
+import PolymorphicCalculus.Inference.SolverImpl.Former
+import PolymorphicCalculus.Inference.SolverImpl.Localise
+import PolymorphicCalculus.Inference.SolverImpl.Localise.Closure
+import PolymorphicCalculus.Inference.SolverImpl.Normal
+import PolymorphicCalculus.Inference.SolverImpl.Polarity
+import PolymorphicCalculus.Inference.SolverImpl.Principal
+import PolymorphicCalculus.Inference.SolverImpl.Product
+import PolymorphicCalculus.Inference.SolverImpl.Reach
+import PolymorphicCalculus.Inference.SolverImpl.Resid
+import PolymorphicCalculus.Inference.SolverImpl.RigidFree
+import PolymorphicCalculus.Inference.SolverImpl.Search
+import PolymorphicCalculus.Inference.SolverImpl.Simplify
+import PolymorphicCalculus.Inference.SolverImpl.Solve
+import PolymorphicCalculus.Inference.SolverImpl.State
+import PolymorphicCalculus.Inference.SolverImpl.Strengthen
+import PolymorphicCalculus.Inference.SolverImpl.Values
+import PolymorphicCalculus.Inference.SolverImpl.Vars
+import PolymorphicCalculus.Inference.Soundness
+import PolymorphicCalculus.Inference.Values
 
 ---- Programs: their erasure, the substitution of definitions, the program
 ---- judgement, instantiation and the corollary for programs, and checking
 
-import OpenCalculus.Programs.Checking
-import OpenCalculus.Programs.Instantiation
-import OpenCalculus.Programs.Substitution
-import OpenCalculus.Programs.Syntax
-import OpenCalculus.Programs.Typing
+import PolymorphicCalculus.Programs.Checking
+import PolymorphicCalculus.Programs.Instantiation
+import PolymorphicCalculus.Programs.Substitution
+import PolymorphicCalculus.Programs.Syntax
+import PolymorphicCalculus.Programs.Typing
