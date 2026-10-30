@@ -1,74 +1,25 @@
 ------------------------------------------------------------------
 -- Eliminating an unknown from a report                         --
 --                                                              --
--- The steps, in the order they are tried, each at the first    --
--- unknown outside a given set where it applies:                --
---   * merging (`mergeᵉ?`, `mergeʳ?`): a lowering, as below,    --
---     whose value is a single unknown;                         --
---   * equating (`equateᵉ`, `equateʳ`): a grade unknown that    --
---     the hypotheses equate with an expression an ordering     --
---     sets against it, both orderings decided at the strength  --
---     `atomic` (`Entail`), is replaced by it everywhere, and   --
---     the orderings made reflexive are removed (`Values`'      --
---     `equate`: of two equal unknowns, the one of smaller      --
---     index remains);                                          --
---   * lowering (`stepᵉ`, `stepʳ`): a grade unknown is sent to  --
---     the value `B* · L · C*` from the join `L` of its lower   --
---     bounds, or its closure where it has the cycle            --
---     `v · v ≾ v`; the bounds are removed with it, and its     --
---     cycles, which close at the value (`Values`' `lower`);    --
---   * raising (`upᵉ-step`, `upʳ-step`): a grade unknown is     --
---     sent to the first upper bound that caps the others, the  --
---     orderings it caps removed (`Values`' `raise`);           --
---   * the forced unit (`unitᵉ`, `unitʳ`): a grade unknown      --
---     bounded above by an expression decided below the unit,   --
---     the unit being least, is sent to the unit, whatever its  --
---     occurrences; for an effect unknown also through its      --
---     image, where the hints declare that the image reflects   --
---     the order at the unit (`reflects-u?`). The bounding      --
---     orderings are removed, the atoms the unknown occurs in   --
---     are written canonically, each ordering split into one    --
---     per alternative of its left side, and the orderings made --
---     reflexive are removed;                                   --
---   * cycle elimination (`collapseᵗ`): the type variables of   --
---     each strongly connected component of the subtyping atoms --
---     are sent to its representative (`Reach`'s `Collapse`),  --
---     a member that is never eliminated where there is one,    --
---     else the least by index, and the atoms made reflexive    --
---     are removed;                                             --
---   * lowering a type variable (`stepᵗ`) to a single bound     --
---     below, open types having no join.                        --
--- An oracle (`oracleᵉ`, `oracleʳ`) licenses lowering and       --
--- raising: the polarity (`Polarity`) of the unknown in the     --
--- reported type and in the atoms of the other sorts and the    --
--- disjunctions; atoms valid at every instance bound nothing.   --
+-- Each step eliminates the first unknown outside a fixed set   --
+-- at which it applies, in the order of `anyStep`: merging,     --
+-- equating it with an expression the hypotheses equate it      --
+-- with, lowering it to the join of its lower bounds, raising   --
+-- it to the upper bound below the others, the forced unit,     --
+-- cycle elimination of type variables, and lowering a type     --
+-- variable to a bound below. Its polarity licenses lowering    --
+-- and raising (`oracleᵉ`, `oracleʳ`).                          --
 --                                                              --
--- Contract (`Elim`). Every step is a substitution `η`: the new --
--- type is the old one along `η`, up to convertibility          --
--- (`conv`). Where the old hypotheses carry no quantified ones  --
--- (`Unq`), neither do the new (`unqᴱ`), and the new entail the --
--- old along `η` (`inst`). Every closed instance of the old     --
--- hypotheses is one of the new (`keep`), at which the new type --
--- is a subtype of the old (`princ`). Steps compose (`_⨾ᴱ_`).   --
--- The unknowns of a given set are never eliminated, and `η`    --
--- fixes them (`Elimᶠ`). Which unknowns remain is not claimed:  --
--- a step is taken where its test succeeds. For a step against  --
--- a bound, the hypotheses it keeps on the unknown's sort are   --
--- entailed by `Values` (`lowerR`, `raiseL`); the type, the     --
--- other sort and the disjunctions are kept by polarity         --
--- (`Monoᵉ`, `Raiseᵉ` and their counterparts, each an instance  --
--- of `Lift`, which relates the parts of a former at their      --
--- variance). For a step by equality, the hypotheses bound `η`  --
--- by the identity in both directions, and it moves no type     --
--- (`Equal`). A forced unit is such a step under the hypotheses --
--- with the unknown below the unit added, which every closed    --
--- instance meets (`unit-forcedᵣ`, `unit-forcedₑ`; through the  --
--- image, by reflection at the instance).                       --
+-- Contract (`Elim`). A step is a substitution `η`; the new     --
+-- type is the old along `η` (`conv`), the new hypotheses       --
+-- entail the old along `η` (`inst`) and keep every closed      --
+-- instance (`keep`), at which the new type is a subtype of the --
+-- old (`princ`). Steps compose (`_⨾ᴱ_`); `Elimᶠ` fixes the     --
+-- given unknowns. Which unknowns remain is not claimed.        --
 --                                                              --
--- The polarity-based elimination follows Pottier's             --
--- simplification of subtyping constraints (ICFP 1996); cycle   --
--- elimination follows Fähndrich, Foster, Su and Aiken (PLDI    --
--- 1998).                                                       --
+-- Polarity-based elimination follows Pottier's simplification  --
+-- of subtyping constraints; cycle elimination follows          --
+-- Fähndrich, Foster, Su and Aiken.                             --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; not; _∨_; _∧_) renaming (Bool to 𝔹)
@@ -137,8 +88,7 @@ open import PolymorphicCalculus.Inference.SolverImpl.Canon       S hints
          canonᴴ; canonᴴ-⊩; canonᴴ-⊩⁻; Ordʳ; Ordᵉ; Pieces; whole; Split; splitsBy;
          piecesʳ; piecesᵉ)
 
--- Updating one slot of a finitely indexed family, by structural
--- recursion on the index, without a decision of equality.
+-- Updating one slot of a finitely indexed family, without deciding equality
 
 upd : ∀ {n} {A : Set} → Fin n → A → (Fin n → A) → Fin n → A
 upd zero    a f zero    = a
@@ -307,11 +257,8 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
   atᶜ-‼ ⁻ p q = p ‼ₛ q
 
 ------------------------------------------------------------------------
--- A substitution related to the identity at every leaf of a type, at
--- the sign of the leaf's position, is related to it at the type: the
--- parts of a former are related at their variance (`Former`). A leaf
--- is admitted by a predicate on its polarity, closed under the parts
--- of a union.
+-- A substitution related to the identity at each leaf of a type, at the
+-- leaf's sign, is related to it at the type; a predicate on polarity admits leaves
 
 module Lift {Θ : Scope} {Q : Hyps Θ} (η : Subst Θ Θ)
             (G : Pol → Set) (G-∪ : ∀ p q → G (p ∪ᴾ q) → G p × G q)
@@ -379,10 +326,8 @@ module Lift {Θ : Scope} {Q : Hyps Θ} (η : Subst Θ Θ)
   lift s A h = subst (atᵛ Q s (A [ η ]ᵛ)) ([id]ᵛ A) (liftᵃ s A (≺-wf A) h)
 
 ------------------------------------------------------------------------
--- A substitution lowering every unknown lowers every grade expression
--- and keeps every ordering whose right side it does not lower. At each
--- instance it keeps every var-rule disjunction, eternality reading only
--- the skeleton.
+-- A substitution lowering every unknown lowers every grade expression, keeps
+-- each ordering whose right side it does not lower, and each disjunction
 
 module Lowering {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
                 (lowg : Q ⊩ η₀ ≾ˢ idˢ) (lowt : ∀ β → Q ∣ sTy η₀ β <:̂ᵛ tvar β) where
@@ -422,8 +367,8 @@ module Lowering {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
       et e = subst (∅ᴴ ⊩ᴱ_) (sym ([⨟]ᵛ A₀ η₀ δ))
                    (⊩ᴱ-<:ˢ {σ = η₀ ⨟ˢ δ} {τ = δ} (λ β → <:̂ᵛ-subst h (lowt β)) A₀ e)
 
--- A substitution that, under the hypotheses, is both below and above
--- the identity moves no type
+-- A substitution both below and above the identity under the hypotheses moves
+-- no type
 
 module Equal {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
              (lowg : Q ⊩ η₀ ≾ˢ idˢ) (hig : Q ⊩ idˢ ≾ˢ η₀)
@@ -547,11 +492,9 @@ falses {a} with isFalse a | falses₂
 liveᵉ : ∀ {Θ} → EVar Θ → Hyps Θ → List (RExp Θ × RExp Θ)
 liveᵉ {Θ} i Q = kept (Vⁱ.lives {Θ} i (ordᵣ Q))
 
--- The oracle of an effect unknown: it may decrease where it occurs on
--- no greater side of an ordering of resources that is not valid and
--- nowhere covariantly in the type, the value being free of it; and
--- increase where it occurs on no smaller side of such an ordering, in
--- no grade of a disjunction and nowhere contravariantly in the type
+-- The oracle of an effect unknown: it may decrease where it is on no greater
+-- side of a live resource ordering and nowhere covariant in the type, and
+-- increase where on no smaller side, in no disjunction's grade, nowhere contravariant
 
 oracleᵉ : ∀ {Θ} → OCType Θ → Hyps Θ → (i : EVar Θ) → Vᵉ.Oracle {Θ} i
 oracleᵉ C Q i = record
@@ -563,9 +506,8 @@ oracleᵉ C Q i = record
   ; raise? = λ b → falses
   }
 
--- Lowering an effect unknown to the join of its bounds below
--- (`Values.lower`); the orderings bounding it are dropped, the rest
--- kept along `η`
+-- Lowering an effect unknown to the join of its lower bounds (`Values.lower`),
+-- dropping the orderings that bound it
 
 stepᵉ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
       → Vᵉ.ByLower {Θ} i (oracleᵉ C Q i) (ordₑ Q) → Elim C Q
@@ -691,10 +633,8 @@ polsᵣ-disj-∈ i ((A₀ , ρ₀) ∷ l) q (here refl) =
 polsᵣ-disj-∈ i ((A₀ , ρ₀) ∷ l) q (there m)   =
   polsᵣ-disj-∈ i l (proj₂ (below-∪ (polᵣ-r i ⁺ ρ₀) (polsᵣ-disj i l) q)) m
 
--- The oracle of a resource unknown: it may decrease where it occurs
--- nowhere covariantly in the type, the value being free of it, and
--- increase where it occurs in no grade of a disjunction and nowhere
--- contravariantly in the type
+-- The oracle of a resource unknown: it may decrease where nowhere covariant in
+-- the type, increase where in no disjunction's grade and nowhere contravariant
 
 oracleʳ : ∀ {Θ} → OCType Θ → Hyps Θ → (i : RVar Θ) → Vʳ.Oracle {Θ} i
 oracleʳ C Q i = record
@@ -776,10 +716,8 @@ mergeʳ? {Θ} F C Q i o with Vʳ.lower {Θ} i (oracleʳ C Q i) (ordᵣ Q)
 ... | _ = nothing
 
 ------------------------------------------------------------------------
--- The dual steps: an unknown on no left side but against its bounds
--- above, and nowhere covariantly in the type, is raised to the bound
--- decided below the others. Raising it raises every right side and
--- every contravariant position.
+-- The dual steps: an unknown on no left side and nowhere covariant in the type
+-- is raised to its bound decided below the others
 
 above-∪ : (p q : Pol) → above (p ∪ᴾ q) ≡ false
         → (above p ≡ false) × (above q ≡ false)
@@ -918,9 +856,8 @@ keep-disj⁺ {Q = Q} η₀ tv fr δ h m with ∈-map⁻ (mapᵈ (_[ η₀ ]ᵛ) 
     et e = subst (∅ᴴ ⊩ᴱ_) (sym ([⨟]ᵛ A₀ η₀ δ))
                  (⊩ᴱ-<:ˢ {σ = η₀ ⨟ˢ δ} {τ = δ} (λ β → <:̂ᵛ-subst h (lowt β)) A₀ e)
 
--- Raising an effect unknown to its bound above (`Values.raise`): the
--- orderings with it on the left are dropped, each then decided from no
--- hypotheses; the rest are kept along `η`
+-- Raising an effect unknown to its bound above (`Values.raise`), dropping the
+-- orderings with it on the left
 
 upᵉ-step : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
          → Vᵉ.ByRaise {Θ} i (oracleᵉ C Q i) (ordₑ Q) → Elim C Q
@@ -1060,9 +997,8 @@ upʳ? {Θ} F C Q i o = Maybe.map at (Vʳ.raise {Θ} i (oracleʳ C Q i) (ordᵣ Q
     at : Vʳ.ByRaise {Θ} i (oracleʳ C Q i) (ordᵣ Q) → Elimᶠ F C Q
     at br@(Vʳ.byRaise up _) = upʳ-step C Q i br , fixes-updʳ i (Vʳ.cap up) o
 
--- The bound of a type variable is another type variable, so the
--- substitution acts on the eternality and subtyping atoms too: a
--- renaming of the type variables, fixing every grade unknown
+-- The bound of a type variable is a type variable, so the step is a renaming
+-- of type variables, fixing every grade unknown
 
 idᶠ : ∀ {n} → Fin n → Fin n
 idᶠ β = β
@@ -1091,8 +1027,8 @@ fixᵗ-r f (ρ ·̂ᵣ ρ')  = cong₂ _·̂ᵣ_ (fixᵗ-r f ρ) (fixᵗ-r f ρ'
 fixᵗ-r f (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔̂ᵣ_ (fixᵗ-r f ρ) (fixᵗ-r f ρ')
 fixᵗ-r f ∣ ε ∣̂ᵉ     = cong ∣_∣̂ᵉ (fixᵗ-e f ε)
 
--- Lowering a type variable to a variable below it lowers every type
--- with no occurrence of it below
+-- Lowering a type variable to a variable below it lowers every type with no
+-- occurrence of it below
 
 module Monoᵗ {Θ : Scope} {Q : Hyps Θ} (α γ : TyVar Θ) (le : (γ , α) ∈ subᵥ Q) where
 
@@ -1240,10 +1176,8 @@ stepᵗ? {Θ} F C Q α o with splitᵗ α (subᵥ Q)
 ...   | _     | _     | _     = nothing
 
 ------------------------------------------------------------------------
--- Elimination by equality: an unknown the hypotheses equate with an
--- expression is replaced by it everywhere, and the orderings the
--- replacement makes reflexive are dropped. Under the hypotheses the
--- replacement moves nothing.
+-- Elimination by equality: an unknown the hypotheses equate with an expression
+-- is replaced by it, the orderings made reflexive dropped
 
 -- One step at an effect unknown
 
@@ -1329,10 +1263,8 @@ equateʳ {Θ} C Q i b eq =
                  keep-disj (λ m → ⊩ᴼ-hyp⁼ m)
 
 ------------------------------------------------------------------------
--- Cycle elimination: the type variables of each strongly connected
--- component of the subtyping atoms sent to its representative `f`, which
--- the hypotheses bound by each in both directions; the subtyping atoms
--- made reflexive are dropped
+-- Cycle elimination: the type variables of each strongly connected component of
+-- the subtyping atoms sent to its representative `f`, reflexive atoms dropped
 
 collapseᵗ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (f : TyVar Θ → TyVar Θ)
           → (∀ β → (Q ⊩ᵗᵛ f β ≾ β) × (Q ⊩ᵗᵛ β ≾ f β)) → Elim C Q
@@ -1389,9 +1321,8 @@ withMem : ∀ {X : Set} → (l : List X) → List (Σ[ a ∈ X ] (a ∈ l))
 withMem []      = []
 withMem (a ∷ l) = (a , here refl) ∷ map (λ { (b , m) → b , there m }) (withMem l)
 
--- The search: the components over the type variables with an atom on
--- each side, only they lying on a cycle; the variables of `F` are
--- preferred as representatives and never move
+-- The search: components over the type variables with an atom on each side;
+-- the variables of `F` preferred as representatives and never moved
 
 collapseᵗ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → Maybe (Elimᶠ F C Q)
 collapseᵗ? {Θ} F C Q = from moves
@@ -1424,9 +1355,8 @@ collapseᵗ? {Θ} F C Q = from moves
             mkFixes (λ β h → [ cong tvar , (λ o → ⊥-elim (t≢f h o)) ]′ (stays ms β))
                     (λ _ _ → refl) (λ _ _ → refl))
 
--- The searches by equality: the first fit expression facing the
--- unknown that the test at the strength `atomic` equates with it
--- (`Values.equate`)
+-- The searches by equality: the first expression facing the unknown that the
+-- strength `atomic` equates with it (`Values.equate`)
 
 equateᵉ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
          → vᵉ F i ≡ false → Maybe (Elimᶠ F C Q)
@@ -1441,9 +1371,8 @@ equateʳ? {Θ} F C Q i o =
             (Vʳ.equate {Θ} i (decideᵣ atomic Q) (ordᵣ Q))
 
 ------------------------------------------------------------------------
--- The forced unit: an unknown bounded above by an expression decided
--- below the unit, the unit being least, is the unit at every closed
--- instance (`Values.Forces`)
+-- The forced unit: an unknown bounded above by an expression below the unit,
+-- the unit being least, is the unit at every closed instance (`Values.Forces`)
 
 -- Least, and below the unit: equal to it
 
@@ -1470,10 +1399,8 @@ forced C Q Q⁺ η₀ lowg hig tv Q̂ inst₀ unq₀ keep⁺ keep₁ =
                      (λ β → subst (λ x → Q⁺ ∣ x <:̂ᵛ tvar β) (sym (tv β)) (tvarₛ reflᵗᵛ))
                      (λ β → subst (λ x → Q⁺ ∣ tvar β <:̂ᵛ x) (sym (tv β)) (tvarₛ reflᵗᵛ))
 
--- The atoms an assignment `η₀` changes, written canonically: an
--- ordering marked by `tᵣ` or `tₑ` split into one per alternative of its
--- left side, a disjunction marked by `tᵈ` in canonical form; the
--- orderings made reflexive are dropped
+-- The atoms an assignment `η₀` changes, written canonically, an ordering split
+-- per alternative of its left side; reflexive orderings dropped
 
 private
   ordʳ-id : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → Ordʳ Q idˢ (ρ , ρ') → Q ⊩ ρ ≾̂ᵣ ρ'
@@ -1565,8 +1492,7 @@ module Retouch {Θ : Scope} (η₀ : Subst Θ Θ) (tᵣ : RExp Θ × RExp Θ →
                 (k (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m₀))
     where t = touchᵈ-≡̂ (A₀ , ρ₀)
 
--- The resource unit, forced by an ordering `x ≾ c` (`m₀`, `f₀`): every
--- forcing ordering is dropped
+-- The resource unit, forced by an ordering `x ≾ c` (`m₀`, `f₀`), which is dropped
 
 unitʳ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
       → ∀ {a₀} → a₀ ∈ ordᵣ Q → Vʳ.Forces {Θ} i a₀ → Elim C Q
@@ -1752,9 +1678,8 @@ unitᵉ? {Θ} F C Q i o with firstHit (Vᵉ.forces? {Θ} i) (ordₑ Q)
                 (firstHit (Vⁱ.forces? {Θ} i) (ordᵣ Q))
 
 ------------------------------------------------------------------------
--- The steps in order: merging, equating, lowering, raising and the
--- forced unit, each at an effect unknown before a resource one, then
--- cycle elimination and lowering a type variable
+-- The steps in order: merging, equating, lowering, raising and the forced unit,
+-- an effect unknown before a resource one; then the type-variable steps
 
 anyStep : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → Maybe (Elimᶠ F C Q)
 anyStep {Θ} F C Q =

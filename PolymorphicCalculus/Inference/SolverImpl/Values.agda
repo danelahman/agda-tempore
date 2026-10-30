@@ -1,77 +1,34 @@
 ------------------------------------------------------------------
 -- Values for one unknown, read off the orderings of its sort   --
 --                                                              --
--- A sort (`Sort`) reads the expressions of one grade sort for  --
--- an unknown `v`: whether `v` occurs, the order decided from   --
--- no hypotheses, the join, the unit, the top, canonical forms, --
--- whether the unit is least, which expressions may replace     --
--- `v`, an expression with `v` sent to a value (`put`), the     --
--- product and a product's factors, and the closure of an       --
--- expression where the hints declare it (`Closure`; none       --
--- through the image of an effect unknown). An ordering is      --
--- valid when it is reflexive or decided (`Valid`); it bounds   --
--- `v` on neither side. An oracle (`Oracle`) says whether `v`   --
--- may decrease, or increase, to a value, the atoms outside the --
--- sort keeping their meaning.                                  --
--- The rules, each a proposition with its decider:              --
---   * lowering (`Lows`, `lower`), principal: every ordering is --
---     valid, has `v` on no right side, is `x ≾ v` with `x`     --
---     free of `v`, a lower bound, of which there is one, or is --
---     a cycle `p ≾ v` with `v` in `p`. From the join `L` of    --
---     the lower bounds, the value is `V = B* · L · C*`, and    --
---     `V = (B* · L · C*)⁺` where a cycle is `v · v ≾ v`: `B`   --
---     and `C` join the multipliers of the cycles `b · v ≾ v`   --
---     and `v · c ≾ v`, `b` and `c` free of `v`, `X* · y` is    --
---     `y ⊔ X⁺ · y`, or `y` where each multiplier leaves `y`,   --
---     decided, and an expression absorbing its own iteration,  --
---     decided, is its own closure (`Shapes`, `Clo`, `StarL`,   --
---     `StarR`, `Sq`). `V` is taken where the closures it needs --
---     exist and every cycle, of any shape, closes at it, `p`   --
---     with `v` sent to `V` decided below `V` (`Closes`,        --
---     `LowTo`);                                                --
---   * raising (`Ups`, `raise`), instance-keeping: the first    --
---     ordering `v ≾ U`, `U` free of `v`, that caps the others, --
---     every ordering being valid, reflexive, with `v` on no    --
---     left side, or `v ≾ x'` with `U ≾ x'` decided; the value  --
---     is `U`;                                                  --
---   * least (`least`), principal: as lowering with no lower    --
---     bound, where the unit is least, `L` being the unit;      --
---   * top (`top`), instance-keeping: every ordering is valid,  --
---     has `v` on no left side, or has `v` as its whole right   --
---     side (`UnderTop`); the value is the top;                 --
---   * forced unit (`Forces`), principal: an ordering `x ≾ y`   --
---     with `x` canonically `v` and `y` decided below the unit, --
---     the unit being least; every solution sends `v` to the    --
---     unit, whatever the occurrences of `v`;                   --
---   * equating (`equate`), principal: the first expression an  --
---     ordering sets against `v`, an earlier unknown or free of --
---     `v`, that a given test places above and below `v`.       --
--- The caller determines which unknowns may be assigned, in     --
--- which order, and what an oracle asks. Lowering and raising   --
--- follow the elimination of variables by polarity (Pottier,    --
--- ICFP 1996; Trifonov and Smith, SAS 1996).                    --
+-- A `Sort` reads the expressions of one grade sort for an      --
+-- unknown `v`. An ordering reflexive or decided from no        --
+-- hypotheses is `Valid` and bounds nothing; an `Oracle` says   --
+-- whether `v` may decrease or increase. The rules, each with   --
+-- its decider:                                                 --
+--   * lowering (`Lows`, `lower`), principal: to `B* · L · C*`, --
+--     `L` joining the lower bounds, `B` and `C` the            --
+--     multipliers of the cycles `b · v ≾ v`, `v · c ≾ v`; its  --
+--     closure where a cycle is `v · v ≾ v`;                    --
+--   * raising (`Ups`, `raise`): to the upper bound decided     --
+--     below the others;                                        --
+--   * least (`least`), principal: lowering from the unit, with --
+--     no lower bound and the unit least;                       --
+--   * top (`top`): to the top, where every ordering with `v`   --
+--     on its left has `v` as its whole right side (`UnderTop`);--
+--   * forced unit (`Forces`), principal: `v ≾ y` with `y`      --
+--     decided below a least unit;                              --
+--   * equating (`equate`), principal: to an expression a test  --
+--     places above and below `v`.                              --
+-- Lowering and raising follow elimination by polarity          --
+-- (Pottier; Trifonov and Smith).                               --
 --                                                              --
--- Contract. The orderings are read through interpretations of  --
--- the sides before and after the assignment (`f₀`, `f₁`) into  --
--- a preorder that agree where `v` does not occur, and that     --
--- keep the decided order after it: at an instance              --
--- (`Localise`), or by entailment along the assignment          --
--- (`Eliminate`). Each value keeps every ordering: lowering and --
--- the least element keep those that lie below `v` and its      --
--- cycles (`lower-keeps`), the upper bound and the top those    --
--- that lie above it (`raise-keeps`, `raise-free`), the top     --
--- also those with `v` as the right side (`top-keeps`), and an  --
--- equal value all of them (`equal-keeps`); an unknown on no    --
--- right side remains so under lowering (`lower-free`). Under   --
--- lowering, each ordering with `v` on its right side holds     --
--- outright, being a lower bound, a cycle, a bound free of `v`, --
--- or valid (`lower-drops`). Lowering is principal: each lower  --
--- bound is an ordering below `v` (`src`), so wherever the      --
--- orderings hold, their join lies below `v` (`joinₑ-lub⊩`),    --
--- and so does `V`, by one argument from the laws of the        --
--- closure for every shape of cycle (`srcᶜ`, `indˡₑ`, `indʳₑ`,  --
--- `plusₑ`; `LowToₑ`). That the upper bound and the top are     --
--- least is not claimed.                                        --
+-- Contract. Read before and after the assignment, each value   --
+-- keeps every ordering (`lower-keeps`, `raise-keeps`,          --
+-- `top-keeps`, `equal-keeps`); lowering makes each ordering    --
+-- with `v` on its right hold outright (`lower-drops`) and is   --
+-- principal (`LowToₑ`). That raising and the top are least is  --
+-- not claimed.                                                 --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; not; true; false) renaming (Bool to 𝔹)
@@ -156,9 +113,7 @@ partition {P = P} p (a ∷ l) = go (p a) (partition p l)
             (λ { (here refl) → inj₂ (here refl)
                ; (there m)   → [ inj₁ , (λ m' → inj₂ (there m')) ]′ (c m) })
 
--- The join of a non-empty list, given as a head and a tail and folded
--- to the left: a lone entry is its own join, and the join lists the
--- entries in the order met
+-- The join of a non-empty list, folded to the left
 
 joins : ∀ {X : Set} → (X → X → X) → X → List X → X
 joins _⊔_ x []        = x
@@ -251,9 +206,8 @@ module Rules {X : Set} (s : Sort X) where
   lives = partition valid?
 
   ----------------------------------------------------------------------
-  -- Lowering: the bounds below, each free of the unknown, and the
-  -- cycles, orderings `p ≾ v` with `p` mentioning the unknown; every
-  -- other ordering has it on no right side, or is valid
+  -- Lowering: the bounds below, free of the unknown, and the cycles `p ≾ v`,
+  -- `p` mentioning it; every other ordering has it on no right side, or is valid
 
   record Lows (l : List (X × X)) : Set where
     constructor lows
@@ -311,8 +265,7 @@ module Rules {X : Set} (s : Sort X) where
       go (just lw)                          (just e) _        nothing   = just (toCyc lw e)
       go (just lw)                          nothing  _        nothing   = nothing
 
-  -- Each cycle holds once the unknown is sent to `b`, by the decided
-  -- order
+  -- Each cycle holds once the unknown is sent to `b`, by the decided order
 
   Closes : (l : List (X × X)) → Lows l → X → Set
   Closes l lw b = ∀ {p} → p ∈ cycs lw → put b p ≤ b
@@ -328,10 +281,8 @@ module Rules {X : Set} (s : Sort X) where
   ... | just e = just (here e)
   ... | nothing  = map there (x ∈? ys)
 
-  -- The cycles of the shapes the value is built from: left-linear
-  -- `b · v ≾ v` and right-linear `v · c ≾ v`, `b` and `c` free of the
-  -- unknown, and quadratic `v · v ≾ v`; a cycle of any other shape is
-  -- left to `Closes`
+  -- The cycles the value is built from: `b · v ≾ v`, `v · c ≾ v` (`b`, `c` free
+  -- of the unknown) and `v · v ≾ v`; any other shape is left to `Closes`
 
   record Shapes (cs : List X) : Set where
     constructor shapes
@@ -370,9 +321,8 @@ module Rules {X : Set} (s : Sort X) where
       go sh (just (y , z , e)) =
         byFactors sh y z e (y ≟ self) (z ≟ self) (isFalse (occ y)) (isFalse (occ z))
 
-  -- The closure `x⁺` of an expression: `x` where it absorbs its own
-  -- iteration, decided; else the closure of its value, where the hints
-  -- declare it
+  -- The closure `x⁺`: `x` where it absorbs its own iteration, decided; else the
+  -- closure of its value, where the hints declare it
 
   data Clo (x : X) : X → Set where
     idem  : mul x x ≤ x → Clo x x
@@ -383,9 +333,8 @@ module Rules {X : Set} (s : Sort X) where
   ... | just p  = just (x , idem p)
   ... | nothing = map (λ (x⁺ , c) → x⁺ , const c) (closure? x)
 
-  -- `B* · y`, `B` the join of the left multipliers `bs`: `y` where each
-  -- multiplier leaves it, decided; else `y ⊔ B⁺ · y`. Its mirror
-  -- `y · C*`.
+  -- `B* · y`, `B` the join of the left multipliers: `y` where each multiplier
+  -- leaves it, decided; else `y ⊔ B⁺ · y`. Its mirror is `y · C*`.
 
   data StarL (bs : List X) (y : X) : X → Set where
     stays : (∀ {b} → b ∈ bs → mul b y ≤ y) → StarL bs y y
@@ -428,10 +377,8 @@ module Rules {X : Set} (s : Sort X) where
       go nothing  e = just (x , linear e)
       go (just m) e = map (λ (x⁺ , c) → x⁺ , quadratic e c) (clo? x)
 
-  -- The value of lowering from `L`, the join of the bounds or the unit:
-  -- `V = B* · L · C*`, and `V = (B* · L · C*)⁺` where there is a
-  -- quadratic cycle, where every cycle closes at `V`. Every solution of
-  -- `L ≾ v` and the cycles of the three shapes lies above `V`.
+  -- The value of lowering from `L`: `B* · L · C*`, or its closure under a
+  -- quadratic cycle, where every cycle closes; every solution lies above it
 
   record LowTo (l : List (X × X)) (lw : Lows l) (L V : X) : Set where
     constructor lowTo
@@ -459,9 +406,8 @@ module Rules {X : Set} (s : Sort X) where
   lowTo-closes = LowTo.cl
 
   ----------------------------------------------------------------------
-  -- Raising: a bound above, `U`. Every ordering with the unknown on its
-  -- left is `v ≾ U`, or has a right side decided above `U`, or is
-  -- valid; every other has it on no left side, or is reflexive
+  -- Raising: a bound `U` above. Each ordering with the unknown on its left is
+  -- `v ≾ U`, has a right side decided above `U`, or is valid
 
   record Capped (U : X) (l : List (X × X)) : Set where
     constructor capped
@@ -693,9 +639,8 @@ module Rules {X : Set} (s : Sort X) where
   ... | nothing = nothing
 
   ----------------------------------------------------------------------
-  -- The rules keep the orderings: read before (`f₀`) and after (`f₁`)
-  -- an assignment, the two agreeing where the unknown does not occur,
-  -- and the decided order kept after it
+  -- The rules keep the orderings, read before (`f₀`) and after (`f₁`) an
+  -- assignment: the two agree where the unknown does not occur
 
   module Keep {Y : Set} (_⊑_ : Y → Y → Set)
               (⊑-refl : ∀ {y} → y ⊑ y) (⊑-trans : ∀ {y y' y''} → y ⊑ y' → y' ⊑ y'' → y ⊑ y'')
@@ -786,9 +731,8 @@ fitᵣ : ∀ {Θ} → RVar Θ → RExp Θ → 𝔹
 fitᵣ i (rvar j) = toℕ j <ᵇ toℕ i
 fitᵣ i ρ        = not (occʳ-r i ρ)
 
--- Through the image, the unit is least where both units are and the
--- projection reflects the order at the unit: `∣ e ∣ ≾ u` then sends `e`
--- to the effect unit, whose image lies below every resource grade
+-- Through the image, the unit is least where both units are and the projection
+-- reflects the order at the unit, so `∣ e ∣ ≾ u` sends `e` to the effect unit
 
 Reflects : Set
 Reflects = (e : E) → mapᵉ e ≾ᵣ uᵣ → e ≾ₑ uₑ
@@ -869,9 +813,8 @@ putⁱ k (rconst _) x = x
 putⁱ k (_ ·̂ᵣ _)   x = x
 putⁱ k (_ ⊔̂ᵣ _)   x = x
 
--- Effect expressions for an effect unknown, resource expressions for a
--- resource unknown, and resource expressions for an effect unknown
--- through its image `∣ k ∣`
+-- Effect expressions for an effect unknown, resource expressions for a resource
+-- unknown and for an effect unknown through its image `∣ k ∣`
 
 sortᵉ : ∀ {Ψ} → EVar Ψ → Sort (EExp Ψ)
 sortᵉ k = record
@@ -984,14 +927,9 @@ joinᵣ-lub⊩ τ x₀ (x₁ ∷ xs) k =
        ; (there m)   → k (there (there m)) })
 
 ------------------------------------------------------------------------
--- The value of lowering lies above `L` and, wherever `L` lies below the
--- unknown and the orderings hold, below the unknown, by one argument
--- for every shape: each left multiplier `b` gives `b · v ≾ v`, so
--- their join `B` does (distributivity), so `B⁺ · v ≾ v` (`indˡ`), and
--- `B* · L ≾ v` by monotonicity; the mirror for `C*`; and, `v · v ≾ v`
--- holding as well, the closure lies below `v` (`plus`). An expression
--- absorbing its own iteration is its own closure, and a star that
--- leaves its argument is the argument.
+-- The value of lowering lies above `L`, and below the unknown wherever `L` is
+-- and the orderings hold: the left multipliers' join `B` gives `B⁺ · v ≾ v`
+-- (`indˡ`), the mirror gives `C`, and `v · v ≾ v` the closure (`plus`).
 
 -- the join of left (right) multipliers leaves what each leaves
 

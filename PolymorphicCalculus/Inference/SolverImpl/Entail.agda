@@ -1,58 +1,26 @@
 --------------------------------------------------------------------
 -- Entailment of grade orderings from hypotheses                  --
 --                                                                --
--- The hypothesis graph of a set `Q` has the grade expressions of --
--- a sort as vertices. Its edges (`Edgeₑ`, `Edgeᵣ`) are the       --
--- orderings of `Q` (`hyp`), the sameness of expressions         --
--- (`same`), the grade's order between constants (`cst`), the     --
--- links to the top (`top`) and from the unit when the hints      --
--- declare it least (`unit`), on the resource side the            --
--- images of the chains between effect atoms (`img`), and the     --
--- factor edges (`factor`): from the product of some atoms of a   --
--- side of `Q` whose normal form is one product to that side,     --
--- every other atom of it being above the unit (`Keepₑ`). An atom --
--- is above the unit (`Aboveₑ`, `Aboveᵣ`) when it is a constant   --
--- above it, when the unit is least (on the resource side also    --
--- the image of an effect variable where the effect unit is       --
--- least), or when a chain reaches it from a variable-free        --
--- expression above the unit. The three are defined together, so  --
--- the set of atoms above the unit is the least fixed point; the  --
--- variables of it in the graph are computed by Kleene iteration  --
--- (`aboveₑ`, `aboveᵣ`).                                           --
+-- The hypothesis graph of `Q` (`Edgeₑ`, `Edgeᵣ`) has the grade   --
+-- expressions of a sort as vertices. Its edges are the orderings --
+-- of `Q`, sameness, the order between constants, links to the    --
+-- top and from a least unit, the images of effect chains         --
+-- (resource side), and factor edges (`Keepₑ`) through atoms      --
+-- above the unit (`Aboveₑ`, `Aboveᵣ`: a least fixed point, by    --
+-- Kleene iteration).                                             --
 --                                                                --
--- A query `e ≾ e'` is answered at an explicit strength           --
--- (`Strength`, `decideₑ`, `decideᵣ`):                             --
---   * `closed`: both sides variable-free, compared by the        --
---     grade's `_≾?_` (`closedₑ?`, `closedᵣ?`);                   --
---   * `derive`: the embedding of normal forms of `Normal`, its   --
---     atoms compared by identity, along the links and along      --
---     chains of the `hyp` (and `img`) edges between single atoms;--
---   * `atomic`: an ordering of `Q` itself, or `derive`;          --
---   * `full`: `closed` where it holds, else the embedding along  --
---     the chains between atoms of the whole graph, through any   --
---     sides and factor edges (`atomEdgesₑ`), or, where the left  --
---     side is a vertex, along a chain of the graph to a vertex   --
---     that is the right side or embeds below it (`alongₑ`).      --
--- `refute≾u` refutes `ρ ≾ u` at every instance by the            --
--- zero-product law, and `checkClosed` decides the closed atoms   --
--- of `Q` and the closed orderings joined by a chain of `hyp`     --
--- edges, then drops each disjunction whose grade is below the    --
--- unit at `full` from the orderings left. `failingChain` follows --
--- each variable-free vertex along the whole graph, factor edges  --
--- included, to a variable-free vertex it is not below.           --
+-- A query `e ≾ e'` is decided at a `Strength`: `closed` (no      --
+-- variables, by the grade's `_≾?_`), `derive` (the embedding of  --
+-- `Normal` along atomic edges), `atomic` (an ordering of `Q`, or --
+-- `derive`) or `full` (along chains of the whole graph).         --
 --                                                                --
 -- Contract. Every edge holds where `Q` does (`edgeₑ-sound`,      --
--- `edgeᵣ-sound`, with `aboveₑ-sound` and `keepₑ-sound`; at an    --
--- instance by `⊩-substₑ`/`⊩-substᵣ`). Each decision is sound by  --
--- its type: a `just` is a derivation of `Q ⊩ e ≾̂ e'` composed of --
--- edges by the laws; the edges of `derive` are among those of    --
--- `full`. A `nothing` claims nothing; no completeness is proved. --
--- `refute≾u` is sound by its type (`Refutedᵤ`), stable under     --
--- instantiation (`refute-[]ʳ`), and rules out `ρ ≾ u` from every --
--- satisfiable set (`refute-⊩`). `checkClosed Q` entails `Q`      --
--- (`checkClosed-⊩`), is entailed wherever `Q` is                 --
--- (`checkClosed-⊆`), and a failure leaves `Q` unsatisfiable      --
--- (`checkClosed-fail`); so does a failing chain, by its type.    --
+-- `edgeᵣ-sound`); a `just` is a derivation of `Q ⊩ e ≾̂ e'`, a   --
+-- `nothing` claims nothing. `refute≾u` refutes `ρ ≾ u` from      --
+-- every satisfiable set (`refute-⊩`). `checkClosed Q` is         --
+-- equivalent to `Q` (`checkClosed-⊩`, `checkClosed-⊆`) and fails --
+-- only on an unsatisfiable set (`checkClosed-fail`), as a        --
+-- failing chain does.                                            --
 --------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)
@@ -299,10 +267,8 @@ mutual
 ------------------------------------------------------------------------
 -- Links and the edges between single atoms
 --
--- Two atoms are linked when they are equal, or are constants joined
--- by a `cst` edge. The edges between atoms are the `hyp` edges whose
--- two sides are single atoms and, on the resource side, the images of
--- the effect ones, each read as an entailment.
+-- Two atoms are linked when equal or joined by a `cst` edge. The atomic edges
+-- are the `hyp` edges between single atoms and, for resources, their images.
 
 EEdge : ∀ {Θ} → Hyps Θ → Set
 EEdge {Θ} Q = Σ[ a ∈ EAtom Θ ] Σ[ b ∈ EAtom Θ ] (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
@@ -389,18 +355,9 @@ min≾ᵣ (just q) = just (edgeᵣ-sound (unit q))
 min≾ᵣ nothing  = nothing
 
 ------------------------------------------------------------------------
--- The strength `derive`: the embedding of `Normal` along the chains
--- of the edges between atoms
---
--- Both sides are compared alternative by alternative: `⊔-lub`
--- reduces the left side to each of its alternatives in turn, and
--- `⊔-ubˡ`/`⊔-ubʳ` pick out an alternative of the right side for each.
--- The right side is first grouped by skeleton, and each group that
--- varies in one slot folded into one alternative, that slot holding
--- the join of its constants (`foldSumₑ`/`foldSumᵣ`). Two atoms are
--- compared by a link, by a `top` edge to an atom the top reaches,
--- and along the chains; the unit is below an atom along a `unit`
--- edge or a chain from the constant `u`.
+-- The strength `derive`: the embedding of `Normal` along chains of atomic
+-- edges, alternative by alternative (`⊔-lub`, `⊔-ubˡ`, `⊔-ubʳ`). The right
+-- side's groups varying in one slot are folded into one (`foldSumₑ`).
 
 module Searchₑ {Θ} {Q : Hyps Θ} (es : List (EEdge Q))
                (t : Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
@@ -416,14 +373,13 @@ module Searchₑ {Θ} {Q : Hyps Θ} (es : List (EEdge Q))
   ... | just p  = just (transₑ (edgeₑ-sound top) p)
   ... | nothing = nothing
 
-  -- An atom below an atom: linked, below an atom above the top, or
-  -- reached along the atomic hypotheses
+  -- An atom below an atom: linked, below an atom the top reaches, or along
+  -- the atomic hypotheses
 
   atom≾ₑ : (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
   atom≾ₑ a b = linkₑ? a b <∣> ceilₑ b <∣> reachₑ? a b
 
-  -- The unit below an atom: when the grade's unit is least, or as the
-  -- constant atom `uₑ`
+  -- The unit below an atom: the grade's unit being least, or as the atom `uₑ`
 
   unit≾ₑ : (b : EAtom Θ) → Maybe (Q ⊩ ûₑ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
   unit≾ₑ b = min≾ₑ (Is-just? uₑ-least?) <∣> atom≾ₑ (ac uₑ) b
@@ -447,8 +403,7 @@ module Searchₑ {Θ} {Q : Hyps Θ} (es : List (EEdge Q))
                 (Is-just ·ₑ-comm?) (is-just? ·ₑ-comm?)
   open Pₑ using (Step; match; skipʳ; skipˡ; absorb; mergeʳ; mergeˡ; pick; absorbAt)
 
-  -- Each step is an entailment, one use of `monoₑ` on products read
-  -- back with a trailing unit (`⟦_⟧ᵉˢ`)
+  -- Each step is one use of `monoₑ` on products read with a trailing unit
 
   stepₑ : ∀ {as bs as' bs'} → Step as bs as' bs'
         → Q ⊩ ⟦ as' ⟧ᵉˢ ≾̂ₑ ⟦ bs' ⟧ᵉˢ → Q ⊩ ⟦ as ⟧ᵉˢ ≾̂ₑ ⟦ bs ⟧ᵉˢ
@@ -486,8 +441,7 @@ module Searchₑ {Θ} {Q : Hyps Θ} (es : List (EEdge Q))
                                (transₑ p (eqₑ (⟦⟧ᵉᵖ-≡ bs))))
   ... | nothing = nothing
 
-  -- One alternative against a whole sum: some alternative of the sum
-  -- bounds it, and the join is above that one
+  -- One alternative below a sum: below one of its alternatives
 
   altSum≾ₑ : (as : List (EAtom Θ))
            → (t : Alts (List (EAtom Θ)))
@@ -499,8 +453,7 @@ module Searchₑ {Θ} {Q : Hyps Θ} (es : List (EEdge Q))
   ...   | just q  = just (transₑ q ⊔-ubʳₑ)
   ...   | nothing = nothing
 
-  -- The whole comparison: every alternative of the left side is below
-  -- the right side, and their join is then below it too
+  -- Every alternative of the left side below the right side
 
   sum≾ₑ : (s t : Alts (List (EAtom Θ)))
         → Maybe (Q ⊩ ⟦ s ⟧ᵉᵖ⁺ ≾̂ₑ ⟦ t ⟧ᵉᵖ⁺)
@@ -509,8 +462,8 @@ module Searchₑ {Θ} {Q : Hyps Θ} (es : List (EEdge Q))
   ... | just p | just q = just (⊔-lubₑ p q)
   ... | _      | _      = nothing
 
--- The right side is compared folded: each of its groups that varies in
--- one slot is one alternative, above each of the group's members
+-- Each group of the right side varying in one slot, folded into one
+-- alternative above its members
 
 foldₑ-≡ᵖ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ ⟦ foldSumₑ (nrmₑ ε) ⟧ᵉᵖ⁺
 foldₑ-≡ᵖ ε =
@@ -528,10 +481,8 @@ deriveₑ : ∀ {Θ} → (Q : Hyps Θ) → (ε ε' : EExp Θ) → Maybe (Q ⊩ �
 deriveₑ Q = embedₑ (edgesₑ Q)
 
 ------------------------------------------------------------------------
--- Resource grades: the same, with a third kind of atom, the image
--- `∣ x ∣` of an effect variable, which is treated as a variable. The
--- unit is below it when either sort's unit is least, the latter
--- carried through the morphism by `map-mono`, as `∣ u ∣ = u`.
+-- Resource grades: the same, with the image `∣ x ∣` of an effect variable as
+-- a third atom, above the unit when either sort's unit is least (`∣ u ∣ = u`)
 
 module Searchᵣ {Θ} {Q : Hyps Θ} (es : List (REdge Q))
                (t : Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
@@ -575,8 +526,7 @@ module Searchᵣ {Θ} {Q : Hyps Θ} (es : List (REdge Q))
                 (Is-just ·ᵣ-comm?) (is-just? ·ᵣ-comm?)
   open Pᵣ using (Step; match; skipʳ; skipˡ; absorb; mergeʳ; mergeˡ; pick; absorbAt)
 
-  -- Each step is an entailment, one use of `monoᵣ` on products read
-  -- back with a trailing unit (`⟦_⟧ʳˢ`)
+  -- Each step is one use of `monoᵣ` on products read with a trailing unit
 
   stepᵣ : ∀ {as bs as' bs'} → Step as bs as' bs'
         → Q ⊩ ⟦ as' ⟧ʳˢ ≾̂ᵣ ⟦ bs' ⟧ʳˢ → Q ⊩ ⟦ as ⟧ʳˢ ≾̂ᵣ ⟦ bs ⟧ʳˢ
@@ -649,24 +599,10 @@ deriveᵣ Q = embedᵣ (edgesᵣ Q)
 ------------------------------------------------------------------------
 -- The strength `full`: the whole graph
 --
--- The edges of the graph are the `hyp` edges, on the resource side
--- the images of the chains between effect atoms of the effect graph,
--- and the factor edges of each side whose normal form is one product
--- of two or more atoms: from each atom whose co-factors are all above
--- the unit, and from the product of its constants, where there are
--- two or more and every variable is above the unit. The variables
--- above the unit are those the graph reaches from a variable-free
--- expression above the unit: from none, the graph is built again with
--- the variables so found until no variable is added, at most once per
--- variable (Kleene iteration). Where the unit is least, every atom is
--- above it.
---
--- An ordering is decided by the embedding along the chains between
--- atoms (`atomEdgesₑ`): the edges between two atoms, and through each
--- side that is not an atom, from an atom with an edge to it to each
--- atom it reaches along edges from sides that are not atoms; or, where
--- the left side is a vertex, along a chain from it to a vertex that is
--- the right side or embeds below it (`alongₑ`).
+-- Factor edges start from a product whose co-factors are above the unit; the
+-- variables above the unit are found by Kleene iteration. An ordering is
+-- decided along chains between atoms (`atomEdgesₑ`), or from a vertex along a
+-- chain to one embedding below the right side (`alongₑ`).
 
 -- Each element of a list with its membership
 
@@ -674,8 +610,7 @@ withMem : ∀ {X : Set} → (l : List X) → List (Σ[ x ∈ X ] x ∈ l)
 withMem []      = []
 withMem (x ∷ l) = (x , here refl) ∷ map (λ { (y , m) → y , there m }) (withMem l)
 
--- The first occurrence of each element, by a key, keys the same by
--- the given test counted once
+-- The first element for each key, keys compared by the given test
 
 firsts : ∀ {X K : Set} {_≅_ : K → K → Set} → Decidable _≅_ → (X → K) → List K → List X
        → List X
@@ -733,9 +668,8 @@ above?ₑ U a with Is-just? uₑ-least?
 ... | just q  = just (least q)
 ... | nothing = atomAboveₑ U a
 
--- The products that factor edges start from: one atom of a product,
--- the others above the unit, and its constants, its variables above
--- the unit
+-- The sources of factor edges: one atom of a product, the others above the
+-- unit; and its constants, its variables above the unit
 
 allAboveₑ : ∀ {Θ} {Q : Hyps Θ} → Uₑ Q → (as : List (EAtom Θ)) → Maybe (Keepₑ Q as [])
 allAboveₑ U []       = just stop
@@ -897,8 +831,7 @@ fullₑ Q ε ε' = embedₑ es ε ε' <∣> alongₑ g es ε ε'
     es = map (λ { (a , b , ch) → a , b , chainₑ-sound ch }) (atomEdgesₑ g)
 
 ------------------------------------------------------------------------
--- Resource grades: the same, the images of the chains between effect
--- atoms among the edges
+-- Resource grades: the same, with the images of effect chains as edges
 
 GEdgeᵣ : ∀ {Θ} → Hyps Θ → Set
 GEdgeᵣ {Θ} Q = Σ[ ρ ∈ RExp Θ ] Σ[ ρ' ∈ RExp Θ ] Edgeᵣ Q ρ ρ'
@@ -1098,9 +1031,9 @@ fullᵣ Q ρ ρ' = embedᵣ es ρ ρ' <∣> alongᵣ g es ρ ρ'
 
 
 ------------------------------------------------------------------------
--- The strength `closed`: both sides variable-free, compared by the
--- grade's order along a `cst` edge. An ordering that holds is entailed
--- by every set; one that fails holds at no closed instance.
+-- The strength `closed`: both sides variable-free, compared by the grade's
+-- order. One that holds is entailed by every set; one that fails holds at no
+-- closed instance.
 
 -- The two outcomes of `closed`
 
@@ -1197,12 +1130,8 @@ decideᵣ full Q ρ ρ' with closedᵣ? ρ ρ'
 ------------------------------------------------------------------------
 -- Refutation of `ρ ≾ u` by the zero-product law
 --
--- A constant atom of `ρ`'s normal form that is not itself below the
--- unit refutes every alternative it occurs in, by the zero-product
--- laws of `_≾ᵣ_`; every alternative is below the sum, so one refuted
--- alternative refutes the whole. Refutation is stable under
--- instantiation and rules out entailment from every satisfiable set;
--- it cannot be quantified over all `Q` (`hyp-derives`).
+-- A constant atom not below the unit refutes each alternative it occurs in,
+-- and one refuted alternative the sum. It needs a satisfiable set (`hyp-derives`).
 
 -- No closed instance brings the expression below the unit
 
@@ -1257,8 +1186,7 @@ refute-⊩ (δ , h) ref d = ref δ (inst-≾ᵣ (⊨⇒⊩ᴴ h) d)
 hyp-derives : ∀ {Ψ} → (ρ : RExp Ψ) → hyps [] [] ((ρ , ûᵣ) ∷ []) [] [] [] ⊩ ρ ≾̂ᵣ ûᵣ
 hyp-derives ρ = hypᵣ (here refl)
 
--- The scan is structural over the alternatives of the sum and over
--- the atoms of each
+-- The scan, over the alternatives and their atoms
 
 scan-atom : ∀ {Ψ} → (a : RAtom Ψ) → Maybe (Refutedᵤ ⟦ a ⟧ʳᵃ)
 scan-atom (rv i) = nothing
@@ -1288,15 +1216,13 @@ refute≾u ρ with scan-sum (nrmᵣ ρ)
 
 ------------------------------------------------------------------------
 -- The closed check
+-- The closed check
 --
--- `checkClosed` decides at the strength `closed` every ordering of a
--- set and every ordering between two closed sides joined by a chain
--- of `hyp` edges (`Transitive`, over `Reach`): it drops each one that
--- holds and fails on one that does not. A var-rule disjunction whose
--- grade has a value is decided against the unit in the same way: it
--- is dropped when the ordering holds, and the check fails when the
--- ordering does not hold and the type is refuted eternal (`etDec`).
--- Other atoms are kept unchanged.
+-- `checkClosed` decides at `closed` the orderings of a set and those between
+-- closed sides joined by `hyp` edges (`Transitive`), dropping those that hold
+-- and failing on one that does not. A var-rule disjunction whose grade has a
+-- value is dropped when below the unit, and fails when its type is refuted
+-- eternal (`etDec`).
 
 -- A closed ordering that fails
 
@@ -1393,8 +1319,8 @@ falseᵉ : ∀ {Θ} {l : List (EExp Θ × EExp Θ)} → Falseᵉ l → (δ : Sub
        → (∀ {ε ε'} → (ε , ε') ∈ l → ∅ᴴ ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ) → ⊥
 falseᵉ (ε , ε' , m , n) δ k = n δ (k m)
 
--- Var-rule disjunctions: one whose grade has a value above the unit,
--- at a type refuted eternal, fails
+-- A var-rule disjunction whose grade has a value above the unit, at a type
+-- refuted eternal, fails
 
 Falseᵈ : ∀ {Θ} → List (OVType Θ × RExp Θ) → Set
 Falseᵈ {Θ} l = Σ[ A ∈ OVType Θ ] Σ[ ρ ∈ RExp Θ ]
@@ -1449,11 +1375,8 @@ falseᵈ (A , ρ , m , e , n) δ k with VarOK-∅ (k m)
 ------------------------------------------------------------------------
 -- The orderings a list entails by transitivity
 --
--- The sides of the orderings are the vertices, and the edges are the
--- orderings, the `hyp` edges of the hypothesis graph, and the sameness
--- of sides, closed by `Reach`. A pair of closed sides joined by a
--- chain of two or more edges is entailed; a shorter chain is an
--- ordering of the list, a sameness, or reflexive.
+-- Pairs of closed sides joined by a chain of two or more edges: the
+-- orderings, the `hyp` edges and sameness, closed by `Reach`.
 
 module Transitive {X : Set} {_≅_ : X → X → Set} (_≟_ : Decidable _≅_) (closed? : X → 𝔹)
                   (l : List (X × X)) where
@@ -1662,11 +1585,8 @@ checkClosed-fail Q () (δ , h₀) | inj₂ _ | inj₂ _ | inj₂ _
 ------------------------------------------------------------------------
 -- Failing chains of the whole graph
 --
--- A chain of the whole graph, factor edges included, from a
--- variable-free vertex to a variable-free vertex it is not below at
--- the strength `closed` leaves `Q` unsatisfiable: the chain is a
--- derivation, and at a closed instance it compares the two values.
--- Each source of an edge with a value is followed along the graph.
+-- A chain, factor edges included, from a variable-free vertex to one it is
+-- not below at `closed` leaves `Q` unsatisfiable.
 
 -- The first vertex reached that the source is not below
 

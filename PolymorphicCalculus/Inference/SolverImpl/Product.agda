@@ -1,40 +1,22 @@
 ---------------------------------------------------------------------
 -- Sum-of-products normal form of open grade expressions           --
 --                                                                 --
--- A grade expression is flattened to a sum of alternatives, each  --
--- a product of atoms: constants, variables, and images of effect  --
--- variables under the morphism. Adjacent constants are            --
--- multiplied, units are dropped, a product is distributed over a  --
--- join, and repeated alternatives are merged. A sum with the top  --
--- among its alternatives is the top, `⊤` absorbing the join. A    --
--- sum is nonempty, the join having no unit; a product may be      --
--- empty, and is then the unit itself. Where the hints declare     --
--- `_·_` commutative, each product is then put in one order, its   --
--- constants multiplied into one in front of its variables, these  --
--- by index. The normal form is certified by `≡̂ᵣ`/`≡̂ₑ`, so one     --
--- may compare alternative by alternative and atom by atom, or     --
--- read the sum back as an expression.                             --
+-- An expression is flattened to a nonempty sum of products of     --
+-- atoms (constants, variables, images of effect variables):       --
+-- constants multiplied, units dropped, products distributed over  --
+-- joins, repeats merged, and a sum with a top alternative made    --
+-- the top. Where the hints declare `_·_` commutative, each        --
+-- product is put in one order.                                    --
 --                                                                 --
--- Two read-backs at each layer: `⟦_⟧ʳˢ`/`⟦_⟧ʳˢ⁺` end every        --
--- product in the unit, which makes the certificates structural;   --
--- `⟦_⟧ʳᵖ`/`⟦_⟧ʳᵖ⁺` drop that trailing unit and collapse a lone    --
--- alternative, and are what `canonᵣ`/`canonₑ` return.             --
---                                                                 --
--- `foldSumₑ`/`foldSumᵣ` group and fold a sum without pruning it;  --
--- `SolverImpl.Entail` compares against the folded right side.     --
---                                                                 --
--- `Grouping` groups the alternatives by skeleton, lists the       --
--- groups in skeleton order, folds a group that varies in one slot --
--- into one alternative whose slot is a join of constants, and,    --
--- given a decided order that the join absorbs, drops every        --
--- alternative below another. `SolverImpl.Canon` instantiates it   --
--- with the decider of `SolverImpl.Entail` to form `canonᵣ` and    --
--- `canonₑ`. Each step is certified by a single `≡̂ᵣ`/`≡̂ₑ`.         --
+-- `⟦_⟧ʳˢ` reads a product back ending in the unit, which keeps    --
+-- the certificates structural; `⟦_⟧ʳᵖ` drops that unit.           --
+-- `Grouping` groups alternatives by skeleton, folds a group       --
+-- varying in one slot, and prunes alternatives below others       --
+-- (instantiated in `SolverImpl.Canon`).                           --
 --                                                                 --
 -- Contract. An expression is convertible to its normal form       --
 -- (`nrmᵣ-≡`, `nrmₑ-≡`) and to its fold (`foldSumᵣ-≡`,             --
--- `foldSumₑ-≡`). That two convertible expressions get one normal  --
--- form is not claimed.                                            --
+-- `foldSumₑ-≡`); uniqueness of normal forms is not claimed.       --
 ---------------------------------------------------------------------
 
 open import Algebra.Definitions using (Commutative)
@@ -73,8 +55,7 @@ open import PolymorphicCalculus.Hypotheses    S
 ------------------------------------------------------------------
 -- Alternatives
 --
--- The alternatives of a sum, a nonempty list: the join is a least
--- upper bound of two, and has no unit to stand for none.
+-- A nonempty list: the join is a least upper bound, with no unit
 
 infixr 5 _∷⁺_
 
@@ -117,24 +98,11 @@ sortBy _<_ (a ∷ as) = insertBy _<_ a (sortBy _<_ as)
 ------------------------------------------------------------------
 -- Canonical sums
 --
--- A product in normal form is read as its skeleton, the sequence of
--- its variable atoms, with a constant slot before, between and after
--- them, an empty slot being the unit. The alternatives of a sum are
--- grouped by skeleton, and the groups ordered by it. A group whose
--- alternatives agree in every slot but one is folded into a single
--- alternative, that slot holding the join of their constants: the two
--- distributivity laws bring the join into the slot, and a join of
--- constants is a constant. A group that varies in more than one slot
--- is kept as it is, without repeats and in the order its alternatives
--- arrive.
---
--- The grouping never compares constants: two in the same slot are
--- joined. Skeletons are ordered syntactically, lexicographically from
--- an order on variable atoms. Comparing alternatives by the grade
--- order is left to `Pruning`, which is given the order.
---
--- Stated over any carrier with the laws it uses, and instantiated
--- below at both sorts.
+-- A product is read as its skeleton, its variable atoms, with a constant slot
+-- before, between and after them. Alternatives are grouped and ordered by
+-- skeleton; a group varying in one slot is folded, that slot holding the join
+-- of their constants (by distributivity). Constants are never compared here;
+-- the grade order is left to `Pruning`.
 
 module Grouping
   {X K V : Set} (_≈_ : X → X → Set)
@@ -194,10 +162,8 @@ module Grouping
   ⧺-≈ (alt P)  t = ≈-refl
   ⧺-≈ (P ∷⁺ s) t = ≈-trans (∨-cong ≈-refl (⧺-≈ s t)) (≈-sym ∨-assoc)
 
-  -- Folding a group. With an empty skeleton the group is a join of
-  -- constants. Otherwise either every alternative has the same first
-  -- slot, and the rest of the slots are folded, or they all have the
-  -- same remaining slots, and the first slot is the join of theirs.
+  -- Folding a group: either the first slots agree and the rest are folded, or
+  -- the rest agree and the first slot is the join of theirs
 
   joinᴷ : Alts (Slots []) → K
   joinᴷ (alt ⌜ c ⌝)  = c
@@ -289,8 +255,7 @@ module Grouping
   _<ˢ_ : List V → List V → 𝔹
   _<ˢ_ = lex _≟ⱽ_ _<ⱽ_
 
-  -- Inserting an alternative into its group, or a new group into its
-  -- place
+  -- Inserting an alternative into its group, or a new group into its place
 
   insert : Prod → Alts Group → Alts Group
   insert (vs , s) (alt (ws , g)) with vs ≟ˢ ws
@@ -326,8 +291,7 @@ module Grouping
   groups-≈ (alt P)   = ≈-refl
   groups-≈ (P ∷⁺ ps) = ≈-trans (insert-≈ P (groups ps)) (∨-cong ≈-refl (groups-≈ ps))
 
-  -- Each group folded where it can be, and the groups read back as one
-  -- sum
+  -- Each group folded where it can be, the groups read back as one sum
 
   foldGroup : Group → Group
   foldGroup (vs , g) with fold? g
@@ -370,27 +334,10 @@ module Grouping
   ----------------------------------------------------------------
   -- Pruning
   --
-  -- Given an order whose every instance a join absorbs, and a partial
-  -- decision of it on products, an alternative below another is
-  -- dropped. Two alternatives each below the other are equal as
-  -- grades, and the one listed first is kept, so on a grouped sum the
-  -- tie goes to the smaller skeleton, and within a group to the
-  -- earlier arrival.
-  --
-  -- The sum is pruned from the right: an alternative strictly below
-  -- one kept further on is dropped, and otherwise it is kept and every
-  -- alternative kept further on that is below it, ties included, is
-  -- dropped. Where the decided order is transitive, what remains is
-  -- the set of alternatives not below any other, with ties broken as
-  -- above, whatever order they are examined in. Canonicity is
-  -- relative to the decision: an ordering it does not find prunes
-  -- nothing.
-  --
-  -- Pruning keeps the skeleton order. It can make a group foldable, by
-  -- removing the alternatives that made it vary in a second slot, and a
-  -- fold can expose a new ordering. The fold and the pruning are
-  -- repeated until the sum stops shrinking, in at most as many rounds
-  -- as there are alternatives.
+  -- Given an order a join absorbs, partially decided on products, an
+  -- alternative below another is dropped; of two equal ones the first listed
+  -- is kept. Canonicity is relative to the decision. Fold and pruning are
+  -- repeated until the sum stops shrinking.
 
   module Pruning
     (_≲_    : X → X → Set)
@@ -471,8 +418,7 @@ module Grouping
     prune-≈ (alt P)  = ≈-refl
     prune-≈ (P ∷⁺ s) = ≈-trans (place-≈ P (prune s)) (∨-cong ≈-refl (prune-≈ s))
 
-    -- One round folds and orders, then prunes; rounds are repeated
-    -- while the sum shrinks
+    -- One round folds and orders, then prunes, repeated while the sum shrinks
 
     size : Alts Prod → ℕ
     size (alt _)  = 1
@@ -505,8 +451,8 @@ module Grouping
     ... | true  = ≈-trans (rounds-≈ n qs) p
     ... | false = p
 
-    -- A round that shrinks the sum removes an alternative, so as many
-    -- rounds as there are alternatives reach one that does not
+    -- A round that shrinks the sum removes an alternative, so one round per
+    -- alternative reaches the fixed point
 
     maximal : Alts Prod → Alts Prod
     maximal ps = rounds (size ps) ps
@@ -592,8 +538,7 @@ appₑ-≡ (a ∷ as) bs =
 ⧺ₑ-≡ (P ∷⁺ s) t =
   ≡̂ₑ-trans (≡̂ₑ-cong-⊔ ≡̂ₑ-refl (⧺ₑ-≡ s t)) (≡̂ₑ-sym ≡̂ₑ-assoc-⊔)
 
--- Multiplying sums: every alternative of the one against every
--- alternative of the other, which is where distributivity is spent
+-- Multiplying sums, every alternative against every other: distributivity
 
 mul1ₑ : ∀ {Θ} → List (EAtom Θ) → Alts (List (EAtom Θ)) → Alts (List (EAtom Θ))
 mul1ₑ P (alt Q)  = alt (appₑ P Q)
@@ -617,8 +562,7 @@ mulₑ-≡ (P ∷⁺ s) t =
   ≡̂ₑ-trans (⧺ₑ-≡ (mul1ₑ P t) (mulₑ s t))
   (≡̂ₑ-trans (≡̂ₑ-cong-⊔ (mul1ₑ-≡ P t) (mulₑ-≡ s t)) (≡̂ₑ-sym ≡̂ₑ-distribʳ-⊔))
 
--- Merging repeated alternatives, which the join's idempotence,
--- commutativity and associativity licence; a repeat is absorbed by
+-- Merging repeated alternatives, by the join's laws; a repeat is absorbed by
 -- its last occurrence
 
 -- Atoms and products are compared by the sameness of their read-backs
@@ -629,8 +573,7 @@ a ≟ᵃₑ b = ⟦ a ⟧ᵉᵃ ≟ᵉ ⟦ b ⟧ᵉᵃ
 _≟ᵖₑ_ : ∀ {Θ} → (P Q : List (EAtom Θ)) → Dec (⟦ P ⟧ᵉˢ ≅ᵉ ⟦ Q ⟧ᵉˢ)
 P ≟ᵖₑ Q = ⟦ P ⟧ᵉˢ ≟ᵉ ⟦ Q ⟧ᵉˢ
 
--- An alternative already in the sum is absorbed by it, which keeps
--- the order of the remaining alternatives
+-- An alternative already in the sum is absorbed, the order kept
 
 withinₑ? : ∀ {Θ} → (P : List (EAtom Θ)) → (s : Alts (List (EAtom Θ)))
          → Maybe (⟦ P ⟧ᵉˢ ⊔̂ₑ ⟦ s ⟧ᵉˢ⁺ ≡̂ₑ ⟦ s ⟧ᵉˢ⁺)
@@ -668,9 +611,8 @@ nubₑ-≡ (alt P)  = ≡̂ₑ-refl
 nubₑ-≡ (P ∷⁺ s) =
   ≡̂ₑ-trans (nub1ₑ-≡ P (nubₑ s)) (≡̂ₑ-cong-⊔ ≡̂ₑ-refl (nubₑ-≡ s))
 
--- An alternative that is the top: the constant `⊤`, or the empty
--- product when the unit is the top, `consₑ` dropping a constant that
--- is the unit
+-- An alternative that is the top: `⊤`, or the empty product when the unit is
+-- the top
 
 isTopₑ? : ∀ {Θ} → (P : List (EAtom Θ)) → Maybe (⟦ P ⟧ᵉᵖ ≡̂ₑ econst ⊤ₑ)
 isTopₑ? [] with uₑ ≃ₑ? ⊤ₑ
@@ -841,8 +783,7 @@ a ≟ᵃᵣ b = ⟦ a ⟧ʳᵃ ≟ʳ ⟦ b ⟧ʳᵃ
 _≟ᵖᵣ_ : ∀ {Θ} → (P Q : List (RAtom Θ)) → Dec (⟦ P ⟧ʳˢ ≅ʳ ⟦ Q ⟧ʳˢ)
 P ≟ᵖᵣ Q = ⟦ P ⟧ʳˢ ≟ʳ ⟦ Q ⟧ʳˢ
 
--- An alternative already in the sum is absorbed by it, which keeps
--- the order of the remaining alternatives
+-- An alternative already in the sum is absorbed, the order kept
 
 withinᵣ? : ∀ {Θ} → (P : List (RAtom Θ)) → (s : Alts (List (RAtom Θ)))
          → Maybe (⟦ P ⟧ʳˢ ⊔̂ᵣ ⟦ s ⟧ʳˢ⁺ ≡̂ᵣ ⟦ s ⟧ʳˢ⁺)
@@ -916,8 +857,7 @@ absorbᵣ-≡ s with topSumᵣ? s
       ≡̂ᵣ-trans (consᵣ-≡ (rc ⊤ᵣ) []) (≡̂ᵣ-trans ≡̂ᵣ-identityʳ (≡̂ᵣ-sym q))
 ... | nothing = ≡̂ᵣ-refl
 
--- The sum of `∣ ε ∣̂ᵉ`, read off `ε` directly: the morphism is a
--- monoid map, so it passes through a product and a join alike.
+-- The sum of `∣ ε ∣̂ᵉ`, read off `ε`: the morphism is a monoid map
 
 flatᵐ : ∀ {Θ} → EExp Θ → Alts (List (RAtom Θ))
 flatᵐ (evar i)   = alt (rm i ∷ [])
@@ -968,11 +908,8 @@ flatᵣ-≡ ∣ ε ∣̂ᵉ     = flatᵐ-≡ ε
 ------------------------------------------------------------------
 -- Commuting products
 --
--- Where the hints declare `_·_` commutative (`·ₑ-comm?`/`·ᵣ-comm?`),
--- each product of the flattening is put in one order: the product of
--- its constants, then its variables by index. Products that differ
--- only in the order of their factors then coincide, and repeats are
--- merged again. Elsewhere the flattening is the normal form.
+-- Where the hints declare `_·_` commutative (`·ₑ-comm?`, `·ᵣ-comm?`), each
+-- product is its constant followed by its variables by index; repeats merged
 
 -- The constant of an effect product, and its variables
 
@@ -1047,8 +984,8 @@ commSumₑ-≡ (just c) eq s =
   ≡̂ₑ-trans (nubₑ-≡ (mapᴬ commuteₑ s)) (Commuteₑ.commutes-≡ (≡-Is-just eq) s)
 commSumₑ-≡ nothing  _  s = ≡̂ₑ-refl
 
--- The constant of a resource product, and its variables: resource
--- variables, then images of effect variables, each by index
+-- The constant of a resource product, and its variables: resource variables,
+-- then images of effect variables, each by index
 
 constᵣ : ∀ {Θ} → List (RAtom Θ) → R
 constᵣ []          = uᵣ
@@ -1124,8 +1061,7 @@ commSumᵣ-≡ (just c) eq s =
   ≡̂ᵣ-trans (nubᵣ-≡ (mapᴬ commuteᵣ s)) (Commuteᵣ.commutes-≡ (≡-Is-just eq) s)
 commSumᵣ-≡ nothing  _  s = ≡̂ᵣ-refl
 
--- The normal forms: the flattening, its products reordered where the
--- grade commutes
+-- The normal forms: the flattening, products reordered where `_·_` commutes
 
 nrmₑ : ∀ {Θ} → EExp Θ → Alts (List (EAtom Θ))
 nrmₑ ε = commSumₑ ·ₑ-comm? (flatₑ ε)
@@ -1139,8 +1075,7 @@ nrmᵣ ρ = commSumᵣ ·ᵣ-comm? (flatᵣ ρ)
 nrmᵣ-≡ : ∀ {Θ} → (ρ : RExp Θ) → ρ ≡̂ᵣ ⟦ nrmᵣ ρ ⟧ʳˢ⁺
 nrmᵣ-≡ ρ = ≡̂ᵣ-trans (flatᵣ-≡ ρ) (≡̂ᵣ-sym (commSumᵣ-≡ ·ᵣ-comm? refl (flatᵣ ρ)))
 
--- The normal form read back without trailing units, which is what
--- `deriveₑ`/`deriveᵣ` of `Entail` compare, alternative by alternative
+-- The normal form read back without trailing units, as `Entail` compares it
 
 nrmₑ-≡ᵖ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ ⟦ nrmₑ ε ⟧ᵉᵖ⁺
 nrmₑ-≡ᵖ ε = ≡̂ₑ-trans (nrmₑ-≡ ε) (⟦⟧ᵉᵖ⁺-≡ (nrmₑ ε))
@@ -1151,12 +1086,8 @@ nrmᵣ-≡ᵖ ρ = ≡̂ᵣ-trans (nrmᵣ-≡ ρ) (⟦⟧ʳᵖ⁺-≡ (nrmᵣ ρ
 ------------------------------------------------------------------
 -- Canonical forms
 --
--- `Grouping` at both sorts, and the passage to and from its products.
--- A product of `nrmₑ`/`nrmᵣ` is read into its skeleton and slots, the
--- constants of a run multiplied into one slot, and read back through
--- `consₑ`/`consᵣ`, which drops a slot holding the unit. The canonical
--- forms themselves need the decider, and are assembled in
--- `SolverImpl.Canon`.
+-- `Grouping` at both sorts: a product of `nrmₑ`/`nrmᵣ` read into skeleton and
+-- slots, and back through `consₑ`/`consᵣ`; the canonical forms are in `Canon`
 
 -- Constants are compared by the grade's equivalence
 
@@ -1232,8 +1163,8 @@ fromProdsₑ-≡ : ∀ {Θ} → (ps : Alts (Gₑ.Prod {Θ})) → ⟦ fromProds�
 fromProdsₑ-≡ (alt P)   = atomsₑ-≡ (proj₂ P)
 fromProdsₑ-≡ (P ∷⁺ ps) = ≡̂ₑ-cong-⊔ (atomsₑ-≡ (proj₂ P)) (fromProdsₑ-≡ ps)
 
--- The variable atoms of a resource product: resource variables, then
--- images of effect variables, each ordered by index
+-- The variable atoms of a resource product: resource variables, then images of
+-- effect variables, each by index
 
 data RVAtom (Θ : Scope) : Set where
   vr : RVar Θ → RVAtom Θ
@@ -1321,8 +1252,7 @@ fromProdsᵣ-≡ : ∀ {Θ} → (ps : Alts (Gᵣ.Prod {Θ})) → ⟦ fromProds�
 fromProdsᵣ-≡ (alt P)   = atomsᵣ-≡ (proj₂ P)
 fromProdsᵣ-≡ (P ∷⁺ ps) = ≡̂ᵣ-cong-⊔ (atomsᵣ-≡ (proj₂ P)) (fromProdsᵣ-≡ ps)
 
--- A sum grouped by skeleton, each group that varies in one slot folded
--- into one alternative; no alternative is dropped
+-- A sum grouped by skeleton, each group varying in one slot folded; nothing dropped
 
 foldSumₑ : ∀ {Θ} → Alts (List (EAtom Θ)) → Alts (List (EAtom Θ))
 foldSumₑ s = fromProdsₑ (Gₑ.canonical (toProdsₑ s))
@@ -1341,10 +1271,8 @@ foldSumᵣ-≡ s =
   (≡̂ᵣ-trans (Gᵣ.canonical-≈ (toProdsᵣ s)) (toProdsᵣ-≡ s))
 
 ------------------------------------------------------------------
--- The skeletons of an expression's alternatives, read off its
--- syntax, and the order of grade orderings by the skeletons of their
--- two sides. On a canonical expression they are the skeletons of its
--- groups, in order.
+-- The skeletons of an expression's alternatives, read off its syntax, and the
+-- order of orderings by the skeletons of their sides
 
 varsₑ : ∀ {Θ} → EExp Θ → List (EVar Θ)
 varsₑ (evar i)   = i ∷ []
