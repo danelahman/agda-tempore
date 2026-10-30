@@ -1,7 +1,7 @@
 ------------------------------------------------------------------
 -- Programs and their erasure                                   --
 --                                                              --
--- A program is a sequence of top-level definitions `f = V`,    --
+-- A program is a sequence of definitions `f = V`,              --
 -- the first outermost, each a closed raw value naming the      --
 -- definitions before it by their positions. Its definitions    --
 -- have closed run-time values, the uses of earlier definitions --

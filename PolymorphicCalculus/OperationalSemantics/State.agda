@@ -2,16 +2,15 @@
 -- States and state typings                                     --
 --                                                              --
 -- A state `S ::= ∅ | S ⟨ τ ⟩ₛ | S ∷ₛ V` records the passages   --
--- of time and the resources of a run, without grades;          --
--- `State n` has `n` resources, the variables of the run's      --
--- term. A state typing `Σ` of `S` gives each resource a type   --
--- `[ ρ ] X`; the context of the state is `ctx Σ`, and `Σ`      --
--- types `S` (`Types Σ`) when each resource `V` has             --
--- `ctx Σ' ⟨ ρ ⟩ ⊢ V : X` for the state typing `Σ'` before it.  --
+-- of time and the resources of a run, without grades; `State   --
+-- n` has `n` resources. A state typing `Σ` gives each resource --
+-- a type `[ ρ ] X`; `Σ` types `S` (`Types Σ`) when each        --
+-- resource `V` has type `X` in the context `ctx Σ'` of the     --
+-- state typing before it, behind `ρ`.                          --
 --                                                              --
--- `S ≤ₛ S'` when `S'` extends `S` by passages and resources;   --
--- `δₛ` is the grade of the passages added, and `Σ ⊆[ e ] Σ'`   --
--- extends a state typing along `e`.                            --
+-- `S ≤ₛ S'` when `S'` extends `S`; `δₛ` is the grade of the    --
+-- passages added, and `Σ ⊆[ e ] Σ'` extends a state typing     --
+-- along `e`.                                                   --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)

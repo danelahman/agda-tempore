@@ -1,12 +1,11 @@
 ------------------------------------------------------------------------
--- Overview of the main definitions and results of the monomorphic
--- calculus
+-- Overview of the monomorphic calculus
 --
--- One entry per construct, rule, definition, lemma and theorem, named
--- by its title: the monomorphic calculus, its operational semantics,
--- type safety and termination, its equational theory, denotational
--- semantics and adequacy. The items not yet formalised are listed at
--- the end.
+-- One entry per main definition, rule, lemma and theorem, under its
+-- title: the calculus, its operational semantics and type safety, the
+-- equational theory, the denotational semantics and adequacy. The items
+-- not yet formalised are listed at the end. Check it with
+-- `agda MonomorphicCalculus/Results.agda`.
 --
 -- The calculus is parameterised by a `LanguageSpec` (a grade system, base
 -- types and an operation signature).

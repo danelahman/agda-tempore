@@ -1,50 +1,32 @@
 ------------------------------------------------------------------
 -- Hypotheses and entailment of the polymorphic calculus        --
 --                                                              --
--- A hypothesis set `Hyps Θ` consists of eternality atoms on    --
--- type variables, subtyping atoms between type variables,      --
--- orderings between open grade expressions, var-rule           --
--- disjunctions and quantified orderings (`Quantified`).        --
+-- A hypothesis set `Hyps Θ` holds eternality atoms and         --
+-- subtyping atoms on type variables, orderings between open    --
+-- grade expressions, var-rule disjunctions and quantified      --
+-- orderings (`Quantified`).                                    --
 --                                                              --
--- Grade entailment (`_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`) is semantic            --
--- consequence in the grade system: an ordering is entailed     --
--- when it holds by value at every closed instance satisfying   --
--- the grade part of the set (`_⊨ᵍ_`), its orderings, and its   --
--- quantified orderings at every closed instance of their       --
--- rigids. Convertibility (`_≡̂ᵣ_`, `_≡̂ₑ_`) is entailment from   --
--- no hypotheses both ways. The rules of grade entailment are   --
--- its properties: the laws of the grade algebras, the          --
--- zero-product laws, the properties a grade may have (a least  --
--- unit, commutativity, closures), each taking the property as  --
--- an argument, a quantified hypothesis at any instance         --
--- of its rigids (`instᵣ`, `instₑ`: rule Inst), and a closed    --
--- quantified ordering entailed by no hypotheses, at any        --
--- instance of its rigids (`factᵣ`, `factₑ`: rule Truth). The   --
--- solver decides grade entailment soundly and incompletely.    --
+-- Grade entailment (`_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`) is semantic          --
+-- consequence in the grade system: an ordering holds by value  --
+-- at every closed instance satisfying the grade part of the    --
+-- set (`_⊨ᵍ_`). Convertibility (`_≡̂ᵣ_`, `_≡̂ₑ_`) is           --
+-- entailment both ways from no hypotheses. The rules of grade  --
+-- entailment are its properties: the laws of the grade         --
+-- algebras and the zero-product laws, instances of quantified  --
+-- hypotheses (`instᵣ`, `instₑ`: rule Inst) and of closed       --
+-- orderings valid at no hypotheses (`factᵣ`, `factₑ`: rule     --
+-- Truth).                                                      --
 --                                                              --
 -- Eternality, subtyping and the var-rule disjunction (`_⊩ᴱ_`,  --
--- `_∣_<:̂ᵛ_`, `VarOK`) are inductive, with premises in grade    --
--- entailment. A set entails a quantified ordering when it      --
--- entails its orderings at fresh rigids (`_⊩ᴼ_[_]`: rule Gen), --
--- which is semantic consequence for quantified orderings       --
--- (`⊩ᴼ⇒⊨ᴼ`, `⊨ᴼ⇒⊩ᴼ`).                                          --
--- Substitution is stable along an instance map (`_⊩ᴵ_[_]`, a   --
--- quantified hypothesis at every instance of its rigids),      --
--- which entailment gives (`⊩ᴴ⇒ᴵ`); an instance map carries     --
--- closed instances satisfying the grades of its source back    --
--- (`⊨ᵍ-⨟`).                                                    --
---                                                              --
--- The module also defines convertibility of open types         --
--- (`_≡̂ᵛ_`), and open subtyping with its inversion and          --
--- stability lemmas, which `VarOK` uses: it is closed under     --
--- subtyping in both directions, so under equivalence           --
--- (`VarOK-≃`) and convertibility (`VarOK-≡̂`).                  --
+-- `_∣_<:̂ᵛ_`, `VarOK`) are inductive over grade entailment. A  --
+-- quantified ordering is entailed at fresh rigids (`_⊩ᴼ_[_]`:  --
+-- rule Gen), which is semantic consequence (`⊩ᴼ⇒⊨ᴼ`, `⊨ᴼ⇒⊩ᴼ`). --
+-- Entailment is stable under substitution along an instance    --
+-- map (`_⊩ᴵ_[_]`).                                             --
 --                                                              --
 -- Judgements under a hypothesis set are the constrained types  --
--- of HM(X) (Odersky, Sulzmann and Wehr, 1999) and the          --
--- qualified types of Jones (1994); the set plays the role of   --
--- the given constraints of OutsideIn(X) (Vytiniotis et al.,    --
--- JFP 2011).                                                   --
+-- of HM(X) (Odersky, Sulzmann and Wehr); the set plays the     --
+-- role of the givens of OutsideIn(X).                          --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_; map; _++_)
@@ -203,9 +185,8 @@ record _⊨ᵒ_ {Ψ : Scope} (δ : Subst Ψ ∅ˢ) (o : Ords Ψ) : Set where
 open _⊨ᵒ_ public
 
 -- A closed instance satisfies the grade part of a set when its
--- orderings hold by value, and each quantified ordering at every closed
--- instance of its rigids; every grade is the value of a closed
--- expression
+-- orderings hold by value and its quantified orderings at every instance
+-- of their rigids
 
 record _⊨ᵍ_ {Θ : Scope} (δ : Subst Θ ∅ˢ) (Q : Hyps Θ) : Set where
   constructor mk⊨ᵍ
@@ -257,8 +238,7 @@ record _≡̂ₑ_ {Θ : Scope} (ε ε' : EExp Θ) : Set where
 open _≡̂ₑ_ public
 
 -- Convertible expressions have equivalent values at every closed
--- instance, and expressions with equivalent values there are
--- convertible
+-- instance, and conversely
 
 ≡̂ᵣ-run : ∀ {Θ} {ρ ρ' : RExp Θ} → ρ ≡̂ᵣ ρ' → (δ : Subst Θ ∅ˢ)
        → valʳ (ρ [ δ ]ʳ) ≃ᵣ valʳ (ρ' [ δ ]ʳ)
@@ -276,11 +256,8 @@ open _≡̂ₑ_ public
        → ((δ : Subst Θ ∅ˢ) → valᵉ (ε [ δ ]ᵉ) ≃ₑ valᵉ (ε' [ δ ]ᵉ)) → ε ≡̂ₑ ε'
 ≡̂ₑ-val f = mk≡̂ₑ (semₑ λ δ _ → proj₁ (f δ)) (semₑ λ δ _ → proj₂ (f δ))
 
--- Properties of convertibility: an equivalence and a congruence, the
--- monoid laws, commutativity of multiplication where the grade is
--- commutative, commutativity of the join, distributivity of multiplication over
--- the join, the constants' equivalence and arithmetic, `∣_∣̂ᵉ` a monoid
--- morphism, and absorption of a join by an upper bound
+-- Properties of convertibility: a congruence, the monoid, join and
+-- distributivity laws, the constants' arithmetic, `∣_∣̂ᵉ` a monoid morphism
 
 module _ {Θ : Scope} where
 
@@ -396,13 +373,9 @@ module _ {Θ : Scope} where
   ≡̂ₑ-absorb : ∀ {ε ε' : EExp Θ} → ∅ᴴ ⊩ ε ≾̂ₑ ε' → ε ⊔̂ₑ ε' ≡̂ₑ ε'
   ≡̂ₑ-absorb p = ≡̂ₑ-val λ δ → ⊔ₑ-absorb (runₑ p δ ⊨ᵍ-∅)
 
--- Properties of entailed ordering: the hypotheses, the constants'
--- ordering, convertibility, a preorder, monotonicity of the formers,
--- the join a least upper bound, the top, the unit least where it is
--- least, the zero-product laws, the closure of a grade where it has
--- one, and the instances of quantified
--- hypotheses (rule Inst) and of closed orderings valid at no
--- hypotheses (rule Truth)
+-- Properties of entailed ordering: hypotheses, constants, convertibility,
+-- preorder, monotonicity, joins, top, zero-product laws, quantified
+-- hypotheses (rule Inst) and closed orderings (rule Truth)
 
 module _ {Θ : Scope} {Q : Hyps Θ} where
 
@@ -601,10 +574,8 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
            → (ε₁ ⊔̂ₑ ε₂) ⊔̂ₑ ε₃ ≡̂ₑ ε₁ ⊔̂ₑ (ε₂ ⊔̂ₑ ε₃)
 ≡̂ₑ-assoc-⊔ = ≡̂ₑ-val λ _ → ⊔ₑ-assoc _ _ _
 
--- Eternality: one rule for each eternal type former, plus rules for the
--- eternality atoms of the hypothesis set and for transfer along an
--- assumed subtyping in both directions; no rule for `_⇒_`, `[_]_` and
--- `_⇛_`.
+-- Eternality: a rule for each eternal type former, for the eternality
+-- atoms of the set, and for transfer along an assumed subtyping
 
 infix 4 _⊩ᴱ_
 
@@ -717,11 +688,9 @@ data _≡̂ᶜ_ {Θ} where
 ⊩ᴱ-≡̂ (|List|≡̂ p) (|List|ₑ et) = |List|ₑ (⊩ᴱ-≡̂ p et)
 ⊩ᴱ-≡̂ Empty≡̂     et           = et
 
--- Shape-preserving subtyping of open value and computation types: one
--- constructor per pair of matching type formers, no `refl` or `trans`
--- constructor. The grade slots carry entailments from `Q`, and an
--- unknown head is related only by an assumed subtyping. The relation is
--- proof-relevant, as entailment is.
+-- Shape-preserving subtyping of open types: a constructor per pair of
+-- matching formers, grade slots entailed from `Q`, a type variable
+-- related only by an assumed subtyping
 
 infix  4  _∣_<:̂ᵛ_ _∣_<:̂ᶜ_
 infix  37 [_]ₛ_
@@ -842,12 +811,10 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-eternalʳ (|List|ₛ p)  (|List|ₑ et) = |List|ₑ (<:̂ᵛ-eternalʳ p et)
 <:̂ᵛ-eternalʳ Emptyₛ       et          = et
 
--- The side condition of the `var` rule: eternality is undecided at open
--- types, so the condition is a judgement `VarOK Q A ρ`, meaning that `A` is eternal or `ρ ≾ u` at every
--- instance. It is met by eternality, by the ordering, or by a `disj`
--- hypothesis at a grade above; and it is closed under subtyping in both
--- directions, under the type formers that preserve eternality, and
--- under joins of grades, each up to lowering the grade.
+-- The side condition of the `var` rule, `VarOK Q A ρ`: `A` is eternal or
+-- `ρ ≾ u` at every instance. Met by eternality, by the ordering, or by a
+-- `disj` hypothesis at a grade above; closed under subtyping, the
+-- eternality-preserving formers and joins, up to lowering the grade
 
 data VarOK {Θ : Scope} (Q : Hyps Θ) : OVType Θ → RExp Θ → Set where
   et-ok     : ∀ {A ρ} → Q ⊩ᴱ A → VarOK Q A ρ
@@ -1061,10 +1028,8 @@ Q ⊩ᴼ O [ δ ] = wkᵉⁿ-H (rigids O) Q ⊩ᵒ body O [ δ ↑ᵉⁿ rigids 
 ⊩ᴼ-subst⁻ {σ = σ} {δ} (qord l k o) h =
   ⊩ᵒ-subst⁻ (⊩ᵒ-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉⁿ σ δ k)) h)
 
--- `Q' ⊩ᴴ Q [ σ ]` says `Q'` entails every hypothesis of `Q` transported
--- along `σ`, a quantified one at fresh rigids (`_⊩ᴼ_[_]`); there is no
--- syntactic action of a substitution on `Hyps`, as `ets` and `subᵥ`
--- hold variables, whose images under `σ` are open types.
+-- `Q' ⊩ᴴ Q [ σ ]`: `Q'` entails every hypothesis of `Q` transported
+-- along `σ`, a quantified one at fresh rigids (`_⊩ᴼ_[_]`)
 
 infix 4 _⊩ᴴ_[_] _⊩ᴴ_ _⊩ᴵ_[_] _↪ᴴ_[_]
 
@@ -1255,9 +1220,8 @@ private
 
 ≡̂ᶜ-subst σ (p ‼≡̂ e) = ≡̂ᵛ-subst σ p ‼≡̂ ≡̂ₑ-subst σ e
 
--- Eternality reads only the skeleton, so it moves between the images
--- of a type under two substitutions related by subtyping at every
--- type variable
+-- Eternality moves between the images of a type under substitutions
+-- related by subtyping at every type variable
 
 ⊩ᴱ-<:ˢ : ∀ {Θ Θ'} {Q : Hyps Θ'} {σ τ : Subst Θ Θ'}
        → (∀ α → Q ∣ sTy σ α <:̂ᵛ sTy τ α) → (A : OVType Θ)
@@ -1834,10 +1798,7 @@ VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
 <:̂ᵛ-wkᵉ {Q = Q} {A} {A'} p =
   subst₂ (wkᵉ-H Q ∣_<:̂ᵛ_) (wkˢᵉ-v A) (wkˢᵉ-v A') (<:̂ᵛ-substᴵ (↪⇒⊩ᴵ ↪-wkᵉ) p)
 
--- Entailment is stable under lifting over an effect-grade variable;
--- members of a weakened `Hyps` are read back with `∈-map⁻`, and a
--- quantified one is transported along the embedding of the weakening
--- under its rigids.
+-- Entailment is stable under lifting over an effect-grade variable
 
 ⊩ᴴ-↑ᵉ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {δ : Subst Θ Θ'}
       → Q' ⊩ᴴ Q [ δ ] → wkᵉ-H Q' ⊩ᴴ (wkᵉ-H Q) [ δ ↑ᵉ ]
@@ -1930,9 +1891,7 @@ VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
        (λ {O} m → ⊩ᴼ-resp-≐ˢ O p (⊩qhyps h m))
 
 
--- Grade expressions are monotone in their variables: every former is,
--- so two substitutions ordered pointwise on the grade variables order
--- the images of every grade expression the same way.
+-- Grade expressions are monotone in their variables
 
 infix 4 _⊩_≾ˢ_
 
@@ -2086,10 +2045,8 @@ Q ⊩ ε ≡̂ₑ ε' = (Q ⊩ ε ≾̂ₑ ε') × (Q ⊩ ε' ≾̂ₑ ε)
 ⊩≡̂ₑ-∅ : ∀ {Θ} {ε ε' : EExp Θ} → ∅ᴴ ⊩ ε ≡̂ₑ ε' → ε ≡̂ₑ ε'
 ⊩≡̂ₑ-∅ (p , q) = ≡̂ₑ-antisym-∅ p q
 
--- Rule Gen is semantic consequence for quantified orderings: a set
--- entails a quantified ordering along `σ` exactly when the ordering
--- holds at every closed instance of its rigids, after `σ`, at every
--- closed instance satisfying the grade part of the set
+-- Rule Gen is semantic consequence: a set entails a quantified ordering
+-- along `σ` exactly when it holds at every instance of its rigids
 
 infix 4 _⊨ᴼ_[_]
 

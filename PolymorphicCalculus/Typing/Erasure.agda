@@ -1,19 +1,14 @@
 ------------------------------------------------------------------
 -- Erasure of open derivations to raw terms                     --
 --                                                              --
--- `⌊_⌋ᵛ` and `⌊_⌋ᶜ` map the well-typed syntax of               --
--- `PolymorphicCalculus.Typing` to the well-scoped raw syntax   --
--- of `PolymorphicCalculus.Syntax.Raw`, forgetting types and    --
--- entailment premises and keeping the data a raw term records. --
---                                                              --
--- Erasure is index-preserving: a derivation over `Θ` erases to --
--- a raw term over `Θ`, a handler clause to a                   --
--- `RawC (Θ +e) (2+n)`, a variable to its full-context          --
--- position `var-pos`, a resource value to that of its variable --
--- under its annotations (`⌊_⌋ʳ`), and a definition to its      --
--- position in the program context. It is not injective: `subV` --
--- and `subC` erase to their subjects. The annotation rules     --
--- `annᵛ` and `annᶜ` erase to the annotated raw forms.          --
+-- `⌊_⌋ᵛ` and `⌊_⌋ᶜ` map derivations of                         --
+-- `PolymorphicCalculus.Typing` to raw terms, forgetting types  --
+-- and entailment premises and keeping what a raw term records. --
+-- A derivation over `Θ` erases to a raw term over `Θ`, a       --
+-- variable to its full-context position, a resource value to   --
+-- its variable under annotations (`⌊_⌋ʳ`), a definition to its --
+-- position. Erasure is not injective: `subV` and `subC` erase  --
+-- to their subjects.                                           --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero)
@@ -120,9 +115,7 @@ mutual
 
 -- Sanity checks: erasure computes as intended.
 
--- The scope has to be given explicitly, as in
--- `PolymorphicCalculus.Typing`: `OCtx`'s scope is not
--- determined by `[]`.
+-- The scope is given explicitly: `OCtx`'s scope is not determined by `[]`.
 
 private
 

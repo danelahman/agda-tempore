@@ -3,14 +3,10 @@
 --                                                                    --
 -- A unary logical relation on run-time terms over states, by the     --
 -- shape of a type, its grades forgotten. A computation is reducible  --
--- (`CRed`) when it reduces in finitely many steps to a returned      --
--- reducible value, or to an operation call with a reducible          --
--- parameter whose continuation is reducible at every extension of    --
--- the state and every reducible result; `CRed` is an inductive       --
--- family over the value predicate. Values of ground type are         --
--- reducible by `VRedᵍ`, which `CRed` uses, and every value by        --
--- `VRed`, which instantiates `CRed` at the smaller shapes.           --
---                                                                    --
+-- (`CRed`) when it reduces to a returned reducible value, or to an   --
+-- operation call with a reducible parameter and a continuation       --
+-- reducible at every extension of the state and every reducible      --
+-- result. `VRedᵍ` covers ground types and `VRed` every value.        --
 -- Reducibility is stable under extension of the state, closed under  --
 -- expansion, and preserved by sequencing and by handling.            --
 ------------------------------------------------------------------------

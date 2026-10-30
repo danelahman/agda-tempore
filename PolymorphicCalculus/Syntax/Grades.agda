@@ -27,10 +27,8 @@ module PolymorphicCalculus.Syntax.Grades (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
--- Grade expressions have a join former and open types do not: `_⊔ₑ_`
--- and `_⊔ᵣ_` are total on closed grades, so a join of two open grade
--- expressions always denotes, whereas a join of open types, such as
--- `α₁ ⊔ᵛ α₂`, is defined only once the shapes are known.
+-- Grade expressions have a join former and open types do not: a join of
+-- open types, such as `α₁ ⊔ᵛ α₂`, is defined only once the shapes are known.
 
 -- Effect grade expressions
 

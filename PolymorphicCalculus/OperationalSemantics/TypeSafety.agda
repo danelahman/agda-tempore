@@ -2,15 +2,11 @@
 -- Type safety of the reduction                                 --
 --                                                              --
 -- A configuration whose state a state typing `Σ` types, and    --
--- whose term is typed in the context of the state at `X ‼ ε`,  --
--- has finished, returning a value or calling an operation, or  --
--- steps (`progress`). A step extends the state by passages of  --
--- grade `δₛ e`, and an extension `Σ'` of `Σ` types the new     --
--- state, the new term being typed at `X' ‼ ε'` with `X' <: X`  --
--- and `δₛ e · ∣ ε' ∣ ≾ ∣ ε ∣` (`preservation`). A handled      --
--- operation call runs its clause at the grade `ε_M · ε'` of    --
--- the rest of the handled computation followed by the return   --
--- clause.                                                      --
+-- whose term has type `X ‼ ε` in the context of the state, has --
+-- finished or steps (`progress`). A step extends the state by  --
+-- passages of grade `δₛ e`, and an extension `Σ'` of `Σ` types --
+-- the new state, the new term being typed at `X' ‼ ε'` with    --
+-- `X' <: X` and `δₛ e · ∣ ε' ∣ ≾ ∣ ε ∣` (`preservation`).      --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using () renaming (true to tt𝔹; false to ff𝔹)

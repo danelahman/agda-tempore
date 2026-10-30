@@ -1,9 +1,10 @@
 ------------------------------------------------------------------------
--- Every module of the polymorphic calculus and its type inference, with
--- the grades, the language and the utilities they share with the
--- monomorphic calculus (`MonomorphicCalculus/Everything.agda`).
--- `Results` is the overview of the main definitions and results. The
--- inference examples are checked apart, by `Examples.agda`.
+-- Every module of the polymorphic calculus and its type inference, and
+-- of the grades, language and utilities shared with the monomorphic
+-- calculus (`MonomorphicCalculus/Everything.agda`).
+-- `Results.agda` is the overview of the main results.
+-- Check with `agda Everything.agda`; the inference examples are checked
+-- apart, by `Examples.agda`.
 ------------------------------------------------------------------------
 
 module Everything where

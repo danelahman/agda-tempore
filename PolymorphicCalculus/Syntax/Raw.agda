@@ -3,22 +3,18 @@
 --                                                              --
 -- The input of inference: one former for each former of        --
 -- `PolymorphicCalculus.Typing` except `subV` and `subC`,       --
--- without the typing data except the annotations below.        --
--- `RawV Θ n` and `RawC Θ n` are scoped by the grade and type   --
--- variables `Θ` of the context and by `n` term variables, de   --
--- Bruijn indices into the full context. A top-level definition --
--- is named by its position in the program context, counted     --
--- from the first.                                              --
+-- without the typing data except the annotations. `RawV Θ n`   --
+-- and `RawC Θ n` are scoped by the type and grade variables    --
+-- `Θ` and `n` term variables, de Bruijn indices into the full  --
+-- context. A definition is named by its position in the        --
+-- program context, counted from the first.                     --
 --                                                              --
 -- The annotations are the base type of a constant, the         --
 -- operation of a `perform`, the duration of a `delay`, the     --
--- grade of a `box`, an expression over `Θ`, and the optional   --
--- type annotations of a value and of a computation, open types --
--- over `Θ`.                                                    --
--- A handler's return clause binds the returned value; its      --
--- operation clauses are scoped over `Θ +e`, binding the        --
--- clause's continuation grade, and over the full context,      --
--- `2 + n`.                                                     --
+-- grade of a `box`, and the optional type annotations of       --
+-- values and computations. A handler's operation clauses are   --
+-- scoped over `Θ +e`, binding the continuation grade, and over --
+-- `2 + n` term variables.                                      --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
@@ -57,7 +53,7 @@ mutual
               -------
             → RawV Θ n
 
-    -- uses of top-level definitions
+    -- uses of definitions
 
     usedef  : ℕ
               -------
@@ -140,11 +136,9 @@ mutual
 
     -- handlers
 
-    -- The return clause binds the returned value. The clause family is
-    -- indexed by the operation symbol, matching the open rule; each
-    -- clause is scoped over `Θ +e`, whose new variable is the
-    -- continuation grade, and over the ambient context extended by the
-    -- operation's parameter and the boxed continuation.
+    -- The return clause binds the returned value. The clause for each
+    -- operation is scoped over `Θ +e` and binds the operation's parameter
+    -- and the boxed continuation.
 
     handler : RawC Θ (suc n)
             → (Op → RawC (Θ +e) (suc (suc n)))

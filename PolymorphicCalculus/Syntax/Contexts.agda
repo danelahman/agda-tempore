@@ -2,13 +2,13 @@
 -- Program contexts, variables and contexts of the polymorphic  --
 -- calculus                                                     --
 --                                                              --
--- A program context binds the top-level definitions to closed  --
+-- A program context binds the definitions to closed            --
 -- type schemes `∀ Θ. Q ⇒ X`, named by their position from the  --
 -- first. A context starts with a program context and extends   --
 -- it by variables and locks, indexed by the number of          --
 -- variables it binds, with open grade expressions as grades.   --
 -- A handler clause is typed under an ordinary lock at the      --
--- constant `⊤ᵣ`; there is no separate barrier former.          --
+-- constant `⊤ᵣ`.                                               --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -118,8 +118,7 @@ unquantified-∈ (u , _) (there m) = unquantified-∈ u m
 -- Contexts
 
 -- Structured open contexts, indexed by the number of variables bound;
--- `[]` is the empty program context, `Δ ▶ s` the program context
--- `Δ ∷ᵖ s`
+-- `[]` is the empty program context, `Δ ▶ s` is `Δ ∷ᵖ s`
 
 data OCtx (Θ : Scope) : ℕ → Set where
   []   : OCtx Θ 0                                     -- empty context

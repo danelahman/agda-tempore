@@ -4,14 +4,11 @@
 -- `⟨ S ∣ M ⟩ ↝[ e ] ⟨ S' ∣ M' ⟩`: the small-step semantics of  --
 -- run-time terms, typed or not, with `e : S ≤ₛ S'` the         --
 -- extension of the state. A delay adds a passage, a `box` a    --
--- resource, an `unbox` reads one; a congruence weakens the     --
--- context's other parts into the extended state. A handled     --
--- operation call runs the clause with the rest of the handled  --
--- computation as a resource at the operation's grade; the      --
--- clause's grade variable is not instantiated.                 --
---                                                              --
--- A comparison is decided by the structural order on the data  --
--- the values denote (`compareᴰ`).                              --
+-- resource, an `unbox` reads one. A handled operation call     --
+-- runs the clause with the rest of the handled computation as  --
+-- a resource at the operation's grade, the clause's grade      --
+-- variable uninstantiated. A comparison is decided by the      --
+-- structural order on the data the values denote (`compareᴰ`). --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using () renaming (Bool to 𝔹; true to tt𝔹; false to ff𝔹)

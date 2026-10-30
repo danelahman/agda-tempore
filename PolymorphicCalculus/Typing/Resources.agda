@@ -4,15 +4,11 @@
 -- A type is a non-resource type if it is neither a type        --
 -- variable nor a box type. When every scheme of the program    --
 -- context has a non-resource type, a value of box type is a    --
--- resource value: a variable under annotations, reaching a box --
--- type below the value's own (`resource-value`). A value typed --
--- in a context with no variables has a non-resource type       --
--- (`nonResource-closed`).                                      --
---                                                              --
--- A resource value collapses by transitivity to a bound on its --
--- variable's declared type (`res-collapse`), and its           --
--- annotations go over another resource value reaching that     --
--- type (`res-rebase`).                                         --
+-- resource value: a variable under annotations reaching a box  --
+-- type below the value's own (`resource-value`). A resource    --
+-- value collapses to a bound on its variable's declared type   --
+-- (`res-collapse`), and its annotations go over another        --
+-- resource value (`res-rebase`).                               --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)

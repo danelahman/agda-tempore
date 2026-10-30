@@ -1,21 +1,17 @@
 ------------------------------------------------------------------
 -- Well-typed syntax of the polymorphic calculus                --
 --                                                              --
--- The intrinsic judgements `Q ∣ Γ ⊢V⦂ A` and `Q ∣ Γ ⊢C⦂ C`,    --
--- over open types and grade expressions, with the side         --
--- conditions entailed from the hypothesis set `Q`.             --
+-- The intrinsic judgements `Q ∣ Γ ⊢V⦂ A` and `Q ∣ Γ ⊢C⦂ C`     --
+-- over open types and grade expressions, with side conditions  --
+-- entailed from the hypothesis set `Q`.                        --
 --                                                              --
--- A handler is a value, `handler`, of a handler type, used by  --
--- `handle_`with_`; `handler` types its operation clauses over  --
--- the extended scope `Θ +e`, the continuation grade being a    --
--- rigid effect-grade variable. A comparison `cmp` is a value.  --
--- `unbox` takes a resource value, a variable under             --
--- annotations (`_∣_⊢↪[_]_⦂[_]_`), and binds the payload.       --
--- `const` takes its base type explicitly, as the raw term      --
--- carries it. The rules `annᵛ` and `annᶜ` record a type        --
--- annotation of the raw term and are identities on typing;     --
--- `usedef` types the use of a top-level definition of the      --
--- program context.                                             --
+-- A handler is a value of a handler type, used by              --
+-- `handle_`with_`; its operation clauses are typed over `Θ     --
+-- +e`, the continuation grade being a rigid effect-grade       --
+-- variable. `unbox` takes a resource value, a variable under   --
+-- annotations (`_∣_⊢↪[_]_⦂[_]_`). `usedef` types the use of a  --
+-- definition of the program context. The rules `annᵛ` and      --
+-- `annᶜ` record a type annotation of the raw term.             --
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ; suc)
@@ -53,11 +49,9 @@ infix 26 _∣_⊢↪[_]_⦂[_]_
 -- Resource values
 
 -- `Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X`: a variable `z`, at its declared box type
--- and accumulated grade `ρ'`, under annotations, each a box type and a
--- supertype of the one inside it, reaching `[ ρ ] X`. The annotations
--- follow `[_]ₛ_`: the grade of each is below the grade inside it and
--- the payload above. The variable carries no `VarOK`; `unbox` checks
--- the grade.
+-- and accumulated grade `ρ'`, under annotations, each a box type below
+-- (in grade) and above (in payload) the one inside it, reaching `[ ρ ] X`.
+-- `unbox` checks the grade, so the variable carries no `VarOK`.
 
 data _∣_⊢↪[_]_⦂[_]_ {Θ : Scope} {n : ℕ} (Q : Hyps Θ) (Γ : OCtx Θ n) (ρ' : RExp Θ)
      {ρ₀ : RExp Θ} {X₀ : OVType Θ} (z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ)
@@ -91,13 +85,11 @@ mutual
             -------------
             → Q ∣ Γ ⊢V⦂ A
 
-    -- uses of top-level definitions
+    -- uses of definitions
 
     -- The definition at position `k` of the program context, at an
     -- instance `δ` of its scheme along which `Q` entails the scheme's
     -- hypotheses. There is no lock condition: a definition is closed.
-    -- The type is given by an equation, so that it is a variable of
-    -- the rule.
 
     usedef  : ∀ {k} {s : Scheme} {A : OVType Θ}
             → s ∈ᵖ[ k ] defs Γ
@@ -202,11 +194,8 @@ mutual
 
     -- The return clause is typed as the continuation of `_⨟_` is, after
     -- a lock at the handled effect. The operation clauses are typed
-    -- under a lock at `⊤ᵣ`, the greatest grade: a clause runs at a time
-    -- the handler does not fix.
-
-    -- A handler is a value; the continuation grade of its clauses is the
-    -- rigid variable `evar newᵉ`.
+    -- under a lock at `⊤ᵣ`, as a clause runs at a time the handler does
+    -- not fix. The continuation grade is the rigid `evar newᵉ`.
 
     handler : {A B : OVType Θ}
             → {ε ε' : EExp Θ}
@@ -244,7 +233,7 @@ mutual
             -----------------
             → Q ∣ Γ ⊢C⦂ A ‼ ûₑ
 
-    -- sequential composition (omitting the bound variable due to using de Bruijn indices)
+    -- sequential composition
 
     _⨟_     : {A B : OVType Θ}      -- NOTE: use \;2 to get this unicode semicolon
             → {ε' : EExp Θ}
@@ -294,9 +283,8 @@ mutual
 
     -- natural-number elimination
 
-    -- As for `if`, both branches are typed at the same computation type;
-    -- the successor branch binds the predecessor, as `match` binds the
-    -- components of a pair.
+    -- Both branches have the same computation type; the successor
+    -- branch binds the predecessor.
 
     caseℕ_`zero_`succ_
             : {C : OCType Θ}
@@ -308,9 +296,8 @@ mutual
 
     -- sum elimination
 
-    -- As for `if`, both branches are typed at the same computation type;
-    -- each binds the injected value, as `match` binds the components of
-    -- a pair.
+    -- Both branches have the same computation type; each binds the
+    -- injected value.
 
     case+_`inl_`inr_
             : {A B : OVType Θ}
@@ -323,9 +310,8 @@ mutual
 
     -- list elimination
 
-    -- As for `if`, both branches are typed at the same computation type;
-    -- the `cons` branch binds the head and then the tail, as `match`
-    -- binds the components of a pair.
+    -- Both branches have the same computation type; the `cons` branch
+    -- binds the head and then the tail.
 
     caseL_`nil_`cons_
             : {A : OVType Θ}
@@ -338,9 +324,8 @@ mutual
 
     -- primitive recursion on natural numbers
 
-    -- The step is typed as an operation clause is, under a lock at `⊤ᵣ`;
-    -- it binds the predecessor and, after a lock at the effect, the
-    -- result of the recursive call, as `_⨟_` binds its continuation.
+    -- The step is typed under a lock at `⊤ᵣ`; it binds the predecessor
+    -- and, after a lock at the effect, the result of the recursive call.
     -- The effect absorbs its own iteration.
 
     recℕ    : {B : OVType Θ}
@@ -398,15 +383,10 @@ mutual
             ------------------------------
             → Q ∣ Γ ⊢C⦂ B ‼ (ε ·̂ₑ ε')
 
-    -- unboxing a boxed value/resource after enough time has passed for it to be ready
+    -- unboxing a resource after enough time has passed for it to be ready
 
-    -- The value being unboxed is a resource value: a variable `z`, under
-    -- annotations, reaching `[ ρ ] X`. The time that has passed since `z`
-    -- was brought into scope is the grade `ρ'` read off the context, and
-    -- the continuation binds the payload `X`.
-
-    -- `unbox` takes a resource value, and the continuation binds the
-    -- payload.
+    -- The value is a resource value reaching `[ ρ ] X`; the time passed
+    -- since `z` came into scope is the grade `ρ'` read off the context.
 
     unbox   : {X : OVType Θ}
             → {C : OCType Θ}
@@ -419,7 +399,7 @@ mutual
             -----------------
             → Q ∣ Γ ⊢C⦂ C
 
-    -- boxing up a value/resource that is ready for use in at least `ρ` grade steps
+    -- boxing a value that is ready for use in at least `ρ` grade steps
 
     box     : {A : OVType Θ}
             → {C : OCType Θ}
@@ -450,7 +430,7 @@ numeralᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} → ℕ → Q ∣ Γ ⊢V
 numeralᵛ 0       = zero
 numeralᵛ (suc k) = succ (numeralᵛ k)
 
--- Sub-effecting, recovered as subsumption at an effect-only derivation
+-- Sub-effecting, as subsumption at an effect-only derivation
 
 coerce : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A ε ε'}
        → Q ⊩ ε ≾̂ₑ ε'

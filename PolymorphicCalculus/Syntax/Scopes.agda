@@ -63,9 +63,9 @@ newʳ = zero
 newᵉ : ∀ {Θ} → EVar (Θ +e)
 newᵉ = zero
 
--- Injections of the variables of a scope into an extension. The name
--- `wk<sort of the extension>-<sort of the variable>` gives both sorts;
--- only the matching sort shifts, the other two are the identity.
+-- Injections of the variables of a scope into an extension, named
+-- `wk<sort of the extension>-<sort of the variable>`; only the matching
+-- sort shifts
 
 -- The scope is an explicit argument: `TyVar` and the like are `Fin` of a
 -- projection, which does not determine the scope.

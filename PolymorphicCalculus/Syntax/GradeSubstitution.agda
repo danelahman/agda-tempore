@@ -95,9 +95,8 @@ _⨟ˢ_ : ∀ {Θ Θ' Θ''} → Subst Θ Θ' → Subst Θ' Θ'' → Subst Θ Θ'
              (λ i → sR σ i [ δ ]ʳ)
              (λ i → sE σ i [ δ ]ᵉ)
 
--- A closed instance of any scope: type variables to `Unit`,
--- resource-grade variables to the unit resource grade, effect-grade
--- variables to the unit effect grade
+-- A closed instance of any scope: type variables to `Unit`, grade
+-- variables to the unit grades
 
 groundˢ : ∀ {Θ} → Subst Θ ∅ˢ
 groundˢ = sub (λ _ → Unit) (λ _ → ûᵣ) (λ _ → ûₑ)
@@ -119,9 +118,8 @@ wkˢᵉ {Θ} = sub (λ α → tvar (wkᵉ-tv Θ α))
                (λ i → rvar (wkᵉ-rv Θ i))
                (λ i → evar (wkᵉ-ev Θ i))
 
--- Lifting a substitution over a newly bound variable.
--- The target scope is named in the `zero` clauses: `newᵗ` and friends
--- do not determine it (`TyVar` is `Fin` of a projection).
+-- Lifting a substitution over a newly bound variable; the `zero` clauses
+-- name the target scope, which `newᵗ` and friends do not determine
 
 infixl 32 _↑ᵗ _↑ʳ _↑ᵉ
 

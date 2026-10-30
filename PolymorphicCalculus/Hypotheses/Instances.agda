@@ -1,27 +1,20 @@
 ------------------------------------------------------------------
 -- Closed instances of the polymorphic calculus                 --
 --                                                              --
--- A closed instance of a scope `Θ` is a substitution           --
--- `δ : Subst Θ ∅ˢ`. Meaning is derivability in the polymorphic --
--- calculus at closed instances, each rigid of a clause kept a  --
--- parameter.                                                   --
+-- A closed instance of a scope `Θ` is a substitution `δ :      --
+-- Subst Θ ∅ˢ`. It satisfies hypotheses (`_⊨_`) when each holds --
+-- at it, a quantified ordering at every grade for its rigids;  --
+-- a satisfying instance is one at which no hypotheses entail   --
+-- them (`⊨⇒⊩ᴴ`, `⊩ᴴ⇒⊨`), so grade entailment holds there by    --
+-- definition (`sound-≾ᵣ⁰`, `sound-≾ₑ⁰`). Semantic entailment   --
+-- `Q ⊨ᴴ Q'` holds when every closed instance of `Q` is one of  --
+-- `Q'`.                                                        --
 --                                                              --
--- A closed instance satisfies hypotheses (`_⊨_`) when each     --
--- holds at it, a quantified ordering at every grade for its    --
--- rigids. A satisfying instance is exactly one at which no     --
--- hypotheses entail them (`⊨⇒⊩ᴴ`, `⊩ᴴ⇒⊨`), and it satisfies    --
--- their grade part (`⊨⇒⊨ᵍ`), so grade entailment holds there   --
--- by its definition (`sound-≾ᵣ⁰`, `sound-≾ₑ⁰`). Semantic       --
--- entailment `Q ⊨ᴴ Q'` holds when every closed instance of `Q` --
--- at which no hypotheses entail it is one of `Q'`; open        --
--- entailment implies it.                                       --
---                                                              --
--- A closed grade expression has a value in the carrier.        --
--- Entailed ordering between closed expressions, from no        --
--- hypotheses, is the carrier's ordering of their values, and   --
--- convertibility is equivalence of values; both are decided    --
--- by the carrier. Closed subtyping, closed eternality and the  --
--- closed var-rule disjunction are decidable.                   --
+-- A closed grade expression has a value in the carrier;        --
+-- entailment between closed expressions from no hypotheses is  --
+-- the carrier's ordering of their values, and convertibility   --
+-- is equivalence of values. Closed subtyping, eternality and   --
+-- the var-rule disjunction are decidable.                      --
 ------------------------------------------------------------------
 
 open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)
@@ -289,12 +282,10 @@ A <:̂ᵛ? B with former A ≟ℕ former B
   map′ (λ (p , q) → p ‼ₛ q) (λ { (p ‼ₛ q) → p , q }) (A <:̂ᵛ? A' ×-dec ε ≾̂ₑ? ε')
 
 ------------------------------------------------------------------------
--- Satisfaction at closed instances: a closed instance satisfies `Q`
--- when each hypothesis holds at it, a quantified one at every instance
--- of its rigids. An instance of the rigids is a vector of closed
--- expressions, every grade being the value of one; a closed ordering
--- holds when no hypotheses entail it, which is the ordering of its
--- values (`val-≾ᵣ`, `val-≾ᵣ⁻`).
+-- Satisfaction at closed instances: each hypothesis holds, a quantified
+-- one at every instance of its rigids, a vector of closed expressions.
+-- A closed ordering holds when no hypotheses entail it, which is the
+-- ordering of its values (`val-≾ᵣ`, `val-≾ᵣ⁻`).
 
 infix 4 _⊨_
 

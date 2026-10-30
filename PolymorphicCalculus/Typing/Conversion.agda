@@ -3,16 +3,11 @@
 --                                                              --
 -- A conversion relates a type `A'` that may replace a context  --
 -- type `A`: `A'` is a subtype of `A`, meets the side condition --
--- of `var` wherever `A` does, and relates the payloads of box  --
--- types. Contexts related pointwise (`CtxRel`) type the same   --
--- terms, with the same erasure (`conv-v`, `conv-c`): a         --
--- variable is used at its new type under a `subV`, and an      --
--- `unbox` of a variable whose type changes binds the new       --
--- payload when the resource value has no annotation.           --
---                                                              --
--- Two conversions, under any hypotheses: equivalence, mutual   --
--- subtyping (`equivalence`); and narrowing, subtyping          --
--- (`narrowing`).                                               --
+-- of `var` wherever `A` does, and relates box payloads.        --
+-- Contexts related pointwise (`CtxRel`) type the same terms    --
+-- with the same erasure (`conv-v`, `conv-c`). Two conversions, --
+-- under any hypotheses: equivalence (`equivalence`) and        --
+-- narrowing (`narrowing`).                                     --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)

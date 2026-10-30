@@ -1,10 +1,8 @@
 -------------------------------------------------------------------
 -- The standard library at left-sided intervals                  --
 --                                                               --
--- "At least `n` time steps": the unit is the top, and           --
--- multiplication commutes. Nothing goes stale, so `compose` and --
--- `min` report no condition on time, and `compose` reports its  --
--- effect as a sorted product.                                   --
+-- The unit is the top and multiplication commutes: `compose`    --
+-- and `min` report no time condition; effects come sorted.      --
 -------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -44,9 +42,7 @@ absurd′-reported = refl
 pipe-reported : schemeOf (infer [] pipe) ≡ just expected-pipe
 pipe-reported = refl
 
--- `⊤ = u`: every grade is below the unit, so the disjunction for
--- `f` is met by its grade ordering and no condition is left.
--- `·-comm?`: the product of the effects is sorted, `ε₀ ·̂ₑ ε₁`.
+-- `⊤ = u` meets `f`'s disjunction; `·-comm?` sorts the product
 
 expected-compose-top-comm : Scheme
 expected-compose-top-comm =
@@ -56,8 +52,7 @@ expected-compose-top-comm =
 compose-reported : schemeOf (infer [] compose) ≡ just expected-compose-top-comm
 compose-reported = refl
 
--- `⊤ = u`: every grade is below the unit, so both disjunctions are
--- met by their grade orderings and only the subtyping is left
+-- `⊤ = u` meets both disjunctions; only the subtyping is left
 
 expected-min-top : Scheme
 expected-min-top =

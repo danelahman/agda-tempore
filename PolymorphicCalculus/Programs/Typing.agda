@@ -107,9 +107,8 @@ closed (programEnv (_∷ᴾ_ {P} {Δ} {V} t a)) (there m) =
 ------------------------------------------------------------------------
 -- Resource values
 
--- The schemes of a typed program have non-resource types: a
--- definition's principal type types it in the program context before
--- it, which has no variables
+-- The schemes of a typed program have non-resource types, as each is
+-- typed in a context with no variables
 
 program-nonResource : ∀ {P Δ} → ⊢ᴾ P ⦂ Δ → NonResourceDefs Δ
 program-nonResource (_∷ᴾ_ {Δ = Δ} t a) here =
@@ -119,10 +118,9 @@ program-nonResource (_∷ᴾ_ {Δ = Δ} t a) here =
   where p = principal a
 program-nonResource (t ∷ᴾ a) (there m) = program-nonResource t m
 
--- Lemma (Resource values are annotated variables): in a context whose
--- program context is that of a program, a value of type `[ ρ'' ] X''`
--- is a variable under annotations, reaching `[ ρ ] X` with
--- `ρ'' ≾ ρ` and `X <: X''`, and erasing to the value's erasure
+-- Lemma (Resource values are annotated variables): over the program
+-- context of a program, a value of type `[ ρ'' ] X''` is a variable under
+-- annotations reaching `[ ρ ] X` with `ρ'' ≾ ρ` and `X <: X''`
 
 program-resource-value : ∀ {P Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ'' X''}
                        → ⊢ᴾ P ⦂ defs Γ → (V : Q ∣ Γ ⊢V⦂ [ ρ'' ] X'')

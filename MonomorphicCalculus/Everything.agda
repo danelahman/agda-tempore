@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 -- Every module of the monomorphic calculus.
--- `MonomorphicCalculus.Results` is the overview of its main definitions
--- and results.
+-- `MonomorphicCalculus/Results.agda` is the overview of its main results.
+-- Check with `agda MonomorphicCalculus/Everything.agda`.
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Everything where

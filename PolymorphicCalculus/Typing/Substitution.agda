@@ -1,19 +1,17 @@
 ------------------------------------------------------------------
 -- Substitution of a value for a term variable                  --
 --                                                              --
--- Under no hypotheses: a variable `x : A` at depth             --
--- `k` of `Γ` (`Drop Γ₀ A k Γ Γ⁻`, with `Γ₀` the context before --
--- `x`, which has no definitions, and `Γ⁻` the context without  --
--- it), and a value of type `A` in `Γ₀`, give `Γ⁻ ⊢ M[V/x]`     --
--- from `Γ ⊢ M` (`sub-v`, `sub-c`), erasing to the run-time     --
--- substitution `subᶜ k`.                                       --
+-- Under no hypotheses: a variable `x : A` at depth `k` of `Γ`  --
+-- (`Drop Γ₀ A k Γ Γ⁻`), and a value of type `A` in `Γ₀`, the   --
+-- context before `x`, give `Γ⁻ ⊢ M[V/x]` from `Γ ⊢ M`          --
+-- (`sub-v`, `sub-c`), erasing to the run-time substitution     --
+-- `subᶜ k`.                                                    --
 --                                                              --
 -- A use of `x` behind locks of grade `ρ` meets `x`'s side      --
--- condition: `A` is eternal, and `V` moves past the locks as   --
--- an eternal value, or `ρ` is below the unit, and `V` moves    --
--- past them by a renaming. An `unbox` of `x` unboxes the       --
--- resource value that `V`, a value of box type, is, annotated  --
--- at `x`'s declared type, under the `unbox`'s annotations.     --
+-- condition: `A` is eternal and `V` moves past the locks as an --
+-- eternal value, or `ρ` is below the unit and `V` moves past   --
+-- them by a renaming. An `unbox` of `x` unboxes the resource   --
+-- value that `V` is.                                           --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -190,8 +188,7 @@ sub-var d U x p              (hit refl refl _) with VarOK-∅ᴴ p
 ... | inj₂ le = trans (∥rename-v∥ (drop-ren d le) U) (sym (q _))
 
 -- An `unbox` of the dropped variable unboxes the resource value that
--- the substituted value is, annotated at the variable's declared type,
--- under the `unbox`'s annotations
+-- the substituted value is
 
 sub-unbox : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {X X₀ : OVType Θ}
               {C : OCType Θ} {ρ₀ ρ' ρ} {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}

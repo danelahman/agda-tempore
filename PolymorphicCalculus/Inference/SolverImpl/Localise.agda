@@ -1,126 +1,25 @@
 ------------------------------------------------------------------
 -- Values for the unknowns local to a rigid scope               --
 --                                                              --
--- An unknown is local to a scope when it is free in the image  --
--- of none of the unknowns the scope was entered with; the      --
--- rigid is one of those, so it is never local and never        --
--- assigned.                                                    --
+-- An unknown is local to a scope when no image of the unknowns --
+-- the scope was entered with mentions it; the rigid never is.  --
+-- A round writes the atoms in normal form (`loc-normal`),      --
+-- identifies each cycle of whole unknowns (`collapse`), and    --
+-- sends each local unknown a rule of `Values` applies to to    --
+-- its value: the join of its lower bounds (Pottier's           --
+-- condition), an upper bound, the unit, or the top. Where none --
+-- applies, a set reached from the rigid goes to the top        --
+-- (`raiseL`). Settled atoms are dropped around every round     --
+-- (`loc-settle`).                                              --
 --                                                              --
--- Each round first rewrites the atoms into equivalent ones:    --
---   * each side of an ordering and each disjunction's grade    --
---     is written in canonical form, so no unit factor or       --
---     bracketing hides a whole side; an ordering whose left    --
---     side has two or more alternatives becomes one ordering   --
---     per alternative, the join being the least upper bound; a --
---     right side is never split (`loc-normal`);                --
---   * each strongly connected component of the orderings       --
---     whose sides are whole unknowns is one unknown (`Reach`'s --
---     `Collapse`): each local member absent from every type is --
---     sent to the representative, an outer member where there  --
---     is one, else one that may not move, else the least, each --
---     by index, all in one step (`collapse`). The members are  --
---     equal at every instance (`equal`), so the instance is    --
---     kept (`equal-⊩`); a member sent occurs in no type.       --
---                                                              --
--- Then, before the atoms of the scope are split, each local    --
--- unknown one of four rules of `Values` applies to is sent     --
--- to a value, under an oracle (`oracleᵉ`, `oracleʳ`) that      --
--- keeps the orderings of the other sort and the deferred       --
--- conditions:                                                  --
---   * from the join `L` of its lower bounds, where it occurs   --
---     on a right side only as the whole side (Pottier's        --
---     condition), the value `B* · L · C*` of `Values`, or its  --
---     closure where a cycle is `v · v ≾ v`, each cycle         --
---     `p ≾ v` closing there (`Closes`, `LowTo`); each ordering --
---     with it on the greater side is dropped, being a bound,   --
---     below the value, a cycle, or valid (`lower-drops`);      --
---   * dually, the first upper bound decided (from no           --
---     hypotheses) below each of its others, where it occurs on --
---     a left side only as the whole side;                      --
---   * the same value from the unit, where it has no bound      --
---     below and the unit is least, the unit being then the     --
---     join of no bounds;                                       --
---   * the top, where it occurs on a left side only in an       --
---     ordering whose right side it is.                         --
--- An ordering valid at every instance bounds it on neither     --
--- side.                                                        --
--- In every case it occurs in no type of the residual. The      --
--- grade of a disjunction is the left side of an ordering below --
--- the unit: the first and third steps keep it, the others ask  --
--- it to be free of the unknown. A value may mention the        --
--- rigid, so the value over the rigid is one expression,        --
--- uniform in it.                                               --
---                                                              --
--- Where no step applies to any local unknown, a set of them is --
--- sent to the top at once. Each member is reached from the     --
--- rigid: it is bounded below by an expression decided to be    --
--- the top once the rigid and the members reached before it     --
--- are. Each ordering with a member on its left has on its      --
--- right an expression decided to be the top once the members   --
--- are, or one that mentions only outer unknowns other than the --
--- rigid. No member occurs in a type or in a disjunction's      --
--- grade.                                                       --
---                                                              --
--- In the deferred conditions of inner scopes, an unknown may   --
--- be lowered where it is on no greater side, and raised where  --
--- it is on no smaller side: a lower smaller side or a higher   --
--- greater side keeps a condition. It occurs where it is in     --
--- one.                                                         --
---                                                              --
--- Before the first round, between rounds and after the last,   --
--- the settled atoms are dropped: an ordering decided true      --
--- against no hypotheses, and a var-rule disjunction whose type --
--- is eternal at every instance or whose grade is below the     --
--- unit from the orderings left, both at the strength `full`.   --
--- They hold wherever those orderings do and bound nothing. A   --
--- disjunction whose type a substitution has made eternal at no --
--- instance becomes its grade side, which is what it means at   --
--- every instance solving the scope from no hypotheses, the     --
--- rigid a parameter.                                           --
---                                                              --
--- Contract (`Localised`). `lσ` fixes the images of the outer   --
--- unknowns (`lfix`); a discharge of the new residual along `δ` --
--- is one of the old along `lσ ⨟ δ` (`lsnd`); an instance       --
--- entering the scope that discharges the old residual from no  --
--- hypotheses discharges the new one (`lcpl`); each step        --
--- assigns grade unknowns only, so subtyping demands between    --
--- type variables stay so (`latom`); the type of each           --
--- disjunction left is eternal at some instance                 --
--- (`localise-ds`). A step leaves the residual moved by its     --
--- assignment, less the orderings the assignment settles: they  --
--- hold at every instance once it is made (`Drops`, `loc-ext`). --
---                                                              --
--- Every grade former is monotone, so each value keeps every    --
--- instance that satisfied the residual (`lowerᵉ-⊩` and its     --
--- five siblings), and so does identifying the components       --
--- (`equal-⊩`); the orderings of the sorts assigned are kept by --
--- the rules of `Values` (`lower-keeps`, `raise-keeps`,         --
--- `raise-free`, `equal-keeps`), which also classify them       --
--- (`lowsOf`, `upsOf`). Raising a set keeps every               --
--- instance entering the scope, one that takes the rigid to a   --
--- fresh eigenvariable (`raise-⊩`): with the eigenvariable at   --
--- the top as well, the instance stays one and every member is  --
--- at the top, and the raised instance lies between the two.    --
---                                                              --
--- The lowering values are principal: at every instance of the  --
--- residual they lie below the unknown (`LowToₑ`, `LowToᵣ`,     --
--- `minₑ`, `minᵣ`). The raise and top values, and a raised set, --
--- only keep every instance; that they are least is not         --
--- claimed.                                                     --
---                                                              --
--- A local unknown no step gives a value leaves the scope       --
--- stuck. Known cases: a cycle through a compound side that     --
--- mentions the rigid `j` and an outer unknown `c`, such as     --
--- `j · a ≾ a ≾ c · j` (right-sided time) or `j ≾ a ≾ c · a`    --
--- (left-sided time), where with `c` local, or with no rigid,   --
--- the steps resolve it, and a cycle whose sides are whole      --
--- unknowns is collapsed (`Cycle` in `Examples/Stages`); an     --
--- outer scope's local unknown on both sides of an inner        --
--- scope's deferred condition; a local unknown with no lower    --
--- bound under several upper bounds, none decided below the     --
--- others, which in a program comes only from `absurd`; a cycle --
--- `p ≾ v` not closing at the value, or needing a closure the   --
--- hints do not declare, under an upper bound.                  --
+-- Contract (`Localised`): outer unknowns are fixed (`lfix`), a --
+-- discharge of the new residual is one of the old (`lsnd`), an --
+-- instance entering the scope keeps discharging it (`lcpl`),   --
+-- and only grade unknowns are assigned (`latom`). The lowering --
+-- values are principal (`minₑ`, `minᵣ`); the others only keep  --
+-- instances. A local unknown no step resolves leaves the scope --
+-- stuck, e.g. `j · a ≾ a ≾ c · j` with `j` the rigid and `c`   --
+-- outer.                                                       --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; _∧_; not; true; false; if_then_else_) renaming (Bool to 𝔹)
@@ -401,10 +300,8 @@ evar? (ε ⊔̂ₑ ε')  = nothing
 ------------------------------------------------------------------------
 -- The eigenvariable of a rigid scope
 
--- `κ⟨ b ⟩` (`Deferred`) sends the newest effect-grade variable to `b`,
--- fixing the rest; being a substitution, entailment survives it. The
--- eigenvariable is sent to the unit (`κᵉ`), and to the top (`κ⊤`)
--- where an ordering is kept at the top rigid.
+-- `κ⟨ b ⟩` (`Deferred`) sends the newest effect-grade variable to `b`.
+-- The eigenvariable goes to the unit (`κᵉ`), or to the top (`κ⊤`).
 
 κᵉ : ∀ {Ψ} → Subst (Ψ +e) Ψ
 κᵉ = κ⟨ ûₑ ⟩
@@ -415,8 +312,7 @@ evar? (ε ⊔̂ₑ ε')  = nothing
 ⊩ᴴ-κᵉ : ∀ {Ψ} {Q : Hyps Ψ} → Q ⊩ᴴ (wkᵉ-H Q) [ κᵉ ]
 ⊩ᴴ-κᵉ = ⊩ᴴ-κ ûₑ
 
--- The unit is below the top, so sending the eigenvariable there
--- instead raises every instance
+-- Sending the eigenvariable to the top rather than the unit raises every instance
 
 κᵉ≾κ⊤ : ∀ {Ψ} {Q : Hyps Ψ} → Q ⊩ κᵉ ≾ˢ κ⊤
 κᵉ≾κ⊤ = mk≾ˢ (λ i → ⊩≾̂ᵣ-refl) (λ { zero → topₑ ; (suc i) → ⊩≾̂ₑ-refl })
@@ -632,10 +528,8 @@ agree-out {Ψ₀ = Ψ₀} O X σ₁ σ₂ w δ₀ fv fr fe tr = ue , ur
     ur {k} q | inj₂ qr with anyᶠ-true (λ i → occʳ-r k (sR O i)) qr
     ...   | i , r = subʳ-r X σ₁ σ₂ (sR O i) r (flatʳ (sR δ₀ i) (≐ʳ tr i))
 
--- An instance entering a rigid scope: the scope's own unknowns go to an
--- instance of the enclosing scope, the rigid to a fresh eigenvariable.
--- The images of the outer unknowns other than the rigid do not depend
--- on the eigenvariable.
+-- An instance entering a rigid scope: its own unknowns go to an instance of the
+-- enclosing scope, the rigid to a fresh eigenvariable no other outer image mentions
 
 Entry : ∀ {Θ Φ Ψ''} → Subst (Θ +e) Φ → Subst Φ (Ψ'' +e) → Set
 Entry {Θ} {Ψ'' = Ψ''} O τ = Σ[ δ₀ ∈ Subst Θ Ψ'' ] ((O ⨟ˢ τ) ≐ˢ (δ₀ ↑ᵉ))
@@ -656,9 +550,8 @@ allFalse f (y ∷ l) with isFalse (f y) | allFalse f l
 ... | just _  | nothing = nothing
 ... | nothing | _       = nothing
 
--- An unknown absent from every type of a residual. A disjunction's
--- grade is the left side of an ordering below the unit, so it is kept
--- by lowering, and asked to be free of the unknown only for raising.
+-- An unknown absent from every type of a residual; a disjunction's grade, a
+-- smaller side, need be free of it only for raising
 
 record Cleanᵉ {Ψ} (k : EVar Ψ) (R : Resid Ψ) : Set where
   constructor cleanᵉ
@@ -710,7 +603,7 @@ dfreeʳ? k R with allFalse (λ { (A , ρ) → occʳ-r k ρ }) (ds R)
 -- The lowering lemma and its siblings: an assignment the conditions
 -- license keeps every instance that satisfied the residual
 
--- the types, where the unknown does not occur, are left as they were
+-- The types, free of the unknown, are left as they were
 
 cleanᵉ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : EVar Ψ} {R : Resid Ψ}
          → Cleanᵉ k R → (b : EExp Ψ) → (τ : Subst Ψ Ψ') → Q ⊩ᴿ R [ τ ]
@@ -943,10 +836,8 @@ topʳ-⊩ {Q = Q} {k} {R} fl cl df sd τ h =
                                (sym (updʳ-⨟r k (rconst ⊤ᵣ) τ ρ (df m))) ⊩≾̂ᵣ-refl)
 
 ------------------------------------------------------------------------
--- Settled atoms: an ordering decided true against no hypotheses holds
--- at every instance and bounds nothing; so does a disjunction whose
--- type is eternal at every instance, and one whose grade is below the
--- unit from the orderings left holds wherever they do
+-- Settled atoms bound nothing: an ordering decided true from no hypotheses, a
+-- disjunction whose type is always eternal or whose grade is below the unit
 
 Every : ∀ {Ψ} {X : Set} → (∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) → X → Set
 Every P a = ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst _ Ψ') → P Q δ a
@@ -1085,9 +976,8 @@ first : ∀ {X : Set} → Maybe X → Maybe X → Maybe X
 first (just x) _ = just x
 first nothing  y = y
 
--- Whether an unknown occurs in the deferred conditions on a greater
--- side (`dir↓`) or a smaller one (`dir↑`): sent to the top, it moves
--- that side
+-- Whether an unknown occurs in the deferred conditions on a greater side
+-- (`dir↓`) or a smaller one (`dir↑`), which sending it to the top would move
 
 failed : ∀ {X : Set} → Maybe X → 𝔹
 failed (just _) = false
@@ -1124,9 +1014,8 @@ occursʳ⁺ k R = anyL (λ { (_ , ρ') → occʳ-r k ρ' }) (rs R) ∨ inDfsʳ d
 Step : ∀ {Ψ} → Subst Ψ Ψ → Resid Ψ → Set
 Step σ R = Keeps σ R × Drops σ R
 
--- The oracle of an effect unknown: the orderings of resources and the
--- deferred conditions are kept, and, for raising, the grades of the
--- disjunctions are free of it
+-- The oracle of an effect unknown: resource orderings and deferred conditions
+-- kept; for raising, the disjunctions' grades free of it
 
 oracleᵉ : ∀ {Ψ} → (k : EVar Ψ) → (R : Resid Ψ) → Vᵉ.Oracle {Ψ} k
 oracleᵉ {Ψ} k R = record
@@ -1147,9 +1036,8 @@ oracleʳ {Ψ} k R = record
   ; raise? = λ b → both (dfreeʳ? k R) (stills? dir↑ (updʳ k b) (dfs R))
   }
 
--- The rules of `Values` in order: lowering, raising, the least
--- element for an unknown that occurs, the top for one that occurs on a
--- greater side
+-- The rules of `Values` in order: lowering, raising, the unit for an unknown
+-- that occurs, the top for one that occurs on a greater side
 
 stepᵉ : ∀ {Ψ} → (k : EVar Ψ) → (R : Resid Ψ) → Maybe (Σ[ b ∈ EExp Ψ ] Step (updᵉ k b) R)
 stepᵉ {Ψ} k R with cleanᵉ? k R
@@ -1419,9 +1307,8 @@ tops-below {Φ} {Q = Q} l τ T fe fr le =
 ≾ˢ-refl : ∀ {Φ Ψ'} {Q : Hyps Ψ'} {τ : Subst Φ Ψ'} → Q ⊩ τ ≾ˢ τ
 ≾ˢ-refl = mk≾ˢ (λ i → ⊩≾̂ᵣ-refl) (λ i → ⊩≾̂ₑ-refl)
 
--- The members, each reached from the rigid `j`: bounded below by an
--- expression decided to be the top once `j` and the members reached
--- before it are.
+-- The members, each bounded below by an expression decided to be the top once
+-- the rigid `j` and the members before it are
 
 data Reach {Φ} (R : Resid Φ) (j : EVar Φ) : List (Mem Φ) → Set where
   reach[] : Reach R j []
@@ -1478,10 +1365,8 @@ reach-top {Q = Q} {j = j} (reachʳ {k} {x} {l} m p rc) T h tj = proj₁ ih , fr
     ... | inj₁ r = subst (λ z → Q ⊩ rconst ⊤ᵣ ≾̂ᵣ sR T z) (sym (true-dec (k' ≟ᶠ k) r)) new
     ... | inj₂ r = proj₂ ih r
 
--- An ordering whose left side mentions a member has, on its right, an
--- expression decided to be the top once the members are, or one that
--- mentions only outer unknowns other than the rigid (`O'`) and no
--- member
+-- An ordering whose left side mentions a member has on its right an expression
+-- that is the top once the members are, or one over outer unknowns (`O'`) only
 
 data UpAtₑ {Θ Φ} (O' : Subst Θ Φ) (l : List (Mem Φ)) : EExp Φ × EExp Φ → Set where
   up-free  : ∀ {x y} → hitₑ l x ≡ false → UpAtₑ O' l (x , y)
@@ -1503,10 +1388,8 @@ record CleanM {Φ} (l : List (Mem Φ)) (R : Resid Φ) : Set where
     mss : ∀ {A B} → (A , B) ∈ ss R → (hitᵥ l A ∨ hitᵥ l B) ≡ false
     mds : ∀ {A ρ} → (A , ρ) ∈ ds R → (hitᵥ l A ∨ hitᵣ l ρ) ≡ false
 
--- Raising the members keeps every instance entering the scope. Send the
--- eigenvariable to the top as well (`ω`): the instance stays one, the
--- hypotheses being free of it, and there every member is at the top.
--- The raised instance lies between the two.
+-- Raising the members keeps every instance entering the scope: it lies between
+-- the instance and its copy with the eigenvariable at the top (`ω`)
 
 raise-⊩ : ∀ {Θ Φ Ψ''} {Q₀ : Hyps Ψ''} {R : Resid Φ} → (O : Subst (Θ +e) Φ)
         → {j : EVar Φ} → sE O (newᵉ {Θ}) ≡ evar j → (l : List (Mem Φ)) → Reach R j l
@@ -1749,14 +1632,10 @@ module Find {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) (j : EVar Φ) where
   raise? = select (nsuc (nE Φ + nR Φ)) (λ k → not (freeᵉ k O)) (λ k → not (freeʳ k O))
 
 ------------------------------------------------------------------------
--- Normal forms: each ordering split into its pieces (`piecesʳ`,
--- `piecesᵉ` of `Canon`), both sides canonical and one ordering per
--- alternative of the left side, the join being the least upper bound;
--- each disjunction's grade written canonically. A right side is never
--- split.
+-- Normal forms (`piecesʳ`, `piecesᵉ` of `Canon`): both sides canonical, one
+-- ordering per alternative of a left side; a right side is never split
 
--- Whether a left side has a join, which it needs to have two or more
--- alternatives
+-- Whether a left side has a join, as it must to have several alternatives
 
 hasJoinₑ : ∀ {Ψ} → EExp Ψ → 𝔹
 hasJoinₑ (evar i)   = false
@@ -1781,9 +1660,8 @@ piecesᵈ (A , ρ) =
             VarOK-≡̂ (≡̂ᵛ-refl _) (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst δ (canonᵣ-≡ ρ)))) ok })
 
 ------------------------------------------------------------------------
--- Unknowns that bound each other: each strongly connected component of
--- the orderings between whole unknowns is one unknown, its members
--- being equal at every instance satisfying them
+-- Each strongly connected component of the orderings between whole unknowns
+-- is one unknown, its members equal at every instance
 
 -- The orderings between two whole unknowns
 
@@ -1822,9 +1700,8 @@ keep⇕ (qord l k o) le ge h =
                              (transₑ (⊩oes h m) (mono-substₑ (≾ˢ-↑ᵉⁿ k ge) y)))
 
 
--- Sending each unknown to one equal to it at an instance keeps the
--- instance where the types are fixed: every grade former is monotone,
--- so each side moves by as little in either direction
+-- Sending each unknown to one equal to it at an instance keeps the instance
+-- where the types are fixed, every grade former being monotone
 
 record TypesFixed {Ψ} (σ : Subst Ψ Ψ) (R : Resid Ψ) : Set where
   constructor typesFixed
@@ -1879,9 +1756,8 @@ localʳ {k = k} O q with ∨-false (anyᶠ (λ α → occʳ-v k (sTy O α))) _ q
 clash : ∀ {b} → b ≡ true → b ≡ false → ⊥
 clash refl ()
 
--- The local unknowns identified, of both sorts at once: `cσ` sends each
--- that may move, being local and absent from every type, to its
--- representative, and keeps every instance
+-- The local unknowns of both sorts identified: `cσ` sends each movable one
+-- (local, absent from every type) to its representative, keeping every instance
 
 record Collapse {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) : Set where
   constructor collapsed
@@ -2008,9 +1884,8 @@ settleᴴ : ∀ {Ψ} → Resid Ψ → Hyps Ψ
 settleᴴ R = hyps [] [] (Unsettled.kept (unsettled settledʳ (rs R)))
                        (Unsettled.kept (unsettled settledᵉ (es R))) [] []
 
--- The settled atoms dropped, and each disjunction whose type is never
--- eternal replaced by its grade side: the instances from no
--- hypotheses are unchanged
+-- The settled atoms dropped, a disjunction whose type is never eternal replaced
+-- by its grade side; the instances from no hypotheses are unchanged
 
 loc-settle : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → Localised O R → Localised O R
 loc-settle (loc σ R₀ fx sn cp la) =
@@ -2045,9 +1920,8 @@ loc-settle (loc σ R₀ fx sn cp la) =
 joined : ∀ {Ψ} → Resid Ψ → 𝔹
 joined R = anyL (λ { (x , _) → hasJoinᵣ x }) (rs R) ∨ anyL (λ { (x , _) → hasJoinₑ x }) (es R)
 
--- Each atom written in normal form, an ordering with a join of
--- alternatives on its left made one ordering per alternative: the
--- instances are unchanged
+-- Each atom in normal form, a join on a left side split into one ordering per
+-- alternative; the instances are unchanged
 
 loc-normal : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → Localised O R → Localised O R
 loc-normal (loc σ R₀ fx sn cp la) =
@@ -2120,10 +1994,8 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
                         (λ τ en h → raise-⊩ {Q₀ = ∅ᴴ} O eqj l rc ue ur cl sd τ en h)
                         keepAll (λ α → refl))
 
-  -- A round writes the atoms in normal form, splitting the joins on
-  -- left sides, identifies the unknowns in cycles, then gives values.
-  -- Each round that changes something settles an unknown for good, so
-  -- as many rounds as there are unknowns reach the fixed point.
+  -- A round: normal form, cycles identified, values given. Each round that
+  -- changes something settles an unknown, so one round per unknown suffices.
 
   rounds : ℕ → Localised O R → Localised O R
   rounds nzero    L = L
