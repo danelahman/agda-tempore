@@ -51,13 +51,13 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import OpenCalculus.Syntax.Grades   S
-open import OpenCalculus.Syntax.Types    S
-open import OpenCalculus.Syntax.Contexts S
-open import OpenCalculus.Syntax.Subst    S
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.Contexts          S
+open import OpenCalculus.Syntax.GradeSubstitution S
 
 open import OpenCalculus.Syntax.Raw S
-open import OpenCalculus.Syntax.Raw.Subst S using (_[_]ᴿᵛ; _[_]ᴿᶜ)
+open import OpenCalculus.Syntax.Raw.GradeSubstitution S using (_[_]ᴿᵛ; _[_]ᴿᶜ)
 open import OpenCalculus.Hypotheses S using (qhyps)
 
 open import OpenCalculus.Inference.Constraints.Syntax  S
@@ -72,9 +72,9 @@ varConstraint Γ i A =
 
 -- A use of a definition: of its scheme, if there is one
 
-defConstraint : ∀ {Θ} → Maybe Scheme → OVType Θ → Constraint Θ
-defConstraint nothing  A = ⊥̂
-defConstraint (just s) A = instᶜ s A
+useDefConstraint : ∀ {Θ} → Maybe Scheme → OVType Θ → Constraint Θ
+useDefConstraint nothing  A = ⊥̂
+useDefConstraint (just s) A = instᶜ s A
 
 -- An `unbox` of a resource value, a variable under annotations: the
 -- type it reaches, the grade accumulated at its variable, and the
@@ -109,9 +109,9 @@ mutual
 
   genVˢ ι Γ (var i) A = varConstraint Γ i A
 
-  -- top-level definitions
+  -- uses of top-level definitions
 
-  genVˢ ι Γ (def k) A = defConstraint (lookupᵖ (defs Γ) k) A
+  genVˢ ι Γ (usedef k) A = useDefConstraint (lookupᵖ (defs Γ) k) A
 
   -- base-typed constants, unit, booleans
 
@@ -486,7 +486,7 @@ UnquantifiedAt Δ k = ∀ {s} → s ∈ᵖ[ k ] Δ → qhyps (Qˢ s) ≡ []
 mutual
 
   NoRigidᵛ : ∀ {Θ n} → PCtx → RawV Θ n → Set
-  NoRigidᵛ Δ (def k)       = UnquantifiedAt Δ k
+  NoRigidᵛ Δ (usedef k)    = UnquantifiedAt Δ k
   NoRigidᵛ Δ (succ V)      = NoRigidᵛ Δ V
   NoRigidᵛ Δ ⦉ V , W ⦊      = NoRigidᵛ Δ V × NoRigidᵛ Δ W
   NoRigidᵛ Δ (inl V)       = NoRigidᵛ Δ V
@@ -528,7 +528,7 @@ mutual
   handlerFree-noRigidᵛ : ∀ {Θ n Δ} → Unquantified Δ → (V : RawV Θ n)
                        → HandlerFreeᵛ V → NoRigidᵛ Δ V
   handlerFree-noRigidᵛ u (var i)      h       = tt
-  handlerFree-noRigidᵛ u (def k)      h       = unquantified-at u k
+  handlerFree-noRigidᵛ u (usedef k)   h       = unquantified-at u k
   handlerFree-noRigidᵛ u (const B c)  h       = tt
   handlerFree-noRigidᵛ u ⋆            h       = tt
   handlerFree-noRigidᵛ u true         h       = tt
@@ -585,7 +585,7 @@ mutual
   noRigid-[]ᴿᵛ : ∀ {Θ Θ' n Δ} {σ : Subst Θ Θ'} → (V : RawV Θ n)
                → NoRigidᵛ Δ V → NoRigidᵛ Δ (V [ σ ]ᴿᵛ)
   noRigid-[]ᴿᵛ (var i)      h       = tt
-  noRigid-[]ᴿᵛ (def k)      h       = h
+  noRigid-[]ᴿᵛ (usedef k)   h       = h
   noRigid-[]ᴿᵛ (const B c)  h       = tt
   noRigid-[]ᴿᵛ ⋆            h       = tt
   noRigid-[]ᴿᵛ true         h       = tt
@@ -667,7 +667,7 @@ private
                  → RigidFree (resC ι Γ V)
   resC-rigidFree (var i)       = tt
   resC-rigidFree (V ⦂ᵛ B)      = resC-rigidFree V , tt
-  resC-rigidFree (def k)       = tt
+  resC-rigidFree (usedef k)    = tt
   resC-rigidFree (const B c)   = tt
   resC-rigidFree ⋆             = tt
   resC-rigidFree true          = tt
@@ -683,9 +683,9 @@ private
   resC-rigidFree (lam M)       = tt
   resC-rigidFree (handler N H) = tt
 
-  defConstraint-rigidFree : ∀ {Θ} → (Δ : PCtx) → (k : ℕ) → UnquantifiedAt Δ k
-                          → (A : OVType Θ) → RigidFree (defConstraint (lookupᵖ Δ k) A)
-  defConstraint-rigidFree Δ k u A with lookupᵖ Δ k in eq
+  useDefConstraint-rigidFree : ∀ {Θ} → (Δ : PCtx) → (k : ℕ) → UnquantifiedAt Δ k
+                             → (A : OVType Θ) → RigidFree (useDefConstraint (lookupᵖ Δ k) A)
+  useDefConstraint-rigidFree Δ k u A with lookupᵖ Δ k in eq
   ... | nothing = tt
   ... | just s  = instᶜ-rigidFree s A (u (lookupᵖ-∈ Δ eq))
 
@@ -695,7 +695,7 @@ mutual
                   → (V : RawV Θ₀ n) → {A : OVType Θ} → NoRigidᵛ Δ V
                   → RigidFree (genVˢ ι Γ V A)
   genVˢ-rigidFree e (var i)      h       = tt , tt
-  genVˢ-rigidFree e (def k) {A} h rewrite e = defConstraint-rigidFree _ k h A
+  genVˢ-rigidFree e (usedef k) {A} h rewrite e = useDefConstraint-rigidFree _ k h A
   genVˢ-rigidFree e (const B c)  h       = tt , tt
   genVˢ-rigidFree e ⋆            h       = tt , tt
   genVˢ-rigidFree e true         h       = tt , tt

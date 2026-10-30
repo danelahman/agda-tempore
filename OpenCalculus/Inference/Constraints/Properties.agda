@@ -32,10 +32,10 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import OpenCalculus.Syntax.Grades S
-open import OpenCalculus.Syntax.Types  S
-open import OpenCalculus.Syntax.Subst  S
-open import OpenCalculus.Hypotheses    S
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.GradeSubstitution S
+open import OpenCalculus.Hypotheses               S
 
 open import OpenCalculus.Inference.Constraints.Syntax       S
 open import OpenCalculus.Inference.Constraints.Satisfaction S

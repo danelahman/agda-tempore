@@ -30,10 +30,10 @@ module OpenCalculus.Inference.SolverImpl.Vars (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import OpenCalculus.Syntax.Grades S
-open import OpenCalculus.Syntax.Types  S
-open import OpenCalculus.Syntax.Subst  S
-open import OpenCalculus.Hypotheses    S
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.GradeSubstitution S
+open import OpenCalculus.Hypotheses               S
 
 open import OpenCalculus.Inference.SolverImpl.Core.Occurs S
   using (occᵗ-v; occᵗ-c; occʳ-r; occʳ-v; occʳ-c; occᵉ-e; occᵉ-r; occᵉ-v; occᵉ-c)

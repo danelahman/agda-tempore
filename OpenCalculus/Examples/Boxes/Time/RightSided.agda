@@ -39,8 +39,7 @@ open import OpenCalculus.Examples.Variables
 -- 1. Boxing to survive time
 --
 -- A function argument used after a tick fails `var`'s bound
--- `[0, 1 ] ≾ [0, 0 ]`, boxed or not (`reading-stale-after-idling`
--- in `ClosedCalculus/Examples/Typing/Time/RightSided.agda`, at two ticks).
+-- `[0, 1 ] ≾ [0, 0 ]`, boxed or not.
 
 stale-call-verdict : infer [] stale-call ≡ untypable
 stale-call-verdict = refl
@@ -150,8 +149,7 @@ nesting-not-typable = infer-untypable [] nesting nesting-verdict
 
 ------------------------------------------------------------------
 -- 8. Inside a clause `⊤ᵣ = [0, ∞ ]` has elapsed: only a lease of
--- `[0, ∞ ]` is still open. At the unit the premise is
--- `reading-stale-at-⊤` of `ClosedCalculus/Examples/Typing/Time/RightSided.agda`.
+-- `[0, ∞ ]` is still open, so a claim at the unit is refused.
 
 claimed-at-u-verdict : infer [] (claimed-in-clause (rconst uᵣ)) ≡ untypable
 claimed-at-u-verdict = refl

@@ -29,7 +29,7 @@ open Operations Ops
 
 open import ClosedCalculus.Syntax.Contexts S
 open import ClosedCalculus.Syntax.Terms    S
-open import Language.Types                 S
+open import ClosedCalculus.Syntax.Types    S
 
 -- Raw terms
 

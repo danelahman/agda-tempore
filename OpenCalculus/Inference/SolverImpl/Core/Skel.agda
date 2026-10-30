@@ -21,6 +21,7 @@ open import Data.Maybe.Base using (Maybe; just; nothing; maybe′) renaming (map
 open import Data.Nat.Base using (ℕ; suc)
 
 open import Grades.Base
+open import Language.BaseTypes using (module BaseTypes)
 open import Language.Spec
 
 open import Util.Equality
@@ -32,7 +33,7 @@ module OpenCalculus.Inference.SolverImpl.Core.Skel (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Language.Types S using (BaseType)
+open BaseTypes BTs using (BaseType)
 
 open import OpenCalculus.Syntax.Grades S
 open import OpenCalculus.Syntax.Types  S

@@ -21,17 +21,17 @@ open import ClosedCalculus.Syntax.CompContext   S
 open import ClosedCalculus.Syntax.Data          S using (⟪_⟫; compareᵈ; ⌈_⌉; ⌈_⌉ᵇ)
 open import ClosedCalculus.Syntax.Contexts      S
 open import ClosedCalculus.Syntax.Terms      S
-open import ClosedCalculus.Syntax.RenActions    S
-open import ClosedCalculus.Syntax.Renamings     S
-open import ClosedCalculus.Syntax.Substitutions S
-open import Language.Types         S
+open import ClosedCalculus.Syntax.Renaming.Action S
+open import ClosedCalculus.Syntax.Renaming      S
+open import ClosedCalculus.Syntax.Substitution  S
+open import ClosedCalculus.Syntax.Types S
 
-open import ClosedCalculus.Syntax.Renamings.Equivalence S using (∈-++ᶜˡ; grade-++ᶜˡ-uᵣ)
+open import ClosedCalculus.Syntax.Renaming.Equivalence  S using (∈-++ᶜˡ; grade-++ᶜˡ-uᵣ)
 
 -- Binder subsumption, shared with the two sequencing rules of the operational
 -- semantics.
 
-open import ClosedCalculus.Syntax.Substitutions.Subsumption S using (subCtx)
+open import ClosedCalculus.Syntax.Substitution.Subsumption  S using (subCtx)
 
 
 -- Equations between well-typed values and computations

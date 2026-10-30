@@ -61,7 +61,7 @@ mutual
   -- the raw index of a variable is its full-context position
 
   ⌊ var x p ⌋ᵛ    = var (var-pos x)
-  ⌊ def {k = k} f δ h e ⌋ᵛ = def k
+  ⌊ usedef {k = k} f δ h e ⌋ᵛ = usedef k
   ⌊ const B c ⌋ᵛ  = const B c
   ⌊ ⋆ ⌋ᵛ          = ⋆
   ⌊ true ⌋ᵛ       = true

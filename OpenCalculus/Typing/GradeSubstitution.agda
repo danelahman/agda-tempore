@@ -28,17 +28,17 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import OpenCalculus.Syntax.Grades         S
-open import OpenCalculus.Syntax.Types          S
-open import OpenCalculus.Syntax.Contexts       S
-open import OpenCalculus.Syntax.ContextsLemmas S
-open import OpenCalculus.Syntax.Subst          S
-open import OpenCalculus.Hypotheses            S
-open import OpenCalculus.Typing                S
-open import OpenCalculus.Typing.Erasure        S
-open import OpenCalculus.Typing.Transport      S
-open import OpenCalculus.Syntax.Raw            S
-open import OpenCalculus.Syntax.Raw.Subst      S
+open import OpenCalculus.Syntax.Grades                S
+open import OpenCalculus.Syntax.Types                 S
+open import OpenCalculus.Syntax.Contexts              S
+open import OpenCalculus.Syntax.Contexts.Properties   S
+open import OpenCalculus.Syntax.GradeSubstitution     S
+open import OpenCalculus.Hypotheses                   S
+open import OpenCalculus.Typing                       S
+open import OpenCalculus.Typing.Erasure               S
+open import OpenCalculus.Typing.Transport             S
+open import OpenCalculus.Syntax.Raw                   S
+open import OpenCalculus.Syntax.Raw.GradeSubstitution S
 
 ------------------------------------------------------------------------
 -- The context and the type of the clause of `op` in a handler whose
@@ -96,8 +96,8 @@ mutual
          → Q' ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ
 
   substᵛ σ h (var x p)       = var (∈̂-subst σ x) (VarOK-subst h p)
-  substᵛ {Γ = Γ} σ h (def {s = s} f δ h' e) =
-    def (subst (_ ∈ᵖ[ _ ]_) (sym (defs-subst Γ σ)) f) (δ ⨟ˢ σ) (⊩ᴴ-⨟ h h')
+  substᵛ {Γ = Γ} σ h (usedef {s = s} f δ h' e) =
+    usedef (subst (_ ∈ᵖ[ _ ]_) (sym (defs-subst Γ σ)) f) (δ ⨟ˢ σ) (⊩ᴴ-⨟ h h')
         (trans (cong (_[ σ ]ᵛ) e) ([⨟]ᵛ (Xˢ s) δ σ))
   substᵛ σ h (const B c)     = const B c
   substᵛ σ h ⋆               = ⋆
@@ -176,7 +176,7 @@ mutual
            → ⌊ substᵛ σ h V ⌋ᵛ ≡ ⌊ V ⌋ᵛ [ σ ]ᴿᵛ
 
   ⌊substᵛ⌋ σ h (var x p)      = cong var (var-pos-∈̂-subst σ x)
-  ⌊substᵛ⌋ σ h (def f δ h' e)  = refl
+  ⌊substᵛ⌋ σ h (usedef f δ h' e) = refl
   ⌊substᵛ⌋ σ h (const B c)    = refl
   ⌊substᵛ⌋ σ h ⋆              = refl
   ⌊substᵛ⌋ σ h true           = refl

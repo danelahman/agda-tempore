@@ -4,12 +4,11 @@
 --                                                              --
 -- A program context binds the top-level definitions to closed  --
 -- type schemes `∀ Θ. Q ⇒ X`, named by their position from the  --
--- first. A context starts with a program context and           --
--- otherwise follows `ClosedCalculus.Syntax.Contexts`, indexed  --
--- by the number of variables it binds, with open grade         --
--- expressions as grades. A handler clause is typed under an    --
--- ordinary lock at the constant `⊤ᵣ`; there is no separate     --
--- barrier former.                                              --
+-- first. A context starts with a program context and extends   --
+-- it by variables and locks, indexed by the number of          --
+-- variables it binds, with open grade expressions as grades.   --
+-- A handler clause is typed under an ordinary lock at the      --
+-- constant `⊤ᵣ`; there is no separate barrier former.          --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -34,10 +33,10 @@ module OpenCalculus.Syntax.Contexts (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import OpenCalculus.Syntax.Grades S
-open import OpenCalculus.Syntax.Types  S
-open import OpenCalculus.Syntax.Subst  S
-open import OpenCalculus.Hypotheses    S using (Hyps; qhyps)
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.GradeSubstitution S
+open import OpenCalculus.Hypotheses               S using (Hyps; qhyps)
 
 ------------------------------------------------------------------------
 -- Type schemes and program contexts

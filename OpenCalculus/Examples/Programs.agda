@@ -82,10 +82,10 @@ keep : RawV ∅ˢ 0
 keep = lam (delay ⌜ 1 ⌝ (return v₀))
 
 twice : RawV ∅ˢ 0
-twice = lam ((def 0 · ⋆) ⨟ (def 0 · true))
+twice = lam ((usedef 0 · ⋆) ⨟ (usedef 0 · true))
 
 late : RawV ∅ˢ 0
-late = lam (def 0 · lam (return v₀))
+late = lam (usedef 0 · lam (return v₀))
 
 -- The programs
 

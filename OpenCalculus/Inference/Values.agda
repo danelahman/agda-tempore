@@ -31,13 +31,13 @@ module OpenCalculus.Inference.Values (S : LanguageSpec)
 
 open import OpenCalculus.Syntax.Types         S
 open import OpenCalculus.Syntax.Contexts      S
-open import OpenCalculus.Syntax.Subst         S
+open import OpenCalculus.Syntax.GradeSubstitution S
 open import OpenCalculus.Hypotheses           S
 open import OpenCalculus.Hypotheses.Instances S using (_⊨_; Satisfiable)
 open import OpenCalculus.Typing               S
 open import OpenCalculus.Typing.Erasure       S
 open import OpenCalculus.Syntax.Raw           S using (RawV; return; HandlerFreeᵛ)
-open import OpenCalculus.Syntax.Raw.Subst     S
+open import OpenCalculus.Syntax.Raw.GradeSubstitution S
 open import OpenCalculus.Inference.Principality S
 open import OpenCalculus.Inference.Generate S using (NoRigidᵛ; handlerFree-noRigidᵛ)
 open import OpenCalculus.Inference.SolverImpl S hints opEnum

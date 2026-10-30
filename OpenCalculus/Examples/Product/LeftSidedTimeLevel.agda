@@ -2,10 +2,9 @@
 -- Inference at left-sided time paired with a security level      --
 --                                                                --
 -- `([ n ,+∞⟩ , ℓ)`: at least `n` ticks, touching nothing above   --
--- `ℓ`. The sensor node's operations are graded as in             --
--- `ClosedCalculus.Examples.Typing.Product.LeftSidedTimeLevel`:   --
--- `read` 1 and `write` 2 at `Low`, `send` 4 at `High`. The unit  --
--- is not least and `_·_` commutes.                               --
+-- `ℓ`. The sensor node's operations are graded `read` 1 and      --
+-- `write` 2 at `Low`, `send` 4 at `High`. The unit is not least  --
+-- and `_·_` commutes.                                            --
 --                                                                --
 -- A box at `([ 5 ,+∞⟩ , Low)` is an embargoed report: claimable  --
 -- once five ticks have passed and only from code that has not    --
@@ -116,8 +115,7 @@ publish-reported = refl
 
 ------------------------------------------------------------------
 -- 5. A reading survives a store, `Low`, and not a transmission,
--- `High` (`stale-after-transmitting` in
--- `ClosedCalculus/Examples/Typing/Product/LeftSidedTimeLevel.agda`)
+-- `High`
 
 twice-write-reported : schemeOf (infer [] (twice write)) ≡ just (expected-twice write)
 twice-write-reported = refl

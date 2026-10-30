@@ -31,17 +31,17 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import OpenCalculus.Syntax.Grades         S
-open import OpenCalculus.Syntax.Types          S
-open import OpenCalculus.Syntax.Contexts       S
-open import OpenCalculus.Syntax.ContextsLemmas S
-open import OpenCalculus.Syntax.Subst          S
-open import OpenCalculus.Hypotheses            S
-open import OpenCalculus.Typing                S
+open import OpenCalculus.Syntax.Grades              S
+open import OpenCalculus.Syntax.Types               S
+open import OpenCalculus.Syntax.Contexts            S
+open import OpenCalculus.Syntax.Contexts.Properties S
+open import OpenCalculus.Syntax.GradeSubstitution   S
+open import OpenCalculus.Hypotheses                 S
+open import OpenCalculus.Typing                     S
 
-open import OpenCalculus.Syntax.Raw       S
-open import OpenCalculus.Syntax.Raw.Subst S
-open import OpenCalculus.Typing.Erasure   S
+open import OpenCalculus.Syntax.Raw                   S
+open import OpenCalculus.Syntax.Raw.GradeSubstitution S
+open import OpenCalculus.Typing.Erasure               S
 open import OpenCalculus.Typing.Conversion S using (equivalence; conv-last)
 
 open import OpenCalculus.Inference.Constraints.Syntax       S
@@ -292,15 +292,15 @@ co²ᵗ²ᵉ-ˢ↑ ι σ B₁ B₂ ε₁ ε₂ =
 -- program context, which the substituted context keeps, and the
 -- instance solving the constraint is the instance of the rule
 
-soundDef : ∀ {Θ n Θ'} → (σ : Subst Θ Θ') → {Q : Hyps Θ'}
-         → (Γ : OCtx Θ n) → (k : ℕ) → (A : OVType Θ)
-         → σ ⊨[ Q ] defConstraint (lookupᵖ (defs Γ) k) A
-         → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ def k)
-soundDef σ Γ k A s with lookupᵖ (defs Γ) k in eq
+soundUseDef : ∀ {Θ n Θ'} → (σ : Subst Θ Θ') → {Q : Hyps Θ'}
+            → (Γ : OCtx Θ n) → (k : ℕ) → (A : OVType Θ)
+            → σ ⊨[ Q ] useDefConstraint (lookupᵖ (defs Γ) k) A
+            → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ usedef k)
+soundUseDef σ Γ k A s with lookupᵖ (defs Γ) k in eq
 ... | nothing = ⊥-elim s
 ... | just sc with instᶜ-sound sc A s
 ...   | δ , st , h =
-  subV (def (subst (sc ∈ᵖ[ k ]_) (sym (defs-subst Γ σ)) (lookupᵖ-∈ (defs Γ) eq)) δ h refl) st , refl
+  subV (usedef (subst (sc ∈ᵖ[ k ]_) (sym (defs-subst Γ σ)) (lookupᵖ-∈ (defs Γ) eq)) δ h refl) st , refl
 
 -- A resource value: its constraint, at a solution under which the type
 -- it reaches is a box type, gives a resource value reaching that type,
@@ -338,7 +338,7 @@ soundR {σ = σ} {Q = Q} ι Γ (V ⦂ᵛ B) ceq (s , sa) {ρ} {X} e
 ... | ρ₁ , X₁ , e₁ , q , p with soundR ι Γ V ceq s e₁
 ...   | ρ₀ , X₀ , z , R , er =
   ρ₀ , X₀ , z , res-ann ρ X R q p , cong₂ _⦂ᵛ_ er (trans (sym e) ([⨟]ᵛ B ι σ))
-soundR ι Γ (def k)       ceq () e
+soundR ι Γ (usedef k)    ceq () e
 soundR ι Γ (const B c)   ceq () e
 soundR ι Γ ⋆             ceq () e
 soundR ι Γ true          ceq () e
@@ -383,9 +383,9 @@ mutual
 
       st' = subst (λ z → Q ∣ z <:̂ᵛ A [ σ ]ᵛ) (sym (lookup-ty-subst Γ σ i)) st
 
-  -- top-level definitions
+  -- uses of top-level definitions
 
-  soundVˢ {σ = σ} ι Γ (def k) A s = soundDef σ Γ k A s
+  soundVˢ {σ = σ} ι Γ (usedef k) A s = soundUseDef σ Γ k A s
 
   -- base-typed constants, unit, booleans
 

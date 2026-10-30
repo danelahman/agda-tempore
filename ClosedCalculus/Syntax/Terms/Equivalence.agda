@@ -32,10 +32,10 @@ open Operations Ops
 
 open import ClosedCalculus.Syntax.Contexts   Spec
 open import ClosedCalculus.Syntax.Terms   Spec
-open import ClosedCalculus.Syntax.RenActions Spec
-open import ClosedCalculus.Syntax.Renamings  Spec
-open import Language.Types      Spec
-open import ClosedCalculus.Syntax.Renamings.Equivalence Spec
+open import ClosedCalculus.Syntax.Renaming.Action Spec
+open import ClosedCalculus.Syntax.Renaming   Spec
+open import ClosedCalculus.Syntax.Types Spec
+open import ClosedCalculus.Syntax.Renaming.Equivalence  Spec
 
 -- A `var`'s grade bound is a function into an irrelevant relation.
 

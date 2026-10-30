@@ -30,14 +30,14 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import OpenCalculus.Syntax.Grades         S
-open import OpenCalculus.Syntax.Types          S
-open import OpenCalculus.Syntax.Contexts       S
-open import OpenCalculus.Syntax.ContextsLemmas S
-open import OpenCalculus.Hypotheses            S
-open import OpenCalculus.Typing                S
-open import OpenCalculus.Typing.Erasure        S
-open import OpenCalculus.Syntax.Run            S
+open import OpenCalculus.Syntax.Grades              S
+open import OpenCalculus.Syntax.Types               S
+open import OpenCalculus.Syntax.Contexts            S
+open import OpenCalculus.Syntax.Contexts.Properties S
+open import OpenCalculus.Hypotheses                 S
+open import OpenCalculus.Typing                     S
+open import OpenCalculus.Typing.Erasure             S
+open import OpenCalculus.Syntax.Run                 S
 
 ------------------------------------------------------------------------
 -- The run-time erasure of a derivation
@@ -148,7 +148,7 @@ mutual
            → Ren Q Γ Γ' → Q ∣ Γ ⊢V⦂ A → Q ∣ Γ' ⊢V⦂ A
   rename-v r (var x p)       =
     var (mem (image r x)) (VarOK-≡̂ (≡̂ᵛ-refl _) (lower (image r x)) p)
-  rename-v r (def f δ h e)   = def (subst (_ ∈ᵖ[ _ ]_) (sym (dfs r)) f) δ h e
+  rename-v r (usedef f δ h e) = usedef (subst (_ ∈ᵖ[ _ ]_) (sym (dfs r)) f) δ h e
   rename-v r (const B c)     = const B c
   rename-v r ⋆               = ⋆
   rename-v r true            = true
@@ -205,7 +205,7 @@ mutual
   ∥rename-v∥ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {A : OVType Θ}
              → (r : Ren Q Γ Γ') → (V : Q ∣ Γ ⊢V⦂ A) → ∥ rename-v r V ∥ᵛ ≡ renᵛ (pos r) ∥ V ∥ᵛ
   ∥rename-v∥ r (var x p)       = cong var (at-pos (image r x))
-  ∥rename-v∥ r (def f δ h e)   = refl
+  ∥rename-v∥ r (usedef f δ h e) = refl
   ∥rename-v∥ r (const B c)     = refl
   ∥rename-v∥ r ⋆               = refl
   ∥rename-v∥ r true            = refl
@@ -351,7 +351,7 @@ mutual
     var (∈̂-ty-subst (trans (shift-ty f (var-pos x)) (var-pos-ty x))
                     (lookup-var Γ' (shift f (var-pos x))))
         (et-ok e)
-  eternal-v f e (def g δ h q)            = def (subst (_ ∈ᵖ[ _ ]_) (sym (shift-dfs f)) g) δ h q
+  eternal-v f e (usedef g δ h q)         = usedef (subst (_ ∈ᵖ[ _ ]_) (sym (shift-dfs f)) g) δ h q
   eternal-v f e (const B c)              = const B c
   eternal-v f e ⋆                        = ⋆
   eternal-v f e true                     = true
@@ -373,7 +373,7 @@ mutual
   ∥eternal-v∥ {Γ' = Γ'} f e (var x p) =
     cong var (trans (var-pos-ty-subst (trans (shift-ty f (var-pos x)) (var-pos-ty x)) _)
                     (var-pos-lookup Γ' (shift f (var-pos x))))
-  ∥eternal-v∥ f e (def g δ h q)        = refl
+  ∥eternal-v∥ f e (usedef g δ h q)     = refl
   ∥eternal-v∥ f e (const B c)          = refl
   ∥eternal-v∥ f e ⋆                    = refl
   ∥eternal-v∥ f e true                 = refl

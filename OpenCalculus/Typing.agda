@@ -1,36 +1,27 @@
 ------------------------------------------------------------------
 -- Well-typed syntax of the open calculus                       --
 --                                                              --
--- The intrinsic judgements `Q ∣ Γ ⊢V⦂ A` and `Q ∣ Γ ⊢C⦂ C`     --
--- follow `ClosedCalculus.Syntax.Terms` former by former, with  --
--- open types and grade expressions, and with the side          --
+-- The intrinsic judgements `Q ∣ Γ ⊢V⦂ A` and `Q ∣ Γ ⊢C⦂ C`,    --
+-- over open types and grade expressions, with the side         --
 -- conditions entailed from the hypothesis set `Q`.             --
 --                                                              --
--- Five rules deviate, as marked at their definitions: a        --
--- handler is a value, `handler`, of a handler type, used by    --
--- `handle_`with_`, where `ClosedCalculus.Syntax.Terms` has     --
--- one form taking the clauses; `handler` types its operation   --
--- clauses over the extended scope `Θ +e`, the continuation     --
--- grade, quantified at the meta level in                       --
--- `ClosedCalculus.Syntax.Terms`, being a rigid effect-grade    --
--- variable; a comparison `cmp` is a value, where it is a       --
--- computation in `ClosedCalculus.Syntax.Terms`; `unbox`        --
--- takes a resource value, a variable under annotations         --
--- (`_∣_⊢↪[_]_⦂[_]_`), and binds the payload, where             --
--- `ClosedCalculus.Syntax.Terms` takes a variable and binds any --
--- supertype of the payload; and `const` takes its base type    --
--- explicitly, as the raw term carries it.                      --
---                                                              --
--- The rules `annᵛ` and `annᶜ` record a type annotation of the  --
--- raw term, have no counterpart in                             --
--- `ClosedCalculus.Syntax.Terms`, and are identities on typing. --
--- Nor has the rule `def` of the top-level definitions of the   --
+-- A handler is a value, `handler`, of a handler type, used by  --
+-- `handle_`with_`; `handler` types its operation clauses over  --
+-- the extended scope `Θ +e`, the continuation grade being a    --
+-- rigid effect-grade variable. A comparison `cmp` is a value.  --
+-- `unbox` takes a resource value, a variable under             --
+-- annotations (`_∣_⊢↪[_]_⦂[_]_`), and binds the payload.       --
+-- `const` takes its base type explicitly, as the raw term      --
+-- carries it. The rules `annᵛ` and `annᶜ` record a type        --
+-- annotation of the raw term and are identities on typing;     --
+-- `usedef` types the use of a top-level definition of the      --
 -- program context.                                             --
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ; suc)
 
 open import Grades.Base
+open import Language.BaseTypes using (module BaseTypes)
 open import Language.Spec
 open import Language.Operations
 
@@ -48,12 +39,12 @@ open Operations Ops
 -- Only the base-type signature is needed; the type formers of the closed
 -- language would otherwise clash with those of `OVType`/`OCType`.
 
-open import Language.Types S using (BaseType; BaseConstants)
+open BaseTypes BTs using (BaseType; BaseConstants)
 
 open import OpenCalculus.Syntax.Grades    S
 open import OpenCalculus.Syntax.Types     S
 open import OpenCalculus.Syntax.Contexts  S
-open import OpenCalculus.Syntax.Subst     S using (Subst; _[_]ᵛ)
+open import OpenCalculus.Syntax.GradeSubstitution S using (Subst; _[_]ᵛ)
 open import OpenCalculus.Hypotheses      S
 
 infix 26 _∣_⊢V⦂_
@@ -101,7 +92,7 @@ mutual
             -------------
             → Q ∣ Γ ⊢V⦂ A
 
-    -- top-level definitions
+    -- uses of top-level definitions
 
     -- The definition at position `k` of the program context, at an
     -- instance `δ` of its scheme along which `Q` entails the scheme's
@@ -109,7 +100,7 @@ mutual
     -- The type is given by an equation, so that it is a variable of
     -- the rule.
 
-    def     : ∀ {k} {s : Scheme} {A : OVType Θ}
+    usedef  : ∀ {k} {s : Scheme} {A : OVType Θ}
             → s ∈ᵖ[ k ] defs Γ
             → (δ : Subst (Θˢ s) Θ)
             → Q ⊩ᴴ Qˢ s [ δ ]
@@ -119,7 +110,7 @@ mutual
 
     -- base-typed constants
 
-    -- DEVIATION: the base type is explicit; inference reads it off the term.
+    -- The base type is explicit; inference reads it off the term.
 
     const   : (B : BaseType)
             → BaseConstants B
@@ -190,8 +181,7 @@ mutual
     -- One rule for the six relations of `Cmp`: both operands at one
     -- type, which has to be eternal, and the result a `Bool`.
 
-    -- DEVIATION: a value, where the original's comparison is a
-    -- computation.
+    -- A comparison is a value.
 
     cmp     : {A : OVType Θ}
             → (⋈ : Cmp)
@@ -216,9 +206,8 @@ mutual
     -- under a lock at `⊤ᵣ`, the greatest grade: a clause runs at a time
     -- the handler does not fix.
 
-    -- DEVIATION: a value, where the original has one computation taking
-    -- the clauses; and the original's meta-level quantification over the
-    -- continuation grade is here the rigid variable `evar newᵉ`.
+    -- A handler is a value; the continuation grade of its clauses is the
+    -- rigid variable `evar newᵉ`.
 
     handler : {A B : OVType Θ}
             → {ε ε' : EExp Θ}
@@ -417,9 +406,8 @@ mutual
     -- was brought into scope is the grade `ρ'` read off the context, and
     -- the continuation binds the payload `X`.
 
-    -- DEVIATION: a resource value, where the original names a variable;
-    -- and the continuation binds the payload, where the original binds
-    -- any supertype of it.
+    -- `unbox` takes a resource value, and the continuation binds the
+    -- payload.
 
     unbox   : {X : OVType Θ}
             → {C : OCType Θ}

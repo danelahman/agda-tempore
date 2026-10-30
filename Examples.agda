@@ -6,4 +6,3 @@
 module Examples where
 
 import OpenCalculus.Examples
-import Bridge.Examples.Uniform.All

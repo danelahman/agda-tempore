@@ -52,10 +52,10 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import Language.Types                  S
+open import ClosedCalculus.Syntax.Types     S
 open import ClosedCalculus.Syntax.Contexts  S
 open import ClosedCalculus.Syntax.Terms     S
-open import ClosedCalculus.Syntax.Renamings S
+open import ClosedCalculus.Syntax.Renaming  S
 
 open import Data.Product using (_,_; _×_)
 open import Data.Unit using (⊤; tt)

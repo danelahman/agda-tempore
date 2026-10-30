@@ -36,6 +36,7 @@ open import Data.Vec.Properties using (lookup∘tabulate)
 open import Relation.Nullary using (yes; no)
 
 open import Grades.Base
+open import Language.BaseTypes using (module BaseTypes)
 open import Language.Spec
 
 open import Util.Equality
@@ -47,12 +48,12 @@ module OpenCalculus.Inference.SolverImpl.Expand (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Language.Types S using (_≡ᵇ?_)
+open BaseTypes BTs using (_≡ᵇ?_)
 
-open import OpenCalculus.Syntax.Grades S
-open import OpenCalculus.Syntax.Types  S
-open import OpenCalculus.Syntax.Subst  S
-open import OpenCalculus.Hypotheses    S
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.GradeSubstitution S
+open import OpenCalculus.Hypotheses               S
 
 open import OpenCalculus.Inference.SolverImpl.Core.Skel         S
 open import OpenCalculus.Inference.SolverImpl.Core.SkelUnify    S

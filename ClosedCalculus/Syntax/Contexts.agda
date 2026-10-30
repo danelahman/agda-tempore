@@ -18,7 +18,7 @@ module ClosedCalculus.Syntax.Contexts (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Language.Types S
+open import ClosedCalculus.Syntax.Types S
 
 -- Structured contexts
 

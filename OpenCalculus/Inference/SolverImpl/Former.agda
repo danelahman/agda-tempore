@@ -34,6 +34,7 @@ open import Relation.Nullary using (yes; no)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
 open import Grades.Base
+open import Language.BaseTypes using (module BaseTypes)
 open import Language.Spec
 
 open import Util.Equality
@@ -45,12 +46,12 @@ module OpenCalculus.Inference.SolverImpl.Former (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Language.Types S using (_≡ᵇ?_; eternalBaseType?)
+open BaseTypes BTs using (_≡ᵇ?_; eternalBaseType?)
 
-open import OpenCalculus.Syntax.Grades S
-open import OpenCalculus.Syntax.Types  S
-open import OpenCalculus.Syntax.Subst  S
-open import OpenCalculus.Hypotheses    S
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.GradeSubstitution S
+open import OpenCalculus.Hypotheses               S
 
 -- How the parts at one position of two types of one former are
 -- related by a subtyping demand between the two

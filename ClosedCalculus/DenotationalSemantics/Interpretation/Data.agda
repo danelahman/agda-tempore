@@ -42,7 +42,7 @@ open import Data.Unit using (tt)
 open LanguageSpec S
 
 open import Language.Comparisons
-open import Language.Types              S
+open import ClosedCalculus.Syntax.Types S
 open import ClosedCalculus.Syntax.Terms S
   using (_⊢V⦂_; _⊢C⦂_; cmp; return; const; ⋆; true; false; zero; succ; ⦉_,_⦊; inl; inr; nil; cons)
 open import ClosedCalculus.Syntax.Data      S

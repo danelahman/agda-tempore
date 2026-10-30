@@ -31,6 +31,7 @@ open import Data.Unit using (⊤)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
 open import Grades.Base
+open import Language.BaseTypes using (module BaseTypes)
 open import Language.Spec
 
 open import Util.Equality
@@ -42,7 +43,7 @@ module OpenCalculus.Inference.SolverImpl.Core.SkelUnify (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Language.Types S using (_≡ᵇ?_)
+open BaseTypes BTs using (_≡ᵇ?_)
 
 open import OpenCalculus.Inference.SolverImpl.Core.Thick
 open import OpenCalculus.Inference.SolverImpl.Core.Skel S

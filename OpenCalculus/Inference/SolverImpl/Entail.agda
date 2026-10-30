@@ -93,11 +93,11 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open SystemHintsInterface hints
 
-open import OpenCalculus.Syntax.Grades        S
-open import OpenCalculus.Syntax.Types         S
-open import OpenCalculus.Syntax.Subst         S
-open import OpenCalculus.Hypotheses           S
-open import OpenCalculus.Hypotheses.Instances S
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.GradeSubstitution S
+open import OpenCalculus.Hypotheses               S
+open import OpenCalculus.Hypotheses.Instances     S
   using (Satisfiable; ⊨⇒⊩ᴴ; VarOK-∅; inst-≡̂ᵣ; inst-≾ᵣ; val-≾ᵣ⁻; closed-≾ᵣ; closed-≾ₑ)
 
 open import OpenCalculus.Inference.SolverImpl.Normal S hints

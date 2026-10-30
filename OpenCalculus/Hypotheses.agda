@@ -66,6 +66,7 @@ open import Relation.Binary.Definitions using (Minimum)
 open import Relation.Nullary using (yes; no)
 
 open import Grades.Base
+open import Language.BaseTypes using (module BaseTypes)
 open import Language.Spec
 
 open import Util.Equality
@@ -77,14 +78,13 @@ module OpenCalculus.Hypotheses (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
--- Only the eternal-base-type predicate is imported; the constructors of
--- the closed `Eternal` have open counterparts below.
+-- The eternal base types
 
-open import Language.Types S using (EternalBaseType)
+open BaseTypes BTs using (EternalBaseType)
 
-open import OpenCalculus.Syntax.Grades S
-open import OpenCalculus.Syntax.Types  S
-open import OpenCalculus.Syntax.Subst  S
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.GradeSubstitution S
 open import OpenCalculus.Hypotheses.Quantified S public
 
 -- Deciding a `Maybe` carries the trivial witness of `Is-just` along with it
@@ -601,10 +601,10 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
            → (ε₁ ⊔̂ₑ ε₂) ⊔̂ₑ ε₃ ≡̂ₑ ε₁ ⊔̂ₑ (ε₂ ⊔̂ₑ ε₃)
 ≡̂ₑ-assoc-⊔ = ≡̂ₑ-val λ _ → ⊔ₑ-assoc _ _ _
 
--- Mirrors `Eternal` of `Language.Types`, plus rules for the eternality
--- atoms of the hypothesis set and for transfer along an assumed
--- subtyping in both directions; as in the original, no rule for `_⇒_`
--- and `[_]_`, and none for `_⇛_`.
+-- Eternality: one rule for each eternal type former, plus rules for the
+-- eternality atoms of the hypothesis set and for transfer along an
+-- assumed subtyping in both directions; no rule for `_⇒_`, `[_]_` and
+-- `_⇛_`.
 
 infix 4 _⊩ᴱ_
 
@@ -717,14 +717,11 @@ data _≡̂ᶜ_ {Θ} where
 ⊩ᴱ-≡̂ (|List|≡̂ p) (|List|ₑ et) = |List|ₑ (⊩ᴱ-≡̂ p et)
 ⊩ᴱ-≡̂ Empty≡̂     et           = et
 
--- Shape-preserving subtyping of open value and computation types,
--- mirroring `ClosedCalculus.Syntax.Subtyping` former by former: one constructor per
--- pair of matching type formers, no `refl` or `trans` constructor. The
--- grade slots carry entailments from `Q`, and an unknown head is related
--- only by an assumed subtyping.
---
--- Unlike `ClosedCalculus.Syntax.Subtyping`, the relation is proof-relevant, as
--- entailment is.
+-- Shape-preserving subtyping of open value and computation types: one
+-- constructor per pair of matching type formers, no `refl` or `trans`
+-- constructor. The grade slots carry entailments from `Q`, and an
+-- unknown head is related only by an assumed subtyping. The relation is
+-- proof-relevant, as entailment is.
 
 infix  4  _∣_<:̂ᵛ_ _∣_<:̂ᶜ_
 infix  37 [_]ₛ_
@@ -845,9 +842,8 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-eternalʳ (|List|ₛ p)  (|List|ₑ et) = |List|ₑ (<:̂ᵛ-eternalʳ p et)
 <:̂ᵛ-eternalʳ Emptyₛ       et          = et
 
--- The side condition of the `var` rule: `Eternal` is undecided at open
--- types, so the original's `¬ Eternal A → ρ ≾ᵣ uᵣ` becomes a judgement
--- `VarOK Q A ρ`, meaning that `A` is eternal or `ρ ≾ u` at every
+-- The side condition of the `var` rule: eternality is undecided at open
+-- types, so the condition is a judgement `VarOK Q A ρ`, meaning that `A` is eternal or `ρ ≾ u` at every
 -- instance. It is met by eternality, by the ordering, or by a `disj`
 -- hypothesis at a grade above; and it is closed under subtyping in both
 -- directions, under the type formers that preserve eternality, and

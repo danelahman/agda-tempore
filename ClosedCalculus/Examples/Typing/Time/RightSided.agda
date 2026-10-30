@@ -76,7 +76,7 @@ open import ClosedCalculus.Examples.Typing.Core right-sided-intervals opTime
 open import Language.Comparisons using (Cmp; eq; ne; lt; le; gt; ge; less; equal; greater; holds)
 open import ClosedCalculus.Syntax.Data spec using (compareᵈ)
 open import ClosedCalculus.OperationalSemantics.State spec using (∅)
-open import ClosedCalculus.OperationalSemantics.PreservationTheorem spec using (⟨_,_⟩; _↝_; CMP)
+open import ClosedCalculus.OperationalSemantics.Reduction           spec using (⟨_,_⟩; _↝_; CMP)
 
 ------------------------------------------------------------------------
 -- Effectful computations

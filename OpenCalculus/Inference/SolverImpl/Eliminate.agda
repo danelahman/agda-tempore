@@ -112,11 +112,11 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open SystemHintsInterface hints
 
-open import OpenCalculus.Syntax.Grades        S
-open import OpenCalculus.Syntax.Types         S
-open import OpenCalculus.Syntax.Subst         S
-open import OpenCalculus.Hypotheses           S
-open import OpenCalculus.Hypotheses.Instances S
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.GradeSubstitution S
+open import OpenCalculus.Hypotheses               S
+open import OpenCalculus.Hypotheses.Instances     S
   using (_⊨ᴴ_; ⊨ᴴ-refl; ⊨ᴴ-trans; ⊩ᴴ-⊨ᴴ; mk⊨ᴴ; VarOK-∅-mono; val-≾ᵣ; val-≾ₑ⁻)
 
 open import OpenCalculus.Inference.SolverImpl.Former   S

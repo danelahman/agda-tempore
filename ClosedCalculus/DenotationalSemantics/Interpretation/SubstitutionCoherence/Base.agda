@@ -34,13 +34,13 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import Language.Types         S
+open import ClosedCalculus.Syntax.Types S
 open import ClosedCalculus.Syntax.Contexts      S
 open import ClosedCalculus.Syntax.Terms      S
-open import ClosedCalculus.Syntax.Renamings     S
-open import ClosedCalculus.Syntax.RenActions    S
-open import ClosedCalculus.Syntax.Substitutions S
-open import ClosedCalculus.Syntax.Renamings.Equivalence S using (Var)
+open import ClosedCalculus.Syntax.Renaming      S
+open import ClosedCalculus.Syntax.Renaming.Action S
+open import ClosedCalculus.Syntax.Substitution  S
+open import ClosedCalculus.Syntax.Renaming.Equivalence  S using (Var)
 
 open Category Cat
 open Future Fut

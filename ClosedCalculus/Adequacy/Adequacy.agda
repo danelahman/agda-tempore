@@ -3,7 +3,7 @@
 --                                                                    --
 -- The converse direction of `↝*-sound`. Assembled from               --
 --                                                                    --
---   * whnf existence  — `Normalization.halts` (syntactic)            --
+--   * whnf existence  — `Termination.halts` (syntactic)              --
 --   * the whnf denotes the source — `↝*-sound`                       --
 --   * head faithfulness — `HeadFaithful` (model side)                --
 --                                                                    --
@@ -57,9 +57,9 @@ open Operations Ops
 
 open import ClosedCalculus.Syntax.Contexts Spec
 open import ClosedCalculus.Syntax.Terms    Spec
-open import Language.Types                 Spec
+open import ClosedCalculus.Syntax.Types    Spec
 
-open import ClosedCalculus.OperationalSemantics.PreservationTheorem Spec
+open import ClosedCalculus.OperationalSemantics.Reduction           Spec
 open import ClosedCalculus.OperationalSemantics.State               Spec
 
 open Category Cat
@@ -77,10 +77,10 @@ open import ClosedCalculus.DenotationalSemantics.Interpretation.State    Spec Ca
 
 open import ClosedCalculus.OperationalSemantics.Soundness.Preservation   Spec Cat Fut Pst Adj GTy Mon GE
 
-open import ClosedCalculus.Adequacy.Evaluation    Spec
-open import ClosedCalculus.Adequacy.HeadFaithful  Spec Cat Fut Pst Adj GTy Mon GE
-open import ClosedCalculus.Adequacy.Normalization Spec
-open import ClosedCalculus.Adequacy.Reducibility  Spec
+open import ClosedCalculus.OperationalSemantics.Evaluation               Spec
+open import ClosedCalculus.Adequacy.HeadFaithful                         Spec Cat Fut Pst Adj GTy Mon GE
+open import ClosedCalculus.OperationalSemantics.Termination              Spec
+open import ClosedCalculus.OperationalSemantics.Termination.Reducibility Spec
 
 open HF.HeadFaithful hf
 open HF.BaseFaithful bf

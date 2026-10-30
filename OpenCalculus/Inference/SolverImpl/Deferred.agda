@@ -55,11 +55,11 @@ open GradeSystemInterface Grades
 open SystemHintsInterface hints
 open Operations Ops using (Op)
 
-open import OpenCalculus.Syntax.Grades        S
-open import OpenCalculus.Syntax.Types         S
-open import OpenCalculus.Syntax.Subst         S
-open import OpenCalculus.Hypotheses           S
-open import OpenCalculus.Hypotheses.Instances S using (_⊩ᴼˢ_[_])
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.GradeSubstitution S
+open import OpenCalculus.Hypotheses               S
+open import OpenCalculus.Hypotheses.Instances     S using (_⊩ᴼˢ_[_])
 
 ------------------------------------------------------------------------
 -- Lifting an ordering of substitutions over the rigids

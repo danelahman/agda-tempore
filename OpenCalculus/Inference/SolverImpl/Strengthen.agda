@@ -45,10 +45,10 @@ module OpenCalculus.Inference.SolverImpl.Strengthen (S : LanguageSpec)
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import OpenCalculus.Syntax.Grades S
-open import OpenCalculus.Syntax.Types  S
-open import OpenCalculus.Syntax.Subst  S
-open import OpenCalculus.Hypotheses    S
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.GradeSubstitution S
+open import OpenCalculus.Hypotheses               S
 
 open import OpenCalculus.Inference.SolverImpl.Vars      S
 open import OpenCalculus.Inference.SolverImpl.Eliminate S hints using (Elim; Ĉ; Q̂; η; conv; inst; keep; princ)

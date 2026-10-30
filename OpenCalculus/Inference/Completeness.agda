@@ -32,17 +32,17 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import OpenCalculus.Syntax.Grades         S
-open import OpenCalculus.Syntax.Types          S
-open import OpenCalculus.Syntax.Contexts       S
-open import OpenCalculus.Syntax.ContextsLemmas S
-open import OpenCalculus.Syntax.Subst          S
-open import OpenCalculus.Hypotheses            S
-open import OpenCalculus.Typing                S
+open import OpenCalculus.Syntax.Grades              S
+open import OpenCalculus.Syntax.Types               S
+open import OpenCalculus.Syntax.Contexts            S
+open import OpenCalculus.Syntax.Contexts.Properties S
+open import OpenCalculus.Syntax.GradeSubstitution   S
+open import OpenCalculus.Hypotheses                 S
+open import OpenCalculus.Typing                     S
 
-open import OpenCalculus.Syntax.Raw       S
-open import OpenCalculus.Syntax.Raw.Subst S
-open import OpenCalculus.Typing.Erasure   S
+open import OpenCalculus.Syntax.Raw                   S
+open import OpenCalculus.Syntax.Raw.GradeSubstitution S
+open import OpenCalculus.Typing.Erasure               S
 
 open import OpenCalculus.Inference.Constraints.Syntax       S
 open import OpenCalculus.Inference.Constraints.Satisfaction S
@@ -70,12 +70,12 @@ private
 -- A use of a definition: its position is bound to the scheme of the
 -- rule, and the instance of the rule solves the constraint
 
-cmpDef : ∀ {Θ n Θ'} → (σ : Subst Θ Θ') → {Q : Hyps Θ'}
-       → (Γ : OCtx Θ n) → (k : ℕ) → (A : OVType Θ) → (sc : Scheme)
-       → sc ∈ᵖ[ k ] defs Γ → (δ : Subst (Θˢ sc) Θ') → Q ⊩ᴴ Qˢ sc [ δ ]
-       → Q ∣ Xˢ sc [ δ ]ᵛ <:̂ᵛ A [ σ ]ᵛ
-       → σ ⊨[ Q ] defConstraint (lookupᵖ (defs Γ) k) A
-cmpDef σ Γ k A sc f δ h st rewrite ∈-lookupᵖ f = instᶜ-complete sc A δ st h
+cmpUseDef : ∀ {Θ n Θ'} → (σ : Subst Θ Θ') → {Q : Hyps Θ'}
+          → (Γ : OCtx Θ n) → (k : ℕ) → (A : OVType Θ) → (sc : Scheme)
+          → sc ∈ᵖ[ k ] defs Γ → (δ : Subst (Θˢ sc) Θ') → Q ⊩ᴴ Qˢ sc [ δ ]
+          → Q ∣ Xˢ sc [ δ ]ᵛ <:̂ᵛ A [ σ ]ᵛ
+          → σ ⊨[ Q ] useDefConstraint (lookupᵖ (defs Γ) k) A
+cmpUseDef σ Γ k A sc f δ h st rewrite ∈-lookupᵖ f = instᶜ-complete sc A δ st h
 
 -- A resource value: the variable and the annotations of the raw value
 -- are those of the judgement, which meets each annotation's atom
@@ -137,10 +137,10 @@ mutual
       ok' : VarOK Q (lookup-ty Γ i [ σ ]ᵛ) (lookup-gr Γ i [ σ ]ʳ)
       ok' = subst₂ (VarOK Q) (sym lty) (sym lgr) ok
 
-  -- top-level definitions
+  -- uses of top-level definitions
 
-  cmpV {σ = σ} ι Γ A _ (def {k = k} {s = sc} f δ h refl) def ceq st =
-    cmpDef σ Γ k A sc (subst (sc ∈ᵖ[ k ]_) (trans (cong defs ceq) (defs-subst Γ σ)) f) δ h st
+  cmpV {σ = σ} ι Γ A _ (usedef {k = k} {s = sc} f δ h refl) usedef ceq st =
+    cmpUseDef σ Γ k A sc (subst (sc ∈ᵖ[ k ]_) (trans (cong defs ceq) (defs-subst Γ σ)) f) δ h st
 
   -- base-typed constants, unit, booleans
   --

@@ -23,8 +23,13 @@ and [rzgdmqt/temporal-resources](https://github.com/rzgdmqt/temporal-resources).
 Agda 2.8.0 with the Agda standard library 2.3, registered as
 `standard-library-2.3` (see `tempore-formalisation.agda-lib`).
 
-    agda Everything.agda    # the development: about 90 minutes from scratch
-    agda Examples.agda      # the type-inference examples: about 20 minutes more
+The development has two parts, which do not import each other: the
+calculus with type and grade variables and its type inference, and the
+closed calculus. Both build on `Grades/`, `Language/` and `Util/`.
+
+    agda Everything.agda                  # the calculus with type and grade variables
+    agda Examples.agda                    # its type-inference examples
+    agda ClosedCalculus/Everything.agda   # the closed calculus
 
 A set of examples is checked alone by its index,
 `agda OpenCalculus/Examples/<Set>/All.agda`, whose header names the parts of
@@ -36,18 +41,17 @@ warning. The only postulate is function extensionality (`Util/Equality.agda`).
 - `Util/`: equality and the non-negative rationals.
 - `Grades/`: grade algebras, grade systems and durations, and the hints the
   solver reads (`Grades/Hints.agda`); the concrete grades in `Grades/Examples/`.
-- `Language/`: what both calculi share: base types, operations, types.
+- `Language/`: what both calculi share: base types, ground types,
+  comparisons and operation signatures.
 - `OpenCalculus/`: the calculus with type and grade variables: hypotheses,
   entailment, typing, the operational semantics, type safety and termination,
   constraints, the solver, inference.
 - `ClosedCalculus/`: the closed, intrinsically typed calculus: its operational
   and denotational semantics, equational theory and adequacy.
-- `Bridge/`: instantiation of open typings into closed ones, and completeness
-  of inference with respect to closed typings.
 
-`Results.agda` is the overview: one entry per main definition, rule and
-theorem, named by its title, with the items not yet formalised listed at the
-end.
+`Results.agda` and `ClosedCalculus/Results.agda` are the overviews: one entry
+per main definition, rule and theorem, named by its title; the closed one
+lists the items not yet formalised at the end.
 
 ## Scope
 
@@ -66,8 +70,7 @@ end.
   annotations, with grade-free states; `unbox` there takes a value.
   Instantiation, type safety and termination are for the scope-closed typing.
   The closed calculus types handler clauses at every continuation grade and
-  has comparisons as computations; the instantiation into it covers the terms
-  whose handlers are second class. Completeness of inference is with respect
+  has comparisons as computations. Completeness of inference is with respect
   to scope-closed typings.
 - The denotational results assume uniform handlers, and some of their
   recursions are marked `TERMINATING`.

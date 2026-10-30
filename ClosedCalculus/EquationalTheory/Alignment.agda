@@ -15,12 +15,12 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import ClosedCalculus.Syntax.Contexts      S
-open import ClosedCalculus.Syntax.Terms         S
-open import ClosedCalculus.Syntax.RenActions    S
-open import ClosedCalculus.Syntax.Renamings     S
-open import ClosedCalculus.Syntax.Substitutions S
-open import Language.Types                      S
+open import ClosedCalculus.Syntax.Contexts        S
+open import ClosedCalculus.Syntax.Terms           S
+open import ClosedCalculus.Syntax.Renaming.Action S
+open import ClosedCalculus.Syntax.Renaming        S
+open import ClosedCalculus.Syntax.Substitution    S
+open import ClosedCalculus.Syntax.Types           S
 
 open import ClosedCalculus.Syntax.Terms.Equivalence S
 

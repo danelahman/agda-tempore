@@ -111,9 +111,7 @@ branches-reported = refl
 
 ------------------------------------------------------------------
 -- 6. A demand for two ticks is covered by a store, at 2, or a
--- transmission, at 4, not by a reading, at 1:
--- `sampling-branch-too-little` of
--- `ClosedCalculus/Examples/Typing/Traces/Timed/LeftSided.agda`
+-- transmission, at 4, not by a reading, at 1
 
 read-too-early-verdict : infer [] (op-licensed read) ≡ untypable
 read-too-early-verdict = refl

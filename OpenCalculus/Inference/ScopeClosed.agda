@@ -24,15 +24,15 @@ open import OpenCalculus.Inference.SolverImpl.Enum using (OpEnum)
 module OpenCalculus.Inference.ScopeClosed (S : LanguageSpec)
   (hints : SystemHints (LanguageSpec.Grades S)) (opEnum : OpEnum S) where
 
-open import OpenCalculus.Syntax.Types         S using (OCType)
-open import OpenCalculus.Syntax.Contexts      S using (OCtx; _[_]ᶜᵗˣ; [id]ᶜᵗˣ)
-open import OpenCalculus.Syntax.Subst         S
-open import OpenCalculus.Hypotheses           S using (∅ᴴ; ⊩ᴵ-∅; _∣_<:̂ᶜ_)
-open import OpenCalculus.Hypotheses.Instances S using (_⊨_)
-open import OpenCalculus.Typing               S using (_∣_⊢C⦂_)
-open import OpenCalculus.Typing.Erasure       S using (⌊_⌋ᶜ)
-open import OpenCalculus.Syntax.Raw           S using (RawC)
-open import OpenCalculus.Syntax.Raw.Subst     S using (_[_]ᴿᶜ; [id]ᴿᶜ)
+open import OpenCalculus.Syntax.Types                 S using (OCType)
+open import OpenCalculus.Syntax.Contexts              S using (OCtx; _[_]ᶜᵗˣ; [id]ᶜᵗˣ)
+open import OpenCalculus.Syntax.GradeSubstitution     S
+open import OpenCalculus.Hypotheses                   S using (∅ᴴ; ⊩ᴵ-∅; _∣_<:̂ᶜ_)
+open import OpenCalculus.Hypotheses.Instances         S using (_⊨_)
+open import OpenCalculus.Typing                       S using (_∣_⊢C⦂_)
+open import OpenCalculus.Typing.Erasure               S using (⌊_⌋ᶜ)
+open import OpenCalculus.Syntax.Raw                   S using (RawC)
+open import OpenCalculus.Syntax.Raw.GradeSubstitution S using (_[_]ᴿᶜ; [id]ᴿᶜ)
 open import OpenCalculus.Inference.Principality S
   using (PrincipalScheme; module PrincipalScheme; Typable; typable; typed; untypable)
 open import OpenCalculus.Inference.SolverImpl S hints opEnum using (infer; infer-complete)

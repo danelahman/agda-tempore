@@ -31,16 +31,16 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import OpenCalculus.Syntax.Grades         S
-open import OpenCalculus.Syntax.Types          S
-open import OpenCalculus.Syntax.Contexts       S
-open import OpenCalculus.Syntax.Subst          S using (Subst; _[_]ᵛ)
-open import OpenCalculus.Hypotheses            S
-open import OpenCalculus.Typing                S
-open import OpenCalculus.Typing.Erasure        S
+open import OpenCalculus.Syntax.Grades            S
+open import OpenCalculus.Syntax.Types             S
+open import OpenCalculus.Syntax.Contexts          S
+open import OpenCalculus.Syntax.GradeSubstitution S using (Subst; _[_]ᵛ)
+open import OpenCalculus.Hypotheses               S
+open import OpenCalculus.Typing                   S
+open import OpenCalculus.Typing.Erasure           S
 open import OpenCalculus.Typing.GradeSubstitution S using (clause-ctx; clause-ty)
-open import OpenCalculus.Typing.Renaming       S using (∥_∥ᵛ; ∥_∥ᶜ)
-open import OpenCalculus.Syntax.Run            S
+open import OpenCalculus.Typing.Renaming          S using (∥_∥ᵛ; ∥_∥ᶜ)
+open import OpenCalculus.Syntax.Run               S
 
 module _ {Θ : Scope} (Q : Hyps Θ) where
 
@@ -48,7 +48,7 @@ module _ {Θ : Scope} (Q : Hyps Θ) where
 
   HeadV : ∀ {n} → OCtx Θ n → RunV n → OVType Θ → Set
   HeadV Γ (var i)       T = Σ[ ρ ∈ RExp Θ ] Σ[ x ∈ T ∈̂[ ρ ] Γ ] (var-pos x ≡ i) × VarOK Q T ρ
-  HeadV Γ (def k)       T =
+  HeadV Γ (usedef k)    T =
     Σ[ s ∈ Scheme ] Σ[ f ∈ s ∈ᵖ[ k ] defs Γ ] Σ[ δ ∈ Subst (Θˢ s) Θ ]
       (Q ⊩ᴴ Qˢ s [ δ ]) × (T ≡ Xˢ s [ δ ]ᵛ)
   HeadV Γ (const B c)   T = T ≡ Base B
@@ -157,7 +157,7 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
 
   invV : ∀ {n} {Γ : OCtx Θ n} {T : OVType Θ} → (D : Q ∣ Γ ⊢V⦂ T) → InvV Q Γ ∥ D ∥ᵛ T
   invV {T = T} (var x p)        = T , (_ , x , refl , p) , <:̂ᵛ-refl T
-  invV {T = T} (def f δ h e)    = T , (_ , f , δ , h , e) , <:̂ᵛ-refl T
+  invV {T = T} (usedef f δ h e) = T , (_ , f , δ , h , e) , <:̂ᵛ-refl T
   invV (const B c)              = _ , refl , <:̂ᵛ-refl _
   invV ⋆                        = _ , refl , <:̂ᵛ-refl _
   invV true                     = _ , refl , <:̂ᵛ-refl _
@@ -263,33 +263,33 @@ module _ {Θ : Scope} {n : ℕ} {Q : Hyps Θ} {Γ : OCtx Θ n} (bx : BoxCtx Γ) 
     no-var x f with proj₁ bx x
     ... | _ , _ , e = ⊥-elim (f e)
 
-    no-def : ∀ {s k} {P : Set} → s ∈ᵖ[ k ] defs Γ → P
-    no-def f = ⊥-elim (∅ᵖ-∌ (subst (_ ∈ᵖ[ _ ]_) (proj₂ bx) f))
+    no-usedef : ∀ {s k} {P : Set} → s ∈ᵖ[ k ] defs Γ → P
+    no-usedef f = ⊥-elim (∅ᵖ-∌ (subst (_ ∈ᵖ[ _ ]_) (proj₂ bx) f))
 
   canon-⇒ : ∀ {A C} → (D : Q ∣ Γ ⊢V⦂ A ⇒ C) → LamView ∥ D ∥ᵛ
   canon-⇒ (var x p)          = no-var x (λ ())
-  canon-⇒ (def f δ h e)      = no-def f
+  canon-⇒ (usedef f δ h e)   = no-usedef f
   canon-⇒ (lam M)            = is-lam _
   canon-⇒ (annᵛ _ D)         = canon-⇒ D
   canon-⇒ (subV D (p ⇒ₛ q))  = canon-⇒ D
 
   canon-⇛ : ∀ {C D'} → (D : Q ∣ Γ ⊢V⦂ C ⇛ D') → HandlerView ∥ D ∥ᵛ
   canon-⇛ (var x p)          = no-var x (λ ())
-  canon-⇛ (def f δ h e)      = no-def f
+  canon-⇛ (usedef f δ h e)   = no-usedef f
   canon-⇛ (handler N H)      = is-handler _ _
   canon-⇛ (annᵛ _ D)         = canon-⇛ D
   canon-⇛ (subV D (p ⇛ₛ q))  = canon-⇛ D
 
   canon-× : ∀ {A B} → (D : Q ∣ Γ ⊢V⦂ A |×| B) → PairView ∥ D ∥ᵛ
   canon-× (var x p)          = no-var x (λ ())
-  canon-× (def f δ h e)      = no-def f
+  canon-× (usedef f δ h e)   = no-usedef f
   canon-× ⦉ V , W ⦊           = is-pair _ _
   canon-× (annᵛ _ D)         = canon-× D
   canon-× (subV D (p |×|ₛ q)) = canon-× D
 
   canon-+ : ∀ {A B} → (D : Q ∣ Γ ⊢V⦂ A |+| B) → SumView ∥ D ∥ᵛ
   canon-+ (var x p)          = no-var x (λ ())
-  canon-+ (def f δ h e)      = no-def f
+  canon-+ (usedef f δ h e)   = no-usedef f
   canon-+ (inl V)            = is-inl _
   canon-+ (inr V)            = is-inr _
   canon-+ (annᵛ _ D)         = canon-+ D
@@ -297,7 +297,7 @@ module _ {Θ : Scope} {n : ℕ} {Q : Hyps Θ} {Γ : OCtx Θ n} (bx : BoxCtx Γ) 
 
   canon-List : ∀ {A} → (D : Q ∣ Γ ⊢V⦂ |List| A) → ListView ∥ D ∥ᵛ
   canon-List (var x p)          = no-var x (λ ())
-  canon-List (def f δ h e)      = no-def f
+  canon-List (usedef f δ h e)   = no-usedef f
   canon-List nil                = is-nil
   canon-List (cons V W)         = is-cons _ _
   canon-List (annᵛ _ D)         = canon-List D
@@ -305,7 +305,7 @@ module _ {Θ : Scope} {n : ℕ} {Q : Hyps Θ} {Γ : OCtx Θ n} (bx : BoxCtx Γ) 
 
   canon-Nat : (D : Q ∣ Γ ⊢V⦂ Nat) → NatView ∥ D ∥ᵛ
   canon-Nat (var x p)        = no-var x (λ ())
-  canon-Nat (def f δ h e)    = no-def f
+  canon-Nat (usedef f δ h e) = no-usedef f
   canon-Nat zero             = is-zero
   canon-Nat (succ V)         = is-succ _
   canon-Nat (annᵛ _ D)       = canon-Nat D
@@ -313,7 +313,7 @@ module _ {Θ : Scope} {n : ℕ} {Q : Hyps Θ} {Γ : OCtx Θ n} (bx : BoxCtx Γ) 
 
   canon-Bool : (D : Q ∣ Γ ⊢V⦂ Bool) → BoolView ∥ D ∥ᵛ
   canon-Bool (var x p)        = no-var x (λ ())
-  canon-Bool (def f δ h e)    = no-def f
+  canon-Bool (usedef f δ h e) = no-usedef f
   canon-Bool true             = is-true
   canon-Bool false            = is-false
   canon-Bool (cmp ⋈ V W et)   = is-cmp _ _ _
@@ -322,13 +322,13 @@ module _ {Θ : Scope} {n : ℕ} {Q : Hyps Θ} {Γ : OCtx Θ n} (bx : BoxCtx Γ) 
 
   canon-Empty : (D : Q ∣ Γ ⊢V⦂ Empty) → ⊥
   canon-Empty (var x p)       = no-var x (λ ())
-  canon-Empty (def f δ h e)   = no-def f
+  canon-Empty (usedef f δ h e) = no-usedef f
   canon-Empty (annᵛ _ D)      = canon-Empty D
   canon-Empty (subV D Emptyₛ) = canon-Empty D
 
 canon-box : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ A}
           → defs Γ ≡ ∅ᵖ → (D : Q ∣ Γ ⊢V⦂ [ ρ ] A) → VarView ∥ D ∥ᵛ
 canon-box nd (var x p)          = is-var _
-canon-box nd (def f δ h e)      = ⊥-elim (∅ᵖ-∌ (subst (_ ∈ᵖ[ _ ]_) nd f))
+canon-box nd (usedef f δ h e)   = ⊥-elim (∅ᵖ-∌ (subst (_ ∈ᵖ[ _ ]_) nd f))
 canon-box nd (annᵛ _ D)         = canon-box nd D
 canon-box nd (subV D ([ p ]ₛ q)) = canon-box nd D

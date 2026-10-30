@@ -21,19 +21,19 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import ClosedCalculus.Syntax.Contexts      S
-open import ClosedCalculus.Syntax.Terms         S
-open import ClosedCalculus.Syntax.RenActions    S
-open import ClosedCalculus.Syntax.Renamings     S
-open import ClosedCalculus.Syntax.Substitutions S
-open import Language.Types                      S
+open import ClosedCalculus.Syntax.Contexts        S
+open import ClosedCalculus.Syntax.Terms           S
+open import ClosedCalculus.Syntax.Renaming.Action S
+open import ClosedCalculus.Syntax.Renaming        S
+open import ClosedCalculus.Syntax.Substitution    S
+open import ClosedCalculus.Syntax.Types           S
 
 open import ClosedCalculus.Syntax.Terms.Equivalence  S using (var-≡; subV-≡)
-open import ClosedCalculus.Syntax.Substitutions.Laws S using (sub-wk-≡ᵛ; sub-wk-≡ᶜ)
+open import ClosedCalculus.Syntax.Substitution.Laws  S using (sub-wk-≡ᵛ; sub-wk-≡ᶜ)
 
 -- Binder subsumption and its substitution law.
 
-open import ClosedCalculus.Syntax.Substitutions.Subsumption S using (subCtx; subCtx-sub)
+open import ClosedCalculus.Syntax.Substitution.Subsumption  S using (subCtx; subCtx-sub)
 
 open import ClosedCalculus.EquationalTheory.EquationalTheory S
 

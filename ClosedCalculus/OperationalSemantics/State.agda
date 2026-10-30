@@ -19,12 +19,12 @@ module ClosedCalculus.OperationalSemantics.State (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import ClosedCalculus.Syntax.Contexts   S
-open import ClosedCalculus.Syntax.Data       S using (⟪_⟫; ⟪_⟫ˢ)
-open import ClosedCalculus.Syntax.Terms      S
-open import ClosedCalculus.Syntax.RenActions S
-open import ClosedCalculus.Syntax.Renamings  S
-open import Language.Types                   S
+open import ClosedCalculus.Syntax.Contexts        S
+open import ClosedCalculus.Syntax.Data            S using (⟪_⟫; ⟪_⟫ˢ)
+open import ClosedCalculus.Syntax.Terms           S
+open import ClosedCalculus.Syntax.Renaming.Action S
+open import ClosedCalculus.Syntax.Renaming        S
+open import ClosedCalculus.Syntax.Types           S
 
 -- Definition of state
 

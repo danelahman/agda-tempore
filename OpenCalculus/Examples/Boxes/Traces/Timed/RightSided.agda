@@ -40,8 +40,7 @@ open import OpenCalculus.Examples.Variables
 -- 1. Boxing to survive time
 --
 -- A function argument used after a tick fails `var`'s bound
--- `⟨ 1 ⟩ ≾ uᵣ`, boxed or not (`reading-stale-after-idling` in
--- `ClosedCalculus/Examples/Typing/Traces/Timed/RightSided.agda`, at two ticks).
+-- `⟨ 1 ⟩ ≾ uᵣ`, boxed or not.
 
 stale-call-verdict : infer [] stale-call ≡ untypable
 stale-call-verdict = refl
