@@ -1,22 +1,11 @@
 ------------------------------------------------------------------
 -- Report simplification                                        --
 --                                                              --
--- Two schemes that the report simplifies.                      --
---                                                              --
--- `reused-around-claim` uses a variable on both sides of a     --
--- box's claim and so owes two var-rule disjunctions,           --
--- `eternal α ∨ ∣ε_f∣ ≾ uᵣ` and `eternal α ∨ ∣ε_f∣·∣ε_g∣ ≾ uᵣ`. --
--- Where the unit is least, the second entails the first, which --
--- is dropped.                                                  --
---                                                              --
--- `claimed-after-call` claims a box in a clause built after a  --
--- call, so the least box grade is `∣ε_f∣ · ⊤ᵣ`, a product with --
--- the top among its factors, which the top absorbs.            --
---                                                              --
--- Both simplifications apply where the unit is least; the      --
+-- Two schemes the report simplifies where the unit is least: a --
+-- var-rule disjunction entailed by another is pruned, and a    --
+-- product with the top among its factors is absorbed. The      --
 -- instances under `Reports/` check them at the right-sided     --
--- grades. At the left-sided grades the schemes are settled     --
--- without them, and there is no instance.                      --
+-- grades.                                                      --
 ------------------------------------------------------------------
 
 open import Data.Unit using (tt)
@@ -68,7 +57,7 @@ closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢C⦂ C)
        → ⌊ D ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ → Typable [] M
 closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
--- Typable and handler-free: inference answers `typed`
+-- Typable and handler-free: `typed`
 
 typed-of : (M : RawC ∅ˢ 0) → Typable [] M → HandlerFreeᶜ M → IsTyped (infer [] M)
 typed-of M t h with infer [] M | infer-complete [] M t | infer-handlerFree [] M tt h
@@ -99,12 +88,9 @@ U⇒U = Unit ⇒ Unit ‼ ûₑ
 --
 --   reused-around-claim a f b = f (); unbox b as g in g a; return a
 --
--- `a` is used after `f` and again after `g`, so it owes two var-rule
--- disjunctions, `eternal α ∨ ∣ ε_f ∣ ≾ uᵣ` and
--- `eternal α ∨ ∣ ε_f ∣ · ∣ ε_g ∣ ≾ uᵣ`. Where the unit is least, the
--- second entails the first, which is not reported (checked at the
--- right-sided grades; at the left-sided ones both are settled). The
--- box is claimed after `f`, at the least grade `∣ ε_f ∣`.
+-- `a` owes `eternal α ∨ ∣ ε_f ∣ ≾ uᵣ` and
+-- `eternal α ∨ ∣ ε_f ∣ · ∣ ε_g ∣ ≾ uᵣ`; where the unit is least the
+-- second entails the first, which is dropped.
 
 reused-around-claim : RawC ∅ˢ 0
 reused-around-claim =
@@ -135,10 +121,8 @@ expected-reused-around-claim C ε =
 --     return (λ m. handle m () with handler {op p k ↦ unbox b as y in
 --                                 let a = op p in unbox k as k' in k' a})
 --
--- The clause claims `b` after `f` and behind the clause's lock, so the
--- least box grade is `∣ ε_f ∣ · ⊤ᵣ`: the top where the unit is least,
--- the product with the top being absorbed (checked at the right-sided
--- grades; where the unit is the top, `⊤ᵣ` is the unit).
+-- The box's grade `∣ ε_f ∣ · ⊤ᵣ` is absorbed into the top where the
+-- unit is least.
 
 claimed-after-call : RawC ∅ˢ 0
 claimed-after-call =
