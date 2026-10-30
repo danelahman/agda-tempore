@@ -307,7 +307,7 @@ expected-choose =
 
 -- Subtyping in a summand; typed at every grade.
 --
---   widen = let f = (λ s. case+ s of inl _ ↦ delay 3; ()
+--   subsume-sum = let f = (λ s. case+ s of inl _ ↦ delay 3; ()
 --                                  | inr g ↦ g ())
 --                   : Nat + (Unit ⇒ Unit ‼ 1 ⊔ 3) ⇒ Unit ‼ 1 ⊔ 3
 --           in f (inr (λ _. delay 1; ()) : Nat + (Unit ⇒ Unit ‼ 1))
@@ -321,14 +321,14 @@ private
   Wide   = Nat |+| (Unit ⇒ Unit ‼ j₁₃)
   Narrow = Nat |+| (Unit ⇒ Unit ‼ ⌜ 1 ⌝ᵉ)
 
-widen : RawC ∅ˢ 0
-widen =
+subsume-sum : RawC ∅ˢ 0
+subsume-sum =
   return (lam (case+ v₀ `inl delay ⌜ 3 ⌝ (return ⋆) `inr (v₀ · ⋆))
             ⦂ᵛ (Wide ⇒ Unit ‼ j₁₃))
   ⨟ (v₀ · (inr (lam (delay ⌜ 1 ⌝ (return ⋆))) ⦂ᵛ Narrow))
 
-widen-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (ûₑ ·̂ₑ j₁₃)
-widen-D =
+subsume-sum-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (ûₑ ·̂ₑ j₁₃)
+subsume-sum-D =
   return (annᵛ (Wide ⇒ Unit ‼ j₁₃)
            (lam (case+ var Hd ok₀
                   `inl coerce (transₑ (eqₑ ≡̂ₑ-identityʳ) ⊔-ubʳₑ) (delay ⌜ 3 ⌝ (return ⋆))
@@ -337,11 +337,11 @@ widen-D =
                            (inr (lam (coerce (eqₑ ≡̂ₑ-identityʳ) (delay ⌜ 1 ⌝ (return ⋆))))))
                          (Natₛ |+|ₛ (Unitₛ ⇒ₛ (Unitₛ ‼ₛ ⊔-ubˡₑ))))
 
-widen-typed : IsTyped (infer [] widen)
-widen-typed = typed-of widen (closed widen-D refl) _
+subsume-sum-typed : IsTyped (infer [] subsume-sum)
+subsume-sum-typed = typed-of subsume-sum (closed subsume-sum-D refl) _
 
-expected-widen : Scheme
-expected-widen = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ econst (of-durᵉ ⌜ 1 ⌝ ⊔ₑ of-durᵉ ⌜ 3 ⌝)
+expected-subsume-sum : Scheme
+expected-subsume-sum = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ econst (of-durᵉ ⌜ 1 ⌝ ⊔ₑ of-durᵉ ⌜ 3 ⌝)
 
 --   sum-later = let s = (inl 2 : Nat + Bool) in delay 1; s
 --

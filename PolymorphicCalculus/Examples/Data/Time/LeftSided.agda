@@ -79,8 +79,8 @@ swap-reported = refl
 choose-reported : schemeOf (infer [] choose) ≡ just expected-choose
 choose-reported = refl
 
-widen-reported : schemeOf (infer [] widen) ≡ just expected-widen
-widen-reported = refl
+subsume-sum-reported : schemeOf (infer [] subsume-sum) ≡ just expected-subsume-sum
+subsume-sum-reported = refl
 
 sum-later-reported : schemeOf (infer [] sum-later) ≡ just expected-sum-later
 sum-later-reported = refl
