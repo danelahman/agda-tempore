@@ -1,10 +1,8 @@
 ------------------------------------------------------------------
 -- Runs at left-sided intervals                                 --
 --                                                              --
--- "At least `n` ticks": the unit is not least, so a budget is  --
--- refuted at every grade but the top, where it is established; --
--- a handler that stretches its resumption's result keeps its   --
--- deferred condition at every rigid and is established.        --
+-- A budget is refuted at every grade but the top, where it is  --
+-- established; `stretch` is established.                       --
 ------------------------------------------------------------------
 
 open import Relation.Nullary using (¬_)
