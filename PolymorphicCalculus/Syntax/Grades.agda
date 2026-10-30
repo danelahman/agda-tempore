@@ -27,11 +27,6 @@ module PolymorphicCalculus.Syntax.Grades (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
--- Grade expressions have a join former and open types do not: a join of
--- open types, such as `α₁ ⊔ᵛ α₂`, is defined only once the shapes are known.
-
--- Effect grade expressions
-
 data EExp (Θ : Scope) : Set where
   evar   : EVar Θ → EExp Θ                   -- effect grade variable
   econst : E → EExp Θ                        -- closed effect grade
@@ -40,8 +35,6 @@ data EExp (Θ : Scope) : Set where
 
 infixl 7 _·̂ₑ_
 infixl 6 _⊔̂ₑ_
-
--- Resource grade expressions
 
 data RExp (Θ : Scope) : Set where
   rvar   : RVar Θ → RExp Θ                   -- resource grade variable
@@ -53,7 +46,7 @@ data RExp (Θ : Scope) : Set where
 infixl 7 _·̂ᵣ_
 infixl 6 _⊔̂ᵣ_
 
--- Units (there are no separate unit constructors; the constants subsume them)
+-- Units, as constants
 
 ûₑ : ∀ {Θ} → EExp Θ
 ûₑ = econst uₑ
@@ -102,9 +95,7 @@ wkᵉ-r     (ρ ·̂ᵣ ρ')  = wkᵉ-r ρ ·̂ᵣ wkᵉ-r ρ'
 wkᵉ-r     (ρ ⊔̂ᵣ ρ')  = wkᵉ-r ρ ⊔̂ᵣ wkᵉ-r ρ'
 wkᵉ-r     ∣ ε ∣̂ᵉ     = ∣ wkᵉ-e ε ∣̂ᵉ
 
--- Sameness of expressions: equal formers, the same variables, and
--- equivalent constants. Decidable, the constants deciding by the grade
--- interface's `_≃?_`.
+-- Sameness, decidable: equal formers and variables, equivalent constants
 
 infix 4 _≅ᵉ_ _≅ʳ_ _≟ᵉ_ _≟ʳ_ _≡ᵉ?_ _≡ʳ?_
 

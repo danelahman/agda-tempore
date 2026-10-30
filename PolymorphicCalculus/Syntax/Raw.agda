@@ -1,20 +1,15 @@
 ------------------------------------------------------------------
 -- Raw (well-scoped, untyped) syntax                            --
 --                                                              --
--- The input of inference: one former for each former of        --
--- `PolymorphicCalculus.Typing` except `subV` and `subC`,       --
--- without the typing data except the annotations. `RawV Θ n`   --
--- and `RawC Θ n` are scoped by the type and grade variables    --
--- `Θ` and `n` term variables, de Bruijn indices into the full  --
--- context. A definition is named by its position in the        --
--- program context, counted from the first.                     --
---                                                              --
--- The annotations are the base type of a constant, the         --
--- operation of a `perform`, the duration of a `delay`, the     --
--- grade of a `box`, and the optional type annotations of       --
--- values and computations. A handler's operation clauses are   --
--- scoped over `Θ +e`, binding the continuation grade, and over --
--- `2 + n` term variables.                                      --
+-- The input of inference: the formers of the typing rules but  --
+-- subsumption, keeping only the annotations (a constant's base --
+-- type, the operation of a `perform`, the duration of a        --
+-- `delay`, the grade of a `box`, optional type annotations).   --
+-- `RawV Θ n` and `RawC Θ n` are scoped by `Θ` and `n` term     --
+-- variables, de Bruijn indices into the full context; a        --
+-- definition is its position in the program context, from the  --
+-- first. Handler clauses are scoped over `Θ +e` and `2 + n`    --
+-- variables.                                                   --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
@@ -33,8 +28,6 @@ module PolymorphicCalculus.Syntax.Raw (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
-
--- Only the base-type signature is needed.
 
 open BaseTypes BTs using (BaseType; BaseConstants)
 
@@ -134,21 +127,15 @@ mutual
               ------------
             → RawV Θ n
 
-    -- handlers
-
-    -- The return clause binds the returned value. The clause for each
-    -- operation is scoped over `Θ +e` and binds the operation's parameter
-    -- and the boxed continuation.
+    -- handlers; an operation clause binds the parameter and the boxed
+    -- continuation
 
     handler : RawC Θ (suc n)
             → (Op → RawC (Θ +e) (suc (suc n)))
             ---------------------------------
             → RawV Θ n
 
-    -- type annotation
-
-    -- The annotation is an open type over `Θ`: it fixes a shape, and its
-    -- type variables stay flexible.
+    -- type annotation: it fixes a shape, its type variables flexible
 
     _⦂ᵛ_    : RawV Θ n
             → OVType Θ
@@ -200,8 +187,7 @@ mutual
             ---------
             → RawC Θ n
 
-    -- natural-number elimination, the successor branch binding the
-    -- predecessor
+    -- natural-number elimination
 
     caseℕ_`zero_`succ_
             : RawV Θ n
@@ -210,7 +196,7 @@ mutual
             --------------
             → RawC Θ n
 
-    -- sum elimination, each branch binding the injected value
+    -- sum elimination
 
     case+_`inl_`inr_
             : RawV Θ n
@@ -219,7 +205,7 @@ mutual
             --------------
             → RawC Θ n
 
-    -- list elimination, the `cons` branch binding the head and the tail
+    -- list elimination
 
     caseL_`nil_`cons_
             : RawV Θ n
@@ -229,7 +215,7 @@ mutual
             → RawC Θ n
 
     -- primitive recursion on natural numbers, the step binding the
-    -- predecessor and the result of the recursive call
+    -- predecessor, then the result of the recursive call
 
     recℕ    : RawV Θ n
             → RawC Θ n
@@ -237,8 +223,7 @@ mutual
             --------------------
             → RawC Θ n
 
-    -- primitive recursion on lists, the step binding the head, the tail
-    -- and the result of the recursive call
+    -- primitive recursion on lists, as `recℕ` with the head and tail
 
     recL    : RawV Θ n
             → RawC Θ n
@@ -269,18 +254,14 @@ mutual
             ---------
             → RawC Θ n
 
-    -- unboxing a resource
-
-    -- The value is typable only as a variable under annotations.
+    -- unboxing a resource, typable only as a variable under annotations
 
     unbox   : RawV Θ n
             → RawC Θ (suc n)
             --------------
             → RawC Θ n
 
-    -- boxing up a value
-
-    -- The grade says when the boxed value becomes usable.
+    -- boxing up a value, usable after the grade
 
     box     : RExp Θ
             → RawV Θ n
@@ -289,8 +270,6 @@ mutual
             → RawC Θ n
 
     -- type annotation
-
-    -- As for values, the annotation fixes a shape.
 
     _⦂ᶜ_    : RawC Θ n
             → OCType Θ
@@ -304,8 +283,6 @@ infix 5 _⦂ᵛ_ _⦂ᶜ_
 numeral : ∀ {Θ n} → ℕ → RawV Θ n
 numeral 0       = zero
 numeral (suc k) = succ (numeral k)
-
--- A term with no handler
 
 mutual
 

@@ -280,8 +280,7 @@ mutual
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ N k
   handlerFree-[]ᴿᶜ (M ⦂ᶜ C)                 h           = handlerFree-[]ᴿᶜ M h
 
--- Inversion: a term whose instance has a given outermost former has that
--- former, its subterms instantiating to those of the instance
+-- Inversion: a term has the outermost former of its instance
 
 data InvV {Θ Θ' n} (σ : Subst Θ Θ') : RawV Θ n → RawV Θ' n → Set where
   var   : ∀ {i} → InvV σ (var i) (var i)
