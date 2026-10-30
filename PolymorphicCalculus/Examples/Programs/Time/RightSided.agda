@@ -1,10 +1,8 @@
 ------------------------------------------------------------------
 -- Programs at right-sided intervals                            --
 --                                                              --
--- "At most `n` ticks": a variable used after a tick has to be  --
--- eternal, so `keep`'s scheme requires its type to be. `twice` --
--- uses `keep` at `unit` and at `bool`, both eternal; `late`,   --
--- keeping a function, is rejected.                             --
+-- `keep`'s scheme requires an eternal type: `twice` is         --
+-- accepted, `late`, keeping a function, rejected.              --
 ------------------------------------------------------------------
 
 open import Data.List.Base using ([]; _∷_)

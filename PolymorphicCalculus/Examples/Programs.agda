@@ -1,21 +1,16 @@
 --------------------------------------------------------------------
 -- Checking programs of several top-level definitions             --
 --                                                                --
--- Each definition is inferred in the program context of those    --
--- before it and added to it with its principal type scheme       --
--- (`checkProgram`); a later definition uses an earlier one at    --
--- any instance of its scheme whose hypotheses its own entail.    --
+-- Each definition is inferred in the context of those before it  --
+-- and added with its principal scheme (`checkProgram`).          --
 --                                                                --
 --   keep x  = delay 1; x                                         --
 --   twice _ = keep (); keep true                                 --
 --   late _  = keep (fun x → x)                                   --
 --                                                                --
--- `keep` is used at two instances by `twice`, at `unit` and at   --
--- `bool`, each eternal. Where `keep`'s scheme requires its type  --
--- to be eternal (right-sided time), `late`, which keeps a        --
--- function, is rejected.                                         --
---                                                                --
--- The instances under `Programs/` check the schemes by `refl`.   --
+-- `twice` uses `keep` at two instances. Where `keep` requires    --
+-- an eternal type, `late` is rejected. The instances under       --
+-- `Programs/` check the schemes by `refl`.                       --
 --------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_; _++_)
@@ -58,7 +53,7 @@ open import PolymorphicCalculus.Examples.Variables
 ⌜ n ⌝ᵉ = econst (of-durᵉ ⌜ n ⌝)
 
 ------------------------------------------------------------------
--- The schemes of an accepted program, the first definition's first
+-- The schemes of an accepted program, in order
 
 schemes : PCtx → List ValueScheme
 schemes ∅ᵖ       = []
@@ -75,8 +70,7 @@ rejectedAt (accepted _ _) = nothing
 rejectedAt (rejected k)   = just k
 
 ------------------------------------------------------------------
--- The definitions; a definition names an earlier one by its
--- position, from the first
+-- The definitions; `usedef k` names the one at position `k`, from 0
 
 keep : RawV ∅ˢ 0
 keep = lam (delay ⌜ 1 ⌝ (return v₀))
