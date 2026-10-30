@@ -1,15 +1,11 @@
 ------------------------------------------------------------------
 -- Inversion of open derivations at a run-time term             --
 --                                                              --
--- A derivation of a value or computation is the rule of its    --
--- term's former under subsumptions and annotations: `invV` and --
--- `invC` give the premises of that rule, at a type below the   --
--- derivation's (`HeadV`, `HeadC`), the premises' erasures      --
--- being the term's parts.                                      --
---                                                              --
--- In a context of box-typed variables and no definitions, a    --
--- value of a data, function or handler type is an introduction --
--- form (`canon-*`).                                            --
+-- `invV` and `invC` give the premises of the rule of a term's  --
+-- former, at a type below the derivation's (`HeadV`, `HeadC`), --
+-- with erasures the term's parts. In a context of box-typed    --
+-- variables and no definitions, a value of a data, function or --
+-- handler type is an introduction form (`canon-*`).            --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
@@ -214,8 +210,6 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
 
 ------------------------------------------------------------------------
 -- Canonical forms in a context of box-typed variables
-
--- The forms of the values of each type
 
 module _ {n : ℕ} where
 

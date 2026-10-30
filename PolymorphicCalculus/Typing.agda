@@ -2,16 +2,12 @@
 -- Well-typed syntax of the polymorphic calculus                --
 --                                                              --
 -- The intrinsic judgements `Q ∣ Γ ⊢V⦂ A` and `Q ∣ Γ ⊢C⦂ C`     --
--- over open types and grade expressions, with side conditions  --
--- entailed from the hypothesis set `Q`.                        --
---                                                              --
--- A handler is a value of a handler type, used by              --
--- `handle_`with_`; its operation clauses are typed over `Θ     --
--- +e`, the continuation grade being a rigid effect-grade       --
--- variable. `unbox` takes a resource value, a variable under   --
--- annotations (`_∣_⊢↪[_]_⦂[_]_`). `usedef` types the use of a  --
--- definition of the program context. The rules `annᵛ` and      --
--- `annᶜ` record a type annotation of the raw term.             --
+-- over open types and grade expressions, side conditions       --
+-- entailed from the hypothesis set `Q`. Handler operation      --
+-- clauses are typed over `Θ +e`, the continuation grade a      --
+-- rigid variable; `unbox` takes a resource value, a variable   --
+-- under annotations; `usedef` uses a definition of the program --
+-- context.                                                     --
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ; suc)
@@ -32,8 +28,6 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
--- Only the base-type signature is needed.
-
 open BaseTypes BTs using (BaseType; BaseConstants)
 
 open import PolymorphicCalculus.Syntax.Grades    S
@@ -46,23 +40,15 @@ infix 26 _∣_⊢V⦂_
 infix 26 _∣_⊢C⦂_
 infix 26 _∣_⊢↪[_]_⦂[_]_
 
--- Resource values
-
--- `Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X`: a variable `z`, at its declared box type
--- and accumulated grade `ρ'`, under annotations, each a box type below
--- (in grade) and above (in payload) the one inside it, reaching `[ ρ ] X`.
--- `unbox` checks the grade, so the variable carries no `VarOK`.
+-- Resource values: a box-typed variable `z` at accumulated grade `ρ'`,
+-- under annotations each lower in grade and higher in payload; no `VarOK`
 
 data _∣_⊢↪[_]_⦂[_]_ {Θ : Scope} {n : ℕ} (Q : Hyps Θ) (Γ : OCtx Θ n) (ρ' : RExp Θ)
      {ρ₀ : RExp Θ} {X₀ : OVType Θ} (z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ)
      : RExp Θ → OVType Θ → Set where
 
-  -- the variable at its declared type
-
   res-var : -------------------------------
             Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ₀ ] X₀
-
-  -- an annotation
 
   res-ann : {ρ : RExp Θ} {X : OVType Θ}
           → (ρₐ : RExp Θ) (Xₐ : OVType Θ)
@@ -85,11 +71,8 @@ mutual
             -------------
             → Q ∣ Γ ⊢V⦂ A
 
-    -- uses of definitions
-
-    -- The definition at position `k` of the program context, at an
-    -- instance `δ` of its scheme along which `Q` entails the scheme's
-    -- hypotheses. There is no lock condition: a definition is closed.
+    -- use of a definition, at an instance of its scheme; no lock
+    -- condition, as a definition is closed
 
     usedef  : ∀ {k} {s : Scheme} {A : OVType Θ}
             → s ∈ᵖ[ k ] defs Γ
@@ -99,9 +82,7 @@ mutual
             -----------------
             → Q ∣ Γ ⊢V⦂ A
 
-    -- base-typed constants
-
-    -- The base type is explicit; inference reads it off the term.
+    -- base-typed constants, the base type explicit
 
     const   : (B : BaseType)
             → BaseConstants B
@@ -167,12 +148,8 @@ mutual
             --------------------
             → Q ∣ Γ ⊢V⦂ |List| A
 
-    -- comparison
-
-    -- One rule for the six relations of `Cmp`: both operands at one
-    -- type, which has to be eternal, and the result a `Bool`.
-
-    -- A comparison is a value.
+    -- comparison, a value: one rule for the relations of `Cmp`, at an
+    -- eternal type
 
     cmp     : {A : OVType Θ}
             → (⋈ : Cmp)
@@ -190,12 +167,8 @@ mutual
             -----------------
             → Q ∣ Γ ⊢V⦂ A ⇒ C
 
-    -- handlers
-
-    -- The return clause is typed as the continuation of `_⨟_` is, after
-    -- a lock at the handled effect. The operation clauses are typed
-    -- under a lock at `⊤ᵣ`, as a clause runs at a time the handler does
-    -- not fix. The continuation grade is the rigid `evar newᵉ`.
+    -- handlers: the return clause as the continuation of `_⨟_`; the
+    -- operation clauses under a lock at `⊤ᵣ`, continuation grade rigid
 
     handler : {A B : OVType Θ}
             → {ε ε' : EExp Θ}
@@ -268,10 +241,7 @@ mutual
             -----------------
             → Q ∣ Γ ⊢C⦂ C
 
-    -- boolean elimination
-
-    -- Both branches are typed at the same computation type `C`; differing
-    -- types are reconciled by `subC`.
+    -- boolean elimination, both branches at one type
 
     if_`then_`else_
             : {C : OCType Θ}
@@ -283,9 +253,6 @@ mutual
 
     -- natural-number elimination
 
-    -- Both branches have the same computation type; the successor
-    -- branch binds the predecessor.
-
     caseℕ_`zero_`succ_
             : {C : OCType Θ}
             → Q ∣ Γ ⊢V⦂ Nat
@@ -295,9 +262,6 @@ mutual
             → Q ∣ Γ ⊢C⦂ C
 
     -- sum elimination
-
-    -- Both branches have the same computation type; each binds the
-    -- injected value.
 
     case+_`inl_`inr_
             : {A B : OVType Θ}
@@ -310,9 +274,6 @@ mutual
 
     -- list elimination
 
-    -- Both branches have the same computation type; the `cons` branch
-    -- binds the head and then the tail.
-
     caseL_`nil_`cons_
             : {A : OVType Θ}
             → {C : OCType Θ}
@@ -322,11 +283,8 @@ mutual
             ----------------------------
             → Q ∣ Γ ⊢C⦂ C
 
-    -- primitive recursion on natural numbers
-
-    -- The step is typed under a lock at `⊤ᵣ`; it binds the predecessor
-    -- and, after a lock at the effect, the result of the recursive call.
-    -- The effect absorbs its own iteration.
+    -- primitive recursion on natural numbers: the step under a lock at
+    -- `⊤ᵣ`, the effect absorbing its own iteration
 
     recℕ    : {B : OVType Θ}
             → {ε : EExp Θ}
@@ -337,10 +295,7 @@ mutual
             ----------------------------------------------------
             → Q ∣ Γ ⊢C⦂ B ‼ ε
 
-    -- primitive recursion on lists
-
-    -- As `recℕ`, the step binding the head and the tail in place of the
-    -- predecessor.
+    -- primitive recursion on lists, as `recℕ`
 
     recL    : {A B : OVType Θ}
             → {ε : EExp Θ}
@@ -351,10 +306,7 @@ mutual
             -------------------------------------------------------------
             → Q ∣ Γ ⊢C⦂ B ‼ ε
 
-    -- performing algebraic operations
-
-    -- Parameter and arity types are ground, hence closed: they embed at any
-    -- scope with `⌜_⌝ᵍ` and never mention a type variable.
+    -- performing algebraic operations; parameter and arity types are ground
 
     perform : {A : OVType Θ}
             → {ε : EExp Θ}
@@ -383,10 +335,8 @@ mutual
             ------------------------------
             → Q ∣ Γ ⊢C⦂ B ‼ (ε ·̂ₑ ε')
 
-    -- unboxing a resource after enough time has passed for it to be ready
-
-    -- The value is a resource value reaching `[ ρ ] X`; the time passed
-    -- since `z` came into scope is the grade `ρ'` read off the context.
+    -- unboxing a resource value once enough time `ρ'` has passed since
+    -- its variable came into scope
 
     unbox   : {X : OVType Θ}
             → {C : OCType Θ}
@@ -440,7 +390,7 @@ coerce : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A ε ε'}
 
 coerce {A = A} p M = subC M (<:̂ᵛ-refl A ‼ₛ p)
 
--- Effect-grade annotations
+-- Transport along equal types
 
 ε̂-subst : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A ε ε'}
           → ε ≡ ε'
@@ -450,8 +400,6 @@ coerce {A = A} p M = subC M (<:̂ᵛ-refl A ‼ₛ p)
 
 ε̂-subst refl M = M
 
--- Value types
-
 ty-subst : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A A'}
            → A ≡ A'
            → Q ∣ Γ ⊢V⦂ A
@@ -459,8 +407,6 @@ ty-subst : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A A'}
            → Q ∣ Γ ⊢V⦂ A'
 
 ty-subst refl V = V
-
--- Computation types
 
 c-subst : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C C'}
           → C ≡ C'
@@ -470,42 +416,29 @@ c-subst : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C C'}
 
 c-subst refl M = M
 
--- Sanity checks: the rules are usable.
-
--- The empty scope has to be given explicitly: `OCtx`'s scope is not
--- determined by `[]`, and `Scope`'s fields are projections, not constructors.
+-- Sanity checks; the empty scope is explicit, as `[]` does not determine it
 
 private
 
   ∅ᶜ : OCtx ∅ˢ 0
   ∅ᶜ = []
 
-  -- a value in a plain context
-
   ex-⋆ : ∅ᴴ ∣ (∅ᶜ ∷ Unit) ⊢V⦂ Unit
   ex-⋆ = ⋆
 
-  -- a variable used after time-passage, justified by eternality of its type
+  -- a variable used under a lock, by eternality of its type
 
   ex-var-lock : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst uᵣ ⟩) ⊢V⦂ Unit
   ex-var-lock = var (Tl-⟨⟩ Hd) (et-ok Unitₑ)
 
-  -- a variable used across a clause barrier, the lock at `⊤ᵣ`
-
   ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst ⊤ᵣ ⟩) ⊢V⦂ Unit
   ex-var-barrier = var (Tl-⟨⟩ Hd) (et-ok Unitₑ)
-
-  -- returning a value, sequenced with another such computation
 
   ex-seq : ∅ᴴ ∣ (∅ᶜ ∷ Unit) ⊢C⦂ Unit ‼ (ûₑ ·̂ₑ ûₑ)
   ex-seq = return ⋆ ⨟ return ⋆
 
-  -- unboxing a boxed variable, no time having passed since it came into scope
-
   ex-unbox : ∅ᴴ ∣ (∅ᶜ ∷ [ ûᵣ ] Unit) ⊢C⦂ Unit ‼ ûₑ
   ex-unbox = unbox (res-var {z = Hd}) ⊩≾̂ᵣ-refl (return ⋆)
-
-  -- unboxing an annotated variable
 
   ex-unbox-ann : ∅ᴴ ∣ (∅ᶜ ∷ [ ûᵣ ] Unit) ⊢C⦂ Unit ‼ ûₑ
   ex-unbox-ann = unbox (res-ann ûᵣ Unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl Unitₛ) ⊩≾̂ᵣ-refl (return ⋆)

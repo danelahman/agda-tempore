@@ -1,11 +1,10 @@
 ------------------------------------------------------------------
 -- Substitution of types and grades in open derivations         --
 --                                                              --
--- A substitution `σ : Subst Θ Θ'` along which `Q'` entails     --
--- `Q` takes a derivation under `Q` over `Θ` to one under `Q'`  --
--- over `Θ'` (`substᵛ`, `substᶜ`), erasing to the raw term      --
--- substituted by `σ`. Its instance at `idˢ ,ᵉ ε` instantiates  --
--- the variable of a handler clause at `ε`                      --
+-- Along `σ : Subst Θ Θ'` with `Q'` entailing `Q`, a derivation --
+-- under `Q` becomes one under `Q'` (`substᵛ`, `substᶜ`),       --
+-- erasing to the substituted raw term. At `idˢ ,ᵉ ε` it        --
+-- instantiates the variable of a handler clause                --
 -- (`instantiate-clause`).                                      --
 ------------------------------------------------------------------
 
@@ -41,8 +40,7 @@ open import PolymorphicCalculus.Syntax.Raw                   S
 open import PolymorphicCalculus.Syntax.Raw.GradeSubstitution S
 
 ------------------------------------------------------------------------
--- The context and the type of the clause of `op` in a handler whose
--- return clause has result type `B`, as in the rule `handler`
+-- The context and type of the clause of `op`, as in the rule `handler`
 
 clause-ctx : ∀ {Θ n} → OCtx Θ n → OVType Θ → Op → OCtx (Θ +e) (suc (suc n))
 clause-ctx {Θ} Γ B op =
@@ -66,8 +64,6 @@ clause-ty-↑ σ B op = cong (_‼ _) (wk-↑ᵉ-v σ B)
 
 ------------------------------------------------------------------------
 -- The substitution lemma
-
--- at a resource value
 
 substʳ : ∀ {Θ Θ' n} {Q : Hyps Θ} {Q' : Hyps Θ'} {Γ : OCtx Θ n}
            {ρ' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ} {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
@@ -116,8 +112,6 @@ mutual
     handler (substᶜ σ h N) (λ op → substˡ σ h Γ B op (H op))
   substᵛ σ h (annᵛ A V)      = annᵛ (A [ σ ]ᵛ) (substᵛ σ h V)
   substᵛ σ h (subV V p)      = subV (substᵛ σ h V) (<:̂ᵛ-subst h p)
-
-  -- a handler clause, under the lifted substitution
 
   substˡ : ∀ {Θ Θ' n} {Q : Hyps Θ} {Q' : Hyps Θ'}
          → (σ : Subst Θ Θ') → Q' ⊩ᴴ Q [ σ ]
@@ -246,8 +240,7 @@ mutual
 ------------------------------------------------------------------------
 -- Instantiating the variable of a handler clause
 
--- The clause of `op` at `ε`: the continuation's grade and the clause's
--- grade read `ε` for the clause's variable
+-- The clause context of `op` with its variable read as `ε`
 
 clause-ctx-at : ∀ {Θ n} → OCtx Θ n → OVType Θ → Op → EExp Θ → OCtx Θ (suc (suc n))
 clause-ctx-at Γ B op ε =
