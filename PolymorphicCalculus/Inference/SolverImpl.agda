@@ -33,8 +33,8 @@
 --     (`simplify-⊩`/`-⊨`), which normalises the set, splits    --
 --     each join on a left side and drops each var-rule         --
 --     disjunction entailed by another; elimination of unknowns --
---     (`Elim`) by the value rules of `Values` in the           --
---     prototype's order: equating, lowering and raising under  --
+--     (`Elim`) by the value rules of `Values`: equating,       --
+--     lowering and raising under                               --
 --     a polarity oracle, the polarities read along the         --
 --     variance table (`polᵛ`, `Lift`), the forced unit         --
 --     (`unitᵉ`, `unitʳ`), cycle elimination on the type        --

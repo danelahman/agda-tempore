@@ -33,7 +33,6 @@
 --     sides and factor edges (`atomEdgesₑ`), or, where the left  --
 --     side is a vertex, along a chain of the graph to a vertex   --
 --     that is the right side or embeds below it (`alongₑ`).      --
--- At no hypotheses `full` is the prototype's `decided`.          --
 -- `refute≾u` refutes `ρ ≾ u` at every instance by the            --
 -- zero-product law, and `checkClosed` decides the closed atoms   --
 -- of `Q` and the closed orderings joined by a chain of `hyp`     --
