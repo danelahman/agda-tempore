@@ -1,22 +1,13 @@
 --------------------------------------------------------------------
 -- Inference on primitive recursion                               --
 --                                                                --
--- Programs exercising `recℕ V M N`: `M` is the base and `N` the  --
--- step, which binds the predecessor and, after a lock at the     --
--- effect, the result of the recursive call. The step is typed    --
--- under a lock at `⊤ᵣ`, as an operation clause is, so only an    --
--- eternal outer variable, such as a `Nat`, is usable in it. The  --
--- effect `ε` absorbs its own iteration, `ε · ε ≾ ε`.             --
---                                                                --
--- `recL V M N` is the same on lists, its step binding the head   --
--- and the tail before the lock at the effect, so a head of       --
--- non-eternal type is usable in it only where `∣ ε ∣ ≾ uᵣ`.      --
---                                                                --
--- The durations are stepped: `⌜ n ⌝` is the duration of `n`      --
--- ticks, and `⌜ n ⌝ʳ` and `⌜ n ⌝ᵉ` its grades.                   --
---                                                                --
--- The instances under `Recursion/` check the verdicts and        --
--- schemes by `refl` at right- and left-sided time.               --
+-- `recℕ V M N` and `recL V M N`. The step is typed under a lock  --
+-- at `⊤ᵣ`, so only eternal outer variables are usable in it; it  --
+-- binds the predecessor (or head and tail), then, after a lock   --
+-- at the effect `ε`, the recursive result. `ε` absorbs its own   --
+-- iteration, `ε · ε ≾ ε`. `⌜ n ⌝` is the duration of `n` ticks.  --
+-- The instances under `Recursion/` check each answer by `refl`   --
+-- at both time grades.                                           --
 --------------------------------------------------------------------
 
 open import Data.Unit using (tt)
@@ -83,7 +74,7 @@ closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢C⦂ C)
        → ⌊ D ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ → Typable [] M
 closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
--- Typable and handler-free: inference answers `typed`
+-- Typable and handler-free: `typed`
 
 typed-of : (M : RawC ∅ˢ 0) → Typable [] M → HandlerFreeᶜ M → IsTyped (infer [] M)
 typed-of M t h with infer [] M | infer-complete [] M t | infer-handlerFree [] M tt h
@@ -143,8 +134,7 @@ private
 --
 --   add m n = recℕ m with zero ↦ n | succ p, r ↦ succ r
 --
--- The step uses `r`, bound after the lock at the effect. The
--- effect is the unit, which absorbs itself. Typed at every grade.
+-- The effect is the unit; typed at every grade.
 
 add : RawC ∅ˢ 0
 add = return (lam (return (lam (recℕ v₁ (return v₀) (return (succ v₀))))))
@@ -163,9 +153,7 @@ add-typed = typed-of add (closed add-D refl) _
 --   rebuild n = recℕ n with zero ↦ 0 | succ p, r ↦ succ p
 --   mul m n   = recℕ m with zero ↦ 0 | succ p, r ↦ add n r
 --
--- The predecessor is bound before the lock at the effect; `n` is
--- bound outside the step, behind the lock at `⊤ᵣ`. Both are `Nat`,
--- which is eternal, so `var` asks for nothing. `add n r` is written
+-- `p` and `n` are `Nat`, so `var` asks nothing; `add n r` is written
 -- out as a second `recℕ`. Typed at every grade.
 
 rebuild : RawC ∅ˢ 0
@@ -200,8 +188,7 @@ mul-typed = typed-of mul (closed mul-D refl) _
 --
 --   each f n = recℕ n with zero ↦ () | succ p, r ↦ f ()
 --
--- `f` is bound outside the step, behind the lock at `⊤ᵣ`; a
--- function type is never eternal, so `var` asks for `⊤ᵣ ≾ uᵣ`.
+-- `f` is not eternal, so `var` asks `⊤ᵣ ≾ uᵣ`.
 
 each : RawC ∅ˢ 0
 each = return (lam (return (lam (recℕ v₀ (return ⋆) (v₃ · ⋆)))))
@@ -211,8 +198,7 @@ each = return (lam (return (lam (recℕ v₀ (return ⋆) (v₃ · ⋆)))))
 --
 --   countdown n = recℕ n with zero ↦ () | succ p, r ↦ delay 1; ()
 --
--- The effect `ε` of the recursion is at least a tick and absorbs
--- itself: `ε · ε ≾ ε` and `⌜ 1 ⌝ ≾ ε`.
+-- `⌜ 1 ⌝ ≾ ε` and `ε · ε ≾ ε`.
 
 countdown : RawC ∅ˢ 0
 countdown = return (lam (recℕ v₀ (return ⋆) (delay ⌜ 1 ⌝ (return ⋆))))
@@ -227,7 +213,7 @@ countdown-on = recℕ (numeral 3) (return ⋆) (delay ⌜ 1 ⌝ (return ⋆))
 countdown-at : ℕ → RawC ∅ˢ 0
 countdown-at k = countdown-on ⦂ᶜ (Unit ‼ ⌜ k ⌝ᵉ)
 
--- Two ticks annotated at one, the shape of `wait 2 : unit # 1`
+-- Two ticks annotated at one, as Tempore's `wait 2 : unit # 1`
 
 wait-2-at-1 : RawC ∅ˢ 0
 wait-2-at-1 = recℕ (numeral 2) (return ⋆) (delay ⌜ 1 ⌝ (return ⋆)) ⦂ᶜ (Unit ‼ ⌜ 1 ⌝ᵉ)
@@ -237,7 +223,7 @@ wait-2-at-1 = recℕ (numeral 2) (return ⋆) (delay ⌜ 1 ⌝ (return ⋆)) ⦂
 countdown-top : RawC ∅ˢ 0
 countdown-top = countdown-on ⦂ᶜ (Unit ‼ econst ⊤ₑ)
 
--- typable at every grade, the effect at the top
+-- typable at every grade
 
 countdown-top-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ econst ⊤ₑ
 countdown-top-D =
@@ -255,9 +241,8 @@ countdown-top-typable = closed countdown-top-D refl
 --                               let a = op p in unbox k as k' in k' a;
 --                      return x ↦ ()}
 --
--- The clause resumes after the recursion. The recursion's effect is
--- an unknown of the clause, below `op · j` for the clause's rigid
--- `j` only through the product with the resumption's.
+-- The recursion's effect is a clause-local unknown, bounded by
+-- `op · j` only through its product with the resumption's.
 
 rec-then-resume : ∀ {Θ n} → RawC (Θ +e) (suc (suc (suc (suc n)))) → Op
                 → RawC (Θ +e) (suc (suc n))
@@ -276,8 +261,7 @@ in-clause-pure = in-clause (return ⋆)
 in-clause-tick : RawC ∅ˢ 0
 in-clause-tick = in-clause (delay ⌜ 1 ⌝ (return ⋆))
 
--- With a pure step, typable at every grade: the recursion's effect
--- is the unit
+-- With a pure step, typable at every grade
 
 in-clause-pure-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (ûₑ ·̂ₑ ûₑ)
 in-clause-pure-D =
@@ -300,8 +284,8 @@ in-clause-pure-typable = closed in-clause-pure-D refl
 --                   op p k ↦ recℕ 2 with zero ↦ () | succ p', r ↦ delay 1; ();
 --                   return x ↦ ()}
 --
--- The recursion's effect is the clause's: at least a tick, absorbing
--- itself, and below the clause's bound `op · j` for every `j`.
+-- The recursion's effect, at least a tick, must lie below `op · j`
+-- for every `j`.
 
 drop-clause : RawC ∅ˢ 0
 drop-clause =
@@ -314,9 +298,8 @@ drop-clause =
 --   sum l     = recL l with nil ↦ 0  | cons h t, r ↦ add h r
 --   inc-all l = recL l with nil ↦ [] | cons h t, r ↦ cons (succ h) r
 --
--- `recL` is `recℕ` with the head and the tail in place of the
--- predecessor; `add h r` is written out as a `recℕ` on the head. The
--- effect is the unit. Typed at every grade.
+-- `add h r` is written out as a `recℕ` on the head. Typed at every
+-- grade.
 
 length : RawC ∅ˢ 0
 length = return (lam (recL v₀ (return zero) (return (succ v₀))))
@@ -341,12 +324,8 @@ inc-all = return (lam (recL v₀ (return nil) (return (cons (succ v₂) v₀))))
 --   last-or d l  = recL l with nil ↦ d  | cons h t, r ↦ delay 1; h
 --   last-box d l = last-or d (l : List ([1] Nat))
 --
--- The head is bound behind the lock at the effect `ε`, so `var` asks
--- for `eternal A ∨ ∣ ε ∣ ≾ uᵣ` at the element type `A`. A pure step
--- leaves `ε` the unit: the head is usable at any type, a function
--- among them (`copy-D`). A step of a tick makes `ε` at least a tick:
--- at the right-sided grades the head's type is then asked to be
--- eternal, and a list of boxes is refused.
+-- The head needs `eternal A ∨ ∣ ε ∣ ≾ uᵣ`: any type with a pure step;
+-- with a tick, eternal at the right-sided grades, so boxes are refused.
 
 copy : RawC ∅ˢ 0
 copy = return (lam (recL v₀ (return nil) (return (cons v₂ v₀))))
@@ -377,10 +356,9 @@ last-box =
   return (lam (return (lam
     (recL (v₀ ⦂ᵛ |List| ([ ⌜ 1 ⌝ʳ ] Nat)) (return v₁) (delay ⌜ 1 ⌝ (return v₂))))))
 
--- Unboxing the head instead asks only that the time passed reach the
--- box's grade.
---
 --   latest l = recL l with nil ↦ 0 | cons h t, r ↦ delay 1; unbox h as x in x
+--
+-- Unboxing the head asks only that the box's grade be reached.
 
 latest : RawC ∅ˢ 0
 latest =
@@ -396,8 +374,7 @@ latest-ready =
 --
 --   ticks l = recL l with nil ↦ () | cons h t, r ↦ delay 1; ()
 --
--- As for `countdown`: the effect is at least a tick and absorbs
--- itself.
+-- As `countdown`.
 
 ticks : RawC ∅ˢ 0
 ticks = return (lam (recL v₀ (return ⋆) (delay ⌜ 1 ⌝ (return ⋆))))
@@ -423,18 +400,15 @@ ticks-top-typable : Typable [] ticks-top
 ticks-top-typable = closed ticks-top-D refl
 
 ------------------------------------------------------------------
--- 10. A recursion building a function that calls the recursive
--- result twice
+-- 10. A function calling the recursive result twice
 --
 --   twice n = recℕ n with zero    ↦ box⊤ (λx. delay 1; ())
 --                       | succ p, r ↦ box⊤ (λx. unbox r as f in f x;
 --                                               unbox r as g in g x)
 --   twice-run = unbox (twice 2) as f in f ()
 --
--- The result is boxed at `⊤ᵣ`, so it is unboxed after the first call's
--- time has passed. Each call has its own effect unknown above the
--- function's latent effect `ε`, and the step's body lies above their
--- product, so `ε` absorbs its own iteration through the two calls.
+-- Boxed at `⊤ᵣ`, so it can be unboxed after the first call; `ε`
+-- absorbs the product of the two calls' effects.
 
 twice-base : ∀ {Θ n} → RawC Θ n
 twice-base = box (rconst ⊤ᵣ) (lam (delay ⌜ 1 ⌝ (return ⋆))) (return v₀)

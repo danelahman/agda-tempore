@@ -1,24 +1,11 @@
 ------------------------------------------------------------------
 -- Primitive recursion at right-sided intervals                 --
 --                                                              --
--- "At most `n` ticks": `ε · ε ≾ ε` holds only at the unit and  --
--- at the top, so a recursion's effect is one of the two: the   --
--- closure of its lower bounds. The pure programs have the      --
--- unit; a countdown, a tick a step, has the top, so one        --
--- annotated at a finite bound is refuted, and so is one inside --
--- an operation clause. A function is not usable in the step. A --
--- pure recursion inside an operation clause is typed. A clause --
--- dropping its continuation after a countdown is refuted by    --
--- the report's closed check.                                   --
---                                                              --
--- On lists the same: a pure step leaves the unit, so the head  --
--- is usable at any type; a tick a step makes the top, so a     --
--- head is asked to be eternal and a list of boxes is refused,  --
--- and three ticks is refuted.                                  --
---                                                              --
--- A function built by recursion and calling the recursive      --
--- result twice has the top as its latent effect, and is        --
--- refuted at one tick.                                         --
+-- `ε · ε ≾ ε` holds only at the unit and the top: a pure       --
+-- recursion has the unit, one ticking per step the top,        --
+-- refuted at any finite bound, in a clause too. Functions are  --
+-- not usable in the step; with a tick per step, heads must be  --
+-- eternal.                                                     --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
@@ -47,8 +34,7 @@ open import PolymorphicCalculus.Examples.Recursion spec hints enum ℕᴰ-steppe
 open import PolymorphicCalculus.Examples.Variables
 
 ------------------------------------------------------------------
--- 1. Pure recursion: the effect is lowered to the unit, at which
--- its cycle holds
+-- 1. Pure recursion: the effect is lowered to the unit
 
 expected-add : Scheme
 expected-add = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat ⇒ (Nat ⇒ Nat ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
@@ -86,8 +72,7 @@ each-not-typable : ¬ Typable [] each
 each-not-typable = infer-untypable [] each each-verdict
 
 ------------------------------------------------------------------
--- 4. A countdown: at least a tick, absorbing itself, so the top,
--- the closure of a tick
+-- 4. A countdown: the top, the closure of a tick
 
 expected-countdown : Scheme
 expected-countdown = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat ⇒ Unit ‼ econst ⊤ₑ) ‼ ûₑ
@@ -114,8 +99,7 @@ countdown-at-0-verdict = refl
 countdown-at-0-not-typable : ¬ Typable [] (countdown-at 0)
 countdown-at-0-not-typable = infer-untypable [] (countdown-at 0) countdown-at-0-verdict
 
--- annotated at three ticks: the effect is lowered to the top, and
--- `⊤ ≾ ⌜ 3 ⌝` is closed and false
+-- annotated at three ticks: `⊤ ≾ ⌜ 3 ⌝` is closed and false
 
 countdown-at-3-verdict : infer [] (countdown-at 3) ≡ untypable
 countdown-at-3-verdict = refl
@@ -132,10 +116,8 @@ wait-2-at-1-not-typable : ¬ Typable [] wait-2-at-1
 wait-2-at-1-not-typable = infer-untypable [] wait-2-at-1 wait-2-at-1-verdict
 
 ------------------------------------------------------------------
--- 5. Recursion inside an operation clause: with a pure step, the
--- recursion's effect is lowered to the unit in the clause, as in
--- `in-clause-pure-D`; with a tick a step, to the top, which no
--- finite bound of the clause admits
+-- 5. Recursion inside a clause: a pure step gives the unit; a tick a
+-- step the top, which no finite bound admits
 
 in-clause-pure-reported :
   schemeOf (infer [] in-clause-pure) ≡ just (∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ûₑ)
@@ -151,9 +133,8 @@ in-clause-tick-not-typable : ¬ Typable [] in-clause-tick
 in-clause-tick-not-typable = infer-untypable [] in-clause-tick in-clause-tick-verdict
 
 ------------------------------------------------------------------
--- 6. A clause dropping its continuation: in the clause for `read`
--- the effect is equated with `⌜ 1 ⌝`, and the report keeps
--- `⌜ 1 ⌝ · ⌜ 1 ⌝ ≾ ⌜ 1 ⌝`, closed and false
+-- 6. A clause dropping its continuation: for `read`, the closed
+-- `⌜ 1 ⌝ · ⌜ 1 ⌝ ≾ ⌜ 1 ⌝` is false
 
 drop-clause-verdict : infer [] drop-clause ≡ untypable
 drop-clause-verdict = refl
@@ -189,11 +170,8 @@ inc-all-reported : schemeOf (infer [] inc-all) ≡ just expected-inc-all
 inc-all-reported = refl
 
 ------------------------------------------------------------------
--- 8. The head in the step: with a pure step, usable at any type, a
--- function among them; with a tick a step, asked to be eternal, so a
--- list of boxes is refused. Unboxing the head instead needs the time
--- passed, at least the top, to reach the box's grade: the top for an
--- unknown grade, refuted at a grade of one tick.
+-- 8. The head: any type with a pure step, eternal with a tick a step
+-- (boxes refused); unboxed, its box needs the top grade
 
 expected-copy : Scheme
 expected-copy = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (|List| α₀ ⇒ |List| α₀ ‼ ûₑ) ‼ ûₑ
@@ -235,8 +213,7 @@ latest-ready-not-typable : ¬ Typable [] latest-ready
 latest-ready-not-typable = infer-untypable [] latest-ready latest-ready-verdict
 
 ------------------------------------------------------------------
--- 9. A tick per element: the top, the closure of a tick; refuted
--- at three ticks, established at the top
+-- 9. A tick per element: the top; refuted at three ticks
 
 expected-ticks : Scheme
 expected-ticks = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (|List| α₀ ⇒ Unit ‼ econst ⊤ₑ) ‼ ûₑ
@@ -257,11 +234,8 @@ ticks-at-3-not-typable : ¬ Typable [] (ticks-at 3)
 ticks-at-3-not-typable = infer-untypable [] (ticks-at 3) ticks-at-3-verdict
 
 ------------------------------------------------------------------
--- 10. Calling the recursive result twice: each call's effect
--- unknown is merged into the function's latent effect, whose cycle
--- `ε · ε ≾ ε` lowers it to the top, the closure of a tick; the
--- element type is asked to be eternal, the argument being used
--- after a call
+-- 10. Calling the recursive result twice: the latent effect is the
+-- top, and the argument, used after a call, must be eternal
 
 expected-twice : Scheme
 expected-twice =
