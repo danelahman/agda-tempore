@@ -142,7 +142,7 @@ mutual
             → t ≈ᵗ t' → sub e t ≈ᵗ sub e' t'
 
     -- Sub-effecting nodes are invisible: reduction discards a `coerce`
-    -- (`⟨ S , coerce p M ⟩ ⟶ ⟨ S , M ⟩`), so an equality preserved by
+    -- (`⟨ 𝕊 ∣ coerce p M ⟩ ⟶ ⟨ 𝕊 ∣ M ⟩`), so an equality preserved by
     -- reduction must not see the `sub` node it leaves behind. Collapsing them
     -- is what makes `T-≤` a coercion (`T-≤-refl` / `T-≤-trans`).
 

@@ -75,7 +75,7 @@ open import MonomorphicCalculus.EquationalTheory.Soundness.Base S Cat Fut Pst Ad
 -- `⟦ wk-ren ⟧ = fstᵐ` cancels against the environment extension.
 
 sound-boxed-not-used : ∀ {Γ A C ρ ε} → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A) → (M : Γ ⊢C⦂ C ! ε)
-                     → Soundᶜ== (boxed-not-used V M)
+                     → Soundᶜ≡ᵗʰ (boxed-not-used V M)
 sound-boxed-not-used V M (pV , pCM) pR =
     ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr (C-rename wk-ren M) pCM (renᶜ wk-ren M pR)
               ∙ C-rename-nat wk-ren M pR)
@@ -86,7 +86,7 @@ sound-boxed-not-used V M (pV , pCM) pR =
 sound-unbox-not-used : ∀ {Γ A A₀ C ρ₀ ρ'}
                      → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ₀)
                      → (w : A₀ <:ᵛ A)
-                     → (M : Γ ⊢C⦂ C) → Soundᶜ== (unbox-not-used x rel w M)
+                     → (M : Γ ⊢C⦂ C) → Soundᶜ≡ᵗʰ (unbox-not-used x rel w M)
 sound-unbox-not-used x rel w M pCM pR =
     unbox-def x rel w (C-rename wk-ren M) pCM
   ∙ ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr (C-rename wk-ren M) pCM (renᶜ wk-ren M pR)

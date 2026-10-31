@@ -94,7 +94,7 @@ data NfV where
   varⁿ   : ∀ {Γ A ρ} {f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ} {x : A ∈[ ρ ] Γ}
          → NfV (var f x)
 
-  constⁿ : ∀ {Γ B} {c : BaseConstants B} → NfV {Γ} (const c)
+  constⁿ : ∀ {Γ B} {c : BaseConstants B} → NfV {Γ} (const B c)
 
   ⋆ⁿ     : ∀ {Γ} → NfV {Γ} ⋆
 
@@ -272,7 +272,7 @@ V-subCtx c (varⁿ {f = f} {x = x}) with ≼ᶜ-lookup c x
   nfv (var (λ ¬et → ≾ᵣ-trans b (f (λ et → ¬et (<:ᵛ-eternalˡ s et)))) y)
       s varⁿ (cong var e)
 V-subCtx c (constⁿ {c = b}) =
-  nfv (const b) (<:ᵛ-refl _) constⁿ refl
+  nfv (const _ b) (<:ᵛ-refl _) constⁿ refl
 V-subCtx c ⋆ⁿ =
   nfv ⋆ unitₛ ⋆ⁿ refl
 V-subCtx c trueⁿ =
@@ -422,8 +422,8 @@ C-normalise : ∀ {Γ A ε} → (M : Γ ⊢C⦂ A ! ε) → NfResC Γ M
 
 V-normalise (var f x) =
   nfv (var f x) (<:ᵛ-refl _) varⁿ refl
-V-normalise (const b) =
-  nfv (const b) (<:ᵛ-refl _) constⁿ refl
+V-normalise (const B b) =
+  nfv (const B b) (<:ᵛ-refl _) constⁿ refl
 V-normalise ⋆ =
   nfv ⋆ unitₛ ⋆ⁿ refl
 V-normalise true =

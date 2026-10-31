@@ -111,7 +111,7 @@ licence = single send (upto 1) unlimited
 sent-twice : [] ⊢C⦂ unit ! single send (upto 2) (upto 0)
 sent-twice =
   check (single send (upto 2) (upto 0))
-    (box licence (const 42)          -- ∷ [ licence ] Reading
+    (box licence (const reading 42)  -- ∷ [ licence ] Reading
       (unbox Hd decided (<:ᵛ-refl _) -- ∷ Reading
         (perform send here           -- ⟨ opTime send ⟩ ∷ unit
           (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) decided (<:ᵛ-refl _)
@@ -128,7 +128,7 @@ a-third-claim = refuted (𝟏ᵣ ·ᵣ opTime send ·ᵣ opTime send) licence
 claim-after-local-work : [] ⊢C⦂ unit ! rate-limit
 claim-after-local-work =
   check rate-limit
-    (box licence (const 42)          -- ∷ [ licence ] Reading
+    (box licence (const reading 42)  -- ∷ [ licence ] Reading
       (perform read ⋆                -- ⟨ opTime read ⟩ ∷ Reading
         (perform write here          -- ⟨ opTime write ⟩ ∷ unit
           (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) decided (<:ᵛ-refl _)

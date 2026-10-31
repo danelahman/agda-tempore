@@ -65,7 +65,7 @@ three-units = [0, ↑ # 3 ]
 
 in-time : [] ⊢C⦂ unit ! _
 in-time =
-  box three-units (const 42) -- ∷ [ three-units ] Reading
+  box three-units (const reading 42) -- ∷ [ three-units ] Reading
     (perform read ⋆          -- ⟨ ∣ opTime read ∣ ⟩ ∷ Reading
       (delay (# 1)           -- ⟨ ι 1 ⟩
         (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ≤ᵈ! (<:ᵛ-refl _)

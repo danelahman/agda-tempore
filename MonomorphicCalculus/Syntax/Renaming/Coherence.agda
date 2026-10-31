@@ -62,18 +62,18 @@ mutual
   V-rename-≡ {r = r} {r' = r'} h (var f x)
     with var-rename r x | var-rename r' x | at h x
   ... | _ | _ | refl = var-≡
-  V-rename-≡ h (const c)  = refl
-  V-rename-≡ h ⋆          = refl
-  V-rename-≡ h true       = refl
-  V-rename-≡ h false      = refl
-  V-rename-≡ h zero       = refl
-  V-rename-≡ h (succ V)   = cong succ (V-rename-≡ h V)
+  V-rename-≡ h (const B c) = refl
+  V-rename-≡ h ⋆           = refl
+  V-rename-≡ h true        = refl
+  V-rename-≡ h false       = refl
+  V-rename-≡ h zero        = refl
+  V-rename-≡ h (succ V)    = cong succ (V-rename-≡ h V)
   V-rename-≡ h ⦉ V , W ⦊   = cong₂ ⦉_,_⦊ (V-rename-≡ h V) (V-rename-≡ h W)
-  V-rename-≡ h (inl V)    = cong inl (V-rename-≡ h V)
-  V-rename-≡ h (inr V)    = cong inr (V-rename-≡ h V)
-  V-rename-≡ h nil        = refl
-  V-rename-≡ h (cons V W) = cong₂ cons (V-rename-≡ h V) (V-rename-≡ h W)
-  V-rename-≡ h (fun M)    = cong fun (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
+  V-rename-≡ h (inl V)     = cong inl (V-rename-≡ h V)
+  V-rename-≡ h (inr V)     = cong inr (V-rename-≡ h V)
+  V-rename-≡ h nil         = refl
+  V-rename-≡ h (cons V W)  = cong₂ cons (V-rename-≡ h V) (V-rename-≡ h W)
+  V-rename-≡ h (fun M)     = cong fun (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
   V-rename-≡ h (handler N H) =
     handler-≡ (C-rename-≡ (cong-ren-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) N)
       (λ op ε'' →
@@ -170,7 +170,7 @@ mutual
 
   V-rename-id-≡ {r = r} h (var f x) with var-rename r x | at h x
   ... | _ | refl = var-≡
-  V-rename-id-≡ h (const c) = refl
+  V-rename-id-≡ h (const B c) = refl
   V-rename-id-≡ h ⋆         = refl
   V-rename-id-≡ h true      = refl
   V-rename-id-≡ h false     = refl
@@ -329,7 +329,7 @@ mutual
   V-rename-∘ r₂ r₁ (var f x) with var-rename r₂ x
   ... | _ , _ , y with var-rename r₁ y
   ...   | _ , _ , z = var-≡
-  V-rename-∘ r₂ r₁ (const c) = refl
+  V-rename-∘ r₂ r₁ (const B c) = refl
   V-rename-∘ r₂ r₁ ⋆         = refl
   V-rename-∘ r₂ r₁ true      = refl
   V-rename-∘ r₂ r₁ false     = refl

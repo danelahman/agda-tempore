@@ -29,83 +29,85 @@ open import MonomorphicCalculus.Syntax.Types           S
 -- Definition of state
 
 mutual
-  data 𝕊 (Γ : Ctx) : Set where
-    ∅     : 𝕊 Γ
-    _⟨_⟩ₛ : 𝕊 Γ → (ρ : R) → 𝕊 Γ  
-    _∷ₛ_  : ∀ {A ρ} → (S : 𝕊 Γ) → ((Γ ++ᶜ (toCtx S) ⟨ ρ ⟩) ⊢V⦂ A) → 𝕊 Γ
+  data State (Γ : Ctx) : Set where
+    ∅     : State Γ
+    _⟨_⟩ₛ : State Γ → (ρ : R) → State Γ  
+    _∷ₛ_  : ∀ {A ρ} → (𝕊 : State Γ) → ((Γ ++ᶜ (toCtx 𝕊) ⟨ ρ ⟩) ⊢V⦂ A) → State Γ
 
-  toCtx : ∀ {Γ} → 𝕊 Γ → Ctx
+  toCtx : ∀ {Γ} → State Γ → Ctx
   toCtx ∅ = []
-  toCtx (S ⟨ ρ ⟩ₛ) = (toCtx S) ⟨ ρ ⟩
-  toCtx (_∷ₛ_ {A} {ρ} S V) = (toCtx S ∷ [ ρ ] A)
+  toCtx (𝕊 ⟨ ρ ⟩ₛ) = (toCtx 𝕊) ⟨ ρ ⟩
+  toCtx (_∷ₛ_ {A} {ρ} 𝕊 V) = (toCtx 𝕊 ∷ [ ρ ] A)
 
   infixl 31 _∷ₛ_
   infix  32 _⟨_⟩ₛ
 
 -- Named forms of the state constructors
 
-grade-pass : ∀ {Γ} → (S : 𝕊 Γ) → (ρ : R) → 𝕊 Γ
-grade-pass S ρ = S ⟨ ρ ⟩ₛ 
+grade-pass : ∀ {Γ} → (𝕊 : State Γ) → (ρ : R) → State Γ
+grade-pass 𝕊 ρ = 𝕊 ⟨ ρ ⟩ₛ 
 
-extend-state : ∀ {Γ A ρ} → (S : 𝕊 Γ) → ((Γ ++ᶜ (toCtx S) ⟨ ρ ⟩) ⊢V⦂ A) → 𝕊 Γ
-extend-state S V = S ∷ₛ V 
+extend-state : ∀ {Γ A ρ} → (𝕊 : State Γ) → ((Γ ++ᶜ (toCtx 𝕊) ⟨ ρ ⟩) ⊢V⦂ A) → State Γ
+extend-state 𝕊 V = 𝕊 ∷ₛ V 
 
 -- Sum of the grade passings in the state
 
-state-grade : ∀ {Γ} → (S : 𝕊 Γ) → R
+state-grade : ∀ {Γ} → (𝕊 : State Γ) → R
 state-grade ∅ = 𝟏ᵣ
-state-grade (S ⟨ ρ ⟩ₛ) = state-grade S ·ᵣ ρ
-state-grade (S ∷ₛ A) = state-grade S
+state-grade (𝕊 ⟨ ρ ⟩ₛ) = state-grade 𝕊 ·ᵣ ρ
+state-grade (𝕊 ∷ₛ A) = state-grade 𝕊
 
--- State grade is the same as the context grade of toCtx S 
+-- State grade is the same as the context grade of toCtx 𝕊 
 
-grades-≡ : ∀ {Γ} → (S : 𝕊 Γ) → state-grade S ≡ ctx-grade (toCtx S)
+grades-≡ : ∀ {Γ} → (𝕊 : State Γ) → state-grade 𝕊 ≡ ctx-grade (toCtx 𝕊)
 grades-≡ ∅ = refl
-grades-≡ (S ⟨ ρ ⟩ₛ) = cong (_·ᵣ ρ) (grades-≡ S)
-grades-≡ (S ∷ₛ A) = grades-≡ S
+grades-≡ (𝕊 ⟨ ρ ⟩ₛ) = cong (_·ᵣ ρ) (grades-≡ 𝕊)
+grades-≡ (𝕊 ∷ₛ A) = grades-≡ 𝕊
 
 -- Definition of successor of a state
 
-data _≤ₛ_ : ∀ {Γ Γ'} → 𝕊 Γ → 𝕊 Γ' → Set where
-    id-suc : ∀ {Γ} 
-            → {S : 𝕊 Γ} 
+infix 4 _≤ₛ_
+
+data _≤ₛ_ : ∀ {Γ Γ'} → State Γ → State Γ' → Set where
+    ≤ₛ-refl : ∀ {Γ} 
+            → {𝕊 : State Γ} 
             -----------
-            → S ≤ₛ S
+            → 𝕊 ≤ₛ 𝕊
 
-    ⟨⟩-suc : ∀ {Γ Γ'}
-            → {S : 𝕊 Γ} 
-            → {S' : 𝕊 Γ'} 
-            → (ρ'' : R)
-            → S ≤ₛ S'
+    ≤ₛ-lock : ∀ {Γ Γ'}
+            → {𝕊 : State Γ} 
+            → {𝕊' : State Γ'} 
+            → {ρ : R}
+            → 𝕊 ≤ₛ 𝕊'
             --------------------------
-            → S ≤ₛ (S' ⟨ ρ'' ⟩ₛ)
+            → 𝕊 ≤ₛ (𝕊' ⟨ ρ ⟩ₛ)
 
-    ∷-suc : ∀ {Γ Γ' ρ A} 
-            → {S : 𝕊 Γ} 
-            → {S' : 𝕊 Γ'} 
-            → (V : (Γ' ++ᶜ (toCtx S') ⟨ ρ ⟩) ⊢V⦂ A) 
-            → S ≤ₛ S' 
+    ≤ₛ-res  : ∀ {Γ Γ' ρ A} 
+            → {𝕊 : State Γ} 
+            → {𝕊' : State Γ'} 
+            → {V : (Γ' ++ᶜ (toCtx 𝕊') ⟨ ρ ⟩) ⊢V⦂ A} 
+            → 𝕊 ≤ₛ 𝕊' 
             ---------------------------------------
-            → S ≤ₛ (S' ∷ₛ V)
+            → 𝕊 ≤ₛ (𝕊' ∷ₛ V)
 
 -- The grade δ accumulated when passing from a state 𝕊 to a successor state 𝕊':
--- state-grade S' ≃ᵣ state-grade S ·ᵣ δ, by state-grade-≤ₛ.
+-- state-grade 𝕊' ≃ᵣ state-grade 𝕊 ·ᵣ δ, by state-grade-≤ₛ.
 
-≤ₛ-grade : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'} → S ≤ₛ S' → R
-≤ₛ-grade id-suc       = 𝟏ᵣ
-≤ₛ-grade (⟨⟩-suc ρ q) = ≤ₛ-grade q ·ᵣ ρ
-≤ₛ-grade (∷-suc V q)  = ≤ₛ-grade q
+κₛ : ∀ {Γ Γ'} → {𝕊 : State Γ} → {𝕊' : State Γ'} → 𝕊 ≤ₛ 𝕊' → R
+κₛ ≤ₛ-refl             = 𝟏ᵣ
+κₛ (≤ₛ-lock {ρ = ρ} q) = κₛ q ·ᵣ ρ
+κₛ (≤ₛ-res q)          = κₛ q
 
--- The overall grade of a successor state factors through ≤ₛ-grade.
+-- The overall grade of a successor state factors through κₛ.
 
-state-grade-≤ₛ : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'}
-               → (q : S ≤ₛ S')
-               → state-grade S' ≃ᵣ state-grade S ·ᵣ ≤ₛ-grade q
-state-grade-≤ₛ {S = S} id-suc =
-  ≃ᵣ-sym (·ᵣ-identityʳ (state-grade S))
-state-grade-≤ₛ {S = S} (⟨⟩-suc ρ q) =
-  ≃ᵣ-trans (·ᵣ-cong (state-grade-≤ₛ q) ≃ᵣ-refl) (·ᵣ-assoc (state-grade S) (≤ₛ-grade q) ρ)
-state-grade-≤ₛ (∷-suc V q) =
+state-grade-≤ₛ : ∀ {Γ Γ'} → {𝕊 : State Γ} → {𝕊' : State Γ'}
+               → (q : 𝕊 ≤ₛ 𝕊')
+               → state-grade 𝕊' ≃ᵣ state-grade 𝕊 ·ᵣ κₛ q
+state-grade-≤ₛ {𝕊 = 𝕊} ≤ₛ-refl =
+  ≃ᵣ-sym (·ᵣ-identityʳ (state-grade 𝕊))
+state-grade-≤ₛ {𝕊 = 𝕊} (≤ₛ-lock {ρ = ρ} q) =
+  ≃ᵣ-trans (·ᵣ-cong (state-grade-≤ₛ q) ≃ᵣ-refl) (·ᵣ-assoc (state-grade 𝕊) (κₛ q) ρ)
+state-grade-≤ₛ (≤ₛ-res q) =
   state-grade-≤ₛ q
 
 -- If 𝕊' is a successor of 𝕊 and the grade δ it accumulated stays, together
@@ -113,185 +115,185 @@ state-grade-≤ₛ (∷-suc V q) =
 
 suc-comp-ren : ∀ {Γ Γ'}
              → {ρ'' ρ''' : R}
-             → {S : 𝕊 Γ}
-             → {S' : 𝕊 Γ'}
-             → (q : S ≤ₛ S')
-             → ≤ₛ-grade q ·ᵣ ρ''' ≾ᵣ ρ''
-             → Ren [] (toCtx S' ⟨ ρ''' ⟩) (toCtx S ⟨ ρ'' ⟩)
+             → {𝕊 : State Γ}
+             → {𝕊' : State Γ'}
+             → (q : 𝕊 ≤ₛ 𝕊')
+             → κₛ q ·ᵣ ρ''' ≾ᵣ ρ''
+             → Ren [] (toCtx 𝕊' ⟨ ρ''' ⟩) (toCtx 𝕊 ⟨ ρ'' ⟩)
 
-suc-comp-ren {ρ''' = ρ'''} id-suc δρ'''≾ρ'' =
+suc-comp-ren {ρ''' = ρ'''} ≤ₛ-refl δρ'''≾ρ'' =
   ⟨⟩-≤-ren (≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-identityˡ ρ''')) δρ'''≾ρ'')
-suc-comp-ren {ρ''' = ρ'''} (⟨⟩-suc ρ q) δρ'''≾ρ'' =
-  suc-comp-ren q (≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-assoc (≤ₛ-grade q) ρ ρ''')) δρ'''≾ρ'') ∘ʳ ⟨⟩-μ-ren
-suc-comp-ren (∷-suc V q) δρ'''≾ρ'' =
+suc-comp-ren {ρ''' = ρ'''} (≤ₛ-lock {ρ = ρ} q) δρ'''≾ρ'' =
+  suc-comp-ren q (≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-assoc (κₛ q) ρ ρ''')) δρ'''≾ρ'') ∘ʳ ⟨⟩-μ-ren
+suc-comp-ren (≤ₛ-res q) δρ'''≾ρ'' =
   suc-comp-ren q δρ'''≾ρ'' ∘ʳ cong-⟨⟩-ren wk-ren
 
 -- The cancelled grade-decrease statement (about δ) implies the total one
 -- (about the two states' grades), by monotonicity of _·ᵣ_.
 
-cancelled⇒total : ∀ {Γ Γ'} → {a b : R} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'}
-                → (q : S ≤ₛ S')
-                → ≤ₛ-grade q ·ᵣ a ≾ᵣ b
-                → state-grade S' ·ᵣ a ≾ᵣ state-grade S ·ᵣ b
-cancelled⇒total {a = a} {S = S} q δa≾b =
+cancelled⇒total : ∀ {Γ Γ'} → {a b : R} → {𝕊 : State Γ} → {𝕊' : State Γ'}
+                → (q : 𝕊 ≤ₛ 𝕊')
+                → κₛ q ·ᵣ a ≾ᵣ b
+                → state-grade 𝕊' ·ᵣ a ≾ᵣ state-grade 𝕊 ·ᵣ b
+cancelled⇒total {a = a} {𝕊 = 𝕊} q δa≾b =
   ≾ᵣ-trans
-    (≃ᵣ⇒≾ᵣ (≃ᵣ-trans (·ᵣ-cong (state-grade-≤ₛ q) ≃ᵣ-refl) (·ᵣ-assoc (state-grade S) (≤ₛ-grade q) a)))
+    (≃ᵣ⇒≾ᵣ (≃ᵣ-trans (·ᵣ-cong (state-grade-≤ₛ q) ≃ᵣ-refl) (·ᵣ-assoc (state-grade 𝕊) (κₛ q) a)))
     (·ᵣ-monoʳ-≾ᵣ δa≾b)
 
 -- Concatenation/composition of states
 
 mutual
-  _++ˢ_ : ∀ {Γ} → (S : 𝕊 Γ) → (𝕊 (Γ ++ᶜ toCtx S)) → 𝕊 Γ
-  S ++ˢ ∅ =
-    S
-  S ++ˢ (S' ⟨ ρ ⟩ₛ) =
-    (S ++ˢ S') ⟨ ρ ⟩ₛ
-  _++ˢ_ {Γ} S (_∷ₛ_ {ρ = ρ} S' V) =
-    (S ++ˢ S') ∷ₛ
+  _++ˢ_ : ∀ {Γ} → (𝕊 : State Γ) → (State (Γ ++ᶜ toCtx 𝕊)) → State Γ
+  𝕊 ++ˢ ∅ =
+    𝕊
+  𝕊 ++ˢ (𝕊' ⟨ ρ ⟩ₛ) =
+    (𝕊 ++ˢ 𝕊') ⟨ ρ ⟩ₛ
+  _++ˢ_ {Γ} 𝕊 (_∷ₛ_ {ρ = ρ} 𝕊' V) =
+    (𝕊 ++ˢ 𝕊') ∷ₛ
       V-rename
         (eq-ren
-          (cong (_⟨ ρ ⟩) (trans (++ᶜ-assoc Γ (toCtx S) (toCtx S')) (cong (Γ ++ᶜ_) (sym (toCtx-++ˢ S S'))))))
+          (cong (_⟨ ρ ⟩) (trans (++ᶜ-assoc Γ (toCtx 𝕊) (toCtx 𝕊')) (cong (Γ ++ᶜ_) (sym (toCtx-++ˢ 𝕊 𝕊'))))))
         V
 
   infixl 30 _++ˢ_
 
   toCtx-++ˢ : ∀ {Γ}
-            → (S : 𝕊 Γ)
-            → (S' : 𝕊 (Γ ++ᶜ toCtx S))
-            → toCtx (S ++ˢ S') ≡ toCtx S ++ᶜ toCtx S'
+            → (𝕊 : State Γ)
+            → (𝕊' : State (Γ ++ᶜ toCtx 𝕊))
+            → toCtx (𝕊 ++ˢ 𝕊') ≡ toCtx 𝕊 ++ᶜ toCtx 𝕊'
    
-  toCtx-++ˢ S ∅ =
+  toCtx-++ˢ 𝕊 ∅ =
     refl
-  toCtx-++ˢ S (S' ⟨ ρ ⟩ₛ) =
-    cong (_⟨ ρ ⟩) (toCtx-++ˢ S S')
-  toCtx-++ˢ S (_∷ₛ_ {A = A} {ρ = ρ} S' V) =
-    cong (_∷ [ ρ ] A) (toCtx-++ˢ S S')
+  toCtx-++ˢ 𝕊 (𝕊' ⟨ ρ ⟩ₛ) =
+    cong (_⟨ ρ ⟩) (toCtx-++ˢ 𝕊 𝕊')
+  toCtx-++ˢ 𝕊 (_∷ₛ_ {A = A} {ρ = ρ} 𝕊' V) =
+    cong (_∷ [ ρ ] A) (toCtx-++ˢ 𝕊 𝕊')
 
 -- Splitting a state according to a variable/resource in it
 
 mutual 
 
   split-state-fst : ∀ {Γ A ρ ρ'}
-                  → (S : 𝕊 Γ)
-                  → [ ρ ] A ∈[ ρ' ] (toCtx S)
-                  → 𝕊 Γ
+                  → (𝕊 : State Γ)
+                  → [ ρ ] A ∈[ ρ' ] (toCtx 𝕊)
+                  → State Γ
    
-  split-state-fst (S ⟨ ρ'' ⟩ₛ) (Tl-⟨⟩ x) =
-    split-state-fst S x
-  split-state-fst (S ∷ₛ V) Hd =
-    S
-  split-state-fst (S ∷ₛ V) (Tl-∷ x) =
-    split-state-fst S x
+  split-state-fst (𝕊 ⟨ ρ'' ⟩ₛ) (Tl-⟨⟩ x) =
+    split-state-fst 𝕊 x
+  split-state-fst (𝕊 ∷ₛ V) Hd =
+    𝕊
+  split-state-fst (𝕊 ∷ₛ V) (Tl-∷ x) =
+    split-state-fst 𝕊 x
 
   split-state-snd : ∀ {Γ A ρ ρ'}
-                  → (S : 𝕊 Γ)
-                  → (x : [ ρ ] A ∈[ ρ' ] (toCtx S))
-                   → 𝕊 (Γ ++ᶜ toCtx (split-state-fst S x) ∷ [ ρ ] A)
+                  → (𝕊 : State Γ)
+                  → (x : [ ρ ] A ∈[ ρ' ] (toCtx 𝕊))
+                   → State (Γ ++ᶜ toCtx (split-state-fst 𝕊 x) ∷ [ ρ ] A)
   
-  split-state-snd (S ⟨ ρ ⟩ₛ) (Tl-⟨⟩ x) =
-    split-state-snd S x ⟨ ρ ⟩ₛ
-  split-state-snd (S ∷ₛ V) Hd =
+  split-state-snd (𝕊 ⟨ ρ ⟩ₛ) (Tl-⟨⟩ x) =
+    split-state-snd 𝕊 x ⟨ ρ ⟩ₛ
+  split-state-snd (𝕊 ∷ₛ V) Hd =
     ∅
-  split-state-snd {Γ} (_∷ₛ_ {ρ = ρ} S V) (Tl-∷ x) =
-    split-state-snd S x ∷ₛ
+  split-state-snd {Γ} (_∷ₛ_ {ρ = ρ} 𝕊 V) (Tl-∷ x) =
+    split-state-snd 𝕊 x ∷ₛ
     V-rename (eq-ren (cong (_⟨ ρ ⟩)
       (trans
-        (sym (cong (Γ ++ᶜ_) (split-state-++ᶜ S x)))
-        (sym (++ᶜ-assoc Γ _ (toCtx (split-state-snd S x)))))))
+        (sym (cong (Γ ++ᶜ_) (split-state-++ᶜ 𝕊 x)))
+        (sym (++ᶜ-assoc Γ _ (toCtx (split-state-snd 𝕊 x)))))))
     V
 
   split-state-++ᶜ : ∀ {Γ A ρ ρ'}
-                  → (S : 𝕊 Γ)
-                  → (x : [ ρ ] A ∈[ ρ' ] (toCtx S))
-                  → toCtx (split-state-fst S x) ∷ [ ρ ] A ++ᶜ toCtx (split-state-snd S x) ≡ toCtx S
+                  → (𝕊 : State Γ)
+                  → (x : [ ρ ] A ∈[ ρ' ] (toCtx 𝕊))
+                  → toCtx (split-state-fst 𝕊 x) ∷ [ ρ ] A ++ᶜ toCtx (split-state-snd 𝕊 x) ≡ toCtx 𝕊
 
-  split-state-++ᶜ (S ⟨ ρ ⟩ₛ) (Tl-⟨⟩ x) =
-    cong (_⟨ ρ ⟩) (split-state-++ᶜ S x)
-  split-state-++ᶜ (_∷ₛ_ {A = A} {ρ = ρ} S V) Hd =
+  split-state-++ᶜ (𝕊 ⟨ ρ ⟩ₛ) (Tl-⟨⟩ x) =
+    cong (_⟨ ρ ⟩) (split-state-++ᶜ 𝕊 x)
+  split-state-++ᶜ (_∷ₛ_ {A = A} {ρ = ρ} 𝕊 V) Hd =
     refl
-  split-state-++ᶜ (_∷ₛ_ {A = A} {ρ = ρ} S V) (Tl-∷ x) =
-    cong (_∷ [ ρ ] A) (split-state-++ᶜ S x)
+  split-state-++ᶜ (_∷ₛ_ {A = A} {ρ = ρ} 𝕊 V) (Tl-∷ x) =
+    cong (_∷ [ ρ ] A) (split-state-++ᶜ 𝕊 x)
 
 -- Relating the splitting of the state to the splitting of the corresponding context 
 
 fst-split-state≡split-ctx : ∀ {Γ A ρ ρ'}
-                  → (S : 𝕊 Γ)
-                  → (x : [ ρ ] A ∈[ ρ' ] (toCtx S))
-                  → toCtx (split-state-fst S x) ≡ split-l x
+                  → (𝕊 : State Γ)
+                  → (x : [ ρ ] A ∈[ ρ' ] (toCtx 𝕊))
+                  → toCtx (split-state-fst 𝕊 x) ≡ split-l x
                   
-fst-split-state≡split-ctx (S ⟨ ρ ⟩ₛ) (Tl-⟨⟩ x) = fst-split-state≡split-ctx S x
-fst-split-state≡split-ctx (S ∷ₛ V) Hd          = refl
-fst-split-state≡split-ctx (S ∷ₛ V) (Tl-∷ x)    = fst-split-state≡split-ctx S x
+fst-split-state≡split-ctx (𝕊 ⟨ ρ ⟩ₛ) (Tl-⟨⟩ x) = fst-split-state≡split-ctx 𝕊 x
+fst-split-state≡split-ctx (𝕊 ∷ₛ V) Hd          = refl
+fst-split-state≡split-ctx (𝕊 ∷ₛ V) (Tl-∷ x)    = fst-split-state≡split-ctx 𝕊 x
 
 split-state≡split-ctx : ∀ {Γ A ρ ρ'}
-                  → {S : 𝕊 Γ}
-                  → {x : [ ρ ] A ∈[ ρ' ] (toCtx S)}
-                  → toCtx (split-state-fst S x) ∷ [ ρ ] A ++ᶜ (toCtx (split-state-snd S x))  
+                  → {𝕊 : State Γ}
+                  → {x : [ ρ ] A ∈[ ρ' ] (toCtx 𝕊)}
+                  → toCtx (split-state-fst 𝕊 x) ∷ [ ρ ] A ++ᶜ (toCtx (split-state-snd 𝕊 x))  
                     ≡ 
                     split-l x ∷ [ ρ ] A ++ᶜ (split-r x)
                   
-split-state≡split-ctx {S = S} {x = x} = 
+split-state≡split-ctx {𝕊 = 𝕊} {x = x} = 
   trans
-    (split-state-++ᶜ S x) 
+    (split-state-++ᶜ 𝕊 x) 
     (sym (split-≡ (split-pf x)))
 
 snd-split-state≡split-ctx : ∀ {Γ A ρ ρ'}
-                  → (S : 𝕊 Γ)
-                  → (x : [ ρ ] A ∈[ ρ' ] (toCtx S))
-                  → toCtx (split-state-snd S x) ≡ split-r x
+                  → (𝕊 : State Γ)
+                  → (x : [ ρ ] A ∈[ ρ' ] (toCtx 𝕊))
+                  → toCtx (split-state-snd 𝕊 x) ≡ split-r x
                   
-snd-split-state≡split-ctx {A = A} {ρ = ρ} S x = 
-  ++ᶜ-inj₂ {Γ = toCtx (split-state-fst S x) ∷ [ ρ ] A}
+snd-split-state≡split-ctx {A = A} {ρ = ρ} 𝕊 x = 
+  ++ᶜ-inj₂ {Γ = toCtx (split-state-fst 𝕊 x) ∷ [ ρ ] A}
     (trans
       split-state≡split-ctx
       (cong (_++ᶜ split-r x)
-        (cong (_∷ [ ρ ] A) (sym (fst-split-state≡split-ctx S x)))))
+        (cong (_∷ [ ρ ] A) (sym (fst-split-state≡split-ctx 𝕊 x)))))
 
 snd-split-time≡time-from-head : ∀ {Γ A ρ ρ'}
-                  → (S : 𝕊 Γ)
-                  → (x : [ ρ ] A ∈[ ρ' ] (toCtx S))
-                  → state-grade (split-state-snd S x) ≡ ρ'
+                  → (𝕊 : State Γ)
+                  → (x : [ ρ ] A ∈[ ρ' ] (toCtx 𝕊))
+                  → state-grade (split-state-snd 𝕊 x) ≡ ρ'
                   
-snd-split-time≡time-from-head S x = 
+snd-split-time≡time-from-head 𝕊 x = 
   trans (
     trans 
-      (grades-≡ (split-state-snd S x)) 
-      (cong ctx-grade (snd-split-state≡split-ctx S x))) 
+      (grades-≡ (split-state-snd 𝕊 x)) 
+      (cong ctx-grade (snd-split-state≡split-ctx 𝕊 x))) 
     (split-grade-≡ x)
 
--- Lemmas about which values can and which can't be in toCtx S (only var can be)
+-- Lemmas about which values can and which can't be in toCtx 𝕊 (only var can be)
 
-⇒-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} {A : VType} {C : CType} → A ⇒ C ∈[ ρ ] toCtx S → ⊥
-⇒-not-in-toCtx {S = S ⟨ ρ ⟩ₛ} (Tl-⟨⟩ x) = ⇒-not-in-toCtx x
-⇒-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = ⇒-not-in-toCtx x
+⇒-not-in-toCtx : ∀ {Γ ρ} {𝕊 : State Γ} {A : VType} {C : CType} → A ⇒ C ∈[ ρ ] toCtx 𝕊 → ⊥
+⇒-not-in-toCtx {𝕊 = 𝕊 ⟨ ρ ⟩ₛ} (Tl-⟨⟩ x) = ⇒-not-in-toCtx x
+⇒-not-in-toCtx {𝕊 = 𝕊 ∷ₛ V} (Tl-∷ x) = ⇒-not-in-toCtx x
 
-⇛-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} {C D : CType} → C ⇛ D ∈[ ρ ] toCtx S → ⊥
-⇛-not-in-toCtx {S = S ⟨ ρ ⟩ₛ} (Tl-⟨⟩ x) = ⇛-not-in-toCtx x
-⇛-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = ⇛-not-in-toCtx x
+⇛-not-in-toCtx : ∀ {Γ ρ} {𝕊 : State Γ} {C D : CType} → C ⇛ D ∈[ ρ ] toCtx 𝕊 → ⊥
+⇛-not-in-toCtx {𝕊 = 𝕊 ⟨ ρ ⟩ₛ} (Tl-⟨⟩ x) = ⇛-not-in-toCtx x
+⇛-not-in-toCtx {𝕊 = 𝕊 ∷ₛ V} (Tl-∷ x) = ⇛-not-in-toCtx x
 
-⦉⦊-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} {A B : VType} → A |×| B ∈[ ρ ] toCtx S → ⊥
-⦉⦊-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = ⦉⦊-not-in-toCtx x
-⦉⦊-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = ⦉⦊-not-in-toCtx x
+⦉⦊-not-in-toCtx : ∀ {Γ ρ} {𝕊 : State Γ} {A B : VType} → A |×| B ∈[ ρ ] toCtx 𝕊 → ⊥
+⦉⦊-not-in-toCtx {𝕊 = 𝕊 ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = ⦉⦊-not-in-toCtx x
+⦉⦊-not-in-toCtx {𝕊 = 𝕊 ∷ₛ V} (Tl-∷ x) = ⦉⦊-not-in-toCtx x
 
-nat-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} → nat ∈[ ρ ] toCtx S → ⊥
-nat-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = nat-not-in-toCtx x
-nat-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = nat-not-in-toCtx x
+nat-not-in-toCtx : ∀ {Γ ρ} {𝕊 : State Γ} → nat ∈[ ρ ] toCtx 𝕊 → ⊥
+nat-not-in-toCtx {𝕊 = 𝕊 ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = nat-not-in-toCtx x
+nat-not-in-toCtx {𝕊 = 𝕊 ∷ₛ V} (Tl-∷ x) = nat-not-in-toCtx x
 
-|+|-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} {A B : VType} → A |+| B ∈[ ρ ] toCtx S → ⊥
-|+|-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = |+|-not-in-toCtx x
-|+|-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = |+|-not-in-toCtx x
+|+|-not-in-toCtx : ∀ {Γ ρ} {𝕊 : State Γ} {A B : VType} → A |+| B ∈[ ρ ] toCtx 𝕊 → ⊥
+|+|-not-in-toCtx {𝕊 = 𝕊 ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = |+|-not-in-toCtx x
+|+|-not-in-toCtx {𝕊 = 𝕊 ∷ₛ V} (Tl-∷ x) = |+|-not-in-toCtx x
 
-list-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} {A : VType} → list A ∈[ ρ ] toCtx S → ⊥
-list-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = list-not-in-toCtx x
-list-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = list-not-in-toCtx x
+list-not-in-toCtx : ∀ {Γ ρ} {𝕊 : State Γ} {A : VType} → list A ∈[ ρ ] toCtx 𝕊 → ⊥
+list-not-in-toCtx {𝕊 = 𝕊 ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = list-not-in-toCtx x
+list-not-in-toCtx {𝕊 = 𝕊 ∷ₛ V} (Tl-∷ x) = list-not-in-toCtx x
 
-empty-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} → empty ∈[ ρ ] toCtx S → ⊥
-empty-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = empty-not-in-toCtx x
-empty-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = empty-not-in-toCtx x
+empty-not-in-toCtx : ∀ {Γ ρ} {𝕊 : State Γ} → empty ∈[ ρ ] toCtx 𝕊 → ⊥
+empty-not-in-toCtx {𝕊 = 𝕊 ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = empty-not-in-toCtx x
+empty-not-in-toCtx {𝕊 = 𝕊 ∷ₛ V} (Tl-∷ x) = empty-not-in-toCtx x
 
-bool-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} → bool ∈[ ρ ] toCtx S → ⊥
-bool-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = bool-not-in-toCtx x
-bool-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = bool-not-in-toCtx x
+bool-not-in-toCtx : ∀ {Γ ρ} {𝕊 : State Γ} → bool ∈[ ρ ] toCtx 𝕊 → ⊥
+bool-not-in-toCtx {𝕊 = 𝕊 ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = bool-not-in-toCtx x
+bool-not-in-toCtx {𝕊 = 𝕊 ∷ₛ V} (Tl-∷ x) = bool-not-in-toCtx x
 
 not-in-empty-ctx : {ρ : R} {A : VType} → A ∈[ ρ ] [] → ⊥
 not-in-empty-ctx ()
@@ -299,8 +301,8 @@ not-in-empty-ctx ()
 -- The two components of a value of product type. Over a state context the
 -- value is a pair under a spine of subsumptions, which the recursion peels.
 
-fstᵛ : ∀ {Γ A B} {S : 𝕊 Γ} → toCtx S ⊢V⦂ A |×| B → toCtx S ⊢V⦂ A
-sndᵛ : ∀ {Γ A B} {S : 𝕊 Γ} → toCtx S ⊢V⦂ A |×| B → toCtx S ⊢V⦂ B
+fstᵛ : ∀ {Γ A B} {𝕊 : State Γ} → toCtx 𝕊 ⊢V⦂ A |×| B → toCtx 𝕊 ⊢V⦂ A
+sndᵛ : ∀ {Γ A B} {𝕊 : State Γ} → toCtx 𝕊 ⊢V⦂ A |×| B → toCtx 𝕊 ⊢V⦂ B
 
 fstᵛ (var _ x)        = ⊥-elim (⦉⦊-not-in-toCtx x)
 fstᵛ ⦉ V , _ ⦊        = V
@@ -319,8 +321,8 @@ sub⊎ : ∀ {Γ A A₁ B B₁} → A₁ <:ᵛ A → B₁ <:ᵛ B
 sub⊎ p q (inj₁ W) = inj₁ (subV W p)
 sub⊎ p q (inj₂ W) = inj₂ (subV W q)
 
-injᵛ : ∀ {Γ A B} {S : 𝕊 Γ} → toCtx S ⊢V⦂ A |+| B
-     → (toCtx S ⊢V⦂ A) ⊎ (toCtx S ⊢V⦂ B)
+injᵛ : ∀ {Γ A B} {𝕊 : State Γ} → toCtx 𝕊 ⊢V⦂ A |+| B
+     → (toCtx 𝕊 ⊢V⦂ A) ⊎ (toCtx 𝕊 ⊢V⦂ B)
 injᵛ (var _ x)           = ⊥-elim (|+|-not-in-toCtx x)
 injᵛ (inl V)             = inj₁ V
 injᵛ (inr V)             = inj₂ V
@@ -343,7 +345,7 @@ subL : ∀ {Γ A A₁} → A₁ <:ᵛ A → ListView Γ A₁ → ListView Γ A
 subL p (inj₁ tt)      = inj₁ tt
 subL p (inj₂ (W , L)) = inj₂ (subV W p , subV L (listₛ p))
 
-listᵛ : ∀ {Γ A} {S : 𝕊 Γ} → toCtx S ⊢V⦂ list A → ListView (toCtx S) A
+listᵛ : ∀ {Γ A} {𝕊 : State Γ} → toCtx 𝕊 ⊢V⦂ list A → ListView (toCtx 𝕊) A
 listᵛ (var _ x)             = ⊥-elim (list-not-in-toCtx x)
 listᵛ nil                   = inj₁ tt
 listᵛ (cons V W)            = inj₂ (V , W)
@@ -357,18 +359,18 @@ unlistᵛ (inj₂ (W , L)) = cons W L
 
 -- A state context binds only boxed types, none of them eternal.
 
-eternal-not-in-toCtx : ∀ {Γ ρ A} {S : 𝕊 Γ} → Et A → A ∈[ ρ ] toCtx S → ⊥
-eternal-not-in-toCtx {S = S ⟨ _ ⟩ₛ} et (Tl-⟨⟩ x) = eternal-not-in-toCtx et x
-eternal-not-in-toCtx {S = S ∷ₛ _}   () Hd
-eternal-not-in-toCtx {S = S ∷ₛ _}   et (Tl-∷ x)  = eternal-not-in-toCtx et x
+eternal-not-in-toCtx : ∀ {Γ ρ A} {𝕊 : State Γ} → Et A → A ∈[ ρ ] toCtx 𝕊 → ⊥
+eternal-not-in-toCtx {𝕊 = 𝕊 ⟨ _ ⟩ₛ} et (Tl-⟨⟩ x) = eternal-not-in-toCtx et x
+eternal-not-in-toCtx {𝕊 = 𝕊 ∷ₛ _}   () Hd
+eternal-not-in-toCtx {𝕊 = 𝕊 ∷ₛ _}   et (Tl-∷ x)  = eternal-not-in-toCtx et x
 
 -- The datum a value of an eternal type is. Over a state context the value is
 -- a datum under a spine of subsumptions, which act on the data.
 
-⌊_⌋ᵈ : ∀ {Γ A} {S : 𝕊 Γ} → Et A → toCtx S ⊢V⦂ A → ⟪ A ⟫
+⌊_⌋ᵈ : ∀ {Γ A} {𝕊 : State Γ} → Et A → toCtx 𝕊 ⊢V⦂ A → ⟪ A ⟫
 ⌊ et ⌋ᵈ             (var _ x)   = ⊥-elim (eternal-not-in-toCtx et x)
 ⌊ et ⌋ᵈ             (subV V p)  = ⟪ p ⟫ˢ (⌊ <:ᵛ-eternalˡ p et ⌋ᵈ V)
-⌊ Baseₑ _ ⌋ᵈ        (const c)   = c
+⌊ Baseₑ _ ⌋ᵈ        (const B c) = c
 ⌊ unitₑ ⌋ᵈ          ⋆           = tt
 ⌊ boolₑ ⌋ᵈ          true        = Bool.true
 ⌊ boolₑ ⌋ᵈ          false       = Bool.false
@@ -382,16 +384,16 @@ eternal-not-in-toCtx {S = S ∷ₛ _}   et (Tl-∷ x)  = eternal-not-in-toCtx et
 
 -- There is no value of the empty type over a state context.
 
-empty-not-value : ∀ {Γ} {S : 𝕊 Γ} → toCtx S ⊢V⦂ empty → ⊥
+empty-not-value : ∀ {Γ} {𝕊 : State Γ} → toCtx 𝕊 ⊢V⦂ empty → ⊥
 empty-not-value (var _ x)      = empty-not-in-toCtx x
 empty-not-value (subV V emptyₛ) = empty-not-value V
 
 -- Looking up a resource in the state
 
 resource-lookup : ∀ {Γ ρ ρ' A}
-                → (S : 𝕊 Γ)
-                → (x : [ ρ ] A ∈[ ρ' ] toCtx S)
-                → (Γ ++ᶜ toCtx (split-state-fst S x)) ⟨ ρ ⟩ ⊢V⦂ A
-resource-lookup (S ⟨ _ ⟩ₛ) (Tl-⟨⟩ x) = resource-lookup S x
-resource-lookup (S ∷ₛ V) Hd          = V
-resource-lookup (S ∷ₛ _) (Tl-∷ x)    = resource-lookup S x
+                → (𝕊 : State Γ)
+                → (x : [ ρ ] A ∈[ ρ' ] toCtx 𝕊)
+                → (Γ ++ᶜ toCtx (split-state-fst 𝕊 x)) ⟨ ρ ⟩ ⊢V⦂ A
+resource-lookup (𝕊 ⟨ _ ⟩ₛ) (Tl-⟨⟩ x) = resource-lookup 𝕊 x
+resource-lookup (𝕊 ∷ₛ V) Hd          = V
+resource-lookup (𝕊 ∷ₛ _) (Tl-∷ x)    = resource-lookup 𝕊 x

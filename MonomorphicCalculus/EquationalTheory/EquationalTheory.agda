@@ -40,80 +40,80 @@ mutual
 
   -- value equations
 
-  data _⊢V⦂_==_ (Γ : Ctx) : {A : VType} → Γ ⊢V⦂ A → Γ ⊢V⦂ A → Set where
+  data _⊢V⦂_≡ᵗʰ_ (Γ : Ctx) : {A : VType} → Γ ⊢V⦂ A → Γ ⊢V⦂ A → Set where
 
     -- reflexivity, symmetry, transitivity
 
     V-refl : ∀ {A}
            → {V : Γ ⊢V⦂ A}
            ---------------
-           → Γ ⊢V⦂ V == V
+           → Γ ⊢V⦂ V ≡ᵗʰ V
 
     V-sym : ∀ {A}
           → {V W : Γ ⊢V⦂ A}
-          → Γ ⊢V⦂ V == W
+          → Γ ⊢V⦂ V ≡ᵗʰ W
           -----------------
-          → Γ ⊢V⦂ W == V
+          → Γ ⊢V⦂ W ≡ᵗʰ V
 
     V-trans : ∀ {A}
             → {V W U : Γ ⊢V⦂ A}
-            → Γ ⊢V⦂ V == W
-            → Γ ⊢V⦂ W == U
+            → Γ ⊢V⦂ V ≡ᵗʰ W
+            → Γ ⊢V⦂ W ≡ᵗʰ U
             -------------------
-            → Γ ⊢V⦂ V == U
+            → Γ ⊢V⦂ V ≡ᵗʰ U
 
     -- substitutivity
 
     V-subst : ∀ {Γ' Γ₁ Γ₂ A B}
             → {V W : Γ' ⊢V⦂ B}
-            → (p : Γ' ⊢V⦂ V == W)
+            → (p : Γ' ⊢V⦂ V ≡ᵗʰ W)
             → (s : Γ₁ ∷ A , Γ₂ split Γ')
             → (q : Γ₁ ++ᶜ Γ₂ ≡ Γ)
             → (U : Γ₁ ⊢V⦂ A)
             ---------------------------------------------------------------
             → Γ ⊢V⦂ subst (_⊢V⦂ B) q (V [ s ↦ U ]v)
-                == subst (_⊢V⦂ B) q (W [ s ↦ U ]v)
+                ≡ᵗʰ subst (_⊢V⦂ B) q (W [ s ↦ U ]v)
 
     -- congruence equations
 
     ⦉⦊-cong : ∀ {A B}
            → {V V' : Γ ⊢V⦂ A}
            → {W W' : Γ ⊢V⦂ B}
-           → Γ ⊢V⦂ V == V'
-           → Γ ⊢V⦂ W == W'
+           → Γ ⊢V⦂ V ≡ᵗʰ V'
+           → Γ ⊢V⦂ W ≡ᵗʰ W'
            ------------------------------
-           → Γ ⊢V⦂ ⦉ V , W ⦊ == ⦉ V' , W' ⦊
+           → Γ ⊢V⦂ ⦉ V , W ⦊ ≡ᵗʰ ⦉ V' , W' ⦊
 
     succ-cong : {V V' : Γ ⊢V⦂ nat}
-              → Γ ⊢V⦂ V == V'
+              → Γ ⊢V⦂ V ≡ᵗʰ V'
               ---------------------------
-              → Γ ⊢V⦂ succ V == succ V'
+              → Γ ⊢V⦂ succ V ≡ᵗʰ succ V'
 
     inl-cong : ∀ {A B}
              → {V V' : Γ ⊢V⦂ A}
-             → Γ ⊢V⦂ V == V'
+             → Γ ⊢V⦂ V ≡ᵗʰ V'
              --------------------------------------
-             → Γ ⊢V⦂ inl {B = B} V == inl {B = B} V'
+             → Γ ⊢V⦂ inl {B = B} V ≡ᵗʰ inl {B = B} V'
 
     inr-cong : ∀ {A B}
              → {V V' : Γ ⊢V⦂ B}
-             → Γ ⊢V⦂ V == V'
+             → Γ ⊢V⦂ V ≡ᵗʰ V'
              --------------------------------------
-             → Γ ⊢V⦂ inr {A = A} V == inr {A = A} V'
+             → Γ ⊢V⦂ inr {A = A} V ≡ᵗʰ inr {A = A} V'
 
     cons-cong : ∀ {A}
               → {V V' : Γ ⊢V⦂ A}
               → {W W' : Γ ⊢V⦂ list A}
-              → Γ ⊢V⦂ V == V'
-              → Γ ⊢V⦂ W == W'
+              → Γ ⊢V⦂ V ≡ᵗʰ V'
+              → Γ ⊢V⦂ W ≡ᵗʰ W'
               ---------------------------------
-              → Γ ⊢V⦂ cons V W == cons V' W'
+              → Γ ⊢V⦂ cons V W ≡ᵗʰ cons V' W'
 
     fun-cong : ∀ {A B ε}
              → {M N : Γ ∷ A ⊢C⦂ B ! ε}
-             → Γ ∷ A ⊢C⦂ M == N
+             → Γ ∷ A ⊢C⦂ M ≡ᵗʰ N
              -------------------------
-             → Γ ⊢V⦂ fun M == fun N
+             → Γ ⊢V⦂ fun M ≡ᵗʰ fun N
 
     handler-cong : ∀ {A B ε ε'}
                  → {N N' : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'}
@@ -121,25 +121,25 @@ mutual
                               Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                                   ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
                               ⊢C⦂ B ! (op-grade op ·ₑ ε''))}
-                 → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ N == N'
+                 → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ N ≡ᵗʰ N'
                  → ((op : Op) → (ε'' : E) →
                       Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                           ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-                      ⊢C⦂ H op ε'' == H' op ε'')
+                      ⊢C⦂ H op ε'' ≡ᵗʰ H' op ε'')
                  ---------------------------------------------------
-                 → Γ ⊢V⦂ handler N H == handler N' H'
+                 → Γ ⊢V⦂ handler N H ≡ᵗʰ handler N' H'
 
     -- eta equations
 
     unit-eta : (V : Γ ⊢V⦂ unit)
              ------------------
-             → Γ ⊢V⦂ V == ⋆
+             → Γ ⊢V⦂ V ≡ᵗʰ ⋆
 
     fun-eta : ∀ {A C}
             → (V : Γ ⊢V⦂ A ⇒ C)
             -----------------------------------------------
             → Γ ⊢V⦂ V
-                == fun (V-rename wk-ren V · var (λ _ → ≾ᵣ-refl) Hd)
+                ≡ᵗʰ fun (V-rename wk-ren V · var (λ _ → ≾ᵣ-refl) Hd)
 
     -- equations for subsumption
     --
@@ -149,21 +149,21 @@ mutual
     subV-cong : ∀ {A A'}
               → {w w' : A <:ᵛ A'}
               → {V W : Γ ⊢V⦂ A}
-              → Γ ⊢V⦂ V == W
+              → Γ ⊢V⦂ V ≡ᵗʰ W
               ------------------------------
-              → Γ ⊢V⦂ subV V w == subV W w'
+              → Γ ⊢V⦂ subV V w ≡ᵗʰ subV W w'
 
     subV-refl : ∀ {A}
               → (w : A <:ᵛ A)
               → (V : Γ ⊢V⦂ A)
               ----------------------
-              → Γ ⊢V⦂ subV V w == V
+              → Γ ⊢V⦂ subV V w ≡ᵗʰ V
 
     subV-trans : ∀ {A₁ A₂ A₃}
                → (w : A₁ <:ᵛ A₂) → (w' : A₂ <:ᵛ A₃) → (w'' : A₁ <:ᵛ A₃)
                → (V : Γ ⊢V⦂ A₁)
                ------------------------------------------
-               → Γ ⊢V⦂ subV (subV V w) w' == subV V w''
+               → Γ ⊢V⦂ subV (subV V w) w' ≡ᵗʰ subV V w''
 
     -- Subsumption is natural in the value formers: the witness splits the way
     -- its type does. At `⦉_,_⦊` that is functoriality of `_|×|_`, at `inl` and
@@ -178,24 +178,24 @@ mutual
               → (W : Γ ⊢V⦂ B)
               ------------------------------------------------------
               → Γ ⊢V⦂ subV ⦉ V , W ⦊ (p |×|ₛ q)
-                   == ⦉ subV V p , subV W q ⦊
+                   ≡ᵗʰ ⦉ subV V p , subV W q ⦊
 
     subV-inl : ∀ {A A' B B'}
              → (p : A <:ᵛ A') → (q : B <:ᵛ B')
              → (V : Γ ⊢V⦂ A)
              ---------------------------------------------------
-             → Γ ⊢V⦂ subV (inl V) (p |+|ₛ q) == inl (subV V p)
+             → Γ ⊢V⦂ subV (inl V) (p |+|ₛ q) ≡ᵗʰ inl (subV V p)
 
     subV-inr : ∀ {A A' B B'}
              → (p : A <:ᵛ A') → (q : B <:ᵛ B')
              → (V : Γ ⊢V⦂ B)
              ---------------------------------------------------
-             → Γ ⊢V⦂ subV (inr V) (p |+|ₛ q) == inr (subV V q)
+             → Γ ⊢V⦂ subV (inr V) (p |+|ₛ q) ≡ᵗʰ inr (subV V q)
 
     subV-nil : ∀ {A A'}
              → (p : A <:ᵛ A')
              ---------------------------------------------
-             → Γ ⊢V⦂ subV (nil {A = A}) (listₛ p) == nil
+             → Γ ⊢V⦂ subV (nil {A = A}) (listₛ p) ≡ᵗʰ nil
 
     subV-cons : ∀ {A A'}
               → (p : A <:ᵛ A')
@@ -203,7 +203,7 @@ mutual
               → (W : Γ ⊢V⦂ list A)
               ------------------------------------------------------------
               → Γ ⊢V⦂ subV (cons V W) (listₛ p)
-                   == cons (subV V p) (subV W (listₛ p))
+                   ≡ᵗʰ cons (subV V p) (subV W (listₛ p))
 
     subV-fun : ∀ {A A' C C'}
              → (p : A' <:ᵛ A)
@@ -211,174 +211,174 @@ mutual
              → (M : Γ ∷ A ⊢C⦂ C)
              ------------------------------------------------------
              → Γ ⊢V⦂ subV (fun M) (p ⇒ₛ w)
-                  == fun (subC (subCtx p M) w)
+                  ≡ᵗʰ fun (subC (subCtx p M) w)
 
-  infix 18 _⊢V⦂_==_
+  infix 18 _⊢V⦂_≡ᵗʰ_
 
   -- computation equations
 
-  data _⊢C⦂_==_ (Γ : Ctx) : {C : CType} → Γ ⊢C⦂ C → Γ ⊢C⦂ C → Set where
+  data _⊢C⦂_≡ᵗʰ_ (Γ : Ctx) : {C : CType} → Γ ⊢C⦂ C → Γ ⊢C⦂ C → Set where
 
     -- reflexivity, symmetry, transitivity
 
     C-refl : ∀ {C}
            → {M : Γ ⊢C⦂ C}
            ---------------
-           → Γ ⊢C⦂ M == M
+           → Γ ⊢C⦂ M ≡ᵗʰ M
 
     C-sym : ∀ {C}
           → {M N : Γ ⊢C⦂ C}
-          → Γ ⊢C⦂ M == N
+          → Γ ⊢C⦂ M ≡ᵗʰ N
           -----------------
-          → Γ ⊢C⦂ N == M
+          → Γ ⊢C⦂ N ≡ᵗʰ M
 
     C-trans : ∀ {C}
             → {M N P : Γ ⊢C⦂ C}
-            → Γ ⊢C⦂ M == N
-            → Γ ⊢C⦂ N == P
+            → Γ ⊢C⦂ M ≡ᵗʰ N
+            → Γ ⊢C⦂ N ≡ᵗʰ P
             -------------------
-            → Γ ⊢C⦂ M == P
+            → Γ ⊢C⦂ M ≡ᵗʰ P
 
     -- substitutivity
 
     C-subst : ∀ {Γ' Γ₁ Γ₂ A C}
             → {M N : Γ' ⊢C⦂ C}
-            → (p : Γ' ⊢C⦂ M == N)
+            → (p : Γ' ⊢C⦂ M ≡ᵗʰ N)
             → (s : Γ₁ ∷ A , Γ₂ split Γ')
             → (q : Γ₁ ++ᶜ Γ₂ ≡ Γ)
             → (V : Γ₁ ⊢V⦂ A)
             ---------------------------------------------------------------
             → Γ ⊢C⦂ subst (_⊢C⦂ C) q (M [ s ↦ V ]c)
-                == subst (_⊢C⦂ C) q (N [ s ↦ V ]c)
+                ≡ᵗʰ subst (_⊢C⦂ C) q (N [ s ↦ V ]c)
 
     -- congruence equations
 
     return-cong : ∀ {A}
                 → {V W : Γ ⊢V⦂ A}
-                → Γ ⊢V⦂ V == W
+                → Γ ⊢V⦂ V ≡ᵗʰ W
                 ----------------------------
-                → Γ ⊢C⦂ return V == return W
+                → Γ ⊢C⦂ return V ≡ᵗʰ return W
 
     seq-cong : ∀ {A B ε ε'}
              → {M M' : Γ ⊢C⦂ A ! ε}
              → {N N' : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'}
-             → Γ ⊢C⦂ M == M'
-             → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ N == N'
+             → Γ ⊢C⦂ M ≡ᵗʰ M'
+             → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ N ≡ᵗʰ N'
              ---------------------------------
-             → Γ ⊢C⦂ M ⨟ N == M' ⨟ N'
+             → Γ ⊢C⦂ M ⨟ N ≡ᵗʰ M' ⨟ N'
 
     app-cong : ∀ {A C}
              → {V V' : Γ ⊢V⦂ A ⇒ C}
              → {W W' : Γ ⊢V⦂ A}
-             → Γ ⊢V⦂ V == V'
-             → Γ ⊢V⦂ W == W'
+             → Γ ⊢V⦂ V ≡ᵗʰ V'
+             → Γ ⊢V⦂ W ≡ᵗʰ W'
              ------------------------
-             → Γ ⊢C⦂ V · W == V' · W'
+             → Γ ⊢C⦂ V · W ≡ᵗʰ V' · W'
 
     match-cong : ∀ {A B C}
                → {V W : Γ ⊢V⦂ A |×| B}
                → {M N : Γ ∷ A ∷ B ⊢C⦂ C}
-               → Γ ⊢V⦂ V == W
-               → Γ ∷ A ∷ B ⊢C⦂ M == N
+               → Γ ⊢V⦂ V ≡ᵗʰ W
+               → Γ ∷ A ∷ B ⊢C⦂ M ≡ᵗʰ N
                --------------------------------------
-               → Γ ⊢C⦂ match V `with M == match W `with N
+               → Γ ⊢C⦂ match V `with M ≡ᵗʰ match W `with N
 
     absurd-cong : ∀ {C}
                 → {V W : Γ ⊢V⦂ empty}
-                → Γ ⊢V⦂ V == W
+                → Γ ⊢V⦂ V ≡ᵗʰ W
                 ------------------------------------
-                → Γ ⊢C⦂ absurd {C = C} V == absurd {C = C} W
+                → Γ ⊢C⦂ absurd {C = C} V ≡ᵗʰ absurd {C = C} W
 
     cmp-cong : ∀ {A ⋈}
              → {V V' W W' : Γ ⊢V⦂ A}
              → {et : Et A}
-             → Γ ⊢V⦂ V == V'
-             → Γ ⊢V⦂ W == W'
+             → Γ ⊢V⦂ V ≡ᵗʰ V'
+             → Γ ⊢V⦂ W ≡ᵗʰ W'
              ------------------------------------------
-             → Γ ⊢C⦂ cmp ⋈ V W et == cmp ⋈ V' W' et
+             → Γ ⊢C⦂ cmp ⋈ V W et ≡ᵗʰ cmp ⋈ V' W' et
 
     if-cong : ∀ {C}
             → {V W : Γ ⊢V⦂ bool}
             → {M M' N N' : Γ ⊢C⦂ C}
-            → Γ ⊢V⦂ V == W
-            → Γ ⊢C⦂ M == M'
-            → Γ ⊢C⦂ N == N'
+            → Γ ⊢V⦂ V ≡ᵗʰ W
+            → Γ ⊢C⦂ M ≡ᵗʰ M'
+            → Γ ⊢C⦂ N ≡ᵗʰ N'
             ----------------------------------------------------------
-            → Γ ⊢C⦂ if V `then M `else N == if W `then M' `else N'
+            → Γ ⊢C⦂ if V `then M `else N ≡ᵗʰ if W `then M' `else N'
 
     matchℕ-cong : ∀ {C}
                 → {V W : Γ ⊢V⦂ nat}
                 → {M M' : Γ ⊢C⦂ C}
                 → {N N' : Γ ∷ nat ⊢C⦂ C}
-                → Γ ⊢V⦂ V == W
-                → Γ ⊢C⦂ M == M'
-                → Γ ∷ nat ⊢C⦂ N == N'
+                → Γ ⊢V⦂ V ≡ᵗʰ W
+                → Γ ⊢C⦂ M ≡ᵗʰ M'
+                → Γ ∷ nat ⊢C⦂ N ≡ᵗʰ N'
                 --------------------------------------------------------------
-                → Γ ⊢C⦂ matchℕ V `zero M `succ N == matchℕ W `zero M' `succ N'
+                → Γ ⊢C⦂ matchℕ V `zero M `succ N ≡ᵗʰ matchℕ W `zero M' `succ N'
 
     recℕ-cong : ∀ {B ε}
               → {V W : Γ ⊢V⦂ nat}
               → {M M' : Γ ⊢C⦂ B ! ε}
               → {N N' : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε}
               → {p : ε ·ₑ ε ≾ₑ ε}
-              → Γ ⊢V⦂ V == W
-              → Γ ⊢C⦂ M == M'
-              → (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ N == N'
+              → Γ ⊢V⦂ V ≡ᵗʰ W
+              → Γ ⊢C⦂ M ≡ᵗʰ M'
+              → (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ N ≡ᵗʰ N'
               -----------------------------------------------
-              → Γ ⊢C⦂ recℕ V M N p == recℕ W M' N' p
+              → Γ ⊢C⦂ recℕ V M N p ≡ᵗʰ recℕ W M' N' p
 
     matchL-cong : ∀ {A C}
                 → {V W : Γ ⊢V⦂ list A}
                 → {M M' : Γ ⊢C⦂ C}
                 → {N N' : Γ ∷ A ∷ list A ⊢C⦂ C}
-                → Γ ⊢V⦂ V == W
-                → Γ ⊢C⦂ M == M'
-                → Γ ∷ A ∷ list A ⊢C⦂ N == N'
+                → Γ ⊢V⦂ V ≡ᵗʰ W
+                → Γ ⊢C⦂ M ≡ᵗʰ M'
+                → Γ ∷ A ∷ list A ⊢C⦂ N ≡ᵗʰ N'
                 ------------------------------------------------------------
-                → Γ ⊢C⦂ matchL V `nil M `cons N == matchL W `nil M' `cons N'
+                → Γ ⊢C⦂ matchL V `nil M `cons N ≡ᵗʰ matchL W `nil M' `cons N'
 
     recL-cong : ∀ {A B ε}
               → {V W : Γ ⊢V⦂ list A}
               → {M M' : Γ ⊢C⦂ B ! ε}
               → {N N' : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε}
               → {p : ε ·ₑ ε ≾ₑ ε}
-              → Γ ⊢V⦂ V == W
-              → Γ ⊢C⦂ M == M'
-              → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ N == N'
+              → Γ ⊢V⦂ V ≡ᵗʰ W
+              → Γ ⊢C⦂ M ≡ᵗʰ M'
+              → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ N ≡ᵗʰ N'
               ---------------------------------------------------------
-              → Γ ⊢C⦂ recL V M N p == recL W M' N' p
+              → Γ ⊢C⦂ recL V M N p ≡ᵗʰ recL W M' N' p
 
     match+-cong : ∀ {A B C}
                 → {V W : Γ ⊢V⦂ A |+| B}
                 → {M M' : Γ ∷ A ⊢C⦂ C}
                 → {N N' : Γ ∷ B ⊢C⦂ C}
-                → Γ ⊢V⦂ V == W
-                → Γ ∷ A ⊢C⦂ M == M'
-                → Γ ∷ B ⊢C⦂ N == N'
+                → Γ ⊢V⦂ V ≡ᵗʰ W
+                → Γ ∷ A ⊢C⦂ M ≡ᵗʰ M'
+                → Γ ∷ B ⊢C⦂ N ≡ᵗʰ N'
                 ------------------------------------------------------------
-                → Γ ⊢C⦂ match+ V `inl M `inr N == match+ W `inl M' `inr N'
+                → Γ ⊢C⦂ match+ V `inl M `inr N ≡ᵗʰ match+ W `inl M' `inr N'
 
     perform-cong : ∀ {A ε op}
                  → {V W : Γ ⊢V⦂ ⌜ param op ⌝ᵍ}
                  → {M N : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε}
-                 → Γ ⊢V⦂ V == W
-                 → Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ M == N
+                 → Γ ⊢V⦂ V ≡ᵗʰ W
+                 → Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ M ≡ᵗʰ N
                  ---------------------------------------------------------------
-                 → Γ ⊢C⦂ perform op V M == perform op W N
+                 → Γ ⊢C⦂ perform op V M ≡ᵗʰ perform op W N
 
     delay-cong  : ∀ {A τ ε}
                 → {M N : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε}
-                → Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ M == N
+                → Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ M ≡ᵗʰ N
                 --------------------------------------
-                → Γ ⊢C⦂ delay τ M == delay τ N
+                → Γ ⊢C⦂ delay τ M ≡ᵗʰ delay τ N
 
     handle-cong : ∀ {A B ε ε'}
                 → {M M' : Γ ⊢C⦂ A ! ε}
                 → {V V' : Γ ⊢V⦂ (A ! ε) ⇛ (B ! ε')}
-                → Γ ⊢C⦂ M == M'
-                → Γ ⊢V⦂ V == V'
+                → Γ ⊢C⦂ M ≡ᵗʰ M'
+                → Γ ⊢V⦂ V ≡ᵗʰ V'
                 -----------------------------------------------
-                → Γ ⊢C⦂ handle M `with V == handle M' `with V'
+                → Γ ⊢C⦂ handle M `with V ≡ᵗʰ handle M' `with V'
 
     -- The grade bound and the payload subsumption an `unbox` stores are both
     -- irrelevant, so the two nodes are compared at the resource variable they
@@ -389,24 +389,24 @@ mutual
                → {rel rel' : ρ' ≾ᵣ ρ₀}
                → {w w' : A₀ <:ᵛ A}
                → {M N : Γ ∷ A  ⊢C⦂ C}
-               → Γ ∷ A ⊢C⦂ M == N
+               → Γ ∷ A ⊢C⦂ M ≡ᵗʰ N
                ------------------------------------------------
-               → Γ ⊢C⦂ unbox x rel w M == unbox x rel' w' N
+               → Γ ⊢C⦂ unbox x rel w M ≡ᵗʰ unbox x rel' w' N
 
     box-cong : ∀ {A C ρ}
              → {V W : Γ ⟨ ρ ⟩ ⊢V⦂ A}
              → {M N : Γ ∷ [ ρ ] A ⊢C⦂ C}
-             → Γ ⟨ ρ ⟩ ⊢V⦂ V == W
-             → Γ ∷ [ ρ ] A ⊢C⦂ M == N
+             → Γ ⟨ ρ ⟩ ⊢V⦂ V ≡ᵗʰ W
+             → Γ ∷ [ ρ ] A ⊢C⦂ M ≡ᵗʰ N
              --------------------------
-             → Γ ⊢C⦂ box _ V M == box _ W N
+             → Γ ⊢C⦂ box _ V M ≡ᵗʰ box _ W N
 
     subC-cong : ∀ {C C'}
               → {w w' : C <:ᶜ C'}
               → {M N : Γ ⊢C⦂ C}
-              → Γ ⊢C⦂ M == N
+              → Γ ⊢C⦂ M ≡ᵗʰ N
               ------------------------------
-              → Γ ⊢C⦂ subC M w == subC N w'
+              → Γ ⊢C⦂ subC M w ≡ᵗʰ subC N w'
 
     -- computational/beta-equations for sequential composition
 
@@ -415,7 +415,7 @@ mutual
                → (M : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε)
                -----------------------------------------------------
                → Γ ⊢C⦂ return V ⨟ M
-                   == ε-≃ (≃ₑ-sym (·ₑ-identityˡ ε))
+                   ≡ᵗʰ ε-≃ (≃ₑ-sym (·ₑ-identityˡ ε))
                         ((C-rename
                            (cong-∷-ren
                              (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren))
@@ -428,7 +428,7 @@ mutual
                 → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
                 ---------------------------------------------------------------------
                 → Γ ⊢C⦂ (perform op V M) ⨟ N
-                    == ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
+                    ≡ᵗʰ ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
                          (perform op V
                             (M ⨟
                              C-rename
@@ -443,7 +443,7 @@ mutual
               → (N : Γ ⟨ ∣ ιₑ τ ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
               -------------------------------------------------------
               → Γ ⊢C⦂ delay τ M ⨟ N
-                  == ε-≃ (≃ₑ-sym (·ₑ-assoc (ιₑ τ) ε ε'))
+                  ≡ᵗʰ ε-≃ (≃ₑ-sym (·ₑ-assoc (ιₑ τ) ε ε'))
                        (delay τ
                          (M ⨟
                           C-rename
@@ -458,7 +458,7 @@ mutual
             → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ C ! ε')
             -------------------------------------------------------
             → Γ ⊢C⦂ box _ V M ⨟ N
-                == box _ V (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
+                ≡ᵗʰ box _ V (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
 
     seq-unbox : ∀ {A A₀ B C ρ₀ ρ' ε ε'}
               → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ)
@@ -468,7 +468,7 @@ mutual
               → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ C ! ε')
               -------------------------------------------------------
               → Γ ⊢C⦂ unbox x rel w M ⨟ N
-                  == unbox x rel w (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
+                  ≡ᵗʰ unbox x rel w (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
 
     -- eta-equation for sequential composition
 
@@ -476,7 +476,7 @@ mutual
             → (M : Γ ⊢C⦂ A ! ε)
             ----------------------------------------------------------
             → Γ ⊢C⦂ M
-                == ε-≃ (·ₑ-identityʳ ε) (M ⨟ return (var (λ _ → ≾ᵣ-refl) Hd))
+                ≡ᵗʰ ε-≃ (·ₑ-identityʳ ε) (M ⨟ return (var (λ _ → ≾ᵣ-refl) Hd))
 
     -- associativity equation for sequential composition
 
@@ -486,7 +486,7 @@ mutual
               → (P : Γ ⟨ ∣ ε ·ₑ ε' ∣ᵉ ⟩ ∷ B ⊢C⦂ C ! ε'')
               ---------------------------------------------------------------------
               → Γ ⊢C⦂ (M ⨟ N) ⨟ P
-                  == ε-≃ (≃ₑ-sym (·ₑ-assoc ε ε' ε''))
+                  ≡ᵗʰ ε-≃ (≃ₑ-sym (·ₑ-assoc ε ε' ε''))
                        (M ⨟ (N ⨟ C-rename
                                    (cong-∷-ren
                                      ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)
@@ -501,7 +501,7 @@ mutual
              → (W : Γ ⊢V⦂ A)
              ----------------------
              → Γ ⊢C⦂ fun M · W
-                 == M [ split-[] ↦ W ]c
+                 ≡ᵗʰ M [ split-[] ↦ W ]c
 
     -- beta-equation for pattern-matching
 
@@ -511,8 +511,8 @@ mutual
                → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                ------------------------------------
                → Γ ⊢C⦂ match ⦉ V , W ⦊ `with M
-                   == M [ split-[] ↦ V-rename wk-ren W ]c
-                        [ split-[] ↦ V ]c
+                   ≡ᵗʰ M [ split-[] ↦ V-rename wk-ren W ]c
+                         [ split-[] ↦ V ]c
 
     -- eta-equation for pattern-matching
 
@@ -523,7 +523,7 @@ mutual
               → Γ ⊢C⦂ match V `with
                        ((C-rename (wk-ren ∘ʳ exch-ren ∘ʳ wk-ren ∘ʳ exch-ren)
                          M) [ split-[] ↦ ⦉ var (λ _ → ≾ᵣ-refl) (Tl-∷ Hd) , var (λ _ → ≾ᵣ-refl) Hd ⦊ ]c)
-                  == M [ split-[] ↦ V ]c
+                  ≡ᵗʰ M [ split-[] ↦ V ]c
 
     -- eta-equation for empty type elimination
 
@@ -532,7 +532,7 @@ mutual
                → (M : Γ ∷ empty ⊢C⦂ C)
                -----------------------
                → Γ ⊢C⦂ absurd {C = C} V
-                   == M [ split-[] ↦ V ]c
+                   ≡ᵗʰ M [ split-[] ↦ V ]c
 
     -- beta-equation for comparison: at data, the relation's truth on their
     -- order
@@ -543,19 +543,19 @@ mutual
              → (d e : ⟪ A ⟫)
              ---------------------------------------------------------------
              → Γ ⊢C⦂ cmp ⋈ (⌈ et ⌉ d) (⌈ et ⌉ e) et
-                 == return ⌈ holds ⋈ (compareᵈ et d e) ⌉ᵇ
+                 ≡ᵗʰ return ⌈ holds ⋈ (compareᵈ et d e) ⌉ᵇ
 
     -- beta-equations for boolean elimination
 
     if-beta-true : ∀ {C}
                  → (M N : Γ ⊢C⦂ C)
                  -----------------------------------------
-                 → Γ ⊢C⦂ if true `then M `else N == M
+                 → Γ ⊢C⦂ if true `then M `else N ≡ᵗʰ M
 
     if-beta-false : ∀ {C}
                   → (M N : Γ ⊢C⦂ C)
                   -----------------------------------------
-                  → Γ ⊢C⦂ if false `then M `else N == N
+                  → Γ ⊢C⦂ if false `then M `else N ≡ᵗʰ N
 
     -- eta-equation for boolean elimination
     --
@@ -567,7 +567,7 @@ mutual
            ------------------------------------------------------
            → Γ ⊢C⦂ if V `then (M [ split-[] ↦ true  ]c)
                         `else (M [ split-[] ↦ false ]c)
-               == M [ split-[] ↦ V ]c
+               ≡ᵗʰ M [ split-[] ↦ V ]c
 
     -- beta-equations for natural-number elimination
 
@@ -575,14 +575,14 @@ mutual
                      → (M : Γ ⊢C⦂ C)
                      → (N : Γ ∷ nat ⊢C⦂ C)
                      -------------------------------------------
-                     → Γ ⊢C⦂ matchℕ zero `zero M `succ N == M
+                     → Γ ⊢C⦂ matchℕ zero `zero M `succ N ≡ᵗʰ M
 
     matchℕ-beta-succ : ∀ {C}
                      → (V : Γ ⊢V⦂ nat)
                      → (M : Γ ⊢C⦂ C)
                      → (N : Γ ∷ nat ⊢C⦂ C)
                      -------------------------------------------------------------
-                     → Γ ⊢C⦂ matchℕ succ V `zero M `succ N == N [ split-[] ↦ V ]c
+                     → Γ ⊢C⦂ matchℕ succ V `zero M `succ N ≡ᵗʰ N [ split-[] ↦ V ]c
 
     -- eta-equation for natural-number elimination
     --
@@ -596,7 +596,7 @@ mutual
                         `zero (M [ split-[] ↦ zero ]c)
                         `succ (C-rename (cong-∷-ren wk-ren) M
                                 [ split-[] ↦ succ (var (λ _ → ≾ᵣ-refl) Hd) ]c)
-                   == M [ split-[] ↦ V ]c
+                   ≡ᵗʰ M [ split-[] ↦ V ]c
 
     -- beta-equations for primitive recursion
     --
@@ -608,7 +608,7 @@ mutual
                    → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
                    → (p : ε ·ₑ ε ≾ₑ ε)
                    ---------------------------------------
-                   → Γ ⊢C⦂ recℕ zero M N p == M
+                   → Γ ⊢C⦂ recℕ zero M N p ≡ᵗʰ M
 
     recℕ-beta-succ : ∀ {B ε}
                    → (V : Γ ⊢V⦂ nat)
@@ -617,7 +617,7 @@ mutual
                    → (p : ε ·ₑ ε ≾ₑ ε)
                    ------------------------------------------------------------
                    → Γ ⊢C⦂ recℕ (succ V) M N p
-                       == coerce p (recℕ V M N p ⨟ recℕ-step V N)
+                       ≡ᵗʰ coerce p (recℕ V M N p ⨟ recℕ-step V N)
 
     -- beta-equations for sum elimination
 
@@ -626,14 +626,14 @@ mutual
                     → (M : Γ ∷ A ⊢C⦂ C)
                     → (N : Γ ∷ B ⊢C⦂ C)
                     ----------------------------------------------------------
-                    → Γ ⊢C⦂ match+ inl V `inl M `inr N == M [ split-[] ↦ V ]c
+                    → Γ ⊢C⦂ match+ inl V `inl M `inr N ≡ᵗʰ M [ split-[] ↦ V ]c
 
     match+-beta-inr : ∀ {A B C}
                     → (V : Γ ⊢V⦂ B)
                     → (M : Γ ∷ A ⊢C⦂ C)
                     → (N : Γ ∷ B ⊢C⦂ C)
                     ----------------------------------------------------------
-                    → Γ ⊢C⦂ match+ inr V `inl M `inr N == N [ split-[] ↦ V ]c
+                    → Γ ⊢C⦂ match+ inr V `inl M `inr N ≡ᵗʰ N [ split-[] ↦ V ]c
 
     -- eta-equation for sum elimination
     --
@@ -648,7 +648,7 @@ mutual
                                 [ split-[] ↦ inl (var (λ _ → ≾ᵣ-refl) Hd) ]c)
                         `inr (C-rename (cong-∷-ren wk-ren) M
                                 [ split-[] ↦ inr (var (λ _ → ≾ᵣ-refl) Hd) ]c)
-                   == M [ split-[] ↦ V ]c
+                   ≡ᵗʰ M [ split-[] ↦ V ]c
 
     -- beta-equations for list elimination
 
@@ -656,7 +656,7 @@ mutual
                     → (M : Γ ⊢C⦂ C)
                     → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
                     -----------------------------------------
-                    → Γ ⊢C⦂ matchL nil `nil M `cons N == M
+                    → Γ ⊢C⦂ matchL nil `nil M `cons N ≡ᵗʰ M
 
     matchL-beta-cons : ∀ {A C}
                      → (V : Γ ⊢V⦂ A)
@@ -665,8 +665,8 @@ mutual
                      → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
                      ----------------------------------------------
                      → Γ ⊢C⦂ matchL cons V W `nil M `cons N
-                         == N [ split-[] ↦ V-rename wk-ren W ]c
-                              [ split-[] ↦ V ]c
+                         ≡ᵗʰ N [ split-[] ↦ V-rename wk-ren W ]c
+                               [ split-[] ↦ V ]c
 
     -- eta-equation for list elimination
     --
@@ -681,7 +681,7 @@ mutual
                         `cons ((C-rename (wk-ren ∘ʳ exch-ren ∘ʳ wk-ren ∘ʳ exch-ren) M)
                                  [ split-[] ↦ cons (var (λ _ → ≾ᵣ-refl) (Tl-∷ Hd))
                                                    (var (λ _ → ≾ᵣ-refl) Hd) ]c)
-                   == M [ split-[] ↦ V ]c
+                   ≡ᵗʰ M [ split-[] ↦ V ]c
 
     -- beta-equations for primitive recursion on lists; no eta-equation, as
     -- for `recℕ`
@@ -691,7 +691,7 @@ mutual
                   → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
                   → (p : ε ·ₑ ε ≾ₑ ε)
                   ---------------------------------------
-                  → Γ ⊢C⦂ recL nil M N p == M
+                  → Γ ⊢C⦂ recL nil M N p ≡ᵗʰ M
 
     recL-beta-cons : ∀ {A B ε}
                    → (V : Γ ⊢V⦂ A)
@@ -701,7 +701,7 @@ mutual
                    → (p : ε ·ₑ ε ≾ₑ ε)
                    ------------------------------------------------------------
                    → Γ ⊢C⦂ recL (cons V W) M N p
-                       == coerce p (recL W M N p ⨟ recL-step V W N)
+                       ≡ᵗʰ coerce p (recL W M N p ⨟ recL-step V W N)
 
     -- computational/beta-equations for effect handling
     --
@@ -719,7 +719,7 @@ mutual
                   → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε)
                   ----------------------------------------------------------------
                   → Γ ⊢C⦂ handle return V `with handler N H
-                      == ε-≃ (≃ₑ-sym (·ₑ-identityˡ ε))
+                      ≡ᵗʰ ε-≃ (≃ₑ-sym (·ₑ-identityˡ ε))
                            ((C-rename
                               (cong-∷-ren
                                 (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren))
@@ -736,7 +736,7 @@ mutual
                    → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
                    ----------------------------------------------------------------
                    → Γ ⊢C⦂ handle perform op V M `with handler N H
-                       == ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
+                       ≡ᵗʰ ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
                             (box _ (fun
                                    (handle M
                                    `with handler
@@ -765,7 +765,7 @@ mutual
                  → (N : Γ ⟨ ∣ ιₑ τ ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
                  ------------------------------------------------------------------------------
                  → Γ ⊢C⦂ handle delay τ M `with handler N H
-                     == ε-≃ (≃ₑ-sym (·ₑ-assoc (ιₑ τ) ε ε'))
+                     ≡ᵗʰ ε-≃ (≃ₑ-sym (·ₑ-assoc (ιₑ τ) ε ε'))
                           (delay τ
                             (handle M
                             `with handler
@@ -785,7 +785,7 @@ mutual
                → (W : Γ ⊢V⦂ (B ! ε) ⇛ (C ! ε'))
                ------------------------------------------------------------
                → Γ ⊢C⦂ handle box _ V M `with W
-                   == box _ V (handle M `with V-rename wk-ren W)
+                   ≡ᵗʰ box _ V (handle M `with V-rename wk-ren W)
 
     handle-unbox : ∀ {A A₀ B C ρ₀ ρ' ε ε'}
                  → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ)
@@ -795,7 +795,7 @@ mutual
                  → (V : Γ ⊢V⦂ (B ! ε) ⇛ (C ! ε'))
                  ------------------------------------------------------------
                  → Γ ⊢C⦂ handle unbox x rel w M `with V
-                     == unbox x rel w (handle M `with V-rename wk-ren V)
+                     ≡ᵗʰ unbox x rel w (handle M `with V-rename wk-ren V)
 
     -- beta rule for unbox
 
@@ -811,7 +811,7 @@ mutual
                                                     (grade-++ᶜˡ-𝟏ᵣ (hole-ctx K)))
                                                   p)
                                         w N ])
-                   == box _ V (K [ N [ split-[] ↦ subV (V-rename ((cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ wk-ren-⟨ρ⟩-ctx refl) V) w ]c ])
+                   ≡ᵗʰ box _ V (K [ N [ split-[] ↦ subV (V-rename ((cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ wk-ren-⟨ρ⟩-ctx refl) V) w ]c ])
 
 
     -- unboxing non-related values commute
@@ -827,7 +827,7 @@ mutual
                ----------------------------------------------------
                → Γ ⊢C⦂ unbox x₁ rel₁ w₁
                         (unbox (Tl-∷ x₂) rel₂ w₂ M)
-                   == unbox x₂ rel₂ w₂
+                   ≡ᵗʰ unbox x₂ rel₂ w₂
                         (unbox (Tl-∷ x₁) rel₁ w₁
                                (C-rename exch-ren M))
 
@@ -841,7 +841,7 @@ mutual
              -------------------------------------------------
              → Γ ⊢C⦂ box _ V
                      (box _ (V-rename (cong-⟨⟩-ren wk-ren) W) M)
-                 == box _ W
+                 ≡ᵗʰ box _ W
                      (box _
                        (V-rename (cong-⟨⟩-ren wk-ren) V)
                        (C-rename exch-ren M))
@@ -853,7 +853,7 @@ mutual
                    → (M : Γ ⊢C⦂ C ! ε)
                    -----------------------------------
                    → Γ ⊢C⦂ box _ V (C-rename wk-ren M)
-                       == M
+                       ≡ᵗʰ M
 
     -- eta rule for unbox
 
@@ -864,7 +864,7 @@ mutual
                    → (M : Γ ⊢C⦂ C)
                    ---------------------------------------------------
                    → Γ ⊢C⦂ unbox x rel w (C-rename (wk-ren {A = A}) M)
-                       == M
+                       ≡ᵗʰ M
 
     -- boxing and unboxing unrelated resources commute
 
@@ -877,7 +877,7 @@ mutual
                    -----------------------------------
                    → Γ ⊢C⦂ box _ V
                             (unbox (Tl-∷ x₂) rel₂ w₂ M)
-                       == unbox x₂ rel₂ w₂
+                       ≡ᵗʰ unbox x₂ rel₂ w₂
                             (box _
                               (V-rename (cong-⟨⟩-ren wk-ren) V)
                               (C-rename exch-ren M))
@@ -892,13 +892,13 @@ mutual
               → (w : C <:ᶜ C)
               → (M : Γ ⊢C⦂ C)
               ------------------------
-              → Γ ⊢C⦂ subC M w == M
+              → Γ ⊢C⦂ subC M w ≡ᵗʰ M
 
     subC-trans : ∀ {C₁ C₂ C₃}
                → (w : C₁ <:ᶜ C₂) → (w' : C₂ <:ᶜ C₃) → (w'' : C₁ <:ᶜ C₃)
                → (M : Γ ⊢C⦂ C₁)
                ----------------------------------------------
-               → Γ ⊢C⦂ subC (subC M w) w' == subC M w''
+               → Γ ⊢C⦂ subC (subC M w) w' ≡ᵗʰ subC M w''
 
     subC-perform : ∀ {A A' ε ε' op}
                  → (w : A <:ᵛ A')
@@ -908,7 +908,7 @@ mutual
                         ⊢C⦂ A ! ε)
                  ----------------------------------------------------------
                  → Γ ⊢C⦂ subC (perform op V M) (w !ₛ ·ₑ-monoʳ-≾ₑ rel)
-                      == perform op V (subC M (w !ₛ rel))
+                      ≡ᵗʰ perform op V (subC M (w !ₛ rel))
 
     subC-delay : ∀ {A A' τ ε ε'}
                → (w : A <:ᵛ A')
@@ -916,7 +916,7 @@ mutual
                → (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε)
                ------------------------------------------------
                → Γ ⊢C⦂ subC (delay τ M) (w !ₛ ·ₑ-monoʳ-≾ₑ rel)
-                    == delay τ (subC M (w !ₛ rel))
+                    ≡ᵗʰ delay τ (subC M (w !ₛ rel))
 
     -- Moving a scrutinee's subsumption outwards relaxes the continuation's
     -- lock along the effect half and subsumes its binder along the value half.
@@ -930,7 +930,7 @@ mutual
              → (N : Γ ⟨ ∣ ε₂ ∣ᵉ ⟩ ∷ A' ⊢C⦂ B ! ε')
              ------------------------------------------------------------
              → Γ ⊢C⦂ subC M (w !ₛ rel) ⨟ N
-                  == coerce (·ₑ-monoˡ-≾ₑ rel)
+                  ≡ᵗʰ coerce (·ₑ-monoˡ-≾ₑ rel)
                        (M ⨟ subCtx w
                               (C-rename
                                 (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))) N))
@@ -942,7 +942,7 @@ mutual
                 → (V : Γ ⊢V⦂ (A' ! ε₂) ⇛ (B ! ε'))
                 ----------------------------------------------------------------
                 → Γ ⊢C⦂ handle (subC M (w !ₛ rel)) `with V
-                     == coerce (·ₑ-monoˡ-≾ₑ rel)
+                     ≡ᵗʰ coerce (·ₑ-monoˡ-≾ₑ rel)
                           (handle M `with subV V ((w !ₛ rel) ⇛ₛ <:ᶜ-refl (B ! ε')))
 
     -- `box` and `unbox` bind but compute nothing, so a subsumption of the
@@ -953,7 +953,7 @@ mutual
              → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
              → (M : Γ ∷ [ ρ ] A ⊢C⦂ C)
              ----------------------------------------------------
-             → Γ ⊢C⦂ subC (box _ V M) w == box _ V (subC M w)
+             → Γ ⊢C⦂ subC (box _ V M) w ≡ᵗʰ box _ V (subC M w)
 
     subC-unbox : ∀ {A A₀ C C' ρ₀ ρ'}
                → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ)
@@ -963,7 +963,7 @@ mutual
                → (M : Γ ∷ A ⊢C⦂ C)
                ----------------------------------------------------
                → Γ ⊢C⦂ subC (unbox x rel v M) w
-                    == unbox x rel v (subC M w)
+                    ≡ᵗʰ unbox x rel v (subC M w)
 
     -- Sub-effecting the result of a bind is sub-effecting its continuation.
     -- Only the effect half needs an axiom: its value half is derivable from
@@ -974,7 +974,7 @@ mutual
                   → (M : Γ ⊢C⦂ A ! ε)
                   → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₁')
                   ----------------------------------------------------------
-                  → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (M ⨟ N) == M ⨟ coerce rel N
+                  → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (M ⨟ N) ≡ᵗʰ M ⨟ coerce rel N
 
     -- Handling with a coerced handler value coerces the handled computation
     -- in and the answer out. The handled grade stays fixed: restricting it
@@ -987,8 +987,8 @@ mutual
                 → (V : Γ ⊢V⦂ (A₁ ! ε) ⇛ (B₁ ! ε₁'))
                 ----------------------------------------------------------------
                 → Γ ⊢C⦂ handle M `with subV V ((p !ₛ pε) ⇛ₛ (q !ₛ s))
-                     == subC (handle (subC M (p !ₛ pε)) `with V)
-                             (q !ₛ ·ₑ-monoʳ-≾ₑ s)
+                     ≡ᵗʰ subC (handle (subC M (p !ₛ pε)) `with V)
+                              (q !ₛ ·ₑ-monoʳ-≾ₑ s)
 
     -- equations for collapsing successive delays
 
@@ -996,7 +996,7 @@ mutual
                → (M : Γ ⟨ ιᵣ 0ᴰ ⟩ ⊢C⦂ A ! ε)
                --------------------------
                → Γ ⊢C⦂ delay 0ᴰ M
-                   == ε-≃ (≃ₑ-sym (≃ₑ-trans (·ₑ-cong ιₑ-zero ≃ₑ-refl) (·ₑ-identityˡ ε)))
+                   ≡ᵗʰ ε-≃ (≃ₑ-sym (≃ₑ-trans (·ₑ-cong ιₑ-zero ≃ₑ-refl) (·ₑ-identityˡ ε)))
                         (C-rename
                           (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ ιᵣ-zero) ∘ʳ ⟨⟩-η-ren)
                           M)
@@ -1008,7 +1008,7 @@ mutual
                            (C-rename
                              (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ ιᵣ-plus) ∘ʳ ⟨⟩-μ-ren)
                              M))
-                    == ε-≃ (≃ₑ-trans (·ₑ-cong ιₑ-plus ≃ₑ-refl) (·ₑ-assoc (ιₑ τ₁) (ιₑ τ₂) ε))
+                    ≡ᵗʰ ε-≃ (≃ₑ-trans (·ₑ-cong ιₑ-plus ≃ₑ-refl) (·ₑ-assoc (ιₑ τ₁) (ιₑ τ₂) ε))
                          (delay (τ₁ +ᴰ τ₂) M)
 
-  infix 18 _⊢C⦂_==_
+  infix 18 _⊢C⦂_≡ᵗʰ_

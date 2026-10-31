@@ -79,9 +79,9 @@ nothing-goes-stale ([ _ ,+∞⟩ ∷ᵛ [ _ ,+∞⟩ ∷ᵛ [ _ ,+∞⟩ ∷ᵛ 
 
 transmitted-late : [] ⊢C⦂ unit ! ⟪ 1 , 1 , 2 ⟫ˡ
 transmitted-late =
-  perform read ⋆                     -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading
-    (perform write here              -- ⟨ ⟪ 0 , 1 , 0 ⟫ˡ ⟩ ∷ unit
-      (perform send (const 0)        -- ⟨ ⟪ 0 , 0 , 1 ⟫ˡ ⟩ ∷ unit
+  perform read ⋆                      -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading
+    (perform write here               -- ⟨ ⟪ 0 , 1 , 0 ⟫ˡ ⟩ ∷ unit
+      (perform send (const reading 0) -- ⟨ ⟪ 0 , 0 , 1 ⟫ˡ ⟩ ∷ unit
         (perform send (fresh-var (nothing-goes-stale _)
                                  (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))))
                                      -- ⟨ ⟪ 0 , 0 , 1 ⟫ˡ ⟩ ∷ unit
@@ -101,7 +101,7 @@ average = ⟪ 3 , 0 , 0 ⟫ˡ
 
 claim-after-three-readings : [] ⊢C⦂ unit ! ⟪ 3 , 0 , 2 ⟫ˡ
 claim-after-three-readings =
-  box average (const 42)             -- ∷ [ average ] Reading
+  box average (const reading 42)     -- ∷ [ average ] Reading
     (perform read ⋆                  -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading
       (perform send here             -- ⟨ ⟪ 0 , 0 , 1 ⟫ˡ ⟩ ∷ unit
         (perform read ⋆              -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading

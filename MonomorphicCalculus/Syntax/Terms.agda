@@ -51,7 +51,7 @@ mutual
 
     -- base-typed constants
 
-    const   : {B : BaseType}
+    const   : (B : BaseType)
             → BaseConstants B
             -----------------
             → Γ ⊢V⦂ Base B
@@ -426,8 +426,8 @@ grad-typ⇒var<: (subV V p@([ _ ]ₛ _)) with grad-typ⇒var<: V
 eternal-val-ext : ∀ {Γ A ρ} → Et A → Γ ⊢V⦂ A → Γ ⟨ ρ ⟩ ⊢V⦂ A
 eternal-val-ext et (var _ x) =
   var (λ ¬et → ⊥-elim (¬et et)) (Tl-⟨⟩ x)
-eternal-val-ext _ (const b) =
-  const b
+eternal-val-ext _ (const B b) =
+  const B b
 eternal-val-ext _ ⋆ =
   ⋆
 eternal-val-ext _ true =

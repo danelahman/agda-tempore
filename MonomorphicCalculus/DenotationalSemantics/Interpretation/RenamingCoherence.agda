@@ -242,7 +242,7 @@ mutual
 
   renᵛ : ∀ {Γ Γ' A} → (r : Ren [] Γ' Γ) → (V : Γ ⊢V⦂ A) → Paramᵛ V → Paramᵛ (V-rename r V)
   renᵛ r (var f x) _ = tt
-  renᵛ r (const c) _ = tt
+  renᵛ r (const B c) _ = tt
   renᵛ r ⋆        _ = tt
   renᵛ r true     _ = tt
   renᵛ r false    _ = tt
@@ -331,7 +331,7 @@ mutual
                → ⟦ V-rename r V ⟧ᵛᵗ (renᵛ r V p) ≈ᵐ ⟦ V ⟧ᵛᵗ p ∘ᵐ ⟦ r ⟧ʳ
   V-rename-nat r (var f x) _ with var-rename r x | var-morphism-nat r f x
   ... | ρ' , ρ'≾ρ , y | vmn = vmn
-  V-rename-nat r (const c) _ =
+  V-rename-nat r (const B c) _ =
     ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
   V-rename-nat r ⋆ _ = ≈ᵐ-sym terminalᵐ-unique
   V-rename-nat r true _ =

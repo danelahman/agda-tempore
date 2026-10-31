@@ -90,7 +90,7 @@ radio-low = High , (just High ∣ ((radio , just Low) L.∷ L.[]))
 announce-then-sample : [] ⊢C⦂ Reading ! radio-low
 announce-then-sample =
   check radio-low
-    (perform send (const 0)          -- ⟨ opTime send ⟩ ∷ unit
+    (perform send (const reading 0)  -- ⟨ opTime send ⟩ ∷ unit
       (perform read ⋆                -- ⟨ opTime read ⟩ ∷ Reading
         (return here)))
 
@@ -143,8 +143,8 @@ channel = Low , (just High ∣ L.[])
 store-then-claim : [] ⊢C⦂ unit ! radio-low
 store-then-claim =
   check radio-low
-    (box channel (const 7)           -- ∷ [ channel ] Reading
-      (perform write (const 1)       -- ⟨ opTime write ⟩ ∷ unit
+    (box channel (const reading 7)     -- ∷ [ channel ] Reading
+      (perform write (const reading 1) -- ⟨ opTime write ⟩ ∷ unit
         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) decided (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))

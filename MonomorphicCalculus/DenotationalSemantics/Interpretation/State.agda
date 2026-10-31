@@ -2,16 +2,16 @@
 -- Interpretation of the operational semantics' states, and of the        --
 -- configurations built from them.                                        --
 --                                                                        --
--- A state `S : 𝕊 []` is a Fitch-style telescope: `_⟨ ρ ⟩ₛ` records       --
--- that `ρ` worth of time has passed, and `_∷ₛ_ S V` allocates a cell     --
+-- A state `𝕊 : State []` is a Fitch-style telescope: `_⟨ ρ ⟩ₛ` records   --
+-- that `ρ` worth of time has passed, and `_∷ₛ_ 𝕊 V` allocates a cell     --
 -- together with the value `V` stored in it. A state thus carries all of  --
 -- its data: it is not a store threaded through a state monad, but an     --
--- environment for its own context `toCtx S`.                             --
+-- environment for its own context `toCtx 𝕊`.                             --
 --                                                                        --
 -- The locks `⟨ ρ ⟩` have no global points (`⟨ ρ ⟩ᵒ X` is a Kripke        --
 -- possibility, and near time 0 there is no `ρ`-past to be found), so     --
--- the state supplies only the cells. `⟦ S ⟧ˢ` is a morphism out of the   --
--- state's history `hist S`, the lock-only residue of `toCtx S`, and the  --
+-- the state supplies only the cells. `⟦ 𝕊 ⟧ˢ` is a morphism out of the   --
+-- state's history `hist 𝕊`, the lock-only residue of `toCtx 𝕊`, and the  --
 -- passage of time enters from outside it (in the operational semantics,  --
 -- via `DELAY`).                                                          --
 --                                                                        --
@@ -71,21 +71,21 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Terms S Cat
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
 
 -- The history of a state: the locks it has accumulated, with the cells
--- dropped. This is the part of `toCtx S` that the state cannot itself
+-- dropped. This is the part of `toCtx 𝕊` that the state cannot itself
 -- supply, and hence the domain of its interpretation.
 
-hist : ∀ {Γ} → 𝕊 Γ → Ctx
+hist : ∀ {Γ} → State Γ → Ctx
 hist ∅         = []
-hist (S ⟨ ρ ⟩ₛ) = hist S ⟨ ρ ⟩
-hist (S ∷ₛ V)  = hist S
+hist (𝕊 ⟨ ρ ⟩ₛ) = hist 𝕊 ⟨ ρ ⟩
+hist (𝕊 ∷ₛ V)  = hist 𝕊
 
 -- Parametricity of the values a state stores: `⟦_⟧ˢ` interprets them, so it
 -- needs their certificates, one per cell.
 
-Paramˢ : ∀ {Γ} → 𝕊 Γ → Set
+Paramˢ : ∀ {Γ} → State Γ → Set
 Paramˢ ∅         = ⊤
-Paramˢ (S ⟨ ρ ⟩ₛ) = Paramˢ S
-Paramˢ (S ∷ₛ V)  = Paramˢ S × Paramᵛ V
+Paramˢ (𝕊 ⟨ ρ ⟩ₛ) = Paramˢ 𝕊
+Paramˢ (𝕊 ∷ₛ V)  = Paramˢ 𝕊 × Paramᵛ V
 
 -- The state as an environment for its own context.
 --
@@ -93,21 +93,21 @@ Paramˢ (S ∷ₛ V)  = Paramˢ S × Paramᵛ V
 --   * a cell is filled by the value stored in it, boxed up by the
 --     adjunction unit (`[ ρ ]ᶠ ⟦ V ⟧ ∘ᵐ η⊣`, the `box` morphism).
 --
--- The stored value lives in `[] ++ᶜ toCtx S ⟨ ρ ⟩`, so it is first
+-- The stored value lives in `[] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩`, so it is first
 -- reindexed along the left unit of context concatenation.
 
-⟦_⟧ˢ : (S : 𝕊 []) → Paramˢ S → ⟦ hist S ⟧ᶜᵗˣ →ᵐ ⟦ toCtx S ⟧ᶜᵗˣ
+⟦_⟧ˢ : (𝕊 : State []) → Paramˢ 𝕊 → ⟦ hist 𝕊 ⟧ᶜᵗˣ →ᵐ ⟦ toCtx 𝕊 ⟧ᶜᵗˣ
 ⟦ ∅ ⟧ˢ         _  = idᵐ
-⟦ S ⟨ ρ ⟩ₛ ⟧ˢ  p  = ⟨ ρ ⟩ᶠ (⟦ S ⟧ˢ p)
-⟦ _∷ₛ_ {A} {ρ} S V ⟧ˢ (pS , pV) =
-  ⟨ idᵐ , [ ρ ]ᶠ (⟦ V ⟧ᵛᵗ pV ∘ᵐ ⟦ eq-ren (++ᶜ-identityˡ {toCtx S ⟨ ρ ⟩}) ⟧ʳ) ∘ᵐ η⊣ ⟩ᵐ
-  ∘ᵐ ⟦ S ⟧ˢ pS
+⟦ 𝕊 ⟨ ρ ⟩ₛ ⟧ˢ  p  = ⟨ ρ ⟩ᶠ (⟦ 𝕊 ⟧ˢ p)
+⟦ _∷ₛ_ {A} {ρ} 𝕊 V ⟧ˢ (pS , pV) =
+  ⟨ idᵐ , [ ρ ]ᶠ (⟦ V ⟧ᵛᵗ pV ∘ᵐ ⟦ eq-ren (++ᶜ-identityˡ {toCtx 𝕊 ⟨ ρ ⟩}) ⟧ʳ) ∘ᵐ η⊣ ⟩ᵐ
+  ∘ᵐ ⟦ 𝕊 ⟧ˢ pS
 
 -- The values a state stores are exactly what a resource lookup returns, so a
 -- state's certificate hands one out for every cell.
 
-resource-lookupᴾ : ∀ {Γ ρ ρ' A} → (S : 𝕊 Γ) → (x : [ ρ ] A ∈[ ρ' ] toCtx S)
-                 → Paramˢ S → Paramᵛ (resource-lookup S x)
-resource-lookupᴾ (S ⟨ _ ⟩ₛ) (Tl-⟨⟩ x) pS        = resource-lookupᴾ S x pS
-resource-lookupᴾ (S ∷ₛ V)   Hd        (_ , pV)  = pV
-resource-lookupᴾ (S ∷ₛ _)   (Tl-∷ x)  (pS , _)  = resource-lookupᴾ S x pS
+resource-lookupᴾ : ∀ {Γ ρ ρ' A} → (𝕊 : State Γ) → (x : [ ρ ] A ∈[ ρ' ] toCtx 𝕊)
+                 → Paramˢ 𝕊 → Paramᵛ (resource-lookup 𝕊 x)
+resource-lookupᴾ (𝕊 ⟨ _ ⟩ₛ) (Tl-⟨⟩ x) pS        = resource-lookupᴾ 𝕊 x pS
+resource-lookupᴾ (𝕊 ∷ₛ V)   Hd        (_ , pV)  = pV
+resource-lookupᴾ (𝕊 ∷ₛ _)   (Tl-∷ x)  (pS , _)  = resource-lookupᴾ 𝕊 x pS

@@ -102,11 +102,11 @@ mutual
 
   ⟦⟧ᵛᵗ-irr : ∀ {Γ A} → (V : Γ ⊢V⦂ A) → (p p' : Paramᵛ V)
            → ⟦ V ⟧ᵛᵗ p ≈ᵐ ⟦ V ⟧ᵛᵗ p'
-  ⟦⟧ᵛᵗ-irr (var f x)  _ _ = ≈ᵐ-refl
-  ⟦⟧ᵛᵗ-irr (const c)  _ _ = ≈ᵐ-refl
-  ⟦⟧ᵛᵗ-irr ⋆          _ _ = ≈ᵐ-refl
-  ⟦⟧ᵛᵗ-irr true       _ _ = ≈ᵐ-refl
-  ⟦⟧ᵛᵗ-irr false      _ _ = ≈ᵐ-refl
+  ⟦⟧ᵛᵗ-irr (var f x)   _ _ = ≈ᵐ-refl
+  ⟦⟧ᵛᵗ-irr (const B c) _ _ = ≈ᵐ-refl
+  ⟦⟧ᵛᵗ-irr ⋆           _ _ = ≈ᵐ-refl
+  ⟦⟧ᵛᵗ-irr true        _ _ = ≈ᵐ-refl
+  ⟦⟧ᵛᵗ-irr false       _ _ = ≈ᵐ-refl
   ⟦⟧ᵛᵗ-irr ⦉ V , W ⦊ (pV , pW) (pV' , pW') =
     ⟨ ⟦⟧ᵛᵗ-irr V pV pV' , ⟦⟧ᵛᵗ-irr W pW pW' ⟩ᵐ-cong
   ⟦⟧ᵛᵗ-irr zero      _ _ = ≈ᵐ-refl
@@ -168,10 +168,10 @@ mutual
   ⟦⟧ᶜᵗ-irr (subC M w) pM pM' = ∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr M pM pM')
 
 
-Soundᵛ== : ∀ {Γ A} {V W : Γ ⊢V⦂ A} → Γ ⊢V⦂ V == W → Set
-Soundᵛ== {V = V} {W = W} _ =
+Soundᵛ≡ᵗʰ : ∀ {Γ A} {V W : Γ ⊢V⦂ A} → Γ ⊢V⦂ V ≡ᵗʰ W → Set
+Soundᵛ≡ᵗʰ {V = V} {W = W} _ =
   (pV : Paramᵛ V) → (pW : Paramᵛ W) → ⟦ V ⟧ᵛᵗ pV ≈ᵐ ⟦ W ⟧ᵛᵗ pW
 
-Soundᶜ== : ∀ {Γ C} {M N : Γ ⊢C⦂ C} → Γ ⊢C⦂ M == N → Set
-Soundᶜ== {M = M} {N = N} _ =
+Soundᶜ≡ᵗʰ : ∀ {Γ C} {M N : Γ ⊢C⦂ C} → Γ ⊢C⦂ M ≡ᵗʰ N → Set
+Soundᶜ≡ᵗʰ {M = M} {N = N} _ =
   (pM : Paramᶜ M) → (pN : Paramᶜ N) → ⟦ M ⟧ᶜᵗ pM ≈ᵐ ⟦ N ⟧ᶜᵗ pN

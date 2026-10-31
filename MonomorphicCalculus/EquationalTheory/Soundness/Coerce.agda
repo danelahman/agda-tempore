@@ -148,28 +148,28 @@ coe-refl-≈ A q m =
 -- Functoriality
 
 sound-subV-refl : ∀ {Γ A} → (w : A <:ᵛ A) → (V : Γ ⊢V⦂ A)
-                → Soundᵛ== (subV-refl w V)
+                → Soundᵛ≡ᵗʰ (subV-refl w V)
 sound-subV-refl w V pL pR =
   ∘ᵐ-congˡ (⟦⟧<:ᵛ-id w) ∙ ∘ᵐ-identityˡ _ ∙ ⟦⟧ᵛᵗ-irr V pL pR
 
 sound-subV-trans : ∀ {Γ A₁ A₂ A₃}
                  → (w : A₁ <:ᵛ A₂) → (w' : A₂ <:ᵛ A₃) → (w'' : A₁ <:ᵛ A₃)
                  → (V : Γ ⊢V⦂ A₁)
-                 → Soundᵛ== (subV-trans w w' w'' V)
+                 → Soundᵛ≡ᵗʰ (subV-trans w w' w'' V)
 sound-subV-trans w w' w'' V pL pR =
     ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟦⟧<:ᵛ-trans w w') ∙ ⟦⟧<:ᵛ-irr (<:ᵛ-trans w w') w'')
   ∙ ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pL pR)
 
 sound-subC-refl : ∀ {Γ C} → (w : C <:ᶜ C) → (M : Γ ⊢C⦂ C)
-                → Soundᶜ== (subC-refl w M)
+                → Soundᶜ≡ᵗʰ (subC-refl w M)
 sound-subC-refl w M pL pR =
   ∘ᵐ-congˡ (⟦⟧<:ᶜ-id w) ∙ ∘ᵐ-identityˡ _ ∙ ⟦⟧ᶜᵗ-irr M pL pR
 
 sound-subC-trans : ∀ {Γ C₁ C₂ C₃}
                  → (w : C₁ <:ᶜ C₂) → (w' : C₂ <:ᶜ C₃) → (w'' : C₁ <:ᶜ C₃)
                  → (M : Γ ⊢C⦂ C₁)
-                 → Soundᶜ== (subC-trans w w' w'' M)
+                 → Soundᶜ≡ᵗʰ (subC-trans w w' w'' M)
 sound-subC-trans w w' w'' M pL pR =
     ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟦⟧<:ᶜ-trans w w') ∙ ⟦⟧<:ᶜ-irr (<:ᶜ-trans w w') w'')
@@ -182,7 +182,7 @@ sound-subC-trans w w' w'' M pL pR =
 sound-subV-pair : ∀ {Γ A A' B B'}
                 → (p : A <:ᵛ A') → (q : B <:ᵛ B')
                 → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ B)
-                → Soundᵛ== (subV-pair p q V W)
+                → Soundᵛ≡ᵗʰ (subV-pair p q V W)
 sound-subV-pair p q V W (pV , pW) (pV' , pW') =
     mapˣᵐ-∘⟨⟩ _ _ _ _
   ∙ ⟨ ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
@@ -191,7 +191,7 @@ sound-subV-pair p q V W (pV , pW) (pV' , pW') =
 sound-subV-inl : ∀ {Γ A A' B B'}
                → (p : A <:ᵛ A') → (q : B <:ᵛ B')
                → (V : Γ ⊢V⦂ A)
-               → Soundᵛ== (subV-inl p q V)
+               → Soundᵛ≡ᵗʰ (subV-inl p q V)
 sound-subV-inl p q V pV pV' =
     ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ ([]ᵐ-inlᵐ _ _)
@@ -199,14 +199,14 @@ sound-subV-inl p q V pV pV' =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV'))
 
 sound-subV-nil : ∀ {Γ A A'} → (p : A <:ᵛ A')
-               → Soundᵛ== (subV-nil {Γ = Γ} p)
+               → Soundᵛ≡ᵗʰ (subV-nil {Γ = Γ} p)
 sound-subV-nil p pV pV' =
     ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (mapListᵐ-nil _)
 
 sound-subV-cons : ∀ {Γ A A'} → (p : A <:ᵛ A')
                 → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ list A)
-                → Soundᵛ== (subV-cons p V W)
+                → Soundᵛ≡ᵗʰ (subV-cons p V W)
 sound-subV-cons p V W (pV , pW) (pV' , pW') =
     ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (mapListᵐ-cons _)
@@ -217,7 +217,7 @@ sound-subV-cons p V W (pV , pW) (pV' , pW') =
 sound-subV-inr : ∀ {Γ A A' B B'}
                → (p : A <:ᵛ A') → (q : B <:ᵛ B')
                → (V : Γ ⊢V⦂ B)
-               → Soundᵛ== (subV-inr p q V)
+               → Soundᵛ≡ᵗʰ (subV-inr p q V)
 sound-subV-inr p q V pV pV' =
     ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ ([]ᵐ-inrᵐ _ _)
@@ -227,7 +227,7 @@ sound-subV-inr p q V pV pV' =
 sound-subV-fun : ∀ {Γ A A' C C'}
                → (p : A' <:ᵛ A) → (w : C <:ᶜ C')
                → (M : Γ ∷ A ⊢C⦂ C)
-               → Soundᵛ== (subV-fun p w M)
+               → Soundᵛ≡ᵗʰ (subV-fun p w M)
 sound-subV-fun p w M pM pR =
     map⇒ᵐ-curryᵐˡʳ ⟦ p ⟧<:ᵛ ⟦ w ⟧<:ᶜ (⟦ M ⟧ᶜᵗ pM)
   ∙ curryᵐ-cong (∘ᵐ-congʳ
@@ -242,7 +242,7 @@ sound-subC-box : ∀ {Γ A C C' ρ}
                → (w : C <:ᶜ C')
                → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
                → (M : Γ ∷ [ ρ ] A ⊢C⦂ C)
-               → Soundᶜ== (subC-box w V M)
+               → Soundᶜ≡ᵗʰ (subC-box w V M)
 sound-subC-box w V M (pV , pM) (pV' , pM') =
     ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-cong (∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr M pM pM'))
@@ -255,7 +255,7 @@ sound-subC-unbox : ∀ {Γ A A₀ C C' ρ₀ ρ'}
                  → (v : A₀ <:ᵛ A)
                  → (w : C <:ᶜ C')
                  → (M : Γ ∷ A ⊢C⦂ C)
-                 → Soundᶜ== (subC-unbox x rel v w M)
+                 → Soundᶜ≡ᵗʰ (subC-unbox x rel v w M)
 sound-subC-unbox x rel v w M pM pM' =
     ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr M pM pM'))
@@ -267,7 +267,7 @@ sound-coerce-seq-in : ∀ {Γ A B ε ε₁' ε₂'}
                     → (rel : ε₁' ≾ₑ ε₂')
                     → (M : Γ ⊢C⦂ A ! ε)
                     → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₁')
-                    → Soundᶜ== (coerce-seq-in rel M N)
+                    → Soundᶜ≡ᵗʰ (coerce-seq-in rel M N)
 sound-coerce-seq-in {B = B} rel M N (pM , pN) (pM' , pN') =
     ≈ᵐ-sym (coe-refl-≈ B (·ₑ-monoʳ-≾ₑ rel) _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -312,7 +312,7 @@ sound-subV-handle : ∀ {Γ A A₁ B B₁ ε ε' ε₁'}
                   → (q : B₁ <:ᵛ B) → (s : ε₁' ≾ₑ ε')
                   → (M : Γ ⊢C⦂ A ! ε)
                   → (V : Γ ⊢V⦂ (A₁ ! ε) ⇛ (B₁ ! ε₁'))
-                  → Soundᶜ== (subV-handle p pε q s M V)
+                  → Soundᶜ≡ᵗʰ (subV-handle p pε q s M V)
 sound-subV-handle p pε q s M V (pM , pV) (pM' , pV') =
     app-mapʰ ≾ₑ-refl ⟦ p ⟧<:ᵛ ⟦ q ⟧<:ᵛ pε s (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM)
   ∙ ≈ᵐ-sym (  ∘ᵐ-assoc _ _ _
@@ -330,7 +330,7 @@ sound-subC-perform : ∀ {Γ A A' ε ε' op}
                    → (V : Γ ⊢V⦂ ⌜ param op ⌝ᵍ)
                    → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
                           ⊢C⦂ A ! ε)
-                   → Soundᶜ== (subC-perform w rel V M)
+                   → Soundᶜ≡ᵗʰ (subC-perform w rel V M)
 sound-subC-perform {op = op} w rel V M (pV , pM) (pV' , pM') =
     ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ substᶜ-≈ (ty-gty (param op)) (⟦⟧ᵛᵗ-irr V pV pV')
                         , ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong
@@ -350,7 +350,7 @@ sound-subC-delay : ∀ {Γ A A' τ ε ε'}
                  → (w : A <:ᵛ A')
                  → (rel : ε ≾ₑ ε')
                  → (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε)
-                 → Soundᶜ== (subC-delay w rel M)
+                 → Soundᶜ≡ᵗʰ (subC-delay w rel M)
 sound-subC-delay {τ = τ} w rel M pM pM' =
     ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (⟦⟧ᶜᵗ-irr M pM pM'))))
   ∙ delayᵀ-push τ _ ⟦ w ⟧<:ᵛ rel
@@ -399,7 +399,7 @@ sound-subC-seq : ∀ {Γ A A' B ε₁ ε₂ ε'}
                → (rel : ε₁ ≾ₑ ε₂)
                → (M : Γ ⊢C⦂ A ! ε₁)
                → (N : Γ ⟨ ∣ ε₂ ∣ᵉ ⟩ ∷ A' ⊢C⦂ B ! ε')
-               → Soundᶜ== (subC-seq w rel M N)
+               → Soundᶜ≡ᵗʰ (subC-seq w rel M N)
 sound-subC-seq {B = B} w rel M N (pM , pN) (pM' , pR) =
     ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
         (⟨ ≈ᵐ-refl
@@ -427,7 +427,7 @@ sound-subC-handle : ∀ {Γ A A' B ε₁ ε₂ ε'}
                   → (rel : ε₁ ≾ₑ ε₂)
                   → (M : Γ ⊢C⦂ A ! ε₁)
                   → (V : Γ ⊢V⦂ (A' ! ε₂) ⇛ (B ! ε'))
-                  → Soundᶜ== (subC-handle w rel M V)
+                  → Soundᶜ≡ᵗʰ (subC-handle w rel M V)
 sound-subC-handle {B = B} {ε' = ε'} w rel M V (pM , pV) (pM' , pV') =
     ∘ᵐ-congʳ (  ⟨ ≈ᵐ-refl , ∘ᵐ-congˡ (T-≤-nat ⟦ w ⟧<:ᵛ rel) ∙ ∘ᵐ-assoc _ _ _ ⟩ᵐ-cong
               ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))

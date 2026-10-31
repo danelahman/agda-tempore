@@ -155,7 +155,7 @@ licence = ⟪ unlimited , unlimited , upto 1 ⟫ᵐ
 
 sent-twice : [] ⊢C⦂ unit ! ⟪ upto 0 , upto 0 , upto 2 ⟫ᵐ
 sent-twice =
-  box licence (const 42)             -- ∷ [ licence ] Reading
+  box licence (const reading 42)             -- ∷ [ licence ] Reading
     (unbox Hd (tt , tt , ≤! , tt) (<:ᵛ-refl _)
                                      -- ∷ Reading
       (perform send here             -- ⟨ ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ ⟩ ∷ unit
@@ -172,7 +172,7 @@ a-third-claim (_ , _ , second , _) = ≰! second
 
 claim-after-a-long-wait : [] ⊢C⦂ unit ! ⟪ upto 1 , upto 1 , upto 1 ⟫ᵐ
 claim-after-a-long-wait =
-  box licence (const 42)             -- ∷ [ licence ] Reading
+  box licence (const reading 42)     -- ∷ [ licence ] Reading
     (delay 100                       -- ⟨ ⟪ upto 0 , upto 0 , upto 0 ⟫ᵐ ⟩
       (perform read ⋆                -- ⟨ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ ⟩ ∷ Reading
         (perform write here          -- ⟨ ⟪ upto 0 , upto 1 , upto 0 ⟫ᵐ ⟩ ∷ unit
@@ -210,7 +210,7 @@ nothing-fits op ε'' = 𝟏ᵛ-least 𝟏ₒ-least (op-grade op ·ₑ ε'')
 
 suppressed : [] ⊢C⦂ unit ! ⟪ upto 1 , upto 0 , upto 2 ⟫ᵐ
 suppressed =
-  handle perform read ⋆ (perform send here (perform send (const 0) (return ⋆)))
+  handle perform read ⋆ (perform send here (perform send (const reading 0) (return ⋆)))
     `with discarding {[]} nothing-fits
     `in                              -- ⟨ ⟪ upto 1 , upto 0 , upto 2 ⟫ᵐ ⟩ ∷ unit
       (return ⋆)

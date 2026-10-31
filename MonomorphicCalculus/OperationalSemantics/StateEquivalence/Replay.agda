@@ -52,20 +52,20 @@ castᶜ-castᶜ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ) → 
             → castᶜ e' (castᶜ e M) ≡ M
 castᶜ-castᶜ refl e' M = cong (λ z → castᶜ z M) (uip {p = e'} {q = refl})
 
-replay : ∀ {St St' St₂ : 𝕊 []} → (es : St ≐ˢ St') → (q : St ≤ₛ St₂)
-       → Σ[ St₂' ∈ 𝕊 [] ] Σ[ q' ∈ St' ≤ₛ St₂' ] Σ[ es₂ ∈ St₂ ≐ˢ St₂' ]
+replay : ∀ {𝕊 𝕊' 𝕊₂ : State []} → (es : 𝕊 ≐ˢ 𝕊') → (q : 𝕊 ≤ₛ 𝕊₂)
+       → Σ[ 𝕊₂' ∈ State [] ] Σ[ q' ∈ 𝕊' ≤ₛ 𝕊₂' ] Σ[ es₂ ∈ 𝕊₂ ≐ˢ 𝕊₂' ]
            (q ≤≐ q')
 
-replay {St' = St'} es id-suc = St' , id-suc , es , id-≤≐
+replay {𝕊' = 𝕊'} es ≤ₛ-refl = 𝕊' , ≤ₛ-refl , es , id-≤≐
 
-replay es (⟨⟩-suc ρ q) with replay es q
-... | St₂' , q' , es₂ , h =
-  St₂' ⟨ ρ ⟩ₛ , ⟨⟩-suc ρ q' , ⟨⟩-≐ˢ ρ es₂ , ⟨⟩-≤≐ ρ h
+replay es (≤ₛ-lock {ρ = ρ} q) with replay es q
+... | 𝕊₂' , q' , es₂ , h =
+  𝕊₂' ⟨ ρ ⟩ₛ , ≤ₛ-lock q' , ⟨⟩-≐ˢ ρ es₂ , ⟨⟩-≤≐ ρ h
 
-replay es (∷-suc {ρ = ρ} V q) with replay es q
-... | St₂' , q' , es₂ , h =
-    St₂' ∷ₛ V'
-  , ∷-suc V' q'
+replay es (≤ₛ-res {ρ = ρ} {V = V} q) with replay es q
+... | 𝕊₂' , q' , es₂ , h =
+    𝕊₂' ∷ₛ V'
+  , ≤ₛ-res q'
   , ∷-≐ˢ es₂ (subst (λ z → V ≡ z)
                     (sym (castᵛ-castᵛ
                            (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩) (toCtx-≐ˢ es₂))
@@ -77,16 +77,16 @@ replay es (∷-suc {ρ = ρ} V q) with replay es q
     V' = castᵛ (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩) (toCtx-≐ˢ es₂)) V
 
 -- The same at the reach level: the grade bound transports along the shape's
--- grade equality (`≤ₛ-grade-≤≐`).
+-- grade equality (`κₛ-≤≐`).
 
-reach-replay : ∀ {St St' St₂ : 𝕊 []} {ρ : R}
-             → (es : St ≐ˢ St') → (q : St ⊑ₛ[ ρ ] St₂)
-             → Σ[ St₂' ∈ 𝕊 [] ] Σ[ q' ∈ St' ⊑ₛ[ ρ ] St₂' ]
-               Σ[ es₂ ∈ St₂ ≐ˢ St₂' ]
+reach-replay : ∀ {𝕊 𝕊' 𝕊₂ : State []} {ρ : R}
+             → (es : 𝕊 ≐ˢ 𝕊') → (q : 𝕊 ⊑ₛ[ ρ ] 𝕊₂)
+             → Σ[ 𝕊₂' ∈ State [] ] Σ[ q' ∈ 𝕊' ⊑ₛ[ ρ ] 𝕊₂' ]
+               Σ[ es₂ ∈ 𝕊₂ ≐ˢ 𝕊₂' ]
                  (ext q ≤≐ ext q')
 reach-replay es (reach e b) with replay es e
-... | St₂' , e' , es₂ , h =
-    St₂' , reach e' (subst (_≾ᵣ _) (≤ₛ-grade-≤≐ h) b) , es₂ , h
+... | 𝕊₂' , e' , es₂ , h =
+    𝕊₂' , reach e' (subst (_≾ᵣ _) (κₛ-≤≐ h) b) , es₂ , h
 
 -- What a replayed reach does to an `unbox`: the two consulted renamings agree,
 -- up to the two states' context equalities. This is `suc-comp-ren-≐ʳ` with the
@@ -97,9 +97,9 @@ reach-replay es (reach e b) with replay es e
               ≐ʳ castʳ² (cong (_⟨ 𝟏ᵣ ⟩) e) e ⟨⟩-η-ren
 ⟨⟩-η-ren-cast refl = ≐ʳ-refl
 
-unbox-ren-≐ˢ : ∀ {ρ} {St St' St₂ St₂' : 𝕊 []}
-             → (es : St ≐ˢ St') → (es₂ : St₂ ≐ˢ St₂')
-             → {q : St ⊑ₛ[ ρ ] St₂} → {q' : St' ⊑ₛ[ ρ ] St₂'}
+unbox-ren-≐ˢ : ∀ {ρ} {𝕊 𝕊' 𝕊₂ 𝕊₂' : State []}
+             → (es : 𝕊 ≐ˢ 𝕊') → (es₂ : 𝕊₂ ≐ˢ 𝕊₂')
+             → {q : 𝕊 ⊑ₛ[ ρ ] 𝕊₂} → {q' : 𝕊' ⊑ₛ[ ρ ] 𝕊₂'}
              → ext q ≤≐ ext q'
              -------------------------------------------------------------
              → unbox-ren q
@@ -127,9 +127,9 @@ castʳ²-cancel : ∀ {Γ Γ' Δ Δ' ρ} → (a : Γ ≡ Γ') → (b : Δ ≡ Δ
               ≐ʳ castʳ b r
 castʳ²-cancel refl refl r = ∘ʳ-idˡ-≐ʳ r (cong-⟨⟩-ren-id-≐ʳ ≐ʳ-refl)
 
-unbox-ren-bridge : ∀ {ρ} {St St' St'' St₂ : 𝕊 []}
-                 → (es : St ≐ˢ St') → (es₂ : St'' ≐ˢ St₂)
-                 → {q' : St' ⊑ₛ[ ρ ] St''} → {q : St ⊑ₛ[ ρ ] St₂}
+unbox-ren-bridge : ∀ {ρ} {𝕊 𝕊' 𝕊'' 𝕊₂ : State []}
+                 → (es : 𝕊 ≐ˢ 𝕊') → (es₂ : 𝕊'' ≐ˢ 𝕊₂)
+                 → {q' : 𝕊' ⊑ₛ[ ρ ] 𝕊''} → {q : 𝕊 ⊑ₛ[ ρ ] 𝕊₂}
                  → ext q' ≤≐ ext q
                  -------------------------------------------------------------
                  → (cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es)) ∘ʳ unbox-ren q')
@@ -151,9 +151,9 @@ unbox-ren-bridge {ρ} es es₂ {q'} {q} h
                 ≐ʳ castʳ² e (cong (_⟨ 𝟏ᵣ ⟩) e) ⟨⟩-η⁻¹-ren
 ⟨⟩-η⁻¹-ren-cast refl = ≐ʳ-refl
 
-reach-renᵘ-≐ˢ : ∀ {St St' St₂ St₂' : 𝕊 []}
-              → (es : St ≐ˢ St') → (es₂ : St₂ ≐ˢ St₂')
-              → {q : St ⊑ₛ[ 𝟏ᵣ ] St₂} → {q' : St' ⊑ₛ[ 𝟏ᵣ ] St₂'}
+reach-renᵘ-≐ˢ : ∀ {𝕊 𝕊' 𝕊₂ 𝕊₂' : State []}
+              → (es : 𝕊 ≐ˢ 𝕊') → (es₂ : 𝕊₂ ≐ˢ 𝕊₂')
+              → {q : 𝕊 ⊑ₛ[ 𝟏ᵣ ] 𝕊₂} → {q' : 𝕊' ⊑ₛ[ 𝟏ᵣ ] 𝕊₂'}
               → ext q ≤≐ ext q'
               -------------------------------------------------------------
               → reach-renᵘ q
@@ -190,11 +190,11 @@ cong-⟨⟩-eq-img : ∀ {Γ Γ' ρ A σ} → (e : Γ ≡ Γ') → (x : A ∈[ �
                ≡ (σ ·ᵣ ρ , Tl-⟨⟩ (subst (λ Γ₀ → A ∈[ σ ] Γ₀) e x))
 cong-⟨⟩-eq-img refl x = refl
 
-≤ₛ-embed-≐ˢ : ∀ {A σ} {St St' St'' St₂ : 𝕊 []}
-            → (es : St ≐ˢ St') → (es₂ : St'' ≐ˢ St₂)
-            → {e' : St' ≤ₛ St''} → {e : St ≤ₛ St₂}
+≤ₛ-embed-≐ˢ : ∀ {A σ} {𝕊 𝕊' 𝕊'' 𝕊₂ : State []}
+            → (es : 𝕊 ≐ˢ 𝕊') → (es₂ : 𝕊'' ≐ˢ 𝕊₂)
+            → {e' : 𝕊' ≤ₛ 𝕊''} → {e : 𝕊 ≤ₛ 𝕊₂}
             → (h : e' ≤≐ e)
-            → (x : A ∈[ σ ] toCtx St)
+            → (x : A ∈[ σ ] toCtx 𝕊)
             -------------------------------------------------------------
             → ≤ₛ-embed e' (subst (λ Γ₀ → A ∈[ σ ] Γ₀) (toCtx-≐ˢ es) x)
             ≡ Var-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e x)
@@ -203,8 +203,8 @@ cong-⟨⟩-eq-img refl x = refl
   trans (sym stepL) (trans (at (unbox-ren-bridge es es₂ {q'} {q} h) (Tl-⟨⟩ x))
                            stepR)
   where
-    q' = reach e' (≾ᵣ-refl {≤ₛ-grade e'})
-    q  = reach e  (≾ᵣ-reflexive (sym (≤ₛ-grade-≤≐ h)))
+    q' = reach e' (≾ᵣ-refl {κₛ e'})
+    q  = reach e  (≾ᵣ-reflexive (sym (κₛ-≤≐ h)))
 
     stepL : var-img (cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es)) ∘ʳ unbox-ren q')
                     (Tl-⟨⟩ x)

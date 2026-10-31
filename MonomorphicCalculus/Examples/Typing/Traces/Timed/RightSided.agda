@@ -183,7 +183,7 @@ permit = within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆
 
 claim-after-sampling : [] ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-sampling =
-  box permit (const 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
+  box permit (const reading 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
     (perform read ⋆  -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -191,7 +191,7 @@ claim-after-sampling =
 
 claim-after-idling : [] ⊢C⦂ unit ! within ⟅ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
 claim-after-idling =
-  box permit (const 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
+  box permit (const reading 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
     (delay 2         -- ⟨ within ⟅ ⟨ 2 ⟩ ⟆ ⟩
       (unbox (Tl-⟨⟩ Hd) holds (<:ᵛ-refl _)
                                -- ∷ Reading
@@ -199,7 +199,7 @@ claim-after-idling =
 
 claiming-now : [] ⊢C⦂ unit ! within ⟅ ⌈ send ⌉ ⟆
 claiming-now =
-  box permit (const 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
+  box permit (const reading 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
     (unbox Hd holds (<:ᵛ-refl _)
                      -- ∷ Reading
       (perform send here (return ⋆)))
@@ -219,7 +219,7 @@ transmitting-after-the-reading-too = fails
 
 handed-over : [] ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over =
-  box permit (const 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
+  box permit (const reading 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
     (fun             -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
        (perform read ⋆  -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
@@ -229,7 +229,7 @@ handed-over =
 
 either-way : [] ∷ bool ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 either-way =
-  box permit (const 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
+  box permit (const reading 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
     (perform read ⋆  -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -250,7 +250,7 @@ alternatives = within ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
 claimed-in-both-branches :
   [] ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
 claimed-in-both-branches =
-  box alternatives (const 42)
+  box alternatives (const reading 42)
                      -- ∷ [ within ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ ] Reading
     (if true
       `then coerce holds
@@ -259,7 +259,7 @@ claimed-in-both-branches =
                      -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce holds
-              (perform send (const 0)
+              (perform send (const reading 0)
                      -- ⟨ within ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                      -- ∷ Reading
@@ -284,7 +284,7 @@ transmitting-branch-does-not = fails
 permit-in-a-branch :
   [] ∷ bool ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⟨ 2 ⟩ ∙ ⌈ write ⌉ ⟆
 permit-in-a-branch =
-  box permit (const 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
+  box permit (const reading 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
     (if eternal-var boolₑ (Tl-∷ Hd)
       `then coerce holds
               (perform read ⋆  -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
@@ -311,11 +311,11 @@ scheduled = within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ∙ ⌈ send ⌉ ⟆
 in-order :
   [] ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
 in-order =
-  box scheduled (const 42)
+  box scheduled (const reading 42)
                      -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ∙ ⌈ send ⌉ ⟆ ] Reading
     (perform read ⋆  -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (perform write here  -- ⟨ within ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ unit
-        (perform send (const 0)  -- ⟨ within ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ unit
+        (perform send (const reading 0)  -- ⟨ within ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ unit
           (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))))) holds (<:ᵛ-refl _)
                      -- ∷ Reading
             (perform send here (return ⋆))))))

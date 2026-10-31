@@ -358,7 +358,7 @@ mutual
   subᵛˢ : ∀ {Γ Γ' A} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
         → (V : Γ' ⊢V⦂ A) → Paramᵛ V → Paramᵛ (V-sub₀ s V)
   subᵛˢ s p (var f x)   _         = sub-varᴾ s p x f
-  subᵛˢ s p (const c)   _         = tt
+  subᵛˢ s p (const B c) _         = tt
   subᵛˢ s p ⋆           _         = tt
   subᵛˢ s p true        _         = tt
   subᵛˢ s p false       _         = tt
@@ -449,7 +449,7 @@ mutual
                → (V : Γ' ⊢V⦂ A) → (pV : Paramᵛ V)
                → ⟦ V-sub₀ s V ⟧ᵛᵗ (subᵛˢ s p V pV) ≈ᵐ ⟦ V ⟧ᵛᵗ pV ∘ᵐ ⟦ s ⟧ˢ₀ p
   V-subst-natˢ s p (var f x) _ = sub-var-natˢ s p x f
-  V-subst-natˢ s p (const c) _ =
+  V-subst-natˢ s p (const B c) _ =
     ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
   V-subst-natˢ s p ⋆ _ = ≈ᵐ-sym terminalᵐ-unique
   V-subst-natˢ s p true _ =

@@ -110,9 +110,9 @@ at-most-one-switch =
 claim-after-a-transmission : [] ⊢C⦂ unit ! one-switch
 claim-after-a-transmission =
   check one-switch
-    (box at-most-one-switch (const 7)
+    (box at-most-one-switch (const reading 7)
                                      -- ∷ [ at-most-one-switch ] Reading
-      (perform send (const 1)        -- ⟨ opTime send ⟩ ∷ unit
+      (perform send (const reading 1)        -- ⟨ opTime send ⟩ ∷ unit
         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (decided (𝟏ᵣ ·ᵣ opTime send) at-most-one-switch) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))

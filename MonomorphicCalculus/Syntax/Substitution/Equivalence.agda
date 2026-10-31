@@ -149,7 +149,7 @@ mutual
              → (V : Γ' ⊢V⦂ A) → V-sub₀ s V ≡ V-sub₀ s' V
 
   V-sub₀-≐ˢ₀ h (var f x) = atᵛ h x f
-  V-sub₀-≐ˢ₀ h (const c) = refl
+  V-sub₀-≐ˢ₀ h (const B c) = refl
   V-sub₀-≐ˢ₀ h ⋆         = refl
   V-sub₀-≐ˢ₀ h true      = refl
   V-sub₀-≐ˢ₀ h false     = refl

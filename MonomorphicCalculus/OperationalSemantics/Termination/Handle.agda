@@ -7,7 +7,7 @@
 -- Both premises are stated at exactly the reduct the machine         --
 -- produces. `HANDLE-OP` boxes the resumption at the operation's own  --
 -- grade and `BOX` then allocates it, so the clause fires at          --
--- `St₁ ∷ₛ V₀` with its continuation binder being the fresh cell.     --
+-- `𝕊₁ ∷ₛ V₀` with its continuation binder being the fresh cell.      --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -56,39 +56,39 @@ open import MonomorphicCalculus.Syntax.Substitution.Subsumption  Spec
 -- shape `_∷ₛ_` stores it, and the hypothesis about it is `SRed-fresh`'s:
 -- reducible at every state the lock permits.
 
-Boxed : (B : VType) → (op : Op) → (ε₃ : E) → 𝕊 [] → Set
-Boxed B op ε₃ St₁ =
-  ([] ++ᶜ toCtx St₁ ⟨ ∣ op-grade op ∣ᵉ ⟩)
+Boxed : (B : VType) → (op : Op) → (ε₃ : E) → State [] → Set
+Boxed B op ε₃ 𝕊₁ =
+  ([] ++ᶜ toCtx 𝕊₁ ⟨ ∣ op-grade op ∣ᵉ ⟩)
   ⊢V⦂ (⌜ arity op ⌝ᵍ ⇒ B ! ε₃)
 
 Boxed-VRed : (B : VType) → (op : Op) → (ε₃ : E)
-           → (St₁ : 𝕊 []) → Boxed B op ε₃ St₁ → Set
-Boxed-VRed B op ε₃ St₁ V₀ =
-  ∀ {St'} → (q : St₁ ⊑ₛ[ ∣ op-grade op ∣ᵉ ] St')
-    → VRed (⌜ arity op ⌝ᵍ ⇒ B ! ε₃) St'
+           → (𝕊₁ : State []) → Boxed B op ε₃ 𝕊₁ → Set
+Boxed-VRed B op ε₃ 𝕊₁ V₀ =
+  ∀ {𝕊'} → (q : 𝕊₁ ⊑ₛ[ ∣ op-grade op ∣ᵉ ] 𝕊')
+    → VRed (⌜ arity op ⌝ᵍ ⇒ B ! ε₃) 𝕊'
            (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V₀)
 
 -- The clause, crossed into the context it fires at and given the operation's
 -- parameter. Its continuation binder is the cell `BOX` just allocated, so this
--- lives over `toCtx (St₁ ∷ₛ V₀)` and nothing further is substituted. Crossing
--- the barrier is `unbox-ren` at the `⊤ᵣ`-reach the run to `St₁` licenses.
+-- lives over `toCtx (𝕊₁ ∷ₛ V₀)` and nothing further is substituted. Crossing
+-- the barrier is `unbox-ren` at the `⊤ᵣ`-reach the run to `𝕊₁` licenses.
 
-Fired : ∀ {B} → (St : 𝕊 []) → (op : Op) → (ε₃ : E) → Fam B (toCtx St ⟨ ⊤ᵣ ⟩)
-      → {St₁ : 𝕊 []} → (q : St ⊑ₛ[ ⊤ᵣ ] St₁) → (V₀ : Boxed B op ε₃ St₁)
-      → toCtx St₁ ⊢V⦂ ⌜ param op ⌝ᵍ
-      → toCtx (St₁ ∷ₛ V₀) ⊢C⦂ B ! (op-grade op ·ₑ ε₃)
-Fired St op ε₃ H q V₀ W =
+Fired : ∀ {B} → (𝕊 : State []) → (op : Op) → (ε₃ : E) → Fam B (toCtx 𝕊 ⟨ ⊤ᵣ ⟩)
+      → {𝕊₁ : State []} → (q : 𝕊 ⊑ₛ[ ⊤ᵣ ] 𝕊₁) → (V₀ : Boxed B op ε₃ 𝕊₁)
+      → toCtx 𝕊₁ ⊢V⦂ ⌜ param op ⌝ᵍ
+      → toCtx (𝕊₁ ∷ₛ V₀) ⊢C⦂ B ! (op-grade op ·ₑ ε₃)
+Fired 𝕊 op ε₃ H q V₀ W =
   (C-rename (cong-∷-ren (cong-∷-ren (unbox-ren q))) (H op ε₃))
     [ split-∷ split-[] ↦ W ]c
 
-Clause-Prem : (B : VType) → (St : 𝕊 []) → Fam B (toCtx St ⟨ ⊤ᵣ ⟩) → Set
-Clause-Prem B St H =
-  ∀ {St₁ : 𝕊 []} {op : Op} {ε₃ : E}
-    → (q : St ⊑ₛ[ ⊤ᵣ ] St₁)
-    → (V₀ : Boxed B op ε₃ St₁) → Boxed-VRed B op ε₃ St₁ V₀
-    → (W : toCtx St₁ ⊢V⦂ ⌜ param op ⌝ᵍ)
-    → VRed ⌜ param op ⌝ᵍ St₁ W
-    → CRed' B (op-grade op ·ₑ ε₃) (St₁ ∷ₛ V₀) (Fired St op ε₃ H q V₀ W)
+Clause-Prem : (B : VType) → (𝕊 : State []) → Fam B (toCtx 𝕊 ⟨ ⊤ᵣ ⟩) → Set
+Clause-Prem B 𝕊 H =
+  ∀ {𝕊₁ : State []} {op : Op} {ε₃ : E}
+    → (q : 𝕊 ⊑ₛ[ ⊤ᵣ ] 𝕊₁)
+    → (V₀ : Boxed B op ε₃ 𝕊₁) → Boxed-VRed B op ε₃ 𝕊₁ V₀
+    → (W : toCtx 𝕊₁ ⊢V⦂ ⌜ param op ⌝ᵍ)
+    → VRed ⌜ param op ⌝ᵍ 𝕊₁ W
+    → CRed' B (op-grade op ·ₑ ε₃) (𝕊₁ ∷ₛ V₀) (Fired 𝕊 op ε₃ H q V₀ W)
 
 -- Two clause binders' worth of congruence, composed.
 
@@ -103,32 +103,32 @@ cong-cl-ren-∘-≐ʳ r r' =
 
 -- The sequel premise, as in `Bind`.
 
-Seq-Prem : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
-         → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂) → Set
-Seq-Prem {A} {B} {ε₁} {ε₂} {St} N =
-  ∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ ∣ ε₁ ∣ᵉ ] St₁)
-    → (V : toCtx St₁ ⊢V⦂ A) → VRed A St₁ V
-    → CRed' B ε₂ St₁ ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c)
+Seq-Prem : ∀ {A B ε₁ ε₂} {𝕊 : State []}
+         → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂) → Set
+Seq-Prem {A} {B} {ε₁} {ε₂} {𝕊} N =
+  ∀ {𝕊₁ : State []} → (q : 𝕊 ⊑ₛ[ ∣ ε₁ ∣ᵉ ] 𝕊₁)
+    → (V : toCtx 𝕊₁ ⊢V⦂ A) → VRed A 𝕊₁ V
+    → CRed' B ε₂ 𝕊₁ ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c)
 
 -- Induction on the scrutinee's `CRed` derivation, taken at a skeleton as in
 -- `Bind`. `cred-ret` fires `HANDLE-RET` and is `Bind`'s `cred-ret` verbatim:
 -- the sequel premise consumes the value and the run's `∣ 𝟏ₑ ∣ᵉ` is reconciled
 -- with the reach's `𝟏ᵣ` by `suc-comp-ren-grade`.
 
-handle-CRed : ∀ {s A B ε₁ ε₂} {e : shapeᵛ A ≡ s} {St : 𝕊 []}
-            → {M : toCtx St ⊢C⦂ A ! ε₁}
-            → (H : Fam B (toCtx St ⟨ ⊤ᵣ ⟩))
-            → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
-            → CRedˢ' s e ε₁ St M
-            → Clause-Prem B St H
+handle-CRed : ∀ {s A B ε₁ ε₂} {e : shapeᵛ A ≡ s} {𝕊 : State []}
+            → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁}
+            → (H : Fam B (toCtx 𝕊 ⟨ ⊤ᵣ ⟩))
+            → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+            → CRedˢ' s e ε₁ 𝕊 M
+            → Clause-Prem B 𝕊 H
             → Seq-Prem N
             ------------------------------------------------------------
-            → CRed' B (ε₁ ·ₑ ε₂) St (handle M `with H `in N)
+            → CRed' B (ε₁ ·ₑ ε₂) 𝕊 (handle M `with H `in N)
 
 -- The scrutinee returns: `HANDLE-RET`, and the clauses are discarded.
 
-handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
-            (cred-ret {St₁ = St₁} {V = V} e₀ rs pV) hH hN
+handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {𝕊 = 𝕊} H N
+            (cred-ret {𝕊₁ = 𝕊₁} {V = V} e₀ rs pV) hH hN
   with handle-steps rs H N
 
 ... | H₁ , N₁ , rs' , eH₁ , eN₁ =
@@ -139,15 +139,15 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
     E₀  = steps-extends-state rs
     srs = suc-comp-ren E₀ (steps-grade-≾ rs)
 
-    b : ≤ₛ-grade E₀ ≾ᵣ ∣ ε₁ ∣ᵉ
+    b : κₛ E₀ ≾ᵣ ∣ ε₁ ∣ᵉ
     b = ≾ᵣ-trans
           (≃ᵣ⇒≾ᵣ
-            (≃ᵣ-trans (≃ᵣ-sym (·ᵣ-identityʳ (≤ₛ-grade E₀))) (·ᵣ-cong ≃ᵣ-refl (≃ᵣ-sym map-𝟏ᵉ))))
+            (≃ᵣ-trans (≃ᵣ-sym (·ᵣ-identityʳ (κₛ E₀))) (·ᵣ-cong ≃ᵣ-refl (≃ᵣ-sym map-𝟏ᵉ))))
           (steps-grade-≾ rs)
 
     q = reach E₀ b
 
-    R₁ : Ren [] (toCtx St₁) (toCtx St₁ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩)
+    R₁ : Ren [] (toCtx 𝕊₁) (toCtx 𝕊₁ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩)
     R₁ = ⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren
 
     eqr : (srs ∘ʳ R₁) ≐ʳ unbox-ren q
@@ -178,11 +178,11 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
 
 
 -- The scrutinee gets stuck on an operation: run to the `perform`, then
--- `HANDLE-OP` and `BOX`, landing at `⟨ St₁ ∷ₛ V₀ , Fired … ⟩`. No `ε-subst` is
+-- `HANDLE-OP` and `BOX`, landing at `⟨ 𝕊₁ ∷ₛ V₀ ∣ Fired … ⟩`. No `ε-subst` is
 -- needed, `_⟶_` relating configurations at different effects.
 
-handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
-            (cred-op {A₀ = A₀} {ε₁ = ε₃} {St₁ = St₁} {op = op} {W = W}
+handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {𝕊 = 𝕊} H N
+            (cred-op {A₀ = A₀} {ε₁ = ε₃} {𝕊₁ = 𝕊₁} {op = op} {W = W}
                      {M' = M'} e₀ rs pW pk)
             hH hN
   with handle-steps rs H N
@@ -191,7 +191,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
   CRed-expand* {e₀ = refl} rs'
     (CRed-expand {e₀ = refl} HANDLE-OP
       (CRed-expand {e₀ = refl} BOX
-        (subst (CRed' B _ (St₁ ∷ₛ V₀)) fired
+        (subst (CRed' B _ (𝕊₁ ∷ₛ V₀)) fired
           (hH q₀ V₀ bv W (VRedᵍ→VRed (param op) W pW)))))
   where
     ρₒ  = ∣ op-grade op ∣ᵉ
@@ -203,16 +203,16 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
 
     -- the barrier reach the run licenses: `⊤ᵣ` is greatest, so no bound is
     -- accumulated along the way
-    q₀ : St ⊑ₛ[ ⊤ᵣ ] St₁
+    q₀ : 𝕊 ⊑ₛ[ ⊤ᵣ ] 𝕊₁
     q₀ = reach E₀ (≾-⊤ᵣ _)
 
 
-    κ : Ren [] ((toCtx St₁ ⟨ ρₒ ⟩ ∷ Ar) ⟨ ∣ ε₃ ∣ᵉ ⟩)
-              (toCtx St₁ ⟨ ∣ op-grade op ·ₑ ε₃ ∣ᵉ ⟩)
+    κ : Ren [] ((toCtx 𝕊₁ ⟨ ρₒ ⟩ ∷ Ar) ⟨ ∣ ε₃ ∣ᵉ ⟩)
+              (toCtx 𝕊₁ ⟨ ∣ op-grade op ·ₑ ε₃ ∣ᵉ ⟩)
     κ = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
 
     -- the clauses and sequel `HANDLE-OP` puts under the boxed resumption
-    H₁' : Fam B ((toCtx St₁ ⟨ ρₒ ⟩ ∷ Ar) ⟨ ⊤ᵣ ⟩)
+    H₁' : Fam B ((toCtx 𝕊₁ ⟨ ρₒ ⟩ ∷ Ar) ⟨ ⊤ᵣ ⟩)
     H₁' op' ε' =
       C-rename (cong-∷-ren (cong-∷-ren (barrier-wk-ren ρₒ Ar))) (H₁ op' ε')
 
@@ -220,10 +220,10 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
 
     Body = handle M' `with H₁' `in N₁'
 
-    V₀ : Boxed B op (ε₃ ·ₑ ε₂) St₁
+    V₀ : Boxed B op (ε₃ ·ₑ ε₂) 𝕊₁
     V₀ = V-rename (eq-ren (sym ++ᶜ-identityˡ)) (fun Body)
 
-    fired : Fired St op (ε₃ ·ₑ ε₂) H q₀ V₀ W
+    fired : Fired 𝕊 op (ε₃ ·ₑ ε₂) H q₀ V₀ W
           ≡ (C-rename (cong-∷-ren (cong-∷-ren barrier-ren))
                (H₁ op (ε₃ ·ₑ ε₂))) [ split-∷ split-[] ↦ W ]c
     fired = sub-≡ᶜ (split-∷ split-[]) (refl) (sym cross)
@@ -257,19 +257,19 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
     -- body; the two `eq-ren`s cancel and `reach-unbox-ren-≐ʳ` composes the
     -- unboxing with the clause's own reach.
 
-    bv : Boxed-VRed B op (ε₃ ·ₑ ε₂) St₁ V₀
-    bv {St'} q {St''} q' W' pW' =
+    bv : Boxed-VRed B op (ε₃ ·ₑ ε₂) 𝕊₁ V₀
+    bv {𝕊'} q {𝕊''} q' W' pW' =
       CRed-expand APP
         (CRed-≡ᶜ (sym (sub-≡ᶜ split-[] (refl) collapse)) inner)
       where
         Mq = C-rename (cong-∷-ren (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q))
                (C-rename (cong-∷-ren (eq-ren (sym (++ᶜ-identityˡ
-                                                    {toCtx St₁ ⟨ ρₒ ⟩})))) Body)
+                                                    {toCtx 𝕊₁ ⟨ ρₒ ⟩})))) Body)
 
         q₂ = reach-∘ q' q
 
-        R₂ = eq-ren (sym (++ᶜ-identityˡ {toCtx St₁ ⟨ ρₒ ⟩}))
-               ∘ʳ (eq-ren (++ᶜ-identityˡ {toCtx St₁ ⟨ ρₒ ⟩}) ∘ʳ unbox-ren q)
+        R₂ = eq-ren (sym (++ᶜ-identityˡ {toCtx 𝕊₁ ⟨ ρₒ ⟩}))
+               ∘ʳ (eq-ren (++ᶜ-identityˡ {toCtx 𝕊₁ ⟨ ρₒ ⟩}) ∘ʳ unbox-ren q)
 
         -- the three renamings the clause stacks up compose to `unbox-ren q₂`
         ren-eq : (R₂ ∘ʳ reach-renᵘ q') ≐ʳ unbox-ren q₂
@@ -281,7 +281,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
                                     (eq-ren ++ᶜ-identityˡ) (unbox-ren q)))
                 (∘ʳ-idˡ-≐ʳ (unbox-ren q)
                   (≐ʳ-trans
-                    (eq-ren-∘-≐ʳ (sym (++ᶜ-identityˡ {toCtx St₁ ⟨ ρₒ ⟩}))
+                    (eq-ren-∘-≐ʳ (sym (++ᶜ-identityˡ {toCtx 𝕊₁ ⟨ ρₒ ⟩}))
                                 ++ᶜ-identityˡ)
                     (eq-ren-≐ʳ _ refl))))
               ≐ʳ-refl)
@@ -315,7 +315,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
         -- The reduct is the recursive call: renaming and `_[_↦_]c` both
         -- distribute over `handle` definitionally, and the scrutinee reached
         -- is `resume q₂ M' W'`.
-        inner : CRed' B (ε₃ ·ₑ ε₂) St''
+        inner : CRed' B (ε₃ ·ₑ ε₂) 𝕊''
                   ((C-rename (cong-∷-ren (unbox-ren q₂)) Body)
                      [ split-[] ↦ W' ]c)
         inner =
@@ -324,17 +324,17 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
           where
             sq = unbox-ren q₂
 
-            B₁' : ≤ₛ-grade (ext q₂) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ρₒ ·ᵣ ∣ ε₃ ∣ᵉ
+            B₁' : κₛ (ext q₂) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ρₒ ·ᵣ ∣ ε₃ ∣ᵉ
             B₁' = ·ᵣ-monoˡ-≾ᵣ (bound q₂)
 
-            B₁ : ≤ₛ-grade (ext q₂) ·ᵣ ∣ ε₃ ∣ᵉ
+            B₁ : κₛ (ext q₂) ·ᵣ ∣ ε₃ ∣ᵉ
                ≾ᵣ ∣ op-grade op ·ₑ ε₃ ∣ᵉ
             B₁ = ≾ᵣ-trans B₁' (≃ᵣ⇒≿ᵣ map-·ᵉ)
 
             -- what is left of the sequel's renaming once the arity variable
             -- is gone
-            W₁ : Ren [] (toCtx St'' ⟨ ∣ ε₃ ∣ᵉ ⟩)
-                      (toCtx St₁ ⟨ ∣ op-grade op ·ₑ ε₃ ∣ᵉ ⟩)
+            W₁ : Ren [] (toCtx 𝕊'' ⟨ ∣ ε₃ ∣ᵉ ⟩)
+                      (toCtx 𝕊₁ ⟨ ∣ op-grade op ·ₑ ε₃ ∣ᵉ ⟩)
             W₁ = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren sq
 
             eW₁ : W₁ ≐ʳ suc-comp-ren (ext q₂) B₁
@@ -403,24 +403,24 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
             hN₂ : Seq-Prem ((C-rename
                                (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₁')
                               [ split-∷ (split-⟨⟩ split-[]) ↦ W' ]c)
-            hN₂ {St₃} q₃ V pV =
+            hN₂ {𝕊₃} q₃ V pV =
               CRed-≡ᶜ shift (hN q₄ (spine rs V) (VRed-spine rs V pV))
               where
                 -- the run and the clause's own reach accumulate: the grades
                 -- multiply and each is bounded, so the composite stays
                 -- under `ε₁`
-                B₂ : ≤ₛ-grade (≤ₛ-trans E₀ (ext q₂)) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ
+                B₂ : κₛ (≤ₛ-trans E₀ (ext q₂)) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ
                 B₂ =
                   ≾ᵣ-trans
                     (≃ᵣ⇒≾ᵣ
-                      (≃ᵣ-trans (·ᵣ-cong (≤ₛ-grade-trans E₀ (ext q₂)) ≃ᵣ-refl) (·ᵣ-assoc (≤ₛ-grade E₀) (≤ₛ-grade (ext q₂)) ∣ ε₃ ∣ᵉ)))
+                      (≃ᵣ-trans (·ᵣ-cong (κₛ-trans E₀ (ext q₂)) ≃ᵣ-refl) (·ᵣ-assoc (κₛ E₀) (κₛ (ext q₂)) ∣ ε₃ ∣ᵉ)))
                     (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ B₁) b₀)
 
-                q₄ : St ⊑ₛ[ ∣ ε₁ ∣ᵉ ] St₃
+                q₄ : 𝕊 ⊑ₛ[ ∣ ε₁ ∣ᵉ ] 𝕊₃
                 q₄ = reach (≤ₛ-trans (≤ₛ-trans E₀ (ext q₂)) (ext q₃))
                        (≾ᵣ-trans
                          (≃ᵣ⇒≾ᵣ
-                           (≤ₛ-grade-trans (≤ₛ-trans E₀ (ext q₂)) (ext q₃)))
+                           (κₛ-trans (≤ₛ-trans E₀ (ext q₂)) (ext q₃)))
                          (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (bound q₃)) B₂))
 
                 composite : suc-comp-ren (ext q₄) (reach-bound q₄)
@@ -479,26 +479,26 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
             -- The clause premise, rebuilt from `hH`: the weakening past the
             -- arity variable and the substitution at it cancel (`sub-wk-C`),
             -- leaving one `suc-comp-ren`.
-            hH₂ : Clause-Prem B St''
+            hH₂ : Clause-Prem B 𝕊''
                     (((λ op' ε' →
                           C-rename (cong-∷-ren (cong-∷-ren
                                       (cong-⟨⟩-ren (cong-∷-ren sq))))
                             (H₁' op' ε'))
-                      [ split-[] {toCtx St'' ∷ _} ↦ W' ]cl))
-            hH₂ {St₃} {op₃} {ε₄} q₃ V₀' bv' W₃ pW₃ =
+                      [ split-[] {toCtx 𝕊'' ∷ _} ↦ W' ]cl))
+            hH₂ {𝕊₃} {op₃} {ε₄} q₃ V₀' bv' W₃ pW₃ =
               CRed-≡ᶜ (sub-≡ᶜ (split-∷ split-[]) (refl) step)
                       (hH q₄ V₀' bv' W₃ pW₃)
               where
                 Eᶜ = ≤ₛ-trans E₀ (ext q₂)
 
-                q₄ : St ⊑ₛ[ ⊤ᵣ ] St₃
+                q₄ : 𝕊 ⊑ₛ[ ⊤ᵣ ] 𝕊₃
                 q₄ = reach (≤ₛ-trans Eᶜ (ext q₃)) (≾-⊤ᵣ _)
 
                 -- the barrier renaming the three stacked ones amount to
-                R₀ : Ren [] (toCtx St'' ⟨ ⊤ᵣ ⟩) (toCtx St ⟨ ⊤ᵣ ⟩)
+                R₀ : Ren [] (toCtx 𝕊'' ⟨ ⊤ᵣ ⟩) (toCtx 𝕊 ⟨ ⊤ᵣ ⟩)
                 R₀ = suc-comp-ren Eᶜ (≾-⊤ᵣ _)
 
-                Bᶜ : ≤ₛ-grade (ext q₂) ·ᵣ ⊤ᵣ ≾ᵣ ρₒ ·ᵣ ⊤ᵣ
+                Bᶜ : κₛ (ext q₂) ·ᵣ ⊤ᵣ ≾ᵣ ρₒ ·ᵣ ⊤ᵣ
                 Bᶜ = ·ᵣ-monoˡ-≾ᵣ (bound q₂)
 
                 stack : (steps-barrier-ren rs
@@ -610,7 +610,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
                                   C-rename (cong-∷-ren (cong-∷-ren
                                               (cong-⟨⟩-ren (cong-∷-ren sq))))
                                     (H₁' op'' ε''))
-                              [ split-[] {toCtx St'' ∷ Ar} ↦ W' ]cl) op' ε')
+                              [ split-[] {toCtx 𝕊'' ∷ Ar} ↦ W' ]cl) op' ε')
                           ≡ C-rename (cong-∷-ren (cong-∷-ren R₀)) (H op' ε')
                 cancelled op' ε' =
                   trans (sub-≡ᶜ (split-∷ (split-∷ (split-⟨⟩ split-[]))) (refl)
@@ -637,7 +637,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
                                C-rename (cong-∷-ren (cong-∷-ren
                                            (cong-⟨⟩-ren (cong-∷-ren sq))))
                                  (H₁' op' ε'))
-                           [ split-[] {toCtx St'' ∷ Ar} ↦ W' ]cl) op₃ ε₄)
+                           [ split-[] {toCtx 𝕊'' ∷ Ar} ↦ W' ]cl) op₃ ε₄)
                 step =
                   trans
                     (C-rename-≡
@@ -661,12 +661,12 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
 -- barrier crossing is the lock zone `_⟨_⟩ᵉ` at the same reach, so the two
 -- sides are the same term.
 
-env-Hˢ-fired : ∀ {St Γ B} → (γ : Env St Γ) → {St₁ : 𝕊 []}
-             → (q : St ⊑ₛ[ ⊤ᵣ ] St₁)
+env-Hˢ-fired : ∀ {𝕊 Γ B} → (γ : Env 𝕊 Γ) → {𝕊₁ : State []}
+             → (q : 𝕊 ⊑ₛ[ ⊤ᵣ ] 𝕊₁)
              → (H : Fam B (Γ ⟨ ⊤ᵣ ⟩)) → {op : Op} → {ε : E}
-             → (V₀ : Boxed B op ε St₁)
-             → (W : toCtx St₁ ⊢V⦂ ⌜ param op ⌝ᵍ)
-             → Fired St op ε (env-Hˢ γ [] H) q V₀ W
+             → (V₀ : Boxed B op ε 𝕊₁)
+             → (W : toCtx 𝕊₁ ⊢V⦂ ⌜ param op ⌝ᵍ)
+             → Fired 𝕊 op ε (env-Hˢ γ [] H) q V₀ W
              ≡ env-C (liftᵉ V₀ ((γ ⟨ q ⟩ᵉ) ∷ᵉ W)) (H op ε)
 
 env-Hˢ-fired γ q H V₀ W = refl
@@ -674,8 +674,8 @@ env-Hˢ-fired γ q H V₀ W = refl
 -- The sequel premise survives the return clause's subsumption at `SUB-HANDLE`:
 -- a reach at the smaller lock is one at the larger, and the value is subsumed.
 
-Seq-Prem-sub : ∀ {A A₀ B ε₀ ε₁ ε₂} {St : 𝕊 []}
-             → {N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂}
+Seq-Prem-sub : ∀ {A A₀ B ε₀ ε₁ ε₂} {𝕊 : State []}
+             → {N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂}
              → (p : A₀ <:ᵛ A) → (pε : ε₀ ≾ₑ ε₁)
              → Seq-Prem N
              → Seq-Prem (subCtx p (C-rename (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε))) N))
@@ -709,17 +709,17 @@ Seq-Prem-sub {N = N} p pε hN q V pV =
 -- every reducible computation at every use: as itself by `handle-CRed`, and
 -- through a subsumption by `SUB-HANDLE` and then `handle-CRed`.
 
-handler-CRed : ∀ {s A B ε ε'} {St : 𝕊 []}
-             → {H : Fam B (toCtx St ⟨ ⊤ᵣ ⟩)}
-             → {N : toCtx St ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'}
-             → Clause-Prem B St H
+handler-CRed : ∀ {s A B ε ε'} {𝕊 : State []}
+             → {H : Fam B (toCtx 𝕊 ⟨ ⊤ᵣ ⟩)}
+             → {N : toCtx 𝕊 ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'}
+             → Clause-Prem B 𝕊 H
              → Seq-Prem N
-             → ∀ {A₀ ε₀ B₀ ε₀'} {U : toCtx St ⊢V⦂ (A₀ ! ε₀) ⇛ (B₀ ! ε₀')}
+             → ∀ {A₀ ε₀ B₀ ε₀'} {U : toCtx 𝕊 ⊢V⦂ (A₀ ! ε₀) ⇛ (B₀ ! ε₀')}
              → Use (handler N H) U
-             → {e : shapeᵛ A₀ ≡ s} → {M : toCtx St ⊢C⦂ A₀ ! ε₀}
-             → CRedˢ' s e ε₀ St M
+             → {e : shapeᵛ A₀ ≡ s} → {M : toCtx 𝕊 ⊢C⦂ A₀ ! ε₀}
+             → CRedˢ' s e ε₀ 𝕊 M
              ------------------------------------------------------
-             → CRed' B₀ (ε₀ ·ₑ ε₀') St (handle M `with U)
+             → CRed' B₀ (ε₀ ·ₑ ε₀') 𝕊 (handle M `with U)
 
 handler-CRed {H = H} {N = N} hH hN use-id pM = handle-CRed H N pM hH hN
 handler-CRed {H = H} {N = N} hH hN (use-sub ((p !ₛ pε) ⇛ₛ (o !ₛ _))) pM =

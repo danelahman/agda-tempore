@@ -139,10 +139,10 @@ alg-ηᵀ {ε = ε} {ε₂ = ε₂} alg alg-≤ pv f =
 -- The eternal parameter carried across a step transition. Only `DELAY` extends
 -- the history, and there the parameter passes under the new lock.
 
-step-pv : ∀ {ε₁ ε₃ A A₀ P} {S S' : 𝕊 []}
-        → {M : toCtx S ⊢C⦂ A ! ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃}
-        → (bc : Eternalᵒ P) → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
-        → (⟦ hist S ⟧ᶜᵗˣ →ᵐ P) → (⟦ hist S' ⟧ᶜᵗˣ →ᵐ P)
+step-pv : ∀ {ε₁ ε₃ A A₀ P} {𝕊 𝕊' : State []}
+        → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃}
+        → (bc : Eternalᵒ P) → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
+        → (⟦ hist 𝕊 ⟧ᶜᵗˣ →ᵐ P) → (⟦ hist 𝕊' ⟧ᶜᵗˣ →ᵐ P)
 step-pv bc APP               pv = pv
 step-pv bc MATCH             pv = pv
 step-pv bc MATCHL            pv = pv
@@ -177,8 +177,8 @@ step-pv bc (DELAY {τ = τ})   pv = Eternalᵒ.extᵉ bc ∘ᵐ ⟨ ιᵣ τ ⟩
 -- fold re-delays, carrying the parameter under the tick's box by `necᵉ`; the
 -- two step rules inherit their transition from the sub-step.
 
-alg-stepᵀ : ∀ {ε ε₂ ε₁' ε₃' A A₀ B P} {S S' : 𝕊 []}
-          → {M : toCtx S ⊢C⦂ A ! ε₁'} → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃'}
+alg-stepᵀ : ∀ {ε ε₂ ε₁' ε₃' A A₀ B P} {𝕊 𝕊' : State []}
+          → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁'} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃'}
           → (bc : Eternalᵒ P)
           → (alg : ∀ {ε'} → P ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε' →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε' ·ₑ ε₂))
           → (alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
@@ -191,9 +191,9 @@ alg-stepᵀ : ∀ {ε ε₂ ε₁' ε₃' A A₀ B P} {S S' : 𝕊 []}
                            ∘ᵐ delayᵀ τ ∘ᵐ [ ιᵣ τ ]ᶠ (alg {ε'})
                            ∘ᵐ []-monoidal
                            ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {ιᵣ τ}) idᵐ)
-          → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
-          → (pv : ⟦ hist S ⟧ᶜᵗˣ →ᵐ P)
-          → (f : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε)
+          → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
+          → (pv : ⟦ hist 𝕊 ⟧ᶜᵗˣ →ᵐ P)
+          → (f : ⟦ hist 𝕊' ⟧ᶜᵗˣ →ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε)
           → alg {step-grade r ·ₑ ε}
               ∘ᵐ ⟨ pv , μᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂} {step-grade r} {ε} ∘ᵐ Tᶠ f ∘ᵐ stepᵀ r ⟩ᵐ
           ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (step-grade r) ε ε₂))
@@ -351,32 +351,32 @@ delay-suc {X} {ρ} q =
   ∙ ∘ᵐ-congˡ (Eternalᵒ.α-unit (⟨⊤⟩-eternalᵒ X))
   ∙ ∘ᵐ-identityˡ _
 
-id-suc-step : ∀ {X Y} → (p : ⊤ᵣ ≾ᵣ ⊤ᵣ) → (h : X →ᵐ ⟨ ⊤ᵣ ⟩ᵒ Y)
-            → h ≈ᵐ ⟨⟩-≤ p ∘ᵐ h
-id-suc-step p h = ≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩-≤-id p) ∙ ∘ᵐ-identityˡ _)
+≤ₛ-refl-step : ∀ {X Y} → (p : ⊤ᵣ ≾ᵣ ⊤ᵣ) → (h : X →ᵐ ⟨ ⊤ᵣ ⟩ᵒ Y)
+             → h ≈ᵐ ⟨⟩-≤ p ∘ᵐ h
+≤ₛ-refl-step p h = ≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩-≤-id p) ∙ ∘ᵐ-identityˡ _)
 
 -- A state successor, read as a map into the earlier state's barrier: each lock
 -- it passed is extracted, each cell it allocated is projected away.
 
-suc-g : ∀ {Γ Γ'} → {St : 𝕊 Γ} → {St' : 𝕊 Γ'}
-      → (q : St ≤ₛ St') → ⟦ toCtx St' ⟧ᶜᵗˣ →ᵐ ⟦ toCtx St ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
-suc-g id-suc = ⟨⊤⟩-η
-suc-g {St = St} (⟨⟩-suc ρ q) =
-  Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ ⟦ toCtx St ⟧ᶜᵗˣ) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (suc-g q)
-suc-g (∷-suc V q) = suc-g q ∘ᵐ fstᵐ
+suc-g : ∀ {Γ Γ'} → {𝕊 : State Γ} → {𝕊' : State Γ'}
+      → (q : 𝕊 ≤ₛ 𝕊') → ⟦ toCtx 𝕊' ⟧ᶜᵗˣ →ᵐ ⟦ toCtx 𝕊 ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
+suc-g ≤ₛ-refl = ⟨⊤⟩-η
+suc-g {𝕊 = 𝕊} (≤ₛ-lock {ρ = ρ} q) =
+  Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ ⟦ toCtx 𝕊 ⟧ᶜᵗˣ) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (suc-g q)
+suc-g (≤ₛ-res q) = suc-g q ∘ᵐ fstᵐ
 
 -- `suc-comp-ren` is the free algebra's extension of `suc-g`: extraction at the
 -- outer lock applied to it. The barrier is a free algebra, so the renaming is an
 -- algebra morphism, which is what the fold's parameter-naturality needs.
 
-suc-comp-free-at : ∀ {Γ Γ' a} → {St : 𝕊 Γ} → {St' : 𝕊 Γ'}
-                 → (q : St ≤ₛ St') → (pf : ≤ₛ-grade q ·ᵣ a ≾ᵣ ⊤ᵣ)
+suc-comp-free-at : ∀ {Γ Γ' a} → {𝕊 : State Γ} → {𝕊' : State Γ'}
+                 → (q : 𝕊 ≤ₛ 𝕊') → (pf : κₛ q ·ᵣ a ≾ᵣ ⊤ᵣ)
                  → ⟦ suc-comp-ren {ρ'' = ⊤ᵣ} {ρ''' = a} q pf ⟧ʳ
-                 ≈ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ ⟦ toCtx St ⟧ᶜᵗˣ) {a} ∘ᵐ ⟨ a ⟩ᶠ (suc-g q)
-suc-comp-free-at {a = a} {St = St} id-suc pf =
+                 ≈ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ ⟦ toCtx 𝕊 ⟧ᶜᵗˣ) {a} ∘ᵐ ⟨ a ⟩ᶠ (suc-g q)
+suc-comp-free-at {a = a} {𝕊 = 𝕊} ≤ₛ-refl pf =
     ⟨⟩-≤-irr _ (≾-⊤ᵣ a)
-  ∙ ≈ᵐ-sym (barrier-lock {⟦ toCtx St ⟧ᶜᵗˣ} {a})
-suc-comp-free-at (⟨⟩-suc ρ q) pf =
+  ∙ ≈ᵐ-sym (barrier-lock {⟦ toCtx 𝕊 ⟧ᶜᵗˣ} {a})
+suc-comp-free-at (≤ₛ-lock q) pf =
     ∘ᵐ-congˡ (suc-comp-free-at q _)
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩-μ-nat (suc-g q))
@@ -384,50 +384,50 @@ suc-comp-free-at (⟨⟩-suc ρ q) pf =
   ∙ ∘ᵐ-congˡ (Eternalᵒ.extᵉ-μ (⟨⊤⟩-eternalᵒ _))
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
-suc-comp-free-at (∷-suc V q) pf =
+suc-comp-free-at (≤ₛ-res q) pf =
     ∘ᵐ-congˡ (suc-comp-free-at q pf)
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
 
-suc-comp-free : ∀ {Γ Γ'} → {St : 𝕊 Γ} → {St' : 𝕊 Γ'}
-              → (q : St ≤ₛ St') → (pf : ≤ₛ-grade q ·ᵣ ⊤ᵣ ≾ᵣ ⊤ᵣ)
+suc-comp-free : ∀ {Γ Γ'} → {𝕊 : State Γ} → {𝕊' : State Γ'}
+              → (q : 𝕊 ≤ₛ 𝕊') → (pf : κₛ q ·ᵣ ⊤ᵣ ≾ᵣ ⊤ᵣ)
               → ⟦ suc-comp-ren {ρ'' = ⊤ᵣ} {ρ''' = ⊤ᵣ} q pf ⟧ʳ
               ≈ᵐ ⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ (suc-g q)
 suc-comp-free q pf =
     suc-comp-free-at q pf
   ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨⟩-≤-id _) ∙ ∘ᵐ-identityʳ _)
 
-step-pv-state : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []}
-              → {M : toCtx S ⊢C⦂ A ! ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃}
-              → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
-              → (pS : Paramˢ S) → (pM : Paramᶜ M)
-              → step-pv (bcᴱ (toCtx S)) r (⟨⊤⟩-η ∘ᵐ ⟦ S ⟧ˢ pS)
+step-pv-state : ∀ {ε₁ ε₃ A A₀} {𝕊 𝕊' : State []}
+              → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃}
+              → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
+              → (pS : Paramˢ 𝕊) → (pM : Paramᶜ M)
+              → step-pv (bcᴱ (toCtx 𝕊)) r (⟨⊤⟩-η ∘ᵐ ⟦ 𝕊 ⟧ˢ pS)
               ≈ᵐ ⟦ suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _) ⟧ʳ
-                 ∘ᵐ (⟨⊤⟩-η ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
-step-pv-state APP         pS pM = id-suc-step _ _
-step-pv-state MATCH       pS pM = id-suc-step _ _
-step-pv-state MATCHL      pS pM = id-suc-step _ _
-step-pv-state RECL        pS pM = id-suc-step _ _
-step-pv-state IF-TRUE     pS pM = id-suc-step _ _
-step-pv-state CMP         pS pM = id-suc-step _ _
-step-pv-state IF-FALSE    pS pM = id-suc-step _ _
-step-pv-state MATCH+      pS pM = id-suc-step _ _
-step-pv-state MATCHℕ-ZERO pS pM = id-suc-step _ _
-step-pv-state MATCHℕ-SUCC pS pM = id-suc-step _ _
-step-pv-state RECℕ-ZERO   pS pM = id-suc-step _ _
-step-pv-state RECℕ-SUCC   pS pM = id-suc-step _ _
-step-pv-state SEQ-RET     pS pM = id-suc-step _ _
-step-pv-state SEQ-OP      pS pM = id-suc-step _ _
-step-pv-state HANDLE-RET  pS pM = id-suc-step _ _
-step-pv-state HANDLE-OP   pS pM = id-suc-step _ _
-step-pv-state UNBOX       pS pM = id-suc-step _ _
-step-pv-state SUB-APP     pS pM = id-suc-step _ _
-step-pv-state SUB-HANDLE  pS pM = id-suc-step _ _
-step-pv-state SUB-HANDLE-TRANS pS pM = id-suc-step _ _
-step-pv-state SUB-IF      pS pM = id-suc-step _ _
-step-pv-state SUB-MATCHℕ  pS pM = id-suc-step _ _
-step-pv-state SUB-RECℕ    pS pM = id-suc-step _ _
-step-pv-state SUB         pS pM = id-suc-step _ _
+                 ∘ᵐ (⟨⊤⟩-η ∘ᵐ ⟦ 𝕊' ⟧ˢ (stepᴾˢ r pS pM))
+step-pv-state APP         pS pM = ≤ₛ-refl-step _ _
+step-pv-state MATCH       pS pM = ≤ₛ-refl-step _ _
+step-pv-state MATCHL      pS pM = ≤ₛ-refl-step _ _
+step-pv-state RECL        pS pM = ≤ₛ-refl-step _ _
+step-pv-state IF-TRUE     pS pM = ≤ₛ-refl-step _ _
+step-pv-state CMP         pS pM = ≤ₛ-refl-step _ _
+step-pv-state IF-FALSE    pS pM = ≤ₛ-refl-step _ _
+step-pv-state MATCH+      pS pM = ≤ₛ-refl-step _ _
+step-pv-state MATCHℕ-ZERO pS pM = ≤ₛ-refl-step _ _
+step-pv-state MATCHℕ-SUCC pS pM = ≤ₛ-refl-step _ _
+step-pv-state RECℕ-ZERO   pS pM = ≤ₛ-refl-step _ _
+step-pv-state RECℕ-SUCC   pS pM = ≤ₛ-refl-step _ _
+step-pv-state SEQ-RET     pS pM = ≤ₛ-refl-step _ _
+step-pv-state SEQ-OP      pS pM = ≤ₛ-refl-step _ _
+step-pv-state HANDLE-RET  pS pM = ≤ₛ-refl-step _ _
+step-pv-state HANDLE-OP   pS pM = ≤ₛ-refl-step _ _
+step-pv-state UNBOX       pS pM = ≤ₛ-refl-step _ _
+step-pv-state SUB-APP     pS pM = ≤ₛ-refl-step _ _
+step-pv-state SUB-HANDLE  pS pM = ≤ₛ-refl-step _ _
+step-pv-state SUB-HANDLE-TRANS pS pM = ≤ₛ-refl-step _ _
+step-pv-state SUB-IF      pS pM = ≤ₛ-refl-step _ _
+step-pv-state SUB-MATCHℕ  pS pM = ≤ₛ-refl-step _ _
+step-pv-state SUB-RECℕ    pS pM = ≤ₛ-refl-step _ _
+step-pv-state SUB         pS pM = ≤ₛ-refl-step _ _
 step-pv-state (SEQ-STEP r c)    pS (pM , _) = step-pv-state r pS pM
 step-pv-state (HANDLE-STEP r c) pS (pM , _) = step-pv-state r pS pM
 step-pv-state (BOX {V = V}) pS (pV , _) =
@@ -437,10 +437,10 @@ step-pv-state (BOX {V = V}) pS (pV , _) =
      ∙ ∘ᵐ-congˡ (⟨⊤⟩-η-nat fstᵐ)
      ∙ ∘ᵐ-assoc _ _ _
      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _) ∙ ∘ᵐ-identityˡ _))
-step-pv-state {S = S} (DELAY {τ = τ}) pS pM =
+step-pv-state {𝕊 = 𝕊} (DELAY {τ = τ}) pS pM =
     ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (barrier-lock {⟦ toCtx S ⟧ᶜᵗˣ} {ιᵣ τ})
+  ∙ ∘ᵐ-congˡ (barrier-lock {⟦ toCtx 𝕊 ⟧ᶜᵗˣ} {ιᵣ τ})
   ∙ ≈ᵐ-sym (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (delay-suc _))
 
 -- `HANDLE-STEP`: the same assembly as `SEQ-STEP`, with the handler's fold in
@@ -449,27 +449,27 @@ step-pv-state {S = S} (DELAY {τ = τ}) pS pM =
 -- `T-≤-μᵀ` is matched by `T-alg-of-handlerᵀ-≤`. The fold's parameter is
 -- reindexed along the step's `suc-comp-ren` (`T-alg-of-handlerᵀ-natᴾ`).
 
-sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {S S' : 𝕊 []}
-  → {M : toCtx S ⊢C⦂ A ! ε₁}
+sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {𝕊 𝕊' : State []}
+  → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁}
   → (H : (op : Op) → (ε'' : E)
-       → toCtx S ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+       → toCtx 𝕊 ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
             ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
          ⊢C⦂ B ! (op-grade op ·ₑ ε''))
-  → (N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
-  → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃}
-  → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
-  → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
-  → (pS : Paramˢ S) → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
+  → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+  → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃}
+  → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
+  → (c : κₛ (step-extends-state r) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
+  → (pS : Paramˢ 𝕊) → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
   → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
-  → (uH : EffUniformʰ {toCtx S} H pH)
-  → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
+  → (uH : EffUniformʰ {toCtx 𝕊} H pH)
+  → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ r)
        ∘ᵐ Tᶠ ⟦ step-refines-type r ⟧<:ᵛ
-       ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A₀ ⟧ᵛ} {step-grade r} {ε₃}
-              (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) (stepᵀ r)
-  → ⟦ handle M `with H `in N ⟧ᶜᵗ (pM , pN , pH , uH) ∘ᵐ ⟦ S ⟧ˢ pS
+       ∘ᵐ _⋄_ {⟦ hist 𝕊 ⟧ᶜᵗˣ} {⟦ hist 𝕊' ⟧ᶜᵗˣ} {⟦ A₀ ⟧ᵛ} {step-grade r} {ε₃}
+              (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ 𝕊' ⟧ˢ (stepᴾˢ r pS pM)) (stepᵀ r)
+  → ⟦ handle M `with H `in N ⟧ᶜᵗ (pM , pN , pH , uH) ∘ᵐ ⟦ 𝕊 ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ (HANDLE-STEP {H = H} {N = N} r c))
-       ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ B ⟧ᵛ} {step-grade r} {ε₃ ·ₑ ε₂}
+       ∘ᵐ _⋄_ {⟦ hist 𝕊 ⟧ᶜᵗˣ} {⟦ hist 𝕊' ⟧ᶜᵗˣ} {⟦ B ⟧ᵛ} {step-grade r} {ε₃ ·ₑ ε₂}
               (⟦ handle M'
                    `with (λ op ε'' →
                             C-rename
@@ -489,9 +489,9 @@ sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {S S' : 𝕊 []}
                                 (H op ε'') (pH op ε''))
                       , ren-clauses-uniform
                           (suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _)) H pH uH)
-                 ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
+                 ∘ᵐ ⟦ 𝕊' ⟧ˢ (stepᴾˢ r pS pM))
               (stepᵀ r)
-sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} H N {M'} r c pS pM pN pM' pH uH ih =
+sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {𝕊} {𝕊'} {M} H N {M'} r c pS pM pN pM' pH uH ih =
     ∘ᵐ-congˡ (handle-in-β M H N pM pN pH uH)
   ∙ seq-step-core alg alg-≤ ⟨⊤⟩-η N r c pS pM pN mt ih'
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
@@ -512,8 +512,8 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} H N {M'} r
         ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
         ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _))) ⟩ᵐ-cong))
   -- the handler commutes with the step transition
-  ∙ ∘ᵐ-congʳ (alg-stepᵀ {B = B} (bcᴱ (toCtx S)) alg alg-≤ alg-delay r
-                        (⟨⊤⟩-η ∘ᵐ ⟦ S ⟧ˢ pS) _)
+  ∙ ∘ᵐ-congʳ (alg-stepᵀ {B = B} (bcᴱ (toCtx 𝕊)) alg alg-≤ alg-delay r
+                        (⟨⊤⟩-η ∘ᵐ ⟦ 𝕊 ⟧ˢ pS) _)
   -- drop the identity the strength's pairing picked up
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
       , ∘ᵐ-congʳ (∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ∘ᵐ-identityʳ _ ⟩ᵐ-cong) ⟩ᵐ-cong))))))
@@ -525,12 +525,12 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} H N {M'} r
                           ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (≈ᵐ-sym alg-natᴾ)
-      ∙ ≈ᵐ-sym (seq-target {ε₁} {ε₂} {ε₃} {A} {B} {⟦ toCtx S' ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ}
-                  {toCtx S} {toCtx S'} {⟦ hist S' ⟧ᶜᵗˣ}
+      ∙ ≈ᵐ-sym (seq-target {ε₁} {ε₂} {ε₃} {A} {B} {⟦ toCtx 𝕊' ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ}
+                  {toCtx 𝕊} {toCtx 𝕊'} {⟦ hist 𝕊' ⟧ᶜᵗˣ}
                   alg' ⟨⊤⟩-η N
                   (suc-comp-ren (step-extends-state r) c)
                   (Tᶠ ⟦ step-refines-type r ⟧<:ᵛ ∘ᵐ ⟦ M' ⟧ᶜᵗ pM')
-                  (⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) pN)
+                  (⟦ 𝕊' ⟧ˢ (stepᴾˢ r pS pM)) pN)
       ∙ ≈ᵐ-sym (∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
           , subCtx-str {t = step-refines-type r}
               (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N)
@@ -547,25 +547,25 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} H N {M'} r
             (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N)
             (renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN)
 
-    mt : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε₃
+    mt : ⟦ hist 𝕊' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε₃
     mt = (Tᶠ ⟦ step-refines-type r ⟧<:ᵛ ∘ᵐ ⟦ M' ⟧ᶜᵗ pM')
-           ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)
+           ∘ᵐ ⟦ 𝕊' ⟧ˢ (stepᴾˢ r pS pM)
 
-    ih' : ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
+    ih' : ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟧ˢ pS
         ≈ᵐ T-≤ (step-≾ r)
-           ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
+           ∘ᵐ _⋄_ {⟦ hist 𝕊 ⟧ᶜᵗˣ} {⟦ hist 𝕊' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
                   mt (stepᵀ r)
     ih' = ih
         ∙ ∘ᵐ-congʳ (≈ᵐ-sym (Tᶠ-bind ⟦ step-refines-type r ⟧<:ᵛ
-                            (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) (stepᵀ r)))
+                            (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ 𝕊' ⟧ˢ (stepᴾˢ r pS pM)) (stepᵀ r)))
         ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
 
     -- the clause families at the two states differ by the step's own renaming
-    fren : Ren [] (toCtx S' ⟨ ⊤ᵣ ⟩) (toCtx S ⟨ ⊤ᵣ ⟩)
+    fren : Ren [] (toCtx 𝕊' ⟨ ⊤ᵣ ⟩) (toCtx 𝕊 ⟨ ⊤ᵣ ⟩)
     fren = suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _)
 
     H' : (op : Op) → (ε'' : E)
-       → toCtx S' ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+       → toCtx 𝕊' ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
             ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
          ⊢C⦂ B ! (op-grade op ·ₑ ε'')
     H' op ε'' = C-rename (cong-∷-ren (cong-∷-ren fren)) (H op ε'')
@@ -575,24 +575,24 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} H N {M'} r
 
     uH' = ren-clauses-uniform fren H pH uH
 
-    f : ⟦ toCtx S' ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ →ᵐ ⟦ toCtx S ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
+    f : ⟦ toCtx 𝕊' ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ →ᵐ ⟦ toCtx 𝕊 ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
     f = ⟦ fren ⟧ʳ
 
     -- `f` is the free-algebra morphism induced by `suc-g`
     f≈ : f ≈ᵐ ⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ (suc-g (step-extends-state r))
     f≈ = suc-comp-free (step-extends-state r) (≾-⊤ᵣ _)
 
-    alg : ∀ {ε} → ⟦ toCtx S ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε
+    alg : ∀ {ε} → ⟦ toCtx 𝕊 ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε
         →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε₂)
-    alg = T-alg-of-handlerᵀ (bcᴱ (toCtx S)) (⟦_⟧ʰᵗ {toCtx S} H pH uH)
+    alg = T-alg-of-handlerᵀ (bcᴱ (toCtx 𝕊)) (⟦_⟧ʰᵗ {toCtx 𝕊} H pH uH)
 
-    alg' : ∀ {ε} → ⟦ toCtx S' ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε
+    alg' : ∀ {ε} → ⟦ toCtx 𝕊' ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε
          →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε₂)
-    alg' = T-alg-of-handlerᵀ (bcᴱ (toCtx S')) (⟦_⟧ʰᵗ {toCtx S'} H' pH' uH')
+    alg' = T-alg-of-handlerᵀ (bcᴱ (toCtx 𝕊')) (⟦_⟧ʰᵗ {toCtx 𝕊'} H' pH' uH')
 
     alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
           → alg {εb} ∘ᵐ mapˣᵐ idᵐ (T-≤ q) ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa}
-    alg-≤ q = T-alg-of-handlerᵀ-≤ (bcᴱ (toCtx S)) (⟦_⟧ʰᵗ {toCtx S} H pH uH) q
+    alg-≤ q = T-alg-of-handlerᵀ-≤ (bcᴱ (toCtx 𝕊)) (⟦_⟧ʰᵗ {toCtx 𝕊} H pH uH) q
 
     alg-delay : ∀ {ε'} → (τ : 𝔻)
               → alg {ιₑ τ ·ₑ ε'}
@@ -600,13 +600,13 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} H N {M'} r
               ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (ιₑ τ) ε' ε₂))
                   ∘ᵐ delayᵀ τ ∘ᵐ [ ιᵣ τ ]ᶠ (alg {ε'})
                   ∘ᵐ []-monoidal
-                  ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ (bcᴱ (toCtx S)) {ιᵣ τ}) idᵐ
+                  ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ (bcᴱ (toCtx 𝕊)) {ιᵣ τ}) idᵐ
     alg-delay τ =
-      T-alg-of-handlerᵀ-delayᵀ τ (bcᴱ (toCtx S)) (⟦_⟧ʰᵗ {toCtx S} H pH uH)
+      T-alg-of-handlerᵀ-delayᵀ τ (bcᴱ (toCtx 𝕊)) (⟦_⟧ʰᵗ {toCtx 𝕊} H pH uH)
 
     ⟦H'⟧ʰᵗ-nat : ∀ op ε''
-               → clauseᵀ (⟦_⟧ʰᵗ {toCtx S'} H' pH' uH') op ε''
-               ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {toCtx S} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
+               → clauseᵀ (⟦_⟧ʰᵗ {toCtx 𝕊'} H' pH' uH') op ε''
+               ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {toCtx 𝕊} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
     ⟦H'⟧ʰᵗ-nat op ε'' =
         ∘ᵐ-congˡ (C-rename-nat (cong-∷-ren (cong-∷-ren fren))
                     (H op ε'') (pH op ε''))
@@ -614,8 +614,8 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} H N {M'} r
       ∙ ∘ᵐ-congʳ (adapt-commute _ _ _)
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
-    f-necᵉ : ∀ {ρ₁} → [ ρ₁ ]ᶠ f ∘ᵐ Eternalᵒ.necᵉ (bcᴱ (toCtx S'))
-                    ≈ᵐ Eternalᵒ.necᵉ (bcᴱ (toCtx S)) ∘ᵐ f
+    f-necᵉ : ∀ {ρ₁} → [ ρ₁ ]ᶠ f ∘ᵐ Eternalᵒ.necᵉ (bcᴱ (toCtx 𝕊'))
+                    ≈ᵐ Eternalᵒ.necᵉ (bcᴱ (toCtx 𝕊)) ∘ᵐ f
     f-necᵉ =
         ∘ᵐ-congˡ ([]-congᶠ f≈)
       ∙ free-necᵉ-nat _ (free-extᵉ-nat (suc-g (step-extends-state r)))
@@ -623,11 +623,11 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} H N {M'} r
 
     alg-natᴾ : ∀ {ε} → alg' {ε} ≈ᵐ alg {ε} ∘ᵐ mapˣᵐ f idᵐ
     alg-natᴾ =
-      T-alg-of-handlerᵀ-natᴾ (bcᴱ (toCtx S)) (bcᴱ (toCtx S'))
-        f f-necᵉ (⟦_⟧ʰᵗ {toCtx S} H pH uH) _ ⟦H'⟧ʰᵗ-nat
+      T-alg-of-handlerᵀ-natᴾ (bcᴱ (toCtx 𝕊)) (bcᴱ (toCtx 𝕊'))
+        f f-necᵉ (⟦_⟧ʰᵗ {toCtx 𝕊} H pH uH) _ ⟦H'⟧ʰᵗ-nat
 
-    param-step : step-pv (bcᴱ (toCtx S)) r (⟨⊤⟩-η ∘ᵐ ⟦ S ⟧ˢ pS)
-               ≈ᵐ f ∘ᵐ (⟨⊤⟩-η ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
+    param-step : step-pv (bcᴱ (toCtx 𝕊)) r (⟨⊤⟩-η ∘ᵐ ⟦ 𝕊 ⟧ˢ pS)
+               ≈ᵐ f ∘ᵐ (⟨⊤⟩-η ∘ᵐ ⟦ 𝕊' ⟧ˢ (stepᴾˢ r pS pM))
     param-step = step-pv-state r pS pM
 
 -- `SEQ-OP`: sequencing a computation that begins with an operation is the

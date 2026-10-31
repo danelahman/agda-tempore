@@ -84,20 +84,20 @@ bcᴱ Γ = ⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ
 -- The computation, with its context plugged by the state.
 
 Paramᶜᶠ : ∀ {C} → Config C → Set
-Paramᶜᶠ ⟨ St , M ⟩ = Paramˢ St × Paramᶜ M
+Paramᶜᶠ ⟨ 𝕊 ∣ M ⟩ = Paramˢ 𝕊 × Paramᶜ M
 
 ⟦_⟧ᶜᶠ : ∀ {C} → (cf : Config C) → Paramᶜᶠ cf
       → ⟦ hist (Config.state cf) ⟧ᶜᵗˣ →ᵐ ⟦ C ⟧ᶜ
-⟦ ⟨ St , M ⟩ ⟧ᶜᶠ (pSt , pM) = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt
+⟦ ⟨ 𝕊 ∣ M ⟩ ⟧ᶜᶠ (pSt , pM) = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟧ˢ pSt
 
 -- The state's certificate across a step. Only `BOX` changes it: the cell it
 -- allocates stores the boxed value, whose certificate is the term's,
 -- renamed. Every other rule either keeps the state or only locks it, and the
 -- two congruences inherit the sub-step's.
 
-stepᴾˢ : ∀ {ε ε' A B} {S S' : 𝕊 []}
-       → {M : toCtx S ⊢C⦂ A ! ε} → {M' : toCtx S' ⊢C⦂ B ! ε'}
-       → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩) → Paramˢ S → Paramᶜ M → Paramˢ S'
+stepᴾˢ : ∀ {ε ε' A B} {𝕊 𝕊' : State []}
+       → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ B ! ε'}
+       → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩) → Paramˢ 𝕊 → Paramᶜ M → Paramˢ 𝕊'
 stepᴾˢ APP                 pS _              = pS
 stepᴾˢ MATCH               pS _              = pS
 stepᴾˢ MATCHL              pS _              = pS
@@ -144,9 +144,9 @@ infixl 25 _⋄_
 -- into the shape of the store, never into the effect grade, which is why
 -- allocation contributes `𝟏ₑ`.
 
-step-grade : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
-           → {M : toCtx St ⊢C⦂ A ! ε} → {M' : toCtx St' ⊢C⦂ B ! ε'}
-           → ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩
+step-grade : ∀ {ε ε'} {𝕊 𝕊' : State []} {A B : VType}
+           → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ B ! ε'}
+           → ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩
            → E
 step-grade APP                  = 𝟏ₑ
 step-grade MATCH                = 𝟏ₑ
@@ -181,10 +181,10 @@ step-grade SUB                  = 𝟏ₑ
 -- every world one delay ahead (`η⊣`), and `delayᵀ` reaches those worlds: the
 -- only way a lock is ever produced.
 
-stepᵀ : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
-      → {M : toCtx St ⊢C⦂ A ! ε} → {M' : toCtx St' ⊢C⦂ B ! ε'}
-      → (r : ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩)
-      → ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ hist St' ⟧ᶜᵗˣ (step-grade r)
+stepᵀ : ∀ {ε ε'} {𝕊 𝕊' : State []} {A B : VType}
+      → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ B ! ε'}
+      → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
+      → ⟦ hist 𝕊 ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ hist 𝕊' ⟧ᶜᵗˣ (step-grade r)
 stepᵀ APP               = ηᵀ
 stepᵀ MATCH             = ηᵀ
 stepᵀ MATCHL            = ηᵀ
@@ -217,9 +217,9 @@ stepᵀ SUB               = ηᵀ
 -- The step's effect, composed with the target's, refines the source's. This is
 -- `step-grade-≾` in the effect grades.
 
-step-≾ : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
-       → {M : toCtx St ⊢C⦂ A ! ε} → {M' : toCtx St' ⊢C⦂ B ! ε'}
-       → (r : ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩)
+step-≾ : ∀ {ε ε'} {𝕊 𝕊' : State []} {A B : VType}
+       → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ B ! ε'}
+       → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
        → step-grade r ·ₑ ε' ≾ₑ ε
 step-≾ {ε = ε} APP    = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} MATCH  = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
@@ -336,34 +336,34 @@ sound-APP M V pM pV =
 -- Projecting out of a pair-typed value in a state context: the certificate
 -- it transports, and the projection it denotes.
 
-fstᵛᴾ : ∀ {Γ A B} → (St : 𝕊 Γ) → (P : toCtx St ⊢V⦂ A |×| B)
-      → Paramᵛ P → Paramᵛ (fstᵛ {S = St} P)
-fstᵛᴾ St (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
-fstᵛᴾ St ⦉ V , W ⦊           (pV , pW) = pV
-fstᵛᴾ St (subV P (p |×|ₛ q)) pP        = fstᵛᴾ St P pP
+fstᵛᴾ : ∀ {Γ A B} → (𝕊 : State Γ) → (P : toCtx 𝕊 ⊢V⦂ A |×| B)
+      → Paramᵛ P → Paramᵛ (fstᵛ {𝕊 = 𝕊} P)
+fstᵛᴾ 𝕊 (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
+fstᵛᴾ 𝕊 ⦉ V , W ⦊           (pV , pW) = pV
+fstᵛᴾ 𝕊 (subV P (p |×|ₛ q)) pP        = fstᵛᴾ 𝕊 P pP
 
-sndᵛᴾ : ∀ {Γ A B} → (St : 𝕊 Γ) → (P : toCtx St ⊢V⦂ A |×| B)
-      → Paramᵛ P → Paramᵛ (sndᵛ {S = St} P)
-sndᵛᴾ St (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
-sndᵛᴾ St ⦉ V , W ⦊           (pV , pW) = pW
-sndᵛᴾ St (subV P (p |×|ₛ q)) pP        = sndᵛᴾ St P pP
+sndᵛᴾ : ∀ {Γ A B} → (𝕊 : State Γ) → (P : toCtx 𝕊 ⊢V⦂ A |×| B)
+      → Paramᵛ P → Paramᵛ (sndᵛ {𝕊 = 𝕊} P)
+sndᵛᴾ 𝕊 (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
+sndᵛᴾ 𝕊 ⦉ V , W ⦊           (pV , pW) = pW
+sndᵛᴾ 𝕊 (subV P (p |×|ₛ q)) pP        = sndᵛᴾ 𝕊 P pP
 
-fstᵛ-sound : ∀ {Γ A B} → (St : 𝕊 Γ) → (P : toCtx St ⊢V⦂ A |×| B) → (pP : Paramᵛ P)
-           → ⟦ fstᵛ {S = St} P ⟧ᵛᵗ (fstᵛᴾ St P pP) ≈ᵐ fstᵐ ∘ᵐ ⟦ P ⟧ᵛᵗ pP
-fstᵛ-sound St (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
-fstᵛ-sound St ⦉ V , W ⦊           (pV , pW) = ≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)
-fstᵛ-sound St (subV P (p |×|ₛ q)) pP        =
-    ∘ᵐ-congʳ (fstᵛ-sound St P pP)
+fstᵛ-sound : ∀ {Γ A B} → (𝕊 : State Γ) → (P : toCtx 𝕊 ⊢V⦂ A |×| B) → (pP : Paramᵛ P)
+           → ⟦ fstᵛ {𝕊 = 𝕊} P ⟧ᵛᵗ (fstᵛᴾ 𝕊 P pP) ≈ᵐ fstᵐ ∘ᵐ ⟦ P ⟧ᵛᵗ pP
+fstᵛ-sound 𝕊 (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
+fstᵛ-sound 𝕊 ⦉ V , W ⦊           (pV , pW) = ≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)
+fstᵛ-sound 𝕊 (subV P (p |×|ₛ q)) pP        =
+    ∘ᵐ-congʳ (fstᵛ-sound 𝕊 P pP)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _))
   ∙ ∘ᵐ-assoc _ _ _
 
-sndᵛ-sound : ∀ {Γ A B} → (St : 𝕊 Γ) → (P : toCtx St ⊢V⦂ A |×| B) → (pP : Paramᵛ P)
-           → ⟦ sndᵛ {S = St} P ⟧ᵛᵗ (sndᵛᴾ St P pP) ≈ᵐ sndᵐ ∘ᵐ ⟦ P ⟧ᵛᵗ pP
-sndᵛ-sound St (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
-sndᵛ-sound St ⦉ V , W ⦊           (pV , pW) = ≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _)
-sndᵛ-sound St (subV P (p |×|ₛ q)) pP        =
-    ∘ᵐ-congʳ (sndᵛ-sound St P pP)
+sndᵛ-sound : ∀ {Γ A B} → (𝕊 : State Γ) → (P : toCtx 𝕊 ⊢V⦂ A |×| B) → (pP : Paramᵛ P)
+           → ⟦ sndᵛ {𝕊 = 𝕊} P ⟧ᵛᵗ (sndᵛᴾ 𝕊 P pP) ≈ᵐ sndᵐ ∘ᵐ ⟦ P ⟧ᵛᵗ pP
+sndᵛ-sound 𝕊 (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
+sndᵛ-sound 𝕊 ⦉ V , W ⦊           (pV , pW) = ≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _)
+sndᵛ-sound 𝕊 (subV P (p |×|ₛ q)) pP        =
+    ∘ᵐ-congʳ (sndᵛ-sound 𝕊 P pP)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _))
   ∙ ∘ᵐ-assoc _ _ _
@@ -371,17 +371,17 @@ sndᵛ-sound St (subV P (p |×|ₛ q)) pP        =
 -- MATCH: destructing a pair is substituting its two projections
 -- (`C-subst₂-nat`), which denote its components.
 
-sound-MATCH : ∀ {Γ A B C} → (St : 𝕊 Γ) → (P : toCtx St ⊢V⦂ A |×| B)
-            → (M : toCtx St ∷ A ∷ B ⊢C⦂ C)
+sound-MATCH : ∀ {Γ A B C} → (𝕊 : State Γ) → (P : toCtx 𝕊 ⊢V⦂ A |×| B)
+            → (M : toCtx 𝕊 ∷ A ∷ B ⊢C⦂ C)
             → (pP : Paramᵛ P) → (pM : Paramᶜ M)
             → ⟦ match P `with M ⟧ᶜᵗ (pP , pM)
-            ≈ᵐ ⟦ (M [ split-[] ↦ V-rename wk-ren (sndᵛ {S = St} P) ]c)
-                   [ split-[] ↦ fstᵛ {S = St} P ]c ⟧ᶜᵗ
-                 (subᶜ₂ M (fstᵛ {S = St} P) (sndᵛ {S = St} P) pM (fstᵛᴾ St P pP) (sndᵛᴾ St P pP))
-sound-MATCH St P M pP pM =
-    ∘ᵐ-congʳ (⟨ ⟨ ≈ᵐ-refl , ≈ᵐ-sym (fstᵛ-sound St P pP) ⟩ᵐ-cong
-             , ≈ᵐ-sym (sndᵛ-sound St P pP) ⟩ᵐ-cong)
-  ∙ ≈ᵐ-sym (C-subst₂-nat M (fstᵛ {S = St} P) (sndᵛ {S = St} P) pM (fstᵛᴾ St P pP) (sndᵛᴾ St P pP))
+            ≈ᵐ ⟦ (M [ split-[] ↦ V-rename wk-ren (sndᵛ {𝕊 = 𝕊} P) ]c)
+                   [ split-[] ↦ fstᵛ {𝕊 = 𝕊} P ]c ⟧ᶜᵗ
+                 (subᶜ₂ M (fstᵛ {𝕊 = 𝕊} P) (sndᵛ {𝕊 = 𝕊} P) pM (fstᵛᴾ 𝕊 P pP) (sndᵛᴾ 𝕊 P pP))
+sound-MATCH 𝕊 P M pP pM =
+    ∘ᵐ-congʳ (⟨ ⟨ ≈ᵐ-refl , ≈ᵐ-sym (fstᵛ-sound 𝕊 P pP) ⟩ᵐ-cong
+             , ≈ᵐ-sym (sndᵛ-sound 𝕊 P pP) ⟩ᵐ-cong)
+  ∙ ≈ᵐ-sym (C-subst₂-nat M (fstᵛ {𝕊 = 𝕊} P) (sndᵛ {𝕊 = 𝕊} P) pM (fstᵛᴾ 𝕊 P pP) (sndᵛᴾ 𝕊 P pP))
 
 -- The decomposition of a list in a state context: the certificate it
 -- transports, and the list it denotes, which is the list itself.
@@ -391,12 +391,12 @@ subLᴾ : ∀ {Γ A A₁} → (p : A₁ <:ᵛ A) → (l : ListView Γ A₁)
 subLᴾ p (inj₁ tt)      _  = tt
 subLᴾ p (inj₂ (W , L)) pl = pl
 
-listᵛᴾ : ∀ {Γ A} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ list A)
-       → Paramᵛ V → Paramᵛ (unlistᵛ (listᵛ {S = St} V))
-listᵛᴾ St (var f x)            pV = ⊥-elim (list-not-in-toCtx x)
-listᵛᴾ St nil                  pV = tt
-listᵛᴾ St (cons V W)           pV = pV
-listᵛᴾ St (subV V (listₛ p))   pV = subLᴾ p (listᵛ V) (listᵛᴾ St V pV)
+listᵛᴾ : ∀ {Γ A} → (𝕊 : State Γ) → (V : toCtx 𝕊 ⊢V⦂ list A)
+       → Paramᵛ V → Paramᵛ (unlistᵛ (listᵛ {𝕊 = 𝕊} V))
+listᵛᴾ 𝕊 (var f x)            pV = ⊥-elim (list-not-in-toCtx x)
+listᵛᴾ 𝕊 nil                  pV = tt
+listᵛᴾ 𝕊 (cons V W)           pV = pV
+listᵛᴾ 𝕊 (subV V (listₛ p))   pV = subLᴾ p (listᵛ V) (listᵛᴾ 𝕊 V pV)
 
 subL-sound : ∀ {Γ A A₁} → (p : A₁ <:ᵛ A) → (l : ListView Γ A₁)
            → (pl : Paramᵛ (unlistᵛ l))
@@ -410,14 +410,14 @@ subL-sound p (inj₂ (W , L)) pl =
          ∙ ∘ᵐ-assoc _ _ _
          ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
 
-listᵛ-sound : ∀ {Γ A} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ list A) → (pV : Paramᵛ V)
-            → ⟦ unlistᵛ (listᵛ {S = St} V) ⟧ᵛᵗ (listᵛᴾ St V pV) ≈ᵐ ⟦ V ⟧ᵛᵗ pV
-listᵛ-sound St (var f x)            pV = ⊥-elim (list-not-in-toCtx x)
-listᵛ-sound St nil                  pV = ≈ᵐ-refl
-listᵛ-sound St (cons V W)           pV = ≈ᵐ-refl
-listᵛ-sound St (subV V (listₛ p))   pV =
-    subL-sound p (listᵛ V) (listᵛᴾ St V pV)
-  ∙ ∘ᵐ-congʳ (listᵛ-sound St V pV)
+listᵛ-sound : ∀ {Γ A} → (𝕊 : State Γ) → (V : toCtx 𝕊 ⊢V⦂ list A) → (pV : Paramᵛ V)
+            → ⟦ unlistᵛ (listᵛ {𝕊 = 𝕊} V) ⟧ᵛᵗ (listᵛᴾ 𝕊 V pV) ≈ᵐ ⟦ V ⟧ᵛᵗ pV
+listᵛ-sound 𝕊 (var f x)            pV = ⊥-elim (list-not-in-toCtx x)
+listᵛ-sound 𝕊 nil                  pV = ≈ᵐ-refl
+listᵛ-sound 𝕊 (cons V W)           pV = ≈ᵐ-refl
+listᵛ-sound 𝕊 (subV V (listₛ p))   pV =
+    subL-sound p (listᵛ V) (listᵛᴾ 𝕊 V pV)
+  ∙ ∘ᵐ-congʳ (listᵛ-sound 𝕊 V pV)
 
 -- The reducts of the list eliminators, and their certificates.
 
@@ -446,12 +446,12 @@ sub⊎ᴾ : ∀ {Γ A A₁ B B₁} → (p : A₁ <:ᵛ A) → (q : B₁ <:ᵛ B)
 sub⊎ᴾ p q (inj₁ W) pW = pW
 sub⊎ᴾ p q (inj₂ W) pW = pW
 
-injᵛᴾ : ∀ {Γ A B} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ A |+| B)
-      → Paramᵛ V → Paramᵛ (uninjᵛ (injᵛ {S = St} V))
-injᵛᴾ St (var f x)           pV = ⊥-elim (|+|-not-in-toCtx x)
-injᵛᴾ St (inl V)             pV = pV
-injᵛᴾ St (inr V)             pV = pV
-injᵛᴾ St (subV V (p |+|ₛ q)) pV = sub⊎ᴾ p q (injᵛ V) (injᵛᴾ St V pV)
+injᵛᴾ : ∀ {Γ A B} → (𝕊 : State Γ) → (V : toCtx 𝕊 ⊢V⦂ A |+| B)
+      → Paramᵛ V → Paramᵛ (uninjᵛ (injᵛ {𝕊 = 𝕊} V))
+injᵛᴾ 𝕊 (var f x)           pV = ⊥-elim (|+|-not-in-toCtx x)
+injᵛᴾ 𝕊 (inl V)             pV = pV
+injᵛᴾ 𝕊 (inr V)             pV = pV
+injᵛᴾ 𝕊 (subV V (p |+|ₛ q)) pV = sub⊎ᴾ p q (injᵛ V) (injᵛᴾ 𝕊 V pV)
 
 sub⊎-sound : ∀ {Γ A A₁ B B₁} → (p : A₁ <:ᵛ A) → (q : B₁ <:ᵛ B)
            → (s : (Γ ⊢V⦂ A₁) ⊎ (Γ ⊢V⦂ B₁)) → (ps : Paramᵛ (uninjᵛ s))
@@ -462,13 +462,13 @@ sub⊎-sound p q (inj₁ W) pW =
 sub⊎-sound p q (inj₂ W) pW =
   ≈ᵐ-sym (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ ([]ᵐ-inrᵐ _ _) ∙ ∘ᵐ-assoc _ _ _)
 
-injᵛ-sound : ∀ {Γ A B} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ A |+| B) → (pV : Paramᵛ V)
-           → ⟦ uninjᵛ (injᵛ {S = St} V) ⟧ᵛᵗ (injᵛᴾ St V pV) ≈ᵐ ⟦ V ⟧ᵛᵗ pV
-injᵛ-sound St (var f x)           pV = ⊥-elim (|+|-not-in-toCtx x)
-injᵛ-sound St (inl V)             pV = ≈ᵐ-refl
-injᵛ-sound St (inr V)             pV = ≈ᵐ-refl
-injᵛ-sound St (subV V (p |+|ₛ q)) pV =
-  sub⊎-sound p q (injᵛ V) (injᵛᴾ St V pV) ∙ ∘ᵐ-congʳ (injᵛ-sound St V pV)
+injᵛ-sound : ∀ {Γ A B} → (𝕊 : State Γ) → (V : toCtx 𝕊 ⊢V⦂ A |+| B) → (pV : Paramᵛ V)
+           → ⟦ uninjᵛ (injᵛ {𝕊 = 𝕊} V) ⟧ᵛᵗ (injᵛᴾ 𝕊 V pV) ≈ᵐ ⟦ V ⟧ᵛᵗ pV
+injᵛ-sound 𝕊 (var f x)           pV = ⊥-elim (|+|-not-in-toCtx x)
+injᵛ-sound 𝕊 (inl V)             pV = ≈ᵐ-refl
+injᵛ-sound 𝕊 (inr V)             pV = ≈ᵐ-refl
+injᵛ-sound 𝕊 (subV V (p |+|ₛ q)) pV =
+  sub⊎-sound p q (injᵛ V) (injᵛᴾ 𝕊 V pV) ∙ ∘ᵐ-congʳ (injᵛ-sound 𝕊 V pV)
 
 match+-reductᴾ : ∀ {Γ A B C} → (s : (Γ ⊢V⦂ A) ⊎ (Γ ⊢V⦂ B))
                → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
@@ -480,76 +480,76 @@ match+-reductᴾ (inj₂ W) M N pW pM pN = subᶜ N split-[] W pN pW
 -- CMP: a value of an eternal type denotes the point of its datum, at which
 -- the comparison morphism orders as the data are ordered.
 
-⌊⌋ᵈ-sound : ∀ {Γ A} → (St : 𝕊 Γ) → (et : Et A) → (V : toCtx St ⊢V⦂ A)
-          → (pV : Paramᵛ V) → ⟦ V ⟧ᵛᵗ pV ≈ᵐ ⌜ et ⌝ᵈ (⌊_⌋ᵈ {S = St} et V) ∘ᵐ terminalᵐ
-⌊⌋ᵈ-sound St et (var _ x) pV = ⊥-elim (eternal-not-in-toCtx et x)
-⌊⌋ᵈ-sound St et (subV V p) pV =
-    ∘ᵐ-congʳ (⌊⌋ᵈ-sound St (<:ᵛ-eternalˡ p et) V pV)
+⌊⌋ᵈ-sound : ∀ {Γ A} → (𝕊 : State Γ) → (et : Et A) → (V : toCtx 𝕊 ⊢V⦂ A)
+          → (pV : Paramᵛ V) → ⟦ V ⟧ᵛᵗ pV ≈ᵐ ⌜ et ⌝ᵈ (⌊_⌋ᵈ {𝕊 = 𝕊} et V) ∘ᵐ terminalᵐ
+⌊⌋ᵈ-sound 𝕊 et (var _ x) pV = ⊥-elim (eternal-not-in-toCtx et x)
+⌊⌋ᵈ-sound 𝕊 et (subV V p) pV =
+    ∘ᵐ-congʳ (⌊⌋ᵈ-sound 𝕊 (<:ᵛ-eternalˡ p et) V pV)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (⌜⌝ᵈ-coe p et _)
-⌊⌋ᵈ-sound St (Baseₑ _) (const c) pV = ≈ᵐ-refl
-⌊⌋ᵈ-sound St unitₑ ⋆ pV = ≈ᵐ-sym terminalᵐ-unique
-⌊⌋ᵈ-sound St boolₑ true pV = ≈ᵐ-refl
-⌊⌋ᵈ-sound St boolₑ false pV = ≈ᵐ-refl
-⌊⌋ᵈ-sound St natₑ zero pV = ≈ᵐ-refl
-⌊⌋ᵈ-sound St natₑ (succ V) pV =
-  ∘ᵐ-congʳ (⌊⌋ᵈ-sound St natₑ V pV) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-⌊⌋ᵈ-sound St (et₁ |×|ₑ et₂) ⦉ V , W ⦊ (pV , pW) =
-  ⟨ ⌊⌋ᵈ-sound St et₁ V pV , ⌊⌋ᵈ-sound St et₂ W pW ⟩ᵐ-cong ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)
-⌊⌋ᵈ-sound St (et₁ |+|ₑ et₂) (inl V) pV =
-  ∘ᵐ-congʳ (⌊⌋ᵈ-sound St et₁ V pV) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-⌊⌋ᵈ-sound St (et₁ |+|ₑ et₂) (inr V) pV =
-  ∘ᵐ-congʳ (⌊⌋ᵈ-sound St et₂ V pV) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-⌊⌋ᵈ-sound St (listₑ et) nil pV = ≈ᵐ-refl
-⌊⌋ᵈ-sound St (listₑ et) (cons V W) (pV , pW) =
-    ∘ᵐ-congʳ (⟨ ⌊⌋ᵈ-sound St et V pV , ⌊⌋ᵈ-sound St (listₑ et) W pW ⟩ᵐ-cong
+⌊⌋ᵈ-sound 𝕊 (Baseₑ _) (const B c) pV = ≈ᵐ-refl
+⌊⌋ᵈ-sound 𝕊 unitₑ ⋆ pV = ≈ᵐ-sym terminalᵐ-unique
+⌊⌋ᵈ-sound 𝕊 boolₑ true pV = ≈ᵐ-refl
+⌊⌋ᵈ-sound 𝕊 boolₑ false pV = ≈ᵐ-refl
+⌊⌋ᵈ-sound 𝕊 natₑ zero pV = ≈ᵐ-refl
+⌊⌋ᵈ-sound 𝕊 natₑ (succ V) pV =
+  ∘ᵐ-congʳ (⌊⌋ᵈ-sound 𝕊 natₑ V pV) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+⌊⌋ᵈ-sound 𝕊 (et₁ |×|ₑ et₂) ⦉ V , W ⦊ (pV , pW) =
+  ⟨ ⌊⌋ᵈ-sound 𝕊 et₁ V pV , ⌊⌋ᵈ-sound 𝕊 et₂ W pW ⟩ᵐ-cong ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)
+⌊⌋ᵈ-sound 𝕊 (et₁ |+|ₑ et₂) (inl V) pV =
+  ∘ᵐ-congʳ (⌊⌋ᵈ-sound 𝕊 et₁ V pV) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+⌊⌋ᵈ-sound 𝕊 (et₁ |+|ₑ et₂) (inr V) pV =
+  ∘ᵐ-congʳ (⌊⌋ᵈ-sound 𝕊 et₂ V pV) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+⌊⌋ᵈ-sound 𝕊 (listₑ et) nil pV = ≈ᵐ-refl
+⌊⌋ᵈ-sound 𝕊 (listₑ et) (cons V W) (pV , pW) =
+    ∘ᵐ-congʳ (⟨ ⌊⌋ᵈ-sound 𝕊 et V pV , ⌊⌋ᵈ-sound 𝕊 (listₑ et) W pW ⟩ᵐ-cong
               ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
-cmp-reductᴾ : ∀ {Γ A} → (St : 𝕊 Γ) → (⋈ : Cmp) → (V W : toCtx St ⊢V⦂ A) → (et : Et A)
-            → Paramᶜ (cmp-reduct {S = St} ⋈ V W et)
-cmp-reductᴾ St ⋈ V W et =
-  param-⌈⌉ boolₑ (holds ⋈ (compareᵈ et (⌊_⌋ᵈ {S = St} et V) (⌊_⌋ᵈ {S = St} et W)))
+cmp-reductᴾ : ∀ {Γ A} → (𝕊 : State Γ) → (⋈ : Cmp) → (V W : toCtx 𝕊 ⊢V⦂ A) → (et : Et A)
+            → Paramᶜ (cmp-reduct {𝕊 = 𝕊} ⋈ V W et)
+cmp-reductᴾ 𝕊 ⋈ V W et =
+  param-⌈⌉ boolₑ (holds ⋈ (compareᵈ et (⌊_⌋ᵈ {𝕊 = 𝕊} et V) (⌊_⌋ᵈ {𝕊 = 𝕊} et W)))
 
-sound-CMP : ∀ {Γ A} → (St : 𝕊 Γ) → (⋈ : Cmp) → (V W : toCtx St ⊢V⦂ A) → (et : Et A)
+sound-CMP : ∀ {Γ A} → (𝕊 : State Γ) → (⋈ : Cmp) → (V W : toCtx 𝕊 ⊢V⦂ A) → (et : Et A)
           → (pV : Paramᵛ V) → (pW : Paramᵛ W)
           → ⟦ cmp ⋈ V W et ⟧ᶜᵗ (pV , pW)
-          ≈ᵐ ⟦ cmp-reduct {S = St} ⋈ V W et ⟧ᶜᵗ (cmp-reductᴾ St ⋈ V W et)
-sound-CMP St ⋈ V W et pV pW =
-  sound-cmp ⋈ et V W pV pW _ _ (⌊⌋ᵈ-sound St et V pV) (⌊⌋ᵈ-sound St et W pW)
+          ≈ᵐ ⟦ cmp-reduct {𝕊 = 𝕊} ⋈ V W et ⟧ᶜᵗ (cmp-reductᴾ 𝕊 ⋈ V W et)
+sound-CMP 𝕊 ⋈ V W et pV pW =
+  sound-cmp ⋈ et V W pV pW _ _ (⌊⌋ᵈ-sound 𝕊 et V pV) (⌊⌋ᵈ-sound 𝕊 et W pW)
 
 -- MATCHL / RECL: the scrutinee denotes its decomposition, at which the beta
 -- laws apply.
 
-sound-MATCHL : ∀ {Γ A C} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ list A)
-             → (M : toCtx St ⊢C⦂ C) → (N : toCtx St ∷ A ∷ list A ⊢C⦂ C)
+sound-MATCHL : ∀ {Γ A C} → (𝕊 : State Γ) → (V : toCtx 𝕊 ⊢V⦂ list A)
+             → (M : toCtx 𝕊 ⊢C⦂ C) → (N : toCtx 𝕊 ∷ A ∷ list A ⊢C⦂ C)
              → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
              → ⟦ matchL V `nil M `cons N ⟧ᶜᵗ (pV , pM , pN)
-             ≈ᵐ ⟦ matchL-reduct (listᵛ {S = St} V) M N ⟧ᶜᵗ
-                  (matchL-reductᴾ (listᵛ V) M N (listᵛᴾ St V pV) pM pN)
-sound-MATCHL St V M N pV pM pN =
-    matchLᵐ-cong (≈ᵐ-sym (listᵛ-sound St V pV)) ≈ᵐ-refl ≈ᵐ-refl
-  ∙ go (listᵛ V) (listᵛᴾ St V pV)
+             ≈ᵐ ⟦ matchL-reduct (listᵛ {𝕊 = 𝕊} V) M N ⟧ᶜᵗ
+                  (matchL-reductᴾ (listᵛ V) M N (listᵛᴾ 𝕊 V pV) pM pN)
+sound-MATCHL 𝕊 V M N pV pM pN =
+    matchLᵐ-cong (≈ᵐ-sym (listᵛ-sound 𝕊 V pV)) ≈ᵐ-refl ≈ᵐ-refl
+  ∙ go (listᵛ V) (listᵛᴾ 𝕊 V pV)
   where
-    go : (l : ListView (toCtx St) _) → (pl : Paramᵛ (unlistᵛ l))
+    go : (l : ListView (toCtx 𝕊) _) → (pl : Paramᵛ (unlistᵛ l))
        → ⟦ matchL (unlistᵛ l) `nil M `cons N ⟧ᶜᵗ (pl , pM , pN)
        ≈ᵐ ⟦ matchL-reduct l M N ⟧ᶜᵗ (matchL-reductᴾ l M N pl pM pN)
     go (inj₁ tt)      pl        = sound-MATCHL-NIL M N pM pN
     go (inj₂ (W , L)) (pW , pL) = sound-MATCHL-CONS W L M N pW pL pM pN
 
-sound-RECL : ∀ {Γ A B ε} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ list A)
-           → (M : toCtx St ⊢C⦂ B ! ε)
-           → (N : (toCtx St ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
+sound-RECL : ∀ {Γ A B ε} → (𝕊 : State Γ) → (V : toCtx 𝕊 ⊢V⦂ list A)
+           → (M : toCtx 𝕊 ⊢C⦂ B ! ε)
+           → (N : (toCtx 𝕊 ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
            → (p : ε ·ₑ ε ≾ₑ ε)
            → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
            → ⟦ recL V M N p ⟧ᶜᵗ (pV , pM , pN)
-           ≈ᵐ ⟦ recL-reduct (listᵛ {S = St} V) M N p ⟧ᶜᵗ
-                (recL-reductᴾ (listᵛ V) M N p (listᵛᴾ St V pV) pM pN)
-sound-RECL St V M N p pV pM pN =
-    ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ≈ᵐ-sym (listᵛ-sound St V pV) ⟩ᵐ-cong
-  ∙ go (listᵛ V) (listᵛᴾ St V pV)
+           ≈ᵐ ⟦ recL-reduct (listᵛ {𝕊 = 𝕊} V) M N p ⟧ᶜᵗ
+                (recL-reductᴾ (listᵛ V) M N p (listᵛᴾ 𝕊 V pV) pM pN)
+sound-RECL 𝕊 V M N p pV pM pN =
+    ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ≈ᵐ-sym (listᵛ-sound 𝕊 V pV) ⟩ᵐ-cong
+  ∙ go (listᵛ V) (listᵛᴾ 𝕊 V pV)
   where
-    go : (l : ListView (toCtx St) _) → (pl : Paramᵛ (unlistᵛ l))
+    go : (l : ListView (toCtx 𝕊) _) → (pl : Paramᵛ (unlistᵛ l))
        → ⟦ recL (unlistᵛ l) M N p ⟧ᶜᵗ (pl , pM , pN)
        ≈ᵐ ⟦ recL-reduct l M N p ⟧ᶜᵗ (recL-reductᴾ l M N p pl pM pN)
     go (inj₁ tt)      pl        = sound-RECL-NIL M N p pM pN
@@ -558,17 +558,17 @@ sound-RECL St V M N p pV pM pN =
 -- MATCH+: the scrutinee denotes its decomposition, at which the coproduct's
 -- beta laws apply.
 
-sound-MATCH+ : ∀ {Γ A B C} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ A |+| B)
-             → (M : toCtx St ∷ A ⊢C⦂ C) → (N : toCtx St ∷ B ⊢C⦂ C)
+sound-MATCH+ : ∀ {Γ A B C} → (𝕊 : State Γ) → (V : toCtx 𝕊 ⊢V⦂ A |+| B)
+             → (M : toCtx 𝕊 ∷ A ⊢C⦂ C) → (N : toCtx 𝕊 ∷ B ⊢C⦂ C)
              → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
              → ⟦ match+ V `inl M `inr N ⟧ᶜᵗ (pV , pM , pN)
-             ≈ᵐ ⟦ match+-reduct (injᵛ {S = St} V) M N ⟧ᶜᵗ
-                  (match+-reductᴾ (injᵛ V) M N (injᵛᴾ St V pV) pM pN)
-sound-MATCH+ St V M N pV pM pN =
-    match+ᵐ-cong (≈ᵐ-sym (injᵛ-sound St V pV)) ≈ᵐ-refl ≈ᵐ-refl
-  ∙ go (injᵛ V) (injᵛᴾ St V pV)
+             ≈ᵐ ⟦ match+-reduct (injᵛ {𝕊 = 𝕊} V) M N ⟧ᶜᵗ
+                  (match+-reductᴾ (injᵛ V) M N (injᵛᴾ 𝕊 V pV) pM pN)
+sound-MATCH+ 𝕊 V M N pV pM pN =
+    match+ᵐ-cong (≈ᵐ-sym (injᵛ-sound 𝕊 V pV)) ≈ᵐ-refl ≈ᵐ-refl
+  ∙ go (injᵛ V) (injᵛᴾ 𝕊 V pV)
   where
-    go : (s : (toCtx St ⊢V⦂ _) ⊎ (toCtx St ⊢V⦂ _)) → (ps : Paramᵛ (uninjᵛ s))
+    go : (s : (toCtx 𝕊 ⊢V⦂ _) ⊎ (toCtx 𝕊 ⊢V⦂ _)) → (ps : Paramᵛ (uninjᵛ s))
        → ⟦ match+ uninjᵛ s `inl M `inr N ⟧ᶜᵗ (ps , pM , pN)
        ≈ᵐ ⟦ match+-reduct s M N ⟧ᶜᵗ (match+-reductᴾ s M N ps pM pN)
     go (inj₁ W) pW = match+ᵐ-inl _ _ _ ∙ ≈ᵐ-sym (C-subst-nat M split-[] W pM pW)
@@ -578,13 +578,13 @@ sound-MATCH+ St V M N pV pM pN =
 -- so the two configurations' denotations coincide outright. The stored value
 -- is the boxed one reindexed along `[] ++ᶜ Γ ≡ Γ`, which cancels.
 
-sound-BOX : ∀ {A B ρ ε} → (St : 𝕊 []) → (V : toCtx St ⟨ ρ ⟩ ⊢V⦂ A)
-          → (M : toCtx St ∷ [ ρ ] A ⊢C⦂ B ! ε)
-          → (pSt : Paramˢ St) → (pV : Paramᵛ V) → (pM : Paramᶜ M)
-          → ⟦ box _ V M ⟧ᶜᵗ (pV , pM) ∘ᵐ ⟦ St ⟧ˢ pSt
-          ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ∷ₛ V-rename (eq-ren (sym ++ᶜ-identityˡ)) V ⟧ˢ
+sound-BOX : ∀ {A B ρ ε} → (𝕊 : State []) → (V : toCtx 𝕊 ⟨ ρ ⟩ ⊢V⦂ A)
+          → (M : toCtx 𝕊 ∷ [ ρ ] A ⊢C⦂ B ! ε)
+          → (pSt : Paramˢ 𝕊) → (pV : Paramᵛ V) → (pM : Paramᶜ M)
+          → ⟦ box _ V M ⟧ᶜᵗ (pV , pM) ∘ᵐ ⟦ 𝕊 ⟧ˢ pSt
+          ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ∷ₛ V-rename (eq-ren (sym ++ᶜ-identityˡ)) V ⟧ˢ
                             (pSt , renᵛ (eq-ren (sym ++ᶜ-identityˡ)) V pV)
-sound-BOX {ρ = ρ} St V M pSt pV pM =
+sound-BOX {ρ = ρ} 𝕊 V M pSt pV pM =
   ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (∘ᵐ-congʳ (∘ᵐ-congˡ
       (⟨ ≈ᵐ-refl {f = idᵐ}
@@ -592,15 +592,15 @@ sound-BOX {ρ = ρ} St V M pSt pV pM =
   where
     -- the value the state stores is `V` reindexed along `[] ++ᶜ Γ ≡ Γ`,
     -- and the state's interpretation reindexes it straight back
-    stored≈V : ⟦ V-rename (eq-ren (sym (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))) V ⟧ᵛᵗ
+    stored≈V : ⟦ V-rename (eq-ren (sym (++ᶜ-identityˡ {toCtx 𝕊 ⟨ ρ ⟩}))) V ⟧ᵛᵗ
                  (renᵛ (eq-ren (sym ++ᶜ-identityˡ)) V pV)
-                 ∘ᵐ ⟦ eq-ren (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}) ⟧ʳ
+                 ∘ᵐ ⟦ eq-ren (++ᶜ-identityˡ {toCtx 𝕊 ⟨ ρ ⟩}) ⟧ʳ
              ≈ᵐ ⟦ V ⟧ᵛᵗ pV
     stored≈V =
       ≈ᵐ-trans (∘ᵐ-congˡ (V-rename-nat
-                            (eq-ren (sym (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))) V pV))
+                            (eq-ren (sym (++ᶜ-identityˡ {toCtx 𝕊 ⟨ ρ ⟩}))) V pV))
       (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-      (≈ᵐ-trans (∘ᵐ-congʳ (eq-ren-inv (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩})))
+      (≈ᵐ-trans (∘ᵐ-congʳ (eq-ren-inv (++ᶜ-identityˡ {toCtx 𝕊 ⟨ ρ ⟩})))
                 (∘ᵐ-identityʳ _)))
 
 -- Applying a reindexed abstraction: the codomain half of the reindexing comes
@@ -779,32 +779,32 @@ coe-cancel e q =
 --
 -- The only rule that advances time, and the only one whose history grows. The
 -- state's interpretation passes under the new lock
--- (`⟦ St ⟨ ρ ⟩ₛ ⟧ˢ = ⟨ ρ ⟩ᶠ ⟦ St ⟧ˢ`), and `delayᵀ`'s algebraicity
+-- (`⟦ 𝕊 ⟨ ρ ⟩ₛ ⟧ˢ = ⟨ ρ ⟩ᶠ ⟦ 𝕊 ⟧ˢ`), and `delayᵀ`'s algebraicity
 -- re-associates the transition's `delayᵀ` out.
 
-sound-DELAY : ∀ {A ε} → (τ : 𝔻) → (St : 𝕊 [])
-            → (M : toCtx St ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε)
+sound-DELAY : ∀ {A ε} → (τ : 𝔻) → (𝕊 : State [])
+            → (M : toCtx 𝕊 ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε)
             → (q : (ιₑ τ ·ₑ 𝟏ₑ) ·ₑ ε ≾ₑ ιₑ τ ·ₑ ε)
-            → (pSt : Paramˢ St) → (pM : Paramᶜ M)
-            → ⟦ delay τ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt
-            ≈ᵐ T-≤ q ∘ᵐ ((⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟨ ιᵣ τ ⟩ₛ ⟧ˢ pSt)
+            → (pSt : Paramˢ 𝕊) → (pM : Paramᶜ M)
+            → ⟦ delay τ M ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟧ˢ pSt
+            ≈ᵐ T-≤ q ∘ᵐ ((⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟨ ιᵣ τ ⟩ₛ ⟧ˢ pSt)
                           ⋄ (delayᵀ τ ∘ᵐ [ ιᵣ τ ]ᶠ ηᵀ ∘ᵐ η⊣))
-sound-DELAY {ε = ε} τ St M q pSt pM =
+sound-DELAY {ε = ε} τ 𝕊 M q pSt pM =
   lhs≈ ∙ ≈ᵐ-sym (∘ᵐ-congʳ rhs≈ ∙ cancel)
   where
-    g : ⟨ ιᵣ τ ⟩ᵒ ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ _ ε
-    g = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟨ ιᵣ τ ⟩ₛ ⟧ˢ pSt
+    g : ⟨ ιᵣ τ ⟩ᵒ ⟦ hist 𝕊 ⟧ᶜᵗˣ →ᵐ Tᵒ _ ε
+    g = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟨ ιᵣ τ ⟩ₛ ⟧ˢ pSt
 
     -- the common normal form: delay the whole configuration
-    nf : ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ _ (ιₑ τ ·ₑ ε)
+    nf : ⟦ hist 𝕊 ⟧ᶜᵗˣ →ᵐ Tᵒ _ (ιₑ τ ·ₑ ε)
     nf = delayᵀ τ ∘ᵐ [ ιᵣ τ ]ᶠ g ∘ᵐ η⊣
 
     -- the source: `η⊣`-naturality absorbs the state into the boxed body
-    lhs≈ : ⟦ delay τ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt ≈ᵐ nf
+    lhs≈ : ⟦ delay τ M ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟧ˢ pSt ≈ᵐ nf
     lhs≈ =
       ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat (⟦ St ⟧ˢ pSt))))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat (⟦ 𝕊 ⟧ˢ pSt))))
       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
       ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
 

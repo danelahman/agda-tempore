@@ -111,9 +111,9 @@ contract-busy = [ settling-busy , within-six ]⟨ perform read ∷ᴸ delay (# 1
 
 settled : [] ⊢C⦂ unit ! _
 settled =
-  box contract (const 42)    -- ∷ [ contract ] Reading
-    (perform read ⋆          -- ⟨ opTime read ⟩ ∷ Reading
-      (delay (# 1)           -- ⟨ ι 1 ⟩
+  box contract (const reading 42) -- ∷ [ contract ] Reading
+    (perform read ⋆               -- ⟨ opTime read ⟩ ∷ Reading
+      (delay (# 1)                -- ⟨ ι 1 ⟩
         (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) _ (<:ᵛ-refl _)
                              -- ∷ Reading
           (perform write here (return ⋆)))))

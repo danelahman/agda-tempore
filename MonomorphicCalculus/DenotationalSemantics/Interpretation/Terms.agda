@@ -323,19 +323,19 @@ handler-famᵗ-reindex g h h' eh n n' en p =
 mutual
 
   Paramᵛ : ∀ {Γ A} → Γ ⊢V⦂ A → Set
-  Paramᵛ (var f x)  = ⊤
-  Paramᵛ (const c)  = ⊤
-  Paramᵛ ⋆          = ⊤
-  Paramᵛ true       = ⊤
-  Paramᵛ false      = ⊤
-  Paramᵛ zero       = ⊤
-  Paramᵛ (succ V)   = Paramᵛ V
-  Paramᵛ nil        = ⊤
-  Paramᵛ (cons V W) = Paramᵛ V × Paramᵛ W
-  Paramᵛ ⦉ V , W ⦊  = Paramᵛ V × Paramᵛ W
-  Paramᵛ (inl V)    = Paramᵛ V
-  Paramᵛ (inr V)    = Paramᵛ V
-  Paramᵛ (fun M)    = Paramᶜ M
+  Paramᵛ (var f x)   = ⊤
+  Paramᵛ (const B c) = ⊤
+  Paramᵛ ⋆           = ⊤
+  Paramᵛ true        = ⊤
+  Paramᵛ false       = ⊤
+  Paramᵛ zero        = ⊤
+  Paramᵛ (succ V)    = Paramᵛ V
+  Paramᵛ nil         = ⊤
+  Paramᵛ (cons V W)  = Paramᵛ V × Paramᵛ W
+  Paramᵛ ⦉ V , W ⦊   = Paramᵛ V × Paramᵛ W
+  Paramᵛ (inl V)     = Paramᵛ V
+  Paramᵛ (inr V)     = Paramᵛ V
+  Paramᵛ (fun M)     = Paramᶜ M
   -- the return clause, every operation clause, and the clauses' uniformity in
   -- the residual grade
   Paramᵛ {Γ} (handler {B = B} N H) =
@@ -379,19 +379,19 @@ mutual
                ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' ⟧ᶜᵗ (pH op ε₁'')
 
   ⟦_⟧ᵛᵗ : ∀ {Γ A} → (V : Γ ⊢V⦂ A) → Paramᵛ V → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
-  ⟦ var f x  ⟧ᵛᵗ _ = var-morphism f x
-  ⟦ const c  ⟧ᵛᵗ _ = ⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ
-  ⟦ ⋆        ⟧ᵛᵗ _ = terminalᵐ
-  ⟦ true     ⟧ᵛᵗ _ = trueᵐ ∘ᵐ terminalᵐ
-  ⟦ false    ⟧ᵛᵗ _ = falseᵐ ∘ᵐ terminalᵐ
-  ⟦ zero     ⟧ᵛᵗ _ = zeroᵐ ∘ᵐ terminalᵐ
-  ⟦ succ V   ⟧ᵛᵗ pV = succᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
-  ⟦ nil      ⟧ᵛᵗ _ = nilᵐ ∘ᵐ terminalᵐ
-  ⟦ cons V W ⟧ᵛᵗ (pV , pW) = consᵐ ∘ᵐ ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
+  ⟦ var f x   ⟧ᵛᵗ _ = var-morphism f x
+  ⟦ const B c ⟧ᵛᵗ _ = ⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ
+  ⟦ ⋆         ⟧ᵛᵗ _ = terminalᵐ
+  ⟦ true      ⟧ᵛᵗ _ = trueᵐ ∘ᵐ terminalᵐ
+  ⟦ false     ⟧ᵛᵗ _ = falseᵐ ∘ᵐ terminalᵐ
+  ⟦ zero      ⟧ᵛᵗ _ = zeroᵐ ∘ᵐ terminalᵐ
+  ⟦ succ V    ⟧ᵛᵗ pV = succᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
+  ⟦ nil       ⟧ᵛᵗ _ = nilᵐ ∘ᵐ terminalᵐ
+  ⟦ cons V W  ⟧ᵛᵗ (pV , pW) = consᵐ ∘ᵐ ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
   ⟦ ⦉ V , W ⦊ ⟧ᵛᵗ (pV , pW) = ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
-  ⟦ inl V    ⟧ᵛᵗ pV = inlᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
-  ⟦ inr V    ⟧ᵛᵗ pV = inrᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
-  ⟦ fun M    ⟧ᵛᵗ pM = curryᵐ (⟦ M ⟧ᶜᵗ pM)
+  ⟦ inl V     ⟧ᵛᵗ pV = inlᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
+  ⟦ inr V     ⟧ᵛᵗ pV = inrᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
+  ⟦ fun M     ⟧ᵛᵗ pM = curryᵐ (⟦ M ⟧ᶜᵗ pM)
   ⟦ handler N H ⟧ᵛᵗ (pN , pH , uH) =
     curryʰ (handler-famᵗ (⟦ H ⟧ʰᵗ pH uH) (⟦ N ⟧ᶜᵗ pN))
            (handler-famᵗ-nat (⟦ H ⟧ʰᵗ pH uH) (⟦ N ⟧ᶜᵗ pN))

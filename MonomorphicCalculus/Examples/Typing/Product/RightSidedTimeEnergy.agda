@@ -137,7 +137,7 @@ calibration = ([0, 10 ] , [0, 6 ])
 
 claim-after-idling : [] ⊢C⦂ unit ! ([0, 14 ] , [0, 5 ])
 claim-after-idling =
-  box calibration (const 42)         -- ∷ [ calibration ] Reading
+  box calibration (const reading 42) -- ∷ [ calibration ] Reading
     (delay 8                         -- ⟨ ([0, 8 ] , [0, 0 ]) ⟩
       (unbox (Tl-⟨⟩ Hd) (≤! , ≤!) (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -147,7 +147,7 @@ claim-after-idling =
 
 claim-after-relaying : [] ⊢C⦂ unit ! ([0, 10 ] , [0, 8 ])
 claim-after-relaying =
-  box calibration (const 42)         -- ∷ [ calibration ] Reading
+  box calibration (const reading 42) -- ∷ [ calibration ] Reading
     (perform read ⋆                  -- ⟨ ([0, 1 ] , [0, 1 ]) ⟩ ∷ Reading
       (perform send here             -- ⟨ ([0, 6 ] , [0, 5 ]) ⟩ ∷ unit
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (≤! , ≤!) (<:ᵛ-refl _)

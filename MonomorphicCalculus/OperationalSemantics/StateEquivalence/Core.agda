@@ -44,23 +44,23 @@ open import MonomorphicCalculus.Syntax.Substitution.Equivalence  Spec
 
 mutual
 
-  data _≐ˢ_ : 𝕊 [] → 𝕊 [] → Set where
+  data _≐ˢ_ : State [] → State [] → Set where
 
     ∅-≐ˢ  : ∅ ≐ˢ ∅
 
-    ⟨⟩-≐ˢ : ∀ {St St'} → (ρ : R) → (e : St ≐ˢ St')
-          → (St ⟨ ρ ⟩ₛ) ≐ˢ (St' ⟨ ρ ⟩ₛ)
+    ⟨⟩-≐ˢ : ∀ {𝕊 𝕊'} → (ρ : R) → (e : 𝕊 ≐ˢ 𝕊')
+          → (𝕊 ⟨ ρ ⟩ₛ) ≐ˢ (𝕊' ⟨ ρ ⟩ₛ)
 
-    ∷-≐ˢ  : ∀ {A ρ St St'}
-          → {V  : ([] ++ᶜ toCtx St  ⟨ ρ ⟩) ⊢V⦂ A}
-          → {V' : ([] ++ᶜ toCtx St' ⟨ ρ ⟩) ⊢V⦂ A}
-          → (e : St ≐ˢ St')
+    ∷-≐ˢ  : ∀ {A ρ 𝕊 𝕊'}
+          → {V  : ([] ++ᶜ toCtx 𝕊  ⟨ ρ ⟩) ⊢V⦂ A}
+          → {V' : ([] ++ᶜ toCtx 𝕊' ⟨ ρ ⟩) ⊢V⦂ A}
+          → (e : 𝕊 ≐ˢ 𝕊')
           → V ≡ castᵛ (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩) (sym (toCtx-≐ˢ e))) V'
-          → (St ∷ₛ V) ≐ˢ (St' ∷ₛ V')
+          → (𝕊 ∷ₛ V) ≐ˢ (𝕊' ∷ₛ V')
 
   -- Related states have the same context: `toCtx` reads the skeleton only.
 
-  toCtx-≐ˢ : ∀ {St St'} → St ≐ˢ St' → toCtx St ≡ toCtx St'
+  toCtx-≐ˢ : ∀ {𝕊 𝕊'} → 𝕊 ≐ˢ 𝕊' → toCtx 𝕊 ≡ toCtx 𝕊'
   toCtx-≐ˢ ∅-≐ˢ                = refl
   toCtx-≐ˢ (⟨⟩-≐ˢ ρ e)          = cong (_⟨ ρ ⟩) (toCtx-≐ˢ e)
   toCtx-≐ˢ (∷-≐ˢ {A} {ρ} e eV) = cong (_∷ [ ρ ] A) (toCtx-≐ˢ e)
@@ -69,19 +69,19 @@ mutual
 
 mutual
 
-  ≐ˢ-refl : (St : 𝕊 []) → St ≐ˢ St
+  ≐ˢ-refl : (𝕊 : State []) → 𝕊 ≐ˢ 𝕊
   ≐ˢ-refl ∅           = ∅-≐ˢ
-  ≐ˢ-refl (St ⟨ ρ ⟩ₛ)  = ⟨⟩-≐ˢ ρ (≐ˢ-refl St)
-  ≐ˢ-refl (St ∷ₛ V)   =
-    ∷-≐ˢ (≐ˢ-refl St)
+  ≐ˢ-refl (𝕊 ⟨ ρ ⟩ₛ)   = ⟨⟩-≐ˢ ρ (≐ˢ-refl 𝕊)
+  ≐ˢ-refl (𝕊 ∷ₛ V)    =
+    ∷-≐ˢ (≐ˢ-refl 𝕊)
       (subst (λ e → V ≡ castᵛ (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ _ ⟩) (sym e)) V)
-             (sym (toCtx-≐ˢ-refl St)) (refl {x = V}))
+             (sym (toCtx-≐ˢ-refl 𝕊)) (refl {x = V}))
 
-  toCtx-≐ˢ-refl : (St : 𝕊 []) → toCtx-≐ˢ (≐ˢ-refl St) ≡ refl
+  toCtx-≐ˢ-refl : (𝕊 : State []) → toCtx-≐ˢ (≐ˢ-refl 𝕊) ≡ refl
   toCtx-≐ˢ-refl ∅          = refl
-  toCtx-≐ˢ-refl (St ⟨ ρ ⟩ₛ) = cong (cong (_⟨ ρ ⟩)) (toCtx-≐ˢ-refl St)
-  toCtx-≐ˢ-refl (_∷ₛ_ {A} {ρ} St V) =
-    cong (cong (_∷ [ ρ ] A)) (toCtx-≐ˢ-refl St)
+  toCtx-≐ˢ-refl (𝕊 ⟨ ρ ⟩ₛ) = cong (cong (_⟨ ρ ⟩)) (toCtx-≐ˢ-refl 𝕊)
+  toCtx-≐ˢ-refl (_∷ₛ_ {A} {ρ} 𝕊 V) =
+    cong (cong (_∷ [ ρ ] A)) (toCtx-≐ˢ-refl 𝕊)
 
 -- Shifting a cast across the relation, and symmetry of `_≐ˢ_`. Symmetry is
 -- needed because `VRed`'s Kripke clauses have to replay an extension of the
@@ -93,7 +93,7 @@ mutual
 ≡-shift refl e' {V} {W} eV
   rewrite uip {p = e'} {q = refl} = eV
 
-≐ˢ-sym : ∀ {St St' : 𝕊 []} → St ≐ˢ St' → St' ≐ˢ St
+≐ˢ-sym : ∀ {𝕊 𝕊' : State []} → 𝕊 ≐ˢ 𝕊' → 𝕊' ≐ˢ 𝕊
 ≐ˢ-sym ∅-≐ˢ         = ∅-≐ˢ
 ≐ˢ-sym (⟨⟩-≐ˢ ρ e)   = ⟨⟩-≐ˢ ρ (≐ˢ-sym e)
 ≐ˢ-sym (∷-≐ˢ {A = A} {ρ = ρ} e eV) =
@@ -367,8 +367,8 @@ cast-app-reduct refl M' W' = refl
 -- The two projections commute with a context equality: a one-clause
 -- induction on the value, the variable clause being absurd.
 
-fstᵛ-cast : ∀ {A B} {St St' : 𝕊 []} → (e : toCtx St ≡ toCtx St')
-          → (V : toCtx St ⊢V⦂ A |×| B)
+fstᵛ-cast : ∀ {A B} {𝕊 𝕊' : State []} → (e : toCtx 𝕊 ≡ toCtx 𝕊')
+          → (V : toCtx 𝕊 ⊢V⦂ A |×| B)
           → fstᵛ (castᵛ e V) ≡ castᵛ e (fstᵛ V)
 fstᵛ-cast e (var _ x)           = ⊥-elim (⦉⦊-not-in-toCtx x)
 fstᵛ-cast e ⦉ V , W ⦊           = cong fstᵛ (cast-pair e {V} {W})
@@ -377,8 +377,8 @@ fstᵛ-cast e (subV V (p |×|ₛ _)) =
         (trans (cong (λ z → subV z p) (fstᵛ-cast e V))
                (sym (cast-subV e)))
 
-sndᵛ-cast : ∀ {A B} {St St' : 𝕊 []} → (e : toCtx St ≡ toCtx St')
-          → (V : toCtx St ⊢V⦂ A |×| B)
+sndᵛ-cast : ∀ {A B} {𝕊 𝕊' : State []} → (e : toCtx 𝕊 ≡ toCtx 𝕊')
+          → (V : toCtx 𝕊 ⊢V⦂ A |×| B)
           → sndᵛ (castᵛ e V) ≡ castᵛ e (sndᵛ V)
 sndᵛ-cast e (var _ x)           = ⊥-elim (⦉⦊-not-in-toCtx x)
 sndᵛ-cast e ⦉ V , W ⦊           = cong sndᵛ (cast-pair e {V} {W})
@@ -393,41 +393,41 @@ sndᵛ-cast e (subV V (_ |×|ₛ q)) =
 cast-closed : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (V : ∀ {Δ} → Δ ⊢V⦂ A) → castᵛ e V ≡ V
 cast-closed refl V = refl
 
-⌊⌋ᵈ-cast : ∀ {A} {St St' : 𝕊 []} → (e : toCtx St ≡ toCtx St') → (et : Et A)
-         → (V : toCtx St ⊢V⦂ A)
-         → ⌊_⌋ᵈ {S = St'} et (castᵛ e V) ≡ ⌊_⌋ᵈ {S = St} et V
+⌊⌋ᵈ-cast : ∀ {A} {𝕊 𝕊' : State []} → (e : toCtx 𝕊 ≡ toCtx 𝕊') → (et : Et A)
+         → (V : toCtx 𝕊 ⊢V⦂ A)
+         → ⌊_⌋ᵈ {𝕊 = 𝕊'} et (castᵛ e V) ≡ ⌊_⌋ᵈ {𝕊 = 𝕊} et V
 ⌊⌋ᵈ-cast e et (var _ x) = ⊥-elim (eternal-not-in-toCtx et x)
-⌊⌋ᵈ-cast {St' = St'} e et (subV V p) =
-  trans (cong (⌊_⌋ᵈ {S = St'} et) (cast-subV e {V = V}))
+⌊⌋ᵈ-cast {𝕊' = 𝕊'} e et (subV V p) =
+  trans (cong (⌊_⌋ᵈ {𝕊 = 𝕊'} et) (cast-subV e {V = V}))
         (cong ⟪ p ⟫ˢ (⌊⌋ᵈ-cast e (<:ᵛ-eternalˡ p et) V))
-⌊⌋ᵈ-cast {St' = St'} e et@(Baseₑ _) (const c) =
-  cong (⌊_⌋ᵈ {S = St'} et) (cast-closed e (const c))
-⌊⌋ᵈ-cast {St' = St'} e unitₑ ⋆ = cong (⌊_⌋ᵈ {S = St'} unitₑ) (cast-closed e ⋆)
-⌊⌋ᵈ-cast {St' = St'} e boolₑ true = cong (⌊_⌋ᵈ {S = St'} boolₑ) (cast-closed e true)
-⌊⌋ᵈ-cast {St' = St'} e boolₑ false = cong (⌊_⌋ᵈ {S = St'} boolₑ) (cast-closed e false)
-⌊⌋ᵈ-cast {St' = St'} e natₑ zero = cong (⌊_⌋ᵈ {S = St'} natₑ) (cast-closed e zero)
-⌊⌋ᵈ-cast {St' = St'} e natₑ (succ V) =
-  trans (cong (⌊_⌋ᵈ {S = St'} natₑ) (cast-succ e {V = V}))
+⌊⌋ᵈ-cast {𝕊' = 𝕊'} e et@(Baseₑ _) (const B c) =
+  cong (⌊_⌋ᵈ {𝕊 = 𝕊'} et) (cast-closed e (const B c))
+⌊⌋ᵈ-cast {𝕊' = 𝕊'} e unitₑ ⋆ = cong (⌊_⌋ᵈ {𝕊 = 𝕊'} unitₑ) (cast-closed e ⋆)
+⌊⌋ᵈ-cast {𝕊' = 𝕊'} e boolₑ true = cong (⌊_⌋ᵈ {𝕊 = 𝕊'} boolₑ) (cast-closed e true)
+⌊⌋ᵈ-cast {𝕊' = 𝕊'} e boolₑ false = cong (⌊_⌋ᵈ {𝕊 = 𝕊'} boolₑ) (cast-closed e false)
+⌊⌋ᵈ-cast {𝕊' = 𝕊'} e natₑ zero = cong (⌊_⌋ᵈ {𝕊 = 𝕊'} natₑ) (cast-closed e zero)
+⌊⌋ᵈ-cast {𝕊' = 𝕊'} e natₑ (succ V) =
+  trans (cong (⌊_⌋ᵈ {𝕊 = 𝕊'} natₑ) (cast-succ e {V = V}))
         (cong suc (⌊⌋ᵈ-cast e natₑ V))
-⌊⌋ᵈ-cast {St' = St'} e et@(et₁ |×|ₑ et₂) ⦉ V , W ⦊ =
-  trans (cong (⌊_⌋ᵈ {S = St'} et) (cast-pair e {V} {W}))
+⌊⌋ᵈ-cast {𝕊' = 𝕊'} e et@(et₁ |×|ₑ et₂) ⦉ V , W ⦊ =
+  trans (cong (⌊_⌋ᵈ {𝕊 = 𝕊'} et) (cast-pair e {V} {W}))
         (cong₂ _,_ (⌊⌋ᵈ-cast e et₁ V) (⌊⌋ᵈ-cast e et₂ W))
-⌊⌋ᵈ-cast {St' = St'} e et@(et₁ |+|ₑ et₂) (inl V) =
-  trans (cong (⌊_⌋ᵈ {S = St'} et) (cast-inl e {V = V}))
+⌊⌋ᵈ-cast {𝕊' = 𝕊'} e et@(et₁ |+|ₑ et₂) (inl V) =
+  trans (cong (⌊_⌋ᵈ {𝕊 = 𝕊'} et) (cast-inl e {V = V}))
         (cong inj₁ (⌊⌋ᵈ-cast e et₁ V))
-⌊⌋ᵈ-cast {St' = St'} e et@(et₁ |+|ₑ et₂) (inr V) =
-  trans (cong (⌊_⌋ᵈ {S = St'} et) (cast-inr e {V = V}))
+⌊⌋ᵈ-cast {𝕊' = 𝕊'} e et@(et₁ |+|ₑ et₂) (inr V) =
+  trans (cong (⌊_⌋ᵈ {𝕊 = 𝕊'} et) (cast-inr e {V = V}))
         (cong inj₂ (⌊⌋ᵈ-cast e et₂ V))
-⌊⌋ᵈ-cast {St' = St'} e et@(listₑ _) nil =
-  cong (⌊_⌋ᵈ {S = St'} et) (cast-nil e)
-⌊⌋ᵈ-cast {St' = St'} e et@(listₑ et₁) (cons V W) =
-  trans (cong (⌊_⌋ᵈ {S = St'} et) (cast-cons e {V} {W}))
+⌊⌋ᵈ-cast {𝕊' = 𝕊'} e et@(listₑ _) nil =
+  cong (⌊_⌋ᵈ {𝕊 = 𝕊'} et) (cast-nil e)
+⌊⌋ᵈ-cast {𝕊' = 𝕊'} e et@(listₑ et₁) (cons V W) =
+  trans (cong (⌊_⌋ᵈ {𝕊 = 𝕊'} et) (cast-cons e {V} {W}))
         (cong₂ List._∷_ (⌊⌋ᵈ-cast e et₁ V) (⌊⌋ᵈ-cast e et W))
 
-cast-cmp-reduct : ∀ {A} {St St' : 𝕊 []} → (e : toCtx St' ≡ toCtx St)
-                → (⋈ : Cmp) → (V' W' : toCtx St' ⊢V⦂ A) → (et : Et A)
-                → cmp-reduct {S = St} ⋈ (castᵛ e V') (castᵛ e W') et
-                ≡ castᶜ e (cmp-reduct {S = St'} ⋈ V' W' et)
+cast-cmp-reduct : ∀ {A} {𝕊 𝕊' : State []} → (e : toCtx 𝕊' ≡ toCtx 𝕊)
+                → (⋈ : Cmp) → (V' W' : toCtx 𝕊' ⊢V⦂ A) → (et : Et A)
+                → cmp-reduct {𝕊 = 𝕊} ⋈ (castᵛ e V') (castᵛ e W') et
+                ≡ castᶜ e (cmp-reduct {𝕊 = 𝕊'} ⋈ V' W' et)
 cast-cmp-reduct e ⋈ V' W' et =
   trans (cong₂ (λ a b → return ⌈ holds ⋈ (compareᵈ et a b) ⌉ᵇ)
                (⌊⌋ᵈ-cast e et V') (⌊⌋ᵈ-cast e et W'))
@@ -440,8 +440,8 @@ castL : ∀ {Γ Γ' A} → Γ ≡ Γ' → ListView Γ A → ListView Γ' A
 castL e (inj₁ tt)      = inj₁ tt
 castL e (inj₂ (W , L)) = inj₂ (castᵛ e W , castᵛ e L)
 
-listᵛ-cast : ∀ {A} {St St' : 𝕊 []} → (e : toCtx St ≡ toCtx St')
-           → (V : toCtx St ⊢V⦂ list A)
+listᵛ-cast : ∀ {A} {𝕊 𝕊' : State []} → (e : toCtx 𝕊 ≡ toCtx 𝕊')
+           → (V : toCtx 𝕊 ⊢V⦂ list A)
            → listᵛ (castᵛ e V) ≡ castL e (listᵛ V)
 listᵛ-cast e (var _ x)            = ⊥-elim (list-not-in-toCtx x)
 listᵛ-cast e nil                  = cong listᵛ (cast-nil e)
@@ -480,8 +480,8 @@ cast⊎ : ∀ {Γ Γ' A B} → Γ ≡ Γ' → (Γ ⊢V⦂ A) ⊎ (Γ ⊢V⦂ B) 
 cast⊎ e (inj₁ W) = inj₁ (castᵛ e W)
 cast⊎ e (inj₂ W) = inj₂ (castᵛ e W)
 
-injᵛ-cast : ∀ {A B} {St St' : 𝕊 []} → (e : toCtx St ≡ toCtx St')
-          → (V : toCtx St ⊢V⦂ A |+| B)
+injᵛ-cast : ∀ {A B} {𝕊 𝕊' : State []} → (e : toCtx 𝕊 ≡ toCtx 𝕊')
+          → (V : toCtx 𝕊 ⊢V⦂ A |+| B)
           → injᵛ (castᵛ e V) ≡ cast⊎ e (injᵛ V)
 injᵛ-cast e (var _ x)           = ⊥-elim (|+|-not-in-toCtx x)
 injᵛ-cast e (inl V)             = cong injᵛ (cast-inl e {V = V})
