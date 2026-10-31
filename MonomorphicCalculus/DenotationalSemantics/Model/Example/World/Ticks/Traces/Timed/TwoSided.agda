@@ -46,7 +46,7 @@ open import Grades.Durations.Monus T using (Carrier)
 
 open import Grades.Examples.Traces.Timed.TwoSided
   T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
-  using (TwoSided; lo; hi; uᵗˢ; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
+  using (TwoSided; lo; hi; 𝟏ᵗˢ; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
 
 open import MonomorphicCalculus.DenotationalSemantics.Model.World
 
@@ -75,7 +75,7 @@ w ⊑ᵗ[ i ] w' = (w ⊑ˡᵒ[ lo i ] w') × (w ⊑ʰⁱ[ hi i ] w')
 
 -- reflexivity at the unit grade: neither endpoint asks for time to pass
 
-⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ uᵗˢ ] w
+⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ 𝟏ᵗˢ ] w
 ⊑ᵗ-refl {w} = ⊑ˡᵒ-refl {w} , ⊑ʰⁱ-refl {w}
 
 -- transitivity multiplies the grades, endpointwise

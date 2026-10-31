@@ -595,10 +595,10 @@ wait≥1 = ⌜ str {lower} Data.Fin.Subset.⊥ (1 ∣ᶜ ⁻) ⌝′ (_ , 1 , �
 -- `m` steps, as the product of `m` one-step delays
 
 steps : Closed → ℕ → Closed
-steps w zero    = C.u
+steps w zero    = C.𝟏
 steps w (suc m) = w C.· steps w m
 
-steps-zero : ∀ w → steps w 0 ≡ C.u
+steps-zero : ∀ w → steps w 0 ≡ C.𝟏
 steps-zero w = refl
 
 steps-plus : ∀ w {m n} → steps w (m + n) ≡ steps w m C.· steps w n

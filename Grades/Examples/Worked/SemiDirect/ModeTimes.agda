@@ -41,7 +41,7 @@ open Maps ℕ-names using (_∣_)
 private
   module G = Grade mode-times
 
-open G using (Carrier; _≾_; _≾?_; _≃_; _≃?_; _·_; _⊔_; u; of-dur)
+open G using (Carrier; _≾_; _≾?_; _≃_; _≃?_; _·_; _⊔_; 𝟏; ι)
 
 holds : (c d : Carrier) {p : True (c ≾? d)} → c ≾ d
 holds c d {p} = toWitness p
@@ -63,7 +63,7 @@ put-back = occurrence ((Out , Cold) ∷ []) [ 1 , ↑ 1 ]
 -- out for twenty steps
 
 excursion : Carrier
-excursion = take · of-dur 20 · put-back
+excursion = take · ι 20 · put-back
 
 -- its entry from `Cold` to `Cold`: one or two steps in the block,
 -- twenty-one out, twenty-two or twenty-three in all
@@ -90,12 +90,12 @@ excursion-allowed = holds excursion protocol
 
 -- thirty steps out, and the putting back, are too long
 
-too-long : ¬ (take · of-dur 30 · put-back ≾ protocol)
-too-long = fails (take · of-dur 30 · put-back) protocol
+too-long : ¬ (take · ι 30 · put-back ≾ protocol)
+too-long = fails (take · ι 30 · put-back) protocol
 
 -- a delay spends its time in the mode it keeps
 
-delay-out : entryᵐ (of-dur 5) ⌜ 1 ⌝ ⌜ 1 ⌝ ≡ spent [ 5 , ↑ 5 ] 1
+delay-out : entryᵐ (ι 5) ⌜ 1 ⌝ ⌜ 1 ⌝ ≡ spent [ 5 , ↑ 5 ] 1
 delay-out = refl
 
 -- putting back first gets stuck from `Cold`, so the order matters
@@ -105,13 +105,13 @@ not-commutative = fails (put-back · take) (take · put-back)
 
 -- a branch waiting five or ten steps out of the block: the hull
 
-branch : take · (of-dur 5 ⊔ of-dur 10) · put-back ≾ protocol
-branch = holds (take · (of-dur 5 ⊔ of-dur 10) · put-back) protocol
+branch : take · (ι 5 ⊔ ι 10) · put-back ≾ protocol
+branch = holds (take · (ι 5 ⊔ ι 10) · put-back) protocol
 
 -- the unit is not least, and an operation is not below it
 
-unit-not-least : ¬ (u ≾ take)
-unit-not-least = fails u take
+unit-not-least : ¬ (𝟏 ≾ take)
+unit-not-least = fails 𝟏 take
 
-take-not-below-unit : ¬ (take ≾ u)
-take-not-below-unit = fails take u
+take-not-below-unit : ¬ (take ≾ 𝟏)
+take-not-below-unit = fails take 𝟏

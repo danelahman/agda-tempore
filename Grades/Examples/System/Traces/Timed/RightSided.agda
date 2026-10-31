@@ -156,11 +156,11 @@ traces→right-sided-intervals : right-sided →ᵍ right-sided-intervals
 traces→right-sided-intervals = strictᵍ record
   { map          = mapₒ
   ; map-monotone = λ {P} {Q} → mapₒ-monotone {P} {Q}
-  ; map-u        = refl
+  ; map-𝟏        = refl
   ; map-·        = λ {P} {Q} → mapₒ-· P Q
   ; map-⊤        = refl
   ; map-⊔        = λ {P} {Q} → mapₒ-⊔ P Q
-  ; map-of-dur   = λ {n} →
+  ; map-ι        = λ {n} →
       eq𝕀ᵣ (cong ↑_ (trans (⊔-identityʳ (duration ⟨ n ⟩)) (duration-⟨⟩ n)))
   }
 
@@ -168,7 +168,7 @@ tracesToRightSidedIntervalsGradeSystem : GradeSystem
 tracesToRightSidedIntervalsGradeSystem = record
   { RGrade = right-sided-intervals
   ; EGrade = right-sided
-  ; ∣_∣ᵉ   = traces→right-sided-intervals
+  ; ∣-∣ᵉ   = traces→right-sided-intervals
   }
 
 -- its hints
@@ -177,6 +177,6 @@ tracesToRightSidedIntervalsGradeSystemʰ : SystemHints tracesToRightSidedInterva
 tracesToRightSidedIntervalsGradeSystemʰ = record
   { RHints      = right-sided-intervalsʰ
   ; EHints      = right-sidedʰ
-  ; reflects-u? = nothing
+  ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

@@ -3,7 +3,7 @@
 -- system.                                                            --
 --                                                                    --
 -- Effect grades and resource grades are the same monoid `G` and      --
--- `∣_∣ᵉ` is the identity, so `mapᵉ` reduces away. The instances vary --
+-- `∣-∣ᵉ` is the identity, so `∣_∣ᵉ` reduces away. The instances vary --
 -- `G` and the grade `opTime` assigns to each operation. The calculus --
 -- over the language is `Typing.System`; the example programs are in  --
 -- the instances.                                                     --

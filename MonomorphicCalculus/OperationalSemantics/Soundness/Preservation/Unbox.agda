@@ -48,7 +48,7 @@ open Future Fut using ([_]ᵒ; [_]ᶠ; []-congᶠ; []-idᵐ; []-∘ᵐ; []-≤; 
 open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; μ; ⟨⟩-≤; ⟨⟩-∘ᵐ; ⟨⟩-congᶠ; ⟨⟩-η-nat; ⟨⟩-μ-nat;
                      ⟨⟩-≤-nat; ⟨⟩-≤-irr; ⟨⟩-≤-refl; ⟨⟩-≤-trans; μ-≤ˡ; μ-≤ʳ;
                      ⟨⟩-μ∘Tη≡id; ⟨⟩-μ∘η≡id)
-open Adjunction Adj using (η⊣; η⊣-nat; η⊣-u; η⊣-≤; η⊣-δ; η⊣-monoidal;
+open Adjunction Adj using (η⊣; η⊣-nat; η⊣-𝟏; η⊣-≤; η⊣-δ; η⊣-monoidal;
                            ε⊣; ε⊣-nat; triangleˡ)
 open GroundTypes GTy using (⟦_⟧ᵍ)
 open Monad Mon

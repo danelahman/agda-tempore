@@ -89,12 +89,12 @@ assoc⁻¹-⟨⟩ a b c =
 clause-sound : ∀ {Γ B ε''} → (op : Op)
              → (H : (op' : Op) → (ε' : E)
                   → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
-                       ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε')
+                       ∷ [ ∣ op-grade op' ∣ᵉ ] (type-of-gtype (arity op') ⇒ B ‼ ε')
                     ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
              → (pH : ∀ op' ε' → Paramᶜ (H op' ε'))
              → (uH : EffUniformʰ {Γ} H pH)
              → (V : Γ ⊢V⦂ type-of-gtype (param op)) → (pV : Paramᵛ V)
-             → (W : ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ mapᵉ (op-grade op) ]ᵒ
+             → (W : ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ ∣ op-grade op ∣ᵉ ]ᵒ
                       (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ B ⟧ᵛ ε''))
              → ⟦ (C-rename (cong-∷-ren (cong-∷-ren (barrier-ren {Γ}))) (H op ε''))
                      [ split-∷ split-[] ↦ V ]c ⟧ᶜᵗ
@@ -104,7 +104,7 @@ clause-sound : ∀ {Γ B ε''} → (op : Op)
                              (H op ε'') (pH op ε''))
                        pV)
                  ∘ᵐ ⟨ idᵐ
-                    , [ mapᵉ (op-grade op) ]ᶠ
+                    , [ ∣ op-grade op ∣ᵉ ]ᶠ
                         (map⇒ᵐ (subst (λ O → O →ᵐ ⟦ arity op ⟧ᵍ)
                                       (sym (ty-gty (arity op))) idᵐ) idᵐ)
                       ∘ᵐ W ⟩ᵐ

@@ -33,16 +33,16 @@ open import MonomorphicCalculus.Syntax.Types S
 data EternalCtx : Ctx → Set where
   ec-[] : EternalCtx []
   ec-∷  : ∀ {Δ A} → EternalCtx Δ → Eternal A → EternalCtx (Δ ∷ A)
-  ec-⟨⟩ : ∀ {Δ ρ} → uᵣ ≾ᵣ ρ → ρ ≾ᵣ uᵣ → EternalCtx Δ → EternalCtx (Δ ⟨ ρ ⟩)
+  ec-⟨⟩ : ∀ {Δ ρ} → 𝟏ᵣ ≾ᵣ ρ → ρ ≾ᵣ 𝟏ᵣ → EternalCtx Δ → EternalCtx (Δ ⟨ ρ ⟩)
 
 -- The 0-graded lock, the case the two bounds are `≾ᵣ-refl`, and the case of a
 -- grade only propositionally equal to the unit, which is the form the grades
--- standing in a context take (`of-durʳ-zero`, `map-uᵉ`).
+-- standing in a context take (`ιᵣ-zero`, `map-𝟏ᵉ`).
 
-ec-⟨⟩ᵘ : ∀ {Δ} → EternalCtx Δ → EternalCtx (Δ ⟨ uᵣ ⟩)
+ec-⟨⟩ᵘ : ∀ {Δ} → EternalCtx Δ → EternalCtx (Δ ⟨ 𝟏ᵣ ⟩)
 ec-⟨⟩ᵘ = ec-⟨⟩ ≾ᵣ-refl ≾ᵣ-refl
 
-ec-⟨⟩≡ : ∀ {Δ ρ} → ρ ≡ uᵣ → EternalCtx Δ → EternalCtx (Δ ⟨ ρ ⟩)
+ec-⟨⟩≡ : ∀ {Δ ρ} → ρ ≡ 𝟏ᵣ → EternalCtx Δ → EternalCtx (Δ ⟨ ρ ⟩)
 ec-⟨⟩≡ e = ec-⟨⟩ (≾ᵣ-reflexive (sym e)) (≾ᵣ-reflexive e)
 
 ec-eternal : ∀ {Δ A ρ} → EternalCtx Δ → A ∈[ ρ ] Δ → Eternal A
@@ -91,11 +91,11 @@ data Ren (Ξ : Ctx) : Ctx → Ctx → Set where
   -- variable renaming (corresponds to contraction). As in the `var` typing
   -- rule, the grade bound is only required for non-eternal types: an eternal
   -- variable is available at any grade (in particular behind a lock).
-  var-ren     : ∀ {Δ A ρ} → (¬ Eternal A → ρ ≾ᵣ uᵣ) → A ∈[ ρ ] (Ξ ⋈ᶜ Δ)
+  var-ren     : ∀ {Δ A ρ} → (¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ) → A ∈[ ρ ] (Ξ ⋈ᶜ Δ)
               → Ren Ξ Δ (Δ ∷ A)
   -- strong monoidal functor renamings for ⟨_⟩ modality
-  ⟨⟩-η-ren    : ∀ {Δ} → Ren Ξ Δ (Δ ⟨ uᵣ ⟩)
-  ⟨⟩-η⁻¹-ren  : ∀ {Δ} → Ren Ξ (Δ ⟨ uᵣ ⟩) Δ
+  ⟨⟩-η-ren    : ∀ {Δ} → Ren Ξ Δ (Δ ⟨ 𝟏ᵣ ⟩)
+  ⟨⟩-η⁻¹-ren  : ∀ {Δ} → Ren Ξ (Δ ⟨ 𝟏ᵣ ⟩) Δ
   ⟨⟩-μ-ren    : ∀ {Δ ρ ρ'} → Ren Ξ (Δ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Δ ⟨ ρ ·ᵣ ρ' ⟩)
   -- monotonicity renaming for ⟨_⟩ modality
   ⟨⟩-≤-ren    : ∀ {Δ ρ ρ'} → ρ' ≾ᵣ ρ → Ren Ξ (Δ ⟨ ρ' ⟩) (Δ ⟨ ρ ⟩)
@@ -111,7 +111,7 @@ infixr 20 _∘ʳ_
 
 -- Extending a renaming with a variable
 
-extend-ren : ∀ {Ξ Δ Δ' A ρ} → Ren Ξ Δ Δ' → (¬ Eternal A → ρ ≾ᵣ uᵣ)
+extend-ren : ∀ {Ξ Δ Δ' A ρ} → Ren Ξ Δ Δ' → (¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
            → A ∈[ ρ ] (Ξ ⋈ᶜ Δ) → Ren Ξ Δ (Δ' ∷ A)
 extend-ren r p x = cong-∷-ren r ∘ʳ var-ren p x
 
@@ -225,7 +225,7 @@ exch-ren {Ξ = Ξ} =
 -- binder: `⊤ᵣ` is greatest, so the two locks fold into it.
 
 barrier-ren : ∀ {Δ} → Ren [] Δ (Δ ⟨ ⊤ᵣ ⟩)
-barrier-ren = ⟨⟩-≤-ren (≾-⊤ᵣ uᵣ) ∘ʳ ⟨⟩-η-ren
+barrier-ren = ⟨⟩-≤-ren (≾-⊤ᵣ 𝟏ᵣ) ∘ʳ ⟨⟩-η-ren
 
 barrier-wk-ren : ∀ {Δ} → (ρ : R) → (A : VType)
                → Ren [] ((Δ ⟨ ρ ⟩ ∷ A) ⟨ ⊤ᵣ ⟩) (Δ ⟨ ⊤ᵣ ⟩)

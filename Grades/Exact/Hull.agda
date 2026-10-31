@@ -60,9 +60,9 @@ Run : Set
 Run = List Event
 
 runᴸ : Run → Lang
-runᴸ []              = uᴸ
+runᴸ []              = 𝟏ᴸ
 runᴸ (perform o ∷ r) = opsᴸ ⁅ code o ⁆ ·ᴸ runᴸ r
-runᴸ (delay τ ∷ r)   = of-durᴸ τ ·ᴸ runᴸ r
+runᴸ (delay τ ∷ r)   = ιᴸ τ ·ᴸ runᴸ r
 
 -- the hulls
 

@@ -113,7 +113,7 @@ private
 
   -- locks are forgotten, positions kept
 
-  ex-var-lock : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst uᵣ ⟩) ⊢V⦂ Unit
+  ex-var-lock : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst 𝟏ᵣ ⟩) ⊢V⦂ Unit
   ex-var-lock = var (Tl-⟨⟩ Hd) (et-ok Unitₑ)
 
   ex-var-lock-erase : ⌊ ex-var-lock ⌋ᵛ ≡ var zero
@@ -125,7 +125,7 @@ private
   ex-var-barrier-erase : ⌊ ex-var-barrier ⌋ᵛ ≡ var zero
   ex-var-barrier-erase = refl
 
-  ex-unbox : ∅ᴴ ∣ (∅ᶜ ∷ [ ûᵣ ] Unit) ⊢C⦂ Unit ‼ ûₑ
+  ex-unbox : ∅ᴴ ∣ (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) ⊢C⦂ Unit ‼ 𝟏̂ₑ
   ex-unbox = unbox (res-var {z = Hd}) ⊩≾̂ᵣ-refl (return ⋆)
 
   ex-unbox-erase : ⌊ ex-unbox ⌋ᶜ ≡ unbox (var zero) (return ⋆)
@@ -133,10 +133,10 @@ private
 
   -- annotations are kept
 
-  ex-unbox-ann : ∅ᴴ ∣ (∅ᶜ ∷ [ ûᵣ ] Unit) ⊢C⦂ Unit ‼ ûₑ
-  ex-unbox-ann = unbox (res-ann ûᵣ Unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl Unitₛ) ⊩≾̂ᵣ-refl (return ⋆)
+  ex-unbox-ann : ∅ᴴ ∣ (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) ⊢C⦂ Unit ‼ 𝟏̂ₑ
+  ex-unbox-ann = unbox (res-ann 𝟏̂ᵣ Unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl Unitₛ) ⊩≾̂ᵣ-refl (return ⋆)
 
-  ex-unbox-ann-erase : ⌊ ex-unbox-ann ⌋ᶜ ≡ unbox (var zero ⦂ᵛ [ ûᵣ ] Unit) (return ⋆)
+  ex-unbox-ann-erase : ⌊ ex-unbox-ann ⌋ᶜ ≡ unbox (var zero ⦂ᵛ [ 𝟏̂ᵣ ] Unit) (return ⋆)
   ex-unbox-ann-erase = refl
 
   -- sub-effecting is invisible
@@ -146,8 +146,8 @@ private
 
   -- the grade of `box` is kept
 
-  ex-box : ∅ᴴ ∣ ∅ᶜ ⊢C⦂ [ ûᵣ ] Unit ‼ ûₑ
-  ex-box = box ûᵣ ⋆ (return (var Hd (≾ᵘ-ok ⊩≾̂ᵣ-refl)))
+  ex-box : ∅ᴴ ∣ ∅ᶜ ⊢C⦂ [ 𝟏̂ᵣ ] Unit ‼ 𝟏̂ₑ
+  ex-box = box 𝟏̂ᵣ ⋆ (return (var Hd (≾ᵘ-ok ⊩≾̂ᵣ-refl)))
 
-  ex-box-erase : ⌊ ex-box ⌋ᶜ ≡ box ûᵣ ⋆ (return (var zero))
+  ex-box-erase : ⌊ ex-box ⌋ᶜ ≡ box 𝟏̂ᵣ ⋆ (return (var zero))
   ex-box-erase = refl

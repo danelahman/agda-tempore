@@ -28,8 +28,8 @@ open import Grades.Examples.SemiDirect.WindowedSchedules
   using (windowed-schedules; durations; Durations; Times; ⟪_⟫ₜ; _∪ₜ_; ∅ₜ)
 
 open Maps ℕ-names using (Map; _∣_)
-open Grade windowed-schedules using (Carrier; _≾_; _≾?_; _≃_; _≃?_; _·_; _⊔_; u)
-open Grade durations using (of-dur) renaming (_⊔_ to _⊔ᴰ_)
+open Grade windowed-schedules using (Carrier; _≾_; _≾?_; _≃_; _≃?_; _·_; _⊔_; 𝟏)
+open Grade durations using (ι) renaming (_⊔_ to _⊔ᴰ_)
 
 name : Op → ℕ
 name read  = 0
@@ -39,8 +39,8 @@ name send  = 2
 -- the durations from `n` to `n + k`
 
 span : ℕ → ℕ → Durations
-span n 0       = of-dur n
-span n (suc k) = span n k ⊔ᴰ of-dur (n + suc k)
+span n 0       = ι n
+span n (suc k) = span n k ⊔ᴰ ι (n + suc k)
 
 -- the times from `n` to `n + k`
 
@@ -70,41 +70,41 @@ equal c d {p} = toWitness p
 -- a transmission, one step long, at its start
 
 transmit : Carrier
-transmit = at (of-dur 1) send ⟪ 0 ⟫ₜ
+transmit = at (ι 1) send ⟪ 0 ⟫ₜ
 
 -- two in a row transmit at times 0 and 1, and take two steps
 
-twice : transmit · transmit ≃ at (of-dur 2) send (window 0 1)
-twice = equal (transmit · transmit) (at (of-dur 2) send (window 0 1))
+twice : transmit · transmit ≃ at (ι 2) send (window 0 1)
+twice = equal (transmit · transmit) (at (ι 2) send (window 0 1))
 
 -- idling first shifts the transmission
 
-idle-first : takes (of-dur 2) · transmit ≃ at (of-dur 3) send ⟪ 2 ⟫ₜ
-idle-first = equal (takes (of-dur 2) · transmit) (at (of-dur 3) send ⟪ 2 ⟫ₜ)
+idle-first : takes (ι 2) · transmit ≃ at (ι 3) send ⟪ 2 ⟫ₜ
+idle-first = equal (takes (ι 2) · transmit) (at (ι 3) send ⟪ 2 ⟫ₜ)
 
 -- a schedule: two to six steps, transmitting only between times 2 and 4
 
 slot : Carrier
 slot = at (span 2 4) send (window 2 2)
 
-late-ok : takes (of-dur 2) · transmit ≾ slot
-late-ok = holds (takes (of-dur 2) · transmit) slot
+late-ok : takes (ι 2) · transmit ≾ slot
+late-ok = holds (takes (ι 2) · transmit) slot
 
-early-refused : ¬ (transmit · takes (of-dur 2) ≾ slot)
-early-refused = fails (transmit · takes (of-dur 2)) slot
+early-refused : ¬ (transmit · takes (ι 2) ≾ slot)
+early-refused = fails (transmit · takes (ι 2)) slot
 
 -- so the product does not commute
 
-not-commutative : ¬ (takes (of-dur 2) · transmit ≾ transmit · takes (of-dur 2))
-not-commutative = fails (takes (of-dur 2) · transmit) (transmit · takes (of-dur 2))
+not-commutative : ¬ (takes (ι 2) · transmit ≾ transmit · takes (ι 2))
+not-commutative = fails (takes (ι 2) · transmit) (transmit · takes (ι 2))
 
 -- a branch that idles one or two steps first transmits at time 1 or 2
 
-branching : (takes (of-dur 1) ⊔ takes (of-dur 2)) · transmit
+branching : (takes (ι 1) ⊔ takes (ι 2)) · transmit
           ≃ at (span 2 1) send (window 1 1)
-branching = equal ((takes (of-dur 1) ⊔ takes (of-dur 2)) · transmit) (at (span 2 1) send (window 1 1))
+branching = equal ((takes (ι 1) ⊔ takes (ι 2)) · transmit) (at (span 2 1) send (window 1 1))
 
 -- the unit is not least
 
-unit-not-least : ¬ (u ≾ takes (of-dur 1))
-unit-not-least = fails u (takes (of-dur 1))
+unit-not-least : ¬ (𝟏 ≾ takes (ι 1))
+unit-not-least = fails 𝟏 (takes (ι 1))

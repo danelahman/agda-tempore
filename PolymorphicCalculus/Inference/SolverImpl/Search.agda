@@ -138,7 +138,7 @@ entry δ = idˢ , mk≐ˢ (λ ()) (λ ()) (λ { zero → refl })
 -- and is a closed instance of the localised residual, the rigid at the unit
 
 closedᴸ : ∀ {Ω} {R : Resid Ω} → (L : Localised (rigid {Ω}) (R [ wkˢᵉ ]ᴿ)) → (δ : Subst Ω ∅ˢ)
-        → ∅ᴴ ⊩ᴿ R [ δ ] → ∅ᴴ ⊩ᴿ lR L [ δ ↑ᵉ ⨟ˢ κ⟨ ûₑ ⟩ ]
+        → ∅ᴴ ⊩ᴿ R [ δ ] → ∅ᴴ ⊩ᴿ lR L [ δ ↑ᵉ ⨟ˢ κ⟨ 𝟏̂ₑ ⟩ ]
 closedᴸ L δ h =
   ⊩ᴿ-⨟ ⊩ᴴ-∅
     (lcpl L (δ ↑ᵉ) (entry δ)
@@ -174,7 +174,7 @@ searchᴸ {Ω} Q D L = retried (retryᴰ (ordsOf (lR L)) (dfs (lR L)))
 
     inst : Satisfiable (Q ++ᵠ D) → Σ[ τ ∈ Subst (Ω +e) ∅ˢ ] (∅ᴴ ⊩ᴿ lR L [ τ ])
     inst (δ , h) with ⊨++ᵠ⇒ {R = D} h
-    ... | hQ , hD = δ ↑ᵉ ⨟ˢ κ⟨ ûₑ ⟩ , closedᴸ L δ (asResid-⊩ hQ (⊩ᴼˢ→⊩ᴰ {Q = ∅ᴴ} {δ = δ} D hD))
+    ... | hQ , hD = δ ↑ᵉ ⨟ˢ κ⟨ 𝟏̂ₑ ⟩ , closedᴸ L δ (asResid-⊩ hQ (⊩ᴼˢ→⊩ᴰ {Q = ∅ᴴ} {δ = δ} D hD))
 
     -- and back
 
@@ -372,11 +372,11 @@ constsOf (cond (qord _ k o)) =
 -- The candidates of a class
 
 candsₑ : ℕ → List R × List E → List E
-candsₑ d (rcs , ecs) = deduplicate _≃ₑ?_ (uₑ ∷ ⊤ₑ ∷ ecs ++ witnesses d rcs ecs)
+candsₑ d (rcs , ecs) = deduplicate _≃ₑ?_ (𝟏ₑ ∷ ⊤ₑ ∷ ecs ++ witnesses d rcs ecs)
 
 candsᵣ : ℕ → List R × List E → List R
 candsᵣ d (rcs , ecs) =
-  deduplicate _≃ᵣ?_ (uᵣ ∷ ⊤ᵣ ∷ rcs ++ map mapᵉ (ecs ++ witnesses d rcs ecs))
+  deduplicate _≃ᵣ?_ (𝟏ᵣ ∷ ⊤ᵣ ∷ rcs ++ map ∣_∣ᵉ (ecs ++ witnesses d rcs ecs))
 
 ------------------------------------------------------------------------
 -- The search of a class, and of a residual

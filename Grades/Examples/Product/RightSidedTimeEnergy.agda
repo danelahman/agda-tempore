@@ -3,7 +3,7 @@
 --                                                                    --
 -- The energy grade `[0, e ]` states "at most `e` units spent". It    --
 -- has the carrier, sum, order, join and `⊤ = [0, ∞ ]` of the         --
--- right-sided intervals, with `of-dur` constantly `[0, ↑ 0 ]`:       --
+-- right-sided intervals, with `ι` constantly `[0, ↑ 0 ]`:            --
 -- `delay` spends time and no energy, and energy is spent by          --
 -- operations alone.                                                  --
 --                                                                    --
@@ -34,11 +34,11 @@ energy : Grade ℕᴰ
 energy = record
   { Carrier         = R.Carrier
   ; _·_             = R._·_
-  ; u               = R.u
+  ; 𝟏               = R.𝟏
   ; _≾_             = R._≾_
   ; ⊤               = R.⊤
   ; _⊔_             = R._⊔_
-  ; of-dur          = λ _ → [0, ↑ 0 ]
+  ; ι               = λ _ → [0, ↑ 0 ]
   ; ·-identityˡ     = R.·-identityˡ
   ; ·-identityʳ     = R.·-identityʳ
   ; ·-assoc         = R.·-assoc
@@ -56,15 +56,15 @@ energy = record
   ; ·-distribʳ-⊔-≾  = R.·-distribʳ-⊔-≾
   ; ≾-zero-productˡ = λ {c} {d} → R.≾-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → R.≾-zero-productʳ {c} {d}
-  ; of-dur-zero     = R.≃-refl
-  ; of-dur-plus     = R.≃-refl
+  ; ι-zero          = R.≃-refl
+  ; ι-plus          = R.≃-refl
   }
   where module R = Grade right-sided-intervals
 
 -- its hints, those of right-sided time
 
 energyʰ : GradeHints energy
-energyʰ = record { u-least? = R.u-least? ; ·-comm? = R.·-comm? ; plus? = R.plus? }
+energyʰ = record { 𝟏-least? = R.𝟏-least? ; ·-comm? = R.·-comm? ; plus? = R.plus? }
   where module R = GradeHints right-sided-intervalsʰ
 
 right-sided-time×energy : Grade ℕᴰ

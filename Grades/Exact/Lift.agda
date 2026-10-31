@@ -130,8 +130,8 @@ _·ᴸ_ : Lang → Lang → Lang
 _∪ᴸ_ : Lang → Lang → Lang
 (X ∪ᴸ Y) w = X w ⊎ Y w
 
-uᴸ : Lang
-uᴸ w = w ≡ []
+𝟏ᴸ : Lang
+𝟏ᴸ w = w ≡ []
 
 ⊤ᴸ : Lang
 ⊤ᴸ _ = ⊤
@@ -143,8 +143,8 @@ anyᴸ w = Σ[ τ ∈ Carrier ] w ≡ stretch all τ
 
 -- the strict wait of a duration
 
-of-durᴸ : Carrier → Lang
-of-durᴸ τ w = w ≡ idle τ
+ιᴸ : Carrier → Lang
+ιᴸ τ w = w ≡ idle τ
 
 ------------------------------------------------------------------------
 -- A preorder
@@ -201,12 +201,12 @@ of-durᴸ τ w = w ≡ idle τ
 
 -- the monoid laws, up to equivalence
 
-·-identityˡ : ∀ X → uᴸ ·ᴸ X ≈ X
+·-identityˡ : ∀ X → 𝟏ᴸ ·ᴸ X ≈ X
 ·-identityˡ X =
   ⊆⇒≾ (λ { w (x , y , refl , refl , y∈) → y∈ }) ,
   ⊆⇒≾ (λ w w∈ → [] , w , refl , refl , w∈)
 
-·-identityʳ : ∀ X → X ·ᴸ uᴸ ≈ X
+·-identityʳ : ∀ X → X ·ᴸ 𝟏ᴸ ≈ X
 ·-identityʳ X =
   ⊆⇒≾ (λ { w (x , y , refl , x∈ , refl) → subst X (sym (++-identityʳ x)) x∈ }) ,
   ⊆⇒≾ (λ w w∈ → w , [] , sym (++-identityʳ w) , w∈ , refl)
@@ -228,22 +228,22 @@ of-durᴸ τ w = w ≡ idle τ
 ++-conicalʳ []      e  = e
 ++-conicalʳ (_ ∷ _) ()
 
-zero-productˡ : ∀ {X Y} → (∃ Y) → X ·ᴸ Y ≾ uᴸ → X ≾ uᴸ
+zero-productˡ : ∀ {X Y} → (∃ Y) → X ·ᴸ Y ≾ 𝟏ᴸ → X ≾ 𝟏ᴸ
 zero-productˡ {X} {Y} (y , y∈) f x x∈ with f (x ++ y) (x , y , refl , x∈ , y∈)
 ... | _ , refl , r = [] , refl , subst (_⊑ []) (sym (++-conicalˡ x (⊑-ε r))) ⊑-refl
 
-zero-productʳ : ∀ {X Y} → (∃ X) → X ·ᴸ Y ≾ uᴸ → Y ≾ uᴸ
+zero-productʳ : ∀ {X Y} → (∃ X) → X ·ᴸ Y ≾ 𝟏ᴸ → Y ≾ 𝟏ᴸ
 zero-productʳ {X} {Y} (x , x∈) f y y∈ with f (x ++ y) (x , y , refl , x∈ , y∈)
 ... | _ , refl , r = [] , refl , subst (_⊑ []) (sym (++-conicalʳ x (⊑-ε r))) ⊑-refl
 
 -- strict waits are a monoid morphism
 
-of-dur-zero : of-durᴸ 0ᴰ ≈ uᴸ
-of-dur-zero =
+ι-zero : ιᴸ 0ᴰ ≈ 𝟏ᴸ
+ι-zero =
   ⊆⇒≾ (λ w e → trans e idle-zero) , ⊆⇒≾ (λ w e → trans e (sym idle-zero))
 
-of-dur-plus : ∀ m n → of-durᴸ (m +ᴰ n) ≈ of-durᴸ m ·ᴸ of-durᴸ n
-of-dur-plus m n =
+ι-plus : ∀ m n → ιᴸ (m +ᴰ n) ≈ ιᴸ m ·ᴸ ιᴸ n
+ι-plus m n =
   (λ w e → idle m ++ idle n , (idle m , idle n , refl , refl , refl) ,
            subst (_⊑ idle m ++ idle n) (sym e) (sum⊑ m n)) ,
   (λ { w (x , y , refl , refl , refl) →

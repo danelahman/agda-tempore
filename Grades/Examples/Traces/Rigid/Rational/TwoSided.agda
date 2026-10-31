@@ -52,11 +52,11 @@ private
 two-sided : Grade ℚ≥0ᴰ
 Grade.Carrier         two-sided = I.Carrier
 Grade._·_             two-sided = I._·_
-Grade.u               two-sided = I.u
+Grade.𝟏               two-sided = I.𝟏
 Grade._≾_             two-sided = I._≾_
 Grade.⊤               two-sided = I.⊤
 Grade._⊔_             two-sided = I._⊔_
-Grade.of-dur          two-sided = I.of-dur
+Grade.ι               two-sided = I.ι
 Grade.·-identityˡ     two-sided = I.·-identityˡ
 Grade.·-identityʳ     two-sided = I.·-identityʳ
 Grade.·-assoc         two-sided = I.·-assoc
@@ -74,13 +74,13 @@ Grade.·-distribˡ-⊔-≾  two-sided = I.·-distribˡ-⊔-≾
 Grade.·-distribʳ-⊔-≾  two-sided = I.·-distribʳ-⊔-≾
 Grade.≾-zero-productˡ two-sided {c} {d} = I.≾-zero-productˡ {c} {d}
 Grade.≾-zero-productʳ two-sided {c} {d} = I.≾-zero-productʳ {c} {d}
-Grade.of-dur-zero     two-sided = I.of-dur-zero
-Grade.of-dur-plus     two-sided {τ} {τ′} = I.of-dur-plus {τ} {τ′}
+Grade.ι-zero          two-sided = I.ι-zero
+Grade.ι-plus          two-sided {τ} {τ′} = I.ι-plus {τ} {τ′}
 
 private
   module H = GradeHints (intervalʰ lowerʰ upperʰ)
 
 two-sidedʰ : GradeHints two-sided
-GradeHints.u-least? two-sidedʰ = H.u-least?
+GradeHints.𝟏-least? two-sidedʰ = H.𝟏-least?
 GradeHints.·-comm?  two-sidedʰ = H.·-comm?
 GradeHints.plus?    two-sidedʰ = H.plus?

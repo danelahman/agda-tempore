@@ -59,7 +59,7 @@ open Future Fut using ([_]ᵒ; [_]ᶠ; []-congᶠ; []-idᵐ; []-∘ᵐ; []-≤; 
 open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; μ; ⟨⟩-≤; ⟨⟩-∘ᵐ; ⟨⟩-congᶠ; ⟨⟩-η-nat; ⟨⟩-μ-nat;
                      ⟨⟩-≤-nat; ⟨⟩-≤-irr; ⟨⟩-≤-refl; ⟨⟩-≤-trans; μ-≤ˡ; μ-≤ʳ;
                      ⟨⟩-μ∘Tη≡id; ⟨⟩-μ∘η≡id)
-open Adjunction Adj using (η⊣; η⊣-nat; η⊣-u; η⊣-≤; η⊣-δ; η⊣-monoidal;
+open Adjunction Adj using (η⊣; η⊣-nat; η⊣-𝟏; η⊣-≤; η⊣-δ; η⊣-monoidal;
                            ε⊣; ε⊣-nat; triangleˡ)
 open GroundTypes GTy using (⟦_⟧ᵍ)
 open Monad Mon
@@ -85,17 +85,17 @@ open import MonomorphicCalculus.OperationalSemantics.Soundness.Preservation.Hand
 
 -- The grade a delayed computation's `ηᵀ` leaves behind.
 
-delay-z : ∀ (τ : 𝔻) (ε : E) → of-durᵉ τ ·ₑ ε ≾ₑ (of-durᵉ τ ·ₑ uₑ) ·ₑ ε
+delay-z : ∀ (τ : 𝔻) (ε : E) → ιₑ τ ·ₑ ε ≾ₑ (ιₑ τ ·ₑ 𝟏ₑ) ·ₑ ε
 delay-z τ ε =
   ≾ₑ-trans (·ₑ-monoʳ-≾ₑ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε)))
-           (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) uₑ ε))
+           (≃ₑ⇒≿ₑ (·ₑ-assoc (ιₑ τ) 𝟏ₑ ε))
 
 -- Binding a computation after a delay is delaying the bound computation. (The
 -- `ηᵀ` the transition carries is absorbed, leaving only a regrading.)
 
-delay-nf : ∀ {X Y B ε} → (τ : 𝔻) → (env : X →ᵐ [ of-durʳ τ ]ᵒ Y) → (f : Y →ᵐ Tᵒ B ε)
-         → μᵀ ∘ᵐ Tᶠ f ∘ᵐ (delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ env)
-         ≈ᵐ T-≤ (delay-z τ ε) ∘ᵐ delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ f ∘ᵐ env
+delay-nf : ∀ {X Y B ε} → (τ : 𝔻) → (env : X →ᵐ [ ιᵣ τ ]ᵒ Y) → (f : Y →ᵐ Tᵒ B ε)
+         → μᵀ ∘ᵐ Tᶠ f ∘ᵐ (delayᵀ τ ∘ᵐ [ ιᵣ τ ]ᶠ ηᵀ ∘ᵐ env)
+         ≈ᵐ T-≤ (delay-z τ ε) ∘ᵐ delayᵀ τ ∘ᵐ [ ιᵣ τ ]ᶠ f ∘ᵐ env
 delay-nf {ε = ε} τ env f =
   -- push the bind under the delay …
     ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -137,7 +137,7 @@ delay-nf {ε = ε} τ env f =
        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
        ∙ ∘ᵐ-congˡ (T-≤-trans _ _ w))
   where
-    w : εa ≾ₑ uₑ ·ₑ εb
+    w : εa ≾ₑ 𝟏ₑ ·ₑ εb
     w = ≾ₑ-trans q (≃ₑ⇒≿ₑ (·ₑ-identityˡ εb))
 
 -- The coercion escapes the bind, for the transition of any step.
@@ -193,7 +193,7 @@ T-≤-stepᵀ {εa = εa} {εb = εb} B (DELAY {τ = τ}) g q =
        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
        ∙ ∘ᵐ-congˡ (T-≤-trans (delay-z τ εa) (·ₑ-monoʳ-≾ₑ q) z))
   where
-    z : of-durᵉ τ ·ₑ εa ≾ₑ (of-durᵉ τ ·ₑ uₑ) ·ₑ εb
+    z : ιₑ τ ·ₑ εa ≾ₑ (ιₑ τ ·ₑ 𝟏ₑ) ·ₑ εb
     z = ≾ₑ-trans (·ₑ-monoʳ-≾ₑ q) (delay-z τ εb)
 
 -- A reduction step relates denotationally equal configurations: the source's
@@ -288,9 +288,9 @@ stepᴾᶜ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op} {S = S} {V = V} {M = M} 
        pS ((pV , pM) , pN , pH , uH) =
     (pM
     , renᶜ (cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN
-    , (λ op' ε' → renᶜ (cong-∷-ren (cong-∷-ren (barrier-wk-ren (mapᵉ (op-grade op)) (type-of-gtype (arity op))))) (H op' ε') (pH op' ε'))
+    , (λ op' ε' → renᶜ (cong-∷-ren (cong-∷-ren (barrier-wk-ren ∣ op-grade op ∣ᵉ (type-of-gtype (arity op))))) (H op' ε') (pH op' ε'))
     , ren-clauses-uniform
-        (barrier-wk-ren (mapᵉ (op-grade op)) (type-of-gtype (arity op))) H pH uH)
+        (barrier-wk-ren ∣ op-grade op ∣ᵉ (type-of-gtype (arity op))) H pH uH)
   , subᶜ (C-rename (cong-∷-ren (cong-∷-ren (barrier-ren {toCtx S}))) (H op (ε ·ₑ ε'')))
          (split-∷ split-[]) V
          (renᶜ (cong-∷-ren (cong-∷-ren (barrier-ren {toCtx S})))
@@ -457,7 +457,7 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 
 steps-grade : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
             → cf ⟶* cf' → E
-steps-grade ε*        = uₑ
+steps-grade ε*        = 𝟏ₑ
 steps-grade (r ◅ rs)  = step-grade r ·ₑ steps-grade rs
 
 stepsᵀ : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
@@ -614,7 +614,7 @@ record _⊳_ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
 ⊳-refl : ∀ {A ε} → (cf : Config (A ‼ ε)) → (p : Paramᶜᶠ cf)
        → _⊳_ {cf = cf} {cf' = cf} p p
 ⊳-refl {ε = ε} cf p =
-  mk⊳ uₑ (steps-≾ (ε* {cf = cf})) (run-refines-type (ε* {cf = cf})) ηᵀ
+  mk⊳ 𝟏ₑ (steps-≾ (ε* {cf = cf})) (run-refines-type (ε* {cf = cf})) ηᵀ
       (⟶*-sound (ε* {cf = cf}) p tt)
 
 -- A run of the machine is such a witness. This is the soundness theorem in its
@@ -648,7 +648,7 @@ Program A ε = [] ⊢C⦂ A ‼ ε
          → ⟦ M ⟧ᵖ pM
          ≈ᵐ T-≤ (steps-≾ rs)
             ∘ᵐ Tᶠ ⟦ run-refines-type rs ⟧<:ᵛ
-            ∘ᵐ _⋄_ {𝟙ᵐ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A₀ ⟧ᵛ} {steps-grade rs} {uₑ}
+            ∘ᵐ _⋄_ {𝟙ᵐ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A₀ ⟧ᵛ} {steps-grade rs} {𝟏ₑ}
                    (ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ (proj₂ (stepsᴾᶜᶠ rs (tt , pM)))
                        ∘ᵐ ⟦ S' ⟧ˢ (proj₁ (stepsᴾᶜᶠ rs (tt , pM))))
                    (stepsᵀ rs)

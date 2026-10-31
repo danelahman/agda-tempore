@@ -45,7 +45,7 @@ open import MonomorphicCalculus.Syntax.Substitution.Equivalence  Spec
 -- A cast acts on a variable by relocating it.
 
 castᵛ-var : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ')
-          → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ ] Γ)
+          → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ) → (x : A ∈[ ρ ] Γ)
           → castᵛ e (var f x) ≡ var f (subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
 castᵛ-var refl f x = refl
 
@@ -55,7 +55,7 @@ castᵛ-var refl f x = refl
 castᵛ-var-Var : ∀ {Γ Γ' A ρ ρ'} → (e : Γ ≡ Γ')
               → (x : A ∈[ ρ ] Γ) → (x' : A ∈[ ρ' ] Γ')
               → Var-cast e (ρ , x) ≡ (ρ' , x')
-              → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (f' : ¬ Eternal A → ρ' ≾ᵣ uᵣ)
+              → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ) → (f' : ¬ Eternal A → ρ' ≾ᵣ 𝟏ᵣ)
               → castᵛ e (var f x) ≡ var f' x'
 castᵛ-var-Var refl x _ refl f f' = var-≡
 
@@ -97,7 +97,7 @@ cong-ren-img-r r (Tl-⟨⟩ {ρ = ρ₁} x) =
 -- Renaming a suffix variable along a congruence renaming leaves it where it is.
 
 ren-var-r : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
-          → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+          → (f f' : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
           → V-rename (cong-ren {Γ'' = Δ} r) (var f (∈-++ᶜʳ {Γ = Γ} x))
           ≡ var f' (∈-++ᶜʳ {Γ = Γ'} x)
 ren-var-r r x f f' =
@@ -114,7 +114,7 @@ ren-var-r r x f f' =
 sub-var-r : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ∀ {A ρ}
           → (x : A ∈[ ρ ] Γ₂)
           → (W : Γ₁ ⊢V⦂ B)
-          → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+          → (f f' : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
           → sub-var₀ (sub-atˢ₀ {Γ₁} {B} Γ₂ W) (∈-++ᶜʳ {Γ = Γ₁ ∷ B} x) f
           ≡ var f' (∈-++ᶜʳ {Γ = Γ₁} x)
 
@@ -173,9 +173,9 @@ sub-var-r {Γ₁} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? 
 -- lock; at an eternal type the substitution extends the value instead.
 
 sub-var-hit : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ¬ Eternal B
-            → (p : ctx-grade Γ₂ ≾ᵣ uᵣ)
+            → (p : ctx-grade Γ₂ ≾ᵣ 𝟏ᵣ)
             → (W : Γ₁ ⊢V⦂ B)
-            → (f : ¬ Eternal B → ctx-grade Γ₂ ≾ᵣ uᵣ)
+            → (f : ¬ Eternal B → ctx-grade Γ₂ ≾ᵣ 𝟏ᵣ)
             → sub-var₀ (sub-atˢ₀ {Γ₁} {B} Γ₂ W)
                        (split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) f
             ≡ V-rename (push-ren Γ₂ p) W
@@ -207,13 +207,13 @@ sub-var-hit {B = B} (Γ₂ ⟨ ρ ⟩) ¬et p W f with eternal? B
 -- to `split→∈-∈-++ᶜˡ`.
 
 sub-var-hit′ : ∀ {Γ₁ B σ} → (Γ₂ : Ctx) → ¬ Eternal B
-             → (p : ctx-grade Γ₂ ≾ᵣ uᵣ)
+             → (p : ctx-grade Γ₂ ≾ᵣ 𝟏ᵣ)
              → (y : B ∈[ σ ] ((Γ₁ ∷ B) ++ᶜ Γ₂))
              → _≡_ {A = Var ((Γ₁ ∷ B) ++ᶜ Γ₂) B}
                  (σ , y)
                  (ctx-grade Γ₂ , split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}))
              → (W : Γ₁ ⊢V⦂ B)
-             → (f : ¬ Eternal B → σ ≾ᵣ uᵣ)
+             → (f : ¬ Eternal B → σ ≾ᵣ 𝟏ᵣ)
              → sub-var₀ (sub-atˢ₀ {Γ₁} {B} Γ₂ W) y f
              ≡ V-rename (push-ren Γ₂ p) W
 sub-var-hit′ Γ₂ ¬et p _ refl W f = sub-var-hit Γ₂ ¬et p W f

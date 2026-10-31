@@ -49,7 +49,7 @@ open Future Fut using ([_]ᵒ; [_]ᶠ; []-congᶠ; []-idᵐ; []-∘ᵐ; []-≤; 
 open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; μ; ⟨⟩-≤; ⟨⟩-∘ᵐ; ⟨⟩-congᶠ; ⟨⟩-η-nat; ⟨⟩-μ-nat;
                      ⟨⟩-≤-nat; ⟨⟩-≤-irr; ⟨⟩-≤-refl; ⟨⟩-≤-trans; μ-≤ˡ; μ-≤ʳ;
                      ⟨⟩-μ∘Tη≡id; ⟨⟩-μ∘η≡id)
-open Adjunction Adj using (η⊣; η⊣-nat; η⊣-u; η⊣-≤; η⊣-δ; η⊣-monoidal;
+open Adjunction Adj using (η⊣; η⊣-nat; η⊣-𝟏; η⊣-≤; η⊣-δ; η⊣-monoidal;
                            ε⊣; ε⊣-nat; triangleˡ)
 open GroundTypes GTy using (⟦_⟧ᵍ)
 open Monad Mon
@@ -133,11 +133,11 @@ box-push {ρ' = ρ'} e h =
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
 
--- Discharging a unit-graded box: at grade `u` the box counit turns a
+-- Discharging a unit-graded box: at grade `𝟏` the box counit turns a
 -- transposition into the possibility unit. (The object-general form of
 -- `ret-env`.)
 
-εᵇ-η⊣ : ∀ {X ρ} → (e : ρ ≃ᵣ uᵣ)
+εᵇ-η⊣ : ∀ {X ρ} → (e : ρ ≃ᵣ 𝟏ᵣ)
       → εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ e) ∘ᵐ η⊣ {X} {ρ}
       ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ e) ∘ᵐ η
 εᵇ-η⊣ e =
@@ -146,7 +146,7 @@ box-push {ρ' = ρ'} e h =
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat _))
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ
-      (  ∘ᵐ-congʳ η⊣-u
+      (  ∘ᵐ-congʳ η⊣-𝟏
        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
        ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat η))
        ∙ ∘ᵐ-assoc _ _ _
@@ -155,11 +155,11 @@ box-push {ρ' = ρ'} e h =
 
 -- Opening a unit-graded box around an arbitrary map.
 --
--- At a grade that is the unit (`e : ρ ≡ uᵣ`), the box counit discharges the
+-- At a grade that is the unit (`e : ρ ≡ 𝟏ᵣ`), the box counit discharges the
 -- transposition entirely, leaving the possibility unit relaxed to the grade.
 -- `εᵇ-η⊣` with a map `H` carried through.
 
-box-open : ∀ {X Z ρ} → (e : ρ ≃ᵣ uᵣ) → (H : ⟨ ρ ⟩ᵒ X →ᵐ Z)
+box-open : ∀ {X Z ρ} → (e : ρ ≃ᵣ 𝟏ᵣ) → (H : ⟨ ρ ⟩ᵒ X →ᵐ Z)
          → (εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ e)) ∘ᵐ [ ρ ]ᶠ H ∘ᵐ η⊣ {X} {ρ}
          ≈ᵐ H ∘ᵐ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ e) ∘ᵐ η)
 box-open e H =
@@ -194,19 +194,19 @@ box-open e H =
 -- grade and given back boxed at the continuation's grade `ρ₃`, by
 -- `box-split`.
 
-box-η : ∀ {X ρ₁ ρ₃} → (a : mapᵉ uₑ ·ᵣ ρ₃ ≾ᵣ ρ₁) → (w : ρ₃ ≾ᵣ ρ₁)
-      → εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ᵐ δ ∘ᵐ []-≤ a ∘ᵐ η⊣ {X} {ρ₁}
+box-η : ∀ {X ρ₁ ρ₃} → (a : ∣ 𝟏ₑ ∣ᵉ ·ᵣ ρ₃ ≾ᵣ ρ₁) → (w : ρ₃ ≾ᵣ ρ₁)
+      → εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ᵐ δ ∘ᵐ []-≤ a ∘ᵐ η⊣ {X} {ρ₁}
       ≈ᵐ [ ρ₃ ]ᶠ (⟨⟩-≤ w) ∘ᵐ η⊣ {X} {ρ₃}
 box-η {X} {ρ₁} {ρ₃} a w =
     ∘ᵐ-congʳ (∘ᵐ-congʳ (box-split a))
   -- the outer box is at the unit grade, so the counit discharges it
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-≤-nat _ (≃ᵣ⇒≿ᵣ map-uᵉ))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-≤-nat _ (≃ᵣ⇒≿ᵣ map-𝟏ᵉ))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat _))
   ∙ ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (εᵇ-η⊣ map-uᵉ)
+  ∙ ∘ᵐ-congʳ (εᵇ-η⊣ map-𝟏ᵉ)
   -- and the inner box reassembles, the grade relaxations collapsing
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat _))
@@ -214,14 +214,14 @@ box-η {X} {ρ₁} {ρ₃} a w =
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
   ∙ ∘ᵐ-congˡ ([]-congᶠ collapse)
   where
-    collapse : (⟨⟩-≤ a ∘ᵐ μ {X} {ρ₃} {mapᵉ uₑ})
-                 ∘ᵐ ⟨ ρ₃ ⟩ᶠ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ᵐ η)
+    collapse : (⟨⟩-≤ a ∘ᵐ μ {X} {ρ₃} {∣ 𝟏ₑ ∣ᵉ})
+                 ∘ᵐ ⟨ ρ₃ ⟩ᶠ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ᵐ η)
              ≈ᵐ ⟨⟩-≤ w
     collapse =
         ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ˡ (≃ᵣ⇒≿ᵣ map-uᵉ))))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ˡ (≃ᵣ⇒≿ᵣ map-𝟏ᵉ))))
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ ⟨⟩-μ∘Tη≡id)
       ∙ ∘ᵐ-congʳ (⟨⟩-≤-trans _ _)
@@ -249,13 +249,13 @@ strᵀ-natʳ g =
 -- bound computation to the binder: the strength carries it across.
 
 subCtx-str : ∀ {Γ A A₀ B ε₁ ε₂ X} {t : A₀ <:ᵛ A}
-           → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂) → (pN : Paramᶜ N)
-           → (b : X →ᵐ [ mapᵉ ε₁ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ))
+           → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂) → (pN : Paramᶜ N)
+           → (b : X →ᵐ [ ∣ ε₁ ∣ᵉ ]ᵒ (⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ))
            → (m : X →ᵐ Tᵒ ⟦ A₀ ⟧ᵛ ε₁)
            → Tᶠ (⟦ subCtx t N ⟧ᶜᵗ (subCtxᴾ t N pN))
-               ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ} {⟦ A₀ ⟧ᵛ} {ε₁} ∘ᵐ ⟨ b , m ⟩ᵐ
+               ∘ᵐ strᵀ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ} {⟦ A₀ ⟧ᵛ} {ε₁} ∘ᵐ ⟨ b , m ⟩ᵐ
            ≈ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN)
-               ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₁}
+               ∘ᵐ strᵀ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₁}
                ∘ᵐ ⟨ b , Tᶠ ⟦ t ⟧<:ᵛ ∘ᵐ m ⟩ᵐ
 subCtx-str {t = t} N pN b m =
     ∘ᵐ-congˡ (T-congᶠ (subCtx-nat t N pN))
@@ -270,9 +270,9 @@ subCtx-str {t = t} N pN b m =
 -- Stated generically (over objects) so the associativity metas are pinned.
 
 seq-push : ∀ {Γ Δ A B ε₁ ε₂}
-         → (n : ⟨ mapᵉ ε₁ ⟩ᵒ Γ ×ᵐ A →ᵐ Tᵒ B ε₂) → (m : Γ →ᵐ Tᵒ A ε₁)
+         → (n : ⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ ×ᵐ A →ᵐ Tᵒ B ε₂) → (m : Γ →ᵐ Tᵒ A ε₁)
          → (env : Δ →ᵐ Γ)
-         → (Tᶠ n ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₁} ∘ᵐ ⟨ η⊣ , m ⟩ᵐ) ∘ᵐ env
+         → (Tᶠ n ∘ᵐ strᵀ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ} {A} {ε₁} ∘ᵐ ⟨ η⊣ , m ⟩ᵐ) ∘ᵐ env
          ≈ᵐ Tᶠ n ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ ∘ᵐ env , m ∘ᵐ env ⟩ᵐ
 seq-push n m env =
     ∘ᵐ-assoc _ _ _
@@ -311,15 +311,15 @@ coe-out : ∀ {Γ Δ A B P ε₀ ε₁ ε₂}
                  → alg {εb} ∘ᵐ mapˣᵐ idᵐ (T-≤ q)
                  ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa})
         → (pv : Δ →ᵐ P)
-        → (bx : Δ →ᵐ [ mapᵉ ε₁ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ))
-        → (n : ⟨ mapᵉ ε₁ ⟩ᵒ Γ ×ᵐ A →ᵐ Tᵒ B ε₂)
+        → (bx : Δ →ᵐ [ ∣ ε₁ ∣ᵉ ]ᵒ (⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ))
+        → (n : ⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ ×ᵐ A →ᵐ Tᵒ B ε₂)
         → (W : Δ →ᵐ Tᵒ A ε₀) → (p : ε₀ ≾ₑ ε₁)
         → alg {ε₁} ∘ᵐ ⟨ pv
-                      , Tᶠ n ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₁}
+                      , Tᶠ n ∘ᵐ strᵀ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ} {A} {ε₁}
                           ∘ᵐ ⟨ bx , T-≤ p ∘ᵐ W ⟩ᵐ ⟩ᵐ
         ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p)
             ∘ᵐ alg {ε₀} ∘ᵐ ⟨ pv
-                          , Tᶠ n ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₀}
+                          , Tᶠ n ∘ᵐ strᵀ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ} {A} {ε₀}
                               ∘ᵐ ⟨ []-≤ (map-monotoneᵉ p) ∘ᵐ bx , W ⟩ᵐ ⟩ᵐ
 coe-out alg alg-≤ pv bx n W p =
     ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , inner ⟩ᵐ-cong)
@@ -347,12 +347,12 @@ coe-out alg alg-≤ pv bx n W p =
 -- Splitting the strength across a bind, via `strᵀ-μᵀ` and `strᵀ-nat`.
 
 str-split : ∀ {Γ Δ Δ' A d ε₁ ε₃}
-          → (box₂ : Δ →ᵐ [ mapᵉ (d ·ₑ ε₃) ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ))
+          → (box₂ : Δ →ᵐ [ ∣ d ·ₑ ε₃ ∣ᵉ ]ᵒ (⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ))
           → (g' : Δ' →ᵐ Tᵒ A ε₃) → (t : Δ →ᵐ Tᵒ Δ' d)
-          → strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {d ·ₑ ε₃} ∘ᵐ ⟨ box₂ , μᵀ ∘ᵐ Tᶠ g' ∘ᵐ t ⟩ᵐ
-          ≈ᵐ μᵀ ∘ᵐ Tᶠ (strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₃}) ∘ᵐ Tᶠ (mapˣᵐ idᵐ g')
-              ∘ᵐ strᵀ {[ mapᵉ ε₃ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ)} {Δ'} {d}
-              ∘ᵐ ⟨ (δ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {mapᵉ d} {mapᵉ ε₃}
+          → strᵀ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ} {A} {d ·ₑ ε₃} ∘ᵐ ⟨ box₂ , μᵀ ∘ᵐ Tᶠ g' ∘ᵐ t ⟩ᵐ
+          ≈ᵐ μᵀ ∘ᵐ Tᶠ (strᵀ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ} {A} {ε₃}) ∘ᵐ Tᶠ (mapˣᵐ idᵐ g')
+              ∘ᵐ strᵀ {[ ∣ ε₃ ∣ᵉ ]ᵒ (⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ)} {Δ'} {d}
+              ∘ᵐ ⟨ (δ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ} {∣ d ∣ᵉ} {∣ ε₃ ∣ᵉ}
                       ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ (map-·ᵉ {d} {ε₃}))) ∘ᵐ box₂ , t ⟩ᵐ
 str-split {Γ = Γ} {d = d} {ε₁ = ε₁} {ε₃ = ε₃} box₂ g' t =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ μᵀ box₂ (Tᶠ g' ∘ᵐ t)
@@ -384,21 +384,21 @@ push-str : ∀ {Γ Δ Δ' A B P d ε₁ ε₂ ε₃}
                   → alg {εb} ∘ᵐ mapˣᵐ idᵐ (T-≤ q)
                   ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa})
          → (pv : Δ →ᵐ P)
-         → (bx : Δ →ᵐ [ mapᵉ ε₁ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ))
-         → (n : ⟨ mapᵉ ε₁ ⟩ᵒ Γ ×ᵐ A →ᵐ Tᵒ B ε₂)
+         → (bx : Δ →ᵐ [ ∣ ε₁ ∣ᵉ ]ᵒ (⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ))
+         → (n : ⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ ×ᵐ A →ᵐ Tᵒ B ε₂)
          → (g' : Δ' →ᵐ Tᵒ A ε₃) → (t : Δ →ᵐ Tᵒ Δ' d)
          → (p : d ·ₑ ε₃ ≾ₑ ε₁)
          → alg {ε₁} ∘ᵐ ⟨ pv
-                       , Tᶠ n ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₁}
+                       , Tᶠ n ∘ᵐ strᵀ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ} {A} {ε₁}
                            ∘ᵐ ⟨ bx , T-≤ p ∘ᵐ μᵀ ∘ᵐ Tᶠ g' ∘ᵐ t ⟩ᵐ ⟩ᵐ
          ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p)
              ∘ᵐ alg {d ·ₑ ε₃}
              ∘ᵐ ⟨ pv
                 ,   Tᶠ n ∘ᵐ μᵀ
-                  ∘ᵐ Tᶠ (strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₃})
+                  ∘ᵐ Tᶠ (strᵀ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ} {A} {ε₃})
                   ∘ᵐ Tᶠ (mapˣᵐ idᵐ g')
-                  ∘ᵐ strᵀ {[ mapᵉ ε₃ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ)} {Δ'} {d}
-                  ∘ᵐ ⟨ (δ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {mapᵉ d} {mapᵉ ε₃}
+                  ∘ᵐ strᵀ {[ ∣ ε₃ ∣ᵉ ]ᵒ (⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ)} {Δ'} {d}
+                  ∘ᵐ ⟨ (δ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ Γ} {∣ d ∣ᵉ} {∣ ε₃ ∣ᵉ}
                           ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ (map-·ᵉ {d} {ε₃})))
                          ∘ᵐ ([]-≤ (map-monotoneᵉ p) ∘ᵐ bx)
                      , t ⟩ᵐ ⟩ᵐ
@@ -431,10 +431,10 @@ seq-step-core : ∀ {ε₁ ε₂ ε₃ A A₀ B P} {S S' : 𝕊 []}
   → (alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
            → alg {εb} ∘ᵐ mapˣᵐ idᵐ (T-≤ q) ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa})
   → (pv : ⟦ toCtx S ⟧ᶜᵗˣ →ᵐ P)
-  → {M : toCtx S ⊢C⦂ A ‼ ε₁} → (N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+  → {M : toCtx S ⊢C⦂ A ‼ ε₁} → (N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
   → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
   → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
-  → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
+  → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
   → (pS : Paramˢ S)
   → (pM : Paramᶜ M) → (pN : Paramᶜ N)
   → (m' : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε₃)
@@ -448,11 +448,11 @@ seq-step-core : ∀ {ε₁ ε₂ ε₃ A A₀ B P} {S S' : 𝕊 []}
        ∘ᵐ alg {step-grade r ·ₑ ε₃}
        ∘ᵐ ⟨ pv ∘ᵐ ⟦ S ⟧ˢ pS
           ,   Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ μᵀ
-            ∘ᵐ Tᶠ (strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₃})
+            ∘ᵐ Tᶠ (strᵀ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₃})
             ∘ᵐ Tᶠ (mapˣᵐ idᵐ m')
-            ∘ᵐ strᵀ {[ mapᵉ ε₃ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ)} {⟦ hist S' ⟧ᶜᵗˣ}
+            ∘ᵐ strᵀ {[ ∣ ε₃ ∣ᵉ ]ᵒ (⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ)} {⟦ hist S' ⟧ᶜᵗˣ}
                     {step-grade r}
-            ∘ᵐ ⟨ (δ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {mapᵉ (step-grade r)} {mapᵉ ε₃}
+            ∘ᵐ ⟨ (δ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {∣ step-grade r ∣ᵉ} {∣ ε₃ ∣ᵉ}
                     ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ (map-·ᵉ {step-grade r} {ε₃})))
                    ∘ᵐ ([]-≤ (map-monotoneᵉ (step-≾ r)) ∘ᵐ (η⊣ ∘ᵐ ⟦ S ⟧ˢ pS))
                , stepᵀ r ⟩ᵐ ⟩ᵐ
@@ -478,8 +478,8 @@ seq-step-core {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {P} {S} {S'} alg alg-≤ pv
 -- relaxations merge by `[]-≤-trans` into exactly `box-η`'s hypothesis.
 
 box-core : ∀ {X ρ₂ ρ₄}
-         → (a : mapᵉ uₑ ·ᵣ ρ₄ ≾ᵣ ρ₂) → (w : ρ₄ ≾ᵣ ρ₂)
-         → (εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-uᵉ))
+         → (a : ∣ 𝟏ₑ ∣ᵉ ·ᵣ ρ₄ ≾ᵣ ρ₂) → (w : ρ₄ ≾ᵣ ρ₂)
+         → (εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-𝟏ᵉ))
              ∘ᵐ ((δ ∘ᵐ []-≤ a) ∘ᵐ η⊣ {X} {ρ₂})
          ≈ᵐ [ ρ₄ ]ᶠ (⟨⟩-≤ w) ∘ᵐ η⊣ {X} {ρ₄}
 box-core a w =
@@ -488,14 +488,14 @@ box-core a w =
   ∙ box-η a w
 
 box-id-suc : ∀ {X Y ρ₂ ρ₄}
-           → (a : mapᵉ uₑ ·ᵣ ρ₄ ≾ᵣ ρ₂) → (w : ρ₄ ≾ᵣ ρ₂)
+           → (a : ∣ 𝟏ₑ ∣ᵉ ·ᵣ ρ₄ ≾ᵣ ρ₂) → (w : ρ₄ ≾ᵣ ρ₂)
            → (env : Y →ᵐ X)
-           → (εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-uᵉ))
+           → (εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-𝟏ᵉ))
                ∘ᵐ (δ ∘ᵐ []-≤ a) ∘ᵐ (η⊣ {X} {ρ₂} ∘ᵐ env)
            ≈ᵐ [ ρ₄ ]ᶠ (⟨⟩-≤ w ∘ᵐ ⟨ ρ₄ ⟩ᶠ env) ∘ᵐ η⊣ {Y} {ρ₄}
 box-id-suc {ρ₂ = ρ₂} a w env =
     ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc (δ ∘ᵐ []-≤ a) (η⊣ {_} {ρ₂}) env))
-  ∙ ≈ᵐ-sym (∘ᵐ-assoc (εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-uᵉ))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc (εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-𝟏ᵉ))
                      ((δ ∘ᵐ []-≤ a) ∘ᵐ η⊣ {_} {ρ₂}) env)
   ∙ ∘ᵐ-congˡ (box-core a w)
   ∙ ∘ᵐ-assoc _ _ _
@@ -510,7 +510,7 @@ box-id-suc {ρ₂ = ρ₂} a w env =
 -- is the graded monad's unit law, so the whole `⟨⟩-≤ ∘ μ ∘ ⟨⟩-≤ ∘ η` collapses
 -- to a single grade relaxation (the order being proof-irrelevant).
 
-past-η : ∀ {A ρ σ u'} → (pu : uᵣ ≾ᵣ u') → (e : ρ ·ᵣ u' ≾ᵣ σ) → (k : ρ ≾ᵣ σ)
+past-η : ∀ {A ρ σ u'} → (pu : 𝟏ᵣ ≾ᵣ u') → (e : ρ ·ᵣ u' ≾ᵣ σ) → (k : ρ ≾ᵣ σ)
        → (⟨⟩-≤ e ∘ᵐ μ {A} {u'} {ρ}) ∘ᵐ (⟨⟩-≤ pu ∘ᵐ η)
        ≈ᵐ ⟨⟩-≤ k
 past-η pu e k =
@@ -528,7 +528,7 @@ past-η pu e k =
 -- folding the state's lock with the new tick.
 
 past-tick : ∀ {A B ρ ρ₂ ρ₄ σ u'}
-          → (pu : uᵣ ≾ᵣ u') → (e : ρ ·ᵣ u' ≾ᵣ σ) → (k : ρ ≾ᵣ σ)
+          → (pu : 𝟏ᵣ ≾ᵣ u') → (e : ρ ·ᵣ u' ≾ᵣ σ) → (k : ρ ≾ᵣ σ)
           → (g : σ ·ᵣ ρ₄ ≾ᵣ ρ₂) → (w : ρ ·ᵣ ρ₄ ≾ᵣ ρ₂)
           → (E : A →ᵐ B)
           → (⟨⟩-≤ g ∘ᵐ μ {B} {ρ₄} {σ})
@@ -548,7 +548,7 @@ past-tick pu e k g w E =
 
 -- The grade witness that `suc-comp-ren id-suc` carries.
 
-wk-w : ∀ {ρ₂ ρ₄} → (c : uᵣ ·ᵣ ρ₄ ≾ᵣ ρ₂) → ρ₄ ≾ᵣ ρ₂
+wk-w : ∀ {ρ₂ ρ₄} → (c : 𝟏ᵣ ·ᵣ ρ₄ ≾ᵣ ρ₂) → ρ₄ ≾ᵣ ρ₂
 wk-w {ρ₄ = ρ₄} c = ≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-identityˡ ρ₄)) c
 
 -- The `∷-suc` cancellation: `suc-comp-ren` prefixes a `cong-⟨⟩-ren wk-ren`,
@@ -577,10 +577,10 @@ step-box : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []} {ρ₂ ρ₄ : R}
          → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
          → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
          → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ ρ₄ ≾ᵣ ρ₂)
-         → (g : mapᵉ (step-grade r) ·ᵣ ρ₄ ≾ᵣ ρ₂)
+         → (g : ∣ step-grade r ∣ᵉ ·ᵣ ρ₄ ≾ᵣ ρ₂)
          → (pS : Paramˢ S) → (pM : Paramᶜ M)
          → strᵀ {[ ρ₄ ]ᵒ (⟨ ρ₂ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ)} {⟦ hist S' ⟧ᶜᵗˣ} {step-grade r}
-             ∘ᵐ ⟨ (δ {⟨ ρ₂ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {mapᵉ (step-grade r)} {ρ₄} ∘ᵐ []-≤ g)
+             ∘ᵐ ⟨ (δ {⟨ ρ₂ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {∣ step-grade r ∣ᵉ} {ρ₄} ∘ᵐ []-≤ g)
                     ∘ᵐ (η⊣ ∘ᵐ ⟦ S ⟧ˢ pS)
                 , stepᵀ r ⟩ᵐ
            ≈ᵐ Tᶠ ⟨ [ ρ₄ ]ᶠ (⟦ suc-comp-ren (step-extends-state r) c ⟧ʳ
@@ -866,7 +866,7 @@ step-box (BOX {ρ' = ρ'} {S = St} {V = V}) c g pS (pV , pM) =
 -- one again.
 
 step-box (DELAY {τ = τ} {S = St}) c g pS pM =
-    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ (delayᵀ τ) _ ([ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ (delayᵀ τ) _ ([ ιᵣ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (strᵀ-delayᵀ-algebraicity τ)
@@ -890,7 +890,7 @@ step-box (DELAY {τ = τ} {S = St}) c g pS pM =
                   ∙ ⟨   -- merge the two unit-graded boxes, then open them
                         ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
                       ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
-                      ∙ box-open map-uᵉ _
+                      ∙ box-open map-𝟏ᵉ _
                       -- regroup so the `η⊣` inside can be pulled to the front
                       -- reassociate so the `η⊣` sits second from the left
                       ∙ ∘ᵐ-assoc _ _ _
@@ -904,9 +904,9 @@ step-box (DELAY {τ = τ} {S = St}) c g pS pM =
                       -- and what is left is the pure possibility identity
                       ∙ ∘ᵐ-congˡ ([]-congᶠ
                           (past-tick _ _
-                            (≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-identityʳ (of-durʳ τ)))
-                              (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (≃ᵣ⇒≿ᵣ map-uᵉ))
-                                        (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))))
+                            (≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-identityʳ (ιᵣ τ)))
+                              (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (≃ᵣ⇒≿ᵣ map-𝟏ᵉ))
+                                        (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-ιᵉ ≃ᵣ-refl)))))
                             g _ (⟦ St ⟧ˢ pS)))
                     , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
       ∙ ηᵀ-nat _)))
@@ -942,7 +942,7 @@ step-box (DELAY {τ = τ} {S = St}) c g pS pM =
 seq-g : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []}
       → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
       → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
-      → mapᵉ (step-grade r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁
+      → ∣ step-grade r ∣ᵉ ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ
 seq-g {ε₃ = ε₃} r =
   ≾ᵣ-trans (≃ᵣ⇒≿ᵣ (map-·ᵉ {step-grade r} {ε₃}))
            (map-monotoneᵉ (step-≾ r))
@@ -965,8 +965,8 @@ box-merge p q m d h =
 seq-target : ∀ {ε₁ ε₂ ε₃ A B P} {Γ Γ' : Ctx} {H : Obj}
            → (alg : P ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε₃ →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε₃ ·ₑ ε₂))
            → (pv : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ P)
-           → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-           → (ρ : Ren [] (Γ' ⟨ mapᵉ ε₃ ⟩) (Γ ⟨ mapᵉ ε₁ ⟩))
+           → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+           → (ρ : Ren [] (Γ' ⟨ ∣ ε₃ ∣ᵉ ⟩) (Γ ⟨ ∣ ε₁ ∣ᵉ ⟩))
            → (m' : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε₃)
            → (env : H →ᵐ ⟦ Γ' ⟧ᶜᵗˣ)
            → (pN : Paramᶜ N)
@@ -977,8 +977,8 @@ seq-target : ∀ {ε₁ ε₂ ε₃ A B P} {Γ Γ' : Ctx} {H : Obj}
                ∘ᵐ env
            ≈ᵐ alg ∘ᵐ ⟨ pv ∘ᵐ env
                      ,   Tᶠ (⟦ N ⟧ᶜᵗ pN)
-                       ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₃}
-                       ∘ᵐ ⟨ [ mapᵉ ε₃ ]ᶠ (⟦ ρ ⟧ʳ ∘ᵐ ⟨ mapᵉ ε₃ ⟩ᶠ env) ∘ᵐ η⊣
+                       ∘ᵐ strᵀ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₃}
+                       ∘ᵐ ⟨ [ ∣ ε₃ ∣ᵉ ]ᶠ (⟦ ρ ⟧ʳ ∘ᵐ ⟨ ∣ ε₃ ∣ᵉ ⟩ᶠ env) ∘ᵐ η⊣
                           , m' ∘ᵐ env ⟩ᵐ ⟩ᵐ
 seq-target {ε₃ = ε₃} {A = A} {B = B} {Γ' = Γ'} alg pv N ρ m' env pN =
     ∘ᵐ-assoc _ _ _
@@ -1008,10 +1008,10 @@ seq-target {ε₃ = ε₃} {A = A} {B = B} {Γ' = Γ'} alg pv N ρ m' env pN =
            , ≈ᵐ-refl ⟩ᵐ-cong))
 
 sound-SEQ-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {S S' : 𝕊 []}
-  → {M : toCtx S ⊢C⦂ A ‼ ε₁} → (N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+  → {M : toCtx S ⊢C⦂ A ‼ ε₁} → (N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
   → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
   → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
-  → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
+  → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
   → (pS : Paramˢ S) → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
   → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ r)
@@ -1131,7 +1131,7 @@ appʰ-⟨⟩ p k m =
 -- The fold reads a coercion of the handled values through its return clause.
 
 handle-foldᵗ-Tᶠ : ∀ {X A A' B ε ε'} → (h : Handlerᵀ (⟨ ⊤ᵣ ⟩ᵒ X) B)
-                → (n : ⟨ mapᵉ ε ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε') → (a : A' →ᵐ A)
+                → (n : ⟨ ∣ ε ∣ᵉ ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε') → (a : A' →ᵐ A)
                 → handle-foldᵗ h n ∘ᵐ mapˣᵐ idᵐ (Tᶠ a)
                 ≈ᵐ handle-foldᵗ h (n ∘ᵐ mapˣᵐ idᵐ a)
 handle-foldᵗ-Tᶠ h n a =
@@ -1157,10 +1157,10 @@ relax-coe n c a =
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘ _ _ _ _ ∙ mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _))
 
 sound-SUB-HANDLE : ∀ {Γ A A₁ B B₁ ε ε₁ ε' ε₁'}
-  → (M : Γ ⊢C⦂ A ‼ ε) → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A₁ ⊢C⦂ B₁ ‼ ε₁')
+  → (M : Γ ⊢C⦂ A ‼ ε) → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B₁ ‼ ε₁')
   → (H : (op : Op) → (ε'' : E)
        → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B₁ ‼ ε'')
+            ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B₁ ‼ ε'')
          ⊢C⦂ B₁ ‼ (op-grade op ·ₑ ε''))
   → (p : A <:ᵛ A₁) → (pε : ε ≾ₑ ε₁) → (q : B₁ <:ᵛ B) → (s : ε₁' ≾ₑ ε')
   → (pM : Paramᶜ M) → (pN : Paramᶜ N)

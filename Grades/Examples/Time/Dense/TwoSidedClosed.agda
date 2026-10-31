@@ -76,8 +76,8 @@ infixl 7 _·ᵢ_
 
 -- interval unit
 
-uᵢ : Interval∞
-uᵢ = [ 0ᵈ , ↑ 0ᵈ ]
+𝟏ᵢ : Interval∞
+𝟏ᵢ = [ 0ᵈ , ↑ 0ᵈ ]
 
 -- interval equality
 
@@ -92,11 +92,11 @@ eqᵢ {_} {i₂} refl refl =
 
 -- right and left identity
 
-·ᵢ-identityʳ : (i : Interval∞) → (i ·ᵢ uᵢ) ≡ i
+·ᵢ-identityʳ : (i : Interval∞) → (i ·ᵢ 𝟏ᵢ) ≡ i
 ·ᵢ-identityʳ i =
   eqᵢ (+-identityʳ (min i)) (+∞-identityʳ (max i))
 
-·ᵢ-identityˡ : (i : Interval∞) → (uᵢ ·ᵢ i) ≡ i
+·ᵢ-identityˡ : (i : Interval∞) → (𝟏ᵢ ·ᵢ i) ≡ i
 ·ᵢ-identityˡ i =
   eqᵢ (+-identityˡ (min i)) (+∞-identityˡ (max i))
 
@@ -131,15 +131,15 @@ i₁ ≾ᵢ i₂ =
 -- the unit is not least: `[ 1 / 2 , ↑ 1 / 2 ]` is not above it, its
 -- lower bound being higher
 
-uᵢ-not-least : ¬ Minimum _≾ᵢ_ uᵢ
-uᵢ-not-least least =
+𝟏ᵢ-not-least : ¬ Minimum _≾ᵢ_ 𝟏ᵢ
+𝟏ᵢ-not-least least =
   toWitnessFalse {a? = 1 / 2 ≤? 0ᵈ} tt (proj₁ (least [ 1 / 2 , ↑ 1 / 2 ]))
 
--- uᵢ is the minimal element
+-- 𝟏ᵢ is the minimal element
 
-uᵢ-minimal : ∀ {i} → i ≾ᵢ uᵢ → i ≡ uᵢ
-uᵢ-minimal {i} (_ , maxrel) =
-  eqᵢ {i} {uᵢ}
+𝟏ᵢ-minimal : ∀ {i} → i ≾ᵢ 𝟏ᵢ → i ≡ 𝟏ᵢ
+𝟏ᵢ-minimal {i} (_ , maxrel) =
+  eqᵢ {i} {𝟏ᵢ}
     (≤0⇒≡0 (≤∞-trans {↑ min i} {max i} {↑ 0ᵈ} (min≤max i) maxrel))
     (≤∞-↑0 maxrel)
 
@@ -181,21 +181,21 @@ i₁ ≾ᵢ? i₂ with min i₂ ≤? min i₁ | max i₁ ≤∞? max i₂
 
 -- zero-product property
 
-≡ᵢ-zero-productˡ : ∀ {i₁ i₂} → i₁ ·ᵢ i₂ ≡ uᵢ → i₁ ≡ uᵢ
+≡ᵢ-zero-productˡ : ∀ {i₁ i₂} → i₁ ·ᵢ i₂ ≡ 𝟏ᵢ → i₁ ≡ 𝟏ᵢ
 ≡ᵢ-zero-productˡ {i₁} {i₂} eq =
-  uᵢ-minimal {i₁} (0≤ (min i₁) ,
+  𝟏ᵢ-minimal {i₁} (0≤ (min i₁) ,
                    +∞-≤∞-0ˡ {max i₁} {max i₂} (≤∞-reflexive (cong max eq)))
 
-≡ᵢ-zero-productʳ : ∀ {i₁ i₂} → i₁ ·ᵢ i₂ ≡ uᵢ → i₂ ≡ uᵢ
+≡ᵢ-zero-productʳ : ∀ {i₁ i₂} → i₁ ·ᵢ i₂ ≡ 𝟏ᵢ → i₂ ≡ 𝟏ᵢ
 ≡ᵢ-zero-productʳ {i₁} {i₂} eq =
-  uᵢ-minimal {i₂} (0≤ (min i₂) ,
+  𝟏ᵢ-minimal {i₂} (0≤ (min i₂) ,
                    +∞-≤∞-0ʳ {max i₁} {max i₂} (≤∞-reflexive (cong max eq)))
 
-≾ᵢ-zero-productˡ : ∀ {i₁ i₂} → (i₁ ·ᵢ i₂) ≾ᵢ uᵢ → i₁ ≾ᵢ uᵢ
+≾ᵢ-zero-productˡ : ∀ {i₁ i₂} → (i₁ ·ᵢ i₂) ≾ᵢ 𝟏ᵢ → i₁ ≾ᵢ 𝟏ᵢ
 ≾ᵢ-zero-productˡ {i₁} {i₂} (_ , maxrel) =
   0≤ (min i₁) , +∞-≤∞-0ˡ {max i₁} {max i₂} maxrel
 
-≾ᵢ-zero-productʳ : ∀ {i₁ i₂} → (i₁ ·ᵢ i₂) ≾ᵢ uᵢ → i₂ ≾ᵢ uᵢ
+≾ᵢ-zero-productʳ : ∀ {i₁ i₂} → (i₁ ·ᵢ i₂) ≾ᵢ 𝟏ᵢ → i₂ ≾ᵢ 𝟏ᵢ
 ≾ᵢ-zero-productʳ {i₁} {i₂} (_ , maxrel) =
   0≤ (min i₂) , +∞-≤∞-0ʳ {max i₁} {max i₂} maxrel
 
@@ -258,7 +258,7 @@ dense-closed-two-sided-intervals-with-∞ : Grade ℚ≥0ᴰ
 dense-closed-two-sided-intervals-with-∞ = posetᵍ record
   { Carrier = Interval∞
   ; _·_              = _·ᵢ_
-  ; u                = uᵢ
+  ; 𝟏                = 𝟏ᵢ
   ; ·-identityʳ      = ·ᵢ-identityʳ
   ; ·-identityˡ      = ·ᵢ-identityˡ
   ; ·-assoc          = ·ᵢ-assoc
@@ -285,16 +285,16 @@ dense-closed-two-sided-intervals-with-∞ = posetᵍ record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵢ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ᵢ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ᵢ-irrelevant {i₁} {i₂}
-  ; of-dur            = λ q → [ q , ↑ q ] {fromWitness ≤-refl}
-  ; of-dur-zero       = eqᵢ refl refl
-  ; of-dur-plus       = eqᵢ refl refl
+  ; ι                 = λ q → [ q , ↑ q ] {fromWitness ≤-refl}
+  ; ι-zero            = eqᵢ refl refl
+  ; ι-plus            = eqᵢ refl refl
   }
 
 -- its hints
 
 dense-closed-two-sided-intervals-with-∞ʰ : GradeHints dense-closed-two-sided-intervals-with-∞
 dense-closed-two-sided-intervals-with-∞ʰ = record
-  { u-least? = nothing
+  { 𝟏-least? = nothing
   ; ·-comm?  = just (comm-≡ dense-closed-two-sided-intervals-with-∞ ·ᵢ-comm)
   ; plus?    = λ i → just (plusᵢ i)
   }
@@ -307,13 +307,13 @@ two-sided→dense-closed : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.two-sided-int
 two-sided→dense-closed = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}
-  ; map-u        = eqᵢ refl refl
+  ; map-𝟏        = eqᵢ refl refl
   ; map-·        = λ {i} {j} → eqᵢ (#-+ (Discrete.min i) (Discrete.min j))
                                    (ℕ∞→ℚ∞-+ (Discrete.max i) (Discrete.max j))
   ; map-⊤        = eqᵢ refl refl
   ; map-⊔        = λ {i} {j} → eqᵢ (#-⊓ (Discrete.min i) (Discrete.min j))
                                    (ℕ∞→ℚ∞-⊔ (Discrete.max i) (Discrete.max j))
-  ; map-of-dur   = eqᵢ refl refl
+  ; map-ι        = eqᵢ refl refl
   }
   where
     embed : Discrete.Interval∞ → Interval∞

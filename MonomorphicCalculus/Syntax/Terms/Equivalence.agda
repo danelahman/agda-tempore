@@ -39,10 +39,10 @@ open import MonomorphicCalculus.Syntax.Renaming.Equivalence  Spec
 
 -- A `var`'s grade bound is a function into an irrelevant relation.
 
-bound-irr : ∀ {A ρ} → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ) → f ≡ f'
+bound-irr : ∀ {A ρ} → (f f' : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ) → f ≡ f'
 bound-irr f f' = fun-ext (λ z → ≾ᵣ-irrelevant _ _)
 
-var-≡ : ∀ {Γ A ρ} {f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ} {x : A ∈[ ρ ] Γ}
+var-≡ : ∀ {Γ A ρ} {f f' : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ} {x : A ∈[ ρ ] Γ}
       → var f x ≡ var f' x
 var-≡ {f = f} {f' = f'} {x = x} = cong (λ g → var g x) (bound-irr f f')
 
@@ -75,10 +75,10 @@ unbox-≡ {x = x} {rel = rel} {rel' = rel'} {p = p} {p' = p'} {M = M} refl refl 
 -- congruence goes through `fun-ext`.
 
 handler-≡ : ∀ {Γ A B ε ε'}
-              {N N' : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+              {N N' : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
               {H H' : (op : Op) → (ε'' : E) →
                         Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                          ∷ [ mapᵉ (op-grade op) ]
+                          ∷ [ ∣ op-grade op ∣ᵉ ]
                               (type-of-gtype (arity op) ⇒ B ‼ ε'')
                         ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
           → N ≡ N'

@@ -63,14 +63,14 @@ embargo = record
   { Dur    = ℕᴰ
   ; RGrade = left-sided-intervals
   ; EGrade = left-sided-time×low-high
-  ; ∣_∣ᵉ   = π₁ᵍ {G₁ = left-sided-intervals} {two-point-levels}
+  ; ∣-∣ᵉ   = π₁ᵍ {G₁ = left-sided-intervals} {two-point-levels}
   }
 
 embargoʰ : SystemHints embargo
 embargoʰ = record
   { RHints      = left-sided-intervalsʰ
   ; EHints      = left-sided-time×low-highʰ
-  ; reflects-u? = nothing
+  ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }
 
@@ -81,14 +81,14 @@ taint = record
   { Dur    = ℕᴰ
   ; RGrade = two-point-levels
   ; EGrade = left-sided-time×low-high
-  ; ∣_∣ᵉ   = π₂ᵍ {G₁ = left-sided-intervals} {two-point-levels}
+  ; ∣-∣ᵉ   = π₂ᵍ {G₁ = left-sided-intervals} {two-point-levels}
   }
 
 taintʰ : SystemHints taint
 taintʰ = record
   { RHints      = two-point-levelsʰ
   ; EHints      = left-sided-time×low-highʰ
-  ; reflects-u? = nothing
+  ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }
 

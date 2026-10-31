@@ -37,12 +37,12 @@ module Grades.Exact.Interval
   (⟦_⟧ᵘ : Grade.Carrier Uᵍ → Lift.Lang T Op n code code-injective)
   (soundˡ : ∀ {c d} → Grade._≾_ Lᵍ c d → Lift._≾_ T Op n code code-injective ⟦ c ⟧ˡ ⟦ d ⟧ˡ)
   (soundᵘ : ∀ {c d} → Grade._≾_ Uᵍ c d → Lift._≾_ T Op n code code-injective ⟦ c ⟧ᵘ ⟦ d ⟧ᵘ)
-  (unitˡ : ⟦ Grade.u Lᵍ ⟧ˡ Data.List.Base.[])
-  (unitᵘ : ⟦ Grade.u Uᵍ ⟧ᵘ Data.List.Base.[])
+  (unitˡ : ⟦ Grade.𝟏 Lᵍ ⟧ˡ Data.List.Base.[])
+  (unitᵘ : ⟦ Grade.𝟏 Uᵍ ⟧ᵘ Data.List.Base.[])
   (seqˡ : ∀ {c d x y} → ⟦ c ⟧ˡ x → ⟦ d ⟧ˡ y → ⟦ Grade._·_ Lᵍ c d ⟧ˡ (x Data.List.Base.++ y))
   (seqᵘ : ∀ {c d x y} → ⟦ c ⟧ᵘ x → ⟦ d ⟧ᵘ y → ⟦ Grade._·_ Uᵍ c d ⟧ᵘ (x Data.List.Base.++ y))
-  (delayˡ : ∀ τ → ⟦ Grade.of-dur Lᵍ τ ⟧ˡ (Base.idle T Op n code code-injective τ))
-  (delayᵘ : ∀ τ → ⟦ Grade.of-dur Uᵍ τ ⟧ᵘ (Base.idle T Op n code code-injective τ)) where
+  (delayˡ : ∀ τ → ⟦ Grade.ι Lᵍ τ ⟧ˡ (Base.idle T Op n code code-injective τ))
+  (delayᵘ : ∀ τ → ⟦ Grade.ι Uᵍ τ ⟧ᵘ (Base.idle T Op n code code-injective τ)) where
 
 open import Data.Fin.Subset.Properties using (x∈⁅x⁆)
 open import Data.List.Base using (List; []; _∷_; _++_)
@@ -89,9 +89,9 @@ private
 consistent : Upward (Lᵍ ×ᵍ Uᵍ) Consistent
 consistent = record
   { up       = λ (le , le′) (x , fl , fu) → x , fits-up (soundˡ le) fl , fits-up (soundᵘ le′) fu
-  ; P-u      = [] , fits-∈ unitˡ , fits-∈ unitᵘ
+  ; P-𝟏      = [] , fits-∈ unitˡ , fits-∈ unitᵘ
   ; P-·      = λ (x , fl , fu) (x′ , fl′ , fu′) → x ++ x′ , fits-·ˡ fl fl′ , fits-·ᵘ fu fu′
-  ; P-of-dur = λ τ → idle τ , fits-∈ (delayˡ τ) , fits-∈ (delayᵘ τ)
+  ; P-ι = λ τ → idle τ , fits-∈ (delayˡ τ) , fits-∈ (delayᵘ τ)
   }
 
 intervalᵍ : Grade D

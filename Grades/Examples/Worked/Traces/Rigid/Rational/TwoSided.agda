@@ -27,7 +27,7 @@ import Grades.Examples.Traces.Rigid.Rational.LeftSided Op 3 code name name-code 
 import Grades.Examples.Traces.Rigid.Rational.RightSided Op 3 code name name-code code-name running as U
 
 open import Grades.Base using (module Grade)
-open Grade two-sided using (Carrier; of-dur)
+open Grade two-sided using (Carrier; ι)
   renaming (_·_ to _·ᵢ_)
 
 -- componentwise comparison
@@ -43,15 +43,15 @@ cycle = [ ⌜ ‵ heat · L.idle L.≥ (# 1) ⌝ ⁺ᵉ , ⌜ ‵ heat · U.idle
 
 -- two cycles with rests of one and a half and of two meet it
 
-twice : holds₂ (operation heat ·ᵢ (of-dur (3 / 2) ·ᵢ (operation heat ·ᵢ of-dur (# 2)))) cycle ≡ true
+twice : holds₂ (operation heat ·ᵢ (ι (3 / 2) ·ᵢ (operation heat ·ᵢ ι (# 2)))) cycle ≡ true
 twice = refl
 
 -- a rest of half a unit is too short, one of four too long
 
-hurried : holds₂ (operation heat ·ᵢ of-dur (1 / 2)) cycle ≡ false
+hurried : holds₂ (operation heat ·ᵢ ι (1 / 2)) cycle ≡ false
 hurried = refl
 
-dawdling : holds₂ (operation heat ·ᵢ of-dur (# 4)) cycle ≡ false
+dawdling : holds₂ (operation heat ·ᵢ ι (# 4)) cycle ≡ false
 dawdling = refl
 
 -- a wait of at least five units within at most two: no run fits both

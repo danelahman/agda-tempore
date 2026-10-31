@@ -118,7 +118,7 @@ settled : [] ⊢C⦂ Unit ‼ _
 settled =
   box contract (const 42)    -- ∷ [ contract ] Reading
     (perform read ⋆          -- ⟨ opTime read ⟩ ∷ Reading
-      (delay 5               -- ⟨ of-dur 5 ⟩
+      (delay 5               -- ⟨ ι 5 ⟩
         (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) (holds′ refl , holds′ refl) (<:ᵛ-refl _)
                              -- ∷ Reading
           (perform write here (return ⋆)))))
@@ -127,7 +127,7 @@ settled =
 -- demands: the box cannot be opened
 
 stirred-run : R
-stirred-run = uᵣ ·ᵣ opTime read ·ᵣ opTime send ·ᵣ opTime send
+stirred-run = 𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime send ·ᵣ opTime send
 
 stirred : ¬ (stirred-run ≾ᵣ contract)
 stirred (p , _) = fails′ refl p

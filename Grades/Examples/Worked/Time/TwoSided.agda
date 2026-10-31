@@ -69,13 +69,13 @@ tsi-incomparableʳ rel = ≰! (proj₂ rel)
 -- the unit is the singleton window at 0, and it is minimal: only a
 -- computation that takes no time at all can be graded by it
 
-tsi-unit : Grade.u two-sided-intervals-with-∞ ≡ [ 0 , ↑ 0 ]
+tsi-unit : Grade.𝟏 two-sided-intervals-with-∞ ≡ [ 0 , ↑ 0 ]
 tsi-unit = eqᵢ refl refl
 
 -- `n` time steps is the singleton window at `n`
 
-tsi-of-dur : Grade.of-dur two-sided-intervals-with-∞ 7 ≡ [ 7 , ↑ 7 ]
-tsi-of-dur = eqᵢ refl refl
+tsi-ι : Grade.ι two-sided-intervals-with-∞ 7 ≡ [ 7 , ↑ 7 ]
+tsi-ι = eqᵢ refl refl
 
 ------------------------------------------------------------------------
 -- The infinite upper endpoint

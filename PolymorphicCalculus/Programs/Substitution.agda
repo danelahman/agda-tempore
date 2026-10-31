@@ -103,7 +103,7 @@ private
                → local (clause-ctx Γ B op) ≡ clause-ctx (local Γ) B op
   clause-local {Θ} Γ B op =
     cong (λ G → G ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                  ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ})))
+                  ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ})))
          (local-wkᵉ Γ)
 
   env-wkᵉ : ∀ {Θ n} {ρ : Defs} → (Γ : OCtx Θ n) → DefsEnv ρ (defs Γ)

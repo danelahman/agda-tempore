@@ -2,8 +2,8 @@
 -- The sub-grade of an upward-closed submonoid holding the durations. --
 --                                                                    --
 -- Let `P` be a property of the grades of `G` that is closed upward   --
--- (`c ≾ d` and `P c` give `P d`), holds of `u` and of every          --
--- `of-dur τ`, and is closed under `_·_`. Then the grades with a      --
+-- (`c ≾ d` and `P c` give `P d`), holds of `𝟏` and of every          --
+-- `ι τ`, and is closed under `_·_`. Then the grades with a           --
 -- witness of `P` form a grade `G ∣ P`:                               --
 --                                                                    --
 --   * `⊤` and `c ⊔ d` have `P`, being above a grade that has it;     --
@@ -35,12 +35,12 @@ record Upward {D : Duration} (G : Grade D) (P : Grade.Carrier G → Set) : Set w
   open Grade G
   field
     up      : ∀ {c d} → c ≾ d → P c → P d
-    P-u     : P u
+    P-𝟏     : P 𝟏
     P-·     : ∀ {c d} → P c → P d → P (c · d)
-    P-of-dur : ∀ τ → P (of-dur τ)
+    P-ι : ∀ τ → P (ι τ)
 
   P-⊤ : P ⊤
-  P-⊤ = up (≾-⊤ u) P-u
+  P-⊤ = up (≾-⊤ 𝟏) P-𝟏
 
   P-⊔ : ∀ {c d} → P c → P d → P (c ⊔ d)
   P-⊔ {c} {d} p _ = up (⊔-ubˡ c d) p
@@ -76,11 +76,11 @@ module _ {D : Duration} (G : Grade D) {P : Grade.Carrier G → Set} (U : Upward 
   _∣ᵍ_ = record
     { Carrier         = C
     ; _·_             = _·ᴾ_
-    ; u               = G.u , P-u
+    ; 𝟏               = G.𝟏 , P-𝟏
     ; _≾_             = _≾ᴾ_
     ; ⊤               = G.⊤ , P-⊤
     ; _⊔_             = _⊔ᴾ_
-    ; of-dur          = λ τ → G.of-dur τ , P-of-dur τ
+    ; ι               = λ τ → G.ι τ , P-ι τ
     ; ·-identityˡ     = λ a → G.·-identityˡ (proj₁ a)
     ; ·-identityʳ     = λ a → G.·-identityʳ (proj₁ a)
     ; ·-assoc         = λ a b c → G.·-assoc (proj₁ a) (proj₁ b) (proj₁ c)
@@ -98,15 +98,15 @@ module _ {D : Duration} (G : Grade D) {P : Grade.Carrier G → Set} (U : Upward 
     ; ·-distribʳ-⊔-≾  = λ a b c → G.·-distribʳ-⊔-≾ (proj₁ a) (proj₁ b) (proj₁ c)
     ; ≾-zero-productˡ = G.≾-zero-productˡ
     ; ≾-zero-productʳ = G.≾-zero-productʳ
-    ; of-dur-zero     = G.of-dur-zero
-    ; of-dur-plus     = G.of-dur-plus
+    ; ι-zero          = G.ι-zero
+    ; ι-plus          = G.ι-plus
     }
 
   -- its hints, those of `G`
 
   upwardʰ : GradeHints G → GradeHints _∣ᵍ_
   upwardʰ H = record
-    { u-least? = Maybe.map (λ l a → l (proj₁ a)) H.u-least?
+    { 𝟏-least? = Maybe.map (λ l a → l (proj₁ a)) H.𝟏-least?
     ; ·-comm?  = Maybe.map (λ m a b → m (proj₁ a) (proj₁ b)) H.·-comm?
     ; plus?    = λ a → Maybe.map (plusᴾ (proj₂ a)) (H.plus? (proj₁ a))
     }
@@ -118,11 +118,11 @@ module _ {D : Duration} (G : Grade D) {P : Grade.Carrier G → Set} (U : Upward 
   inclusionᵍ = record
     { map          = proj₁
     ; map-monotone = λ p → p
-    ; map-u        = G.≃-refl
+    ; map-𝟏        = G.≃-refl
     ; map-·        = G.≃-refl
     ; map-⊤        = G.≃-refl
     ; map-⊔        = G.≃-refl
-    ; map-of-dur   = G.≃-refl
+    ; map-ι        = G.≃-refl
     }
 
 infix 5 _∣ʰ_

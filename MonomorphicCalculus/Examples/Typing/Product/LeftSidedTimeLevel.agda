@@ -19,7 +19,7 @@
 -- The two rules that place the unit on opposite sides of the order   --
 -- are decided by different components:                               --
 --                                                                    --
---   * the bound `ρ ≾ᵣ uᵣ` of `var` holds exactly when `ρ` is `Low`:  --
+--   * the bound `ρ ≾ᵣ 𝟏ᵣ` of `var` holds exactly when `ρ` is `Low`:  --
 --     time never makes a reading stale, and a transmission does.     --
 --                                                                    --
 --   * a handler clause cannot discard its continuation, returning at --
@@ -98,7 +98,7 @@ relaying =
 ------------------------------------------------------------------------
 -- Readings survive time, not a transmission
 --
--- `var` asks for `ρ ≾ᵣ uᵣ` at a non-eternal type. The time component
+-- `var` asks for `ρ ≾ᵣ 𝟏ᵣ` at a non-eternal type. The time component
 -- always meets it, the unit being the greatest floor; the level
 -- component meets it only at `Low`.
 
@@ -117,7 +117,7 @@ logged-uplink =
 -- transmitting first and storing the reading afterwards is refused:
 -- the reading would be used past a `High` lock
 
-stale-after-transmitting : ¬ (uᵣ ·ᵣ opTime send ≾ᵣ uᵣ)
+stale-after-transmitting : ¬ (𝟏ᵣ ·ᵣ opTime send ≾ᵣ 𝟏ᵣ)
 stale-after-transmitting (_ , tainted) = ⋢! tainted
 
 -- the identifier is eternal, and crosses a transmission all the same
@@ -137,7 +137,7 @@ raising-the-level : [] ⊢C⦂ Unit ‼ ([ 3 ,+∞⟩ , High)
 raising-the-level =
   coerce (≤! , ⊑!) (perform read ⋆ (perform write here (return ⋆)))
 
-no-declassifying : ¬ (opTime read ·ₑ (opTime send ·ₑ uₑ) ≾ₑ ([ 5 ,+∞⟩ , Low))
+no-declassifying : ¬ (opTime read ·ₑ (opTime send ·ₑ 𝟏ₑ) ≾ₑ ([ 5 ,+∞⟩ , Low))
 no-declassifying (_ , tainted) = ⋢! tainted
 
 ------------------------------------------------------------------------
@@ -154,7 +154,7 @@ branching =
 
 -- the storing branch alone would have stayed `Low`
 
-storing-is-low : opTime write ·ₑ uₑ ≾ₑ ([ 2 ,+∞⟩ , Low)
+storing-is-low : opTime write ·ₑ 𝟏ₑ ≾ₑ ([ 2 ,+∞⟩ , Low)
 storing-is-low = ≤! , ⊑!
 
 ------------------------------------------------------------------------
@@ -191,17 +191,17 @@ waited-out =
 
 -- read and stored only, it is still under embargo: three steps of five
 
-too-early : ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ report)
+too-early : ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ report)
 too-early (not-yet , _) = ≰! not-yet
 
 -- relayed, the run is late enough and tainted
 
-tainted : ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ report)
+tainted : ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ report)
 tainted (_ , high) = ⋢! high
 
 -- and waiting afterwards does not clean it
 
-waiting-does-not-clean : ¬ (uᵣ ·ᵣ opTime send ·ᵣ of-durʳ 10 ≾ᵣ report)
+waiting-does-not-clean : ¬ (𝟏ᵣ ·ᵣ opTime send ·ᵣ ιᵣ 10 ≾ᵣ report)
 waiting-does-not-clean (_ , high) = ⋢! high
 
 -- a report cleared for the network may be published after a
@@ -255,7 +255,7 @@ after-a-quiet-branch =
 -- with a transmitting branch instead of the idling one, the join is
 -- `High`, and the claim is refused on either path
 
-after-a-transmitting-branch : ¬ (uᵣ ·ᵣ ([ 4 ,+∞⟩ , High) ≾ᵣ report)
+after-a-transmitting-branch : ¬ (𝟏ᵣ ·ᵣ ([ 4 ,+∞⟩ , High) ≾ᵣ report)
 after-a-transmitting-branch (_ , high) = ⋢! high
 
 ------------------------------------------------------------------------
@@ -278,11 +278,11 @@ identified =
 -- no clause may drop its continuation: a `return` guarantees none of
 -- the operation's time
 
-no-discarding : ¬ (uₑ ≾ₑ op-grade read ·ₑ uₑ)
+no-discarding : ¬ (𝟏ₑ ≾ₑ op-grade read ·ₑ 𝟏ₑ)
 no-discarding (early , _) = ≰! early
 
 -- and none may close over a reading: the barrier `⊤ᵣ` is `High`
 
 no-reporting : (op : Op) → (ε'' : E)
-             → ¬ (uᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ uᵣ)
+             → ¬ (𝟏ᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ 𝟏ᵣ)
 no-reporting op ε'' (_ , ())

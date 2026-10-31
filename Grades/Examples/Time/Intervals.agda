@@ -42,11 +42,11 @@ intervals : Grade D
 intervals = posetᵍ record
   { Carrier         = Interval
   ; _·_             = _⊕_
-  ; u               = 0ⁱ
+  ; 𝟏               = 0ⁱ
   ; _≾_             = _⊆ⁱ_
   ; ⊤               = ⊤ⁱ
   ; _⊔_             = _∪ⁱ_
-  ; of-dur          = pointⁱ
+  ; ι               = pointⁱ
   ; ·-identityˡ     = ⊕-identityˡ
   ; ·-identityʳ     = ⊕-identityʳ
   ; ·-assoc         = ⊕-assoc
@@ -65,15 +65,15 @@ intervals = posetᵍ record
   ; ·-distribʳ-⊔-≾  = ⊕-distribʳ-∪ⁱ
   ; ≾-zero-productˡ = λ {i} {j} → ⊆ⁱ-0ⁱ-sumˡ i j
   ; ≾-zero-productʳ = λ {i} {j} → ⊆ⁱ-0ⁱ-sumʳ i j
-  ; of-dur-zero     = refl
-  ; of-dur-plus     = λ {τ} {τ'} → pointⁱ-+ τ τ'
+  ; ι-zero          = refl
+  ; ι-plus          = λ {τ} {τ'} → pointⁱ-+ τ τ'
   }
 
 -- its hints
 
 intervalsʰ : GradeHints intervals
 intervalsʰ = record
-  { u-least? = nothing
+  { 𝟏-least? = nothing
   ; ·-comm?  = just (comm-≡ intervals ⊕-comm)
   ; plus?    = λ i → just (plusⁱ i)
   }

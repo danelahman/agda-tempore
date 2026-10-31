@@ -28,8 +28,8 @@
 -- the join is the minimum or the maximum accordingly; `⊤` is         --
 -- `(-∞ , (-∞ , ∞) , ∞)`. The unit `(0 , [0 , 0] , 0)` is the only    --
 -- grade below the unit, which gives the zero-product law: from       --
--- `x · y ≾ u` the trough and peak of `x` are `0`, its range is       --
--- `[0 , 0]` by consistency, and so `y ≾ u`. The unit is not least,   --
+-- `x · y ≾ 𝟏` the trough and peak of `x` are `0`, its range is       --
+-- `[0 , 0]` by consistency, and so `y ≾ 𝟏`. The unit is not least,   --
 -- `_·_` does not commute, and delays change no level. The resource   --
 -- levels are the grade of one resource indexed by the resource names --
 -- (`Grades.Indexed`).                                                --
@@ -73,8 +73,8 @@ s ·ˢ s' =
        (≤∞-trans (0≤ext s) (⊔∞-ubˡ (ext s) _))
        (≤∞-trans (+∞-monoʳ (net s) (net≤ext s')) (⊔∞-ubʳ (ext s) _))
 
-uˢ : Side
-uˢ = side 0∞ 0∞ ≤∞-refl ≤∞-refl
+𝟏ˢ : Side
+𝟏ˢ = side 0∞ 0∞ ≤∞-refl ≤∞-refl
 
 ⊤ˢ : Side
 ⊤ˢ = side ∞ ∞ ≤∞-∞ ≤∞-∞
@@ -109,12 +109,12 @@ private
 ≤ˢ-trans : ∀ {s s' s''} → s ≤ˢ s' → s' ≤ˢ s'' → s ≤ˢ s''
 ≤ˢ-trans (p , q) (p' , q') = ≤∞-trans p p' , ≤∞-trans q q'
 
-·ˢ-identityˡ : ∀ s → uˢ ·ˢ s ≤ˢ s × s ≤ˢ uˢ ·ˢ s
+·ˢ-identityˡ : ∀ s → 𝟏ˢ ·ˢ s ≤ˢ s × s ≤ˢ 𝟏ˢ ·ˢ s
 ·ˢ-identityˡ s =
     (≤-≡ (+∞-identityˡ (net s)) , ⊔∞-lub (0≤ext s) (≤-≡ (+∞-identityˡ (ext s))))
   , (≥-≡ (+∞-identityˡ (net s)) , ≤∞-trans (≥-≡ (+∞-identityˡ (ext s))) (⊔∞-ubʳ 0∞ _))
 
-·ˢ-identityʳ : ∀ s → s ·ˢ uˢ ≤ˢ s × s ≤ˢ s ·ˢ uˢ
+·ˢ-identityʳ : ∀ s → s ·ˢ 𝟏ˢ ≤ˢ s × s ≤ˢ s ·ˢ 𝟏ˢ
 ·ˢ-identityʳ s =
     (≤-≡ (+∞-identityʳ (net s))
     , ⊔∞-lub ≤∞-refl (≤∞-trans (≤-≡ (+∞-identityʳ (net s))) (net≤ext s)))
@@ -193,8 +193,8 @@ x ·ᴸ y =
                                (trans (cong (_+∞ d) (+∞-comm b c)) (+∞-assoc c b d))))
                (sym (+∞-assoc a c (b +∞ d))))
 
-uᴸ : Level
-uᴸ = level uˢ uˢ (≤∞-reflexive (sym (+∞-identityˡ 0∞)))
+𝟏ᴸ : Level
+𝟏ᴸ = level 𝟏ˢ 𝟏ˢ (≤∞-reflexive (sym (+∞-identityˡ 0∞)))
 
 ⊤ᴸ : Level
 ⊤ᴸ = level ⊤ˢ ⊤ˢ ≤∞-∞
@@ -233,23 +233,23 @@ private
 
   -- the second side of a product below the unit's, the first one's
   -- net change being 0
-  second-≤u : ∀ s s' → 0∞ ≤∞ net s → s ·ˢ s' ≤ˢ uˢ → s' ≤ˢ uˢ
-  second-≤u s s' n (_ , e) =
+  second-≤𝟏 : ∀ s s' → 0∞ ≤∞ net s → s ·ˢ s' ≤ˢ 𝟏ˢ → s' ≤ˢ 𝟏ˢ
+  second-≤𝟏 s s' n (_ , e) =
       ≤∞-trans (net≤ext s') h'≤0
     , h'≤0
     where
       h'≤0 : ext s' ≤∞ 0∞
       h'≤0 = +∞-≤0ʳ n (≤∞-trans (⊔∞-ubʳ (ext s) _) e)
 
-zero-productˡ : ∀ {x y} → x ·ᴸ y ≾ᴸ uᴸ → x ≾ᴸ uᴸ
+zero-productˡ : ∀ {x y} → x ·ᴸ y ≾ᴸ 𝟏ᴸ → x ≾ᴸ 𝟏ᴸ
 zero-productˡ {x} {y} ((_ , el) , (_ , eu)) =
     (net-≤0 (lower x) (ext-≤0 (lower x) (lower y) el) , ext-≤0 (lower x) (lower y) el)
   , (net-≤0 (upper x) (ext-≤0 (upper x) (upper y) eu) , ext-≤0 (upper x) (upper y) eu)
 
-zero-productʳ : ∀ {x y} → x ·ᴸ y ≾ᴸ uᴸ → y ≾ᴸ uᴸ
+zero-productʳ : ∀ {x y} → x ·ᴸ y ≾ᴸ 𝟏ᴸ → y ≾ᴸ 𝟏ᴸ
 zero-productʳ {x} {y} p@(pl , pu) =
-    second-≤u (lower x) (lower y) (net-≥0 (net (upper x)) (net (lower x)) nu cons′) pl
-  , second-≤u (upper x) (upper y) (net-≥0 (net (lower x)) (net (upper x)) nl (consistent x)) pu
+    second-≤𝟏 (lower x) (lower y) (net-≥0 (net (upper x)) (net (lower x)) nu cons′) pl
+  , second-≤𝟏 (upper x) (upper y) (net-≥0 (net (lower x)) (net (upper x)) nl (consistent x)) pu
   where
     xu = zero-productˡ {x} {y} p
     nl = net-≤ (proj₁ xu)
@@ -263,11 +263,11 @@ one-resource : {D : Duration} → Grade D
 one-resource = record
   { Carrier         = Level
   ; _·_             = _·ᴸ_
-  ; u               = uᴸ
+  ; 𝟏               = 𝟏ᴸ
   ; _≾_             = _≾ᴸ_
   ; ⊤               = ⊤ᴸ
   ; _⊔_             = _⊔ᴸ_
-  ; of-dur          = λ _ → uᴸ
+  ; ι               = λ _ → 𝟏ᴸ
   ; ·-identityˡ     = λ x → pair (·ˢ-identityˡ (lower x)) (·ˢ-identityˡ (upper x))
   ; ·-identityʳ     = λ x → pair (·ˢ-identityʳ (lower x)) (·ˢ-identityʳ (upper x))
   ; ·-assoc         = λ x y z → pair (·ˢ-assoc (lower x) (lower y) (lower z))
@@ -290,8 +290,8 @@ one-resource = record
                               , ·ˢ-distribʳ (upper x) (upper y) (upper z)
   ; ≾-zero-productˡ = λ {x} {y} → zero-productˡ {x} {y}
   ; ≾-zero-productʳ = λ {x} {y} → zero-productʳ {x} {y}
-  ; of-dur-zero     = (≤ˢ-refl , ≤ˢ-refl) , (≤ˢ-refl , ≤ˢ-refl)
-  ; of-dur-plus     = pair (·ˢ-identityˡ uˢ) (·ˢ-identityˡ uˢ) .proj₂ , pair (·ˢ-identityˡ uˢ) (·ˢ-identityˡ uˢ) .proj₁
+  ; ι-zero          = (≤ˢ-refl , ≤ˢ-refl) , (≤ˢ-refl , ≤ˢ-refl)
+  ; ι-plus          = pair (·ˢ-identityˡ 𝟏ˢ) (·ˢ-identityˡ 𝟏ˢ) .proj₂ , pair (·ˢ-identityˡ 𝟏ˢ) (·ˢ-identityˡ 𝟏ˢ) .proj₁
   }
   where
     pair : ∀ {a b c d : Side} → a ≤ˢ b × b ≤ˢ a → c ≤ˢ d × d ≤ˢ c

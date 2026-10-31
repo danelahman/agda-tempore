@@ -187,16 +187,16 @@ _≡̂ₑ?_ : (ε ε' : EExp ∅ˢ) → Dec (ε ≡̂ₑ ε')
 -- The var-rule disjunction: eternality, or a value below the unit
 
 VarOK-∅ : {A : OVType ∅ˢ} {ρ : RExp ∅ˢ}
-        → VarOK ∅ᴴ A ρ → (∅ᴴ ⊩ᴱ A) ⊎ (valʳ ρ ≾ᵣ uᵣ)
+        → VarOK ∅ᴴ A ρ → (∅ᴴ ⊩ᴱ A) ⊎ (valʳ ρ ≾ᵣ 𝟏ᵣ)
 VarOK-∅ ok = [ inj₁ , (λ le → inj₂ (val-≾ᵣ le)) ]′ (VarOK-∅ᴴ ok)
 
 VarOK-∅⁻ : {A : OVType ∅ˢ} {ρ : RExp ∅ˢ}
-         → (∅ᴴ ⊩ᴱ A) ⊎ (valʳ ρ ≾ᵣ uᵣ) → VarOK ∅ᴴ A ρ
+         → (∅ᴴ ⊩ᴱ A) ⊎ (valʳ ρ ≾ᵣ 𝟏ᵣ) → VarOK ∅ᴴ A ρ
 VarOK-∅⁻ (inj₁ et) = et-ok et
 VarOK-∅⁻ (inj₂ le) = ≾ᵘ-ok (val-≾ᵣ⁻ le)
 
 VarOK? : (A : OVType ∅ˢ) → (ρ : RExp ∅ˢ) → Dec (VarOK ∅ᴴ A ρ)
-VarOK? A ρ with ⊩ᴱ? A | valʳ ρ ≾ᵣ? uᵣ
+VarOK? A ρ with ⊩ᴱ? A | valʳ ρ ≾ᵣ? 𝟏ᵣ
 ... | yes et | _      = yes (et-ok et)
 ... | no  _  | yes le = yes (≾ᵘ-ok (val-≾ᵣ⁻ le))
 ... | no ¬et | no ¬le = no λ ok → [ ¬et , ¬le ]′ (VarOK-∅ ok)
@@ -414,7 +414,7 @@ inst-≡̂ₑ δ p = val-≡̂ₑ (≡̂ₑ-subst δ p)
 
 inst-VarOK : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {A : OVType Θ} {ρ : RExp Θ}
            → ∅ᴴ ⊩ᴴ Q [ δ ] → VarOK Q A ρ
-           → (∅ᴴ ⊩ᴱ A [ δ ]ᵛ) ⊎ (valʳ (ρ [ δ ]ʳ) ≾ᵣ uᵣ)
+           → (∅ᴴ ⊩ᴱ A [ δ ]ᵛ) ⊎ (valʳ (ρ [ δ ]ʳ) ≾ᵣ 𝟏ᵣ)
 inst-VarOK h ok = VarOK-∅ (VarOK-subst h ok)
 
 -- An ordering between expressions convertible to constants is theirs

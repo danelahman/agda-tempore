@@ -54,7 +54,7 @@ op-shape-inj refl = refl
 -- `sub` nodes are transparent (reduction discards a `coerce`); a delay is
 -- descended only when it delays by nothing, along a zero-step.
 
-⊑-zero : ∀ {τ w} → τ ≡ 0ᴰ → w ⊑[ mapᵉ (of-durᵉ τ) ] w
+⊑-zero : ∀ {τ w} → τ ≡ 0ᴰ → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w
 ⊑-zero refl = ⊑-delay0
 
 data Head0 {A : PSh} : ∀ {ε w} → Tˢ A ε w → Shape → Set where
@@ -64,20 +64,20 @@ data Head0 {A : PSh} : ∀ {ε w} → Tˢ A ε w → Shape → Set where
           → Head0 (leaf x) ret-shape
 
   h-op    : ∀ {ε w} {op : Op} {v : carrier ⟦ param op ⟧ᵍ w}
-          → {k : ∀ {w'} → w ⊑[ mapᵉ (op-grade op) ] w'
+          → {k : ∀ {w'} → w ⊑[ ∣ op-grade op ∣ᵉ ] w'
                → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w'}
-          → {kc : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w')
+          → {kc : ∀ {w'} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w')
                     {y y' : carrier ⟦ arity op ⟧ᵍ w'}
                 → _≈_ ⟦ arity op ⟧ᵍ y y' → k q y ≈ᵗ k q y'}
-          → {kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (op-grade op) ] w') (r : w' ⊑[ uᵣ ] w'')
+          → {kn : ∀ {w' w''} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                     (y : carrier ⟦ arity op ⟧ᵍ w')
                 → k (⊑ρ∘ᵘ q r) (transport ⟦ arity op ⟧ᵍ r y) ≈ᵗ transportᵗ r (k q y)}
           --------------------------------------------
           → Head0 (op-node op v k kc kn) (op-shape op)
 
   h-delay : ∀ {ε w s τ}
-          → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
-          → {kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+          → {k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
+          → {kn : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                 → k (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (k q)}
           → (z : τ ≡ 0ᴰ)
           → Head0 (k (⊑-zero z)) s
@@ -114,8 +114,8 @@ head0-sub⁻ (h-sub h) = h
 -- which is what the two delay collapses need.
 
 head0-⊑ : ∀ {A ε w s τ}
-        → (k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w')
-        → (q q' : w ⊑[ mapᵉ (of-durᵉ τ) ] w)
+        → (k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w')
+        → (q q' : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w)
         → Head0 (k q) s
         ----------------
         → Head0 (k q') s
@@ -135,7 +135,7 @@ mutual
   head0-≈ᵗ (op-≈ _ _)   h-op                = h-op
   head0-≈ᵗ (delay-≈ ek) (h-delay z h)       = h-delay z (head0-≈ᵗ (ek _) h)
   head0-≈ᵗ (sub-≈ et)   (h-sub h)           = h-sub (head0-≈ᵗ et h)
-  head0-≈ᵗ sub-u        (h-sub h)           = h
+  head0-≈ᵗ sub-𝟏        (h-sub h)           = h
   head0-≈ᵗ sub-∘        (h-sub (h-sub h))   = h-sub h
   head0-≈ᵗ sub-delay    (h-sub (h-delay z h)) = h-delay z (h-sub h)
   head0-≈ᵗ sub-op       (h-sub h-op)        = h-op
@@ -163,7 +163,7 @@ mutual
   head0-≈ᵗ⁻ (op-≈ _ _)   h-op                = h-op
   head0-≈ᵗ⁻ (delay-≈ ek) (h-delay z h)       = h-delay z (head0-≈ᵗ⁻ (ek _) h)
   head0-≈ᵗ⁻ (sub-≈ et)   (h-sub h)           = h-sub (head0-≈ᵗ⁻ et h)
-  head0-≈ᵗ⁻ sub-u        h                   = h-sub h
+  head0-≈ᵗ⁻ sub-𝟏        h                   = h-sub h
   head0-≈ᵗ⁻ sub-∘        (h-sub h)           = h-sub (h-sub h)
   head0-≈ᵗ⁻ sub-delay    (h-delay z (h-sub h)) = h-sub (h-delay z h)
   head0-≈ᵗ⁻ sub-op       h-op                = h-sub h-op

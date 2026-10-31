@@ -30,7 +30,7 @@ module PolymorphicCalculus.Examples.Product (S : LanguageSpec)
 
 open LanguageSpec S
 open GradeSystemInterface Grades
-  using (R; 𝔻; of-durʳ; of-durᵉ; uᵣ; _·ᵣ_; _·ₑ_; _⊔ₑ_; mapᵉ; _≾ᵣ?_)
+  using (R; 𝔻; ιᵣ; ιₑ; 𝟏ᵣ; _·ᵣ_; _·ₑ_; _⊔ₑ_; ∣_∣ᵉ; _≾ᵣ?_)
   renaming (_≾ᵣ_ to _≾ᴳ_)
 open Operations Ops using (Op; param; arity; op-grade)
 
@@ -57,10 +57,10 @@ open import PolymorphicCalculus.Examples.Variables
 ⌜ n ⌝ = Stepped.fromℕ st n
 
 ⌜_⌝ʳ : ∀ {Θ} → ℕ → RExp Θ
-⌜ n ⌝ʳ = rconst (of-durʳ ⌜ n ⌝)
+⌜ n ⌝ʳ = rconst (ιᵣ ⌜ n ⌝)
 
 ⌜_⌝ᵉ : ∀ {Θ} → ℕ → EExp Θ
-⌜ n ⌝ᵉ = econst (of-durᵉ ⌜ n ⌝)
+⌜ n ⌝ᵉ = econst (ιₑ ⌜ n ⌝)
 
 ------------------------------------------------------------------
 -- A closed derivation in the empty context is a typing
@@ -73,18 +73,18 @@ private
 
   -- A variable no time has passed over
 
-  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → VarOK Q A ûᵣ
+  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → VarOK Q A 𝟏̂ᵣ
   ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
   -- A claim, or a use, after one closed grade below the bound
 
-  after : ∀ {Θ} {Q : Hyps Θ} {c c' : R} → c ≾ᴳ c' → Q ⊩ ûᵣ ·̂ᵣ rconst c ≾̂ᵣ rconst c'
+  after : ∀ {Θ} {Q : Hyps Θ} {c c' : R} → c ≾ᴳ c' → Q ⊩ 𝟏̂ᵣ ·̂ᵣ rconst c ≾̂ᵣ rconst c'
   after p = transᵣ (eqᵣ ≡̂ᵣ-identityˡ) (atomᵣ p)
 
   -- ... and after two
 
   after₂ : ∀ {Θ} {Q : Hyps Θ} {c c' c'' : R} → c ·ᵣ c' ≾ᴳ c''
-         → Q ⊩ (ûᵣ ·̂ᵣ rconst c) ·̂ᵣ rconst c' ≾̂ᵣ rconst c''
+         → Q ⊩ (𝟏̂ᵣ ·̂ᵣ rconst c) ·̂ᵣ rconst c' ≾̂ᵣ rconst c''
   after₂ p = transᵣ (eqᵣ (≡̂ᵣ-cong ≡̂ᵣ-identityˡ ≡̂ᵣ-refl)) (transᵣ (eqᵣ ≡̂ᵣ-const-·) (atomᵣ p))
 
 ------------------------------------------------------------------
@@ -97,11 +97,11 @@ private
 embargoed : RExp ∅ˢ → ℕ → RawC ∅ˢ 0
 embargoed c d = box c ⋆ (delay ⌜ d ⌝ (unbox (var fzero) (return v₀)))
 
-embargoed-D : ∀ c d → of-durʳ ⌜ d ⌝ ≾ᴳ c → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (⌜ d ⌝ᵉ ·̂ₑ ûₑ)
+embargoed-D : ∀ c d → ιᵣ ⌜ d ⌝ ≾ᴳ c → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ)
 embargoed-D c d p =
   box (rconst c) ⋆ (delay ⌜ d ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) (after p) (return (var Hd ok₀))))
 
-embargoed-typable : ∀ c d → True (of-durʳ ⌜ d ⌝ ≾ᵣ? c) → Typable [] (embargoed (rconst c) d)
+embargoed-typable : ∀ c d → True (ιᵣ ⌜ d ⌝ ≾ᵣ? c) → Typable [] (embargoed (rconst c) d)
 embargoed-typable c d p = closed (embargoed-D c d (toWitness p)) refl
 
 expected-embargoed : ℕ → Scheme
@@ -118,23 +118,23 @@ transmitted : RExp ∅ˢ → Op → ℕ → RawC ∅ˢ 0
 transmitted c op d =
   return (lam (box c ⋆ (perform op v₁ (delay ⌜ d ⌝ (unbox (var (fsuc fzero)) (return v₀))))))
 
-transmitted-D : ∀ c op d → mapᵉ (op-grade op) ·ᵣ of-durʳ ⌜ d ⌝ ≾ᴳ c
+transmitted-D : ∀ c op d → ∣ op-grade op ∣ᵉ ·ᵣ ιᵣ ⌜ d ⌝ ≾ᴳ c
               → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂
-                  (⌜ param op ⌝ᵍ ⇒ Unit ‼ (econst (op-grade op) ·̂ₑ (⌜ d ⌝ᵉ ·̂ₑ ûₑ))) ‼ ûₑ
+                  (⌜ param op ⌝ᵍ ⇒ Unit ‼ (econst (op-grade op) ·̂ₑ (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ))) ‼ 𝟏̂ₑ
 transmitted-D c op d p =
   return (lam (box (rconst c) ⋆
     (perform op (var (Tl-∷ Hd) ok₀)
       (delay ⌜ d ⌝ (unbox (res-var {z = Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))}) (after₂ p)
                   (return (var Hd ok₀)))))))
 
-transmitted-typable : ∀ c op d → True ((mapᵉ (op-grade op) ·ᵣ of-durʳ ⌜ d ⌝) ≾ᵣ? c)
+transmitted-typable : ∀ c op d → True ((∣ op-grade op ∣ᵉ ·ᵣ ιᵣ ⌜ d ⌝) ≾ᵣ? c)
                     → Typable [] (transmitted (rconst c) op d)
 transmitted-typable c op d p = closed (transmitted-D c op d (toWitness p)) refl
 
 expected-transmitted : Op → ℕ → Scheme
 expected-transmitted op d =
   ∀[ 0 , 0 , 0 ] ⊤ ⟹
-    (⌜ param op ⌝ᵍ ⇒ Unit ‼ econst (op-grade op ·ₑ of-durᵉ ⌜ d ⌝)) ‼ ûₑ
+    (⌜ param op ⌝ᵍ ⇒ Unit ‼ econst (op-grade op ·ₑ ιₑ ⌜ d ⌝)) ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- 3. A branch joining levels
@@ -154,7 +154,7 @@ joined-claim op₀ op₁ op₂ =
 expected-joined-claim : Op → Op → Op → Scheme
 expected-joined-claim op₀ op₁ op₂ =
   ∀[ 1 , 0 , 0 ] ⊤ ⟹
-    ([ rconst (mapᵉ g) ] α₀ ⇒ (Bool ⇒ α₀ ‼ econst g) ‼ ûₑ) ‼ ûₑ
+    ([ rconst ∣ g ∣ᵉ ] α₀ ⇒ (Bool ⇒ α₀ ‼ econst g) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
   where
     g = op-grade op₀ ·ₑ (op-grade op₁ ⊔ₑ op-grade op₂)
 
@@ -175,29 +175,29 @@ expected-publish : Op → Scheme
 expected-publish op =
   ∀[ 1 , 0 , 1 ] ⊤ ⟹
     ((Unit ⇒ ⌜ param op ⌝ᵍ ‼ ε₀)
-     ⇒ ([ rconst (mapᵉ (op-grade op)) ·̂ᵣ ∣ ε₀ ∣̂ᵉ ] α₀ ⇒ α₀ ‼ (econst (op-grade op) ·̂ₑ ε₀)) ‼ ûₑ)
-    ‼ ûₑ
+     ⇒ ([ rconst ∣ op-grade op ∣ᵉ ·̂ᵣ ∣ ε₀ ∣̂ᵉ ] α₀ ⇒ α₀ ‼ (econst (op-grade op) ·̂ₑ ε₀)) ‼ 𝟏̂ₑ)
+    ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- 5. A reading used after an operation
 --
 --   twice op r = op r; op r
 --
--- A reading is not eternal: `var` asks `op-grade op ≾ uᵣ`.
+-- A reading is not eternal: `var` asks `op-grade op ≾ 𝟏ᵣ`.
 
 twice : Op → RawC ∅ˢ 0
 twice op = return (lam (perform op v₀ (perform op v₁ (return ⋆))))
 
-twice-D : ∀ op → mapᵉ (op-grade op) ≾ᴳ uᵣ
+twice-D : ∀ op → ∣ op-grade op ∣ᵉ ≾ᴳ 𝟏ᵣ
         → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂
-            (⌜ param op ⌝ᵍ ⇒ Unit ‼ (econst (op-grade op) ·̂ₑ (econst (op-grade op) ·̂ₑ ûₑ))) ‼ ûₑ
+            (⌜ param op ⌝ᵍ ⇒ Unit ‼ (econst (op-grade op) ·̂ₑ (econst (op-grade op) ·̂ₑ 𝟏̂ₑ))) ‼ 𝟏̂ₑ
 twice-D op q =
   return (lam (perform op (var Hd ok₀)
     (perform op (var (Tl-∷ (Tl-⟨⟩ Hd)) (≾ᵘ-ok (after q))) (return ⋆))))
 
-twice-typable : ∀ op → True (mapᵉ (op-grade op) ≾ᵣ? uᵣ) → Typable [] (twice op)
+twice-typable : ∀ op → True (∣ op-grade op ∣ᵉ ≾ᵣ? 𝟏ᵣ) → Typable [] (twice op)
 twice-typable op q = closed (twice-D op (toWitness q)) refl
 
 expected-twice : Op → Scheme
 expected-twice op =
-  ∀[ 0 , 0 , 0 ] ⊤ ⟹ (⌜ param op ⌝ᵍ ⇒ Unit ‼ econst (op-grade op ·ₑ op-grade op)) ‼ ûₑ
+  ∀[ 0 , 0 , 0 ] ⊤ ⟹ (⌜ param op ⌝ᵍ ⇒ Unit ‼ econst (op-grade op ·ₑ op-grade op)) ‼ 𝟏̂ₑ

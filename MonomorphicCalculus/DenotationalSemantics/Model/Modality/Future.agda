@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------
 -- Semantics of the box modality `[ ρ ] A` on types, as a functor       --
--- graded by a monoid of grades `(R , · , u , ≾)`. It is the analogue   --
+-- graded by a monoid of grades `(R , · , 𝟏 , ≾)`. It is the analogue   --
 -- of the comonadic □-modality on types in Fitch-style modal calculi.   --
 --                                                                      --
 -- The modality is a lax graded comonad, with counit `ε` and            --
@@ -13,8 +13,8 @@
 -- and `·-assoc`.                                                       --
 --                                                                      --
 -- At the unit resource grade the counit is moreover an                 --
--- isomorphism: a unit-graded unit `ηᵘ : A →ᵐ [ u ]ᵒ A` splits `ε`, so  --
--- `[ u ]ᵒ A ≅ A`. This is the semantic counterpart of the calculus     --
+-- isomorphism: a unit-graded unit `ηᵘ : A →ᵐ [ 𝟏 ]ᵒ A` splits `ε`, so  --
+-- `[ 𝟏 ]ᵒ A ≅ A`. This is the semantic counterpart of the calculus     --
 -- being able to use a variable once the resources to its right sum to  --
 -- the unit grade, and it is dual to the context modality's             --
 -- unit-graded counit `εᵘ`.                                             --
@@ -56,15 +56,15 @@ record Future : Set₁ where
 
     -- Counit
 
-    ε : ∀ {A} → [ u ]ᵒ A →ᵐ A
+    ε : ∀ {A} → [ 𝟏 ]ᵒ A →ᵐ A
 
     -- Comultiplication
 
     δ : ∀ {A ρ₁ ρ₂} → [ ρ₁ · ρ₂ ]ᵒ A →ᵐ [ ρ₁ ]ᵒ ([ ρ₂ ]ᵒ A)
 
-    -- Unit-graded unit: the inverse of the counit `ε` at grade `u`.
+    -- Unit-graded unit: the inverse of the counit `ε` at grade `𝟏`.
 
-    ηᵘ : ∀ {A} → A →ᵐ [ u ]ᵒ A
+    ηᵘ : ∀ {A} → A →ᵐ [ 𝟏 ]ᵒ A
 
     -- Monoidality (lax): a boxed `A` and a boxed `B` at the same grade
     -- combine into a boxed pair. This is what lets the monad's strength
@@ -98,7 +98,7 @@ record Future : Set₁ where
 
     -- ε is natural
 
-    []-ε-nat : ∀ {A B} → (f : A →ᵐ B) → f ∘ᵐ ε ≈ᵐ ε ∘ᵐ [ u ]ᶠ f
+    []-ε-nat : ∀ {A B} → (f : A →ᵐ B) → f ∘ᵐ ε ≈ᵐ ε ∘ᵐ [ 𝟏 ]ᶠ f
 
     -- δ is natural
 
@@ -120,10 +120,10 @@ record Future : Set₁ where
     -- Graded comonad laws
 
     []-ε∘δ≡id : ∀ {A ρ}
-              → ε {[ ρ ]ᵒ A} ∘ᵐ δ {A} {u} {ρ}
+              → ε {[ ρ ]ᵒ A} ∘ᵐ δ {A} {𝟏} {ρ}
               ≈ᵐ []-≤ {A = A} (≃⇒≿ (·-identityˡ ρ))
     []-Dε∘δ≡id : ∀ {A ρ}
-               → [ ρ ]ᶠ (ε {A}) ∘ᵐ δ {A} {ρ} {u}
+               → [ ρ ]ᶠ (ε {A}) ∘ᵐ δ {A} {ρ} {𝟏}
                ≈ᵐ []-≤ {A} (≃⇒≿ (·-identityʳ ρ))
     []-δ∘δ≡Dδ∘δ : ∀ {A ρ₁ ρ₂ ρ₃}
                 → δ {[ ρ₃ ]ᵒ A} {ρ₁} {ρ₂} ∘ᵐ δ {A} {ρ₁ · ρ₂} {ρ₃}
@@ -132,9 +132,9 @@ record Future : Set₁ where
 
     -- ηᵘ is natural
 
-    ηᵘ-nat : ∀ {A B} → (f : A →ᵐ B) → [ u ]ᶠ f ∘ᵐ ηᵘ ≈ᵐ ηᵘ ∘ᵐ f
+    ηᵘ-nat : ∀ {A B} → (f : A →ᵐ B) → [ 𝟏 ]ᶠ f ∘ᵐ ηᵘ ≈ᵐ ηᵘ ∘ᵐ f
 
-    -- ηᵘ and the counit ε are mutually inverse (so `[ u ]ᵒ A ≅ A`)
+    -- ηᵘ and the counit ε are mutually inverse (so `[ 𝟏 ]ᵒ A ≅ A`)
 
     []-ε∘ηᵘ≡id : ∀ {A} → ε {A} ∘ᵐ ηᵘ {A} ≈ᵐ idᵐ
     []-ηᵘ∘ε≡id : ∀ {A} → ηᵘ {A} ∘ᵐ ε {A} ≈ᵐ idᵐ

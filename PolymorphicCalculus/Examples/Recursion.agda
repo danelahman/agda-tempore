@@ -32,7 +32,7 @@ module PolymorphicCalculus.Examples.Recursion (S : LanguageSpec)
   (st : Stepped (GradeSystem.Dur (LanguageSpec.Grades S))) where
 
 open LanguageSpec S
-open GradeSystemInterface Grades using (R; 𝔻; of-durʳ; of-durᵉ; ⊤ᵣ; ⊤ₑ; ≃ᵣ⇒≾ᵣ; map-uᵉ)
+open GradeSystemInterface Grades using (R; 𝔻; ιᵣ; ιₑ; ⊤ᵣ; ⊤ₑ; ≃ᵣ⇒≾ᵣ; map-𝟏ᵉ)
 open Operations Ops using (Op; op-grade)
 
 open import PolymorphicCalculus.Syntax.Grades                S
@@ -60,10 +60,10 @@ open import PolymorphicCalculus.Examples.Variables
 ⌜ n ⌝ = Stepped.fromℕ st n
 
 ⌜_⌝ʳ : ∀ {Θ} → ℕ → RExp Θ
-⌜ n ⌝ʳ = rconst (of-durʳ ⌜ n ⌝)
+⌜ n ⌝ʳ = rconst (ιᵣ ⌜ n ⌝)
 
 ⌜_⌝ᵉ : ∀ {Θ} → ℕ → EExp Θ
-⌜ n ⌝ᵉ = econst (of-durᵉ ⌜ n ⌝)
+⌜ n ⌝ᵉ = econst (ιₑ ⌜ n ⌝)
 
 ------------------------------------------------------------------
 -- Verdicts
@@ -110,7 +110,7 @@ private
 
   -- A variable no time has passed over
 
-  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → VarOK Q A ûᵣ
+  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → VarOK Q A 𝟏̂ᵣ
   ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
   -- A natural number, usable under any lock
@@ -120,13 +120,13 @@ private
 
   -- A unit effect has passed
 
-  u-passed : ∀ {Θ} {Q : Hyps Θ} → Q ⊩ ûᵣ ·̂ᵣ ∣ ûₑ ∣̂ᵉ ≾̂ᵣ ûᵣ
-  u-passed = transᵣ (eqᵣ ≡̂ᵣ-identityˡ)
-               (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-uᵉ)))
+  𝟏-passed : ∀ {Θ} {Q : Hyps Θ} → Q ⊩ 𝟏̂ᵣ ·̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ ≾̂ᵣ 𝟏̂ᵣ
+  𝟏-passed = transᵣ (eqᵣ ≡̂ᵣ-identityˡ)
+               (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-𝟏ᵉ)))
 
   -- A pure step iterates purely
 
-  pure : ∀ {Θ} {Q : Hyps Θ} → Q ⊩ ûₑ ·̂ₑ ûₑ ≾̂ₑ ûₑ
+  pure : ∀ {Θ} {Q : Hyps Θ} → Q ⊩ 𝟏̂ₑ ·̂ₑ 𝟏̂ₑ ≾̂ₑ 𝟏̂ₑ
   pure = eqₑ ≡̂ₑ-identityˡ
 
 ------------------------------------------------------------------
@@ -139,7 +139,7 @@ private
 add : RawC ∅ˢ 0
 add = return (lam (return (lam (recℕ v₁ (return v₀) (return (succ v₀))))))
 
-add-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ (Nat ⇒ Nat ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+add-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ (Nat ⇒ Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 add-D =
   return (lam (return (lam
     (recℕ (var (Tl-∷ Hd) ok₀) (return (var Hd ok₀)) (return (succ (var Hd ok₀))) pure))))
@@ -159,7 +159,7 @@ add-typed = typed-of add (closed add-D refl) _
 rebuild : RawC ∅ˢ 0
 rebuild = return (lam (recℕ v₀ (return zero) (return (succ v₁))))
 
-rebuild-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ Nat ‼ ûₑ) ‼ ûₑ
+rebuild-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 rebuild-D =
   return (lam
     (recℕ (var Hd ok₀) (return zero) (return (succ (var (Tl-∷ (Tl-⟨⟩ Hd)) okℕ))) pure))
@@ -172,7 +172,7 @@ mul =
   return (lam (return (lam
     (recℕ v₁ (return zero) (recℕ v₂ (return v₀) (return (succ v₀)))))))
 
-mul-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ (Nat ⇒ Nat ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+mul-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ (Nat ⇒ Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 mul-D =
   return (lam (return (lam
     (recℕ (var (Tl-∷ Hd) ok₀) (return zero)
@@ -188,7 +188,7 @@ mul-typed = typed-of mul (closed mul-D refl) _
 --
 --   each f n = recℕ n with zero ↦ () | succ p, r ↦ f ()
 --
--- `f` is not eternal, so `var` asks `⊤ᵣ ≾ uᵣ`.
+-- `f` is not eternal, so `var` asks `⊤ᵣ ≾ 𝟏ᵣ`.
 
 each : RawC ∅ˢ 0
 each = return (lam (return (lam (recℕ v₀ (return ⋆) (v₃ · ⋆)))))
@@ -263,15 +263,15 @@ in-clause-tick = in-clause (delay ⌜ 1 ⌝ (return ⋆))
 
 -- With a pure step, typable at every grade
 
-in-clause-pure-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (ûₑ ·̂ₑ ûₑ)
+in-clause-pure-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)
 in-clause-pure-D =
   handle (return ⋆)
   `with handler (return ⋆) (λ op →
     coerce (eqₑ ≡̂ₑ-identityˡ)
       (recℕ (numeralᵛ 2) (return ⋆) (return ⋆) pure
-       ⨟ perform op (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) (≾ᵘ-ok u-passed))
+       ⨟ perform op (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) (≾ᵘ-ok 𝟏-passed))
            (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))})
-                  (transᵣ (monoᵣ u-passed ⊩≾̂ᵣ-refl) (eqᵣ ≡̂ᵣ-identityˡ))
+                  (transᵣ (monoᵣ 𝟏-passed ⊩≾̂ᵣ-refl) (eqᵣ ≡̂ᵣ-identityˡ))
                   (var Hd ok₀ · var (Tl-∷ Hd) ok₀))))
 
 in-clause-pure-typable : Typable [] in-clause-pure
@@ -304,7 +304,7 @@ drop-clause =
 length : RawC ∅ˢ 0
 length = return (lam (recL v₀ (return zero) (return (succ v₀))))
 
-length-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (|List| Bool ⇒ Nat ‼ ûₑ) ‼ ûₑ
+length-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (|List| Bool ⇒ Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 length-D = return (lam (recL (var Hd ok₀) (return zero) (return (succ (var Hd ok₀))) pure))
 
 length-typed : IsTyped (infer [] length)
@@ -324,7 +324,7 @@ inc-all = return (lam (recL v₀ (return nil) (return (cons (succ v₂) v₀))))
 --   last-or d l  = recL l with nil ↦ d  | cons h t, r ↦ delay 1; h
 --   last-box d l = last-or d (l : List ([1] Nat))
 --
--- The head needs `eternal A ∨ ∣ ε ∣ ≾ uᵣ`: any type with a pure step;
+-- The head needs `eternal A ∨ ∣ ε ∣ ≾ 𝟏ᵣ`: any type with a pure step;
 -- with a tick, eternal at the right-sided grades, so boxes are refused.
 
 copy : RawC ∅ˢ 0
@@ -333,13 +333,13 @@ copy = return (lam (recL v₀ (return nil) (return (cons v₂ v₀))))
 private
 
   Fn : ∀ {Θ} → OVType Θ
-  Fn = Unit ⇒ Unit ‼ ûₑ
+  Fn = Unit ⇒ Unit ‼ 𝟏̂ₑ
 
-copy-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (|List| Fn ⇒ |List| Fn ‼ ûₑ) ‼ ûₑ
+copy-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (|List| Fn ⇒ |List| Fn ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 copy-D =
   return (lam
     (recL (var Hd ok₀) (return nil)
-          (return (cons (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) (≾ᵘ-ok u-passed)) (var Hd ok₀)))
+          (return (cons (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) (≾ᵘ-ok 𝟏-passed)) (var Hd ok₀)))
           pure))
 
 copy-typed : IsTyped (infer [] copy)

@@ -103,8 +103,8 @@ _·ᵘ_ : Upper → Upper → Upper
 x ·ᵘ y = upper! (bound x +ʰ bound y)
                 (⊑ʰ-trans (admits0 x) (+ʰ-inflate (bound x) (admits0 y)))
 
-uᵘ ⊤ᵘ : Upper
-uᵘ = upper! (fin 0⁺) ⊑ʰ-refl
+𝟏ᵘ ⊤ᵘ : Upper
+𝟏ᵘ = upper! (fin 0⁺) ⊑ʰ-refl
 ⊤ᵘ = upper ∞ʰ
 
 _⊔ᵘ_ : Upper → Upper → Upper
@@ -137,11 +137,11 @@ dense-right-sided-cut-intervals : Grade ℚ≥0ᴰ
 dense-right-sided-cut-intervals = posetᵍ record
   { Carrier         = Upper
   ; _·_             = _·ᵘ_
-  ; u               = uᵘ
+  ; 𝟏               = 𝟏ᵘ
   ; _≾_             = _≾ᵘ_
   ; ⊤               = ⊤ᵘ
   ; _⊔_             = _⊔ᵘ_
-  ; of-dur          = λ q → ≤ ↑ q
+  ; ι               = λ q → ≤ ↑ q
   ; ·-identityˡ     = λ x → eqᵘ (+ʰ-identityˡ (bound x))
   ; ·-identityʳ     = λ x → eqᵘ (+ʰ-identityʳ (bound x))
   ; ·-assoc         = λ x y z → eqᵘ (+ʰ-assoc (bound x) (bound y) (bound z))
@@ -163,15 +163,15 @@ dense-right-sided-cut-intervals = posetᵍ record
   ; ≾-zero-productʳ = λ {x} {y} r →
       ⊑ʰ-trans (subst (bound y ⊑ʰ_) (+ʰ-comm (bound y) (bound x))
                       (+ʰ-inflate (bound y) (admits0 x))) r
-  ; of-dur-zero     = eqᵘ refl
-  ; of-dur-plus     = eqᵘ refl
+  ; ι-zero          = eqᵘ refl
+  ; ι-plus          = eqᵘ refl
   }
 
 -- its hints
 
 dense-right-sided-cut-intervalsʰ : GradeHints dense-right-sided-cut-intervals
 dense-right-sided-cut-intervalsʰ = record
-  { u-least? = just admits0
+  { 𝟏-least? = just admits0
   ; ·-comm?  = just (comm-≡ dense-right-sided-cut-intervals (λ x y → eqᵘ (+ʰ-comm (bound x) (bound y))))
   ; plus?    = λ x → just (plusᵘ x)
   }
@@ -184,11 +184,11 @@ closed→cut : GradeMorphism idᴰ Closed.dense-right-sided-intervals
 closed→cut = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}
-  ; map-u        = eqᵘ refl
+  ; map-𝟏        = eqᵘ refl
   ; map-·        = λ {i} {j} → hom {i} {j}
   ; map-⊤        = eqᵘ refl
   ; map-⊔        = λ {i} {j} → join {i} {j}
-  ; map-of-dur   = eqᵘ refl
+  ; map-ι        = eqᵘ refl
   }
   where
     embed : Closed.𝕀ᵣ → Upper
@@ -211,11 +211,11 @@ two-sided→cut : GradeMorphism idᴰ TwoSided.dense-two-sided-intervals-with-�
 two-sided→cut = strictᵍ record
   { map          = embed
   ; map-monotone = proj₂
-  ; map-u        = eqᵘ refl
+  ; map-𝟏        = eqᵘ refl
   ; map-·        = eqᵘ refl
   ; map-⊤        = eqᵘ refl
   ; map-⊔        = eqᵘ refl
-  ; map-of-dur   = eqᵘ refl
+  ; map-ι        = eqᵘ refl
   }
   where
     embed : Interval → Upper
@@ -229,11 +229,11 @@ right-sided→dense-cut : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.right-sided-in
 right-sided→dense-cut = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}
-  ; map-u        = eqᵘ refl
+  ; map-𝟏        = eqᵘ refl
   ; map-·        = λ {i} {j} → hom {i} {j}
   ; map-⊤        = eqᵘ refl
   ; map-⊔        = λ {i} {j} → join {i} {j}
-  ; map-of-dur   = eqᵘ refl
+  ; map-ι        = eqᵘ refl
   }
   where
     embed : Discrete.𝕀ᵣ → Upper

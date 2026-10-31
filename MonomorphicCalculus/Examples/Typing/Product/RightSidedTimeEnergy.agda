@@ -35,7 +35,7 @@ open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Relation.Nullary using (¬_)
 
 open import Grades.Examples.Time.RightSided
-  using (𝕀ᵣ; ↑_; uₒ-least)
+  using (𝕀ᵣ; ↑_; 𝟏ₒ-least)
   renaming ([0,_] to ⌈0,_⌉)
 open import Grades.Examples.Product.RightSidedTimeEnergy
   using (right-sided-time×energy)
@@ -82,7 +82,7 @@ idling = delay 5 (return ⋆)          -- ⟨ ([0, 5 ] , [0, 0 ]) ⟩
 -- and a reading goes stale under it all the same, on the time
 -- component
 
-reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-durʳ 1 ≾ᵣ uᵣ)
+reading-stale-after-idling : ¬ (𝟏ᵣ ·ᵣ ιᵣ 1 ≾ᵣ 𝟏ᵣ)
 reading-stale-after-idling (late , _) = ≰! late
 
 ------------------------------------------------------------------------
@@ -157,12 +157,12 @@ claim-after-relaying =
 -- eight steps spent working rather than idling (two readings and a
 -- transmission) draw seven units, and the claim is refused
 
-drained : ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ calibration)
+drained : ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ calibration)
 drained (_ , overdrawn) = ≰! overdrawn
 
 -- and idling past ten steps drifts it, having drawn nothing
 
-drifted : ¬ (uᵣ ·ᵣ of-durʳ 11 ≾ᵣ calibration)
+drifted : ¬ (𝟏ᵣ ·ᵣ ιᵣ 11 ≾ᵣ calibration)
 drifted (late , _) = ≰! late
 
 ------------------------------------------------------------------------
@@ -178,19 +178,19 @@ forwarded =
 -- a clause may drop its continuation: doing nothing meets every
 -- deadline and every budget
 
-nothing-fits : (op : Op) → (ε'' : E) → uₑ ≾ₑ op-grade op ·ₑ ε''
+nothing-fits : (op : Op) → (ε'' : E) → 𝟏ₑ ≾ₑ op-grade op ·ₑ ε''
 nothing-fits op ε'' =
-  uₒ-least (proj₁ (op-grade op ·ₑ ε'')) , uₒ-least (proj₂ (op-grade op ·ₑ ε''))
+  𝟏ₒ-least (proj₁ (op-grade op ·ₑ ε'')) , 𝟏ₒ-least (proj₂ (op-grade op ·ₑ ε''))
 
 -- the barrier `⊤ᵣ` has no deadline, so no clause may close over a
 -- reading
 
-reading-stale-at-⊤ : ¬ (uᵣ ·ᵣ ⊤ᵣ ≾ᵣ uᵣ)
+reading-stale-at-⊤ : ¬ (𝟏ᵣ ·ᵣ ⊤ᵣ ≾ᵣ 𝟏ᵣ)
 reading-stale-at-⊤ (() , _)
 
 no-reporting : (op : Op) → (ε'' : E)
-             → ¬ (uᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ uᵣ)
+             → ¬ (𝟏ᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ 𝟏ᵣ)
 no-reporting op ε'' bound =
   reading-stale-at-⊤
-    (≾ᵣ-zero-productˡ {uᵣ ·ᵣ ⊤ᵣ} {op-grade op}
-      (≾ᵣ-zero-productˡ {uᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op} {ε''} bound))
+    (≾ᵣ-zero-productˡ {𝟏ᵣ ·ᵣ ⊤ᵣ} {op-grade op}
+      (≾ᵣ-zero-productˡ {𝟏ᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op} {ε''} bound))

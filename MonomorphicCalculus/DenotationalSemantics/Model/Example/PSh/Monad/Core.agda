@@ -5,11 +5,11 @@
 -- The monad `Tᵒ A ε` is graded by the effect grades `ε : E`. Its     --
 -- values are the wellfounded trees `Tˢ`:                             --
 --                                                                    --
---   * `leaf`       : a returned value of `A` (grade `uₑ`);           --
+--   * `leaf`       : a returned value of `A` (grade `𝟏ₑ`);           --
 --   * `op-node`    : an algebraic operation, with a Kripke           --
 --                    continuation over its resource;                 --
 --   * `delay-node` : a delay by `τ` ticks, with a Kripke             --
---                    continuation over `mapᵉ (of-durᵉ τ)`;           --
+--                    continuation over `∣ ιₑ τ ∣ᵉ`;                  --
 --   * `sub`        : sub-effecting (the semantics of `coerce`).      --
 --                                                                    --
 -- Each node's continuation carries a congruence witness `k-cong`     --
@@ -58,36 +58,36 @@ open Category PShCat using (mapˣᵐ; sndᵐ; ×ᵐ-assoc; ×ᵐ-assoc⁻¹)
 -- delay-collapsing rules need: a zero delay moves through no resource, and
 -- consecutive delays move through the product of theirs, up to equivalence.
 
-delay-uᵣ : mapᵉ (of-durᵉ 0ᴰ) ≃ᵣ uᵣ
-delay-uᵣ = ≃ᵣ-trans map-of-durᵉ of-durʳ-zero
+delay-𝟏ᵣ : ∣ ιₑ 0ᴰ ∣ᵉ ≃ᵣ 𝟏ᵣ
+delay-𝟏ᵣ = ≃ᵣ-trans map-ιᵉ ιᵣ-zero
 
 delay-·ᵣ : ∀ {τ₁ τ₂}
-         → mapᵉ (of-durᵉ τ₁) ·ᵣ mapᵉ (of-durᵉ τ₂) ≃ᵣ mapᵉ (of-durᵉ (τ₁ +ᴰ τ₂))
-delay-·ᵣ = ≃ᵣ-trans (·ᵣ-cong map-of-durᵉ map-of-durᵉ)
-                    (≃ᵣ-trans (≃ᵣ-sym of-durʳ-plus) (≃ᵣ-sym map-of-durᵉ))
+         → ∣ ιₑ τ₁ ∣ᵉ ·ᵣ ∣ ιₑ τ₂ ∣ᵉ ≃ᵣ ∣ ιₑ (τ₁ +ᴰ τ₂) ∣ᵉ
+delay-·ᵣ = ≃ᵣ-trans (·ᵣ-cong map-ιᵉ map-ιᵉ)
+                    (≃ᵣ-trans (≃ᵣ-sym ιᵣ-plus) (≃ᵣ-sym map-ιᵉ))
 
 -- Splitting a `τ₁ +ᴰ τ₂` step into a `τ₁` step followed by a `τ₂` one.
 
 ⊑-split : ∀ {τ₁ τ₂ w w' w''}
-        → w ⊑[ mapᵉ (of-durᵉ τ₁) ] w' → w' ⊑[ mapᵉ (of-durᵉ τ₂) ] w''
-        → w ⊑[ mapᵉ (of-durᵉ (τ₁ +ᴰ τ₂)) ] w''
+        → w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w' → w' ⊑[ ∣ ιₑ τ₂ ∣ᵉ ] w''
+        → w ⊑[ ∣ ιₑ (τ₁ +ᴰ τ₂) ∣ᵉ ] w''
 ⊑-split q₁ q₂ = ⊑-mono (≃ᵣ⇒≾ᵣ delay-·ᵣ) (⊑-trans q₁ q₂)
 
 -- The zero-delay step from a world to itself.
 
-⊑-delay0 : ∀ {w} → w ⊑[ mapᵉ (of-durᵉ 0ᴰ) ] w
-⊑-delay0 = ⊑-mono (≃ᵣ⇒≿ᵣ delay-uᵣ) ⊑-refl
+⊑-delay0 : ∀ {w} → w ⊑[ ∣ ιₑ 0ᴰ ∣ᵉ ] w
+⊑-delay0 = ⊑-mono (≃ᵣ⇒≿ᵣ delay-𝟏ᵣ) ⊑-refl
 
 -- The effect grades the two delay collapses regrade along. By proof
 -- irrelevance any witness will do, so the rules quantify over one and these
 -- are the canonical choices to feed them.
 
-delay0ᵉ : ∀ {ε} → ε ≾ₑ of-durᵉ 0ᴰ ·ₑ ε
-delay0ᵉ {ε} = ≃ₑ⇒≿ₑ (≃ₑ-trans (·ₑ-cong of-durᵉ-zero ≃ₑ-refl) (·ₑ-identityˡ ε))
+delay0ᵉ : ∀ {ε} → ε ≾ₑ ιₑ 0ᴰ ·ₑ ε
+delay0ᵉ {ε} = ≃ₑ⇒≿ₑ (≃ₑ-trans (·ₑ-cong ιₑ-zero ≃ₑ-refl) (·ₑ-identityˡ ε))
 
-delay+ᵉ : ∀ {τ₁ τ₂ ε} → of-durᵉ (τ₁ +ᴰ τ₂) ·ₑ ε ≾ₑ of-durᵉ τ₁ ·ₑ (of-durᵉ τ₂ ·ₑ ε)
+delay+ᵉ : ∀ {τ₁ τ₂ ε} → ιₑ (τ₁ +ᴰ τ₂) ·ₑ ε ≾ₑ ιₑ τ₁ ·ₑ (ιₑ τ₂ ·ₑ ε)
 delay+ᵉ {τ₁} {τ₂} {ε} =
-  ≃ₑ⇒≾ₑ (≃ₑ-trans (·ₑ-cong of-durᵉ-plus ≃ₑ-refl) (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε))
+  ≃ₑ⇒≾ₑ (≃ₑ-trans (·ₑ-cong ιₑ-plus ≃ₑ-refl) (·ₑ-assoc (ιₑ τ₁) (ιₑ τ₂) ε))
 
 -- The tree underlying the monad, its transport, and its bisimulation,
 -- defined simultaneously (induction-induction-recursion).
@@ -95,48 +95,48 @@ delay+ᵉ {τ₁} {τ₂} {ε} =
 mutual
 
   data Tˢ (A : PSh) : E → W → Set where
-    leaf       : ∀ {w} → carrier A w → Tˢ A uₑ w
+    leaf       : ∀ {w} → carrier A w → Tˢ A 𝟏ₑ w
     op-node    : ∀ {ε w} → (op : Op) → carrier ⟦ param op ⟧ᵍ w
-               → (k : ∀ {w'} → w ⊑[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w')
-               → (k-cong : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w')
+               → (k : ∀ {w'} → w ⊑[ ∣ op-grade op ∣ᵉ ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w')
+               → (k-cong : ∀ {w'} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w')
                              {y y' : carrier ⟦ arity op ⟧ᵍ w'}
                          → _≈_ ⟦ arity op ⟧ᵍ y y' → k q y ≈ᵗ k q y')
-               → (k-nat : ∀ {w' w''} (q : w ⊑[ mapᵉ (op-grade op) ] w') (r : w' ⊑[ uᵣ ] w'')
+               → (k-nat : ∀ {w' w''} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                             (y : carrier ⟦ arity op ⟧ᵍ w')
                         → k (⊑ρ∘ᵘ q r) (transport ⟦ arity op ⟧ᵍ r y) ≈ᵗ transportᵗ r (k q y))
                → Tˢ A (op-grade op ·ₑ ε) w
     delay-node : ∀ {ε w} → (τ : 𝔻)
-               → (k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w')
-               → (k-nat : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+               → (k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w')
+               → (k-nat : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                         → k (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (k q))
-               → Tˢ A (of-durᵉ τ ·ₑ ε) w
+               → Tˢ A (ιₑ τ ·ₑ ε) w
     sub        : ∀ {ε ε' w} → ε ≾ₑ ε' → Tˢ A ε w → Tˢ A ε' w
 
   data _≈ᵗ_ {A : PSh} : {ε : E} {w : W} → Tˢ A ε w → Tˢ A ε w → Set where
     leaf-≈  : ∀ {w} {x y : carrier A w} → _≈_ A x y → leaf x ≈ᵗ leaf y
     op-≈    : ∀ {ε w} {op : Op} {v v' : carrier ⟦ param op ⟧ᵍ w}
-                {k k' : ∀ {w'} → w ⊑[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w'}
-                {kc  : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w') {y y' : carrier ⟦ arity op ⟧ᵍ w'}
+                {k k' : ∀ {w'} → w ⊑[ ∣ op-grade op ∣ᵉ ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w'}
+                {kc  : ∀ {w'} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w') {y y' : carrier ⟦ arity op ⟧ᵍ w'}
                      → _≈_ ⟦ arity op ⟧ᵍ y y' → k q y ≈ᵗ k q y'}
-                {kn  : ∀ {w' w''} (q : w ⊑[ mapᵉ (op-grade op) ] w') (r : w' ⊑[ uᵣ ] w'')
+                {kn  : ∀ {w' w''} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                          (y : carrier ⟦ arity op ⟧ᵍ w')
                      → k (⊑ρ∘ᵘ q r) (transport ⟦ arity op ⟧ᵍ r y) ≈ᵗ transportᵗ r (k q y)}
-                {kc' : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w') {y y' : carrier ⟦ arity op ⟧ᵍ w'}
+                {kc' : ∀ {w'} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w') {y y' : carrier ⟦ arity op ⟧ᵍ w'}
                      → _≈_ ⟦ arity op ⟧ᵍ y y' → k' q y ≈ᵗ k' q y'}
-                {kn' : ∀ {w' w''} (q : w ⊑[ mapᵉ (op-grade op) ] w') (r : w' ⊑[ uᵣ ] w'')
+                {kn' : ∀ {w' w''} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                          (y : carrier ⟦ arity op ⟧ᵍ w')
                      → k' (⊑ρ∘ᵘ q r) (transport ⟦ arity op ⟧ᵍ r y) ≈ᵗ transportᵗ r (k' q y)}
             → _≈_ ⟦ param op ⟧ᵍ v v'
-            → (∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w') (y : carrier ⟦ arity op ⟧ᵍ w')
+            → (∀ {w'} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w') (y : carrier ⟦ arity op ⟧ᵍ w')
                  → k q y ≈ᵗ k' q y)
             → op-node op v k kc kn ≈ᵗ op-node op v' k' kc' kn'
     delay-≈ : ∀ {ε w} {τ : 𝔻}
-                {k k' : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
-                {kn  : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+                {k k' : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
+                {kn  : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                      → k (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (k q)}
-                {kn' : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+                {kn' : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                      → k' (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (k' q)}
-            → (∀ {w'} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') → k q ≈ᵗ k' q)
+            → (∀ {w'} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') → k q ≈ᵗ k' q)
             → delay-node τ k kn ≈ᵗ delay-node τ k' kn'
     sub-≈   : ∀ {ε ε' w} {e e' : ε ≾ₑ ε'} {t t' : Tˢ A ε w}
             → t ≈ᵗ t' → sub e t ≈ᵗ sub e' t'
@@ -146,21 +146,21 @@ mutual
     -- reduction must not see the `sub` node it leaves behind. Collapsing them
     -- is what makes `T-≤` a coercion (`T-≤-refl` / `T-≤-trans`).
 
-    sub-u   : ∀ {ε w} {t : Tˢ A ε w}
+    sub-𝟏   : ∀ {ε w} {t : Tˢ A ε w}
             → sub ≾ₑ-refl t ≈ᵗ t
     sub-∘   : ∀ {ε ε' ε'' w} {e : ε ≾ₑ ε'} {e' : ε' ≾ₑ ε''} {t : Tˢ A ε w}
             → sub e' (sub e t) ≈ᵗ sub (≾ₑ-trans e e') t
 
     -- A `sub` may be pushed under a delay, at a grade factoring through the
-    -- delay's own (`of-durᵉ τ ·ₑ_`): a coercion of the residual effect leaves
+    -- delay's own (`ιₑ τ ·ₑ_`): a coercion of the residual effect leaves
     -- the delay untouched. This is what makes sub-effecting commute with the
     -- multiplication in the inner grade, which the `⟶*` closure needs.
 
     sub-delay : ∀ {ε ε' w} {τ : 𝔻} {e : ε ≾ₑ ε'}
-                  {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
-                  {kn  : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+                  {k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
+                  {kn  : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                        → k (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (k q)}
-                  {kn' : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+                  {kn' : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                        → sub e (k (⊑ρ∘ᵘ q r)) ≈ᵗ transportᵗ r (sub e (k q))}
               → sub (·ₑ-monoʳ-≾ₑ e) (delay-node τ k kn)
               ≈ᵗ delay-node τ (λ q → sub e (k q)) kn'
@@ -178,17 +178,17 @@ mutual
 
     sub-op : ∀ {ε ε' w} {op : Op} {e : ε ≾ₑ ε'}
                {v : carrier ⟦ param op ⟧ᵍ w}
-               {k : ∀ {w'} → w ⊑[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w'}
-               {kc  : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w')
+               {k : ∀ {w'} → w ⊑[ ∣ op-grade op ∣ᵉ ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w'}
+               {kc  : ∀ {w'} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w')
                         {y y' : carrier ⟦ arity op ⟧ᵍ w'}
                     → _≈_ ⟦ arity op ⟧ᵍ y y' → k q y ≈ᵗ k q y'}
-               {kn  : ∀ {w' w''} (q : w ⊑[ mapᵉ (op-grade op) ] w') (r : w' ⊑[ uᵣ ] w'')
+               {kn  : ∀ {w' w''} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                         (y : carrier ⟦ arity op ⟧ᵍ w')
                     → k (⊑ρ∘ᵘ q r) (transport ⟦ arity op ⟧ᵍ r y) ≈ᵗ transportᵗ r (k q y)}
-               {kc' : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w')
+               {kc' : ∀ {w'} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w')
                         {y y' : carrier ⟦ arity op ⟧ᵍ w'}
                     → _≈_ ⟦ arity op ⟧ᵍ y y' → sub e (k q y) ≈ᵗ sub e (k q y')}
-               {kn' : ∀ {w' w''} (q : w ⊑[ mapᵉ (op-grade op) ] w') (r : w' ⊑[ uᵣ ] w'')
+               {kn' : ∀ {w' w''} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                         (y : carrier ⟦ arity op ⟧ᵍ w')
                     → sub e (k (⊑ρ∘ᵘ q r) (transport ⟦ arity op ⟧ᵍ r y))
                     ≈ᵗ transportᵗ r (sub e (k q y))}
@@ -197,16 +197,16 @@ mutual
 
 
     -- Delays are the passage of time, not observable nodes. A delay by no
-    -- time is no delay: at grade `mapᵉ (of-durᵉ 0ᴰ) = uᵣ` the node's Kripke
+    -- time is no delay: at grade `∣ ιₑ 0ᴰ ∣ᵉ = 𝟏ᵣ` the node's Kripke
     -- continuation is already determined by its value at the world itself
     -- (that is its own `k-nat`), so the node is that value.
 
     delay-zero : ∀ {ε w}
-                   {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ 0ᴰ) ] w' → Tˢ A ε w'}
-                   {kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ 0ᴰ) ] w') (r : w' ⊑[ uᵣ ] w'')
+                   {k : ∀ {w'} → w ⊑[ ∣ ιₑ 0ᴰ ∣ᵉ ] w' → Tˢ A ε w'}
+                   {kn : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ 0ᴰ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                        → k (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (k q)}
-                   {q₀ : w ⊑[ mapᵉ (of-durᵉ 0ᴰ) ] w}
-                 → (e : ε ≾ₑ of-durᵉ 0ᴰ ·ₑ ε)
+                   {q₀ : w ⊑[ ∣ ιₑ 0ᴰ ∣ᵉ ] w}
+                 → (e : ε ≾ₑ ιₑ 0ᴰ ·ₑ ε)
                → delay-node 0ᴰ k kn ≈ᵗ sub e (k q₀)
 
     -- And two consecutive delays are the one delay by their sum: the outer
@@ -214,26 +214,26 @@ mutual
     -- step (`⊑-split`), which is what the syntactic rule's `⟨⟩-μ-ren` records.
 
     delay-plus : ∀ {ε w} {τ₁ τ₂ : 𝔻}
-                   {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ (τ₁ +ᴰ τ₂)) ] w' → Tˢ A ε w'}
-                   {kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ (τ₁ +ᴰ τ₂)) ] w')
-                           (r : w' ⊑[ uᵣ ] w'')
+                   {k : ∀ {w'} → w ⊑[ ∣ ιₑ (τ₁ +ᴰ τ₂) ∣ᵉ ] w' → Tˢ A ε w'}
+                   {kn : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ (τ₁ +ᴰ τ₂) ∣ᵉ ] w')
+                           (r : w' ⊑[ 𝟏ᵣ ] w'')
                        → k (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (k q)}
-                   {k' : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ₁) ] w'
-                       → ∀ {w''} → w' ⊑[ mapᵉ (of-durᵉ τ₂) ] w'' → Tˢ A ε w''}
-                   {kn₂ : ∀ {w'} (q₁ : w ⊑[ mapᵉ (of-durᵉ τ₁) ] w')
-                        → ∀ {w'' w'''} (q₂ : w' ⊑[ mapᵉ (of-durᵉ τ₂) ] w'')
-                            (r : w'' ⊑[ uᵣ ] w''')
+                   {k' : ∀ {w'} → w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w'
+                       → ∀ {w''} → w' ⊑[ ∣ ιₑ τ₂ ∣ᵉ ] w'' → Tˢ A ε w''}
+                   {kn₂ : ∀ {w'} (q₁ : w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w')
+                        → ∀ {w'' w'''} (q₂ : w' ⊑[ ∣ ιₑ τ₂ ∣ᵉ ] w'')
+                            (r : w'' ⊑[ 𝟏ᵣ ] w''')
                         → k' q₁ (⊑ρ∘ᵘ q₂ r) ≈ᵗ transportᵗ r (k' q₁ q₂)}
-                   {kn₁ : ∀ {w' w''} (q₁ : w ⊑[ mapᵉ (of-durᵉ τ₁) ] w') (r : w' ⊑[ uᵣ ] w'')
+                   {kn₁ : ∀ {w' w''} (q₁ : w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                         → delay-node τ₂ (k' (⊑ρ∘ᵘ q₁ r)) (kn₂ (⊑ρ∘ᵘ q₁ r))
                         ≈ᵗ transportᵗ r (delay-node τ₂ (k' q₁) (kn₂ q₁))}
                  -- the two-step continuation only ever reaches the one-step one
                  -- through the composite step; stated up to `≈ᵗ` so that the
                  -- rule applies without matching accessibility witnesses
-                 → (∀ {w' w''} (q₁ : w ⊑[ mapᵉ (of-durᵉ τ₁) ] w')
-                      (q₂ : w' ⊑[ mapᵉ (of-durᵉ τ₂) ] w'')
+                 → (∀ {w' w''} (q₁ : w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w')
+                      (q₂ : w' ⊑[ ∣ ιₑ τ₂ ∣ᵉ ] w'')
                     → k' q₁ q₂ ≈ᵗ k (⊑-split q₁ q₂))
-                 → (e : of-durᵉ (τ₁ +ᴰ τ₂) ·ₑ ε ≾ₑ of-durᵉ τ₁ ·ₑ (of-durᵉ τ₂ ·ₑ ε))
+                 → (e : ιₑ (τ₁ +ᴰ τ₂) ·ₑ ε ≾ₑ ιₑ τ₁ ·ₑ (ιₑ τ₂ ·ₑ ε))
                → delay-node τ₁ (λ q₁ → delay-node τ₂ (k' q₁) (kn₂ q₁)) kn₁
                ≈ᵗ sub e (delay-node (τ₁ +ᴰ τ₂) k kn)
 
@@ -250,7 +250,7 @@ mutual
   -- the reindexed continuation's coherence witnesses are rebuilt from
   -- the stored ones (using proof irrelevance of accessibility witnesses).
 
-  transportᵗ : ∀ {A ε w w'} → w ⊑[ uᵣ ] w' → Tˢ A ε w → Tˢ A ε w'
+  transportᵗ : ∀ {A ε w w'} → w ⊑[ 𝟏ᵣ ] w' → Tˢ A ε w → Tˢ A ε w'
   transportᵗ {A} p (leaf x)             = leaf (transport A p x)
   transportᵗ {A} p (op-node op v k kc kn) =
     op-node op (transport ⟦ param op ⟧ᵍ p v)
@@ -285,13 +285,13 @@ infix 4 _≈ᵗ_
 -- witnesses explicit, since they are never inferable from a `≈ᵗ` goal.
 
 delay-irrᵗ : ∀ {A ε w} {τ : 𝔻}
-           → (k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w')
-           → (kn kn' : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+           → (k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w')
+           → (kn kn' : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                      → k (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (k q))
            → delay-node τ k kn ≈ᵗ delay-node τ k kn'
 delay-irrᵗ k kn kn' = delay-≈ (λ q → ≈ᵗ-refl (k q))
 
--- `sub-u`/`sub-∘` at any witnesses of the required orderings. The
+-- `sub-𝟏`/`sub-∘` at any witnesses of the required orderings. The
 -- constructors are stated at `≾ₑ-refl`/`≾ₑ-trans`, which is the standard
 -- presentation; sub-effecting witnesses being proof-irrelevant, these recover
 -- the form the recursions meet, where the witness comes from elsewhere.
@@ -299,8 +299,8 @@ delay-irrᵗ k kn kn' = delay-≈ (λ q → ≈ᵗ-refl (k q))
 sub-congᵗ : ∀ {A ε ε' w} {e : ε ≾ₑ ε'} {t t' : Tˢ A ε w} → t ≈ᵗ t' → sub e t ≈ᵗ sub e t'
 sub-congᵗ = sub-≈
 
-sub-uᵗ : ∀ {A ε w} → (e : ε ≾ₑ ε) → (t : Tˢ A ε w) → sub e t ≈ᵗ t
-sub-uᵗ e t rewrite ≾ₑ-irrelevant e ≾ₑ-refl = sub-u
+sub-𝟏ᵗ : ∀ {A ε w} → (e : ε ≾ₑ ε) → (t : Tˢ A ε w) → sub e t ≈ᵗ t
+sub-𝟏ᵗ e t rewrite ≾ₑ-irrelevant e ≾ₑ-refl = sub-𝟏
 
 sub-∘ᵗ : ∀ {A ε ε' ε'' w} → (e : ε ≾ₑ ε') → (e' : ε' ≾ₑ ε'') → (e'' : ε ≾ₑ ε'')
        → (t : Tˢ A ε w) → sub e' (sub e t) ≈ᵗ sub e'' t
@@ -311,8 +311,8 @@ sub-∘ᵗ e e' e'' t rewrite ≾ₑ-irrelevant e'' (≾ₑ-trans e e') = sub-�
 -- defining block `transportᵗ` reduces, and it pushes straight through a `sub`.
 
 sub-delayᵗ : ∀ {A ε ε' w} {τ : 𝔻} → (e : ε ≾ₑ ε')
-           → (k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w')
-           → (kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+           → (k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w')
+           → (kn : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                  → k (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (k q))
            → sub (·ₑ-monoʳ-≾ₑ e) (delay-node τ k kn)
            ≈ᵗ delay-node τ (λ q → sub e (k q)) (λ q r → sub-≈ (kn q r))
@@ -322,11 +322,11 @@ sub-delayᵗ e k kn = sub-delay
 
 sub-opᵗ : ∀ {A ε ε' w} {op : Op} → (e : ε ≾ₑ ε')
         → (v : carrier ⟦ param op ⟧ᵍ w)
-        → (k : ∀ {w'} → w ⊑[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w')
-        → (kc : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w')
+        → (k : ∀ {w'} → w ⊑[ ∣ op-grade op ∣ᵉ ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w')
+        → (kc : ∀ {w'} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w')
                   {y y' : carrier ⟦ arity op ⟧ᵍ w'}
               → _≈_ ⟦ arity op ⟧ᵍ y y' → k q y ≈ᵗ k q y')
-        → (kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (op-grade op) ] w') (r : w' ⊑[ uᵣ ] w'')
+        → (kn : ∀ {w' w''} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                   (y : carrier ⟦ arity op ⟧ᵍ w')
               → k (⊑ρ∘ᵘ q r) (transport ⟦ arity op ⟧ᵍ r y) ≈ᵗ transportᵗ r (k q y))
         → sub (·ₑ-monoʳ-≾ₑ e) (op-node op v k kc kn)
@@ -350,19 +350,19 @@ sub-opᵗ e v k kc kn = sub-op
                → ε-substˢ q (ε-substˢ p t) ≡ ε-substˢ (trans p q) t
 ε-substˢ-trans refl refl t = refl
 
-transportᵗ-ε-substˢ : ∀ {A ε ε' w w'} (p : w ⊑[ uᵣ ] w') (e : ε ≡ ε') (t : Tˢ A ε w)
+transportᵗ-ε-substˢ : ∀ {A ε ε' w w'} (p : w ⊑[ 𝟏ᵣ ] w') (e : ε ≡ ε') (t : Tˢ A ε w)
                     → transportᵗ p (ε-substˢ e t) ≡ ε-substˢ e (transportᵗ p t)
 transportᵗ-ε-substˢ p refl t = refl
 
 -- Transport respects `_≈ᵗ_` and satisfies the presheaf laws (up to `_≈ᵗ_`).
 
-transportᵗ-cong : ∀ {A ε w w'} (p : w ⊑[ uᵣ ] w') {t t' : Tˢ A ε w}
+transportᵗ-cong : ∀ {A ε w w'} (p : w ⊑[ 𝟏ᵣ ] w') {t t' : Tˢ A ε w}
                 → t ≈ᵗ t' → transportᵗ p t ≈ᵗ transportᵗ p t'
 transportᵗ-cong {A} p (leaf-≈ e)          = leaf-≈ (transport-cong A p e)
 transportᵗ-cong p (op-≈ {op = op} ev ek)  = op-≈ (transport-cong ⟦ param op ⟧ᵍ p ev) (λ q y → ek (⊑ᵘ∘ρ p q) y)
 transportᵗ-cong p (delay-≈ ek)            = delay-≈ (λ q → ek (⊑ᵘ∘ρ p q))
 transportᵗ-cong p (sub-≈ et)              = sub-≈ (transportᵗ-cong p et)
-transportᵗ-cong p sub-u                   = sub-uᵗ _ _
+transportᵗ-cong p sub-𝟏                   = sub-𝟏ᵗ _ _
 transportᵗ-cong p sub-∘                   = sub-∘ᵗ _ _ _ _
 transportᵗ-cong p sub-delay               = sub-delay
 transportᵗ-cong p sub-op                  = sub-op
@@ -385,7 +385,7 @@ transportᵗ-refl (op-node op v k kc kn)   = op-≈ (transport-refl ⟦ param op
 transportᵗ-refl (delay-node τ k kn)      = delay-≈ (λ q → ≡→≈ᵗ (cong k (⊑-irrelevant _ _)))
 transportᵗ-refl (sub e t)                = sub-≈ (transportᵗ-refl t)
 
-transportᵗ-trans : ∀ {A ε w w' w''} (p : w ⊑[ uᵣ ] w') (q : w' ⊑[ uᵣ ] w'') (t : Tˢ A ε w)
+transportᵗ-trans : ∀ {A ε w w' w''} (p : w ⊑[ 𝟏ᵣ ] w') (q : w' ⊑[ 𝟏ᵣ ] w'') (t : Tˢ A ε w)
                  → transportᵗ (⊑ᵘ-trans p q) t ≈ᵗ transportᵗ q (transportᵗ p t)
 transportᵗ-trans {A} p q (leaf x)             = leaf-≈ (transport-trans A p q x)
 transportᵗ-trans p q (op-node op v k kc kn)   = op-≈ (transport-trans ⟦ param op ⟧ᵍ p q v) (λ q' y → ≡→≈ᵗ (cong (λ z → k z y) (⊑-irrelevant _ _)))
@@ -445,7 +445,7 @@ mutual
   Tˢᶠ-congᵗ f (op-≈ ev ek) = op-≈ ev (λ q y → Tˢᶠ-congᵗ f (ek q y))
   Tˢᶠ-congᵗ f (delay-≈ ek) = delay-≈ (λ q → Tˢᶠ-congᵗ f (ek q))
   Tˢᶠ-congᵗ f (sub-≈ et)   = sub-≈ (Tˢᶠ-congᵗ f et)
-  Tˢᶠ-congᵗ f sub-u        = sub-uᵗ _ _
+  Tˢᶠ-congᵗ f sub-𝟏        = sub-𝟏ᵗ _ _
   Tˢᶠ-congᵗ f sub-∘        = sub-∘ᵗ _ _ _ _
   Tˢᶠ-congᵗ f sub-delay    = sub-delay
   Tˢᶠ-congᵗ f sub-op       = sub-op
@@ -465,7 +465,7 @@ mutual
                 → ε-substˢ p (Tˢᶠ f t) ≡ Tˢᶠ f (ε-substˢ p t)
   ε-substˢ-Tˢᶠ' refl f t = refl
 
-  Tˢᶠ-natᵗ : ∀ {A B ε w w'} (f : A →ᵖ B) (p : w ⊑[ uᵣ ] w') (t : Tˢ A ε w)
+  Tˢᶠ-natᵗ : ∀ {A B ε w w'} (f : A →ᵖ B) (p : w ⊑[ 𝟏ᵣ ] w') (t : Tˢ A ε w)
            → Tˢᶠ f (transportᵗ p t) ≈ᵗ transportᵗ p (Tˢᶠ f t)
   Tˢᶠ-natᵗ f p (leaf x)               = leaf-≈ (nat f p x)
   Tˢᶠ-natᵗ f p (op-node op v k kc kn) = op-≈ (≈-refl ⟦ param op ⟧ᵍ) (λ q y → ≈ᵗ-refl _)
@@ -523,17 +523,17 @@ T-≤-nat f p t = ≈ᵗ-refl _
              → ε-substˢ p (Tˢᶠ f t) ≡ Tˢᶠ f (ε-substˢ p t)
 ε-substˢ-Tˢᶠ refl f t = refl
 
-ηᵀ : ∀ {A} → A →ᵖ Tᵒ A uₑ
+ηᵀ : ∀ {A} → A →ᵖ Tᵒ A 𝟏ₑ
 ηᵀ = pmap leaf leaf-≈ (λ p x → ≈ᵗ-refl _)
 
 ηᵀ-nat : ∀ {A B} → (f : A →ᵖ B) → ηᵀ ∘ᵖ f ≈ᵖ Tᶠ f ∘ᵖ ηᵀ
 ηᵀ-nat f x = ≈ᵗ-refl _
 
 ε-substˢ-delay : ∀ {A ε ε' w} → (τ : 𝔻) → (p : ε ≡ ε')
-               → (k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w')
-               → (kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+               → (k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w')
+               → (kn : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                      → k (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (k q))
-               → ε-substˢ (cong (of-durᵉ τ ·ₑ_) p) (delay-node τ k kn)
+               → ε-substˢ (cong (ιₑ τ ·ₑ_) p) (delay-node τ k kn)
                ≈ᵗ delay-node τ (λ q → ε-substˢ p (k q))
                     (λ q r → ≈ᵗ-trans (ε-substˢ-congᵗ p (kn q r))
                                       (≡→≈ᵗ (sym (transportᵗ-ε-substˢ r p (k q)))))
@@ -548,13 +548,13 @@ T-≤-nat f p t = ≈ᵗ-refl _
 ε-substˢ-uip p q t = cong (λ z → ε-substˢ z t) (uip {p = p} {q = q})
 
 delay-ε-substˢ-out : ∀ {A ε ε' w} → (τ : 𝔻) → (p : ε ≡ ε')
-                   → (k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w')
-                   → (kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+                   → (k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w')
+                   → (kn : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                          → k (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (k q))
-                   → (kn' : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+                   → (kn' : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                           → ε-substˢ p (k (⊑ρ∘ᵘ q r)) ≈ᵗ transportᵗ r (ε-substˢ p (k q)))
                    → delay-node τ (λ q → ε-substˢ p (k q)) kn'
-                   ≈ᵗ ε-substˢ (cong (of-durᵉ τ ·ₑ_) p) (delay-node τ k kn)
+                   ≈ᵗ ε-substˢ (cong (ιₑ τ ·ₑ_) p) (delay-node τ k kn)
 delay-ε-substˢ-out τ refl k kn kn' = delay-irrᵗ k kn' kn
 
 -- Two composites of sub-effecting nodes with the same endpoints agree.
@@ -571,22 +571,22 @@ sub-swapᵗ b a d c t =
 
 delay-plus-out :
   ∀ {A ε ε₂ ε₃ w} {τ₁ τ₂ : 𝔻}
-  → (p : of-durᵉ τ₂ ·ₑ ε ≾ₑ ε₂)
-  → (k' : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ₁) ] w'
-        → ∀ {w''} → w' ⊑[ mapᵉ (of-durᵉ τ₂) ] w'' → Tˢ A ε w'')
-  → (kn₂ : ∀ {w'} (q₁ : w ⊑[ mapᵉ (of-durᵉ τ₁) ] w')
-         → ∀ {w'' w'''} (q₂ : w' ⊑[ mapᵉ (of-durᵉ τ₂) ] w'') (r : w'' ⊑[ uᵣ ] w''')
+  → (p : ιₑ τ₂ ·ₑ ε ≾ₑ ε₂)
+  → (k' : ∀ {w'} → w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w'
+        → ∀ {w''} → w' ⊑[ ∣ ιₑ τ₂ ∣ᵉ ] w'' → Tˢ A ε w'')
+  → (kn₂ : ∀ {w'} (q₁ : w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w')
+         → ∀ {w'' w'''} (q₂ : w' ⊑[ ∣ ιₑ τ₂ ∣ᵉ ] w'') (r : w'' ⊑[ 𝟏ᵣ ] w''')
          → k' q₁ (⊑ρ∘ᵘ q₂ r) ≈ᵗ transportᵗ r (k' q₁ q₂))
-  → (kn₁ : ∀ {w' w''} (q₁ : w ⊑[ mapᵉ (of-durᵉ τ₁) ] w') (r : w' ⊑[ uᵣ ] w'')
+  → (kn₁ : ∀ {w' w''} (q₁ : w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
          → sub p (delay-node τ₂ (k' (⊑ρ∘ᵘ q₁ r)) (kn₂ (⊑ρ∘ᵘ q₁ r)))
          ≈ᵗ transportᵗ r (sub p (delay-node τ₂ (k' q₁) (kn₂ q₁))))
-  → (k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ (τ₁ +ᴰ τ₂)) ] w' → Tˢ A ε w')
-  → (kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ (τ₁ +ᴰ τ₂)) ] w') (r : w' ⊑[ uᵣ ] w'')
+  → (k : ∀ {w'} → w ⊑[ ∣ ιₑ (τ₁ +ᴰ τ₂) ∣ᵉ ] w' → Tˢ A ε w')
+  → (kn : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ (τ₁ +ᴰ τ₂) ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
         → k (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (k q))
-  → (∀ {w' w''} (q₁ : w ⊑[ mapᵉ (of-durᵉ τ₁) ] w') (q₂ : w' ⊑[ mapᵉ (of-durᵉ τ₂) ] w'')
+  → (∀ {w' w''} (q₁ : w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w') (q₂ : w' ⊑[ ∣ ιₑ τ₂ ∣ᵉ ] w'')
      → k' q₁ q₂ ≈ᵗ k (⊑-split q₁ q₂))
-  → (P : of-durᵉ (τ₁ +ᴰ τ₂) ·ₑ ε ≾ₑ ε₃)
-  → (P' : of-durᵉ τ₁ ·ₑ ε₂ ≾ₑ ε₃)
+  → (P : ιₑ (τ₁ +ᴰ τ₂) ·ₑ ε ≾ₑ ε₃)
+  → (P' : ιₑ τ₁ ·ₑ ε₂ ≾ₑ ε₃)
   → sub P' (delay-node τ₁ (λ q₁ → sub p (delay-node τ₂ (k' q₁) (kn₂ q₁))) kn₁)
   ≈ᵗ sub P (delay-node (τ₁ +ᴰ τ₂) k kn)
 delay-plus-out {w = w} {τ₁ = τ₁} {τ₂} p k' kn₂ kn₁ k kn hk P P' =
@@ -596,7 +596,7 @@ delay-plus-out {w = w} {τ₁ = τ₁} {τ₂} p k' kn₂ kn₁ k kn hk P P' =
             (sub-∘ᵗ X P' P _)))
   where
     X = ≾ₑ-trans delay+ᵉ (·ₑ-monoʳ-≾ₑ p)
-    kn₁' : ∀ {w' w''} (q₁ : w ⊑[ mapᵉ (of-durᵉ τ₁) ] w') (r : w' ⊑[ uᵣ ] w'')
+    kn₁' : ∀ {w' w''} (q₁ : w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
          → delay-node τ₂ (k' (⊑ρ∘ᵘ q₁ r)) (kn₂ (⊑ρ∘ᵘ q₁ r))
          ≈ᵗ transportᵗ r (delay-node τ₂ (k' q₁) (kn₂ q₁))
     kn₁' q₁ r = delay-≈ (λ q₂ →
@@ -618,7 +618,7 @@ mutual
         (λ q e → μˢ-congᵗ (kc q e))
         (λ q r y → ≈ᵗ-trans (μˢ-congᵗ (kn q r y)) (μˢ-natᵗ r (k q y))))
   μˢ {ε' = ε'} (delay-node {ε = ε₀} τ k kn) =
-    sub (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) ε₀ ε'))
+    sub (≃ₑ⇒≿ₑ (·ₑ-assoc (ιₑ τ) ε₀ ε'))
       (delay-node τ (λ q → μˢ (k q))
         (λ q r → ≈ᵗ-trans (μˢ-congᵗ (kn q r)) (μˢ-natᵗ r (k q))))
   μˢ (sub p t) =
@@ -636,13 +636,13 @@ mutual
   μˢ-congᵗ (op-≈ ev ek) = sub-≈ (op-≈ ev (λ q y → μˢ-congᵗ (ek q y)))
   μˢ-congᵗ (delay-≈ ek) = sub-≈ (delay-≈ (λ q → μˢ-congᵗ (ek q)))
   μˢ-congᵗ (sub-≈ et)   = sub-≈ (μˢ-congᵗ et)
-  μˢ-congᵗ sub-u        = sub-uᵗ _ _
+  μˢ-congᵗ sub-𝟏        = sub-𝟏ᵗ _ _
   μˢ-congᵗ sub-∘        = sub-∘ᵗ _ _ _ _
   -- the coercion moves past `μˢ`'s regrading, and then under the delay
   μˢ-congᵗ {ε' = ε'} (sub-delay {ε = ε₁} {ε' = ε₁'} {τ = τ} {e = e}) =
     ≈ᵗ-trans
       (sub-swapᵗ _ _ (·ₑ-monoʳ-≾ₑ (·ₑ-monoˡ-≾ₑ e))
-                     (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) ε₁' ε')) _)
+                     (≃ₑ⇒≿ₑ (·ₑ-assoc (ιₑ τ) ε₁' ε')) _)
       (sub-≈ sub-delay)
   -- likewise under an operation
   μˢ-congᵗ {ε' = ε'} (sub-op {ε = ε₁} {ε' = ε₁'} {op = op} {e = e}) =
@@ -658,14 +658,14 @@ mutual
   μˢ-congᵗ {ε' = ε'} (delay-plus {ε = ε₀} {τ₁ = τ₁} {τ₂ = τ₂} {k = k} {kn = kn}
                                  {k' = k'} hk e) =
     ≈ᵗ-trans
-      (delay-plus-out (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ₂) ε₀ ε')) (λ q₁ q₂ → μˢ (k' q₁ q₂)) _ _
+      (delay-plus-out (≃ₑ⇒≿ₑ (·ₑ-assoc (ιₑ τ₂) ε₀ ε')) (λ q₁ q₂ → μˢ (k' q₁ q₂)) _ _
                       (λ q → μˢ (k q)) _ (λ q₁ q₂ → μˢ-congᵗ (hk q₁ q₂))
-                      (≾ₑ-trans (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ (τ₁ +ᴰ τ₂)) ε₀ ε')) (·ₑ-monoˡ-≾ₑ e)) _)
+                      (≾ₑ-trans (≃ₑ⇒≿ₑ (·ₑ-assoc (ιₑ (τ₁ +ᴰ τ₂)) ε₀ ε')) (·ₑ-monoˡ-≾ₑ e)) _)
       (≈ᵗ-sym (sub-∘ᵗ _ _ _ _))
   μˢ-congᵗ (≈ᵗ-sym et)  = ≈ᵗ-sym (μˢ-congᵗ et)
   μˢ-congᵗ (≈ᵗ-trans et et') = ≈ᵗ-trans (μˢ-congᵗ et) (μˢ-congᵗ et')
 
-  μˢ-natᵗ : ∀ {A ε ε' w w'} (p : w ⊑[ uᵣ ] w') (t : Tˢ (Tᵒ A ε') ε w)
+  μˢ-natᵗ : ∀ {A ε ε' w w'} (p : w ⊑[ 𝟏ᵣ ] w') (t : Tˢ (Tᵒ A ε') ε w)
           → μˢ (transportᵗ p t) ≈ᵗ transportᵗ p (μˢ t)
   μˢ-natᵗ p (leaf t) = ≈ᵗ-refl _
   μˢ-natᵗ p (op-node op v k kc kn) =
@@ -694,10 +694,10 @@ mutual
 -- since the pushed continuation carries rebuilt coherence witnesses).
 
 ε-substˢ-op : ∀ {A ε ε' w} → (p : ε ≡ ε') → (op : Op) → (v : carrier ⟦ param op ⟧ᵍ w)
-            → (k : ∀ {w'} → w ⊑[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w')
-            → (kc : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w') {y y' : carrier ⟦ arity op ⟧ᵍ w'}
+            → (k : ∀ {w'} → w ⊑[ ∣ op-grade op ∣ᵉ ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w')
+            → (kc : ∀ {w'} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w') {y y' : carrier ⟦ arity op ⟧ᵍ w'}
                   → _≈_ ⟦ arity op ⟧ᵍ y y' → k q y ≈ᵗ k q y')
-            → (kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (op-grade op) ] w') (r : w' ⊑[ uᵣ ] w'')
+            → (kn : ∀ {w' w''} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                       (y : carrier ⟦ arity op ⟧ᵍ w')
                   → k (⊑ρ∘ᵘ q r) (transport ⟦ arity op ⟧ᵍ r y) ≈ᵗ transportᵗ r (k q y))
             → ε-substˢ (cong (op-grade op ·ₑ_) p) (op-node op v k kc kn)
@@ -744,7 +744,7 @@ sub-substˢ P refl t = refl
 
 -- First identity law
 
-T-μ∘η≡id : ∀ {A ε} → μᵀ {A} {uₑ} {ε} ∘ᵖ ηᵀ {Tᵒ A ε} ≈ᵖ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
+T-μ∘η≡id : ∀ {A ε} → μᵀ {A} {𝟏ₑ} {ε} ∘ᵖ ηᵀ {Tᵒ A ε} ≈ᵖ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
 T-μ∘η≡id t = ≈ᵗ-refl _
 
 -- Three sub-effecting nodes against two, with the same endpoints
@@ -775,7 +775,7 @@ sub3ᵗ d a c Y X t =
 μˢ-identity₂ (sub p t) =
   ≈ᵗ-trans (sub-congᵗ (μˢ-identity₂ t)) (sub-swapᵗ _ _ _ _ t)
 
-T-μ∘Tη≡id : ∀ {A ε} → μᵀ {A} {ε} {uₑ} ∘ᵖ Tᶠ (ηᵀ {A}) ≈ᵖ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityʳ ε))
+T-μ∘Tη≡id : ∀ {A ε} → μᵀ {A} {ε} {𝟏ₑ} ∘ᵖ Tᶠ (ηᵀ {A}) ≈ᵖ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityʳ ε))
 T-μ∘Tη≡id t = μˢ-identity₂ t
 
 -- Associativity law
@@ -803,7 +803,7 @@ T-μ∘μ≡μ∘Tμ : ∀ {A ε ε' ε''}
            ≈ᵖ T-≤ (≃ₑ⇒≾ₑ (·ₑ-assoc ε ε' ε'')) ∘ᵖ μᵀ ∘ᵖ μᵀ
 T-μ∘μ≡μ∘Tμ t = μˢ-assoc t
 
--- The strength threads a box `[ mapᵉ ε ]ᶜ A` along the tree. The box is
+-- The strength threads a box `[ ∣ ε ∣ᵉ ]ᶜ A` along the tree. The box is
 -- kept as a bundle (carrying its own naturality `fun-nat`), which is
 -- what lets the strengthened tree's nodes rebuild their coherence
 -- witnesses. The box presheaf `A` is kept explicit throughout (it can
@@ -816,7 +816,7 @@ T-μ∘μ≡μ∘Tμ t = μˢ-assoc t
 
 -- Advance a box across a resource step (used when recursing under a node).
 
-box▸ : ∀ {ρ₀ ε₀ w w'} (A : PSh) → w ⊑[ mapᵉ ρ₀ ] w' → [ mapᵉ (ρ₀ ·ₑ ε₀) ]ᶜ A w → [ mapᵉ ε₀ ]ᶜ A w'
+box▸ : ∀ {ρ₀ ε₀ w w'} (A : PSh) → w ⊑[ ∣ ρ₀ ∣ᵉ ] w' → [ ∣ ρ₀ ·ₑ ε₀ ∣ᵉ ]ᶜ A w → [ ∣ ε₀ ∣ᵉ ]ᶜ A w'
 box▸ A q box = mk[]
   (λ r → fun box (⊑-mono (≃ᵣ⇒≿ᵣ map-·ᵉ) (⊑-trans q r)))
   (λ r s → ≈-trans A ([]-fun-irr box _ _) (fun-nat box (⊑-mono (≃ᵣ⇒≿ᵣ map-·ᵉ) (⊑-trans q r)) s))
@@ -828,9 +828,9 @@ mutual
 
   {-# TERMINATING #-}
 
-  strˢ : ∀ {B ε w} (A : PSh) → [ mapᵉ ε ]ᶜ A w → Tˢ B ε w → Tˢ (A ×ᵖ B) ε w
+  strˢ : ∀ {B ε w} (A : PSh) → [ ∣ ε ∣ᵉ ]ᶜ A w → Tˢ B ε w → Tˢ (A ×ᵖ B) ε w
   strˢ A box (leaf b) =
-    leaf (fun box (⊑-mono (≃ᵣ⇒≿ᵣ map-uᵉ) ⊑-refl) , b)
+    leaf (fun box (⊑-mono (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ⊑-refl) , b)
   strˢ A box (op-node op v k kc kn) =
     op-node op v (λ q y → strˢ A (box▸ A q box) (k q y))
       (λ q e → strˢ-congᵗ A (λ r → ≈-refl A) (kc q e))
@@ -850,14 +850,14 @@ mutual
   -- `ε-substˢ` commutes with the strength (coercing the box's grade)
 
   strˢ-ε-substˢ : ∀ {B ε ε₁ w} (A : PSh) → (p : ε ≡ ε₁)
-                → (a : [ mapᵉ ε₁ ]ᶜ A w)
+                → (a : [ ∣ ε₁ ∣ᵉ ]ᶜ A w)
                 → (t : Tˢ B ε w)
                 → strˢ A a (ε-substˢ p t)
-                ≈ᵗ ε-substˢ p (strˢ A (app ([]-≤ (≾ᵣ-reflexive (cong mapᵉ p))) a) t)
+                ≈ᵗ ε-substˢ p (strˢ A (app ([]-≤ (≾ᵣ-reflexive (cong ∣_∣ᵉ p))) a) t)
   strˢ-ε-substˢ A refl a t = strˢ-congᵗ A (λ r → []-fun-irr a _ _) (≈ᵗ-refl t)
 
-  strˢ-congᵗ : ∀ {B ε w} (A : PSh) {box box' : [ mapᵉ ε ]ᶜ A w}
-             → (∀ {w'} (r : w ⊑[ mapᵉ ε ] w') → _≈_ A (fun box r) (fun box' r))
+  strˢ-congᵗ : ∀ {B ε w} (A : PSh) {box box' : [ ∣ ε ∣ᵉ ]ᶜ A w}
+             → (∀ {w'} (r : w ⊑[ ∣ ε ∣ᵉ ] w') → _≈_ A (fun box r) (fun box' r))
              → {t t' : Tˢ B ε w} → t ≈ᵗ t' → strˢ A box t ≈ᵗ strˢ A box' t'
   strˢ-congᵗ A hb (leaf-≈ eb)  = leaf-≈ (hb _ , eb)
   strˢ-congᵗ A hb (op-≈ ev ek) = op-≈ ev (λ q y → strˢ-congᵗ A (λ r → hb _) (ek q y))
@@ -867,8 +867,8 @@ mutual
   -- A `sub` coerces the box as well (`app ([]-≤ _)`), but only by moving it
   -- along a different accessibility witness, which `[]-fun-irr` absorbs, so
   -- the box hypothesis is reusable at the coerced box.
-  strˢ-congᵗ A {box} {box'} hb (sub-u {t = t}) =
-    ≈ᵗ-trans sub-u
+  strˢ-congᵗ A {box} {box'} hb (sub-𝟏 {t = t}) =
+    ≈ᵗ-trans sub-𝟏
       (strˢ-congᵗ A (λ r → ≈-trans A ([]-fun-irr box _ r) (hb r)) (≈ᵗ-refl t))
   strˢ-congᵗ A {box} {box'} hb (sub-∘ {e = e} {e' = e'} {t = t}) =
     ≈ᵗ-trans sub-∘
@@ -928,8 +928,8 @@ mutual
 
   -- Strength is natural in the world (uses the box's `fun-nat` at leaves).
 
-  strˢ-natᵗ : ∀ {B ε w w'} (A : PSh) (a : [ mapᵉ ε ]ᶜ A w) (p : w ⊑[ uᵣ ] w') (t : Tˢ B ε w)
-            → strˢ A (transport ([ mapᵉ ε ]ᵒ A) p a) (transportᵗ p t) ≈ᵗ transportᵗ p (strˢ A a t)
+  strˢ-natᵗ : ∀ {B ε w w'} (A : PSh) (a : [ ∣ ε ∣ᵉ ]ᶜ A w) (p : w ⊑[ 𝟏ᵣ ] w') (t : Tˢ B ε w)
+            → strˢ A (transport ([ ∣ ε ∣ᵉ ]ᵒ A) p a) (transportᵗ p t) ≈ᵗ transportᵗ p (strˢ A a t)
   strˢ-natᵗ {B} A a p (leaf b) =
     leaf-≈ (≈-trans A ([]-fun-irr a _ _) (fun-nat a _ p) , ≈-refl B)
   strˢ-natᵗ A a p (op-node op v k kc kn) =
@@ -942,7 +942,7 @@ mutual
       (strˢ-congᵗ A (λ r → []-fun-irr a _ _) (≈ᵗ-refl (transportᵗ p t)))
       (strˢ-natᵗ A (app ([]-≤ (map-monotoneᵉ e)) a) p t))
 
-strᵀ : ∀ {A B ε} → [ mapᵉ ε ]ᵒ A ×ᵖ Tᵒ B ε →ᵖ Tᵒ (A ×ᵖ B) ε
+strᵀ : ∀ {A B ε} → [ ∣ ε ∣ᵉ ]ᵒ A ×ᵖ Tᵒ B ε →ᵖ Tᵒ (A ×ᵖ B) ε
 strᵀ {A} {B} {ε} = pmap (λ { (a , t) → strˢ A a t })
             (λ { {x = a , t} {a' , t'} (ea , et) → strˢ-congᵗ A (λ r → ea r) et })
             (λ { p (a , t) → strˢ-natᵗ A a p t })
@@ -952,8 +952,8 @@ strᵀ {A} {B} {ε} = pmap (λ { (a , t) → strˢ A a t })
 -- reconciles them at each node.
 
 strˢ-nat : ∀ {A A' B B' ε w} → (f : A →ᵖ A') → (g : B →ᵖ B')
-         → (box : [ mapᵉ ε ]ᶜ A w) → (t : Tˢ B ε w)
-         → strˢ A' (app ([ mapᵉ ε ]ᶠ f) box) (Tˢᶠ g t) ≈ᵗ Tˢᶠ (mapˣᵐ f g) (strˢ A box t)
+         → (box : [ ∣ ε ∣ᵉ ]ᶜ A w) → (t : Tˢ B ε w)
+         → strˢ A' (app ([ ∣ ε ∣ᵉ ]ᶠ f) box) (Tˢᶠ g t) ≈ᵗ Tˢᶠ (mapˣᵐ f g) (strˢ A box t)
 strˢ-nat {A' = A'} {B' = B'} f g box (leaf b)      = leaf-≈ (≈-refl A' , ≈-refl B')
 strˢ-nat {A' = A'} f g box (op-node op v k kc kn)  =
   op-≈ (≈-refl ⟦ param op ⟧ᵍ)
@@ -970,13 +970,13 @@ strˢ-nat {A' = A'} f g box (sub p t)         =
     (strˢ-nat f g (app ([]-≤ (map-monotoneᵉ p)) box) t))
 
 strᵀ-nat : ∀ {A A' B B' ε} → (f : A →ᵖ A') → (g : B →ᵖ B')
-         → strᵀ {A'} {B'} ∘ᵖ mapˣᵐ ([ mapᵉ ε ]ᶠ f) (Tᶠ g)
+         → strᵀ {A'} {B'} ∘ᵖ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ f) (Tᶠ g)
          ≈ᵖ Tᶠ (mapˣᵐ f g) ∘ᵖ strᵀ {A} {B}
 strᵀ-nat f g (a , t) = strˢ-nat f g a t
 
 -- Strength projects away on the second component
 
-strˢ-snd : ∀ {B ε w} (A : PSh) → (box : [ mapᵉ ε ]ᶜ A w) → (t : Tˢ B ε w)
+strˢ-snd : ∀ {B ε w} (A : PSh) → (box : [ ∣ ε ∣ᵉ ]ᶜ A w) → (t : Tˢ B ε w)
          → Tˢᶠ sndᵐ (strˢ A box t) ≈ᵗ t
 strˢ-snd {B = B} A box (leaf b)          = leaf-≈ (≈-refl B)
 strˢ-snd A box (op-node op v k kc kn)  =
@@ -992,15 +992,15 @@ strᵀ-sndᵐ {A} (a , t) = strˢ-snd A a t
 -- Strength unit coherence
 
 strᵀ-ηᵀ : ∀ {A B}
-        → strᵀ {A} {B} {uₑ} ∘ᵖ mapˣᵐ idᵖ ηᵀ
-        ≈ᵖ ηᵀ {A ×ᵖ B} ∘ᵖ mapˣᵐ (ε ∘ᵖ []-≤ (≃ᵣ⇒≿ᵣ map-uᵉ)) idᵖ
+        → strᵀ {A} {B} {𝟏ₑ} ∘ᵖ mapˣᵐ idᵖ ηᵀ
+        ≈ᵖ ηᵀ {A ×ᵖ B} ∘ᵖ mapˣᵐ (ε ∘ᵖ []-≤ (≃ᵣ⇒≿ᵣ map-𝟏ᵉ)) idᵖ
 strᵀ-ηᵀ (box , b) = ≈ᵗ-refl _
 
 -- Associativity with the product
 
 strˢ-assoc : ∀ {C ε w} (A B : PSh)
-           → (a : [ mapᵉ ε ]ᶜ A w)
-           → (b : [ mapᵉ ε ]ᶜ B w)
+           → (a : [ ∣ ε ∣ᵉ ]ᶜ A w)
+           → (b : [ ∣ ε ∣ᵉ ]ᶜ B w)
            → (t : Tˢ C ε w)
            → Tˢᶠ ×ᵐ-assoc (strˢ (A ×ᵖ B) (app []-monoidal (a , b)) t) ≈ᵗ strˢ A a (strˢ B b t)
 strˢ-assoc {C} A B a b (leaf c)          = leaf-≈ (≈-refl (A ×ᵖ B ×ᵖ C))
@@ -1026,17 +1026,17 @@ strᵀ-assoc {A} {B} (a , b , t) = strˢ-assoc A B a b t
 
 -- Strength commutes with multiplication. Threading the box through `μˢ`
 -- agrees with splitting it (via `δ`) and threading the inner layer via
--- `Tˢᶠ strᵀ`. Since the strengthened `A` is here a box `[ mapᵉ ε' ] A`,
+-- `Tˢᶠ strᵀ`. Since the strengthened `A` is here a box `[ ∣ ε' ∣ᵉ ] A`,
 -- the two boxes are only `_≈_`-equal, so this is a native `_≈ᵗ_`
 -- induction; the outer box `a` and the split box `a'` are related by `rel`.
 
 strˢ-μˢ : ∀ {B ε ε' w} (A : PSh)
-        → (a  : [ mapᵉ (ε ·ₑ ε') ]ᶜ A w)
-        → (a' : [ mapᵉ ε ]ᶜ ([ mapᵉ ε' ]ᵒ A) w)
-        → (rel : ∀ {w1} (p : w ⊑[ mapᵉ ε ] w1) {w2} (q : w1 ⊑[ mapᵉ ε' ] w2)
+        → (a  : [ ∣ ε ·ₑ ε' ∣ᵉ ]ᶜ A w)
+        → (a' : [ ∣ ε ∣ᵉ ]ᶜ ([ ∣ ε' ∣ᵉ ]ᵒ A) w)
+        → (rel : ∀ {w1} (p : w ⊑[ ∣ ε ∣ᵉ ] w1) {w2} (q : w1 ⊑[ ∣ ε' ∣ᵉ ] w2)
                  → _≈_ A (fun (fun a' p) q) (fun a (⊑-mono (≃ᵣ⇒≿ᵣ map-·ᵉ) (⊑-trans p q))))
         → (t : Tˢ (Tᵒ B ε') ε w)
-        → strˢ A a (μˢ t) ≈ᵗ μˢ (Tˢᶠ (strᵀ {A} {B} {ε'}) (strˢ ([ mapᵉ ε' ]ᵒ A) a' t))
+        → strˢ A a (μˢ t) ≈ᵗ μˢ (Tˢᶠ (strᵀ {A} {B} {ε'}) (strˢ ([ ∣ ε' ∣ᵉ ]ᵒ A) a' t))
 strˢ-μˢ A a a' rel (leaf s) =
   sub-≈ (strˢ-congᵗ A (λ r → ≈-trans A ([]-fun-irr a _ _) (≈-sym A (rel _ r))) (≈ᵗ-refl s))
 strˢ-μˢ A a a' rel (op-node op v k kc kn) =
@@ -1058,23 +1058,23 @@ strᵀ-μᵀ : ∀ {A B ε ε'}
         → strᵀ {A} {B} {ε ·ₑ ε'} ∘ᵖ mapˣᵐ idᵖ (μᵀ {B} {ε} {ε'})
         ≈ᵖ μᵀ {A ×ᵖ B} {ε} {ε'}
           ∘ᵖ Tᶠ (strᵀ {A} {B} {ε'})
-          ∘ᵖ strᵀ {[ mapᵉ ε' ]ᵒ A} {Tᵒ B ε'} {ε}
+          ∘ᵖ strᵀ {[ ∣ ε' ∣ᵉ ]ᵒ A} {Tᵒ B ε'} {ε}
           ∘ᵖ mapˣᵐ (δ ∘ᵖ []-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ)) idᵖ
 strᵀ-μᵀ {A} {ε = ε} {ε' = ε'} (a , t) =
   strˢ-μˢ A a
-    (app (δ {A} {mapᵉ ε} {mapᵉ ε'}) (app ([]-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ)) a))
+    (app (δ {A} {∣ ε ∣ᵉ} {∣ ε' ∣ᵉ}) (app ([]-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ)) a))
     (λ p q → ≈-refl A)
     t
 
 -- SUB-EFFECTING IS FUNCTORIAL IN THE GRADE
 --
--- `T-≤ p` adds a `sub p` node, and `_≈ᵗ_` collapses those (`sub-u`,
+-- `T-≤ p` adds a `sub p` node, and `_≈ᵗ_` collapses those (`sub-𝟏`,
 -- `sub-∘`): a coercion node is invisible to the tree equality. That is what
 -- makes these laws hold, and it is what the operational soundness proof
 -- needs, since reduction discards coercions as it refines effect grades.
 
 T-≤-refl : ∀ {A ε} → (p : ε ≾ₑ ε) → T-≤ {A} p ≈ᵖ idᵖ
-T-≤-refl p t = sub-uᵗ p t
+T-≤-refl p t = sub-𝟏ᵗ p t
 
 T-≤-trans : ∀ {A ε₁ ε₂ ε₃} → (p : ε₁ ≾ₑ ε₂) → (q : ε₂ ≾ₑ ε₃) → (r : ε₁ ≾ₑ ε₃)
           → T-≤ {A} q ∘ᵖ T-≤ {A} p ≈ᵖ T-≤ {A} r
@@ -1084,7 +1084,7 @@ T-≤-trans p q r t = sub-∘ᵗ p q r _
 -- transport does nothing, and the `sub` node it is compared against collapses.
 
 T-≤-≡ : ∀ {A ε ε'} → (e : ε ≡ ε') → ε-substᵀ {A} e ≈ᵖ T-≤ (≾ₑ-reflexive e)
-T-≤-≡ refl t = ≈ᵗ-sym sub-u
+T-≤-≡ refl t = ≈ᵗ-sym sub-𝟏
 
 -- Sub-effecting commutes with the multiplication and with the strength;
 -- both hold definitionally, as `μˢ` and `strˢ` push a `sub` node outwards

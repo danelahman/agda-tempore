@@ -11,7 +11,7 @@
 -- Reindexed along a map of points into the carrier (`reindexʷ`), it   --
 -- is a tick frame: a world is how much has accumulated, and a grade   --
 -- bounds how much more may. `Ticks.Time.*` state this relation at the --
--- points `of-dur`, up to the order of a sum.                          --
+-- points `ι`, up to the order of a sum.                               --
 --                                                                     --
 -- At a grade whose unit is least, `c' ≾ c` holds at the unit grade,   --
 -- so the accumulated amount may shrink. `forward` intersects a frame  --

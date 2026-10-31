@@ -26,7 +26,7 @@ open import MonomorphicCalculus.Syntax.Renaming      S
 open import MonomorphicCalculus.Syntax.Substitution  S
 open import MonomorphicCalculus.Syntax.Types S
 
-open import MonomorphicCalculus.Syntax.Renaming.Equivalence  S using (∈-++ᶜˡ; grade-++ᶜˡ-uᵣ)
+open import MonomorphicCalculus.Syntax.Renaming.Equivalence  S using (∈-++ᶜˡ; grade-++ᶜˡ-𝟏ᵣ)
 
 -- Binder subsumption, shared with the two sequencing rules of the operational
 -- semantics.
@@ -116,15 +116,15 @@ mutual
              → Γ ⊢V⦂ lam M == lam N
 
     handler-cong : ∀ {A B ε ε'}
-                 → {N N' : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+                 → {N N' : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
                  → {H H' : ((op : Op) → (ε'' : E) →
                               Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                                  ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                               ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))}
-                 → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ N == N'
+                 → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ N == N'
                  → ((op : Op) → (ε'' : E) →
                       Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                          ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                          ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                       ⊢C⦂ H op ε'' == H' op ε'')
                  ---------------------------------------------------
                  → Γ ⊢V⦂ handler N H == handler N' H'
@@ -261,9 +261,9 @@ mutual
 
     seq-cong : ∀ {A B ε ε'}
              → {M M' : Γ ⊢C⦂ A ‼ ε}
-             → {N N' : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+             → {N N' : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
              → Γ ⊢C⦂ M == M'
-             → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ N == N'
+             → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ N == N'
              ---------------------------------
              → Γ ⊢C⦂ M ⨟ N == M' ⨟ N'
 
@@ -319,11 +319,11 @@ mutual
     recℕ-cong : ∀ {B ε}
               → {V W : Γ ⊢V⦂ Nat}
               → {M M' : Γ ⊢C⦂ B ‼ ε}
-              → {N N' : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+              → {N N' : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
               → {p : ε ·ₑ ε ≾ₑ ε}
               → Γ ⊢V⦂ V == W
               → Γ ⊢C⦂ M == M'
-              → (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ N == N'
+              → (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ N == N'
               -----------------------------------------------
               → Γ ⊢C⦂ recℕ V M N p == recℕ W M' N' p
 
@@ -340,11 +340,11 @@ mutual
     recL-cong : ∀ {A B ε}
               → {V W : Γ ⊢V⦂ |List| A}
               → {M M' : Γ ⊢C⦂ B ‼ ε}
-              → {N N' : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+              → {N N' : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
               → {p : ε ·ₑ ε ≾ₑ ε}
               → Γ ⊢V⦂ V == W
               → Γ ⊢C⦂ M == M'
-              → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ N == N'
+              → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ N == N'
               ---------------------------------------------------------
               → Γ ⊢C⦂ recL V M N p == recL W M' N' p
 
@@ -360,15 +360,15 @@ mutual
 
     perform-cong : ∀ {A ε op}
                  → {V W : Γ ⊢V⦂ type-of-gtype (param op)}
-                 → {M N : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
+                 → {M N : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
                  → Γ ⊢V⦂ V == W
-                 → Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ M == N
+                 → Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ M == N
                  ---------------------------------------------------------------
                  → Γ ⊢C⦂ perform op V M == perform op W N
 
     delay-cong  : ∀ {A τ ε}
-                → {M N : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε}
-                → Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ M == N
+                → {M N : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε}
+                → Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ M == N
                 --------------------------------------
                 → Γ ⊢C⦂ delay τ M == delay τ N
 
@@ -412,20 +412,20 @@ mutual
 
     seq-return : ∀ {A B ε}
                → (V : Γ ⊢V⦂ A)
-               → (M : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+               → (M : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε)
                -----------------------------------------------------
                → Γ ⊢C⦂ return V ⨟ M
                    == ε-≃ (≃ₑ-sym (·ₑ-identityˡ ε))
                         ((C-rename
                            (cong-∷-ren
-                             (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren))
+                             (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren))
                            M)
                          [ split-[] ↦ V ]c)
 
     seq-perform : ∀ {A B ε ε' op}
                 → (V : Γ ⊢V⦂ type-of-gtype (param op))
-                → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
-                → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+                → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
+                → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
                 ---------------------------------------------------------------------
                 → Γ ⊢C⦂ (perform op V M) ⨟ N
                     == ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
@@ -439,23 +439,23 @@ mutual
                                N))
 
     seq-delay : ∀ {A B τ ε ε'}
-              → (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
-              → (N : Γ ⟨ mapᵉ (of-durᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+              → (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε)
+              → (N : Γ ⟨ ∣ ιₑ τ ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
               -------------------------------------------------------
               → Γ ⊢C⦂ delay τ M ⨟ N
-                  == ε-≃ (≃ₑ-sym (·ₑ-assoc (of-durᵉ τ) ε ε'))
+                  == ε-≃ (≃ₑ-sym (·ₑ-assoc (ιₑ τ) ε ε'))
                        (delay τ
                          (M ⨟
                           C-rename
                             (cong-∷-ren
-                              (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))
+                              (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-ιᵉ ≃ᵣ-refl)))
                                ∘ʳ ⟨⟩-μ-ren))
                             N))
 
     seq-box : ∀ {A B C ρ ε ε'}
             → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
             → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
-            → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
+            → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ C ‼ ε')
             -------------------------------------------------------
             → Γ ⊢C⦂ box _ V M ⨟ N
                 == box _ V (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
@@ -465,7 +465,7 @@ mutual
               → (rel : ρ' ≾ᵣ ρ₀)
               → (w : A₀ <:ᵛ A)
               → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
-              → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
+              → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ C ‼ ε')
               -------------------------------------------------------
               → Γ ⊢C⦂ unbox x rel w M ⨟ N
                   == unbox x rel w (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
@@ -482,8 +482,8 @@ mutual
 
     seq-assoc : ∀ {A B C ε ε' ε''}
               → (M : Γ ⊢C⦂ A ‼ ε)
-              → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε')
-              → (P : Γ ⟨ mapᵉ (ε ·ₑ ε') ⟩ ∷ B ⊢C⦂ C ‼ ε'')
+              → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
+              → (P : Γ ⟨ ∣ ε ·ₑ ε' ∣ᵉ ⟩ ∷ B ⊢C⦂ C ‼ ε'')
               ---------------------------------------------------------------------
               → Γ ⊢C⦂ (M ⨟ N) ⨟ P
                   == ε-≃ (≃ₑ-sym (·ₑ-assoc ε ε' ε''))
@@ -605,7 +605,7 @@ mutual
 
     recℕ-beta-zero : ∀ {B ε}
                    → (M : Γ ⊢C⦂ B ‼ ε)
-                   → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                   → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                    → (p : ε ·ₑ ε ≾ₑ ε)
                    ---------------------------------------
                    → Γ ⊢C⦂ recℕ zero M N p == M
@@ -613,7 +613,7 @@ mutual
     recℕ-beta-succ : ∀ {B ε}
                    → (V : Γ ⊢V⦂ Nat)
                    → (M : Γ ⊢C⦂ B ‼ ε)
-                   → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                   → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                    → (p : ε ·ₑ ε ≾ₑ ε)
                    ------------------------------------------------------------
                    → Γ ⊢C⦂ recℕ (succ V) M N p
@@ -688,7 +688,7 @@ mutual
 
     recL-beta-nil : ∀ {A B ε}
                   → (M : Γ ⊢C⦂ B ‼ ε)
-                  → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                  → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                   → (p : ε ·ₑ ε ≾ₑ ε)
                   ---------------------------------------
                   → Γ ⊢C⦂ recL nil M N p == M
@@ -697,7 +697,7 @@ mutual
                    → (V : Γ ⊢V⦂ A)
                    → (W : Γ ⊢V⦂ |List| A)
                    → (M : Γ ⊢C⦂ B ‼ ε)
-                   → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                   → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                    → (p : ε ·ₑ ε ≾ₑ ε)
                    ------------------------------------------------------------
                    → Γ ⊢C⦂ recL (cons V W) M N p
@@ -714,26 +714,26 @@ mutual
                   → (V : Γ ⊢V⦂ A)
                   → (H : (op : Op) → (ε'' : E) →
                            Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                               ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                            ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-                  → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+                  → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε)
                   ----------------------------------------------------------------
                   → Γ ⊢C⦂ handle return V `with handler N H
                       == ε-≃ (≃ₑ-sym (·ₑ-identityˡ ε))
                            ((C-rename
                               (cong-∷-ren
-                                (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren))
+                                (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren))
                               N)
                             [ split-[] ↦ V ]c)
 
     handle-perform : ∀ {A B ε ε' op}
                    → (V : Γ ⊢V⦂ type-of-gtype (param op))
-                   → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
+                   → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
                    → (H : (op : Op) → (ε'' : E) →
                             Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                                ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                                ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                             ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-                   → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+                   → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
                    ----------------------------------------------------------------
                    → Γ ⊢C⦂ handle perform op V M `with handler N H
                        == ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
@@ -749,7 +749,7 @@ mutual
                                            (λ op' ε'' →
                                               C-rename
                                                 (cong-∷-ren (cong-∷-ren
-                                                  (barrier-wk-ren {Γ} (mapᵉ (op-grade op))
+                                                  (barrier-wk-ren {Γ} ∣ op-grade op ∣ᵉ
                                                                   (type-of-gtype (arity op)))))
                                                 (H op' ε''))))
                                   (C-rename (cong-∷-ren (cong-∷-ren barrier-ren))
@@ -757,21 +757,21 @@ mutual
                                    [ split-∷ split-[] ↦ V ]c))
 
     handle-delay : ∀ {A B τ ε ε'}
-                 → (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
+                 → (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε)
                  → (H : (op : Op) → (ε'' : E) →
                           Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                              ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-                 → (N : Γ ⟨ mapᵉ (of-durᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+                 → (N : Γ ⟨ ∣ ιₑ τ ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
                  ------------------------------------------------------------------------------
                  → Γ ⊢C⦂ handle delay τ M `with handler N H
-                     == ε-≃ (≃ₑ-sym (·ₑ-assoc (of-durᵉ τ) ε ε'))
+                     == ε-≃ (≃ₑ-sym (·ₑ-assoc (ιₑ τ) ε ε'))
                           (delay τ
                             (handle M
                             `with handler
                                     (C-rename
                                       (cong-∷-ren
-                                        (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))
+                                        (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-ιᵉ ≃ᵣ-refl)))
                                          ∘ʳ ⟨⟩-μ-ren))
                                       N)
                                     (λ op' ε'' →
@@ -808,7 +808,7 @@ mutual
                -----------------------------------------------------------------------
                → Γ ⊢C⦂ box _ V (K [ unbox (∈-++ᶜˡ (hole-ctx K) Hd)
                                         (≾ᵣ-trans (≾ᵣ-reflexive
-                                                    (grade-++ᶜˡ-uᵣ (hole-ctx K)))
+                                                    (grade-++ᶜˡ-𝟏ᵣ (hole-ctx K)))
                                                   p)
                                         w N ])
                    == box _ V (K [ N [ split-[] ↦ subV (V-rename ((cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ wk-ren-⟨ρ⟩-ctx refl) V) w ]c ])
@@ -904,7 +904,7 @@ mutual
                  → (w : A <:ᵛ A')
                  → (rel : ε ≾ₑ ε')
                  → (V : Γ ⊢V⦂ type-of-gtype (param op))
-                 → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+                 → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
                         ⊢C⦂ A ‼ ε)
                  ----------------------------------------------------------
                  → Γ ⊢C⦂ subC (perform op V M) (w ‼ₛ ·ₑ-monoʳ-≾ₑ rel)
@@ -913,7 +913,7 @@ mutual
     subC-delay : ∀ {A A' τ ε ε'}
                → (w : A <:ᵛ A')
                → (rel : ε ≾ₑ ε')
-               → (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
+               → (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε)
                ------------------------------------------------
                → Γ ⊢C⦂ subC (delay τ M) (w ‼ₛ ·ₑ-monoʳ-≾ₑ rel)
                     == delay τ (subC M (w ‼ₛ rel))
@@ -927,7 +927,7 @@ mutual
              → (w : A <:ᵛ A')
              → (rel : ε₁ ≾ₑ ε₂)
              → (M : Γ ⊢C⦂ A ‼ ε₁)
-             → (N : Γ ⟨ mapᵉ ε₂ ⟩ ∷ A' ⊢C⦂ B ‼ ε')
+             → (N : Γ ⟨ ∣ ε₂ ∣ᵉ ⟩ ∷ A' ⊢C⦂ B ‼ ε')
              ------------------------------------------------------------
              → Γ ⊢C⦂ subC M (w ‼ₛ rel) ⨟ N
                   == coerce (·ₑ-monoˡ-≾ₑ rel)
@@ -972,7 +972,7 @@ mutual
     coerce-seq-in : ∀ {A B ε ε₁' ε₂'}
                   → (rel : ε₁' ≾ₑ ε₂')
                   → (M : Γ ⊢C⦂ A ‼ ε)
-                  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
+                  → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
                   ----------------------------------------------------------
                   → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (M ⨟ N) == M ⨟ coerce rel N
 
@@ -993,22 +993,22 @@ mutual
     -- equations for collapsing successive delays
 
     delay-zero : ∀ {A ε}
-               → (M : Γ ⟨ of-durʳ 0ᴰ ⟩ ⊢C⦂ A ‼ ε)
+               → (M : Γ ⟨ ιᵣ 0ᴰ ⟩ ⊢C⦂ A ‼ ε)
                --------------------------
                → Γ ⊢C⦂ delay 0ᴰ M
-                   == ε-≃ (≃ₑ-sym (≃ₑ-trans (·ₑ-cong of-durᵉ-zero ≃ₑ-refl) (·ₑ-identityˡ ε)))
+                   == ε-≃ (≃ₑ-sym (≃ₑ-trans (·ₑ-cong ιₑ-zero ≃ₑ-refl) (·ₑ-identityˡ ε)))
                         (C-rename
-                          (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ of-durʳ-zero) ∘ʳ ⟨⟩-η-ren)
+                          (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ ιᵣ-zero) ∘ʳ ⟨⟩-η-ren)
                           M)
 
     delay-delay : ∀ {A τ₁ τ₂ ε}
-                → (M : Γ ⟨ of-durʳ (τ₁ +ᴰ τ₂) ⟩ ⊢C⦂ A ‼ ε)
+                → (M : Γ ⟨ ιᵣ (τ₁ +ᴰ τ₂) ⟩ ⊢C⦂ A ‼ ε)
                 ------------------------------------
                 → Γ ⊢C⦂ delay τ₁ (delay τ₂
                            (C-rename
-                             (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ of-durʳ-plus) ∘ʳ ⟨⟩-μ-ren)
+                             (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ ιᵣ-plus) ∘ʳ ⟨⟩-μ-ren)
                              M))
-                    == ε-≃ (≃ₑ-trans (·ₑ-cong of-durᵉ-plus ≃ₑ-refl) (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε))
+                    == ε-≃ (≃ₑ-trans (·ₑ-cong ιₑ-plus ≃ₑ-refl) (·ₑ-assoc (ιₑ τ₁) (ιₑ τ₂) ε))
                          (delay (τ₁ +ᴰ τ₂) M)
 
   infix 18 _⊢C⦂_==_

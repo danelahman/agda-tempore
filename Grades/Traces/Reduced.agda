@@ -80,9 +80,9 @@ open import Relation.Nullary.Decidable
 
 open import Grades.Traces.Sets T Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans public
   hiding (NeTraces; neTraces; traces; sorted; nonempty; ne-ext; neSet;
-          u; _·_; _∪_; ·-identityˡ; ·-identityʳ; ·-assoc;
+          𝟏; _·_; _∪_; ·-identityˡ; ·-identityʳ; ·-assoc;
           ·-distribˡ-∪; ·-distribʳ-∪; ·-zero-productˡ; ·-zero-productʳ;
-          of-dur; of-dur-zero; of-dur-plus)
+          ι; ι-zero; ι-plus)
 
 open WithDecEq _≟ₒ_ public
 
@@ -607,15 +607,15 @@ infixl 7 _·_
 _·_ : Antichain → Antichain → Antichain
 P · Q = acSet (traces P ·ˢ traces Q) (·ˢ-ne (nonempty P) (nonempty Q))
 
-u : Antichain
-u = singleton ε
+𝟏 : Antichain
+𝟏 = singleton ε
 
-·-identityʳ : (P : Antichain) → (P · u) ≡ P
+·-identityʳ : (P : Antichain) → (P · 𝟏) ≡ P
 ·-identityʳ P =
   ac-ext (trans (n-identityʳ (traces P))
                 (n-reduced-id (traces P) (sorted P) (reduced P)))
 
-·-identityˡ : (P : Antichain) → (u · P) ≡ P
+·-identityˡ : (P : Antichain) → (𝟏 · P) ≡ P
 ·-identityˡ P =
   ac-ext (trans (n-identityˡ (traces P))
                 (n-reduced-id (traces P) (sorted P) (reduced P)))
@@ -840,14 +840,14 @@ P ⊔ Q = acSet (traces P ++ traces Q) (++-ne (nonempty P) (nonempty Q))
 -- Inclusion of durations as pure delays
 --
 -- A duration `τ` becomes the singleton antichain containing the pure
--- delay of duration `τ`, which is what a grade's `of-dur` asks for.
+-- delay of duration `τ`, which is what a grade's `ι` asks for.
 
-of-dur : Carrier → Antichain
-of-dur τ = singleton ⟨ τ ⟩
+ι : Carrier → Antichain
+ι τ = singleton ⟨ τ ⟩
 
-of-dur-zero : of-dur 0ᴰ ≡ u
-of-dur-zero = ac-ext {of-dur 0ᴰ} {u} (cong [_] (⟨⟩-zero 0ᴰ <-irrefl))
+ι-zero : ι 0ᴰ ≡ 𝟏
+ι-zero = ac-ext {ι 0ᴰ} {𝟏} (cong [_] (⟨⟩-zero 0ᴰ <-irrefl))
 
-of-dur-plus : {m k : Carrier} → of-dur (m +ᴰ k) ≡ (of-dur m · of-dur k)
-of-dur-plus {m} {k} =
-  ac-ext {of-dur (m +ᴰ k)} {of-dur m · of-dur k} (cong [_] (⟨⟩-hom m k))
+ι-plus : {m k : Carrier} → ι (m +ᴰ k) ≡ (ι m · ι k)
+ι-plus {m} {k} =
+  ac-ext {ι (m +ᴰ k)} {ι m · ι k} (cong [_] (⟨⟩-hom m k))

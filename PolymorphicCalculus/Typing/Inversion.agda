@@ -83,7 +83,7 @@ module _ {Θ : Scope} (Q : Hyps Θ) where
 
   HeadC : ∀ {n} → OCtx Θ n → RunC n → OCType Θ → Set
   HeadC Γ (return V)                C =
-    Σ[ A ∈ OVType Θ ] (C ≡ A ‼ ûₑ) × (Σ[ D ∈ Q ∣ Γ ⊢V⦂ A ] ∥ D ∥ᵛ ≡ V)
+    Σ[ A ∈ OVType Θ ] (C ≡ A ‼ 𝟏̂ₑ) × (Σ[ D ∈ Q ∣ Γ ⊢V⦂ A ] ∥ D ∥ᵛ ≡ V)
   HeadC Γ (M ⨟ N)                   C =
     Σ[ A ∈ OVType Θ ] Σ[ B ∈ OVType Θ ] Σ[ ε ∈ EExp Θ ] Σ[ ε' ∈ EExp Θ ]
       (C ≡ B ‼ (ε ·̂ₑ ε'))
@@ -126,11 +126,11 @@ module _ {Θ : Scope} (Q : Hyps Θ) where
   HeadC Γ (perform op V M)          C =
     Σ[ A ∈ OVType Θ ] Σ[ ε ∈ EExp Θ ] (C ≡ A ‼ (econst (op-grade op) ·̂ₑ ε))
       × (Σ[ D ∈ Q ∣ Γ ⊢V⦂ ⌜ param op ⌝ᵍ ] ∥ D ∥ᵛ ≡ V)
-      × (Σ[ E ∈ Q ∣ Γ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ‼ ε ]
+      × (Σ[ E ∈ Q ∣ Γ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ‼ ε ]
            ∥ E ∥ᶜ ≡ M)
   HeadC Γ (delay τ M)               C =
-    Σ[ A ∈ OVType Θ ] Σ[ ε ∈ EExp Θ ] (C ≡ A ‼ (econst (of-durᵉ τ) ·̂ₑ ε))
-      × (Σ[ D ∈ Q ∣ Γ ⟨ rconst (of-durʳ τ) ⟩ ⊢C⦂ A ‼ ε ] ∥ D ∥ᶜ ≡ M)
+    Σ[ A ∈ OVType Θ ] Σ[ ε ∈ EExp Θ ] (C ≡ A ‼ (econst (ιₑ τ) ·̂ₑ ε))
+      × (Σ[ D ∈ Q ∣ Γ ⟨ rconst (ιᵣ τ) ⟩ ⊢C⦂ A ‼ ε ] ∥ D ∥ᶜ ≡ M)
   HeadC Γ (handle M `with V)        C =
     Σ[ A ∈ OVType Θ ] Σ[ B ∈ OVType Θ ] Σ[ ε ∈ EExp Θ ] Σ[ ε' ∈ EExp Θ ]
       (C ≡ B ‼ (ε ·̂ₑ ε'))

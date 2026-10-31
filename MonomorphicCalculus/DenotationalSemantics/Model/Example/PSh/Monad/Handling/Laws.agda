@@ -54,16 +54,16 @@ T-alg-of-handlerᵀ-ηᵀ bc h x = ≈ᵗ-refl _
 
 T-alg-of-handlerᵀ-delayᵀ : ∀ {P A ε' ε''} → (τ : 𝔻) → (bc : Eternalᵒ P) → (h : Handlerˢ P A)
                          → T-alg-of-handlerᵀ bc h ∘ᵖ mapˣᵐ idᵖ (delayᵀ {Tᵒ A ε''} {ε'} τ)
-                         ≈ᵖ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) ε' ε''))
+                         ≈ᵖ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (ιₑ τ) ε' ε''))
                            ∘ᵖ delayᵀ τ
-                           ∘ᵖ [ of-durʳ τ ]ᶠ (T-alg-of-handlerᵀ bc h)
+                           ∘ᵖ [ ιᵣ τ ]ᶠ (T-alg-of-handlerᵀ bc h)
                            ∘ᵖ []-monoidal
-                           ∘ᵖ mapˣᵐ (Eternalᵒ.necᵉ bc {of-durʳ τ}) idᵖ
+                           ∘ᵖ mapˣᵐ (Eternalᵒ.necᵉ bc {ιᵣ τ}) idᵖ
 T-alg-of-handlerᵀ-delayᵀ {P = P} τ bc h (pv , boxT) =
   sub-congᵗ
     (delay-≈ (λ q → T-alg-of-handlerˢ-congᵖ bc h
-                      (≈-sym P (Eternalᵒ.necᵉ-≤ bc (≃ᵣ⇒≾ᵣ map-of-durᵉ) pv q))
-                      (fun boxT (⊑-mono (≃ᵣ⇒≾ᵣ map-of-durᵉ) q))))
+                      (≈-sym P (Eternalᵒ.necᵉ-≤ bc (≃ᵣ⇒≾ᵣ map-ιᵉ) pv q))
+                      (fun boxT (⊑-mono (≃ᵣ⇒≾ᵣ map-ιᵉ) q))))
 
 T-alg-of-handlerᵀ-≤ : ∀ {P A ε₁ ε₂ ε'} → (bc : Eternalᵒ P) → (h : Handlerˢ P A) → (p : ε₁ ≾ₑ ε₂)
                     → T-alg-of-handlerᵀ {P} {A} {ε₂} {ε'} bc h ∘ᵖ mapˣᵐ idᵖ (T-≤ p)

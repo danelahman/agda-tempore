@@ -2,7 +2,7 @@
 -- The language of the sensor node, over an identity grade system.    --
 --                                                                    --
 -- Effect grades and resource grades are the same monoid `G` and      --
--- `∣_∣ᵉ` is the identity. The instances vary `G` and the grade       --
+-- `∣-∣ᵉ` is the identity. The instances vary `G` and the grade       --
 -- `opTime` assigns to each operation.                                --
 ------------------------------------------------------------------------
 

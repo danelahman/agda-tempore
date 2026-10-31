@@ -44,20 +44,20 @@ open import MonomorphicCalculus.Syntax.Substitution.Action  S
 -- the observation.
 
 sub-var₀-irr : ∀ {Γ Γ' A ρ} → (s : Sub₀ [] Γ Γ') → (x : A ∈[ ρ ] Γ')
-             → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+             → (f f' : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
              → sub-var₀ s x f ≡ sub-var₀ s x f'
 sub-var₀-irr s x f f' = cong (sub-var₀ s x) (bound-irr f f')
 
 -- An eternal type discharges a grade bound whatever the grade.
 
-et-bound : ∀ {A ρ} → Eternal A → ¬ Eternal A → ρ ≾ᵣ uᵣ
+et-bound : ∀ {A ρ} → Eternal A → ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ
 et-bound et ¬et = ⊥-elim (¬et et)
 
 -- Two `var` nodes at the same image agree.
 
 var-img-≡ : ∀ {Γ A} {t t' : Var Γ A} → t ≡ t'
-          → (f  : ¬ Eternal A → proj₁ t  ≾ᵣ uᵣ)
-          → (f' : ¬ Eternal A → proj₁ t' ≾ᵣ uᵣ)
+          → (f  : ¬ Eternal A → proj₁ t  ≾ᵣ 𝟏ᵣ)
+          → (f' : ¬ Eternal A → proj₁ t' ≾ᵣ 𝟏ᵣ)
           → var f (proj₂ t) ≡ var f' (proj₂ t')
 var-img-≡ refl f f' = var-≡
 
@@ -74,12 +74,12 @@ infix 4 _≐ˢ₀_
 -- substitutions Agda has to infer.
 --
 -- Two fields, because `atᵗ` is not derivable from `atᵛ`: a box-typed variable
--- has no `≾ᵣ uᵣ` bound, so it is never read as a value.
+-- has no `≾ᵣ 𝟏ᵣ` bound, so it is never read as a value.
 
 record _≐ˢ₀_ {Γ Γ'} (s s' : Sub₀ [] Γ Γ') : Set where
   constructor mk≐ˢ₀
   field
-    atᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+    atᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
         → sub-var₀ s x f ≡ sub-var₀ s' x f
     atᵗ : ∀ {A ρ ρ'} → (y : [ ρ ] A ∈[ ρ' ] Γ') → tgt-img₀ s y ≡ tgt-img₀ s' y
 

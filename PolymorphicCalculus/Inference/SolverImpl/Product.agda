@@ -472,12 +472,12 @@ data EAtom (Θ : Scope) : Set where
 ⟦ av i ⟧ᵉᵃ = evar i
 
 ⟦_⟧ᵉᵖ : ∀ {Θ} → List (EAtom Θ) → EExp Θ
-⟦ [] ⟧ᵉᵖ         = ûₑ
+⟦ [] ⟧ᵉᵖ         = 𝟏̂ₑ
 ⟦ a ∷ [] ⟧ᵉᵖ     = ⟦ a ⟧ᵉᵃ
 ⟦ a ∷ b ∷ as ⟧ᵉᵖ = ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ b ∷ as ⟧ᵉᵖ
 
 ⟦_⟧ᵉˢ : ∀ {Θ} → List (EAtom Θ) → EExp Θ
-⟦ [] ⟧ᵉˢ     = ûₑ
+⟦ [] ⟧ᵉˢ     = 𝟏̂ₑ
 ⟦ a ∷ as ⟧ᵉˢ = ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ as ⟧ᵉˢ
 
 ⟦_⟧ᵉᵖ⁺ : ∀ {Θ} → Alts (List (EAtom Θ)) → EExp Θ
@@ -501,7 +501,7 @@ data EAtom (Θ : Scope) : Set where
 
 consₑ : ∀ {Θ} → EAtom Θ → List (EAtom Θ) → List (EAtom Θ)
 consₑ (ac c) (ac d ∷ as) = consₑ (ac (c ·ₑ d)) as
-consₑ (ac c) as with c ≃ₑ? uₑ
+consₑ (ac c) as with c ≃ₑ? 𝟏ₑ
 ... | yes _ = as
 ... | no _  = ac c ∷ as
 consₑ (av i) as = av i ∷ as
@@ -511,10 +511,10 @@ consₑ-≡ : ∀ {Θ} → (a : EAtom Θ) → (as : List (EAtom Θ))
 consₑ-≡ (ac c) (ac d ∷ as) =
   ≡̂ₑ-trans (consₑ-≡ (ac (c ·ₑ d)) as)
   (≡̂ₑ-trans (≡̂ₑ-cong (≡̂ₑ-sym ≡̂ₑ-const-·) ≡̂ₑ-refl) ≡̂ₑ-assoc)
-consₑ-≡ (ac c) [] with c ≃ₑ? uₑ
+consₑ-≡ (ac c) [] with c ≃ₑ? 𝟏ₑ
 ... | yes e = ≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-identityˡ) (≡̂ₑ-cong (≡̂ₑ-const (≃ₑ-sym e)) ≡̂ₑ-refl)
 ... | no _     = ≡̂ₑ-refl
-consₑ-≡ (ac c) (av i ∷ as) with c ≃ₑ? uₑ
+consₑ-≡ (ac c) (av i ∷ as) with c ≃ₑ? 𝟏ₑ
 ... | yes e = ≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-identityˡ) (≡̂ₑ-cong (≡̂ₑ-const (≃ₑ-sym e)) ≡̂ₑ-refl)
 ... | no _     = ≡̂ₑ-refl
 consₑ-≡ (av i) as = ≡̂ₑ-refl
@@ -615,7 +615,7 @@ nubₑ-≡ (P ∷⁺ s) =
 -- the top
 
 isTopₑ? : ∀ {Θ} → (P : List (EAtom Θ)) → Maybe (⟦ P ⟧ᵉᵖ ≡̂ₑ econst ⊤ₑ)
-isTopₑ? [] with uₑ ≃ₑ? ⊤ₑ
+isTopₑ? [] with 𝟏ₑ ≃ₑ? ⊤ₑ
 ... | yes p = just (≡̂ₑ-const p)
 ... | no _  = nothing
 isTopₑ? (ac c ∷ []) with c ≃ₑ? ⊤ₑ
@@ -688,12 +688,12 @@ data RAtom (Θ : Scope) : Set where
 ⟦ rm i ⟧ʳᵃ = ∣ evar i ∣̂ᵉ
 
 ⟦_⟧ʳᵖ : ∀ {Θ} → List (RAtom Θ) → RExp Θ
-⟦ [] ⟧ʳᵖ         = ûᵣ
+⟦ [] ⟧ʳᵖ         = 𝟏̂ᵣ
 ⟦ a ∷ [] ⟧ʳᵖ     = ⟦ a ⟧ʳᵃ
 ⟦ a ∷ b ∷ as ⟧ʳᵖ = ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ b ∷ as ⟧ʳᵖ
 
 ⟦_⟧ʳˢ : ∀ {Θ} → List (RAtom Θ) → RExp Θ
-⟦ [] ⟧ʳˢ     = ûᵣ
+⟦ [] ⟧ʳˢ     = 𝟏̂ᵣ
 ⟦ a ∷ as ⟧ʳˢ = ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ as ⟧ʳˢ
 
 ⟦_⟧ʳᵖ⁺ : ∀ {Θ} → Alts (List (RAtom Θ)) → RExp Θ
@@ -715,7 +715,7 @@ data RAtom (Θ : Scope) : Set where
 
 consᵣ : ∀ {Θ} → RAtom Θ → List (RAtom Θ) → List (RAtom Θ)
 consᵣ (rc c) (rc d ∷ as) = consᵣ (rc (c ·ᵣ d)) as
-consᵣ (rc c) as with c ≃ᵣ? uᵣ
+consᵣ (rc c) as with c ≃ᵣ? 𝟏ᵣ
 ... | yes _ = as
 ... | no _  = rc c ∷ as
 consᵣ (rv i) as = rv i ∷ as
@@ -726,13 +726,13 @@ consᵣ-≡ : ∀ {Θ} → (a : RAtom Θ) → (as : List (RAtom Θ))
 consᵣ-≡ (rc c) (rc d ∷ as) =
   ≡̂ᵣ-trans (consᵣ-≡ (rc (c ·ᵣ d)) as)
   (≡̂ᵣ-trans (≡̂ᵣ-cong (≡̂ᵣ-sym ≡̂ᵣ-const-·) ≡̂ᵣ-refl) ≡̂ᵣ-assoc)
-consᵣ-≡ (rc c) [] with c ≃ᵣ? uᵣ
+consᵣ-≡ (rc c) [] with c ≃ᵣ? 𝟏ᵣ
 ... | yes e = ≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-identityˡ) (≡̂ᵣ-cong (≡̂ᵣ-const (≃ᵣ-sym e)) ≡̂ᵣ-refl)
 ... | no _     = ≡̂ᵣ-refl
-consᵣ-≡ (rc c) (rv i ∷ as) with c ≃ᵣ? uᵣ
+consᵣ-≡ (rc c) (rv i ∷ as) with c ≃ᵣ? 𝟏ᵣ
 ... | yes e = ≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-identityˡ) (≡̂ᵣ-cong (≡̂ᵣ-const (≃ᵣ-sym e)) ≡̂ᵣ-refl)
 ... | no _     = ≡̂ᵣ-refl
-consᵣ-≡ (rc c) (rm i ∷ as) with c ≃ᵣ? uᵣ
+consᵣ-≡ (rc c) (rm i ∷ as) with c ≃ᵣ? 𝟏ᵣ
 ... | yes e = ≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-identityˡ) (≡̂ᵣ-cong (≡̂ᵣ-const (≃ᵣ-sym e)) ≡̂ᵣ-refl)
 ... | no _     = ≡̂ᵣ-refl
 consᵣ-≡ (rv i) as = ≡̂ᵣ-refl
@@ -822,7 +822,7 @@ nubᵣ-≡ (P ∷⁺ s) =
   ≡̂ᵣ-trans (nub1ᵣ-≡ P (nubᵣ s)) (≡̂ᵣ-cong-⊔ ≡̂ᵣ-refl (nubᵣ-≡ s))
 
 isTopᵣ? : ∀ {Θ} → (P : List (RAtom Θ)) → Maybe (⟦ P ⟧ʳᵖ ≡̂ᵣ rconst ⊤ᵣ)
-isTopᵣ? [] with uᵣ ≃ᵣ? ⊤ᵣ
+isTopᵣ? [] with 𝟏ᵣ ≃ᵣ? ⊤ᵣ
 ... | yes p = just (≡̂ᵣ-const p)
 ... | no _  = nothing
 isTopᵣ? (rc c ∷ []) with c ≃ᵣ? ⊤ᵣ
@@ -861,7 +861,7 @@ absorbᵣ-≡ s with topSumᵣ? s
 
 flatᵐ : ∀ {Θ} → EExp Θ → Alts (List (RAtom Θ))
 flatᵐ (evar i)   = alt (rm i ∷ [])
-flatᵐ (econst c) = alt (consᵣ (rc (mapᵉ c)) [])
+flatᵐ (econst c) = alt (consᵣ (rc ∣ c ∣ᵉ) [])
 flatᵐ (ε ·̂ₑ ε')  = absorbᵣ (nubᵣ (mulᵣ (flatᵐ ε) (flatᵐ ε')))
 flatᵐ (ε ⊔̂ₑ ε')  = absorbᵣ (nubᵣ (flatᵐ ε ⧺ flatᵐ ε'))
 
@@ -869,7 +869,7 @@ flatᵐ-≡ : ∀ {Θ} → (ε : EExp Θ) → ∣ ε ∣̂ᵉ ≡̂ᵣ ⟦ flat�
 flatᵐ-≡ (evar i)   = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
 flatᵐ-≡ (econst c) =
   ≡̂ᵣ-trans ≡̂ᵣ-map-const
-           (≡̂ᵣ-sym (≡̂ᵣ-trans (consᵣ-≡ (rc (mapᵉ c)) []) ≡̂ᵣ-identityʳ))
+           (≡̂ᵣ-sym (≡̂ᵣ-trans (consᵣ-≡ (rc ∣ c ∣ᵉ) []) ≡̂ᵣ-identityʳ))
 flatᵐ-≡ (ε ·̂ₑ ε')  =
   ≡̂ᵣ-trans ≡̂ᵣ-map-·
   (≡̂ᵣ-trans (≡̂ᵣ-cong (flatᵐ-≡ ε) (flatᵐ-≡ ε'))
@@ -914,7 +914,7 @@ flatᵣ-≡ ∣ ε ∣̂ᵉ     = flatᵐ-≡ ε
 -- The constant of an effect product, and its variables
 
 constₑ : ∀ {Θ} → List (EAtom Θ) → E
-constₑ []          = uₑ
+constₑ []          = 𝟏ₑ
 constₑ (ac c ∷ as) = c ·ₑ constₑ as
 constₑ (av _ ∷ as) = constₑ as
 
@@ -988,7 +988,7 @@ commSumₑ-≡ nothing  _  s = ≡̂ₑ-refl
 -- then images of effect variables, each by index
 
 constᵣ : ∀ {Θ} → List (RAtom Θ) → R
-constᵣ []          = uᵣ
+constᵣ []          = 𝟏ᵣ
 constᵣ (rc c ∷ as) = c ·ᵣ constᵣ as
 constᵣ (rv _ ∷ as) = constᵣ as
 constᵣ (rm _ ∷ as) = constᵣ as
@@ -1115,7 +1115,7 @@ module Gₑ {Θ : Scope} =
 -- The unit, where no constant has been met
 
 ⌊_⌋ₑ : Maybe E → E
-⌊ nothing ⌋ₑ = uₑ
+⌊ nothing ⌋ₑ = 𝟏ₑ
 ⌊ just c ⌋ₑ  = c
 
 _·ᵐₑ_ : Maybe E → E → E
@@ -1200,7 +1200,7 @@ module Gᵣ {Θ : Scope} =
            rconst _⊔ᵣ_ ≡̂ᵣ-const-⊔ sameConstᵣ? ⟦_⟧ʳᵛ _≟ʳᵛ_ _<ʳᵛ_
 
 ⌊_⌋ᵣ : Maybe R → R
-⌊ nothing ⌋ᵣ = uᵣ
+⌊ nothing ⌋ᵣ = 𝟏ᵣ
 ⌊ just c ⌋ᵣ  = c
 
 _·ᵐᵣ_ : Maybe R → R → R

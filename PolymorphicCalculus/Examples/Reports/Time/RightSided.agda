@@ -29,7 +29,7 @@ open import PolymorphicCalculus.Examples.Variables
 
 reused-around-claim-reported :
   schemeOf (infer [] reused-around-claim)
-    ≡ just (expected-reused-around-claim (eternal α₂ ∨ ∣ ε₀ ∣̂ᵉ ·̂ᵣ ∣ ε₁ ∣̂ᵉ ≾ûᵣ) (ε₀ ·̂ₑ ε₁))
+    ≡ just (expected-reused-around-claim (eternal α₂ ∨ ∣ ε₀ ∣̂ᵉ ·̂ᵣ ∣ ε₁ ∣̂ᵉ ≾𝟏̂ᵣ) (ε₀ ·̂ₑ ε₁))
 reused-around-claim-reported = refl
 
 ------------------------------------------------------------------

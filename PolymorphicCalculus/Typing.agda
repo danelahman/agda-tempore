@@ -175,7 +175,7 @@ mutual
             → Q ∣ Γ ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'
             → ((op : Op) →
                  wkᵉ-H Q ∣ wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                             ∷ [ rconst (mapᵉ (op-grade op)) ]
+                             ∷ [ rconst ∣ op-grade op ∣ᵉ ]
                                  (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ}))
                    ⊢C⦂ wkᵉ-v B ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ})))
             ---------------------------------------------------------------
@@ -204,7 +204,7 @@ mutual
     return  : {A : OVType Θ}
             → Q ∣ Γ ⊢V⦂ A
             -----------------
-            → Q ∣ Γ ⊢C⦂ A ‼ ûₑ
+            → Q ∣ Γ ⊢C⦂ A ‼ 𝟏̂ₑ
 
     -- sequential composition
 
@@ -312,7 +312,7 @@ mutual
             → {ε : EExp Θ}
             → (op : Op)
             → Q ∣ Γ ⊢V⦂ ⌜ param op ⌝ᵍ
-            → Q ∣ Γ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ‼ ε
+            → Q ∣ Γ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ‼ ε
             ------------------------------------------------------------------
             → Q ∣ Γ ⊢C⦂ A ‼ (econst (op-grade op) ·̂ₑ ε)
 
@@ -321,9 +321,9 @@ mutual
     delay   : {A : OVType Θ}
             → {ε : EExp Θ}
             → (τ : 𝔻)
-            → Q ∣ Γ ⟨ rconst (of-durʳ τ) ⟩ ⊢C⦂ A ‼ ε
+            → Q ∣ Γ ⟨ rconst (ιᵣ τ) ⟩ ⊢C⦂ A ‼ ε
             ----------------------------------------
-            → Q ∣ Γ ⊢C⦂ A ‼ (econst (of-durᵉ τ) ·̂ₑ ε)
+            → Q ∣ Γ ⊢C⦂ A ‼ (econst (ιₑ τ) ·̂ₑ ε)
 
     -- effect handling
 
@@ -428,17 +428,17 @@ private
 
   -- a variable used under a lock, by eternality of its type
 
-  ex-var-lock : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst uᵣ ⟩) ⊢V⦂ Unit
+  ex-var-lock : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst 𝟏ᵣ ⟩) ⊢V⦂ Unit
   ex-var-lock = var (Tl-⟨⟩ Hd) (et-ok Unitₑ)
 
   ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst ⊤ᵣ ⟩) ⊢V⦂ Unit
   ex-var-barrier = var (Tl-⟨⟩ Hd) (et-ok Unitₑ)
 
-  ex-seq : ∅ᴴ ∣ (∅ᶜ ∷ Unit) ⊢C⦂ Unit ‼ (ûₑ ·̂ₑ ûₑ)
+  ex-seq : ∅ᴴ ∣ (∅ᶜ ∷ Unit) ⊢C⦂ Unit ‼ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)
   ex-seq = return ⋆ ⨟ return ⋆
 
-  ex-unbox : ∅ᴴ ∣ (∅ᶜ ∷ [ ûᵣ ] Unit) ⊢C⦂ Unit ‼ ûₑ
+  ex-unbox : ∅ᴴ ∣ (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) ⊢C⦂ Unit ‼ 𝟏̂ₑ
   ex-unbox = unbox (res-var {z = Hd}) ⊩≾̂ᵣ-refl (return ⋆)
 
-  ex-unbox-ann : ∅ᴴ ∣ (∅ᶜ ∷ [ ûᵣ ] Unit) ⊢C⦂ Unit ‼ ûₑ
-  ex-unbox-ann = unbox (res-ann ûᵣ Unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl Unitₛ) ⊩≾̂ᵣ-refl (return ⋆)
+  ex-unbox-ann : ∅ᴴ ∣ (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) ⊢C⦂ Unit ‼ 𝟏̂ₑ
+  ex-unbox-ann = unbox (res-ann 𝟏̂ᵣ Unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl Unitₛ) ⊩≾̂ᵣ-refl (return ⋆)

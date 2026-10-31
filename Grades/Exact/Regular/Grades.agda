@@ -52,7 +52,7 @@ open import Grades.Hints using (GradeHints)
 open import Grades.Exact.Base T Op n code code-injective
 open import Grades.Exact.Order T Op n code code-injective using (_⊑_; ⊑-refl; ⊑-trans)
 open import Grades.Exact.Lift T Op n code code-injective as L
-  using (Lang; uᴸ; _·ᴸ_; _∪ᴸ_; ⊆⇒≾; ⊑-++)
+  using (Lang; 𝟏ᴸ; _·ᴸ_; _∪ᴸ_; ⊆⇒≾; ⊑-++)
 open import Grades.Exact.Expression T Op n code code-injective running
 import Grades.Exact.Finite T Op n code code-injective name code-name running dense κ κ-pos as Fin′
 open import Grades.Exact.Regular.Unroll T Op n code code-injective running
@@ -207,7 +207,7 @@ private
   any⊆ᴸ : L.anyᴸ L.⊆ᴸ strᴸ {lower} all (0ᴰ ∣ᶜ ⁻)
   any⊆ᴸ w (τ , e) = τ , ≤⇒⁻⊑⁻ (0ᴰ-least τ) , e
 
-  upper-zero : strᴸ {upper} none (fin (0ᴰ ∣ᶜ ⁺)) L.≈ uᴸ
+  upper-zero : strᴸ {upper} none (fin (0ᴰ ∣ᶜ ⁺)) L.≈ 𝟏ᴸ
   upper-zero =
     ⊆⇒≾ (λ { x (τ , r , refl) → trans (cong (stretch none) (≤0⇒≡0 (⊑⇒≤ r))) (stretch-0 none) }) ,
     ⊆⇒≾ (λ { x refl → 0ᴰ , ≤⇒⁺⊑⁺ ≤ᴰ-refl , sym (stretch-0 none) })
@@ -225,11 +225,11 @@ private
            (≈-sym (L.·-identityˡ _))
   lower-hom m n (no ¬p) (no ¬q) (yes r) =
     ⊥-elim (<⇒≢ r (sym (trans (cong₂ _+ᴰ_ (≮0⇒≡0 ¬p) (≮0⇒≡0 ¬q)) (+ᴰ-identityˡ 0ᴰ))))
-  lower-hom m n (no _) (no _) (no _) = ≈-sym (L.·-identityˡ uᴸ)
+  lower-hom m n (no _) (no _) (no _) = ≈-sym (L.·-identityˡ 𝟏ᴸ)
   lower-hom m n (yes p) _ (no ¬r) = ⊥-elim (¬r (<-≤-trans p (≤ᴰ-+ m n)))
   lower-hom m n (no _) (yes q) (no ¬r) = ⊥-elim (¬r (<-≤-trans q (≤ᴰ-+ˡ n m)))
 
-  lower-zero : (c : Dec (0ᴰ <ᴰ 0ᴰ)) → ⟦ expr (at-least′ 0ᴰ c) ⟧ L.≈ uᴸ
+  lower-zero : (c : Dec (0ᴰ <ᴰ 0ᴰ)) → ⟦ expr (at-least′ 0ᴰ c) ⟧ L.≈ 𝟏ᴸ
   lower-zero (yes p) = ⊥-elim (<⇒≢ p refl)
   lower-zero (no _)  = ≈-refl
 
@@ -390,11 +390,11 @@ upperᵍ : Grade D
 upperᵍ = record
   { Carrier = Proper′ upper
   ; _·_     = _·ᵉ_
-  ; u       = εᵉ
+  ; 𝟏       = εᵉ
   ; _≾_     = _≾ᴳ_
   ; ⊤       = ⌜ str all ∞ ⌝
   ; _⊔_     = _∣ᵉ_
-  ; of-dur  = waitᵁ
+  ; ι       = waitᵁ
   ; ·-identityˡ = ·-identityˡᵉ upper
   ; ·-identityʳ = ·-identityʳᵉ upper
   ; ·-assoc     = ·-assocᵉ upper
@@ -412,14 +412,14 @@ upperᵍ = record
   ; ·-distribʳ-⊔-≾ = distribʳ-ᴳ upper
   ; ≾-zero-productˡ = λ {c} {d} → zero-ˡ upper {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → zero-ʳ upper {c} {d}
-  ; of-dur-zero = ↑² (waitᵁ 0ᴰ) εᵉ upper-zero
-  ; of-dur-plus = λ {m} {n} → ↑² (waitᵁ (m +ᴰ n)) (waitᵁ m ·ᵉ waitᵁ n) (upper-split m n)
+  ; ι-zero = ↑² (waitᵁ 0ᴰ) εᵉ upper-zero
+  ; ι-plus = λ {m} {n} → ↑² (waitᵁ (m +ᴰ n)) (waitᵁ m ·ᵉ waitᵁ n) (upper-split m n)
   }
 
 -- its hints: Kleene's plus at every grade
 
 upperʰ : GradeHints upperᵍ
-upperʰ = record { u-least? = nothing ; ·-comm? = nothing ; plus? = λ c → just (plusᵉ upper c) }
+upperʰ = record { 𝟏-least? = nothing ; ·-comm? = nothing ; plus? = λ c → just (plusᵉ upper c) }
 
 -- the lower instance: left-sided grades
 
@@ -427,11 +427,11 @@ lowerᵍ : Grade D
 lowerᵍ = record
   { Carrier = Proper′ lower
   ; _·_     = _·ᵉ_
-  ; u       = εᵉ
+  ; 𝟏       = εᵉ
   ; _≾_     = _≾ᴳ_
   ; ⊤       = ⌜ str all (0ᴰ ∣ᶜ ⁻) ⌝ {⊤-proper}
   ; _⊔_     = _∣ᵉ_
-  ; of-dur  = waitᴸ
+  ; ι       = waitᴸ
   ; ·-identityˡ = ·-identityˡᵉ lower
   ; ·-identityʳ = ·-identityʳᵉ lower
   ; ·-assoc     = ·-assocᵉ lower
@@ -449,8 +449,8 @@ lowerᵍ = record
   ; ·-distribʳ-⊔-≾ = distribʳ-ᴳ lower
   ; ≾-zero-productˡ = λ {c} {d} → zero-ˡ lower {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → zero-ʳ lower {c} {d}
-  ; of-dur-zero = ↑² (waitᴸ 0ᴰ) εᵉ (lower-zero (0ᴰ <ᴰ? 0ᴰ))
-  ; of-dur-plus = λ {m} {n} → ↑² (waitᴸ (m +ᴰ n)) (waitᴸ m ·ᵉ waitᴸ n) (lower-hom m n (0ᴰ <ᴰ? m) (0ᴰ <ᴰ? n) (0ᴰ <ᴰ? (m +ᴰ n)))
+  ; ι-zero = ↑² (waitᴸ 0ᴰ) εᵉ (lower-zero (0ᴰ <ᴰ? 0ᴰ))
+  ; ι-plus = λ {m} {n} → ↑² (waitᴸ (m +ᴰ n)) (waitᴸ m ·ᵉ waitᴸ n) (lower-hom m n (0ᴰ <ᴰ? m) (0ᴰ <ᴰ? n) (0ᴰ <ᴰ? (m +ᴰ n)))
   }
   where
     ⊤-proper : IsTrue (Fin′.nonEmpty (Fin′.words {lower} (str all (0ᴰ ∣ᶜ ⁻))))
@@ -461,4 +461,4 @@ lowerᵍ = record
 -- its hints: Kleene's plus at every grade
 
 lowerʰ : GradeHints lowerᵍ
-lowerʰ = record { u-least? = nothing ; ·-comm? = nothing ; plus? = λ c → just (plusᵉ lower c) }
+lowerʰ = record { 𝟏-least? = nothing ; ·-comm? = nothing ; plus? = λ c → just (plusᵉ lower c) }

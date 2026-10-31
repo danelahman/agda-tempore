@@ -117,9 +117,9 @@ Tᶠ-leafᵐ g a =
 
 Tᶠ-nodeᵐ : ∀ {X X' Y : Obj} {ε : E} → (g : X →ᵐ X') → (op : Op)
          → (w : Y →ᵐ ⟦ param op ⟧ᵍ)
-         → (k : Y →ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ X ε))
+         → (k : Y →ᵐ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ X ε))
          → Tᶠ g ∘ᵐ nodeᵐ op w k
-         ≈ᵐ nodeᵐ op w ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Tᶠ g)) ∘ᵐ k)
+         ≈ᵐ nodeᵐ op w ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ (Tᶠ g)) ∘ᵐ k)
 Tᶠ-nodeᵐ g op w k =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc (Tᶠ g) (opᵀ op) ⟨ w , k ⟩ᵐ))
     (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (opᵀ-nat op g)))
@@ -158,7 +158,7 @@ ret-presentation : ∀ {A ε} → (M : Prog A ε) → (pM : Paramᶜ M)
                  → (w : Ret-whnf (⟨ ∅ , M ⟩))
                  → Σ[ Y ∈ Obj ] Σ[ δ ∈ E ] Σ[ a ∈ (Y →ᵐ ⟦ A ⟧ᵛ) ]
                    Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (ret-ticks w) ]
-                   Σ[ r ∈ (δ ·ₑ uₑ ≾ₑ ε) ]
+                   Σ[ r ∈ (δ ·ₑ 𝟏ₑ ≾ₑ ε) ]
                      (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ a) d r)
 ret-presentation M pM (ret-whnf St A₀ V rs) =
     _ , _ , _ , _ , stepsᵀ-delays rs , steps-≾ rs
@@ -171,7 +171,7 @@ op-presentation : ∀ {A ε} → (M : Prog A ε) → (pM : Paramᶜ M)
                 → (w : Op-whnf (⟨ ∅ , M ⟩))
                 → Σ[ Y ∈ Obj ] Σ[ δ ∈ E ] Σ[ ε₂ ∈ E ]
                   Σ[ v ∈ (Y →ᵐ ⟦ param (Op-whnf.oper w) ⟧ᵍ) ]
-                  Σ[ k ∈ (Y →ᵐ [ mapᵉ (op-grade (Op-whnf.oper w)) ]ᵒ
+                  Σ[ k ∈ (Y →ᵐ [ ∣ op-grade (Op-whnf.oper w) ∣ᵉ ]ᵒ
                                  (⟦ arity (Op-whnf.oper w) ⟧ᵍ ⇒ᵐ Tᵒ ⟦ A ⟧ᵛ ε₂)) ]
                   Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (op-ticks w) ]
                   Σ[ r ∈ (δ ·ₑ (op-grade (Op-whnf.oper w) ·ₑ ε₂) ≾ₑ ε) ]
@@ -254,7 +254,7 @@ const-presentation : ∀ {b ε} → (M : Prog (Base b) ε) → (pM : Paramᶜ M)
                    → (w : Ret-whnf (⟨ ∅ , M ⟩))
                    → Σ[ c ∈ BaseConstants b ] Σ[ Y ∈ Obj ] Σ[ δ ∈ E ]
                      Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (ret-ticks w) ]
-                     Σ[ r ∈ (δ ·ₑ uₑ ≾ₑ ε) ]
+                     Σ[ r ∈ (δ ·ₑ 𝟏ₑ ≾ₑ ε) ]
                        (base-val (ret-value w) ≡ const c)
                      × (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ)) d r)
 
@@ -339,7 +339,7 @@ bool-presentation : ∀ {ε} → (M : Prog Bool ε) → (pM : Paramᶜ M)
                   → (w : Ret-whnf (⟨ ∅ , M ⟩))
                   → Σ[ Y ∈ Obj ] Σ[ δ ∈ E ]
                     Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (ret-ticks w) ]
-                    Σ[ r ∈ (δ ·ₑ uₑ ≾ₑ ε) ]
+                    Σ[ r ∈ (δ ·ₑ 𝟏ₑ ≾ₑ ε) ]
                       ( ((bool-val (ret-value w) ≡ true)
                          × (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ (trueᵐ ∘ᵐ terminalᵐ)) d r))
                       ⊎ ((bool-val (ret-value w) ≡ false)
@@ -391,7 +391,7 @@ adequacy-bool {M = M} {N = N} pM pN e wM wN
 leaf-adequacy : ∀ {A ε Y δ n} → {M : Prog A ε} → (pM : Paramᶜ M)
               → {a : Y →ᵐ ⟦ A ⟧ᵛ}
               → {d : 𝟙ᵐ →ᵐ Tᵒ Y δ} → Delaysᵐ d n
-              → (r : δ ·ₑ uₑ ≾ₑ ε)
+              → (r : δ ·ₑ 𝟏ₑ ≾ₑ ε)
               → ⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ a) d r
               -------------------------------------
               → Ret-whnf (⟨ ∅ , M ⟩)
@@ -406,7 +406,7 @@ leaf-adequacy {M = M} pM nd r eq = go (halts M)
 
 node-adequacy : ∀ {A ε ε₂ Y δ n op} → {M : Prog A ε} → (pM : Paramᶜ M)
               → {v : Y →ᵐ ⟦ param op ⟧ᵍ}
-              → {k : Y →ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ A ⟧ᵛ ε₂)}
+              → {k : Y →ᵐ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ A ⟧ᵛ ε₂)}
               → {d : 𝟙ᵐ →ᵐ Tᵒ Y δ} → Delaysᵐ d n
               → (r : δ ·ₑ (op-grade op ·ₑ ε₂) ≾ₑ ε)
               → ⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (nodeᵐ op v k) d r

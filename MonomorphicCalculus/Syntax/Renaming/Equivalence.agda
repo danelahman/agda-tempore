@@ -96,7 +96,7 @@ rvar-≡ = cong _
 -- pushing the equality inside the constructors.
 
 subst-Hd : ∀ {Γ Γ' A} → (e : Γ ≡ Γ')
-         → subst (λ Γ₀ → A ∈[ uᵣ ] Γ₀) (cong (_∷ A) e) Hd ≡ Hd
+         → subst (λ Γ₀ → A ∈[ 𝟏ᵣ ] Γ₀) (cong (_∷ A) e) Hd ≡ Hd
 subst-Hd refl = refl
 
 subst-Tl-∷ : ∀ {Γ Γ' A B ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
@@ -268,15 +268,15 @@ cong-ren-img-l r (Δ ∷ B)    y =
 cong-ren-img-l r (Δ ⟨ ρ' ⟩) y =
   cong (λ t → proj₁ t ·ᵣ ρ' , Tl-⟨⟩ (proj₂ t)) (cong-ren-img-l r Δ y)
 
-grade-++ᶜˡ-zeroˡ : ∀ {ρ} → (Δ : Ctx) → grade-++ᶜˡ ρ Δ ≾ᵣ uᵣ → ρ ≾ᵣ uᵣ
+grade-++ᶜˡ-zeroˡ : ∀ {ρ} → (Δ : Ctx) → grade-++ᶜˡ ρ Δ ≾ᵣ 𝟏ᵣ → ρ ≾ᵣ 𝟏ᵣ
 grade-++ᶜˡ-zeroˡ []         p = p
 grade-++ᶜˡ-zeroˡ (Δ ∷ B)    p = grade-++ᶜˡ-zeroˡ Δ p
 grade-++ᶜˡ-zeroˡ (Δ ⟨ ρ' ⟩) p = grade-++ᶜˡ-zeroˡ Δ (≾ᵣ-zero-productˡ p)
 
 -- A concatenation of unit-bounded suffixes is unit-bounded.
 
-ctx-grade-++ᶜ-≾ᵣ : (Δ₁ Δ₂ : Ctx) → ctx-grade Δ₁ ≾ᵣ uᵣ → ctx-grade Δ₂ ≾ᵣ uᵣ
-                 → ctx-grade (Δ₁ ++ᶜ Δ₂) ≾ᵣ uᵣ
+ctx-grade-++ᶜ-≾ᵣ : (Δ₁ Δ₂ : Ctx) → ctx-grade Δ₁ ≾ᵣ 𝟏ᵣ → ctx-grade Δ₂ ≾ᵣ 𝟏ᵣ
+                 → ctx-grade (Δ₁ ++ᶜ Δ₂) ≾ᵣ 𝟏ᵣ
 ctx-grade-++ᶜ-≾ᵣ Δ₁ []          p₁ p₂ = p₁
 ctx-grade-++ᶜ-≾ᵣ Δ₁ (Δ₂ ∷ B)    p₁ p₂ = ctx-grade-++ᶜ-≾ᵣ Δ₁ Δ₂ p₁ p₂
 ctx-grade-++ᶜ-≾ᵣ Δ₁ (Δ₂ ⟨ ρ ⟩)  p₁ p₂ =
@@ -286,17 +286,17 @@ ctx-grade-++ᶜ-≾ᵣ Δ₁ (Δ₂ ⟨ ρ ⟩)  p₁ p₂ =
 -- At the unit the push contributes the suffix's own grade, which is the grade
 -- `split→∈` records.
 
-grade-++ᶜˡ-uᵣ : (Δ : Ctx) → grade-++ᶜˡ uᵣ Δ ≡ ctx-grade Δ
-grade-++ᶜˡ-uᵣ []         = refl
-grade-++ᶜˡ-uᵣ (Δ ∷ B)    = grade-++ᶜˡ-uᵣ Δ
-grade-++ᶜˡ-uᵣ (Δ ⟨ ρ' ⟩) = cong (_·ᵣ ρ') (grade-++ᶜˡ-uᵣ Δ)
+grade-++ᶜˡ-𝟏ᵣ : (Δ : Ctx) → grade-++ᶜˡ 𝟏ᵣ Δ ≡ ctx-grade Δ
+grade-++ᶜˡ-𝟏ᵣ []         = refl
+grade-++ᶜˡ-𝟏ᵣ (Δ ∷ B)    = grade-++ᶜˡ-𝟏ᵣ Δ
+grade-++ᶜˡ-𝟏ᵣ (Δ ⟨ ρ' ⟩) = cong (_·ᵣ ρ') (grade-++ᶜˡ-𝟏ᵣ Δ)
 
 -- The variable a `Γ₁ ∷ B , Γ₂` splitting names is `B` pushed under `Γ₂`.
 
 split→∈-∈-++ᶜˡ : (Γ₁ : Ctx) → (B : VType) → (Γ₂ : Ctx)
                → _≡_ {A = Var ((Γ₁ ∷ B) ++ᶜ Γ₂) B}
                    (ctx-grade Γ₂ , split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}))
-                   (grade-++ᶜˡ uᵣ Γ₂ , ∈-++ᶜˡ {Γ = Γ₁ ∷ B} Γ₂ (Hd {Γ = Γ₁}))
+                   (grade-++ᶜˡ 𝟏ᵣ Γ₂ , ∈-++ᶜˡ {Γ = Γ₁ ∷ B} Γ₂ (Hd {Γ = Γ₁}))
 split→∈-∈-++ᶜˡ Γ₁ B []         = refl
 split→∈-∈-++ᶜˡ Γ₁ B (Γ₂ ∷ C)   =
   cong (λ t → proj₁ t , Tl-∷ (proj₂ t)) (split→∈-∈-++ᶜˡ Γ₁ B Γ₂)
@@ -333,7 +333,7 @@ Var-cast-flip⁻ refl t t' q = sym q
 -- the suffix's grade is bounded by the unit: each lock is crossed by
 -- `⟨⟩-≤-ren` at its own grade.
 
-push-ren : ∀ {Γ₀} → (Δ : Ctx) → ctx-grade Δ ≾ᵣ uᵣ → Ren [] (Γ₀ ++ᶜ Δ) Γ₀
+push-ren : ∀ {Γ₀} → (Δ : Ctx) → ctx-grade Δ ≾ᵣ 𝟏ᵣ → Ren [] (Γ₀ ++ᶜ Δ) Γ₀
 push-ren []         p = id-ren
 push-ren (Δ ∷ B)    p = push-ren Δ p ∘ʳ wk-ren
 push-ren (Δ ⟨ ρ' ⟩) p =
@@ -342,7 +342,7 @@ push-ren (Δ ⟨ ρ' ⟩) p =
 
 -- It acts as `∈-++ᶜˡ`, which is what pins it down up to `_≐ʳ_`.
 
-push-ren-img : ∀ {Γ₀ A ρ} → (Δ : Ctx) → (p : ctx-grade Δ ≾ᵣ uᵣ)
+push-ren-img : ∀ {Γ₀ A ρ} → (Δ : Ctx) → (p : ctx-grade Δ ≾ᵣ 𝟏ᵣ)
              → (y : A ∈[ ρ ] Γ₀)
              → var-img (push-ren {Γ₀} Δ p) y ≡ (grade-++ᶜˡ ρ Δ , ∈-++ᶜˡ Δ y)
 push-ren-img []         p y = refl
@@ -353,11 +353,11 @@ push-ren-img (Δ ⟨ ρ' ⟩) p y =
 -- At a one-entry suffix it is the weakening, resp. the lock crossing: the two
 -- shapes the environment's telescope zones present.
 
-push-ren-∷ : ∀ {Γ₀ B} → (p : ctx-grade ([] ∷ B) ≾ᵣ uᵣ)
+push-ren-∷ : ∀ {Γ₀ B} → (p : ctx-grade ([] ∷ B) ≾ᵣ 𝟏ᵣ)
            → push-ren {Γ₀} ([] ∷ B) p ≐ʳ wk-ren
 push-ren-∷ p = ∘ʳ-identityˡ-≐ʳ wk-ren
 
-push-ren-⟨⟩ : ∀ {Γ₀ ρ} → (p : ctx-grade ([] ⟨ ρ ⟩) ≾ᵣ uᵣ) → (p' : ρ ≾ᵣ uᵣ)
+push-ren-⟨⟩ : ∀ {Γ₀ ρ} → (p : ctx-grade ([] ⟨ ρ ⟩) ≾ᵣ 𝟏ᵣ) → (p' : ρ ≾ᵣ 𝟏ᵣ)
             → push-ren {Γ₀} ([] ⟨ ρ ⟩) p ≐ʳ (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren p')
 push-ren-⟨⟩ p p' =
   ≐ʳ-trans (∘ʳ-identityˡ-≐ʳ _) (∘ʳ-≐ʳ ≐ʳ-refl (⟨⟩-≤-ren-≐ʳ _ p'))
@@ -366,7 +366,7 @@ push-ren-⟨⟩ p p' =
 -- renaming the prefix under the suffix.
 
 push-ren-nat : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (Δ : Ctx)
-             → (p : ctx-grade Δ ≾ᵣ uᵣ)
+             → (p : ctx-grade Δ ≾ᵣ 𝟏ᵣ)
              → (push-ren Δ p ∘ʳ cong-ren {Γ'' = Δ} r) ≐ʳ (r ∘ʳ push-ren Δ p)
 push-ren-nat r Δ p = mk≐ʳ go
   where
@@ -380,8 +380,8 @@ push-ren-nat r Δ p = mk≐ʳ go
 -- associativity.
 
 push-ren-++ᶜ : ∀ {Γ₀} → (Δ₁ Δ₂ : Ctx)
-             → (p : ctx-grade (Δ₁ ++ᶜ Δ₂) ≾ᵣ uᵣ)
-             → (p₁ : ctx-grade Δ₁ ≾ᵣ uᵣ) → (p₂ : ctx-grade Δ₂ ≾ᵣ uᵣ)
+             → (p : ctx-grade (Δ₁ ++ᶜ Δ₂) ≾ᵣ 𝟏ᵣ)
+             → (p₁ : ctx-grade Δ₁ ≾ᵣ 𝟏ᵣ) → (p₂ : ctx-grade Δ₂ ≾ᵣ 𝟏ᵣ)
              → (push-ren (Δ₁ ++ᶜ Δ₂) p ∘ʳ eq-ren (sym (++ᶜ-assoc Γ₀ Δ₁ Δ₂)))
              ≐ʳ (push-ren {Γ₀} Δ₁ p₁ ∘ʳ push-ren Δ₂ p₂)
 push-ren-++ᶜ {Γ₀} Δ₁ Δ₂ p p₁ p₂ = mk≐ʳ go
@@ -471,7 +471,7 @@ eternal?-no {A} ¬et with eternal? A
 ... | no ¬et' = cong no (fun-ext (λ e → ⊥-elim (¬et e)))
 
 ⟨⟩-η⁻¹-img : ∀ {Γ A σ} → (x : A ∈[ σ ] Γ)
-           → var-img (⟨⟩-η⁻¹-ren {Δ = Γ}) x ≡ (σ ·ᵣ uᵣ , Tl-⟨⟩ x)
+           → var-img (⟨⟩-η⁻¹-ren {Δ = Γ}) x ≡ (σ ·ᵣ 𝟏ᵣ , Tl-⟨⟩ x)
 ⟨⟩-η⁻¹-img Hd        = refl
 ⟨⟩-η⁻¹-img (Tl-∷ x)  = refl
 ⟨⟩-η⁻¹-img (Tl-⟨⟩ x) = refl

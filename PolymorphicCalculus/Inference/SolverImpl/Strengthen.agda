@@ -408,11 +408,11 @@ module _ {Θ : Scope} (M : Vars Θ) where
   -- an instance of the kept variables, extended by closed constants
 
   extⁱ : ∀ {Ω} → Subst kept Ω → Subst Θ Ω
-  extⁱ δ = sub (ext (vᵗ M) Unit (sTy δ)) (ext (vʳ M) ûᵣ (sR δ)) (ext (vᵉ M) ûₑ (sE δ))
+  extⁱ δ = sub (ext (vᵗ M) Unit (sTy δ)) (ext (vʳ M) 𝟏̂ᵣ (sR δ)) (ext (vᵉ M) 𝟏̂ₑ (sE δ))
 
   extⁱ-ι : ∀ {Ω} → (δ : Subst kept Ω) → ⌜ thin ⌝ʳ ⨟ˢ extⁱ δ ≐ˢ δ
-  extⁱ-ι δ = mk≐ˢ (ext-emb (vᵗ M) Unit (sTy δ)) (ext-emb (vʳ M) ûᵣ (sR δ))
-                  (ext-emb (vᵉ M) ûₑ (sE δ))
+  extⁱ-ι δ = mk≐ˢ (ext-emb (vᵗ M) Unit (sTy δ)) (ext-emb (vʳ M) 𝟏̂ᵣ (sR δ))
+                  (ext-emb (vᵉ M) 𝟏̂ₑ (sE δ))
 
 -- A substitution fixing a set fixes every substitution whose image lies in it
 
@@ -559,9 +559,9 @@ extⁱ-fix : ∀ {Θ} → (M : Vars Θ) → Fixes M (extⁱ M idˢ ⨟ˢ ⌜ thi
 extⁱ-fix M =
   mkFixes (λ α h → cong (_[ ⌜ thin M ⌝ʳ ]ᵛ) (ext-str (vᵗ M) Unit tvar α h)
                    ⊚ cong tvar (emb-str (vᵗ M) α h))
-          (λ i h → cong (_[ ⌜ thin M ⌝ʳ ]ʳ) (ext-str (vʳ M) ûᵣ rvar i h)
+          (λ i h → cong (_[ ⌜ thin M ⌝ʳ ]ʳ) (ext-str (vʳ M) 𝟏̂ᵣ rvar i h)
                    ⊚ cong rvar (emb-str (vʳ M) i h))
-          (λ i h → cong (_[ ⌜ thin M ⌝ʳ ]ᵉ) (ext-str (vᵉ M) ûₑ evar i h)
+          (λ i h → cong (_[ ⌜ thin M ⌝ʳ ]ᵉ) (ext-str (vᵉ M) 𝟏̂ₑ evar i h)
                    ⊚ cong evar (emb-str (vᵉ M) i h))
   where
     _⊚_ : ∀ {A : Set} {x y z : A} → x ≡ y → y ≡ z → x ≡ z

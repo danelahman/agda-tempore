@@ -182,8 +182,8 @@ mutual
     recL (rename-v r V) (rename-c r M)
          (rename-c (lockʳ ∣ ε ∣̂ᵉ ((lockʳ (rconst ⊤ᵣ) r ⇑ʳ) ⇑ʳ) ⇑ʳ) N) p
   rename-c r (perform op V M)          =
-    perform op (rename-v r V) (rename-c (lockʳ (rconst (mapᵉ (op-grade op))) r ⇑ʳ) M)
-  rename-c r (delay τ M)               = delay τ (rename-c (lockʳ (rconst (of-durʳ τ)) r) M)
+    perform op (rename-v r V) (rename-c (lockʳ (rconst ∣ op-grade op ∣ᵉ) r ⇑ʳ) M)
+  rename-c r (delay τ M)               = delay τ (rename-c (lockʳ (rconst (ιᵣ τ)) r) M)
   rename-c r (handle M `with V)        = handle rename-c r M `with rename-v r V
   rename-c r (unbox {z = z} R p N)    =
     unbox (res-move (mem (image r z)) R) (transᵣ (lower (image r z)) p) (rename-c (r ⇑ʳ) N)
@@ -243,9 +243,9 @@ mutual
                (∥rename-c∥ (lockʳ ∣ ε ∣̂ᵉ ((lockʳ (rconst ⊤ᵣ) r ⇑ʳ) ⇑ʳ) ⇑ʳ) N)
   ∥rename-c∥ r (perform op V M)          =
     cong₂ (perform op) (∥rename-v∥ r V)
-                       (∥rename-c∥ (lockʳ (rconst (mapᵉ (op-grade op))) r ⇑ʳ) M)
+                       (∥rename-c∥ (lockʳ (rconst ∣ op-grade op ∣ᵉ) r ⇑ʳ) M)
   ∥rename-c∥ r (delay τ M)               =
-    cong (delay τ) (∥rename-c∥ (lockʳ (rconst (of-durʳ τ)) r) M)
+    cong (delay τ) (∥rename-c∥ (lockʳ (rconst (ιᵣ τ)) r) M)
   ∥rename-c∥ r (handle M `with V)        =
     cong₂ handle_`with_ (∥rename-c∥ r M) (∥rename-v∥ r V)
   ∥rename-c∥ r (unbox {z = z} R p N)    =
@@ -282,14 +282,14 @@ dfs wk-ren   = refl
 -- A lock above the unit may be removed; one below it inserted
 
 lock-remove : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ : RExp Θ}
-            → Q ⊩ ûᵣ ≾̂ᵣ ρ → Ren Q (Γ ⟨ ρ ⟩) Γ
+            → Q ⊩ 𝟏̂ᵣ ≾̂ᵣ ρ → Ren Q (Γ ⟨ ρ ⟩) Γ
 pos (lock-remove le) i = i
 ty  (lock-remove le) i = refl
 gr  (lock-remove le) i = transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)) (monoᵣ ⊩≾̂ᵣ-refl le)
 dfs (lock-remove le)   = refl
 
 lock-insert : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ : RExp Θ}
-            → Q ⊩ ρ ≾̂ᵣ ûᵣ → Ren Q Γ (Γ ⟨ ρ ⟩)
+            → Q ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ → Ren Q Γ (Γ ⟨ ρ ⟩)
 pos (lock-insert le) i = i
 ty  (lock-insert le) i = refl
 gr  (lock-insert le) i = transᵣ (monoᵣ ⊩≾̂ᵣ-refl le) (eqᵣ ≡̂ᵣ-identityʳ)
@@ -430,7 +430,7 @@ ety  (ext-∘ʳ e r) i = trans (ety e (pos r i)) (ty r i)
 egr  (ext-∘ʳ e r) i = transᵣ (egr e (pos r i)) (monoᵣ (gr r i) ⊩≾̂ᵣ-refl)
 edfs (ext-∘ʳ e r)   = trans (edfs e) (dfs r)
 
-id-ext : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} → Ext Q Γ Γ ûᵣ
+id-ext : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} → Ext Q Γ Γ 𝟏̂ᵣ
 epos id-ext i = i
 ety  id-ext i = refl
 egr  id-ext i = eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)

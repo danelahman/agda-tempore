@@ -150,7 +150,7 @@ module Over (L : LevelLattice) where
       GradeHints (semidirectʰ (level-gradeʰ L) outputs (indexedᵃ (raise-action {D})))
 
   flow-levelsʰ : {D : Duration} → GradeHints (flow-levels {D})
-  GradeHints.u-least? (flow-levelsʰ {D}) = H.u-least? {D}
+  GradeHints.𝟏-least? (flow-levelsʰ {D}) = H.𝟏-least? {D}
   GradeHints.·-comm?  (flow-levelsʰ {D}) = H.·-comm? {D}
   GradeHints.plus?    (flow-levelsʰ {D}) = H.plus? {D}
 

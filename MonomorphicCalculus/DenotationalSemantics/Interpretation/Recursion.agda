@@ -69,7 +69,7 @@ private
 -- result. The renaming and the substitution coherences, composed.
 
 recℕ-stepᴾ : ∀ {Γ B ε} → (V : Γ ⊢V⦂ Nat)
-           → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+           → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
            → Paramᵛ V → Paramᶜ N → Paramᶜ (recℕ-step V N)
 recℕ-stepᴾ V N pV pN =
   subᶜ (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren barrier-ren))) N)
@@ -77,11 +77,11 @@ recℕ-stepᴾ V N pV pN =
        (renᶜ (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren barrier-ren))) N pN) pV
 
 sound-recℕ-step : ∀ {Γ B ε} → (V : Γ ⊢V⦂ Nat)
-                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                 → (pV : Paramᵛ V) → (pN : Paramᶜ N)
                 → ⟦ recℕ-step V N ⟧ᶜᵗ (recℕ-stepᴾ V N pV pN)
                 ≈ᵐ ⟦ N ⟧ᶜᵗ pN
-                     ∘ᵐ mapˣᵐ (⟨ mapᵉ ε ⟩ᶠ (mapˣᵐ ⟨⊤⟩-η idᵐ ∘ᵐ ⟨ idᵐ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ)) idᵐ
+                     ∘ᵐ mapˣᵐ (⟨ ∣ ε ∣ᵉ ⟩ᶠ (mapˣᵐ ⟨⊤⟩-η idᵐ ∘ᵐ ⟨ idᵐ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ)) idᵐ
 sound-recℕ-step V N pV pN =
     C-subst-nat (C-rename r N) (split-∷ (split-⟨⟩ split-[])) V (renᶜ r N pN) pV
   ∙ ∘ᵐ-congˡ (C-rename-nat r N pN)
@@ -96,13 +96,13 @@ sound-recℕ-step V N pV pN =
 -- carried under `η⊣` and through the strength, is the unfolding.
 
 sound-RECℕ-ZERO : ∀ {Γ B ε} → (M : Γ ⊢C⦂ B ‼ ε)
-                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                 → (p : ε ·ₑ ε ≾ₑ ε) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                 → ⟦ recℕ zero M N p ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ M ⟧ᶜᵗ pM
 sound-RECℕ-ZERO M N p pM pN = recℕᵐ-zero _ _
 
 sound-RECℕ-SUCC : ∀ {Γ B ε} → (V : Γ ⊢V⦂ Nat) → (M : Γ ⊢C⦂ B ‼ ε)
-                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                 → (p : ε ·ₑ ε ≾ₑ ε)
                 → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                 → ⟦ recℕ (succ V) M N p ⟧ᶜᵗ (pV , pM , pN)
@@ -142,7 +142,7 @@ sound-RECℕ-SUCC {B = B} V M N p pV pM pN =
 -- `⟨⊤⟩-η`, the head and the tail by the values, under the lock.
 
 recL-stepᴾ : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ |List| A)
-           → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+           → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
            → Paramᵛ V → Paramᵛ W → Paramᶜ N → Paramᶜ (recL-step V W N)
 recL-stepᴾ V W N pV pW pN =
   subᶜ (C-rename r N [ split-∷ (split-⟨⟩ (split-∷ split-[])) ↦ V ]c)
@@ -153,11 +153,11 @@ recL-stepᴾ V W N pV pW pN =
     r = cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-∷-ren barrier-ren)))
 
 sound-recL-step : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ |List| A)
-                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                 → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pN : Paramᶜ N)
                 → ⟦ recL-step V W N ⟧ᶜᵗ (recL-stepᴾ V W N pV pW pN)
                 ≈ᵐ ⟦ N ⟧ᶜᵗ pN
-                     ∘ᵐ mapˣᵐ (⟨ mapᵉ ε ⟩ᶠ (mapˣᵐ (mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ
+                     ∘ᵐ mapˣᵐ (⟨ ∣ ε ∣ᵉ ⟩ᶠ (mapˣᵐ (mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ
                                             ∘ᵐ ⟨ ⟨ idᵐ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ))
                               idᵐ
 sound-recL-step V W N pV pW pN =
@@ -186,14 +186,14 @@ sound-recL-step V W N pV pW pN =
 -- The list recursor's beta laws, at `nil` and at a `cons`.
 
 sound-RECL-NIL : ∀ {Γ A B ε} → (M : Γ ⊢C⦂ B ‼ ε)
-               → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+               → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                → (p : ε ·ₑ ε ≾ₑ ε) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                → ⟦ recL nil M N p ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ M ⟧ᶜᵗ pM
 sound-RECL-NIL M N p pM pN = recLᵐ-nil _ _
 
 sound-RECL-CONS : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ |List| A)
                 → (M : Γ ⊢C⦂ B ‼ ε)
-                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                 → (p : ε ·ₑ ε ≾ₑ ε)
                 → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                 → ⟦ recL (cons V W) M N p ⟧ᶜᵗ ((pV , pW) , pM , pN)

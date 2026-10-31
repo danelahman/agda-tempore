@@ -36,18 +36,18 @@ open import Grades.Regular.Decide 3 using (nonempty?)
 open import Grades.Examples.Traces.Regular.RightSided Op 2 code code-injective
 open Grades.Base.Grade right-sided using (_≾?_; _≃?_)
 
-read·tick²≾⊤ : isYes ((operationᴿ read ·ᴿ of-dur 2) ≾? ⊤) ≡ true
+read·tick²≾⊤ : isYes ((operationᴿ read ·ᴿ ι 2) ≾? ⊤) ≡ true
 read·tick²≾⊤ = refl
 
 send⋠read : isYes (operationᴿ send ≾? operationᴿ read) ≡ false
 send⋠read = refl
 
-of-dur-2+3 : isYes ((of-dur 2 ·ᴿ of-dur 3) ≃? of-dur 5) ≡ true
-of-dur-2+3 = refl
+ι-2+3 : isYes ((ι 2 ·ᴿ ι 3) ≃? ι 5) ≡ true
+ι-2+3 = refl
 
 -- `⊤` is not absorbing
 
-⊤⋠tick·⊤ : isYes (⊤ ≾? (of-dur 1 ·ᴿ ⊤)) ≡ false
+⊤⋠tick·⊤ : isYes (⊤ ≾? (ι 1 ·ᴿ ⊤)) ≡ false
 ⊤⋠tick·⊤ = refl
 
 -- literals

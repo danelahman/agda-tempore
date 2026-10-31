@@ -6,26 +6,26 @@
 --                                                                    --
 --   (m , n) · (m' , n')  =  (m · m' , n ∨ act m n')                  --
 --                                                                    --
--- the unit `(u , ⊥)`, the order, the joins and `⊤` componentwise,    --
--- and `of-dur τ = (of-dur τ , ⊥)`. The second component records      --
+-- the unit `(𝟏 , ⊥)`, the order, the joins and `⊤` componentwise,    --
+-- and `ι τ = (ι τ , ⊥)`. The second component records                --
 -- what happened, each later record seen through the first component  --
 -- of what came before it.                                            --
 --                                                                    --
 -- The action is lawful (`Action`) when, up to the equivalence of the --
 -- order,                                                             --
 --                                                                    --
---   (A1) act u n ≃ n                                                 --
+--   (A1) act 𝟏 n ≃ n                                                 --
 --   (A2) act (m · m') n ≃ act m (act m' n)                           --
 --   (A3) act m ⊥ ≃ ⊥   and   act m (n ∨ n') ≃ act m n ∨ act m n'     --
 --   (A4) act (m ⊔ m') n ≃ act m n ∨ act m' n                         --
 --   (A5) act is monotone in each argument                            --
---   (A6) for m ≾ u, act m n ≾ ⊥ only if n ≾ ⊥                        --
+--   (A6) for m ≾ 𝟏, act m n ≾ ⊥ only if n ≾ ⊥                        --
 --                                                                    --
 -- the inequalities of A3 and A4 that follow from A5 being omitted.   --
 -- The identities follow from A1 and A3, associativity from A2 and    --
 -- A3, the left distributive law from A3 and the right one from A4.   --
 -- A6 is exactly the right zero-product law (`zero-productʳ⇒A6`); it  --
--- holds where the unit of `M` is least (`A6-of-u-least`) and where   --
+-- holds where the unit of `M` is least (`A6-of-𝟏-least`) and where   --
 -- every `act m` reflects `⊥`.                                        --
 --                                                                    --
 -- Its hints declare the unit least where those of `M` do; `_·_` is   --
@@ -116,7 +116,7 @@ module _ {D : Duration} (M : Grade D) (N : Semilattice) where
   private
     module M = Grade M
     module N = Semilattice N
-  open M using (_·_; u; _≾_; _⊔_)
+  open M using (_·_; 𝟏; _≾_; _⊔_)
   open N using (_⊑_; _≈_; bot; _∨_)
 
   record Action : Set where
@@ -124,7 +124,7 @@ module _ {D : Duration} (M : Grade D) (N : Semilattice) where
       act : M.Carrier → N.Carrier → N.Carrier
 
       -- (A1), (A2): a monoid action
-      act-identity : ∀ n → act u n ≈ n
+      act-identity : ∀ n → act 𝟏 n ≈ n
       act-comp     : ∀ m m' n → act (m · m') n ≈ act m (act m' n)
 
       -- (A3): by maps of bounded join-semilattices
@@ -139,7 +139,7 @@ module _ {D : Duration} (M : Grade D) (N : Semilattice) where
       act-monoʳ : ∀ {m n n'} → n ⊑ n' → act m n ⊑ act m n'
 
       -- (A6): grades below the unit reflect `⊥`
-      act-reflects-bot : ∀ {m n} → m ≾ u → act m n ⊑ bot → n ⊑ bot
+      act-reflects-bot : ∀ {m n} → m ≾ 𝟏 → act m n ⊑ bot → n ⊑ bot
 
     -- the converses of (A3)
     act-bot-≈ : ∀ m → act m bot ≈ bot
@@ -151,12 +151,12 @@ module _ {D : Duration} (M : Grade D) (N : Semilattice) where
 
   -- (A6) holds where the unit is least, given (A1) and (A5)
 
-  A6-of-u-least : Minimum _≾_ u
+  A6-of-𝟏-least : Minimum _≾_ 𝟏
                 → (act : M.Carrier → N.Carrier → N.Carrier)
-                → (∀ n → act u n ≈ n)
+                → (∀ n → act 𝟏 n ≈ n)
                 → (∀ {m m' n} → m ≾ m' → act m n ⊑ act m' n)
-                → ∀ {m n} → m ≾ u → act m n ⊑ bot → n ⊑ bot
-  A6-of-u-least least act ident monoˡ {m} {n} _ q =
+                → ∀ {m n} → m ≾ 𝟏 → act m n ⊑ bot → n ⊑ bot
+  A6-of-𝟏-least least act ident monoˡ {m} {n} _ q =
     N.⊑-trans (proj₂ (ident n)) (N.⊑-trans (monoˡ (least m)) q)
 
 ------------------------------------------------------------------------
@@ -175,18 +175,18 @@ module Pairs {D : Duration} (M : Grade D) (N : Semilattice)
   _·ˢ_ : M.Carrier × N.Carrier → M.Carrier × N.Carrier → M.Carrier × N.Carrier
   (m , n) ·ˢ (m' , n') = (m M.· m' , n N.∨ act m n')
 
-  uˢ : M.Carrier × N.Carrier
-  uˢ = (M.u , N.bot)
+  𝟏ˢ : M.Carrier × N.Carrier
+  𝟏ˢ = (M.𝟏 , N.bot)
 
   _≾ˢ_ : M.Carrier × N.Carrier → M.Carrier × N.Carrier → Set
   (m , n) ≾ˢ (m' , n') = (m M.≾ m') × (n N.⊑ n')
 
   -- (A6) is necessary for the right zero-product law
 
-  zero-productʳ⇒A6 : (∀ {c d} → c ·ˢ d ≾ˢ uˢ → d ≾ˢ uˢ)
-                   → ∀ {m n} → m M.≾ M.u → act m n N.⊑ N.bot → n N.⊑ N.bot
+  zero-productʳ⇒A6 : (∀ {c d} → c ·ˢ d ≾ˢ 𝟏ˢ → d ≾ˢ 𝟏ˢ)
+                   → ∀ {m n} → m M.≾ M.𝟏 → act m n N.⊑ N.bot → n N.⊑ N.bot
   zero-productʳ⇒A6 zp {m} {n} p q =
-    proj₂ (zp {m , N.bot} {M.u , n}
+    proj₂ (zp {m , N.bot} {M.𝟏 , n}
                (M.≾-trans (proj₁ (M.·-identityʳ m)) p , N.∨-lub (N.bot-⊑ N.bot) q))
 
 ------------------------------------------------------------------------
@@ -197,15 +197,15 @@ syntax semidirect M N A = M ⋉⟨ A ⟩ N
 semidirect M N A = record
   { Carrier         = M.Carrier × N.Carrier
   ; _·_             = _·ˢ_
-  ; u               = uˢ
+  ; 𝟏               = 𝟏ˢ
   ; _≾_             = _≾ˢ_
   ; ⊤               = (M.⊤ , N.top)
   ; _⊔_             = λ (m , n) (m' , n') → (m M.⊔ m' , n N.∨ n')
-  ; of-dur          = λ τ → (M.of-dur τ , N.bot)
+  ; ι               = λ τ → (M.ι τ , N.bot)
   ; ·-identityˡ     = λ (m , n) →
       pair (M.·-identityˡ m)
            (N.∨-lub (N.bot-⊑ n) (proj₁ (act-identity n))
-           , N.⊑-trans (proj₂ (act-identity n)) (N.∨-ubʳ N.bot (act M.u n)))
+           , N.⊑-trans (proj₂ (act-identity n)) (N.∨-ubʳ N.bot (act M.𝟏 n)))
   ; ·-identityʳ     = λ (m , n) →
       pair (M.·-identityʳ m)
            (N.∨-lub N.⊑-refl (N.⊑-trans (act-bot m) (N.bot-⊑ n)) , N.∨-ubˡ n (act m N.bot))
@@ -239,8 +239,8 @@ semidirect M N A = record
   ; ≾-zero-productʳ = λ (p , q) →
         M.≾-zero-productʳ p
       , act-reflects-bot (M.≾-zero-productˡ p) (N.⊑-trans (N.∨-ubʳ _ _) q)
-  ; of-dur-zero     = pair M.of-dur-zero N.≈-refl
-  ; of-dur-plus     = pair M.of-dur-plus (N.bot-⊑ _ , N.∨-lub N.⊑-refl (act-bot _))
+  ; ι-zero          = pair M.ι-zero N.≈-refl
+  ; ι-plus          = pair M.ι-plus (N.bot-⊑ _ , N.∨-lub N.⊑-refl (act-bot _))
   }
   where
     module M = Grade M
@@ -256,7 +256,7 @@ semidirect M N A = record
 semidirectʰ : {D : Duration} {M : Grade D} → GradeHints M
             → (N : Semilattice) (A : Action M N) → GradeHints (M ⋉⟨ A ⟩ N)
 semidirectʰ H N A = record
-  { u-least? = Maybe.map (λ l (m , n) → l m , Semilattice.bot-⊑ N n) (GradeHints.u-least? H)
+  { 𝟏-least? = Maybe.map (λ l (m , n) → l m , Semilattice.bot-⊑ N n) (GradeHints.𝟏-least? H)
   ; ·-comm?  = nothing
   ; plus?    = λ _ → nothing
   }
@@ -270,9 +270,9 @@ module _ {D : Duration} {M : Grade D} {N : Semilattice} {A : Action M N} where
   π₁ˢ = record
     { map          = proj₁
     ; map-monotone = proj₁
-    ; map-u        = Grade.≃-refl M
+    ; map-𝟏        = Grade.≃-refl M
     ; map-·        = Grade.≃-refl M
     ; map-⊤        = Grade.≃-refl M
     ; map-⊔        = Grade.≃-refl M
-    ; map-of-dur   = Grade.≃-refl M
+    ; map-ι        = Grade.≃-refl M
     }

@@ -87,9 +87,9 @@ private
   handleᴴ : ∀ {Γ A B ε ε'}
           → ((op : Op) → (ε'' : E)
                → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                    ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                  ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-          → Γ ⊢C⦂ A ‼ ε → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε' → Γ ⊢C⦂ B ‼ (ε ·ₑ ε')
+          → Γ ⊢C⦂ A ‼ ε → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε' → Γ ⊢C⦂ B ‼ (ε ·ₑ ε')
   handleᴴ H M N = handle M `with H `in N
 
   -- The reduct of `handle-perform` is the clause applied to the boxed
@@ -116,21 +116,21 @@ private
 
 sound-handle-perform : ∀ {Γ A B ε ε' op}
   → (V : Γ ⊢V⦂ type-of-gtype (param op))
-  → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
+  → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
   → (H : (op' : Op) → (ε'' : E)
        → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
-            ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε'')
+            ∷ [ ∣ op-grade op' ∣ᵉ ] (type-of-gtype (arity op') ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op' ·ₑ ε''))
-  → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+  → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
   → Soundᶜ== (handle-perform V M H N)
 sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
                      ((pV , pM) , pN , pH , uH) pR = assembly
   where
-    ren : Ren [] ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
-                 (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
+    ren : Ren [] ((Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) ⟨ ∣ ε ∣ᵉ ⟩)
+                 (Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩)
     ren = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
 
-    ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
+    ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ ∘ᵐ ⟨ ∣ ε ∣ᵉ ⟩ᶠ fstᵐ
     ern = ∘ᵐ-congˡ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _)) ∙ ∘ᵐ-assoc _ _ _
 
     Vp = subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV)

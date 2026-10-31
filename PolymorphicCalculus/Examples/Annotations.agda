@@ -22,7 +22,7 @@ module PolymorphicCalculus.Examples.Annotations (S : LanguageSpec)
   (hints : SystemHints (LanguageSpec.Grades S)) (opEnum : OpEnum S) where
 
 open LanguageSpec S
-open GradeSystemInterface Grades using (≃ᵣ⇒≾ᵣ; map-uᵉ)
+open GradeSystemInterface Grades using (≃ᵣ⇒≾ᵣ; map-𝟏ᵉ)
 
 open import PolymorphicCalculus.Syntax.Grades                S
 open import PolymorphicCalculus.Syntax.Types                 S
@@ -59,17 +59,17 @@ closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
 -- A variable no time has passed over
 
-ok₀ : ∀ {Θ} {A : OVType Θ} → VarOK ∅ᴴ A ûᵣ
+ok₀ : ∀ {Θ} {A : OVType Θ} → VarOK ∅ᴴ A 𝟏̂ᵣ
 ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
 -- A variable a value's unit effect has passed over
 
-ok₁ : ∀ {Θ} {A : OVType Θ} → VarOK ∅ᴴ A (ûᵣ ·̂ᵣ ∣ ûₑ ∣̂ᵉ)
+ok₁ : ∀ {Θ} {A : OVType Θ} → VarOK ∅ᴴ A (𝟏̂ᵣ ·̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ)
 ok₁ = ≾ᵘ-ok (transᵣ (eqᵣ ≡̂ᵣ-identityˡ)
-               (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-uᵉ))))
+               (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-𝟏ᵉ))))
 
 U⇒U : ∀ {Θ} → OVType Θ
-U⇒U = Unit ⇒ Unit ‼ ûₑ
+U⇒U = Unit ⇒ Unit ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- An argument annotation: the identity with its argument annotated
@@ -85,21 +85,21 @@ id-bool-typed =
                           ⨟ return (var (Tl-∷ (Tl-⟨⟩ Hd)) ok₁)))) refl) _
 
 expected-id-bool : Scheme
-expected-id-bool = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Bool ⇒ Bool ‼ ûₑ) ‼ ûₑ
+expected-id-bool = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Bool ⇒ Bool ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- A computation annotation: `id` annotated as a function on `Unit`,
 -- the reported type.
 
 id-unit : RawC ∅ˢ 0
-id-unit = return (lam (return v₀)) ⦂ᶜ (U⇒U ‼ ûₑ)
+id-unit = return (lam (return v₀)) ⦂ᶜ (U⇒U ‼ 𝟏̂ₑ)
 
 id-unit-typed : IsTyped (infer [] id-unit)
 id-unit-typed =
-  typed-of id-unit (closed (annᶜ (U⇒U ‼ ûₑ) (return (lam (return (var Hd ok₀))))) refl) _
+  typed-of id-unit (closed (annᶜ (U⇒U ‼ 𝟏̂ₑ) (return (lam (return (var Hd ok₀))))) refl) _
 
 expected-id-unit : Scheme
-expected-id-unit = ∀[ 0 , 0 , 0 ] ⊤ ⟹ U⇒U ‼ ûₑ
+expected-id-unit = ∀[ 0 , 0 , 0 ] ⊤ ⟹ U⇒U ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- `compose f g x = f (g x)` with `g` annotated as taking no time where
@@ -112,7 +112,7 @@ compose-g =
 
 compose-g-typed : IsTyped (infer [] compose-g)
 compose-g-typed =
-  typed-of compose-g (closed {C = (U⇒U ⇒ (U⇒U ⇒ (Unit ⇒ Unit ‼ (ûₑ ·̂ₑ ûₑ)) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ}
+  typed-of compose-g (closed {C = (U⇒U ⇒ (U⇒U ⇒ (Unit ⇒ Unit ‼ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ}
     (return (lam (return (lam (return (lam
       ((annᵛ U⇒U (var (Tl-∷ Hd) ok₀) · var Hd ok₀)
        ⨟ (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ Hd)))) ok₁ · var Hd ok₀))))))))
@@ -121,4 +121,4 @@ compose-g-typed =
 expected-compose-g : Scheme
 expected-compose-g =
   ∀[ 1 , 0 , 1 ] ⊤ ⟹
-    ((Unit ⇒ α₀ ‼ ε₀) ⇒ (U⇒U ⇒ (Unit ⇒ α₀ ‼ ε₀) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+    ((Unit ⇒ α₀ ‼ ε₀) ⇒ (U⇒U ⇒ (Unit ⇒ α₀ ‼ ε₀) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ

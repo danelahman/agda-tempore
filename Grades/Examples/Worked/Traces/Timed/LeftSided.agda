@@ -49,7 +49,7 @@ open import Grades.Examples.Worked.Operations
 
 open import Grades.Examples.Traces.Timed.LeftSided
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
-  using (left-sided; _≾_; _≾?_; ≾-⊤; ≾-antisym; Antichain; acSet; _·_; u)
+  using (left-sided; _≾_; _≾?_; ≾-⊤; ≾-antisym; Antichain; acSet; _·_; 𝟏)
   public
 
 order : Grade._≾_ left-sided ≡ _≾_
@@ -224,10 +224,10 @@ one-branch-does-not = fails
 -- covered by every run, so every grade weakens to it and it is the
 -- designated greatest one.
 
-everything-weakens : (P : Antichain) → P ≾ u
+everything-weakens : (P : Antichain) → P ≾ 𝟏
 everything-weakens = ≾-⊤
 
-the-unit-is-greatest : Grade.⊤ left-sided ≡ u
+the-unit-is-greatest : Grade.⊤ left-sided ≡ 𝟏
 the-unit-is-greatest = refl
 
 ------------------------------------------------------------------------

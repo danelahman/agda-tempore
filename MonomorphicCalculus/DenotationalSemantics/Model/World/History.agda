@@ -3,9 +3,9 @@
 --                                                                            --
 -- A world is a timed trace, the run observed so far. A trace is read         --
 -- in the grade by reading each operation by its grade and each delay         --
--- by `of-dur`, and sequencing:                                               --
+-- by `ι`, and sequencing:                                                    --
 --                                                                            --
---   ⟦ ε ⟧ = u     ⟦ o · s ⟧ = opᵍ o · ⟦ s ⟧     ⟦ d · s ⟧ = of-dur d · ⟦ s ⟧ --
+--   ⟦ ε ⟧ = 𝟏     ⟦ o · s ⟧ = opᵍ o · ⟦ s ⟧     ⟦ d · s ⟧ = ι d · ⟦ s ⟧      --
 --                                                                            --
 -- a monoid morphism up to `≃`. A grade `ρ` reaches the histories             --
 -- extending the current one by a continuation it admits:                     --
@@ -44,11 +44,11 @@ open Grade G
 ⟦_⟧ᵗ : Trace → Carrier
 ⟦_⟧⁻ : Trace⁻ → Carrier
 
-⟦ ε             ⟧ᵗ = u
+⟦ ε             ⟧ᵗ = 𝟏
 ⟦ operation o s ⟧ᵗ = opᵍ o · ⟦ s ⟧ᵗ
-⟦ delay d s     ⟧ᵗ = of-dur ∣ d ∣⁺ · ⟦ s ⟧⁻
+⟦ delay d s     ⟧ᵗ = ι ∣ d ∣⁺ · ⟦ s ⟧⁻
 
-⟦ ε⁻             ⟧⁻ = u
+⟦ ε⁻             ⟧⁻ = 𝟏
 ⟦ operation⁻ o s ⟧⁻ = opᵍ o · ⟦ s ⟧ᵗ
 
 ⟦inj⁻⟧ : ∀ s → ⟦ inj⁻ s ⟧ᵗ ≡ ⟦ s ⟧⁻
@@ -57,11 +57,11 @@ open Grade G
 
 -- prepending a delay
 
-⟦prepend⟧ : ∀ d s → ⟦ prepend d s ⟧ᵗ ≃ of-dur ∣ d ∣⁺ · ⟦ s ⟧ᵗ
+⟦prepend⟧ : ∀ d s → ⟦ prepend d s ⟧ᵗ ≃ ι ∣ d ∣⁺ · ⟦ s ⟧ᵗ
 ⟦prepend⟧ d ε               = ≃-refl
 ⟦prepend⟧ d (operation o s) = ≃-refl
 ⟦prepend⟧ d (delay e s)     =
-  ≃-trans (·-cong of-dur-plus ≃-refl) (·-assoc (of-dur ∣ d ∣⁺) (of-dur ∣ e ∣⁺) ⟦ s ⟧⁻)
+  ≃-trans (·-cong ι-plus ≃-refl) (·-assoc (ι ∣ d ∣⁺) (ι ∣ e ∣⁺) ⟦ s ⟧⁻)
 
 -- reading is a monoid morphism
 
@@ -70,11 +70,11 @@ open Grade G
 ⟦∙⟧ (operation o s)            t =
   ≃-trans (·-cong ≃-refl (⟦∙⟧ s t)) (≃-sym (·-assoc (opᵍ o) ⟦ s ⟧ᵗ ⟦ t ⟧ᵗ))
 ⟦∙⟧ (delay d ε⁻)               t =
-  ≃-trans (⟦prepend⟧ d t) (·-cong (≃-sym (·-identityʳ (of-dur ∣ d ∣⁺))) ≃-refl)
+  ≃-trans (⟦prepend⟧ d t) (·-cong (≃-sym (·-identityʳ (ι ∣ d ∣⁺))) ≃-refl)
 ⟦∙⟧ (delay d (operation⁻ o s)) t =
   ≃-trans (·-cong ≃-refl (≃-trans (·-cong ≃-refl (⟦∙⟧ s t))
                                   (≃-sym (·-assoc (opᵍ o) ⟦ s ⟧ᵗ ⟦ t ⟧ᵗ))))
-          (≃-sym (·-assoc (of-dur ∣ d ∣⁺) (opᵍ o · ⟦ s ⟧ᵗ) ⟦ t ⟧ᵗ))
+          (≃-sym (·-assoc (ι ∣ d ∣⁺) (opᵍ o · ⟦ s ⟧ᵗ) ⟦ t ⟧ᵗ))
 
 ------------------------------------------------------------------------
 -- Accessibility on histories
@@ -90,7 +90,7 @@ record _⊑ʰ[_]_ (w : Trace) (ρ : Carrier) (w' : Trace) : Set where
 
 open _⊑ʰ[_]_ public
 
-⊑ʰ-refl : ∀ {w} → w ⊑ʰ[ u ] w
+⊑ʰ-refl : ∀ {w} → w ⊑ʰ[ 𝟏 ] w
 ⊑ʰ-refl {w} = mkʰ ε (∙-identityʳ w) ≾-refl
 
 ⊑ʰ-trans : ∀ {ρ₁ ρ₂ w w' w''} → w ⊑ʰ[ ρ₁ ] w' → w' ⊑ʰ[ ρ₂ ] w'' → w ⊑ʰ[ ρ₁ · ρ₂ ] w''

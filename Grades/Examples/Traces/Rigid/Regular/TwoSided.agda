@@ -57,7 +57,7 @@ open U public using (Upper; ≤_; <_; ≤∞)
 open L using (lang; k; tick; encᶠ; ⌜_⌝′; ∈-⌜⌝′⁺; ≤ᶠ-refl; str; lower; upper; ‵_;
               steps; Word; Expr; op; stretch; ⟦_⟧)
 import Grades.Regular.Automaton k as A
-open import Grades.Regular.Grade k tick using (table; wf′; ∈·⁺; ∈u⁺; ≾⇒⊆)
+open import Grades.Regular.Grade k tick using (table; wf′; ∈·⁺; ∈𝟏⁺; ≾⇒⊆)
 open import Grades.Regular.Meet k using (meet?)
 open L.C using (≾-lang)
 
@@ -127,7 +127,7 @@ private
   steps-word v (suc m) = v ++ steps-word v m
 
   steps-∈ : ∀ w v → Mem (table (lang w)) v → ∀ m → Mem (table (lang (steps w m))) (steps-word v m)
-  steps-∈ w v s zero    = mem ∈u⁺
+  steps-∈ w v s zero    = mem ∈𝟏⁺
   steps-∈ w v s (suc m) =
     mem (∈·⁺ (lang w) (lang (steps w m)) v (steps-word v m) (get s) (get (steps-∈ w v s m)))
 
@@ -146,12 +146,12 @@ private
                             (λ {m} {n} → L.steps-plus (⌜ e≤ ⌝′ i≤) {m} {n}))
 
   left-sidedʰ : GradeHints left-sided
-  GradeHints.u-least? left-sidedʰ = Hᴸ.u-least?
+  GradeHints.𝟏-least? left-sidedʰ = Hᴸ.𝟏-least?
   GradeHints.·-comm?  left-sidedʰ = Hᴸ.·-comm?
   GradeHints.plus?    left-sidedʰ = Hᴸ.plus?
 
   right-sidedʰ : GradeHints right-sided
-  GradeHints.u-least? right-sidedʰ = Hᵁ.u-least?
+  GradeHints.𝟏-least? right-sidedʰ = Hᵁ.𝟏-least?
   GradeHints.·-comm?  right-sidedʰ = Hᵁ.·-comm?
   GradeHints.plus?    right-sidedʰ = Hᵁ.plus?
 
@@ -160,11 +160,11 @@ consistent = record
   { up       = λ {(l , u)} {(l′ , u′)} (p , q) (w , wl , wu) →
       w , mem (≾⇒⊆ (lang l) (lang l′) (≾-lang p) w (get wl)) ,
           mem (≾⇒⊆ (lang u) (lang u′) (≾-lang q) w (get wu))
-  ; P-u      = [] , mem ∈u⁺ , mem ∈u⁺
+  ; P-𝟏      = [] , mem ∈𝟏⁺ , mem ∈𝟏⁺
   ; P-·      = λ {(l , u)} {(l′ , u′)} (w , wl , wu) (w′ , wl′ , wu′) →
       w ++ w′ , mem (∈·⁺ (lang l) (lang l′) w w′ (get wl) (get wl′)) ,
                 mem (∈·⁺ (lang u) (lang u′) w w′ (get wu) (get wu′))
-  ; P-of-dur = λ m → steps-word (encᶠ (stretch Data.Fin.Subset.⊥ 1)) m ,
+  ; P-ι = λ m → steps-word (encᶠ (stretch Data.Fin.Subset.⊥ 1)) m ,
                      steps-∈ (⌜ e≥ ⌝′ i≥) _ step-≥ m , steps-∈ (⌜ e≤ ⌝′ i≤) _ step-≤ m
   }
 

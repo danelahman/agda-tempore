@@ -68,7 +68,7 @@ wkₛ (≤ₛ-lock e) i = wkₛ e i
 wkₛ (≤ₛ-res e)  i = suc (wkₛ e i)
 
 δₛ : ∀ {n m} {𝕊 : State n} {𝕊' : State m} → 𝕊 ≤ₛ 𝕊' → RExp ∅ˢ
-δₛ ≤ₛ-refl             = ûᵣ
+δₛ ≤ₛ-refl             = 𝟏̂ᵣ
 δₛ (≤ₛ-lock {ρ = ρ} e) = δₛ e ·̂ᵣ rconst ρ
 δₛ (≤ₛ-res e)          = δₛ e
 

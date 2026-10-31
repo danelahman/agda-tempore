@@ -30,7 +30,7 @@ open import Grades.Hints using (GradeHints)
 open import Grades.Examples.Time.LeftSided
   using (left-sided-intervals; left-sided-intervals-with-⊤; left-sided-intervalsʰ;
          left-sided-intervals-with-⊤ʰ;
-         𝕀; [_,+∞⟩; uₒ-not-least; 𝕀⊤; timed_; untimed)
+         𝕀; [_,+∞⟩; 𝟏ₒ-not-least; 𝕀⊤; timed_; untimed)
 
 open import Grades.Examples.Counts.Power left-sided-intervals public
 
@@ -50,9 +50,9 @@ atleast k = [ k ,+∞⟩
 -- the unit is not least once there is a counter: demanding one more
 -- of it lies strictly below demanding nothing
 
-uᵛ-not-least : ∀ {n} → ¬ Minimum (_≾ᵛ_ {suc n}) uᵛ
-uᵛ-not-least {n} least =
-  uₒ-not-least (λ i → proj₁ (least (i ∷ uᵛ {n})))
+𝟏ᵛ-not-least : ∀ {n} → ¬ Minimum (_≾ᵛ_ {suc n}) 𝟏ᵛ
+𝟏ᵛ-not-least {n} least =
+  𝟏ₒ-not-least (λ i → proj₁ (least (i ∷ 𝟏ᵛ {n})))
   where open import Data.Vec.Base using (_∷_)
 
 ------------------------------------------------------------------------

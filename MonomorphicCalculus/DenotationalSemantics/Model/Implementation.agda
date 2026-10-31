@@ -2,7 +2,7 @@
 -- Implementing the operations.                                        --
 --                                                                     --
 -- An external implementation `op-semᵐ` of each operation: from the    --
--- parameter, seen from `mapᵉ (op-grade op)` in its future (where the  --
+-- parameter, seen from `∣ op-grade op ∣ᵉ` in its future (where the    --
 -- continuation runs), the arity value. It is the semantic counterpart --
 -- of `MonomorphicCalculus.OperationalSemantics.TopLevel.op-sem`, and  --
 -- being a single morphism it is uniform in the state.                 --
@@ -61,10 +61,10 @@ record Implementation : Set₁ where
   field
 
     -- The external implementation: from the parameter, as seen from
-    -- `mapᵉ (op-grade op)` in its future, the arity value the operation returns.
+    -- `∣ op-grade op ∣ᵉ` in its future, the arity value the operation returns.
 
     op-semᵐ : (op : Op)
-            → ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ param op ⟧ᵍ →ᵐ ⟦ arity op ⟧ᵍ
+            → ⟨ ∣ op-grade op ∣ᵉ ⟩ᵒ ⟦ param op ⟧ᵍ →ᵐ ⟦ arity op ⟧ᵍ
 
     -- Running a computation's operations. A graded monad morphism …
 
@@ -86,21 +86,21 @@ record Implementation : Set₁ where
 
     implᵐ-delayᵀ : ∀ {A ε} → (τ : 𝔻)
                  → implᵐ ∘ᵐ delayᵀ {A} {ε} τ
-                 ≈ᵐ tickᵏ (of-durᵉ τ)
-                    ∘ᵐ []-≤ (≃ᵣ⇒≾ᵣ map-of-durᵉ)
-                    ∘ᵐ [ of-durʳ τ ]ᶠ implᵐ
+                 ≈ᵐ tickᵏ (ιₑ τ)
+                    ∘ᵐ []-≤ (≃ᵣ⇒≾ᵣ map-ιᵉ)
+                    ∘ᵐ [ ιᵣ τ ]ᶠ implᵐ
 
     -- … and it runs an operation away: the continuation is fed the computed
     -- arity value, and only the operation's tick is left.
 
     implᵐ-opᵀ : ∀ {X A ε} → (op : Op)
               → (v : X →ᵐ ⟦ param op ⟧ᵍ)
-              → (k : (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ ⟦ arity op ⟧ᵍ) →ᵐ Tᵒ A ε)
+              → (k : (⟨ ∣ op-grade op ∣ᵉ ⟩ᵒ X ×ᵐ ⟦ arity op ⟧ᵍ) →ᵐ Tᵒ A ε)
               → implᵐ ∘ᵐ (opᵀ op
-                          ∘ᵐ ⟨ v , [ mapᵉ (op-grade op) ]ᶠ (curryᵐ k) ∘ᵐ η⊣ ⟩ᵐ)
+                          ∘ᵐ ⟨ v , [ ∣ op-grade op ∣ᵉ ]ᶠ (curryᵐ k) ∘ᵐ η⊣ ⟩ᵐ)
               ≈ᵐ tickᵏ (op-grade op)
-                 ∘ᵐ [ mapᵉ (op-grade op) ]ᶠ
+                 ∘ᵐ [ ∣ op-grade op ∣ᵉ ]ᶠ
                      (implᵐ ∘ᵐ k
                       ∘ᵐ ⟨ idᵐ
-                         , op-semᵐ op ∘ᵐ ⟨ mapᵉ (op-grade op) ⟩ᶠ v ⟩ᵐ)
+                         , op-semᵐ op ∘ᵐ ⟨ ∣ op-grade op ∣ᵉ ⟩ᶠ v ⟩ᵐ)
                  ∘ᵐ η⊣

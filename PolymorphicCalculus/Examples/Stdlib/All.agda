@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
 -- Nine functions of Tempore's standard library, `typed` over any
--- language, with schemes checked at the four combinations of `u-least?`
+-- language, with schemes checked at the four combinations of `𝟏-least?`
 -- and `·-comm?`. Exercises `Generate`, `Solve` and `SolverImpl`.
 ------------------------------------------------------------------------
 

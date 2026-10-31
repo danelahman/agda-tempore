@@ -46,7 +46,7 @@ Radio = ⟨ 1 ⟩
 -- The operations
 
 opTime : Op → Grade.Carrier (mode-switch-costs {ℕᴰ})
-opTime read  = Grade.u (mode-switch-costs {ℕᴰ})
+opTime read  = Grade.𝟏 (mode-switch-costs {ℕᴰ})
 opTime write = grade (listing ((Idle , Idle , cost 0) L.∷ L.[]))
 opTime send  = grade (listing ((Idle , Radio , cost 1) L.∷ (Radio , Radio , cost 0) L.∷ L.[]))
 
@@ -88,15 +88,15 @@ sample-idle-sample-store : [] ⊢C⦂ Unit ‼ opTime write
 sample-idle-sample-store =
   check (opTime write)
     (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
-      (delay 4                       -- ⟨ uᵣ ⟩
+      (delay 4                       -- ⟨ 𝟏ᵣ ⟩
         (perform read ⋆              -- ⟨ opTime read ⟩ ∷ Reading
-          (perform write (fresh-var (decided (uᵣ ·ᵣ of-durʳ 4 ·ᵣ opTime read) uᵣ)
+          (perform write (fresh-var (decided (𝟏ᵣ ·ᵣ ιᵣ 4 ·ᵣ opTime read) 𝟏ᵣ)
                                       (Tl-∷ (Tl-⟨⟩ (Tl-⟨⟩ Hd))))
                                      -- ⟨ opTime write ⟩ ∷ Unit
             (return ⋆)))))
 
-stale-after-storing : ¬ (uᵣ ·ᵣ opTime write ≾ᵣ uᵣ)
-stale-after-storing = refuted (uᵣ ·ᵣ opTime write) uᵣ
+stale-after-storing : ¬ (𝟏ᵣ ·ᵣ opTime write ≾ᵣ 𝟏ᵣ)
+stale-after-storing = refuted (𝟏ᵣ ·ᵣ opTime write) 𝟏ᵣ
 
 ------------------------------------------------------------------------
 -- Unboxing: claimable after at most one switch, the modes not named
@@ -113,18 +113,18 @@ claim-after-a-transmission =
     (box at-most-one-switch (const 7)
                                      -- ∷ [ at-most-one-switch ] Reading
       (perform send (const 1)        -- ⟨ opTime send ⟩ ∷ Unit
-        (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (decided (uᵣ ·ᵣ opTime send) at-most-one-switch) (<:ᵛ-refl _)
+        (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (decided (𝟏ᵣ ·ᵣ opTime send) at-most-one-switch) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))
 
 -- a store before the claim may get stuck
 
-claim-after-a-store : ¬ (uᵣ ·ᵣ opTime write ≾ᵣ at-most-one-switch)
-claim-after-a-store = refuted (uᵣ ·ᵣ opTime write) at-most-one-switch
+claim-after-a-store : ¬ (𝟏ᵣ ·ᵣ opTime write ≾ᵣ at-most-one-switch)
+claim-after-a-store = refuted (𝟏ᵣ ·ᵣ opTime write) at-most-one-switch
 
 ------------------------------------------------------------------------
 -- Effect handling: the unit is not least, so no clause discards a
 -- transmission's continuation
 
-cannot-discard : ¬ (uₑ ≾ₑ opTime send ·ₑ uₑ)
-cannot-discard = refuted uₑ (opTime send ·ₑ uₑ)
+cannot-discard : ¬ (𝟏ₑ ≾ₑ opTime send ·ₑ 𝟏ₑ)
+cannot-discard = refuted 𝟏ₑ (opTime send ·ₑ 𝟏ₑ)

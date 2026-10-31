@@ -8,9 +8,9 @@
 -- The product, the join and the order are those of the matrices, the --
 -- unit is `Iᴹ`, and `⊤` is `⊤ᴹ`. These matrices are closed under the --
 -- product and the join, and the unit is the only one below the unit: --
--- if `x · y ≾ u`, then `x` changes no mode and gets stuck from none, --
+-- if `x · y ≾ 𝟏`, then `x` changes no mode and gets stuck from none, --
 -- for a change followed by a nonzero entry is not below `𝟙` and      --
--- `stuck` is never left, hence `x ≾ u` and `y ≾ u`. The dioid is to  --
+-- `stuck` is never left, hence `x ≾ 𝟏` and `y ≾ 𝟏`. The dioid is to  --
 -- have no zero divisors, `𝟙` above `𝟘`, and products of nonzero      --
 -- entries below `𝟙` only from factors below `𝟙`, the changes being   --
 -- kept by the action and by orbit joins (`ModeEntries`). Delays are  --
@@ -118,10 +118,10 @@ module _ (E : ModeEntries) where
 
   -- given by copatterns, unfolded only when a field is asked for
 
-  uᵐ : ModeMatrix
-  mat uᵐ = Iᴹ
-  total uᵐ n = ⌜ n ⌝ , subst (λ c → ¬ (c ≤ 𝟘)) (sym (Iᴹ-diag ⌜ n ⌝)) 𝟙≰𝟘
-  changes uᵐ ne = change-𝟘 (≤-reflexive (Iᴹ-off (λ e → ne (⌜⌝-injective e))))
+  𝟏ᵐ : ModeMatrix
+  mat 𝟏ᵐ = Iᴹ
+  total 𝟏ᵐ n = ⌜ n ⌝ , subst (λ c → ¬ (c ≤ 𝟘)) (sym (Iᴹ-diag ⌜ n ⌝)) 𝟙≰𝟘
+  changes 𝟏ᵐ ne = change-𝟘 (≤-reflexive (Iᴹ-off (λ e → ne (⌜⌝-injective e))))
 
   ⊤ᵐ : ModeMatrix
   mat ⊤ᵐ = ⊤ᴹ
@@ -192,14 +192,14 @@ module _ (E : ModeEntries) where
   ----------------------------------------------------------------------
   -- The zero-product law
 
-  module _ (x y : ModeMatrix) (h : x ·ᵐ y ≾ᵐ uᵐ) where
+  module _ (x y : ModeMatrix) (h : x ·ᵐ y ≾ᵐ 𝟏ᵐ) where
 
     private
       hp : ∀ a c → e x a stuck ⊗ e y stuck c ≤ entry Iᴹ a c
-      hp a c = ≤-trans (⊗ᴹ-ub (mat x) (mat y) a c stuck) (at {x ·ᵐ y} {uᵐ} h a c)
+      hp a c = ≤-trans (⊗ᴹ-ub (mat x) (mat y) a c stuck) (at {x ·ᵐ y} {𝟏ᵐ} h a c)
 
       ht : ∀ a b c → e x a b ⊗ e y b c ≤ entry Iᴹ a c
-      ht a b c = ≤-trans (⊗ᴹ-ub (mat x) (mat y) a c b) (at {x ·ᵐ y} {uᵐ} h a c)
+      ht a b c = ≤-trans (⊗ᴹ-ub (mat x) (mat y) a c b) (at {x ·ᵐ y} {𝟏ᵐ} h a c)
 
       ≤off : ∀ a c {t} → ¬ a ≡ c → t ≤ entry Iᴹ a c → t ≤ 𝟘
       ≤off a c ne p = ≤-trans p (≤-reflexive (Iᴹ-off ne))
@@ -215,7 +215,7 @@ module _ (E : ModeEntries) where
       refute p stuck   _  _  yr _ = yr ≤-refl
       refute p ⌜ m ⌝ b≢ x≰ yr = change-not-unit (changes x (λ e → b≢ (cong ⌜_⌝ (sym e)))) x≰ yr
 
-    zero-productˡ′ : mat x ≤ᵖ mat uᵐ
+    zero-productˡ′ : mat x ≤ᵖ mat 𝟏ᵐ
     zero-productˡ′ stuck b = stuck-row (mat x) Iᴹ b
     zero-productˡ′ ⌜ p ⌝ b with b ≟ᴹ ⌜ p ⌝
     ... | yes refl with e x ⌜ p ⌝ ⌜ p ⌝ ≤? 𝟘
@@ -233,7 +233,7 @@ module _ (E : ModeEntries) where
     ...       | no ne = ⊥-elim (nonzero-⊗ x≰ yr (≤off ⌜ p ⌝ r (λ e → ne (sym e)) (ht ⌜ p ⌝ b r)))
     ...       | yes refl = ⊥-elim (refute p b b≢ x≰ yr (≤diag ⌜ p ⌝ (ht ⌜ p ⌝ b ⌜ p ⌝)))
 
-    zero-productʳ′ : mat y ≤ᵖ mat uᵐ
+    zero-productʳ′ : mat y ≤ᵖ mat 𝟏ᵐ
     zero-productʳ′ stuck c = stuck-row (mat y) Iᴹ c
     zero-productʳ′ ⌜ q ⌝ c with total x q
     ... | s , xs with s ≟ᴹ ⌜ q ⌝
@@ -257,7 +257,7 @@ module _ (E : ModeEntries) where
     private module D = Duration D
     field
       delay      : D.Carrier → ModeMatrix
-      delay-zero : (delay D.0ᴰ ≾ᵐ uᵐ) × (uᵐ ≾ᵐ delay D.0ᴰ)
+      delay-zero : (delay D.0ᴰ ≾ᵐ 𝟏ᵐ) × (𝟏ᵐ ≾ᵐ delay D.0ᴰ)
       delay-plus : ∀ τ τ' → (delay (τ D.+ᴰ τ') ≾ᵐ delay τ ·ᵐ delay τ')
                           × (delay τ ·ᵐ delay τ' ≾ᵐ delay (τ D.+ᴰ τ'))
 
@@ -265,7 +265,7 @@ module _ (E : ModeEntries) where
 
   unit-delays : ∀ {D} → Delays D
   unit-delays = record
-    { delay      = λ _ → uᵐ
+    { delay      = λ _ → 𝟏ᵐ
     ; delay-zero = pw (λ _ _ → ≤-refl) , pw (λ _ _ → ≤-refl)
     ; delay-plus = λ _ _ → pw (⊗ᴹ-identityˡ⁻ Iᴹ) , pw (⊗ᴹ-identityˡ Iᴹ)
     }
@@ -274,11 +274,11 @@ module _ (E : ModeEntries) where
   mode-grade-with Δ = record
     { Carrier         = ModeMatrix
     ; _·_             = _·ᵐ_
-    ; u               = uᵐ
+    ; 𝟏               = 𝟏ᵐ
     ; _≾_             = _≾ᵐ_
     ; ⊤               = ⊤ᵐ
     ; _⊔_             = _⊔ᵐ_
-    ; of-dur          = Delays.delay Δ
+    ; ι               = Delays.delay Δ
     ; ·-identityˡ     = λ x → pw (⊗ᴹ-identityˡ (mat x)) , pw (⊗ᴹ-identityˡ⁻ (mat x))
     ; ·-identityʳ     = λ x → pw (⊗ᴹ-identityʳ (mat x)) , pw (⊗ᴹ-identityʳ⁻ (mat x))
     ; ·-assoc         = λ x y z → pw (⊗ᴹ-assoc (mat x) (mat y) (mat z))
@@ -298,8 +298,8 @@ module _ (E : ModeEntries) where
     ; ·-distribʳ-⊔-≾  = λ x y z → pw (⊗ᴹ-distribʳ (mat x) (mat y) (mat z))
     ; ≾-zero-productˡ = λ {x} {y} h → pw (zero-productˡ′ x y h)
     ; ≾-zero-productʳ = λ {x} {y} h → pw (zero-productʳ′ x y h)
-    ; of-dur-zero     = Delays.delay-zero Δ
-    ; of-dur-plus     = λ {τ} {τ'} → Delays.delay-plus Δ τ τ'
+    ; ι-zero          = Delays.delay-zero Δ
+    ; ι-plus          = λ {τ} {τ'} → Delays.delay-plus Δ τ τ'
     }
 
   ----------------------------------------------------------------------

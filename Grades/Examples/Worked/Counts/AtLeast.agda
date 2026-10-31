@@ -19,7 +19,7 @@ open import Grades.Examples.Worked.Counts.Index using (Certain; ⟪_,_,_⟫ˡ)
 
 import Grades.Examples.Counts.AtLeast as AtLeast
 
-open AtLeast using (_≾ᵛ_; _≾ᵛ?_; _·ᵛ_; _⊔ᵛ_; uᵛ)
+open AtLeast using (_≾ᵛ_; _≾ᵛ?_; _·ᵛ_; _⊔ᵛ_; 𝟏ᵛ)
 
 holds : {c d : Certain} {p : True (c ≾ᵛ? d)} → c ≾ᵛ d
 holds {p = p} = toWitness p
@@ -53,5 +53,5 @@ joined = refl
 
 -- demanding nothing is the greatest grade, and it is the unit
 
-nothing-greatest : ⟪ 3 , 1 , 2 ⟫ˡ ≾ᵛ uᵛ
+nothing-greatest : ⟪ 3 , 1 , 2 ⟫ˡ ≾ᵛ 𝟏ᵛ
 nothing-greatest = holds

@@ -24,7 +24,7 @@ module PolymorphicCalculus.Examples.Stdlib (S : LanguageSpec)
   (hints : SystemHints (LanguageSpec.Grades S)) (opEnum : OpEnum S) where
 
 open LanguageSpec S
-open GradeSystemInterface Grades using (≃ᵣ⇒≾ᵣ; map-uᵉ)
+open GradeSystemInterface Grades using (≃ᵣ⇒≾ᵣ; map-𝟏ᵉ)
 
 open import PolymorphicCalculus.Syntax.Grades                S
 open import PolymorphicCalculus.Syntax.Types                 S
@@ -60,11 +60,11 @@ closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
 -- A variable no time has passed over
 
-ok₀ : ∀ {A : OVType ∅ˢ} → VarOK ∅ᴴ A ûᵣ
+ok₀ : ∀ {A : OVType ∅ˢ} → VarOK ∅ᴴ A 𝟏̂ᵣ
 ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
 U⇒U : OVType ∅ˢ
-U⇒U = Unit ⇒ Unit ‼ ûₑ
+U⇒U = Unit ⇒ Unit ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- let id x = x
@@ -75,10 +75,10 @@ id : RawC ∅ˢ 0
 id = return (lam (return v₀))
 
 id-typed : IsTyped (infer [] id)
-id-typed = typed-of id (closed {C = U⇒U ‼ ûₑ} (return (lam (return (var Hd ok₀)))) refl) _
+id-typed = typed-of id (closed {C = U⇒U ‼ 𝟏̂ₑ} (return (lam (return (var Hd ok₀)))) refl) _
 
 expected-id : Scheme
-expected-id = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ α₀ ‼ ûₑ) ‼ ûₑ
+expected-id = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ α₀ ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- let ignore _ = ()
@@ -89,10 +89,10 @@ ignore : RawC ∅ˢ 0
 ignore = return (lam (return ⋆))
 
 ignore-typed : IsTyped (infer [] ignore)
-ignore-typed = typed-of ignore (closed {C = U⇒U ‼ ûₑ} (return (lam (return ⋆))) refl) _
+ignore-typed = typed-of ignore (closed {C = U⇒U ‼ 𝟏̂ₑ} (return (lam (return ⋆))) refl) _
 
 expected-ignore : Scheme
-expected-ignore = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ Unit ‼ ûₑ) ‼ ûₑ
+expected-ignore = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ Unit ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- let fst (x, _) = x
@@ -103,11 +103,11 @@ fst = return (lam (match v₀ `in return v₁))
 
 fst-typed : IsTyped (infer [] fst)
 fst-typed =
-  typed-of fst (closed {C = (Unit |×| Bool ⇒ Unit ‼ ûₑ) ‼ ûₑ}
+  typed-of fst (closed {C = (Unit |×| Bool ⇒ Unit ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ}
     (return (lam (match var Hd ok₀ `in return (var (Tl-∷ Hd) ok₀)))) refl) _
 
 expected-fst : Scheme
-expected-fst = ∀[ 2 , 0 , 0 ] ⊤ ⟹ (α₁ |×| α₀ ⇒ α₁ ‼ ûₑ) ‼ ûₑ
+expected-fst = ∀[ 2 , 0 , 0 ] ⊤ ⟹ (α₁ |×| α₀ ⇒ α₁ ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- let snd (_, y) = y
@@ -118,11 +118,11 @@ snd = return (lam (match v₀ `in return v₀))
 
 snd-typed : IsTyped (infer [] snd)
 snd-typed =
-  typed-of snd (closed {C = (Unit |×| Bool ⇒ Bool ‼ ûₑ) ‼ ûₑ}
+  typed-of snd (closed {C = (Unit |×| Bool ⇒ Bool ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ}
     (return (lam (match var Hd ok₀ `in return (var Hd ok₀)))) refl) _
 
 expected-snd : Scheme
-expected-snd = ∀[ 2 , 0 , 0 ] ⊤ ⟹ (α₁ |×| α₀ ⇒ α₀ ‼ ûₑ) ‼ ûₑ
+expected-snd = ∀[ 2 , 0 , 0 ] ⊤ ⟹ (α₁ |×| α₀ ⇒ α₀ ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- let not x = if x then false else true
@@ -134,11 +134,11 @@ not = return (lam (if v₀ `then return false `else return true))
 
 not-typed : IsTyped (infer [] not)
 not-typed =
-  typed-of not (closed {C = (Bool ⇒ Bool ‼ ûₑ) ‼ ûₑ}
+  typed-of not (closed {C = (Bool ⇒ Bool ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ}
     (return (lam (if var Hd ok₀ `then return false `else return true))) refl) _
 
 expected-not : Scheme
-expected-not = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Bool ⇒ Bool ‼ ûₑ) ‼ ûₑ
+expected-not = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Bool ⇒ Bool ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- let absurd void = (match void with)
@@ -150,11 +150,11 @@ absurd′ = return (lam (absurd v₀))
 
 absurd′-typed : IsTyped (infer [] absurd′)
 absurd′-typed =
-  typed-of absurd′ (closed {C = (Empty ⇒ Unit ‼ ûₑ) ‼ ûₑ}
+  typed-of absurd′ (closed {C = (Empty ⇒ Unit ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ}
     (return (lam (absurd (var Hd ok₀)))) refl) _
 
 expected-absurd′ : Scheme
-expected-absurd′ = ∀[ 1 , 0 , 1 ] ⊤ ⟹ (Empty ⇒ α₀ ‼ ε₀) ‼ ûₑ
+expected-absurd′ = ∀[ 1 , 0 , 1 ] ⊤ ⟹ (Empty ⇒ α₀ ‼ ε₀) ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- let (|>) x f = f x
@@ -166,16 +166,16 @@ pipe = return (lam (return (lam (v₀ · v₁))))
 
 pipe-typed : IsTyped (infer [] pipe)
 pipe-typed =
-  typed-of pipe (closed {C = (Unit ⇒ (U⇒U ⇒ Unit ‼ ûₑ) ‼ ûₑ) ‼ ûₑ}
+  typed-of pipe (closed {C = (Unit ⇒ (U⇒U ⇒ Unit ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ}
     (return (lam (return (lam (var Hd ok₀ · var (Tl-∷ Hd) ok₀))))) refl) _
 
 expected-pipe : Scheme
-expected-pipe = ∀[ 2 , 0 , 1 ] ⊤ ⟹ (α₁ ⇒ ((α₁ ⇒ α₀ ‼ ε₀) ⇒ α₀ ‼ ε₀) ‼ ûₑ) ‼ ûₑ
+expected-pipe = ∀[ 2 , 0 , 1 ] ⊤ ⟹ (α₁ ⇒ ((α₁ ⇒ α₀ ‼ ε₀) ⇒ α₀ ‼ ε₀) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- let compose f g x = f (g x)
 -- Tempore's scheme: [α,β,γ],[ρ₀,ρ₁] (β → γ # ρ₁) → (α → β # ρ₀) → α → γ # ρ₀ + ρ₁
--- `f` is used after `g x`, so `var` asks `∣ ε₁ ∣̂ᵉ ≾ uᵣ`; where the unit
+-- `f` is used after `g x`, so `var` asks `∣ ε₁ ∣̂ᵉ ≾ 𝟏ᵣ`; where the unit
 -- is least this forces `g` pure (`expected-compose`).
 
 compose : RawC ∅ˢ 0
@@ -183,20 +183,20 @@ compose = return (lam (return (lam (return (lam ((v₁ · v₀) ⨟ (v₃ · v�
 
 compose-typed : IsTyped (infer [] compose)
 compose-typed =
-  typed-of compose (closed {C = (U⇒U ⇒ (U⇒U ⇒ (Unit ⇒ Unit ‼ (ûₑ ·̂ₑ ûₑ)) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ}
+  typed-of compose (closed {C = (U⇒U ⇒ (U⇒U ⇒ (Unit ⇒ Unit ‼ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ}
     (return (lam (return (lam (return (lam
       ((var (Tl-∷ Hd) ok₀ · var Hd ok₀)
-       ⨟ (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ Hd)))) (≾ᵘ-ok u·u≾u) · var Hd ok₀))))))))
+       ⨟ (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ Hd)))) (≾ᵘ-ok 𝟏·𝟏≾𝟏) · var Hd ok₀))))))))
     refl) _
   where
-    u·u≾u : ∅ᴴ ⊩ ûᵣ ·̂ᵣ ∣ ûₑ ∣̂ᵉ ≾̂ᵣ ûᵣ
-    u·u≾u = transᵣ (eqᵣ ≡̂ᵣ-identityˡ)
-              (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-uᵉ)))
+    𝟏·𝟏≾𝟏 : ∅ᴴ ⊩ 𝟏̂ᵣ ·̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ ≾̂ᵣ 𝟏̂ᵣ
+    𝟏·𝟏≾𝟏 = transᵣ (eqᵣ ≡̂ᵣ-identityˡ)
+              (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-𝟏ᵉ)))
 
 expected-compose : Scheme
 expected-compose =
   ∀[ 3 , 0 , 1 ] ⊤ ⟹
-    ((α₁ ⇒ α₀ ‼ ε₀) ⇒ ((α₂ ⇒ α₁ ‼ ûₑ) ⇒ (α₂ ⇒ α₀ ‼ ε₀) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+    ((α₁ ⇒ α₀ ‼ ε₀) ⇒ ((α₂ ⇒ α₁ ‼ 𝟏̂ₑ) ⇒ (α₂ ⇒ α₀ ‼ ε₀) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- let min x y = if x < y then x else y
@@ -210,8 +210,8 @@ min = return (lam (return (lam (return (lam
 
 min-typed : IsTyped (infer [] min)
 min-typed =
-  typed-of min (closed {C = ((Unit |×| Unit ⇒ Bool ‼ ûₑ)
-                             ⇒ (Unit ⇒ (Unit ⇒ Unit ‼ (ûₑ ·̂ₑ ûₑ)) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ}
+  typed-of min (closed {C = ((Unit |×| Unit ⇒ Bool ‼ 𝟏̂ₑ)
+                             ⇒ (Unit ⇒ (Unit ⇒ Unit ‼ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ}
     (return (lam (return (lam (return (lam
       ((var (Tl-∷ (Tl-∷ Hd)) ok₀ · ⦉ var (Tl-∷ Hd) ok₀ , var Hd ok₀ ⦊)
        ⨟ (if var Hd ok₀
@@ -222,5 +222,5 @@ min-typed =
 expected-min : Scheme
 expected-min =
   ∀[ 3 , 0 , 1 ] α₂ <: α₁ ∧ α₀ <: α₁
-                 ∧ eternal α₀ ∨ ∣ ε₀ ∣̂ᵉ ≾ûᵣ ∧ eternal α₂ ∨ ∣ ε₀ ∣̂ᵉ ≾ûᵣ ⟹
-    ((α₂ |×| α₀ ⇒ Bool ‼ ε₀) ⇒ (α₂ ⇒ (α₀ ⇒ α₁ ‼ ε₀) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+                 ∧ eternal α₀ ∨ ∣ ε₀ ∣̂ᵉ ≾𝟏̂ᵣ ∧ eternal α₂ ∨ ∣ ε₀ ∣̂ᵉ ≾𝟏̂ᵣ ⟹
+    ((α₂ |×| α₀ ⇒ Bool ‼ ε₀) ⇒ (α₂ ⇒ (α₀ ⇒ α₁ ‼ ε₀) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ

@@ -111,7 +111,7 @@ sub-env-is-⟦⟧ˢ₀ (split-⟨⟩ s) W pW = ⟨⟩-congᶠ (sub-env-is-⟦⟧
 mutual
 
   sub-varᴾ : ∀ {Γ Γ' A ρ} → (s : Sub₀ [] Γ Γ') → Paramˢ₀ s
-           → (x : A ∈[ ρ ] Γ') → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+           → (x : A ∈[ ρ ] Γ') → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
            → Paramᵛ (sub-var₀ s x f)
   sub-varᴾ ⌜ r ⌝          p  x         f = tt
   sub-varᴾ (val-sub V)    pV Hd        f = pV
@@ -123,7 +123,7 @@ mutual
     sub-varᴾ-⟨⟩ s p y f (eternal? A)
 
   sub-varᴾ-⟨⟩ : ∀ {Γ Γ' A ρ ρ'} → (s : Sub₀ [] Γ Γ') → Paramˢ₀ s
-              → (y : A ∈[ ρ' ] Γ') → (f : ¬ Eternal A → ρ' ·ᵣ ρ ≾ᵣ uᵣ)
+              → (y : A ∈[ ρ' ] Γ') → (f : ¬ Eternal A → ρ' ·ᵣ ρ ≾ᵣ 𝟏ᵣ)
               → (dec : Dec (Eternal A))
               → Paramᵛ (sub-var₀-⟨⟩ {ρ = ρ} s y f dec)
   sub-varᴾ-⟨⟩ s p y f (yes et) =
@@ -132,7 +132,7 @@ mutual
     renᵛ _ (sub-var₀ s y (λ ¬et' → ≾ᵣ-zero-productˡ (f ¬et')))
            (sub-varᴾ s p y (λ ¬et' → ≾ᵣ-zero-productˡ (f ¬et')))
 sub-var-natˢ : ∀ {Γ Γ' A ρ} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
-             → (x : A ∈[ ρ ] Γ') → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+             → (x : A ∈[ ρ ] Γ') → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
              → ⟦ sub-var₀ s x f ⟧ᵛᵗ (sub-varᴾ s p x f)
              ≈ᵐ var-morphism f x ∘ᵐ ⟦ s ⟧ˢ₀ p
 
@@ -147,7 +147,7 @@ sub-var-natˢ {A = B} (val-sub W) pW Hd f with eternal? B
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-u et)) ⟨⟩-εᵘ∘η≡id))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-𝟏 et)) ⟨⟩-εᵘ∘η≡id))
               (∘ᵐ-identityˡ _))))))
 ... | no ¬et =
   ≈ᵐ-sym
@@ -420,17 +420,17 @@ mutual
     ∀ {Δ Δ' B} → (ss : Sub₀ [] Δ Δ') → (ps : Paramˢ₀ ss)
     → (H : (op : Op) → (ε'' : E)
          → Δ' ∷ type-of-gtype (param op)
-              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+              ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
            ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
     → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
     → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
          → ⟦ H op ε₂'' ⟧ᶜᵗ (pH op ε₂'')
-             ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
+             ∘ᵐ mapˣᵐ idᵐ ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
          ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' ⟧ᶜᵗ (pH op ε₁''))
     → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
          → ⟦ C-sub₀ (cong-∷-sub (cong-∷-sub ss)) (H op ε₂'') ⟧ᶜᵗ
               (subᶜˢ (cong-∷-sub (cong-∷-sub ss)) ps (H op ε₂'') (pH op ε₂''))
-             ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
+             ∘ᵐ mapˣᵐ idᵐ ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
          ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q)
               ∘ᵐ ⟦ C-sub₀ (cong-∷-sub (cong-∷-sub ss)) (H op ε₁'') ⟧ᶜᵗ
                    (subᶜˢ (cong-∷-sub (cong-∷-sub ss)) ps (H op ε₁'') (pH op ε₁'')))
@@ -616,7 +616,7 @@ mutual
                     (≈ᵐ-trans (substᵈ-≈ (ty-gty (arity op))
                                 (C-subst-natˢ (cong-∷-sub (cong-⟨⟩-sub s)) p M pM))
                               (≡→≈ᵐ (sym (substᵈ-∘ (ty-gty (arity op)) (⟦ M ⟧ᶜᵗ pM)
-                                           (⟨ mapᵉ (op-grade op) ⟩ᶠ (⟦ s ⟧ˢ₀ p)))))))))
+                                           (⟨ ∣ op-grade op ∣ᵉ ⟩ᶠ (⟦ s ⟧ˢ₀ p)))))))))
          (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (curryᵐ-nat _ _)))
          (≈ᵐ-trans (∘ᵐ-congˡ ([]-∘ᵐ _ _))
          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)

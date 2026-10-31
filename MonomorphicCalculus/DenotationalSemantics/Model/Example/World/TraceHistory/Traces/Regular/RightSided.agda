@@ -31,7 +31,7 @@ open import Grades.Traces.Base ℕᵀ Op
 open import Grades.Examples.Traces.Regular.Base Op n code code-injective
   using (enc)
 open import Grades.Examples.Traces.Regular.RightSided Op n code code-injective
-  using (Regular; u; _·ᴿ_; _≾_; _permits_; permits-∙; ≾⇒⊆; ∈u⁺; right-sided)
+  using (Regular; 𝟏; _·ᴿ_; _≾_; _permits_; permits-∙; ≾⇒⊆; ∈𝟏⁺; right-sided)
 
 open import MonomorphicCalculus.DenotationalSemantics.Model.World
 
@@ -51,8 +51,8 @@ open _⊑ʳ[_]_
 
 -- reflexivity at the unit grade: the empty run
 
-⊑ʳ-refl : ∀ {w} → w ⊑ʳ[ u ] w
-⊑ʳ-refl {w} = mkʳ ε (∙-identityʳ w) ∈u⁺
+⊑ʳ-refl : ∀ {w} → w ⊑ʳ[ 𝟏 ] w
+⊑ʳ-refl {w} = mkʳ ε (∙-identityʳ w) ∈𝟏⁺
 
 -- transitivity multiplies the grades: the two continuations sequence
 -- into one the product permits

@@ -41,7 +41,7 @@
 -- The rigid interval-letter grades share one history frame           --
 -- (`MonomorphicCalculus.DenotationalSemantics.Model.World.History`): --
 -- a continuation is read in the grade, operations by their grades    --
--- and delays by `of-dur`, and is admitted when its reading is below  --
+-- and delays by `ι`, and is admitted when its reading is below       --
 -- the grade.                                                         --
 --                                                                    --
 -- The timed and finite-subset trace grades have a frame of either    --
@@ -203,7 +203,7 @@ import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Product.Lef
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Product.RightSidedTimeLevel
 
 -- time points and energy spent, the energy frame being the time frame
--- along the identity, which ignores `of-dur`
+-- along the identity, which ignores `ι`
 
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Product.RightSidedTimeEnergy
 

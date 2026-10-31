@@ -22,7 +22,7 @@
 -- condition `min ≤ max` of the target.                               --
 --                                                                    --
 -- The `unbounded` of the cap is measured by `∞`, so the two greatest --
--- grades correspond, `[ u , unbounded ]` above and `[ 0 , ∞ ]`       --
+-- grades correspond, `[ 𝟏 , unbounded ]` above and `[ 0 , ∞ ]`       --
 -- below; neither is absorbing.                                       --
 ------------------------------------------------------------------------
 
@@ -71,7 +71,7 @@ open import Grades.Traces.MaxDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
 open import Grades.Examples.Traces.Timed.TwoSided
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
-  using (TwoSided; lo; hi; lo◇hi; _·ᵗˢ_; _⊔ᵗˢ_; ⊤ᵗˢ; of-durᵗˢ; two-sided;
+  using (TwoSided; lo; hi; lo◇hi; _·ᵗˢ_; _⊔ᵗˢ_; ⊤ᵗˢ; ιᵗˢ; two-sided;
          _≾ᵗˢ_; _◇ˢ₀_; ◇ˢ₀-dur)
 
 open import Grades.Examples.Traces.Timed.RightSided
@@ -196,11 +196,11 @@ two-sided-traces→intervals : two-sided →ᵍ two-sided-intervals-with-∞
 two-sided-traces→intervals = strictᵍ record
   { map          = mapₒ
   ; map-monotone = λ {i₁} {i₂} → mapₒ-monotone {i₁} {i₂}
-  ; map-u        = eqᵢ refl refl
+  ; map-𝟏        = eqᵢ refl refl
   ; map-·        = λ {i₁} {i₂} → mapₒ-· i₁ i₂
   ; map-⊤        = eqᵢ refl refl
   ; map-⊔        = λ {i₁} {i₂} → mapₒ-⊔ i₁ i₂
-  ; map-of-dur   = λ {n} →
+  ; map-ι        = λ {n} →
       eqᵢ (duration-⟨⟩ˡᵒ n)
           (cong ↑_ (trans (⊔-identityʳ (durationʰⁱ ⟨ n ⟩)) (duration-⟨⟩ʰⁱ n)))
   }
@@ -209,7 +209,7 @@ tracesToTwoSidedIntervalsGradeSystem : GradeSystem
 tracesToTwoSidedIntervalsGradeSystem = record
   { RGrade = two-sided-intervals-with-∞
   ; EGrade = two-sided
-  ; ∣_∣ᵉ   = two-sided-traces→intervals
+  ; ∣-∣ᵉ   = two-sided-traces→intervals
   }
 
 -- its hints
@@ -218,6 +218,6 @@ tracesToTwoSidedIntervalsGradeSystemʰ : SystemHints tracesToTwoSidedIntervalsGr
 tracesToTwoSidedIntervalsGradeSystemʰ = record
   { RHints      = two-sided-intervals-with-∞ʰ
   ; EHints      = noGradeHints
-  ; reflects-u? = nothing
+  ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

@@ -65,13 +65,13 @@ open import MonomorphicCalculus.DenotationalSemantics.Model.Modality.Eternal
 
 Clausesˢ : PSh → PSh → Set
 Clausesˢ P A = (op : Op) → (ε'' : E)
-             → P ×ᵖ (⟦ param op ⟧ᵍ ×ᵖ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A ε''))
+             → P ×ᵖ (⟦ param op ⟧ᵍ ×ᵖ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A ε''))
                  →ᵖ Tᵒ A (op-grade op ·ₑ ε'')
 
 Monoˢ : ∀ {P A} → Clausesˢ P A → Set
 Monoˢ {P} {A} cl = ∀ (op : Op) {εa εb} → (q : εa ≾ₑ εb)
                  → cl op εb ∘ᵖ mapˣᵐ idᵖ (mapˣᵐ idᵖ
-                       ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵖ (T-≤ q))))
+                       ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵖ (T-≤ q))))
                  ≈ᵖ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵖ cl op εa
 
 Handlerˢ : PSh → PSh → Set
@@ -88,7 +88,7 @@ clause-mono′ = proj₂
 
 coerced-box-fun : ∀ {A B ρ εa εb w w' w''} → (q : εa ≾ₑ εb)
                 → (bx : carrier ([ ρ ]ᵒ (A ⇒ᵖ Tᵒ B εa)) w)
-                → (r : w ⊑[ ρ ] w') → (s : w' ⊑[ uᵣ ] w'') → (y : carrier A w'')
+                → (r : w ⊑[ ρ ] w') → (s : w' ⊑[ 𝟏ᵣ ] w'') → (y : carrier A w'')
                 → fun (fun (app ([ ρ ]ᶠ (map⇒ᵐ idᵖ (T-≤ q))) bx) r) s y
                 ≈ᵗ sub q (fun (fun bx r) s y)
 coerced-box-fun q bx r s y = sub-≈ (fun-irr (fun bx r) _ s y)
@@ -100,9 +100,9 @@ coerced-box-fun q bx r s y = sub-≈ (fun-irr (fun bx r) _ s y)
 clause-mono : ∀ {P A} → (h : Handlerˢ P A)
             → ∀ (op : Op) {εa εb w} → (q : εa ≾ₑ εb)
             → (pv : carrier P w) → (v : carrier ⟦ param op ⟧ᵍ w)
-            → (bx  : carrier ([ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A εa)) w)
-            → (bx' : carrier ([ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A εb)) w)
-            → (∀ {w'} (r : w ⊑[ mapᵉ (op-grade op) ] w') {w''} (s : w' ⊑[ uᵣ ] w'')
+            → (bx  : carrier ([ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A εa)) w)
+            → (bx' : carrier ([ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A εb)) w)
+            → (∀ {w'} (r : w ⊑[ ∣ op-grade op ∣ᵉ ] w') {w''} (s : w' ⊑[ 𝟏ᵣ ] w'')
                  (y : carrier ⟦ arity op ⟧ᵍ w'')
                → fun (fun bx' r) s y ≈ᵗ sub q (fun (fun bx r) s y))
             → app (clause h op εb) (pv , (v , bx'))
@@ -121,16 +121,16 @@ clause-mono {P} h op {εa} q pv v bx bx' rel =
 -- under each delay by `necᵉ`, so collapsing a delay must collapse that too.
 
 -- At a grade that is the unit, necessitating and reading back is the
--- identity (`necᵉ-≤` down to `uᵣ`, then `necᵉ-u`).
+-- identity (`necᵉ-≤` down to `𝟏ᵣ`, then `necᵉ-𝟏`).
 
-necᵉ-pt-u : ∀ {P ρ w} → (bc : Eternalᵒ P) → (u₀ : ρ ≃ᵣ uᵣ)
+necᵉ-pt-𝟏 : ∀ {P ρ w} → (bc : Eternalᵒ P) → (u₀ : ρ ≃ᵣ 𝟏ᵣ)
           → (pv : carrier P w) → (q₀ : w ⊑[ ρ ] w)
           → _≈_ P (fun (app (Eternalᵒ.necᵉ bc {ρ}) pv) q₀) pv
-necᵉ-pt-u {P} bc u₀ pv q₀ =
+necᵉ-pt-𝟏 {P} bc u₀ pv q₀ =
   ≈-trans P ([]-fun-irr (app (Eternalᵒ.necᵉ bc) pv) q₀
                (⊑-mono (≃ᵣ⇒≿ᵣ u₀) ⊑-refl))
   (≈-trans P (Eternalᵒ.necᵉ-≤ bc (≃ᵣ⇒≿ᵣ u₀) pv ⊑-refl)
-  (≈-trans P (Eternalᵒ.necᵉ-u bc pv ⊑-refl)
+  (≈-trans P (Eternalᵒ.necᵉ-𝟏 bc pv ⊑-refl)
              (transport-refl P pv)))
 
 -- Necessitating twice and reading back through the two steps agrees with
@@ -175,7 +175,7 @@ mutual
     sub (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) ε₀ ε'))
       (app (clause h op (ε₀ ·ₑ ε')) (pv , (v , handler-box bc pv h op k kc kn)))
   T-alg-of-handlerˢ {ε' = ε'} bc h pv (delay-node {ε = ε₀} τ k kn) =
-    sub (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) ε₀ ε'))
+    sub (≃ₑ⇒≿ₑ (·ₑ-assoc (ιₑ τ) ε₀ ε'))
       (delay-node τ (λ q → T-alg-of-handlerˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) q) (k q))
         (λ q r → ≈ᵗ-trans
           (T-alg-of-handlerˢ-congᵖ bc h (fun-nat (app (Eternalᵒ.necᵉ bc) pv) q r) (k (⊑ρ∘ᵘ q r)))
@@ -187,18 +187,18 @@ mutual
 
   -- The clause's boxed continuation, folded and rebundled. The eternal
   -- parameter `pv` is carried into the folded sub-computations at each future
-  -- world via `necᵉ` (which crosses the operation's box `[ mapᵉ (op-grade op) ]`).
+  -- world via `necᵉ` (which crosses the operation's box `[ ∣ op-grade op ∣ᵉ ]`).
 
   handler-box : ∀ {P A ε₀ ε' w} (bc : Eternalᵒ P) (pv : carrier P w) (h : Handlerˢ P A) (op : Op)
-      → (k : ∀ {w'} → w ⊑[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w'
+      → (k : ∀ {w'} → w ⊑[ ∣ op-grade op ∣ᵉ ] w' → carrier ⟦ arity op ⟧ᵍ w'
            → Tˢ (Tᵒ A ε') ε₀ w')
-      → (kc : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w')
+      → (kc : ∀ {w'} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w')
                 {y y' : carrier ⟦ arity op ⟧ᵍ w'}
             → _≈_ ⟦ arity op ⟧ᵍ y y' → k q y ≈ᵗ k q y')
-      → (kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (op-grade op) ] w') (r : w' ⊑[ uᵣ ] w'')
+      → (kn : ∀ {w' w''} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                 (y : carrier ⟦ arity op ⟧ᵍ w')
             → k (⊑ρ∘ᵘ q r) (transport ⟦ arity op ⟧ᵍ r y) ≈ᵗ transportᵗ r (k q y))
-      → [ mapᵉ (op-grade op) ]ᶜ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A (ε₀ ·ₑ ε')) w
+      → [ ∣ op-grade op ∣ᵉ ]ᶜ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A (ε₀ ·ₑ ε')) w
   handler-box {P = P} bc pv h op k kc kn = mk[]
     (λ q → mk⇒
       (λ r y → T-alg-of-handlerˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) (⊑ρ∘ᵘ q r)) (k (⊑ρ∘ᵘ q r) y))
@@ -235,13 +235,13 @@ mutual
     sub-congᵗ (delay-≈ (λ q → T-alg-of-handlerˢ-congᵗ bc h _ (ek q)))
   T-alg-of-handlerˢ-congᵗ bc h pv (sub-≈ et)             =
     sub-≈ (T-alg-of-handlerˢ-congᵗ bc h pv et)
-  T-alg-of-handlerˢ-congᵗ bc h pv sub-u                 = sub-uᵗ _ _
+  T-alg-of-handlerˢ-congᵗ bc h pv sub-𝟏                 = sub-𝟏ᵗ _ _
   T-alg-of-handlerˢ-congᵗ bc h pv sub-∘                 = sub-∘ᵗ _ _ _ _
   T-alg-of-handlerˢ-congᵗ {ε' = ε'} bc h pv
     (sub-delay {ε = ε₁} {ε' = ε₁'} {τ = τ} {e = e}) =
     ≈ᵗ-trans
       (sub-swapᵗ _ _ (·ₑ-monoʳ-≾ₑ (·ₑ-monoˡ-≾ₑ e))
-                     (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) ε₁' ε')) _)
+                     (≃ₑ⇒≿ₑ (·ₑ-assoc (ιₑ τ) ε₁' ε')) _)
       (sub-congᵗ sub-delay)
   -- The `op` case: the coercion pushed under the operation changes which clause
   -- the fold selects, and `clause-mono` is what identifies the two. The two
@@ -265,18 +265,18 @@ mutual
             (≈-refl P , (≈-refl ⟦ param op ⟧ᵍ , (λ q r y → ≈ᵗ-refl _))))))
   -- The fold regrades a delay node but leaves the node itself, and carries the
   -- eternal parameter under it by `necᵉ`; so both collapses are reapplied to
-  -- the folded continuations, with `necᵉ-pt-u`/`necᵉ-pt-·` collapsing the
+  -- the folded continuations, with `necᵉ-pt-𝟏`/`necᵉ-pt-·` collapsing the
   -- parameter alongside and proof irrelevance reconciling the regradings.
   T-alg-of-handlerˢ-congᵗ {ε' = ε'} bc h pv
     (delay-zero {ε = ε₀} {k = k} {q₀ = q₀} e) =
     ≈ᵗ-trans (sub-congᵗ (delay-zero {q₀ = q₀} delay0ᵉ))
     (≈ᵗ-trans (sub-congᵗ (sub-congᵗ
-                (T-alg-of-handlerˢ-congᵖ bc h (necᵉ-pt-u bc delay-uᵣ pv q₀) (k q₀))))
+                (T-alg-of-handlerˢ-congᵖ bc h (necᵉ-pt-𝟏 bc delay-𝟏ᵣ pv q₀) (k q₀))))
               (sub-∘ᵗ _ _ _ _))
   T-alg-of-handlerˢ-congᵗ {P = P} {ε' = ε'} bc h pv
     (delay-plus {ε = ε₀} {τ₁ = τ₁} {τ₂ = τ₂} {k = k} {kn = kn} {k' = k'} hk e) =
     ≈ᵗ-trans
-      (delay-plus-out (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ₂) ε₀ ε'))
+      (delay-plus-out (≃ₑ⇒≿ₑ (·ₑ-assoc (ιₑ τ₂) ε₀ ε'))
          (λ q₁ q₂ → T-alg-of-handlerˢ bc h
                       (fun (app (Eternalᵒ.necᵉ bc)
                                 (fun (app (Eternalᵒ.necᵉ bc) pv) q₁)) q₂)
@@ -289,7 +289,7 @@ mutual
                        (≈-sym P (necᵉ-pt-· bc (≃ᵣ⇒≾ᵣ delay-·ᵣ) pv q₁ q₂))
                        (k' q₁ q₂))
                      (T-alg-of-handlerˢ-congᵗ bc h _ (hk q₁ q₂)))
-         (≾ₑ-trans (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ (τ₁ +ᴰ τ₂)) ε₀ ε')) (·ₑ-monoˡ-≾ₑ e)) _)
+         (≾ₑ-trans (≃ₑ⇒≿ₑ (·ₑ-assoc (ιₑ (τ₁ +ᴰ τ₂)) ε₀ ε')) (·ₑ-monoˡ-≾ₑ e)) _)
       (≈ᵗ-sym (sub-∘ᵗ _ _ _ _))
   T-alg-of-handlerˢ-congᵗ bc h pv (≈ᵗ-sym et)           =
     ≈ᵗ-sym (T-alg-of-handlerˢ-congᵗ bc h pv et)
@@ -325,7 +325,7 @@ mutual
   -- the eternal parameter and the tree.
 
   T-alg-of-handlerˢ-nat : ∀ {P A ε ε' w w'} (bc : Eternalᵒ P) (h : Handlerˢ P A)
-                          (r : w ⊑[ uᵣ ] w') (pv : carrier P w)
+                          (r : w ⊑[ 𝟏ᵣ ] w') (pv : carrier P w)
                           (t : Tˢ (Tᵒ A ε') ε w)
                         → T-alg-of-handlerˢ bc h (transport P r pv) (transportᵗ r t)
                         ≈ᵗ transportᵗ r (T-alg-of-handlerˢ bc h pv t)

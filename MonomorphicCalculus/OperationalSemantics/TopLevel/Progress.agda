@@ -45,7 +45,7 @@ module PureTopLevelProgressTheorem (OpSemantics : TopLevelOpSemantics) where
                           → {S S' : 𝕊 []}
                           → {M : toCtx S ⊢C⦂ A ‼ ε}
                           → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
-                          → (prf : state-grade S' ·ᵣ mapᵉ ε' ≾ᵣ state-grade S ·ᵣ mapᵉ ε)
+                          → (prf : state-grade S' ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ state-grade S ·ᵣ ∣ ε ∣ᵉ)
                           → (t : B <:ᵛ A)
                           → ⟨ S , M ⟩ ⟿ ⟨ S' , M' ⟩
                           ------------------------------------------------------------

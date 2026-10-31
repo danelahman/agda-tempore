@@ -33,7 +33,7 @@ open import Relation.Nullary.Decidable
 open import Grades.Base using (GradeMorphism)
 
 open import Grades.Examples.Time.Dense.RightSided
-  using (𝕀ᵣ; ↑_; ℚ≥0; _/_; #_; nonZero; uₒ-least;
+  using (𝕀ᵣ; ↑_; ℚ≥0; _/_; #_; nonZero; 𝟏ₒ-least;
          dense-right-sided-intervals; right-sided→dense)
   renaming ([0,_] to ⌈0,_⌉; _≤_ to _≤ᵈ_; _≤?_ to _≤ᵈ?_)
 
@@ -100,7 +100,7 @@ relaying =
 
 -- half a unit is enough for a reading to go stale
 
-reading-stale-after-sampling : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
+reading-stale-after-sampling : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ 𝟏ᵣ)
 reading-stale-after-sampling = ≰ᵈ!
 
 ------------------------------------------------------------------------
@@ -114,7 +114,7 @@ relaxing-a-deadline =
   coerce ≤ᵈ! (perform read ⋆ (perform send here (return ⋆)))
 
 tightening-a-deadline :
-  ¬ (opTime read ·ₑ (opTime send ·ₑ uₑ) ≾ₑ [0, 23 / 4 ])
+  ¬ (opTime read ·ₑ (opTime send ·ₑ 𝟏ₑ) ≾ₑ [0, 23 / 4 ])
 tightening-a-deadline = ≰ᵈ!
 
 ------------------------------------------------------------------------
@@ -147,7 +147,7 @@ claim-after-relaying =
 -- and the claim is refused
 
 rounded-up-it-expires :
-  ¬ (uᵣ ·ᵣ ticks read ·ᵣ ticks send ≾ᵣ [0, # 6 ])
+  ¬ (𝟏ᵣ ·ᵣ ticks read ·ᵣ ticks send ≾ᵣ [0, # 6 ])
 rounded-up-it-expires = ≰ᵈ!
 
 -- A lease of three and a half units: idling may spend any part of it,
@@ -192,13 +192,13 @@ claim-after-idling =
 
 -- a quarter unit more of idling overruns it
 
-idling-overruns : ¬ (uᵣ ·ᵣ of-durʳ (15 / 4) ≾ᵣ half-tick-lease)
+idling-overruns : ¬ (𝟏ᵣ ·ᵣ ιᵣ (15 / 4) ≾ᵣ half-tick-lease)
 idling-overruns = ≰ᵈ!
 
 -- and so does a second reading after the idling
 
 sampling-twice-overruns :
-  ¬ (uᵣ ·ᵣ of-durʳ (# 3) ·ᵣ opTime read ·ᵣ opTime read ≾ᵣ half-tick-lease)
+  ¬ (𝟏ᵣ ·ᵣ ιᵣ (# 3) ·ᵣ opTime read ·ᵣ opTime read ≾ᵣ half-tick-lease)
 sampling-twice-overruns = ≰ᵈ!
 
 ------------------------------------------------------------------------
@@ -214,8 +214,8 @@ forwarded =
 -- a clause may drop its continuation: returning at once meets every
 -- deadline
 
-nothing-fits : (op : Op) → (ε'' : E) → uₑ ≾ₑ op-grade op ·ₑ ε''
-nothing-fits op ε'' = uₒ-least (op-grade op ·ₑ ε'')
+nothing-fits : (op : Op) → (ε'' : E) → 𝟏ₑ ≾ₑ op-grade op ·ₑ ε''
+nothing-fits op ε'' = 𝟏ₒ-least (op-grade op ·ₑ ε'')
 
 suppressed : [] ⊢C⦂ Unit ‼ [0, # 3 ]
 suppressed =
@@ -226,12 +226,12 @@ suppressed =
 
 -- the barrier `⊤ᵣ` is `[0, ∞ ]`, so no clause may close over a reading
 
-reading-stale-at-⊤ : ¬ (uᵣ ·ᵣ ⊤ᵣ ≾ᵣ uᵣ)
+reading-stale-at-⊤ : ¬ (𝟏ᵣ ·ᵣ ⊤ᵣ ≾ᵣ 𝟏ᵣ)
 reading-stale-at-⊤ ()
 
 no-reporting : (op : Op) → (ε'' : E)
-             → ¬ (uᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ uᵣ)
+             → ¬ (𝟏ᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ 𝟏ᵣ)
 no-reporting op ε'' bound =
   reading-stale-at-⊤
-    (≾ᵣ-zero-productˡ {uᵣ ·ᵣ ⊤ᵣ} {op-grade op}
-      (≾ᵣ-zero-productˡ {uᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op} {ε''} bound))
+    (≾ᵣ-zero-productˡ {𝟏ᵣ ·ᵣ ⊤ᵣ} {op-grade op}
+      (≾ᵣ-zero-productˡ {𝟏ᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op} {ε''} bound))

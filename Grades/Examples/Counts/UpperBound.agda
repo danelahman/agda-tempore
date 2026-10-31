@@ -40,14 +40,14 @@ open import Util.Equality
 
 untimed : {D : Duration} → Grade D → Grade D
 untimed G = record G
-  { of-dur      = λ _ → u
-  ; of-dur-zero = ≃-refl
-  ; of-dur-plus = ≃-sym (·-identityˡ u)
+  { ι           = λ _ → 𝟏
+  ; ι-zero = ≃-refl
+  ; ι-plus = ≃-sym (·-identityˡ 𝟏)
   }
   where open Grade G
 
 untimedʰ : {D : Duration} {G : Grade D} → GradeHints G → GradeHints (untimed G)
-untimedʰ H = record { u-least? = H.u-least? ; ·-comm? = H.·-comm? ; plus? = H.plus? }
+untimedʰ H = record { 𝟏-least? = H.𝟏-least? ; ·-comm? = H.·-comm? ; plus? = H.plus? }
   where module H = GradeHints H
 
 ------------------------------------------------------------------------
@@ -62,7 +62,7 @@ counts-upper-boundʰ = indexedʰ (untimed right-sided-intervals) (untimedʰ righ
 -- "at most `k` of the operation `s`", none of the others
 
 upto : ℕ → 𝕀ᵣ → Map 𝕀ᵣ
-upto s k = Grade.u right-sided-intervals ∣ ((s , k) ∷ [])
+upto s k = Grade.𝟏 right-sided-intervals ∣ ((s , k) ∷ [])
 
 ------------------------------------------------------------------------
 -- Restriction to the first `n` names
@@ -84,7 +84,7 @@ module _ (n : ℕ) where
   restrictᵍ = record
     { map          = restrict
     ; map-monotone = λ p → P.tabulate-≾ᵛ (λ i → pointwise⁻ _≾ᴳ_ p (toℕ i))
-    ; map-u        = ≡⇒≃ᵛ (P.tabulate-uᵛ _ (λ _ → refl))
+    ; map-𝟏        = ≡⇒≃ᵛ (P.tabulate-𝟏ᵛ _ (λ _ → refl))
     ; map-·        = λ {f} {g} → ≡⇒≃ᵛ
         (trans (tabulate-cong (λ i → !-map₂ _·ᴳ_ f g (toℕ i)))
                (P.tabulate-·ᵛ (λ i → f ! toℕ i) (λ i → g ! toℕ i)))
@@ -92,5 +92,5 @@ module _ (n : ℕ) where
     ; map-⊔        = λ {f} {g} → ≡⇒≃ᵛ
         (trans (tabulate-cong (λ i → !-map₂ _⊔ᴳ_ f g (toℕ i)))
                (P.tabulate-⊔ᵛ (λ i → f ! toℕ i) (λ i → g ! toℕ i)))
-    ; map-of-dur   = ≡⇒≃ᵛ (P.tabulate-uᵛ _ (λ _ → refl))
+    ; map-ι        = ≡⇒≃ᵛ (P.tabulate-𝟏ᵛ _ (λ _ → refl))
     }

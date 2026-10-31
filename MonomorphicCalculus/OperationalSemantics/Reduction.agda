@@ -62,7 +62,7 @@ caseL-reduct (inj₂ (W , L)) M N =
   (N [ split-[] ↦ V-rename wk-ren L ]c) [ split-[] ↦ W ]c
 
 recL-reduct : ∀ {Γ A B ε} → ListView Γ A → Γ ⊢C⦂ B ‼ ε
-            → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε
+            → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε
             → ε ·ₑ ε ≾ₑ ε
             → Γ ⊢C⦂ B ‼ ε
 recL-reduct (inj₁ _)       M N p = M
@@ -79,7 +79,7 @@ case+-reduct (inj₂ W) M N = N [ split-[] ↦ W ]c
 -- The reduct of a comparison: the relation's truth on the operands' data
 
 cmp-reduct : ∀ {Γ A} {S : 𝕊 Γ} → Cmp → (V W : toCtx S ⊢V⦂ A) → Eternal A
-           → toCtx S ⊢C⦂ Bool ‼ uₑ
+           → toCtx S ⊢C⦂ Bool ‼ 𝟏ₑ
 cmp-reduct ⋈ V W et = return ⌈ holds ⋈ (compareᵈ et (⌊ et ⌋ᵈ V) (⌊ et ⌋ᵈ W)) ⌉ᵇ
 
 mutual
@@ -124,7 +124,7 @@ mutual
                    → {S : 𝕊 []}
                    → {V : toCtx S ⊢V⦂ |List| A}
                    → {M : toCtx S ⊢C⦂ B ‼ ε}
-                   → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+                   → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
                    → {p : ε ·ₑ ε ≾ₑ ε}
                      ------------------------------------------------------------
                    → ⟨ S , recL V M N p ⟩ ⟶ ⟨ S , recL-reduct (listᵛ V) M N p ⟩
@@ -174,7 +174,7 @@ mutual
         RECℕ-ZERO  : ∀ {B ε}
                    → {S : 𝕊 []}
                    → {M : toCtx S ⊢C⦂ B ‼ ε}
-                   → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+                   → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
                    → {p : ε ·ₑ ε ≾ₑ ε}
                      --------------------------------------
                    → ⟨ S , recℕ zero M N p ⟩ ⟶ ⟨ S , M ⟩
@@ -183,7 +183,7 @@ mutual
                    → {S : 𝕊 []}
                    → {V : toCtx S ⊢V⦂ Nat}
                    → {M : toCtx S ⊢C⦂ B ‼ ε}
-                   → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+                   → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
                    → {p : ε ·ₑ ε ≾ₑ ε}
                      ------------------------------------------------------------
                    → ⟨ S , recℕ (succ V) M N p ⟩ ⟶
@@ -205,10 +205,10 @@ mutual
                    → {A A₀ B : VType}
                    → {S S' : 𝕊 []}
                    → {M : toCtx S ⊢C⦂ A ‼ ε₁}
-                   → {N : ((toCtx S) ⟨ mapᵉ ε₁ ⟩ ∷ A) ⊢C⦂ B ‼ ε₂}
+                   → {N : ((toCtx S) ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A) ⊢C⦂ B ‼ ε₂}
                    → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
                    → (M⟶M' : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
-                   → (δε₃≾ε₁ : ≤ₛ-grade (step-extends-state M⟶M') ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
+                   → (δε₃≾ε₁ : ≤ₛ-grade (step-extends-state M⟶M') ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
                     --------------------------------------------------------------------
                    → ⟨ S , M ⨟ N ⟩ ⟶
                      ⟨ S' , M' ⨟ subCtx (step-refines-type M⟶M')
@@ -220,12 +220,12 @@ mutual
         SEQ-RET    : ∀ {A B ε}
                    → {S : 𝕊 []}
                    → {V : toCtx S ⊢V⦂ A}
-                   → {N : (toCtx S ⟨ mapᵉ uₑ ⟩ ∷ A) ⊢C⦂ B ‼ ε}
+                   → {N : (toCtx S ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A) ⊢C⦂ B ‼ ε}
                      --------------------------------------------
                    → ⟨ S , return V ⨟ N ⟩ ⟶
                      ⟨ S , (C-rename
                              (cong-∷-ren
-                               ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren)))
+                               ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)))
                               N) [ split-[] ↦ V ]c ⟩
 
         -- sequencing an operation: float it out, the sequel joining its
@@ -233,8 +233,8 @@ mutual
         SEQ-OP     : ∀ {A B ε ε' op} 
                    → {S : 𝕊 []} 
                    → {V : (toCtx S) ⊢V⦂ type-of-gtype (param op)} 
-                   → {M : toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε} 
-                   → {N : toCtx S ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε'} 
+                   → {M : toCtx S ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε} 
+                   → {N : toCtx S ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'} 
                     -----------------------------------------------------------------------------------
                    → ⟨ S , (perform op V M) ⨟ N  ⟩ ⟶
                      ⟨ S , ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
@@ -246,9 +246,9 @@ mutual
         -- delay: let time pass, moving the lock into the state
         DELAY      : ∀ {A τ ε}
                    → {S : 𝕊 []}
-                   → {M : toCtx S ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε} → 
+                   → {M : toCtx S ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε} → 
                      -------------------------------------------------------------
-                     ⟨ S , (delay τ M) ⟩ ⟶ ⟨ grade-pass S (of-durʳ τ) , M ⟩
+                     ⟨ S , (delay τ M) ⟩ ⟶ ⟨ grade-pass S (ιᵣ τ) , M ⟩
 
         -- handling a returned value: run the return clause
         HANDLE-RET : ∀ {A B ε}
@@ -259,14 +259,14 @@ mutual
                         → (ε' : E)
                         → toCtx S ⟨ ⊤ᵣ ⟩
                                   ∷ type-of-gtype (param op)
-                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε')
+                                  ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε')
                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε')}
-                   → {N : toCtx S ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε}
+                   → {N : toCtx S ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε}
                      --------------------------------------------------------------------------
                    → ⟨ S , handle return V `with handler N H ⟩ ⟶
                      ⟨ S , (C-rename
                              (cong-∷-ren
-                               (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren))
+                               (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren))
                              N) [ split-[] ↦ V ]c ⟩
                      
         -- handling: step the handled computation, carrying time and state forward
@@ -276,12 +276,12 @@ mutual
                     → {H : (op : Op) → (ε₃ : E) →
                          toCtx S ⟨ ⊤ᵣ ⟩
                                  ∷ type-of-gtype (param op)
-                                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₃)
+                                 ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε₃)
                                ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)}
-                    → {N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂}
+                    → {N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂}
                     → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₁'}
                     → (M⟶M' : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
-                    → (δε₁'≾ε₁ : ≤ₛ-grade (step-extends-state M⟶M') ·ᵣ mapᵉ ε₁' ≾ᵣ mapᵉ ε₁)
+                    → (δε₁'≾ε₁ : ≤ₛ-grade (step-extends-state M⟶M') ·ᵣ ∣ ε₁' ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
                       -----------------------------------------------------------------------
                     → ⟨ S  , handle M `with handler N H ⟩ ⟶
                       ⟨ S' , handle M'
@@ -302,13 +302,13 @@ mutual
         HANDLE-OP   : ∀ {A B ε ε'' op}
                     → {S : 𝕊 []} 
                     → {V : toCtx S ⊢V⦂ type-of-gtype (param op)}
-                    → {M : toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
+                    → {M : toCtx S ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
                     → {H : (op' : Op) → (ε' : E) →
                              toCtx S ⟨ ⊤ᵣ ⟩
                                      ∷ type-of-gtype (param op')
-                                     ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε')
+                                     ∷ [ ∣ op-grade op' ∣ᵉ ] (type-of-gtype (arity op') ⇒ B ‼ ε')
                                    ⊢C⦂ B ‼ (op-grade op' ·ₑ ε')}
-                    → {N : toCtx S ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε''}
+                    → {N : toCtx S ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε''}
                       --------------------------------------------------------------------------
                     → ⟨ S , handle perform op V M `with handler N H ⟩ ⟶
                       ⟨ S , box _ (lam
@@ -322,7 +322,7 @@ mutual
                                       (λ op' ε' →
                                          C-rename
                                            (cong-∷-ren (cong-∷-ren
-                                             (barrier-wk-ren (mapᵉ (op-grade op))
+                                             (barrier-wk-ren ∣ op-grade op ∣ᵉ
                                                              (type-of-gtype (arity op)))))
                                            (H op' ε'))))
                              -- the clause is included into the context reached
@@ -372,11 +372,11 @@ mutual
         SUB-HANDLE  : ∀ {A A₁ B B₁ ε ε₁ ε' ε₁'}
                     → {S : 𝕊 []}
                     → {M : toCtx S ⊢C⦂ A ‼ ε}
-                    → {N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A₁ ⊢C⦂ B₁ ‼ ε₁'}
+                    → {N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B₁ ‼ ε₁'}
                     → {H : (op : Op) → (ε₃ : E) →
                          toCtx S ⟨ ⊤ᵣ ⟩
                                  ∷ type-of-gtype (param op)
-                                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B₁ ‼ ε₃)
+                                 ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B₁ ‼ ε₃)
                                ⊢C⦂ B₁ ‼ (op-grade op ·ₑ ε₃)}
                     → {p : A <:ᵛ A₁}
                     → {pε : ε ≾ₑ ε₁}
@@ -429,7 +429,7 @@ mutual
                     → {S : 𝕊 []}
                     → {V : toCtx S ⊢V⦂ Nat}
                     → {M : toCtx S ⊢C⦂ B ‼ ε}
-                    → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+                    → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
                     → {p : ε ·ₑ ε ≾ₑ ε}
                       ---------------------------------------------------------
                     → ⟨ S , recℕ (subV V Natₛ) M N p ⟩ ⟶ ⟨ S , recℕ V M N p ⟩
@@ -472,7 +472,7 @@ mutual
     step-extends-state (SEQ-STEP M⟶M' _)    = step-extends-state M⟶M'
     step-extends-state SEQ-RET              = id-suc
     step-extends-state SEQ-OP               = id-suc
-    step-extends-state DELAY                = ⟨⟩-suc (of-durʳ _) id-suc
+    step-extends-state DELAY                = ⟨⟩-suc (ιᵣ _) id-suc
     step-extends-state HANDLE-RET           = id-suc
     step-extends-state (HANDLE-STEP M⟶M' _) = step-extends-state M⟶M'
     step-extends-state HANDLE-OP            = id-suc
@@ -536,7 +536,7 @@ step-grade-≾ : ∀ {A B ε ε'}
              → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
              → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
              -------------------------------------------------
-             → ≤ₛ-grade (step-extends-state r) ·ᵣ mapᵉ ε' ≾ᵣ mapᵉ ε
+             → ≤ₛ-grade (step-extends-state r) ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ ∣ ε ∣ᵉ
 
 step-grade-≾ APP   = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ MATCH = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
@@ -553,22 +553,22 @@ step-grade-≾ RECℕ-SUCC = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} step _) =
   ≾ᵣ-trans
     (≃ᵣ⇒≾ᵣ
-      (≃ᵣ-trans (·ᵣ-cong ≃ᵣ-refl (map-·ᵉ {ε₃} {ε₂})) (≃ᵣ-sym (·ᵣ-assoc (≤ₛ-grade (step-extends-state step)) (mapᵉ ε₃) (mapᵉ ε₂)))))
+      (≃ᵣ-trans (·ᵣ-cong ≃ᵣ-refl (map-·ᵉ {ε₃} {ε₂})) (≃ᵣ-sym (·ᵣ-assoc (≤ₛ-grade (step-extends-state step)) ∣ ε₃ ∣ᵉ ∣ ε₂ ∣ᵉ))))
     (≾ᵣ-trans
       (·ᵣ-monoˡ-≾ᵣ (step-grade-≾ step))
       (≃ᵣ⇒≿ᵣ (map-·ᵉ {ε₁} {ε₂})))
 step-grade-≾ (SEQ-RET {ε = ε}) =
-  ≃ᵣ⇒≿ᵣ (≃ᵣ-trans (map-·ᵉ {uₑ} {ε}) (·ᵣ-cong map-uᵉ ≃ᵣ-refl))
+  ≃ᵣ⇒≿ᵣ (≃ᵣ-trans (map-·ᵉ {𝟏ₑ} {ε}) (·ᵣ-cong map-𝟏ᵉ ≃ᵣ-refl))
 step-grade-≾ SEQ-OP = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ (DELAY {τ = τ} {ε = ε}) =
   ≃ᵣ⇒≾ᵣ
-    (≃ᵣ-trans (·ᵣ-cong (·ᵣ-identityˡ (of-durʳ τ)) ≃ᵣ-refl) (≃ᵣ-sym (≃ᵣ-trans (map-·ᵉ {of-durᵉ τ} {ε}) (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl))))
+    (≃ᵣ-trans (·ᵣ-cong (·ᵣ-identityˡ (ιᵣ τ)) ≃ᵣ-refl) (≃ᵣ-sym (≃ᵣ-trans (map-·ᵉ {ιₑ τ} {ε}) (·ᵣ-cong map-ιᵉ ≃ᵣ-refl))))
 step-grade-≾ (HANDLE-RET {ε = ε}) =
-  ≃ᵣ⇒≿ᵣ (≃ᵣ-trans (map-·ᵉ {uₑ} {ε}) (·ᵣ-cong map-uᵉ ≃ᵣ-refl))
+  ≃ᵣ⇒≿ᵣ (≃ᵣ-trans (map-·ᵉ {𝟏ₑ} {ε}) (·ᵣ-cong map-𝟏ᵉ ≃ᵣ-refl))
 step-grade-≾ (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₁' = ε₁'} step _) =
   ≾ᵣ-trans
     (≃ᵣ⇒≾ᵣ
-      (≃ᵣ-trans (·ᵣ-cong ≃ᵣ-refl (map-·ᵉ {ε₁'} {ε₂})) (≃ᵣ-sym (·ᵣ-assoc (≤ₛ-grade (step-extends-state step)) (mapᵉ ε₁') (mapᵉ ε₂)))))
+      (≃ᵣ-trans (·ᵣ-cong ≃ᵣ-refl (map-·ᵉ {ε₁'} {ε₂})) (≃ᵣ-sym (·ᵣ-assoc (≤ₛ-grade (step-extends-state step)) ∣ ε₁' ∣ᵉ ∣ ε₂ ∣ᵉ))))
     (≾ᵣ-trans
       (·ᵣ-monoˡ-≾ᵣ (step-grade-≾ step))
       (≃ᵣ⇒≿ᵣ (map-·ᵉ {ε₁} {ε₂})))
@@ -597,7 +597,7 @@ step-invariants : ∀ {A B ε ε'}
                 → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
                 → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
                 → B <:ᵛ A                                               -- return types become more precise
-                × state-grade S' ·ᵣ mapᵉ ε' ≾ᵣ state-grade S ·ᵣ mapᵉ ε  -- effects become more precise
+                × state-grade S' ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ state-grade S ·ᵣ ∣ ε ∣ᵉ  -- effects become more precise
 
 step-invariants r =
   step-refines-type r ,
@@ -649,14 +649,14 @@ CASEL-CONS : ∀ {A C} {S : 𝕊 []} {V : toCtx S ⊢V⦂ A} {W : toCtx S ⊢V�
 CASEL-CONS = CASEL
 
 RECL-NIL   : ∀ {A B ε} {S : 𝕊 []} {M : toCtx S ⊢C⦂ B ‼ ε}
-             {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+             {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
              {p : ε ·ₑ ε ≾ₑ ε}
            → ⟨ S , recL nil M N p ⟩ ⟶ ⟨ S , M ⟩
 RECL-NIL = RECL
 
 RECL-CONS  : ∀ {A B ε} {S : 𝕊 []} {V : toCtx S ⊢V⦂ A} {W : toCtx S ⊢V⦂ |List| A}
              {M : toCtx S ⊢C⦂ B ‼ ε}
-             {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+             {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
              {p : ε ·ₑ ε ≾ₑ ε}
            → ⟨ S , recL (cons V W) M N p ⟩ ⟶
              ⟨ S , coerce p (recL W M N p ⨟ recL-step V W N) ⟩

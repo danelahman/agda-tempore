@@ -11,7 +11,7 @@
 -- The energy frame is the right-sided tick frame reindexed along     --
 -- the identity. The identity is not a grade morphism, `energy` not   --
 -- counting time steps, but it is a lax monoid map, and a frame never --
--- sees `of-dur`.                                                     --
+-- sees `ι`.                                                          --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Product.RightSidedTimeEnergy where
@@ -41,7 +41,7 @@ energy→time : LaxMap energy right-sided-intervals
 energy→time = record
   { map      = λ c → c
   ; monotone = λ r → r
-  ; lax-u    = ≾-refl
+  ; lax-𝟏    = ≾-refl
   ; lax-·    = λ {a} {b} → ≾-refl {a ·ₒ b}
   }
 

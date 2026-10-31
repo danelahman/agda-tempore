@@ -14,7 +14,7 @@
 --                                                                    --
 -- The two rules that place the unit on opposite sides of the order:  --
 --                                                                    --
---   * the bound `ρ ≾ᵣ uᵣ` of `var` holds when `ρ` counts nothing, so --
+--   * the bound `ρ ≾ᵣ 𝟏ᵣ` of `var` holds when `ρ` counts nothing, so --
 --     a reading survives any amount of idling and no operation;      --
 --     after an operation it must be licensed.                        --
 --                                                                    --
@@ -37,9 +37,9 @@ open import Data.Unit using (tt)
 
 open import Relation.Nullary using (¬_)
 
-open import Grades.Examples.Time.RightSided using (uₒ-least)
+open import Grades.Examples.Time.RightSided using (𝟏ₒ-least)
 open import Grades.Examples.Counts.AtMost
-  using (at-most-counts; upto; unlimited; uᵛ-least)
+  using (at-most-counts; upto; unlimited; 𝟏ᵛ-least)
 
 open import Grades.Examples.Worked.Operations
   using (Op; read; write; send)
@@ -95,12 +95,12 @@ idle-then-transmit =
 
 -- storing the reading first makes it stale for the transmission
 
-stale-after-storing : ¬ (uᵣ ·ᵣ opTime write ≾ᵣ uᵣ)
+stale-after-storing : ¬ (𝟏ᵣ ·ᵣ opTime write ≾ᵣ 𝟏ᵣ)
 stale-after-storing (_ , wrote , _ , _) = ≰! wrote
 
 -- and so a reading cannot be transmitted twice
 
-stale-after-transmitting : ¬ (uᵣ ·ᵣ opTime send ≾ᵣ uᵣ)
+stale-after-transmitting : ¬ (𝟏ᵣ ·ᵣ opTime send ≾ᵣ 𝟏ᵣ)
 stale-after-transmitting (_ , _ , sent , _) = ≰! sent
 
 ------------------------------------------------------------------------
@@ -165,7 +165,7 @@ sent-twice =
 
 -- a third claim, after the second transmission, is refused
 
-a-third-claim : ¬ (uᵣ ·ᵣ opTime send ·ᵣ opTime send ≾ᵣ licence)
+a-third-claim : ¬ (𝟏ᵣ ·ᵣ opTime send ·ᵣ opTime send ≾ᵣ licence)
 a-third-claim (_ , _ , second , _) = ≰! second
 
 -- idling and local work leave the licence as it was
@@ -195,7 +195,7 @@ branching =
 
 -- neither branch's own grade will do for the other
 
-storing-is-not-transmitting : ¬ (opTime write ·ₑ uₑ ≾ₑ opTime send)
+storing-is-not-transmitting : ¬ (opTime write ·ₑ 𝟏ₑ ≾ₑ opTime send)
 storing-is-not-transmitting (_ , wrote , _ , _) = ≰! wrote
 
 ------------------------------------------------------------------------
@@ -205,8 +205,8 @@ storing-is-not-transmitting (_ , wrote , _ , _) = ≰! wrote
 -- clauses do, so suppressing the operations spends the quota all the
 -- same.
 
-nothing-fits : (op : Op) → (ε'' : E) → uₑ ≾ₑ op-grade op ·ₑ ε''
-nothing-fits op ε'' = uᵛ-least uₒ-least (op-grade op ·ₑ ε'')
+nothing-fits : (op : Op) → (ε'' : E) → 𝟏ₑ ≾ₑ op-grade op ·ₑ ε''
+nothing-fits op ε'' = 𝟏ᵛ-least 𝟏ₒ-least (op-grade op ·ₑ ε'')
 
 suppressed : [] ⊢C⦂ Unit ‼ ⟪ upto 1 , upto 0 , upto 2 ⟫ᵐ
 suppressed =
@@ -225,12 +225,12 @@ forwarded =
 -- the barrier `⊤ᵣ` is unlimited on every counter, so no clause may
 -- close over a reading
 
-reading-stale-at-⊤ : ¬ (uᵣ ·ᵣ ⊤ᵣ ≾ᵣ uᵣ)
+reading-stale-at-⊤ : ¬ (𝟏ᵣ ·ᵣ ⊤ᵣ ≾ᵣ 𝟏ᵣ)
 reading-stale-at-⊤ (() , _)
 
 no-reporting : (op : Op) → (ε'' : E)
-             → ¬ (uᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ uᵣ)
+             → ¬ (𝟏ᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ 𝟏ᵣ)
 no-reporting op ε'' bound =
   reading-stale-at-⊤
-    (≾ᵣ-zero-productˡ {uᵣ ·ᵣ ⊤ᵣ} {op-grade op}
-      (≾ᵣ-zero-productˡ {uᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op} {ε''} bound))
+    (≾ᵣ-zero-productˡ {𝟏ᵣ ·ᵣ ⊤ᵣ} {op-grade op}
+      (≾ᵣ-zero-productˡ {𝟏ᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op} {ε''} bound))

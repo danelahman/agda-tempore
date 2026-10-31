@@ -140,9 +140,9 @@ mapₒ-⊔ any-run        Q              = sym (⊤ᵛ-⊔ᵛ (⊤-⊔-≡ ≾�
 ------------------------------------------------------------------------
 -- Time draws on no counter
 
-mapₒ-of-dur : (k : ℕ) → mapₒ (Grade.of-dur right-sided k) ≡ uᵛ
-mapₒ-of-dur k =
-  tabulate-uᵛ (need (⟨ k ⟩ ∷ []))
+mapₒ-ι : (k : ℕ) → mapₒ (Grade.ι right-sided k) ≡ 𝟏ᵛ
+mapₒ-ι k =
+  tabulate-𝟏ᵛ (need (⟨ k ⟩ ∷ []))
     (λ i → cong upto (trans (⊔-identityʳ (occ i ⟨ k ⟩)) (occ-⟨⟩ i k)))
 
 ------------------------------------------------------------------------
@@ -152,18 +152,18 @@ subsets→at-most-counts : right-sided →ᵍ at-most-counts n
 subsets→at-most-counts = strictᵍ record
   { map          = mapₒ
   ; map-monotone = λ {P} {Q} → mapₒ-monotone {P} {Q}
-  ; map-u        = mapₒ-of-dur 0
+  ; map-𝟏        = mapₒ-ι 0
   ; map-·        = λ {P} {Q} → mapₒ-· P Q
   ; map-⊤        = refl
   ; map-⊔        = λ {P} {Q} → mapₒ-⊔ P Q
-  ; map-of-dur   = λ {k} → mapₒ-of-dur k
+  ; map-ι        = λ {k} → mapₒ-ι k
   }
 
 subsetsToAtMostCountsGradeSystem : GradeSystem
 subsetsToAtMostCountsGradeSystem = record
   { RGrade = at-most-counts n
   ; EGrade = right-sided
-  ; ∣_∣ᵉ   = subsets→at-most-counts
+  ; ∣-∣ᵉ   = subsets→at-most-counts
   }
 
 -- its hints
@@ -172,6 +172,6 @@ subsetsToAtMostCountsGradeSystemʰ : SystemHints subsetsToAtMostCountsGradeSyste
 subsetsToAtMostCountsGradeSystemʰ = record
   { RHints      = (at-most-countsʰ n)
   ; EHints      = noGradeHints
-  ; reflects-u? = nothing
+  ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

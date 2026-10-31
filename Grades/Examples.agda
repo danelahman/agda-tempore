@@ -116,7 +116,7 @@ import Grades.Examples.Counts.Occurrences
 -- saying what the resource grade forgets.
 
 -- a grade read as both components, the projection being the identity:
--- nothing is forgotten, and `mapᵉ` drops out of the typing rules
+-- nothing is forgotten, and `∣_∣ᵉ` drops out of the typing rules
 
 import Grades.Examples.System.Identity
 

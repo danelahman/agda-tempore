@@ -53,7 +53,7 @@ open import Grades.Traces.Coverage.Decidable ℕᵀ Op costˡᵒ
 
 open import Grades.Examples.Traces.Timed.LeftSided
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
-  using (left-sided; _≾_; Antichain; traces; u; _·_; Trace; _∙_; _·ˢ_;
+  using (left-sided; _≾_; Antichain; traces; 𝟏; _·_; Trace; _∙_; _·ˢ_;
          ∙-identityʳ; ∙-assoc; ∙-cancelˡ; ε; n-◃⁻; ◃-∈; True-irr)
 
 open DecCoverage _≟ₒ_ using (_≼ᶜ?_)
@@ -80,10 +80,10 @@ open _⊑ᵇ[_]_
 -- reflexivity at the unit grade `{ ε }`: the empty continuation covers
 -- the empty guarantee
 
-⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ u ] w
+⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ 𝟏 ] w
 ⊑ᵇ-refl {w} =
   mkᵇ ε
-      (fromWitness {a? = any? (λ p → p ≼ᶜ? ε) (traces u)} (here (≼ᶜ-refl ε)))
+      (fromWitness {a? = any? (λ p → p ≼ᶜ? ε) (traces 𝟏)} (here (≼ᶜ-refl ε)))
       (∙-identityʳ w)
 
 -- transitivity multiplies the grades, sequencing the two

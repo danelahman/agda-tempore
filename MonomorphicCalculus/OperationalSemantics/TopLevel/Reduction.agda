@@ -45,9 +45,9 @@ module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
     OP-STEP : ∀ {A ε op}
             → {S : 𝕊 []} 
             → {V : (toCtx S) ⊢V⦂ type-of-gtype (param op)} 
-            → {M : toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε} 
+            → {M : toCtx S ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε} 
             → ⟨ S , perform op V M ⟩ ⟿
-              ⟨ grade-pass S (mapᵉ (op-grade op)) , M [ split-[] ↦ op-sem op V ]c ⟩
+              ⟨ grade-pass S ∣ op-grade op ∣ᵉ , M [ split-[] ↦ op-sem op V ]c ⟩
 
   -- Reflexive-transitive closure: a run of the top-level machine.
 
@@ -70,7 +70,7 @@ module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
                             → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
                             → ⟨ S , M ⟩ ⟿ ⟨ S' , M' ⟩
                             → B <:ᵛ A
-                            × state-grade S' ·ᵣ mapᵉ ε' ≾ᵣ state-grade S ·ᵣ mapᵉ ε
+                            × state-grade S' ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ state-grade S ·ᵣ ∣ ε ∣ᵉ
 
   top-level-step-invariants (⟶-STEP step) =
     step-invariants step

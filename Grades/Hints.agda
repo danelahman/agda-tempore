@@ -30,7 +30,7 @@ record GradeHints {D : Duration} (G : Grade D) : Set where
   field
 
     -- whether the unit is least
-    u-least? : Maybe (Minimum _≾_ u)
+    𝟏-least? : Maybe (Minimum _≾_ 𝟏)
 
     -- commutativity of `_·_`; the trace grades leave it out, as there
     -- it depends on whether `Op` is empty
@@ -42,7 +42,7 @@ record GradeHints {D : Duration} (G : Grade D) : Set where
 -- no hints
 
 noGradeHints : {D : Duration} {G : Grade D} → GradeHints G
-noGradeHints = record { u-least? = nothing ; ·-comm? = nothing ; plus? = λ _ → nothing }
+noGradeHints = record { 𝟏-least? = nothing ; ·-comm? = nothing ; plus? = λ _ → nothing }
 
 -- commutativity on the nose
 
@@ -55,15 +55,15 @@ comm-≡ G m c d = Grade.≃-reflexive G (m c d)
 
 record SystemHints (S : GradeSystem) : Set where
   open GradeSystem S
-  open GradeSystemInterface S using (E; R; mapᵉ; _≾ₑ_; _≾ᵣ_; uₑ; uᵣ)
+  open GradeSystemInterface S using (E; R; ∣_∣ᵉ; _≾ₑ_; _≾ᵣ_; 𝟏ₑ; 𝟏ᵣ)
   field
 
     RHints : GradeHints RGrade
     EHints : GradeHints EGrade
 
-    -- whether `∣_∣ᵉ` reflects the order at the unit, `∣ e ∣ ≾ u` giving
-    -- `e ≾ u`
-    reflects-u? : Maybe ((e : E) → mapᵉ e ≾ᵣ uᵣ → e ≾ₑ uₑ)
+    -- whether `∣_∣ᵉ` reflects the order at the unit, `∣ e ∣ᵉ ≾ 𝟏` giving
+    -- `e ≾ 𝟏`
+    reflects-𝟏? : Maybe ((e : E) → ∣ e ∣ᵉ ≾ᵣ 𝟏ᵣ → e ≾ₑ 𝟏ₑ)
 
     -- candidate values of an effect rigid of a deferred condition, from
     -- the number of occurrences of the rigids on a side of an ordering
@@ -76,7 +76,7 @@ record SystemHints (S : GradeSystem) : Set where
 noSystemHints : {S : GradeSystem} → SystemHints S
 noSystemHints = record
   { RHints = noGradeHints ; EHints = noGradeHints
-  ; reflects-u? = nothing ; witnesses = λ _ _ _ → [] }
+  ; reflects-𝟏? = nothing ; witnesses = λ _ _ _ → [] }
 
 -- The hints of a grade system, its grades' hints named as in
 -- `GradeSystemInterface`
@@ -86,7 +86,7 @@ module SystemHintsInterface {S : GradeSystem} (H : SystemHints S) where
   open SystemHints H public
 
   open GradeHints RHints public renaming
-    (u-least? to uᵣ-least?; ·-comm? to ·ᵣ-comm?; plus? to plusᵣ?)
+    (𝟏-least? to 𝟏ᵣ-least?; ·-comm? to ·ᵣ-comm?; plus? to plusᵣ?)
 
   open GradeHints EHints public renaming
-    (u-least? to uₑ-least?; ·-comm? to ·ₑ-comm?; plus? to plusₑ?)
+    (𝟏-least? to 𝟏ₑ-least?; ·-comm? to ·ₑ-comm?; plus? to plusₑ?)

@@ -3,7 +3,7 @@
 --                                                              --
 -- The closed grades of `Grades.Base` extended with variables   --
 -- of a scope, products and binary joins. Resource expressions  --
--- embed effect expressions along the morphism `mapᵉ`; effect   --
+-- embed effect expressions along the morphism `∣-∣ᵉ`; effect   --
 -- expressions do not embed resource expressions.               --
 ------------------------------------------------------------------
 
@@ -41,18 +41,18 @@ data RExp (Θ : Scope) : Set where
   rconst : R → RExp Θ                        -- closed resource grade
   _·̂ᵣ_   : RExp Θ → RExp Θ → RExp Θ          -- multiplication
   _⊔̂ᵣ_   : RExp Θ → RExp Θ → RExp Θ          -- binary join
-  ∣_∣̂ᵉ   : EExp Θ → RExp Θ                   -- image of an effect grade under `mapᵉ`
+  ∣_∣̂ᵉ   : EExp Θ → RExp Θ                   -- image of an effect grade under `∣-∣ᵉ`
 
 infixl 7 _·̂ᵣ_
 infixl 6 _⊔̂ᵣ_
 
 -- Units, as constants
 
-ûₑ : ∀ {Θ} → EExp Θ
-ûₑ = econst uₑ
+𝟏̂ₑ : ∀ {Θ} → EExp Θ
+𝟏̂ₑ = econst 𝟏ₑ
 
-ûᵣ : ∀ {Θ} → RExp Θ
-ûᵣ = rconst uᵣ
+𝟏̂ᵣ : ∀ {Θ} → RExp Θ
+𝟏̂ᵣ = rconst 𝟏ᵣ
 
 -- Action of the scope extensions on expressions
 
@@ -241,4 +241,4 @@ valʳ (rvar ())
 valʳ (rconst c) = c
 valʳ (ρ ·̂ᵣ ρ')  = valʳ ρ ·ᵣ valʳ ρ'
 valʳ (ρ ⊔̂ᵣ ρ')  = valʳ ρ ⊔ᵣ valʳ ρ'
-valʳ ∣ ε ∣̂ᵉ     = mapᵉ (valᵉ ε)
+valʳ ∣ ε ∣̂ᵉ     = ∣ valᵉ ε ∣ᵉ

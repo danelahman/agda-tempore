@@ -3,13 +3,13 @@
 --                                                                       --
 -- For any graded monad `M` of the model, the graded `[-]`-strength      --
 --                                                                       --
---   strᵀ : [ mapᵉ ε ]ᵒ A ×ᵐ Tᵒ B ε →ᵐ Tᵒ (A ×ᵐ B) ε                     --
+--   strᵀ : [ ∣ ε ∣ᵉ ]ᵒ A ×ᵐ Tᵒ B ε →ᵐ Tᵒ (A ×ᵐ B) ε                     --
 --                                                                       --
 -- corresponds to a graded `[-]`-enrichment                              --
 --                                                                       --
---   enrᵀ : [ mapᵉ ε ]ᵒ (A ⇒ᵐ B) →ᵐ Tᵒ A ε ⇒ᵐ Tᵒ B ε                     --
+--   enrᵀ : [ ∣ ε ∣ᵉ ]ᵒ (A ⇒ᵐ B) →ᵐ Tᵒ A ε ⇒ᵐ Tᵒ B ε                     --
 --                                                                       --
--- both boxed by the resource projection `mapᵉ ε` of the effect grade.   --
+-- both boxed by the resource projection `∣ ε ∣ᵉ` of the effect grade.   --
 --                                                                       --
 -- The two are inter-derivable (`enr-of-str` / `str-of-enr`), and        --
 -- these translations are mutually inverse (`str-of-enr-of-str`,         --
@@ -107,20 +107,20 @@ module _ (M : Monad) where
   -- morphism families (the naturality laws are the predicates below).
 
   Strᵀ : Set₁
-  Strᵀ = ∀ {A B ε} → [ mapᵉ ε ]ᵒ A ×ᵐ Tᵒ B ε →ᵐ Tᵒ (A ×ᵐ B) ε
+  Strᵀ = ∀ {A B ε} → [ ∣ ε ∣ᵉ ]ᵒ A ×ᵐ Tᵒ B ε →ᵐ Tᵒ (A ×ᵐ B) ε
 
   Enrᵀ : Set₁
-  Enrᵀ = ∀ {A B ε} → [ mapᵉ ε ]ᵒ (A ⇒ᵐ B) →ᵐ Tᵒ A ε ⇒ᵐ Tᵒ B ε
+  Enrᵀ = ∀ {A B ε} → [ ∣ ε ∣ᵉ ]ᵒ (A ⇒ᵐ B) →ᵐ Tᵒ A ε ⇒ᵐ Tᵒ B ε
 
   StrNat : Strᵀ → Set₁
   StrNat str = ∀ {A A' B B' ε} → (f : A →ᵐ A') → (g : B →ᵐ B')
-             → str {A'} {B'} {ε} ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ f) (Tᶠ g)
+             → str {A'} {B'} {ε} ∘ᵐ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ f) (Tᶠ g)
              ≈ᵐ Tᶠ (mapˣᵐ f g) ∘ᵐ str {A} {B}
 
   EnrNat : Enrᵀ → Set₁
   EnrNat enr = ∀ {A B C D ε} → (f : A →ᵐ B) → (g : C →ᵐ D)
              → map⇒ᵐ (Tᶠ f) (Tᶠ g) ∘ᵐ enr {B} {C} {ε}
-             ≈ᵐ enr {A} {D} ∘ᵐ [ mapᵉ ε ]ᶠ (map⇒ᵐ f g)
+             ≈ᵐ enr {A} {D} ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ (map⇒ᵐ f g)
 
   -- Enrichment from strength: strengthen `A ⇒ᵐ B` against a `Tᵒ A`, then
   -- evaluate inside the monad and curry.
@@ -134,7 +134,7 @@ module _ (M : Monad) where
   str-of-enr : Enrᵀ → Strᵀ
   str-of-enr enr {A} {B} {ε} =
        uncurryᵐ (enr {B} {A ×ᵐ B} {ε})
-    ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ (curryᵐ idᵐ)) idᵐ
+    ∘ᵐ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)) idᵐ
 
   -- The enrichment derived from the monad's strength.
 
@@ -153,18 +153,18 @@ module _ (M : Monad) where
   str-of-enr-of-str str str-nat {A} {B} {ε} =
     begin
          uncurryᵐ (curryᵐ (Tᶠ appᵐ ∘ᵐ str {B ⇒ᵐ (A ×ᵐ B)} {B} {ε}))
-      ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ (curryᵐ idᵐ)) idᵐ
+      ∘ᵐ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)) idᵐ
     ≈⟨ ∘ᵐ-congˡ (curryᵐ-uncurryᵐ-iso (Tᶠ appᵐ ∘ᵐ str)) ⟩
          (Tᶠ appᵐ ∘ᵐ str {B ⇒ᵐ (A ×ᵐ B)} {B} {ε})
-      ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ (curryᵐ idᵐ)) idᵐ
-    ≈⟨ ∘ᵐ-assoc (Tᶠ appᵐ) str (mapˣᵐ ([ mapᵉ ε ]ᶠ (curryᵐ idᵐ)) idᵐ) ⟩
+      ∘ᵐ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)) idᵐ
+    ≈⟨ ∘ᵐ-assoc (Tᶠ appᵐ) str (mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)) idᵐ) ⟩
          Tᶠ appᵐ
       ∘ᵐ str {B ⇒ᵐ (A ×ᵐ B)} {B} {ε}
-      ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ (curryᵐ idᵐ)) idᵐ
+      ∘ᵐ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)) idᵐ
     ≈⟨ ∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-cong ≈ᵐ-refl (≈ᵐ-sym T-idᵐ))) ⟩
          Tᶠ appᵐ
       ∘ᵐ str {B ⇒ᵐ (A ×ᵐ B)} {B} {ε}
-      ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ (curryᵐ idᵐ)) (Tᶠ idᵐ)
+      ∘ᵐ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)) (Tᶠ idᵐ)
     ≈⟨ ∘ᵐ-congʳ (str-nat (curryᵐ idᵐ) idᵐ) ⟩
          Tᶠ appᵐ
       ∘ᵐ Tᶠ (mapˣᵐ (curryᵐ idᵐ) idᵐ)
@@ -200,47 +200,47 @@ module _ (M : Monad) where
     begin
       curryᵐ (   Tᶠ appᵐ
               ∘ᵐ uncurryᵐ (enr {A} {(A ⇒ᵐ B) ×ᵐ A} {ε})
-              ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ (curryᵐ idᵐ)) idᵐ)
+              ∘ᵐ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)) idᵐ)
     ≈⟨ curryᵐ-cong
          (≈ᵐ-trans
            (≈ᵐ-sym (∘ᵐ-assoc (Tᶠ appᵐ)
                              (uncurryᵐ (enr {A} {(A ⇒ᵐ B) ×ᵐ A} {ε}))
-                             (mapˣᵐ ([ mapᵉ ε ]ᶠ (curryᵐ idᵐ)) idᵐ)))
+                             (mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)) idᵐ)))
            (∘ᵐ-congˡ (≈ᵐ-sym (uncurryᵐ-map⇒ᵐˡ (Tᶠ appᵐ) (enr {A} {(A ⇒ᵐ B) ×ᵐ A} {ε}))))) ⟩
       curryᵐ (   uncurryᵐ (map⇒ᵐ idᵐ (Tᶠ appᵐ) ∘ᵐ enr {A} {(A ⇒ᵐ B) ×ᵐ A} {ε})
-              ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ (curryᵐ idᵐ)) idᵐ)
+              ∘ᵐ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)) idᵐ)
     ≈⟨ curryᵐ-cong (∘ᵐ-congˡ (uncurryᵐ-cong
          (∘ᵐ-congˡ (map⇒ᵐ-cong (≈ᵐ-sym T-idᵐ) ≈ᵐ-refl)))) ⟩
       curryᵐ (   uncurryᵐ (map⇒ᵐ (Tᶠ idᵐ) (Tᶠ appᵐ) ∘ᵐ enr {A} {(A ⇒ᵐ B) ×ᵐ A} {ε})
-              ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ (curryᵐ idᵐ)) idᵐ)
+              ∘ᵐ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)) idᵐ)
     ≈⟨ curryᵐ-cong (∘ᵐ-congˡ (uncurryᵐ-cong (enr-nat idᵐ appᵐ))) ⟩
-      curryᵐ (   uncurryᵐ (enr {A} {B} {ε} ∘ᵐ [ mapᵉ ε ]ᶠ (map⇒ᵐ idᵐ appᵐ))
-              ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ (curryᵐ idᵐ)) idᵐ)
-    ≈˘⟨ curryᵐ-cong (uncurryᵐ-nat ([ mapᵉ ε ]ᶠ (curryᵐ idᵐ))
-                                  (enr {A} {B} {ε} ∘ᵐ [ mapᵉ ε ]ᶠ (map⇒ᵐ idᵐ appᵐ))) ⟩
-      curryᵐ (uncurryᵐ (   (enr {A} {B} {ε} ∘ᵐ [ mapᵉ ε ]ᶠ (map⇒ᵐ idᵐ appᵐ))
-                        ∘ᵐ [ mapᵉ ε ]ᶠ (curryᵐ idᵐ)))
+      curryᵐ (   uncurryᵐ (enr {A} {B} {ε} ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ appᵐ))
+              ∘ᵐ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)) idᵐ)
+    ≈˘⟨ curryᵐ-cong (uncurryᵐ-nat ([ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ))
+                                  (enr {A} {B} {ε} ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ appᵐ))) ⟩
+      curryᵐ (uncurryᵐ (   (enr {A} {B} {ε} ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ appᵐ))
+                        ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)))
     ≈⟨ uncurryᵐ-curryᵐ-iso
-         (   (enr {A} {B} {ε} ∘ᵐ [ mapᵉ ε ]ᶠ (map⇒ᵐ idᵐ appᵐ))
-          ∘ᵐ [ mapᵉ ε ]ᶠ (curryᵐ idᵐ)) ⟩
-         (enr {A} {B} {ε} ∘ᵐ [ mapᵉ ε ]ᶠ (map⇒ᵐ idᵐ appᵐ))
-      ∘ᵐ [ mapᵉ ε ]ᶠ (curryᵐ idᵐ)
-    ≈⟨ ∘ᵐ-assoc (enr {A} {B} {ε}) ([ mapᵉ ε ]ᶠ (map⇒ᵐ idᵐ appᵐ)) ([ mapᵉ ε ]ᶠ (curryᵐ idᵐ)) ⟩
+         (   (enr {A} {B} {ε} ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ appᵐ))
+          ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)) ⟩
+         (enr {A} {B} {ε} ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ appᵐ))
+      ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)
+    ≈⟨ ∘ᵐ-assoc (enr {A} {B} {ε}) ([ ∣ ε ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ appᵐ)) ([ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)) ⟩
          enr {A} {B} {ε}
-      ∘ᵐ [ mapᵉ ε ]ᶠ (map⇒ᵐ idᵐ appᵐ)
-      ∘ᵐ [ mapᵉ ε ]ᶠ (curryᵐ idᵐ)
+      ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ appᵐ)
+      ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ (curryᵐ idᵐ)
     ≈˘⟨ ∘ᵐ-congʳ ([]-∘ᵐ (curryᵐ idᵐ) (map⇒ᵐ idᵐ appᵐ)) ⟩
          enr {A} {B} {ε}
-      ∘ᵐ [ mapᵉ ε ]ᶠ (map⇒ᵐ idᵐ appᵐ ∘ᵐ curryᵐ idᵐ)
+      ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ appᵐ ∘ᵐ curryᵐ idᵐ)
     ≈⟨ ∘ᵐ-congʳ ([]-congᶠ (map⇒ᵐ-curryᵐ appᵐ idᵐ)) ⟩
          enr {A} {B} {ε}
-      ∘ᵐ [ mapᵉ ε ]ᶠ (curryᵐ (appᵐ ∘ᵐ idᵐ))
+      ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ (curryᵐ (appᵐ ∘ᵐ idᵐ))
     ≈⟨ ∘ᵐ-congʳ ([]-congᶠ (curryᵐ-cong (∘ᵐ-identityʳ appᵐ))) ⟩
          enr {A} {B} {ε}
-      ∘ᵐ [ mapᵉ ε ]ᶠ (curryᵐ appᵐ)
+      ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ (curryᵐ appᵐ)
     ≈⟨ ∘ᵐ-congʳ ([]-congᶠ (uncurryᵐ-curryᵐ-iso idᵐ)) ⟩
          enr {A} {B} {ε}
-      ∘ᵐ [ mapᵉ ε ]ᶠ idᵐ
+      ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ idᵐ
     ≈⟨ ∘ᵐ-congʳ []-idᵐ ⟩
          enr {A} {B} {ε}
       ∘ᵐ idᵐ
@@ -299,7 +299,7 @@ module _ (M : Monad) where
       curryᵐ (   Tᶠ g
               ∘ᵐ Tᶠ appᵐ
               ∘ᵐ str {B ⇒ᵐ C} {B} {ε}
-              ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ idᵐ) (Tᶠ f))
+              ∘ᵐ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ idᵐ) (Tᶠ f))
     ≈⟨ curryᵐ-cong (∘ᵐ-congʳ (∘ᵐ-congʳ (str-nat idᵐ f))) ⟩
       curryᵐ (   Tᶠ g
               ∘ᵐ Tᶠ appᵐ
@@ -329,15 +329,15 @@ module _ (M : Monad) where
     ≈˘⟨ curryᵐ-cong (∘ᵐ-congʳ (str-nat (map⇒ᵐ f g) idᵐ)) ⟩
       curryᵐ (   Tᶠ appᵐ
               ∘ᵐ str {A ⇒ᵐ D} {A} {ε}
-              ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ (map⇒ᵐ f g)) (Tᶠ idᵐ))
+              ∘ᵐ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ (map⇒ᵐ f g)) (Tᶠ idᵐ))
     ≈⟨ curryᵐ-cong (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-cong ≈ᵐ-refl T-idᵐ))) ⟩
       curryᵐ (   Tᶠ appᵐ
               ∘ᵐ str {A ⇒ᵐ D} {A} {ε}
-              ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ (map⇒ᵐ f g)) idᵐ)
+              ∘ᵐ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ (map⇒ᵐ f g)) idᵐ)
     ≈⟨ ≈ᵐ-trans (curryᵐ-cong (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-                (curryᵐ-nat ([ mapᵉ ε ]ᶠ (map⇒ᵐ f g)) (Tᶠ appᵐ ∘ᵐ str {A ⇒ᵐ D} {A} {ε})) ⟩
+                (curryᵐ-nat ([ ∣ ε ∣ᵉ ]ᶠ (map⇒ᵐ f g)) (Tᶠ appᵐ ∘ᵐ str {A ⇒ᵐ D} {A} {ε})) ⟩
          curryᵐ (Tᶠ appᵐ ∘ᵐ str {A ⇒ᵐ D} {A} {ε})
-      ∘ᵐ [ mapᵉ ε ]ᶠ (map⇒ᵐ f g)
+      ∘ᵐ [ ∣ ε ∣ᵉ ]ᶠ (map⇒ᵐ f g)
     ∎
 
   -- Hence the strength's derived enrichment is natural,

@@ -137,18 +137,18 @@ traces→left-sided-intervals : left-sided →ᵍ left-sided-intervals
 traces→left-sided-intervals = strictᵍ record
   { map          = mapₒ
   ; map-monotone = λ {P} {Q} → mapₒ-monotone {P} {Q}
-  ; map-u        = refl
+  ; map-𝟏        = refl
   ; map-·        = λ {P} {Q} → mapₒ-· P Q
   ; map-⊤        = refl
   ; map-⊔        = λ {P} {Q} → mapₒ-⊔ P Q
-  ; map-of-dur   = λ {n} → eq𝕀 (duration-⟨⟩ n)
+  ; map-ι        = λ {n} → eq𝕀 (duration-⟨⟩ n)
   }
 
 tracesToLeftSidedIntervalsGradeSystem : GradeSystem
 tracesToLeftSidedIntervalsGradeSystem = record
   { RGrade = left-sided-intervals
   ; EGrade = left-sided
-  ; ∣_∣ᵉ   = traces→left-sided-intervals
+  ; ∣-∣ᵉ   = traces→left-sided-intervals
   }
 
 -- its hints
@@ -157,6 +157,6 @@ tracesToLeftSidedIntervalsGradeSystemʰ : SystemHints tracesToLeftSidedIntervals
 tracesToLeftSidedIntervalsGradeSystemʰ = record
   { RHints      = left-sided-intervalsʰ
   ; EHints      = noGradeHints
-  ; reflects-u? = nothing
+  ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

@@ -383,14 +383,14 @@ typableᵛ-⇔ {Δ} {V} p = mk⇔ to from
 
 returnᵛ : ∀ {Θ} {Q : Hyps Θ} {Δ : PCtx} {V : RawV ∅ˢ 0} {X : OVType Θ}
         → (D : Q ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X) → ⌊ D ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
-        → Σ[ D' ∈ (Q ∣ ⌜ Δ ⌝ᵖ [ from∅ ]ᶜᵗˣ ⊢C⦂ X ‼ ûₑ) ] (⌊ D' ⌋ᶜ ≡ return V [ from∅ ]ᴿᶜ)
+        → Σ[ D' ∈ (Q ∣ ⌜ Δ ⌝ᵖ [ from∅ ]ᶜᵗˣ ⊢C⦂ X ‼ 𝟏̂ₑ) ] (⌊ D' ⌋ᶜ ≡ return V [ from∅ ]ᴿᶜ)
 returnᵛ {Δ = Δ} D e =
   return (ctx-substᵛ (sym (⌜⌝ᵖ-subst Δ from∅)) D) ,
   cong return (trans (⌊ctxᵛ⌋ (sym (⌜⌝ᵖ-subst Δ from∅)) D) e)
 
 typableᵛ→typable : ∀ {Δ V} → Typableᵛ Δ V → Typable ⌜ Δ ⌝ᵖ (return V)
 typableᵛ→typable (typableᵛ Θ₀ Q₀ X₀ D₀ e s) =
-  typable Θ₀ from∅ Q₀ (X₀ ‼ ûₑ) (proj₁ (returnᵛ D₀ e)) (proj₂ (returnᵛ D₀ e)) s
+  typable Θ₀ from∅ Q₀ (X₀ ‼ 𝟏̂ₑ) (proj₁ (returnᵛ D₀ e)) (proj₂ (returnᵛ D₀ e)) s
 
 -- The value of a derivation erasing to `return W`, at a subtype
 

@@ -38,7 +38,7 @@ module _ (F : World G) where
   []       ⊑ⱽ[ []     ] []         = 𝟙
   (w ∷ ws) ⊑ⱽ[ ρ ∷ ρs ] (w' ∷ ws') = (w ⊑[ ρ ] w') × (ws ⊑ⱽ[ ρs ] ws')
 
-  ⊑ⱽ-refl : ∀ {n} {ws : Vec W n} → ws ⊑ⱽ[ Grade.u (power n) ] ws
+  ⊑ⱽ-refl : ∀ {n} {ws : Vec W n} → ws ⊑ⱽ[ Grade.𝟏 (power n) ] ws
   ⊑ⱽ-refl {ws = []}    = tt
   ⊑ⱽ-refl {ws = _ ∷ _} = ⊑-refl , ⊑ⱽ-refl
 

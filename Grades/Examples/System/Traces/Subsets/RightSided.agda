@@ -101,11 +101,11 @@ subsets→right-sided-intervals : right-sided →ᵍ right-sided-intervals
 subsets→right-sided-intervals = strictᵍ record
   { map          = mapₒ
   ; map-monotone = λ {P} {Q} → mapₒ-monotone {P} {Q}
-  ; map-u        = refl
+  ; map-𝟏        = refl
   ; map-·        = λ {P} {Q} → mapₒ-· P Q
   ; map-⊤        = refl
   ; map-⊔        = λ {P} {Q} → mapₒ-⊔ P Q
-  ; map-of-dur   = λ {n} →
+  ; map-ι        = λ {n} →
       eq𝕀ᵣ (cong ↑_ (trans (⊔-identityʳ (duration ⟨ n ⟩)) (duration-⟨⟩ n)))
   }
 
@@ -113,7 +113,7 @@ subsetsToRightSidedIntervalsGradeSystem : GradeSystem
 subsetsToRightSidedIntervalsGradeSystem = record
   { RGrade = right-sided-intervals
   ; EGrade = right-sided
-  ; ∣_∣ᵉ   = subsets→right-sided-intervals
+  ; ∣-∣ᵉ   = subsets→right-sided-intervals
   }
 
 -- its hints
@@ -122,6 +122,6 @@ subsetsToRightSidedIntervalsGradeSystemʰ : SystemHints subsetsToRightSidedInter
 subsetsToRightSidedIntervalsGradeSystemʰ = record
   { RHints      = right-sided-intervalsʰ
   ; EHints      = noGradeHints
-  ; reflects-u? = nothing
+  ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

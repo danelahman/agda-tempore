@@ -42,8 +42,8 @@ open Past Pst
 open GroundEternal GE
 open import MonomorphicCalculus.DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj
-       using (Eternalᵒ; ⟨u≈⟩-counit; ⟨u≈⟩-counit-unit;
-              ⟨u≈⟩-eternalᵒ; ⟨u≈⟩-eternalᵒ-extᵉ)
+       using (Eternalᵒ; ⟨𝟏≈⟩-counit; ⟨𝟏≈⟩-counit-unit;
+              ⟨𝟏≈⟩-eternalᵒ; ⟨𝟏≈⟩-eternalᵒ-extᵉ)
 
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
@@ -60,7 +60,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Variables S
 ec-Eternalᵒ : ∀ {Γ} → EternalCtx Γ → Eternalᵒ ⟦ Γ ⟧ᶜᵗˣ
 ec-Eternalᵒ ec-[]          = 𝟙-eternalᵒ
 ec-Eternalᵒ (ec-∷ ec et)   = ×-eternalᵒ (ec-Eternalᵒ ec) (eternalᵛ-Eternalᵒ et)
-ec-Eternalᵒ (ec-⟨⟩ q p ec) = ⟨u≈⟩-eternalᵒ q p (ec-Eternalᵒ ec)
+ec-Eternalᵒ (ec-⟨⟩ q p ec) = ⟨𝟏≈⟩-eternalᵒ q p (ec-Eternalᵒ ec)
 
 ec-extᵉ : ∀ {Γ} → EternalCtx Γ → ∀ {ρ} → ⟨ ρ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ
 ec-extᵉ ec = Eternalᵒ.extᵉ (ec-Eternalᵒ ec)
@@ -85,7 +85,7 @@ evar-Hd : ∀ {Γ A} → (et : Eternal A)
         → eternalᵛ-extᵉ et ∘ᵐ var-proj (Hd {A} {Γ}) ≈ᵐ sndᵐ
 evar-Hd et =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-u et)) ⟨⟩-εᵘ∘η≡id))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-𝟏 et)) ⟨⟩-εᵘ∘η≡id))
             (∘ᵐ-identityˡ sndᵐ))
 
 -- Extensionality for maps into a product: agreeing on both projections.
@@ -99,17 +99,17 @@ prod-ext pf ps =
 -- Crossing a unit-equivalent lock: the morphism of a variable under the lock is
 -- the one below it, precomposed with the lock's counit.
 
-ec-var-lock : ∀ {Γ A ρ' ρ₀} → (p : ρ₀ ≾ᵣ uᵣ) → (et : Eternal A)
+ec-var-lock : ∀ {Γ A ρ' ρ₀} → (p : ρ₀ ≾ᵣ 𝟏ᵣ) → (et : Eternal A)
             → (y : A ∈[ ρ' ] Γ)
             → eternalᵛ-extᵉ et ∘ᵐ var-proj (Tl-⟨⟩ {ρ = ρ₀} y)
-            ≈ᵐ (eternalᵛ-extᵉ et ∘ᵐ var-proj y) ∘ᵐ ⟨u≈⟩-counit p
+            ≈ᵐ (eternalᵛ-extᵉ et ∘ᵐ var-proj y) ∘ᵐ ⟨𝟏≈⟩-counit p
 ec-var-lock p et y =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-μ et))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
   (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (≈ᵐ-sym (eternalᵛ-extᵉ-≤ et p))
-                                  (∘ᵐ-congˡ (eternalᵛ-extᵉ-u et))))
+                                  (∘ᵐ-congˡ (eternalᵛ-extᵉ-𝟏 et))))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-≤-nat _ p)))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -148,11 +148,11 @@ ec-var-alg (ec-⟨⟩ q p ec) et (Tl-⟨⟩ y) =
   (≈ᵐ-trans (∘ᵐ-congˡ (ec-var-alg ec et y))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
             (≈ᵐ-sym
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨u≈⟩-eternalᵒ-extᵉ q p (ec-Eternalᵒ ec)))
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨𝟏≈⟩-eternalᵒ-extᵉ q p (ec-Eternalᵒ ec)))
       (≈ᵐ-trans (∘ᵐ-congˡ (ec-var-lock p et y))
       (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
       (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨u≈⟩-counit-unit q p)))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨𝟏≈⟩-counit-unit q p)))
                 (∘ᵐ-congʳ (∘ᵐ-identityˡ _))))))))))))
 
 -- Renamings are interpreted at the empty ambient: that is where the language's

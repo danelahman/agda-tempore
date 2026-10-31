@@ -232,9 +232,9 @@ lk-irr refl b b' w w'
   rewrite ≾ᵣ-irrelevant b b' | <:ᵛ-irrelevant w w' = ≈ᵐ-refl
 
 -- Projecting the head variable through one lock and relaxing the redundant
--- `uᵣ ·ᵣ ρ` back to `ρ` is the (locked) second projection.
+-- `𝟏ᵣ ·ᵣ ρ` back to `ρ` is the (locked) second projection.
 
-hd-lookup : ∀ {Δ₀ B ρ} → (c : uᵣ ·ᵣ ρ ≾ᵣ ρ)
+hd-lookup : ∀ {Δ₀ B ρ} → (c : 𝟏ᵣ ·ᵣ ρ ≾ᵣ ρ)
           → ⟨⟩-≤ c ∘ᵐ var-proj (Tl-⟨⟩ {Γ = Δ₀ ∷ B} {ρ = ρ} Hd) ≈ᵐ ⟨ ρ ⟩ᶠ sndᵐ
 hd-lookup c =
   ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-∘ᵐ η sndᵐ)))
@@ -270,14 +270,14 @@ unbox-step {σ = σ} {lkᵒ = lkᵒ} eM elk =
 -- them as lemmas is what lets the `eternal?` split reduce `var-morphism`
 -- inside a recursive call's type.)
 
-var-morphism-et : ∀ {Γ B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Eternal B → ρ' ≾ᵣ uᵣ)
+var-morphism-et : ∀ {Γ B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Eternal B → ρ' ≾ᵣ 𝟏ᵣ)
                 → (et : Eternal B)
                 → var-morphism f y ≈ᵐ eternalᵛ-extᵉ et ∘ᵐ var-proj y
 var-morphism-et {B = B} y f et with eternal? B
 ... | yes et' = ∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et' et)
 ... | no ¬et' = ⊥-elim (¬et' et)
 
-var-morphism-¬et : ∀ {Γ B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Eternal B → ρ' ≾ᵣ uᵣ)
+var-morphism-¬et : ∀ {Γ B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Eternal B → ρ' ≾ᵣ 𝟏ᵣ)
                  → (¬et : ¬ Eternal B)
                  → var-morphism f y ≈ᵐ εᵘ ∘ᵐ ⟨⟩-≤ (f ¬et) ∘ᵐ var-proj y
 var-morphism-¬et {B = B} y f ¬et with eternal? B
@@ -291,9 +291,9 @@ var-morphism-¬et {B = B} y f ¬et with eternal? B
 
 boxed-proj : ∀ {Γ A ρ}
            → Σ[ ρ₀ ∈ R ] Σ[ A₀ ∈ VType ] Σ[ ρ' ∈ R ]
-               (([ ρ₀ ] A₀ ∈[ ρ' ] Γ) × (([ ρ₀ ] A₀) <:ᵛ ([ ρ ] A)) × ρ' ≾ᵣ uᵣ)
-           → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟨ uᵣ ⟩ᵒ ⟦ [ ρ ] A ⟧ᵛ
-boxed-proj (_ , _ , _ , x , w , b) = ⟨ uᵣ ⟩ᶠ ⟦ w ⟧<:ᵛ ∘ᵐ ⟨⟩-≤ b ∘ᵐ var-proj x
+               (([ ρ₀ ] A₀ ∈[ ρ' ] Γ) × (([ ρ₀ ] A₀) <:ᵛ ([ ρ ] A)) × ρ' ≾ᵣ 𝟏ᵣ)
+           → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟨ 𝟏ᵣ ⟩ᵒ ⟦ [ ρ ] A ⟧ᵛ
+boxed-proj (_ , _ , _ , x , w , b) = ⟨ 𝟏ᵣ ⟩ᶠ ⟦ w ⟧<:ᵛ ∘ᵐ ⟨⟩-≤ b ∘ᵐ var-proj x
 
 grad-typ-var-nat : ∀ {Γ A ρ} → (W : Γ ⊢V⦂ [ ρ ] A) → (pW : Paramᵛ W)
                  → boxed-proj (grad-typ⇒var<: W) ≈ᵐ η ∘ᵐ ⟦ W ⟧ᵛᵗ pW

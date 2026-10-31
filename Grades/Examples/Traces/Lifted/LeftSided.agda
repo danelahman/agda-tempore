@@ -88,22 +88,22 @@ open R public hiding (≾-antisym)
 -- The unit `{ ε }` guarantees nothing, the empty trace being covered by
 -- every run, so it is already the greatest grade.
 
-≾-⊤ : (P : Antichain) → P ≾ u
-≾-⊤ P s _ = fromWitness {a? = any? (_≽?_ s) (traces u)} (here ≼-nil)
+≾-⊤ : (P : Antichain) → P ≾ 𝟏
+≾-⊤ P s _ = fromWitness {a? = any? (_≽?_ s) (traces 𝟏)} (here ≼-nil)
 
 -- The unit is therefore not least, once some duration is positive:
 -- the delay by it would be equal to the unit.
 
-u⋠of-dur : (τ : Carrier) → 0ᴰ <ᴰ τ → ¬ (u ≾ of-dur τ)
-u⋠of-dur τ pos rel =
+𝟏⋠ι : (τ : Carrier) → 0ᴰ <ᴰ τ → ¬ (𝟏 ≾ ι τ)
+𝟏⋠ι τ pos rel =
   delay≢ε (trans (sym (⟨⟩-pos τ pos))
-                 (∷-injectiveˡ (cong traces (≾-antisym {of-dur τ} {u} (≾-⊤ (of-dur τ)) rel))))
+                 (∷-injectiveˡ (cong traces (≾-antisym {ι τ} {𝟏} (≾-⊤ (ι τ)) rel))))
   where
     delay≢ε : ∀ {d} → delay d ε⁻ ≡ ε → ⊥
     delay≢ε ()
 
-u-not-least : (τ : Carrier) → 0ᴰ <ᴰ τ → ¬ Minimum _≾_ u
-u-not-least τ pos least = u⋠of-dur τ pos (least (of-dur τ))
+𝟏-not-least : (τ : Carrier) → 0ᴰ <ᴰ τ → ¬ Minimum _≾_ 𝟏
+𝟏-not-least τ pos least = 𝟏⋠ι τ pos (least (ι τ))
 
 ------------------------------------------------------------------------
 -- Zero-product property
@@ -111,10 +111,10 @@ u-not-least τ pos least = u⋠of-dur τ pos (least (of-dur τ))
 -- The unit is greatest, so every grade lies below it and the property is
 -- vacuous.
 
-≾-zero-productˡ : {P Q : Antichain} → (P · Q) ≾ u → P ≾ u
+≾-zero-productˡ : {P Q : Antichain} → (P · Q) ≾ 𝟏 → P ≾ 𝟏
 ≾-zero-productˡ {P} {Q} _ = ≾-⊤ P
 
-≾-zero-productʳ : {P Q : Antichain} → (P · Q) ≾ u → Q ≾ u
+≾-zero-productʳ : {P Q : Antichain} → (P · Q) ≾ 𝟏 → Q ≾ 𝟏
 ≾-zero-productʳ {P} {Q} _ = ≾-⊤ Q
 
 ------------------------------------------------------------------------
@@ -138,12 +138,12 @@ left-sided : Grade D
 left-sided = posetᵍ record
   { Carrier         = Antichain
   ; _·_             = _·_
-  ; u               = u
+  ; 𝟏               = 𝟏
   ; ·-identityʳ     = ·-identityʳ
   ; ·-identityˡ     = ·-identityˡ
   ; ·-assoc         = ·-assoc
   ; _≾_             = _≾_
-  ; ⊤               = u
+  ; ⊤               = 𝟏
   ; ≾-⊤             = ≾-⊤
   ; _⊔_             = _⊔_
   ; ⊔-ubˡ           = ⊔-ubˡ
@@ -160,7 +160,7 @@ left-sided = posetᵍ record
   ; ≾-zero-productˡ = λ {c} {d} → ≾-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾-zero-productʳ {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → ≾-irrelevant {c} {d}
-  ; of-dur          = of-dur
-  ; of-dur-zero     = of-dur-zero
-  ; of-dur-plus     = λ {m} {n} → of-dur-plus {m} {n}
+  ; ι               = ι
+  ; ι-zero          = ι-zero
+  ; ι-plus          = λ {m} {n} → ι-plus {m} {n}
   }

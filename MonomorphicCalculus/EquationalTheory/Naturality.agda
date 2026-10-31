@@ -177,7 +177,7 @@ coerce-ε-≃ {A = A} e e' c c' M =
 
 subC-return : ∀ {Γ A A' ε'}
             → (p : A <:ᵛ A')
-            → (q : uₑ ≾ₑ ε')
+            → (q : 𝟏ₑ ≾ₑ ε')
             → (V : Γ ⊢V⦂ A)
             ----------------------------------------------------------
             → Γ ⊢C⦂ subC (return V) (p ‼ₛ q) == coerce q (return (subV V p))
@@ -209,7 +209,7 @@ subC-seq-eta v rel M =
 seq-ε-subst : ∀ {Γ A B ε ε' ε''}
             → (e : ε' ≡ ε'')
             → (M : Γ ⊢C⦂ A ‼ ε)
-            → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε')
+            → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
             ------------------------------------------------------
             → M ⨟ ε-subst e N ≡ ε-subst (cong (ε ·ₑ_) e) (M ⨟ N)
 seq-ε-subst refl M N = refl
@@ -230,7 +230,7 @@ subC-seq-in : ∀ {Γ A B B' ε ε₁' ε₂'}
             → (v : B <:ᵛ B')
             → (q : ε₁' ≾ₑ ε₂')
             → (M : Γ ⊢C⦂ A ‼ ε)
-            → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
+            → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
             ----------------------------------------------------------
             → Γ ⊢C⦂ subC (M ⨟ N) (v ‼ₛ ·ₑ-monoʳ-≾ₑ q)
                  == M ⨟ subC N (v ‼ₛ q)
@@ -242,7 +242,7 @@ subC-seq-in {Γ} {B' = B'} {ε = ε} {ε₁' = ε₁'} v q M N =
            (seq-cong C-refl (subC-trans (v ‼ₛ ≾ₑ-refl) (<:ᵛ-refl B' ‼ₛ q)
                                         (v ‼ₛ q) N))))
   where
-    assoc-≾ : ε ·ₑ (ε₁' ·ₑ uₑ) ≾ₑ ε ·ₑ ε₁'
+    assoc-≾ : ε ·ₑ (ε₁' ·ₑ 𝟏ₑ) ≾ₑ ε ·ₑ ε₁'
     assoc-≾ = ≃ₑ⇒≾ₑ (·ₑ-cong ≃ₑ-refl (·ₑ-identityʳ ε₁'))
 
     value-half : Γ ⊢C⦂ subC (M ⨟ N) (v ‼ₛ ≾ₑ-refl)
@@ -251,7 +251,7 @@ subC-seq-in {Γ} {B' = B'} {ε = ε} {ε₁' = ε₁'} v q M N =
       C-trans
         (C-trans (subC-seq-eta v ≾ₑ-refl (M ⨟ N))
         (C-trans (ε-≃-cong _ (subC-cong
-                    (==-castᶜ refl (cong (λ X → ε-≃ (≃ₑ-sym (·ₑ-assoc ε ε₁' uₑ)) (M ⨟ (N ⨟ X)))
+                    (==-castᶜ refl (cong (λ X → ε-≃ (≃ₑ-sym (·ₑ-assoc ε ε₁' 𝟏ₑ)) (M ⨟ (N ⨟ X)))
                                          (cong return (subV-≡ var-≡)))
                               (seq-assoc M N (return (subV hd v))))))
                  (coerce-ε-≃ _ _ (·ₑ-monoˡ-≾ₑ ≾ₑ-refl) assoc-≾

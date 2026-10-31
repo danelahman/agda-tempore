@@ -60,7 +60,7 @@ open import Grades.Hints using (SystemHints; noGradeHints)
 
 open import Grades.Examples.Traces.Lifted.LeftSided
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O
-  using (left-sided; Antichain; traces; nonempty; _≾_; _·_; _⊔_; u; of-dur;
+  using (left-sided; Antichain; traces; nonempty; _≾_; _·_; _⊔_; 𝟏; ι;
          Trace; ⟨_⟩; ε; ·ˢ-ne; ++-ne; n-ne; n-∈⁻; n-◃⁻; ◃-∈; ≾ˢ-◃)
   renaming (NonEmpty to NonEmptyˢ; _·ˢ_ to _⊙_; n to reduce)
 
@@ -143,8 +143,8 @@ mapₗ-⊔ P Q =
 ------------------------------------------------------------------------
 -- Time draws on no counter
 
-mapₗ-of-dur : (k : ℕ) → mapₗ (of-dur k) ≡ uᵛ
-mapₗ-of-dur k = tabulate-uᵛ (certain (⟨ k ⟩ ∷ [])) (λ i → cong atleast (occ-⟨⟩ i k))
+mapₗ-ι : (k : ℕ) → mapₗ (ι k) ≡ 𝟏ᵛ
+mapₗ-ι k = tabulate-𝟏ᵛ (certain (⟨ k ⟩ ∷ [])) (λ i → cong atleast (occ-⟨⟩ i k))
 
 ------------------------------------------------------------------------
 -- The grade morphism and the grade system
@@ -153,18 +153,18 @@ left-sided→at-least-counts : left-sided →ᵍ at-least-counts n
 left-sided→at-least-counts = strictᵍ record
   { map          = mapₗ
   ; map-monotone = λ {P} {Q} → mapₗ-monotone {P} {Q}
-  ; map-u        = mapₗ-of-dur 0
+  ; map-𝟏        = mapₗ-ι 0
   ; map-·        = λ {P} {Q} → mapₗ-· P Q
-  ; map-⊤        = mapₗ-of-dur 0
+  ; map-⊤        = mapₗ-ι 0
   ; map-⊔        = λ {P} {Q} → mapₗ-⊔ P Q
-  ; map-of-dur   = λ {k} → mapₗ-of-dur k
+  ; map-ι        = λ {k} → mapₗ-ι k
   }
 
 leftSidedToAtLeastCountsGradeSystem : GradeSystem
 leftSidedToAtLeastCountsGradeSystem = record
   { RGrade = at-least-counts n
   ; EGrade = left-sided
-  ; ∣_∣ᵉ   = left-sided→at-least-counts
+  ; ∣-∣ᵉ   = left-sided→at-least-counts
   }
 
 -- its hints
@@ -173,6 +173,6 @@ leftSidedToAtLeastCountsGradeSystemʰ : SystemHints leftSidedToAtLeastCountsGrad
 leftSidedToAtLeastCountsGradeSystemʰ = record
   { RHints      = (at-least-countsʰ n)
   ; EHints      = noGradeHints
-  ; reflects-u? = nothing
+  ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

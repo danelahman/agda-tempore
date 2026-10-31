@@ -18,7 +18,7 @@ module PolymorphicCalculus.Examples.Programs.Time.LeftSided where
 
 open Time-LeftSided using (spec; hints; enum)
 
-open import PolymorphicCalculus.Syntax.Grades spec using (ûₑ)
+open import PolymorphicCalculus.Syntax.Grades spec using (𝟏̂ₑ)
 open import PolymorphicCalculus.Syntax.Types spec
 open import PolymorphicCalculus.Examples.Programs spec hints enum ℕᴰ-stepped
 open import PolymorphicCalculus.Examples.Variables
@@ -33,6 +33,6 @@ keep-twice-reported = refl
 keep-late-reported :
   schemesOf (checkProgram keep-late)
     ≡ just ( (∀ᵛ[ 1 , 0 , 0 ] ⊤ ⟹ α₀ ⇒ α₀ ‼ ⌜ 1 ⌝ᵉ)
-           ∷ (∀ᵛ[ 2 , 0 , 0 ] ⊤ ⟹ α₁ ⇒ (α₀ ⇒ α₀ ‼ ûₑ) ‼ ⌜ 1 ⌝ᵉ)
+           ∷ (∀ᵛ[ 2 , 0 , 0 ] ⊤ ⟹ α₁ ⇒ (α₀ ⇒ α₀ ‼ 𝟏̂ₑ) ‼ ⌜ 1 ⌝ᵉ)
            ∷ [])
 keep-late-reported = refl

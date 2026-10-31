@@ -51,7 +51,7 @@ open import MonomorphicCalculus.Syntax.Terms      S
 open import MonomorphicCalculus.Syntax.Renaming      S
 open import MonomorphicCalculus.Syntax.Renaming.Action S using (V-rename; C-rename)
 open import MonomorphicCalculus.Syntax.Renaming.Equivalence  S
-       using (∈-++ᶜˡ; grade-++ᶜˡ; grade-++ᶜˡ-uᵣ; wk-ren-⟨ρ⟩-ctx-img; var-img)
+       using (∈-++ᶜˡ; grade-++ᶜˡ; grade-++ᶜˡ-𝟏ᵣ; wk-ren-⟨ρ⟩-ctx-img; var-img)
 open import MonomorphicCalculus.Syntax.Substitution  S
 open import MonomorphicCalculus.Syntax.CompContext   S
 
@@ -129,11 +129,11 @@ sound-unbox-beta {Γ} {A} {A'} {C} {D} {ρ} V K p u N pK pN (pV , pL) (pV' , pR)
     w₀ = ⟨⟩-≤-ren p ∘ʳ wk-ren-⟨ρ⟩-ctx refl
 
     -- the variable that renaming names, and the bound the axiom stores
-    xB : [ ρ ] A ∈[ grade-++ᶜˡ uᵣ Θ ] ((Γ ∷ [ ρ ] A) ++ᶜ Θ)
+    xB : [ ρ ] A ∈[ grade-++ᶜˡ 𝟏ᵣ Θ ] ((Γ ∷ [ ρ ] A) ++ᶜ Θ)
     xB = ∈-++ᶜˡ Θ Hd
 
-    relB : grade-++ᶜˡ uᵣ Θ ≾ᵣ ρ
-    relB = ≾ᵣ-trans (≾ᵣ-reflexive (grade-++ᶜˡ-uᵣ Θ)) p
+    relB : grade-++ᶜˡ 𝟏ᵣ Θ ≾ᵣ ρ
+    relB = ≾ᵣ-trans (≾ᵣ-reflexive (grade-++ᶜˡ-𝟏ᵣ Θ)) p
 
     X : (Γ ∷ [ ρ ] A) ++ᶜ Θ ⊢C⦂ D
     X = unbox xB relB u N
@@ -172,10 +172,10 @@ sound-unbox-beta {Γ} {A} {A'} {C} {D} {ρ} V K p u N pK pN (pV , pL) (pV' , pR)
       ∙ ∘ᵐ-assoc _ _ _
 
     -- reaching `xB` is reaching the head variable through the lock
-    c : uᵣ ·ᵣ ρ ≾ᵣ ρ
+    c : 𝟏ᵣ ·ᵣ ρ ≾ᵣ ρ
     c = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ ρ)
 
-    wImg : var-img w (Tl-⟨⟩ (Hd {Γ = Γ})) ≡ (grade-++ᶜˡ uᵣ Θ , xB)
+    wImg : var-img w (Tl-⟨⟩ (Hd {Γ = Γ})) ≡ (grade-++ᶜˡ 𝟏ᵣ Θ , xB)
     wImg = wk-ren-⟨ρ⟩-ctx-img Θ refl (Hd {Γ = Γ})
 
     relW : proj₁ (var-img w (Tl-⟨⟩ (Hd {Γ = Γ}))) ≾ᵣ ρ

@@ -86,9 +86,9 @@ one-then-wait   = ⌜ ≥ 1 · idle ≥ 1 ⌝
 wait-1          = ⌜ idle ≥ 1 ⌝
 wait-5          = ⌜ idle ≥ 5 ⌝
 budget-5        = ⌜ ≥ 5 ⌝
-settled-run     = ‵ᵍ open′ ·ᵍ of-dur 5 ·ᵍ ‵ᵍ close′
+settled-run     = ‵ᵍ open′ ·ᵍ ι 5 ·ᵍ ‵ᵍ close′
 stirred-run     = ‵ᵍ open′ ·ᵍ ‵ᵍ stir ·ᵍ ‵ᵍ stir ·ᵍ ‵ᵍ close′
-interrupted-run = ‵ᵍ open′ ·ᵍ of-dur 2 ·ᵍ ‵ᵍ stir ·ᵍ of-dur 3 ·ᵍ ‵ᵍ close′
+interrupted-run = ‵ᵍ open′ ·ᵍ ι 2 ·ᵍ ‵ᵍ stir ·ᵍ ι 3 ·ᵍ ‵ᵍ close′
 open-then-stir  = ‵ᵍ open′ ·ᵍ ‵ᵍ stir
 anything        = ⌜ ≥ 0 ⌝
 twice           = one-then-wait ·ᵍ one-then-wait
@@ -139,8 +139,8 @@ twice-not-below = fails twice one-wait refl
 open-then-stir-anything : C._≾_ open-then-stir anything
 open-then-stir-anything = holds open-then-stir anything refl
 
-not-nothing : ¬ C._≾_ open-then-stir C.u
-not-nothing = fails open-then-stir C.u refl
+not-nothing : ¬ C._≾_ open-then-stir C.𝟏
+not-nothing = fails open-then-stir C.𝟏 refl
 
 ------------------------------------------------------------------------
 -- A strict wait is made only from a budget letter: `idle ‵ stir` is

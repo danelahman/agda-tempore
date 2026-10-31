@@ -137,7 +137,7 @@ atomʳ? _              = nothing
 -- The image of an effect atom
 
 ∣_∣ᵃ : ∀ {Θ} → EAtom Θ → RAtom Θ
-∣ ac c ∣ᵃ = rc (mapᵉ c)
+∣ ac c ∣ᵃ = rc ∣ c ∣ᵉ
 ∣ av i ∣ᵃ = rm i
 
 ∣⟦_⟧∣ : ∀ {Θ} → (a : EAtom Θ) → ∣ ⟦ a ⟧ᵉᵃ ∣̂ᵉ ≡̂ᵣ ⟦ ∣ a ∣ᵃ ⟧ʳᵃ
@@ -151,23 +151,23 @@ atomʳ? _              = nothing
 consₑ-length : ∀ {Θ} → (c : E) → (as : List (EAtom Θ))
              → length (consₑ (ac c) as) ≤ suc (length as)
 consₑ-length c (ac d ∷ as) = m≤n⇒m≤1+n (consₑ-length (c ·ₑ d) as)
-consₑ-length c [] with c ≃ₑ? uₑ
+consₑ-length c [] with c ≃ₑ? 𝟏ₑ
 ... | yes _ = z≤n
 ... | no _  = ≤-refl
-consₑ-length c (av i ∷ as) with c ≃ₑ? uₑ
+consₑ-length c (av i ∷ as) with c ≃ₑ? 𝟏ₑ
 ... | yes _ = n≤1+n _
 ... | no _  = ≤-refl
 
 consᵣ-length : ∀ {Θ} → (c : R) → (as : List (RAtom Θ))
              → length (consᵣ (rc c) as) ≤ suc (length as)
 consᵣ-length c (rc d ∷ as) = m≤n⇒m≤1+n (consᵣ-length (c ·ᵣ d) as)
-consᵣ-length c [] with c ≃ᵣ? uᵣ
+consᵣ-length c [] with c ≃ᵣ? 𝟏ᵣ
 ... | yes _ = z≤n
 ... | no _  = ≤-refl
-consᵣ-length c (rv i ∷ as) with c ≃ᵣ? uᵣ
+consᵣ-length c (rv i ∷ as) with c ≃ᵣ? 𝟏ᵣ
 ... | yes _ = n≤1+n _
 ... | no _  = ≤-refl
-consᵣ-length c (rm i ∷ as) with c ≃ᵣ? uᵣ
+consᵣ-length c (rm i ∷ as) with c ≃ᵣ? 𝟏ᵣ
 ... | yes _ = n≤1+n _
 ... | no _  = ≤-refl
 
@@ -218,20 +218,20 @@ module Embedding
   (cons   : K → List A → List A)
   (cons-length : ∀ c as → length (cons c as) ≤ suc (length as))
   (_≤ᵃ_ : A → A → Set) (_≤ᵃ?_ : ∀ a b → Dec (a ≤ᵃ b))
-  (u≤_  : A → Set)     (u≤?   : ∀ b → Dec (u≤ b))
-  (_≤u  : A → Set)     (≤u?   : ∀ a → Dec (a ≤u))
+  (𝟏≤_  : A → Set)     (𝟏≤?   : ∀ b → Dec (𝟏≤ b))
+  (_≤𝟏  : A → Set)     (≤𝟏?   : ∀ a → Dec (a ≤𝟏))
   (⊤≤_  : A → Set)     (⊤≤?   : ∀ b → Dec (⊤≤ b))
   (Comm : Set)         (comm? : Dec Comm)
   where
 
   data Step : List A → List A → List A → List A → Set where
     match    : ∀ {a as b bs} → a ≤ᵃ b → Step (a ∷ as) (b ∷ bs) as bs
-    skipʳ    : ∀ {as b bs} → u≤ b → Step as (b ∷ bs) as bs
-    skipˡ    : ∀ {a as bs} → a ≤u → Step (a ∷ as) bs as bs
+    skipʳ    : ∀ {as b bs} → 𝟏≤ b → Step as (b ∷ bs) as bs
+    skipˡ    : ∀ {a as bs} → a ≤𝟏 → Step (a ∷ as) bs as bs
     absorb   : ∀ {a as b bs} → ⊤≤ b → Step (a ∷ as) (b ∷ bs) as (b ∷ bs)
-    mergeʳ   : ∀ {as a b bs c} → const? a ≡ just c → u≤ b
+    mergeʳ   : ∀ {as a b bs c} → const? a ≡ just c → 𝟏≤ b
              → Step as (a ∷ b ∷ bs) as (cons c bs)
-    mergeˡ   : ∀ {a b as bs c} → const? a ≡ just c → b ≤u
+    mergeˡ   : ∀ {a b as bs c} → const? a ≡ just c → b ≤𝟏
              → Step (a ∷ b ∷ as) bs (cons c as) bs
     pick     : ∀ {a as bs} → Comm → (p : Any (a ≤ᵃ_) bs) → Step (a ∷ as) bs as (bs ─ p)
     absorbAt : ∀ {a as bs} → Comm → Any ⊤≤_ bs → Step (a ∷ as) bs as bs
@@ -273,24 +273,24 @@ module Embedding
   matches (a ∷ as) (b ∷ bs) = opt (a ≤ᵃ? b) λ p → as , bs , match p
   matches _        _        = []
 
-  skipsʳ as (b ∷ bs) = opt (u≤? b) λ p → as , bs , skipʳ p
+  skipsʳ as (b ∷ bs) = opt (𝟏≤? b) λ p → as , bs , skipʳ p
   skipsʳ as []       = []
 
-  skipsˡ (a ∷ as) bs = opt (≤u? a) λ p → as , bs , skipˡ p
+  skipsˡ (a ∷ as) bs = opt (≤𝟏? a) λ p → as , bs , skipˡ p
   skipsˡ []       bs = []
 
   absorbs (a ∷ as) (b ∷ bs) = opt (⊤≤? b) λ p → as , b ∷ bs , absorb p
   absorbs _        _        = []
 
   mergeʳ-at : ∀ as a b bs → (m : Maybe K) → const? a ≡ m → List (Next as (a ∷ b ∷ bs))
-  mergeʳ-at as a b bs (just c) e = opt (u≤? b) λ p → as , cons c bs , mergeʳ e p
+  mergeʳ-at as a b bs (just c) e = opt (𝟏≤? b) λ p → as , cons c bs , mergeʳ e p
   mergeʳ-at as a b bs nothing  e = []
 
   mergesʳ as (a ∷ b ∷ bs) = mergeʳ-at as a b bs (const? a) refl
   mergesʳ as _            = []
 
   mergeˡ-at : ∀ a b as bs → (m : Maybe K) → const? a ≡ m → List (Next (a ∷ b ∷ as) bs)
-  mergeˡ-at a b as bs (just c) e = opt (≤u? b) λ p → cons c as , bs , mergeˡ e p
+  mergeˡ-at a b as bs (just c) e = opt (≤𝟏? b) λ p → cons c as , bs , mergeˡ e p
   mergeˡ-at a b as bs nothing  e = []
 
   mergesˡ (a ∷ b ∷ as) bs = mergeˡ-at a b as bs (const? a) refl
@@ -316,19 +316,19 @@ module Embedding
              ++ picks as bs ++ absorbsAt as bs
 
   mergeʳ-at-complete : ∀ {as a b bs c} → (m : Maybe K) → (e : const? a ≡ m)
-                     → const? a ≡ just c → u≤ b
+                     → const? a ≡ just c → 𝟏≤ b
                      → Any (Reaches as (cons c bs)) (mergeʳ-at as a b bs m e)
   mergeʳ-at-complete {as} {b = b} {bs} (just c') e e' p =
-    opt-complete (u≤? b) (λ p → as , cons c' bs , mergeʳ e p) p
+    opt-complete (𝟏≤? b) (λ p → as , cons c' bs , mergeʳ e p) p
                  λ _ → cong (λ k → as , cons k bs) (just-injective (trans (sym e) e'))
   mergeʳ-at-complete nothing e e' p with trans (sym e) e'
   ... | ()
 
   mergeˡ-at-complete : ∀ {a b as bs c} → (m : Maybe K) → (e : const? a ≡ m)
-                     → const? a ≡ just c → b ≤u
+                     → const? a ≡ just c → b ≤𝟏
                      → Any (Reaches (cons c as) bs) (mergeˡ-at a b as bs m e)
   mergeˡ-at-complete {b = b} {as} {bs} (just c') e e' p =
-    opt-complete (≤u? b) (λ p → cons c' as , bs , mergeˡ e p) p
+    opt-complete (≤𝟏? b) (λ p → cons c' as , bs , mergeˡ e p) p
                  λ _ → cong (λ k → cons k as , bs) (just-injective (trans (sym e) e'))
   mergeˡ-at-complete nothing e e' p with trans (sym e) e'
   ... | ()
@@ -354,10 +354,10 @@ module Embedding
   steps-complete (match p) = match-complete p
   steps-complete {as} {b ∷ bs} (skipʳ p) =
     ++⁺ʳ (matches as (b ∷ bs))
-      (++⁺ˡ (opt-complete (u≤? b) (λ p → as , bs , skipʳ p) p λ _ → refl))
+      (++⁺ˡ (opt-complete (𝟏≤? b) (λ p → as , bs , skipʳ p) p λ _ → refl))
   steps-complete {a ∷ as} {bs} (skipˡ p) =
     ++⁺ʳ (matches (a ∷ as) bs) (++⁺ʳ (skipsʳ (a ∷ as) bs)
-      (++⁺ˡ (opt-complete (≤u? a) (λ p → as , bs , skipˡ p) p λ _ → refl)))
+      (++⁺ˡ (opt-complete (≤𝟏? a) (λ p → as , bs , skipˡ p) p λ _ → refl)))
   steps-complete (absorb p) = absorb-complete p
   steps-complete {as} {a ∷ b ∷ bs} (mergeʳ e p) =
     ++⁺ʳ (matches as (a ∷ b ∷ bs)) (++⁺ʳ (skipsʳ as (a ∷ b ∷ bs))

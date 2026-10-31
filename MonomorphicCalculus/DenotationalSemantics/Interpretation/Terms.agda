@@ -129,7 +129,7 @@ map⇒ᵐ-swap f g =
 
 recℕ-stepᵗ : ∀ {X B ε}
            → ε ·ₑ ε ≾ₑ ε
-           → ⟨ mapᵉ ε ⟩ᵒ (⟨ ⊤ᵣ ⟩ᵒ X ×ᵐ ℕᵐ) ×ᵐ B →ᵐ Tᵒ B ε
+           → ⟨ ∣ ε ∣ᵉ ⟩ᵒ (⟨ ⊤ᵣ ⟩ᵒ X ×ᵐ ℕᵐ) ×ᵐ B →ᵐ Tᵒ B ε
            → (X ×ᵐ ℕᵐ) ×ᵐ Tᵒ B ε →ᵐ Tᵒ B ε
 recℕ-stepᵗ p n =
   T-≤ p ∘ᵐ μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ ∘ᵐ mapˣᵐ (η⊣ ∘ᵐ mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ
@@ -139,7 +139,7 @@ recℕ-stepᵗ p n =
 
 recL-stepᵗ : ∀ {X A B ε}
            → ε ·ₑ ε ≾ₑ ε
-           → ⟨ mapᵉ ε ⟩ᵒ ((⟨ ⊤ᵣ ⟩ᵒ X ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ B →ᵐ Tᵒ B ε
+           → ⟨ ∣ ε ∣ᵉ ⟩ᵒ ((⟨ ⊤ᵣ ⟩ᵒ X ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ B →ᵐ Tᵒ B ε
            → ((X ×ᵐ A) ×ᵐ Listᵐ A) ×ᵐ Tᵒ B ε →ᵐ Tᵒ B ε
 recL-stepᵗ p n =
   T-≤ p ∘ᵐ μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ ∘ᵐ mapˣᵐ (η⊣ ∘ᵐ mapˣᵐ (mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ) idᵐ
@@ -154,21 +154,21 @@ private
   _∙_ = ≈ᵐ-trans
 
 handle-foldᵗ : ∀ {X A B ε ε'} → Handlerᵀ (⟨ ⊤ᵣ ⟩ᵒ X) B
-             → ⟨ mapᵉ ε ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε'
+             → ⟨ ∣ ε ∣ᵉ ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε'
              → X ×ᵐ Tᵒ A ε →ᵐ Tᵒ B (ε ·ₑ ε')
 handle-foldᵗ {X} h n =
   T-alg-of-handlerᵀ (⟨⊤⟩-eternalᵒ X) h
     ∘ᵐ ⟨ ⟨⊤⟩-η ∘ᵐ fstᵐ , Tᶠ n ∘ᵐ strᵀ ∘ᵐ mapˣᵐ η⊣ idᵐ ⟩ᵐ
 
 handle-foldᵗ-cong : ∀ {X A B ε ε'} → (h : Handlerᵀ (⟨ ⊤ᵣ ⟩ᵒ X) B)
-                  → {n n' : ⟨ mapᵉ ε ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε'} → n ≈ᵐ n'
+                  → {n n' : ⟨ ∣ ε ∣ᵉ ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε'} → n ≈ᵐ n'
                   → handle-foldᵗ h n ≈ᵐ handle-foldᵗ h n'
 handle-foldᵗ-cong h e = ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ∘ᵐ-congˡ (T-congᶠ e) ⟩ᵐ-cong
 
 -- At a paired environment it is the inline form of handling.
 
 handle-foldᵗ-⟨⟩ : ∀ {Y X A B ε ε'} → (h : Handlerᵀ (⟨ ⊤ᵣ ⟩ᵒ X) B)
-                → (n : ⟨ mapᵉ ε ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
+                → (n : ⟨ ∣ ε ∣ᵉ ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
                 → (g : Y →ᵐ X) → (m : Y →ᵐ Tᵒ A ε)
                 → handle-foldᵗ h n ∘ᵐ ⟨ g , m ⟩ᵐ
                 ≈ᵐ T-alg-of-handlerᵀ (⟨⊤⟩-eternalᵒ X) h
@@ -186,7 +186,7 @@ handle-foldᵗ-⟨⟩ h n g m =
 -- reaching its context through the relaxed lock.
 
 handle-foldᵗ-≤ : ∀ {X A B ε₀ ε₁ ε'} → (h : Handlerᵀ (⟨ ⊤ᵣ ⟩ᵒ X) B)
-               → (n : ⟨ mapᵉ ε₁ ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε') → (q : ε₀ ≾ₑ ε₁)
+               → (n : ⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε') → (q : ε₀ ≾ₑ ε₁)
                → handle-foldᵗ h n ∘ᵐ mapˣᵐ idᵐ (T-≤ q)
                ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q)
                     ∘ᵐ handle-foldᵗ h (n ∘ᵐ mapˣᵐ (⟨⟩-≤ (map-monotoneᵉ q)) idᵐ)
@@ -232,9 +232,9 @@ handle-foldᵗ-nat : ∀ {X Y A B ε ε'} → (g : Y →ᵐ X)
                  → (h : Handlerᵀ (⟨ ⊤ᵣ ⟩ᵒ X) B) → (h' : Handlerᵀ (⟨ ⊤ᵣ ⟩ᵒ Y) B)
                  → (∀ op ε'' → clauseᵀ h' op ε''
                              ≈ᵐ clauseᵀ h op ε'' ∘ᵐ mapˣᵐ (⟨ ⊤ᵣ ⟩ᶠ g) idᵐ)
-                 → (n : ⟨ mapᵉ ε ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
-                 → (n' : ⟨ mapᵉ ε ⟩ᵒ Y ×ᵐ A →ᵐ Tᵒ B ε')
-                 → n' ≈ᵐ n ∘ᵐ mapˣᵐ (⟨ mapᵉ ε ⟩ᶠ g) idᵐ
+                 → (n : ⟨ ∣ ε ∣ᵉ ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
+                 → (n' : ⟨ ∣ ε ∣ᵉ ⟩ᵒ Y ×ᵐ A →ᵐ Tᵒ B ε')
+                 → n' ≈ᵐ n ∘ᵐ mapˣᵐ (⟨ ∣ ε ∣ᵉ ⟩ᶠ g) idᵐ
                  → handle-foldᵗ h' n' ≈ᵐ handle-foldᵗ h n ∘ᵐ mapˣᵐ g idᵐ
 handle-foldᵗ-nat {X} {Y} g h h' eh n n' en =
     ∘ᵐ-congˡ (T-alg-of-handlerᵀ-natᴾ (⟨⊤⟩-eternalᵒ X) (⟨⊤⟩-eternalᵒ Y)
@@ -251,7 +251,7 @@ handle-foldᵗ-nat {X} {Y} g h h' eh n n' en =
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-    unit-eq : mapˣᵐ ([ _ ]ᶠ (⟨ mapᵉ _ ⟩ᶠ g)) idᵐ ∘ᵐ mapˣᵐ η⊣ (idᵐ {Tᵒ _ _})
+    unit-eq : mapˣᵐ ([ _ ]ᶠ (⟨ ∣ _ ∣ᵉ ⟩ᶠ g)) idᵐ ∘ᵐ mapˣᵐ η⊣ (idᵐ {Tᵒ _ _})
             ≈ᵐ mapˣᵐ η⊣ idᵐ ∘ᵐ mapˣᵐ g idᵐ
     unit-eq = mapˣᵐ-∘ _ _ _ _
             ∙ mapˣᵐ-cong (η⊣-nat g) ≈ᵐ-refl
@@ -270,7 +270,7 @@ handle-foldᵗ-nat {X} {Y} g h h' eh n n' en =
 -- clause reaches its context through the relaxed lock `⟨⟩-≤`.
 
 handler-famᵗ : ∀ {X A B ε ε'} → Handlerᵀ (⟨ ⊤ᵣ ⟩ᵒ X) B
-             → ⟨ mapᵉ ε ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε'
+             → ⟨ ∣ ε ∣ᵉ ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε'
              → Familyʰ X A ε B ε'
 handler-famᵗ h n p = handle-foldᵗ h (n ∘ᵐ mapˣᵐ (⟨⟩-≤ (map-monotoneᵉ p)) idᵐ)
 
@@ -286,7 +286,7 @@ relax-∘ n a b c =
              ∙ mapˣᵐ-cong (⟨⟩-≤-trans b a ∙ ⟨⟩-≤-irr _ c) (∘ᵐ-identityˡ _))
 
 handler-famᵗ-nat : ∀ {X A B ε ε'} → (h : Handlerᵀ (⟨ ⊤ᵣ ⟩ᵒ X) B)
-                 → (n : ⟨ mapᵉ ε ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
+                 → (n : ⟨ ∣ ε ∣ᵉ ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
                  → Naturalʰ (handler-famᵗ h n)
 handler-famᵗ-nat h n p₀ p₁ q =
     handle-foldᵗ-≤ h _ q
@@ -298,9 +298,9 @@ handler-famᵗ-reindex : ∀ {X Y A B ε ε' ε₀} → (g : Y →ᵐ X)
                      → (h : Handlerᵀ (⟨ ⊤ᵣ ⟩ᵒ X) B) → (h' : Handlerᵀ (⟨ ⊤ᵣ ⟩ᵒ Y) B)
                      → (∀ op ε'' → clauseᵀ h' op ε''
                                  ≈ᵐ clauseᵀ h op ε'' ∘ᵐ mapˣᵐ (⟨ ⊤ᵣ ⟩ᶠ g) idᵐ)
-                     → (n : ⟨ mapᵉ ε ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
-                     → (n' : ⟨ mapᵉ ε ⟩ᵒ Y ×ᵐ A →ᵐ Tᵒ B ε')
-                     → n' ≈ᵐ n ∘ᵐ mapˣᵐ (⟨ mapᵉ ε ⟩ᶠ g) idᵐ
+                     → (n : ⟨ ∣ ε ∣ᵉ ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
+                     → (n' : ⟨ ∣ ε ∣ᵉ ⟩ᵒ Y ×ᵐ A →ᵐ Tᵒ B ε')
+                     → n' ≈ᵐ n ∘ᵐ mapˣᵐ (⟨ ∣ ε ∣ᵉ ⟩ᶠ g) idᵐ
                      → (p : ε₀ ≾ₑ ε)
                      → handler-famᵗ h' n' p ≈ᵐ handler-famᵗ h n p ∘ᵐ mapˣᵐ g idᵐ
 handler-famᵗ-reindex g h h' eh n n' en p =
@@ -369,13 +369,13 @@ mutual
   EffUniformʰ : ∀ {Γ B}
               → (H : (op : Op) → (ε'' : E)
                    → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                        ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                        ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                      ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
               → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
               → Set
   EffUniformʰ H pH = ∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
                → ⟦ H op ε₂'' ⟧ᶜᵗ (pH op ε₂'')
-                   ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
+                   ∘ᵐ mapˣᵐ idᵐ ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
                ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' ⟧ᶜᵗ (pH op ε₁'')
 
   ⟦_⟧ᵛᵗ : ∀ {Γ A} → (V : Γ ⊢V⦂ A) → Paramᵛ V → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
@@ -425,11 +425,11 @@ mutual
   ⟦_⟧ᶜᵗ {Γ} (perform {A} {ε} op V M) (pV , pM) =
     opᵀ op ∘ᵐ
       ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV)
-      , [ mapᵉ (op-grade op) ]ᶠ
-          (curryᵐ (subst (λ O → (⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ ×ᵐ O) →ᵐ Tᵒ ⟦ A ⟧ᵛ ε)
+      , [ ∣ op-grade op ∣ᵉ ]ᶠ
+          (curryᵐ (subst (λ O → (⟨ ∣ op-grade op ∣ᵉ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ ×ᵐ O) →ᵐ Tᵒ ⟦ A ⟧ᵛ ε)
                          (ty-gty (arity op)) (⟦ M ⟧ᶜᵗ pM)))
         ∘ᵐ η⊣ ⟩ᵐ
-  ⟦ delay τ M ⟧ᶜᵗ pM = delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ (⟦ M ⟧ᶜᵗ pM) ∘ᵐ η⊣
+  ⟦ delay τ M ⟧ᶜᵗ pM = delayᵀ τ ∘ᵐ [ ιᵣ τ ]ᶠ (⟦ M ⟧ᶜᵗ pM) ∘ᵐ η⊣
   -- application at the handled computation's own grade
   ⟦ handle M `with V ⟧ᶜᵗ (pM , pV) =
     appʰ ≾ₑ-refl ∘ᵐ ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ
@@ -449,7 +449,7 @@ mutual
   ⟦_⟧ʰᵗ : ∀ {Γ B}
         → (H : (op : Op) → (ε'' : E)
              → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                  ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
         → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
         → EffUniformʰ {Γ} {B} H pH
@@ -459,7 +459,7 @@ mutual
                     ∘ᵐ mapˣᵐ
                          (mapˣᵐ idᵐ (subst (λ O → ⟦ param op ⟧ᵍ →ᵐ O)
                                            (sym (ty-gty (param op))) idᵐ))
-                         ([ mapᵉ (op-grade op) ]ᶠ
+                         ([ ∣ op-grade op ∣ᵉ ]ᶠ
                            (map⇒ᵐ (subst (λ O → O →ᵐ ⟦ arity op ⟧ᵍ)
                                          (sym (ty-gty (arity op))) idᵐ) idᵐ))
                     ∘ᵐ ×ᵐ-assoc⁻¹)
@@ -509,9 +509,9 @@ sound-ε-≃ {A = A} e M pM =
 handle-in-β : ∀ {Γ A B ε ε'} → (M : Γ ⊢C⦂ A ‼ ε)
             → (H : (op : Op) → (ε'' : E)
                  → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                      ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                      ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                    ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-            → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε')
+            → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
             → (pM : Paramᶜ M) → (pN : Paramᶜ N)
             → (pH : ∀ op ε'' → Paramᶜ (H op ε'')) → (uH : EffUniformʰ {Γ} {B} H pH)
             → ⟦ handle M `with H `in N ⟧ᶜᵗ (pM , pN , pH , uH)

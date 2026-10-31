@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 -- The product of two grades, and of two grade systems.               --
 --                                                                    --
--- `G₁ ×ᵍ G₂` is the componentwise product: `_·_`, `u`, `⊤`, `_⊔_`    --
--- and the order are those of the components, and `of-dur τ` is       --
--- `(of-dur τ , of-dur τ)`, a delay advancing both components; the    --
+-- `G₁ ×ᵍ G₂` is the componentwise product: `_·_`, `𝟏`, `⊤`, `_⊔_`    --
+-- and the order are those of the components, and `ι τ` is            --
+-- `(ι τ , ι τ)`, a delay advancing both components; the              --
 -- components share their durations.                                  --
 -- Every law holds componentwise, the zero-product laws included, and --
 -- the order is decided componentwise. The hints of the product       --
@@ -52,11 +52,11 @@ module _ {D : Duration} {G₁ G₂ G₃ : Grade D} where
   g ∘ᵍ f = record
     { map          = λ c → map g (map f c)
     ; map-monotone = λ p → map-monotone g (map-monotone f p)
-    ; map-u        = ≃-trans G₃ (map-≃ g (map-u f)) (map-u g)
+    ; map-𝟏        = ≃-trans G₃ (map-≃ g (map-𝟏 f)) (map-𝟏 g)
     ; map-·        = ≃-trans G₃ (map-≃ g (map-· f)) (map-· g)
     ; map-⊤        = ≃-trans G₃ (map-≃ g (map-⊤ f)) (map-⊤ g)
     ; map-⊔        = ≃-trans G₃ (map-≃ g (map-⊔ f)) (map-⊔ g)
-    ; map-of-dur   = ≃-trans G₃ (map-≃ g (map-of-dur f)) (map-of-dur g)
+    ; map-ι        = ≃-trans G₃ (map-≃ g (map-ι f)) (map-ι g)
     }
 
 ------------------------------------------------------------------------
@@ -68,11 +68,11 @@ _×ᵍ_ : {D : Duration} → Grade D → Grade D → Grade D
 G₁ ×ᵍ G₂ = record
   { Carrier         = C₁ × C₂
   ; _·_             = λ (c₁ , c₂) (d₁ , d₂) → (c₁ ·₁ d₁ , c₂ ·₂ d₂)
-  ; u               = (u₁ , u₂)
+  ; 𝟏               = (𝟏₁ , 𝟏₂)
   ; _≾_             = λ (c₁ , c₂) (d₁ , d₂) → (c₁ ≾₁ d₁) × (c₂ ≾₂ d₂)
   ; ⊤               = (⊤₁ , ⊤₂)
   ; _⊔_             = λ (c₁ , c₂) (d₁ , d₂) → (c₁ ⊔₁ d₁ , c₂ ⊔₂ d₂)
-  ; of-dur          = λ τ → (of-dur₁ τ , of-dur₂ τ)
+  ; ι               = λ τ → (ι₁ τ , ι₂ τ)
   ; ·-identityˡ     = λ (c₁ , c₂) → pair≃ (G₁.·-identityˡ c₁) (G₂.·-identityˡ c₂)
   ; ·-identityʳ     = λ (c₁ , c₂) → pair≃ (G₁.·-identityʳ c₁) (G₂.·-identityʳ c₂)
   ; ·-assoc         = λ (c₁ , c₂) (d₁ , d₂) (e₁ , e₂) →
@@ -94,8 +94,8 @@ G₁ ×ᵍ G₂ = record
                         G₁.·-distribʳ-⊔-≾ c₁ d₁ e₁ , G₂.·-distribʳ-⊔-≾ c₂ d₂ e₂
   ; ≾-zero-productˡ = λ (p₁ , p₂) → G₁.≾-zero-productˡ p₁ , G₂.≾-zero-productˡ p₂
   ; ≾-zero-productʳ = λ (p₁ , p₂) → G₁.≾-zero-productʳ p₁ , G₂.≾-zero-productʳ p₂
-  ; of-dur-zero     = pair≃ G₁.of-dur-zero G₂.of-dur-zero
-  ; of-dur-plus     = pair≃ G₁.of-dur-plus G₂.of-dur-plus
+  ; ι-zero          = pair≃ G₁.ι-zero G₂.ι-zero
+  ; ι-plus          = pair≃ G₁.ι-plus G₂.ι-plus
   }
   where
     module G₁ = Grade G₁
@@ -103,10 +103,10 @@ G₁ ×ᵍ G₂ = record
     pair≃ : ∀ {a a' b b'} → a G₁.≃ a' → b G₂.≃ b'
           → (a G₁.≾ a' × b G₂.≾ b') × (a' G₁.≾ a × b' G₂.≾ b)
     pair≃ (p , p') (q , q') = (p , q) , (p' , q')
-    open Grade G₁ using () renaming (Carrier to C₁; _·_ to _·₁_; u to u₁;
-      _≾_ to _≾₁_; ⊤ to ⊤₁; _⊔_ to _⊔₁_; of-dur to of-dur₁)
-    open Grade G₂ using () renaming (Carrier to C₂; _·_ to _·₂_; u to u₂;
-      _≾_ to _≾₂_; ⊤ to ⊤₂; _⊔_ to _⊔₂_; of-dur to of-dur₂)
+    open Grade G₁ using () renaming (Carrier to C₁; _·_ to _·₁_; 𝟏 to 𝟏₁;
+      _≾_ to _≾₁_; ⊤ to ⊤₁; _⊔_ to _⊔₁_; ι to ι₁)
+    open Grade G₂ using () renaming (Carrier to C₂; _·_ to _·₂_; 𝟏 to 𝟏₂;
+      _≾_ to _≾₂_; ⊤ to ⊤₂; _⊔_ to _⊔₂_; ι to ι₂)
 
 -- its hints, componentwise
 
@@ -114,7 +114,7 @@ infixr 2 _×ʰ_
 
 _×ʰ_ : {D : Duration} {G₁ G₂ : Grade D} → GradeHints G₁ → GradeHints G₂ → GradeHints (G₁ ×ᵍ G₂)
 _×ʰ_ {G₁ = G₁} {G₂} H₁ H₂ = record
-  { u-least? = zipWith (λ l₁ l₂ (c₁ , c₂) → l₁ c₁ , l₂ c₂) H₁.u-least? H₂.u-least?
+  { 𝟏-least? = zipWith (λ l₁ l₂ (c₁ , c₂) → l₁ c₁ , l₂ c₂) H₁.𝟏-least? H₂.𝟏-least?
   ; ·-comm?  = zipWith (λ m₁ m₂ (c₁ , c₂) (d₁ , d₂) → pairᵐ (m₁ c₁ d₁) (m₂ c₂ d₂))
                        H₁.·-comm? H₂.·-comm?
   ; plus?    = λ (c₁ , c₂) → zipWith plus× (H₁.plus? c₁) (H₂.plus? c₂)
@@ -145,22 +145,22 @@ module _ {D : Duration} {G₁ G₂ : Grade D} where
   π₁ᵍ = record
     { map          = proj₁
     ; map-monotone = proj₁
-    ; map-u        = ≃-refl G₁
+    ; map-𝟏        = ≃-refl G₁
     ; map-·        = ≃-refl G₁
     ; map-⊤        = ≃-refl G₁
     ; map-⊔        = ≃-refl G₁
-    ; map-of-dur   = ≃-refl G₁
+    ; map-ι        = ≃-refl G₁
     }
 
   π₂ᵍ : (G₁ ×ᵍ G₂) →ᵍ G₂
   π₂ᵍ = record
     { map          = proj₂
     ; map-monotone = proj₂
-    ; map-u        = ≃-refl G₂
+    ; map-𝟏        = ≃-refl G₂
     ; map-·        = ≃-refl G₂
     ; map-⊤        = ≃-refl G₂
     ; map-⊔        = ≃-refl G₂
-    ; map-of-dur   = ≃-refl G₂
+    ; map-ι        = ≃-refl G₂
     }
 
 module _ {D : Duration} {G G₁ G₂ : Grade D} where
@@ -171,11 +171,11 @@ module _ {D : Duration} {G G₁ G₂ : Grade D} where
   ⟨ f , g ⟩ᵍ = record
     { map          = λ c → (map f c , map g c)
     ; map-monotone = λ p → map-monotone f p , map-monotone g p
-    ; map-u        = pairᵐ (map-u f) (map-u g)
+    ; map-𝟏        = pairᵐ (map-𝟏 f) (map-𝟏 g)
     ; map-·        = pairᵐ (map-· f) (map-· g)
     ; map-⊤        = pairᵐ (map-⊤ f) (map-⊤ g)
     ; map-⊔        = pairᵐ (map-⊔ f) (map-⊔ g)
-    ; map-of-dur   = pairᵐ (map-of-dur f) (map-of-dur g)
+    ; map-ι        = pairᵐ (map-ι f) (map-ι g)
     }
 
   -- the universal property: pairing followed by a projection is the
@@ -204,11 +204,11 @@ module _ {D : Duration} {G₁ G₂ H₁ H₂ : Grade D} where
   f ×ᵐ g = record
     { map          = λ (c₁ , c₂) → (map f c₁ , map g c₂)
     ; map-monotone = λ (p₁ , p₂) → map-monotone f p₁ , map-monotone g p₂
-    ; map-u        = pairᵐ (map-u f) (map-u g)
+    ; map-𝟏        = pairᵐ (map-𝟏 f) (map-𝟏 g)
     ; map-·        = pairᵐ (map-· f) (map-· g)
     ; map-⊤        = pairᵐ (map-⊤ f) (map-⊤ g)
     ; map-⊔        = pairᵐ (map-⊔ f) (map-⊔ g)
-    ; map-of-dur   = pairᵐ (map-of-dur f) (map-of-dur g)
+    ; map-ι        = pairᵐ (map-ι f) (map-ι g)
     }
 
 ------------------------------------------------------------------------
@@ -216,7 +216,7 @@ module _ {D : Duration} {G₁ G₂ H₁ H₂ : Grade D} where
 --
 -- A morphism of the durations, and along it a morphism on the effect
 -- grades and one on the resource grades, commuting with the
--- projections `∣_∣ᵉ`.
+-- projections `∣-∣ᵉ`.
 
 record _→ˢ_ (S₁ S₂ : GradeSystem) : Set₁ where
   open GradeSystem
@@ -227,7 +227,7 @@ record _→ˢ_ (S₁ S₂ : GradeSystem) : Set₁ where
     mapᴱ   : GradeMorphism mapᴰ (EGrade S₁) (EGrade S₂)
     mapᴿ   : GradeMorphism mapᴰ (RGrade S₁) (RGrade S₂)
     square : (e : Grade.Carrier (EGrade S₁))
-           → map ∣ S₂ ∣ᵉ (map mapᴱ e) ≡ map mapᴿ (map ∣ S₁ ∣ᵉ e)
+           → map (∣-∣ᵉ S₂) (map mapᴱ e) ≡ map mapᴿ (map (∣-∣ᵉ S₁) e)
 
 ------------------------------------------------------------------------
 -- Candidate grades of a product: each candidate of the first component
@@ -246,12 +246,12 @@ infixr 2 _×ˢ_⟨_⟩
 
 _×ˢ_⟨_⟩ : (S₁ S₂ : GradeSystem)
         → GradeSystem.Dur S₁ ≡ GradeSystem.Dur S₂ → GradeSystem
-record { Dur = D ; RGrade = R₁ ; EGrade = E₁ ; ∣_∣ᵉ = p₁ }
-  ×ˢ record { RGrade = R₂ ; EGrade = E₂ ; ∣_∣ᵉ = p₂ } ⟨ refl ⟩ = record
+record { Dur = D ; RGrade = R₁ ; EGrade = E₁ ; ∣-∣ᵉ = p₁ }
+  ×ˢ record { RGrade = R₂ ; EGrade = E₂ ; ∣-∣ᵉ = p₂ } ⟨ refl ⟩ = record
   { Dur    = D
   ; RGrade = R₁ ×ᵍ R₂
   ; EGrade = E₁ ×ᵍ E₂
-  ; ∣_∣ᵉ   = p₁ ×ᵐ p₂
+  ; ∣-∣ᵉ   = p₁ ×ᵐ p₂
   }
 
 -- its hints: it reflects the order at the unit where both components
@@ -264,7 +264,7 @@ _×ʰˢ_⟨_⟩ : {S₁ S₂ : GradeSystem} → SystemHints S₁ → SystemHints
 _×ʰˢ_⟨_⟩ {record { Dur = D }} {record {}} H₁ H₂ refl = record
   { RHints      = H₁.RHints ×ʰ H₂.RHints
   ; EHints      = H₁.EHints ×ʰ H₂.EHints
-  ; reflects-u? = zipWith (λ f g (e₁ , e₂) (q₁ , q₂) → f e₁ q₁ , g e₂ q₂) H₁.reflects-u? H₂.reflects-u?
+  ; reflects-𝟏? = zipWith (λ f g (e₁ , e₂) (q₁ , q₂) → f e₁ q₁ , g e₂ q₂) H₁.reflects-𝟏? H₂.reflects-𝟏?
   ; witnesses   = λ d rcs ecs → pairs (H₁.witnesses d (mapᴸ proj₁ rcs) (mapᴸ proj₁ ecs))
                                       (H₂.witnesses d (mapᴸ proj₂ rcs) (mapᴸ proj₂ ecs))
   }

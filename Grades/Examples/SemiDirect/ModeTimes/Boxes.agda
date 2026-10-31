@@ -66,8 +66,8 @@ n ∈ᵢ i = (min i ≤ n) × (↑ n ≤∞ max i)
 ∈ᵢ-≾ : ∀ {n i j} → i ≾ᵢ j → n ∈ᵢ i → n ∈ᵢ j
 ∈ᵢ-≾ {n} {i} {j} (lo , hi) (a , b) = ℕₚ.≤-trans lo a , ≤∞-trans {↑ n} {max i} {max j} b hi
 
-0∈uᵢ : 0 ∈ᵢ uᵢ
-0∈uᵢ = z≤n , z≤n
+0∈𝟏ᵢ : 0 ∈ᵢ 𝟏ᵢ
+0∈𝟏ᵢ = z≤n , z≤n
 
 ------------------------------------------------------------------------
 -- Summaries of traces: finitely many modes with their times
@@ -265,7 +265,7 @@ private
 closed : Grades.Matrix.Restrict.Closed ℕ-names equivariant-boxes RealisableEntry
 closed = record
   { P-𝟘     = tt
-  ; P-𝟙     = witness [] tt , (λ s → 0∈uᵢ) , 0∈uᵢ
+  ; P-𝟙     = witness [] tt , (λ s → 0∈𝟏ᵢ) , 0∈𝟏ᵢ
   ; P-⊤     = witness [] tt , (λ s → z≤n , tt) , (z≤n , tt)
   ; P-⊕     = λ { {nothing} {y} _ q → subst-⊕ y q
                 ; {just b} {nothing} p _ → p

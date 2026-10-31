@@ -15,11 +15,11 @@
 -- The two endpoints settle the two questions that the one-sided      --
 -- grades settle one each:                                            --
 --                                                                    --
---   * the bound `ρ ≾ᵣ uᵣ` of `var` forces `max ρ` to `0`, so a       --
+--   * the bound `ρ ≾ᵣ 𝟏ᵣ` of `var` forces `max ρ` to `0`, so a       --
 --     reading goes stale after any activity; the upper endpoint      --
 --     decides it, as at the upper bounds.                            --
 --                                                                    --
---   * a handler clause cannot discard its continuation, `uₑ ≾ₑ ε`    --
+--   * a handler clause cannot discard its continuation, `𝟏ₑ ≾ₑ ε`    --
 --     forcing `min ε` to `0`; the lower endpoint decides it, as at   --
 --     the lower bounds.                                              --
 --                                                                    --
@@ -101,14 +101,14 @@ tagged-relaying =
 ------------------------------------------------------------------------
 -- Readings go stale
 --
--- `ρ ≾ᵣ uᵣ` is `0 ≤ min ρ × max ρ ≤ 0`: the upper endpoint has to be
+-- `ρ ≾ᵣ 𝟏ᵣ` is `0 ≤ min ρ × max ρ ≤ 0`: the upper endpoint has to be
 -- `0`, so a reading is usable only where no lock stands between its
 -- binding and its use.
 
-reading-stale-after-an-operation : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
+reading-stale-after-an-operation : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ 𝟏ᵣ)
 reading-stale-after-an-operation (_ , hi) = ≰! hi
 
-reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-durʳ 2 ≾ᵣ uᵣ)
+reading-stale-after-idling : ¬ (𝟏ᵣ ·ᵣ ιᵣ 2 ≾ᵣ 𝟏ᵣ)
 reading-stale-after-idling (_ , hi) = ≰! hi
 
 -- the identifier is eternal, and so is not subject to any of this
@@ -128,10 +128,10 @@ enlarging-the-window : [] ⊢C⦂ Unit ‼ [ 2 , 6 ]
 enlarging-the-window =
   coerce (≤! , ≤!) (perform read ⋆ (perform write here (return ⋆)))
 
-raising-the-floor : ¬ (opTime read ·ₑ (opTime write ·ₑ uₑ) ≾ₑ [ 4 , 6 ])
+raising-the-floor : ¬ (opTime read ·ₑ (opTime write ·ₑ 𝟏ₑ) ≾ₑ [ 4 , 6 ])
 raising-the-floor (lo , _) = ≰! lo
 
-tightening-the-deadline : ¬ (opTime read ·ₑ (opTime write ·ₑ uₑ) ≾ₑ [ 3 , 3 ])
+tightening-the-deadline : ¬ (opTime read ·ₑ (opTime write ·ₑ 𝟏ₑ) ≾ₑ [ 3 , 3 ])
 tightening-the-deadline (_ , hi) = ≰! hi
 
 ------------------------------------------------------------------------
@@ -149,10 +149,10 @@ branching =
 
 -- neither branch's own window will do for the conditional
 
-storing-window-too-tight : ¬ (opTime send ·ₑ uₑ ≾ₑ [ 2 , 3 ])
+storing-window-too-tight : ¬ (opTime send ·ₑ 𝟏ₑ ≾ₑ [ 2 , 3 ])
 storing-window-too-tight (_ , hi) = ≰! hi
 
-transmitting-window-too-late : ¬ (opTime write ·ₑ uₑ ≾ₑ [ 4 , 6 ])
+transmitting-window-too-late : ¬ (opTime write ·ₑ 𝟏ₑ ≾ₑ [ 4 , 6 ])
 transmitting-window-too-late (lo , _) = ≰! lo
 
 -- an `if` over data alone: both branches make the same run, so neither
@@ -188,13 +188,13 @@ claim-in-the-window =
                                      -- ∷ Reading
         (perform send here (return ⋆))))
 
-claim-too-early : ¬ (uᵣ ≾ᵣ [ 2 , 6 ])
+claim-too-early : ¬ (𝟏ᵣ ≾ᵣ [ 2 , 6 ])
 claim-too-early (lo , _) = ≰! lo
 
-claim-after-a-reading-too-early : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ [ 2 , 6 ])
+claim-after-a-reading-too-early : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ [ 2 , 6 ])
 claim-after-a-reading-too-early (lo , _) = ≰! lo
 
-claim-too-late : ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ [ 2 , 6 ])
+claim-too-late : ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ [ 2 , 6 ])
 claim-too-late (_ , hi) = ≰! hi
 
 -- a window that opens at one tick is within reach of a reading and a
@@ -287,7 +287,7 @@ claim-after-a-store =
 -- enlarging that to `[ 2 , 6 ]` first drops its floor to two, and the
 -- box asks for three
 
-coercing-closes-it : ¬ (uᵣ ·ᵣ [ 2 , 6 ] ≾ᵣ [ 3 , 6 ])
+coercing-closes-it : ¬ (𝟏ᵣ ·ᵣ [ 2 , 6 ] ≾ᵣ [ 3 , 6 ])
 coercing-closes-it (lo , _) = ≰! lo
 
 -- the same program with the coercion, against a box whose window opens
@@ -328,7 +328,7 @@ window-in-a-branch =
 
 -- one reading more in the transmitting branch and the window has closed
 
-one-reading-too-many : ¬ (uᵣ ·ᵣ opTime send ·ᵣ opTime read ≾ᵣ [ 2 , 6 ])
+one-reading-too-many : ¬ (𝟏ᵣ ·ᵣ opTime send ·ᵣ opTime read ≾ᵣ [ 2 , 6 ])
 one-reading-too-many (_ , hi) = ≰! hi
 
 -- Two staggered resources, each claimed at the one point of the run
@@ -352,10 +352,10 @@ staggered =
 -- the points cannot be swapped: at the earlier one the second window
 -- has not opened, and at the later one the first has closed
 
-second-not-open-yet : ¬ (uᵣ ·ᵣ of-durʳ 3 ≾ᵣ [ 6 , 12 ])
+second-not-open-yet : ¬ (𝟏ᵣ ·ᵣ ιᵣ 3 ≾ᵣ [ 6 , 12 ])
 second-not-open-yet (lo , _) = ≰! lo
 
-first-closed-by-then : ¬ (uᵣ ·ᵣ of-durʳ 3 ·ᵣ opTime send ≾ᵣ [ 2 , 6 ])
+first-closed-by-then : ¬ (𝟏ᵣ ·ᵣ ιᵣ 3 ·ᵣ opTime send ≾ᵣ [ 2 , 6 ])
 first-closed-by-then (_ , hi) = ≰! hi
 
 ------------------------------------------------------------------------
@@ -375,10 +375,10 @@ identified =
     `in                              -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
       (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
 
--- and no clause may drop its continuation: `uₑ ≾ₑ op-grade op ·ₑ ε''`
+-- and no clause may drop its continuation: `𝟏ₑ ≾ₑ op-grade op ·ₑ ε''`
 -- asks the clause's floor to be `0`, and an operation's is not
 
-no-discarding : ¬ (uₑ ≾ₑ op-grade read ·ₑ uₑ)
+no-discarding : ¬ (𝟏ₑ ≾ₑ op-grade read ·ₑ 𝟏ₑ)
 no-discarding (lo , _) = ≰! lo
 
 ------------------------------------------------------------------------

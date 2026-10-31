@@ -58,13 +58,13 @@ open import MonomorphicCalculus.Syntax.Substitution.Subsumption  Spec
 
 Boxed : (B : VType) → (op : Op) → (ε₃ : E) → 𝕊 [] → Set
 Boxed B op ε₃ St₁ =
-  ([] ++ᶜ toCtx St₁ ⟨ mapᵉ (op-grade op) ⟩)
+  ([] ++ᶜ toCtx St₁ ⟨ ∣ op-grade op ∣ᵉ ⟩)
   ⊢V⦂ (type-of-gtype (arity op) ⇒ B ‼ ε₃)
 
 Boxed-VRed : (B : VType) → (op : Op) → (ε₃ : E)
            → (St₁ : 𝕊 []) → Boxed B op ε₃ St₁ → Set
 Boxed-VRed B op ε₃ St₁ V₀ =
-  ∀ {St'} → (q : St₁ ⊑ₛ[ mapᵉ (op-grade op) ] St')
+  ∀ {St'} → (q : St₁ ⊑ₛ[ ∣ op-grade op ∣ᵉ ] St')
     → VRed (type-of-gtype (arity op) ⇒ B ‼ ε₃) St'
            (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V₀)
 
@@ -104,21 +104,21 @@ cong-cl-ren-∘-≐ʳ r r' =
 -- The sequel premise, as in `Bind`.
 
 Seq-Prem : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
-         → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂) → Set
+         → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂) → Set
 Seq-Prem {A} {B} {ε₁} {ε₂} {St} N =
-  ∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ mapᵉ ε₁ ] St₁)
+  ∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ ∣ ε₁ ∣ᵉ ] St₁)
     → (V : toCtx St₁ ⊢V⦂ A) → VRed A St₁ V
     → CRed' B ε₂ St₁ ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c)
 
 -- Induction on the scrutinee's `CRed` derivation, taken at a skeleton as in
 -- `Bind`. `cred-ret` fires `HANDLE-RET` and is `Bind`'s `cred-ret` verbatim:
--- the sequel premise consumes the value and the run's `mapᵉ uₑ` is reconciled
--- with the reach's `uᵣ` by `suc-comp-ren-grade`.
+-- the sequel premise consumes the value and the run's `∣ 𝟏ₑ ∣ᵉ` is reconciled
+-- with the reach's `𝟏ᵣ` by `suc-comp-ren-grade`.
 
 handle-CRed : ∀ {s A B ε₁ ε₂} {e : shapeᵛ A ≡ s} {St : 𝕊 []}
             → {M : toCtx St ⊢C⦂ A ‼ ε₁}
             → (H : Fam B (toCtx St ⟨ ⊤ᵣ ⟩))
-            → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+            → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
             → CRedˢ' s e ε₁ St M
             → Clause-Prem B St H
             → Seq-Prem N
@@ -139,21 +139,21 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
     E₀  = steps-extends-state rs
     srs = suc-comp-ren E₀ (steps-grade-≾ rs)
 
-    b : ≤ₛ-grade E₀ ≾ᵣ mapᵉ ε₁
+    b : ≤ₛ-grade E₀ ≾ᵣ ∣ ε₁ ∣ᵉ
     b = ≾ᵣ-trans
           (≃ᵣ⇒≾ᵣ
-            (≃ᵣ-trans (≃ᵣ-sym (·ᵣ-identityʳ (≤ₛ-grade E₀))) (·ᵣ-cong ≃ᵣ-refl (≃ᵣ-sym map-uᵉ))))
+            (≃ᵣ-trans (≃ᵣ-sym (·ᵣ-identityʳ (≤ₛ-grade E₀))) (·ᵣ-cong ≃ᵣ-refl (≃ᵣ-sym map-𝟏ᵉ))))
           (steps-grade-≾ rs)
 
     q = reach E₀ b
 
-    R₁ : Ren [] (toCtx St₁) (toCtx St₁ ⟨ mapᵉ uₑ ⟩)
-    R₁ = ⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren
+    R₁ : Ren [] (toCtx St₁) (toCtx St₁ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩)
+    R₁ = ⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren
 
     eqr : (srs ∘ʳ R₁) ≐ʳ unbox-ren q
-    eqr = ≐ʳ-trans (≐ʳ-sym (∘ʳ-assoc-≐ʳ srs (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ))
+    eqr = ≐ʳ-trans (≐ʳ-sym (∘ʳ-assoc-≐ʳ srs (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ))
                                        ⟨⟩-η-ren))
-                   (∘ʳ-≐ʳ (≐ʳ-sym (suc-comp-ren-≤ E₀ (reach-bound q) (steps-grade-≾ rs) (≃ᵣ⇒≿ᵣ map-uᵉ)))
+                   (∘ʳ-≐ʳ (≐ʳ-sym (suc-comp-ren-≤ E₀ (reach-bound q) (steps-grade-≾ rs) (≃ᵣ⇒≿ᵣ map-𝟏ᵉ)))
                          ≐ʳ-refl)
 
     ren-shift : C-rename (cong-∷-ren R₁) (C-rename (cong-∷-ren srs) N)
@@ -194,7 +194,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
         (subst (CRed' B _ (St₁ ∷ₛ V₀)) fired
           (hH q₀ V₀ bv W (VRedᵍ→VRed (param op) W pW)))))
   where
-    ρₒ  = mapᵉ (op-grade op)
+    ρₒ  = ∣ op-grade op ∣ᵉ
     Ar  = type-of-gtype (arity op)
     E₀  = steps-extends-state rs
 
@@ -207,8 +207,8 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
     q₀ = reach E₀ (≾-⊤ᵣ _)
 
 
-    κ : Ren [] ((toCtx St₁ ⟨ ρₒ ⟩ ∷ Ar) ⟨ mapᵉ ε₃ ⟩)
-              (toCtx St₁ ⟨ mapᵉ (op-grade op ·ₑ ε₃) ⟩)
+    κ : Ren [] ((toCtx St₁ ⟨ ρₒ ⟩ ∷ Ar) ⟨ ∣ ε₃ ∣ᵉ ⟩)
+              (toCtx St₁ ⟨ ∣ op-grade op ·ₑ ε₃ ∣ᵉ ⟩)
     κ = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
 
     -- the clauses and sequel `HANDLE-OP` puts under the boxed resumption
@@ -324,17 +324,17 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
           where
             sq = unbox-ren q₂
 
-            B₁' : ≤ₛ-grade (ext q₂) ·ᵣ mapᵉ ε₃ ≾ᵣ ρₒ ·ᵣ mapᵉ ε₃
+            B₁' : ≤ₛ-grade (ext q₂) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ρₒ ·ᵣ ∣ ε₃ ∣ᵉ
             B₁' = ·ᵣ-monoˡ-≾ᵣ (bound q₂)
 
-            B₁ : ≤ₛ-grade (ext q₂) ·ᵣ mapᵉ ε₃
-               ≾ᵣ mapᵉ (op-grade op ·ₑ ε₃)
+            B₁ : ≤ₛ-grade (ext q₂) ·ᵣ ∣ ε₃ ∣ᵉ
+               ≾ᵣ ∣ op-grade op ·ₑ ε₃ ∣ᵉ
             B₁ = ≾ᵣ-trans B₁' (≃ᵣ⇒≿ᵣ map-·ᵉ)
 
             -- what is left of the sequel's renaming once the arity variable
             -- is gone
-            W₁ : Ren [] (toCtx St'' ⟨ mapᵉ ε₃ ⟩)
-                      (toCtx St₁ ⟨ mapᵉ (op-grade op ·ₑ ε₃) ⟩)
+            W₁ : Ren [] (toCtx St'' ⟨ ∣ ε₃ ∣ᵉ ⟩)
+                      (toCtx St₁ ⟨ ∣ op-grade op ·ₑ ε₃ ∣ᵉ ⟩)
             W₁ = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren sq
 
             eW₁ : W₁ ≐ʳ suc-comp-ren (ext q₂) B₁
@@ -352,7 +352,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
                 ≡ subCtx-run rs (C-rename (cong-∷-ren (srs ∘ʳ W₁)) N)
             eN₂ =
               trans (sub-≡ᶜ (split-∷ (split-⟨⟩ split-[])) (refl) split-off)
-                (trans (sub-wk-C ([] ⟨ mapᵉ ε₃ ⟩ ∷ A₀)
+                (trans (sub-wk-C ([] ⟨ ∣ ε₃ ∣ᵉ ⟩ ∷ A₀)
                                     (C-rename (cong-∷-ren W₁) N₁) W')
                   (trans (C-rename-cong (cong-∷-ren W₁) eN₁)
                     (trans (subCtx-run-ren rs W₁ (C-rename (cong-∷-ren srs) N))
@@ -409,14 +409,14 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
                 -- the run and the clause's own reach accumulate: the grades
                 -- multiply and each is bounded, so the composite stays
                 -- under `ε₁`
-                B₂ : ≤ₛ-grade (≤ₛ-trans E₀ (ext q₂)) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁
+                B₂ : ≤ₛ-grade (≤ₛ-trans E₀ (ext q₂)) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ
                 B₂ =
                   ≾ᵣ-trans
                     (≃ᵣ⇒≾ᵣ
-                      (≃ᵣ-trans (·ᵣ-cong (≤ₛ-grade-trans E₀ (ext q₂)) ≃ᵣ-refl) (·ᵣ-assoc (≤ₛ-grade E₀) (≤ₛ-grade (ext q₂)) (mapᵉ ε₃))))
+                      (≃ᵣ-trans (·ᵣ-cong (≤ₛ-grade-trans E₀ (ext q₂)) ≃ᵣ-refl) (·ᵣ-assoc (≤ₛ-grade E₀) (≤ₛ-grade (ext q₂)) ∣ ε₃ ∣ᵉ)))
                     (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ B₁) b₀)
 
-                q₄ : St ⊑ₛ[ mapᵉ ε₁ ] St₃
+                q₄ : St ⊑ₛ[ ∣ ε₁ ∣ᵉ ] St₃
                 q₄ = reach (≤ₛ-trans (≤ₛ-trans E₀ (ext q₂)) (ext q₃))
                        (≾ᵣ-trans
                          (≃ᵣ⇒≾ᵣ
@@ -675,7 +675,7 @@ env-Hˢ-fired γ q H V₀ W = refl
 -- a reach at the smaller lock is one at the larger, and the value is subsumed.
 
 Seq-Prem-sub : ∀ {A A₀ B ε₀ ε₁ ε₂} {St : 𝕊 []}
-             → {N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂}
+             → {N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂}
              → (p : A₀ <:ᵛ A) → (pε : ε₀ ≾ₑ ε₁)
              → Seq-Prem N
              → Seq-Prem (subCtx p (C-rename (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε))) N))
@@ -711,7 +711,7 @@ Seq-Prem-sub {N = N} p pε hN q V pV =
 
 handler-CRed : ∀ {s A B ε ε'} {St : 𝕊 []}
              → {H : Fam B (toCtx St ⟨ ⊤ᵣ ⟩)}
-             → {N : toCtx St ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+             → {N : toCtx St ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
              → Clause-Prem B St H
              → Seq-Prem N
              → ∀ {A₀ ε₀ B₀ ε₀'} {U : toCtx St ⊢V⦂ (A₀ ‼ ε₀) ⇛ (B₀ ‼ ε₀')}

@@ -56,7 +56,7 @@ data Env : (St : 𝕊 []) → Ctx → Set where
   -- Postcomposition with a reach: what makes `Env` functorial in the state.
 
   reachᵉ   : ∀ {St St' Γ}
-           → Env St Γ → St ⊑ₛ[ uᵣ ] St'
+           → Env St Γ → St ⊑ₛ[ 𝟏ᵣ ] St'
            ------------------------------
            → Env St' Γ
 

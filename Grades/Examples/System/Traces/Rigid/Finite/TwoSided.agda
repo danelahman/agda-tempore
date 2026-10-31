@@ -126,7 +126,7 @@ interval-runs→intervals = record
   ; map-monotone = λ {a} {b} (pL , pU) →
       proj₁ (hullᴾ-mono {c = proj₁ (proj₁ a)} {proj₁ (proj₁ b)} pL) ,
       proj₂ (hullᴾ-mono {c = proj₂ (proj₁ a)} {proj₂ (proj₁ b)} pU)
-  ; map-u        = ends (mapₒ E.u) R.u (cong lo (hullᴾ-ε {lower})) (cong hi (hullᴾ-ε {upper}))
+  ; map-𝟏        = ends (mapₒ E.𝟏) R.𝟏 (cong lo (hullᴾ-ε {lower})) (cong hi (hullᴾ-ε {upper}))
   ; map-·        = λ {a} {b} →
       ends (mapₒ (a E.· b)) (mapₒ a R.· mapₒ b) (cong lo (hullᴾ-· (proj₁ (proj₁ a)) (proj₁ (proj₁ b))))
            (cong hi (hullᴾ-· (proj₂ (proj₁ a)) (proj₂ (proj₁ b))))
@@ -136,14 +136,14 @@ interval-runs→intervals = record
   ; map-⊔        = λ {a} {b} →
       ends (mapₒ (a E.⊔ b)) (mapₒ a R.⊔ mapₒ b) (cong lo (hullᴾ-∣ (proj₁ (proj₁ a)) (proj₁ (proj₁ b))))
            (cong hi (hullᴾ-∣ (proj₂ (proj₁ a)) (proj₂ (proj₁ b))))
-  ; map-of-dur   = λ {τ} → ends (mapₒ (E.of-dur τ)) (R.of-dur τ) (wait-lo τ) (wait-hi τ)
+  ; map-ι        = λ {τ} → ends (mapₒ (E.ι τ)) (R.ι τ) (wait-lo τ) (wait-hi τ)
   }
 
 intervalRunsToIntervalsGradeSystem : GradeSystem
 intervalRunsToIntervalsGradeSystem = record
   { RGrade = dense-two-sided-intervals-with-∞
   ; EGrade = two-sided
-  ; ∣_∣ᵉ   = interval-runs→intervals
+  ; ∣-∣ᵉ   = interval-runs→intervals
   }
 
 -- its hints
@@ -152,6 +152,6 @@ intervalRunsToIntervalsGradeSystemʰ : SystemHints intervalRunsToIntervalsGradeS
 intervalRunsToIntervalsGradeSystemʰ = record
   { RHints      = dense-two-sided-intervals-with-∞ʰ
   ; EHints      = noGradeHints
-  ; reflects-u? = nothing
+  ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []
   }

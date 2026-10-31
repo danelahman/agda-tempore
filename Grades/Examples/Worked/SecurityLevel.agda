@@ -66,7 +66,7 @@ module _ where
 
   -- waiting does not
 
-  idle : of-dur 5 · Low ≡ Low
+  idle : ι 5 · Low ≡ Low
   idle = refl
 
   -- at the sensor node, `logged` stays `Low` and `uplink`, which
@@ -75,7 +75,7 @@ module _ where
   logged-low : touches read · touches write ≡ Low
   logged-low = refl
 
-  uplink-high : touches read · of-dur 2 · touches send ≡ High
+  uplink-high : touches read · ι 2 · touches send ≡ High
   uplink-high = refl
 
 -- three taint labels: personal data, a key, the network

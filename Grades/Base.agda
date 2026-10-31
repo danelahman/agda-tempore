@@ -60,12 +60,12 @@ record Grade (D : Duration) : Set₁ where
 
     -- carrier and operations
     Carrier : Set₀
-    _·_     : Carrier → Carrier → Carrier
-    u       : Carrier
     _≾_     : Rel Carrier lzero
+    𝟏       : Carrier
+    _·_     : Carrier → Carrier → Carrier
     ⊤       : Carrier
     _⊔_     : Carrier → Carrier → Carrier
-    of-dur  : D.Carrier → Carrier
+    ι       : D.Carrier → Carrier
 
   -- equality is the order's equivalence
   _≃_ : Rel Carrier lzero
@@ -74,8 +74,8 @@ record Grade (D : Duration) : Set₁ where
   field
 
     -- a monoid, up to equivalence
-    ·-identityˡ : (c : Carrier) → (u · c) ≃ c
-    ·-identityʳ : (c : Carrier) → (c · u) ≃ c
+    ·-identityˡ : (c : Carrier) → (𝟏 · c) ≃ c
+    ·-identityʳ : (c : Carrier) → (c · 𝟏) ≃ c
     ·-assoc     : (c d e : Carrier) → (c · d) · e ≃ c · (d · e)
 
     -- a preorder, decidable and proof-irrelevant
@@ -100,13 +100,13 @@ record Grade (D : Duration) : Set₁ where
     ·-distribʳ-⊔-≾ : (c d e : Carrier) → (d ⊔ e) · c ≾ (d · c) ⊔ (e · c)
 
     -- the unit's zero-product property
-    ≾-zero-productˡ : ∀ {c d} → c · d ≾ u → c ≾ u
-    ≾-zero-productʳ : ∀ {c d} → c · d ≾ u → d ≾ u
+    ≾-zero-productˡ : ∀ {c d} → c · d ≾ 𝟏 → c ≾ 𝟏
+    ≾-zero-productʳ : ∀ {c d} → c · d ≾ 𝟏 → d ≾ 𝟏
 
     -- durations included as a monoid morphism up to equivalence,
-    -- `of-dur τ` the grade of the delay `τ`
-    of-dur-zero : of-dur D.0ᴰ ≃ u
-    of-dur-plus : ∀ {τ τ'} → of-dur (τ D.+ᴰ τ') ≃ of-dur τ · of-dur τ'
+    -- `ι τ` the grade of the delay `τ`
+    ι-zero : ι D.0ᴰ ≃ 𝟏
+    ι-plus : ∀ {τ τ'} → ι (τ D.+ᴰ τ') ≃ ι τ · ι τ'
 
   -- _≡_ is included in _≾_
   ≾-reflexive  : _≡_ ⇒ _≾_
@@ -203,15 +203,15 @@ record PosetGrade (D : Duration) : Set₁ where
 
   field
     Carrier : Set₀
-    _·_     : Carrier → Carrier → Carrier
-    u       : Carrier
     _≾_     : Rel Carrier lzero
+    𝟏       : Carrier
+    _·_     : Carrier → Carrier → Carrier
     ⊤       : Carrier
     _⊔_     : Carrier → Carrier → Carrier
-    of-dur  : D.Carrier → Carrier
+    ι       : D.Carrier → Carrier
 
-    ·-identityˡ : (c : Carrier) → (u · c) ≡ c
-    ·-identityʳ : (c : Carrier) → (c · u) ≡ c
+    ·-identityˡ : (c : Carrier) → (𝟏 · c) ≡ c
+    ·-identityʳ : (c : Carrier) → (c · 𝟏) ≡ c
     ·-assoc     : (c d e : Carrier) → ((c · d) · e) ≡ (c · (d · e))
 
     ≾-refl       : Reflexive _≾_
@@ -231,16 +231,16 @@ record PosetGrade (D : Duration) : Set₁ where
     ·-distribˡ-⊔-≾ : (c d e : Carrier) → (c · (d ⊔ e)) ≾ ((c · d) ⊔ (c · e))
     ·-distribʳ-⊔-≾ : (c d e : Carrier) → ((d ⊔ e) · c) ≾ ((d · c) ⊔ (e · c))
 
-    ≾-zero-productˡ : ∀ {c d} → (c · d) ≾ u → c ≾ u
-    ≾-zero-productʳ : ∀ {c d} → (c · d) ≾ u → d ≾ u
+    ≾-zero-productˡ : ∀ {c d} → (c · d) ≾ 𝟏 → c ≾ 𝟏
+    ≾-zero-productʳ : ∀ {c d} → (c · d) ≾ 𝟏 → d ≾ 𝟏
 
-    of-dur-zero : of-dur D.0ᴰ ≡ u
-    of-dur-plus : ∀ {τ τ'} → of-dur (τ D.+ᴰ τ') ≡ (of-dur τ · of-dur τ')
+    ι-zero : ι D.0ᴰ ≡ 𝟏
+    ι-plus : ∀ {τ τ'} → ι (τ D.+ᴰ τ') ≡ (ι τ · ι τ')
 
 posetᵍ : {D : Duration} → PosetGrade D → Grade D
 posetᵍ G = record
-  { Carrier = P.Carrier ; _·_ = P._·_ ; u = P.u ; _≾_ = P._≾_ ; ⊤ = P.⊤
-  ; _⊔_ = P._⊔_ ; of-dur = P.of-dur
+  { Carrier = P.Carrier ; _≾_ = P._≾_ ; 𝟏 = P.𝟏 ; _·_ = P._·_ ; ⊤ = P.⊤
+  ; _⊔_ = P._⊔_ ; ι = P.ι
   ; ·-identityˡ = λ c → ≡⇒≃ (P.·-identityˡ c)
   ; ·-identityʳ = λ c → ≡⇒≃ (P.·-identityʳ c)
   ; ·-assoc = λ c d e → ≡⇒≃ (P.·-assoc c d e)
@@ -250,8 +250,8 @@ posetᵍ G = record
   ; ·-monoˡ-≾ = P.·-monoˡ-≾ ; ·-monoʳ-≾ = P.·-monoʳ-≾
   ; ·-distribˡ-⊔-≾ = P.·-distribˡ-⊔-≾ ; ·-distribʳ-⊔-≾ = P.·-distribʳ-⊔-≾
   ; ≾-zero-productˡ = P.≾-zero-productˡ ; ≾-zero-productʳ = P.≾-zero-productʳ
-  ; of-dur-zero = ≡⇒≃ P.of-dur-zero
-  ; of-dur-plus = ≡⇒≃ P.of-dur-plus
+  ; ι-zero = ≡⇒≃ P.ι-zero
+  ; ι-plus = ≡⇒≃ P.ι-plus
   }
   where
     module P = PosetGrade G
@@ -264,10 +264,10 @@ posetᵍ G = record
 
 record GradeMorphism {D₁ D₂ : Duration} (h : D₁ →ᴰ D₂)
                      (G₁ : Grade D₁) (G₂ : Grade D₂) : Set₁ where
-  open Grade G₁ renaming (Carrier to C₁; _≾_ to _≾₁_; u to u₁; _·_ to _·₁_;
-                          ⊤ to ⊤₁; _⊔_ to _⊔₁_; of-dur to of-dur₁; _≃_ to _≃₁_)
-  open Grade G₂ renaming (Carrier to C₂; _≾_ to _≾₂_; u to u₂; _·_ to _·₂_;
-                          ⊤ to ⊤₂; _⊔_ to _⊔₂_; of-dur to of-dur₂; _≃_ to _≃₂_)
+  open Grade G₁ renaming (Carrier to C₁; _≾_ to _≾₁_; 𝟏 to 𝟏₁; _·_ to _·₁_;
+                          ⊤ to ⊤₁; _⊔_ to _⊔₁_; ι to ι₁; _≃_ to _≃₁_)
+  open Grade G₂ renaming (Carrier to C₂; _≾_ to _≾₂_; 𝟏 to 𝟏₂; _·_ to _·₂_;
+                          ⊤ to ⊤₂; _⊔_ to _⊔₂_; ι to ι₂; _≃_ to _≃₂_)
 
   field
 
@@ -278,7 +278,7 @@ record GradeMorphism {D₁ D₂ : Duration} (h : D₁ →ᴰ D₂)
     map-monotone : {c₁ c₁' : C₁} → (c₁ ≾₁ c₁') → (map c₁ ≾₂ map c₁')
 
     -- map preserves the monoid structure
-    map-u        : map u₁ ≃₂ u₂
+    map-𝟏        : map 𝟏₁ ≃₂ 𝟏₂
     map-·        : {c₁ c₁' : C₁} → map (c₁ ·₁ c₁') ≃₂ map c₁ ·₂ map c₁'
 
     -- map preserves the greatest grade
@@ -288,7 +288,7 @@ record GradeMorphism {D₁ D₂ : Duration} (h : D₁ →ᴰ D₂)
     map-⊔        : {c₁ c₁' : C₁} → map (c₁ ⊔₁ c₁') ≃₂ map c₁ ⊔₂ map c₁'
 
     -- map preserves the inclusion of durations
-    map-of-dur   : ∀ {τ} → map (of-dur₁ τ) ≃₂ of-dur₂ (_→ᴰ_.map h τ)
+    map-ι        : ∀ {τ} → map (ι₁ τ) ≃₂ ι₂ (_→ᴰ_.map h τ)
 
   -- map preserves the equivalence
   map-≃ : {c₁ c₁' : C₁} → c₁ ≃₁ c₁' → map c₁ ≃₂ map c₁'
@@ -298,28 +298,28 @@ record GradeMorphism {D₁ D₂ : Duration} (h : D₁ →ᴰ D₂)
 
 record StrictMorphism {D₁ D₂ : Duration} (h : D₁ →ᴰ D₂)
                       (G₁ : Grade D₁) (G₂ : Grade D₂) : Set₁ where
-  open Grade G₁ renaming (Carrier to C₁; _≾_ to _≾₁_; u to u₁; _·_ to _·₁_;
-                          ⊤ to ⊤₁; _⊔_ to _⊔₁_; of-dur to of-dur₁)
-  open Grade G₂ renaming (Carrier to C₂; _≾_ to _≾₂_; u to u₂; _·_ to _·₂_;
-                          ⊤ to ⊤₂; _⊔_ to _⊔₂_; of-dur to of-dur₂)
+  open Grade G₁ renaming (Carrier to C₁; _≾_ to _≾₁_; 𝟏 to 𝟏₁; _·_ to _·₁_;
+                          ⊤ to ⊤₁; _⊔_ to _⊔₁_; ι to ι₁)
+  open Grade G₂ renaming (Carrier to C₂; _≾_ to _≾₂_; 𝟏 to 𝟏₂; _·_ to _·₂_;
+                          ⊤ to ⊤₂; _⊔_ to _⊔₂_; ι to ι₂)
   field
     map          : C₁ → C₂
     map-monotone : {c₁ c₁' : C₁} → (c₁ ≾₁ c₁') → (map c₁ ≾₂ map c₁')
-    map-u        : map u₁ ≡ u₂
+    map-𝟏        : map 𝟏₁ ≡ 𝟏₂
     map-·        : {c₁ c₁' : C₁} → map (c₁ ·₁ c₁') ≡ (map c₁ ·₂ map c₁')
     map-⊤        : map ⊤₁ ≡ ⊤₂
     map-⊔        : {c₁ c₁' : C₁} → map (c₁ ⊔₁ c₁') ≡ (map c₁ ⊔₂ map c₁')
-    map-of-dur   : ∀ {τ} → map (of-dur₁ τ) ≡ of-dur₂ (_→ᴰ_.map h τ)
+    map-ι        : ∀ {τ} → map (ι₁ τ) ≡ ι₂ (_→ᴰ_.map h τ)
 
 strictᵍ : {D₁ D₂ : Duration} {h : D₁ →ᴰ D₂} {G₁ : Grade D₁} {G₂ : Grade D₂}
        → StrictMorphism h G₁ G₂ → GradeMorphism h G₁ G₂
 strictᵍ {G₂ = G₂} f = record
   { map = map ; map-monotone = map-monotone
-  ; map-u = ≃-reflexive G₂ map-u
+  ; map-𝟏 = ≃-reflexive G₂ map-𝟏
   ; map-· = ≃-reflexive G₂ map-·
   ; map-⊤ = ≃-reflexive G₂ map-⊤
   ; map-⊔ = ≃-reflexive G₂ map-⊔
-  ; map-of-dur = ≃-reflexive G₂ map-of-dur
+  ; map-ι = ≃-reflexive G₂ map-ι
   }
   where open StrictMorphism f
 
@@ -333,7 +333,8 @@ module _→ᵍ_ {D : Duration} {G₁ G₂ : Grade D} (f : G₁ →ᵍ G₂) =
 
 
 -- Grade systems: resource and effect grades over the same durations,
--- and the image `∣_∣ᵉ` of effects in resources
+-- and the morphism `∣-∣ᵉ` of effects into resources, `∣ ε ∣ᵉ` the image
+-- of `ε`
 
 record GradeSystem : Set₂ where
 
@@ -342,7 +343,7 @@ record GradeSystem : Set₂ where
     Dur    : Duration
     RGrade : Grade Dur
     EGrade : Grade Dur
-    ∣_∣ᵉ : EGrade →ᵍ RGrade
+    ∣-∣ᵉ : EGrade →ᵍ RGrade
 
 
 -- The fields of the effect and the resource grade, under distinct names
@@ -356,12 +357,12 @@ module GradeSystemInterface (GS : GradeSystem) where
   open Grade RGrade renaming
     (Carrier to R;
      _·_ to _·ᵣ_;
-     u to uᵣ;
+     𝟏 to 𝟏ᵣ;
      _≾_ to _≾ᵣ_;
      _≃_ to _≃ᵣ_;
      ⊤ to ⊤ᵣ;
      _⊔_ to _⊔ᵣ_;
-     of-dur to of-durʳ;
+     ι to ιᵣ;
      ·-identityˡ to ·ᵣ-identityˡ;
      ·-identityʳ to ·ᵣ-identityʳ;
      ·-assoc to ·ᵣ-assoc;
@@ -379,8 +380,8 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-distribʳ-⊔-≾ to ·ᵣ-distribʳ-⊔ᵣ-≾ᵣ;
      ≾-zero-productˡ to ≾ᵣ-zero-productˡ;
      ≾-zero-productʳ to ≾ᵣ-zero-productʳ;
-     of-dur-zero to of-durʳ-zero;
-     of-dur-plus to of-durʳ-plus;
+     ι-zero to ιᵣ-zero;
+     ι-plus to ιᵣ-plus;
      ≾-reflexive to ≾ᵣ-reflexive;
      ≃-refl to ≃ᵣ-refl;
      ≃-sym to ≃ᵣ-sym;
@@ -405,12 +406,12 @@ module GradeSystemInterface (GS : GradeSystem) where
   open Grade EGrade renaming
     (Carrier to E;
      _·_ to _·ₑ_;
-     u to uₑ;
+     𝟏 to 𝟏ₑ;
      _≾_ to _≾ₑ_;
      _≃_ to _≃ₑ_;
      ⊤ to ⊤ₑ;
      _⊔_ to _⊔ₑ_;
-     of-dur to of-durᵉ;
+     ι to ιₑ;
      ·-identityˡ to ·ₑ-identityˡ;
      ·-identityʳ to ·ₑ-identityʳ;
      ·-assoc to ·ₑ-assoc;
@@ -426,8 +427,8 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-monoʳ-≾ to ·ₑ-monoʳ-≾ₑ;
      ·-distribˡ-⊔-≾ to ·ₑ-distribˡ-⊔ₑ-≾ₑ;
      ·-distribʳ-⊔-≾ to ·ₑ-distribʳ-⊔ₑ-≾ₑ;
-     of-dur-zero to of-durᵉ-zero;
-     of-dur-plus to of-durᵉ-plus;
+     ι-zero to ιₑ-zero;
+     ι-plus to ιₑ-plus;
      ≾-zero-productˡ to ≾ₑ-zero-productˡ;
      ≾-zero-productʳ to ≾ₑ-zero-productʳ;
      ≾-reflexive to ≾ₑ-reflexive;
@@ -451,13 +452,13 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-distribʳ-⊔ to ·ₑ-distribʳ-⊔ₑ
    ) public
 
-  open _→ᵍ_ ∣_∣ᵉ renaming
-    (map to mapᵉ;
+  open _→ᵍ_ ∣-∣ᵉ renaming
+    (map to ∣_∣ᵉ;
      map-monotone to map-monotoneᵉ;
-     map-u to map-uᵉ;
+     map-𝟏 to map-𝟏ᵉ;
      map-· to map-·ᵉ;
      map-⊤ to map-⊤ᵉ;
      map-⊔ to map-⊔ᵉ;
-     map-of-dur to map-of-durᵉ;
+     map-ι to map-ιᵉ;
      map-≃ to map-≃ᵉ
     ) public

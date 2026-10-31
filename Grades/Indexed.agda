@@ -11,7 +11,7 @@
 --                                                                    --
 -- A semilattice, an action and a grade lift to maps, with every      --
 -- operation, the order included, pointwise, and every law holding    --
--- pointwise; `of-dur τ` is constantly `of-dur τ`. Its hints declare  --
+-- pointwise; `ι τ` is constantly `ι τ`. Its hints declare            --
 -- the unit least and `_·_` commutative where those of the component  --
 -- do, and no closures.                                               --
 ------------------------------------------------------------------------
@@ -256,8 +256,8 @@ module Maps (𝒩 : Names) where
     indexedᵃ = record
       { act              = λ m → map (A.act m)
       ; act-identity     = λ f →
-            (pw λ s → subst (_⊑ _) (sym (!-map (A.act M.u) f s)) (proj₁ (A.act-identity (f ! s))))
-          , (pw λ s → subst (_ ⊑_) (sym (!-map (A.act M.u) f s)) (proj₂ (A.act-identity (f ! s))))
+            (pw λ s → subst (_⊑ _) (sym (!-map (A.act M.𝟏) f s)) (proj₁ (A.act-identity (f ! s))))
+          , (pw λ s → subst (_ ⊑_) (sym (!-map (A.act M.𝟏) f s)) (proj₂ (A.act-identity (f ! s))))
       ; act-comp         = λ m m' f →
             (pw λ s → subst₂ _⊑_ (sym (!-map (A.act (m M.· m')) f s)) (sym (inner m m' f s))
                                 (proj₁ (A.act-comp m m' (f ! s))))
@@ -319,13 +319,13 @@ module Maps (𝒩 : Names) where
     indexedᵍ = record
       { Carrier         = Map G.Carrier
       ; _·_             = map₂ _·_
-      ; u               = everywhere G.u
+      ; 𝟏               = everywhere G.𝟏
       ; _≾_             = Pointwise _≾_
       ; ⊤               = everywhere G.⊤
       ; _⊔_             = map₂ _⊔_
-      ; of-dur          = λ τ → everywhere (G.of-dur τ)
-      ; ·-identityˡ     = λ m → pw≃ λ s → ≃-at (!· (everywhere G.u) m s) refl (G.·-identityˡ (m ! s))
-      ; ·-identityʳ     = λ m → pw≃ λ s → ≃-at (!· m (everywhere G.u) s) refl (G.·-identityʳ (m ! s))
+      ; ι               = λ τ → everywhere (G.ι τ)
+      ; ·-identityˡ     = λ m → pw≃ λ s → ≃-at (!· (everywhere G.𝟏) m s) refl (G.·-identityˡ (m ! s))
+      ; ·-identityʳ     = λ m → pw≃ λ s → ≃-at (!· m (everywhere G.𝟏) s) refl (G.·-identityʳ (m ! s))
       ; ·-assoc         = λ m m' m'' → pw≃ λ s →
           ≃-at (trans (!· (map₂ _·_ m m') m'' s) (cong (_· (m'' ! s)) (!· m m' s)))
                (trans (!· m (map₂ _·_ m' m'') s) (cong ((m ! s) ·_) (!· m' m'' s)))
@@ -356,16 +356,16 @@ module Maps (𝒩 : Names) where
           G.≾-zero-productˡ (≾-at (sym (!· m m' s)) refl (at p s))
       ; ≾-zero-productʳ = λ {m} {m'} p → pw λ s →
           G.≾-zero-productʳ (≾-at (sym (!· m m' s)) refl (at p s))
-      ; of-dur-zero     = pw≃ λ _ → G.of-dur-zero
-      ; of-dur-plus     = λ {τ} {τ'} → pw≃ λ s →
-          ≃-at refl (!· (everywhere (G.of-dur τ)) (everywhere (G.of-dur τ')) s) G.of-dur-plus
+      ; ι-zero          = pw≃ λ _ → G.ι-zero
+      ; ι-plus          = λ {τ} {τ'} → pw≃ λ s →
+          ≃-at refl (!· (everywhere (G.ι τ)) (everywhere (G.ι τ')) s) G.ι-plus
       }
 
     -- its hints, from those of `G`
 
     indexedʰ : GradeHints G → GradeHints indexedᵍ
     indexedʰ H = record
-      { u-least? = Maybe.map (λ l m → pw λ s → l (m ! s)) (GradeHints.u-least? H)
+      { 𝟏-least? = Maybe.map (λ l m → pw λ s → l (m ! s)) (GradeHints.𝟏-least? H)
       ; ·-comm?  = Maybe.map (λ c m m' → pw≃ λ s →
                      ≃-at (!· m m' s) (!· m' m s) (c (m ! s) (m' ! s))) (GradeHints.·-comm? H)
       ; plus?    = λ _ → nothing
@@ -377,9 +377,9 @@ module Maps (𝒩 : Names) where
     evalᵍ s = record
       { map          = _! s
       ; map-monotone = λ p → at p s
-      ; map-u        = G.≃-refl
+      ; map-𝟏        = G.≃-refl
       ; map-·        = λ {m} {m'} → ≃-at (!· m m' s) refl G.≃-refl
       ; map-⊤        = G.≃-refl
       ; map-⊔        = λ {m} {m'} → ≃-at (!⊔ m m' s) refl G.≃-refl
-      ; map-of-dur   = G.≃-refl
+      ; map-ι        = G.≃-refl
       }

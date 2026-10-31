@@ -25,7 +25,7 @@ open import Relation.Nullary.Decidable using (True; False; toWitness; toWitnessF
 
 open import Grades.Base using (Grade)
 open import Grades.Indexed using (ℕ-names; module Maps)
-open import Grades.Examples.Time.RightSided using (uₒ-least)
+open import Grades.Examples.Time.RightSided using (𝟏ₒ-least)
 open import Grades.Examples.Counts.AtMost using (upto; unlimited)
 open import Grades.Examples.Counts.UpperBound using (counts-upper-bound)
 open import Grades.Examples.Worked.Counts.UpperBound using (single)
@@ -94,13 +94,13 @@ idle-then-transmit : [] ⊢C⦂ Unit ‼ rate-limit
 idle-then-transmit =
   check rate-limit
     (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
-      (delay 5                       -- ⟨ uᵣ ⟩
+      (delay 5                       -- ⟨ 𝟏ᵣ ⟩
         (perform send (fresh-var decided (Tl-⟨⟩ Hd))
                                      -- ⟨ opTime send ⟩ ∷ Unit
           (return ⋆))))
 
-stale-after-storing : ¬ (uᵣ ·ᵣ opTime write ≾ᵣ uᵣ)
-stale-after-storing = refuted (uᵣ ·ᵣ opTime write) uᵣ
+stale-after-storing : ¬ (𝟏ᵣ ·ᵣ opTime write ≾ᵣ 𝟏ᵣ)
+stale-after-storing = refuted (𝟏ᵣ ·ᵣ opTime write) 𝟏ᵣ
 
 ------------------------------------------------------------------------
 -- Unboxing: a licence for one transmission, anything else free
@@ -120,8 +120,8 @@ sent-twice =
 
 -- a third claim, after the second transmission, is refused
 
-a-third-claim : ¬ (uᵣ ·ᵣ opTime send ·ᵣ opTime send ≾ᵣ licence)
-a-third-claim = refuted (uᵣ ·ᵣ opTime send ·ᵣ opTime send) licence
+a-third-claim : ¬ (𝟏ᵣ ·ᵣ opTime send ·ᵣ opTime send ≾ᵣ licence)
+a-third-claim = refuted (𝟏ᵣ ·ᵣ opTime send ·ᵣ opTime send) licence
 
 -- reading and storing leave the licence as it was
 
@@ -139,8 +139,8 @@ claim-after-local-work =
 -- Effect handling: the unit is least, so a clause may discard its
 -- continuation
 
-nothing-fits : (op : Op) → (ε'' : E) → uₑ ≾ₑ op-grade op ·ₑ ε''
-nothing-fits op ε'' = pointwise⁺ _ (λ s → uₒ-least ((op-grade op ·ₑ ε'') ! s))
+nothing-fits : (op : Op) → (ε'' : E) → 𝟏ₑ ≾ₑ op-grade op ·ₑ ε''
+nothing-fits op ε'' = pointwise⁺ _ (λ s → 𝟏ₒ-least ((op-grade op ·ₑ ε'') ! s))
 
 suppressed : [] ⊢C⦂ Unit ‼ rate-limit
 suppressed =

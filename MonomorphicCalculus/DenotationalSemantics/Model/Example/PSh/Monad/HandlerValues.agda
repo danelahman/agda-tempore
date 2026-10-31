@@ -53,7 +53,7 @@ record Hᶜ (A : PSh) (ε : E) (B : PSh) (ε' : E) (w : W) : Set where
   field
     hfun   : ∀ {ε₀} → ε₀ ≾ₑ ε → (Tᵒ A ε₀ ⇒ᶜ Tᵒ B (ε₀ ·ₑ ε')) w
     hfun-≤ : ∀ {ε₀ ε₁} → (p₀ : ε₀ ≾ₑ ε) → (p₁ : ε₁ ≾ₑ ε) → (q : ε₀ ≾ₑ ε₁)
-           → ∀ {w'} → (r : w ⊑[ uᵣ ] w') → (t : carrier (Tᵒ A ε₀) w')
+           → ∀ {w'} → (r : w ⊑[ 𝟏ᵣ ] w') → (t : carrier (Tᵒ A ε₀) w')
            → _≈_ (Tᵒ B (ε₁ ·ₑ ε'))
                  (fun (hfun p₁) r (app (T-≤ q) t))
                  (app (T-≤ (·ₑ-monoˡ-≾ₑ q)) (fun (hfun p₀) r t))

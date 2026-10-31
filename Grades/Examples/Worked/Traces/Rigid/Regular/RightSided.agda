@@ -108,11 +108,11 @@ heat-strict-cool     = ⌜ ‵ heat · idle ≤ 3 · ‵ cool ⌝
 across               = ‵ᵍ cool
 within-cool-and-log  = ⌜ (≤ 1 & ⁅ code cool ⁆) · (≤ 1 & (⁅ code cool ⁆ ∪ ⁅ code log ⁆)) ⌝
 within-cool-then-log = ⌜ (≤ 1 & ⁅ code cool ⁆) · (≤ 1 & ⁅ code log ⁆) ⌝
-logged-run           = ‵ᵍ heat ·ᵍ ‵ᵍ log ·ᵍ of-dur 2 ·ᵍ ‵ᵍ cool
-uncooled-run         = ‵ᵍ heat ·ᵍ of-dur 3
-stirred-run          = ‵ᵍ heat ·ᵍ of-dur 2 ·ᵍ ‵ᵍ log ·ᵍ ‵ᵍ cool
+logged-run           = ‵ᵍ heat ·ᵍ ‵ᵍ log ·ᵍ ι 2 ·ᵍ ‵ᵍ cool
+uncooled-run         = ‵ᵍ heat ·ᵍ ι 3
+stirred-run          = ‵ᵍ heat ·ᵍ ι 2 ·ᵍ ‵ᵍ log ·ᵍ ‵ᵍ cool
 wait-two             = ⌜ idle ≤ 2 ⌝
-two-delays           = of-dur 1 ·ᵍ of-dur 1
+two-delays           = ι 1 ·ᵍ ι 1
 
 ------------------------------------------------------------------------
 -- Sequencing two budgets of one keeps within two budgets of one
@@ -180,14 +180,14 @@ into-a-window-without-it = fails across within-cool-then-log refl
 -- A delay of two steps is a wait of at most two, as two delays of one
 -- are
 
-of-dur-2 : C._≾_ (of-dur 2) wait-two
-of-dur-2 = holds (of-dur 2) wait-two refl
+ι-2 : C._≾_ (ι 2) wait-two
+ι-2 = holds (ι 2) wait-two refl
 
-of-dur-2′ : C._≾_ wait-two (of-dur 2)
-of-dur-2′ = holds wait-two (of-dur 2) refl
+ι-2′ : C._≾_ wait-two (ι 2)
+ι-2′ = holds wait-two (ι 2) refl
 
-of-dur-1+1 : C._≾_ wait-two two-delays
-of-dur-1+1 = holds wait-two two-delays refl
+ι-1+1 : C._≾_ wait-two two-delays
+ι-1+1 = holds wait-two two-delays refl
 
 ------------------------------------------------------------------------
 -- Costs in whole steps: an open end admits the adjacent step, so

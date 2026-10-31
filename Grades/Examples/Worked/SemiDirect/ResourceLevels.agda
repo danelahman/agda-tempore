@@ -88,19 +88,19 @@ close-first-refused = fails (close-file L.· open-file) two-at-a-time
 
 -- a branch joins the ranges
 
-branch : open-file L.⊔ L.u L.≃ res 0 (+ 0) (+ 1) 1
-branch = same (open-file L.⊔ L.u) (res 0 (+ 0) (+ 1) 1)
+branch : open-file L.⊔ L.𝟏 L.≃ res 0 (+ 0) (+ 1) 1
+branch = same (open-file L.⊔ L.𝟏) (res 0 (+ 0) (+ 1) 1)
 
 -- the unit is not least: opening is not above it
 
-unit-not-least : ¬ (L.u L.≾ open-file)
-unit-not-least = fails L.u open-file
+unit-not-least : ¬ (L.𝟏 L.≾ open-file)
+unit-not-least = fails L.𝟏 open-file
 
 -- the unit is the only grade below it: a grade that opens and closes is
 -- not
 
-open-close-not-below-unit : ¬ (open-file L.· close-file L.≾ L.u)
-open-close-not-below-unit = fails (open-file L.· close-file) L.u
+open-close-not-below-unit : ¬ (open-file L.· close-file L.≾ L.𝟏)
+open-close-not-below-unit = fails (open-file L.· close-file) L.𝟏
 
 ------------------------------------------------------------------------
 -- By name: files (0) and sockets (1)
@@ -112,7 +112,7 @@ sockets = 1
 -- `x` for the resource `r`, the unit for the others
 
 only : ℕ → Level → Map Level
-only r x = L.u ∣ ((r , x) ∷ [])
+only r x = L.𝟏 ∣ ((r , x) ∷ [])
 
 holdsᴿ : (c d : Map Level) {p : True (c R.≾? d)} → c R.≾ d
 holdsᴿ c d {p} = toWitness p
@@ -123,7 +123,7 @@ failsᴿ c d {p} = toWitnessFalse p
 -- at most two files and one socket at a time, all released
 
 budget : Map Level
-budget = L.u ∣ ((files , two-at-a-time) ∷ (sockets , res 0 (+ 0) (+ 0) 1) ∷ [])
+budget = L.𝟏 ∣ ((files , two-at-a-time) ∷ (sockets , res 0 (+ 0) (+ 0) 1) ∷ [])
 
 -- a file and a socket opened together, both closed
 
@@ -144,5 +144,5 @@ two-sockets-refused =
 
 -- the files' levels are untouched by the sockets
 
-files-alone : (only sockets open-file R.· only files open-file) ! files ≡ L.u L.· open-file
+files-alone : (only sockets open-file R.· only files open-file) ! files ≡ L.𝟏 L.· open-file
 files-alone = refl

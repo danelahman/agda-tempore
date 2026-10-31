@@ -53,8 +53,8 @@ report = ([ 5 ,+∞⟩ , Low)
 -- `logged` and two ticks of idling: five steps of `Low` work, and the
 -- embargo is over
 
-after-embargo : node read · node write · of-dur 2 ≾ report
-after-embargo = ≾! (node read · node write · of-dur 2) report
+after-embargo : node read · node write · ι 2 ≾ report
+after-embargo = ≾! (node read · node write · ι 2) report
 
 -- `logged` alone: three steps, still under embargo
 
@@ -63,17 +63,17 @@ under-embargo = ⋠! (node read · node write) report
 
 -- `uplink`: seven steps, but it transmits, and is tainted
 
-tainted : ¬ (node read · of-dur 2 · node send ≾ report)
-tainted = ⋠! (node read · of-dur 2 · node send) report
+tainted : ¬ (node read · ι 2 · node send ≾ report)
+tainted = ⋠! (node read · ι 2 · node send) report
 
 -- waiting advances time and leaves the level alone
 
-wait : of-dur 20 ≡ ([ 20 ,+∞⟩ , Low)
+wait : ι 20 ≡ ([ 20 ,+∞⟩ , Low)
 wait = refl
 
 -- sequencing adds the time and joins the levels
 
-seq : node read · of-dur 2 · node send ≡ ([ 7 ,+∞⟩ , High)
+seq : node read · ι 2 · node send ≡ ([ 7 ,+∞⟩ , High)
 seq = refl
 
 -- the join keeps the smaller guarantee and the higher level
@@ -83,5 +83,5 @@ join = refl
 
 -- the unit is not least: it is not below an embargo
 
-unit-not-least : ¬ Minimum _≾_ u
-unit-not-least least = ⋠! u ([ 1 ,+∞⟩ , Low) (least ([ 1 ,+∞⟩ , Low))
+unit-not-least : ¬ Minimum _≾_ 𝟏
+unit-not-least least = ⋠! 𝟏 ([ 1 ,+∞⟩ , Low) (least ([ 1 ,+∞⟩ , Low))

@@ -97,17 +97,17 @@ cast-cmp refl = refl
 -- transported there is `cong` of the extension.
 
 cast-delay : ∀ {Γ Γ' A ε τ} → (e : Γ ≡ Γ')
-           → {M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε}
-           → castᶜ e (delay τ M) ≡ delay τ (castᶜ (cong (_⟨ of-durʳ τ ⟩) e) M)
+           → {M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε}
+           → castᶜ e (delay τ M) ≡ delay τ (castᶜ (cong (_⟨ ιᵣ τ ⟩) e) M)
 cast-delay refl = refl
 
 cast-perform : ∀ {Γ Γ' A ε} → (e : Γ ≡ Γ') → {op : Op}
              → {V : Γ ⊢V⦂ type-of-gtype (param op)}
-             → {M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+             → {M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
                       ⊢C⦂ A ‼ ε}
              → castᶜ e (perform op V M)
              ≡ perform op (castᵛ e V)
-                 (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩
+                 (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ∣ op-grade op ∣ᵉ ⟩
                                          ∷ type-of-gtype (arity op)) e) M)
 cast-perform refl = refl
 
@@ -152,20 +152,20 @@ cast-caseL refl = refl
 
 cast-recL : ∀ {Γ Γ' A B ε} → (e : Γ ≡ Γ')
           → {V : Γ ⊢V⦂ |List| A} → {M : Γ ⊢C⦂ B ‼ ε}
-          → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+          → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
           → {p : ε ·ₑ ε ≾ₑ ε}
           → castᶜ e (recL V M N p)
           ≡ recL (castᵛ e V) (castᶜ e M)
-                 (castᶜ (cong (λ Δ → (Δ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B) e) N) p
+                 (castᶜ (cong (λ Δ → (Δ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) e) N) p
 cast-recL refl = refl
 
 cast-recℕ : ∀ {Γ Γ' B ε} → (e : Γ ≡ Γ')
           → {V : Γ ⊢V⦂ Nat} → {M : Γ ⊢C⦂ B ‼ ε}
-          → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+          → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
           → {p : ε ·ₑ ε ≾ₑ ε}
           → castᶜ e (recℕ V M N p)
           ≡ recℕ (castᵛ e V) (castᶜ e M)
-                 (castᶜ (cong (λ Δ → (Δ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B) e) N) p
+                 (castᶜ (cong (λ Δ → (Δ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) e) N) p
 cast-recℕ refl = refl
 
 cast-case+ : ∀ {Γ Γ' A B C} → (e : Γ ≡ Γ')
@@ -182,17 +182,17 @@ cast-box : ∀ {Γ Γ' A C ρ} → (e : Γ ≡ Γ')
 cast-box refl = refl
 
 cast-handler : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
-             → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+             → {N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
              → {H : (op : Op) → (ε'' : E) →
                       Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                        ∷ [ mapᵉ (op-grade op) ]
+                        ∷ [ ∣ op-grade op ∣ᵉ ]
                             (type-of-gtype (arity op) ⇒ B ‼ ε'')
                       ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
              → castᵛ e (handler N H)
-             ≡ handler (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) e) N)
+             ≡ handler (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) e) N)
                        (λ op ε'' →
                           castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                                                ∷ [ mapᵉ (op-grade op) ]
+                                                ∷ [ ∣ op-grade op ∣ᵉ ]
                                                     (type-of-gtype (arity op) ⇒ B ‼ ε''))
                                  e)
                                 (H op ε''))
@@ -255,9 +255,9 @@ cast-unbox : ∀ {Γ Γ' A A₀ C ρ₀ ρ'} → (e : Γ ≡ Γ')
 cast-unbox refl = refl
 
 cast-seq : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
-         → {M : Γ ⊢C⦂ A ‼ ε} → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+         → {M : Γ ⊢C⦂ A ‼ ε} → {N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
          → castᶜ e (M ⨟ N)
-         ≡ (castᶜ e M) ⨟ (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) e) N)
+         ≡ (castᶜ e M) ⨟ (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) e) N)
 cast-seq refl = refl
 
 -- A handler clause's typing, and clause families indexed by it.
@@ -265,7 +265,7 @@ cast-seq refl = refl
 Cl : (B : VType) → (op : Op) → (ε₃ : E) → Ctx → Set
 Cl B op ε₃ Γ₀ =
   Γ₀ ∷ type-of-gtype (param op)
-    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₃)
+    ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε₃)
   ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)
 
 Fam : VType → Ctx → Set
@@ -279,7 +279,7 @@ Cl-cast : ∀ {Γ Γ' B} → (op : Op) → (ε : E) → Γ ≡ Γ'
         → Cl B op ε (Γ ⟨ ⊤ᵣ ⟩) → Cl B op ε (Γ' ⟨ ⊤ᵣ ⟩)
 Cl-cast {B = B} op ε e X =
   castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                        ∷ [ mapᵉ (op-grade op) ]
+                        ∷ [ ∣ op-grade op ∣ᵉ ]
                             (type-of-gtype (arity op) ⇒ B ‼ ε))
               e)
         X

@@ -121,7 +121,7 @@ module PShGround (BT : PShBaseTypes) where
   ordᵖ equal   = inj₂ (inj₁ tt)
   ordᵖ greater = inj₂ (inj₂ tt)
 
-  ordᵖ-tr : ∀ {w w'} (q : w ⊑[ uᵣ ] w') (o : Order)
+  ordᵖ-tr : ∀ {w w'} (q : w ⊑[ 𝟏ᵣ ] w') (o : Order)
           → _≈_ Ordᵐ {w'} (ordᵖ {w'} o) (transport Ordᵐ q (ordᵖ {w} o))
   ordᵖ-tr q less    = tt
   ordᵖ-tr q equal   = tt

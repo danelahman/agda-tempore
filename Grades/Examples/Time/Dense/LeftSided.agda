@@ -62,8 +62,8 @@ infixl 7 _·ₒ_
 
 -- interval unit
 
-uₒ : 𝕀
-uₒ = [ 0ᵈ ,+∞⟩
+𝟏ₒ : 𝕀
+𝟏ₒ = [ 0ᵈ ,+∞⟩
 
 -- interval order
 
@@ -74,10 +74,10 @@ infix 6 _≾ₒ_
 
 -- identity laws
 
-·ₒ-identityʳ : (i : 𝕀) → i ·ₒ uₒ ≡ i
+·ₒ-identityʳ : (i : 𝕀) → i ·ₒ 𝟏ₒ ≡ i
 ·ₒ-identityʳ [ p ,+∞⟩ = eq𝕀 (+-identityʳ p)
 
-·ₒ-identityˡ : (i : 𝕀) → uₒ ·ₒ i ≡ i
+·ₒ-identityˡ : (i : 𝕀) → 𝟏ₒ ·ₒ i ≡ i
 ·ₒ-identityˡ [ p ,+∞⟩ = eq𝕀 (+-identityˡ p)
 
 -- associativity
@@ -115,7 +115,7 @@ infix 6 _≾ₒ_
 -- the unit is the greatest grade: demanding nothing is the weakest
 -- lower bound there is
 
-≾ₒ-⊤ : (i : 𝕀) → i ≾ₒ uₒ
+≾ₒ-⊤ : (i : 𝕀) → i ≾ₒ 𝟏ₒ
 ≾ₒ-⊤ [ p ,+∞⟩ = 0≤ p
 
 -- decidability
@@ -125,24 +125,24 @@ _≾ₒ?_ : Decidable _≾ₒ_
 
 -- the unit is not least: `[ 1 / 2 ,+∞⟩` lies strictly below it
 
-uₒ-not-least : ¬ Minimum _≾ₒ_ uₒ
-uₒ-not-least least =
+𝟏ₒ-not-least : ¬ Minimum _≾ₒ_ 𝟏ₒ
+𝟏ₒ-not-least least =
   toWitnessFalse {a? = [ 0ᵈ ,+∞⟩ ≾ₒ? [ 1 / 2 ,+∞⟩} tt (least [ 1 / 2 ,+∞⟩)
 
 -- zero-product properties
 
-≡ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≡ uₒ → i₁ ≡ uₒ
+≡ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≡ 𝟏ₒ → i₁ ≡ 𝟏ₒ
 ≡ₒ-zero-productˡ {[ p ,+∞⟩} {[ q ,+∞⟩} eq =
   eq𝕀 (≤0⇒≡0 (+-≤0ˡ {p} {q} (≤-reflexive (𝕀-inj eq))))
 
-≡ₒ-zero-productʳ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≡ uₒ → i₂ ≡ uₒ
+≡ₒ-zero-productʳ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≡ 𝟏ₒ → i₂ ≡ 𝟏ₒ
 ≡ₒ-zero-productʳ {[ p ,+∞⟩} {[ q ,+∞⟩} eq =
   eq𝕀 (≤0⇒≡0 (+-≤0ʳ {p} {q} (≤-reflexive (𝕀-inj eq))))
 
-≾ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≾ₒ uₒ → i₁ ≾ₒ uₒ
+≾ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≾ₒ 𝟏ₒ → i₁ ≾ₒ 𝟏ₒ
 ≾ₒ-zero-productˡ {i₁} _ = ≾ₒ-⊤ i₁
 
-≾ₒ-zero-productʳ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≾ₒ uₒ → i₂ ≾ₒ uₒ
+≾ₒ-zero-productʳ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≾ₒ 𝟏ₒ → i₂ ≾ₒ 𝟏ₒ
 ≾ₒ-zero-productʳ {_} {i₂} _ = ≾ₒ-⊤ i₂
 
 -- binary joins: a weaker grade has the smaller bound, so the join
@@ -183,12 +183,12 @@ dense-left-sided-intervals : Grade ℚ≥0ᴰ
 dense-left-sided-intervals = posetᵍ record
   { Carrier           = 𝕀
   ; _·_               = _·ₒ_
-  ; u                 = uₒ
+  ; 𝟏                 = 𝟏ₒ
   ; ·-identityʳ       = ·ₒ-identityʳ
   ; ·-identityˡ       = ·ₒ-identityˡ
   ; ·-assoc           = ·ₒ-assoc
   ; _≾_               = _≾ₒ_
-  ; ⊤                 = uₒ
+  ; ⊤                 = 𝟏ₒ
   ; ≾-⊤               = ≾ₒ-⊤
   ; _⊔_               = _⊔ₒ_
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
@@ -205,16 +205,16 @@ dense-left-sided-intervals = posetᵍ record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ₒ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ₒ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ₒ-irrelevant {i₁} {i₂}
-  ; of-dur            = λ q → [ q ,+∞⟩
-  ; of-dur-zero       = refl
-  ; of-dur-plus       = refl
+  ; ι                 = λ q → [ q ,+∞⟩
+  ; ι-zero            = refl
+  ; ι-plus            = refl
   }
 
 -- its hints
 
 dense-left-sided-intervalsʰ : GradeHints dense-left-sided-intervals
 dense-left-sided-intervalsʰ = record
-  { u-least? = nothing
+  { 𝟏-least? = nothing
   ; ·-comm?  = just (comm-≡ dense-left-sided-intervals ·ₒ-comm)
   ; plus?    = λ i → just (plus-self (≾ₒ-refl {i}) (·ₒ-iter i))
   }
@@ -227,11 +227,11 @@ left-sided→dense : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.left-sided-interval
 left-sided→dense = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}
-  ; map-u        = refl
+  ; map-𝟏        = refl
   ; map-·        = λ {i} {j} → hom {i} {j}
   ; map-⊤        = refl
   ; map-⊔        = λ {i} {j} → join {i} {j}
-  ; map-of-dur   = refl
+  ; map-ι        = refl
   }
   where
     embed : Discrete.𝕀 → 𝕀

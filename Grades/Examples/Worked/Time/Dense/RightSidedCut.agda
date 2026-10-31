@@ -74,7 +74,7 @@ rci-seq-∞ = refl
 
 -- a delay by one unit is two half-unit delays
 
-rci-tick : Grade.of-dur G (# 1) ≡ Grade.of-dur G (1 / 2) R.·ᵘ Grade.of-dur G (1 / 2)
+rci-tick : Grade.ι G (# 1) ≡ Grade.ι G (1 / 2) R.·ᵘ Grade.ι G (1 / 2)
 rci-tick = refl
 
 ------------------------------------------------------------------------
@@ -92,23 +92,23 @@ rci-join-∞ = refl
 ------------------------------------------------------------------------
 -- The unit "at most 0" is the least grade, and the zero-product law
 
-rci-unit-least : Grade.u G R.≾ᵘ R.< 1 / 2
+rci-unit-least : Grade.𝟏 G R.≾ᵘ R.< 1 / 2
 rci-unit-least = ≾ʳ!
 
-rci-zero-product : R.≤ ↑ # 0 R.·ᵘ R.≤ ↑ # 0 R.≾ᵘ Grade.u G
+rci-zero-product : R.≤ ↑ # 0 R.·ᵘ R.≤ ↑ # 0 R.≾ᵘ Grade.𝟏 G
 rci-zero-product = ≾ʳ!
 
-rci-zero-product-factor : R.≤ ↑ # 0 R.≾ᵘ Grade.u G
+rci-zero-product-factor : R.≤ ↑ # 0 R.≾ᵘ Grade.𝟏 G
 rci-zero-product-factor =
   Grade.≾-zero-productʳ G {R.≤ ↑ # 0} {R.≤ ↑ # 0} rci-zero-product
 
 -- a product with a positive factor is not within the unit, and
 -- neither is the factor
 
-rci-not-zero-product : ¬ (R.≤ ↑ # 0 R.·ᵘ R.< 1 / 2 R.≾ᵘ Grade.u G)
+rci-not-zero-product : ¬ (R.≤ ↑ # 0 R.·ᵘ R.< 1 / 2 R.≾ᵘ Grade.𝟏 G)
 rci-not-zero-product = ⋠ʳ!
 
-rci-not-zero-factor : ¬ (R.< 1 / 2 R.≾ᵘ Grade.u G)
+rci-not-zero-factor : ¬ (R.< 1 / 2 R.≾ᵘ Grade.𝟏 G)
 rci-not-zero-factor = ⋠ʳ!
 
 ------------------------------------------------------------------------

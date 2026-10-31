@@ -68,19 +68,19 @@ module Mᵣ {Θ : Scope} =
 -- Where the unit is least, a product with a top factor is the top: below the
 -- top, and above the top times the unit
 
-⊤-·ₑ : Is-just uₑ-least? → ∀ {Θ} {ε : EExp Θ} → econst ⊤ₑ ·̂ₑ ε ≡̂ₑ econst ⊤ₑ
+⊤-·ₑ : Is-just 𝟏ₑ-least? → ∀ {Θ} {ε : EExp Θ} → econst ⊤ₑ ·̂ₑ ε ≡̂ₑ econst ⊤ₑ
 ⊤-·ₑ ij = ≡̂ₑ-antisym-∅ topₑ (transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-identityʳ)) (monoₑ ⊩≾̂ₑ-refl (minₑ (to-witness ij))))
 
-·-⊤ₑ : Is-just uₑ-least? → ∀ {Θ} {ε : EExp Θ} → ε ·̂ₑ econst ⊤ₑ ≡̂ₑ econst ⊤ₑ
+·-⊤ₑ : Is-just 𝟏ₑ-least? → ∀ {Θ} {ε : EExp Θ} → ε ·̂ₑ econst ⊤ₑ ≡̂ₑ econst ⊤ₑ
 ·-⊤ₑ ij = ≡̂ₑ-antisym-∅ topₑ (transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-identityˡ)) (monoₑ (minₑ (to-witness ij)) ⊩≾̂ₑ-refl))
 
-⊤-·ᵣ : Is-just uᵣ-least? → ∀ {Θ} {ρ : RExp Θ} → rconst ⊤ᵣ ·̂ᵣ ρ ≡̂ᵣ rconst ⊤ᵣ
+⊤-·ᵣ : Is-just 𝟏ᵣ-least? → ∀ {Θ} {ρ : RExp Θ} → rconst ⊤ᵣ ·̂ᵣ ρ ≡̂ᵣ rconst ⊤ᵣ
 ⊤-·ᵣ ij = ≡̂ᵣ-antisym-∅ topᵣ (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)) (monoᵣ ⊩≾̂ᵣ-refl (minᵣ (to-witness ij))))
 
-·-⊤ᵣ : Is-just uᵣ-least? → ∀ {Θ} {ρ : RExp Θ} → ρ ·̂ᵣ rconst ⊤ᵣ ≡̂ᵣ rconst ⊤ᵣ
+·-⊤ᵣ : Is-just 𝟏ᵣ-least? → ∀ {Θ} {ρ : RExp Θ} → ρ ·̂ᵣ rconst ⊤ᵣ ≡̂ᵣ rconst ⊤ᵣ
 ·-⊤ᵣ ij = ≡̂ᵣ-antisym-∅ topᵣ (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityˡ)) (monoᵣ (minᵣ (to-witness ij)) ⊩≾̂ᵣ-refl))
 
-topProdₑ? : ∀ {Θ} → Is-just uₑ-least? → (P : List (EAtom Θ)) → Maybe (⟦ P ⟧ᵉˢ ≡̂ₑ econst ⊤ₑ)
+topProdₑ? : ∀ {Θ} → Is-just 𝟏ₑ-least? → (P : List (EAtom Θ)) → Maybe (⟦ P ⟧ᵉˢ ≡̂ₑ econst ⊤ₑ)
 topProdₑ? ij []      = nothing
 topProdₑ? ij (a ∷ P) with a ≟ᵃₑ ac ⊤ₑ
 ... | yes e = just (≡̂ₑ-trans (≡̂ₑ-cong (≅ᵉ⇒≡̂ e) ≡̂ₑ-refl) (⊤-·ₑ ij))
@@ -88,7 +88,7 @@ topProdₑ? ij (a ∷ P) with a ≟ᵃₑ ac ⊤ₑ
 ...   | just q  = just (≡̂ₑ-trans (≡̂ₑ-cong ≡̂ₑ-refl q) (·-⊤ₑ ij))
 ...   | nothing = nothing
 
-topProdᵣ? : ∀ {Θ} → Is-just uᵣ-least? → (P : List (RAtom Θ)) → Maybe (⟦ P ⟧ʳˢ ≡̂ᵣ rconst ⊤ᵣ)
+topProdᵣ? : ∀ {Θ} → Is-just 𝟏ᵣ-least? → (P : List (RAtom Θ)) → Maybe (⟦ P ⟧ʳˢ ≡̂ᵣ rconst ⊤ᵣ)
 topProdᵣ? ij []      = nothing
 topProdᵣ? ij (a ∷ P) with a ≟ᵃᵣ rc ⊤ᵣ
 ... | yes e = just (≡̂ᵣ-trans (≡̂ᵣ-cong (≅ʳ⇒≡̂ e) ≡̂ᵣ-refl) (⊤-·ᵣ ij))
@@ -97,28 +97,28 @@ topProdᵣ? ij (a ∷ P) with a ≟ᵃᵣ rc ⊤ᵣ
 ...   | nothing = nothing
 
 absorbProdₑ : ∀ {Θ} → List (EAtom Θ) → List (EAtom Θ)
-absorbProdₑ P with Is-just? uₑ-least?
+absorbProdₑ P with Is-just? 𝟏ₑ-least?
 ... | nothing = P
 ... | just ij with topProdₑ? ij P
 ...   | just _  = consₑ (ac ⊤ₑ) []
 ...   | nothing = P
 
 absorbProdᵣ : ∀ {Θ} → List (RAtom Θ) → List (RAtom Θ)
-absorbProdᵣ P with Is-just? uᵣ-least?
+absorbProdᵣ P with Is-just? 𝟏ᵣ-least?
 ... | nothing = P
 ... | just ij with topProdᵣ? ij P
 ...   | just _  = consᵣ (rc ⊤ᵣ) []
 ...   | nothing = P
 
 absorbProdₑ-≡ : ∀ {Θ} → (P : List (EAtom Θ)) → ⟦ absorbProdₑ P ⟧ᵉˢ ≡̂ₑ ⟦ P ⟧ᵉˢ
-absorbProdₑ-≡ P with Is-just? uₑ-least?
+absorbProdₑ-≡ P with Is-just? 𝟏ₑ-least?
 ... | nothing = ≡̂ₑ-refl
 ... | just ij with topProdₑ? ij P
 ...   | just q  = ≡̂ₑ-trans (consₑ-≡ (ac ⊤ₑ) []) (≡̂ₑ-trans ≡̂ₑ-identityʳ (≡̂ₑ-sym q))
 ...   | nothing = ≡̂ₑ-refl
 
 absorbProdᵣ-≡ : ∀ {Θ} → (P : List (RAtom Θ)) → ⟦ absorbProdᵣ P ⟧ʳˢ ≡̂ᵣ ⟦ P ⟧ʳˢ
-absorbProdᵣ-≡ P with Is-just? uᵣ-least?
+absorbProdᵣ-≡ P with Is-just? 𝟏ᵣ-least?
 ... | nothing = ≡̂ᵣ-refl
 ... | just ij with topProdᵣ? ij P
 ...   | just q  = ≡̂ᵣ-trans (consᵣ-≡ (rc ⊤ᵣ) []) (≡̂ᵣ-trans ≡̂ᵣ-identityʳ (≡̂ᵣ-sym q))

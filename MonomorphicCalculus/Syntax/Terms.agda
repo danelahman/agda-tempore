@@ -44,7 +44,7 @@ mutual
 
     var     : {A : VType}
             → {ρ : R}
-            → (¬ Eternal A → ρ ≾ᵣ uᵣ)
+            → (¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
             → A ∈[ ρ ] Γ
             -------------------------
             → Γ ⊢V⦂ A           
@@ -130,10 +130,10 @@ mutual
 
     handler : {A B : VType}
             → {ε ε' : E}
-            → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'
+            → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'
             → ((op : Op) → (ε'' : E) →
                  Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                   ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                   ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                  ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
             ---------------------------------------------------------------------
             → Γ ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε')
@@ -156,7 +156,7 @@ mutual
     return  : {A : VType}
             → Γ ⊢V⦂ A
             -------------
-            → Γ ⊢C⦂ A ‼ uₑ
+            → Γ ⊢C⦂ A ‼ 𝟏ₑ
 
     -- sequential composition (the bound variable is a de Bruijn index)
 
@@ -164,7 +164,7 @@ mutual
             → {ε' : E}
             → {ε : E}
             → Γ ⊢C⦂ A ‼ ε
-            → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'
+            → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'
             -----------------------------
             → Γ ⊢C⦂ B ‼ (ε ·ₑ ε')
 
@@ -204,7 +204,7 @@ mutual
             → Γ ⊢V⦂ A
             → Eternal A
             -----------------
-            → Γ ⊢C⦂ Bool ‼ uₑ
+            → Γ ⊢C⦂ Bool ‼ 𝟏ₑ
 
     -- boolean elimination
 
@@ -243,7 +243,7 @@ mutual
             → {ε : E}
             → Γ ⊢V⦂ Nat
             → Γ ⊢C⦂ B ‼ ε
-            → (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε
+            → (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε
             → ε ·ₑ ε ≾ₑ ε
             ------------------------------------------
             → Γ ⊢C⦂ B ‼ ε
@@ -286,7 +286,7 @@ mutual
             → {ε : E}
             → Γ ⊢V⦂ |List| A
             → Γ ⊢C⦂ B ‼ ε
-            → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε
+            → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε
             → ε ·ₑ ε ≾ₑ ε
             ----------------------------------------------------
             → Γ ⊢C⦂ B ‼ ε
@@ -297,7 +297,7 @@ mutual
             → {ε : E}
             → (op : Op)
             → Γ ⊢V⦂ type-of-gtype (param op)
-            → Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε
+            → Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε
             ---------------------------------------------------------------
             → Γ ⊢C⦂ A ‼ ((op-grade op) ·ₑ ε)
 
@@ -306,9 +306,9 @@ mutual
     delay   : {A : VType}
             → {ε : E}
             → (τ : 𝔻)
-            → Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε
+            → Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε
             ------------------------------
-            → Γ ⊢C⦂ A ‼ (of-durᵉ τ ·ₑ ε)
+            → Γ ⊢C⦂ A ‼ (ιₑ τ ·ₑ ε)
 
     -- effect handling
 
@@ -362,9 +362,9 @@ handle_`with_`in_ : ∀ {Γ A B ε ε'}
                   → Γ ⊢C⦂ A ‼ ε
                   → ((op : Op) → (ε'' : E) →
                        Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                         ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                         ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                        ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-                  → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'
+                  → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'
                   ---------------------------------------------------------------------
                   → Γ ⊢C⦂ B ‼ (ε ·ₑ ε')
 
@@ -413,7 +413,7 @@ numeralᵛ (suc k) = succ (numeralᵛ k)
 grad-typ⇒var<: : ∀ {Γ A ρ}
                → Γ ⊢V⦂ [ ρ ] A
                → Σ[ ρ₀ ∈ R ] Σ[ A₀ ∈ VType ] Σ[ ρ' ∈ R ]
-                   (([ ρ₀ ] A₀ ∈[ ρ' ] Γ) × ([ ρ₀ ] A₀ <:ᵛ [ ρ ] A) × ρ' ≾ᵣ uᵣ)
+                   (([ ρ₀ ] A₀ ∈[ ρ' ] Γ) × ([ ρ₀ ] A₀ <:ᵛ [ ρ ] A) × ρ' ≾ᵣ 𝟏ᵣ)
 
 grad-typ⇒var<: (var f x) =
   _ , _ , _ , x , <:ᵛ-refl _ , f (λ ())

@@ -25,7 +25,7 @@ module PolymorphicCalculus.Examples.Boxes.Traces.Timed.RightSided where
 
 open Traces-Timed-RightSided using (spec; hints; enum)
 open LanguageSpec spec using (Grades)
-open GradeSystemInterface Grades using (uᵣ; ⊤ᵣ)
+open GradeSystemInterface Grades using (𝟏ᵣ; ⊤ᵣ)
 
 open import PolymorphicCalculus.Syntax.Grades   spec using (rconst; ∣_∣̂ᵉ; _·̂ᵣ_; _·̂ₑ_)
 open import PolymorphicCalculus.Syntax.Contexts spec using ([])
@@ -35,7 +35,7 @@ open import PolymorphicCalculus.Examples.Boxes spec hints enum ℕᴰ-stepped
 open import PolymorphicCalculus.Examples.Variables
 
 ------------------------------------------------------------------
--- 1. A function argument used after a tick fails `⟨ 1 ⟩ ≾ uᵣ`, boxed
+-- 1. A function argument used after a tick fails `⟨ 1 ⟩ ≾ 𝟏ᵣ`, boxed
 -- or not
 
 stale-call-verdict : infer [] stale-call ≡ untypable
@@ -146,11 +146,11 @@ nesting-not-typable = infer-untypable [] nesting nesting-verdict
 -- 8. Inside a clause `⊤ᵣ = unbounded` has elapsed: only an unbounded
 -- permit is open
 
-claimed-at-u-verdict : infer [] (claimed-in-clause (rconst uᵣ)) ≡ untypable
-claimed-at-u-verdict = refl
+claimed-at-𝟏-verdict : infer [] (claimed-in-clause (rconst 𝟏ᵣ)) ≡ untypable
+claimed-at-𝟏-verdict = refl
 
-claimed-at-u-not-typable : ¬ Typable [] (claimed-in-clause (rconst uᵣ))
-claimed-at-u-not-typable = infer-untypable [] (claimed-in-clause (rconst uᵣ)) claimed-at-u-verdict
+claimed-at-𝟏-not-typable : ¬ Typable [] (claimed-in-clause (rconst 𝟏ᵣ))
+claimed-at-𝟏-not-typable = infer-untypable [] (claimed-in-clause (rconst 𝟏ᵣ)) claimed-at-𝟏-verdict
 
 claimed-at-1-verdict : infer [] (claimed-in-clause ⌜ 1 ⌝ʳ) ≡ untypable
 claimed-at-1-verdict = refl

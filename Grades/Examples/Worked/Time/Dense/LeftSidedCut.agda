@@ -62,7 +62,7 @@ lci-seq-closed = refl
 
 -- a delay by one unit is two half-unit delays
 
-lci-tick : Grade.of-dur G (# 1) ≡ Grade.of-dur G (1 / 2) L.·ˡ Grade.of-dur G (1 / 2)
+lci-tick : Grade.ι G (# 1) ≡ Grade.ι G (1 / 2) L.·ˡ Grade.ι G (1 / 2)
 lci-tick = refl
 
 ------------------------------------------------------------------------
@@ -78,16 +78,16 @@ lci-join-point = refl
 -- The unit is the greatest grade, so the zero-product law holds of
 -- every product
 
-lci-zero-product : L.> # 1 L.·ˡ L.≥ # 2 L.≾ˡ Grade.u G
+lci-zero-product : L.> # 1 L.·ˡ L.≥ # 2 L.≾ˡ Grade.𝟏 G
 lci-zero-product = ≾ˡ!
 
-lci-zero-product-factor : L.> # 1 L.≾ˡ Grade.u G
+lci-zero-product-factor : L.> # 1 L.≾ˡ Grade.𝟏 G
 lci-zero-product-factor = Grade.≾-zero-productˡ G {L.> # 1} {L.≥ # 2} lci-zero-product
 
 -- the unit is not least: an open bound at zero lies below it, and
 -- not above it
 
-lci-not-least : ¬ (Grade.u G L.≾ˡ L.> # 0)
+lci-not-least : ¬ (Grade.𝟏 G L.≾ˡ L.> # 0)
 lci-not-least = ⋠ˡ!
 
 ------------------------------------------------------------------------

@@ -53,7 +53,7 @@ extend-state S V = S ∷ₛ V
 -- Sum of the grade passings in the state
 
 state-grade : ∀ {Γ} → (S : 𝕊 Γ) → R
-state-grade ∅ = uᵣ
+state-grade ∅ = 𝟏ᵣ
 state-grade (S ⟨ ρ ⟩ₛ) = state-grade S ·ᵣ ρ
 state-grade (S ∷ₛ A) = state-grade S
 
@@ -92,7 +92,7 @@ data _≤ₛ_ : ∀ {Γ Γ'} → 𝕊 Γ → 𝕊 Γ' → Set where
 -- state-grade S' ≃ᵣ state-grade S ·ᵣ δ, by state-grade-≤ₛ.
 
 ≤ₛ-grade : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'} → S ≤ₛ S' → R
-≤ₛ-grade id-suc       = uᵣ
+≤ₛ-grade id-suc       = 𝟏ᵣ
 ≤ₛ-grade (⟨⟩-suc ρ q) = ≤ₛ-grade q ·ᵣ ρ
 ≤ₛ-grade (∷-suc V q)  = ≤ₛ-grade q
 

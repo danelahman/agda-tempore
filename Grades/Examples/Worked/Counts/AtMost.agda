@@ -22,7 +22,7 @@ import Grades.Examples.Counts.AtMost as AtMost
 
 open AtMost using (at-most-counts; upto; unlimited)
 
-open AtMost using (_≾ᵛ_; _≾ᵛ?_; _·ᵛ_; _⊔ᵛ_; uᵛ; ⊤ᵛ)
+open AtMost using (_≾ᵛ_; _≾ᵛ?_; _·ᵛ_; _⊔ᵛ_; 𝟏ᵛ; ⊤ᵛ)
 
 holds : {c d : Quota} {p : True (c ≾ᵛ? d)} → c ≾ᵛ d
 holds {p = p} = toWitness p
@@ -75,7 +75,7 @@ joined = refl
 
 -- the unit is least and `unlimited` everywhere is greatest
 
-none-least : uᵛ ≾ᵛ ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ
+none-least : 𝟏ᵛ ≾ᵛ ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ
 none-least = holds
 
 unlimited-greatest : ⟪ upto 5 , unlimited , upto 9 ⟫ᵐ ≾ᵛ ⊤ᵛ

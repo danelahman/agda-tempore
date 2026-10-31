@@ -91,7 +91,7 @@ data NfC : ∀ {Γ A ε} → Γ ⊢C⦂ A ‼ ε → Set
 
 data NfV where
 
-  varⁿ   : ∀ {Γ A ρ} {f : ¬ Eternal A → ρ ≾ᵣ uᵣ} {x : A ∈[ ρ ] Γ}
+  varⁿ   : ∀ {Γ A ρ} {f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ} {x : A ∈[ ρ ] Γ}
          → NfV (var f x)
 
   constⁿ : ∀ {Γ B} {c : BaseConstants B} → NfV {Γ} (const c)
@@ -130,11 +130,11 @@ data NfV where
                {Bh : Op → E → VType} {εh : Op → E → E}
                {H : (op : Op) → (ε'' : E) →
                       Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                        ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                        ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                       ⊢C⦂ Bh op ε'' ‼ εh op ε''}
                {p : (op : Op) → (ε'' : E) →
                       (Bh op ε'' ‼ εh op ε'') <:ᶜ (B ‼ (op-grade op ·ₑ ε''))}
-               {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B₁ ‼ ε₁} {q : B₁ <:ᵛ B}
+               {N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B₁ ‼ ε₁} {q : B₁ <:ᵛ B}
            → NfC N
            → ((op : Op) → (ε'' : E) → NfC (H op ε''))
            → NfV (handler (subC N (q ‼ₛ ≾ₑ-refl))
@@ -144,7 +144,7 @@ data NfC where
 
   returnⁿ  : ∀ {Γ A} {V : Γ ⊢V⦂ A} → NfV V → NfC (return V)
 
-  seqⁿ     : ∀ {Γ A B ε ε'} {M : Γ ⊢C⦂ A ‼ ε} {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+  seqⁿ     : ∀ {Γ A B ε ε'} {M : Γ ⊢C⦂ A ‼ ε} {N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
            → NfC M → NfC N → NfC (M ⨟ N)
 
   -- the argument meets the domain the function fixes
@@ -183,7 +183,7 @@ data NfC where
   -- binder fixes
 
   recℕⁿ    : ∀ {Γ B ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ Nat}
-               {M : Γ ⊢C⦂ A₁ ‼ ε₁} {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ A₂ ‼ ε₂}
+               {M : Γ ⊢C⦂ A₁ ‼ ε₁} {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ A₂ ‼ ε₂}
                {p : (A₁ ‼ ε₁) <:ᶜ (B ‼ ε)} {q : (A₂ ‼ ε₂) <:ᶜ (B ‼ ε)}
                {r : ε ·ₑ ε ≾ₑ ε}
            → NfV V → NfC M → NfC N
@@ -203,7 +203,7 @@ data NfC where
 
   recLⁿ    : ∀ {Γ A B ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ |List| A}
                {M : Γ ⊢C⦂ A₁ ‼ ε₁}
-               {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ A₂ ‼ ε₂}
+               {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ A₂ ‼ ε₂}
                {p : (A₁ ‼ ε₁) <:ᶜ (B ‼ ε)} {q : (A₂ ‼ ε₂) <:ᶜ (B ‼ ε)}
                {r : ε ·ₑ ε ≾ₑ ε}
            → NfV V → NfC M → NfC N
@@ -213,10 +213,10 @@ data NfC where
   -- non-trivial because ground types include the box modality
 
   performⁿ : ∀ {Γ A ε A' op} {V : Γ ⊢V⦂ A'} {p : A' <:ᵛ type-of-gtype (param op)}
-               {M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
+               {M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
            → NfV V → NfC M → NfC (perform op (subV V p) M)
 
-  delayⁿ   : ∀ {Γ A ε τ} {M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε} → NfC M → NfC (delay τ M)
+  delayⁿ   : ∀ {Γ A ε τ} {M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε} → NfC M → NfC (delay τ M)
 
   -- the handler meets the type of the handled computation
 
@@ -598,6 +598,6 @@ private
   ex-body : ∀ {Γ A}
           → rtm (V-normalise {Γ}
                    (lam (subC (return {A = A} (var (λ _ → ≾ᵣ-refl) Hd))
-                              (<:ᶜ-refl (A ‼ uₑ)))))
+                              (<:ᶜ-refl (A ‼ 𝟏ₑ)))))
           ≡ lam (return (var (λ _ → ≾ᵣ-refl) Hd))
   ex-body = refl

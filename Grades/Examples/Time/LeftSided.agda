@@ -53,8 +53,8 @@ infixl 7 _·ₒ_
 
 -- interval unit
 
-uₒ : 𝕀
-uₒ = [ 0 ,+∞⟩
+𝟏ₒ : 𝕀
+𝟏ₒ = [ 0 ,+∞⟩
 
 -- interval order
 
@@ -65,10 +65,10 @@ infix 6 _≾ₒ_
 
 -- identity laws
 
-·ₒ-identityʳ : (i : 𝕀) → i ·ₒ uₒ ≡ i
+·ₒ-identityʳ : (i : 𝕀) → i ·ₒ 𝟏ₒ ≡ i
 ·ₒ-identityʳ [ m ,+∞⟩ = eq𝕀 (+-identityʳ m)
 
-·ₒ-identityˡ : (i : 𝕀) → uₒ ·ₒ i ≡ i
+·ₒ-identityˡ : (i : 𝕀) → 𝟏ₒ ·ₒ i ≡ i
 ·ₒ-identityˡ [ m ,+∞⟩ = eq𝕀 (+-identityˡ m)
 
 -- associativity
@@ -106,13 +106,13 @@ infix 6 _≾ₒ_
 -- the unit is the greatest grade: demanding nothing is the weakest
 -- lower bound there is
 
-≾ₒ-⊤ : (i : 𝕀) → i ≾ₒ uₒ
+≾ₒ-⊤ : (i : 𝕀) → i ≾ₒ 𝟏ₒ
 ≾ₒ-⊤ [ _ ,+∞⟩ = z≤n
 
 -- the unit is not least: `[ 1 ,+∞⟩` lies strictly below it
 
-uₒ-not-least : ¬ Minimum _≾ₒ_ uₒ
-uₒ-not-least least = 1+n≰n (least [ 1 ,+∞⟩)
+𝟏ₒ-not-least : ¬ Minimum _≾ₒ_ 𝟏ₒ
+𝟏ₒ-not-least least = 1+n≰n (least [ 1 ,+∞⟩)
 
 -- decidability
 
@@ -128,16 +128,16 @@ _≾ₒ?_ : Decidable _≾ₒ_
 
 -- zero-product properties
 
-≡ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≡ uₒ → i₁ ≡ uₒ
+≡ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≡ 𝟏ₒ → i₁ ≡ 𝟏ₒ
 ≡ₒ-zero-productˡ {[ m ,+∞⟩} {[ _ ,+∞⟩} eq = eq𝕀 (m+n≡0⇒m≡0 m (𝕀-inj eq))
 
-≡ₒ-zero-productʳ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≡ uₒ → i₂ ≡ uₒ
+≡ₒ-zero-productʳ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≡ 𝟏ₒ → i₂ ≡ 𝟏ₒ
 ≡ₒ-zero-productʳ {[ m ,+∞⟩} {[ _ ,+∞⟩} eq = eq𝕀 (m+n≡0⇒n≡0 m (𝕀-inj eq))
 
-≾ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≾ₒ uₒ → i₁ ≾ₒ uₒ
+≾ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≾ₒ 𝟏ₒ → i₁ ≾ₒ 𝟏ₒ
 ≾ₒ-zero-productˡ {[ _ ,+∞⟩} {[ _ ,+∞⟩} _ = z≤n
 
-≾ₒ-zero-productʳ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≾ₒ uₒ → i₂ ≾ₒ uₒ
+≾ₒ-zero-productʳ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≾ₒ 𝟏ₒ → i₂ ≾ₒ 𝟏ₒ
 ≾ₒ-zero-productʳ {[ _ ,+∞⟩} {[ _ ,+∞⟩} _ = z≤n
 
 -- binary joins: a weaker grade has the smaller bound, so the join
@@ -178,12 +178,12 @@ left-sided-intervals : Grade ℕᴰ
 left-sided-intervals = posetᵍ record
   { Carrier          = 𝕀
   ; _·_               = _·ₒ_
-  ; u                 = uₒ
+  ; 𝟏                 = 𝟏ₒ
   ; ·-identityʳ       = ·ₒ-identityʳ
   ; ·-identityˡ       = ·ₒ-identityˡ
   ; ·-assoc           = ·ₒ-assoc
   ; _≾_               = _≾ₒ_
-  ; ⊤                 = uₒ
+  ; ⊤                 = 𝟏ₒ
   ; ≾-⊤               = ≾ₒ-⊤
   ; _⊔_               = _⊔ₒ_
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
@@ -200,16 +200,16 @@ left-sided-intervals = posetᵍ record
   ; ≾-zero-productˡ   = ≾ₒ-zero-productˡ
   ; ≾-zero-productʳ   = ≾ₒ-zero-productʳ
   ; ≾-irrelevant      = ≾ₒ-irrelevant
-  ; of-dur            = [_,+∞⟩
-  ; of-dur-zero       = refl
-  ; of-dur-plus       = refl
+  ; ι                 = [_,+∞⟩
+  ; ι-zero            = refl
+  ; ι-plus            = refl
   }
 
 -- its hints
 
 left-sided-intervalsʰ : GradeHints left-sided-intervals
 left-sided-intervalsʰ = record
-  { u-least? = nothing
+  { 𝟏-least? = nothing
   ; ·-comm?  = just (comm-≡ left-sided-intervals ·ₒ-comm)
   ; plus?    = λ i → just (plus-self (≾ₒ-refl {i}) (·ₒ-iter i))
   }
@@ -239,8 +239,8 @@ untimed   ·ᵗ _         = untimed
 
 infixl 7 _·ᵗ_
 
-uᵗ : 𝕀⊤
-uᵗ = timed uₒ
+𝟏ᵗ : 𝕀⊤
+𝟏ᵗ = timed 𝟏ₒ
 
 -- interval order, with `untimed` greatest
 
@@ -258,16 +258,16 @@ infix 6 _≾ᵗ_
 
 -- the unit is not least, as for the intervals themselves
 
-uᵗ-not-least : ¬ Minimum _≾ᵗ_ uᵗ
-uᵗ-not-least least = 1+n≰n (least (timed [ 1 ,+∞⟩))
+𝟏ᵗ-not-least : ¬ Minimum _≾ᵗ_ 𝟏ᵗ
+𝟏ᵗ-not-least least = 1+n≰n (least (timed [ 1 ,+∞⟩))
 
 -- identity laws
 
-·ᵗ-identityʳ : (i : 𝕀⊤) → i ·ᵗ uᵗ ≡ i
+·ᵗ-identityʳ : (i : 𝕀⊤) → i ·ᵗ 𝟏ᵗ ≡ i
 ·ᵗ-identityʳ (timed i) = cong timed_ (·ₒ-identityʳ i)
 ·ᵗ-identityʳ untimed   = refl
 
-·ᵗ-identityˡ : (i : 𝕀⊤) → uᵗ ·ᵗ i ≡ i
+·ᵗ-identityˡ : (i : 𝕀⊤) → 𝟏ᵗ ·ᵗ i ≡ i
 ·ᵗ-identityˡ (timed i) = cong timed_ (·ₒ-identityˡ i)
 ·ᵗ-identityˡ untimed   = refl
 
@@ -346,12 +346,12 @@ untimed   ≾ᵗ? untimed   = yes tt
 -- zero-product properties, `untimed` sitting above the unit and not
 -- below it
 
-≾ᵗ-zero-productˡ : ∀ {i₁ i₂ : 𝕀⊤} → i₁ ·ᵗ i₂ ≾ᵗ uᵗ → i₁ ≾ᵗ uᵗ
+≾ᵗ-zero-productˡ : ∀ {i₁ i₂ : 𝕀⊤} → i₁ ·ᵗ i₂ ≾ᵗ 𝟏ᵗ → i₁ ≾ᵗ 𝟏ᵗ
 ≾ᵗ-zero-productˡ {timed i₁} {timed i₂} rel = ≾ₒ-zero-productˡ {i₁} {i₂} rel
 ≾ᵗ-zero-productˡ {timed _}  {untimed}  ()
 ≾ᵗ-zero-productˡ {untimed}  {_}        ()
 
-≾ᵗ-zero-productʳ : ∀ {i₁ i₂ : 𝕀⊤} → i₁ ·ᵗ i₂ ≾ᵗ uᵗ → i₂ ≾ᵗ uᵗ
+≾ᵗ-zero-productʳ : ∀ {i₁ i₂ : 𝕀⊤} → i₁ ·ᵗ i₂ ≾ᵗ 𝟏ᵗ → i₂ ≾ᵗ 𝟏ᵗ
 ≾ᵗ-zero-productʳ {timed i₁} {timed i₂} rel = ≾ₒ-zero-productʳ {i₁} {i₂} rel
 ≾ᵗ-zero-productʳ {timed _}  {untimed}  ()
 ≾ᵗ-zero-productʳ {untimed}  {_}        ()
@@ -411,7 +411,7 @@ left-sided-intervals-with-⊤ : Grade ℕᴰ
 left-sided-intervals-with-⊤ = posetᵍ record
   { Carrier           = 𝕀⊤
   ; _·_               = _·ᵗ_
-  ; u                 = uᵗ
+  ; 𝟏                 = 𝟏ᵗ
   ; ·-identityʳ       = ·ᵗ-identityʳ
   ; ·-identityˡ       = ·ᵗ-identityˡ
   ; ·-assoc           = ·ᵗ-assoc
@@ -433,16 +433,16 @@ left-sided-intervals-with-⊤ = posetᵍ record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵗ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ᵗ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ᵗ-irrelevant {i₁} {i₂}
-  ; of-dur            = λ n → timed [ n ,+∞⟩
-  ; of-dur-zero       = refl
-  ; of-dur-plus       = refl
+  ; ι                 = λ n → timed [ n ,+∞⟩
+  ; ι-zero            = refl
+  ; ι-plus            = refl
   }
 
 -- its hints
 
 left-sided-intervals-with-⊤ʰ : GradeHints left-sided-intervals-with-⊤
 left-sided-intervals-with-⊤ʰ = record
-  { u-least? = nothing
+  { 𝟏-least? = nothing
   ; ·-comm?  = just (comm-≡ left-sided-intervals-with-⊤ ·ᵗ-comm)
   ; plus?    = λ i → just (plus-self (≾ᵗ-refl {i}) (·ᵗ-iter i))
   }

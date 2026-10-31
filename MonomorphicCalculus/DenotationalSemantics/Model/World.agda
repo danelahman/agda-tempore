@@ -12,12 +12,13 @@
 -- world-movement of the graded effect monad.                           --
 --                                                                      --
 -- The monad is graded by the effect grades `ε : E`, but it moves       --
--- through the worlds along the resource projection `mapᵉ ε` of its     --
+-- through the worlds along the resource projection `∣ ε ∣ᵉ` of its     --
 -- effect: an operation of grade `op-grade op` advances the worlds by   --
--- `mapᵉ (op-grade op)` resources, matching the box `[ mapᵉ (op-grade   --
--- op) ]` that the calculus's operations and handlers use. No separate  --
--- effect-graded accessibility is needed: the worlds may carry as much  --
--- history as desired, and `_⊑[_]_` relates those worlds.               --
+-- `∣ op-grade op ∣ᵉ` resources, matching the box                       --
+-- `[ ∣ op-grade op ∣ᵉ ]` that the calculus's operations and handlers   --
+-- use. No separate effect-graded accessibility is needed: the worlds   --
+-- may carry as much history as desired, and `_⊑[_]_` relates those     --
+-- worlds.                                                              --
 --                                                                      --
 -- The family has the natural laws that make the (co)monad / monad      --
 -- coherences hold on the nose (reflexivity at the unit grade,          --
@@ -37,7 +38,7 @@ module MonomorphicCalculus.DenotationalSemantics.Model.World {D : Duration} (RG 
 
 open Grade RG using () renaming
   (Carrier to R;
-   u to uᵣ;
+   𝟏 to 𝟏ᵣ;
    _·_ to _·ᵣ_;
    _≾_ to _≾ᵣ_)
 
@@ -59,7 +60,7 @@ record World : Set₁ where
 
     -- resource accessibility is a graded preorder
 
-    ⊑-refl : ∀ {w} → w ⊑[ uᵣ ] w
+    ⊑-refl : ∀ {w} → w ⊑[ 𝟏ᵣ ] w
     ⊑-trans : ∀ {ρ₁ ρ₂ w w' w''}
             → w ⊑[ ρ₁ ] w' → w' ⊑[ ρ₂ ] w'' → w ⊑[ ρ₁ ·ᵣ ρ₂ ] w''
     ⊑-mono : ∀ {ρ₁ ρ₂ w w'} → ρ₁ ≾ᵣ ρ₂ → w ⊑[ ρ₁ ] w' → w ⊑[ ρ₂ ] w'

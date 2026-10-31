@@ -53,7 +53,7 @@ Dcl : VType → Op → E → Ctx
 Dcl D op ε'' =
   [] ⟨ ⊤ᵣ ⟩
      ∷ type-of-gtype (param op)
-     ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ D ‼ ε'')
+     ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ D ‼ ε'')
 
 -- Every renaming reaching a clause comes out as an `eq-ren`-conjugated core;
 -- the helpers below fuse nested conjugations, extend one by a suffix, and turn

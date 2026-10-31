@@ -94,7 +94,7 @@ reach-replay es (reach e b) with replay es e
 
 ⟨⟩-η-ren-cast : ∀ {Γ Γ'} → (e : Γ' ≡ Γ)
               → ⟨⟩-η-ren {Δ = Γ}
-              ≐ʳ castʳ² (cong (_⟨ uᵣ ⟩) e) e ⟨⟩-η-ren
+              ≐ʳ castʳ² (cong (_⟨ 𝟏ᵣ ⟩) e) e ⟨⟩-η-ren
 ⟨⟩-η-ren-cast refl = ≐ʳ-refl
 
 unbox-ren-≐ˢ : ∀ {ρ} {St St' St₂ St₂' : 𝕊 []}
@@ -112,7 +112,7 @@ unbox-ren-≐ˢ {ρ} es es₂ {q} {q'} h =
           (⟨⟩-η-ren-cast (sym (toCtx-≐ˢ es₂))))
     (≐ʳ-sym
       (castʳ²-∘ʳ (sym (toCtx-≐ˢ es₂))
-                 (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
+                 (cong (_⟨ 𝟏ᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
                  (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es)))
                  (suc-comp-ren (ext q') (reach-bound q')) ⟨⟩-η-ren))
 
@@ -148,12 +148,12 @@ unbox-ren-bridge {ρ} es es₂ {q'} {q} h
 
 ⟨⟩-η⁻¹-ren-cast : ∀ {Γ Γ'} → (e : Γ' ≡ Γ)
                 → ⟨⟩-η⁻¹-ren {Δ = Γ}
-                ≐ʳ castʳ² e (cong (_⟨ uᵣ ⟩) e) ⟨⟩-η⁻¹-ren
+                ≐ʳ castʳ² e (cong (_⟨ 𝟏ᵣ ⟩) e) ⟨⟩-η⁻¹-ren
 ⟨⟩-η⁻¹-ren-cast refl = ≐ʳ-refl
 
 reach-renᵘ-≐ˢ : ∀ {St St' St₂ St₂' : 𝕊 []}
               → (es : St ≐ˢ St') → (es₂ : St₂ ≐ˢ St₂')
-              → {q : St ⊑ₛ[ uᵣ ] St₂} → {q' : St' ⊑ₛ[ uᵣ ] St₂'}
+              → {q : St ⊑ₛ[ 𝟏ᵣ ] St₂} → {q' : St' ⊑ₛ[ 𝟏ᵣ ] St₂'}
               → ext q ≤≐ ext q'
               -------------------------------------------------------------
               → reach-renᵘ q
@@ -168,12 +168,12 @@ reach-renᵘ-≐ˢ es es₂ {q} {q'} h =
       (∘ʳ-≐ʳ ≐ʳ-refl
         (≐ʳ-sym
           (castʳ²-∘ʳ (sym (toCtx-≐ˢ es₂))
-                     (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
-                     (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es)))
+                     (cong (_⟨ 𝟏ᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
+                     (cong (_⟨ 𝟏ᵣ ⟩) (sym (toCtx-≐ˢ es)))
                      (suc-comp-ren (ext q') (reach-bound q')) ⟨⟩-η-ren)))
       (≐ʳ-sym
         (castʳ²-∘ʳ (sym (toCtx-≐ˢ es₂))
-                   (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es)))
+                   (cong (_⟨ 𝟏ᵣ ⟩) (sym (toCtx-≐ˢ es)))
                    (sym (toCtx-≐ˢ es))
                    ⟨⟩-η⁻¹-ren
                    (suc-comp-ren (ext q') (reach-bound q') ∘ʳ ⟨⟩-η-ren))))

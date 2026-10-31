@@ -70,20 +70,20 @@ in-window : [] ⊢C⦂ Unit ‼ _
 in-window =
   box window (const 42)      -- ∷ [ window ] Reading
     (perform read ⋆          -- ⟨ ∣ opTime read ∣ ⟩ ∷ Reading
-      (delay (# 1)           -- ⟨ of-dur 1 ⟩
+      (delay (# 1)           -- ⟨ ι 1 ⟩
         (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ⊆! (<:ᵛ-refl _)
                              -- ∷ Reading
           (perform write here (return ⋆)))))
 
 -- right after the reading, half a unit at most has passed
 
-too-soon : ¬ (uᵣ ·ᵣ mapᵉ (opTime read) ≾ᵣ window)
+too-soon : ¬ (𝟏ᵣ ·ᵣ ∣ opTime read ∣ᵉ ≾ᵣ window)
 too-soon = ⊈!
 
 -- after a reading and a transmission, up to four and a half units may
 -- have passed
 
-too-late : ¬ (uᵣ ·ᵣ mapᵉ (opTime read) ·ᵣ mapᵉ (opTime send) ≾ᵣ window)
+too-late : ¬ (𝟏ᵣ ·ᵣ ∣ opTime read ∣ᵉ ·ᵣ ∣ opTime send ∣ᵉ ≾ᵣ window)
 too-late = ⊈!
 
 -- the effect grade of the run is the run itself, at both ends
@@ -93,8 +93,8 @@ run = [ L.⌜ L.‵_ {L.lower} read L.· L.idle L.≥ (# 1) L.· L.‵_ {L.lower
       , U.⌜ U.‵_ {U.upper} read U.· U.idle U.≤ (# 1) U.· U.‵_ {U.upper} write ⌝
       ]ᵍ
 
-run-measured : mapᵉ run ≡ ] 9 / 4 , ↑ 7 / 2 ]
+run-measured : ∣ run ∣ᵉ ≡ ] 9 / 4 , ↑ 7 / 2 ]
 run-measured = refl
 
-run-is-delayed : run ≃ₑ opTime read ·ₑ of-durᵉ (# 1) ·ₑ opTime write
+run-is-delayed : run ≃ₑ opTime read ·ₑ ιₑ (# 1) ·ₑ opTime write
 run-is-delayed = _

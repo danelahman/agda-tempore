@@ -353,13 +353,13 @@ data CRed (s : Shape) (P : VPred s)
   cred-op : ∀ {A A₀ ε ε₁} {e : shapeᵛ A ≡ s} {St St₁ : 𝕊 []} {op : Op}
           → {M : toCtx St ⊢C⦂ A ‼ ε}
           → {W : toCtx St₁ ⊢V⦂ type-of-gtype (param op)}
-          → {M' : toCtx St₁ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+          → {M' : toCtx St₁ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
                     ⊢C⦂ A₀ ‼ ε₁}
           → (e₀ : shapeᵛ A₀ ≡ s)
           → ⟨ St , M ⟩ ⟶* ⟨ St₁ , perform op W M' ⟩
           → VRedᵍ (param op) St₁ W
           → (∀ {St₂ : 𝕊 []}
-             → (q : St₁ ⊑ₛ[ mapᵉ (op-grade op) ] St₂)
+             → (q : St₁ ⊑ₛ[ ∣ op-grade op ∣ᵉ ] St₂)
              → (W' : toCtx St₂ ⊢V⦂ type-of-gtype (arity op))
              → VRedᵍ (arity op) St₂ W'
              → CRed s P e₀ ε₁ St₂ (resume q M' W'))
@@ -418,7 +418,7 @@ VRedˢ (Lˢ t) {(A ‼ ε) ⇛ (B ‼ ε')} () St V
 VRedˢ (Lˢ t) {[ ρ ] A}     () St V
 
 VRedˢ (t →ˢ t') {A ⇒ (B ‼ ε)} e  St V =
-  ∀ {St'} → (q : St ⊑ₛ[ uᵣ ] St')
+  ∀ {St'} → (q : St ⊑ₛ[ 𝟏ᵣ ] St')
   → (W : toCtx St' ⊢V⦂ A)
   → VRedˢ t (→ˢ-inj₁ e) St' W
   → CRed t' (VRedˢ t') (→ˢ-inj₂ e) ε St' (reach-val q V · W)
@@ -436,7 +436,7 @@ VRedˢ (t →ˢ t') {[ ρ ] A}     () St V
 -- the handler and every subsumption of it handle reducible computations
 
 VRedˢ (t ⇛ˢ t') {(A ‼ ε) ⇛ (B ‼ ε')} e St V =
-  ∀ {St'} → (q : St ⊑ₛ[ uᵣ ] St')
+  ∀ {St'} → (q : St ⊑ₛ[ 𝟏ᵣ ] St')
   → ∀ {A₀ ε₀ B₀ ε₀'} {U : toCtx St' ⊢V⦂ (A₀ ‼ ε₀) ⇛ (B₀ ‼ ε₀')}
   → (u : Use (reach-val q V) U)
   → (M : toCtx St' ⊢C⦂ A₀ ‼ ε₀)
@@ -695,7 +695,7 @@ VRed-≡ᵛ A refl p = p
 -- value, so what holds of it transports. An induction on the value: the spine
 -- passes it on, and the variable clause is where the reach is absorbed.
 
-reach-read-val : ∀ {t A ρ} {St St' : 𝕊 []} → (q : St ⊑ₛ[ uᵣ ] St')
+reach-read-val : ∀ {t A ρ} {St St' : 𝕊 []} → (q : St ⊑ₛ[ 𝟏ᵣ ] St')
                → (V : toCtx St ⊢V⦂ [ ρ ] A)
                → (e : shapeᵛ (val-typeᵛ V) ≡ t)
                → (e' : shapeᵛ (val-typeᵛ (reach-val q V)) ≡ t)
@@ -716,7 +716,7 @@ reach-read-val {ρ = ρ} q (var _ x) e e' h {St₂} (read ee rel) =
 
 reach-read-val q (subV V ([ _ ]ₛ _)) e e' h r = reach-read-val q V e e' h r
 
-VRedˢ-reach : ∀ {t A} {St St' : 𝕊 []} → (q : St ⊑ₛ[ uᵣ ] St')
+VRedˢ-reach : ∀ {t A} {St St' : 𝕊 []} → (q : St ⊑ₛ[ 𝟏ᵣ ] St')
             → (e : shapeᵛ A ≡ t) → (V : toCtx St ⊢V⦂ A)
             → VRedˢ t e St V → VRedˢ t e St' (reach-val q V)
 
@@ -799,7 +799,7 @@ VRedˢ-reach {t →ˢ t'} {[ ρ ] A}     q () V f
 VRedˢ-reach {t ⇛ˢ t'} {(A ‼ ε) ⇛ (B ‼ ε')} q₀ e V f = λ q' u M pM →
   CRedˢ'-≡ˢ (f (reach-∘ q' q₀) (subst (λ z → Use z _) (sym eq) u) M (CRedˢ'-≡ˢ pM))
   where
-    eq : ∀ {St''} {q' : _ ⊑ₛ[ uᵣ ] St''}
+    eq : ∀ {St''} {q' : _ ⊑ₛ[ 𝟏ᵣ ] St''}
        → reach-val (reach-∘ q' q₀) V ≡ reach-val q' (reach-val q₀ V)
     eq {q' = q'} = trans (V-rename-≡ (reach-renᵘ-∘ q' q₀) V)
                          (V-rename-∘ (reach-renᵘ q₀) (reach-renᵘ q') V)
@@ -826,7 +826,7 @@ VRedˢ-reach {□ˢ t} {Empty}       q () V f
 VRedˢ-reach {□ˢ t} {A ⇒ (B ‼ ε)} q () V f
 VRedˢ-reach {□ˢ t} {(A ‼ ε) ⇛ (B ‼ ε')} q () V f
 
-VRed-reach : ∀ {A St St'} → (q : St ⊑ₛ[ uᵣ ] St') → (V : toCtx St ⊢V⦂ A)
+VRed-reach : ∀ {A St St'} → (q : St ⊑ₛ[ 𝟏ᵣ ] St') → (V : toCtx St ⊢V⦂ A)
            → VRed A St V → VRed A St' (reach-val q V)
 
 VRed-reach q V p = VRedˢ-reach q refl V p
@@ -1000,7 +1000,7 @@ CRed-≡ᶜ refl p = p
 SRed-fresh : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
            → (∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
                 → VRed A St' (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V))
-           → (f : ¬ Eternal ([ ρ ] A) → uᵣ ≾ᵣ uᵣ)
+           → (f : ¬ Eternal ([ ρ ] A) → 𝟏ᵣ ≾ᵣ 𝟏ᵣ)
            ------------------------------------------
            → VRed ([ ρ ] A) (St ∷ₛ V) (var f Hd)
 
@@ -1024,7 +1024,7 @@ SRed-fresh {A} {ρ} {St} V pV f {St'} r =
 -- reducible via the store read at the states its own box grade allows.
 
 SRed-var : ∀ {A ρ} {St : 𝕊 []} → SRed St
-         → (x : A ∈[ ρ ] toCtx St) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+         → (x : A ∈[ ρ ] toCtx St) → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
          --------------------------------------------------------
          → VRed A St (var f x)
 

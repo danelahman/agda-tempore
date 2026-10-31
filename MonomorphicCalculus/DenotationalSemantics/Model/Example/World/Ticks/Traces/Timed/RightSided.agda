@@ -61,7 +61,7 @@ open import Grades.Traces.Allowance T Op costʰⁱ using (duration-≼ᵃ)
 open import Grades.Examples.Traces.Timed.RightSided
   T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
   using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_;
-         Antichain; traces; u; _∙_; _·ˢ_; n-◃⁻; ◃-∈; True-irr)
+         Antichain; traces; 𝟏; _∙_; _·ˢ_; n-◃⁻; ◃-∈; True-irr)
 
 open import MonomorphicCalculus.DenotationalSemantics.Model.World
 open import MonomorphicCalculus.DenotationalSemantics.Model.World.Action using (forward)
@@ -81,7 +81,7 @@ w ⊑ᵗ[ unbounded ]      w' = ⊤
 -- reflexivity at the unit grade `{ ε }`: the empty bound permits no
 -- time to pass, and none has
 
-⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ (within u) ] w
+⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ (within 𝟏) ] w
 ⊑ᵗ-refl {w} = fromWitness (here (≤-reflexive (sym (+-identityʳ w))))
 
 -- transitivity multiplies the grades: the two advances compose into the

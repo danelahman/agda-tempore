@@ -17,7 +17,7 @@
 -- The two consequences that are reversed relative to the lower       --
 -- bounds, both checked below:                                        --
 --                                                                    --
---   * the bound `ρ ≾ᵣ uᵣ` of `var` holds only at the unit, so a      --
+--   * the bound `ρ ≾ᵣ 𝟏ᵣ` of `var` holds only at the unit, so a      --
 --     reading goes stale after any activity, and a resource that     --
 --     must survive is leased.                                        --
 --                                                                    --
@@ -114,14 +114,14 @@ tagged-relaying =
 ------------------------------------------------------------------------
 -- Readings go stale
 --
--- `var` asks for `ρ ≾ᵣ uᵣ` at a non-eternal type, and the only grade
+-- `var` asks for `ρ ≾ᵣ 𝟏ᵣ` at a non-eternal type, and the only grade
 -- below `[0, 0 ]` is itself, so a reading is usable only where no lock
 -- stands between its binding and its use.
 
-reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-durʳ 2 ≾ᵣ uᵣ)
+reading-stale-after-idling : ¬ (𝟏ᵣ ·ᵣ ιᵣ 2 ≾ᵣ 𝟏ᵣ)
 reading-stale-after-idling = ≰!
 
-reading-stale-after-an-operation : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
+reading-stale-after-an-operation : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ 𝟏ᵣ)
 reading-stale-after-an-operation = ≰!
 
 -- the identifier is eternal, so it crosses locks all the same
@@ -141,7 +141,7 @@ carried-id =
 relaxing-a-deadline : [] ⊢C⦂ Unit ‼ [0, 6 ]
 relaxing-a-deadline = coerce ≤! (perform read ⋆ (perform write here (return ⋆)))
 
-tightening-a-deadline : ¬ (opTime read ·ₑ (opTime write ·ₑ uₑ) ≾ₑ [0, 3 ])
+tightening-a-deadline : ¬ (opTime read ·ₑ (opTime write ·ₑ 𝟏ₑ) ≾ₑ [0, 3 ])
 tightening-a-deadline = ≰!
 
 ------------------------------------------------------------------------
@@ -160,7 +160,7 @@ branching =
 -- the storing branch's own grade will not do for the conditional, the
 -- transmitting branch overrunning it
 
-transmitting-takes-longer : ¬ (opTime send ·ₑ uₑ ≾ₑ [0, 3 ])
+transmitting-takes-longer : ¬ (opTime send ·ₑ 𝟏ₑ ≾ₑ [0, 3 ])
 transmitting-takes-longer = ≰!
 
 -- an `if` over data alone: both branches make the same run, so neither
@@ -185,13 +185,13 @@ sampling-then-branching =
 -- `caseℕ` binds the predecessor in its successor branch, and, as for
 -- `if`, both branches are coerced to one grade.
 
-is-zero : [] ⊢V⦂ Nat ⇒ Bool ‼ uₑ
+is-zero : [] ⊢V⦂ Nat ⇒ Bool ‼ 𝟏ₑ
 is-zero = lam (caseℕ here `zero return true `succ return false)
 
-predecessor : [] ⊢V⦂ Nat ⇒ Nat ‼ uₑ
+predecessor : [] ⊢V⦂ Nat ⇒ Nat ‼ 𝟏ₑ
 predecessor = lam (caseℕ here `zero return zero `succ return here)
 
-two-before-three : [] ⊢C⦂ Nat ‼ uₑ
+two-before-three : [] ⊢C⦂ Nat ‼ 𝟏ₑ
 two-before-three = predecessor · numeralᵛ 3
 
 -- a count of pending transmissions: none costs nothing, otherwise the
@@ -224,7 +224,7 @@ count-survives =
 
 -- addition, recursing on the first argument
 
-add : [] ⊢V⦂ Nat ⇒ (Nat ⇒ Nat ‼ uₑ) ‼ uₑ
+add : [] ⊢V⦂ Nat ⇒ (Nat ⇒ Nat ‼ 𝟏ₑ) ‼ 𝟏ₑ
 add =
   lam (return (lam
     (recℕ (eternal-var Natₑ (Tl-∷ Hd))
@@ -232,13 +232,13 @@ add =
       (return (succ here))         -- ⟨ ⊤ᵣ ⟩ ∷ Nat ⟨ [0, 0 ] ⟩ ∷ Nat
       ≤!)))
 
-two-plus-three : [] ⊢C⦂ Nat ‼ uₑ
+two-plus-three : [] ⊢C⦂ Nat ‼ 𝟏ₑ
 two-plus-three =
   recℕ (numeralᵛ 2) (return (numeralᵛ 3)) (return (succ here)) ≤!
 
 -- the predecessor, bound by the step, rebuilds the number
 
-rebuild : [] ⊢V⦂ Nat ⇒ Nat ‼ uₑ
+rebuild : [] ⊢V⦂ Nat ⇒ Nat ‼ 𝟏ₑ
 rebuild =
   lam (recℕ here
         (return zero)
@@ -248,7 +248,7 @@ rebuild =
 -- an identifier from outside the step: eternal, so it crosses the
 -- barrier
 
-tagging-each : [] ∷ NodeId ⊢C⦂ NodeId ‼ uₑ
+tagging-each : [] ∷ NodeId ⊢C⦂ NodeId ‼ 𝟏ₑ
 tagging-each =
   recℕ (numeralᵛ 2)
     (return here)
@@ -261,7 +261,7 @@ tagging-each =
 barrier-is-the-top : ⊤ᵣ ≡ ⌈0, ∞ ⌉
 barrier-is-the-top = refl
 
-reading-barred-from-step : ¬ (uᵣ ·ᵣ ⌈0, ∞ ⌉ ≾ᵣ uᵣ)
+reading-barred-from-step : ¬ (𝟏ᵣ ·ᵣ ⌈0, ∞ ⌉ ≾ᵣ 𝟏ᵣ)
 reading-barred-from-step ()
 
 -- a countdown, a tick a step: graded at the top, which absorbs itself
@@ -269,8 +269,8 @@ reading-barred-from-step ()
 countdown : [] ⊢V⦂ Nat ⇒ Unit ‼ ⊤ₑ
 countdown =
   lam (recℕ here
-        (coerce (≾-⊤ₑ uₑ) (return ⋆))
-        (coerce (≾-⊤ₑ (of-durᵉ 1 ·ₑ uₑ)) (delay 1 (return ⋆)))
+        (coerce (≾-⊤ₑ 𝟏ₑ) (return ⋆))
+        (coerce (≾-⊤ₑ (ιₑ 1 ·ₑ 𝟏ₑ)) (delay 1 (return ⋆)))
                                    -- ⟨ ⊤ᵣ ⟩ ∷ Nat ⟨ ⌈0, ∞ ⌉ ⟩ ∷ Unit
         (≾-⊤ₑ (⊤ₑ ·ₑ ⊤ₑ)))
 
@@ -288,7 +288,7 @@ tick-a-step-overruns = ≰!
 -- `case+` binds the injected value in the branch its injection names,
 -- and, as for `if`, both branches are coerced to one grade.
 
-swap : ∀ {A B} → [] ⊢V⦂ (A |+| B) ⇒ (B |+| A) ‼ uₑ
+swap : ∀ {A B} → [] ⊢V⦂ (A |+| B) ⇒ (B |+| A) ‼ 𝟏ₑ
 swap = lam (case+ here `inl return (inr here) `inr return (inl here))
 
 -- a reading is transmitted, an identifier stands for none and costs
@@ -350,21 +350,21 @@ readings-not-eternal (|List|ₑ r) = reading-not-eternal r
 
 -- the length, whatever the elements are
 
-length : ∀ {A} → [] ⊢V⦂ |List| A ⇒ Nat ‼ uₑ
+length : ∀ {A} → [] ⊢V⦂ |List| A ⇒ Nat ‼ 𝟏ₑ
 length =
   lam (recL here
         (return zero)
         (return (succ here))         -- ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A ⟨ [0, 0 ] ⟩ ∷ Nat
         ≤!)
 
-three-readings-long : [] ⊢C⦂ Nat ‼ uₑ
+three-readings-long : [] ⊢C⦂ Nat ‼ 𝟏ₑ
 three-readings-long =
   length {Reading} · cons (const 1) (cons (const 2) (cons (const 3) nil))
 
 -- a pure map: each count is incremented; a count is eternal, so the head
 -- crosses the result's lock
 
-incrementing : [] ⊢V⦂ |List| Nat ⇒ |List| Nat ‼ uₑ
+incrementing : [] ⊢V⦂ |List| Nat ⇒ |List| Nat ‼ 𝟏ₑ
 incrementing =
   lam (recL here
         (return nil)
@@ -377,8 +377,8 @@ incrementing =
 pacing : ∀ {A} → [] ⊢V⦂ |List| A ⇒ Unit ‼ ⊤ₑ
 pacing =
   lam (recL here
-        (coerce (≾-⊤ₑ uₑ) (return ⋆))
-        (coerce (≾-⊤ₑ (of-durᵉ 1 ·ₑ uₑ)) (delay 1 (return ⋆)))
+        (coerce (≾-⊤ₑ 𝟏ₑ) (return ⋆))
+        (coerce (≾-⊤ₑ (ιₑ 1 ·ₑ 𝟏ₑ)) (delay 1 (return ⋆)))
                                      -- ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A ⟨ ⌈0, ∞ ⌉ ⟩ ∷ Unit
         (≾-⊤ₑ (⊤ₑ ·ₑ ⊤ₑ)))
 
@@ -386,7 +386,7 @@ pacing =
 -- after the recursion at the tail has run. A reading is a head the step
 -- may use when that takes no time: the latest reading, at the unit.
 
-latest : [] ⊢V⦂ |List| Reading ⇒ (Reading |+| Unit) ‼ uₑ
+latest : [] ⊢V⦂ |List| Reading ⇒ (Reading |+| Unit) ‼ 𝟏ₑ
 latest =
   lam (recL here
         (return (inr ⋆))
@@ -397,7 +397,7 @@ latest =
 
 -- behind the lock of a recursion that may take time, the head is stale
 
-head-stale-behind-the-top : ¬ (uᵣ ·ᵣ mapᵉ ⊤ₑ ≾ᵣ uᵣ)
+head-stale-behind-the-top : ¬ (𝟏ᵣ ·ᵣ ∣ ⊤ₑ ∣ᵉ ≾ᵣ 𝟏ᵣ)
 head-stale-behind-the-top ()
 
 ------------------------------------------------------------------------
@@ -409,7 +409,7 @@ head-stale-behind-the-top ()
 
 -- two identifiers, bound together, compared at once
 
-same-node : [] ∷ NodeId ∷ NodeId ⊢C⦂ Bool ‼ uₑ
+same-node : [] ∷ NodeId ∷ NodeId ⊢C⦂ Bool ‼ 𝟏ₑ
 same-node =
   cmp eq (eternal-var nodeid-eternal (Tl-∷ Hd)) here nodeid-eternal
 
@@ -515,12 +515,12 @@ claim-after-sampling =
 -- a transmission and a reading spend seven, which the lease does not
 -- cover, so the claim is refused
 
-lease-expired : ¬ (uᵣ ·ᵣ opTime send ·ᵣ opTime read ≾ᵣ [0, 6 ])
+lease-expired : ¬ (𝟏ᵣ ·ᵣ opTime send ·ᵣ opTime read ≾ᵣ [0, 6 ])
 lease-expired = ≰!
 
 -- idling spends the lease just as working does
 
-idling-spends-it : ¬ (uᵣ ·ᵣ of-durʳ 7 ≾ᵣ [0, 6 ])
+idling-spends-it : ¬ (𝟏ᵣ ·ᵣ ιᵣ 7 ≾ᵣ [0, 6 ])
 idling-spends-it = ≰!
 
 -- handing a leased resource to a function, which claims it itself
@@ -557,10 +557,10 @@ either-way =
 -- one. Against a lease of four, the sampling branch still holds it and
 -- the transmitting branch has spent it.
 
-open-after-a-reading : uᵣ ·ᵣ opTime read ≾ᵣ [0, 4 ]
+open-after-a-reading : 𝟏ᵣ ·ᵣ opTime read ≾ᵣ [0, 4 ]
 open-after-a-reading = ≤!
 
-spent-by-a-transmission : ¬ (uᵣ ·ᵣ opTime send ≾ᵣ [0, 4 ])
+spent-by-a-transmission : ¬ (𝟏ᵣ ·ᵣ opTime send ≾ᵣ [0, 4 ])
 spent-by-a-transmission = ≰!
 
 -- leased for six instead, both branches hold it, and the conditional is
@@ -604,7 +604,7 @@ claim-after-a-reading =
 -- relaxing that reading's deadline to six spends six of them, and the
 -- lease does not cover it
 
-coercing-closes-it : ¬ (uᵣ ·ᵣ [0, 6 ] ≾ᵣ [0, 4 ])
+coercing-closes-it : ¬ (𝟏ᵣ ·ᵣ [0, 6 ] ≾ᵣ [0, 4 ])
 coercing-closes-it = ≰!
 
 -- the same program with the coercion, against a lease long enough for
@@ -637,7 +637,7 @@ carrying-a-lease =
 
 -- the reading taken along the way is not available at that same point
 
-reading-is-not : ¬ (uᵣ ·ᵣ opTime read ·ᵣ of-durʳ 2 ≾ᵣ uᵣ)
+reading-is-not : ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ ιᵣ 2 ≾ᵣ 𝟏ᵣ)
 reading-is-not = ≰!
 
 -- a lease long enough to cover a transmission as well, spent down to
@@ -656,10 +656,10 @@ longer-lease =
 -- reading and a transmission the longer one is open and the shorter one
 -- has run out
 
-long-lease-open : uᵣ ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ [0, 9 ]
+long-lease-open : 𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ [0, 9 ]
 long-lease-open = ≤!
 
-short-lease-run-out : ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ [0, 6 ])
+short-lease-run-out : ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ [0, 6 ])
 short-lease-run-out = ≰!
 
 -- a lease of six spent either way: one branch idles two ticks and then
@@ -685,7 +685,7 @@ spend-it-either-way =
 -- the sampling branch spends one of the six, and transmitting first
 -- would spend seven, as in `short-lease-run-out` above
 
-claim-before-transmitting : uᵣ ·ᵣ opTime read ≾ᵣ [0, 6 ]
+claim-before-transmitting : 𝟏ᵣ ·ᵣ opTime read ≾ᵣ [0, 6 ]
 claim-before-transmitting = ≤!
 
 ------------------------------------------------------------------------
@@ -712,7 +712,7 @@ identified =
 -- the operation and the resumption would have to meet, and returning at
 -- once meets it
 
-nothing-fits : (op : Op) → (ε'' : E) → uₑ ≾ₑ op-grade op ·ₑ ε''
+nothing-fits : (op : Op) → (ε'' : E) → 𝟏ₑ ≾ₑ op-grade op ·ₑ ε''
 nothing-fits read  ⌈0, ↑ n ⌉ = z≤n
 nothing-fits read  ⌈0, ∞ ⌉   = tt
 nothing-fits write ⌈0, ↑ n ⌉ = z≤n
@@ -744,7 +744,7 @@ everything-weakens = ≾-⊤ₑ
 
 -- and unlike the unit it is not a deadline any reading survives
 
-reading-stale-at-⊤ : ¬ (uᵣ ·ᵣ ⊤ᵣ ≾ᵣ uᵣ)
+reading-stale-at-⊤ : ¬ (𝟏ᵣ ·ᵣ ⊤ᵣ ≾ᵣ 𝟏ᵣ)
 reading-stale-at-⊤ ()
 
 -- so no handler clause here may close over a reading: the bound
@@ -752,8 +752,8 @@ reading-stale-at-⊤ ()
 -- clause spends past it
 
 no-reporting : (op : Op) → (ε'' : E)
-             → ¬ (uᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ uᵣ)
+             → ¬ (𝟏ᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ 𝟏ᵣ)
 no-reporting op ε'' bound =
   reading-stale-at-⊤
-    (≾ᵣ-zero-productˡ {uᵣ ·ᵣ ⊤ᵣ} {op-grade op}
-      (≾ᵣ-zero-productˡ {uᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op} {ε''} bound))
+    (≾ᵣ-zero-productˡ {𝟏ᵣ ·ᵣ ⊤ᵣ} {op-grade op}
+      (≾ᵣ-zero-productˡ {𝟏ᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op} {ε''} bound))

@@ -34,8 +34,8 @@ open import Grades.Examples.Traces.Regular.Base Op 2 code code-injective
 ⊤ : DFA
 ⊤ = Σ*
 
-of-dur : ℕ → DFA
-of-dur = ⟨_⟩
+ι : ℕ → DFA
+ι = ⟨_⟩
 
 R S : DFA
 R = ⌈ read ⌉
@@ -69,11 +69,11 @@ distrib-== = refl
 distrib-≡ : (R ∪ S) · ⟨ 1 ⟩ ≡ R · ⟨ 1 ⟩ ∪ S · ⟨ 1 ⟩
 distrib-≡ = refl
 
-of-dur-+-== : (of-dur 2 · of-dur 3 ==ᴰ of-dur 5) ≡ true
-of-dur-+-== = refl
+ι-+-== : (ι 2 · ι 3 ==ᴰ ι 5) ≡ true
+ι-+-== = refl
 
-of-dur-+-≡ : of-dur 2 · of-dur 3 ≡ of-dur 5
-of-dur-+-≡ = refl
+ι-+-≡ : ι 2 · ι 3 ≡ ι 5
+ι-+-≡ = refl
 
 ------------------------------------------------------------------------
 -- A moderately larger language: runs of `read`/`send`, each followed

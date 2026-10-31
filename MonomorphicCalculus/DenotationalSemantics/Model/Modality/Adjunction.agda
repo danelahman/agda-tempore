@@ -80,14 +80,14 @@ record Adjunction : Set₁ where
               → [ ρ ]ᶠ (ε⊣ {A} {ρ}) ∘ᵐ η⊣ {[ ρ ]ᵒ A} {ρ} ≈ᵐ idᵐ
 
     -- At the unit grade the adjunction restricts to the unit-graded
-    -- isomorphisms `⟨ u ⟩ᵒ A ≅ A` and `[ u ]ᵒ A ≅ A`: the counit `ε⊣`
+    -- isomorphisms `⟨ 𝟏 ⟩ᵒ A ≅ A` and `[ 𝟏 ]ᵒ A ≅ A`: the counit `ε⊣`
     -- factors through the box counit `ε` and the possibility counit `εᵘ`,
     -- and dually (by symmetry) the unit `η⊣` factors through the box unit
     -- `ηᵘ` and the possibility unit `η`. This makes a variable of eternal
-    -- type usable at the unit grade: `extᵉ { u } ∘ η ≈ idᵐ`.
+    -- type usable at the unit grade: `extᵉ { 𝟏 } ∘ η ≈ idᵐ`.
 
-    ε⊣-u : ∀ {A} → ε⊣ {A} {u} ≈ᵐ εᵘ ∘ᵐ ⟨ u ⟩ᶠ ε
-    η⊣-u : ∀ {A} → η⊣ {A} {u} ≈ᵐ [ u ]ᶠ η ∘ᵐ ηᵘ
+    ε⊣-𝟏 : ∀ {A} → ε⊣ {A} {𝟏} ≈ᵐ εᵘ ∘ᵐ ⟨ 𝟏 ⟩ᶠ ε
+    η⊣-𝟏 : ∀ {A} → η⊣ {A} {𝟏} ≈ᵐ [ 𝟏 ]ᶠ η ∘ᵐ ηᵘ
 
     -- The graded adjunction is compatible with composition of grades. An
     -- eternal object being a `Past.μ`-algebra (via the extraction `extᵉ` /

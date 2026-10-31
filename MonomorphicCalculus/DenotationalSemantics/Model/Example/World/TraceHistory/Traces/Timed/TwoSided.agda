@@ -68,13 +68,13 @@ open import Grades.Traces.Allowance.Decidable ℕᵀ Op costʰⁱ
 
 open import Grades.Examples.Traces.Timed.TwoSided
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
-  using (TwoSided; lo; hi; uᵗˢ; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
+  using (TwoSided; lo; hi; 𝟏ᵗˢ; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
 
 -- the floor endpoint is the left-sided grade's antichain carrier
 
 open import Grades.Examples.Traces.Timed.LeftSided
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
-  using () renaming (traces to tracesˡᵒ; u to uˡᵒ;
+  using () renaming (traces to tracesˡᵒ; 𝟏 to 𝟏ˡᵒ;
                      n-◃⁻ to nˡᵒ-◃⁻; ◃-∈ to ◃ˡᵒ-∈)
 
 -- the cap endpoint is the right-sided grade's carrier, `unbounded` and
@@ -83,7 +83,7 @@ open import Grades.Examples.Traces.Timed.LeftSided
 open import Grades.Examples.Traces.Timed.RightSided
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
   using (Bounds; within_; unbounded; _·ᵇ_)
-  renaming (_≾_ to _≾ʰⁱ_; traces to tracesʰⁱ; u to uʰⁱ;
+  renaming (_≾_ to _≾ʰⁱ_; traces to tracesʰⁱ; 𝟏 to 𝟏ʰⁱ;
             n-◃⁻ to nʰⁱ-◃⁻; ◃-∈ to ◃ʰⁱ-∈)
 
 open DecCoverage _≟ₒ_ using (_≼ᶜ?_)
@@ -155,12 +155,12 @@ open _⊑ᵇ[_]_
 -- reflexivity at the unit grade: the empty continuation covers the
 -- empty guarantee and stays within the empty allowance
 
-⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ uᵗˢ ] w
+⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ 𝟏ᵗˢ ] w
 ⊑ᵇ-refl {w} =
   mkᵇ ε
-      (fromWitness {a? = any? (λ p → p ≼ᶜ? ε) (tracesˡᵒ uˡᵒ)}
+      (fromWitness {a? = any? (λ p → p ≼ᶜ? ε) (tracesˡᵒ 𝟏ˡᵒ)}
                    (here (≼ᶜ-refl ε)))
-      (fromWitness {a? = any? (λ q → ε ≼ᵃ? q) (tracesʰⁱ uʰⁱ)}
+      (fromWitness {a? = any? (λ q → ε ≼ᵃ? q) (tracesʰⁱ 𝟏ʰⁱ)}
                    (here (≼ᵃ-refl ε)))
       (∙-identityʳ w)
 

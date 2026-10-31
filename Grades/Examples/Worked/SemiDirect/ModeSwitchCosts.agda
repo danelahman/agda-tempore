@@ -31,7 +31,7 @@ open import Util.Equality
 private
   module G = Grade (mode-switch-costs {ℕᴰ})
 
-open G using (Carrier; _≾_; _≾?_; _≃_; _≃?_; _·_; _⊔_; u)
+open G using (Carrier; _≾_; _≾?_; _≃_; _≃?_; _·_; _⊔_; 𝟏)
 
 holds : (c d : Carrier) {p : True (c ≾? d)} → c ≾ d
 holds c d {p} = toWitness p
@@ -88,13 +88,13 @@ two-round-trips-refused = fails (round-trip · round-trip) round-trip
 -- a branch transmitting or not: from `On` it keeps the mode at no
 -- cost, from every other mode it keeps the mode or gets stuck
 
-branch : transmit ⊔ u ≃ decided (listing ((On , On , cost 0) ∷ (⋆ , ⋆ , cost 0) ∷ (⋆ , ✗ , cost 0) ∷ (Off , Off , cost 0) ∷ (Off , ✗ , cost 0) ∷ []))
-branch = same (transmit ⊔ u) (decided (listing ((On , On , cost 0) ∷ (⋆ , ⋆ , cost 0) ∷ (⋆ , ✗ , cost 0) ∷ (Off , Off , cost 0) ∷ (Off , ✗ , cost 0) ∷ [])))
+branch : transmit ⊔ 𝟏 ≃ decided (listing ((On , On , cost 0) ∷ (⋆ , ⋆ , cost 0) ∷ (⋆ , ✗ , cost 0) ∷ (Off , Off , cost 0) ∷ (Off , ✗ , cost 0) ∷ []))
+branch = same (transmit ⊔ 𝟏) (decided (listing ((On , On , cost 0) ∷ (⋆ , ⋆ , cost 0) ∷ (⋆ , ✗ , cost 0) ∷ (Off , Off , cost 0) ∷ (Off , ✗ , cost 0) ∷ [])))
 
 -- the unit is not least, and the only grade below it is itself
 
-unit-not-least : ¬ (u ≾ transmit)
-unit-not-least = fails u transmit
+unit-not-least : ¬ (𝟏 ≾ transmit)
+unit-not-least = fails 𝟏 transmit
 
-transmit-not-below-unit : ¬ (transmit ≾ u)
-transmit-not-below-unit = fails transmit u
+transmit-not-below-unit : ¬ (transmit ≾ 𝟏)
+transmit-not-below-unit = fails transmit 𝟏

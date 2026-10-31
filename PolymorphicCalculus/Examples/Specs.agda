@@ -5,7 +5,7 @@
 -- with the operation times of `Worked.Operations.Grading`, at    --
 -- four grades covering the hint properties the solver reads:     --
 --                                                                --
---   grade                      u-least?   ·-comm?                --
+--   grade                      𝟏-least?   ·-comm?                --
 --   Time/RightSided            yes        yes                    --
 --   Time/LeftSided             no         yes                    --
 --   Traces/Timed/RightSided    yes        no                     --

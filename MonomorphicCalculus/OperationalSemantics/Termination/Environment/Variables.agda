@@ -58,7 +58,7 @@ env-Vˢ-≡ γ Δ = cong (env-Vˢ γ Δ)
 -- `∈-++ᶜʳ-assoc`.
 
 env-Vˢ-var-r : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx) → (x : A ∈[ ρ ] Δ)
-             → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+             → (f f' : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
              → env-Vˢ γ Δ (var f (∈-++ᶜʳ {Γ = Γ} x))
              ≡ var f' (∈-++ᶜʳ {Γ = toCtx St} x)
 
@@ -157,7 +157,7 @@ env-Vˢ-var-r (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ x f f' =
 -- own variable is a suffix variable.
 
 env-var-hd : ∀ {St Γ A} → (γ : Env St Γ) → (W : toCtx St ⊢V⦂ A)
-           → (f : ¬ Eternal A → uᵣ ≾ᵣ uᵣ)
+           → (f : ¬ Eternal A → 𝟏ᵣ ≾ᵣ 𝟏ᵣ)
            → env-V (γ ∷ᵉ W) (var f Hd) ≡ W
 env-var-hd γ W f =
   sub-≡ᵛ split-[] (refl) (env-Vˢ-var-r γ ([] ∷ _) Hd f f)
@@ -166,10 +166,10 @@ env-var-hd γ W f =
 
 env-Vˢ-var-l : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
              → ¬ Eternal A
-             → (p : ctx-grade Δ ≾ᵣ uᵣ)
+             → (p : ctx-grade Δ ≾ᵣ 𝟏ᵣ)
              → (x : A ∈[ ρ ] Γ)
-             → (f  : ¬ Eternal A → grade-++ᶜˡ ρ Δ ≾ᵣ uᵣ)
-             → (f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+             → (f  : ¬ Eternal A → grade-++ᶜˡ ρ Δ ≾ᵣ 𝟏ᵣ)
+             → (f' : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
              → env-Vˢ γ Δ (var f (∈-++ᶜˡ Δ x))
              ≡ V-rename (push-ren Δ p) (env-Vˢ γ [] (var f' x))
 
@@ -209,7 +209,7 @@ env-Vˢ-var-l (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₁} γ q) Δ ¬et p (Tl-
     pₗ = ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ ρ₁)) pρ
     p₁ = ctx-grade-++ᶜ-≾ᵣ Δ₁ Δ pₗ p
 
-    f₁  = λ z → subst (_≾ᵣ uᵣ) (sym (grade-++ᶜˡ-assoc _ Δ₁ Δ)) (f z)
+    f₁  = λ z → subst (_≾ᵣ 𝟏ᵣ) (sym (grade-++ᶜˡ-assoc _ Δ₁ Δ)) (f z)
     f'' = λ z → ≾ᵣ-zero-productˡ (grade-++ᶜˡ-zeroˡ Δ (f z))
 
     inner = castᵛ-var-Var ei (∈-++ᶜˡ Δ (∈-++ᶜˡ Δ₁ x)) (∈-++ᶜˡ (Δ₁ ++ᶜ Δ) x)
@@ -234,7 +234,7 @@ env-Vˢ-var-l (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₁} V γ) Δ ¬et
     pₗ = ≾ᵣ-refl
     p₁ = ctx-grade-++ᶜ-≾ᵣ Δ₁ Δ pₗ p
 
-    f₁ = λ z → subst (_≾ᵣ uᵣ) (sym (grade-++ᶜˡ-assoc _ Δ₁ Δ)) (f z)
+    f₁ = λ z → subst (_≾ᵣ 𝟏ᵣ) (sym (grade-++ᶜˡ-assoc _ Δ₁ Δ)) (f z)
 
     inner = castᵛ-var-Var ei (∈-++ᶜˡ Δ (∈-++ᶜˡ Δ₁ x)) (∈-++ᶜˡ (Δ₁ ++ᶜ Δ) x)
               (Var-cast-flip⁻ ei _ _ (∈-++ᶜˡ-assoc Δ₁ Δ x)) f f₁
@@ -296,7 +296,7 @@ env-Vˢ-var-l (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ ¬et p (Tl-∷ x
     pₗ = ≾ᵣ-refl
     p₁ = ctx-grade-++ᶜ-≾ᵣ Δ₁ Δ pₗ p
 
-    f₁ = λ z → subst (_≾ᵣ uᵣ) (sym (grade-++ᶜˡ-assoc _ Δ₁ Δ)) (f z)
+    f₁ = λ z → subst (_≾ᵣ 𝟏ᵣ) (sym (grade-++ᶜˡ-assoc _ Δ₁ Δ)) (f z)
 
     inner = castᵛ-var-Var ei (∈-++ᶜˡ Δ (∈-++ᶜˡ Δ₁ x)) (∈-++ᶜˡ (Δ₁ ++ᶜ Δ) x)
               (Var-cast-flip⁻ ei _ _ (∈-++ᶜˡ-assoc Δ₁ Δ x)) f f₁
@@ -336,8 +336,8 @@ env-Vˢ-var-l (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ ¬et p Hd f f' =
 
 env-var-tl : ∀ {St Γ A A₀ ρ} → (γ : Env St Γ) → (W : toCtx St ⊢V⦂ A₀)
            → ¬ Eternal A
-           → (x : A ∈[ ρ ] Γ) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
-           → (f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+           → (x : A ∈[ ρ ] Γ) → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+           → (f' : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
            → env-V (γ ∷ᵉ W) (var f (Tl-∷ x)) ≡ env-V γ (var f' x)
 
 env-var-tl γ W ¬et x f f' =
@@ -349,9 +349,9 @@ env-var-tl γ W ¬et x f f' =
 
 env-var-lock : ∀ {St St' Γ A ρ ρ'} → (γ : Env St Γ) → (q : St ⊑ₛ[ ρ ] St')
              → ¬ Eternal A
-             → (p : ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ' ] Γ)
-             → (f  : ¬ Eternal A → ρ' ·ᵣ ρ ≾ᵣ uᵣ)
-             → (f' : ¬ Eternal A → ρ' ≾ᵣ uᵣ)
+             → (p : ρ ≾ᵣ 𝟏ᵣ) → (x : A ∈[ ρ' ] Γ)
+             → (f  : ¬ Eternal A → ρ' ·ᵣ ρ ≾ᵣ 𝟏ᵣ)
+             → (f' : ¬ Eternal A → ρ' ≾ᵣ 𝟏ᵣ)
              → env-V (γ ⟨ q ⟩ᵉ) (var f (Tl-⟨⟩ x))
              ≡ reach-val (reach-≤ q p) (env-V γ (var f' x))
 
@@ -361,7 +361,7 @@ env-var-lock : ∀ {St St' Γ A ρ ρ'} → (γ : Env St Γ) → (q : St ⊑ₛ[
 
 env-var-lift : ∀ {St Γ A A₀ ρ ρ'} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A₀)
              → (γ : Env St Γ) → ¬ Eternal A
-             → (x : A ∈[ ρ' ] Γ) → (f f' : ¬ Eternal A → ρ' ≾ᵣ uᵣ)
+             → (x : A ∈[ ρ' ] Γ) → (f f' : ¬ Eternal A → ρ' ≾ᵣ 𝟏ᵣ)
              → env-V (liftᵉ V γ) (var f (Tl-∷ x))
              ≡ V-rename wk-ren (env-V γ (var f' x))
 
@@ -384,7 +384,7 @@ env-var-lock {ρ = ρ} γ q ¬et p x f f' =
 -- an eternal type, so the eternal cases need no law.
 
 env-var : ∀ {St Γ A ρ} → (γ : Env St Γ) → Rel-Env γ
-        → (x : A ∈[ ρ ] Γ) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+        → (x : A ∈[ ρ ] Γ) → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
         ------------------------------------------------
         → VRed A St (env-V γ (var f x))
 

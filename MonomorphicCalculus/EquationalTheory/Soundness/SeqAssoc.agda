@@ -87,8 +87,8 @@ open ≈-Reasoning
 
 sound-seq-assoc : ∀ {Γ A B C ε ε' ε''}
                 → (M : Γ ⊢C⦂ A ‼ ε)
-                → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε')
-                → (P : Γ ⟨ mapᵉ (ε ·ₑ ε') ⟩ ∷ B ⊢C⦂ C ‼ ε'')
+                → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
+                → (P : Γ ⟨ ∣ ε ·ₑ ε' ∣ᵉ ⟩ ∷ B ⊢C⦂ C ‼ ε'')
                 → Soundᶜ== (seq-assoc M N P)
 sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
     bigchase
@@ -113,18 +113,18 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
     -- (‡) The lock-merging renaming denotes "weaken, then fold the two locks
     -- with `μ`, then relax the merged grade"; the only place the syntax of
     -- `rin` is used.
-    φ-def : φ ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε' ⟩ᶠ fstᵐ
+    φ-def : φ ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ ∘ᵐ ⟨ ∣ ε' ∣ᵉ ⟩ᶠ fstᵐ
     φ-def = ∘ᵐ-congˡ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _)) ∙ ∘ᵐ-assoc _ _ _
 
-    -- The environment's `⟨ mapᵉ ε ⟩`-lock, transposed at `mapᵉ ε'` and merged
+    -- The environment's `⟨ ∣ ε ∣ᵉ ⟩`-lock, transposed at `∣ ε' ∣ᵉ` and merged
     -- with the outer lock by `μ`. This is the value the box carries once the
     -- comultiplication `δ` has split it.
-    α : ⟨ mapᵉ ε ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ mapᵉ ε' ]ᵒ (⟨ mapᵉ (ε ·ₑ ε') ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ)
-    α = [ mapᵉ ε' ]ᶠ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ) ∘ᵐ η⊣
+    α : ⟨ ∣ ε ∣ᵉ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ ∣ ε' ∣ᵉ ]ᵒ (⟨ ∣ ε ·ₑ ε' ∣ᵉ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ)
+    α = [ ∣ ε' ∣ᵉ ]ᶠ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ) ∘ᵐ η⊣
 
     -- (†) The transposed lock-merge `α`, precomposed with the projection that
     -- forgets the bound value, is the renaming `φ` transposed.
-    α-fstᵐ : α ∘ᵐ fstᵐ {B = ⟦ A ⟧ᵛ} ≈ᵐ [ mapᵉ ε' ]ᶠ φ ∘ᵐ η⊣
+    α-fstᵐ : α ∘ᵐ fstᵐ {B = ⟦ A ⟧ᵛ} ≈ᵐ [ ∣ ε' ∣ᵉ ]ᶠ φ ∘ᵐ η⊣
     α-fstᵐ =
         ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat fstᵐ))
@@ -135,7 +135,7 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
     -- (Step B) The split box `δ ∘ []-≤ σ ∘ η⊣` is the transpose of `α`: the
     -- adjunction reconciles the comultiplication with the lock merge.
     box-split : δ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ η⊣
-              ≈ᵐ [ mapᵉ ε ]ᶠ α ∘ᵐ η⊣
+              ≈ᵐ [ ∣ ε ∣ᵉ ]ᶠ α ∘ᵐ η⊣
     box-split =
         ∘ᵐ-congʳ (η⊣-≤ _)
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)

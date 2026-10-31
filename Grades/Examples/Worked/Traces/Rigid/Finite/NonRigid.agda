@@ -104,7 +104,7 @@ heat-for-delay = refl
 
 -- the unit is least, and goes to the unit
 
-unit-least : upper-both NR.uᵇ ⟅ ⌈ heat ⌉ ⟆ʳ ≡ (true , true)
+unit-least : upper-both NR.𝟏ᵇ ⟅ ⌈ heat ⌉ ⟆ʳ ≡ (true , true)
 unit-least = refl
 
 -- the unbounded grade goes to the unrestricted stretch, above every
@@ -139,7 +139,7 @@ wait-placed = refl
 
 -- the unit guarantees nothing, and goes to the greatest grade
 
-unit-greatest : lower-both ⟅ ⌈ heat ⌉ ∙ ⟨ # 2 ⟩ ⟆ˡ NL.u ≡ (true , true)
+unit-greatest : lower-both ⟅ ⌈ heat ⌉ ∙ ⟨ # 2 ⟩ ⟆ˡ NL.𝟏 ≡ (true , true)
 unit-greatest = refl
 
 ------------------------------------------------------------------------

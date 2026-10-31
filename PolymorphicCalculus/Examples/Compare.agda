@@ -29,7 +29,7 @@ module PolymorphicCalculus.Examples.Compare (S : LanguageSpec)
   (st : Stepped (GradeSystem.Dur (LanguageSpec.Grades S))) where
 
 open LanguageSpec S
-open GradeSystemInterface Grades using (𝔻; of-durʳ; of-durᵉ)
+open GradeSystemInterface Grades using (𝔻; ιᵣ; ιₑ)
 
 open import PolymorphicCalculus.Syntax.Grades      S
 open import PolymorphicCalculus.Syntax.Types       S
@@ -57,10 +57,10 @@ open import PolymorphicCalculus.Examples.Variables
 ⌜ n ⌝ = Stepped.fromℕ st n
 
 ⌜_⌝ʳ : ∀ {Θ} → ℕ → RExp Θ
-⌜ n ⌝ʳ = rconst (of-durʳ ⌜ n ⌝)
+⌜ n ⌝ʳ = rconst (ιᵣ ⌜ n ⌝)
 
 ⌜_⌝ᵉ : ∀ {Θ} → ℕ → EExp Θ
-⌜ n ⌝ᵉ = econst (of-durᵉ ⌜ n ⌝)
+⌜ n ⌝ᵉ = econst (ιₑ ⌜ n ⌝)
 
 ------------------------------------------------------------------
 -- Verdicts
@@ -86,7 +86,7 @@ private
 
   -- A variable no time has passed over
 
-  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → VarOK Q A ûᵣ
+  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → VarOK Q A 𝟏̂ᵣ
   ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
 ------------------------------------------------------------------
@@ -99,14 +99,14 @@ private
 lt-nats : RawC ∅ˢ 0
 lt-nats = return (cmp lt (numeral 2) (numeral 3))
 
-lt-nats-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Bool ‼ ûₑ
+lt-nats-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Bool ‼ 𝟏̂ₑ
 lt-nats-D = return (cmp lt (numeralᵛ 2) (numeralᵛ 3) Natₑ)
 
 lt-nats-typed : IsTyped (infer [] lt-nats)
 lt-nats-typed = typed-of lt-nats (closed lt-nats-D refl) _
 
 expected-lt-nats : Scheme
-expected-lt-nats = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ ûₑ
+expected-lt-nats = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- 2. Lists of natural numbers
@@ -118,7 +118,7 @@ expected-lt-nats = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ ûₑ
 eq-lists : RawC ∅ˢ 0
 eq-lists = return (cmp eq (cons (numeral 1) nil) (cons (numeral 2) nil))
 
-eq-lists-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Bool ‼ ûₑ
+eq-lists-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Bool ‼ 𝟏̂ₑ
 eq-lists-D =
   return (cmp eq (cons (numeralᵛ 1) nil) (cons (numeralᵛ 2) nil) (|List|ₑ Natₑ))
 
@@ -126,7 +126,7 @@ eq-lists-typed : IsTyped (infer [] eq-lists)
 eq-lists-typed = typed-of eq-lists (closed eq-lists-D refl) _
 
 expected-eq-lists : Scheme
-expected-eq-lists = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ ûₑ
+expected-eq-lists = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- 3. Pairs and sums of eternal types
@@ -138,12 +138,12 @@ ge-pairs : RawC ∅ˢ 0
 ge-pairs = return (cmp ge ⦉ zero , true ⦊ ⦉ numeral 1 , false ⦊)
 
 expected-ge-pairs : Scheme
-expected-ge-pairs = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ ûₑ
+expected-ge-pairs = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ 𝟏̂ₑ
 
 ne-sums : RawC ∅ˢ 0
 ne-sums = return (cmp ne (inl zero ⦂ᵛ (Nat |+| Bool)) (inr true ⦂ᵛ (Nat |+| Bool)))
 
-ne-sums-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Bool ‼ ûₑ
+ne-sums-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Bool ‼ 𝟏̂ₑ
 ne-sums-D =
   return (cmp ne (annᵛ (Nat |+| Bool) (inl zero)) (annᵛ (Nat |+| Bool) (inr true))
               (Natₑ |+|ₑ Boolₑ))
@@ -152,7 +152,7 @@ ne-sums-typed : IsTyped (infer [] ne-sums)
 ne-sums-typed = typed-of ne-sums (closed ne-sums-D refl) _
 
 expected-ne-sums : Scheme
-expected-ne-sums = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ ûₑ
+expected-ne-sums = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ 𝟏̂ₑ
 
 --   ne-sums' = inl 0 ≠ inr true
 --
@@ -162,7 +162,7 @@ ne-sums' : RawC ∅ˢ 0
 ne-sums' = return (cmp ne (inl zero) (inr true))
 
 expected-ne-sums' : Scheme
-expected-ne-sums' = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ ûₑ
+expected-ne-sums' = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- 4. A polymorphic comparison
@@ -177,11 +177,11 @@ equal = return (lam (return (lam (return (cmp eq v₁ v₀)))))
 expected-equal : Scheme
 expected-equal =
   ∀[ 3 , 0 , 0 ] eternal α₀ ∧ α₂ <: α₀ ∧ α₁ <: α₀ ⟹
-    (α₂ ⇒ (α₁ ⇒ Bool ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+    (α₂ ⇒ (α₁ ⇒ Bool ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 -- An instance at `Nat`, as a derivation
 
-equal-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ (Nat ⇒ Bool ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+equal-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ (Nat ⇒ Bool ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 equal-D = return (lam (return (lam (return (cmp eq (var (Tl-∷ Hd) ok₀) (var Hd ok₀) Natₑ)))))
 
 equal-typed : IsTyped (infer [] equal)
@@ -195,7 +195,7 @@ reflexive : RawC ∅ˢ 0
 reflexive = return (lam (return (cmp eq v₀ v₀)))
 
 expected-reflexive : Scheme
-expected-reflexive = ∀[ 1 , 0 , 0 ] eternal α₀ ⟹ (α₀ ⇒ Bool ‼ ûₑ) ‼ ûₑ
+expected-reflexive = ∀[ 1 , 0 , 0 ] eternal α₀ ⟹ (α₀ ⇒ Bool ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- 5. Functions and boxes do not compare
@@ -207,7 +207,7 @@ eq-funs : RawC ∅ˢ 0
 eq-funs = return (cmp eq (lam (return ⋆)) (lam (return ⋆)))
 
 eq-boxes : RawC ∅ˢ 0
-eq-boxes = box ûᵣ ⋆ (box ûᵣ ⋆ (return (cmp eq v₁ v₀)))
+eq-boxes = box 𝟏̂ᵣ ⋆ (box 𝟏̂ᵣ ⋆ (return (cmp eq v₁ v₀)))
 
 ------------------------------------------------------------------
 -- 6. Comparisons under a lock
@@ -219,7 +219,7 @@ eq-boxes = box ûᵣ ⋆ (box ûᵣ ⋆ (return (cmp eq v₁ v₀)))
 later-lt : RawC ∅ˢ 0
 later-lt = return (numeral 2) ⨟ delay ⌜ 1 ⌝ (return (cmp lt v₀ (numeral 3)))
 
-later-lt-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Bool ‼ (ûₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ ûₑ))
+later-lt-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Bool ‼ (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 later-lt-D =
   return (numeralᵛ 2)
   ⨟ delay ⌜ 1 ⌝ (return (cmp lt (var (Tl-⟨⟩ Hd) (et-ok Natₑ)) (numeralᵛ 3) Natₑ))
@@ -240,7 +240,7 @@ later-equal = return (lam (return (lam (delay ⌜ 1 ⌝ (return (cmp eq v₁ v�
 expected-later-equal : Scheme
 expected-later-equal =
   ∀[ 3 , 0 , 0 ] eternal α₀ ∧ α₂ <: α₀ ∧ α₁ <: α₀ ⟹
-    (α₂ ⇒ (α₁ ⇒ Bool ‼ ⌜ 1 ⌝ᵉ) ‼ ûₑ) ‼ ûₑ
+    (α₂ ⇒ (α₁ ⇒ Bool ‼ ⌜ 1 ⌝ᵉ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- 7. A comparison inspected by `if`
@@ -252,7 +252,7 @@ expected-later-equal =
 max : RawC ∅ˢ 0
 max = return (lam (return (lam (if cmp lt v₁ v₀ `then return v₀ `else return v₁))))
 
-max-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ (Nat ⇒ Nat ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+max-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ (Nat ⇒ Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 max-D =
   return (lam (return (lam
     (if cmp lt (var (Tl-∷ Hd) ok₀) (var Hd ok₀) Natₑ
@@ -264,4 +264,4 @@ max-typed = typed-of max (closed max-D refl) _
 expected-max : Scheme
 expected-max =
   ∀[ 4 , 0 , 0 ] eternal α₀ ∧ α₃ <: α₀ ∧ α₁ <: α₀ ∧ α₁ <: α₂ ∧ α₃ <: α₂ ⟹
-    (α₃ ⇒ (α₁ ⇒ α₂ ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+    (α₃ ⇒ (α₁ ⇒ α₂ ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ

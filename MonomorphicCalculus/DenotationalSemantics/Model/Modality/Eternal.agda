@@ -2,7 +2,7 @@
 -- Objects interpreting eternal types.                                --
 --                                                                    --
 -- An eternal type (`MonomorphicCalculus.Syntax.Types.Eternal`) is    --
--- available at any grade, not only below the unit `u`; concretely    --
+-- available at any grade, not only below the unit `𝟏`; concretely    --
 -- (`Example.PSh`) these are the constant presheaves.                 --
 --                                                                    --
 -- `Eternalᵒ A` is an Eilenberg–Moore algebra `α : ⟨ ⊤ ⟩ᵒ A →ᵐ A`     --
@@ -40,11 +40,11 @@ open Past Pst
 open Adjunction Adj
 
 -- At the greatest grade the graded context modality collapses to an ordinary
--- monad: `≾-⊤` relaxes the grades `u` and `⊤ · ⊤` produced by `η` and `μ` back
+-- monad: `≾-⊤` relaxes the grades `𝟏` and `⊤ · ⊤` produced by `η` and `μ` back
 -- to `⊤`. `⊤` is not assumed absorbing.
 
 ⟨⊤⟩-η : ∀ {A} → A →ᵐ ⟨ ⊤ ⟩ᵒ A
-⟨⊤⟩-η = ⟨⟩-≤ (≾-⊤ u) ∘ᵐ η
+⟨⊤⟩-η = ⟨⟩-≤ (≾-⊤ 𝟏) ∘ᵐ η
 
 ⟨⊤⟩-μ : ∀ {A} → ⟨ ⊤ ⟩ᵒ (⟨ ⊤ ⟩ᵒ A) →ᵐ ⟨ ⊤ ⟩ᵒ A
 ⟨⊤⟩-μ {A} = ⟨⟩-≤ (≾-⊤ (⊤ · ⊤)) ∘ᵐ μ {A} {⊤} {⊤}
@@ -55,7 +55,7 @@ open Adjunction Adj
 ⟨⊤⟩-η-nat : ∀ {A B} → (f : A →ᵐ B) → ⟨ ⊤ ⟩ᶠ f ∘ᵐ ⟨⊤⟩-η ≈ᵐ ⟨⊤⟩-η ∘ᵐ f
 ⟨⊤⟩-η-nat f =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-nat f (≾-⊤ u)))
+  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-nat f (≾-⊤ 𝟏)))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-η-nat f))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
@@ -74,10 +74,10 @@ open Adjunction Adj
 ⟨⊤⟩-μ∘η≡id {A} =
   ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ʳ (≾-⊤ u)))))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ʳ (≾-⊤ 𝟏)))))
   (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (·-monoʳ-≾ (≾-⊤ u)) (≾-⊤ (⊤ · ⊤))))
+  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (·-monoʳ-≾ (≾-⊤ 𝟏)) (≾-⊤ (⊤ · ⊤))))
   (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ (≃⇒≾ (·-identityʳ ⊤))))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (μ-εᵘ {A} {⊤}))
@@ -87,13 +87,13 @@ open Adjunction Adj
 
 ⟨⊤⟩-μ∘Tη≡id : ∀ {A} → ⟨⊤⟩-μ {A} ∘ᵐ ⟨ ⊤ ⟩ᶠ (⟨⊤⟩-η {A}) ≈ᵐ idᵐ
 ⟨⊤⟩-μ∘Tη≡id {A} =
-  ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ (⟨⟩-≤ (≾-⊤ u)) η))
+  ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ (⟨⟩-≤ (≾-⊤ 𝟏)) η))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ˡ (≾-⊤ u)))))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ˡ (≾-⊤ 𝟏)))))
   (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (·-monoˡ-≾ (≾-⊤ u)) (≾-⊤ (⊤ · ⊤))))
+  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (·-monoˡ-≾ (≾-⊤ 𝟏)) (≾-⊤ (⊤ · ⊤))))
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-μ∘Tη≡id {A} {⊤}))
   (≈ᵐ-trans (⟨⟩-≤-trans _ _)
   (≈ᵐ-trans (⟨⟩-≤-irr _ ≾-refl) ⟨⟩-≤-refl)))))))))
@@ -166,8 +166,8 @@ record Eternalᵒ (A : Obj) : Set₁ where
 
   -- At the unit grade, extraction is the possibility counit `εᵘ`.
 
-  extᵉ-u : extᵉ {u} ≈ᵐ εᵘ
-  extᵉ-u =
+  extᵉ-𝟏 : extᵉ {𝟏} ≈ᵐ εᵘ
+  extᵉ-𝟏 =
     ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ _))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym ⟨⟩-η∘εᵘ≡id))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -234,12 +234,12 @@ record Eternalᵒ (A : Obj) : Set₁ where
 
   -- At the unit grade it is the box's unit `ηᵘ`.
 
-  necᵉ-u : necᵉ {u} ≈ᵐ ηᵘ
-  necᵉ-u =
-    ≈ᵐ-trans (∘ᵐ-congʳ η⊣-u)
+  necᵉ-𝟏 : necᵉ {𝟏} ≈ᵐ ηᵘ
+  necᵉ-𝟏 =
+    ≈ᵐ-trans (∘ᵐ-congʳ η⊣-𝟏)
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ η (extᵉ {u}))))
-    (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congˡ extᵉ-u)))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ η (extᵉ {𝟏}))))
+    (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congˡ extᵉ-𝟏)))
     (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ ⟨⟩-εᵘ∘η≡id))
     (≈ᵐ-trans (∘ᵐ-congˡ []-idᵐ)
               (∘ᵐ-identityˡ ηᵘ))))))
@@ -943,15 +943,15 @@ module _ {A B : Obj} (f : A →ᵐ B) (g : B →ᵐ A)
 -- mutually inverse. So `⟨ ρ ⟩ᵒ A` is eternal whenever `A` is, which is what
 -- makes a lock at such a grade admissible inside an eternal context.
 
-⟨u≈⟩-unit : ∀ {A ρ} → u ≾ ρ → A →ᵐ ⟨ ρ ⟩ᵒ A
-⟨u≈⟩-unit q = ⟨⟩-≤ q ∘ᵐ η
+⟨𝟏≈⟩-unit : ∀ {A ρ} → 𝟏 ≾ ρ → A →ᵐ ⟨ ρ ⟩ᵒ A
+⟨𝟏≈⟩-unit q = ⟨⟩-≤ q ∘ᵐ η
 
-⟨u≈⟩-counit : ∀ {A ρ} → ρ ≾ u → ⟨ ρ ⟩ᵒ A →ᵐ A
-⟨u≈⟩-counit p = εᵘ ∘ᵐ ⟨⟩-≤ p
+⟨𝟏≈⟩-counit : ∀ {A ρ} → ρ ≾ 𝟏 → ⟨ ρ ⟩ᵒ A →ᵐ A
+⟨𝟏≈⟩-counit p = εᵘ ∘ᵐ ⟨⟩-≤ p
 
-⟨u≈⟩-counit-unit : ∀ {A ρ} → (q : u ≾ ρ) → (p : ρ ≾ u)
-                 → ⟨u≈⟩-counit {A} p ∘ᵐ ⟨u≈⟩-unit q ≈ᵐ idᵐ
-⟨u≈⟩-counit-unit q p =
+⟨𝟏≈⟩-counit-unit : ∀ {A ρ} → (q : 𝟏 ≾ ρ) → (p : ρ ≾ 𝟏)
+                 → ⟨𝟏≈⟩-counit {A} p ∘ᵐ ⟨𝟏≈⟩-unit q ≈ᵐ idᵐ
+⟨𝟏≈⟩-counit-unit q p =
   ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ
      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -962,9 +962,9 @@ module _ {A B : Obj} (f : A →ᵐ B) (g : B →ᵐ A)
                          (∘ᵐ-identityˡ _))))
             (⟨⟩-εᵘ∘η≡id))
 
-⟨u≈⟩-unit-counit : ∀ {A ρ} → (q : u ≾ ρ) → (p : ρ ≾ u)
-                 → ⟨u≈⟩-unit {A} q ∘ᵐ ⟨u≈⟩-counit p ≈ᵐ idᵐ
-⟨u≈⟩-unit-counit q p =
+⟨𝟏≈⟩-unit-counit : ∀ {A ρ} → (q : 𝟏 ≾ ρ) → (p : ρ ≾ 𝟏)
+                 → ⟨𝟏≈⟩-unit {A} q ∘ᵐ ⟨𝟏≈⟩-counit p ≈ᵐ idᵐ
+⟨𝟏≈⟩-unit-counit q p =
   ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ
      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -974,16 +974,16 @@ module _ {A B : Obj} (f : A →ᵐ B) (g : B →ᵐ A)
   (≈ᵐ-trans (⟨⟩-≤-irr _ ≾-refl)
             (⟨⟩-≤-refl))))
 
-⟨u≈⟩-eternalᵒ : ∀ {A ρ} → (q : u ≾ ρ) → (p : ρ ≾ u)
+⟨𝟏≈⟩-eternalᵒ : ∀ {A ρ} → (q : 𝟏 ≾ ρ) → (p : ρ ≾ 𝟏)
               → Eternalᵒ A → Eternalᵒ (⟨ ρ ⟩ᵒ A)
-⟨u≈⟩-eternalᵒ q p =
-  iso-eternalᵒ (⟨u≈⟩-unit q) (⟨u≈⟩-counit p)
-    (⟨u≈⟩-unit-counit q p) (⟨u≈⟩-counit-unit q p)
+⟨𝟏≈⟩-eternalᵒ q p =
+  iso-eternalᵒ (⟨𝟏≈⟩-unit q) (⟨𝟏≈⟩-counit p)
+    (⟨𝟏≈⟩-unit-counit q p) (⟨𝟏≈⟩-counit-unit q p)
 
-⟨u≈⟩-eternalᵒ-extᵉ : ∀ {A ρ σ} → (q : u ≾ ρ) → (p : ρ ≾ u) → (eA : Eternalᵒ A)
-                   → Eternalᵒ.extᵉ (⟨u≈⟩-eternalᵒ q p eA) {σ}
-                   ≈ᵐ ⟨u≈⟩-unit q ∘ᵐ Eternalᵒ.extᵉ eA {σ}
-                        ∘ᵐ ⟨ σ ⟩ᶠ (⟨u≈⟩-counit p)
-⟨u≈⟩-eternalᵒ-extᵉ q p eA =
-  iso-eternalᵒ-extᵉ (⟨u≈⟩-unit q) (⟨u≈⟩-counit p)
-    (⟨u≈⟩-unit-counit q p) (⟨u≈⟩-counit-unit q p) eA
+⟨𝟏≈⟩-eternalᵒ-extᵉ : ∀ {A ρ σ} → (q : 𝟏 ≾ ρ) → (p : ρ ≾ 𝟏) → (eA : Eternalᵒ A)
+                   → Eternalᵒ.extᵉ (⟨𝟏≈⟩-eternalᵒ q p eA) {σ}
+                   ≈ᵐ ⟨𝟏≈⟩-unit q ∘ᵐ Eternalᵒ.extᵉ eA {σ}
+                        ∘ᵐ ⟨ σ ⟩ᶠ (⟨𝟏≈⟩-counit p)
+⟨𝟏≈⟩-eternalᵒ-extᵉ q p eA =
+  iso-eternalᵒ-extᵉ (⟨𝟏≈⟩-unit q) (⟨𝟏≈⟩-counit p)
+    (⟨𝟏≈⟩-unit-counit q p) (⟨𝟏≈⟩-counit-unit q p) eA
