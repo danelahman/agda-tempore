@@ -1,23 +1,23 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Durations along the allowance order                                 --
---                                                                    --
+--                                                                     --
 -- A permitted run is no longer than the bound that permits it, up to  --
--- the budget already banked: `s ≼ᵃ[ k ] t` gives                     --
+-- the budget already banked: `s ≼ᵃ[ k ] t` gives                      --
 -- `duration s ≤ duration t + k`, where both durations charge an       --
 -- operation its execution time. At zero budget this is monotonicity   --
 -- of `duration` for `_≼ᵃ_`, which is what a time-ticks frame reads    --
--- the order through.                                                 --
---                                                                    --
+-- the order through.                                                  --
+--                                                                     --
 -- The bound is one-way: a bound may take longer than everything it    --
 -- permits, since its operations may be skipped and its delays left    --
--- unspent.                                                           --
---                                                                    --
+-- unspent.                                                            --
+--                                                                     --
 -- The module closes with the inversion that nothing but the empty run --
 -- is permitted by the empty bound. That needs every operation to cost --
 -- something -- a free operation could be paid for out of no budget at --
 -- all -- so the positivity of `costʰⁱ` is taken as an argument where  --
 -- it is used, and it is what the grade's zero-product law rests on.   --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
 open import Data.Nat.Base using (ℕ; zero; suc; s≤s)

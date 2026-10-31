@@ -1,4 +1,4 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Subsumption is confined to the reconciliation points.               --
 --                                                                     --
 -- Every derivation has one with the same erasure in which `subV` and  --
@@ -6,7 +6,7 @@
 -- not itself determine: an application's argument, a `perform`'s      --
 -- parameter, the head and tail of a `cons`, the operands of a `cmp`,  --
 -- the branches of `if`, `caseℕ`, `case+` and `caseL`, the base and    --
--- step of `recℕ` and `recL`, a handler's clauses and its return      --
+-- step of `recℕ` and `recL`, a handler's clauses and its return       --
 -- clause, the handler of a `handle`, and the root.                    --
 -- `NfV`/`NfC` pin those positions and `C-normal-form` is the theorem. --
 --                                                                     --
@@ -14,7 +14,7 @@
 -- types and lock grades at once. It is a statement about derivations: --
 -- nothing in the substitution calculus may call it, since it rebuilds --
 -- every variable.                                                     --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Product
 

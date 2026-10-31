@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
--- Data as values, and comparisons of data.                            --
+-- Data as values, and comparisons of data.                           --
 --                                                                    --
--- The value a datum embeds as (`⌈_⌉`) denotes the datum's point,       --
--- constant in the context (`⟦⌈⌉⟧`). A comparison of two values         --
--- denoting points of data denotes returning the relation's truth on   --
--- the data's order (`sound-cmp`): the semantic content of `CMP` and   --
--- of the equational theory's comparison β law.                         --
+-- The value a datum embeds as (`⌈_⌉`) denotes the datum's point,     --
+-- constant in the context (`⟦⌈⌉⟧`). A comparison of two values       --
+-- denoting points of data denotes returning the relation's truth on  --
+-- the data's order (`sound-cmp`): the semantic content of `CMP` and  --
+-- of the equational theory's comparison β law.                       --
 ------------------------------------------------------------------------
 
 open import Grades.Base

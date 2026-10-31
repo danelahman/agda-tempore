@@ -2,9 +2,9 @@
 -- The lower reader decides the order on words of lower letters.      --
 --                                                                    --
 -- A word is read at the lower ends of its letters: an operation at   --
--- the lower end of its running time, a stretch at its end. As for     --
--- the upper reader, an accepting run gives every run of the word a    --
--- run of the bound it fits, and a word whose runs all fit runs of     --
+-- the lower end of its running time, a stretch at its end. As for    --
+-- the upper reader, an accepting run gives every run of the word a   --
+-- run of the bound it fits, and a word whose runs all fit runs of    --
 -- finitely many bounds is accepted against one of them.              --
 ------------------------------------------------------------------------
 

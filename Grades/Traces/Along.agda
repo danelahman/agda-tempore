@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Timed traces along a morphism of durations.                         --
+-- Timed traces along a morphism of durations.                        --
 --                                                                    --
 -- A monoid morphism `h` between time domains that keeps positive     --
 -- durations positive maps traces to traces, delay by delay: the      --
@@ -7,7 +7,7 @@
 -- trace monoid, sends the pure delay by `τ` to the pure delay by     --
 -- `h τ`, scales durations by `h`, and is monotone for the allowance  --
 -- and coverage orders, each taken at the costs mapped by `h`.        --
--- Monotonicity of `h`, and its compatibility with the truncated       --
+-- Monotonicity of `h`, and its compatibility with the truncated      --
 -- difference, follow from it being a morphism of canonically ordered --
 -- monoids.                                                           --
 --                                                                    --

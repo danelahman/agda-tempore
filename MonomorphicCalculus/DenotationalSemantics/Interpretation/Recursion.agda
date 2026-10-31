@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
--- Primitive recursion: the denotation of one unfolding of the step,   --
--- and the recursors' beta laws read at the interpretation, with the   --
--- list eliminator's. Shared by the soundness of the reduction and of  --
--- the equational theory.                                              --
+-- Primitive recursion: the denotation of one unfolding of the step,  --
+-- and the recursors' beta laws read at the interpretation, with the  --
+-- list eliminator's. Shared by the soundness of the reduction and of --
+-- the equational theory.                                             --
 ------------------------------------------------------------------------
 
 open import Grades.Base

@@ -1,13 +1,13 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Deciding the allowance relation.                                    --
---                                                                    --
+--                                                                     --
 -- By recursion on a fuel budget bounding the combined size of the two --
 -- traces: every rule shrinks that size by at least one, and the       --
 -- delay-free injection preserves it (`size-inj⁻`), so banking or      --
 -- spending a leading delay counts as one step too.                    --
---                                                                    --
+--                                                                     --
 -- A leading delay of the *bound* settles the head on its own. Any     --
--- derivation against it moves that delay into the budget             --
+-- derivation against it moves that delay into the budget              --
 -- (`bank-delay-inv`), so the case is one recursive call rather than a --
 -- choice. Where the bound leads with an operation there is a real     --
 -- choice -- skip it, or, if the run leads with an operation too,      --
@@ -15,7 +15,7 @@
 -- where the rule puts its premise. Matching also needs decidable      --
 -- equality of operation symbols, which is what `DecAllowance` takes   --
 -- as a parameter.                                                     --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; s≤s)
 open import Data.Nat.Properties using (+-suc; n≤1+n)

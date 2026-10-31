@@ -1,16 +1,16 @@
-------------------------------------------------------------------------
--- Interpretation of base types in the presheaf model.                  --
---                                                                    --
+---------------------------------------------------------------------------
+-- Interpretation of base types in the presheaf model.                   --
+--                                                                       --
 -- A base type is interpreted by deciding its eternality. An eternal     --
--- base type is interpreted by a constant presheaf `Kᵖ` on a chosen       --
--- setoid, whose constants are elements of that setoid; a non-eternal     --
--- one is interpreted by an arbitrary presheaf, with arbitrary global     --
--- elements standing for its constants. An eternal base type's order is   --
--- a comparison on its setoid, natural as it stands on a constant         --
--- presheaf. `Kᵖ-eternalᵒ` then supplies the `GroundEternal` structure    --
--- for the eternal case, so the presheaf model is closed over any choice  --
--- of base types (`PShBaseTypes`).                                        --
-------------------------------------------------------------------------
+-- base type is interpreted by a constant presheaf `Kᵖ` on a chosen      --
+-- setoid, whose constants are elements of that setoid; a non-eternal    --
+-- one is interpreted by an arbitrary presheaf, with arbitrary global    --
+-- elements standing for its constants. An eternal base type's order is  --
+-- a comparison on its setoid, natural as it stands on a constant        --
+-- presheaf. `Kᵖ-eternalᵒ` then supplies the `GroundEternal` structure   --
+-- for the eternal case, so the presheaf model is closed over any choice --
+-- of base types (`PShBaseTypes`).                                       --
+---------------------------------------------------------------------------
 
 open import Language.BaseTypes
 open import Grades.Base

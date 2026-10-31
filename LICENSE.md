@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2025 Danel Ahman
+Copyright (c) 2025-2026 Danel Ahman and Mariana Milicich
 
 Copyright (c) 2024 Danel Ahman and Gašper Žajdela
 

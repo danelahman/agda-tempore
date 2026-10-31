@@ -1,6 +1,6 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- The moves that build allowance proofs, and what they add up to.     --
---                                                                    --
+--                                                                     --
 -- The relation's rules act on the *heads* of the two traces. These    --
 -- lemmas lift them to the trace operations the grades are defined by: --
 -- moving a leading delay of the bound into the budget and back,       --
@@ -8,22 +8,22 @@
 -- on a leading delay of the run, and finally monotonicity of the      --
 -- trace product, which is what makes the lift of this order           --
 -- compatible with the language product.                               --
---                                                                    --
+--                                                                     --
 -- Prefixing the bound is where this order is simple: an operation the --
 -- bound offers and the run does not take is skipped outright, so a    --
 -- prefix of the bound never has to be paid for.                       --
---                                                                    --
+--                                                                     --
 -- Monotonicity holds in the form with the second budget pinned to     --
--- zero,                                                              --
---                                                                    --
---   mono-∙ : s ≼ᵃ[ j ] s' → t ≼ᵃ[ 0 ] t' → (s ∙ t) ≼ᵃ[ j ] (s' ∙ t') --
---                                                                    --
+-- zero,                                                               --
+--                                                                     --
+--   mono-∙ : s ≼ᵃ[ j ] s' → t ≼ᵃ[ 0 ] t' → (s ∙ t) ≼ᵃ[ j ] (s' ∙ t')  --
+--                                                                     --
 -- and not in the budget-additive one: budget reaching the second      --
 -- factor would have to cross whatever operations the first matches,   --
 -- which is exactly what this order refuses. The pinned form is what   --
 -- `Sets.liftˢ`'s `liftˢ-·ˢ` consumes, the lifts being taken at        --
 -- `_≼ᵃ_ = _≼ᵃ[ 0 ]_`, so it is the instance the grades need.          --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc)
 

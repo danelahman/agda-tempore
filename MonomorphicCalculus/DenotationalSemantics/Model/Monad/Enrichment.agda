@@ -1,28 +1,28 @@
-------------------------------------------------------------------------
--- The `[-]`-strength of the graded monad as a `[-]`-enrichment.        --
---                                                                    --
--- For any graded monad `M` of the model, the graded `[-]`-strength     --
---                                                                    --
---   strᵀ : [ mapᵉ ε ]ᵒ A ×ᵐ Tᵒ B ε →ᵐ Tᵒ (A ×ᵐ B) ε                    --
---                                                                    --
--- corresponds to a graded `[-]`-enrichment                            --
---                                                                    --
---   enrᵀ : [ mapᵉ ε ]ᵒ (A ⇒ᵐ B) →ᵐ Tᵒ A ε ⇒ᵐ Tᵒ B ε                    --
---                                                                    --
--- both boxed by the resource projection `mapᵉ ε` of the effect grade.  --
---                                                                    --
+---------------------------------------------------------------------------
+-- The `[-]`-strength of the graded monad as a `[-]`-enrichment.         --
+--                                                                       --
+-- For any graded monad `M` of the model, the graded `[-]`-strength      --
+--                                                                       --
+--   strᵀ : [ mapᵉ ε ]ᵒ A ×ᵐ Tᵒ B ε →ᵐ Tᵒ (A ×ᵐ B) ε                     --
+--                                                                       --
+-- corresponds to a graded `[-]`-enrichment                              --
+--                                                                       --
+--   enrᵀ : [ mapᵉ ε ]ᵒ (A ⇒ᵐ B) →ᵐ Tᵒ A ε ⇒ᵐ Tᵒ B ε                     --
+--                                                                       --
+-- both boxed by the resource projection `mapᵉ ε` of the effect grade.   --
+--                                                                       --
 -- The two are inter-derivable — `enr-of-str` / `str-of-enr` — and       --
 -- these translations are mutually inverse (`str-of-enr-of-str`,         --
 -- `enr-of-str-of-enr`), so a natural `[-]`-strength is *the same data*  --
 -- as a natural `[-]`-enrichment. The enrichment `enrᵀ` derived from the --
 -- monad's strength is natural (`enrᵀ-nat`) and recovers the strength    --
--- (`str-of-enrᵀ≈strᵀ`).                                                --
---                                                                    --
+-- (`str-of-enrᵀ≈strᵀ`).                                                 --
+--                                                                       --
 -- The correspondence concerns the strength/enrichment and their         --
 -- naturality only: the box is *lax*, so the further enrichment          --
 -- coherence laws (which would need the box's counit/comultiplication    --
 -- inverses) are not available.                                          --
-------------------------------------------------------------------------
+---------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

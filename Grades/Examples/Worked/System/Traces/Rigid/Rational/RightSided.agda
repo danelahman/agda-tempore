@@ -1,12 +1,12 @@
-------------------------------------------------------------------------
--- Worked instance: rigid regular-expression upper bounds, measured by --
--- the slowest run.                                                   --
---                                                                    --
+--------------------------------------------------------------------------
+-- Worked instance: rigid regular-expression upper bounds, measured by  --
+-- the slowest run.                                                     --
+--                                                                      --
 -- `System.Traces.Rigid.Rational.RightSided` measures an upper bound by --
--- the supremum of the durations of its runs. Heating takes two to    --
--- four units, cooling more than one and less than two, logging more  --
--- than a quarter and at most a half. Each measure is computed.       --
-------------------------------------------------------------------------
+-- the supremum of the durations of its runs. Heating takes two to      --
+-- four units, cooling more than one and less than two, logging more    --
+-- than a quarter and at most a half. Each measure is computed.         --
+--------------------------------------------------------------------------
 
 module Grades.Examples.Worked.System.Traces.Rigid.Rational.RightSided where
 

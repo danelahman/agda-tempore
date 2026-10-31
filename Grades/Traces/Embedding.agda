@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Antichains along a map of traces.                                   --
+-- Antichains along a map of traces.                                  --
 --                                                                    --
 -- A map `f` from the traces of one time domain to those of another   --
 -- that is a monoid morphism for sequencing and monotone for two      --

@@ -1,14 +1,14 @@
-------------------------------------------------------------------------
--- Closing the bounds of an upper run.                                --
---                                                                    --
--- On an exact run, an accepting upper run against any bounds is also --
+-------------------------------------------------------------------------
+-- Closing the bounds of an upper run.                                 --
+--                                                                     --
+-- On an exact run, an accepting upper run against any bounds is also  --
 -- an accepting run against closed bounds within them: a bound with no --
 -- end is closed past every sum the run could compare against it, and  --
--- an open end close enough below itself that every comparison the    --
--- run could make keeps its outcome. The comparisons are finitely     --
--- many -- the sums of infixes of the run against the sums of         --
+-- an open end close enough below itself that every comparison the     --
+-- run could make keeps its outcome. The comparisons are finitely      --
+-- many -- the sums of infixes of the run against the sums of          --
 -- subsequences of the bounds -- and density supplies the closed ends. --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
 open import Data.Nat.Base using (ℕ)

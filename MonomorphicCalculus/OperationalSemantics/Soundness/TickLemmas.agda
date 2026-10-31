@@ -1,11 +1,11 @@
-------------------------------------------------------------------------
+----------------------------------------------------------------------------
 -- Lemmas about the tick monad, shared by the top-level soundness proofs. --
---                                                                    --
+--                                                                        --
 -- Kleisli composition `_⋄ᵏ_`, its associativity, and `tick-nf`: binding  --
 -- after a tick is a tick of the bound computation. `ImplLemmas` adds the --
 -- one fact that holds of any implementation, namely that a graded monad  --
--- morphism maps a bind to a bind.                                       --
-------------------------------------------------------------------------
+-- morphism maps a bind to a bind.                                        --
+----------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

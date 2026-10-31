@@ -1,14 +1,14 @@
 ------------------------------------------------------------------------
 -- When two renamings act alike.                                      --
 --                                                                    --
--- `Ren` is a free syntactic structure: `id-ren`, `_∘ʳ_` and the       --
--- congruences are constructors, so composition is not associative     --
--- and `cong-ren` does not commute with it on the nose. What is true   --
--- is that renamings agreeing on variables act the same on terms.      --
+-- `Ren` is a free syntactic structure: `id-ren`, `_∘ʳ_` and the      --
+-- congruences are constructors, so composition is not associative    --
+-- and `cong-ren` does not commute with it on the nose. What is true  --
+-- is that renamings agreeing on variables act the same on terms.     --
 --                                                                    --
--- `_≐ʳ_` compares renamings by where a variable of the target comes   --
--- from — grade and position, not the grade-bound proof, which is      --
--- irrelevant.                                                         --
+-- `_≐ʳ_` compares renamings by where a variable of the target comes  --
+-- from — grade and position, not the grade-bound proof, which is     --
+-- irrelevant.                                                        --
 ------------------------------------------------------------------------
 
 open import Data.Empty

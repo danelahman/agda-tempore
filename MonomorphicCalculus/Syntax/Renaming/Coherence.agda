@@ -1,10 +1,10 @@
-------------------------------------------------------------------------
--- Coherence of the renaming action.                                  --
---                                                                    --
+-------------------------------------------------------------------------
+-- Coherence of the renaming action.                                   --
+--                                                                     --
 -- The action is functorial and a congruence. The premises are stated  --
--- at `_≐ʳ_`, since `Ren` is freely generated and `cong-ren` commutes   --
--- with `_∘ʳ_` only up to it; the conclusions are equalities of terms.  --
-------------------------------------------------------------------------
+-- at `_≐ʳ_`, since `Ren` is freely generated and `cong-ren` commutes  --
+-- with `_∘ʳ_` only up to it; the conclusions are equalities of terms. --
+-------------------------------------------------------------------------
 
 open import Data.Empty
 open import Data.Product

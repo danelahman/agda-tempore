@@ -1,13 +1,13 @@
-------------------------------------------------------------------------
--- Infrastructure for the denotational soundness of the equational      --
--- theory.                                                             --
---                                                                    --
--- The interpretation is indexed by a parametricity certificate         --
+---------------------------------------------------------------------------
+-- Infrastructure for the denotational soundness of the equational       --
+-- theory.                                                               --
+--                                                                       --
+-- The interpretation is indexed by a parametricity certificate          --
 -- (`Paramᵛ`/`Paramᶜ`), which the equational theory knows nothing about. --
 -- The interpretation does not depend on the certificate                 --
--- (`⟦⟧ᵛᵗ-irr`/`⟦⟧ᶜᵗ-irr`), so soundness is stated for arbitrary          --
+-- (`⟦⟧ᵛᵗ-irr`/`⟦⟧ᶜᵗ-irr`), so soundness is stated for arbitrary         --
 -- certificates on the two sides.                                        --
-------------------------------------------------------------------------
+---------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

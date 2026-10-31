@@ -1,5 +1,5 @@
 ------------------------------------------------------
--- Parallel substitutions: composition taken freely   --
+-- Parallel substitutions: composition taken freely --
 ------------------------------------------------------
 
 open import Data.Empty

@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
 -- Bind: sequencing preserves reducibility.                           --
 --                                                                    --
--- Stated about `CRed` alone — over the sequel *term* and its effect,  --
+-- Stated about `CRed` alone — over the sequel *term* and its effect, --
 -- at an arbitrary state — rather than over closing environments,     --
--- because `SEQ-OP` floats the operation out and leaves the sequel at  --
--- a context no environment reaches. Above `Environment` because the   --
--- `cred-op` case needs `sub-wk-C`.                                    --
+-- because `SEQ-OP` floats the operation out and leaves the sequel at --
+-- a context no environment reaches. Above `Environment` because the  --
+-- `cred-op` case needs `sub-wk-C`.                                   --
 ------------------------------------------------------------------------
 
 open import Data.Product

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 -- The non-negative rationals are commensurable.                      --
 --                                                                    --
--- For a list of durations, the unit is one over the least common    --
+-- For a list of durations, the unit is one over the least common     --
 -- multiple `D` of their denominators, and the count of `n / d` (in   --
 -- lowest terms) is `n · (D / d)`. Both are computed by ℕ arithmetic, --
 -- so on literals they normalise to numerals.                         --

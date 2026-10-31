@@ -1,14 +1,14 @@
-------------------------------------------------------------------------
--- Soundness of the structural (eta/commutation) equations for the      --
--- resource modalities.                                                 --
---                                                                    --
+---------------------------------------------------------------------------
+-- Soundness of the structural (eta/commutation) equations for the       --
+-- resource modalities.                                                  --
+--                                                                       --
 -- `box`/`unbox` denote precomposition by an environment extension. The  --
 -- eta rules `boxed-not-used`/`unbox-not-used` say a binder over an      --
 -- unused variable is the identity (`fstᵐ` undoes the extension); the    --
 -- commutation rules say two binders' extensions commute, which on the   --
 -- environment side is `exch-ren`'s denotation `⟨ ⟨ fstᵐ∘fstᵐ , sndᵐ ⟩ , --
 -- sndᵐ∘fstᵐ ⟩` reassociating the two inserted factors.                  --
-------------------------------------------------------------------------
+---------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

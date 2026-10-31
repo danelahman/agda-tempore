@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------
--- Comparison at the eternal types, and the data as points.            --
+-- Comparison at the eternal types, and the data as points.           --
 --                                                                    --
--- `cmpᵐ` is the comparison morphism of an eternal type, by recursion   --
--- on its eternality: the base types' own (`GroundEternal`), and the    --
--- derived ones of `Model.Comparison` for the formers. `⌜_⌝ᵈ` sends a   --
--- datum to a point of the type's interpretation. Compared at points,   --
--- `cmpᵐ` returns the structural order of the data (`cmpᵐ-pt`), and a   --
--- coercion acts on points as on data (`⌜⌝ᵈ-coe`).                      --
+-- `cmpᵐ` is the comparison morphism of an eternal type, by recursion --
+-- on its eternality: the base types' own (`GroundEternal`), and the  --
+-- derived ones of `Model.Comparison` for the formers. `⌜_⌝ᵈ` sends a --
+-- datum to a point of the type's interpretation. Compared at points, --
+-- `cmpᵐ` returns the structural order of the data (`cmpᵐ-pt`), and a --
+-- coercion acts on points as on data (`⌜⌝ᵈ-coe`).                    --
 ------------------------------------------------------------------------
 
 open import Grades.Base

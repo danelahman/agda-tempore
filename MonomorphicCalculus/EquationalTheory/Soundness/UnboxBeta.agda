@@ -1,17 +1,17 @@
-------------------------------------------------------------------------
--- Soundness of `unbox-beta`.                                           --
---                                                                    --
+---------------------------------------------------------------------------
+-- Soundness of `unbox-beta`.                                            --
+--                                                                       --
 -- Unboxing the variable a `box V` just bound — anywhere inside an       --
 -- evaluation context `K` — is substituting `V`. The two sides differ    --
 -- only in `K`'s hole and agree only under the ambient `box`, so this is --
 -- `fill-cong-env` applied at the box's environment extension            --
 -- `g = ⟨ idᵐ , [ ρ ]ᶠ ⟦V⟧ ∘ᵐ η⊣ ⟩`.                                     --
---                                                                    --
+--                                                                       --
 -- The hole obligation is the adjunction's triangle: the cell was        --
 -- written by `η⊣` and the read is `ε⊣`, and `ε⊣ ∘ ⟨ρ⟩ᶠ η⊣ ≈ idᵐ`.       --
 -- Getting there needs `wkc-ext`: the weakening that reaches under `K`'s --
--- binders commutes with extending the environment through them.        --
-------------------------------------------------------------------------
+-- binders commutes with extending the environment through them.         --
+---------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

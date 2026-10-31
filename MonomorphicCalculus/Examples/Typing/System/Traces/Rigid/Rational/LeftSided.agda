@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
 -- Typed example computations over the duration-hull system of the    --
--- rigid regular-expression lower bounds, in dense time.               --
+-- rigid regular-expression lower bounds, in dense time.              --
 --                                                                    --
 -- Effect grades are lower bounds over interval letters, each         --
 -- operation graded by itself; resource grades are left-sided time    --

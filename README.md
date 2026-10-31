@@ -46,9 +46,9 @@ parts of the solver it exercises. A check passes when Agda exits with 0 and
 prints no warning. The only postulate is function extensionality
 (`Util/Equality.agda`).
 
-`PolymorphicCalculus/Results.agda` and `MonomorphicCalculus/Results.agda`
-are the overviews to read first: one entry per main definition, rule and
-theorem, under its title.
+The root of each calculus, `PolymorphicCalculus/Everything.agda` and
+`MonomorphicCalculus/Everything.agda`, names its key modules and main
+results.
 
 ## Layout
 

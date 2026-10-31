@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Rigid timed regular-expression grades over the non-negative       --
+-- Rigid timed regular-expression grades over the non-negative        --
 -- rationals: what the right-, left- and two-sided grades share.      --
 --                                                                    --
 -- Grades are one-sided expressions with iteration                    --

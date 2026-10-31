@@ -15,7 +15,7 @@
 -- `derive`) or `full` (along chains of the whole graph).         --
 --                                                                --
 -- Contract. Every edge holds where `Q` does (`edgeₑ-sound`,      --
--- `edgeᵣ-sound`); a `just` is a derivation of `Q ⊩ e ≾̂ e'`, a   --
+-- `edgeᵣ-sound`); a `just` is a derivation of `Q ⊩ e ≾̂ e'`, a    --
 -- `nothing` claims nothing. `refute≾u` refutes `ρ ≾ u` from      --
 -- every satisfiable set (`refute-⊩`). `checkClosed Q` is         --
 -- equivalent to `Q` (`checkClosed-⊩`, `checkClosed-⊆`) and fails --

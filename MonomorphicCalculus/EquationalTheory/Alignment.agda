@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- The syntactic equivalence is contained in the equational theory.    --
--- The converse fails: the equational theory has further βη axioms.    --
+-- The syntactic equivalence is contained in the equational theory.   --
+-- The converse fails: the equational theory has further βη axioms.   --
 ------------------------------------------------------------------------
 
 open import Grades.Base

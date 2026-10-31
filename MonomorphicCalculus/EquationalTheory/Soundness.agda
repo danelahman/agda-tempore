@@ -1,10 +1,10 @@
-------------------------------------------------------------------------
--- Denotational soundness of the equational theory.                      --
--- Every derivable `M == N` denotes `⟦M⟧ ≈ᵐ ⟦N⟧`.                        --
--- Congruences recurse on their premises; axioms dispatch to their       --
--- own `sound-*` lemma. `Midᵛ`/`Midᶜ` thread certificates the endpoints  --
--- do not determine.                                                     --
-------------------------------------------------------------------------
+--------------------------------------------------------------------------
+-- Denotational soundness of the equational theory.                     --
+-- Every derivable `M == N` denotes `⟦M⟧ ≈ᵐ ⟦N⟧`.                       --
+-- Congruences recurse on their premises; axioms dispatch to their      --
+-- own `sound-*` lemma. `Midᵛ`/`Midᶜ` thread certificates the endpoints --
+-- do not determine.                                                    --
+--------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

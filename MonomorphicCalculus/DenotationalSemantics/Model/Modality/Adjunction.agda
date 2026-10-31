@@ -1,19 +1,19 @@
-------------------------------------------------------------------------
+--------------------------------------------------------------------------
 -- The graded adjunction between the context modality `⟨ ρ ⟩` and the   --
 -- box modality `[ ρ ]`, at a common resource grade `ρ`.                --
---                                                                    --
+--                                                                      --
 -- Semantically `⟨ ρ ⟩ ⊣ [ ρ ]`: the context modality (Kripke           --
--- possibility, `Σ` over accessible *past* worlds) is left adjoint to    --
--- the box modality (Kripke necessity, `∀` over accessible *future*      --
--- worlds). This adjunction is what interprets the Fitch-style formers:   --
--- the unit `η⊣` transposes a value typed under a lock into a boxed       --
--- value (the semantics of `box`), and the counit `ε⊣` extracts a boxed   --
--- value reached through a lock (the semantics of `unbox`).               --
---                                                                    --
--- The adjunction is *ungraded across the two sides* — both modalities    --
--- carry the same grade `ρ` — so the triangle identities need no grade    --
+-- possibility, `Σ` over accessible *past* worlds) is left adjoint to   --
+-- the box modality (Kripke necessity, `∀` over accessible *future*     --
+-- worlds). This adjunction is what interprets the Fitch-style formers: --
+-- the unit `η⊣` transposes a value typed under a lock into a boxed     --
+-- value (the semantics of `box`), and the counit `ε⊣` extracts a boxed --
+-- value reached through a lock (the semantics of `unbox`).             --
+--                                                                      --
+-- The adjunction is *ungraded across the two sides* — both modalities  --
+-- carry the same grade `ρ` — so the triangle identities need no grade  --
 -- coercions.                                                           --
-------------------------------------------------------------------------
+--------------------------------------------------------------------------
 
 open import Grades.Durations using (Duration)
 open import Grades.Base

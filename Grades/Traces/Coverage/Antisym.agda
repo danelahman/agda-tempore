@@ -1,20 +1,20 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- The coverage order is antisymmetric.                                --
---                                                                    --
+--                                                                     --
 -- Two runs that cover each other are the same run, at any cost model. --
 -- The order is taken at slack zero, where `use-delay` cannot fire --  --
 -- a delay has positive length -- so a demanded delay is met only by a --
 -- delay, and two leading delays pin each other's length, leaving no   --
--- slack for what follows.                                            --
---                                                                    --
+-- slack for what follows.                                             --
+--                                                                     --
 -- What rules out the mismatched cases is the number of operation      --
 -- nodes. Coverage never buys an operation with time, so that number   --
 -- is monotone along the order and `pay-op` makes it drop strictly: a  --
 -- run with something banked cannot be covered back.                   --
---                                                                    --
+--                                                                     --
 -- This is the field `Coverage.AsOrder` fills in, and through it what  --
 -- makes the normal forms of `Traces.Reduced` canonical.               --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
 open import Data.Nat.Base using (ℕ; zero; suc; s≤s; z≤n; _≤_)

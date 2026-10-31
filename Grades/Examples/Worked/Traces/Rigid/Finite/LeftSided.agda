@@ -2,7 +2,7 @@
 -- Worked rigid timed finite-expression lower bounds in dense time.   --
 --                                                                    --
 -- The operations of `Operations`. The cases: strict waits add up,    --
--- undisturbed waits are kept, activity needs explicit flanks, open    --
+-- undisturbed waits are kept, activity needs explicit flanks, open   --
 -- against closed ends, an equivalence of distinct expressions, the   --
 -- hull of a delay, and a strict wait made only from a budget letter. --
 ------------------------------------------------------------------------

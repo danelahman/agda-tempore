@@ -11,8 +11,8 @@
 -- side is never split.                                         --
 --                                                              --
 -- Contract. An expression is convertible to its canonical form --
--- (`canonᵣ-≡`, `canonₑ-≡`), a type likewise (`canonᵛ-≡̂`,      --
--- `canonᶜ-≡̂`), and a hypothesis set and its canonical form    --
+-- (`canonᵣ-≡`, `canonₑ-≡`), a type likewise (`canonᵛ-≡̂`,       --
+-- `canonᶜ-≡̂`), and a hypothesis set and its canonical form     --
 -- entail each other (`canonᴴ-⊩`, `canonᴴ-⊩⁻`). Uniqueness is   --
 -- not claimed: it depends on what the decider proves.          --
 ------------------------------------------------------------------

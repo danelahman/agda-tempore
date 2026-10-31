@@ -8,7 +8,7 @@
 -- is the duration hull, read off each end                            --
 -- (`Exact.Finite.Durations`):                                        --
 --                                                                    --
---   ∣ [ L , U ] ∣ᵉ  =  ⟪ lower end of the hull of L ,                 --
+--   ∣ [ L , U ] ∣ᵉ  =  ⟪ lower end of the hull of L ,                --
 --                        upper end of the hull of U ⟫                --
 --                                                                    --
 -- The run both ends fit lasts a duration in both hulls, so the two   --

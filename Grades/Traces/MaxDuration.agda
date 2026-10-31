@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
 -- Worst-case durations: the *greatest* duration of a set of timed    --
--- traces, relative to a cost on operation symbols.                    --
---                                                                     --
--- The per-trace `duration` is shared with `MinDuration.agda` and      --
--- lives in `Durations.agda`; only the set-level aggregation -- here   --
--- the `⊔`-based worst case -- is specific to this module.             --
+-- traces, relative to a cost on operation symbols.                   --
+--                                                                    --
+-- The per-trace `duration` is shared with `MinDuration.agda` and     --
+-- lives in `Durations.agda`; only the set-level aggregation -- here  --
+-- the `⊔`-based worst case -- is specific to this module.            --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)

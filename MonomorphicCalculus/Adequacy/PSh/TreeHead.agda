@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- Head shapes of effect trees, at an arbitrary tick total.            --
---                                                                     --
--- The durations are stepped, a duration being a number of unit        --
--- ticks. Delays are descended along a fixed path of unit ticks, so    --
--- `delay-plus` splits without the frame ever interpolating.           --
--- The tick total is therefore observable too (`HeadTimed`).           --
+-- Head shapes of effect trees, at an arbitrary tick total.           --
+--                                                                    --
+-- The durations are stepped, a duration being a number of unit       --
+-- ticks. Delays are descended along a fixed path of unit ticks, so   --
+-- `delay-plus` splits without the frame ever interpolating.          --
+-- The tick total is therefore observable too (`HeadTimed`).          --
 ------------------------------------------------------------------------
 
 open import Data.Empty

@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Soundness of the delay-collapsing equations.                         --
+-- Soundness of the delay-collapsing equations.                       --
 ------------------------------------------------------------------------
 
 open import Grades.Base

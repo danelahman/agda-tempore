@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
 -- When two parallel substitutions act alike.                         --
 --                                                                    --
--- Chains of different lengths can act the same way, so `_≐ˢ_` is an   --
--- observation, as `_≐ʳ_` is. Transferring it to terms is the one      --
--- induction over term formers the whole layer needs; the congruences  --
--- it uses are chain inductions resting on the interchange.            --
+-- Chains of different lengths can act the same way, so `_≐ˢ_` is an  --
+-- observation, as `_≐ʳ_` is. Transferring it to terms is the one     --
+-- induction over term formers the whole layer needs; the congruences --
+-- it uses are chain inductions resting on the interchange.           --
 ------------------------------------------------------------------------
 
 open import Data.Empty

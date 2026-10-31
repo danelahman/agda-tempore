@@ -1,13 +1,13 @@
-------------------------------------------------------------------------
--- Shortening and lengthening the stretches of a word.                --
---                                                                    --
+-------------------------------------------------------------------------
+-- Shortening and lengthening the stretches of a word.                 --
+--                                                                     --
 -- `Shrinks w w′`: `w′` is `w` with some stretches shortened, possibly --
--- to nothing, and its operations untouched. `Lengthens w w′`: `w′`   --
--- is `w` with some stretches lengthened. The words of an upper       --
--- expression are closed under shrinking, those of a lower expression --
--- under lengthening: a stretch letter admits every shorter length in --
--- the first case and every longer one in the second.                 --
-------------------------------------------------------------------------
+-- to nothing, and its operations untouched. `Lengthens w w′`: `w′`    --
+-- is `w` with some stretches lengthened. The words of an upper        --
+-- expression are closed under shrinking, those of a lower expression  --
+-- under lengthening: a stretch letter admits every shorter length in  --
+-- the first case and every longer one in the second.                  --
+-------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
 open import Data.Nat.Base using (ℕ)

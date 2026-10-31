@@ -1,24 +1,24 @@
-------------------------------------------------------------------------
--- Setoid-valued unit-monotone presheaves over the worlds `W`.          --
---                                                                    --
--- A presheaf is a covariant functor over the preorder of worlds       --
--- `(W, ⊑[ uᵣ ])` given by unit-graded accessibility, valued in        --
+---------------------------------------------------------------------------
+-- Setoid-valued unit-monotone presheaves over the worlds `W`.           --
+--                                                                       --
+-- A presheaf is a covariant functor over the preorder of worlds         --
+-- `(W, ⊑[ uᵣ ])` given by unit-graded accessibility, valued in          --
 -- setoids: each world carries a set `carrier` together with a per-      --
 -- world equivalence `_≈_`. The functorial `transport` moves elements    --
 -- along unit-accessibility, respecting `_≈_` and satisfying the         --
--- reflexivity and transitivity laws up to `_≈_` (a genuine preorder,     --
+-- reflexivity and transitivity laws up to `_≈_` (a genuine preorder,    --
 -- since `uᵣ ·ᵣ uᵣ ≡ uᵣ`).                                               --
---                                                                    --
--- A morphism is a natural transformation whose components respect        --
--- `_≈_`. Morphism equality is pointwise target-`_≈_`; every categorical  --
+--                                                                       --
+-- A morphism is a natural transformation whose components respect       --
+-- `_≈_`. Morphism equality is pointwise target-`_≈_`; every categorical --
 -- law is stated up to this equality, which is what lets later           --
--- constructions (a possibility modality realised as a coend) satisfy     --
+-- constructions (a possibility modality realised as a coend) satisfy    --
 -- their functor laws.                                                   --
---                                                                    --
--- Because unit-accessibility witnesses are proof irrelevant, transport   --
--- along any witness is determined up to `_≈_` by the source and target   --
+--                                                                       --
+-- Because unit-accessibility witnesses are proof irrelevant, transport  --
+-- along any witness is determined up to `_≈_` by the source and target  --
 -- worlds alone; this discharges the functor laws.                       --
-------------------------------------------------------------------------
+---------------------------------------------------------------------------
 
 open import Grades.Base
 open import MonomorphicCalculus.DenotationalSemantics.Model.World

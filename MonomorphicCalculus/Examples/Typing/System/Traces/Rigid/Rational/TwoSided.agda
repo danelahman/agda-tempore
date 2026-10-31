@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
 -- Typed example computations over the duration-hull system of the    --
--- rigid regular-expression intervals, in dense time.                  --
+-- rigid regular-expression intervals, in dense time.                 --
 --                                                                    --
 -- Effect grades are consistent pairs of a lower and an upper bound   --
 -- over interval letters, each operation graded by itself at both;    --

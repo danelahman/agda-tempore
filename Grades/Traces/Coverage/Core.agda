@@ -1,4 +1,4 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- The slack-indexed coverage relation, and its preorder structure.    --
 --                                                                     --
 -- `s ≼ᶜ[ k ] t` reads: the run `t` covers the trace `s`, given a      --
@@ -24,7 +24,7 @@
 -- weakenable to more slack, and transitive with the slacks adding up. --
 -- Everything derived from those laws -- the moves, the duration bound --
 -- and the decision procedure -- lives in the sibling modules.         --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc)
 

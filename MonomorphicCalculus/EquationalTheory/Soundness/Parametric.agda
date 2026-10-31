@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- Parametric derivations.                                             --
--- The interpretation is defined only on terms with a parametricity    --
--- certificate (`Paramᵛ`/`Paramᶜ`), which the equational theory does   --
--- not preserve in either direction.                                   --
--- `Midᵛ`/`Midᶜ` collect the certificates a derivation's endpoints     --
--- do not already determine.                                           --
+-- Parametric derivations.                                            --
+-- The interpretation is defined only on terms with a parametricity   --
+-- certificate (`Paramᵛ`/`Paramᶜ`), which the equational theory does  --
+-- not preserve in either direction.                                  --
+-- `Midᵛ`/`Midᶜ` collect the certificates a derivation's endpoints    --
+-- do not already determine.                                          --
 ------------------------------------------------------------------------
 
 open import Grades.Base

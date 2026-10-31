@@ -1,5 +1,5 @@
 -------------------------------------------------------------
--- Action of a generating substitution on well-typed terms  --
+-- Action of a generating substitution on well-typed terms --
 -------------------------------------------------------------
 
 open import Data.Empty

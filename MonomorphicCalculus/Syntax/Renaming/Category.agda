@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
 -- The categorical structure of renamings.                            --
 --                                                                    --
--- `Ren` is freely generated — `id-ren` and `_∘ʳ_` are constructors —  --
+-- `Ren` is freely generated — `id-ren` and `_∘ʳ_` are constructors — --
 -- so it is a graph, and `_≐ʳ_` is the quotient that makes it a       --
 -- category. This module names that structure and the two functors    --
--- acting on it, so that the laws elsewhere can be read as instances   --
--- rather than as separate facts.                                      --
+-- acting on it, so that the laws elsewhere can be read as instances  --
+-- rather than as separate facts.                                     --
 ------------------------------------------------------------------------
 
 open import Data.Empty

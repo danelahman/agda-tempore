@@ -1,26 +1,26 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Semantics of the context modality `Γ ⟨ ρ ⟩`, as a functor graded by --
--- a monoid of grades `(R , · , u , ≾)`. It is the analogue of the      --
--- monadic lock-modality on contexts in Fitch-style modal calculi.      --
---                                                                    --
+-- a monoid of grades `(R , · , u , ≾)`. It is the analogue of the     --
+-- monadic lock-modality on contexts in Fitch-style modal calculi.     --
+--                                                                     --
 -- The modality is a *lax* graded monad: unit `η` and multiplication   --
--- `μ`. Concretely it is realised as Kripke possibility (a Σ-type over  --
--- accessible *past* worlds). Laws are stated up to the categorical     --
--- equality `≈ᵐ`.                                                        --
---                                                                    --
--- At the *unit* resource grade the unit is additionally an             --
--- isomorphism: a unit-graded counit `εᵘ : ⟨ u ⟩ᵒ A →ᵐ A` splits `η`,   --
--- so `⟨ u ⟩ᵒ A ≅ A`. This is dual to the box modality's unit-graded    --
--- unit `ηᵘ`, and combined with the graded adjunction `⟨ ρ ⟩ ⊣ [ ρ ]`   --
--- it is what interprets using a variable once the resources to its     --
--- right sum to the unit grade.                                         --
---                                                                    --
+-- `μ`. Concretely it is realised as Kripke possibility (a Σ-type over --
+-- accessible *past* worlds). Laws are stated up to the categorical    --
+-- equality `≈ᵐ`.                                                      --
+--                                                                     --
+-- At the *unit* resource grade the unit is additionally an            --
+-- isomorphism: a unit-graded counit `εᵘ : ⟨ u ⟩ᵒ A →ᵐ A` splits `η`,  --
+-- so `⟨ u ⟩ᵒ A ≅ A`. This is dual to the box modality's unit-graded   --
+-- unit `ηᵘ`, and combined with the graded adjunction `⟨ ρ ⟩ ⊣ [ ρ ]`  --
+-- it is what interprets using a variable once the resources to its    --
+-- right sum to the unit grade.                                        --
+--                                                                     --
 -- Note on the grade order: `μ` reverses the multiplication order,     --
 --   μ : ⟨ ρ₁ ⟩ (⟨ ρ₂ ⟩ A) →ᵐ ⟨ ρ₂ · ρ₁ ⟩ A ,                          --
--- so that, under `⟦ Γ ⟨ ρ ⟩ ⟧ = ⟨ ρ ⟩ ⟦ Γ ⟧`, folding a nested       --
+-- so that, under `⟦ Γ ⟨ ρ ⟩ ⟧ = ⟨ ρ ⟩ ⟦ Γ ⟧`, folding a nested        --
 -- context `Γ ⟨ ρ₁ ⟩ ⟨ ρ₂ ⟩` yields the grade `ρ₁ · ρ₂`, matching      --
 -- `ctx-grade (Γ ⟨ ρ₁ ⟩ ⟨ ρ₂ ⟩) = (… · ρ₁) · ρ₂` of the calculus.      --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Grades.Durations using (Duration)
 open import Grades.Base

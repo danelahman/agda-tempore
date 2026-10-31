@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
 -- Generating substitutions against renamings.                        --
 --                                                                    --
--- Two statements: a renaming acts as the substitution it embeds to,   --
--- and substituting commutes with renaming whenever the two do so on   --
--- variables. The second is what a chain's congruences need — folding  --
--- a congruence along a chain weakens the image at every step, and     --
--- comparing that with weakening once is exactly this interchange.     --
+-- Two statements: a renaming acts as the substitution it embeds to,  --
+-- and substituting commutes with renaming whenever the two do so on  --
+-- variables. The second is what a chain's congruences need — folding --
+-- a congruence along a chain weakens the image at every step, and    --
+-- comparing that with weakening once is exactly this interchange.    --
 ------------------------------------------------------------------------
 
 open import Data.Empty

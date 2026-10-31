@@ -1,4 +1,4 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- The prefix order on timed traces, and why it carries no grade.      --
 --                                                                     --
 -- The orders the trace grades are built from match one trace against  --
@@ -22,7 +22,7 @@
 -- sequencing two gap-free demands leaving a gap between them. An      --
 -- order's tolerance of unmatched operations in the middle is what     --
 -- makes the trace grades monoid-graded at all.                        --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Relation.Nullary using (¬_)
 

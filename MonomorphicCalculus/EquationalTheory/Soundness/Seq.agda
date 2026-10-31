@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- Soundness of the sequencing equations.                              --
--- `M ⨟ N` denotes `μᵀ ∘ Tᶠ ⟦N⟧ ∘ strᵀ ∘ ⟨ η⊣ , ⟦M⟧ ⟩`; each equation  --
--- is a graded monad law threaded through the strength.                --
--- `seq-box`/`seq-unbox`: a resource binder commutes with sequencing   --
--- (`seq-extend`); `seq-delay`/`seq-perform`: `delay`/the operation    --
--- are algebraic over `⨟`.                                             --
+-- Soundness of the sequencing equations.                             --
+-- `M ⨟ N` denotes `μᵀ ∘ Tᶠ ⟦N⟧ ∘ strᵀ ∘ ⟨ η⊣ , ⟦M⟧ ⟩`; each equation --
+-- is a graded monad law threaded through the strength.               --
+-- `seq-box`/`seq-unbox`: a resource binder commutes with sequencing  --
+-- (`seq-extend`); `seq-delay`/`seq-perform`: `delay`/the operation   --
+-- are algebraic over `⨟`.                                            --
 ------------------------------------------------------------------------
 
 open import Grades.Base

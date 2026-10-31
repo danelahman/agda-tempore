@@ -2,7 +2,7 @@
 -- Handler values for the free graded monad.                          --
 --                                                                    --
 -- An element of `Hᵖ A ε B ε'` at a world is a family, over the       --
--- handled grades `ε₀ ≾ₑ ε`, of Kripke functions                       --
+-- handled grades `ε₀ ≾ₑ ε`, of Kripke functions                      --
 -- `Tᵒ A ε₀ ⇒ᶜ Tᵒ B (ε₀ ·ₑ ε')`, natural in `ε₀` along `T-≤`.         --
 -- Equality, transport, application and abstraction are those of      --
 -- `_⇒ᵖ_`, taken at every index.                                      --

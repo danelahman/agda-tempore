@@ -1,23 +1,23 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- The box modality `[ ρ ] A` on setoid-valued presheaves, with the    --
--- *Kripke necessity* semantics over the graded accessibility relation  --
--- on worlds. An element of `[ ρ ]ᵒ A` at a world `w` is an "end": a     --
--- family of elements of `A` at every world reachable from `w` by        --
--- spending the resource grade `ρ`, together with a naturality witness    --
--- reconciling that family with the unit-transport of `A`. This is the    --
--- exact shape of Base's Kripke exponential `_⇒ᶜ_`, but the only input    --
--- is the accessibility witness (there is no argument object), so the     --
--- bundle carries `fun` and `fun-nat` and no `fun-cong`.                  --
---                                                                    --
--- The modality is a lax graded comonad (counit `ε`, comultiplication    --
--- `δ`), packaged as an instance of                                       --
--- `MonomorphicCalculus.DenotationalSemantics.Model.Modality.Future`.     --
--- Every coherence law is                                                 --
--- a pointwise `≈` goal; the two sides feed `A` two witnesses of the      --
--- *same* accessibility fact, reconciled by `[]-fun-irr` (proof           --
--- irrelevance of the witnesses) and, where a transport is crossed, by    --
--- `fun-nat`.                                                             --
-------------------------------------------------------------------------
+-- *Kripke necessity* semantics over the graded accessibility relation --
+-- on worlds. An element of `[ ρ ]ᵒ A` at a world `w` is an "end": a   --
+-- family of elements of `A` at every world reachable from `w` by      --
+-- spending the resource grade `ρ`, together with a naturality witness --
+-- reconciling that family with the unit-transport of `A`. This is the --
+-- exact shape of Base's Kripke exponential `_⇒ᶜ_`, but the only input --
+-- is the accessibility witness (there is no argument object), so the  --
+-- bundle carries `fun` and `fun-nat` and no `fun-cong`.               --
+--                                                                     --
+-- The modality is a lax graded comonad (counit `ε`, comultiplication  --
+-- `δ`), packaged as an instance of                                    --
+-- `MonomorphicCalculus.DenotationalSemantics.Model.Modality.Future`.  --
+-- Every coherence law is                                              --
+-- a pointwise `≈` goal; the two sides feed `A` two witnesses of the   --
+-- *same* accessibility fact, reconciled by `[]-fun-irr` (proof        --
+-- irrelevance of the witnesses) and, where a transport is crossed, by --
+-- `fun-nat`.                                                          --
+-------------------------------------------------------------------------
 
 open import Grades.Base
 open import MonomorphicCalculus.DenotationalSemantics.Model.World

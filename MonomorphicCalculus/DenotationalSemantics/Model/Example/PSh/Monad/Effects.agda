@@ -1,12 +1,12 @@
-------------------------------------------------------------------------
--- The algebraic operations and delays of the effect monad. Both        --
--- mention the box modality graded by the *resource* projection `mapᵉ`  --
--- of the relevant effect grade, and store that box's Kripke value as    --
--- the node's continuation, rebuilding the node's coherence witnesses     --
--- from the box's (and, for operations, the exponential's) naturality.    --
---                                                                    --
--- (The monad's `[-]`-strength is core structure and lives in `Core`.)  --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+-- The algebraic operations and delays of the effect monad. Both       --
+-- mention the box modality graded by the *resource* projection `mapᵉ` --
+-- of the relevant effect grade, and store that box's Kripke value as  --
+-- the node's continuation, rebuilding the node's coherence witnesses  --
+-- from the box's (and, for operations, the exponential's) naturality. --
+--                                                                     --
+-- (The monad's `[-]`-strength is core structure and lives in `Core`.) --
+-------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

@@ -1,12 +1,12 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Worked instance: rigid regular-expression lower bounds, measured by --
--- the fastest run.                                                   --
---                                                                    --
--- `System.Traces.Rigid.Rational.LeftSided` measures a lower bound by   --
--- the infimum of the durations of its runs. Heating takes two to     --
--- four units, cooling more than one and less than two, logging more  --
--- than a quarter and at most a half. Each measure is computed.       --
-------------------------------------------------------------------------
+-- the fastest run.                                                    --
+--                                                                     --
+-- `System.Traces.Rigid.Rational.LeftSided` measures a lower bound by  --
+-- the infimum of the durations of its runs. Heating takes two to      --
+-- four units, cooling more than one and less than two, logging more   --
+-- than a quarter and at most a half. Each measure is computed.        --
+-------------------------------------------------------------------------
 
 module Grades.Examples.Worked.System.Traces.Rigid.Rational.LeftSided where
 

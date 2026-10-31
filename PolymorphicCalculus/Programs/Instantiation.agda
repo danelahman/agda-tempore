@@ -39,7 +39,9 @@ open import PolymorphicCalculus.Programs.Substitution            S
 open import PolymorphicCalculus.Programs.Typing                  S
 
 ------------------------------------------------------------------------
--- Theorem (Instantiation)
+-- Instantiation: at a closed instance `δ ⊨ Q`, a typing under `Q` in a
+-- typed program gives a scope-closed typing of the erasure of the
+-- instantiated term, the definitions substituted
 
 instantiationᵛ : ∀ {Θ n P} {Q : Hyps Θ} {Γ : OCtx Θ n} {X : OVType Θ} {δ : Subst Θ ∅ˢ}
                → ⊢ᴾ P ⦂ defs Γ → (V : Q ∣ Γ ⊢V⦂ X) → δ ⊨ Q
@@ -64,7 +66,8 @@ instantiation {P = P} {δ = δ} t M h =
   where M' = sdef-c (programEnv t) M
 
 ------------------------------------------------------------------------
--- Corollary (Programs)
+-- A term typed in the program context of a typed program is typed in the
+-- empty state at every closed instance, and halts
 
 programs : ∀ {Θ P Δ} {Q : Hyps Θ} {C : OCType Θ} {δ : Subst Θ ∅ˢ}
          → ⊢ᴾ P ⦂ Δ → (M : Q ∣ ⌜ Δ ⌝ᵖ ⊢C⦂ C) → δ ⊨ Q

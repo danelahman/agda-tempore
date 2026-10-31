@@ -10,8 +10,8 @@
 -- within its hull, and against an expression of the same side the    --
 -- two are compared alike:                                            --
 --                                                                    --
---   run r ≾ ⟦ U ⟧   iff   ⟦ hullᵁ r ⟧ ≾ ⟦ U ⟧                         --
---   run r ≾ ⟦ L ⟧   iff   ⟦ hullᴸ r ⟧ ≾ ⟦ L ⟧                         --
+--   run r ≾ ⟦ U ⟧   iff   ⟦ hullᵁ r ⟧ ≾ ⟦ U ⟧                        --
+--   run r ≾ ⟦ L ⟧   iff   ⟦ hullᴸ r ⟧ ≾ ⟦ L ⟧                        --
 --                                                                    --
 -- The proof shortens (lengthens) the waits of the run one at a time, --
 -- removing (inserting) the same time in the word it fits, which      --

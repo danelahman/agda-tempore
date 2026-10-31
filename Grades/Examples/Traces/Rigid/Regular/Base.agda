@@ -8,7 +8,7 @@
 -- the exact words `e` denotes, and literals compare as their sets of --
 -- exact words do:                                                    --
 --                                                                    --
---   ⌜ e ⌝ ≾ ⌜ f ⌝   iff   ⟦ e ⟧ ≾ ⟦ f ⟧                               --
+--   ⌜ e ⌝ ≾ ⌜ f ⌝   iff   ⟦ e ⟧ ≾ ⟦ f ⟧                              --
 --                                                                    --
 -- An expression is compiled to an extended regular expression over   --
 -- the letters: an operation to the slots of each of its running      --

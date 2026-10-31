@@ -1,28 +1,28 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Non-empty finite sets of timed traces, and their monoid structure.  --
 --                                                                     --
--- Every trace-based grade is built from the same carrier: a non-empty  --
--- finite set of timed traces, read as a set of alternative runs. The    --
--- monoid is the language product, which sequences each trace of one     --
--- set with each trace of the other, with unit `{ ε }`. The grades       --
--- differ in the *order* they put on this carrier -- that is what the    --
--- modules under `Grades.Examples.Traces` do -- and the two-sided       --
--- grades there pair two such sets, as a floor and a cap.                --
+-- Every trace-based grade is built from the same carrier: a non-empty --
+-- finite set of timed traces, read as a set of alternative runs. The  --
+-- monoid is the language product, which sequences each trace of one   --
+-- set with each trace of the other, with unit `{ ε }`. The grades     --
+-- differ in the *order* they put on this carrier -- that is what the  --
+-- modules under `Grades.Examples.Traces` do -- and the two-sided      --
+-- grades there pair two such sets, as a floor and a cap.              --
 --                                                                     --
--- A set is represented *canonically*: the underlying list is strictly  --
--- increasing for the lexicographic order `_<ᵀ_` on traces, so it       --
--- neither repeats a trace nor records the order the members were       --
--- written in. Two sets with the same members are therefore equal, and  --
--- the operations normalise their results with `nf`. This is why the    --
--- file takes the alphabet's order as a parameter: the carrier itself   --
--- depends on it.                                                       --
+-- A set is represented *canonically*: the underlying list is strictly --
+-- increasing for the lexicographic order `_<ᵀ_` on traces, so it      --
+-- neither repeats a trace nor records the order the members were      --
+-- written in. Two sets with the same members are therefore equal, and --
+-- the operations normalise their results with `nf`. This is why the   --
+-- file takes the alphabet's order as a parameter: the carrier itself  --
+-- depends on it.                                                      --
 --                                                                     --
--- Deciding membership -- hence any order phrased through it -- needs   --
--- decidable equality of operation symbols, which the `WithDecEq`       --
--- submodule takes as a parameter rather than the whole file.           --
+-- Deciding membership -- hence any order phrased through it -- needs  --
+-- decidable equality of operation symbols, which the `WithDecEq`      --
+-- submodule takes as a parameter rather than the whole file.          --
 --                                                                     --
--- The timed traces themselves are re-exported from `Traces.Base`.      --
-------------------------------------------------------------------------
+-- The timed traces themselves are re-exported from `Traces.Base`.     --
+-------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
 

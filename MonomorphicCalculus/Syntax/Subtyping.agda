@@ -1,15 +1,15 @@
 -------------------------------------------------------------------
--- Shape-preserving subtyping of value and computation types      --
---                                                                --
--- Structural inductive families: one constructor per pair of     --
--- matching type formers, and no `refl` or `trans` constructor,   --
--- so reflexivity, transitivity and proof irrelevance are lemmas  --
--- and mismatched shapes are uninhabited.                         --
---                                                                --
+-- Shape-preserving subtyping of value and computation types     --
+--                                                               --
+-- Structural inductive families: one constructor per pair of    --
+-- matching type formers, and no `refl` or `trans` constructor,  --
+-- so reflexivity, transitivity and proof irrelevance are lemmas --
+-- and mismatched shapes are uninhabited.                        --
+--                                                               --
 -- A function's domain, a handler's handled computation and a    --
--- box's grade are contravariant, a computation's effect          --
--- covariant. The box direction agrees with `unbox`'s premise: a  --
--- larger box grade is the weaker obligation.                     --
+-- box's grade are contravariant, a computation's effect         --
+-- covariant. The box direction agrees with `unbox`'s premise: a --
+-- larger box grade is the weaker obligation.                    --
 -------------------------------------------------------------------
 
 open import Grades.Base

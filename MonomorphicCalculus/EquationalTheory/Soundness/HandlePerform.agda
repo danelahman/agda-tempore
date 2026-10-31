@@ -1,10 +1,10 @@
-------------------------------------------------------------------------
--- Soundness of the `handle-perform` equation.                          --
--- Handling an operation applies the matching clause, with the rest of  --
--- the handled computation boxed up as the clause's continuation. The   --
--- inner handle's transport across the arity binder is                  --
--- `handle-op-cont`, shared verbatim with operational preservation.     --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+-- Soundness of the `handle-perform` equation.                         --
+-- Handling an operation applies the matching clause, with the rest of --
+-- the handled computation boxed up as the clause's continuation. The  --
+-- inner handle's transport across the arity binder is                 --
+-- `handle-op-cont`, shared verbatim with operational preservation.    --
+-------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

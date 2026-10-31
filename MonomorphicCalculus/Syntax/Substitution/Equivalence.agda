@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
 -- When two generating substitutions act alike.                       --
 --                                                                    --
--- `Sub₀` is a free syntactic structure, so distinct generators can    --
--- put the same values in the same places. `_≐ˢ₀_` compares them by    --
--- what they do to a variable — as a value, and, at box type, as a     --
--- resource variable — and the action respects it.                     --
+-- `Sub₀` is a free syntactic structure, so distinct generators can   --
+-- put the same values in the same places. `_≐ˢ₀_` compares them by   --
+-- what they do to a variable — as a value, and, at box type, as a    --
+-- resource variable — and the action respects it.                    --
 ------------------------------------------------------------------------
 
 open import Data.Empty

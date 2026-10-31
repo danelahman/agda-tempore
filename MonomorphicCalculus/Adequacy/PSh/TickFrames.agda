@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
--- The concrete tick frames can always let time pass.                  --
---                                                                     --
--- Checks `PSh.HeadFaithful`'s `TickFrame` premise — some world is     --
--- reachable at every grade — holds for the simplest concrete frame.   --
+-- The concrete tick frames can always let time pass.                 --
+--                                                                    --
+-- Checks `PSh.HeadFaithful`'s `TickFrame` premise — some world is    --
+-- reachable at every grade — holds for the simplest concrete frame.  --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Adequacy.PSh.TickFrames where

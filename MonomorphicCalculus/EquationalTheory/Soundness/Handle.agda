@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
--- Soundness of the effect-handling equations.                          --
--- Each is the corresponding `T-alg-of-handlerᵀ-*` law of the model,    --
--- with the handled computation's own former unfolded first.            --
+-- Soundness of the effect-handling equations.                        --
+-- Each is the corresponding `T-alg-of-handlerᵀ-*` law of the model,  --
+-- with the handled computation's own former unfolded first.          --
 ------------------------------------------------------------------------
 
 open import Grades.Base

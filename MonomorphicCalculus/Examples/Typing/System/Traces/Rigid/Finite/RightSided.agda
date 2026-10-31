@@ -6,7 +6,7 @@
 -- operation graded by itself; resource grades are right-sided time   --
 -- intervals, and an effect grade is measured by its slowest run. A   --
 -- box with a deadline of three units may be opened after a reading   --
--- and a wait of a unit, at most one and a half units having passed; --
+-- and a wait of a unit, at most one and a half units having passed;  --
 -- after a reading and a transmission it may not, the transmission    --
 -- possibly taking four. The effect grade records the run itself.     --
 --                                                                    --

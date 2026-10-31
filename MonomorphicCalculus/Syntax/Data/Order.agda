@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------
--- The structural order on data is a strict total order.               --
+-- The structural order on data is a strict total order.              --
 --                                                                    --
--- A comparison `c` is lawful when swapping its arguments flips its    --
--- outcome, `equal` is equality, and `less` is transitive. The base    --
--- types' comparisons are lawful, and lawfulness is closed under the   --
--- formers, so `compareᵈ` is lawful at every eternal type and `less`   --
--- is a strict total order (`compareᵈ-isStrictTotalOrder`). Each       --
--- relation of `Cmp` then means what its name says.                    --
+-- A comparison `c` is lawful when swapping its arguments flips its   --
+-- outcome, `equal` is equality, and `less` is transitive. The base   --
+-- types' comparisons are lawful, and lawfulness is closed under the  --
+-- formers, so `compareᵈ` is lawful at every eternal type and `less`  --
+-- is a strict total order (`compareᵈ-isStrictTotalOrder`). Each      --
+-- relation of `Cmp` then means what its name says.                   --
 ------------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)

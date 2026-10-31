@@ -1,30 +1,30 @@
-------------------------------------------------------------------------
--- The order on exact timed words.                                    --
---                                                                    --
+-------------------------------------------------------------------------
+-- The order on exact timed words.                                     --
+--                                                                     --
 -- A word is read as a labelling of the time it spans: at each instant --
--- below its duration it is inside a stretch admitting a set `S` of   --
--- operations (`bud S`), or inside an operation `o` of running time   --
--- `d`, at an offset `δ` from its start (`opl o δ d`). Labels are     --
--- ordered pointwise by                                               --
---                                                                    --
---   bud S ≤ˡ bud S′       when  S ⊆ S′                               --
---   opl o δ d ≤ˡ opl o δ d                                           --
---   opl o δ d ≤ˡ bud S    when  o ∈ S                                --
---                                                                    --
--- and `x ⊑ y`, `x` fits `y`, says the two words take the same time   --
+-- below its duration it is inside a stretch admitting a set `S` of    --
+-- operations (`bud S`), or inside an operation `o` of running time    --
+-- `d`, at an offset `δ` from its start (`opl o δ d`). Labels are      --
+-- ordered pointwise by                                                --
+--                                                                     --
+--   bud S ≤ˡ bud S′       when  S ⊆ S′                                --
+--   opl o δ d ≤ˡ opl o δ d                                            --
+--   opl o δ d ≤ˡ bud S    when  o ∈ S                                 --
+--                                                                     --
+-- and `x ⊑ y`, `x` fits `y`, says the two words take the same time    --
 -- and `x`'s label lies below `y`'s at every instant. So an operation  --
--- of `y` is matched by the same operation of `x` over the same span, --
--- since equal offsets at an instant mean equal starts; a strict wait --
--- of `y` is waited out by `x`; inside a stretch of `y` admitting `S`,--
--- `x` waits, or runs stretches with smaller sets, or runs operations --
--- of `S` -- an operation of `x` that `y` does not match belongs to   --
--- the set of every stretch it overlaps (the window rule).            --
---                                                                    --
--- The labelling ignores how stretches are merged, so the order is a  --
--- preorder that sequencing preserves, and on normal words it is      --
--- antisymmetric: the labelling determines the normal form. A word    --
--- fits the empty word only if it is empty.                           --
-------------------------------------------------------------------------
+-- of `y` is matched by the same operation of `x` over the same span,  --
+-- since equal offsets at an instant mean equal starts; a strict wait  --
+-- of `y` is waited out by `x`; inside a stretch of `y` admitting `S`, --
+-- `x` waits, or runs stretches with smaller sets, or runs operations  --
+-- of `S` -- an operation of `x` that `y` does not match belongs to    --
+-- the set of every stretch it overlaps (the window rule).             --
+--                                                                     --
+-- The labelling ignores how stretches are merged, so the order is a   --
+-- preorder that sequencing preserves, and on normal words it is       --
+-- antisymmetric: the labelling determines the normal form. A word     --
+-- fits the empty word only if it is empty.                            --
+-------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
 open import Data.Nat.Base using (ℕ)

@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Filling a computation term context is a congruence.                  --
--- Equal fillings denote equal filled terms.                            --
+-- Filling a computation term context is a congruence.                --
+-- Equal fillings denote equal filled terms.                          --
 ------------------------------------------------------------------------
 
 open import Grades.Base

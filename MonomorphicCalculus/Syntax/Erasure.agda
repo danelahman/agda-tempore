@@ -1,7 +1,7 @@
-------------------------------------------------------------------
+-------------------------------------------------------------------
 -- Erasure of well-typed terms to their underlying raw terms.    --
 --                                                               --
--- `ErV`/`ErC` are the term formers with every type, side       --
+-- `ErV`/`ErC` are the term formers with every type, side        --
 -- condition and subsumption witness dropped; a box keeps its    --
 -- grade and a delay its duration, both being part of the        --
 -- program. Variables become de Bruijn positions, counting       --
@@ -12,7 +12,7 @@
 -- A handler's clause family is indexed by the operation and the --
 -- continuation's effect, as in the typing rule, so that equal   --
 -- erasures compare clauses at every effect.                     --
-------------------------------------------------------------------
+-------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Comparisons using (Cmp)

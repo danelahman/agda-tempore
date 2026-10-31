@@ -1,17 +1,17 @@
 ------------------------------------------------------------------------
--- A strict total order on timed traces.                               --
---                                                                     --
--- Traces are compared lexicographically: first by which constructor    --
--- heads them, with `ε` below an operation and an operation below a     --
--- delay, and then, on a common head, by the operation symbol or the    --
--- delay's duration and finally by the continuation. The delay-free     --
--- traces `Trace⁻` are ordered by the same scheme, and the two orders   --
--- are mutually recursive because the two types are.                    --
---                                                                     --
--- This is an ordering of the syntax, unrelated to the comparison       --
--- orders of `Traces.Order` and its instances: it says nothing about    --
--- how one run relates to another, only where each sits in a fixed      --
--- enumeration of all runs.                                            --
+-- A strict total order on timed traces.                              --
+--                                                                    --
+-- Traces are compared lexicographically: first by which constructor  --
+-- heads them, with `ε` below an operation and an operation below a   --
+-- delay, and then, on a common head, by the operation symbol or the  --
+-- delay's duration and finally by the continuation. The delay-free   --
+-- traces `Trace⁻` are ordered by the same scheme, and the two orders --
+-- are mutually recursive because the two types are.                  --
+--                                                                    --
+-- This is an ordering of the syntax, unrelated to the comparison     --
+-- orders of `Traces.Order` and its instances: it says nothing about  --
+-- how one run relates to another, only where each sits in a fixed    --
+-- enumeration of all runs.                                           --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)

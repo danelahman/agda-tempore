@@ -1,16 +1,16 @@
-------------------------------------------------------------------------
--- Interpretation of the subtyping witnesses as coercion morphisms.     --
---                                                                    --
--- A witness `A <:ᵛ A'` denotes a morphism `⟦ A ⟧ᵛ →ᵐ ⟦ A' ⟧ᵛ`, built   --
--- by recursion on the witness: products and the box act functorially,   --
--- a function by `map⇒ᵐ` (contravariant in the domain), a box's grade    --
--- by `[]-≤`, a computation's effect by `T-≤`, and a handler by `mapʰ`  --
--- (restricting the handled grade, contravariant in the handled type).  --
---                                                                    --
--- The assignment is functorial and witness-irrelevant: `⟦ <:ᵛ-refl ⟧`   --
--- is the identity, `⟦ <:ᵛ-trans p q ⟧` the composite, and any two       --
--- witnesses of the same inclusion denote equal morphisms.               --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+-- Interpretation of the subtyping witnesses as coercion morphisms.    --
+--                                                                     --
+-- A witness `A <:ᵛ A'` denotes a morphism `⟦ A ⟧ᵛ →ᵐ ⟦ A' ⟧ᵛ`, built  --
+-- by recursion on the witness: products and the box act functorially, --
+-- a function by `map⇒ᵐ` (contravariant in the domain), a box's grade  --
+-- by `[]-≤`, a computation's effect by `T-≤`, and a handler by `mapʰ` --
+-- (restricting the handled grade, contravariant in the handled type). --
+--                                                                     --
+-- The assignment is functorial and witness-irrelevant: `⟦ <:ᵛ-refl ⟧` --
+-- is the identity, `⟦ <:ᵛ-trans p q ⟧` the composite, and any two     --
+-- witnesses of the same inclusion denote equal morphisms.             --
+-------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

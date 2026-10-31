@@ -6,7 +6,7 @@
 -- extending the current one by a continuation whose reading is below --
 -- `L` (`World.History`):                                             --
 --                                                                    --
---   w ⊑ʰ[ L ] w'   iff   Σ[ s ] w ∙ s ≡ w'  and  ⟦ s ⟧ ≾ L            --
+--   w ⊑ʰ[ L ] w'   iff   Σ[ s ] w ∙ s ≡ w'  and  ⟦ s ⟧ ≾ L           --
 --                                                                    --
 -- The reading of a trace is the hull of the run it records, so by    --
 -- the invisibility of the hull this is the reading the order gives:  --

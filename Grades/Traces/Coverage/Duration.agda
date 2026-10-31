@@ -1,20 +1,20 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Durations along the coverage order                                  --
---                                                                    --
+--                                                                     --
 -- A guarantee is no longer than the run that covers it, up to the     --
--- slack already banked: `s ≼ᶜ[ k ] t` gives                          --
+-- slack already banked: `s ≼ᶜ[ k ] t` gives                           --
 -- `duration s ≤ duration t + k`, where both durations charge an       --
 -- operation its execution time. At zero slack this is monotonicity of --
 -- `duration` for `_≼ᶜ_`, which is what a time-ticks frame reads the   --
 -- order through, and what makes a guarantee of a trace imply a        --
--- guarantee of the time it takes.                                    --
---                                                                    --
+-- guarantee of the time it takes.                                     --
+--                                                                     --
 -- Nothing but the empty guarantee is covered by a spent run: with no  --
 -- slack there is nothing to pay a named delay with, and a run that    --
 -- has ended performs no operation to match. Unlike the allowance      --
 -- order this needs no assumption about `costˡᵒ` -- an operation is    --
--- never bought here, at any price.                                   --
-------------------------------------------------------------------------
+-- never bought here, at any price.                                    --
+-------------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
 open import Data.Nat.Base using (ℕ; zero; suc)

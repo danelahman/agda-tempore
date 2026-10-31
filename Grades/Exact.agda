@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Exact timed words: runs with exact running times and stretches    --
--- that admit sets of operations. This module is only an index.      --
+-- Exact timed words: runs with exact running times and stretches     --
+-- that admit sets of operations. This module is only an index.       --
 ------------------------------------------------------------------------
 
 module Grades.Exact where

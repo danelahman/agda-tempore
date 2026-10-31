@@ -1,9 +1,9 @@
-------------------------------------------------------------------------
--- The budget-indexed allowance relation, and its preorder structure.  --
---                                                                    --
+--------------------------------------------------------------------------
+-- The budget-indexed allowance relation, and its preorder structure.   --
+--                                                                      --
 -- `s ≼ᵃ[ k ] t` reads: the bound `t` permits the run `s`, given a      --
 -- budget `k` already banked. Read as a bound `t` and a run `s`:        --
---                                                                    --
+--                                                                      --
 --   * an operation the bound names is permitted outright (`keep`),     --
 --     and one the bound does not name is paid for out of budget, at    --
 --     its execution time (`use-op`);                                   --
@@ -11,23 +11,23 @@
 --   * budget comes from the bound's delays, at their length            --
 --     (`bank-delay`), and from nowhere else: an operation the bound    --
 --     names but the run does not perform is simply skipped, freeing    --
---     nothing (`skip-op`);                                            --
+--     nothing (`skip-op`);                                             --
 --   * and budget does not cross a match. `keep` recurses at budget     --
 --     zero, so what the bound offers before an operation it names is   --
---     spent before that operation or not at all.                      --
---                                                                    --
+--     spent before that operation or not at all.                       --
+--                                                                      --
 -- So a bound limits what happens, how long it takes, and *when* its    --
 -- slack is available: its operations say which effects are permitted   --
 -- outright, and each stretch of delay is a budget for the work the run --
 -- does in the same stretch. Going up the order, an operation turns     --
--- into a delay long enough to cover it and a delay grows.             --
---                                                                    --
+-- into a delay long enough to cover it and a delay grows.              --
+--                                                                      --
 -- The relation is a preorder at the budgets: reflexive at any budget,  --
 -- weakenable to more budget, and transitive with the budgets adding    --
 -- up. Everything derived from those laws -- the moves that build       --
 -- allowance proofs, the duration bound, and the decision procedure --  --
--- lives in the sibling modules.                                       --
-------------------------------------------------------------------------
+-- lives in the sibling modules.                                        --
+--------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc)
 

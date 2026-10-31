@@ -3,11 +3,11 @@
 -- whole steps, as intervals.                                         --
 --                                                                    --
 -- Worlds are timed traces, and a grade `[ L , U ]` reaches the       --
--- histories extending the current one by one continuation that both --
+-- histories extending the current one by one continuation that both  --
 -- endpoints admit (`World.History` at the interval grade):           --
 --                                                                    --
---   w ⊑ʰ[ [ L , U ] ] w'   iff   Σ[ s ] w ∙ s ≡ w'                    --
---                                  and  ⟦ s ⟧ ≾ L  and  ⟦ s ⟧ ≾ U     --
+--   w ⊑ʰ[ [ L , U ] ] w'   iff   Σ[ s ] w ∙ s ≡ w'                   --
+--                                  and  ⟦ s ⟧ ≾ L  and  ⟦ s ⟧ ≾ U    --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
