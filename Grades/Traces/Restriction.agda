@@ -5,10 +5,10 @@
 -- restriction drops every event outside it while keeping the delays, --
 -- merging the delays that surrounded a dropped operation. Sequencing --
 -- and the language product are preserved, so restriction is a monoid --
--- map -- which is what makes it a grade morphism.                    --
+-- map, and so a grade morphism.                                      --
 --                                                                    --
--- Both alphabets are in play at once, so this module opens the trace --
--- toolkit *unapplied* and names the alphabet at each use.            --
+-- Both alphabets are in play, so the trace toolkit is opened         --
+-- unapplied and the alphabet named at each use.                      --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
@@ -89,8 +89,8 @@ operation' : (op : Op) → T (OpPred op) → Op'
 operation' op p = op , p
 
 -- Restricting a trace keeps the operations the predicate admits, drops
--- the rest, and leaves the delays alone -- a delay's duration is a
--- positive duration of the time domain, shared by both alphabets.
+-- the rest, and leaves the delays alone, their durations being shared
+-- by both alphabets.
 
 mutual
   restrict-trace : Trace Op → Trace Op'

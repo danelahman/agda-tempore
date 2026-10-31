@@ -5,8 +5,8 @@
 -- `GroundTypes` interpretation, the finite-product/-coproduct and      --
 -- function-type formers via the cartesian closed structure, and the    --
 -- box modality `[ ρ ] A` via `[ ρ ]ᵒ`, a handler type via `Hᵒ`. A      --
--- computation type                                                     --
--- `A ‼ ε` is the graded monad applied to the value type, `Tᵒ ⟦ A ⟧ ε`. --
+-- computation type `A ‼ ε` is the graded monad applied to the value    --
+-- type, `Tᵒ ⟦ A ⟧ ε`.                                                  --
 --                                                                      --
 -- The two interpretations are mutually recursive: a function type      --
 -- `A ⇒ C` has a computation type as its codomain.                      --

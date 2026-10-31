@@ -312,13 +312,13 @@ handler-famᵗ-reindex g h h' eh n n' en p =
                ∙ ≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _))
     ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
 
--- The interpretation is defined only for *parametric* terms: a term whose
+-- The interpretation is defined only for parametric terms: a term whose
 -- handlers are uniform in the residual effect grade the clauses are quantified
 -- over. `Paramᶜ`/`Paramᵛ` is that certificate, and it is defined simultaneously
 -- with the interpretation (induction-recursion) because the handler case has to
--- speak about the *denotations* of the clauses.
+-- speak about the denotations of the clauses.
 --
--- Every case but `handler` is inert, just collecting the sub-terms' certificates.
+-- Every case but `handler` only collects the sub-terms' certificates.
 
 mutual
 
@@ -336,8 +336,8 @@ mutual
   Paramᵛ (inl V)    = Paramᵛ V
   Paramᵛ (inr V)    = Paramᵛ V
   Paramᵛ (lam M)    = Paramᶜ M
-  -- the return clause, every operation clause, and — the actual content —
-  -- the clauses' uniformity in the residual grade
+  -- the return clause, every operation clause, and the clauses' uniformity in
+  -- the residual grade
   Paramᵛ {Γ} (handler {B = B} N H) =
     Paramᶜ N × Σ[ pH ∈ (∀ op ε'' → Paramᶜ (H op ε'')) ] EffUniformʰ {Γ} {B} H pH
   Paramᵛ (subV V p) = Paramᵛ V
@@ -441,7 +441,7 @@ mutual
 
   -- The semantic handler of a syntactic one. Each clause sees the ambient
   -- context barred by `⟨ ⊤ᵣ ⟩`, so it interprets to a morphism parameterised
-  -- by `⟨ ⊤ᵣ ⟩ᵒ ⟦ Γ ⟧` — the free `⟨⊤⟩`-algebra, hence eternal in every model.
+  -- by `⟨ ⊤ᵣ ⟩ᵒ ⟦ Γ ⟧`, the free `⟨⊤⟩`-algebra, hence eternal in every model.
   -- The `ty-gty` coercions adapt the ground-type parameter/arity to their
   -- value-type interpretations, and `×ᵐ-assoc⁻¹` reassociates the parameter.
   -- The handler's ambivalence is the clauses' uniformity `uH`, transported

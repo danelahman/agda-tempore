@@ -3,10 +3,10 @@
 --                                                                    --
 -- `progress` halts a configuration at a `return` or at an unhandled  --
 -- `perform` (`Progress`'s `is-value`/`is-op`), and both are          --
--- final. Packaged here as evaluation relations on configurations,    --
--- together with the run's observable time (its *tick total*).        --
+-- final. Packaged as evaluation relations on configurations,         --
+-- together with the run's observable time, its tick total.           --
 --                                                                    --
--- Purely syntactic: no model parameters.                             --
+-- Syntactic: no model parameters.                                    --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -76,7 +76,7 @@ bool-val-canonical false          = inj₂ refl
 bool-val-canonical (subV V Boolₛ) = bool-val-canonical V
 
 -- The ticks a step takes: only `DELAY` advances time, by its own delay. The
--- grade `steps-grade` is not an observable — it absorbs `uₑ` factors freely
+-- grade `steps-grade` is not an observable: it absorbs `uₑ` factors freely
 -- and `_≾ₑ_` is a preorder.
 
 step-ticks : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
@@ -179,7 +179,7 @@ finality-perform : ∀ {A ε op} {D : CType} {St : 𝕊 []}
                  → ⊥
 finality-perform ()
 
--- A step out of a configuration is unique — target and derivation. Packing
+-- A step out of a configuration is unique, target and derivation alike. Packing
 -- grade, target and derivation into one Σ keeps the statement homogeneous, so
 -- consumers can match on `refl`.
 

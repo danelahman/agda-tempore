@@ -332,9 +332,9 @@ inrᵖ {B = B} = pmap inj₂ (λ e → e) (λ p x → ≈-refl B)
 -- Boolean object
 --
 -- The constant presheaf on `Data.Bool`: propositional equality per world and
--- identity transport. Constancy is what makes the eliminator a presheaf map —
--- its `nat` obligation rewrites the scrutinee away — and it is also what makes
--- `𝔹ᵖ` eternal (`Modality.Eternal`).
+-- identity transport. Constancy makes the eliminator a presheaf map (its `nat`
+-- obligation rewrites the scrutinee away) and makes `𝔹ᵖ` eternal
+-- (`Modality.Eternal`).
 
 𝔹ᵖ : PSh
 𝔹ᵖ = record
@@ -355,7 +355,7 @@ trueᵖ = pmap (λ _ → true) (λ _ → refl) (λ _ _ → refl)
 falseᵖ : 𝟙ᵖ →ᵖ 𝔹ᵖ
 falseᵖ = pmap (λ _ → false) (λ _ → refl) (λ _ _ → refl)
 
--- Both obligations follow the same shape: case on the scrutinee's *value*
+-- Both obligations follow the same shape: case on the scrutinee's value
 -- through a helper, then move that value along the equation the scrutinee's
 -- own `app-cong`/`nat` supplies.
 
@@ -411,7 +411,7 @@ ifᵖ-∘ : ∀ {X Y A} → (b : X →ᵖ 𝔹ᵖ) → (f g : X →ᵖ A) → (h
 ifᵖ-∘ {A = A} b f g h x = ≈-refl A
 
 -- A map out of `X ×ᵖ 𝔹ᵖ` is determined by its two instances: at each world the
--- second component *is* a boolean, so the case split is on that value.
+-- second component is a boolean, so the case split is on that value.
 
 ifᵖ-η : ∀ {X A} → (b : X →ᵖ 𝔹ᵖ) → (m : X ×ᵖ 𝔹ᵖ →ᵖ A)
       → m ∘ᵖ ⟨ idᵖ , b ⟩ᵖ
@@ -681,7 +681,7 @@ uncurryᵖ-curryᵖ-iso {C = C} g a p b = ≈-trans C
 -- Distributivity of the exponential over the product `A ×ᵖ (B ⇒ᵖ C) →ᵖ B ⇒ᵖ (A ×ᵖ C)`
 -- (the exponential's costrength). Defined directly rather than via
 -- `curryᵖ`/`uncurryᵖ`, so its normal form is small: the Kripke function it
--- produces just transports the `A` component and applies the `B ⇒ᵖ C` one.
+-- produces transports the `A` component and applies the `B ⇒ᵖ C` one.
 
 expᵖ-str : ∀ {A B C} → A ×ᵖ (B ⇒ᵖ C) →ᵖ (B ⇒ᵖ (A ×ᵖ C))
 expᵖ-str {A} {B} {C} = pmap

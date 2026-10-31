@@ -70,8 +70,8 @@ T-alg-of-handlerᵀ-≤ : ∀ {P A ε₁ ε₂ ε'} → (bc : Eternalᵒ P) → 
                     ≈ᵖ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵖ T-alg-of-handlerᵀ {P} {A} {ε₁} {ε'} bc h
 T-alg-of-handlerᵀ-≤ bc h p x = ≈ᵗ-refl _
 
--- The fold is a congruence in the *handler*: pointwise-equal clauses fold to
--- equal algebras. By induction on the tree — the only handler-dependent node is
+-- The fold is a congruence in the handler: pointwise-equal clauses fold to
+-- equal algebras. By induction on the tree; the only handler-dependent node is
 -- `op`, where the matching clause is applied (`heq`) and the folded continuations
 -- agree by the inductive hypothesis.
 
@@ -155,7 +155,7 @@ T-alg-of-handlerᵀ-natᴾ bc bc' f fcomm h (pv' , t) =
 -- The same, stated for an arbitrary handler `h'` whose clauses are the
 -- reindexed ones. This is the form consumers have (a renamed or substituted
 -- handler comes with a clause-level equation, not as a literal `reindexʰ`), and
--- it is insensitive to which ambivalence proof `h'` happens to carry.
+-- it is insensitive to which ambivalence proof `h'` carries.
 
 T-alg-of-handlerᵀ-natᴾ′ : ∀ {P P' A ε ε'} (bc : Eternalᵒ P) (bc' : Eternalᵒ P')
                           (f : P' →ᵖ P)
@@ -170,9 +170,9 @@ T-alg-of-handlerᵀ-natᴾ′ {P} {P'} {A} {ε} {ε'} bc bc' f fcomm h h' ceq x 
     (T-alg-of-handlerᵀ-cong {P'} {A} {ε} {ε'} bc' {h = h'} {h' = reindexʰ f h} ceq x)
     (T-alg-of-handlerᵀ-natᴾ {P} {P'} {A} {ε} {ε'} bc bc' f fcomm h x)
 
--- Sub-effecting in the *inner* grade. The handler must be *ambivalent* in the
+-- Sub-effecting in the inner grade. The handler must be ambivalent in the
 -- residual grade (`Monoˢ`); the fold selects `h op` by that grade, so at an
--- `op`-node the coerced continuation is folded by the *higher-grade* clause,
+-- `op`-node the coerced continuation is folded by the higher-grade clause,
 -- and `clause-mono` moves the coercion back out (`·ₑ-monoʳ`) so it may be
 -- shared with the other cases. Leaves / delays / subs commute the coercion
 -- through the `sub`/`ε-subst` machinery (`sub-ε-substᵗ`, `sub-delay`, `sub-∘`).

@@ -16,7 +16,7 @@
 -- that is, every listed guarantee has a weaker one listed in `P'`.   --
 -- Both endpoints are read disjunctively and weaken by gaining        --
 -- members, and the union of two grades is their join. The            --
--- quantifiers range universally over the set of the *stronger* grade --
+-- quantifiers range universally over the set of the stronger grade   --
 -- and existentially over that of the weaker, the mirror image of     --
 -- `Lifted.RightSided`.                                               --
 --                                                                    --
@@ -25,11 +25,9 @@
 -- carrier is the `Antichain` of `Traces.Reduced` at the order        --
 -- itself, not at its converse, and the order is a partial order.     --
 --                                                                    --
--- The fact specific to this module is that the unit `{ ε }` is the   --
--- greatest grade, the empty trace being covered by every run;        --
--- `TracePartialOrder` does not supply it.                            --
---                                                                    --
--- The construction does not otherwise inspect the order.             --
+-- The unit `{ ε }` is the greatest grade, the empty trace being      --
+-- covered by every run. `TracePartialOrder` does not supply this,    --
+-- and the construction does not otherwise inspect the order.         --
 -- `Example.Traces.Timed.LeftSided` instantiates it at the coverage   --
 -- order, in which only an operation covers a demand for that         --
 -- operation.                                                         --

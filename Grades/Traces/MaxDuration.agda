@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- Worst-case durations: the *greatest* duration of a set of timed    --
+-- Worst-case durations: the greatest duration of a set of timed      --
 -- traces, relative to a cost on operation symbols.                   --
 --                                                                    --
--- The per-trace `duration` is shared with `MinDuration.agda` and     --
--- lives in `Durations.agda`; only the set-level aggregation -- here  --
--- the `⊔`-based worst case -- is specific to this module.            --
+-- The per-trace `duration` is that of `Durations.agda`, shared with  --
+-- `MinDuration.agda`; only the aggregation over a set, by `⊔`, is    --
+-- specific.                                                          --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
@@ -38,7 +38,7 @@ open import Grades.Traces.Durations ℕᵀ Op
 open WithDecEq _≟ₒ_
 
 ------------------------------------------------------------------------
--- The (greatest) of a list of durations
+-- The greatest of a list of durations
 
 bigMax : List ℕ → ℕ
 bigMax = foldr _⊔_ zero
@@ -89,8 +89,8 @@ bigMax-mono f g (x ∷ xs) h = ⊔-mono-≤ (h x) (bigMax-mono f g xs h)
 ------------------------------------------------------------------------
 -- Worst-case durations relative to a fixed cost on operation symbols
 --
--- We reuse the per-trace `duration` of `Durations.agda` and aggregate
--- a set of traces by its greatest (worst-case) member.
+-- A set of traces is measured by its greatest member, at the per-trace
+-- `duration` of `Durations.agda`.
 
 module MaxDurations (c : Op → ℕ) where
 

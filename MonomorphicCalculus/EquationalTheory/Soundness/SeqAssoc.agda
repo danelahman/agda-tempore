@@ -4,7 +4,7 @@
 -- `(M ⨟ N) ⨟ P == …(M ⨟ (N ⨟ P'))` is the graded monad's associativity  --
 -- (`T-μ∘μ≡μ∘Tμ`) threaded through the strength's multiplication law     --
 -- (`strᵀ-μᵀ`) and product-associativity (`strᵀ-assoc`). Because the box --
--- is *lax* (no `δ⁻¹`), the environment box is reconciled with the       --
+-- is lax (no `δ⁻¹`), the environment box is reconciled with the         --
 -- possibility multiplication `μ` by the adjunction laws `η⊣-δ`,         --
 -- `η⊣-monoidal`, `η⊣-≤` (as in `sound-seq-delay`), rather than by       --
 -- cancelling `δ⁻¹ ∘ δ`.                                                 --
@@ -110,14 +110,14 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
 
     φ = ⟦ rin ⟧ʳ
 
-    -- The lock-merging renaming denotes exactly "weaken, then fold the two
-    -- locks with `μ`, then relax the merged grade" — this is (‡), the only
-    -- place the syntax of `rin` is used.
+    -- (‡) The lock-merging renaming denotes "weaken, then fold the two locks
+    -- with `μ`, then relax the merged grade"; the only place the syntax of
+    -- `rin` is used.
     φ-def : φ ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε' ⟩ᶠ fstᵐ
     φ-def = ∘ᵐ-congˡ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _)) ∙ ∘ᵐ-assoc _ _ _
 
     -- The environment's `⟨ mapᵉ ε ⟩`-lock, transposed at `mapᵉ ε'` and merged
-    -- with the outer lock by `μ`. This is the *value* the box carries once the
+    -- with the outer lock by `μ`. This is the value the box carries once the
     -- comultiplication `δ` has split it.
     α : ⟨ mapᵉ ε ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ mapᵉ ε' ]ᵒ (⟨ mapᵉ (ε ·ₑ ε') ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ)
     α = [ mapᵉ ε' ]ᶠ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ) ∘ᵐ η⊣

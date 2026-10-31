@@ -12,11 +12,10 @@
 -- permits, since its operations may be skipped and its delays left    --
 -- unspent.                                                            --
 --                                                                     --
--- The module closes with the inversion that nothing but the empty run --
--- is permitted by the empty bound. That needs every operation to cost --
--- something -- a free operation could be paid for out of no budget at --
--- all -- so the positivity of `costʰⁱ` is taken as an argument where  --
--- it is used, and it is what the grade's zero-product law rests on.   --
+-- The empty bound permits only the empty run. That needs every        --
+-- operation to cost something, since a free operation could be paid   --
+-- for out of no budget, so positivity of `costʰⁱ` is an argument      --
+-- where it is used; the grade's zero-product law rests on it.         --
 -------------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -42,7 +41,7 @@ open import Grades.Traces.Allowance.Core T Op costʰⁱ
 open Durations costʰⁱ
 
 ------------------------------------------------------------------------
--- Small arithmetic helpers
+-- Arithmetic
 
 -- moving what the bound's head contributes out of its duration and into
 -- the budget the premise carries

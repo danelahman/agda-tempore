@@ -22,8 +22,8 @@ open import MonomorphicCalculus.Syntax.Contexts S
 open import MonomorphicCalculus.Syntax.Terms    S
 open import MonomorphicCalculus.Syntax.Types    S
 
--- Progress theorem at the top-level: a term is just a returned value or makes a reduction step,
--- using the pure semantics of algebraic operations.
+-- Progress at the top level: a term is a returned value or makes a reduction
+-- step, using the pure semantics of algebraic operations.
 
 module PureTopLevelProgressTheorem (OpSemantics : TopLevelOpSemantics) where
   open PureTopLevelPreservationTheorem (OpSemantics)

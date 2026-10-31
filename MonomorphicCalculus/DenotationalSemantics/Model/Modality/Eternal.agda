@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Objects interpreting *eternal* types.                              --
+-- Objects interpreting eternal types.                                --
 --                                                                    --
 -- An eternal type (`MonomorphicCalculus.Syntax.Types.Eternal`) is    --
 -- available at any grade, not only below the unit `u`; concretely    --
@@ -164,7 +164,7 @@ record Eternalᵒ (A : Obj) : Set₁ where
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-trans p (≾-⊤ ρ₂)))
               (∘ᵐ-congʳ (⟨⟩-≤-irr _ (≾-⊤ ρ₁))))
 
-  -- At the unit grade, extraction is exactly the possibility counit `εᵘ`.
+  -- At the unit grade, extraction is the possibility counit `εᵘ`.
 
   extᵉ-u : extᵉ {u} ≈ᵐ εᵘ
   extᵉ-u =
@@ -285,7 +285,7 @@ record Eternalᵒ (A : Obj) : Set₁ where
 
 
 -- `⟨ ⊤ ⟩ᵒ X` is eternal for any `X`, with the monad multiplication as its
--- algebra: the two laws *are* the monad's unit and associativity laws.
+-- algebra: the two laws are the monad's unit and associativity laws.
 
 ⟨⊤⟩-eternalᵒ : (X : Obj) → Eternalᵒ (⟨ ⊤ ⟩ᵒ X)
 ⟨⊤⟩-eternalᵒ X = record { α = ⟨⊤⟩-μ ; α-unit = ⟨⊤⟩-μ∘η≡id ; α-assoc = ⟨⊤⟩-μ∘μ≡μ∘Tμ }

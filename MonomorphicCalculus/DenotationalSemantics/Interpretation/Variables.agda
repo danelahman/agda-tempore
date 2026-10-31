@@ -67,9 +67,8 @@ var-proj (Tl-⟨⟩ {ρ = ρ} x)     = μ ∘ᵐ ⟨ ρ ⟩ᶠ (var-proj x)
 
 -- The eternal structure of an eternal type's interpretation, assembled by
 -- recursion on the eternality witness from the structure supplied for each
--- former by `GroundEternal`. Because this lands in `Eternalᵒ`, all the
--- eternal laws below are `Eternalᵒ` fields (or derived there), rather than
--- being re-proved by induction for each former.
+-- former by `GroundEternal`. The eternal laws below are then `Eternalᵒ`
+-- fields or derived from them, not re-proved for each former.
 
 eternalᵛ-Eternalᵒ : ∀ {A} → Eternal A → Eternalᵒ ⟦ A ⟧ᵛ
 eternalᵛ-Eternalᵒ (Baseₑ {b} eb) = ⟦ b ⟧ᵇᵉ eb
@@ -104,7 +103,7 @@ eternalᵛ-extᵉ-μ : ∀ {A} → (et : Eternal A) → ∀ {ρ₁ ρ₂}
 eternalᵛ-extᵉ-μ et = Eternalᵒ.extᵉ-μ (eternalᵛ-Eternalᵒ et)
 
 -- Eternal extraction does not depend on how eternality was established
--- (`Eternal` is a property — see `MonomorphicCalculus.Syntax.Types.eternal-irrelevant`).
+-- (`Eternal` is a property: `MonomorphicCalculus.Syntax.Types.eternal-irrelevant`).
 
 eternalᵛ-extᵉ-irr : ∀ {A} → (et et' : Eternal A) → ∀ {ρ}
                   → eternalᵛ-extᵉ et {ρ} ≈ᵐ eternalᵛ-extᵉ et' {ρ}

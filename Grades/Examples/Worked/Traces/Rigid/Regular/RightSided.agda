@@ -2,11 +2,10 @@
 -- Worked rigid timed regular upper bounds, in whole steps.           --
 --                                                                    --
 -- Heating takes two to four steps, cooling one or two, logging one.  --
--- The cases are those of the formalisation findings (F4), the order  --
--- of strict waits and budgets, the prototype's tests of the rigid    --
--- upper bounds, the window rule, the delays, and the costs of open   --
--- ends. Each comparison is established by running the inclusion      --
--- test.                                                              --
+-- The cases: sequenced budgets, the order of strict waits and        --
+-- budgets, rejected runs, the window rule, the delays, and the costs --
+-- of open ends. Each comparison is established by running the        --
+-- inclusion test.                                                    --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Worked.Traces.Rigid.Regular.RightSided where
@@ -116,12 +115,12 @@ wait-two             = ⌜ idle ≤ 2 ⌝
 two-delays           = of-dur 1 ·ᵍ of-dur 1
 
 ------------------------------------------------------------------------
--- F4: sequencing two budgets of one keeps within two budgets of one
+-- Sequencing two budgets of one keeps within two budgets of one
 -- around a strict wait, which may be empty; and an operation of two
 -- steps fits them too
 
-f4 : C._≾_ one·one wait-around
-f4 = holds one·one wait-around refl
+budgets-fit : C._≾_ one·one wait-around
+budgets-fit = holds one·one wait-around refl
 
 two-steps-fit : C._≾_ (‵ᵍ cool) wait-around
 two-steps-fit = holds (‵ᵍ cool) wait-around refl
@@ -146,8 +145,7 @@ budget-not-in-wait : ¬ C._≾_ heat-then-budget heat-wait-budget
 budget-not-in-wait = fails heat-then-budget heat-wait-budget refl
 
 ------------------------------------------------------------------------
--- The prototype's tests (`traces_rigid_upper_reject.tpe`,
--- `strict_delays_traces_reject.tpe`)
+-- Rejected runs
 
 -- a log bought within the delay between heating and cooling
 
@@ -160,7 +158,7 @@ uncooled : ¬ C._≾_ uncooled-run heat-then-cool
 uncooled = fails uncooled-run heat-then-cool refl
 
 -- an operation of one step after a wait of two fits a budget of three,
--- but not a strict wait (the stirring of the prototype's test)
+-- but not a strict wait
 
 stirred-budget : C._≾_ stirred-run heat-then-cool
 stirred-budget = holds stirred-run heat-then-cool refl

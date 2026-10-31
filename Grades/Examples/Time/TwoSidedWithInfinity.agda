@@ -48,7 +48,7 @@ record Interval∞ : Set₀ where
   field
     min : ℕ
     max : ℕ∞
-    -- min is smaller or equal than max
+    -- min is at most max
     {min≤max?} : True (↑ min ≤∞? max)
 
 open Interval∞ public

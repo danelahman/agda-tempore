@@ -94,8 +94,7 @@ anything        = ⌜ ≥ 0 ⌝
 twice           = one-then-wait ·ᵍ one-then-wait
 
 ------------------------------------------------------------------------
--- The prototype's test (`strict_delays_lower_reject.tpe`): a strict
--- wait demands an undisturbed wait, which operations do not give,
+-- A strict wait demands an undisturbed wait, which operations do not give,
 -- while a budget counts them
 
 settled : C._≾_ settled-run settle
@@ -123,7 +122,7 @@ budget-not-below-strict : ¬ C._≾_ budget-5 wait-5
 budget-not-below-strict = fails budget-5 wait-5 refl
 
 ------------------------------------------------------------------------
--- F4: the flanks are explicit, so a budget of one before a wait of one
+-- The flanks are explicit, so a budget of one before a wait of one
 -- does not fit a wait of one alone; and a run of two such fits no
 -- budget of one before a wait of two
 

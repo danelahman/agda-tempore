@@ -147,7 +147,7 @@ inventing-time = ≰!
 -- Conditional branching
 --
 -- The two branches are typed at one grade, so both are coerced to it.
--- Here that grade is the *smaller* floor: a conditional guarantees only
+-- That grade is the smaller floor: a conditional guarantees only
 -- what its faster branch does. Neither branch locks the context: both
 -- start from the context the `if` itself is in.
 
@@ -188,8 +188,7 @@ sampling-then-branching =
 -- `unbox`'s premise `elapsed ≾ᵣ ρ` reads `ρ ≤ elapsed` here: the box
 -- may be claimed once at least as much time has passed as it asks for.
 -- What has elapsed is the product of the locks standing between the
--- box's binding and the claim -- the `⟨ … ⟩` entries the comments
--- show.
+-- box's binding and the claim: the `⟨ … ⟩` entries the comments show.
 
 -- a reading promised in two ticks, claimed after idling three: the
 -- premise is `2 ≤ 3`, and waiting longer than the box asks for is
@@ -237,8 +236,8 @@ claiming-now =
       (perform send here (return ⋆)))
 
 -- a boxed resource crosses a binder as an ordinary value: the function
--- takes the box, stores a reading of its own, and then claims it --
--- two ticks against the one the box asks for
+-- takes the box, stores a reading of its own, and then claims it, two
+-- ticks against the one the box asks for
 
 handed-over : [] ⊢C⦂ Unit ‼ [ 6 ,+∞⟩
 handed-over =
@@ -265,7 +264,7 @@ unreachable-after-a-reading : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ [ 4 ,+∞⟩)
 unreachable-after-a-reading = ≰!
 
 -- promised in one tick instead, both branches reach it with time to
--- spare -- two ticks in one, four in the other -- and the conditional
+-- spare (two ticks in one, four in the other), and the conditional
 -- is graded at the floor of the two
 
 claimed-in-both-branches : [] ⊢C⦂ Unit ‼ [ 6 ,+∞⟩
@@ -285,8 +284,8 @@ claimed-in-both-branches =
                                      -- ∷ Reading
                   (perform send here (return ⋆)))))
 
--- claiming the resource and then choosing what to transmit -- the
--- claimed reading or one taken along the way -- with both branches
+-- claiming the resource and then choosing what to transmit (the
+-- claimed reading or one taken along the way), with both branches
 -- making the same run
 
 either-way : [] ∷ Bool ⊢C⦂ Unit ‼ [ 6 ,+∞⟩
@@ -304,8 +303,8 @@ either-way =
 -- Sub-effecting against unboxing
 --
 -- Sequencing locks its continuation by the grade the first part is
--- *typed at* and binds that part's result -- the `⟨ … ⟩ ∷ …` on the
--- `⨟` line below. A `coerce` on the first part therefore changes the
+-- typed at and binds that part's result: the `⟨ … ⟩ ∷ …` on the `⨟`
+-- line below. A `coerce` on the first part therefore changes the
 -- lock, and at these grades can only take claims away: coercing
 -- forgets time, and time is what the box is compared against.
 
@@ -352,7 +351,7 @@ claim-without-coercing = ≤!
 -- A conditional's grade is the join of its branches', which at these
 -- intervals is the smaller floor. Sequencing after it locks the
 -- continuation by that join, so a box claimed there has to have been
--- discharged by *both* branches.
+-- discharged by both branches.
 
 -- the conditional guarantees two ticks, and the box asks for one, so
 -- the claim goes through with a tick to spare
@@ -368,8 +367,8 @@ claim-after-a-branch =
                                      -- ∷ Reading
           (perform send here (return ⋆)))
 
--- the transmitting branch guarantees four ticks on its own -- that is
--- `reachable-after-a-transmission` above -- and the join loses them to
+-- the transmitting branch guarantees four ticks on its own
+-- (`reachable-after-a-transmission` above), and the join loses them to
 -- the branch that only idles
 
 four-ticks-lost-at-the-join : ¬ (uᵣ ·ᵣ [ 2 ,+∞⟩ ≾ᵣ [ 4 ,+∞⟩)
@@ -465,7 +464,7 @@ scheduled-choice =
 --
 -- The forwarding clause performs the operation again and resumes, so it
 -- spends exactly the grade it is typed at. Handling locks its `in` part
--- by the handled computation's grade, exactly as sequencing does.
+-- by the handled computation's grade, as sequencing does.
 
 forwarded : [] ⊢C⦂ Reading ‼ [ 1 ,+∞⟩
 forwarded =
@@ -552,7 +551,7 @@ handled-by-argument = handling-a-reading · claiming
 -- The greatest grade
 --
 -- Here it is the unit: "at least 0 ticks" claims nothing, so every
--- grade weakens to it and a lock at `⊤ᵣ` lets everything through --
+-- grade weakens to it and a lock at `⊤ᵣ` lets everything through:
 -- nothing ever expires under a lower bound.
 
 everything-weakens : (ε : E) → ε ≾ₑ ⊤ₑ

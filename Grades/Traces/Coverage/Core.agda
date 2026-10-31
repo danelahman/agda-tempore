@@ -2,11 +2,10 @@
 -- The slack-indexed coverage relation, and its preorder structure.    --
 --                                                                     --
 -- `s ≼ᶜ[ k ] t` reads: the run `t` covers the trace `s`, given a      --
--- slack `k` already banked. Read as a guarantee `s` and an            --
--- elapsed run `t`:                                                    --
+-- slack `k` already banked:                                           --
 --                                                                     --
---   * every operation `s` names must genuinely occur in `t`, in       --
---     order (`keep`) -- it is never bought with time;                 --
+--   * every operation `s` names must occur in `t`, in order (`keep`), --
+--     and is never bought with time;                                  --
 --   * every delay `s` names is paid out of slack (`use-delay`), and   --
 --     slack is banked from whatever `t` did that `s` did not name:    --
 --     its unmatched operations at their execution time (`pay-op`)     --
@@ -17,13 +16,13 @@
 --                                                                     --
 -- Time discharges a demand for time; nothing discharges a demand for  --
 -- an operation but the operation, and a demand for time is met only   --
--- where it is placed. This is the order a *guarantee* wants; it is    --
+-- where it is placed. This is the order a guarantee wants; it is      --
 -- not the converse of `Traces.Allowance`, where time buys operations. --
 --                                                                     --
 -- The relation is a preorder at the slacks: reflexive at any slack,   --
 -- weakenable to more slack, and transitive with the slacks adding up. --
--- Everything derived from those laws -- the moves, the duration bound --
--- and the decision procedure -- lives in the sibling modules.         --
+-- The moves, the duration bound and the decision procedure are in     --
+-- the sibling modules.                                                --
 -------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc)
@@ -58,8 +57,8 @@ data _≼ᶜ[_]_ : Trace → Carrier → Trace → Set where
             -------------
             → ε ≼ᶜ[ k ] t
 
-  -- a demanded operation is met by the same operation occurring -- and
-  -- the slack banked up to here does NOT cross the match
+  -- a demanded operation is met by the same operation; the slack
+  -- banked so far does not cross the match
   keep      : ∀ {k o s t}
             → s ≼ᶜ[ 0ᴰ ] t
             --------------------------------------
@@ -101,8 +100,8 @@ coe refl p = p
 --
 -- A run covers itself: every operation it names is matched by the same
 -- operation and every delay by the same delay, whose length the run has
--- just banked. The matched case recurses at slack zero, which is where
--- the induction already was.
+-- banked. The matched case recurses at slack zero, where the induction
+-- already is.
 
 mutual
 
@@ -117,7 +116,7 @@ mutual
   ≼ᶜ-refl⁻ (operation⁻ o s) = keep (≼ᶜ-refl s)
 
 ------------------------------------------------------------------------
--- Weakening: more slack is always fine
+-- Weakening to more slack
 --
 -- The `keep` case is immediate: its premise does not mention the
 -- slack being weakened.
@@ -141,7 +140,7 @@ del-op {k} {o} d = pay-op (weaken (costˡᵒ o) d)
 ------------------------------------------------------------------------
 -- Transitivity: the slacks add up
 --
--- The awkward case is `pay-op` against `keep`: the middle run's matched
+-- The hard case is `pay-op` against `keep`: the middle run's matched
 -- operation resets the slack, so the inductive hypothesis lands at
 -- `(j + costˡᵒ o) + 0` and has to be weakened by `k` before it can be
 -- re-associated.

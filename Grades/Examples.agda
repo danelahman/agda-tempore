@@ -133,16 +133,16 @@ import Grades.Examples.System.IntervalsToLeftSidedIntervals
 
 -- the timed trace grades to time intervals: forget which runs a grade
 -- mentions and which operations they perform, keep what their
--- durations say -- the cap the deadline its slowest bound imposes, the
--- floor what its *fastest* guarantee takes, and the two-sided one
--- their pair
+-- durations say: the cap the deadline its slowest bound imposes, the
+-- floor what its fastest guarantee takes, and the two-sided one their
+-- pair
 
 import Grades.Examples.System.Traces.Timed.RightSided
 import Grades.Examples.System.Traces.Timed.LeftSided
 import Grades.Examples.System.Traces.Timed.TwoSided
 
 -- the subset cap to time intervals: the same, the deadline being the
--- one its *slowest* listed run imposes
+-- one its slowest listed run imposes
 
 import Grades.Examples.System.Traces.Subsets.RightSided
 
@@ -161,13 +161,13 @@ import Grades.Examples.System.Traces.Rigid.Rational.LeftSided
 import Grades.Examples.System.Traces.Rigid.Rational.TwoSided
 
 -- the subset cap to at-most counts: on each counter, the greatest
--- count among the listed traces -- a quota that covers the run that
--- draws on it most
+-- count among the listed traces, a quota covering the run that draws
+-- on it most
 
 import Grades.Examples.System.Counts.Subsets.AtMost
 
 -- the subset cap to at-least counts: on each counter, the least count
--- among the listed traces -- a guarantee certain of every run
+-- among the listed traces, a guarantee certain of every run
 
 import Grades.Examples.System.Counts.Subsets.AtLeast
 

@@ -9,10 +9,9 @@
 -- A `nodeid` variable is usable after any passage of time; a         --
 -- `reading` variable only under the bound `ρ ≾ᵣ uᵣ` of `var`.        --
 --                                                                    --
--- This module contains the three ways of meeting the bound of `var`, --
--- the coercion lemma that every instance instantiates, and the       --
--- operation clauses passed to `handle`, whose typing is the same at  --
--- every grade.                                                       --
+-- Shared by the instances: the three ways of meeting the bound of    --
+-- `var`, the coercion lemma, and the operation clauses passed to     --
+-- `handle`, whose typing is the same at every grade.                 --
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
@@ -78,8 +77,8 @@ fresh-var p x = var (λ _ → p) x
 -- Sub-effecting against unboxing
 --
 -- Sequencing types its continuation under the lock `⟨ mapᵉ ε ⟩`, where
--- `ε` is the grade the first part is *typed at* -- not the time it
--- takes -- and `handle`'s `in` part is locked the same way. So a
+-- `ε` is the grade the first part is typed at, not the time it takes,
+-- and `handle`'s `in` part is locked the same way. So a
 -- `coerce` on that first part changes what its continuation may claim,
 -- and it can only take claims away; the instances exhibit the converse
 -- failing.
@@ -151,7 +150,7 @@ identifying op ε'' =
 
 -- Resume, and then answer with the reading the clause closed over. A
 -- reading is not eternal, so `var` asks for its bound at the barrier
--- and at everything the clause has spent since -- the question `Node`
+-- and at everything the clause has spent since: the question `Node`
 -- leaves to each instance.
 
 reporting : (reading-crosses :

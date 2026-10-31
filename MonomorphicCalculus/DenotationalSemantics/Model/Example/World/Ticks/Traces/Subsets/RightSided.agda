@@ -11,7 +11,7 @@
 --                                                                    --
 -- The quantifier is existential, following the order of the grade,   --
 -- which is inclusion in the permitting direction: a weaker grade     --
--- lists *more* runs, and a condition preserved by weakening is met   --
+-- lists more runs, and a condition preserved by weakening is met     --
 -- by one listed run rather than by all.                              --
 --                                                                    --
 -- The grade bounds which runs may occur; the tick world records only --

@@ -117,13 +117,13 @@ import PolymorphicCalculus.OperationalSemantics.State
 
 ---- Type safety (`type-safety`, in `OperationalSemantics/TypeSafety`): a
 ---- run-time term with a scope-closed typing over a typed state is finished
----- (`Final`) or steps, an extension of the state typing typing the new
----- state and the new term at a subtype, its grade after the step's below
----- the original (`progress`, `preservation`). Termination (`termination`,
----- in `OperationalSemantics/Termination`): a run-time term typed in the
----- empty context halts from the empty state (`Halts`), by the fundamental
----- lemma (`fund-v`, `fund-c`) of the reducibility relation (`VRed`,
----- `CRed`, in `OperationalSemantics/Termination/Reducibility`).
+---- (`Final`) or steps; an extension of the state typing types the new
+---- state and the new term at a subtype, its grade after the step's
+---- below the original (`progress`, `preservation`). Termination
+---- (`termination`, in `OperationalSemantics/Termination`): a run-time term
+---- typed in the empty context halts from the empty state (`Halts`), by the
+---- fundamental lemma (`fund-v`, `fund-c`) of the reducibility relation
+---- (`VRed`, `CRed`, in `OperationalSemantics/Termination/Reducibility`).
 
 import PolymorphicCalculus.OperationalSemantics.Termination
 import PolymorphicCalculus.OperationalSemantics.Termination.Reducibility

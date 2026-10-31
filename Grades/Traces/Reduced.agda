@@ -5,8 +5,8 @@
 -- a closure: `P ≾ Q` says every member of `P` has a member of `Q`         --
 -- below it, so two sets with the same closure are ordered both ways       --
 -- without being the same set. The normal form that repairs this is        --
--- the antichain of the `≼`-minimal members, taken on top of the           --
--- canonical sorting `nf` that `Traces.Sets` already supplies:             --
+-- the antichain of the `≼`-minimal members, composed with the             --
+-- canonical sorting `nf` of `Traces.Sets`:                                --
 --                                                                         --
 --   n xs = nf (mins xs)                                                   --
 --                                                                         --
@@ -26,23 +26,17 @@
 -- of `xs` sits `≼`-below `x`. Everything is phrased through it, since     --
 -- it is the invariant the reduction preserves and the order reads.        --
 --                                                                         --
--- On top of the reduction sits the structure the antichains carry         --
--- as a grade: the carrier `Antichain`, the language product with          --
--- unit `{ ε }`, the order                                                 --
+-- The antichains carry a grade: the carrier `Antichain`, the language     --
+-- product with unit `{ ε }`, the order                                    --
 --                                                                         --
 --   P ≾ Q   iff   every member of `P` lies in the closure of `Q`          --
 --                                                                         --
 -- and the union as its join. One definition of the order serves           --
 -- both handednesses: at the order it reads "each member of `P` has        --
 -- a member of `Q` below it", and at `flipᵖ` of the order it reads         --
--- "above", which is the other grade. It is a *partial* order,             --
--- antisymmetry being `reduced-ext`, and that is what the reduction        --
--- is for.                                                                 --
---                                                                         --
--- The un-reduced carrier of `Traces.Sets` therefore plays no part         --
--- here: the re-export below keeps that module's list-level                --
--- machinery, which the reduction is built from, and leaves its            --
--- set-level monoid behind.                                                --
+-- "above", which is the other grade. It is a partial order,               --
+-- antisymmetry being `reduced-ext`, which is what the reduction is        --
+-- for. Of `Traces.Sets` only the list-level machinery is used.            --
 -----------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
@@ -81,8 +75,8 @@ open import Relation.Nullary.Decidable
   using (True; toWitness; fromWitness; _→-dec_)
 
 -- the timed traces, their canonical sorting, and the list-level
--- language product; the set-level monoid of `Traces.Sets` is the one
--- the antichains below carry instead, so it stays out of the re-export
+-- language product; the set-level monoid of `Traces.Sets` is left out,
+-- the antichains carrying their own
 
 open import Grades.Traces.Sets T Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans public
   hiding (NeTraces; neTraces; traces; sorted; nonempty; ne-ext; neSet;
@@ -100,16 +94,15 @@ open Grades.Traces.Order.TracePartialOrder P
 -- Closure membership
 --
 -- `x ◃ xs` reads "`x` is in the closure of `xs`": some member of `xs`
--- sits `≼`-below `x`. This is the whole content of the grade's order,
--- one endpoint at a time, and the reduction below is exactly the map
--- that keeps it fixed while shrinking the list.
+-- sits `≼`-below `x`. It is the grade's order, one member at a time,
+-- and the reduction below shrinks a list keeping it fixed.
 
 infix 4 _◃_
 
 _◃_ : Trace → List Trace → Set
 x ◃ xs = Any (_≼ x) xs
 
--- a witness below `x` inside `xs` is what it takes
+-- a member of `xs` below `x` puts `x` in the closure
 
 ◃-intro : {x y : Trace} {xs : List Trace} → y ∈ xs → y ≼ x → x ◃ xs
 ◃-intro {x} m p = Any.map (λ eq → subst (_≼ x) eq p) m
@@ -185,8 +178,8 @@ mins-⊆ {x} {y ∷ ys} m with ins-∈⁻ {x} {y} {mins ys} m
 ------------------------------------------------------------------------
 -- Every member is covered
 --
--- The inserted element is always in the closure of the result: either
--- it survives, or it was dropped in favour of something below it.
+-- The inserted element is in the closure of the result: it survives,
+-- or is dropped for something below it.
 
 mutual
 
@@ -238,10 +231,10 @@ mins-◃⁻ p with find p
 ------------------------------------------------------------------------
 -- Reducedness
 --
--- A list is reduced when no member is strictly below another: in the
--- presence of `≼-antisym` that says it is an antichain. It is stated
--- as `True` of a decision, hence proof-irrelevant, with the membership
--- form `Reducedᵐ` as the working formulation.
+-- A list is reduced when no member is strictly below another, which
+-- given `≼-antisym` makes it an antichain. It is `True` of a decision,
+-- hence proof-irrelevant; the proofs use the membership form
+-- `Reducedᵐ`.
 
 Reducedᵐ : List Trace → Set
 Reducedᵐ xs = {x y : Trace} → x ∈ xs → y ∈ xs → y ≼ x → x ≼ y
@@ -333,9 +326,9 @@ mins-ne (x ∷ xs) _ = ins-ne x (mins xs)
 ------------------------------------------------------------------------
 -- Canonicity
 --
--- A sorted, reduced list is determined by its closure. This is where
--- `≼-antisym` is spent, and it is the statement that makes the
--- normalised carrier antisymmetric: `x ∈ xs` gives some `y ∈ ys` below
+-- A sorted, reduced list is determined by its closure; this spends
+-- `≼-antisym` and makes the normalised carrier antisymmetric:
+-- `x ∈ xs` gives some `y ∈ ys` below
 -- it, which in turn gives some `x' ∈ xs` below `y`; reducedness of
 -- `xs` turns `x' ≼ x` into `x ≼ x'`, hence `x ≼ y`, and antisymmetry
 -- identifies them.
@@ -468,8 +461,7 @@ n-◃⁻ xs p = nf-◃⁻ (mins-◃⁻ p)
 n-∈⁻ : {v : Trace} {xs : List Trace} → v ∈ n xs → v ∈ xs
 n-∈⁻ {v} {xs} m = mins-⊆ {v} {xs} (nf-∈⁻ {v} {mins xs} m)
 
--- the load-bearing lemma: `nf` is determined by its members, `n` by
--- its closure
+-- `nf` is determined by its members, `n` by its closure
 
 n-ext : {xs ys : List Trace}
       → ({v : Trace} → v ◃ xs → v ◃ ys)
@@ -640,12 +632,11 @@ u = singleton ε
 --
 -- `P ≾ Q` says every member of `P` lies in the closure of `Q`: some
 -- member of `Q` sits `≼`-below each member of `P`. At `flipᵖ` of the
--- order that reads "above", so this one definition -- and every law
--- proved of it -- serves a grade of either handedness.
+-- order that reads "above", so this one definition, with every law
+-- proved of it, serves a grade of either handedness.
 --
--- It is `Sets.liftˢ` at the converse comparison rather than a
--- transcription of `_◃_`, which is what lets the lift's machinery --
--- decidability, proof-irrelevance, antitonicity in the source -- apply
+-- It is `Sets.liftˢ` at the converse comparison, so that the lift's
+-- decidability, proof-irrelevance and antitonicity in the source apply
 -- to it unchanged.
 
 infix 4 _≽_
@@ -664,7 +655,7 @@ infix 5 _≾ˢ_
 _≾ˢ_ : List Trace → List Trace → Set
 _≾ˢ_ = liftˢ _≽_ _≽?_
 
--- at this relation the lift *is* closure membership, one member of the
+-- at this relation the lift is closure membership, one member of the
 -- left-hand list at a time
 
 ≾ˢ-◃ : {xs ys : List Trace} → xs ≾ˢ ys → {v : Trace} → v ∈ xs → v ◃ ys
@@ -697,10 +688,9 @@ P ≾ Q = traces P ≾ˢ traces Q
 ------------------------------------------------------------------------
 -- Antisymmetry
 --
--- Mutual `≾` is mutual closure inclusion -- one step of `◃-trans` in
--- each direction -- and a sorted reduced list is determined by its
--- closure. This is what the reduction buys, and it is the law the
--- un-reduced carrier of `Traces.Sets` cannot state.
+-- Mutual `≾` is mutual closure inclusion, by one step of `◃-trans`
+-- each way, and a sorted reduced list is determined by its closure.
+-- The un-reduced carrier of `Traces.Sets` lacks this law.
 
 ≾-antisym : {P Q : Antichain} → P ≾ Q → Q ≾ P → P ≡ Q
 ≾-antisym {P} {Q} p q =

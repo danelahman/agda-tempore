@@ -198,7 +198,7 @@ mutual
       e₂ = evar (newᵉ {Θ +ty +ty +e})
       A↑ = wkᵉ-v (wkᵉ-v (wkᵗ-v (wkᵗ-v A)))
       Γ↑ = wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))
-      -- and additionally under the rigid `∀ᵉ` of a clause
+      -- and also under the rigid `∀ᵉ` of a clause
       e'' = evar (newᵉ {Θ +ty +ty +e +e})
       γ⇑  = wkᵉ-v (wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty}))))
       Γ⇑  = wkᵉ-ctx (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))))

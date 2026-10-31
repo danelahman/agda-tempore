@@ -9,7 +9,7 @@
 -- for two ticks, then transmitted", and settling time counts only if --
 -- it falls between the two operations.                               --
 --                                                                    --
--- The set is read *disjunctively*: a longer list is a weaker grade,  --
+-- The set is read disjunctively: a longer list is a weaker grade,    --
 -- and the union of two grades is their join. The members are reduced --
 -- to the antichain of the weakest of them, and mutually weakening    --
 -- grades are equal.                                                  --
@@ -134,7 +134,7 @@ a-store-guarantees-no-third-tick = fails
 ------------------------------------------------------------------------
 -- A named delay counts only where it is named
 --
--- The guarantee asks for two ticks *between* the reading and the
+-- The guarantee asks for two ticks between the reading and the
 -- transmission. A run that stores in that window covers it; one that
 -- stores before the reading does not, though it performs the same
 -- operations and takes the same ten ticks.
@@ -185,8 +185,8 @@ no-dropping-a-branch = fails
 ------------------------------------------------------------------------
 -- As a resource grade: what opens a box
 --
--- `unbox`'s premise `ρ' ≾ᵣ ρ` weighs what elapsed -- the product of
--- the locks standing to the variable's right -- against the grade on
+-- `unbox`'s premise `ρ' ≾ᵣ ρ` weighs what elapsed (the product of
+-- the locks standing to the variable's right) against the grade on
 -- the box: whatever elapsed covers one of the demands the box lists. A
 -- box listing more demands is easier to open, and waiting opens no box
 -- that demands an operation.

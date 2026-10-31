@@ -3,16 +3,16 @@
 -- operation symbols.                                                 --
 --                                                                    --
 -- `s ≼ᶜ t` reads: the run `t` covers the trace `s`. Every operation  --
--- `s` names must genuinely occur in `t`, in order -- time never buys --
--- one -- and every delay `s` names must be covered by what `t` does  --
+-- `s` names must occur in `t`, in order, never bought with time, and --
+-- every delay `s` names must be covered by what `t` does             --
 -- between the same two operations it names, unmatched operations     --
 -- counting at their execution time. So `⟨ n ⟩ ≼ᶜ t` as soon as `t`   --
 -- spends `n` where `s` asks for it, and `⌈ o ⌉ ≼ᶜ t` only when `t`   --
 -- performs `o`.                                                      --
 --                                                                    --
--- This is the order a *guarantee* wants, and it is not the converse  --
--- of `Traces.Allowance`: there a bound's delays buy the run's        --
--- operations, which read as a guarantee would let a run that merely  --
+-- This is the order a guarantee wants. It is not the converse of     --
+-- `Traces.Allowance`, where a bound's delays buy the run's           --
+-- operations: read as a guarantee, that would let a run that only    --
 -- idles discharge "a reading was taken".                             --
 ------------------------------------------------------------------------
 

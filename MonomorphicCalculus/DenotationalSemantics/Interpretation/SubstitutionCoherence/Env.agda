@@ -7,7 +7,7 @@
 -- pairs the substituted value on, and the two congruences are the product and
 -- the modality applied to the recursive one.
 --
--- It needs a parametricity certificate, since it interprets a stored *value*;
+-- It needs a parametricity certificate, since it interprets a stored value;
 -- `Paramˢ₀` collects those.
 ------------------------------------------------------------------------
 
@@ -88,7 +88,7 @@ Paramˢ₀ (cong-⟨⟩-sub s) = Paramˢ₀ s
 ⟦ cong-⟨⟩-sub {ρ = ρ} s ⟧ˢ₀   p  = ⟨ ρ ⟩ᶠ (⟦ s ⟧ˢ₀ p)
 
 -- Replacing the entry a splitting names is a parametric substitution, and at a
--- variable's own splitting its environment morphism is `sub-env` — on the nose,
+-- variable's own splitting its environment morphism is `sub-env` on the nose,
 -- both recursions being `var-split`'s.
 
 sub-split₀ᴾ : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢V⦂ A)
@@ -230,7 +230,7 @@ sub-var-natˢ {A = B} (cong-⟨⟩-sub s) p (Tl-⟨⟩ y) f with eternal? B
 
 -- What a substitution does to a resource (box-typed) variable: a statement
 -- about its projection alone, since a box-typed variable is not read as a
--- value. The image occurs at its *declared* box type, so the projections
+-- value. The image occurs at its declared box type, so the projections
 -- only agree after the declared type is coerced to the named one.
 
 sub-rvar-natˢ : ∀ {Γ Γ' A ρ σ} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)

@@ -6,15 +6,14 @@
 -- delay-free injection preserves it (`size-inj⁻`), so banking or      --
 -- spending a leading delay counts as one step too.                    --
 --                                                                     --
--- A leading delay of the *bound* settles the head on its own. Any     --
+-- A leading delay of the bound settles the head on its own: any       --
 -- derivation against it moves that delay into the budget              --
--- (`bank-delay-inv`), so the case is one recursive call rather than a --
--- choice. Where the bound leads with an operation there is a real     --
--- choice -- skip it, or, if the run leads with an operation too,      --
--- match it or pay for it -- and matching recurses at budget zero,     --
--- where the rule puts its premise. Matching also needs decidable      --
--- equality of operation symbols, which is what `DecAllowance` takes   --
--- as a parameter.                                                     --
+-- (`bank-delay-inv`), so the case is one recursive call, not a        --
+-- choice. Where the bound leads with an operation there is a choice:  --
+-- skip it, or, if the run leads with an operation too, match it or    --
+-- pay for it; matching recurses at budget zero, where the rule puts   --
+-- its premise, and needs decidable equality of operation symbols,     --
+-- the parameter of `DecAllowance`.                                    --
 -------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; s≤s)
@@ -59,7 +58,7 @@ module DecAllowance (_≟ₒ_ : DecidableEquality Op) where
   ...     | no ¬d = no (λ { (use-op _ d) → ¬d d })
 
   -- an operation of the run against one of the bound: skip, pay, or
-  -- match -- and matching carries no budget across
+  -- match, carrying no budget across
   dec (suc n) (operation o s') k (operation o' t') (s≤s le)
     with dec n (operation o s') k t'
                (subst (ℕ._≤ n) (+-suc (size s') (size t')) le)

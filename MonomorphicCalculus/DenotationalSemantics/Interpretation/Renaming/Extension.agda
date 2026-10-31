@@ -46,11 +46,10 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Variables S
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Renaming.Algebra S Cat Fut Pst Adj GTy Mon GE
 
 -- `ext Γ Γ' Θ` weakens a morphism `⟦ Γ ⟧ → ⟦ Γ' ⟧` past everything a suffix
--- `Θ` binds. It is the semantic counterpart of the syntactic `cong-ren`,
--- generalised from renaming denotations to arbitrary
--- morphisms — which is what an environment *extension* (e.g. the one `box`
--- installs) needs, since that is not the denotation of any renaming. It is
--- also the same recursion as `sub-env`.
+-- `Θ` binds. It is the semantic counterpart of the syntactic `cong-ren`, at
+-- arbitrary morphisms rather than renaming denotations: an environment
+-- extension, such as the one `box` installs, is not the denotation of any
+-- renaming. It is the same recursion as `sub-env`.
 --
 -- The two contexts are explicit: they only ever occur under `⟦_⟧ᶜᵗˣ`, which is
 -- not injective, so leaving them implicit makes every use ambiguous.

@@ -3,8 +3,8 @@
 --                                                                    --
 -- A grade `[0, n ]` is an upper bound, "at most `n` time steps",     --
 -- with `n` a possibly infinite natural number. Multiplication adds   --
--- the bounds and the order is `≤` on them, and a *larger* bound is   --
--- the weaker grade, as the mirror image of the left-sided intervals. --
+-- the bounds, the order is `≤` on them, and a larger bound is the    --
+-- weaker grade, the mirror image of the left-sided intervals.        --
 --                                                                    --
 -- The greatest grade `[0, ∞ ]` imposes no deadline and is absorbing: --
 -- a computation following an unbounded one is unbounded. The         --

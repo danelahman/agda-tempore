@@ -1,8 +1,8 @@
 ---------------------------------------------------------------------------
 -- Soundness of `unbox-beta`.                                            --
 --                                                                       --
--- Unboxing the variable a `box V` just bound — anywhere inside an       --
--- evaluation context `K` — is substituting `V`. The two sides differ    --
+-- Unboxing the variable a `box V` just bound, anywhere inside an        --
+-- evaluation context `K`, is substituting `V`. The two sides differ     --
 -- only in `K`'s hole and agree only under the ambient `box`, so this is --
 -- `fill-cong-env` applied at the box's environment extension            --
 -- `g = ⟨ idᵐ , [ ρ ]ᶠ ⟦V⟧ ∘ᵐ η⊣ ⟩`.                                     --

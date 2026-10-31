@@ -4,9 +4,9 @@
 -- Reasoning in the equational theory is observationally valid: a     --
 -- derivation `[] ⊢C⦂ M == N` between closed programs denotes an      --
 -- equality of global points (`soundᶜ`), and `adequacy` reads that    --
--- back off the machine — the two programs halt in the same shape, on --
--- the same operation, and at an answer type with the same answer:    --
--- the same constant at a base type, the same boolean at `Bool`.      --
+-- back off the machine: the two programs halt in the same shape, on  --
+-- the same operation, and at an answer type with the same answer     --
+-- (the same constant at a base type, the same boolean at `Bool`).    --
 --                                                                    --
 -- The two theorems meet at `⟦ M ⟧ᵖ ≈ᵐ ⟦ N ⟧ᵖ`; everything here is    --
 -- their composition.                                                 --
@@ -171,7 +171,7 @@ data Same-answer {b : BaseType} {ε : E} (M N : Prog (Base b) ε) : Set where
 -- Derivable equations are observational equations: `halts` supplies a whnf on
 -- each side, `==-ret-not-op` rules out the mismatched pairings, and the
 -- matching ones are `adequacy-base` resp. `same-operation`. No halting
--- hypothesis is needed — every program halts.
+-- hypothesis is needed: every program halts.
 
 ==-same-answer : ∀ {b ε} → {M N : Prog (Base b) ε}
                → (p : [] ⊢C⦂ M == N) → (mp : Midᶜ p)

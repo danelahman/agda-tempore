@@ -46,7 +46,7 @@ open GroundTypes GTy
 open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Core Spec Wld GTy
 
 -- A returned value, or an operation. The observation is parameterised by a
--- *predicate* on this rather than fixed at the shape alone.
+-- predicate on this rather than fixed at the shape alone.
 
 data Res (A : PSh) : W → Set where
   ret-res : ∀ {w} → carrier A w → Res A w
@@ -93,8 +93,8 @@ p-len (pcons q p) = suc (p-len p)
 ⊑-zero : ∀ {τ w} → τ ≡ 0ᴰ → w ⊑[ mapᵉ (of-durᵉ τ) ] w
 ⊑-zero z = ⊑-cast (sym z) ⊑-delay0
 
--- `Head P t p n` — descending `t` along `p` reaches, after `n` ticks, a head
--- satisfying `P`. `Headᵏ` is the same for a delay node's *continuation*.
+-- `Head P t p n`: descending `t` along `p` reaches, after `n` ticks, a head
+-- satisfying `P`. `Headᵏ` is the same for a delay node's continuation.
 
 mutual
 
@@ -273,7 +273,7 @@ mutual
   headᵏ-reach (hk-suc τ' e q h) with headᵏ-reach h
   ... | w' , ρ , acc , r , pr = w' , _ , ⊑-trans q acc , r , pr
 
--- Bisimilar trees have the same head *and the same tick total*. Mutual
+-- Bisimilar trees have the same head and the same tick total. Mutual
 -- with its converse, since `≈ᵗ-sym` is a constructor.
 
 module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
@@ -301,7 +301,7 @@ module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
     head-≈ᵗ sub-delay    (h-sub (h-delay h)) = h-delay (headᵏ-sub h)
     head-≈ᵗ sub-op       (h-sub (h-op px))   = h-op px
 
-    -- a zero delay *is* its own continuation, at the only zero-step there is
+    -- a zero delay is its own continuation, at the only zero-step there is
     head-≈ᵗ (delay-zero {k = k} {q₀ = q₀} e) (h-delay (hk-zero z h)) =
       h-sub (head-⊑ k (⊑-zero z) q₀ h)
     head-≈ᵗ (delay-zero e) (h-delay (hk-suc τ' e' q h)) = ⊥-elim (1+≢0ᴰ (sym e'))
@@ -381,7 +381,7 @@ module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
       hk-suc τ'' (trans (sym c) e) q
         (headᵏ-≈ (λ q' → ≈ᵗ-trans (ek _) (≡→≈ᵗ (cong k' (⊑-irrelevant _ _)))) h)
 
-    -- Induction on the *outer* delay, not on the path.
+    -- Induction on the outer delay, not on the path.
 
     plus-fwd : ∀ {ε w we n} → (τ₁ τ₂ : 𝔻)
              → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ (τ₁ +ᴰ τ₂)) ] w' → Tˢ A ε w'}

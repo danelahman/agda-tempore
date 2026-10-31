@@ -15,7 +15,7 @@
 --                                                                    --
 --   Q ≾ Q'   iff   Q ⊆ Q'                                            --
 --                                                                    --
--- and the set is read *disjunctively*: a longer list permits more,   --
+-- and the set is read disjunctively: a longer list permits more,     --
 -- and the union of two grades is their join. There is no least       --
 -- grade: `{ ε }`, permitting only the empty run, lies below only the --
 -- lists that contain the empty run.                                  --
@@ -25,8 +25,8 @@
 -- absorbing. It is distinct from the empty list, which permits       --
 -- nothing and is excluded.                                           --
 --                                                                    --
--- As an *effect* grade this is a list of the runs a computation may  --
--- have, and `coerce` adds runs to it. As a *resource* grade it is a  --
+-- As an effect grade this is a list of the runs a computation may    --
+-- have, and `coerce` adds runs to it. As a resource grade it is a    --
 -- permit listing exactly the runs it covers, and the premise         --
 -- `ρ' ≾ᵣ ρ` of `unbox` requires the elapsed runs to be among them.   --
 ------------------------------------------------------------------------

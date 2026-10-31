@@ -1,12 +1,10 @@
 --------------------------------------------------------------------------
--- Best-case durations: the *least* duration of a set of timed traces   --
+-- Best-case durations: the least duration of a set of timed traces     --
 --                                                                      --
--- This is the `⊓`-aggregation companion to `MaxDuration.agda`'s        --
--- `⊔`-based `setDuration`. Where `setDuration` measures a set by its   --
--- longest (worst-case) trace, `minSetDuration` measures it by its      --
--- shortest (best-case) trace -- the time taken when the computation    --
--- realises its fastest available trace. The per-trace `duration` is    --
--- shared via `Durations.agda`; only the set-level aggregation differs. --
+-- `minSetDuration` measures a set by its shortest trace, the time      --
+-- taken when the computation realises its fastest run, as              --
+-- `setDuration` of `MaxDuration.agda` measures it by its longest. The  --
+-- per-trace `duration` is that of `Durations.agda`.                    --
 --------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
@@ -47,9 +45,8 @@ open WithDecEq _≟ₒ_
 ------------------------------------------------------------------------
 -- The minimum of a seed and a list of naturals
 --
--- `min` has no additive identity in `ℕ` (it would be `∞`), so rather
--- than folding from a base element we thread the first element of a
--- non-empty list as a running seed.
+-- `min` has no identity in `ℕ`, so the first element of a non-empty
+-- list is threaded through as a seed.
 
 minWith : ℕ → List ℕ → ℕ
 minWith a []       = a
@@ -86,7 +83,7 @@ minWith-attained a (x ∷ xs) with ⊓-sel x (minWith a xs)
 ...   | inj₂ (v , mem , eqv) = inj₂ (v , there mem , trans eq eqv)
 
 ------------------------------------------------------------------------
--- The (least) duration of a non-empty list of traces
+-- The least duration of a non-empty list of traces
 
 bigMin : List ℕ → ℕ
 bigMin []       = zero
@@ -131,9 +128,8 @@ bigMin-mono f g xs ne h =
     (λ t t∈xs → ≤-trans (bigMin-mem f t xs t∈xs) (h t))
 
 -- `bigMin` is a monoid homomorphism `(List ℕ, ++) → (ℕ, ⊓)` on non-empty
--- lists; non-emptiness is recorded by taking both arguments in
--- cons-shaped form, since `NonEmpty` is defined on `List Trace` and does
--- not apply to `List ℕ`
+-- lists, both arguments taken in cons form as `NonEmpty` is defined on
+-- `List Trace` only
 
 bigMin-++ : (a : ℕ) (as : List ℕ) (b : ℕ) (bs : List ℕ)
           → bigMin ((a ∷ as) ++ (b ∷ bs)) ≡ bigMin (a ∷ as) ⊓ bigMin (b ∷ bs)
@@ -178,8 +174,8 @@ bigMin-++ a as b bs = ≤-antisym le ge
 ------------------------------------------------------------------------
 -- Best-case durations relative to a fixed cost on operation symbols
 --
--- We reuse the per-trace `duration` of `Durations.agda` and only change
--- the set-level aggregation from `⊔` (worst case) to `⊓` (best case).
+-- A set of traces is measured by its least member, at the per-trace
+-- `duration` of `Durations.agda`.
 
 module MinDurations (c : Op → ℕ) where
 
@@ -191,8 +187,8 @@ module MinDurations (c : Op → ℕ) where
   minSetDuration : List Trace → ℕ
   minSetDuration xs = bigMin (map duration xs)
 
-  -- `minSetDuration` is *anti*-monotone for the subset order: enlarging
-  -- a set can only lower (or keep) its minimum
+  -- `minSetDuration` is antitone for the subset order: enlarging a set
+  -- can only lower its minimum
 
   minSetDuration-⊒ : (xs ys : List Trace)
                    → NonEmpty xs → xs ⊑ ys → minSetDuration ys ≤ minSetDuration xs

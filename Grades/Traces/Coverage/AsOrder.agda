@@ -1,14 +1,12 @@
-------------------------------------------------------------------------
--- The coverage partial order, packaged as a `TraceOrder`.            --
---                                                                    --
--- The same interface `Allowance.AsOrder` meets, at the order a       --
--- guarantee wants. `mono-∙` is available only with the second slack  --
--- pinned to zero -- the slack-additive form is false here, as        --
--- `Coverage.Moves` records -- but the lift is taken at slack zero    --
--- throughout, so that is exactly the instance needed. Nothing here   --
--- asks anything of `costˡᵒ`: an operation is never bought, at any    --
--- price.                                                             --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+-- The coverage partial order, packaged as a `TraceOrder`.             --
+--                                                                     --
+-- The interface `Allowance.AsOrder` meets, at the order a guarantee   --
+-- wants. `mono-∙` holds only with the second slack pinned to zero     --
+-- (the slack-additive form fails, as `Coverage.Moves` records),       --
+-- which is the instance the lift, taken at slack zero, needs. Nothing --
+-- is asked of `costˡᵒ`: an operation is never bought.                 --
+-------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)
 

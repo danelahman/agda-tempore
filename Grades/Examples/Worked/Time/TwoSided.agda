@@ -81,7 +81,7 @@ tsi-of-dur = eqᵢ refl refl
 -- The infinite upper endpoint
 --
 -- `[ n , ∞ ]` is the largest grade with lower bound `n`, and `[ 0 , ∞ ]`
--- the largest of all -- the greatest grade of this monoid. Unlike the
+-- the largest of all, the greatest grade of this monoid. Unlike the
 -- right-sided intervals' top it is not absorbing: its `min` endpoint is
 -- the unit, so a run sequenced after it keeps its own lower bound.
 

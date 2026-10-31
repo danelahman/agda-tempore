@@ -170,7 +170,7 @@ no-tighter-allowance = fails _ _
 --                                        permits reading and stopping
 --
 -- The floor's lift reverses and the cap's does not, so the one fact
--- reads as *weakening* at the floor and as *loosening* at the cap.
+-- reads as weakening at the floor and as loosening at the cap.
 
 -- at the floor, with the cap held fixed: the store may be dropped from
 -- what is guaranteed
@@ -225,7 +225,7 @@ inverted-is-not-a-grade ()
 -- Both endpoints gain members
 --
 -- Adding a listed trace weakens at either end, the sets being read
--- disjunctively -- so a branching computation is graded by listing what
+-- disjunctively, so a branching computation is graded by listing what
 -- each branch does, at both endpoints.
 
 add-a-guarantee :

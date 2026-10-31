@@ -12,8 +12,8 @@
 -- Nothing but the empty guarantee is covered by a spent run: with no  --
 -- slack there is nothing to pay a named delay with, and a run that    --
 -- has ended performs no operation to match. Unlike the allowance      --
--- order this needs no assumption about `costˡᵒ` -- an operation is    --
--- never bought here, at any price.                                    --
+-- order this needs no assumption about `costˡᵒ`, an operation never   --
+-- being bought.                                                       --
 -------------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -39,7 +39,7 @@ open import Grades.Traces.Coverage.Core T Op costˡᵒ
 open Durations costˡᵒ
 
 ------------------------------------------------------------------------
--- Small arithmetic helpers
+-- Arithmetic
 
 -- moving what the run's head contributes out of its duration and into
 -- the slack the premise carries

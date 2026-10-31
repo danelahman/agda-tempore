@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 -- Worked instances of the timed trace grades in dense time.          --
 --                                                                    --
--- The sensor node of `Worked.Operations` once more, now with running --
+-- The sensor node of `Worked.Operations`, with running               --
 -- times in units of dense time, each an interval with open or closed --
 -- ends:                                                              --
 --                                                                    --

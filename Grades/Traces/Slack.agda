@@ -1,11 +1,10 @@
 -------------------------------------------------------------------------
 -- The slack arithmetic the trace orders share.                        --
 --                                                                     --
--- Both orders on timed traces carry a duration of banked time         --
--- and shuffle it about as they walk the two traces, and both are      --
--- decided by recursion on a fuel budget bounding the combined size of --
--- those traces. None of that depends on the rules, so it is collected --
--- here rather than restated in each.                                  --
+-- Both orders on timed traces carry a duration of banked time as they --
+-- walk the two traces, and both are decided by recursion on fuel      --
+-- bounding the combined size of the traces. None of this depends on   --
+-- their rules.                                                        --
 -------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc)
@@ -22,7 +21,7 @@ open import Grades.Durations.Monus T as M using (Carrier; ∸-+-assoc)
 open M.Notation
 
 ------------------------------------------------------------------------
--- Small arithmetic helpers
+-- Arithmetic
 
 -- swapping the two trailing summands
 

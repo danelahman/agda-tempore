@@ -19,7 +19,7 @@ open import MonomorphicCalculus.Syntax.Contexts S
 open import MonomorphicCalculus.Syntax.Terms    S
 open import MonomorphicCalculus.Syntax.Types    S
 
--- Progress theorem. A term is either returned value, operation or makes step
+-- Progress: a term is a returned value or an operation, or it makes a step
 
 data Progresses : {ε : E}
                 → {S : 𝕊 []}
@@ -110,7 +110,7 @@ progress (unbox _ _ _ _) = step-progress UNBOX
 progress (box _ _ _)       = step-progress BOX
 progress (subC M (_ ‼ₛ _)) = step-progress SUB
 
--- Theorem: is-value is indeed final state (make no further steps)
+-- is-value is final: it makes no further steps
 
 finality-value : ∀ {A B τ₂}
                 → {S : 𝕊 []}
@@ -123,7 +123,7 @@ finality-value : ∀ {A B τ₂}
 finality-value ()
 
 
--- Theorem: is-op is indeed final state (make no further steps)
+-- is-op is final: it makes no further steps
 
 finality-op : ∀ {A B op τ₂ τ₃}
                 → {S S₁ : 𝕊 []}

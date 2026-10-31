@@ -86,7 +86,7 @@ ctx-substᶜ refl M = M
 -- Generation weakens into the scope of its `∃`s and satisfaction extends `σ`;
 -- each pair cancels (`wk-,*`), one lemma per binder pattern, `wk-,ᵗ-*` for one `∃ᵗ`.
 
--- `∃ᵗ∃ᵗ` — pairing, injections, pattern-matching, sum elimination
+-- `∃ᵗ∃ᵗ`: pairing, injections, pattern-matching, sum elimination
 
 co²ᵗ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ') → (Γ : OCtx Θ n)
          → wkᵗ-ctx (wkᵗ-ctx Γ) [ σ ,ᵗ B₁ ,ᵗ B₂ ]ᶜᵗˣ ≡ Γ [ σ ]ᶜᵗˣ
@@ -104,7 +104,7 @@ co²ᵗ-r : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ') �
        → wkᵗ-r (wkᵗ-r ρ) [ σ ,ᵗ B₁ ,ᵗ B₂ ]ʳ ≡ ρ [ σ ]ʳ
 co²ᵗ-r σ B₁ B₂ ρ = trans (wk-,ᵗ-r (σ ,ᵗ B₁) B₂ (wkᵗ-r ρ)) (wk-,ᵗ-r σ B₁ ρ)
 
--- `∃ᵗ∃ᵗ∃ᵉ` — lambda abstraction, function application, list recursion
+-- `∃ᵗ∃ᵗ∃ᵉ`: lambda abstraction, function application, list recursion
 
 co²ᵗᵉ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ') → (ε : EExp Θ')
           → (Γ : OCtx Θ n)
@@ -124,7 +124,7 @@ co²ᵗᵉ-e : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ')
 co²ᵗᵉ-e σ B₁ B₂ ε ε₀ =
   trans (wk-,ᵉ-e (σ ,ᵗ B₁ ,ᵗ B₂) ε (wkᵗ-e (wkᵗ-e ε₀))) (co²ᵗ-e σ B₁ B₂ ε₀)
 
--- `∃ᵗ∃ʳ` — unboxing
+-- `∃ᵗ∃ʳ`: unboxing
 
 coᵗʳ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ρ : RExp Θ')
          → (Γ : OCtx Θ n)
@@ -141,7 +141,7 @@ coᵗʳ-e : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ρ : 
        → wkʳ-e (wkᵗ-e ε) [ σ ,ᵗ B ,ʳ ρ ]ᵉ ≡ ε [ σ ]ᵉ
 coᵗʳ-e σ B ρ ε = trans (wk-,ʳ-e (σ ,ᵗ B) ρ (wkᵗ-e ε)) (wk-,ᵗ-e σ B ε)
 
--- `∃ᵗ∃ᵉ` — a prefix of the `∃ᵗ∃ᵉ∃ᵉ` pattern below
+-- `∃ᵗ∃ᵉ`: a prefix of the `∃ᵗ∃ᵉ∃ᵉ` pattern below
 
 coᵗᵉ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ε : EExp Θ')
          → (Γ : OCtx Θ n)
@@ -158,7 +158,7 @@ coᵗᵉ-e : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ε :
        → wkᵉ-e (wkᵗ-e ε₀) [ σ ,ᵗ B ,ᵉ ε ]ᵉ ≡ ε₀ [ σ ]ᵉ
 coᵗᵉ-e σ B ε ε₀ = trans (wk-,ᵉ-e (σ ,ᵗ B) ε (wkᵗ-e ε₀)) (wk-,ᵗ-e σ B ε₀)
 
--- `∃ᵗ∃ᵉ∃ᵉ` — sequencing
+-- `∃ᵗ∃ᵉ∃ᵉ`: sequencing
 
 coᵗ²ᵉ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ε₁ ε₂ : EExp Θ')
           → (Γ : OCtx Θ n)
@@ -196,7 +196,7 @@ coᵗ²ᵉ-v↑ σ B ε₁ ε₂ A =
   trans (wk-↑ᵉ-v (σ ,ᵗ B ,ᵉ ε₁ ,ᵉ ε₂) (wkᵉ-v (wkᵉ-v (wkᵗ-v A))))
         (cong wkᵉ-v (coᵗ²ᵉ-v σ B ε₁ ε₂ A))
 
--- `∃ᵗ∃ᵗ∃ᵉ∃ᵉ` — handlers, handling
+-- `∃ᵗ∃ᵗ∃ᵉ∃ᵉ`: handlers, handling
 
 co²ᵗ²ᵉ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ')
            → (ε₁ ε₂ : EExp Θ') → (Γ : OCtx Θ n)

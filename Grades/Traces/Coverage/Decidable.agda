@@ -4,8 +4,8 @@
 -- A backtracking search on the two heads, driven by fuel: every       --
 -- constructor shrinks the combined size of the two traces by at least --
 -- one, so the combined size is fuel enough. Matching an operation     --
--- recurses at slack *zero*, which is where `keep` puts its premise -- --
--- the banked slack is simply dropped at the match.                    --
+-- recurses at slack zero, where `keep` puts its premise: the banked   --
+-- slack is dropped at the match.                                      --
 --                                                                     --
 -- The size measure is shared with the allowance order: it speaks only --
 -- about traces, not about either relation.                            --
@@ -42,8 +42,8 @@ module DecCoverage (_≟ₒ_ : DecidableEquality Op) where
   -- the empty demand is met by any run
   dec n ε k t le = yes nil
 
-  -- a demanded operation and a spent run: no rule applies, which is the
-  -- whole point of the order -- time never buys an operation
+  -- a demanded operation and a spent run: no rule applies, as time
+  -- never buys an operation
   dec (suc n) (operation o s') k ε (s≤s le) = no λ ()
 
   -- a demanded operation against an operation of the run: bank the

@@ -237,7 +237,7 @@ xs ◇ˢ unbounded  = ⊤
 ◇ˢ₀-self xs ne with neHead xs ne
 ... | t , t∈xs = ◇ˢ₀-intro t∈xs t∈xs (t , ≼ᶠ-refl t , ≼ᶜ-refl t)
 
--- a witness travels along any map that keeps the members --
+-- a witness travels along any map that keeps the members,
 -- normalisation in particular
 
 ◇ˢ₀-∈ : {xs xs' ys ys' : List Trace}

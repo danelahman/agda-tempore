@@ -4,7 +4,7 @@
 -- Effect grades and resource grades are both sets of timed traces at --
 -- the coverage order, and each operation is graded by the one-event  --
 -- run that performs it. A grade lists guarantees, and a computation  --
--- lies below it when each of its runs *covers* one of them: every    --
+-- lies below it when each of its runs covers one of them: every      --
 -- operation the guarantee lists has occurred, and every delay it     --
 -- lists has elapsed in the run, operations counted at `costˡᵒ` (read --
 -- 1, write 2, send 4), the time each is certain to take.             --
@@ -185,7 +185,7 @@ sampling-then-branching =
 -- Unboxing: a resource that comes due when work has been done
 --
 -- `unbox`'s premise is `elapsed ≾ᵣ ρ`: what the computation did between
--- boxing the resource and claiming it -- the locks the comments show --
+-- boxing the resource and claiming it (the locks the comments show)
 -- has to cover what the box asks for. The box below asks for a reading.
 
 demand : R
@@ -252,7 +252,7 @@ idling-does-not-discharge-it = fails
 claiming-at-once : ¬ (uᵣ ≾ᵣ demand)
 claiming-at-once = failsᵉ uᵣ demand
 
--- a demand for *time* is discharged by anything that takes it, work
+-- a demand for time is discharged by anything that takes it, work
 -- included: two ticks of idling, or a store, both cover two ticks
 
 waiting : R
@@ -273,7 +273,7 @@ storing-covers-it = holds
 -- Unboxing under a branch
 --
 -- A box asking for either of two runs is within both branches' reach,
--- and the conditional is graded by what both branches guarantee -- here
+-- and the conditional is graded by what both branches guarantee, here
 -- a transmission, which each branch makes.
 
 alternatives : R
@@ -309,8 +309,8 @@ transmitting-branch-does-not = fails
 -- Sub-effecting against unboxing
 --
 -- Sequencing locks its continuation by the grade the first part is
--- *typed at* and binds that part's result -- the `⟨ … ⟩ ∷ …` on the
--- `⨟` line below. What a `coerce` there forgets is not time but the
+-- typed at and binds that part's result: the `⟨ … ⟩ ∷ …` on the `⨟`
+-- line below. What a `coerce` there forgets is not time but the
 -- operation: a reading may be traded for the tick it took, and a box
 -- asking for the reading is then out of reach.
 
@@ -340,7 +340,7 @@ forgetting-the-reading-closes-it = fails
 -- A grade with several members is read disjunctively: each run of the
 -- computation covers one of them. `if` produces one, its grade being
 -- the union of its branches'. An `unbox` after the join is discharged
--- only if *every* branch discharges it.
+-- only if every branch discharges it.
 
 -- the grade of the conditional: the join of what its branches
 -- guarantee, which is their union
@@ -349,8 +349,8 @@ after-the-join : E
 after-the-join = ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
 
 -- and the grade on the box, a different element of the same monoid: it
--- asks for a reading *or* for two ticks, and the two branches meet it
--- by different members -- the sampling branch covers the reading and
+-- asks for a reading or for two ticks, and the two branches meet it
+-- by different members: the sampling branch covers the reading and
 -- not the ticks, the storing branch the other way round.
 
 mixed-demand : R
@@ -468,8 +468,8 @@ sampling-branch-too-little = fails
 ------------------------------------------------------------------------
 -- Effect handling
 --
--- Handling locks its `in` part by the handled computation's grade,
--- exactly as sequencing does.
+-- Handling locks its `in` part by the handled computation's grade, as
+-- sequencing does.
 
 forwarded : [] ⊢C⦂ Reading ‼ ⟅ ⌈ read ⌉ ⟆
 forwarded =

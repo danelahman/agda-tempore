@@ -3,11 +3,10 @@
 --                                                                    --
 -- A grade `[0, q ]` is an upper bound, "at most `q` time units",     --
 -- with `q` a possibly infinite non-negative rational; a deadline of  --
--- 2.5 units is `[0, ↑ 5 / 2 ]`. Multiplication adds the bounds and   --
--- the order is `≤` on them, and a *larger* bound is the weaker       --
--- grade; `[0, ∞ ]` imposes no deadline and is absorbing. Durations   --
--- are non-negative rationals, a delay by `q` having grade            --
--- `[0, ↑ q ]`.                                                       --
+-- 2.5 units is `[0, ↑ 5 / 2 ]`. Multiplication adds the bounds, the  --
+-- order is `≤` on them, and a larger bound is the weaker grade;      --
+-- `[0, ∞ ]` imposes no deadline and is absorbing. A delay by `q` has --
+-- grade `[0, ↑ q ]`.                                                 --
 --                                                                    --
 -- The discrete intervals of `Time.RightSided` embed along the        --
 -- inclusion of durations, a deadline of `n` time steps being read as --

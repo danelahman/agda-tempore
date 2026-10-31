@@ -58,7 +58,7 @@ sub-ε-substˢ refl q q' t = sub-≈ (≈ᵗ-refl t)
 ε-substˢ-sub' q refl q' t = sub-≈ (≈ᵗ-refl t)
 
 -- The handler is uniform in its grade index. The algebra law applies the
--- clause at two grades that are only *propositionally* equal —
+-- clause at two grades that are only propositionally equal:
 -- `(ε₁ ·ₑ ε') ·ₑ ε''` on the left, `ε₁ ·ₑ (ε' ·ₑ ε'')` on the right. A
 -- `Handlerˢ` is an arbitrary family indexed by the grade, so those are
 -- different morphisms at different types; but they coincide up to
@@ -92,7 +92,7 @@ box-ε-substˢ-fun : ∀ {A X ρ ε₁ ε₂ w} → (e : ε₁ ≡ ε₂)
 box-ε-substˢ-fun refl b q r y = refl
 
 -- A grade transport pushes out through a delay node. The transported node's
--- own coherence witness is *constructed* here (rather than taken as an
+-- own coherence witness is constructed here (rather than taken as an
 -- argument), since `_≈ᵗ_` does not determine it.
 
 delay-ε-substˢ-nat : ∀ {A ε₁ ε₂ τ w} → (e : ε₁ ≡ ε₂)
@@ -128,7 +128,7 @@ necᵉ-box▸ {P = P} bc pv q r =
             (Eternalᵒ.necᵉ-δ bc pv q r)
 
 -- The fold is an algebra: folding a two-layer tree is folding the outer layer
--- after folding each inner one. By induction on the tree — at each node the
+-- after folding each inner one. By induction on the tree: at each node the
 -- fold and the multiplication agree, so the two transports coincide.
 
 T-alg-of-handlerˢ-μˢ : ∀ {P A ε ε' ε'' w} → (bc : Eternalᵒ P) → (h : Handlerˢ P A)

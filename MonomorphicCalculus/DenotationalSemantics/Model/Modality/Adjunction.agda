@@ -3,16 +3,15 @@
 -- box modality `[ ρ ]`, at a common resource grade `ρ`.                --
 --                                                                      --
 -- Semantically `⟨ ρ ⟩ ⊣ [ ρ ]`: the context modality (Kripke           --
--- possibility, `Σ` over accessible *past* worlds) is left adjoint to   --
--- the box modality (Kripke necessity, `∀` over accessible *future*     --
--- worlds). This adjunction is what interprets the Fitch-style formers: --
--- the unit `η⊣` transposes a value typed under a lock into a boxed     --
--- value (the semantics of `box`), and the counit `ε⊣` extracts a boxed --
--- value reached through a lock (the semantics of `unbox`).             --
+-- possibility, `Σ` over accessible past worlds) is left adjoint to     --
+-- the box modality (Kripke necessity, `∀` over accessible future       --
+-- worlds). This adjunction interprets the Fitch-style formers: the     --
+-- unit `η⊣` transposes a value typed under a lock into a boxed value   --
+-- (the semantics of `box`), and the counit `ε⊣` extracts a boxed value --
+-- reached through a lock (the semantics of `unbox`).                   --
 --                                                                      --
--- The adjunction is *ungraded across the two sides* — both modalities  --
--- carry the same grade `ρ` — so the triangle identities need no grade  --
--- coercions.                                                           --
+-- Both modalities carry the same grade `ρ`, so the triangle            --
+-- identities need no grade coercions.                                  --
 --------------------------------------------------------------------------
 
 open import Grades.Durations using (Duration)
@@ -80,23 +79,23 @@ record Adjunction : Set₁ where
     triangleʳ : ∀ {A ρ}
               → [ ρ ]ᶠ (ε⊣ {A} {ρ}) ∘ᵐ η⊣ {[ ρ ]ᵒ A} {ρ} ≈ᵐ idᵐ
 
-    -- At the *unit* grade the adjunction restricts to the unit-graded
+    -- At the unit grade the adjunction restricts to the unit-graded
     -- isomorphisms `⟨ u ⟩ᵒ A ≅ A` and `[ u ]ᵒ A ≅ A`: the counit `ε⊣`
     -- factors through the box counit `ε` and the possibility counit `εᵘ`,
     -- and dually (by symmetry) the unit `η⊣` factors through the box unit
-    -- `ηᵘ` and the possibility unit `η`. This is what makes a variable of
-    -- *eternal* type usable at the unit grade: `extᵉ { u } ∘ η ≈ idᵐ`.
+    -- `ηᵘ` and the possibility unit `η`. This makes a variable of eternal
+    -- type usable at the unit grade: `extᵉ { u } ∘ η ≈ idᵐ`.
 
     ε⊣-u : ∀ {A} → ε⊣ {A} {u} ≈ᵐ εᵘ ∘ᵐ ⟨ u ⟩ᶠ ε
     η⊣-u : ∀ {A} → η⊣ {A} {u} ≈ᵐ [ u ]ᶠ η ∘ᵐ ηᵘ
 
-    -- The graded adjunction is compatible with *composition* of grades. Since
-    -- an eternal object is characterised as a `Past.μ`-algebra (via the
-    -- extraction `extᵉ` / counit `ε⊣`), we take the *counit*-side law as
-    -- primitive: extracting a doubly-boxed value after folding the two pasts
-    -- with `μ` agrees with extracting through the two `δ`-split box layers. The
-    -- unit-side companion `η⊣-δ` (which mentions the future comultiplication
-    -- `δ` on the left) is *derived* from this below.
+    -- The graded adjunction is compatible with composition of grades. An
+    -- eternal object being a `Past.μ`-algebra (via the extraction `extᵉ` /
+    -- counit `ε⊣`), the counit-side law is primitive: extracting a
+    -- doubly-boxed value after folding the two pasts with `μ` agrees with
+    -- extracting through the two `δ`-split box layers. The unit-side
+    -- companion `η⊣-δ` (which mentions the future comultiplication `δ` on the
+    -- left) is derived from it below.
 
     ε⊣-μ : ∀ {A ρ₁ ρ₂}
          → ε⊣ {A} {ρ₁ · ρ₂} ∘ᵐ μ {[ ρ₁ · ρ₂ ]ᵒ A} {ρ₂} {ρ₁}
@@ -104,10 +103,10 @@ record Adjunction : Set₁ where
 
     -- The unit is compatible with the box's monoidal structure: transposing a
     -- value twice and pairing the two boxes gives the same as transposing the
-    -- pair. (Both name the *same* future, so the two boxes agree witness by
-    -- witness — that is what makes the lax monoidality enough here.)
+    -- pair. (Both name the same future, so the two boxes agree witness by
+    -- witness, and lax monoidality suffices.)
     --
-    -- This is what lets an environment box cross a `delay`: `delayᵀ`'s
+    -- This lets an environment box cross a `delay`: `delayᵀ`'s
     -- strength law routes the box through `[]-monoidal`.
 
     η⊣-monoidal : ∀ {A ρ}
@@ -132,7 +131,7 @@ record Adjunction : Set₁ where
         (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
         (≈ᵐ-trans (∘ᵐ-congˡ triangleʳ) (∘ᵐ-identityˡ h))))))
 
-  -- The unit-side compatibility, *derived* from the counit-side `ε⊣-μ` by
+  -- The unit-side compatibility, derived from the counit-side `ε⊣-μ` by
   -- transposing across both box layers (`mate-inj` twice). This is the form
   -- consumed by `Eternalᵒ.necᵉ-δ` and `Preservation.Step.box-split`.
 

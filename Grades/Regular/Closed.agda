@@ -4,8 +4,8 @@
 -- Given a preorder `R` on letters, a language is closed when it      --
 -- holds every word lying letter by letter below one of its words.    --
 -- Closed languages are closed under the operations of the regular    --
--- grade -- concatenation, union, iteration, the empty word and the   --
--- set of all words -- so they form a sub-grade of it, ordered by     --
+-- grade (concatenation, union, iteration, the empty word and the     --
+-- set of all words), so they form a sub-grade of it, ordered by      --
 -- inclusion, once a monoid morphism from durations is chosen among   --
 -- them. The literal of a language is its downward closure. Its       --
 -- hints declare Kleene's plus for every grade.                       --

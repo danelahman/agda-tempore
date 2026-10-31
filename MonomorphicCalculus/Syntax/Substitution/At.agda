@@ -2,8 +2,8 @@
 -- Substituting at the prefix boundary.                                --
 --                                                                     --
 -- Replacing the entry sitting between `Γ'` and a suffix `Θ` by a      --
--- value over `Γ'`, presenting the result over `Γ' ++ᶜ Θ`. This is the --
--- form every consumer of substitution actually uses: the one          --
+-- value over `Γ'`, presenting the result over `Γ' ++ᶜ Θ`: the form    --
+-- every consumer of substitution uses, and the one                    --
 -- substitution operator at the splitting `split-≡-++ᶜ`.               --
 -------------------------------------------------------------------------
 

@@ -2,9 +2,9 @@
 -- (Left) one-sided intervals of dense time, the end open or closed,  --
 -- as grades.                                                         --
 --                                                                    --
--- A grade is a lower cut of the non-negative rationals: `≥ p`, "at   --
--- least `p` time units", or `> p`, "more than `p`" -- the interval   --
--- `⟨ l , ∞ ⟩` of `Durations.Intervals` with lower end `l`. The order --
+-- A grade is a lower cut of the non-negative rationals, the interval --
+-- `⟨ l , ∞ ⟩` of `Durations.Intervals` with lower end `l`: `≥ p`,    --
+-- "at least `p` time units", or `> p`, "more than `p`". The order    --
 -- is containment of the durations admitted, so `> p` lies below      --
 -- `≥ p` and a larger bound below a smaller one; sequencing adds the  --
 -- bounds, the sum strict when a bound summed is; the join is the     --

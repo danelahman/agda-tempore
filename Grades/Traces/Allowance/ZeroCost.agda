@@ -4,8 +4,7 @@
 --                                                                    --
 -- `Traces.Allowance` is parameterised by `costʰⁱ` alone, but         --
 -- `Allowance.Antisym` and `Allowance.AsOrder` ask in addition that   --
--- every operation cost something. This module says what that rules   --
--- out.                                                               --
+-- every operation cost something.                                    --
 --                                                                    --
 -- At an operation `o` with `costʰⁱ o ≡ 0`, the bound `ε` permits the --
 -- run `⌈ o ⌉`: `use-op` pays for the operation out of an empty       --
@@ -15,8 +14,7 @@
 -- distinct traces permit each other, so `≼-antisym` is false too.    --
 -- `FreeOperation` exhibits each as a checked term.                   --
 --                                                                    --
--- The claim is about this cost model and no more: it is positivity   --
--- of `costʰⁱ` that is at stake, not the allowance order itself, and  --
+-- The failure is one of the cost model, not of the allowance order:  --
 -- at a positive cost model `Allowance.Antisym` and                   --
 -- `Allowance.Duration` supply both fields.                           --
 ------------------------------------------------------------------------
@@ -42,7 +40,7 @@ open import Grades.Traces.Allowance T Op costʰⁱ
 ------------------------------------------------------------------------
 -- What a free operation permits
 --
--- One operation costing nothing is enough to exhibit the failure.
+-- One operation costing nothing suffices.
 
 module FreeOperation (o : Op) (free : costʰⁱ o ≡ 0ᴰ) where
 

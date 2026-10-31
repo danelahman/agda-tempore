@@ -2,8 +2,8 @@
 -- Graded reachability: the frame the logical relation is indexed by. --
 --                                                                    --
 -- Kripke over an accessibility that carries a grade budget: an       --
--- extension together with the bound licensing the lock it crossed    --
--- — rather than over `≤ₛ` alone, since reindexing along `≤ₛ` is not  --
+-- extension together with the bound licensing the lock it crossed,   --
+-- rather than over `≤ₛ` alone, since reindexing along `≤ₛ` is not    --
 -- free weakening.                                                    --
 ------------------------------------------------------------------------
 
@@ -42,8 +42,8 @@ open import MonomorphicCalculus.Syntax.Substitution.Action       Spec
 open import MonomorphicCalculus.Syntax.Substitution.Laws         Spec
 open import MonomorphicCalculus.Syntax.Substitution.Subsumption  Spec
 
--- `St ⊑ₛ[ ρ ] St'` — `St'` is reachable from `St` on the budget `ρ`: the grade
--- the extension accumulated stays below `ρ`. The `ₛ` marks it as refining the
+-- `St ⊑ₛ[ ρ ] St'`: `St'` is reachable from `St` on the budget `ρ`, the grade
+-- the extension accumulated staying below `ρ`. The `ₛ` marks it as refining the
 -- state extension `≤ₛ`.
 
 infix 4 _⊑ₛ[_]_
@@ -91,7 +91,7 @@ reach-under q = C-rename (cong-∷-ren (reach-renᵘ q))
 
 -- Resuming a continuation guarded by `ρ` at a state where `ρ` has elapsed:
 -- cross the lock along the reach, then feed it the arity value. The reach is the
--- one `unbox` consumes, because that is how a resumption is reached — `HANDLE-OP`
+-- one `unbox` consumes, because that is how a resumption is reached: `HANDLE-OP`
 -- boxes it at `ρ` and the clause unboxes it once `ρ` has passed.
 
 resume : ∀ {St St' ρ A ε B}
@@ -219,7 +219,7 @@ suc-comp-ren-≤ (∷-suc V q) b b₁ p =
                 (≐ʳ-sym (∘ʳ-assoc-≐ʳ (suc-comp-ren q _) (cong-⟨⟩-ren wk-ren)
                                     (⟨⟩-≤-ren p)))))
 
--- Relaxing the *source* grade is pre-composing with a relaxation (the mirror of
+-- Relaxing the source grade is pre-composing with a relaxation (the mirror of
 -- `suc-comp-ren-≤`, which relaxes the residual one).
 
 suc-comp-ren-≤ˡ : ∀ {St St₁ : 𝕊 []} {ρ₀ ρ₁ ρ₂ : R} → (e : St ≤ₛ St₁)
@@ -253,7 +253,7 @@ suc-comp-ren-∘-≐ʳ : ∀ {St St₁ St₂ : 𝕊 []} {ρ₀ ρ₁ ρ₂ : R}
                  → suc-comp-ren (≤ₛ-trans e e') b
                  ≐ʳ (suc-comp-ren e b₁ ∘ʳ suc-comp-ren e' b₂)
 
--- `≤ₛ-trans e id-suc` *is* `e`, so the composite is `e` at a relaxed grade
+-- `≤ₛ-trans e id-suc` is `e`, so the composite is `e` at a relaxed grade
 suc-comp-ren-∘-≐ʳ {ρ₂ = ρ₂} e id-suc b b₁ b₂ =
   suc-comp-ren-≤ e b b₁
     (≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-identityˡ ρ₂)) b₂)
@@ -554,7 +554,7 @@ suc-comp-ren-grade : ∀ {St St₁ : 𝕊 []} {ρ'' ρ₁ ρ₂ : R} → (e : St
 suc-comp-ren-grade e refl b₁ b₂ =
   ≐ʳ-trans (∘ʳ-identityʳ-≐ʳ (suc-comp-ren e b₁)) (suc-comp-ren-irr e b₁ b₂)
 
--- The same on the *source* side: an extension started at a propositionally
+-- The same on the source side: an extension started at a propositionally
 -- equal guard is the same renaming, `eq-ren` being the identity there.
 
 suc-comp-ren-grade-src : ∀ {St St₁ : 𝕊 []} {ρ₁ ρ₂ ρ₃ : R} → (e : St ≤ₛ St₁)
@@ -649,7 +649,7 @@ unbox-ren-unit q p = mk≐ʳ go
                          (proj₂ (var-img ⟨⟩-η⁻¹-ren x))))
 
 -- Two reaches whose renamings are identity-like: the unit reach at a state, and
--- the reach a `DELAY` takes (whose target context *is* the source under the
+-- the reach a `DELAY` takes (whose target context is the source under the
 -- lock). Both are needed to recognise a reduct as the action of an environment.
 
 -- Both are `≤ₛ-embed` of the identity extension, which is the identity: a
@@ -777,7 +777,7 @@ lookup-body-≡ St refl rel rel' =
 ≤ₛ-ctx-toCtx (⟨⟩-suc ρ e) = cong (_⟨ ρ ⟩) (≤ₛ-ctx-toCtx e)
 ≤ₛ-ctx-toCtx (∷-suc V e)  = cong (_∷ _) (≤ₛ-ctx-toCtx e)
 
--- So an extension's embedding *is* the push under the context it adds.
+-- So an extension's embedding is the push under the context it adds.
 
 ≤ₛ-embed-push : ∀ {A ρ} {St₀ St₂ : 𝕊 []} → (e : St₀ ≤ₛ St₂)
               → (y : A ∈[ ρ ] toCtx St₀)
@@ -798,7 +798,7 @@ lookup-body-≡ St refl rel rel' =
                          (sym (≤ₛ-ctx-toCtx (∷-suc V e))) _))
 
 -- Looking up, at whatever state the run has reached, the cell `BOX` just
--- allocated returns the value that was stored — renamed.
+-- allocated returns the stored value, renamed.
 
 -- Transporting a stored value along an equality of the states it was split off
 -- at is transporting it along the contexts.
@@ -892,7 +892,7 @@ alloc-lookup-≡ {A} {ρ} {St} {St'} V e rel q₀ eq₀ =
                       (subst-state-castᵛ
                          (sym (≤ₛ-embed-fst e (Hd {Γ = toCtx St}))) V))
 
--- `St [ c ]⊑ᶜ St'`: an extension under which the cell `c` has ripened —
+-- `St [ c ]⊑ᶜ St'`: an extension under which the cell `c` has ripened:
 -- enough grade has accumulated at `c`'s own position for its `ρ`-box to be
 -- read.
 

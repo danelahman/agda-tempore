@@ -46,9 +46,6 @@ witnesses L M = record
   ; bound = size L ℕ.* size M
   }
 
--- Prototype: the same search runs on derivatives of the two terms in
--- place of table rows, and finds the same counterexample.
-
 -- the first discovered pair holding a counterexample, whose word is
 -- then a shortest one
 

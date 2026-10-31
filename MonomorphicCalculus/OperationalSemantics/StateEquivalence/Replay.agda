@@ -118,7 +118,7 @@ unbox-ren-≐ˢ {ρ} es es₂ {q} {q'} h =
 
 -- The form the Kripke clauses use. A clause transported along `_≐ˢ_` moves its
 -- boxed value to the other state too, so the renaming consulted there is
--- precomposed with that context equality — which cancels against the source
+-- precomposed with that context equality, which cancels against the source
 -- cast the bridge introduces.
 
 castʳ²-cancel : ∀ {Γ Γ' Δ Δ' ρ} → (a : Γ ≡ Γ') → (b : Δ ≡ Δ')

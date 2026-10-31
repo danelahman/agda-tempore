@@ -107,7 +107,7 @@ subC-if {Γ} {C} {C'} w V M N =
 
 
 -- Function application: the domain half of the witness lands on the
--- argument, the codomain half outside — the `SUB-APP` reduction rule,
+-- argument, the codomain half outside: the `SUB-APP` reduction rule,
 -- read as an equation.
 
 subV-app : ∀ {Γ A A' C C'}
@@ -172,7 +172,7 @@ coerce-ε-≃ {A = A} e e' c c' M =
 
 -- Returning: expand the subsumed `return` by the sequencing eta rule, move
 -- the subsumption onto the trailing binder, and collapse the bind. Only the
--- value half enters — the effect half has nowhere to go, `return`'s effect
+-- value half enters; the effect half has nowhere to go, `return`'s effect
 -- being the unit.
 
 subC-return : ∀ {Γ A A' ε'}

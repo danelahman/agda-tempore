@@ -71,7 +71,7 @@ castʳ² : ∀ {Γ₁ Γ₂ Γ₁' Γ₂'} → Γ₁' ≡ Γ₁ → Γ₂' ≡ �
 castʳ² refl refl r = r
 
 -- The three renamings `suc-comp-ren` is built from, each compared across a cast.
--- Provable because here the contexts are *variables*, so the equalities can be
+-- Provable because the contexts are variables, so the equalities can be
 -- matched; the lemmas are then applied at `toCtx`-equalities.
 
 castʳ²-∘ʳ : ∀ {Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃'}
@@ -204,7 +204,7 @@ suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ'''}
   rewrite subst-Tl-∷ {B = [ ρ₁ ] A₁} (toCtx-≐ˢ es) z =
   cong (_∷ [ ρ₁ ] A₁) (≐ˢ-snd-ctx es z)
 
--- The same, presented at the `St'`-side cell the caller actually has.
+-- The same, presented at the `St'`-side cell the caller has.
 
 ≐ˢ-fst₂ : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
         → (z : [ ρ ] A ∈[ σ ] toCtx St) → (z' : [ ρ ] A ∈[ σ ] toCtx St')

@@ -4,8 +4,8 @@
 --                                                                    --
 -- A timed trace records one run of a computation as it is observed   --
 -- from outside: an alternation of delays and operations. The toolkit --
--- supplies non-empty finite *sets* of such traces -- the runs a      --
--- computation may have -- with the language product, the orders on   --
+-- supplies non-empty finite sets of such traces, the runs a          --
+-- computation may have, with the language product, the orders on     --
 -- traces, and the antichain normal forms a set is cut down to under  --
 -- an order. The `Timed.*` and `Subsets.*` grades of                  --
 -- `Grades.Examples.Traces` are built on these sets, each with its    --
@@ -14,9 +14,9 @@
 -- cap is sets with an added greatest point. The regular and rigid    --
 -- grades are represented by automata and expressions.                --
 --                                                                    --
--- Nothing in this module is itself a grade. This module is only an   --
--- index -- everything is parameterised by the alphabet `Op`, and the --
--- trace layer also by the time domain of its delays, so it lists the --
+-- Nothing here is itself a grade. The module is only an index:       --
+-- everything is parameterised by the alphabet `Op`, and the trace    --
+-- layer also by the time domain of its delays, so it lists the       --
 -- pieces rather than re-exporting them.                              --
 ------------------------------------------------------------------------
 
@@ -25,8 +25,8 @@ module Grades.Traces where
 ------------------------------------------------------------------------
 -- Traces and sets of traces
 
--- Strictly positive durations of a time domain, which is what a delay
--- carries. Alphabet independent, so it stands alone.
+-- Strictly positive durations of a time domain, which a delay carries;
+-- independent of the alphabet.
 
 import Grades.Traces.Positive
 
@@ -75,8 +75,7 @@ import Grades.Traces.MinDuration
 --
 -- The interface the grades take their order from, in two layers: the
 -- order-theoretic half, which the converse also meets, and the facts
--- about the unit on top of it. It mentions no particular order, so
--- each order below meets the interface once and inherits the whole
+-- about the unit. Each order below meets it once and inherits the
 -- set-level construction with all its laws.
 
 import Grades.Traces.Order
@@ -122,9 +121,9 @@ import Grades.Traces.Allowance
 
 import Grades.Traces.Allowance.Antisym
 
--- And the checked negative that makes that hypothesis necessary: at a
--- cost model with a free operation, the empty bound permits a run
--- different from itself, so `≼-ε-inv` and `≼-antisym` both fail.
+-- That this is needed, checked: at a cost model with a free operation,
+-- the empty bound permits a run different from itself, so `≼-ε-inv`
+-- and `≼-antisym` both fail.
 
 import Grades.Traces.Allowance.ZeroCost
 
@@ -138,8 +137,8 @@ import Grades.Traces.Allowance.AsOrder
 -- Covering a guarantee
 --
 -- The coverage order: when a run covers a trace. Every operation the
--- trace names must genuinely occur in the run, in order -- time never
--- buys one -- and every delay it names is met by what the run does
+-- trace names must occur in the run, in order, never bought with time,
+-- and every delay it names is met by what the run does
 -- between the same two operations it names. Slack does not cross a
 -- named operation, so a demand for time is met only where it is placed.
 --
@@ -152,10 +151,9 @@ import Grades.Traces.Coverage
 
 import Grades.Traces.Coverage.Antisym
 
--- Its interface instance. Unlike the allowance order this needs no
--- assumption about `costˡᵒ`: an operation is never bought here, at any
--- price, so a spent run covers nothing but the empty guarantee
--- outright, and covers it antisymmetrically at any cost model.
+-- Its interface instance, which needs no assumption about `costˡᵒ`: an
+-- operation is never bought, so at any cost model the order is
+-- antisymmetric and a spent run covers only the empty guarantee.
 
 import Grades.Traces.Coverage.AsOrder
 

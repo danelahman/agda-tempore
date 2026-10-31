@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
 -- The categorical structure of renamings.                            --
 --                                                                    --
--- `Ren` is freely generated — `id-ren` and `_∘ʳ_` are constructors — --
+-- `Ren` is freely generated (`id-ren` and `_∘ʳ_` are constructors),  --
 -- so it is a graph, and `_≐ʳ_` is the quotient that makes it a       --
--- category. This module names that structure and the two functors    --
--- acting on it, so that the laws elsewhere can be read as instances  --
--- rather than as separate facts.                                     --
+-- category. Naming that structure and the two functors acting on it  --
+-- lets the laws elsewhere be read as instances rather than as        --
+-- separate facts.                                                    --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -40,7 +40,7 @@ open import MonomorphicCalculus.Syntax.Terms.Equivalence     Spec
 --
 --   `∘ʳ-assoc-≐ʳ`, `∘ʳ-identityˡ-≐ʳ`, `∘ʳ-identityʳ-≐ʳ`   (Equivalence)
 --
--- `∘ʳ-≐ʳ` is composition's congruence, i.e. `_≐ʳ_` is a congruence for the
+-- `∘ʳ-≐ʳ` is composition's congruence: `_≐ʳ_` is a congruence for the
 -- category structure. `var-img` is the faithful functor into the presheaf
 -- of variables that defines the quotient.
 
@@ -51,11 +51,11 @@ open import MonomorphicCalculus.Syntax.Terms.Equivalence     Spec
 --
 -- Only two constructors read `Ξ`: `var-ren`, whose variable ranges over
 -- `Ξ ⋈ᶜ Δ` (the ambient may be read, never rewritten), and `⟨⟩-ext-ctx`,
--- which also demands `EternalCtx Ξ` — the lock-introducing map exists only
+-- which also demands `EternalCtx Ξ`: the lock-introducing map exists only
 -- over an eternal ambient.
 
 -- Forgetting what a renaming fixes is the projection to the fibre over the
--- empty ambient. It is a functor *on the nose*: `expose-ren` sends `id-ren`
+-- empty ambient. It is a functor on the nose: `expose-ren` sends `id-ren`
 -- to `id-ren` and `_∘ʳ_` to `_∘ʳ_` by definition, so no quotient is needed.
 
 expose-ren-[]-id : ∀ {Ξ Δ} → expose-ren-[] {Ξ} {Δ} id-ren ≡ id-ren
@@ -69,8 +69,8 @@ expose-ren-[]-∘ r₂ r₁ = refl
 
 -- Extending the ambient on the left is the reindexing functor of the
 -- indexing, and likewise strictly functorial. Its `EternalCtx` premise is
--- the obligation `⟨⟩-ext-ctx` incurs: the prefix, now standing to the left
--- of the lock, must be eternal too.
+-- the obligation `⟨⟩-ext-ctx` incurs: the prefix, which then stands to the
+-- left of the lock, must be eternal too.
 
 cong-renˡ-id : ∀ {Ξ Δ} → (Γ'' : Ctx) → (ec : EternalCtx Γ'')
              → cong-renˡ {Ξ} {Δ} Γ'' ec id-ren ≡ id-ren
@@ -82,7 +82,7 @@ cong-renˡ-∘ : ∀ {Ξ Δ Δ' Δ''} → (Γ'' : Ctx) → (ec : EternalCtx Γ''
             ≡ cong-renˡ Γ'' ec r₂ ∘ʳ cong-renˡ Γ'' ec r₁
 cong-renˡ-∘ Γ'' ec r₂ r₁ = refl
 
--- Extending the *local* part on the right is the action of contexts on each
+-- Extending the local part on the right is the action of contexts on each
 -- fibre. Unlike the two above it is functorial only up to `_≐ʳ_`, since
 -- `cong-ren` recurses on the suffix and so does not commute with `_∘ʳ_` on
 -- the nose: that is `cong-ren-∘-≐ʳ` and `cong-ren-id-≐ʳ` (Coherence).

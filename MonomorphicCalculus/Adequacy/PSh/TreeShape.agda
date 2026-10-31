@@ -140,7 +140,7 @@ mutual
   head0-≈ᵗ sub-delay    (h-sub (h-delay z h)) = h-delay z (h-sub h)
   head0-≈ᵗ sub-op       (h-sub h-op)        = h-op
 
-  -- a zero delay *is* its own continuation, at the only zero-step there is
+  -- a zero delay is its own continuation, at the only zero-step there is
   head0-≈ᵗ (delay-zero {k = k} {q₀ = q₀} e) (h-delay z h) =
     h-sub (head0-⊑ k _ q₀ h)
 

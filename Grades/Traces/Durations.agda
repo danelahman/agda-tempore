@@ -24,8 +24,8 @@ open import Grades.Durations.Monus T
 ------------------------------------------------------------------------
 -- Durations relative to a fixed cost on operation symbols
 --
--- The development below is parameterised by the map `c` assigning to
--- each operation symbol its cost (its contribution to a duration).
+-- Parameterised by the map `c` assigning each operation symbol its
+-- cost, its contribution to a duration.
 
 module Durations (c : Op → Carrier) where
 

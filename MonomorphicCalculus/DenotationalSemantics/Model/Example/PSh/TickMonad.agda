@@ -140,7 +140,7 @@ infix 4 _≈ᵏ_
 sub-congᵏ : ∀ {A ε ε' w} {e : ε ≾ₑ ε'} {t t' : Tᵏˢ A ε w} → t ≈ᵏ t' → sub e t ≈ᵏ sub e t'
 sub-congᵏ = sub-≈
 
--- `sub-u`/`sub-∘` at *any* witnesses of the required orderings; the
+-- `sub-u`/`sub-∘` at any witnesses of the required orderings; the
 -- constructors are stated at `≾ₑ-refl`/`≾ₑ-trans`, and sub-effecting witnesses
 -- are proof-irrelevant.
 
@@ -205,7 +205,7 @@ tick-irrᵏ : ∀ {A ε w} {δ : E}
           → tick-node δ k kn ≈ᵏ tick-node δ k kn'
 tick-irrᵏ k kn kn' = tick-≈ (λ q → ≈ᵏ-refl (k q))
 
--- `tick-·` when the inner node sits under a sub-effecting node — the shape the
+-- `tick-·` when the inner node sits under a sub-effecting node: the shape the
 -- structural recursions produce, with every witness explicit.
 
 tick-·-out :

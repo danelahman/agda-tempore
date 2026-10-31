@@ -56,7 +56,7 @@ subC-≡ : ∀ {Γ C C'} {p p' : C <:ᶜ C'} {M M' : Γ ⊢C⦂ C}
 subC-≡ {p = p} {p' = p'} {M = M} refl =
   cong (subC M) (<:ᶜ-irrelevant p p')
 
--- `unbox` is compared at the *resource variable* it names, together with the
+-- `unbox` is compared at the resource variable it names, together with the
 -- declared box type that variable stands at; the grade bound and the payload
 -- subsumption it stores alongside are irrelevant.
 

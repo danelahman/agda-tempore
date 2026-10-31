@@ -3,7 +3,7 @@
 -- elapsed time.                                                      --
 --                                                                    --
 -- The mirror image of the left-sided grade: `[0, m ] ≾ [0, n ]` is   --
--- `m ≤ n`, so the *smaller* bound is the stronger claim. Weakening   --
+-- `m ≤ n`, so the smaller bound is the stronger claim. Weakening     --
 -- relaxes a budget.                                                  --
 --                                                                    --
 -- The `uplink` run of the sensor node (read, idle two ticks, send)   --
@@ -36,8 +36,8 @@ rsi-no-tighten = ≰!
 rsi-seq : [0, ↑ 1 ] ·ʳ [0, ↑ 8 ] ≡ [0, ↑ 9 ]
 rsi-seq = refl
 
--- here the unit is the *smallest* grade: "at most 0 ticks" is the
--- strongest budget there is
+-- the unit is the least grade: "at most 0 ticks" is the strongest
+-- budget there is
 
 rsi-unit : uʳ ≡ [0, ↑ 0 ]
 rsi-unit = refl

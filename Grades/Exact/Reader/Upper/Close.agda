@@ -6,8 +6,8 @@
 -- end is closed past every sum the run could compare against it, and  --
 -- an open end close enough below itself that every comparison the     --
 -- run could make keeps its outcome. The comparisons are finitely      --
--- many -- the sums of infixes of the run against the sums of          --
--- subsequences of the bounds -- and density supplies the closed ends. --
+-- many (the sums of infixes of the run against the sums of            --
+-- subsequences of the bounds), and density supplies the closed ends.  --
 -------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)

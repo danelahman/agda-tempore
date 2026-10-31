@@ -61,7 +61,7 @@ open import MonomorphicCalculus.OperationalSemantics.Soundness.Preservation.Unbo
 
 open import MonomorphicCalculus.EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
 
--- The certificates a computation term context carries, i.e. those of every
+-- The certificates a computation term context carries: those of every
 -- sub-term other than the hole.
 
 Paramᵏ : ∀ {Γ f CH C} → Γ ⊢K[ f ◁ CH ]⦂ C → Set

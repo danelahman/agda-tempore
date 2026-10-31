@@ -130,7 +130,7 @@ module _ (≾ᵣ-antisym : ∀ {c d} → c ≾ᵣ d → d ≾ᵣ c → c ≡ d)
 
   <:ᶜ-antisym (p ‼ₛ r) (q ‼ₛ s) = cong₂ _‼_ (<:ᵛ-antisym p q) (≾ₑ-antisym r s)
 
--- Subtyping is a *property* of a pair of types: any two witnesses
+-- Subtyping is a property of a pair of types: any two witnesses
 -- coincide, by irrelevance of the grade orderings and UIP at `Base`.
 
 <:ᵛ-irrelevant : ∀ {A B} → (p q : A <:ᵛ B) → p ≡ q
@@ -156,9 +156,9 @@ module _ (≾ᵣ-antisym : ∀ {c d} → c ≾ᵣ d → d ≾ᵣ c → c ≡ d)
 <:ᶜ-irrelevant (p ‼ₛ r) (q ‼ₛ s) =
   cong₂ _‼ₛ_ (<:ᵛ-irrelevant p q) (≾ₑ-irrelevant r s)
 
--- Eternality lives on the shared skeleton — `Eternal` has no `_⇒_`, `_⇛_`
--- or `[_]_` clause, and the only grade it could see is a box's — so it
--- transfers along `_<:ᵛ_` in both directions.
+-- Eternality lives on the shared skeleton (`Eternal` has no `_⇒_`, `_⇛_` or
+-- `[_]_` clause, and the only grade it could see is a box's), so it transfers
+-- along `_<:ᵛ_` in both directions.
 
 <:ᵛ-eternalˡ : ∀ {A B} → A <:ᵛ B → Eternal B → Eternal A
 <:ᵛ-eternalˡ (Baseₛ refl) et          = et
@@ -182,26 +182,25 @@ module _ (≾ᵣ-antisym : ∀ {c d} → c ≾ᵣ d → d ≾ᵣ c → c ≡ d)
 
 
 -------------------------------------------------------------------
--- Least upper bounds of value and computation types              --
---                                                                --
--- `A₁ ⊔ᵛ A₂ ≡ A` says that `A` is a least upper bound of `A₁`    --
--- and `A₂` for `_<:ᵛ_`. A ternary inductive family in the same   --
--- style as `_<:ᵛ_`: one constructor per matching pair of type    --
--- formers, so mismatched shapes are uninhabited and the joined   --
--- type is read off structurally.                                 --
---                                                                --
--- The relation is partial, and deliberately so: a function's     --
--- domain, a handler's handled computation and a box's grade are  --
--- contravariant, so joining them would ask for *meets* of types  --
--- and of grades, neither of which is available. Those positions  --
--- are therefore pinned — one shared domain, one shared grade —   --
--- and the only component genuinely joined is a computation's     --
--- effect, where `_⊔ₑ_` always exists.                            --
---                                                                --
--- The constructors and their premises are instances: the         --
--- relation is syntax-directed on its two input types, so a       --
--- witness is found by instance search and reads as a side        --
--- condition on a rule rather than as a premise of it.            --
+-- Least upper bounds of value and computation types             --
+--                                                               --
+-- `A₁ ⊔ᵛ A₂ ≡ A` says that `A` is a least upper bound of `A₁`   --
+-- and `A₂` for `_<:ᵛ_`. A ternary inductive family in the same  --
+-- style as `_<:ᵛ_`: one constructor per matching pair of type   --
+-- formers, so mismatched shapes are uninhabited and the joined  --
+-- type is read off structurally.                                --
+--                                                               --
+-- The relation is partial: a function's domain, a handler's     --
+-- handled computation and a box's grade are contravariant, so   --
+-- joining them would ask for meets of types and of grades,      --
+-- which are not available. Those positions are pinned to one    --
+-- shared domain and one shared grade, and only a computation's  --
+-- effect is joined, where `_⊔ₑ_` always exists.                 --
+--                                                               --
+-- The constructors and their premises are instances: the        --
+-- relation is syntax-directed on its two input types, so a      --
+-- witness is found by instance search and reads as a side       --
+-- condition on a rule rather than as a premise of it.           --
 -------------------------------------------------------------------
 
 infix 4 _⊔ᵛ_≡_ _⊔ᶜ_≡_

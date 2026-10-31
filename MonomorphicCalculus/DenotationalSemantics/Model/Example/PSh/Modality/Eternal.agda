@@ -5,9 +5,9 @@
 -- world, with identity transport. Being world-independent, its value    --
 -- can be necessitated into, and extracted from, the box / context       --
 -- modality at any grade, so `Kᵖ S` carries an `Eternalᵒ` structure      --
--- (`Kᵖ-eternalᵒ`). This is what interprets the eternal *base* types.    --
+-- (`Kᵖ-eternalᵒ`). This interprets the eternal base types.              --
 --                                                                       --
--- The eternal *type formers* are handled by the closure lemmas:         --
+-- The eternal type formers are handled by the closure lemmas:           --
 -- `𝟙ᵖ-eternalᵒ` (Unit), `𝔹ᵖ-eternalᵒ` (Bool), `ℕᵖ-eternalᵒ` (Nat),      --
 -- `𝟘ᵖ-eternalᵒ` (Empty), `×ᵖ-eternalᵒ` (products), `+ᵖ-eternalᵒ` (sums) --
 -- and `Listᵖ-eternalᵒ` (lists), for any eternal objects. Together they  --
@@ -116,7 +116,7 @@ Kᵖ-eternalᵒ S = record
   ; α-assoc = λ ()
   }
 
--- Closure: the boolean object. `𝔹ᵖ` *is* the constant presheaf on the
+-- Closure: the boolean object. `𝔹ᵖ` is the constant presheaf on the
 -- booleans, so its eternal structure is `Kᵖ-eternalᵒ` at that setoid.
 
 𝔹ᵖ-eternalᵒ : Eternalᵒ 𝔹ᵖ

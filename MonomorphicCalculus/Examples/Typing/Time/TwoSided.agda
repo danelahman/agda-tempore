@@ -245,7 +245,7 @@ either-way =
 -- Unboxing under a branch
 --
 -- Against the window `[ 0 , 8 ]`, a reading is inside it and so is a
--- transmission, so both branches may claim the resource -- and neither
+-- transmission, so both branches may claim the resource, and neither
 -- meets an endpoint exactly.
 
 claimed-in-both-branches : [] ⊢C⦂ Unit ‼ [ 5 , 12 ]
@@ -268,7 +268,7 @@ claimed-in-both-branches =
 -- Sub-effecting against unboxing
 --
 -- Sequencing locks its continuation by the grade the first part is
--- *typed at*, so a `coerce` there changes the lock, and here it moves
+-- typed at, so a `coerce` there changes the lock, and here it moves
 -- both endpoints and can close a box from either side. Below it is the
 -- floor that gives way.
 

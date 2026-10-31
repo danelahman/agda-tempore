@@ -9,8 +9,8 @@
 -- reading and at most six units of anything after it. A box at this  --
 -- grade may be unboxed after a reading and a wait of one unit; after --
 -- a reading and a transmission instead it may not, the transmission  --
--- filling the wait the guarantee demands -- though it stays within   --
--- the bound, and within a guarantee asking only for a unit of        --
+-- filling the wait the guarantee demands, though it stays within     --
+-- the bound and within a guarantee asking only for a unit of         --
 -- anything.                                                          --
 --                                                                    --
 -- Reading takes more than a quarter and at most half a unit, writing --

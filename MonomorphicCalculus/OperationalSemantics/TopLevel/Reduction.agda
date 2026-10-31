@@ -24,8 +24,8 @@ open import MonomorphicCalculus.Syntax.Substitution    S
 open import MonomorphicCalculus.Syntax.Types           S
 
 
--- Top-level small-step operational semantics aka Preservation theorem,
--- using the pure semantics of algebraic operations.
+-- Top-level small-step operational semantics, using the pure semantics
+-- of algebraic operations; being typed, it is also preservation.
 
 module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
 
@@ -60,9 +60,9 @@ module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
          → {cf₁ : Config (A ‼ ε₁)} → {cf₂ : Config (B ‼ ε₂)} → {cf₃ : Config (C ‼ ε₃)}
          → cf₁ ⟿ cf₂ → cf₂ ⟿* cf₃ → cf₁ ⟿* cf₃
 
-  -- invariants preserved by the top-level small-step operational semantics
-  -- in particular, running a top-level implementation of an algebraic operation
-  -- results in an equality S' · ε' ≡ S · ε
+  -- invariants preserved by the top-level small-step operational semantics;
+  -- running a top-level implementation of an algebraic operation gives an
+  -- equality S' · ε' ≡ S · ε
   
   top-level-step-invariants : ∀ {A B ε ε'}
                             → {S S' : 𝕊 []}

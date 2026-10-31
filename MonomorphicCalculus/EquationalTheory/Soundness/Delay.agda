@@ -61,7 +61,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.RenamingCoh
 open import MonomorphicCalculus.EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
 open import MonomorphicCalculus.EquationalTheory.Soundness.Seq S Cat Fut Pst Adj GTy Mon GE using (εᵇ-η⊣-u)
 
--- `delay 0ᴰ M` is `M` with its (now unit-graded) lock discarded.
+-- `delay 0ᴰ M` is `M` with its lock, unit-graded at `0ᴰ`, discarded.
 
 sound-delay-zero : ∀ {Γ A ε} → (M : Γ ⟨ of-durʳ 0ᴰ ⟩ ⊢C⦂ A ‼ ε)
                  → Soundᶜ== (delay-zero M)

@@ -59,7 +59,7 @@ mutual
     ε⁻         : Trace⁻
     operation⁻ : Op → Trace → Trace⁻
 
--- the pure delay of duration τ (a zero delay is just the empty trace)
+-- the pure delay of duration τ (a zero delay is the empty trace)
 
 delay-of : (τ : Carrier) → Dec (0ᴰ <ᴰ τ) → Trace
 delay-of τ (yes p) = delay (pos⁺ τ p) ε⁻

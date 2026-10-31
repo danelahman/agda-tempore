@@ -2,7 +2,7 @@
 -- The model-side interface: head faithfulness.                       --
 --                                                                    --
 -- The model must not identify distinct heads: no-confusion and       --
--- injectivity, at the composite shape `↝*-sound` produces — a head   --
+-- injectivity, at the composite shape `↝*-sound` produces: a head    --
 -- (`ηᵀ`-leaf or `opᵀ`-node) bound after a run's time transition.     --
 -- Transitions are restricted to the class `stepsᵀ` builds, which     --
 -- carries the run's tick total.                                      --
@@ -276,9 +276,9 @@ record HeadTimed : Set₂ where
                 ---------------------------------------------------------------------
                 → n₁ ≡ n₂
 
--- Faithfulness of the interpretation at the *answer* types: the base
+-- Faithfulness of the interpretation at the answer types: the base
 -- constants, an assumption on the `GroundTypes` parameter, and the two
--- booleans, one on `Cat`. Neither is a theorem — a model may collapse them.
+-- booleans, one on `Cat`. Neither is a theorem; a model may collapse them.
 
 record BaseFaithful : Set where
 

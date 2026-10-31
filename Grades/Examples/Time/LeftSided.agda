@@ -2,8 +2,8 @@
 -- (Left) one-sided (closed) intervals as grades.                     --
 --                                                                    --
 -- A grade `[ n ,+∞⟩` is a lower bound, "at least `n` time steps".    --
--- Multiplication adds the bounds and the order is the reverse of `≤` --
--- on them, and a *smaller* bound is the weaker grade.                --
+-- Multiplication adds the bounds, the order is the reverse of `≤`    --
+-- on them, and a smaller bound is the weaker grade.                  --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Time.LeftSided where

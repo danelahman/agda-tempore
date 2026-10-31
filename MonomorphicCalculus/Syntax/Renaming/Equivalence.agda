@@ -3,11 +3,11 @@
 --                                                                    --
 -- `Ren` is a free syntactic structure: `id-ren`, `_∘ʳ_` and the      --
 -- congruences are constructors, so composition is not associative    --
--- and `cong-ren` does not commute with it on the nose. What is true  --
--- is that renamings agreeing on variables act the same on terms.     --
+-- and `cong-ren` does not commute with it on the nose. Renamings     --
+-- agreeing on variables do act the same on terms.                    --
 --                                                                    --
 -- `_≐ʳ_` compares renamings by where a variable of the target comes  --
--- from — grade and position, not the grade-bound proof, which is     --
+-- from: grade and position, not the grade-bound proof, which is      --
 -- irrelevant.                                                        --
 ------------------------------------------------------------------------
 
@@ -58,7 +58,7 @@ Var-∷ (σ , y) = σ , Tl-∷ y
 Var-⟨⟩ : ∀ {Γ A} → (ρ : R) → Var Γ A → Var (Γ ⟨ ρ ⟩) A
 Var-⟨⟩ ρ (σ , y) = σ ·ᵣ ρ , Tl-⟨⟩ y
 
--- A *resource* variable's position carries the declared box type as well: a
+-- A resource variable's position carries the declared box type as well: a
 -- substitution may send it to an occurrence at a subtype of the one named.
 
 RVar : Ctx → Set
@@ -118,7 +118,7 @@ subst-sym-subst′ refl w = refl
 infix 4 _≐ʳ_
 
 -- A record, not a function type: the statements below are used at renamings
--- Agda has to *infer*, which needs the relation to be rigid.
+-- Agda has to infer, which needs the relation to be rigid.
 
 record _≐ʳ_ {Γ Γ'} (r r' : Ren [] Γ Γ') : Set where
   constructor mk≐ʳ
@@ -350,7 +350,7 @@ push-ren-img (Δ ∷ B)    p y = cong Var-∷ (push-ren-img Δ p y)
 push-ren-img (Δ ⟨ ρ' ⟩) p y =
   cong (Var-⟨⟩ ρ') (push-ren-img Δ (≾ᵣ-zero-productˡ p) y)
 
--- At a one-entry suffix it is the weakening, resp. the lock crossing — the two
+-- At a one-entry suffix it is the weakening, resp. the lock crossing: the two
 -- shapes the environment's telescope zones present.
 
 push-ren-∷ : ∀ {Γ₀ B} → (p : ctx-grade ([] ∷ B) ≾ᵣ uᵣ)
@@ -478,7 +478,7 @@ eternal?-no {A} ¬et with eternal? A
 
 -- A variable of a concatenation comes from one of the two parts.
 
--- The grade of a variable of the *right* part is unchanged: only that part's
+-- The grade of a variable of the right part is unchanged: only that part's
 -- locks stand to its right.
 
 ∈-++ᶜ-split : ∀ {A ρ} → (Δ₁ Δ₂ : Ctx) → A ∈[ ρ ] (Δ₁ ++ᶜ Δ₂)

@@ -107,7 +107,7 @@ no-budgeting = fails
 -- Conditional branching
 --
 -- The union of two grades is still their join, so a conditional is
--- graded by the two branches' runs listed together -- and by nothing
+-- graded by the two branches' runs listed together, and by nothing
 -- shorter, there being no bound that covers both by costing more.
 
 branching :
@@ -143,9 +143,8 @@ sampling-then-branching =
 -- Unboxing: a permit that names its runs
 --
 -- The permit below lists two runs: taking a reading, and idling two
--- ticks. A claim is allowed after either of them -- that is, when the
--- locks in between multiply to one of the two -- and after nothing
--- else.
+-- ticks. A claim is allowed after either of them (when the locks in
+-- between multiply to one of the two) and after nothing else.
 
 permit : R
 permit = permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆
@@ -286,8 +285,8 @@ reading-not-covered-by-the-idling = fails
 ------------------------------------------------------------------------
 -- Effect handling
 --
--- Handling locks its `in` part by the handled computation's grade,
--- exactly as sequencing does.
+-- Handling locks its `in` part by the handled computation's grade, as
+-- sequencing does.
 
 forwarded : [] ⊢C⦂ Reading ‼ permitting ⟅ ⌈ read ⌉ ⟆
 forwarded =

@@ -53,7 +53,7 @@ record Interval∞ : Set₀ where
   field
     min : ℚ≥0
     max : ℚ∞
-    -- min is smaller or equal than max
+    -- min is at most max
     {min≤max?} : True (↑ min ≤∞? max)
 
 open Interval∞ public

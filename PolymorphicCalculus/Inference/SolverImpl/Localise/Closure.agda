@@ -371,7 +371,7 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (P : Open O) (R : Resid Φ) where
           σ : Subst Φ Φ
           σ = sub tvar (λ k → rvar (Cʳ.target mr k)) (λ k → evar (Cᵉ.target me k))
 
-          -- a set of unknowns none that may move is in
+          -- a set of unknowns containing none that may move
           fixes : ∀ {W : Vars Φ} → (∀ k → Mvᵉ k → vᵉ W k ≡ false) → (∀ k → Mvʳ k → vʳ W k ≡ false)
                 → Fixes W σ
           fixes fe fr =
