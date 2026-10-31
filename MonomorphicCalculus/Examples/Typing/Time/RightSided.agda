@@ -76,7 +76,7 @@ open import MonomorphicCalculus.Examples.Typing.Core right-sided-intervals opTim
 open import Language.Comparisons using (Cmp; eq; ne; lt; le; gt; ge; less; equal; greater; holds)
 open import MonomorphicCalculus.Syntax.Data spec using (compareᵈ)
 open import MonomorphicCalculus.OperationalSemantics.State spec using (∅)
-open import MonomorphicCalculus.OperationalSemantics.Reduction           spec using (⟨_,_⟩; _↝_; CMP)
+open import MonomorphicCalculus.OperationalSemantics.Reduction           spec using (⟨_,_⟩; _⟶_; CMP)
 
 ------------------------------------------------------------------------
 -- Effectful computations
@@ -472,7 +472,7 @@ differ-of-less = refl
 -- data off the values
 
 two-below-three-reduces : ⟨ ∅ , cmp lt (numeralᵛ 2) (numeralᵛ 3) Natₑ ⟩
-                        ↝ ⟨ ∅ , return true ⟩
+                        ⟶ ⟨ ∅ , return true ⟩
 two-below-three-reduces = CMP
 
 ------------------------------------------------------------------------

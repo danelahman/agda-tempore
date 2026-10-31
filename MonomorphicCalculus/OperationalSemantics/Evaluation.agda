@@ -81,7 +81,7 @@ bool-val-canonical (subV V Boolₛ) = bool-val-canonical V
 
 step-ticks : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
-           → ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩
+           → ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩
            → 𝔻
 step-ticks APP                 = 0ᴰ
 step-ticks MATCH               = 0ᴰ
@@ -113,7 +113,7 @@ step-ticks RECL                = 0ᴰ
 step-ticks SUB                 = 0ᴰ
 
 ticks : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
-      → cf ↝* cf'
+      → cf ⟶* cf'
       → 𝔻
 ticks ε*       = 0ᴰ
 ticks (r ◅ rs) = step-ticks r +ᴰ ticks rs
@@ -126,7 +126,7 @@ record Ret-whnf {A : VType} {ε : E} (cf : Config (A ‼ ε)) : Set where
     state : 𝕊 []
     vtype : VType
     value : toCtx state ⊢V⦂ vtype
-    run   : cf ↝* ⟨ state , return value ⟩
+    run   : cf ⟶* ⟨ state , return value ⟩
 
 -- Evaluation to an unhandled operation, with its parameter and continuation.
 
@@ -140,7 +140,7 @@ record Op-whnf {A : VType} {ε : E} (cf : Config (A ‼ ε)) : Set where
     prm   : toCtx state ⊢V⦂ type-of-gtype (param oper)
     cont  : toCtx state ⟨ mapᵉ (op-grade oper) ⟩ ∷ type-of-gtype (arity oper)
               ⊢C⦂ vtype ‼ resid
-    run   : cf ↝* ⟨ state , perform oper prm cont ⟩
+    run   : cf ⟶* ⟨ state , perform oper prm cont ⟩
 
 data Halts {A : VType} {ε : E} (cf : Config (A ‼ ε)) : Set where
   halts-ret : Ret-whnf cf → Halts cf
@@ -164,7 +164,7 @@ Prog A ε = toCtx {[]} ∅ ⊢C⦂ A ‼ ε
 
 finality-ret : ∀ {A} {D : CType} {St : 𝕊 []}
              → {V : toCtx St ⊢V⦂ A} → {cf : Config D}
-             → ⟨ St , return V ⟩ ↝ cf
+             → ⟨ St , return V ⟩ ⟶ cf
              ------------------------
              → ⊥
 finality-ret ()
@@ -174,7 +174,7 @@ finality-perform : ∀ {A ε op} {D : CType} {St : 𝕊 []}
                  → {M : toCtx St ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
                           ⊢C⦂ A ‼ ε}
                  → {cf : Config D}
-                 → ⟨ St , perform op W M ⟩ ↝ cf
+                 → ⟨ St , perform op W M ⟩ ⟶ cf
                  -----------------------------
                  → ⊥
 finality-perform ()
@@ -185,7 +185,7 @@ finality-perform ()
 
 Step-from : ∀ {A ε} → (cf : Config (A ‼ ε)) → Set
 Step-from cf =
-  Σ[ A' ∈ VType ] Σ[ ε' ∈ E ] Σ[ cf' ∈ Config (A' ‼ ε') ] (cf ↝ cf')
+  Σ[ A' ∈ VType ] Σ[ ε' ∈ E ] Σ[ cf' ∈ Config (A' ‼ ε') ] (cf ⟶ cf')
 
 -- The two congruences, as maps on packed steps. The reducts are left to
 -- unification: they are whatever the rule builds out of the sub-step.
@@ -210,64 +210,64 @@ handle-step : ∀ {A B ε₁ ε₂} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ �
 handle-step N H (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) =
   _ , _ , _ , HANDLE-STEP r (step-grade-≾ r)
 
-↝-det : ∀ {A A₁ A₂ ε ε₁ ε₂} {cf : Config (A ‼ ε)}
+⟶-det : ∀ {A A₁ A₂ ε ε₁ ε₂} {cf : Config (A ‼ ε)}
       → {cf₁ : Config (A₁ ‼ ε₁)} → {cf₂ : Config (A₂ ‼ ε₂)}
-      → (r₁ : cf ↝ cf₁) → (r₂ : cf ↝ cf₂)
+      → (r₁ : cf ⟶ cf₁) → (r₂ : cf ⟶ cf₂)
       -----------------------------------------------------------
       → _≡_ {A = Step-from cf} (A₁ , ε₁ , cf₁ , r₁) (A₂ , ε₂ , cf₂ , r₂)
 
 -- the rules that fire on a determined term shape
-↝-det APP        APP        = refl
-↝-det MATCH      MATCH      = refl
-↝-det CMP        CMP        = refl
-↝-det IF-TRUE    IF-TRUE    = refl
-↝-det IF-FALSE   IF-FALSE   = refl
-↝-det CASE+      CASE+      = refl
-↝-det CASEℕ-ZERO CASEℕ-ZERO = refl
-↝-det CASEℕ-SUCC CASEℕ-SUCC = refl
-↝-det RECℕ-ZERO  RECℕ-ZERO  = refl
-↝-det RECℕ-SUCC  RECℕ-SUCC  = refl
-↝-det SEQ-RET    SEQ-RET    = refl
-↝-det SEQ-OP     SEQ-OP     = refl
-↝-det DELAY      DELAY      = refl
-↝-det HANDLE-RET HANDLE-RET = refl
-↝-det HANDLE-OP  HANDLE-OP  = refl
-↝-det BOX        BOX        = refl
-↝-det UNBOX      UNBOX      = refl
-↝-det SUB-APP    SUB-APP    = refl
-↝-det SUB-HANDLE SUB-HANDLE = refl
-↝-det SUB-HANDLE-TRANS SUB-HANDLE-TRANS = refl
-↝-det SUB-IF     SUB-IF     = refl
-↝-det SUB-CASEℕ  SUB-CASEℕ  = refl
-↝-det SUB-RECℕ   SUB-RECℕ   = refl
-↝-det CASEL      CASEL      = refl
-↝-det RECL       RECL       = refl
-↝-det SUB        SUB        = refl
+⟶-det APP        APP        = refl
+⟶-det MATCH      MATCH      = refl
+⟶-det CMP        CMP        = refl
+⟶-det IF-TRUE    IF-TRUE    = refl
+⟶-det IF-FALSE   IF-FALSE   = refl
+⟶-det CASE+      CASE+      = refl
+⟶-det CASEℕ-ZERO CASEℕ-ZERO = refl
+⟶-det CASEℕ-SUCC CASEℕ-SUCC = refl
+⟶-det RECℕ-ZERO  RECℕ-ZERO  = refl
+⟶-det RECℕ-SUCC  RECℕ-SUCC  = refl
+⟶-det SEQ-RET    SEQ-RET    = refl
+⟶-det SEQ-OP     SEQ-OP     = refl
+⟶-det DELAY      DELAY      = refl
+⟶-det HANDLE-RET HANDLE-RET = refl
+⟶-det HANDLE-OP  HANDLE-OP  = refl
+⟶-det BOX        BOX        = refl
+⟶-det UNBOX      UNBOX      = refl
+⟶-det SUB-APP    SUB-APP    = refl
+⟶-det SUB-HANDLE SUB-HANDLE = refl
+⟶-det SUB-HANDLE-TRANS SUB-HANDLE-TRANS = refl
+⟶-det SUB-IF     SUB-IF     = refl
+⟶-det SUB-CASEℕ  SUB-CASEℕ  = refl
+⟶-det SUB-RECℕ   SUB-RECℕ   = refl
+⟶-det CASEL      CASEL      = refl
+⟶-det RECL       RECL       = refl
+⟶-det SUB        SUB        = refl
 
 -- the congruences: normalise the grade premises (they are irrelevant), then
 -- rebuild both reducts from the sub-derivations' equality
-↝-det (SEQ-STEP {N = N} r p) (SEQ-STEP r' p')
+⟶-det (SEQ-STEP {N = N} r p) (SEQ-STEP r' p')
   rewrite ≾ᵣ-irrelevant p (step-grade-≾ r) | ≾ᵣ-irrelevant p' (step-grade-≾ r') =
-  cong (seq-step N) (↝-det r r')
-↝-det (HANDLE-STEP {H = H} {N = N} r p) (HANDLE-STEP r' p')
+  cong (seq-step N) (⟶-det r r')
+⟶-det (HANDLE-STEP {H = H} {N = N} r p) (HANDLE-STEP r' p')
   rewrite ≾ᵣ-irrelevant p (step-grade-≾ r) | ≾ᵣ-irrelevant p' (step-grade-≾ r') =
-  cong (handle-step N H) (↝-det r r')
+  cong (handle-step N H) (⟶-det r r')
 -- a congruence against a whnf scrutinee cannot happen
-↝-det (SEQ-STEP r _)    SEQ-RET          = ⊥-elim (finality-ret r)
-↝-det SEQ-RET           (SEQ-STEP r _)   = ⊥-elim (finality-ret r)
-↝-det (SEQ-STEP r _)    SEQ-OP           = ⊥-elim (finality-perform r)
-↝-det SEQ-OP            (SEQ-STEP r _)   = ⊥-elim (finality-perform r)
-↝-det (HANDLE-STEP r _) HANDLE-RET       = ⊥-elim (finality-ret r)
-↝-det HANDLE-RET        (HANDLE-STEP r _) = ⊥-elim (finality-ret r)
-↝-det (HANDLE-STEP r _) HANDLE-OP        = ⊥-elim (finality-perform r)
-↝-det HANDLE-OP         (HANDLE-STEP r _) = ⊥-elim (finality-perform r)
+⟶-det (SEQ-STEP r _)    SEQ-RET          = ⊥-elim (finality-ret r)
+⟶-det SEQ-RET           (SEQ-STEP r _)   = ⊥-elim (finality-ret r)
+⟶-det (SEQ-STEP r _)    SEQ-OP           = ⊥-elim (finality-perform r)
+⟶-det SEQ-OP            (SEQ-STEP r _)   = ⊥-elim (finality-perform r)
+⟶-det (HANDLE-STEP r _) HANDLE-RET       = ⊥-elim (finality-ret r)
+⟶-det HANDLE-RET        (HANDLE-STEP r _) = ⊥-elim (finality-ret r)
+⟶-det (HANDLE-STEP r _) HANDLE-OP        = ⊥-elim (finality-perform r)
+⟶-det HANDLE-OP         (HANDLE-STEP r _) = ⊥-elim (finality-perform r)
 
 Op-run : ∀ {A ε} → (cf : Config (A ‼ ε)) → Set
 Op-run cf =
   Σ[ St ∈ 𝕊 [] ] Σ[ op ∈ Op ] Σ[ A' ∈ VType ] Σ[ ε' ∈ E ]
   Σ[ W ∈ toCtx St ⊢V⦂ type-of-gtype (param op) ]
   Σ[ M ∈ (toCtx St ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A' ‼ ε') ]
-    (cf ↝* ⟨ St , perform op W M ⟩)
+    (cf ⟶* ⟨ St , perform op W M ⟩)
 
 op-run-det : ∀ {A ε} {cf : Config (A ‼ ε)}
            → {St₁ St₂ : 𝕊 []} → {op₁ op₂ : Op} → {A₁ A₂ : VType} → {ε₁' ε₂' : E}
@@ -277,8 +277,8 @@ op-run-det : ∀ {A ε} {cf : Config (A ‼ ε)}
                      ⊢C⦂ A₁ ‼ ε₁'}
            → {M₂ : toCtx St₂ ⟨ mapᵉ (op-grade op₂) ⟩ ∷ type-of-gtype (arity op₂)
                      ⊢C⦂ A₂ ‼ ε₂'}
-           → (rs₁ : cf ↝* ⟨ St₁ , perform op₁ W₁ M₁ ⟩)
-           → (rs₂ : cf ↝* ⟨ St₂ , perform op₂ W₂ M₂ ⟩)
+           → (rs₁ : cf ⟶* ⟨ St₁ , perform op₁ W₁ M₁ ⟩)
+           → (rs₂ : cf ⟶* ⟨ St₂ , perform op₂ W₂ M₂ ⟩)
            ---------------------------------------------------------------
            → _≡_ {A = Op-run cf} (St₁ , op₁ , A₁ , ε₁' , W₁ , M₁ , rs₁)
                                  (St₂ , op₂ , A₂ , ε₂' , W₂ , M₂ , rs₂)
@@ -286,7 +286,7 @@ op-run-det : ∀ {A ε} {cf : Config (A ‼ ε)}
 op-run-det ε*         ε*         = refl
 op-run-det ε*         (r ◅ _)    = ⊥-elim (finality-perform r)
 op-run-det (r ◅ _)    ε*         = ⊥-elim (finality-perform r)
-op-run-det (r₁ ◅ rs₁) (r₂ ◅ rs₂) with ↝-det r₁ r₂
+op-run-det (r₁ ◅ rs₁) (r₂ ◅ rs₂) with ⟶-det r₁ r₂
 ... | refl =
   cong (λ z → proj₁ z , proj₁ (proj₂ z) , proj₁ (proj₂ (proj₂ z))
              , proj₁ (proj₂ (proj₂ (proj₂ z)))
@@ -306,12 +306,12 @@ op-run-det (r₁ ◅ rs₁) (r₂ ◅ rs₂) with ↝-det r₁ r₂
             → {W : toCtx St₂ ⊢V⦂ type-of-gtype (param op)}
             → {M : toCtx St₂ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
                      ⊢C⦂ A₂ ‼ ε'}
-            → cf ↝* ⟨ St₁ , return V ⟩
-            → cf ↝* ⟨ St₂ , perform op W M ⟩
+            → cf ⟶* ⟨ St₁ , return V ⟩
+            → cf ⟶* ⟨ St₂ , perform op W M ⟩
             → ⊥
     no-both ε*         (r ◅ _)    = finality-ret r
     no-both (r ◅ _)    ε*         = finality-perform r
-    no-both (r₁ ◅ rs₁) (r₂ ◅ rs₂) with ↝-det r₁ r₂
+    no-both (r₁ ◅ rs₁) (r₂ ◅ rs₂) with ⟶-det r₁ r₂
     ... | refl = no-both rs₁ rs₂
 
 op-whnf-unique : ∀ {A ε} {cf : Config (A ‼ ε)} → (w w' : Op-whnf cf)

@@ -1,11 +1,11 @@
 ------------------------------------------------------------------
 -- States and state typings                                     --
 --                                                              --
--- A state `S ::= ∅ | S ⟨ τ ⟩ₛ | S ∷ₛ V` records the passages   --
+-- A state `𝕊 ::= ∅ | 𝕊 ⟨ τ ⟩ₛ | 𝕊 ∷ₛ V` records the passages   --
 -- of time and the resources of a run; `State n` has `n`        --
--- resources. A state typing `Σ` types `S` (`Types Σ`) when     --
+-- resources. A state typing `Ψ` types `𝕊` (`Types Ψ`) when     --
 -- each resource has its type `[ ρ ] X` in the context before   --
--- it, behind `ρ`. `S ≤ₛ S'` extends a state; `δₛ` is the grade --
+-- it, behind `ρ`. `𝕊 ≤ₛ 𝕊'` extends a state; `δₛ` is the grade --
 -- of the passages added.                                       --
 ------------------------------------------------------------------
 
@@ -49,49 +49,49 @@ data State : ℕ → Set where
 -- The resource at a position, in the scope of the whole state
 
 lookupₛ : ∀ {n} → State n → Fin n → RunV n
-lookupₛ (S ⟨ τ ⟩ₛ) i       = lookupₛ S i
-lookupₛ (S ∷ₛ V)   zero    = wkᵛ V
-lookupₛ (S ∷ₛ V)   (suc i) = wkᵛ (lookupₛ S i)
+lookupₛ (𝕊 ⟨ τ ⟩ₛ) i       = lookupₛ 𝕊 i
+lookupₛ (𝕊 ∷ₛ V)   zero    = wkᵛ V
+lookupₛ (𝕊 ∷ₛ V)   (suc i) = wkᵛ (lookupₛ 𝕊 i)
 
 -- Extension by passages and resources
 
 infix 4 _≤ₛ_
 
-data _≤ₛ_ {n} (S : State n) : ∀ {m} → State m → Set where
-  ≤ₛ-refl : S ≤ₛ S
-  ≤ₛ-lock : ∀ {m} {S' : State m} {τ} → S ≤ₛ S' → S ≤ₛ S' ⟨ τ ⟩ₛ
-  ≤ₛ-res  : ∀ {m} {S' : State m} {V} → S ≤ₛ S' → S ≤ₛ S' ∷ₛ V
+data _≤ₛ_ {n} (𝕊 : State n) : ∀ {m} → State m → Set where
+  ≤ₛ-refl : 𝕊 ≤ₛ 𝕊
+  ≤ₛ-lock : ∀ {m} {𝕊' : State m} {τ} → 𝕊 ≤ₛ 𝕊' → 𝕊 ≤ₛ 𝕊' ⟨ τ ⟩ₛ
+  ≤ₛ-res  : ∀ {m} {𝕊' : State m} {V} → 𝕊 ≤ₛ 𝕊' → 𝕊 ≤ₛ 𝕊' ∷ₛ V
 
-wkₛ : ∀ {n m} {S : State n} {S' : State m} → S ≤ₛ S' → Fin n → Fin m
+wkₛ : ∀ {n m} {𝕊 : State n} {𝕊' : State m} → 𝕊 ≤ₛ 𝕊' → Fin n → Fin m
 wkₛ ≤ₛ-refl     i = i
 wkₛ (≤ₛ-lock e) i = wkₛ e i
 wkₛ (≤ₛ-res e)  i = suc (wkₛ e i)
 
-δₛ : ∀ {n m} {S : State n} {S' : State m} → S ≤ₛ S' → RExp ∅ˢ
+δₛ : ∀ {n m} {𝕊 : State n} {𝕊' : State m} → 𝕊 ≤ₛ 𝕊' → RExp ∅ˢ
 δₛ ≤ₛ-refl             = ûᵣ
 δₛ (≤ₛ-lock {τ = τ} e) = δₛ e ·̂ᵣ rconst (of-durʳ τ)
 δₛ (≤ₛ-res e)          = δₛ e
 
 infixl 25 _⨾ₛ_
 
-_⨾ₛ_ : ∀ {n m k} {S : State n} {S' : State m} {S'' : State k}
-     → S ≤ₛ S' → S' ≤ₛ S'' → S ≤ₛ S''
+_⨾ₛ_ : ∀ {n m k} {𝕊 : State n} {𝕊' : State m} {𝕊'' : State k}
+     → 𝕊 ≤ₛ 𝕊' → 𝕊' ≤ₛ 𝕊'' → 𝕊 ≤ₛ 𝕊''
 e ⨾ₛ ≤ₛ-refl     = e
 e ⨾ₛ ≤ₛ-lock e'  = ≤ₛ-lock (e ⨾ₛ e')
 e ⨾ₛ ≤ₛ-res e'   = ≤ₛ-res (e ⨾ₛ e')
 
-wkₛ-⨾ : ∀ {n m k} {S : State n} {S' : State m} {S'' : State k}
-      → (e : S ≤ₛ S') → (e' : S' ≤ₛ S'') → ∀ i → wkₛ (e ⨾ₛ e') i ≡ wkₛ e' (wkₛ e i)
+wkₛ-⨾ : ∀ {n m k} {𝕊 : State n} {𝕊' : State m} {𝕊'' : State k}
+      → (e : 𝕊 ≤ₛ 𝕊') → (e' : 𝕊' ≤ₛ 𝕊'') → ∀ i → wkₛ (e ⨾ₛ e') i ≡ wkₛ e' (wkₛ e i)
 wkₛ-⨾ e ≤ₛ-refl      i = refl
 wkₛ-⨾ e (≤ₛ-lock e') i = wkₛ-⨾ e e' i
 wkₛ-⨾ e (≤ₛ-res e')  i = cong suc (wkₛ-⨾ e e' i)
 
-lookupₛ-wk : ∀ {n m} {S : State n} {S' : State m} → (e : S ≤ₛ S')
-           → ∀ i → lookupₛ S' (wkₛ e i) ≡ renᵛ (wkₛ e) (lookupₛ S i)
-lookupₛ-wk {S = S} ≤ₛ-refl i = sym (ren-idᵛ (λ j → refl) (lookupₛ S i))
+lookupₛ-wk : ∀ {n m} {𝕊 : State n} {𝕊' : State m} → (e : 𝕊 ≤ₛ 𝕊')
+           → ∀ i → lookupₛ 𝕊' (wkₛ e i) ≡ renᵛ (wkₛ e) (lookupₛ 𝕊 i)
+lookupₛ-wk {𝕊 = 𝕊} ≤ₛ-refl i = sym (ren-idᵛ (λ j → refl) (lookupₛ 𝕊 i))
 lookupₛ-wk (≤ₛ-lock e) i = lookupₛ-wk e i
-lookupₛ-wk {S = S} (≤ₛ-res e) i =
-  trans (cong wkᵛ (lookupₛ-wk e i)) (ren-fuseᵛ (λ j → refl) (lookupₛ S i))
+lookupₛ-wk {𝕊 = 𝕊} (≤ₛ-res e) i =
+  trans (cong wkᵛ (lookupₛ-wk e i)) (ren-fuseᵛ (λ j → refl) (lookupₛ 𝕊 i))
 
 ------------------------------------------------------------------------
 -- State typings
@@ -100,47 +100,47 @@ infixl 31 _∷[_]_
 
 data StateTyping : ∀ {n} → State n → Set where
   ∅      : StateTyping ∅
-  _⟨⟩ˢ   : ∀ {n} {S : State n} {τ} → StateTyping S → StateTyping (S ⟨ τ ⟩ₛ)
-  _∷[_]_ : ∀ {n} {S : State n} {V} → StateTyping S → RExp ∅ˢ → OVType ∅ˢ
-         → StateTyping (S ∷ₛ V)
+  _⟨⟩ˢ   : ∀ {n} {𝕊 : State n} {τ} → StateTyping 𝕊 → StateTyping (𝕊 ⟨ τ ⟩ₛ)
+  _∷[_]_ : ∀ {n} {𝕊 : State n} {V} → StateTyping 𝕊 → RExp ∅ˢ → OVType ∅ˢ
+         → StateTyping (𝕊 ∷ₛ V)
 
-ctx : ∀ {n} {S : State n} → StateTyping S → OCtx ∅ˢ n
+ctx : ∀ {n} {𝕊 : State n} → StateTyping 𝕊 → OCtx ∅ˢ n
 ctx ∅                     = []
-ctx (_⟨⟩ˢ {τ = τ} Σ)      = ctx Σ ⟨ rconst (of-durʳ τ) ⟩
-ctx (Σ ∷[ ρ ] X)          = ctx Σ ∷ [ ρ ] X
+ctx (_⟨⟩ˢ {τ = τ} Ψ)      = ctx Ψ ⟨ rconst (of-durʳ τ) ⟩
+ctx (Ψ ∷[ ρ ] X)          = ctx Ψ ∷ [ ρ ] X
 
-ctx-defs : ∀ {n} {S : State n} → (Σ : StateTyping S) → defs (ctx Σ) ≡ ∅ᵖ
+ctx-defs : ∀ {n} {𝕊 : State n} → (Ψ : StateTyping 𝕊) → defs (ctx Ψ) ≡ ∅ᵖ
 ctx-defs ∅            = refl
-ctx-defs (Σ ⟨⟩ˢ)      = ctx-defs Σ
-ctx-defs (Σ ∷[ ρ ] X) = ctx-defs Σ
+ctx-defs (Ψ ⟨⟩ˢ)      = ctx-defs Ψ
+ctx-defs (Ψ ∷[ ρ ] X) = ctx-defs Ψ
 
-data Types : ∀ {n} {S : State n} → StateTyping S → Set where
+data Types : ∀ {n} {𝕊 : State n} → StateTyping 𝕊 → Set where
   ∅    : Types ∅
-  _⟨⟩ˢ : ∀ {n} {S : State n} {τ} {Σ : StateTyping S}
-       → Types Σ → Types (_⟨⟩ˢ {τ = τ} Σ)
-  _∷ᵗ_ : ∀ {n} {S : State n} {Σ : StateTyping S} {ρ X V}
-       → Types Σ → ctx Σ ⟨ ρ ⟩ ⊢ᵛ V ⦂ X → Types (_∷[_]_ {V = V} Σ ρ X)
+  _⟨⟩ˢ : ∀ {n} {𝕊 : State n} {τ} {Ψ : StateTyping 𝕊}
+       → Types Ψ → Types (_⟨⟩ˢ {τ = τ} Ψ)
+  _∷ᵗ_ : ∀ {n} {𝕊 : State n} {Ψ : StateTyping 𝕊} {ρ X V}
+       → Types Ψ → ctx Ψ ⟨ ρ ⟩ ⊢ᵛ V ⦂ X → Types (_∷[_]_ {V = V} Ψ ρ X)
 
-types-defs : ∀ {n} {S : State n} {Σ : StateTyping S} → Types Σ → defs (ctx Σ) ≡ ∅ᵖ
-types-defs {Σ = Σ} _ = ctx-defs Σ
+types-defs : ∀ {n} {𝕊 : State n} {Ψ : StateTyping 𝕊} → Types Ψ → defs (ctx Ψ) ≡ ∅ᵖ
+types-defs {Ψ = Ψ} _ = ctx-defs Ψ
 
 -- Extension of a state typing along an extension of its state
 
 infix 4 _⊆[_]_
 
-data _⊆[_]_ {n} {S : State n} (Σ : StateTyping S)
-     : ∀ {m} {S' : State m} → S ≤ₛ S' → StateTyping S' → Set where
-  ⊆-refl : Σ ⊆[ ≤ₛ-refl ] Σ
-  ⊆-lock : ∀ {m} {S' : State m} {e : S ≤ₛ S'} {Σ' : StateTyping S'} {τ}
-         → Σ ⊆[ e ] Σ' → Σ ⊆[ ≤ₛ-lock {τ = τ} e ] (Σ' ⟨⟩ˢ)
-  ⊆-res  : ∀ {m} {S' : State m} {e : S ≤ₛ S'} {Σ' : StateTyping S'} {V ρ X}
-         → Σ ⊆[ e ] Σ' → Σ ⊆[ ≤ₛ-res {V = V} e ] (Σ' ∷[ ρ ] X)
+data _⊆[_]_ {n} {𝕊 : State n} (Ψ : StateTyping 𝕊)
+     : ∀ {m} {𝕊' : State m} → 𝕊 ≤ₛ 𝕊' → StateTyping 𝕊' → Set where
+  ⊆-refl : Ψ ⊆[ ≤ₛ-refl ] Ψ
+  ⊆-lock : ∀ {m} {𝕊' : State m} {e : 𝕊 ≤ₛ 𝕊'} {Ψ' : StateTyping 𝕊'} {τ}
+         → Ψ ⊆[ e ] Ψ' → Ψ ⊆[ ≤ₛ-lock {τ = τ} e ] (Ψ' ⟨⟩ˢ)
+  ⊆-res  : ∀ {m} {𝕊' : State m} {e : 𝕊 ≤ₛ 𝕊'} {Ψ' : StateTyping 𝕊'} {V ρ X}
+         → Ψ ⊆[ e ] Ψ' → Ψ ⊆[ ≤ₛ-res {V = V} e ] (Ψ' ∷[ ρ ] X)
 
 -- The extended context makes each variable older by the passages added
 
-⊆-ext : ∀ {n m} {S : State n} {S' : State m} {e : S ≤ₛ S'}
-          {Σ : StateTyping S} {Σ' : StateTyping S'}
-      → Σ ⊆[ e ] Σ' → Ext ∅ᴴ (ctx Σ) (ctx Σ') (δₛ e)
+⊆-ext : ∀ {n m} {𝕊 : State n} {𝕊' : State m} {e : 𝕊 ≤ₛ 𝕊'}
+          {Ψ : StateTyping 𝕊} {Ψ' : StateTyping 𝕊'}
+      → Ψ ⊆[ e ] Ψ' → Ext ∅ᴴ (ctx Ψ) (ctx Ψ') (δₛ e)
 epos (⊆-ext {e = e} p) = wkₛ e
 ety  (⊆-ext ⊆-refl)     i = refl
 ety  (⊆-ext (⊆-lock p)) i = ety (⊆-ext p) i
@@ -153,23 +153,23 @@ edfs (⊆-ext ⊆-refl)       = refl
 edfs (⊆-ext (⊆-lock p))   = edfs (⊆-ext p)
 edfs (⊆-ext (⊆-res p))    = edfs (⊆-ext p)
 
-ctx-box : ∀ {n} {S : State n} → (Σ : StateTyping S) → BoxCtx (ctx Σ)
-ctx-box Σ = boxed Σ , ctx-defs Σ
+ctx-box : ∀ {n} {𝕊 : State n} → (Ψ : StateTyping 𝕊) → BoxCtx (ctx Ψ)
+ctx-box Ψ = boxed Ψ , ctx-defs Ψ
   where
-    boxed : ∀ {n} {S : State n} → (Σ : StateTyping S) → ∀ {A ρ} → A ∈̂[ ρ ] ctx Σ
+    boxed : ∀ {n} {𝕊 : State n} → (Ψ : StateTyping 𝕊) → ∀ {A ρ} → A ∈̂[ ρ ] ctx Ψ
           → Σ[ ρ₀ ∈ RExp ∅ˢ ] Σ[ A₀ ∈ OVType ∅ˢ ] A ≡ [ ρ₀ ] A₀
-    boxed (Σ ⟨⟩ˢ)      (Tl-⟨⟩ x) = boxed Σ x
-    boxed (Σ ∷[ ρ ] X) Hd        = ρ , X , refl
-    boxed (Σ ∷[ ρ ] X) (Tl-∷ x)  = boxed Σ x
+    boxed (Ψ ⟨⟩ˢ)      (Tl-⟨⟩ x) = boxed Ψ x
+    boxed (Ψ ∷[ ρ ] X) Hd        = ρ , X , refl
+    boxed (Ψ ∷[ ρ ] X) (Tl-∷ x)  = boxed Ψ x
 
 -- A resource used within its grade is typed in the whole state's context
 
 private
 
-  lookup-ext : ∀ {n m} {S : State n} {Σ : StateTyping S} {Γ : OCtx ∅ˢ m} {δ ρ₀ ρ' A₀}
-             → Types Σ → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] ctx Σ) → (e : Ext ∅ᴴ (ctx Σ) Γ δ)
+  lookup-ext : ∀ {n m} {𝕊 : State n} {Ψ : StateTyping 𝕊} {Γ : OCtx ∅ˢ m} {δ ρ₀ ρ' A₀}
+             → Types Ψ → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] ctx Ψ) → (e : Ext ∅ᴴ (ctx Ψ) Γ δ)
              → ∅ᴴ ⊩ ρ' ·̂ᵣ δ ≾̂ᵣ ρ₀
-             → Γ ⊢ᵛ renᵛ (epos e) (lookupₛ S (var-pos x)) ⦂ A₀
+             → Γ ⊢ᵛ renᵛ (epos e) (lookupₛ 𝕊 (var-pos x)) ⦂ A₀
   lookup-ext (T ⟨⟩ˢ) (Tl-⟨⟩ x) e le =
     lookup-ext T x e' (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-assoc)) le)
     where
@@ -178,15 +178,15 @@ private
       ety  e' = ety e
       egr  e' i = transᵣ (egr e i) (eqᵣ ≡̂ᵣ-assoc)
       edfs e'   = edfs e
-  lookup-ext {S = S ∷ₛ V} (T ∷ᵗ (D , refl)) Hd e le =
+  lookup-ext {𝕊 = 𝕊 ∷ₛ V} (T ∷ᵗ (D , refl)) Hd e le =
     rename-v r D , trans (∥rename-v∥ r D) (sym (ren-fuseᵛ (λ i → refl) ∥ D ∥ᵛ))
     where
       r = ext-unlock (ext-∘ʳ e wk-ren) (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityˡ)) le)
-  lookup-ext {S = S ∷ₛ V} (T ∷ᵗ _) (Tl-∷ x) e le with lookup-ext T x (ext-∘ʳ e wk-ren) le
-  ... | D , p = D , trans p (sym (ren-fuseᵛ (λ i → refl) (lookupₛ S (var-pos x))))
+  lookup-ext {𝕊 = 𝕊 ∷ₛ V} (T ∷ᵗ _) (Tl-∷ x) e le with lookup-ext T x (ext-∘ʳ e wk-ren) le
+  ... | D , p = D , trans p (sym (ren-fuseᵛ (λ i → refl) (lookupₛ 𝕊 (var-pos x))))
 
-lookup-typed : ∀ {n} {S : State n} {Σ : StateTyping S} {ρ₀ ρ' A₀}
-             → Types Σ → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] ctx Σ) → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ₀
-             → ctx Σ ⊢ᵛ lookupₛ S (var-pos x) ⦂ A₀
-lookup-typed {S = S} T x le with lookup-ext T x id-ext (transᵣ (eqᵣ ≡̂ᵣ-identityʳ) le)
-... | D , p = D , trans p (ren-idᵛ (λ i → refl) (lookupₛ S (var-pos x)))
+lookup-typed : ∀ {n} {𝕊 : State n} {Ψ : StateTyping 𝕊} {ρ₀ ρ' A₀}
+             → Types Ψ → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] ctx Ψ) → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ₀
+             → ctx Ψ ⊢ᵛ lookupₛ 𝕊 (var-pos x) ⦂ A₀
+lookup-typed {𝕊 = 𝕊} T x le with lookup-ext T x id-ext (transᵣ (eqᵣ ≡̂ᵣ-identityʳ) le)
+... | D , p = D , trans p (ren-idᵛ (λ i → refl) (lookupₛ 𝕊 (var-pos x)))

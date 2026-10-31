@@ -4,7 +4,7 @@
 -- A substitution maps the three sorts of variables of one      --
 -- scope to open types, resource expressions and effect         --
 -- expressions over another scope. A scope extended by the      --
--- variables of another (`Θ ⊹ Ψ`) is substituted by a pair of   --
+-- variables of another (`Θ ⊹ Ω`) is substituted by a pair of   --
 -- substitutions (`σ ⊕ˢ δ`).                                    --
 ------------------------------------------------------------------
 
@@ -176,29 +176,29 @@ private
   ... | yes _ = refl
   ... | no ¬p = ⊥-elim (¬p refl)
 
-updᵉ-hit : ∀ {Ψ} → (k : EVar Ψ) → (b : EExp Ψ) → sE (updᵉ k b) k ≡ b
+updᵉ-hit : ∀ {Ω} → (k : EVar Ω) → (b : EExp Ω) → sE (updᵉ k b) k ≡ b
 updᵉ-hit k b with k ≟ᶠ k
 ... | yes _ = refl
 ... | no ¬p = ⊥-elim (¬p refl)
 
-updᵉ-miss : ∀ {Ψ} → (k : EVar Ψ) → (b : EExp Ψ) → (i : EVar Ψ)
+updᵉ-miss : ∀ {Ω} → (k : EVar Ω) → (b : EExp Ω) → (i : EVar Ω)
           → ⌊ k ≟ᶠ i ⌋ ≡ false → sE (updᵉ k b) i ≡ evar i
 updᵉ-miss k b i q with i ≟ᶠ k
 ... | no _     = refl
 ... | yes refl = ⊥-elim (true≢false (trans (sym (≟-refl k)) q))
 
-updʳ-hit : ∀ {Ψ} → (k : RVar Ψ) → (b : RExp Ψ) → sR (updʳ k b) k ≡ b
+updʳ-hit : ∀ {Ω} → (k : RVar Ω) → (b : RExp Ω) → sR (updʳ k b) k ≡ b
 updʳ-hit k b with k ≟ᶠ k
 ... | yes _ = refl
 ... | no ¬p = ⊥-elim (¬p refl)
 
-updʳ-miss : ∀ {Ψ} → (k : RVar Ψ) → (b : RExp Ψ) → (i : RVar Ψ)
+updʳ-miss : ∀ {Ω} → (k : RVar Ω) → (b : RExp Ω) → (i : RVar Ω)
           → ⌊ k ≟ᶠ i ⌋ ≡ false → sR (updʳ k b) i ≡ rvar i
 updʳ-miss k b i q with i ≟ᶠ k
 ... | no _     = refl
 ... | yes refl = ⊥-elim (true≢false (trans (sym (≟-refl k)) q))
 
-updʳ-e : ∀ {Ψ} → (k : RVar Ψ) → (b : RExp Ψ) → (ε : EExp Ψ) → ε [ updʳ k b ]ᵉ ≡ ε
+updʳ-e : ∀ {Ω} → (k : RVar Ω) → (b : RExp Ω) → (ε : EExp Ω) → ε [ updʳ k b ]ᵉ ≡ ε
 updʳ-e k b (evar i)   = refl
 updʳ-e k b (econst c) = refl
 updʳ-e k b (ε ·̂ₑ ε')  = cong₂ _·̂ₑ_ (updʳ-e k b ε) (updʳ-e k b ε')
@@ -688,18 +688,18 @@ memo-≐ σ = mk≐ˢ (lookup∘tabulate (sTy σ)) (lookup∘tabulate (sR σ)) (
 ------------------------------------------------------------------------
 -- Juxtaposition of scopes
 
--- `Θ ⊹ Ψ` extends `Θ` by the variables of `Ψ`, the new ones innermost
+-- `Θ ⊹ Ω` extends `Θ` by the variables of `Ω`, the new ones innermost
 
 infixl 30 _⊹_
 
 _⊹_ : Scope → Scope → Scope
-Θ ⊹ Ψ = scope (nTy Ψ + nTy Θ) (nR Ψ + nR Θ) (nE Ψ + nE Θ)
+Θ ⊹ Ω = scope (nTy Ω + nTy Θ) (nR Ω + nR Θ) (nE Ω + nE Θ)
 
-wkˢ⊹ : ∀ {Θ} → (Ψ : Scope) → Subst Θ (Θ ⊹ Ψ)
-wkˢ⊹ Ψ = sub (λ α → tvar (nTy Ψ ↑ʳ α)) (λ i → rvar (nR Ψ ↑ʳ i)) (λ i → evar (nE Ψ ↑ʳ i))
+wkˢ⊹ : ∀ {Θ} → (Ω : Scope) → Subst Θ (Θ ⊹ Ω)
+wkˢ⊹ Ω = sub (λ α → tvar (nTy Ω ↑ʳ α)) (λ i → rvar (nR Ω ↑ʳ i)) (λ i → evar (nE Ω ↑ʳ i))
 
-newˢ⊹ : ∀ {Θ} → (Ψ : Scope) → Subst Ψ (Θ ⊹ Ψ)
-newˢ⊹ {Θ} Ψ = sub (λ α → tvar (α ↑ˡ nTy Θ)) (λ i → rvar (i ↑ˡ nR Θ)) (λ i → evar (i ↑ˡ nE Θ))
+newˢ⊹ : ∀ {Θ} → (Ω : Scope) → Subst Ω (Θ ⊹ Ω)
+newˢ⊹ {Θ} Ω = sub (λ α → tvar (α ↑ˡ nTy Θ)) (λ i → rvar (i ↑ˡ nR Θ)) (λ i → evar (i ↑ˡ nE Θ))
 
 -- Extending by images for the new variables of one sort, innermost first
 
@@ -720,7 +720,7 @@ _⊕ᵉ_ {c = suc c} σ es = (σ ⊕ᵉ (λ i → es (suc i))) ,ᵉ es zero
 
 infixl 28 _⊕ˢ_
 
-_⊕ˢ_ : ∀ {Θ Ψ Θ'} → Subst Θ Θ' → Subst Ψ Θ' → Subst (Θ ⊹ Ψ) Θ'
+_⊕ˢ_ : ∀ {Θ Ω Θ'} → Subst Θ Θ' → Subst Ω Θ' → Subst (Θ ⊹ Ω) Θ'
 σ ⊕ˢ δ = ((σ ⊕ᵗ sTy δ) ⊕ʳ sR δ) ⊕ᵉ sE δ
 
 private
@@ -787,14 +787,14 @@ private
 
 -- The pair restricts to each of its components
 
-wkˢ⊹-⊕ˢ : ∀ {Θ Ψ Θ'} → (σ : Subst Θ Θ') → (δ : Subst Ψ Θ') → (wkˢ⊹ Ψ ⨟ˢ (σ ⊕ˢ δ)) ≐ˢ σ
-wkˢ⊹-⊕ˢ {Ψ = Ψ} σ δ =
+wkˢ⊹-⊕ˢ : ∀ {Θ Ω Θ'} → (σ : Subst Θ Θ') → (δ : Subst Ω Θ') → (wkˢ⊹ Ω ⨟ˢ (σ ⊕ˢ δ)) ≐ˢ σ
+wkˢ⊹-⊕ˢ {Ω = Ω} σ δ =
   mk≐ˢ (λ α → trans (⊕ᵉ-T _ (sE δ) _) (trans (⊕ʳ-T _ (sR δ) _) (⊕ᵗ-old σ (sTy δ) α)))
        (λ i → trans (⊕ᵉ-R _ (sE δ) _) (trans (⊕ʳ-old _ (sR δ) i) (⊕ᵗ-R σ (sTy δ) i)))
        (λ i → trans (⊕ᵉ-old _ (sE δ) i) (trans (⊕ʳ-E _ (sR δ) i) (⊕ᵗ-E σ (sTy δ) i)))
 
-newˢ⊹-⊕ˢ : ∀ {Θ Ψ Θ'} → (σ : Subst Θ Θ') → (δ : Subst Ψ Θ') → (newˢ⊹ Ψ ⨟ˢ (σ ⊕ˢ δ)) ≐ˢ δ
-newˢ⊹-⊕ˢ {Ψ = Ψ} σ δ =
+newˢ⊹-⊕ˢ : ∀ {Θ Ω Θ'} → (σ : Subst Θ Θ') → (δ : Subst Ω Θ') → (newˢ⊹ Ω ⨟ˢ (σ ⊕ˢ δ)) ≐ˢ δ
+newˢ⊹-⊕ˢ {Ω = Ω} σ δ =
   mk≐ˢ (λ α → trans (⊕ᵉ-T _ (sE δ) _) (trans (⊕ʳ-T _ (sR δ) _) (⊕ᵗ-new σ (sTy δ) α)))
        (λ i → trans (⊕ᵉ-R _ (sE δ) _) (⊕ʳ-new _ (sR δ) i))
        (λ i → ⊕ᵉ-new _ (sE δ) i)

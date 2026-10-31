@@ -107,7 +107,7 @@ import PolymorphicCalculus.Typing.Transport
 ---- Operational semantics, on run-time terms: states and state typings,
 ---- with their extensions (`State`, `StateTyping`, `_≤ₛ_`, `_⊆[_]_`, in
 ---- `OperationalSemantics/State`), and the reduction
----- `⟨ S ∣ M ⟩↝⟨ S' ∣ M' ⟩` (`Step`, in `OperationalSemantics/Reduction`).
+---- `⟨ 𝕊 ∣ M ⟩⟶⟨ 𝕊' ∣ M' ⟩` (`Step`, in `OperationalSemantics/Reduction`).
 ---- HANDLE-OP leaves the clause's grade variable uninstantiated; CMP
 ---- decides a comparison by the structural order on the data its operands
 ---- denote (`compareᴰ`).

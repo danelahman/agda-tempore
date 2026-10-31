@@ -148,7 +148,7 @@ data _⊩ᵗᵛ_≾_ {Θ : Scope} (Q : Hyps Θ) : TyVar Θ → TyVar Θ → Set 
 
 infix 4 _⊨ᵒ_ _⊨ᵍ_
 
-record _⊨ᵒ_ {Ψ : Scope} (δ : Subst Ψ ∅ˢ) (o : Ords Ψ) : Set where
+record _⊨ᵒ_ {Ω : Scope} (δ : Subst Ω ∅ˢ) (o : Ords Ω) : Set where
   constructor mk⊨ᵒ
   field
     ⊨ᵒʳ : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors o → valʳ (ρ [ δ ]ʳ) ≾ᵣ valʳ (ρ' [ δ ]ʳ)
@@ -899,7 +899,7 @@ VarOK-∅ᴴ = VarOK-split refl
 
 infix 4 _⊩ᵒ_[_] _⊩ᴼ_[_]
 
-record _⊩ᵒ_[_] {Ψ Ψ' : Scope} (Q : Hyps Ψ') (o : Ords Ψ) (δ : Subst Ψ Ψ') : Set where
+record _⊩ᵒ_[_] {Ω Ω' : Scope} (Q : Hyps Ω') (o : Ords Ω) (δ : Subst Ω Ω') : Set where
   constructor mk⊩ᵒ
   field
     ⊩ors : ∀ {ρ ρ'} → (ρ , ρ') ∈ ors o → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
@@ -907,13 +907,13 @@ record _⊩ᵒ_[_] {Ψ Ψ' : Scope} (Q : Hyps Ψ') (o : Ords Ψ) (δ : Subst Ψ 
 
 open _⊩ᵒ_[_] public
 
-⊩ᵒ-resp-≐ˢ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {o : Ords Ψ} {δ δ' : Subst Ψ Ψ'}
+⊩ᵒ-resp-≐ˢ : ∀ {Ω Ω'} {Q : Hyps Ω'} {o : Ords Ω} {δ δ' : Subst Ω Ω'}
            → δ ≐ˢ δ' → Q ⊩ᵒ o [ δ ] → Q ⊩ᵒ o [ δ' ]
 ⊩ᵒ-resp-≐ˢ {Q = Q} p h =
   mk⊩ᵒ (λ {ρ} {ρ'} m → subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) ([≐]ʳ p ρ) ([≐]ʳ p ρ') (⊩ors h m))
        (λ {ε} {ε'} m → subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) ([≐]ᵉ p ε) ([≐]ᵉ p ε') (⊩oes h m))
 
-⊩ᵒ-subst : ∀ {Ψ Ψ₁ Ψ'} {Q : Hyps Ψ'} {o : Ords Ψ} {σ : Subst Ψ Ψ₁} {δ : Subst Ψ₁ Ψ'}
+⊩ᵒ-subst : ∀ {Ω Ω₁ Ω'} {Q : Hyps Ω'} {o : Ords Ω} {σ : Subst Ω Ω₁} {δ : Subst Ω₁ Ω'}
          → Q ⊩ᵒ o [ σ ]ᴼ [ δ ] → Q ⊩ᵒ o [ σ ⨟ˢ δ ]
 ⊩ᵒ-subst {Q = Q} {σ = σ} {δ} h =
   mk⊩ᵒ (λ {ρ} {ρ'} m → subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) ([⨟]ʳ ρ σ δ) ([⨟]ʳ ρ' σ δ)
@@ -921,7 +921,7 @@ open _⊩ᵒ_[_] public
        (λ {ε} {ε'} m → subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε σ δ) ([⨟]ᵉ ε' σ δ)
                               (⊩oes h (∈-map⁺ (mapᵖ (_[ σ ]ᵉ)) m)))
 
-⊩ᵒ-subst⁻ : ∀ {Ψ Ψ₁ Ψ'} {Q : Hyps Ψ'} {o : Ords Ψ} {σ : Subst Ψ Ψ₁} {δ : Subst Ψ₁ Ψ'}
+⊩ᵒ-subst⁻ : ∀ {Ω Ω₁ Ω'} {Q : Hyps Ω'} {o : Ords Ω} {σ : Subst Ω Ω₁} {δ : Subst Ω₁ Ω'}
           → Q ⊩ᵒ o [ σ ⨟ˢ δ ] → Q ⊩ᵒ o [ σ ]ᴼ [ δ ]
 ⊩ᵒ-subst⁻ {Q = Q} {o = o} {σ = σ} {δ} h = mk⊩ᵒ r e
   where
@@ -1184,8 +1184,8 @@ VarOK-substᴵ h (|List|-ok ok)     = |List|-ok (VarOK-substᴵ h ok)
 VarOK-substᴵ h (⊔-ok q ok₁ ok₂)   =
   ⊔-ok (⊩-substᴵᵣ h q) (VarOK-substᴵ h ok₁) (VarOK-substᴵ h ok₂)
 
-⊩ᵒ-⨟ᴵ : ∀ {Ψ Ψ' Ψ''} {Q : Hyps Ψ'} {Q' : Hyps Ψ''} {o : Ords Ψ}
-          {δ : Subst Ψ Ψ'} {δ' : Subst Ψ' Ψ''}
+⊩ᵒ-⨟ᴵ : ∀ {Ω Ω' Ω''} {Q : Hyps Ω'} {Q' : Hyps Ω''} {o : Ords Ω}
+          {δ : Subst Ω Ω'} {δ' : Subst Ω' Ω''}
       → Q' ⊩ᴵ Q [ δ' ] → Q ⊩ᵒ o [ δ ] → Q' ⊩ᵒ o [ δ ⨟ˢ δ' ]
 ⊩ᵒ-⨟ᴵ {Q' = Q'} {δ = δ} {δ'} g h =
   mk⊩ᵒ (λ {ρ} {ρ'} m → subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y) ([⨟]ʳ ρ δ δ') ([⨟]ʳ ρ' δ δ')
@@ -1481,8 +1481,8 @@ VarOK-subst h = VarOK-substᴵ (⊩ᴴ⇒ᴵ h)
           → Q' ⊩ᴴ Q [ σ ] → Q ∣ C <:̂ᶜ C' → Q' ∣ C [ σ ]ᶜ <:̂ᶜ C' [ σ ]ᶜ
 <:̂ᶜ-subst h = <:̂ᶜ-substᴵ (⊩ᴴ⇒ᴵ h)
 
-⊩ᵒ-⨟ : ∀ {Ψ Ψ' Ψ''} {Q : Hyps Ψ'} {Q' : Hyps Ψ''} {o : Ords Ψ}
-         {δ : Subst Ψ Ψ'} {δ' : Subst Ψ' Ψ''}
+⊩ᵒ-⨟ : ∀ {Ω Ω' Ω''} {Q : Hyps Ω'} {Q' : Hyps Ω''} {o : Ords Ω}
+         {δ : Subst Ω Ω'} {δ' : Subst Ω' Ω''}
      → Q' ⊩ᴴ Q [ δ' ] → Q ⊩ᵒ o [ δ ] → Q' ⊩ᵒ o [ δ ⨟ˢ δ' ]
 ⊩ᵒ-⨟ g = ⊩ᵒ-⨟ᴵ (⊩ᴴ⇒ᴵ g)
 
@@ -1823,38 +1823,38 @@ mono-substᵣ p ∣ ε ∣̂ᵉ     = map-mono (mono-substₑ p ε)
 
 -- Assigning below (above) the unknown's value lowers (raises) the substitution
 
-updᵉ-below : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (k : EVar Ψ) → (b : EExp Ψ) → (τ : Subst Ψ Ψ')
+updᵉ-below : ∀ {Ω Ω'} {Q : Hyps Ω'} → (k : EVar Ω) → (b : EExp Ω) → (τ : Subst Ω Ω')
            → Q ⊩ b [ τ ]ᵉ ≾̂ₑ sE τ k → Q ⊩ (updᵉ k b ⨟ˢ τ) ≾ˢ τ
-updᵉ-below {Ψ} {Q = Q} k b τ p = mk≾ˢ (λ i → ⊩≾̂ᵣ-refl) e
+updᵉ-below {Ω} {Q = Q} k b τ p = mk≾ˢ (λ i → ⊩≾̂ᵣ-refl) e
   where
-    e : (i : EVar Ψ) → Q ⊩ sE (updᵉ k b) i [ τ ]ᵉ ≾̂ₑ sE τ i
+    e : (i : EVar Ω) → Q ⊩ sE (updᵉ k b) i [ τ ]ᵉ ≾̂ₑ sE τ i
     e i with i ≟ᶠ k
     ... | yes refl = p
     ... | no _     = ⊩≾̂ₑ-refl
 
-updᵉ-above : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (k : EVar Ψ) → (b : EExp Ψ) → (τ : Subst Ψ Ψ')
+updᵉ-above : ∀ {Ω Ω'} {Q : Hyps Ω'} → (k : EVar Ω) → (b : EExp Ω) → (τ : Subst Ω Ω')
            → Q ⊩ sE τ k ≾̂ₑ b [ τ ]ᵉ → Q ⊩ τ ≾ˢ (updᵉ k b ⨟ˢ τ)
-updᵉ-above {Ψ} {Q = Q} k b τ p = mk≾ˢ (λ i → ⊩≾̂ᵣ-refl) e
+updᵉ-above {Ω} {Q = Q} k b τ p = mk≾ˢ (λ i → ⊩≾̂ᵣ-refl) e
   where
-    e : (i : EVar Ψ) → Q ⊩ sE τ i ≾̂ₑ sE (updᵉ k b) i [ τ ]ᵉ
+    e : (i : EVar Ω) → Q ⊩ sE τ i ≾̂ₑ sE (updᵉ k b) i [ τ ]ᵉ
     e i with i ≟ᶠ k
     ... | yes refl = p
     ... | no _     = ⊩≾̂ₑ-refl
 
-updʳ-below : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (k : RVar Ψ) → (b : RExp Ψ) → (τ : Subst Ψ Ψ')
+updʳ-below : ∀ {Ω Ω'} {Q : Hyps Ω'} → (k : RVar Ω) → (b : RExp Ω) → (τ : Subst Ω Ω')
            → Q ⊩ b [ τ ]ʳ ≾̂ᵣ sR τ k → Q ⊩ (updʳ k b ⨟ˢ τ) ≾ˢ τ
-updʳ-below {Ψ} {Q = Q} k b τ p = mk≾ˢ r (λ i → ⊩≾̂ₑ-refl)
+updʳ-below {Ω} {Q = Q} k b τ p = mk≾ˢ r (λ i → ⊩≾̂ₑ-refl)
   where
-    r : (i : RVar Ψ) → Q ⊩ sR (updʳ k b) i [ τ ]ʳ ≾̂ᵣ sR τ i
+    r : (i : RVar Ω) → Q ⊩ sR (updʳ k b) i [ τ ]ʳ ≾̂ᵣ sR τ i
     r i with i ≟ᶠ k
     ... | yes refl = p
     ... | no _     = ⊩≾̂ᵣ-refl
 
-updʳ-above : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (k : RVar Ψ) → (b : RExp Ψ) → (τ : Subst Ψ Ψ')
+updʳ-above : ∀ {Ω Ω'} {Q : Hyps Ω'} → (k : RVar Ω) → (b : RExp Ω) → (τ : Subst Ω Ω')
            → Q ⊩ sR τ k ≾̂ᵣ b [ τ ]ʳ → Q ⊩ τ ≾ˢ (updʳ k b ⨟ˢ τ)
-updʳ-above {Ψ} {Q = Q} k b τ p = mk≾ˢ r (λ i → ⊩≾̂ₑ-refl)
+updʳ-above {Ω} {Q = Q} k b τ p = mk≾ˢ r (λ i → ⊩≾̂ₑ-refl)
   where
-    r : (i : RVar Ψ) → Q ⊩ sR τ i ≾̂ᵣ sR (updʳ k b) i [ τ ]ʳ
+    r : (i : RVar Ω) → Q ⊩ sR τ i ≾̂ᵣ sR (updʳ k b) i [ τ ]ʳ
     r i with i ≟ᶠ k
     ... | yes refl = p
     ... | no _     = ⊩≾̂ᵣ-refl

@@ -97,7 +97,7 @@ Paramᶜᶠ ⟨ St , M ⟩ = Paramˢ St × Paramᶜ M
 
 stepᴾˢ : ∀ {ε ε' A B} {S S' : 𝕊 []}
        → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
-       → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩) → Paramˢ S → Paramᶜ M → Paramˢ S'
+       → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩) → Paramˢ S → Paramᶜ M → Paramˢ S'
 stepᴾˢ APP                 pS _              = pS
 stepᴾˢ MATCH               pS _              = pS
 stepᴾˢ CASEL               pS _              = pS
@@ -146,7 +146,7 @@ infixl 25 _⋄_
 
 step-grade : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
-           → ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩
+           → ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩
            → E
 step-grade APP                  = uₑ
 step-grade MATCH                = uₑ
@@ -183,7 +183,7 @@ step-grade SUB                  = uₑ
 
 stepᵀ : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
       → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
-      → (r : ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩)
+      → (r : ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩)
       → ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ hist St' ⟧ᶜᵗˣ (step-grade r)
 stepᵀ APP               = ηᵀ
 stepᵀ MATCH             = ηᵀ
@@ -219,7 +219,7 @@ stepᵀ SUB               = ηᵀ
 
 step-≾ : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
        → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
-       → (r : ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩)
+       → (r : ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩)
        → step-grade r ·ₑ ε' ≾ₑ ε
 step-≾ {ε = ε} APP    = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} MATCH  = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)

@@ -3,7 +3,7 @@
 --                                                                       --
 -- The top-level machine runs a program against external                 --
 -- implementations of the algebraic operations (`op-sem`): an ordinary   --
--- step `↝-STEP`, and `OP-STEP`, which replaces an operation call by     --
+-- step `⟶-STEP`, and `OP-STEP`, which replaces an operation call by     --
 -- the implementation's value and locks the state by `op-grade op`.      --
 --                                                                       --
 -- Its denotation lands in the tick monad (`Model.TickMonad`), composed  --
@@ -130,32 +130,32 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
            → ⟦ hist (Config.state cf) ⟧ᶜᵗˣ →ᵐ Tᵏ ⟦ A ⟧ᵛ ε
     ⟦ cf ⟧ᵏᶜᶠ p = implᵐ ∘ᵐ ⟦ cf ⟧ᶜᶠ p
 
-    -- The certificate across a top-level step: `↝-STEP` inherits the ordinary
+    -- The certificate across a top-level step: `⟶-STEP` inherits the ordinary
     -- one, `OP-STEP` substitutes the implementation's (parametric) value.
 
     topᴾᶜᶠ : ∀ {ε ε'} {St St' : 𝕊 []} {A A₀ : VType}
            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A₀ ‼ ε'}
            → (r : ⟨ St , M ⟩ ⟿ ⟨ St' , M' ⟩)
            → Paramᶜᶠ (⟨ St , M ⟩) → Paramᶜᶠ (⟨ St' , M' ⟩)
-    topᴾᶜᶠ (↝-STEP r) p = stepᴾᶜᶠ r p
+    topᴾᶜᶠ (⟶-STEP r) p = stepᴾᶜᶠ r p
     topᴾᶜᶠ (OP-STEP {op = op} {S = St} {V = V} {M = M}) (pSt , (pV , pM)) =
       pSt , subᶜ M split-[] (op-sem op V) pM (op-par op St V)
 
-    -- The top-level step's grade, transition and refinement: `↝-STEP`
+    -- The top-level step's grade, transition and refinement: `⟶-STEP`
     -- inherits the ordinary ones, run through the implementation; `OP-STEP`
     -- performs the operation, costing `op-grade op`, with a tick transition.
 
     top-grade : ∀ {ε ε'} {St St' : 𝕊 []} {A A₀ : VType}
               → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A₀ ‼ ε'}
               → ⟨ St , M ⟩ ⟿ ⟨ St' , M' ⟩ → E
-    top-grade (↝-STEP r)          = step-grade r
+    top-grade (⟶-STEP r)          = step-grade r
     top-grade (OP-STEP {op = op}) = op-grade op ·ₑ uₑ
 
     top-stepᵏ : ∀ {ε ε'} {St St' : 𝕊 []} {A A₀ : VType}
               → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A₀ ‼ ε'}
               → (r : ⟨ St , M ⟩ ⟿ ⟨ St' , M' ⟩)
               → ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵏ ⟦ hist St' ⟧ᶜᵗˣ (top-grade r)
-    top-stepᵏ (↝-STEP r) = implᵐ ∘ᵐ stepᵀ r
+    top-stepᵏ (⟶-STEP r) = implᵐ ∘ᵐ stepᵀ r
     top-stepᵏ (OP-STEP {op = op}) =
       tickᵏ (op-grade op) ∘ᵐ [ mapᵉ (op-grade op) ]ᶠ ηᵏ ∘ᵐ η⊣
 
@@ -163,7 +163,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
           → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A₀ ‼ ε'}
           → (r : ⟨ St , M ⟩ ⟿ ⟨ St' , M' ⟩)
           → top-grade r ·ₑ ε' ≾ₑ ε
-    top-≾ (↝-STEP r) = step-≾ r
+    top-≾ (⟶-STEP r) = step-≾ r
     top-≾ (OP-STEP {ε = ε} {op = op}) =
       ≃ₑ⇒≾ₑ (·ₑ-cong (·ₑ-identityʳ (op-grade op)) ≃ₑ-refl)
 
@@ -172,7 +172,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     top-refines-type : ∀ {ε ε'} {St St' : 𝕊 []} {A A₀ : VType}
                      → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A₀ ‼ ε'}
                      → ⟨ St , M ⟩ ⟿ ⟨ St' , M' ⟩ → A₀ <:ᵛ A
-    top-refines-type (↝-STEP r)      = step-refines-type r
+    top-refines-type (⟶-STEP r)      = step-refines-type r
     top-refines-type {A = A} OP-STEP = <:ᵛ-refl A
 
     -- A refinement at a type the step does not move denotes the identity.
@@ -222,7 +222,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     Uniform⟿ : ∀ {ε ε'} {St St' : 𝕊 []} {A A₀ : VType}
              → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A₀ ‼ ε'}
              → ⟨ St , M ⟩ ⟿ ⟨ St' , M' ⟩ → Paramᶜ M → Set
-    Uniform⟿ (↝-STEP r) pM = Uniform↝ r pM
+    Uniform⟿ (⟶-STEP r) pM = Uniform⟶ r pM
     Uniform⟿ OP-STEP    _  = ⊤
 
     -- The interpretation's ground-type coercions on the arity cancel against
@@ -299,7 +299,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
           ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-refl _)
           ∙ᵏ ∘ᵐ-identityˡ _
 
-    -- Soundness of a top-level step: `↝-STEP` is `↝-sound` carried along the
+    -- Soundness of a top-level step: `⟶-STEP` is `⟶-sound` carried along the
     -- monad morphism `implᵐ`.
 
     ⟿-sound : ∀ {ε ε' A A₀} {St St' : 𝕊 []}
@@ -313,8 +313,8 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
                 ∘ᵐ _⋄ᵏ_ {⟦ hist St ⟧ᶜᵗˣ} {⟦ hist St' ⟧ᶜᵗˣ} {⟦ A₀ ⟧ᵛ}
                         {top-grade r} {ε'}
                         (⟦ ⟨ St' , M' ⟩ ⟧ᵏᶜᶠ (topᴾᶜᶠ r p)) (top-stepᵏ r)
-    ⟿-sound (↝-STEP {S' = St'} {N = M'} r) (pSt , pM) u =
-        ∘ᵐ-congʳ (↝-sound r pSt pM u)
+    ⟿-sound (⟶-STEP {S' = St'} {N = M'} r) (pSt , pM) u =
+        ∘ᵐ-congʳ (⟶-sound r pSt pM u)
       ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ᵏ ∘ᵐ-congˡ (implᵐ-T-≤ (step-≾ r))
       ∙ᵏ ∘ᵐ-assoc _ _ _
@@ -399,7 +399,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
 
     T-≤ᵏ-implstep : ∀ {ε ε' εa εb A A₀} {St St' : 𝕊 []} → (B : Obj)
                   → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A₀ ‼ ε'}
-                  → (r : ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩)
+                  → (r : ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩)
                   → (g : ⟦ hist St' ⟧ᶜᵗˣ →ᵐ Tᵏ B εa) → (q : εa ≾ₑ εb)
                   → μᵏ ∘ᵐ Tᵏᶠ (T-≤ᵏ q ∘ᵐ g) ∘ᵐ (implᵐ ∘ᵐ stepᵀ r)
                   ≈ᵐ T-≤ᵏ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵏ ∘ᵐ Tᵏᶠ g ∘ᵐ (implᵐ ∘ᵐ stepᵀ r)
@@ -444,7 +444,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
               → (g : ⟦ hist St' ⟧ᶜᵗˣ →ᵐ Tᵏ B εa) → (q : εa ≾ₑ εb)
               → μᵏ ∘ᵐ Tᵏᶠ (T-≤ᵏ q ∘ᵐ g) ∘ᵐ top-stepᵏ r
               ≈ᵐ T-≤ᵏ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵏ ∘ᵐ Tᵏᶠ g ∘ᵐ top-stepᵏ r
-    T-≤ᵏ-topᵏ B (↝-STEP r) g q = T-≤ᵏ-implstep B r g q
+    T-≤ᵏ-topᵏ B (⟶-STEP r) g q = T-≤ᵏ-implstep B r g q
     T-≤ᵏ-topᵏ B (OP-STEP {op = op}) g q = tick-case (op-grade op) η⊣ g q
 
     top-steps-grade : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}

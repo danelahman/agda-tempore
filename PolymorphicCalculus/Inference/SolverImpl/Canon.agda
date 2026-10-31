@@ -211,36 +211,36 @@ canonᶜ-≡̂ (A ‼ ε) = canonᵛ-≡̂ A ‼≡̂ canonₑ-≡ ε
 -- Splitting an ordering into its left side's alternatives, each below the
 -- right side: the join being least, they hold at the same instances
 
-Ordʳ : ∀ {Ψ Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → RExp Ψ × RExp Ψ → Set
+Ordʳ : ∀ {Ω Ω'} → Hyps Ω' → Subst Ω Ω' → RExp Ω × RExp Ω → Set
 Ordʳ Q δ (ρ , ρ') = Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
 
-Ordᵉ : ∀ {Ψ Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → EExp Ψ × EExp Ψ → Set
+Ordᵉ : ∀ {Ω Ω'} → Hyps Ω' → Subst Ω Ω' → EExp Ω × EExp Ω → Set
 Ordᵉ Q δ (ε , ε') = Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
 
 -- The orderings an atom is replaced by, equivalent to it at every instance
 
-record Pieces {Ψ} {X : Set} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) (a : X) : Set where
+record Pieces {Ω} {X : Set} (P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X → Set) (a : X) : Set where
   constructor pieces
   field
     parts : List X
-    pback : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → (∀ {b} → b ∈ parts → P Q δ b) → P Q δ a
-    pfwd  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → P Q δ a → ∀ {b} → b ∈ parts → P Q δ b
+    pback : ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω') → (∀ {b} → b ∈ parts → P Q δ b) → P Q δ a
+    pfwd  : ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω') → P Q δ a → ∀ {b} → b ∈ parts → P Q δ b
 
 -- An atom left whole
 
-whole : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set} → (a : X) → Pieces P a
+whole : ∀ {Ω} {X : Set} {P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X → Set} → (a : X) → Pieces P a
 whole a = pieces (a ∷ []) (λ δ k → k (here refl)) (λ δ h → λ { (here refl) → h })
 
-record Split {Ψ} {X : Set} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) (l : List X) : Set where
+record Split {Ω} {X : Set} (P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X → Set) (l : List X) : Set where
   constructor split
   field
     out  : List X
-    back : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+    back : ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω')
          → (∀ {b} → b ∈ out → P Q δ b) → ∀ {a} → a ∈ l → P Q δ a
-    fwd  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+    fwd  : ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω')
          → (∀ {a} → a ∈ l → P Q δ a) → ∀ {b} → b ∈ out → P Q δ b
 
-consˢ : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set} {a : X} {l : List X}
+consˢ : ∀ {Ω} {X : Set} {P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X → Set} {a : X} {l : List X}
       → Pieces P a → Split P l → Split P (a ∷ l)
 consˢ (pieces ps pb pf) (split o bk fw) =
   split (ps ++ o)
@@ -248,45 +248,45 @@ consˢ (pieces ps pb pf) (split o bk fw) =
                    ; (there m)   → bk δ (λ m' → k (∈-++⁺ʳ ps m')) m })
         (λ δ k m → [ pf δ (k (here refl)) , fw δ (λ m' → k (there m')) ]′ (∈-++⁻ ps m))
 
-splits : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set}
+splits : ∀ {Ω} {X : Set} {P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X → Set}
        → ((a : X) → Pieces P a) → (l : List X) → Split P l
 splits f []      = split [] (λ δ k → λ ()) (λ δ k → λ ())
 splits f (a ∷ l) = consˢ (f a) (splits f l)
 
 -- The images of the entries under `g`, each split
 
-splitsBy : ∀ {Ψ} {X Y : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set}
+splitsBy : ∀ {Ω} {X Y : Set} {P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X → Set}
          → (g : Y → X) → ((a : Y) → Pieces P (g a)) → (l : List Y) → Split P (map g l)
 splitsBy g f []      = split [] (λ δ k → λ ()) (λ δ k → λ ())
 splitsBy g f (a ∷ l) = consˢ (f a) (splitsBy g f l)
 
 -- The alternatives of a sum, each below the same right side
 
-partsʳ : ∀ {Ψ} → Alts (List (RAtom Ψ)) → RExp Ψ → List (RExp Ψ × RExp Ψ)
+partsʳ : ∀ {Ω} → Alts (List (RAtom Ω)) → RExp Ω → List (RExp Ω × RExp Ω)
 partsʳ (alt p)  y = (⟦ p ⟧ʳᵖ , y) ∷ []
 partsʳ (p ∷⁺ s) y = (⟦ p ⟧ʳᵖ , y) ∷ partsʳ s y
 
-partsₑ : ∀ {Ψ} → Alts (List (EAtom Ψ)) → EExp Ψ → List (EExp Ψ × EExp Ψ)
+partsₑ : ∀ {Ω} → Alts (List (EAtom Ω)) → EExp Ω → List (EExp Ω × EExp Ω)
 partsₑ (alt p)  y = (⟦ p ⟧ᵉᵖ , y) ∷ []
 partsₑ (p ∷⁺ s) y = (⟦ p ⟧ᵉᵖ , y) ∷ partsₑ s y
 
-partsʳ-lub : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (s : Alts (List (RAtom Ψ))) → (y : RExp Ψ)
+partsʳ-lub : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} → (s : Alts (List (RAtom Ω))) → (y : RExp Ω)
            → (∀ {b} → b ∈ partsʳ s y → Ordʳ Q δ b) → Q ⊩ ⟦ s ⟧ʳᵖ⁺ [ δ ]ʳ ≾̂ᵣ y [ δ ]ʳ
 partsʳ-lub (alt p)  y k = k (here refl)
 partsʳ-lub (p ∷⁺ s) y k = ⊔-lubᵣ (k (here refl)) (partsʳ-lub s y (λ m → k (there m)))
 
-partsʳ-ub : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (s : Alts (List (RAtom Ψ))) → (y : RExp Ψ)
+partsʳ-ub : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} → (s : Alts (List (RAtom Ω))) → (y : RExp Ω)
           → Q ⊩ ⟦ s ⟧ʳᵖ⁺ [ δ ]ʳ ≾̂ᵣ y [ δ ]ʳ → ∀ {b} → b ∈ partsʳ s y → Ordʳ Q δ b
 partsʳ-ub (alt p)  y h (here refl) = h
 partsʳ-ub (p ∷⁺ s) y h (here refl) = transᵣ ⊔-ubˡᵣ h
 partsʳ-ub (p ∷⁺ s) y h (there m)   = partsʳ-ub s y (transᵣ ⊔-ubʳᵣ h) m
 
-partsₑ-lub : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (s : Alts (List (EAtom Ψ))) → (y : EExp Ψ)
+partsₑ-lub : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} → (s : Alts (List (EAtom Ω))) → (y : EExp Ω)
            → (∀ {b} → b ∈ partsₑ s y → Ordᵉ Q δ b) → Q ⊩ ⟦ s ⟧ᵉᵖ⁺ [ δ ]ᵉ ≾̂ₑ y [ δ ]ᵉ
 partsₑ-lub (alt p)  y k = k (here refl)
 partsₑ-lub (p ∷⁺ s) y k = ⊔-lubₑ (k (here refl)) (partsₑ-lub s y (λ m → k (there m)))
 
-partsₑ-ub : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (s : Alts (List (EAtom Ψ))) → (y : EExp Ψ)
+partsₑ-ub : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} → (s : Alts (List (EAtom Ω))) → (y : EExp Ω)
           → Q ⊩ ⟦ s ⟧ᵉᵖ⁺ [ δ ]ᵉ ≾̂ₑ y [ δ ]ᵉ → ∀ {b} → b ∈ partsₑ s y → Ordᵉ Q δ b
 partsₑ-ub (alt p)  y h (here refl) = h
 partsₑ-ub (p ∷⁺ s) y h (here refl) = transₑ ⊔-ubˡₑ h
@@ -294,7 +294,7 @@ partsₑ-ub (p ∷⁺ s) y h (there m)   = partsₑ-ub s y (transₑ ⊔-ubʳₑ
 
 -- An ordering: its left side's alternatives, each below its right side
 
-piecesʳ : ∀ {Ψ} → (a : RExp Ψ × RExp Ψ) → Pieces Ordʳ a
+piecesʳ : ∀ {Ω} → (a : RExp Ω × RExp Ω) → Pieces Ordʳ a
 piecesʳ (x , y) =
   pieces (partsʳ s (canonᵣ y))
          (λ δ k → transᵣ (eqᵣ (≡̂ᵣ-subst δ (canonᵣ-≡ x)))
@@ -306,7 +306,7 @@ piecesʳ (x , y) =
   where
     s = canonSumᵣ (nrmᵣ x)
 
-piecesᵉ : ∀ {Ψ} → (a : EExp Ψ × EExp Ψ) → Pieces Ordᵉ a
+piecesᵉ : ∀ {Ω} → (a : EExp Ω × EExp Ω) → Pieces Ordᵉ a
 piecesᵉ (x , y) =
   pieces (partsₑ s (canonₑ y))
          (λ δ k → transₑ (eqₑ (≡̂ₑ-subst δ (canonₑ-≡ x)))

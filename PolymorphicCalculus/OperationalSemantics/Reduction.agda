@@ -1,8 +1,8 @@
 ------------------------------------------------------------------
 -- The reduction of configurations                              --
 --                                                              --
--- `⟨ S ∣ M ⟩ ↝[ e ] ⟨ S' ∣ M' ⟩`: small-step reduction of      --
--- run-time terms, `e : S ≤ₛ S'` extending the state. A delay   --
+-- `⟨ 𝕊 ∣ M ⟩ ⟶[ e ] ⟨ 𝕊' ∣ M' ⟩`: small-step reduction of      --
+-- run-time terms, `e : 𝕊 ≤ₛ 𝕊'` extending the state. A delay   --
 -- adds a passage, a `box` a resource, an `unbox` reads one. A  --
 -- handled operation call runs the clause, its grade variable   --
 -- uninstantiated, with the rest of the handled computation as  --
@@ -97,96 +97,96 @@ decide ⋈ V W with holds ⋈ (compareᴰ (datum V) (datum W))
 ------------------------------------------------------------------------
 -- Reduction
 
-data Step {n} (S : State n) : RunC n → ∀ {m} (S' : State m) → S ≤ₛ S' → RunC m → Set
+data Step {n} (𝕊 : State n) : RunC n → ∀ {m} (𝕊' : State m) → 𝕊 ≤ₛ 𝕊' → RunC m → Set
 
-syntax Step S M S' e M' = ⟨ S ∣ M ⟩↝[ e ]⟨ S' ∣ M' ⟩
+syntax Step 𝕊 M 𝕊' e M' = ⟨ 𝕊 ∣ M ⟩⟶[ e ]⟨ 𝕊' ∣ M' ⟩
 
-data Step {n} S where
+data Step {n} 𝕊 where
 
   -- functions, data and recursion
 
   APP        : ∀ {M V}
-             → ⟨ S ∣ lam M · V ⟩↝[ ≤ₛ-refl ]⟨ S ∣ M [ V ]₀ ⟩
+             → ⟨ 𝕊 ∣ lam M · V ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M [ V ]₀ ⟩
 
   MATCH      : ∀ {V W M}
-             → ⟨ S ∣ match ⦉ V , W ⦊ `in M ⟩↝[ ≤ₛ-refl ]⟨ S ∣ M [ V ]₁ [ W ]₀ ⟩
+             → ⟨ 𝕊 ∣ match ⦉ V , W ⦊ `in M ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M [ V ]₁ [ W ]₀ ⟩
 
   CMP        : ∀ {⋈ V W M N}
-             → ⟨ S ∣ if cmp ⋈ V W `then M `else N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ if decide ⋈ V W `then M `else N ⟩
+             → ⟨ 𝕊 ∣ if cmp ⋈ V W `then M `else N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ if decide ⋈ V W `then M `else N ⟩
 
   IF-TRUE    : ∀ {M N}
-             → ⟨ S ∣ if true `then M `else N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ M ⟩
+             → ⟨ 𝕊 ∣ if true `then M `else N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M ⟩
 
   IF-FALSE   : ∀ {M N}
-             → ⟨ S ∣ if false `then M `else N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ N ⟩
+             → ⟨ 𝕊 ∣ if false `then M `else N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ N ⟩
 
   CASEℕ-ZERO : ∀ {M N}
-             → ⟨ S ∣ caseℕ zero `zero M `succ N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ M ⟩
+             → ⟨ 𝕊 ∣ caseℕ zero `zero M `succ N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M ⟩
 
   CASEℕ-SUCC : ∀ {V M N}
-             → ⟨ S ∣ caseℕ succ V `zero M `succ N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ N [ V ]₀ ⟩
+             → ⟨ 𝕊 ∣ caseℕ succ V `zero M `succ N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ N [ V ]₀ ⟩
 
   RECℕ-ZERO  : ∀ {M N}
-             → ⟨ S ∣ recℕ zero M N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ M ⟩
+             → ⟨ 𝕊 ∣ recℕ zero M N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M ⟩
 
   RECℕ-SUCC  : ∀ {V M N}
-             → ⟨ S ∣ recℕ (succ V) M N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ recℕ V M N ⨟ N [ V ]₁ ⟩
+             → ⟨ 𝕊 ∣ recℕ (succ V) M N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ recℕ V M N ⨟ N [ V ]₁ ⟩
 
   CASE-INL   : ∀ {V M N}
-             → ⟨ S ∣ case+ inl V `inl M `inr N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ M [ V ]₀ ⟩
+             → ⟨ 𝕊 ∣ case+ inl V `inl M `inr N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M [ V ]₀ ⟩
 
   CASE-INR   : ∀ {V M N}
-             → ⟨ S ∣ case+ inr V `inl M `inr N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ N [ V ]₀ ⟩
+             → ⟨ 𝕊 ∣ case+ inr V `inl M `inr N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ N [ V ]₀ ⟩
 
   CASEL-NIL  : ∀ {M N}
-             → ⟨ S ∣ caseL nil `nil M `cons N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ M ⟩
+             → ⟨ 𝕊 ∣ caseL nil `nil M `cons N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M ⟩
 
   CASEL-CONS : ∀ {V W M N}
-             → ⟨ S ∣ caseL cons V W `nil M `cons N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ N [ V ]₁ [ W ]₀ ⟩
+             → ⟨ 𝕊 ∣ caseL cons V W `nil M `cons N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ N [ V ]₁ [ W ]₀ ⟩
 
   RECL-NIL   : ∀ {M N}
-             → ⟨ S ∣ recL nil M N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ M ⟩
+             → ⟨ 𝕊 ∣ recL nil M N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M ⟩
 
   RECL-CONS  : ∀ {V W M N}
-             → ⟨ S ∣ recL (cons V W) M N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ recL W M N ⨟ N [ V ]₂ [ W ]₁ ⟩
+             → ⟨ 𝕊 ∣ recL (cons V W) M N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ recL W M N ⨟ N [ V ]₂ [ W ]₁ ⟩
 
   -- sequencing
 
   SEQ-RET    : ∀ {V N}
-             → ⟨ S ∣ return V ⨟ N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ N [ V ]₀ ⟩
+             → ⟨ 𝕊 ∣ return V ⨟ N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ N [ V ]₀ ⟩
 
   SEQ-OP     : ∀ {op V M N}
-             → ⟨ S ∣ perform op V M ⨟ N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ perform op V (M ⨟ renᶜ (ext suc) N) ⟩
+             → ⟨ 𝕊 ∣ perform op V M ⨟ N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ perform op V (M ⨟ renᶜ (ext suc) N) ⟩
 
-  SEQ-STEP   : ∀ {m} {S' : State m} {e : S ≤ₛ S'} {M M' N}
-             → ⟨ S ∣ M ⟩↝[ e ]⟨ S' ∣ M' ⟩
-             → ⟨ S ∣ M ⨟ N ⟩↝[ e ]⟨ S' ∣ M' ⨟ renᶜ (ext (wkₛ e)) N ⟩
+  SEQ-STEP   : ∀ {m} {𝕊' : State m} {e : 𝕊 ≤ₛ 𝕊'} {M M' N}
+             → ⟨ 𝕊 ∣ M ⟩⟶[ e ]⟨ 𝕊' ∣ M' ⟩
+             → ⟨ 𝕊 ∣ M ⨟ N ⟩⟶[ e ]⟨ 𝕊' ∣ M' ⨟ renᶜ (ext (wkₛ e)) N ⟩
 
   -- passage of time
 
   DELAY      : ∀ {τ M}
-             → ⟨ S ∣ delay τ M ⟩↝[ ≤ₛ-lock ≤ₛ-refl ]⟨ S ⟨ τ ⟩ₛ ∣ M ⟩
+             → ⟨ 𝕊 ∣ delay τ M ⟩⟶[ ≤ₛ-lock ≤ₛ-refl ]⟨ 𝕊 ⟨ τ ⟩ₛ ∣ M ⟩
 
   -- effect handling
 
   HANDLE-RET : ∀ {V N H}
-             → ⟨ S ∣ handle return V `with handler N H ⟩↝[ ≤ₛ-refl ]⟨ S ∣ N [ V ]₀ ⟩
+             → ⟨ 𝕊 ∣ handle return V `with handler N H ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ N [ V ]₀ ⟩
 
   HANDLE-OP  : ∀ {op V M N H}
-             → ⟨ S ∣ handle perform op V M `with handler N H ⟩↝[ ≤ₛ-refl ]⟨ S ∣
+             → ⟨ 𝕊 ∣ handle perform op V M `with handler N H ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣
                  box (lam (handle M `with wkᵛ (handler N H))) (H op [ V ]₁) ⟩
 
-  HANDLE-STEP : ∀ {m} {S' : State m} {e : S ≤ₛ S'} {M M' V}
-              → ⟨ S ∣ M ⟩↝[ e ]⟨ S' ∣ M' ⟩
-              → ⟨ S ∣ handle M `with V ⟩↝[ e ]⟨ S' ∣ handle M' `with renᵛ (wkₛ e) V ⟩
+  HANDLE-STEP : ∀ {m} {𝕊' : State m} {e : 𝕊 ≤ₛ 𝕊'} {M M' V}
+              → ⟨ 𝕊 ∣ M ⟩⟶[ e ]⟨ 𝕊' ∣ M' ⟩
+              → ⟨ 𝕊 ∣ handle M `with V ⟩⟶[ e ]⟨ 𝕊' ∣ handle M' `with renᵛ (wkₛ e) V ⟩
 
   -- resources
 
   BOX        : ∀ {V N}
-             → ⟨ S ∣ box V N ⟩↝[ ≤ₛ-res ≤ₛ-refl ]⟨ S ∷ₛ V ∣ N ⟩
+             → ⟨ 𝕊 ∣ box V N ⟩⟶[ ≤ₛ-res ≤ₛ-refl ]⟨ 𝕊 ∷ₛ V ∣ N ⟩
 
   UNBOX      : ∀ {i N}
-             → ⟨ S ∣ unbox (var i) N ⟩↝[ ≤ₛ-refl ]⟨ S ∣ N [ lookupₛ S i ]₀ ⟩
+             → ⟨ 𝕊 ∣ unbox (var i) N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ N [ lookupₛ 𝕊 i ]₀ ⟩
 
 -- A finished computation: a returned value or an operation call
 
@@ -196,7 +196,7 @@ data Final {n} : RunC n → Set where
 
 -- A step, its extension of the state left implicit
 
-infix 3 ⟨_∣_⟩↝⟨_∣_⟩
+infix 3 ⟨_∣_⟩⟶⟨_∣_⟩
 
-⟨_∣_⟩↝⟨_∣_⟩ : ∀ {n m} → State n → RunC n → State m → RunC m → Set
-⟨ S ∣ M ⟩↝⟨ S' ∣ M' ⟩ = Σ[ e ∈ S ≤ₛ _ ] ⟨ S ∣ M ⟩↝[ e ]⟨ S' ∣ M' ⟩
+⟨_∣_⟩⟶⟨_∣_⟩ : ∀ {n m} → State n → RunC n → State m → RunC m → Set
+⟨ 𝕊 ∣ M ⟩⟶⟨ 𝕊' ∣ M' ⟩ = Σ[ e ∈ 𝕊 ≤ₛ _ ] ⟨ 𝕊 ∣ M ⟩⟶[ e ]⟨ 𝕊' ∣ M' ⟩

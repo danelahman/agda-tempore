@@ -47,8 +47,8 @@ data Progresses : {ε : E}
              → {S S' : 𝕊 []} {A B : VType}
              → {M : toCtx S ⊢C⦂ A ‼ ε''}
              → {M' : toCtx S' ⊢C⦂  B ‼ ε''' }
-             → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
-             → (p : ≤ₛ-grade (step-extends-state M↝M') ·ᵣ mapᵉ ε''' ≾ᵣ mapᵉ ε'')
+             → (M⟶M' : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
+             → (p : ≤ₛ-grade (step-extends-state M⟶M') ·ᵣ mapᵉ ε''' ≾ᵣ mapᵉ ε'')
              → (t : B <:ᵛ A)
                --------------------------------------------------------------
              → Progresses M
@@ -60,10 +60,10 @@ step-progress : ∀ {ε'' ε'''}
               → {S S' : 𝕊 []} {A B : VType}
               → {M : toCtx S ⊢C⦂ A ‼ ε''}
               → {M' : toCtx S' ⊢C⦂ B ‼ ε'''}
-              → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+              → (M⟶M' : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
                 ---------------------------------
               → Progresses M
-step-progress M↝M' = steps M↝M' (step-grade-≾ M↝M') (step-refines-type M↝M')
+step-progress M⟶M' = steps M⟶M' (step-grade-≾ M⟶M') (step-refines-type M⟶M')
 
 -- Progress theorem statement
 
@@ -73,7 +73,7 @@ progress (return V) = is-value
 progress (M ⨟ N) with progress M
 progress ((return V) ⨟ N) | is-value = step-progress SEQ-RET
 ... | is-op                          = step-progress SEQ-OP
-progress (M ⨟ N) | steps M↝M' p _    = step-progress (SEQ-STEP M↝M' p)
+progress (M ⨟ N) | steps M⟶M' p _    = step-progress (SEQ-STEP M⟶M' p)
 progress (var ρ≾uᵣ x · W)          = ⊥-elim (⇒-not-in-toCtx x)
 progress (lam M · W)               = step-progress APP
 progress (subV V (_ ⇒ₛ (_ ‼ₛ _)) · W) = step-progress SUB-APP
@@ -101,7 +101,7 @@ progress (handle M `with var _ x)  = ⊥-elim (⇛-not-in-toCtx x)
 progress (handle M `with handler N H) with progress M
 progress (handle (return V) `with handler N H) | is-value = step-progress HANDLE-RET
 ... | is-op                     = step-progress HANDLE-OP
-... | steps M↝M' p _            = step-progress (HANDLE-STEP M↝M' p)
+... | steps M⟶M' p _            = step-progress (HANDLE-STEP M⟶M' p)
 progress (handle M `with subV (var _ x) (_ ⇛ₛ _)) = ⊥-elim (⇛-not-in-toCtx x)
 progress (handle M `with subV (handler N H) ((_ ‼ₛ _) ⇛ₛ _)) =
   step-progress SUB-HANDLE
@@ -118,7 +118,7 @@ finality-value : ∀ {A B τ₂}
                 → {V : toCtx S ⊢V⦂ A}
                 → {M₁ : toCtx S₁ ⊢C⦂ B ‼ τ₂}
                 → {uₑ≾ε : uₑ ≾ₑ τ₂}
-                → ⟨ S , return V ⟩ ↝ ⟨ S₁ , M₁ ⟩
+                → ⟨ S , return V ⟩ ⟶ ⟨ S₁ , M₁ ⟩
                 → ⊥
 finality-value ()
 
@@ -130,6 +130,6 @@ finality-op : ∀ {A B op τ₂ τ₃}
                 → {V : toCtx S ⊢V⦂ type-of-gtype (param op) }
                 → {M : toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ τ₂}
                 → {M₁ : toCtx S₁ ⊢C⦂ B ‼ τ₃}
-                → ⟨ S , perform op V M ⟩ ↝ ⟨ S₁ , M₁ ⟩
+                → ⟨ S , perform op V M ⟩ ⟶ ⟨ S₁ , M₁ ⟩
                 → ⊥
 finality-op ()

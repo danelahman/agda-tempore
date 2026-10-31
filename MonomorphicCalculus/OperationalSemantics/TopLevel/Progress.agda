@@ -62,5 +62,5 @@ module PureTopLevelProgressTheorem (OpSemantics : TopLevelOpSemantics) where
       (≃ᵣ⇒≾ᵣ (≃ᵣ-trans (·ᵣ-assoc _ _ _) (·ᵣ-cong ≃ᵣ-refl (≃ᵣ-sym map-·ᵉ))))
       (<:ᵛ-refl _)
       OP-STEP
-  ... | steps M↝M' p t =
-    top-level-steps (cancelled⇒total (step-extends-state M↝M') p) t (↝-STEP M↝M')
+  ... | steps M⟶M' p t =
+    top-level-steps (cancelled⇒total (step-extends-state M⟶M') p) t (⟶-STEP M⟶M')

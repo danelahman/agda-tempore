@@ -341,7 +341,7 @@ data CRed (s : Shape) (P : VPred s)
            → {M : toCtx St ⊢C⦂ A ‼ ε}
            → {V : toCtx St₁ ⊢V⦂ A₀}
            → (e₀ : shapeᵛ A₀ ≡ s)
-           → ⟨ St , M ⟩ ↝* ⟨ St₁ , return V ⟩
+           → ⟨ St , M ⟩ ⟶* ⟨ St₁ , return V ⟩
            → P e₀ St₁ V
            ---------------------------------
            → CRed s P e ε St M
@@ -356,7 +356,7 @@ data CRed (s : Shape) (P : VPred s)
           → {M' : toCtx St₁ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
                     ⊢C⦂ A₀ ‼ ε₁}
           → (e₀ : shapeᵛ A₀ ≡ s)
-          → ⟨ St , M ⟩ ↝* ⟨ St₁ , perform op W M' ⟩
+          → ⟨ St , M ⟩ ⟶* ⟨ St₁ , perform op W M' ⟩
           → VRedᵍ (param op) St₁ W
           → (∀ {St₂ : 𝕊 []}
              → (q : St₁ ⊑ₛ[ mapᵉ (op-grade op) ] St₂)
@@ -513,7 +513,7 @@ SRed St = ∀ {A ρ σ} {St' : 𝕊 []} → (c : [ ρ ] A ∈[ σ ] toCtx St)
 CRed-expand : ∀ {s} {P : VPred s} {A A₀ ε ε₀} {St St₀ : 𝕊 []}
             → {e : shapeᵛ A ≡ s} → {e₀ : shapeᵛ A₀ ≡ s}
             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₀ : toCtx St₀ ⊢C⦂ A₀ ‼ ε₀}
-            → ⟨ St , M ⟩ ↝ ⟨ St₀ , M₀ ⟩
+            → ⟨ St , M ⟩ ⟶ ⟨ St₀ , M₀ ⟩
             → CRed s P e₀ ε₀ St₀ M₀
             -------------------------
             → CRed s P e ε St M
@@ -527,7 +527,7 @@ CRed-expand r (cred-op e₀ rs pW pk) = cred-op e₀ (r ◅ rs) pW pk
 CRed-expand* : ∀ {s} {P : VPred s} {A A₀ ε ε₀} {St St₀ : 𝕊 []}
              → {e : shapeᵛ A ≡ s} → {e₀ : shapeᵛ A₀ ≡ s}
              → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₀ : toCtx St₀ ⊢C⦂ A₀ ‼ ε₀}
-             → ⟨ St , M ⟩ ↝* ⟨ St₀ , M₀ ⟩
+             → ⟨ St , M ⟩ ⟶* ⟨ St₀ , M₀ ⟩
              → CRed s P e₀ ε₀ St₀ M₀
              -------------------------
              → CRed s P e ε St M
@@ -596,7 +596,7 @@ VRed-sub p V pV = VRedˢ-sub {e = <:ᵛ-shape p} p V (VRedˢ-≡ˢ pV)
 -- them in order; reducibility travels along it.
 
 VRed-spine : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
-           → (rs : cf ↝* cf') → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ B)
+           → (rs : cf ⟶* cf') → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ B)
            → VRed B St V → VRed A St (spine rs V)
 
 VRed-spine ε*       V pV = pV
@@ -629,9 +629,9 @@ SRed-∅ c r = ⊥-elim (not-in-empty-ctx c)
 
 bool-canonical : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Bool)
                → (∀ {A ε} {M N : toCtx St ⊢C⦂ A ‼ ε}
-                    → ⟨ St , if V `then M `else N ⟩ ↝* ⟨ St , M ⟩)
+                    → ⟨ St , if V `then M `else N ⟩ ⟶* ⟨ St , M ⟩)
                ⊎ (∀ {A ε} {M N : toCtx St ⊢C⦂ A ‼ ε}
-                    → ⟨ St , if V `then M `else N ⟩ ↝* ⟨ St , N ⟩)
+                    → ⟨ St , if V `then M `else N ⟩ ⟶* ⟨ St , N ⟩)
 bool-canonical (var f x)      = ⊥-elim (Bool-not-in-toCtx x)
 bool-canonical true           = inj₁ (IF-TRUE ◅ ε*)
 bool-canonical false          = inj₂ (IF-FALSE ◅ ε*)
@@ -645,10 +645,10 @@ bool-canonical (subV V Boolₛ) with bool-canonical V
 
 nat-canonical : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Nat)
               → (∀ {A ε} {M : toCtx St ⊢C⦂ A ‼ ε} {N : toCtx St ∷ Nat ⊢C⦂ A ‼ ε}
-                   → ⟨ St , caseℕ V `zero M `succ N ⟩ ↝* ⟨ St , M ⟩)
+                   → ⟨ St , caseℕ V `zero M `succ N ⟩ ⟶* ⟨ St , M ⟩)
               ⊎ Σ[ W ∈ toCtx St ⊢V⦂ Nat ]
                   (∀ {A ε} {M : toCtx St ⊢C⦂ A ‼ ε} {N : toCtx St ∷ Nat ⊢C⦂ A ‼ ε}
-                     → ⟨ St , caseℕ V `zero M `succ N ⟩ ↝* ⟨ St , N [ split-[] ↦ W ]c ⟩)
+                     → ⟨ St , caseℕ V `zero M `succ N ⟩ ⟶* ⟨ St , N [ split-[] ↦ W ]c ⟩)
 nat-canonical (var f x)     = ⊥-elim (Nat-not-in-toCtx x)
 nat-canonical zero          = inj₁ (CASEℕ-ZERO ◅ ε*)
 nat-canonical (succ V)      = inj₂ (V , CASEℕ-SUCC ◅ ε*)

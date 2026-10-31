@@ -97,7 +97,7 @@ open import PolymorphicCalculus.Inference.SolverImpl.Localise S hints
 open OpEnum opEnum
 
 Wit : ∀ {Θ} → (s : St Θ) → Constraint Θ → Set
-Wit s C = ∀ {Ψ'} → (δ : Subst (Ψ s) Ψ') → (Q : Hyps Ψ')
+Wit s C = ∀ {Ω'} → (δ : Subst (Ω s) Ω') → (Q : Hyps Ω')
         → Q ⊩ᴿ (res s) [ δ ] → (θ s ⨟ˢ δ) ⊨[ Q ] C
 
 -- A witness is re-read at any later state
@@ -636,9 +636,9 @@ threadOps {f = f} g (op ∷ l) s with g s op
 -- The inner store, restricted to the outer unknowns, moves the rigid
 -- back to the newest position
 
-pop-key : ∀ {Ψ Φ} → (γ : Subst (Ψ +e) (Φ +e)) → {j : EVar (Φ +e)}
-        → sE γ (newᵉ {Ψ}) ≡ evar j → {δ₀ : Subst Ψ Φ}
-        → ((wkˢᵉ {Ψ} ⨟ˢ γ) ⨟ˢ popˢ j) ≐ˢ (δ₀ ⨟ˢ wkˢᵉ)
+pop-key : ∀ {Ω Φ} → (γ : Subst (Ω +e) (Φ +e)) → {j : EVar (Φ +e)}
+        → sE γ (newᵉ {Ω}) ≡ evar j → {δ₀ : Subst Ω Φ}
+        → ((wkˢᵉ {Ω} ⨟ˢ γ) ⨟ˢ popˢ j) ≐ˢ (δ₀ ⨟ˢ wkˢᵉ)
         → (γ ⨟ˢ popˢ j) ≐ˢ (δ₀ ↑ᵉ)
 pop-key γ {j} eqj {δ₀} pδ =
   mk≐ˢ (λ α → trans (≐ᵗ pδ α) (wkˢᵉ-v (sTy δ₀ α)))
@@ -656,10 +656,10 @@ popᵉ : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e))
      → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (∀ᵉ C)))
 popᵉ s C (scope nt nr nzero)    θ'' R'' rg'' m'' w'' = refuted
 popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
-  with evar? (sE (mδ m'') (newᵉ {Ψ s}))
+  with evar? (sE (mδ m'') (newᵉ {Ω s}))
 ... | nothing = refuted
-... | just (j , eqj) with strSub j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'')
-                        | splitᴿ (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') (mδ m'') j R''
+... | just (j , eqj) with strSub j (wkˢᵉ {Ω s} ⨟ˢ mδ m'')
+                        | splitᴿ (wkˢᵉ {Ω s} ⨟ˢ mδ m'') (mδ m'') j R''
 ...   | just (δ₀ , pδ) | solved (R₀ , tr) =
         solved (st (scope nt nr n) (θ s ⨟ˢ δ₀) (res s [ δ₀ ]ᴿ ∪ᴿ R₀) (transRig δ₀ (rig s)) ,
               mor δ₀ ≐ˢ-refl (λ δ Q h → ⊩ᴿ-subst (∪ᴿ-fst h)) ,
@@ -690,32 +690,32 @@ popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
 
 -- The residual's orderings as hypotheses
 
-ordsOf : ∀ {Ψ} → Resid Ψ → Hyps Ψ
+ordsOf : ∀ {Ω} → Resid Ω → Hyps Ω
 ordsOf R = hyps [] [] (rs R) (es R) [] []
 
-ordsOf-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {δ : Subst Ψ Ψ'}
+ordsOf-⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} {R : Resid Ω} {δ : Subst Ω Ω'}
          → Q ⊩ᴿ R [ δ ] → Q ⊩ᴴ ordsOf R [ δ ]
 ordsOf-⊩ h = mk⊩ᴴ (λ ()) (λ ()) (⊩rs h) (⊩es h) (λ ()) (λ ())
 
 -- An ordering of an entry binding `k` rigids, at `δ`
 
-Atʳ : ∀ {Ψ Ψ'} → (k : ℕ) → Hyps Ψ' → Subst Ψ Ψ' → RExp (Ψ +eⁿ k) × RExp (Ψ +eⁿ k) → Set
+Atʳ : ∀ {Ω Ω'} → (k : ℕ) → Hyps Ω' → Subst Ω Ω' → RExp (Ω +eⁿ k) × RExp (Ω +eⁿ k) → Set
 Atʳ k Q δ (x , y) = wkᵉⁿ-H k Q ⊩ x [ δ ↑ᵉⁿ k ]ʳ ≾̂ᵣ y [ δ ↑ᵉⁿ k ]ʳ
 
-Atᵉ : ∀ {Ψ Ψ'} → (k : ℕ) → Hyps Ψ' → Subst Ψ Ψ' → EExp (Ψ +eⁿ k) × EExp (Ψ +eⁿ k) → Set
+Atᵉ : ∀ {Ω Ω'} → (k : ℕ) → Hyps Ω' → Subst Ω Ω' → EExp (Ω +eⁿ k) × EExp (Ω +eⁿ k) → Set
 Atᵉ k Q δ (x , y) = wkᵉⁿ-H k Q ⊩ x [ δ ↑ᵉⁿ k ]ᵉ ≾̂ₑ y [ δ ↑ᵉⁿ k ]ᵉ
 
-data Verdict {Ψ} {X : Set} (H : Hyps Ψ) (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set)
+data Verdict {Ω} {X : Set} (H : Hyps Ω) (P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X → Set)
              (a : X) : Set where
-  settled   : (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → Q ⊩ᴴ H [ δ ] → P Q δ a)
+  settled   : (∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω') → Q ⊩ᴴ H [ δ ] → P Q δ a)
             → Verdict H P a
-  refuted   : ((δ : Subst Ψ ∅ˢ) → ¬ P ∅ᴴ δ a) → Verdict H P a
+  refuted   : ((δ : Subst Ω ∅ˢ) → ¬ P ∅ᴴ δ a) → Verdict H P a
   undecided : Verdict H P a
 
 -- At the witnesses, a closed instance of an entry's ordering is one of
 -- the ordering with its rigids instantiated
 
-atWitʳ : ∀ {Ψ} → (k : ℕ) → (cs : List E) → (x y : RExp (Ψ +eⁿ k)) → (δ : Subst Ψ ∅ˢ)
+atWitʳ : ∀ {Ω} → (k : ℕ) → (cs : List E) → (x y : RExp (Ω +eⁿ k)) → (δ : Subst Ω ∅ˢ)
        → Atʳ k ∅ᴴ δ (x , y) → ∅ᴴ ⊩ x [ wit k cs ]ʳ [ δ ]ʳ ≾̂ᵣ y [ wit k cs ]ʳ [ δ ]ʳ
 atWitʳ k cs x y δ p =
   subst₂ (λ a b → ∅ᴴ ⊩ a ≾̂ᵣ b) (eq x) (eq y) (⊩-substᵣ (⊩ᴴ-wit k cs) p)
@@ -724,7 +724,7 @@ atWitʳ k cs x y δ p =
     eq z = trans ([⨟]ʳ z (δ ↑ᵉⁿ k) (wit k cs))
                  (trans ([≐]ʳ (wit-⨟ δ k cs) z) (sym ([⨟]ʳ z (wit k cs) δ)))
 
-atWitᵉ : ∀ {Ψ} → (k : ℕ) → (cs : List E) → (x y : EExp (Ψ +eⁿ k)) → (δ : Subst Ψ ∅ˢ)
+atWitᵉ : ∀ {Ω} → (k : ℕ) → (cs : List E) → (x y : EExp (Ω +eⁿ k)) → (δ : Subst Ω ∅ˢ)
        → Atᵉ k ∅ᴴ δ (x , y) → ∅ᴴ ⊩ x [ wit k cs ]ᵉ [ δ ]ᵉ ≾̂ₑ y [ wit k cs ]ᵉ [ δ ]ᵉ
 atWitᵉ k cs x y δ p =
   subst₂ (λ a b → ∅ᴴ ⊩ a ≾̂ₑ b) (eq x) (eq y) (⊩-substₑ (⊩ᴴ-wit k cs) p)
@@ -733,27 +733,27 @@ atWitᵉ k cs x y δ p =
     eq z = trans ([⨟]ᵉ z (δ ↑ᵉⁿ k) (wit k cs))
                  (trans ([≐]ᵉ (wit-⨟ δ k cs) z) (sym ([⨟]ᵉ z (wit k cs) δ)))
 
-witnessʳ : ∀ {Ψ} {H : Hyps Ψ} → (k : ℕ) → (x y : RExp (Ψ +eⁿ k)) → List (List E)
+witnessʳ : ∀ {Ω} {H : Hyps Ω} → (k : ℕ) → (x y : RExp (Ω +eⁿ k)) → List (List E)
          → Verdict H (Atʳ k) (x , y)
 witnessʳ k x y []         = undecided
 witnessʳ k x y (cs ∷ css) with closedᵣ? (x [ wit k cs ]ʳ) (y [ wit k cs ]ʳ)
 ... | just (failsᵣ n) = refuted (λ δ p → n δ (atWitʳ k cs x y δ p))
 ... | _               = witnessʳ k x y css
 
-witnessᵉ : ∀ {Ψ} {H : Hyps Ψ} → (k : ℕ) → (x y : EExp (Ψ +eⁿ k)) → List (List E)
+witnessᵉ : ∀ {Ω} {H : Hyps Ω} → (k : ℕ) → (x y : EExp (Ω +eⁿ k)) → List (List E)
          → Verdict H (Atᵉ k) (x , y)
 witnessᵉ k x y []         = undecided
 witnessᵉ k x y (cs ∷ css) with closedₑ? (x [ wit k cs ]ᵉ) (y [ wit k cs ]ᵉ)
 ... | just (failsₑ n) = refuted (λ δ p → n δ (atWitᵉ k cs x y δ p))
 ... | _               = witnessᵉ k x y css
 
-verdictʳ : ∀ {Ψ} → (H : Hyps Ψ) → (k : ℕ) → (a : RExp (Ψ +eⁿ k) × RExp (Ψ +eⁿ k))
+verdictʳ : ∀ {Ω} → (H : Hyps Ω) → (k : ℕ) → (a : RExp (Ω +eⁿ k) × RExp (Ω +eⁿ k))
          → Verdict H (Atʳ k) a
 verdictʳ H k (x , y) with decideᵣ full (wkᵉⁿ-H k H) x y
 ... | just p  = settled (λ δ h → ⊩-substᵣ (⊩ᴴ-↑ᵉⁿ k h) p)
 ... | nothing = witnessʳ k x y (grid (candidatesᵣ x y) k)
 
-verdictᵉ : ∀ {Ψ} → (H : Hyps Ψ) → (k : ℕ) → (a : EExp (Ψ +eⁿ k) × EExp (Ψ +eⁿ k))
+verdictᵉ : ∀ {Ω} → (H : Hyps Ω) → (k : ℕ) → (a : EExp (Ω +eⁿ k) × EExp (Ω +eⁿ k))
          → Verdict H (Atᵉ k) a
 verdictᵉ H k (x , y) with decideₑ full (wkᵉⁿ-H k H) x y
 ... | just p  = settled (λ δ h → ⊩-substₑ (⊩ᴴ-↑ᵉⁿ k h) p)
@@ -761,19 +761,19 @@ verdictᵉ H k (x , y) with decideₑ full (wkᵉⁿ-H k H) x y
 
 -- The orderings of a list that are not settled, or one refuted
 
-record Sifted {Ψ} {X : Set} (H : Hyps Ψ) (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set)
+record Sifted {Ω} {X : Set} (H : Hyps Ω) (P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X → Set)
               (l : List X) : Set where
   constructor sifted
   field
     left  : List X
     left⊆ : ∀ {a} → a ∈ left → a ∈ l
-    back  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → Q ⊩ᴴ H [ δ ]
+    back  : ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω') → Q ⊩ᴴ H [ δ ]
           → (∀ {a} → a ∈ left → P Q δ a) → ∀ {a} → a ∈ l → P Q δ a
 
-NoWit : ∀ {Ψ} {X : Set} → (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) → List X → Set
-NoWit {Ψ} {X} P l = Σ[ a ∈ X ] ((a ∈ l) × ((δ : Subst Ψ ∅ˢ) → ¬ P ∅ᴴ δ a))
+NoWit : ∀ {Ω} {X : Set} → (P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X → Set) → List X → Set
+NoWit {Ω} {X} P l = Σ[ a ∈ X ] ((a ∈ l) × ((δ : Subst Ω ∅ˢ) → ¬ P ∅ᴴ δ a))
 
-sift : ∀ {Ψ} {X : Set} {H : Hyps Ψ} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set}
+sift : ∀ {Ω} {X : Set} {H : Hyps Ω} {P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X → Set}
      → ((a : X) → Verdict H P a) → (l : List X) → NoWit P l ⊎ Sifted H P l
 sift v []      = inj₂ (sifted [] (λ ()) (λ δ h k → λ ()))
 sift v (a ∷ l) with v a | sift v l
@@ -789,34 +789,34 @@ sift v (a ∷ l) with v a | sift v l
 
 -- An entry with no ordering left is dropped
 
-unlessEmpty : ∀ {Ψ} → Maybe Op → (k : ℕ) → Ords (Ψ +eⁿ k) → List (QOrd Ψ)
+unlessEmpty : ∀ {Ω} → Maybe Op → (k : ℕ) → Ords (Ω +eⁿ k) → List (QOrd Ω)
 unlessEmpty l k (ords [] []) = []
 unlessEmpty l k o            = qord l k o ∷ []
 
-unlessEmpty-back : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} {l : Maybe Op} {k : ℕ}
-                 → (o : Ords (Ψ +eⁿ k))
+unlessEmpty-back : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} {l : Maybe Op} {k : ℕ}
+                 → (o : Ords (Ω +eⁿ k))
                  → (∀ {E'} → E' ∈ unlessEmpty l k o → Q ⊩ᴼ E' [ δ ]) → Q ⊩ᴼ qord l k o [ δ ]
 unlessEmpty-back (ords [] [])      f = mk⊩ᵒ (λ ()) (λ ())
 unlessEmpty-back (ords (a ∷ r) e)  f = f (here refl)
 unlessEmpty-back (ords [] (a ∷ e)) f = f (here refl)
 
-unlessEmpty-fwd : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} {l : Maybe Op} {k : ℕ}
-                → (o : Ords (Ψ +eⁿ k))
+unlessEmpty-fwd : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} {l : Maybe Op} {k : ℕ}
+                → (o : Ords (Ω +eⁿ k))
                 → Q ⊩ᴼ qord l k o [ δ ] → ∀ {E'} → E' ∈ unlessEmpty l k o → Q ⊩ᴼ E' [ δ ]
 unlessEmpty-fwd (ords [] [])      h ()
 unlessEmpty-fwd (ords (a ∷ r) e)  h (here refl) = h
 unlessEmpty-fwd (ords [] (a ∷ e)) h (here refl) = h
 
-data Retried {Ψ} (H : Hyps Ψ) (E : QOrd Ψ) : Set where
-  refutedᵈ : ((δ : Subst Ψ ∅ˢ) → ¬ (∅ᴴ ⊩ᴼ E [ δ ])) → Retried H E
-  keptᵈ    : (D : List (QOrd Ψ))
-           → (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → Q ⊩ᴴ H [ δ ]
+data Retried {Ω} (H : Hyps Ω) (E : QOrd Ω) : Set where
+  refutedᵈ : ((δ : Subst Ω ∅ˢ) → ¬ (∅ᴴ ⊩ᴼ E [ δ ])) → Retried H E
+  keptᵈ    : (D : List (QOrd Ω))
+           → (∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω') → Q ⊩ᴴ H [ δ ]
                 → (∀ {E'} → E' ∈ D → Q ⊩ᴼ E' [ δ ]) → Q ⊩ᴼ E [ δ ])
-           → (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → Q ⊩ᴼ E [ δ ]
+           → (∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω') → Q ⊩ᴼ E [ δ ]
                 → ∀ {E'} → E' ∈ D → Q ⊩ᴼ E' [ δ ])
            → Retried H E
 
-retryᵈ : ∀ {Ψ} → (H : Hyps Ψ) → (E : QOrd Ψ) → Retried H E
+retryᵈ : ∀ {Ω} → (H : Hyps Ω) → (E : QOrd Ω) → Retried H E
 retryᵈ H (qord l k o) with sift (verdictʳ H k) (ors o) | sift (verdictᵉ H k) (oes o)
 ... | inj₁ (a , m , r) | _                = refutedᵈ (λ δ h → r δ (⊩ors h m))
 ... | inj₂ _           | inj₁ (a , m , r) = refutedᵈ (λ δ h → r δ (⊩oes h m))
@@ -827,19 +827,19 @@ retryᵈ H (qord l k o) with sift (verdictʳ H k) (ors o) | sift (verdictᵉ H k
             (λ δ h → unlessEmpty-fwd (ords lr le)
                        (mk⊩ᵒ (λ m → ⊩ors h (sr m)) (λ m → ⊩oes h (se m))))
 
-record RetriedL {Ψ} (H : Hyps Ψ) (D : List (QOrd Ψ)) : Set where
+record RetriedL {Ω} (H : Hyps Ω) (D : List (QOrd Ω)) : Set where
   constructor retriedL
   field
-    D'    : List (QOrd Ψ)
-    backᴰ : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → Q ⊩ᴴ H [ δ ]
+    D'    : List (QOrd Ω)
+    backᴰ : ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω') → Q ⊩ᴴ H [ δ ]
           → (∀ {E} → E ∈ D' → Q ⊩ᴼ E [ δ ]) → ∀ {E} → E ∈ D → Q ⊩ᴼ E [ δ ]
-    fwdᴰ  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+    fwdᴰ  : ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω')
           → (∀ {E} → E ∈ D → Q ⊩ᴼ E [ δ ]) → ∀ {E} → E ∈ D' → Q ⊩ᴼ E [ δ ]
 
-RefutedL : ∀ {Ψ} → List (QOrd Ψ) → Set
-RefutedL {Ψ} D = Σ[ E ∈ QOrd Ψ ] ((E ∈ D) × ((δ : Subst Ψ ∅ˢ) → ¬ (∅ᴴ ⊩ᴼ E [ δ ])))
+RefutedL : ∀ {Ω} → List (QOrd Ω) → Set
+RefutedL {Ω} D = Σ[ E ∈ QOrd Ω ] ((E ∈ D) × ((δ : Subst Ω ∅ˢ) → ¬ (∅ᴴ ⊩ᴼ E [ δ ])))
 
-retryᴰ : ∀ {Ψ} → (H : Hyps Ψ) → (D : List (QOrd Ψ)) → RefutedL D ⊎ RetriedL H D
+retryᴰ : ∀ {Ω} → (H : Hyps Ω) → (D : List (QOrd Ω)) → RefutedL D ⊎ RetriedL H D
 retryᴰ H []      = inj₂ (retriedL [] (λ δ h g → λ ()) (λ δ g → λ ()))
 retryᴰ H (E ∷ D) with retryᵈ H E | retryᴰ H D
 ... | refutedᵈ r     | _                    = inj₁ (E , here refl , r)
@@ -852,14 +852,14 @@ retryᴰ H (E ∷ D) with retryᵈ H E | retryᴰ H D
 
 -- A residual with its deferred conditions replaced
 
-withDfs : ∀ {Ψ} → Resid Ψ → List (QOrd Ψ) → Resid Ψ
+withDfs : ∀ {Ω} → Resid Ω → List (QOrd Ω) → Resid Ω
 withDfs R D = resid (rs R) (es R) (ts R) (ss R) (ds R) D
 
 retry : ∀ {Θ} → (s : St Θ) → Maybe (Σ[ s' ∈ St Θ ] (s ⟶ s'))
 retry s with retryᴰ (ordsOf (res s)) (dfs (res s))
 ... | inj₁ _                 = nothing
 ... | inj₂ (retriedL D' b f) =
-      just (st (Ψ s) (θ s) (withDfs (res s) D') (rig s) ,
+      just (st (Ω s) (θ s) (withDfs (res s) D') (rig s) ,
             mor idˢ (⨟-idʳ (θ s))
                 (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ))
                              (mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (⊩ss h) (⊩ds h)
@@ -878,11 +878,11 @@ thenRetry {C = C} (solved (s₁ , m₁ , w₁)) with retry s₁
 
 -- The entries a clause leaves carry its operation
 
-relabel : ∀ {Ψ} → Op → QOrd Ψ → QOrd Ψ
+relabel : ∀ {Ω} → Op → QOrd Ω → QOrd Ω
 relabel op (qord nothing  k o) = qord (just op) k o
 relabel op (qord (just l) k o) = qord (just l) k o
 
-relabel-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (op : Op) → (E : QOrd Ψ)
+relabel-⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} → (op : Op) → (E : QOrd Ω)
           → Q ⊩ᴼ relabel op E [ δ ] → Q ⊩ᴼ E [ δ ]
 relabel-⊩ op (qord nothing  k o) h = h
 relabel-⊩ op (qord (just l) k o) h = h
@@ -895,7 +895,7 @@ labelled op stuck   = stuck
 labelled {C = C} op (solved (s₁ , m₁ , w₁)) =
   solved (s₂ , ⟶-⨟ m₁ m₂ , wit-mono m₂ C w₁)
   where
-    s₂ = st (Ψ s₁) (θ s₁) (withDfs (res s₁) (map (relabel op) (dfs (res s₁)))) (rig s₁)
+    s₂ = st (Ω s₁) (θ s₁) (withDfs (res s₁) (map (relabel op) (dfs (res s₁)))) (rig s₁)
 
     m₂ : s₁ ⟶ s₂
     m₂ = mor idˢ (⨟-idʳ (θ s₁))
@@ -912,17 +912,17 @@ localiseˢ {Θ} s {s''} m = localised (localise (mδ m) (res s''))
   where
     -- The state the localisation leaves
     localised : Localised (mδ m) (res s'') → Σ[ s₃ ∈ St (Θ +e) ] (s'' ⟶ s₃)
-    localised L = st (Ψ s'') (θ s'' ⨟ˢ lσ L) (lR L) (rig s'') , mor (lσ L) ≐ˢ-refl (lsnd L)
+    localised L = st (Ω s'') (θ s'' ⨟ˢ lσ L) (lR L) (rig s'') , mor (lσ L) ≐ˢ-refl (lsnd L)
 
 -- The scope closed at the state the localisation leaves
 
 closeᵉ : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e)) → {s₃ : St (Θ +e)}
        → (m : ⇑ᵉˢ s ⟶ s₃) → Wit s₃ C → Σ[ s₄ ∈ St (Θ +e) ] (s₃ ⟶ s₄)
        → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (∀ᵉ C)))
-closeᵉ s C m w (s₄ , m₄) = popᵉ s C (Ψ s₄) (θ s₄) (res s₄) (rig s₄) (⟶-⨟ m m₄) (wit-mono m₄ C w)
+closeᵉ s C m w (s₄ , m₄) = popᵉ s C (Ω s₄) (θ s₄) (res s₄) (rig s₄) (⟶-⨟ m m₄) (wit-mono m₄ C w)
 
-chain₂ᵛ : ∀ {Θ Ψ Ψ₁ Ψ₂} → (X : OVType Θ) → (σ : Subst Θ Ψ) → (δ : Subst Ψ Ψ₁)
-        → (δ' : Subst Ψ₁ Ψ₂) → X [ σ ]ᵛ [ δ ]ᵛ [ δ' ]ᵛ ≡ X [ (σ ⨟ˢ δ) ⨟ˢ δ' ]ᵛ
+chain₂ᵛ : ∀ {Θ Ω Ω₁ Ω₂} → (X : OVType Θ) → (σ : Subst Θ Ω) → (δ : Subst Ω Ω₁)
+        → (δ' : Subst Ω₁ Ω₂) → X [ σ ]ᵛ [ δ ]ᵛ [ δ' ]ᵛ ≡ X [ (σ ⨟ˢ δ) ⨟ˢ δ' ]ᵛ
 chain₂ᵛ X σ δ δ' = trans (cong (_[ δ' ]ᵛ) ([⨟]ᵛ X σ δ)) ([⨟]ᵛ X (σ ⨟ˢ δ) δ')
 
 -- One expansion and decomposition make every subtyping demand of a residual
@@ -932,22 +932,22 @@ chain₂ᵛ X σ δ δ' = trans (cong (_[ δ' ]ᵛ) ([⨟]ᵛ X σ δ)) ([⨟]�
 reexpand : ∀ {Θ} → (s : St Θ) → Maybe (Σ[ s' ∈ St Θ ] (s ⟶ s'))
 reexpand s with expandSub (ss (res s))
 ... | nothing       = nothing
-... | just (Ψ' , δ) with subsList (ss (res s [ δ ]ᴿ)) | etsDec (ts (res s [ δ ]ᴿ))
+... | just (Ω' , δ) with subsList (ss (res s [ δ ]ᴿ)) | etsDec (ts (res s [ δ ]ᴿ))
 ...   | nothing | _       = nothing
 ...   | just _  | nothing = nothing
 ...   | just e  | just t  =
-        just (st Ψ' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e t) (transRig δ (rig s)) ,
+        just (st Ω' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e t) (transRig δ (rig s)) ,
               mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (atomiseᴿ-sound _ e t h)))
 
 -- An eternality demand is decided by `etDec` when pushed: refuted, or its atoms
 -- on type variables pushed
 
 solveEt : ∀ {Θ} → (s : St Θ) → (A : OVType Θ)
-        → (x : Maybe (List (TyVar (Ψ s)))) → etDec (A [ θ s ]ᵛ) ≡ x
+        → (x : Maybe (List (TyVar (Ω s)))) → etDec (A [ θ s ]ᵛ) ≡ x
         → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (Etᶜ A)))
 solveEt s A nothing   e = refuted
 solveEt s A (just αs) e =
-  solved (st (Ψ s) (θ s) (pushᵗ αs (res s)) (rig s) ,
+  solved (st (Ω s) (θ s) (pushᵗ αs (res s)) (rig s) ,
         mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailᵗ h)) ,
         λ δ Q h → subst (Q ⊩ᴱ_) ([⨟]ᵛ A (θ s) δ)
                         (etDec-intro (A [ θ s ]ᵛ) e δ
@@ -957,10 +957,10 @@ solveEt s A (just αs) e =
 -- grade side is pushed, if eternal with no atom it is dropped, else it is pushed
 
 solveDisj : ∀ {Θ} → (s : St Θ) → (A : OVType Θ) → (ρ : RExp Θ)
-          → (x : Maybe (List (TyVar (Ψ s)))) → etDec (A [ θ s ]ᵛ) ≡ x
+          → (x : Maybe (List (TyVar (Ω s)))) → etDec (A [ θ s ]ᵛ) ≡ x
           → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (Et∨≾ᵘ A ρ)))
 solveDisj s A ρ nothing       e =
-  solved (st (Ψ s) (θ s) (pushʳ (ρ [ θ s ]ʳ) ûᵣ (res s)) (rig s) ,
+  solved (st (Ω s) (θ s) (pushʳ (ρ [ θ s ]ʳ) ûᵣ (res s)) (rig s) ,
         mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailʳ h)) ,
         λ δ Q h → ≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ (θ s) δ) (⊩rs h (here refl))))
 solveDisj s A ρ (just [])     e =
@@ -968,7 +968,7 @@ solveDisj s A ρ (just [])     e =
         λ δ Q h → et-ok (subst (Q ⊩ᴱ_) ([⨟]ᵛ A (θ s) δ)
                                (etDec-intro (A [ θ s ]ᵛ) e δ (λ ()))))
 solveDisj s A ρ (just (_ ∷ _)) e =
-  solved (st (Ψ s) (θ s) (pushᵈ (A [ θ s ]ᵛ) (ρ [ θ s ]ʳ) (res s)) (rig s) ,
+  solved (st (Ω s) (θ s) (pushᵈ (A [ θ s ]ᵛ) (ρ [ θ s ]ʳ) (res s)) (rig s) ,
         mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailᵈ h)) ,
         λ δ Q h → subst₂ (VarOK Q) ([⨟]ᵛ A (θ s) δ) ([⨟]ʳ ρ (θ s) δ) (⊩ds h (here refl)))
 
@@ -990,26 +990,26 @@ solve s (C ∧̂ D) with solve s C
 
 solve s (A ≾̂ᵥᶜ B) with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))
 ... | nothing        = refuted
-... | just (Ψ' , δ) with subDec (A [ θ s ]ᵛ [ δ ]ᵛ) (B [ θ s ]ᵛ [ δ ]ᵛ)
+... | just (Ω' , δ) with subDec (A [ θ s ]ᵛ [ δ ]ᵛ) (B [ θ s ]ᵛ [ δ ]ᵛ)
 ...   | nothing = refuted
 ...   | just d  with subsList (ss (res s [ δ ]ᴿ)) | etsDec (ts (res s [ δ ]ᴿ))
 ...     | nothing | _       = refuted
 ...     | just _  | nothing = refuted
 ...     | just e  | just t  =
-        solved (st Ψ' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e t ∪ᴿ atomsᴿ (atomsOf d))
+        solved (st Ω' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e t ∪ᴿ atomsᴿ (atomsOf d))
                  (transRig δ (rig s)) ,
               mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (atomiseᴿ-sound _ e t (∪ᴿ-fst h))) ,
               λ δ' Q h → subst₂ (Q ∣_<:̂ᵛ_) (chain₂ᵛ A (θ s) δ δ') (chain₂ᵛ B (θ s) δ δ')
                                 (intro d δ' (holdsᴿ (atomsOf d) (∪ᴿ-snd h))))
 
 solve s (ρ ≾̂ᵣᶜ ρ') =
-  solved (st (Ψ s) (θ s) (pushʳ (ρ [ θ s ]ʳ) (ρ' [ θ s ]ʳ) (res s)) (rig s) ,
+  solved (st (Ω s) (θ s) (pushʳ (ρ [ θ s ]ʳ) (ρ' [ θ s ]ʳ) (res s)) (rig s) ,
         mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailʳ h)) ,
         λ δ Q h → subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y)
                          ([⨟]ʳ ρ (θ s) δ) ([⨟]ʳ ρ' (θ s) δ) (⊩rs h (here refl)))
 
 solve s (ε ≾̂ₑᶜ ε') =
-  solved (st (Ψ s) (θ s) (pushᵉ (ε [ θ s ]ᵉ) (ε' [ θ s ]ᵉ) (res s)) (rig s) ,
+  solved (st (Ω s) (θ s) (pushᵉ (ε [ θ s ]ᵉ) (ε' [ θ s ]ᵉ) (res s)) (rig s) ,
         mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailᵉ h)) ,
         λ δ Q h → subst₂ (λ x y → Q ⊩ x ≾̂ₑ y)
                          ([⨟]ᵉ ε (θ s) δ) ([⨟]ᵉ ε' (θ s) δ) (⊩es h (here refl)))
@@ -1027,13 +1027,13 @@ solve {Θ} s (∃ᵗ C) with solve (s ↑ᵗˢ) C
 ... | refuted = refuted
 ... | stuck   = stuck
 ... | solved (s'' , m'' , w'') =
-      solved (st (Ψ s'') (wkˢᵗ {Θ} ⨟ˢ θ s'') (res s'') (rig s'') ,
-            mor (wkˢᵗ {Ψ s} ⨟ˢ mδ m'')
-                (≐ˢ-trans (≐ˢ-sym (⨟-assoc (θ s) (wkˢᵗ {Ψ s}) (mδ m'')))
+      solved (st (Ω s'') (wkˢᵗ {Θ} ⨟ˢ θ s'') (res s'') (rig s'') ,
+            mor (wkˢᵗ {Ω s} ⨟ˢ mδ m'')
+                (≐ˢ-trans (≐ˢ-sym (⨟-assoc (θ s) (wkˢᵗ {Ω s}) (mδ m'')))
                  (≐ˢ-trans (⨟-congˡ (≐ˢ-sym (wkˢᵗ-↑ᵗ (θ s))) (mδ m''))
                  (≐ˢ-trans (⨟-assoc (wkˢᵗ {Θ}) (θ s ↑ᵗ) (mδ m''))
                            (⨟-congʳ (wkˢᵗ {Θ}) (mtri m'')))))
-                (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc (wkˢᵗ {Ψ s}) (mδ m'') δ))
+                (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc (wkˢᵗ {Ω s}) (mδ m'') δ))
                                        (⊩ᴿ-subst (mres m'' δ Q h))) ,
             λ δ Q h → sTy (θ s'' ⨟ˢ δ) (newᵗ {Θ}) ,
                       ⊨-resp-≐ˢ (≐ˢ-sym (≐ˢ-trans
@@ -1045,13 +1045,13 @@ solve {Θ} s (∃ʳ C) with solve (s ↑ʳˢ) C
 ... | refuted = refuted
 ... | stuck   = stuck
 ... | solved (s'' , m'' , w'') =
-      solved (st (Ψ s'') (wkˢʳ {Θ} ⨟ˢ θ s'') (res s'') (rig s'') ,
-            mor (wkˢʳ {Ψ s} ⨟ˢ mδ m'')
-                (≐ˢ-trans (≐ˢ-sym (⨟-assoc (θ s) (wkˢʳ {Ψ s}) (mδ m'')))
+      solved (st (Ω s'') (wkˢʳ {Θ} ⨟ˢ θ s'') (res s'') (rig s'') ,
+            mor (wkˢʳ {Ω s} ⨟ˢ mδ m'')
+                (≐ˢ-trans (≐ˢ-sym (⨟-assoc (θ s) (wkˢʳ {Ω s}) (mδ m'')))
                  (≐ˢ-trans (⨟-congˡ (≐ˢ-sym (wkˢʳ-↑ʳ (θ s))) (mδ m''))
                  (≐ˢ-trans (⨟-assoc (wkˢʳ {Θ}) (θ s ↑ʳ) (mδ m''))
                            (⨟-congʳ (wkˢʳ {Θ}) (mtri m'')))))
-                (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc (wkˢʳ {Ψ s}) (mδ m'') δ))
+                (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc (wkˢʳ {Ω s}) (mδ m'') δ))
                                        (⊩ᴿ-subst (mres m'' δ Q h))) ,
             λ δ Q h → sR (θ s'' ⨟ˢ δ) (newʳ {Θ}) ,
                       ⊨-resp-≐ˢ (≐ˢ-sym (≐ˢ-trans
@@ -1063,13 +1063,13 @@ solve {Θ} s (∃ᵉ C) with solve (s ↑ᵉˢ) C
 ... | refuted = refuted
 ... | stuck   = stuck
 ... | solved (s'' , m'' , w'') =
-      solved (st (Ψ s'') (wkˢᵉ {Θ} ⨟ˢ θ s'') (res s'') (rig s'') ,
-            mor (wkˢᵉ {Ψ s} ⨟ˢ mδ m'')
-                (≐ˢ-trans (≐ˢ-sym (⨟-assoc (θ s) (wkˢᵉ {Ψ s}) (mδ m'')))
+      solved (st (Ω s'') (wkˢᵉ {Θ} ⨟ˢ θ s'') (res s'') (rig s'') ,
+            mor (wkˢᵉ {Ω s} ⨟ˢ mδ m'')
+                (≐ˢ-trans (≐ˢ-sym (⨟-assoc (θ s) (wkˢᵉ {Ω s}) (mδ m'')))
                  (≐ˢ-trans (⨟-congˡ (≐ˢ-sym (wkˢᵉ-↑ᵉ (θ s))) (mδ m''))
                  (≐ˢ-trans (⨟-assoc (wkˢᵉ {Θ}) (θ s ↑ᵉ) (mδ m''))
                            (⨟-congʳ (wkˢᵉ {Θ}) (mtri m'')))))
-                (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc (wkˢᵉ {Ψ s}) (mδ m'') δ))
+                (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc (wkˢᵉ {Ω s}) (mδ m'') δ))
                                        (⊩ᴿ-subst (mres m'' δ Q h))) ,
             λ δ Q h → sE (θ s'' ⨟ˢ δ) (newᵉ {Θ}) ,
                       ⊨-resp-≐ˢ (≐ˢ-sym (≐ˢ-trans

@@ -79,7 +79,7 @@ svar?-just (sBox t)  ()
 
 mutual
 
-  skelᵛ : ∀ {Ψ} → OVType Ψ → Skel (nTy Ψ)
+  skelᵛ : ∀ {Ω} → OVType Ω → Skel (nTy Ω)
   skelᵛ (tvar α)  = svar α
   skelᵛ (Base b)  = sBase b
   skelᵛ Unit      = sUnit
@@ -93,7 +93,7 @@ mutual
   skelᵛ (C ⇛ D)   = skelᶜ C s⇛ skelᶜ D
   skelᵛ ([ ρ ] A) = sBox skelᵛ A
 
-  skelᶜ : ∀ {Ψ} → OCType Ψ → Skel (nTy Ψ)
+  skelᶜ : ∀ {Ω} → OCType Ω → Skel (nTy Ω)
   skelᶜ (A ‼ ε) = skelᵛ A
 
 -- Substitutions of skeleton variables

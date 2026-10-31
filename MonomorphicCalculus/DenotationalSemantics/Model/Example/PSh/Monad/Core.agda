@@ -142,7 +142,7 @@ mutual
             → t ≈ᵗ t' → sub e t ≈ᵗ sub e' t'
 
     -- Sub-effecting nodes are invisible: reduction discards a `coerce`
-    -- (`⟨ S , coerce p M ⟩ ↝ ⟨ S , M ⟩`), so an equality preserved by
+    -- (`⟨ S , coerce p M ⟩ ⟶ ⟨ S , M ⟩`), so an equality preserved by
     -- reduction must not see the `sub` node it leaves behind. Collapsing them
     -- is what makes `T-≤` a coercion (`T-≤-refl` / `T-≤-trans`).
 
@@ -154,7 +154,7 @@ mutual
     -- A `sub` may be pushed under a delay, at a grade factoring through the
     -- delay's own (`of-durᵉ τ ·ₑ_`): a coercion of the residual effect leaves
     -- the delay untouched. This is what makes sub-effecting commute with the
-    -- multiplication in the inner grade, which the `↝*` closure needs.
+    -- multiplication in the inner grade, which the `⟶*` closure needs.
 
     sub-delay : ∀ {ε ε' w} {τ : 𝔻} {e : ε ≾ₑ ε'}
                   {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}

@@ -131,16 +131,16 @@ module _ {Θ Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} where
 ∃ᵉ*-elim (suc c) h with ∃ᵉ*-elim c h
 ... | es , (ε , h') = (λ { zero → ε ; (suc i) → es i }) , h'
 
-∃ˢ-intro : ∀ {Θ Θ' Ψ} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {C : Constraint (Θ ⊹ Ψ)}
-         → (δ : Subst Ψ Θ') → (σ ⊕ˢ δ) ⊨[ Q ] C → σ ⊨[ Q ] ∃ˢ Ψ C
-∃ˢ-intro {Ψ = Ψ} δ h =
-  ∃ᵗ*-intro (nTy Ψ) (sTy δ) (∃ʳ*-intro (nR Ψ) (sR δ) (∃ᵉ*-intro (nE Ψ) (sE δ) h))
+∃ˢ-intro : ∀ {Θ Θ' Ω} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {C : Constraint (Θ ⊹ Ω)}
+         → (δ : Subst Ω Θ') → (σ ⊕ˢ δ) ⊨[ Q ] C → σ ⊨[ Q ] ∃ˢ Ω C
+∃ˢ-intro {Ω = Ω} δ h =
+  ∃ᵗ*-intro (nTy Ω) (sTy δ) (∃ʳ*-intro (nR Ω) (sR δ) (∃ᵉ*-intro (nE Ω) (sE δ) h))
 
-∃ˢ-elim : ∀ {Θ Θ' Ψ} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {C : Constraint (Θ ⊹ Ψ)}
-        → σ ⊨[ Q ] ∃ˢ Ψ C → Σ[ δ ∈ Subst Ψ Θ' ] (σ ⊕ˢ δ) ⊨[ Q ] C
-∃ˢ-elim {Ψ = Ψ} h with ∃ᵗ*-elim (nTy Ψ) h
-... | ts , h₁ with ∃ʳ*-elim (nR Ψ) h₁
-... | rs , h₂ with ∃ᵉ*-elim (nE Ψ) h₂
+∃ˢ-elim : ∀ {Θ Θ' Ω} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {C : Constraint (Θ ⊹ Ω)}
+        → σ ⊨[ Q ] ∃ˢ Ω C → Σ[ δ ∈ Subst Ω Θ' ] (σ ⊕ˢ δ) ⊨[ Q ] C
+∃ˢ-elim {Ω = Ω} h with ∃ᵗ*-elim (nTy Ω) h
+... | ts , h₁ with ∃ʳ*-elim (nR Ω) h₁
+... | rs , h₂ with ∃ᵉ*-elim (nE Ω) h₂
 ... | es , h₃ = sub ts rs es , h₃
 
 ------------------------------------------------------------------------
@@ -173,7 +173,7 @@ hypsᶜ-complete Q' h =
 instᶜ-sound : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} (s : Scheme) (A : OVType Θ)
             → σ ⊨[ Q ] instᶜ s A
             → Σ[ δ ∈ Subst (Θˢ s) Θ' ] (Q ∣ Xˢ s [ δ ]ᵛ <:̂ᵛ A [ σ ]ᵛ) × (Q ⊩ᴴ Qˢ s [ δ ])
-instᶜ-sound {σ = σ} {Q} s A h with ∃ˢ-elim {Ψ = Θˢ s} {σ = σ} {Q = Q} {C = instᶜ-body s A} h
+instᶜ-sound {σ = σ} {Q} s A h with ∃ˢ-elim {Ω = Θˢ s} {σ = σ} {Q = Q} {C = instᶜ-body s A} h
 ... | δ , (st , hq) =
   δ , subst₂ (Q ∣_<:̂ᵛ_) eX eA st ,
   hypsᶜ-sound (Qˢ s)
@@ -189,7 +189,7 @@ instᶜ-complete : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} (s : Scheme) 
                → (δ : Subst (Θˢ s) Θ') → Q ∣ Xˢ s [ δ ]ᵛ <:̂ᵛ A [ σ ]ᵛ → Q ⊩ᴴ Qˢ s [ δ ]
                → σ ⊨[ Q ] instᶜ s A
 instᶜ-complete {σ = σ} {Q} s A δ st hq =
-  ∃ˢ-intro {Ψ = Θˢ s} {σ = σ} {Q = Q} {C = instᶜ-body s A} δ
+  ∃ˢ-intro {Ω = Θˢ s} {σ = σ} {Q = Q} {C = instᶜ-body s A} δ
     (subst₂ (Q ∣_<:̂ᵛ_) (sym eX) (sym eA) st ,
      ⊨-subst (hypsᶜ (Qˢ s))
        (⊨-resp-≐ˢ (≐ˢ-sym (newˢ⊹-⊕ˢ σ δ)) (hypsᶜ (Qˢ s)) (hypsᶜ-complete (Qˢ s) hq)))

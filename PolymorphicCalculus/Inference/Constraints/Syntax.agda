@@ -84,11 +84,11 @@ infix  2 ∃ᵗ_ ∃ʳ_ ∃ᵉ_ ∀ᵉ_
 ∃ᵉ* zero        C = C
 ∃ᵉ* {Θ} (suc c) C = ∃ᵉ* c (∃ᵉ_ {Θ = scope (nTy Θ) (nR Θ) (c + nE Θ)} C)
 
-∃ˢ : ∀ {Θ} → (Ψ : Scope) → Constraint (Θ ⊹ Ψ) → Constraint Θ
-∃ˢ {Θ} Ψ C =
-  ∃ᵗ* (nTy Ψ)
-    (∃ʳ* {Θ = scope (nTy Ψ + nTy Θ) (nR Θ) (nE Θ)} (nR Ψ)
-      (∃ᵉ* {Θ = scope (nTy Ψ + nTy Θ) (nR Ψ + nR Θ) (nE Θ)} (nE Ψ) C))
+∃ˢ : ∀ {Θ} → (Ω : Scope) → Constraint (Θ ⊹ Ω) → Constraint Θ
+∃ˢ {Θ} Ω C =
+  ∃ᵗ* (nTy Ω)
+    (∃ʳ* {Θ = scope (nTy Ω + nTy Θ) (nR Θ) (nE Θ)} (nR Ω)
+      (∃ᵉ* {Θ = scope (nTy Ω + nTy Θ) (nR Ω + nR Θ) (nE Θ)} (nE Ω) C))
 
 -- Rigid quantification over several effect-grade variables, outermost first
 

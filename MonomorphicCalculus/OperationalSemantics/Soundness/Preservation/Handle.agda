@@ -141,7 +141,7 @@ alg-ηᵀ {ε = ε} {ε₂ = ε₂} alg alg-≤ pv f =
 
 step-pv : ∀ {ε₁ ε₃ A A₀ P} {S S' : 𝕊 []}
         → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
-        → (bc : Eternalᵒ P) → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+        → (bc : Eternalᵒ P) → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
         → (⟦ hist S ⟧ᶜᵗˣ →ᵐ P) → (⟦ hist S' ⟧ᶜᵗˣ →ᵐ P)
 step-pv bc APP               pv = pv
 step-pv bc MATCH             pv = pv
@@ -191,7 +191,7 @@ alg-stepᵀ : ∀ {ε ε₂ ε₁' ε₃' A A₀ B P} {S S' : 𝕊 []}
                            ∘ᵐ delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ (alg {ε'})
                            ∘ᵐ []-monoidal
                            ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {of-durʳ τ}) idᵐ)
-          → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+          → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
           → (pv : ⟦ hist S ⟧ᶜᵗˣ →ᵐ P)
           → (f : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε)
           → alg {step-grade r ·ₑ ε}
@@ -399,7 +399,7 @@ suc-comp-free q pf =
 
 step-pv-state : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []}
               → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
-              → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+              → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
               → (pS : Paramˢ S) → (pM : Paramᶜ M)
               → step-pv (bcᴱ (toCtx S)) r (⟨⊤⟩-η ∘ᵐ ⟦ S ⟧ˢ pS)
               ≈ᵐ ⟦ suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _) ⟧ʳ
@@ -457,7 +457,7 @@ sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {S S' : 𝕊 []}
          ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
   → (N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
   → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
-  → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+  → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
   → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
   → (pS : Paramˢ S) → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
   → (pH : ∀ op ε'' → Paramᶜ (H op ε''))

@@ -427,15 +427,15 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (P : Open O) (R : Resid Φ) where
 -- Canonical form: atoms in normal form, joins on left sides split
 -- (`normalᴿ`), orderings decided true dropped (`dropᴿ`); instances unchanged
 
-normalᴿ : ∀ {Ψ} → Resid Ψ → Resid Ψ
+normalᴿ : ∀ {Ω} → Resid Ω → Resid Ω
 normalᴿ R = resid (Split.out (splits piecesʳ (rs R))) (Split.out (splits piecesᵉ (es R)))
                   (ts R) (ss R) (Split.out (splits piecesᵈ (ds R))) (dfs R)
 
-dropᴿ : ∀ {Ψ} → Resid Ψ → Resid Ψ
+dropᴿ : ∀ {Ω} → Resid Ω → Resid Ω
 dropᴿ R = record R { rs = Unsettled.kept (unsettled settledʳ (rs R))
                    ; es = Unsettled.kept (unsettled settledᵉ (es R)) }
 
-canonᴿ : ∀ {Ψ} → Resid Ψ → Resid Ψ
+canonᴿ : ∀ {Ω} → Resid Ω → Resid Ω
 canonᴿ R = dropᴿ (normalᴿ R)
 
 loc-normal : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → Localised O R → Localised O R
@@ -470,7 +470,7 @@ loc-canon L = loc-drop (loc-normal L)
 
 -- Normal forms keep the number of disjunctions
 
-normal-ds : ∀ {Ψ} → (l : List (OVType Ψ × RExp Ψ)) → length (Split.out (splits piecesᵈ l)) ≡ length l
+normal-ds : ∀ {Ω} → (l : List (OVType Ω × RExp Ω)) → length (Split.out (splits piecesᵈ l)) ≡ length l
 normal-ds []      = refl
 normal-ds (a ∷ l) = cong nsuc (normal-ds l)
 
@@ -478,21 +478,21 @@ normal-ds (a ∷ l) = cong nsuc (normal-ds l)
 -- Settling the disjunctions: those below the unit at `full` or always eternal
 -- dropped, those never eternal reduced to their grade side
 
-ordsᴴ : ∀ {Ψ} → Resid Ψ → Hyps Ψ
+ordsᴴ : ∀ {Ω} → Resid Ω → Hyps Ω
 ordsᴴ R = hyps [] [] (rs R) (es R) [] []
 
-settledOf : ∀ {Ψ} → (R : Resid Ψ) → Unsettled (Under (ordsᴴ R) Disj) (ds R)
+settledOf : ∀ {Ω} → (R : Resid Ω) → Unsettled (Under (ordsᴴ R) Disj) (ds R)
 settledOf R = unsettled (settledᵈ (ordsᴴ R)) (ds R)
 
-refinedOf : ∀ {Ψ} → (R : Resid Ψ) → Refined (Unsettled.kept (settledOf R))
+refinedOf : ∀ {Ω} → (R : Resid Ω) → Refined (Unsettled.kept (settledOf R))
 refinedOf R = refine (Unsettled.kept (settledOf R))
 
-settleᴿ : ∀ {Ψ} → Resid Ψ → Resid Ψ
+settleᴿ : ∀ {Ω} → Resid Ω → Resid Ω
 settleᴿ R = record R { rs = rs R ++ Refined.orders (refinedOf R) ; ds = Refined.rest (refinedOf R) }
 
 -- Some disjunction is settled
 
-Settles : ∀ {Ψ} → Resid Ψ → Set
+Settles : ∀ {Ω} → Resid Ω → Set
 Settles R = length (ds (settleᴿ R)) < length (ds R)
 
 loc-settle : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → Localised O R → Localised O R
@@ -519,7 +519,7 @@ loc-settle (loc σ R₀ fx sn cp la) =
 
 -- With no disjunction settled, each one's type is eternal at some instance
 
-unsettled-≤ : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set}
+unsettled-≤ : ∀ {Ω} {X : Set} {P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X → Set}
             → (set : (a : X) → Maybe (Every P a)) → (l : List X)
             → length (Unsettled.kept (unsettled set l)) ≤ length l
 unsettled-≤ set []      = z≤n
@@ -527,7 +527,7 @@ unsettled-≤ set (a ∷ l) with set a
 ... | just _  = m≤n⇒m≤1+n (unsettled-≤ set l)
 ... | nothing = s≤s (unsettled-≤ set l)
 
-unsettled-all : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set}
+unsettled-all : ∀ {Ω} {X : Set} {P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X → Set}
               → (set : (a : X) → Maybe (Every P a)) → (l : List X)
               → length l ≤ length (Unsettled.kept (unsettled set l))
               → ∀ {a} → a ∈ l → a ∈ Unsettled.kept (unsettled set l)
@@ -536,31 +536,31 @@ unsettled-all set (a ∷ l) h m with set a
 unsettled-all set (a ∷ l) h (here refl) | nothing = here refl
 unsettled-all set (a ∷ l) h (there m)   | nothing = there (unsettled-all set l (s≤s⁻¹ h) m)
 
-refine-≤ : ∀ {Ψ} → (l : List (OVType Ψ × RExp Ψ)) → length (Refined.rest (refine l)) ≤ length l
+refine-≤ : ∀ {Ω} → (l : List (OVType Ω × RExp Ω)) → length (Refined.rest (refine l)) ≤ length l
 refine-≤ []            = z≤n
-refine-≤ {Ψ} ((A , ρ) ∷ l) = go (etDec A) refl (refine l) (refine-≤ l)
+refine-≤ {Ω} ((A , ρ) ∷ l) = go (etDec A) refl (refine l) (refine-≤ l)
   where
-    go : (x : Maybe (List (TyVar Ψ))) → (e : etDec A ≡ x) → (F : Refined l)
+    go : (x : Maybe (List (TyVar Ω))) → (e : etDec A ≡ x) → (F : Refined l)
        → length (Refined.rest F) ≤ length l → length (Refined.rest (consᴿ A ρ x e F)) ≤ nsuc (length l)
     go nothing   e (refined r _ _ _ _ _) le = m≤n⇒m≤1+n le
     go (just αs) e (refined r _ _ _ _ _) le = s≤s le
 
-refine-all : ∀ {Ψ} → (l : List (OVType Ψ × RExp Ψ)) → length l ≤ length (Refined.rest (refine l))
-           → ∀ {A ρ} → (A , ρ) ∈ l → Σ[ αs ∈ List (TyVar Ψ) ] (etDec A ≡ just αs)
-refine-all {Ψ} ((A , ρ) ∷ l) = go (etDec A) refl (refine l) (refine-≤ l) (refine-all l)
+refine-all : ∀ {Ω} → (l : List (OVType Ω × RExp Ω)) → length l ≤ length (Refined.rest (refine l))
+           → ∀ {A ρ} → (A , ρ) ∈ l → Σ[ αs ∈ List (TyVar Ω) ] (etDec A ≡ just αs)
+refine-all {Ω} ((A , ρ) ∷ l) = go (etDec A) refl (refine l) (refine-≤ l) (refine-all l)
   where
-    go : (x : Maybe (List (TyVar Ψ))) → (e : etDec A ≡ x) → (F : Refined l)
+    go : (x : Maybe (List (TyVar Ω))) → (e : etDec A ≡ x) → (F : Refined l)
        → length (Refined.rest F) ≤ length l
        → (length l ≤ length (Refined.rest F) → ∀ {A' ρ'} → (A' , ρ') ∈ l
-          → Σ[ αs ∈ List (TyVar Ψ) ] (etDec A' ≡ just αs))
+          → Σ[ αs ∈ List (TyVar Ω) ] (etDec A' ≡ just αs))
        → nsuc (length l) ≤ length (Refined.rest (consᴿ A ρ x e F))
-       → ∀ {A' ρ'} → (A' , ρ') ∈ (A , ρ) ∷ l → Σ[ αs ∈ List (TyVar Ψ) ] (etDec A' ≡ just αs)
+       → ∀ {A' ρ'} → (A' , ρ') ∈ (A , ρ) ∷ l → Σ[ αs ∈ List (TyVar Ω) ] (etDec A' ≡ just αs)
     go nothing   e (refined r _ _ _ _ _) le rec h m = ⊥-elim (<-irrefl refl (≤-trans h le))
     go (just αs) e (refined r _ _ _ _ _) le rec h (here refl) = αs , e
     go (just αs) e (refined r _ _ _ _ _) le rec h (there m)   = rec (s≤s⁻¹ h) m
 
-settled-none : ∀ {Ψ} → (R : Resid Ψ) → ¬ Settles R
-             → ∀ {A ρ} → (A , ρ) ∈ ds R → Σ[ αs ∈ List (TyVar Ψ) ] (etDec A ≡ just αs)
+settled-none : ∀ {Ω} → (R : Resid Ω) → ¬ Settles R
+             → ∀ {A ρ} → (A , ρ) ∈ ds R → Σ[ αs ∈ List (TyVar Ω) ] (etDec A ≡ just αs)
 settled-none R ns m =
   refine-all K (≤-trans dk ds≤) (unsettled-all (settledᵈ (ordsᴴ R)) (ds R) (≤-trans ds≤ (refine-≤ K)) m)
   where

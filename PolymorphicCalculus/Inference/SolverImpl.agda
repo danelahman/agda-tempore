@@ -118,7 +118,7 @@ open import PolymorphicCalculus.Inference.SolverImpl.Strengthen S hints
   using (Ren; Strengthened; strengthen; ⌜_⌝ʳ; _[_]ᴴ; ⊩ᴴ-ren⁺; fixes-≐; fixes-⊆; fvᴰ;
          fix-⊩ᴼ; fix-⊩ᴼ⁻; conv⁻; inst⁻; keep⁻; princ⁻)
 
-Fixing-[] : ∀ {Θ Ψ} → (σ : Subst Θ Ψ) → Fixing [] σ
+Fixing-[] : ∀ {Θ Ω} → (σ : Subst Θ Ω) → Fixing [] σ
 Fixing-[] σ = fixing (λ i ()) (λ i i' ())
 
 -- The driver's answer: a scope, a substitution, the residual read back
@@ -139,7 +139,7 @@ runSolverᴰ C with solve init C
 ...       | nothing        = refuted
 ...       | just (Q₀ , hq) with checkClosed Q₀
 ...         | nothing = refuted
-...         | just Q  = solved (Ψ s₂ , θ s₂ , Q , dfs (res s₂))
+...         | just Q  = solved (Ω s₂ , θ s₂ , Q , dfs (res s₂))
 
 -- The answer's hypotheses: the residual and the deferred conditions,
 -- as quantified hypotheses
@@ -389,7 +389,7 @@ record Reported {Θ₀ Θ : Scope} (w : Subst Θ₀ Θ) (X : OCType Θ) (C : Con
     to-R̃   : (δ : Subst Θ' ∅ˢ) → δ ⊨ Q̂ ∣ R → ∅ᴴ ⊩ᴼˢ R̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]
     princ  : (δ : Subst Θ' ∅ˢ) → ∅ᴴ ⊩ᴴ Q̂ [ δ ]
            → ∅ᴴ ∣ X̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]ᶜ <:̂ᶜ X [ σ ]ᶜ [ δ ]ᶜ
-    ext-ι  : ∀ {Ψ} → (δ : Subst Θ̃ Ψ) → Σ[ δ' ∈ Subst Θ' Ψ ] (⌜ ι ⌝ʳ ⨟ˢ δ' ≐ˢ δ)
+    ext-ι  : ∀ {Ω} → (δ : Subst Θ̃ Ω) → Σ[ δ' ∈ Subst Θ' Ω ] (⌜ ι ⌝ʳ ⨟ˢ δ' ≐ˢ δ)
 
 -- An entry with its grade expressions in canonical form means the same
 

@@ -1,10 +1,10 @@
 ------------------------------------------------------------------
 -- The solver state                                             --
 --                                                              --
--- A state `St Θ` is a scope `Ψ` of the variables still         --
--- unknown, the substitution `θ : Subst Θ Ψ` found so far, the  --
--- residual over `Ψ`, and the rigid effect-grade variables of   --
--- `Ψ`. A morphism `s ⟶ s'` is a move of the driver: a          --
+-- A state `St Θ` is a scope `Ω` of the variables still         --
+-- unknown, the substitution `θ : Subst Θ Ω` found so far, the  --
+-- residual over `Ω`, and the rigid effect-grade variables of   --
+-- `Ω`. A morphism `s ⟶ s'` is a move of the driver: a          --
 -- substitution `δ` extending `θ` to the new one, along which a --
 -- discharge of the new residual is one of the old. Morphisms   --
 -- compose.                                                     --
@@ -66,10 +66,10 @@ i ∈ᶠ (j ∷ js) = ⌊ i ≟ᶠ j ⌋ ∨ (i ∈ᶠ js)
 
 -- A substitution fixes the rigids when it sends them to distinct variables
 
-record Fixing {Θ Ψ : Scope} (rg : Rig Θ) (σ : Subst Θ Ψ) : Set where
+record Fixing {Θ Ω : Scope} (rg : Rig Θ) (σ : Subst Θ Ω) : Set where
   constructor fixing
   field
-    fixᵉ : (i : EVar Θ) → i ∈ᶠ rg ≡ true → Σ[ j ∈ EVar Ψ ] (sE σ i ≡ evar j)
+    fixᵉ : (i : EVar Θ) → i ∈ᶠ rg ≡ true → Σ[ j ∈ EVar Ω ] (sE σ i ≡ evar j)
     injᵉ : (i i' : EVar Θ) → i ∈ᶠ rg ≡ true → i' ∈ᶠ rg ≡ true → sE σ i ≡ sE σ i' → i ≡ i'
 
 open Fixing public
@@ -77,22 +77,22 @@ open Fixing public
 -- A rigid is never bound, so its image under the driver's substitutions is a
 -- variable
 
-varᵉ? : ∀ {Ψ} → EExp Ψ → Maybe (EVar Ψ)
+varᵉ? : ∀ {Ω} → EExp Ω → Maybe (EVar Ω)
 varᵉ? (evar i)  = just i
 varᵉ? (econst c) = nothing
 varᵉ? (ε ·̂ₑ ε') = nothing
 varᵉ? (ε ⊔̂ₑ ε') = nothing
 
-transRig : ∀ {Ψ Ψ'} → Subst Ψ Ψ' → Rig Ψ → Rig Ψ'
+transRig : ∀ {Ω Ω'} → Subst Ω Ω' → Rig Ω → Rig Ω'
 transRig δ rg = mapMaybe (λ i → varᵉ? (sE δ i)) rg
 
 record St (Θ : Scope) : Set where
   constructor st
   field
-    Ψ   : Scope                 -- the variables still unknown
-    θ   : Subst Θ Ψ             -- the solution so far
-    res : Resid Ψ               -- what is left over
-    rig : Rig Ψ                 -- the rigid effect-grade variables
+    Ω   : Scope                 -- the variables still unknown
+    θ   : Subst Θ Ω             -- the solution so far
+    res : Resid Ω               -- what is left over
+    rig : Rig Ω                 -- the rigid effect-grade variables
 
 open St public
 
@@ -104,9 +104,9 @@ infix 4 _⟶_
 record _⟶_ {Θ : Scope} (s s' : St Θ) : Set where
   constructor mor
   field
-    mδ   : Subst (Ψ s) (Ψ s')
+    mδ   : Subst (Ω s) (Ω s')
     mtri : (θ s ⨟ˢ mδ) ≐ˢ θ s'
-    mres : ∀ {Ψ''} → (δ : Subst (Ψ s') Ψ'') → (Q : Hyps Ψ'')
+    mres : ∀ {Ω''} → (δ : Subst (Ω s') Ω'') → (Q : Hyps Ω'')
          → Q ⊩ᴿ (res s') [ δ ] → Q ⊩ᴿ (res s) [ mδ ⨟ˢ δ ]
 
 open _⟶_ public
@@ -128,13 +128,13 @@ open _⟶_ public
 infixl 32 _↑ᵗˢ _↑ʳˢ _↑ᵉˢ
 
 _↑ᵗˢ : ∀ {Θ} → St Θ → St (Θ +ty)
-s ↑ᵗˢ = st (Ψ s +ty) (θ s ↑ᵗ) (res s [ wkˢᵗ {Ψ s} ]ᴿ) (transRig (wkˢᵗ {Ψ s}) (rig s))
+s ↑ᵗˢ = st (Ω s +ty) (θ s ↑ᵗ) (res s [ wkˢᵗ {Ω s} ]ᴿ) (transRig (wkˢᵗ {Ω s}) (rig s))
 
 _↑ʳˢ : ∀ {Θ} → St Θ → St (Θ +r)
-s ↑ʳˢ = st (Ψ s +r) (θ s ↑ʳ) (res s [ wkˢʳ {Ψ s} ]ᴿ) (transRig (wkˢʳ {Ψ s}) (rig s))
+s ↑ʳˢ = st (Ω s +r) (θ s ↑ʳ) (res s [ wkˢʳ {Ω s} ]ᴿ) (transRig (wkˢʳ {Ω s}) (rig s))
 
 _↑ᵉˢ : ∀ {Θ} → St Θ → St (Θ +e)
-s ↑ᵉˢ = st (Ψ s +e) (θ s ↑ᵉ) (res s [ wkˢᵉ {Ψ s} ]ᴿ) (transRig (wkˢᵉ {Ψ s}) (rig s))
+s ↑ᵉˢ = st (Ω s +e) (θ s ↑ᵉ) (res s [ wkˢᵉ {Ω s} ]ᴿ) (transRig (wkˢᵉ {Ω s}) (rig s))
 
 ⇑ᵉˢ : ∀ {Θ} → St Θ → St (Θ +e)
-⇑ᵉˢ s = st (Ψ s +e) (θ s ↑ᵉ) emptyᴿ (newᵉ {Ψ s} ∷ transRig (wkˢᵉ {Ψ s}) (rig s))
+⇑ᵉˢ s = st (Ω s +e) (θ s ↑ᵉ) emptyᴿ (newᵉ {Ω s} ∷ transRig (wkˢᵉ {Ω s}) (rig s))

@@ -1,16 +1,16 @@
 ------------------------------------------------------------------------
 -- Adequacy of the denotational semantics w.r.t. the operational one. --
 --                                                                    --
--- The converse direction of `↝*-sound`. Assembled from               --
+-- The converse direction of `⟶*-sound`. Assembled from               --
 --                                                                    --
 --   * whnf existence: `Termination.halts` (syntactic)                --
---   * the whnf denotes the source: `↝*-sound`                        --
+--   * the whnf denotes the source: `⟶*-sound`                        --
 --   * head faithfulness: `HeadFaithful` (model side)                 --
 --                                                                    --
 -- Stated for two programs: `⟦ M ⟧ ≈ᵐ ⟦ N ⟧` implies they halt with   --
 -- the same shape, at the same operation, with the same answer.       --
 --                                                                    --
--- Scope: the machine `↝`, where unhandled operations stop computing  --
+-- Scope: the machine `⟶`, where unhandled operations stop computing  --
 -- and denotations live in the tree monad `Tᵒ`.                       --
 ------------------------------------------------------------------------
 
@@ -128,13 +128,13 @@ Tᶠ-nodeᵐ g op w k =
                             (⟨ ∘ᵐ-identityˡ w , ≈ᵐ-refl ⟩ᵐ-cong)))))
 
 -- A program is its whnf, coerced along the run's refinement and run after the
--- run's transition, then coerced back to the program's grade: `↝*-sound` at
+-- run's transition, then coerced back to the program's grade: `⟶*-sound` at
 -- the empty state (`hist ∅ ≡ []`, so `⟦ [] ⟧ᶜᵗˣ = 𝟙ᵐ` and the empty
 -- environment is `idᵐ`).
 
 program-run-sound : ∀ {A B ε ε'} {cf' : Config (B ‼ ε')}
                   → (M : Prog A ε) → (pM : Paramᶜ M)
-                  → (rs : ⟨ ∅ , M ⟩ ↝* cf')
+                  → (rs : ⟨ ∅ , M ⟩ ⟶* cf')
                   → ⟦ M ⟧ᵖ pM
                   ≈ᵐ delayedᵐ (Tᶠ ⟦ run-refines-type rs ⟧<:ᵛ
                                  ∘ᵐ ⟦ cf' ⟧ᶜᶠ (stepsᴾᶜᶠ rs (tt , pM)))
@@ -142,7 +142,7 @@ program-run-sound : ∀ {A B ε ε'} {cf' : Config (B ‼ ε')}
 
 program-run-sound M pM rs =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ (⟦ M ⟧ᵖ pM)))
-    (≈ᵐ-trans (↝*-sound rs (tt , pM) (uniform↝* rs (tt , pM)))
+    (≈ᵐ-trans (⟶*-sound rs (tt , pM) (uniform⟶* rs (tt , pM)))
               (∘ᵐ-congʳ (Tᶠ-⋄ _ _ _)))
 
 -- The value a whnf returns, at the program's own type: a run refines the type,
