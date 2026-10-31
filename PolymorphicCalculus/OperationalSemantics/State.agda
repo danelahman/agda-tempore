@@ -1,12 +1,12 @@
 ------------------------------------------------------------------
 -- States and state typings                                     --
 --                                                              --
--- A state `𝕊 ::= ∅ | 𝕊 ⟨ τ ⟩ₛ | 𝕊 ∷ₛ V` records the passages   --
--- of time and the resources of a run; `State n` has `n`        --
--- resources. A state typing `Ψ` types `𝕊` (`Types Ψ`) when     --
--- each resource has its type `[ ρ ] X` in the context before   --
--- it, behind `ρ`. `𝕊 ≤ₛ 𝕊'` extends a state; `δₛ` is the grade --
--- of the passages added.                                       --
+-- A state `𝕊 ::= ∅ | 𝕊 ⟨ ρ ⟩ₛ | 𝕊 ∷ₛ V` records the grades of  --
+-- the passages of time and the resources of a run; `State n`   --
+-- has `n` resources. A state typing `Ψ` types `𝕊` (`Types Ψ`)  --
+-- when each resource has its type `[ ρ ] X` in the context     --
+-- before it, behind `ρ`. `𝕊 ≤ₛ 𝕊'` extends a state; `δₛ` is    --
+-- the grade of the passages added.                             --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)
@@ -43,13 +43,13 @@ infix  32 _⟨_⟩ₛ
 
 data State : ℕ → Set where
   ∅    : State 0
-  _⟨_⟩ₛ : ∀ {n} → State n → 𝔻 → State n
+  _⟨_⟩ₛ : ∀ {n} → State n → R → State n
   _∷ₛ_  : ∀ {n} → State n → RunV n → State (suc n)
 
 -- The resource at a position, in the scope of the whole state
 
 lookupₛ : ∀ {n} → State n → Fin n → RunV n
-lookupₛ (𝕊 ⟨ τ ⟩ₛ) i       = lookupₛ 𝕊 i
+lookupₛ (𝕊 ⟨ ρ ⟩ₛ) i       = lookupₛ 𝕊 i
 lookupₛ (𝕊 ∷ₛ V)   zero    = wkᵛ V
 lookupₛ (𝕊 ∷ₛ V)   (suc i) = wkᵛ (lookupₛ 𝕊 i)
 
@@ -59,7 +59,7 @@ infix 4 _≤ₛ_
 
 data _≤ₛ_ {n} (𝕊 : State n) : ∀ {m} → State m → Set where
   ≤ₛ-refl : 𝕊 ≤ₛ 𝕊
-  ≤ₛ-lock : ∀ {m} {𝕊' : State m} {τ} → 𝕊 ≤ₛ 𝕊' → 𝕊 ≤ₛ 𝕊' ⟨ τ ⟩ₛ
+  ≤ₛ-lock : ∀ {m} {𝕊' : State m} {ρ} → 𝕊 ≤ₛ 𝕊' → 𝕊 ≤ₛ 𝕊' ⟨ ρ ⟩ₛ
   ≤ₛ-res  : ∀ {m} {𝕊' : State m} {V} → 𝕊 ≤ₛ 𝕊' → 𝕊 ≤ₛ 𝕊' ∷ₛ V
 
 wkₛ : ∀ {n m} {𝕊 : State n} {𝕊' : State m} → 𝕊 ≤ₛ 𝕊' → Fin n → Fin m
@@ -69,7 +69,7 @@ wkₛ (≤ₛ-res e)  i = suc (wkₛ e i)
 
 δₛ : ∀ {n m} {𝕊 : State n} {𝕊' : State m} → 𝕊 ≤ₛ 𝕊' → RExp ∅ˢ
 δₛ ≤ₛ-refl             = ûᵣ
-δₛ (≤ₛ-lock {τ = τ} e) = δₛ e ·̂ᵣ rconst (of-durʳ τ)
+δₛ (≤ₛ-lock {ρ = ρ} e) = δₛ e ·̂ᵣ rconst ρ
 δₛ (≤ₛ-res e)          = δₛ e
 
 infixl 25 _⨾ₛ_
@@ -100,13 +100,13 @@ infixl 31 _∷[_]_
 
 data StateTyping : ∀ {n} → State n → Set where
   ∅      : StateTyping ∅
-  _⟨⟩ˢ   : ∀ {n} {𝕊 : State n} {τ} → StateTyping 𝕊 → StateTyping (𝕊 ⟨ τ ⟩ₛ)
+  _⟨⟩ˢ   : ∀ {n} {𝕊 : State n} {ρ} → StateTyping 𝕊 → StateTyping (𝕊 ⟨ ρ ⟩ₛ)
   _∷[_]_ : ∀ {n} {𝕊 : State n} {V} → StateTyping 𝕊 → RExp ∅ˢ → OVType ∅ˢ
          → StateTyping (𝕊 ∷ₛ V)
 
 ctx : ∀ {n} {𝕊 : State n} → StateTyping 𝕊 → OCtx ∅ˢ n
 ctx ∅                     = []
-ctx (_⟨⟩ˢ {τ = τ} Ψ)      = ctx Ψ ⟨ rconst (of-durʳ τ) ⟩
+ctx (_⟨⟩ˢ {ρ = ρ} Ψ)      = ctx Ψ ⟨ rconst ρ ⟩
 ctx (Ψ ∷[ ρ ] X)          = ctx Ψ ∷ [ ρ ] X
 
 ctx-defs : ∀ {n} {𝕊 : State n} → (Ψ : StateTyping 𝕊) → defs (ctx Ψ) ≡ ∅ᵖ
@@ -116,8 +116,8 @@ ctx-defs (Ψ ∷[ ρ ] X) = ctx-defs Ψ
 
 data Types : ∀ {n} {𝕊 : State n} → StateTyping 𝕊 → Set where
   ∅    : Types ∅
-  _⟨⟩ˢ : ∀ {n} {𝕊 : State n} {τ} {Ψ : StateTyping 𝕊}
-       → Types Ψ → Types (_⟨⟩ˢ {τ = τ} Ψ)
+  _⟨⟩ˢ : ∀ {n} {𝕊 : State n} {ρ} {Ψ : StateTyping 𝕊}
+       → Types Ψ → Types (_⟨⟩ˢ {ρ = ρ} Ψ)
   _∷ᵗ_ : ∀ {n} {𝕊 : State n} {Ψ : StateTyping 𝕊} {ρ X V}
        → Types Ψ → ctx Ψ ⟨ ρ ⟩ ⊢ᵛ V ⦂ X → Types (_∷[_]_ {V = V} Ψ ρ X)
 
@@ -131,8 +131,8 @@ infix 4 _⊆[_]_
 data _⊆[_]_ {n} {𝕊 : State n} (Ψ : StateTyping 𝕊)
      : ∀ {m} {𝕊' : State m} → 𝕊 ≤ₛ 𝕊' → StateTyping 𝕊' → Set where
   ⊆-refl : Ψ ⊆[ ≤ₛ-refl ] Ψ
-  ⊆-lock : ∀ {m} {𝕊' : State m} {e : 𝕊 ≤ₛ 𝕊'} {Ψ' : StateTyping 𝕊'} {τ}
-         → Ψ ⊆[ e ] Ψ' → Ψ ⊆[ ≤ₛ-lock {τ = τ} e ] (Ψ' ⟨⟩ˢ)
+  ⊆-lock : ∀ {m} {𝕊' : State m} {e : 𝕊 ≤ₛ 𝕊'} {Ψ' : StateTyping 𝕊'} {ρ}
+         → Ψ ⊆[ e ] Ψ' → Ψ ⊆[ ≤ₛ-lock {ρ = ρ} e ] (Ψ' ⟨⟩ˢ)
   ⊆-res  : ∀ {m} {𝕊' : State m} {e : 𝕊 ≤ₛ 𝕊'} {Ψ' : StateTyping 𝕊'} {V ρ X}
          → Ψ ⊆[ e ] Ψ' → Ψ ⊆[ ≤ₛ-res {V = V} e ] (Ψ' ∷[ ρ ] X)
 

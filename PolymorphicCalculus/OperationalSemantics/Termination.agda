@@ -383,8 +383,8 @@ mutual
   fund-c {Γ = Γ} {𝕊 = 𝕊} {σ} (delay τ M) r =
     cred-back (DELAY ▸ done) (fund-c M r')
     where
-      r' : Env (Γ ⟨ rconst (of-durʳ τ) ⟩) (𝕊 ⟨ τ ⟩ₛ) σ
-      at r' i = subst (VRed (shapeᵛ (lookup-ty Γ i)) (𝕊 ⟨ τ ⟩ₛ)) (ren-idᵛ (λ j → refl) (σ i))
+      r' : Env (Γ ⟨ rconst (of-durʳ τ) ⟩) (𝕊 ⟨ of-durʳ τ ⟩ₛ) σ
+      at r' i = subst (VRed (shapeᵛ (lookup-ty Γ i)) (𝕊 ⟨ of-durʳ τ ⟩ₛ)) (ren-idᵛ (λ j → refl) (σ i))
                       (VRed-mono (shapeᵛ (lookup-ty Γ i)) (≤ₛ-lock ≤ₛ-refl) (σ i) (at r i))
       nodefs r' = nodefs r
 
