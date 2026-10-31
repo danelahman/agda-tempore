@@ -43,7 +43,8 @@ open import Grades.Regular.Grade k tick public
   using (Regular; regular; table; wf′; ∈·⁺; ∈·-elim; ∈⊔⁺ˡ; ∈⊔⁺ʳ; ∈⊔-elim; ∈u⁻; ∈u⁺; ∈⊤)
   renaming (_≾_ to _≾ᴿ_; _·ᴿ_ to _·ᴿ_; _⊔ᴿ_ to _⊔ᴿ_; u to uᴿ; ⊤ to ⊤ᴿ)
 import Grades.Regular.Grade k tick as G
-open import Grades.Regular.Grade k tick using (starᴿ; ∈*⁻; ∈*⁺; plusᴿ; c⁺-def)
+open import Grades.Regular.Grade k tick using (starᴿ; ∈*⁻; ∈*⁺; c⁺-def)
+import Grades.Regular.Grade as O
 
 open Equivalence using (to; from)
 
@@ -205,20 +206,51 @@ open _≾_ public
 ≾-antisym : ∀ {c d} → c ≾ d → d ≾ c → c ≡ d
 ≾-antisym {c} {d} (≾-intro p) (≾-intro q) = lang-injective (G.≾-antisym {lang c} {lang d} p q)
 
+-- The laws of the regular grade are typed with the names of the
+-- unapplied module (`O`). A comparison of composites is transported
+-- along equations stated with those names, so that it is checked
+-- syntactically, without running the inclusion test.
+
+private
+  ·-lang : ∀ c d → O._·ᴿ_ k tick (lang c) (lang d) ≡ lang (c · d)
+  ·-lang c d = refl
+
+  ⊔-lang : ∀ c d → O._⊔ᴿ_ k tick (lang c) (lang d) ≡ lang (c ⊔ d)
+  ⊔-lang c d = refl
+
+  ≾-via : ∀ {c d x y} → x ≡ lang c → y ≡ lang d → x ≾ᴿ y → c ≾ d
+  ≾-via refl refl p = ≾-intro p
+
+  ·-distribˡ-⊔-≾ : ∀ c d e → (c · (d ⊔ e)) ≾ ((c · d) ⊔ (c · e))
+  ·-distribˡ-⊔-≾ c d e =
+    ≾-via (trans (cong (O._·ᴿ_ k tick (lang c)) (⊔-lang d e)) (·-lang c (d ⊔ e)))
+          (trans (cong₂ (O._⊔ᴿ_ k tick) (·-lang c d) (·-lang c e)) (⊔-lang (c · d) (c · e)))
+          (G.·-distribˡ-⊔-≾ (lang c) (lang d) (lang e))
+
+  ·-distribʳ-⊔-≾ : ∀ c d e → ((d ⊔ e) · c) ≾ ((d · c) ⊔ (e · c))
+  ·-distribʳ-⊔-≾ c d e =
+    ≾-via (trans (cong (λ x → O._·ᴿ_ k tick x (lang c)) (⊔-lang d e)) (·-lang (d ⊔ e) c))
+          (trans (cong₂ (O._⊔ᴿ_ k tick) (·-lang d c) (·-lang e c)) (⊔-lang (d · c) (e · c)))
+          (G.·-distribʳ-⊔-≾ (lang c) (lang d) (lang e))
+
 -- Kleene's plus
 
 plusᶜ : (c : Closed) → Plus _·_ _≾_ c
-plusᶜ c = plus c⁺ (≾-intro (Plus.≾-c⁺ P)) (≾-intro (Plus.c⁺-iter P))
+plusᶜ c = plus c⁺ (≾-intro (Plus.≾-c⁺ P))
+               (≾-via (trans (cong₂ (O._·ᴿ_ k tick) c⁺-lang c⁺-lang) (·-lang c⁺ c⁺)) c⁺-lang
+                      (Plus.c⁺-iter P))
                (λ {v} cv vv → ≾-intro (Plus.c⁺-least P {lang v} (≾-lang cv) (≾-lang vv)))
                (λ {d} cd → ≾-intro (Plus.⁺-indˡ P {lang d} (≾-lang cd)))
                (λ {d} dc → ≾-intro (Plus.⁺-indʳ P {lang d} (≾-lang dc)))
   where
-    P = plusᴿ (lang c)
+    P = O.plusᴿ k tick (lang c)
     c⁺ : Closed
     c⁺ = ⟨ Plus.c⁺ P ⟩ᶜ
            (subst IsClosed (sym (c⁺-def (lang c)))
              (·-closed (lang c) (starᴿ (lang c)) (closedness′ c)
                (star-closed (lang c) (closedness′ c))))
+    c⁺-lang : Plus.c⁺ P ≡ lang c⁺
+    c⁺-lang = refl
 
 -- the monoid laws
 
@@ -262,8 +294,8 @@ module WithDurations
     ; ⊔-lub           = λ {c} {d} {e} p q → ≾-intro (G.⊔-lub {lang c} {lang d} {lang e} (≾-lang p) (≾-lang q))
     ; ·-monoˡ-≾       = λ {c} {d} {d′} p → ≾-intro (G.·-monoˡ-≾ {lang c} {lang d} {lang d′} (≾-lang p))
     ; ·-monoʳ-≾       = λ {c} {d} {d′} p → ≾-intro (G.·-monoʳ-≾ {lang c} {lang d} {lang d′} (≾-lang p))
-    ; ·-distribˡ-⊔-≾  = λ c d e → ≾-intro (G.·-distribˡ-⊔-≾ (lang c) (lang d) (lang e))
-    ; ·-distribʳ-⊔-≾  = λ c d e → ≾-intro (G.·-distribʳ-⊔-≾ (lang c) (lang d) (lang e))
+    ; ·-distribˡ-⊔-≾  = ·-distribˡ-⊔-≾
+    ; ·-distribʳ-⊔-≾  = ·-distribʳ-⊔-≾
     ; ≾-zero-productˡ = λ {c} {d} p → ≾-intro (G.≾-zero-productˡ {lang c} {lang d} (≾-lang p))
     ; ≾-zero-productʳ = λ {c} {d} p → ≾-intro (G.≾-zero-productʳ {lang c} {lang d} (≾-lang p))
     ; of-dur-zero     = of-dur-zero
