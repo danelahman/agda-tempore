@@ -85,67 +85,67 @@ private
 
   -- the eliminators at a constructor in the second component
 
-  caseᵐ-inl-at : ∀ {Y X A B C} → (f : (X ×ᵐ (A +ᵐ B)) ×ᵐ A →ᵐ C)
-               → (g : (X ×ᵐ (A +ᵐ B)) ×ᵐ B →ᵐ C)
-               → (u : Y →ᵐ X) → (a : Y →ᵐ A)
-               → caseᵐ sndᵐ f g ∘ᵐ ⟨ u , inlᵐ ∘ᵐ a ⟩ᵐ
-               ≈ᵐ f ∘ᵐ ⟨ ⟨ u , inlᵐ ∘ᵐ a ⟩ᵐ , a ⟩ᵐ
-  caseᵐ-inl-at f g u a =
-      caseᵐ-∘ sndᵐ f g ⟨ u , inlᵐ ∘ᵐ a ⟩ᵐ
-    ∙ caseᵐ-cong (⟨⟩ᵐ-sndᵐ _ _) ≈ᵐ-refl ≈ᵐ-refl
-    ∙ caseᵐ-inl a _ _
+  match+ᵐ-inl-at : ∀ {Y X A B C} → (f : (X ×ᵐ (A +ᵐ B)) ×ᵐ A →ᵐ C)
+                 → (g : (X ×ᵐ (A +ᵐ B)) ×ᵐ B →ᵐ C)
+                 → (u : Y →ᵐ X) → (a : Y →ᵐ A)
+                 → match+ᵐ sndᵐ f g ∘ᵐ ⟨ u , inlᵐ ∘ᵐ a ⟩ᵐ
+                 ≈ᵐ f ∘ᵐ ⟨ ⟨ u , inlᵐ ∘ᵐ a ⟩ᵐ , a ⟩ᵐ
+  match+ᵐ-inl-at f g u a =
+      match+ᵐ-∘ sndᵐ f g ⟨ u , inlᵐ ∘ᵐ a ⟩ᵐ
+    ∙ match+ᵐ-cong (⟨⟩ᵐ-sndᵐ _ _) ≈ᵐ-refl ≈ᵐ-refl
+    ∙ match+ᵐ-inl a _ _
     ∙ ∘ᵐ-assoc _ _ _
     ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
 
-  caseᵐ-inr-at : ∀ {Y X A B C} → (f : (X ×ᵐ (A +ᵐ B)) ×ᵐ A →ᵐ C)
-               → (g : (X ×ᵐ (A +ᵐ B)) ×ᵐ B →ᵐ C)
-               → (u : Y →ᵐ X) → (b : Y →ᵐ B)
-               → caseᵐ sndᵐ f g ∘ᵐ ⟨ u , inrᵐ ∘ᵐ b ⟩ᵐ
-               ≈ᵐ g ∘ᵐ ⟨ ⟨ u , inrᵐ ∘ᵐ b ⟩ᵐ , b ⟩ᵐ
-  caseᵐ-inr-at f g u b =
-      caseᵐ-∘ sndᵐ f g ⟨ u , inrᵐ ∘ᵐ b ⟩ᵐ
-    ∙ caseᵐ-cong (⟨⟩ᵐ-sndᵐ _ _) ≈ᵐ-refl ≈ᵐ-refl
-    ∙ caseᵐ-inr b _ _
+  match+ᵐ-inr-at : ∀ {Y X A B C} → (f : (X ×ᵐ (A +ᵐ B)) ×ᵐ A →ᵐ C)
+                 → (g : (X ×ᵐ (A +ᵐ B)) ×ᵐ B →ᵐ C)
+                 → (u : Y →ᵐ X) → (b : Y →ᵐ B)
+                 → match+ᵐ sndᵐ f g ∘ᵐ ⟨ u , inrᵐ ∘ᵐ b ⟩ᵐ
+                 ≈ᵐ g ∘ᵐ ⟨ ⟨ u , inrᵐ ∘ᵐ b ⟩ᵐ , b ⟩ᵐ
+  match+ᵐ-inr-at f g u b =
+      match+ᵐ-∘ sndᵐ f g ⟨ u , inrᵐ ∘ᵐ b ⟩ᵐ
+    ∙ match+ᵐ-cong (⟨⟩ᵐ-sndᵐ _ _) ≈ᵐ-refl ≈ᵐ-refl
+    ∙ match+ᵐ-inr b _ _
     ∙ ∘ᵐ-assoc _ _ _
     ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
 
-  caseℕᵐ-zero-at : ∀ {X C} → (f : X ×ᵐ ℕᵐ →ᵐ C) → (g : (X ×ᵐ ℕᵐ) ×ᵐ ℕᵐ →ᵐ C)
-                 → (u : 𝟙ᵐ →ᵐ X)
-                 → caseℕᵐ sndᵐ f g ∘ᵐ ⟨ u , zeroᵐ ⟩ᵐ ≈ᵐ f ∘ᵐ ⟨ u , zeroᵐ ⟩ᵐ
-  caseℕᵐ-zero-at f g u =
-      caseℕᵐ-∘ sndᵐ f g ⟨ u , zeroᵐ ⟩ᵐ
-    ∙ caseℕᵐ-cong (⟨⟩ᵐ-sndᵐ _ _ ∙ pt zeroᵐ) ≈ᵐ-refl ≈ᵐ-refl
-    ∙ caseℕᵐ-zero _ _
+  matchℕᵐ-zero-at : ∀ {X C} → (f : X ×ᵐ ℕᵐ →ᵐ C) → (g : (X ×ᵐ ℕᵐ) ×ᵐ ℕᵐ →ᵐ C)
+                  → (u : 𝟙ᵐ →ᵐ X)
+                  → matchℕᵐ sndᵐ f g ∘ᵐ ⟨ u , zeroᵐ ⟩ᵐ ≈ᵐ f ∘ᵐ ⟨ u , zeroᵐ ⟩ᵐ
+  matchℕᵐ-zero-at f g u =
+      matchℕᵐ-∘ sndᵐ f g ⟨ u , zeroᵐ ⟩ᵐ
+    ∙ matchℕᵐ-cong (⟨⟩ᵐ-sndᵐ _ _ ∙ pt zeroᵐ) ≈ᵐ-refl ≈ᵐ-refl
+    ∙ matchℕᵐ-zero _ _
 
-  caseℕᵐ-succ-at : ∀ {Y X C} → (f : X ×ᵐ ℕᵐ →ᵐ C) → (g : (X ×ᵐ ℕᵐ) ×ᵐ ℕᵐ →ᵐ C)
-                 → (u : Y →ᵐ X) → (n : Y →ᵐ ℕᵐ)
-                 → caseℕᵐ sndᵐ f g ∘ᵐ ⟨ u , succᵐ ∘ᵐ n ⟩ᵐ
-                 ≈ᵐ g ∘ᵐ ⟨ ⟨ u , succᵐ ∘ᵐ n ⟩ᵐ , n ⟩ᵐ
-  caseℕᵐ-succ-at f g u n =
-      caseℕᵐ-∘ sndᵐ f g ⟨ u , succᵐ ∘ᵐ n ⟩ᵐ
-    ∙ caseℕᵐ-cong (⟨⟩ᵐ-sndᵐ _ _) ≈ᵐ-refl ≈ᵐ-refl
-    ∙ caseℕᵐ-succ n _ _
+  matchℕᵐ-succ-at : ∀ {Y X C} → (f : X ×ᵐ ℕᵐ →ᵐ C) → (g : (X ×ᵐ ℕᵐ) ×ᵐ ℕᵐ →ᵐ C)
+                  → (u : Y →ᵐ X) → (n : Y →ᵐ ℕᵐ)
+                  → matchℕᵐ sndᵐ f g ∘ᵐ ⟨ u , succᵐ ∘ᵐ n ⟩ᵐ
+                  ≈ᵐ g ∘ᵐ ⟨ ⟨ u , succᵐ ∘ᵐ n ⟩ᵐ , n ⟩ᵐ
+  matchℕᵐ-succ-at f g u n =
+      matchℕᵐ-∘ sndᵐ f g ⟨ u , succᵐ ∘ᵐ n ⟩ᵐ
+    ∙ matchℕᵐ-cong (⟨⟩ᵐ-sndᵐ _ _) ≈ᵐ-refl ≈ᵐ-refl
+    ∙ matchℕᵐ-succ n _ _
     ∙ ∘ᵐ-assoc _ _ _
     ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
 
-  caseLᵐ-nil-at : ∀ {X A C} → (f : X ×ᵐ Listᵐ A →ᵐ C)
-                → (g : ((X ×ᵐ Listᵐ A) ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C)
-                → (u : 𝟙ᵐ →ᵐ X)
-                → caseLᵐ sndᵐ f g ∘ᵐ ⟨ u , nilᵐ ⟩ᵐ ≈ᵐ f ∘ᵐ ⟨ u , nilᵐ ⟩ᵐ
-  caseLᵐ-nil-at f g u =
-      caseLᵐ-∘ sndᵐ f g ⟨ u , nilᵐ ⟩ᵐ
-    ∙ caseLᵐ-cong (⟨⟩ᵐ-sndᵐ _ _ ∙ pt nilᵐ) ≈ᵐ-refl ≈ᵐ-refl
-    ∙ caseLᵐ-nil _ _
-
-  caseLᵐ-cons-at : ∀ {Y X A C} → (f : X ×ᵐ Listᵐ A →ᵐ C)
+  matchLᵐ-nil-at : ∀ {X A C} → (f : X ×ᵐ Listᵐ A →ᵐ C)
                  → (g : ((X ×ᵐ Listᵐ A) ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C)
-                 → (u : Y →ᵐ X) → (v : Y →ᵐ A) → (w : Y →ᵐ Listᵐ A)
-                 → caseLᵐ sndᵐ f g ∘ᵐ ⟨ u , consᵐ ∘ᵐ ⟨ v , w ⟩ᵐ ⟩ᵐ
-                 ≈ᵐ g ∘ᵐ ⟨ ⟨ ⟨ u , consᵐ ∘ᵐ ⟨ v , w ⟩ᵐ ⟩ᵐ , v ⟩ᵐ , w ⟩ᵐ
-  caseLᵐ-cons-at f g u v w =
-      caseLᵐ-∘ sndᵐ f g ⟨ u , consᵐ ∘ᵐ ⟨ v , w ⟩ᵐ ⟩ᵐ
-    ∙ caseLᵐ-cong (⟨⟩ᵐ-sndᵐ _ _) ≈ᵐ-refl ≈ᵐ-refl
-    ∙ caseLᵐ-cons v w _ _
+                 → (u : 𝟙ᵐ →ᵐ X)
+                 → matchLᵐ sndᵐ f g ∘ᵐ ⟨ u , nilᵐ ⟩ᵐ ≈ᵐ f ∘ᵐ ⟨ u , nilᵐ ⟩ᵐ
+  matchLᵐ-nil-at f g u =
+      matchLᵐ-∘ sndᵐ f g ⟨ u , nilᵐ ⟩ᵐ
+    ∙ matchLᵐ-cong (⟨⟩ᵐ-sndᵐ _ _ ∙ pt nilᵐ) ≈ᵐ-refl ≈ᵐ-refl
+    ∙ matchLᵐ-nil _ _
+
+  matchLᵐ-cons-at : ∀ {Y X A C} → (f : X ×ᵐ Listᵐ A →ᵐ C)
+                  → (g : ((X ×ᵐ Listᵐ A) ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C)
+                  → (u : Y →ᵐ X) → (v : Y →ᵐ A) → (w : Y →ᵐ Listᵐ A)
+                  → matchLᵐ sndᵐ f g ∘ᵐ ⟨ u , consᵐ ∘ᵐ ⟨ v , w ⟩ᵐ ⟩ᵐ
+                  ≈ᵐ g ∘ᵐ ⟨ ⟨ ⟨ u , consᵐ ∘ᵐ ⟨ v , w ⟩ᵐ ⟩ᵐ , v ⟩ᵐ , w ⟩ᵐ
+  matchLᵐ-cons-at f g u v w =
+      matchLᵐ-∘ sndᵐ f g ⟨ u , consᵐ ∘ᵐ ⟨ v , w ⟩ᵐ ⟩ᵐ
+    ∙ matchLᵐ-cong (⟨⟩ᵐ-sndᵐ _ _) ≈ᵐ-refl ≈ᵐ-refl
+    ∙ matchLᵐ-cons v w _ _
     ∙ ∘ᵐ-assoc _ _ _
     ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
                ∙ ⟨ mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
@@ -304,10 +304,10 @@ cmp𝔹ᵐ-pt b b' =
 
 private
   cmpℕ-zero : 𝟙ᵐ ×ᵐ ℕᵐ →ᵐ Ordᵐ
-  cmpℕ-zero = caseℕᵐ sndᵐ (⌜ equal ⌝ᵒ ∘ᵐ terminalᵐ) (⌜ less ⌝ᵒ ∘ᵐ terminalᵐ)
+  cmpℕ-zero = matchℕᵐ sndᵐ (⌜ equal ⌝ᵒ ∘ᵐ terminalᵐ) (⌜ less ⌝ᵒ ∘ᵐ terminalᵐ)
 
   cmpℕ-succ : (ℕᵐ ⇒ᵐ Ordᵐ) ×ᵐ ℕᵐ →ᵐ Ordᵐ
-  cmpℕ-succ = caseℕᵐ sndᵐ (⌜ greater ⌝ᵒ ∘ᵐ terminalᵐ) (appᵐ ∘ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ)
+  cmpℕ-succ = matchℕᵐ sndᵐ (⌜ greater ⌝ᵒ ∘ᵐ terminalᵐ) (appᵐ ∘ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ)
 
   cmpℕ-curried : ℕᵐ →ᵐ ℕᵐ ⇒ᵐ Ordᵐ
   cmpℕ-curried = iterᵐ (curryᵐ cmpℕ-zero) (curryᵐ cmpℕ-succ)
@@ -328,8 +328,8 @@ cmpℕᵐ-pt n m = uncurry-⟨⟩ _ _ _ ∙ go n m
       ∙ at m
       where
         at : (m : ℕ) → cmpℕ-zero ∘ᵐ ⟨ idᵐ , ⌜ m ⌝ᴺ ⟩ᵐ ≈ᵐ ⌜ compareᴺ zero m ⌝ᵒ
-        at zero    = caseℕᵐ-zero-at _ _ idᵐ ∙ const-pt _ _
-        at (suc m) = caseℕᵐ-succ-at _ _ idᵐ ⌜ m ⌝ᴺ ∙ const-pt _ _
+        at zero    = matchℕᵐ-zero-at _ _ idᵐ ∙ const-pt _ _
+        at (suc m) = matchℕᵐ-succ-at _ _ idᵐ ⌜ m ⌝ᴺ ∙ const-pt _ _
     go (suc n) m =
         app-curry-∘ cmpℕ-succ _ _ _ (cmpℕ-curried ∘ᵐ ⌜ n ⌝ᴺ)
           (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (iterᵐ-succ _ _) ∙ ∘ᵐ-assoc _ _ _)
@@ -337,9 +337,9 @@ cmpℕᵐ-pt n m = uncurry-⟨⟩ _ _ _ ∙ go n m
       where
         at : (m : ℕ) → cmpℕ-succ ∘ᵐ ⟨ cmpℕ-curried ∘ᵐ ⌜ n ⌝ᴺ , ⌜ m ⌝ᴺ ⟩ᵐ
                      ≈ᵐ ⌜ compareᴺ (suc n) m ⌝ᵒ
-        at zero    = caseℕᵐ-zero-at _ _ _ ∙ const-pt _ _
+        at zero    = matchℕᵐ-zero-at _ _ _ ∙ const-pt _ _
         at (suc m) =
-            caseℕᵐ-succ-at _ _ _ ⌜ m ⌝ᴺ
+            matchℕᵐ-succ-at _ _ _ ⌜ m ⌝ᴺ
           ∙ ∘ᵐ-assoc _ _ _
           ∙ ∘ᵐ-congʳ (fst²-snd _ _ _)
           ∙ go n m
@@ -365,15 +365,15 @@ cmp×ᵐ-⟨⟩ c d a a' b b' =
 
 cmp+ᵐ : ∀ {A B} → (A ×ᵐ A →ᵐ Ordᵐ) → (B ×ᵐ B →ᵐ Ordᵐ) → (A +ᵐ B) ×ᵐ (A +ᵐ B) →ᵐ Ordᵐ
 cmp+ᵐ c d =
-  uncurryᵐ [ curryᵐ (caseᵐ sndᵐ (c ∘ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ) (⌜ less ⌝ᵒ ∘ᵐ terminalᵐ))
-           , curryᵐ (caseᵐ sndᵐ (⌜ greater ⌝ᵒ ∘ᵐ terminalᵐ) (d ∘ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ)) ]ᵐ
+  uncurryᵐ [ curryᵐ (match+ᵐ sndᵐ (c ∘ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ) (⌜ less ⌝ᵒ ∘ᵐ terminalᵐ))
+           , curryᵐ (match+ᵐ sndᵐ (⌜ greater ⌝ᵒ ∘ᵐ terminalᵐ) (d ∘ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ)) ]ᵐ
 
 cmp+ᵐ-inl-inl : ∀ {A B} → (c : A ×ᵐ A →ᵐ Ordᵐ) → (d : B ×ᵐ B →ᵐ Ordᵐ) → (a a' : 𝟙ᵐ →ᵐ A)
               → cmp+ᵐ c d ∘ᵐ ⟨ inlᵐ ∘ᵐ a , inlᵐ ∘ᵐ a' ⟩ᵐ ≈ᵐ c ∘ᵐ ⟨ a , a' ⟩ᵐ
 cmp+ᵐ-inl-inl c d a a' =
     uncurry-⟨⟩ _ _ _
   ∙ app-curry-∘ _ _ _ _ a (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ ([]ᵐ-inlᵐ _ _))
-  ∙ caseᵐ-inl-at _ _ a a'
+  ∙ match+ᵐ-inl-at _ _ a a'
   ∙ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (fst²-snd _ _ _)
 
 cmp+ᵐ-inl-inr : ∀ {A B} → (c : A ×ᵐ A →ᵐ Ordᵐ) → (d : B ×ᵐ B →ᵐ Ordᵐ)
@@ -382,7 +382,7 @@ cmp+ᵐ-inl-inr : ∀ {A B} → (c : A ×ᵐ A →ᵐ Ordᵐ) → (d : B ×ᵐ B
 cmp+ᵐ-inl-inr c d a b =
     uncurry-⟨⟩ _ _ _
   ∙ app-curry-∘ _ _ _ _ a (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ ([]ᵐ-inlᵐ _ _))
-  ∙ caseᵐ-inr-at _ _ a b
+  ∙ match+ᵐ-inr-at _ _ a b
   ∙ const-pt _ _
 
 cmp+ᵐ-inr-inl : ∀ {A B} → (c : A ×ᵐ A →ᵐ Ordᵐ) → (d : B ×ᵐ B →ᵐ Ordᵐ)
@@ -391,7 +391,7 @@ cmp+ᵐ-inr-inl : ∀ {A B} → (c : A ×ᵐ A →ᵐ Ordᵐ) → (d : B ×ᵐ B
 cmp+ᵐ-inr-inl c d b a =
     uncurry-⟨⟩ _ _ _
   ∙ app-curry-∘ _ _ _ _ b (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ ([]ᵐ-inrᵐ _ _))
-  ∙ caseᵐ-inl-at _ _ b a
+  ∙ match+ᵐ-inl-at _ _ b a
   ∙ const-pt _ _
 
 cmp+ᵐ-inr-inr : ∀ {A B} → (c : A ×ᵐ A →ᵐ Ordᵐ) → (d : B ×ᵐ B →ᵐ Ordᵐ) → (b b' : 𝟙ᵐ →ᵐ B)
@@ -399,7 +399,7 @@ cmp+ᵐ-inr-inr : ∀ {A B} → (c : A ×ᵐ A →ᵐ Ordᵐ) → (d : B ×ᵐ B
 cmp+ᵐ-inr-inr c d b b' =
     uncurry-⟨⟩ _ _ _
   ∙ app-curry-∘ _ _ _ _ b (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ ([]ᵐ-inrᵐ _ _))
-  ∙ caseᵐ-inr-at _ _ b b'
+  ∙ match+ᵐ-inr-at _ _ b b'
   ∙ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (fst²-snd _ _ _)
 
 -- lists: lexicographic, the empty list first, by a fold into `Listᵐ A ⇒ᵐ Ordᵐ`
@@ -412,12 +412,12 @@ module _ {A : Obj} (c : A ×ᵐ A →ᵐ Ordᵐ) where
 
   private
     cmpL-nil : 𝟙ᵐ ×ᵐ Listᵐ A →ᵐ Ordᵐ
-    cmpL-nil = caseLᵐ sndᵐ (⌜ equal ⌝ᵒ ∘ᵐ terminalᵐ) (⌜ less ⌝ᵒ ∘ᵐ terminalᵐ)
+    cmpL-nil = matchLᵐ sndᵐ (⌜ equal ⌝ᵒ ∘ᵐ terminalᵐ) (⌜ less ⌝ᵒ ∘ᵐ terminalᵐ)
 
     -- at a head `x`, the recursive comparison `φ` of the tail, and a list
     cmpL-cons : (A ×ᵐ (Listᵐ A ⇒ᵐ Ordᵐ)) ×ᵐ Listᵐ A →ᵐ Ordᵐ
     cmpL-cons =
-      caseLᵐ sndᵐ (⌜ greater ⌝ᵒ ∘ᵐ terminalᵐ)
+      matchLᵐ sndᵐ (⌜ greater ⌝ᵒ ∘ᵐ terminalᵐ)
         (lexᵐ ∘ᵐ ⟨ c ∘ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ ∘ᵐ fstᵐ ∘ᵐ fstᵐ , sndᵐ ∘ᵐ fstᵐ ⟩ᵐ
                  , appᵐ ∘ᵐ ⟨ sndᵐ ∘ᵐ fstᵐ ∘ᵐ fstᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ ⟩ᵐ)
 
@@ -441,8 +441,8 @@ module _ {A : Obj} (c : A ×ᵐ A →ᵐ Ordᵐ) where
           where
             at : (ys : List D) → cmpL-nil ∘ᵐ ⟨ idᵐ , ⌜ point ⌝ᴸ ys ⟩ᵐ
                                ≈ᵐ ⌜ compareᴸ compare [] ys ⌝ᵒ
-            at []       = caseLᵐ-nil-at _ _ idᵐ ∙ const-pt _ _
-            at (y ∷ ys) = caseLᵐ-cons-at _ _ idᵐ (point y) (⌜ point ⌝ᴸ ys) ∙ const-pt _ _
+            at []       = matchLᵐ-nil-at _ _ idᵐ ∙ const-pt _ _
+            at (y ∷ ys) = matchLᵐ-cons-at _ _ idᵐ (point y) (⌜ point ⌝ᴸ ys) ∙ const-pt _ _
         go (x ∷ xs) ys =
             app-curry-∘ cmpL-cons _ _ _ w
               (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -456,9 +456,9 @@ module _ {A : Obj} (c : A ×ᵐ A →ᵐ Ordᵐ) where
 
             at : (ys : List D) → cmpL-cons ∘ᵐ ⟨ w , ⌜ point ⌝ᴸ ys ⟩ᵐ
                                ≈ᵐ ⌜ compareᴸ compare (x ∷ xs) ys ⌝ᵒ
-            at []       = caseLᵐ-nil-at _ _ w ∙ const-pt _ _
+            at []       = matchLᵐ-nil-at _ _ w ∙ const-pt _ _
             at (y ∷ ys) =
-                caseLᵐ-cons-at _ _ w (point y) (⌜ point ⌝ᴸ ys)
+                matchLᵐ-cons-at _ _ w (point y) (⌜ point ⌝ᴸ ys)
               ∙ ∘ᵐ-assoc _ _ _
               ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _
                          ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _ ∙ ⟨ px , py ⟩ᵐ-cong) ∙ hc x y

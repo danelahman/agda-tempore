@@ -73,7 +73,7 @@ tagged-relaying =
   perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
                                      -- ∷ NodeId ∷ Reading
-      `in perform send here (return ⋆))
+      `with perform send here (return ⋆))
 
 -- a computation that only idles, which guarantees time and no work
 
@@ -207,7 +207,7 @@ claim-after-storing =
 handed-over : [] ⊢C⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over =
   box demand (const 42)              -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
-    (lam                             -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+    (fun                             -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
        (perform read ⋆               -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -222,7 +222,7 @@ handed-over =
 handed-over' : [] ⊢C⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over' =
   box demand (const 42)              -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
-    (lam                             -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+    (fun                             -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
        (perform read ⋆               -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
          (perform read ⋆             -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
            (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) holds (<:ᵛ-refl _)

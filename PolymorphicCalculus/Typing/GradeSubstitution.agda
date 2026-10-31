@@ -91,7 +91,7 @@ mutual
          ---------------------------------
          → Q' ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ
 
-  substᵛ σ h (var x p)       = var (∈̂-subst σ x) (VarOK-subst h p)
+  substᵛ σ h (var x p)       = var (∈̂-subst σ x) (Et∨≾ᵘ-subst h p)
   substᵛ {Γ = Γ} σ h (usedef {s = s} f δ h' e) =
     usedef (subst (_ ∈ᵖ[ _ ]_) (sym (defs-subst Γ σ)) f) (δ ⨟ˢ σ) (⊩ᴴ-⨟ h h')
         (trans (cong (_[ σ ]ᵛ) e) ([⨟]ᵛ (Xˢ s) δ σ))
@@ -107,7 +107,7 @@ mutual
   substᵛ σ h nil             = nil
   substᵛ σ h (cons V W)      = cons (substᵛ σ h V) (substᵛ σ h W)
   substᵛ σ h (cmp ⋈ V W et)  = cmp ⋈ (substᵛ σ h V) (substᵛ σ h W) (⊩Et-subst h et)
-  substᵛ σ h (lam M)         = lam (substᶜ σ h M)
+  substᵛ σ h (fun M)         = fun (substᶜ σ h M)
   substᵛ {Γ = Γ} σ h (handler {B = B} N H) =
     handler (substᶜ σ h N) (λ op → substˡ σ h Γ B op (H op))
   substᵛ σ h (annᵛ A V)      = annᵛ (A [ σ ]ᵛ) (substᵛ σ h V)
@@ -130,35 +130,35 @@ mutual
          ---------------------------------
          → Q' ∣ Γ [ σ ]ᶜᵗˣ ⊢C⦂ C [ σ ]ᶜ
 
-  substᶜ σ h (return V)                = return (substᵛ σ h V)
-  substᶜ σ h (M ⨟ N)                   = substᶜ σ h M ⨟ substᶜ σ h N
-  substᶜ σ h (V · W)                   = substᵛ σ h V · substᵛ σ h W
-  substᶜ σ h (match V `in M)           = match substᵛ σ h V `in substᶜ σ h M
-  substᶜ σ h (absurd V)                = absurd (substᵛ σ h V)
-  substᶜ σ h (if V `then M `else N)    =
+  substᶜ σ h (return V)                 = return (substᵛ σ h V)
+  substᶜ σ h (M ⨟ N)                    = substᶜ σ h M ⨟ substᶜ σ h N
+  substᶜ σ h (V · W)                    = substᵛ σ h V · substᵛ σ h W
+  substᶜ σ h (match V `with M)          = match substᵛ σ h V `with substᶜ σ h M
+  substᶜ σ h (absurd V)                 = absurd (substᵛ σ h V)
+  substᶜ σ h (if V `then M `else N)     =
     if substᵛ σ h V `then substᶜ σ h M `else substᶜ σ h N
-  substᶜ σ h (caseℕ V `zero M `succ N) =
-    caseℕ substᵛ σ h V `zero substᶜ σ h M `succ substᶜ σ h N
-  substᶜ σ h (case+ V `inl M `inr N)   =
-    case+ substᵛ σ h V `inl substᶜ σ h M `inr substᶜ σ h N
-  substᶜ σ h (caseL V `nil M `cons N)  =
-    caseL substᵛ σ h V `nil substᶜ σ h M `cons substᶜ σ h N
-  substᶜ σ h (recℕ V M N p)            =
+  substᶜ σ h (matchℕ V `zero M `succ N) =
+    matchℕ substᵛ σ h V `zero substᶜ σ h M `succ substᶜ σ h N
+  substᶜ σ h (match+ V `inl M `inr N)   =
+    match+ substᵛ σ h V `inl substᶜ σ h M `inr substᶜ σ h N
+  substᶜ σ h (matchL V `nil M `cons N)  =
+    matchL substᵛ σ h V `nil substᶜ σ h M `cons substᶜ σ h N
+  substᶜ σ h (recℕ V M N p)             =
     recℕ (substᵛ σ h V) (substᶜ σ h M) (substᶜ σ h N) (⊩-substₑ h p)
-  substᶜ σ h (recL V M N p)            =
+  substᶜ σ h (recL V M N p)             =
     recL (substᵛ σ h V) (substᶜ σ h M) (substᶜ σ h N) (⊩-substₑ h p)
-  substᶜ {Γ = Γ} σ h (perform op V M)  =
+  substᶜ {Γ = Γ} σ h (perform op V M)   =
     perform op (ty-subst (⌜⌝ᵍ-subst σ (param op)) (substᵛ σ h V))
                (ctx-castᶜ (cong (Γ [ σ ]ᶜᵗˣ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷_)
                                 (⌜⌝ᵍ-subst σ (arity op)))
                           (substᶜ σ h M))
-  substᶜ σ h (delay τ M)               = delay τ (substᶜ σ h M)
-  substᶜ σ h (handle M `with V)        = handle substᶜ σ h M `with substᵛ σ h V
-  substᶜ σ h (unbox R p N)             =
+  substᶜ σ h (delay τ M)                = delay τ (substᶜ σ h M)
+  substᶜ σ h (handle M `with V)         = handle substᶜ σ h M `with substᵛ σ h V
+  substᶜ σ h (unbox R p N)              =
     unbox (substʳ σ h R) (⊩-substᵣ h p) (substᶜ σ h N)
-  substᶜ σ h (box ρ V N)               = box (ρ [ σ ]ʳ) (substᵛ σ h V) (substᶜ σ h N)
-  substᶜ σ h (annᶜ C M)                = annᶜ (C [ σ ]ᶜ) (substᶜ σ h M)
-  substᶜ σ h (subC M p)                = subC (substᶜ σ h M) (<:̂ᶜ-subst h p)
+  substᶜ σ h (box ρ V N)                = box (ρ [ σ ]ʳ) (substᵛ σ h V) (substᶜ σ h N)
+  substᶜ σ h (annᶜ C M)                 = annᶜ (C [ σ ]ᶜ) (substᶜ σ h M)
+  substᶜ σ h (subC M p)                 = subC (substᶜ σ h M) (<:̂ᶜ-subst h p)
 
 ------------------------------------------------------------------------
 -- The substituted derivation erases to the substituted raw term
@@ -183,7 +183,7 @@ mutual
   ⌊substᵛ⌋ σ h nil            = refl
   ⌊substᵛ⌋ σ h (cons V W)     = cong₂ cons (⌊substᵛ⌋ σ h V) (⌊substᵛ⌋ σ h W)
   ⌊substᵛ⌋ σ h (cmp ⋈ V W et) = cong₂ (cmp ⋈) (⌊substᵛ⌋ σ h V) (⌊substᵛ⌋ σ h W)
-  ⌊substᵛ⌋ σ h (lam M)        = cong lam (⌊substᶜ⌋ σ h M)
+  ⌊substᵛ⌋ σ h (fun M)        = cong fun (⌊substᶜ⌋ σ h M)
   ⌊substᵛ⌋ {Γ = Γ} σ h (handler {B = B} N H) =
     cong₂ handler (⌊substᶜ⌋ σ h N) (fun-ext (λ op → ⌊substˡ⌋ σ h Γ B op (H op)))
   ⌊substᵛ⌋ σ h (annᵛ A V)     = cong (_⦂ᵛ A [ σ ]ᵛ) (⌊substᵛ⌋ σ h V)
@@ -203,39 +203,39 @@ mutual
            → (σ : Subst Θ Θ') → (h : Q' ⊩ᴴ Q [ σ ]) → (M : Q ∣ Γ ⊢C⦂ C)
            → ⌊ substᶜ σ h M ⌋ᶜ ≡ ⌊ M ⌋ᶜ [ σ ]ᴿᶜ
 
-  ⌊substᶜ⌋ σ h (return V)                = cong return (⌊substᵛ⌋ σ h V)
-  ⌊substᶜ⌋ σ h (M ⨟ N)                   = cong₂ _⨟_ (⌊substᶜ⌋ σ h M) (⌊substᶜ⌋ σ h N)
-  ⌊substᶜ⌋ σ h (V · W)                   = cong₂ _·_ (⌊substᵛ⌋ σ h V) (⌊substᵛ⌋ σ h W)
-  ⌊substᶜ⌋ σ h (match V `in M)           =
-    cong₂ match_`in_ (⌊substᵛ⌋ σ h V) (⌊substᶜ⌋ σ h M)
-  ⌊substᶜ⌋ σ h (absurd V)                = cong absurd (⌊substᵛ⌋ σ h V)
-  ⌊substᶜ⌋ σ h (if V `then M `else N)    =
+  ⌊substᶜ⌋ σ h (return V)                 = cong return (⌊substᵛ⌋ σ h V)
+  ⌊substᶜ⌋ σ h (M ⨟ N)                    = cong₂ _⨟_ (⌊substᶜ⌋ σ h M) (⌊substᶜ⌋ σ h N)
+  ⌊substᶜ⌋ σ h (V · W)                    = cong₂ _·_ (⌊substᵛ⌋ σ h V) (⌊substᵛ⌋ σ h W)
+  ⌊substᶜ⌋ σ h (match V `with M)          =
+    cong₂ match_`with_ (⌊substᵛ⌋ σ h V) (⌊substᶜ⌋ σ h M)
+  ⌊substᶜ⌋ σ h (absurd V)                 = cong absurd (⌊substᵛ⌋ σ h V)
+  ⌊substᶜ⌋ σ h (if V `then M `else N)     =
     cong₃ if_`then_`else_ (⌊substᵛ⌋ σ h V) (⌊substᶜ⌋ σ h M) (⌊substᶜ⌋ σ h N)
-  ⌊substᶜ⌋ σ h (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_ (⌊substᵛ⌋ σ h V) (⌊substᶜ⌋ σ h M) (⌊substᶜ⌋ σ h N)
-  ⌊substᶜ⌋ σ h (case+ V `inl M `inr N)   =
-    cong₃ case+_`inl_`inr_ (⌊substᵛ⌋ σ h V) (⌊substᶜ⌋ σ h M) (⌊substᶜ⌋ σ h N)
-  ⌊substᶜ⌋ σ h (caseL V `nil M `cons N)  =
-    cong₃ caseL_`nil_`cons_ (⌊substᵛ⌋ σ h V) (⌊substᶜ⌋ σ h M) (⌊substᶜ⌋ σ h N)
-  ⌊substᶜ⌋ σ h (recℕ V M N p)            =
+  ⌊substᶜ⌋ σ h (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_ (⌊substᵛ⌋ σ h V) (⌊substᶜ⌋ σ h M) (⌊substᶜ⌋ σ h N)
+  ⌊substᶜ⌋ σ h (match+ V `inl M `inr N)   =
+    cong₃ match+_`inl_`inr_ (⌊substᵛ⌋ σ h V) (⌊substᶜ⌋ σ h M) (⌊substᶜ⌋ σ h N)
+  ⌊substᶜ⌋ σ h (matchL V `nil M `cons N)  =
+    cong₃ matchL_`nil_`cons_ (⌊substᵛ⌋ σ h V) (⌊substᶜ⌋ σ h M) (⌊substᶜ⌋ σ h N)
+  ⌊substᶜ⌋ σ h (recℕ V M N p)             =
     cong₃ recℕ (⌊substᵛ⌋ σ h V) (⌊substᶜ⌋ σ h M) (⌊substᶜ⌋ σ h N)
-  ⌊substᶜ⌋ σ h (recL V M N p)            =
+  ⌊substᶜ⌋ σ h (recL V M N p)             =
     cong₃ recL (⌊substᵛ⌋ σ h V) (⌊substᶜ⌋ σ h M) (⌊substᶜ⌋ σ h N)
-  ⌊substᶜ⌋ {Γ = Γ} σ h (perform op V M)  =
+  ⌊substᶜ⌋ {Γ = Γ} σ h (perform op V M)   =
     cong₂ (perform op)
           (trans (⌊ty-subst⌋ (⌜⌝ᵍ-subst σ (param op)) _) (⌊substᵛ⌋ σ h V))
           (trans (⌊ctx-castᶜ⌋ (cong (Γ [ σ ]ᶜᵗˣ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷_)
                                     (⌜⌝ᵍ-subst σ (arity op))) _)
                  (⌊substᶜ⌋ σ h M))
-  ⌊substᶜ⌋ σ h (delay τ M)               = cong (delay τ) (⌊substᶜ⌋ σ h M)
-  ⌊substᶜ⌋ σ h (handle M `with V)        =
+  ⌊substᶜ⌋ σ h (delay τ M)                = cong (delay τ) (⌊substᶜ⌋ σ h M)
+  ⌊substᶜ⌋ σ h (handle M `with V)         =
     cong₂ handle_`with_ (⌊substᶜ⌋ σ h M) (⌊substᵛ⌋ σ h V)
-  ⌊substᶜ⌋ σ h (unbox R p N)             =
+  ⌊substᶜ⌋ σ h (unbox R p N)              =
     cong₂ unbox (⌊substʳ⌋ σ h R) (⌊substᶜ⌋ σ h N)
-  ⌊substᶜ⌋ σ h (box ρ V N)               =
+  ⌊substᶜ⌋ σ h (box ρ V N)                =
     cong₂ (box (ρ [ σ ]ʳ)) (⌊substᵛ⌋ σ h V) (⌊substᶜ⌋ σ h N)
-  ⌊substᶜ⌋ σ h (annᶜ C M)                = cong (_⦂ᶜ C [ σ ]ᶜ) (⌊substᶜ⌋ σ h M)
-  ⌊substᶜ⌋ σ h (subC M p)                = ⌊substᶜ⌋ σ h M
+  ⌊substᶜ⌋ σ h (annᶜ C M)                 = cong (_⦂ᶜ C [ σ ]ᶜ) (⌊substᶜ⌋ σ h M)
+  ⌊substᶜ⌋ σ h (subC M p)                 = ⌊substᶜ⌋ σ h M
 
 ------------------------------------------------------------------------
 -- Instantiating the variable of a handler clause

@@ -68,7 +68,7 @@ tagged-relaying =
   perform read ⋆         -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
                          -- ∷ NodeId ∷ Reading
-      `in perform send here (return ⋆))
+      `with perform send here (return ⋆))
 
 ------------------------------------------------------------------------
 -- Readings go stale
@@ -168,7 +168,7 @@ claim-after-idling =
 handed-over : [] ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over =
   box permit (const 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
-    (lam                 -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
+    (fun                 -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
        (perform read ⋆   -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                          -- ∷ Reading

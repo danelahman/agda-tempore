@@ -68,7 +68,7 @@ open import PolymorphicCalculus.Syntax.Types             S
 open import PolymorphicCalculus.Syntax.GradeSubstitution S
 open import PolymorphicCalculus.Hypotheses               S
 open import PolymorphicCalculus.Hypotheses.Instances     S
-  using (_⊨ᴴ_; ⊨ᴴ-refl; ⊨ᴴ-trans; ⊩ᴴ-⊨ᴴ; mk⊨ᴴ; VarOK-∅-mono; val-≾ᵣ; val-≾ₑ⁻)
+  using (_⊨ᴴ_; ⊨ᴴ-refl; ⊨ᴴ-trans; ⊩ᴴ-⊨ᴴ; mk⊨ᴴ; Et∨≾ᵘ-∅-mono; val-≾ᵣ; val-≾ₑ⁻)
 
 open import PolymorphicCalculus.Inference.SolverImpl.Former   S
 open import PolymorphicCalculus.Inference.SolverImpl.Polarity S
@@ -172,7 +172,7 @@ record Elim {Θ : Scope} (C : OCType Θ) (Q : Hyps Θ) : Set where
     inst  : Unq Q → Q̂ ⊩ᴴ Q [ η ]
     unqᴱ  : Unq Q → Unq Q̂
     keep  : Q ⊨ᴴ Q̂
-    princ : (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ∣ Ĉ [ δ ]ᶜ <:̂ᶜ C [ δ ]ᶜ
+    princ : (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ Ĉ [ δ ]ᶜ <:̂ᶜ C [ δ ]ᶜ
 
 open Elim public
 
@@ -230,12 +230,12 @@ module _ {Θ : Scope} (Q : Hyps Θ) where
   atʳ ⁻ x y = Q ⊩ y ≾̂ᵣ x
 
   atᵛ : Sign → OVType Θ → OVType Θ → Set
-  atᵛ ⁺ A B = Q ∣ A <:̂ᵛ B
-  atᵛ ⁻ A B = Q ∣ B <:̂ᵛ A
+  atᵛ ⁺ A B = Q ⊩ A <:̂ᵛ B
+  atᵛ ⁻ A B = Q ⊩ B <:̂ᵛ A
 
   atᶜ : Sign → OCType Θ → OCType Θ → Set
-  atᶜ ⁺ C D = Q ∣ C <:̂ᶜ D
-  atᶜ ⁻ C D = Q ∣ D <:̂ᶜ C
+  atᶜ ⁺ C D = Q ⊩ C <:̂ᶜ D
+  atᶜ ⁻ C D = Q ⊩ D <:̂ᶜ C
 
 module _ {Θ : Scope} {Q : Hyps Θ} where
 
@@ -330,7 +330,7 @@ module Lift {Θ : Scope} {Q : Hyps Θ} (η : Subst Θ Θ)
 -- each ordering whose right side it does not lower, and each disjunction
 
 module Lowering {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
-                (lowg : Q ⊩ η₀ ≾ˢ idˢ) (lowt : ∀ β → Q ∣ sTy η₀ β <:̂ᵛ tvar β) where
+                (lowg : Q ⊩ η₀ ≾ˢ idˢ) (lowt : ∀ β → Q ⊩ sTy η₀ β <:̂ᵛ tvar β) where
 
   lowʳ : (ρ : RExp Θ) → Q ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ
   lowʳ ρ = subst (Q ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ_) ([id]ʳ ρ) (mono-substᵣ lowg ρ)
@@ -358,10 +358,10 @@ module Lowering {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
 
   keep-disj : (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ]
             → ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q)
-            → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+            → ∅ᴴ ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ [ δ ]ʳ
   keep-disj δ h m with ∈-map⁻ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m
   ... | (A₀ , ρ₀) , m₀ , refl =
-        VarOK-∅-mono et (⊩-substᵣ h (lowʳ ρ₀)) (⊩disj h m₀)
+        Et∨≾ᵘ-∅-mono et (⊩-substᵣ h (lowʳ ρ₀)) (⊩disj h m₀)
     where
       et : ∅ᴴ ⊩Et A₀ [ δ ]ᵛ → ∅ᴴ ⊩Et A₀ [ η₀ ]ᵛ [ δ ]ᵛ
       et e = subst (∅ᴴ ⊩Et_) (sym ([⨟]ᵛ A₀ η₀ δ))
@@ -372,7 +372,7 @@ module Lowering {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
 
 module Equal {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
              (lowg : Q ⊩ η₀ ≾ˢ idˢ) (hig : Q ⊩ idˢ ≾ˢ η₀)
-             (lowt : ∀ β → Q ∣ sTy η₀ β <:̂ᵛ tvar β) (hit : ∀ β → Q ∣ tvar β <:̂ᵛ sTy η₀ β) where
+             (lowt : ∀ β → Q ⊩ sTy η₀ β <:̂ᵛ tvar β) (hit : ∀ β → Q ⊩ tvar β <:̂ᵛ sTy η₀ β) where
 
   open Lowering {Q = Q} η₀ lowg lowt public
 
@@ -844,13 +844,13 @@ keep-disj⁺ : ∀ {Θ} {Q : Hyps Θ} → (η₀ : Subst Θ Θ) → (∀ β → 
            → (∀ {A ρ} → (A , ρ) ∈ disj Q → ρ [ η₀ ]ʳ ≡ ρ)
            → (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ]
            → ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q)
-           → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+           → ∅ᴴ ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ [ δ ]ʳ
 keep-disj⁺ {Q = Q} η₀ tv fr δ h m with ∈-map⁻ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m
 ... | (A₀ , ρ₀) , m₀ , refl =
-      VarOK-∅-mono et (⊩-substᵣ h (atʳ-≡ ⁺ (fr m₀))) (⊩disj h m₀)
+      Et∨≾ᵘ-∅-mono et (⊩-substᵣ h (atʳ-≡ ⁺ (fr m₀))) (⊩disj h m₀)
   where
-    lowt : ∀ β → Q ∣ sTy η₀ β <:̂ᵛ tvar β
-    lowt β = subst (λ x → Q ∣ x <:̂ᵛ tvar β) (sym (tv β)) (tvarₛ reflᵗᵛ)
+    lowt : ∀ β → Q ⊩ sTy η₀ β <:̂ᵛ tvar β
+    lowt β = subst (λ x → Q ⊩ x <:̂ᵛ tvar β) (sym (tv β)) (tvarₛ reflᵗᵛ)
 
     et : ∅ᴴ ⊩Et A₀ [ δ ]ᵛ → ∅ᴴ ⊩Et A₀ [ η₀ ]ᵛ [ δ ]ᵛ
     et e = subst (∅ᴴ ⊩Et_) (sym ([⨟]ᵛ A₀ η₀ δ))
@@ -1032,11 +1032,11 @@ fixᵗ-r f ∣ ε ∣̂ᵉ     = cong ∣_∣̂ᵉ (fixᵗ-e f ε)
 
 module Monoᵗ {Θ : Scope} {Q : Hyps Θ} (α γ : TyVar Θ) (le : (γ , α) ∈ subᵥ Q) where
 
-  lowt : ∀ β → Q ∣ sTy (updᵗ α γ) β <:̂ᵛ tvar β
+  lowt : ∀ β → Q ⊩ sTy (updᵗ α γ) β <:̂ᵛ tvar β
   lowt β with α ≟ᶠ β
-  ... | yes refl = subst (λ x → Q ∣ tvar x <:̂ᵛ tvar α) (sym (upd-≡ α γ idᶠ))
+  ... | yes refl = subst (λ x → Q ⊩ tvar x <:̂ᵛ tvar α) (sym (upd-≡ α γ idᶠ))
                          (tvarₛ (hypᵗᵛ le))
-  ... | no  ¬p   = subst (λ x → Q ∣ tvar x <:̂ᵛ tvar β) (sym (upd-≢ α β γ idᶠ ¬p))
+  ... | no  ¬p   = subst (λ x → Q ⊩ tvar x <:̂ᵛ tvar β) (sym (upd-≢ α β γ idᶠ ¬p))
                          (tvarₛ reflᵗᵛ)
 
   lowg : Q ⊩ updᵗ α γ ≾ˢ idˢ
@@ -1133,10 +1133,10 @@ stepᵗ {Θ} C Q α s cb cq cc =
                  (λ m → hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m))
                  (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m)) (λ m → unq-qhyps u m)
       where
-        sb : ∀ {β γ} → (β , γ) ∈ subᵥ Q → Q₀ ∣ sTy η₀ β <:̂ᵛ sTy η₀ γ
+        sb : ∀ {β γ} → (β , γ) ∈ subᵥ Q → Q₀ ⊩ sTy η₀ β <:̂ᵛ sTy η₀ γ
         sb m with casesᵗ s m
         ... | inj₁ refl =
-              subst₂ (λ x y → Q₀ ∣ tvar x <:̂ᵛ tvar y)
+              subst₂ (λ x y → Q₀ ⊩ tvar x <:̂ᵛ tvar y)
                      (sym (upd-≢ α γ₀ γ₀ idᶠ α≢γ₀)) (sym (upd-≡ α γ₀ idᶠ))
                      (tvarₛ reflᵗᵛ)
         ... | inj₂ m' = tvarₛ (hypᵗᵛ (∈-map⁺ (mapᵖ (upd α γ₀ idᶠ)) m'))
@@ -1154,13 +1154,13 @@ stepᵗ {Θ} C Q α s cb cq cc =
         ... | β , m₀ , refl = <:̂ᵛ-eternalˡ (M.lowt β) (et-hyp m₀)
 
         sb : ∀ {x y} → (x , y) ∈ map (mapᵖ (upd α γ₀ idᶠ)) (restᵗ s)
-           → Q ∣ tvar x <:̂ᵛ tvar y
+           → Q ⊩ tvar x <:̂ᵛ tvar y
         sb m with ∈-map⁻ (mapᵖ (upd α γ₀ idᶠ)) m
         ... | (β , γ) , m₀ , refl with apart-∈ _≟ᶠ_ m₀
         ...   | inj₁ refl = tvarₛ reflᵗᵛ
         ...   | inj₂ m₁   =
                 <:̂ᵛ-trans (M.lowt β)
-                  (subst (λ y → Q ∣ tvar β <:̂ᵛ tvar y)
+                  (subst (λ y → Q ⊩ tvar β <:̂ᵛ tvar y)
                          (sym (upd-≢ α γ γ₀ idᶠ (⌊⌋-false (cS m₁))))
                          (tvarₛ (hypᵗᵛ (subᵗ s m₀))))
 
@@ -1261,7 +1261,7 @@ equateʳ {Θ} C Q i b eq =
 -- the subtyping atoms sent to its representative `f`, reflexive atoms dropped
 
 collapseᵗ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (f : TyVar Θ → TyVar Θ)
-          → (∀ β → (Q ⊩ᵗᵛ f β ≾ β) × (Q ⊩ᵗᵛ β ≾ f β)) → Elim C Q
+          → (∀ β → (Q ⊩ᵗᵛ f β <: β) × (Q ⊩ᵗᵛ β <: f β)) → Elim C Q
 collapseᵗ {Θ} C Q f both =
   mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ (λ u → unq (no-qhyps u)) keep₀
          (λ δ h → <:̂ᶜ-subst h (sameᶜ ⁺ C))
@@ -1276,10 +1276,10 @@ collapseᵗ {Θ} C Q f both =
               (map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q))
               (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q)) (qhyps Q)
 
-    lowt : ∀ β → Q ∣ sTy η₀ β <:̂ᵛ tvar β
+    lowt : ∀ β → Q ⊩ sTy η₀ β <:̂ᵛ tvar β
     lowt β = tvarₛ (proj₁ (both β))
 
-    hit : ∀ β → Q ∣ tvar β <:̂ᵛ sTy η₀ β
+    hit : ∀ β → Q ⊩ tvar β <:̂ᵛ sTy η₀ β
     hit β = tvarₛ (proj₂ (both β))
 
     open Equal {Q = Q} η₀ (mk≾ˢ (λ _ → ⊩≾̂ᵣ-refl) (λ _ → ⊩≾̂ₑ-refl))
@@ -1291,9 +1291,9 @@ collapseᵗ {Θ} C Q f both =
                  (λ m → hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m))
                  (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m)) (λ m → unq-qhyps u m)
       where
-        sb : ∀ {β β'} → (β , β') ∈ subᵥ Q → Q₀ ∣ sTy η₀ β <:̂ᵛ sTy η₀ β'
+        sb : ∀ {β β'} → (β , β') ∈ subᵥ Q → Q₀ ⊩ sTy η₀ β <:̂ᵛ sTy η₀ β'
         sb {β} m with apart-∈ _≟ᶠ_ (∈-map⁺ (mapᵖ f) m)
-        ... | inj₁ e  = subst (λ y → Q₀ ∣ tvar (f β) <:̂ᵛ tvar y) e (tvarₛ reflᵗᵛ)
+        ... | inj₁ e  = subst (λ y → Q₀ ⊩ tvar (f β) <:̂ᵛ tvar y) e (tvarₛ reflᵗᵛ)
         ... | inj₂ m' = tvarₛ (hypᵗᵛ m')
 
     keep₀ : Q ⊨ᴴ Q₀
@@ -1306,7 +1306,7 @@ collapseᵗ {Θ} C Q f both =
         et m with ∈-map⁻ f m
         ... | β , m₀ , refl = <:̂ᵛ-eternalˡ (lowt β) (et-hyp m₀)
 
-        sb : ∀ {x y} → (x , y) ∈ apart _≟ᶠ_ (map (mapᵖ f) (subᵥ Q)) → Q ∣ tvar x <:̂ᵛ tvar y
+        sb : ∀ {x y} → (x , y) ∈ apart _≟ᶠ_ (map (mapᵖ f) (subᵥ Q)) → Q ⊩ tvar x <:̂ᵛ tvar y
         sb m with ∈-map⁻ (mapᵖ f) (apart-⊆ _≟ᶠ_ m)
         ... | (β , β') , m₀ , refl =
               <:̂ᵛ-trans (lowt β) (<:̂ᵛ-trans (tvarₛ (hypᵗᵛ m₀)) (hit β'))
@@ -1345,7 +1345,7 @@ collapseᵗ? {Θ} F C Q = from moves
     from []         = nothing
     from ms@(_ ∷ _) =
       just (collapseᵗ C Q (target ms)
-                      (equal (Q ⊩ᵗᵛ_≾_) reflᵗᵛ (λ e p → transᵗᵛ (hypᵗᵛ e) p) ms) ,
+                      (equal (Q ⊩ᵗᵛ_<:_) reflᵗᵛ (λ e p → transᵗᵛ (hypᵗᵛ e) p) ms) ,
             mkFixes (λ β h → [ cong tvar , (λ o → ⊥-elim (t≢f h o)) ]′ (stays ms β))
                     (λ _ _ → refl) (λ _ _ → refl))
 
@@ -1390,8 +1390,8 @@ forced C Q Q⁺ η₀ lowg hig tv Q̂ inst₀ unq₀ keep⁺ keep₁ =
          (λ δ h → <:̂ᶜ-subst (keep₁ δ h) (E.sameᶜ ⁺ C))
   where
     module E = Equal {Q = Q⁺} η₀ lowg hig
-                     (λ β → subst (λ x → Q⁺ ∣ x <:̂ᵛ tvar β) (sym (tv β)) (tvarₛ reflᵗᵛ))
-                     (λ β → subst (λ x → Q⁺ ∣ tvar β <:̂ᵛ x) (sym (tv β)) (tvarₛ reflᵗᵛ))
+                     (λ β → subst (λ x → Q⁺ ⊩ x <:̂ᵛ tvar β) (sym (tv β)) (tvarₛ reflᵗᵛ))
+                     (λ β → subst (λ x → Q⁺ ⊩ tvar β <:̂ᵛ x) (sym (tv β)) (tvarₛ reflᵗᵛ))
 
 -- The atoms an assignment `η₀` changes, written canonically, an ordering split
 -- per alternative of its left side; reflexive orderings dropped
@@ -1456,7 +1456,7 @@ module Retouch {Θ : Scope} (η₀ : Subst Θ Θ) (tᵣ : RExp Θ × RExp Θ →
     ordᵉ-id (apart-back _≟ᵉ_ (λ e → eqₑ (≡̂ₑ-subst _ (≅ᵉ⇒≡̂ e))) Sᵉ idˢ (λ mb → idᵉ-ord (hypₑ mb))
                         (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m))
 
-  instᵈ : ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK retouched (A [ η₀ ]ᵛ) (ρ [ η₀ ]ʳ)
+  instᵈ : ∀ {A ρ} → (A , ρ) ∈ disj Q → retouched ⊩ A [ η₀ ]ᵛ Et∨≾ᵘ ρ [ η₀ ]ʳ
   instᵈ {A} {ρ} m =
     hyp-ok-≡̂ (∈-map⁺ touchᵈ m) (proj₁ (touchᵈ-≡̂ (A , ρ))) (eqᵣ (proj₂ (touchᵈ-≡̂ (A , ρ))))
 
@@ -1478,11 +1478,11 @@ module Retouch {Θ : Scope} (η₀ : Subst Θ Θ) (tᵣ : RExp Θ × RExp Θ →
 
   keepᵈ : (δ : Subst Θ ∅ˢ)
         → (∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q)
-           → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ))
-        → ∀ {A ρ} → (A , ρ) ∈ map touchᵈ (disj Q) → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+           → ∅ᴴ ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ [ δ ]ʳ)
+        → ∀ {A ρ} → (A , ρ) ∈ map touchᵈ (disj Q) → ∅ᴴ ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ [ δ ]ʳ
   keepᵈ δ k m with ∈-map⁻ touchᵈ m
   ... | (A₀ , ρ₀) , m₀ , refl =
-        VarOK-≡̂ (≡̂ᵛ-subst δ (≡̂ᵛ-sym (proj₁ t))) (eqᵣ (≡̂ᵣ-subst δ (≡̂ᵣ-sym (proj₂ t))))
+        Et∨≾ᵘ-≡̂ (≡̂ᵛ-subst δ (≡̂ᵛ-sym (proj₁ t))) (eqᵣ (≡̂ᵣ-subst δ (≡̂ᵣ-sym (proj₂ t))))
                 (k (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m₀))
     where t = touchᵈ-≡̂ (A₀ , ρ₀)
 

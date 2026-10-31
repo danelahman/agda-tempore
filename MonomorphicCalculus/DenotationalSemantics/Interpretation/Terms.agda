@@ -335,7 +335,7 @@ mutual
   Paramᵛ ⦉ V , W ⦊  = Paramᵛ V × Paramᵛ W
   Paramᵛ (inl V)    = Paramᵛ V
   Paramᵛ (inr V)    = Paramᵛ V
-  Paramᵛ (lam M)    = Paramᶜ M
+  Paramᵛ (fun M)    = Paramᶜ M
   -- the return clause, every operation clause, and the clauses' uniformity in
   -- the residual grade
   Paramᵛ {Γ} (handler {B = B} N H) =
@@ -343,18 +343,18 @@ mutual
   Paramᵛ (subV V p) = Paramᵛ V
 
   Paramᶜ : ∀ {Γ C} → Γ ⊢C⦂ C → Set
-  Paramᶜ (return V)       = Paramᵛ V
-  Paramᶜ (M ⨟ N)          = Paramᶜ M × Paramᶜ N
-  Paramᶜ (V · W)          = Paramᵛ V × Paramᵛ W
-  Paramᶜ (match V `in M)  = Paramᵛ V × Paramᶜ M
-  Paramᶜ (absurd V)       = Paramᵛ V
-  Paramᶜ (cmp ⋈ V W et)   = Paramᵛ V × Paramᵛ W
+  Paramᶜ (return V)         = Paramᵛ V
+  Paramᶜ (M ⨟ N)            = Paramᶜ M × Paramᶜ N
+  Paramᶜ (V · W)            = Paramᵛ V × Paramᵛ W
+  Paramᶜ (match V `with M)  = Paramᵛ V × Paramᶜ M
+  Paramᶜ (absurd V)         = Paramᵛ V
+  Paramᶜ (cmp ⋈ V W et)     = Paramᵛ V × Paramᵛ W
   Paramᶜ (if V `then M `else N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
-  Paramᶜ (caseℕ V `zero M `succ N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
+  Paramᶜ (matchℕ V `zero M `succ N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (recℕ V M N p) = Paramᵛ V × Paramᶜ M × Paramᶜ N
-  Paramᶜ (caseL V `nil M `cons N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
+  Paramᶜ (matchL V `nil M `cons N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (recL V M N p) = Paramᵛ V × Paramᶜ M × Paramᶜ N
-  Paramᶜ (case+ V `inl M `inr N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
+  Paramᶜ (match+ V `inl M `inr N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (perform op V M) = Paramᵛ V × Paramᶜ M
   Paramᶜ (delay τ M)      = Paramᶜ M
   Paramᶜ (unbox x rel p M) = Paramᶜ M
@@ -391,7 +391,7 @@ mutual
   ⟦ ⦉ V , W ⦊ ⟧ᵛᵗ (pV , pW) = ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
   ⟦ inl V    ⟧ᵛᵗ pV = inlᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
   ⟦ inr V    ⟧ᵛᵗ pV = inrᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
-  ⟦ lam M    ⟧ᵛᵗ pM = curryᵐ (⟦ M ⟧ᶜᵗ pM)
+  ⟦ fun M    ⟧ᵛᵗ pM = curryᵐ (⟦ M ⟧ᶜᵗ pM)
   ⟦ handler N H ⟧ᵛᵗ (pN , pH , uH) =
     curryʰ (handler-famᵗ (⟦ H ⟧ʰᵗ pH uH) (⟦ N ⟧ᶜᵗ pN))
            (handler-famᵗ-nat (⟦ H ⟧ʰᵗ pH uH) (⟦ N ⟧ᶜᵗ pN))
@@ -402,7 +402,7 @@ mutual
   ⟦ _⨟_ {ε = ε} M N ⟧ᶜᵗ (pM , pN) =
     μᵀ ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ
   ⟦ V · W    ⟧ᶜᵗ (pV , pW) = appᵐ ∘ᵐ ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
-  ⟦ match V `in M ⟧ᶜᵗ (pV , pM) =
+  ⟦ match V `with M ⟧ᶜᵗ (pV , pM) =
     ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ ⟨ idᵐ , fstᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ , sndᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
   ⟦ absurd V ⟧ᶜᵗ pV = initialᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
   -- the relation's truth on the comparison of the operands
@@ -410,18 +410,18 @@ mutual
     ηᵀ ∘ᵐ holdsᵐ ⋈ ∘ᵐ cmpᵐ et ∘ᵐ ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
   ⟦ if V `then M `else N ⟧ᶜᵗ (pV , pM , pN) =
     ifᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
-  ⟦ caseℕ V `zero M `succ N ⟧ᶜᵗ (pV , pM , pN) =
-    caseℕᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+  ⟦ matchℕ V `zero M `succ N ⟧ᶜᵗ (pV , pM , pN) =
+    matchℕᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   -- primitive recursion at `T ⟦ B ⟧ ε`, from the scrutinee
   ⟦ recℕ V M N p ⟧ᶜᵗ (pV , pM , pN) =
     recℕᵐ (⟦ M ⟧ᶜᵗ pM) (recℕ-stepᵗ p (⟦ N ⟧ᶜᵗ pN)) ∘ᵐ ⟨ idᵐ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
-  ⟦ caseL V `nil M `cons N ⟧ᶜᵗ (pV , pM , pN) =
-    caseLᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+  ⟦ matchL V `nil M `cons N ⟧ᶜᵗ (pV , pM , pN) =
+    matchLᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   -- primitive recursion on lists at `T ⟦ B ⟧ ε`, from the scrutinee
   ⟦ recL V M N p ⟧ᶜᵗ (pV , pM , pN) =
     recLᵐ (⟦ M ⟧ᶜᵗ pM) (recL-stepᵗ p (⟦ N ⟧ᶜᵗ pN)) ∘ᵐ ⟨ idᵐ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
-  ⟦ case+ V `inl M `inr N ⟧ᶜᵗ (pV , pM , pN) =
-    caseᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+  ⟦ match+ V `inl M `inr N ⟧ᶜᵗ (pV , pM , pN) =
+    match+ᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ⟦_⟧ᶜᵗ {Γ} (perform {A} {ε} op V M) (pV , pM) =
     opᵀ op ∘ᵐ
       ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV)

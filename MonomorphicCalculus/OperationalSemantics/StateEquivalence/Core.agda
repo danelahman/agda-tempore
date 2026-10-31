@@ -106,12 +106,12 @@ mutual
 -- each inversion is a standalone lemma over abstract contexts, where the
 -- equality can be matched.
 
-cast-lam⁻ : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ) → {M : Γ ∷ A ⊢C⦂ B ! ε}
+cast-fun⁻ : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ) → {M : Γ ∷ A ⊢C⦂ B ! ε}
        → (V' : Γ' ⊢V⦂ A ⇒ B ! ε)
-       → lam M ≡ castᵛ e V'
+       → fun M ≡ castᵛ e V'
        → Σ[ M' ∈ (Γ' ∷ A ⊢C⦂ B ! ε) ]
-           (V' ≡ lam M') × (M ≡ castᶜ (cong (_∷ A) e) M')
-cast-lam⁻ refl _ refl = _ , refl , refl
+           (V' ≡ fun M') × (M ≡ castᶜ (cong (_∷ A) e) M')
+cast-fun⁻ refl _ refl = _ , refl , refl
 
 cast-pair⁻ : ∀ {Γ Γ' A B} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ A} → {W : Γ ⊢V⦂ B}
         → (U' : Γ' ⊢V⦂ A |×| B)
@@ -163,9 +163,9 @@ cast-seq⁻ refl _ refl = _ , _ , refl , refl , refl
 cast-match⁻ : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
          → {V : Γ ⊢V⦂ A |×| B} → {M : Γ ∷ A ∷ B ⊢C⦂ C}
          → (P' : Γ' ⊢C⦂ C)
-         → (match V `in M) ≡ castᶜ e P'
+         → (match V `with M) ≡ castᶜ e P'
          → Σ[ V' ∈ (Γ' ⊢V⦂ A |×| B) ] Σ[ M' ∈ (Γ' ∷ A ∷ B ⊢C⦂ C) ]
-             (P' ≡ (match V' `in M')) × (V ≡ castᵛ e V')
+             (P' ≡ (match V' `with M')) × (V ≡ castᵛ e V')
            × (M ≡ castᶜ (cong (λ Γ₀ → Γ₀ ∷ A ∷ B) e) M')
 cast-match⁻ refl _ refl = _ , _ , refl , refl , refl
 
@@ -186,15 +186,15 @@ cast-cmp⁻ : ∀ {Γ Γ' A ⋈} → (e : Γ' ≡ Γ)
               (P' ≡ cmp ⋈ V' W' et) × (V ≡ castᵛ e V') × (W ≡ castᵛ e W')
 cast-cmp⁻ refl _ refl = _ , _ , refl , refl , refl
 
-cast-caseℕ⁻ : ∀ {Γ Γ' C} → (e : Γ' ≡ Γ)
-            → {V : Γ ⊢V⦂ nat} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ nat ⊢C⦂ C}
-            → (P' : Γ' ⊢C⦂ C)
-            → (caseℕ V `zero M `succ N) ≡ castᶜ e P'
-            → Σ[ V' ∈ (Γ' ⊢V⦂ nat) ] Σ[ M' ∈ (Γ' ⊢C⦂ C) ]
-              Σ[ N' ∈ (Γ' ∷ nat ⊢C⦂ C) ]
-                (P' ≡ (caseℕ V' `zero M' `succ N')) × (V ≡ castᵛ e V')
-              × (M ≡ castᶜ e M') × (N ≡ castᶜ (cong (_∷ nat) e) N')
-cast-caseℕ⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
+cast-matchℕ⁻ : ∀ {Γ Γ' C} → (e : Γ' ≡ Γ)
+             → {V : Γ ⊢V⦂ nat} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ nat ⊢C⦂ C}
+             → (P' : Γ' ⊢C⦂ C)
+             → (matchℕ V `zero M `succ N) ≡ castᶜ e P'
+             → Σ[ V' ∈ (Γ' ⊢V⦂ nat) ] Σ[ M' ∈ (Γ' ⊢C⦂ C) ]
+               Σ[ N' ∈ (Γ' ∷ nat ⊢C⦂ C) ]
+                (P' ≡ (matchℕ V' `zero M' `succ N')) × (V ≡ castᵛ e V')
+               × (M ≡ castᶜ e M') × (N ≡ castᶜ (cong (_∷ nat) e) N')
+cast-matchℕ⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
 
 cast-recℕ⁻ : ∀ {Γ Γ' B ε} → (e : Γ' ≡ Γ)
            → {V : Γ ⊢V⦂ nat} → {M : Γ ⊢C⦂ B ! ε}
@@ -221,15 +221,15 @@ cast-recℕ-reduct : ∀ {Γ Γ' B ε} → (e : Γ' ≡ Γ)
                    ≡ castᶜ e (coerce p (recℕ V' M' N' p ⨟ recℕ-step V' N'))
 cast-recℕ-reduct refl V' M' N' p = refl
 
-cast-caseL⁻ : ∀ {Γ Γ' A C} → (e : Γ' ≡ Γ)
-            → {V : Γ ⊢V⦂ list A} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ A ∷ list A ⊢C⦂ C}
-            → (P' : Γ' ⊢C⦂ C)
-            → caseL V `nil M `cons N ≡ castᶜ e P'
-            → Σ[ V' ∈ (Γ' ⊢V⦂ list A) ] Σ[ M' ∈ (Γ' ⊢C⦂ C) ]
-              Σ[ N' ∈ (Γ' ∷ A ∷ list A ⊢C⦂ C) ]
-                (P' ≡ caseL V' `nil M' `cons N') × (V ≡ castᵛ e V')
-              × (M ≡ castᶜ e M') × (N ≡ castᶜ (cong (λ X → X ∷ A ∷ list A) e) N')
-cast-caseL⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
+cast-matchL⁻ : ∀ {Γ Γ' A C} → (e : Γ' ≡ Γ)
+             → {V : Γ ⊢V⦂ list A} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ A ∷ list A ⊢C⦂ C}
+             → (P' : Γ' ⊢C⦂ C)
+             → matchL V `nil M `cons N ≡ castᶜ e P'
+             → Σ[ V' ∈ (Γ' ⊢V⦂ list A) ] Σ[ M' ∈ (Γ' ⊢C⦂ C) ]
+               Σ[ N' ∈ (Γ' ∷ A ∷ list A ⊢C⦂ C) ]
+                (P' ≡ matchL V' `nil M' `cons N') × (V ≡ castᵛ e V')
+               × (M ≡ castᶜ e M') × (N ≡ castᶜ (cong (λ X → X ∷ A ∷ list A) e) N')
+cast-matchL⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
 
 cast-recL⁻ : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ)
            → {V : Γ ⊢V⦂ list A} → {M : Γ ⊢C⦂ B ! ε}
@@ -244,15 +244,15 @@ cast-recL⁻ : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ)
              × (N ≡ castᶜ (cong (λ X → (X ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) e) N')
 cast-recL⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
 
-cast-case+⁻ : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
-            → {V : Γ ⊢V⦂ A |+| B} → {M : Γ ∷ A ⊢C⦂ C} → {N : Γ ∷ B ⊢C⦂ C}
-            → (P' : Γ' ⊢C⦂ C)
-            → (case+ V `inl M `inr N) ≡ castᶜ e P'
-            → Σ[ V' ∈ (Γ' ⊢V⦂ A |+| B) ] Σ[ M' ∈ (Γ' ∷ A ⊢C⦂ C) ]
-              Σ[ N' ∈ (Γ' ∷ B ⊢C⦂ C) ]
-                (P' ≡ (case+ V' `inl M' `inr N')) × (V ≡ castᵛ e V')
-              × (M ≡ castᶜ (cong (_∷ A) e) M') × (N ≡ castᶜ (cong (_∷ B) e) N')
-cast-case+⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
+cast-match+⁻ : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
+             → {V : Γ ⊢V⦂ A |+| B} → {M : Γ ∷ A ⊢C⦂ C} → {N : Γ ∷ B ⊢C⦂ C}
+             → (P' : Γ' ⊢C⦂ C)
+             → (match+ V `inl M `inr N) ≡ castᶜ e P'
+             → Σ[ V' ∈ (Γ' ⊢V⦂ A |+| B) ] Σ[ M' ∈ (Γ' ∷ A ⊢C⦂ C) ]
+               Σ[ N' ∈ (Γ' ∷ B ⊢C⦂ C) ]
+                (P' ≡ (match+ V' `inl M' `inr N')) × (V ≡ castᵛ e V')
+               × (M ≡ castᶜ (cong (_∷ A) e) M') × (N ≡ castᶜ (cong (_∷ B) e) N')
+cast-match+⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
 
 cast-perform⁻ : ∀ {Γ Γ' A ε} → (e : Γ' ≡ Γ) → {op : Op}
            → {V : Γ ⊢V⦂ ⌜ param op ⌝ᵍ}
@@ -455,13 +455,13 @@ listᵛ-cast e (subV V (listₛ p))   =
     comm (inj₂ (W , L)) =
       cong₂ (λ a b → inj₂ (a , b)) (sym (cast-subV e)) (sym (cast-subV e))
 
-cast-caseL-reduct : ∀ {Γ Γ' A C} → (e : Γ' ≡ Γ) → (l : ListView Γ' A)
-                  → (M' : Γ' ⊢C⦂ C) → (N' : Γ' ∷ A ∷ list A ⊢C⦂ C)
-                  → caseL-reduct (castL e l) (castᶜ e M')
-                                 (castᶜ (cong (λ X → X ∷ A ∷ list A) e) N')
-                  ≡ castᶜ e (caseL-reduct l M' N')
-cast-caseL-reduct refl (inj₁ tt)      M' N' = refl
-cast-caseL-reduct refl (inj₂ (W , L)) M' N' = refl
+cast-matchL-reduct : ∀ {Γ Γ' A C} → (e : Γ' ≡ Γ) → (l : ListView Γ' A)
+                   → (M' : Γ' ⊢C⦂ C) → (N' : Γ' ∷ A ∷ list A ⊢C⦂ C)
+                   → matchL-reduct (castL e l) (castᶜ e M')
+                                   (castᶜ (cong (λ X → X ∷ A ∷ list A) e) N')
+                   ≡ castᶜ e (matchL-reduct l M' N')
+cast-matchL-reduct refl (inj₁ tt)      M' N' = refl
+cast-matchL-reduct refl (inj₂ (W , L)) M' N' = refl
 
 cast-recL-reduct : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ) → (l : ListView Γ' A)
                  → (M' : Γ' ⊢C⦂ B ! ε)
@@ -494,13 +494,13 @@ injᵛ-cast e (subV V (p |+|ₛ q)) =
     comm (inj₁ W) = cong inj₁ (sym (cast-subV e))
     comm (inj₂ W) = cong inj₂ (sym (cast-subV e))
 
-cast-case+-reduct : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ) → (s : (Γ' ⊢V⦂ A) ⊎ (Γ' ⊢V⦂ B))
-                  → (M' : Γ' ∷ A ⊢C⦂ C) → (N' : Γ' ∷ B ⊢C⦂ C)
-                  → case+-reduct (cast⊎ e s) (castᶜ (cong (_∷ A) e) M')
-                                 (castᶜ (cong (_∷ B) e) N')
-                  ≡ castᶜ e (case+-reduct s M' N')
-cast-case+-reduct refl (inj₁ W) M' N' = refl
-cast-case+-reduct refl (inj₂ W) M' N' = refl
+cast-match+-reduct : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ) → (s : (Γ' ⊢V⦂ A) ⊎ (Γ' ⊢V⦂ B))
+                   → (M' : Γ' ∷ A ⊢C⦂ C) → (N' : Γ' ∷ B ⊢C⦂ C)
+                   → match+-reduct (cast⊎ e s) (castᶜ (cong (_∷ A) e) M')
+                                   (castᶜ (cong (_∷ B) e) N')
+                   ≡ castᶜ e (match+-reduct s M' N')
+cast-match+-reduct refl (inj₁ W) M' N' = refl
+cast-match+-reduct refl (inj₂ W) M' N' = refl
 
 cast-match-reduct : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
            → (M' : Γ' ∷ A ∷ B ⊢C⦂ C) → (V' : Γ' ⊢V⦂ A) → (W' : Γ' ⊢V⦂ B)

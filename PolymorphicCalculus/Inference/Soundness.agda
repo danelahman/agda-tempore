@@ -326,7 +326,7 @@ soundR {σ = σ} ι Γ (var i) refl s {ρ} {X} e =
     x   = lookup-var (Γ [ σ ]ᶜᵗˣ) i
     z   = mem-cast ety egr x
 soundR {σ = σ} {Q = Q} ι Γ (V ⦂ᵛ B) ceq (s , sa) {ρ} {X} e
-  with <:̂ᵛ-boxʳ (subst (Q ∣ resTy ι Γ V [ σ ]ᵛ <:̂ᵛ_) e sa)
+  with <:̂ᵛ-boxʳ (subst (Q ⊩ resTy ι Γ V [ σ ]ᵛ <:̂ᵛ_) e sa)
 ... | ρ₁ , X₁ , e₁ , q , p with soundR ι Γ V ceq s e₁
 ...   | ρ₀ , X₀ , z , R , er =
   ρ₀ , X₀ , z , res-ann ρ X R q p , cong₂ _⦂ᵛ_ er (trans (sym e) ([⨟]ᵛ B ι σ))
@@ -343,7 +343,7 @@ soundR ι Γ (inr V)       ceq () e
 soundR ι Γ nil           ceq () e
 soundR ι Γ (cons V W)    ceq () e
 soundR ι Γ (cmp ⋈ V W)   ceq () e
-soundR ι Γ (lam M)       ceq () e
+soundR ι Γ (fun M)       ceq () e
 soundR ι Γ (handler N H) ceq () e
 
 mutual
@@ -355,21 +355,21 @@ mutual
           → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ ι ⨟ˢ σ ]ᴿᵛ)
 
   -- variables: the witness is `lookup-var`, at position `i`; the `Et∨≾ᵘ`
-  -- conjunct is `VarOK`, the subtyping atom the `subV` to the expected type
+  -- conjunct is `_⊩_Et∨≾ᵘ_`, the subtyping atom the `subV` to the expected type
 
   soundVˢ {σ = σ} {Q = Q} ι Γ (var i) A (st , ok) =
     subV D₀ st' , cong var (var-pos-lookup (Γ [ σ ]ᶜᵗˣ) i)
     where
       x = lookup-var (Γ [ σ ]ᶜᵗˣ) i
 
-      ok₁ = subst₂ (VarOK Q)
+      ok₁ = subst₂ (Q ⊩_Et∨≾ᵘ_)
                    (sym (lookup-ty-subst Γ σ i))
                    (sym (lookup-gr-subst Γ σ i))
                    ok
 
       D₀ = var x ok₁
 
-      st' = subst (λ z → Q ∣ z <:̂ᵛ A [ σ ]ᵛ) (sym (lookup-ty-subst Γ σ i)) st
+      st' = subst (λ z → Q ⊩ z <:̂ᵛ A [ σ ]ᵛ) (sym (lookup-ty-subst Γ σ i)) st
 
   -- uses of definitions
 
@@ -411,7 +411,7 @@ mutual
       D₁ = ctx-substᵛ pΓ (proj₁ ih₁)
       D₂ = ctx-substᵛ pΓ (proj₁ ih₂)
 
-      D = subV ⦉ D₁ , D₂ ⦊ (subst (λ z → Q ∣ _ <:̂ᵛ z) pA st)
+      D = subV ⦉ D₁ , D₂ ⦊ (subst (λ z → Q ⊩ _ <:̂ᵛ z) pA st)
 
       q = cong₂ ⦉_,_⦊
                 (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V₁)))
@@ -434,7 +434,7 @@ mutual
 
       D₁ = ctx-substᵛ pΓ (proj₁ ih₁)
 
-      D = subV (inl {B = B₂} D₁) (subst (λ z → Q ∣ B₁ |+| B₂ <:̂ᵛ z) pA st)
+      D = subV (inl {B = B₂} D₁) (subst (λ z → Q ⊩ B₁ |+| B₂ <:̂ᵛ z) pA st)
 
       q = cong inl (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V)))
 
@@ -453,14 +453,14 @@ mutual
 
       D₂ = ctx-substᵛ pΓ (proj₁ ih₂)
 
-      D = subV (inr {A = B₁} D₂) (subst (λ z → Q ∣ B₁ |+| B₂ <:̂ᵛ z) pA st)
+      D = subV (inr {A = B₁} D₂) (subst (λ z → Q ⊩ B₁ |+| B₂ <:̂ᵛ z) pA st)
 
       q = cong inr (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᵛ pι V)))
 
   -- lists
 
   soundVˢ {σ = σ} {Q = Q} ι Γ nil A (B , (st , _)) =
-    subV (nil {A = B}) (subst (λ z → Q ∣ list B <:̂ᵛ z) (wk-,ᵗ-v σ B A) st) , refl
+    subV (nil {A = B}) (subst (λ z → Q ⊩ list B <:̂ᵛ z) (wk-,ᵗ-v σ B A) st) , refl
 
   soundVˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (cons V W) A (B , (st , _) , s₁ , s₂) =
     D , q
@@ -479,7 +479,7 @@ mutual
       D₁ = ctx-substᵛ pΓ (proj₁ ih₁)
       D₂ = ctx-substᵛ pΓ (proj₁ ih₂)
 
-      D = subV (cons D₁ D₂) (subst (λ z → Q ∣ list B <:̂ᵛ z) pA st)
+      D = subV (cons D₁ D₂) (subst (λ z → Q ⊩ list B <:̂ᵛ z) pA st)
 
       q = cong₂ cons
                 (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V)))
@@ -505,7 +505,7 @@ mutual
       D₁ = ctx-substᵛ pΓ (proj₁ ih₁)
       D₂ = ctx-substᵛ pΓ (proj₁ ih₂)
 
-      D = subV (cmp ⋈ D₁ D₂ et) (subst (λ z → Q ∣ bool <:̂ᵛ z) pA st)
+      D = subV (cmp ⋈ D₁ D₂ et) (subst (λ z → Q ⊩ bool <:̂ᵛ z) pA st)
 
       q = cong₂ (cmp ⋈)
                 (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V)))
@@ -513,7 +513,7 @@ mutual
 
   -- lambda abstraction
 
-  soundVˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (lam M) A (B₁ , B₂ , ε , st , s) =
+  soundVˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (fun M) A (B₁ , B₂ , ε , st , s) =
     D , q
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
@@ -530,9 +530,9 @@ mutual
 
       D₀ = ctx-substᶜ (cong (_∷ _) pΓ) (proj₁ ih)
 
-      D = subV (lam D₀) (subst (λ z → Q ∣ _ <:̂ᵛ z) pA st)
+      D = subV (fun D₀) (subst (λ z → Q ⊩ _ <:̂ᵛ z) pA st)
 
-      q = cong lam (trans (⌊ctxᶜ⌋ (cong (_∷ _) pΓ) (proj₁ ih))
+      q = cong fun (trans (⌊ctxᶜ⌋ (cong (_∷ _) pΓ) (proj₁ ih))
                           (trans (proj₂ ih) ([≐]ᴿᶜ pι M)))
 
   -- handlers: the clause family one `∀ᵉ` deeper; its erasure needs `fun-ext`
@@ -583,7 +583,7 @@ mutual
       DH : (op : Op) → _
       DH op = c-subst (cong (_! _) pγ⇑) (ctx-substᶜ (cH op) (proj₁ (ihH op)))
 
-      D = subV (handler D₂ DH) (subst (λ z → Q ∣ _ <:̂ᵛ z) pA st)
+      D = subV (handler D₂ DH) (subst (λ z → Q ⊩ _ <:̂ᵛ z) pA st)
 
       q = cong₂ handler
                 (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᶜ pι N)))
@@ -673,7 +673,7 @@ mutual
       D₂ = ctx-substᵛ pΓ (proj₁ ih₂)
 
       D = subC (D₁ · D₂)
-               (subst (λ z → Q ∣ _ <:̂ᵛ z) pA st
+               (subst (λ z → Q ⊩ _ <:̂ᵛ z) pA st
                   !ₛ subst (λ z → Q ⊩ _ ≾̂ₑ z) pt le)
 
       q = cong₂ _·_
@@ -682,7 +682,7 @@ mutual
 
   -- pattern-matching
 
-  soundCˢ {Θ = Θ} {σ = σ} ι Γ (match V `in M) A t (B₁ , B₂ , s₁ , s₂) =
+  soundCˢ {Θ = Θ} {σ = σ} ι Γ (match V `with M) A t (B₁ , B₂ , s₁ , s₂) =
     D , q
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
@@ -705,9 +705,9 @@ mutual
       D₁ = ctx-substᵛ pΓ (proj₁ ih₁)
       D₂ = c-subst (cong₂ _!_ pA pt) (ctx-substᶜ c₂ (proj₁ ih₂))
 
-      D = match D₁ `in D₂
+      D = match D₁ `with D₂
 
-      q = cong₂ match_`in_
+      q = cong₂ match_`with_
                 (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V)))
                 (trans (⌊c⌋ (cong₂ _!_ pA pt) (ctx-substᶜ c₂ (proj₁ ih₂)))
                        (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂))
@@ -732,9 +732,9 @@ mutual
 
   -- natural-number elimination
 
-  soundCˢ ι Γ (caseℕ V `zero M₁ `succ M₂) A t (s₀ , s₁ , s₂) =
-    caseℕ (proj₁ ih₀) `zero (proj₁ ih₁) `succ (proj₁ ih₂) ,
-    cong₃ caseℕ_`zero_`succ_ (proj₂ ih₀) (proj₂ ih₁) (proj₂ ih₂)
+  soundCˢ ι Γ (matchℕ V `zero M₁ `succ M₂) A t (s₀ , s₁ , s₂) =
+    matchℕ (proj₁ ih₀) `zero (proj₁ ih₁) `succ (proj₁ ih₂) ,
+    cong₃ matchℕ_`zero_`succ_ (proj₂ ih₀) (proj₂ ih₁) (proj₂ ih₂)
     where
       ih₀ = soundVˢ ι Γ V nat s₀
       ih₁ = soundCˢ ι Γ M₁ A t s₁
@@ -742,7 +742,7 @@ mutual
 
   -- sum elimination
 
-  soundCˢ {Θ = Θ} {σ = σ} ι Γ (case+ V `inl M₁ `inr M₂) A t (B₁ , B₂ , s₀ , s₁ , s₂) =
+  soundCˢ {Θ = Θ} {σ = σ} ι Γ (match+ V `inl M₁ `inr M₂) A t (B₁ , B₂ , s₀ , s₁ , s₂) =
     D , q
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
@@ -769,9 +769,9 @@ mutual
       D₁ = c-subst pC (ctx-substᶜ c₁ (proj₁ ih₁))
       D₂ = c-subst pC (ctx-substᶜ c₂ (proj₁ ih₂))
 
-      D = case+ D₀ `inl D₁ `inr D₂
+      D = match+ D₀ `inl D₁ `inr D₂
 
-      q = cong₃ case+_`inl_`inr_
+      q = cong₃ match+_`inl_`inr_
                 (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₀)) (trans (proj₂ ih₀) ([≐]ᴿᵛ pι V)))
                 (trans (⌊c⌋ pC (ctx-substᶜ c₁ (proj₁ ih₁)))
                        (trans (⌊ctxᶜ⌋ c₁ (proj₁ ih₁))
@@ -807,7 +807,7 @@ mutual
       D₂ = ctx-substᶜ c₂ (proj₁ ih₂)
 
       D = subC (recℕ D₀ D₁ D₂ it)
-               (subst (λ z → Q ∣ _ <:̂ᵛ z) pA st
+               (subst (λ z → Q ⊩ _ <:̂ᵛ z) pA st
                   !ₛ subst (λ z → Q ⊩ _ ≾̂ₑ z) pt le)
 
       q = cong₃ recℕ
@@ -817,7 +817,7 @@ mutual
 
   -- list elimination
 
-  soundCˢ {Θ = Θ} {σ = σ} ι Γ (caseL V `nil M₁ `cons M₂) A t (B , s₀ , s₁ , s₂) =
+  soundCˢ {Θ = Θ} {σ = σ} ι Γ (matchL V `nil M₁ `cons M₂) A t (B , s₀ , s₁ , s₂) =
     D , q
     where
       ι↑ = ι ⨟ˢ wkˢᵗ
@@ -842,9 +842,9 @@ mutual
       D₁ = c-subst pC (ctx-substᶜ pΓ (proj₁ ih₁))
       D₂ = c-subst pC (ctx-substᶜ c₂ (proj₁ ih₂))
 
-      D = caseL D₀ `nil D₁ `cons D₂
+      D = matchL D₀ `nil D₁ `cons D₂
 
-      q = cong₃ caseL_`nil_`cons_
+      q = cong₃ matchL_`nil_`cons_
                 (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₀)) (trans (proj₂ ih₀) ([≐]ᴿᵛ pι V)))
                 (trans (⌊c⌋ pC (ctx-substᶜ pΓ (proj₁ ih₁)))
                        (trans (⌊ctxᶜ⌋ pΓ (proj₁ ih₁))
@@ -881,7 +881,7 @@ mutual
       D₂ = ctx-substᶜ c₂ (proj₁ ih₂)
 
       D = subC (recL D₀ D₁ D₂ it)
-               (subst (λ z → Q ∣ _ <:̂ᵛ z) pA st
+               (subst (λ z → Q ⊩ _ <:̂ᵛ z) pA st
                   !ₛ subst (λ z → Q ⊩ _ ≾̂ₑ z) pt le)
 
       q = cong₃ recL
@@ -978,7 +978,7 @@ mutual
       DV = ctx-substᵛ pΓ (proj₁ ihV)
 
       D = subC (handle D₁ `with DV)
-               (subst (λ z → Q ∣ _ <:̂ᵛ z) pA st
+               (subst (λ z → Q ⊩ _ <:̂ᵛ z) pA st
                   !ₛ subst (λ z → Q ⊩ _ ≾̂ₑ z) pt le)
 
       q = cong₂ handle_`with_
@@ -1018,8 +1018,8 @@ mutual
 
       -- the payload and the binder are equivalent
 
-      eqv = subst (Q ∣ X₁ <:̂ᵛ_) pβ p₁
-          , subst (Q ∣_<:̂ᵛ X₁) pβ (<:̂ᵛ-box-type (subst (Q ∣ [ ρ ] _ <:̂ᵛ_) e₁ sb'))
+      eqv = subst (Q ⊩ X₁ <:̂ᵛ_) pβ p₁
+          , subst (Q ⊩_<:̂ᵛ X₁) pβ (<:̂ᵛ-box-type (subst (Q ⊩ [ ρ ] _ <:̂ᵛ_) e₁ sb'))
 
       D₁ = conv-last equivalence eqv D₀
 
@@ -1123,7 +1123,7 @@ private
   ex-return-is : ex-return ≡ coerce ⊩≾̂ₑ-refl (return (subV ⋆ unitₛ))
   ex-return-is = refl
 
-  -- a variable used after time-passage: the `Et∨≾ᵘ` disjunction is `VarOK`
+  -- a variable used after time-passage: the `Et∨≾ᵘ` disjunction is `_⊩_Et∨≾ᵘ_`
 
   ex-var : ∅ᴴ ∣ (∅ᶜ ∷ unit) ⟨ 𝟏̂ᵣ ⟩ ⊢V⦂ unit
   ex-var = proj₁ (soundV {σ = idˢ} {Q = ∅ᴴ} ((∅ᶜ ∷ unit) ⟨ 𝟏̂ᵣ ⟩) (var zero) unit (unitₛ , et-ok unitₑ))

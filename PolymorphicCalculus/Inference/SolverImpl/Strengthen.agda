@@ -201,7 +201,7 @@ Q [ r ]ᴴ = hyps (map (rTy r) (ets Q))
     et m with ∈-map⁻ (rTy r) m
     ... | α , m' , refl = ⊩ets h m'
 
-    sb : ∀ {α β} → (α , β) ∈ map (mapᵖ (rTy r)) (subᵥ Q) → Q' ∣ sTy δ α <:̂ᵛ sTy δ β
+    sb : ∀ {α β} → (α , β) ∈ map (mapᵖ (rTy r)) (subᵥ Q) → Q' ⊩ sTy δ α <:̂ᵛ sTy δ β
     sb m with ∈-map⁻ (mapᵖ (rTy r)) m
     ... | (α , β) , m' , refl = ⊩subᵥ h m'
 
@@ -220,10 +220,10 @@ Q [ r ]ᴴ = hyps (map (rTy r) (ets Q))
                  (⊩ordₑ h m')
 
     dj : ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) (disj Q)
-       → VarOK Q' (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+       → Q' ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ [ δ ]ʳ
     dj m with ∈-map⁻ (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) m
     ... | (A , ρ) , m' , refl =
-          subst₂ (VarOK Q') (sym ([⨟]ᵛ A ⌜ r ⌝ʳ δ)) (sym ([⨟]ʳ ρ ⌜ r ⌝ʳ δ)) (⊩disj h m')
+          subst₂ (Q' ⊩_Et∨≾ᵘ_) (sym ([⨟]ᵛ A ⌜ r ⌝ʳ δ)) (sym ([⨟]ʳ ρ ⌜ r ⌝ʳ δ)) (⊩disj h m')
 
     qh : ∀ {O} → O ∈ map (_[ ⌜ r ⌝ʳ ]ᵠ) (qhyps Q) → Q' ⊩ᴼ O [ δ ]
     qh m with ∈-map⁻ (_[ ⌜ r ⌝ʳ ]ᵠ) m
@@ -606,8 +606,8 @@ module _ {Θ₀ Θ : Scope} {τ : Subst Θ₀ Θ} {C : OCType Θ} {Q : Hyps Θ} 
   keep⁻ : (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ᴴ Q⁻ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]
   keep⁻ δ h = ⊩ᴴ-ren⁻ ι (subst (λ P → ∅ᴴ ⊩ᴴ P [ δ ]) (sym Q-ι) (keep el δ h))
 
-  princ⁻ : (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ∣ X⁻ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]ᶜ <:̂ᶜ C [ δ ]ᶜ
+  princ⁻ : (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ X⁻ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]ᶜ <:̂ᶜ C [ δ ]ᶜ
   princ⁻ δ h =
-    subst (λ Y → ∅ᴴ ∣ Y <:̂ᶜ C [ δ ]ᶜ)
+    subst (λ Y → ∅ᴴ ⊩ Y <:̂ᶜ C [ δ ]ᶜ)
           (trans (cong (_[ δ ]ᶜ) (sym X-ι)) ([⨟]ᶜ X⁻ ⌜ ι ⌝ʳ δ))
           (princ el δ h)

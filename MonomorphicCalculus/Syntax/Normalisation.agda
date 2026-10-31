@@ -5,7 +5,7 @@
 -- `subC` occur only where a sub-derivation must meet a type it does   --
 -- not itself determine: an application's argument, a `perform`'s      --
 -- parameter, the head and tail of a `cons`, the operands of a `cmp`,  --
--- the branches of `if`, `caseℕ`, `case+` and `caseL`, the base and    --
+-- the branches of `if`, `matchℕ`, `match+` and `matchL`, the base and --
 -- step of `recℕ` and `recL`, a handler's clauses and its return       --
 -- clause, the handler of a `handle`, and the root.                    --
 -- `NfV`/`NfC` pin those positions and `C-normal-form` is the theorem. --
@@ -121,7 +121,7 @@ data NfV where
              {p : A₁ <:ᵛ A} {q : A₂ <:ᵛ list A}
          → NfV V → NfV W → NfV (cons (subV V p) (subV W q))
 
-  lamⁿ   : ∀ {Γ A B ε} {M : Γ ∷ A ⊢C⦂ B ! ε} → NfC M → NfV (lam M)
+  funⁿ   : ∀ {Γ A B ε} {M : Γ ∷ A ⊢C⦂ B ! ε} → NfC M → NfV (fun M)
 
   -- the clauses and the return clause meet at the handler's result type;
   -- the clauses' effects are fixed by the rule, the return clause's is not
@@ -153,7 +153,7 @@ data NfC where
            → NfV V → NfV W → NfC (V · subV W p)
 
   matchⁿ   : ∀ {Γ A B C ε} {V : Γ ⊢V⦂ A |×| B} {N : Γ ∷ A ∷ B ⊢C⦂ C ! ε}
-           → NfV V → NfC N → NfC (match V `in N)
+           → NfV V → NfC N → NfC (match V `with N)
 
   absurdⁿ  : ∀ {Γ A ε} {V : Γ ⊢V⦂ empty} → NfV V → NfC (absurd {C = A ! ε} V)
 
@@ -171,13 +171,13 @@ data NfC where
            → NfV V → NfC M → NfC N
            → NfC (if V `then subC M p `else subC N q)
 
-  -- likewise for the branches of a `caseℕ` and of a `case+`
+  -- likewise for the branches of a `matchℕ` and of a `match+`
 
-  caseℕⁿ   : ∀ {Γ A ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ nat}
+  matchℕⁿ  : ∀ {Γ A ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ nat}
                {M : Γ ⊢C⦂ A₁ ! ε₁} {N : Γ ∷ nat ⊢C⦂ A₂ ! ε₂}
                {p : (A₁ ! ε₁) <:ᶜ (A ! ε)} {q : (A₂ ! ε₂) <:ᶜ (A ! ε)}
            → NfV V → NfC M → NfC N
-           → NfC (caseℕ V `zero subC M p `succ subC N q)
+           → NfC (matchℕ V `zero subC M p `succ subC N q)
 
   -- the base and the step meet at the recursion's type, which the step's
   -- binder fixes
@@ -189,17 +189,17 @@ data NfC where
            → NfV V → NfC M → NfC N
            → NfC (recℕ V (subC M p) (subC N q) r)
 
-  case+ⁿ   : ∀ {Γ A B A' ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ A |+| B}
+  match+ⁿ  : ∀ {Γ A B A' ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ A |+| B}
                {M : Γ ∷ A ⊢C⦂ A₁ ! ε₁} {N : Γ ∷ B ⊢C⦂ A₂ ! ε₂}
                {p : (A₁ ! ε₁) <:ᶜ (A' ! ε)} {q : (A₂ ! ε₂) <:ᶜ (A' ! ε)}
            → NfV V → NfC M → NfC N
-           → NfC (case+ V `inl subC M p `inr subC N q)
+           → NfC (match+ V `inl subC M p `inr subC N q)
 
-  caseLⁿ   : ∀ {Γ A A' ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ list A}
+  matchLⁿ  : ∀ {Γ A A' ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ list A}
                {M : Γ ⊢C⦂ A₁ ! ε₁} {N : Γ ∷ A ∷ list A ⊢C⦂ A₂ ! ε₂}
                {p : (A₁ ! ε₁) <:ᶜ (A' ! ε)} {q : (A₂ ! ε₂) <:ᶜ (A' ! ε)}
            → NfV V → NfC M → NfC N
-           → NfC (caseL V `nil subC M p `cons subC N q)
+           → NfC (matchL V `nil subC M p `cons subC N q)
 
   recLⁿ    : ∀ {Γ A B ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ list A}
                {M : Γ ⊢C⦂ A₁ ! ε₁}
@@ -299,9 +299,9 @@ V-subCtx c (consⁿ {p = p} {q = q} nV nW) with V-subCtx c nV | V-subCtx c nW
 ... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
   nfv (cons (subV V' (<:ᵛ-trans s₁ p)) (subV W' (<:ᵛ-trans s₂ q))) (<:ᵛ-refl _)
       (consⁿ n₁ n₂) (cong₂ cons e₁ e₂)
-V-subCtx c (lamⁿ {A = A} nM) with C-subCtx (≼-∷ c (<:ᵛ-refl A)) nM
+V-subCtx c (funⁿ {A = A} nM) with C-subCtx (≼-∷ c (<:ᵛ-refl A)) nM
 ... | nfc M' sv se n e =
-  nfv (lam M') (<:ᵛ-refl A ⇒ₛ (sv !ₛ se)) (lamⁿ n) (cong lam e)
+  nfv (fun M') (<:ᵛ-refl A ⇒ₛ (sv !ₛ se)) (funⁿ n) (cong fun e)
 V-subCtx c (handlerⁿ {A = A} {p = p} {q = q} nN nH)
   with C-subCtx (≼-∷ (≼-⟨⟩ c ≾ᵣ-refl) (<:ᵛ-refl A)) nN
 ... | nfc N' sB sε₁ nN' eN =
@@ -332,7 +332,7 @@ C-subCtx c (appⁿ {p = p} nV nW) with V-subCtx c nV
 C-subCtx c (matchⁿ nV nN) with V-subCtx c nV
 ... | nfv V' (s₁ |×|ₛ s₂) nV' eV with C-subCtx (≼-∷ (≼-∷ c s₁) s₂) nN
 ...   | nfc N' sv se nN' eN =
-  nfc (match V' `in N') sv se (matchⁿ nV' nN') (cong₂ match_`in_ eV eN)
+  nfc (match V' `with N') sv se (matchⁿ nV' nN') (cong₂ match_`with_ eV eN)
 C-subCtx c (absurdⁿ nV) with V-subCtx c nV
 ... | nfv V' emptyₛ nV' eV =
   nfc (absurd V') (<:ᵛ-refl _) ≾ₑ-refl (absurdⁿ nV') (cong absurd eV)
@@ -348,13 +348,13 @@ C-subCtx c (ifⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
              `else subC N' (<:ᶜ-trans (sv₂ !ₛ se₂) q))
       (<:ᵛ-refl _) ≾ₑ-refl (ifⁿ nV' nM' nN')
       (cong₃ (λ a b d → if a `then b `else d) eV eM eN)
-C-subCtx c (caseℕⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
+C-subCtx c (matchℕⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
 ... | nfv V' natₛ nV' eV with C-subCtx c nM | C-subCtx (≼-∷ c natₛ) nN
 ...   | nfc M' sv₁ se₁ nM' eM | nfc N' sv₂ se₂ nN' eN =
-  nfc (caseℕ V' `zero subC M' (<:ᶜ-trans (sv₁ !ₛ se₁) p)
-                `succ subC N' (<:ᶜ-trans (sv₂ !ₛ se₂) q))
-      (<:ᵛ-refl _) ≾ₑ-refl (caseℕⁿ nV' nM' nN')
-      (cong₃ (λ a b d → caseℕ a `zero b `succ d) eV eM eN)
+  nfc (matchℕ V' `zero subC M' (<:ᶜ-trans (sv₁ !ₛ se₁) p)
+                 `succ subC N' (<:ᶜ-trans (sv₂ !ₛ se₂) q))
+      (<:ᵛ-refl _) ≾ₑ-refl (matchℕⁿ nV' nM' nN')
+      (cong₃ (λ a b d → matchℕ a `zero b `succ d) eV eM eN)
 C-subCtx c (recℕⁿ {B = B} {p = p} {q = q} {r = r} nV nM nN) with V-subCtx c nV
 ... | nfv V' natₛ nV' eV
       with C-subCtx c nM
@@ -364,22 +364,22 @@ C-subCtx c (recℕⁿ {B = B} {p = p} {q = q} {r = r} nV nM nN) with V-subCtx c 
                (subC N' (<:ᶜ-trans (sv₂ !ₛ se₂) q)) r)
       (<:ᵛ-refl _) ≾ₑ-refl (recℕⁿ nV' nM' nN')
       (cong₃ (λ a b d → recℕ a b d) eV eM eN)
-C-subCtx c (case+ⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
+C-subCtx c (match+ⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
 ... | nfv V' (s₁ |+|ₛ s₂) nV' eV
       with C-subCtx (≼-∷ c s₁) nM | C-subCtx (≼-∷ c s₂) nN
 ...   | nfc M' sv₁ se₁ nM' eM | nfc N' sv₂ se₂ nN' eN =
-  nfc (case+ V' `inl subC M' (<:ᶜ-trans (sv₁ !ₛ se₁) p)
-                `inr subC N' (<:ᶜ-trans (sv₂ !ₛ se₂) q))
-      (<:ᵛ-refl _) ≾ₑ-refl (case+ⁿ nV' nM' nN')
-      (cong₃ (λ a b d → case+ a `inl b `inr d) eV eM eN)
-C-subCtx c (caseLⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
+  nfc (match+ V' `inl subC M' (<:ᶜ-trans (sv₁ !ₛ se₁) p)
+                 `inr subC N' (<:ᶜ-trans (sv₂ !ₛ se₂) q))
+      (<:ᵛ-refl _) ≾ₑ-refl (match+ⁿ nV' nM' nN')
+      (cong₃ (λ a b d → match+ a `inl b `inr d) eV eM eN)
+C-subCtx c (matchLⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
 ... | nfv V' (listₛ s) nV' eV
       with C-subCtx c nM | C-subCtx (≼-∷ (≼-∷ c s) (listₛ s)) nN
 ...   | nfc M' sv₁ se₁ nM' eM | nfc N' sv₂ se₂ nN' eN =
-  nfc (caseL V' `nil subC M' (<:ᶜ-trans (sv₁ !ₛ se₁) p)
-                `cons subC N' (<:ᶜ-trans (sv₂ !ₛ se₂) q))
-      (<:ᵛ-refl _) ≾ₑ-refl (caseLⁿ nV' nM' nN')
-      (cong₃ (λ a b d → caseL a `nil b `cons d) eV eM eN)
+  nfc (matchL V' `nil subC M' (<:ᶜ-trans (sv₁ !ₛ se₁) p)
+                 `cons subC N' (<:ᶜ-trans (sv₂ !ₛ se₂) q))
+      (<:ᵛ-refl _) ≾ₑ-refl (matchLⁿ nV' nM' nN')
+      (cong₃ (λ a b d → matchL a `nil b `cons d) eV eM eN)
 C-subCtx c (recLⁿ {B = B} {p = p} {q = q} {r = r} nV nM nN) with V-subCtx c nV
 ... | nfv V' (listₛ s) nV' eV
       with C-subCtx c nM
@@ -449,9 +449,9 @@ V-normalise nil =
 V-normalise (cons V W) with V-normalise V | V-normalise W
 ... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
   nfv (cons (subV V' s₁) (subV W' s₂)) (<:ᵛ-refl _) (consⁿ n₁ n₂) (cong₂ cons e₁ e₂)
-V-normalise (lam {A = A} {C = B ! ε} M) with C-normalise M
+V-normalise (fun {A = A} {C = B ! ε} M) with C-normalise M
 ... | nfc M' sv se n e =
-  nfv (lam M') (<:ᵛ-refl A ⇒ₛ (sv !ₛ se)) (lamⁿ n) (cong lam e)
+  nfv (fun M') (<:ᵛ-refl A ⇒ₛ (sv !ₛ se)) (funⁿ n) (cong fun e)
 V-normalise (handler N H) with C-normalise N
 ... | nfc N' sB sε₁ nN eN =
   nfv (handler (subC N' (sB !ₛ ≾ₑ-refl))
@@ -480,13 +480,13 @@ C-normalise (V · W) with V-normalise V
 ... | nfv V' (sd ⇒ₛ (sv !ₛ se)) nV eV with V-normalise W
 ...   | nfv W' sw nW eW =
   nfc (V' · subV W' (<:ᵛ-trans sw sd)) sv se (appⁿ nV nW) (cong₂ _·_ eV eW)
-C-normalise (match V `in N) with V-normalise V
+C-normalise (match V `with N) with V-normalise V
 ... | nfv V' (s₁ |×|ₛ s₂) nV eV with C-normalise N
 ...   | nfc N₁ sv se nN eN
         with C-subCtx (≼-∷ (≼-∷ (≼ᶜ-refl _) s₁) s₂) nN
 ...     | nfc N' sv' se' nN' eN' =
-  nfc (match V' `in N') (<:ᵛ-trans sv' sv) (≾ₑ-trans se' se)
-      (matchⁿ nV nN') (cong₂ match_`in_ eV (trans eN' eN))
+  nfc (match V' `with N') (<:ᵛ-trans sv' sv) (≾ₑ-trans se' se)
+      (matchⁿ nV nN') (cong₂ match_`with_ eV (trans eN' eN))
 C-normalise (absurd V) with V-normalise V
 ... | nfv V' emptyₛ nV eV =
   nfc (absurd V') (<:ᵛ-refl _) ≾ₑ-refl (absurdⁿ nV) (cong absurd eV)
@@ -500,36 +500,36 @@ C-normalise (if V `then M `else N) with V-normalise V
   nfc (if V' `then subC M' (sv₁ !ₛ se₁) `else subC N' (sv₂ !ₛ se₂))
       (<:ᵛ-refl _) ≾ₑ-refl (ifⁿ nV nM nN)
       (cong₃ (λ a b d → if a `then b `else d) eV eM eN)
-C-normalise (caseℕ V `zero M `succ N) with V-normalise V
+C-normalise (matchℕ V `zero M `succ N) with V-normalise V
 ... | nfv V' natₛ nV eV with C-normalise M | C-normalise N
 ...   | nfc M' sv₁ se₁ nM eM | nfc N' sv₂ se₂ nN eN =
-  nfc (caseℕ V' `zero subC M' (sv₁ !ₛ se₁) `succ subC N' (sv₂ !ₛ se₂))
-      (<:ᵛ-refl _) ≾ₑ-refl (caseℕⁿ nV nM nN)
-      (cong₃ (λ a b d → caseℕ a `zero b `succ d) eV eM eN)
+  nfc (matchℕ V' `zero subC M' (sv₁ !ₛ se₁) `succ subC N' (sv₂ !ₛ se₂))
+      (<:ᵛ-refl _) ≾ₑ-refl (matchℕⁿ nV nM nN)
+      (cong₃ (λ a b d → matchℕ a `zero b `succ d) eV eM eN)
 C-normalise (recℕ V M N r) with V-normalise V
 ... | nfv V' natₛ nV eV with C-normalise M | C-normalise N
 ...   | nfc M' sv₁ se₁ nM eM | nfc N' sv₂ se₂ nN eN =
   nfc (recℕ V' (subC M' (sv₁ !ₛ se₁)) (subC N' (sv₂ !ₛ se₂)) r)
       (<:ᵛ-refl _) ≾ₑ-refl (recℕⁿ nV nM nN)
       (cong₃ (λ a b d → recℕ a b d) eV eM eN)
-C-normalise (case+ V `inl M `inr N) with V-normalise V
+C-normalise (match+ V `inl M `inr N) with V-normalise V
 ... | nfv V' (s₁ |+|ₛ s₂) nV eV with C-normalise M | C-normalise N
 ...   | nfc M₁ sv₁ se₁ nM eM | nfc N₁ sv₂ se₂ nN eN
         with C-subCtx (≼-∷ (≼ᶜ-refl _) s₁) nM | C-subCtx (≼-∷ (≼ᶜ-refl _) s₂) nN
 ...     | nfc M' sv₁' se₁' nM' eM' | nfc N' sv₂' se₂' nN' eN' =
-  nfc (case+ V' `inl subC M' (<:ᵛ-trans sv₁' sv₁ !ₛ ≾ₑ-trans se₁' se₁)
-                `inr subC N' (<:ᵛ-trans sv₂' sv₂ !ₛ ≾ₑ-trans se₂' se₂))
-      (<:ᵛ-refl _) ≾ₑ-refl (case+ⁿ nV nM' nN')
-      (cong₃ (λ a b d → case+ a `inl b `inr d) eV (trans eM' eM) (trans eN' eN))
-C-normalise (caseL V `nil M `cons N) with V-normalise V
+  nfc (match+ V' `inl subC M' (<:ᵛ-trans sv₁' sv₁ !ₛ ≾ₑ-trans se₁' se₁)
+                 `inr subC N' (<:ᵛ-trans sv₂' sv₂ !ₛ ≾ₑ-trans se₂' se₂))
+      (<:ᵛ-refl _) ≾ₑ-refl (match+ⁿ nV nM' nN')
+      (cong₃ (λ a b d → match+ a `inl b `inr d) eV (trans eM' eM) (trans eN' eN))
+C-normalise (matchL V `nil M `cons N) with V-normalise V
 ... | nfv V' (listₛ s) nV eV with C-normalise M | C-normalise N
 ...   | nfc M' sv₁ se₁ nM eM | nfc N₁ sv₂ se₂ nN eN
         with C-subCtx (≼-∷ (≼-∷ (≼ᶜ-refl _) s) (listₛ s)) nN
 ...     | nfc N' sv₂' se₂' nN' eN' =
-  nfc (caseL V' `nil subC M' (sv₁ !ₛ se₁)
-                `cons subC N' (<:ᵛ-trans sv₂' sv₂ !ₛ ≾ₑ-trans se₂' se₂))
-      (<:ᵛ-refl _) ≾ₑ-refl (caseLⁿ nV nM nN')
-      (cong₃ (λ a b d → caseL a `nil b `cons d) eV eM (trans eN' eN))
+  nfc (matchL V' `nil subC M' (sv₁ !ₛ se₁)
+                 `cons subC N' (<:ᵛ-trans sv₂' sv₂ !ₛ ≾ₑ-trans se₂' se₂))
+      (<:ᵛ-refl _) ≾ₑ-refl (matchLⁿ nV nM nN')
+      (cong₃ (λ a b d → matchL a `nil b `cons d) eV eM (trans eN' eN))
 C-normalise (recL {B = B} V M N r) with V-normalise V
 ... | nfv V' (listₛ s) nV eV with C-normalise M | C-normalise N
 ...   | nfc M' sv₁ se₁ nM eM | nfc N₁ sv₂ se₂ nN eN
@@ -597,7 +597,7 @@ private
 
   ex-body : ∀ {Γ A}
           → rtm (V-normalise {Γ}
-                   (lam (subC (return {A = A} (var (λ _ → ≾ᵣ-refl) Hd))
+                   (fun (subC (return {A = A} (var (λ _ → ≾ᵣ-refl) Hd))
                               (<:ᶜ-refl (A ! 𝟏ₑ)))))
-          ≡ lam (return (var (λ _ → ≾ᵣ-refl) Hd))
+          ≡ fun (return (var (λ _ → ≾ᵣ-refl) Hd))
   ex-body = refl

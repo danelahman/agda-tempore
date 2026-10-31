@@ -6,7 +6,7 @@
 -- by rule: each type a rule leaves undetermined is ∃-bound,    --
 -- each side condition an atom. The expected type is an upper   --
 -- bound: where a rule meets two undetermined types it is the   --
--- right side of a `_≾̂ᵥᶜ_` or `_≾̂ₑᶜ_` atom; elsewhere `_≐ᵥ_`    --
+-- right side of a `_<:̂ᵥᶜ_` or `_≾̂ₑᶜ_` atom; elsewhere `_≐ᵥ_`   --
 -- fixes its shape. A use of a definition owes the constraint   --
 -- of its scheme (`instᶜ`), an unbound position the             --
 -- unsatisfiable one.                                           --
@@ -50,17 +50,17 @@ open import PolymorphicCalculus.Hypotheses S using (qhyps)
 open import PolymorphicCalculus.Inference.Constraints.Syntax  S
 open import PolymorphicCalculus.Inference.Constraints.Schemes S using (instᶜ; instᶜ-rigidFree)
 
--- The looked-up type subtypes into the expected one; its grade owes `VarOK`'s
--- disjunction
+-- The looked-up type subtypes into the expected one; its grade owes the
+-- disjunction `_⊩_Et∨≾ᵘ_`
 
 varConstraint : ∀ {Θ n} → OCtx Θ n → Fin n → OVType Θ → Constraint Θ
 varConstraint Γ i A =
-  (lookup-ty Γ i ≾̂ᵥᶜ A) ∧̂ Et∨≾ᵘ (lookup-ty Γ i) (lookup-gr Γ i)
+  (lookup-ty Γ i <:̂ᵥᶜ A) ∧̂ Et∨≾ᵘ (lookup-ty Γ i) (lookup-gr Γ i)
 
 -- A use of a definition: of its scheme, if there is one
 
 useDefConstraint : ∀ {Θ} → Maybe Scheme → OVType Θ → Constraint Θ
-useDefConstraint nothing  A = ⊥̂
+useDefConstraint nothing  A = falseᶜ
 useDefConstraint (just s) A = instᶜ s A
 
 -- An `unbox` of a variable under annotations: the type it reaches, its grade,
@@ -77,9 +77,9 @@ resGr Γ (V ⦂ᵛ B) = resGr Γ V
 resGr Γ _        = 𝟏̂ᵣ
 
 resC : ∀ {Θ₀ Θ n} → Subst Θ₀ Θ → OCtx Θ n → RawV Θ₀ n → Constraint Θ
-resC ι Γ (var i)  = ⊤̂
-resC ι Γ (V ⦂ᵛ B) = resC ι Γ V ∧̂ (resTy ι Γ V ≾̂ᵥᶜ B [ ι ]ᵛ)
-resC ι Γ _        = ⊥̂
+resC ι Γ (var i)  = trueᶜ
+resC ι Γ (V ⦂ᵛ B) = resC ι Γ V ∧̂ (resTy ι Γ V <:̂ᵥᶜ B [ ι ]ᵛ)
+resC ι Γ _        = falseᶜ
 
 -- `genVˢ ι` and `genCˢ ι` generate for a raw term whose type and grade variables
 -- `ι` interprets; under a binder `ι` is composed with the weakening
@@ -166,8 +166,8 @@ mutual
 
   -- lambda abstraction: the body at the synthesised arrow, below the expected type
 
-  genVˢ {Θ = Θ} ι Γ (lam M) A =
-    ∃ᵗ (∃ᵗ (∃ᵉ ((α₁ ⇒ (α₂ ! e) ≾̂ᵥᶜ A↑) ∧̂ genCˢ ι↑ (Γ↑ ∷ α₁) M (α₂ ! e))))
+  genVˢ {Θ = Θ} ι Γ (fun M) A =
+    ∃ᵗ (∃ᵗ (∃ᵉ ((α₁ ⇒ (α₂ ! e) <:̂ᵥᶜ A↑) ∧̂ genCˢ ι↑ (Γ↑ ∷ α₁) M (α₂ ! e))))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
       α₁ = wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ})))
@@ -181,7 +181,7 @@ mutual
   -- continuation grade is the rigid of its `∀ᵉ`
 
   genVˢ {Θ = Θ} ι Γ (handler N H) A =
-    ∃ᵗ (∃ᵗ (∃ᵉ (∃ᵉ (  ((α ! e₁) ⇛ (γ ! e₂) ≾̂ᵥᶜ A↑)
+    ∃ᵗ (∃ᵗ (∃ᵉ (∃ᵉ (  ((α ! e₁) ⇛ (γ ! e₂) <:̂ᵥᶜ A↑)
                     ∧̂ genCˢ ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) N (γ ! e₂)
                     ∧̂ ⋀ᵒᵖ (λ op →
                          ∀ᵉ (genCˢ (ι↑ ↑ᵉ)
@@ -206,7 +206,7 @@ mutual
   -- type annotation: the value checked against the annotation, below the
   -- expected type
 
-  genVˢ ι Γ (V ⦂ᵛ B) A = genVˢ ι Γ V (B [ ι ]ᵛ) ∧̂ (B [ ι ]ᵛ ≾̂ᵥᶜ A)
+  genVˢ ι Γ (V ⦂ᵛ B) A = genVˢ ι Γ V (B [ ι ]ᵛ) ∧̂ (B [ ι ]ᵛ <:̂ᵥᶜ A)
 
 
   genCˢ : ∀ {Θ₀ Θ n} → Subst Θ₀ Θ → OCtx Θ n → RawC Θ₀ n → OCType Θ → Constraint Θ
@@ -235,7 +235,7 @@ mutual
   genCˢ {Θ = Θ} ι Γ (V₁ · V₂) (A ! t) =
     ∃ᵗ (∃ᵗ (∃ᵉ (  genVˢ ι↑ Γ↑ V₁ (α ⇒ (β ! e))
                 ∧̂ genVˢ ι↑ Γ↑ V₂ α
-                ∧̂ (β ≾̂ᵥᶜ A↑)
+                ∧̂ (β <:̂ᵥᶜ A↑)
                 ∧̂ (e ≾̂ₑᶜ t↑))))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
@@ -248,7 +248,7 @@ mutual
 
   -- pattern-matching
 
-  genCˢ {Θ = Θ} ι Γ (match V `in M) (A ! t) =
+  genCˢ {Θ = Θ} ι Γ (match V `with M) (A ! t) =
     ∃ᵗ (∃ᵗ (genVˢ ι↑ Γ↑ V (α₁ |×| α₂) ∧̂ genCˢ ι↑ (Γ↑ ∷ α₁ ∷ α₂) M (A↑ ! t↑)))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
@@ -269,12 +269,12 @@ mutual
 
   -- natural-number elimination
 
-  genCˢ ι Γ (caseℕ V `zero M₁ `succ M₂) (A ! t) =
+  genCˢ ι Γ (matchℕ V `zero M₁ `succ M₂) (A ! t) =
     genVˢ ι Γ V nat ∧̂ genCˢ ι Γ M₁ (A ! t) ∧̂ genCˢ ι (Γ ∷ nat) M₂ (A ! t)
 
   -- sum elimination: the summands ∃-bound, both branches at the expected type
 
-  genCˢ {Θ = Θ} ι Γ (case+ V `inl M₁ `inr M₂) (A ! t) =
+  genCˢ {Θ = Θ} ι Γ (match+ V `inl M₁ `inr M₂) (A ! t) =
     ∃ᵗ (∃ᵗ (  genVˢ ι↑ Γ↑ V (α₁ |+| α₂)
             ∧̂ genCˢ ι↑ (Γ↑ ∷ α₁) M₁ (A↑ ! t↑)
             ∧̂ genCˢ ι↑ (Γ↑ ∷ α₂) M₂ (A↑ ! t↑)))
@@ -294,7 +294,7 @@ mutual
             ∧̂ genCˢ ι↑ Γ↑ M₁ (β ! e)
             ∧̂ genCˢ ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) M₂ (β ! e)
             ∧̂ ((e ·̂ₑ e) ≾̂ₑᶜ e)
-            ∧̂ (β ≾̂ᵥᶜ A↑)
+            ∧̂ (β <:̂ᵥᶜ A↑)
             ∧̂ (e ≾̂ₑᶜ t↑)))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
@@ -306,7 +306,7 @@ mutual
 
   -- list elimination: the element type ∃-bound, both branches at the expected type
 
-  genCˢ {Θ = Θ} ι Γ (caseL V `nil M₁ `cons M₂) (A ! t) =
+  genCˢ {Θ = Θ} ι Γ (matchL V `nil M₁ `cons M₂) (A ! t) =
     ∃ᵗ (  genVˢ ι↑ Γ↑ V (list α)
         ∧̂ genCˢ ι↑ Γ↑ M₁ (A↑ ! t↑)
         ∧̂ genCˢ ι↑ (Γ↑ ∷ α ∷ list α) M₂ (A↑ ! t↑))
@@ -324,7 +324,7 @@ mutual
                 ∧̂ genCˢ ι↑ Γ↑ M₁ (β ! e)
                 ∧̂ genCˢ ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ α ∷ list α) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) M₂ (β ! e)
                 ∧̂ ((e ·̂ₑ e) ≾̂ₑᶜ e)
-                ∧̂ (β ≾̂ᵥᶜ A↑)
+                ∧̂ (β <:̂ᵥᶜ A↑)
                 ∧̂ (e ≾̂ₑᶜ t↑))))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
@@ -366,7 +366,7 @@ mutual
   genCˢ {Θ = Θ} ι Γ (handle M `with V) (A ! t) =
     ∃ᵗ (∃ᵗ (∃ᵉ (∃ᵉ (  genCˢ ι↑ Γ↑ M (α ! e₁)
                     ∧̂ genVˢ ι↑ Γ↑ V ((α ! e₁) ⇛ (γ ! e₂))
-                    ∧̂ (γ ≾̂ᵥᶜ A↑)
+                    ∧̂ (γ <:̂ᵥᶜ A↑)
                     ∧̂ ((e₁ ·̂ₑ e₂) ≾̂ₑᶜ t↑)))))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ
@@ -409,7 +409,7 @@ mutual
   -- type annotation: as for values, split into value and effect atoms
 
   genCˢ ι Γ (M ⦂ᶜ (B ! u)) (A ! t) =
-    genCˢ ι Γ M (B' ! u') ∧̂ (B' ≾̂ᵥᶜ A) ∧̂ (u' ≾̂ₑᶜ t)
+    genCˢ ι Γ M (B' ! u') ∧̂ (B' <:̂ᵥᶜ A) ∧̂ (u' ≾̂ₑᶜ t)
     where
       B' = B [ ι ]ᵛ
       u' = u [ ι ]ᵉ
@@ -432,29 +432,29 @@ mutual
   NoRigidᵛ Δ (inr V)       = NoRigidᵛ Δ V
   NoRigidᵛ Δ (cons V W)    = NoRigidᵛ Δ V × NoRigidᵛ Δ W
   NoRigidᵛ Δ (cmp ⋈ V W)   = NoRigidᵛ Δ V × NoRigidᵛ Δ W
-  NoRigidᵛ Δ (lam M)       = NoRigidᶜ Δ M
+  NoRigidᵛ Δ (fun M)       = NoRigidᶜ Δ M
   NoRigidᵛ Δ (handler N H) = ⊥
   NoRigidᵛ Δ (V ⦂ᵛ A)      = NoRigidᵛ Δ V
   NoRigidᵛ Δ _             = ⊤
 
   NoRigidᶜ : ∀ {Θ n} → PCtx → RawC Θ n → Set
-  NoRigidᶜ Δ (return V)                = NoRigidᵛ Δ V
-  NoRigidᶜ Δ (M ⨟ N)                   = NoRigidᶜ Δ M × NoRigidᶜ Δ N
-  NoRigidᶜ Δ (V · W)                   = NoRigidᵛ Δ V × NoRigidᵛ Δ W
-  NoRigidᶜ Δ (match V `in M)           = NoRigidᵛ Δ V × NoRigidᶜ Δ M
-  NoRigidᶜ Δ (absurd V)                = NoRigidᵛ Δ V
-  NoRigidᶜ Δ (if V `then M `else N)    = NoRigidᵛ Δ V × NoRigidᶜ Δ M × NoRigidᶜ Δ N
-  NoRigidᶜ Δ (caseℕ V `zero M `succ N) = NoRigidᵛ Δ V × NoRigidᶜ Δ M × NoRigidᶜ Δ N
-  NoRigidᶜ Δ (case+ V `inl M `inr N)   = NoRigidᵛ Δ V × NoRigidᶜ Δ M × NoRigidᶜ Δ N
-  NoRigidᶜ Δ (recℕ V M N)              = NoRigidᵛ Δ V × NoRigidᶜ Δ M × NoRigidᶜ Δ N
-  NoRigidᶜ Δ (caseL V `nil M `cons N)  = NoRigidᵛ Δ V × NoRigidᶜ Δ M × NoRigidᶜ Δ N
-  NoRigidᶜ Δ (recL V M N)              = NoRigidᵛ Δ V × NoRigidᶜ Δ M × NoRigidᶜ Δ N
-  NoRigidᶜ Δ (perform op V M)          = NoRigidᵛ Δ V × NoRigidᶜ Δ M
-  NoRigidᶜ Δ (delay τ M)               = NoRigidᶜ Δ M
-  NoRigidᶜ Δ (handle M `with V)        = NoRigidᶜ Δ M × NoRigidᵛ Δ V
-  NoRigidᶜ Δ (unbox V N)               = NoRigidᵛ Δ V × NoRigidᶜ Δ N
-  NoRigidᶜ Δ (box ρ V N)               = NoRigidᵛ Δ V × NoRigidᶜ Δ N
-  NoRigidᶜ Δ (M ⦂ᶜ C)                  = NoRigidᶜ Δ M
+  NoRigidᶜ Δ (return V)                 = NoRigidᵛ Δ V
+  NoRigidᶜ Δ (M ⨟ N)                    = NoRigidᶜ Δ M × NoRigidᶜ Δ N
+  NoRigidᶜ Δ (V · W)                    = NoRigidᵛ Δ V × NoRigidᵛ Δ W
+  NoRigidᶜ Δ (match V `with M)          = NoRigidᵛ Δ V × NoRigidᶜ Δ M
+  NoRigidᶜ Δ (absurd V)                 = NoRigidᵛ Δ V
+  NoRigidᶜ Δ (if V `then M `else N)     = NoRigidᵛ Δ V × NoRigidᶜ Δ M × NoRigidᶜ Δ N
+  NoRigidᶜ Δ (matchℕ V `zero M `succ N) = NoRigidᵛ Δ V × NoRigidᶜ Δ M × NoRigidᶜ Δ N
+  NoRigidᶜ Δ (match+ V `inl M `inr N)   = NoRigidᵛ Δ V × NoRigidᶜ Δ M × NoRigidᶜ Δ N
+  NoRigidᶜ Δ (recℕ V M N)               = NoRigidᵛ Δ V × NoRigidᶜ Δ M × NoRigidᶜ Δ N
+  NoRigidᶜ Δ (matchL V `nil M `cons N)  = NoRigidᵛ Δ V × NoRigidᶜ Δ M × NoRigidᶜ Δ N
+  NoRigidᶜ Δ (recL V M N)               = NoRigidᵛ Δ V × NoRigidᶜ Δ M × NoRigidᶜ Δ N
+  NoRigidᶜ Δ (perform op V M)           = NoRigidᵛ Δ V × NoRigidᶜ Δ M
+  NoRigidᶜ Δ (delay τ M)                = NoRigidᶜ Δ M
+  NoRigidᶜ Δ (handle M `with V)         = NoRigidᶜ Δ M × NoRigidᵛ Δ V
+  NoRigidᶜ Δ (unbox V N)                = NoRigidᵛ Δ V × NoRigidᶜ Δ N
+  NoRigidᶜ Δ (box ρ V N)                = NoRigidᵛ Δ V × NoRigidᶜ Δ N
+  NoRigidᶜ Δ (M ⦂ᶜ C)                   = NoRigidᶜ Δ M
 
 -- A handler-free term in a program context without quantified
 -- hypotheses has none
@@ -480,7 +480,7 @@ mutual
   handlerFree-noRigidᵛ u nil          h       = tt
   handlerFree-noRigidᵛ u (cons V W)   (h , k) = handlerFree-noRigidᵛ u V h , handlerFree-noRigidᵛ u W k
   handlerFree-noRigidᵛ u (cmp ⋈ V W)  (h , k) = handlerFree-noRigidᵛ u V h , handlerFree-noRigidᵛ u W k
-  handlerFree-noRigidᵛ u (lam M)      h       = handlerFree-noRigidᶜ u M h
+  handlerFree-noRigidᵛ u (fun M)      h       = handlerFree-noRigidᶜ u M h
   handlerFree-noRigidᵛ u (handler N H) ()
   handlerFree-noRigidᵛ u (V ⦂ᵛ A)     h       = handlerFree-noRigidᵛ u V h
 
@@ -491,31 +491,31 @@ mutual
     handlerFree-noRigidᶜ u M h , handlerFree-noRigidᶜ u N k
   handlerFree-noRigidᶜ u (V · W)                  (h , k)     =
     handlerFree-noRigidᵛ u V h , handlerFree-noRigidᵛ u W k
-  handlerFree-noRigidᶜ u (match V `in M)          (h , k)     =
+  handlerFree-noRigidᶜ u (match V `with M)        (h , k)     =
     handlerFree-noRigidᵛ u V h , handlerFree-noRigidᶜ u M k
   handlerFree-noRigidᶜ u (absurd V)               h           = handlerFree-noRigidᵛ u V h
   handlerFree-noRigidᶜ u (if V `then M `else N)   (h , k , l) =
     handlerFree-noRigidᵛ u V h , handlerFree-noRigidᶜ u M k , handlerFree-noRigidᶜ u N l
-  handlerFree-noRigidᶜ u (caseℕ V `zero M `succ N) (h , k , l) =
+  handlerFree-noRigidᶜ u (matchℕ V `zero M `succ N) (h , k , l) =
     handlerFree-noRigidᵛ u V h , handlerFree-noRigidᶜ u M k , handlerFree-noRigidᶜ u N l
-  handlerFree-noRigidᶜ u (case+ V `inl M `inr N)  (h , k , l) =
+  handlerFree-noRigidᶜ u (match+ V `inl M `inr N)  (h , k , l) =
     handlerFree-noRigidᵛ u V h , handlerFree-noRigidᶜ u M k , handlerFree-noRigidᶜ u N l
-  handlerFree-noRigidᶜ u (recℕ V M N)             (h , k , l) =
+  handlerFree-noRigidᶜ u (recℕ V M N)              (h , k , l) =
     handlerFree-noRigidᵛ u V h , handlerFree-noRigidᶜ u M k , handlerFree-noRigidᶜ u N l
-  handlerFree-noRigidᶜ u (caseL V `nil M `cons N) (h , k , l) =
+  handlerFree-noRigidᶜ u (matchL V `nil M `cons N) (h , k , l) =
     handlerFree-noRigidᵛ u V h , handlerFree-noRigidᶜ u M k , handlerFree-noRigidᶜ u N l
-  handlerFree-noRigidᶜ u (recL V M N)             (h , k , l) =
+  handlerFree-noRigidᶜ u (recL V M N)              (h , k , l) =
     handlerFree-noRigidᵛ u V h , handlerFree-noRigidᶜ u M k , handlerFree-noRigidᶜ u N l
-  handlerFree-noRigidᶜ u (perform op V M)         (h , k)     =
+  handlerFree-noRigidᶜ u (perform op V M)          (h , k)     =
     handlerFree-noRigidᵛ u V h , handlerFree-noRigidᶜ u M k
-  handlerFree-noRigidᶜ u (delay τ M)              h           = handlerFree-noRigidᶜ u M h
-  handlerFree-noRigidᶜ u (handle M `with V)       (h , k)     =
+  handlerFree-noRigidᶜ u (delay τ M)               h           = handlerFree-noRigidᶜ u M h
+  handlerFree-noRigidᶜ u (handle M `with V)        (h , k)     =
     handlerFree-noRigidᶜ u M h , handlerFree-noRigidᵛ u V k
-  handlerFree-noRigidᶜ u (unbox V N)              (h , k)     =
+  handlerFree-noRigidᶜ u (unbox V N)               (h , k)     =
     handlerFree-noRigidᵛ u V h , handlerFree-noRigidᶜ u N k
-  handlerFree-noRigidᶜ u (box ρ V N)              (h , k)     =
+  handlerFree-noRigidᶜ u (box ρ V N)               (h , k)     =
     handlerFree-noRigidᵛ u V h , handlerFree-noRigidᶜ u N k
-  handlerFree-noRigidᶜ u (M ⦂ᶜ C)                 h           = handlerFree-noRigidᶜ u M h
+  handlerFree-noRigidᶜ u (M ⦂ᶜ C)                  h           = handlerFree-noRigidᶜ u M h
 
 -- Substitution keeps it
 
@@ -537,7 +537,7 @@ mutual
   noRigid-[]ᴿᵛ (cons V W)   (h , k) = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᵛ W k
   noRigid-[]ᴿᵛ (cmp ⋈ V W)  (h , k) = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᵛ W k
   noRigid-[]ᴿᵛ ⦉ V , W ⦊     (h , k) = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᵛ W k
-  noRigid-[]ᴿᵛ (lam M)      h       = noRigid-[]ᴿᶜ M h
+  noRigid-[]ᴿᵛ (fun M)      h       = noRigid-[]ᴿᶜ M h
   noRigid-[]ᴿᵛ (handler N H) ()
   noRigid-[]ᴿᵛ (V ⦂ᵛ A)     h       = noRigid-[]ᴿᵛ V h
 
@@ -546,26 +546,26 @@ mutual
   noRigid-[]ᴿᶜ (return V)               h           = noRigid-[]ᴿᵛ V h
   noRigid-[]ᴿᶜ (M ⨟ N)                  (h , k)     = noRigid-[]ᴿᶜ M h , noRigid-[]ᴿᶜ N k
   noRigid-[]ᴿᶜ (V · W)                  (h , k)     = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᵛ W k
-  noRigid-[]ᴿᶜ (match V `in M)          (h , k)     = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ M k
+  noRigid-[]ᴿᶜ (match V `with M)        (h , k)     = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ M k
   noRigid-[]ᴿᶜ (absurd V)               h           = noRigid-[]ᴿᵛ V h
   noRigid-[]ᴿᶜ (if V `then M `else N)   (h , k , l) =
     noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ M k , noRigid-[]ᴿᶜ N l
-  noRigid-[]ᴿᶜ (caseℕ V `zero M `succ N) (h , k , l) =
+  noRigid-[]ᴿᶜ (matchℕ V `zero M `succ N) (h , k , l) =
     noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ M k , noRigid-[]ᴿᶜ N l
-  noRigid-[]ᴿᶜ (case+ V `inl M `inr N)  (h , k , l) =
+  noRigid-[]ᴿᶜ (match+ V `inl M `inr N)  (h , k , l) =
     noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ M k , noRigid-[]ᴿᶜ N l
-  noRigid-[]ᴿᶜ (recℕ V M N)             (h , k , l) =
+  noRigid-[]ᴿᶜ (recℕ V M N)              (h , k , l) =
     noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ M k , noRigid-[]ᴿᶜ N l
-  noRigid-[]ᴿᶜ (caseL V `nil M `cons N) (h , k , l) =
+  noRigid-[]ᴿᶜ (matchL V `nil M `cons N) (h , k , l) =
     noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ M k , noRigid-[]ᴿᶜ N l
-  noRigid-[]ᴿᶜ (recL V M N)             (h , k , l) =
+  noRigid-[]ᴿᶜ (recL V M N)              (h , k , l) =
     noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ M k , noRigid-[]ᴿᶜ N l
-  noRigid-[]ᴿᶜ (perform op V M)         (h , k)     = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ M k
-  noRigid-[]ᴿᶜ (delay τ M)              h           = noRigid-[]ᴿᶜ M h
-  noRigid-[]ᴿᶜ (handle M `with V)       (h , k)     = noRigid-[]ᴿᶜ M h , noRigid-[]ᴿᵛ V k
-  noRigid-[]ᴿᶜ (unbox V N)              (h , k)     = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ N k
-  noRigid-[]ᴿᶜ (box ρ V N)              (h , k)     = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ N k
-  noRigid-[]ᴿᶜ (M ⦂ᶜ C)                 h           = noRigid-[]ᴿᶜ M h
+  noRigid-[]ᴿᶜ (perform op V M)          (h , k)     = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ M k
+  noRigid-[]ᴿᶜ (delay τ M)               h           = noRigid-[]ᴿᶜ M h
+  noRigid-[]ᴿᶜ (handle M `with V)        (h , k)     = noRigid-[]ᴿᶜ M h , noRigid-[]ᴿᵛ V k
+  noRigid-[]ᴿᶜ (unbox V N)               (h , k)     = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ N k
+  noRigid-[]ᴿᶜ (box ρ V N)               (h , k)     = noRigid-[]ᴿᵛ V h , noRigid-[]ᴿᶜ N k
+  noRigid-[]ᴿᶜ (M ⦂ᶜ C)                  h           = noRigid-[]ᴿᶜ M h
 
 -- The constraint has no rigid binder, the program context being the hypothesis's
 
@@ -618,7 +618,7 @@ private
   resC-rigidFree nil           = tt
   resC-rigidFree (cons V W)    = tt
   resC-rigidFree (cmp ⋈ V W)   = tt
-  resC-rigidFree (lam M)       = tt
+  resC-rigidFree (fun M)       = tt
   resC-rigidFree (handler N H) = tt
 
   useDefConstraint-rigidFree : ∀ {Θ} → (Δ : PCtx) → (k : ℕ) → UnquantifiedAt Δ k
@@ -649,7 +649,7 @@ mutual
     (tt , tt) , genVˢ-rigidFree (eᵗ Γ e) V h , genVˢ-rigidFree (eᵗ Γ e) W k
   genVˢ-rigidFree {Γ = Γ} e (cmp ⋈ V W) (h , k) =
     (tt , tt) , genVˢ-rigidFree (eᵗ Γ e) V h , genVˢ-rigidFree (eᵗ Γ e) W k , tt
-  genVˢ-rigidFree {Γ = Γ} e (lam M) h = tt , genCˢ-rigidFree (eᵗᵗᵉ Γ e) M h
+  genVˢ-rigidFree {Γ = Γ} e (fun M) h = tt , genCˢ-rigidFree (eᵗᵗᵉ Γ e) M h
   genVˢ-rigidFree e (handler N H) ()
   genVˢ-rigidFree e (V ⦂ᵛ B)     h       = genVˢ-rigidFree e V h , tt
 
@@ -662,21 +662,21 @@ mutual
     genCˢ-rigidFree (eᵗᵉᵉ Γ e) M₁ h , genCˢ-rigidFree (eᵗᵉᵉ Γ e) M₂ k , tt
   genCˢ-rigidFree {Γ = Γ} e (V₁ · V₂)        {A ! t} (h , k)     =
     genVˢ-rigidFree (eᵗᵗᵉ Γ e) V₁ h , genVˢ-rigidFree (eᵗᵗᵉ Γ e) V₂ k , tt , tt
-  genCˢ-rigidFree {Γ = Γ} e (match V `in M)  {A ! t} (h , k)     =
+  genCˢ-rigidFree {Γ = Γ} e (match V `with M) {A ! t} (h , k)     =
     genVˢ-rigidFree (eᵗᵗ Γ e) V h , genCˢ-rigidFree (eᵗᵗ Γ e) M k
   genCˢ-rigidFree e (absurd V)               {A ! t} h           =
     genVˢ-rigidFree e V h
   genCˢ-rigidFree e (if V `then M₁ `else M₂) {A ! t} (h , k , l) =
     genVˢ-rigidFree e V h , genCˢ-rigidFree e M₁ k , genCˢ-rigidFree e M₂ l
-  genCˢ-rigidFree e (caseℕ V `zero M₁ `succ M₂) {A ! t} (h , k , l) =
+  genCˢ-rigidFree e (matchℕ V `zero M₁ `succ M₂) {A ! t} (h , k , l) =
     genVˢ-rigidFree e V h , genCˢ-rigidFree e M₁ k , genCˢ-rigidFree e M₂ l
-  genCˢ-rigidFree {Γ = Γ} e (case+ V `inl M₁ `inr M₂) {A ! t} (h , k , l) =
+  genCˢ-rigidFree {Γ = Γ} e (match+ V `inl M₁ `inr M₂) {A ! t} (h , k , l) =
     genVˢ-rigidFree (eᵗᵗ Γ e) V h , genCˢ-rigidFree (eᵗᵗ Γ e) M₁ k
     , genCˢ-rigidFree (eᵗᵗ Γ e) M₂ l
   genCˢ-rigidFree {Γ = Γ} e (recℕ V M₁ M₂)   {A ! t} (h , k , l) =
     genVˢ-rigidFree (eᵗᵉ Γ e) V h , genCˢ-rigidFree (eᵗᵉ Γ e) M₁ k
     , genCˢ-rigidFree (eᵗᵉ Γ e) M₂ l , tt , tt , tt
-  genCˢ-rigidFree {Γ = Γ} e (caseL V `nil M₁ `cons M₂) {A ! t} (h , k , l) =
+  genCˢ-rigidFree {Γ = Γ} e (matchL V `nil M₁ `cons M₂) {A ! t} (h , k , l) =
     genVˢ-rigidFree (eᵗ Γ e) V h , genCˢ-rigidFree (eᵗ Γ e) M₁ k
     , genCˢ-rigidFree (eᵗ Γ e) M₂ l
   genCˢ-rigidFree {Γ = Γ} e (recL V M₁ M₂)   {A ! t} (h , k , l) =
@@ -720,13 +720,13 @@ private
 
   -- a variable: the subtyping atom and the disjunction
 
-  ex-var : genV Γ₁ (var zero) α₀ ≡ (α₀ ≾̂ᵥᶜ α₀) ∧̂ Et∨≾ᵘ α₀ 𝟏̂ᵣ
+  ex-var : genV Γ₁ (var zero) α₀ ≡ (α₀ <:̂ᵥᶜ α₀) ∧̂ Et∨≾ᵘ α₀ 𝟏̂ᵣ
   ex-var = refl
 
   -- the same variable behind a clause barrier: the grade has picked up `⊤ᵣ`
 
   ex-var-⊤ : genV (Γ₁ ⟨ rconst ⊤ᵣ ⟩) (var zero) α₀
-           ≡ (α₀ ≾̂ᵥᶜ α₀) ∧̂ Et∨≾ᵘ α₀ (𝟏̂ᵣ ·̂ᵣ rconst ⊤ᵣ)
+           ≡ (α₀ <:̂ᵥᶜ α₀) ∧̂ Et∨≾ᵘ α₀ (𝟏̂ᵣ ·̂ᵣ rconst ⊤ᵣ)
   ex-var-⊤ = refl
 
   -- boxing a value: the annotation is the box's grade, in the payload's context
@@ -738,7 +738,7 @@ private
   ex-box : (c : R)
          → genC ∅ᶜ (box (rconst c) ⋆ (return (var zero))) ([ rconst c ] unit ! 𝟏̂ₑ)
            ≡ (∃ᵗ (  (unit ≐ᵥ α₀)
-                  ∧̂ ((([ rconst c ] α₀ ≾̂ᵥᶜ [ rconst c ] unit)
+                  ∧̂ ((([ rconst c ] α₀ <:̂ᵥᶜ [ rconst c ] unit)
                        ∧̂ Et∨≾ᵘ ([ rconst c ] α₀) 𝟏̂ᵣ)
                      ∧̂ (𝟏̂ₑ ≾̂ₑᶜ 𝟏̂ₑ))))
   ex-box c = refl

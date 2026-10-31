@@ -145,14 +145,14 @@ step-pv : ∀ {ε₁ ε₃ A A₀ P} {S S' : 𝕊 []}
         → (⟦ hist S ⟧ᶜᵗˣ →ᵐ P) → (⟦ hist S' ⟧ᶜᵗˣ →ᵐ P)
 step-pv bc APP               pv = pv
 step-pv bc MATCH             pv = pv
-step-pv bc CASEL             pv = pv
+step-pv bc MATCHL            pv = pv
 step-pv bc RECL              pv = pv
 step-pv bc IF-TRUE           pv = pv
 step-pv bc CMP               pv = pv
 step-pv bc IF-FALSE          pv = pv
-step-pv bc CASE+             pv = pv
-step-pv bc CASEℕ-ZERO        pv = pv
-step-pv bc CASEℕ-SUCC        pv = pv
+step-pv bc MATCH+            pv = pv
+step-pv bc MATCHℕ-ZERO       pv = pv
+step-pv bc MATCHℕ-SUCC       pv = pv
 step-pv bc RECℕ-ZERO         pv = pv
 step-pv bc RECℕ-SUCC         pv = pv
 step-pv bc SEQ-RET           pv = pv
@@ -165,7 +165,7 @@ step-pv bc SUB-APP           pv = pv
 step-pv bc SUB-HANDLE        pv = pv
 step-pv bc SUB-HANDLE-TRANS  pv = pv
 step-pv bc SUB-IF            pv = pv
-step-pv bc SUB-CASEℕ         pv = pv
+step-pv bc SUB-MATCHℕ        pv = pv
 step-pv bc SUB-RECℕ          pv = pv
 step-pv bc SUB               pv = pv
 step-pv bc (SEQ-STEP r c)    pv = step-pv bc r pv
@@ -199,31 +199,31 @@ alg-stepᵀ : ∀ {ε ε₂ ε₁' ε₃' A A₀ B P} {S S' : 𝕊 []}
           ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (step-grade r) ε ε₂))
               ∘ᵐ μᵀ {⟦ B ⟧ᵛ} {step-grade r} {ε ·ₑ ε₂}
               ∘ᵐ Tᶠ (alg {ε} ∘ᵐ ⟨ step-pv bc r pv , f ⟩ᵐ) ∘ᵐ stepᵀ r
-alg-stepᵀ bc alg alg-≤ alg-delay APP        pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay MATCH      pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay CASEL      pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay RECL       pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay IF-TRUE    pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay CMP        pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay IF-FALSE   pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay CASE+      pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay CASEℕ-ZERO pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay CASEℕ-SUCC pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay RECℕ-ZERO  pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay RECℕ-SUCC  pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay SEQ-RET    pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay SEQ-OP     pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay HANDLE-RET pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay HANDLE-OP  pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay BOX        pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay UNBOX      pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay SUB-APP    pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay SUB-HANDLE pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay APP         pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay MATCH       pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay MATCHL      pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay RECL        pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay IF-TRUE     pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay CMP         pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay IF-FALSE    pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay MATCH+      pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay MATCHℕ-ZERO pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay MATCHℕ-SUCC pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay RECℕ-ZERO   pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay RECℕ-SUCC   pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay SEQ-RET     pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay SEQ-OP      pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay HANDLE-RET  pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay HANDLE-OP   pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay BOX         pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay UNBOX       pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay SUB-APP     pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay SUB-HANDLE  pv f = alg-ηᵀ alg alg-≤ pv f
 alg-stepᵀ bc alg alg-≤ alg-delay SUB-HANDLE-TRANS pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay SUB-IF     pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay SUB-CASEℕ  pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay SUB-RECℕ   pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay SUB        pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay SUB-IF      pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay SUB-MATCHℕ  pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay SUB-RECℕ    pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay SUB         pv f = alg-ηᵀ alg alg-≤ pv f
 alg-stepᵀ {B = B} bc alg alg-≤ alg-delay (SEQ-STEP r c) pv f =
   alg-stepᵀ {B = B} bc alg alg-≤ alg-delay r pv f
 alg-stepᵀ {B = B} bc alg alg-≤ alg-delay (HANDLE-STEP r c) pv f =
@@ -404,30 +404,30 @@ step-pv-state : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []}
               → step-pv (bcᴱ (toCtx S)) r (⟨⊤⟩-η ∘ᵐ ⟦ S ⟧ˢ pS)
               ≈ᵐ ⟦ suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _) ⟧ʳ
                  ∘ᵐ (⟨⊤⟩-η ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
-step-pv-state APP        pS pM = id-suc-step _ _
-step-pv-state MATCH      pS pM = id-suc-step _ _
-step-pv-state CASEL      pS pM = id-suc-step _ _
-step-pv-state RECL       pS pM = id-suc-step _ _
-step-pv-state IF-TRUE    pS pM = id-suc-step _ _
-step-pv-state CMP        pS pM = id-suc-step _ _
-step-pv-state IF-FALSE   pS pM = id-suc-step _ _
-step-pv-state CASE+      pS pM = id-suc-step _ _
-step-pv-state CASEℕ-ZERO pS pM = id-suc-step _ _
-step-pv-state CASEℕ-SUCC pS pM = id-suc-step _ _
-step-pv-state RECℕ-ZERO  pS pM = id-suc-step _ _
-step-pv-state RECℕ-SUCC  pS pM = id-suc-step _ _
-step-pv-state SEQ-RET    pS pM = id-suc-step _ _
-step-pv-state SEQ-OP     pS pM = id-suc-step _ _
-step-pv-state HANDLE-RET pS pM = id-suc-step _ _
-step-pv-state HANDLE-OP  pS pM = id-suc-step _ _
-step-pv-state UNBOX      pS pM = id-suc-step _ _
-step-pv-state SUB-APP    pS pM = id-suc-step _ _
-step-pv-state SUB-HANDLE pS pM = id-suc-step _ _
+step-pv-state APP         pS pM = id-suc-step _ _
+step-pv-state MATCH       pS pM = id-suc-step _ _
+step-pv-state MATCHL      pS pM = id-suc-step _ _
+step-pv-state RECL        pS pM = id-suc-step _ _
+step-pv-state IF-TRUE     pS pM = id-suc-step _ _
+step-pv-state CMP         pS pM = id-suc-step _ _
+step-pv-state IF-FALSE    pS pM = id-suc-step _ _
+step-pv-state MATCH+      pS pM = id-suc-step _ _
+step-pv-state MATCHℕ-ZERO pS pM = id-suc-step _ _
+step-pv-state MATCHℕ-SUCC pS pM = id-suc-step _ _
+step-pv-state RECℕ-ZERO   pS pM = id-suc-step _ _
+step-pv-state RECℕ-SUCC   pS pM = id-suc-step _ _
+step-pv-state SEQ-RET     pS pM = id-suc-step _ _
+step-pv-state SEQ-OP      pS pM = id-suc-step _ _
+step-pv-state HANDLE-RET  pS pM = id-suc-step _ _
+step-pv-state HANDLE-OP   pS pM = id-suc-step _ _
+step-pv-state UNBOX       pS pM = id-suc-step _ _
+step-pv-state SUB-APP     pS pM = id-suc-step _ _
+step-pv-state SUB-HANDLE  pS pM = id-suc-step _ _
 step-pv-state SUB-HANDLE-TRANS pS pM = id-suc-step _ _
-step-pv-state SUB-IF     pS pM = id-suc-step _ _
-step-pv-state SUB-CASEℕ  pS pM = id-suc-step _ _
-step-pv-state SUB-RECℕ   pS pM = id-suc-step _ _
-step-pv-state SUB        pS pM = id-suc-step _ _
+step-pv-state SUB-IF      pS pM = id-suc-step _ _
+step-pv-state SUB-MATCHℕ  pS pM = id-suc-step _ _
+step-pv-state SUB-RECℕ    pS pM = id-suc-step _ _
+step-pv-state SUB         pS pM = id-suc-step _ _
 step-pv-state (SEQ-STEP r c)    pS (pM , _) = step-pv-state r pS pM
 step-pv-state (HANDLE-STEP r c) pS (pM , _) = step-pv-state r pS pM
 step-pv-state (BOX {V = V}) pS (pV , _) =
@@ -1028,7 +1028,7 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
                 → ⟦ handle perform op V M `with H `in N ⟧ᶜᵗ
                      ((pV , pM) , pN , pH , uH)
                 ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) ε ε''))
-                   ∘ᵐ ⟦ box _ (lam (handle M
+                   ∘ᵐ ⟦ box _ (fun (handle M
                                    `with (λ op' ε' →
                                             C-rename (cong-∷-ren (cong-∷-ren
                                               (barrier-wk-ren ∣ op-grade op ∣ᵉ

@@ -48,27 +48,27 @@ mutual
     inr   : ErV → ErV
     nil   : ErV
     cons  : ErV → ErV → ErV
-    lam   : ErC → ErV
+    fun   : ErC → ErV
     handler : ErC → (Op → E → ErC) → ErV
 
   data ErC : Set where
     return            : ErV → ErC
     _⨟_               : ErC → ErC → ErC
     _·_               : ErV → ErV → ErC
-    match_`in_        : ErV → ErC → ErC
+    match_`with_      : ErV → ErC → ErC
     absurd            : ErV → ErC
     cmp               : Cmp → ErV → ErV → ErC
     if_`then_`else_   : ErV → ErC → ErC → ErC
-    caseℕ_`zero_`succ_ : ErV → ErC → ErC → ErC
-    recℕ              : ErV → ErC → ErC → ErC
-    case+_`inl_`inr_  : ErV → ErC → ErC → ErC
-    caseL_`nil_`cons_ : ErV → ErC → ErC → ErC
-    recL              : ErV → ErC → ErC → ErC
-    perform           : Op → ErV → ErC → ErC
-    delay             : 𝔻 → ErC → ErC
-    handle_`with_     : ErC → ErV → ErC
-    unbox             : ℕ → ErC → ErC
-    box               : R → ErV → ErC → ErC
+    matchℕ_`zero_`succ_ : ErV → ErC → ErC → ErC
+    recℕ               : ErV → ErC → ErC → ErC
+    match+_`inl_`inr_  : ErV → ErC → ErC → ErC
+    matchL_`nil_`cons_ : ErV → ErC → ErC → ErC
+    recL               : ErV → ErC → ErC → ErC
+    perform            : Op → ErV → ErC → ErC
+    delay              : 𝔻 → ErC → ErC
+    handle_`with_      : ErC → ErV → ErC
+    unbox              : ℕ → ErC → ErC
+    box                : R → ErV → ErC → ErC
 
 -- De Bruijn position of a variable: locks contribute nothing.
 
@@ -95,7 +95,7 @@ mutual
   ⌊ inr V ⌋ᵛ     = inr ⌊ V ⌋ᵛ
   ⌊ nil ⌋ᵛ       = nil
   ⌊ cons V W ⌋ᵛ  = cons ⌊ V ⌋ᵛ ⌊ W ⌋ᵛ
-  ⌊ lam M ⌋ᵛ     = lam ⌊ M ⌋ᶜ
+  ⌊ fun M ⌋ᵛ     = fun ⌊ M ⌋ᶜ
   ⌊ handler N H ⌋ᵛ = handler ⌊ N ⌋ᶜ (λ op ε'' → ⌊ H op ε'' ⌋ᶜ)
   ⌊ subV V p ⌋ᵛ  = ⌊ V ⌋ᵛ
 
@@ -104,14 +104,14 @@ mutual
   ⌊ return V ⌋ᶜ               = return ⌊ V ⌋ᵛ
   ⌊ M ⨟ N ⌋ᶜ                  = ⌊ M ⌋ᶜ ⨟ ⌊ N ⌋ᶜ
   ⌊ V · W ⌋ᶜ                  = ⌊ V ⌋ᵛ · ⌊ W ⌋ᵛ
-  ⌊ match V `in M ⌋ᶜ          = match ⌊ V ⌋ᵛ `in ⌊ M ⌋ᶜ
+  ⌊ match V `with M ⌋ᶜ        = match ⌊ V ⌋ᵛ `with ⌊ M ⌋ᶜ
   ⌊ absurd V ⌋ᶜ               = absurd ⌊ V ⌋ᵛ
   ⌊ cmp ⋈ V W _ ⌋ᶜ            = cmp ⋈ ⌊ V ⌋ᵛ ⌊ W ⌋ᵛ
   ⌊ if V `then M `else N ⌋ᶜ   = if ⌊ V ⌋ᵛ `then ⌊ M ⌋ᶜ `else ⌊ N ⌋ᶜ
-  ⌊ caseℕ V `zero M `succ N ⌋ᶜ = caseℕ ⌊ V ⌋ᵛ `zero ⌊ M ⌋ᶜ `succ ⌊ N ⌋ᶜ
-  ⌊ recℕ V M N p ⌋ᶜ            = recℕ ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ ⌊ N ⌋ᶜ
-  ⌊ case+ V `inl M `inr N ⌋ᶜ = case+ ⌊ V ⌋ᵛ `inl ⌊ M ⌋ᶜ `inr ⌊ N ⌋ᶜ
-  ⌊ caseL V `nil M `cons N ⌋ᶜ = caseL ⌊ V ⌋ᵛ `nil ⌊ M ⌋ᶜ `cons ⌊ N ⌋ᶜ
+  ⌊ matchℕ V `zero M `succ N ⌋ᶜ = matchℕ ⌊ V ⌋ᵛ `zero ⌊ M ⌋ᶜ `succ ⌊ N ⌋ᶜ
+  ⌊ recℕ V M N p ⌋ᶜ             = recℕ ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ ⌊ N ⌋ᶜ
+  ⌊ match+ V `inl M `inr N ⌋ᶜ = match+ ⌊ V ⌋ᵛ `inl ⌊ M ⌋ᶜ `inr ⌊ N ⌋ᶜ
+  ⌊ matchL V `nil M `cons N ⌋ᶜ = matchL ⌊ V ⌋ᵛ `nil ⌊ M ⌋ᶜ `cons ⌊ N ⌋ᶜ
   ⌊ recL V M N p ⌋ᶜ            = recL ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ ⌊ N ⌋ᶜ
   ⌊ perform op V M ⌋ᶜ         = perform op ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ
   ⌊ delay τ M ⌋ᶜ              = delay τ ⌊ M ⌋ᶜ

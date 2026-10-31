@@ -48,7 +48,7 @@ mutual
   cons V W     [ σ ]ᴿᵛ = cons (V [ σ ]ᴿᵛ) (W [ σ ]ᴿᵛ)
   cmp ⋈ V W    [ σ ]ᴿᵛ = cmp ⋈ (V [ σ ]ᴿᵛ) (W [ σ ]ᴿᵛ)
   ⦉ V , W ⦊     [ σ ]ᴿᵛ = ⦉ (V [ σ ]ᴿᵛ) , (W [ σ ]ᴿᵛ) ⦊
-  lam M        [ σ ]ᴿᵛ = lam (M [ σ ]ᴿᶜ)
+  fun M        [ σ ]ᴿᵛ = fun (M [ σ ]ᴿᶜ)
   handler N H  [ σ ]ᴿᵛ = handler (N [ σ ]ᴿᶜ) (λ op → H op [ σ ↑ᵉ ]ᴿᶜ)
   (V ⦂ᵛ A)     [ σ ]ᴿᵛ = (V [ σ ]ᴿᵛ) ⦂ᵛ (A [ σ ]ᵛ)
 
@@ -56,20 +56,20 @@ mutual
   return V                 [ σ ]ᴿᶜ = return (V [ σ ]ᴿᵛ)
   (M ⨟ N)                  [ σ ]ᴿᶜ = (M [ σ ]ᴿᶜ) ⨟ (N [ σ ]ᴿᶜ)
   (V · W)                  [ σ ]ᴿᶜ = (V [ σ ]ᴿᵛ) · (W [ σ ]ᴿᵛ)
-  (match V `in M)          [ σ ]ᴿᶜ = match (V [ σ ]ᴿᵛ) `in (M [ σ ]ᴿᶜ)
+  (match V `with M)        [ σ ]ᴿᶜ = match (V [ σ ]ᴿᵛ) `with (M [ σ ]ᴿᶜ)
   absurd V                 [ σ ]ᴿᶜ = absurd (V [ σ ]ᴿᵛ)
   (if V `then M `else N)   [ σ ]ᴿᶜ = if (V [ σ ]ᴿᵛ) `then (M [ σ ]ᴿᶜ) `else (N [ σ ]ᴿᶜ)
-  (caseℕ V `zero M `succ N) [ σ ]ᴿᶜ = caseℕ (V [ σ ]ᴿᵛ) `zero (M [ σ ]ᴿᶜ) `succ (N [ σ ]ᴿᶜ)
-  (case+ V `inl M `inr N) [ σ ]ᴿᶜ = case+ (V [ σ ]ᴿᵛ) `inl (M [ σ ]ᴿᶜ) `inr (N [ σ ]ᴿᶜ)
-  recℕ V M N               [ σ ]ᴿᶜ = recℕ (V [ σ ]ᴿᵛ) (M [ σ ]ᴿᶜ) (N [ σ ]ᴿᶜ)
-  (caseL V `nil M `cons N) [ σ ]ᴿᶜ = caseL (V [ σ ]ᴿᵛ) `nil (M [ σ ]ᴿᶜ) `cons (N [ σ ]ᴿᶜ)
-  recL V M N               [ σ ]ᴿᶜ = recL (V [ σ ]ᴿᵛ) (M [ σ ]ᴿᶜ) (N [ σ ]ᴿᶜ)
-  perform op V M           [ σ ]ᴿᶜ = perform op (V [ σ ]ᴿᵛ) (M [ σ ]ᴿᶜ)
-  delay τ M                [ σ ]ᴿᶜ = delay τ (M [ σ ]ᴿᶜ)
-  (handle M `with V)       [ σ ]ᴿᶜ = handle (M [ σ ]ᴿᶜ) `with (V [ σ ]ᴿᵛ)
-  unbox V N                [ σ ]ᴿᶜ = unbox (V [ σ ]ᴿᵛ) (N [ σ ]ᴿᶜ)
-  box ρ V N                [ σ ]ᴿᶜ = box (ρ [ σ ]ʳ) (V [ σ ]ᴿᵛ) (N [ σ ]ᴿᶜ)
-  (M ⦂ᶜ C)                 [ σ ]ᴿᶜ = (M [ σ ]ᴿᶜ) ⦂ᶜ (C [ σ ]ᶜ)
+  (matchℕ V `zero M `succ N) [ σ ]ᴿᶜ = matchℕ (V [ σ ]ᴿᵛ) `zero (M [ σ ]ᴿᶜ) `succ (N [ σ ]ᴿᶜ)
+  (match+ V `inl M `inr N) [ σ ]ᴿᶜ = match+ (V [ σ ]ᴿᵛ) `inl (M [ σ ]ᴿᶜ) `inr (N [ σ ]ᴿᶜ)
+  recℕ V M N                [ σ ]ᴿᶜ = recℕ (V [ σ ]ᴿᵛ) (M [ σ ]ᴿᶜ) (N [ σ ]ᴿᶜ)
+  (matchL V `nil M `cons N) [ σ ]ᴿᶜ = matchL (V [ σ ]ᴿᵛ) `nil (M [ σ ]ᴿᶜ) `cons (N [ σ ]ᴿᶜ)
+  recL V M N                [ σ ]ᴿᶜ = recL (V [ σ ]ᴿᵛ) (M [ σ ]ᴿᶜ) (N [ σ ]ᴿᶜ)
+  perform op V M            [ σ ]ᴿᶜ = perform op (V [ σ ]ᴿᵛ) (M [ σ ]ᴿᶜ)
+  delay τ M                 [ σ ]ᴿᶜ = delay τ (M [ σ ]ᴿᶜ)
+  (handle M `with V)        [ σ ]ᴿᶜ = handle (M [ σ ]ᴿᶜ) `with (V [ σ ]ᴿᵛ)
+  unbox V N                 [ σ ]ᴿᶜ = unbox (V [ σ ]ᴿᵛ) (N [ σ ]ᴿᶜ)
+  box ρ V N                 [ σ ]ᴿᶜ = box (ρ [ σ ]ʳ) (V [ σ ]ᴿᵛ) (N [ σ ]ᴿᶜ)
+  (M ⦂ᶜ C)                  [ σ ]ᴿᶜ = (M [ σ ]ᴿᶜ) ⦂ᶜ (C [ σ ]ᶜ)
 
 -- The action looks at a substitution only pointwise
 
@@ -91,7 +91,7 @@ mutual
   [≐]ᴿᵛ p (cons V W)   = cong₂ cons ([≐]ᴿᵛ p V) ([≐]ᴿᵛ p W)
   [≐]ᴿᵛ p (cmp ⋈ V W)  = cong₂ (cmp ⋈) ([≐]ᴿᵛ p V) ([≐]ᴿᵛ p W)
   [≐]ᴿᵛ p ⦉ V , W ⦊     = cong₂ ⦉_,_⦊ ([≐]ᴿᵛ p V) ([≐]ᴿᵛ p W)
-  [≐]ᴿᵛ p (lam M)      = cong lam ([≐]ᴿᶜ p M)
+  [≐]ᴿᵛ p (fun M)      = cong fun ([≐]ᴿᶜ p M)
   [≐]ᴿᵛ p (handler N H) =
     cong₂ handler ([≐]ᴿᶜ p N) (fun-ext (λ op → [≐]ᴿᶜ (≐ˢ-↑ᵉ p) (H op)))
   [≐]ᴿᵛ p (V ⦂ᵛ A)     = cong₂ _⦂ᵛ_ ([≐]ᴿᵛ p V) ([≐]ᵛ p A)
@@ -101,26 +101,26 @@ mutual
   [≐]ᴿᶜ p (return V)               = cong return ([≐]ᴿᵛ p V)
   [≐]ᴿᶜ p (M ⨟ N)                  = cong₂ _⨟_ ([≐]ᴿᶜ p M) ([≐]ᴿᶜ p N)
   [≐]ᴿᶜ p (V · W)                  = cong₂ _·_ ([≐]ᴿᵛ p V) ([≐]ᴿᵛ p W)
-  [≐]ᴿᶜ p (match V `in M)          = cong₂ match_`in_ ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M)
+  [≐]ᴿᶜ p (match V `with M)        = cong₂ match_`with_ ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M)
   [≐]ᴿᶜ p (absurd V)               = cong absurd ([≐]ᴿᵛ p V)
   [≐]ᴿᶜ p (if V `then M `else N)   =
     cong₃ if_`then_`else_ ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M) ([≐]ᴿᶜ p N)
-  [≐]ᴿᶜ p (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_ ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M) ([≐]ᴿᶜ p N)
-  [≐]ᴿᶜ p (case+ V `inl M `inr N) =
-    cong₃ case+_`inl_`inr_ ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M) ([≐]ᴿᶜ p N)
-  [≐]ᴿᶜ p (recℕ V M N)             =
+  [≐]ᴿᶜ p (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_ ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M) ([≐]ᴿᶜ p N)
+  [≐]ᴿᶜ p (match+ V `inl M `inr N) =
+    cong₃ match+_`inl_`inr_ ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M) ([≐]ᴿᶜ p N)
+  [≐]ᴿᶜ p (recℕ V M N)              =
     cong₃ recℕ ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M) ([≐]ᴿᶜ p N)
-  [≐]ᴿᶜ p (caseL V `nil M `cons N) =
-    cong₃ caseL_`nil_`cons_ ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M) ([≐]ᴿᶜ p N)
-  [≐]ᴿᶜ p (recL V M N)             =
+  [≐]ᴿᶜ p (matchL V `nil M `cons N) =
+    cong₃ matchL_`nil_`cons_ ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M) ([≐]ᴿᶜ p N)
+  [≐]ᴿᶜ p (recL V M N)              =
     cong₃ recL ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M) ([≐]ᴿᶜ p N)
-  [≐]ᴿᶜ p (perform op V M)         = cong₂ (perform op) ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M)
-  [≐]ᴿᶜ p (delay τ M)              = cong (delay τ) ([≐]ᴿᶜ p M)
-  [≐]ᴿᶜ p (handle M `with V)       = cong₂ handle_`with_ ([≐]ᴿᶜ p M) ([≐]ᴿᵛ p V)
-  [≐]ᴿᶜ p (unbox V N)              = cong₂ unbox ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p N)
-  [≐]ᴿᶜ p (box ρ V N)              = cong₃ box ([≐]ʳ p ρ) ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p N)
-  [≐]ᴿᶜ p (M ⦂ᶜ C)                 = cong₂ _⦂ᶜ_ ([≐]ᴿᶜ p M) ([≐]ᶜ p C)
+  [≐]ᴿᶜ p (perform op V M)          = cong₂ (perform op) ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p M)
+  [≐]ᴿᶜ p (delay τ M)               = cong (delay τ) ([≐]ᴿᶜ p M)
+  [≐]ᴿᶜ p (handle M `with V)        = cong₂ handle_`with_ ([≐]ᴿᶜ p M) ([≐]ᴿᵛ p V)
+  [≐]ᴿᶜ p (unbox V N)               = cong₂ unbox ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p N)
+  [≐]ᴿᶜ p (box ρ V N)               = cong₃ box ([≐]ʳ p ρ) ([≐]ᴿᵛ p V) ([≐]ᴿᶜ p N)
+  [≐]ᴿᶜ p (M ⦂ᶜ C)                  = cong₂ _⦂ᶜ_ ([≐]ᴿᶜ p M) ([≐]ᶜ p C)
 
 -- Identity
 
@@ -141,7 +141,7 @@ mutual
   [id]ᴿᵛ (cons V W)   = cong₂ cons ([id]ᴿᵛ V) ([id]ᴿᵛ W)
   [id]ᴿᵛ (cmp ⋈ V W)  = cong₂ (cmp ⋈) ([id]ᴿᵛ V) ([id]ᴿᵛ W)
   [id]ᴿᵛ ⦉ V , W ⦊     = cong₂ ⦉_,_⦊ ([id]ᴿᵛ V) ([id]ᴿᵛ W)
-  [id]ᴿᵛ (lam M)      = cong lam ([id]ᴿᶜ M)
+  [id]ᴿᵛ (fun M)      = cong fun ([id]ᴿᶜ M)
   [id]ᴿᵛ (handler N H) =
     cong₂ handler ([id]ᴿᶜ N) (fun-ext (λ op → trans ([≐]ᴿᶜ ↑ᵉ-id (H op)) ([id]ᴿᶜ (H op))))
   [id]ᴿᵛ (V ⦂ᵛ A)     = cong₂ _⦂ᵛ_ ([id]ᴿᵛ V) ([id]ᵛ A)
@@ -150,26 +150,26 @@ mutual
   [id]ᴿᶜ (return V)               = cong return ([id]ᴿᵛ V)
   [id]ᴿᶜ (M ⨟ N)                  = cong₂ _⨟_ ([id]ᴿᶜ M) ([id]ᴿᶜ N)
   [id]ᴿᶜ (V · W)                  = cong₂ _·_ ([id]ᴿᵛ V) ([id]ᴿᵛ W)
-  [id]ᴿᶜ (match V `in M)          = cong₂ match_`in_ ([id]ᴿᵛ V) ([id]ᴿᶜ M)
+  [id]ᴿᶜ (match V `with M)        = cong₂ match_`with_ ([id]ᴿᵛ V) ([id]ᴿᶜ M)
   [id]ᴿᶜ (absurd V)               = cong absurd ([id]ᴿᵛ V)
   [id]ᴿᶜ (if V `then M `else N)   =
     cong₃ if_`then_`else_ ([id]ᴿᵛ V) ([id]ᴿᶜ M) ([id]ᴿᶜ N)
-  [id]ᴿᶜ (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_ ([id]ᴿᵛ V) ([id]ᴿᶜ M) ([id]ᴿᶜ N)
-  [id]ᴿᶜ (case+ V `inl M `inr N) =
-    cong₃ case+_`inl_`inr_ ([id]ᴿᵛ V) ([id]ᴿᶜ M) ([id]ᴿᶜ N)
-  [id]ᴿᶜ (recℕ V M N)             =
+  [id]ᴿᶜ (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_ ([id]ᴿᵛ V) ([id]ᴿᶜ M) ([id]ᴿᶜ N)
+  [id]ᴿᶜ (match+ V `inl M `inr N) =
+    cong₃ match+_`inl_`inr_ ([id]ᴿᵛ V) ([id]ᴿᶜ M) ([id]ᴿᶜ N)
+  [id]ᴿᶜ (recℕ V M N)              =
     cong₃ recℕ ([id]ᴿᵛ V) ([id]ᴿᶜ M) ([id]ᴿᶜ N)
-  [id]ᴿᶜ (caseL V `nil M `cons N) =
-    cong₃ caseL_`nil_`cons_ ([id]ᴿᵛ V) ([id]ᴿᶜ M) ([id]ᴿᶜ N)
-  [id]ᴿᶜ (recL V M N)             =
+  [id]ᴿᶜ (matchL V `nil M `cons N) =
+    cong₃ matchL_`nil_`cons_ ([id]ᴿᵛ V) ([id]ᴿᶜ M) ([id]ᴿᶜ N)
+  [id]ᴿᶜ (recL V M N)              =
     cong₃ recL ([id]ᴿᵛ V) ([id]ᴿᶜ M) ([id]ᴿᶜ N)
-  [id]ᴿᶜ (perform op V M)         = cong₂ (perform op) ([id]ᴿᵛ V) ([id]ᴿᶜ M)
-  [id]ᴿᶜ (delay τ M)              = cong (delay τ) ([id]ᴿᶜ M)
-  [id]ᴿᶜ (handle M `with V)       = cong₂ handle_`with_ ([id]ᴿᶜ M) ([id]ᴿᵛ V)
-  [id]ᴿᶜ (unbox V N)              = cong₂ unbox ([id]ᴿᵛ V) ([id]ᴿᶜ N)
-  [id]ᴿᶜ (box ρ V N)              = cong₃ box ([id]ʳ ρ) ([id]ᴿᵛ V) ([id]ᴿᶜ N)
-  [id]ᴿᶜ (M ⦂ᶜ C)                 = cong₂ _⦂ᶜ_ ([id]ᴿᶜ M) ([id]ᶜ C)
+  [id]ᴿᶜ (perform op V M)          = cong₂ (perform op) ([id]ᴿᵛ V) ([id]ᴿᶜ M)
+  [id]ᴿᶜ (delay τ M)               = cong (delay τ) ([id]ᴿᶜ M)
+  [id]ᴿᶜ (handle M `with V)        = cong₂ handle_`with_ ([id]ᴿᶜ M) ([id]ᴿᵛ V)
+  [id]ᴿᶜ (unbox V N)               = cong₂ unbox ([id]ᴿᵛ V) ([id]ᴿᶜ N)
+  [id]ᴿᶜ (box ρ V N)               = cong₃ box ([id]ʳ ρ) ([id]ᴿᵛ V) ([id]ᴿᶜ N)
+  [id]ᴿᶜ (M ⦂ᶜ C)                  = cong₂ _⦂ᶜ_ ([id]ᴿᶜ M) ([id]ᶜ C)
 
 -- Composition
 
@@ -191,7 +191,7 @@ mutual
   [⨟]ᴿᵛ (cons V W)   σ δ = cong₂ cons ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᵛ W σ δ)
   [⨟]ᴿᵛ (cmp ⋈ V W)  σ δ = cong₂ (cmp ⋈) ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᵛ W σ δ)
   [⨟]ᴿᵛ ⦉ V , W ⦊     σ δ = cong₂ ⦉_,_⦊ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᵛ W σ δ)
-  [⨟]ᴿᵛ (lam M)      σ δ = cong lam ([⨟]ᴿᶜ M σ δ)
+  [⨟]ᴿᵛ (fun M)      σ δ = cong fun ([⨟]ᴿᶜ M σ δ)
   [⨟]ᴿᵛ (handler N H) σ δ =
     cong₂ handler ([⨟]ᴿᶜ N σ δ)
           (fun-ext (λ op → trans ([⨟]ᴿᶜ (H op) (σ ↑ᵉ) (δ ↑ᵉ)) ([≐]ᴿᶜ (⨟-↑ᵉ σ δ) (H op))))
@@ -202,26 +202,26 @@ mutual
   [⨟]ᴿᶜ (return V)               σ δ = cong return ([⨟]ᴿᵛ V σ δ)
   [⨟]ᴿᶜ (M ⨟ N)                  σ δ = cong₂ _⨟_ ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᶜ N σ δ)
   [⨟]ᴿᶜ (V · W)                  σ δ = cong₂ _·_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᵛ W σ δ)
-  [⨟]ᴿᶜ (match V `in M)          σ δ = cong₂ match_`in_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ)
+  [⨟]ᴿᶜ (match V `with M)        σ δ = cong₂ match_`with_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ)
   [⨟]ᴿᶜ (absurd V)               σ δ = cong absurd ([⨟]ᴿᵛ V σ δ)
   [⨟]ᴿᶜ (if V `then M `else N)   σ δ =
     cong₃ if_`then_`else_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᶜ N σ δ)
-  [⨟]ᴿᶜ (caseℕ V `zero M `succ N) σ δ =
-    cong₃ caseℕ_`zero_`succ_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᶜ N σ δ)
-  [⨟]ᴿᶜ (case+ V `inl M `inr N) σ δ =
-    cong₃ case+_`inl_`inr_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᶜ N σ δ)
-  [⨟]ᴿᶜ (recℕ V M N)             σ δ =
+  [⨟]ᴿᶜ (matchℕ V `zero M `succ N) σ δ =
+    cong₃ matchℕ_`zero_`succ_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᶜ N σ δ)
+  [⨟]ᴿᶜ (match+ V `inl M `inr N) σ δ =
+    cong₃ match+_`inl_`inr_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᶜ N σ δ)
+  [⨟]ᴿᶜ (recℕ V M N)              σ δ =
     cong₃ recℕ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᶜ N σ δ)
-  [⨟]ᴿᶜ (caseL V `nil M `cons N) σ δ =
-    cong₃ caseL_`nil_`cons_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᶜ N σ δ)
-  [⨟]ᴿᶜ (recL V M N)             σ δ =
+  [⨟]ᴿᶜ (matchL V `nil M `cons N) σ δ =
+    cong₃ matchL_`nil_`cons_ ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᶜ N σ δ)
+  [⨟]ᴿᶜ (recL V M N)              σ δ =
     cong₃ recL ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᶜ N σ δ)
-  [⨟]ᴿᶜ (perform op V M)         σ δ = cong₂ (perform op) ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ)
-  [⨟]ᴿᶜ (delay τ M)              σ δ = cong (delay τ) ([⨟]ᴿᶜ M σ δ)
-  [⨟]ᴿᶜ (handle M `with V)       σ δ = cong₂ handle_`with_ ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᵛ V σ δ)
-  [⨟]ᴿᶜ (unbox V N)              σ δ = cong₂ unbox ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ N σ δ)
-  [⨟]ᴿᶜ (box ρ V N)              σ δ = cong₃ box ([⨟]ʳ ρ σ δ) ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ N σ δ)
-  [⨟]ᴿᶜ (M ⦂ᶜ C)                 σ δ = cong₂ _⦂ᶜ_ ([⨟]ᴿᶜ M σ δ) ([⨟]ᶜ C σ δ)
+  [⨟]ᴿᶜ (perform op V M)          σ δ = cong₂ (perform op) ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ M σ δ)
+  [⨟]ᴿᶜ (delay τ M)               σ δ = cong (delay τ) ([⨟]ᴿᶜ M σ δ)
+  [⨟]ᴿᶜ (handle M `with V)        σ δ = cong₂ handle_`with_ ([⨟]ᴿᶜ M σ δ) ([⨟]ᴿᵛ V σ δ)
+  [⨟]ᴿᶜ (unbox V N)               σ δ = cong₂ unbox ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ N σ δ)
+  [⨟]ᴿᶜ (box ρ V N)               σ δ = cong₃ box ([⨟]ʳ ρ σ δ) ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ N σ δ)
+  [⨟]ᴿᶜ (M ⦂ᶜ C)                  σ δ = cong₂ _⦂ᶜ_ ([⨟]ᴿᶜ M σ δ) ([⨟]ᶜ C σ δ)
 
 -- A handler-free term stays handler-free
 
@@ -243,7 +243,7 @@ mutual
   handlerFree-[]ᴿᵛ (cons V W)   (h , k) = handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᵛ W k
   handlerFree-[]ᴿᵛ (cmp ⋈ V W)  (h , k) = handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᵛ W k
   handlerFree-[]ᴿᵛ ⦉ V , W ⦊     (h , k) = handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᵛ W k
-  handlerFree-[]ᴿᵛ (lam M)      h       = handlerFree-[]ᴿᶜ M h
+  handlerFree-[]ᴿᵛ (fun M)      h       = handlerFree-[]ᴿᶜ M h
   handlerFree-[]ᴿᵛ (handler N H) ()
   handlerFree-[]ᴿᵛ (V ⦂ᵛ A)     h       = handlerFree-[]ᴿᵛ V h
 
@@ -254,31 +254,31 @@ mutual
     handlerFree-[]ᴿᶜ M h , handlerFree-[]ᴿᶜ N k
   handlerFree-[]ᴿᶜ (V · W)                  (h , k)     =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᵛ W k
-  handlerFree-[]ᴿᶜ (match V `in M)          (h , k)     =
+  handlerFree-[]ᴿᶜ (match V `with M)        (h , k)     =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k
   handlerFree-[]ᴿᶜ (absurd V)               h           = handlerFree-[]ᴿᵛ V h
   handlerFree-[]ᴿᶜ (if V `then M `else N)   (h , k , l) =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k , handlerFree-[]ᴿᶜ N l
-  handlerFree-[]ᴿᶜ (caseℕ V `zero M `succ N) (h , k , l) =
+  handlerFree-[]ᴿᶜ (matchℕ V `zero M `succ N) (h , k , l) =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k , handlerFree-[]ᴿᶜ N l
-  handlerFree-[]ᴿᶜ (case+ V `inl M `inr N) (h , k , l) =
+  handlerFree-[]ᴿᶜ (match+ V `inl M `inr N) (h , k , l) =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k , handlerFree-[]ᴿᶜ N l
-  handlerFree-[]ᴿᶜ (recℕ V M N)             (h , k , l) =
+  handlerFree-[]ᴿᶜ (recℕ V M N)              (h , k , l) =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k , handlerFree-[]ᴿᶜ N l
-  handlerFree-[]ᴿᶜ (caseL V `nil M `cons N) (h , k , l) =
+  handlerFree-[]ᴿᶜ (matchL V `nil M `cons N) (h , k , l) =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k , handlerFree-[]ᴿᶜ N l
-  handlerFree-[]ᴿᶜ (recL V M N)             (h , k , l) =
+  handlerFree-[]ᴿᶜ (recL V M N)              (h , k , l) =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k , handlerFree-[]ᴿᶜ N l
-  handlerFree-[]ᴿᶜ (perform op V M)         (h , k)     =
+  handlerFree-[]ᴿᶜ (perform op V M)          (h , k)     =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k
-  handlerFree-[]ᴿᶜ (delay τ M)              h           = handlerFree-[]ᴿᶜ M h
-  handlerFree-[]ᴿᶜ (handle M `with V)       (h , k)     =
+  handlerFree-[]ᴿᶜ (delay τ M)               h           = handlerFree-[]ᴿᶜ M h
+  handlerFree-[]ᴿᶜ (handle M `with V)        (h , k)     =
     handlerFree-[]ᴿᶜ M h , handlerFree-[]ᴿᵛ V k
-  handlerFree-[]ᴿᶜ (unbox V N)              (h , k)     =
+  handlerFree-[]ᴿᶜ (unbox V N)               (h , k)     =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ N k
-  handlerFree-[]ᴿᶜ (box ρ V N)              (h , k)     =
+  handlerFree-[]ᴿᶜ (box ρ V N)               (h , k)     =
     handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ N k
-  handlerFree-[]ᴿᶜ (M ⦂ᶜ C)                 h           = handlerFree-[]ᴿᶜ M h
+  handlerFree-[]ᴿᶜ (M ⦂ᶜ C)                  h           = handlerFree-[]ᴿᶜ M h
 
 -- Inversion: a term has the outermost former of its instance
 
@@ -300,7 +300,7 @@ data InvV {Θ Θ' n} (σ : Subst Θ Θ') : RawV Θ n → RawV Θ' n → Set wher
        → InvV σ (cmp ⋈ V W) (cmp ⋈ V' W')
   ⦉_,_⦊  : ∀ {V W V' W'} → V [ σ ]ᴿᵛ ≡ V' → W [ σ ]ᴿᵛ ≡ W'
         → InvV σ ⦉ V , W ⦊ ⦉ V' , W' ⦊
-  lam   : ∀ {M M'} → M [ σ ]ᴿᶜ ≡ M' → InvV σ (lam M) (lam M')
+  fun   : ∀ {M M'} → M [ σ ]ᴿᶜ ≡ M' → InvV σ (fun M) (fun M')
   handler : ∀ {N H N' H'} → N [ σ ]ᴿᶜ ≡ N' → ((op : Op) → H op [ σ ↑ᵉ ]ᴿᶜ ≡ H' op)
           → InvV σ (handler N H) (handler N' H')
   annᵛ  : ∀ {V A V' A'} → V [ σ ]ᴿᵛ ≡ V' → A [ σ ]ᵛ ≡ A'
@@ -313,18 +313,18 @@ data InvC {Θ Θ' n} (σ : Subst Θ Θ') : RawC Θ n → RawC Θ' n → Set wher
   _·_     : ∀ {V W V' W'} → V [ σ ]ᴿᵛ ≡ V' → W [ σ ]ᴿᵛ ≡ W'
           → InvC σ (V · W) (V' · W')
   match   : ∀ {V M V' M'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M'
-          → InvC σ (match V `in M) (match V' `in M')
+          → InvC σ (match V `with M) (match V' `with M')
   absurd  : ∀ {V V'} → V [ σ ]ᴿᵛ ≡ V' → InvC σ (absurd V) (absurd V')
   if      : ∀ {V M N V' M' N'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M' → N [ σ ]ᴿᶜ ≡ N'
           → InvC σ (if V `then M `else N) (if V' `then M' `else N')
-  caseℕ   : ∀ {V M N V' M' N'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M' → N [ σ ]ᴿᶜ ≡ N'
-          → InvC σ (caseℕ V `zero M `succ N) (caseℕ V' `zero M' `succ N')
-  case+   : ∀ {V M N V' M' N'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M' → N [ σ ]ᴿᶜ ≡ N'
-          → InvC σ (case+ V `inl M `inr N) (case+ V' `inl M' `inr N')
+  matchℕ  : ∀ {V M N V' M' N'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M' → N [ σ ]ᴿᶜ ≡ N'
+          → InvC σ (matchℕ V `zero M `succ N) (matchℕ V' `zero M' `succ N')
+  match+  : ∀ {V M N V' M' N'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M' → N [ σ ]ᴿᶜ ≡ N'
+          → InvC σ (match+ V `inl M `inr N) (match+ V' `inl M' `inr N')
   recℕ    : ∀ {V M N V' M' N'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M' → N [ σ ]ᴿᶜ ≡ N'
           → InvC σ (recℕ V M N) (recℕ V' M' N')
-  caseL   : ∀ {V M N V' M' N'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M' → N [ σ ]ᴿᶜ ≡ N'
-          → InvC σ (caseL V `nil M `cons N) (caseL V' `nil M' `cons N')
+  matchL  : ∀ {V M N V' M' N'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M' → N [ σ ]ᴿᶜ ≡ N'
+          → InvC σ (matchL V `nil M `cons N) (matchL V' `nil M' `cons N')
   recL    : ∀ {V M N V' M' N'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M' → N [ σ ]ᴿᶜ ≡ N'
           → InvC σ (recL V M N) (recL V' M' N')
   perform : ∀ {op V M V' M'} → V [ σ ]ᴿᵛ ≡ V' → M [ σ ]ᴿᶜ ≡ M'
@@ -355,7 +355,7 @@ invV nil         refl = nil
 invV (cons V W)  refl = cons refl refl
 invV (cmp ⋈ V W) refl = cmp refl refl
 invV ⦉ V , W ⦊     refl = ⦉ refl , refl ⦊
-invV (lam M)      refl = lam refl
+invV (fun M)      refl = fun refl
 invV (handler N H) refl = handler refl (λ op → refl)
 invV (V ⦂ᵛ A)     refl = annᵛ refl refl
 
@@ -364,17 +364,17 @@ invC : ∀ {Θ Θ' n} {σ : Subst Θ Θ'} → (M : RawC Θ n) → {M' : RawC Θ'
 invC (return V)               refl = return refl
 invC (M ⨟ N)                  refl = refl ⨟ refl
 invC (V · W)                  refl = refl · refl
-invC (match V `in M)          refl = match refl refl
+invC (match V `with M)        refl = match refl refl
 invC (absurd V)               refl = absurd refl
 invC (if V `then M `else N)   refl = if refl refl refl
-invC (caseℕ V `zero M `succ N) refl = caseℕ refl refl refl
-invC (case+ V `inl M `inr N) refl = case+ refl refl refl
-invC (recℕ V M N)             refl = recℕ refl refl refl
-invC (caseL V `nil M `cons N) refl = caseL refl refl refl
-invC (recL V M N)             refl = recL refl refl refl
-invC (perform op V M)         refl = perform refl refl
-invC (delay τ M)              refl = delay refl
-invC (handle M `with V)       refl = handle refl refl
-invC (unbox V N)              refl = unbox refl refl
-invC (box ρ V N)              refl = box refl refl refl
-invC (M ⦂ᶜ (A ! ε))           refl = annᶜ refl refl refl
+invC (matchℕ V `zero M `succ N) refl = matchℕ refl refl refl
+invC (match+ V `inl M `inr N) refl = match+ refl refl refl
+invC (recℕ V M N)              refl = recℕ refl refl refl
+invC (matchL V `nil M `cons N) refl = matchL refl refl refl
+invC (recL V M N)              refl = recL refl refl refl
+invC (perform op V M)          refl = perform refl refl
+invC (delay τ M)               refl = delay refl
+invC (handle M `with V)        refl = handle refl refl
+invC (unbox V N)               refl = unbox refl refl
+invC (box ρ V N)               refl = box refl refl refl
+invC (M ⦂ᶜ (A ! ε))            refl = annᶜ refl refl refl

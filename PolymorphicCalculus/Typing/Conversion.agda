@@ -41,8 +41,8 @@ open import PolymorphicCalculus.Syntax.Raw                 S
 record Conversion : Set₁ where
   field
     Rel      : ∀ {Θ} → Hyps Θ → OVType Θ → OVType Θ → Set
-    rel-sub  : ∀ {Θ} {Q : Hyps Θ} {A' A} → Rel Q A' A → Q ∣ A' <:̂ᵛ A
-    rel-ok   : ∀ {Θ} {Q : Hyps Θ} {A' A ρ} → Rel Q A' A → VarOK Q A ρ → VarOK Q A' ρ
+    rel-sub  : ∀ {Θ} {Q : Hyps Θ} {A' A} → Rel Q A' A → Q ⊩ A' <:̂ᵛ A
+    rel-ok   : ∀ {Θ} {Q : Hyps Θ} {A' A ρ} → Rel Q A' A → Q ⊩ A Et∨≾ᵘ ρ → Q ⊩ A' Et∨≾ᵘ ρ
     rel-box  : ∀ {Θ} {Q : Hyps Θ} {ρ' ρ X' X} → Rel Q ([ ρ' ] X') ([ ρ ] X) → Rel Q X' X
     rel-refl : ∀ {Θ} {Q : Hyps Θ} → (A : OVType Θ) → Rel Q A A
     rel-wkᵉ  : ∀ {Θ} {Q : Hyps Θ} {A' A} → Rel Q A' A → Rel (wkᵉ-H Q) (wkᵉ-v A') (wkᵉ-v A)
@@ -51,9 +51,9 @@ record Conversion : Set₁ where
 
 equivalence : Conversion
 equivalence = record
-  { Rel      = λ Q A' A → (Q ∣ A' <:̂ᵛ A) × (Q ∣ A <:̂ᵛ A')
+  { Rel      = λ Q A' A → (Q ⊩ A' <:̂ᵛ A) × (Q ⊩ A <:̂ᵛ A')
   ; rel-sub  = proj₁
-  ; rel-ok   = λ r → VarOK-≃ (proj₁ r) (proj₂ r) ⊩≾̂ᵣ-refl
+  ; rel-ok   = λ r → Et∨≾ᵘ-≃ (proj₁ r) (proj₂ r) ⊩≾̂ᵣ-refl
   ; rel-box  = λ r → <:̂ᵛ-box-type (proj₁ r) , <:̂ᵛ-box-type (proj₂ r)
   ; rel-refl = λ A → <:̂ᵛ-refl A , <:̂ᵛ-refl A
   ; rel-wkᵉ  = λ r → <:̂ᵛ-wkᵉ (proj₁ r) , <:̂ᵛ-wkᵉ (proj₂ r)
@@ -63,7 +63,7 @@ equivalence = record
 
 narrowing : Conversion
 narrowing = record
-  { Rel      = λ Q A' A → Q ∣ A' <:̂ᵛ A
+  { Rel      = λ Q A' A → Q ⊩ A' <:̂ᵛ A
   ; rel-sub  = λ p → p
   ; rel-ok   = subˡ-ok
   ; rel-box  = <:̂ᵛ-box-type
@@ -213,7 +213,7 @@ module _ (𝒞 : Conversion) where
     conv-v c nil             = nil
     conv-v c (cons V W)      = cons (conv-v c V) (conv-v c W)
     conv-v c (cmp ⋈ V W et)  = cmp ⋈ (conv-v c V) (conv-v c W) et
-    conv-v c (lam {A = A} M) = lam (conv-c (c ∷≡ A) M)
+    conv-v c (fun {A = A} M) = fun (conv-c (c ∷≡ A) M)
     conv-v c (handler {A = A} N H) =
       handler (conv-c (lockʳ c ∷≡ A) N)
               (λ op → conv-c (lockʳ (crel-wkᵉ c) ∷≡ _ ∷≡ _) (H op))
@@ -222,18 +222,18 @@ module _ (𝒞 : Conversion) where
 
     conv-c : ∀ {Θ n} {Q : Hyps Θ} {Γ' Γ : OCtx Θ n} {C : OCType Θ}
            → CtxRel Q Γ' Γ → Q ∣ Γ ⊢C⦂ C → Q ∣ Γ' ⊢C⦂ C
-    conv-c c (return V)                = return (conv-v c V)
-    conv-c c (_⨟_ {A = A} M N)         = conv-c c M ⨟ conv-c (lockʳ c ∷≡ A) N
-    conv-c c (V · W)                   = conv-v c V · conv-v c W
-    conv-c c (match_`in_ {A = A} {B} V M) = match conv-v c V `in conv-c (c ∷≡ A ∷≡ B) M
-    conv-c c (absurd V)                = absurd (conv-v c V)
-    conv-c c (if V `then M `else N)    = if conv-v c V `then conv-c c M `else conv-c c N
-    conv-c c (caseℕ V `zero M `succ N) =
-      caseℕ conv-v c V `zero conv-c c M `succ conv-c (c ∷≡ nat) N
-    conv-c c (case+_`inl_`inr_ {A = A} {B} V M N) =
-      case+ conv-v c V `inl conv-c (c ∷≡ A) M `inr conv-c (c ∷≡ B) N
-    conv-c c (caseL_`nil_`cons_ {A = A} V M N) =
-      caseL conv-v c V `nil conv-c c M `cons conv-c (c ∷≡ A ∷≡ list A) N
+    conv-c c (return V)                  = return (conv-v c V)
+    conv-c c (_⨟_ {A = A} M N)           = conv-c c M ⨟ conv-c (lockʳ c ∷≡ A) N
+    conv-c c (V · W)                     = conv-v c V · conv-v c W
+    conv-c c (match_`with_ {A = A} {B} V M) = match conv-v c V `with conv-c (c ∷≡ A ∷≡ B) M
+    conv-c c (absurd V)                  = absurd (conv-v c V)
+    conv-c c (if V `then M `else N)      = if conv-v c V `then conv-c c M `else conv-c c N
+    conv-c c (matchℕ V `zero M `succ N)  =
+      matchℕ conv-v c V `zero conv-c c M `succ conv-c (c ∷≡ nat) N
+    conv-c c (match+_`inl_`inr_ {A = A} {B} V M N) =
+      match+ conv-v c V `inl conv-c (c ∷≡ A) M `inr conv-c (c ∷≡ B) N
+    conv-c c (matchL_`nil_`cons_ {A = A} V M N) =
+      matchL conv-v c V `nil conv-c c M `cons conv-c (c ∷≡ A ∷≡ list A) N
     conv-c c (recℕ {B = B} V M N p)    =
       recℕ (conv-v c V) (conv-c c M) (conv-c (lockʳ (lockʳ c ∷≡ nat) ∷≡ B) N) p
     conv-c c (recL {A = A} {B} V M N p) =
@@ -273,7 +273,7 @@ module _ (𝒞 : Conversion) where
     ⌊conv-v⌋ c nil             = refl
     ⌊conv-v⌋ c (cons V W)      = cong₂ cons (⌊conv-v⌋ c V) (⌊conv-v⌋ c W)
     ⌊conv-v⌋ c (cmp ⋈ V W et)  = cong₂ (cmp ⋈) (⌊conv-v⌋ c V) (⌊conv-v⌋ c W)
-    ⌊conv-v⌋ c (lam {A = A} M) = cong lam (⌊conv-c⌋ (c ∷≡ A) M)
+    ⌊conv-v⌋ c (fun {A = A} M) = cong fun (⌊conv-c⌋ (c ∷≡ A) M)
     ⌊conv-v⌋ c (handler {A = A} N H) =
       cong₂ handler (⌊conv-c⌋ (lockʳ c ∷≡ A) N)
             (fun-ext (λ op → ⌊conv-c⌋ (lockʳ (crel-wkᵉ c) ∷≡ _ ∷≡ _) (H op)))
@@ -283,21 +283,21 @@ module _ (𝒞 : Conversion) where
     ⌊conv-c⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ' Γ : OCtx Θ n} {C : OCType Θ}
              → (c : CtxRel Q Γ' Γ) → (M : Q ∣ Γ ⊢C⦂ C)
              → ⌊ conv-c c M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
-    ⌊conv-c⌋ c (return V)                = cong return (⌊conv-v⌋ c V)
-    ⌊conv-c⌋ c (_⨟_ {A = A} M N)         =
+    ⌊conv-c⌋ c (return V)                  = cong return (⌊conv-v⌋ c V)
+    ⌊conv-c⌋ c (_⨟_ {A = A} M N)           =
       cong₂ _⨟_ (⌊conv-c⌋ c M) (⌊conv-c⌋ (lockʳ c ∷≡ A) N)
-    ⌊conv-c⌋ c (V · W)                   = cong₂ _·_ (⌊conv-v⌋ c V) (⌊conv-v⌋ c W)
-    ⌊conv-c⌋ c (match_`in_ {A = A} {B} V M) =
-      cong₂ match_`in_ (⌊conv-v⌋ c V) (⌊conv-c⌋ (c ∷≡ A ∷≡ B) M)
-    ⌊conv-c⌋ c (absurd V)                = cong absurd (⌊conv-v⌋ c V)
-    ⌊conv-c⌋ c (if V `then M `else N)    =
+    ⌊conv-c⌋ c (V · W)                     = cong₂ _·_ (⌊conv-v⌋ c V) (⌊conv-v⌋ c W)
+    ⌊conv-c⌋ c (match_`with_ {A = A} {B} V M) =
+      cong₂ match_`with_ (⌊conv-v⌋ c V) (⌊conv-c⌋ (c ∷≡ A ∷≡ B) M)
+    ⌊conv-c⌋ c (absurd V)                  = cong absurd (⌊conv-v⌋ c V)
+    ⌊conv-c⌋ c (if V `then M `else N)      =
       cong₃ if_`then_`else_ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M) (⌊conv-c⌋ c N)
-    ⌊conv-c⌋ c (caseℕ V `zero M `succ N) =
-      cong₃ caseℕ_`zero_`succ_ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M) (⌊conv-c⌋ (c ∷≡ nat) N)
-    ⌊conv-c⌋ c (case+_`inl_`inr_ {A = A} {B} V M N) =
-      cong₃ case+_`inl_`inr_ (⌊conv-v⌋ c V) (⌊conv-c⌋ (c ∷≡ A) M) (⌊conv-c⌋ (c ∷≡ B) N)
-    ⌊conv-c⌋ c (caseL_`nil_`cons_ {A = A} V M N) =
-      cong₃ caseL_`nil_`cons_ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M)
+    ⌊conv-c⌋ c (matchℕ V `zero M `succ N)  =
+      cong₃ matchℕ_`zero_`succ_ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M) (⌊conv-c⌋ (c ∷≡ nat) N)
+    ⌊conv-c⌋ c (match+_`inl_`inr_ {A = A} {B} V M N) =
+      cong₃ match+_`inl_`inr_ (⌊conv-v⌋ c V) (⌊conv-c⌋ (c ∷≡ A) M) (⌊conv-c⌋ (c ∷≡ B) N)
+    ⌊conv-c⌋ c (matchL_`nil_`cons_ {A = A} V M N) =
+      cong₃ matchL_`nil_`cons_ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M)
             (⌊conv-c⌋ (c ∷≡ A ∷≡ list A) N)
     ⌊conv-c⌋ c (recℕ {B = B} V M N p)    =
       cong₃ recℕ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M) (⌊conv-c⌋ (lockʳ (lockʳ c ∷≡ nat) ∷≡ B) N)

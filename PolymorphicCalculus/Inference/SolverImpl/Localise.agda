@@ -609,45 +609,45 @@ cleanᵉ-⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} {k : EVar Ω} {R : Resid Ω}
          → Cleanᵉ k R → (b : EExp Ω) → (τ : Subst Ω Ω') → Q ⊩ᴿ R [ τ ]
          → (∀ {A ρ} → (A , ρ) ∈ ds R → Q ⊩ ρ [ updᵉ k b ⨟ˢ τ ]ʳ ≾̂ᵣ ρ [ τ ]ʳ)
          → (∀ {A} → A ∈ ts R → Q ⊩Et A [ updᵉ k b ⨟ˢ τ ]ᵛ)
-         × (∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ updᵉ k b ⨟ˢ τ ]ᵛ <:̂ᵛ B [ updᵉ k b ⨟ˢ τ ]ᵛ)
+         × (∀ {A B} → (A , B) ∈ ss R → Q ⊩ A [ updᵉ k b ⨟ˢ τ ]ᵛ <:̂ᵛ B [ updᵉ k b ⨟ˢ τ ]ᵛ)
          × (∀ {A ρ} → (A , ρ) ∈ ds R
-              → VarOK Q (A [ updᵉ k b ⨟ˢ τ ]ᵛ) (ρ [ updᵉ k b ⨟ˢ τ ]ʳ))
+              → Q ⊩ A [ updᵉ k b ⨟ˢ τ ]ᵛ Et∨≾ᵘ ρ [ updᵉ k b ⨟ˢ τ ]ʳ)
 cleanᵉ-⊩ {Q = Q} {k} {R} (cleanᵉ ct cs cd) b τ h g = ts' , ss' , ds'
   where
     ts' : ∀ {A} → A ∈ ts R → Q ⊩Et A [ updᵉ k b ⨟ˢ τ ]ᵛ
     ts' {A} m = subst (Q ⊩Et_) (sym (updᵉ-⨟v k b τ A (ct m))) (⊩ts h m)
 
-    ss' : ∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ updᵉ k b ⨟ˢ τ ]ᵛ <:̂ᵛ B [ updᵉ k b ⨟ˢ τ ]ᵛ
+    ss' : ∀ {A B} → (A , B) ∈ ss R → Q ⊩ A [ updᵉ k b ⨟ˢ τ ]ᵛ <:̂ᵛ B [ updᵉ k b ⨟ˢ τ ]ᵛ
     ss' {A} {B} m with ∨-false (occᵉ-v k A) (occᵉ-v k B) (cs m)
-    ... | qA , qB = subst₂ (Q ∣_<:̂ᵛ_) (sym (updᵉ-⨟v k b τ A qA)) (sym (updᵉ-⨟v k b τ B qB))
+    ... | qA , qB = subst₂ (Q ⊩_<:̂ᵛ_) (sym (updᵉ-⨟v k b τ A qA)) (sym (updᵉ-⨟v k b τ B qB))
                            (⊩ss h m)
 
-    ds' : ∀ {A ρ} → (A , ρ) ∈ ds R → VarOK Q (A [ updᵉ k b ⨟ˢ τ ]ᵛ) (ρ [ updᵉ k b ⨟ˢ τ ]ʳ)
+    ds' : ∀ {A ρ} → (A , ρ) ∈ ds R → Q ⊩ A [ updᵉ k b ⨟ˢ τ ]ᵛ Et∨≾ᵘ ρ [ updᵉ k b ⨟ˢ τ ]ʳ
     ds' {A} {ρ} m =
-      subst (λ X → VarOK Q X (ρ [ updᵉ k b ⨟ˢ τ ]ʳ)) (sym (updᵉ-⨟v k b τ A (cd m)))
-            (VarOK-≡̂ (≡̂ᵛ-refl (A [ τ ]ᵛ)) (g m) (⊩ds h m))
+      subst (λ X → Q ⊩ X Et∨≾ᵘ ρ [ updᵉ k b ⨟ˢ τ ]ʳ) (sym (updᵉ-⨟v k b τ A (cd m)))
+            (Et∨≾ᵘ-≡̂ (≡̂ᵛ-refl (A [ τ ]ᵛ)) (g m) (⊩ds h m))
 
 cleanʳ-⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} {k : RVar Ω} {R : Resid Ω}
          → Cleanʳ k R → (b : RExp Ω) → (τ : Subst Ω Ω') → Q ⊩ᴿ R [ τ ]
          → (∀ {A ρ} → (A , ρ) ∈ ds R → Q ⊩ ρ [ updʳ k b ⨟ˢ τ ]ʳ ≾̂ᵣ ρ [ τ ]ʳ)
          → (∀ {A} → A ∈ ts R → Q ⊩Et A [ updʳ k b ⨟ˢ τ ]ᵛ)
-         × (∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ updʳ k b ⨟ˢ τ ]ᵛ <:̂ᵛ B [ updʳ k b ⨟ˢ τ ]ᵛ)
+         × (∀ {A B} → (A , B) ∈ ss R → Q ⊩ A [ updʳ k b ⨟ˢ τ ]ᵛ <:̂ᵛ B [ updʳ k b ⨟ˢ τ ]ᵛ)
          × (∀ {A ρ} → (A , ρ) ∈ ds R
-              → VarOK Q (A [ updʳ k b ⨟ˢ τ ]ᵛ) (ρ [ updʳ k b ⨟ˢ τ ]ʳ))
+              → Q ⊩ A [ updʳ k b ⨟ˢ τ ]ᵛ Et∨≾ᵘ ρ [ updʳ k b ⨟ˢ τ ]ʳ)
 cleanʳ-⊩ {Q = Q} {k} {R} (cleanʳ ct cs cd) b τ h g = ts' , ss' , ds'
   where
     ts' : ∀ {A} → A ∈ ts R → Q ⊩Et A [ updʳ k b ⨟ˢ τ ]ᵛ
     ts' {A} m = subst (Q ⊩Et_) (sym (updʳ-⨟v k b τ A (ct m))) (⊩ts h m)
 
-    ss' : ∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ updʳ k b ⨟ˢ τ ]ᵛ <:̂ᵛ B [ updʳ k b ⨟ˢ τ ]ᵛ
+    ss' : ∀ {A B} → (A , B) ∈ ss R → Q ⊩ A [ updʳ k b ⨟ˢ τ ]ᵛ <:̂ᵛ B [ updʳ k b ⨟ˢ τ ]ᵛ
     ss' {A} {B} m with ∨-false (occʳ-v k A) (occʳ-v k B) (cs m)
-    ... | qA , qB = subst₂ (Q ∣_<:̂ᵛ_) (sym (updʳ-⨟v k b τ A qA)) (sym (updʳ-⨟v k b τ B qB))
+    ... | qA , qB = subst₂ (Q ⊩_<:̂ᵛ_) (sym (updʳ-⨟v k b τ A qA)) (sym (updʳ-⨟v k b τ B qB))
                            (⊩ss h m)
 
-    ds' : ∀ {A ρ} → (A , ρ) ∈ ds R → VarOK Q (A [ updʳ k b ⨟ˢ τ ]ᵛ) (ρ [ updʳ k b ⨟ˢ τ ]ʳ)
+    ds' : ∀ {A ρ} → (A , ρ) ∈ ds R → Q ⊩ A [ updʳ k b ⨟ˢ τ ]ᵛ Et∨≾ᵘ ρ [ updʳ k b ⨟ˢ τ ]ʳ
     ds' {A} {ρ} m =
-      subst (λ X → VarOK Q X (ρ [ updʳ k b ⨟ˢ τ ]ʳ)) (sym (updʳ-⨟v k b τ A (cd m)))
-            (VarOK-≡̂ (≡̂ᵛ-refl (A [ τ ]ᵛ)) (g m) (⊩ds h m))
+      subst (λ X → Q ⊩ X Et∨≾ᵘ ρ [ updʳ k b ⨟ˢ τ ]ʳ) (sym (updʳ-⨟v k b τ A (cd m)))
+            (Et∨≾ᵘ-≡̂ (≡̂ᵛ-refl (A [ τ ]ᵛ)) (g m) (⊩ds h m))
 
 -- A resource assignment leaves every effect ordering as it was
 
@@ -843,7 +843,7 @@ Every : ∀ {Ω} {X : Set} → (∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X �
 Every P a = ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst _ Ω') → P Q δ a
 
 Disj : ∀ {Ω Ω'} → Hyps Ω' → Subst Ω Ω' → OVType Ω × RExp Ω → Set
-Disj Q δ (A , ρ) = VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+Disj Q δ (A , ρ) = Q ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ [ δ ]ʳ
 
 settledʳ : ∀ {Ω} → (a : RExp Ω × RExp Ω) → Maybe (Every Ordʳ a)
 settledʳ (ρ , ρ') with decideᵣ full ∅ᴴ ρ ρ'
@@ -1467,14 +1467,14 @@ raise-⊩ {Θ} {Ω'' = Ω''} {Q₀ = Q₀} {R} O {j} eqj l rc ue ur (cleanM ct c
     ts' : ∀ {A} → A ∈ ts R → Q ⊩Et A [ τ₁ ]ᵛ
     ts' {A} m = subst (Q ⊩Et_) (sym (tops-⨟v l τ A (ct m))) (⊩ts h m)
 
-    ss' : ∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ τ₁ ]ᵛ <:̂ᵛ B [ τ₁ ]ᵛ
+    ss' : ∀ {A B} → (A , B) ∈ ss R → Q ⊩ A [ τ₁ ]ᵛ <:̂ᵛ B [ τ₁ ]ᵛ
     ss' {A} {B} m with ∨-false (hitᵥ l A) (hitᵥ l B) (cs m)
-    ... | qA , qB = subst₂ (Q ∣_<:̂ᵛ_) (sym (tops-⨟v l τ A qA)) (sym (tops-⨟v l τ B qB))
+    ... | qA , qB = subst₂ (Q ⊩_<:̂ᵛ_) (sym (tops-⨟v l τ A qA)) (sym (tops-⨟v l τ B qB))
                            (⊩ss h m)
 
-    ds' : ∀ {A ρ} → (A , ρ) ∈ ds R → VarOK Q (A [ τ₁ ]ᵛ) (ρ [ τ₁ ]ʳ)
+    ds' : ∀ {A ρ} → (A , ρ) ∈ ds R → Q ⊩ A [ τ₁ ]ᵛ Et∨≾ᵘ ρ [ τ₁ ]ʳ
     ds' {A} {ρ} m with ∨-false (hitᵥ l A) (hitᵣ l ρ) (cd m)
-    ... | qA , qρ = subst₂ (VarOK Q) (sym (tops-⨟v l τ A qA)) (sym (tops-⨟r l τ ρ qρ))
+    ... | qA , qρ = subst₂ (Q ⊩_Et∨≾ᵘ_) (sym (tops-⨟v l τ A qA)) (sym (tops-⨟r l τ ρ qρ))
                            (⊩ds h m)
 
 -- Finding the set: reach from the rigid among the candidates, drop the
@@ -1655,9 +1655,9 @@ hasJoinᵣ ∣ ε ∣̂ᵉ     = hasJoinₑ ε
 piecesᵈ : ∀ {Ω} → (a : OVType Ω × RExp Ω) → Pieces Disj a
 piecesᵈ (A , ρ) =
   pieces ((A , canonᵣ ρ) ∷ [])
-         (λ δ k → VarOK-≡̂ (≡̂ᵛ-refl _) (eqᵣ (≡̂ᵣ-subst δ (canonᵣ-≡ ρ))) (k (here refl)))
+         (λ δ k → Et∨≾ᵘ-≡̂ (≡̂ᵛ-refl _) (eqᵣ (≡̂ᵣ-subst δ (canonᵣ-≡ ρ))) (k (here refl)))
          (λ δ ok → λ { (here refl) →
-            VarOK-≡̂ (≡̂ᵛ-refl _) (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst δ (canonᵣ-≡ ρ)))) ok })
+            Et∨≾ᵘ-≡̂ (≡̂ᵛ-refl _) (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst δ (canonᵣ-≡ ρ)))) ok })
 
 ------------------------------------------------------------------------
 -- Each strongly connected component of the orderings between whole unknowns
@@ -1717,9 +1717,9 @@ equal-⊩ {Q = Q} {σ} (typesFixed ft fs fd) τ h le ge =
   mk⊩ᴿ (equal-keeps {_⊑_ = Q ⊩_≾̂ᵣ_} transᵣ (mono-substᵣ le) (mono-substᵣ ge) (⊩rs h))
        (equal-keeps {_⊑_ = Q ⊩_≾̂ₑ_} transₑ (mono-substₑ le) (mono-substₑ ge) (⊩es h))
        (λ {A} m → subst (Q ⊩Et_) (ty A (ft m)) (⊩ts h m))
-       (λ {A} {B} m → subst₂ (Q ∣_<:̂ᵛ_) (ty A (proj₁ (fs m))) (ty B (proj₂ (fs m))) (⊩ss h m))
-       (λ {A} {ρ} m → subst (λ X → VarOK Q X (ρ [ σ ⨟ˢ τ ]ʳ)) (ty A (fd m))
-                            (VarOK-≡̂ (≡̂ᵛ-refl (A [ τ ]ᵛ)) (mono-substᵣ le ρ) (⊩ds h m)))
+       (λ {A} {B} m → subst₂ (Q ⊩_<:̂ᵛ_) (ty A (proj₁ (fs m))) (ty B (proj₂ (fs m))) (⊩ss h m))
+       (λ {A} {ρ} m → subst (λ X → Q ⊩ X Et∨≾ᵘ ρ [ σ ⨟ˢ τ ]ʳ) (ty A (fd m))
+                            (Et∨≾ᵘ-≡̂ (≡̂ᵛ-refl (A [ τ ]ᵛ)) (mono-substᵣ le ρ) (⊩ds h m)))
        (λ {E} m → keep⇕ {σ = σ} E le ge (⊩dfs h m))
   where
     ty : ∀ A → A [ σ ]ᵛ ≡ A → A [ τ ]ᵛ ≡ A [ σ ⨟ˢ τ ]ᵛ

@@ -269,7 +269,7 @@ record Category : Set₂ where
   -- BINARY COPRODUCTS
   --
   -- Plain coproducts: copairing with its two β laws and uniqueness. The
-  -- eliminator stable under a context, `caseᵐ`, is derived below from the
+  -- eliminator stable under a context, `match+ᵐ`, is derived below from the
   -- exponentials.
 
   field
@@ -338,7 +338,7 @@ record Category : Set₂ where
   --
   -- Lawvere's: iteration from a global element along an endomorphism, with
   -- its two β laws and uniqueness. The case analysis stable under a
-  -- context, `caseℕᵐ`, is derived below through the coproducts.
+  -- context, `matchℕᵐ`, is derived below through the coproducts.
 
   field
     ℕᵐ : Obj
@@ -650,7 +650,7 @@ record Category : Set₂ where
   --
   -- `X ×ᵐ -` preserves the coproduct, being left adjoint to `X ⇒ᵐ -`: a map
   -- out of `X ×ᵐ (A +ᵐ B)` is the copairing `copairˣᵐ` of its two
-  -- restrictions. `caseᵐ` is the eliminator this yields, with the laws that
+  -- restrictions. `match+ᵐ` is the eliminator this yields, with the laws that
   -- `ifᵐ` has as fields.
 
   swapᵐ : ∀ {A B} → A ×ᵐ B →ᵐ B ×ᵐ A
@@ -774,33 +774,33 @@ record Category : Set₂ where
 
   -- The eliminator: a scrutinee and two branches over the context.
 
-  caseᵐ : ∀ {X A B C} → X →ᵐ A +ᵐ B → X ×ᵐ A →ᵐ C → X ×ᵐ B →ᵐ C → X →ᵐ C
-  caseᵐ s f g = copairˣᵐ f g ∘ᵐ ⟨ idᵐ , s ⟩ᵐ
+  match+ᵐ : ∀ {X A B C} → X →ᵐ A +ᵐ B → X ×ᵐ A →ᵐ C → X ×ᵐ B →ᵐ C → X →ᵐ C
+  match+ᵐ s f g = copairˣᵐ f g ∘ᵐ ⟨ idᵐ , s ⟩ᵐ
 
-  caseᵐ-cong : ∀ {X A B C} {s s' : X →ᵐ A +ᵐ B}
+  match+ᵐ-cong : ∀ {X A B C} {s s' : X →ᵐ A +ᵐ B}
                {f f' : X ×ᵐ A →ᵐ C} {g g' : X ×ᵐ B →ᵐ C}
-             → s ≈ᵐ s' → f ≈ᵐ f' → g ≈ᵐ g' → caseᵐ s f g ≈ᵐ caseᵐ s' f' g'
-  caseᵐ-cong ps pf pg = ∘ᵐ-cong (copairˣᵐ-cong pf pg) ⟨ ≈ᵐ-refl , ps ⟩ᵐ-cong
+               → s ≈ᵐ s' → f ≈ᵐ f' → g ≈ᵐ g' → match+ᵐ s f g ≈ᵐ match+ᵐ s' f' g'
+  match+ᵐ-cong ps pf pg = ∘ᵐ-cong (copairˣᵐ-cong pf pg) ⟨ ≈ᵐ-refl , ps ⟩ᵐ-cong
 
-  caseᵐ-inl : ∀ {X A B C} → (a : X →ᵐ A)
-            → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
-            → caseᵐ (inlᵐ ∘ᵐ a) f g ≈ᵐ f ∘ᵐ ⟨ idᵐ , a ⟩ᵐ
-  caseᵐ-inl a f g =
+  match+ᵐ-inl : ∀ {X A B C} → (a : X →ᵐ A)
+              → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
+              → match+ᵐ (inlᵐ ∘ᵐ a) f g ≈ᵐ f ∘ᵐ ⟨ idᵐ , a ⟩ᵐ
+  match+ᵐ-inl a f g =
     ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-mapˣᵐ inlᵐ a))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ (copairˣᵐ-inl f g)))
 
-  caseᵐ-inr : ∀ {X A B C} → (b : X →ᵐ B)
-            → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
-            → caseᵐ (inrᵐ ∘ᵐ b) f g ≈ᵐ g ∘ᵐ ⟨ idᵐ , b ⟩ᵐ
-  caseᵐ-inr b f g =
+  match+ᵐ-inr : ∀ {X A B C} → (b : X →ᵐ B)
+              → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C)
+              → match+ᵐ (inrᵐ ∘ᵐ b) f g ≈ᵐ g ∘ᵐ ⟨ idᵐ , b ⟩ᵐ
+  match+ᵐ-inr b f g =
     ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-mapˣᵐ inrᵐ b))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ (copairˣᵐ-inr f g)))
 
-  caseᵐ-∘ : ∀ {Y X A B C} → (s : X →ᵐ A +ᵐ B)
-          → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C) → (h : Y →ᵐ X)
-          → caseᵐ s f g ∘ᵐ h
-          ≈ᵐ caseᵐ (s ∘ᵐ h) (f ∘ᵐ mapˣᵐ h idᵐ) (g ∘ᵐ mapˣᵐ h idᵐ)
-  caseᵐ-∘ s f g h =
+  match+ᵐ-∘ : ∀ {Y X A B C} → (s : X →ᵐ A +ᵐ B)
+            → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C) → (h : Y →ᵐ X)
+            → match+ᵐ s f g ∘ᵐ h
+            ≈ᵐ match+ᵐ (s ∘ᵐ h) (f ∘ᵐ mapˣᵐ h idᵐ) (g ∘ᵐ mapˣᵐ h idᵐ)
+  match+ᵐ-∘ s f g h =
     ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ
       (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
@@ -810,23 +810,23 @@ record Category : Set₂ where
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
               (∘ᵐ-congˡ (copairˣᵐ-∘ f g h))))
 
-  caseᵐ-η : ∀ {X A B C} → (s : X →ᵐ A +ᵐ B) → (m : X ×ᵐ (A +ᵐ B) →ᵐ C)
-          → m ∘ᵐ ⟨ idᵐ , s ⟩ᵐ
-          ≈ᵐ caseᵐ s (m ∘ᵐ mapˣᵐ idᵐ inlᵐ) (m ∘ᵐ mapˣᵐ idᵐ inrᵐ)
-  caseᵐ-η s m = ∘ᵐ-congˡ (copairˣᵐ-unique _ _ m ≈ᵐ-refl ≈ᵐ-refl)
+  match+ᵐ-η : ∀ {X A B C} → (s : X →ᵐ A +ᵐ B) → (m : X ×ᵐ (A +ᵐ B) →ᵐ C)
+            → m ∘ᵐ ⟨ idᵐ , s ⟩ᵐ
+            ≈ᵐ match+ᵐ s (m ∘ᵐ mapˣᵐ idᵐ inlᵐ) (m ∘ᵐ mapˣᵐ idᵐ inrᵐ)
+  match+ᵐ-η s m = ∘ᵐ-congˡ (copairˣᵐ-unique _ _ m ≈ᵐ-refl ≈ᵐ-refl)
 
-  caseᵐ-post : ∀ {X A B C D} → (s : X →ᵐ A +ᵐ B)
-             → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C) → (k : C →ᵐ D)
-             → k ∘ᵐ caseᵐ s f g ≈ᵐ caseᵐ s (k ∘ᵐ f) (k ∘ᵐ g)
-  caseᵐ-post s f g k =
+  match+ᵐ-post : ∀ {X A B C D} → (s : X →ᵐ A +ᵐ B)
+               → (f : X ×ᵐ A →ᵐ C) → (g : X ×ᵐ B →ᵐ C) → (k : C →ᵐ D)
+               → k ∘ᵐ match+ᵐ s f g ≈ᵐ match+ᵐ s (k ∘ᵐ f) (k ∘ᵐ g)
+  match+ᵐ-post s f g k =
     ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ (copairˣᵐ-post f g k))
 
 
   -- NATURAL NUMBERS IN A CONTEXT
   --
   -- Lambek: `[ zeroᵐ , succᵐ ]ᵐ : 𝟙ᵐ +ᵐ ℕᵐ →ᵐ ℕᵐ` is an isomorphism, its
-  -- inverse `predᵐ` defined by iteration. `caseℕᵐ` is `caseᵐ` at the
-  -- predecessor, with the laws `caseᵐ` has.
+  -- inverse `predᵐ` defined by iteration. `matchℕᵐ` is `match+ᵐ` at the
+  -- predecessor, with the laws `match+ᵐ` has.
 
   predᵐ : ℕᵐ →ᵐ 𝟙ᵐ +ᵐ ℕᵐ
   predᵐ = iterᵐ inlᵐ (inrᵐ ∘ᵐ [ zeroᵐ , succᵐ ]ᵐ)
@@ -860,56 +860,56 @@ record Category : Set₂ where
   -- The eliminator: a scrutinee, a zero branch, and a successor branch that
   -- receives the predecessor, over the context.
 
-  caseℕᵐ : ∀ {X C} → X →ᵐ ℕᵐ → X →ᵐ C → X ×ᵐ ℕᵐ →ᵐ C → X →ᵐ C
-  caseℕᵐ s f g = caseᵐ (predᵐ ∘ᵐ s) (f ∘ᵐ fstᵐ) g
+  matchℕᵐ : ∀ {X C} → X →ᵐ ℕᵐ → X →ᵐ C → X ×ᵐ ℕᵐ →ᵐ C → X →ᵐ C
+  matchℕᵐ s f g = match+ᵐ (predᵐ ∘ᵐ s) (f ∘ᵐ fstᵐ) g
 
-  caseℕᵐ-cong : ∀ {X C} {s s' : X →ᵐ ℕᵐ} {f f' : X →ᵐ C} {g g' : X ×ᵐ ℕᵐ →ᵐ C}
-              → s ≈ᵐ s' → f ≈ᵐ f' → g ≈ᵐ g' → caseℕᵐ s f g ≈ᵐ caseℕᵐ s' f' g'
-  caseℕᵐ-cong ps pf pg = caseᵐ-cong (∘ᵐ-congʳ ps) (∘ᵐ-congˡ pf) pg
+  matchℕᵐ-cong : ∀ {X C} {s s' : X →ᵐ ℕᵐ} {f f' : X →ᵐ C} {g g' : X ×ᵐ ℕᵐ →ᵐ C}
+               → s ≈ᵐ s' → f ≈ᵐ f' → g ≈ᵐ g' → matchℕᵐ s f g ≈ᵐ matchℕᵐ s' f' g'
+  matchℕᵐ-cong ps pf pg = match+ᵐ-cong (∘ᵐ-congʳ ps) (∘ᵐ-congˡ pf) pg
 
-  caseℕᵐ-zero : ∀ {X C} → (f : X →ᵐ C) → (g : X ×ᵐ ℕᵐ →ᵐ C)
-              → caseℕᵐ (zeroᵐ ∘ᵐ terminalᵐ) f g ≈ᵐ f
-  caseℕᵐ-zero f g =
-    ≈ᵐ-trans (caseᵐ-cong (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ predᵐ-zero))
-                         ≈ᵐ-refl ≈ᵐ-refl)
-    (≈ᵐ-trans (caseᵐ-inl terminalᵐ (f ∘ᵐ fstᵐ) g)
+  matchℕᵐ-zero : ∀ {X C} → (f : X →ᵐ C) → (g : X ×ᵐ ℕᵐ →ᵐ C)
+               → matchℕᵐ (zeroᵐ ∘ᵐ terminalᵐ) f g ≈ᵐ f
+  matchℕᵐ-zero f g =
+    ≈ᵐ-trans (match+ᵐ-cong (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ predᵐ-zero))
+                           ≈ᵐ-refl ≈ᵐ-refl)
+    (≈ᵐ-trans (match+ᵐ-inl terminalᵐ (f ∘ᵐ fstᵐ) g)
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)) (∘ᵐ-identityʳ f))))
 
-  caseℕᵐ-succ : ∀ {X C} → (n : X →ᵐ ℕᵐ) → (f : X →ᵐ C) → (g : X ×ᵐ ℕᵐ →ᵐ C)
-              → caseℕᵐ (succᵐ ∘ᵐ n) f g ≈ᵐ g ∘ᵐ ⟨ idᵐ , n ⟩ᵐ
-  caseℕᵐ-succ n f g =
-    ≈ᵐ-trans (caseᵐ-cong (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ predᵐ-succ))
-                         ≈ᵐ-refl ≈ᵐ-refl)
-             (caseᵐ-inr n (f ∘ᵐ fstᵐ) g)
+  matchℕᵐ-succ : ∀ {X C} → (n : X →ᵐ ℕᵐ) → (f : X →ᵐ C) → (g : X ×ᵐ ℕᵐ →ᵐ C)
+               → matchℕᵐ (succᵐ ∘ᵐ n) f g ≈ᵐ g ∘ᵐ ⟨ idᵐ , n ⟩ᵐ
+  matchℕᵐ-succ n f g =
+    ≈ᵐ-trans (match+ᵐ-cong (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ predᵐ-succ))
+                           ≈ᵐ-refl ≈ᵐ-refl)
+             (match+ᵐ-inr n (f ∘ᵐ fstᵐ) g)
 
-  caseℕᵐ-∘ : ∀ {Y X C} → (s : X →ᵐ ℕᵐ) → (f : X →ᵐ C) → (g : X ×ᵐ ℕᵐ →ᵐ C)
-           → (h : Y →ᵐ X)
-           → caseℕᵐ s f g ∘ᵐ h ≈ᵐ caseℕᵐ (s ∘ᵐ h) (f ∘ᵐ h) (g ∘ᵐ mapˣᵐ h idᵐ)
-  caseℕᵐ-∘ s f g h =
-    ≈ᵐ-trans (caseᵐ-∘ _ _ _ h)
-             (caseᵐ-cong (∘ᵐ-assoc _ _ _)
-                         (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                         (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
-                                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-                         ≈ᵐ-refl)
+  matchℕᵐ-∘ : ∀ {Y X C} → (s : X →ᵐ ℕᵐ) → (f : X →ᵐ C) → (g : X ×ᵐ ℕᵐ →ᵐ C)
+            → (h : Y →ᵐ X)
+            → matchℕᵐ s f g ∘ᵐ h ≈ᵐ matchℕᵐ (s ∘ᵐ h) (f ∘ᵐ h) (g ∘ᵐ mapˣᵐ h idᵐ)
+  matchℕᵐ-∘ s f g h =
+    ≈ᵐ-trans (match+ᵐ-∘ _ _ _ h)
+             (match+ᵐ-cong (∘ᵐ-assoc _ _ _)
+                           (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                           (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
+                                     (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+                           ≈ᵐ-refl)
 
   -- η: a map out of `X ×ᵐ ℕᵐ` is determined by its zero and successor
   -- instances
 
-  caseℕᵐ-η : ∀ {X C} → (s : X →ᵐ ℕᵐ) → (m : X ×ᵐ ℕᵐ →ᵐ C)
-           → m ∘ᵐ ⟨ idᵐ , s ⟩ᵐ
-           ≈ᵐ caseℕᵐ s (m ∘ᵐ ⟨ idᵐ , zeroᵐ ∘ᵐ terminalᵐ ⟩ᵐ) (m ∘ᵐ mapˣᵐ idᵐ succᵐ)
-  caseℕᵐ-η {X} {C} s m =
+  matchℕᵐ-η : ∀ {X C} → (s : X →ᵐ ℕᵐ) → (m : X ×ᵐ ℕᵐ →ᵐ C)
+            → m ∘ᵐ ⟨ idᵐ , s ⟩ᵐ
+            ≈ᵐ matchℕᵐ s (m ∘ᵐ ⟨ idᵐ , zeroᵐ ∘ᵐ terminalᵐ ⟩ᵐ) (m ∘ᵐ mapˣᵐ idᵐ succᵐ)
+  matchℕᵐ-η {X} {C} s m =
     ≈ᵐ-trans (∘ᵐ-congʳ ⟨ ≈ᵐ-refl
                        , ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityˡ s))
                          (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym [zero,succ]-predᵐ))
                                    (∘ᵐ-assoc _ _ _)) ⟩ᵐ-cong)
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-mapˣᵐ [ zeroᵐ , succᵐ ]ᵐ (predᵐ ∘ᵐ s)))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (caseᵐ-η (predᵐ ∘ᵐ s) (m ∘ᵐ mapˣᵐ idᵐ [ zeroᵐ , succᵐ ]ᵐ))
-              (caseᵐ-cong ≈ᵐ-refl (branch zeroᵐ (zero-side) ([]ᵐ-inlᵐ _ _))
-                                  (branch succᵐ ≈ᵐ-refl ([]ᵐ-inrᵐ _ _))))))
+    (≈ᵐ-trans (match+ᵐ-η (predᵐ ∘ᵐ s) (m ∘ᵐ mapˣᵐ idᵐ [ zeroᵐ , succᵐ ]ᵐ))
+              (match+ᵐ-cong ≈ᵐ-refl (branch zeroᵐ (zero-side) ([]ᵐ-inlᵐ _ _))
+                                    (branch succᵐ ≈ᵐ-refl ([]ᵐ-inrᵐ _ _))))))
     where
       -- a branch: the copairing restricted along an injection
       branch : ∀ {A} {k : X ×ᵐ A →ᵐ C} → (c : A →ᵐ ℕᵐ) → m ∘ᵐ mapˣᵐ idᵐ c ≈ᵐ k
@@ -933,11 +933,11 @@ record Category : Set₂ where
                                                   (≈ᵐ-sym terminalᵐ-unique))) ⟩ᵐ-cong)))
                  (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
 
-  caseℕᵐ-post : ∀ {X C D} → (s : X →ᵐ ℕᵐ)
-              → (f : X →ᵐ C) → (g : X ×ᵐ ℕᵐ →ᵐ C) → (k : C →ᵐ D)
-              → k ∘ᵐ caseℕᵐ s f g ≈ᵐ caseℕᵐ s (k ∘ᵐ f) (k ∘ᵐ g)
-  caseℕᵐ-post s f g k =
-    ≈ᵐ-trans (caseᵐ-post _ _ _ k) (caseᵐ-cong ≈ᵐ-refl (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) ≈ᵐ-refl)
+  matchℕᵐ-post : ∀ {X C D} → (s : X →ᵐ ℕᵐ)
+               → (f : X →ᵐ C) → (g : X ×ᵐ ℕᵐ →ᵐ C) → (k : C →ᵐ D)
+               → k ∘ᵐ matchℕᵐ s f g ≈ᵐ matchℕᵐ s (k ∘ᵐ f) (k ∘ᵐ g)
+  matchℕᵐ-post s f g k =
+    ≈ᵐ-trans (match+ᵐ-post _ _ _ k) (match+ᵐ-cong ≈ᵐ-refl (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) ≈ᵐ-refl)
 
 
   -- ITERATION AND PRIMITIVE RECURSION IN A CONTEXT
@@ -1303,7 +1303,7 @@ record Category : Set₂ where
   -- LISTS IN A CONTEXT
   --
   -- Lambek: `[ nilᵐ , consᵐ ]ᵐ : 𝟙ᵐ +ᵐ (A ×ᵐ Listᵐ A) →ᵐ Listᵐ A` is an
-  -- isomorphism, its inverse `unconsᵐ` defined by a fold. `caseLᵐ` is `caseᵐ`
+  -- isomorphism, its inverse `unconsᵐ` defined by a fold. `matchLᵐ` is `match+ᵐ`
   -- at it, the cons branch reading the context, head and tail left-nested as
   -- the syntax binds them.
 
@@ -1338,59 +1338,59 @@ record Category : Set₂ where
   -- The eliminator: a scrutinee, a nil branch, and a cons branch that
   -- receives the head and the tail, over the context.
 
-  caseLᵐ : ∀ {X A C} → X →ᵐ Listᵐ A → X →ᵐ C → (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C → X →ᵐ C
-  caseLᵐ s f g = caseᵐ (unconsᵐ ∘ᵐ s) (f ∘ᵐ fstᵐ) (g ∘ᵐ ×ᵐ-assoc⁻¹)
+  matchLᵐ : ∀ {X A C} → X →ᵐ Listᵐ A → X →ᵐ C → (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C → X →ᵐ C
+  matchLᵐ s f g = match+ᵐ (unconsᵐ ∘ᵐ s) (f ∘ᵐ fstᵐ) (g ∘ᵐ ×ᵐ-assoc⁻¹)
 
-  caseLᵐ-cong : ∀ {X A C} {s s' : X →ᵐ Listᵐ A} {f f' : X →ᵐ C}
-                {g g' : (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C}
-              → s ≈ᵐ s' → f ≈ᵐ f' → g ≈ᵐ g' → caseLᵐ s f g ≈ᵐ caseLᵐ s' f' g'
-  caseLᵐ-cong ps pf pg = caseᵐ-cong (∘ᵐ-congʳ ps) (∘ᵐ-congˡ pf) (∘ᵐ-congˡ pg)
+  matchLᵐ-cong : ∀ {X A C} {s s' : X →ᵐ Listᵐ A} {f f' : X →ᵐ C}
+                 {g g' : (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C}
+               → s ≈ᵐ s' → f ≈ᵐ f' → g ≈ᵐ g' → matchLᵐ s f g ≈ᵐ matchLᵐ s' f' g'
+  matchLᵐ-cong ps pf pg = match+ᵐ-cong (∘ᵐ-congʳ ps) (∘ᵐ-congˡ pf) (∘ᵐ-congˡ pg)
 
-  caseLᵐ-nil : ∀ {X A C} → (f : X →ᵐ C) → (g : (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C)
-             → caseLᵐ (nilᵐ ∘ᵐ terminalᵐ) f g ≈ᵐ f
-  caseLᵐ-nil f g =
-      caseᵐ-cong (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ unconsᵐ-nil) ≈ᵐ-refl ≈ᵐ-refl
-    ∙ caseᵐ-inl terminalᵐ (f ∘ᵐ fstᵐ) _
+  matchLᵐ-nil : ∀ {X A C} → (f : X →ᵐ C) → (g : (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C)
+              → matchLᵐ (nilᵐ ∘ᵐ terminalᵐ) f g ≈ᵐ f
+  matchLᵐ-nil f g =
+      match+ᵐ-cong (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ unconsᵐ-nil) ≈ᵐ-refl ≈ᵐ-refl
+    ∙ match+ᵐ-inl terminalᵐ (f ∘ᵐ fstᵐ) _
     ∙ ∘ᵐ-assoc _ _ _
     ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
     ∙ ∘ᵐ-identityʳ f
 
-  caseLᵐ-cons : ∀ {X A C} → (v : X →ᵐ A) → (w : X →ᵐ Listᵐ A)
-              → (f : X →ᵐ C) → (g : (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C)
-              → caseLᵐ (consᵐ ∘ᵐ ⟨ v , w ⟩ᵐ) f g ≈ᵐ g ∘ᵐ ⟨ ⟨ idᵐ , v ⟩ᵐ , w ⟩ᵐ
-  caseLᵐ-cons v w f g =
-      caseᵐ-cong (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ unconsᵐ-cons) ≈ᵐ-refl ≈ᵐ-refl
-    ∙ caseᵐ-inr ⟨ v , w ⟩ᵐ _ _
+  matchLᵐ-cons : ∀ {X A C} → (v : X →ᵐ A) → (w : X →ᵐ Listᵐ A)
+               → (f : X →ᵐ C) → (g : (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C)
+               → matchLᵐ (consᵐ ∘ᵐ ⟨ v , w ⟩ᵐ) f g ≈ᵐ g ∘ᵐ ⟨ ⟨ idᵐ , v ⟩ᵐ , w ⟩ᵐ
+  matchLᵐ-cons v w f g =
+      match+ᵐ-cong (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ unconsᵐ-cons) ≈ᵐ-refl ≈ᵐ-refl
+    ∙ match+ᵐ-inr ⟨ v , w ⟩ᵐ _ _
     ∙ ∘ᵐ-assoc _ _ _
     ∙ ∘ᵐ-congʳ (×ᵐ-assoc⁻¹-⟨⟩ idᵐ v w)
 
-  caseLᵐ-∘ : ∀ {Y X A C} → (s : X →ᵐ Listᵐ A) → (f : X →ᵐ C)
-           → (g : (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C) → (h : Y →ᵐ X)
-           → caseLᵐ s f g ∘ᵐ h
-           ≈ᵐ caseLᵐ (s ∘ᵐ h) (f ∘ᵐ h) (g ∘ᵐ mapˣᵐ (mapˣᵐ h idᵐ) idᵐ)
-  caseLᵐ-∘ s f g h =
-      caseᵐ-∘ _ _ _ h
-    ∙ caseᵐ-cong (∘ᵐ-assoc _ _ _)
+  matchLᵐ-∘ : ∀ {Y X A C} → (s : X →ᵐ Listᵐ A) → (f : X →ᵐ C)
+            → (g : (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C) → (h : Y →ᵐ X)
+            → matchLᵐ s f g ∘ᵐ h
+            ≈ᵐ matchLᵐ (s ∘ᵐ h) (f ∘ᵐ h) (g ∘ᵐ mapˣᵐ (mapˣᵐ h idᵐ) idᵐ)
+  matchLᵐ-∘ s f g h =
+      match+ᵐ-∘ _ _ _ h
+    ∙ match+ᵐ-cong (∘ᵐ-assoc _ _ _)
         (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
         (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (×ᵐ-assoc⁻¹-mapˣᵐ h) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
 
   -- η: a map out of `X ×ᵐ Listᵐ A` is determined by its nil and cons
   -- instances
 
-  caseLᵐ-η : ∀ {X A C} → (s : X →ᵐ Listᵐ A) → (m : X ×ᵐ Listᵐ A →ᵐ C)
-           → m ∘ᵐ ⟨ idᵐ , s ⟩ᵐ
-           ≈ᵐ caseLᵐ s (m ∘ᵐ ⟨ idᵐ , nilᵐ ∘ᵐ terminalᵐ ⟩ᵐ)
+  matchLᵐ-η : ∀ {X A C} → (s : X →ᵐ Listᵐ A) → (m : X ×ᵐ Listᵐ A →ᵐ C)
+            → m ∘ᵐ ⟨ idᵐ , s ⟩ᵐ
+            ≈ᵐ matchLᵐ s (m ∘ᵐ ⟨ idᵐ , nilᵐ ∘ᵐ terminalᵐ ⟩ᵐ)
                        (m ∘ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , consᵐ ∘ᵐ mapˣᵐ sndᵐ idᵐ ⟩ᵐ)
-  caseLᵐ-η {X} {A} {C} s m =
+  matchLᵐ-η {X} {A} {C} s m =
       ∘ᵐ-congʳ ⟨ ≈ᵐ-refl
                , ≈ᵐ-sym (∘ᵐ-identityˡ s)
                  ∙ ∘ᵐ-congˡ (≈ᵐ-sym [nil,cons]-unconsᵐ)
                  ∙ ∘ᵐ-assoc _ _ _ ⟩ᵐ-cong
     ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-mapˣᵐ [ nilᵐ , consᵐ ]ᵐ (unconsᵐ ∘ᵐ s))
     ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-    ∙ caseᵐ-η (unconsᵐ ∘ᵐ s) (m ∘ᵐ mapˣᵐ idᵐ [ nilᵐ , consᵐ ]ᵐ)
-    ∙ caseᵐ-cong ≈ᵐ-refl (branch nilᵐ nil-side ([]ᵐ-inlᵐ _ _))
-                         (branch consᵐ cons-side ([]ᵐ-inrᵐ _ _))
+    ∙ match+ᵐ-η (unconsᵐ ∘ᵐ s) (m ∘ᵐ mapˣᵐ idᵐ [ nilᵐ , consᵐ ]ᵐ)
+    ∙ match+ᵐ-cong ≈ᵐ-refl (branch nilᵐ nil-side ([]ᵐ-inlᵐ _ _))
+                           (branch consᵐ cons-side ([]ᵐ-inrᵐ _ _))
     where
       -- a branch: the copairing restricted along an injection
       branch : ∀ {B} {k : X ×ᵐ B →ᵐ C} → (c : B →ᵐ Listᵐ A) → m ∘ᵐ mapˣᵐ idᵐ c ≈ᵐ k
@@ -1429,12 +1429,12 @@ record Category : Set₂ where
                            ∙ ⟨ ⟨⟩ᵐ-sndᵐ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
                            ∙ ≈ᵐ-sym sndᵐ-split) ⟩ᵐ-cong
 
-  caseLᵐ-post : ∀ {X A C D} → (s : X →ᵐ Listᵐ A)
-              → (f : X →ᵐ C) → (g : (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C) → (k : C →ᵐ D)
-              → k ∘ᵐ caseLᵐ s f g ≈ᵐ caseLᵐ s (k ∘ᵐ f) (k ∘ᵐ g)
-  caseLᵐ-post s f g k =
-    caseᵐ-post _ _ _ k
-    ∙ caseᵐ-cong ≈ᵐ-refl (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  matchLᵐ-post : ∀ {X A C D} → (s : X →ᵐ Listᵐ A)
+               → (f : X →ᵐ C) → (g : (X ×ᵐ A) ×ᵐ Listᵐ A →ᵐ C) → (k : C →ᵐ D)
+               → k ∘ᵐ matchLᵐ s f g ≈ᵐ matchLᵐ s (k ∘ᵐ f) (k ∘ᵐ g)
+  matchLᵐ-post s f g k =
+    match+ᵐ-post _ _ _ k
+    ∙ match+ᵐ-cong ≈ᵐ-refl (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
 
 
   -- FOLDS AND PRIMITIVE RECURSION ON LISTS IN A CONTEXT

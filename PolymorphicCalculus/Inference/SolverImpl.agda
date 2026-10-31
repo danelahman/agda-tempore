@@ -388,7 +388,7 @@ record Reported {Θ₀ Θ : Scope} (w : Subst Θ₀ Θ) (X : OCType Θ) (C : Con
     to-Q̃   : (δ : Subst Θ' ∅ˢ) → ∅ᴴ ⊩ᴴ Q̂ [ δ ] → ∅ᴴ ⊩ᴴ Q̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]
     to-R̃   : (δ : Subst Θ' ∅ˢ) → δ ⊨ Q̂ ∣ R → ∅ᴴ ⊩ᴼˢ R̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]
     princ  : (δ : Subst Θ' ∅ˢ) → ∅ᴴ ⊩ᴴ Q̂ [ δ ]
-           → ∅ᴴ ∣ X̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]ᶜ <:̂ᶜ X [ σ ]ᶜ [ δ ]ᶜ
+           → ∅ᴴ ⊩ X̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]ᶜ <:̂ᶜ X [ σ ]ᶜ [ δ ]ᶜ
     ext-ι  : ∀ {Ω} → (δ : Subst Θ̃ Ω) → Σ[ δ' ∈ Subst Θ' Ω ] (⌜ ι ⌝ʳ ⨟ˢ δ' ≐ˢ δ)
 
 -- An entry with its grade expressions in canonical form means the same
@@ -587,7 +587,7 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ (Q̃ ++ᵠ R̃) X̃ inst' fac
         τ = η ⨟ˢ π ⨟ˢ δ
         h  = proj₁ (++ᵠ⇒ hh)
         hs = proj₂ (++ᵠ⇒ hh)
-        i = PrincipalSolution.instantiate p τ Q' (++ᵠ⇐ (⊩ᴴ-⨟ h hQ , hR δ Q' hs))
+        i = PrincipalSolution.sound p τ Q' (++ᵠ⇐ (⊩ᴴ-⨟ h hQ , hR δ Q' hs))
         D = proj₁ i
         e = proj₂ i
 
@@ -601,7 +601,7 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ (Q̃ ++ᵠ R̃) X̃ inst' fac
         → (D₀ : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ C₀) → ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
         → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀
         → Σ[ δ ∈ Subst Θ̃ ∅ˢ ]
-            ((σ̃ ⨟ˢ δ ≐ˢ σ₀ ⨟ˢ δ₀) × (δ ⊨ Q̃ ++ᵠ R̃) × (∅ᴴ ∣ X̃ [ δ ]ᶜ <:̂ᶜ C₀ [ δ₀ ]ᶜ))
+            ((σ̃ ⨟ˢ δ ≐ˢ σ₀ ⨟ˢ δ₀) × (δ ⊨ Q̃ ++ᵠ R̃) × (∅ᴴ ⊩ X̃ [ δ ]ᶜ <:̂ᶜ C₀ [ δ₀ ]ᶜ))
     fac σ₀ Q₀ {A₀ ! ε₀} D₀ e₀ δ₀ h₀ =
       ⌜ ι ⌝ʳ ⨟ˢ δ' , agree , ⊨++ᵠ⇐ (to-Q̃ δ' hQ̂ , to-R̃ δ' (hQ̂ , proj₂ hq)) ,
       <:̂ᶜ-trans (princ δ' hQ̂) below
@@ -621,9 +621,9 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ (Q̃ ++ᵠ R̃) X̃ inst' fac
           ≐ˢ-trans (≐ˢ-sym (⨟-assoc σ̃ ⌜ ι ⌝ʳ δ'))
           (≐ˢ-trans (⨟-congˡ σ̃-ι δ') ceq₁)
 
-        below : ∅ᴴ ∣ X [ σ ]ᶜ [ δ' ]ᶜ <:̂ᶜ (A₀ ! ε₀) [ δ₀ ]ᶜ
+        below : ∅ᴴ ⊩ X [ σ ]ᶜ [ δ' ]ᶜ <:̂ᶜ (A₀ ! ε₀) [ δ₀ ]ᶜ
         below =
-          subst (λ A → ∅ᴴ ∣ A ! t̂ Θ [ σ ]ᵉ [ δ' ]ᵉ <:̂ᶜ A₀ [ δ₀ ]ᵛ ! ε₀ [ δ₀ ]ᵉ)
+          subst (λ A → ∅ᴴ ⊩ A ! t̂ Θ [ σ ]ᵉ [ δ' ]ᵉ <:̂ᶜ A₀ [ δ₀ ]ᵛ ! ε₀ [ δ₀ ]ᵉ)
                 (sym aeq) (<:̂ᵛ-refl (A₀ [ δ₀ ]ᵛ) !ₛ le)
 
 -- The solver's answer, closed: an instance types `M`, and a typing
@@ -637,7 +637,7 @@ answer-typable Γ M {σ = σ} e (δ , h) =
   typable ∅ˢ (wk₊ ⨟ˢ (σ ⨟ˢ δ)) ∅ᴴ _ (ctx-substᶜ ceq D₀)
           (trans (⌊ctxᶜ⌋ ceq D₀) (trans (proj₂ i) meq)) (idˢ , ⊩ᴵ-∅)
   where
-    i  = PrincipalSolution.instantiate
+    i  = PrincipalSolution.sound
            (principalSolution solver Γ M (runSolver-++ᵠ C[ Γ , M ] e)) δ ∅ᴴ (⊨⇒⊩ᴴ h)
     D₀ = proj₁ i
 

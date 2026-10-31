@@ -82,7 +82,7 @@ eg v ε ε' [ σ ∣ τ ]ᴾ = eg v (ε [ σ ]ᵉ) (ε' [ τ ]ᵉ)
 -- The demand a pair of parts makes, at its variance
 
 Holdsᴾ : ∀ {Ω} → Hyps Ω → Part Ω → Set
-Holdsᴾ Q (ty v A B)  = At v (Q ∣_<:̂ᵛ_) A B
+Holdsᴾ Q (ty v A B)  = At v (Q ⊩_<:̂ᵛ_) A B
 Holdsᴾ Q (rg v ρ ρ') = At v (Q ⊩_≾̂ᵣ_) ρ ρ'
 Holdsᴾ Q (eg v ε ε') = At v (Q ⊩_≾̂ₑ_) ε ε'
 
@@ -177,7 +177,7 @@ eternal ⇛ᴰ          = false
 
 <:-intro : ∀ {Ω Ω'} {Q : Hyps Ω'} {A B : OVType Ω} {ps} → Decomp A B ps
          → (σ τ : Subst Ω Ω') → All (λ p → Holdsᴾ Q (p [ σ ∣ τ ]ᴾ)) ps
-         → Q ∣ A [ σ ]ᵛ <:̂ᵛ B [ τ ]ᵛ
+         → Q ⊩ A [ σ ]ᵛ <:̂ᵛ B [ τ ]ᵛ
 <:-intro Baseᴰ  σ τ []              = Baseₛ refl
 <:-intro unitᴰ  σ τ []              = unitₛ
 <:-intro boolᴰ  σ τ []              = boolₛ
@@ -191,7 +191,7 @@ eternal ⇛ᴰ          = false
 <:-intro ⇛ᴰ     σ τ (p ∷ e ∷ q ∷ e' ∷ []) = (p !ₛ e) ⇛ₛ (q !ₛ e')
 
 <:-elim : ∀ {Ω Ω'} {Q : Hyps Ω'} {A B : OVType Ω} {ps} → Decomp A B ps
-        → (σ τ : Subst Ω Ω') → Q ∣ A [ σ ]ᵛ <:̂ᵛ B [ τ ]ᵛ
+        → (σ τ : Subst Ω Ω') → Q ⊩ A [ σ ]ᵛ <:̂ᵛ B [ τ ]ᵛ
         → All (λ p → Holdsᴾ Q (p [ σ ∣ τ ]ᴾ)) ps
 <:-elim Baseᴰ  σ τ (Baseₛ _)        = []
 <:-elim unitᴰ  σ τ unitₛ            = []

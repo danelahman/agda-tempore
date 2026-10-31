@@ -43,7 +43,7 @@ module _ {Θ : Scope} (Q : Hyps Θ) where
   -- The premises of the rule of a value's former, at a type
 
   HeadV : ∀ {n} → OCtx Θ n → RunV n → OVType Θ → Set
-  HeadV Γ (var i)       T = Σ[ ρ ∈ RExp Θ ] Σ[ x ∈ T ∈̂[ ρ ] Γ ] (var-pos x ≡ i) × VarOK Q T ρ
+  HeadV Γ (var i)       T = Σ[ ρ ∈ RExp Θ ] Σ[ x ∈ T ∈̂[ ρ ] Γ ] (var-pos x ≡ i) × Q ⊩ T Et∨≾ᵘ ρ
   HeadV Γ (usedef k)    T =
     Σ[ s ∈ Scheme ] Σ[ f ∈ s ∈ᵖ[ k ] defs Γ ] Σ[ δ ∈ Subst (Θˢ s) Θ ]
       (Q ⊩ᴴ Qˢ s [ δ ]) × (T ≡ Xˢ s [ δ ]ᵛ)
@@ -67,7 +67,7 @@ module _ {Θ : Scope} (Q : Hyps Θ) where
   HeadV Γ (cmp ⋈ V W)   T =
     (T ≡ bool) × Σ[ A ∈ OVType Θ ] (Q ⊩Et A)
       × (Σ[ D ∈ Q ∣ Γ ⊢V⦂ A ] ∥ D ∥ᵛ ≡ V) × (Σ[ E ∈ Q ∣ Γ ⊢V⦂ A ] ∥ E ∥ᵛ ≡ W)
-  HeadV Γ (lam M)       T =
+  HeadV Γ (fun M)       T =
     Σ[ A ∈ OVType Θ ] Σ[ C ∈ OCType Θ ] (T ≡ A ⇒ C) × (Σ[ D ∈ Q ∣ Γ ∷ A ⊢C⦂ C ] ∥ D ∥ᶜ ≡ M)
   HeadV Γ (handler N H) T =
     Σ[ A ∈ OVType Θ ] Σ[ B ∈ OVType Θ ] Σ[ ε ∈ EExp Θ ] Σ[ ε' ∈ EExp Θ ]
@@ -77,77 +77,77 @@ module _ {Θ : Scope} (Q : Hyps Θ) where
            ((op : Op) → ∥ E op ∥ᶜ ≡ H op))
 
   InvV : ∀ {n} → OCtx Θ n → RunV n → OVType Θ → Set
-  InvV Γ V T = Σ[ T₀ ∈ OVType Θ ] HeadV Γ V T₀ × Q ∣ T₀ <:̂ᵛ T
+  InvV Γ V T = Σ[ T₀ ∈ OVType Θ ] HeadV Γ V T₀ × Q ⊩ T₀ <:̂ᵛ T
 
   -- The premises of the rule of a computation's former, at a type
 
   HeadC : ∀ {n} → OCtx Θ n → RunC n → OCType Θ → Set
-  HeadC Γ (return V)                C =
+  HeadC Γ (return V)                 C =
     Σ[ A ∈ OVType Θ ] (C ≡ A ! 𝟏̂ₑ) × (Σ[ D ∈ Q ∣ Γ ⊢V⦂ A ] ∥ D ∥ᵛ ≡ V)
-  HeadC Γ (M ⨟ N)                   C =
+  HeadC Γ (M ⨟ N)                    C =
     Σ[ A ∈ OVType Θ ] Σ[ B ∈ OVType Θ ] Σ[ ε ∈ EExp Θ ] Σ[ ε' ∈ EExp Θ ]
       (C ≡ B ! (ε ·̂ₑ ε'))
       × (Σ[ D ∈ Q ∣ Γ ⊢C⦂ A ! ε ] ∥ D ∥ᶜ ≡ M)
       × (Σ[ E ∈ Q ∣ Γ ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ A ⊢C⦂ B ! ε' ] ∥ E ∥ᶜ ≡ N)
-  HeadC Γ (V · W)                   C =
+  HeadC Γ (V · W)                    C =
     Σ[ A ∈ OVType Θ ] (Σ[ D ∈ Q ∣ Γ ⊢V⦂ A ⇒ C ] ∥ D ∥ᵛ ≡ V) × (Σ[ E ∈ Q ∣ Γ ⊢V⦂ A ] ∥ E ∥ᵛ ≡ W)
-  HeadC Γ (match V `in M)           C =
+  HeadC Γ (match V `with M)          C =
     Σ[ A ∈ OVType Θ ] Σ[ B ∈ OVType Θ ]
       (Σ[ D ∈ Q ∣ Γ ⊢V⦂ A |×| B ] ∥ D ∥ᵛ ≡ V) × (Σ[ E ∈ Q ∣ Γ ∷ A ∷ B ⊢C⦂ C ] ∥ E ∥ᶜ ≡ M)
-  HeadC Γ (absurd V)                C = Σ[ D ∈ Q ∣ Γ ⊢V⦂ empty ] ∥ D ∥ᵛ ≡ V
-  HeadC Γ (if V `then M `else N)    C =
+  HeadC Γ (absurd V)                 C = Σ[ D ∈ Q ∣ Γ ⊢V⦂ empty ] ∥ D ∥ᵛ ≡ V
+  HeadC Γ (if V `then M `else N)     C =
     (Σ[ D ∈ Q ∣ Γ ⊢V⦂ bool ] ∥ D ∥ᵛ ≡ V)
       × (Σ[ E ∈ Q ∣ Γ ⊢C⦂ C ] ∥ E ∥ᶜ ≡ M) × (Σ[ F ∈ Q ∣ Γ ⊢C⦂ C ] ∥ F ∥ᶜ ≡ N)
-  HeadC Γ (caseℕ V `zero M `succ N) C =
+  HeadC Γ (matchℕ V `zero M `succ N) C =
     (Σ[ D ∈ Q ∣ Γ ⊢V⦂ nat ] ∥ D ∥ᵛ ≡ V)
       × (Σ[ E ∈ Q ∣ Γ ⊢C⦂ C ] ∥ E ∥ᶜ ≡ M) × (Σ[ F ∈ Q ∣ Γ ∷ nat ⊢C⦂ C ] ∥ F ∥ᶜ ≡ N)
-  HeadC Γ (case+ V `inl M `inr N)   C =
+  HeadC Γ (match+ V `inl M `inr N)   C =
     Σ[ A ∈ OVType Θ ] Σ[ B ∈ OVType Θ ]
       (Σ[ D ∈ Q ∣ Γ ⊢V⦂ A |+| B ] ∥ D ∥ᵛ ≡ V)
       × (Σ[ E ∈ Q ∣ Γ ∷ A ⊢C⦂ C ] ∥ E ∥ᶜ ≡ M) × (Σ[ F ∈ Q ∣ Γ ∷ B ⊢C⦂ C ] ∥ F ∥ᶜ ≡ N)
-  HeadC Γ (caseL V `nil M `cons N)  C =
+  HeadC Γ (matchL V `nil M `cons N)  C =
     Σ[ A ∈ OVType Θ ]
       (Σ[ D ∈ Q ∣ Γ ⊢V⦂ list A ] ∥ D ∥ᵛ ≡ V)
       × (Σ[ E ∈ Q ∣ Γ ⊢C⦂ C ] ∥ E ∥ᶜ ≡ M)
       × (Σ[ F ∈ Q ∣ Γ ∷ A ∷ list A ⊢C⦂ C ] ∥ F ∥ᶜ ≡ N)
-  HeadC Γ (recℕ V M N)              C =
+  HeadC Γ (recℕ V M N)               C =
     Σ[ B ∈ OVType Θ ] Σ[ ε ∈ EExp Θ ] (C ≡ B ! ε)
       × (Σ[ D ∈ Q ∣ Γ ⊢V⦂ nat ] ∥ D ∥ᵛ ≡ V)
       × (Σ[ E ∈ Q ∣ Γ ⊢C⦂ B ! ε ] ∥ E ∥ᶜ ≡ M)
       × (Σ[ F ∈ Q ∣ (Γ ⟨ rconst ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B ⊢C⦂ B ! ε ] ∥ F ∥ᶜ ≡ N)
       × (Q ⊩ ε ·̂ₑ ε ≾̂ₑ ε)
-  HeadC Γ (recL V M N)              C =
+  HeadC Γ (recL V M N)               C =
     Σ[ A ∈ OVType Θ ] Σ[ B ∈ OVType Θ ] Σ[ ε ∈ EExp Θ ] (C ≡ B ! ε)
       × (Σ[ D ∈ Q ∣ Γ ⊢V⦂ list A ] ∥ D ∥ᵛ ≡ V)
       × (Σ[ E ∈ Q ∣ Γ ⊢C⦂ B ! ε ] ∥ E ∥ᶜ ≡ M)
       × (Σ[ F ∈ Q ∣ (Γ ⟨ rconst ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B ⊢C⦂ B ! ε ]
            ∥ F ∥ᶜ ≡ N)
       × (Q ⊩ ε ·̂ₑ ε ≾̂ₑ ε)
-  HeadC Γ (perform op V M)          C =
+  HeadC Γ (perform op V M)           C =
     Σ[ A ∈ OVType Θ ] Σ[ ε ∈ EExp Θ ] (C ≡ A ! (econst (op-grade op) ·̂ₑ ε))
       × (Σ[ D ∈ Q ∣ Γ ⊢V⦂ ⌜ param op ⌝ᵍ ] ∥ D ∥ᵛ ≡ V)
       × (Σ[ E ∈ Q ∣ Γ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε ]
            ∥ E ∥ᶜ ≡ M)
-  HeadC Γ (delay τ M)               C =
+  HeadC Γ (delay τ M)                C =
     Σ[ A ∈ OVType Θ ] Σ[ ε ∈ EExp Θ ] (C ≡ A ! (econst (ιₑ τ) ·̂ₑ ε))
       × (Σ[ D ∈ Q ∣ Γ ⟨ rconst (ιᵣ τ) ⟩ ⊢C⦂ A ! ε ] ∥ D ∥ᶜ ≡ M)
-  HeadC Γ (handle M `with V)        C =
+  HeadC Γ (handle M `with V)         C =
     Σ[ A ∈ OVType Θ ] Σ[ B ∈ OVType Θ ] Σ[ ε ∈ EExp Θ ] Σ[ ε' ∈ EExp Θ ]
       (C ≡ B ! (ε ·̂ₑ ε'))
       × (Σ[ D ∈ Q ∣ Γ ⊢C⦂ A ! ε ] ∥ D ∥ᶜ ≡ M)
       × (Σ[ E ∈ Q ∣ Γ ⊢V⦂ (A ! ε) ⇛ (B ! ε') ] ∥ E ∥ᵛ ≡ V)
-  HeadC Γ (unbox V N)               C =
+  HeadC Γ (unbox V N)                C =
     Σ[ ρ₀ ∈ RExp Θ ] Σ[ X₀ ∈ OVType Θ ] Σ[ ρ' ∈ RExp Θ ] Σ[ ρ ∈ RExp Θ ]
       Σ[ X ∈ OVType Θ ] Σ[ z ∈ [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ ]
       (Σ[ R ∈ Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X ] eraseᵛ ⌊ R ⌋ʳ ≡ V)
       × (Q ⊩ ρ' ≾̂ᵣ ρ)
       × (Σ[ D ∈ Q ∣ Γ ∷ X ⊢C⦂ C ] ∥ D ∥ᶜ ≡ N)
-  HeadC Γ (box V N)                 C =
+  HeadC Γ (box V N)                  C =
     Σ[ ρ ∈ RExp Θ ] Σ[ A ∈ OVType Θ ]
       (Σ[ D ∈ Q ∣ Γ ⟨ ρ ⟩ ⊢V⦂ A ] ∥ D ∥ᵛ ≡ V) × (Σ[ E ∈ Q ∣ Γ ∷ [ ρ ] A ⊢C⦂ C ] ∥ E ∥ᶜ ≡ N)
 
   InvC : ∀ {n} → OCtx Θ n → RunC n → OCType Θ → Set
-  InvC Γ M C = Σ[ C₀ ∈ OCType Θ ] HeadC Γ M C₀ × Q ∣ C₀ <:̂ᶜ C
+  InvC Γ M C = Σ[ C₀ ∈ OCType Θ ] HeadC Γ M C₀ × Q ⊩ C₀ <:̂ᶜ C
 
 module _ {Θ : Scope} {Q : Hyps Θ} where
 
@@ -166,7 +166,7 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
   invV nil                      = _ , (_ , refl) , <:̂ᵛ-refl _
   invV (cons V W)               = _ , (_ , refl , (V , refl) , (W , refl)) , <:̂ᵛ-refl _
   invV (cmp ⋈ V W et)           = _ , (refl , _ , et , (V , refl) , (W , refl)) , <:̂ᵛ-refl _
-  invV (lam M)                  = _ , (_ , _ , refl , (M , refl)) , <:̂ᵛ-refl _
+  invV (fun M)                  = _ , (_ , _ , refl , (M , refl)) , <:̂ᵛ-refl _
   invV (handler N H)            =
     _ , (_ , _ , _ , _ , refl , (N , refl) , (H , λ op → refl)) , <:̂ᵛ-refl _
   invV (annᵛ A V)               = invV V
@@ -174,27 +174,27 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
   ... | T₀ , h , q              = T₀ , h , <:̂ᵛ-trans q p
 
   invC : ∀ {n} {Γ : OCtx Θ n} {C : OCType Θ} → (D : Q ∣ Γ ⊢C⦂ C) → InvC Q Γ ∥ D ∥ᶜ C
-  invC (return V)                = _ , (_ , refl , (V , refl)) , <:̂ᶜ-refl _
-  invC (M ⨟ N)                   = _ , (_ , _ , _ , _ , refl , (M , refl) , (N , refl)) , <:̂ᶜ-refl _
-  invC (V · W)                   = _ , (_ , (V , refl) , (W , refl)) , <:̂ᶜ-refl _
-  invC (match V `in M)           = _ , (_ , _ , (V , refl) , (M , refl)) , <:̂ᶜ-refl _
-  invC (absurd V)                = _ , (V , refl) , <:̂ᶜ-refl _
-  invC (if V `then M `else N)    = _ , ((V , refl) , (M , refl) , (N , refl)) , <:̂ᶜ-refl _
-  invC (caseℕ V `zero M `succ N) = _ , ((V , refl) , (M , refl) , (N , refl)) , <:̂ᶜ-refl _
-  invC (case+ V `inl M `inr N)   = _ , (_ , _ , (V , refl) , (M , refl) , (N , refl)) , <:̂ᶜ-refl _
-  invC (caseL V `nil M `cons N)  = _ , (_ , (V , refl) , (M , refl) , (N , refl)) , <:̂ᶜ-refl _
-  invC (recℕ V M N p)            =
+  invC (return V)                 = _ , (_ , refl , (V , refl)) , <:̂ᶜ-refl _
+  invC (M ⨟ N)                    = _ , (_ , _ , _ , _ , refl , (M , refl) , (N , refl)) , <:̂ᶜ-refl _
+  invC (V · W)                    = _ , (_ , (V , refl) , (W , refl)) , <:̂ᶜ-refl _
+  invC (match V `with M)          = _ , (_ , _ , (V , refl) , (M , refl)) , <:̂ᶜ-refl _
+  invC (absurd V)                 = _ , (V , refl) , <:̂ᶜ-refl _
+  invC (if V `then M `else N)     = _ , ((V , refl) , (M , refl) , (N , refl)) , <:̂ᶜ-refl _
+  invC (matchℕ V `zero M `succ N) = _ , ((V , refl) , (M , refl) , (N , refl)) , <:̂ᶜ-refl _
+  invC (match+ V `inl M `inr N)   = _ , (_ , _ , (V , refl) , (M , refl) , (N , refl)) , <:̂ᶜ-refl _
+  invC (matchL V `nil M `cons N)  = _ , (_ , (V , refl) , (M , refl) , (N , refl)) , <:̂ᶜ-refl _
+  invC (recℕ V M N p)             =
     _ , (_ , _ , refl , (V , refl) , (M , refl) , (N , refl) , p) , <:̂ᶜ-refl _
-  invC (recL V M N p)            =
+  invC (recL V M N p)             =
     _ , (_ , _ , _ , refl , (V , refl) , (M , refl) , (N , refl) , p) , <:̂ᶜ-refl _
-  invC (perform op V M)          = _ , (_ , _ , refl , (V , refl) , (M , refl)) , <:̂ᶜ-refl _
-  invC (delay τ M)               = _ , (_ , _ , refl , (M , refl)) , <:̂ᶜ-refl _
-  invC (handle M `with V)        =
+  invC (perform op V M)           = _ , (_ , _ , refl , (V , refl) , (M , refl)) , <:̂ᶜ-refl _
+  invC (delay τ M)                = _ , (_ , _ , refl , (M , refl)) , <:̂ᶜ-refl _
+  invC (handle M `with V)         =
     _ , (_ , _ , _ , _ , refl , (M , refl) , (V , refl)) , <:̂ᶜ-refl _
-  invC (unbox R p N)             =
+  invC (unbox R p N)              =
     _ , (_ , _ , _ , _ , _ , _ , (R , refl) , p , (N , refl)) , <:̂ᶜ-refl _
-  invC (box ρ V N)               = _ , (_ , _ , (V , refl) , (N , refl)) , <:̂ᶜ-refl _
-  invC (annᶜ C M)                = invC M
+  invC (box ρ V N)                = _ , (_ , _ , (V , refl) , (N , refl)) , <:̂ᶜ-refl _
+  invC (annᶜ C M)                 = invC M
   invC (subC M p) with invC M
   ... | C₀ , h , q               = C₀ , h , <:̂ᶜ-trans q p
 
@@ -213,8 +213,8 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
 
 module _ {n : ℕ} where
 
-  data LamView : RunV n → Set where
-    is-lam : ∀ M → LamView (lam M)
+  data FunView : RunV n → Set where
+    is-fun : ∀ M → FunView (fun M)
 
   data HandlerView : RunV n → Set where
     is-handler : ∀ N H → HandlerView (handler N H)
@@ -260,10 +260,10 @@ module _ {Θ : Scope} {n : ℕ} {Q : Hyps Θ} {Γ : OCtx Θ n} (bx : BoxCtx Γ) 
     no-usedef : ∀ {s k} {P : Set} → s ∈ᵖ[ k ] defs Γ → P
     no-usedef f = ⊥-elim (∅ᵖ-∌ (subst (_ ∈ᵖ[ _ ]_) (proj₂ bx) f))
 
-  canon-⇒ : ∀ {A C} → (D : Q ∣ Γ ⊢V⦂ A ⇒ C) → LamView ∥ D ∥ᵛ
+  canon-⇒ : ∀ {A C} → (D : Q ∣ Γ ⊢V⦂ A ⇒ C) → FunView ∥ D ∥ᵛ
   canon-⇒ (var x p)          = no-var x (λ ())
   canon-⇒ (usedef f δ h e)   = no-usedef f
-  canon-⇒ (lam M)            = is-lam _
+  canon-⇒ (fun M)            = is-fun _
   canon-⇒ (annᵛ _ D)         = canon-⇒ D
   canon-⇒ (subV D (p ⇒ₛ q))  = canon-⇒ D
 
@@ -289,36 +289,36 @@ module _ {Θ : Scope} {n : ℕ} {Q : Hyps Θ} {Γ : OCtx Θ n} (bx : BoxCtx Γ) 
   canon-+ (annᵛ _ D)         = canon-+ D
   canon-+ (subV D (p |+|ₛ q)) = canon-+ D
 
-  canon-List : ∀ {A} → (D : Q ∣ Γ ⊢V⦂ list A) → ListView ∥ D ∥ᵛ
-  canon-List (var x p)          = no-var x (λ ())
-  canon-List (usedef f δ h e)   = no-usedef f
-  canon-List nil                = is-nil
-  canon-List (cons V W)         = is-cons _ _
-  canon-List (annᵛ _ D)         = canon-List D
-  canon-List (subV D (listₛ p)) = canon-List D
+  canon-list : ∀ {A} → (D : Q ∣ Γ ⊢V⦂ list A) → ListView ∥ D ∥ᵛ
+  canon-list (var x p)          = no-var x (λ ())
+  canon-list (usedef f δ h e)   = no-usedef f
+  canon-list nil                = is-nil
+  canon-list (cons V W)         = is-cons _ _
+  canon-list (annᵛ _ D)         = canon-list D
+  canon-list (subV D (listₛ p)) = canon-list D
 
-  canon-Nat : (D : Q ∣ Γ ⊢V⦂ nat) → NatView ∥ D ∥ᵛ
-  canon-Nat (var x p)        = no-var x (λ ())
-  canon-Nat (usedef f δ h e) = no-usedef f
-  canon-Nat zero             = is-zero
-  canon-Nat (succ V)         = is-succ _
-  canon-Nat (annᵛ _ D)       = canon-Nat D
-  canon-Nat (subV D natₛ)    = canon-Nat D
+  canon-nat : (D : Q ∣ Γ ⊢V⦂ nat) → NatView ∥ D ∥ᵛ
+  canon-nat (var x p)        = no-var x (λ ())
+  canon-nat (usedef f δ h e) = no-usedef f
+  canon-nat zero             = is-zero
+  canon-nat (succ V)         = is-succ _
+  canon-nat (annᵛ _ D)       = canon-nat D
+  canon-nat (subV D natₛ)    = canon-nat D
 
-  canon-Bool : (D : Q ∣ Γ ⊢V⦂ bool) → BoolView ∥ D ∥ᵛ
-  canon-Bool (var x p)        = no-var x (λ ())
-  canon-Bool (usedef f δ h e) = no-usedef f
-  canon-Bool true             = is-true
-  canon-Bool false            = is-false
-  canon-Bool (cmp ⋈ V W et)   = is-cmp _ _ _
-  canon-Bool (annᵛ _ D)       = canon-Bool D
-  canon-Bool (subV D boolₛ)   = canon-Bool D
+  canon-bool : (D : Q ∣ Γ ⊢V⦂ bool) → BoolView ∥ D ∥ᵛ
+  canon-bool (var x p)        = no-var x (λ ())
+  canon-bool (usedef f δ h e) = no-usedef f
+  canon-bool true             = is-true
+  canon-bool false            = is-false
+  canon-bool (cmp ⋈ V W et)   = is-cmp _ _ _
+  canon-bool (annᵛ _ D)       = canon-bool D
+  canon-bool (subV D boolₛ)   = canon-bool D
 
-  canon-Empty : (D : Q ∣ Γ ⊢V⦂ empty) → ⊥
-  canon-Empty (var x p)       = no-var x (λ ())
-  canon-Empty (usedef f δ h e) = no-usedef f
-  canon-Empty (annᵛ _ D)      = canon-Empty D
-  canon-Empty (subV D emptyₛ) = canon-Empty D
+  canon-empty : (D : Q ∣ Γ ⊢V⦂ empty) → ⊥
+  canon-empty (var x p)       = no-var x (λ ())
+  canon-empty (usedef f δ h e) = no-usedef f
+  canon-empty (annᵛ _ D)      = canon-empty D
+  canon-empty (subV D emptyₛ) = canon-empty D
 
 canon-box : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ A}
           → defs Γ ≡ ∅ᵖ → (D : Q ∣ Γ ⊢V⦂ [ ρ ] A) → VarView ∥ D ∥ᵛ

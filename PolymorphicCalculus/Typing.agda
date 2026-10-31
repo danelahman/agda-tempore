@@ -41,7 +41,7 @@ infix 26 _∣_⊢C⦂_
 infix 26 _∣_⊢↪[_]_⦂[_]_
 
 -- Resource values: a box-typed variable `z` at accumulated grade `ρ'`,
--- under annotations each lower in grade and higher in payload; no `VarOK`
+-- under annotations each lower in grade and higher in payload; no `_⊩_Et∨≾ᵘ_`
 
 data _∣_⊢↪[_]_⦂[_]_ {Θ : Scope} {n : ℕ} (Q : Hyps Θ) (Γ : OCtx Θ n) (ρ' : RExp Θ)
      {ρ₀ : RExp Θ} {X₀ : OVType Θ} (z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ)
@@ -54,7 +54,7 @@ data _∣_⊢↪[_]_⦂[_]_ {Θ : Scope} {n : ℕ} (Q : Hyps Θ) (Γ : OCtx Θ n
           → (ρₐ : RExp Θ) (Xₐ : OVType Θ)
           → Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X
           → Q ⊩ ρₐ ≾̂ᵣ ρ
-          → Q ∣ X <:̂ᵛ Xₐ
+          → Q ⊩ X <:̂ᵛ Xₐ
           -------------------------------
           → Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρₐ ] Xₐ
 
@@ -67,7 +67,7 @@ mutual
     var     : {A : OVType Θ}
             → {ρ : RExp Θ}
             → (x : A ∈̂[ ρ ] Γ)
-            → VarOK Q A ρ
+            → Q ⊩ A Et∨≾ᵘ ρ
             -------------
             → Q ∣ Γ ⊢V⦂ A
 
@@ -161,7 +161,7 @@ mutual
 
     -- lambda abstraction
 
-    lam     : {A : OVType Θ}
+    fun     : {A : OVType Θ}
             → {C : OCType Θ}
             → Q ∣ Γ ∷ A ⊢C⦂ C
             -----------------
@@ -192,7 +192,7 @@ mutual
 
     subV    : {A A' : OVType Θ}
             → Q ∣ Γ ⊢V⦂ A
-            → Q ∣ A <:̂ᵛ A'
+            → Q ⊩ A <:̂ᵛ A'
             --------------
             → Q ∣ Γ ⊢V⦂ A'
 
@@ -227,12 +227,12 @@ mutual
 
     -- pattern-matching
 
-    match_`in_ : {A B : OVType Θ}
-               → {C : OCType Θ}
-               → Q ∣ Γ ⊢V⦂ A |×| B
-               → Q ∣ Γ ∷ A ∷ B ⊢C⦂ C
-               ---------------------
-               → Q ∣ Γ ⊢C⦂ C
+    match_`with_ : {A B : OVType Θ}
+                 → {C : OCType Θ}
+                 → Q ∣ Γ ⊢V⦂ A |×| B
+                 → Q ∣ Γ ∷ A ∷ B ⊢C⦂ C
+                 ---------------------
+                 → Q ∣ Γ ⊢C⦂ C
 
     -- empty type elimination
 
@@ -253,7 +253,7 @@ mutual
 
     -- natural-number elimination
 
-    caseℕ_`zero_`succ_
+    matchℕ_`zero_`succ_
             : {C : OCType Θ}
             → Q ∣ Γ ⊢V⦂ nat
             → Q ∣ Γ ⊢C⦂ C
@@ -263,7 +263,7 @@ mutual
 
     -- sum elimination
 
-    case+_`inl_`inr_
+    match+_`inl_`inr_
             : {A B : OVType Θ}
             → {C : OCType Θ}
             → Q ∣ Γ ⊢V⦂ A |+| B
@@ -274,7 +274,7 @@ mutual
 
     -- list elimination
 
-    caseL_`nil_`cons_
+    matchL_`nil_`cons_
             : {A : OVType Θ}
             → {C : OCType Θ}
             → Q ∣ Γ ⊢V⦂ list A
@@ -370,7 +370,7 @@ mutual
 
     subC    : {C C' : OCType Θ}
             → Q ∣ Γ ⊢C⦂ C
-            → Q ∣ C <:̂ᶜ C'
+            → Q ⊩ C <:̂ᶜ C'
             --------------
             → Q ∣ Γ ⊢C⦂ C'
 

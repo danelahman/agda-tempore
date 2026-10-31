@@ -109,7 +109,7 @@ tagged-relaying =
   perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
                                      -- ∷ NodeId ∷ Reading
-      `in perform send here (return ⋆))
+      `with perform send here (return ⋆))
 
 ------------------------------------------------------------------------
 -- Readings go stale
@@ -182,14 +182,14 @@ sampling-then-branching =
 ------------------------------------------------------------------------
 -- Natural numbers
 --
--- `caseℕ` binds the predecessor in its successor branch, and, as for
+-- `matchℕ` binds the predecessor in its successor branch, and, as for
 -- `if`, both branches are coerced to one grade.
 
 is-zero : [] ⊢V⦂ nat ⇒ bool ! 𝟏ₑ
-is-zero = lam (caseℕ here `zero return true `succ return false)
+is-zero = fun (matchℕ here `zero return true `succ return false)
 
 predecessor : [] ⊢V⦂ nat ⇒ nat ! 𝟏ₑ
-predecessor = lam (caseℕ here `zero return zero `succ return here)
+predecessor = fun (matchℕ here `zero return zero `succ return here)
 
 two-before-three : [] ⊢C⦂ nat ! 𝟏ₑ
 two-before-three = predecessor · numeralᵛ 3
@@ -200,7 +200,7 @@ two-before-three = predecessor · numeralᵛ 3
 
 transmitting-if-pending : [] ∷ nat ∷ Reading ⊢C⦂ unit ! [0, 6 ]
 transmitting-if-pending =
-  caseℕ eternal-var natₑ (Tl-∷ Hd)
+  matchℕ eternal-var natₑ (Tl-∷ Hd)
     `zero coerce ≤! (return ⋆)
     `succ perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)  -- ∷ nat
 
@@ -226,7 +226,7 @@ count-survives =
 
 add : [] ⊢V⦂ nat ⇒ (nat ⇒ nat ! 𝟏ₑ) ! 𝟏ₑ
 add =
-  lam (return (lam
+  fun (return (fun
     (recℕ (eternal-var natₑ (Tl-∷ Hd))
       (return here)
       (return (succ here))         -- ⟨ ⊤ᵣ ⟩ ∷ nat ⟨ [0, 0 ] ⟩ ∷ nat
@@ -240,7 +240,7 @@ two-plus-three =
 
 rebuild : [] ⊢V⦂ nat ⇒ nat ! 𝟏ₑ
 rebuild =
-  lam (recℕ here
+  fun (recℕ here
         (return zero)
         (return (succ (eternal-var natₑ (Tl-∷ (Tl-⟨⟩ Hd)))))
         ≤!)
@@ -268,7 +268,7 @@ reading-barred-from-step ()
 
 countdown : [] ⊢V⦂ nat ⇒ unit ! ⊤ₑ
 countdown =
-  lam (recℕ here
+  fun (recℕ here
         (coerce (≾-⊤ₑ 𝟏ₑ) (return ⋆))
         (coerce (≾-⊤ₑ (ιₑ 1 ·ₑ 𝟏ₑ)) (delay 1 (return ⋆)))
                                    -- ⟨ ⊤ᵣ ⟩ ∷ nat ⟨ ⌈0, ∞ ⌉ ⟩ ∷ unit
@@ -285,11 +285,11 @@ tick-a-step-overruns = ≰!
 ------------------------------------------------------------------------
 -- Sums
 --
--- `case+` binds the injected value in the branch its injection names,
+-- `match+` binds the injected value in the branch its injection names,
 -- and, as for `if`, both branches are coerced to one grade.
 
 swap : ∀ {A B} → [] ⊢V⦂ (A |+| B) ⇒ (B |+| A) ! 𝟏ₑ
-swap = lam (case+ here `inl return (inr here) `inr return (inl here))
+swap = fun (match+ here `inl return (inr here) `inr return (inl here))
 
 -- a reading is transmitted, an identifier stands for none and costs
 -- nothing; the reading is bound by the branch itself, so `var` asks for
@@ -297,7 +297,7 @@ swap = lam (case+ here `inl return (inr here) `inr return (inl here))
 
 relaying-or-not : [] ∷ (Reading |+| NodeId) ⊢C⦂ unit ! [0, 6 ]
 relaying-or-not =
-  case+ here
+  match+ here
     `inl perform send here (return ⋆)  -- ∷ Reading
     `inr coerce ≤! (return ⋆)          -- ∷ NodeId
 
@@ -315,7 +315,7 @@ reading-or-tag-not-eternal (r |+|ₑ _) = reading-not-eternal r
 ------------------------------------------------------------------------
 -- Lists
 --
--- `caseL` binds the head and then the tail in its `cons` branch, and,
+-- `matchL` binds the head and then the tail in its `cons` branch, and,
 -- as for `if`, both branches are coerced to one grade.
 
 -- the first pending reading is transmitted, an empty list costs nothing;
@@ -323,7 +323,7 @@ reading-or-tag-not-eternal (r |+|ₑ _) = reading-not-eternal r
 
 transmitting-the-first : [] ∷ list Reading ⊢C⦂ unit ! [0, 6 ]
 transmitting-the-first =
-  caseL here
+  matchL here
     `nil coerce ≤! (return ⋆)
     `cons perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)
                                      -- ∷ Reading ∷ list Reading
@@ -352,7 +352,7 @@ readings-not-eternal (listₑ r) = reading-not-eternal r
 
 length : ∀ {A} → [] ⊢V⦂ list A ⇒ nat ! 𝟏ₑ
 length =
-  lam (recL here
+  fun (recL here
         (return zero)
         (return (succ here))         -- ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A ⟨ [0, 0 ] ⟩ ∷ nat
         ≤!)
@@ -366,7 +366,7 @@ three-readings-long =
 
 incrementing : [] ⊢V⦂ list nat ⇒ list nat ! 𝟏ₑ
 incrementing =
-  lam (recL here
+  fun (recL here
         (return nil)
         (return (cons (succ (eternal-var natₑ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))) here))
         ≤!)
@@ -376,7 +376,7 @@ incrementing =
 
 pacing : ∀ {A} → [] ⊢V⦂ list A ⇒ unit ! ⊤ₑ
 pacing =
-  lam (recL here
+  fun (recL here
         (coerce (≾-⊤ₑ 𝟏ₑ) (return ⋆))
         (coerce (≾-⊤ₑ (ιₑ 1 ·ₑ 𝟏ₑ)) (delay 1 (return ⋆)))
                                      -- ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A ⟨ ⌈0, ∞ ⌉ ⟩ ∷ unit
@@ -388,7 +388,7 @@ pacing =
 
 latest : [] ⊢V⦂ list Reading ⇒ (Reading |+| unit) ! 𝟏ₑ
 latest =
-  lam (recL here
+  fun (recL here
         (return (inr ⋆))
         (return (inl (fresh-var ≤! (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))))
                                      -- ⟨ ⊤ᵣ ⟩ ∷ Reading ∷ list Reading
@@ -528,7 +528,7 @@ idling-spends-it = ≰!
 handed-over : [] ⊢C⦂ unit ! [0, 7 ]
 handed-over =
   box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
-    (lam                             -- ∷ [ [0, 6 ] ] Reading
+    (fun                             -- ∷ [ [0, 6 ] ] Reading
        (perform read ⋆               -- ⟨ [0, 1 ] ⟩ ∷ Reading
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading

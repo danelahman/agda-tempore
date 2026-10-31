@@ -73,7 +73,7 @@ private
 
   -- A variable no time has passed over
 
-  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → VarOK Q A 𝟏̂ᵣ
+  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → Q ⊩ A Et∨≾ᵘ 𝟏̂ᵣ
   ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
   -- A claim, or a use, after one closed grade below the bound
@@ -116,13 +116,13 @@ expected-embargoed d = ∀[ 0 , 0 , 0 ] ⊤ ⟹ unit ! ⌜ d ⌝ᵉ
 
 transmitted : RExp ∅ˢ → Op → ℕ → RawC ∅ˢ 0
 transmitted c op d =
-  return (lam (box c ⋆ (perform op v₁ (delay ⌜ d ⌝ (unbox (var (fsuc fzero)) (return v₀))))))
+  return (fun (box c ⋆ (perform op v₁ (delay ⌜ d ⌝ (unbox (var (fsuc fzero)) (return v₀))))))
 
 transmitted-D : ∀ c op d → ∣ op-grade op ∣ᵉ ·ᵣ ιᵣ ⌜ d ⌝ ≾ᴳ c
               → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂
                   (⌜ param op ⌝ᵍ ⇒ unit ! (econst (op-grade op) ·̂ₑ (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ))) ! 𝟏̂ₑ
 transmitted-D c op d p =
-  return (lam (box (rconst c) ⋆
+  return (fun (box (rconst c) ⋆
     (perform op (var (Tl-∷ Hd) ok₀)
       (delay ⌜ d ⌝ (unbox (res-var {z = Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))}) (after₂ p)
                   (return (var Hd ok₀)))))))
@@ -146,7 +146,7 @@ expected-transmitted op d =
 
 joined-claim : Op → Op → Op → RawC ∅ˢ 0
 joined-claim op₀ op₁ op₂ =
-  return (lam (return (lam
+  return (fun (return (fun
     (perform op₀ ⋆
       ((if v₁ `then perform op₁ v₀ (return ⋆) `else perform op₂ v₀ (return ⋆))
        ⨟ unbox (var (fsuc (fsuc (fsuc fzero)))) (return v₀))))))
@@ -168,7 +168,7 @@ expected-joined-claim op₀ op₁ op₂ =
 
 publish : Op → RawC ∅ˢ 0
 publish op =
-  return (lam (return (lam
+  return (fun (return (fun
     ((v₁ · ⋆) ⨟ perform op v₀ (unbox (var (fsuc (fsuc fzero))) (return v₀))))))
 
 expected-publish : Op → Scheme
@@ -186,13 +186,13 @@ expected-publish op =
 -- A reading is not eternal: `var` asks `op-grade op ≾ 𝟏ᵣ`.
 
 twice : Op → RawC ∅ˢ 0
-twice op = return (lam (perform op v₀ (perform op v₁ (return ⋆))))
+twice op = return (fun (perform op v₀ (perform op v₁ (return ⋆))))
 
 twice-D : ∀ op → ∣ op-grade op ∣ᵉ ≾ᴳ 𝟏ᵣ
         → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂
             (⌜ param op ⌝ᵍ ⇒ unit ! (econst (op-grade op) ·̂ₑ (econst (op-grade op) ·̂ₑ 𝟏̂ₑ))) ! 𝟏̂ₑ
 twice-D op q =
-  return (lam (perform op (var Hd ok₀)
+  return (fun (perform op (var Hd ok₀)
     (perform op (var (Tl-∷ (Tl-⟨⟩ Hd)) (≾ᵘ-ok (after q))) (return ⋆))))
 
 twice-typable : ∀ op → True (∣ op-grade op ∣ᵉ ≾ᵣ? 𝟏ᵣ) → Typable [] (twice op)

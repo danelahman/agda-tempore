@@ -86,7 +86,7 @@ closedDef {P} {Δ} {V} r a =
                (erase-substᵛ V from∅))))
   where
     p  = principal a
-    D₀ = instantiate p idˢ (Q̃ p) ⊩ᴴ-refl
+    D₀ = sound p idˢ (Q̃ p) ⊩ᴴ-refl
     D₁ = ty-subst ([id]ᵛ (X̃ p)) (proj₁ D₀)
     r' = subst (DefsEnv ⟦ P ⟧ᴾ) (sym (defs-⌜⌝ Δ)) r
 
@@ -108,7 +108,7 @@ program-nonResource : ∀ {P Δ} → ⊢ᴾ P ⦂ Δ → NonResourceDefs Δ
 program-nonResource (_∷ᴾ_ {Δ = Δ} t a) here =
   subst NonResource ([id]ᵛ (X̃ p))
         (nonResource-closed (subst NonResourceDefs (sym (defs-⌜⌝ Δ)) (program-nonResource t))
-                            (proj₁ (instantiate p idˢ (Q̃ p) ⊩ᴴ-refl)))
+                            (proj₁ (sound p idˢ (Q̃ p) ⊩ᴴ-refl)))
   where p = principal a
 program-nonResource (t ∷ᴾ a) (there m) = program-nonResource t m
 

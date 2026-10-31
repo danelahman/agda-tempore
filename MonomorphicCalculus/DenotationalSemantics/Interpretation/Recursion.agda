@@ -238,16 +238,16 @@ sound-RECL-CONS {B = B} V W M N p pV pW pM pN =
 -- The list eliminator's beta laws: at `nil` the `nil` branch, at a `cons`
 -- the `cons` branch with the head and the tail substituted, as for `match`.
 
-sound-CASEL-NIL : ∀ {Γ A C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
-                → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-                → ⟦ caseL nil `nil M `cons N ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ M ⟧ᶜᵗ pM
-sound-CASEL-NIL M N pM pN = caseLᵐ-nil _ _
+sound-MATCHL-NIL : ∀ {Γ A C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
+                 → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+                 → ⟦ matchL nil `nil M `cons N ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ M ⟧ᶜᵗ pM
+sound-MATCHL-NIL M N pM pN = matchLᵐ-nil _ _
 
-sound-CASEL-CONS : ∀ {Γ A C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ list A)
-                 → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
-                 → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-                 → ⟦ caseL cons V W `nil M `cons N ⟧ᶜᵗ ((pV , pW) , pM , pN)
-                 ≈ᵐ ⟦ (N [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟧ᶜᵗ
-                      (subᶜ₂ N V W pN pV pW)
-sound-CASEL-CONS V W M N pV pW pM pN =
-  caseLᵐ-cons _ _ _ _ ∙ ≈ᵐ-sym (C-subst₂-nat N V W pN pV pW)
+sound-MATCHL-CONS : ∀ {Γ A C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ list A)
+                  → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
+                  → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+                  → ⟦ matchL cons V W `nil M `cons N ⟧ᶜᵗ ((pV , pW) , pM , pN)
+                  ≈ᵐ ⟦ (N [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟧ᶜᵗ
+                       (subᶜ₂ N V W pN pV pW)
+sound-MATCHL-CONS V W M N pV pW pM pN =
+  matchLᵐ-cons _ _ _ _ ∙ ≈ᵐ-sym (C-subst₂-nat N V W pN pV pW)

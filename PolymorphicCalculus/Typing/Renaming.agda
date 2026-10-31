@@ -140,7 +140,7 @@ mutual
   rename-v : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {A : OVType Θ}
            → Ren Q Γ Γ' → Q ∣ Γ ⊢V⦂ A → Q ∣ Γ' ⊢V⦂ A
   rename-v r (var x p)       =
-    var (mem (image r x)) (VarOK-≡̂ (≡̂ᵛ-refl _) (lower (image r x)) p)
+    var (mem (image r x)) (Et∨≾ᵘ-≡̂ (≡̂ᵛ-refl _) (lower (image r x)) p)
   rename-v r (usedef f δ h e) = usedef (subst (_ ∈ᵖ[ _ ]_) (sym (dfs r)) f) δ h e
   rename-v r (const B c)     = const B c
   rename-v r ⋆               = ⋆
@@ -154,7 +154,7 @@ mutual
   rename-v r nil             = nil
   rename-v r (cons V W)      = cons (rename-v r V) (rename-v r W)
   rename-v r (cmp ⋈ V W et)  = cmp ⋈ (rename-v r V) (rename-v r W) et
-  rename-v r (lam M)         = lam (rename-c (r ⇑ʳ) M)
+  rename-v r (fun M)         = fun (rename-c (r ⇑ʳ) M)
   rename-v r (handler {ε = ε} N H) =
     handler (rename-c (lockʳ ∣ ε ∣̂ᵉ r ⇑ʳ) N) (λ op → rename-c (clauseʳ r) (H op))
   rename-v r (annᵛ A V)      = annᵛ A (rename-v r V)
@@ -162,29 +162,29 @@ mutual
 
   rename-c : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {C : OCType Θ}
            → Ren Q Γ Γ' → Q ∣ Γ ⊢C⦂ C → Q ∣ Γ' ⊢C⦂ C
-  rename-c r (return V)                = return (rename-v r V)
-  rename-c r (_⨟_ {ε = ε} M N)         = rename-c r M ⨟ rename-c (lockʳ ∣ ε ∣̂ᵉ r ⇑ʳ) N
-  rename-c r (V · W)                   = rename-v r V · rename-v r W
-  rename-c r (match V `in M)           = match rename-v r V `in rename-c ((r ⇑ʳ) ⇑ʳ) M
-  rename-c r (absurd V)                = absurd (rename-v r V)
-  rename-c r (if V `then M `else N)    =
+  rename-c r (return V)                 = return (rename-v r V)
+  rename-c r (_⨟_ {ε = ε} M N)          = rename-c r M ⨟ rename-c (lockʳ ∣ ε ∣̂ᵉ r ⇑ʳ) N
+  rename-c r (V · W)                    = rename-v r V · rename-v r W
+  rename-c r (match V `with M)          = match rename-v r V `with rename-c ((r ⇑ʳ) ⇑ʳ) M
+  rename-c r (absurd V)                 = absurd (rename-v r V)
+  rename-c r (if V `then M `else N)     =
     if rename-v r V `then rename-c r M `else rename-c r N
-  rename-c r (caseℕ V `zero M `succ N) =
-    caseℕ rename-v r V `zero rename-c r M `succ rename-c (r ⇑ʳ) N
-  rename-c r (case+ V `inl M `inr N)   =
-    case+ rename-v r V `inl rename-c (r ⇑ʳ) M `inr rename-c (r ⇑ʳ) N
-  rename-c r (caseL V `nil M `cons N)  =
-    caseL rename-v r V `nil rename-c r M `cons rename-c ((r ⇑ʳ) ⇑ʳ) N
-  rename-c r (recℕ {ε = ε} V M N p)    =
+  rename-c r (matchℕ V `zero M `succ N) =
+    matchℕ rename-v r V `zero rename-c r M `succ rename-c (r ⇑ʳ) N
+  rename-c r (match+ V `inl M `inr N)   =
+    match+ rename-v r V `inl rename-c (r ⇑ʳ) M `inr rename-c (r ⇑ʳ) N
+  rename-c r (matchL V `nil M `cons N)  =
+    matchL rename-v r V `nil rename-c r M `cons rename-c ((r ⇑ʳ) ⇑ʳ) N
+  rename-c r (recℕ {ε = ε} V M N p)     =
     recℕ (rename-v r V) (rename-c r M)
          (rename-c (lockʳ ∣ ε ∣̂ᵉ (lockʳ (rconst ⊤ᵣ) r ⇑ʳ) ⇑ʳ) N) p
-  rename-c r (recL {ε = ε} V M N p)    =
+  rename-c r (recL {ε = ε} V M N p)     =
     recL (rename-v r V) (rename-c r M)
          (rename-c (lockʳ ∣ ε ∣̂ᵉ ((lockʳ (rconst ⊤ᵣ) r ⇑ʳ) ⇑ʳ) ⇑ʳ) N) p
-  rename-c r (perform op V M)          =
+  rename-c r (perform op V M)           =
     perform op (rename-v r V) (rename-c (lockʳ (rconst ∣ op-grade op ∣ᵉ) r ⇑ʳ) M)
-  rename-c r (delay τ M)               = delay τ (rename-c (lockʳ (rconst (ιᵣ τ)) r) M)
-  rename-c r (handle M `with V)        = handle rename-c r M `with rename-v r V
+  rename-c r (delay τ M)                = delay τ (rename-c (lockʳ (rconst (ιᵣ τ)) r) M)
+  rename-c r (handle M `with V)         = handle rename-c r M `with rename-v r V
   rename-c r (unbox {z = z} R p N)    =
     unbox (res-move (mem (image r z)) R) (transᵣ (lower (image r z)) p) (rename-c (r ⇑ʳ) N)
   rename-c r (box ρ V N)               = box ρ (rename-v (lockʳ ρ r) V) (rename-c (r ⇑ʳ) N)
@@ -211,7 +211,7 @@ mutual
   ∥rename-v∥ r nil             = refl
   ∥rename-v∥ r (cons V W)      = cong₂ cons (∥rename-v∥ r V) (∥rename-v∥ r W)
   ∥rename-v∥ r (cmp ⋈ V W et)  = cong₂ (cmp ⋈) (∥rename-v∥ r V) (∥rename-v∥ r W)
-  ∥rename-v∥ r (lam M)         = cong lam (∥rename-c∥ (r ⇑ʳ) M)
+  ∥rename-v∥ r (fun M)         = cong fun (∥rename-c∥ (r ⇑ʳ) M)
   ∥rename-v∥ r (handler {ε = ε} N H) =
     cong₂ handler (∥rename-c∥ (lockʳ ∣ ε ∣̂ᵉ r ⇑ʳ) N)
                   (fun-ext (λ op → ∥rename-c∥ (clauseʳ r) (H op)))
@@ -220,33 +220,33 @@ mutual
 
   ∥rename-c∥ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {C : OCType Θ}
              → (r : Ren Q Γ Γ') → (M : Q ∣ Γ ⊢C⦂ C) → ∥ rename-c r M ∥ᶜ ≡ renᶜ (pos r) ∥ M ∥ᶜ
-  ∥rename-c∥ r (return V)                = cong return (∥rename-v∥ r V)
-  ∥rename-c∥ r (_⨟_ {ε = ε} M N)         =
+  ∥rename-c∥ r (return V)                 = cong return (∥rename-v∥ r V)
+  ∥rename-c∥ r (_⨟_ {ε = ε} M N)          =
     cong₂ _⨟_ (∥rename-c∥ r M) (∥rename-c∥ (lockʳ ∣ ε ∣̂ᵉ r ⇑ʳ) N)
-  ∥rename-c∥ r (V · W)                   = cong₂ _·_ (∥rename-v∥ r V) (∥rename-v∥ r W)
-  ∥rename-c∥ r (match V `in M)           =
-    cong₂ match_`in_ (∥rename-v∥ r V) (∥rename-c∥ ((r ⇑ʳ) ⇑ʳ) M)
-  ∥rename-c∥ r (absurd V)                = cong absurd (∥rename-v∥ r V)
-  ∥rename-c∥ r (if V `then M `else N)    =
+  ∥rename-c∥ r (V · W)                    = cong₂ _·_ (∥rename-v∥ r V) (∥rename-v∥ r W)
+  ∥rename-c∥ r (match V `with M)          =
+    cong₂ match_`with_ (∥rename-v∥ r V) (∥rename-c∥ ((r ⇑ʳ) ⇑ʳ) M)
+  ∥rename-c∥ r (absurd V)                 = cong absurd (∥rename-v∥ r V)
+  ∥rename-c∥ r (if V `then M `else N)     =
     cong₃ if_`then_`else_ (∥rename-v∥ r V) (∥rename-c∥ r M) (∥rename-c∥ r N)
-  ∥rename-c∥ r (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_ (∥rename-v∥ r V) (∥rename-c∥ r M) (∥rename-c∥ (r ⇑ʳ) N)
-  ∥rename-c∥ r (case+ V `inl M `inr N)   =
-    cong₃ case+_`inl_`inr_ (∥rename-v∥ r V) (∥rename-c∥ (r ⇑ʳ) M) (∥rename-c∥ (r ⇑ʳ) N)
-  ∥rename-c∥ r (caseL V `nil M `cons N)  =
-    cong₃ caseL_`nil_`cons_ (∥rename-v∥ r V) (∥rename-c∥ r M) (∥rename-c∥ ((r ⇑ʳ) ⇑ʳ) N)
-  ∥rename-c∥ r (recℕ {ε = ε} V M N p)    =
+  ∥rename-c∥ r (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_ (∥rename-v∥ r V) (∥rename-c∥ r M) (∥rename-c∥ (r ⇑ʳ) N)
+  ∥rename-c∥ r (match+ V `inl M `inr N)   =
+    cong₃ match+_`inl_`inr_ (∥rename-v∥ r V) (∥rename-c∥ (r ⇑ʳ) M) (∥rename-c∥ (r ⇑ʳ) N)
+  ∥rename-c∥ r (matchL V `nil M `cons N)  =
+    cong₃ matchL_`nil_`cons_ (∥rename-v∥ r V) (∥rename-c∥ r M) (∥rename-c∥ ((r ⇑ʳ) ⇑ʳ) N)
+  ∥rename-c∥ r (recℕ {ε = ε} V M N p)     =
     cong₃ recℕ (∥rename-v∥ r V) (∥rename-c∥ r M)
                (∥rename-c∥ (lockʳ ∣ ε ∣̂ᵉ (lockʳ (rconst ⊤ᵣ) r ⇑ʳ) ⇑ʳ) N)
-  ∥rename-c∥ r (recL {ε = ε} V M N p)    =
+  ∥rename-c∥ r (recL {ε = ε} V M N p)     =
     cong₃ recL (∥rename-v∥ r V) (∥rename-c∥ r M)
                (∥rename-c∥ (lockʳ ∣ ε ∣̂ᵉ ((lockʳ (rconst ⊤ᵣ) r ⇑ʳ) ⇑ʳ) ⇑ʳ) N)
-  ∥rename-c∥ r (perform op V M)          =
+  ∥rename-c∥ r (perform op V M)           =
     cong₂ (perform op) (∥rename-v∥ r V)
                        (∥rename-c∥ (lockʳ (rconst ∣ op-grade op ∣ᵉ) r ⇑ʳ) M)
-  ∥rename-c∥ r (delay τ M)               =
+  ∥rename-c∥ r (delay τ M)                =
     cong (delay τ) (∥rename-c∥ (lockʳ (rconst (ιᵣ τ)) r) M)
-  ∥rename-c∥ r (handle M `with V)        =
+  ∥rename-c∥ r (handle M `with V)         =
     cong₂ handle_`with_ (∥rename-c∥ r M) (∥rename-v∥ r V)
   ∥rename-c∥ r (unbox {z = z} R p N)    =
     cong₂ unbox (trans (∥res∥ (res-move (mem (image r z)) R))

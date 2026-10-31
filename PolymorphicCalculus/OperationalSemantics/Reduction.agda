@@ -99,6 +99,7 @@ decide ⋈ V W with holds ⋈ (compareᴰ (datum V) (datum W))
 
 data Step {n} (𝕊 : State n) : RunC n → ∀ {m} (𝕊' : State m) → 𝕊 ≤ₛ 𝕊' → RunC m → Set
 
+infix 3 Step
 syntax Step 𝕊 M 𝕊' e M' = ⟨ 𝕊 ∣ M ⟩⟶[ e ]⟨ 𝕊' ∣ M' ⟩
 
 data Step {n} 𝕊 where
@@ -106,10 +107,10 @@ data Step {n} 𝕊 where
   -- functions, data and recursion
 
   APP        : ∀ {M V}
-             → ⟨ 𝕊 ∣ lam M · V ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M [ V ]₀ ⟩
+             → ⟨ 𝕊 ∣ fun M · V ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M [ V ]₀ ⟩
 
   MATCH      : ∀ {V W M}
-             → ⟨ 𝕊 ∣ match ⦉ V , W ⦊ `in M ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M [ V ]₁ [ W ]₀ ⟩
+             → ⟨ 𝕊 ∣ match ⦉ V , W ⦊ `with M ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M [ V ]₁ [ W ]₀ ⟩
 
   CMP        : ∀ {⋈ V W M N}
              → ⟨ 𝕊 ∣ if cmp ⋈ V W `then M `else N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ if decide ⋈ V W `then M `else N ⟩
@@ -120,11 +121,11 @@ data Step {n} 𝕊 where
   IF-FALSE   : ∀ {M N}
              → ⟨ 𝕊 ∣ if false `then M `else N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ N ⟩
 
-  CASEℕ-ZERO : ∀ {M N}
-             → ⟨ 𝕊 ∣ caseℕ zero `zero M `succ N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M ⟩
+  MATCHℕ-ZERO : ∀ {M N}
+              → ⟨ 𝕊 ∣ matchℕ zero `zero M `succ N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M ⟩
 
-  CASEℕ-SUCC : ∀ {V M N}
-             → ⟨ 𝕊 ∣ caseℕ succ V `zero M `succ N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ N [ V ]₀ ⟩
+  MATCHℕ-SUCC : ∀ {V M N}
+              → ⟨ 𝕊 ∣ matchℕ succ V `zero M `succ N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ N [ V ]₀ ⟩
 
   RECℕ-ZERO  : ∀ {M N}
              → ⟨ 𝕊 ∣ recℕ zero M N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M ⟩
@@ -132,17 +133,17 @@ data Step {n} 𝕊 where
   RECℕ-SUCC  : ∀ {V M N}
              → ⟨ 𝕊 ∣ recℕ (succ V) M N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ recℕ V M N ⨟ N [ V ]₁ ⟩
 
-  CASE-INL   : ∀ {V M N}
-             → ⟨ 𝕊 ∣ case+ inl V `inl M `inr N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M [ V ]₀ ⟩
+  MATCH+-INL : ∀ {V M N}
+             → ⟨ 𝕊 ∣ match+ inl V `inl M `inr N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M [ V ]₀ ⟩
 
-  CASE-INR   : ∀ {V M N}
-             → ⟨ 𝕊 ∣ case+ inr V `inl M `inr N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ N [ V ]₀ ⟩
+  MATCH+-INR : ∀ {V M N}
+             → ⟨ 𝕊 ∣ match+ inr V `inl M `inr N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ N [ V ]₀ ⟩
 
-  CASEL-NIL  : ∀ {M N}
-             → ⟨ 𝕊 ∣ caseL nil `nil M `cons N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M ⟩
+  MATCHL-NIL : ∀ {M N}
+             → ⟨ 𝕊 ∣ matchL nil `nil M `cons N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M ⟩
 
-  CASEL-CONS : ∀ {V W M N}
-             → ⟨ 𝕊 ∣ caseL cons V W `nil M `cons N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ N [ V ]₁ [ W ]₀ ⟩
+  MATCHL-CONS : ∀ {V W M N}
+              → ⟨ 𝕊 ∣ matchL cons V W `nil M `cons N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ N [ V ]₁ [ W ]₀ ⟩
 
   RECL-NIL   : ∀ {M N}
              → ⟨ 𝕊 ∣ recL nil M N ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣ M ⟩
@@ -174,7 +175,7 @@ data Step {n} 𝕊 where
 
   HANDLE-OP  : ∀ {op V M N H}
              → ⟨ 𝕊 ∣ handle perform op V M `with handler N H ⟩⟶[ ≤ₛ-refl ]⟨ 𝕊 ∣
-                 box (lam (handle M `with wkᵛ (handler N H))) (H op [ V ]₁) ⟩
+                 box (fun (handle M `with wkᵛ (handler N H))) (H op [ V ]₁) ⟩
 
   HANDLE-STEP : ∀ {m} {𝕊' : State m} {e : 𝕊 ≤ₛ 𝕊'} {M M' V}
               → ⟨ 𝕊 ∣ M ⟩⟶[ e ]⟨ 𝕊' ∣ M' ⟩

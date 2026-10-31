@@ -72,26 +72,26 @@ mutual
   nil           [ ρ ]ᵈᵛ = nil
   cons V W      [ ρ ]ᵈᵛ = cons (V [ ρ ]ᵈᵛ) (W [ ρ ]ᵈᵛ)
   cmp ⋈ V W     [ ρ ]ᵈᵛ = cmp ⋈ (V [ ρ ]ᵈᵛ) (W [ ρ ]ᵈᵛ)
-  lam M         [ ρ ]ᵈᵛ = lam (M [ ρ ]ᵈᶜ)
+  fun M         [ ρ ]ᵈᵛ = fun (M [ ρ ]ᵈᶜ)
   handler N H   [ ρ ]ᵈᵛ = handler (N [ ρ ]ᵈᶜ) (λ op → H op [ ρ ]ᵈᶜ)
 
   _[_]ᵈᶜ : ∀ {n} → RunC n → Defs → RunC n
-  return V                  [ ρ ]ᵈᶜ = return (V [ ρ ]ᵈᵛ)
-  (M ⨟ N)                   [ ρ ]ᵈᶜ = M [ ρ ]ᵈᶜ ⨟ N [ ρ ]ᵈᶜ
-  (V · W)                   [ ρ ]ᵈᶜ = V [ ρ ]ᵈᵛ · W [ ρ ]ᵈᵛ
-  (match V `in M)           [ ρ ]ᵈᶜ = match V [ ρ ]ᵈᵛ `in M [ ρ ]ᵈᶜ
-  absurd V                  [ ρ ]ᵈᶜ = absurd (V [ ρ ]ᵈᵛ)
-  (if V `then M `else N)    [ ρ ]ᵈᶜ = if V [ ρ ]ᵈᵛ `then M [ ρ ]ᵈᶜ `else N [ ρ ]ᵈᶜ
-  (caseℕ V `zero M `succ N) [ ρ ]ᵈᶜ = caseℕ V [ ρ ]ᵈᵛ `zero M [ ρ ]ᵈᶜ `succ N [ ρ ]ᵈᶜ
-  (case+ V `inl M `inr N)   [ ρ ]ᵈᶜ = case+ V [ ρ ]ᵈᵛ `inl M [ ρ ]ᵈᶜ `inr N [ ρ ]ᵈᶜ
-  (caseL V `nil M `cons N)  [ ρ ]ᵈᶜ = caseL V [ ρ ]ᵈᵛ `nil M [ ρ ]ᵈᶜ `cons N [ ρ ]ᵈᶜ
-  recℕ V M N                [ ρ ]ᵈᶜ = recℕ (V [ ρ ]ᵈᵛ) (M [ ρ ]ᵈᶜ) (N [ ρ ]ᵈᶜ)
-  recL V M N                [ ρ ]ᵈᶜ = recL (V [ ρ ]ᵈᵛ) (M [ ρ ]ᵈᶜ) (N [ ρ ]ᵈᶜ)
-  perform op V M            [ ρ ]ᵈᶜ = perform op (V [ ρ ]ᵈᵛ) (M [ ρ ]ᵈᶜ)
-  delay τ M                 [ ρ ]ᵈᶜ = delay τ (M [ ρ ]ᵈᶜ)
-  (handle M `with V)        [ ρ ]ᵈᶜ = handle M [ ρ ]ᵈᶜ `with V [ ρ ]ᵈᵛ
-  unbox V N                 [ ρ ]ᵈᶜ = unbox (V [ ρ ]ᵈᵛ) (N [ ρ ]ᵈᶜ)
-  box V N                   [ ρ ]ᵈᶜ = box (V [ ρ ]ᵈᵛ) (N [ ρ ]ᵈᶜ)
+  return V                   [ ρ ]ᵈᶜ = return (V [ ρ ]ᵈᵛ)
+  (M ⨟ N)                    [ ρ ]ᵈᶜ = M [ ρ ]ᵈᶜ ⨟ N [ ρ ]ᵈᶜ
+  (V · W)                    [ ρ ]ᵈᶜ = V [ ρ ]ᵈᵛ · W [ ρ ]ᵈᵛ
+  (match V `with M)          [ ρ ]ᵈᶜ = match V [ ρ ]ᵈᵛ `with M [ ρ ]ᵈᶜ
+  absurd V                   [ ρ ]ᵈᶜ = absurd (V [ ρ ]ᵈᵛ)
+  (if V `then M `else N)     [ ρ ]ᵈᶜ = if V [ ρ ]ᵈᵛ `then M [ ρ ]ᵈᶜ `else N [ ρ ]ᵈᶜ
+  (matchℕ V `zero M `succ N) [ ρ ]ᵈᶜ = matchℕ V [ ρ ]ᵈᵛ `zero M [ ρ ]ᵈᶜ `succ N [ ρ ]ᵈᶜ
+  (match+ V `inl M `inr N)   [ ρ ]ᵈᶜ = match+ V [ ρ ]ᵈᵛ `inl M [ ρ ]ᵈᶜ `inr N [ ρ ]ᵈᶜ
+  (matchL V `nil M `cons N)  [ ρ ]ᵈᶜ = matchL V [ ρ ]ᵈᵛ `nil M [ ρ ]ᵈᶜ `cons N [ ρ ]ᵈᶜ
+  recℕ V M N                 [ ρ ]ᵈᶜ = recℕ (V [ ρ ]ᵈᵛ) (M [ ρ ]ᵈᶜ) (N [ ρ ]ᵈᶜ)
+  recL V M N                 [ ρ ]ᵈᶜ = recL (V [ ρ ]ᵈᵛ) (M [ ρ ]ᵈᶜ) (N [ ρ ]ᵈᶜ)
+  perform op V M             [ ρ ]ᵈᶜ = perform op (V [ ρ ]ᵈᵛ) (M [ ρ ]ᵈᶜ)
+  delay τ M                  [ ρ ]ᵈᶜ = delay τ (M [ ρ ]ᵈᶜ)
+  (handle M `with V)         [ ρ ]ᵈᶜ = handle M [ ρ ]ᵈᶜ `with V [ ρ ]ᵈᵛ
+  unbox V N                  [ ρ ]ᵈᶜ = unbox (V [ ρ ]ᵈᵛ) (N [ ρ ]ᵈᶜ)
+  box V N                    [ ρ ]ᵈᶜ = box (V [ ρ ]ᵈᵛ) (N [ ρ ]ᵈᶜ)
 
 infixl 50 _[_]ᵈᵛ _[_]ᵈᶜ
 

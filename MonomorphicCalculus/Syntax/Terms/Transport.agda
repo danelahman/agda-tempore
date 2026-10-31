@@ -58,9 +58,9 @@ castᵛ-irr e e' V = cong (λ z → castᵛ z V) uip
 castᶜ-irr : ∀ {Γ Γ' C} → (e e' : Γ ≡ Γ') → (M : Γ ⊢C⦂ C) → castᶜ e M ≡ castᶜ e' M
 castᶜ-irr e e' M = cong (λ z → castᶜ z M) uip
 
-cast-lam : ∀ {Γ Γ' A C} → (e : Γ ≡ Γ') → (M : Γ ∷ A ⊢C⦂ C)
-         → castᵛ e (lam M) ≡ lam (castᶜ (cong (_∷ A) e) M)
-cast-lam refl M = refl
+cast-fun : ∀ {Γ Γ' A C} → (e : Γ ≡ Γ') → (M : Γ ∷ A ⊢C⦂ C)
+         → castᵛ e (fun M) ≡ fun (castᶜ (cong (_∷ A) e) M)
+cast-fun refl M = refl
 
 cast-pair : ∀ {Γ Γ' A B} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ A} → {W : Γ ⊢V⦂ B}
           → castᵛ e ⦉ V , W ⦊ ≡ ⦉ castᵛ e V , castᵛ e W ⦊
@@ -113,20 +113,20 @@ cast-perform refl = refl
 
 cast-match : ∀ {Γ Γ' A B C} → (e : Γ ≡ Γ')
            → {V : Γ ⊢V⦂ A |×| B} → {M : Γ ∷ A ∷ B ⊢C⦂ C}
-           → castᶜ e (match V `in M)
-           ≡ match (castᵛ e V) `in (castᶜ (cong (λ Γ₀ → Γ₀ ∷ A ∷ B) e) M)
+           → castᶜ e (match V `with M)
+           ≡ match (castᵛ e V) `with (castᶜ (cong (λ Γ₀ → Γ₀ ∷ A ∷ B) e) M)
 cast-match refl = refl
 
 cast-succ : ∀ {Γ Γ'} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ nat}
           → castᵛ e (succ V) ≡ succ (castᵛ e V)
 cast-succ refl = refl
 
-cast-caseℕ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ')
-           → {V : Γ ⊢V⦂ nat} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ nat ⊢C⦂ C}
-           → castᶜ e (caseℕ V `zero M `succ N)
-           ≡ caseℕ (castᵛ e V) `zero (castᶜ e M)
-                               `succ (castᶜ (cong (_∷ nat) e) N)
-cast-caseℕ refl = refl
+cast-matchℕ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ')
+            → {V : Γ ⊢V⦂ nat} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ nat ⊢C⦂ C}
+            → castᶜ e (matchℕ V `zero M `succ N)
+            ≡ matchℕ (castᵛ e V) `zero (castᶜ e M)
+                                 `succ (castᶜ (cong (_∷ nat) e) N)
+cast-matchℕ refl = refl
 
 cast-inl : ∀ {Γ Γ' A B} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ A}
          → castᵛ e (inl {B = B} V) ≡ inl (castᵛ e V)
@@ -143,12 +143,12 @@ cast-cons : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ A} → {W : 
           → castᵛ e (cons V W) ≡ cons (castᵛ e V) (castᵛ e W)
 cast-cons refl = refl
 
-cast-caseL : ∀ {Γ Γ' A C} → (e : Γ ≡ Γ')
-           → {V : Γ ⊢V⦂ list A} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ A ∷ list A ⊢C⦂ C}
-           → castᶜ e (caseL V `nil M `cons N)
-           ≡ caseL (castᵛ e V) `nil (castᶜ e M)
-                               `cons (castᶜ (cong (λ Δ → Δ ∷ A ∷ list A) e) N)
-cast-caseL refl = refl
+cast-matchL : ∀ {Γ Γ' A C} → (e : Γ ≡ Γ')
+            → {V : Γ ⊢V⦂ list A} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ A ∷ list A ⊢C⦂ C}
+            → castᶜ e (matchL V `nil M `cons N)
+            ≡ matchL (castᵛ e V) `nil (castᶜ e M)
+                                 `cons (castᶜ (cong (λ Δ → Δ ∷ A ∷ list A) e) N)
+cast-matchL refl = refl
 
 cast-recL : ∀ {Γ Γ' A B ε} → (e : Γ ≡ Γ')
           → {V : Γ ⊢V⦂ list A} → {M : Γ ⊢C⦂ B ! ε}
@@ -168,12 +168,12 @@ cast-recℕ : ∀ {Γ Γ' B ε} → (e : Γ ≡ Γ')
                  (castᶜ (cong (λ Δ → (Δ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) e) N) p
 cast-recℕ refl = refl
 
-cast-case+ : ∀ {Γ Γ' A B C} → (e : Γ ≡ Γ')
-           → {V : Γ ⊢V⦂ A |+| B} → {M : Γ ∷ A ⊢C⦂ C} → {N : Γ ∷ B ⊢C⦂ C}
-           → castᶜ e (case+ V `inl M `inr N)
-           ≡ case+ (castᵛ e V) `inl (castᶜ (cong (_∷ A) e) M)
-                               `inr (castᶜ (cong (_∷ B) e) N)
-cast-case+ refl = refl
+cast-match+ : ∀ {Γ Γ' A B C} → (e : Γ ≡ Γ')
+            → {V : Γ ⊢V⦂ A |+| B} → {M : Γ ∷ A ⊢C⦂ C} → {N : Γ ∷ B ⊢C⦂ C}
+            → castᶜ e (match+ V `inl M `inr N)
+            ≡ match+ (castᵛ e V) `inl (castᶜ (cong (_∷ A) e) M)
+                                 `inr (castᶜ (cong (_∷ B) e) N)
+cast-match+ refl = refl
 
 cast-box : ∀ {Γ Γ' A C ρ} → (e : Γ ≡ Γ')
          → {V : Γ ⟨ ρ ⟩ ⊢V⦂ A} → {M : Γ ∷ [ ρ ] A ⊢C⦂ C}

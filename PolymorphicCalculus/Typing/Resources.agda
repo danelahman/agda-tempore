@@ -58,7 +58,7 @@ nonResource-subst empty      δ _ = tt
 nonResource-subst (A ⇒ C)    δ _ = tt
 nonResource-subst (C ⇛ D)    δ _ = tt
 
-nonResource-<: : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ∣ A <:̂ᵛ B → NonResource A → NonResource B
+nonResource-<: : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ⊩ A <:̂ᵛ B → NonResource A → NonResource B
 nonResource-<: (Baseₛ _)   _ = tt
 nonResource-<: unitₛ       _ = tt
 nonResource-<: boolₛ       _ = tt
@@ -94,7 +94,7 @@ nonResource-closed nr (inr V)       = tt
 nonResource-closed nr nil           = tt
 nonResource-closed nr (cons V W)    = tt
 nonResource-closed nr (cmp ⋈ V W e) = tt
-nonResource-closed nr (lam M)       = tt
+nonResource-closed nr (fun M)       = tt
 nonResource-closed nr (handler N H) = tt
 nonResource-closed nr (annᵛ A V)    = nonResource-closed nr V
 nonResource-closed nr (subV V p)    = nonResource-<: p (nonResource-closed nr V)
@@ -102,7 +102,7 @@ nonResource-closed nr (subV V p)    = nonResource-<: p (nonResource-closed nr V)
 ------------------------------------------------------------------------
 -- Resource values
 
--- `V : [ ρ'' ] X''` is a variable meeting `VarOK` under annotations
+-- `V : [ ρ'' ] X''` is a variable meeting `_⊩_Et∨≾ᵘ_` under annotations
 -- reaching `[ ρ ] X`, with `ρ'' ≾ ρ` and `X <: X''`
 
 record ResourceValue {Θ n} (Q : Hyps Θ) (Γ : OCtx Θ n) (ρ'' : RExp Θ) (X'' : OVType Θ)
@@ -111,11 +111,11 @@ record ResourceValue {Θ n} (Q : Hyps Θ) (Γ : OCtx Θ n) (ρ'' : RExp Θ) (X''
     {res-ρ₀ res-ρ' res-ρ} : RExp Θ
     {res-X₀ res-X}        : OVType Θ
     res-z     : [ res-ρ₀ ] res-X₀ ∈̂[ res-ρ' ] Γ
-    usable    : VarOK Q ([ res-ρ₀ ] res-X₀) res-ρ'
+    usable    : Q ⊩ ([ res-ρ₀ ] res-X₀) Et∨≾ᵘ res-ρ'
     chain     : Q ∣ Γ ⊢↪[ res-ρ' ] res-z ⦂[ res-ρ ] res-X
     erases    : ⌊ chain ⌋ʳ ≡ V
     grade     : Q ⊩ ρ'' ≾̂ᵣ res-ρ
-    payload   : Q ∣ res-X <:̂ᵛ X''
+    payload   : Q ⊩ res-X <:̂ᵛ X''
 
 open ResourceValue public
 
@@ -145,7 +145,7 @@ resource-value nr (subV V p) with <:̂ᵛ-boxʳ p
 res-collapse : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ}
                  {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
              → Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X
-             → (Q ⊩ ρ ≾̂ᵣ ρ₀) × (Q ∣ X₀ <:̂ᵛ X)
+             → (Q ⊩ ρ ≾̂ᵣ ρ₀) × (Q ⊩ X₀ <:̂ᵛ X)
 res-collapse res-var = ⊩≾̂ᵣ-refl , <:̂ᵛ-refl _
 res-collapse (res-ann _ _ R p q) with res-collapse R
 ... | p' , q' = transᵣ p p' , <:̂ᵛ-trans q' q

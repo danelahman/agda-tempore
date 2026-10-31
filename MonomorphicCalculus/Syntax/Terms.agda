@@ -116,7 +116,7 @@ mutual
 
     -- lambda abstraction
           
-    lam     : {A : VType}
+    fun     : {A : VType}
             → {C : CType}
             → Γ ∷ A ⊢C⦂ C
             -------------
@@ -179,12 +179,12 @@ mutual
 
     -- pattern-matching
 
-    match_`in_ : {A B : VType}
-               → {C : CType}
-               → Γ ⊢V⦂ A |×| B
-               → Γ ∷ A ∷ B ⊢C⦂ C
-               -----------------
-               → Γ ⊢C⦂ C
+    match_`with_ : {A B : VType}
+                 → {C : CType}
+                 → Γ ⊢V⦂ A |×| B
+                 → Γ ∷ A ∷ B ⊢C⦂ C
+                 -----------------
+                 → Γ ⊢C⦂ C
 
     -- empty type elimination
 
@@ -224,7 +224,7 @@ mutual
     -- As for `if`, both branches are typed at the same computation type;
     -- the successor branch binds the predecessor.
 
-    caseℕ_`zero_`succ_
+    matchℕ_`zero_`succ_
             : {C : CType}
             → Γ ⊢V⦂ nat
             → Γ ⊢C⦂ C
@@ -253,7 +253,7 @@ mutual
     -- As for `if`, both branches are typed at the same computation type;
     -- each binds the injected value.
 
-    case+_`inl_`inr_
+    match+_`inl_`inr_
             : {A B : VType}
             → {C : CType}
             → Γ ⊢V⦂ A |+| B
@@ -267,7 +267,7 @@ mutual
     -- As for `if`, both branches are typed at the same computation type;
     -- the `cons` branch binds the head and then the tail, as `match`.
 
-    caseL_`nil_`cons_
+    matchL_`nil_`cons_
             : {A : VType}
             → {C : CType}
             → Γ ⊢V⦂ list A

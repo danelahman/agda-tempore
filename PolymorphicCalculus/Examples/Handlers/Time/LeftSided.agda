@@ -71,7 +71,7 @@ discard-not-typable = infer-untypable [] discard discard-untypable-verdict
 
 late-discard : RawC ∅ˢ 0
 late-discard =
-  return (lam (handle (v₀ · ⋆) `with handler (return ⋆) (λ _ → delay 4 (return ⋆))))
+  return (fun (handle (v₀ · ⋆) `with handler (return ⋆) (λ _ → delay 4 (return ⋆))))
 
 late-discard-verdict : infer [] late-discard ≡ untypable
 late-discard-verdict = refl
@@ -79,7 +79,7 @@ late-discard-verdict = refl
 -- The same clause nested in an outer clause, which then resumes
 
 nested-reject : RawC ∅ˢ 0
-nested-reject = return (lam (handle (v₀ · ⋆) `with handler (return ⋆) outer))
+nested-reject = return (fun (handle (v₀ · ⋆) `with handler (return ⋆) outer))
   where
     inner : ∀ {Θ n} → RawC Θ n
     inner = handle (perform send ⋆ (return ⋆)) `with handler (return ⋆) (λ _ → delay 4 (return ⋆))

@@ -67,7 +67,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.RenamingCoh
 -- computing the missing component with `⟦ W ⟧`.
 
 -- `eternal-val-ext` builds only variables, constants, units, booleans,
--- numerals, pairs and injections, never a `lam`, so its result is
+-- numerals, pairs and injections, never a `fun`, so its result is
 -- parametric outright.
 
 eternal-val-extᴾ : ∀ {Γ A ρ} → (et : Et A) → (V : Γ ⊢V⦂ A)

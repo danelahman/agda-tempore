@@ -4,9 +4,9 @@
 -- object's uniqueness, `fun-beta`/`fun-eta` the exponential's,         --
 -- `match-beta`/`match-eta` the product's, `absurd-eta` the initial     --
 -- object's strictness, the boolean equations are the boolean object's  --
--- own laws, the natural-number equations those of `caseℕᵐ` and of      --
--- the recursor `recℕᵐ`, the sum equations the coproduct's (`caseᵐ`),   --
--- and the list equations those of `caseLᵐ` and of `recLᵐ`.             --
+-- own laws, the natural-number equations those of `matchℕᵐ` and of     --
+-- the recursor `recℕᵐ`, the sum equations the coproduct's (`match+ᵐ`), --
+-- and the list equations those of `matchLᵐ` and of `recLᵐ`.            --
 --------------------------------------------------------------------------
 
 open import Grades.Base
@@ -140,30 +140,30 @@ sound-if-eta V M pM (pV , pT , pF) pR =
   ∙ ≈ᵐ-sym (C-subst-nat M split-[] V pM pV)
   ∙ ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ V ]c) (subᶜ M split-[] V pM pV) pR
 
--- The natural-number betas are those of `caseℕᵐ`; at a successor the branch
+-- The natural-number betas are those of `matchℕᵐ`; at a successor the branch
 -- is then the substitution of the predecessor.
 
-sound-caseℕ-beta-zero : ∀ {Γ C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ nat ⊢C⦂ C)
-                      → Soundᶜ== (caseℕ-beta-zero M N)
-sound-caseℕ-beta-zero M N (pV , pM , pN) pR =
-    caseℕᵐ-zero (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+sound-matchℕ-beta-zero : ∀ {Γ C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ nat ⊢C⦂ C)
+                       → Soundᶜ== (matchℕ-beta-zero M N)
+sound-matchℕ-beta-zero M N (pV , pM , pN) pR =
+    matchℕᵐ-zero (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ∙ ⟦⟧ᶜᵗ-irr M pM pR
 
-sound-caseℕ-beta-succ : ∀ {Γ C} → (V : Γ ⊢V⦂ nat)
-                      → (M : Γ ⊢C⦂ C) → (N : Γ ∷ nat ⊢C⦂ C)
-                      → Soundᶜ== (caseℕ-beta-succ V M N)
-sound-caseℕ-beta-succ V M N (pV , pM , pN) pR =
-    caseℕᵐ-succ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+sound-matchℕ-beta-succ : ∀ {Γ C} → (V : Γ ⊢V⦂ nat)
+                       → (M : Γ ⊢C⦂ C) → (N : Γ ∷ nat ⊢C⦂ C)
+                       → Soundᶜ== (matchℕ-beta-succ V M N)
+sound-matchℕ-beta-succ V M N (pV , pM , pN) pR =
+    matchℕᵐ-succ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ∙ ≈ᵐ-sym (C-subst-nat N split-[] V pN pV)
   ∙ ⟦⟧ᶜᵗ-irr (N [ split-[] ↦ V ]c) (subᶜ N split-[] V pN pV) pR
 
--- `caseℕ-eta`: the zero branch is the body at `zero`, the successor branch
--- the body restricted along `succᵐ`, the shape `caseℕᵐ-η` speaks about.
+-- `matchℕ-eta`: the zero branch is the body at `zero`, the successor branch
+-- the body restricted along `succᵐ`, the shape `matchℕᵐ-η` speaks about.
 
-sound-caseℕ-eta : ∀ {Γ C} → (V : Γ ⊢V⦂ nat) → (M : Γ ∷ nat ⊢C⦂ C)
-                → Paramᶜ M → Soundᶜ== (caseℕ-eta V M)
-sound-caseℕ-eta {Γ} {C} V M pM (pV , pZ , pS) pR =
-    caseℕᵐ-cong ≈ᵐ-refl
+sound-matchℕ-eta : ∀ {Γ C} → (V : Γ ⊢V⦂ nat) → (M : Γ ∷ nat ⊢C⦂ C)
+                 → Paramᶜ M → Soundᶜ== (matchℕ-eta V M)
+sound-matchℕ-eta {Γ} {C} V M pM (pV , pZ , pS) pR =
+    matchℕᵐ-cong ≈ᵐ-refl
       (⟦⟧ᶜᵗ-irr (M [ split-[] ↦ zero ]c) pZ (subᶜ M split-[] zero pM tt)
        ∙ C-subst-nat M split-[] zero pM tt)
       (⟦⟧ᶜᵗ-irr (C-rename (cong-∷-ren wk-ren) M [ split-[] ↦ U ]c) pS
@@ -177,7 +177,7 @@ sound-caseℕ-eta {Γ} {C} V M pM (pV , pZ , pS) pR =
                    ∙ ⟨ ∘ᵐ-identityʳ _ ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _)
                      , ∘ᵐ-identityˡ _
                        ∙ ∘ᵐ-congʳ (var-morphism-Hd {Γ} {nat} (λ _ → ≾ᵣ-refl)) ⟩ᵐ-cong))
-  ∙ ≈ᵐ-sym (caseℕᵐ-η (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM))
+  ∙ ≈ᵐ-sym (matchℕᵐ-η (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM))
   ∙ ≈ᵐ-sym (C-subst-nat M split-[] V pM pV)
   ∙ ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ V ]c) (subᶜ M split-[] V pM pV) pR
   where
@@ -205,33 +205,33 @@ sound-recℕ-beta-succ V M N p (pV , pM , pN) pR =
 -- `⟦ inl V ⟧ᵛᵗ = inlᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ` of the scrutinee, after which the branch is
 -- the substitution of the payload.
 
-sound-case+-beta-inl : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A)
-                     → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
-                     → Soundᶜ== (case+-beta-inl V M N)
-sound-case+-beta-inl V M N (pV , pM , pN) pR =
-    caseᵐ-inl (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+sound-match+-beta-inl : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A)
+                      → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
+                      → Soundᶜ== (match+-beta-inl V M N)
+sound-match+-beta-inl V M N (pV , pM , pN) pR =
+    match+ᵐ-inl (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ∙ ≈ᵐ-sym (C-subst-nat M split-[] V pM pV)
   ∙ ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ V ]c) (subᶜ M split-[] V pM pV) pR
 
-sound-case+-beta-inr : ∀ {Γ A B C} → (V : Γ ⊢V⦂ B)
-                     → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
-                     → Soundᶜ== (case+-beta-inr V M N)
-sound-case+-beta-inr V M N (pV , pM , pN) pR =
-    caseᵐ-inr (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+sound-match+-beta-inr : ∀ {Γ A B C} → (V : Γ ⊢V⦂ B)
+                      → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
+                      → Soundᶜ== (match+-beta-inr V M N)
+sound-match+-beta-inr V M N (pV , pM , pN) pR =
+    match+ᵐ-inr (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ∙ ≈ᵐ-sym (C-subst-nat N split-[] V pN pV)
   ∙ ⟦⟧ᶜᵗ-irr (N [ split-[] ↦ V ]c) (subᶜ N split-[] V pN pV) pR
 
--- `case+-eta`: each branch is the body restricted along an injection, which
--- is the shape `caseᵐ-η` speaks about. As with `if-eta`, `M` occurs only under
+-- `match+-eta`: each branch is the body restricted along an injection, which
+-- is the shape `match+ᵐ-η` speaks about. As with `if-eta`, `M` occurs only under
 -- a substitution on both sides, so its certificate comes in separately.
 
-sound-case+-eta : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A |+| B) → (M : Γ ∷ A |+| B ⊢C⦂ C)
-                → Paramᶜ M → Soundᶜ== (case+-eta V M)
-sound-case+-eta {Γ} {A} {B} {C} V M pM (pV , pL , pR') pR =
-    caseᵐ-cong ≈ᵐ-refl
+sound-match+-eta : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A |+| B) → (M : Γ ∷ A |+| B ⊢C⦂ C)
+                 → Paramᶜ M → Soundᶜ== (match+-eta V M)
+sound-match+-eta {Γ} {A} {B} {C} V M pM (pV , pL , pR') pR =
+    match+ᵐ-cong ≈ᵐ-refl
       (restrict (inl (var (λ _ → ≾ᵣ-refl) Hd)) tt inlᵐ refl pL)
       (restrict (inr (var (λ _ → ≾ᵣ-refl) Hd)) tt inrᵐ refl pR')
-  ∙ ≈ᵐ-sym (caseᵐ-η (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM))
+  ∙ ≈ᵐ-sym (match+ᵐ-η (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM))
   ∙ ≈ᵐ-sym (C-subst-nat M split-[] V pM pV)
   ∙ ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ V ]c) (subᶜ M split-[] V pM pV) pR
   where
@@ -332,26 +332,26 @@ sound-match-beta V W M ((pV , pW) , pM) pR =
 
 -- The list eliminator's betas, as for the reductions at `nil` and `cons`.
 
-sound-caseL-beta-nil : ∀ {Γ A C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
-                     → Soundᶜ== (caseL-beta-nil M N)
-sound-caseL-beta-nil M N (_ , pM , pN) pR =
-  sound-CASEL-NIL M N pM pN ∙ ⟦⟧ᶜᵗ-irr M pM pR
+sound-matchL-beta-nil : ∀ {Γ A C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
+                      → Soundᶜ== (matchL-beta-nil M N)
+sound-matchL-beta-nil M N (_ , pM , pN) pR =
+  sound-MATCHL-NIL M N pM pN ∙ ⟦⟧ᶜᵗ-irr M pM pR
 
-sound-caseL-beta-cons : ∀ {Γ A C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ list A)
-                      → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
-                      → Soundᶜ== (caseL-beta-cons V W M N)
-sound-caseL-beta-cons V W M N ((pV , pW) , pM , pN) pR =
-    sound-CASEL-CONS V W M N pV pW pM pN
+sound-matchL-beta-cons : ∀ {Γ A C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ list A)
+                       → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
+                       → Soundᶜ== (matchL-beta-cons V W M N)
+sound-matchL-beta-cons V W M N ((pV , pW) , pM , pN) pR =
+    sound-MATCHL-CONS V W M N pV pW pM pN
   ∙ ⟦⟧ᶜᵗ-irr ((N [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c) _ pR
 
--- `caseL-eta`: the `nil` branch is the body at `nil`, the `cons` branch the
--- body at the re-consed components, the shape `caseLᵐ-η` speaks about. `M`
+-- `matchL-eta`: the `nil` branch is the body at `nil`, the `cons` branch the
+-- body at the re-consed components, the shape `matchLᵐ-η` speaks about. `M`
 -- occurs only under a substitution on both sides.
 
-sound-caseL-eta : ∀ {Γ A C} → (V : Γ ⊢V⦂ list A) → (M : Γ ∷ list A ⊢C⦂ C)
-                → Paramᶜ M → Soundᶜ== (caseL-eta V M)
-sound-caseL-eta {Γ} {A} {C} V M pM (pV , pZ , pS) pR =
-    caseLᵐ-cong ≈ᵐ-refl
+sound-matchL-eta : ∀ {Γ A C} → (V : Γ ⊢V⦂ list A) → (M : Γ ∷ list A ⊢C⦂ C)
+                 → Paramᶜ M → Soundᶜ== (matchL-eta V M)
+sound-matchL-eta {Γ} {A} {C} V M pM (pV , pZ , pS) pR =
+    matchLᵐ-cong ≈ᵐ-refl
       (⟦⟧ᶜᵗ-irr (M [ split-[] ↦ nil ]c) pZ (subᶜ M split-[] nil pM tt)
        ∙ C-subst-nat M split-[] nil pM tt)
       (⟦⟧ᶜᵗ-irr ((C-rename ρ M) [ split-[] ↦ U ]c) pS
@@ -360,7 +360,7 @@ sound-caseL-eta {Γ} {A} {C} V M pM (pV , pZ , pS) pR =
        ∙ ∘ᵐ-congˡ (C-rename-nat ρ M pM)
        ∙ ∘ᵐ-assoc _ _ _
        ∙ ∘ᵐ-congʳ cart)
-  ∙ ≈ᵐ-sym (caseLᵐ-η (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM))
+  ∙ ≈ᵐ-sym (matchLᵐ-η (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM))
   ∙ ≈ᵐ-sym (C-subst-nat M split-[] V pM pV)
   ∙ ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ V ]c) (subᶜ M split-[] V pM pV) pR
   where

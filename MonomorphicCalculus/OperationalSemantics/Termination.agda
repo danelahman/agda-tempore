@@ -103,7 +103,7 @@ FL-match : ∀ {St Γ A B D ε} → (γ : Env St Γ) → Rel-Env γ
          → (∀ {St'} → (γ' : Env St' (Γ ∷ A ∷ B)) → Rel-Env γ'
               → CRed' D ε St' (env-C γ' M))
          --------------------------------------------------------------
-         → CRed' D ε St (env-C γ (match V `in M))
+         → CRed' D ε St (env-C γ (match V `with M))
 
 FL-match {St = St} {A = A} {B = B} γ pγ V M (p₁ , p₂) pM =
   subst (CRed' _ _ St) (sym (env-Cˢ-match γ [] V M))
@@ -119,30 +119,30 @@ FL-match {St = St} {A = A} {B = B} γ pγ V M (p₁ , p₂) pM =
          ≡ env-C ((γ ∷ᵉ U₁) ∷ᵉ U₂) M
     step = sub-swap-C [] M₀ U₂ U₁
 
--- Sum elimination: `CASE+` reduces at the scrutinee's decomposition, whose
+-- Sum elimination: `MATCH+` reduces at the scrutinee's decomposition, whose
 -- reducibility names the branch and gives the payload's; that branch with the
 -- payload substituted is the action at the environment extended by it.
 
-FL-case+ : ∀ {St Γ A B D ε} → (γ : Env St Γ) → Rel-Env γ
-         → (V : Γ ⊢V⦂ A |+| B)
-         → (M : Γ ∷ A ⊢C⦂ D ! ε) → (N : Γ ∷ B ⊢C⦂ D ! ε)
-         → VRed (A |+| B) St (env-V γ V)
-         → (∀ {St'} → (γ' : Env St' (Γ ∷ A)) → Rel-Env γ'
-              → CRed' D ε St' (env-C γ' M))
-         → (∀ {St'} → (γ' : Env St' (Γ ∷ B)) → Rel-Env γ'
-              → CRed' D ε St' (env-C γ' N))
-         --------------------------------------------------------------
-         → CRed' D ε St (env-C γ (case+ V `inl M `inr N))
+FL-match+ : ∀ {St Γ A B D ε} → (γ : Env St Γ) → Rel-Env γ
+          → (V : Γ ⊢V⦂ A |+| B)
+          → (M : Γ ∷ A ⊢C⦂ D ! ε) → (N : Γ ∷ B ⊢C⦂ D ! ε)
+          → VRed (A |+| B) St (env-V γ V)
+          → (∀ {St'} → (γ' : Env St' (Γ ∷ A)) → Rel-Env γ'
+               → CRed' D ε St' (env-C γ' M))
+          → (∀ {St'} → (γ' : Env St' (Γ ∷ B)) → Rel-Env γ'
+               → CRed' D ε St' (env-C γ' N))
+          --------------------------------------------------------------
+          → CRed' D ε St (env-C γ (match+ V `inl M `inr N))
 
-FL-case+ {St = St} {A = A} {B = B} {D = D} {ε = ε} γ pγ V M N pV pM pN =
-  subst (CRed' _ _ St) (sym (env-Cˢ-case+ γ [] V M N))
-    (CRed-expand CASE+ (go (injᵛ (env-V γ V)) pV))
+FL-match+ {St = St} {A = A} {B = B} {D = D} {ε = ε} γ pγ V M N pV pM pN =
+  subst (CRed' _ _ St) (sym (env-Cˢ-match+ γ [] V M N))
+    (CRed-expand MATCH+ (go (injᵛ (env-V γ V)) pV))
   where
     M₀ = env-Cˢ γ ([] ∷ A) M
     N₀ = env-Cˢ γ ([] ∷ B) N
 
     go : (s : (toCtx St ⊢V⦂ A) ⊎ (toCtx St ⊢V⦂ B)) → VRed⊎ (VRed A St) (VRed B St) s
-       → CRed' D ε St (case+-reduct s M₀ N₀)
+       → CRed' D ε St (match+-reduct s M₀ N₀)
     go _ (red-inl {W} pW) = pM (γ ∷ᵉ W) (pγ , pW)
     go _ (red-inr {W} pW) = pN (γ ∷ᵉ W) (pγ , pW)
 
@@ -192,29 +192,29 @@ FL-recℕ {St = St} {B = B} {ε = ε} γ pγ V M N p pM pN =
                                            barrier-reach-≐ʳ) N₀))
             (pN ((((γ ⟨ barrier-reach ⟩ᵉ) ∷ᵉ W) ⟨ q ⟩ᵉ) ∷ᵉ U) ((pγ , tt) , pU))
 
--- List elimination: `CASEL` reduces at the scrutinee's decomposition, whose
+-- List elimination: `MATCHL` reduces at the scrutinee's decomposition, whose
 -- reducibility names the branch; the `cons` branch substitutes the head and
 -- the tail in the opposite order from the environment, as for `match`.
 
-FL-caseL : ∀ {St Γ A D ε} → (γ : Env St Γ) → Rel-Env γ
-         → (V : Γ ⊢V⦂ list A)
-         → (M : Γ ⊢C⦂ D ! ε) → (N : Γ ∷ A ∷ list A ⊢C⦂ D ! ε)
-         → VRed (list A) St (env-V γ V)
-         → CRed' D ε St (env-C γ M)
-         → (∀ {St'} → (γ' : Env St' (Γ ∷ A ∷ list A)) → Rel-Env γ'
-              → CRed' D ε St' (env-C γ' N))
-         --------------------------------------------------------------
-         → CRed' D ε St (env-C γ (caseL V `nil M `cons N))
+FL-matchL : ∀ {St Γ A D ε} → (γ : Env St Γ) → Rel-Env γ
+          → (V : Γ ⊢V⦂ list A)
+          → (M : Γ ⊢C⦂ D ! ε) → (N : Γ ∷ A ∷ list A ⊢C⦂ D ! ε)
+          → VRed (list A) St (env-V γ V)
+          → CRed' D ε St (env-C γ M)
+          → (∀ {St'} → (γ' : Env St' (Γ ∷ A ∷ list A)) → Rel-Env γ'
+               → CRed' D ε St' (env-C γ' N))
+          --------------------------------------------------------------
+          → CRed' D ε St (env-C γ (matchL V `nil M `cons N))
 
-FL-caseL {St = St} {A = A} {D = D} {ε = ε} γ pγ V M N pV pM pN =
-  subst (CRed' _ _ St) (sym (env-Cˢ-caseL γ [] V M N))
-    (CRed-expand CASEL (go (listᵛ (env-V γ V)) pV))
+FL-matchL {St = St} {A = A} {D = D} {ε = ε} γ pγ V M N pV pM pN =
+  subst (CRed' _ _ St) (sym (env-Cˢ-matchL γ [] V M N))
+    (CRed-expand MATCHL (go (listᵛ (env-V γ V)) pV))
   where
     M₀ = env-C γ M
     N₀ = env-Cˢ γ ([] ∷ A ∷ list A) N
 
     go : (l : ListView (toCtx St) A) → VRedL (VRed A St) l
-       → CRed' D ε St (caseL-reduct l M₀ N₀)
+       → CRed' D ε St (matchL-reduct l M₀ N₀)
     go (inj₁ tt)      red-nil          = pM
     go (inj₂ (W , L)) (red-cons pW pL) =
       CRed-≡ᶜ (sym (sub-swap-C [] N₀ L W)) (pN ((γ ∷ᵉ W) ∷ᵉ L) ((pγ , pW) , pL))
@@ -404,7 +404,7 @@ mutual
   -- `VRed-sub`.
   --
   -- At a lambda the environment moves to the state the Kripke clause offers and
-  -- gains the argument (`reachᵉ`, `_∷ᵉ_`). The action is a `lam`, so `APP`
+  -- gains the argument (`reachᵉ`, `_∷ᵉ_`). The action is a `fun`, so `APP`
   -- reduces the clause's application to that body.
 
   FL-V : ∀ {St Γ A} → (γ : Env St Γ) → Rel-Env γ
@@ -437,8 +437,8 @@ mutual
     subst (VRed (list A) _) (sym (env-Vˢ-cons γ [] V W))
       (red-cons (FL-V γ pγ V) (FL-V γ pγ W))
 
-  FL-V {A = A ⇒ (B ! ε)} γ pγ (lam M) q W pW =
-    subst (λ z → CRed' B ε _ (reach-val q z · W)) (sym (env-Vˢ-lam γ [] M))
+  FL-V {A = A ⇒ (B ! ε)} γ pγ (fun M) q W pW =
+    subst (λ z → CRed' B ε _ (reach-val q z · W)) (sym (env-Vˢ-fun γ [] M))
       (CRed-expand APP (FL-C (reachᵉ γ q ∷ᵉ W) (pγ , pW) M))
 
   -- At a handler the environment moves to the state the Kripke clause offers,
@@ -493,15 +493,15 @@ mutual
     subst (CRed' _ _ _) (sym (env-Cˢ-if γ [] V M N))
       (CRed-expand* rs (FL-C γ pγ N))
 
-  -- `caseℕ` likewise (`nat-canonical`); the successor branch receives the
+  -- `matchℕ` likewise (`nat-canonical`); the successor branch receives the
   -- predecessor, reducible as every natural number is.
 
-  FL-C γ pγ (caseℕ V `zero M `succ N) with nat-canonical (env-V γ V)
+  FL-C γ pγ (matchℕ V `zero M `succ N) with nat-canonical (env-V γ V)
   ... | inj₁ rs =
-    subst (CRed' _ _ _) (sym (env-Cˢ-caseℕ γ [] V M N))
+    subst (CRed' _ _ _) (sym (env-Cˢ-matchℕ γ [] V M N))
       (CRed-expand* rs (FL-C γ pγ M))
   ... | inj₂ (W , rs) =
-    subst (CRed' _ _ _) (sym (env-Cˢ-caseℕ γ [] V M N))
+    subst (CRed' _ _ _) (sym (env-Cˢ-matchℕ γ [] V M N))
       (CRed-expand* rs (FL-C (γ ∷ᵉ W) (pγ , tt) N))
 
   FL-C γ pγ (V · W) =
@@ -551,17 +551,17 @@ mutual
   FL-C γ pγ (recℕ V M N p) =
     FL-recℕ γ pγ V M N p (FL-C γ pγ M) (λ γ' pγ' → FL-C γ' pγ' N)
 
-  FL-C γ pγ (caseL V `nil M `cons N) =
-    FL-caseL γ pγ V M N (FL-V γ pγ V) (FL-C γ pγ M) (λ γ' pγ' → FL-C γ' pγ' N)
+  FL-C γ pγ (matchL V `nil M `cons N) =
+    FL-matchL γ pγ V M N (FL-V γ pγ V) (FL-C γ pγ M) (λ γ' pγ' → FL-C γ' pγ' N)
 
   FL-C γ pγ (recL V M N p) =
     FL-recL γ pγ V M N p (FL-V γ pγ V) (FL-C γ pγ M) (λ γ' pγ' → FL-C γ' pγ' N)
 
-  FL-C γ pγ (match V `in M) =
+  FL-C γ pγ (match V `with M) =
     FL-match γ pγ V M (FL-V γ pγ V) (λ γ' pγ' → FL-C γ' pγ' M)
 
-  FL-C γ pγ (case+ V `inl M `inr N) =
-    FL-case+ γ pγ V M N (FL-V γ pγ V)
+  FL-C γ pγ (match+ V `inl M `inr N) =
+    FL-match+ γ pγ V M N (FL-V γ pγ V)
       (λ γ' pγ' → FL-C γ' pγ' M) (λ γ' pγ' → FL-C γ' pγ' N)
 
   FL-C γ pγ (perform op V M) =

@@ -53,7 +53,7 @@ import PolymorphicCalculus.Syntax.Types
 
 ---- Hypotheses (`Hyps`, in `Hypotheses`): grade orderings, quantified
 ---- orderings (`QOrd`, in `Hypotheses/Quantified`), eternality, subtyping
----- and the disjunctions of the variable rule (`VarOK`). Grade entailment
+---- and the disjunctions of the variable rule (`_⊩_Et∨≾ᵘ_`). Grade entailment
 ---- (`_⊩_≾̂ₑ_`, `_⊩_≾̂ᵣ_`) is semantic consequence: an ordering holding at
 ---- every closed instance satisfying the grade hypotheses. It is closed
 ---- under the laws of the grade algebras, contains every true ordering
@@ -61,7 +61,7 @@ import PolymorphicCalculus.Syntax.Types
 ---- instance of its rigids (`instₑ`, rule Inst), and is stable under
 ---- substitution (`⊩-substₑ`, `⊩-substᵣ`); a quantified ordering is
 ---- entailed exactly when it is a semantic consequence (`⊩ᴼ⇒⊨ᴼ`, `⊨ᴼ⇒⊩ᴼ`).
----- Open subtyping (`_∣_<:̂ᵛ_`) is a preorder reflecting eternality. Closed
+---- Open subtyping (`_⊩_<:̂ᵛ_`) is a preorder reflecting eternality. Closed
 ---- instances `δ ⊨ Q` and `Satisfiable` are in `Hypotheses/Instances`,
 ---- where entailment is sound at a satisfying closed instance
 ---- (`sound-≾ₑ⁰`, `sound-≾ᵣ⁰`, `⊨⇒⊩ᴴ`).

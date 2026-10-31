@@ -4,10 +4,10 @@
 -- Generation runs at `Θ` extended by the result type and       --
 -- effect (`C[_,_]`). A solution with its residual hypotheses   --
 -- is principal (`PrincipalSolution Γ M`) when every instance   --
--- meeting the residue types `M` (`instantiate`) and every      --
--- typing of `M` factors through it at each closed instance     --
--- (`factor`). A typing is a derivation erasing to an instance  --
--- of `M`, annotations included.                                --
+-- meeting the residue types `M` (`sound`) and every typing of  --
+-- `M` factors through it at each closed instance (`complete`). --
+-- A typing is a derivation erasing to an instance of `M`,      --
+-- annotations included.                                        --
 --                                                              --
 -- `PrincipalScheme Γ M` is a principal type scheme over a      --
 -- scope of its own; `M` is `Typable` exactly when its          --
@@ -120,21 +120,21 @@ record PrincipalSolution {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n)
     -- every instance meeting them types `M`, at the principal type
     -- `X̂ Θ [ σ⁺ ]ᵛ` and effect `t̂ Θ [ σ⁺ ]ᵉ`
 
-    instantiate : ∀ {Θ''} → (δ : Subst Θ⁺ Θ'') → (Q : Hyps Θ'')
-                → Q ⊩ᴴ Q⁺ [ δ ]
-                -------------------------------------------------------
-                → Σ[ D ∈ (Q ∣ Γ₊ Γ [ σ⁺ ⨟ˢ δ ]ᶜᵗˣ
-                            ⊢C⦂ (X̂ Θ [ σ⁺ ⨟ˢ δ ]ᵛ) ! (t̂ Θ [ σ⁺ ⨟ˢ δ ]ᵉ)) ]
+    sound : ∀ {Θ''} → (δ : Subst Θ⁺ Θ'') → (Q : Hyps Θ'')
+          → Q ⊩ᴴ Q⁺ [ δ ]
+          -------------------------------------------------------
+          → Σ[ D ∈ (Q ∣ Γ₊ Γ [ σ⁺ ⨟ˢ δ ]ᶜᵗˣ
+                      ⊢C⦂ (X̂ Θ [ σ⁺ ⨟ˢ δ ]ᵛ) ! (t̂ Θ [ σ⁺ ⨟ˢ δ ]ᵉ)) ]
                     (⌊ D ⌋ᶜ ≡ M₊ M [ σ⁺ ⨟ˢ δ ]ᴿᶜ)
 
     -- every typing of `M` factors through the principal one at each closed
     -- instance satisfying its hypotheses
 
-    factor : ∀ {Θ''} → (σ : Subst (Θ +ty +e) Θ'') → (Q : Hyps Θ'')
+    complete : ∀ {Θ''} → (σ : Subst (Θ +ty +e) Θ'') → (Q : Hyps Θ'')
         → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
         → (D : Q ∣ Γ₊ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A₀ ! ε₀)
         → ⌊ D ⌋ᶜ ≡ M₊ M [ σ ]ᴿᶜ
-        → Q ∣ A₀ <:̂ᵛ X̂ Θ [ σ ]ᵛ
+        → Q ⊩ A₀ <:̂ᵛ X̂ Θ [ σ ]ᵛ
         → Q ⊩ ε₀ ≾̂ₑ t̂ Θ [ σ ]ᵉ
         → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q
         ----------------------------------------------------
@@ -213,7 +213,7 @@ principal-inst {Θ} {Γ = Γ} {M = M} p {Θ''} σ₀ Q {A₀} {ε₀} D e δ₀ 
 
     D' = typing₊ σ₀ D e
 
-    fac = factor p σ Q (proj₁ D') (proj₂ D') (<:̂ᵛ-refl A₀) ⊩≾̂ₑ-refl δ₀ h₀
+    fac = complete p σ Q (proj₁ D') (proj₂ D') (<:̂ᵛ-refl A₀) ⊩≾̂ₑ-refl δ₀ h₀
 
     δ   = proj₁ fac
     tri = proj₁ (proj₂ fac)
@@ -233,8 +233,8 @@ principal-inst {Θ} {Γ = Γ} {M = M} p {Θ''} σ₀ Q {A₀} {ε₀} D e δ₀ 
 
 -- A principal type scheme `∀ Θ̃. Q̃ ⇒ X̃` of `M` in `Γ`, with an instantiation `σ̃`
 -- of the program's variables. Every instance entailing `Q̃` types `M`
--- (`instantiate`); every typing factors through it at each closed instance,
--- where `X̃` is a subtype of its type (`factor`). Entailment is by closed
+-- (`sound`); every typing factors through it at each closed instance,
+-- where `X̃` is a subtype of its type (`complete`). Entailment is by closed
 -- instances, as in HM(X).
 
 record PrincipalScheme {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
@@ -245,21 +245,21 @@ record PrincipalScheme {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) :
     Q̃ : Hyps Θ̃
     X̃ : OCType Θ̃
 
-    instantiate : ∀ {Θ''} → (δ : Subst Θ̃ Θ'') → (Q : Hyps Θ'')
-                → Q ⊩ᴴ Q̃ [ δ ]
-                --------------------------------------------------
-                → Σ[ D ∈ (Q ∣ Γ [ σ̃ ⨟ˢ δ ]ᶜᵗˣ ⊢C⦂ X̃ [ δ ]ᶜ) ]
+    sound : ∀ {Θ''} → (δ : Subst Θ̃ Θ'') → (Q : Hyps Θ'')
+          → Q ⊩ᴴ Q̃ [ δ ]
+          --------------------------------------------------
+          → Σ[ D ∈ (Q ∣ Γ [ σ̃ ⨟ˢ δ ]ᶜᵗˣ ⊢C⦂ X̃ [ δ ]ᶜ) ]
                     (⌊ D ⌋ᶜ ≡ M [ σ̃ ⨟ˢ δ ]ᴿᶜ)
 
-    factor : ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q₀ : Hyps Θ'') → {C₀ : OCType Θ''}
-           → (D₀ : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ C₀)
-           → ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
-           → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀
-           ---------------------------------------------------
-           → Σ[ δ ∈ Subst Θ̃ ∅ˢ ]
+    complete : ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q₀ : Hyps Θ'') → {C₀ : OCType Θ''}
+             → (D₀ : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ C₀)
+             → ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
+             → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀
+             ---------------------------------------------------
+             → Σ[ δ ∈ Subst Θ̃ ∅ˢ ]
                ((σ̃ ⨟ˢ δ ≐ˢ σ₀ ⨟ˢ δ₀)
                  × (δ ⊨ Q̃)
-                 × (∅ᴴ ∣ X̃ [ δ ]ᶜ <:̂ᶜ C₀ [ δ₀ ]ᶜ))
+                 × (∅ᴴ ⊩ X̃ [ δ ]ᶜ <:̂ᶜ C₀ [ δ₀ ]ᶜ))
 
 open PrincipalScheme
 
@@ -285,11 +285,11 @@ typable-⇔ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalSche
 typable-⇔ {Γ = Γ} {M} p = mk⇔ to from
   where
     to : Typable Γ M → Satisfiable (Q̃ p)
-    to (typable Θ₀ σ₀ Q₀ C₀ D₀ e (δ₀ , h₀)) with factor p σ₀ Q₀ D₀ e δ₀ h₀
+    to (typable Θ₀ σ₀ Q₀ C₀ D₀ e (δ₀ , h₀)) with complete p σ₀ Q₀ D₀ e δ₀ h₀
     ... | δ , _ , h , _ = δ , h
 
     from : Satisfiable (Q̃ p) → Typable Γ M
-    from (δ , h) with instantiate p δ ∅ᴴ (⊨⇒⊩ᴴ h)
+    from (δ , h) with sound p δ ∅ᴴ (⊨⇒⊩ᴴ h)
     ... | D , e = typable ∅ˢ (σ̃ p ⨟ˢ δ) ∅ᴴ (X̃ p [ δ ]ᶜ) D e (idˢ , ⊩ᴵ-∅)
 
 -- A term whose principal type scheme has no hypotheses is typable
@@ -340,17 +340,17 @@ record PrincipalSchemeᵛ (Δ : PCtx) (V : RawV ∅ˢ 0) : Set where
     Q̃ : Hyps Θ̃
     X̃ : OVType Θ̃
 
-    instantiate : ∀ {Θ''} → (δ : Subst Θ̃ Θ'') → (Q : Hyps Θ'')
-                → Q ⊩ᴴ Q̃ [ δ ]
-                -------------------------------------------------------------
-                → Σ[ D ∈ (Q ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X̃ [ δ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ)
+    sound : ∀ {Θ''} → (δ : Subst Θ̃ Θ'') → (Q : Hyps Θ'')
+          → Q ⊩ᴴ Q̃ [ δ ]
+          -------------------------------------------------------------
+          → Σ[ D ∈ (Q ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X̃ [ δ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ)
 
-    factor : ∀ {Θ''} → (Q₀ : Hyps Θ'') → {X₀ : OVType Θ''}
-           → (D₀ : Q₀ ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X₀)
-           → ⌊ D₀ ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
-           → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀
-           ---------------------------------------------------------------
-           → Σ[ δ ∈ Subst Θ̃ ∅ˢ ] (δ ⊨ Q̃) × (∅ᴴ ∣ X̃ [ δ ]ᵛ <:̂ᵛ X₀ [ δ₀ ]ᵛ)
+    complete : ∀ {Θ''} → (Q₀ : Hyps Θ'') → {X₀ : OVType Θ''}
+             → (D₀ : Q₀ ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X₀)
+             → ⌊ D₀ ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
+             → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀
+             ---------------------------------------------------------------
+             → Σ[ δ ∈ Subst Θ̃ ∅ˢ ] (δ ⊨ Q̃) × (∅ᴴ ⊩ X̃ [ δ ]ᵛ <:̂ᵛ X₀ [ δ₀ ]ᵛ)
 
 -- A typing of `V` in `Δ`, under hypotheses some closed instance satisfies
 
@@ -372,11 +372,11 @@ typableᵛ-⇔ {Δ} {V} p = mk⇔ to from
     module P = PrincipalSchemeᵛ p
 
     to : Typableᵛ Δ V → Satisfiable P.Q̃
-    to (typableᵛ Θ₀ Q₀ X₀ D₀ e (δ₀ , h₀)) with P.factor Q₀ D₀ e δ₀ h₀
+    to (typableᵛ Θ₀ Q₀ X₀ D₀ e (δ₀ , h₀)) with P.complete Q₀ D₀ e δ₀ h₀
     ... | δ , h , _ = δ , h
 
     from : Satisfiable P.Q̃ → Typableᵛ Δ V
-    from (δ , h) with P.instantiate δ ∅ᴴ (⊨⇒⊩ᴴ h)
+    from (δ , h) with P.sound δ ∅ᴴ (⊨⇒⊩ᴴ h)
     ... | D , e = typableᵛ ∅ˢ ∅ᴴ (P.X̃ [ δ ]ᵛ) D e (idˢ , ⊩ᴵ-∅)
 
 -- A typing of a value is one of the computation returning it
@@ -396,26 +396,26 @@ typableᵛ→typable (typableᵛ Θ₀ Q₀ X₀ D₀ e s) =
 
 returned : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {X : OVType Θ} {ε : EExp Θ} {W : RawV Θ n}
          → (D : Q ∣ Γ ⊢C⦂ X ! ε) → ⌊ D ⌋ᶜ ≡ return W
-         → Σ[ X' ∈ OVType Θ ] Σ[ D' ∈ (Q ∣ Γ ⊢V⦂ X') ] (⌊ D' ⌋ᵛ ≡ W) × (Q ∣ X' <:̂ᵛ X)
+         → Σ[ X' ∈ OVType Θ ] Σ[ D' ∈ (Q ∣ Γ ⊢V⦂ X') ] (⌊ D' ⌋ᵛ ≡ W) × (Q ⊩ X' <:̂ᵛ X)
 returned (return D) refl = _ , D , refl , <:̂ᵛ-refl _
 returned (subC D (p !ₛ q)) e with returned D e
 ... | X' , D' , e' , p' = X' , D' , e' , <:̂ᵛ-trans p' p
-returned (M ⨟ N)                   ()
-returned (V · W)                   ()
-returned (match V `in M)           ()
-returned (absurd V)                ()
-returned (if V `then M `else N)    ()
-returned (caseℕ V `zero M `succ N) ()
-returned (case+ V `inl M `inr N)   ()
-returned (caseL V `nil M `cons N)  ()
-returned (recℕ V M N p)            ()
-returned (recL V M N p)            ()
-returned (perform op V M)          ()
-returned (delay τ M)               ()
-returned (handle M `with V)        ()
-returned (unbox R p N)             ()
-returned (box ρ V N)               ()
-returned (annᶜ C M)                ()
+returned (M ⨟ N)                    ()
+returned (V · W)                    ()
+returned (match V `with M)          ()
+returned (absurd V)                 ()
+returned (if V `then M `else N)     ()
+returned (matchℕ V `zero M `succ N) ()
+returned (match+ V `inl M `inr N)   ()
+returned (matchL V `nil M `cons N)  ()
+returned (recℕ V M N p)             ()
+returned (recL V M N p)             ()
+returned (perform op V M)           ()
+returned (delay τ M)                ()
+returned (handle M `with V)         ()
+returned (unbox R p N)              ()
+returned (box ρ V N)                ()
+returned (annᶜ C M)                 ()
 
 -- The principal type scheme of `return V` gives that of `V`: its result type,
 -- which every typing of `V` returned bounds
@@ -429,12 +429,12 @@ private
             → (C : OCType Θ) → (δ : Subst Θ Θ')
             → (D : Q ∣ Γ ⊢C⦂ C [ δ ]ᶜ) → ⌊ D ⌋ᶜ ≡ return W
             → Σ[ X' ∈ OVType Θ' ] Σ[ D' ∈ (Q ∣ Γ ⊢V⦂ X') ] (⌊ D' ⌋ᵛ ≡ W)
-                × (Q ∣ X' <:̂ᵛ resultᵛ C [ δ ]ᵛ)
+                × (Q ⊩ X' <:̂ᵛ resultᵛ C [ δ ]ᵛ)
   returnedᶜ (A ! ε) δ D e = returned D e
 
   resultᵛ-<: : ∀ {Θ Θ'} {Q : Hyps Θ'} {B : OVType Θ'} {ε' : EExp Θ'}
              → (C : OCType Θ) → (δ : Subst Θ Θ')
-             → Q ∣ C [ δ ]ᶜ <:̂ᶜ B ! ε' → Q ∣ resultᵛ C [ δ ]ᵛ <:̂ᵛ B
+             → Q ⊩ C [ δ ]ᶜ <:̂ᶜ B ! ε' → Q ⊩ resultᵛ C [ δ ]ᵛ <:̂ᵛ B
   resultᵛ-<: (A ! ε) δ (st !ₛ _) = st
 
 valueScheme : ∀ {Δ V} → PrincipalScheme {∅ˢ} {0} ⌜ Δ ⌝ᵖ (return V) → PrincipalSchemeᵛ Δ V
@@ -442,7 +442,7 @@ valueScheme {Δ} {V} p = mkPrincipalSchemeᵛ (Θ̃ p) (Q̃ p) (resultᵛ (X̃ p
   where
     inst' : ∀ {Θ''} → (δ : Subst (Θ̃ p) Θ'') → (Q : Hyps Θ'') → Q ⊩ᴴ Q̃ p [ δ ]
           → Σ[ D ∈ (Q ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ resultᵛ (X̃ p) [ δ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ)
-    inst' δ Q h with instantiate p δ Q h
+    inst' δ Q h with sound p δ Q h
     ... | D , e with returnedᶜ (X̃ p) δ D e
     ...   | X' , D' , e' , st =
       subV (ctx-substᵛ c D') st ,
@@ -452,6 +452,6 @@ valueScheme {Δ} {V} p = mkPrincipalSchemeᵛ (Θ̃ p) (Q̃ p) (resultᵛ (X̃ p
     fac' : ∀ {Θ''} → (Q₀ : Hyps Θ'') → {X₀ : OVType Θ''}
          → (D₀ : Q₀ ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X₀) → ⌊ D₀ ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
          → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀
-         → Σ[ δ ∈ Subst (Θ̃ p) ∅ˢ ] (δ ⊨ Q̃ p) × (∅ᴴ ∣ resultᵛ (X̃ p) [ δ ]ᵛ <:̂ᵛ X₀ [ δ₀ ]ᵛ)
-    fac' Q₀ D₀ e δ₀ h₀ with factor p from∅ Q₀ (proj₁ (returnᵛ D₀ e)) (proj₂ (returnᵛ D₀ e)) δ₀ h₀
+         → Σ[ δ ∈ Subst (Θ̃ p) ∅ˢ ] (δ ⊨ Q̃ p) × (∅ᴴ ⊩ resultᵛ (X̃ p) [ δ ]ᵛ <:̂ᵛ X₀ [ δ₀ ]ᵛ)
+    fac' Q₀ D₀ e δ₀ h₀ with complete p from∅ Q₀ (proj₁ (returnᵛ D₀ e)) (proj₂ (returnᵛ D₀ e)) δ₀ h₀
     ... | δ , _ , h , st = δ , h , resultᵛ-<: (X̃ p) δ st

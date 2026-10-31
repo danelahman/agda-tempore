@@ -160,7 +160,7 @@ mutual
   V-sub₀-≐ˢ₀ h (inr V)   = cong inr (V-sub₀-≐ˢ₀ h V)
   V-sub₀-≐ˢ₀ h nil       = refl
   V-sub₀-≐ˢ₀ h (cons V W) = cong₂ cons (V-sub₀-≐ˢ₀ h V) (V-sub₀-≐ˢ₀ h W)
-  V-sub₀-≐ˢ₀ h (lam M)   = cong lam (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) M)
+  V-sub₀-≐ˢ₀ h (fun M)   = cong fun (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) M)
   V-sub₀-≐ˢ₀ h (handler N H) =
     handler-≡ (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ (_ ⟨ _ ⟩ ∷ _) h) N)
       (λ op ε'' →
@@ -174,28 +174,28 @@ mutual
   C-sub₀-≐ˢ₀ h (M ⨟ N) =
     cong₂ _⨟_ (C-sub₀-≐ˢ₀ h M) (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ (_ ⟨ _ ⟩ ∷ _) h) N)
   C-sub₀-≐ˢ₀ h (V · W) = cong₂ _·_ (V-sub₀-≐ˢ₀ h V) (V-sub₀-≐ˢ₀ h W)
-  C-sub₀-≐ˢ₀ h (match V `in M) =
-    cong₂ match_`in_ (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _ ∷ _) h) M)
+  C-sub₀-≐ˢ₀ h (match V `with M) =
+    cong₂ match_`with_ (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _ ∷ _) h) M)
   C-sub₀-≐ˢ₀ h (absurd V) = cong absurd (V-sub₀-≐ˢ₀ h V)
   C-sub₀-≐ˢ₀ h (cmp ⋈ V W et) =
     cong₂ (λ a b → cmp ⋈ a b et) (V-sub₀-≐ˢ₀ h V) (V-sub₀-≐ˢ₀ h W)
   C-sub₀-≐ˢ₀ h (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M) (C-sub₀-≐ˢ₀ h N)
-  C-sub₀-≐ˢ₀ h (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_ (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M)
+  C-sub₀-≐ˢ₀ h (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_ (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M)
       (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) N)
   C-sub₀-≐ˢ₀ h (recℕ V M N p) =
     cong₃ (λ a b c → recℕ a b c p) (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M)
       (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ (([] ⟨ _ ⟩ ∷ nat) ⟨ _ ⟩ ∷ _) h) N)
-  C-sub₀-≐ˢ₀ h (caseL V `nil M `cons N) =
-    cong₃ caseL_`nil_`cons_ (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M)
+  C-sub₀-≐ˢ₀ h (matchL V `nil M `cons N) =
+    cong₃ matchL_`nil_`cons_ (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M)
       (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _ ∷ _) h) N)
   C-sub₀-≐ˢ₀ h (recL V M N p) =
     cong₃ (λ a b c → recL a b c p) (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M)
       (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ (([] ⟨ _ ⟩ ∷ _ ∷ list _) ⟨ _ ⟩ ∷ _) h) N)
-  C-sub₀-≐ˢ₀ h (case+ V `inl M `inr N) =
-    cong₃ case+_`inl_`inr_ (V-sub₀-≐ˢ₀ h V)
+  C-sub₀-≐ˢ₀ h (match+ V `inl M `inr N) =
+    cong₃ match+_`inl_`inr_ (V-sub₀-≐ˢ₀ h V)
       (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) M)
       (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) N)
   C-sub₀-≐ˢ₀ h (perform op V M) =

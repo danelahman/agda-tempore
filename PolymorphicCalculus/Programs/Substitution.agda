@@ -145,7 +145,7 @@ mutual
   sdef-v r nil             = nil
   sdef-v r (cons V W)      = cons (sdef-v r V) (sdef-v r W)
   sdef-v r (cmp ⋈ V W et)  = cmp ⋈ (sdef-v r V) (sdef-v r W) et
-  sdef-v r (lam M)         = lam (sdef-c r M)
+  sdef-v r (fun M)         = fun (sdef-c r M)
   sdef-v {Γ = Γ} r (handler {B = B} N H) =
     handler (sdef-c r N)
             (λ op → ctx-castᶜ (clause-local Γ B op) (sdef-c (env-wkᵉ Γ r) (H op)))
@@ -154,20 +154,20 @@ mutual
 
   sdef-c : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ} {ρ : Defs}
          → DefsEnv ρ (defs Γ) → Q ∣ Γ ⊢C⦂ C → Q ∣ local Γ ⊢C⦂ C
-  sdef-c r (return V)                = return (sdef-v r V)
-  sdef-c r (M ⨟ N)                   = sdef-c r M ⨟ sdef-c r N
-  sdef-c r (V · W)                   = sdef-v r V · sdef-v r W
-  sdef-c r (match V `in M)           = match sdef-v r V `in sdef-c r M
-  sdef-c r (absurd V)                = absurd (sdef-v r V)
-  sdef-c r (if V `then M `else N)    = if sdef-v r V `then sdef-c r M `else sdef-c r N
-  sdef-c r (caseℕ V `zero M `succ N) = caseℕ sdef-v r V `zero sdef-c r M `succ sdef-c r N
-  sdef-c r (case+ V `inl M `inr N)   = case+ sdef-v r V `inl sdef-c r M `inr sdef-c r N
-  sdef-c r (caseL V `nil M `cons N)  = caseL sdef-v r V `nil sdef-c r M `cons sdef-c r N
-  sdef-c r (recℕ V M N p)            = recℕ (sdef-v r V) (sdef-c r M) (sdef-c r N) p
-  sdef-c r (recL V M N p)            = recL (sdef-v r V) (sdef-c r M) (sdef-c r N) p
-  sdef-c r (perform op V M)          = perform op (sdef-v r V) (sdef-c r M)
-  sdef-c r (delay τ M)               = delay τ (sdef-c r M)
-  sdef-c r (handle M `with V)        = handle sdef-c r M `with sdef-v r V
+  sdef-c r (return V)                 = return (sdef-v r V)
+  sdef-c r (M ⨟ N)                    = sdef-c r M ⨟ sdef-c r N
+  sdef-c r (V · W)                    = sdef-v r V · sdef-v r W
+  sdef-c r (match V `with M)          = match sdef-v r V `with sdef-c r M
+  sdef-c r (absurd V)                 = absurd (sdef-v r V)
+  sdef-c r (if V `then M `else N)     = if sdef-v r V `then sdef-c r M `else sdef-c r N
+  sdef-c r (matchℕ V `zero M `succ N) = matchℕ sdef-v r V `zero sdef-c r M `succ sdef-c r N
+  sdef-c r (match+ V `inl M `inr N)   = match+ sdef-v r V `inl sdef-c r M `inr sdef-c r N
+  sdef-c r (matchL V `nil M `cons N)  = matchL sdef-v r V `nil sdef-c r M `cons sdef-c r N
+  sdef-c r (recℕ V M N p)             = recℕ (sdef-v r V) (sdef-c r M) (sdef-c r N) p
+  sdef-c r (recL V M N p)             = recL (sdef-v r V) (sdef-c r M) (sdef-c r N) p
+  sdef-c r (perform op V M)           = perform op (sdef-v r V) (sdef-c r M)
+  sdef-c r (delay τ M)                = delay τ (sdef-c r M)
+  sdef-c r (handle M `with V)         = handle sdef-c r M `with sdef-v r V
   sdef-c r (unbox {z = z} R p N)    = unbox (res-move (∈̂-local z) R) p (sdef-c r N)
   sdef-c r (box ρ V N)               = box ρ (sdef-v r V) (sdef-c r N)
   sdef-c r (annᶜ C M)                = annᶜ C (sdef-c r M)
@@ -195,7 +195,7 @@ mutual
   ∥sdef-v∥ r nil             = refl
   ∥sdef-v∥ r (cons V W)      = cong₂ cons (∥sdef-v∥ r V) (∥sdef-v∥ r W)
   ∥sdef-v∥ r (cmp ⋈ V W et)  = cong₂ (cmp ⋈) (∥sdef-v∥ r V) (∥sdef-v∥ r W)
-  ∥sdef-v∥ r (lam M)         = cong lam (∥sdef-c∥ r M)
+  ∥sdef-v∥ r (fun M)         = cong fun (∥sdef-c∥ r M)
   ∥sdef-v∥ {Γ = Γ} r (handler {B = B} N H) =
     cong₂ handler (∥sdef-c∥ r N)
           (fun-ext (λ op → trans (cong eraseᶜ (⌊ctx-castᶜ⌋ (clause-local Γ B op) _))
@@ -206,24 +206,24 @@ mutual
   ∥sdef-c∥ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ} {ρ : Defs}
            → (r : DefsEnv ρ (defs Γ)) → (M : Q ∣ Γ ⊢C⦂ C)
            → ∥ sdef-c r M ∥ᶜ ≡ ∥ M ∥ᶜ [ ρ ]ᵈᶜ
-  ∥sdef-c∥ r (return V)                = cong return (∥sdef-v∥ r V)
-  ∥sdef-c∥ r (M ⨟ N)                   = cong₂ _⨟_ (∥sdef-c∥ r M) (∥sdef-c∥ r N)
-  ∥sdef-c∥ r (V · W)                   = cong₂ _·_ (∥sdef-v∥ r V) (∥sdef-v∥ r W)
-  ∥sdef-c∥ r (match V `in M)           = cong₂ match_`in_ (∥sdef-v∥ r V) (∥sdef-c∥ r M)
-  ∥sdef-c∥ r (absurd V)                = cong absurd (∥sdef-v∥ r V)
-  ∥sdef-c∥ r (if V `then M `else N)    =
+  ∥sdef-c∥ r (return V)                 = cong return (∥sdef-v∥ r V)
+  ∥sdef-c∥ r (M ⨟ N)                    = cong₂ _⨟_ (∥sdef-c∥ r M) (∥sdef-c∥ r N)
+  ∥sdef-c∥ r (V · W)                    = cong₂ _·_ (∥sdef-v∥ r V) (∥sdef-v∥ r W)
+  ∥sdef-c∥ r (match V `with M)          = cong₂ match_`with_ (∥sdef-v∥ r V) (∥sdef-c∥ r M)
+  ∥sdef-c∥ r (absurd V)                 = cong absurd (∥sdef-v∥ r V)
+  ∥sdef-c∥ r (if V `then M `else N)     =
     cong₃ if_`then_`else_ (∥sdef-v∥ r V) (∥sdef-c∥ r M) (∥sdef-c∥ r N)
-  ∥sdef-c∥ r (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_ (∥sdef-v∥ r V) (∥sdef-c∥ r M) (∥sdef-c∥ r N)
-  ∥sdef-c∥ r (case+ V `inl M `inr N)   =
-    cong₃ case+_`inl_`inr_ (∥sdef-v∥ r V) (∥sdef-c∥ r M) (∥sdef-c∥ r N)
-  ∥sdef-c∥ r (caseL V `nil M `cons N)  =
-    cong₃ caseL_`nil_`cons_ (∥sdef-v∥ r V) (∥sdef-c∥ r M) (∥sdef-c∥ r N)
-  ∥sdef-c∥ r (recℕ V M N p)            = cong₃ recℕ (∥sdef-v∥ r V) (∥sdef-c∥ r M) (∥sdef-c∥ r N)
-  ∥sdef-c∥ r (recL V M N p)            = cong₃ recL (∥sdef-v∥ r V) (∥sdef-c∥ r M) (∥sdef-c∥ r N)
-  ∥sdef-c∥ r (perform op V M)          = cong₂ (perform op) (∥sdef-v∥ r V) (∥sdef-c∥ r M)
-  ∥sdef-c∥ r (delay τ M)               = cong (delay τ) (∥sdef-c∥ r M)
-  ∥sdef-c∥ r (handle M `with V)        = cong₂ handle_`with_ (∥sdef-c∥ r M) (∥sdef-v∥ r V)
+  ∥sdef-c∥ r (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_ (∥sdef-v∥ r V) (∥sdef-c∥ r M) (∥sdef-c∥ r N)
+  ∥sdef-c∥ r (match+ V `inl M `inr N)   =
+    cong₃ match+_`inl_`inr_ (∥sdef-v∥ r V) (∥sdef-c∥ r M) (∥sdef-c∥ r N)
+  ∥sdef-c∥ r (matchL V `nil M `cons N)  =
+    cong₃ matchL_`nil_`cons_ (∥sdef-v∥ r V) (∥sdef-c∥ r M) (∥sdef-c∥ r N)
+  ∥sdef-c∥ r (recℕ V M N p)             = cong₃ recℕ (∥sdef-v∥ r V) (∥sdef-c∥ r M) (∥sdef-c∥ r N)
+  ∥sdef-c∥ r (recL V M N p)             = cong₃ recL (∥sdef-v∥ r V) (∥sdef-c∥ r M) (∥sdef-c∥ r N)
+  ∥sdef-c∥ r (perform op V M)           = cong₂ (perform op) (∥sdef-v∥ r V) (∥sdef-c∥ r M)
+  ∥sdef-c∥ r (delay τ M)                = cong (delay τ) (∥sdef-c∥ r M)
+  ∥sdef-c∥ r (handle M `with V)         = cong₂ handle_`with_ (∥sdef-c∥ r M) (∥sdef-v∥ r V)
   ∥sdef-c∥ r (unbox {z = z} R p N)    =
     cong₂ unbox (trans (∥res∥ (res-move (∈̂-local z) R))
                        (trans (cong var (var-pos-local z)) (cong (_[ _ ]ᵈᵛ) (sym (∥res∥ R)))))

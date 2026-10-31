@@ -138,11 +138,11 @@ wkᵉ-val {Γ = Γ} {A} V = ty-subst (wkˢᵉ-v A) (ctx-castᵛ (wkˢᵉ-ctx Γ)
         (erase-substᵛ ⌊ V ⌋ᵛ wkˢᵉ)
 
 ------------------------------------------------------------------------
--- Under no hypotheses a box-typed variable meets `VarOK` only below the unit
+-- Under no hypotheses a box-typed variable meets `_⊩_Et∨≾ᵘ_` only below the unit
 
 box-young : ∀ {Θ} {ρ ρ' : RExp Θ} {A : OVType Θ}
-          → VarOK ∅ᴴ ([ ρ ] A) ρ' → ∅ᴴ ⊩ ρ' ≾̂ᵣ 𝟏̂ᵣ
-box-young ok with VarOK-∅ᴴ ok
+          → ∅ᴴ ⊩ ([ ρ ] A) Et∨≾ᵘ ρ' → ∅ᴴ ⊩ ρ' ≾̂ᵣ 𝟏̂ᵣ
+box-young ok with Et∨≾ᵘ-∅ᴴ ok
 ... | inj₁ ()
 ... | inj₂ le = le
 
@@ -151,19 +151,19 @@ box-young ok with VarOK-∅ᴴ ok
 
 sub-var : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B ρ}
         → (d : Drop Γ₀ A k Γ Γ⁻) → ∅ᴴ ∣ Γ₀ ⊢V⦂ A
-        → (x : B ∈̂[ ρ ] Γ) → VarOK ∅ᴴ B ρ → DropView d x
+        → (x : B ∈̂[ ρ ] Γ) → ∅ᴴ ⊩ B Et∨≾ᵘ ρ → DropView d x
         → ∅ᴴ ∣ Γ⁻ ⊢V⦂ B
 sub-var d U x p              (miss x' _)       = var x' p
-sub-var d U x p              (hit refl refl _) with VarOK-∅ᴴ p
+sub-var d U x p              (hit refl refl _) with Et∨≾ᵘ-∅ᴴ p
 ... | inj₁ e  = eternal-v (dshift d) e U
 ... | inj₂ le = rename-v (drop-ren d le) U
 
 ∥sub-var∥ : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B ρ}
           → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢V⦂ A)
-          → (x : B ∈̂[ ρ ] Γ) → (p : VarOK ∅ᴴ B ρ) → (v : DropView d x)
+          → (x : B ∈̂[ ρ ] Γ) → (p : ∅ᴴ ⊩ B Et∨≾ᵘ ρ) → (v : DropView d x)
           → ∥ sub-var d U x p v ∥ᵛ ≡ subVar k ∥ U ∥ᵛ (var-pos x)
 ∥sub-var∥ d U x p          (miss x' q)       = sym (q _)
-∥sub-var∥ d U x p          (hit refl refl q) with VarOK-∅ᴴ p
+∥sub-var∥ d U x p          (hit refl refl q) with Et∨≾ᵘ-∅ᴴ p
 ... | inj₁ e  = trans (∥eternal-v∥ (dshift d) e U) (sym (q _))
 ... | inj₂ le = trans (∥rename-v∥ (drop-ren d le) U) (sym (q _))
 
@@ -231,7 +231,7 @@ mutual
   sub-v d U nil            = nil
   sub-v d U (cons V W)     = cons (sub-v d U V) (sub-v d U W)
   sub-v d U (cmp ⋈ V W et) = cmp ⋈ (sub-v d U V) (sub-v d U W) et
-  sub-v d U (lam M)        = lam (sub-c (there∷ d) U M)
+  sub-v d U (fun M)        = fun (sub-c (there∷ d) U M)
   sub-v d U (handler N H)  =
     handler (sub-c (there∷ (there⟨⟩ d)) U N)
             (λ op → sub-c (there∷ (there∷ (there⟨⟩ (wkᵉ-drop d)))) (wkᵉ-val U) (H op))
@@ -240,26 +240,26 @@ mutual
 
   sub-c : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {C : OCType Θ}
         → Drop Γ₀ A k Γ Γ⁻ → ∅ᴴ ∣ Γ₀ ⊢V⦂ A → ∅ᴴ ∣ Γ ⊢C⦂ C → ∅ᴴ ∣ Γ⁻ ⊢C⦂ C
-  sub-c d U (return V)                = return (sub-v d U V)
-  sub-c d U (M ⨟ N)                   = sub-c d U M ⨟ sub-c (there∷ (there⟨⟩ d)) U N
-  sub-c d U (V · W)                   = sub-v d U V · sub-v d U W
-  sub-c d U (match V `in M)           = match sub-v d U V `in sub-c (there∷ (there∷ d)) U M
-  sub-c d U (absurd V)                = absurd (sub-v d U V)
-  sub-c d U (if V `then M `else N)    = if sub-v d U V `then sub-c d U M `else sub-c d U N
-  sub-c d U (caseℕ V `zero M `succ N) =
-    caseℕ sub-v d U V `zero sub-c d U M `succ sub-c (there∷ d) U N
-  sub-c d U (case+ V `inl M `inr N)   =
-    case+ sub-v d U V `inl sub-c (there∷ d) U M `inr sub-c (there∷ d) U N
-  sub-c d U (caseL V `nil M `cons N)  =
-    caseL sub-v d U V `nil sub-c d U M `cons sub-c (there∷ (there∷ d)) U N
-  sub-c d U (recℕ V M N p)            =
+  sub-c d U (return V)                 = return (sub-v d U V)
+  sub-c d U (M ⨟ N)                    = sub-c d U M ⨟ sub-c (there∷ (there⟨⟩ d)) U N
+  sub-c d U (V · W)                    = sub-v d U V · sub-v d U W
+  sub-c d U (match V `with M)          = match sub-v d U V `with sub-c (there∷ (there∷ d)) U M
+  sub-c d U (absurd V)                 = absurd (sub-v d U V)
+  sub-c d U (if V `then M `else N)     = if sub-v d U V `then sub-c d U M `else sub-c d U N
+  sub-c d U (matchℕ V `zero M `succ N) =
+    matchℕ sub-v d U V `zero sub-c d U M `succ sub-c (there∷ d) U N
+  sub-c d U (match+ V `inl M `inr N)   =
+    match+ sub-v d U V `inl sub-c (there∷ d) U M `inr sub-c (there∷ d) U N
+  sub-c d U (matchL V `nil M `cons N)  =
+    matchL sub-v d U V `nil sub-c d U M `cons sub-c (there∷ (there∷ d)) U N
+  sub-c d U (recℕ V M N p)             =
     recℕ (sub-v d U V) (sub-c d U M) (sub-c (there∷ (there⟨⟩ (there∷ (there⟨⟩ d)))) U N) p
-  sub-c d U (recL V M N p)            =
+  sub-c d U (recL V M N p)             =
     recL (sub-v d U V) (sub-c d U M)
          (sub-c (there∷ (there⟨⟩ (there∷ (there∷ (there⟨⟩ d))))) U N) p
-  sub-c d U (perform op V M)          = perform op (sub-v d U V) (sub-c (there∷ (there⟨⟩ d)) U M)
-  sub-c d U (delay τ M)               = delay τ (sub-c (there⟨⟩ d) U M)
-  sub-c d U (handle M `with V)        = handle sub-c d U M `with sub-v d U V
+  sub-c d U (perform op V M)           = perform op (sub-v d U V) (sub-c (there∷ (there⟨⟩ d)) U M)
+  sub-c d U (delay τ M)                = delay τ (sub-c (there⟨⟩ d) U M)
+  sub-c d U (handle M `with V)         = handle sub-c d U M `with sub-v d U V
   sub-c d U (unbox {z = z} R p N)    = sub-unbox d U R p (sub-c (there∷ d) U N) (drop-view d z)
   sub-c d U (box ρ V N)               = box ρ (sub-v (there⟨⟩ d) U V) (sub-c (there∷ d) U N)
   sub-c d U (annᶜ C M)                = annᶜ C (sub-c d U M)
@@ -286,7 +286,7 @@ mutual
   ∥sub-v∥ d U nil            = refl
   ∥sub-v∥ d U (cons V W)     = cong₂ cons (∥sub-v∥ d U V) (∥sub-v∥ d U W)
   ∥sub-v∥ d U (cmp ⋈ V W et) = cong₂ (cmp ⋈) (∥sub-v∥ d U V) (∥sub-v∥ d U W)
-  ∥sub-v∥ d U (lam M)        = cong lam (∥sub-c∥ (there∷ d) U M)
+  ∥sub-v∥ d U (fun M)        = cong fun (∥sub-c∥ (there∷ d) U M)
   ∥sub-v∥ d U (handler N H)  =
     cong₂ handler (∥sub-c∥ (there∷ (there⟨⟩ d)) U N)
           (fun-ext (λ op →
@@ -298,31 +298,31 @@ mutual
   ∥sub-c∥ : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {C : OCType Θ}
           → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢V⦂ A) → (M : ∅ᴴ ∣ Γ ⊢C⦂ C)
           → ∥ sub-c d U M ∥ᶜ ≡ subᶜ k ∥ U ∥ᵛ ∥ M ∥ᶜ
-  ∥sub-c∥ d U (return V)                = cong return (∥sub-v∥ d U V)
-  ∥sub-c∥ d U (M ⨟ N)                   =
+  ∥sub-c∥ d U (return V)                 = cong return (∥sub-v∥ d U V)
+  ∥sub-c∥ d U (M ⨟ N)                    =
     cong₂ _⨟_ (∥sub-c∥ d U M) (∥sub-c∥ (there∷ (there⟨⟩ d)) U N)
-  ∥sub-c∥ d U (V · W)                   = cong₂ _·_ (∥sub-v∥ d U V) (∥sub-v∥ d U W)
-  ∥sub-c∥ d U (match V `in M)           =
-    cong₂ match_`in_ (∥sub-v∥ d U V) (∥sub-c∥ (there∷ (there∷ d)) U M)
-  ∥sub-c∥ d U (absurd V)                = cong absurd (∥sub-v∥ d U V)
-  ∥sub-c∥ d U (if V `then M `else N)    =
+  ∥sub-c∥ d U (V · W)                    = cong₂ _·_ (∥sub-v∥ d U V) (∥sub-v∥ d U W)
+  ∥sub-c∥ d U (match V `with M)          =
+    cong₂ match_`with_ (∥sub-v∥ d U V) (∥sub-c∥ (there∷ (there∷ d)) U M)
+  ∥sub-c∥ d U (absurd V)                 = cong absurd (∥sub-v∥ d U V)
+  ∥sub-c∥ d U (if V `then M `else N)     =
     cong₃ if_`then_`else_ (∥sub-v∥ d U V) (∥sub-c∥ d U M) (∥sub-c∥ d U N)
-  ∥sub-c∥ d U (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_ (∥sub-v∥ d U V) (∥sub-c∥ d U M) (∥sub-c∥ (there∷ d) U N)
-  ∥sub-c∥ d U (case+ V `inl M `inr N)   =
-    cong₃ case+_`inl_`inr_ (∥sub-v∥ d U V) (∥sub-c∥ (there∷ d) U M) (∥sub-c∥ (there∷ d) U N)
-  ∥sub-c∥ d U (caseL V `nil M `cons N)  =
-    cong₃ caseL_`nil_`cons_ (∥sub-v∥ d U V) (∥sub-c∥ d U M) (∥sub-c∥ (there∷ (there∷ d)) U N)
-  ∥sub-c∥ d U (recℕ V M N p)            =
+  ∥sub-c∥ d U (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_ (∥sub-v∥ d U V) (∥sub-c∥ d U M) (∥sub-c∥ (there∷ d) U N)
+  ∥sub-c∥ d U (match+ V `inl M `inr N)   =
+    cong₃ match+_`inl_`inr_ (∥sub-v∥ d U V) (∥sub-c∥ (there∷ d) U M) (∥sub-c∥ (there∷ d) U N)
+  ∥sub-c∥ d U (matchL V `nil M `cons N)  =
+    cong₃ matchL_`nil_`cons_ (∥sub-v∥ d U V) (∥sub-c∥ d U M) (∥sub-c∥ (there∷ (there∷ d)) U N)
+  ∥sub-c∥ d U (recℕ V M N p)             =
     cong₃ recℕ (∥sub-v∥ d U V) (∥sub-c∥ d U M)
                (∥sub-c∥ (there∷ (there⟨⟩ (there∷ (there⟨⟩ d)))) U N)
-  ∥sub-c∥ d U (recL V M N p)            =
+  ∥sub-c∥ d U (recL V M N p)             =
     cong₃ recL (∥sub-v∥ d U V) (∥sub-c∥ d U M)
                (∥sub-c∥ (there∷ (there⟨⟩ (there∷ (there∷ (there⟨⟩ d))))) U N)
-  ∥sub-c∥ d U (perform op V M)          =
+  ∥sub-c∥ d U (perform op V M)           =
     cong₂ (perform op) (∥sub-v∥ d U V) (∥sub-c∥ (there∷ (there⟨⟩ d)) U M)
-  ∥sub-c∥ d U (delay τ M)               = cong (delay τ) (∥sub-c∥ (there⟨⟩ d) U M)
-  ∥sub-c∥ d U (handle M `with V)        =
+  ∥sub-c∥ d U (delay τ M)                = cong (delay τ) (∥sub-c∥ (there⟨⟩ d) U M)
+  ∥sub-c∥ d U (handle M `with V)         =
     cong₂ handle_`with_ (∥sub-c∥ d U M) (∥sub-v∥ d U V)
   ∥sub-c∥ d U (unbox {z = z} R p N)    =
     trans (∥sub-unbox∥ d U R p (sub-c (there∷ d) U N) (drop-view d z))

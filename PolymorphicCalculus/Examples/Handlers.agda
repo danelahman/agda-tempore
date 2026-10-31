@@ -59,12 +59,12 @@ closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
 -- A variable no time has passed over
 
-ok₀ : ∀ {Θ} {A : OVType Θ} → VarOK ∅ᴴ A 𝟏̂ᵣ
+ok₀ : ∀ {Θ} {A : OVType Θ} → ∅ᴴ ⊩ A Et∨≾ᵘ 𝟏̂ᵣ
 ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
 -- A variable a value's unit effect has passed over
 
-ok₁ : ∀ {Θ} {A : OVType Θ} → VarOK ∅ᴴ A (𝟏̂ᵣ ·̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ)
+ok₁ : ∀ {Θ} {A : OVType Θ} → ∅ᴴ ⊩ A Et∨≾ᵘ (𝟏̂ᵣ ·̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ)
 ok₁ = ≾ᵘ-ok (transᵣ (eqᵣ ≡̂ᵣ-identityˡ)
                (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-𝟏ᵉ))))
 
@@ -84,10 +84,10 @@ U⇒U = unit ⇒ unit ! 𝟏̂ₑ
 resume-through : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc n))
 resume-through op =
   perform op v₁ (unbox (var (fsuc fzero))
-    (return (lam (return v₀)) ⨟ ((v₀ · lam (v₂ · v₃)) ⨟ ((v₁ · v₀) ⨟ (v₀ · ⋆)))))
+    (return (fun (return v₀)) ⨟ ((v₀ · fun (v₂ · v₃)) ⨟ ((v₁ · v₀) ⨟ (v₀ · ⋆)))))
 
 relay : RawC ∅ˢ 0
-relay = return (lam (handle (v₀ · ⋆) `with handler (return ⋆) resume-through))
+relay = return (fun (handle (v₀ · ⋆) `with handler (return ⋆) resume-through))
 
 -- Typable, `h` at `unit ⇒ unit ! j`, so never refuted
 
@@ -100,17 +100,17 @@ private
   𝟏³ = ≡̂ₑ-trans ≡̂ₑ-identityˡ (≡̂ₑ-trans ≡̂ₑ-identityˡ ≡̂ₑ-identityˡ)
 
   H : ∀ {n} {Γ : OCtx (∅ˢ +e) n} → ∅ᴴ ∣ Γ ⊢V⦂ T ⇒ T ! 𝟏̂ₑ
-  H = lam (return (var Hd ok₀))
+  H = fun (return (var Hd ok₀))
 
   relay-D : ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
   relay-D =
-    return (lam (handle var Hd ok₀ · ⋆
+    return (fun (handle var Hd ok₀ · ⋆
       `with handler (return ⋆) (λ op →
         perform op (var (Tl-∷ Hd) ok₀)
           (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) (eqᵣ ≡̂ᵣ-identityˡ)
             (coerce (eqₑ 𝟏³)
               (return H
-               ⨟ ((var Hd ok₀ · lam (var (Tl-∷ (Tl-∷ (Tl-⟨⟩ Hd))) ok₁
+               ⨟ ((var Hd ok₀ · fun (var (Tl-∷ (Tl-∷ (Tl-⟨⟩ Hd))) ok₁
                                      · var (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))) ok₁))
                   ⨟ ((var (Tl-∷ (Tl-⟨⟩ Hd)) ok₁ · var Hd ok₀)
                      ⨟ (var Hd ok₀ · ⋆)))))))))
@@ -136,11 +136,11 @@ expected-relay = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((unit ⇒ α₀ ! ε₀) ⇒ unit ! �
 
 through-box : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc n))
 through-box op =
-  return (lam (return v₀)) ⨟ ((v₀ · v₁) ⨟ ((v₁ · v₀) ⨟
+  return (fun (return v₀)) ⨟ ((v₀ · v₁) ⨟ ((v₁ · v₀) ⨟
     perform op v₄ (unbox (var (fsuc fzero)) (v₀ · v₁))))
 
 relay-boxed : RawC ∅ˢ 0
-relay-boxed = return (lam (handle (v₀ · ⋆) `with handler (return ⋆) through-box))
+relay-boxed = return (fun (handle (v₀ · ⋆) `with handler (return ⋆) through-box))
 
 -- Typable, `h` at the continuation's type
 
@@ -151,7 +151,7 @@ private
 
   -- a variable three unit effects have passed over
 
-  ok₃ : ∀ {Θ} {A : OVType Θ} → VarOK ∅ᴴ A (((𝟏̂ᵣ ·̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ) ·̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ) ·̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ)
+  ok₃ : ∀ {Θ} {A : OVType Θ} → ∅ᴴ ⊩ A Et∨≾ᵘ (((𝟏̂ᵣ ·̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ) ·̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ) ·̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ)
   ok₃ = ≾ᵘ-ok (step (step (step ⊩≾̂ᵣ-refl)))
     where
       𝟏-map : ∀ {Θ} → ∅ᴴ {Θ} ⊩ ∣ 𝟏̂ₑ ∣̂ᵉ ≾̂ᵣ 𝟏̂ᵣ
@@ -162,10 +162,10 @@ private
 
   relay-boxed-D : ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
   relay-boxed-D =
-    return (lam (handle var Hd ok₀ · ⋆
+    return (fun (handle var Hd ok₀ · ⋆
       `with handler (return ⋆) (λ op →
         coerce (eqₑ 𝟏³)
-          (return (lam {A = K op} (return (var Hd ok₀)))
+          (return (fun {A = K op} (return (var Hd ok₀)))
            ⨟ ((var Hd ok₀ · var (Tl-∷ (Tl-⟨⟩ Hd)) ok₁)
               ⨟ ((var (Tl-∷ (Tl-⟨⟩ Hd)) ok₁ · var Hd ok₀)
                  ⨟ perform op (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))))) ok₃)
@@ -190,11 +190,11 @@ expected-relay-boxed = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((unit ⇒ α₀ ! ε₀) ⇒ un
 -- least, refuted at the left-sided grades.
 
 discard : RawC ∅ˢ 0
-discard = return (lam (handle (v₀ · ⋆) `with handler (return ⋆) (λ _ → return ⋆)))
+discard = return (fun (handle (v₀ · ⋆) `with handler (return ⋆) (λ _ → return ⋆)))
 
 discard-D : Minimum (Grade._≾_ EGrade) 𝟏ₑ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
 discard-D least =
-  return (lam (handle var Hd ok₀ · ⋆
+  return (fun (handle var Hd ok₀ · ⋆
                 `with handler (return ⋆) (λ _ → coerce (minₑ least) (return ⋆))))
 
 discard-typable : Minimum (Grade._≾_ EGrade) 𝟏ₑ → Typable [] discard
@@ -218,12 +218,12 @@ resume-twice-clause op =
 
 resume-twice : RawC ∅ˢ 0
 resume-twice =
-  return (lam (handle (v₀ · ⋆) `with handler (return ⋆) resume-twice-clause))
+  return (fun (handle (v₀ · ⋆) `with handler (return ⋆) resume-twice-clause))
 
 resume-twice-D : True (⊤ₑ ≾ₑ? 𝟏ₑ)
                → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
 resume-twice-D top =
-  return (lam (handle var Hd ok₀ · ⋆
+  return (fun (handle var Hd ok₀ · ⋆
     `with handler (return ⋆) (λ op →
       coerce (monoₑ ⊩≾̂ₑ-refl twice≾once)
         (perform op (var (Tl-∷ Hd) ok₀)
@@ -237,7 +237,7 @@ resume-twice-D top =
     twice≾once : ∀ {Θ} {Q : Hyps Θ} {ε} → Q ⊩ ε ·̂ₑ ε ≾̂ₑ ε
     twice≾once = transₑ (monoₑ ⊩≾̂ₑ-refl below-𝟏) (eqₑ ≡̂ₑ-identityʳ)
 
-    okʲ : ∀ {Θ} {Q : Hyps Θ} {A ε} → VarOK Q A (𝟏̂ᵣ ·̂ᵣ ∣ ε ∣̂ᵉ)
+    okʲ : ∀ {Θ} {Q : Hyps Θ} {A ε} → Q ⊩ A Et∨≾ᵘ (𝟏̂ᵣ ·̂ᵣ ∣ ε ∣̂ᵉ)
     okʲ = ≾ᵘ-ok (transᵣ (eqᵣ ≡̂ᵣ-identityˡ)
                   (transᵣ (map-mono below-𝟏)
                     (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-𝟏ᵉ)))))
@@ -267,10 +267,10 @@ forwarder : ∀ {Θ n} → RawV Θ n
 forwarder = handler (return v₀) forward
 
 bound : RawC ∅ˢ 0
-bound = return (lam (return forwarder ⨟ (handle (v₁ · ⋆) `with v₀)))
+bound = return (fun (return forwarder ⨟ (handle (v₁ · ⋆) `with v₀)))
 
 run : RawC ∅ˢ 0
-run = return (lam (return (lam (handle (v₀ · ⋆) `with v₁))))
+run = return (fun (return (fun (handle (v₀ · ⋆) `with v₁))))
 
 run-forward : RawC ∅ˢ 0
 run-forward = run ⨟ (v₀ · forwarder)
@@ -290,7 +290,7 @@ private
 
   bound-D : ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ))) ! 𝟏̂ₑ
   bound-D =
-    return (lam (return (handler (return (var Hd ok₀)) forward-D)
+    return (fun (return (handler (return (var Hd ok₀)) forward-D)
                  ⨟ (handle var (Tl-∷ (Tl-⟨⟩ Hd)) ok₁ · ⋆ `with var Hd ok₀)))
 
 bound-typable : Typable [] bound

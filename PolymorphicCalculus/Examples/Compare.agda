@@ -86,7 +86,7 @@ private
 
   -- A variable no time has passed over
 
-  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → VarOK Q A 𝟏̂ᵣ
+  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → Q ⊩ A Et∨≾ᵘ 𝟏̂ᵣ
   ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
 ------------------------------------------------------------------
@@ -172,7 +172,7 @@ expected-ne-sums' = ∀[ 0 , 0 , 0 ] ⊤ ⟹ bool ! 𝟏̂ₑ
 -- The operands get a common eternal supertype.
 
 equal : RawC ∅ˢ 0
-equal = return (lam (return (lam (return (cmp eq v₁ v₀)))))
+equal = return (fun (return (fun (return (cmp eq v₁ v₀)))))
 
 expected-equal : Scheme
 expected-equal =
@@ -182,7 +182,7 @@ expected-equal =
 -- An instance at `nat`, as a derivation
 
 equal-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ (nat ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
-equal-D = return (lam (return (lam (return (cmp eq (var (Tl-∷ Hd) ok₀) (var Hd ok₀) natₑ)))))
+equal-D = return (fun (return (fun (return (cmp eq (var (Tl-∷ Hd) ok₀) (var Hd ok₀) natₑ)))))
 
 equal-typed : IsTyped (infer [] equal)
 equal-typed = typed-of equal (closed equal-D refl) _
@@ -192,7 +192,7 @@ equal-typed = typed-of equal (closed equal-D refl) _
 --   reflexive x = x = x
 
 reflexive : RawC ∅ˢ 0
-reflexive = return (lam (return (cmp eq v₀ v₀)))
+reflexive = return (fun (return (cmp eq v₀ v₀)))
 
 expected-reflexive : Scheme
 expected-reflexive = ∀[ 1 , 0 , 0 ] eternal α₀ ⟹ (α₀ ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂ₑ
@@ -204,7 +204,7 @@ expected-reflexive = ∀[ 1 , 0 , 0 ] eternal α₀ ⟹ (α₀ ⇒ bool ! 𝟏̂
 --   eq-boxes = box[0] () as x in box[0] () as y in x = y
 
 eq-funs : RawC ∅ˢ 0
-eq-funs = return (cmp eq (lam (return ⋆)) (lam (return ⋆)))
+eq-funs = return (cmp eq (fun (return ⋆)) (fun (return ⋆)))
 
 eq-boxes : RawC ∅ˢ 0
 eq-boxes = box 𝟏̂ᵣ ⋆ (box 𝟏̂ᵣ ⋆ (return (cmp eq v₁ v₀)))
@@ -235,7 +235,7 @@ expected-later-lt = ∀[ 0 , 0 , 0 ] ⊤ ⟹ bool ! ⌜ 1 ⌝ᵉ
 -- The eternality the comparison asks for meets the variable rule.
 
 later-equal : RawC ∅ˢ 0
-later-equal = return (lam (return (lam (delay ⌜ 1 ⌝ (return (cmp eq v₁ v₀))))))
+later-equal = return (fun (return (fun (delay ⌜ 1 ⌝ (return (cmp eq v₁ v₀))))))
 
 expected-later-equal : Scheme
 expected-later-equal =
@@ -250,11 +250,11 @@ expected-later-equal =
 -- The result is a common supertype of `x` and `y`.
 
 max : RawC ∅ˢ 0
-max = return (lam (return (lam (if cmp lt v₁ v₀ `then return v₀ `else return v₁))))
+max = return (fun (return (fun (if cmp lt v₁ v₀ `then return v₀ `else return v₁))))
 
 max-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 max-D =
-  return (lam (return (lam
+  return (fun (return (fun
     (if cmp lt (var (Tl-∷ Hd) ok₀) (var Hd ok₀) natₑ
      `then return (var Hd ok₀) `else return (var (Tl-∷ Hd) ok₀)))))
 

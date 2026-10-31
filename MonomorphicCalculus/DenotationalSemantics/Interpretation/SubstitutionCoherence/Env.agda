@@ -369,7 +369,7 @@ mutual
   subᵛˢ s p ⦉ V , W ⦊   (pV , pW) = subᵛˢ s p V pV , subᵛˢ s p W pW
   subᵛˢ s p (inl V)     pV        = subᵛˢ s p V pV
   subᵛˢ s p (inr V)     pV        = subᵛˢ s p V pV
-  subᵛˢ s p (lam M)     pM        = subᶜˢ (cong-∷-sub s) p M pM
+  subᵛˢ s p (fun M)     pM        = subᶜˢ (cong-∷-sub s) p M pM
   -- the clauses are substituted into under the barrier lock, which acts on the
   -- ambient context only, so the clauses' uniformity transports
   subᵛˢ s p (handler N H) (pN , pH , uH) =
@@ -381,27 +381,27 @@ mutual
 
   subᶜˢ : ∀ {Γ Γ' C} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
         → (M : Γ' ⊢C⦂ C) → Paramᶜ M → Paramᶜ (C-sub₀ s M)
-  subᶜˢ s p (return V)       pV        = subᵛˢ s p V pV
-  subᶜˢ s p (M ⨟ N)          (pM , pN) =
+  subᶜˢ s p (return V)         pV        = subᵛˢ s p V pV
+  subᶜˢ s p (M ⨟ N)            (pM , pN) =
     subᶜˢ s p M pM , subᶜˢ (cong-∷-sub (cong-⟨⟩-sub s)) p N pN
-  subᶜˢ s p (V · W)          (pV , pW) = subᵛˢ s p V pV , subᵛˢ s p W pW
-  subᶜˢ s p (match V `in M)  (pV , pM) =
+  subᶜˢ s p (V · W)            (pV , pW) = subᵛˢ s p V pV , subᵛˢ s p W pW
+  subᶜˢ s p (match V `with M)  (pV , pM) =
     subᵛˢ s p V pV , subᶜˢ (cong-∷-sub (cong-∷-sub s)) p M pM
-  subᶜˢ s p (absurd V)       pV        = subᵛˢ s p V pV
-  subᶜˢ s p (cmp ⋈ V W et)   (pV , pW) = subᵛˢ s p V pV , subᵛˢ s p W pW
+  subᶜˢ s p (absurd V)         pV        = subᵛˢ s p V pV
+  subᶜˢ s p (cmp ⋈ V W et)     (pV , pW) = subᵛˢ s p V pV , subᵛˢ s p W pW
   subᶜˢ s p (if V `then M `else N) (pV , pM , pN) =
     subᵛˢ s p V pV , subᶜˢ s p M pM , subᶜˢ s p N pN
-  subᶜˢ s p (caseL V `nil M `cons N) (pV , pM , pN) =
+  subᶜˢ s p (matchL V `nil M `cons N) (pV , pM , pN) =
     subᵛˢ s p V pV , subᶜˢ s p M pM , subᶜˢ (cong-∷-sub (cong-∷-sub s)) p N pN
-  subᶜˢ s p (recL V M N q) (pV , pM , pN) =
+  subᶜˢ s p (recL V M N q) (pV , pM , pN)  =
       subᵛˢ s p V pV , subᶜˢ s p M pM
     , subᶜˢ (cong-∷-sub (cong-⟨⟩-sub (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s))))) p N pN
-  subᶜˢ s p (caseℕ V `zero M `succ N) (pV , pM , pN) =
+  subᶜˢ s p (matchℕ V `zero M `succ N) (pV , pM , pN) =
     subᵛˢ s p V pV , subᶜˢ s p M pM , subᶜˢ (cong-∷-sub s) p N pN
-  subᶜˢ s p (recℕ V M N q) (pV , pM , pN) =
+  subᶜˢ s p (recℕ V M N q) (pV , pM , pN)  =
       subᵛˢ s p V pV , subᶜˢ s p M pM
     , subᶜˢ (cong-∷-sub (cong-⟨⟩-sub (cong-∷-sub (cong-⟨⟩-sub s)))) p N pN
-  subᶜˢ s p (case+ V `inl M `inr N) (pV , pM , pN) =
+  subᶜˢ s p (match+ V `inl M `inr N) (pV , pM , pN) =
     subᵛˢ s p V pV , subᶜˢ (cong-∷-sub s) p M pM , subᶜˢ (cong-∷-sub s) p N pN
   subᶜˢ s p (perform op V M) (pV , pM) =
     subᵛˢ s p V pV , subᶜˢ (cong-∷-sub (cong-⟨⟩-sub s)) p M pM
@@ -473,7 +473,7 @@ mutual
     ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-natˢ s p V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   V-subst-natˢ s p (inr V) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-natˢ s p V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  V-subst-natˢ s p (lam M) pM =
+  V-subst-natˢ s p (fun M) pM =
     ≈ᵐ-trans (curryᵐ-cong (C-subst-natˢ (cong-∷-sub s) p M pM))
              (curryᵐ-nat (⟦ s ⟧ˢ₀ p) (⟦ M ⟧ᶜᵗ pM))
   -- the denoted family is natural in the context (`handler-famᵗ-reindex`); the
@@ -531,7 +531,7 @@ mutual
     ≈ᵐ-trans (∘ᵐ-congʳ (⟨ V-subst-natˢ s p V pV , V-subst-natˢ s p W pW ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-  C-subst-natˢ s p (match V `in M) (pV , pM) =
+  C-subst-natˢ s p (match V `with M) (pV , pM) =
     ≈ᵐ-trans (∘ᵐ-congˡ (C-subst-natˢ (cong-∷-sub (cong-∷-sub s)) p M pM))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
@@ -561,12 +561,12 @@ mutual
     ≈ᵐ-trans (ifᵐ-cong (V-subst-natˢ s p V pV)
                        (C-subst-natˢ s p M pM) (C-subst-natˢ s p N pN))
              (≈ᵐ-sym (ifᵐ-∘ _ _ _ _))
-  -- likewise for `caseℕ` and `case+`: `caseℕᵐ-∘`, `caseᵐ-∘`
-  C-subst-natˢ s p (caseℕ V `zero M `succ N) (pV , pM , pN) =
-    ≈ᵐ-trans (caseℕᵐ-cong (V-subst-natˢ s p V pV)
-                          (C-subst-natˢ s p M pM)
-                          (C-subst-natˢ (cong-∷-sub s) p N pN))
-             (≈ᵐ-sym (caseℕᵐ-∘ _ _ _ _))
+  -- likewise for `matchℕ` and `match+`: `matchℕᵐ-∘`, `match+ᵐ-∘`
+  C-subst-natˢ s p (matchℕ V `zero M `succ N) (pV , pM , pN) =
+    ≈ᵐ-trans (matchℕᵐ-cong (V-subst-natˢ s p V pV)
+                           (C-subst-natˢ s p M pM)
+                           (C-subst-natˢ (cong-∷-sub s) p N pN))
+             (≈ᵐ-sym (matchℕᵐ-∘ _ _ _ _))
   -- the recursor is natural in its context: `recℕᵐ-∘`, `recℕ-stepᵗ-nat`
   C-subst-natˢ s p (recℕ V M N q) (pV , pM , pN) =
     ≈ᵐ-trans (∘ᵐ-cong (recℕᵐ-cong (C-subst-natˢ s p M pM)
@@ -582,12 +582,12 @@ mutual
                  , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
                  (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))))
     (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
-  -- lists: `caseLᵐ-∘`, and `recLᵐ-∘` with `recL-stepᵗ-nat`
-  C-subst-natˢ s p (caseL V `nil M `cons N) (pV , pM , pN) =
-    ≈ᵐ-trans (caseLᵐ-cong (V-subst-natˢ s p V pV)
-                          (C-subst-natˢ s p M pM)
-                          (C-subst-natˢ (cong-∷-sub (cong-∷-sub s)) p N pN))
-             (≈ᵐ-sym (caseLᵐ-∘ _ _ _ _))
+  -- lists: `matchLᵐ-∘`, and `recLᵐ-∘` with `recL-stepᵗ-nat`
+  C-subst-natˢ s p (matchL V `nil M `cons N) (pV , pM , pN) =
+    ≈ᵐ-trans (matchLᵐ-cong (V-subst-natˢ s p V pV)
+                           (C-subst-natˢ s p M pM)
+                           (C-subst-natˢ (cong-∷-sub (cong-∷-sub s)) p N pN))
+             (≈ᵐ-sym (matchLᵐ-∘ _ _ _ _))
   C-subst-natˢ s p (recL V M N q) (pV , pM , pN) =
     ≈ᵐ-trans (∘ᵐ-cong (recLᵐ-cong (C-subst-natˢ s p M pM)
                 (recL-stepᵗ-nat q _ _ (⟦ s ⟧ˢ₀ p)
@@ -603,11 +603,11 @@ mutual
                  , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
                  (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))))
     (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
-  C-subst-natˢ s p (case+ V `inl M `inr N) (pV , pM , pN) =
-    ≈ᵐ-trans (caseᵐ-cong (V-subst-natˢ s p V pV)
-                         (C-subst-natˢ (cong-∷-sub s) p M pM)
-                         (C-subst-natˢ (cong-∷-sub s) p N pN))
-             (≈ᵐ-sym (caseᵐ-∘ _ _ _ _))
+  C-subst-natˢ s p (match+ V `inl M `inr N) (pV , pM , pN) =
+    ≈ᵐ-trans (match+ᵐ-cong (V-subst-natˢ s p V pV)
+                           (C-subst-natˢ (cong-∷-sub s) p M pM)
+                           (C-subst-natˢ (cong-∷-sub s) p N pN))
+             (≈ᵐ-sym (match+ᵐ-∘ _ _ _ _))
   C-subst-natˢ s p (perform op V M) (pV , pM) =
     ≈ᵐ-trans (∘ᵐ-congʳ
       (⟨ ≈ᵐ-trans (substᶜ-≈ (ty-gty (param op)) (V-subst-natˢ s p V pV))

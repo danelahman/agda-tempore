@@ -352,7 +352,7 @@ canonᴴ-⊩ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE d
     ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → canonᴴ Q ⊩ ε ≾̂ₑ ε'
     ordE m = ⊩-idₑ (Split.back (splits piecesᵉ (ordₑ Q)) idˢ (λ m' → ⊩-idₑ⁻ (hypₑ m')) m)
 
-    dsj : ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK (canonᴴ Q) A ρ
+    dsj : ∀ {A ρ} → (A , ρ) ∈ disj Q → canonᴴ Q ⊩ A Et∨≾ᵘ ρ
     dsj {A} {ρ} m =
       hyp-ok-≡̂ (∈-map⁺ (mapᵈ canonᵛ canonᵣ) m) (canonᵛ-≡̂ A) (eqᵣ (canonᵣ-≡ ρ))
 
@@ -365,7 +365,7 @@ canonᴴ-⊩⁻ Q = mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ord
     ordE : ∀ {ε ε'} → (ε , ε') ∈ Split.out (splits piecesᵉ (ordₑ Q)) → Q ⊩ ε ≾̂ₑ ε'
     ordE m = ⊩-idₑ (Split.fwd (splits piecesᵉ (ordₑ Q)) idˢ (λ m' → ⊩-idₑ⁻ (hypₑ m')) m)
 
-    dsj : ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ canonᵛ canonᵣ) (disj Q) → VarOK Q A ρ
+    dsj : ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ canonᵛ canonᵣ) (disj Q) → Q ⊩ A Et∨≾ᵘ ρ
     dsj m with ∈-map⁻ (mapᵈ canonᵛ canonᵣ) m
     ... | (A₀ , ρ₀) , m₀ , refl =
           hyp-ok-≡̂ m₀ (≡̂ᵛ-sym (canonᵛ-≡̂ A₀)) (eqᵣ (≡̂ᵣ-sym (canonᵣ-≡ ρ₀)))

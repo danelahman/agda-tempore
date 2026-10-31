@@ -32,7 +32,7 @@ open import PolymorphicCalculus.Typing.GradeSubstitution         S
 open import PolymorphicCalculus.Typing.ScopeClosed               S
 open import PolymorphicCalculus.Syntax.Raw.GradeSubstitution     S
 open import PolymorphicCalculus.Syntax.Run                       S
-open import PolymorphicCalculus.OperationalSemantics.State       S using (∅; ctx)
+open import PolymorphicCalculus.OperationalSemantics.State       S using (∅; toCtx)
 open import PolymorphicCalculus.OperationalSemantics.Termination S using (Halts; termination)
 open import PolymorphicCalculus.Programs.Syntax                  S
 open import PolymorphicCalculus.Programs.Substitution            S
@@ -71,11 +71,11 @@ instantiation {P = P} {δ = δ} t M h =
 
 programs : ∀ {Θ P Δ} {Q : Hyps Θ} {C : OCType Θ} {δ : Subst Θ ∅ˢ}
          → ⊢ᴾ P ⦂ Δ → (M : Q ∣ ⌜ Δ ⌝ᵖ ⊢C⦂ C) → δ ⊨ Q
-         → ctx ∅ ⊢ᶜ ⌊ ⌊ M ⌋ᶜ [ δ ]ᴿᶜ ⌋ᴾᶜ P ⦂ C [ δ ]ᶜ
+         → toCtx ∅ ⊢ᶜ ⌊ ⌊ M ⌋ᶜ [ δ ]ᴿᶜ ⌋ᴾᶜ P ⦂ C [ δ ]ᶜ
            × Halts ∅ (⌊ ⌊ M ⌋ᶜ [ δ ]ᴿᶜ ⌋ᴾᶜ P)
 programs {P = P} {Δ = Δ} {C = C} {δ = δ} t M h = typed , termination typed
   where
-    typed : ctx ∅ ⊢ᶜ ⌊ ⌊ M ⌋ᶜ [ δ ]ᴿᶜ ⌋ᴾᶜ P ⦂ C [ δ ]ᶜ
+    typed : toCtx ∅ ⊢ᶜ ⌊ ⌊ M ⌋ᶜ [ δ ]ᴿᶜ ⌋ᴾᶜ P ⦂ C [ δ ]ᶜ
     typed = subst (λ Γ → Γ ⊢ᶜ ⌊ ⌊ M ⌋ᶜ [ δ ]ᴿᶜ ⌋ᴾᶜ P ⦂ C [ δ ]ᶜ)
                   (cong (_[ δ ]ᶜᵗˣ) (local-⌜⌝ Δ))
                   (instantiation (subst (⊢ᴾ _ ⦂_) (sym (defs-⌜⌝ Δ)) t) M h)

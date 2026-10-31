@@ -139,7 +139,7 @@ completenessᵛ : ∀ {Δ} {V : RawV ∅ˢ 0} {X : OVType ∅ˢ}
               → (¬ inferᵛ Δ V ≡ untypable)
                 × (∀ {p} → inferᵛ Δ V ≡ typed p
                    → Σ[ δ ∈ Subst (PrincipalSchemeᵛ.Θ̃ p) ∅ˢ ]
-                       (δ ⊨ PrincipalSchemeᵛ.Q̃ p) × (∅ᴴ ∣ PrincipalSchemeᵛ.X̃ p [ δ ]ᵛ <:̂ᵛ X))
+                       (δ ⊨ PrincipalSchemeᵛ.Q̃ p) × (∅ᴴ ⊩ PrincipalSchemeᵛ.X̃ p [ δ ]ᵛ <:̂ᵛ X))
 completenessᵛ {Δ} {V} {X} D e =
   (λ u → inferᵛ-untypable Δ V u (typableᵛ ∅ˢ ∅ᴴ X D e' (idˢ , ⊩ᴵ-∅))) ,
   λ {p} _ → scheme p
@@ -149,6 +149,6 @@ completenessᵛ {Δ} {V} {X} D e =
 
     scheme : (p : PrincipalSchemeᵛ Δ V)
            → Σ[ δ ∈ Subst (PrincipalSchemeᵛ.Θ̃ p) ∅ˢ ]
-               (δ ⊨ PrincipalSchemeᵛ.Q̃ p) × (∅ᴴ ∣ PrincipalSchemeᵛ.X̃ p [ δ ]ᵛ <:̂ᵛ X)
-    scheme p with PrincipalSchemeᵛ.factor p ∅ᴴ D e' idˢ ⊩ᴵ-∅
-    ... | δ , h , st = δ , h , subst (λ X' → ∅ᴴ ∣ _ <:̂ᵛ X') ([id]ᵛ X) st
+               (δ ⊨ PrincipalSchemeᵛ.Q̃ p) × (∅ᴴ ⊩ PrincipalSchemeᵛ.X̃ p [ δ ]ᵛ <:̂ᵛ X)
+    scheme p with PrincipalSchemeᵛ.complete p ∅ᴴ D e' idˢ ⊩ᴵ-∅
+    ... | δ , h , st = δ , h , subst (λ X' → ∅ᴴ ⊩ _ <:̂ᵛ X') ([id]ᵛ X) st

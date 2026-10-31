@@ -130,8 +130,8 @@ record _⊩ᴿ_[_] {Ω Ω' : Scope} (Q : Hyps Ω') (R : Resid Ω) (δ : Subst Ω
     ⊩rs : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
     ⊩es : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
     ⊩ts : ∀ {A}    → A ∈ ts R        → Q ⊩Et A [ δ ]ᵛ
-    ⊩ss : ∀ {A B}  → (A , B) ∈ ss R  → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
-    ⊩ds : ∀ {A ρ}  → (A , ρ) ∈ ds R  → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+    ⊩ss : ∀ {A B}  → (A , B) ∈ ss R  → Q ⊩ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
+    ⊩ds : ∀ {A ρ}  → (A , ρ) ∈ ds R  → Q ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ [ δ ]ʳ
     ⊩dfs : ∀ {E}   → E ∈ dfs R       → Q ⊩ᴼ E [ δ ]
 
 open _⊩ᴿ_[_] public
@@ -145,8 +145,8 @@ open _⊩ᴿ_[_] public
   mk⊩ᴿ (λ {ρ} {ρ'} m → subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) ([≐]ʳ p ρ) ([≐]ʳ p ρ') (⊩rs h m))
        (λ {ε} {ε'} m → subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) ([≐]ᵉ p ε) ([≐]ᵉ p ε') (⊩es h m))
        (λ {A}       m → subst (Q ⊩Et_) ([≐]ᵛ p A) (⊩ts h m))
-       (λ {A} {B}   m → subst₂ (Q ∣_<:̂ᵛ_) ([≐]ᵛ p A) ([≐]ᵛ p B) (⊩ss h m))
-       (λ {A} {ρ}   m → subst₂ (VarOK Q) ([≐]ᵛ p A) ([≐]ʳ p ρ) (⊩ds h m))
+       (λ {A} {B}   m → subst₂ (Q ⊩_<:̂ᵛ_) ([≐]ᵛ p A) ([≐]ᵛ p B) (⊩ss h m))
+       (λ {A} {ρ}   m → subst₂ (Q ⊩_Et∨≾ᵘ_) ([≐]ᵛ p A) ([≐]ʳ p ρ) (⊩ds h m))
        (λ {E}       m → ⊩ᴼ-resp-≐ˢ E p (⊩dfs h m))
 
 -- A residual pushed through a substitution
@@ -161,9 +161,9 @@ open _⊩ᴿ_[_] public
                               (⊩es h (∈-map⁺ (mapᵖ (_[ σ ]ᵉ)) m)))
        (λ {A}      m → subst (Q ⊩Et_) ([⨟]ᵛ A σ δ)
                               (⊩ts h (∈-map⁺ (_[ σ ]ᵛ) m)))
-       (λ {A} {B}  m → subst₂ (Q ∣_<:̂ᵛ_) ([⨟]ᵛ A σ δ) ([⨟]ᵛ B σ δ)
+       (λ {A} {B}  m → subst₂ (Q ⊩_<:̂ᵛ_) ([⨟]ᵛ A σ δ) ([⨟]ᵛ B σ δ)
                               (⊩ss h (∈-map⁺ (mapᵖ (_[ σ ]ᵛ)) m)))
-       (λ {A} {ρ}  m → subst₂ (VarOK Q) ([⨟]ᵛ A σ δ) ([⨟]ʳ ρ σ δ)
+       (λ {A} {ρ}  m → subst₂ (Q ⊩_Et∨≾ᵘ_) ([⨟]ᵛ A σ δ) ([⨟]ʳ ρ σ δ)
                               (⊩ds h (∈-map⁺ (mapᵈ (_[ σ ]ᵛ) (_[ σ ]ʳ)) m)))
        (λ {E}      m → ⊩ᴼ-subst E (⊩dfs h (∈-map⁺ (_[ σ ]ᵠ) m)))
 
@@ -188,15 +188,15 @@ open _⊩ᴿ_[_] public
     ts' m with ∈-map⁻ (_[ σ ]ᵛ) m
     ... | A₀ , m₀ , refl = subst (Q ⊩Et_) (sym ([⨟]ᵛ A₀ σ δ)) (⊩ts h m₀)
 
-    ss' : ∀ {A B} → (A , B) ∈ ss (R [ σ ]ᴿ) → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
+    ss' : ∀ {A B} → (A , B) ∈ ss (R [ σ ]ᴿ) → Q ⊩ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
     ss' m with ∈-map⁻ (mapᵖ (_[ σ ]ᵛ)) m
     ... | (A₀ , B₀) , m₀ , refl =
-      subst₂ (Q ∣_<:̂ᵛ_) (sym ([⨟]ᵛ A₀ σ δ)) (sym ([⨟]ᵛ B₀ σ δ)) (⊩ss h m₀)
+      subst₂ (Q ⊩_<:̂ᵛ_) (sym ([⨟]ᵛ A₀ σ δ)) (sym ([⨟]ᵛ B₀ σ δ)) (⊩ss h m₀)
 
-    ds' : ∀ {A ρ} → (A , ρ) ∈ ds (R [ σ ]ᴿ) → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+    ds' : ∀ {A ρ} → (A , ρ) ∈ ds (R [ σ ]ᴿ) → Q ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ [ δ ]ʳ
     ds' m with ∈-map⁻ (mapᵈ (_[ σ ]ᵛ) (_[ σ ]ʳ)) m
     ... | (A₀ , ρ₀) , m₀ , refl =
-      subst₂ (VarOK Q) (sym ([⨟]ᵛ A₀ σ δ)) (sym ([⨟]ʳ ρ₀ σ δ)) (⊩ds h m₀)
+      subst₂ (Q ⊩_Et∨≾ᵘ_) (sym ([⨟]ᵛ A₀ σ δ)) (sym ([⨟]ʳ ρ₀ σ δ)) (⊩ds h m₀)
 
     dfs' : ∀ {E} → E ∈ dfs (R [ σ ]ᴿ) → Q ⊩ᴼ E [ δ ]
     dfs' m with ∈-map⁻ (_[ σ ]ᵠ) m
@@ -213,10 +213,10 @@ open _⊩ᴿ_[_] public
        (λ {ε} {ε'} m → subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε δ δ') ([⨟]ᵉ ε' δ δ')
                               (⊩-substₑ g (⊩es h m)))
        (λ {A}      m → subst (Q' ⊩Et_) ([⨟]ᵛ A δ δ') (⊩Et-subst g (⊩ts h m)))
-       (λ {A} {B}  m → subst₂ (Q' ∣_<:̂ᵛ_) ([⨟]ᵛ A δ δ') ([⨟]ᵛ B δ δ')
+       (λ {A} {B}  m → subst₂ (Q' ⊩_<:̂ᵛ_) ([⨟]ᵛ A δ δ') ([⨟]ᵛ B δ δ')
                               (<:̂ᵛ-subst g (⊩ss h m)))
-       (λ {A} {ρ}  m → subst₂ (VarOK Q') ([⨟]ᵛ A δ δ') ([⨟]ʳ ρ δ δ')
-                              (VarOK-subst g (⊩ds h m)))
+       (λ {A} {ρ}  m → subst₂ (Q' ⊩_Et∨≾ᵘ_) ([⨟]ᵛ A δ δ') ([⨟]ʳ ρ δ δ')
+                              (Et∨≾ᵘ-subst g (⊩ds h m)))
        (λ {E}      m → ⊩ᴼ-⨟ E g (⊩dfs h m))
 
 -- The two components of a union
@@ -299,14 +299,14 @@ a ∪ᴬ b = atoms (asubᵥ a ++ asubᵥ b) (aordᵣ a ++ aordᵣ b) (aordₑ a 
 record Holds {Ω Ω' : Scope} (Q : Hyps Ω') (δ : Subst Ω Ω') (a : SubAtoms Ω) : Set where
   constructor holds
   field
-    hv : ∀ {α β} → (α , β) ∈ asubᵥ a → Q ∣ sTy δ α <:̂ᵛ sTy δ β
+    hv : ∀ {α β} → (α , β) ∈ asubᵥ a → Q ⊩ sTy δ α <:̂ᵛ sTy δ β
     hr : ∀ {ρ ρ'} → (ρ , ρ') ∈ aordᵣ a → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
     he : ∀ {ε ε'} → (ε , ε') ∈ aordₑ a → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
 
 open Holds public
 
 holdsᵛ : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} {α β}
-       → Q ∣ sTy δ α <:̂ᵛ sTy δ β → Holds Q δ (atomsᵛ α β)
+       → Q ⊩ sTy δ α <:̂ᵛ sTy δ β → Holds Q δ (atomsᵛ α β)
 holdsᵛ p = holds (λ { (here refl) → p }) (λ ()) (λ ())
 
 holdsʳ : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} {ρ ρ'}
@@ -348,7 +348,7 @@ atomsᴿ-⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} → (a : SubAtoms
          → Holds Q δ a → Q ⊩ᴿ (atomsᴿ a) [ δ ]
 atomsᴿ-⊩ {Q = Q} {δ = δ} a hs = mk⊩ᴿ (hr hs) (he hs) (λ ()) ss' (λ ()) (λ ())
   where
-    ss' : ∀ {X Y} → (X , Y) ∈ map (mapᵖ tvar) (asubᵥ a) → Q ∣ X [ δ ]ᵛ <:̂ᵛ Y [ δ ]ᵛ
+    ss' : ∀ {X Y} → (X , Y) ∈ map (mapᵖ tvar) (asubᵥ a) → Q ⊩ X [ δ ]ᵛ <:̂ᵛ Y [ δ ]ᵛ
     ss' m with ∈-map⁻ (mapᵖ tvar) m
     ... | (α , β) , m₀ , refl = hv hs m₀
 
@@ -365,7 +365,7 @@ record Exact {Ω : Scope} (P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → Set) 
 open Exact public
 
 SubDec : ∀ {Ω} → OVType Ω → OVType Ω → Set
-SubDec A B = Exact (λ Q δ → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ)
+SubDec A B = Exact (λ Q δ → Q ⊩ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ)
 
 -- The demand of a pair of parts (`Former`)
 
@@ -660,8 +660,8 @@ etDec-refute A = etDec-refuteᵃ A (≺-wf A)
 -- its grade side
 
 etDec-grade : ∀ {Ω Ω'} → (A : OVType Ω) → etDec A ≡ nothing → (δ : Subst Ω Ω')
-            → {ρ : RExp Ω'} → VarOK ∅ᴴ (A [ δ ]ᵛ) ρ → ∅ᴴ ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ
-etDec-grade A e δ ok = [ (λ et → ⊥-elim (etDec-refute A e δ et)) , (λ le → le) ]′ (VarOK-∅ᴴ ok)
+            → {ρ : RExp Ω'} → ∅ᴴ ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ → ∅ᴴ ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ
+etDec-grade A e δ ok = [ (λ et → ⊥-elim (etDec-refute A e δ et)) , (λ le → le) ]′ (Et∨≾ᵘ-∅ᴴ ok)
 
 -- The decomposition of a whole list of eternality demands
 
@@ -725,9 +725,9 @@ record SubsDec {Ω : Scope} (l : List (OVType Ω × OVType Ω)) : Set where
   field
     atomsOfˢ : SubAtoms Ω
     introˢ   : ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω') → Holds Q δ atomsOfˢ
-             → ∀ {A B} → (A , B) ∈ l → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
+             → ∀ {A B} → (A , B) ∈ l → Q ⊩ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
     elimˢ    : ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω')
-             → (∀ {A B} → (A , B) ∈ l → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ)
+             → (∀ {A B} → (A , B) ∈ l → Q ⊩ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ)
              → Holds Q δ atomsOfˢ
 
 open SubsDec public
@@ -826,7 +826,7 @@ toHyps R with etsDec (ts R) | subsList (ss R)
     ets' : ∀ {A} → A ∈ ts R → Q ⊩Et A [ idˢ ]ᵛ
     ets' = introᵗ t idˢ (λ {α} m → subst (Q ⊩Et_) (sym ([id]ᵛ (tvar α))) (et-hyp m))
 
-    subs' : ∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ idˢ ]ᵛ <:̂ᵛ B [ idˢ ]ᵛ
+    subs' : ∀ {A B} → (A , B) ∈ ss R → Q ⊩ A [ idˢ ]ᵛ <:̂ᵛ B [ idˢ ]ᵛ
     subs' = introˢ d idˢ hyps'
 
     ordᵣ' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ idˢ ]ʳ ≾̂ᵣ ρ' [ idˢ ]ʳ
@@ -839,9 +839,9 @@ toHyps R with etsDec (ts R) | subsList (ss R)
       subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([id]ᵉ ε)) (sym ([id]ᵉ ε'))
              (hypₑ (∈-++⁺ˡ m))
 
-    disj' : ∀ {A ρ} → (A , ρ) ∈ ds R → VarOK Q (A [ idˢ ]ᵛ) (ρ [ idˢ ]ʳ)
+    disj' : ∀ {A ρ} → (A , ρ) ∈ ds R → Q ⊩ A [ idˢ ]ᵛ Et∨≾ᵘ ρ [ idˢ ]ʳ
     disj' {A} {ρ} m =
-      subst₂ (VarOK Q) (sym ([id]ᵛ A)) (sym ([id]ʳ ρ)) (hyp-ok₀ m)
+      subst₂ (Q ⊩_Et∨≾ᵘ_) (sym ([id]ᵛ A)) (sym ([id]ʳ ρ)) (hyp-ok₀ m)
 
 -- The read-back has no quantified hypotheses
 
