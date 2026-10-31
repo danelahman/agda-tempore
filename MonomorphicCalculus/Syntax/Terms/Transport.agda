@@ -83,13 +83,13 @@ cast-subC : ∀ {Γ Γ' C C'} → (e : Γ ≡ Γ') → {p : C <:ᶜ C'} → {M :
 cast-subC refl = refl
 
 cast-if : ∀ {Γ Γ' C} → (e : Γ ≡ Γ')
-        → {V : Γ ⊢V⦂ Bool} → {M N : Γ ⊢C⦂ C}
+        → {V : Γ ⊢V⦂ bool} → {M N : Γ ⊢C⦂ C}
         → castᶜ e (if V `then M `else N)
         ≡ if (castᵛ e V) `then (castᶜ e M) `else (castᶜ e N)
 cast-if refl = refl
 
 cast-cmp : ∀ {Γ Γ' A ⋈} → (e : Γ ≡ Γ')
-         → {V W : Γ ⊢V⦂ A} → {et : Eternal A}
+         → {V W : Γ ⊢V⦂ A} → {et : Et A}
          → castᶜ e (cmp ⋈ V W et) ≡ cmp ⋈ (castᵛ e V) (castᵛ e W) et
 cast-cmp refl = refl
 
@@ -97,18 +97,18 @@ cast-cmp refl = refl
 -- transported there is `cong` of the extension.
 
 cast-delay : ∀ {Γ Γ' A ε τ} → (e : Γ ≡ Γ')
-           → {M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε}
+           → {M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε}
            → castᶜ e (delay τ M) ≡ delay τ (castᶜ (cong (_⟨ ιᵣ τ ⟩) e) M)
 cast-delay refl = refl
 
 cast-perform : ∀ {Γ Γ' A ε} → (e : Γ ≡ Γ') → {op : Op}
-             → {V : Γ ⊢V⦂ type-of-gtype (param op)}
-             → {M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
-                      ⊢C⦂ A ‼ ε}
+             → {V : Γ ⊢V⦂ ⌜ param op ⌝ᵍ}
+             → {M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
+                      ⊢C⦂ A ! ε}
              → castᶜ e (perform op V M)
              ≡ perform op (castᵛ e V)
                  (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ∣ op-grade op ∣ᵉ ⟩
-                                         ∷ type-of-gtype (arity op)) e) M)
+                                         ∷ ⌜ arity op ⌝ᵍ) e) M)
 cast-perform refl = refl
 
 cast-match : ∀ {Γ Γ' A B C} → (e : Γ ≡ Γ')
@@ -117,15 +117,15 @@ cast-match : ∀ {Γ Γ' A B C} → (e : Γ ≡ Γ')
            ≡ match (castᵛ e V) `in (castᶜ (cong (λ Γ₀ → Γ₀ ∷ A ∷ B) e) M)
 cast-match refl = refl
 
-cast-succ : ∀ {Γ Γ'} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ Nat}
+cast-succ : ∀ {Γ Γ'} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ nat}
           → castᵛ e (succ V) ≡ succ (castᵛ e V)
 cast-succ refl = refl
 
 cast-caseℕ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ')
-           → {V : Γ ⊢V⦂ Nat} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ Nat ⊢C⦂ C}
+           → {V : Γ ⊢V⦂ nat} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ nat ⊢C⦂ C}
            → castᶜ e (caseℕ V `zero M `succ N)
            ≡ caseℕ (castᵛ e V) `zero (castᶜ e M)
-                               `succ (castᶜ (cong (_∷ Nat) e) N)
+                               `succ (castᶜ (cong (_∷ nat) e) N)
 cast-caseℕ refl = refl
 
 cast-inl : ∀ {Γ Γ' A B} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ A}
@@ -139,33 +139,33 @@ cast-inr refl = refl
 cast-nil : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → castᵛ e (nil {A = A}) ≡ nil
 cast-nil refl = refl
 
-cast-cons : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ A} → {W : Γ ⊢V⦂ |List| A}
+cast-cons : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ A} → {W : Γ ⊢V⦂ list A}
           → castᵛ e (cons V W) ≡ cons (castᵛ e V) (castᵛ e W)
 cast-cons refl = refl
 
 cast-caseL : ∀ {Γ Γ' A C} → (e : Γ ≡ Γ')
-           → {V : Γ ⊢V⦂ |List| A} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ A ∷ |List| A ⊢C⦂ C}
+           → {V : Γ ⊢V⦂ list A} → {M : Γ ⊢C⦂ C} → {N : Γ ∷ A ∷ list A ⊢C⦂ C}
            → castᶜ e (caseL V `nil M `cons N)
            ≡ caseL (castᵛ e V) `nil (castᶜ e M)
-                               `cons (castᶜ (cong (λ Δ → Δ ∷ A ∷ |List| A) e) N)
+                               `cons (castᶜ (cong (λ Δ → Δ ∷ A ∷ list A) e) N)
 cast-caseL refl = refl
 
 cast-recL : ∀ {Γ Γ' A B ε} → (e : Γ ≡ Γ')
-          → {V : Γ ⊢V⦂ |List| A} → {M : Γ ⊢C⦂ B ‼ ε}
-          → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
+          → {V : Γ ⊢V⦂ list A} → {M : Γ ⊢C⦂ B ! ε}
+          → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε}
           → {p : ε ·ₑ ε ≾ₑ ε}
           → castᶜ e (recL V M N p)
           ≡ recL (castᵛ e V) (castᶜ e M)
-                 (castᶜ (cong (λ Δ → (Δ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) e) N) p
+                 (castᶜ (cong (λ Δ → (Δ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) e) N) p
 cast-recL refl = refl
 
 cast-recℕ : ∀ {Γ Γ' B ε} → (e : Γ ≡ Γ')
-          → {V : Γ ⊢V⦂ Nat} → {M : Γ ⊢C⦂ B ‼ ε}
-          → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
+          → {V : Γ ⊢V⦂ nat} → {M : Γ ⊢C⦂ B ! ε}
+          → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε}
           → {p : ε ·ₑ ε ≾ₑ ε}
           → castᶜ e (recℕ V M N p)
           ≡ recℕ (castᵛ e V) (castᶜ e M)
-                 (castᶜ (cong (λ Δ → (Δ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) e) N) p
+                 (castᶜ (cong (λ Δ → (Δ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) e) N) p
 cast-recℕ refl = refl
 
 cast-case+ : ∀ {Γ Γ' A B C} → (e : Γ ≡ Γ')
@@ -182,24 +182,24 @@ cast-box : ∀ {Γ Γ' A C ρ} → (e : Γ ≡ Γ')
 cast-box refl = refl
 
 cast-handler : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
-             → {N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+             → {N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'}
              → {H : (op : Op) → (ε'' : E) →
-                      Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                      Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                         ∷ [ ∣ op-grade op ∣ᵉ ]
-                            (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                      ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
+                            (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+                      ⊢C⦂ B ! (op-grade op ·ₑ ε'')}
              → castᵛ e (handler N H)
              ≡ handler (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) e) N)
                        (λ op ε'' →
-                          castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                          castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                                                 ∷ [ ∣ op-grade op ∣ᵉ ]
-                                                    (type-of-gtype (arity op) ⇒ B ‼ ε''))
+                                                    (⌜ arity op ⌝ᵍ ⇒ B ! ε''))
                                  e)
                                 (H op ε''))
 cast-handler refl = refl
 
 cast-handle : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
-            → {M : Γ ⊢C⦂ A ‼ ε} → {V : Γ ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε')}
+            → {M : Γ ⊢C⦂ A ! ε} → {V : Γ ⊢V⦂ (A ! ε) ⇛ (B ! ε')}
             → castᶜ e (handle M `with V) ≡ handle (castᶜ e M) `with (castᵛ e V)
 cast-handle refl = refl
 
@@ -255,7 +255,7 @@ cast-unbox : ∀ {Γ Γ' A A₀ C ρ₀ ρ'} → (e : Γ ≡ Γ')
 cast-unbox refl = refl
 
 cast-seq : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
-         → {M : Γ ⊢C⦂ A ‼ ε} → {N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+         → {M : Γ ⊢C⦂ A ! ε} → {N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'}
          → castᶜ e (M ⨟ N)
          ≡ (castᶜ e M) ⨟ (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) e) N)
 cast-seq refl = refl
@@ -264,9 +264,9 @@ cast-seq refl = refl
 
 Cl : (B : VType) → (op : Op) → (ε₃ : E) → Ctx → Set
 Cl B op ε₃ Γ₀ =
-  Γ₀ ∷ type-of-gtype (param op)
-    ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε₃)
-  ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)
+  Γ₀ ∷ ⌜ param op ⌝ᵍ
+    ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε₃)
+  ⊢C⦂ B ! (op-grade op ·ₑ ε₃)
 
 Fam : VType → Ctx → Set
 Fam B Γ₀ = (op : Op) → (ε : E) → Cl B op ε Γ₀
@@ -278,9 +278,9 @@ Fam B Γ₀ = (op : Op) → (ε : E) → Cl B op ε Γ₀
 Cl-cast : ∀ {Γ Γ' B} → (op : Op) → (ε : E) → Γ ≡ Γ'
         → Cl B op ε (Γ ⟨ ⊤ᵣ ⟩) → Cl B op ε (Γ' ⟨ ⊤ᵣ ⟩)
 Cl-cast {B = B} op ε e X =
-  castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+  castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                         ∷ [ ∣ op-grade op ∣ᵉ ]
-                            (type-of-gtype (arity op) ⇒ B ‼ ε))
+                            (⌜ arity op ⌝ᵍ ⇒ B ! ε))
               e)
         X
 

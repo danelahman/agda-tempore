@@ -13,7 +13,7 @@
 -- holds exactly when every pair of parts holds at its variance --
 -- (`<:-intro`, `<:-elim`), eternality exactly when the column  --
 -- admits the former and every value-type part is eternal       --
--- (`⊩ᴱ-intro`, `⊩ᴱ-elim`). Recursion along the table is well   --
+-- (`⊩Et-intro`, `⊩Et-elim`). Recursion along the table is well --
 -- founded (`_≺_`, `≺-wf`).                                     --
 ------------------------------------------------------------------
 
@@ -90,23 +90,23 @@ Holdsᴾ Q (eg v ε ε') = At v (Q ⊩_≾̂ₑ_) ε ε'
 
 data Decomp {Ω : Scope} : OVType Ω → OVType Ω → List (Part Ω) → Set where
   Baseᴰ  : ∀ {b} → Decomp (Base b) (Base b) []
-  Unitᴰ  : Decomp Unit Unit []
-  Boolᴰ  : Decomp Bool Bool []
-  Natᴰ   : Decomp Nat Nat []
-  Emptyᴰ : Decomp Empty Empty []
+  unitᴰ  : Decomp unit unit []
+  boolᴰ  : Decomp bool bool []
+  natᴰ   : Decomp nat nat []
+  emptyᴰ : Decomp empty empty []
   |×|ᴰ   : ∀ {A A' B B'}
          → Decomp (A |×| B) (A' |×| B') (ty co A A' ∷ ty co B B' ∷ [])
   |+|ᴰ   : ∀ {A A' B B'}
          → Decomp (A |+| B) (A' |+| B') (ty co A A' ∷ ty co B B' ∷ [])
-  |List|ᴰ : ∀ {A A'}
-          → Decomp (|List| A) (|List| A') (ty co A A' ∷ [])
+  listᴰ  : ∀ {A A'}
+         → Decomp (list A) (list A') (ty co A A' ∷ [])
   ⇒ᴰ     : ∀ {A A' B B' ε ε'}
-         → Decomp (A ⇒ B ‼ ε) (A' ⇒ B' ‼ ε')
+         → Decomp (A ⇒ B ! ε) (A' ⇒ B' ! ε')
                   (ty contra A A' ∷ ty co B B' ∷ eg co ε ε' ∷ [])
   []ᴰ    : ∀ {ρ ρ' A A'}
          → Decomp ([ ρ ] A) ([ ρ' ] A') (rg contra ρ ρ' ∷ ty co A A' ∷ [])
   ⇛ᴰ     : ∀ {A A' B B' ε η ε' η'}
-         → Decomp (A ‼ ε ⇛ B ‼ ε') (A' ‼ η ⇛ B' ‼ η')
+         → Decomp (A ! ε ⇛ B ! ε') (A' ! η ⇛ B' ! η')
                   (ty contra A A' ∷ eg contra ε η ∷ ty co B B' ∷ eg co ε' η' ∷ [])
 
 -- Two types: a pair of type variables, one former, or a clash
@@ -121,16 +121,16 @@ decompose (tvar α)       (tvar β)          = vars α β
 decompose (Base b)       (Base b')         with b ≡ᵇ? b'
 ... | yes refl = parts _ Baseᴰ
 ... | no _     = clash
-decompose Unit           Unit              = parts _ Unitᴰ
-decompose Bool           Bool              = parts _ Boolᴰ
-decompose Nat            Nat               = parts _ Natᴰ
-decompose Empty          Empty             = parts _ Emptyᴰ
+decompose unit           unit              = parts _ unitᴰ
+decompose bool           bool              = parts _ boolᴰ
+decompose nat            nat               = parts _ natᴰ
+decompose empty          empty             = parts _ emptyᴰ
 decompose (A |×| B)      (A' |×| B')       = parts _ |×|ᴰ
 decompose (A |+| B)      (A' |+| B')       = parts _ |+|ᴰ
-decompose (|List| A)     (|List| A')       = parts _ |List|ᴰ
-decompose (A ⇒ (B ‼ ε))  (A' ⇒ (B' ‼ ε'))  = parts _ ⇒ᴰ
+decompose (list A)       (list A')         = parts _ listᴰ
+decompose (A ⇒ (B ! ε))  (A' ⇒ (B' ! ε'))  = parts _ ⇒ᴰ
 decompose ([ ρ ] A)      ([ ρ' ] A')       = parts _ []ᴰ
-decompose (A ‼ ε ⇛ B ‼ ε') (A' ‼ η ⇛ B' ‼ η') = parts _ ⇛ᴰ
+decompose (A ! ε ⇛ B ! ε') (A' ! η ⇛ B' ! η') = parts _ ⇛ᴰ
 decompose _              _                 = clash
 
 -- One type: a type variable, or its former against itself, its pairs diagonal
@@ -147,28 +147,28 @@ data Self {Ω : Scope} : OVType Ω → Set where
 self : ∀ {Ω} → (A : OVType Ω) → Self A
 self (tvar α)      = var α
 self (Base b)      = form _ Baseᴰ []
-self Unit          = form _ Unitᴰ []
-self Bool          = form _ Boolᴰ []
-self Nat           = form _ Natᴰ []
-self Empty         = form _ Emptyᴰ []
+self unit          = form _ unitᴰ []
+self bool          = form _ boolᴰ []
+self nat           = form _ natᴰ []
+self empty         = form _ emptyᴰ []
 self (A |×| B)     = form _ |×|ᴰ (refl ∷ refl ∷ [])
 self (A |+| B)     = form _ |+|ᴰ (refl ∷ refl ∷ [])
-self (|List| A)    = form _ |List|ᴰ (refl ∷ [])
-self (A ⇒ (B ‼ ε)) = form _ ⇒ᴰ (refl ∷ refl ∷ refl ∷ [])
+self (list A)      = form _ listᴰ (refl ∷ [])
+self (A ⇒ (B ! ε)) = form _ ⇒ᴰ (refl ∷ refl ∷ refl ∷ [])
 self ([ ρ ] A)     = form _ []ᴰ (refl ∷ refl ∷ [])
-self (A ‼ ε ⇛ B ‼ ε') = form _ ⇛ᴰ (refl ∷ refl ∷ refl ∷ refl ∷ [])
+self (A ! ε ⇛ B ! ε') = form _ ⇛ᴰ (refl ∷ refl ∷ refl ∷ refl ∷ [])
 
 -- The eternality column
 
 eternal : ∀ {Ω} {A B : OVType Ω} {ps} → Decomp A B ps → 𝔹
 eternal (Baseᴰ {b}) = ⌊ eternalBaseType? b ⌋
-eternal Unitᴰ       = true
-eternal Boolᴰ       = true
-eternal Natᴰ        = true
-eternal Emptyᴰ      = true
+eternal unitᴰ       = true
+eternal boolᴰ       = true
+eternal natᴰ        = true
+eternal emptyᴰ      = true
 eternal |×|ᴰ        = true
 eternal |+|ᴰ        = true
-eternal |List|ᴰ     = true
+eternal listᴰ       = true
 eternal ⇒ᴰ          = false
 eternal []ᴰ         = false
 eternal ⇛ᴰ          = false
@@ -179,66 +179,66 @@ eternal ⇛ᴰ          = false
          → (σ τ : Subst Ω Ω') → All (λ p → Holdsᴾ Q (p [ σ ∣ τ ]ᴾ)) ps
          → Q ∣ A [ σ ]ᵛ <:̂ᵛ B [ τ ]ᵛ
 <:-intro Baseᴰ  σ τ []              = Baseₛ refl
-<:-intro Unitᴰ  σ τ []              = Unitₛ
-<:-intro Boolᴰ  σ τ []              = Boolₛ
-<:-intro Natᴰ   σ τ []              = Natₛ
-<:-intro Emptyᴰ σ τ []              = Emptyₛ
+<:-intro unitᴰ  σ τ []              = unitₛ
+<:-intro boolᴰ  σ τ []              = boolₛ
+<:-intro natᴰ   σ τ []              = natₛ
+<:-intro emptyᴰ σ τ []              = emptyₛ
 <:-intro |×|ᴰ   σ τ (p ∷ q ∷ [])     = p |×|ₛ q
 <:-intro |+|ᴰ   σ τ (p ∷ q ∷ [])     = p |+|ₛ q
-<:-intro |List|ᴰ σ τ (p ∷ [])        = |List|ₛ p
-<:-intro ⇒ᴰ     σ τ (p ∷ q ∷ e ∷ []) = p ⇒ₛ (q ‼ₛ e)
+<:-intro listᴰ  σ τ (p ∷ [])         = listₛ p
+<:-intro ⇒ᴰ     σ τ (p ∷ q ∷ e ∷ []) = p ⇒ₛ (q !ₛ e)
 <:-intro []ᴰ    σ τ (r ∷ p ∷ [])     = [ r ]ₛ p
-<:-intro ⇛ᴰ     σ τ (p ∷ e ∷ q ∷ e' ∷ []) = (p ‼ₛ e) ⇛ₛ (q ‼ₛ e')
+<:-intro ⇛ᴰ     σ τ (p ∷ e ∷ q ∷ e' ∷ []) = (p !ₛ e) ⇛ₛ (q !ₛ e')
 
 <:-elim : ∀ {Ω Ω'} {Q : Hyps Ω'} {A B : OVType Ω} {ps} → Decomp A B ps
         → (σ τ : Subst Ω Ω') → Q ∣ A [ σ ]ᵛ <:̂ᵛ B [ τ ]ᵛ
         → All (λ p → Holdsᴾ Q (p [ σ ∣ τ ]ᴾ)) ps
 <:-elim Baseᴰ  σ τ (Baseₛ _)        = []
-<:-elim Unitᴰ  σ τ Unitₛ            = []
-<:-elim Boolᴰ  σ τ Boolₛ            = []
-<:-elim Natᴰ   σ τ Natₛ             = []
-<:-elim Emptyᴰ σ τ Emptyₛ           = []
+<:-elim unitᴰ  σ τ unitₛ            = []
+<:-elim boolᴰ  σ τ boolₛ            = []
+<:-elim natᴰ   σ τ natₛ             = []
+<:-elim emptyᴰ σ τ emptyₛ           = []
 <:-elim |×|ᴰ   σ τ (p |×|ₛ q)       = p ∷ q ∷ []
 <:-elim |+|ᴰ   σ τ (p |+|ₛ q)       = p ∷ q ∷ []
-<:-elim |List|ᴰ σ τ (|List|ₛ p)      = p ∷ []
-<:-elim ⇒ᴰ     σ τ (p ⇒ₛ (q ‼ₛ e))  = p ∷ q ∷ e ∷ []
+<:-elim listᴰ  σ τ (listₛ p)         = p ∷ []
+<:-elim ⇒ᴰ     σ τ (p ⇒ₛ (q !ₛ e))  = p ∷ q ∷ e ∷ []
 <:-elim []ᴰ    σ τ ([ r ]ₛ p)       = r ∷ p ∷ []
-<:-elim ⇛ᴰ     σ τ ((p ‼ₛ e) ⇛ₛ (q ‼ₛ e')) = p ∷ e ∷ q ∷ e' ∷ []
+<:-elim ⇛ᴰ     σ τ ((p !ₛ e) ⇛ₛ (q !ₛ e')) = p ∷ e ∷ q ∷ e' ∷ []
 
 -- The table is exact for eternality, at every instance; a grade part demands nothing
 
 Etᴾ : ∀ {Ω} → Hyps Ω → Part Ω → Set
-Etᴾ Q (ty _ A _) = Q ⊩ᴱ A
+Etᴾ Q (ty _ A _) = Q ⊩Et A
 Etᴾ Q (rg _ _ _) = ⊤
 Etᴾ Q (eg _ _ _) = ⊤
 
-⊩ᴱ-intro : ∀ {Ω Ω'} {Q : Hyps Ω'} {A B : OVType Ω} {ps} → (g : Decomp A B ps)
-         → eternal g ≡ true → (δ : Subst Ω Ω')
-         → All (λ p → Etᴾ Q (p [ δ ∣ δ ]ᴾ)) ps → Q ⊩ᴱ A [ δ ]ᵛ
-⊩ᴱ-intro (Baseᴰ {b}) e δ [] with eternalBaseType? b
+⊩Et-intro : ∀ {Ω Ω'} {Q : Hyps Ω'} {A B : OVType Ω} {ps} → (g : Decomp A B ps)
+          → eternal g ≡ true → (δ : Subst Ω Ω')
+          → All (λ p → Etᴾ Q (p [ δ ∣ δ ]ᴾ)) ps → Q ⊩Et A [ δ ]ᵛ
+⊩Et-intro (Baseᴰ {b}) e δ [] with eternalBaseType? b
 ... | yes p = Baseₑ p
-⊩ᴱ-intro (Baseᴰ {b}) () δ [] | no _
-⊩ᴱ-intro Unitᴰ  e  δ []           = Unitₑ
-⊩ᴱ-intro Boolᴰ  e  δ []           = Boolₑ
-⊩ᴱ-intro Natᴰ   e  δ []           = Natₑ
-⊩ᴱ-intro Emptyᴰ e  δ []           = Emptyₑ
-⊩ᴱ-intro |×|ᴰ   e  δ (p ∷ q ∷ []) = p |×|ₑ q
-⊩ᴱ-intro |+|ᴰ   e  δ (p ∷ q ∷ []) = p |+|ₑ q
-⊩ᴱ-intro |List|ᴰ e δ (p ∷ [])     = |List|ₑ p
+⊩Et-intro (Baseᴰ {b}) () δ [] | no _
+⊩Et-intro unitᴰ  e  δ []           = unitₑ
+⊩Et-intro boolᴰ  e  δ []           = boolₑ
+⊩Et-intro natᴰ   e  δ []           = natₑ
+⊩Et-intro emptyᴰ e  δ []           = emptyₑ
+⊩Et-intro |×|ᴰ   e  δ (p ∷ q ∷ []) = p |×|ₑ q
+⊩Et-intro |+|ᴰ   e  δ (p ∷ q ∷ []) = p |+|ₑ q
+⊩Et-intro listᴰ  e  δ (p ∷ [])     = listₑ p
 
-⊩ᴱ-elim : ∀ {Ω Ω'} {Q : Hyps Ω'} {A B : OVType Ω} {ps} → (g : Decomp A B ps)
-        → (δ : Subst Ω Ω') → Q ⊩ᴱ A [ δ ]ᵛ
-        → (eternal g ≡ true) × All (λ p → Etᴾ Q (p [ δ ∣ δ ]ᴾ)) ps
-⊩ᴱ-elim (Baseᴰ {b}) δ (Baseₑ p) with eternalBaseType? b
+⊩Et-elim : ∀ {Ω Ω'} {Q : Hyps Ω'} {A B : OVType Ω} {ps} → (g : Decomp A B ps)
+         → (δ : Subst Ω Ω') → Q ⊩Et A [ δ ]ᵛ
+         → (eternal g ≡ true) × All (λ p → Etᴾ Q (p [ δ ∣ δ ]ᴾ)) ps
+⊩Et-elim (Baseᴰ {b}) δ (Baseₑ p) with eternalBaseType? b
 ... | yes _ = refl , []
 ... | no ¬p = ⊥-elim-irr (¬p p)
-⊩ᴱ-elim Unitᴰ  δ Unitₑ      = refl , []
-⊩ᴱ-elim Boolᴰ  δ Boolₑ      = refl , []
-⊩ᴱ-elim Natᴰ   δ Natₑ       = refl , []
-⊩ᴱ-elim Emptyᴰ δ Emptyₑ     = refl , []
-⊩ᴱ-elim |×|ᴰ   δ (p |×|ₑ q) = refl , p ∷ q ∷ []
-⊩ᴱ-elim |+|ᴰ   δ (p |+|ₑ q) = refl , p ∷ q ∷ []
-⊩ᴱ-elim |List|ᴰ δ (|List|ₑ p) = refl , p ∷ []
+⊩Et-elim unitᴰ  δ unitₑ      = refl , []
+⊩Et-elim boolᴰ  δ boolₑ      = refl , []
+⊩Et-elim natᴰ   δ natₑ       = refl , []
+⊩Et-elim emptyᴰ δ emptyₑ     = refl , []
+⊩Et-elim |×|ᴰ   δ (p |×|ₑ q) = refl , p ∷ q ∷ []
+⊩Et-elim |+|ᴰ   δ (p |+|ₑ q) = refl , p ∷ q ∷ []
+⊩Et-elim listᴰ  δ (listₑ p)  = refl , p ∷ []
 
 -- The value-type parts of a type are smaller than it
 
@@ -264,19 +264,19 @@ accs : ∀ {Ω} → (A : OVType Ω)
      → (∀ {B ps} → Decomp A B ps → All Accˡ ps) × (∀ {B ps} → Decomp B A ps → All Accʳ ps)
 accs (tvar α)      = (λ ()) , (λ ())
 accs (Base b)      = (λ { Baseᴰ → [] }) , (λ { Baseᴰ → [] })
-accs Unit          = (λ { Unitᴰ → [] }) , (λ { Unitᴰ → [] })
-accs Bool          = (λ { Boolᴰ → [] }) , (λ { Boolᴰ → [] })
-accs Nat           = (λ { Natᴰ → [] }) , (λ { Natᴰ → [] })
-accs Empty         = (λ { Emptyᴰ → [] }) , (λ { Emptyᴰ → [] })
+accs unit          = (λ { unitᴰ → [] }) , (λ { unitᴰ → [] })
+accs bool          = (λ { boolᴰ → [] }) , (λ { boolᴰ → [] })
+accs nat           = (λ { natᴰ → [] }) , (λ { natᴰ → [] })
+accs empty         = (λ { emptyᴰ → [] }) , (λ { emptyᴰ → [] })
 accs (A |×| B)     = (λ { |×|ᴰ → ≺-wf A ∷ ≺-wf B ∷ [] })
                    , (λ { |×|ᴰ → ≺-wf A ∷ ≺-wf B ∷ [] })
 accs (A |+| B)     = (λ { |+|ᴰ → ≺-wf A ∷ ≺-wf B ∷ [] })
                    , (λ { |+|ᴰ → ≺-wf A ∷ ≺-wf B ∷ [] })
-accs (|List| A)    = (λ { |List|ᴰ → ≺-wf A ∷ [] }) , (λ { |List|ᴰ → ≺-wf A ∷ [] })
-accs (A ⇒ (B ‼ ε)) = (λ { ⇒ᴰ → ≺-wf A ∷ ≺-wf B ∷ tt ∷ [] })
+accs (list A)      = (λ { listᴰ → ≺-wf A ∷ [] }) , (λ { listᴰ → ≺-wf A ∷ [] })
+accs (A ⇒ (B ! ε)) = (λ { ⇒ᴰ → ≺-wf A ∷ ≺-wf B ∷ tt ∷ [] })
                    , (λ { ⇒ᴰ → ≺-wf A ∷ ≺-wf B ∷ tt ∷ [] })
 accs ([ ρ ] A)     = (λ { []ᴰ → tt ∷ ≺-wf A ∷ [] }) , (λ { []ᴰ → tt ∷ ≺-wf A ∷ [] })
-accs (A ‼ ε ⇛ B ‼ ε') = (λ { ⇛ᴰ → ≺-wf A ∷ tt ∷ ≺-wf B ∷ tt ∷ [] })
+accs (A ! ε ⇛ B ! ε') = (λ { ⇛ᴰ → ≺-wf A ∷ tt ∷ ≺-wf B ∷ tt ∷ [] })
                      , (λ { ⇛ᴰ → ≺-wf A ∷ tt ∷ ≺-wf B ∷ tt ∷ [] })
 
 ≺-wf A = acc λ { (left g m)  → lookup (proj₁ (accs A) g) m

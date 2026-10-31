@@ -60,36 +60,36 @@ private
 
 -- The comparison morphism of an eternal type
 
-cmpᵐ : ∀ {A} → Eternal A → ⟦ A ⟧ᵛ ×ᵐ ⟦ A ⟧ᵛ →ᵐ Ordᵐ
+cmpᵐ : ∀ {A} → Et A → ⟦ A ⟧ᵛ ×ᵐ ⟦ A ⟧ᵛ →ᵐ Ordᵐ
 cmpᵐ (Baseₑ eb)     = cmpᵇᵐ _ eb
-cmpᵐ Unitₑ          = cmp𝟙ᵐ
-cmpᵐ Boolₑ          = cmp𝔹ᵐ
-cmpᵐ Natₑ           = cmpℕᵐ
+cmpᵐ unitₑ          = cmp𝟙ᵐ
+cmpᵐ boolₑ          = cmp𝔹ᵐ
+cmpᵐ natₑ           = cmpℕᵐ
 cmpᵐ (et₁ |×|ₑ et₂) = cmp×ᵐ (cmpᵐ et₁) (cmpᵐ et₂)
 cmpᵐ (et₁ |+|ₑ et₂) = cmp+ᵐ (cmpᵐ et₁) (cmpᵐ et₂)
-cmpᵐ (|List|ₑ et)   = cmpLᵐ (cmpᵐ et)
-cmpᵐ Emptyₑ         = cmp𝟘ᵐ
+cmpᵐ (listₑ et)     = cmpLᵐ (cmpᵐ et)
+cmpᵐ emptyₑ         = cmp𝟘ᵐ
 
 -- A datum as a point
 
-⌜_⌝ᵈ : ∀ {A} → Eternal A → ⟪ A ⟫ → 𝟙ᵐ →ᵐ ⟦ A ⟧ᵛ
+⌜_⌝ᵈ : ∀ {A} → Et A → ⟪ A ⟫ → 𝟙ᵐ →ᵐ ⟦ A ⟧ᵛ
 ⌜ Baseₑ _ ⌝ᵈ        c        = ⟦ c ⟧ᵇᶜ
-⌜ Unitₑ ⌝ᵈ          _        = terminalᵐ
-⌜ Boolₑ ⌝ᵈ          b        = ⌜ b ⌝ᵇ
-⌜ Natₑ ⌝ᵈ           n        = ⌜ n ⌝ᴺ
+⌜ unitₑ ⌝ᵈ          _        = terminalᵐ
+⌜ boolₑ ⌝ᵈ          b        = ⌜ b ⌝ᵇ
+⌜ natₑ ⌝ᵈ           n        = ⌜ n ⌝ᴺ
 ⌜ et₁ |×|ₑ et₂ ⌝ᵈ   (x , y)  = ⟨ ⌜ et₁ ⌝ᵈ x , ⌜ et₂ ⌝ᵈ y ⟩ᵐ
 ⌜ et₁ |+|ₑ et₂ ⌝ᵈ   (inj₁ x) = inlᵐ ∘ᵐ ⌜ et₁ ⌝ᵈ x
 ⌜ et₁ |+|ₑ et₂ ⌝ᵈ   (inj₂ y) = inrᵐ ∘ᵐ ⌜ et₂ ⌝ᵈ y
-⌜ |List|ₑ et ⌝ᵈ     xs       = ⌜ ⌜ et ⌝ᵈ ⌝ᴸ xs
-⌜ Emptyₑ ⌝ᵈ         ()
+⌜ listₑ et ⌝ᵈ       xs       = ⌜ ⌜ et ⌝ᵈ ⌝ᴸ xs
+⌜ emptyₑ ⌝ᵈ         ()
 
 -- Compared at the points of data, the comparison returns the data's order.
 
-cmpᵐ-pt : ∀ {A} → (et : Eternal A) → Compares (cmpᵐ et) ⌜ et ⌝ᵈ (compareᵈ et)
+cmpᵐ-pt : ∀ {A} → (et : Et A) → Compares (cmpᵐ et) ⌜ et ⌝ᵈ (compareᵈ et)
 cmpᵐ-pt (Baseₑ eb) c c' = cmpᵇᵐ-pt eb c c'
-cmpᵐ-pt Unitₑ      _ _  = cmp𝟙ᵐ-pt _ _
-cmpᵐ-pt Boolₑ      b b' = cmp𝔹ᵐ-pt b b'
-cmpᵐ-pt Natₑ       n m  = cmpℕᵐ-pt n m
+cmpᵐ-pt unitₑ      _ _  = cmp𝟙ᵐ-pt _ _
+cmpᵐ-pt boolₑ      b b' = cmp𝔹ᵐ-pt b b'
+cmpᵐ-pt natₑ       n m  = cmpℕᵐ-pt n m
 cmpᵐ-pt (et₁ |×|ₑ et₂) (x , y) (x' , y') =
     cmp×ᵐ-⟨⟩ _ _ _ _ _ _
   ∙ ∘ᵐ-congʳ ⟨ cmpᵐ-pt et₁ x x' , cmpᵐ-pt et₂ y y' ⟩ᵐ-cong
@@ -98,17 +98,17 @@ cmpᵐ-pt (et₁ |+|ₑ et₂) (inj₁ x) (inj₁ x') = cmp+ᵐ-inl-inl _ _ _ _ 
 cmpᵐ-pt (et₁ |+|ₑ et₂) (inj₁ x) (inj₂ y)  = cmp+ᵐ-inl-inr _ _ _ _
 cmpᵐ-pt (et₁ |+|ₑ et₂) (inj₂ y) (inj₁ x)  = cmp+ᵐ-inr-inl _ _ _ _
 cmpᵐ-pt (et₁ |+|ₑ et₂) (inj₂ y) (inj₂ y') = cmp+ᵐ-inr-inr _ _ _ _ ∙ cmpᵐ-pt et₂ y y'
-cmpᵐ-pt (|List|ₑ et) xs ys = cmpLᵐ-pt (cmpᵐ et) ⌜ et ⌝ᵈ (compareᵈ et) (cmpᵐ-pt et) xs ys
-cmpᵐ-pt Emptyₑ () _
+cmpᵐ-pt (listₑ et) xs ys = cmpLᵐ-pt (cmpᵐ et) ⌜ et ⌝ᵈ (compareᵈ et) (cmpᵐ-pt et) xs ys
+cmpᵐ-pt emptyₑ () _
 
 -- A coercion at an eternal type acts on points as on data.
 
-⌜⌝ᵈ-coe : ∀ {A₀ A} → (p : A₀ <:ᵛ A) → (et : Eternal A) → (d : ⟪ A₀ ⟫)
+⌜⌝ᵈ-coe : ∀ {A₀ A} → (p : A₀ <:ᵛ A) → (et : Et A) → (d : ⟪ A₀ ⟫)
         → ⟦ p ⟧<:ᵛ ∘ᵐ ⌜ <:ᵛ-eternalˡ p et ⌝ᵈ d ≈ᵐ ⌜ et ⌝ᵈ (⟪ p ⟫ˢ d)
 ⌜⌝ᵈ-coe (Baseₛ refl) (Baseₑ _) c = ∘ᵐ-identityˡ _
-⌜⌝ᵈ-coe Unitₛ        Unitₑ     _ = ∘ᵐ-identityˡ _
-⌜⌝ᵈ-coe Boolₛ        Boolₑ     _ = ∘ᵐ-identityˡ _
-⌜⌝ᵈ-coe Natₛ         Natₑ      _ = ∘ᵐ-identityˡ _
+⌜⌝ᵈ-coe unitₛ        unitₑ     _ = ∘ᵐ-identityˡ _
+⌜⌝ᵈ-coe boolₛ        boolₑ     _ = ∘ᵐ-identityˡ _
+⌜⌝ᵈ-coe natₛ         natₑ      _ = ∘ᵐ-identityˡ _
 ⌜⌝ᵈ-coe (p |×|ₛ q) (et₁ |×|ₑ et₂) (x , y) =
   mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ⌜⌝ᵈ-coe p et₁ x , ⌜⌝ᵈ-coe q et₂ y ⟩ᵐ-cong
 ⌜⌝ᵈ-coe (p |+|ₛ q) (et₁ |+|ₑ et₂) (inj₁ x) =
@@ -117,9 +117,9 @@ cmpᵐ-pt Emptyₑ () _
 ⌜⌝ᵈ-coe (p |+|ₛ q) (et₁ |+|ₑ et₂) (inj₂ y) =
     ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ ([]ᵐ-inrᵐ _ _)
   ∙ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⌜⌝ᵈ-coe q et₂ y)
-⌜⌝ᵈ-coe (|List|ₛ p) (|List|ₑ et) []       = mapListᵐ-nil _
-⌜⌝ᵈ-coe (|List|ₛ p) (|List|ₑ et) (x ∷ xs) =
+⌜⌝ᵈ-coe (listₛ p) (listₑ et) []           = mapListᵐ-nil _
+⌜⌝ᵈ-coe (listₛ p) (listₑ et) (x ∷ xs)     =
     ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (mapListᵐ-cons _) ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-             ∙ ⟨ ⌜⌝ᵈ-coe p et x , ⌜⌝ᵈ-coe (|List|ₛ p) (|List|ₑ et) xs ⟩ᵐ-cong)
-⌜⌝ᵈ-coe Emptyₛ Emptyₑ ()
+             ∙ ⟨ ⌜⌝ᵈ-coe p et x , ⌜⌝ᵈ-coe (listₛ p) (listₑ et) xs ⟩ᵐ-cong)
+⌜⌝ᵈ-coe emptyₛ emptyₑ ()

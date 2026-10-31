@@ -30,7 +30,7 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import Language.GroundTypes Grades BTs using (GType; Base; Unit; Bool; Nat; Empty; _|×|ᵍ_; _|+|ᵍ_; |List|ᵍ; [_]ᵍ_)
+open import Language.GroundTypes Grades BTs using (GType; Base; unit; bool; nat; empty; _|×|ᵍ_; _|+|ᵍ_; listᵍ; [_]ᵍ_)
 
 open import PolymorphicCalculus.Syntax.Grades                  S
 open import PolymorphicCalculus.Syntax.Types                   S
@@ -109,40 +109,40 @@ mutual
   shapeᵛ : ∀ {Θ} → OVType Θ → Shape
   shapeᵛ (tvar α)          = unitˢ
   shapeᵛ (Base b)          = baseˢ
-  shapeᵛ Unit              = unitˢ
-  shapeᵛ Bool              = boolˢ
-  shapeᵛ Nat               = natˢ
+  shapeᵛ unit              = unitˢ
+  shapeᵛ bool              = boolˢ
+  shapeᵛ nat               = natˢ
   shapeᵛ (A |×| B)         = shapeᵛ A ×ˢ shapeᵛ B
   shapeᵛ (A |+| B)         = shapeᵛ A +ˢ shapeᵛ B
-  shapeᵛ (|List| A)        = listˢ (shapeᵛ A)
-  shapeᵛ Empty             = emptyˢ
+  shapeᵛ (list A)          = listˢ (shapeᵛ A)
+  shapeᵛ empty             = emptyˢ
   shapeᵛ (A ⇒ C)           = shapeᵛ A ⇒ˢ shapeᶜ C
   shapeᵛ (C ⇛ D)           = shapeᶜ C ⇛ˢ shapeᶜ D
   shapeᵛ ([ ρ ] A)         = □ˢ (shapeᵛ A)
 
   shapeᶜ : ∀ {Θ} → OCType Θ → Shape
-  shapeᶜ (A ‼ ε) = shapeᵛ A
+  shapeᶜ (A ! ε) = shapeᵛ A
 
 shapeᵍ : GType → Shape
 shapeᵍ (Base b)    = baseˢ
-shapeᵍ Unit        = unitˢ
-shapeᵍ Bool        = boolˢ
-shapeᵍ Nat         = natˢ
-shapeᵍ Empty       = emptyˢ
+shapeᵍ unit        = unitˢ
+shapeᵍ bool        = boolˢ
+shapeᵍ nat         = natˢ
+shapeᵍ empty       = emptyˢ
 shapeᵍ (A |×|ᵍ B)  = shapeᵍ A ×ˢ shapeᵍ B
 shapeᵍ (A |+|ᵍ B)  = shapeᵍ A +ˢ shapeᵍ B
-shapeᵍ (|List|ᵍ A) = listˢ (shapeᵍ A)
+shapeᵍ (listᵍ A)   = listˢ (shapeᵍ A)
 shapeᵍ ([ ρ ]ᵍ A)  = □ˢ (shapeᵍ A)
 
 shape-⌜⌝ : ∀ {Θ} → (A : GType) → shapeᵛ (⌜_⌝ᵍ {Θ} A) ≡ shapeᵍ A
 shape-⌜⌝ (Base b)    = refl
-shape-⌜⌝ Unit        = refl
-shape-⌜⌝ Bool        = refl
-shape-⌜⌝ Nat         = refl
-shape-⌜⌝ Empty       = refl
+shape-⌜⌝ unit        = refl
+shape-⌜⌝ bool        = refl
+shape-⌜⌝ nat         = refl
+shape-⌜⌝ empty       = refl
 shape-⌜⌝ (A |×|ᵍ B)  = cong₂ _×ˢ_ (shape-⌜⌝ A) (shape-⌜⌝ B)
 shape-⌜⌝ (A |+|ᵍ B)  = cong₂ _+ˢ_ (shape-⌜⌝ A) (shape-⌜⌝ B)
-shape-⌜⌝ (|List|ᵍ A) = cong listˢ (shape-⌜⌝ A)
+shape-⌜⌝ (listᵍ A)   = cong listˢ (shape-⌜⌝ A)
 shape-⌜⌝ ([ ρ ]ᵍ A)  = cong □ˢ (shape-⌜⌝ A)
 
 -- Subtyping and weakening preserve the shape
@@ -152,58 +152,58 @@ mutual
   <:-shapeᵛ : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ∣ A <:̂ᵛ B → shapeᵛ A ≡ shapeᵛ B
   <:-shapeᵛ (tvarₛ p)   = refl
   <:-shapeᵛ (Baseₛ p)   = refl
-  <:-shapeᵛ Unitₛ       = refl
-  <:-shapeᵛ Boolₛ       = refl
-  <:-shapeᵛ Natₛ        = refl
+  <:-shapeᵛ unitₛ       = refl
+  <:-shapeᵛ boolₛ       = refl
+  <:-shapeᵛ natₛ        = refl
   <:-shapeᵛ (p |×|ₛ q)  = cong₂ _×ˢ_ (<:-shapeᵛ p) (<:-shapeᵛ q)
   <:-shapeᵛ (p |+|ₛ q)  = cong₂ _+ˢ_ (<:-shapeᵛ p) (<:-shapeᵛ q)
-  <:-shapeᵛ (|List|ₛ p) = cong listˢ (<:-shapeᵛ p)
-  <:-shapeᵛ Emptyₛ      = refl
+  <:-shapeᵛ (listₛ p)   = cong listˢ (<:-shapeᵛ p)
+  <:-shapeᵛ emptyₛ      = refl
   <:-shapeᵛ (p ⇒ₛ q)    = cong₂ _⇒ˢ_ (sym (<:-shapeᵛ p)) (<:-shapeᶜ q)
   <:-shapeᵛ (p ⇛ₛ q)    = cong₂ _⇛ˢ_ (sym (<:-shapeᶜ p)) (<:-shapeᶜ q)
   <:-shapeᵛ ([ p ]ₛ q)  = cong □ˢ (<:-shapeᵛ q)
 
   <:-shapeᶜ : ∀ {Θ} {Q : Hyps Θ} {C D} → Q ∣ C <:̂ᶜ D → shapeᶜ C ≡ shapeᶜ D
-  <:-shapeᶜ (p ‼ₛ q) = <:-shapeᵛ p
+  <:-shapeᶜ (p !ₛ q) = <:-shapeᵛ p
 
 mutual
 
   wkᵉ-shapeᵛ : ∀ {Θ} → (A : OVType Θ) → shapeᵛ (wkᵉ-v A) ≡ shapeᵛ A
   wkᵉ-shapeᵛ (tvar α)   = refl
   wkᵉ-shapeᵛ (Base b)   = refl
-  wkᵉ-shapeᵛ Unit       = refl
-  wkᵉ-shapeᵛ Bool       = refl
-  wkᵉ-shapeᵛ Nat        = refl
+  wkᵉ-shapeᵛ unit       = refl
+  wkᵉ-shapeᵛ bool       = refl
+  wkᵉ-shapeᵛ nat        = refl
   wkᵉ-shapeᵛ (A |×| B)  = cong₂ _×ˢ_ (wkᵉ-shapeᵛ A) (wkᵉ-shapeᵛ B)
   wkᵉ-shapeᵛ (A |+| B)  = cong₂ _+ˢ_ (wkᵉ-shapeᵛ A) (wkᵉ-shapeᵛ B)
-  wkᵉ-shapeᵛ (|List| A) = cong listˢ (wkᵉ-shapeᵛ A)
-  wkᵉ-shapeᵛ Empty      = refl
+  wkᵉ-shapeᵛ (list A)   = cong listˢ (wkᵉ-shapeᵛ A)
+  wkᵉ-shapeᵛ empty      = refl
   wkᵉ-shapeᵛ (A ⇒ C)    = cong₂ _⇒ˢ_ (wkᵉ-shapeᵛ A) (wkᵉ-shapeᶜ C)
   wkᵉ-shapeᵛ (C ⇛ D)    = cong₂ _⇛ˢ_ (wkᵉ-shapeᶜ C) (wkᵉ-shapeᶜ D)
   wkᵉ-shapeᵛ ([ ρ ] A)  = cong □ˢ (wkᵉ-shapeᵛ A)
 
   wkᵉ-shapeᶜ : ∀ {Θ} → (C : OCType Θ) → shapeᶜ (wkᵉ-c C) ≡ shapeᶜ C
-  wkᵉ-shapeᶜ (A ‼ ε) = wkᵉ-shapeᵛ A
+  wkᵉ-shapeᶜ (A ! ε) = wkᵉ-shapeᵛ A
 
 ------------------------------------------------------------------------
 -- Reducible values of ground type
 
 VRedᵍ : GType → ∀ {n} → State n → RunV n → Set
 VRedᵍ (Base b)      𝕊 V          = ⊤
-VRedᵍ Unit          𝕊 V          = ⊤
-VRedᵍ Bool          𝕊 V          = BoolView V
-VRedᵍ Nat           𝕊 zero       = ⊤
-VRedᵍ Nat           𝕊 (succ V)   = VRedᵍ Nat 𝕊 V
-VRedᵍ Nat           𝕊 _          = ⊥
-VRedᵍ Empty         𝕊 V          = ⊥
+VRedᵍ unit          𝕊 V          = ⊤
+VRedᵍ bool          𝕊 V          = BoolView V
+VRedᵍ nat           𝕊 zero       = ⊤
+VRedᵍ nat           𝕊 (succ V)   = VRedᵍ nat 𝕊 V
+VRedᵍ nat           𝕊 _          = ⊥
+VRedᵍ empty         𝕊 V          = ⊥
 VRedᵍ (A |×|ᵍ B)    𝕊 ⦉ V , W ⦊   = VRedᵍ A 𝕊 V × VRedᵍ B 𝕊 W
 VRedᵍ (A |×|ᵍ B)    𝕊 _          = ⊥
 VRedᵍ (A |+|ᵍ B)    𝕊 (inl V)    = VRedᵍ A 𝕊 V
 VRedᵍ (A |+|ᵍ B)    𝕊 (inr V)    = VRedᵍ B 𝕊 V
 VRedᵍ (A |+|ᵍ B)    𝕊 _          = ⊥
-VRedᵍ (|List|ᵍ A)   𝕊 nil        = ⊤
-VRedᵍ (|List|ᵍ A)   𝕊 (cons V W) = VRedᵍ A 𝕊 V × VRedᵍ (|List|ᵍ A) 𝕊 W
-VRedᵍ (|List|ᵍ A)   𝕊 _          = ⊥
+VRedᵍ (listᵍ A)     𝕊 nil        = ⊤
+VRedᵍ (listᵍ A)     𝕊 (cons V W) = VRedᵍ A 𝕊 V × VRedᵍ (listᵍ A) 𝕊 W
+VRedᵍ (listᵍ A)     𝕊 _          = ⊥
 VRedᵍ ([ ρ ]ᵍ A)    𝕊 (var i)    = VRedᵍ A 𝕊 (lookupₛ 𝕊 i)
 VRedᵍ ([ ρ ]ᵍ A)    𝕊 _          = ⊥
 
@@ -266,16 +266,16 @@ private
 VRedᵍ-mono : ∀ (A : GType) {n m} {𝕊 : State n} {𝕊' : State m} (e : 𝕊 ≤ₛ 𝕊') V
            → VRedᵍ A 𝕊 V → VRedᵍ A 𝕊' (renᵛ (wkₛ e) V)
 VRedᵍ-mono (Base b)    e V          r         = tt
-VRedᵍ-mono Unit        e V          r         = tt
-VRedᵍ-mono Bool        e V          r         = bool-ren (wkₛ e) r
-VRedᵍ-mono Nat         e zero       r         = tt
-VRedᵍ-mono Nat         e (succ V)   r         = VRedᵍ-mono Nat e V r
+VRedᵍ-mono unit        e V          r         = tt
+VRedᵍ-mono bool        e V          r         = bool-ren (wkₛ e) r
+VRedᵍ-mono nat         e zero       r         = tt
+VRedᵍ-mono nat         e (succ V)   r         = VRedᵍ-mono nat e V r
 VRedᵍ-mono (A |×|ᵍ B)  e ⦉ V , W ⦊   (r , r')  = VRedᵍ-mono A e V r , VRedᵍ-mono B e W r'
 VRedᵍ-mono (A |+|ᵍ B)  e (inl V)    r         = VRedᵍ-mono A e V r
 VRedᵍ-mono (A |+|ᵍ B)  e (inr V)    r         = VRedᵍ-mono B e V r
-VRedᵍ-mono (|List|ᵍ A) e nil        r         = tt
-VRedᵍ-mono (|List|ᵍ A) e (cons V W) (r , r')  =
-  VRedᵍ-mono A e V r , VRedᵍ-mono (|List|ᵍ A) e W r'
+VRedᵍ-mono (listᵍ A)   e nil        r         = tt
+VRedᵍ-mono (listᵍ A)   e (cons V W) (r , r')  =
+  VRedᵍ-mono A e V r , VRedᵍ-mono (listᵍ A) e W r'
 VRedᵍ-mono ([ ρ ]ᵍ A)  {𝕊 = 𝕊} {𝕊'} e (var i) r =
   subst (VRedᵍ A 𝕊') (sym (lookupₛ-wk e i)) (VRedᵍ-mono A e (lookupₛ 𝕊 i) r)
 
@@ -304,29 +304,29 @@ VRed-mono (□ˢ A)    {𝕊 = 𝕊} {𝕊'} e (var i) r =
 VRed-ground : ∀ (A : GType) {n} {𝕊 : State n} V
             → VRed (shapeᵍ A) 𝕊 V → VRedᵍ A 𝕊 V
 VRed-ground (Base b)    V          r         = tt
-VRed-ground Unit        V          r         = tt
-VRed-ground Bool        V          r         = r
-VRed-ground Nat         zero       r         = tt
-VRed-ground Nat         (succ V)   r         = VRed-ground Nat V r
+VRed-ground unit        V          r         = tt
+VRed-ground bool        V          r         = r
+VRed-ground nat         zero       r         = tt
+VRed-ground nat         (succ V)   r         = VRed-ground nat V r
 VRed-ground (A |×|ᵍ B)  ⦉ V , W ⦊   (r , r')  = VRed-ground A V r , VRed-ground B W r'
 VRed-ground (A |+|ᵍ B)  (inl V)    r         = VRed-ground A V r
 VRed-ground (A |+|ᵍ B)  (inr V)    r         = VRed-ground B V r
-VRed-ground (|List|ᵍ A) nil        r         = tt
-VRed-ground (|List|ᵍ A) (cons V W) (r , r')  = VRed-ground A V r , VRed-ground (|List|ᵍ A) W r'
+VRed-ground (listᵍ A)   nil        r         = tt
+VRed-ground (listᵍ A)   (cons V W) (r , r')  = VRed-ground A V r , VRed-ground (listᵍ A) W r'
 VRed-ground ([ ρ ]ᵍ A)  {𝕊 = 𝕊} (var i) r    = VRed-ground A (lookupₛ 𝕊 i) r
 
 ground-VRed : ∀ (A : GType) {n} {𝕊 : State n} V
             → VRedᵍ A 𝕊 V → VRed (shapeᵍ A) 𝕊 V
 ground-VRed (Base b)    V          r         = tt
-ground-VRed Unit        V          r         = tt
-ground-VRed Bool        V          r         = r
-ground-VRed Nat         zero       r         = tt
-ground-VRed Nat         (succ V)   r         = ground-VRed Nat V r
+ground-VRed unit        V          r         = tt
+ground-VRed bool        V          r         = r
+ground-VRed nat         zero       r         = tt
+ground-VRed nat         (succ V)   r         = ground-VRed nat V r
 ground-VRed (A |×|ᵍ B)  ⦉ V , W ⦊   (r , r')  = ground-VRed A V r , ground-VRed B W r'
 ground-VRed (A |+|ᵍ B)  (inl V)    r         = ground-VRed A V r
 ground-VRed (A |+|ᵍ B)  (inr V)    r         = ground-VRed B V r
-ground-VRed (|List|ᵍ A) nil        r         = tt
-ground-VRed (|List|ᵍ A) (cons V W) (r , r')  = ground-VRed A V r , ground-VRed (|List|ᵍ A) W r'
+ground-VRed (listᵍ A)   nil        r         = tt
+ground-VRed (listᵍ A)   (cons V W) (r , r')  = ground-VRed A V r , ground-VRed (listᵍ A) W r'
 ground-VRed ([ ρ ]ᵍ A)  {𝕊 = 𝕊} (var i) r    = ground-VRed A (lookupₛ 𝕊 i) r
 
 ------------------------------------------------------------------------

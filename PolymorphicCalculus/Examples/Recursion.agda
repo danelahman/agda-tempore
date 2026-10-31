@@ -115,8 +115,8 @@ private
 
   -- A natural number, usable under any lock
 
-  okℕ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → VarOK Q Nat ρ
-  okℕ = et-ok Natₑ
+  okℕ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → VarOK Q nat ρ
+  okℕ = et-ok natₑ
 
   -- A unit effect has passed
 
@@ -139,7 +139,7 @@ private
 add : RawC ∅ˢ 0
 add = return (lam (return (lam (recℕ v₁ (return v₀) (return (succ v₀))))))
 
-add-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ (Nat ⇒ Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
+add-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 add-D =
   return (lam (return (lam
     (recℕ (var (Tl-∷ Hd) ok₀) (return (var Hd ok₀)) (return (succ (var Hd ok₀))) pure))))
@@ -153,13 +153,13 @@ add-typed = typed-of add (closed add-D refl) _
 --   rebuild n = recℕ n with zero ↦ 0 | succ p, r ↦ succ p
 --   mul m n   = recℕ m with zero ↦ 0 | succ p, r ↦ add n r
 --
--- `p` and `n` are `Nat`, so `var` asks nothing; `add n r` is written
+-- `p` and `n` are `nat`, so `var` asks nothing; `add n r` is written
 -- out as a second `recℕ`. Typed at every grade.
 
 rebuild : RawC ∅ˢ 0
 rebuild = return (lam (recℕ v₀ (return zero) (return (succ v₁))))
 
-rebuild-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
+rebuild-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ
 rebuild-D =
   return (lam
     (recℕ (var Hd ok₀) (return zero) (return (succ (var (Tl-∷ (Tl-⟨⟩ Hd)) okℕ))) pure))
@@ -172,7 +172,7 @@ mul =
   return (lam (return (lam
     (recℕ v₁ (return zero) (recℕ v₂ (return v₀) (return (succ v₀)))))))
 
-mul-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ (Nat ⇒ Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
+mul-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 mul-D =
   return (lam (return (lam
     (recℕ (var (Tl-∷ Hd) ok₀) (return zero)
@@ -211,23 +211,23 @@ countdown-on : RawC ∅ˢ 0
 countdown-on = recℕ (numeral 3) (return ⋆) (delay ⌜ 1 ⌝ (return ⋆))
 
 countdown-at : ℕ → RawC ∅ˢ 0
-countdown-at k = countdown-on ⦂ᶜ (Unit ‼ ⌜ k ⌝ᵉ)
+countdown-at k = countdown-on ⦂ᶜ (unit ! ⌜ k ⌝ᵉ)
 
 -- Two ticks annotated at one, as Tempore's `wait 2 : unit # 1`
 
 wait-2-at-1 : RawC ∅ˢ 0
-wait-2-at-1 = recℕ (numeral 2) (return ⋆) (delay ⌜ 1 ⌝ (return ⋆)) ⦂ᶜ (Unit ‼ ⌜ 1 ⌝ᵉ)
+wait-2-at-1 = recℕ (numeral 2) (return ⋆) (delay ⌜ 1 ⌝ (return ⋆)) ⦂ᶜ (unit ! ⌜ 1 ⌝ᵉ)
 
 -- annotated at the top
 
 countdown-top : RawC ∅ˢ 0
-countdown-top = countdown-on ⦂ᶜ (Unit ‼ econst ⊤ₑ)
+countdown-top = countdown-on ⦂ᶜ (unit ! econst ⊤ₑ)
 
 -- typable at every grade
 
-countdown-top-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ econst ⊤ₑ
+countdown-top-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! econst ⊤ₑ
 countdown-top-D =
-  annᶜ (Unit ‼ econst ⊤ₑ)
+  annᶜ (unit ! econst ⊤ₑ)
     (recℕ (numeralᵛ 3) (coerce topₑ (return ⋆)) (coerce topₑ (delay ⌜ 1 ⌝ (return ⋆))) topₑ)
 
 countdown-top-typable : Typable [] countdown-top
@@ -263,7 +263,7 @@ in-clause-tick = in-clause (delay ⌜ 1 ⌝ (return ⋆))
 
 -- With a pure step, typable at every grade
 
-in-clause-pure-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)
+in-clause-pure-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)
 in-clause-pure-D =
   handle (return ⋆)
   `with handler (return ⋆) (λ op →
@@ -304,7 +304,7 @@ drop-clause =
 length : RawC ∅ˢ 0
 length = return (lam (recL v₀ (return zero) (return (succ v₀))))
 
-length-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (|List| Bool ⇒ Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
+length-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (list bool ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ
 length-D = return (lam (recL (var Hd ok₀) (return zero) (return (succ (var Hd ok₀))) pure))
 
 length-typed : IsTyped (infer [] length)
@@ -333,9 +333,9 @@ copy = return (lam (recL v₀ (return nil) (return (cons v₂ v₀))))
 private
 
   Fn : ∀ {Θ} → OVType Θ
-  Fn = Unit ⇒ Unit ‼ 𝟏̂ₑ
+  Fn = unit ⇒ unit ! 𝟏̂ₑ
 
-copy-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (|List| Fn ⇒ |List| Fn ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
+copy-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (list Fn ⇒ list Fn ! 𝟏̂ₑ) ! 𝟏̂ₑ
 copy-D =
   return (lam
     (recL (var Hd ok₀) (return nil)
@@ -354,7 +354,7 @@ last-or = return (lam (return (lam (recL v₀ (return v₁) (delay ⌜ 1 ⌝ (re
 last-box : RawC ∅ˢ 0
 last-box =
   return (lam (return (lam
-    (recL (v₀ ⦂ᵛ |List| ([ ⌜ 1 ⌝ʳ ] Nat)) (return v₁) (delay ⌜ 1 ⌝ (return v₂))))))
+    (recL (v₀ ⦂ᵛ list ([ ⌜ 1 ⌝ʳ ] nat)) (return v₁) (delay ⌜ 1 ⌝ (return v₂))))))
 
 --   latest l = recL l with nil ↦ 0 | cons h t, r ↦ delay 1; unbox h as x in x
 --
@@ -366,7 +366,7 @@ latest =
 
 latest-ready : RawC ∅ˢ 0
 latest-ready =
-  return (lam (recL (v₀ ⦂ᵛ |List| ([ ⌜ 1 ⌝ʳ ] Nat)) (return zero)
+  return (lam (recL (v₀ ⦂ᵛ list ([ ⌜ 1 ⌝ʳ ] nat)) (return zero)
                     (delay ⌜ 1 ⌝ (unbox (var (fsuc (fsuc fzero))) (return v₀)))))
 
 ------------------------------------------------------------------
@@ -385,14 +385,14 @@ ticks-on : RawC ∅ˢ 0
 ticks-on = recL (cons ⋆ (cons ⋆ (cons ⋆ nil))) (return ⋆) (delay ⌜ 1 ⌝ (return ⋆))
 
 ticks-at : ℕ → RawC ∅ˢ 0
-ticks-at k = ticks-on ⦂ᶜ (Unit ‼ ⌜ k ⌝ᵉ)
+ticks-at k = ticks-on ⦂ᶜ (unit ! ⌜ k ⌝ᵉ)
 
 ticks-top : RawC ∅ˢ 0
-ticks-top = ticks-on ⦂ᶜ (Unit ‼ econst ⊤ₑ)
+ticks-top = ticks-on ⦂ᶜ (unit ! econst ⊤ₑ)
 
-ticks-top-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ econst ⊤ₑ
+ticks-top-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! econst ⊤ₑ
 ticks-top-D =
-  annᶜ (Unit ‼ econst ⊤ₑ)
+  annᶜ (unit ! econst ⊤ₑ)
     (recL (cons ⋆ (cons ⋆ (cons ⋆ nil))) (coerce topₑ (return ⋆))
           (coerce topₑ (delay ⌜ 1 ⌝ (return ⋆))) topₑ)
 
@@ -428,4 +428,4 @@ twice-run = recℕ (numeral 2) twice-base twice-step ⨟ unbox (var fzero) (v₀
 -- annotated at `k` ticks
 
 twice-run-at : ℕ → RawC ∅ˢ 0
-twice-run-at k = twice-run ⦂ᶜ (Unit ‼ ⌜ k ⌝ᵉ)
+twice-run-at k = twice-run ⦂ᶜ (unit ! ⌜ k ⌝ᵉ)

@@ -109,17 +109,17 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
     perform[_]ₖ : ∀ {A ε}
         → state ≤ᶠ f
         → (op : Op)
-        → Γ ⊢V⦂ type-of-gtype (param op)
-        → Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢K[ f ◁ CH ]⦂ A ‼ ε
+        → Γ ⊢V⦂ ⌜ param op ⌝ᵍ
+        → Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢K[ f ◁ CH ]⦂ A ! ε
         -------------------------------------------------------------------------------
-        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (op-grade op ·ₑ ε)
+        → Γ ⊢K[ f ◁ CH ]⦂ A ! (op-grade op ·ₑ ε)
     
     delay[_]ₖ : ∀ {A ε}
         → state ≤ᶠ f
         → (τ : 𝔻)
-        → Γ ⟨ ιᵣ τ ⟩ ⊢K[ f ◁ CH ]⦂ A ‼ ε
+        → Γ ⟨ ιᵣ τ ⟩ ⊢K[ f ◁ CH ]⦂ A ! ε
         -----------------------------------------
-        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (ιₑ τ ·ₑ ε)
+        → Γ ⊢K[ f ◁ CH ]⦂ A ! (ιₑ τ ·ₑ ε)
 
     unbox[_]ₖ : ∀ {A A₀ C ρ₀ ρ'}
         → state ≤ᶠ f
@@ -140,19 +140,19 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
     -- evaluation specific computation term contexts
 
     _ₖ[_]⨟_ : ∀ {Aₖ A εₖ ε}
-        → Γ ⊢K[ f ◁ CH ]⦂ Aₖ ‼ εₖ
+        → Γ ⊢K[ f ◁ CH ]⦂ Aₖ ! εₖ
         → eval ≤ᶠ f
-        → Γ ⟨ ∣ εₖ ∣ᵉ ⟩ ∷ Aₖ ⊢C⦂ A ‼ ε
+        → Γ ⟨ ∣ εₖ ∣ᵉ ⟩ ∷ Aₖ ⊢C⦂ A ! ε
         ----------------------------------
-        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (εₖ ·ₑ ε)
+        → Γ ⊢K[ f ◁ CH ]⦂ A ! (εₖ ·ₑ ε)
     
     handle[_]ₖ_`with_
         : ∀ {A B ε ε'}
         → eval ≤ᶠ f
-        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ ε
-        → Γ ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε')
+        → Γ ⊢K[ f ◁ CH ]⦂ A ! ε
+        → Γ ⊢V⦂ (A ! ε) ⇛ (B ! ε')
         ---------------------------------
-        → Γ ⊢K[ f ◁ CH ]⦂ B ‼ (ε ·ₑ ε')
+        → Γ ⊢K[ f ◁ CH ]⦂ B ! (ε ·ₑ ε')
 
 
 -- Contexts of the hole in a computation term context
@@ -168,7 +168,7 @@ rel-hole-ctx (sub[ p ]ₖ q K) Γ' =
 rel-hole-ctx (K ₖ[ p ]⨟ N) Γ' =
   rel-hole-ctx K Γ'
 rel-hole-ctx (perform[_]ₖ p op V K) Γ' =
-  rel-hole-ctx K (Γ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op))
+  rel-hole-ctx K (Γ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ)
 rel-hole-ctx (handle[ p ]ₖ K `with V) Γ' =
   rel-hole-ctx K Γ'
 rel-hole-ctx (delay[ p ]ₖ τ K) Γ' =

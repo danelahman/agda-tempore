@@ -31,7 +31,7 @@ module PolymorphicCalculus.Syntax.GradeSubstitution (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Language.GroundTypes Grades BTs using (GType; Base; Unit; Bool; Nat; Empty; _|×|ᵍ_; _|+|ᵍ_; |List|ᵍ; [_]ᵍ_)
+open import Language.GroundTypes Grades BTs using (GType; Base; unit; bool; nat; empty; _|×|ᵍ_; _|+|ᵍ_; listᵍ; [_]ᵍ_)
 
 open import PolymorphicCalculus.Syntax.Grades   S
 open import PolymorphicCalculus.Syntax.Types    S
@@ -67,19 +67,19 @@ mutual
   _[_]ᵛ : ∀ {Θ Θ'} → OVType Θ → Subst Θ Θ' → OVType Θ'
   tvar α    [ σ ]ᵛ = sTy σ α
   Base b    [ σ ]ᵛ = Base b
-  Unit      [ σ ]ᵛ = Unit
-  Bool      [ σ ]ᵛ = Bool
-  Nat       [ σ ]ᵛ = Nat
+  unit      [ σ ]ᵛ = unit
+  bool      [ σ ]ᵛ = bool
+  nat       [ σ ]ᵛ = nat
   (A |×| B) [ σ ]ᵛ = A [ σ ]ᵛ |×| B [ σ ]ᵛ
   (A |+| B) [ σ ]ᵛ = A [ σ ]ᵛ |+| B [ σ ]ᵛ
-  (|List| A) [ σ ]ᵛ = |List| (A [ σ ]ᵛ)
-  Empty     [ σ ]ᵛ = Empty
+  (list A)  [ σ ]ᵛ = list (A [ σ ]ᵛ)
+  empty     [ σ ]ᵛ = empty
   (A ⇒ C)   [ σ ]ᵛ = A [ σ ]ᵛ ⇒ C [ σ ]ᶜ
   (C ⇛ D)   [ σ ]ᵛ = C [ σ ]ᶜ ⇛ D [ σ ]ᶜ
   ([ ρ ] A) [ σ ]ᵛ = [ ρ [ σ ]ʳ ] A [ σ ]ᵛ
 
   _[_]ᶜ : ∀ {Θ Θ'} → OCType Θ → Subst Θ Θ' → OCType Θ'
-  (A ‼ ε) [ σ ]ᶜ = A [ σ ]ᵛ ‼ ε [ σ ]ᵉ
+  (A ! ε) [ σ ]ᶜ = A [ σ ]ᵛ ! ε [ σ ]ᵉ
 
 -- Identity and composition, the first applied first
 
@@ -93,10 +93,10 @@ _⨟ˢ_ : ∀ {Θ Θ' Θ''} → Subst Θ Θ' → Subst Θ' Θ'' → Subst Θ Θ'
              (λ i → sR σ i [ δ ]ʳ)
              (λ i → sE σ i [ δ ]ᵉ)
 
--- The ground instance: type variables to `Unit`, grades to the units
+-- The ground instance: type variables to `unit`, grades to the units
 
 groundˢ : ∀ {Θ} → Subst Θ ∅ˢ
-groundˢ = sub (λ _ → Unit) (λ _ → 𝟏̂ᵣ) (λ _ → 𝟏̂ₑ)
+groundˢ = sub (λ _ → unit) (λ _ → 𝟏̂ᵣ) (λ _ → 𝟏̂ₑ)
 
 -- Weakening substitutions
 
@@ -235,19 +235,19 @@ mutual
   [id]ᵛ : ∀ {Θ} → (A : OVType Θ) → A [ idˢ ]ᵛ ≡ A
   [id]ᵛ (tvar α)  = refl
   [id]ᵛ (Base b)  = refl
-  [id]ᵛ Unit      = refl
-  [id]ᵛ Bool      = refl
-  [id]ᵛ Nat       = refl
+  [id]ᵛ unit      = refl
+  [id]ᵛ bool      = refl
+  [id]ᵛ nat       = refl
   [id]ᵛ (A |×| B) = cong₂ _|×|_ ([id]ᵛ A) ([id]ᵛ B)
   [id]ᵛ (A |+| B) = cong₂ _|+|_ ([id]ᵛ A) ([id]ᵛ B)
-  [id]ᵛ (|List| A) = cong |List| ([id]ᵛ A)
-  [id]ᵛ Empty     = refl
+  [id]ᵛ (list A)  = cong list ([id]ᵛ A)
+  [id]ᵛ empty     = refl
   [id]ᵛ (A ⇒ C)   = cong₂ _⇒_ ([id]ᵛ A) ([id]ᶜ C)
   [id]ᵛ (C ⇛ D)   = cong₂ _⇛_ ([id]ᶜ C) ([id]ᶜ D)
   [id]ᵛ ([ ρ ] A) = cong₂ [_]_ ([id]ʳ ρ) ([id]ᵛ A)
 
   [id]ᶜ : ∀ {Θ} → (C : OCType Θ) → C [ idˢ ]ᶜ ≡ C
-  [id]ᶜ (A ‼ ε) = cong₂ _‼_ ([id]ᵛ A) ([id]ᵉ ε)
+  [id]ᶜ (A ! ε) = cong₂ _!_ ([id]ᵛ A) ([id]ᵉ ε)
 
 [⨟]ᵉ : ∀ {Θ Θ' Θ''} → (ε : EExp Θ) → (σ : Subst Θ Θ') → (δ : Subst Θ' Θ'')
      → ε [ σ ]ᵉ [ δ ]ᵉ ≡ ε [ σ ⨟ˢ δ ]ᵉ
@@ -270,20 +270,20 @@ mutual
        → A [ σ ]ᵛ [ δ ]ᵛ ≡ A [ σ ⨟ˢ δ ]ᵛ
   [⨟]ᵛ (tvar α)  σ δ = refl
   [⨟]ᵛ (Base b)  σ δ = refl
-  [⨟]ᵛ Unit      σ δ = refl
-  [⨟]ᵛ Bool      σ δ = refl
-  [⨟]ᵛ Nat       σ δ = refl
+  [⨟]ᵛ unit      σ δ = refl
+  [⨟]ᵛ bool      σ δ = refl
+  [⨟]ᵛ nat       σ δ = refl
   [⨟]ᵛ (A |×| B) σ δ = cong₂ _|×|_ ([⨟]ᵛ A σ δ) ([⨟]ᵛ B σ δ)
   [⨟]ᵛ (A |+| B) σ δ = cong₂ _|+|_ ([⨟]ᵛ A σ δ) ([⨟]ᵛ B σ δ)
-  [⨟]ᵛ (|List| A) σ δ = cong |List| ([⨟]ᵛ A σ δ)
-  [⨟]ᵛ Empty     σ δ = refl
+  [⨟]ᵛ (list A)  σ δ = cong list ([⨟]ᵛ A σ δ)
+  [⨟]ᵛ empty     σ δ = refl
   [⨟]ᵛ (A ⇒ C)   σ δ = cong₂ _⇒_ ([⨟]ᵛ A σ δ) ([⨟]ᶜ C σ δ)
   [⨟]ᵛ (C ⇛ D)   σ δ = cong₂ _⇛_ ([⨟]ᶜ C σ δ) ([⨟]ᶜ D σ δ)
   [⨟]ᵛ ([ ρ ] A) σ δ = cong₂ [_]_ ([⨟]ʳ ρ σ δ) ([⨟]ᵛ A σ δ)
 
   [⨟]ᶜ : ∀ {Θ Θ' Θ''} → (C : OCType Θ) → (σ : Subst Θ Θ') → (δ : Subst Θ' Θ'')
        → C [ σ ]ᶜ [ δ ]ᶜ ≡ C [ σ ⨟ˢ δ ]ᶜ
-  [⨟]ᶜ (A ‼ ε) σ δ = cong₂ _‼_ ([⨟]ᵛ A σ δ) ([⨟]ᵉ ε σ δ)
+  [⨟]ᶜ (A ! ε) σ δ = cong₂ _!_ ([⨟]ᵛ A σ δ) ([⨟]ᵉ ε σ δ)
 
 [≐]ᵉ : ∀ {Θ Θ'} {σ δ : Subst Θ Θ'} → σ ≐ˢ δ → (ε : EExp Θ) → ε [ σ ]ᵉ ≡ ε [ δ ]ᵉ
 [≐]ᵉ p (evar i)   = ≐ᵉ p i
@@ -303,19 +303,19 @@ mutual
   [≐]ᵛ : ∀ {Θ Θ'} {σ δ : Subst Θ Θ'} → σ ≐ˢ δ → (A : OVType Θ) → A [ σ ]ᵛ ≡ A [ δ ]ᵛ
   [≐]ᵛ p (tvar α)  = ≐ᵗ p α
   [≐]ᵛ p (Base b)  = refl
-  [≐]ᵛ p Unit      = refl
-  [≐]ᵛ p Bool      = refl
-  [≐]ᵛ p Nat       = refl
+  [≐]ᵛ p unit      = refl
+  [≐]ᵛ p bool      = refl
+  [≐]ᵛ p nat       = refl
   [≐]ᵛ p (A |×| B) = cong₂ _|×|_ ([≐]ᵛ p A) ([≐]ᵛ p B)
   [≐]ᵛ p (A |+| B) = cong₂ _|+|_ ([≐]ᵛ p A) ([≐]ᵛ p B)
-  [≐]ᵛ p (|List| A) = cong |List| ([≐]ᵛ p A)
-  [≐]ᵛ p Empty     = refl
+  [≐]ᵛ p (list A)  = cong list ([≐]ᵛ p A)
+  [≐]ᵛ p empty     = refl
   [≐]ᵛ p (A ⇒ C)   = cong₂ _⇒_ ([≐]ᵛ p A) ([≐]ᶜ p C)
   [≐]ᵛ p (C ⇛ D)   = cong₂ _⇛_ ([≐]ᶜ p C) ([≐]ᶜ p D)
   [≐]ᵛ p ([ ρ ] A) = cong₂ [_]_ ([≐]ʳ p ρ) ([≐]ᵛ p A)
 
   [≐]ᶜ : ∀ {Θ Θ'} {σ δ : Subst Θ Θ'} → σ ≐ˢ δ → (C : OCType Θ) → C [ σ ]ᶜ ≡ C [ δ ]ᶜ
-  [≐]ᶜ p (A ‼ ε) = cong₂ _‼_ ([≐]ᵛ p A) ([≐]ᵉ p ε)
+  [≐]ᶜ p (A ! ε) = cong₂ _!_ ([≐]ᵛ p A) ([≐]ᵉ p ε)
 
 wkˢᵗ-e : ∀ {Θ} → (ε : EExp Θ) → ε [ wkˢᵗ ]ᵉ ≡ wkᵗ-e ε
 wkˢᵗ-e (evar i)   = refl
@@ -361,57 +361,57 @@ mutual
   wkˢᵗ-v : ∀ {Θ} → (A : OVType Θ) → A [ wkˢᵗ ]ᵛ ≡ wkᵗ-v A
   wkˢᵗ-v (tvar α)  = refl
   wkˢᵗ-v (Base b)  = refl
-  wkˢᵗ-v Unit      = refl
-  wkˢᵗ-v Bool      = refl
-  wkˢᵗ-v Nat       = refl
+  wkˢᵗ-v unit      = refl
+  wkˢᵗ-v bool      = refl
+  wkˢᵗ-v nat       = refl
   wkˢᵗ-v (A |×| B) = cong₂ _|×|_ (wkˢᵗ-v A) (wkˢᵗ-v B)
   wkˢᵗ-v (A |+| B) = cong₂ _|+|_ (wkˢᵗ-v A) (wkˢᵗ-v B)
-  wkˢᵗ-v (|List| A) = cong |List| (wkˢᵗ-v A)
-  wkˢᵗ-v Empty     = refl
+  wkˢᵗ-v (list A)  = cong list (wkˢᵗ-v A)
+  wkˢᵗ-v empty     = refl
   wkˢᵗ-v (A ⇒ C)   = cong₂ _⇒_ (wkˢᵗ-v A) (wkˢᵗ-c C)
   wkˢᵗ-v (C ⇛ D)   = cong₂ _⇛_ (wkˢᵗ-c C) (wkˢᵗ-c D)
   wkˢᵗ-v ([ ρ ] A) = cong₂ [_]_ (wkˢᵗ-r ρ) (wkˢᵗ-v A)
 
   wkˢᵗ-c : ∀ {Θ} → (C : OCType Θ) → C [ wkˢᵗ ]ᶜ ≡ wkᵗ-c C
-  wkˢᵗ-c (A ‼ ε) = cong₂ _‼_ (wkˢᵗ-v A) (wkˢᵗ-e ε)
+  wkˢᵗ-c (A ! ε) = cong₂ _!_ (wkˢᵗ-v A) (wkˢᵗ-e ε)
 
 mutual
 
   wkˢʳ-v : ∀ {Θ} → (A : OVType Θ) → A [ wkˢʳ ]ᵛ ≡ wkʳ-v A
   wkˢʳ-v (tvar α)  = refl
   wkˢʳ-v (Base b)  = refl
-  wkˢʳ-v Unit      = refl
-  wkˢʳ-v Bool      = refl
-  wkˢʳ-v Nat       = refl
+  wkˢʳ-v unit      = refl
+  wkˢʳ-v bool      = refl
+  wkˢʳ-v nat       = refl
   wkˢʳ-v (A |×| B) = cong₂ _|×|_ (wkˢʳ-v A) (wkˢʳ-v B)
   wkˢʳ-v (A |+| B) = cong₂ _|+|_ (wkˢʳ-v A) (wkˢʳ-v B)
-  wkˢʳ-v (|List| A) = cong |List| (wkˢʳ-v A)
-  wkˢʳ-v Empty     = refl
+  wkˢʳ-v (list A)  = cong list (wkˢʳ-v A)
+  wkˢʳ-v empty     = refl
   wkˢʳ-v (A ⇒ C)   = cong₂ _⇒_ (wkˢʳ-v A) (wkˢʳ-c C)
   wkˢʳ-v (C ⇛ D)   = cong₂ _⇛_ (wkˢʳ-c C) (wkˢʳ-c D)
   wkˢʳ-v ([ ρ ] A) = cong₂ [_]_ (wkˢʳ-r ρ) (wkˢʳ-v A)
 
   wkˢʳ-c : ∀ {Θ} → (C : OCType Θ) → C [ wkˢʳ ]ᶜ ≡ wkʳ-c C
-  wkˢʳ-c (A ‼ ε) = cong₂ _‼_ (wkˢʳ-v A) (wkˢʳ-e ε)
+  wkˢʳ-c (A ! ε) = cong₂ _!_ (wkˢʳ-v A) (wkˢʳ-e ε)
 
 mutual
 
   wkˢᵉ-v : ∀ {Θ} → (A : OVType Θ) → A [ wkˢᵉ ]ᵛ ≡ wkᵉ-v A
   wkˢᵉ-v (tvar α)  = refl
   wkˢᵉ-v (Base b)  = refl
-  wkˢᵉ-v Unit      = refl
-  wkˢᵉ-v Bool      = refl
-  wkˢᵉ-v Nat       = refl
+  wkˢᵉ-v unit      = refl
+  wkˢᵉ-v bool      = refl
+  wkˢᵉ-v nat       = refl
   wkˢᵉ-v (A |×| B) = cong₂ _|×|_ (wkˢᵉ-v A) (wkˢᵉ-v B)
   wkˢᵉ-v (A |+| B) = cong₂ _|+|_ (wkˢᵉ-v A) (wkˢᵉ-v B)
-  wkˢᵉ-v (|List| A) = cong |List| (wkˢᵉ-v A)
-  wkˢᵉ-v Empty     = refl
+  wkˢᵉ-v (list A)  = cong list (wkˢᵉ-v A)
+  wkˢᵉ-v empty     = refl
   wkˢᵉ-v (A ⇒ C)   = cong₂ _⇒_ (wkˢᵉ-v A) (wkˢᵉ-c C)
   wkˢᵉ-v (C ⇛ D)   = cong₂ _⇛_ (wkˢᵉ-c C) (wkˢᵉ-c D)
   wkˢᵉ-v ([ ρ ] A) = cong₂ [_]_ (wkˢᵉ-r ρ) (wkˢᵉ-v A)
 
   wkˢᵉ-c : ∀ {Θ} → (C : OCType Θ) → C [ wkˢᵉ ]ᶜ ≡ wkᵉ-c C
-  wkˢᵉ-c (A ‼ ε) = cong₂ _‼_ (wkˢᵉ-v A) (wkˢᵉ-e ε)
+  wkˢᵉ-c (A ! ε) = cong₂ _!_ (wkˢᵉ-v A) (wkˢᵉ-e ε)
 
 wkˢᵗ-,ᵗ : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ') → wkˢᵗ ⨟ˢ (σ ,ᵗ B) ≐ˢ σ
 wkˢᵗ-,ᵗ σ B = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
@@ -587,13 +587,13 @@ wk-↑ᵉ-c σ C = trans (cong (_[ σ ↑ᵉ ]ᶜ) (sym (wkˢᵉ-c C)))
 
 ⌜⌝ᵍ-subst : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (A : GType) → ⌜ A ⌝ᵍ [ σ ]ᵛ ≡ ⌜ A ⌝ᵍ
 ⌜⌝ᵍ-subst σ (Base b)   = refl
-⌜⌝ᵍ-subst σ Unit       = refl
-⌜⌝ᵍ-subst σ Bool       = refl
-⌜⌝ᵍ-subst σ Nat        = refl
-⌜⌝ᵍ-subst σ Empty      = refl
+⌜⌝ᵍ-subst σ unit       = refl
+⌜⌝ᵍ-subst σ bool       = refl
+⌜⌝ᵍ-subst σ nat        = refl
+⌜⌝ᵍ-subst σ empty      = refl
 ⌜⌝ᵍ-subst σ (A |×|ᵍ B) = cong₂ _|×|_ (⌜⌝ᵍ-subst σ A) (⌜⌝ᵍ-subst σ B)
 ⌜⌝ᵍ-subst σ (A |+|ᵍ B) = cong₂ _|+|_ (⌜⌝ᵍ-subst σ A) (⌜⌝ᵍ-subst σ B)
-⌜⌝ᵍ-subst σ (|List|ᵍ A) = cong |List| (⌜⌝ᵍ-subst σ A)
+⌜⌝ᵍ-subst σ (listᵍ A)  = cong list (⌜⌝ᵍ-subst σ A)
 ⌜⌝ᵍ-subst σ ([ ρ ]ᵍ A) = cong₂ [_]_ refl (⌜⌝ᵍ-subst σ A)
 
 -- Pointwise equality is a congruence; composition is associative and unital

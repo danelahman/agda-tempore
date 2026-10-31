@@ -132,7 +132,7 @@ Tᶠ-nodeᵐ g op w k =
 -- the empty state (`hist ∅ ≡ []`, so `⟦ [] ⟧ᶜᵗˣ = 𝟙ᵐ` and the empty
 -- environment is `idᵐ`).
 
-program-run-sound : ∀ {A B ε ε'} {cf' : Config (B ‼ ε')}
+program-run-sound : ∀ {A B ε ε'} {cf' : Config (B ! ε')}
                   → (M : Prog A ε) → (pM : Paramᶜ M)
                   → (rs : ⟨ ∅ , M ⟩ ⟶* cf')
                   → ⟦ M ⟧ᵖ pM
@@ -285,12 +285,12 @@ adequacy-base {M = M} {N = N} pM pN e wM wN
                     (≈ᵐ-trans (≈ᵐ-sym eM) (≈ᵐ-trans e eN)))
 ... | refl = cM , sM , sN
 
--- A `Bool`-typed value's leaf is one of the two constants', read through its
+-- A `bool`-typed value's leaf is one of the two constants', read through its
 -- subsumption spine by `bool-val`; the state's environment is absorbed by the
 -- terminal object, as at a base constant. Which constant it is has to be
 -- carried along, since the two give different leaves.
 
-bool-leaf-value : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Bool)
+bool-leaf-value : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ bool)
                 → (pSt : Paramˢ St) → (pV : Paramᵛ V)
                 → ((bool-val V ≡ true)
                    × (⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
@@ -299,7 +299,7 @@ bool-leaf-value : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Bool)
                    × (⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
                         ≈ᵐ leafᵐ (falseᵐ ∘ᵐ terminalᵐ)))
 
-bool-leaf-value (var f x) pSt pV = ⊥-elim (Bool-not-in-toCtx x)
+bool-leaf-value (var f x) pSt pV = ⊥-elim (bool-not-in-toCtx x)
 bool-leaf-value {St = St} true pSt pV =
   inj₁ (refl
        , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (trueᵐ ∘ᵐ terminalᵐ) (⟦ St ⟧ˢ pSt))
@@ -310,17 +310,17 @@ bool-leaf-value {St = St} false pSt pV =
        , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (falseᵐ ∘ᵐ terminalᵐ) (⟦ St ⟧ˢ pSt))
            (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc falseᵐ terminalᵐ (⟦ St ⟧ˢ pSt))
                                (∘ᵐ-congʳ terminalᵐ-unique))))
-bool-leaf-value (subV V Boolₛ) pSt pV with bool-leaf-value V pSt pV
+bool-leaf-value (subV V boolₛ) pSt pV with bool-leaf-value V pSt pV
 ... | inj₁ (sv , qv) =
   inj₁ (sv , ≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-identityˡ _))) qv)
 ... | inj₂ (sv , qv) =
   inj₂ (sv , ≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-identityˡ _))) qv)
 
--- The head presentation at `Bool`, with the boolean it returns.
+-- The head presentation at `bool`, with the boolean it returns.
 
--- The same at `Bool`, where the run's refinement is `Boolₛ`.
+-- The same at `bool`, where the run's refinement is `boolₛ`.
 
-bool-run-leaf : ∀ {A₀} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A₀) → (p : A₀ <:ᵛ Bool)
+bool-run-leaf : ∀ {A₀} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A₀) → (p : A₀ <:ᵛ bool)
               → (pSt : Paramˢ St) → (pV : Paramᵛ V)
               → ((bool-val (subV V p) ≡ true)
                  × (Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
@@ -329,13 +329,13 @@ bool-run-leaf : ∀ {A₀} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A₀) → (p
                  × (Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
                       ≈ᵐ leafᵐ (falseᵐ ∘ᵐ terminalᵐ)))
 
-bool-run-leaf V Boolₛ pSt pV with bool-leaf-value V pSt pV
+bool-run-leaf V boolₛ pSt pV with bool-leaf-value V pSt pV
 ... | inj₁ (sv , qv) =
   inj₁ (sv , ≈ᵐ-trans (∘ᵐ-congˡ T-idᵐ) (≈ᵐ-trans (∘ᵐ-identityˡ _) qv))
 ... | inj₂ (sv , qv) =
   inj₂ (sv , ≈ᵐ-trans (∘ᵐ-congˡ T-idᵐ) (≈ᵐ-trans (∘ᵐ-identityˡ _) qv))
 
-bool-presentation : ∀ {ε} → (M : Prog Bool ε) → (pM : Paramᶜ M)
+bool-presentation : ∀ {ε} → (M : Prog bool ε) → (pM : Paramᶜ M)
                   → (w : Ret-whnf (⟨ ∅ , M ⟩))
                   → Σ[ Y ∈ Obj ] Σ[ δ ∈ E ]
                     Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (ret-ticks w) ]
@@ -358,7 +358,7 @@ bool-presentation M pM (ret-whnf St A₀ V rs)
 
 -- The returned answers are the same boolean.
 
-adequacy-bool : ∀ {ε} → {M N : Prog Bool ε}
+adequacy-bool : ∀ {ε} → {M N : Prog bool ε}
               → (pM : Paramᶜ M) → (pN : Paramᶜ N)
               → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
               → (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))

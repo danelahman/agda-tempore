@@ -82,19 +82,19 @@ mutual
   skelᵛ : ∀ {Ω} → OVType Ω → Skel (nTy Ω)
   skelᵛ (tvar α)  = svar α
   skelᵛ (Base b)  = sBase b
-  skelᵛ Unit      = sUnit
-  skelᵛ Bool      = sBool
-  skelᵛ Nat       = sNat
+  skelᵛ unit      = sUnit
+  skelᵛ bool      = sBool
+  skelᵛ nat       = sNat
   skelᵛ (A |×| B) = skelᵛ A s× skelᵛ B
   skelᵛ (A |+| B) = skelᵛ A s+ skelᵛ B
-  skelᵛ (|List| A) = sList (skelᵛ A)
-  skelᵛ Empty     = sEmpty
+  skelᵛ (list A)  = sList (skelᵛ A)
+  skelᵛ empty     = sEmpty
   skelᵛ (A ⇒ C)   = skelᵛ A s⇒ skelᶜ C
   skelᵛ (C ⇛ D)   = skelᶜ C s⇛ skelᶜ D
   skelᵛ ([ ρ ] A) = sBox skelᵛ A
 
   skelᶜ : ∀ {Ω} → OCType Ω → Skel (nTy Ω)
-  skelᶜ (A ‼ ε) = skelᵛ A
+  skelᶜ (A ! ε) = skelᵛ A
 
 -- Substitutions of skeleton variables
 

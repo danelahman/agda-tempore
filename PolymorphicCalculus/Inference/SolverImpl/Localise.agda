@@ -146,15 +146,15 @@ mutual
          → occᵉ-v k A ≡ false → A [ updᵉ k b ]ᵛ ≡ A
   updᵉ-v k b (tvar α)  q = refl
   updᵉ-v k b (Base c)  q = refl
-  updᵉ-v k b Unit      q = refl
-  updᵉ-v k b Bool      q = refl
-  updᵉ-v k b Nat       q = refl
-  updᵉ-v k b Empty     q = refl
+  updᵉ-v k b unit      q = refl
+  updᵉ-v k b bool      q = refl
+  updᵉ-v k b nat       q = refl
+  updᵉ-v k b empty     q = refl
   updᵉ-v k b (A |×| B) q with ∨-false (occᵉ-v k A) (occᵉ-v k B) q
   ... | q₁ , q₂ = cong₂ _|×|_ (updᵉ-v k b A q₁) (updᵉ-v k b B q₂)
   updᵉ-v k b (A |+| B) q with ∨-false (occᵉ-v k A) (occᵉ-v k B) q
   ... | q₁ , q₂ = cong₂ _|+|_ (updᵉ-v k b A q₁) (updᵉ-v k b B q₂)
-  updᵉ-v k b (|List| A) q = cong |List| (updᵉ-v k b A q)
+  updᵉ-v k b (list A)  q = cong list (updᵉ-v k b A q)
   updᵉ-v k b (A ⇒ C)   q with ∨-false (occᵉ-v k A) (occᵉ-c k C) q
   ... | q₁ , q₂ = cong₂ _⇒_ (updᵉ-v k b A q₁) (updᵉ-c k b C q₂)
   updᵉ-v k b (C ⇛ D)   q with ∨-false (occᵉ-c k C) (occᵉ-c k D) q
@@ -164,8 +164,8 @@ mutual
 
   updᵉ-c : ∀ {Ω} → (k : EVar Ω) → (b : EExp Ω) → (C : OCType Ω)
          → occᵉ-c k C ≡ false → C [ updᵉ k b ]ᶜ ≡ C
-  updᵉ-c k b (A ‼ ε) q with ∨-false (occᵉ-v k A) (occᵉ-e k ε) q
-  ... | q₁ , q₂ = cong₂ _‼_ (updᵉ-v k b A q₁) (updᵉ-e k b ε q₂)
+  updᵉ-c k b (A ! ε) q with ∨-false (occᵉ-v k A) (occᵉ-e k ε) q
+  ... | q₁ , q₂ = cong₂ _!_ (updᵉ-v k b A q₁) (updᵉ-e k b ε q₂)
 
 mutual
 
@@ -173,15 +173,15 @@ mutual
          → occʳ-v k A ≡ false → A [ updʳ k b ]ᵛ ≡ A
   updʳ-v k b (tvar α)  q = refl
   updʳ-v k b (Base c)  q = refl
-  updʳ-v k b Unit      q = refl
-  updʳ-v k b Bool      q = refl
-  updʳ-v k b Nat       q = refl
-  updʳ-v k b Empty     q = refl
+  updʳ-v k b unit      q = refl
+  updʳ-v k b bool      q = refl
+  updʳ-v k b nat       q = refl
+  updʳ-v k b empty     q = refl
   updʳ-v k b (A |×| B) q with ∨-false (occʳ-v k A) (occʳ-v k B) q
   ... | q₁ , q₂ = cong₂ _|×|_ (updʳ-v k b A q₁) (updʳ-v k b B q₂)
   updʳ-v k b (A |+| B) q with ∨-false (occʳ-v k A) (occʳ-v k B) q
   ... | q₁ , q₂ = cong₂ _|+|_ (updʳ-v k b A q₁) (updʳ-v k b B q₂)
-  updʳ-v k b (|List| A) q = cong |List| (updʳ-v k b A q)
+  updʳ-v k b (list A)  q = cong list (updʳ-v k b A q)
   updʳ-v k b (A ⇒ C)   q with ∨-false (occʳ-v k A) (occʳ-c k C) q
   ... | q₁ , q₂ = cong₂ _⇒_ (updʳ-v k b A q₁) (updʳ-c k b C q₂)
   updʳ-v k b (C ⇛ D)   q with ∨-false (occʳ-c k C) (occʳ-c k D) q
@@ -191,7 +191,7 @@ mutual
 
   updʳ-c : ∀ {Ω} → (k : RVar Ω) → (b : RExp Ω) → (C : OCType Ω)
          → occʳ-c k C ≡ false → C [ updʳ k b ]ᶜ ≡ C
-  updʳ-c k b (A ‼ ε) q = cong₂ _‼_ (updʳ-v k b A q) (updʳ-e k b ε)
+  updʳ-c k b (A ! ε) q = cong₂ _!_ (updʳ-v k b A q) (updʳ-e k b ε)
 
 -- ... and so does a later substitution
 
@@ -388,8 +388,8 @@ module _ {Θ Φ Ω Ω'} {O : Subst Θ Φ} {X : Subst Φ Ω} {σ₁ σ₂ : Subst
 |+|-inj : ∀ {Ω} {A B C D : OVType Ω} → A |+| B ≡ C |+| D → (A ≡ C) × (B ≡ D)
 |+|-inj refl = refl , refl
 
-|List|-inj : ∀ {Ω} {A B : OVType Ω} → |List| A ≡ |List| B → A ≡ B
-|List|-inj refl = refl
+list-inj : ∀ {Ω} {A B : OVType Ω} → list A ≡ list B → A ≡ B
+list-inj refl = refl
 
 ⇒-inj : ∀ {Ω} {A B : OVType Ω} {C D : OCType Ω} → A ⇒ C ≡ B ⇒ D → (A ≡ B) × (C ≡ D)
 ⇒-inj refl = refl , refl
@@ -400,8 +400,8 @@ module _ {Θ Φ Ω Ω'} {O : Subst Θ Φ} {X : Subst Φ Ω} {σ₁ σ₂ : Subst
 []-inj : ∀ {Ω} {ρ ρ' : RExp Ω} {A B : OVType Ω} → [ ρ ] A ≡ [ ρ' ] B → (ρ ≡ ρ') × (A ≡ B)
 []-inj refl = refl , refl
 
-‼-inj : ∀ {Ω} {A B : OVType Ω} {ε ε' : EExp Ω} → A ‼ ε ≡ B ‼ ε' → (A ≡ B) × (ε ≡ ε')
-‼-inj refl = refl , refl
+!-inj : ∀ {Ω} {A B : OVType Ω} {ε ε' : EExp Ω} → A ! ε ≡ B ! ε' → (A ≡ B) × (ε ≡ ε')
+!-inj refl = refl , refl
 
 module _ {Φ Ω Ω'} (X : Subst Φ Ω) (σ₁ σ₂ : Subst Ω Ω') where
 
@@ -439,7 +439,7 @@ module _ {Φ Ω Ω'} (X : Subst Φ Ω) (σ₁ σ₂ : Subst Ω Ω') where
   subᵉ-v {k} (A |+| B) r e with ∨-true (occᵉ-v k A) (occᵉ-v k B) r
   ... | inj₁ r' = subᵉ-v A r' (proj₁ (|+|-inj e))
   ... | inj₂ r' = subᵉ-v B r' (proj₂ (|+|-inj e))
-  subᵉ-v {k} (|List| A) r e = subᵉ-v A r (|List|-inj e)
+  subᵉ-v {k} (list A) r e = subᵉ-v A r (list-inj e)
   subᵉ-v {k} (A ⇒ C) r e with ∨-true (occᵉ-v k A) (occᵉ-c k C) r
   ... | inj₁ r' = subᵉ-v A r' (proj₁ (⇒-inj e))
   ... | inj₂ r' = subᵉ-c C r' (proj₂ (⇒-inj e))
@@ -450,9 +450,9 @@ module _ {Φ Ω Ω'} (X : Subst Φ Ω) (σ₁ σ₂ : Subst Ω Ω') where
   ... | inj₁ r' = subᵉ-r ρ r' (proj₁ ([]-inj e))
   ... | inj₂ r' = subᵉ-v A r' (proj₂ ([]-inj e))
 
-  subᵉ-c {k} (A ‼ ε) r e with ∨-true (occᵉ-v k A) (occᵉ-e k ε) r
-  ... | inj₁ r' = subᵉ-v A r' (proj₁ (‼-inj e))
-  ... | inj₂ r' = subᵉ-e ε r' (proj₂ (‼-inj e))
+  subᵉ-c {k} (A ! ε) r e with ∨-true (occᵉ-v k A) (occᵉ-e k ε) r
+  ... | inj₁ r' = subᵉ-v A r' (proj₁ (!-inj e))
+  ... | inj₂ r' = subᵉ-e ε r' (proj₂ (!-inj e))
 
   -- at a resource-grade unknown
 
@@ -478,7 +478,7 @@ module _ {Φ Ω Ω'} (X : Subst Φ Ω) (σ₁ σ₂ : Subst Ω Ω') where
   subʳ-v {k} (A |+| B) r e with ∨-true (occʳ-v k A) (occʳ-v k B) r
   ... | inj₁ r' = subʳ-v A r' (proj₁ (|+|-inj e))
   ... | inj₂ r' = subʳ-v B r' (proj₂ (|+|-inj e))
-  subʳ-v {k} (|List| A) r e = subʳ-v A r (|List|-inj e)
+  subʳ-v {k} (list A) r e = subʳ-v A r (list-inj e)
   subʳ-v {k} (A ⇒ C) r e with ∨-true (occʳ-v k A) (occʳ-c k C) r
   ... | inj₁ r' = subʳ-v A r' (proj₁ (⇒-inj e))
   ... | inj₂ r' = subʳ-c C r' (proj₂ (⇒-inj e))
@@ -489,7 +489,7 @@ module _ {Φ Ω Ω'} (X : Subst Φ Ω) (σ₁ σ₂ : Subst Ω Ω') where
   ... | inj₁ r' = subʳ-r ρ r' (proj₁ ([]-inj e))
   ... | inj₂ r' = subʳ-v A r' (proj₂ ([]-inj e))
 
-  subʳ-c (A ‼ ε) r e = subʳ-v A r (proj₁ (‼-inj e))
+  subʳ-c (A ! ε) r e = subʳ-v A r (proj₁ (!-inj e))
 
 -- The images of the unknowns `O` mentions are all of the form `y [ w ]`,
 -- on which the two agree
@@ -608,14 +608,14 @@ dfreeʳ? k R with allFalse (λ { (A , ρ) → occʳ-r k ρ }) (ds R)
 cleanᵉ-⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} {k : EVar Ω} {R : Resid Ω}
          → Cleanᵉ k R → (b : EExp Ω) → (τ : Subst Ω Ω') → Q ⊩ᴿ R [ τ ]
          → (∀ {A ρ} → (A , ρ) ∈ ds R → Q ⊩ ρ [ updᵉ k b ⨟ˢ τ ]ʳ ≾̂ᵣ ρ [ τ ]ʳ)
-         → (∀ {A} → A ∈ ts R → Q ⊩ᴱ A [ updᵉ k b ⨟ˢ τ ]ᵛ)
+         → (∀ {A} → A ∈ ts R → Q ⊩Et A [ updᵉ k b ⨟ˢ τ ]ᵛ)
          × (∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ updᵉ k b ⨟ˢ τ ]ᵛ <:̂ᵛ B [ updᵉ k b ⨟ˢ τ ]ᵛ)
          × (∀ {A ρ} → (A , ρ) ∈ ds R
               → VarOK Q (A [ updᵉ k b ⨟ˢ τ ]ᵛ) (ρ [ updᵉ k b ⨟ˢ τ ]ʳ))
 cleanᵉ-⊩ {Q = Q} {k} {R} (cleanᵉ ct cs cd) b τ h g = ts' , ss' , ds'
   where
-    ts' : ∀ {A} → A ∈ ts R → Q ⊩ᴱ A [ updᵉ k b ⨟ˢ τ ]ᵛ
-    ts' {A} m = subst (Q ⊩ᴱ_) (sym (updᵉ-⨟v k b τ A (ct m))) (⊩ts h m)
+    ts' : ∀ {A} → A ∈ ts R → Q ⊩Et A [ updᵉ k b ⨟ˢ τ ]ᵛ
+    ts' {A} m = subst (Q ⊩Et_) (sym (updᵉ-⨟v k b τ A (ct m))) (⊩ts h m)
 
     ss' : ∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ updᵉ k b ⨟ˢ τ ]ᵛ <:̂ᵛ B [ updᵉ k b ⨟ˢ τ ]ᵛ
     ss' {A} {B} m with ∨-false (occᵉ-v k A) (occᵉ-v k B) (cs m)
@@ -630,14 +630,14 @@ cleanᵉ-⊩ {Q = Q} {k} {R} (cleanᵉ ct cs cd) b τ h g = ts' , ss' , ds'
 cleanʳ-⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} {k : RVar Ω} {R : Resid Ω}
          → Cleanʳ k R → (b : RExp Ω) → (τ : Subst Ω Ω') → Q ⊩ᴿ R [ τ ]
          → (∀ {A ρ} → (A , ρ) ∈ ds R → Q ⊩ ρ [ updʳ k b ⨟ˢ τ ]ʳ ≾̂ᵣ ρ [ τ ]ʳ)
-         → (∀ {A} → A ∈ ts R → Q ⊩ᴱ A [ updʳ k b ⨟ˢ τ ]ᵛ)
+         → (∀ {A} → A ∈ ts R → Q ⊩Et A [ updʳ k b ⨟ˢ τ ]ᵛ)
          × (∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ updʳ k b ⨟ˢ τ ]ᵛ <:̂ᵛ B [ updʳ k b ⨟ˢ τ ]ᵛ)
          × (∀ {A ρ} → (A , ρ) ∈ ds R
               → VarOK Q (A [ updʳ k b ⨟ˢ τ ]ᵛ) (ρ [ updʳ k b ⨟ˢ τ ]ʳ))
 cleanʳ-⊩ {Q = Q} {k} {R} (cleanʳ ct cs cd) b τ h g = ts' , ss' , ds'
   where
-    ts' : ∀ {A} → A ∈ ts R → Q ⊩ᴱ A [ updʳ k b ⨟ˢ τ ]ᵛ
-    ts' {A} m = subst (Q ⊩ᴱ_) (sym (updʳ-⨟v k b τ A (ct m))) (⊩ts h m)
+    ts' : ∀ {A} → A ∈ ts R → Q ⊩Et A [ updʳ k b ⨟ˢ τ ]ᵛ
+    ts' {A} m = subst (Q ⊩Et_) (sym (updʳ-⨟v k b τ A (ct m))) (⊩ts h m)
 
     ss' : ∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ updʳ k b ⨟ˢ τ ]ᵛ <:̂ᵛ B [ updʳ k b ⨟ˢ τ ]ᵛ
     ss' {A} {B} m with ∨-false (occʳ-v k A) (occʳ-v k B) (cs m)
@@ -866,7 +866,7 @@ settledᵈ : ∀ {Ω} → (H : Hyps Ω) → (a : OVType Ω × RExp Ω) → Maybe
 settledᵈ H (A , ρ) with decideᵣ full H ρ 𝟏̂ᵣ
 ... | just p  = just (λ δ h → ≾ᵘ-ok (⊩-substᵣ h p))
 ... | nothing with etDec A in e
-...   | just [] = just (λ δ _ → et-ok (⊩ᴱ-subst ∅ᴴ-⊩ᴴ (etDec-sound {Q = ∅ᴴ} A e (λ ()))))
+...   | just [] = just (λ δ _ → et-ok (⊩Et-subst ∅ᴴ-⊩ᴴ (etDec-sound {Q = ∅ᴴ} A e (λ ()))))
 ...   | just (_ ∷ _) = nothing
 ...   | nothing      = nothing
 
@@ -1192,17 +1192,17 @@ hitᵥ : ∀ {Φ} → List (Mem Φ) → OVType Φ → 𝔹
 hitᶜ : ∀ {Φ} → List (Mem Φ) → OCType Φ → 𝔹
 hitᵥ l (tvar α)  = false
 hitᵥ l (Base b)  = false
-hitᵥ l Unit      = false
-hitᵥ l Bool      = false
-hitᵥ l Nat       = false
-hitᵥ l Empty     = false
+hitᵥ l unit      = false
+hitᵥ l bool      = false
+hitᵥ l nat       = false
+hitᵥ l empty     = false
 hitᵥ l (A |×| B) = hitᵥ l A ∨ hitᵥ l B
 hitᵥ l (A |+| B) = hitᵥ l A ∨ hitᵥ l B
-hitᵥ l (|List| A) = hitᵥ l A
+hitᵥ l (list A)  = hitᵥ l A
 hitᵥ l (A ⇒ C)   = hitᵥ l A ∨ hitᶜ l C
 hitᵥ l (C ⇛ D)   = hitᶜ l C ∨ hitᶜ l D
 hitᵥ l ([ ρ ] A) = hitᵣ l ρ ∨ hitᵥ l A
-hitᶜ l (A ‼ ε)   = hitᵥ l A ∨ hitₑ l ε
+hitᶜ l (A ! ε)   = hitᵥ l A ∨ hitₑ l ε
 
 -- What no member occurs in is left alone
 
@@ -1227,23 +1227,23 @@ tops-v : ∀ {Φ} → (l : List (Mem Φ)) → (A : OVType Φ) → hitᵥ l A ≡
 tops-c : ∀ {Φ} → (l : List (Mem Φ)) → (C : OCType Φ) → hitᶜ l C ≡ false → C [ tops l ]ᶜ ≡ C
 tops-v l (tvar α)  q = refl
 tops-v l (Base b)  q = refl
-tops-v l Unit      q = refl
-tops-v l Bool      q = refl
-tops-v l Nat       q = refl
-tops-v l Empty     q = refl
+tops-v l unit      q = refl
+tops-v l bool      q = refl
+tops-v l nat       q = refl
+tops-v l empty     q = refl
 tops-v l (A |×| B) q with ∨-false (hitᵥ l A) (hitᵥ l B) q
 ... | q₁ , q₂ = cong₂ _|×|_ (tops-v l A q₁) (tops-v l B q₂)
 tops-v l (A |+| B) q with ∨-false (hitᵥ l A) (hitᵥ l B) q
 ... | q₁ , q₂ = cong₂ _|+|_ (tops-v l A q₁) (tops-v l B q₂)
-tops-v l (|List| A) q = cong |List| (tops-v l A q)
+tops-v l (list A)  q = cong list (tops-v l A q)
 tops-v l (A ⇒ C)   q with ∨-false (hitᵥ l A) (hitᶜ l C) q
 ... | q₁ , q₂ = cong₂ _⇒_ (tops-v l A q₁) (tops-c l C q₂)
 tops-v l (C ⇛ D)   q with ∨-false (hitᶜ l C) (hitᶜ l D) q
 ... | q₁ , q₂ = cong₂ _⇛_ (tops-c l C q₁) (tops-c l D q₂)
 tops-v l ([ ρ ] A) q with ∨-false (hitᵣ l ρ) (hitᵥ l A) q
 ... | q₁ , q₂ = cong₂ [_]_ (tops-r l ρ q₁) (tops-v l A q₂)
-tops-c l (A ‼ ε)   q with ∨-false (hitᵥ l A) (hitₑ l ε) q
-... | q₁ , q₂ = cong₂ _‼_ (tops-v l A q₁) (tops-e l ε q₂)
+tops-c l (A ! ε)   q with ∨-false (hitᵥ l A) (hitₑ l ε) q
+... | q₁ , q₂ = cong₂ _!_ (tops-v l A q₁) (tops-e l ε q₂)
 
 -- ... and so does a later substitution
 
@@ -1464,8 +1464,8 @@ raise-⊩ {Θ} {Ω'' = Ω''} {Q₀ = Q₀} {R} O {j} eqj l rc ue ur (cleanM ct c
                         (trans ([id]ʳ (y [ τ ]ʳ)) (sym (tops-⨟r l τ y q)))))
                         (⊩rs hT m))
 
-    ts' : ∀ {A} → A ∈ ts R → Q ⊩ᴱ A [ τ₁ ]ᵛ
-    ts' {A} m = subst (Q ⊩ᴱ_) (sym (tops-⨟v l τ A (ct m))) (⊩ts h m)
+    ts' : ∀ {A} → A ∈ ts R → Q ⊩Et A [ τ₁ ]ᵛ
+    ts' {A} m = subst (Q ⊩Et_) (sym (tops-⨟v l τ A (ct m))) (⊩ts h m)
 
     ss' : ∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ τ₁ ]ᵛ <:̂ᵛ B [ τ₁ ]ᵛ
     ss' {A} {B} m with ∨-false (hitᵥ l A) (hitᵥ l B) (cs m)
@@ -1716,7 +1716,7 @@ equal-⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} {σ : Subst Ω Ω} {R : Resid Ω}
 equal-⊩ {Q = Q} {σ} (typesFixed ft fs fd) τ h le ge =
   mk⊩ᴿ (equal-keeps {_⊑_ = Q ⊩_≾̂ᵣ_} transᵣ (mono-substᵣ le) (mono-substᵣ ge) (⊩rs h))
        (equal-keeps {_⊑_ = Q ⊩_≾̂ₑ_} transₑ (mono-substₑ le) (mono-substₑ ge) (⊩es h))
-       (λ {A} m → subst (Q ⊩ᴱ_) (ty A (ft m)) (⊩ts h m))
+       (λ {A} m → subst (Q ⊩Et_) (ty A (ft m)) (⊩ts h m))
        (λ {A} {B} m → subst₂ (Q ∣_<:̂ᵛ_) (ty A (proj₁ (fs m))) (ty B (proj₂ (fs m))) (⊩ss h m))
        (λ {A} {ρ} m → subst (λ X → VarOK Q X (ρ [ σ ⨟ˢ τ ]ʳ)) (ty A (fd m))
                             (VarOK-≡̂ (≡̂ᵛ-refl (A [ τ ]ᵛ)) (mono-substᵣ le ρ) (⊩ds h m)))

@@ -212,15 +212,15 @@ mutual
         → (A : OVType Θ) → fvᵛ A ⊆ᵛ F → A [ ρ ]ᵛ ≡ A
   fix-v f (tvar α)  h = fixᵗ f α (⊆ᵗ h α (≟-self α))
   fix-v f (Base b)  h = refl
-  fix-v f Unit      h = refl
-  fix-v f Bool      h = refl
-  fix-v f Nat       h = refl
-  fix-v f Empty     h = refl
+  fix-v f unit      h = refl
+  fix-v f bool      h = refl
+  fix-v f nat       h = refl
+  fix-v f empty     h = refl
   fix-v f (A |×| B) h = cong₂ _|×|_ (fix-v f A (⊆-∪ˡ (fvᵛ A) (fvᵛ B) h))
                                     (fix-v f B (⊆-∪ʳ (fvᵛ A) (fvᵛ B) h))
   fix-v f (A |+| B) h = cong₂ _|+|_ (fix-v f A (⊆-∪ˡ (fvᵛ A) (fvᵛ B) h))
                                     (fix-v f B (⊆-∪ʳ (fvᵛ A) (fvᵛ B) h))
-  fix-v f (|List| A) h = cong |List| (fix-v f A h)
+  fix-v f (list A)  h = cong list (fix-v f A h)
   fix-v f (A ⇒ C)   h = cong₂ _⇒_ (fix-v f A (⊆-∪ˡ (fvᵛ A) (fvᶜ C) h))
                                   (fix-c f C (⊆-∪ʳ (fvᵛ A) (fvᶜ C) h))
   fix-v f (C ⇛ D)   h = cong₂ _⇛_ (fix-c f C (⊆-∪ˡ (fvᶜ C) (fvᶜ D) h))
@@ -230,6 +230,6 @@ mutual
 
   fix-c : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ
         → (C : OCType Θ) → fvᶜ C ⊆ᵛ F → C [ ρ ]ᶜ ≡ C
-  fix-c f (A ‼ ε) h =
-    cong₂ _‼_ (fix-v f A (mk⊆ᵛ (⊆ᵗ h) (⊆ʳ h) (λ i o → ⊆ᵉ h i (∨-inˡ o))))
+  fix-c f (A ! ε) h =
+    cong₂ _!_ (fix-v f A (mk⊆ᵛ (⊆ᵗ h) (⊆ʳ h) (λ i o → ⊆ᵉ h i (∨-inˡ o))))
               (fix-e f ε (mk⊆ᵛ (λ _ ()) (λ _ ()) (λ i o → ⊆ᵉ h i (∨-inʳ (occᵉ-v i A) o))))

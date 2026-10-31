@@ -58,15 +58,15 @@ open import MonomorphicCalculus.Examples.Typing.Core (at-least-counts 3) opTime
 ------------------------------------------------------------------------
 -- Effectful computations
 
-sampling : [] ⊢C⦂ Reading ‼ ⟪ 1 , 0 , 0 ⟫ˡ
+sampling : [] ⊢C⦂ Reading ! ⟪ 1 , 0 , 0 ⟫ˡ
 sampling =
   perform read ⋆                     -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading
     (return here)
 
-relaying : [] ⊢C⦂ Unit ‼ ⟪ 1 , 0 , 1 ⟫ˡ
+relaying : [] ⊢C⦂ unit ! ⟪ 1 , 0 , 1 ⟫ˡ
 relaying =
   perform read ⋆                     -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading
-    (perform send here               -- ⟨ ⟪ 0 , 0 , 1 ⟫ˡ ⟩ ∷ Unit
+    (perform send here               -- ⟨ ⟪ 0 , 0 , 1 ⟫ˡ ⟩ ∷ unit
       (return ⋆))
 
 ------------------------------------------------------------------------
@@ -77,14 +77,14 @@ nothing-goes-stale ([ _ ,+∞⟩ ∷ᵛ [ _ ,+∞⟩ ∷ᵛ [ _ ,+∞⟩ ∷ᵛ 
 
 -- a reading transmitted after a store and a transmission of its own
 
-transmitted-late : [] ⊢C⦂ Unit ‼ ⟪ 1 , 1 , 2 ⟫ˡ
+transmitted-late : [] ⊢C⦂ unit ! ⟪ 1 , 1 , 2 ⟫ˡ
 transmitted-late =
   perform read ⋆                     -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading
-    (perform write here              -- ⟨ ⟪ 0 , 1 , 0 ⟫ˡ ⟩ ∷ Unit
-      (perform send (const 0)        -- ⟨ ⟪ 0 , 0 , 1 ⟫ˡ ⟩ ∷ Unit
+    (perform write here              -- ⟨ ⟪ 0 , 1 , 0 ⟫ˡ ⟩ ∷ unit
+      (perform send (const 0)        -- ⟨ ⟪ 0 , 0 , 1 ⟫ˡ ⟩ ∷ unit
         (perform send (fresh-var (nothing-goes-stale _)
                                  (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))))
-                                     -- ⟨ ⟪ 0 , 0 , 1 ⟫ˡ ⟩ ∷ Unit
+                                     -- ⟨ ⟪ 0 , 0 , 1 ⟫ˡ ⟩ ∷ unit
           (return ⋆))))
 
 ------------------------------------------------------------------------
@@ -99,11 +99,11 @@ average = ⟪ 3 , 0 , 0 ⟫ˡ
 -- claimed after three readings, a transmission in between: the other
 -- counters demand nothing
 
-claim-after-three-readings : [] ⊢C⦂ Unit ‼ ⟪ 3 , 0 , 2 ⟫ˡ
+claim-after-three-readings : [] ⊢C⦂ unit ! ⟪ 3 , 0 , 2 ⟫ˡ
 claim-after-three-readings =
   box average (const 42)             -- ∷ [ average ] Reading
     (perform read ⋆                  -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading
-      (perform send here             -- ⟨ ⟪ 0 , 0 , 1 ⟫ˡ ⟩ ∷ Unit
+      (perform send here             -- ⟨ ⟪ 0 , 0 , 1 ⟫ˡ ⟩ ∷ unit
         (perform read ⋆              -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading
           (perform read ⋆            -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading
             (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))))))))
@@ -134,9 +134,9 @@ transmitting-is-no-reading (short , _) = ≰! short
 -- The join keeps only what both branches make certain, so a token
 -- claimed after a conditional has to be earned on both paths.
 
-three-readings-or-one : [] ∷ Bool ⊢C⦂ Unit ‼ ⟪ 1 , 0 , 0 ⟫ˡ
+three-readings-or-one : [] ∷ bool ⊢C⦂ unit ! ⟪ 1 , 0 , 0 ⟫ˡ
 three-readings-or-one =
-  if eternal-var Boolₑ Hd
+  if eternal-var boolₑ Hd
     `then coerce (≤! , ≤! , ≤! , tt)
             (perform read ⋆ (perform read ⋆ (perform read ⋆ (return ⋆))))
     `else coerce (≤! , ≤! , ≤! , tt)
@@ -162,7 +162,7 @@ reading-crosses-the-barrier :
   (op : Op) → (ε'' : E) → 𝟏ᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ 𝟏ᵣ
 reading-crosses-the-barrier op ε'' = nothing-goes-stale _
 
-reported : Node ⊢C⦂ Reading ‼ ⟪ 1 , 0 , 0 ⟫ˡ
+reported : Node ⊢C⦂ Reading ! ⟪ 1 , 0 , 0 ⟫ˡ
 reported =
   handle perform read ⋆ (return here)
     `with reporting reading-crosses-the-barrier

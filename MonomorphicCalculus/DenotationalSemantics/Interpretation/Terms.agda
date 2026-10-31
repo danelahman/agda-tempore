@@ -8,7 +8,7 @@
 -- post-composes the coercion of its witness.                         --
 --                                                                    --
 -- `perform`'s parameter/arity are ground types, interpreted via the  --
--- coercion `⟦ type-of-gtype G ⟧ᵛ ≡ ⟦ G ⟧ᵍ` (`ty-gty`).               --
+-- coercion `⟦ ⌜ G ⌝ᵍ ⟧ᵛ ≡ ⟦ G ⟧ᵍ` (`ty-gty`).                        --
 ------------------------------------------------------------------------
 
 open import Grades.Base
@@ -67,15 +67,15 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Comparisons
 -- The value-type interpretation of a ground type coincides with its
 -- ground-type interpretation.
 
-ty-gty : ∀ (G : GType) → ⟦ type-of-gtype G ⟧ᵛ ≡ ⟦ G ⟧ᵍ
+ty-gty : ∀ (G : GType) → ⟦ ⌜ G ⌝ᵍ ⟧ᵛ ≡ ⟦ G ⟧ᵍ
 ty-gty (Base b)     = refl
-ty-gty Unit         = refl
-ty-gty Bool         = refl
-ty-gty Nat          = refl
-ty-gty Empty        = refl
+ty-gty unit         = refl
+ty-gty bool         = refl
+ty-gty nat          = refl
+ty-gty empty        = refl
 ty-gty (G₁ |×|ᵍ G₂) = cong₂ _×ᵐ_ (ty-gty G₁) (ty-gty G₂)
 ty-gty (G₁ |+|ᵍ G₂) = cong₂ _+ᵐ_ (ty-gty G₁) (ty-gty G₂)
-ty-gty (|List|ᵍ G)  = cong Listᵐ (ty-gty G)
+ty-gty (listᵍ G)    = cong Listᵐ (ty-gty G)
 ty-gty ([ ρ ]ᵍ G)   = cong (λ O → [ ρ ]ᵒ O) (ty-gty G)
 
 -- Naturality of `×ᵐ-assoc⁻¹` in its third component, and commutation of
@@ -368,9 +368,9 @@ mutual
   -- the semantic handler's `Monoᵀ` field (built by `⟦_⟧ʰᵗ`).
   EffUniformʰ : ∀ {Γ B}
               → (H : (op : Op) → (ε'' : E)
-                   → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                        ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                     ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+                   → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                        ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+                     ⊢C⦂ B ! (op-grade op ·ₑ ε''))
               → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
               → Set
   EffUniformʰ H pH = ∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
@@ -448,9 +448,9 @@ mutual
   -- along that adapter.
   ⟦_⟧ʰᵗ : ∀ {Γ B}
         → (H : (op : Op) → (ε'' : E)
-             → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                  ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-               ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+             → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                  ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+               ⊢C⦂ B ! (op-grade op ·ₑ ε''))
         → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
         → EffUniformʰ {Γ} {B} H pH
         → Handlerᵀ ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ ⟦ B ⟧ᵛ
@@ -485,11 +485,11 @@ mutual
 -- carries no computational content, so it also transports a term's
 -- parametricity certificate.
 
-ε-substᴾ : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢C⦂ A ‼ ε)
+ε-substᴾ : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢C⦂ A ! ε)
          → Paramᶜ M → Paramᶜ (ε-subst e M)
 ε-substᴾ refl M p = p
 
-sound-ε-subst : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢C⦂ A ‼ ε) → (pM : Paramᶜ M)
+sound-ε-subst : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢C⦂ A ! ε) → (pM : Paramᶜ M)
               → ⟦ ε-subst e M ⟧ᶜᵗ (ε-substᴾ e M pM) ≈ᵐ ε-substᵀ e ∘ᵐ ⟦ M ⟧ᶜᵗ pM
 sound-ε-subst refl M pM =
   ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-congˡ ε-substᵀ-refl) (∘ᵐ-identityˡ _))
@@ -497,7 +497,7 @@ sound-ε-subst refl M pM =
 -- Regrading along an equivalence of effects is a sub-effecting, so it denotes
 -- the monad's `T-≤`, and the certificate is the term's own.
 
-sound-ε-≃ : ∀ {Γ A ε ε'} → (e : ε ≃ₑ ε') → (M : Γ ⊢C⦂ A ‼ ε) → (pM : Paramᶜ M)
+sound-ε-≃ : ∀ {Γ A ε ε'} → (e : ε ≃ₑ ε') → (M : Γ ⊢C⦂ A ! ε) → (pM : Paramᶜ M)
           → ⟦ ε-≃ e M ⟧ᶜᵗ pM ≈ᵐ T-≤ (proj₁ e) ∘ᵐ ⟦ M ⟧ᶜᵗ pM
 sound-ε-≃ {A = A} e M pM =
   ∘ᵐ-congˡ (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (T-congᶠ (⟦⟧<:ᵛ-refl A)) T-idᵐ))
@@ -506,12 +506,12 @@ sound-ε-≃ {A = A} e M pM =
 -- Handling with a handler written in place denotes the fold of its clauses
 -- after the return clause is sequenced: `curryʰ-β` at the reflexive index.
 
-handle-in-β : ∀ {Γ A B ε ε'} → (M : Γ ⊢C⦂ A ‼ ε)
+handle-in-β : ∀ {Γ A B ε ε'} → (M : Γ ⊢C⦂ A ! ε)
             → (H : (op : Op) → (ε'' : E)
-                 → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                      ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                   ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-            → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
+                 → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                      ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+                   ⊢C⦂ B ! (op-grade op ·ₑ ε''))
+            → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
             → (pM : Paramᶜ M) → (pN : Paramᶜ N)
             → (pH : ∀ op ε'' → Paramᶜ (H op ε'')) → (uH : EffUniformʰ {Γ} {B} H pH)
             → ⟦ handle M `with H `in N ⟧ᶜᵗ (pM , pN , pH , uH)

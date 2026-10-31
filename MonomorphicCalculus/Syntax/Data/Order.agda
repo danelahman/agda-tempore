@@ -155,7 +155,7 @@ module _ {X : Set} {_<_ : X → X → Set} (sto : IsStrictTotalOrder _≡_ _<_) 
 ℕ-lawful .trans< {zero}  {suc _} {suc _} _ _ = refl
 ℕ-lawful .trans< {suc n} {suc m} {suc k} e e' = ℕ-lawful .trans< {n} {m} {k} e e'
 
-×-lawful : ∀ {A₁ A₂} {et₁ : Eternal A₁} {et₂ : Eternal A₂}
+×-lawful : ∀ {A₁ A₂} {et₁ : Et A₁} {et₂ : Et A₂}
          → Lawful (compareᵈ et₁) → Lawful (compareᵈ et₂)
          → Lawful (compareᵈ (et₁ |×|ₑ et₂))
 ×-lawful {et₁ = et₁} {et₂} L M .swap (x , y) (x' , y') =
@@ -166,7 +166,7 @@ module _ {X : Set} {_<_ : X → X → Set} (sto : IsStrictTotalOrder _≡_ _<_) 
 ×-lawful L M .reflex (x , y) = cong₂ lexᵒ (L .reflex x) (M .reflex y)
 ×-lawful L M .trans< {x , y} {x' , y'} {x'' , y''} = lex-trans L (M .trans<)
 
-⊎-lawful : ∀ {A₁ A₂} {et₁ : Eternal A₁} {et₂ : Eternal A₂}
+⊎-lawful : ∀ {A₁ A₂} {et₁ : Et A₁} {et₂ : Et A₂}
          → Lawful (compareᵈ et₁) → Lawful (compareᵈ et₂)
          → Lawful (compareᵈ (et₁ |+|ₑ et₂))
 ⊎-lawful L M .swap (inj₁ x) (inj₁ x') = L .swap x x'
@@ -201,26 +201,26 @@ List-lawful L .trans< {x ∷ xs} {y ∷ ys} {z ∷ zs} e e' =
 
 -- Every eternal type's comparison is lawful
 
-compareᵈ-lawful : ∀ {A} → (et : Eternal A) → Lawful (compareᵈ et)
+compareᵈ-lawful : ∀ {A} → (et : Et A) → Lawful (compareᵈ et)
 compareᵈ-lawful (Baseₑ eb)     = order-of-lawful (≺ᵇ-isStrictTotalOrder eb)
-compareᵈ-lawful Unitₑ          = record { swap = λ _ _ → refl ; exact = λ _ → refl
+compareᵈ-lawful unitₑ          = record { swap = λ _ _ → refl ; exact = λ _ → refl
                                         ; reflex = λ _ → refl ; trans< = λ () }
-compareᵈ-lawful Boolₑ          = 𝔹-lawful
-compareᵈ-lawful Natₑ           = ℕ-lawful
+compareᵈ-lawful boolₑ          = 𝔹-lawful
+compareᵈ-lawful natₑ           = ℕ-lawful
 compareᵈ-lawful (et₁ |×|ₑ et₂) =
   ×-lawful {et₁ = et₁} {et₂} (compareᵈ-lawful et₁) (compareᵈ-lawful et₂)
 compareᵈ-lawful (et₁ |+|ₑ et₂) =
   ⊎-lawful {et₁ = et₁} {et₂} (compareᵈ-lawful et₁) (compareᵈ-lawful et₂)
-compareᵈ-lawful (|List|ₑ et)   = List-lawful (compareᵈ-lawful et)
-compareᵈ-lawful Emptyₑ         = record { swap = λ () ; exact = λ { {()} } ; reflex = λ ()
+compareᵈ-lawful (listₑ et)     = List-lawful (compareᵈ-lawful et)
+compareᵈ-lawful emptyₑ         = record { swap = λ () ; exact = λ { {()} } ; reflex = λ ()
                                         ; trans< = λ { {()} } }
 
 -- The strict order: `less`
 
-_<[_]_ : ∀ {A} → ⟪ A ⟫ → Eternal A → ⟪ A ⟫ → Set
+_<[_]_ : ∀ {A} → ⟪ A ⟫ → Et A → ⟪ A ⟫ → Set
 x <[ et ] y = compareᵈ et x y ≡ less
 
-compareᵈ-isStrictTotalOrder : ∀ {A} → (et : Eternal A)
+compareᵈ-isStrictTotalOrder : ∀ {A} → (et : Et A)
                             → IsStrictTotalOrder _≡_ (λ x y → x <[ et ] y)
 compareᵈ-isStrictTotalOrder et = record
   { isStrictPartialOrder = record
@@ -253,19 +253,19 @@ compareᵈ-isStrictTotalOrder et = record
 
 -- What the relations of `Cmp` mean
 
-holds-eq : ∀ {A} → (et : Eternal A) → ∀ {x y}
+holds-eq : ∀ {A} → (et : Et A) → ∀ {x y}
          → holds eq (compareᵈ et x y) ≡ true → x ≡ y
 holds-eq et {x} {y} h with compareᵈ et x y in e
 ... | equal = compareᵈ-lawful et .exact e
 
-holds-gt : ∀ {A} → (et : Eternal A) → ∀ x y
+holds-gt : ∀ {A} → (et : Et A) → ∀ x y
          → holds gt (compareᵈ et x y) ≡ holds lt (compareᵈ et y x)
 holds-gt et x y rewrite compareᵈ-lawful et .swap x y with compareᵈ et x y
 ... | less    = refl
 ... | equal   = refl
 ... | greater = refl
 
-holds-le : ∀ {A} → (et : Eternal A) → ∀ {x y}
+holds-le : ∀ {A} → (et : Et A) → ∀ {x y}
          → holds le (compareᵈ et x y) ≡ true → (x <[ et ] y) ⊎ (x ≡ y)
 holds-le et {x} {y} h with compareᵈ et x y in e
 ... | less  = inj₁ refl

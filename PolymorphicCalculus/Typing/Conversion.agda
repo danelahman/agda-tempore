@@ -229,16 +229,16 @@ module _ (𝒞 : Conversion) where
     conv-c c (absurd V)                = absurd (conv-v c V)
     conv-c c (if V `then M `else N)    = if conv-v c V `then conv-c c M `else conv-c c N
     conv-c c (caseℕ V `zero M `succ N) =
-      caseℕ conv-v c V `zero conv-c c M `succ conv-c (c ∷≡ Nat) N
+      caseℕ conv-v c V `zero conv-c c M `succ conv-c (c ∷≡ nat) N
     conv-c c (case+_`inl_`inr_ {A = A} {B} V M N) =
       case+ conv-v c V `inl conv-c (c ∷≡ A) M `inr conv-c (c ∷≡ B) N
     conv-c c (caseL_`nil_`cons_ {A = A} V M N) =
-      caseL conv-v c V `nil conv-c c M `cons conv-c (c ∷≡ A ∷≡ |List| A) N
+      caseL conv-v c V `nil conv-c c M `cons conv-c (c ∷≡ A ∷≡ list A) N
     conv-c c (recℕ {B = B} V M N p)    =
-      recℕ (conv-v c V) (conv-c c M) (conv-c (lockʳ (lockʳ c ∷≡ Nat) ∷≡ B) N) p
+      recℕ (conv-v c V) (conv-c c M) (conv-c (lockʳ (lockʳ c ∷≡ nat) ∷≡ B) N) p
     conv-c c (recL {A = A} {B} V M N p) =
       recL (conv-v c V) (conv-c c M)
-           (conv-c (lockʳ (lockʳ c ∷≡ A ∷≡ |List| A) ∷≡ B) N) p
+           (conv-c (lockʳ (lockʳ c ∷≡ A ∷≡ list A) ∷≡ B) N) p
     conv-c c (perform op V M)          = perform op (conv-v c V) (conv-c (lockʳ c ∷≡ _) M)
     conv-c c (delay τ M)               = delay τ (conv-c (lockʳ c) M)
     conv-c c (handle M `with V)        = handle conv-c c M `with conv-v c V
@@ -293,17 +293,17 @@ module _ (𝒞 : Conversion) where
     ⌊conv-c⌋ c (if V `then M `else N)    =
       cong₃ if_`then_`else_ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M) (⌊conv-c⌋ c N)
     ⌊conv-c⌋ c (caseℕ V `zero M `succ N) =
-      cong₃ caseℕ_`zero_`succ_ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M) (⌊conv-c⌋ (c ∷≡ Nat) N)
+      cong₃ caseℕ_`zero_`succ_ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M) (⌊conv-c⌋ (c ∷≡ nat) N)
     ⌊conv-c⌋ c (case+_`inl_`inr_ {A = A} {B} V M N) =
       cong₃ case+_`inl_`inr_ (⌊conv-v⌋ c V) (⌊conv-c⌋ (c ∷≡ A) M) (⌊conv-c⌋ (c ∷≡ B) N)
     ⌊conv-c⌋ c (caseL_`nil_`cons_ {A = A} V M N) =
       cong₃ caseL_`nil_`cons_ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M)
-            (⌊conv-c⌋ (c ∷≡ A ∷≡ |List| A) N)
+            (⌊conv-c⌋ (c ∷≡ A ∷≡ list A) N)
     ⌊conv-c⌋ c (recℕ {B = B} V M N p)    =
-      cong₃ recℕ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M) (⌊conv-c⌋ (lockʳ (lockʳ c ∷≡ Nat) ∷≡ B) N)
+      cong₃ recℕ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M) (⌊conv-c⌋ (lockʳ (lockʳ c ∷≡ nat) ∷≡ B) N)
     ⌊conv-c⌋ c (recL {A = A} {B} V M N p) =
       cong₃ recL (⌊conv-v⌋ c V) (⌊conv-c⌋ c M)
-            (⌊conv-c⌋ (lockʳ (lockʳ c ∷≡ A ∷≡ |List| A) ∷≡ B) N)
+            (⌊conv-c⌋ (lockʳ (lockʳ c ∷≡ A ∷≡ list A) ∷≡ B) N)
     ⌊conv-c⌋ c (perform op V M)          =
       cong₂ (perform op) (⌊conv-v⌋ c V) (⌊conv-c⌋ (lockʳ c ∷≡ _) M)
     ⌊conv-c⌋ c (delay τ M)               = cong (delay τ) (⌊conv-c⌋ (lockʳ c) M)

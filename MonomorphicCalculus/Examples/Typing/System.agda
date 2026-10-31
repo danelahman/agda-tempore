@@ -49,10 +49,10 @@ Reading NodeId : VType
 Reading = Base reading
 NodeId  = Base nodeid
 
-reading-not-eternal : ¬ Eternal Reading
+reading-not-eternal : ¬ Et Reading
 reading-not-eternal (Baseₑ ())
 
-nodeid-eternal : Eternal NodeId
+nodeid-eternal : Et NodeId
 nodeid-eternal = Baseₑ tt
 
 ------------------------------------------------------------------------
@@ -67,7 +67,7 @@ nodeid-eternal = Baseₑ tt
 here : ∀ {Γ A} → Γ ∷ A ⊢V⦂ A
 here = var (λ _ → ≾ᵣ-refl) Hd
 
-eternal-var : ∀ {Γ A ρ} → Eternal A → A ∈[ ρ ] Γ → Γ ⊢V⦂ A
+eternal-var : ∀ {Γ A ρ} → Et A → A ∈[ ρ ] Γ → Γ ⊢V⦂ A
 eternal-var et x = var (λ ¬et → ⊥-elim (¬et et)) x
 
 fresh-var : ∀ {Γ A ρ} → ρ ≾ᵣ 𝟏ᵣ → A ∈[ ρ ] Γ → Γ ⊢V⦂ A
@@ -118,14 +118,14 @@ Node = [] ∷ NodeId ∷ Reading
 -- discharges at every grade.
 
 forwarding : ∀ {Γ B} → (op : Op) → (ε'' : E)
-           → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                 ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-             ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')
+           → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                 ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+             ⊢C⦂ B ! (op-grade op ·ₑ ε'')
 forwarding op ε'' =
   perform op (fresh-var ≾ᵣ-refl (Tl-∷ Hd))
                                      -- ⟨ op-grade op ⟩ ∷ arity op
     (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _))
-           (<:ᵛ-refl _)              -- ∷ arity op ⇒ B ‼ ε''
+           (<:ᵛ-refl _)              -- ∷ arity op ⇒ B ! ε''
       (here · fresh-var ≾ᵣ-refl (Tl-∷ Hd)))
 
 -- Resume, and then answer with the identifier the clause closed over.
@@ -133,15 +133,15 @@ forwarding op ε'' =
 -- operation and after everything the continuation did.
 
 identifying : (op : Op) → (ε'' : E)
-            → Node ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                    ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ NodeId ‼ ε'')
-              ⊢C⦂ NodeId ‼ (op-grade op ·ₑ ε'')
+            → Node ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                    ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ NodeId ! ε'')
+              ⊢C⦂ NodeId ! (op-grade op ·ₑ ε'')
 identifying op ε'' =
   ε-≃ (·ₑ-cong ≃ₑ-refl (·ₑ-identityʳ ε''))
     (perform op (fresh-var ≾ᵣ-refl (Tl-∷ Hd))
                                      -- ⟨ op-grade op ⟩ ∷ arity op
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _))
-           (<:ᵛ-refl _)              -- ∷ arity op ⇒ NodeId ‼ ε''
+           (<:ᵛ-refl _)              -- ∷ arity op ⇒ NodeId ! ε''
         ((here · fresh-var ≾ᵣ-refl (Tl-∷ Hd))
           ⨟                          -- ⟨ ε'' ⟩ ∷ NodeId
             return (eternal-var nodeid-eternal
@@ -157,15 +157,15 @@ reporting : (reading-crosses :
               (op : Op) → (ε'' : E)
               → 𝟏ᵣ ·ᵣ ⊤ᵣ ·ᵣ ∣ op-grade op ∣ᵉ ·ᵣ ∣ ε'' ∣ᵉ ≾ᵣ 𝟏ᵣ)
           → (op : Op) → (ε'' : E)
-          → Node ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                  ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ Reading ‼ ε'')
-            ⊢C⦂ Reading ‼ (op-grade op ·ₑ ε'')
+          → Node ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                  ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ Reading ! ε'')
+            ⊢C⦂ Reading ! (op-grade op ·ₑ ε'')
 reporting reading-crosses op ε'' =
   ε-≃ (·ₑ-cong ≃ₑ-refl (·ₑ-identityʳ ε''))
     (perform op (fresh-var ≾ᵣ-refl (Tl-∷ Hd))
                                      -- ⟨ op-grade op ⟩ ∷ arity op
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _))
-           (<:ᵛ-refl _)              -- ∷ arity op ⇒ Reading ‼ ε''
+           (<:ᵛ-refl _)              -- ∷ arity op ⇒ Reading ! ε''
         ((here · fresh-var ≾ᵣ-refl (Tl-∷ Hd))
           ⨟                          -- ⟨ ε'' ⟩ ∷ Reading
             return (fresh-var (reading-crosses op ε'')
@@ -180,7 +180,7 @@ reporting reading-crosses op ε'' =
 discarding : ∀ {Γ}
            → (nothing-fits : (op : Op) → (ε'' : E) → 𝟏ₑ ≾ₑ op-grade op ·ₑ ε'')
            → (op : Op) → (ε'' : E)
-           → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                 ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ Unit ‼ ε'')
-             ⊢C⦂ Unit ‼ (op-grade op ·ₑ ε'')
+           → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                 ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ unit ! ε'')
+             ⊢C⦂ unit ! (op-grade op ·ₑ ε'')
 discarding nothing-fits op ε'' = coerce (nothing-fits op ε'') (return ⋆)

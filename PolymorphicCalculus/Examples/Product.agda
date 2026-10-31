@@ -97,7 +97,7 @@ private
 embargoed : RExp ∅ˢ → ℕ → RawC ∅ˢ 0
 embargoed c d = box c ⋆ (delay ⌜ d ⌝ (unbox (var fzero) (return v₀)))
 
-embargoed-D : ∀ c d → ιᵣ ⌜ d ⌝ ≾ᴳ c → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ)
+embargoed-D : ∀ c d → ιᵣ ⌜ d ⌝ ≾ᴳ c → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ)
 embargoed-D c d p =
   box (rconst c) ⋆ (delay ⌜ d ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) (after p) (return (var Hd ok₀))))
 
@@ -105,7 +105,7 @@ embargoed-typable : ∀ c d → True (ιᵣ ⌜ d ⌝ ≾ᵣ? c) → Typable [] 
 embargoed-typable c d p = closed (embargoed-D c d (toWitness p)) refl
 
 expected-embargoed : ℕ → Scheme
-expected-embargoed d = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ⌜ d ⌝ᵉ
+expected-embargoed d = ∀[ 0 , 0 , 0 ] ⊤ ⟹ unit ! ⌜ d ⌝ᵉ
 
 ------------------------------------------------------------------
 -- 2. Claiming it after an operation
@@ -120,7 +120,7 @@ transmitted c op d =
 
 transmitted-D : ∀ c op d → ∣ op-grade op ∣ᵉ ·ᵣ ιᵣ ⌜ d ⌝ ≾ᴳ c
               → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂
-                  (⌜ param op ⌝ᵍ ⇒ Unit ‼ (econst (op-grade op) ·̂ₑ (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ))) ‼ 𝟏̂ₑ
+                  (⌜ param op ⌝ᵍ ⇒ unit ! (econst (op-grade op) ·̂ₑ (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ))) ! 𝟏̂ₑ
 transmitted-D c op d p =
   return (lam (box (rconst c) ⋆
     (perform op (var (Tl-∷ Hd) ok₀)
@@ -134,7 +134,7 @@ transmitted-typable c op d p = closed (transmitted-D c op d (toWitness p)) refl
 expected-transmitted : Op → ℕ → Scheme
 expected-transmitted op d =
   ∀[ 0 , 0 , 0 ] ⊤ ⟹
-    (⌜ param op ⌝ᵍ ⇒ Unit ‼ econst (op-grade op ·ₑ ιₑ ⌜ d ⌝)) ‼ 𝟏̂ₑ
+    (⌜ param op ⌝ᵍ ⇒ unit ! econst (op-grade op ·ₑ ιₑ ⌜ d ⌝)) ! 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- 3. A branch joining levels
@@ -154,7 +154,7 @@ joined-claim op₀ op₁ op₂ =
 expected-joined-claim : Op → Op → Op → Scheme
 expected-joined-claim op₀ op₁ op₂ =
   ∀[ 1 , 0 , 0 ] ⊤ ⟹
-    ([ rconst ∣ g ∣ᵉ ] α₀ ⇒ (Bool ⇒ α₀ ‼ econst g) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
+    ([ rconst ∣ g ∣ᵉ ] α₀ ⇒ (bool ⇒ α₀ ! econst g) ! 𝟏̂ₑ) ! 𝟏̂ₑ
   where
     g = op-grade op₀ ·ₑ (op-grade op₁ ⊔ₑ op-grade op₂)
 
@@ -174,9 +174,9 @@ publish op =
 expected-publish : Op → Scheme
 expected-publish op =
   ∀[ 1 , 0 , 1 ] ⊤ ⟹
-    ((Unit ⇒ ⌜ param op ⌝ᵍ ‼ ε₀)
-     ⇒ ([ rconst ∣ op-grade op ∣ᵉ ·̂ᵣ ∣ ε₀ ∣̂ᵉ ] α₀ ⇒ α₀ ‼ (econst (op-grade op) ·̂ₑ ε₀)) ‼ 𝟏̂ₑ)
-    ‼ 𝟏̂ₑ
+    ((unit ⇒ ⌜ param op ⌝ᵍ ! ε₀)
+     ⇒ ([ rconst ∣ op-grade op ∣ᵉ ·̂ᵣ ∣ ε₀ ∣̂ᵉ ] α₀ ⇒ α₀ ! (econst (op-grade op) ·̂ₑ ε₀)) ! 𝟏̂ₑ)
+    ! 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- 5. A reading used after an operation
@@ -190,7 +190,7 @@ twice op = return (lam (perform op v₀ (perform op v₁ (return ⋆))))
 
 twice-D : ∀ op → ∣ op-grade op ∣ᵉ ≾ᴳ 𝟏ᵣ
         → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂
-            (⌜ param op ⌝ᵍ ⇒ Unit ‼ (econst (op-grade op) ·̂ₑ (econst (op-grade op) ·̂ₑ 𝟏̂ₑ))) ‼ 𝟏̂ₑ
+            (⌜ param op ⌝ᵍ ⇒ unit ! (econst (op-grade op) ·̂ₑ (econst (op-grade op) ·̂ₑ 𝟏̂ₑ))) ! 𝟏̂ₑ
 twice-D op q =
   return (lam (perform op (var Hd ok₀)
     (perform op (var (Tl-∷ (Tl-⟨⟩ Hd)) (≾ᵘ-ok (after q))) (return ⋆))))
@@ -200,4 +200,4 @@ twice-typable op q = closed (twice-D op (toWitness q)) refl
 
 expected-twice : Op → Scheme
 expected-twice op =
-  ∀[ 0 , 0 , 0 ] ⊤ ⟹ (⌜ param op ⌝ᵍ ⇒ Unit ‼ econst (op-grade op ·ₑ op-grade op)) ‼ 𝟏̂ₑ
+  ∀[ 0 , 0 , 0 ] ⊤ ⟹ (⌜ param op ⌝ᵍ ⇒ unit ! econst (op-grade op ·ₑ op-grade op)) ! 𝟏̂ₑ

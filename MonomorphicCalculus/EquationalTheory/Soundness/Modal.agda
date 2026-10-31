@@ -74,7 +74,7 @@ open import MonomorphicCalculus.EquationalTheory.Soundness.Base S Cat Fut Pst Ad
 -- A boxing binder over an unused variable is the identity: the weakening
 -- `⟦ wk-ren ⟧ = fstᵐ` cancels against the environment extension.
 
-sound-boxed-not-used : ∀ {Γ A C ρ ε} → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A) → (M : Γ ⊢C⦂ C ‼ ε)
+sound-boxed-not-used : ∀ {Γ A C ρ ε} → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A) → (M : Γ ⊢C⦂ C ! ε)
                      → Soundᶜ== (boxed-not-used V M)
 sound-boxed-not-used V M (pV , pCM) pR =
     ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr (C-rename wk-ren M) pCM (renᶜ wk-ren M pR)

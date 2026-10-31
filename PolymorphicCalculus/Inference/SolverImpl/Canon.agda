@@ -176,36 +176,36 @@ canonᶜ : ∀ {Θ} → OCType Θ → OCType Θ
 
 canonᵛ (tvar α)  = tvar α
 canonᵛ (Base b)  = Base b
-canonᵛ Unit      = Unit
-canonᵛ Bool      = Bool
-canonᵛ Nat       = Nat
+canonᵛ unit      = unit
+canonᵛ bool      = bool
+canonᵛ nat       = nat
 canonᵛ (A |×| B) = canonᵛ A |×| canonᵛ B
 canonᵛ (A |+| B) = canonᵛ A |+| canonᵛ B
-canonᵛ (|List| A) = |List| (canonᵛ A)
-canonᵛ Empty     = Empty
+canonᵛ (list A)  = list (canonᵛ A)
+canonᵛ empty     = empty
 canonᵛ (A ⇒ C)   = canonᵛ A ⇒ canonᶜ C
 canonᵛ (C ⇛ D)   = canonᶜ C ⇛ canonᶜ D
 canonᵛ ([ ρ ] A) = [ canonᵣ ρ ] canonᵛ A
 
-canonᶜ (A ‼ ε) = canonᵛ A ‼ canonₑ ε
+canonᶜ (A ! ε) = canonᵛ A ! canonₑ ε
 
 canonᵛ-≡̂ : ∀ {Θ} → (A : OVType Θ) → A ≡̂ᵛ canonᵛ A
 canonᶜ-≡̂ : ∀ {Θ} → (C : OCType Θ) → C ≡̂ᶜ canonᶜ C
 
 canonᵛ-≡̂ (tvar α)  = tvar≡̂
 canonᵛ-≡̂ (Base b)  = Base≡̂
-canonᵛ-≡̂ Unit      = Unit≡̂
-canonᵛ-≡̂ Bool      = Bool≡̂
-canonᵛ-≡̂ Nat       = Nat≡̂
+canonᵛ-≡̂ unit      = unit≡̂
+canonᵛ-≡̂ bool      = bool≡̂
+canonᵛ-≡̂ nat       = nat≡̂
 canonᵛ-≡̂ (A |×| B) = canonᵛ-≡̂ A |×|≡̂ canonᵛ-≡̂ B
 canonᵛ-≡̂ (A |+| B) = canonᵛ-≡̂ A |+|≡̂ canonᵛ-≡̂ B
-canonᵛ-≡̂ (|List| A) = |List|≡̂ (canonᵛ-≡̂ A)
-canonᵛ-≡̂ Empty     = Empty≡̂
+canonᵛ-≡̂ (list A)  = list≡̂ (canonᵛ-≡̂ A)
+canonᵛ-≡̂ empty     = empty≡̂
 canonᵛ-≡̂ (A ⇒ C)   = canonᵛ-≡̂ A ⇒≡̂ canonᶜ-≡̂ C
 canonᵛ-≡̂ (C ⇛ D)   = canonᶜ-≡̂ C ⇛≡̂ canonᶜ-≡̂ D
 canonᵛ-≡̂ ([ ρ ] A) = [ canonᵣ-≡ ρ ]≡̂ canonᵛ-≡̂ A
 
-canonᶜ-≡̂ (A ‼ ε) = canonᵛ-≡̂ A ‼≡̂ canonₑ-≡ ε
+canonᶜ-≡̂ (A ! ε) = canonᵛ-≡̂ A !≡̂ canonₑ-≡ ε
 
 ------------------------------------------------------------------------
 -- Splitting an ordering into its left side's alternatives, each below the

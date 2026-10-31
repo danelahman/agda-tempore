@@ -70,49 +70,49 @@ var-proj (Tl-⟨⟩ {ρ = ρ} x)     = μ ∘ᵐ ⟨ ρ ⟩ᶠ (var-proj x)
 -- former by `GroundEternal`. The eternal laws below are then `Eternalᵒ`
 -- fields or derived from them, not re-proved for each former.
 
-eternalᵛ-Eternalᵒ : ∀ {A} → Eternal A → Eternalᵒ ⟦ A ⟧ᵛ
+eternalᵛ-Eternalᵒ : ∀ {A} → Et A → Eternalᵒ ⟦ A ⟧ᵛ
 eternalᵛ-Eternalᵒ (Baseₑ {b} eb) = ⟦ b ⟧ᵇᵉ eb
-eternalᵛ-Eternalᵒ Unitₑ          = 𝟙-eternalᵒ
-eternalᵛ-Eternalᵒ Boolₑ          = 𝔹-eternalᵒ
-eternalᵛ-Eternalᵒ Natₑ           = ℕ-eternalᵒ
-eternalᵛ-Eternalᵒ Emptyₑ         = 𝟘-eternalᵒ
+eternalᵛ-Eternalᵒ unitₑ          = 𝟙-eternalᵒ
+eternalᵛ-Eternalᵒ boolₑ          = 𝔹-eternalᵒ
+eternalᵛ-Eternalᵒ natₑ           = ℕ-eternalᵒ
+eternalᵛ-Eternalᵒ emptyₑ         = 𝟘-eternalᵒ
 eternalᵛ-Eternalᵒ (et₁ |×|ₑ et₂) =
   ×-eternalᵒ (eternalᵛ-Eternalᵒ et₁) (eternalᵛ-Eternalᵒ et₂)
 eternalᵛ-Eternalᵒ (et₁ |+|ₑ et₂) =
   +-eternalᵒ (eternalᵛ-Eternalᵒ et₁) (eternalᵛ-Eternalᵒ et₂)
-eternalᵛ-Eternalᵒ (|List|ₑ et)   = List-eternalᵒ (eternalᵛ-Eternalᵒ et)
+eternalᵛ-Eternalᵒ (listₑ et)     = List-eternalᵒ (eternalᵛ-Eternalᵒ et)
 
 -- Eternal extraction at an arbitrary grade.
 
-eternalᵛ-extᵉ : ∀ {A} → Eternal A → ∀ {ρ} → ⟨ ρ ⟩ᵒ ⟦ A ⟧ᵛ →ᵐ ⟦ A ⟧ᵛ
+eternalᵛ-extᵉ : ∀ {A} → Et A → ∀ {ρ} → ⟨ ρ ⟩ᵒ ⟦ A ⟧ᵛ →ᵐ ⟦ A ⟧ᵛ
 eternalᵛ-extᵉ et = Eternalᵒ.extᵉ (eternalᵛ-Eternalᵒ et)
 
 -- Eternal extraction is uniform in the grade, is the possibility counit
 -- `εᵘ` at the unit grade, and is a graded `⟨_⟩`-algebra.
 
-eternalᵛ-extᵉ-≤ : ∀ {A} → (et : Eternal A) → ∀ {ρ₁ ρ₂} → (p : ρ₁ ≾ᵣ ρ₂)
+eternalᵛ-extᵉ-≤ : ∀ {A} → (et : Et A) → ∀ {ρ₁ ρ₂} → (p : ρ₁ ≾ᵣ ρ₂)
                 → eternalᵛ-extᵉ et {ρ₂} ∘ᵐ ⟨⟩-≤ p ≈ᵐ eternalᵛ-extᵉ et {ρ₁}
 eternalᵛ-extᵉ-≤ et = Eternalᵒ.extᵉ-≤ (eternalᵛ-Eternalᵒ et)
 
-eternalᵛ-extᵉ-𝟏 : ∀ {A} → (et : Eternal A) → eternalᵛ-extᵉ et {𝟏ᵣ} ≈ᵐ εᵘ
+eternalᵛ-extᵉ-𝟏 : ∀ {A} → (et : Et A) → eternalᵛ-extᵉ et {𝟏ᵣ} ≈ᵐ εᵘ
 eternalᵛ-extᵉ-𝟏 et = Eternalᵒ.extᵉ-𝟏 (eternalᵛ-Eternalᵒ et)
 
-eternalᵛ-extᵉ-μ : ∀ {A} → (et : Eternal A) → ∀ {ρ₁ ρ₂}
+eternalᵛ-extᵉ-μ : ∀ {A} → (et : Et A) → ∀ {ρ₁ ρ₂}
                 → eternalᵛ-extᵉ et {ρ₂ ·ᵣ ρ₁} ∘ᵐ μ {⟦ A ⟧ᵛ} {ρ₁} {ρ₂}
                 ≈ᵐ eternalᵛ-extᵉ et {ρ₁} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (eternalᵛ-extᵉ et {ρ₂})
 eternalᵛ-extᵉ-μ et = Eternalᵒ.extᵉ-μ (eternalᵛ-Eternalᵒ et)
 
 -- Eternal extraction does not depend on how eternality was established
--- (`Eternal` is a property: `MonomorphicCalculus.Syntax.Types.eternal-irrelevant`).
+-- (`Et` is a property: `MonomorphicCalculus.Syntax.Types.eternal-irrelevant`).
 
-eternalᵛ-extᵉ-irr : ∀ {A} → (et et' : Eternal A) → ∀ {ρ}
+eternalᵛ-extᵉ-irr : ∀ {A} → (et et' : Et A) → ∀ {ρ}
                   → eternalᵛ-extᵉ et {ρ} ≈ᵐ eternalᵛ-extᵉ et' {ρ}
 eternalᵛ-extᵉ-irr et et' with eternal-irrelevant et et'
 ... | refl = ≈ᵐ-refl
 
 -- The morphism interpreting a variable: project, then extract.
 
-var-morphism : ∀ {Γ A ρ} → (¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ) → A ∈[ ρ ] Γ
+var-morphism : ∀ {Γ A ρ} → (¬ Et A → ρ ≾ᵣ 𝟏ᵣ) → A ∈[ ρ ] Γ
              → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
 var-morphism {A = A} f x with eternal? A
 ... | yes et = eternalᵛ-extᵉ et ∘ᵐ var-proj x
@@ -120,7 +120,7 @@ var-morphism {A = A} f x with eternal? A
 
 -- Unfold `var-morphism` at an eternal type (handles the internal `eternal?`).
 
-var-morphism-unfoldᵉ : ∀ {Γ A ρ} → (et : Eternal A) → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+var-morphism-unfoldᵉ : ∀ {Γ A ρ} → (et : Et A) → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
                      → (y : A ∈[ ρ ] Γ)
                      → var-morphism f y ≈ᵐ eternalᵛ-extᵉ et ∘ᵐ var-proj y
 var-morphism-unfoldᵉ {A = A} et f y with eternal? A
@@ -138,7 +138,7 @@ private
 -- The head variable denotes the second projection: at a non-eternal type the
 -- grade bound is reflexive and the possibility counit cancels `η`; at an
 -- eternal one the extraction cancels it.
-var-morphism-Hd : ∀ {Γ A} → (f : ¬ Eternal A → 𝟏ᵣ ≾ᵣ 𝟏ᵣ)
+var-morphism-Hd : ∀ {Γ A} → (f : ¬ Et A → 𝟏ᵣ ≾ᵣ 𝟏ᵣ)
                 → var-morphism {Γ ∷ A} f Hd ≈ᵐ sndᵐ
 var-morphism-Hd {A = A} f with eternal? A
 ... | yes et =
@@ -152,7 +152,7 @@ var-morphism-Hd {A = A} f with eternal? A
   ∙ᵛ ∘ᵐ-identityˡ _
 
 -- Weakening a variable past a `∷` projects the environment.
-var-morphism-Tl-∷ : ∀ {Γ A B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Eternal B → ρ' ≾ᵣ 𝟏ᵣ)
+var-morphism-Tl-∷ : ∀ {Γ A B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Et B → ρ' ≾ᵣ 𝟏ᵣ)
                   → var-morphism {Γ ∷ A} f (Tl-∷ y) ≈ᵐ var-morphism f y ∘ᵐ fstᵐ
 var-morphism-Tl-∷ {B = B} y f with eternal? B
 ... | yes et = ≈ᵐ-sym (∘ᵐ-assoc _ _ _)

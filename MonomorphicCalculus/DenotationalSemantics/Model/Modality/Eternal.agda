@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 -- Objects interpreting eternal types.                                --
 --                                                                    --
--- An eternal type (`MonomorphicCalculus.Syntax.Types.Eternal`) is    --
+-- An eternal type (`MonomorphicCalculus.Syntax.Types.Et`) is         --
 -- available at any grade, not only below the unit `𝟏`; concretely    --
 -- (`Example.PSh`) these are the constant presheaves.                 --
 --                                                                    --

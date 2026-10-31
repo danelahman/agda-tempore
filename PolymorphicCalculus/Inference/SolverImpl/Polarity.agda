@@ -115,7 +115,7 @@ polᵣ-v : ∀ {Ω} → RVar Ω → Sign → OVType Ω → Pol
 polᵣ-v i = polᵛ (λ _ _ → noᴾ) (polᵣ-r i) (λ _ _ → noᴾ)
 
 polᵣ-c : ∀ {Ω} → RVar Ω → Sign → OCType Ω → Pol
-polᵣ-c i s (A ‼ _) = polᵣ-v i s A
+polᵣ-c i s (A ! _) = polᵣ-v i s A
 
 -- Occurrences of one effect-grade unknown, reached in resource expressions
 -- through the monotone `∣_∣̂ᵉ`
@@ -137,7 +137,7 @@ polₑ-v : ∀ {Ω} → EVar Ω → Sign → OVType Ω → Pol
 polₑ-v i = polᵛ (λ _ _ → noᴾ) (polₑ-r i) (polₑ-e i)
 
 polₑ-c : ∀ {Ω} → EVar Ω → Sign → OCType Ω → Pol
-polₑ-c i s (A ‼ ε) = polₑ-v i s A ∪ᴾ polₑ-e i s ε
+polₑ-c i s (A ! ε) = polₑ-v i s A ∪ᴾ polₑ-e i s ε
 
 -- Orderings and var-rule disjunctions, listed
 
@@ -160,7 +160,7 @@ polₜ-v : ∀ {Ω} → TyVar Ω → Sign → OVType Ω → Pol
 polₜ-v α = polᵛ (λ s β → atˢ s ⌊ α ≟ᶠ β ⌋) (λ _ _ → noᴾ) (λ _ _ → noᴾ)
 
 polₜ-c : ∀ {Ω} → TyVar Ω → Sign → OCType Ω → Pol
-polₜ-c α s (A ‼ ε) = polₜ-v α s A
+polₜ-c α s (A ! ε) = polₜ-v α s A
 
 polsₜ-sub : ∀ {n} → Fin n → List (Fin n × Fin n) → Pol
 polsₜ-sub α []            = noᴾ

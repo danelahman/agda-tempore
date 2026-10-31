@@ -44,20 +44,20 @@ open import MonomorphicCalculus.Syntax.Substitution.Action  S
 -- the observation.
 
 sub-var₀-irr : ∀ {Γ Γ' A ρ} → (s : Sub₀ [] Γ Γ') → (x : A ∈[ ρ ] Γ')
-             → (f f' : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+             → (f f' : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
              → sub-var₀ s x f ≡ sub-var₀ s x f'
 sub-var₀-irr s x f f' = cong (sub-var₀ s x) (bound-irr f f')
 
 -- An eternal type discharges a grade bound whatever the grade.
 
-et-bound : ∀ {A ρ} → Eternal A → ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ
+et-bound : ∀ {A ρ} → Et A → ¬ Et A → ρ ≾ᵣ 𝟏ᵣ
 et-bound et ¬et = ⊥-elim (¬et et)
 
 -- Two `var` nodes at the same image agree.
 
 var-img-≡ : ∀ {Γ A} {t t' : Var Γ A} → t ≡ t'
-          → (f  : ¬ Eternal A → proj₁ t  ≾ᵣ 𝟏ᵣ)
-          → (f' : ¬ Eternal A → proj₁ t' ≾ᵣ 𝟏ᵣ)
+          → (f  : ¬ Et A → proj₁ t  ≾ᵣ 𝟏ᵣ)
+          → (f' : ¬ Et A → proj₁ t' ≾ᵣ 𝟏ᵣ)
           → var f (proj₂ t) ≡ var f' (proj₂ t')
 var-img-≡ refl f f' = var-≡
 
@@ -79,7 +79,7 @@ infix 4 _≐ˢ₀_
 record _≐ˢ₀_ {Γ Γ'} (s s' : Sub₀ [] Γ Γ') : Set where
   constructor mk≐ˢ₀
   field
-    atᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+    atᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
         → sub-var₀ s x f ≡ sub-var₀ s' x f
     atᵗ : ∀ {A ρ ρ'} → (y : [ ρ ] A ∈[ ρ' ] Γ') → tgt-img₀ s y ≡ tgt-img₀ s' y
 
@@ -187,13 +187,13 @@ mutual
       (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) N)
   C-sub₀-≐ˢ₀ h (recℕ V M N p) =
     cong₃ (λ a b c → recℕ a b c p) (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M)
-      (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _) h) N)
+      (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ (([] ⟨ _ ⟩ ∷ nat) ⟨ _ ⟩ ∷ _) h) N)
   C-sub₀-≐ˢ₀ h (caseL V `nil M `cons N) =
     cong₃ caseL_`nil_`cons_ (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M)
       (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _ ∷ _) h) N)
   C-sub₀-≐ˢ₀ h (recL V M N p) =
     cong₃ (λ a b c → recL a b c p) (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M)
-      (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ (([] ⟨ _ ⟩ ∷ _ ∷ |List| _) ⟨ _ ⟩ ∷ _) h) N)
+      (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ (([] ⟨ _ ⟩ ∷ _ ∷ list _) ⟨ _ ⟩ ∷ _) h) N)
   C-sub₀-≐ˢ₀ h (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_ (V-sub₀-≐ˢ₀ h V)
       (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) M)
@@ -213,7 +213,7 @@ mutual
   C-sub₀-≐ˢ₀ h (subC M p) = subC-≡ (C-sub₀-≐ˢ₀ h M)
 
 
-eternal-val-ext-cong : ∀ {Γ A ρ} → (et : Eternal A) → {V V' : Γ ⊢V⦂ A}
+eternal-val-ext-cong : ∀ {Γ A ρ} → (et : Et A) → {V V' : Γ ⊢V⦂ A}
                      → V ≡ V'
                      → eternal-val-ext {ρ = ρ} et V ≡ eternal-val-ext et V'
 eternal-val-ext-cong et = cong (eternal-val-ext et)

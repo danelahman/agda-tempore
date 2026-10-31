@@ -110,19 +110,19 @@ mutual
   strᵛ : ∀ {Ω} → EVar (Ω +e) → OVType (Ω +e) → Maybe (OVType Ω)
   strᵛ j (tvar α)  = just (tvar α)
   strᵛ j (Base b)  = just (Base b)
-  strᵛ j Unit      = just Unit
-  strᵛ j Bool      = just Bool
-  strᵛ j Nat       = just Nat
+  strᵛ j unit      = just unit
+  strᵛ j bool      = just bool
+  strᵛ j nat       = just nat
   strᵛ j (A |×| B) = zip₂ _|×|_ (strᵛ j A) (strᵛ j B)
   strᵛ j (A |+| B) = zip₂ _|+|_ (strᵛ j A) (strᵛ j B)
-  strᵛ j (|List| A) = mmap |List| (strᵛ j A)
-  strᵛ j Empty     = just Empty
+  strᵛ j (list A)  = mmap list (strᵛ j A)
+  strᵛ j empty     = just empty
   strᵛ j (A ⇒ C)   = zip₂ _⇒_ (strᵛ j A) (strᶜ j C)
   strᵛ j (C ⇛ D)   = zip₂ _⇛_ (strᶜ j C) (strᶜ j D)
   strᵛ j ([ ρ ] A) = zip₂ [_]_ (strʳ j ρ) (strᵛ j A)
 
   strᶜ : ∀ {Ω} → EVar (Ω +e) → OCType (Ω +e) → Maybe (OCType Ω)
-  strᶜ j (A ‼ ε) = zip₂ _‼_ (strᵛ j A) (strᵉ j ε)
+  strᶜ j (A ! ε) = zip₂ _!_ (strᵛ j A) (strᵉ j ε)
 
 popˢ : ∀ {Ω} → EVar (Ω +e) → Subst (Ω +e) (Ω +e)
 popˢ {Ω} j = sub tvar rvar
@@ -162,16 +162,16 @@ mutual
            → strᵛ j A ≡ just A₀ → A [ popˢ j ]ᵛ ≡ wkᵉ-v A₀
   str-popᵛ j (tvar α)  refl = refl
   str-popᵛ j (Base b)  refl = refl
-  str-popᵛ j Unit      refl = refl
-  str-popᵛ j Bool      refl = refl
-  str-popᵛ j Nat       refl = refl
-  str-popᵛ j Empty     refl = refl
+  str-popᵛ j unit      refl = refl
+  str-popᵛ j bool      refl = refl
+  str-popᵛ j nat       refl = refl
+  str-popᵛ j empty     refl = refl
   str-popᵛ j (A |×| B) q with zip₂-just _|×|_ (strᵛ j A) (strᵛ j B) q
   ... | a , b , qa , qb , refl = cong₂ _|×|_ (str-popᵛ j A qa) (str-popᵛ j B qb)
   str-popᵛ j (A |+| B) q with zip₂-just _|+|_ (strᵛ j A) (strᵛ j B) q
   ... | a , b , qa , qb , refl = cong₂ _|+|_ (str-popᵛ j A qa) (str-popᵛ j B qb)
-  str-popᵛ j (|List| A) q with map-just |List| (strᵛ j A) q
-  ... | a , qa , refl = cong |List| (str-popᵛ j A qa)
+  str-popᵛ j (list A)  q with map-just list (strᵛ j A) q
+  ... | a , qa , refl = cong list (str-popᵛ j A qa)
   str-popᵛ j (A ⇒ C)   q with zip₂-just _⇒_ (strᵛ j A) (strᶜ j C) q
   ... | a , b , qa , qb , refl = cong₂ _⇒_ (str-popᵛ j A qa) (str-popᶜ j C qb)
   str-popᵛ j (C ⇛ D)   q with zip₂-just _⇛_ (strᶜ j C) (strᶜ j D) q
@@ -181,8 +181,8 @@ mutual
 
   str-popᶜ : ∀ {Ω} → (j : EVar (Ω +e)) → (C : OCType (Ω +e)) → {C₀ : OCType Ω}
            → strᶜ j C ≡ just C₀ → C [ popˢ j ]ᶜ ≡ wkᵉ-c C₀
-  str-popᶜ j (A ‼ ε) q with zip₂-just _‼_ (strᵛ j A) (strᵉ j ε) q
-  ... | a , b , qa , qb , refl = cong₂ _‼_ (str-popᵛ j A qa) (str-popᵉ j ε qb)
+  str-popᶜ j (A ! ε) q with zip₂-just _!_ (strᵛ j A) (strᵉ j ε) q
+  ... | a , b , qa , qb , refl = cong₂ _!_ (str-popᵛ j A qa) (str-popᵉ j ε qb)
 
 str-wkᵉ : ∀ {Ω} → (ε : EExp Ω) → strᵉ (newᵉ {Ω}) (wkᵉ-e ε) ≡ just ε
 str-wkᵉ (evar i)   = refl
@@ -202,19 +202,19 @@ mutual
   str-wkᵛ : ∀ {Ω} → (A : OVType Ω) → strᵛ (newᵉ {Ω}) (wkᵉ-v A) ≡ just A
   str-wkᵛ (tvar α)  = refl
   str-wkᵛ (Base b)  = refl
-  str-wkᵛ Unit      = refl
-  str-wkᵛ Bool      = refl
-  str-wkᵛ Nat       = refl
-  str-wkᵛ Empty     = refl
+  str-wkᵛ unit      = refl
+  str-wkᵛ bool      = refl
+  str-wkᵛ nat       = refl
+  str-wkᵛ empty     = refl
   str-wkᵛ (A |×| B) = cong₂ (zip₂ _|×|_) (str-wkᵛ A) (str-wkᵛ B)
   str-wkᵛ (A |+| B) = cong₂ (zip₂ _|+|_) (str-wkᵛ A) (str-wkᵛ B)
-  str-wkᵛ (|List| A) = cong (mmap |List|) (str-wkᵛ A)
+  str-wkᵛ (list A)  = cong (mmap list) (str-wkᵛ A)
   str-wkᵛ (A ⇒ C)   = cong₂ (zip₂ _⇒_) (str-wkᵛ A) (str-wkᶜ C)
   str-wkᵛ (C ⇛ D)   = cong₂ (zip₂ _⇛_) (str-wkᶜ C) (str-wkᶜ D)
   str-wkᵛ ([ ρ ] A) = cong₂ (zip₂ [_]_) (str-wkʳ ρ) (str-wkᵛ A)
 
   str-wkᶜ : ∀ {Ω} → (C : OCType Ω) → strᶜ (newᵉ {Ω}) (wkᵉ-c C) ≡ just C
-  str-wkᶜ (A ‼ ε) = cong₂ (zip₂ _‼_) (str-wkᵛ A) (str-wkᵉ ε)
+  str-wkᶜ (A ! ε) = cong₂ (zip₂ _!_) (str-wkᵛ A) (str-wkᵉ ε)
 
 -- The pointwise partial results of the three sorts assembled by a finite
 -- traversal; the auxiliaries take the scrutinee explicitly
@@ -341,17 +341,17 @@ mutual
        → (A : OVType Φ) → occᵉ-v j A ≡ true → occᵉ-v k (A [ σ ]ᵛ) ≡ true
   escᵛ σ j k r (tvar α)  ()
   escᵛ σ j k r (Base b)  ()
-  escᵛ σ j k r Unit      ()
-  escᵛ σ j k r Bool      ()
-  escᵛ σ j k r Nat       ()
-  escᵛ σ j k r Empty     ()
+  escᵛ σ j k r unit      ()
+  escᵛ σ j k r bool      ()
+  escᵛ σ j k r nat       ()
+  escᵛ σ j k r empty     ()
   escᵛ σ j k r (A |×| B) q with ∨-true (occᵉ-v j A) (occᵉ-v j B) q
   ... | inj₁ s = ∨-left  (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-v k (B [ σ ]ᵛ)) (escᵛ σ j k r A s)
   ... | inj₂ s = ∨-right (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-v k (B [ σ ]ᵛ)) (escᵛ σ j k r B s)
   escᵛ σ j k r (A |+| B) q with ∨-true (occᵉ-v j A) (occᵉ-v j B) q
   ... | inj₁ s = ∨-left  (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-v k (B [ σ ]ᵛ)) (escᵛ σ j k r A s)
   ... | inj₂ s = ∨-right (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-v k (B [ σ ]ᵛ)) (escᵛ σ j k r B s)
-  escᵛ σ j k r (|List| A) q = escᵛ σ j k r A q
+  escᵛ σ j k r (list A)  q = escᵛ σ j k r A q
   escᵛ σ j k r (A ⇒ C)   q with ∨-true (occᵉ-v j A) (occᵉ-c j C) q
   ... | inj₁ s = ∨-left  (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-c k (C [ σ ]ᶜ)) (escᵛ σ j k r A s)
   ... | inj₂ s = ∨-right (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-c k (C [ σ ]ᶜ)) (escᶜ σ j k r C s)
@@ -364,7 +364,7 @@ mutual
 
   escᶜ : ∀ {Φ Ω} → (σ : Subst Φ Ω) → (j : EVar Φ) → (k : EVar Ω) → sE σ j ≡ evar k
        → (C : OCType Φ) → occᵉ-c j C ≡ true → occᵉ-c k (C [ σ ]ᶜ) ≡ true
-  escᶜ σ j k r (A ‼ ε) q with ∨-true (occᵉ-v j A) (occᵉ-e j ε) q
+  escᶜ σ j k r (A ! ε) q with ∨-true (occᵉ-v j A) (occᵉ-e j ε) q
   ... | inj₁ s = ∨-left  (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-e k (ε [ σ ]ᵉ)) (escᵛ σ j k r A s)
   ... | inj₂ s = ∨-right (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-e k (ε [ σ ]ᵉ)) (escᵉ σ j k r ε s)
 
@@ -395,17 +395,17 @@ mutual
   occ-wkᵛ : ∀ {Ω} → (A : OVType Ω) → occᵉ-v (newᵉ {Ω}) (wkᵉ-v A) ≡ true → ⊥
   occ-wkᵛ (tvar α)  ()
   occ-wkᵛ (Base b)  ()
-  occ-wkᵛ Unit      ()
-  occ-wkᵛ Bool      ()
-  occ-wkᵛ Nat       ()
-  occ-wkᵛ Empty     ()
+  occ-wkᵛ unit      ()
+  occ-wkᵛ bool      ()
+  occ-wkᵛ nat       ()
+  occ-wkᵛ empty     ()
   occ-wkᵛ {Ω} (A |×| B) q =
     [ occ-wkᵛ A , occ-wkᵛ B ]′
       (∨-true (occᵉ-v (newᵉ {Ω}) (wkᵉ-v A)) (occᵉ-v (newᵉ {Ω}) (wkᵉ-v B)) q)
   occ-wkᵛ {Ω} (A |+| B) q =
     [ occ-wkᵛ A , occ-wkᵛ B ]′
       (∨-true (occᵉ-v (newᵉ {Ω}) (wkᵉ-v A)) (occᵉ-v (newᵉ {Ω}) (wkᵉ-v B)) q)
-  occ-wkᵛ {Ω} (|List| A) q = occ-wkᵛ A q
+  occ-wkᵛ {Ω} (list A)  q = occ-wkᵛ A q
   occ-wkᵛ {Ω} (A ⇒ C)   q =
     [ occ-wkᵛ A , occ-wkᶜ C ]′
       (∨-true (occᵉ-v (newᵉ {Ω}) (wkᵉ-v A)) (occᵉ-c (newᵉ {Ω}) (wkᵉ-c C)) q)
@@ -417,7 +417,7 @@ mutual
       (∨-true (occᵉ-r (newᵉ {Ω}) (wkᵉ-r ρ)) (occᵉ-v (newᵉ {Ω}) (wkᵉ-v A)) q)
 
   occ-wkᶜ : ∀ {Ω} → (C : OCType Ω) → occᵉ-c (newᵉ {Ω}) (wkᵉ-c C) ≡ true → ⊥
-  occ-wkᶜ {Ω} (A ‼ ε) q =
+  occ-wkᶜ {Ω} (A ! ε) q =
     [ occ-wkᵛ A , occ-wkᵉ ε ]′
       (∨-true (occᵉ-v (newᵉ {Ω}) (wkᵉ-v A)) (occᵉ-e (newᵉ {Ω}) (wkᵉ-e ε)) q)
 
@@ -451,17 +451,17 @@ mutual
            → strᵛ j A ≡ nothing → occᵉ-v j A ≡ true
   str-occᵛ j (tvar α)  ()
   str-occᵛ j (Base b)  ()
-  str-occᵛ j Unit      ()
-  str-occᵛ j Bool      ()
-  str-occᵛ j Nat       ()
-  str-occᵛ j Empty     ()
+  str-occᵛ j unit      ()
+  str-occᵛ j bool      ()
+  str-occᵛ j nat       ()
+  str-occᵛ j empty     ()
   str-occᵛ j (A |×| B) q with zip₂-nothing _|×|_ (strᵛ j A) (strᵛ j B) q
   ... | inj₁ s = ∨-left  (occᵉ-v j A) (occᵉ-v j B) (str-occᵛ j A s)
   ... | inj₂ s = ∨-right (occᵉ-v j A) (occᵉ-v j B) (str-occᵛ j B s)
   str-occᵛ j (A |+| B) q with zip₂-nothing _|+|_ (strᵛ j A) (strᵛ j B) q
   ... | inj₁ s = ∨-left  (occᵉ-v j A) (occᵉ-v j B) (str-occᵛ j A s)
   ... | inj₂ s = ∨-right (occᵉ-v j A) (occᵉ-v j B) (str-occᵛ j B s)
-  str-occᵛ j (|List| A) q = str-occᵛ j A (map-nothing |List| (strᵛ j A) q)
+  str-occᵛ j (list A)  q = str-occᵛ j A (map-nothing list (strᵛ j A) q)
   str-occᵛ j (A ⇒ C)   q with zip₂-nothing _⇒_ (strᵛ j A) (strᶜ j C) q
   ... | inj₁ s = ∨-left  (occᵉ-v j A) (occᵉ-c j C) (str-occᵛ j A s)
   ... | inj₂ s = ∨-right (occᵉ-v j A) (occᵉ-c j C) (str-occᶜ j C s)
@@ -474,7 +474,7 @@ mutual
 
   str-occᶜ : ∀ {Ω} → (j : EVar (Ω +e)) → (C : OCType (Ω +e))
            → strᶜ j C ≡ nothing → occᵉ-c j C ≡ true
-  str-occᶜ j (A ‼ ε) q with zip₂-nothing _‼_ (strᵛ j A) (strᵉ j ε) q
+  str-occᶜ j (A ! ε) q with zip₂-nothing _!_ (strᵛ j A) (strᵉ j ε) q
   ... | inj₁ s = ∨-left  (occᵉ-v j A) (occᵉ-e j ε) (str-occᵛ j A s)
   ... | inj₂ s = ∨-right (occᵉ-v j A) (occᵉ-e j ε) (str-occᵉ j ε s)
 

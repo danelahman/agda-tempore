@@ -70,7 +70,7 @@ open import PolymorphicCalculus.Inference.SolverImpl.Entail S hints
   using (decideᵣ; decideₑ; full; memʳ?; memᵉ?; memʳ-⊩; memᵉ-⊩; refute≾𝟏)
 
 -- Derivations from a list of subtyping hypotheses and one of eternality atoms,
--- mirroring `_⊩ᵗᵛ_≾_` and `_⊩ᴱ_`: eternality moves both ways, subtyping forwards
+-- mirroring `_⊩ᵗᵛ_≾_` and `_⊩Et_`: eternality moves both ways, subtyping forwards
 
 infix 4 _⊢ᵖ_≾_
 
@@ -111,13 +111,13 @@ Etᴾ-mono k j (downᴾ m et) = downᴾ (k m) (Etᴾ-mono k j et)
 Etᴾ-mono k j (upᴾ m et)   = upᴾ (k m) (Etᴾ-mono k j et)
 
 Etᴾ-⊩' : ∀ {Θ} {Q : Hyps Θ} {l as α} → (∀ {p} → p ∈ l → p ∈ subᵥ Q)
-       → (∀ {β} → β ∈ as → Q ⊩ᴱ tvar β) → Etᴾ l as α → Q ⊩ᴱ tvar α
+       → (∀ {β} → β ∈ as → Q ⊩Et tvar β) → Etᴾ l as α → Q ⊩Et tvar α
 Etᴾ-⊩' k j (atomᴾ m)    = j m
 Etᴾ-⊩' k j (downᴾ m et) = et-subˡ (hypᵗᵛ (k m)) (Etᴾ-⊩' k j et)
 Etᴾ-⊩' k j (upᴾ m et)   = et-subʳ (hypᵗᵛ (k m)) (Etᴾ-⊩' k j et)
 
 Etᴾ-⊩ : ∀ {Θ} {Q : Hyps Θ} {l as α} → (∀ {p} → p ∈ l → p ∈ subᵥ Q)
-      → (∀ {β} → β ∈ as → β ∈ ets Q) → Etᴾ l as α → Q ⊩ᴱ tvar α
+      → (∀ {β} → β ∈ as → β ∈ ets Q) → Etᴾ l as α → Q ⊩Et tvar α
 Etᴾ-⊩ k j = Etᴾ-⊩' k (λ m → et-hyp (j m))
 
 -- Both searches saturate a labelled vertex set along the hypotheses,
@@ -181,7 +181,7 @@ module _ {n : ℕ} (l : List (Fin n × Fin n)) where
 -- Eternality of every atom a type decomposes to, from the set itself
 
 ets? : ∀ {Θ} → (Q : Hyps Θ) → (as : List (TyVar Θ))
-     → Maybe (∀ {α} → α ∈ as → Q ⊩ᴱ tvar α)
+     → Maybe (∀ {α} → α ∈ as → Q ⊩Et tvar α)
 ets? Q []       = just (λ ())
 ets? Q (α ∷ as) with etᴾ? (subᵥ Q) (ets Q) α | ets? Q as
 ... | just w | just k = just (λ { (here refl) → Etᴾ-⊩ (λ q → q) (λ q → q) w
@@ -324,13 +324,13 @@ settle-inst A ρ Q δ d h with decideᵣ full Q ρ 𝟏̂ᵣ
 ...     | nothing with refute≾𝟏 ρ
 ...       | just ref = mk⊩ᴴ et' (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (⊩disj h) (⊩qhyps h)
       where
-        etA : ∅ᴴ ⊩ᴱ A [ δ ]ᵛ
+        etA : ∅ᴴ ⊩Et A [ δ ]ᵛ
         etA = from d
           where
-            from : VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ) → ∅ᴴ ⊩ᴱ A [ δ ]ᵛ
+            from : VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ) → ∅ᴴ ⊩Et A [ δ ]ᵛ
             from ok = [ (λ et → et) , (λ le → ⊥-elim (ref δ (val-≾ᵣ le))) ]′ (VarOK-∅ᴴ ok)
 
-        et' : ∀ {β} → β ∈ (αs ++ ets Q) → ∅ᴴ ⊩ᴱ sTy δ β
+        et' : ∀ {β} → β ∈ (αs ++ ets Q) → ∅ᴴ ⊩Et sTy δ β
         et' m = [ etDec-compl A e δ etA , ⊩ets h ]′ (∈-++⁻ αs m)
 ...       | nothing = mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) dsj' (⊩qhyps h)
       where
@@ -392,19 +392,19 @@ sameᵛ? (tvar α) (tvar β) with α ≟ᶠ β
 sameᵛ? (Base b) (Base b') with b ≡ᵇ? b'
 ... | yes refl = just Base≡̂
 ... | no _     = nothing
-sameᵛ? Unit Unit = just Unit≡̂
-sameᵛ? Bool Bool = just Bool≡̂
-sameᵛ? Nat Nat = just Nat≡̂
+sameᵛ? unit unit = just unit≡̂
+sameᵛ? bool bool = just bool≡̂
+sameᵛ? nat nat = just nat≡̂
 sameᵛ? (A |×| B) (A' |×| B') with sameᵛ? A A' | sameᵛ? B B'
 ... | just p | just q = just (p |×|≡̂ q)
 ... | _      | _      = nothing
 sameᵛ? (A |+| B) (A' |+| B') with sameᵛ? A A' | sameᵛ? B B'
 ... | just p | just q = just (p |+|≡̂ q)
 ... | _      | _      = nothing
-sameᵛ? (|List| A) (|List| A') with sameᵛ? A A'
-... | just p = just (|List|≡̂ p)
+sameᵛ? (list A) (list A') with sameᵛ? A A'
+... | just p = just (list≡̂ p)
 ... | _      = nothing
-sameᵛ? Empty Empty = just Empty≡̂
+sameᵛ? empty empty = just empty≡̂
 sameᵛ? (A ⇒ C) (A' ⇒ C') with sameᵛ? A A' | sameᶜ? C C'
 ... | just p | just q = just (p ⇒≡̂ q)
 ... | _      | _      = nothing
@@ -413,8 +413,8 @@ sameᵛ? ([ ρ ] A) ([ ρ' ] A') with ρ ≟ʳ ρ' | sameᵛ? A A'
 ... | _     | _      = nothing
 sameᵛ? _ _ = nothing
 
-sameᶜ? (A ‼ ε) (A' ‼ ε') with sameᵛ? A A' | ε ≟ᵉ ε'
-... | just p | yes e = just (p ‼≡̂ ≅ᵉ⇒≡̂ e)
+sameᶜ? (A ! ε) (A' ! ε') with sameᵛ? A A' | ε ≟ᵉ ε'
+... | just p | yes e = just (p !≡̂ ≅ᵉ⇒≡̂ e)
 ... | _      | _     = nothing
 
 -- A disjunction entailed by another: the same type, and a grade entailed above
@@ -522,13 +522,13 @@ pruneᵀ-at-⊩ : ∀ {Θ} → (Q : Hyps Θ) → (l : List (TyVar Θ × TyVar Θ
             → (∀ {α β} → (α , β) ∈ subᵥ Q → pruneᵀ-at Q l ⊩ᵗᵛ α ≾ β)
             → pruneᵀ-at Q l ⊩ᴴ Q
 pruneᵀ-at-⊩ {Θ} Q l k =
-  mk⊩ᴴ⁼ (Walk.walk-⊨ (Okᴱ l) (etᴱ? l) (λ α → pruneᵀ-at Q l ⊩ᴱ tvar α) close
+  mk⊩ᴴ⁼ (Walk.walk-⊨ (Okᴱ l) (etᴱ? l) (λ α → pruneᵀ-at Q l ⊩Et tvar α) close
                      [] (ets Q) (λ ()) et-hyp)
         (λ m → tvarₛ (k m)) hypᵣ hypₑ hyp-ok₀ (λ m → ⊩ᴼ-hyp⁼ m)
   where
     close : ∀ (seen rest : List (TyVar Θ)) {α} → Okᴱ l seen rest α
-          → (∀ {β} → β ∈ seen ++ rest → pruneᵀ-at Q l ⊩ᴱ tvar β)
-          → pruneᵀ-at Q l ⊩ᴱ tvar α
+          → (∀ {β} → β ∈ seen ++ rest → pruneᵀ-at Q l ⊩Et tvar β)
+          → pruneᵀ-at Q l ⊩Et tvar α
     close seen rest w hs = Etᴾ-⊩' (λ q → q) (λ q → hs (∈-++⁺ˡ q)) w
 
 pruneᵀ-at-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → (l : List (TyVar Θ × TyVar Θ))

@@ -58,7 +58,7 @@ env-Vˢ-≡ γ Δ = cong (env-Vˢ γ Δ)
 -- `∈-++ᶜʳ-assoc`.
 
 env-Vˢ-var-r : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx) → (x : A ∈[ ρ ] Δ)
-             → (f f' : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+             → (f f' : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
              → env-Vˢ γ Δ (var f (∈-++ᶜʳ {Γ = Γ} x))
              ≡ var f' (∈-++ᶜʳ {Γ = toCtx St} x)
 
@@ -157,7 +157,7 @@ env-Vˢ-var-r (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ x f f' =
 -- own variable is a suffix variable.
 
 env-var-hd : ∀ {St Γ A} → (γ : Env St Γ) → (W : toCtx St ⊢V⦂ A)
-           → (f : ¬ Eternal A → 𝟏ᵣ ≾ᵣ 𝟏ᵣ)
+           → (f : ¬ Et A → 𝟏ᵣ ≾ᵣ 𝟏ᵣ)
            → env-V (γ ∷ᵉ W) (var f Hd) ≡ W
 env-var-hd γ W f =
   sub-≡ᵛ split-[] (refl) (env-Vˢ-var-r γ ([] ∷ _) Hd f f)
@@ -165,11 +165,11 @@ env-var-hd γ W f =
 -- Any other variable is untouched by the entry, and is the action of the rest.
 
 env-Vˢ-var-l : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
-             → ¬ Eternal A
+             → ¬ Et A
              → (p : ctx-grade Δ ≾ᵣ 𝟏ᵣ)
              → (x : A ∈[ ρ ] Γ)
-             → (f  : ¬ Eternal A → grade-++ᶜˡ ρ Δ ≾ᵣ 𝟏ᵣ)
-             → (f' : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+             → (f  : ¬ Et A → grade-++ᶜˡ ρ Δ ≾ᵣ 𝟏ᵣ)
+             → (f' : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
              → env-Vˢ γ Δ (var f (∈-++ᶜˡ Δ x))
              ≡ V-rename (push-ren Δ p) (env-Vˢ γ [] (var f' x))
 
@@ -335,9 +335,9 @@ env-Vˢ-var-l (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ ¬et p Hd f f' =
 -- the reach, which `unbox-ren-unit` recognises as the unit reach's renaming.
 
 env-var-tl : ∀ {St Γ A A₀ ρ} → (γ : Env St Γ) → (W : toCtx St ⊢V⦂ A₀)
-           → ¬ Eternal A
-           → (x : A ∈[ ρ ] Γ) → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
-           → (f' : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+           → ¬ Et A
+           → (x : A ∈[ ρ ] Γ) → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
+           → (f' : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
            → env-V (γ ∷ᵉ W) (var f (Tl-∷ x)) ≡ env-V γ (var f' x)
 
 env-var-tl γ W ¬et x f f' =
@@ -348,10 +348,10 @@ env-var-tl γ W ¬et x f f' =
     (sub-wk-V [] (env-Vˢ γ [] (var f' x)) W)
 
 env-var-lock : ∀ {St St' Γ A ρ ρ'} → (γ : Env St Γ) → (q : St ⊑ₛ[ ρ ] St')
-             → ¬ Eternal A
+             → ¬ Et A
              → (p : ρ ≾ᵣ 𝟏ᵣ) → (x : A ∈[ ρ' ] Γ)
-             → (f  : ¬ Eternal A → ρ' ·ᵣ ρ ≾ᵣ 𝟏ᵣ)
-             → (f' : ¬ Eternal A → ρ' ≾ᵣ 𝟏ᵣ)
+             → (f  : ¬ Et A → ρ' ·ᵣ ρ ≾ᵣ 𝟏ᵣ)
+             → (f' : ¬ Et A → ρ' ≾ᵣ 𝟏ᵣ)
              → env-V (γ ⟨ q ⟩ᵉ) (var f (Tl-⟨⟩ x))
              ≡ reach-val (reach-≤ q p) (env-V γ (var f' x))
 
@@ -360,8 +360,8 @@ env-var-lock : ∀ {St St' Γ A ρ ρ'} → (γ : Env St Γ) → (q : St ⊑ₛ[
 -- binder rather than substituting for it.
 
 env-var-lift : ∀ {St Γ A A₀ ρ ρ'} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A₀)
-             → (γ : Env St Γ) → ¬ Eternal A
-             → (x : A ∈[ ρ' ] Γ) → (f f' : ¬ Eternal A → ρ' ≾ᵣ 𝟏ᵣ)
+             → (γ : Env St Γ) → ¬ Et A
+             → (x : A ∈[ ρ' ] Γ) → (f f' : ¬ Et A → ρ' ≾ᵣ 𝟏ᵣ)
              → env-V (liftᵉ V γ) (var f (Tl-∷ x))
              ≡ V-rename wk-ren (env-V γ (var f' x))
 
@@ -384,7 +384,7 @@ env-var-lock {ρ = ρ} γ q ¬et p x f f' =
 -- an eternal type, so the eternal cases need no law.
 
 env-var : ∀ {St Γ A ρ} → (γ : Env St Γ) → Rel-Env γ
-        → (x : A ∈[ ρ ] Γ) → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+        → (x : A ∈[ ρ ] Γ) → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
         ------------------------------------------------
         → VRed A St (env-V γ (var f x))
 

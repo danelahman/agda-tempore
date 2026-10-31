@@ -44,10 +44,10 @@ open import MonomorphicCalculus.OperationalSemantics.StateEquivalence.Extensions
 -- that the two steps extend the state alike.
 
 Sim : ∀ {A A₁ ε ε₁} {St St' St₁ : 𝕊 []}
-    → (es : St ≐ˢ St') → {M : toCtx St ⊢C⦂ A ‼ ε} → (M' : toCtx St' ⊢C⦂ A ‼ ε)
-    → {N : toCtx St₁ ⊢C⦂ A₁ ‼ ε₁} → (r : ⟨ St , M ⟩ ⟶ ⟨ St₁ , N ⟩) → Set
+    → (es : St ≐ˢ St') → {M : toCtx St ⊢C⦂ A ! ε} → (M' : toCtx St' ⊢C⦂ A ! ε)
+    → {N : toCtx St₁ ⊢C⦂ A₁ ! ε₁} → (r : ⟨ St , M ⟩ ⟶ ⟨ St₁ , N ⟩) → Set
 Sim {A₁ = A₁} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
-  Σ[ St₁' ∈ 𝕊 [] ] Σ[ N' ∈ (toCtx St₁' ⊢C⦂ A₁ ‼ ε₁) ] Σ[ es₁ ∈ St₁ ≐ˢ St₁' ]
+  Σ[ St₁' ∈ 𝕊 [] ] Σ[ N' ∈ (toCtx St₁' ⊢C⦂ A₁ ! ε₁) ] Σ[ es₁ ∈ St₁ ≐ˢ St₁' ]
   Σ[ r' ∈ (⟨ St' , M' ⟩ ⟶ ⟨ St₁' , N' ⟩) ]
     (step-extends-state r ≤≐ step-extends-state r')
   × (N ≡ castᶜ (sym (toCtx-≐ˢ es₁)) N')
@@ -56,8 +56,8 @@ Sim {A₁ = A₁} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 -- reduct being the coerced computation itself.
 
 ⟶-≐ˢ-sub : ∀ {A A' ε ε'} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-        → {M : toCtx St ⊢C⦂ A ‼ ε} → {w : (A ‼ ε) <:ᶜ (A' ‼ ε')}
-        → (P' : toCtx St' ⊢C⦂ A' ‼ ε')
+        → {M : toCtx St ⊢C⦂ A ! ε} → {w : (A ! ε) <:ᶜ (A' ! ε')}
+        → (P' : toCtx St' ⊢C⦂ A' ! ε')
         → subC M w ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
         → Sim es P' (SUB {M = M} {w = w})
 ⟶-≐ˢ-sub es P' eM with cast-sub⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -67,9 +67,9 @@ Sim {A₁ = A₁} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 -- both sides.
 
 ⟶-≐ˢ-sub-app : ∀ {A A₁ B B₁ ε ε₁} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-            → {V : toCtx St ⊢V⦂ A₁ ⇒ (B₁ ‼ ε₁)} → {W : toCtx St ⊢V⦂ A}
-            → {q : A <:ᵛ A₁} → {r : (B₁ ‼ ε₁) <:ᶜ B ‼ ε}
-            → (P' : toCtx St' ⊢C⦂ B ‼ ε)
+            → {V : toCtx St ⊢V⦂ A₁ ⇒ (B₁ ! ε₁)} → {W : toCtx St ⊢V⦂ A}
+            → {q : A <:ᵛ A₁} → {r : (B₁ ! ε₁) <:ᶜ B ! ε}
+            → (P' : toCtx St' ⊢C⦂ B ! ε)
             → (subV V (q ⇒ₛ r) · W) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
             → Sim es P' (SUB-APP {V = V} {W = W} {q = q} {r = r})
 ⟶-≐ˢ-sub-app es {q = q} {r = r} P' eM
@@ -87,23 +87,23 @@ Sim {A₁ = A₁} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 
 cast-sub-handle : ∀ {Γ Γ' A A₁ B₁ ε ε₁ ε₁'} → (e : Γ' ≡ Γ)
                 → {p : A <:ᵛ A₁} → {pε : ε ≾ₑ ε₁}
-                → (M' : Γ' ⊢C⦂ A ‼ ε)
-                → (N' : Γ' ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B₁ ‼ ε₁')
+                → (M' : Γ' ⊢C⦂ A ! ε)
+                → (N' : Γ' ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B₁ ! ε₁')
                 → (H' : (op : Op) → (ε₃ : E) →
-                          Γ' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                          Γ' ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                             ∷ [ ∣ op-grade op ∣ᵉ ]
-                                (type-of-gtype (arity op) ⇒ B₁ ‼ ε₃)
-                          ⊢C⦂ B₁ ‼ (op-grade op ·ₑ ε₃))
+                                (⌜ arity op ⌝ᵍ ⇒ B₁ ! ε₃)
+                          ⊢C⦂ B₁ ! (op-grade op ·ₑ ε₃))
                 → handle (castᶜ e M')
                   `with handler
                           (subCtx p
                             (C-rename (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε)))
                               (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A₁) e) N')))
                           (λ op ε₃ →
-                             castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                             castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                                                    ∷ [ ∣ op-grade op ∣ᵉ ]
-                                                       (type-of-gtype (arity op)
-                                                          ⇒ B₁ ‼ ε₃))
+                                                       (⌜ arity op ⌝ᵍ
+                                                          ⇒ B₁ ! ε₃))
                                          e)
                                    (H' op ε₃))
                 ≡ castᶜ e
@@ -115,17 +115,17 @@ cast-sub-handle : ∀ {Γ Γ' A A₁ B₁ ε ε₁ ε₁'} → (e : Γ' ≡ Γ)
 cast-sub-handle refl M' N' H' = refl
 
 ⟶-≐ˢ-sub-handle : ∀ {A A₁ B B₁ ε ε₁ ε' ε₁'} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-               → {M : toCtx St ⊢C⦂ A ‼ ε}
-               → {N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B₁ ‼ ε₁'}
+               → {M : toCtx St ⊢C⦂ A ! ε}
+               → {N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B₁ ! ε₁'}
                → {H : (op : Op) → (ε₃ : E) →
-                        toCtx St ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                        toCtx St ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                           ∷ [ ∣ op-grade op ∣ᵉ ]
-                              (type-of-gtype (arity op) ⇒ B₁ ‼ ε₃)
-                        ⊢C⦂ B₁ ‼ (op-grade op ·ₑ ε₃)}
+                              (⌜ arity op ⌝ᵍ ⇒ B₁ ! ε₃)
+                        ⊢C⦂ B₁ ! (op-grade op ·ₑ ε₃)}
                → {p : A <:ᵛ A₁} → {pε : ε ≾ₑ ε₁}
-               → {q : (B₁ ‼ ε₁') <:ᶜ (B ‼ ε')}
-               → (P' : toCtx St' ⊢C⦂ B ‼ (ε ·ₑ ε'))
-               → (handle M `with subV (handler N H) ((p ‼ₛ pε) ⇛ₛ q))
+               → {q : (B₁ ! ε₁') <:ᶜ (B ! ε')}
+               → (P' : toCtx St' ⊢C⦂ B ! (ε ·ₑ ε'))
+               → (handle M `with subV (handler N H) ((p !ₛ pε) ⇛ₛ q))
                    ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
                → Sim es P' (SUB-HANDLE {M = M} {N = N} {H = H} {p = p} {pε = pε} {q = q})
 ⟶-≐ˢ-sub-handle es P' eM with cast-handle⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -140,9 +140,9 @@ cast-sub-handle refl M' N' H' = refl
 -- nested subsumption at a handler: the coercions compose on both sides.
 
 ⟶-≐ˢ-sub-handle-trans : ∀ {A₀ A' A B ε ε'} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-                     → {M : toCtx St ⊢C⦂ A ‼ ε} → {V : toCtx St ⊢V⦂ A₀}
-                     → {p : A₀ <:ᵛ A'} → {p' : A' <:ᵛ (A ‼ ε) ⇛ (B ‼ ε')}
-                     → (P' : toCtx St' ⊢C⦂ B ‼ (ε ·ₑ ε'))
+                     → {M : toCtx St ⊢C⦂ A ! ε} → {V : toCtx St ⊢V⦂ A₀}
+                     → {p : A₀ <:ᵛ A'} → {p' : A' <:ᵛ (A ! ε) ⇛ (B ! ε')}
+                     → (P' : toCtx St' ⊢C⦂ B ! (ε ·ₑ ε'))
                      → (handle M `with subV (subV V p) p')
                          ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
                      → Sim es P' (SUB-HANDLE-TRANS {M = M} {V = V} {p = p} {p' = p'})
@@ -155,52 +155,52 @@ cast-sub-handle refl M' N' H' = refl
           (sym (trans (cast-handle (sym (toCtx-≐ˢ es)))
                       (cong (handle _ `with_) (cast-subV (sym (toCtx-≐ˢ es))))))
 
--- subsumption at a scrutinised boolean: `Boolₛ` is dropped on both sides.
+-- subsumption at a scrutinised boolean: `boolₛ` is dropped on both sides.
 
 ⟶-≐ˢ-sub-if : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-           → {V : toCtx St ⊢V⦂ Bool} → {M N : toCtx St ⊢C⦂ A ‼ ε}
-           → (P' : toCtx St' ⊢C⦂ A ‼ ε)
-           → (if subV V Boolₛ `then M `else N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+           → {V : toCtx St ⊢V⦂ bool} → {M N : toCtx St ⊢C⦂ A ! ε}
+           → (P' : toCtx St' ⊢C⦂ A ! ε)
+           → (if subV V boolₛ `then M `else N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
            → Sim es P' (SUB-IF {V = V} {M = M} {N = N})
 ⟶-≐ˢ-sub-if es P' eM with cast-if⁻ (sym (toCtx-≐ˢ es)) P' eM
 ... | Vb' , M₀' , N₀' , refl , eVb , eM₀ , eN₀
   with cast-subV⁻ (sym (toCtx-≐ˢ es)) Vb' eVb
-...   | Boolₛ , V' , refl , eV =
+...   | boolₛ , V' , refl , eV =
     _ , _ , es , SUB-IF , id-≤≐
   , trans (cong₃ (λ v m n → if v `then m `else n) eV eM₀ eN₀)
           (sym (cast-if (sym (toCtx-≐ˢ es))))
 
--- subsumption at a scrutinised natural number: `Natₛ` is dropped on both
+-- subsumption at a scrutinised natural number: `natₛ` is dropped on both
 -- sides.
 
 ⟶-≐ˢ-sub-caseℕ : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-              → {V : toCtx St ⊢V⦂ Nat} → {M : toCtx St ⊢C⦂ A ‼ ε}
-              → {N : toCtx St ∷ Nat ⊢C⦂ A ‼ ε}
-              → (P' : toCtx St' ⊢C⦂ A ‼ ε)
-              → (caseℕ subV V Natₛ `zero M `succ N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+              → {V : toCtx St ⊢V⦂ nat} → {M : toCtx St ⊢C⦂ A ! ε}
+              → {N : toCtx St ∷ nat ⊢C⦂ A ! ε}
+              → (P' : toCtx St' ⊢C⦂ A ! ε)
+              → (caseℕ subV V natₛ `zero M `succ N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
               → Sim es P' (SUB-CASEℕ {V = V} {M = M} {N = N})
 ⟶-≐ˢ-sub-caseℕ es P' eM with cast-caseℕ⁻ (sym (toCtx-≐ˢ es)) P' eM
 ... | Vn' , M₀' , N₀' , refl , eVn , eM₀ , eN₀
   with cast-subV⁻ (sym (toCtx-≐ˢ es)) Vn' eVn
-...   | Natₛ , V' , refl , eV =
+...   | natₛ , V' , refl , eV =
     _ , _ , es , SUB-CASEℕ , id-≤≐
   , trans (cong₃ (λ v m n → caseℕ v `zero m `succ n) eV eM₀ eN₀)
           (sym (cast-caseℕ (sym (toCtx-≐ˢ es))))
 
--- subsumption at a recursion's natural number: `Natₛ` is dropped on both
+-- subsumption at a recursion's natural number: `natₛ` is dropped on both
 -- sides.
 
 ⟶-≐ˢ-sub-recℕ : ∀ {B ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-             → {V : toCtx St ⊢V⦂ Nat} → {M : toCtx St ⊢C⦂ B ‼ ε}
-             → {N : (toCtx St ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
+             → {V : toCtx St ⊢V⦂ nat} → {M : toCtx St ⊢C⦂ B ! ε}
+             → {N : (toCtx St ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε}
              → {p : ε ·ₑ ε ≾ₑ ε}
-             → (P' : toCtx St' ⊢C⦂ B ‼ ε)
-             → recℕ (subV V Natₛ) M N p ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+             → (P' : toCtx St' ⊢C⦂ B ! ε)
+             → recℕ (subV V natₛ) M N p ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
              → Sim es P' (SUB-RECℕ {V = V} {M = M} {N = N} {p = p})
 ⟶-≐ˢ-sub-recℕ es {p = p} P' eM with cast-recℕ⁻ (sym (toCtx-≐ˢ es)) P' eM
 ... | Vn' , M₀' , N₀' , refl , eVn , eM₀ , eN₀
   with cast-subV⁻ (sym (toCtx-≐ˢ es)) Vn' eVn
-...   | Natₛ , V' , refl , eV =
+...   | natₛ , V' , refl , eV =
     _ , _ , es , SUB-RECℕ , id-≤≐
   , trans (cong₃ (λ v m n → recℕ v m n p) eV eM₀ eN₀)
           (sym (cast-recℕ (sym (toCtx-≐ˢ es))))
@@ -209,8 +209,8 @@ cast-sub-handle refl M' N' H' = refl
 -- (`cast-true⁻`/`cast-false⁻`), and the reduct is the branch it names.
 
 ⟶-≐ˢ-if-true : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-            → {M N : toCtx St ⊢C⦂ A ‼ ε}
-            → (P' : toCtx St' ⊢C⦂ A ‼ ε)
+            → {M N : toCtx St ⊢C⦂ A ! ε}
+            → (P' : toCtx St' ⊢C⦂ A ! ε)
             → (if true `then M `else N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
             → Sim es P' (IF-TRUE {M = M} {N = N})
 ⟶-≐ˢ-if-true es P' eM with cast-if⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -219,8 +219,8 @@ cast-sub-handle refl M' N' H' = refl
 ...     | refl = _ , _ , es , IF-TRUE , id-≤≐ , eM₀
 
 ⟶-≐ˢ-if-false : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-             → {M N : toCtx St ⊢C⦂ A ‼ ε}
-             → (P' : toCtx St' ⊢C⦂ A ‼ ε)
+             → {M N : toCtx St ⊢C⦂ A ! ε}
+             → (P' : toCtx St' ⊢C⦂ A ! ε)
              → (if false `then M `else N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
              → Sim es P' (IF-FALSE {M = M} {N = N})
 ⟶-≐ˢ-if-false es P' eM with cast-if⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -233,8 +233,8 @@ cast-sub-handle refl M' N' H' = refl
 -- (`cast-succ⁻`), the reducts the same substitution into the successor branch.
 
 ⟶-≐ˢ-caseℕ-zero : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-               → {M : toCtx St ⊢C⦂ A ‼ ε} → {N : toCtx St ∷ Nat ⊢C⦂ A ‼ ε}
-               → (P' : toCtx St' ⊢C⦂ A ‼ ε)
+               → {M : toCtx St ⊢C⦂ A ! ε} → {N : toCtx St ∷ nat ⊢C⦂ A ! ε}
+               → (P' : toCtx St' ⊢C⦂ A ! ε)
                → (caseℕ zero `zero M `succ N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
                → Sim es P' (CASEℕ-ZERO {M = M} {N = N})
 ⟶-≐ˢ-caseℕ-zero es P' eM with cast-caseℕ⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -243,9 +243,9 @@ cast-sub-handle refl M' N' H' = refl
 ...     | refl = _ , _ , es , CASEℕ-ZERO , id-≤≐ , eM₀
 
 ⟶-≐ˢ-caseℕ-succ : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-               → {V : toCtx St ⊢V⦂ Nat}
-               → {M : toCtx St ⊢C⦂ A ‼ ε} → {N : toCtx St ∷ Nat ⊢C⦂ A ‼ ε}
-               → (P' : toCtx St' ⊢C⦂ A ‼ ε)
+               → {V : toCtx St ⊢V⦂ nat}
+               → {M : toCtx St ⊢C⦂ A ! ε} → {N : toCtx St ∷ nat ⊢C⦂ A ! ε}
+               → (P' : toCtx St' ⊢C⦂ A ! ε)
                → (caseℕ succ V `zero M `succ N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
                → Sim es P' (CASEℕ-SUCC {V = V} {M = M} {N = N})
 ⟶-≐ˢ-caseℕ-succ es P' eM with cast-caseℕ⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -260,10 +260,10 @@ cast-sub-handle refl M' N' H' = refl
 -- base; or the same successor, the reducts the same unfolding.
 
 ⟶-≐ˢ-recℕ-zero : ∀ {B ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-              → {M : toCtx St ⊢C⦂ B ‼ ε}
-              → {N : (toCtx St ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
+              → {M : toCtx St ⊢C⦂ B ! ε}
+              → {N : (toCtx St ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε}
               → {p : ε ·ₑ ε ≾ₑ ε}
-              → (P' : toCtx St' ⊢C⦂ B ‼ ε)
+              → (P' : toCtx St' ⊢C⦂ B ! ε)
               → recℕ zero M N p ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
               → Sim es P' (RECℕ-ZERO {M = M} {N = N} {p = p})
 ⟶-≐ˢ-recℕ-zero es P' eM with cast-recℕ⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -272,11 +272,11 @@ cast-sub-handle refl M' N' H' = refl
 ...     | refl = _ , _ , es , RECℕ-ZERO , id-≤≐ , eM₀
 
 ⟶-≐ˢ-recℕ-succ : ∀ {B ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-              → {V : toCtx St ⊢V⦂ Nat}
-              → {M : toCtx St ⊢C⦂ B ‼ ε}
-              → {N : (toCtx St ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
+              → {V : toCtx St ⊢V⦂ nat}
+              → {M : toCtx St ⊢C⦂ B ! ε}
+              → {N : (toCtx St ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε}
               → {p : ε ·ₑ ε ≾ₑ ε}
-              → (P' : toCtx St' ⊢C⦂ B ‼ ε)
+              → (P' : toCtx St' ⊢C⦂ B ! ε)
               → recℕ (succ V) M N p ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
               → Sim es P' (RECℕ-SUCC {V = V} {M = M} {N = N} {p = p})
 ⟶-≐ˢ-recℕ-succ es {p = p} P' eM with cast-recℕ⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -291,8 +291,8 @@ cast-sub-handle refl M' N' H' = refl
 -- same substitution (`sub-≡ᶜ`), the cast commuting with it (`cast-app-reduct`).
 
 ⟶-≐ˢ-app : ∀ {A B ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-        → {M₀ : toCtx St ∷ A ⊢C⦂ B ‼ ε} → {V : toCtx St ⊢V⦂ A}
-        → (P' : toCtx St' ⊢C⦂ B ‼ ε)
+        → {M₀ : toCtx St ∷ A ⊢C⦂ B ! ε} → {V : toCtx St ⊢V⦂ A}
+        → (P' : toCtx St' ⊢C⦂ B ! ε)
         → (lam M₀ · V) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
         → Sim es P' (APP {M = M₀} {V = V})
 ⟶-≐ˢ-app es P' eM with cast-app⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -306,8 +306,8 @@ cast-sub-handle refl M' N' H' = refl
 -- `⟨⟩-≐ˢ` and the extensions by `⟨⟩-≤≐`
 
 ⟶-≐ˢ-delay : ∀ {A ε τ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-          → {M₀ : toCtx St ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε}
-          → (P' : toCtx St' ⊢C⦂ A ‼ (ιₑ τ ·ₑ ε))
+          → {M₀ : toCtx St ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε}
+          → (P' : toCtx St' ⊢C⦂ A ! (ιₑ τ ·ₑ ε))
           → delay τ M₀ ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
           → Sim es P' (DELAY {M = M₀})
 ⟶-≐ˢ-delay {τ = τ} es P' eM with cast-delay⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -319,8 +319,8 @@ cast-sub-handle refl M' N' H' = refl
 -- (`cast-box-val` moves the cast past the reindexing `_∷ₛ_` applies).
 
 ⟶-≐ˢ-box : ∀ {A B ρ ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-        → {V : toCtx St ⟨ ρ ⟩ ⊢V⦂ A} → {M₀ : toCtx St ∷ [ ρ ] A ⊢C⦂ B ‼ ε}
-        → (P' : toCtx St' ⊢C⦂ B ‼ ε)
+        → {V : toCtx St ⟨ ρ ⟩ ⊢V⦂ A} → {M₀ : toCtx St ∷ [ ρ ] A ⊢C⦂ B ! ε}
+        → (P' : toCtx St' ⊢C⦂ B ! ε)
         → box _ V M₀ ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
         → Sim es P' (BOX {V = V} {M = M₀})
 ⟶-≐ˢ-box es P' eM with cast-box⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -336,9 +336,9 @@ cast-sub-handle refl M' N' H' = refl
 -- decomposition commutes with the cast (`listᵛ-cast`).
 
 ⟶-≐ˢ-caseL : ∀ {A D ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-           → {U : toCtx St ⊢V⦂ |List| A}
-           → {M₀ : toCtx St ⊢C⦂ D ‼ ε} → {N₀ : toCtx St ∷ A ∷ |List| A ⊢C⦂ D ‼ ε}
-           → (P' : toCtx St' ⊢C⦂ D ‼ ε)
+           → {U : toCtx St ⊢V⦂ list A}
+           → {M₀ : toCtx St ⊢C⦂ D ! ε} → {N₀ : toCtx St ∷ A ∷ list A ⊢C⦂ D ! ε}
+           → (P' : toCtx St' ⊢C⦂ D ! ε)
            → caseL U `nil M₀ `cons N₀ ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
            → Sim es P' (CASEL {V = U} {M = M₀} {N = N₀})
 ⟶-≐ˢ-caseL es P' eM with cast-caseL⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -352,8 +352,8 @@ cast-sub-handle refl M' N' H' = refl
 
 ⟶-≐ˢ-case+ : ∀ {A B D ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
            → {U : toCtx St ⊢V⦂ A |+| B}
-           → {M₀ : toCtx St ∷ A ⊢C⦂ D ‼ ε} → {N₀ : toCtx St ∷ B ⊢C⦂ D ‼ ε}
-           → (P' : toCtx St' ⊢C⦂ D ‼ ε)
+           → {M₀ : toCtx St ∷ A ⊢C⦂ D ! ε} → {N₀ : toCtx St ∷ B ⊢C⦂ D ! ε}
+           → (P' : toCtx St' ⊢C⦂ D ! ε)
            → case+ U `inl M₀ `inr N₀ ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
            → Sim es P' (CASE+ {V = U} {M = M₀} {N = N₀})
 ⟶-≐ˢ-case+ es P' eM with cast-case+⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -364,10 +364,10 @@ cast-sub-handle refl M' N' H' = refl
              (cast-case+-reduct (sym (toCtx-≐ˢ es)) (injᵛ U') M₀' N₀'))
 
 ⟶-≐ˢ-recL : ∀ {A B ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-          → {U : toCtx St ⊢V⦂ |List| A} → {M₀ : toCtx St ⊢C⦂ B ‼ ε}
-          → {N₀ : (toCtx St ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
+          → {U : toCtx St ⊢V⦂ list A} → {M₀ : toCtx St ⊢C⦂ B ! ε}
+          → {N₀ : (toCtx St ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε}
           → {p : ε ·ₑ ε ≾ₑ ε}
-          → (P' : toCtx St' ⊢C⦂ B ‼ ε)
+          → (P' : toCtx St' ⊢C⦂ B ! ε)
           → recL U M₀ N₀ p ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
           → Sim es P' (RECL {V = U} {M = M₀} {N = N₀} {p = p})
 ⟶-≐ˢ-recL es {p = p} P' eM with cast-recL⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -381,8 +381,8 @@ cast-sub-handle refl M' N' H' = refl
 -- (`cast-cmp-reduct`).
 
 ⟶-≐ˢ-cmp : ∀ {A ⋈} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-         → {U W : toCtx St ⊢V⦂ A} → {et : Eternal A}
-         → (P' : toCtx St' ⊢C⦂ Bool ‼ 𝟏ₑ)
+         → {U W : toCtx St ⊢V⦂ A} → {et : Et A}
+         → (P' : toCtx St' ⊢C⦂ bool ! 𝟏ₑ)
          → cmp ⋈ U W et ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
          → Sim es P' (CMP {⋈ = ⋈} {V = U} {W = W} {et = et})
 ⟶-≐ˢ-cmp {⋈ = ⋈} es {et = et} P' eM with cast-cmp⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -394,8 +394,8 @@ cast-sub-handle refl M' N' H' = refl
 
 ⟶-≐ˢ-match : ∀ {A B D ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
           → {U : toCtx St ⊢V⦂ A |×| B}
-          → {M₀ : toCtx St ∷ A ∷ B ⊢C⦂ D ‼ ε}
-          → (P' : toCtx St' ⊢C⦂ D ‼ ε)
+          → {M₀ : toCtx St ∷ A ∷ B ⊢C⦂ D ! ε}
+          → (P' : toCtx St' ⊢C⦂ D ! ε)
           → (match U `in M₀) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
           → Sim es P' (MATCH {P = U} {M = M₀})
 ⟶-≐ˢ-match es P' eM with cast-match⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -414,8 +414,8 @@ cast-sub-handle refl M' N' H' = refl
 -- mentions the context, so `cast-seq-ret` is what moves the cast past it.
 
 ⟶-≐ˢ-seq-ret : ∀ {A B ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-            → {V : toCtx St ⊢V⦂ A} → {N : toCtx St ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε}
-            → (P' : toCtx St' ⊢C⦂ B ‼ (𝟏ₑ ·ₑ ε))
+            → {V : toCtx St ⊢V⦂ A} → {N : toCtx St ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε}
+            → (P' : toCtx St' ⊢C⦂ B ! (𝟏ₑ ·ₑ ε))
             → (return V ⨟ N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
             → Sim es P' (SEQ-RET {V = V} {N = N})
 ⟶-≐ˢ-seq-ret es P' eM with cast-seq⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -430,12 +430,12 @@ cast-sub-handle refl M' N' H' = refl
 ⟶-≐ˢ-handle-ret : ∀ {A B ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
                → {V : toCtx St ⊢V⦂ A}
                → {H : (op : Op) → (ε' : E) →
-                        toCtx St ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                        toCtx St ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                           ∷ [ ∣ op-grade op ∣ᵉ ]
-                              (type-of-gtype (arity op) ⇒ B ‼ ε')
-                        ⊢C⦂ B ‼ (op-grade op ·ₑ ε')}
-               → {N : toCtx St ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε}
-               → (P' : toCtx St' ⊢C⦂ B ‼ (𝟏ₑ ·ₑ ε))
+                              (⌜ arity op ⌝ᵍ ⇒ B ! ε')
+                        ⊢C⦂ B ! (op-grade op ·ₑ ε')}
+               → {N : toCtx St ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε}
+               → (P' : toCtx St' ⊢C⦂ B ! (𝟏ₑ ·ₑ ε))
                → (handle return V `with H `in N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
                → Sim es P' (HANDLE-RET {V = V} {H = H} {N = N})
 ⟶-≐ˢ-handle-ret es P' eM with cast-handle⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -453,8 +453,8 @@ cast-sub-handle refl M' N' H' = refl
 
 ⟶-≐ˢ-unbox : ∀ {A A₀ D ε ρ ρ'} {St St' : 𝕊 []} → (es : St ≐ˢ St')
           → {x : [ ρ ] A₀ ∈[ ρ' ] toCtx St} → {rel : ρ' ≾ᵣ ρ} → {p : A₀ <:ᵛ A}
-          → {M₀ : toCtx St ∷ A ⊢C⦂ D ‼ ε}
-          → (P' : toCtx St' ⊢C⦂ D ‼ ε)
+          → {M₀ : toCtx St ∷ A ⊢C⦂ D ! ε}
+          → (P' : toCtx St' ⊢C⦂ D ! ε)
           → unbox x rel p M₀ ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
           → Sim es P' (UNBOX {z = x} {rel = rel} {p = p} {M = M₀})
 ⟶-≐ˢ-unbox {St = St} {St' = St'} es {x = x} {rel = rel} {p = p} P' eM
@@ -474,19 +474,19 @@ cast-sub-handle refl M' N' H' = refl
 -- sequencing an operation: the operation floats out, its continuation gaining
 -- the sequel. The reduct is retyped in its effect (`ε-subst`) as well.
 
-ε-subst-≡ : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → {M M' : Γ ⊢C⦂ A ‼ ε}
+ε-subst-≡ : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → {M M' : Γ ⊢C⦂ A ! ε}
           → M ≡ M' → ε-subst e M ≡ ε-subst e M'
 ε-subst-≡ refl eM = eM
 
 cast-seq-op : ∀ {Γ Γ' A B ε ε'} {op : Op} → (e : Γ' ≡ Γ)
-            → (V' : Γ' ⊢V⦂ type-of-gtype (param op))
-            → (M' : Γ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
-                      ⊢C⦂ A ‼ ε)
-            → (N' : Γ' ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
+            → (V' : Γ' ⊢V⦂ ⌜ param op ⌝ᵍ)
+            → (M' : Γ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
+                      ⊢C⦂ A ! ε)
+            → (N' : Γ' ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
             → ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
                 (perform op (castᵛ e V')
                   ((castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ∣ op-grade op ∣ᵉ ⟩
-                                          ∷ type-of-gtype (arity op)) e) M')
+                                          ∷ ⌜ arity op ⌝ᵍ) e) M')
                     ⨟ C-rename
                         (cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
                                      ∘ʳ cong-⟨⟩-ren wk-ren))
@@ -503,11 +503,11 @@ cast-seq-op : ∀ {Γ Γ' A B ε ε'} {op : Op} → (e : Γ' ≡ Γ)
 cast-seq-op refl V' M' N' = refl
 
 ⟶-≐ˢ-seq-op : ∀ {A B ε ε'} {op : Op} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-           → {V : toCtx St ⊢V⦂ type-of-gtype (param op)}
-           → {M₀ : toCtx St ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
-                     ⊢C⦂ A ‼ ε}
-           → {N : toCtx St ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
-           → (P' : toCtx St' ⊢C⦂ B ‼ ((op-grade op ·ₑ ε) ·ₑ ε'))
+           → {V : toCtx St ⊢V⦂ ⌜ param op ⌝ᵍ}
+           → {M₀ : toCtx St ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
+                     ⊢C⦂ A ! ε}
+           → {N : toCtx St ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'}
+           → (P' : toCtx St' ⊢C⦂ B ! ((op-grade op ·ₑ ε) ·ₑ ε'))
            → (perform op V M₀ ⨟ N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
            → Sim es P' (SEQ-OP {V = V} {M = M₀} {N = N})
 ⟶-≐ˢ-seq-op es P' eM with cast-seq⁻ (sym (toCtx-≐ˢ es)) P' eM
@@ -544,29 +544,29 @@ cast-rename-cl refl refl r' M' = refl
 -- The fired clause crosses the barrier by a renaming, so nothing is retyped.
 
 cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
-               → (V' : Γ' ⊢V⦂ type-of-gtype (param op))
-               → (M' : Γ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
-                         ⊢C⦂ A ‼ ε)
+               → (V' : Γ' ⊢V⦂ ⌜ param op ⌝ᵍ)
+               → (M' : Γ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
+                         ⊢C⦂ A ! ε)
                → (H' : (op' : Op) → (ε' : E) →
-                         Γ' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
+                         Γ' ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op' ⌝ᵍ
                            ∷ [ ∣ op-grade op' ∣ᵉ ]
-                               (type-of-gtype (arity op') ⇒ B ‼ ε')
-                         ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
-               → (N' : Γ' ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'')
+                               (⌜ arity op' ⌝ᵍ ⇒ B ! ε')
+                         ⊢C⦂ B ! (op-grade op' ·ₑ ε'))
+               → (N' : Γ' ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'')
                → box _ (lam
                        (handle (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ∣ op-grade op ∣ᵉ ⟩
-                                                      ∷ type-of-gtype (arity op))
+                                                      ∷ ⌜ arity op ⌝ᵍ)
                                             e) M')
                        `with (λ op' ε' →
                                 C-rename
                                   (cong-∷-ren (cong-∷-ren
                                     (barrier-wk-ren ∣ op-grade op ∣ᵉ
-                                                    (type-of-gtype (arity op)))))
+                                                    ⌜ arity op ⌝ᵍ)))
                                   (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩
-                                                         ∷ type-of-gtype (param op')
+                                                         ∷ ⌜ param op' ⌝ᵍ
                                                          ∷ [ ∣ op-grade op' ∣ᵉ ]
-                                                             (type-of-gtype (arity op')
-                                                                ⇒ B ‼ ε'))
+                                                             (⌜ arity op' ⌝ᵍ
+                                                                ⇒ B ! ε'))
                                                e)
                                          (H' op' ε')))
                        `in (C-rename
@@ -576,10 +576,10 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                              (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A)
                                           e) N'))))
                       (C-rename (cong-∷-ren (cong-∷-ren barrier-ren))
-                        (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                        (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                                                ∷ [ ∣ op-grade op ∣ᵉ ]
-                                                   (type-of-gtype (arity op)
-                                                      ⇒ B ‼ (ε ·ₑ ε'')))
+                                                   (⌜ arity op ⌝ᵍ
+                                                      ⇒ B ! (ε ·ₑ ε'')))
                                      e)
                                (H' op (ε ·ₑ ε'')))
                        [ split-∷ split-[] ↦ castᵛ e V' ]c)
@@ -590,7 +590,7 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                                    C-rename
                                      (cong-∷-ren (cong-∷-ren
                                        (barrier-wk-ren ∣ op-grade op ∣ᵉ
-                                                       (type-of-gtype (arity op)))))
+                                                       ⌜ arity op ⌝ᵍ)))
                                      (H' op' ε'))
                           `in (C-rename
                                 (  cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ)
@@ -606,16 +606,16 @@ cast-handle-op refl V' M' H' N' = refl
 -- reduct is a congruence for `_≡_`.
 
 ⟶-≐ˢ-handle-op : ∀ {A B ε ε''} {op : Op} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-              → {V : toCtx St ⊢V⦂ type-of-gtype (param op)}
+              → {V : toCtx St ⊢V⦂ ⌜ param op ⌝ᵍ}
               → {M₀ : toCtx St ⟨ ∣ op-grade op ∣ᵉ ⟩
-                        ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
+                        ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε}
               → {H : (op' : Op) → (ε' : E) →
-                       toCtx St ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
+                       toCtx St ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op' ⌝ᵍ
                          ∷ [ ∣ op-grade op' ∣ᵉ ]
-                             (type-of-gtype (arity op') ⇒ B ‼ ε')
-                       ⊢C⦂ B ‼ (op-grade op' ·ₑ ε')}
-              → {N : toCtx St ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε''}
-              → (P' : toCtx St' ⊢C⦂ B ‼ ((op-grade op ·ₑ ε) ·ₑ ε''))
+                             (⌜ arity op' ⌝ᵍ ⇒ B ! ε')
+                       ⊢C⦂ B ! (op-grade op' ·ₑ ε')}
+              → {N : toCtx St ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε''}
+              → (P' : toCtx St' ⊢C⦂ B ! ((op-grade op ·ₑ ε) ·ₑ ε''))
               → (handle perform op V M₀ `with H `in N)
                   ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
               → Sim es P' (HANDLE-OP {V = V} {M = M₀} {H = H} {N = N})
@@ -639,7 +639,7 @@ cast-handle-op refl V' M' H' N' = refl
               (λ op' ε' →
                  C-rename-cong (cong-∷-ren (cong-∷-ren
                                  (barrier-wk-ren ∣ op-grade op ∣ᵉ
-                                                 (type-of-gtype (arity op)))))
+                                                 ⌜ arity op ⌝ᵍ)))
                                (eH op' ε')))))
         (sub-≡ᶜ (split-∷ split-[]) eV
           (C-rename-cong (cong-∷-ren (cong-∷-ren barrier-ren))
@@ -649,25 +649,25 @@ cast-handle-op refl V' M' H' N' = refl
 -- simulation is passed in, as the recursion supplies it.
 
 ⟶-≐ˢ-handle-step : ∀ {A A₁ B ε₁ ε₂ ε₁'} {St St' St₁ : 𝕊 []} → (es : St ≐ˢ St')
-                → {M : toCtx St ⊢C⦂ A ‼ ε₁}
+                → {M : toCtx St ⊢C⦂ A ! ε₁}
                 → {H : (op : Op) → (ε₃ : E) →
-                         toCtx St ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                         toCtx St ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                            ∷ [ ∣ op-grade op ∣ᵉ ]
-                               (type-of-gtype (arity op) ⇒ B ‼ ε₃)
-                         ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)}
-                → {N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂}
-                → {M₁ : toCtx St₁ ⊢C⦂ A₁ ‼ ε₁'}
-                → (M' : toCtx St' ⊢C⦂ A ‼ ε₁)
+                               (⌜ arity op ⌝ᵍ ⇒ B ! ε₃)
+                         ⊢C⦂ B ! (op-grade op ·ₑ ε₃)}
+                → {N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂}
+                → {M₁ : toCtx St₁ ⊢C⦂ A₁ ! ε₁'}
+                → (M' : toCtx St' ⊢C⦂ A ! ε₁)
                 → (H' : (op : Op) → (ε₃ : E) →
-                          toCtx St' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                          toCtx St' ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                             ∷ [ ∣ op-grade op ∣ᵉ ]
-                                (type-of-gtype (arity op) ⇒ B ‼ ε₃)
-                          ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃))
-                → (N' : toCtx St' ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+                                (⌜ arity op ⌝ᵍ ⇒ B ! ε₃)
+                          ⊢C⦂ B ! (op-grade op ·ₑ ε₃))
+                → (N' : toCtx St' ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
                 → (∀ op ε₃ → H op ε₃
-                     ≡ castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                     ≡ castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                                               ∷ [ ∣ op-grade op ∣ᵉ ]
-                                                  (type-of-gtype (arity op) ⇒ B ‼ ε₃))
+                                                  (⌜ arity op ⌝ᵍ ⇒ B ! ε₃))
                                (sym (toCtx-≐ˢ es)))
                               (H' op ε₃))
                 → N ≡ castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A) (sym (toCtx-≐ˢ es))) N'
@@ -733,9 +733,9 @@ cast-handle-op refl V' M' H' N' = refl
 
 ⟶-≐ˢ : ∀ {A A₁ ε ε₁} {St St' St₁ : 𝕊 []}
     → (es : St ≐ˢ St')
-    → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε}
+    → {M : toCtx St ⊢C⦂ A ! ε} → {M' : toCtx St' ⊢C⦂ A ! ε}
     → M ≡ castᶜ (sym (toCtx-≐ˢ es)) M'
-    → {N : toCtx St₁ ⊢C⦂ A₁ ‼ ε₁}
+    → {N : toCtx St₁ ⊢C⦂ A₁ ! ε₁}
     → (r : ⟨ St , M ⟩ ⟶ ⟨ St₁ , N ⟩)
     -------------------------------
     → Sim es M' r
@@ -813,12 +813,12 @@ cast-handle-op refl V' M' H' N' = refl
 
 ⟶*-≐ˢ : ∀ {A A₁ ε ε₁} {St St' St₁ : 𝕊 []}
      → (es : St ≐ˢ St')
-     → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε}
+     → {M : toCtx St ⊢C⦂ A ! ε} → {M' : toCtx St' ⊢C⦂ A ! ε}
      → M ≡ castᶜ (sym (toCtx-≐ˢ es)) M'
-     → {N : toCtx St₁ ⊢C⦂ A₁ ‼ ε₁}
+     → {N : toCtx St₁ ⊢C⦂ A₁ ! ε₁}
      → ⟨ St , M ⟩ ⟶* ⟨ St₁ , N ⟩
      -------------------------------------------------------------------
-     → Σ[ St₁' ∈ 𝕊 [] ] Σ[ N' ∈ (toCtx St₁' ⊢C⦂ A₁ ‼ ε₁) ]
+     → Σ[ St₁' ∈ 𝕊 [] ] Σ[ N' ∈ (toCtx St₁' ⊢C⦂ A₁ ! ε₁) ]
        Σ[ es₁ ∈ St₁ ≐ˢ St₁' ]
          (⟨ St' , M' ⟩ ⟶* ⟨ St₁' , N' ⟩)
        × (N ≡ castᶜ (sym (toCtx-≐ˢ es₁)) N')

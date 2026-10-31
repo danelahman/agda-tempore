@@ -114,7 +114,7 @@ impatient = toWitnessFalse {a? = consistent? (waiting , brief)} _
 ------------------------------------------------------------------------
 -- A box at the contract, opened after the wait
 
-settled : [] ⊢C⦂ Unit ‼ _
+settled : [] ⊢C⦂ unit ! _
 settled =
   box contract (const 42)    -- ∷ [ contract ] Reading
     (perform read ⋆          -- ⟨ opTime read ⟩ ∷ Reading

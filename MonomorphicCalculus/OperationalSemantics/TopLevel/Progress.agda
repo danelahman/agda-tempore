@@ -31,7 +31,7 @@ module PureTopLevelProgressTheorem (OpSemantics : TopLevelOpSemantics) where
   data TopLevelProgresses : {ε : E}
                           → {S : 𝕊 []}
                           → {A : VType}
-                          → (M : toCtx S ⊢C⦂ A ‼ ε)
+                          → (M : toCtx S ⊢C⦂ A ! ε)
                           → Set where
 
        is-top-level-value : {S : 𝕊 []}
@@ -43,8 +43,8 @@ module PureTopLevelProgressTheorem (OpSemantics : TopLevelOpSemantics) where
        top-level-steps    : ∀ {ε ε'}
                           → {A B : VType}
                           → {S S' : 𝕊 []}
-                          → {M : toCtx S ⊢C⦂ A ‼ ε}
-                          → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
+                          → {M : toCtx S ⊢C⦂ A ! ε}
+                          → {M' : toCtx S' ⊢C⦂ B ! ε'}
                           → (prf : state-grade S' ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ state-grade S ·ᵣ ∣ ε ∣ᵉ)
                           → (t : B <:ᵛ A)
                           → ⟨ S , M ⟩ ⟿ ⟨ S' , M' ⟩
@@ -53,7 +53,7 @@ module PureTopLevelProgressTheorem (OpSemantics : TopLevelOpSemantics) where
 
   -- Top-level progress theorem statement
   
-  top-level-progress : ∀ {A ε} → {S : 𝕊 []} → (M : toCtx S ⊢C⦂ A ‼ ε) → TopLevelProgresses M
+  top-level-progress : ∀ {A ε} → {S : 𝕊 []} → (M : toCtx S ⊢C⦂ A ! ε) → TopLevelProgresses M
   top-level-progress {S = S} M with progress M
   ... | is-value =
     is-top-level-value

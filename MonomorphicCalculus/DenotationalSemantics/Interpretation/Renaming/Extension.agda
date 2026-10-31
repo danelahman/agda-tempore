@@ -104,7 +104,7 @@ ext-++ᶜ Γ Γ' g Θ (Δ ⟨ ρ ⟩) =
 -- variable (relaxed back to the original grade) equals projecting the
 -- original variable and reindexing the environment by `⟦ r ⟧ʳ`.
 
-var-proj-nat : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (x : A ∈[ ρ ] Γ) → (¬et : ¬ Eternal A)
+var-proj-nat : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (x : A ∈[ ρ ] Γ) → (¬et : ¬ Et A)
              → ⟨⟩-≤ (proj₁ (proj₂ (var-rename r x)) ¬et)
                  ∘ᵐ var-proj (proj₂ (proj₂ (var-rename r x)))
                ≈ᵐ var-proj x ∘ᵐ ⟦ r ⟧ʳ
@@ -197,7 +197,7 @@ var-proj-nat (cong-⟨⟩-ren r) (Tl-⟨⟩ x) ¬et with var-rename r x | var-pr
 -- `⟨⟩-≤` that `var-proj-nat` carries is absorbed; proved by induction on the
 -- renaming using the eternal-extraction algebra laws.
 
-var-proj-nat-eternal : ∀ {Γ Γ' A ρ} → (et : Eternal A) → (r : Ren [] Γ' Γ) → (x : A ∈[ ρ ] Γ)
+var-proj-nat-eternal : ∀ {Γ Γ' A ρ} → (et : Et A) → (r : Ren [] Γ' Γ) → (x : A ∈[ ρ ] Γ)
     → eternalᵛ-extᵉ et {proj₁ (var-rename r x)} ∘ᵐ var-proj (proj₂ (proj₂ (var-rename r x)))
       ≈ᵐ (eternalᵛ-extᵉ et {ρ} ∘ᵐ var-proj x) ∘ᵐ ⟦ r ⟧ʳ
 var-proj-nat-eternal et id-ren x =
@@ -312,7 +312,7 @@ var-proj-nat-eternal et (⟨⟩-ext-ctx _ ecΓ) x =
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
             (ec-var-alg ecΓ et x))))
 
-var-morphism-nat : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ) → (x : A ∈[ ρ ] Γ)
+var-morphism-nat : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ) → (x : A ∈[ ρ ] Γ)
                  → var-morphism (λ q → ≾ᵣ-trans (proj₁ (proj₂ (var-rename r x)) q) (f q))
                                 (proj₂ (proj₂ (var-rename r x)))
                    ≈ᵐ var-morphism f x ∘ᵐ ⟦ r ⟧ʳ

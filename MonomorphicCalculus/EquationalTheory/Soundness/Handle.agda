@@ -76,10 +76,10 @@ open import MonomorphicCalculus.EquationalTheory.Soundness.Seq S Cat Fut Pst Adj
 sound-handle-return : ∀ {Γ A B ε}
   → (V : Γ ⊢V⦂ A)
   → (H : (op : Op) → (ε'' : E)
-       → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-            ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-  → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+       → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+            ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+         ⊢C⦂ B ! (op-grade op ·ₑ ε''))
+  → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε)
   → Soundᶜ== (handle-return V H N)
 sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
     handle-in-β (return V) H N pV pN pH uH
@@ -125,17 +125,17 @@ module Reindex
          (g : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟨ ⊤ᵣ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ)
          (r≈ : ⟦ r ⟧ʳ ≈ᵐ ⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ g)
          (H : (op : Op) → (ε'' : E)
-            → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                 ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-              ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+            → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                 ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+              ⊢C⦂ B ! (op-grade op ·ₑ ε''))
          (pH : ∀ op ε'' → Paramᶜ (H op ε''))
          (uH : EffUniformʰ {Γ} H pH)
        where
 
   Hᵣ : (op : Op) → (ε'' : E)
-     → Γ' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-          ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-       ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')
+     → Γ' ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+          ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+       ⊢C⦂ B ! (op-grade op ·ₑ ε'')
   Hᵣ op ε'' = C-rename (cong-∷-ren (cong-∷-ren r)) (H op ε'')
 
   pHᵣ : ∀ op ε'' → Paramᶜ (Hᵣ op ε'')
@@ -195,7 +195,7 @@ module Reindex
 -- handler value, which is weakened past it.
 
 handle-wk : ∀ {Γ A B C ε ε'}
-          → (W : Γ ⊢V⦂ (B ‼ ε) ⇛ (C ‼ ε')) → (pW : Paramᵛ W)
+          → (W : Γ ⊢V⦂ (B ! ε) ⇛ (C ! ε')) → (pW : Paramᵛ W)
           → (pW' : Paramᵛ (V-rename (wk-ren {Δ = Γ} {A = A}) W))
           → (m : ⟦ Γ ∷ A ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ B ⟧ᵛ ε)
           → (g : ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ∷ A ⟧ᶜᵗˣ) → fstᵐ ∘ᵐ g ≈ᵐ idᵐ
@@ -213,8 +213,8 @@ handle-wk W pW pW' m g fg =
 
 sound-handle-box : ∀ {Γ A B C ρ ε ε'}
   → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
-  → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
-  → (W : Γ ⊢V⦂ (B ‼ ε) ⇛ (C ‼ ε'))
+  → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ! ε)
+  → (W : Γ ⊢V⦂ (B ! ε) ⇛ (C ! ε'))
   → Soundᶜ== (handle-box V M W)
 sound-handle-box {ρ = ρ} V M W ((pV , pM) , pW) (pV₂ , pM₂ , pW₂) =
     handle-wk W pW pW₂ (⟦ M ⟧ᶜᵗ pM) gb (⟨⟩ᵐ-fstᵐ _ _)
@@ -227,8 +227,8 @@ sound-handle-unbox : ∀ {Γ A A₀ B C ρ₀ ρ' ε ε'}
   → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ)
   → (rel : ρ' ≾ᵣ ρ₀)
   → (w : A₀ <:ᵛ A)
-  → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
-  → (V : Γ ⊢V⦂ (B ‼ ε) ⇛ (C ‼ ε'))
+  → (M : Γ ∷ A ⊢C⦂ B ! ε)
+  → (V : Γ ⊢V⦂ (B ! ε) ⇛ (C ! ε'))
   → Soundᶜ== (handle-unbox x rel w M V)
 sound-handle-unbox x rel w M V (pM , pV) (pM₂ , pV₂) =
     handle-wk V pV pV₂ (⟦ M ⟧ᶜᵗ pM) gu (⟨⟩ᵐ-fstᵐ _ _)
@@ -241,7 +241,7 @@ sound-handle-unbox x rel w M V (pM , pV) (pM₂ , pV₂) =
 
 private
   -- by a lemma, so that `⟦ delay τ M ⟧ᶜᵗ` is unfolded at a variable `M`
-  delay-congᵗ : ∀ {Γ A ε τ} (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε) (pM : Paramᶜ M) {f}
+  delay-congᵗ : ∀ {Γ A ε τ} (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε) (pM : Paramᶜ M) {f}
               → ⟦ M ⟧ᶜᵗ pM ≈ᵐ f
               → ⟦ delay τ M ⟧ᶜᵗ pM ≈ᵐ delayᵀ τ ∘ᵐ [ ιᵣ τ ]ᶠ f ∘ᵐ η⊣
   delay-congᵗ M pM eq = ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ eq))
@@ -249,14 +249,14 @@ private
   -- The reduct of `handle-delay` denotes the delayed fold. The equation fixes
   -- the reduct's return clause and handler, so that they are the rule's own
   -- terms.
-  handle-delay-rhs : ∀ {Γ A B τ ε ε' ε₀} {L : Γ ⊢C⦂ B ‼ ε₀}
+  handle-delay-rhs : ∀ {Γ A B τ ε ε' ε₀} {L : Γ ⊢C⦂ B ! ε₀}
     → (e : ιₑ τ ·ₑ (ε ·ₑ ε') ≃ₑ ε₀)
-    → (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε)
+    → (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε)
     → {H : (op : Op) → (ε'' : E)
-         → Γ ⟨ ιᵣ τ ⟩ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-              ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-           ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
-    → {N : Γ ⟨ ιᵣ τ ⟩ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+         → Γ ⟨ ιᵣ τ ⟩ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+              ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+           ⊢C⦂ B ! (op-grade op ·ₑ ε'')}
+    → {N : Γ ⟨ ιᵣ τ ⟩ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'}
     → Γ ⊢C⦂ L == ε-≃ e (delay τ (handle M `with handler N H))
     → (p : Paramᶜ (ε-≃ e (delay τ (handle M `with handler N H))))
     → (pM : Paramᶜ M) → (pN : Paramᶜ N)
@@ -275,12 +275,12 @@ private
                   (handle-in-β M H N pM pN pH uH))
 
 sound-handle-delay : ∀ {Γ A B τ ε ε'}
-  → (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε)
+  → (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε)
   → (H : (op : Op) → (ε'' : E)
-       → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-            ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-  → (N : Γ ⟨ ∣ ιₑ τ ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
+       → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+            ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+         ⊢C⦂ B ! (op-grade op ·ₑ ε''))
+  → (N : Γ ⟨ ∣ ιₑ τ ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
   → Soundᶜ== (handle-delay M H N)
 sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
     handle-in-β (delay τ M) H N pM pN pH uH

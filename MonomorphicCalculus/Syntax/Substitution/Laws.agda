@@ -56,8 +56,8 @@ wkˢ {B = B} Θ = ⌜ cong-ren {Γ'' = Θ} (wk-ren {A = B}) ⌝ˢ
 
 sub-wk-var : ∀ {Γ B A ρ} → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
            → (x : A ∈[ ρ ] (Γ ++ᶜ Θ))
-           → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
-           → (f' : ¬ Eternal A
+           → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
+           → (f' : ¬ Et A
                  → proj₁ (var-img (cong-ren {Γ'' = Θ} (wk-ren {A = B})) x) ≾ᵣ 𝟏ᵣ)
            → sub-var₀ (cong-sub₀ {Γ'' = Θ} (val-sub W))
                       (proj₂ (var-img (cong-ren {Γ'' = Θ} (wk-ren {A = B})) x)) f'
@@ -129,7 +129,7 @@ val-sub-tgt-ren r (subV V ([ _ ]ₛ _)) = val-sub-tgt-ren r V
       → Interchange (val-sub (V-rename r W)) (cong-∷-ren r) r (val-sub W)
 ⋈-val {Γ} {Γ'} {B} r W = mk⋈ goᵛ goᵗ
   where
-    goᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] (Γ' ∷ B)) → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+    goᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] (Γ' ∷ B)) → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
         → V-sub₀ (val-sub (V-rename r W)) (V-rename (cong-∷-ren r) (var f x))
         ≡ V-rename r (V-sub₀ (val-sub W) (var f x))
     goᵛ Hd       f = refl
@@ -188,7 +188,7 @@ sub-swap-≐ˢ : ∀ {Γ B₁ B₂} → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ 
             → swap-innerˢ W₁ W₂ ≐ˢ swap-outerˢ W₁ W₂
 sub-swap-≐ˢ {Γ} {B₁} {B₂} W₁ W₂ = mk≐ˢ goᵛ goᵗ
   where
-    goᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] ((Γ ∷ B₁) ∷ B₂)) → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+    goᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] ((Γ ∷ B₁) ∷ B₂)) → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
         → sub-var (swap-innerˢ W₁ W₂) x f ≡ sub-var (swap-outerˢ W₁ W₂) x f
     goᵛ Hd              f = refl
     goᵛ (Tl-∷ Hd)       f = sym (sub-wk-≡ᵛ [] (V-sub₀ (val-sub W₁) W₂) W₁)

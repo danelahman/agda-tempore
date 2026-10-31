@@ -64,7 +64,7 @@ a-unit = [ # 1 ,+∞⟩
 -- opened after a reading and a wait of a unit: at least a unit and a
 -- quarter has passed
 
-settled : [] ⊢C⦂ Unit ‼ _
+settled : [] ⊢C⦂ unit ! _
 settled =
   box a-unit (const 42)      -- ∷ [ a-unit ] Reading
     (perform read ⋆          -- ⟨ ∣ opTime read ∣ ⟩ ∷ Reading

@@ -86,19 +86,19 @@ private
     walkᵛ : ∀ {Θ} → OVType Θ → 𝔹
     walkᵛ (tvar α)  = walkᶠ α
     walkᵛ (Base b)  = true
-    walkᵛ Unit      = true
-    walkᵛ Bool      = true
-    walkᵛ Nat       = true
+    walkᵛ unit      = true
+    walkᵛ bool      = true
+    walkᵛ nat       = true
     walkᵛ (A |×| B) = walkᵛ A && walkᵛ B
     walkᵛ (A |+| B) = walkᵛ A && walkᵛ B
-    walkᵛ (|List| A) = walkᵛ A
-    walkᵛ Empty     = true
+    walkᵛ (list A)  = walkᵛ A
+    walkᵛ empty     = true
     walkᵛ (A ⇒ C)   = walkᵛ A && walkᶜ C
     walkᵛ (C ⇛ D)   = walkᶜ C && walkᶜ D
     walkᵛ ([ ρ ] A) = walkʳ ρ && walkᵛ A
 
     walkᶜ : ∀ {Θ} → OCType Θ → 𝔹
-    walkᶜ (A ‼ ε) = walkᵛ A && walkᵉ ε
+    walkᶜ (A ! ε) = walkᵛ A && walkᵉ ε
 
   walkˡ : ∀ {A : Set} → (A → 𝔹) → List A → 𝔹
   walkˡ f []       = true

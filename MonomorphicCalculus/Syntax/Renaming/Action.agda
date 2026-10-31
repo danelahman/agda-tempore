@@ -38,7 +38,7 @@ open import MonomorphicCalculus.Syntax.Types     S
 var-rename : ∀ {Δ Δ' A ρ}
            → Ren [] Δ Δ'
            → A ∈[ ρ ] Δ'
-           → Σ[ ρ' ∈ R ] ((¬ Eternal A → ρ' ≾ᵣ ρ) × A ∈[ ρ' ] Δ)
+           → Σ[ ρ' ∈ R ] ((¬ Et A → ρ' ≾ᵣ ρ) × A ∈[ ρ' ] Δ)
 
 var-rename id-ren x =
   _ , (λ _ → ≾ᵣ-refl) , x

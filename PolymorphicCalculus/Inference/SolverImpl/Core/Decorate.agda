@@ -49,10 +49,10 @@ decorate : ∀ {m} → (Ω : Scope) → Skel m
          → Σ[ Ω' ∈ Scope ] (Subst Ω Ω' × OVType Ω')
 decorate Ω (svar γ)  = Ω +ty , wkˢᵗ , tvar (newᵗ {Ω})
 decorate Ω (sBase b) = Ω , idˢ , Base b
-decorate Ω sUnit     = Ω , idˢ , Unit
-decorate Ω sBool     = Ω , idˢ , Bool
-decorate Ω sNat      = Ω , idˢ , Nat
-decorate Ω sEmpty    = Ω , idˢ , Empty
+decorate Ω sUnit     = Ω , idˢ , unit
+decorate Ω sBool     = Ω , idˢ , bool
+decorate Ω sNat      = Ω , idˢ , nat
+decorate Ω sEmpty    = Ω , idˢ , empty
 decorate Ω (t s× u) with decorate Ω t
 ... | Ω₁ , w₁ , A with decorate Ω₁ u
 ...   | Ω₂ , w₂ , B = Ω₂ , w₁ ⨟ˢ w₂ , (A [ w₂ ]ᵛ |×| B)
@@ -60,18 +60,18 @@ decorate Ω (t s+ u) with decorate Ω t
 ... | Ω₁ , w₁ , A with decorate Ω₁ u
 ...   | Ω₂ , w₂ , B = Ω₂ , w₁ ⨟ˢ w₂ , (A [ w₂ ]ᵛ |+| B)
 decorate Ω (sList t) with decorate Ω t
-... | Ω₁ , w₁ , A = Ω₁ , w₁ , |List| A
+... | Ω₁ , w₁ , A = Ω₁ , w₁ , list A
 decorate Ω (t s⇒ u) with decorate Ω t
 ... | Ω₁ , w₁ , A with decorate Ω₁ u
 ...   | Ω₂ , w₂ , B =
         Ω₂ +e , (w₁ ⨟ˢ w₂ ⨟ˢ wkˢᵉ) ,
-        (wkᵉ-v (A [ w₂ ]ᵛ) ⇒ (wkᵉ-v B ‼ evar (newᵉ {Ω₂})))
+        (wkᵉ-v (A [ w₂ ]ᵛ) ⇒ (wkᵉ-v B ! evar (newᵉ {Ω₂})))
 decorate Ω (t s⇛ u) with decorate Ω t
 ... | Ω₁ , w₁ , A with decorate Ω₁ u
 ...   | Ω₂ , w₂ , B =
         Ω₂ +e +e , (w₁ ⨟ˢ w₂ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ) ,
-        (wkᵉ-v (wkᵉ-v (A [ w₂ ]ᵛ)) ‼ wkᵉ-e (evar (newᵉ {Ω₂}))
-          ⇛ wkᵉ-v (wkᵉ-v B) ‼ evar (newᵉ {Ω₂ +e}))
+        (wkᵉ-v (wkᵉ-v (A [ w₂ ]ᵛ)) ! wkᵉ-e (evar (newᵉ {Ω₂}))
+          ⇛ wkᵉ-v (wkᵉ-v B) ! evar (newᵉ {Ω₂ +e}))
 decorate Ω (sBox t) with decorate Ω t
 ... | Ω₁ , w₁ , A = Ω₁ +r , (w₁ ⨟ˢ wkˢʳ) , ([ rvar (newʳ {Ω₁}) ] wkʳ-v A)
 

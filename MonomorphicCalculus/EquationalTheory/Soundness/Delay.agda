@@ -63,7 +63,7 @@ open import MonomorphicCalculus.EquationalTheory.Soundness.Seq S Cat Fut Pst Adj
 
 -- `delay 0ᴰ M` is `M` with its lock, unit-graded at `0ᴰ`, discarded.
 
-sound-delay-zero : ∀ {Γ A ε} → (M : Γ ⟨ ιᵣ 0ᴰ ⟩ ⊢C⦂ A ‼ ε)
+sound-delay-zero : ∀ {Γ A ε} → (M : Γ ⟨ ιᵣ 0ᴰ ⟩ ⊢C⦂ A ! ε)
                  → Soundᶜ== (delay-zero M)
 sound-delay-zero {Γ} {A} {ε} M pM pR =
     ∘ᵐ-congˡ delayᵀ-zero
@@ -89,7 +89,7 @@ sound-delay-zero {Γ} {A} {ε} M pM pR =
 -- `M` occurs renamed on the left and under an `ε-subst` on the right, so its
 -- own certificate comes in separately (the axiom's `Midᶜ` payload).
 
-sound-delay-delay : ∀ {Γ A τ₁ τ₂ ε} → (M : Γ ⟨ ιᵣ (τ₁ +ᴰ τ₂) ⟩ ⊢C⦂ A ‼ ε)
+sound-delay-delay : ∀ {Γ A τ₁ τ₂ ε} → (M : Γ ⟨ ιᵣ (τ₁ +ᴰ τ₂) ⟩ ⊢C⦂ A ! ε)
                   → Paramᶜ M → Soundᶜ== (delay-delay {τ₁ = τ₁} {τ₂ = τ₂} M)
 sound-delay-delay {Γ} {A} {τ₁} {τ₂} {ε} M pM pL pR =
     ⟦⟧ᶜᵗ-irr (delay τ₁ (delay τ₂ (C-rename r M))) pL (renᶜ r M pM)

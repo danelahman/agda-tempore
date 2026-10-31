@@ -52,8 +52,8 @@ open import MonomorphicCalculus.Syntax.Substitution.At                S
 Dcl : VType → Op → E → Ctx
 Dcl D op ε'' =
   [] ⟨ ⊤ᵣ ⟩
-     ∷ type-of-gtype (param op)
-     ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ D ‼ ε'')
+     ∷ ⌜ param op ⌝ᵍ
+     ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ D ! ε'')
 
 -- Every renaming reaching a clause comes out as an `eq-ren`-conjugated core;
 -- the helpers below fuse nested conjugations, extend one by a suffix, and turn

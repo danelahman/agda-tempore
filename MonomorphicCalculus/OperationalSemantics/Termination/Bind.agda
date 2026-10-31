@@ -50,8 +50,8 @@ open import MonomorphicCalculus.Syntax.Substitution.Subsumption  Spec
 -- which is what the recursive call is handed.
 
 seq-CRed : ∀ {s A B ε₁ ε₂} {e : shapeᵛ A ≡ s} {St : 𝕊 []}
-         → {M : toCtx St ⊢C⦂ A ‼ ε₁}
-         → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+         → {M : toCtx St ⊢C⦂ A ! ε₁}
+         → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
          → CRedˢ' s e ε₁ St M
          → (∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ ∣ ε₁ ∣ᵉ ] St₁)
               → (V : toCtx St₁ ⊢V⦂ A) → VRed A St₁ V
@@ -126,7 +126,7 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
         (cred-op refl ε* pW resump)))
   where
     ρₒ  = ∣ op-grade op ∣ᵉ
-    Ar  = type-of-gtype (arity op)
+    Ar  = ⌜ arity op ⌝ᵍ
     E₀  = steps-extends-state rs
     b₀  = steps-grade-≾ rs
     srs = suc-comp-ren E₀ b₀

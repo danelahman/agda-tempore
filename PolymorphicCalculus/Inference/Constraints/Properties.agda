@@ -47,7 +47,7 @@ open import PolymorphicCalculus.Inference.Constraints.Satisfaction S
   subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) ([≐]ʳ p ρ) ([≐]ʳ p ρ') s
 ⊨-resp-≐ˢ {Q = Q} p (ε ≾̂ₑᶜ ε')   s        =
   subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) ([≐]ᵉ p ε) ([≐]ᵉ p ε') s
-⊨-resp-≐ˢ {Q = Q} p (Etᶜ A)      s        = subst (Q ⊩ᴱ_) ([≐]ᵛ p A) s
+⊨-resp-≐ˢ {Q = Q} p (Etᶜ A)      s        = subst (Q ⊩Et_) ([≐]ᵛ p A) s
 ⊨-resp-≐ˢ {Q = Q} p (Et∨≾ᵘ A ρ)  s        =
   subst₂ (VarOK Q) ([≐]ᵛ p A) ([≐]ʳ p ρ) s
 ⊨-resp-≐ˢ p (∃ᵗ C)               (B , s)  = B , ⊨-resp-≐ˢ (≐ˢ-,ᵗ p B) C s
@@ -100,7 +100,7 @@ private
 ⊨-mono {σ = σ} {δ = δ} {Q' = Q'} h (ε ≾̂ₑᶜ ε') s =
   subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε σ δ) ([⨟]ᵉ ε' σ δ) (⊩-substₑ h s)
 ⊨-mono {σ = σ} {δ = δ} {Q' = Q'} h (Etᶜ A) s =
-  subst (Q' ⊩ᴱ_) ([⨟]ᵛ A σ δ) (⊩ᴱ-subst h s)
+  subst (Q' ⊩Et_) ([⨟]ᵛ A σ δ) (⊩Et-subst h s)
 ⊨-mono {σ = σ} {δ = δ} {Q' = Q'} h (Et∨≾ᵘ A ρ) s =
   subst₂ (VarOK Q') ([⨟]ᵛ A σ δ) ([⨟]ʳ ρ σ δ) (VarOK-subst h s)
 ⊨-mono {σ = σ} {δ = δ} h (∃ᵗ C) (B , s) =
@@ -127,7 +127,7 @@ private
 ⊨-subst {δ = δ} {σ = σ} {Q = Q} (ε ≾̂ₑᶜ ε') s =
   subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([⨟]ᵉ ε δ σ)) (sym ([⨟]ᵉ ε' δ σ)) s
 ⊨-subst {δ = δ} {σ = σ} {Q = Q} (Etᶜ A) s =
-  subst (Q ⊩ᴱ_) (sym ([⨟]ᵛ A δ σ)) s
+  subst (Q ⊩Et_) (sym ([⨟]ᵛ A δ σ)) s
 ⊨-subst {δ = δ} {σ = σ} {Q = Q} (Et∨≾ᵘ A ρ) s =
   subst₂ (VarOK Q) (sym ([⨟]ᵛ A δ σ)) (sym ([⨟]ʳ ρ δ σ)) s
 ⊨-subst {δ = δ} {σ = σ} (∃ᵗ C) (B , s) =
@@ -152,7 +152,7 @@ private
 ⊨-subst⁻ {δ = δ} {σ = σ} {Q = Q} (ε ≾̂ₑᶜ ε') s =
   subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε δ σ) ([⨟]ᵉ ε' δ σ) s
 ⊨-subst⁻ {δ = δ} {σ = σ} {Q = Q} (Etᶜ A) s =
-  subst (Q ⊩ᴱ_) ([⨟]ᵛ A δ σ) s
+  subst (Q ⊩Et_) ([⨟]ᵛ A δ σ) s
 ⊨-subst⁻ {δ = δ} {σ = σ} {Q = Q} (Et∨≾ᵘ A ρ) s =
   subst₂ (VarOK Q) ([⨟]ᵛ A δ σ) ([⨟]ʳ ρ δ σ) s
 ⊨-subst⁻ {δ = δ} {σ = σ} (∃ᵗ C) (B , s) =

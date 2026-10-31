@@ -39,11 +39,11 @@ record GroundTypes (Cat : Category) (Fut : Future Cat RGrade) : Set₁ where
 
   ⟦_⟧ᵍ : GType → Obj
   ⟦ Base b     ⟧ᵍ = ⟦ b ⟧ᵇ
-  ⟦ Unit       ⟧ᵍ = 𝟙ᵐ
-  ⟦ Bool       ⟧ᵍ = 𝔹ᵐ
-  ⟦ Nat        ⟧ᵍ = ℕᵐ
-  ⟦ Empty      ⟧ᵍ = 𝟘ᵐ
+  ⟦ unit       ⟧ᵍ = 𝟙ᵐ
+  ⟦ bool       ⟧ᵍ = 𝔹ᵐ
+  ⟦ nat        ⟧ᵍ = ℕᵐ
+  ⟦ empty      ⟧ᵍ = 𝟘ᵐ
   ⟦ G₁ |×|ᵍ G₂ ⟧ᵍ = ⟦ G₁ ⟧ᵍ ×ᵐ ⟦ G₂ ⟧ᵍ
   ⟦ G₁ |+|ᵍ G₂ ⟧ᵍ = ⟦ G₁ ⟧ᵍ +ᵐ ⟦ G₂ ⟧ᵍ
-  ⟦ |List|ᵍ G  ⟧ᵍ = Listᵐ ⟦ G ⟧ᵍ
+  ⟦ listᵍ G    ⟧ᵍ = Listᵐ ⟦ G ⟧ᵍ
   ⟦ [ ρ ]ᵍ G   ⟧ᵍ = [ ρ ]ᵒ ⟦ G ⟧ᵍ

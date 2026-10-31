@@ -62,52 +62,52 @@ private
 
 -- The embedded data are parametric
 
-param-⌈⌉ : ∀ {Γ A} → (et : Eternal A) → (d : ⟪ A ⟫) → Paramᵛ {Γ} (⌈ et ⌉ d)
+param-⌈⌉ : ∀ {Γ A} → (et : Et A) → (d : ⟪ A ⟫) → Paramᵛ {Γ} (⌈ et ⌉ d)
 param-⌈⌉ (Baseₑ _)      _        = tt
-param-⌈⌉ Unitₑ          _        = tt
-param-⌈⌉ Boolₑ          true     = tt
-param-⌈⌉ Boolₑ          false    = tt
-param-⌈⌉ Natₑ           zero     = tt
-param-⌈⌉ Natₑ           (suc n)  = param-⌈⌉ Natₑ n
+param-⌈⌉ unitₑ          _        = tt
+param-⌈⌉ boolₑ          true     = tt
+param-⌈⌉ boolₑ          false    = tt
+param-⌈⌉ natₑ           zero     = tt
+param-⌈⌉ natₑ           (suc n)  = param-⌈⌉ natₑ n
 param-⌈⌉ (et₁ |×|ₑ et₂) (x , y)  = param-⌈⌉ et₁ x , param-⌈⌉ et₂ y
 param-⌈⌉ (et₁ |+|ₑ et₂) (inj₁ x) = param-⌈⌉ et₁ x
 param-⌈⌉ (et₁ |+|ₑ et₂) (inj₂ y) = param-⌈⌉ et₂ y
-param-⌈⌉ (|List|ₑ et)   []       = tt
-param-⌈⌉ (|List|ₑ et)   (x ∷ xs) = param-⌈⌉ et x , param-⌈⌉ (|List|ₑ et) xs
-param-⌈⌉ Emptyₑ         ()
+param-⌈⌉ (listₑ et)     []       = tt
+param-⌈⌉ (listₑ et)     (x ∷ xs) = param-⌈⌉ et x , param-⌈⌉ (listₑ et) xs
+param-⌈⌉ emptyₑ         ()
 
 -- An embedded datum denotes its point
 
-⟦⌈⌉⟧ : ∀ {Γ A} → (et : Eternal A) → (d : ⟪ A ⟫)
+⟦⌈⌉⟧ : ∀ {Γ A} → (et : Et A) → (d : ⟪ A ⟫)
      → ⟦ ⌈_⌉ {Γ} et d ⟧ᵛᵗ (param-⌈⌉ et d) ≈ᵐ ⌜ et ⌝ᵈ d ∘ᵐ terminalᵐ
 ⟦⌈⌉⟧ (Baseₑ _)      _        = ≈ᵐ-refl
-⟦⌈⌉⟧ Unitₑ          _        = ≈ᵐ-sym terminalᵐ-unique
-⟦⌈⌉⟧ Boolₑ          true     = ≈ᵐ-refl
-⟦⌈⌉⟧ Boolₑ          false    = ≈ᵐ-refl
-⟦⌈⌉⟧ Natₑ           zero     = ≈ᵐ-refl
-⟦⌈⌉⟧ Natₑ           (suc n)  = ∘ᵐ-congʳ (⟦⌈⌉⟧ Natₑ n) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+⟦⌈⌉⟧ unitₑ          _        = ≈ᵐ-sym terminalᵐ-unique
+⟦⌈⌉⟧ boolₑ          true     = ≈ᵐ-refl
+⟦⌈⌉⟧ boolₑ          false    = ≈ᵐ-refl
+⟦⌈⌉⟧ natₑ           zero     = ≈ᵐ-refl
+⟦⌈⌉⟧ natₑ           (suc n)  = ∘ᵐ-congʳ (⟦⌈⌉⟧ natₑ n) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 ⟦⌈⌉⟧ (et₁ |×|ₑ et₂) (x , y)  =
   ⟨ ⟦⌈⌉⟧ et₁ x , ⟦⌈⌉⟧ et₂ y ⟩ᵐ-cong ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)
 ⟦⌈⌉⟧ (et₁ |+|ₑ et₂) (inj₁ x) = ∘ᵐ-congʳ (⟦⌈⌉⟧ et₁ x) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 ⟦⌈⌉⟧ (et₁ |+|ₑ et₂) (inj₂ y) = ∘ᵐ-congʳ (⟦⌈⌉⟧ et₂ y) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-⟦⌈⌉⟧ (|List|ₑ et)   []       = ≈ᵐ-refl
-⟦⌈⌉⟧ (|List|ₑ et)   (x ∷ xs) =
-    ∘ᵐ-congʳ (⟨ ⟦⌈⌉⟧ et x , ⟦⌈⌉⟧ (|List|ₑ et) xs ⟩ᵐ-cong ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
+⟦⌈⌉⟧ (listₑ et)     []       = ≈ᵐ-refl
+⟦⌈⌉⟧ (listₑ et)     (x ∷ xs) =
+    ∘ᵐ-congʳ (⟨ ⟦⌈⌉⟧ et x , ⟦⌈⌉⟧ (listₑ et) xs ⟩ᵐ-cong ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-⟦⌈⌉⟧ Emptyₑ         ()
+⟦⌈⌉⟧ emptyₑ         ()
 
 -- A comparison of values denoting data's points returns the relation's
 -- truth on the data's order.
 
-sound-cmp : ∀ {Γ A} → (⋈ : Cmp) → (et : Eternal A) → (V W : Γ ⊢V⦂ A)
+sound-cmp : ∀ {Γ A} → (⋈ : Cmp) → (et : Et A) → (V W : Γ ⊢V⦂ A)
           → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (d e : ⟪ A ⟫)
           → ⟦ V ⟧ᵛᵗ pV ≈ᵐ ⌜ et ⌝ᵈ d ∘ᵐ terminalᵐ
           → ⟦ W ⟧ᵛᵗ pW ≈ᵐ ⌜ et ⌝ᵈ e ∘ᵐ terminalᵐ
           → ⟦ cmp ⋈ V W et ⟧ᶜᵗ (pV , pW)
             ≈ᵐ ⟦ return {Γ} ⌈ holds ⋈ (compareᵈ et d e) ⌉ᵇ ⟧ᶜᵗ
-                 (param-⌈⌉ Boolₑ (holds ⋈ (compareᵈ et d e)))
+                 (param-⌈⌉ boolₑ (holds ⋈ (compareᵈ et d e)))
 sound-cmp ⋈ et V W pV pW d e eV eW =
     ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ eV , eW ⟩ᵐ-cong ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (cmpᵐ-pt et d e)))
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (holdsᵐ-pt ⋈ (compareᵈ et d e)))
-  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟦⌈⌉⟧ Boolₑ (holds ⋈ (compareᵈ et d e))))
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟦⌈⌉⟧ boolₑ (holds ⋈ (compareᵈ et d e))))

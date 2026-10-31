@@ -50,7 +50,7 @@ hit-⟨⟩-img p y = cong (var-img′ (⟨⟩-≤-ren p)) (⟨⟩-η⁻¹-img y)
 -- An eternal extension is natural: it builds only variables, constants, `⋆`,
 -- booleans, pairs and injections, so a renaming passes through it.
 
-eternal-val-ext-ren : ∀ {Γ Γ' A ρ} → (et : Eternal A) → (r : Ren [] Γ Γ')
+eternal-val-ext-ren : ∀ {Γ Γ' A ρ} → (et : Et A) → (r : Ren [] Γ Γ')
                     → (V : Γ' ⊢V⦂ A)
                     → V-rename (cong-⟨⟩-ren {ρ = ρ} r) (eternal-val-ext et V)
                     ≡ eternal-val-ext et (V-rename r V)
@@ -69,8 +69,8 @@ eternal-val-ext-ren (et₁ |+|ₑ _)   r (inl V)     =
 eternal-val-ext-ren (_ |+|ₑ et₂)   r (inr V)     =
   cong inr (eternal-val-ext-ren et₂ r V)
 eternal-val-ext-ren et             r nil         = refl
-eternal-val-ext-ren (|List|ₑ et)   r (cons V W)  =
-  cong₂ cons (eternal-val-ext-ren et r V) (eternal-val-ext-ren (|List|ₑ et) r W)
+eternal-val-ext-ren (listₑ et)     r (cons V W)  =
+  cong₂ cons (eternal-val-ext-ren et r V) (eternal-val-ext-ren (listₑ et) r W)
 eternal-val-ext-ren et             r (subV V p) =
   cong (λ W → subV W p) (eternal-val-ext-ren (<:ᵛ-eternalˡ p et) r V)
 
@@ -166,16 +166,16 @@ mutual
              (C-sub₀-⌜⌝ (cong-ren r) N))
   C-sub₀-⌜⌝ r (recℕ V M N p) =
     cong₃ (λ a b c → recℕ a b c p) (V-sub₀-⌜⌝ r V) (C-sub₀-⌜⌝ r M)
-      (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _) r) N)
-             (C-sub₀-⌜⌝ (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _)} r) N))
+      (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (([] ⟨ _ ⟩ ∷ nat) ⟨ _ ⟩ ∷ _) r) N)
+             (C-sub₀-⌜⌝ (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ nat) ⟨ _ ⟩ ∷ _)} r) N))
   C-sub₀-⌜⌝ r (caseL V `nil M `cons N) =
     cong₃ caseL_`nil_`cons_ (V-sub₀-⌜⌝ r V) (C-sub₀-⌜⌝ r M)
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _ ∷ _) r) N)
              (C-sub₀-⌜⌝ (cong-ren r) N))
   C-sub₀-⌜⌝ r (recL V M N p) =
     cong₃ (λ a b c → recL a b c p) (V-sub₀-⌜⌝ r V) (C-sub₀-⌜⌝ r M)
-      (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (([] ⟨ _ ⟩ ∷ _ ∷ |List| _) ⟨ _ ⟩ ∷ _) r) N)
-             (C-sub₀-⌜⌝ (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ _ ∷ |List| _) ⟨ _ ⟩ ∷ _)} r) N))
+      (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (([] ⟨ _ ⟩ ∷ _ ∷ list _) ⟨ _ ⟩ ∷ _) r) N)
+             (C-sub₀-⌜⌝ (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ _ ∷ list _) ⟨ _ ⟩ ∷ _)} r) N))
   C-sub₀-⌜⌝ r (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_ (V-sub₀-⌜⌝ r V)
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
@@ -213,7 +213,7 @@ record Interchange {Δ Δ' Γ Γ'} (s' : Sub₀ [] Δ Δ') (r : Ren [] Δ' Γ')
                    (r' : Ren [] Δ Γ) (s : Sub₀ [] Γ Γ') : Set where
   constructor mk⋈
   field
-    atᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+    atᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
         → V-sub₀ s' (V-rename r (var f x)) ≡ V-rename r' (V-sub₀ s (var f x))
     atᵗ : ∀ {A ρ ρ'} → (y : [ ρ ] A ∈[ ρ' ] Γ')
         → tgt-img₀ s' (proj₂ (var-img r y)) ≡ rvar-img′ r' (tgt-img₀ s y)
@@ -340,13 +340,13 @@ mutual
       (C-sub₀-ren (⋈-cong ([] ∷ _) h) N)
   C-sub₀-ren h (recℕ V M N p) =
     cong₃ (λ a b c → recℕ a b c p) (V-sub₀-ren h V) (C-sub₀-ren h M)
-      (C-sub₀-ren (⋈-cong (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _) h) N)
+      (C-sub₀-ren (⋈-cong (([] ⟨ _ ⟩ ∷ nat) ⟨ _ ⟩ ∷ _) h) N)
   C-sub₀-ren h (caseL V `nil M `cons N) =
     cong₃ caseL_`nil_`cons_ (V-sub₀-ren h V) (C-sub₀-ren h M)
       (C-sub₀-ren (⋈-cong ([] ∷ _ ∷ _) h) N)
   C-sub₀-ren h (recL V M N p) =
     cong₃ (λ a b c → recL a b c p) (V-sub₀-ren h V) (C-sub₀-ren h M)
-      (C-sub₀-ren (⋈-cong (([] ⟨ _ ⟩ ∷ _ ∷ |List| _) ⟨ _ ⟩ ∷ _) h) N)
+      (C-sub₀-ren (⋈-cong (([] ⟨ _ ⟩ ∷ _ ∷ list _) ⟨ _ ⟩ ∷ _) h) N)
   C-sub₀-ren h (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_ (V-sub₀-ren h V)
       (C-sub₀-ren (⋈-cong ([] ∷ _) h) M) (C-sub₀-ren (⋈-cong ([] ∷ _) h) N)

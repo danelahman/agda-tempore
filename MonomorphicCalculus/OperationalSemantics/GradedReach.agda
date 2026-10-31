@@ -96,9 +96,9 @@ reach-under q = C-rename (cong-∷-ren (reach-renᵘ q))
 
 resume : ∀ {St St' ρ A ε B}
        → (q : St ⊑ₛ[ ρ ] St')
-       → toCtx St ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε
+       → toCtx St ⟨ ρ ⟩ ∷ B ⊢C⦂ A ! ε
        → toCtx St' ⊢V⦂ B
-       → toCtx St' ⊢C⦂ A ‼ ε
+       → toCtx St' ⊢C⦂ A ! ε
 resume q M W = (C-rename (cong-∷-ren (unbox-ren q)) M) [ split-[] ↦ W ]c
 
 -- Two general facts about `_≤ₛ_` that `MonomorphicCalculus.OperationalSemantics.State` does not
@@ -336,14 +336,14 @@ unbox-ren-img q x =
 -- What a whole run accumulates: the closure of `Reduction`'s
 -- per-step facts under composition, packaged as the reach a run licenses.
 
-steps-extends-state : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+steps-extends-state : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
                     → cf ⟶* cf' → Config.state cf ≤ₛ Config.state cf'
 
 steps-extends-state ε*       = id-suc
 steps-extends-state (r ◅ rs) =
   ≤ₛ-trans (step-extends-state r) (steps-extends-state rs)
 
-steps-grade-≾ : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+steps-grade-≾ : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
               → (rs : cf ⟶* cf')
               → ≤ₛ-grade (steps-extends-state rs) ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ ∣ ε ∣ᵉ
 
@@ -357,7 +357,7 @@ steps-grade-≾ {ε' = ε'} (r ◅ rs) =
 -- The renaming a whole run licenses. A run's bound relates two locked contexts,
 -- so it goes straight to `suc-comp-ren` rather than through a reach.
 
-steps-ren : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+steps-ren : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
           → (rs : cf ⟶* cf')
           → Ren [] (toCtx (Config.state cf') ⟨ ∣ ε' ∣ᵉ ⟩)
                    (toCtx (Config.state cf)  ⟨ ∣ ε ∣ᵉ  ⟩)
@@ -368,12 +368,12 @@ steps-ren rs = suc-comp-ren (steps-extends-state rs) (steps-grade-≾ rs)
 -- does not flatten, so the stack is kept as it stands and described by what
 -- substituting into it does.
 
-subCtx-run : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+subCtx-run : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
            → cf ⟶* cf' → ∀ {Γ C} → Γ ∷ A ⊢C⦂ C → Γ ∷ B ⊢C⦂ C
 subCtx-run ε*       N = N
 subCtx-run (r ◅ rs) N = subCtx-run rs (subCtx (step-refines-type r) N)
 
-spine : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+spine : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
       → cf ⟶* cf' → ∀ {Γ} → Γ ⊢V⦂ B → Γ ⊢V⦂ A
 spine ε*       V = V
 spine (r ◅ rs) V = subV (spine rs V) (step-refines-type r)
@@ -381,7 +381,7 @@ spine (r ◅ rs) V = subV (spine rs V) (step-refines-type r)
 -- The subsumption laws of `MonomorphicCalculus.Syntax.Substitution.Subsumption`, iterated along
 -- a run.
 
-subCtx-run-sub : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+subCtx-run-sub : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
                → (rs : cf ⟶* cf') → ∀ {Γ C} → (N : Γ ∷ A ⊢C⦂ C) → (V : Γ ⊢V⦂ B)
                ---------------------------------------------------------------
                → subCtx-run rs N [ split-[] ↦ V ]c
@@ -392,7 +392,7 @@ subCtx-run-sub (r ◅ rs) N V =
   trans (subCtx-run-sub rs (subCtx (step-refines-type r) N) V)
         (subCtx-sub (step-refines-type r) N (spine rs V))
 
-subCtx-run-ren : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+subCtx-run-ren : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
                → (rs : cf ⟶* cf') → ∀ {Γ Δ C} → (r : Ren [] Δ Γ)
                → (N : Γ ∷ A ⊢C⦂ C)
                -----------------------------------------------
@@ -408,11 +408,11 @@ subCtx-run-ren (r₀ ◅ rs) r N =
 -- step's own extension, and subsume its binder to the refined value type.
 
 seq-steps : ∀ {A A₁ B ε ε' ε₂} {St St₁ : 𝕊 []}
-          → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A₁ ‼ ε'}
+          → {M : toCtx St ⊢C⦂ A ! ε} → {M₁ : toCtx St₁ ⊢C⦂ A₁ ! ε'}
           → (rs : ⟨ St , M ⟩ ⟶* ⟨ St₁ , M₁ ⟩)
-          → (N : toCtx St ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+          → (N : toCtx St ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
           -----------------------------------------------------------------
-          → Σ[ N₁ ∈ (toCtx St₁ ⟨ ∣ ε' ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B ‼ ε₂) ]
+          → Σ[ N₁ ∈ (toCtx St₁ ⟨ ∣ ε' ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B ! ε₂) ]
               (⟨ St , M ⨟ N ⟩ ⟶* ⟨ St₁ , M₁ ⨟ N₁ ⟩)
             × (N₁ ≡ subCtx-run rs (C-rename (cong-∷-ren (steps-ren rs)) N))
 
@@ -453,20 +453,20 @@ seq-steps (r ◅ rs) N
 -- The same under `handle`, which also retypes the clauses along the barrier
 -- lock, at the run's own extension.
 
-steps-barrier-ren : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+steps-barrier-ren : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
                   → (rs : cf ⟶* cf')
                   → Ren [] (toCtx (Config.state cf') ⟨ ⊤ᵣ ⟩)
                            (toCtx (Config.state cf)  ⟨ ⊤ᵣ ⟩)
 steps-barrier-ren rs = suc-comp-ren (steps-extends-state rs) (≾-⊤ᵣ _)
 
 handle-steps : ∀ {A A₁ B ε ε' ε₂} {St St₁ : 𝕊 []}
-             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A₁ ‼ ε'}
+             → {M : toCtx St ⊢C⦂ A ! ε} → {M₁ : toCtx St₁ ⊢C⦂ A₁ ! ε'}
              → (rs : ⟨ St , M ⟩ ⟶* ⟨ St₁ , M₁ ⟩)
              → (H : (op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St ⟨ ⊤ᵣ ⟩))
-             → (N : toCtx St ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+             → (N : toCtx St ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
              ---------------------------------------------------------------
              → Σ[ H₁ ∈ ((op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St₁ ⟨ ⊤ᵣ ⟩)) ]
-               Σ[ N₁ ∈ (toCtx St₁ ⟨ ∣ ε' ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B ‼ ε₂) ]
+               Σ[ N₁ ∈ (toCtx St₁ ⟨ ∣ ε' ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B ! ε₂) ]
                  (⟨ St , handle M `with H `in N ⟩ ⟶*
                   ⟨ St₁ , handle M₁ `with H₁ `in N₁ ⟩)
                × (∀ op ε₃ → H₁ op ε₃

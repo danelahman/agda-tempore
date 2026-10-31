@@ -92,14 +92,14 @@ operations = record
   }
   where
     param' : Op → GType
-    param' read  = Unit
+    param' read  = unit
     param' write = Base reading
     param' send  = Base reading
 
     arity' : Op → GType
     arity' read  = Base reading
-    arity' write = Unit
-    arity' send  = Unit
+    arity' write = unit
+    arity' send  = unit
 
 spec : LanguageSpec
 spec = record

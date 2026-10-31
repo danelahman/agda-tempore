@@ -6,8 +6,8 @@
 -- `Eternalᵒ` structure (in particular the extraction `extᵉ`).           --
 --                                                                       --
 -- The structure is supplied for each former of                          --
--- `MonomorphicCalculus.Syntax.Types.Eternal`: the eternal base types,   --
--- and closure under `Unit`, `Bool`, `Nat`, `Empty`, products, sums and  --
+-- `MonomorphicCalculus.Syntax.Types.Et`: the eternal base types,        --
+-- and closure under `unit`, `bool`, `nat`, `empty`, products, sums and  --
 -- lists. `Interpretation.Variables` assembles an `Eternalᵒ` for every   --
 -- eternal type by recursion on the eternality witness, so the eternal   --
 -- laws (grade-uniformity, the unit grade, the `⟨_⟩`-algebra law) come   --

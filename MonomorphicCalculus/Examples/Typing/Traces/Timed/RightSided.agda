@@ -55,24 +55,24 @@ open import MonomorphicCalculus.Examples.Typing.Core right-sided opTime
 -- of a computation is the run it makes, and the locks along it are
 -- that run, one event at a time.
 
-sampling : [] ⊢C⦂ Reading ‼ within ⟅ ⌈ read ⌉ ⟆
+sampling : [] ⊢C⦂ Reading ! within ⟅ ⌈ read ⌉ ⟆
 sampling =
   perform read ⋆     -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (return here)
 
-storing : [] ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+storing : [] ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 storing =
   perform read ⋆     -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-    (perform write here  -- ⟨ within ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
+    (perform write here  -- ⟨ within ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ unit
       (return ⋆))
 
-relaying : [] ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+relaying : [] ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 relaying =
   perform read ⋆     -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-    (perform send here  -- ⟨ within ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
+    (perform send here  -- ⟨ within ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ unit
       (return ⋆))
 
-tagged-relaying : [] ∷ NodeId ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+tagged-relaying : [] ∷ NodeId ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 tagged-relaying =
   perform read ⋆     -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
@@ -92,7 +92,7 @@ reading-stale-after-idling = fails
 reading-stale-after-an-operation : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ 𝟏ᵣ)
 reading-stale-after-an-operation = fails
 
-carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ within ⟅ ⌈ read ⌉ ⟆
+carried-id : [] ∷ NodeId ⊢C⦂ NodeId ! within ⟅ ⌈ read ⌉ ⟆
 carried-id =
   perform read ⋆     -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
@@ -104,7 +104,7 @@ carried-id =
 -- to cover it, and a delay grows. Neither direction is reversible, and
 -- the context is untouched.
 
-exact-run-to-budget : [] ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆
+exact-run-to-budget : [] ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆
 exact-run-to-budget =
   coerce holds (perform read ⋆ (perform write here (return ⋆)))
 
@@ -119,9 +119,9 @@ budget-back-to-the-run = fails
 -- conditional lists what each branch does. Neither branch locks the
 -- context.
 
-branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ within ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆
+branching : [] ∷ bool ∷ Reading ⊢C⦂ unit ! within ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆
 branching =
-  if eternal-var Boolₑ (Tl-∷ Hd)
+  if eternal-var boolₑ (Tl-∷ Hd)
     `then coerce holds (perform send  here (return ⋆))
     `else coerce holds (perform write here (return ⋆))
 
@@ -137,9 +137,9 @@ storing-is-not-transmitting = fails
 -- a budget covering the costlier branch covers both, time paying for
 -- any operation that costs no more
 
-timed-branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ within ⟅ ⟨ 6 ⟩ ⟆
+timed-branching : [] ∷ bool ∷ Reading ⊢C⦂ unit ! within ⟅ ⟨ 6 ⟩ ⟆
 timed-branching =
-  if eternal-var Boolₑ (Tl-∷ Hd)
+  if eternal-var boolₑ (Tl-∷ Hd)
     `then coerce holds (perform send  here (return ⋆))
     `else coerce holds (perform write here (return ⋆))
 
@@ -152,14 +152,14 @@ five-ticks-are-short = fails
 -- is coerced
 
 either-reading :
-  [] ∷ Bool ∷ Reading ∷ Reading ⊢C⦂ Unit ‼ within ⟅ ⌈ send ⌉ ⟆
+  [] ∷ bool ∷ Reading ∷ Reading ⊢C⦂ unit ! within ⟅ ⌈ send ⌉ ⟆
 either-reading =
-  if eternal-var Boolₑ (Tl-∷ (Tl-∷ Hd))
+  if eternal-var boolₑ (Tl-∷ (Tl-∷ Hd))
     `then perform send here (return ⋆)
     `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)
 
 sampling-then-branching :
-  [] ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+  [] ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 sampling-then-branching =
   perform {ε = within ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆} read ⋆
                      -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
@@ -181,7 +181,7 @@ permit = within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆
 -- the reading the permit names, two ticks of its budget, and the empty
 -- run all keep it open
 
-claim-after-sampling : [] ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+claim-after-sampling : [] ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-sampling =
   box permit (const 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
     (perform read ⋆  -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
@@ -189,7 +189,7 @@ claim-after-sampling =
                                      -- ∷ Reading
         (perform send here (return ⋆))))
 
-claim-after-idling : [] ⊢C⦂ Unit ‼ within ⟅ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+claim-after-idling : [] ⊢C⦂ unit ! within ⟅ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
 claim-after-idling =
   box permit (const 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
     (delay 2         -- ⟨ within ⟅ ⟨ 2 ⟩ ⟆ ⟩
@@ -197,7 +197,7 @@ claim-after-idling =
                                -- ∷ Reading
         (perform send here (return ⋆))))
 
-claiming-now : [] ⊢C⦂ Unit ‼ within ⟅ ⌈ send ⌉ ⟆
+claiming-now : [] ⊢C⦂ unit ! within ⟅ ⌈ send ⌉ ⟆
 claiming-now =
   box permit (const 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
     (unbox Hd holds (<:ᵛ-refl _)
@@ -217,7 +217,7 @@ transmitting-after-the-reading-too :
   ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ permit)
 transmitting-after-the-reading-too = fails
 
-handed-over : [] ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+handed-over : [] ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over =
   box permit (const 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
     (lam             -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
@@ -227,13 +227,13 @@ handed-over =
            (perform send here (return ⋆))))
       · here)
 
-either-way : [] ∷ Bool ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+either-way : [] ∷ bool ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 either-way =
   box permit (const 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
     (perform read ⋆  -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                                      -- ∷ Reading
-        (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
+        (if eternal-var boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
           `then perform send here (return ⋆)
           `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆))))
 
@@ -248,7 +248,7 @@ alternatives : R
 alternatives = within ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
 
 claimed-in-both-branches :
-  [] ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+  [] ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
 claimed-in-both-branches =
   box alternatives (const 42)
                      -- ∷ [ within ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ ] Reading
@@ -260,7 +260,7 @@ claimed-in-both-branches =
                   (perform send here (return ⋆))))
       `else coerce holds
               (perform send (const 0)
-                     -- ⟨ within ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
+                     -- ⟨ within ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                      -- ∷ Reading
                   (perform send here (return ⋆)))))
@@ -282,10 +282,10 @@ transmitting-branch-does-not = fails
 -- the union of the two runs, which are incomparable, so both are listed.
 
 permit-in-a-branch :
-  [] ∷ Bool ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⟨ 2 ⟩ ∙ ⌈ write ⌉ ⟆
+  [] ∷ bool ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⟨ 2 ⟩ ∙ ⌈ write ⌉ ⟆
 permit-in-a-branch =
   box permit (const 42)        -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
-    (if eternal-var Boolₑ (Tl-∷ Hd)
+    (if eternal-var boolₑ (Tl-∷ Hd)
       `then coerce holds
               (perform read ⋆  -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
@@ -309,13 +309,13 @@ scheduled : R
 scheduled = within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ∙ ⌈ send ⌉ ⟆
 
 in-order :
-  [] ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+  [] ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
 in-order =
   box scheduled (const 42)
                      -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ∙ ⌈ send ⌉ ⟆ ] Reading
     (perform read ⋆  -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-      (perform write here  -- ⟨ within ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
-        (perform send (const 0)  -- ⟨ within ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
+      (perform write here  -- ⟨ within ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ unit
+        (perform send (const 0)  -- ⟨ within ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ unit
           (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))))) holds (<:ᵛ-refl _)
                      -- ∷ Reading
             (perform send here (return ⋆))))))
@@ -333,14 +333,14 @@ out-of-order = fails
 -- Handling locks its `in` part by the handled computation's grade, as
 -- sequencing does.
 
-forwarded : [] ⊢C⦂ Reading ‼ within ⟅ ⌈ read ⌉ ⟆
+forwarded : [] ⊢C⦂ Reading ! within ⟅ ⌈ read ⌉ ⟆
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
     `in              -- ⟨ within ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (return here)
 
-identified : Node ⊢C⦂ NodeId ‼ within ⟅ ⌈ read ⌉ ⟆
+identified : Node ⊢C⦂ NodeId ! within ⟅ ⌈ read ⌉ ⟆
 identified =
   handle perform read ⋆ (return here)
     `with identifying
@@ -354,9 +354,9 @@ identified =
 nothing-fits : (op : Op) → (ε'' : E) → 𝟏ₑ ≾ₑ op-grade op ·ₑ ε''
 nothing-fits op ε'' = ≾-⊥ (op-grade op ·ₑ ε'')
 
-suppressed : [] ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+suppressed : [] ⊢C⦂ unit ! within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 suppressed =
   handle perform read ⋆ (perform write here (return ⋆))
     `with discarding {[]} nothing-fits
-    `in              -- ⟨ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
+    `in              -- ⟨ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ⟩ ∷ unit
       (return ⋆)

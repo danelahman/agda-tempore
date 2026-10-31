@@ -251,10 +251,10 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
   atᵛ-≡ ⁺ {A} refl = <:̂ᵛ-refl A
   atᵛ-≡ ⁻ {A} refl = <:̂ᵛ-refl A
 
-  atᶜ-‼ : (s : Sign) → {A A' : OVType Θ} {ε ε' : EExp Θ}
-        → atᵛ Q s A A' → atᵉ Q s ε ε' → atᶜ Q s (A ‼ ε) (A' ‼ ε')
-  atᶜ-‼ ⁺ p q = p ‼ₛ q
-  atᶜ-‼ ⁻ p q = p ‼ₛ q
+  atᶜ-! : (s : Sign) → {A A' : OVType Θ} {ε ε' : EExp Θ}
+        → atᵛ Q s A A' → atᵉ Q s ε ε' → atᶜ Q s (A ! ε) (A' ! ε')
+  atᶜ-! ⁺ p q = p !ₛ q
+  atᶜ-! ⁻ p q = p !ₛ q
 
 ------------------------------------------------------------------------
 -- A substitution related to the identity at each leaf of a type, at the
@@ -363,9 +363,9 @@ module Lowering {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
   ... | (A₀ , ρ₀) , m₀ , refl =
         VarOK-∅-mono et (⊩-substᵣ h (lowʳ ρ₀)) (⊩disj h m₀)
     where
-      et : ∅ᴴ ⊩ᴱ A₀ [ δ ]ᵛ → ∅ᴴ ⊩ᴱ A₀ [ η₀ ]ᵛ [ δ ]ᵛ
-      et e = subst (∅ᴴ ⊩ᴱ_) (sym ([⨟]ᵛ A₀ η₀ δ))
-                   (⊩ᴱ-<:ˢ {σ = η₀ ⨟ˢ δ} {τ = δ} (λ β → <:̂ᵛ-subst h (lowt β)) A₀ e)
+      et : ∅ᴴ ⊩Et A₀ [ δ ]ᵛ → ∅ᴴ ⊩Et A₀ [ η₀ ]ᵛ [ δ ]ᵛ
+      et e = subst (∅ᴴ ⊩Et_) (sym ([⨟]ᵛ A₀ η₀ δ))
+                   (⊩Et-<:ˢ {σ = η₀ ⨟ˢ δ} {τ = δ} (λ β → <:̂ᵛ-subst h (lowt β)) A₀ e)
 
 -- A substitution both below and above the identity under the hypotheses moves
 -- no type
@@ -400,7 +400,7 @@ module Equal {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
                 (λ s β _ → sameᵗ s β) (λ s ρ _ → sameʳ s ρ) (λ s ε _ → sameᵉ s ε) s A tt
 
   sameᶜ : (s : Sign) → (C : OCType Θ) → atᶜ Q s (C [ η₀ ]ᶜ) C
-  sameᶜ s (A ‼ ε) = atᶜ-‼ s (sameᵛ s A) (sameᵉ s ε)
+  sameᶜ s (A ! ε) = atᶜ-! s (sameᵛ s A) (sameᵉ s ε)
 
 ------------------------------------------------------------------------
 -- An unknown absent from an expression is fixed by updating it
@@ -449,8 +449,8 @@ module Monoᵉ {Θ : Scope} {Q : Hyps Θ} (i : EVar Θ) (b : EExp Θ)
 
   monoᵉ-c : (s : Sign) → (C : OCType Θ) → below (polₑ-c i s C) ≡ false
           → atᶜ Q s (C [ updᵉ i b ]ᶜ) C
-  monoᵉ-c s (A ‼ ε) q =
-    atᶜ-‼ s (monoᵉ-v s A (proj₁ d)) (monoᵉ-e s ε (proj₂ d))
+  monoᵉ-c s (A ! ε) q =
+    atᶜ-! s (monoᵉ-v s A (proj₁ d)) (monoᵉ-e s ε (proj₂ d))
     where d = below-∪ (polₑ-v i s A) (polₑ-e i s ε) q
 
 -- Reading the folded analysis at one entry of a component
@@ -623,7 +623,7 @@ module Monoʳ {Θ : Scope} {Q : Hyps Θ} (i : RVar Θ) (b : RExp Θ)
 
   monoʳ-c : (s : Sign) → (C : OCType Θ) → below (polᵣ-c i s C) ≡ false
           → atᶜ Q s (C [ updʳ i b ]ᶜ) C
-  monoʳ-c s (A ‼ ε) q = atᶜ-‼ s (monoʳ-v s A q) (atᵉ-≡ s (updʳ-e i b ε))
+  monoʳ-c s (A ! ε) q = atᶜ-! s (monoʳ-v s A q) (atᵉ-≡ s (updʳ-e i b ε))
 
 polsᵣ-disj-∈ : ∀ {Θ} → (i : RVar Θ) → (l : List (OVType Θ × RExp Θ))
              → below (polsᵣ-disj i l) ≡ false
@@ -786,8 +786,8 @@ module Raiseᵉ {Θ : Scope} {Q : Hyps Θ} (i : EVar Θ) (b : EExp Θ)
 
   raiseᵉ-c : (s : Sign) → (C : OCType Θ) → above (polₑ-c i s C) ≡ false
            → atᶜ Q s (C [ updᵉ i b ]ᶜ) C
-  raiseᵉ-c s (A ‼ ε) q =
-    atᶜ-‼ s (raiseᵉ-v s A (proj₁ d)) (raiseᵉ-e s ε (proj₂ d))
+  raiseᵉ-c s (A ! ε) q =
+    atᶜ-! s (raiseᵉ-v s A (proj₁ d)) (raiseᵉ-e s ε (proj₂ d))
     where d = above-∪ (polₑ-v i s A) (polₑ-e i s ε) q
 
 module Raiseʳ {Θ : Scope} {Q : Hyps Θ} (i : RVar Θ) (b : RExp Θ)
@@ -808,7 +808,7 @@ module Raiseʳ {Θ : Scope} {Q : Hyps Θ} (i : RVar Θ) (b : RExp Θ)
 
   raiseʳ-c : (s : Sign) → (C : OCType Θ) → above (polᵣ-c i s C) ≡ false
            → atᶜ Q s (C [ updʳ i b ]ᶜ) C
-  raiseʳ-c s (A ‼ ε) q = atᶜ-‼ s (raiseʳ-v s A q) (atᵉ-≡ s (updʳ-e i b ε))
+  raiseʳ-c s (A ! ε) q = atᶜ-! s (raiseʳ-v s A q) (atᵉ-≡ s (updʳ-e i b ε))
 
 -- Reading the folded analysis at the left side of an entry
 
@@ -852,9 +852,9 @@ keep-disj⁺ {Q = Q} η₀ tv fr δ h m with ∈-map⁻ (mapᵈ (_[ η₀ ]ᵛ) 
     lowt : ∀ β → Q ∣ sTy η₀ β <:̂ᵛ tvar β
     lowt β = subst (λ x → Q ∣ x <:̂ᵛ tvar β) (sym (tv β)) (tvarₛ reflᵗᵛ)
 
-    et : ∅ᴴ ⊩ᴱ A₀ [ δ ]ᵛ → ∅ᴴ ⊩ᴱ A₀ [ η₀ ]ᵛ [ δ ]ᵛ
-    et e = subst (∅ᴴ ⊩ᴱ_) (sym ([⨟]ᵛ A₀ η₀ δ))
-                 (⊩ᴱ-<:ˢ {σ = η₀ ⨟ˢ δ} {τ = δ} (λ β → <:̂ᵛ-subst h (lowt β)) A₀ e)
+    et : ∅ᴴ ⊩Et A₀ [ δ ]ᵛ → ∅ᴴ ⊩Et A₀ [ η₀ ]ᵛ [ δ ]ᵛ
+    et e = subst (∅ᴴ ⊩Et_) (sym ([⨟]ᵛ A₀ η₀ δ))
+                 (⊩Et-<:ˢ {σ = η₀ ⨟ˢ δ} {τ = δ} (λ β → <:̂ᵛ-subst h (lowt β)) A₀ e)
 
 -- Raising an effect unknown to its bound above (`Values.raise`), dropping the
 -- orderings with it on the left
@@ -1054,7 +1054,7 @@ module Monoᵗ {Θ : Scope} {Q : Hyps Θ} (α γ : TyVar Θ) (le : (γ , α) ∈
 
   monoᵗ-c : (s : Sign) → (C : OCType Θ) → below (polₜ-c α s C) ≡ false
           → atᶜ Q s (C [ updᵗ α γ ]ᶜ) C
-  monoᵗ-c s (A ‼ ε) q = atᶜ-‼ s (monoᵗ-v s A q) (atᵉ-≡ s (fixᵗ-e (upd α γ idᶠ) ε))
+  monoᵗ-c s (A ! ε) q = atᶜ-! s (monoᵗ-v s A q) (atᵉ-≡ s (fixᵗ-e (upd α γ idᶠ) ε))
 
 polsₜ-sub-∈ : ∀ {n} → (α : Fin n) → (l : List (Fin n × Fin n))
             → below (polsₜ-sub α l) ≡ false
@@ -1149,7 +1149,7 @@ stepᵗ {Θ} C Q α s cb cq cc =
                             (λ {ε} {ε'} m → fixedᵉ (fixᵗ-e (upd α γ₀ idᶠ) ε')))
                  keep-disj (λ m → ⊩ᴼ-hyp⁼ m)
       where
-        et : ∀ {x} → x ∈ map (upd α γ₀ idᶠ) (ets Q) → Q ⊩ᴱ tvar x
+        et : ∀ {x} → x ∈ map (upd α γ₀ idᶠ) (ets Q) → Q ⊩Et tvar x
         et m with ∈-map⁻ (upd α γ₀ idᶠ) m
         ... | β , m₀ , refl = <:̂ᵛ-eternalˡ (M.lowt β) (et-hyp m₀)
 
@@ -1302,7 +1302,7 @@ collapseᵗ {Θ} C Q f both =
                  (keep-ordᵉ (ordₑ Q) (λ m → m) (λ {ε} {ε'} m → fixedᵉ (fixᵗ-e f ε')))
                  keep-disj (λ m → ⊩ᴼ-hyp⁼ m)
       where
-        et : ∀ {x} → x ∈ map f (ets Q) → Q ⊩ᴱ tvar x
+        et : ∀ {x} → x ∈ map f (ets Q) → Q ⊩Et tvar x
         et m with ∈-map⁻ f m
         ... | β , m₀ , refl = <:̂ᵛ-eternalˡ (lowt β) (et-hyp m₀)
 

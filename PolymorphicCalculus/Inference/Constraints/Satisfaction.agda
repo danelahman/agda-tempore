@@ -50,7 +50,7 @@ _⊨[_]_ : ∀ {Θ Θ'} → Subst Θ Θ' → Hyps Θ' → Constraint Θ → Set
 σ ⊨[ Q ] (A ≾̂ᵥᶜ B)               = Q ∣ A [ σ ]ᵛ <:̂ᵛ B [ σ ]ᵛ
 σ ⊨[ Q ] (ρ ≾̂ᵣᶜ ρ')              = Q ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
 σ ⊨[ Q ] (ε ≾̂ₑᶜ ε')              = Q ⊩ ε [ σ ]ᵉ ≾̂ₑ ε' [ σ ]ᵉ
-σ ⊨[ Q ] Etᶜ A                   = Q ⊩ᴱ A [ σ ]ᵛ
+σ ⊨[ Q ] Etᶜ A                   = Q ⊩Et A [ σ ]ᵛ
 σ ⊨[ Q ] Et∨≾ᵘ A ρ               = VarOK Q (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
 _⊨[_]_ {Θ' = Θ'} σ Q (∃ᵗ C)      = Σ[ B ∈ OVType Θ' ] ((σ ,ᵗ B) ⊨[ Q ] C)
 _⊨[_]_ {Θ' = Θ'} σ Q (∃ʳ C)      = Σ[ ρ ∈ RExp Θ' ]   ((σ ,ʳ ρ) ⊨[ Q ] C)
@@ -75,7 +75,7 @@ private
 
   ex-∃ᵗ : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
         → σ ⊨[ Q ] (∃ᵗ (tvar (newᵗ {Θ}) ≐ᵥ tvar (newᵗ {Θ})))
-  ex-∃ᵗ = Unit , Unitₛ , Unitₛ
+  ex-∃ᵗ = unit , unitₛ , unitₛ
 
   -- A rigid effect-grade variable is its own witness under `_↑ᵉ`.
 

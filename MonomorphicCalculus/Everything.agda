@@ -14,7 +14,7 @@ module MonomorphicCalculus.Everything where
 
 ---- Syntax: value, computation and ground types (`VType`, `CType`,
 ---- `GType`, in `Syntax/Types`), among them the handler types `C ⇛ D`, and
----- eternal types (`Eternal`); contexts with locks, their grade, and
+---- eternal types (`Et`); contexts with locks, their grade, and
 ---- variables under locks (`Ctx`, `ctx-grade`, `_∈[_]_`, in
 ---- `Syntax/Contexts`); subtyping (`_<:ᵛ_`, `_<:ᶜ_`, in `Syntax/Subtyping`),
 ---- a preorder, antisymmetric where the grade orders are, and reflecting

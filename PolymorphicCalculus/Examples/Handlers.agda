@@ -69,7 +69,7 @@ ok₁ = ≾ᵘ-ok (transᵣ (eqᵣ ≡̂ᵣ-identityˡ)
                (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-𝟏ᵉ))))
 
 U⇒U : ∀ {Θ} → OVType Θ
-U⇒U = Unit ⇒ Unit ‼ 𝟏̂ₑ
+U⇒U = unit ⇒ unit ! 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- A handler resuming through a helper `h`
@@ -89,20 +89,20 @@ resume-through op =
 relay : RawC ∅ˢ 0
 relay = return (lam (handle (v₀ · ⋆) `with handler (return ⋆) resume-through))
 
--- Typable, `h` at `Unit ⇒ Unit ‼ j`, so never refuted
+-- Typable, `h` at `unit ⇒ unit ! j`, so never refuted
 
 private
 
   T : OVType (∅ˢ +e)
-  T = Unit ⇒ Unit ‼ evar (newᵉ {∅ˢ})
+  T = unit ⇒ unit ! evar (newᵉ {∅ˢ})
 
   𝟏³ : ∀ {Θ} {ε : EExp Θ} → 𝟏̂ₑ ·̂ₑ (𝟏̂ₑ ·̂ₑ (𝟏̂ₑ ·̂ₑ ε)) ≡̂ₑ ε
   𝟏³ = ≡̂ₑ-trans ≡̂ₑ-identityˡ (≡̂ₑ-trans ≡̂ₑ-identityˡ ≡̂ₑ-identityˡ)
 
-  H : ∀ {n} {Γ : OCtx (∅ˢ +e) n} → ∅ᴴ ∣ Γ ⊢V⦂ T ⇒ T ‼ 𝟏̂ₑ
+  H : ∀ {n} {Γ : OCtx (∅ˢ +e) n} → ∅ᴴ ∣ Γ ⊢V⦂ T ⇒ T ! 𝟏̂ₑ
   H = lam (return (var Hd ok₀))
 
-  relay-D : ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ Unit ‼ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ‼ 𝟏̂ₑ
+  relay-D : ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
   relay-D =
     return (lam (handle var Hd ok₀ · ⋆
       `with handler (return ⋆) (λ op →
@@ -122,7 +122,7 @@ relay-unrefuted : infer [] relay ≢ untypable
 relay-unrefuted = infer-complete [] relay relay-typable
 
 expected-relay : Scheme
-expected-relay = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ 𝟏̂ₑ
+expected-relay = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((unit ⇒ α₀ ! ε₀) ⇒ unit ! ε₀) ! 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- The helper applied twice to the boxed continuation
@@ -147,7 +147,7 @@ relay-boxed = return (lam (handle (v₀ · ⋆) `with handler (return ⋆) throu
 private
 
   K : Op → OVType (∅ˢ +e)
-  K op = [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ Unit ‼ evar (newᵉ {∅ˢ}))
+  K op = [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ unit ! evar (newᵉ {∅ˢ}))
 
   -- a variable three unit effects have passed over
 
@@ -160,7 +160,7 @@ private
       step : ∀ {Θ} {ρ : RExp Θ} → ∅ᴴ ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ → ∅ᴴ ⊩ ρ ·̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ ≾̂ᵣ 𝟏̂ᵣ
       step p = transᵣ (monoᵣ p 𝟏-map) (eqᵣ ≡̂ᵣ-identityˡ)
 
-  relay-boxed-D : ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ Unit ‼ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ‼ 𝟏̂ₑ
+  relay-boxed-D : ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
   relay-boxed-D =
     return (lam (handle var Hd ok₀ · ⋆
       `with handler (return ⋆) (λ op →
@@ -179,7 +179,7 @@ relay-boxed-unrefuted : infer [] relay-boxed ≢ untypable
 relay-boxed-unrefuted = infer-complete [] relay-boxed relay-boxed-typable
 
 expected-relay-boxed : Scheme
-expected-relay-boxed = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ 𝟏̂ₑ
+expected-relay-boxed = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((unit ⇒ α₀ ! ε₀) ⇒ unit ! ε₀) ! 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- A handler that drops its continuation
@@ -192,7 +192,7 @@ expected-relay-boxed = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ 
 discard : RawC ∅ˢ 0
 discard = return (lam (handle (v₀ · ⋆) `with handler (return ⋆) (λ _ → return ⋆)))
 
-discard-D : Minimum (Grade._≾_ EGrade) 𝟏ₑ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ Unit ‼ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ‼ 𝟏̂ₑ
+discard-D : Minimum (Grade._≾_ EGrade) 𝟏ₑ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
 discard-D least =
   return (lam (handle var Hd ok₀ · ⋆
                 `with handler (return ⋆) (λ _ → coerce (minₑ least) (return ⋆))))
@@ -201,7 +201,7 @@ discard-typable : Minimum (Grade._≾_ EGrade) 𝟏ₑ → Typable [] discard
 discard-typable least = closed (discard-D least) refl
 
 expected-discard : Scheme
-expected-discard = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ 𝟏̂ₑ
+expected-discard = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((unit ⇒ α₀ ! ε₀) ⇒ unit ! ε₀) ! 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- A handler that resumes twice
@@ -221,7 +221,7 @@ resume-twice =
   return (lam (handle (v₀ · ⋆) `with handler (return ⋆) resume-twice-clause))
 
 resume-twice-D : True (⊤ₑ ≾ₑ? 𝟏ₑ)
-               → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ Unit ‼ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ‼ 𝟏̂ₑ
+               → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
 resume-twice-D top =
   return (lam (handle var Hd ok₀ · ⋆
     `with handler (return ⋆) (λ op →
@@ -246,7 +246,7 @@ resume-twice-typable : True (⊤ₑ ≾ₑ? 𝟏ₑ) → Typable [] resume-twice
 resume-twice-typable top = closed (resume-twice-D top) refl
 
 expected-resume-twice : Scheme
-expected-resume-twice = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ 𝟏̂ₑ
+expected-resume-twice = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((unit ⇒ α₀ ! ε₀) ⇒ unit ! ε₀) ! 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- Handlers as values
@@ -275,20 +275,20 @@ run = return (lam (return (lam (handle (v₀ · ⋆) `with v₁))))
 run-forward : RawC ∅ˢ 0
 run-forward = run ⨟ (v₀ · forwarder)
 
--- `bound` is typable, `forwarder` at `Unit ‼ 𝟏̂ₑ ⇛ Unit ‼ 𝟏̂ₑ`
+-- `bound` is typable, `forwarder` at `unit ! 𝟏̂ₑ ⇛ unit ! 𝟏̂ₑ`
 
 private
 
   forward-D : ∀ {n} {Γ : OCtx (∅ˢ +e) n} → (op : Op)
             → ∅ᴴ ∣ Γ ⟨ rconst ⊤ᵣ ⟩ ∷ᶜ ⌜ param op ⌝ᵍ
-                   ∷ᶜ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ Unit ‼ evar (newᵉ {∅ˢ}))
-              ⊢C⦂ Unit ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {∅ˢ}))
+                   ∷ᶜ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ unit ! evar (newᵉ {∅ˢ}))
+              ⊢C⦂ unit ! (econst (op-grade op) ·̂ₑ evar (newᵉ {∅ˢ}))
   forward-D op =
     perform op (var (Tl-∷ Hd) ok₀)
       (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) (eqᵣ ≡̂ᵣ-identityˡ)
         (var Hd ok₀ · var (Tl-∷ Hd) ok₀))
 
-  bound-D : ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ Unit ‼ (𝟏̂ₑ ·̂ₑ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ))) ‼ 𝟏̂ₑ
+  bound-D : ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ))) ! 𝟏̂ₑ
   bound-D =
     return (lam (return (handler (return (var Hd ok₀)) forward-D)
                  ⨟ (handle var (Tl-∷ (Tl-⟨⟩ Hd)) ok₁ · ⋆ `with var Hd ok₀)))
@@ -300,18 +300,18 @@ bound-unrefuted : infer [] bound ≢ untypable
 bound-unrefuted = infer-complete [] bound bound-typable
 
 expected-bound : Scheme
-expected-bound = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ α₀ ‼ ε₀) ‼ 𝟏̂ₑ
+expected-bound = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((unit ⇒ α₀ ! ε₀) ⇒ α₀ ! ε₀) ! 𝟏̂ₑ
 
 -- The handled effect, then the handler's; sorted the other way round
 -- where the product commutes
 
 expected-run : Scheme
 expected-run =
-  ∀[ 2 , 0 , 2 ] ⊤ ⟹ ((α₁ ‼ ε₁ ⇛ α₀ ‼ ε₀) ⇒ ((Unit ⇒ α₁ ‼ ε₁) ⇒ α₀ ‼ (ε₁ ·̂ₑ ε₀)) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
+  ∀[ 2 , 0 , 2 ] ⊤ ⟹ ((α₁ ! ε₁ ⇛ α₀ ! ε₀) ⇒ ((unit ⇒ α₁ ! ε₁) ⇒ α₀ ! (ε₁ ·̂ₑ ε₀)) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 
 expected-run-commuted : Scheme
 expected-run-commuted =
-  ∀[ 2 , 0 , 2 ] ⊤ ⟹ ((α₁ ‼ ε₁ ⇛ α₀ ‼ ε₀) ⇒ ((Unit ⇒ α₁ ‼ ε₁) ⇒ α₀ ‼ (ε₀ ·̂ₑ ε₁)) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
+  ∀[ 2 , 0 , 2 ] ⊤ ⟹ ((α₁ ! ε₁ ⇛ α₀ ! ε₀) ⇒ ((unit ⇒ α₁ ! ε₁) ⇒ α₀ ! (ε₀ ·̂ₑ ε₁)) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 
 expected-run-forward : Scheme
-expected-run-forward = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ α₀ ‼ ε₀) ‼ 𝟏̂ₑ
+expected-run-forward = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((unit ⇒ α₀ ! ε₀) ⇒ α₀ ! ε₀) ! 𝟏̂ₑ

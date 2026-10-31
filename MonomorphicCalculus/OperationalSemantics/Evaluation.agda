@@ -36,7 +36,7 @@ open import MonomorphicCalculus.Syntax.Types    Spec
 
 -- A runtime context is built solely from locks and box-typed cells, so it
 -- holds no base-typed variable either (the counterpart of `⇒-not-in-toCtx`,
--- `⦉⦊-not-in-toCtx` and `Empty-not-in-toCtx` in `MonomorphicCalculus.OperationalSemantics.State`).
+-- `⦉⦊-not-in-toCtx` and `empty-not-in-toCtx` in `MonomorphicCalculus.OperationalSemantics.State`).
 
 Base-not-in-toCtx : ∀ {Γ ρ b} {St : 𝕊 Γ} → Base b ∈[ ρ ] toCtx St → ⊥
 Base-not-in-toCtx {St = St ⟨ ρ ⟩ₛ} (Tl-⟨⟩ x) = Base-not-in-toCtx x
@@ -59,28 +59,28 @@ base-canonical (var f x)             = ⊥-elim (Base-not-in-toCtx x)
 base-canonical (const c)             = c , refl
 base-canonical (subV V (Baseₛ refl)) = base-canonical V
 
--- The same at `Bool`, where the spine is again forced to be identity
+-- The same at `bool`, where the spine is again forced to be identity
 -- coercions.
 
-bool-val : ∀ {St : 𝕊 []} → toCtx St ⊢V⦂ Bool → toCtx St ⊢V⦂ Bool
-bool-val (var f x)      = ⊥-elim (Bool-not-in-toCtx x)
+bool-val : ∀ {St : 𝕊 []} → toCtx St ⊢V⦂ bool → toCtx St ⊢V⦂ bool
+bool-val (var f x)      = ⊥-elim (bool-not-in-toCtx x)
 bool-val true           = true
 bool-val false          = false
-bool-val (subV V Boolₛ) = bool-val V
+bool-val (subV V boolₛ) = bool-val V
 
-bool-val-canonical : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Bool)
+bool-val-canonical : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ bool)
                    → (bool-val V ≡ true) ⊎ (bool-val V ≡ false)
-bool-val-canonical (var f x)      = ⊥-elim (Bool-not-in-toCtx x)
+bool-val-canonical (var f x)      = ⊥-elim (bool-not-in-toCtx x)
 bool-val-canonical true           = inj₁ refl
 bool-val-canonical false          = inj₂ refl
-bool-val-canonical (subV V Boolₛ) = bool-val-canonical V
+bool-val-canonical (subV V boolₛ) = bool-val-canonical V
 
 -- The ticks a step takes: only `DELAY` advances time, by its own delay. The
 -- grade `steps-grade` is not an observable: it absorbs `𝟏ₑ` factors freely
 -- and `_≾ₑ_` is a preorder.
 
 step-ticks : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
-           → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
+           → {M : toCtx St ⊢C⦂ A ! ε} → {M' : toCtx St' ⊢C⦂ B ! ε'}
            → ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩
            → 𝔻
 step-ticks APP                 = 0ᴰ
@@ -112,7 +112,7 @@ step-ticks CASEL               = 0ᴰ
 step-ticks RECL                = 0ᴰ
 step-ticks SUB                 = 0ᴰ
 
-ticks : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+ticks : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
       → cf ⟶* cf'
       → 𝔻
 ticks ε*       = 0ᴰ
@@ -120,7 +120,7 @@ ticks (r ◅ rs) = step-ticks r +ᴰ ticks rs
 
 -- Evaluation to a returned value.
 
-record Ret-whnf {A : VType} {ε : E} (cf : Config (A ‼ ε)) : Set where
+record Ret-whnf {A : VType} {ε : E} (cf : Config (A ! ε)) : Set where
   constructor ret-whnf
   field
     state : 𝕊 []
@@ -130,35 +130,35 @@ record Ret-whnf {A : VType} {ε : E} (cf : Config (A ‼ ε)) : Set where
 
 -- Evaluation to an unhandled operation, with its parameter and continuation.
 
-record Op-whnf {A : VType} {ε : E} (cf : Config (A ‼ ε)) : Set where
+record Op-whnf {A : VType} {ε : E} (cf : Config (A ! ε)) : Set where
   constructor op-whnf
   field
     state : 𝕊 []
     oper  : Op
     resid : E
     vtype : VType
-    prm   : toCtx state ⊢V⦂ type-of-gtype (param oper)
-    cont  : toCtx state ⟨ ∣ op-grade oper ∣ᵉ ⟩ ∷ type-of-gtype (arity oper)
-              ⊢C⦂ vtype ‼ resid
+    prm   : toCtx state ⊢V⦂ ⌜ param oper ⌝ᵍ
+    cont  : toCtx state ⟨ ∣ op-grade oper ∣ᵉ ⟩ ∷ ⌜ arity oper ⌝ᵍ
+              ⊢C⦂ vtype ! resid
     run   : cf ⟶* ⟨ state , perform oper prm cont ⟩
 
-data Halts {A : VType} {ε : E} (cf : Config (A ‼ ε)) : Set where
+data Halts {A : VType} {ε : E} (cf : Config (A ! ε)) : Set where
   halts-ret : Ret-whnf cf → Halts cf
   halts-op  : Op-whnf  cf → Halts cf
 
 -- The observable time of an evaluation.
 
-ret-ticks : ∀ {A ε} {cf : Config (A ‼ ε)} → Ret-whnf cf → 𝔻
+ret-ticks : ∀ {A ε} {cf : Config (A ! ε)} → Ret-whnf cf → 𝔻
 ret-ticks w = ticks (Ret-whnf.run w)
 
-op-ticks : ∀ {A ε} {cf : Config (A ‼ ε)} → Op-whnf cf → 𝔻
+op-ticks : ∀ {A ε} {cf : Config (A ! ε)} → Op-whnf cf → 𝔻
 op-ticks w = ticks (Op-whnf.run w)
 
 -- `toCtx ∅ ≡ []`, so this is `MonomorphicCalculus.OperationalSemantics.Soundness.Preservation`'s
 -- `Program` (definitionally), stated without model parameters.
 
 Prog : VType → E → Set
-Prog A ε = toCtx {[]} ∅ ⊢C⦂ A ‼ ε
+Prog A ε = toCtx {[]} ∅ ⊢C⦂ A ! ε
 
 -- Neither whnf steps.
 
@@ -170,9 +170,9 @@ finality-ret : ∀ {A} {D : CType} {St : 𝕊 []}
 finality-ret ()
 
 finality-perform : ∀ {A ε op} {D : CType} {St : 𝕊 []}
-                 → {W : toCtx St ⊢V⦂ type-of-gtype (param op)}
-                 → {M : toCtx St ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
-                          ⊢C⦂ A ‼ ε}
+                 → {W : toCtx St ⊢V⦂ ⌜ param op ⌝ᵍ}
+                 → {M : toCtx St ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
+                          ⊢C⦂ A ! ε}
                  → {cf : Config D}
                  → ⟨ St , perform op W M ⟩ ⟶ cf
                  -----------------------------
@@ -183,35 +183,35 @@ finality-perform ()
 -- grade, target and derivation into one Σ keeps the statement homogeneous, so
 -- consumers can match on `refl`.
 
-Step-from : ∀ {A ε} → (cf : Config (A ‼ ε)) → Set
+Step-from : ∀ {A ε} → (cf : Config (A ! ε)) → Set
 Step-from cf =
-  Σ[ A' ∈ VType ] Σ[ ε' ∈ E ] Σ[ cf' ∈ Config (A' ‼ ε') ] (cf ⟶ cf')
+  Σ[ A' ∈ VType ] Σ[ ε' ∈ E ] Σ[ cf' ∈ Config (A' ! ε') ] (cf ⟶ cf')
 
 -- The two congruences, as maps on packed steps. The reducts are left to
 -- unification: they are whatever the rule builds out of the sub-step.
 
-seq-step : ∀ {A B ε₁ ε₂} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ ε₁}
-         → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+seq-step : ∀ {A B ε₁ ε₂} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ! ε₁}
+         → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
          → Step-from (⟨ St , M ⟩)
          ---------------------------------
          → Step-from (⟨ St , M ⨟ N ⟩)
 seq-step N (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , _ , SEQ-STEP r (step-grade-≾ r)
 
-handle-step : ∀ {A B ε₁ ε₂} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ ε₁}
-            → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+handle-step : ∀ {A B ε₁ ε₂} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ! ε₁}
+            → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
             → (H : (op : Op) → (ε₃ : E) →
-                     toCtx St ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                     toCtx St ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                              ∷ [ ∣ op-grade op ∣ᵉ ]
-                                 (type-of-gtype (arity op) ⇒ B ‼ ε₃)
-                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃))
+                                 (⌜ arity op ⌝ᵍ ⇒ B ! ε₃)
+                           ⊢C⦂ B ! (op-grade op ·ₑ ε₃))
             → Step-from (⟨ St , M ⟩)
             ------------------------------------------------------
             → Step-from (⟨ St , handle M `with handler N H ⟩)
 handle-step N H (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) =
   _ , _ , _ , HANDLE-STEP r (step-grade-≾ r)
 
-⟶-det : ∀ {A A₁ A₂ ε ε₁ ε₂} {cf : Config (A ‼ ε)}
-      → {cf₁ : Config (A₁ ‼ ε₁)} → {cf₂ : Config (A₂ ‼ ε₂)}
+⟶-det : ∀ {A A₁ A₂ ε ε₁ ε₂} {cf : Config (A ! ε)}
+      → {cf₁ : Config (A₁ ! ε₁)} → {cf₂ : Config (A₂ ! ε₂)}
       → (r₁ : cf ⟶ cf₁) → (r₂ : cf ⟶ cf₂)
       -----------------------------------------------------------
       → _≡_ {A = Step-from cf} (A₁ , ε₁ , cf₁ , r₁) (A₂ , ε₂ , cf₂ , r₂)
@@ -262,21 +262,21 @@ handle-step N H (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) =
 ⟶-det (HANDLE-STEP r _) HANDLE-OP        = ⊥-elim (finality-perform r)
 ⟶-det HANDLE-OP         (HANDLE-STEP r _) = ⊥-elim (finality-perform r)
 
-Op-run : ∀ {A ε} → (cf : Config (A ‼ ε)) → Set
+Op-run : ∀ {A ε} → (cf : Config (A ! ε)) → Set
 Op-run cf =
   Σ[ St ∈ 𝕊 [] ] Σ[ op ∈ Op ] Σ[ A' ∈ VType ] Σ[ ε' ∈ E ]
-  Σ[ W ∈ toCtx St ⊢V⦂ type-of-gtype (param op) ]
-  Σ[ M ∈ (toCtx St ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A' ‼ ε') ]
+  Σ[ W ∈ toCtx St ⊢V⦂ ⌜ param op ⌝ᵍ ]
+  Σ[ M ∈ (toCtx St ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A' ! ε') ]
     (cf ⟶* ⟨ St , perform op W M ⟩)
 
-op-run-det : ∀ {A ε} {cf : Config (A ‼ ε)}
+op-run-det : ∀ {A ε} {cf : Config (A ! ε)}
            → {St₁ St₂ : 𝕊 []} → {op₁ op₂ : Op} → {A₁ A₂ : VType} → {ε₁' ε₂' : E}
-           → {W₁ : toCtx St₁ ⊢V⦂ type-of-gtype (param op₁)}
-           → {W₂ : toCtx St₂ ⊢V⦂ type-of-gtype (param op₂)}
-           → {M₁ : toCtx St₁ ⟨ ∣ op-grade op₁ ∣ᵉ ⟩ ∷ type-of-gtype (arity op₁)
-                     ⊢C⦂ A₁ ‼ ε₁'}
-           → {M₂ : toCtx St₂ ⟨ ∣ op-grade op₂ ∣ᵉ ⟩ ∷ type-of-gtype (arity op₂)
-                     ⊢C⦂ A₂ ‼ ε₂'}
+           → {W₁ : toCtx St₁ ⊢V⦂ ⌜ param op₁ ⌝ᵍ}
+           → {W₂ : toCtx St₂ ⊢V⦂ ⌜ param op₂ ⌝ᵍ}
+           → {M₁ : toCtx St₁ ⟨ ∣ op-grade op₁ ∣ᵉ ⟩ ∷ ⌜ arity op₁ ⌝ᵍ
+                     ⊢C⦂ A₁ ! ε₁'}
+           → {M₂ : toCtx St₂ ⟨ ∣ op-grade op₂ ∣ᵉ ⟩ ∷ ⌜ arity op₂ ⌝ᵍ
+                     ⊢C⦂ A₂ ! ε₂'}
            → (rs₁ : cf ⟶* ⟨ St₁ , perform op₁ W₁ M₁ ⟩)
            → (rs₂ : cf ⟶* ⟨ St₂ , perform op₂ W₂ M₂ ⟩)
            ---------------------------------------------------------------
@@ -297,15 +297,15 @@ op-run-det (r₁ ◅ rs₁) (r₂ ◅ rs₂) with ⟶-det r₁ r₂
 
 -- The two shapes exclude each other.
 
-⇓-exclusive : ∀ {A ε} {cf : Config (A ‼ ε)} → Ret-whnf cf → Op-whnf cf → ⊥
+⇓-exclusive : ∀ {A ε} {cf : Config (A ! ε)} → Ret-whnf cf → Op-whnf cf → ⊥
 ⇓-exclusive w w' = no-both (Ret-whnf.run w) (Op-whnf.run w')
   where
-    no-both : ∀ {A A₁ A₂ ε ε'} {cf : Config (A ‼ ε)}
+    no-both : ∀ {A A₁ A₂ ε ε'} {cf : Config (A ! ε)}
             → {St₁ St₂ : 𝕊 []} {op : Op}
             → {V : toCtx St₁ ⊢V⦂ A₁}
-            → {W : toCtx St₂ ⊢V⦂ type-of-gtype (param op)}
-            → {M : toCtx St₂ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
-                     ⊢C⦂ A₂ ‼ ε'}
+            → {W : toCtx St₂ ⊢V⦂ ⌜ param op ⌝ᵍ}
+            → {M : toCtx St₂ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
+                     ⊢C⦂ A₂ ! ε'}
             → cf ⟶* ⟨ St₁ , return V ⟩
             → cf ⟶* ⟨ St₂ , perform op W M ⟩
             → ⊥
@@ -314,7 +314,7 @@ op-run-det (r₁ ◅ rs₁) (r₂ ◅ rs₂) with ⟶-det r₁ r₂
     no-both (r₁ ◅ rs₁) (r₂ ◅ rs₂) with ⟶-det r₁ r₂
     ... | refl = no-both rs₁ rs₂
 
-op-whnf-unique : ∀ {A ε} {cf : Config (A ‼ ε)} → (w w' : Op-whnf cf)
+op-whnf-unique : ∀ {A ε} {cf : Config (A ! ε)} → (w w' : Op-whnf cf)
                → Σ[ e ∈ Op-whnf.oper w ≡ Op-whnf.oper w' ]
                    (op-ticks w ≡ op-ticks w')
 op-whnf-unique w w' =

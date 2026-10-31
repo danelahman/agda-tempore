@@ -66,7 +66,7 @@ window = [ # 1 , ↑ # 3 ]
 -- opened after a reading and a wait of a unit: more than one and a
 -- quarter, at most one and a half units have passed
 
-in-window : [] ⊢C⦂ Unit ‼ _
+in-window : [] ⊢C⦂ unit ! _
 in-window =
   box window (const 42)      -- ∷ [ window ] Reading
     (perform read ⋆          -- ⟨ ∣ opTime read ∣ ⟩ ∷ Reading

@@ -55,16 +55,16 @@ unbox-lookup {A} {ρ} S z ρ'≾ρ =
 -- branch with both substituted, as for `match`, resp. the recursion at the tail
 -- sequenced with one unfolding of the step.
 
-caseL-reduct : ∀ {Γ A C} → ListView Γ A → Γ ⊢C⦂ C → Γ ∷ A ∷ |List| A ⊢C⦂ C
+caseL-reduct : ∀ {Γ A C} → ListView Γ A → Γ ⊢C⦂ C → Γ ∷ A ∷ list A ⊢C⦂ C
              → Γ ⊢C⦂ C
 caseL-reduct (inj₁ _)       M N = M
 caseL-reduct (inj₂ (W , L)) M N =
   (N [ split-[] ↦ V-rename wk-ren L ]c) [ split-[] ↦ W ]c
 
-recL-reduct : ∀ {Γ A B ε} → ListView Γ A → Γ ⊢C⦂ B ‼ ε
-            → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε
+recL-reduct : ∀ {Γ A B ε} → ListView Γ A → Γ ⊢C⦂ B ! ε
+            → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε
             → ε ·ₑ ε ≾ₑ ε
-            → Γ ⊢C⦂ B ‼ ε
+            → Γ ⊢C⦂ B ! ε
 recL-reduct (inj₁ _)       M N p = M
 recL-reduct (inj₂ (W , L)) M N p = coerce p (recL L M N p ⨟ recL-step W L N)
 
@@ -78,8 +78,8 @@ case+-reduct (inj₂ W) M N = N [ split-[] ↦ W ]c
 
 -- The reduct of a comparison: the relation's truth on the operands' data
 
-cmp-reduct : ∀ {Γ A} {S : 𝕊 Γ} → Cmp → (V W : toCtx S ⊢V⦂ A) → Eternal A
-           → toCtx S ⊢C⦂ Bool ‼ 𝟏ₑ
+cmp-reduct : ∀ {Γ A} {S : 𝕊 Γ} → Cmp → (V W : toCtx S ⊢V⦂ A) → Et A
+           → toCtx S ⊢C⦂ bool ! 𝟏ₑ
 cmp-reduct ⋈ V W et = return ⌈ holds ⋈ (compareᵈ et (⌊ et ⌋ᵈ V) (⌊ et ⌋ᵈ W)) ⌉ᵇ
 
 mutual
@@ -90,7 +90,7 @@ mutual
         -- application: substitute the argument into the abstraction's body
         APP        : ∀ {A B ε}
                    → {S : 𝕊 []}
-                   → {M : ((toCtx S) ∷ A) ⊢C⦂ B ‼ ε}
+                   → {M : ((toCtx S) ∷ A) ⊢C⦂ B ! ε}
                    → {V : (toCtx S) ⊢V⦂ A}
                      -----------------------------------------
                    → ⟨ S , lam M · V ⟩ ⟶ ⟨ S , M [ split-[] ↦ V ]c ⟩
@@ -111,9 +111,9 @@ mutual
         -- and the tail
         CASEL      : ∀ {A C}
                    → {S : 𝕊 []}
-                   → {V : toCtx S ⊢V⦂ |List| A}
+                   → {V : toCtx S ⊢V⦂ list A}
                    → {M : toCtx S ⊢C⦂ C}
-                   → {N : toCtx S ∷ A ∷ |List| A ⊢C⦂ C}
+                   → {N : toCtx S ∷ A ∷ list A ⊢C⦂ C}
                      ------------------------------------------------------------
                    → ⟨ S , caseL V `nil M `cons N ⟩ ⟶ ⟨ S , caseL-reduct (listᵛ V) M N ⟩
 
@@ -122,9 +122,9 @@ mutual
         -- the step, the effect absorbing its own iteration
         RECL       : ∀ {A B ε}
                    → {S : 𝕊 []}
-                   → {V : toCtx S ⊢V⦂ |List| A}
-                   → {M : toCtx S ⊢C⦂ B ‼ ε}
-                   → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
+                   → {V : toCtx S ⊢V⦂ list A}
+                   → {M : toCtx S ⊢C⦂ B ! ε}
+                   → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε}
                    → {p : ε ·ₑ ε ≾ₑ ε}
                      ------------------------------------------------------------
                    → ⟨ S , recL V M N p ⟩ ⟶ ⟨ S , recL-reduct (listᵛ V) M N p ⟩
@@ -134,7 +134,7 @@ mutual
                    → {S : 𝕊 []}
                    → {⋈ : Cmp}
                    → {V W : toCtx S ⊢V⦂ A}
-                   → {et : Eternal A}
+                   → {et : Et A}
                      ------------------------------------------------------------
                    → ⟨ S , cmp ⋈ V W et ⟩ ⟶ ⟨ S , cmp-reduct ⋈ V W et ⟩
 
@@ -156,15 +156,15 @@ mutual
         CASEℕ-ZERO : ∀ {C}
                    → {S : 𝕊 []}
                    → {M : toCtx S ⊢C⦂ C}
-                   → {N : toCtx S ∷ Nat ⊢C⦂ C}
+                   → {N : toCtx S ∷ nat ⊢C⦂ C}
                      ------------------------------------------------
                    → ⟨ S , caseℕ zero `zero M `succ N ⟩ ⟶ ⟨ S , M ⟩
 
         CASEℕ-SUCC : ∀ {C}
                    → {S : 𝕊 []}
-                   → {V : toCtx S ⊢V⦂ Nat}
+                   → {V : toCtx S ⊢V⦂ nat}
                    → {M : toCtx S ⊢C⦂ C}
-                   → {N : toCtx S ∷ Nat ⊢C⦂ C}
+                   → {N : toCtx S ∷ nat ⊢C⦂ C}
                      ------------------------------------------------------------
                    → ⟨ S , caseℕ succ V `zero M `succ N ⟩ ⟶ ⟨ S , N [ split-[] ↦ V ]c ⟩
 
@@ -173,17 +173,17 @@ mutual
         -- step, the effect absorbing its own iteration
         RECℕ-ZERO  : ∀ {B ε}
                    → {S : 𝕊 []}
-                   → {M : toCtx S ⊢C⦂ B ‼ ε}
-                   → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
+                   → {M : toCtx S ⊢C⦂ B ! ε}
+                   → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε}
                    → {p : ε ·ₑ ε ≾ₑ ε}
                      --------------------------------------
                    → ⟨ S , recℕ zero M N p ⟩ ⟶ ⟨ S , M ⟩
 
         RECℕ-SUCC  : ∀ {B ε}
                    → {S : 𝕊 []}
-                   → {V : toCtx S ⊢V⦂ Nat}
-                   → {M : toCtx S ⊢C⦂ B ‼ ε}
-                   → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
+                   → {V : toCtx S ⊢V⦂ nat}
+                   → {M : toCtx S ⊢C⦂ B ! ε}
+                   → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε}
                    → {p : ε ·ₑ ε ≾ₑ ε}
                      ------------------------------------------------------------
                    → ⟨ S , recℕ (succ V) M N p ⟩ ⟶
@@ -204,9 +204,9 @@ mutual
         SEQ-STEP   : ∀ {ε₁ ε₂ ε₃}
                    → {A A₀ B : VType}
                    → {S S' : 𝕊 []}
-                   → {M : toCtx S ⊢C⦂ A ‼ ε₁}
-                   → {N : ((toCtx S) ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A) ⊢C⦂ B ‼ ε₂}
-                   → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
+                   → {M : toCtx S ⊢C⦂ A ! ε₁}
+                   → {N : ((toCtx S) ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A) ⊢C⦂ B ! ε₂}
+                   → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃}
                    → (M⟶M' : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
                    → (δε₃≾ε₁ : ≤ₛ-grade (step-extends-state M⟶M') ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
                     --------------------------------------------------------------------
@@ -220,7 +220,7 @@ mutual
         SEQ-RET    : ∀ {A B ε}
                    → {S : 𝕊 []}
                    → {V : toCtx S ⊢V⦂ A}
-                   → {N : (toCtx S ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A) ⊢C⦂ B ‼ ε}
+                   → {N : (toCtx S ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A) ⊢C⦂ B ! ε}
                      --------------------------------------------
                    → ⟨ S , return V ⨟ N ⟩ ⟶
                      ⟨ S , (C-rename
@@ -232,9 +232,9 @@ mutual
         -- continuation
         SEQ-OP     : ∀ {A B ε ε' op} 
                    → {S : 𝕊 []} 
-                   → {V : (toCtx S) ⊢V⦂ type-of-gtype (param op)} 
-                   → {M : toCtx S ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε} 
-                   → {N : toCtx S ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'} 
+                   → {V : (toCtx S) ⊢V⦂ ⌜ param op ⌝ᵍ} 
+                   → {M : toCtx S ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε} 
+                   → {N : toCtx S ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'} 
                     -----------------------------------------------------------------------------------
                    → ⟨ S , (perform op V M) ⨟ N  ⟩ ⟶
                      ⟨ S , ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
@@ -246,7 +246,7 @@ mutual
         -- delay: let time pass, moving the lock into the state
         DELAY      : ∀ {A τ ε}
                    → {S : 𝕊 []}
-                   → {M : toCtx S ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε} → 
+                   → {M : toCtx S ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε} → 
                      -------------------------------------------------------------
                      ⟨ S , (delay τ M) ⟩ ⟶ ⟨ grade-pass S (ιᵣ τ) , M ⟩
 
@@ -258,10 +258,10 @@ mutual
                      {H : (op : Op)
                         → (ε' : E)
                         → toCtx S ⟨ ⊤ᵣ ⟩
-                                  ∷ type-of-gtype (param op)
-                                  ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε')
-                          ⊢C⦂ B ‼ (op-grade op ·ₑ ε')}
-                   → {N : toCtx S ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε}
+                                  ∷ ⌜ param op ⌝ᵍ
+                                  ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε')
+                          ⊢C⦂ B ! (op-grade op ·ₑ ε')}
+                   → {N : toCtx S ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε}
                      --------------------------------------------------------------------------
                    → ⟨ S , handle return V `with handler N H ⟩ ⟶
                      ⟨ S , (C-rename
@@ -272,14 +272,14 @@ mutual
         -- handling: step the handled computation, carrying time and state forward
         HANDLE-STEP : ∀ {A A₀ B ε₁ ε₂ ε₁'}
                     → {S S' : 𝕊 []}
-                    → {M : toCtx S ⊢C⦂ A ‼ ε₁}
+                    → {M : toCtx S ⊢C⦂ A ! ε₁}
                     → {H : (op : Op) → (ε₃ : E) →
                          toCtx S ⟨ ⊤ᵣ ⟩
-                                 ∷ type-of-gtype (param op)
-                                 ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε₃)
-                               ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)}
-                    → {N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂}
-                    → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₁'}
+                                 ∷ ⌜ param op ⌝ᵍ
+                                 ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε₃)
+                               ⊢C⦂ B ! (op-grade op ·ₑ ε₃)}
+                    → {N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂}
+                    → {M' : toCtx S' ⊢C⦂ A₀ ! ε₁'}
                     → (M⟶M' : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
                     → (δε₁'≾ε₁ : ≤ₛ-grade (step-extends-state M⟶M') ·ᵣ ∣ ε₁' ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
                       -----------------------------------------------------------------------
@@ -301,14 +301,14 @@ mutual
         -- time has passed
         HANDLE-OP   : ∀ {A B ε ε'' op}
                     → {S : 𝕊 []} 
-                    → {V : toCtx S ⊢V⦂ type-of-gtype (param op)}
-                    → {M : toCtx S ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
+                    → {V : toCtx S ⊢V⦂ ⌜ param op ⌝ᵍ}
+                    → {M : toCtx S ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε}
                     → {H : (op' : Op) → (ε' : E) →
                              toCtx S ⟨ ⊤ᵣ ⟩
-                                     ∷ type-of-gtype (param op')
-                                     ∷ [ ∣ op-grade op' ∣ᵉ ] (type-of-gtype (arity op') ⇒ B ‼ ε')
-                                   ⊢C⦂ B ‼ (op-grade op' ·ₑ ε')}
-                    → {N : toCtx S ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε''}
+                                     ∷ ⌜ param op' ⌝ᵍ
+                                     ∷ [ ∣ op-grade op' ∣ᵉ ] (⌜ arity op' ⌝ᵍ ⇒ B ! ε')
+                                   ⊢C⦂ B ! (op-grade op' ·ₑ ε')}
+                    → {N : toCtx S ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε''}
                       --------------------------------------------------------------------------
                     → ⟨ S , handle perform op V M `with handler N H ⟩ ⟶
                       ⟨ S , box _ (lam
@@ -323,7 +323,7 @@ mutual
                                          C-rename
                                            (cong-∷-ren (cong-∷-ren
                                              (barrier-wk-ren ∣ op-grade op ∣ᵉ
-                                                             (type-of-gtype (arity op)))))
+                                                             ⌜ arity op ⌝ᵍ)))
                                            (H op' ε'))))
                              -- the clause is included into the context reached
                              -- when the operation is handled
@@ -334,7 +334,7 @@ mutual
         -- box: extend the state with a new resource
         BOX         : ∀ {A B ρ' ε} → {S : 𝕊 []}
                     → {V : toCtx S ⟨ ρ' ⟩ ⊢V⦂ A}
-                    → {M : toCtx S ∷ [ ρ' ] A ⊢C⦂ B ‼ ε}
+                    → {M : toCtx S ∷ [ ρ' ] A ⊢C⦂ B ! ε}
                       -------------------------------------------------------
                     → ⟨ S , (box _ V M) ⟩ ⟶
                       ⟨ extend-state S (V-rename (eq-ren (sym ++ᶜ-identityˡ)) V) , M ⟩
@@ -371,18 +371,18 @@ mutual
         -- handled computation
         SUB-HANDLE  : ∀ {A A₁ B B₁ ε ε₁ ε' ε₁'}
                     → {S : 𝕊 []}
-                    → {M : toCtx S ⊢C⦂ A ‼ ε}
-                    → {N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B₁ ‼ ε₁'}
+                    → {M : toCtx S ⊢C⦂ A ! ε}
+                    → {N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B₁ ! ε₁'}
                     → {H : (op : Op) → (ε₃ : E) →
                          toCtx S ⟨ ⊤ᵣ ⟩
-                                 ∷ type-of-gtype (param op)
-                                 ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B₁ ‼ ε₃)
-                               ⊢C⦂ B₁ ‼ (op-grade op ·ₑ ε₃)}
+                                 ∷ ⌜ param op ⌝ᵍ
+                                 ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B₁ ! ε₃)
+                               ⊢C⦂ B₁ ! (op-grade op ·ₑ ε₃)}
                     → {p : A <:ᵛ A₁}
                     → {pε : ε ≾ₑ ε₁}
-                    → {q : (B₁ ‼ ε₁') <:ᶜ (B ‼ ε')}
+                    → {q : (B₁ ! ε₁') <:ᶜ (B ! ε')}
                       ------------------------------------------------------------
-                    → ⟨ S , handle M `with subV (handler N H) ((p ‼ₛ pε) ⇛ₛ q) ⟩ ⟶
+                    → ⟨ S , handle M `with subV (handler N H) ((p !ₛ pε) ⇛ₛ q) ⟩ ⟶
                       ⟨ S , handle M
                             `with handler
                                     (subCtx p
@@ -395,44 +395,44 @@ mutual
         SUB-HANDLE-TRANS
                     : ∀ {A₀ A' A B ε ε'}
                     → {S : 𝕊 []}
-                    → {M : toCtx S ⊢C⦂ A ‼ ε}
+                    → {M : toCtx S ⊢C⦂ A ! ε}
                     → {V : toCtx S ⊢V⦂ A₀}
                     → {p : A₀ <:ᵛ A'}
-                    → {p' : A' <:ᵛ (A ‼ ε) ⇛ (B ‼ ε')}
+                    → {p' : A' <:ᵛ (A ! ε) ⇛ (B ! ε')}
                       ------------------------------------------------------------
                     → ⟨ S , handle M `with subV (subV V p) p' ⟩ ⟶
                       ⟨ S , handle M `with subV V (<:ᵛ-trans p p') ⟩
 
-        -- subsumption at a scrutinised boolean: `Bool <:ᵛ Bool` is the
+        -- subsumption at a scrutinised boolean: `bool <:ᵛ bool` is the
         -- identity, so it is dropped
         SUB-IF      : ∀ {C}
                     → {S : 𝕊 []}
-                    → {V : toCtx S ⊢V⦂ Bool}
+                    → {V : toCtx S ⊢V⦂ bool}
                     → {M N : toCtx S ⊢C⦂ C}
                       -------------------------------------------------------
-                    → ⟨ S , if subV V Boolₛ `then M `else N ⟩ ⟶
+                    → ⟨ S , if subV V boolₛ `then M `else N ⟩ ⟶
                       ⟨ S , if V `then M `else N ⟩
 
-        -- subsumption at a scrutinised natural number: `Nat <:ᵛ Nat` is the
+        -- subsumption at a scrutinised natural number: `nat <:ᵛ nat` is the
         -- identity, so it is dropped
         SUB-CASEℕ   : ∀ {C}
                     → {S : 𝕊 []}
-                    → {V : toCtx S ⊢V⦂ Nat}
+                    → {V : toCtx S ⊢V⦂ nat}
                     → {M : toCtx S ⊢C⦂ C}
-                    → {N : toCtx S ∷ Nat ⊢C⦂ C}
+                    → {N : toCtx S ∷ nat ⊢C⦂ C}
                       ---------------------------------------------------------
-                    → ⟨ S , caseℕ subV V Natₛ `zero M `succ N ⟩ ⟶
+                    → ⟨ S , caseℕ subV V natₛ `zero M `succ N ⟩ ⟶
                       ⟨ S , caseℕ V `zero M `succ N ⟩
 
         -- subsumption at a recursion's natural number: dropped, as for `caseℕ`
         SUB-RECℕ    : ∀ {B ε}
                     → {S : 𝕊 []}
-                    → {V : toCtx S ⊢V⦂ Nat}
-                    → {M : toCtx S ⊢C⦂ B ‼ ε}
-                    → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
+                    → {V : toCtx S ⊢V⦂ nat}
+                    → {M : toCtx S ⊢C⦂ B ! ε}
+                    → {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε}
                     → {p : ε ·ₑ ε ≾ₑ ε}
                       ---------------------------------------------------------
-                    → ⟨ S , recℕ (subV V Natₛ) M N p ⟩ ⟶ ⟨ S , recℕ V M N p ⟩
+                    → ⟨ S , recℕ (subV V natₛ) M N p ⟩ ⟶ ⟨ S , recℕ V M N p ⟩
 
         -- subsumption at a computation: discarded, the reduct landing at the
         -- subtype the step is free to refine to
@@ -451,8 +451,8 @@ mutual
     step-extends-state : ∀ {ε ε'}
                        → {S S' : 𝕊 []}
                        → {A B : VType}
-                       → {M : toCtx S ⊢C⦂ A ‼ ε}
-                       → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
+                       → {M : toCtx S ⊢C⦂ A ! ε}
+                       → {M' : toCtx S' ⊢C⦂ B ! ε'}
                        → (M⟶M' : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩ )
                        -----------------------------------
                        → S ≤ₛ S'
@@ -489,8 +489,8 @@ mutual
     -- reduction steps refine the value type, as they refine the effect
     step-refines-type : ∀ {A B ε ε'}
                       → {S S' : 𝕊 []}
-                      → {M : toCtx S ⊢C⦂ A ‼ ε}
-                      → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
+                      → {M : toCtx S ⊢C⦂ A ! ε}
+                      → {M' : toCtx S' ⊢C⦂ B ! ε'}
                       → ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩
                       ---------------------------
                       → B <:ᵛ A
@@ -500,7 +500,7 @@ mutual
     step-refines-type {A = A} CASEL             = <:ᵛ-refl A
     step-refines-type {A = A} RECL              = <:ᵛ-refl A
     step-refines-type {A = A} IF-TRUE           = <:ᵛ-refl A
-    step-refines-type CMP                       = Boolₛ
+    step-refines-type CMP                       = boolₛ
     step-refines-type {A = A} IF-FALSE          = <:ᵛ-refl A
     step-refines-type {A = A} CASE+             = <:ᵛ-refl A
     step-refines-type {A = A} CASEℕ-ZERO        = <:ᵛ-refl A
@@ -516,13 +516,13 @@ mutual
     step-refines-type {A = A} HANDLE-OP         = <:ᵛ-refl A
     step-refines-type {A = A} BOX               = <:ᵛ-refl A
     step-refines-type {A = A} UNBOX             = <:ᵛ-refl A
-    step-refines-type (SUB-APP {r = p ‼ₛ _})    = p
-    step-refines-type (SUB-HANDLE {q = p ‼ₛ _}) = p
+    step-refines-type (SUB-APP {r = p !ₛ _})    = p
+    step-refines-type (SUB-HANDLE {q = p !ₛ _}) = p
     step-refines-type {A = A} SUB-HANDLE-TRANS  = <:ᵛ-refl A
     step-refines-type {A = A} SUB-IF            = <:ᵛ-refl A
     step-refines-type {A = A} SUB-CASEℕ         = <:ᵛ-refl A
     step-refines-type {A = A} SUB-RECℕ          = <:ᵛ-refl A
-    step-refines-type (SUB {w = p ‼ₛ _})        = p
+    step-refines-type (SUB {w = p !ₛ _})        = p
 
 -- Reduction steps make effects more precise, in cancelled form: the grade δ by
 -- which the state grew, composed with the residual effect ε', stays below the
@@ -532,8 +532,8 @@ mutual
 
 step-grade-≾ : ∀ {A B ε ε'}
              → {S S' : 𝕊 []}
-             → {M : toCtx S ⊢C⦂ A ‼ ε}
-             → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
+             → {M : toCtx S ⊢C⦂ A ! ε}
+             → {M' : toCtx S' ⊢C⦂ B ! ε'}
              → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
              -------------------------------------------------
              → ≤ₛ-grade (step-extends-state r) ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ ∣ ε ∣ᵉ
@@ -577,15 +577,15 @@ step-grade-≾ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op}) =
     (≃ᵣ-trans (·ᵣ-identityˡ _) (map-≃ᵉ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε''))))
 step-grade-≾ BOX     = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ UNBOX   = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
-step-grade-≾ (SUB-APP {r = _ ‼ₛ s}) =
+step-grade-≾ (SUB-APP {r = _ !ₛ s}) =
   ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)) (map-monotoneᵉ s)
-step-grade-≾ (SUB-HANDLE {q = _ ‼ₛ s}) =
+step-grade-≾ (SUB-HANDLE {q = _ !ₛ s}) =
   ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)) (map-monotoneᵉ (·ₑ-monoʳ-≾ₑ s))
 step-grade-≾ SUB-HANDLE-TRANS = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ SUB-IF  = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ SUB-CASEℕ = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ SUB-RECℕ = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
-step-grade-≾ (SUB {w = _ ‼ₛ q}) =
+step-grade-≾ (SUB {w = _ !ₛ q}) =
   ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)) (map-monotoneᵉ q)
 
 -- invariants preserved by the small-step operational semantics, stated in
@@ -593,8 +593,8 @@ step-grade-≾ (SUB {w = _ ‼ₛ q}) =
 
 step-invariants : ∀ {A B ε ε'}
                 → {S S' : 𝕊 []}
-                → {M : toCtx S ⊢C⦂ A ‼ ε}
-                → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
+                → {M : toCtx S ⊢C⦂ A ! ε}
+                → {M' : toCtx S' ⊢C⦂ B ! ε'}
                 → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
                 → B <:ᵛ A                                               -- return types become more precise
                 × state-grade S' ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ state-grade S ·ᵣ ∣ ε ∣ᵉ  -- effects become more precise
@@ -608,17 +608,17 @@ step-invariants r =
 
 infixr 5 _◅_
 
-data _⟶*_ : ∀ {A B ε ε'} → Config (A ‼ ε) → Config (B ‼ ε') → Set where
-  ε*   : ∀ {A ε} {cf : Config (A ‼ ε)}
+data _⟶*_ : ∀ {A B ε ε'} → Config (A ! ε) → Config (B ! ε') → Set where
+  ε*   : ∀ {A ε} {cf : Config (A ! ε)}
        → cf ⟶* cf
   _◅_  : ∀ {A B C ε₁ ε₂ ε₃}
-       → {cf₁ : Config (A ‼ ε₁)} → {cf₂ : Config (B ‼ ε₂)} → {cf₃ : Config (C ‼ ε₃)}
+       → {cf₁ : Config (A ! ε₁)} → {cf₂ : Config (B ! ε₂)} → {cf₃ : Config (C ! ε₃)}
        → cf₁ ⟶ cf₂ → cf₂ ⟶* cf₃ → cf₁ ⟶* cf₃
 
 -- The refinement a run accumulates.
 
 run-refines-type : ∀ {A B ε ε'}
-                 → {cf : Config (A ‼ ε)} → {cf' : Config (B ‼ ε')}
+                 → {cf : Config (A ! ε)} → {cf' : Config (B ! ε')}
                  → cf ⟶* cf' → B <:ᵛ A
 run-refines-type {A = A} ε* = <:ᵛ-refl A
 run-refines-type (r ◅ rs)   = <:ᵛ-trans (run-refines-type rs) (step-refines-type r)
@@ -638,25 +638,25 @@ CASE-INR = CASE+
 -- The list eliminators at `nil` and at a `cons`: `CASEL` and `RECL`, by
 -- computation of `listᵛ`.
 
-CASEL-NIL  : ∀ {A C} {S : 𝕊 []} {M : toCtx S ⊢C⦂ C} {N : toCtx S ∷ A ∷ |List| A ⊢C⦂ C}
+CASEL-NIL  : ∀ {A C} {S : 𝕊 []} {M : toCtx S ⊢C⦂ C} {N : toCtx S ∷ A ∷ list A ⊢C⦂ C}
            → ⟨ S , caseL nil `nil M `cons N ⟩ ⟶ ⟨ S , M ⟩
 CASEL-NIL = CASEL
 
-CASEL-CONS : ∀ {A C} {S : 𝕊 []} {V : toCtx S ⊢V⦂ A} {W : toCtx S ⊢V⦂ |List| A}
-             {M : toCtx S ⊢C⦂ C} {N : toCtx S ∷ A ∷ |List| A ⊢C⦂ C}
+CASEL-CONS : ∀ {A C} {S : 𝕊 []} {V : toCtx S ⊢V⦂ A} {W : toCtx S ⊢V⦂ list A}
+             {M : toCtx S ⊢C⦂ C} {N : toCtx S ∷ A ∷ list A ⊢C⦂ C}
            → ⟨ S , caseL cons V W `nil M `cons N ⟩ ⟶
              ⟨ S , (N [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟩
 CASEL-CONS = CASEL
 
-RECL-NIL   : ∀ {A B ε} {S : 𝕊 []} {M : toCtx S ⊢C⦂ B ‼ ε}
-             {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
+RECL-NIL   : ∀ {A B ε} {S : 𝕊 []} {M : toCtx S ⊢C⦂ B ! ε}
+             {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε}
              {p : ε ·ₑ ε ≾ₑ ε}
            → ⟨ S , recL nil M N p ⟩ ⟶ ⟨ S , M ⟩
 RECL-NIL = RECL
 
-RECL-CONS  : ∀ {A B ε} {S : 𝕊 []} {V : toCtx S ⊢V⦂ A} {W : toCtx S ⊢V⦂ |List| A}
-             {M : toCtx S ⊢C⦂ B ‼ ε}
-             {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
+RECL-CONS  : ∀ {A B ε} {S : 𝕊 []} {V : toCtx S ⊢V⦂ A} {W : toCtx S ⊢V⦂ list A}
+             {M : toCtx S ⊢C⦂ B ! ε}
+             {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε}
              {p : ε ·ₑ ε ≾ₑ ε}
            → ⟨ S , recL (cons V W) M N p ⟩ ⟶
              ⟨ S , coerce p (recL W M N p ⨟ recL-step V W N) ⟩

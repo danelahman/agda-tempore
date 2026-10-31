@@ -68,19 +68,19 @@ mutual
   shapeᵛ : ∀ {Ω} → OVType Ω → Skel 1
   shapeᵛ (tvar α)  = svar zero
   shapeᵛ (Base b)  = sBase b
-  shapeᵛ Unit      = sUnit
-  shapeᵛ Bool      = sBool
-  shapeᵛ Nat       = sNat
+  shapeᵛ unit      = sUnit
+  shapeᵛ bool      = sBool
+  shapeᵛ nat       = sNat
   shapeᵛ (A |×| B) = shapeᵛ A s× shapeᵛ B
   shapeᵛ (A |+| B) = shapeᵛ A s+ shapeᵛ B
-  shapeᵛ (|List| A) = sList (shapeᵛ A)
-  shapeᵛ Empty     = sEmpty
+  shapeᵛ (list A)  = sList (shapeᵛ A)
+  shapeᵛ empty     = sEmpty
   shapeᵛ (A ⇒ C)   = shapeᵛ A s⇒ shapeᶜ C
   shapeᵛ (C ⇛ D)   = shapeᶜ C s⇛ shapeᶜ D
   shapeᵛ ([ ρ ] A) = sBox shapeᵛ A
 
   shapeᶜ : ∀ {Ω} → OCType Ω → Skel 1
-  shapeᶜ (A ‼ ε) = shapeᵛ A
+  shapeᶜ (A ! ε) = shapeᵛ A
 
 -- The shapes a substitution gives the type variables
 
@@ -93,20 +93,20 @@ mutual
             → shapeᵛ (A [ δ ]ᵛ) ≡ skelᵛ A [ shapeˢ δ ]ᵏ
   shape-[]ᵛ (tvar α)  δ = refl
   shape-[]ᵛ (Base b)  δ = refl
-  shape-[]ᵛ Unit      δ = refl
-  shape-[]ᵛ Bool      δ = refl
-  shape-[]ᵛ Nat       δ = refl
+  shape-[]ᵛ unit      δ = refl
+  shape-[]ᵛ bool      δ = refl
+  shape-[]ᵛ nat       δ = refl
   shape-[]ᵛ (A |×| B) δ = cong₂ _s×_ (shape-[]ᵛ A δ) (shape-[]ᵛ B δ)
   shape-[]ᵛ (A |+| B) δ = cong₂ _s+_ (shape-[]ᵛ A δ) (shape-[]ᵛ B δ)
-  shape-[]ᵛ (|List| A) δ = cong sList (shape-[]ᵛ A δ)
-  shape-[]ᵛ Empty     δ = refl
+  shape-[]ᵛ (list A)  δ = cong sList (shape-[]ᵛ A δ)
+  shape-[]ᵛ empty     δ = refl
   shape-[]ᵛ (A ⇒ C)   δ = cong₂ _s⇒_ (shape-[]ᵛ A δ) (shape-[]ᶜ C δ)
   shape-[]ᵛ (C ⇛ D)   δ = cong₂ _s⇛_ (shape-[]ᶜ C δ) (shape-[]ᶜ D δ)
   shape-[]ᵛ ([ ρ ] A) δ = cong sBox_ (shape-[]ᵛ A δ)
 
   shape-[]ᶜ : ∀ {Ω Ω'} → (C : OCType Ω) → (δ : Subst Ω Ω')
             → shapeᶜ (C [ δ ]ᶜ) ≡ skelᶜ C [ shapeˢ δ ]ᵏ
-  shape-[]ᶜ (A ‼ ε) δ = shape-[]ᵛ A δ
+  shape-[]ᶜ (A ! ε) δ = shape-[]ᵛ A δ
 
 -- Subtyping preserves the shape
 
@@ -115,19 +115,19 @@ mutual
   <:̂ᵛ-shape : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ∣ A <:̂ᵛ B → shapeᵛ A ≡ shapeᵛ B
   <:̂ᵛ-shape (tvarₛ p)    = refl
   <:̂ᵛ-shape (Baseₛ refl) = refl
-  <:̂ᵛ-shape Unitₛ        = refl
-  <:̂ᵛ-shape Boolₛ        = refl
-  <:̂ᵛ-shape Natₛ         = refl
+  <:̂ᵛ-shape unitₛ        = refl
+  <:̂ᵛ-shape boolₛ        = refl
+  <:̂ᵛ-shape natₛ         = refl
   <:̂ᵛ-shape (p |×|ₛ q)   = cong₂ _s×_ (<:̂ᵛ-shape p) (<:̂ᵛ-shape q)
   <:̂ᵛ-shape (p |+|ₛ q)   = cong₂ _s+_ (<:̂ᵛ-shape p) (<:̂ᵛ-shape q)
-  <:̂ᵛ-shape (|List|ₛ p)  = cong sList (<:̂ᵛ-shape p)
-  <:̂ᵛ-shape Emptyₛ       = refl
+  <:̂ᵛ-shape (listₛ p)    = cong sList (<:̂ᵛ-shape p)
+  <:̂ᵛ-shape emptyₛ       = refl
   <:̂ᵛ-shape (p ⇒ₛ q)     = cong₂ _s⇒_ (sym (<:̂ᵛ-shape p)) (<:̂ᶜ-shape q)
   <:̂ᵛ-shape (p ⇛ₛ q)     = cong₂ _s⇛_ (sym (<:̂ᶜ-shape p)) (<:̂ᶜ-shape q)
   <:̂ᵛ-shape ([ r ]ₛ p)   = cong sBox_ (<:̂ᵛ-shape p)
 
   <:̂ᶜ-shape : ∀ {Θ} {Q : Hyps Θ} {C D} → Q ∣ C <:̂ᶜ D → shapeᶜ C ≡ shapeᶜ D
-  <:̂ᶜ-shape (p ‼ₛ r) = <:̂ᵛ-shape p
+  <:̂ᶜ-shape (p !ₛ r) = <:̂ᵛ-shape p
 
 -- An open type refines a skeleton when it has the same formers outside the
 -- skeleton's variables
@@ -140,19 +140,19 @@ data _⊑ᶜ_ {Ω : Scope} {n : ℕ} : Skel n → OCType Ω → Set
 data _⊑ᵛ_ {Ω} {n} where
   var⊑   : ∀ {γ A} → svar γ ⊑ᵛ A
   Base⊑  : ∀ {b} → sBase {n} b ⊑ᵛ Base {Ω} b
-  Unit⊑  : sUnit {n} ⊑ᵛ Unit {Ω}
-  Bool⊑  : sBool {n} ⊑ᵛ Bool {Ω}
-  Nat⊑   : sNat {n} ⊑ᵛ Nat {Ω}
+  unit⊑  : sUnit {n} ⊑ᵛ unit {Ω}
+  bool⊑  : sBool {n} ⊑ᵛ bool {Ω}
+  nat⊑   : sNat {n} ⊑ᵛ nat {Ω}
   _×⊑_   : ∀ {t u A B} → t ⊑ᵛ A → u ⊑ᵛ B → (t s× u) ⊑ᵛ (A |×| B)
   _+⊑_   : ∀ {t u A B} → t ⊑ᵛ A → u ⊑ᵛ B → (t s+ u) ⊑ᵛ (A |+| B)
-  List⊑  : ∀ {t A} → t ⊑ᵛ A → sList t ⊑ᵛ (|List| A)
-  Empty⊑ : sEmpty {n} ⊑ᵛ Empty {Ω}
+  list⊑  : ∀ {t A} → t ⊑ᵛ A → sList t ⊑ᵛ (list A)
+  empty⊑ : sEmpty {n} ⊑ᵛ empty {Ω}
   _⇒⊑_   : ∀ {t u A C} → t ⊑ᵛ A → u ⊑ᶜ C → (t s⇒ u) ⊑ᵛ (A ⇒ C)
   _⇛⊑_   : ∀ {t u C D} → t ⊑ᶜ C → u ⊑ᶜ D → (t s⇛ u) ⊑ᵛ (C ⇛ D)
   Box⊑   : ∀ {t A ρ} → t ⊑ᵛ A → sBox t ⊑ᵛ ([ ρ ] A)
 
 data _⊑ᶜ_ {Ω} {n} where
-  ‼⊑ : ∀ {t A ε} → t ⊑ᵛ A → t ⊑ᶜ (A ‼ ε)
+  !⊑ : ∀ {t A ε} → t ⊑ᵛ A → t ⊑ᶜ (A ! ε)
 
 -- A skeleton whose instance has a type's shape refines that type
 
@@ -163,144 +163,144 @@ mutual
   ⊑-from (svar γ)  ζ A           eq   = var⊑
   ⊑-from (sBase b) ζ (tvar α)    ()
   ⊑-from (sBase b) ζ (Base b')   refl = Base⊑
-  ⊑-from (sBase b) ζ Unit        ()
-  ⊑-from (sBase b) ζ Bool        ()
-  ⊑-from (sBase b) ζ Nat         ()
+  ⊑-from (sBase b) ζ unit        ()
+  ⊑-from (sBase b) ζ bool        ()
+  ⊑-from (sBase b) ζ nat         ()
   ⊑-from (sBase b) ζ (A |×| B)   ()
   ⊑-from (sBase b) ζ (A |+| B)   ()
-  ⊑-from (sBase b) ζ Empty       ()
+  ⊑-from (sBase b) ζ empty       ()
   ⊑-from (sBase b) ζ (A ⇒ C)     ()
   ⊑-from (sBase b) ζ (C ⇛ D)     ()
   ⊑-from (sBase b) ζ ([ ρ ] A)   ()
-  ⊑-from (sBase b) ζ (|List| A)  ()
+  ⊑-from (sBase b) ζ (list A)    ()
   ⊑-from sUnit     ζ (tvar α)    ()
   ⊑-from sUnit     ζ (Base b')   ()
-  ⊑-from sUnit     ζ Unit        refl = Unit⊑
-  ⊑-from sUnit     ζ Bool        ()
-  ⊑-from sUnit     ζ Nat         ()
+  ⊑-from sUnit     ζ unit        refl = unit⊑
+  ⊑-from sUnit     ζ bool        ()
+  ⊑-from sUnit     ζ nat         ()
   ⊑-from sUnit     ζ (A |×| B)   ()
   ⊑-from sUnit     ζ (A |+| B)   ()
-  ⊑-from sUnit     ζ Empty       ()
+  ⊑-from sUnit     ζ empty       ()
   ⊑-from sUnit     ζ (A ⇒ C)     ()
   ⊑-from sUnit     ζ (C ⇛ D)     ()
   ⊑-from sUnit     ζ ([ ρ ] A)   ()
-  ⊑-from sUnit     ζ (|List| A)  ()
+  ⊑-from sUnit     ζ (list A)    ()
   ⊑-from sBool     ζ (tvar α)    ()
   ⊑-from sBool     ζ (Base b')   ()
-  ⊑-from sBool     ζ Unit        ()
-  ⊑-from sBool     ζ Bool        refl = Bool⊑
-  ⊑-from sBool     ζ Nat         ()
+  ⊑-from sBool     ζ unit        ()
+  ⊑-from sBool     ζ bool        refl = bool⊑
+  ⊑-from sBool     ζ nat         ()
   ⊑-from sBool     ζ (A |×| B)   ()
   ⊑-from sBool     ζ (A |+| B)   ()
-  ⊑-from sBool     ζ Empty       ()
+  ⊑-from sBool     ζ empty       ()
   ⊑-from sBool     ζ (A ⇒ C)     ()
   ⊑-from sBool     ζ (C ⇛ D)     ()
   ⊑-from sBool     ζ ([ ρ ] A)   ()
-  ⊑-from sBool     ζ (|List| A)  ()
+  ⊑-from sBool     ζ (list A)    ()
   ⊑-from sNat      ζ (tvar α)    ()
   ⊑-from sNat      ζ (Base b')   ()
-  ⊑-from sNat      ζ Unit        ()
-  ⊑-from sNat      ζ Bool        ()
-  ⊑-from sNat      ζ Nat         refl = Nat⊑
+  ⊑-from sNat      ζ unit        ()
+  ⊑-from sNat      ζ bool        ()
+  ⊑-from sNat      ζ nat         refl = nat⊑
   ⊑-from sNat      ζ (A |×| B)   ()
   ⊑-from sNat      ζ (A |+| B)   ()
-  ⊑-from sNat      ζ Empty       ()
+  ⊑-from sNat      ζ empty       ()
   ⊑-from sNat      ζ (A ⇒ C)     ()
   ⊑-from sNat      ζ (C ⇛ D)     ()
   ⊑-from sNat      ζ ([ ρ ] A)   ()
-  ⊑-from sNat      ζ (|List| A)  ()
+  ⊑-from sNat      ζ (list A)    ()
   ⊑-from (t s× u)  ζ (tvar α)    ()
   ⊑-from (t s× u)  ζ (Base b')   ()
-  ⊑-from (t s× u)  ζ Unit        ()
-  ⊑-from (t s× u)  ζ Bool        ()
-  ⊑-from (t s× u)  ζ Nat         ()
+  ⊑-from (t s× u)  ζ unit        ()
+  ⊑-from (t s× u)  ζ bool        ()
+  ⊑-from (t s× u)  ζ nat         ()
   ⊑-from (t s× u)  ζ (A |×| B)   eq   =
     ⊑-from t ζ A (proj₁ (s×-inj eq)) ×⊑ ⊑-from u ζ B (proj₂ (s×-inj eq))
   ⊑-from (t s× u)  ζ (A |+| B)   ()
-  ⊑-from (t s× u)  ζ Empty       ()
+  ⊑-from (t s× u)  ζ empty       ()
   ⊑-from (t s× u)  ζ (A ⇒ C)     ()
   ⊑-from (t s× u)  ζ (C ⇛ D)     ()
   ⊑-from (t s× u)  ζ ([ ρ ] A)   ()
-  ⊑-from (t s× u)  ζ (|List| A)  ()
+  ⊑-from (t s× u)  ζ (list A)    ()
   ⊑-from (t s+ u)  ζ (tvar α)    ()
   ⊑-from (t s+ u)  ζ (Base b')   ()
-  ⊑-from (t s+ u)  ζ Unit        ()
-  ⊑-from (t s+ u)  ζ Bool        ()
-  ⊑-from (t s+ u)  ζ Nat         ()
+  ⊑-from (t s+ u)  ζ unit        ()
+  ⊑-from (t s+ u)  ζ bool        ()
+  ⊑-from (t s+ u)  ζ nat         ()
   ⊑-from (t s+ u)  ζ (A |+| B)   eq   =
     ⊑-from t ζ A (proj₁ (s+-inj eq)) +⊑ ⊑-from u ζ B (proj₂ (s+-inj eq))
   ⊑-from (t s+ u)  ζ (A |×| B)   ()
-  ⊑-from (t s+ u)  ζ Empty       ()
+  ⊑-from (t s+ u)  ζ empty       ()
   ⊑-from (t s+ u)  ζ (A ⇒ C)     ()
   ⊑-from (t s+ u)  ζ (C ⇛ D)     ()
   ⊑-from (t s+ u)  ζ ([ ρ ] A)   ()
-  ⊑-from (t s+ u)  ζ (|List| A)  ()
+  ⊑-from (t s+ u)  ζ (list A)    ()
   ⊑-from sEmpty    ζ (tvar α)    ()
   ⊑-from sEmpty    ζ (Base b')   ()
-  ⊑-from sEmpty    ζ Unit        ()
-  ⊑-from sEmpty    ζ Bool        ()
-  ⊑-from sEmpty    ζ Nat         ()
+  ⊑-from sEmpty    ζ unit        ()
+  ⊑-from sEmpty    ζ bool        ()
+  ⊑-from sEmpty    ζ nat         ()
   ⊑-from sEmpty    ζ (A |×| B)   ()
   ⊑-from sEmpty    ζ (A |+| B)   ()
-  ⊑-from sEmpty    ζ Empty       refl = Empty⊑
+  ⊑-from sEmpty    ζ empty       refl = empty⊑
   ⊑-from sEmpty    ζ (A ⇒ C)     ()
   ⊑-from sEmpty    ζ (C ⇛ D)     ()
   ⊑-from sEmpty    ζ ([ ρ ] A)   ()
-  ⊑-from sEmpty    ζ (|List| A)  ()
+  ⊑-from sEmpty    ζ (list A)    ()
   ⊑-from (t s⇒ u)  ζ (tvar α)    ()
   ⊑-from (t s⇒ u)  ζ (Base b')   ()
-  ⊑-from (t s⇒ u)  ζ Unit        ()
-  ⊑-from (t s⇒ u)  ζ Bool        ()
-  ⊑-from (t s⇒ u)  ζ Nat         ()
+  ⊑-from (t s⇒ u)  ζ unit        ()
+  ⊑-from (t s⇒ u)  ζ bool        ()
+  ⊑-from (t s⇒ u)  ζ nat         ()
   ⊑-from (t s⇒ u)  ζ (A |×| B)   ()
   ⊑-from (t s⇒ u)  ζ (A |+| B)   ()
-  ⊑-from (t s⇒ u)  ζ Empty       ()
+  ⊑-from (t s⇒ u)  ζ empty       ()
   ⊑-from (t s⇒ u)  ζ (A ⇒ C)     eq   =
     ⊑-from t ζ A (proj₁ (s⇒-inj eq)) ⇒⊑ ⊑-fromᶜ u ζ C (proj₂ (s⇒-inj eq))
   ⊑-from (t s⇒ u)  ζ ([ ρ ] A)   ()
-  ⊑-from (t s⇒ u)  ζ (|List| A)  ()
+  ⊑-from (t s⇒ u)  ζ (list A)    ()
   ⊑-from (t s⇒ u)  ζ (C ⇛ D)     ()
   ⊑-from (t s⇛ u)  ζ (tvar α)    ()
   ⊑-from (t s⇛ u)  ζ (Base b')   ()
-  ⊑-from (t s⇛ u)  ζ Unit        ()
-  ⊑-from (t s⇛ u)  ζ Bool        ()
-  ⊑-from (t s⇛ u)  ζ Nat         ()
+  ⊑-from (t s⇛ u)  ζ unit        ()
+  ⊑-from (t s⇛ u)  ζ bool        ()
+  ⊑-from (t s⇛ u)  ζ nat         ()
   ⊑-from (t s⇛ u)  ζ (A |×| B)   ()
   ⊑-from (t s⇛ u)  ζ (A |+| B)   ()
-  ⊑-from (t s⇛ u)  ζ Empty       ()
+  ⊑-from (t s⇛ u)  ζ empty       ()
   ⊑-from (t s⇛ u)  ζ (A ⇒ C)     ()
   ⊑-from (t s⇛ u)  ζ (C ⇛ D)     eq   =
     ⊑-fromᶜ t ζ C (proj₁ (s⇛-inj eq)) ⇛⊑ ⊑-fromᶜ u ζ D (proj₂ (s⇛-inj eq))
   ⊑-from (t s⇛ u)  ζ ([ ρ ] A)   ()
-  ⊑-from (t s⇛ u)  ζ (|List| A)  ()
+  ⊑-from (t s⇛ u)  ζ (list A)    ()
   ⊑-from (sBox t)  ζ (tvar α)    ()
   ⊑-from (sBox t)  ζ (Base b')   ()
-  ⊑-from (sBox t)  ζ Unit        ()
-  ⊑-from (sBox t)  ζ Bool        ()
-  ⊑-from (sBox t)  ζ Nat         ()
+  ⊑-from (sBox t)  ζ unit        ()
+  ⊑-from (sBox t)  ζ bool        ()
+  ⊑-from (sBox t)  ζ nat         ()
   ⊑-from (sBox t)  ζ (A |×| B)   ()
   ⊑-from (sBox t)  ζ (A |+| B)   ()
-  ⊑-from (sBox t)  ζ Empty       ()
+  ⊑-from (sBox t)  ζ empty       ()
   ⊑-from (sBox t)  ζ (A ⇒ C)     ()
   ⊑-from (sBox t)  ζ (C ⇛ D)     ()
   ⊑-from (sBox t)  ζ ([ ρ ] A)   eq   = Box⊑ (⊑-from t ζ A (sBox-inj eq))
-  ⊑-from (sBox t)  ζ (|List| A)  ()
+  ⊑-from (sBox t)  ζ (list A)    ()
   ⊑-from (sList t) ζ (tvar α)    ()
   ⊑-from (sList t) ζ (Base b')   ()
-  ⊑-from (sList t) ζ Unit        ()
-  ⊑-from (sList t) ζ Bool        ()
-  ⊑-from (sList t) ζ Nat         ()
+  ⊑-from (sList t) ζ unit        ()
+  ⊑-from (sList t) ζ bool        ()
+  ⊑-from (sList t) ζ nat         ()
   ⊑-from (sList t) ζ (A |×| B)   ()
   ⊑-from (sList t) ζ (A |+| B)   ()
-  ⊑-from (sList t) ζ Empty       ()
+  ⊑-from (sList t) ζ empty       ()
   ⊑-from (sList t) ζ (A ⇒ C)     ()
   ⊑-from (sList t) ζ (C ⇛ D)     ()
   ⊑-from (sList t) ζ ([ ρ ] A)   ()
-  ⊑-from (sList t) ζ (|List| A)  eq   = List⊑ (⊑-from t ζ A (sList-inj eq))
+  ⊑-from (sList t) ζ (list A)    eq   = list⊑ (⊑-from t ζ A (sList-inj eq))
 
   ⊑-fromᶜ : ∀ {Ω n} → (t : Skel n) → (ζ : SSub n 1) → (C : OCType Ω)
           → t [ ζ ]ᵏ ≡ shapeᶜ C → t ⊑ᶜ C
-  ⊑-fromᶜ t ζ (A ‼ ε) eq = ‼⊑ (⊑-from t ζ A eq)
+  ⊑-fromᶜ t ζ (A ! ε) eq = !⊑ (⊑-from t ζ A eq)
 
 -- An open type decorates a skeleton when it refines it with a type variable at
 -- every skeleton variable
@@ -313,19 +313,19 @@ data _◃ᶜ_ {Ω : Scope} {n : ℕ} : Skel n → OCType Ω → Set
 data _◃ᵛ_ {Ω} {n} where
   var◃   : ∀ {γ α} → svar γ ◃ᵛ tvar α
   Base◃  : ∀ {b} → sBase {n} b ◃ᵛ Base {Ω} b
-  Unit◃  : sUnit {n} ◃ᵛ Unit {Ω}
-  Bool◃  : sBool {n} ◃ᵛ Bool {Ω}
-  Nat◃   : sNat {n} ◃ᵛ Nat {Ω}
+  unit◃  : sUnit {n} ◃ᵛ unit {Ω}
+  bool◃  : sBool {n} ◃ᵛ bool {Ω}
+  nat◃   : sNat {n} ◃ᵛ nat {Ω}
   _×◃_   : ∀ {t u A B} → t ◃ᵛ A → u ◃ᵛ B → (t s× u) ◃ᵛ (A |×| B)
   _+◃_   : ∀ {t u A B} → t ◃ᵛ A → u ◃ᵛ B → (t s+ u) ◃ᵛ (A |+| B)
-  List◃  : ∀ {t A} → t ◃ᵛ A → sList t ◃ᵛ (|List| A)
-  Empty◃ : sEmpty {n} ◃ᵛ Empty {Ω}
+  list◃  : ∀ {t A} → t ◃ᵛ A → sList t ◃ᵛ (list A)
+  empty◃ : sEmpty {n} ◃ᵛ empty {Ω}
   _⇒◃_   : ∀ {t u A C} → t ◃ᵛ A → u ◃ᶜ C → (t s⇒ u) ◃ᵛ (A ⇒ C)
   _⇛◃_   : ∀ {t u C D} → t ◃ᶜ C → u ◃ᶜ D → (t s⇛ u) ◃ᵛ (C ⇛ D)
   Box◃   : ∀ {t A ρ} → t ◃ᵛ A → sBox t ◃ᵛ ([ ρ ] A)
 
 data _◃ᶜ_ {Ω} {n} where
-  ‼◃ : ∀ {t A ε} → t ◃ᵛ A → t ◃ᶜ (A ‼ ε)
+  !◃ : ∀ {t A ε} → t ◃ᵛ A → t ◃ᶜ (A ! ε)
 
 -- Two decorations of one skeleton decompose
 
@@ -335,15 +335,15 @@ data _◃ᶜ_ {Ω} {n} where
 ◃-fits (Base◃ {b})   Base◃           with b ≡ᵇ? b
 ... | yes refl = []
 ... | no ¬p    = ⊥-elim (¬p refl)
-◃-fits Unit◃         Unit◃           = []
-◃-fits Bool◃         Bool◃           = []
-◃-fits Nat◃          Nat◃            = []
-◃-fits Empty◃        Empty◃          = []
+◃-fits unit◃         unit◃           = []
+◃-fits bool◃         bool◃           = []
+◃-fits nat◃          nat◃            = []
+◃-fits empty◃        empty◃          = []
 ◃-fits (p ×◃ q)      (p' ×◃ q')      = (_ , p , p') ∷ (_ , q , q') ∷ []
 ◃-fits (p +◃ q)      (p' +◃ q')      = (_ , p , p') ∷ (_ , q , q') ∷ []
-◃-fits (List◃ p)     (List◃ p')      = (_ , p , p') ∷ []
-◃-fits (p ⇒◃ ‼◃ q)   (p' ⇒◃ ‼◃ q')   = (_ , p , p') ∷ (_ , q , q') ∷ tt ∷ []
-◃-fits (‼◃ p ⇛◃ ‼◃ q) (‼◃ p' ⇛◃ ‼◃ q') = (_ , p , p') ∷ tt ∷ (_ , q , q') ∷ tt ∷ []
+◃-fits (list◃ p)     (list◃ p')      = (_ , p , p') ∷ []
+◃-fits (p ⇒◃ !◃ q)   (p' ⇒◃ !◃ q')   = (_ , p , p') ∷ (_ , q , q') ∷ tt ∷ []
+◃-fits (!◃ p ⇛◃ !◃ q) (!◃ p' ⇛◃ !◃ q') = (_ , p , p') ∷ tt ∷ (_ , q , q') ∷ tt ∷ []
 ◃-fits (Box◃ p)      (Box◃ p')       = tt ∷ (_ , p , p') ∷ []
 
 ◃-subDec : ∀ {Ω n} {t : Skel n} {A B : OVType Ω} → t ◃ᵛ A → t ◃ᵛ B
@@ -361,20 +361,20 @@ mutual
          → ((α : TyVar Ω) → τ α ◃ᵛ sTy ω α) → (skelᵛ A [ τ ]ᵏ) ◃ᵛ (A [ ω ]ᵛ)
   ◃-skel (tvar α)  k = k α
   ◃-skel (Base b)  k = Base◃
-  ◃-skel Unit      k = Unit◃
-  ◃-skel Bool      k = Bool◃
-  ◃-skel Nat       k = Nat◃
+  ◃-skel unit      k = unit◃
+  ◃-skel bool      k = bool◃
+  ◃-skel nat       k = nat◃
   ◃-skel (A |×| B) k = ◃-skel A k ×◃ ◃-skel B k
   ◃-skel (A |+| B) k = ◃-skel A k +◃ ◃-skel B k
-  ◃-skel (|List| A) k = List◃ (◃-skel A k)
-  ◃-skel Empty     k = Empty◃
+  ◃-skel (list A)  k = list◃ (◃-skel A k)
+  ◃-skel empty     k = empty◃
   ◃-skel (A ⇒ C)   k = ◃-skel A k ⇒◃ ◃-skelᶜ C k
   ◃-skel (C ⇛ D)   k = ◃-skelᶜ C k ⇛◃ ◃-skelᶜ D k
   ◃-skel ([ ρ ] A) k = Box◃ (◃-skel A k)
 
   ◃-skelᶜ : ∀ {Ω Ω' n} → (C : OCType Ω) → {τ : SSub (nTy Ω) n} → {ω : Subst Ω Ω'}
           → ((α : TyVar Ω) → τ α ◃ᵛ sTy ω α) → (skelᶜ C [ τ ]ᵏ) ◃ᶜ (C [ ω ]ᶜ)
-  ◃-skelᶜ (A ‼ ε) k = ‼◃ (◃-skel A k)
+  ◃-skelᶜ (A ! ε) k = !◃ (◃-skel A k)
 
 -- A substitution that renames the type variables
 
@@ -412,20 +412,20 @@ mutual
   ◃-ren {t = svar γ} r (var◃ {α = α}) with tyRen r α
   ... | β , q = subst (svar γ ◃ᵛ_) (sym q) var◃
   ◃-ren r Base◃     = Base◃
-  ◃-ren r Unit◃     = Unit◃
-  ◃-ren r Bool◃     = Bool◃
-  ◃-ren r Nat◃      = Nat◃
+  ◃-ren r unit◃     = unit◃
+  ◃-ren r bool◃     = bool◃
+  ◃-ren r nat◃      = nat◃
   ◃-ren r (p ×◃ q)  = ◃-ren r p ×◃ ◃-ren r q
   ◃-ren r (p +◃ q)  = ◃-ren r p +◃ ◃-ren r q
-  ◃-ren r (List◃ p) = List◃ (◃-ren r p)
-  ◃-ren r Empty◃    = Empty◃
+  ◃-ren r (list◃ p) = list◃ (◃-ren r p)
+  ◃-ren r empty◃    = empty◃
   ◃-ren r (p ⇒◃ q)  = ◃-ren r p ⇒◃ ◃-renᶜ r q
   ◃-ren r (p ⇛◃ q)  = ◃-renᶜ r p ⇛◃ ◃-renᶜ r q
   ◃-ren r (Box◃ p)  = Box◃ (◃-ren r p)
 
   ◃-renᶜ : ∀ {Ω Ω' n} {t : Skel n} {C : OCType Ω} {σ : Subst Ω Ω'}
          → TyRen σ → t ◃ᶜ C → t ◃ᶜ (C [ σ ]ᶜ)
-  ◃-renᶜ r (‼◃ p) = ‼◃ (◃-ren r p)
+  ◃-renᶜ r (!◃ p) = !◃ (◃-ren r p)
 
 ◃-wkʳ : ∀ {Ω n} {t : Skel n} {A : OVType Ω} → t ◃ᵛ A → t ◃ᵛ wkʳ-v A
 ◃-wkʳ {t = t} {A = A} d = subst (t ◃ᵛ_) (wkˢʳ-v A) (◃-ren TyRen-wkʳ d)
@@ -442,10 +442,10 @@ Dec◃ Ω t (Ω' , w , A) = TyRen w × (t ◃ᵛ A)
 decorate-◃ : ∀ {m} → (Ω : Scope) → (t : Skel m) → Dec◃ Ω t (decorate Ω t)
 decorate-◃ Ω (svar γ)  = TyRen-wkᵗ , var◃
 decorate-◃ Ω (sBase b) = TyRen-idˢ , Base◃
-decorate-◃ Ω sUnit     = TyRen-idˢ , Unit◃
-decorate-◃ Ω sBool     = TyRen-idˢ , Bool◃
-decorate-◃ Ω sNat      = TyRen-idˢ , Nat◃
-decorate-◃ Ω sEmpty    = TyRen-idˢ , Empty◃
+decorate-◃ Ω sUnit     = TyRen-idˢ , unit◃
+decorate-◃ Ω sBool     = TyRen-idˢ , bool◃
+decorate-◃ Ω sNat      = TyRen-idˢ , nat◃
+decorate-◃ Ω sEmpty    = TyRen-idˢ , empty◃
 decorate-◃ Ω (t s× u) with decorate Ω t | decorate-◃ Ω t
 ... | Ω₁ , w₁ , A | r₁ , d₁ with decorate Ω₁ u | decorate-◃ Ω₁ u
 ...   | Ω₂ , w₂ , B | r₂ , d₂ = TyRen-⨟ r₁ r₂ , (◃-ren r₂ d₁ ×◃ d₂)
@@ -453,17 +453,17 @@ decorate-◃ Ω (t s+ u) with decorate Ω t | decorate-◃ Ω t
 ... | Ω₁ , w₁ , A | r₁ , d₁ with decorate Ω₁ u | decorate-◃ Ω₁ u
 ...   | Ω₂ , w₂ , B | r₂ , d₂ = TyRen-⨟ r₁ r₂ , (◃-ren r₂ d₁ +◃ d₂)
 decorate-◃ Ω (sList t) with decorate Ω t | decorate-◃ Ω t
-... | Ω₁ , w₁ , A | r₁ , d₁ = r₁ , List◃ d₁
+... | Ω₁ , w₁ , A | r₁ , d₁ = r₁ , list◃ d₁
 decorate-◃ Ω (t s⇒ u) with decorate Ω t | decorate-◃ Ω t
 ... | Ω₁ , w₁ , A | r₁ , d₁ with decorate Ω₁ u | decorate-◃ Ω₁ u
 ...   | Ω₂ , w₂ , B | r₂ , d₂ =
         TyRen-⨟ (TyRen-⨟ r₁ r₂) TyRen-wkᵉ ,
-        (◃-wkᵉ (◃-ren r₂ d₁) ⇒◃ ‼◃ (◃-wkᵉ d₂))
+        (◃-wkᵉ (◃-ren r₂ d₁) ⇒◃ !◃ (◃-wkᵉ d₂))
 decorate-◃ Ω (t s⇛ u) with decorate Ω t | decorate-◃ Ω t
 ... | Ω₁ , w₁ , A | r₁ , d₁ with decorate Ω₁ u | decorate-◃ Ω₁ u
 ...   | Ω₂ , w₂ , B | r₂ , d₂ =
         TyRen-⨟ (TyRen-⨟ (TyRen-⨟ r₁ r₂) TyRen-wkᵉ) TyRen-wkᵉ ,
-        (‼◃ (◃-wkᵉ (◃-wkᵉ (◃-ren r₂ d₁))) ⇛◃ ‼◃ (◃-wkᵉ (◃-wkᵉ d₂)))
+        (!◃ (◃-wkᵉ (◃-wkᵉ (◃-ren r₂ d₁))) ⇛◃ !◃ (◃-wkᵉ (◃-wkᵉ d₂)))
 decorate-◃ Ω (sBox t) with decorate Ω t | decorate-◃ Ω t
 ... | Ω₁ , w₁ , A | r₁ , d₁ = TyRen-⨟ r₁ TyRen-wkʳ , Box◃ (◃-wkʳ d₁)
 
@@ -488,10 +488,10 @@ decorate-max : ∀ {m Ω''} → (Ω : Scope) → (t : Skel m) → (δ : Subst Ω
              → {A₀ : OVType Ω''} → t ⊑ᵛ A₀ → DecMax δ A₀ (decorate Ω t)
 decorate-max Ω (svar γ)  δ {A₀} var⊑ = (δ ,ᵗ A₀) , wkˢᵗ-,ᵗ δ A₀ , refl
 decorate-max Ω (sBase b) δ Base⊑  = δ , ⨟-idˡ δ , refl
-decorate-max Ω sUnit     δ Unit⊑  = δ , ⨟-idˡ δ , refl
-decorate-max Ω sBool     δ Bool⊑  = δ , ⨟-idˡ δ , refl
-decorate-max Ω sNat      δ Nat⊑   = δ , ⨟-idˡ δ , refl
-decorate-max Ω sEmpty    δ Empty⊑ = δ , ⨟-idˡ δ , refl
+decorate-max Ω sUnit     δ unit⊑  = δ , ⨟-idˡ δ , refl
+decorate-max Ω sBool     δ bool⊑  = δ , ⨟-idˡ δ , refl
+decorate-max Ω sNat      δ nat⊑   = δ , ⨟-idˡ δ , refl
+decorate-max Ω sEmpty    δ empty⊑ = δ , ⨟-idˡ δ , refl
 decorate-max Ω (t s× u) δ (p ×⊑ q) with decorate Ω t | decorate-max Ω t δ p
 ... | Ω₁ , w₁ , A | δ₁ , tri₁ , eq₁ with decorate Ω₁ u | decorate-max Ω₁ u δ₁ q
 ...   | Ω₂ , w₂ , B | δ₂ , tri₂ , eq₂ =
@@ -504,9 +504,9 @@ decorate-max Ω (t s+ u) δ (p +⊑ q) with decorate Ω t | decorate-max Ω t δ
         δ₂ ,
         ≐ˢ-trans (⨟-assoc w₁ w₂ δ₂) (≐ˢ-trans (⨟-congʳ w₁ tri₂) tri₁) ,
         cong₂ _|+|_ (trans ([⨟]ᵛ A w₂ δ₂) (trans ([≐]ᵛ tri₂ A) eq₁)) eq₂
-decorate-max Ω (sList t) δ (List⊑ p) with decorate Ω t | decorate-max Ω t δ p
-... | Ω₁ , w₁ , A | δ₁ , tri₁ , eq₁ = δ₁ , tri₁ , cong |List| eq₁
-decorate-max Ω (t s⇒ u) δ {_ ⇒ (_ ‼ ε)} (p ⇒⊑ ‼⊑ q)
+decorate-max Ω (sList t) δ (list⊑ p) with decorate Ω t | decorate-max Ω t δ p
+... | Ω₁ , w₁ , A | δ₁ , tri₁ , eq₁ = δ₁ , tri₁ , cong list eq₁
+decorate-max Ω (t s⇒ u) δ {_ ⇒ (_ ! ε)} (p ⇒⊑ !⊑ q)
   with decorate Ω t | decorate-max Ω t δ p
 ... | Ω₁ , w₁ , A | δ₁ , tri₁ , eq₁ with decorate Ω₁ u | decorate-max Ω₁ u δ₁ q
 ...   | Ω₂ , w₂ , B | δ₂ , tri₂ , eq₂ =
@@ -517,8 +517,8 @@ decorate-max Ω (t s⇒ u) δ {_ ⇒ (_ ‼ ε)} (p ⇒⊑ ‼⊑ q)
         cong₂ _⇒_
           (trans (wkᵉ-inst (A [ w₂ ]ᵛ) δ₂ ε)
                  (trans ([⨟]ᵛ A w₂ δ₂) (trans ([≐]ᵛ tri₂ A) eq₁)))
-          (cong (_‼ ε) (trans (wkᵉ-inst B δ₂ ε) eq₂))
-decorate-max Ω (t s⇛ u) δ {(_ ‼ ε) ⇛ (_ ‼ ε')} (‼⊑ p ⇛⊑ ‼⊑ q)
+          (cong (_! ε) (trans (wkᵉ-inst B δ₂ ε) eq₂))
+decorate-max Ω (t s⇛ u) δ {(_ ! ε) ⇛ (_ ! ε')} (!⊑ p ⇛⊑ !⊑ q)
   with decorate Ω t | decorate-max Ω t δ p
 ... | Ω₁ , w₁ , A | δ₁ , tri₁ , eq₁ with decorate Ω₁ u | decorate-max Ω₁ u δ₁ q
 ...   | Ω₂ , w₂ , B | δ₂ , tri₂ , eq₂ =
@@ -529,11 +529,11 @@ decorate-max Ω (t s⇛ u) δ {(_ ‼ ε) ⇛ (_ ‼ ε')} (‼⊑ p ⇛⊑ ‼�
               (≐ˢ-trans (⨟-congʳ (w₁ ⨟ˢ w₂) (wkˢᵉ-,ᵉ δ₂ ε))
                 (≐ˢ-trans (⨟-assoc w₁ w₂ δ₂) (≐ˢ-trans (⨟-congʳ w₁ tri₂) tri₁))))) ,
         cong₂ _⇛_
-          (cong (_‼ ε)
+          (cong (_! ε)
             (trans (wkᵉ-inst (wkᵉ-v (A [ w₂ ]ᵛ)) (δ₂ ,ᵉ ε) ε')
               (trans (wkᵉ-inst (A [ w₂ ]ᵛ) δ₂ ε)
                 (trans ([⨟]ᵛ A w₂ δ₂) (trans ([≐]ᵛ tri₂ A) eq₁)))))
-          (cong (_‼ ε')
+          (cong (_! ε')
             (trans (wkᵉ-inst (wkᵉ-v B) (δ₂ ,ᵉ ε) ε') (trans (wkᵉ-inst B δ₂ ε) eq₂)))
 decorate-max Ω (sBox t) δ {[ ρ ] _} (Box⊑ p) with decorate Ω t | decorate-max Ω t δ p
 ... | Ω₁ , w₁ , A | δ₁ , tri₁ , eq₁ =

@@ -76,7 +76,7 @@ decided {p = p} = toWitness p
 refuted : (c d : R) {p : False (c ≾ᵣ? d)} → ¬ (c ≾ᵣ d)
 refuted c d {p} = toWitnessFalse p
 
-check : ∀ {Γ A ε} (ε' : E) {p : True (ε ≾ₑ? ε')} → Γ ⊢C⦂ A ‼ ε → Γ ⊢C⦂ A ‼ ε'
+check : ∀ {Γ A ε} (ε' : E) {p : True (ε ≾ₑ? ε')} → Γ ⊢C⦂ A ! ε → Γ ⊢C⦂ A ! ε'
 check ε' {p} M = coerce (toWitness p) M
 
 ------------------------------------------------------------------------
@@ -87,28 +87,28 @@ radio-low = High , (just High ∣ ((radio , just Low) L.∷ L.[]))
 
 -- transmitting a constant before reading keeps it
 
-announce-then-sample : [] ⊢C⦂ Reading ‼ radio-low
+announce-then-sample : [] ⊢C⦂ Reading ! radio-low
 announce-then-sample =
   check radio-low
-    (perform send (const 0)          -- ⟨ opTime send ⟩ ∷ Unit
+    (perform send (const 0)          -- ⟨ opTime send ⟩ ∷ unit
       (perform read ⋆                -- ⟨ opTime read ⟩ ∷ Reading
         (return here)))
 
 -- storing the reading keeps it too: memory may be written at `High`
 
-sample-then-store : [] ⊢C⦂ Unit ‼ radio-low
+sample-then-store : [] ⊢C⦂ unit ! radio-low
 sample-then-store =
   check radio-low
     (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
-      (perform write here            -- ⟨ opTime write ⟩ ∷ Unit
+      (perform write here            -- ⟨ opTime write ⟩ ∷ unit
         (return ⋆)))
 
 -- transmitting the reading is a program, graded by what it does
 
-relaying : [] ⊢C⦂ Unit ‼ (opTime read ·ₑ (opTime send ·ₑ 𝟏ₑ))
+relaying : [] ⊢C⦂ unit ! (opTime read ·ₑ (opTime send ·ₑ 𝟏ₑ))
 relaying =
   perform read ⋆                     -- ⟨ opTime read ⟩ ∷ Reading
-    (perform send here               -- ⟨ opTime send ⟩ ∷ Unit
+    (perform send here               -- ⟨ opTime send ⟩ ∷ unit
       (return ⋆))
 
 -- and that grade writes the radio at `High`, breaking the policy
@@ -119,13 +119,13 @@ relaying-refused = refuted (opTime read ·ₑ (opTime send ·ₑ 𝟏ₑ)) radio
 ------------------------------------------------------------------------
 -- Readings survive idling, not an operation
 
-idle-then-store : [] ⊢C⦂ Unit ‼ radio-low
+idle-then-store : [] ⊢C⦂ unit ! radio-low
 idle-then-store =
   check radio-low
     (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
       (delay 5                       -- ⟨ 𝟏ᵣ ⟩
         (perform write (fresh-var decided (Tl-⟨⟩ Hd))
-                                     -- ⟨ opTime write ⟩ ∷ Unit
+                                     -- ⟨ opTime write ⟩ ∷ unit
           (return ⋆))))
 
 stale-after-storing : ¬ (𝟏ᵣ ·ᵣ opTime write ≾ᵣ 𝟏ᵣ)
@@ -140,11 +140,11 @@ channel = Low , (just High ∣ L.[])
 
 -- storing between boxing and claiming leaves the channel public
 
-store-then-claim : [] ⊢C⦂ Unit ‼ radio-low
+store-then-claim : [] ⊢C⦂ unit ! radio-low
 store-then-claim =
   check radio-low
     (box channel (const 7)           -- ∷ [ channel ] Reading
-      (perform write (const 1)       -- ⟨ opTime write ⟩ ∷ Unit
+      (perform write (const 1)       -- ⟨ opTime write ⟩ ∷ unit
         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) decided (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))
@@ -164,9 +164,9 @@ nothing-fits op ε'' = Low⊑ , pointwise⁺ _ (λ _ → tt)
 -- the clauses discard the transmission, but `handle` is graded by the
 -- handled computation, so the radio is still written at `High`
 
-suppressed : [] ⊢C⦂ Unit ‼ ((opTime read ·ₑ (opTime send ·ₑ 𝟏ₑ)) ·ₑ 𝟏ₑ)
+suppressed : [] ⊢C⦂ unit ! ((opTime read ·ₑ (opTime send ·ₑ 𝟏ₑ)) ·ₑ 𝟏ₑ)
 suppressed =
   handle perform read ⋆ (perform send here (return ⋆))
     `with discarding {[]} nothing-fits
-    `in                              -- ⟨ opTime read · opTime send ⟩ ∷ Unit
+    `in                              -- ⟨ opTime read · opTime send ⟩ ∷ unit
       (return ⋆)

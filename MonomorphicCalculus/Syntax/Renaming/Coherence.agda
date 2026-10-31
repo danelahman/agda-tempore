@@ -38,8 +38,8 @@ open import MonomorphicCalculus.Syntax.Terms.Equivalence     Spec
 -- result with whichever bound its own typing supplies.
 
 var-ren-≡ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (x : A ∈[ ρ ] Γ)
-          → (f  : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
-          → (f' : ¬ Eternal A → proj₁ (var-img r x) ≾ᵣ 𝟏ᵣ)
+          → (f  : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
+          → (f' : ¬ Et A → proj₁ (var-img r x) ≾ᵣ 𝟏ᵣ)
           → V-rename r (var f x) ≡ var f' (proj₂ (var-img r x))
 var-ren-≡ r x f f' with var-rename r x
 ... | _ , _ , y = var-≡
@@ -47,8 +47,8 @@ var-ren-≡ r x f f' with var-rename r x
 -- The same with the target supplied, for callers that have computed it.
 
 var-ren-img-≡ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (x : A ∈[ ρ ] Γ)
-              → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ) → {t : Var Γ' A}
-              → var-img r x ≡ t → (f' : ¬ Eternal A → proj₁ t ≾ᵣ 𝟏ᵣ)
+              → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ) → {t : Var Γ' A}
+              → var-img r x ≡ t → (f' : ¬ Et A → proj₁ t ≾ᵣ 𝟏ᵣ)
               → V-rename r (var f x) ≡ var f' (proj₂ t)
 var-ren-img-≡ r x f refl f' = var-ren-≡ r x f f'
 
@@ -102,7 +102,7 @@ mutual
   C-rename-≡ h (recℕ V M N p) =
     cong₃ (λ a b c → recℕ a b c p)
       (V-rename-≡ h V) (C-rename-≡ h M)
-      (C-rename-≡ (cong-ren-≐ʳ (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _) h) N)
+      (C-rename-≡ (cong-ren-≐ʳ (([] ⟨ _ ⟩ ∷ nat) ⟨ _ ⟩ ∷ _) h) N)
   C-rename-≡ h (caseL V `nil M `cons N) =
     cong₃ caseL_`nil_`cons_
       (V-rename-≡ h V) (C-rename-≡ h M)
@@ -110,7 +110,7 @@ mutual
   C-rename-≡ h (recL V M N p) =
     cong₃ (λ a b c → recL a b c p)
       (V-rename-≡ h V) (C-rename-≡ h M)
-      (C-rename-≡ (cong-ren-≐ʳ (([] ⟨ _ ⟩ ∷ _ ∷ |List| _) ⟨ _ ⟩ ∷ _) h) N)
+      (C-rename-≡ (cong-ren-≐ʳ (([] ⟨ _ ⟩ ∷ _ ∷ list _) ⟨ _ ⟩ ∷ _) h) N)
   C-rename-≡ h (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_
       (V-rename-≡ h V) (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
@@ -210,7 +210,7 @@ mutual
   C-rename-id-≡ h (recℕ V M N p) =
     cong₃ (λ a b c → recℕ a b c p)
       (V-rename-id-≡ h V) (C-rename-id-≡ h M)
-      (C-rename-id-≡ (cong-ren-id-≐ʳ (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _) h) N)
+      (C-rename-id-≡ (cong-ren-id-≐ʳ (([] ⟨ _ ⟩ ∷ nat) ⟨ _ ⟩ ∷ _) h) N)
   C-rename-id-≡ h (caseL V `nil M `cons N) =
     cong₃ caseL_`nil_`cons_
       (V-rename-id-≡ h V) (C-rename-id-≡ h M)
@@ -218,7 +218,7 @@ mutual
   C-rename-id-≡ h (recL V M N p) =
     cong₃ (λ a b c → recL a b c p)
       (V-rename-id-≡ h V) (C-rename-id-≡ h M)
-      (C-rename-id-≡ (cong-ren-id-≐ʳ (([] ⟨ _ ⟩ ∷ _ ∷ |List| _) ⟨ _ ⟩ ∷ _) h) N)
+      (C-rename-id-≡ (cong-ren-id-≐ʳ (([] ⟨ _ ⟩ ∷ _ ∷ list _) ⟨ _ ⟩ ∷ _) h) N)
   C-rename-id-≡ h (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_
       (V-rename-id-≡ h V) (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) M)
@@ -380,16 +380,16 @@ mutual
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))
   C-rename-∘ r₂ r₁ (recℕ V M N p) =
     cong₃ (λ a b c → recℕ a b c p) (V-rename-∘ r₂ r₁ V) (C-rename-∘ r₂ r₁ M)
-      (trans (C-rename-≡ (cong-ren-∘-≐ʳ (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _) r₂ r₁) N)
-             (C-rename-∘ (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _)} r₂) (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ Nat) ⟨ _ ⟩ ∷ _)} r₁) N))
+      (trans (C-rename-≡ (cong-ren-∘-≐ʳ (([] ⟨ _ ⟩ ∷ nat) ⟨ _ ⟩ ∷ _) r₂ r₁) N)
+             (C-rename-∘ (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ nat) ⟨ _ ⟩ ∷ _)} r₂) (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ nat) ⟨ _ ⟩ ∷ _)} r₁) N))
   C-rename-∘ r₂ r₁ (caseL V `nil M `cons N) =
     cong₃ caseL_`nil_`cons_ (V-rename-∘ r₂ r₁ V) (C-rename-∘ r₂ r₁ M)
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _ ∷ _) r₂ r₁) N)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))
   C-rename-∘ r₂ r₁ (recL V M N p) =
     cong₃ (λ a b c → recL a b c p) (V-rename-∘ r₂ r₁ V) (C-rename-∘ r₂ r₁ M)
-      (trans (C-rename-≡ (cong-ren-∘-≐ʳ (([] ⟨ _ ⟩ ∷ _ ∷ |List| _) ⟨ _ ⟩ ∷ _) r₂ r₁) N)
-             (C-rename-∘ (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ _ ∷ |List| _) ⟨ _ ⟩ ∷ _)} r₂) (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ _ ∷ |List| _) ⟨ _ ⟩ ∷ _)} r₁) N))
+      (trans (C-rename-≡ (cong-ren-∘-≐ʳ (([] ⟨ _ ⟩ ∷ _ ∷ list _) ⟨ _ ⟩ ∷ _) r₂ r₁) N)
+             (C-rename-∘ (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ _ ∷ list _) ⟨ _ ⟩ ∷ _)} r₂) (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ _ ∷ list _) ⟨ _ ⟩ ∷ _)} r₁) N))
   C-rename-∘ r₂ r₁ (case+ V `inl M `inr N) =
     cong₃ case+_`inl_`inr_ (V-rename-∘ r₂ r₁ V)
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _) r₂ r₁) M)
