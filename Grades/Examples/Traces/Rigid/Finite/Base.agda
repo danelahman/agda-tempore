@@ -47,10 +47,16 @@ open import Grades.Exact.Base ℚ≥0ᵀ Op n code code-injective public using (
 holds : ∀ {s} → Proper′ s → Proper′ s → Bool
 holds c d = isYes (c ≾ᵉ? d)
 
+-- the decision is an ordinary argument, so it is not abstracted
+private
+  yes-of : ∀ {a} {A : Set a} (x : Dec A) → isYes x ≡ true → A
+  yes-of (yes p) _ = p
+
+  no-of : ∀ {a} {A : Set a} (x : Dec A) → isYes x ≡ false → ¬ A
+  no-of (no ¬p) _ = ¬p
+
 holds′ : ∀ {s} (c d : Proper′ s) → holds c d ≡ true → c ≾ᵉ d
-holds′ c d e with c ≾ᵉ? d
-... | yes p = p
+holds′ c d = yes-of (c ≾ᵉ? d)
 
 fails′ : ∀ {s} (c d : Proper′ s) → holds c d ≡ false → ¬ (c ≾ᵉ d)
-fails′ c d e with c ≾ᵉ? d
-... | no ¬p = ¬p
+fails′ c d = no-of (c ≾ᵉ? d)
