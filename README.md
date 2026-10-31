@@ -34,9 +34,9 @@ The two calculi do not import each other; both build on `Grades/`,
 calculus also has its own root. Approximate cold build times on an unloaded
 machine:
 
-    agda Everything.agda                          # everything, ~30 min
-    agda PolymorphicCalculus/Everything.agda      # polymorphic calculus, ~10 min
-    agda MonomorphicCalculus/Everything.agda      # monomorphic calculus, ~20 min
+    agda Everything.agda                          # everything, ~22 min
+    agda PolymorphicCalculus/Everything.agda      # polymorphic calculus, ~7 min
+    agda MonomorphicCalculus/Everything.agda      # monomorphic calculus, ~14 min
     agda PolymorphicCalculus/Examples.agda        # inference examples, ~6 min more
 
 The inference examples are not in `Everything.agda`. A set of them is
