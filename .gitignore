@@ -8,3 +8,6 @@ _build/
 
 # Scratch notes and spikes (kept out of the repository on purpose)
 notes/
+
+# Retired modules, kept locally
+backup/
