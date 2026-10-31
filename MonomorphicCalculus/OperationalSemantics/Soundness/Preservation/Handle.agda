@@ -140,7 +140,7 @@ alg-ηᵀ {ε = ε} {ε₂ = ε₂} alg alg-≤ pv f =
 -- the history, and there the parameter passes under the new lock.
 
 step-pv : ∀ {ε₁ ε₃ A A₀ P} {𝕊 𝕊' : State []}
-        → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃}
+        → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε₃}
         → (bc : Eternalᵒ P) → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
         → (⟦ hist 𝕊 ⟧ᶜᵗˣ →ᵐ P) → (⟦ hist 𝕊' ⟧ᶜᵗˣ →ᵐ P)
 step-pv bc APP               pv = pv
@@ -178,7 +178,7 @@ step-pv bc (DELAY {τ = τ})   pv = Eternalᵒ.extᵉ bc ∘ᵐ ⟨ ιᵣ τ ⟩
 -- two step rules inherit their transition from the sub-step.
 
 alg-stepᵀ : ∀ {ε ε₂ ε₁' ε₃' A A₀ B P} {𝕊 𝕊' : State []}
-          → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁'} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃'}
+          → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁'} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε₃'}
           → (bc : Eternalᵒ P)
           → (alg : ∀ {ε'} → P ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε' →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε' ·ₑ ε₂))
           → (alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
@@ -398,7 +398,7 @@ suc-comp-free q pf =
   ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨⟩-≤-id _) ∙ ∘ᵐ-identityʳ _)
 
 step-pv-state : ∀ {ε₁ ε₃ A A₀} {𝕊 𝕊' : State []}
-              → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃}
+              → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε₃}
               → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
               → (pS : Paramˢ 𝕊) → (pM : Paramᶜ M)
               → step-pv (bcᴱ (toCtx 𝕊)) r (⟨⊤⟩-η ∘ᵐ ⟦ 𝕊 ⟧ˢ pS)
@@ -450,13 +450,13 @@ step-pv-state {𝕊 = 𝕊} (DELAY {τ = τ}) pS pM =
 -- reindexed along the step's `suc-comp-ren` (`T-alg-of-handlerᵀ-natᴾ`).
 
 sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {𝕊 𝕊' : State []}
-  → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁}
+  → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁}
   → (H : (op : Op) → (ε'' : E)
        → toCtx 𝕊 ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
             ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-         ⊢C⦂ B ! (op-grade op ·ₑ ε''))
-  → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
-  → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃}
+         ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε''))
+  → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂)
+  → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε₃}
   → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
   → (c : κₛ (step-extends-state r) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
   → (pS : Paramˢ 𝕊) → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
@@ -567,7 +567,7 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {𝕊} {𝕊'} {M} H N 
     H' : (op : Op) → (ε'' : E)
        → toCtx 𝕊' ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
             ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-         ⊢C⦂ B ! (op-grade op ·ₑ ε'')
+         ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε'')
     H' op ε'' = C-rename (cong-∷-ren (cong-∷-ren fren)) (H op ε'')
 
     pH' : ∀ op ε'' → Paramᶜ (H' op ε'')
@@ -972,9 +972,9 @@ cont-collapse alg p c =
 -- in an arbitrary context.
 
 sound-SEQ-OP : ∀ {Γ A B ε ε'} → (op : Op)
-             → (V : Γ ⊢V⦂ ⌜ param op ⌝ᵍ)
-             → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε)
-             → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
+             → (V : Γ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
+             → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢ᶜ⦂ A ! ε)
+             → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε')
              → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
              → ⟦ perform op V M ⨟ N ⟧ᶜᵗ ((pV , pM) , pN)
              ≈ᵐ ⟦ ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
@@ -1013,15 +1013,15 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N pV pM pN =
 -- carried under the operation's box by `necᵉ`.
 
 sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
-                → (V : Γ ⊢V⦂ ⌜ param op ⌝ᵍ)
+                → (V : Γ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
                 → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
-                       ⊢C⦂ A ! ε)
+                       ⊢ᶜ⦂ A ! ε)
                 → (H : (op' : Op) → (ε' : E)
                      → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op' ⌝ᵍ
                           ∷ [ ∣ op-grade op' ∣ᵉ ]
                               (⌜ arity op' ⌝ᵍ ⇒ B ! ε')
-                       ⊢C⦂ B ! (op-grade op' ·ₑ ε'))
-                → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'')
+                       ⊢ᶜ⦂ B ! (op-grade op' ·ₑ ε'))
+                → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε'')
                 → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                 → (pH : ∀ op' ε' → Paramᶜ (H op' ε'))
                 → (uH : EffUniformʰ {Γ} H pH)

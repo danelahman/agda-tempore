@@ -67,7 +67,7 @@ decided c d {p} = toWitness p
 refuted : (c d : R) {p : False (c ≾ᵣ? d)} → ¬ (c ≾ᵣ d)
 refuted c d {p} = toWitnessFalse p
 
-check : ∀ {Γ A ε} (ε' : E) {p : True (ε ≾ₑ? ε')} → Γ ⊢C⦂ A ! ε → Γ ⊢C⦂ A ! ε'
+check : ∀ {Γ A ε} (ε' : E) {p : True (ε ≾ₑ? ε')} → Γ ⊢ᶜ⦂ A ! ε → Γ ⊢ᶜ⦂ A ! ε'
 check ε' {p} M = coerce (toWitness p) M
 
 ------------------------------------------------------------------------
@@ -84,7 +84,7 @@ deadline = listed (0 L.∷ 1 L.∷ L.[])
     within  = bounds ([ 0 , ∞ ] ∣ L.[]) [ 0 , ↑ 12 ] (witness L.[] tt)
     anytime = bounds ([ 0 , ∞ ] ∣ L.[]) [ 0 , ∞ ] (witness L.[] tt)
 
-sample-and-transmit : [] ⊢C⦂ unit ! deadline
+sample-and-transmit : [] ⊢ᶜ⦂ unit ! deadline
 sample-and-transmit =
   check deadline
     (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
@@ -124,7 +124,7 @@ within-eight = listed L.[]
   where
     eight = bounds ([ 0 , ∞ ] ∣ L.[]) [ 0 , ↑ 8 ] (witness L.[] tt)
 
-claimed-in-time : [] ⊢C⦂ Reading ! (ιₑ 5 ·ₑ 𝟏ₑ)
+claimed-in-time : [] ⊢ᶜ⦂ Reading ! (ιₑ 5 ·ₑ 𝟏ₑ)
 claimed-in-time =
   check (ιₑ 5 ·ₑ 𝟏ₑ)
     (box within-eight (const reading 42) -- ∷ [ within-eight ] Reading

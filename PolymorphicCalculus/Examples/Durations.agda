@@ -54,7 +54,7 @@ open import PolymorphicCalculus.Examples.Variables
 
 -- A closed derivation in the empty context is a typing
 
-closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢C⦂ C)
+closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢ᶜ⦂ C)
        → ⌊ D ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ → Typable [] M
 closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
@@ -69,10 +69,10 @@ claim-after : 𝔻 → 𝔻 → 𝔻 → RawC ∅ˢ 0
 claim-after ρ τ τ' = box ⌜ ρ ⌝ʳ ⋆ (delay τ (delay τ' (unbox (var fzero) (return v₀))))
 
 claim-after-D : ∀ ρ τ τ' → 𝟏ᵣ ·ᵣ ιᵣ τ ·ᵣ ιᵣ τ' ≾ᴳ ιᵣ ρ
-              → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! (⌜ τ ⌝ᵉ ·̂ₑ (⌜ τ' ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
+              → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ unit ! (⌜ τ ⌝ᵉ ·̂ₑ (⌜ τ' ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 claim-after-D ρ τ τ' p =
   box ⌜ ρ ⌝ʳ ⋆
-    (delay τ (delay τ' (unbox (res-var {z = Tl-⟨⟩ (Tl-⟨⟩ Hd)}) elapsed (return (var Hd ok₀)))))
+    (delay τ (delay τ' (unbox (res-var (Tl-⟨⟩ (Tl-⟨⟩ Hd))) elapsed (return (var Hd ok₀)))))
   where
     elapsed : ∅ᴴ ⊩ 𝟏̂ᵣ ·̂ᵣ ⌜ τ ⌝ʳ ·̂ᵣ ⌜ τ' ⌝ʳ ≾̂ᵣ ⌜ ρ ⌝ʳ
     elapsed = transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-const-· ≡̂ᵣ-refl) ≡̂ᵣ-const-·)) (atomᵣ p)

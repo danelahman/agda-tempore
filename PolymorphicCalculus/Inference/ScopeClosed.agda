@@ -27,7 +27,7 @@ open import PolymorphicCalculus.Syntax.Contexts              S using (OCtx; _[_]
 open import PolymorphicCalculus.Syntax.GradeSubstitution     S
 open import PolymorphicCalculus.Hypotheses                   S using (∅ᴴ; ⊩ᴵ-∅; _⊩_<:̂ᶜ_)
 open import PolymorphicCalculus.Hypotheses.Instances         S using (_⊨_)
-open import PolymorphicCalculus.Typing                       S using (_∣_⊢C⦂_)
+open import PolymorphicCalculus.Typing                       S using (_∣_⊢ᶜ⦂_)
 open import PolymorphicCalculus.Typing.Erasure               S using (⌊_⌋ᶜ)
 open import PolymorphicCalculus.Syntax.Raw                   S using (RawC)
 open import PolymorphicCalculus.Syntax.Raw.GradeSubstitution S using (_[_]ᴿᶜ; [id]ᴿᶜ)
@@ -42,17 +42,17 @@ private
   -- the scope-closed typing as a typing at the identity instance
 
   at-id : ∀ {n} {Γ : OCtx ∅ˢ n} {M : RawC ∅ˢ n} {C : OCType ∅ˢ}
-        → (D : ∅ᴴ ∣ Γ ⊢C⦂ C) → ⌊ D ⌋ᶜ ≡ M
-        → Σ[ D' ∈ ∅ᴴ ∣ Γ [ idˢ ]ᶜᵗˣ ⊢C⦂ C ] ⌊ D' ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ
+        → (D : ∅ᴴ ∣ Γ ⊢ᶜ⦂ C) → ⌊ D ⌋ᶜ ≡ M
+        → Σ[ D' ∈ ∅ᴴ ∣ Γ [ idˢ ]ᶜᵗˣ ⊢ᶜ⦂ C ] ⌊ D' ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ
   at-id {Γ = Γ} {M} D e =
-    subst (λ Γ' → Σ[ D' ∈ ∅ᴴ ∣ Γ' ⊢C⦂ _ ] ⌊ D' ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ) (sym ([id]ᶜᵗˣ Γ))
+    subst (λ Γ' → Σ[ D' ∈ ∅ᴴ ∣ Γ' ⊢ᶜ⦂ _ ] ⌊ D' ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ) (sym ([id]ᶜᵗˣ Γ))
           (D , trans e (sym ([id]ᴿᶜ M)))
 
   ⊤-sat : (idˢ {∅ˢ}) ⊨ ∅ᴴ
   ⊤-sat = ⊩ᴵ-∅
 
 completeness : ∀ {n} {Γ : OCtx ∅ˢ n} {M : RawC ∅ˢ n} {C : OCType ∅ˢ}
-             → (D : ∅ᴴ ∣ Γ ⊢C⦂ C) → ⌊ D ⌋ᶜ ≡ M
+             → (D : ∅ᴴ ∣ Γ ⊢ᶜ⦂ C) → ⌊ D ⌋ᶜ ≡ M
              → (¬ infer Γ M ≡ untypable)
                × (∀ {p} → infer Γ M ≡ typed p
                   → Σ[ δ ∈ Subst (Θ̃ p) ∅ˢ ] (δ ⊨ Q̃ p) × (∅ᴴ ⊩ X̃ p [ δ ]ᶜ <:̂ᶜ C))

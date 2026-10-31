@@ -90,13 +90,13 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
   -- morphisms (with the ground-type coercions the interpretation carries).
 
   paramᵐ : (op : Op) → (𝕊 : State [])
-         → (V : toCtx 𝕊 ⊢V⦂ ⌜ param op ⌝ᵍ) → Paramᵛ V
+         → (V : toCtx 𝕊 ⊢ᵛ⦂ ⌜ param op ⌝ᵍ) → Paramᵛ V
          → ⟦ toCtx 𝕊 ⟧ᶜᵗˣ →ᵐ ⟦ param op ⟧ᵍ
   paramᵐ op 𝕊 V pV =
     subst (λ O → ⟦ toCtx 𝕊 ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV)
 
   arityᵐ : (op : Op) → (𝕊 : State [])
-         → (V : toCtx 𝕊 ⊢V⦂ ⌜ param op ⌝ᵍ)
+         → (V : toCtx 𝕊 ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
          → Paramᵛ (op-sem op V)
          → ⟨ ∣ op-grade op ∣ᵉ ⟩ᵒ ⟦ toCtx 𝕊 ⟧ᶜᵗˣ →ᵐ ⟦ arity op ⟧ᵍ
   arityᵐ op 𝕊 V pOp =
@@ -114,12 +114,12 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
 
   OpSemParametric : Set
   OpSemParametric = ∀ (op : Op) → (𝕊 : State [])
-                  → (V : toCtx 𝕊 ⊢V⦂ ⌜ param op ⌝ᵍ)
+                  → (V : toCtx 𝕊 ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
                   → Paramᵛ (op-sem op V)
 
   OpSemCoherent : OpSemParametric → Set
   OpSemCoherent op-par = ∀ (op : Op) → (𝕊 : State [])
-                → (V : toCtx 𝕊 ⊢V⦂ ⌜ param op ⌝ᵍ)
+                → (V : toCtx 𝕊 ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
                 → (pV : Paramᵛ V)
                 → arityᵐ op 𝕊 V (op-par op 𝕊 V)
                 ≈ᵐ op-semᵐ op ∘ᵐ ⟨ ∣ op-grade op ∣ᵉ ⟩ᶠ (paramᵐ op 𝕊 V pV)
@@ -134,7 +134,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     -- one, `OP-STEP` substitutes the implementation's (parametric) value.
 
     topᴾᶜᶠ : ∀ {ε ε'} {𝕊 𝕊' : State []} {A A₀ : VType}
-           → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+           → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
            → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ᵗ ⟨ 𝕊' ∣ M' ⟩)
            → Paramᶜᶠ (⟨ 𝕊 ∣ M ⟩) → Paramᶜᶠ (⟨ 𝕊' ∣ M' ⟩)
     topᴾᶜᶠ (STEP r) p = stepᴾᶜᶠ r p
@@ -146,13 +146,13 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     -- performs the operation, costing `op-grade op`, with a tick transition.
 
     top-grade : ∀ {ε ε'} {𝕊 𝕊' : State []} {A A₀ : VType}
-              → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+              → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
               → ⟨ 𝕊 ∣ M ⟩ ⟶ᵗ ⟨ 𝕊' ∣ M' ⟩ → E
     top-grade (STEP r)            = step-grade r
     top-grade (OP-STEP {op = op}) = op-grade op ·ₑ 𝟏ₑ
 
     top-stepᵏ : ∀ {ε ε'} {𝕊 𝕊' : State []} {A A₀ : VType}
-              → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+              → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
               → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ᵗ ⟨ 𝕊' ∣ M' ⟩)
               → ⟦ hist 𝕊 ⟧ᶜᵗˣ →ᵐ Tᵏ ⟦ hist 𝕊' ⟧ᶜᵗˣ (top-grade r)
     top-stepᵏ (STEP r) = implᵐ ∘ᵐ stepᵀ r
@@ -160,7 +160,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
       tickᵏ (op-grade op) ∘ᵐ [ ∣ op-grade op ∣ᵉ ]ᶠ ηᵏ ∘ᵐ η⊣
 
     top-≾ : ∀ {ε ε'} {𝕊 𝕊' : State []} {A A₀ : VType}
-          → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+          → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
           → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ᵗ ⟨ 𝕊' ∣ M' ⟩)
           → top-grade r ·ₑ ε' ≾ₑ ε
     top-≾ (STEP r) = step-≾ r
@@ -170,7 +170,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     -- The value type a top-level step refines to.
 
     top-refines-type : ∀ {ε ε'} {𝕊 𝕊' : State []} {A A₀ : VType}
-                     → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+                     → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
                      → ⟨ 𝕊 ∣ M ⟩ ⟶ᵗ ⟨ 𝕊' ∣ M' ⟩ → A₀ <:ᵛ A
     top-refines-type (STEP r)        = step-refines-type r
     top-refines-type {A = A} OP-STEP = <:ᵛ-refl A
@@ -220,7 +220,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
       ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (Tᵏ-∘ᵐ h₁ h₂)))
 
     Uniform⟶ᵗ : ∀ {ε ε'} {𝕊 𝕊' : State []} {A A₀ : VType}
-              → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+              → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
               → ⟨ 𝕊 ∣ M ⟩ ⟶ᵗ ⟨ 𝕊' ∣ M' ⟩ → Paramᶜ M → Set
     Uniform⟶ᵗ (STEP r) pM = Uniform⟶ r pM
     Uniform⟶ᵗ OP-STEP  _  = ⊤
@@ -239,9 +239,9 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     -- leaves a tick.
 
     sound-OP-STEP : ∀ {A ε} → (op : Op) → (𝕊 : State [])
-                  → (V : toCtx 𝕊 ⊢V⦂ ⌜ param op ⌝ᵍ)
+                  → (V : toCtx 𝕊 ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
                   → (M : toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
-                         ⊢C⦂ A ! ε)
+                         ⊢ᶜ⦂ A ! ε)
                   → (pSt : Paramˢ 𝕊) → (pV : Paramᵛ V) → (pM : Paramᶜ M)
                   → ⟦ ⟨ 𝕊 ∣ perform op V M ⟩ ⟧ᵏᶜᶠ (pSt , (pV , pM))
                   ≈ᵐ T-≤ᵏ (top-≾ (OP-STEP {op = op} {𝕊 = 𝕊} {V = V} {M = M}))
@@ -303,7 +303,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     -- monad morphism `implᵐ`.
 
     ⟶ᵗ-sound : ∀ {ε ε' A A₀} {𝕊 𝕊' : State []}
-             → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+             → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
              → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ᵗ ⟨ 𝕊' ∣ M' ⟩)
              → (p : Paramᶜᶠ (⟨ 𝕊 ∣ M ⟩))
              → Uniform⟶ᵗ r (proj₂ p)
@@ -398,7 +398,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     -- and `DELAY`'s delay becomes a tick.
 
     T-≤ᵏ-implstep : ∀ {ε ε' εa εb A A₀} {𝕊 𝕊' : State []} → (B : Obj)
-                  → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+                  → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
                   → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
                   → (g : ⟦ hist 𝕊' ⟧ᶜᵗˣ →ᵐ Tᵏ B εa) → (q : εa ≾ₑ εb)
                   → μᵏ ∘ᵐ Tᵏᶠ (T-≤ᵏ q ∘ᵐ g) ∘ᵐ (implᵐ ∘ᵐ stepᵀ r)
@@ -439,7 +439,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     -- The coercion escapes any top-level transition.
 
     T-≤ᵏ-topᵏ : ∀ {ε ε' εa εb A A₀} {𝕊 𝕊' : State []} → (B : Obj)
-              → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+              → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
               → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ᵗ ⟨ 𝕊' ∣ M' ⟩)
               → (g : ⟦ hist 𝕊' ⟧ᶜᵗˣ →ᵐ Tᵏ B εa) → (q : εa ≾ₑ εb)
               → μᵏ ∘ᵐ Tᵏᶠ (T-≤ᵏ q ∘ᵐ g) ∘ᵐ top-stepᵏ r

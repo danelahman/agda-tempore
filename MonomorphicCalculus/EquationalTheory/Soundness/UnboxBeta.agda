@@ -105,11 +105,11 @@ wkc-ext Γ Γ' (Θ ⟨ ρ ⟩) g =
   ∙ ∘ᵐ-assoc _ _ _
 
 sound-unbox-beta : ∀ {Γ A A' C D ρ}
-                 → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
+                 → (V : Γ ⟨ ρ ⟩ ⊢ᵛ⦂ A)
                  → (K : Γ ∷ [ ρ ] A ⊢K[ all ◁ D ]⦂ C)
                  → (p : ctx-grade (hole-ctx K) ≾ᵣ ρ)
                  → (u : A <:ᵛ A')
-                 → (N : (Γ ∷ [ ρ ] A ++ᶜ hole-ctx K) ∷ A' ⊢C⦂ D)
+                 → (N : (Γ ∷ [ ρ ] A ++ᶜ hole-ctx K) ∷ A' ⊢ᶜ⦂ D)
                  → Paramᵏ K → Paramᶜ N
                  → Soundᶜ≡ᵗʰ (unbox-beta V K p u N)
 sound-unbox-beta {Γ} {A} {A'} {C} {D} {ρ} V K p u N pK pN (pV , pL) (pV' , pR) =
@@ -135,7 +135,7 @@ sound-unbox-beta {Γ} {A} {A'} {C} {D} {ρ} V K p u N pK pN (pV , pL) (pV' , pR)
     relB : grade-++ᶜˡ 𝟏ᵣ Θ ≾ᵣ ρ
     relB = ≾ᵣ-trans (≾ᵣ-reflexive (grade-++ᶜˡ-𝟏ᵣ Θ)) p
 
-    X : (Γ ∷ [ ρ ] A) ++ᶜ Θ ⊢C⦂ D
+    X : (Γ ∷ [ ρ ] A) ++ᶜ Θ ⊢ᶜ⦂ D
     X = unbox xB relB u N
 
     -- exactly the renaming the axiom's right-hand side uses (`∘ʳ` is a
@@ -143,10 +143,10 @@ sound-unbox-beta {Γ} {A} {A'} {C} {D} {ρ} V K p u N pK pN (pV , pL) (pV' , pR)
     r₁ : Ren [] ((Γ ∷ [ ρ ] A) ++ᶜ Θ) (Γ ⟨ ρ ⟩)
     r₁ = (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ wk-ren-⟨ρ⟩-ctx refl
 
-    W : (Γ ∷ [ ρ ] A) ++ᶜ Θ ⊢V⦂ A'
+    W : (Γ ∷ [ ρ ] A) ++ᶜ Θ ⊢ᵛ⦂ A'
     W = subV (V-rename r₁ V) u
 
-    Y : (Γ ∷ [ ρ ] A) ++ᶜ Θ ⊢C⦂ D
+    Y : (Γ ∷ [ ρ ] A) ++ᶜ Θ ⊢ᶜ⦂ D
     Y = N [ split-[] ↦ W ]c
 
     pY : Paramᶜ Y

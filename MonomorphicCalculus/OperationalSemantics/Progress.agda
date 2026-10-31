@@ -24,12 +24,12 @@ open import MonomorphicCalculus.Syntax.Types    S
 data Progresses : {ε : E}
                 → {𝕊 : State []}
                 → {A : VType}
-                → (M : toCtx 𝕊 ⊢C⦂ A ! ε)
+                → (M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε)
                 →  Set where
                             
     is-return  : {𝕊 : State []}
                → {A : VType}
-               → {V : toCtx 𝕊 ⊢V⦂ A} 
+               → {V : toCtx 𝕊 ⊢ᵛ⦂ A} 
                  --------------------------
                → Progresses (return V) 
 
@@ -37,16 +37,16 @@ data Progresses : {ε : E}
                → {𝕊 : State []}
                → {A : VType}
                → {op : Op}
-               → {V : toCtx 𝕊 ⊢V⦂ ⌜ param op ⌝ᵍ}
-               → {M : toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε}
+               → {V : toCtx 𝕊 ⊢ᵛ⦂ ⌜ param op ⌝ᵍ}
+               → {M : toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢ᶜ⦂ A ! ε}
                  -------------------------------------------------------------------------
                → Progresses (perform op V M) 
 
 
     steps      : ∀ {ε'' ε'''}
                → {𝕊 𝕊' : State []} {A B : VType}
-               → {M : toCtx 𝕊 ⊢C⦂ A ! ε''}
-               → {M' : toCtx 𝕊' ⊢C⦂  B ! ε''' }
+               → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε''}
+               → {M' : toCtx 𝕊' ⊢ᶜ⦂  B ! ε''' }
                → (M⟶M' : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
                → (p : κₛ (step-extends-state M⟶M') ·ᵣ ∣ ε''' ∣ᵉ ≾ᵣ ∣ ε'' ∣ᵉ)
                → (t : B <:ᵛ A)
@@ -58,8 +58,8 @@ data Progresses : {ε : E}
 
 step-progress : ∀ {ε'' ε'''}
               → {𝕊 𝕊' : State []} {A B : VType}
-              → {M : toCtx 𝕊 ⊢C⦂ A ! ε''}
-              → {M' : toCtx 𝕊' ⊢C⦂ B ! ε'''}
+              → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε''}
+              → {M' : toCtx 𝕊' ⊢ᶜ⦂ B ! ε'''}
               → (M⟶M' : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
                 ---------------------------------
               → Progresses M
@@ -67,7 +67,7 @@ step-progress M⟶M' = steps M⟶M' (step-grade-≾ M⟶M') (step-refines-type M
 
 -- Progress theorem statement
 
-progress : ∀ {A ε'} → {𝕊 : State []} → (M : toCtx 𝕊 ⊢C⦂ A ! ε') → Progresses M
+progress : ∀ {A ε'} → {𝕊 : State []} → (M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε') → Progresses M
 
 progress (return V) = is-return
 progress (M ⨟ N) with progress M
@@ -115,8 +115,8 @@ progress (subC M (_ !ₛ _)) = step-progress SUB
 finality-value : ∀ {A B τ₂}
                 → {𝕊 : State []}
                 → {𝕊₁ : State []}
-                → {V : toCtx 𝕊 ⊢V⦂ A}
-                → {M₁ : toCtx 𝕊₁ ⊢C⦂ B ! τ₂}
+                → {V : toCtx 𝕊 ⊢ᵛ⦂ A}
+                → {M₁ : toCtx 𝕊₁ ⊢ᶜ⦂ B ! τ₂}
                 → {𝟏ₑ≾ε : 𝟏ₑ ≾ₑ τ₂}
                 → ⟨ 𝕊 ∣ return V ⟩ ⟶ ⟨ 𝕊₁ ∣ M₁ ⟩
                 → ⊥
@@ -127,9 +127,9 @@ finality-value ()
 
 finality-op : ∀ {A B op τ₂ τ₃}
                 → {𝕊 𝕊₁ : State []}
-                → {V : toCtx 𝕊 ⊢V⦂ ⌜ param op ⌝ᵍ }
-                → {M : toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! τ₂}
-                → {M₁ : toCtx 𝕊₁ ⊢C⦂ B ! τ₃}
+                → {V : toCtx 𝕊 ⊢ᵛ⦂ ⌜ param op ⌝ᵍ }
+                → {M : toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢ᶜ⦂ A ! τ₂}
+                → {M₁ : toCtx 𝕊₁ ⊢ᶜ⦂ B ! τ₃}
                 → ⟨ 𝕊 ∣ perform op V M ⟩ ⟶ ⟨ 𝕊₁ ∣ M₁ ⟩
                 → ⊥
 finality-op ()

@@ -151,7 +151,7 @@ env-cell-typ (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ t =
 
 -- and the same on computations
 
-env-Cˢ-≡ : ∀ {𝕊 Γ C} → (γ : Env 𝕊 Γ) → (Δ : Ctx) → {M M' : (Γ ++ᶜ Δ) ⊢C⦂ C}
+env-Cˢ-≡ : ∀ {𝕊 Γ C} → (γ : Env 𝕊 Γ) → (Δ : Ctx) → {M M' : (Γ ++ᶜ Δ) ⊢ᶜ⦂ C}
          → M ≡ M' → env-Cˢ γ Δ M ≡ env-Cˢ γ Δ M'
 env-Cˢ-≡ γ Δ = cong (env-Cˢ γ Δ)
 
@@ -162,7 +162,7 @@ env-Cˢ-≡ γ Δ = cong (env-Cˢ γ Δ)
 env-Cˢ-unbox : ∀ {𝕊 Γ A A₀ C ρ₀ σ} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
              → (x : [ ρ₀ ] A₀ ∈[ σ ] (Γ ++ᶜ Δ)) → (rel : σ ≾ᵣ ρ₀)
              → (p : A₀ <:ᵛ A)
-             → (M : ((Γ ++ᶜ Δ) ∷ A) ⊢C⦂ C)
+             → (M : ((Γ ++ᶜ Δ) ∷ A) ⊢ᶜ⦂ C)
              → (rel' : rvar-elapsed (env-cell γ Δ (σ , x))
                          ≾ᵣ rvar-grade (env-cell γ Δ (σ , x)))
              → (p' : rvar-type (env-cell γ Δ (σ , x)) <:ᵛ A)
@@ -293,7 +293,7 @@ unbox-read q c r =
                       (unbox-ren-img q (rvar-pos c)))))
 
 alloc-read : ∀ {A ρ} {𝕊 𝕊₂ : State []}
-           → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢V⦂ A) → (c : RVar (toCtx 𝕊))
+           → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢ᵛ⦂ A) → (c : RVar (toCtx 𝕊))
            → (r : (𝕊 ∷ₛ V) [ rvar-pos (RVar-∷ c) ]⊑ᶜ 𝕊₂)
            → Σ[ r₀ ∈ 𝕊 [ rvar-pos c ]⊑ᶜ 𝕊₂ ] (lookupᶜ r₀ ≡ lookupᶜ r)
 
@@ -359,13 +359,13 @@ Var-cast-loop refl t = refl
 -- `grad-typ⇒var<:` and `val-cell` locate the same occurrence, by two
 -- recursions on the value that agree clause for clause.
 
-val-cell-≡ : ∀ {Γ A ρ} → (W : Γ ⊢V⦂ [ ρ ] A)
+val-cell-≡ : ∀ {Γ A ρ} → (W : Γ ⊢ᵛ⦂ [ ρ ] A)
            → tgt-img₀ (val-sub W) Hd ≡ val-cell W
 
 val-cell-≡ (var f x)           = refl
 val-cell-≡ (subV V ([ _ ]ₛ _)) = val-cell-≡ V
 
-rvar-hit : ∀ {Γ A ρ} → (Θ : Ctx) → (W : Γ ⊢V⦂ [ ρ ] A)
+rvar-hit : ∀ {Γ A ρ} → (Θ : Ctx) → (W : Γ ⊢ᵛ⦂ [ ρ ] A)
          → atᴿ {Γ} Θ (split→∈ (split-≡-++ᶜ {Γ ∷ [ ρ ] A} {Θ})) W
          ≡ RVar-++ᶜˡ Θ (val-cell W)
 

@@ -33,18 +33,17 @@ open import PolymorphicCalculus.Typing          S
 
 open import PolymorphicCalculus.Syntax.Raw    S
 
-⌊_⌋ʳ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ}
-       {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
-     → Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X
-     ---------------------------
+⌊_⌋ʳ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ' : RExp Θ} {A : OVType Θ}
+     → Q ⊢ A ∈̂[ ρ' ] Γ
+     -----------------
      → RawV Θ n
-⌊_⌋ʳ {z = z} res-var    = var (var-pos z)
+⌊ res-var z ⌋ʳ           = var (var-pos z)
 ⌊ res-ann ρₐ Xₐ R _ _ ⌋ʳ = ⌊ R ⌋ʳ ⦂ᵛ [ ρₐ ] Xₐ
 
 mutual
 
   ⌊_⌋ᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ}
-       → Q ∣ Γ ⊢V⦂ A
+       → Q ∣ Γ ⊢ᵛ⦂ A
        -------------
        → RawV Θ n
 
@@ -70,7 +69,7 @@ mutual
 
 
   ⌊_⌋ᶜ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ}
-       → Q ∣ Γ ⊢C⦂ C
+       → Q ∣ Γ ⊢ᶜ⦂ C
        -------------
        → RawC Θ n
 
@@ -105,7 +104,7 @@ private
   ∅ᶜ : OCtx ∅ˢ 0
   ∅ᶜ = []
 
-  ex-⋆ : ∅ᴴ ∣ (∅ᶜ ∷ unit) ⊢V⦂ unit
+  ex-⋆ : ∅ᴴ ∣ (∅ᶜ ∷ unit) ⊢ᵛ⦂ unit
   ex-⋆ = ⋆
 
   ex-⋆-erase : ⌊ ex-⋆ ⌋ᵛ ≡ ⋆
@@ -113,28 +112,28 @@ private
 
   -- locks are forgotten, positions kept
 
-  ex-var-lock : ∅ᴴ ∣ ((∅ᶜ ∷ unit) ⟨ rconst 𝟏ᵣ ⟩) ⊢V⦂ unit
+  ex-var-lock : ∅ᴴ ∣ ((∅ᶜ ∷ unit) ⟨ rconst 𝟏ᵣ ⟩) ⊢ᵛ⦂ unit
   ex-var-lock = var (Tl-⟨⟩ Hd) (et-ok unitₑ)
 
   ex-var-lock-erase : ⌊ ex-var-lock ⌋ᵛ ≡ var zero
   ex-var-lock-erase = refl
 
-  ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ unit) ⟨ rconst ⊤ᵣ ⟩) ⊢V⦂ unit
+  ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ unit) ⟨ rconst ⊤ᵣ ⟩) ⊢ᵛ⦂ unit
   ex-var-barrier = var (Tl-⟨⟩ Hd) (et-ok unitₑ)
 
   ex-var-barrier-erase : ⌊ ex-var-barrier ⌋ᵛ ≡ var zero
   ex-var-barrier-erase = refl
 
-  ex-unbox : ∅ᴴ ∣ (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) ⊢C⦂ unit ! 𝟏̂ₑ
-  ex-unbox = unbox (res-var {z = Hd}) ⊩≾̂ᵣ-refl (return ⋆)
+  ex-unbox : ∅ᴴ ∣ (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) ⊢ᶜ⦂ unit ! 𝟏̂ₑ
+  ex-unbox = unbox (res-var Hd) ⊩≾̂ᵣ-refl (return ⋆)
 
   ex-unbox-erase : ⌊ ex-unbox ⌋ᶜ ≡ unbox (var zero) (return ⋆)
   ex-unbox-erase = refl
 
   -- annotations are kept
 
-  ex-unbox-ann : ∅ᴴ ∣ (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) ⊢C⦂ unit ! 𝟏̂ₑ
-  ex-unbox-ann = unbox (res-ann 𝟏̂ᵣ unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl unitₛ) ⊩≾̂ᵣ-refl (return ⋆)
+  ex-unbox-ann : ∅ᴴ ∣ (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) ⊢ᶜ⦂ unit ! 𝟏̂ₑ
+  ex-unbox-ann = unbox (res-ann 𝟏̂ᵣ unit (res-var Hd) ⊩≾̂ᵣ-refl unitₛ) ⊩≾̂ᵣ-refl (return ⋆)
 
   ex-unbox-ann-erase : ⌊ ex-unbox-ann ⌋ᶜ ≡ unbox (var zero ⦂ᵛ [ 𝟏̂ᵣ ] unit) (return ⋆)
   ex-unbox-ann-erase = refl
@@ -146,7 +145,7 @@ private
 
   -- the grade of `box` is kept
 
-  ex-box : ∅ᴴ ∣ ∅ᶜ ⊢C⦂ [ 𝟏̂ᵣ ] unit ! 𝟏̂ₑ
+  ex-box : ∅ᴴ ∣ ∅ᶜ ⊢ᶜ⦂ [ 𝟏̂ᵣ ] unit ! 𝟏̂ₑ
   ex-box = box 𝟏̂ᵣ ⋆ (return (var Hd (≾ᵘ-ok ⊩≾̂ᵣ-refl)))
 
   ex-box-erase : ⌊ ex-box ⌋ᶜ ≡ box 𝟏̂ᵣ ⋆ (return (var zero))

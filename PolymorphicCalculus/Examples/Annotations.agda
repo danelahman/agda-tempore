@@ -53,7 +53,7 @@ typed-of M t h with infer [] M | infer-complete [] M t | infer-handlerFree [] M 
 
 -- A closed derivation in the empty context is a typing
 
-closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢C⦂ C)
+closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢ᶜ⦂ C)
        → ⌊ D ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ → Typable [] M
 closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 

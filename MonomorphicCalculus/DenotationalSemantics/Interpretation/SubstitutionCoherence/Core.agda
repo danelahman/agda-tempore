@@ -59,18 +59,18 @@ private
   _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
   _∙_ = ≈ᵐ-trans
 
-subᵛ : ∀ {Γ Γ₁ Γ₂ A B} → (V : Γ ⊢V⦂ B) → (s : Γ₁ ∷ A , Γ₂ split Γ)
-     → (W : Γ₁ ⊢V⦂ A)
+subᵛ : ∀ {Γ Γ₁ Γ₂ A B} → (V : Γ ⊢ᵛ⦂ B) → (s : Γ₁ ∷ A , Γ₂ split Γ)
+     → (W : Γ₁ ⊢ᵛ⦂ A)
      → Paramᵛ V → Paramᵛ W → Paramᵛ (V [ s ↦ W ]v)
 subᵛ V s W pV pW = subᵛˢ (sub-split₀ s W) (sub-split₀ᴾ s W pW) V pV
 
-subᶜ : ∀ {Γ Γ₁ Γ₂ A C} → (M : Γ ⊢C⦂ C) → (s : Γ₁ ∷ A , Γ₂ split Γ)
-     → (W : Γ₁ ⊢V⦂ A)
+subᶜ : ∀ {Γ Γ₁ Γ₂ A C} → (M : Γ ⊢ᶜ⦂ C) → (s : Γ₁ ∷ A , Γ₂ split Γ)
+     → (W : Γ₁ ⊢ᵛ⦂ A)
      → Paramᶜ M → Paramᵛ W → Paramᶜ (M [ s ↦ W ]c)
 subᶜ M s W pM pW = subᶜˢ (sub-split₀ s W) (sub-split₀ᴾ s W pW) M pM
 
-V-subst-nat : ∀ {Γ Γ₁ Γ₂ A B} → (V : Γ ⊢V⦂ B) → (s : Γ₁ ∷ A , Γ₂ split Γ)
-            → (W : Γ₁ ⊢V⦂ A)
+V-subst-nat : ∀ {Γ Γ₁ Γ₂ A B} → (V : Γ ⊢ᵛ⦂ B) → (s : Γ₁ ∷ A , Γ₂ split Γ)
+            → (W : Γ₁ ⊢ᵛ⦂ A)
             → (pV : Paramᵛ V) → (pW : Paramᵛ W)
             → ⟦ V [ s ↦ W ]v ⟧ᵛᵗ (subᵛ V s W pV pW)
             ≈ᵐ ⟦ V ⟧ᵛᵗ pV ∘ᵐ sub-env s W pW
@@ -78,8 +78,8 @@ V-subst-nat V s W pV pW =
   ≈ᵐ-trans (V-subst-natˢ (sub-split₀ s W) (sub-split₀ᴾ s W pW) V pV)
            (∘ᵐ-congʳ (sub-env-is-⟦⟧ˢ₀ s W pW))
 
-C-subst-nat : ∀ {Γ Γ₁ Γ₂ A C} → (M : Γ ⊢C⦂ C) → (s : Γ₁ ∷ A , Γ₂ split Γ)
-            → (W : Γ₁ ⊢V⦂ A)
+C-subst-nat : ∀ {Γ Γ₁ Γ₂ A C} → (M : Γ ⊢ᶜ⦂ C) → (s : Γ₁ ∷ A , Γ₂ split Γ)
+            → (W : Γ₁ ⊢ᵛ⦂ A)
             → (pM : Paramᶜ M) → (pW : Paramᵛ W)
             → ⟦ M [ s ↦ W ]c ⟧ᶜᵗ (subᶜ M s W pM pW)
             ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ sub-env s W pW
@@ -90,14 +90,14 @@ C-subst-nat M s W pM pW =
 -- Replacing the two innermost variables, the outer by `V` and the inner by
 -- `W`: `W` weakened past `A` first, then `V`. The environment is the pair.
 
-subᶜ₂ : ∀ {Γ A B C} → (M : Γ ∷ A ∷ B ⊢C⦂ C) → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ B)
+subᶜ₂ : ∀ {Γ A B C} → (M : Γ ∷ A ∷ B ⊢ᶜ⦂ C) → (V : Γ ⊢ᵛ⦂ A) → (W : Γ ⊢ᵛ⦂ B)
       → Paramᶜ M → Paramᵛ V → Paramᵛ W
       → Paramᶜ ((M [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c)
 subᶜ₂ M V W pM pV pW =
   subᶜ (M [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
     (subᶜ M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV
 
-C-subst₂-nat : ∀ {Γ A B C} → (M : Γ ∷ A ∷ B ⊢C⦂ C) → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ B)
+C-subst₂-nat : ∀ {Γ A B C} → (M : Γ ∷ A ∷ B ⊢ᶜ⦂ C) → (V : Γ ⊢ᵛ⦂ A) → (W : Γ ⊢ᵛ⦂ B)
              → (pM : Paramᶜ M) → (pV : Paramᵛ V) → (pW : Paramᵛ W)
              → ⟦ (M [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟧ᶜᵗ
                  (subᶜ₂ M V W pM pV pW)

@@ -75,14 +75,14 @@ cmpUseDef σ Γ k A sc f δ h st rewrite ∈-lookupᵖ f = instᶜ-complete sc A
 -- A resource value: the raw variable and annotations are the judgement's
 
 cmpR : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : OCtx Θ' n}
-         {ρ' ρ₀ ρ : RExp Θ'} {X₀ X : OVType Θ'} {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ₀}
+         {ρ' ρ : RExp Θ'} {X : OVType Θ'}
      → (ι : Subst Θ₀ Θ) → (Γ : OCtx Θ n) → (V : RawV Θ₀ n)
-     → (R : Q ∣ Γ₀ ⊢↪[ ρ' ] z ⦂[ ρ ] X)
+     → (R : Q ⊢ [ ρ ] X ∈̂[ ρ' ] Γ₀)
      → InvV (ι ⨟ˢ σ) V ⌊ R ⌋ʳ
      → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
      ---------------------------------------------------------------------
      → (σ ⊨[ Q ] resC ι Γ V) × (resTy ι Γ V [ σ ]ᵛ ≡ [ ρ ] X) × (resGr Γ V [ σ ]ʳ ≡ ρ')
-cmpR {σ = σ} {z = z} ι Γ _ res-var var ceq = tt , lty , lgr
+cmpR {σ = σ} ι Γ _ (res-var z) var ceq = tt , lty , lgr
   where
     i = var-pos z
 
@@ -103,7 +103,7 @@ mutual
   cmpV : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : OCtx Θ' n}
        → (ι : Subst Θ₀ Θ) → (Γ : OCtx Θ n) → (A : OVType Θ) → (V : RawV Θ₀ n)
        → {A₀ : OVType Θ'}
-       → (D : Q ∣ Γ₀ ⊢V⦂ A₀)
+       → (D : Q ∣ Γ₀ ⊢ᵛ⦂ A₀)
        → InvV (ι ⨟ˢ σ) V ⌊ D ⌋ᵛ
        → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
        → Q ⊩ A₀ <:̂ᵛ A [ σ ]ᵛ
@@ -338,7 +338,7 @@ mutual
        → (ι : Subst Θ₀ Θ) → (Γ : OCtx Θ n) → (A : OVType Θ) → (t : EExp Θ)
        → (M : RawC Θ₀ n)
        → {A₀ : OVType Θ'} → {ε₀ : EExp Θ'}
-       → (D : Q ∣ Γ₀ ⊢C⦂ A₀ ! ε₀)
+       → (D : Q ∣ Γ₀ ⊢ᶜ⦂ A₀ ! ε₀)
        → InvC (ι ⨟ˢ σ) M ⌊ D ⌋ᶜ
        → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
        → Q ⊩ A₀ <:̂ᵛ A [ σ ]ᵛ
@@ -720,7 +720,7 @@ mutual
 completeVˢ : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : OCtx Θ' n}
            → (ι : Subst Θ₀ Θ) → (Γ : OCtx Θ n) → (A : OVType Θ) → (V : RawV Θ₀ n)
            → {A₀ : OVType Θ'}
-           → (D : Q ∣ Γ₀ ⊢V⦂ A₀)
+           → (D : Q ∣ Γ₀ ⊢ᵛ⦂ A₀)
            → ⌊ D ⌋ᵛ ≡ V [ ι ⨟ˢ σ ]ᴿᵛ
            → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
            → Q ⊩ A₀ <:̂ᵛ A [ σ ]ᵛ
@@ -733,7 +733,7 @@ completeCˢ : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : O
            → (ι : Subst Θ₀ Θ) → (Γ : OCtx Θ n) → (A : OVType Θ) → (t : EExp Θ)
            → (M : RawC Θ₀ n)
            → {A₀ : OVType Θ'} → {ε₀ : EExp Θ'}
-           → (D : Q ∣ Γ₀ ⊢C⦂ A₀ ! ε₀)
+           → (D : Q ∣ Γ₀ ⊢ᶜ⦂ A₀ ! ε₀)
            → ⌊ D ⌋ᶜ ≡ M [ ι ⨟ˢ σ ]ᴿᶜ
            → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
            → Q ⊩ A₀ <:̂ᵛ A [ σ ]ᵛ
@@ -748,7 +748,7 @@ completeCˢ ι Γ A t M D e = cmpC ι Γ A t M D (invC M (sym e))
 completeV : ∀ {Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : OCtx Θ' n}
           → (Γ : OCtx Θ n) → (A : OVType Θ) → (V : RawV Θ n)
           → {A₀ : OVType Θ'}
-          → (D : Q ∣ Γ₀ ⊢V⦂ A₀)
+          → (D : Q ∣ Γ₀ ⊢ᵛ⦂ A₀)
           → ⌊ D ⌋ᵛ ≡ V [ σ ]ᴿᵛ
           → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
           → Q ⊩ A₀ <:̂ᵛ A [ σ ]ᵛ
@@ -761,7 +761,7 @@ completeV {σ = σ} Γ A V D e =
 completeC : ∀ {Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : OCtx Θ' n}
           → (Γ : OCtx Θ n) → (A : OVType Θ) → (t : EExp Θ) → (M : RawC Θ n)
           → {A₀ : OVType Θ'} → {ε₀ : EExp Θ'}
-          → (D : Q ∣ Γ₀ ⊢C⦂ A₀ ! ε₀)
+          → (D : Q ∣ Γ₀ ⊢ᶜ⦂ A₀ ! ε₀)
           → ⌊ D ⌋ᶜ ≡ M [ σ ]ᴿᶜ
           → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
           → Q ⊩ A₀ <:̂ᵛ A [ σ ]ᵛ
@@ -779,7 +779,7 @@ charV : ∀ {Θ n Θ'} → (Γ : OCtx Θ n) → (V : RawV Θ n) → (A : OVType 
       → (σ : Subst Θ Θ') → (Q : Hyps Θ')
       ----------------------------------------------------------------
       → (σ ⊨[ Q ] genV Γ V A)
-        ⇔ (Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ σ ]ᴿᵛ))
+        ⇔ (Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢ᵛ⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ σ ]ᴿᵛ))
 
 charV Γ V A σ Q =
   mk⇔ (soundV Γ V A)
@@ -789,7 +789,7 @@ charC : ∀ {Θ n Θ'} → (Γ : OCtx Θ n) → (M : RawC Θ n) → (A : OVType 
       → (t : EExp Θ) → (σ : Subst Θ Θ') → (Q : Hyps Θ')
       ------------------------------------------------------------------------
       → (σ ⊨[ Q ] genC Γ M (A ! t))
-        ⇔ (Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A [ σ ]ᵛ ! t [ σ ]ᵉ) ] (⌊ D ⌋ᶜ ≡ M [ σ ]ᴿᶜ))
+        ⇔ (Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢ᶜ⦂ A [ σ ]ᵛ ! t [ σ ]ᵉ) ] (⌊ D ⌋ᶜ ≡ M [ σ ]ᴿᶜ))
 
 charC Γ M A t σ Q =
   mk⇔ (soundC Γ M A t)
@@ -826,7 +826,7 @@ private
   ex-unbox : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) (unbox (var zero) (return ⋆))
                               (unit ! 𝟏̂ₑ)
   ex-unbox = completeC {σ = idˢ} (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) unit 𝟏̂ₑ (unbox (var zero) (return ⋆))
-                       (unbox (res-var {z = Hd}) ⊩≾̂ᵣ-refl (return ⋆))
+                       (unbox (res-var Hd) ⊩≾̂ᵣ-refl (return ⋆))
                        refl refl unitₛ ⊩≾̂ₑ-refl
 
   -- unboxing an annotated variable: the annotation's atom is the step's
@@ -835,7 +835,7 @@ private
                                   (unbox (var zero ⦂ᵛ [ 𝟏̂ᵣ ] unit) (return ⋆)) (unit ! 𝟏̂ₑ)
   ex-unbox-ann =
     completeC {σ = idˢ} (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) unit 𝟏̂ₑ (unbox (var zero ⦂ᵛ [ 𝟏̂ᵣ ] unit) (return ⋆))
-              (unbox (res-ann 𝟏̂ᵣ unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl unitₛ) ⊩≾̂ᵣ-refl (return ⋆))
+              (unbox (res-ann 𝟏̂ᵣ unit (res-var Hd) ⊩≾̂ᵣ-refl unitₛ) ⊩≾̂ᵣ-refl (return ⋆))
               refl refl unitₛ ⊩≾̂ₑ-refl
 
   -- boxing a value: the annotation needs no witness, only the payload's type

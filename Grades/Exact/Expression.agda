@@ -87,10 +87,10 @@ data Expr (s : Instance) : Set where
 ‵_ : ∀ {s} → Op → Expr s
 ‵ o = ops ⁅ code o ⁆
 
-infix 9 ‵_ _？
+infix 9 ‵_ _ˀ
 
-_？ : ∀ {s} → Op → Expr s
-o ？ = ‵ o ∣ ε
+_ˀ : ∀ {s} → Op → Expr s
+o ˀ = ‵ o ∣ ε
 
 ------------------------------------------------------------------------
 -- Meaning

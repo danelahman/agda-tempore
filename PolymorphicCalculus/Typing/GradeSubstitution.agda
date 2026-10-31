@@ -65,21 +65,19 @@ clause-ty-↑ σ B op = cong (_! _) (wk-↑ᵉ-v σ B)
 ------------------------------------------------------------------------
 -- The substitution lemma
 
-substʳ : ∀ {Θ Θ' n} {Q : Hyps Θ} {Q' : Hyps Θ'} {Γ : OCtx Θ n}
-           {ρ' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ} {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
+substʳ : ∀ {Θ Θ' n} {Q : Hyps Θ} {Q' : Hyps Θ'} {Γ : OCtx Θ n} {ρ' : RExp Θ} {A : OVType Θ}
        → (σ : Subst Θ Θ') → Q' ⊩ᴴ Q [ σ ]
-       → Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X
-       → Q' ∣ Γ [ σ ]ᶜᵗˣ ⊢↪[ ρ' [ σ ]ʳ ] ∈̂-subst σ z ⦂[ ρ [ σ ]ʳ ] X [ σ ]ᵛ
-substʳ σ h res-var               = res-var
+       → Q ⊢ A ∈̂[ ρ' ] Γ
+       → Q' ⊢ A [ σ ]ᵛ ∈̂[ ρ' [ σ ]ʳ ] Γ [ σ ]ᶜᵗˣ
+substʳ σ h (res-var z)           = res-var (∈̂-subst σ z)
 substʳ σ h (res-ann ρₐ Xₐ R p q) =
   res-ann (ρₐ [ σ ]ʳ) (Xₐ [ σ ]ᵛ) (substʳ σ h R) (⊩-substᵣ h p) (<:̂ᵛ-subst h q)
 
-⌊substʳ⌋ : ∀ {Θ Θ' n} {Q : Hyps Θ} {Q' : Hyps Θ'} {Γ : OCtx Θ n}
-             {ρ' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ} {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
+⌊substʳ⌋ : ∀ {Θ Θ' n} {Q : Hyps Θ} {Q' : Hyps Θ'} {Γ : OCtx Θ n} {ρ' : RExp Θ} {A : OVType Θ}
          → (σ : Subst Θ Θ') → (h : Q' ⊩ᴴ Q [ σ ])
-         → (R : Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X)
+         → (R : Q ⊢ A ∈̂[ ρ' ] Γ)
          → ⌊ substʳ σ h R ⌋ʳ ≡ ⌊ R ⌋ʳ [ σ ]ᴿᵛ
-⌊substʳ⌋ {z = z} σ h res-var = cong var (var-pos-∈̂-subst σ z)
+⌊substʳ⌋ σ h (res-var z)           = cong var (var-pos-∈̂-subst σ z)
 ⌊substʳ⌋ σ h (res-ann ρₐ Xₐ R p q) =
   cong (_⦂ᵛ [ ρₐ [ σ ]ʳ ] (Xₐ [ σ ]ᵛ)) (⌊substʳ⌋ σ h R)
 
@@ -87,9 +85,9 @@ mutual
 
   substᵛ : ∀ {Θ Θ' n} {Q : Hyps Θ} {Q' : Hyps Θ'} {Γ : OCtx Θ n} {A : OVType Θ}
          → (σ : Subst Θ Θ') → Q' ⊩ᴴ Q [ σ ]
-         → Q ∣ Γ ⊢V⦂ A
+         → Q ∣ Γ ⊢ᵛ⦂ A
          ---------------------------------
-         → Q' ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ
+         → Q' ∣ Γ [ σ ]ᶜᵗˣ ⊢ᵛ⦂ A [ σ ]ᵛ
 
   substᵛ σ h (var x p)       = var (∈̂-subst σ x) (Et∨≾ᵘ-subst h p)
   substᵛ {Γ = Γ} σ h (usedef {s = s} f δ h' e) =
@@ -116,9 +114,9 @@ mutual
   substˡ : ∀ {Θ Θ' n} {Q : Hyps Θ} {Q' : Hyps Θ'}
          → (σ : Subst Θ Θ') → Q' ⊩ᴴ Q [ σ ]
          → (Γ : OCtx Θ n) → (B : OVType Θ) → (op : Op)
-         → wkᵉ-H Q ∣ clause-ctx Γ B op ⊢C⦂ clause-ty B op
+         → wkᵉ-H Q ∣ clause-ctx Γ B op ⊢ᶜ⦂ clause-ty B op
          ------------------------------------------------------------------
-         → wkᵉ-H Q' ∣ clause-ctx (Γ [ σ ]ᶜᵗˣ) (B [ σ ]ᵛ) op ⊢C⦂ clause-ty (B [ σ ]ᵛ) op
+         → wkᵉ-H Q' ∣ clause-ctx (Γ [ σ ]ᶜᵗˣ) (B [ σ ]ᵛ) op ⊢ᶜ⦂ clause-ty (B [ σ ]ᵛ) op
 
   substˡ σ h Γ B op M =
     c-subst (clause-ty-↑ σ B op)
@@ -126,9 +124,9 @@ mutual
 
   substᶜ : ∀ {Θ Θ' n} {Q : Hyps Θ} {Q' : Hyps Θ'} {Γ : OCtx Θ n} {C : OCType Θ}
          → (σ : Subst Θ Θ') → Q' ⊩ᴴ Q [ σ ]
-         → Q ∣ Γ ⊢C⦂ C
+         → Q ∣ Γ ⊢ᶜ⦂ C
          ---------------------------------
-         → Q' ∣ Γ [ σ ]ᶜᵗˣ ⊢C⦂ C [ σ ]ᶜ
+         → Q' ∣ Γ [ σ ]ᶜᵗˣ ⊢ᶜ⦂ C [ σ ]ᶜ
 
   substᶜ σ h (return V)                 = return (substᵛ σ h V)
   substᶜ σ h (M ⨟ N)                    = substᶜ σ h M ⨟ substᶜ σ h N
@@ -166,7 +164,7 @@ mutual
 mutual
 
   ⌊substᵛ⌋ : ∀ {Θ Θ' n} {Q : Hyps Θ} {Q' : Hyps Θ'} {Γ : OCtx Θ n} {A : OVType Θ}
-           → (σ : Subst Θ Θ') → (h : Q' ⊩ᴴ Q [ σ ]) → (V : Q ∣ Γ ⊢V⦂ A)
+           → (σ : Subst Θ Θ') → (h : Q' ⊩ᴴ Q [ σ ]) → (V : Q ∣ Γ ⊢ᵛ⦂ A)
            → ⌊ substᵛ σ h V ⌋ᵛ ≡ ⌊ V ⌋ᵛ [ σ ]ᴿᵛ
 
   ⌊substᵛ⌋ σ h (var x p)      = cong var (var-pos-∈̂-subst σ x)
@@ -192,7 +190,7 @@ mutual
   ⌊substˡ⌋ : ∀ {Θ Θ' n} {Q : Hyps Θ} {Q' : Hyps Θ'}
            → (σ : Subst Θ Θ') → (h : Q' ⊩ᴴ Q [ σ ])
            → (Γ : OCtx Θ n) → (B : OVType Θ) → (op : Op)
-           → (M : wkᵉ-H Q ∣ clause-ctx Γ B op ⊢C⦂ clause-ty B op)
+           → (M : wkᵉ-H Q ∣ clause-ctx Γ B op ⊢ᶜ⦂ clause-ty B op)
            → ⌊ substˡ σ h Γ B op M ⌋ᶜ ≡ ⌊ M ⌋ᶜ [ σ ↑ᵉ ]ᴿᶜ
   ⌊substˡ⌋ σ h Γ B op M =
     trans (⌊c-subst⌋ (clause-ty-↑ σ B op) _)
@@ -200,7 +198,7 @@ mutual
                  (⌊substᶜ⌋ (σ ↑ᵉ) (⊩ᴴ-↑ᵉ h) M))
 
   ⌊substᶜ⌋ : ∀ {Θ Θ' n} {Q : Hyps Θ} {Q' : Hyps Θ'} {Γ : OCtx Θ n} {C : OCType Θ}
-           → (σ : Subst Θ Θ') → (h : Q' ⊩ᴴ Q [ σ ]) → (M : Q ∣ Γ ⊢C⦂ C)
+           → (σ : Subst Θ Θ') → (h : Q' ⊩ᴴ Q [ σ ]) → (M : Q ∣ Γ ⊢ᶜ⦂ C)
            → ⌊ substᶜ σ h M ⌋ᶜ ≡ ⌊ M ⌋ᶜ [ σ ]ᴿᶜ
 
   ⌊substᶜ⌋ σ h (return V)                 = cong return (⌊substᵛ⌋ σ h V)
@@ -263,9 +261,9 @@ clause-ty-,ᵉ B op ε = cong (_! _) (trans (wk-,ᵉ-v idˢ ε B) ([id]ᵛ B))
 
 instantiate-clause : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {B : OVType Θ} {op : Op}
                    → (ε : EExp Θ)
-                   → wkᵉ-H Q ∣ clause-ctx Γ B op ⊢C⦂ clause-ty B op
+                   → wkᵉ-H Q ∣ clause-ctx Γ B op ⊢ᶜ⦂ clause-ty B op
                    ------------------------------------------------------------------
-                   → Q ∣ clause-ctx-at Γ B op ε ⊢C⦂ B ! (econst (op-grade op) ·̂ₑ ε)
+                   → Q ∣ clause-ctx-at Γ B op ε ⊢ᶜ⦂ B ! (econst (op-grade op) ·̂ₑ ε)
 
 instantiate-clause {Γ = Γ} {B} {op} ε M =
   c-subst (clause-ty-,ᵉ B op ε)
@@ -273,7 +271,7 @@ instantiate-clause {Γ = Γ} {B} {op} ε M =
 
 ⌊instantiate-clause⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {B : OVType Θ} {op : Op}
                      → (ε : EExp Θ)
-                     → (M : wkᵉ-H Q ∣ clause-ctx Γ B op ⊢C⦂ clause-ty B op)
+                     → (M : wkᵉ-H Q ∣ clause-ctx Γ B op ⊢ᶜ⦂ clause-ty B op)
                      → ⌊ instantiate-clause ε M ⌋ᶜ ≡ ⌊ M ⌋ᶜ [ idˢ ,ᵉ ε ]ᴿᶜ
 ⌊instantiate-clause⌋ {Γ = Γ} {B} {op} ε M =
   trans (⌊c-subst⌋ (clause-ty-,ᵉ B op ε) _)

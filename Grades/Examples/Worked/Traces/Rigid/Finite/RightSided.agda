@@ -79,7 +79,7 @@ cool-too-long = refl
 either : holds ⌜ ‵ heat ∣ ‵ cool ⌝ ⌜ ≤ (# 4) ⌝ ≡ true
 either = refl
 
-maybe-log : holds ⌜ log ？ ⌝ ⌜ ≤ (1 / 2) & ⁅ code log ⁆ ⌝ ≡ true
+maybe-log : holds ⌜ log ˀ ⌝ ⌜ ≤ (1 / 2) & ⁅ code log ⁆ ⌝ ≡ true
 maybe-log = refl
 
 ------------------------------------------------------------------------

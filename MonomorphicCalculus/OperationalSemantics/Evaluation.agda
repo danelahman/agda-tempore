@@ -46,14 +46,14 @@ Base-not-in-toCtx {𝕊 = 𝕊 ∷ₛ V}   (Tl-∷ x)  = Base-not-in-toCtx x
 -- subsumption spine, which `base-val` strips.
 
 base-val : ∀ {b} {𝕊 : State []}
-         → toCtx 𝕊 ⊢V⦂ Base b
-         → toCtx 𝕊 ⊢V⦂ Base b
+         → toCtx 𝕊 ⊢ᵛ⦂ Base b
+         → toCtx 𝕊 ⊢ᵛ⦂ Base b
 base-val (var f x)             = ⊥-elim (Base-not-in-toCtx x)
 base-val (const B c)           = const B c
 base-val (subV V (Baseₛ refl)) = base-val V
 
 base-canonical : ∀ {b} {𝕊 : State []}
-               → (V : toCtx 𝕊 ⊢V⦂ Base b)
+               → (V : toCtx 𝕊 ⊢ᵛ⦂ Base b)
                → Σ[ c ∈ BaseConstants b ] base-val V ≡ const b c
 base-canonical (var f x)             = ⊥-elim (Base-not-in-toCtx x)
 base-canonical (const B c)           = c , refl
@@ -62,13 +62,13 @@ base-canonical (subV V (Baseₛ refl)) = base-canonical V
 -- The same at `bool`, where the spine is again forced to be identity
 -- coercions.
 
-bool-val : ∀ {𝕊 : State []} → toCtx 𝕊 ⊢V⦂ bool → toCtx 𝕊 ⊢V⦂ bool
+bool-val : ∀ {𝕊 : State []} → toCtx 𝕊 ⊢ᵛ⦂ bool → toCtx 𝕊 ⊢ᵛ⦂ bool
 bool-val (var f x)      = ⊥-elim (bool-not-in-toCtx x)
 bool-val true           = true
 bool-val false          = false
 bool-val (subV V boolₛ) = bool-val V
 
-bool-val-canonical : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢V⦂ bool)
+bool-val-canonical : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ bool)
                    → (bool-val V ≡ true) ⊎ (bool-val V ≡ false)
 bool-val-canonical (var f x)      = ⊥-elim (bool-not-in-toCtx x)
 bool-val-canonical true           = inj₁ refl
@@ -80,7 +80,7 @@ bool-val-canonical (subV V boolₛ) = bool-val-canonical V
 -- and `_≾ₑ_` is a preorder.
 
 step-ticks : ∀ {ε ε'} {𝕊 𝕊' : State []} {A B : VType}
-           → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ B ! ε'}
+           → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ B ! ε'}
            → ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩
            → 𝔻
 step-ticks APP                 = 0ᴰ
@@ -125,7 +125,7 @@ record Ret-whnf {A : VType} {ε : E} (cf : Config (A ! ε)) : Set where
   field
     state : State []
     vtype : VType
-    value : toCtx state ⊢V⦂ vtype
+    value : toCtx state ⊢ᵛ⦂ vtype
     run   : cf ⟶* ⟨ state ∣ return value ⟩
 
 -- Evaluation to an unhandled operation, with its parameter and continuation.
@@ -137,9 +137,9 @@ record Op-whnf {A : VType} {ε : E} (cf : Config (A ! ε)) : Set where
     oper  : Op
     resid : E
     vtype : VType
-    prm   : toCtx state ⊢V⦂ ⌜ param oper ⌝ᵍ
+    prm   : toCtx state ⊢ᵛ⦂ ⌜ param oper ⌝ᵍ
     cont  : toCtx state ⟨ ∣ op-grade oper ∣ᵉ ⟩ ∷ ⌜ arity oper ⌝ᵍ
-              ⊢C⦂ vtype ! resid
+              ⊢ᶜ⦂ vtype ! resid
     run   : cf ⟶* ⟨ state ∣ perform oper prm cont ⟩
 
 data Halts {A : VType} {ε : E} (cf : Config (A ! ε)) : Set where
@@ -158,21 +158,21 @@ op-ticks w = ticks (Op-whnf.run w)
 -- `toCtx ∅` of the empty state.
 
 Closed : VType → E → Set
-Closed A ε = [] ⊢C⦂ A ! ε
+Closed A ε = [] ⊢ᶜ⦂ A ! ε
 
 -- Neither whnf steps.
 
 finality-ret : ∀ {A} {D : CType} {𝕊 : State []}
-             → {V : toCtx 𝕊 ⊢V⦂ A} → {cf : Config D}
+             → {V : toCtx 𝕊 ⊢ᵛ⦂ A} → {cf : Config D}
              → ⟨ 𝕊 ∣ return V ⟩ ⟶ cf
              ------------------------
              → ⊥
 finality-ret ()
 
 finality-perform : ∀ {A ε op} {D : CType} {𝕊 : State []}
-                 → {W : toCtx 𝕊 ⊢V⦂ ⌜ param op ⌝ᵍ}
+                 → {W : toCtx 𝕊 ⊢ᵛ⦂ ⌜ param op ⌝ᵍ}
                  → {M : toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
-                          ⊢C⦂ A ! ε}
+                          ⊢ᶜ⦂ A ! ε}
                  → {cf : Config D}
                  → ⟨ 𝕊 ∣ perform op W M ⟩ ⟶ cf
                  -----------------------------
@@ -190,20 +190,20 @@ Step-from cf =
 -- The two congruences, as maps on packed steps. The reducts are left to
 -- unification: they are whatever the rule builds out of the sub-step.
 
-seq-step : ∀ {A B ε₁ ε₂} {𝕊 : State []} {M : toCtx 𝕊 ⊢C⦂ A ! ε₁}
-         → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+seq-step : ∀ {A B ε₁ ε₂} {𝕊 : State []} {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁}
+         → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂)
          → Step-from (⟨ 𝕊 ∣ M ⟩)
          ---------------------------------
          → Step-from (⟨ 𝕊 ∣ M ⨟ N ⟩)
 seq-step N (A₀ , ε₃ , ⟨ 𝕊' ∣ M' ⟩ , r) = _ , _ , _ , SEQ-STEP r (step-grade-≾ r)
 
-handle-step : ∀ {A B ε₁ ε₂} {𝕊 : State []} {M : toCtx 𝕊 ⊢C⦂ A ! ε₁}
-            → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+handle-step : ∀ {A B ε₁ ε₂} {𝕊 : State []} {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁}
+            → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂)
             → (H : (op : Op) → (ε₃ : E) →
                      toCtx 𝕊 ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                              ∷ [ ∣ op-grade op ∣ᵉ ]
                                  (⌜ arity op ⌝ᵍ ⇒ B ! ε₃)
-                           ⊢C⦂ B ! (op-grade op ·ₑ ε₃))
+                           ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε₃))
             → Step-from (⟨ 𝕊 ∣ M ⟩)
             ------------------------------------------------------
             → Step-from (⟨ 𝕊 ∣ handle M `with handler N H ⟩)
@@ -265,18 +265,18 @@ handle-step N H (A₀ , ε₃ , ⟨ 𝕊' ∣ M' ⟩ , r) =
 Op-run : ∀ {A ε} → (cf : Config (A ! ε)) → Set
 Op-run cf =
   Σ[ 𝕊 ∈ State [] ] Σ[ op ∈ Op ] Σ[ A' ∈ VType ] Σ[ ε' ∈ E ]
-  Σ[ W ∈ toCtx 𝕊 ⊢V⦂ ⌜ param op ⌝ᵍ ]
-  Σ[ M ∈ (toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A' ! ε') ]
+  Σ[ W ∈ toCtx 𝕊 ⊢ᵛ⦂ ⌜ param op ⌝ᵍ ]
+  Σ[ M ∈ (toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢ᶜ⦂ A' ! ε') ]
     (cf ⟶* ⟨ 𝕊 ∣ perform op W M ⟩)
 
 op-run-det : ∀ {A ε} {cf : Config (A ! ε)}
            → {𝕊₁ 𝕊₂ : State []} → {op₁ op₂ : Op} → {A₁ A₂ : VType} → {ε₁' ε₂' : E}
-           → {W₁ : toCtx 𝕊₁ ⊢V⦂ ⌜ param op₁ ⌝ᵍ}
-           → {W₂ : toCtx 𝕊₂ ⊢V⦂ ⌜ param op₂ ⌝ᵍ}
+           → {W₁ : toCtx 𝕊₁ ⊢ᵛ⦂ ⌜ param op₁ ⌝ᵍ}
+           → {W₂ : toCtx 𝕊₂ ⊢ᵛ⦂ ⌜ param op₂ ⌝ᵍ}
            → {M₁ : toCtx 𝕊₁ ⟨ ∣ op-grade op₁ ∣ᵉ ⟩ ∷ ⌜ arity op₁ ⌝ᵍ
-                     ⊢C⦂ A₁ ! ε₁'}
+                     ⊢ᶜ⦂ A₁ ! ε₁'}
            → {M₂ : toCtx 𝕊₂ ⟨ ∣ op-grade op₂ ∣ᵉ ⟩ ∷ ⌜ arity op₂ ⌝ᵍ
-                     ⊢C⦂ A₂ ! ε₂'}
+                     ⊢ᶜ⦂ A₂ ! ε₂'}
            → (rs₁ : cf ⟶* ⟨ 𝕊₁ ∣ perform op₁ W₁ M₁ ⟩)
            → (rs₂ : cf ⟶* ⟨ 𝕊₂ ∣ perform op₂ W₂ M₂ ⟩)
            ---------------------------------------------------------------
@@ -302,10 +302,10 @@ op-run-det (r₁ ▸ rs₁) (r₂ ▸ rs₂) with ⟶-det r₁ r₂
   where
     no-both : ∀ {A A₁ A₂ ε ε'} {cf : Config (A ! ε)}
             → {𝕊₁ 𝕊₂ : State []} {op : Op}
-            → {V : toCtx 𝕊₁ ⊢V⦂ A₁}
-            → {W : toCtx 𝕊₂ ⊢V⦂ ⌜ param op ⌝ᵍ}
+            → {V : toCtx 𝕊₁ ⊢ᵛ⦂ A₁}
+            → {W : toCtx 𝕊₂ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ}
             → {M : toCtx 𝕊₂ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
-                     ⊢C⦂ A₂ ! ε'}
+                     ⊢ᶜ⦂ A₂ ! ε'}
             → cf ⟶* ⟨ 𝕊₁ ∣ return V ⟩
             → cf ⟶* ⟨ 𝕊₂ ∣ perform op W M ⟩
             → ⊥

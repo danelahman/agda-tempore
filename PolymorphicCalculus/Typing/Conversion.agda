@@ -143,30 +143,30 @@ module _ (𝒞 : Conversion) where
 
   -- A resource value over a related variable, with the same erasure
 
-  record ResImage {Θ n} (Q : Hyps Θ) (Γ' : OCtx Θ n) (ρ' : RExp Θ) {ρ₀ X₀}
-                  (z' : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ') (ρ : RExp Θ) (X : OVType Θ) (V : RawV Θ n)
-                  : Set where
+  record ResImage {Θ n} (Q : Hyps Θ) (Γ' : OCtx Θ n) (ρ' : RExp Θ)
+                  (ρ : RExp Θ) (X : OVType Θ) (V : RawV Θ n) : Set where
     field
       {ρ*} : RExp Θ
       {X*} : OVType Θ
-      chain* : Q ∣ Γ' ⊢↪[ ρ' ] z' ⦂[ ρ* ] X*
+      chain* : Q ⊢ [ ρ* ] X* ∈̂[ ρ' ] Γ'
       rel*   : Rel Q ([ ρ* ] X*) ([ ρ ] X)
       erase* : ⌊ chain* ⌋ʳ ≡ V
 
   open ResImage
 
-  res-image : ∀ {Θ n} {Q : Hyps Θ} {Γ' Γ : OCtx Θ n} {ρ' ρ₀ ρ₀' ρ : RExp Θ} {X₀ X₀' X : OVType Θ}
-                {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ} {z' : [ ρ₀' ] X₀' ∈̂[ ρ' ] Γ'}
-            → var-pos z' ≡ var-pos z → Rel Q ([ ρ₀' ] X₀') ([ ρ₀ ] X₀)
-            → (R : Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X) → ResImage Q Γ' ρ' z' ρ X ⌊ R ⌋ʳ
-  res-image e r₀ res-var = record { chain* = res-var ; rel* = r₀ ; erase* = cong var e }
-  res-image e r₀ (res-ann ρₐ Xₐ R p q) =
+  res-image : ∀ {Θ n} {Q : Hyps Θ} {Γ' Γ : OCtx Θ n} {ρ' ρ₀' ρ : RExp Θ} {X₀' X : OVType Θ}
+            → (R : Q ⊢ [ ρ ] X ∈̂[ ρ' ] Γ) → (z' : [ ρ₀' ] X₀' ∈̂[ ρ' ] Γ')
+            → var-pos z' ≡ var-pos (res-var-of R)
+            → Rel Q ([ ρ₀' ] X₀') ([ res-grade-of R ] res-payload-of R)
+            → ResImage Q Γ' ρ' ρ X ⌊ R ⌋ʳ
+  res-image (res-var _) z' e r₀ = record { chain* = res-var z' ; rel* = r₀ ; erase* = cong var e }
+  res-image (res-ann ρₐ Xₐ R p q) z' e r₀ =
     record { chain* = res-ann ρₐ Xₐ (chain* i) (transᵣ p (<:̂ᵛ-box-grade s))
                               (<:̂ᵛ-trans (<:̂ᵛ-box-type s) q)
            ; rel*   = rel-refl _
            ; erase* = cong (_⦂ᵛ [ ρₐ ] Xₐ) (erase* i) }
     where
-      i = res-image e r₀ R
+      i = res-image R z' e r₀
       s = rel-sub (rel* i)
 
   -- The image of a variable of box type is a variable of box type
@@ -196,7 +196,7 @@ module _ (𝒞 : Conversion) where
   mutual
 
     conv-v : ∀ {Θ n} {Q : Hyps Θ} {Γ' Γ : OCtx Θ n} {A : OVType Θ}
-           → CtxRel Q Γ' Γ → Q ∣ Γ ⊢V⦂ A → Q ∣ Γ' ⊢V⦂ A
+           → CtxRel Q Γ' Γ → Q ∣ Γ ⊢ᵛ⦂ A → Q ∣ Γ' ⊢ᵛ⦂ A
     conv-v c (var x ok)      =
       subV (var (mem' i) (rel-ok (rel' i) ok)) (rel-sub (rel' i))
       where i = image c x
@@ -221,7 +221,7 @@ module _ (𝒞 : Conversion) where
     conv-v c (subV V p)      = subV (conv-v c V) p
 
     conv-c : ∀ {Θ n} {Q : Hyps Θ} {Γ' Γ : OCtx Θ n} {C : OCType Θ}
-           → CtxRel Q Γ' Γ → Q ∣ Γ ⊢C⦂ C → Q ∣ Γ' ⊢C⦂ C
+           → CtxRel Q Γ' Γ → Q ∣ Γ ⊢ᶜ⦂ C → Q ∣ Γ' ⊢ᶜ⦂ C
     conv-c c (return V)                  = return (conv-v c V)
     conv-c c (_⨟_ {A = A} M N)           = conv-c c M ⨟ conv-c (lockʳ c ∷≡ A) N
     conv-c c (V · W)                     = conv-v c V · conv-v c W
@@ -242,12 +242,12 @@ module _ (𝒞 : Conversion) where
     conv-c c (perform op V M)          = perform op (conv-v c V) (conv-c (lockʳ c ∷≡ _) M)
     conv-c c (delay τ M)               = delay τ (conv-c (lockʳ c) M)
     conv-c c (handle M `with V)        = handle conv-c c M `with conv-v c V
-    conv-c c (unbox {z = z} R p N)     =
+    conv-c c (unbox R p N)             =
       unbox (chain* r) (transᵣ p (<:̂ᵛ-box-grade (rel-sub (rel* r))))
             (conv-c (c ∷ʳ rel-box (rel* r)) N)
       where
-        b = box-image c z
-        r = res-image {z' = z' b} (zpos b) (zrel b) R
+        b = box-image c (res-var-of R)
+        r = res-image R (z' b) (zpos b) (zrel b)
     conv-c c (box {A = A} ρ V N)       = box ρ (conv-v (lockʳ c) V) (conv-c (c ∷≡ [ ρ ] A) N)
     conv-c c (annᶜ C M)                = annᶜ C (conv-c c M)
     conv-c c (subC M p)                = subC (conv-c c M) p
@@ -257,7 +257,7 @@ module _ (𝒞 : Conversion) where
   mutual
 
     ⌊conv-v⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ' Γ : OCtx Θ n} {A : OVType Θ}
-             → (c : CtxRel Q Γ' Γ) → (V : Q ∣ Γ ⊢V⦂ A)
+             → (c : CtxRel Q Γ' Γ) → (V : Q ∣ Γ ⊢ᵛ⦂ A)
              → ⌊ conv-v c V ⌋ᵛ ≡ ⌊ V ⌋ᵛ
     ⌊conv-v⌋ c (var x ok)      = cong var (pos' (image c x))
     ⌊conv-v⌋ c (usedef f δ h e) = refl
@@ -281,7 +281,7 @@ module _ (𝒞 : Conversion) where
     ⌊conv-v⌋ c (subV V p)      = ⌊conv-v⌋ c V
 
     ⌊conv-c⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ' Γ : OCtx Θ n} {C : OCType Θ}
-             → (c : CtxRel Q Γ' Γ) → (M : Q ∣ Γ ⊢C⦂ C)
+             → (c : CtxRel Q Γ' Γ) → (M : Q ∣ Γ ⊢ᶜ⦂ C)
              → ⌊ conv-c c M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
     ⌊conv-c⌋ c (return V)                  = cong return (⌊conv-v⌋ c V)
     ⌊conv-c⌋ c (_⨟_ {A = A} M N)           =
@@ -309,11 +309,11 @@ module _ (𝒞 : Conversion) where
     ⌊conv-c⌋ c (delay τ M)               = cong (delay τ) (⌊conv-c⌋ (lockʳ c) M)
     ⌊conv-c⌋ c (handle M `with V)        =
       cong₂ handle_`with_ (⌊conv-c⌋ c M) (⌊conv-v⌋ c V)
-    ⌊conv-c⌋ c (unbox {z = z} R p N)     =
+    ⌊conv-c⌋ c (unbox R p N)             =
       cong₂ unbox (erase* r) (⌊conv-c⌋ (c ∷ʳ rel-box (rel* r)) N)
       where
-        b = box-image c z
-        r = res-image {z' = z' b} (zpos b) (zrel b) R
+        b = box-image c (res-var-of R)
+        r = res-image R (z' b) (zpos b) (zrel b)
     ⌊conv-c⌋ c (box {A = A} ρ V N)       =
       cong₂ (box ρ) (⌊conv-v⌋ (lockʳ c) V) (⌊conv-c⌋ (c ∷≡ [ ρ ] A) N)
     ⌊conv-c⌋ c (annᶜ C M)                = cong (_⦂ᶜ C) (⌊conv-c⌋ c M)
@@ -322,6 +322,6 @@ module _ (𝒞 : Conversion) where
   -- The type of the last variable converted
 
   conv-last : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A' A : OVType Θ} {C : OCType Θ}
-            → Rel Q A' A → (M : Q ∣ Γ ∷ A ⊢C⦂ C)
-            → Σ[ M' ∈ Q ∣ Γ ∷ A' ⊢C⦂ C ] ⌊ M' ⌋ᶜ ≡ ⌊ M ⌋ᶜ
+            → Rel Q A' A → (M : Q ∣ Γ ∷ A ⊢ᶜ⦂ C)
+            → Σ[ M' ∈ Q ∣ Γ ∷ A' ⊢ᶜ⦂ C ] ⌊ M' ⌋ᶜ ≡ ⌊ M ⌋ᶜ
   conv-last {Γ = Γ} r M = conv-c (crel-refl Γ ∷ʳ r) M , ⌊conv-c⌋ (crel-refl Γ ∷ʳ r) M

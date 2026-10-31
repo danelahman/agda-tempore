@@ -74,7 +74,7 @@ open import MonomorphicCalculus.EquationalTheory.Soundness.Base S Cat Fut Pst Ad
 -- A boxing binder over an unused variable is the identity: the weakening
 -- `⟦ wk-ren ⟧ = fstᵐ` cancels against the environment extension.
 
-sound-boxed-not-used : ∀ {Γ A C ρ ε} → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A) → (M : Γ ⊢C⦂ C ! ε)
+sound-boxed-not-used : ∀ {Γ A C ρ ε} → (V : Γ ⟨ ρ ⟩ ⊢ᵛ⦂ A) → (M : Γ ⊢ᶜ⦂ C ! ε)
                      → Soundᶜ≡ᵗʰ (boxed-not-used V M)
 sound-boxed-not-used V M (pV , pCM) pR =
     ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr (C-rename wk-ren M) pCM (renᶜ wk-ren M pR)
@@ -86,7 +86,7 @@ sound-boxed-not-used V M (pV , pCM) pR =
 sound-unbox-not-used : ∀ {Γ A A₀ C ρ₀ ρ'}
                      → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ₀)
                      → (w : A₀ <:ᵛ A)
-                     → (M : Γ ⊢C⦂ C) → Soundᶜ≡ᵗʰ (unbox-not-used x rel w M)
+                     → (M : Γ ⊢ᶜ⦂ C) → Soundᶜ≡ᵗʰ (unbox-not-used x rel w M)
 sound-unbox-not-used x rel w M pCM pR =
     unbox-def x rel w (C-rename wk-ren M) pCM
   ∙ ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr (C-rename wk-ren M) pCM (renᶜ wk-ren M pR)
@@ -110,7 +110,7 @@ unbox-cell-≈ : ∀ {Γ A A₀ C ρ₀ ρ' ρ''}
              → (rel : ρ' ≾ᵣ ρ₀) → (rel' : ρ'' ≾ᵣ ρ₀)
              → (w w' : A₀ <:ᵛ A)
              → _≡_ {A = Var Γ ([ ρ₀ ] A₀)} (ρ' , x) (ρ'' , x')
-             → (M : Γ ∷ A ⊢C⦂ C) → (pM : Paramᶜ M)
+             → (M : Γ ∷ A ⊢ᶜ⦂ C) → (pM : Paramᶜ M)
              → ⟦ unbox x rel w M ⟧ᶜᵗ pM ≈ᵐ ⟦ unbox x' rel' w' M ⟧ᶜᵗ pM
 
 unbox-cell-≈ x x' rel rel' w w' h M pM =

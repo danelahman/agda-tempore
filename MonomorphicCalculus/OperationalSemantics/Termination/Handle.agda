@@ -59,7 +59,7 @@ open import MonomorphicCalculus.Syntax.Substitution.Subsumption  Spec
 Boxed : (B : VType) → (op : Op) → (ε₃ : E) → State [] → Set
 Boxed B op ε₃ 𝕊₁ =
   ([] ++ᶜ toCtx 𝕊₁ ⟨ ∣ op-grade op ∣ᵉ ⟩)
-  ⊢V⦂ (⌜ arity op ⌝ᵍ ⇒ B ! ε₃)
+  ⊢ᵛ⦂ (⌜ arity op ⌝ᵍ ⇒ B ! ε₃)
 
 Boxed-VRed : (B : VType) → (op : Op) → (ε₃ : E)
            → (𝕊₁ : State []) → Boxed B op ε₃ 𝕊₁ → Set
@@ -75,8 +75,8 @@ Boxed-VRed B op ε₃ 𝕊₁ V₀ =
 
 Fired : ∀ {B} → (𝕊 : State []) → (op : Op) → (ε₃ : E) → Fam B (toCtx 𝕊 ⟨ ⊤ᵣ ⟩)
       → {𝕊₁ : State []} → (q : 𝕊 ⊑ₛ[ ⊤ᵣ ] 𝕊₁) → (V₀ : Boxed B op ε₃ 𝕊₁)
-      → toCtx 𝕊₁ ⊢V⦂ ⌜ param op ⌝ᵍ
-      → toCtx (𝕊₁ ∷ₛ V₀) ⊢C⦂ B ! (op-grade op ·ₑ ε₃)
+      → toCtx 𝕊₁ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ
+      → toCtx (𝕊₁ ∷ₛ V₀) ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε₃)
 Fired 𝕊 op ε₃ H q V₀ W =
   (C-rename (cong-∷-ren (cong-∷-ren (unbox-ren q))) (H op ε₃))
     [ split-∷ split-[] ↦ W ]c
@@ -86,7 +86,7 @@ Clause-Prem B 𝕊 H =
   ∀ {𝕊₁ : State []} {op : Op} {ε₃ : E}
     → (q : 𝕊 ⊑ₛ[ ⊤ᵣ ] 𝕊₁)
     → (V₀ : Boxed B op ε₃ 𝕊₁) → Boxed-VRed B op ε₃ 𝕊₁ V₀
-    → (W : toCtx 𝕊₁ ⊢V⦂ ⌜ param op ⌝ᵍ)
+    → (W : toCtx 𝕊₁ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
     → VRed ⌜ param op ⌝ᵍ 𝕊₁ W
     → CRed' B (op-grade op ·ₑ ε₃) (𝕊₁ ∷ₛ V₀) (Fired 𝕊 op ε₃ H q V₀ W)
 
@@ -104,10 +104,10 @@ cong-cl-ren-∘-≐ʳ r r' =
 -- The sequel premise, as in `Bind`.
 
 Seq-Prem : ∀ {A B ε₁ ε₂} {𝕊 : State []}
-         → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂) → Set
+         → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂) → Set
 Seq-Prem {A} {B} {ε₁} {ε₂} {𝕊} N =
   ∀ {𝕊₁ : State []} → (q : 𝕊 ⊑ₛ[ ∣ ε₁ ∣ᵉ ] 𝕊₁)
-    → (V : toCtx 𝕊₁ ⊢V⦂ A) → VRed A 𝕊₁ V
+    → (V : toCtx 𝕊₁ ⊢ᵛ⦂ A) → VRed A 𝕊₁ V
     → CRed' B ε₂ 𝕊₁ ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c)
 
 -- Induction on the scrutinee's `CRed` derivation, taken at a skeleton as in
@@ -116,9 +116,9 @@ Seq-Prem {A} {B} {ε₁} {ε₂} {𝕊} N =
 -- with the reach's `𝟏ᵣ` by `suc-comp-ren-grade`.
 
 handle-CRed : ∀ {s A B ε₁ ε₂} {e : shapeᵛ A ≡ s} {𝕊 : State []}
-            → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁}
+            → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁}
             → (H : Fam B (toCtx 𝕊 ⟨ ⊤ᵣ ⟩))
-            → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+            → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂)
             → CRedˢ' s e ε₁ 𝕊 M
             → Clause-Prem B 𝕊 H
             → Seq-Prem N
@@ -665,7 +665,7 @@ env-Hˢ-fired : ∀ {𝕊 Γ B} → (γ : Env 𝕊 Γ) → {𝕊₁ : State []}
              → (q : 𝕊 ⊑ₛ[ ⊤ᵣ ] 𝕊₁)
              → (H : Fam B (Γ ⟨ ⊤ᵣ ⟩)) → {op : Op} → {ε : E}
              → (V₀ : Boxed B op ε 𝕊₁)
-             → (W : toCtx 𝕊₁ ⊢V⦂ ⌜ param op ⌝ᵍ)
+             → (W : toCtx 𝕊₁ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
              → Fired 𝕊 op ε (env-Hˢ γ [] H) q V₀ W
              ≡ env-C (liftᵉ V₀ ((γ ⟨ q ⟩ᵉ) ∷ᵉ W)) (H op ε)
 
@@ -675,7 +675,7 @@ env-Hˢ-fired γ q H V₀ W = refl
 -- a reach at the smaller lock is one at the larger, and the value is subsumed.
 
 Seq-Prem-sub : ∀ {A A₀ B ε₀ ε₁ ε₂} {𝕊 : State []}
-             → {N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂}
+             → {N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂}
              → (p : A₀ <:ᵛ A) → (pε : ε₀ ≾ₑ ε₁)
              → Seq-Prem N
              → Seq-Prem (subCtx p (C-rename (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε))) N))
@@ -711,12 +711,12 @@ Seq-Prem-sub {N = N} p pε hN q V pV =
 
 handler-CRed : ∀ {s A B ε ε'} {𝕊 : State []}
              → {H : Fam B (toCtx 𝕊 ⟨ ⊤ᵣ ⟩)}
-             → {N : toCtx 𝕊 ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'}
+             → {N : toCtx 𝕊 ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε'}
              → Clause-Prem B 𝕊 H
              → Seq-Prem N
-             → ∀ {A₀ ε₀ B₀ ε₀'} {U : toCtx 𝕊 ⊢V⦂ (A₀ ! ε₀) ⇛ (B₀ ! ε₀')}
+             → ∀ {A₀ ε₀ B₀ ε₀'} {U : toCtx 𝕊 ⊢ᵛ⦂ (A₀ ! ε₀) ⇛ (B₀ ! ε₀')}
              → Use (handler N H) U
-             → {e : shapeᵛ A₀ ≡ s} → {M : toCtx 𝕊 ⊢C⦂ A₀ ! ε₀}
+             → {e : shapeᵛ A₀ ≡ s} → {M : toCtx 𝕊 ⊢ᶜ⦂ A₀ ! ε₀}
              → CRedˢ' s e ε₀ 𝕊 M
              ------------------------------------------------------
              → CRed' B₀ (ε₀ ·ₑ ε₀') 𝕊 (handle M `with U)

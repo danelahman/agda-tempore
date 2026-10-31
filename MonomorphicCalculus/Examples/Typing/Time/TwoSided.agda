@@ -74,24 +74,24 @@ open import MonomorphicCalculus.Examples.Typing.Core
 -- its total time falls in, and each `perform` locks the context by the
 -- window its own operation takes.
 
-sampling : [] ⊢C⦂ Reading ! [ 1 , 1 ]
+sampling : [] ⊢ᶜ⦂ Reading ! [ 1 , 1 ]
 sampling =
   perform read ⋆                     -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
     (return here)
 
-storing : [] ⊢C⦂ unit ! [ 3 , 4 ]
+storing : [] ⊢ᶜ⦂ unit ! [ 3 , 4 ]
 storing =
   perform read ⋆                     -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
     (perform write here              -- ⟨ [ 2 , 3 ] ⟩ ∷ unit
       (return ⋆))
 
-relaying : [] ⊢C⦂ unit ! [ 5 , 7 ]
+relaying : [] ⊢ᶜ⦂ unit ! [ 5 , 7 ]
 relaying =
   perform read ⋆                     -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
     (perform send here               -- ⟨ [ 4 , 6 ] ⟩ ∷ unit
       (return ⋆))
 
-tagged-relaying : [] ∷ NodeId ⊢C⦂ unit ! [ 5 , 7 ]
+tagged-relaying : [] ∷ NodeId ⊢ᶜ⦂ unit ! [ 5 , 7 ]
 tagged-relaying =
   perform read ⋆                     -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
@@ -113,7 +113,7 @@ reading-stale-after-idling (_ , hi) = ≰! hi
 
 -- the identifier is eternal, and so is not subject to any of this
 
-carried-id : [] ∷ NodeId ⊢C⦂ NodeId ! [ 1 , 1 ]
+carried-id : [] ∷ NodeId ⊢ᶜ⦂ NodeId ! [ 1 , 1 ]
 carried-id =
   perform read ⋆                     -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
     (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
@@ -124,7 +124,7 @@ carried-id =
 -- `coerce` enlarges the window: it may forget the floor downwards and the
 -- deadline upwards, and neither the other way. The context is untouched.
 
-enlarging-the-window : [] ⊢C⦂ unit ! [ 2 , 6 ]
+enlarging-the-window : [] ⊢ᶜ⦂ unit ! [ 2 , 6 ]
 enlarging-the-window =
   coerce (≤! , ≤!) (perform read ⋆ (perform write here (return ⋆)))
 
@@ -141,7 +141,7 @@ tightening-the-deadline (_ , hi) = ≰! hi
 -- so it is their hull: the floor of the faster branch and the deadline
 -- of the slower.
 
-branching : [] ∷ bool ∷ Reading ⊢C⦂ unit ! [ 2 , 6 ]
+branching : [] ∷ bool ∷ Reading ⊢ᶜ⦂ unit ! [ 2 , 6 ]
 branching =
   if eternal-var boolₑ (Tl-∷ Hd)
     `then coerce (≤! , ≤!) (perform send  here (return ⋆))
@@ -158,13 +158,13 @@ transmitting-window-too-late (lo , _) = ≰! lo
 -- an `if` over data alone: both branches make the same run, so neither
 -- is coerced
 
-either-reading : [] ∷ bool ∷ Reading ∷ Reading ⊢C⦂ unit ! [ 4 , 6 ]
+either-reading : [] ∷ bool ∷ Reading ∷ Reading ⊢ᶜ⦂ unit ! [ 4 , 6 ]
 either-reading =
   if eternal-var boolₑ (Tl-∷ (Tl-∷ Hd))
     `then perform send here (return ⋆)
     `else perform send (fresh-var (≤! , ≤!) (Tl-∷ Hd)) (return ⋆)
 
-sampling-then-branching : [] ⊢C⦂ unit ! [ 3 , 7 ]
+sampling-then-branching : [] ⊢ᶜ⦂ unit ! [ 3 , 7 ]
 sampling-then-branching =
   perform read ⋆                     -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
     (if true
@@ -180,7 +180,7 @@ sampling-then-branching =
 -- the window, clear of both endpoints; claiming it at once is too
 -- early; a reading and a transmission spend up to seven, too late.
 
-claim-in-the-window : [] ⊢C⦂ unit ! [ 7 , 9 ]
+claim-in-the-window : [] ⊢ᶜ⦂ unit ! [ 7 , 9 ]
 claim-in-the-window =
   box [ 2 , 6 ] (const reading 42)   -- ∷ [ [ 2 , 6 ] ] Reading
     (delay 3                         -- ⟨ [ 3 , 3 ] ⟩
@@ -201,7 +201,7 @@ claim-too-late (_ , hi) = ≰! hi
 -- store, which take between three and four: past the floor and inside
 -- the deadline, with neither endpoint met exactly
 
-claim-after-storing : [] ⊢C⦂ unit ! [ 7 , 10 ]
+claim-after-storing : [] ⊢ᶜ⦂ unit ! [ 7 , 10 ]
 claim-after-storing =
   box [ 1 , 6 ] (const reading 42)   -- ∷ [ [ 1 , 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
@@ -210,7 +210,7 @@ claim-after-storing =
                                      -- ∷ Reading
           (perform send here (return ⋆)))))
 
-handed-over : [] ⊢C⦂ unit ! [ 6 , 9 ]
+handed-over : [] ⊢ᶜ⦂ unit ! [ 6 , 9 ]
 handed-over =
   box [ 1 , 6 ] (const reading 42)      -- ∷ [ [ 1 , 6 ] ] Reading
     (fun                                -- ∷ [ [ 1 , 6 ] ] Reading
@@ -222,7 +222,7 @@ handed-over =
 
 -- and one claimable at once is one whose window is open from the start
 
-claiming-now : [] ⊢C⦂ unit ! [ 4 , 6 ]
+claiming-now : [] ⊢ᶜ⦂ unit ! [ 4 , 6 ]
 claiming-now =
   box [ 0 , 6 ] (const reading 42)   -- ∷ [ [ 0 , 6 ] ] Reading
     (unbox Hd (≤! , ≤!) (<:ᵛ-refl _) -- ∷ Reading
@@ -231,7 +231,7 @@ claiming-now =
 -- claiming the resource and then choosing what to transmit, with both
 -- branches making the same run
 
-either-way : [] ∷ bool ⊢C⦂ unit ! [ 5 , 7 ]
+either-way : [] ∷ bool ⊢ᶜ⦂ unit ! [ 5 , 7 ]
 either-way =
   box [ 0 , 6 ] (const reading 42)   -- ∷ [ [ 0 , 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
@@ -248,7 +248,7 @@ either-way =
 -- transmission, so both branches may claim the resource, and neither
 -- meets an endpoint exactly.
 
-claimed-in-both-branches : [] ⊢C⦂ unit ! [ 5 , 12 ]
+claimed-in-both-branches : [] ⊢ᶜ⦂ unit ! [ 5 , 12 ]
 claimed-in-both-branches =
   box [ 0 , 8 ] (const reading 42)           -- ∷ [ [ 0 , 8 ] ] Reading
     (if true
@@ -275,7 +275,7 @@ claimed-in-both-branches =
 -- a reading and a store take between three and four ticks, which lands
 -- inside the box's window
 
-claim-after-a-store : [] ⊢C⦂ unit ! [ 7 , 10 ]
+claim-after-a-store : [] ⊢ᶜ⦂ unit ! [ 7 , 10 ]
 claim-after-a-store =
   box [ 3 , 6 ] (const reading 42)           -- ∷ [ [ 3 , 6 ] ] Reading
     ((perform read ⋆ (perform write here (return ⋆)))
@@ -293,7 +293,7 @@ coercing-closes-it (lo , _) = ≰! lo
 -- the same program with the coercion, against a box whose window opens
 -- where the coerced grade does
 
-claim-after-a-coerced-store : [] ⊢C⦂ unit ! [ 6 , 12 ]
+claim-after-a-coerced-store : [] ⊢ᶜ⦂ unit ! [ 6 , 12 ]
 claim-after-a-coerced-store =
   box [ 2 , 6 ] (const reading 42)           -- ∷ [ [ 2 , 6 ] ] Reading
     (coerce {ε' = [ 2 , 6 ]} (≤! , ≤!)
@@ -310,7 +310,7 @@ claim-after-a-coerced-store =
 -- claims it clear of both endpoints, the branch that transmits lands on
 -- its far edge, and both are coerced to a window containing the two.
 
-window-in-a-branch : [] ∷ bool ⊢C⦂ unit ! [ 6 , 12 ]
+window-in-a-branch : [] ∷ bool ⊢ᶜ⦂ unit ! [ 6 , 12 ]
 window-in-a-branch =
   box [ 2 , 6 ] (const reading 42)           -- ∷ [ [ 2 , 6 ] ] Reading
     (if eternal-var boolₑ (Tl-∷ Hd)
@@ -336,7 +336,7 @@ one-reading-too-many (_ , hi) = ≰! hi
 -- second after transmitting the first as well. Two box bindings stand
 -- in the context, and the indices tell them apart.
 
-staggered : [] ⊢C⦂ unit ! [ 11 , 15 ]
+staggered : [] ⊢ᶜ⦂ unit ! [ 11 , 15 ]
 staggered =
   box [ 2 , 6 ] (const reading 1)            -- ∷ [ [ 2 , 6 ] ] Reading
     (box [ 6 , 12 ] (const reading 2)
@@ -361,14 +361,14 @@ first-closed-by-then (_ , hi) = ≰! hi
 ------------------------------------------------------------------------
 -- Effect handling
 
-forwarded : [] ⊢C⦂ Reading ! [ 1 , 1 ]
+forwarded : [] ⊢ᶜ⦂ Reading ! [ 1 , 1 ]
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
     `in                              -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
       (return here)
 
-identified : Node ⊢C⦂ NodeId ! [ 1 , 1 ]
+identified : Node ⊢ᶜ⦂ NodeId ! [ 1 , 1 ]
 identified =
   handle perform read ⋆ (return here)
     `with identifying

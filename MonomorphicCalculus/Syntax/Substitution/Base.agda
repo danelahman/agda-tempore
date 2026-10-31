@@ -42,7 +42,7 @@ data Sub₀ (Ξ : Ctx) : Ctx → Ctx → Set where
   ⌜_⌝         : ∀ {Δ Δ'} → Ren Ξ Δ Δ' → Sub₀ Ξ Δ Δ'
   -- extension by a value. The value lives over the whole context, joined with
   -- `⋈ᶜ` so that the empty ambient reduces, exactly as in `var-ren`.
-  val-sub     : ∀ {Δ A} → (Ξ ⋈ᶜ Δ) ⊢V⦂ A → Sub₀ Ξ Δ (Δ ∷ A)
+  val-sub     : ∀ {Δ A} → (Ξ ⋈ᶜ Δ) ⊢ᵛ⦂ A → Sub₀ Ξ Δ (Δ ∷ A)
   -- congruence substitutions
   cong-∷-sub  : ∀ {Δ Δ' A} → Sub₀ Ξ Δ Δ' → Sub₀ Ξ (Δ ∷ A) (Δ' ∷ A)
   cong-⟨⟩-sub : ∀ {Δ Δ' ρ} → Sub₀ Ξ Δ Δ' → Sub₀ Ξ (Δ ⟨ ρ ⟩) (Δ' ⟨ ρ ⟩)
@@ -68,7 +68,7 @@ expose-sub₀ : ∀ {Ξ Δ₀ Δ₀'} → (Δ : Ctx) → Sub₀ (Ξ ⋈ᶜ Δ) �
 expose-sub₀ Δ ⌜ r ⌝ =
   ⌜ expose-ren Δ r ⌝
 expose-sub₀ {Ξ} Δ (val-sub {Δ₀} {A} V) =
-  val-sub (subst (_⊢V⦂ A) (⋈ᶜ-assoc Ξ Δ Δ₀) V)
+  val-sub (subst (_⊢ᵛ⦂ A) (⋈ᶜ-assoc Ξ Δ Δ₀) V)
 expose-sub₀ Δ (cong-∷-sub s) =
   cong-∷-sub (expose-sub₀ Δ s)
 expose-sub₀ Δ (cong-⟨⟩-sub s) =

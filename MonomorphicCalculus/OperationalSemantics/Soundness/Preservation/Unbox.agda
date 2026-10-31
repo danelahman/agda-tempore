@@ -299,7 +299,7 @@ unbox-lookup-sound {A} {ρ} 𝕊 x rel pSt =
 -- soundness proofs can rewrite by it.
 
 unbox-def : ∀ {Γ A A₀ C ρ ρ'} → (x : [ ρ ] A₀ ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
-          → (p : A₀ <:ᵛ A) → (M : Γ ∷ A ⊢C⦂ C) → (pM : Paramᶜ M)
+          → (p : A₀ <:ᵛ A) → (M : Γ ∷ A ⊢ᶜ⦂ C) → (pM : Paramᶜ M)
           → ⟦ unbox x rel p M ⟧ᶜᵗ pM
           ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , ⟦ p ⟧<:ᵛ ∘ᵐ ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
 unbox-def x rel p M pM = ≈ᵐ-refl
@@ -309,7 +309,7 @@ unbox-def x rel p M pM = ≈ᵐ-refl
 
 sound-UNBOX : ∀ {A A₀ C ρ ρ'} → (𝕊 : State [])
             → (x : [ ρ ] A₀ ∈[ ρ' ] toCtx 𝕊) → (rel : ρ' ≾ᵣ ρ) → (p : A₀ <:ᵛ A)
-            → (M : toCtx 𝕊 ∷ A ⊢C⦂ C)
+            → (M : toCtx 𝕊 ∷ A ⊢ᶜ⦂ C)
             → (pSt : Paramˢ 𝕊) → (pM : Paramᶜ M)
             → ⟦ unbox x rel p M ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟧ˢ pSt
             ≈ᵐ ⟦ M [ split-[] ↦ subV (unbox-lookup 𝕊 x rel) p ]c ⟧ᶜᵗ

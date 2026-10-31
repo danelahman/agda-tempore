@@ -72,7 +72,7 @@ open import Grades.Exact.Lift T Op n code code-injective
   using (Lang; 𝟏ᴸ; _·ᴸ_; ⊑-++; ·-mono; ·-assoc; ·-identityˡ; ·-identityʳ)
   renaming (_≈_ to _≈ᴸ_; _≾_ to _≾ᴸ_; ≾-refl to ≾ᴸ-refl; ≾-trans to ≾ᴸ-trans)
 open import Grades.Exact.Expression T Op n code code-injective running
-  using (Instance; upper; Expr; ε; ops; str; _∣_; _·_; ‵_; _？; ⟦_⟧; strᴸ)
+  using (Instance; upper; Expr; ε; ops; str; _∣_; _·_; ‵_; _ˀ; ⟦_⟧; strᴸ)
 open import Grades.Exact.Letters T Op n code code-injective running
   using (Letter; op; st; Word′; ⟦_⟧ʷ; Kind; opk; stk)
 open import Grades.Exact.Reader.Upper T Op n code code-injective running
@@ -93,12 +93,12 @@ mutual
 
   up : Trace → Expr upper
   up εᵗ              = ε
-  up (operation o t) = o ？ · up t
+  up (operation o t) = o ˀ · up t
   up (delay d t⁻)    = ≤ᵇ d · up⁻ t⁻
 
   up⁻ : Trace⁻ → Expr upper
   up⁻ ε⁻ᵗ              = ε
-  up⁻ (operation⁻ o t) = o ？ · up t
+  up⁻ (operation⁻ o t) = o ˀ · up t
 
 up-inj⁻ : ∀ t⁻ → up (inj⁻ t⁻) ≡ up⁻ t⁻
 up-inj⁻ ε⁻ᵗ              = refl
@@ -113,10 +113,10 @@ private
 
   -- an operation kept, or left out
 
-  kept : ∀ {o d y} {e : Expr upper} → ∣ d ∣⁺ ∈ⁱ rt o → ⟦ e ⟧ y → ⟦ o ？ · e ⟧ (op o d ∷ [] ++ y)
+  kept : ∀ {o d y} {e : Expr upper} → ∣ d ∣⁺ ∈ⁱ rt o → ⟦ e ⟧ y → ⟦ o ˀ · e ⟧ (op o d ∷ [] ++ y)
   kept {o} {d} {y} r y∈ = op o d ∷ [] , y , refl , inj₁ (o , d , x∈⁅x⁆ (code o) , r , refl) , y∈
 
-  skipped : ∀ {o y} {e : Expr upper} → ⟦ e ⟧ y → ⟦ o ？ · e ⟧ y
+  skipped : ∀ {o y} {e : Expr upper} → ⟦ e ⟧ y → ⟦ o ˀ · e ⟧ y
   skipped {y = y} y∈ = [] , y , refl , inj₂ refl , y∈
 
   -- a running time is at most the cost
@@ -489,14 +489,14 @@ up-prepend d (delay e t⁻)    =
 up-∙ : ∀ s t → ⟦ up (s ∙ᵗ t) ⟧ ≈ᴸ (⟦ up s ⟧ ·ᴸ ⟦ up t ⟧)
 up-∙ εᵗ t = ≈-sym (·-identityˡ ⟦ up t ⟧)
 up-∙ (operation o s) t =
-  ≈-trans (·-cong ≈-refl (up-∙ s t)) (≈-sym (·-assoc ⟦ _？ {upper} o ⟧ ⟦ up s ⟧ ⟦ up t ⟧))
+  ≈-trans (·-cong ≈-refl (up-∙ s t)) (≈-sym (·-assoc ⟦ _ˀ {upper} o ⟧ ⟦ up s ⟧ ⟦ up t ⟧))
 up-∙ (delay d ε⁻ᵗ) t =
   ≈-trans (up-prepend d t)
           (·-cong (≈-sym (·-identityʳ ⟦ ≤ᵇ d ⟧)) ≈-refl)
 up-∙ (delay d (operation⁻ o s)) t =
   ≈-trans (·-cong ≈-refl (≈-trans (·-cong ≈-refl (up-∙ s t))
-                                   (≈-sym (·-assoc ⟦ _？ {upper} o ⟧ ⟦ up s ⟧ ⟦ up t ⟧))))
-          (≈-sym (·-assoc ⟦ ≤ᵇ d ⟧ (⟦ _？ {upper} o ⟧ ·ᴸ ⟦ up s ⟧) ⟦ up t ⟧))
+                                   (≈-sym (·-assoc ⟦ _ˀ {upper} o ⟧ ⟦ up s ⟧ ⟦ up t ⟧))))
+          (≈-sym (·-assoc ⟦ ≤ᵇ d ⟧ (⟦ _ˀ {upper} o ⟧ ·ᴸ ⟦ up s ⟧) ⟦ up t ⟧))
 
 ------------------------------------------------------------------------
 -- A run of a translation lasts at most the bound's span, operations
@@ -526,7 +526,7 @@ mutual
   up-dur⁻ ε⁻ᵗ refl = ≤ᴰ-refl
   up-dur⁻ (operation⁻ o t) x∈ = op-dur o t x∈
 
-  op-dur : ∀ o t {x} → ⟦ o ？ · up t ⟧ x → dur x ≤ᴰ costʰⁱ o +ᴰ span t
+  op-dur : ∀ o t {x} → ⟦ o ˀ · up t ⟧ x → dur x ≤ᴰ costʰⁱ o +ᴰ span t
   op-dur o t (_ , x₂ , refl , inj₁ (o′ , dd , c , r , refl) , x₂∈)
     with code-injective (x∈⁅y⁆⇒x≡y (code o) c)
   ... | refl =

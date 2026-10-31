@@ -33,12 +33,12 @@ open import MonomorphicCalculus.Syntax.Subtyping S public
 
 -- Well-typed terms (values and computations)
 
-infix 26 _⊢V⦂_
-infix 26 _⊢C⦂_
+infix 26 _⊢ᵛ⦂_
+infix 26 _⊢ᶜ⦂_
 
 mutual
 
-  data _⊢V⦂_ (Γ : Ctx) : VType → Set where
+  data _⊢ᵛ⦂_ (Γ : Ctx) : VType → Set where
 
     -- variables
 
@@ -47,80 +47,80 @@ mutual
             → (¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
             → A ∈[ ρ ] Γ
             -------------------------
-            → Γ ⊢V⦂ A           
+            → Γ ⊢ᵛ⦂ A           
 
     -- base-typed constants
 
     const   : (B : BaseType)
             → BaseConstants B
             -----------------
-            → Γ ⊢V⦂ Base B
+            → Γ ⊢ᵛ⦂ Base B
 
     -- unit type
 
     ⋆       :
               -----------
-              Γ ⊢V⦂ unit
+              Γ ⊢ᵛ⦂ unit
 
     -- booleans
 
     true    :
               -----------
-              Γ ⊢V⦂ bool
+              Γ ⊢ᵛ⦂ bool
 
     false   :
               -----------
-              Γ ⊢V⦂ bool
+              Γ ⊢ᵛ⦂ bool
 
     -- natural numbers
 
     zero    :
               ----------
-              Γ ⊢V⦂ nat
+              Γ ⊢ᵛ⦂ nat
 
-    succ    : Γ ⊢V⦂ nat
+    succ    : Γ ⊢ᵛ⦂ nat
               ---------
-            → Γ ⊢V⦂ nat
+            → Γ ⊢ᵛ⦂ nat
 
     -- pairing
 
     ⦉_,_⦊    : {A B : VType}
-            → Γ ⊢V⦂ A
-            → Γ ⊢V⦂ B
+            → Γ ⊢ᵛ⦂ A
+            → Γ ⊢ᵛ⦂ B
             ---------------
-            → Γ ⊢V⦂ A |×| B
+            → Γ ⊢ᵛ⦂ A |×| B
 
     -- injections into a sum
 
     inl     : {A B : VType}
-            → Γ ⊢V⦂ A
+            → Γ ⊢ᵛ⦂ A
             ---------------
-            → Γ ⊢V⦂ A |+| B
+            → Γ ⊢ᵛ⦂ A |+| B
 
     inr     : {A B : VType}
-            → Γ ⊢V⦂ B
+            → Γ ⊢ᵛ⦂ B
             ---------------
-            → Γ ⊢V⦂ A |+| B
+            → Γ ⊢ᵛ⦂ A |+| B
 
     -- lists
 
     nil     : {A : VType}
               ---------------
-            → Γ ⊢V⦂ list A
+            → Γ ⊢ᵛ⦂ list A
 
     cons    : {A : VType}
-            → Γ ⊢V⦂ A
-            → Γ ⊢V⦂ list A
+            → Γ ⊢ᵛ⦂ A
+            → Γ ⊢ᵛ⦂ list A
             ---------------
-            → Γ ⊢V⦂ list A
+            → Γ ⊢ᵛ⦂ list A
 
     -- lambda abstraction
           
     fun     : {A : VType}
             → {C : CType}
-            → Γ ∷ A ⊢C⦂ C
+            → Γ ∷ A ⊢ᶜ⦂ C
             -------------
-            → Γ ⊢V⦂ A ⇒ C
+            → Γ ⊢ᵛ⦂ A ⇒ C
 
     -- handlers: the return clause binds the handled computation's result
     -- behind the lock of its effect, as the continuation of `_⨟_`. An
@@ -130,13 +130,13 @@ mutual
 
     handler : {A B : VType}
             → {ε ε' : E}
-            → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'
+            → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε'
             → ((op : Op) → (ε'' : E) →
                  Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                    ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-                 ⊢C⦂ B ! (op-grade op ·ₑ ε''))
+                 ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε''))
             ---------------------------------------------------------------------
-            → Γ ⊢V⦂ (A ! ε) ⇛ (B ! ε')
+            → Γ ⊢ᵛ⦂ (A ! ε) ⇛ (B ! ε')
 
     -- subsumption
     --
@@ -144,54 +144,54 @@ mutual
     -- computed and nothing is eta-expanded.
 
     subV    : {A A' : VType}
-            → Γ ⊢V⦂ A
+            → Γ ⊢ᵛ⦂ A
             → A <:ᵛ A'
             -----------
-            → Γ ⊢V⦂ A'
+            → Γ ⊢ᵛ⦂ A'
 
-  data _⊢C⦂_ (Γ : Ctx) : CType → Set where
+  data _⊢ᶜ⦂_ (Γ : Ctx) : CType → Set where
 
     -- returning a value
 
     return  : {A : VType}
-            → Γ ⊢V⦂ A
+            → Γ ⊢ᵛ⦂ A
             -------------
-            → Γ ⊢C⦂ A ! 𝟏ₑ
+            → Γ ⊢ᶜ⦂ A ! 𝟏ₑ
 
     -- sequential composition (the bound variable is a de Bruijn index)
 
     _⨟_     : {A B : VType}      -- input: \;2
             → {ε' : E}
             → {ε : E}
-            → Γ ⊢C⦂ A ! ε
-            → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'
+            → Γ ⊢ᶜ⦂ A ! ε
+            → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε'
             -----------------------------
-            → Γ ⊢C⦂ B ! (ε ·ₑ ε')
+            → Γ ⊢ᶜ⦂ B ! (ε ·ₑ ε')
 
     -- function application
     
     _·_     : {A : VType}
             → {C : CType}
-            → Γ ⊢V⦂ A ⇒ C
-            → Γ ⊢V⦂ A
+            → Γ ⊢ᵛ⦂ A ⇒ C
+            → Γ ⊢ᵛ⦂ A
             -------------
-            → Γ ⊢C⦂ C
+            → Γ ⊢ᶜ⦂ C
 
     -- pattern-matching
 
     match_`with_ : {A B : VType}
                  → {C : CType}
-                 → Γ ⊢V⦂ A |×| B
-                 → Γ ∷ A ∷ B ⊢C⦂ C
+                 → Γ ⊢ᵛ⦂ A |×| B
+                 → Γ ∷ A ∷ B ⊢ᶜ⦂ C
                  -----------------
-                 → Γ ⊢C⦂ C
+                 → Γ ⊢ᶜ⦂ C
 
     -- empty type elimination
 
     absurd  : {C : CType}
-            → Γ ⊢V⦂ empty
+            → Γ ⊢ᵛ⦂ empty
             -------------
-            → Γ ⊢C⦂ C
+            → Γ ⊢ᶜ⦂ C
 
     -- comparison at an eternal type
 
@@ -200,11 +200,11 @@ mutual
 
     cmp     : {A : VType}
             → (⋈ : Cmp)
-            → Γ ⊢V⦂ A
-            → Γ ⊢V⦂ A
+            → Γ ⊢ᵛ⦂ A
+            → Γ ⊢ᵛ⦂ A
             → Et A
             -----------------
-            → Γ ⊢C⦂ bool ! 𝟏ₑ
+            → Γ ⊢ᶜ⦂ bool ! 𝟏ₑ
 
     -- boolean elimination
 
@@ -213,11 +213,11 @@ mutual
 
     if_`then_`else_
             : {C : CType}
-            → Γ ⊢V⦂ bool
-            → Γ ⊢C⦂ C
-            → Γ ⊢C⦂ C
+            → Γ ⊢ᵛ⦂ bool
+            → Γ ⊢ᶜ⦂ C
+            → Γ ⊢ᶜ⦂ C
             ------------
-            → Γ ⊢C⦂ C
+            → Γ ⊢ᶜ⦂ C
 
     -- natural-number elimination
 
@@ -226,11 +226,11 @@ mutual
 
     matchℕ_`zero_`succ_
             : {C : CType}
-            → Γ ⊢V⦂ nat
-            → Γ ⊢C⦂ C
-            → Γ ∷ nat ⊢C⦂ C
+            → Γ ⊢ᵛ⦂ nat
+            → Γ ⊢ᶜ⦂ C
+            → Γ ∷ nat ⊢ᶜ⦂ C
             ---------------
-            → Γ ⊢C⦂ C
+            → Γ ⊢ᶜ⦂ C
 
     -- primitive recursion on natural numbers
 
@@ -241,12 +241,12 @@ mutual
 
     recℕ    : {B : VType}
             → {ε : E}
-            → Γ ⊢V⦂ nat
-            → Γ ⊢C⦂ B ! ε
-            → (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε
+            → Γ ⊢ᵛ⦂ nat
+            → Γ ⊢ᶜ⦂ B ! ε
+            → (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε
             → ε ·ₑ ε ≾ₑ ε
             ------------------------------------------
-            → Γ ⊢C⦂ B ! ε
+            → Γ ⊢ᶜ⦂ B ! ε
 
     -- sum elimination
 
@@ -256,11 +256,11 @@ mutual
     match+_`inl_`inr_
             : {A B : VType}
             → {C : CType}
-            → Γ ⊢V⦂ A |+| B
-            → Γ ∷ A ⊢C⦂ C
-            → Γ ∷ B ⊢C⦂ C
+            → Γ ⊢ᵛ⦂ A |+| B
+            → Γ ∷ A ⊢ᶜ⦂ C
+            → Γ ∷ B ⊢ᶜ⦂ C
             ---------------
-            → Γ ⊢C⦂ C
+            → Γ ⊢ᶜ⦂ C
 
     -- list elimination
 
@@ -270,11 +270,11 @@ mutual
     matchL_`nil_`cons_
             : {A : VType}
             → {C : CType}
-            → Γ ⊢V⦂ list A
-            → Γ ⊢C⦂ C
-            → Γ ∷ A ∷ list A ⊢C⦂ C
+            → Γ ⊢ᵛ⦂ list A
+            → Γ ⊢ᶜ⦂ C
+            → Γ ∷ A ∷ list A ⊢ᶜ⦂ C
             ------------------------
-            → Γ ⊢C⦂ C
+            → Γ ⊢ᶜ⦂ C
 
     -- primitive recursion on lists
 
@@ -284,41 +284,41 @@ mutual
 
     recL    : {A B : VType}
             → {ε : E}
-            → Γ ⊢V⦂ list A
-            → Γ ⊢C⦂ B ! ε
-            → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε
+            → Γ ⊢ᵛ⦂ list A
+            → Γ ⊢ᶜ⦂ B ! ε
+            → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε
             → ε ·ₑ ε ≾ₑ ε
             ----------------------------------------------------
-            → Γ ⊢C⦂ B ! ε
+            → Γ ⊢ᶜ⦂ B ! ε
 
     -- performing algebraic operations
 
     perform : {A : VType}
             → {ε : E}
             → (op : Op)
-            → Γ ⊢V⦂ ⌜ param op ⌝ᵍ
-            → Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε
+            → Γ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ
+            → Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢ᶜ⦂ A ! ε
             ---------------------------------------------------------------
-            → Γ ⊢C⦂ A ! ((op-grade op) ·ₑ ε)
+            → Γ ⊢ᶜ⦂ A ! ((op-grade op) ·ₑ ε)
 
     -- explicit delaying of a computation
 
     delay   : {A : VType}
             → {ε : E}
             → (τ : 𝔻)
-            → Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε
+            → Γ ⟨ ιᵣ τ ⟩ ⊢ᶜ⦂ A ! ε
             ------------------------------
-            → Γ ⊢C⦂ A ! (ιₑ τ ·ₑ ε)
+            → Γ ⊢ᶜ⦂ A ! (ιₑ τ ·ₑ ε)
 
     -- effect handling
 
     handle_`with_
             : {A B : VType}
             → {ε ε' : E}
-            → Γ ⊢C⦂ A ! ε
-            → Γ ⊢V⦂ (A ! ε) ⇛ (B ! ε')
+            → Γ ⊢ᶜ⦂ A ! ε
+            → Γ ⊢ᵛ⦂ (A ! ε) ⇛ (B ! ε')
             --------------------------
-            → Γ ⊢C⦂ B ! (ε ·ₑ ε')
+            → Γ ⊢ᶜ⦂ B ! (ε ·ₑ ε')
 
     -- unboxing a boxed value/resource after enough time has passed for it to be ready
 
@@ -334,39 +334,39 @@ mutual
             → [ ρ₀ ] A₀ ∈[ ρ' ] Γ
             → ρ' ≾ᵣ ρ₀
             → A₀ <:ᵛ A
-            → Γ ∷ A ⊢C⦂ C
+            → Γ ∷ A ⊢ᶜ⦂ C
             ---------------------------
-            → Γ ⊢C⦂ C
+            → Γ ⊢ᶜ⦂ C
 
     -- boxing up a value/resource that is ready for use in at least `ρ` grade steps
 
     box     : {A : VType}
             → {C : CType}
             → (ρ : R)
-            → Γ ⟨ ρ ⟩ ⊢V⦂ A
-            → Γ ∷ [ ρ ] A ⊢C⦂ C
+            → Γ ⟨ ρ ⟩ ⊢ᵛ⦂ A
+            → Γ ∷ [ ρ ] A ⊢ᶜ⦂ C
             --------------------
-            → Γ ⊢C⦂ C
+            → Γ ⊢ᶜ⦂ C
 
     -- subsumption
 
     subC    : {C C' : CType}
-            → Γ ⊢C⦂ C
+            → Γ ⊢ᶜ⦂ C
             → C <:ᶜ C'
             -----------
-            → Γ ⊢C⦂ C'
+            → Γ ⊢ᶜ⦂ C'
 
 -- Handling with a handler written in place
 
 handle_`with_`in_ : ∀ {Γ A B ε ε'}
-                  → Γ ⊢C⦂ A ! ε
+                  → Γ ⊢ᶜ⦂ A ! ε
                   → ((op : Op) → (ε'' : E) →
                        Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                          ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-                       ⊢C⦂ B ! (op-grade op ·ₑ ε''))
-                  → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'
+                       ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε''))
+                  → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε'
                   ---------------------------------------------------------------------
-                  → Γ ⊢C⦂ B ! (ε ·ₑ ε')
+                  → Γ ⊢ᶜ⦂ B ! (ε ·ₑ ε')
 
 handle M `with H `in N = handle M `with handler N H
 
@@ -374,15 +374,15 @@ handle M `with H `in N = handle M `with handler N H
 
 coerce : ∀ {Γ A ε ε'}
        → ε ≾ₑ ε'
-       → Γ ⊢C⦂ A ! ε
+       → Γ ⊢ᶜ⦂ A ! ε
        --------------
-       → Γ ⊢C⦂ A ! ε'
+       → Γ ⊢ᶜ⦂ A ! ε'
 
 coerce {A = A} p M = subC M (<:ᵛ-refl A !ₛ p)
 
 -- Numerals
 
-numeralᵛ : ∀ {Γ} → ℕ → Γ ⊢V⦂ nat
+numeralᵛ : ∀ {Γ} → ℕ → Γ ⊢ᵛ⦂ nat
 numeralᵛ 0       = zero
 numeralᵛ (suc k) = succ (numeralᵛ k)
 
@@ -390,9 +390,9 @@ numeralᵛ (suc k) = succ (numeralᵛ k)
 
 ε-subst : ∀ {Γ A ε ε'}
           → ε ≡ ε'
-          → Γ ⊢C⦂ A ! ε
+          → Γ ⊢ᶜ⦂ A ! ε
           ---------------
-          → Γ ⊢C⦂ A ! ε'
+          → Γ ⊢ᶜ⦂ A ! ε'
 
 ε-subst refl M = M
 
@@ -400,9 +400,9 @@ numeralᵛ (suc k) = succ (numeralᵛ k)
 
 ε-≃ : ∀ {Γ A ε ε'}
     → ε ≃ₑ ε'
-    → Γ ⊢C⦂ A ! ε
+    → Γ ⊢ᶜ⦂ A ! ε
     ---------------
-    → Γ ⊢C⦂ A ! ε'
+    → Γ ⊢ᶜ⦂ A ! ε'
 
 ε-≃ e M = coerce (proj₁ e) M
 
@@ -411,7 +411,7 @@ numeralᵛ (suc k) = succ (numeralᵛ k)
 -- bounds.
 
 grad-typ⇒var<: : ∀ {Γ A ρ}
-               → Γ ⊢V⦂ [ ρ ] A
+               → Γ ⊢ᵛ⦂ [ ρ ] A
                → Σ[ ρ₀ ∈ R ] Σ[ A₀ ∈ VType ] Σ[ ρ' ∈ R ]
                    (([ ρ₀ ] A₀ ∈[ ρ' ] Γ) × ([ ρ₀ ] A₀ <:ᵛ [ ρ ] A) × ρ' ≾ᵣ 𝟏ᵣ)
 
@@ -423,7 +423,7 @@ grad-typ⇒var<: (subV V p@([ _ ]ₛ _)) with grad-typ⇒var<: V
 
 -- A value of eternal type stays typed under any grade extension of its context
 
-eternal-val-ext : ∀ {Γ A ρ} → Et A → Γ ⊢V⦂ A → Γ ⟨ ρ ⟩ ⊢V⦂ A
+eternal-val-ext : ∀ {Γ A ρ} → Et A → Γ ⊢ᵛ⦂ A → Γ ⟨ ρ ⟩ ⊢ᵛ⦂ A
 eternal-val-ext et (var _ x) =
   var (λ ¬et → ⊥-elim (¬et et)) (Tl-⟨⟩ x)
 eternal-val-ext _ (const B b) =

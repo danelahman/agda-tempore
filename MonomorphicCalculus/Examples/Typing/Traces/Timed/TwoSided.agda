@@ -48,24 +48,24 @@ open import MonomorphicCalculus.Examples.Typing.Core two-sided opTime
 -- guarantee it meets and the allowance it stays within, and each lock
 -- is the one-event interval of the operation that put it up.
 
-sampling : [] ⊢C⦂ Reading ! exact ⌈ read ⌉
+sampling : [] ⊢ᶜ⦂ Reading ! exact ⌈ read ⌉
 sampling =
   perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
     (return here)
 
-storing : [] ⊢C⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ write ⌉)
+storing : [] ⊢ᶜ⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ write ⌉)
 storing =
   perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
     (perform write here              -- ⟨ exact ⌈ write ⌉ ⟩ ∷ unit
       (return ⋆))
 
-relaying : [] ⊢C⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ send ⌉)
+relaying : [] ⊢ᶜ⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 relaying =
   perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
     (perform send here               -- ⟨ exact ⌈ send ⌉ ⟩ ∷ unit
       (return ⋆))
 
-tagged-relaying : [] ∷ NodeId ⊢C⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ send ⌉)
+tagged-relaying : [] ∷ NodeId ⊢ᶜ⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 tagged-relaying =
   perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
@@ -82,7 +82,7 @@ tagged-relaying =
 reading-stale-after-an-operation : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ 𝟏ᵣ)
 reading-stale-after-an-operation = fails (𝟏ᵣ ·ᵣ opTime read) 𝟏ᵣ
 
-carried-id : [] ∷ NodeId ⊢C⦂ NodeId ! exact ⌈ read ⌉
+carried-id : [] ∷ NodeId ⊢ᶜ⦂ NodeId ! exact ⌈ read ⌉
 carried-id =
   perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
     (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
@@ -97,7 +97,7 @@ carried-id =
 contract : E
 contract = [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
 
-meeting-the-contract : [] ⊢C⦂ unit ! contract
+meeting-the-contract : [] ⊢ᶜ⦂ unit ! contract
 meeting-the-contract =
   coerce (holds _ _) (perform read ⋆ (perform write here (return ⋆)))
 
@@ -122,7 +122,7 @@ transmitting-twice-fails-the-cap = fails _ _
 window : E
 window = [ ⟅ ⟨ 2 ⟩ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ ]
 
-branching : [] ∷ bool ∷ Reading ⊢C⦂ unit ! window
+branching : [] ∷ bool ∷ Reading ⊢ᶜ⦂ unit ! window
 branching =
   if eternal-var boolₑ (Tl-∷ Hd)
     `then coerce (holds _ _) (perform send  here (return ⋆))
@@ -138,7 +138,7 @@ three-ticks-not-guaranteed = fails _ _
 -- an `if` over data alone needs no contract found for it
 
 either-reading :
-  [] ∷ bool ∷ Reading ∷ Reading ⊢C⦂ unit ! exact ⌈ send ⌉
+  [] ∷ bool ∷ Reading ∷ Reading ⊢ᶜ⦂ unit ! exact ⌈ send ⌉
 either-reading =
   if eternal-var boolₑ (Tl-∷ (Tl-∷ Hd))
     `then perform send here (return ⋆)
@@ -157,7 +157,7 @@ either-reading =
 -- store left over, and spends three of the six the allowance leaves
 
 claim-after-storing :
-  [] ⊢C⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉)
+  [] ⊢ᶜ⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉)
 claim-after-storing =
   box contract (const reading 42)    -- ∷ [ contract ] Reading
     (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
@@ -166,7 +166,7 @@ claim-after-storing =
                                      -- ∷ Reading
           (perform send here (return ⋆)))))
 
-handed-over : [] ⊢C⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ send ⌉)
+handed-over : [] ⊢ᶜ⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 handed-over =
   box contract (const reading 42)    -- ∷ [ contract ] Reading
     (fun                             -- ∷ [ contract ] Reading
@@ -176,7 +176,7 @@ handed-over =
            (perform send here (return ⋆))))
       · here)
 
-either-way : [] ∷ bool ⊢C⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ send ⌉)
+either-way : [] ∷ bool ⊢ᶜ⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 either-way =
   box contract (const reading 42)    -- ∷ [ contract ] Reading
     (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
@@ -218,7 +218,7 @@ alternatives : R
 alternatives = [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ ]
 
 claimed-in-both-branches :
-  [] ⊢C⦂ unit ! [ ⟅ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⟨ 12 ⟩ ⟆ ]
+  [] ⊢ᶜ⦂ unit ! [ ⟅ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⟨ 12 ⟩ ⟆ ]
 claimed-in-both-branches =
   box alternatives (const reading 42)        -- ∷ [ alternatives ] Reading
     (if true
@@ -269,7 +269,7 @@ storing-branch-joins : opTime write ·ₑ 𝟏ₑ ≾ₑ branch-join
 storing-branch-joins = holds _ _
 
 claim-after-a-branch :
-  [] ∷ bool ⊢C⦂ unit ! [ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆ˡᵒ
+  [] ∷ bool ⊢ᶜ⦂ unit ! [ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆ˡᵒ
                        , within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆ ]
 claim-after-a-branch =
   box mixed-contract (const reading 42)
@@ -293,7 +293,7 @@ claim-after-a-branch =
 -- ticks of allowance for the slower branch.
 
 store-or-not :
-  [] ∷ bool ⊢C⦂ unit ! [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 9 ⟩ ⟆ ]
+  [] ∷ bool ⊢ᶜ⦂ unit ! [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 9 ⟩ ⟆ ]
 store-or-not =
   box contract (const reading 42)            -- ∷ [ contract ] Reading
     (if eternal-var boolₑ (Tl-∷ Hd)
@@ -320,14 +320,14 @@ storing-then-transmitting-first =
 ------------------------------------------------------------------------
 -- Effect handling
 
-forwarded : [] ⊢C⦂ Reading ! exact ⌈ read ⌉
+forwarded : [] ⊢ᶜ⦂ Reading ! exact ⌈ read ⌉
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
     `in                              -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
       (return here)
 
-identified : Node ⊢C⦂ NodeId ! exact ⌈ read ⌉
+identified : Node ⊢ᶜ⦂ NodeId ! exact ⌈ read ⌉
 identified =
   handle perform read ⋆ (return here)
     `with identifying

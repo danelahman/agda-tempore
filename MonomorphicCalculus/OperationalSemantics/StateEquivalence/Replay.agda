@@ -44,11 +44,11 @@ open import MonomorphicCalculus.OperationalSemantics.StateEquivalence.Bisimulati
 -- state: the shape is copied, and each cell's value is transported along the
 -- contexts' equality.
 
-castᵛ-castᵛ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ) → (V : Γ ⊢V⦂ A)
+castᵛ-castᵛ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ) → (V : Γ ⊢ᵛ⦂ A)
             → castᵛ e' (castᵛ e V) ≡ V
 castᵛ-castᵛ refl e' V = cong (λ z → castᵛ z V) (uip {p = e'} {q = refl})
 
-castᶜ-castᶜ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ) → (M : Γ ⊢C⦂ C)
+castᶜ-castᶜ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ) → (M : Γ ⊢ᶜ⦂ C)
             → castᶜ e' (castᶜ e M) ≡ M
 castᶜ-castᶜ refl e' M = cong (λ z → castᶜ z M) (uip {p = e'} {q = refl})
 

@@ -104,7 +104,7 @@ comm-r m a b =
 -- A boxed value weakened past an intervening binder: the weakening slides out
 -- of the box by `η⊣`-naturality.
 
-box-wk : ∀ {Γ B ρ'} → (X : VType) → (W : Γ ⟨ ρ' ⟩ ⊢V⦂ B) → (pW : Paramᵛ W)
+box-wk : ∀ {Γ B ρ'} → (X : VType) → (W : Γ ⟨ ρ' ⟩ ⊢ᵛ⦂ B) → (pW : Paramᵛ W)
        → [ ρ' ]ᶠ (⟦ V-rename (cong-⟨⟩-ren (wk-ren {A = X})) W ⟧ᵛᵗ
                     (renᵛ (cong-⟨⟩-ren (wk-ren {A = X})) W pW)) ∘ᵐ η⊣
        ≈ᵐ ([ ρ' ]ᶠ (⟦ W ⟧ᵛᵗ pW) ∘ᵐ η⊣) ∘ᵐ fstᵐ
@@ -120,7 +120,7 @@ sound-unbox-comm : ∀ {Γ A A₁ B B₂ C ρ₁ ρ₁' ρ₂ ρ₂'}
                  → (w₁ : A₁ <:ᵛ A)
                  → (x₂ : [ ρ₂ ] B₂ ∈[ ρ₂' ] Γ) → (rel₂ : ρ₂' ≾ᵣ ρ₂)
                  → (w₂ : B₂ <:ᵛ B)
-                 → (M : Γ ∷ A ∷ B ⊢C⦂ C)
+                 → (M : Γ ∷ A ∷ B ⊢ᶜ⦂ C)
                  → Soundᶜ≡ᵗʰ (unbox-comm x₁ rel₁ w₁ x₂ rel₂ w₂ M)
 sound-unbox-comm {Γ = Γ} {A = A} {B = B} x₁ rel₁ w₁ x₂ rel₂ w₂ M pM pR =
     unbox-def x₁ rel₁ w₁ (unbox (Tl-∷ x₂) rel₂ w₂ M) pM
@@ -145,8 +145,8 @@ sound-unbox-comm {Γ = Γ} {A = A} {B = B} x₁ rel₁ w₁ x₂ rel₂ w₂ M p
             ∙ comm-r (⟦ M ⟧ᶜᵗ pM) _ _)
 
 sound-box-comm : ∀ {Γ A B C ρ ρ'}
-               → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A) → (W : Γ ⟨ ρ' ⟩ ⊢V⦂ B)
-               → (M : Γ ∷ [ ρ ] A ∷ [ ρ' ] B ⊢C⦂ C)
+               → (V : Γ ⟨ ρ ⟩ ⊢ᵛ⦂ A) → (W : Γ ⟨ ρ' ⟩ ⊢ᵛ⦂ B)
+               → (M : Γ ∷ [ ρ ] A ∷ [ ρ' ] B ⊢ᶜ⦂ C)
                → Soundᶜ≡ᵗʰ (box-comm V W M)
 sound-box-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} {ρ' = ρ'} V W M (pV , (pW' , pM)) (pW , (pV' , pMr)) =
     ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
@@ -167,10 +167,10 @@ sound-box-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} {ρ' = ρ'} V W M (pV , (pW' 
             ∙ comm-r (⟦ M ⟧ᶜᵗ pM) _ _)
 
 sound-box-unbox-comm : ∀ {Γ A B B₂ C ρ ρ₂ ρ₂'}
-                     → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
+                     → (V : Γ ⟨ ρ ⟩ ⊢ᵛ⦂ A)
                      → (x₂ : [ ρ₂ ] B₂ ∈[ ρ₂' ] Γ) → (rel₂ : ρ₂' ≾ᵣ ρ₂)
                      → (w₂ : B₂ <:ᵛ B)
-                     → (M : Γ ∷ [ ρ ] A ∷ B ⊢C⦂ C)
+                     → (M : Γ ∷ [ ρ ] A ∷ B ⊢ᶜ⦂ C)
                      → Soundᶜ≡ᵗʰ (box-unbox-comm V x₂ rel₂ w₂ M)
 sound-box-unbox-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} V x₂ rel₂ w₂ M (pV , pM) pR =
     ∘ᵐ-congˡ (  unbox-def (Tl-∷ x₂) rel₂ w₂ M pM

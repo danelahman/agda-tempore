@@ -59,7 +59,7 @@ open import MonomorphicCalculus.EquationalTheory.Soundness.Fill S Cat Fut Pst Ad
 
 mutual
 
-  Midᵛ : ∀ {Γ A} {V W : Γ ⊢V⦂ A} → Γ ⊢V⦂ V ≡ᵗʰ W → Set
+  Midᵛ : ∀ {Γ A} {V W : Γ ⊢ᵛ⦂ A} → Γ ⊢ᵛ⦂ V ≡ᵗʰ W → Set
 
   Midᵛ (V-sym p)                         = Midᵛ p
   Midᵛ (V-trans {W = W} p q)             = Paramᵛ W × Midᵛ p × Midᵛ q
@@ -75,7 +75,7 @@ mutual
   Midᵛ (subV-cong p)                     = Midᵛ p
   Midᵛ _                                 = ⊤
 
-  Midᶜ : ∀ {Γ C} {M N : Γ ⊢C⦂ C} → Γ ⊢C⦂ M ≡ᵗʰ N → Set
+  Midᶜ : ∀ {Γ C} {M N : Γ ⊢ᶜ⦂ C} → Γ ⊢ᶜ⦂ M ≡ᵗʰ N → Set
 
   Midᶜ (C-sym p)                         = Midᶜ p
   Midᶜ (C-trans {N = N} p q)             = Paramᶜ N × Midᶜ p × Midᶜ q

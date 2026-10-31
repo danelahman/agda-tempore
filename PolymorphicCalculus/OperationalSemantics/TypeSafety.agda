@@ -106,7 +106,7 @@ open Preserved
 private
 
   stay : ∀ {n} {𝕊 : State n} {Ψ : StateTyping 𝕊} {M' C₁ X ε}
-       → Types Ψ → (D : ∅ᴴ ∣ toCtx Ψ ⊢C⦂ C₁) → ∥ D ∥ᶜ ≡ M' → ∅ᴴ ⊩ C₁ <:̂ᶜ X ! ε
+       → Types Ψ → (D : ∅ᴴ ∣ toCtx Ψ ⊢ᶜ⦂ C₁) → ∥ D ∥ᶜ ≡ M' → ∅ᴴ ⊩ C₁ <:̂ᶜ X ! ε
        → Preserved ≤ₛ-refl Ψ M' X ε
   stay {Ψ = Ψ} T D eq (p !ₛ q) = record
     { Ψ' = Ψ ; extends = ⊆-refl ; types = T ; typed = D , eq ; subtype = p
@@ -116,9 +116,9 @@ private
 
   retype : ∀ {n m} {Γ : OCtx ∅ˢ n} {Γ' : OCtx ∅ˢ m} {δ A B ε ε₁ ε'}
          → (e : Ext ∅ᴴ Γ Γ' δ) → ∅ᴴ ⊩ δ ·̂ᵣ ∣ ε₁ ∣̂ᵉ ≾̂ᵣ ∣ ε ∣̂ᵉ
-         → (N : ∅ᴴ ∣ Γ ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
-         → (H : (op : Op) → wkᵉ-H ∅ᴴ ∣ clause-ctx Γ B op ⊢C⦂ clause-ty B op)
-         → Σ[ D ∈ ∅ᴴ ∣ Γ' ⊢V⦂ (A ! ε₁) ⇛ (B ! ε') ]
+         → (N : ∅ᴴ ∣ Γ ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε')
+         → (H : (op : Op) → wkᵉ-H ∅ᴴ ∣ clause-ctx Γ B op ⊢ᶜ⦂ clause-ty B op)
+         → Σ[ D ∈ ∅ᴴ ∣ Γ' ⊢ᵛ⦂ (A ! ε₁) ⇛ (B ! ε') ]
              ∥ D ∥ᵛ ≡ renᵛ (epos e) (handler ∥ N ∥ᶜ (λ op → ∥ H op ∥ᶜ))
   retype e le N H =
     handler (rename-c (ext-lock e le ⇑ʳ) N) (λ op → rename-c (ext-clause e) (H op)) ,
@@ -393,13 +393,13 @@ preservation {Ψ = Ψ} T (D , eD) BOX with invC≡ D eD
   }
 
 preservation T (D , eD) UNBOX with invC≡ D eD
-... | _ , (_ , _ , _ , _ , _ , x , (R , eR) , p , (DN , eN)) , q₀
+... | _ , (_ , _ , _ , (R , eR) , p , (DN , eN)) , q₀
     with trans (sym (∥res∥ R)) eR
 ... | refl =
   stay T (sub-c (here (types-defs T)) (subV (proj₁ L) q') DN)
        (trans (∥sub-c∥ (here (types-defs T)) (subV (proj₁ L) q') DN) (cong₂ (subᶜ 0) (proj₂ L) eN)) q₀
   where
-    L  = lookup-typed T x (transᵣ p (proj₁ (res-collapse R)))
+    L  = lookup-typed T (res-var-of R) (transᵣ p (proj₁ (res-collapse R)))
     q' = proj₂ (res-collapse R)
 
 ------------------------------------------------------------------------
@@ -475,7 +475,7 @@ progress {Ψ = Ψ} {M = handle M `with V} (D , eD) with invC≡ D eD
 ... | inj₂ (_ , _ , _ , _ , s)  | _              = step (HANDLE-STEP s)
 
 progress {M = unbox V N} (D , eD) with invC≡ D eD
-... | _ , (_ , _ , _ , _ , _ , z , (R , eR) , _) , _
+... | _ , (_ , _ , _ , (R , eR) , _) , _
     rewrite trans (sym eR) (∥res∥ R) = step UNBOX
 
 progress {M = box V N} _ = step BOX

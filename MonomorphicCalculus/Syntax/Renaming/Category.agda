@@ -87,7 +87,7 @@ cong-renˡ-∘ Γ'' ec r₂ r₁ = refl
 -- `cong-ren` recurses on the suffix and so does not commute with `_∘ʳ_` on
 -- the nose: that is `cong-ren-∘-≐ʳ` and `cong-ren-id-≐ʳ` (Coherence).
 
--- `Γ ⊢V⦂ A` and `Γ ⊢C⦂ C` are presheaves on the category above. The action is
+-- `Γ ⊢ᵛ⦂ A` and `Γ ⊢ᶜ⦂ C` are presheaves on the category above. The action is
 -- `V-rename`/`C-rename`; the laws are `V-rename-∘`, `V-rename-id-≡` (the
 -- action respects the quotient on renamings) and `V-rename-cong`, and likewise
 -- for `C`. Everything a term stores is either shape or a proof-irrelevant

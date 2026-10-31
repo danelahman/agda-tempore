@@ -81,7 +81,7 @@ var-pos (Tl-⟨⟩ x) = var-pos x
 
 mutual
 
-  ⌊_⌋ᵛ : ∀ {Γ A} → Γ ⊢V⦂ A → ErV
+  ⌊_⌋ᵛ : ∀ {Γ A} → Γ ⊢ᵛ⦂ A → ErV
 
   ⌊ var f x ⌋ᵛ   = var (var-pos x)
   ⌊ const B c ⌋ᵛ = const B c
@@ -99,7 +99,7 @@ mutual
   ⌊ handler N H ⌋ᵛ = handler ⌊ N ⌋ᶜ (λ op ε'' → ⌊ H op ε'' ⌋ᶜ)
   ⌊ subV V p ⌋ᵛ  = ⌊ V ⌋ᵛ
 
-  ⌊_⌋ᶜ : ∀ {Γ C} → Γ ⊢C⦂ C → ErC
+  ⌊_⌋ᶜ : ∀ {Γ C} → Γ ⊢ᶜ⦂ C → ErC
 
   ⌊ return V ⌋ᶜ               = return ⌊ V ⌋ᵛ
   ⌊ M ⨟ N ⌋ᶜ                  = ⌊ M ⌋ᶜ ⨟ ⌊ N ⌋ᶜ

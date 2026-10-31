@@ -52,12 +52,12 @@ open import MonomorphicCalculus.OperationalSemantics.Termination.Environment.Cor
 -- The action under a suffix.
 
 env-Vˢ : ∀ {𝕊 Γ A} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-       → (Γ ++ᶜ Δ) ⊢V⦂ A
-       → (toCtx 𝕊 ++ᶜ Δ) ⊢V⦂ A
+       → (Γ ++ᶜ Δ) ⊢ᵛ⦂ A
+       → (toCtx 𝕊 ++ᶜ Δ) ⊢ᵛ⦂ A
 
 env-Cˢ : ∀ {𝕊 Γ C} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-       → (Γ ++ᶜ Δ) ⊢C⦂ C
-       → (toCtx 𝕊 ++ᶜ Δ) ⊢C⦂ C
+       → (Γ ++ᶜ Δ) ⊢ᶜ⦂ C
+       → (toCtx 𝕊 ++ᶜ Δ) ⊢ᶜ⦂ C
 
 env-Vˢ ⌊ 𝕊 ⌋ Δ V = V
 env-Vˢ (reachᵉ γ q) Δ V = V-rename (cong-ren (reach-renᵘ q)) (env-Vˢ γ Δ V)
@@ -96,7 +96,7 @@ env-Cˢ (liftᵉ {𝕊 = 𝕊} {Γ = Γ} {A = A} {ρ = ρ} V γ) Δ M =
 -- Commutes with `fun` via `cong-∷-sub` at the suffix `Δ ∷ A`.
 
 env-Vˢ-fun : ∀ {𝕊 Γ A B ε} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-           → (M : (Γ ++ᶜ Δ) ∷ A ⊢C⦂ B ! ε)
+           → (M : (Γ ++ᶜ Δ) ∷ A ⊢ᶜ⦂ B ! ε)
            → env-Vˢ γ Δ (fun M) ≡ fun (env-Cˢ γ (Δ ∷ A) M)
 
 env-Vˢ-fun ⌊ 𝕊 ⌋ Δ M = refl
@@ -174,7 +174,7 @@ env-Vˢ-fun {A = A} (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ M =
     eA'   = ++ᶜ-assoc Γ ([] ∷ A₀) (Δ ∷ A)
     body  = env-Cˢ γ (Δ₁ ∷ A) (castᶜ (cong (_∷ A) eA) M)
 
-env-Cˢ-ret : ∀ {𝕊 Γ A} → (γ : Env 𝕊 Γ) → (Δ : Ctx) → (V : (Γ ++ᶜ Δ) ⊢V⦂ A)
+env-Cˢ-ret : ∀ {𝕊 Γ A} → (γ : Env 𝕊 Γ) → (Δ : Ctx) → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ A)
            → env-Cˢ γ Δ (return V) ≡ return (env-Vˢ γ Δ V)
 
 env-Cˢ-ret ⌊ 𝕊 ⌋ Δ V = refl
@@ -231,7 +231,7 @@ env-Cˢ-ret (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ V =
     eA   = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
 
 env-Cˢ-app : ∀ {𝕊 Γ A C} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-           → (V : (Γ ++ᶜ Δ) ⊢V⦂ A ⇒ C) → (U : (Γ ++ᶜ Δ) ⊢V⦂ A)
+           → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ A ⇒ C) → (U : (Γ ++ᶜ Δ) ⊢ᵛ⦂ A)
            → env-Cˢ γ Δ (V · U) ≡ (env-Vˢ γ Δ V) · (env-Vˢ γ Δ U)
 
 env-Cˢ-app ⌊ 𝕊 ⌋ Δ V U = refl
@@ -291,7 +291,7 @@ env-Cˢ-app (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ V U =
     eA   = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
 
 env-Cˢ-cmp : ∀ {𝕊 Γ A} → (γ : Env 𝕊 Γ) → (Δ : Ctx) → (⋈ : Cmp)
-           → (V U : (Γ ++ᶜ Δ) ⊢V⦂ A) → (et : Et A)
+           → (V U : (Γ ++ᶜ Δ) ⊢ᵛ⦂ A) → (et : Et A)
            → env-Cˢ γ Δ (cmp ⋈ V U et) ≡ cmp ⋈ (env-Vˢ γ Δ V) (env-Vˢ γ Δ U) et
 
 env-Cˢ-cmp ⌊ 𝕊 ⌋ Δ ⋈ V U et = refl
@@ -354,7 +354,7 @@ env-Cˢ-cmp (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ ⋈ V U et =
     eA   = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
 
 env-Cˢ-if : ∀ {𝕊 Γ C} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-          → (V : (Γ ++ᶜ Δ) ⊢V⦂ bool) → (M N : (Γ ++ᶜ Δ) ⊢C⦂ C)
+          → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ bool) → (M N : (Γ ++ᶜ Δ) ⊢ᶜ⦂ C)
           → env-Cˢ γ Δ (if V `then M `else N)
           ≡ if (env-Vˢ γ Δ V) `then (env-Cˢ γ Δ M) `else (env-Cˢ γ Δ N)
 
@@ -434,7 +434,7 @@ env-Cˢ-if (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ V M N =
 -- Subsumption commutes with the action at both judgements.
 
 env-Vˢ-sub : ∀ {𝕊 Γ A A'} → (γ : Env 𝕊 Γ) → (Δ : Ctx) → {p : A <:ᵛ A'}
-           → (V : (Γ ++ᶜ Δ) ⊢V⦂ A)
+           → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ A)
            → env-Vˢ γ Δ (subV V p) ≡ subV (env-Vˢ γ Δ V) p
 
 env-Vˢ-sub ⌊ 𝕊 ⌋ Δ V = refl
@@ -492,7 +492,7 @@ env-Vˢ-sub (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ V =
     eA   = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
 
 env-Cˢ-sub : ∀ {𝕊 Γ C C'} → (γ : Env 𝕊 Γ) → (Δ : Ctx) → {p : C <:ᶜ C'}
-           → (M : (Γ ++ᶜ Δ) ⊢C⦂ C)
+           → (M : (Γ ++ᶜ Δ) ⊢ᶜ⦂ C)
            → env-Cˢ γ Δ (subC M p) ≡ subC (env-Cˢ γ Δ M) p
 
 env-Cˢ-sub ⌊ 𝕊 ⌋ Δ M = refl
@@ -551,7 +551,7 @@ env-Cˢ-sub (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ M =
 
 
 env-Vˢ-pair : ∀ {𝕊 Γ A B} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-            → (V : (Γ ++ᶜ Δ) ⊢V⦂ A) → (U : (Γ ++ᶜ Δ) ⊢V⦂ B)
+            → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ A) → (U : (Γ ++ᶜ Δ) ⊢ᵛ⦂ B)
             → env-Vˢ γ Δ ⦉ V , U ⦊ ≡ ⦉ env-Vˢ γ Δ V , env-Vˢ γ Δ U ⦊
 
 env-Vˢ-pair ⌊ 𝕊 ⌋ Δ V U = refl
@@ -614,7 +614,7 @@ env-Vˢ-pair (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ V U =
 -- different (but equal) proofs, reconciled by `castᶜ-irr`.
 
 env-Cˢ-delay : ∀ {𝕊 Γ A ε τ} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-             → (M : (Γ ++ᶜ Δ) ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε)
+             → (M : (Γ ++ᶜ Δ) ⟨ ιᵣ τ ⟩ ⊢ᶜ⦂ A ! ε)
              → env-Cˢ γ Δ (delay τ M) ≡ delay τ (env-Cˢ γ (Δ ⟨ ιᵣ τ ⟩) M)
 
 env-Cˢ-delay ⌊ 𝕊 ⌋ Δ M = refl
@@ -704,8 +704,8 @@ env-Cˢ-delay {τ = τ} (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ M 
     eA₂   = ++ᶜ-assoc Γ ([] ∷ A₀) (Δ ⟨ ιᵣ τ ⟩)
 
 env-Cˢ-seq : ∀ {𝕊 Γ A B ε ε'} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-           → (M : (Γ ++ᶜ Δ) ⊢C⦂ A ! ε)
-           → (N : (Γ ++ᶜ Δ) ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
+           → (M : (Γ ++ᶜ Δ) ⊢ᶜ⦂ A ! ε)
+           → (N : (Γ ++ᶜ Δ) ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε')
            → env-Cˢ γ Δ (M ⨟ N)
            ≡ (env-Cˢ γ Δ M) ⨟ (env-Cˢ γ (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) N)
 
@@ -809,8 +809,8 @@ env-Cˢ-seq {A = A} {ε = ε} (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W)
     exε   = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) p
 
 env-Cˢ-perform : ∀ {𝕊 Γ A ε} {op : Op} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-           → (V : (Γ ++ᶜ Δ) ⊢V⦂ ⌜ param op ⌝ᵍ)
-           → (M : (Γ ++ᶜ Δ) ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε)
+           → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
+           → (M : (Γ ++ᶜ Δ) ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢ᶜ⦂ A ! ε)
            → env-Cˢ γ Δ (perform op (V) (M))
            ≡ perform op (env-Vˢ γ Δ V) (env-Cˢ γ (Δ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ) M)
 
@@ -902,8 +902,8 @@ env-Cˢ-perform {op = op} (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ 
     exf   = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ) p
 
 env-Cˢ-match : ∀ {𝕊 Γ A B C} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-           → (V : (Γ ++ᶜ Δ) ⊢V⦂ A |×| B)
-           → (M : (Γ ++ᶜ Δ) ∷ A ∷ B ⊢C⦂ C)
+           → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ A |×| B)
+           → (M : (Γ ++ᶜ Δ) ∷ A ∷ B ⊢ᶜ⦂ C)
            → env-Cˢ γ Δ (match (V) `with (M))
            ≡ match (env-Vˢ γ Δ V) `with (env-Cˢ γ (Δ ∷ A ∷ B) M)
 
@@ -1001,9 +1001,9 @@ env-Cˢ-match {A = A} {B = B} (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W)
 -- `castᶜ-irr` as for `match+`.
 
 env-Cˢ-matchℕ : ∀ {𝕊 Γ C} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-              → (V : (Γ ++ᶜ Δ) ⊢V⦂ nat)
-              → (M : (Γ ++ᶜ Δ) ⊢C⦂ C)
-              → (N : (Γ ++ᶜ Δ) ∷ nat ⊢C⦂ C)
+              → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ nat)
+              → (M : (Γ ++ᶜ Δ) ⊢ᶜ⦂ C)
+              → (N : (Γ ++ᶜ Δ) ∷ nat ⊢ᶜ⦂ C)
               → env-Cˢ γ Δ (matchℕ V `zero M `succ N)
               ≡ matchℕ (env-Vˢ γ Δ V) `zero (env-Cˢ γ Δ M)
                                       `succ (env-Cˢ γ (Δ ∷ nat) N)
@@ -1116,9 +1116,9 @@ env-Cˢ-matchℕ (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ V M N =
 -- reconciled by `castᶜ-irr` as for `matchℕ`.
 
 env-Cˢ-recℕ : ∀ {𝕊 Γ B ε} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-            → (V : (Γ ++ᶜ Δ) ⊢V⦂ nat)
-            → (M : (Γ ++ᶜ Δ) ⊢C⦂ B ! ε)
-            → (N : ((Γ ++ᶜ Δ) ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
+            → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ nat)
+            → (M : (Γ ++ᶜ Δ) ⊢ᶜ⦂ B ! ε)
+            → (N : ((Γ ++ᶜ Δ) ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε)
             → (p : ε ·ₑ ε ≾ₑ ε)
             → env-Cˢ γ Δ (recℕ V M N p)
             ≡ recℕ (env-Vˢ γ Δ V) (env-Cˢ γ Δ M)
@@ -1232,7 +1232,7 @@ env-Cˢ-recℕ {B = B} {ε = ε} (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ
 -- The injections: the action passes the injection, as it passes a pair.
 
 env-Vˢ-inl : ∀ {𝕊 Γ A B} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-           → (V : (Γ ++ᶜ Δ) ⊢V⦂ A)
+           → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ A)
            → env-Vˢ γ Δ (inl {B = B} V) ≡ inl (env-Vˢ γ Δ V)
 
 env-Vˢ-inl ⌊ 𝕊 ⌋ Δ V = refl
@@ -1270,7 +1270,7 @@ env-Vˢ-inl {B = B} (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ V =
     eA   = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
 
 env-Vˢ-inr : ∀ {𝕊 Γ A B} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-           → (V : (Γ ++ᶜ Δ) ⊢V⦂ B)
+           → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ B)
            → env-Vˢ γ Δ (inr {A = A} V) ≡ inr (env-Vˢ γ Δ V)
 
 env-Vˢ-inr ⌊ 𝕊 ⌋ Δ V = refl
@@ -1311,9 +1311,9 @@ env-Vˢ-inr {A = A} (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ V =
 -- the two casts reconciled by `castᶜ-irr` as for `match`.
 
 env-Cˢ-match+ : ∀ {𝕊 Γ A B C} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-              → (V : (Γ ++ᶜ Δ) ⊢V⦂ A |+| B)
-              → (M : (Γ ++ᶜ Δ) ∷ A ⊢C⦂ C)
-              → (N : (Γ ++ᶜ Δ) ∷ B ⊢C⦂ C)
+              → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ A |+| B)
+              → (M : (Γ ++ᶜ Δ) ∷ A ⊢ᶜ⦂ C)
+              → (N : (Γ ++ᶜ Δ) ∷ B ⊢ᶜ⦂ C)
               → env-Cˢ γ Δ (match+ V `inl M `inr N)
               ≡ match+ (env-Vˢ γ Δ V) `inl (env-Cˢ γ (Δ ∷ A) M)
                                       `inr (env-Cˢ γ (Δ ∷ B) N)
@@ -1475,7 +1475,7 @@ env-Vˢ-nil {A = A} (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ =
     eA   = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
 
 env-Vˢ-cons : ∀ {𝕊 Γ A} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-            → (V : (Γ ++ᶜ Δ) ⊢V⦂ A) → (U : (Γ ++ᶜ Δ) ⊢V⦂ list A)
+            → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ A) → (U : (Γ ++ᶜ Δ) ⊢ᵛ⦂ list A)
             → env-Vˢ γ Δ (cons V U) ≡ cons (env-Vˢ γ Δ V) (env-Vˢ γ Δ U)
 
 env-Vˢ-cons ⌊ 𝕊 ⌋ Δ V U = refl
@@ -1535,9 +1535,9 @@ env-Vˢ-cons (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ V U =
     eA   = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
 
 env-Cˢ-matchL : ∀ {𝕊 Γ A C} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-              → (V : (Γ ++ᶜ Δ) ⊢V⦂ list A)
-              → (M : (Γ ++ᶜ Δ) ⊢C⦂ C)
-              → (N : (Γ ++ᶜ Δ) ∷ A ∷ list A ⊢C⦂ C)
+              → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ list A)
+              → (M : (Γ ++ᶜ Δ) ⊢ᶜ⦂ C)
+              → (N : (Γ ++ᶜ Δ) ∷ A ∷ list A ⊢ᶜ⦂ C)
               → env-Cˢ γ Δ (matchL V `nil M `cons N)
               ≡ matchL (env-Vˢ γ Δ V) `nil (env-Cˢ γ Δ M)
                                       `cons (env-Cˢ γ (Δ ∷ A ∷ list A) N)
@@ -1646,9 +1646,9 @@ env-Cˢ-matchL {A = A} (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ V M
     exN   = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ X → X ∷ A ∷ list A) p
 
 env-Cˢ-recL : ∀ {𝕊 Γ A B ε} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-            → (V : (Γ ++ᶜ Δ) ⊢V⦂ list A)
-            → (M : (Γ ++ᶜ Δ) ⊢C⦂ B ! ε)
-            → (N : ((Γ ++ᶜ Δ) ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
+            → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ list A)
+            → (M : (Γ ++ᶜ Δ) ⊢ᶜ⦂ B ! ε)
+            → (N : ((Γ ++ᶜ Δ) ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε)
             → (p : ε ·ₑ ε ≾ₑ ε)
             → env-Cˢ γ Δ (recL V M N p)
             ≡ recL (env-Vˢ γ Δ V) (env-Cˢ γ Δ M)
@@ -1761,8 +1761,8 @@ env-Cˢ-recL {A = A} {B = B} {ε = ε} (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A�
 
 
 env-Cˢ-box : ∀ {𝕊 Γ A C ρ} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-           → (V : (Γ ++ᶜ Δ) ⟨ ρ ⟩ ⊢V⦂ A)
-           → (M : (Γ ++ᶜ Δ) ∷ [ ρ ] A ⊢C⦂ C)
+           → (V : (Γ ++ᶜ Δ) ⟨ ρ ⟩ ⊢ᵛ⦂ A)
+           → (M : (Γ ++ᶜ Δ) ∷ [ ρ ] A ⊢ᶜ⦂ C)
            → env-Cˢ γ Δ (box _ V M)
            ≡ box _ (env-Vˢ γ (Δ ⟨ ρ ⟩) V) (env-Cˢ γ (Δ ∷ [ ρ ] A) M)
 
@@ -1901,21 +1901,21 @@ env-Cˢ-box {A = A} {ρ = ρ} (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W)
 
 -- The action, at the empty suffix.
 
-env-V : ∀ {𝕊 Γ A} → Env 𝕊 Γ → Γ ⊢V⦂ A → toCtx 𝕊 ⊢V⦂ A
+env-V : ∀ {𝕊 Γ A} → Env 𝕊 Γ → Γ ⊢ᵛ⦂ A → toCtx 𝕊 ⊢ᵛ⦂ A
 env-V γ V = env-Vˢ γ [] V
 
-env-C : ∀ {𝕊 Γ C} → Env 𝕊 Γ → Γ ⊢C⦂ C → toCtx 𝕊 ⊢C⦂ C
+env-C : ∀ {𝕊 Γ C} → Env 𝕊 Γ → Γ ⊢ᶜ⦂ C → toCtx 𝕊 ⊢ᶜ⦂ C
 env-C γ M = env-Cˢ γ [] M
 
-env-C-id : ∀ {𝕊 C} → (M : toCtx 𝕊 ⊢C⦂ C) → env-C ⌊ 𝕊 ⌋ M ≡ M
+env-C-id : ∀ {𝕊 C} → (M : toCtx 𝕊 ⊢ᶜ⦂ C) → env-C ⌊ 𝕊 ⌋ M ≡ M
 env-C-id M = refl
 
 -- The action commutes with substituting a telescope entry, definitionally:
 -- at the empty suffix every cast is `refl` (`++ᶜ-assoc Γ Γ' []` is, and so is
 -- `cong₂ _++ᶜ_ refl refl`) and the variable is `Hd`.
 
-env-Cˢ-head : ∀ {𝕊 Γ A C} → (γ : Env 𝕊 Γ) → (M : Γ ∷ A ⊢C⦂ C)
-            → (W : toCtx 𝕊 ⊢V⦂ A)
+env-Cˢ-head : ∀ {𝕊 Γ A C} → (γ : Env 𝕊 Γ) → (M : Γ ∷ A ⊢ᶜ⦂ C)
+            → (W : toCtx 𝕊 ⊢ᵛ⦂ A)
             → (env-Cˢ γ ([] ∷ A) M) [ split-[] ↦ W ]c ≡ env-C (γ ∷ᵉ W) M
 env-Cˢ-head γ M W = refl
 
@@ -1946,7 +1946,7 @@ Cl-cast-irr e e' X = castᶜ-irr _ e' X
 -- the same by `uip`.
 
 env-Vˢ-handler : ∀ {𝕊 Γ A B ε ε'} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-               → (N : (Γ ++ᶜ Δ) ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
+               → (N : (Γ ++ᶜ Δ) ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε')
                → (H : Fam B ((Γ ++ᶜ Δ) ⟨ ⊤ᵣ ⟩))
                → env-Vˢ γ Δ (handler N H)
                ≡ handler (env-Cˢ γ (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) N) (env-Hˢ γ Δ H)
@@ -2061,8 +2061,8 @@ env-Vˢ-handler {A = A} {B = B} {ε = ε}
         D = Δ ++ᶜ Dcl B op ε₀
 
 env-Cˢ-handle : ∀ {𝕊 Γ A B ε ε'} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
-              → (M : (Γ ++ᶜ Δ) ⊢C⦂ A ! ε)
-              → (V : (Γ ++ᶜ Δ) ⊢V⦂ (A ! ε) ⇛ (B ! ε'))
+              → (M : (Γ ++ᶜ Δ) ⊢ᶜ⦂ A ! ε)
+              → (V : (Γ ++ᶜ Δ) ⊢ᵛ⦂ (A ! ε) ⇛ (B ! ε'))
               → env-Cˢ γ Δ (handle M `with V)
               ≡ handle (env-Cˢ γ Δ M) `with (env-Vˢ γ Δ V)
 

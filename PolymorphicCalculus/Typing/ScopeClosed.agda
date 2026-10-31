@@ -27,7 +27,7 @@ open import PolymorphicCalculus.Syntax.Run      S
 infix 4 _⊢ᵛ_⦂_ _⊢ᶜ_⦂_
 
 _⊢ᵛ_⦂_ : ∀ {n} → OCtx ∅ˢ n → RunV n → OVType ∅ˢ → Set
-Γ ⊢ᵛ V ⦂ X = Σ[ D ∈ ∅ᴴ ∣ Γ ⊢V⦂ X ] ∥ D ∥ᵛ ≡ V
+Γ ⊢ᵛ V ⦂ X = Σ[ D ∈ ∅ᴴ ∣ Γ ⊢ᵛ⦂ X ] ∥ D ∥ᵛ ≡ V
 
 _⊢ᶜ_⦂_ : ∀ {n} → OCtx ∅ˢ n → RunC n → OCType ∅ˢ → Set
-Γ ⊢ᶜ M ⦂ C = Σ[ D ∈ ∅ᴴ ∣ Γ ⊢C⦂ C ] ∥ D ∥ᶜ ≡ M
+Γ ⊢ᶜ M ⦂ C = Σ[ D ∈ ∅ᴴ ∣ Γ ⊢ᶜ⦂ C ] ∥ D ∥ᶜ ≡ M

@@ -44,7 +44,7 @@ open LanguageSpec S
 open import Language.Comparisons
 open import MonomorphicCalculus.Syntax.Types S
 open import MonomorphicCalculus.Syntax.Terms S
-  using (_⊢V⦂_; _⊢C⦂_; cmp; return; const; ⋆; true; false; zero; succ; ⦉_,_⦊; inl; inr; nil; cons)
+  using (_⊢ᵛ⦂_; _⊢ᶜ⦂_; cmp; return; const; ⋆; true; false; zero; succ; ⦉_,_⦊; inl; inr; nil; cons)
 open import MonomorphicCalculus.Syntax.Data      S
 
 open Category Cat
@@ -99,7 +99,7 @@ param-⌈⌉ emptyₑ         ()
 -- A comparison of values denoting data's points returns the relation's
 -- truth on the data's order.
 
-sound-cmp : ∀ {Γ A} → (⋈ : Cmp) → (et : Et A) → (V W : Γ ⊢V⦂ A)
+sound-cmp : ∀ {Γ A} → (⋈ : Cmp) → (et : Et A) → (V W : Γ ⊢ᵛ⦂ A)
           → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (d e : ⟪ A ⟫)
           → ⟦ V ⟧ᵛᵗ pV ≈ᵐ ⌜ et ⌝ᵈ d ∘ᵐ terminalᵐ
           → ⟦ W ⟧ᵛᵗ pW ≈ᵐ ⌜ et ⌝ᵈ e ∘ᵐ terminalᵐ

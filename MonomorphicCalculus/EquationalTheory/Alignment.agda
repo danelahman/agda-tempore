@@ -26,8 +26,8 @@ open import MonomorphicCalculus.Syntax.Terms.Equivalence S
 
 open import MonomorphicCalculus.EquationalTheory.EquationalTheory S
 
-≡→≡ᵗʰᵛ : ∀ {Γ A} {V V' : Γ ⊢V⦂ A} → V ≡ V' → Γ ⊢V⦂ V ≡ᵗʰ V'
+≡→≡ᵗʰᵛ : ∀ {Γ A} {V V' : Γ ⊢ᵛ⦂ A} → V ≡ V' → Γ ⊢ᵛ⦂ V ≡ᵗʰ V'
 ≡→≡ᵗʰᵛ refl = V-refl
 
-≡→≡ᵗʰᶜ : ∀ {Γ C} {M M' : Γ ⊢C⦂ C} → M ≡ M' → Γ ⊢C⦂ M ≡ᵗʰ M'
+≡→≡ᵗʰᶜ : ∀ {Γ C} {M M' : Γ ⊢ᶜ⦂ C} → M ≡ M' → Γ ⊢ᶜ⦂ M ≡ᵗʰ M'
 ≡→≡ᵗʰᶜ refl = C-refl

@@ -53,7 +53,7 @@ open import PolymorphicCalculus.Examples.Variables
 ------------------------------------------------------------------
 -- A closed derivation in the empty context is a typing
 
-closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢C⦂ C)
+closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢ᶜ⦂ C)
        → ⌊ D ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ → Typable [] M
 closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
@@ -99,15 +99,15 @@ private
   𝟏³ : ∀ {Θ} {ε : EExp Θ} → 𝟏̂ₑ ·̂ₑ (𝟏̂ₑ ·̂ₑ (𝟏̂ₑ ·̂ₑ ε)) ≡̂ₑ ε
   𝟏³ = ≡̂ₑ-trans ≡̂ₑ-identityˡ (≡̂ₑ-trans ≡̂ₑ-identityˡ ≡̂ₑ-identityˡ)
 
-  H : ∀ {n} {Γ : OCtx (∅ˢ +e) n} → ∅ᴴ ∣ Γ ⊢V⦂ T ⇒ T ! 𝟏̂ₑ
+  H : ∀ {n} {Γ : OCtx (∅ˢ +e) n} → ∅ᴴ ∣ Γ ⊢ᵛ⦂ T ⇒ T ! 𝟏̂ₑ
   H = fun (return (var Hd ok₀))
 
-  relay-D : ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
+  relay-D : ∅ᴴ ∣ [] ⊢ᶜ⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
   relay-D =
     return (fun (handle var Hd ok₀ · ⋆
       `with handler (return ⋆) (λ op →
         perform op (var (Tl-∷ Hd) ok₀)
-          (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) (eqᵣ ≡̂ᵣ-identityˡ)
+          (unbox (res-var (Tl-∷ (Tl-⟨⟩ Hd))) (eqᵣ ≡̂ᵣ-identityˡ)
             (coerce (eqₑ 𝟏³)
               (return H
                ⨟ ((var Hd ok₀ · fun (var (Tl-∷ (Tl-∷ (Tl-⟨⟩ Hd))) ok₁
@@ -160,7 +160,7 @@ private
       step : ∀ {Θ} {ρ : RExp Θ} → ∅ᴴ ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ → ∅ᴴ ⊩ ρ ·̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ ≾̂ᵣ 𝟏̂ᵣ
       step p = transᵣ (monoᵣ p 𝟏-map) (eqᵣ ≡̂ᵣ-identityˡ)
 
-  relay-boxed-D : ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
+  relay-boxed-D : ∅ᴴ ∣ [] ⊢ᶜ⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
   relay-boxed-D =
     return (fun (handle var Hd ok₀ · ⋆
       `with handler (return ⋆) (λ op →
@@ -169,7 +169,7 @@ private
            ⨟ ((var Hd ok₀ · var (Tl-∷ (Tl-⟨⟩ Hd)) ok₁)
               ⨟ ((var (Tl-∷ (Tl-⟨⟩ Hd)) ok₁ · var Hd ok₀)
                  ⨟ perform op (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))))) ok₃)
-                     (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) (eqᵣ ≡̂ᵣ-identityˡ)
+                     (unbox (res-var (Tl-∷ (Tl-⟨⟩ Hd))) (eqᵣ ≡̂ᵣ-identityˡ)
                        (var Hd ok₀ · var (Tl-∷ Hd) ok₀))))))))
 
 relay-boxed-typable : Typable [] relay-boxed
@@ -192,7 +192,7 @@ expected-relay-boxed = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((unit ⇒ α₀ ! ε₀) ⇒ un
 discard : RawC ∅ˢ 0
 discard = return (fun (handle (v₀ · ⋆) `with handler (return ⋆) (λ _ → return ⋆)))
 
-discard-D : Minimum (Grade._≾_ EGrade) 𝟏ₑ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
+discard-D : Minimum (Grade._≾_ EGrade) 𝟏ₑ → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
 discard-D least =
   return (fun (handle var Hd ok₀ · ⋆
                 `with handler (return ⋆) (λ _ → coerce (minₑ least) (return ⋆))))
@@ -221,13 +221,13 @@ resume-twice =
   return (fun (handle (v₀ · ⋆) `with handler (return ⋆) resume-twice-clause))
 
 resume-twice-D : True (⊤ₑ ≾ₑ? 𝟏ₑ)
-               → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
+               → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
 resume-twice-D top =
   return (fun (handle var Hd ok₀ · ⋆
     `with handler (return ⋆) (λ op →
       coerce (monoₑ ⊩≾̂ₑ-refl twice≾once)
         (perform op (var (Tl-∷ Hd) ok₀)
-          (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) (eqᵣ ≡̂ᵣ-identityˡ)
+          (unbox (res-var (Tl-∷ (Tl-⟨⟩ Hd))) (eqᵣ ≡̂ᵣ-identityˡ)
             ((var Hd ok₀ · var (Tl-∷ Hd) ok₀)
              ⨟ (var (Tl-∷ (Tl-⟨⟩ Hd)) okʲ · var (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) okʲ)))))))
   where
@@ -282,13 +282,13 @@ private
   forward-D : ∀ {n} {Γ : OCtx (∅ˢ +e) n} → (op : Op)
             → ∅ᴴ ∣ Γ ⟨ rconst ⊤ᵣ ⟩ ∷ᶜ ⌜ param op ⌝ᵍ
                    ∷ᶜ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ unit ! evar (newᵉ {∅ˢ}))
-              ⊢C⦂ unit ! (econst (op-grade op) ·̂ₑ evar (newᵉ {∅ˢ}))
+              ⊢ᶜ⦂ unit ! (econst (op-grade op) ·̂ₑ evar (newᵉ {∅ˢ}))
   forward-D op =
     perform op (var (Tl-∷ Hd) ok₀)
-      (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) (eqᵣ ≡̂ᵣ-identityˡ)
+      (unbox (res-var (Tl-∷ (Tl-⟨⟩ Hd))) (eqᵣ ≡̂ᵣ-identityˡ)
         (var Hd ok₀ · var (Tl-∷ Hd) ok₀))
 
-  bound-D : ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ))) ! 𝟏̂ₑ
+  bound-D : ∅ᴴ ∣ [] ⊢ᶜ⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ))) ! 𝟏̂ₑ
   bound-D =
     return (fun (return (handler (return (var Hd ok₀)) forward-D)
                  ⨟ (handle var (Tl-∷ (Tl-⟨⟩ Hd)) ok₁ · ⋆ `with var Hd ok₀)))

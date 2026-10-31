@@ -249,7 +249,7 @@ strᵀ-natʳ g =
 -- bound computation to the binder: the strength carries it across.
 
 subCtx-str : ∀ {Γ A A₀ B ε₁ ε₂ X} {t : A₀ <:ᵛ A}
-           → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂) → (pN : Paramᶜ N)
+           → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂) → (pN : Paramᶜ N)
            → (b : X →ᵐ [ ∣ ε₁ ∣ᵉ ]ᵒ (⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ))
            → (m : X →ᵐ Tᵒ ⟦ A₀ ⟧ᵛ ε₁)
            → Tᶠ (⟦ subCtx t N ⟧ᶜᵗ (subCtxᴾ t N pN))
@@ -431,8 +431,8 @@ seq-step-core : ∀ {ε₁ ε₂ ε₃ A A₀ B P} {𝕊 𝕊' : State []}
   → (alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
            → alg {εb} ∘ᵐ mapˣᵐ idᵐ (T-≤ q) ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa})
   → (pv : ⟦ toCtx 𝕊 ⟧ᶜᵗˣ →ᵐ P)
-  → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁} → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
-  → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃}
+  → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁} → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂)
+  → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε₃}
   → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
   → (c : κₛ (step-extends-state r) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
   → (pS : Paramˢ 𝕊)
@@ -574,7 +574,7 @@ box-≤ₛ-res w w' env cell =
 -- own effect grades only instantiate them.
 
 step-box : ∀ {ε₁ ε₃ A A₀} {𝕊 𝕊' : State []} {ρ₂ ρ₄ : R}
-         → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃}
+         → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε₃}
          → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
          → (c : κₛ (step-extends-state r) ·ᵣ ρ₄ ≾ᵣ ρ₂)
          → (g : ∣ step-grade r ∣ᵉ ·ᵣ ρ₄ ≾ᵣ ρ₂)
@@ -940,7 +940,7 @@ step-box (DELAY {τ = τ} {𝕊 = 𝕊}) c g pS pM =
 -- into the single one `step-box` expects.
 
 seq-g : ∀ {ε₁ ε₃ A A₀} {𝕊 𝕊' : State []}
-      → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃}
+      → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε₃}
       → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
       → ∣ step-grade r ∣ᵉ ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ
 seq-g {ε₃ = ε₃} r =
@@ -965,7 +965,7 @@ box-merge p q m d h =
 seq-target : ∀ {ε₁ ε₂ ε₃ A B P} {Γ Γ' : Ctx} {H : Obj}
            → (alg : P ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε₃ →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε₃ ·ₑ ε₂))
            → (pv : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ P)
-           → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+           → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂)
            → (ρ : Ren [] (Γ' ⟨ ∣ ε₃ ∣ᵉ ⟩) (Γ ⟨ ∣ ε₁ ∣ᵉ ⟩))
            → (m' : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε₃)
            → (env : H →ᵐ ⟦ Γ' ⟧ᶜᵗˣ)
@@ -1008,8 +1008,8 @@ seq-target {ε₃ = ε₃} {A = A} {B = B} {Γ' = Γ'} alg pv N ρ m' env pN =
            , ≈ᵐ-refl ⟩ᵐ-cong))
 
 sound-SEQ-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {𝕊 𝕊' : State []}
-  → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁} → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
-  → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃}
+  → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁} → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂)
+  → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε₃}
   → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
   → (c : κₛ (step-extends-state r) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
   → (pS : Paramˢ 𝕊) → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
@@ -1103,7 +1103,7 @@ sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {𝕊} {𝕊'} {M} N {M'} 
 -- step's own type refinement, its effect half the step's sub-effecting.
 
 sound-SUB : ∀ {ε ε' A A'} {𝕊 : State []}
-  → {M : toCtx 𝕊 ⊢C⦂ A ! ε}
+  → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε}
   → (p : A <:ᵛ A') → (q : ε ≾ₑ ε')
   → (pS : Paramˢ 𝕊) → (pM : Paramᶜ M)
   → ⟦ subC M (p !ₛ q) ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟧ˢ pS
@@ -1157,11 +1157,11 @@ relax-coe n c a =
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘ _ _ _ _ ∙ mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _))
 
 sound-SUB-HANDLE : ∀ {Γ A A₁ B B₁ ε ε₁ ε' ε₁'}
-  → (M : Γ ⊢C⦂ A ! ε) → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B₁ ! ε₁')
+  → (M : Γ ⊢ᶜ⦂ A ! ε) → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A₁ ⊢ᶜ⦂ B₁ ! ε₁')
   → (H : (op : Op) → (ε'' : E)
        → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
             ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B₁ ! ε'')
-         ⊢C⦂ B₁ ! (op-grade op ·ₑ ε''))
+         ⊢ᶜ⦂ B₁ ! (op-grade op ·ₑ ε''))
   → (p : A <:ᵛ A₁) → (pε : ε ≾ₑ ε₁) → (q : B₁ <:ᵛ B) → (s : ε₁' ≾ₑ ε')
   → (pM : Paramᶜ M) → (pN : Paramᶜ N)
   → (pH : ∀ op ε'' → Paramᶜ (H op ε'')) → (uH : EffUniformʰ {Γ} {B₁} H pH)
@@ -1243,7 +1243,7 @@ sound-SUB-HANDLE {Γ} M N H p pε q s pM pN pH uH = lhs ∙ ≈ᵐ-sym rhs
 -- `SUB-HANDLE-TRANS`: nested coercions denote their composite.
 
 sound-SUB-HANDLE-TRANS : ∀ {Γ A₀ A' A B ε ε'}
-  → (M : Γ ⊢C⦂ A ! ε) → (V : Γ ⊢V⦂ A₀)
+  → (M : Γ ⊢ᶜ⦂ A ! ε) → (V : Γ ⊢ᵛ⦂ A₀)
   → (p : A₀ <:ᵛ A') → (p' : A' <:ᵛ (A ! ε) ⇛ (B ! ε'))
   → (pM : Paramᶜ M) → (pV : Paramᵛ V)
   → ⟦ handle M `with subV (subV V p) p' ⟧ᶜᵗ (pM , pV)

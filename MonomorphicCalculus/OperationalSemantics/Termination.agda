@@ -68,7 +68,7 @@ open import MonomorphicCalculus.Syntax.Substitution.Equivalence  Spec
 
 fund-unbox : ∀ {𝕊 Γ A A₀ D ρ σ ε} → (γ : Env 𝕊 Γ) → Rel-Env γ
            → (x : [ ρ ] A₀ ∈[ σ ] Γ) → (rel : σ ≾ᵣ ρ) → (p : A₀ <:ᵛ A)
-           → (M : Γ ∷ A ⊢C⦂ D ! ε)
+           → (M : Γ ∷ A ⊢ᶜ⦂ D ! ε)
            → (∀ {𝕊'} → (γ' : Env 𝕊' (Γ ∷ A)) → Rel-Env γ'
                 → CRed' D ε 𝕊' (env-C γ' M))
            --------------------------------------------------------------
@@ -98,7 +98,7 @@ fund-unbox {𝕊 = 𝕊} {A = A} {A₀ = A₀} {ρ = ρ} {σ = σ} γ pγ x rel 
 -- suffix, where both orders' casts and boundary variables reduce.
 
 fund-match : ∀ {𝕊 Γ A B D ε} → (γ : Env 𝕊 Γ) → Rel-Env γ
-           → (V : Γ ⊢V⦂ A |×| B) → (M : Γ ∷ A ∷ B ⊢C⦂ D ! ε)
+           → (V : Γ ⊢ᵛ⦂ A |×| B) → (M : Γ ∷ A ∷ B ⊢ᶜ⦂ D ! ε)
            → VRed (A |×| B) 𝕊 (env-V γ V)
            → (∀ {𝕊'} → (γ' : Env 𝕊' (Γ ∷ A ∷ B)) → Rel-Env γ'
                 → CRed' D ε 𝕊' (env-C γ' M))
@@ -124,8 +124,8 @@ fund-match {𝕊 = 𝕊} {A = A} {B = B} γ pγ V M (p₁ , p₂) pM =
 -- payload substituted is the action at the environment extended by it.
 
 fund-match+ : ∀ {𝕊 Γ A B D ε} → (γ : Env 𝕊 Γ) → Rel-Env γ
-            → (V : Γ ⊢V⦂ A |+| B)
-            → (M : Γ ∷ A ⊢C⦂ D ! ε) → (N : Γ ∷ B ⊢C⦂ D ! ε)
+            → (V : Γ ⊢ᵛ⦂ A |+| B)
+            → (M : Γ ∷ A ⊢ᶜ⦂ D ! ε) → (N : Γ ∷ B ⊢ᶜ⦂ D ! ε)
             → VRed (A |+| B) 𝕊 (env-V γ V)
             → (∀ {𝕊'} → (γ' : Env 𝕊' (Γ ∷ A)) → Rel-Env γ'
                  → CRed' D ε 𝕊' (env-C γ' M))
@@ -141,7 +141,7 @@ fund-match+ {𝕊 = 𝕊} {A = A} {B = B} {D = D} {ε = ε} γ pγ V M N pV pM p
     M₀ = env-Cˢ γ ([] ∷ A) M
     N₀ = env-Cˢ γ ([] ∷ B) N
 
-    go : (s : (toCtx 𝕊 ⊢V⦂ A) ⊎ (toCtx 𝕊 ⊢V⦂ B)) → VRed⊎ (VRed A 𝕊) (VRed B 𝕊) s
+    go : (s : (toCtx 𝕊 ⊢ᵛ⦂ A) ⊎ (toCtx 𝕊 ⊢ᵛ⦂ B)) → VRed⊎ (VRed A 𝕊) (VRed B 𝕊) s
        → CRed' D ε 𝕊 (match+-reduct s M₀ N₀)
     go _ (red-inl {W} pW) = pM (γ ∷ᵉ W) (pγ , pW)
     go _ (red-inr {W} pW) = pN (γ ∷ᵉ W) (pγ , pW)
@@ -155,8 +155,8 @@ fund-match+ {𝕊 = 𝕊} {A = A} {B = B} {D = D} {ε = ε} γ pγ V M N pV pM p
 -- unfolding crosses it by), the predecessor, the reach, and the result.
 
 fund-recℕ : ∀ {𝕊 Γ B ε} → (γ : Env 𝕊 Γ) → Rel-Env γ
-          → (V : Γ ⊢V⦂ nat) → (M : Γ ⊢C⦂ B ! ε)
-          → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
+          → (V : Γ ⊢ᵛ⦂ nat) → (M : Γ ⊢ᶜ⦂ B ! ε)
+          → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε)
           → (p : ε ·ₑ ε ≾ₑ ε)
           → CRed' B ε 𝕊 (env-C γ M)
           → (∀ {𝕊'} → (γ' : Env 𝕊' ((Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B))
@@ -170,7 +170,7 @@ fund-recℕ {𝕊 = 𝕊} {B = B} {ε = ε} γ pγ V M N p pM pN =
     M₀ = env-C γ M
     N₀ = env-Cˢ γ (([] ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) N
 
-    go : (U : toCtx 𝕊 ⊢V⦂ nat) → CRed' B ε 𝕊 (recℕ U M₀ N₀ p)
+    go : (U : toCtx 𝕊 ⊢ᵛ⦂ nat) → CRed' B ε 𝕊 (recℕ U M₀ N₀ p)
     go (var f x)     = ⊥-elim (nat-not-in-toCtx x)
     go zero          = CRed-expand RECℕ-ZERO pM
     go (subV U natₛ) = CRed-expand SUB-RECℕ (go U)
@@ -179,7 +179,7 @@ fund-recℕ {𝕊 = 𝕊} {B = B} {ε = ε} γ pγ V M N p pM pN =
         (CRed'-sub (<:ᵛ-refl B) p (seq-CRed (recℕ-step W N₀) (go W) cont))
       where
         cont : ∀ {𝕊₁ : State []} → (q : 𝕊 ⊑ₛ[ ∣ ε ∣ᵉ ] 𝕊₁)
-             → (U : toCtx 𝕊₁ ⊢V⦂ B) → VRed B 𝕊₁ U
+             → (U : toCtx 𝕊₁ ⊢ᵛ⦂ B) → VRed B 𝕊₁ U
              → CRed' B ε 𝕊₁
                  ((C-rename (cong-∷-ren (unbox-ren q)) (recℕ-step W N₀))
                     [ split-[] ↦ U ]c)
@@ -197,8 +197,8 @@ fund-recℕ {𝕊 = 𝕊} {B = B} {ε = ε} γ pγ V M N p pM pN =
 -- the tail in the opposite order from the environment, as for `match`.
 
 fund-matchL : ∀ {𝕊 Γ A D ε} → (γ : Env 𝕊 Γ) → Rel-Env γ
-            → (V : Γ ⊢V⦂ list A)
-            → (M : Γ ⊢C⦂ D ! ε) → (N : Γ ∷ A ∷ list A ⊢C⦂ D ! ε)
+            → (V : Γ ⊢ᵛ⦂ list A)
+            → (M : Γ ⊢ᶜ⦂ D ! ε) → (N : Γ ∷ A ∷ list A ⊢ᶜ⦂ D ! ε)
             → VRed (list A) 𝕊 (env-V γ V)
             → CRed' D ε 𝕊 (env-C γ M)
             → (∀ {𝕊'} → (γ' : Env 𝕊' (Γ ∷ A ∷ list A)) → Rel-Env γ'
@@ -226,8 +226,8 @@ fund-matchL {𝕊 = 𝕊} {A = A} {D = D} {ε = ε} γ pγ V M N pV pM pN =
 -- the head, the tail, the reach and the result.
 
 fund-recL : ∀ {𝕊 Γ A B ε} → (γ : Env 𝕊 Γ) → Rel-Env γ
-          → (V : Γ ⊢V⦂ list A) → (M : Γ ⊢C⦂ B ! ε)
-          → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
+          → (V : Γ ⊢ᵛ⦂ list A) → (M : Γ ⊢ᶜ⦂ B ! ε)
+          → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε)
           → (p : ε ·ₑ ε ≾ₑ ε)
           → VRed (list A) 𝕊 (env-V γ V)
           → CRed' B ε 𝕊 (env-C γ M)
@@ -254,7 +254,7 @@ fund-recL {𝕊 = 𝕊} {A = A} {B = B} {ε = ε} γ pγ V M N p pV pM pN =
         rec = CRed-expand RECL (go (listᵛ L) pL)
 
         cont : ∀ {𝕊₁ : State []} → (q : 𝕊 ⊑ₛ[ ∣ ε ∣ᵉ ] 𝕊₁)
-             → (U : toCtx 𝕊₁ ⊢V⦂ B) → VRed B 𝕊₁ U
+             → (U : toCtx 𝕊₁ ⊢ᵛ⦂ B) → VRed B 𝕊₁ U
              → CRed' B ε 𝕊₁
                  ((C-rename (cong-∷-ren (unbox-ren q)) (recL-step W L N₀))
                     [ split-[] ↦ U ]c)
@@ -279,7 +279,7 @@ fund-recL {𝕊 = 𝕊} {A = A} {B = B} {ε = ε} γ pγ V M N p pV pM pN =
 -- `Rel-Env` `((pγ , pW) , bv)`.
 
 fund-handler : ∀ {𝕊 Γ A B ε₁ ε₂} → (γ : Env 𝕊 Γ) → Rel-Env γ
-             → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+             → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂)
              → (H : Fam B (Γ ⟨ ⊤ᵣ ⟩))
              → (∀ {𝕊'} {op : Op} {ε₃ : E}
                   → (γ' : Env 𝕊' (Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
@@ -289,9 +289,9 @@ fund-handler : ∀ {𝕊 Γ A B ε₁ ε₂} → (γ : Env 𝕊 Γ) → Rel-Env 
                   → CRed' B (op-grade op ·ₑ ε₃) 𝕊' (env-C γ' (H op ε₃)))
              → (∀ {𝕊'} → (γ' : Env 𝕊' (Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A)) → Rel-Env γ'
                   → CRed' B ε₂ 𝕊' (env-C γ' N))
-             → ∀ {s A₀ ε₀ B₀ ε₀'} {U : toCtx 𝕊 ⊢V⦂ (A₀ ! ε₀) ⇛ (B₀ ! ε₀')}
+             → ∀ {s A₀ ε₀ B₀ ε₀'} {U : toCtx 𝕊 ⊢ᵛ⦂ (A₀ ! ε₀) ⇛ (B₀ ! ε₀')}
              → Use (env-V γ (handler N H)) U
-             → {e : shapeᵛ A₀ ≡ s} → {M : toCtx 𝕊 ⊢C⦂ A₀ ! ε₀}
+             → {e : shapeᵛ A₀ ≡ s} → {M : toCtx 𝕊 ⊢ᶜ⦂ A₀ ! ε₀}
              → CRedˢ' s e ε₀ 𝕊 M
              --------------------------------------------------------------
              → CRed' B₀ (ε₀ ·ₑ ε₀') 𝕊 (handle M `with U)
@@ -318,7 +318,7 @@ fund-handler {𝕊 = 𝕊} {Γ = Γ} {A = A} {B = B} {ε₁ = ε₁} γ pγ N H 
 -- `Rel-Env` is the boxed value's reducibility at every state the lock permits.
 
 fund-box : ∀ {𝕊 Γ A D ρ ε} → (γ : Env 𝕊 Γ) → Rel-Env γ
-         → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A) → (M : Γ ∷ [ ρ ] A ⊢C⦂ D ! ε)
+         → (V : Γ ⟨ ρ ⟩ ⊢ᵛ⦂ A) → (M : Γ ∷ [ ρ ] A ⊢ᶜ⦂ D ! ε)
          → (∀ {𝕊'} → (γ' : Env 𝕊' (Γ ⟨ ρ ⟩)) → Rel-Env γ'
               → VRed A 𝕊' (env-V γ' V))
          → (∀ {𝕊'} → (γ' : Env 𝕊' (Γ ∷ [ ρ ] A)) → Rel-Env γ'
@@ -363,9 +363,9 @@ fund-box {𝕊 = 𝕊} {Γ = Γ} {A = A} {ρ = ρ} γ pγ V M pV pM =
 -- the resumption, both of `env-Cˢ`'s casts being `refl` at the empty suffix.
 
 fund-perform : ∀ {𝕊 Γ A ε} {op : Op} → (γ : Env 𝕊 Γ) → Rel-Env γ
-             → (V : Γ ⊢V⦂ ⌜ param op ⌝ᵍ)
+             → (V : Γ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
              → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
-                      ⊢C⦂ A ! ε)
+                      ⊢ᶜ⦂ A ! ε)
              → VRed ⌜ param op ⌝ᵍ 𝕊 (env-V γ V)
              → (∀ {𝕊'} → (γ' : Env 𝕊' (Γ ⟨ ∣ op-grade op ∣ᵉ ⟩
                                          ∷ ⌜ arity op ⌝ᵍ))
@@ -387,7 +387,7 @@ fund-perform {𝕊 = 𝕊} {Γ = Γ} {op = op} γ pγ V M pV pM =
     -- the action at the resumption's environment is the resumption, once the
     -- two `++ᶜ`-associativity casts are seen to be the identity
     resumeq : ∀ {𝕊₂ : State []} → (q : 𝕊 ⊑ₛ[ ρ ] 𝕊₂)
-            → (W' : toCtx 𝕊₂ ⊢V⦂ Ar)
+            → (W' : toCtx 𝕊₂ ⊢ᵛ⦂ Ar)
             → env-C ((γ ⟨ q ⟩ᵉ) ∷ᵉ W') M ≡ resume q M₀ W'
     resumeq q W' =
       cong (λ z → (C-rename (cong-∷-ren (unbox-ren q)) z) [ split-[] ↦ W' ]c)
@@ -408,7 +408,7 @@ mutual
   -- reduces the clause's application to that body.
 
   fund-v : ∀ {𝕊 Γ A} → (γ : Env 𝕊 Γ) → Rel-Env γ
-         → (V : Γ ⊢V⦂ A)
+         → (V : Γ ⊢ᵛ⦂ A)
          -------------------------------
          → VRed A 𝕊 (env-V γ V)
 
@@ -462,7 +462,7 @@ mutual
   -- the action itself up to `_≡_`.
 
   fund-c : ∀ {𝕊 Γ A ε} → (γ : Env 𝕊 Γ) → Rel-Env γ
-         → (M : Γ ⊢C⦂ A ! ε)
+         → (M : Γ ⊢ᶜ⦂ A ! ε)
          -------------------------------
          → CRed' A ε 𝕊 (env-C γ M)
 
@@ -578,7 +578,7 @@ mutual
 -- is read off; the reducibility of the components plays no part.
 
 CRed-halts : ∀ {s} {P : VPred s} {A ε} {e : shapeᵛ A ≡ s} {𝕊 : State []}
-           → {M : toCtx 𝕊 ⊢C⦂ A ! ε}
+           → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε}
            → CRed s P e ε 𝕊 M
            --------------------
            → Halts (⟨ 𝕊 ∣ M ⟩)

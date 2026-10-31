@@ -90,9 +90,9 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
          (H : (op' : Op) → (ε₀ : E)
               → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op' ⌝ᵍ
                    ∷ [ ∣ op-grade op' ∣ᵉ ] (⌜ arity op' ⌝ᵍ ⇒ B ! ε₀)
-                ⊢C⦂ B ! (op-grade op' ·ₑ ε₀))
-         (M : Γ ⟨ ρ ⟩ ∷ A₀ ⊢C⦂ A ! ε)
-         (N : Γ ⟨ σ ⟩ ∷ A ⊢C⦂ B ! ε')
+                ⊢ᶜ⦂ B ! (op-grade op' ·ₑ ε₀))
+         (M : Γ ⟨ ρ ⟩ ∷ A₀ ⊢ᶜ⦂ A ! ε)
+         (N : Γ ⟨ σ ⟩ ∷ A ⊢ᶜ⦂ B ! ε')
          (ren : Ren [] ((Γ ⟨ ρ ⟩ ∷ A₀) ⟨ ∣ ε ∣ᵉ ⟩) (Γ ⟨ σ ⟩))
          (pM : Paramᶜ M) (pN : Paramᶜ N)
          (pH : ∀ op' ε₀ → Paramᶜ (H op' ε₀))
@@ -107,7 +107,7 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
   H' : (op' : Op) → (ε₀ : E)
      → ((Γ ⟨ ρ ⟩) ∷ A₀) ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op' ⌝ᵍ
           ∷ [ ∣ op-grade op' ∣ᵉ ] (⌜ arity op' ⌝ᵍ ⇒ B ! ε₀)
-       ⊢C⦂ B ! (op-grade op' ·ₑ ε₀)
+       ⊢ᶜ⦂ B ! (op-grade op' ·ₑ ε₀)
   H' op' ε₀ = C-rename (cong-∷-ren (cong-∷-ren (barrier-wk-ren ρ A₀))) (H op' ε₀)
 
   pH' : ∀ op' ε₀ → Paramᶜ (H' op' ε₀)

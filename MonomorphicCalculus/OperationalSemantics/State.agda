@@ -32,7 +32,7 @@ mutual
   data State (Γ : Ctx) : Set where
     ∅     : State Γ
     _⟨_⟩ₛ : State Γ → (ρ : R) → State Γ  
-    _∷ₛ_  : ∀ {A ρ} → (𝕊 : State Γ) → ((Γ ++ᶜ (toCtx 𝕊) ⟨ ρ ⟩) ⊢V⦂ A) → State Γ
+    _∷ₛ_  : ∀ {A ρ} → (𝕊 : State Γ) → ((Γ ++ᶜ (toCtx 𝕊) ⟨ ρ ⟩) ⊢ᵛ⦂ A) → State Γ
 
   toCtx : ∀ {Γ} → State Γ → Ctx
   toCtx ∅ = []
@@ -47,7 +47,7 @@ mutual
 grade-pass : ∀ {Γ} → (𝕊 : State Γ) → (ρ : R) → State Γ
 grade-pass 𝕊 ρ = 𝕊 ⟨ ρ ⟩ₛ 
 
-extend-state : ∀ {Γ A ρ} → (𝕊 : State Γ) → ((Γ ++ᶜ (toCtx 𝕊) ⟨ ρ ⟩) ⊢V⦂ A) → State Γ
+extend-state : ∀ {Γ A ρ} → (𝕊 : State Γ) → ((Γ ++ᶜ (toCtx 𝕊) ⟨ ρ ⟩) ⊢ᵛ⦂ A) → State Γ
 extend-state 𝕊 V = 𝕊 ∷ₛ V 
 
 -- Sum of the grade passings in the state
@@ -85,7 +85,7 @@ data _≤ₛ_ : ∀ {Γ Γ'} → State Γ → State Γ' → Set where
     ≤ₛ-res  : ∀ {Γ Γ' ρ A} 
             → {𝕊 : State Γ} 
             → {𝕊' : State Γ'} 
-            → {V : (Γ' ++ᶜ (toCtx 𝕊') ⟨ ρ ⟩) ⊢V⦂ A} 
+            → {V : (Γ' ++ᶜ (toCtx 𝕊') ⟨ ρ ⟩) ⊢ᵛ⦂ A} 
             → 𝕊 ≤ₛ 𝕊' 
             ---------------------------------------
             → 𝕊 ≤ₛ (𝕊' ∷ₛ V)
@@ -301,8 +301,8 @@ not-in-empty-ctx ()
 -- The two components of a value of product type. Over a state context the
 -- value is a pair under a spine of subsumptions, which the recursion peels.
 
-fstᵛ : ∀ {Γ A B} {𝕊 : State Γ} → toCtx 𝕊 ⊢V⦂ A |×| B → toCtx 𝕊 ⊢V⦂ A
-sndᵛ : ∀ {Γ A B} {𝕊 : State Γ} → toCtx 𝕊 ⊢V⦂ A |×| B → toCtx 𝕊 ⊢V⦂ B
+fstᵛ : ∀ {Γ A B} {𝕊 : State Γ} → toCtx 𝕊 ⊢ᵛ⦂ A |×| B → toCtx 𝕊 ⊢ᵛ⦂ A
+sndᵛ : ∀ {Γ A B} {𝕊 : State Γ} → toCtx 𝕊 ⊢ᵛ⦂ A |×| B → toCtx 𝕊 ⊢ᵛ⦂ B
 
 fstᵛ (var _ x)        = ⊥-elim (⦉⦊-not-in-toCtx x)
 fstᵛ ⦉ V , _ ⦊        = V
@@ -317,12 +317,12 @@ sndᵛ (subV V (_ |×|ₛ q)) = subV (sndᵛ V) q
 -- payload.
 
 sub⊎ : ∀ {Γ A A₁ B B₁} → A₁ <:ᵛ A → B₁ <:ᵛ B
-     → (Γ ⊢V⦂ A₁) ⊎ (Γ ⊢V⦂ B₁) → (Γ ⊢V⦂ A) ⊎ (Γ ⊢V⦂ B)
+     → (Γ ⊢ᵛ⦂ A₁) ⊎ (Γ ⊢ᵛ⦂ B₁) → (Γ ⊢ᵛ⦂ A) ⊎ (Γ ⊢ᵛ⦂ B)
 sub⊎ p q (inj₁ W) = inj₁ (subV W p)
 sub⊎ p q (inj₂ W) = inj₂ (subV W q)
 
-injᵛ : ∀ {Γ A B} {𝕊 : State Γ} → toCtx 𝕊 ⊢V⦂ A |+| B
-     → (toCtx 𝕊 ⊢V⦂ A) ⊎ (toCtx 𝕊 ⊢V⦂ B)
+injᵛ : ∀ {Γ A B} {𝕊 : State Γ} → toCtx 𝕊 ⊢ᵛ⦂ A |+| B
+     → (toCtx 𝕊 ⊢ᵛ⦂ A) ⊎ (toCtx 𝕊 ⊢ᵛ⦂ B)
 injᵛ (var _ x)           = ⊥-elim (|+|-not-in-toCtx x)
 injᵛ (inl V)             = inj₁ V
 injᵛ (inr V)             = inj₂ V
@@ -330,7 +330,7 @@ injᵛ (subV V (p |+|ₛ q)) = sub⊎ p q (injᵛ V)
 
 -- and back
 
-uninjᵛ : ∀ {Γ A B} → (Γ ⊢V⦂ A) ⊎ (Γ ⊢V⦂ B) → Γ ⊢V⦂ A |+| B
+uninjᵛ : ∀ {Γ A B} → (Γ ⊢ᵛ⦂ A) ⊎ (Γ ⊢ᵛ⦂ B) → Γ ⊢ᵛ⦂ A |+| B
 uninjᵛ (inj₁ W) = inl W
 uninjᵛ (inj₂ W) = inr W
 
@@ -339,13 +339,13 @@ uninjᵛ (inj₂ W) = inr W
 -- which the recursion pushes into the head and the tail.
 
 ListView : Ctx → VType → Set
-ListView Γ A = ⊤ ⊎ ((Γ ⊢V⦂ A) × (Γ ⊢V⦂ list A))
+ListView Γ A = ⊤ ⊎ ((Γ ⊢ᵛ⦂ A) × (Γ ⊢ᵛ⦂ list A))
 
 subL : ∀ {Γ A A₁} → A₁ <:ᵛ A → ListView Γ A₁ → ListView Γ A
 subL p (inj₁ tt)      = inj₁ tt
 subL p (inj₂ (W , L)) = inj₂ (subV W p , subV L (listₛ p))
 
-listᵛ : ∀ {Γ A} {𝕊 : State Γ} → toCtx 𝕊 ⊢V⦂ list A → ListView (toCtx 𝕊) A
+listᵛ : ∀ {Γ A} {𝕊 : State Γ} → toCtx 𝕊 ⊢ᵛ⦂ list A → ListView (toCtx 𝕊) A
 listᵛ (var _ x)             = ⊥-elim (list-not-in-toCtx x)
 listᵛ nil                   = inj₁ tt
 listᵛ (cons V W)            = inj₂ (V , W)
@@ -353,7 +353,7 @@ listᵛ (subV V (listₛ p))    = subL p (listᵛ V)
 
 -- and back
 
-unlistᵛ : ∀ {Γ A} → ListView Γ A → Γ ⊢V⦂ list A
+unlistᵛ : ∀ {Γ A} → ListView Γ A → Γ ⊢ᵛ⦂ list A
 unlistᵛ (inj₁ tt)      = nil
 unlistᵛ (inj₂ (W , L)) = cons W L
 
@@ -367,7 +367,7 @@ eternal-not-in-toCtx {𝕊 = 𝕊 ∷ₛ _}   et (Tl-∷ x)  = eternal-not-in-to
 -- The datum a value of an eternal type is. Over a state context the value is
 -- a datum under a spine of subsumptions, which act on the data.
 
-⌊_⌋ᵈ : ∀ {Γ A} {𝕊 : State Γ} → Et A → toCtx 𝕊 ⊢V⦂ A → ⟪ A ⟫
+⌊_⌋ᵈ : ∀ {Γ A} {𝕊 : State Γ} → Et A → toCtx 𝕊 ⊢ᵛ⦂ A → ⟪ A ⟫
 ⌊ et ⌋ᵈ             (var _ x)   = ⊥-elim (eternal-not-in-toCtx et x)
 ⌊ et ⌋ᵈ             (subV V p)  = ⟪ p ⟫ˢ (⌊ <:ᵛ-eternalˡ p et ⌋ᵈ V)
 ⌊ Baseₑ _ ⌋ᵈ        (const B c) = c
@@ -384,7 +384,7 @@ eternal-not-in-toCtx {𝕊 = 𝕊 ∷ₛ _}   et (Tl-∷ x)  = eternal-not-in-to
 
 -- There is no value of the empty type over a state context.
 
-empty-not-value : ∀ {Γ} {𝕊 : State Γ} → toCtx 𝕊 ⊢V⦂ empty → ⊥
+empty-not-value : ∀ {Γ} {𝕊 : State Γ} → toCtx 𝕊 ⊢ᵛ⦂ empty → ⊥
 empty-not-value (var _ x)      = empty-not-in-toCtx x
 empty-not-value (subV V emptyₛ) = empty-not-value V
 
@@ -393,7 +393,7 @@ empty-not-value (subV V emptyₛ) = empty-not-value V
 resource-lookup : ∀ {Γ ρ ρ' A}
                 → (𝕊 : State Γ)
                 → (x : [ ρ ] A ∈[ ρ' ] toCtx 𝕊)
-                → (Γ ++ᶜ toCtx (split-state-fst 𝕊 x)) ⟨ ρ ⟩ ⊢V⦂ A
+                → (Γ ++ᶜ toCtx (split-state-fst 𝕊 x)) ⟨ ρ ⟩ ⊢ᵛ⦂ A
 resource-lookup (𝕊 ⟨ _ ⟩ₛ) (Tl-⟨⟩ x) = resource-lookup 𝕊 x
 resource-lookup (𝕊 ∷ₛ V) Hd          = V
 resource-lookup (𝕊 ∷ₛ _) (Tl-∷ x)    = resource-lookup 𝕊 x

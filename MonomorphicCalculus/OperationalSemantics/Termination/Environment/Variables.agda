@@ -47,7 +47,7 @@ open import MonomorphicCalculus.OperationalSemantics.Termination.Environment.Act
 -- The action is a function of the term, so this is `cong`, with no recursion on
 -- the environment.
 
-env-Vˢ-≡ : ∀ {𝕊 Γ A} → (γ : Env 𝕊 Γ) → (Δ : Ctx) → {V V' : (Γ ++ᶜ Δ) ⊢V⦂ A}
+env-Vˢ-≡ : ∀ {𝕊 Γ A} → (γ : Env 𝕊 Γ) → (Δ : Ctx) → {V V' : (Γ ++ᶜ Δ) ⊢ᵛ⦂ A}
          → V ≡ V' → env-Vˢ γ Δ V ≡ env-Vˢ γ Δ V'
 env-Vˢ-≡ γ Δ = cong (env-Vˢ γ Δ)
 
@@ -156,7 +156,7 @@ env-Vˢ-var-r (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ x f f' =
 -- action is `env-Vˢ γ ([] ∷ A)` followed by substituting `Hd`, and the entry's
 -- own variable is a suffix variable.
 
-env-var-hd : ∀ {𝕊 Γ A} → (γ : Env 𝕊 Γ) → (W : toCtx 𝕊 ⊢V⦂ A)
+env-var-hd : ∀ {𝕊 Γ A} → (γ : Env 𝕊 Γ) → (W : toCtx 𝕊 ⊢ᵛ⦂ A)
            → (f : ¬ Et A → 𝟏ᵣ ≾ᵣ 𝟏ᵣ)
            → env-V (γ ∷ᵉ W) (var f Hd) ≡ W
 env-var-hd γ W f =
@@ -334,7 +334,7 @@ env-Vˢ-var-l (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ ¬et p Hd f 
 -- which cancels (`sub-wk-V []`); `env-var-lock` composes the lock crossing with
 -- the reach, which `unbox-ren-unit` recognises as the unit reach's renaming.
 
-env-var-tl : ∀ {𝕊 Γ A A₀ ρ} → (γ : Env 𝕊 Γ) → (W : toCtx 𝕊 ⊢V⦂ A₀)
+env-var-tl : ∀ {𝕊 Γ A A₀ ρ} → (γ : Env 𝕊 Γ) → (W : toCtx 𝕊 ⊢ᵛ⦂ A₀)
            → ¬ Et A
            → (x : A ∈[ ρ ] Γ) → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
            → (f' : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
@@ -359,7 +359,7 @@ env-var-lock : ∀ {𝕊 𝕊' Γ A ρ ρ'} → (γ : Env 𝕊 Γ) → (q : 𝕊
 -- weakening past the new cell and there is nothing to cancel: `liftᵉ` keeps the
 -- binder rather than substituting for it.
 
-env-var-lift : ∀ {𝕊 Γ A A₀ ρ ρ'} → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢V⦂ A₀)
+env-var-lift : ∀ {𝕊 Γ A A₀ ρ ρ'} → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢ᵛ⦂ A₀)
              → (γ : Env 𝕊 Γ) → ¬ Et A
              → (x : A ∈[ ρ' ] Γ) → (f f' : ¬ Et A → ρ' ≾ᵣ 𝟏ᵣ)
              → env-V (liftᵉ V γ) (var f (Tl-∷ x))

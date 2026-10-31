@@ -70,11 +70,12 @@ import PolymorphicCalculus.Hypotheses
 import PolymorphicCalculus.Hypotheses.Instances
 import PolymorphicCalculus.Hypotheses.Quantified
 
----- Type system: the judgements `Q ∣ Γ ⊢ V : X` and `Q ∣ Γ ⊢ M : C` as
----- intrinsically typed derivations (`_∣_⊢V⦂_`, `_∣_⊢C⦂_`, in `Typing`),
+---- Type system: the judgements `Q ∣ Γ ⊢ᵛ V : X` and `Q ∣ Γ ⊢ᶜ M : C` as
+---- intrinsically typed derivations (`_∣_⊢ᵛ⦂_`, `_∣_⊢ᶜ⦂_`, in `Typing`),
 ---- with the rules Var, UseDef, Box, Unbox, Handler, Handle and the rest;
----- Unbox takes a resource value, a variable under annotations
----- (`_∣_⊢↪[_]_⦂[_]_`). A typing of a raw term is a derivation erasing to
+---- Unbox takes a resource value, a variable under annotations, by the
+---- resource access `Q ⊢ [ ρ ] X ∈̂[ ρ' ] Γ` (`_⊢_∈̂[_]_`, with rules
+---- Res-Var and Res-Ann). A typing of a raw term is a derivation erasing to
 ---- it (`⌊_⌋ᵛ`, `⌊_⌋ᶜ`, `⌊_⌋ʳ`, in `Typing/Erasure`). Under a program
 ---- context whose schemes have non-resource types, a value of box type is
 ---- a resource value (`resource-value`, in `Typing/Resources`). The

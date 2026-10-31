@@ -44,7 +44,7 @@ open import PolymorphicCalculus.Programs.Typing                  S
 -- instantiated term, the definitions substituted
 
 instantiationᵛ : ∀ {Θ n P} {Q : Hyps Θ} {Γ : OCtx Θ n} {X : OVType Θ} {δ : Subst Θ ∅ˢ}
-               → ⊢ᴾ P ⦂ defs Γ → (V : Q ∣ Γ ⊢V⦂ X) → δ ⊨ Q
+               → ⊢ᴾ P ⦂ defs Γ → (V : Q ∣ Γ ⊢ᵛ⦂ X) → δ ⊨ Q
                → local Γ [ δ ]ᶜᵗˣ ⊢ᵛ ⌊ ⌊ V ⌋ᵛ [ δ ]ᴿᵛ ⌋ᴾᵛ P ⦂ X [ δ ]ᵛ
 instantiationᵛ {P = P} {δ = δ} t V h =
   substᵛ δ (⊨⇒⊩ᴴ h) V' ,
@@ -55,7 +55,7 @@ instantiationᵛ {P = P} {δ = δ} t V h =
   where V' = sdef-v (programEnv t) V
 
 instantiation : ∀ {Θ n P} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ} {δ : Subst Θ ∅ˢ}
-              → ⊢ᴾ P ⦂ defs Γ → (M : Q ∣ Γ ⊢C⦂ C) → δ ⊨ Q
+              → ⊢ᴾ P ⦂ defs Γ → (M : Q ∣ Γ ⊢ᶜ⦂ C) → δ ⊨ Q
               → local Γ [ δ ]ᶜᵗˣ ⊢ᶜ ⌊ ⌊ M ⌋ᶜ [ δ ]ᴿᶜ ⌋ᴾᶜ P ⦂ C [ δ ]ᶜ
 instantiation {P = P} {δ = δ} t M h =
   substᶜ δ (⊨⇒⊩ᴴ h) M' ,
@@ -70,7 +70,7 @@ instantiation {P = P} {δ = δ} t M h =
 -- empty state at every closed instance, and halts
 
 programs : ∀ {Θ P Δ} {Q : Hyps Θ} {C : OCType Θ} {δ : Subst Θ ∅ˢ}
-         → ⊢ᴾ P ⦂ Δ → (M : Q ∣ ⌜ Δ ⌝ᵖ ⊢C⦂ C) → δ ⊨ Q
+         → ⊢ᴾ P ⦂ Δ → (M : Q ∣ ⌜ Δ ⌝ᵖ ⊢ᶜ⦂ C) → δ ⊨ Q
          → toCtx ∅ ⊢ᶜ ⌊ ⌊ M ⌋ᶜ [ δ ]ᴿᶜ ⌋ᴾᶜ P ⦂ C [ δ ]ᶜ
            × Halts ∅ (⌊ ⌊ M ⌋ᶜ [ δ ]ᴿᶜ ⌋ᴾᶜ P)
 programs {P = P} {Δ = Δ} {C = C} {δ = δ} t M h = typed , termination typed

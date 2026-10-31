@@ -149,7 +149,7 @@ program-run-sound M pM rs =
 -- so the value stands at a subtype of it.
 
 ret-value : ∀ {A ε} {M : Closed A ε} → (w : Ret-whnf (⟨ ∅ ∣ M ⟩))
-          → toCtx (Ret-whnf.state w) ⊢V⦂ A
+          → toCtx (Ret-whnf.state w) ⊢ᵛ⦂ A
 ret-value w = subV (Ret-whnf.value w) (run-refines-type (Ret-whnf.run w))
 
 -- The two head presentations of a program, read off a whnf it reaches.
@@ -238,7 +238,7 @@ adequacy {M = M} {N = N} pM pN e = record { same-ret = sr ; same-op = so }
 -- At a base type the run's refinement is `Baseₛ refl`, whose coercion is the
 -- identity, so the whnf's leaf survives it unchanged.
 
-base-run-leaf : ∀ {b A₀} {𝕊 : State []} → (V : toCtx 𝕊 ⊢V⦂ A₀)
+base-run-leaf : ∀ {b A₀} {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ A₀)
               → (p : A₀ <:ᵛ Base b)
               → (pSt : Paramˢ 𝕊) → (pV : Paramᵛ V)
               → Σ[ c ∈ BaseConstants b ]
@@ -290,7 +290,7 @@ adequacy-base {M = M} {N = N} pM pN e wM wN
 -- terminal object, as at a base constant. Which constant it is has to be
 -- carried along, since the two give different leaves.
 
-bool-leaf-value : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢V⦂ bool)
+bool-leaf-value : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ bool)
                 → (pSt : Paramˢ 𝕊) → (pV : Paramᵛ V)
                 → ((bool-val V ≡ true)
                    × (⟦ ⟨ 𝕊 ∣ return V ⟩ ⟧ᶜᶠ (pSt , pV)
@@ -320,7 +320,7 @@ bool-leaf-value (subV V boolₛ) pSt pV with bool-leaf-value V pSt pV
 
 -- The same at `bool`, where the run's refinement is `boolₛ`.
 
-bool-run-leaf : ∀ {A₀} {𝕊 : State []} → (V : toCtx 𝕊 ⊢V⦂ A₀) → (p : A₀ <:ᵛ bool)
+bool-run-leaf : ∀ {A₀} {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ A₀) → (p : A₀ <:ᵛ bool)
               → (pSt : Paramˢ 𝕊) → (pV : Paramᵛ V)
               → ((bool-val (subV V p) ≡ true)
                  × (Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ ⟨ 𝕊 ∣ return V ⟩ ⟧ᶜᶠ (pSt , pV)

@@ -137,8 +137,8 @@ cong-sub₀-≐ˢ₀ (Γ₀ ⟨ ρ ⟩) h = cong-⟨⟩-sub-≐ˢ₀ (cong-sub�
 -- Renaming along an identity-like renaming is the transport.
 
 V-rename-eq-≡ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {r : Ren [] Γ' Γ}
-              → r ≐ʳ eq-ren e → (V : Γ ⊢V⦂ A)
-              → V-rename r V ≡ subst (_⊢V⦂ A) e V
+              → r ≐ʳ eq-ren e → (V : Γ ⊢ᵛ⦂ A)
+              → V-rename r V ≡ subst (_⊢ᵛ⦂ A) e V
 V-rename-eq-≡ refl h V = V-rename-id-≡ h V
 
 -- Substitution respects the `≐ˢ₀` equivalence on substitutions.
@@ -146,7 +146,7 @@ V-rename-eq-≡ refl h V = V-rename-id-≡ h V
 mutual
 
   V-sub₀-≐ˢ₀ : ∀ {Γ Γ' A} {s s' : Sub₀ [] Γ Γ'} → s ≐ˢ₀ s'
-             → (V : Γ' ⊢V⦂ A) → V-sub₀ s V ≡ V-sub₀ s' V
+             → (V : Γ' ⊢ᵛ⦂ A) → V-sub₀ s V ≡ V-sub₀ s' V
 
   V-sub₀-≐ˢ₀ h (var f x) = atᵛ h x f
   V-sub₀-≐ˢ₀ h (const B c) = refl
@@ -168,7 +168,7 @@ mutual
   V-sub₀-≐ˢ₀ h (subV V p) = subV-≡ (V-sub₀-≐ˢ₀ h V)
 
   C-sub₀-≐ˢ₀ : ∀ {Γ Γ' C} {s s' : Sub₀ [] Γ Γ'} → s ≐ˢ₀ s'
-             → (M : Γ' ⊢C⦂ C) → C-sub₀ s M ≡ C-sub₀ s' M
+             → (M : Γ' ⊢ᶜ⦂ C) → C-sub₀ s M ≡ C-sub₀ s' M
 
   C-sub₀-≐ˢ₀ h (return V) = cong return (V-sub₀-≐ˢ₀ h V)
   C-sub₀-≐ˢ₀ h (M ⨟ N) =
@@ -213,27 +213,27 @@ mutual
   C-sub₀-≐ˢ₀ h (subC M p) = subC-≡ (C-sub₀-≐ˢ₀ h M)
 
 
-eternal-val-ext-cong : ∀ {Γ A ρ} → (et : Et A) → {V V' : Γ ⊢V⦂ A}
+eternal-val-ext-cong : ∀ {Γ A ρ} → (et : Et A) → {V V' : Γ ⊢ᵛ⦂ A}
                      → V ≡ V'
                      → eternal-val-ext {ρ = ρ} et V ≡ eternal-val-ext et V'
 eternal-val-ext-cong et = cong (eternal-val-ext et)
 
-substᶜ-≡ : ∀ {C Γ₁ Γ₂} → (e : Γ₁ ≡ Γ₂) → {M M' : Γ₁ ⊢C⦂ C}
-         → M ≡ M' → subst (_⊢C⦂ C) e M ≡ subst (_⊢C⦂ C) e M'
-substᶜ-≡ {C} e = cong (subst (_⊢C⦂ C) e)
+substᶜ-≡ : ∀ {C Γ₁ Γ₂} → (e : Γ₁ ≡ Γ₂) → {M M' : Γ₁ ⊢ᶜ⦂ C}
+         → M ≡ M' → subst (_⊢ᶜ⦂ C) e M ≡ subst (_⊢ᶜ⦂ C) e M'
+substᶜ-≡ {C} e = cong (subst (_⊢ᶜ⦂ C) e)
 
-substᶜ-≡′ : (f : Ctx → Ctx) → ∀ {C Γ₁ Γ₂} → (e : Γ₁ ≡ Γ₂) → {M M' : f Γ₁ ⊢C⦂ C}
+substᶜ-≡′ : (f : Ctx → Ctx) → ∀ {C Γ₁ Γ₂} → (e : Γ₁ ≡ Γ₂) → {M M' : f Γ₁ ⊢ᶜ⦂ C}
           → M ≡ M'
-          → subst (λ z → f z ⊢C⦂ C) e M ≡ subst (λ z → f z ⊢C⦂ C) e M'
-substᶜ-≡′ f {C} e = cong (subst (λ z → f z ⊢C⦂ C) e)
+          → subst (λ z → f z ⊢ᶜ⦂ C) e M ≡ subst (λ z → f z ⊢ᶜ⦂ C) e M'
+substᶜ-≡′ f {C} e = cong (subst (λ z → f z ⊢ᶜ⦂ C) e)
 
-sub-≡ᵛ : ∀ {Γ Γ₁ Γ₂ A B} → (s : Γ₁ ∷ A , Γ₂ split Γ) → {W W' : Γ₁ ⊢V⦂ A}
-       → W ≡ W' → {V V' : Γ ⊢V⦂ B} → V ≡ V'
+sub-≡ᵛ : ∀ {Γ Γ₁ Γ₂ A B} → (s : Γ₁ ∷ A , Γ₂ split Γ) → {W W' : Γ₁ ⊢ᵛ⦂ A}
+       → W ≡ W' → {V V' : Γ ⊢ᵛ⦂ B} → V ≡ V'
        → (V [ s ↦ W ]v) ≡ (V' [ s ↦ W' ]v)
 sub-≡ᵛ s eW eV = cong₂ (λ U V₀ → V₀ [ s ↦ U ]v) eW eV
 
-sub-≡ᶜ : ∀ {Γ Γ₁ Γ₂ A C} → (s : Γ₁ ∷ A , Γ₂ split Γ) → {W W' : Γ₁ ⊢V⦂ A}
-       → W ≡ W' → {M M' : Γ ⊢C⦂ C} → M ≡ M'
+sub-≡ᶜ : ∀ {Γ Γ₁ Γ₂ A C} → (s : Γ₁ ∷ A , Γ₂ split Γ) → {W W' : Γ₁ ⊢ᵛ⦂ A}
+       → W ≡ W' → {M M' : Γ ⊢ᶜ⦂ C} → M ≡ M'
        → (M [ s ↦ W ]c) ≡ (M' [ s ↦ W' ]c)
 sub-≡ᶜ s eW eM = cong₂ (λ U M₀ → M₀ [ s ↦ U ]c) eW eM
 

@@ -90,10 +90,10 @@ clause-sound : ∀ {Γ B ε''} → (op : Op)
              → (H : (op' : Op) → (ε' : E)
                   → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op' ⌝ᵍ
                        ∷ [ ∣ op-grade op' ∣ᵉ ] (⌜ arity op' ⌝ᵍ ⇒ B ! ε')
-                    ⊢C⦂ B ! (op-grade op' ·ₑ ε'))
+                    ⊢ᶜ⦂ B ! (op-grade op' ·ₑ ε'))
              → (pH : ∀ op' ε' → Paramᶜ (H op' ε'))
              → (uH : EffUniformʰ {Γ} H pH)
-             → (V : Γ ⊢V⦂ ⌜ param op ⌝ᵍ) → (pV : Paramᵛ V)
+             → (V : Γ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ) → (pV : Paramᵛ V)
              → (W : ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ ∣ op-grade op ∣ᵉ ]ᵒ
                       (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ B ⟧ᵛ ε''))
              → ⟦ (C-rename (cong-∷-ren (cong-∷-ren (barrier-ren {Γ}))) (H op ε''))

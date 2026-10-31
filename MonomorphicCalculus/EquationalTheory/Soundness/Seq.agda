@@ -133,7 +133,7 @@ seq-extend m n g f fg = ∘ᵐ-congʳ (str-extend m n g f fg)
               ∙ ∘ᵐ-congʳ []-ε∘ηᵘ≡id
               ∙ ∘ᵐ-identityʳ _)
 
-sound-seq-return : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (M : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε)
+sound-seq-return : ∀ {Γ A B ε} → (V : Γ ⊢ᵛ⦂ A) → (M : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε)
                  → Soundᶜ≡ᵗʰ (seq-return V M)
 sound-seq-return {Γ} {A} {B} {ε} V M (pV , pM) pR =
     ∘ᵐ-congʳ (  ∘ᵐ-congʳ (  ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
@@ -165,7 +165,7 @@ sound-seq-return {Γ} {A} {B} {ε} V M (pV , pM) pR =
 
 -- The counit law: sequencing a `return` of the bound variable is the identity.
 
-sound-seq-eta : ∀ {Γ A ε} → (M : Γ ⊢C⦂ A ! ε) → Soundᶜ≡ᵗʰ (seq-eta M)
+sound-seq-eta : ∀ {Γ A ε} → (M : Γ ⊢ᶜ⦂ A ! ε) → Soundᶜ≡ᵗʰ (seq-eta M)
 sound-seq-eta {Γ} {A} {ε} M pM pN =
     ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ (·ₑ-identityʳ ε) (M ⨟ return (var (λ _ → ≾ᵣ-refl) Hd)))
                 pN (pM , tt)
@@ -193,8 +193,8 @@ sound-seq-eta {Γ} {A} {ε} M pM pN =
 -- `seq-box`/`seq-unbox`: a resource binder commutes with sequencing.
 
 sound-seq-box : ∀ {Γ A B C ρ ε ε'}
-              → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A) → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ! ε)
-              → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ C ! ε')
+              → (V : Γ ⟨ ρ ⟩ ⊢ᵛ⦂ A) → (M : Γ ∷ [ ρ ] A ⊢ᶜ⦂ B ! ε)
+              → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ C ! ε')
               → Soundᶜ≡ᵗʰ (seq-box V M N)
 sound-seq-box {ρ = ρ} V M N ((pV , pM) , pN) pR =
     ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (box _ V (M ⨟ C-rename r N)) pR (pV , (pM , renᶜ r N pN))
@@ -207,7 +207,7 @@ sound-seq-box {ρ = ρ} V M N ((pV , pM) , pN) pR =
 
 sound-seq-unbox : ∀ {Γ A A₀ B C ρ₀ ρ' ε ε'}
                 → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ₀) → (w : A₀ <:ᵛ A)
-                → (M : Γ ∷ A ⊢C⦂ B ! ε) → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ C ! ε')
+                → (M : Γ ∷ A ⊢ᶜ⦂ B ! ε) → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ C ! ε')
                 → Soundᶜ≡ᵗʰ (seq-unbox x rel w M N)
 sound-seq-unbox {ε = ε} x rel w M N (pM , pN) pR =
     ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x rel w (M ⨟ C-rename r N)) pR (pM , renᶜ r N pN)
@@ -300,8 +300,8 @@ str-delay {X} {A} {B} {ε} {ε'} τ m n =
                                                                           , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))))))
 
 sound-seq-delay : ∀ {Γ A B τ ε ε'}
-                → (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε)
-                → (N : Γ ⟨ ∣ ιₑ τ ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
+                → (M : Γ ⟨ ιᵣ τ ⟩ ⊢ᶜ⦂ A ! ε)
+                → (N : Γ ⟨ ∣ ιₑ τ ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε')
                 → Soundᶜ≡ᵗʰ (seq-delay M N)
 sound-seq-delay {Γ} {A} {B} {τ} {ε} {ε'} M N (pM , pN) pR =
     ∘ᵐ-congʳ (str-delay τ (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN))
@@ -327,9 +327,9 @@ sound-seq-delay {Γ} {A} {B} {τ} {ε} {ε'} M N (pM , pN) pR =
     pRc = pM , renᶜ r N pN
 
 sound-seq-perform : ∀ {Γ A B ε ε' op}
-                  → (V : Γ ⊢V⦂ ⌜ param op ⌝ᵍ)
-                  → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε)
-                  → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
+                  → (V : Γ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
+                  → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢ᶜ⦂ A ! ε)
+                  → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε')
                   → Soundᶜ≡ᵗʰ (seq-perform V M N)
 sound-seq-perform {Γ} {A} {B} {ε} {ε'} {op} V M N ((pV , pM) , pN) pR =
     ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ e' (perform op V (M ⨟ C-rename r' N)))

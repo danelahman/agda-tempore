@@ -67,7 +67,7 @@ open import PolymorphicCalculus.Examples.Variables
 
 -- A closed derivation in the empty context is a typing
 
-closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢C⦂ C)
+closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢ᶜ⦂ C)
        → ⌊ D ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ → Typable [] M
 closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
@@ -99,7 +99,7 @@ private
 lt-nats : RawC ∅ˢ 0
 lt-nats = return (cmp lt (numeral 2) (numeral 3))
 
-lt-nats-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ bool ! 𝟏̂ₑ
+lt-nats-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ bool ! 𝟏̂ₑ
 lt-nats-D = return (cmp lt (numeralᵛ 2) (numeralᵛ 3) natₑ)
 
 lt-nats-typed : IsTyped (infer [] lt-nats)
@@ -118,7 +118,7 @@ expected-lt-nats = ∀[ 0 , 0 , 0 ] ⊤ ⟹ bool ! 𝟏̂ₑ
 eq-lists : RawC ∅ˢ 0
 eq-lists = return (cmp eq (cons (numeral 1) nil) (cons (numeral 2) nil))
 
-eq-lists-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ bool ! 𝟏̂ₑ
+eq-lists-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ bool ! 𝟏̂ₑ
 eq-lists-D =
   return (cmp eq (cons (numeralᵛ 1) nil) (cons (numeralᵛ 2) nil) (listₑ natₑ))
 
@@ -143,7 +143,7 @@ expected-ge-pairs = ∀[ 0 , 0 , 0 ] ⊤ ⟹ bool ! 𝟏̂ₑ
 ne-sums : RawC ∅ˢ 0
 ne-sums = return (cmp ne (inl zero ⦂ᵛ (nat |+| bool)) (inr true ⦂ᵛ (nat |+| bool)))
 
-ne-sums-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ bool ! 𝟏̂ₑ
+ne-sums-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ bool ! 𝟏̂ₑ
 ne-sums-D =
   return (cmp ne (annᵛ (nat |+| bool) (inl zero)) (annᵛ (nat |+| bool) (inr true))
               (natₑ |+|ₑ boolₑ))
@@ -181,7 +181,7 @@ expected-equal =
 
 -- An instance at `nat`, as a derivation
 
-equal-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ (nat ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
+equal-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (nat ⇒ (nat ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 equal-D = return (fun (return (fun (return (cmp eq (var (Tl-∷ Hd) ok₀) (var Hd ok₀) natₑ)))))
 
 equal-typed : IsTyped (infer [] equal)
@@ -219,7 +219,7 @@ eq-boxes = box 𝟏̂ᵣ ⋆ (box 𝟏̂ᵣ ⋆ (return (cmp eq v₁ v₀)))
 later-lt : RawC ∅ˢ 0
 later-lt = return (numeral 2) ⨟ delay ⌜ 1 ⌝ (return (cmp lt v₀ (numeral 3)))
 
-later-lt-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ bool ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
+later-lt-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ bool ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 later-lt-D =
   return (numeralᵛ 2)
   ⨟ delay ⌜ 1 ⌝ (return (cmp lt (var (Tl-⟨⟩ Hd) (et-ok natₑ)) (numeralᵛ 3) natₑ))
@@ -252,7 +252,7 @@ expected-later-equal =
 max : RawC ∅ˢ 0
 max = return (fun (return (fun (if cmp lt v₁ v₀ `then return v₀ `else return v₁))))
 
-max-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
+max-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (nat ⇒ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 max-D =
   return (fun (return (fun
     (if cmp lt (var (Tl-∷ Hd) ok₀) (var Hd ok₀) natₑ

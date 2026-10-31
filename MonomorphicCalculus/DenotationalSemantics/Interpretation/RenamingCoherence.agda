@@ -240,7 +240,7 @@ recL-stepᵗ-nat {A = A} {B = B} {ε = ε} p n n' h e =
 
 mutual
 
-  renᵛ : ∀ {Γ Γ' A} → (r : Ren [] Γ' Γ) → (V : Γ ⊢V⦂ A) → Paramᵛ V → Paramᵛ (V-rename r V)
+  renᵛ : ∀ {Γ Γ' A} → (r : Ren [] Γ' Γ) → (V : Γ ⊢ᵛ⦂ A) → Paramᵛ V → Paramᵛ (V-rename r V)
   renᵛ r (var f x) _ = tt
   renᵛ r (const B c) _ = tt
   renᵛ r ⋆        _ = tt
@@ -262,7 +262,7 @@ mutual
     , ren-clauses-uniform (cong-⟨⟩-ren r) H pH uH
   renᵛ r (subV V p) pV = renᵛ r V pV
 
-  renᶜ : ∀ {Γ Γ' C} → (r : Ren [] Γ' Γ) → (M : Γ ⊢C⦂ C) → Paramᶜ M → Paramᶜ (C-rename r M)
+  renᶜ : ∀ {Γ Γ' C} → (r : Ren [] Γ' Γ) → (M : Γ ⊢ᶜ⦂ C) → Paramᶜ M → Paramᶜ (C-rename r M)
   renᶜ r (return V)         pV        = renᵛ r V pV
   renᶜ r (M ⨟ N)            (pM , pN) =
     renᶜ r M pM , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN
@@ -303,7 +303,7 @@ mutual
     → (H : (op : Op) → (ε'' : E)
          → Δ ∷ ⌜ param op ⌝ᵍ
               ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-           ⊢C⦂ B ! (op-grade op ·ₑ ε''))
+           ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε''))
     → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
     → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
          → ⟦ H op ε₂'' ⟧ᶜᵗ (pH op ε₂'')
@@ -327,7 +327,7 @@ mutual
               (∘ᵐ-congʳ (≈ᵐ-sym (C-rename-nat (cong-∷-ren (cong-∷-ren rr))
                                    (H op _) (pH op _)))))))))
 
-  V-rename-nat : ∀ {Γ Γ' A} → (r : Ren [] Γ' Γ) → (V : Γ ⊢V⦂ A) → (p : Paramᵛ V)
+  V-rename-nat : ∀ {Γ Γ' A} → (r : Ren [] Γ' Γ) → (V : Γ ⊢ᵛ⦂ A) → (p : Paramᵛ V)
                → ⟦ V-rename r V ⟧ᵛᵗ (renᵛ r V p) ≈ᵐ ⟦ V ⟧ᵛᵗ p ∘ᵐ ⟦ r ⟧ʳ
   V-rename-nat r (var f x) _ with var-rename r x | var-morphism-nat r f x
   ... | ρ' , ρ'≾ρ , y | vmn = vmn
@@ -387,7 +387,7 @@ mutual
   V-rename-nat r (subV V p) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
 
-  C-rename-nat : ∀ {Γ Γ' C} → (r : Ren [] Γ' Γ) → (M : Γ ⊢C⦂ C) → (p : Paramᶜ M)
+  C-rename-nat : ∀ {Γ Γ' C} → (r : Ren [] Γ' Γ) → (M : Γ ⊢ᶜ⦂ C) → (p : Paramᶜ M)
                → ⟦ C-rename r M ⟧ᶜᵗ (renᶜ r M p) ≈ᵐ ⟦ M ⟧ᶜᵗ p ∘ᵐ ⟦ r ⟧ʳ
   C-rename-nat r (return V) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))

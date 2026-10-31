@@ -45,14 +45,14 @@ open import MonomorphicCalculus.Syntax.Substitution.Laws    S
 -- while `_⨟_` and a handler's return clause, unlike `unbox`, carry no
 -- witness of their own.
 
-subCtx : ∀ {Γ A A₀ C} → A₀ <:ᵛ A → Γ ∷ A ⊢C⦂ C → Γ ∷ A₀ ⊢C⦂ C
+subCtx : ∀ {Γ A A₀ C} → A₀ <:ᵛ A → Γ ∷ A ⊢ᶜ⦂ C → Γ ∷ A₀ ⊢ᶜ⦂ C
 subCtx p N =
   C-rename (cong-∷-ren wk-ren) N [ split-[] ↦ subV (var (λ _ → ≾ᵣ-refl) Hd) p ]c
 
 -- Substituting into a subsumed binder subsumes the value first.
 
-subCtx-sub : ∀ {Γ A A₀ C} → (w : A₀ <:ᵛ A) → (N : Γ ∷ A ⊢C⦂ C)
-           → (V : Γ ⊢V⦂ A₀)
+subCtx-sub : ∀ {Γ A A₀ C} → (w : A₀ <:ᵛ A) → (N : Γ ∷ A ⊢ᶜ⦂ C)
+           → (V : Γ ⊢ᵛ⦂ A₀)
            ----------------------------------------------------------
            → subCtx w N [ split-[] ↦ V ]c ≡ N [ split-[] ↦ subV V w ]c
 
@@ -65,7 +65,7 @@ subCtx-sub {A = A} w N V =
 -- it.
 
 subCtx-ren : ∀ {Γ Δ A A₀ C} → (r : Ren [] Δ Γ) → (w : A₀ <:ᵛ A)
-           → (N : Γ ∷ A ⊢C⦂ C)
+           → (N : Γ ∷ A ⊢ᶜ⦂ C)
            ------------------------------------------------
            → C-rename (cong-∷-ren r) (subCtx w N)
            ≡ subCtx w (C-rename (cong-∷-ren r) N)
@@ -94,7 +94,7 @@ subCtx-ren r w N =
 -- being the one the equality leaves alone.
 
 subCtx-cast : ∀ {Γ Γ' A A₀ C} → (f : Ctx → Ctx) → (e : Γ' ≡ Γ)
-            → (w : A₀ <:ᵛ A) → (N : f Γ' ∷ A ⊢C⦂ C)
+            → (w : A₀ <:ᵛ A) → (N : f Γ' ∷ A ⊢ᶜ⦂ C)
             ----------------------------------------------------
             → subCtx w (castᶜ (cong (λ Γ₀ → f Γ₀ ∷ A) e) N)
             ≡ castᶜ (cong (λ Γ₀ → f Γ₀ ∷ A₀) e) (subCtx w N)

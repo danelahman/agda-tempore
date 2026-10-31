@@ -20,25 +20,25 @@ open import PolymorphicCalculus.Typing          S
 open import PolymorphicCalculus.Typing.Erasure  S
 
 ctx-castᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ Γ' : OCtx Θ n} {A : OVType Θ}
-          → Γ ≡ Γ' → Q ∣ Γ ⊢V⦂ A → Q ∣ Γ' ⊢V⦂ A
+          → Γ ≡ Γ' → Q ∣ Γ ⊢ᵛ⦂ A → Q ∣ Γ' ⊢ᵛ⦂ A
 ctx-castᵛ refl V = V
 
 ctx-castᶜ : ∀ {Θ n} {Q : Hyps Θ} {Γ Γ' : OCtx Θ n} {C : OCType Θ}
-          → Γ ≡ Γ' → Q ∣ Γ ⊢C⦂ C → Q ∣ Γ' ⊢C⦂ C
+          → Γ ≡ Γ' → Q ∣ Γ ⊢ᶜ⦂ C → Q ∣ Γ' ⊢ᶜ⦂ C
 ctx-castᶜ refl M = M
 
 ⌊ctx-castᵛ⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ Γ' : OCtx Θ n} {A : OVType Θ}
-            → (p : Γ ≡ Γ') → (V : Q ∣ Γ ⊢V⦂ A) → ⌊ ctx-castᵛ p V ⌋ᵛ ≡ ⌊ V ⌋ᵛ
+            → (p : Γ ≡ Γ') → (V : Q ∣ Γ ⊢ᵛ⦂ A) → ⌊ ctx-castᵛ p V ⌋ᵛ ≡ ⌊ V ⌋ᵛ
 ⌊ctx-castᵛ⌋ refl V = refl
 
 ⌊ctx-castᶜ⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ Γ' : OCtx Θ n} {C : OCType Θ}
-            → (p : Γ ≡ Γ') → (M : Q ∣ Γ ⊢C⦂ C) → ⌊ ctx-castᶜ p M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
+            → (p : Γ ≡ Γ') → (M : Q ∣ Γ ⊢ᶜ⦂ C) → ⌊ ctx-castᶜ p M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
 ⌊ctx-castᶜ⌋ refl M = refl
 
 ⌊ty-subst⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A A' : OVType Θ}
-           → (p : A ≡ A') → (V : Q ∣ Γ ⊢V⦂ A) → ⌊ ty-subst p V ⌋ᵛ ≡ ⌊ V ⌋ᵛ
+           → (p : A ≡ A') → (V : Q ∣ Γ ⊢ᵛ⦂ A) → ⌊ ty-subst p V ⌋ᵛ ≡ ⌊ V ⌋ᵛ
 ⌊ty-subst⌋ refl V = refl
 
 ⌊c-subst⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C C' : OCType Θ}
-          → (p : C ≡ C') → (M : Q ∣ Γ ⊢C⦂ C) → ⌊ c-subst p M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
+          → (p : C ≡ C') → (M : Q ∣ Γ ⊢ᶜ⦂ C) → ⌊ c-subst p M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
 ⌊c-subst⌋ refl M = refl

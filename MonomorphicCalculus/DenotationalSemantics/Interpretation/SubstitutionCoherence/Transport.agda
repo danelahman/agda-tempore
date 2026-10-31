@@ -62,31 +62,31 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Substitutio
 
 -- Retyping a clause along a context equality preserves parametricity.
 
-substᴾᶜ : ∀ {Δ Δ' D C} → (e : Δ ≡ Δ') → (t : Δ ++ᶜ D ⊢C⦂ C)
-        → Paramᶜ t → Paramᶜ (subst (λ Γ₀ → Γ₀ ++ᶜ D ⊢C⦂ C) e t)
+substᴾᶜ : ∀ {Δ Δ' D C} → (e : Δ ≡ Δ') → (t : Δ ++ᶜ D ⊢ᶜ⦂ C)
+        → Paramᶜ t → Paramᶜ (subst (λ Γ₀ → Γ₀ ++ᶜ D ⊢ᶜ⦂ C) e t)
 substᴾᶜ refl t p = p
 
-substᴾᶜ′ : ∀ {Δ Δ' C} → {e : Δ ≡ Δ'} → (t : Δ ⊢C⦂ C)
-         → Paramᶜ t → Paramᶜ (subst (_⊢C⦂ C) e t)
+substᴾᶜ′ : ∀ {Δ Δ' C} → {e : Δ ≡ Δ'} → (t : Δ ⊢ᶜ⦂ C)
+         → Paramᶜ t → Paramᶜ (subst (_⊢ᶜ⦂ C) e t)
 substᴾᶜ′ {e = refl} t p = p
 
-substᴾᵛ : ∀ {Δ Δ' A} → {e : Δ ≡ Δ'} → (t : Δ ⊢V⦂ A)
-        → Paramᵛ t → Paramᵛ (subst (_⊢V⦂ A) e t)
+substᴾᵛ : ∀ {Δ Δ' A} → {e : Δ ≡ Δ'} → (t : Δ ⊢ᵛ⦂ A)
+        → Paramᵛ t → Paramᵛ (subst (_⊢ᵛ⦂ A) e t)
 substᴾᵛ {e = refl} t p = p
 
-subst-ctx-interp : ∀ {Δ Δ' C} → (e : Δ ≡ Δ') → (t : Δ ⊢C⦂ C) → (p : Paramᶜ t)
-                 → ⟦ subst (_⊢C⦂ C) e t ⟧ᶜᵗ (substᴾᶜ′ {e = e} t p)
+subst-ctx-interp : ∀ {Δ Δ' C} → (e : Δ ≡ Δ') → (t : Δ ⊢ᶜ⦂ C) → (p : Paramᶜ t)
+                 → ⟦ subst (_⊢ᶜ⦂ C) e t ⟧ᶜᵗ (substᴾᶜ′ {e = e} t p)
                  ≈ᵐ ⟦ t ⟧ᶜᵗ p ∘ᵐ ⟦ eq-ren e ⟧ʳ
 subst-ctx-interp refl t p = ≈ᵐ-sym (∘ᵐ-identityʳ _)
 
-subst-val-interp : ∀ {Δ Δ' A} → (e : Δ ≡ Δ') → (t : Δ ⊢V⦂ A) → (p : Paramᵛ t)
-                 → ⟦ subst (_⊢V⦂ A) e t ⟧ᵛᵗ (substᴾᵛ {e = e} t p)
+subst-val-interp : ∀ {Δ Δ' A} → (e : Δ ≡ Δ') → (t : Δ ⊢ᵛ⦂ A) → (p : Paramᵛ t)
+                 → ⟦ subst (_⊢ᵛ⦂ A) e t ⟧ᵛᵗ (substᴾᵛ {e = e} t p)
                  ≈ᵐ ⟦ t ⟧ᵛᵗ p ∘ᵐ ⟦ eq-ren e ⟧ʳ
 subst-val-interp refl t p = ≈ᵐ-sym (∘ᵐ-identityʳ _)
 
-subst-clause-interp : ∀ {Δ Δ' D C} → (e : Δ ≡ Δ') → (t : Δ ++ᶜ D ⊢C⦂ C)
+subst-clause-interp : ∀ {Δ Δ' D C} → (e : Δ ≡ Δ') → (t : Δ ++ᶜ D ⊢ᶜ⦂ C)
                     → (p : Paramᶜ t)
-                    → ⟦ subst (λ Γ₀ → Γ₀ ++ᶜ D ⊢C⦂ C) e t ⟧ᶜᵗ (substᴾᶜ e t p)
+                    → ⟦ subst (λ Γ₀ → Γ₀ ++ᶜ D ⊢ᶜ⦂ C) e t ⟧ᶜᵗ (substᴾᶜ e t p)
                     ≈ᵐ ⟦ t ⟧ᶜᵗ p ∘ᵐ ⟦ eq-ren (cong (_++ᶜ D) e) ⟧ʳ
 subst-clause-interp refl t p = ≈ᵐ-sym (∘ᵐ-identityʳ _)
 
@@ -114,7 +114,7 @@ subst-clauses-uniform :
   → (H : (op : Op) → (ε'' : E)
        → Δ ∷ ⌜ param op ⌝ᵍ
             ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-         ⊢C⦂ B ! (op-grade op ·ₑ ε''))
+         ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε''))
   → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
   → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
        → ⟦ H op ε₂'' ⟧ᶜᵗ (pH op ε₂'')
@@ -123,13 +123,13 @@ subst-clauses-uniform :
   → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
        → ⟦ subst (λ Γ₀ → Γ₀ ∷ ⌜ param op ⌝ᵍ
                             ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε₂'')
-                          ⊢C⦂ B ! (op-grade op ·ₑ ε₂''))
+                          ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε₂''))
                  e (H op ε₂'') ⟧ᶜᵗ (substᴾᶜ e (H op ε₂'') (pH op ε₂''))
            ∘ᵐ mapˣᵐ idᵐ ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
        ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q)
            ∘ᵐ ⟦ subst (λ Γ₀ → Γ₀ ∷ ⌜ param op ⌝ᵍ
                                  ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε₁'')
-                               ⊢C⦂ B ! (op-grade op ·ₑ ε₁''))
+                               ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε₁''))
                       e (H op ε₁'') ⟧ᶜᵗ (substᴾᶜ e (H op ε₁'') (pH op ε₁'')))
 subst-clauses-uniform e H pH uH op q =
   ≈ᵐ-trans (∘ᵐ-congˡ (subst-clause-interp e (H op _) (pH op _)))
