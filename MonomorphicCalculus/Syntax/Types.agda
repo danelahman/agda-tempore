@@ -16,16 +16,12 @@ module MonomorphicCalculus.Syntax.Types (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
--- Re-export the base types data so that downstream syntax and
--- semantics modules see `BaseType`, `_≡ᵇ?_`, `EternalBaseType`,
--- `eternalBaseType?`, and `BaseConstants` directly via
--- `MonomorphicCalculus.Syntax.Types`.
+-- Re-exported, so that `BaseType`, `_≡ᵇ?_`, `EternalBaseType`,
+-- `eternalBaseType?` and `BaseConstants` come with the types.
 
 open BaseTypes BTs public
 
--- Re-export the ground types so that downstream syntax and
--- semantics modules see `GType` and its constructors directly
--- via `MonomorphicCalculus.Syntax.Types`.
+-- Re-exported, so that `GType` and its constructors come with the types.
 
 open import Language.GroundTypes Grades BTs public
 
@@ -64,7 +60,7 @@ data Eternal : VType → Set where
   |List|ₑ : ∀ {A} → Eternal A → Eternal (|List| A)
   Emptyₑ : Eternal Empty
 
--- Eternality is a *property* of a type: any two witnesses coincide
+-- Eternality is a property of a type: any two witnesses coincide
 -- (the base-type witness is irrelevant).
 
 eternal-irrelevant : ∀ {A} → (et et' : Eternal A) → et ≡ et'

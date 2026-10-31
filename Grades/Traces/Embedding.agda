@@ -7,9 +7,9 @@
 -- antichain is the normal form of the images of its members. The     --
 -- normal form only removes members whose closure the rest already    --
 -- covers, and `f` keeps closures, so normalising before or after     --
--- mapping comes to the same (`mapˢ-n`). That is what makes the map   --
--- preserve the language product, the union, singletons and the order --
--- -- what a grade morphism between the lifted grades asks for.       --
+-- mapping comes to the same (`mapˢ-n`). So the map preserves the     --
+-- language product, the union, singletons and the order, as a grade  --
+-- morphism between the lifted grades asks.                           --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)

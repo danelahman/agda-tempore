@@ -168,9 +168,8 @@ mutual
     -- Subsumption is natural in the value formers: the witness splits the way
     -- its type does. At `⦉_,_⦊` that is functoriality of `_|×|_`, at `inl` and
     -- `inr` functoriality of `_|+|_`, at `nil` and `cons` functoriality of
-    -- `|List|`, at `lam` functoriality of `_⇒_` —
-    -- contravariant in the domain, so the binder is subsumed rather than the
-    -- body coerced there. The atomic formers and `var` have no rule of their
+    -- `|List|`, at `lam` functoriality of `_⇒_`, contravariant in the domain,
+    -- so the binder is subsumed rather than the body coerced there. The atomic formers and `var` have no rule of their
     -- own.
 
     subV-pair : ∀ {A A' B B'}

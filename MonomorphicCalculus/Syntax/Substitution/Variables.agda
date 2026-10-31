@@ -49,7 +49,7 @@ castᵛ-var : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ')
           → castᵛ e (var f x) ≡ var f (subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
 castᵛ-var refl f x = refl
 
--- The same, taking the relocation as a `Var` equality — which is what the
+-- The same, taking the relocation as a `Var` equality, which is what the
 -- pushing lemmas below have, their grades changing along with their positions.
 
 castᵛ-var-Var : ∀ {Γ Γ' A ρ ρ'} → (e : Γ ≡ Γ')
@@ -142,7 +142,7 @@ sub-var-r {Γ₁} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? 
 
     fᵢ = λ z → ≾ᵣ-zero-productˡ (f z)
 
--- A variable the splitting sends right *is* that variable, pushed right.
+-- A variable the splitting sends right is that variable, pushed right.
 
 ∈-++ᶜ-split-inj₂ : ∀ {A ρ} → (Δ₁ Δ₂ : Ctx) → (x : A ∈[ ρ ] (Δ₁ ++ᶜ Δ₂))
                  → (y : A ∈[ ρ ] Δ₂)

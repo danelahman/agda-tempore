@@ -3,10 +3,10 @@
 --                                                                     --
 -- An end is a cut of the time domain: a point `p` with a side,        --
 -- `p ∣ ⁻` lying just below `p` and `p ∣ ⁺` just above it, the cuts    --
--- ordered lexicographically (`_⊑_`). A lower end `c` admits the       --
--- durations above it -- `p ∣ ⁻` is "at least p", `p ∣ ⁺` "more than   --
--- p" -- and an upper end, a cut or `∞`, admits those below it --      --
--- `p ∣ ⁺` is "at most p", `p ∣ ⁻` "less than p".                      --
+-- ordered lexicographically (`_⊑_`). A lower end admits the durations --
+-- above it (`p ∣ ⁻` is "at least p", `p ∣ ⁺` "more than p"), and an   --
+-- upper end, a cut or `∞`, those below it (`p ∣ ⁺` is "at most p",    --
+-- `p ∣ ⁻` "less than p").                                             --
 --                                                                     --
 -- Ends add pointwise, an end of a sum being open exactly when an end  --
 -- summed is: on lower ends that takes the larger side, on upper ends  --
@@ -21,9 +21,9 @@
 -- the point of the end, or, at an open end in a discrete time domain, --
 -- the adjacent step.                                                  --
 --                                                                     --
--- What the ends say about the durations admitted (`_∈ⁱ_`) -- that     --
--- the order is containment and the sum the Minkowski sum, in a dense  --
--- time domain -- is in `Durations.Intervals.Dense`.                   --
+-- What the ends say about the durations admitted (`_∈ⁱ_`), that in a  --
+-- dense time domain the order is containment and the sum the          --
+-- Minkowski sum, is in `Durations.Intervals.Dense`.                   --
 -------------------------------------------------------------------------
 
 open import Grades.Durations

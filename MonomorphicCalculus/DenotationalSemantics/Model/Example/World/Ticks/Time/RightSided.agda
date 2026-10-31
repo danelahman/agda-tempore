@@ -9,7 +9,7 @@
 --   w ⊑[ [0, n ] ] w'   iff   w ≤ w'   and   ↑ w' ≤∞ ↑ w +∞ n        --
 --                                                                    --
 -- This is the mirror image of the frame of `Time.LeftSided`, in      --
--- which the world advances by *at least* the bound. Multiplication   --
+-- which the world advances by at least the bound. Multiplication     --
 -- of grades adds the bounds, the composite of two accessibilities    --
 -- advances by at most their sum, and a larger bound, the weaker      --
 -- grade, gives a larger relation.                                    --

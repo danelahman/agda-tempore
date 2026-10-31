@@ -59,8 +59,8 @@ import Grades.Examples.Worked.Traces.Regular.RightSided
 ------------------------------------------------------------------------
 -- Rigid timed regular grades, in whole steps
 
--- upper bounds: the order of strict waits and budgets, the prototype's
--- tests, the window rule, the delays
+-- upper bounds: the order of strict waits and budgets, rejected runs,
+-- the window rule, the delays
 
 import Grades.Examples.Worked.Traces.Rigid.Regular.RightSided
 
@@ -71,7 +71,7 @@ import Grades.Examples.Worked.Traces.Rigid.Regular.LeftSided
 ------------------------------------------------------------------------
 -- Rigid timed finite-expression grades, in dense time
 
--- upper bounds: the F4 products at rational lengths, open against
+-- upper bounds: products of budgets at rational lengths, open against
 -- closed ends, an equivalence of distinct expressions, the window rule,
 -- open running times, the hull
 
@@ -109,7 +109,6 @@ import Grades.Examples.Worked.Traces.Rigid.Rational.LeftSided
 
 import Grades.Examples.Worked.Traces.Rigid.Rational.TwoSided
 
--- comparisons on which the decision and the reference reader of the
--- design study agree
+-- a random sample of comparisons
 
-import Grades.Examples.Worked.Traces.Rigid.Rational.CrossChecked
+import Grades.Examples.Worked.Traces.Rigid.Rational.Sampled

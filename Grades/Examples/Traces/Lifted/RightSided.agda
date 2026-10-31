@@ -16,10 +16,10 @@
 --                                                                    --
 -- that is, every listed bound lies within one listed in `Q`. This is --
 -- `↓P ⊆ ↓Q` for the sets of runs the two grades permit, so the union --
--- of two grades is their join, the closure is *downward*, and the    --
+-- of two grades is their join, the closure is downward, and the      --
 -- canonical form of a grade is the antichain of its `≼`-maximal      --
 -- members. The carrier is the `Antichain` of `Traces.Reduced` at the --
--- *converse* of the order (`Order.flipᵖ`, whose minimal members are  --
+-- converse of the order (`Order.flipᵖ`, whose minimal members are    --
 -- the maximal members of this order), and the order is a partial     --
 -- order.                                                             --
 --                                                                    --
@@ -28,10 +28,9 @@
 -- absorbing. It is distinct from the empty set of bounds, which      --
 -- permits nothing and is excluded. It is the greatest grade.         --
 --                                                                    --
--- The facts specific to this module concern `{ ε }`: it is the       --
--- *least* grade, the empty run staying within every bound, and it is --
--- a zero for the product. Both rest on the two unit facts that a     --
--- `TraceOrder` adds to the order-theoretic part used by the          --
+-- `{ ε }` is the least grade, the empty run staying within every     --
+-- bound, and a zero for the product. Both rest on the two unit facts --
+-- that a `TraceOrder` adds to the order-theoretic part used by the   --
 -- reduction.                                                         --
 --                                                                    --
 -- `Example.Traces.Timed.RightSided` instantiates the construction at --

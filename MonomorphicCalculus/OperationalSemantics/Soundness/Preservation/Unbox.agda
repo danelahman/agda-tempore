@@ -80,14 +80,14 @@ state-past (St ⟨ σ ⟩ₛ) (Tl-⟨⟩ y) pSt        = μ ∘ᵐ ⟨ σ ⟩ᶠ
 state-past (St ∷ₛ W)   Hd        (pSt , _)  = η ∘ᵐ ⟦ St ⟧ˢ pSt
 state-past (St ∷ₛ W)   (Tl-∷ y)  (pSt , _)  = state-past St y pSt
 
--- Projecting a cell out of the state's environment recovers exactly the value
--- stored in it — boxed by `η⊣` (the `box` morphism, which is what put it
--- there) and viewed from the past in which it was allocated.
+-- Projecting a cell out of the state's environment recovers the value stored
+-- in it, boxed by `η⊣` (the `box` morphism, which put it there) and viewed
+-- from the past in which it was allocated.
 --
 -- Each case is a naturality law of the modality against the corresponding
 -- clause of `⟦_⟧ˢ`: `Hd` is `η`'s naturality against the cell just written,
 -- `Tl-∷` drops a later cell by `fstᵐ`, and `Tl-⟨⟩` folds a lock with `μ`'s
--- naturality — the grades multiplying exactly as `ctx-grade` says they must.
+-- naturality, the grades multiplying as `ctx-grade` says.
 
 state-lookup : ∀ {A ρ ρ'} → (St : 𝕊 []) → (x : [ ρ ] A ∈[ ρ' ] toCtx St)
              → (pSt : Paramˢ St)
@@ -214,7 +214,7 @@ past-core {A} {ρ} (St ⟨ σ ⟩ₛ) (Tl-⟨⟩ y) pSt p =
     p₀ = ≃ᵣ⇒≿ᵣ (cell-grade St y)
 
 -- The grade equality that `wk-ren-⟨ρ⟩-ctx` carries can be split off as a
--- `⟨⟩-≤` (here `Γ`, `Γ'` and `ρ` are independent, so the equality *can* be
+-- `⟨⟩-≤` (here `Γ`, `Γ'` and `ρ` are independent, so the equality can be
 -- matched, unlike inside `past-core`).
 
 wk-lock-≤ : ∀ {Γ Γ' ρ} → (e : ctx-grade Γ' ≡ ρ)

@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 -- The subset order on sets of traces.                                --
 --                                                                    --
--- The subset grade orders `NeTraces` by `_⊑_` of `Sets`. This module --
--- collects the reading of `_⊑_` as membership and the zero-product   --
--- law of its grade structure.                                        --
+-- The subset grade orders `NeTraces` by `_⊑_` of `Sets`; below are   --
+-- the reading of `_⊑_` as membership and the zero-product law of the --
+-- grade.                                                             --
 --                                                                    --
 -- `_⊑_` is `liftˢ _≡_`, the set-level lift of the ordered trace      --
 -- grades at the discrete order. The discrete order is not a          --
@@ -43,8 +43,8 @@ open WithDecEq _≟ₒ_ using (_⊑_; _∈?_; _≟ᵀ_)
 ------------------------------------------------------------------------
 -- `_⊑_` is membership-wise inclusion
 --
--- The lift's `True`-of-a-decision packaging is what makes the order
--- proof-irrelevant; these two turn it back into the statement it is.
+-- The lift wraps a decision in `True`, which makes the order
+-- proof-irrelevant; these two unwrap it.
 
 ∈-⊑ : {xs ys : List Trace} {s : Trace} → xs ⊑ ys → s ∈ xs → s ∈ ys
 ∈-⊑ {xs} {s = s} sub mem = toWitness (sub s (fromWitness {a? = s ∈? xs} mem))

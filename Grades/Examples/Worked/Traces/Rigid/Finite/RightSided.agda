@@ -3,10 +3,10 @@
 --                                                                    --
 -- Heating takes two to four units, cooling more than one and less    --
 -- than two, logging more than a quarter and at most a half. The      --
--- cases: the products of the formalisation findings (F4) at rational --
--- lengths, open against closed ends, an equivalence of distinct      --
--- expressions, the window rule, open running times, and the hull of  --
--- a delay. Each comparison is checked by evaluating the decision.    --
+-- cases: products of budgets at rational lengths, open against       --
+-- closed ends, an equivalence of distinct expressions, the window    --
+-- rule, open running times, and the hull of a delay. Each comparison --
+-- is checked by evaluating the decision.                             --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Worked.Traces.Rigid.Finite.RightSided where
@@ -22,18 +22,18 @@ open import Grades.Examples.Worked.Traces.Rigid.Finite.Operations
 open import Grades.Examples.Traces.Rigid.Finite.RightSided Op 3 code name name-code code-name running
 
 ------------------------------------------------------------------------
--- F4: an "at most" strict wait does not separate budgets on its own
+-- An "at most" strict wait does not separate budgets on its own
 
 two-halves separated : Proper′ upper
 two-halves = ⌜ ≤ (1 / 2) · ≤ (1 / 2) ⌝
 separated  = ⌜ ≤ (1 / 2) · idle ≤ (1 / 2) · ≤ (1 / 2) ⌝
 
 -- the strict wait is passed at length zero
-F4-product : holds two-halves separated ≡ true
-F4-product = refl
+halves-within-separated : holds two-halves separated ≡ true
+halves-within-separated = refl
 
-F4-converse : holds separated two-halves ≡ false
-F4-converse = refl
+separated-not-within-halves : holds separated two-halves ≡ false
+separated-not-within-halves = refl
 
 -- cooling, less than two units, spreads over both budgets past the wait
 cool-in-budgets : holds ⌜ ‵ cool ⌝ ⌜ ≤ (# 1) · idle ≤ (# 1) · ≤ (# 1) ⌝ ≡ true

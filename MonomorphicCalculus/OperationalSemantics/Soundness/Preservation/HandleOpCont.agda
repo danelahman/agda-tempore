@@ -3,7 +3,7 @@
 --                                                                      --
 -- `sound-HANDLE-OP`'s reduct boxes up the handled remainder as a       --
 -- continuation: `handle M with H' in N'`, where `H'` is `H` renamed by --
--- `barrier-wk-ren` (its clauses now sit behind the barrier of the      --
+-- `barrier-wk-ren` (its clauses sit behind the barrier of the          --
 -- extended ambient) and `N'` is `N` renamed by the commuting           --
 -- conversion. This lemma reconciles that inner handle's interpretation --
 -- with the handler's fold at the ambient context `Γ`, its parameter    --

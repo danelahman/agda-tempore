@@ -4,22 +4,21 @@
 -- Every trace-based grade is built from the same carrier: a non-empty --
 -- finite set of timed traces, read as a set of alternative runs. The  --
 -- monoid is the language product, which sequences each trace of one   --
--- set with each trace of the other, with unit `{ ε }`. The grades     --
--- differ in the *order* they put on this carrier -- that is what the  --
--- modules under `Grades.Examples.Traces` do -- and the two-sided      --
--- grades there pair two such sets, as a floor and a cap.              --
+-- set with each trace of the other, with unit `{ ε }`. The grades of  --
+-- `Grades.Examples.Traces` differ in the order they put on this       --
+-- carrier, and the two-sided ones pair two such sets, as a floor and  --
+-- a cap.                                                              --
 --                                                                     --
--- A set is represented *canonically*: the underlying list is strictly --
+-- A set is represented canonically: the underlying list is strictly   --
 -- increasing for the lexicographic order `_<ᵀ_` on traces, so it      --
 -- neither repeats a trace nor records the order the members were      --
--- written in. Two sets with the same members are therefore equal, and --
--- the operations normalise their results with `nf`. This is why the   --
--- file takes the alphabet's order as a parameter: the carrier itself  --
--- depends on it.                                                      --
+-- written in. Two sets with the same members are equal, and the       --
+-- operations normalise their results with `nf`. The alphabet's order  --
+-- is a parameter, since the carrier depends on it.                    --
 --                                                                     --
--- Deciding membership -- hence any order phrased through it -- needs  --
--- decidable equality of operation symbols, which the `WithDecEq`      --
--- submodule takes as a parameter rather than the whole file.          --
+-- Deciding membership, and so any order phrased through it, needs     --
+-- decidable equality of operation symbols, a parameter of the         --
+-- `WithDecEq` submodule only.                                         --
 --                                                                     --
 -- The timed traces themselves are re-exported from `Traces.Base`.     --
 -------------------------------------------------------------------------
@@ -112,7 +111,7 @@ NonEmpty-irr (_ ∷ _) tt tt = refl
 --
 -- `v <* xs` puts `v` strictly below the head of `xs`, and a list is
 -- canonical when each of its elements sits strictly below the rest.
--- Being *strictly* increasing, a canonical list also repeats nothing,
+-- Being strictly increasing, a canonical list also repeats nothing,
 -- so it names its members and nothing else.
 
 infix 4 _<*_
@@ -146,8 +145,8 @@ Sorted-irr (x ∷ xs) (b , s) (b' , s') =
 ------------------------------------------------------------------------
 -- A canonical list is determined by its members
 --
--- This is what makes the representation canonical, and everything
--- below rests on it: trichotomy pins down the two heads, and the two
+-- This makes the representation canonical, and everything below rests
+-- on it: trichotomy pins down the two heads, and the two
 -- tails then have the same members in turn.
 
 -- the two heads agree, since each sits in the other list and a member
@@ -345,7 +344,7 @@ nf-sorted-id (x ∷ xs) (b , s) =
   trans (cong (insert x) (nf-sorted-id xs s)) (insert-front x xs b)
 
 ------------------------------------------------------------------------
--- The load-bearing lemma: a normal form is determined by its members
+-- A normal form is determined by its members
 
 nf-ext : {xs ys : List Trace}
        → ({w : Trace} → w ∈ xs → w ∈ ys)
@@ -464,7 +463,7 @@ cpw-map x (y ∷ ys) zs =
 -- Membership transported across the operations
 --
 -- The language product and concatenation are both elementwise, so each
--- sends "the same members" to "the same members" -- which is all
+-- sends "the same members" to "the same members", which is all
 -- `nf-ext` asks for.
 
 ·ˢ-∈ : {xs xs' ys ys' : List Trace}
@@ -694,7 +693,7 @@ module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
   -- The set-level lift of a relation on traces
   --
   -- Every order the trace grades put on sets of traces has one shape:
-  -- every trace of the left-hand set is related to *some* trace of the
+  -- every trace of the left-hand set is related to some trace of the
   -- right-hand one. Only the relation lifted differs, so the properties
   -- are proved here once and instantiated elsewhere.
   --
@@ -825,7 +824,7 @@ module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
   ... | inj₁ s∈xs = p s (fromWitness s∈xs)
   ... | inj₂ s∈ys = q s (fromWitness s∈ys)
 
-  -- the orders built from the lift are proof-irrelevant, pointwise --
+  -- the orders built from the lift are proof-irrelevant, pointwise:
   -- which is every trace grade's `≾-irrelevant`, one endpoint at a time
 
   liftˢ-irrelevant : {R : Trace → Trace → Set} → {R? : Decidable R}
@@ -864,8 +863,8 @@ module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
   ⊑-trans : {xs ys zs : List Trace} → xs ⊑ ys → ys ⊑ zs → xs ⊑ zs
   ⊑-trans = liftˢ-trans _≟ᵀ_ trans
 
-  -- at equality the lift is literally list inclusion: a trace related
-  -- to *some* member of the right-hand list is one of its members
+  -- at equality the lift is list inclusion: a trace related to some
+  -- member of the right-hand list is one of its members
 
   ⊑-∈ : {xs ys : List Trace} → xs ⊑ ys → {w : Trace} → w ∈ xs → w ∈ ys
   ⊑-∈ p m = toWitness (p _ (fromWitness m))

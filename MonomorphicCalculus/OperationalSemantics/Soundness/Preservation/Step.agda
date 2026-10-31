@@ -90,7 +90,7 @@ box-split a =
 
 -- `box-split` with an environment postcomposed. The environment is pulled out
 -- to the right, the split applied, and `η⊣`-naturality then carries it back
--- under the box — so the transposition ends up at the *environment's* source.
+-- under the box, so the transposition ends up at the environment's source.
 -- This is what lets `DELAY`'s strength components share one `η⊣`.
 
 box-split-env : ∀ {X Y σ ρ₁ ρ₃} → (a : σ ·ᵣ ρ₃ ≾ᵣ ρ₁) → (env : Y →ᵐ X)
@@ -235,7 +235,7 @@ box-η {X} {ρ₁} {ρ₃} a w =
 -- resp. the handler's), bottoming out in `step-box`: the environment carried
 -- across the step is the new state's environment, renamed by `suc-comp-ren`.
 
--- Naturality of the strength in its monadic (tree) component alone — the
+-- Naturality of the strength in its monadic (tree) component alone, the
 -- dual of `strᵀ-natˡ`. Derived from `strᵀ-nat` and `[]-idᵐ`.
 
 strᵀ-natʳ : ∀ {A B B' ε} → (g : B →ᵐ B')
@@ -407,8 +407,8 @@ push-str alg alg-≤ pv bx n g' t p =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
       , ∘ᵐ-congʳ (str-split ([]-≤ (map-monotoneᵉ p) ∘ᵐ bx) g' t) ⟩ᵐ-cong))
 
--- The two coercions a sequencing step produces — the re-association of the
--- effect grades, and the step's own refinement — merge into `step-≾`'s.
+-- The two coercions a sequencing step produces (the re-association of the
+-- effect grades, and the step's own refinement) merge into `step-≾`'s.
 
 seq-coe : ∀ {X A d ε₁ ε₂ ε₃}
         → (p : d ·ₑ ε₃ ≾ₑ ε₁)
@@ -590,7 +590,7 @@ step-box : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []} {ρ₂ ρ₄ : R}
               ∘ᵐ stepᵀ r
 
 -- The time-preserving rules: `strᵀ-ηᵀ` opens the box, and `box-id-suc`
--- is exactly what is left — the environment survives unchanged.
+-- is what is left: the environment survives unchanged.
 
 step-box APP c g pS pM =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
@@ -917,8 +917,8 @@ step-box (DELAY {τ = τ} {S = St}) c g pS pM =
   ∙ ∘ᵐ-assoc _ _ _
 
 -- Re-associating two multiplications. `T-μ∘μ≡μ∘Tμ` runs the other way (it
--- *produces* the transport), so the inverse direction cancels a transport
--- against its own inverse — which is `refl` by uniqueness of identity proofs.
+-- produces the transport), so the inverse direction cancels a transport
+-- against its own inverse, which is `refl` by uniqueness of identity proofs.
 
 μμ : ∀ {A ε ε' ε''}
    → μᵀ {A} {ε ·ₑ ε'} {ε''} ∘ᵐ μᵀ {Tᵒ A ε''} {ε} {ε'}
@@ -933,7 +933,7 @@ step-box (DELAY {τ = τ} {S = St}) c g pS pM =
 
 -- `SEQ-STEP`: `seq-step-core` reduces the source to the
 -- `strᵀ ∘ ⟨ box , stepᵀ r ⟩` core; `step-box` replaces that core by the
--- *new* state's box, renamed by `suc-comp-ren`; and `seq-coe` reconciles the
+-- new state's box, renamed by `suc-comp-ren`; and `seq-coe` reconciles the
 -- effect grades (which differ by an associativity).
 
 -- The box `seq-step-core` produces carries two grade relaxations, which merge
@@ -958,9 +958,9 @@ box-merge p q m d h =
 
 -- The target's denotation, unfolded to the same normal form. Generic in the
 -- algebra: `⨟` uses `μᵀ`, `handle` uses the handler's fold, and they thread the
--- environment through the strength in exactly the same way. The renaming
+-- environment through the strength in the same way. The renaming
 -- `suc-comp-ren` sits in the continuation, and `strᵀ-natˡ` moves it into the
--- environment box — which is exactly the box `step-box` delivers.
+-- environment box, which is the box `step-box` delivers.
 
 seq-target : ∀ {ε₁ ε₂ ε₃ A B P} {Γ Γ' : Ctx} {H : Obj}
            → (alg : P ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε₃ →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε₃ ·ₑ ε₂))
@@ -1043,7 +1043,7 @@ sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} N {M'} r c pS
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _)))))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _))))))
-  -- the inner term is now the target's normal form (`seq-target`)
+  -- the inner term is the target's normal form (`seq-target`)
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ
       (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))))))
   -- push `Tᶠ ⟦N⟧` past the inner `μᵀ` …
@@ -1054,7 +1054,7 @@ sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} N {M'} r c pS
   -- … and re-associate the two `μᵀ`s, which is where the `ε-substᵀ` appears
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ μμ)
   -- regroup: the transport floats to the front, and the rest collects under
-  -- one `Tᶠ` — which is exactly `seq-target`'s normal form
+  -- one `Tᶠ`, which is `seq-target`'s normal form
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))

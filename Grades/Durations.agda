@@ -133,8 +133,8 @@ data Grain {C : Set₀} (_≤_ : C → C → Set₀) (0ᴰ : C) : Set₀ where
 -- Time domains: durations that are compared and subtracted. A time
 -- domain is a commutative, cancellative monoid of durations with a
 -- decidable total order in which `τ ≤ τ'` exactly when `τ'` is `τ`
--- followed by some further duration -- the positive cone of a totally
--- ordered abelian group -- and which is dense or discrete. The
+-- followed by some further duration (the positive cone of a totally
+-- ordered abelian group), and which is dense or discrete. The
 -- difference, the truncated subtraction and the extremal operations
 -- are derived from these fields in `Durations.Monus`.
 

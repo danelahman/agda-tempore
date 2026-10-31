@@ -240,7 +240,7 @@ mutual
 eq-ren-≐ʳ : ∀ {Γ Γ'} → (e e' : Γ ≡ Γ') → eq-ren e ≐ʳ eq-ren e'
 eq-ren-≐ʳ e e' rewrite uip {p = e} {q = e'} = ≐ʳ-refl
 
--- Renaming along an identity-*like* renaming between contexts that are only
+-- Renaming along an identity-like renaming between contexts that are only
 -- propositionally equal: the action is the transport. `eq-ren refl` is
 -- `id-ren`, so this is `C-rename-id-≡` once the equality is matched.
 
@@ -256,9 +256,9 @@ cong-ren-eq-ren-≐ʳ : ∀ {Γ Γ'} → (Δ : Ctx) → (e : Γ ≡ Γ')
                   ≐ʳ eq-ren (cong (_++ᶜ Δ) e)
 cong-ren-eq-ren-≐ʳ Δ refl = cong-ren-id-≐ʳ Δ ≐ʳ-refl
 
--- `eq-ren` commutes with the suffix formers. (Note `cong-ren` at nested suffixes
--- is *not* `cong-ren` at their concatenation: the contexts differ by
--- `++ᶜ-assoc`, so any such step has to be conjugated by `eq-ren`s.)
+-- `eq-ren` commutes with the suffix formers. (`cong-ren` at nested suffixes is
+-- not `cong-ren` at their concatenation: the contexts differ by `++ᶜ-assoc`,
+-- so any such step has to be conjugated by `eq-ren`s.)
 
 eq-ren-∷-≐ʳ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ')
            → eq-ren (cong (_∷ A) e) ≐ʳ cong-∷-ren {A = A} (eq-ren e)
@@ -269,15 +269,15 @@ eq-ren-⟨⟩-≐ʳ : ∀ {Γ Γ' ρ} → (e : Γ ≡ Γ')
 eq-ren-⟨⟩-≐ʳ refl = ≐ʳ-sym (cong-⟨⟩-ren-id-≐ʳ ≐ʳ-refl)
 
 -- A context splitting is determined by its two halves, which identifies the
--- two ways `sub-wk`'s `handle` case reaches the substituted variable —
--- `split-++ʳ s D` and `split-≡-++ᶜ` — without computing either.
+-- two ways `sub-wk`'s `handle` case reaches the substituted variable,
+-- `split-++ʳ s D` and `split-≡-++ᶜ`, without computing either.
 
 split-unique : ∀ {Γ Γ₁ Γ₂} → (s s' : Γ₁ , Γ₂ split Γ) → s ≡ s'
 split-unique split-[]     split-[]      = refl
 split-unique (split-∷ s)  (split-∷ s')  = cong split-∷ (split-unique s s')
 split-unique (split-⟨⟩ s) (split-⟨⟩ s') = cong split-⟨⟩ (split-unique s s')
 
--- `cong-ren` at nested suffixes is `cong-ren` at their concatenation — but only
+-- `cong-ren` at nested suffixes is `cong-ren` at their concatenation, but only
 -- up to `++ᶜ-assoc`, so conjugated by `eq-ren`s.
 
 cong-ren-assoc-≐ʳ : ∀ {Γ Γ'} → (Θ D : Ctx) → (r : Ren [] Γ' Γ)

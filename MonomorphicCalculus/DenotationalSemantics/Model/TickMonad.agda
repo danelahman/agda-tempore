@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------
--- The TICK MONAD: the target of the pure top-level interpretation.       --
+-- The tick monad: the target of the pure top-level interpretation.       --
 --                                                                        --
 -- A graded monad with the same unit, multiplication, functorial action   --
 -- and sub-effecting as `Monad`, but with no algebraic operations and no  --

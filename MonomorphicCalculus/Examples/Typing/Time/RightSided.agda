@@ -148,7 +148,7 @@ tightening-a-deadline = ≰!
 -- Conditional branching
 --
 -- Both branches are coerced to one grade, and here that grade is the
--- *larger* deadline: a conditional may take as long as its slower
+-- larger deadline: a conditional may take as long as its slower
 -- branch. Neither branch locks the context.
 
 branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ [0, 6 ]
@@ -479,8 +479,8 @@ two-below-three-reduces = CMP
 -- Unboxing: a lease that expires
 --
 -- `unbox`'s premise `elapsed ≾ᵣ ρ` reads `elapsed ≤ ρ` here: the box
--- may be claimed while what the computation has spent -- the product of
--- the locks between the box's binding and the claim -- is still within
+-- may be claimed while what the computation has spent (the product of
+-- the locks between the box's binding and the claim) is still within
 -- what the box allows. The resource below is leased for six ticks'
 -- worth of work.
 
@@ -535,8 +535,8 @@ handed-over =
            (perform send here (return ⋆))))
       · here)
 
--- claiming the resource and then choosing what to transmit -- the
--- claimed reading or one taken along the way -- with both branches
+-- claiming the resource and then choosing what to transmit (the
+-- claimed reading or one taken along the way), with both branches
 -- making the same run
 
 either-way : [] ∷ Bool ⊢C⦂ Unit ‼ [0, 7 ]
@@ -586,7 +586,7 @@ claimed-in-both-branches =
 -- Sub-effecting against unboxing
 --
 -- Sequencing locks its continuation by the grade the first part is
--- *typed at*. A `coerce` there can only take claims away: coercing
+-- typed at. A `coerce` there can only take claims away: coercing
 -- relaxes the deadline, so the lock grows and the lease is spent
 -- against a larger figure.
 
@@ -683,7 +683,7 @@ spend-it-either-way =
 
 -- the claim has to be made before the transmission and not after it:
 -- the sampling branch spends one of the six, and transmitting first
--- would spend seven -- `short-lease-run-out` above
+-- would spend seven, as in `short-lease-run-out` above
 
 claim-before-transmitting : uᵣ ·ᵣ opTime read ≾ᵣ [0, 6 ]
 claim-before-transmitting = ≤!
@@ -691,8 +691,8 @@ claim-before-transmitting = ≤!
 ------------------------------------------------------------------------
 -- Effect handling
 --
--- Handling locks its `in` part by the handled computation's grade,
--- exactly as sequencing does.
+-- Handling locks its `in` part by the handled computation's grade, as
+-- sequencing does.
 
 forwarded : [] ⊢C⦂ Reading ‼ [0, 1 ]
 forwarded =

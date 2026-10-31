@@ -17,7 +17,7 @@
 -- since equal offsets at an instant mean equal starts; a strict wait  --
 -- of `y` is waited out by `x`; inside a stretch of `y` admitting `S`, --
 -- `x` waits, or runs stretches with smaller sets, or runs operations  --
--- of `S` -- an operation of `x` that `y` does not match belongs to    --
+-- of `S`: an operation of `x` that `y` does not match belongs to      --
 -- the set of every stretch it overlaps (the window rule).             --
 --                                                                     --
 -- The labelling ignores how stretches are merged, so the order is a   --

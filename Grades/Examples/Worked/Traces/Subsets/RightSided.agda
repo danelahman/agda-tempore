@@ -6,7 +6,7 @@
 -- equality, in contrast with `Worked.Traces.Timed.RightSided`, where --
 -- a listed delay is a budget that pays for unlisted operations.      --
 --                                                                    --
--- The set is read *disjunctively*: a longer list permits more, the   --
+-- The set is read disjunctively: a longer list permits more, the     --
 -- union of two grades is their join, and `{ ε }` lies below every    --
 -- list containing the empty run.                                     --
 --                                                                    --
@@ -51,9 +51,9 @@ failsᵉ P Q {p} = toWitnessFalse p
 ------------------------------------------------------------------------
 -- Permitting more
 --
--- Read as an *effect* grade: `coerce` moves along `≾`, and here that
--- means adding runs to the list of runs a computation may have. It can
--- never mean allowing a run that is not listed.
+-- As an effect grade: `coerce` moves along `≾`, adding runs to the
+-- list of runs a computation may have, never allowing one that is not
+-- listed.
 
 permit-a-second-run :
   permitting ⟅ ⌈ read ⌉ ⟆ ≾ permitting ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
@@ -81,7 +81,7 @@ pure-does-not-fit-elsewhere =
 -- The greatest grade
 --
 -- `any-run` permits any run at all, so every written-out list weakens
--- to it, and it weakens to none of them -- a finite list leaves some
+-- to it, and it weakens to none of them, a finite list leaving some
 -- run unpermitted. Permitting everything survives sequencing,
 -- `any-run` being absorbing.
 
@@ -101,9 +101,9 @@ the-top-absorbs = refl
 -- Nothing is approximated
 --
 -- The comparison is equality, so a listed delay pays for no operation
--- and a listed operation permits nothing but itself. Both of the following
--- hold in `Traces.Timed.RightSided`, where the allowance order lets
--- time pay for operations; here neither does.
+-- and a listed operation permits nothing but itself. Both comparisons
+-- below hold in `Traces.Timed.RightSided`, where the allowance order
+-- lets time pay for operations.
 
 a-store-is-not-three-ticks :
   ¬ (permitting ⟅ ⌈ write ⌉ ⟆ ≾ permitting ⟅ ⟨ 3 ⟩ ⟆)
@@ -124,7 +124,7 @@ listing-it-works = holds
 -- Unions are joins
 --
 -- Each branch's runs are permitted by the union, and any grade
--- permitting both permits it -- so a branching construct would grade
+-- permitting both permits it, so a branching construct would grade
 -- its result by listing what each branch may do.
 
 union-is-a-join-inˡ :
@@ -160,10 +160,10 @@ sequencing-adds-nothing-else = fails
 ------------------------------------------------------------------------
 -- As a resource grade
 --
--- Read the other way: a box carries a grade `ρ` and `unbox` asks the
--- grade `ρ'` of what has elapsed to satisfy `ρ' ≾ᵣ ρ`. So the box
--- names the runs it will tolerate, and the box opens exactly when
--- every run that may have happened is one of them.
+-- A box carries a grade `ρ`, and `unbox` asks the grade `ρ'` of what
+-- has elapsed to satisfy `ρ' ≾ᵣ ρ`. So the box names the runs it
+-- tolerates, and opens exactly when every run that may have happened
+-- is one of them.
 
 the-box-tolerates : Permits
 the-box-tolerates = permitting ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
@@ -176,7 +176,7 @@ an-unlisted-run-does-not :
   ¬ (permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆ ≾ the-box-tolerates)
 an-unlisted-run-does-not = fails
 
--- and a branching computation opens it only if *every* branch is
+-- and a branching computation opens it only if every branch is
 -- listed, the elapsed grade being read disjunctively too
 
 both-branches-listed :

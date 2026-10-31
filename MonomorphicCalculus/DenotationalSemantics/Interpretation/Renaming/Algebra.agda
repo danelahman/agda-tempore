@@ -173,7 +173,7 @@ ec-var-alg (ec-⟨⟩ q p ec) et (Tl-⟨⟩ y) =
 ⟦ cong-⟨⟩-ren {ρ = ρ} r ⟧ʳ = ⟨ ρ ⟩ᶠ ⟦ r ⟧ʳ
 ⟦ ⟨⟩-ext-ctx _ ecΓ ⟧ʳ    = Eternalᵒ.extᵉ (ec-Eternalᵒ ecΓ)
 
--- Transport along an equality of *grades* is the grade relaxation at the
+-- Transport along an equality of grades is the grade relaxation at the
 -- reflexive witness.
 
 eq-ren-grade : ∀ {Γ ρ ρ'} → (g : ρ ≡ ρ')

@@ -88,8 +88,8 @@ data _≤ₛ_ : ∀ {Γ Γ'} → 𝕊 Γ → 𝕊 Γ' → Set where
             ---------------------------------------
             → S ≤ₛ (S' ∷ₛ V)
 
--- The grade δ accumulated when passing from a state 𝕊 to a successor state 𝕊',
--- i.e. the δ with state-grade S' ≃ᵣ state-grade S ·ᵣ δ (see state-grade-≤ₛ).
+-- The grade δ accumulated when passing from a state 𝕊 to a successor state 𝕊':
+-- state-grade S' ≃ᵣ state-grade S ·ᵣ δ, by state-grade-≤ₛ.
 
 ≤ₛ-grade : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'} → S ≤ₛ S' → R
 ≤ₛ-grade id-suc       = uᵣ

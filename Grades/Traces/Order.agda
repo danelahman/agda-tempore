@@ -1,10 +1,9 @@
 ------------------------------------------------------------------------
 -- What a trace order has to supply to carry grades.                  --
 --                                                                    --
--- Several orders on timed traces are in play -- the allowance order  --
--- of `Traces.Allowance` and the coverage order of `Traces.Coverage`  --
--- -- and the grades built over them differ only in which one they    --
--- lift. The interface they meet comes in two layers.                 --
+-- The grades over timed traces differ only in which order they lift, --
+-- the allowance order of `Traces.Allowance` or the coverage order of --
+-- `Traces.Coverage`. The interface they meet comes in two layers.    --
 --                                                                    --
 -- `TracePartialOrder` is the order-theoretic half: decidability, the --
 -- partial-order laws, and monotonicity for the trace product. It is  --
@@ -15,13 +14,12 @@
 -- for those that close downward.                                     --
 --                                                                    --
 -- `TraceOrder` adds the two facts about the unit that the grades'    --
--- zero-product properties rest on. Those are not self-dual --        --
--- `ε ≼ t` has no converse -- so they make sense at one handedness    --
--- only and stay out of the layer that is flipped.                    --
+-- zero-product properties rest on. Those are not self-dual (`ε ≼ t`  --
+-- has no converse), so they make sense at one handedness only and    --
+-- stay out of the layer that is flipped.                             --
 --                                                                    --
--- Monotonicity is the demanding field. It is what fails for the      --
--- prefix order (`Traces.Prefix`), and it is why contiguity-based     --
--- orders carry no grade at all.                                      --
+-- Monotonicity is the demanding field: it fails for the prefix order --
+-- (`Traces.Prefix`), and so contiguity-based orders carry no grade.  --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (Decidable)

@@ -53,7 +53,7 @@ RVar-cast : ∀ {Γ Γ'} → Γ ≡ Γ' → RVar Γ → RVar Γ'
 RVar-cast e (ρ , A , t) = ρ , A , Var-cast e t
 
 -- What the action does to an `unbox`: the cell `env-cell` computes, at the
--- *declared* box type the named one only bounds. The grade bound and the
+-- declared box type the named one only bounds. The grade bound and the
 -- payload subsumption travel separately, as `env-cell-rel` and `env-cell-typ`.
 
 env-cell : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
@@ -255,7 +255,7 @@ env-cell₀ {A = A} {ρ = ρ} (liftᵉ V γ) (σ , Hd) = ρ , A , uᵣ , Hd
 env-cell₀ (liftᵉ V γ) (σ , Tl-∷ y)             = RVar-∷ (env-cell₀ γ (σ , y))
 
 -- Reading a cell a zone has moved: the same read, at the cell the inner
--- environment names, and the same value — the two positions agree once the
+-- environment names, and the same value: the two positions agree once the
 -- extension is embedded.
 
 push-read : ∀ {A ρ σ σ'} {St St' St₂ : 𝕊 []}
@@ -301,7 +301,7 @@ alloc-read V c r =
   push-read (∷-suc V id-suc) r
     (≤ₛ-embed-∘ (∷-suc V id-suc) (extᶜ r) (rvar-pos c))
 
--- The raw store read is reducible at the cell's *declared* payload type. At
+-- The raw store read is reducible at the cell's declared payload type. At
 -- `_∷ᵉ_`'s own entry that is `Rel-Env`'s component unfolded, the entry being a
 -- value of box type and `VRed` speaking of its cell.
 
@@ -333,7 +333,7 @@ env-cell₀-val (liftᵉ V γ) (pγ , pV) (σ , Tl-∷ y) r =
   where rd = alloc-read V (env-cell₀ γ (σ , y)) r
 
 -- `env-cell` and `env-cell₀` agree on the cells pushed in from the
--- environment's own context — all that `FL-unbox` reads.
+-- environment's own context, all that `FL-unbox` reads.
 
 Var-++ᶜˡ : ∀ {Γ A} → (Δ : Ctx) → Var Γ A → Var (Γ ++ᶜ Δ) A
 Var-++ᶜˡ Δ (σ , x) = grade-++ᶜˡ σ Δ , ∈-++ᶜˡ Δ x
@@ -345,13 +345,13 @@ Var-cast-loop : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (t : Var Γ' A)
               → Var-cast e (Var-cast (sym e) t) ≡ t
 Var-cast-loop refl t = refl
 
--- A cell that comes from the *suffix* is left where it is: `cong-ren` is the
+-- A cell that comes from the suffix is left where it is: `cong-ren` is the
 -- identity on the suffix, and a substituting zone's boundary variable is not a
 -- suffix variable, so `⟨_⟩[_↦_]rvar` leaves it alone (`sub-rvar-r`). This is
 -- what the `Hd` halves of `_∷ᵉ_`/`liftᵉ` below need, the boundary entry being
 -- a suffix cell at the suffix the zone recurses at.
 
--- Substituting *at* a resource variable, rather than past it: the counterpart
+-- Substituting at a resource variable, rather than past it: the counterpart
 -- of `sub-rvar-r`, and what the `Hd` halves of `_∷ᵉ_`/`liftᵉ` need. The value
 -- put in the variable's place is of box type, hence a variable itself up to
 -- subsumption, and the result is that variable pushed back under the suffix.
@@ -463,8 +463,8 @@ env-cell-push (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₀} γ q) Δ (σ , Tl-�
     eIn  = ++ᶜ-assoc Γ ([] ⟨ ρ₀ ⟩) Δ
     eOut = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ₀ ⟩) Δ)
 
-    -- `Tl-⟨⟩ y` *is* the push of `y` under `[] ⟨ ρ₀ ⟩`, so the zone's
-    -- associativity cast just re-brackets the two pushes
+    -- `Tl-⟨⟩ y` is the push of `y` under `[] ⟨ ρ₀ ⟩`, so the zone's
+    -- associativity cast re-brackets the two pushes
     step-in : Var-cast eIn (Var-++ᶜˡ Δ (σ , Tl-⟨⟩ y))
             ≡ Var-++ᶜˡ Δ' (_ , y)
     step-in =
@@ -544,7 +544,7 @@ env-cell-push (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₀} V γ) Δ (σ 
     bnd = ∈-++ᶜˡ {Γ = B₀} Δ Hd
 
 -- What `FL-unbox` reads: at the unextended state the readability proof is
--- `id-suc`, whose embedding is the identity, so the store read *is*
+-- `id-suc`, whose embedding is the identity, so the store read is
 -- `unbox-lookup`. The cell is taken as a parameter, to be met by
 -- `env-cell-push`.
 

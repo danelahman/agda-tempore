@@ -6,8 +6,8 @@
 -- operation may run, `> d` one longer than `d`, `≥ d & S` one in     --
 -- which only those of `S` may, and `idle ≥ d` a strict wait of at    --
 -- least `d`, in which none may. Activity before, between and after   --
--- is admitted only where a stretch says so -- `≥ 0` is the flank     --
--- admitting anything -- so the empty word is not the greatest grade. --
+-- is admitted only where a stretch says so (`≥ 0` is the flank       --
+-- admitting anything), so the empty word is not the greatest grade.  --
 -- A delay of `d` steps is graded by `d` strict waits of at least a   --
 -- step each, the hull of the delay on this side (`Exact.Hull`).      --
 ------------------------------------------------------------------------

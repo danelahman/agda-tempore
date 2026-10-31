@@ -2,10 +2,9 @@
 -- The coverage order is antisymmetric.                                --
 --                                                                     --
 -- Two runs that cover each other are the same run, at any cost model. --
--- The order is taken at slack zero, where `use-delay` cannot fire --  --
--- a delay has positive length -- so a demanded delay is met only by a --
--- delay, and two leading delays pin each other's length, leaving no   --
--- slack for what follows.                                             --
+-- At slack zero `use-delay` cannot fire, a delay having positive      --
+-- length, so a demanded delay is met only by a delay, and two leading --
+-- delays pin each other's length, leaving no slack for what follows.  --
 --                                                                     --
 -- What rules out the mismatched cases is the number of operation      --
 -- nodes. Coverage never buys an operation with time, so that number   --

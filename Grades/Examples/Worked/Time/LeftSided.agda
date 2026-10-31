@@ -2,7 +2,7 @@
 -- Worked instances of left-sided intervals: a lower bound on elapsed --
 -- time.                                                              --
 --                                                                    --
--- `[ m ,+∞⟩ ≾ [ n ,+∞⟩` is `n ≤ m`: a *larger* lower bound is the    --
+-- `[ m ,+∞⟩ ≾ [ n ,+∞⟩` is `n ≤ m`: a larger lower bound is the      --
 -- stronger claim and lies below. Weakening decreases the amount of   --
 -- time known to have passed.                                         --
 --                                                                    --

@@ -74,7 +74,7 @@ record Monad : Set₁ where
     ε-substᵀ-trans : ∀ {A ε ε' ε''} → (p : ε ≡ ε') → (q : ε' ≡ ε'')
                    → ε-substᵀ q ∘ᵐ ε-substᵀ p ≈ᵐ ε-substᵀ {A} (trans p q)
 
-    -- Sub-effecting — the semantics of `coerce`. Covariant in the effect
+    -- Sub-effecting, the semantics of `coerce`. Covariant in the effect
     -- grade, and functorial in it (`T-≤-refl` / `T-≤-trans` below).
 
     T-≤ : ∀ {A ε₁ ε₂} → ε₁ ≾ₑ ε₂ → Tᵒ A ε₁ →ᵐ Tᵒ A ε₂
@@ -109,8 +109,8 @@ record Monad : Set₁ where
     T-≤-≡ : ∀ {A ε ε'} → (e : ε ≡ ε')
           → ε-substᵀ {A} e ≈ᵐ T-≤ (≾ₑ-reflexive e)
 
-    -- Sub-effecting commutes with the monad multiplication in either grade —
-    -- the outer one landing on `·ₑ-monoˡ`, the inner one on `·ₑ-monoʳ` — and
+    -- Sub-effecting commutes with the monad multiplication in either grade
+    -- (the outer one landing on `·ₑ-monoˡ`, the inner one on `·ₑ-monoʳ`) and
     -- with the strength (which also relaxes the box's grade, the box being
     -- contravariant in it).
 
@@ -152,7 +152,7 @@ record Monad : Set₁ where
                → delayᵀ {ε = ε} τ ∘ᵐ [ of-durʳ τ ]ᶠ (Tᶠ f)
                ≈ᵐ Tᶠ f ∘ᵐ delayᵀ τ
 
-    -- Sub-effecting the delayed computation is sub-effecting the delay — the
+    -- Sub-effecting the delayed computation is sub-effecting the delay, the
     -- inner-grade counterpart of `T-≤-μᵀ`.
 
     delayᵀ-≤ : ∀ {A ε ε'} → (τ : 𝔻) → (p : ε ≾ₑ ε')
@@ -226,9 +226,9 @@ record Monad : Set₁ where
 
     strᵀ-sndᵐ : ∀ {A B ε} → Tᶠ sndᵐ ∘ᵐ strᵀ {A} {B} {ε} ≈ᵐ sndᵐ
 
-    -- Strength coherence laws. Because the box is only *lax* (no counit /
+    -- Strength coherence laws. Because the box is only lax (no counit /
     -- comultiplication inverses `ε⁻¹` / `δ⁻¹`), the unit and multiplication
-    -- laws keep the box on the *input* and eliminate it on the output via
+    -- laws keep the box on the input and eliminate it on the output via
     -- the counit `ε` (unit law) or split it via the comultiplication `δ`
     -- (multiplication law).
 
@@ -357,14 +357,14 @@ record Monad : Set₁ where
                                    ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {mapᵉ (op-grade op)}) idᵐ
                                    ∘ᵐ ⟨ fstᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ ⟩ᵐ ⟩ᵐ
 
-    -- The fold commutes with sub-effecting in the outer grade — the same shape
+    -- The fold commutes with sub-effecting in the outer grade, the same shape
     -- as `T-≤-μᵀ`.
 
     T-alg-of-handlerᵀ-≤ : ∀ {P A ε₁ ε₂ ε'} → (bc : Eternalᵒ P) → (h : Handlerᵀ P A) → (p : ε₁ ≾ₑ ε₂)
                         → T-alg-of-handlerᵀ {P} {A} {ε₂} {ε'} bc h ∘ᵐ mapˣᵐ idᵐ (T-≤ p)
                         ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵐ T-alg-of-handlerᵀ {P} {A} {ε₁} {ε'} bc h
 
-    -- It also commutes with sub-effecting in the inner grade — landing on
+    -- It also commutes with sub-effecting in the inner grade, landing on
     -- `·ₑ-monoʳ`, dual to the outer law's `·ₑ-monoˡ`.
 
     T-alg-of-handlerᵀ-≤ⁱ : ∀ {P A ε ε₁' ε₂'} → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)

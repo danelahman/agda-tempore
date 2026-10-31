@@ -1181,7 +1181,7 @@ refute-⊩ : ∀ {Ψ} {ρ : RExp Ψ} {Q : Hyps Ψ} → Satisfiable Q
          → Refutedᵤ ρ → ¬ (Q ⊩ ρ ≾̂ᵣ ûᵣ)
 refute-⊩ (δ , h) ref d = ref δ (inst-≾ᵣ (⊨⇒⊩ᴴ h) d)
 
--- Satisfiability is essential: a hypothesis names any ordering at all
+-- Satisfiability is needed: a hypothesis may name any ordering
 
 hyp-derives : ∀ {Ψ} → (ρ : RExp Ψ) → hyps [] [] ((ρ , ûᵣ) ∷ []) [] [] [] ⊩ ρ ≾̂ᵣ ûᵣ
 hyp-derives ρ = hypᵣ (here refl)
@@ -1215,7 +1215,6 @@ refute≾u ρ with scan-sum (nrmᵣ ρ)
 ... | just r  = just (refute-≡̂ᵣ (nrmᵣ-≡ ρ) r)
 
 ------------------------------------------------------------------------
--- The closed check
 -- The closed check
 --
 -- `checkClosed` decides at `closed` the orderings of a set and those between

@@ -472,7 +472,7 @@ cast-sub-handle refl M' N' H' = refl
         eM₀)
 
 -- sequencing an operation: the operation floats out, its continuation gaining
--- the sequel. The reduct is retyped in its *effect* (`ε-subst`) as well.
+-- the sequel. The reduct is retyped in its effect (`ε-subst`) as well.
 
 ε-subst-≡ : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → {M M' : Γ ⊢C⦂ A ‼ ε}
           → M ≡ M' → ε-subst e M ≡ ε-subst e M'

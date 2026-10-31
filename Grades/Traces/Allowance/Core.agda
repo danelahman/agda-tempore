@@ -2,7 +2,7 @@
 -- The budget-indexed allowance relation, and its preorder structure.   --
 --                                                                      --
 -- `s ≼ᵃ[ k ] t` reads: the bound `t` permits the run `s`, given a      --
--- budget `k` already banked. Read as a bound `t` and a run `s`:        --
+-- budget `k` already banked:                                           --
 --                                                                      --
 --   * an operation the bound names is permitted outright (`keep`),     --
 --     and one the bound does not name is paid for out of budget, at    --
@@ -10,13 +10,13 @@
 --   * a delay the run takes is paid for out of budget (`use-delay`);   --
 --   * budget comes from the bound's delays, at their length            --
 --     (`bank-delay`), and from nowhere else: an operation the bound    --
---     names but the run does not perform is simply skipped, freeing    --
+--     names but the run does not perform is skipped, freeing           --
 --     nothing (`skip-op`);                                             --
 --   * and budget does not cross a match. `keep` recurses at budget     --
 --     zero, so what the bound offers before an operation it names is   --
 --     spent before that operation or not at all.                       --
 --                                                                      --
--- So a bound limits what happens, how long it takes, and *when* its    --
+-- So a bound limits what happens, how long it takes, and when its      --
 -- slack is available: its operations say which effects are permitted   --
 -- outright, and each stretch of delay is a budget for the work the run --
 -- does in the same stretch. Going up the order, an operation turns     --
@@ -24,9 +24,8 @@
 --                                                                      --
 -- The relation is a preorder at the budgets: reflexive at any budget,  --
 -- weakenable to more budget, and transitive with the budgets adding    --
--- up. Everything derived from those laws -- the moves that build       --
--- allowance proofs, the duration bound, and the decision procedure --  --
--- lives in the sibling modules.                                        --
+-- up. The moves that build allowance proofs, the duration bound and    --
+-- the decision procedure are in the sibling modules.                   --
 --------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc)
@@ -48,8 +47,8 @@ open M.Notation
 
 open import Grades.Traces.Base T Op
 
--- the slack arithmetic and the size measure are the same for either
--- order on traces, so they are shared rather than restated
+-- the slack arithmetic and the size measure, shared by both orders on
+-- traces
 
 open import Grades.Traces.Slack T Op public
 
@@ -65,8 +64,8 @@ data _≼ᵃ[_]_ : Trace → Carrier → Trace → Set where
              -------------
              → ε ≼ᵃ[ k ] t
 
-  -- an operation the bound names is permitted outright -- and the
-  -- budget banked up to here does NOT cross the match
+  -- an operation the bound names is permitted outright; the budget
+  -- banked so far does not cross the match
   keep       : ∀ {k o s t}
              → s ≼ᵃ[ 0ᴰ ] t
              --------------------------------------
@@ -106,8 +105,8 @@ infix 4 _≼ᵃ_
 _≼ᵃ_ : Trace → Trace → Set
 s ≼ᵃ t = s ≼ᵃ[ 0ᴰ ] t
 
--- rewriting the budget along an equation (the endpoints are fixed, so
--- this is just transport and avoids leaving them as metavariables)
+-- rewriting the budget along an equation, the endpoints fixed so that
+-- they are not left as metavariables
 
 coe : ∀ {j k s t} → j ≡ k → s ≼ᵃ[ j ] t → s ≼ᵃ[ k ] t
 coe refl p = p
@@ -115,10 +114,9 @@ coe refl p = p
 ------------------------------------------------------------------------
 -- Reflexivity (at any budget)
 --
--- Every operation of the run is named by the bound and every delay is
--- covered by the same delay, so nothing is spent -- and the matched
--- operations recurse at budget zero, which is where the induction
--- already was.
+-- Every operation of the run is named by the bound and every delay
+-- covered by the same delay, so nothing is spent; matched operations
+-- recurse at budget zero, where the induction already is.
 
 mutual
 
@@ -133,10 +131,10 @@ mutual
   ≼ᵃ-refl⁻ (operation⁻ o s) = keep (≼ᵃ-refl s)
 
 ------------------------------------------------------------------------
--- Weakening: more budget is always fine
+-- Weakening to more budget
 --
--- A matched operation discards the budget anyway, so that case has
--- nothing to weaken.
+-- A matched operation discards the budget, so that case has nothing to
+-- weaken.
 
 weaken : ∀ {j s t} (m : Carrier) → s ≼ᵃ[ j ] t → s ≼ᵃ[ j + m ] t
 weaken m nil                          = nil
@@ -154,9 +152,8 @@ weaken {j} m (use-op {o = o} p d')    =
 ------------------------------------------------------------------------
 -- Transitivity: the budgets add up
 --
--- The matched-operation cases are where budget is discarded, so what
--- crosses a match has to be re-weakened on the other side rather than
--- carried.
+-- Budget is discarded at a match, so what crosses one is weakened
+-- again on the other side, not carried.
 
 ≼ᵃ-trans : ∀ {j k s t u} → s ≼ᵃ[ j ] t → t ≼ᵃ[ k ] u → s ≼ᵃ[ j + k ] u
 ≼ᵃ-trans nil                       _                       = nil

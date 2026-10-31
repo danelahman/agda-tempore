@@ -1,13 +1,13 @@
 -------------------------------------------------------------------------
 -- The moves that build allowance proofs, and what they add up to.     --
 --                                                                     --
--- The relation's rules act on the *heads* of the two traces. These    --
+-- The relation's rules act on the heads of the two traces; these      --
 -- lemmas lift them to the trace operations the grades are defined by: --
 -- moving a leading delay of the bound into the budget and back,       --
 -- prepending a delay or a whole prefix to the bound, spending budget  --
--- on a leading delay of the run, and finally monotonicity of the      --
--- trace product, which is what makes the lift of this order           --
--- compatible with the language product.                               --
+-- on a leading delay of the run, and monotonicity of the trace        --
+-- product, which makes the lift of this order compatible with the     --
+-- language product.                                                   --
 --                                                                     --
 -- Prefixing the bound is where this order is simple: an operation the --
 -- bound offers and the run does not take is skipped outright, so a    --
@@ -20,9 +20,8 @@
 --                                                                     --
 -- and not in the budget-additive one: budget reaching the second      --
 -- factor would have to cross whatever operations the first matches,   --
--- which is exactly what this order refuses. The pinned form is what   --
--- `Sets.liftˢ`'s `liftˢ-·ˢ` consumes, the lifts being taken at        --
--- `_≼ᵃ_ = _≼ᵃ[ 0 ]_`, so it is the instance the grades need.          --
+-- which this order refuses. The pinned form is what `Sets.liftˢ`'s    --
+-- `liftˢ-·ˢ` consumes, the lifts being taken at `_≼ᵃ_ = _≼ᵃ[ 0 ]_`.   --
 -------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc)

@@ -7,7 +7,7 @@
 -- Both premises are stated at exactly the reduct the machine         --
 -- produces. `HANDLE-OP` boxes the resumption at the operation's own  --
 -- grade and `BOX` then allocates it, so the clause fires at          --
--- `St₁ ∷ₛ V₀` with its continuation binder *being* the fresh cell.   --
+-- `St₁ ∷ₛ V₀` with its continuation binder being the fresh cell.     --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -53,8 +53,8 @@ open import MonomorphicCalculus.Syntax.Substitution.Subsumption  Spec
 
 -- The clause premise: at the state the operation is handled at, with the
 -- resumption already boxed and allocated. `V₀` is the boxed resumption in the
--- shape `_∷ₛ_` stores it, and the hypothesis about it is exactly
--- `SRed-fresh`'s — reducible at every state the lock permits.
+-- shape `_∷ₛ_` stores it, and the hypothesis about it is `SRed-fresh`'s:
+-- reducible at every state the lock permits.
 
 Boxed : (B : VType) → (op : Op) → (ε₃ : E) → 𝕊 [] → Set
 Boxed B op ε₃ St₁ =
@@ -111,7 +111,7 @@ Seq-Prem {A} {B} {ε₁} {ε₂} {St} N =
     → CRed' B ε₂ St₁ ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c)
 
 -- Induction on the scrutinee's `CRed` derivation, taken at a skeleton as in
--- `Bind`. `cred-ret` fires `HANDLE-RET` and is `Bind`'s `cred-ret` verbatim —
+-- `Bind`. `cred-ret` fires `HANDLE-RET` and is `Bind`'s `cred-ret` verbatim:
 -- the sequel premise consumes the value and the run's `mapᵉ uₑ` is reconciled
 -- with the reach's `uᵣ` by `suc-comp-ren-grade`.
 
@@ -253,7 +253,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
                       (cong-∷-ren-≐ʳ (barrier-unbox-≐ʳ q₀ (≾-⊤ᵣ _))))))
                 (H op (ε₃ ·ₑ ε₂))))
 
-    -- The boxed resumption *is* a lambda, so `APP` fires and leaves its own
+    -- The boxed resumption is a lambda, so `APP` fires and leaves its own
     -- body; the two `eq-ren`s cancel and `reach-unbox-ren-≐ʳ` composes the
     -- unboxing with the clause's own reach.
 
@@ -312,7 +312,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
                   (cong-∷-ren-≐ʳ ren-eq))
                 Body))
 
-        -- The reduct *is* the recursive call: renaming and `_[_↦_]c` both
+        -- The reduct is the recursive call: renaming and `_[_↦_]c` both
         -- distribute over `handle` definitionally, and the scrutinee reached
         -- is `resume q₂ M' W'`.
         inner : CRed' B (ε₃ ·ₑ ε₂) St''
@@ -658,7 +658,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
                         (sym (cancelled op₃ ε₄))))
 
 -- `env-Hˢ` at the empty suffix is the action at the clause suffix, and the
--- barrier crossing is the lock zone `_⟨_⟩ᵉ` at the same reach — so the two
+-- barrier crossing is the lock zone `_⟨_⟩ᵉ` at the same reach, so the two
 -- sides are the same term.
 
 env-Hˢ-fired : ∀ {St Γ B} → (γ : Env St Γ) → {St₁ : 𝕊 []}

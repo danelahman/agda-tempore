@@ -55,14 +55,14 @@ sub-split₀ (split-⟨⟩ s) W = cong-⟨⟩-sub (sub-split₀ s W)
 -- A prefix boundary names its own splitting too, `split-≡-++ᶜ`, whose halves
 -- are the prefix and suffix as given. `≡-split` recurses on the suffix in step
 -- with `sub-split₀`, so extending the suffix by a binder, resp. a lock, is
--- `cong-∷-sub`, resp. `cong-⟨⟩-sub` — again definitionally.
+-- `cong-∷-sub`, resp. `cong-⟨⟩-sub`, again definitionally.
 
 sub-atˢ₀ : ∀ {Γ B} → (Θ : Ctx) → Γ ⊢V⦂ B
          → Sub₀ [] (Γ ++ᶜ Θ) ((Γ ∷ B) ++ᶜ Θ)
 sub-atˢ₀ {Γ} {B} Θ W = sub-split₀ (split-≡-++ᶜ {Γ ∷ B} {Θ}) W
 
--- Substituting a value at a splitting in a variable, i.e. looking the variable
--- up. The grade bound is the `var` rule's own premise, needed to build a
+-- Substituting a value at a splitting in a variable: looking the variable up.
+-- The grade bound is the `var` rule's own premise, needed to build a
 -- value out of a variable.
 
 ⟨_,_⟩[_↦_]var : ∀ {Γ Γ₁ Γ₂ A B ρ'}
@@ -75,8 +75,7 @@ sub-atˢ₀ {Γ} {B} Θ W = sub-split₀ (split-≡-++ᶜ {Γ ∷ B} {Θ}) W
 
 ⟨ y , f ⟩[ s ↦ W ]var = sub-var₀ (sub-split₀ s W) y f
 
--- Substituting in a *resource* variable, i.e. one of box type, which is what
--- an `unbox` names. Its grade is not bounded by the unit, so it is not read
+-- Substituting in a resource variable, one of box type, as an `unbox` names. Its grade is not bounded by the unit, so it is not read
 -- as a value; it does not have to be, a value of box type being a variable up
 -- to subsumption.
 

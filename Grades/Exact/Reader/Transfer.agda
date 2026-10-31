@@ -4,8 +4,8 @@
 -- Two lists of pieces with the same kinds are given zipped, and two  --
 -- greater words with the same letters likewise. When the reader's    --
 -- comparison agrees on the two readings at every chain it could      --
--- compare -- an infix of the pieces against a subsequence of the     --
--- bounds -- a run on one reading is a run on the other.              --
+-- compare (an infix of the pieces against a subsequence of the       --
+-- bounds), a run on one reading is a run on the other.               --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)

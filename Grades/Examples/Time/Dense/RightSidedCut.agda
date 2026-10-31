@@ -2,10 +2,10 @@
 -- (Right) one-sided intervals of dense time, the end open or closed  --
 -- or absent, as grades.                                              --
 --                                                                    --
--- A grade is an upper end of `Durations.Intervals` admitting zero:   --
--- `≤ ↑ a`, "at most `a` time units", `< a`, "less than `a`" for a    --
--- positive `a`, or `≤ ∞`, no bound -- the interval `⟨ 0⁻ , h ⟩`      --
--- with upper end `h`. The order is containment of the durations      --
+-- A grade is an upper end of `Durations.Intervals` admitting zero,   --
+-- the interval `⟨ 0⁻ , h ⟩` with upper end `h`: `≤ ↑ a`, "at most    --
+-- `a` time units", `< a`, "less than `a`" for a positive `a`, or     --
+-- `≤ ∞`, no bound. The order is containment of the durations         --
 -- admitted, so `< a` lies below `≤ ↑ a` and a smaller bound below a  --
 -- larger one; sequencing adds the bounds, the sum strict when a      --
 -- bound summed is and absent when one is; the join is the weaker     --

@@ -1,33 +1,33 @@
 ----------------------------------------------------------------------------
 -- The context modality `⟨ ρ ⟩ A` on setoid-valued presheaves, with the   --
--- *Kripke possibility* semantics over the graded accessibility relation  --
+-- Kripke possibility semantics over the graded accessibility relation    --
 -- on worlds. An element of `⟨ ρ ⟩ A` at a world `w` is a bundle          --
 --                                                                        --
 --   mk⟨⟩ (acc : wᵖ ⊑[ ρ ] w) (val : carrier A wᵖ)                        --
 --                                                                        --
--- i.e. a *past* world `wᵖ`, reachable to `w` by spending the resource    --
--- grade `ρ`, together with a value of `A` at that past world.            --
+-- of a past world `wᵖ`, reachable to `w` by spending the resource        --
+-- grade `ρ`, and a value of `A` at that past world.                      --
 --                                                                        --
 -- As the base presheaves are unit-monotone, this Σ-bundle is quotiented  --
--- into the *coend* `∫^{wᵖ} (wᵖ ⊑[ ρ ] w) ×                               --
--- carrier A wᵖ`. Concretely the per-world equivalence `_≈_` is the       --
--- equivalence closure of the generating relation `_◅_`: a bundle may be  --
--- pushed forward along a unit-accessibility step `wᵖ ⊑[ u ] wᵖ'`,        --
--- transporting its value along and readjusting the witness (the witness  --
--- readjustment is free, by `⊑-irrelevant`). Taking the closure of this   --
--- one-step relation is exactly what makes the adjunction unit `η⊣`       --
--- natural in the worlds: `η⊣` names the past world by the *present* one, --
--- and moving the present world forward is a generating step.             --
+-- into the coend `∫^{wᵖ} (wᵖ ⊑[ ρ ] w) × carrier A wᵖ`. Concretely the   --
+-- per-world equivalence `_≈_` is the equivalence closure of the          --
+-- generating relation `_◅_`: a bundle may be pushed forward along a      --
+-- unit-accessibility step `wᵖ ⊑[ u ] wᵖ'`, transporting its value along  --
+-- and readjusting the witness (the witness readjustment is free, by      --
+-- `⊑-irrelevant`). Taking the closure of this one-step relation is what  --
+-- makes the adjunction unit `η⊣` natural in the worlds: `η⊣` names the   --
+-- past world by the present one, and moving the present world forward    --
+-- is a generating step.                                                  --
 --                                                                        --
 -- The modality is a lax graded monad (unit `η`, multiplication `μ` with  --
 -- reversed grade order), packaged as an instance of                      --
 -- `MonomorphicCalculus.DenotationalSemantics.Model.Modality.Past`.       --
--- Because transport of a                                                 --
--- bundle only readjusts the witness, keeping the past world and value    --
--- fixed, almost every coherence law is either definitional (`≈-refl`) or --
--- a single generating step for witness-irrelevance (`≈-mk-irr`). The one --
--- exception is the congruence of `μ`, which folds a value-level chain    --
--- through the fixed-outer-witness map `postμ`.                           --
+-- Because transport of a bundle only readjusts the witness, keeping the  --
+-- past world and value fixed, almost every coherence law is either       --
+-- definitional (`≈-refl`) or a single generating step for                --
+-- witness-irrelevance (`≈-mk-irr`). The one exception is the congruence  --
+-- of `μ`, which folds a value-level chain through the                    --
+-- fixed-outer-witness map `postμ`.                                       --
 ----------------------------------------------------------------------------
 
 open import Grades.Base
@@ -126,7 +126,7 @@ _◅_ {A = A} e e' = Σ[ s ∈ wᵖ e ⊑[ u ] wᵖ e' ] _≈_ A (transport A s 
   (λ {w} {x} {y} e → return (⊑-refl , ≈-trans A (transport-refl A x) e))
   (λ {w} {w'} t x → eq-sym (_◅_ {u} {A} {w'}) (return (t , ≈-refl A)))
 
--- Multiplication (note the reversed grade order)
+-- Multiplication (reversed grade order)
 
 μ-app : ∀ {A ρ₁ ρ₂ w} → ⟨ ρ₁ ⟩ᶜ (⟨ ρ₂ ⟩ᵒ A) w → ⟨ ρ₂ · ρ₁ ⟩ᶜ A w
 μ-app e = mk⟨⟩ (⊑-trans (acc (val e)) (acc e)) (val (val e))
@@ -156,8 +156,8 @@ postμ-cong q = gmap (postμ q) (λ st → st)
 μ = pmap μ-app μ-cong (λ t e → ≈-mk-irr _ _ (val (val e)))
 
 -- Unit-graded counit (inverse of `η` at grade `u`). It transports the
--- value forward along the unit-accessibility witness — realisable for
--- every world precisely because the presheaves are unit-monotone. Its
+-- value forward along the unit-accessibility witness, which is possible at
+-- every world because the presheaves are unit-monotone. Its
 -- congruence folds the coend chain, transporting each generating step
 -- along the accessibility witness of the target bundle.
 

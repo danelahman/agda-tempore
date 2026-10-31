@@ -122,7 +122,7 @@ delay-nf {ε = ε} τ env f =
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (T-≤-trans _ _ (delay-z τ ε))
 
--- The rules that transition by `ηᵀ`: the coercion simply passes through,
+-- The rules that transition by `ηᵀ`: the coercion passes through,
 -- both sides collapsing to the same chain of sub-effectings.
 
 ηᵀ-case : ∀ {X B εa εb} → (g : X →ᵐ Tᵒ B εa) → (q : εa ≾ₑ εb)
@@ -200,9 +200,9 @@ T-≤-stepᵀ {εa = εa} {εb = εb} B (DELAY {τ = τ}) g q =
 -- denotation is the target's, run after the step's time transition and
 -- coerced along the effect refinement the step licenses.
 
--- The handlers a reduction actually reaches must be uniform. `HANDLE-OP` is the
--- only rule that fires a clause, and the only rules that can reach it are the
--- two congruences — so this is a recursion on the *reduction*, not on the term.
+-- The handlers a reduction reaches must be uniform. `HANDLE-OP` is the only
+-- rule that fires a clause, and the only rules that can reach it are the two
+-- congruences, so this is a recursion on the reduction, not on the term.
 
 -- The clauses' uniformity in the residual effect is carried by the term's own
 -- `Paramᶜ`, so a reduction assumes nothing on top of it and every case is `⊤`.
@@ -391,7 +391,7 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 
 -- Peeling a subsumption: at an eliminated function it splits (`SUB-APP`), at a
 -- scrutinised boolean or natural number it is the identity (`SUB-IF`,
--- `SUB-CASEℕ`, `SUB-RECℕ`), and at a computation it is discarded (`SUB`) — in
+-- `SUB-CASEℕ`, `SUB-RECℕ`), and at a computation it is discarded (`SUB`); in
 -- the first and last the codomain half becomes the step's own refinement of
 -- both components.
 
@@ -578,7 +578,7 @@ run-collapse h₁ h₂ a m c w K =
 
 
 -- `cf ⊳ cf'`: `cf` runs to `cf'` denotationally, after some transition and
--- coerced along some refinement. Reflexive (`⊳-refl`) but not transitive —
+-- coerced along some refinement. Reflexive (`⊳-refl`) but not transitive:
 -- sub-effecting escapes a bind only for reduction's own transitions
 -- (`T-≤-stepᵀ`); transitivity along a run is `↝*-sound`'s induction instead.
 

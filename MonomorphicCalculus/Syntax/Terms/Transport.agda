@@ -93,7 +93,7 @@ cast-cmp : ∀ {Γ Γ' A ⋈} → (e : Γ ≡ Γ')
          → castᶜ e (cmp ⋈ V W et) ≡ cmp ⋈ (castᵛ e V) (castᵛ e W) et
 cast-cmp refl = refl
 
--- The binding formers put their body at an *extended* context, so the cast
+-- The binding formers put their body at an extended context, so the cast
 -- transported there is `cong` of the extension.
 
 cast-delay : ∀ {Γ Γ' A ε τ} → (e : Γ ≡ Γ')

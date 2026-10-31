@@ -128,7 +128,7 @@ mutual
       ok' : VarOK Q (lookup-ty Γ i [ σ ]ᵛ) (lookup-gr Γ i [ σ ]ʳ)
       ok' = subst₂ (VarOK Q) (sym lty) (sym lgr) ok
 
-  -- uses of top-level definitions
+  -- uses of definitions
 
   cmpV {σ = σ} ι Γ A _ (usedef {k = k} {s = sc} f δ h refl) usedef ceq st =
     cmpUseDef σ Γ k A sc (subst (sc ∈ᵖ[ k ]_) (trans (cong defs ceq) (defs-subst Γ σ)) f) δ h st

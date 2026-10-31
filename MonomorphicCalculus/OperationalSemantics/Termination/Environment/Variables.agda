@@ -44,8 +44,8 @@ open import MonomorphicCalculus.Syntax.Substitution.Equivalence  Spec
 open import MonomorphicCalculus.OperationalSemantics.Termination.Environment.Core Spec
 open import MonomorphicCalculus.OperationalSemantics.Termination.Environment.Action Spec
 
--- The action is a function of the term, so this is `cong` — no recursion on
--- the environment needed.
+-- The action is a function of the term, so this is `cong`, with no recursion on
+-- the environment.
 
 env-Vˢ-≡ : ∀ {St Γ A} → (γ : Env St Γ) → (Δ : Ctx) → {V V' : (Γ ++ᶜ Δ) ⊢V⦂ A}
          → V ≡ V' → env-Vˢ γ Δ V ≡ env-Vˢ γ Δ V'
@@ -239,7 +239,7 @@ env-Vˢ-var-l (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₁} V γ) Δ ¬et
     inner = castᵛ-var-Var ei (∈-++ᶜˡ Δ (∈-++ᶜˡ Δ₁ x)) (∈-++ᶜˡ (Δ₁ ++ᶜ Δ) x)
               (Var-cast-flip⁻ ei _ _ (∈-++ᶜˡ-assoc Δ₁ Δ x)) f f₁
 
--- The cell's own variable: a *suffix* variable of the inner action, carried
+-- The cell's own variable: a suffix variable of the inner action, carried
 -- through unchanged since nothing is substituted.
 
 env-Vˢ-var-l (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₁} V γ) Δ ¬et p Hd f f' =
@@ -301,7 +301,7 @@ env-Vˢ-var-l (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ ¬et p (Tl-∷ x
     inner = castᵛ-var-Var ei (∈-++ᶜˡ Δ (∈-++ᶜˡ Δ₁ x)) (∈-++ᶜˡ (Δ₁ ++ᶜ Δ) x)
               (Var-cast-flip⁻ ei _ _ (∈-++ᶜˡ-assoc Δ₁ Δ x)) f f₁
 
--- The entry's own variable: a *suffix* variable of the inner action, which the
+-- The entry's own variable: a suffix variable of the inner action, which the
 -- substitution then hits (`sub-var-hit′`), returning the entry's value pushed
 -- under `Δ`. At the empty suffix that is `env-var-hd`.
 
@@ -356,7 +356,7 @@ env-var-lock : ∀ {St St' Γ A ρ ρ'} → (γ : Env St Γ) → (q : St ⊑ₛ[
              ≡ reach-val (reach-≤ q p) (env-V γ (var f' x))
 
 -- The cell zone's own instance: `Δ := [] ∷ [ ρ ] A₀`, where the push is the
--- weakening past the new cell and there is nothing to cancel — `liftᵉ` keeps the
+-- weakening past the new cell and there is nothing to cancel: `liftᵉ` keeps the
 -- binder rather than substituting for it.
 
 env-var-lift : ∀ {St Γ A A₀ ρ ρ'} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A₀)

@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------
 -- Effect handling for the free graded monad.                          --
 --                                                                     --
--- A handler is a family of clause *morphisms*, one per operation and  --
+-- A handler is a family of clause morphisms, one per operation and    --
 -- residual effect grade, closing over an eternal parameter `P`.       --
 -- `T-alg-of-handlerˢ` folds a computation tree, reinterpreting every  --
 -- operation by the matching clause and keeping delays as delays; `P`  --
@@ -9,7 +9,7 @@
 --                                                                     --
 -- Split for load time: the (slow) fold and its (co)naturality live in --
 -- `Handling.Core`; the algebra laws in `Handling.Laws` (η/delay/op/≤) --
--- and `Handling.Mu` (the μ law). This module re-exports all three.    --
+-- and `Handling.Mu` (the μ law), all three re-exported here.          --
 -------------------------------------------------------------------------
 
 open import Grades.Base

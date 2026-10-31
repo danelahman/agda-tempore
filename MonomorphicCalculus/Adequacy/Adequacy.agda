@@ -3,9 +3,9 @@
 --                                                                    --
 -- The converse direction of `↝*-sound`. Assembled from               --
 --                                                                    --
---   * whnf existence  — `Termination.halts` (syntactic)              --
---   * the whnf denotes the source — `↝*-sound`                       --
---   * head faithfulness — `HeadFaithful` (model side)                --
+--   * whnf existence: `Termination.halts` (syntactic)                --
+--   * the whnf denotes the source: `↝*-sound`                        --
+--   * head faithfulness: `HeadFaithful` (model side)                 --
 --                                                                    --
 -- Stated for two programs: `⟦ M ⟧ ≈ᵐ ⟦ N ⟧` implies they halt with   --
 -- the same shape, at the same operation, with the same answer.       --

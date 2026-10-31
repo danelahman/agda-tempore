@@ -10,7 +10,7 @@
 -- This is the trace counterpart of the two-sided time windows, the   --
 -- two endpoints refusing independently, over the operations          --
 -- performed rather than their duration. A box demands that certain   --
--- operations have been performed *and* that no more than its         --
+-- operations have been performed and that no more than its           --
 -- allowance has been spent since, so a claim can be refused for      --
 -- doing too little and for doing too much; the examples below        --
 -- exhibit both.                                                      --
@@ -147,8 +147,8 @@ either-reading =
 ------------------------------------------------------------------------
 -- Unboxing: a resource with a contract
 --
--- `unbox`'s premise asks what elapsed -- the product of the locks
--- between the box's binding and the claim -- to cover the box's
+-- `unbox`'s premise asks what elapsed (the product of the locks
+-- between the box's binding and the claim) to cover the box's
 -- guarantee and stay within its allowance. The box below asks for a
 -- reading, and allows a reading and six ticks' worth of other work.
 
@@ -251,8 +251,8 @@ transmitting-branch-overspends = fails _ _
 --
 -- `if` joins its branches by taking the union at each endpoint, so a
 -- conditional's grade lists what each branch does on both sides. The
--- box's floor is then met member by member -- the sampling branch
--- covers the demanded reading, the storing branch the two ticks --
+-- box's floor is then met member by member (the sampling branch
+-- covers the demanded reading, the storing branch the two ticks),
 -- while its six ticks of allowance cover both branches at once.
 
 branch-join : E

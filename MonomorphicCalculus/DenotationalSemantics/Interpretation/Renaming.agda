@@ -6,9 +6,9 @@
 -- covariantly, as a reindexing `⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ`. Each             --
 -- constructor is a structural map of the model: weakening projects       --
 -- (`fstᵐ`), a variable renaming contracts (`⟨ idᵐ , var-morphism … ⟩ᵐ`), --
--- and the lock renamings are exactly the context modality's              --
--- unit `η`, counit `εᵘ`, multiplication `μ`, and monotonicity `⟨⟩-≤` —   --
--- all available at an *arbitrary* resource grade.                        --
+-- and the lock renamings are the context modality's unit `η`, counit     --
+-- `εᵘ`, multiplication `μ`, and monotonicity `⟨⟩-≤`, each at an          --
+-- arbitrary resource grade.                                              --
 -- The three parts below are the algebra structure of eternal contexts,   --
 -- the extension of an environment morphism through a suffix, and the     --
 -- denotation of each structural renaming.                                --

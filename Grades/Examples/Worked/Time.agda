@@ -14,7 +14,7 @@
 -- `[0, ∞ ]` and `[ 7 , ∞ ]` impose no upper bound.                   --
 --                                                                    --
 -- In each grade `_·_` adds the endpoints, so sequencing two runs     --
--- adds their windows, and the order is *weakening*: a grade lies     --
+-- adds their windows, and the order is weakening: a grade lies       --
 -- below the grades that claim less. The modules below give the       --
 -- direction of weakening and the greatest element `⊤` of each grade. --
 --                                                                    --

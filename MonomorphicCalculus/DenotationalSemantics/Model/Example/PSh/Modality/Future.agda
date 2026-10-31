@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------
 -- The box modality `[ ρ ] A` on setoid-valued presheaves, with the    --
--- *Kripke necessity* semantics over the graded accessibility relation --
+-- Kripke necessity semantics over the graded accessibility relation   --
 -- on worlds. An element of `[ ρ ]ᵒ A` at a world `w` is an "end": a   --
 -- family of elements of `A` at every world reachable from `w` by      --
 -- spending the resource grade `ρ`, together with a naturality witness --
@@ -12,11 +12,10 @@
 -- The modality is a lax graded comonad (counit `ε`, comultiplication  --
 -- `δ`), packaged as an instance of                                    --
 -- `MonomorphicCalculus.DenotationalSemantics.Model.Modality.Future`.  --
--- Every coherence law is                                              --
--- a pointwise `≈` goal; the two sides feed `A` two witnesses of the   --
--- *same* accessibility fact, reconciled by `[]-fun-irr` (proof        --
--- irrelevance of the witnesses) and, where a transport is crossed, by --
--- `fun-nat`.                                                          --
+-- Every coherence law is a pointwise `≈` goal; the two sides feed `A` --
+-- two witnesses of the same accessibility fact, reconciled by         --
+-- `[]-fun-irr` (proof irrelevance of the witnesses) and, where a      --
+-- transport is crossed, by `fun-nat`.                                 --
 -------------------------------------------------------------------------
 
 open import Grades.Base
@@ -144,8 +143,8 @@ open [_]ᶜ public
 
 
 -- Unit-graded unit (inverse of `ε` at grade `u`). It transports the
--- value forward along the unit-accessibility witness — realisable for
--- every world precisely because the presheaves are unit-monotone.
+-- value forward along the unit-accessibility witness, which is possible at
+-- every world because the presheaves are unit-monotone.
 
 ηᵘ : ∀ {A} → A →ᵖ [ u ]ᵒ A
 ηᵘ {A} = pmap

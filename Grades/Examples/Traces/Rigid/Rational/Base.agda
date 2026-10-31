@@ -4,7 +4,7 @@
 --                                                                    --
 -- Grades are one-sided expressions with iteration                    --
 -- (`Exact.Regular.Grades`), written with `⌜_⌝`, whose side condition --
--- -- at least one word -- is computed. A comparison is decided by    --
+-- (at least one word) is computed. A comparison is decided by        --
 -- the automaton of the reader, over the unit the rationals of the    --
 -- two expressions share; `holds` reads the decision as a Boolean, so --
 -- that a comparison is checked by evaluation.                        --

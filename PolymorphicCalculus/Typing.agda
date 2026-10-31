@@ -208,7 +208,7 @@ mutual
 
     -- sequential composition
 
-    _⨟_     : {A B : OVType Θ}      -- NOTE: use \;2 to get this unicode semicolon
+    _⨟_     : {A B : OVType Θ}      -- input: \;2
             → {ε' : EExp Θ}
             → {ε : EExp Θ}
             → Q ∣ Γ ⊢C⦂ A ‼ ε

@@ -174,7 +174,7 @@ step-pv bc (DELAY {τ = τ})   pv = Eternalᵒ.extᵉ bc ∘ᵐ ⟨ of-durʳ τ 
 
 -- The step transition commutes with the handler, by induction on the
 -- reduction. The `ηᵀ` rules go by `alg-ηᵀ`; `DELAY` ticks, and the
--- fold *re-delays*, carrying the parameter under the tick's box by `necᵉ`; the
+-- fold re-delays, carrying the parameter under the tick's box by `necᵉ`; the
 -- two step rules inherit their transition from the sub-step.
 
 alg-stepᵀ : ∀ {ε ε₂ ε₁' ε₃' A A₀ B P} {S S' : 𝕊 []}
@@ -229,10 +229,10 @@ alg-stepᵀ {B = B} bc alg alg-≤ alg-delay (SEQ-STEP r c) pv f =
 alg-stepᵀ {B = B} bc alg alg-≤ alg-delay (HANDLE-STEP r c) pv f =
   alg-stepᵀ {B = B} bc alg alg-≤ alg-delay r pv f
 alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {τ = τ}) pv f =
-  -- Both sides reach the same normal form: the tick, with the *whole* bind
-  -- carried under the box. `alg-ηᵀ` does the work there — under `[ of-durʳ τ ]`
-  -- the step has become the trivial one, and the parameter has crossed the box
-  -- as the lock's extraction.
+  -- Both sides reach the same normal form: the tick, with the whole bind
+  -- carried under the box. `alg-ηᵀ` does the work there: under `[ of-durʳ τ ]`
+  -- the step is the trivial one, and the parameter has crossed the box as the
+  -- lock's extraction.
   lhs ∙ ∘ᵐ-congˡ (T-≤-irr _ _) ∙ ≈ᵐ-sym rhs
   where
     pv' = Eternalᵒ.extᵉ bc {of-durʳ τ} ∘ᵐ ⟨ of-durʳ τ ⟩ᶠ pv
@@ -334,7 +334,7 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {�
 
 -- The state's barrier across a step: the parameter `step-pv` carries forward is
 -- the one read off the new state, reindexed along the step's `suc-comp-ren`.
--- Only `DELAY` and `BOX` do anything — the lock the delay adds folds into the
+-- Only `DELAY` and `BOX` do anything: the lock the delay adds folds into the
 -- barrier, and the cell the box allocates is projected away.
 
 ⟨⟩-≤-id : ∀ {X ρ} → (p : ρ ≾ᵣ ρ) → ⟨⟩-≤ {X} p ≈ᵐ idᵐ
@@ -718,13 +718,13 @@ seq-op-box {X} {A} {B} {ε} {ε'} op alg m n rn ern =
        ∙ ∘ᵐ-congʳ (map⇒ᵐ-curryᵐ _ _)
        ∙ map⇒ᵐ-curryᵐ _ _))
   -- and that body is the target's, once the syntax's renaming is recognised as
-  -- the environment the continuation actually receives
+  -- the environment the continuation receives
   ∙ ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong (≈ᵐ-sym
       (  ∘ᵐ-congʳ (∘ᵐ-congˡ (T-∘ᵐ n (mapˣᵐ rn idᵐ)))
        ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
        ∙ body))))
   where
-    -- the renaming the syntax applies to the continuation *is* the environment
+    -- the renaming the syntax applies to the continuation is the environment
     -- the strength hands it: a map on the strength's boxed component (`strᵀ-natˡ`),
     -- and that map is `op-env`
     body : alg ∘ᵐ Tᶠ n ∘ᵐ Tᶠ (mapˣᵐ rn idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ
@@ -793,14 +793,14 @@ seq-op-core op alg cl alg-op refl v m n rn ern =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (strᵀ-opᵀ-algebraicity op)))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-  -- the reshuffle just hands the parameter back and pairs environment with
+  -- the reshuffle hands the parameter back and pairs environment with
   -- continuation
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ op-pair _ _ _ _)))
   -- the sequel is natural, so it too goes into the continuation
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (opᵀ-nat op n)))
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-  -- and the operation is algebraic for the algebra, so that goes in too —
+  -- and the operation is algebraic for the algebra, so that goes in too,
   -- leaving the grade reassociation behind
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ alg-op
@@ -968,7 +968,7 @@ cont-collapse alg p c =
                        ∙ curryᵐ-uncurryᵐ-iso c ⟩ᵐ-cong))
 
 -- SEQ-OP: sequencing an operation is the operation with the sequencing pushed
--- into its continuation. The state plays no part — the rule is a plain equation
+-- into its continuation. The state plays no part: the rule is a plain equation
 -- in an arbitrary context.
 
 sound-SEQ-OP : ∀ {Γ A B ε ε'} → (op : Op)

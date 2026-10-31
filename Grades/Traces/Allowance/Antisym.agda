@@ -1,11 +1,10 @@
 -------------------------------------------------------------------------
 -- The allowance order is antisymmetric, at a positive cost model.     --
 --                                                                     --
--- Positivity of `costʰⁱ` is what the statement needs, and it is taken --
--- as a parameter exactly as `Allowance.AsOrder` takes it: a free      --
--- operation would be performed out of an empty budget, so `ε` would   --
--- permit `⌈ o ⌉` while permitting nothing but itself, and the order   --
--- would identify two different traces.                                --
+-- The statement needs `costʰⁱ` positive, a parameter here as in       --
+-- `Allowance.AsOrder`: a free operation would be performed out of an  --
+-- empty budget, so `ε` would permit `⌈ o ⌉` while permitting nothing  --
+-- but itself, and the order would identify two different traces.      --
 --                                                                     --
 -- With a positive cost, `use-op` is blocked at budget zero exactly as --
 -- positive delay lengths block `use-delay`, so a bound and a run that --

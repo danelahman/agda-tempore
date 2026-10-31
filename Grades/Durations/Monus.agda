@@ -4,9 +4,9 @@
 -- Everything here is derived from the fields of `TimeDomain`: the     --
 -- strict order, decidable equality, truncated subtraction `_∸ᴰ_`, the --
 -- maximum and minimum, and the laws relating them to addition. The    --
--- subtraction is characterised by two facts -- below the minuend it   --
--- is the difference, otherwise it is zero -- and every other law is   --
--- proved from those two and cancellation, never by unfolding it.      --
+-- subtraction is characterised by two facts, that below the minuend   --
+-- it is the difference and otherwise zero; every other law is proved  --
+-- from those two and cancellation, never by unfolding it.             --
 -------------------------------------------------------------------------
 
 open import Grades.Durations

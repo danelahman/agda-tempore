@@ -116,7 +116,7 @@ mutual
   -- eta
   soundᵛ (unit-eta V)         _            pV pW = sound-unit-eta V pV pW
   soundᵛ (fun-eta V)          _            pV pW = sound-fun-eta V pV pW
-  -- axioms — subsumption
+  -- axioms: subsumption
   soundᵛ (subV-refl w V)      _            = sound-subV-refl w V
   soundᵛ (subV-trans w w' w'' V) _         = sound-subV-trans w w' w'' V
   soundᵛ (subV-pair p q V W)  _            = sound-subV-pair p q V W
@@ -201,7 +201,7 @@ mutual
             (⟨ ≈ᵐ-refl , ∘ᵐ-congˡ ([]-congᶠ (soundᵛ p mp pV pV')) ⟩ᵐ-cong)
   soundᶜ (subC-cong {w = w} {w' = w'} p) mp pM pN =
     ∘ᵐ-cong (⟦⟧<:ᶜ-irr w w') (soundᶜ p mp pM pN)
-  -- axioms — sequencing
+  -- axioms: sequencing
   soundᶜ (seq-return V M)     _  = sound-seq-return V M
   soundᶜ (seq-perform V M N)  _  = sound-seq-perform V M N
   soundᶜ (seq-delay M N)      _  = sound-seq-delay M N
@@ -209,7 +209,7 @@ mutual
   soundᶜ (seq-unbox x rel w M N) _ = sound-seq-unbox x rel w M N
   soundᶜ (seq-eta M)          _  = sound-seq-eta M
   soundᶜ (seq-assoc M N P)    _  = sound-seq-assoc M N P
-  -- axioms — beta/eta
+  -- axioms: beta/eta
   soundᶜ (fun-beta M W)       _  = sound-fun-beta M W
   soundᶜ (match-beta V W M)   _  = sound-match-beta V W M
   soundᶜ (match-eta V M)      m  = sound-match-eta V M m
@@ -231,13 +231,13 @@ mutual
   soundᶜ (caseL-eta V M)      m  = sound-caseL-eta V M m
   soundᶜ (recL-beta-nil M N p) _ = sound-recL-beta-nil M N p
   soundᶜ (recL-beta-cons V W M N p) _ = sound-recL-beta-cons V W M N p
-  -- axioms — handling
+  -- axioms: handling
   soundᶜ (handle-return V H N)   _ = sound-handle-return V H N
   soundᶜ (handle-perform V M H N) _ = sound-handle-perform V M H N
   soundᶜ (handle-delay M H N)    _ = sound-handle-delay M H N
   soundᶜ (handle-box V M W)      _ = sound-handle-box V M W
   soundᶜ (handle-unbox x rel w M V) _ = sound-handle-unbox x rel w M V
-  -- axioms — modal
+  -- axioms: modal
   soundᶜ (unbox-beta V K p w N)  m = sound-unbox-beta V K p w N (proj₁ m) (proj₂ m)
   soundᶜ (unbox-comm x₁ rel₁ w₁ x₂ rel₂ w₂ M) _ =
     sound-unbox-comm x₁ rel₁ w₁ x₂ rel₂ w₂ M
@@ -245,7 +245,7 @@ mutual
   soundᶜ (box-unbox-comm V x₂ rel₂ w₂ M) _ = sound-box-unbox-comm V x₂ rel₂ w₂ M
   soundᶜ (boxed-not-used V M)    _ = sound-boxed-not-used V M
   soundᶜ (unbox-not-used x rel w M) _ = sound-unbox-not-used x rel w M
-  -- axioms — subsumption
+  -- axioms: subsumption
   soundᶜ (subC-refl w M)         _ = sound-subC-refl w M
   soundᶜ (subC-trans w w' w'' M) _ = sound-subC-trans w w' w'' M
   soundᶜ (subC-perform w rel V M) _ = sound-subC-perform w rel V M
@@ -256,6 +256,6 @@ mutual
   soundᶜ (subC-unbox x rel v w M) _ = sound-subC-unbox x rel v w M
   soundᶜ (coerce-seq-in rel M N) _ = sound-coerce-seq-in rel M N
   soundᶜ (subV-handle p pε q s M V) _ = sound-subV-handle p pε q s M V
-  -- axioms — delay
+  -- axioms: delay
   soundᶜ (delay-zero M)          _ = sound-delay-zero M
   soundᶜ (delay-delay M)         m = sound-delay-delay M m

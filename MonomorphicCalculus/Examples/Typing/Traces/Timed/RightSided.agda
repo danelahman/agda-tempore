@@ -9,7 +9,7 @@
 -- delays a budget, spent on idling and on operations the bound does  --
 -- not list, at `costʰⁱ` (read 1, write 3, send 6).                   --
 --                                                                    --
--- The grade records *which* operations a run performed and *where*.  --
+-- The grade records which operations a run performed and where.      --
 -- The premise of `unbox` requires the elapsed run to be one the box  --
 -- permits, and a claim can be refused for performing the wrong       --
 -- operations, or the right operations in the wrong order, rather     --
@@ -52,7 +52,7 @@ open import MonomorphicCalculus.Examples.Typing.Core right-sided opTime
 -- Effectful computations
 --
 -- Sequencing is the language product, so at singleton grades the grade
--- of a computation is the run it makes -- and the locks along it are
+-- of a computation is the run it makes, and the locks along it are
 -- that run, one event at a time.
 
 sampling : [] ⊢C⦂ Reading ‼ within ⟅ ⌈ read ⌉ ⟆
@@ -302,7 +302,7 @@ permit-in-a-branch =
 
 -- Where the budget sits is part of the permit. This one names a
 -- reading, then budgets three ticks, then names a transmission, and the
--- run below spends its store inside that window -- which the locks show
+-- run below spends its store inside that window, as the locks show
 -- in the order the permit reads them.
 
 scheduled : R
@@ -330,8 +330,8 @@ out-of-order = fails
 ------------------------------------------------------------------------
 -- Effect handling
 --
--- Handling locks its `in` part by the handled computation's grade,
--- exactly as sequencing does.
+-- Handling locks its `in` part by the handled computation's grade, as
+-- sequencing does.
 
 forwarded : [] ⊢C⦂ Reading ‼ within ⟅ ⌈ read ⌉ ⟆
 forwarded =

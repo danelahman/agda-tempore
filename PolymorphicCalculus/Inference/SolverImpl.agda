@@ -691,7 +691,7 @@ closed-untypable p n t = n (Equivalence.to (typable-⇔ p) t)
 ------------------------------------------------------------------------
 -- Inference: a principal type scheme, a refutation, or `stuck`, only where a
 -- handler clause's scope closes with a local unknown `Localise` assigns no
--- value (see `SolverImpl.Localise`)
+-- value
 
 inferReported : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n}
               → (p : PrincipalScheme Γ M) → ClosedReport p → Inference Γ M

@@ -131,7 +131,7 @@ cong-ren {Γ'' = Γ'' ∷ A} r   = cong-∷-ren (cong-ren r)
 cong-ren {Γ'' = Γ'' ⟨ ρ' ⟩} r = cong-⟨⟩-ren (cong-ren r)
 
 -- Extending the ambient on the left. Only `⟨⟩-ext-ctx` constrains it: the
--- prefix, now standing to the left of the lock, must be eternal too.
+-- prefix, which then stands to the left of the lock, must be eternal too.
 
 cong-renˡ : ∀ {Ξ Δ Δ'} → (Γ'' : Ctx) → EternalCtx Γ''
           → Ren Ξ Δ Δ' → Ren (Γ'' ++ᶜ Ξ) Δ Δ'
@@ -196,7 +196,7 @@ expose-ren Δ (cong-∷-ren r) =
 expose-ren Δ (cong-⟨⟩-ren r) =
   cong-⟨⟩-ren (expose-ren Δ r)
 
--- Viewing a renaming at the empty ambient, i.e. forgetting what it fixes. This
+-- Viewing a renaming at the empty ambient, forgetting what it fixes. This
 -- is what lets a renaming meet `unbox`'s certificate, which is stored there.
 
 expose-ren-[] : ∀ {Ξ Δ Δ'} → Ren Ξ Δ Δ' → Ren [] (Ξ ++ᶜ Δ) (Ξ ++ᶜ Δ')

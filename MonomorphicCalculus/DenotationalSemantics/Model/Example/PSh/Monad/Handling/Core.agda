@@ -47,23 +47,21 @@ open import MonomorphicCalculus.DenotationalSemantics.Model.Modality.Eternal
 -- A handler parameterised by an eternal object `P`: a clause morphism for
 -- every operation and residual grade, closing over `P`.
 
--- A handler bundles its clauses with a proof that they are *ambivalent* in the
+-- A handler bundles its clauses with a proof that they are ambivalent in the
 -- residual grade `ε''`: clauses whose boxed continuations agree up to a
 -- coercion `q` produce results agreeing up to `·ₑ-monoʳ-≾ₑ q`. The clause family
--- alone would not determine this — clauses at different `ε''` are a priori
--- unrelated morphisms — and it is exactly what the `sub-op` rule of `_≈ᵗ_`
--- needs to be respected by the fold (a coercion pushed under an operation
--- changes which clause is selected).
+-- alone does not determine this (clauses at different `ε''` are unrelated
+-- morphisms), and the fold needs it to respect the `sub-op` rule of `_≈ᵗ_`
+-- (a coercion pushed under an operation changes which clause is selected).
 --
--- The witness is stated pointwise on *related boxes* rather than as a
--- reindexing equation, because that is the form the fold consumes: at a
--- `sub-op` node the two boxes differ by the fold's own `sub` clause, hence
+-- The fold consumes the property pointwise, on related boxes (`clause-mono`):
+-- at a `sub-op` node the two boxes differ by the fold's own `sub` clause, hence
 -- agree definitionally.
 
 -- The clause family alone, and the ambivalence property on it. The property is
--- stated as a *reindexing equation* (coercing the boxed continuation's residual
--- equals coercing the clause's output), which is the form expressible in an
--- arbitrary category — see the abstract `Handlerᵀ`.
+-- stated as a reindexing equation (coercing the boxed continuation's residual
+-- equals coercing the clause's output), the form expressible in an arbitrary
+-- category, as in the abstract `Handlerᵀ`.
 
 Clausesˢ : PSh → PSh → Set
 Clausesˢ P A = (op : Op) → (ε'' : E)
@@ -95,7 +93,7 @@ coerced-box-fun : ∀ {A B ρ εa εb w w' w''} → (q : εa ≾ₑ εb)
                 ≈ᵗ sub q (fun (fun bx r) s y)
 coerced-box-fun q bx r s y = sub-≈ (fun-irr (fun bx r) _ s y)
 
--- The ambivalence property in the *pointwise* form the fold consumes: clauses
+-- The ambivalence property in the pointwise form the fold consumes: clauses
 -- applied to boxes that agree up to a coercion `q` agree up to `·ₑ-monoʳ-≾ₑ q`.
 -- Derived from the reindexing form by rewriting the coerced box.
 
@@ -122,7 +120,7 @@ clause-mono {P} h op {εa} q pv v bx bx' rel =
 -- fold respect the delay collapses: the fold carries the eternal parameter
 -- under each delay by `necᵉ`, so collapsing a delay must collapse that too.
 
--- At a grade that *is* the unit, necessitating and reading back is the
+-- At a grade that is the unit, necessitating and reading back is the
 -- identity (`necᵉ-≤` down to `uᵣ`, then `necᵉ-u`).
 
 necᵉ-pt-u : ∀ {P ρ w} → (bc : Eternalᵒ P) → (u₀ : ρ ≃ᵣ uᵣ)
@@ -153,8 +151,8 @@ necᵉ-pt-· {P} bc m pv q₁ q₂ =
 -- its congruence and world-naturality (defined mutually, as for `μˢ`).
 --
 -- At an `op-node` the fold reinterprets the operation by the matching
--- clause `h op`. The clause expects its continuation as a *boxed
--- exponential*, which `handler-box` rebuilds from the node's stored
+-- clause `h op`. The clause expects its continuation as a boxed
+-- exponential, which `handler-box` rebuilds from the node's stored
 -- continuation `k` and its coherence witnesses `k-cong`/`k-nat`: the
 -- exponential's `fun-cong`/`fun-nat` come from `k-cong`/`k-nat` (advanced
 -- across the fold's own congruence/naturality), and the box's `fun-nat`
@@ -224,7 +222,7 @@ mutual
                    (T-alg-of-handlerˢ-congᵗ bc h _
                      (≡→≈ᵗ (cong (λ z → k z y) (⊑-irrelevant _ _)))))
 
-  -- Congruence in the *tree* argument (the eternal parameter `pv` held fixed).
+  -- Congruence in the tree argument (the eternal parameter `pv` held fixed).
 
   T-alg-of-handlerˢ-congᵗ : ∀ {P A ε ε' w} (bc : Eternalᵒ P) (h : Handlerˢ P A)
                             (pv : carrier P w) {t t' : Tˢ (Tᵒ A ε') ε w}
@@ -305,7 +303,7 @@ mutual
                  ≡ ε-substˢ (cong (_·ₑ ε') p) (T-alg-of-handlerˢ bc h pv t)
   T-alg-ε-substˢ bc h pv refl t = refl
 
-  -- Congruence in the eternal *parameter* argument (the tree held fixed).
+  -- Congruence in the eternal parameter argument (the tree held fixed).
 
   T-alg-of-handlerˢ-congᵖ : ∀ {P A ε ε' w} (bc : Eternalᵒ P) (h : Handlerˢ P A)
                             {pv pv' : carrier P w} → _≈_ P pv pv'

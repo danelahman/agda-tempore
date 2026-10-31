@@ -69,8 +69,7 @@ var-rename (cong-⟨⟩-ren r) (Tl-⟨⟩ x) with var-rename r x
 var-rename (⟨⟩-ext-ctx _ ecΔ) x =
   _ , (λ ¬et → ⊥-elim (¬et (ec-eternal ecΔ x))) , Tl-⟨⟩ x
 
--- Renaming a *resource* variable, i.e. one of box type, which is what `unbox`
--- names. Box types are never eternal, so the grade bound is unconditional.
+-- Renaming a resource variable, one of box type, as `unbox` names. Box types are never eternal, so the grade bound is unconditional.
 --
 -- Stated with projections rather than a `with`, so that the `unbox` clause of
 -- the action below reduces to an `unbox` node at an abstract renaming.
@@ -87,8 +86,8 @@ rvar-rename r x =
   , proj₁ (proj₂ (var-rename r x)) (λ ())
 
 -- The value-taking reading of `unbox`, as a derived rule. The value is taken not
--- in `Γ` but in a `Δ` that `Γ` reaches through one lock of the box's own grade
--- -- a Fitch-style witness, and the source of the elapsed grade.
+-- in `Γ` but in a `Δ` that `Γ` reaches through one lock of the box's own
+-- grade: a Fitch-style witness, and the source of the elapsed grade.
 
 unbox⇒var : ∀ {Γ Δ A ρ}
           → Ren [] Γ (Δ ⟨ ρ ⟩)

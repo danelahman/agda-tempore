@@ -514,7 +514,7 @@ record Category : Set₂ where
                          (≈ᵐ-trans (∘ᵐ-congʳ mapˣᵐ-idᵐ) (∘ᵐ-identityʳ _))))
              (uncurryᵐ-curryᵐ-iso idᵐ)
 
-  -- Precomposing an abstraction's *argument*: the functorial action of the
+  -- Precomposing an abstraction's argument: the functorial action of the
   -- exponential on the domain reindexes what the abstraction is applied to.
 
   map⇒ᵐ-curryᵐˡ : ∀ {A B C D} → (f : A →ᵐ B) → (k : C ×ᵐ B →ᵐ D)
@@ -590,7 +590,7 @@ record Category : Set₂ where
                      (curryᵐ-cong (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
 
   -- The exponential's costrength applied to a pair whose second component is
-  -- an abstraction: the paired-in value simply joins the abstraction's
+  -- an abstraction: the paired-in value joins the abstraction's
   -- environment (it is constant in the abstracted argument, hence `fstᵐ`).
 
   exp-strᵐ-⟨⟩ : ∀ {A B C D} → (f : A →ᵐ B) → (g : A ×ᵐ C →ᵐ D)

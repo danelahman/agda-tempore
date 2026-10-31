@@ -3,8 +3,8 @@
 -- rationals: what the right-, left- and two-sided grades share.       --
 --                                                                     --
 -- Grades are finite one-sided expressions (`Exact.Finite`), written   --
--- with `⌜_⌝`, whose side condition -- no iteration, at least one      --
--- word -- is computed. A comparison is decided by the reader; `holds` --
+-- with `⌜_⌝`, whose side condition (no iteration, at least one        --
+-- word) is computed. A comparison is decided by the reader; `holds`   --
 -- and `fails` read the decision as a Boolean, so that a comparison    --
 -- is checked by evaluation.                                           --
 -------------------------------------------------------------------------

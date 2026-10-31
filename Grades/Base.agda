@@ -345,7 +345,7 @@ record GradeSystem : Set₂ where
     ∣_∣ᵉ : EGrade →ᵍ RGrade
 
 
--- Helpful module exporting effect and resource grade fields with different names
+-- The fields of the effect and the resource grade, under distinct names
 
 module GradeSystemInterface (GS : GradeSystem) where
 

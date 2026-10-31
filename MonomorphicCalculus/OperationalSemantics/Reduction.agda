@@ -84,7 +84,7 @@ cmp-reduct ⋈ V W et = return ⌈ holds ⋈ (compareᵈ et (⌊ et ⌋ᵈ V) (�
 
 mutual
 
-    -- Small-step operational semantics aka Preservation theorem
+    -- Small-step operational semantics; being typed, it is also preservation
     data _↝_ :  {C D : CType} → Config C → Config D → Set where
 
         -- application: substitute the argument into the abstraction's body
@@ -404,7 +404,7 @@ mutual
                       ⟨ S , handle M `with subV V (<:ᵛ-trans p p') ⟩
 
         -- subsumption at a scrutinised boolean: `Bool <:ᵛ Bool` is the
-        -- identity, so it is simply dropped
+        -- identity, so it is dropped
         SUB-IF      : ∀ {C}
                     → {S : 𝕊 []}
                     → {V : toCtx S ⊢V⦂ Bool}
@@ -414,7 +414,7 @@ mutual
                       ⟨ S , if V `then M `else N ⟩
 
         -- subsumption at a scrutinised natural number: `Nat <:ᵛ Nat` is the
-        -- identity, so it is simply dropped
+        -- identity, so it is dropped
         SUB-CASEℕ   : ∀ {C}
                     → {S : 𝕊 []}
                     → {V : toCtx S ⊢V⦂ Nat}
@@ -486,7 +486,7 @@ mutual
     step-extends-state SUB-RECℕ             = id-suc
     step-extends-state SUB                  = id-suc
 
-    -- reduction steps refine the value type, just as they refine the effect
+    -- reduction steps refine the value type, as they refine the effect
     step-refines-type : ∀ {A B ε ε'}
                       → {S S' : 𝕊 []}
                       → {M : toCtx S ⊢C⦂ A ‼ ε}

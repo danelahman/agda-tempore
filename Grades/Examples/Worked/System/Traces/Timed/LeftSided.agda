@@ -2,7 +2,7 @@
 -- Worked instance: forgetting the runs, keeping the guarantee.       --
 --                                                                    --
 -- `System.Traces.Timed.LeftSided` measures a grade of guarantees by  --
--- its *fastest* member. The set is read disjunctively, and the time  --
+-- its fastest member. The set is read disjunctively, and the time    --
 -- guaranteed is that of the cheapest member.                         --
 ------------------------------------------------------------------------
 

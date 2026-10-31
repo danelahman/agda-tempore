@@ -91,7 +91,7 @@ subst-clause-interp : ∀ {Δ Δ' D C} → (e : Δ ≡ Δ') → (t : Δ ++ᶜ D 
 subst-clause-interp refl t p = ≈ᵐ-sym (∘ᵐ-identityʳ _)
 
 -- A clause-context retyping is a nested product reindexing, and in particular
--- acts only on the ambient part — it is independent of the residual grade the
+-- acts only on the ambient part: it is independent of the residual grade the
 -- continuation slot carries.
 
 eq-ren-clause : ∀ {Δ Δ'} → (e : Δ ≡ Δ') → (Γ' : Ctx) → (pt kt : VType)

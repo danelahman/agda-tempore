@@ -55,15 +55,15 @@ open import MonomorphicCalculus.OperationalSemantics.GradedReach Spec
 open import MonomorphicCalculus.Syntax.Substitution.Equivalence  Spec
 
 -- Induction on the typing derivation, mutually for values and computations.
--- Five computation cases are split off here, each stated as its own lemma
--- taking the induction hypotheses it needs — for a binding subterm, at *every*
--- environment, since the state the subterm is reached at is not the one the
--- case starts from. Sequencing is `Termination.Bind`'s `seq-CRed`.
+-- Five computation cases are split off as lemmas taking the induction
+-- hypotheses they need: for a binding subterm, at every environment, since the
+-- state the subterm is reached at is not the one the case starts from.
+-- Sequencing is `Termination.Bind`'s `seq-CRed`.
 
 -- Unboxing: read the store. `env-Cˢ-unbox` sends the action to an `unbox` at
 -- the cell the environment sends this one to, `UNBOX` reads that cell, and the
--- value read — the raw read at the cell's declared payload type, subsumed once
--- along the composite the action accumulates — is reducible at the current
+-- value read (the raw read at the cell's declared payload type, subsumed once
+-- along the composite the action accumulates) is reducible at the current
 -- state.
 
 FL-unbox : ∀ {St Γ A A₀ D ρ σ ε} → (γ : Env St Γ) → Rel-Env γ
@@ -92,10 +92,10 @@ FL-unbox {St = St} {A = A} {A₀ = A₀} {ρ = ρ} {σ = σ} γ pγ x rel p M pM
     pU = VRed-sub p₁ Y store
 
 -- Matching: `MATCH` fires at any scrutinee, substituting its two projections
--- in the *opposite* order from the environment — the rule replaces `B` (its
+-- in the opposite order from the environment: the rule replaces `B` (its
 -- value weakened past `A`) and then `A`, the action replaces `A` with `B`
--- riding in the suffix and then `B`. That is exactly `sub-swap-C`, at the
--- empty suffix, where both orders' casts and boundary variables reduce.
+-- riding in the suffix and then `B`. That is `sub-swap-C` at the empty
+-- suffix, where both orders' casts and boundary variables reduce.
 
 FL-match : ∀ {St Γ A B D ε} → (γ : Env St Γ) → Rel-Env γ
          → (V : Γ ⊢V⦂ A |×| B) → (M : Γ ∷ A ∷ B ⊢C⦂ D ‼ ε)
@@ -358,9 +358,9 @@ FL-box {St = St} {Γ = Γ} {A = A} {ρ = ρ} γ pγ V M pV pM =
 
 -- Performing: already a weak head normal form, so this is `cred-op` at the empty
 -- run. Its resumption premise is the induction hypothesis at the environment a
--- `resume` amounts to — the lock the operation is performed under, matched by
--- the resumption's own reach, and the arity value on top — which the action
--- *is*, both of `env-Cˢ`'s casts being `refl` at the empty suffix.
+-- `resume` amounts to (the lock the operation is performed under, matched by
+-- the resumption's own reach, and the arity value on top), where the action is
+-- the resumption, both of `env-Cˢ`'s casts being `refl` at the empty suffix.
 
 FL-perform : ∀ {St Γ A ε} {op : Op} → (γ : Env St Γ) → Rel-Env γ
            → (V : Γ ⊢V⦂ type-of-gtype (param op))
@@ -384,7 +384,7 @@ FL-perform {St = St} {Γ = Γ} {op = op} γ pγ V M pV pM =
     Ar = type-of-gtype (arity op)
     M₀ = env-Cˢ γ ([] ⟨ ρ ⟩ ∷ Ar) M
 
-    -- the action at the resumption's environment *is* the resumption, once the
+    -- the action at the resumption's environment is the resumption, once the
     -- two `++ᶜ`-associativity casts are seen to be the identity
     resumeq : ∀ {St₂ : 𝕊 []} → (q : St ⊑ₛ[ ρ ] St₂)
             → (W' : toCtx St₂ ⊢V⦂ Ar)
@@ -525,8 +525,8 @@ mutual
                       (castᶜ-irr (++ᶜ-assoc _ ([] ⟨ of-durʳ τ ⟩) []) refl M)))
 
   -- Sequencing: `env-Cˢ-seq` splits the action, `seq-CRed` runs the scrutinee and
-  -- then the sequel. The environment the sequel needs is `(γ ⟨ q ⟩ᵉ) ∷ᵉ V` — and
-  -- `env-Cˢ (γ ⟨ q ⟩ᵉ) ([] ∷ A)` *is* `C-rename (cong-∷-ren (unbox-ren q))` of the
+  -- then the sequel. The environment the sequel needs is `(γ ⟨ q ⟩ᵉ) ∷ᵉ V`, and
+  -- `env-Cˢ (γ ⟨ q ⟩ᵉ) ([] ∷ A)` is `C-rename (cong-∷-ren (unbox-ren q))` of the
   -- action at suffix `[] ⟨ mapᵉ ε₁ ⟩ ∷ A`, definitionally (both of `env-Cˢ`'s
   -- casts are `refl` at the empty suffix), so only `env-Cˢ-head` is needed.
 
@@ -573,9 +573,9 @@ mutual
   FL-C γ pγ (unbox x rel p M) =
     FL-unbox γ pγ x rel p M (λ γ' pγ' → FL-C γ' pγ' M)
 
--- A reducible computation halts: its run *is* the evaluation, and which of the
--- two shapes it halts in is which `CRed` constructor it is. The reducibility
--- of the components plays no part — normalization is all that is read off.
+-- A reducible computation halts: its run is the evaluation, and which of the
+-- two shapes it halts in is which `CRed` constructor it is. Only normalization
+-- is read off; the reducibility of the components plays no part.
 
 CRed-halts : ∀ {s} {P : VPred s} {A ε} {e : shapeᵛ A ≡ s} {St : 𝕊 []}
            → {M : toCtx St ⊢C⦂ A ‼ ε}

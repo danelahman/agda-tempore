@@ -154,8 +154,8 @@ claim-after-relaying =
                                      -- ∷ Reading
           (perform write here (return ⋆)))))
 
--- eight steps spent working instead of idling -- two readings and a
--- transmission -- draw seven units, and the claim is refused
+-- eight steps spent working rather than idling (two readings and a
+-- transmission) draw seven units, and the claim is refused
 
 drained : ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ calibration)
 drained (_ , overdrawn) = ≰! overdrawn

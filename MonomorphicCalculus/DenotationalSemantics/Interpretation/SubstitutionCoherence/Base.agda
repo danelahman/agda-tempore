@@ -67,7 +67,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.RenamingCoh
 -- computing the missing component with `⟦ W ⟧`.
 
 -- `eternal-val-ext` builds only variables, constants, units, booleans,
--- numerals, pairs and injections — never a `lam` — so its result is
+-- numerals, pairs and injections, never a `lam`, so its result is
 -- parametric outright.
 
 eternal-val-extᴾ : ∀ {Γ A ρ} → (et : Eternal A) → (V : Γ ⊢V⦂ A)
@@ -97,7 +97,7 @@ sub-env (split-⟨⟩ {ρ = ρ} s)  W pW = ⟨ ρ ⟩ᶠ (sub-env s W pW)
 
 -- (`var-morphism-Tl-∷` lives in `Interpretation.Variables`.)
 
--- Weakening a value of *eternal* type under a lock: denotationally this is
+-- Weakening a value of eternal type under a lock: denotationally this is
 -- the eternal extraction applied to the locked environment. Proved by
 -- induction on the value (only the eternal formers can occur).
 
@@ -232,7 +232,7 @@ lk-irr refl b b' w w'
   rewrite ≾ᵣ-irrelevant b b' | <:ᵛ-irrelevant w w' = ≈ᵐ-refl
 
 -- Projecting the head variable through one lock and relaxing the redundant
--- `uᵣ ·ᵣ ρ` back to `ρ` is just the (locked) second projection.
+-- `uᵣ ·ᵣ ρ` back to `ρ` is the (locked) second projection.
 
 hd-lookup : ∀ {Δ₀ B ρ} → (c : uᵣ ·ᵣ ρ ≾ᵣ ρ)
           → ⟨⟩-≤ c ∘ᵐ var-proj (Tl-⟨⟩ {Γ = Δ₀ ∷ B} {ρ = ρ} Hd) ≈ᵐ ⟨ ρ ⟩ᶠ sndᵐ

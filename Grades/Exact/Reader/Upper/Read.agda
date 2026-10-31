@@ -6,8 +6,8 @@
 -- with an operation of the bound is matched; any other item is       --
 -- poured whole into the current stretch when the chain still fits,   --
 -- and otherwise overflows into the stretch of the fit that holds the --
--- instant where the current stretch, full, would end -- or where the --
--- item starts, if that is later; when the current stretch does not   --
+-- instant where the current stretch, full, would end, or where the   --
+-- item starts if that is later; when the current stretch does not    --
 -- admit the item, the chain is closed and a new one opened at the    --
 -- stretch of the fit holding the item's start. The reader runs ahead --
 -- of the fit: every stretch of the fit ends no later than the        --

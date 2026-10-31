@@ -1,18 +1,17 @@
 ---------------------------------------------------------------------------
 -- Eternal structure for the eternal base types.                         --
 --                                                                       --
--- The variable rule may use a variable of an *eternal* type at any      --
+-- The variable rule may use a variable of an eternal type at any        --
 -- grade, so the interpretation of an eternal type must carry an         --
 -- `Eternalᵒ` structure (in particular the extraction `extᵉ`).           --
 --                                                                       --
--- The structure is supplied for each *former* of                        --
--- `MonomorphicCalculus.Syntax.Types.Eternal`:                           --
--- the eternal base types, and closure under `Unit`, `Bool`, `Nat`,      --
--- `Empty`, products, sums and lists. `Interpretation.Variables` then    --
--- assembles an `Eternalᵒ` for every eternal type by recursion on the    --
--- eternality witness, so all the eternal *laws* (grade-uniformity, the  --
--- unit grade, the `⟨_⟩`-algebra law) come from `Eternalᵒ` rather than   --
--- being re-derived per former.                                          --
+-- The structure is supplied for each former of                          --
+-- `MonomorphicCalculus.Syntax.Types.Eternal`: the eternal base types,   --
+-- and closure under `Unit`, `Bool`, `Nat`, `Empty`, products, sums and  --
+-- lists. `Interpretation.Variables` assembles an `Eternalᵒ` for every   --
+-- eternal type by recursion on the eternality witness, so the eternal   --
+-- laws (grade-uniformity, the unit grade, the `⟨_⟩`-algebra law) come   --
+-- from `Eternalᵒ`, not re-derived per former.                           --
 --                                                                       --
 -- An eternal base type also carries its order, a comparison morphism    --
 -- (`cmpᵇᵐ`) agreeing with the signature's order on the constants;       --
@@ -98,7 +97,7 @@ record GroundEternal : Set₁ where
                        ≈ᵐ consᵐ ∘ᵐ ⟨ Eternalᵒ.extᵉ eA {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ fstᵐ
                                   , Eternalᵒ.extᵉ (List-eternalᵒ eA) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
 
-    -- A constant of an eternal base type denotes a *global* element: it is
+    -- A constant of an eternal base type denotes a global element: it is
     -- the same at every world, so the eternal extraction recovers it. This
     -- is what lets a constant be weakened under a lock (`eternal-val-ext`).
     ⟦⟧ᵇᶜ-eternal : ∀ {b} → .(eb : EternalBaseType b) → (c : BaseConstants b) → ∀ {ρ}

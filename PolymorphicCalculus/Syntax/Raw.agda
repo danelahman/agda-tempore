@@ -153,7 +153,7 @@ mutual
 
     -- sequential composition
 
-    _⨟_     : RawC Θ n              -- NOTE: use \;2 to get this unicode semicolon
+    _⨟_     : RawC Θ n              -- input: \;2
             → RawC Θ (suc n)
             --------------
             → RawC Θ n

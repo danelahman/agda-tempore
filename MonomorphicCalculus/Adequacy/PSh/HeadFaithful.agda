@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------
 -- The presheaf model is head-faithful.                                --
 --                                                                     --
--- Discharges `Adequacy.HeadFaithful`'s record — the model-side        --
--- assumption of the adequacy theorem — for the free graded tree monad --
+-- Discharges `Adequacy.HeadFaithful`'s record, the model-side         --
+-- assumption of the adequacy theorem, for the free graded tree monad  --
 -- on presheaves, and `HeadTimed` with it.                             --
 --                                                                     --
 -- Needs stepped durations, a duration being a number of unit ticks,   --
@@ -93,7 +93,7 @@ record ConstFrame : Set where
                     → _≈_ ⟦ b ⟧ᵇ {w}  (app ⟦ c₁ ⟧ᵇᶜ tt) (app ⟦ c₂ ⟧ᵇᶜ tt)
 
 -- `TickFrame` from a frame in which any grade can be spent from any world.
--- That is what the concrete tick frames have — see `PSh.TickFrames` — so the
+-- The concrete tick frames are such frames (`PSh.TickFrames`), so the
 -- assumption is not vacuous.
 
 reachable⇒tick : W → (∀ (ρ : R) (w : W) → Σ[ w' ∈ W ] w ⊑[ ρ ] w') → TickFrame
@@ -217,7 +217,7 @@ module _ (TF : TickFrame) where
       (delayedᵐ-head (isOp-closed {X} {op₁}) (nodeᵐ-head op₁ v₁ k₁) nd₁ r₁ p le₁)
       (delayedᵐ-head (isOp-closed {X} {op₂}) (nodeᵐ-head op₂ v₂ k₂) nd₂ r₂ p le₂)
 
-  -- The predicate says the leaf *is* that global element, which the
+  -- The predicate says the leaf is that global element, which the
   -- observation carries to whatever world the delays reach. Stated for an
   -- arbitrary `g : 𝟙ᵖ →ᵖ X`, since both answer types return one: a base
   -- constant `⟦ c ⟧ᵇᶜ` and a boolean `trueᵖ`/`falseᵖ`.
@@ -235,7 +235,7 @@ module _ (TF : TickFrame) where
   isG-head {X} g y p = h-leaf (≈-refl X)
 
   -- Two leaves with the same delayed denotation carry the same answer, at
-  -- *some* world the delays reach. Both answer types read their observation
+  -- some world the delays reach. Both answer types read their observation
   -- off this; what separates them is whether that world can be left again.
 
   globals-meet : ∀ {X Y₁ Y₂ : PSh} {ε δ₁ δ₂ : E} {n₁ n₂ : 𝔻}

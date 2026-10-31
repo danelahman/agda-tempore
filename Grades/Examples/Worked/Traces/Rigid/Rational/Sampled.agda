@@ -1,14 +1,12 @@
 -------------------------------------------------------------------------
--- Worked comparisons of regular-expression bounds, decided in Agda    --
--- and by the reference reader of the design study.                    --
+-- Worked comparisons of regular-expression bounds, a random sample.   --
 --                                                                     --
 -- Two operations, `a` taking more than zero and at most one unit, `b` --
--- at least one and less than two. Each comparison is one of a random  --
--- set on which the decision and the reference reader agree; here      --
--- the decision is evaluated.                                          --
+-- at least one and less than two. Each comparison is checked by       --
+-- evaluating the decision.                                            --
 -------------------------------------------------------------------------
 
-module Grades.Examples.Worked.Traces.Rigid.Rational.CrossChecked where
+module Grades.Examples.Worked.Traces.Rigid.Rational.Sampled where
 
 open import Data.Bool.Base using (Bool; true; false)
 open import Data.Fin.Base using (Fin; zero; suc)

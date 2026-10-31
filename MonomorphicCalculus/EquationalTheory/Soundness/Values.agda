@@ -124,7 +124,7 @@ sound-if-beta-false M N (_ , pM , pN) pN' =
   ∙ ⟦⟧ᶜᵗ-irr N pN pN'
 
 -- `if-eta`: the two branches substitute the two booleans into the same body,
--- and `sub-env split-[] true` is `⟨ idᵐ , trueᵐ ∘ᵐ terminalᵐ ⟩ᵐ` — exactly the
+-- and `sub-env split-[] true` is `⟨ idᵐ , trueᵐ ∘ᵐ terminalᵐ ⟩ᵐ`, the
 -- shape `ifᵐ-η` speaks about. As with `match-eta`, `M` occurs only under a
 -- substitution on both sides, so its certificate comes in separately.
 

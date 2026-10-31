@@ -3,8 +3,8 @@
 --                                                                    --
 -- `Sub₀` is a free syntactic structure, so distinct generators can   --
 -- put the same values in the same places. `_≐ˢ₀_` compares them by   --
--- what they do to a variable — as a value, and, at box type, as a    --
--- resource variable — and the action respects it.                    --
+-- what they do to a variable (as a value, and, at box type, as a     --
+-- resource variable), and the action respects it.                    --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -114,7 +114,7 @@ cong-∷-sub-≐ˢ₀ h = mk≐ˢ₀ goᵛ goᵗ
     goᵗ (Tl-∷ y) = cong RVar-∷ (atᵗ h y)
 
 -- Crossing a lock splits on the variable's eternality, but both sides split on
--- the same decision — the clause takes it as an argument.
+-- the same decision, which the clause takes as an argument.
 
 cong-⟨⟩-sub-≐ˢ₀ : ∀ {Γ Γ' ρ} {s s' : Sub₀ [] Γ Γ'}
                 → s ≐ˢ₀ s' → cong-⟨⟩-sub {ρ = ρ} s ≐ˢ₀ cong-⟨⟩-sub s'

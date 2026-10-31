@@ -567,8 +567,8 @@ C-normalise (subC M (pv ‼ₛ pe)) with C-normalise M
   nfc M' (<:ᵛ-trans sv pv) (≾ₑ-trans se pe) n e
 
 
--- The theorem: every derivation equals, up to erasure, one in which every
--- subsumption sits at a reconciliation point — the root among them.
+-- Every derivation equals, up to erasure, one in which every subsumption sits
+-- at a reconciliation point, the root among them.
 
 data NfRootV : ∀ {Γ A} → Γ ⊢V⦂ A → Set where
   rootⁿ : ∀ {Γ A A'} {V : Γ ⊢V⦂ A} {p : A <:ᵛ A'} → NfV V → NfRootV (subV V p)

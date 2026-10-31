@@ -2,11 +2,10 @@
 -- (Left) one-sided (closed) intervals of dense time as grades.       --
 --                                                                    --
 -- A grade `[ q ,+∞⟩` is a lower bound, "at least `q` time units",    --
--- with `q` a non-negative rational; a delay of half a unit has grade --
--- `[ 1 / 2 ,+∞⟩`. Multiplication adds the bounds and the order is    --
--- the reverse of `≤` on them, and a *smaller* bound is the weaker    --
--- grade. Durations are non-negative rationals, a delay by `q` having --
--- grade `[ q ,+∞⟩`.                                                  --
+-- with `q` a non-negative rational. Multiplication adds the bounds,  --
+-- the order is the reverse of `≤` on them, and a smaller bound is    --
+-- the weaker grade. A delay by `q` has grade `[ q ,+∞⟩`, so a delay  --
+-- of half a unit has grade `[ 1 / 2 ,+∞⟩`.                           --
 --                                                                    --
 -- The discrete intervals of `Time.LeftSided` embed along the         --
 -- inclusion of durations, a bound of `n` time steps being read as    --

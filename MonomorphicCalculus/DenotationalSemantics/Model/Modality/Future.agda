@@ -3,16 +3,16 @@
 -- graded by a monoid of grades `(R , · , u , ≾)`. It is the analogue   --
 -- of the comonadic □-modality on types in Fitch-style modal calculi.   --
 --                                                                      --
--- The modality is a *lax* graded comonad: it provides a counit `ε`     --
--- and comultiplication `δ`. (With expiring resources the box is        --
--- genuinely lax — a smaller resource budget is a strictly stronger     --
+-- The modality is a lax graded comonad, with counit `ε` and            --
+-- comultiplication `δ`. (With expiring resources the box is            --
+-- genuinely lax: a smaller resource budget is a strictly stronger      --
 -- obligation, so `[ ρ₁ · ρ₂ ]` and `[ ρ₁ ] [ ρ₂ ]` need not coincide.) --
 -- Laws are stated up to the categorical equality `≈ᵐ`, and, because    --
 -- the monoid laws hold only propositionally, the graded comonad laws   --
 -- carry explicit `[]-≤` coercions along `·-identityˡ`, `·-identityʳ`,  --
 -- and `·-assoc`.                                                       --
 --                                                                      --
--- At the *unit* resource grade the counit is additionally an           --
+-- At the unit resource grade the counit is moreover an                 --
 -- isomorphism: a unit-graded unit `ηᵘ : A →ᵐ [ u ]ᵒ A` splits `ε`, so  --
 -- `[ u ]ᵒ A ≅ A`. This is the semantic counterpart of the calculus     --
 -- being able to use a variable once the resources to its right sum to  --
@@ -49,7 +49,7 @@ record Future : Set₁ where
     [_]ᶠ : ∀ {A B} → (ρ : Carrier) → A →ᵐ B → [ ρ ]ᵒ A →ᵐ [ ρ ]ᵒ B
 
     -- Monotonicity for gradings. The box is `∀`-shaped (Kripke
-    -- necessity), so it is *contravariant* in the grade: a larger grade
+    -- necessity), so it is contravariant in the grade: a larger grade
     -- (a larger accessibility relation) is a stronger obligation.
 
     []-≤ : ∀ {A ρ₁ ρ₂} → ρ₁ ≾ ρ₂ → [ ρ₂ ]ᵒ A →ᵐ [ ρ₁ ]ᵒ A

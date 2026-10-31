@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
 -- The moves that build coverage proofs, and what they add up to.     --
 --                                                                    --
--- The relation's rules act on the *heads* of the two traces. These   --
--- helpers lift them to the trace operations the grades are defined   --
+-- The relation's rules act on the heads of the two traces; these     --
+-- lemmas lift them to the trace operations the grades are defined    --
 -- by: inverting a leading delay of the run, absorbing one into the   --
 -- slack, spending slack on one the guarantee names, and padding the  --
 -- run on the left. None of them touches `keep`.                      --
@@ -15,7 +15,7 @@
 -- and not in the slack-additive form, slack after a match being what --
 -- this order refuses to carry. At `j := 0` the pinned form is what   --
 -- `Sets.liftˢ`'s `liftˢ-·ˢ` consumes, the lifts being taken at       --
--- `_≼ᶜ_ = _≼ᶜ[ 0 ]_`, so it is the instance the grades need.         --
+-- `_≼ᶜ_ = _≼ᶜ[ 0 ]_`.                                                --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc)
@@ -37,8 +37,8 @@ open M.Notation
 
 open import Grades.Traces.Base T Op
 
--- the arithmetic helpers are about durations alone, so they are shared with
--- the allowance order rather than restated
+-- the arithmetic, about durations alone, is shared with the allowance
+-- order
 
 open import Grades.Traces.Coverage.Core T Op costˡᵒ
 
@@ -120,9 +120,9 @@ prepend-left t (use-delay {s⁻ = operation⁻ o s''} p d') = ⊥-elim (op-⋠�
 ------------------------------------------------------------------------
 -- Monotonicity of the trace product, second slack pinned to zero
 --
--- With the second slack zero there is nothing to swap past, so no case
--- does slack arithmetic beyond adding zero. The `keep` case recurses at slack zero,
--- which is precisely where the rule puts it.
+-- With the second slack zero no case does slack arithmetic beyond
+-- adding zero; the `keep` case recurses at slack zero, where the rule
+-- puts it.
 
 mono-∙ : ∀ {j s s' t t'}
        → s ≼ᶜ[ j ] s' → t ≼ᶜ[ 0ᴰ ] t' → (s ∙ t) ≼ᶜ[ j ] (s' ∙ t')

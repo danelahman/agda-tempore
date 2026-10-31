@@ -20,6 +20,6 @@ open import MonomorphicCalculus.Syntax.Types    S
 record TopLevelOpSemantics : Set where
   field 
     op-sem : (op : Op)
-           → {S : 𝕊 []} -- TODO: formally requires a naturality condition; needs to be parametric in S
+           → {S : 𝕊 []} -- uniform in S only under `OpSemCoherent`
            → toCtx S ⊢V⦂ type-of-gtype (param op)
            → toCtx S ⟨ mapᵉ (op-grade op) ⟩ ⊢V⦂ type-of-gtype (arity op)

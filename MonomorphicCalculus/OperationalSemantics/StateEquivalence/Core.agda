@@ -85,7 +85,7 @@ mutual
 
 -- Shifting a cast across the relation, and symmetry of `_≐ˢ_`. Symmetry is
 -- needed because `VRed`'s Kripke clauses have to replay an extension of the
--- *other* state (`reach-replay` runs in one direction only).
+-- other state (`reach-replay` runs in one direction only).
 
 ≡-shift : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ)
          → {V : Γ' ⊢V⦂ A} → {W : Γ ⊢V⦂ A}

@@ -8,8 +8,8 @@
 -- a reading and at most twelve steps of anything after it. A box at  --
 -- this grade may be unboxed after a reading and a wait of five       --
 -- steps; after a reading and two transmissions instead it may not,   --
--- the transmissions filling the wait the guarantee demands -- though --
--- they stay within the bound, and within a guarantee asking only for --
+-- the transmissions filling the wait the guarantee demands, though   --
+-- they stay within the bound and within a guarantee asking only for  --
 -- five steps of anything.                                            --
 --                                                                    --
 -- Reading takes one step, writing two or three, sending four to six. --

@@ -18,7 +18,7 @@
 -- and only grade unknowns are assigned (`latom`). The lowering --
 -- values are principal (`minₑ`, `minᵣ`); the others only keep  --
 -- instances. A local unknown no step resolves leaves the scope --
--- stuck, e.g. `j · a ≾ a ≾ c · j` with `j` the rigid and `c`   --
+-- stuck, as `a` in `j · a ≾ a ≾ c · j`, `j` the rigid and `c`  --
 -- outer.                                                       --
 ------------------------------------------------------------------
 
@@ -1795,7 +1795,7 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
           σ : Subst Φ Φ
           σ = sub tvar (λ k → rvar (Cʳ.target mr k)) (λ k → evar (Cᵉ.target me k))
 
-          -- a set of unknowns none that may move is in
+          -- a set of unknowns containing none that may move
           fixes : ∀ {W : Vars Φ} → (∀ k → Mvᵉ k → vᵉ W k ≡ false) → (∀ k → Mvʳ k → vʳ W k ≡ false)
                 → Fixes W σ
           fixes fe fr =

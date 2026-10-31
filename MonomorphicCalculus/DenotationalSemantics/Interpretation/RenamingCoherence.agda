@@ -86,7 +86,7 @@ unbox-env-nat′ r x rel with var-rename r x | var-proj-nat r x (λ ())
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
 
--- and at whichever bound the renamed node actually stores
+-- and at whichever bound the renamed node stores
 
 unbox-env-nat : ∀ {Γ Γ' A ρ ρ'} → (r : Ren [] Γ' Γ)
               → (x : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
@@ -119,7 +119,7 @@ unbox-env-nat r x rel rel' =
          , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
 
 -- A left map `mapˣᵐ g idᵐ` commutes past the reassociating adapter
--- `mapˣᵐ (mapˣᵐ idᵐ p) a ∘ᵐ ×ᵐ-assoc⁻¹` — the naturality in the first factor of
+-- `mapˣᵐ (mapˣᵐ idᵐ p) a ∘ᵐ ×ᵐ-assoc⁻¹`: the naturality in the first factor of
 -- the ground-type adapter used by `⟦_⟧ʰᵗ`.
 
 adapt-commute : ∀ {D D' P Q R S} → (g : D →ᵐ D') → (p : Q →ᵐ P) → (a : S →ᵐ R)

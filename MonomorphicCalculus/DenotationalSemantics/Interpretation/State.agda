@@ -4,23 +4,20 @@
 --                                                                        --
 -- A state `S : 𝕊 []` is a Fitch-style telescope: `_⟨ ρ ⟩ₛ` records       --
 -- that `ρ` worth of time has passed, and `_∷ₛ_ S V` allocates a cell     --
--- *together with the value `V` stored in it*. So a state is not an       --
--- opaque store to be threaded through a state monad — it already         --
--- carries all of its data, and it interprets as an *environment* for     --
--- its own context `toCtx S`.                                             --
+-- together with the value `V` stored in it. A state thus carries all of  --
+-- its data: it is not a store threaded through a state monad, but an     --
+-- environment for its own context `toCtx S`.                             --
 --                                                                        --
--- The environment cannot be closed off entirely, though: the locks       --
--- `⟨ ρ ⟩` have no global points (`⟨ ρ ⟩ᵒ X` is a Kripke possibility, and --
--- near time 0 there is no `ρ`-past to be found). What the state *can*    --
--- supply is exactly the cells. So `⟦ S ⟧ˢ` is a morphism out of the      --
--- state's *history* `hist S` — the lock-only residue of `toCtx S` —      --
--- and the passage of time enters from outside it (in the operational     --
--- semantics, via `DELAY`).                                               --
+-- The locks `⟨ ρ ⟩` have no global points (`⟨ ρ ⟩ᵒ X` is a Kripke        --
+-- possibility, and near time 0 there is no `ρ`-past to be found), so     --
+-- the state supplies only the cells. `⟦ S ⟧ˢ` is a morphism out of the   --
+-- state's history `hist S`, the lock-only residue of `toCtx S`, and the  --
+-- passage of time enters from outside it (in the operational semantics,  --
+-- via `DELAY`).                                                          --
 --                                                                        --
--- Note the cell clause of `⟦_⟧ˢ` is precisely the morphism that          --
--- `⟦ box V M ⟧ᶜᵗ` precomposes with: allocating a resource and extending  --
--- the store are the same map. That is what makes `BOX` a plain equation  --
--- rather than a state transition.                                        --
+-- The cell clause of `⟦_⟧ˢ` is the morphism that `⟦ box V M ⟧ᶜᵗ`         --
+-- precomposes with: allocating a resource and extending the store are    --
+-- the same map, so `BOX` is an equation rather than a state transition.  --
 ----------------------------------------------------------------------------
 
 open import Grades.Base
@@ -94,7 +91,7 @@ Paramˢ (S ∷ₛ V)  = Paramˢ S × Paramᵛ V
 --
 --   * a lock is passed through by the context modality's functorial action;
 --   * a cell is filled by the value stored in it, boxed up by the
---     adjunction unit (`[ ρ ]ᶠ ⟦ V ⟧ ∘ᵐ η⊣`) — the `box` morphism.
+--     adjunction unit (`[ ρ ]ᶠ ⟦ V ⟧ ∘ᵐ η⊣`, the `box` morphism).
 --
 -- The stored value lives in `[] ++ᶜ toCtx S ⟨ ρ ⟩`, so it is first
 -- reindexed along the left unit of context concatenation.

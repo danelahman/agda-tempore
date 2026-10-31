@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 -- The logical relation: reducible values, computations and stores.   --
 --                                                                    --
--- Unary and purely syntactic — it only has to deliver weak-head      --
+-- Unary and syntactic, since it only has to deliver weak-head        --
 -- normalization; soundness and head-faithfulness are separate.       --
 --                                                                    --
 -- `CRed` is an inductive family, not a recursion on a measure: `E`   --
@@ -52,7 +52,7 @@ open import MonomorphicCalculus.Syntax.Substitution.Equivalence  Spec
 
 -- A value of box type is a variable under a spine of subsumptions: the spine
 -- leaves the variable alone, so the value still names a cell, but at the
--- cell's *declared* grade and payload type, which its own type only bounds.
+-- cell's declared grade and payload type, which its own type only bounds.
 
 val-cell : ∀ {Γ A ρ} → Γ ⊢V⦂ [ ρ ] A
          → Σ[ ρ₀ ∈ R ] Σ[ A₀ ∈ VType ] Var Γ ([ ρ₀ ] A₀)
@@ -470,7 +470,7 @@ VRedˢ (□ˢ t) {(A ‼ ε) ⇛ (B ‼ ε')} () St V
 VRed : (A : VType) → (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set
 VRed A = VRedˢ (shapeᵛ A) {A} refl
 
--- Reducible computations at the value predicate `VRed` — the form the
+-- Reducible computations at the value predicate `VRed`, the form the
 -- fundamental lemma proves. Stated at a shape, so that a subsumption moves the
 -- equality index and leaves the predicate alone.
 
@@ -692,7 +692,7 @@ VRed-≡ᵛ : ∀ {St : 𝕊 []} → (A : VType) → {V V' : toCtx St ⊢V⦂ A}
 VRed-≡ᵛ A refl p = p
 
 -- Reading a cell after a reach is reading it before: the payload is the same
--- value, so what holds of it transports. An induction on the value — the spine
+-- value, so what holds of it transports. An induction on the value: the spine
 -- passes it on, and the variable clause is where the reach is absorbed.
 
 reach-read-val : ∀ {t A ρ} {St St' : 𝕊 []} → (q : St ⊑ₛ[ uᵣ ] St')
@@ -833,7 +833,7 @@ VRed-reach q V p = VRedˢ-reach q refl V p
 
 -- `VRedᵍ` is `VRed` restricted to the ground types, whose skeletons have no
 -- arrows, so the two predicates coincide clause for clause. Two recursions on
--- the ground type, with the value's own type left free — a box's read is at
+-- the ground type, with the value's own type left free, since a box's read is at
 -- the cell's declared type, not the one named.
 
 VRedˢ→VRedᵍˢ : (G : GType) → ∀ {A} {St : 𝕊 []}
@@ -1011,7 +1011,7 @@ SRed-fresh {A} {ρ} {St} V pV f {St'} r =
     e   = extᶜ r
     rel = ready r
     -- the allocation accumulates nothing, so the cell's readability at `St'`
-    -- *is* the bound the reach back to `St` needs
+    -- is the bound the reach back to `St` needs
     q₀ : St ⊑ₛ[ ρ ] St'
     q₀ = reach (≤ₛ-trans (∷-suc V id-suc) e)
                (≾ᵣ-trans

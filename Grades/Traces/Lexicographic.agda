@@ -8,10 +8,9 @@
 -- traces `Trace⁻` are ordered by the same scheme, and the two orders --
 -- are mutually recursive because the two types are.                  --
 --                                                                    --
--- This is an ordering of the syntax, unrelated to the comparison     --
--- orders of `Traces.Order` and its instances: it says nothing about  --
--- how one run relates to another, only where each sits in a fixed    --
--- enumeration of all runs.                                           --
+-- It orders the syntax and is unrelated to the orders of             --
+-- `Traces.Order`: it fixes an enumeration of the runs and says       --
+-- nothing about how one run relates to another.                      --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)

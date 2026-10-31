@@ -31,10 +31,6 @@ open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Grades.Regular.Automaton k
 open import Grades.Regular.Canonical k
 
--- Prototype: literals, including `&` and `~`, are regex terms stepped
--- by symbolic derivatives (RE#: Varatalu, Veanes, Ernits, POPL 2025;
--- CAV 2025); these canonical tables are their specification.
-
 ------------------------------------------------------------------------
 -- Finite sets of states, as strictly increasing lists
 

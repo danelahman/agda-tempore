@@ -141,7 +141,7 @@ infixl 25 _⋄_
 
 -- A step's effect. Only `DELAY` does anything: it is the sole rule that
 -- advances time, by exactly its own delay. Resources (cells) are allocated
--- into the *shape* of the store, never into the effect grade, which is why
+-- into the shape of the store, never into the effect grade, which is why
 -- allocation contributes `uₑ`.
 
 step-grade : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
@@ -178,8 +178,8 @@ step-grade SUB-RECℕ             = uₑ
 step-grade SUB                  = uₑ
 
 -- The transition itself. `DELAY` ticks: it names the present as the past of
--- every world one delay ahead (`η⊣`), and `delayᵀ` is what actually reaches
--- those worlds — this is the only way a lock can ever be produced.
+-- every world one delay ahead (`η⊣`), and `delayᵀ` reaches those worlds: the
+-- only way a lock is ever produced.
 
 stepᵀ : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
       → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
@@ -274,7 +274,7 @@ infixr 3 _∙_
 _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
 _∙_ = ≈ᵐ-trans
 
--- Composing with the trivial transition just re-grades: `ηᵀ` allocates no
+-- Composing with the trivial transition re-grades: `ηᵀ` allocates no
 -- time, so the Kleisli composite is the computation itself.
 
 ⋄-ηᵀ : ∀ {X A ε'} → (f : X →ᵐ Tᵒ A ε')
@@ -574,7 +574,7 @@ sound-CASE+ St V M N pV pM pN =
     go (inj₁ W) pW = caseᵐ-inl _ _ _ ∙ ≈ᵐ-sym (C-subst-nat M split-[] W pM pW)
     go (inj₂ W) pW = caseᵐ-inr _ _ _ ∙ ≈ᵐ-sym (C-subst-nat N split-[] W pN pW)
 
--- BOX: allocating a resource and extending the store are the *same* morphism,
+-- BOX: allocating a resource and extending the store are the same morphism,
 -- so the two configurations' denotations coincide outright. The stored value
 -- is the boxed one reindexed along `[] ++ᶜ Γ ≡ Γ`, which cancels.
 

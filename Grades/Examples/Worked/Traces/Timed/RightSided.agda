@@ -12,12 +12,12 @@
 -- six ticks on anything": a duty-cycle budget, which specifies what  --
 -- must be possible and bounds the rest by time.                      --
 --                                                                    --
--- The budget is *local*: what a bound offers between two listed      --
+-- The budget is local: what a bound offers between two listed        --
 -- operations pays only for what the run does between the same two. A --
 -- bound thus specifies when its slack is available as well as its    --
--- amount; one of the sections below depends on this.                 --
+-- amount.                                                            --
 --                                                                    --
--- The set is read *disjunctively*: a longer list is a weaker grade.  --
+-- The set is read disjunctively: a longer list is a weaker grade.    --
 -- The members are reduced to the antichain of the most permissive of --
 -- them, and mutually permitting grades are equal.                    --
 --                                                                    --
@@ -172,7 +172,7 @@ offering-a-second-bound :
   ≾ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ write ⌉ ∙ ⌈ read ⌉ ⟆
 offering-a-second-bound = holds
 
--- `return` does nothing, so every bound permits it -- the unit is the
+-- `return` does nothing, so every bound permits it: the unit is the
 -- least grade, where for a floor it would be the greatest
 
 pure-stays-within-anything : within ⟅ ε ⟆ ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
@@ -197,8 +197,8 @@ no-tightening = fails
 ------------------------------------------------------------------------
 -- As a resource grade: a permit that expires
 --
--- `unbox`'s premise `ρ' ≾ᵣ ρ` weighs what elapsed -- the product of
--- the locks standing to the variable's right -- against the grade on
+-- `unbox`'s premise `ρ' ≾ᵣ ρ` weighs what elapsed (the product of
+-- the locks standing to the variable's right) against the grade on
 -- the box, both read as upper bounds: what elapsed is still within what
 -- the box allows. Overspending closes the box.
 
@@ -363,8 +363,8 @@ either-placement :
 either-placement = holds
 
 -- Placement binds only while the budget is tight. Enlarge the window to
--- nine ticks and the run that stores afterwards is permitted again --
--- not because its store moved: nine ticks pay for the transmission
+-- nine ticks and the run that stores afterwards is permitted again,
+-- its store unmoved: nine ticks pay for the transmission
 -- (six) and the store after it (three), so the `⌈ send ⌉` of the bound
 -- is unmatched and no listed operation separates the budget. Eight
 -- ticks pay for only one of the two.

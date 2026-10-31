@@ -25,7 +25,7 @@
 -- `Regular.*` has the cap at inclusion, over regular sets of runs    --
 -- represented by canonical minimal automata.                         --
 --                                                                    --
--- Every endpoint is read *disjunctively*, one listed trace carrying  --
+-- Every endpoint is read disjunctively, one listed trace carrying    --
 -- the grade: grades weaken by gaining members, and the union of two  --
 -- grades is their join.                                              --
 --                                                                    --

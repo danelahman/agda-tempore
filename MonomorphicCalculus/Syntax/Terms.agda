@@ -158,9 +158,9 @@ mutual
             -------------
             → Γ ⊢C⦂ A ‼ uₑ
 
-    -- sequential composition (omitting the bound variable due to using de Bruijn indices)
-    
-    _⨟_     : {A B : VType}      -- NOTE: use \;2 to get this unicode semicolon
+    -- sequential composition (the bound variable is a de Bruijn index)
+
+    _⨟_     : {A B : VType}      -- input: \;2
             → {ε' : E}
             → {ε : E}
             → Γ ⊢C⦂ A ‼ ε
@@ -407,7 +407,7 @@ numeralᵛ (suc k) = succ (numeralᵛ k)
 ε-≃ e M = coerce (proj₁ e) M
 
 -- Values with graded modal types are variables, up to subsumption: the
--- occurrence is at the *declared* box type, which the value's type only
+-- occurrence is at the declared box type, which the value's type only
 -- bounds.
 
 grad-typ⇒var<: : ∀ {Γ A ρ}
@@ -421,7 +421,7 @@ grad-typ⇒var<: (subV V p@([ _ ]ₛ _)) with grad-typ⇒var<: V
 ... | ρ₀ , A₀ , ρ' , x , q , b =
   ρ₀ , A₀ , ρ' , x , <:ᵛ-trans q p , b
 
--- Values typing with eternal types can type under any grade extension of its typing context
+-- A value of eternal type stays typed under any grade extension of its context
 
 eternal-val-ext : ∀ {Γ A ρ} → Eternal A → Γ ⊢V⦂ A → Γ ⟨ ρ ⟩ ⊢V⦂ A
 eternal-val-ext et (var _ x) =
