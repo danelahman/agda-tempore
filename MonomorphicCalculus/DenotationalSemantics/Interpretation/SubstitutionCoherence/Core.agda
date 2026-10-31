@@ -92,18 +92,18 @@ C-subst-nat M s W pM pW =
 
 subᶜ₂ : ∀ {Γ A B C} → (M : Γ ∷ A ∷ B ⊢ᶜ⦂ C) → (V : Γ ⊢ᵛ⦂ A) → (W : Γ ⊢ᵛ⦂ B)
       → Paramᶜ M → Paramᵛ V → Paramᵛ W
-      → Paramᶜ ((M [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c)
+      → Paramᶜ ((M [ V-rename wk-ren W ]₀) [ V ]₀)
 subᶜ₂ M V W pM pV pW =
-  subᶜ (M [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
+  subᶜ (M [ V-rename wk-ren W ]₀) split-[] V
     (subᶜ M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV
 
 C-subst₂-nat : ∀ {Γ A B C} → (M : Γ ∷ A ∷ B ⊢ᶜ⦂ C) → (V : Γ ⊢ᵛ⦂ A) → (W : Γ ⊢ᵛ⦂ B)
              → (pM : Paramᶜ M) → (pV : Paramᵛ V) → (pW : Paramᵛ W)
-             → ⟦ (M [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟧ᶜᵗ
+             → ⟦ (M [ V-rename wk-ren W ]₀) [ V ]₀ ⟧ᶜᵗ
                  (subᶜ₂ M V W pM pV pW)
              ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ ⟨ idᵐ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
 C-subst₂-nat M V W pM pV pW =
-    C-subst-nat (M [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
+    C-subst-nat (M [ V-rename wk-ren W ]₀) split-[] V
       (subᶜ M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV
   ∙ ∘ᵐ-congˡ (  C-subst-nat M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)
               ∙ ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , V-rename-nat wk-ren W pW ⟩ᵐ-cong)

@@ -62,12 +62,12 @@ sub-atˢ₀ : ∀ {Γ B} → (Θ : Ctx) → Γ ⊢ᵛ⦂ B
 sub-atˢ₀ {Γ} {B} Θ W = sub-split₀ (split-≡-++ᶜ {Γ ∷ B} {Θ}) W
 
 -- Substituting a value at a splitting in a variable: looking the variable up.
--- The grade bound is the `var` rule's own premise, needed to build a
+-- The side condition is the `var` rule's own premise, needed to build a
 -- value out of a variable.
 
 ⟨_,_⟩[_↦_]var : ∀ {Γ Γ₁ Γ₂ A B ρ'}
               → B ∈[ ρ' ] Γ
-              → (¬ Et B → ρ' ≾ᵣ 𝟏ᵣ)
+              → .(B Et∨≾ᵘ ρ')
               → (s : Γ₁ ∷ A , Γ₂ split Γ)
               → Γ₁ ⊢ᵛ⦂ A
               ---------------------------
@@ -109,6 +109,18 @@ _[_↦_]c : ∀ {Γ Γ₁ Γ₂ A C}
         → Γ₁ ++ᶜ Γ₂ ⊢ᶜ⦂ C
 
 M [ s ↦ W ]c = C-sub₀ (sub-split₀ s W) M
+
+-- Substituting for the last-bound variable, and for the one bound before it:
+-- the action at the splittings with an empty suffix and with a one-binder
+-- suffix.
+
+infixl 40 _[_]₀ _[_]₁
+
+_[_]₀ : ∀ {Γ A C} → Γ ∷ A ⊢ᶜ⦂ C → Γ ⊢ᵛ⦂ A → Γ ⊢ᶜ⦂ C
+M [ W ]₀ = M [ split-[] ↦ W ]c
+
+_[_]₁ : ∀ {Γ A B C} → Γ ∷ A ∷ B ⊢ᶜ⦂ C → Γ ⊢ᵛ⦂ A → Γ ∷ B ⊢ᶜ⦂ C
+M [ W ]₁ = M [ split-∷ split-[] ↦ W ]c
 
 -- and in a handler's clause family, which sits under the barrier lock
 -- `⟨ ⊤ᵣ ⟩` and two binders. That is an ordinary suffix, so the clause

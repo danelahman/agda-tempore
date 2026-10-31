@@ -56,7 +56,7 @@ seq-CRed : ∀ {s A B ε₁ ε₂} {e : shapeᵛ A ≡ s} {𝕊 : State []}
          → (∀ {𝕊₁ : State []} → (q : 𝕊 ⊑ₛ[ ∣ ε₁ ∣ᵉ ] 𝕊₁)
               → (V : toCtx 𝕊₁ ⊢ᵛ⦂ A) → VRed A 𝕊₁ V
               → CRed' B ε₂ 𝕊₁
-                  ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c))
+                  ((C-rename (cong-∷-ren (unbox-ren q)) N) [ V ]₀))
          ------------------------------------------------------------------
          → CRed' B (ε₁ ·ₑ ε₂) 𝕊 (M ⨟ N)
 
@@ -101,8 +101,8 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {𝕊 = 𝕊} N
 
     -- the sequel the run reached takes the whnf where the original takes its
     -- spine
-    shift : (C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ spine rs V ]c
-          ≡ (C-rename (cong-∷-ren R₁) N₁) [ split-[] ↦ V ]c
+    shift : (C-rename (cong-∷-ren (unbox-ren q)) N) [ spine rs V ]₀
+          ≡ (C-rename (cong-∷-ren R₁) N₁) [ V ]₀
     shift =
       sym
         (trans
@@ -215,7 +215,7 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {𝕊 = 𝕊} N
         hN₃ : ∀ {𝕊₃ : State []} → (q' : 𝕊₂ ⊑ₛ[ ∣ ε₃ ∣ᵉ ] 𝕊₃)
             → (V : toCtx 𝕊₃ ⊢ᵛ⦂ A₀) → VRed A₀ 𝕊₃ V
             → CRed' B ε₂ 𝕊₃
-                ((C-rename (cong-∷-ren (unbox-ren q')) N₃) [ split-[] ↦ V ]c)
+                ((C-rename (cong-∷-ren (unbox-ren q')) N₃) [ V ]₀)
 
         hN₃ {𝕊₃} q' V pV =
           CRed-≡ᶜ shift (hN q₁ (spine rs V) (VRed-spine rs V pV))
@@ -265,9 +265,9 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {𝕊 = 𝕊} N
                               (cong-∷-ren (unbox-ren q')) N))
 
             shift : (C-rename (cong-∷-ren (unbox-ren q₁)) N)
-                      [ split-[] ↦ spine rs V ]c
+                      [ spine rs V ]₀
                   ≡ (C-rename (cong-∷-ren (unbox-ren q')) N₃)
-                      [ split-[] ↦ V ]c
+                      [ V ]₀
             shift =
               sym
                 (trans

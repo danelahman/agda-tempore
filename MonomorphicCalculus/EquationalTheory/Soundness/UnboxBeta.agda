@@ -147,7 +147,7 @@ sound-unbox-beta {Γ} {A} {A'} {C} {D} {ρ} V K p u N pK pN (pV , pL) (pV' , pR)
     W = subV (V-rename r₁ V) u
 
     Y : (Γ ∷ [ ρ ] A) ++ᶜ Θ ⊢ᶜ⦂ D
-    Y = N [ split-[] ↦ W ]c
+    Y = N [ W ]₀
 
     pY : Paramᶜ Y
     pY = subᶜ N split-[] W pN (renᵛ r₁ V pV)

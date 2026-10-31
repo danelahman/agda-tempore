@@ -149,9 +149,9 @@ sound-seq-return {Γ} {A} {B} {ε} V M (pV , pM) pR =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
                         ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ εᵇ-η⊣-𝟏 {⟦ Γ ⟧ᶜᵗˣ} map-𝟏ᵉ
                           , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ (≃ₑ-sym (·ₑ-identityˡ ε)) ((C-rename r M) [ split-[] ↦ V ]c))
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ (≃ₑ-sym (·ₑ-identityˡ ε)) ((C-rename r M) [ V ]₀))
                 pR pRc
-            ∙ sound-ε-≃ (≃ₑ-sym (·ₑ-identityˡ ε)) ((C-rename r M) [ split-[] ↦ V ]c) pRc
+            ∙ sound-ε-≃ (≃ₑ-sym (·ₑ-identityˡ ε)) ((C-rename r M) [ V ]₀) pRc
             ∙ ∘ᵐ-congʳ (  C-subst-nat (C-rename r M) split-[] V (renᶜ r M pM) pV
                         ∙ ∘ᵐ-congˡ (C-rename-nat r M pM)
                         ∙ ∘ᵐ-assoc _ _ _
@@ -167,10 +167,10 @@ sound-seq-return {Γ} {A} {B} {ε} V M (pV , pM) pR =
 
 sound-seq-eta : ∀ {Γ A ε} → (M : Γ ⊢ᶜ⦂ A ! ε) → Soundᶜ≡ᵗʰ (seq-eta M)
 sound-seq-eta {Γ} {A} {ε} M pM pN =
-    ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ (·ₑ-identityʳ ε) (M ⨟ return (var (λ _ → ≾ᵣ-refl) Hd)))
+    ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ (·ₑ-identityʳ ε) (M ⨟ return (var Hd (≾ᵘ-ok ≾ᵣ-refl))))
                 pN (pM , tt)
             ∙ sound-ε-≃ (·ₑ-identityʳ ε)
-                (M ⨟ return (var (λ _ → ≾ᵣ-refl) Hd)) (pM , tt)
+                (M ⨟ return (var Hd (≾ᵘ-ok ≾ᵣ-refl))) (pM , tt)
             ∙ ∘ᵐ-congʳ seq-body
             ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
             ∙ ∘ᵐ-congˡ (T-≤-trans _ _ ≾ₑ-refl ∙ T-≤-refl _)
@@ -178,7 +178,7 @@ sound-seq-eta {Γ} {A} {ε} M pM pN =
   where
     -- `M ⨟ return x` folds to `μᵀ ∘ Tᶠ ηᵀ` after the strength projects (`x`
     -- is the bound variable `sndᵐ`), which the monad's right unit collapses.
-    seq-body : ⟦ M ⨟ return (var (λ _ → ≾ᵣ-refl) Hd) ⟧ᶜᵗ (pM , tt)
+    seq-body : ⟦ M ⨟ return (var Hd (≾ᵘ-ok ≾ᵣ-refl)) ⟧ᶜᵗ (pM , tt)
              ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityʳ ε)) ∘ᵐ ⟦ M ⟧ᶜᵗ pM
     seq-body =
         ∘ᵐ-congʳ (  ∘ᵐ-congˡ (T-congᶠ (∘ᵐ-congʳ (var-morphism-Hd {Γ ⟨ ∣ ε ∣ᵉ ⟩} {A} _)))

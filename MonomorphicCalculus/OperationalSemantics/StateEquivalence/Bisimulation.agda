@@ -582,7 +582,7 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                                                       ⇒ B ! (ε ·ₑ ε'')))
                                      e)
                                (H' op (ε ·ₑ ε'')))
-                       [ split-∷ split-[] ↦ castᵛ e V' ]c)
+                       [ castᵛ e V' ]₁)
                ≡ castᶜ e
                    (box _ (fun
                           (handle M'
@@ -599,7 +599,7 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                                 N')))
                          (C-rename (cong-∷-ren (cong-∷-ren barrier-ren))
                                    (H' op (ε ·ₑ ε''))
-                          [ split-∷ split-[] ↦ V' ]c))
+                          [ V' ]₁))
 cast-handle-op refl V' M' H' N' = refl
 
 -- `HANDLE-OP` fires a clause: the state is unchanged, and every piece of the

@@ -241,7 +241,7 @@ recL-stepᵗ-nat {A = A} {B = B} {ε = ε} p n n' h e =
 mutual
 
   renᵛ : ∀ {Γ Γ' A} → (r : Ren [] Γ' Γ) → (V : Γ ⊢ᵛ⦂ A) → Paramᵛ V → Paramᵛ (V-rename r V)
-  renᵛ r (var f x) _ = tt
+  renᵛ r (var x f) _ = tt
   renᵛ r (const B c) _ = tt
   renᵛ r ⋆        _ = tt
   renᵛ r true     _ = tt
@@ -329,7 +329,7 @@ mutual
 
   V-rename-nat : ∀ {Γ Γ' A} → (r : Ren [] Γ' Γ) → (V : Γ ⊢ᵛ⦂ A) → (p : Paramᵛ V)
                → ⟦ V-rename r V ⟧ᵛᵗ (renᵛ r V p) ≈ᵐ ⟦ V ⟧ᵛᵗ p ∘ᵐ ⟦ r ⟧ʳ
-  V-rename-nat r (var f x) _ with var-rename r x | var-morphism-nat r f x
+  V-rename-nat r (var x f) _ with var-rename r x | var-morphism-nat r f x
   ... | ρ' , ρ'≾ρ , y | vmn = vmn
   V-rename-nat r (const B c) _ =
     ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))

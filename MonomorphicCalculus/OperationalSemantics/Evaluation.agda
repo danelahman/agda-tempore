@@ -48,14 +48,14 @@ Base-not-in-toCtx {𝕊 = 𝕊 ∷ₛ V}   (Tl-∷ x)  = Base-not-in-toCtx x
 base-val : ∀ {b} {𝕊 : State []}
          → toCtx 𝕊 ⊢ᵛ⦂ Base b
          → toCtx 𝕊 ⊢ᵛ⦂ Base b
-base-val (var f x)             = ⊥-elim (Base-not-in-toCtx x)
+base-val (var x f)             = ⊥-elim (Base-not-in-toCtx x)
 base-val (const B c)           = const B c
 base-val (subV V (Baseₛ refl)) = base-val V
 
 base-canonical : ∀ {b} {𝕊 : State []}
                → (V : toCtx 𝕊 ⊢ᵛ⦂ Base b)
                → Σ[ c ∈ BaseConstants b ] base-val V ≡ const b c
-base-canonical (var f x)             = ⊥-elim (Base-not-in-toCtx x)
+base-canonical (var x f)             = ⊥-elim (Base-not-in-toCtx x)
 base-canonical (const B c)           = c , refl
 base-canonical (subV V (Baseₛ refl)) = base-canonical V
 
@@ -63,14 +63,14 @@ base-canonical (subV V (Baseₛ refl)) = base-canonical V
 -- coercions.
 
 bool-val : ∀ {𝕊 : State []} → toCtx 𝕊 ⊢ᵛ⦂ bool → toCtx 𝕊 ⊢ᵛ⦂ bool
-bool-val (var f x)      = ⊥-elim (bool-not-in-toCtx x)
+bool-val (var x f)      = ⊥-elim (bool-not-in-toCtx x)
 bool-val true           = true
 bool-val false          = false
 bool-val (subV V boolₛ) = bool-val V
 
 bool-val-canonical : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ bool)
                    → (bool-val V ≡ true) ⊎ (bool-val V ≡ false)
-bool-val-canonical (var f x)      = ⊥-elim (bool-not-in-toCtx x)
+bool-val-canonical (var x f)      = ⊥-elim (bool-not-in-toCtx x)
 bool-val-canonical true           = inj₁ refl
 bool-val-canonical false          = inj₂ refl
 bool-val-canonical (subV V boolₛ) = bool-val-canonical V

@@ -33,23 +33,23 @@ open import MonomorphicCalculus.Syntax.Terms.Equivalence     Spec
 
 
 -- Renaming a variable is the variable the renaming sends it to: `var-img`
--- records the position, and the grade bound it recomputes is invisible to
--- `_≡_`. Stated at an arbitrary bound so that the caller may present the
--- result with whichever bound its own typing supplies.
+-- records the position, and the side condition it recomputes is irrelevant.
+-- Stated at an arbitrary side condition so that the caller may present the
+-- result with whichever one its own typing supplies.
 
 var-ren-≡ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (x : A ∈[ ρ ] Γ)
-          → (f  : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
-          → (f' : ¬ Et A → proj₁ (var-img r x) ≾ᵣ 𝟏ᵣ)
-          → V-rename r (var f x) ≡ var f' (proj₂ (var-img r x))
+          → .(f : A Et∨≾ᵘ ρ)
+          → .(f' : A Et∨≾ᵘ proj₁ (var-img r x))
+          → V-rename r (var x f) ≡ var (proj₂ (var-img r x)) f'
 var-ren-≡ r x f f' with var-rename r x
-... | _ , _ , y = var-≡
+... | _ , _ , y = refl
 
 -- The same with the target supplied, for callers that have computed it.
 
 var-ren-img-≡ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (x : A ∈[ ρ ] Γ)
-              → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ) → {t : Var Γ' A}
-              → var-img r x ≡ t → (f' : ¬ Et A → proj₁ t ≾ᵣ 𝟏ᵣ)
-              → V-rename r (var f x) ≡ var f' (proj₂ t)
+              → .(f : A Et∨≾ᵘ ρ) → {t : Var Γ' A}
+              → var-img r x ≡ t → .(f' : A Et∨≾ᵘ proj₁ t)
+              → V-rename r (var x f) ≡ var (proj₂ t) f'
 var-ren-img-≡ r x f refl f' = var-ren-≡ r x f f'
 
 -- The renaming action respects the `≐ʳ` equivalence on renamings.
@@ -59,9 +59,9 @@ mutual
   V-rename-≡ : ∀ {Γ Γ' A} {r r' : Ren [] Γ Γ'} → r ≐ʳ r'
              → (V : Γ' ⊢ᵛ⦂ A) → V-rename r V ≡ V-rename r' V
 
-  V-rename-≡ {r = r} {r' = r'} h (var f x)
+  V-rename-≡ {r = r} {r' = r'} h (var x f)
     with var-rename r x | var-rename r' x | at h x
-  ... | _ | _ | refl = var-≡
+  ... | _ | _ | refl = refl
   V-rename-≡ h (const B c) = refl
   V-rename-≡ h ⋆           = refl
   V-rename-≡ h true        = refl
@@ -168,8 +168,8 @@ mutual
   V-rename-id-≡ : ∀ {Γ A} {r : Ren [] Γ Γ} → r ≐ʳ id-ren
                 → (V : Γ ⊢ᵛ⦂ A) → V-rename r V ≡ V
 
-  V-rename-id-≡ {r = r} h (var f x) with var-rename r x | at h x
-  ... | _ | refl = var-≡
+  V-rename-id-≡ {r = r} h (var x f) with var-rename r x | at h x
+  ... | _ | refl = refl
   V-rename-id-≡ h (const B c) = refl
   V-rename-id-≡ h ⋆         = refl
   V-rename-id-≡ h true      = refl
@@ -326,9 +326,9 @@ mutual
              → (V : Γ'' ⊢ᵛ⦂ A)
              → V-rename (r₂ ∘ʳ r₁) V ≡ V-rename r₁ (V-rename r₂ V)
 
-  V-rename-∘ r₂ r₁ (var f x) with var-rename r₂ x
+  V-rename-∘ r₂ r₁ (var x f) with var-rename r₂ x
   ... | _ , _ , y with var-rename r₁ y
-  ...   | _ , _ , z = var-≡
+  ...   | _ , _ , z = refl
   V-rename-∘ r₂ r₁ (const B c) = refl
   V-rename-∘ r₂ r₁ ⋆         = refl
   V-rename-∘ r₂ r₁ true      = refl

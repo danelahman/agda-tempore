@@ -40,26 +40,13 @@ open import MonomorphicCalculus.Syntax.Substitution.Base    S
 open import MonomorphicCalculus.Syntax.Substitution.Lookup  S
 open import MonomorphicCalculus.Syntax.Substitution.Action  S
 
--- The grade bound a `var` carries is irrelevant, and so is the one handed to
--- the observation.
-
-sub-var₀-irr : ∀ {Γ Γ' A ρ} → (s : Sub₀ [] Γ Γ') → (x : A ∈[ ρ ] Γ')
-             → (f f' : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
-             → sub-var₀ s x f ≡ sub-var₀ s x f'
-sub-var₀-irr s x f f' = cong (sub-var₀ s x) (bound-irr f f')
-
--- An eternal type discharges a grade bound whatever the grade.
-
-et-bound : ∀ {A ρ} → Et A → ¬ Et A → ρ ≾ᵣ 𝟏ᵣ
-et-bound et ¬et = ⊥-elim (¬et et)
-
 -- Two `var` nodes at the same image agree.
 
 var-img-≡ : ∀ {Γ A} {t t' : Var Γ A} → t ≡ t'
-          → (f  : ¬ Et A → proj₁ t  ≾ᵣ 𝟏ᵣ)
-          → (f' : ¬ Et A → proj₁ t' ≾ᵣ 𝟏ᵣ)
-          → var f (proj₂ t) ≡ var f' (proj₂ t')
-var-img-≡ refl f f' = var-≡
+          → .(f : A Et∨≾ᵘ proj₁ t )
+          → .(f' : A Et∨≾ᵘ proj₁ t')
+          → var (proj₂ t) f ≡ var (proj₂ t') f'
+var-img-≡ refl f f' = refl
 
 -- Where a substitution sends a resource variable, forgetting the grade bound.
 -- This is what an `unbox` node stores.
@@ -79,7 +66,7 @@ infix 4 _≐ˢ₀_
 record _≐ˢ₀_ {Γ Γ'} (s s' : Sub₀ [] Γ Γ') : Set where
   constructor mk≐ˢ₀
   field
-    atᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
+    atᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → .(f : A Et∨≾ᵘ ρ)
         → sub-var₀ s x f ≡ sub-var₀ s' x f
     atᵗ : ∀ {A ρ ρ'} → (y : [ ρ ] A ∈[ ρ' ] Γ') → tgt-img₀ s y ≡ tgt-img₀ s' y
 
@@ -105,7 +92,7 @@ cong-∷-sub-≐ˢ₀ : ∀ {Γ Γ' A} {s s' : Sub₀ [] Γ Γ'}
                → s ≐ˢ₀ s' → cong-∷-sub {A = A} s ≐ˢ₀ cong-∷-sub s'
 cong-∷-sub-≐ˢ₀ h = mk≐ˢ₀ goᵛ goᵗ
   where
-    goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] _) → (f : _) → _
+    goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] _) → .(f : _) → _
     goᵛ Hd       f = refl
     goᵛ (Tl-∷ y) f = cong (V-rename wk-ren) (atᵛ h y f)
 
@@ -120,7 +107,7 @@ cong-⟨⟩-sub-≐ˢ₀ : ∀ {Γ Γ' ρ} {s s' : Sub₀ [] Γ Γ'}
                 → s ≐ˢ₀ s' → cong-⟨⟩-sub {ρ = ρ} s ≐ˢ₀ cong-⟨⟩-sub s'
 cong-⟨⟩-sub-≐ˢ₀ {ρ = ρ} h = mk≐ˢ₀ goᵛ goᵗ
   where
-    goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] _) → (f : _) → _
+    goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] _) → .(f : _) → _
     goᵛ {A'} (Tl-⟨⟩ y) f with eternal? A'
     ... | yes et = cong (eternal-val-ext et) (atᵛ h y _)
     ... | no ¬et = cong (V-rename _) (atᵛ h y _)
@@ -148,7 +135,7 @@ mutual
   V-sub₀-≐ˢ₀ : ∀ {Γ Γ' A} {s s' : Sub₀ [] Γ Γ'} → s ≐ˢ₀ s'
              → (V : Γ' ⊢ᵛ⦂ A) → V-sub₀ s V ≡ V-sub₀ s' V
 
-  V-sub₀-≐ˢ₀ h (var f x) = atᵛ h x f
+  V-sub₀-≐ˢ₀ h (var x f) = atᵛ h x f
   V-sub₀-≐ˢ₀ h (const B c) = refl
   V-sub₀-≐ˢ₀ h ⋆         = refl
   V-sub₀-≐ˢ₀ h true      = refl

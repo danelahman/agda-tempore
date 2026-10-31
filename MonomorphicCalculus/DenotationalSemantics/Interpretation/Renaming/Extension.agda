@@ -121,7 +121,7 @@ var-proj-nat (r₁ ∘ʳ r₂) x ¬et with var-rename r₁ x | var-proj-nat r₁
             (∘ᵐ-assoc _ _ _)))))
 var-proj-nat wk-ren x ¬et =
   ≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl) (∘ᵐ-identityˡ _)
-var-proj-nat {A = A} (var-ren p y) Hd ¬et with eternal? A
+var-proj-nat {A = A} (var-ren y p) Hd ¬et with eternal? A
 ... | yes et = ⊥-elim (¬et et)
 ... | no ¬et' =
   ≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))
@@ -130,7 +130,7 @@ var-proj-nat {A = A} (var-ren p y) Hd ¬et with eternal? A
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _)))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
-var-proj-nat (var-ren p y) (Tl-∷ x) ¬et =
+var-proj-nat (var-ren y p) (Tl-∷ x) ¬et =
   ≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl)
   (≈ᵐ-trans (∘ᵐ-identityˡ _)
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ _))
@@ -211,7 +211,7 @@ var-proj-nat-eternal et (r₁ ∘ʳ r₂) x
             (∘ᵐ-assoc _ _ _))
 var-proj-nat-eternal et wk-ren x =
   ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-var-proj-nat-eternal et (var-ren p y) Hd =
+var-proj-nat-eternal et (var-ren y p) Hd =
   ≈ᵐ-sym
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
@@ -220,7 +220,7 @@ var-proj-nat-eternal et (var-ren p y) Hd =
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
     (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-𝟏 et)) ⟨⟩-εᵘ∘η≡id))
               (∘ᵐ-identityˡ _)))))))
-var-proj-nat-eternal et (var-ren p y) (Tl-∷ x) =
+var-proj-nat-eternal et (var-ren y p) (Tl-∷ x) =
   ≈ᵐ-sym
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
@@ -312,15 +312,17 @@ var-proj-nat-eternal et (⟨⟩-ext-ctx _ ecΓ) x =
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
             (ec-var-alg ecΓ et x))))
 
-var-morphism-nat : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ) → (x : A ∈[ ρ ] Γ)
-                 → var-morphism (λ q → ≾ᵣ-trans (proj₁ (proj₂ (var-rename r x)) q) (f q))
-                                (proj₂ (proj₂ (var-rename r x)))
-                   ≈ᵐ var-morphism f x ∘ᵐ ⟦ r ⟧ʳ
+var-morphism-nat : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → .(f : A Et∨≾ᵘ ρ) → (x : A ∈[ ρ ] Γ)
+                 → var-morphism (proj₂ (proj₂ (var-rename r x)))
+                                (Et∨≾ᵘ-≾ (proj₁ (proj₂ (var-rename r x))) f)
+                   ≈ᵐ var-morphism x f ∘ᵐ ⟦ r ⟧ʳ
 var-morphism-nat {A = A} r f x with eternal? A
 ... | yes et = var-proj-nat-eternal et r x
 ... | no ¬et with var-rename r x | var-proj-nat r x ¬et
 ...   | ρ' , ρ'≾ρ , y | vpn =
-  ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (ρ'≾ρ ¬et) (f ¬et)))))
+  ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ
+             (≈ᵐ-trans (⟨⟩-≤-irr _ _)
+                       (≈ᵐ-sym (⟨⟩-≤-trans (ρ'≾ρ ¬et) (Et∨≾ᵘ→¬Et⇒≾ f ¬et))))))
   (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ vpn))
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))

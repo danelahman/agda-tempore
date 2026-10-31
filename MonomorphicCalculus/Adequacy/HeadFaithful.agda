@@ -374,7 +374,7 @@ base-leaf-const : ∀ {b} {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ Base b
                   × (⟦ ⟨ 𝕊 ∣ return V ⟩ ⟧ᶜᶠ (pSt , pV)
                        ≈ᵐ leafᵐ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ))
 
-base-leaf-const (var f x) pSt pV = ⊥-elim (Base-not-in-toCtx x)
+base-leaf-const (var x f) pSt pV = ⊥-elim (Base-not-in-toCtx x)
 base-leaf-const {𝕊 = 𝕊} (const B c) pSt pV =
     c , refl
   , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ) (⟦ 𝕊 ⟧ˢ pSt))

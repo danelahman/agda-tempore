@@ -299,7 +299,7 @@ bool-leaf-value : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ bool)
                    × (⟦ ⟨ 𝕊 ∣ return V ⟩ ⟧ᶜᶠ (pSt , pV)
                         ≈ᵐ leafᵐ (falseᵐ ∘ᵐ terminalᵐ)))
 
-bool-leaf-value (var f x) pSt pV = ⊥-elim (bool-not-in-toCtx x)
+bool-leaf-value (var x f) pSt pV = ⊥-elim (bool-not-in-toCtx x)
 bool-leaf-value {𝕊 = 𝕊} true pSt pV =
   inj₁ (refl
        , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (trueᵐ ∘ᵐ terminalᵐ) (⟦ 𝕊 ⟧ˢ pSt))

@@ -88,10 +88,10 @@ data Ren (Ξ : Ctx) : Ctx → Ctx → Set where
   _∘ʳ_        : ∀ {Δ Δ' Δ''} → Ren Ξ Δ' Δ'' → Ren Ξ Δ Δ' → Ren Ξ Δ Δ''
   -- weakening renaming (the projection off the top variable)
   wk-ren      : ∀ {Δ A} → Ren Ξ (Δ ∷ A) Δ
-  -- variable renaming (corresponds to contraction). As in the `var` typing
-  -- rule, the grade bound is only required for non-eternal types: an eternal
-  -- variable is available at any grade (in particular behind a lock).
-  var-ren     : ∀ {Δ A ρ} → (¬ Et A → ρ ≾ᵣ 𝟏ᵣ) → A ∈[ ρ ] (Ξ ⋈ᶜ Δ)
+  -- variable renaming (corresponds to contraction), under the side
+  -- condition of the `var` typing rule: an eternal variable is available at
+  -- any grade (in particular behind a lock).
+  var-ren     : ∀ {Δ A ρ} → A ∈[ ρ ] (Ξ ⋈ᶜ Δ) → .(A Et∨≾ᵘ ρ)
               → Ren Ξ Δ (Δ ∷ A)
   -- strong monoidal functor renamings for ⟨_⟩ modality
   ⟨⟩-η-ren    : ∀ {Δ} → Ren Ξ Δ (Δ ⟨ 𝟏ᵣ ⟩)
@@ -111,9 +111,9 @@ infixr 20 _∘ʳ_
 
 -- Extending a renaming with a variable
 
-extend-ren : ∀ {Ξ Δ Δ' A ρ} → Ren Ξ Δ Δ' → (¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
-           → A ∈[ ρ ] (Ξ ⋈ᶜ Δ) → Ren Ξ Δ (Δ' ∷ A)
-extend-ren r p x = cong-∷-ren r ∘ʳ var-ren p x
+extend-ren : ∀ {Ξ Δ Δ' A ρ} → Ren Ξ Δ Δ' → A ∈[ ρ ] (Ξ ⋈ᶜ Δ)
+           → .(A Et∨≾ᵘ ρ) → Ren Ξ Δ (Δ' ∷ A)
+extend-ren r x ok = cong-∷-ren r ∘ʳ var-ren x ok
 
 -- Equality renaming. It runs from `Δ'` to `Δ`, since the action on terms is
 -- contravariant and `castᵛ e` transports a term forwards along `e`
@@ -141,11 +141,12 @@ cong-renˡ Γ'' ec'' (r₂ ∘ʳ r₁) =
   cong-renˡ Γ'' ec'' r₂ ∘ʳ cong-renˡ Γ'' ec'' r₁
 cong-renˡ Γ'' ec'' wk-ren =
   wk-ren
-cong-renˡ {Ξ} {Δ} Γ'' ec'' (var-ren p x) =
-  var-ren p (subst (λ Γ₀ → _ ∈[ _ ] Γ₀)
-              (trans (sym (++ᶜ-assoc Γ'' Ξ Δ)) (sym (⋈ᶜ-++ᶜ (Γ'' ++ᶜ Ξ) Δ)))
-              (∈-ctx-extensionˡ Γ'' (Ξ ++ᶜ Δ)
-                (subst (λ Γ₀ → _ ∈[ _ ] Γ₀) (⋈ᶜ-++ᶜ Ξ Δ) x)))
+cong-renˡ {Ξ} {Δ} Γ'' ec'' (var-ren x ok) =
+  var-ren (subst (λ Γ₀ → _ ∈[ _ ] Γ₀)
+            (trans (sym (++ᶜ-assoc Γ'' Ξ Δ)) (sym (⋈ᶜ-++ᶜ (Γ'' ++ᶜ Ξ) Δ)))
+            (∈-ctx-extensionˡ Γ'' (Ξ ++ᶜ Δ)
+              (subst (λ Γ₀ → _ ∈[ _ ] Γ₀) (⋈ᶜ-++ᶜ Ξ Δ) x)))
+          ok
 cong-renˡ Γ'' ec'' ⟨⟩-η-ren =
   ⟨⟩-η-ren
 cong-renˡ Γ'' ec'' ⟨⟩-η⁻¹-ren =
@@ -177,8 +178,8 @@ expose-ren Δ (r₂ ∘ʳ r₁) =
   expose-ren Δ r₂ ∘ʳ expose-ren Δ r₁
 expose-ren Δ wk-ren =
   wk-ren
-expose-ren {Ξ} Δ (var-ren {Δ = Δ₀} p x) =
-  var-ren p (subst (λ Γ₀ → _ ∈[ _ ] Γ₀) (⋈ᶜ-assoc Ξ Δ Δ₀) x)
+expose-ren {Ξ} Δ (var-ren {Δ = Δ₀} x ok) =
+  var-ren (subst (λ Γ₀ → _ ∈[ _ ] Γ₀) (⋈ᶜ-assoc Ξ Δ Δ₀) x) ok
 expose-ren Δ ⟨⟩-η-ren =
   ⟨⟩-η-ren
 expose-ren Δ ⟨⟩-η⁻¹-ren =
@@ -216,7 +217,7 @@ wk-ren-⟨ρ⟩-ctx {Δ} {Δ' ⟨ ρ' ⟩} {ρ} {Ξ} refl =
 
 exch-ren : ∀ {Δ A B Ξ} → Ren Ξ (Δ ∷ A ∷ B) (Δ ∷ B ∷ A)
 exch-ren {Ξ = Ξ} =
-  extend-ren (cong-∷-ren wk-ren) (λ _ → ≾ᵣ-refl) (∈-⋈ᶜ Ξ (Tl-∷ Hd))
+  extend-ren (cong-∷-ren wk-ren) (∈-⋈ᶜ Ξ (Tl-∷ Hd)) (≾ᵘ-ok ≾ᵣ-refl)
 
 -- The barrier `⟨ ⊤ᵣ ⟩` guarding a handler's clauses, as renamings.
 --

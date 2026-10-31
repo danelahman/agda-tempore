@@ -1916,7 +1916,7 @@ env-C-id M = refl
 
 env-Cˢ-head : ∀ {𝕊 Γ A C} → (γ : Env 𝕊 Γ) → (M : Γ ∷ A ⊢ᶜ⦂ C)
             → (W : toCtx 𝕊 ⊢ᵛ⦂ A)
-            → (env-Cˢ γ ([] ∷ A) M) [ split-[] ↦ W ]c ≡ env-C (γ ∷ᵉ W) M
+            → (env-Cˢ γ ([] ∷ A) M) [ W ]₀ ≡ env-C (γ ∷ᵉ W) M
 env-Cˢ-head γ M W = refl
 
 -- A clause lives over the ambient under the barrier lock and the clause's two

@@ -38,15 +38,15 @@ open import MonomorphicCalculus.Syntax.Substitution.Equivalence  Spec
 
 -- The action is defined under a suffix `Δ`, and a variable of that suffix is
 -- one the environment does not close: it is carried along, its position fixed
--- and only its grade bound recomputed. `∈-++ᶜʳ` is the injection, and the
+-- and only its side condition recomputed. `∈-++ᶜʳ` is the injection, and the
 -- lemmas below let the recursion see through the casts and the congruence
 -- renamings.
 
 -- A cast acts on a variable by relocating it.
 
 castᵛ-var : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ')
-          → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ) → (x : A ∈[ ρ ] Γ)
-          → castᵛ e (var f x) ≡ var f (subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
+          → .(f : A Et∨≾ᵘ ρ) → (x : A ∈[ ρ ] Γ)
+          → castᵛ e (var x f) ≡ var (subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x) f
 castᵛ-var refl f x = refl
 
 -- The same, taking the relocation as a `Var` equality, which is what the
@@ -55,9 +55,9 @@ castᵛ-var refl f x = refl
 castᵛ-var-Var : ∀ {Γ Γ' A ρ ρ'} → (e : Γ ≡ Γ')
               → (x : A ∈[ ρ ] Γ) → (x' : A ∈[ ρ' ] Γ')
               → Var-cast e (ρ , x) ≡ (ρ' , x')
-              → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ) → (f' : ¬ Et A → ρ' ≾ᵣ 𝟏ᵣ)
-              → castᵛ e (var f x) ≡ var f' x'
-castᵛ-var-Var refl x _ refl f f' = var-≡
+              → .(f : A Et∨≾ᵘ ρ) → .(f' : A Et∨≾ᵘ ρ')
+              → castᵛ e (var x f) ≡ var x' f'
+castᵛ-var-Var refl x _ refl f f' = refl
 
 -- Casting the target of a renaming is prefixing it with an `eq-ren`.
 
@@ -97,15 +97,15 @@ cong-ren-img-r r (Tl-⟨⟩ {ρ = ρ₁} x) =
 -- Renaming a suffix variable along a congruence renaming leaves it where it is.
 
 ren-var-r : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
-          → (f f' : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
-          → V-rename (cong-ren {Γ'' = Δ} r) (var f (∈-++ᶜʳ {Γ = Γ} x))
-          ≡ var f' (∈-++ᶜʳ {Γ = Γ'} x)
+          → .(f f' : A Et∨≾ᵘ ρ)
+          → V-rename (cong-ren {Γ'' = Δ} r) (var (∈-++ᶜʳ {Γ = Γ} x) f)
+          ≡ var (∈-++ᶜʳ {Γ = Γ'} x) f'
 ren-var-r r x f f' =
   var-ren-img-≡ (cong-ren r) (∈-++ᶜʳ x) f (cong-ren-img-r r x) f'
 
 -- The variable being replaced lies in the prefix, so a suffix variable survives
 -- it: what comes back is that variable again, its position fixed and only its
--- grade bound recomputed. Induction on the suffix variable, which is also the
+-- side condition recomputed. Induction on the suffix variable, which is also the
 -- recursion of `split-≡-++ᶜ = ≡-split refl` and of `⟨_,_⟩[_↦_]var`.
 
 -- Since the substitution reads its result context off the splitting, the two
@@ -114,11 +114,11 @@ ren-var-r r x f f' =
 sub-var-r : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ∀ {A ρ}
           → (x : A ∈[ ρ ] Γ₂)
           → (W : Γ₁ ⊢ᵛ⦂ B)
-          → (f f' : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
+          → .(f f' : A Et∨≾ᵘ ρ)
           → sub-var₀ (sub-atˢ₀ {Γ₁} {B} Γ₂ W) (∈-++ᶜʳ {Γ = Γ₁ ∷ B} x) f
-          ≡ var f' (∈-++ᶜʳ {Γ = Γ₁} x)
+          ≡ var (∈-++ᶜʳ {Γ = Γ₁} x) f'
 
-sub-var-r (Γ₂ ∷ C) Hd W f f' = var-≡
+sub-var-r (Γ₂ ∷ C) Hd W f f' = refl
 
 sub-var-r {Γ₁} (Γ₂ ∷ C) (Tl-∷ x) W f f' =
   trans (V-rename-cong wk-ren (sub-var-r Γ₂ x W f f))
@@ -127,20 +127,18 @@ sub-var-r {Γ₁} (Γ₂ ∷ C) (Tl-∷ x) W f f' =
 sub-var-r {Γ₁} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? A
 
 ... | yes et =
-  trans (eternal-val-ext-cong et
-          (sub-var-r Γ₂ x W _ (λ z → ⊥-elim (z et)))) var-≡
+  eternal-val-ext-cong et (sub-var-r Γ₂ x W _ (et-ok et))
 
 ... | no ¬et =
-  trans (V-rename-cong rn (sub-var-r Γ₂ x W fᵢ fᵢ))
-        (var-ren-img-≡ rn (∈-++ᶜʳ {Γ = Γ₁} x) fᵢ
-           (cong (var-img′ (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))))
+  trans (V-rename-cong rn
+           (sub-var-r Γ₂ x W (Et∨≾ᵘ-zero-productˡ f) (Et∨≾ᵘ-zero-productˡ f)))
+        (var-ren-img-≡ rn (∈-++ᶜʳ {Γ = Γ₁} x) (Et∨≾ᵘ-zero-productˡ f)
+           (cong (var-img′ (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (Et∨≾ᵘ→¬Et⇒≾ f ¬et))))
                  (⟨⟩-η⁻¹-img (∈-++ᶜʳ {Γ = Γ₁} x)))
            f')
   where
     rn : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀
-    rn = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))
-
-    fᵢ = λ z → ≾ᵣ-zero-productˡ (f z)
+    rn = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (Et∨≾ᵘ→¬Et⇒≾ f ¬et))
 
 -- A variable the splitting sends right is that variable, pushed right.
 
@@ -175,7 +173,7 @@ sub-var-r {Γ₁} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? 
 sub-var-hit : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ¬ Et B
             → (p : ctx-grade Γ₂ ≾ᵣ 𝟏ᵣ)
             → (W : Γ₁ ⊢ᵛ⦂ B)
-            → (f : ¬ Et B → ctx-grade Γ₂ ≾ᵣ 𝟏ᵣ)
+            → .(f : B Et∨≾ᵘ ctx-grade Γ₂)
             → sub-var₀ (sub-atˢ₀ {Γ₁} {B} Γ₂ W)
                        (split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) f
             ≡ V-rename (push-ren Γ₂ p) W
@@ -192,15 +190,14 @@ sub-var-hit {B = B} (Γ₂ ⟨ ρ ⟩) ¬et p W f with eternal? B
 ... | yes et = ⊥-elim (¬et et)
 
 ... | no ¬p =
-  trans (V-rename-cong rn (sub-var-hit Γ₂ ¬et pᵢ W fᵢ))
+  trans (V-rename-cong rn (sub-var-hit Γ₂ ¬et pᵢ W (Et∨≾ᵘ-zero-productˡ f)))
     (trans (sym (V-rename-∘ (push-ren Γ₂ pᵢ) rn _))
               (V-rename-≡ (∘ʳ-≐ʳ ≐ʳ-refl (∘ʳ-≐ʳ ≐ʳ-refl (⟨⟩-≤-ren-≐ʳ _ _))) _))
   where
     rn : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀
-    rn = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬p))
+    rn = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (Et∨≾ᵘ→¬Et⇒≾ f ¬p))
 
     pᵢ = ≾ᵣ-zero-productˡ p
-    fᵢ = λ z → ≾ᵣ-zero-productˡ (f z)
 
 -- The same, taking the looked-up variable as an equation: what reaches the
 -- substitution is `∈-++ᶜˡ Γ₂ Hd`, which is `split→∈` of the splitting only up
@@ -213,7 +210,7 @@ sub-var-hit′ : ∀ {Γ₁ B σ} → (Γ₂ : Ctx) → ¬ Et B
                  (σ , y)
                  (ctx-grade Γ₂ , split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}))
              → (W : Γ₁ ⊢ᵛ⦂ B)
-             → (f : ¬ Et B → σ ≾ᵣ 𝟏ᵣ)
+             → .(f : B Et∨≾ᵘ σ)
              → sub-var₀ (sub-atˢ₀ {Γ₁} {B} Γ₂ W) y f
              ≡ V-rename (push-ren Γ₂ p) W
 sub-var-hit′ Γ₂ ¬et p _ refl W f = sub-var-hit Γ₂ ¬et p W f

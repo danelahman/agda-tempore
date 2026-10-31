@@ -1,15 +1,16 @@
 -------------------------------------------------------------------------
 -- Terms up to irrelevant stored data.                                 --
 --                                                                     --
--- A term stores three pieces of data no rule inspects: a `var`'s      --
--- grade bound, a subsumption's subtyping witness, and an `unbox`'s    --
--- grade bound. All three are proof-irrelevant (`≾ᵣ-irrelevant`,       --
--- `<:ᵛ-irrelevant`/`<:ᶜ-irrelevant`, the first through `fun-ext`), so --
--- terms differing only in them are propositionally equal.             --
+-- A term stores three pieces of data no rule inspects: a `var`'s side --
+-- condition, a subsumption's subtyping witness, and an `unbox`'s      --
+-- grade bound. The first is an irrelevant argument, so it is never    --
+-- compared; the other two are proof-irrelevant (`<:ᵛ-irrelevant`/     --
+-- `<:ᶜ-irrelevant`, `≾ᵣ-irrelevant`), so terms differing only in them --
+-- are propositionally equal.                                          --
 --                                                                     --
 -- Equality of terms is therefore `_≡_`, and the congruence at each    --
--- former is `cong`/`cong₂`. Named here are only the five that are     --
--- not: the four irrelevance laws, and `handler-≡`, whose clause       --
+-- former is `cong`/`cong₂`. Named here are only the four that are     --
+-- not: the three irrelevance laws, and `handler-≡`, whose clause      --
 -- family is compared pointwise and so needs `fun-ext`.                --
 -------------------------------------------------------------------------
 
@@ -37,14 +38,7 @@ open import MonomorphicCalculus.Syntax.Renaming   Spec
 open import MonomorphicCalculus.Syntax.Types Spec
 open import MonomorphicCalculus.Syntax.Renaming.Equivalence  Spec
 
--- A `var`'s grade bound is a function into an irrelevant relation.
-
-bound-irr : ∀ {A ρ} → (f f' : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ) → f ≡ f'
-bound-irr f f' = fun-ext (λ z → ≾ᵣ-irrelevant _ _)
-
-var-≡ : ∀ {Γ A ρ} {f f' : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ} {x : A ∈[ ρ ] Γ}
-      → var f x ≡ var f' x
-var-≡ {f = f} {f' = f'} {x = x} = cong (λ g → var g x) (bound-irr f f')
+-- Subsumption is compared at the subsumed term; the witness is irrelevant.
 
 subV-≡ : ∀ {Γ A A'} {p p' : A <:ᵛ A'} {V V' : Γ ⊢ᵛ⦂ A}
        → V ≡ V' → subV V p ≡ subV V' p'

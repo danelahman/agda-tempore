@@ -107,11 +107,11 @@ C-sub (s ◅ σ) M = C-sub₀ s (C-sub σ M)
 sub-var : ∀ {Δ Δ' A ρ}
         → Sub [] Δ Δ'
         → A ∈[ ρ ] Δ'
-        → (¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
+        → .(A Et∨≾ᵘ ρ)
         ---------------------------
         → Δ ⊢ᵛ⦂ A
 
-sub-var σ x f = V-sub σ (var f x)
+sub-var σ x f = V-sub σ (var x f)
 
 -- A resource variable's image stays a variable, its grade dropping once per
 -- step.

@@ -40,14 +40,15 @@ mutual
 
   data _⊢ᵛ⦂_ (Γ : Ctx) : VType → Set where
 
-    -- variables
+    -- variables, under the side condition `A Et∨≾ᵘ ρ`. The term does not
+    -- record which disjunct holds, so the condition is irrelevant.
 
     var     : {A : VType}
             → {ρ : R}
-            → (¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
             → A ∈[ ρ ] Γ
-            -------------------------
-            → Γ ⊢ᵛ⦂ A           
+            → .(A Et∨≾ᵘ ρ)
+            -------------
+            → Γ ⊢ᵛ⦂ A
 
     -- base-typed constants
 
@@ -415,8 +416,8 @@ grad-typ⇒var<: : ∀ {Γ A ρ}
                → Σ[ ρ₀ ∈ R ] Σ[ A₀ ∈ VType ] Σ[ ρ' ∈ R ]
                    (([ ρ₀ ] A₀ ∈[ ρ' ] Γ) × ([ ρ₀ ] A₀ <:ᵛ [ ρ ] A) × ρ' ≾ᵣ 𝟏ᵣ)
 
-grad-typ⇒var<: (var f x) =
-  _ , _ , _ , x , <:ᵛ-refl _ , f (λ ())
+grad-typ⇒var<: (var x f) =
+  _ , _ , _ , x , <:ᵛ-refl _ , Et∨≾ᵘ→¬Et⇒≾ f (λ ())
 grad-typ⇒var<: (subV V p@([ _ ]ₛ _)) with grad-typ⇒var<: V
 ... | ρ₀ , A₀ , ρ' , x , q , b =
   ρ₀ , A₀ , ρ' , x , <:ᵛ-trans q p , b
@@ -424,8 +425,8 @@ grad-typ⇒var<: (subV V p@([ _ ]ₛ _)) with grad-typ⇒var<: V
 -- A value of eternal type stays typed under any grade extension of its context
 
 eternal-val-ext : ∀ {Γ A ρ} → Et A → Γ ⊢ᵛ⦂ A → Γ ⟨ ρ ⟩ ⊢ᵛ⦂ A
-eternal-val-ext et (var _ x) =
-  var (λ ¬et → ⊥-elim (¬et et)) (Tl-⟨⟩ x)
+eternal-val-ext et (var x _) =
+  var (Tl-⟨⟩ x) (et-ok et)
 eternal-val-ext _ (const B b) =
   const B b
 eternal-val-ext _ ⋆ =

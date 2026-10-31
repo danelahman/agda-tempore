@@ -72,7 +72,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.RenamingCoh
 
 eternal-val-extᴾ : ∀ {Γ A ρ} → (et : Et A) → (V : Γ ⊢ᵛ⦂ A)
                  → Paramᵛ (eternal-val-ext {ρ = ρ} et V)
-eternal-val-extᴾ et (var _ x)                  = tt
+eternal-val-extᴾ et (var x _)                  = tt
 eternal-val-extᴾ _  (const B b)                = tt
 eternal-val-extᴾ _  ⋆                          = tt
 eternal-val-extᴾ _  true                       = tt
@@ -118,7 +118,7 @@ eternal-val-ext-nat : ∀ {Γ A ρ} → (et : Et A) → (V : Γ ⊢ᵛ⦂ A) →
                     → ⟦ eternal-val-ext {ρ = ρ} et V ⟧ᵛᵗ (eternal-val-extᴾ et V)
                       ≈ᵐ eternalᵛ-extᵉ et ∘ᵐ ⟨ ρ ⟩ᶠ (⟦ V ⟧ᵛᵗ pV)
 
-eternal-val-ext-nat {A = A} et (var f y) _ with eternal? A
+eternal-val-ext-nat {A = A} et (var y f) _ with eternal? A
 ... | yes et' =
   ≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et' et))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -270,16 +270,16 @@ unbox-step {σ = σ} {lkᵒ = lkᵒ} eM elk =
 -- them as lemmas is what lets the `eternal?` split reduce `var-morphism`
 -- inside a recursive call's type.)
 
-var-morphism-et : ∀ {Γ B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Et B → ρ' ≾ᵣ 𝟏ᵣ)
+var-morphism-et : ∀ {Γ B ρ'} → (y : B ∈[ ρ' ] Γ) → .(f : B Et∨≾ᵘ ρ')
                 → (et : Et B)
-                → var-morphism f y ≈ᵐ eternalᵛ-extᵉ et ∘ᵐ var-proj y
+                → var-morphism y f ≈ᵐ eternalᵛ-extᵉ et ∘ᵐ var-proj y
 var-morphism-et {B = B} y f et with eternal? B
 ... | yes et' = ∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et' et)
 ... | no ¬et' = ⊥-elim (¬et' et)
 
-var-morphism-¬et : ∀ {Γ B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Et B → ρ' ≾ᵣ 𝟏ᵣ)
+var-morphism-¬et : ∀ {Γ B ρ'} → (y : B ∈[ ρ' ] Γ) → .(f : B Et∨≾ᵘ ρ')
                  → (¬et : ¬ Et B)
-                 → var-morphism f y ≈ᵐ εᵘ ∘ᵐ ⟨⟩-≤ (f ¬et) ∘ᵐ var-proj y
+                 → var-morphism y f ≈ᵐ εᵘ ∘ᵐ ⟨⟩-≤ (Et∨≾ᵘ→¬Et⇒≾ f ¬et) ∘ᵐ var-proj y
 var-morphism-¬et {B = B} y f ¬et with eternal? B
 ... | yes et'  = ⊥-elim (¬et et')
 ... | no ¬et'' = ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))
@@ -297,10 +297,10 @@ boxed-proj (_ , _ , _ , x , w , b) = ⟨ 𝟏ᵣ ⟩ᶠ ⟦ w ⟧<:ᵛ ∘ᵐ �
 
 grad-typ-var-nat : ∀ {Γ A ρ} → (W : Γ ⊢ᵛ⦂ [ ρ ] A) → (pW : Paramᵛ W)
                  → boxed-proj (grad-typ⇒var<: W) ≈ᵐ η ∘ᵐ ⟦ W ⟧ᵛᵗ pW
-grad-typ-var-nat {A = A} {ρ = ρ} (var f x) _ =
+grad-typ-var-nat {A = A} {ρ = ρ} (var x f) _ =
   ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩-congᶠ (⟦⟧<:ᵛ-refl ([ ρ ] A))) ⟨⟩-idᵐ))
   (≈ᵐ-trans (∘ᵐ-identityˡ _)
-  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ (f (λ ()))))
+  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ (Et∨≾ᵘ→¬Et⇒≾ f (λ ()))))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityˡ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ⟨⟩-η∘εᵘ≡id))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)

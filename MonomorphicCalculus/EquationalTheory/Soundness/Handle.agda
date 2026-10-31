@@ -101,9 +101,9 @@ sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
                         ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ εᵇ-η⊣-𝟏 {⟦ Γ ⟧ᶜᵗˣ} map-𝟏ᵉ
                           , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ e ((C-rename r N) [ split-[] ↦ V ]c))
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ e ((C-rename r N) [ V ]₀))
                 pR pRc
-            ∙ sound-ε-≃ e ((C-rename r N) [ split-[] ↦ V ]c) pRc
+            ∙ sound-ε-≃ e ((C-rename r N) [ V ]₀) pRc
             ∙ ∘ᵐ-congʳ (  C-subst-nat (C-rename r N) split-[] V (renᶜ r N pN) pV
                         ∙ ∘ᵐ-congˡ (C-rename-nat r N pN)
                         ∙ ∘ᵐ-assoc _ _ _

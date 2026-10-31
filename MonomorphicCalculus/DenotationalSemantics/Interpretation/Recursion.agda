@@ -247,7 +247,7 @@ sound-MATCHL-CONS : ∀ {Γ A C} → (V : Γ ⊢ᵛ⦂ A) → (W : Γ ⊢ᵛ⦂ 
                   → (M : Γ ⊢ᶜ⦂ C) → (N : Γ ∷ A ∷ list A ⊢ᶜ⦂ C)
                   → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                   → ⟦ matchL cons V W `nil M `cons N ⟧ᶜᵗ ((pV , pW) , pM , pN)
-                  ≈ᵐ ⟦ (N [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟧ᶜᵗ
+                  ≈ᵐ ⟦ (N [ V-rename wk-ren W ]₀) [ V ]₀ ⟧ᶜᵗ
                        (subᶜ₂ N V W pN pV pW)
 sound-MATCHL-CONS V W M N pV pW pM pN =
   matchLᵐ-cons _ _ _ _ ∙ ≈ᵐ-sym (C-subst₂-nat N V W pN pV pW)

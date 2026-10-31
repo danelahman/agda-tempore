@@ -47,17 +47,17 @@ open import MonomorphicCalculus.Syntax.Substitution.Laws    S
 
 subCtx : ∀ {Γ A A₀ C} → A₀ <:ᵛ A → Γ ∷ A ⊢ᶜ⦂ C → Γ ∷ A₀ ⊢ᶜ⦂ C
 subCtx p N =
-  C-rename (cong-∷-ren wk-ren) N [ split-[] ↦ subV (var (λ _ → ≾ᵣ-refl) Hd) p ]c
+  C-rename (cong-∷-ren wk-ren) N [ subV (var Hd (≾ᵘ-ok ≾ᵣ-refl)) p ]₀
 
 -- Substituting into a subsumed binder subsumes the value first.
 
 subCtx-sub : ∀ {Γ A A₀ C} → (w : A₀ <:ᵛ A) → (N : Γ ∷ A ⊢ᶜ⦂ C)
            → (V : Γ ⊢ᵛ⦂ A₀)
            ----------------------------------------------------------
-           → subCtx w N [ split-[] ↦ V ]c ≡ N [ split-[] ↦ subV V w ]c
+           → subCtx w N [ V ]₀ ≡ N [ subV V w ]₀
 
 subCtx-sub {A = A} w N V =
-  trans (sub-swap-≡ᶜ V (subV (var (λ _ → ≾ᵣ-refl) Hd) w)
+  trans (sub-swap-≡ᶜ V (subV (var Hd (≾ᵘ-ok ≾ᵣ-refl)) w)
                      (C-rename (cong-∷-ren wk-ren) N))
         (cong (C-sub₀ (val-sub (subV V w))) (sub-wk-≡ᶜ ([] ∷ A) V N))
 
@@ -72,9 +72,9 @@ subCtx-ren : ∀ {Γ Δ A A₀ C} → (r : Ren [] Δ Γ) → (w : A₀ <:ᵛ A)
 
 subCtx-ren r w N =
   trans (sym (ren-sub-≡ᶜ [] (cong-∷-ren r)
-                         (subV (var (λ _ → ≾ᵣ-refl) Hd) w)
+                         (subV (var Hd (≾ᵘ-ok ≾ᵣ-refl)) w)
                          (C-rename (cong-∷-ren wk-ren) N)))
-        (cong₂ (λ U X → C-sub₀ (val-sub U) X) (subV-≡ var-≡) renM)
+        (cong₂ (λ U X → C-sub₀ (val-sub U) X) (subV-≡ refl) renM)
   where
     renM : C-rename (cong-∷-ren (cong-∷-ren r))
              (C-rename (cong-∷-ren wk-ren) N)

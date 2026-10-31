@@ -329,7 +329,7 @@ eq-ren-inv refl = ∘ᵐ-identityˡ idᵐ
 
 sound-APP : ∀ {Γ A B ε} → (M : Γ ∷ A ⊢ᶜ⦂ B ! ε) → (V : Γ ⊢ᵛ⦂ A)
           → (pM : Paramᶜ M) → (pV : Paramᵛ V)
-          → ⟦ fun M · V ⟧ᶜᵗ (pM , pV) ≈ᵐ ⟦ M [ split-[] ↦ V ]c ⟧ᶜᵗ (subᶜ M split-[] V pM pV)
+          → ⟦ fun M · V ⟧ᶜᵗ (pM , pV) ≈ᵐ ⟦ M [ V ]₀ ⟧ᶜᵗ (subᶜ M split-[] V pM pV)
 sound-APP M V pM pV =
   ≈ᵐ-trans (βᵐ (⟦ M ⟧ᶜᵗ pM) (⟦ V ⟧ᵛᵗ pV)) (≈ᵐ-sym (C-subst-nat M split-[] V pM pV))
 
@@ -338,19 +338,19 @@ sound-APP M V pM pV =
 
 fstᵛᴾ : ∀ {Γ A B} → (𝕊 : State Γ) → (P : toCtx 𝕊 ⊢ᵛ⦂ A |×| B)
       → Paramᵛ P → Paramᵛ (fstᵛ {𝕊 = 𝕊} P)
-fstᵛᴾ 𝕊 (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
+fstᵛᴾ 𝕊 (var x f)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
 fstᵛᴾ 𝕊 ⦉ V , W ⦊           (pV , pW) = pV
 fstᵛᴾ 𝕊 (subV P (p |×|ₛ q)) pP        = fstᵛᴾ 𝕊 P pP
 
 sndᵛᴾ : ∀ {Γ A B} → (𝕊 : State Γ) → (P : toCtx 𝕊 ⊢ᵛ⦂ A |×| B)
       → Paramᵛ P → Paramᵛ (sndᵛ {𝕊 = 𝕊} P)
-sndᵛᴾ 𝕊 (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
+sndᵛᴾ 𝕊 (var x f)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
 sndᵛᴾ 𝕊 ⦉ V , W ⦊           (pV , pW) = pW
 sndᵛᴾ 𝕊 (subV P (p |×|ₛ q)) pP        = sndᵛᴾ 𝕊 P pP
 
 fstᵛ-sound : ∀ {Γ A B} → (𝕊 : State Γ) → (P : toCtx 𝕊 ⊢ᵛ⦂ A |×| B) → (pP : Paramᵛ P)
            → ⟦ fstᵛ {𝕊 = 𝕊} P ⟧ᵛᵗ (fstᵛᴾ 𝕊 P pP) ≈ᵐ fstᵐ ∘ᵐ ⟦ P ⟧ᵛᵗ pP
-fstᵛ-sound 𝕊 (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
+fstᵛ-sound 𝕊 (var x f)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
 fstᵛ-sound 𝕊 ⦉ V , W ⦊           (pV , pW) = ≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)
 fstᵛ-sound 𝕊 (subV P (p |×|ₛ q)) pP        =
     ∘ᵐ-congʳ (fstᵛ-sound 𝕊 P pP)
@@ -360,7 +360,7 @@ fstᵛ-sound 𝕊 (subV P (p |×|ₛ q)) pP        =
 
 sndᵛ-sound : ∀ {Γ A B} → (𝕊 : State Γ) → (P : toCtx 𝕊 ⊢ᵛ⦂ A |×| B) → (pP : Paramᵛ P)
            → ⟦ sndᵛ {𝕊 = 𝕊} P ⟧ᵛᵗ (sndᵛᴾ 𝕊 P pP) ≈ᵐ sndᵐ ∘ᵐ ⟦ P ⟧ᵛᵗ pP
-sndᵛ-sound 𝕊 (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
+sndᵛ-sound 𝕊 (var x f)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
 sndᵛ-sound 𝕊 ⦉ V , W ⦊           (pV , pW) = ≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _)
 sndᵛ-sound 𝕊 (subV P (p |×|ₛ q)) pP        =
     ∘ᵐ-congʳ (sndᵛ-sound 𝕊 P pP)
@@ -375,8 +375,8 @@ sound-MATCH : ∀ {Γ A B C} → (𝕊 : State Γ) → (P : toCtx 𝕊 ⊢ᵛ⦂
             → (M : toCtx 𝕊 ∷ A ∷ B ⊢ᶜ⦂ C)
             → (pP : Paramᵛ P) → (pM : Paramᶜ M)
             → ⟦ match P `with M ⟧ᶜᵗ (pP , pM)
-            ≈ᵐ ⟦ (M [ split-[] ↦ V-rename wk-ren (sndᵛ {𝕊 = 𝕊} P) ]c)
-                   [ split-[] ↦ fstᵛ {𝕊 = 𝕊} P ]c ⟧ᶜᵗ
+            ≈ᵐ ⟦ (M [ V-rename wk-ren (sndᵛ {𝕊 = 𝕊} P) ]₀)
+                   [ fstᵛ {𝕊 = 𝕊} P ]₀ ⟧ᶜᵗ
                  (subᶜ₂ M (fstᵛ {𝕊 = 𝕊} P) (sndᵛ {𝕊 = 𝕊} P) pM (fstᵛᴾ 𝕊 P pP) (sndᵛᴾ 𝕊 P pP))
 sound-MATCH 𝕊 P M pP pM =
     ∘ᵐ-congʳ (⟨ ⟨ ≈ᵐ-refl , ≈ᵐ-sym (fstᵛ-sound 𝕊 P pP) ⟩ᵐ-cong
@@ -393,7 +393,7 @@ subLᴾ p (inj₂ (W , L)) pl = pl
 
 listᵛᴾ : ∀ {Γ A} → (𝕊 : State Γ) → (V : toCtx 𝕊 ⊢ᵛ⦂ list A)
        → Paramᵛ V → Paramᵛ (unlistᵛ (listᵛ {𝕊 = 𝕊} V))
-listᵛᴾ 𝕊 (var f x)            pV = ⊥-elim (list-not-in-toCtx x)
+listᵛᴾ 𝕊 (var x f)            pV = ⊥-elim (list-not-in-toCtx x)
 listᵛᴾ 𝕊 nil                  pV = tt
 listᵛᴾ 𝕊 (cons V W)           pV = pV
 listᵛᴾ 𝕊 (subV V (listₛ p))   pV = subLᴾ p (listᵛ V) (listᵛᴾ 𝕊 V pV)
@@ -412,7 +412,7 @@ subL-sound p (inj₂ (W , L)) pl =
 
 listᵛ-sound : ∀ {Γ A} → (𝕊 : State Γ) → (V : toCtx 𝕊 ⊢ᵛ⦂ list A) → (pV : Paramᵛ V)
             → ⟦ unlistᵛ (listᵛ {𝕊 = 𝕊} V) ⟧ᵛᵗ (listᵛᴾ 𝕊 V pV) ≈ᵐ ⟦ V ⟧ᵛᵗ pV
-listᵛ-sound 𝕊 (var f x)            pV = ⊥-elim (list-not-in-toCtx x)
+listᵛ-sound 𝕊 (var x f)            pV = ⊥-elim (list-not-in-toCtx x)
 listᵛ-sound 𝕊 nil                  pV = ≈ᵐ-refl
 listᵛ-sound 𝕊 (cons V W)           pV = ≈ᵐ-refl
 listᵛ-sound 𝕊 (subV V (listₛ p))   pV =
@@ -448,7 +448,7 @@ sub⊎ᴾ p q (inj₂ W) pW = pW
 
 injᵛᴾ : ∀ {Γ A B} → (𝕊 : State Γ) → (V : toCtx 𝕊 ⊢ᵛ⦂ A |+| B)
       → Paramᵛ V → Paramᵛ (uninjᵛ (injᵛ {𝕊 = 𝕊} V))
-injᵛᴾ 𝕊 (var f x)           pV = ⊥-elim (|+|-not-in-toCtx x)
+injᵛᴾ 𝕊 (var x f)           pV = ⊥-elim (|+|-not-in-toCtx x)
 injᵛᴾ 𝕊 (inl V)             pV = pV
 injᵛᴾ 𝕊 (inr V)             pV = pV
 injᵛᴾ 𝕊 (subV V (p |+|ₛ q)) pV = sub⊎ᴾ p q (injᵛ V) (injᵛᴾ 𝕊 V pV)
@@ -464,7 +464,7 @@ sub⊎-sound p q (inj₂ W) pW =
 
 injᵛ-sound : ∀ {Γ A B} → (𝕊 : State Γ) → (V : toCtx 𝕊 ⊢ᵛ⦂ A |+| B) → (pV : Paramᵛ V)
            → ⟦ uninjᵛ (injᵛ {𝕊 = 𝕊} V) ⟧ᵛᵗ (injᵛᴾ 𝕊 V pV) ≈ᵐ ⟦ V ⟧ᵛᵗ pV
-injᵛ-sound 𝕊 (var f x)           pV = ⊥-elim (|+|-not-in-toCtx x)
+injᵛ-sound 𝕊 (var x f)           pV = ⊥-elim (|+|-not-in-toCtx x)
 injᵛ-sound 𝕊 (inl V)             pV = ≈ᵐ-refl
 injᵛ-sound 𝕊 (inr V)             pV = ≈ᵐ-refl
 injᵛ-sound 𝕊 (subV V (p |+|ₛ q)) pV =
@@ -482,7 +482,7 @@ match+-reductᴾ (inj₂ W) M N pW pM pN = subᶜ N split-[] W pN pW
 
 ⌊⌋ᵈ-sound : ∀ {Γ A} → (𝕊 : State Γ) → (et : Et A) → (V : toCtx 𝕊 ⊢ᵛ⦂ A)
           → (pV : Paramᵛ V) → ⟦ V ⟧ᵛᵗ pV ≈ᵐ ⌜ et ⌝ᵈ (⌊_⌋ᵈ {𝕊 = 𝕊} et V) ∘ᵐ terminalᵐ
-⌊⌋ᵈ-sound 𝕊 et (var _ x) pV = ⊥-elim (eternal-not-in-toCtx et x)
+⌊⌋ᵈ-sound 𝕊 et (var x _) pV = ⊥-elim (eternal-not-in-toCtx et x)
 ⌊⌋ᵈ-sound 𝕊 et (subV V p) pV =
     ∘ᵐ-congʳ (⌊⌋ᵈ-sound 𝕊 (<:ᵛ-eternalˡ p et) V pV)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -695,7 +695,7 @@ subCtxᴾ : ∀ {Γ A A₀ C} → (t : A₀ <:ᵛ A) → (N : Γ ∷ A ⊢ᶜ⦂
         → Paramᶜ (subCtx t N)
 subCtxᴾ t N pN =
   subᶜ (C-rename (cong-∷-ren wk-ren) N) split-[]
-       (subV (var (λ _ → ≾ᵣ-refl) Hd) t)
+       (subV (var Hd (≾ᵘ-ok ≾ᵣ-refl)) t)
        (renᶜ (cong-∷-ren wk-ren) N pN) tt
 
 subCtx-nat : ∀ {Γ A A₀ C} → (t : A₀ <:ᵛ A) → (N : Γ ∷ A ⊢ᶜ⦂ C) → (pN : Paramᶜ N)
@@ -703,7 +703,7 @@ subCtx-nat : ∀ {Γ A A₀ C} → (t : A₀ <:ᵛ A) → (N : Γ ∷ A ⊢ᶜ�
            ≈ᵐ ⟦ N ⟧ᶜᵗ pN ∘ᵐ mapˣᵐ idᵐ ⟦ t ⟧<:ᵛ
 subCtx-nat {Γ} {A} {A₀} t N pN =
     C-subst-nat (C-rename (cong-∷-ren wk-ren) N) split-[]
-                (subV (var (λ _ → ≾ᵣ-refl) Hd) t)
+                (subV (var Hd (≾ᵘ-ok ≾ᵣ-refl)) t)
                 (renᶜ (cong-∷-ren wk-ren) N pN) tt
   ∙ ∘ᵐ-congˡ (C-rename-nat (cong-∷-ren wk-ren) N pN)
   ∙ ∘ᵐ-assoc _ _ _
@@ -733,7 +733,7 @@ sound-MATCHℕ-SUCC : ∀ {Γ C} → (V : Γ ⊢ᵛ⦂ nat)
                   → (M : Γ ⊢ᶜ⦂ C) → (N : Γ ∷ nat ⊢ᶜ⦂ C)
                   → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                   → ⟦ matchℕ succ V `zero M `succ N ⟧ᶜᵗ (pV , pM , pN)
-                  ≈ᵐ ⟦ N [ split-[] ↦ V ]c ⟧ᶜᵗ (subᶜ N split-[] V pN pV)
+                  ≈ᵐ ⟦ N [ V ]₀ ⟧ᶜᵗ (subᶜ N split-[] V pN pV)
 sound-MATCHℕ-SUCC V M N pV pM pN =
     matchℕᵐ-succ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ∙ ≈ᵐ-sym (C-subst-nat N split-[] V pN pV)
@@ -890,7 +890,7 @@ ret-env X e =
 
 sub-ren : ∀ {Γ Γ' A C} → (r : Ren [] Γ' Γ) → (N : Γ ∷ A ⊢ᶜ⦂ C) → (V : Γ' ⊢ᵛ⦂ A)
         → (pN : Paramᶜ N) → (pV : Paramᵛ V)
-        → ⟦ C-rename (cong-∷-ren r) N [ split-[] ↦ V ]c ⟧ᶜᵗ
+        → ⟦ C-rename (cong-∷-ren r) N [ V ]₀ ⟧ᶜᵗ
              (subᶜ (C-rename (cong-∷-ren r) N) split-[] V (renᶜ (cong-∷-ren r) N pN) pV)
         ≈ᵐ ⟦ N ⟧ᶜᵗ pN ∘ᵐ ⟨ ⟦ r ⟧ʳ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
 sub-ren r N V pN pV =
@@ -910,7 +910,7 @@ sub-ren r N V pN pV =
 ret-subᴾ : ∀ {Γ A B ε} → (V : Γ ⊢ᵛ⦂ A) → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε)
          → Paramᵛ V → Paramᶜ N
          → Paramᶜ (C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
-                     [ split-[] ↦ V ]c)
+                     [ V ]₀)
 ret-subᴾ {Γ} V N pV pN =
   subᶜ (C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N)
        split-[] V
@@ -925,7 +925,7 @@ ret-step : ∀ {Γ A B ε}
          → alg ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
          ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
             ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
-                   [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+                   [ V ]₀ ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 ret-step {Γ} alg alg-η V N pV pN =
     ∘ᵐ-congʳ ret-massage
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -936,7 +936,7 @@ ret-step {Γ} alg alg-η V N pV pN =
     -- syntax's re-locking renaming (`ret-env`), leaving `ηᵀ ∘ (renamed subst)`.
     ret-massage : Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
                 ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
-                            [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+                            [ V ]₀ ⟧ᶜᵗ (ret-subᴾ V N pV pN)
     ret-massage =
         ∘ᵐ-congʳ (∘ᵐ-congʳ
           (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))
@@ -965,7 +965,7 @@ ret-step-P : ∀ {Γ A B ε P}
            → alg ∘ᵐ ⟨ pv , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ ⟩ᵐ
            ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
               ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
-                     [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+                     [ V ]₀ ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 ret-step-P {Γ} pv alg alg-η V N pV pN =
     ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ret-massage ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
@@ -976,7 +976,7 @@ ret-step-P {Γ} pv alg alg-η V N pV pN =
   where
     ret-massage : Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
                 ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
-                            [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+                            [ V ]₀ ⟧ᶜᵗ (ret-subᴾ V N pV pN)
     ret-massage =
         ∘ᵐ-congʳ (∘ᵐ-congʳ
           (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))
@@ -999,7 +999,7 @@ sound-SEQ-RET : ∀ {Γ A B ε} → (V : Γ ⊢ᵛ⦂ A) → (N : Γ ⟨ ∣ �
               → ⟦ return V ⨟ N ⟧ᶜᵗ (pV , pN)
               ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
                  ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
-                        [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+                        [ V ]₀ ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 sound-SEQ-RET V N pV pN = ret-step μᵀ T-μ∘η≡id V N pV pN
 
 sound-HANDLE-RET : ∀ {Γ A B ε}
@@ -1015,7 +1015,7 @@ sound-HANDLE-RET : ∀ {Γ A B ε}
                  → ⟦ handle return V `with H `in N ⟧ᶜᵗ (pV , pN , pH , uH)
                  ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
                     ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
-                           [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+                           [ V ]₀ ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 sound-HANDLE-RET {Γ} V H N pV pN pH uH =
     handle-in-β (return V) H N pV pN pH uH
   ∙ ret-step-P ⟨⊤⟩-η (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH))

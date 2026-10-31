@@ -249,7 +249,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
                              {⟦ hist 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ⟧ᶜᵗˣ}
                              {⟦ A ⟧ᵛ} {op-grade op ·ₑ 𝟏ₑ} {ε}
                              (⟦ ⟨ grade-pass 𝕊 (∣ op-grade op ∣ᵉ)
-                                ∣ M [ split-[] ↦ op-sem op V ]c ⟩ ⟧ᵏᶜᶠ
+                                ∣ M [ op-sem op V ]₀ ⟩ ⟧ᵏᶜᶠ
                                 (pSt , subᶜ M split-[] (op-sem op V) pM (op-par op 𝕊 V)))
                              (top-stepᵏ (OP-STEP {op = op} {𝕊 = 𝕊} {V = V} {M = M}))
     sound-OP-STEP {A} {ε} op 𝕊 V M pSt pV pM =
@@ -271,7 +271,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
         d = op-grade op
 
         cf' : Config (A ! ε)
-        cf' = ⟨ grade-pass 𝕊 (∣ d ∣ᵉ) ∣ M [ split-[] ↦ op-sem op V ]c ⟩
+        cf' = ⟨ grade-pass 𝕊 (∣ d ∣ᵉ) ∣ M [ op-sem op V ]₀ ⟩
 
         pcf' : Paramᶜᶠ cf'
         pcf' = pSt , subᶜ M split-[] (op-sem op V) pM (op-par op 𝕊 V)
@@ -280,7 +280,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
         cont : subst (λ O → (⟨ ∣ d ∣ᵉ ⟩ᵒ ⟦ toCtx 𝕊 ⟧ᶜᵗˣ ×ᵐ O) →ᵐ Tᵒ ⟦ A ⟧ᵛ ε)
                      (ty-gty (arity op)) (⟦ M ⟧ᶜᵗ pM)
                  ∘ᵐ ⟨ idᵐ , op-semᵐ op ∘ᵐ ⟨ ∣ d ∣ᵉ ⟩ᶠ (paramᵐ op 𝕊 V pV) ⟩ᵐ
-             ≈ᵐ ⟦ M [ split-[] ↦ op-sem op V ]c ⟧ᶜᵗ
+             ≈ᵐ ⟦ M [ op-sem op V ]₀ ⟧ᶜᵗ
                   (subᶜ M split-[] (op-sem op V) pM (op-par op 𝕊 V))
         cont =
             ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ≈ᵐ-sym (op-coh op 𝕊 V pV) ⟩ᵐ-cong)
