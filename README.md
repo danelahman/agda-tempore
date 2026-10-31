@@ -46,6 +46,11 @@ parts of the solver it exercises. A check passes when Agda exits with 0 and
 prints no warning. The only postulate is function extensionality
 (`Util/Equality.agda`).
 
+The sources use many Unicode symbols, including mathematical letters such as
+`𝟏` and `𝕊`, combining accents (`ε̂`) and brackets such as `⦉ ⦊`. A monospace
+font with wide coverage, such as [JuliaMono](https://juliamono.netlify.app),
+shows them all and keeps columns aligned; DejaVu Sans Mono lacks several.
+
 The root of each calculus, `PolymorphicCalculus/Everything.agda` and
 `MonomorphicCalculus/Everything.agda`, names its key modules and main
 results.
