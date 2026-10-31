@@ -97,8 +97,9 @@ open R public hiding (≾-antisym)
 -- the delay by it would be equal to the unit.
 
 u⋠of-dur : (τ : Carrier) → 0ᴰ <ᴰ τ → ¬ (u ≾ of-dur τ)
-u⋠of-dur τ pos rel with cong traces (≾-antisym {of-dur τ} {u} (≾-⊤ (of-dur τ)) rel)
-... | e = delay≢ε (trans (sym (⟨⟩-pos τ pos)) (∷-injectiveˡ e))
+u⋠of-dur τ pos rel =
+  delay≢ε (trans (sym (⟨⟩-pos τ pos))
+                 (∷-injectiveˡ (cong traces (≾-antisym {of-dur τ} {u} (≾-⊤ (of-dur τ)) rel))))
   where
     delay≢ε : ∀ {d} → delay d ε⁻ ≡ ε → ⊥
     delay≢ε ()
