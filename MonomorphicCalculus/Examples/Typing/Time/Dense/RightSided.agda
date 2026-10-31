@@ -136,7 +136,7 @@ branching =
 
 claim-after-relaying : [] ⊢C⦂ unit ! [0, 23 / 2 ]
 claim-after-relaying =
-  box [0, # 6 ] (const 42)           -- ∷ [ [0, # 6 ] ] Reading
+  box [0, # 6 ] (const reading 42)   -- ∷ [ [0, # 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [0, 1 / 2 ] ⟩ ∷ Reading
       (perform send here             -- ⟨ [0, 11 / 2 ] ⟩ ∷ unit
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) ≤ᵈ! (<:ᵛ-refl _)
@@ -158,7 +158,7 @@ half-tick-lease = [0, 7 / 2 ]
 
 claim-after-idling-and-sampling : [] ⊢C⦂ unit ! [0, # 9 ]
 claim-after-idling-and-sampling =
-  box half-tick-lease (const 42)
+  box half-tick-lease (const reading 42)
                                      -- ∷ [ [0, 7 / 2 ] ] Reading
     (delay (# 3)                     -- ⟨ [0, # 3 ] ⟩
       (perform read ⋆                -- ⟨ [0, 1 / 2 ] ⟩ ∷ Reading
@@ -170,7 +170,7 @@ claim-after-idling-and-sampling =
 
 claim-after-storing-twice : [] ⊢C⦂ unit ! [0, # 9 ]
 claim-after-storing-twice =
-  box half-tick-lease (const 42)
+  box half-tick-lease (const reading 42)
                                      -- ∷ [ [0, 7 / 2 ] ] Reading
     (perform read ⋆                  -- ⟨ [0, 1 / 2 ] ⟩ ∷ Reading
       (perform write here            -- ⟨ [0, 5 / 2 ] ⟩ ∷ unit
@@ -183,7 +183,7 @@ claim-after-storing-twice =
 
 claim-after-idling : [] ⊢C⦂ unit ! [0, # 9 ]
 claim-after-idling =
-  box half-tick-lease (const 42)
+  box half-tick-lease (const reading 42)
                                      -- ∷ [ [0, 7 / 2 ] ] Reading
     (delay (7 / 2)                   -- ⟨ [0, 7 / 2 ] ⟩
       (unbox (Tl-⟨⟩ Hd) ≤ᵈ! (<:ᵛ-refl _)

@@ -62,9 +62,9 @@ buffer = res 0 (+ 0) (+ 0) 1
 store-then-transmit : [] ⊢C⦂ unit ! buffer
 store-then-transmit =
   check buffer
-    (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
-      (perform write here            -- ⟨ opTime write ⟩ ∷ unit
-        (perform send (const 0)      -- ⟨ opTime send ⟩ ∷ unit
+    (perform read ⋆                     -- ⟨ opTime read ⟩ ∷ Reading
+      (perform write here               -- ⟨ opTime write ⟩ ∷ unit
+        (perform send (const reading 0) -- ⟨ opTime send ⟩ ∷ unit
           (return ⋆))))
 
 -- transmitting first frees a slot never occupied
@@ -104,8 +104,8 @@ one-slot = res 0 (+ 0) (+ 1) 1
 claim-after-a-store : [] ⊢C⦂ unit ! res 0 (+ 0) (+ 0) 1
 claim-after-a-store =
   check (res 0 (+ 0) (+ 0) 1)
-    (box one-slot (const 7)          -- ∷ [ one-slot ] Reading
-      (perform write (const 1)       -- ⟨ opTime write ⟩ ∷ unit
+    (box one-slot (const reading 7)    -- ∷ [ one-slot ] Reading
+      (perform write (const reading 1) -- ⟨ opTime write ⟩ ∷ unit
         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (decided (𝟏ᵣ ·ᵣ opTime write) one-slot) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))

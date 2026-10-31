@@ -80,7 +80,7 @@ sound-handle-return : ∀ {Γ A B ε}
             ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
          ⊢C⦂ B ! (op-grade op ·ₑ ε''))
   → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε)
-  → Soundᶜ== (handle-return V H N)
+  → Soundᶜ≡ᵗʰ (handle-return V H N)
 sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
     handle-in-β (return V) H N pV pN pH uH
   ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
@@ -215,7 +215,7 @@ sound-handle-box : ∀ {Γ A B C ρ ε ε'}
   → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
   → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ! ε)
   → (W : Γ ⊢V⦂ (B ! ε) ⇛ (C ! ε'))
-  → Soundᶜ== (handle-box V M W)
+  → Soundᶜ≡ᵗʰ (handle-box V M W)
 sound-handle-box {ρ = ρ} V M W ((pV , pM) , pW) (pV₂ , pM₂ , pW₂) =
     handle-wk W pW pW₂ (⟦ M ⟧ᶜᵗ pM) gb (⟨⟩ᵐ-fstᵐ _ _)
   ∙ ∘ᵐ-cong (∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ⟦⟧ᶜᵗ-irr M pM pM₂ ⟩ᵐ-cong)
@@ -229,7 +229,7 @@ sound-handle-unbox : ∀ {Γ A A₀ B C ρ₀ ρ' ε ε'}
   → (w : A₀ <:ᵛ A)
   → (M : Γ ∷ A ⊢C⦂ B ! ε)
   → (V : Γ ⊢V⦂ (B ! ε) ⇛ (C ! ε'))
-  → Soundᶜ== (handle-unbox x rel w M V)
+  → Soundᶜ≡ᵗʰ (handle-unbox x rel w M V)
 sound-handle-unbox x rel w M V (pM , pV) (pM₂ , pV₂) =
     handle-wk V pV pV₂ (⟦ M ⟧ᶜᵗ pM) gu (⟨⟩ᵐ-fstᵐ _ _)
   ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ⟦⟧ᶜᵗ-irr M pM pM₂ ⟩ᵐ-cong)
@@ -257,7 +257,7 @@ private
               ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
            ⊢C⦂ B ! (op-grade op ·ₑ ε'')}
     → {N : Γ ⟨ ιᵣ τ ⟩ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'}
-    → Γ ⊢C⦂ L == ε-≃ e (delay τ (handle M `with handler N H))
+    → Γ ⊢C⦂ L ≡ᵗʰ ε-≃ e (delay τ (handle M `with handler N H))
     → (p : Paramᶜ (ε-≃ e (delay τ (handle M `with handler N H))))
     → (pM : Paramᶜ M) → (pN : Paramᶜ N)
     → (pH : ∀ op ε'' → Paramᶜ (H op ε'')) → (uH : EffUniformʰ {Γ ⟨ ιᵣ τ ⟩} H pH)
@@ -281,7 +281,7 @@ sound-handle-delay : ∀ {Γ A B τ ε ε'}
             ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
          ⊢C⦂ B ! (op-grade op ·ₑ ε''))
   → (N : Γ ⟨ ∣ ιₑ τ ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
-  → Soundᶜ== (handle-delay M H N)
+  → Soundᶜ≡ᵗʰ (handle-delay M H N)
 sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
     handle-in-β (delay τ M) H N pM pN pH uH
   ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , str-delay τ (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) ⟩ᵐ-cong)

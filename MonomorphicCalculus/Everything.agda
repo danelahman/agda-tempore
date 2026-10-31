@@ -69,7 +69,7 @@ import MonomorphicCalculus.Syntax.Substitution.Lookup
 import MonomorphicCalculus.Syntax.Substitution.Subsumption
 import MonomorphicCalculus.Syntax.Substitution.Variables
 
----- Operational semantics: states, with their grade and extensions (`𝕊`,
+---- Operational semantics: states, with their grade and extensions (`State`,
 ---- `state-grade`, `_≤ₛ_`, in `OperationalSemantics/State`), and the
 ---- small-step reduction of configurations (`Config`, `_⟶_`, in
 ---- `OperationalSemantics/Reduction`). CMP reduces a comparison to its
@@ -123,7 +123,7 @@ import MonomorphicCalculus.OperationalSemantics.TopLevel
 import MonomorphicCalculus.OperationalSemantics.TopLevel.Progress
 import MonomorphicCalculus.OperationalSemantics.TopLevel.Reduction
 
----- Equational theory (`_⊢V⦂_==_`, `_⊢C⦂_==_`, in
+---- Equational theory (`_⊢V⦂_≡ᵗʰ_`, `_⊢C⦂_≡ᵗʰ_`, in
 ---- `EquationalTheory/EquationalTheory`), with axioms for sequencing
 ---- (`seq-return`, `seq-perform`, `seq-assoc`, …), functions (`fun-beta`,
 ---- `fun-eta`), handling (`handle-return`, `handle-perform`, …), delays
@@ -194,7 +194,7 @@ import MonomorphicCalculus.DenotationalSemantics.Interpretation.Variables
 ---- `OperationalSemantics/Soundness/Preservation`): a run with uniform
 ---- handlers relates the denotations of its configurations, by a time
 ---- transition and an effect-refining coercion; the same for running
----- operations by implementations, into the tick monad (`⟿*-sound`, in
+---- operations by implementations, into the tick monad (`⟶*ᵗ-sound`, in
 ---- `OperationalSemantics/Soundness/TopLevel`).
 
 import MonomorphicCalculus.EquationalTheory.Soundness

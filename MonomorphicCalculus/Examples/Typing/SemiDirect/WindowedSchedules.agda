@@ -82,10 +82,10 @@ warm-up = span 0 10 , (∅ₜ ∣ ((name read , ⟪ 0 ⟫ₜ) L.∷ (name send ,
 late-uplink : [] ⊢C⦂ Reading ! warm-up
 late-uplink =
   check warm-up
-    (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
-      (delay 2                       -- ⟨ ι 2 ⟩
-        (perform send (const 0)      -- ⟨ opTime send ⟩ ∷ unit
-          (return (const 1)))))
+    (perform read ⋆                     -- ⟨ opTime read ⟩ ∷ Reading
+      (delay 2                          -- ⟨ ι 2 ⟩
+        (perform send (const reading 0) -- ⟨ opTime send ⟩ ∷ unit
+          (return (const reading 1)))))
 
 -- transmitting at once is a program, graded by what it does
 
@@ -122,8 +122,8 @@ within-four = span 0 4 , (ℕₜ ∣ L.[])
 claimed-in-time : [] ⊢C⦂ unit ! at (span 7 2) send ⟪ 3 ⟫ₜ
 claimed-in-time =
   check (at (span 7 2) send ⟪ 3 ⟫ₜ)
-    (box within-four (const 42)      -- ∷ [ within-four ] Reading
-      (delay 3                       -- ⟨ ι 3 ⟩
+    (box within-four (const reading 42) -- ∷ [ within-four ] Reading
+      (delay 3                          -- ⟨ ι 3 ⟩
         (unbox (Tl-⟨⟩ Hd) (decided (𝟏ᵣ ·ᵣ ιᵣ 3) within-four) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))

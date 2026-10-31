@@ -73,7 +73,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.RenamingCoh
 eternal-val-extᴾ : ∀ {Γ A ρ} → (et : Et A) → (V : Γ ⊢V⦂ A)
                  → Paramᵛ (eternal-val-ext {ρ = ρ} et V)
 eternal-val-extᴾ et (var _ x)                  = tt
-eternal-val-extᴾ _  (const b)                  = tt
+eternal-val-extᴾ _  (const B b)                = tt
 eternal-val-extᴾ _  ⋆                          = tt
 eternal-val-extᴾ _  true                       = tt
 eternal-val-extᴾ _  false                      = tt
@@ -127,7 +127,7 @@ eternal-val-ext-nat {A = A} et (var f y) _ with eternal? A
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
             (∘ᵐ-congʳ (⟨⟩-congᶠ (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et et'))))))))
 ... | no ¬et' = ⊥-elim (¬et' et)
-eternal-val-ext-nat (Baseₑ eb) (const c) _ =
+eternal-val-ext-nat (Baseₑ eb) (const B c) _ =
   ≈ᵐ-sym
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))

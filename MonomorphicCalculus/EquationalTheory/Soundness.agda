@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------
 -- Denotational soundness of the equational theory.                     --
--- Every derivable `M == N` denotes `⟦M⟧ ≈ᵐ ⟦N⟧`.                       --
+-- Every derivable `M ≡ᵗʰ N` denotes `⟦M⟧ ≈ᵐ ⟦N⟧`.                      --
 -- Congruences recurse on their premises; axioms dispatch to their      --
 -- own `sound-*` lemma. `Midᵛ`/`Midᶜ` thread certificates the endpoints --
 -- do not determine.                                                    --
@@ -81,7 +81,7 @@ open import MonomorphicCalculus.EquationalTheory.Soundness.HandlePerform S Cat F
 
 mutual
 
-  soundᵛ : ∀ {Γ A} {V W : Γ ⊢V⦂ A} → (p : Γ ⊢V⦂ V == W) → Midᵛ p → Soundᵛ== p
+  soundᵛ : ∀ {Γ A} {V W : Γ ⊢V⦂ A} → (p : Γ ⊢V⦂ V ≡ᵗʰ W) → Midᵛ p → Soundᵛ≡ᵗʰ p
   -- setoid structure
   soundᵛ (V-refl {V = V})     _            pV pW = ⟦⟧ᵛᵗ-irr V pV pW
   soundᵛ (V-sym p)            mp           pV pW = ≈ᵐ-sym (soundᵛ p mp pW pV)
@@ -126,7 +126,7 @@ mutual
   soundᵛ (subV-cons p V W)    _            = sound-subV-cons p V W
   soundᵛ (subV-fun p w M)     _            = sound-subV-fun p w M
 
-  soundᶜ : ∀ {Γ C} {M N : Γ ⊢C⦂ C} → (p : Γ ⊢C⦂ M == N) → Midᶜ p → Soundᶜ== p
+  soundᶜ : ∀ {Γ C} {M N : Γ ⊢C⦂ C} → (p : Γ ⊢C⦂ M ≡ᵗʰ N) → Midᶜ p → Soundᶜ≡ᵗʰ p
   -- setoid structure
   soundᶜ (C-refl {M = M})     _            pM pN = ⟦⟧ᶜᵗ-irr M pM pN
   soundᶜ (C-sym p)            mp           pM pN = ≈ᵐ-sym (soundᶜ p mp pN pM)

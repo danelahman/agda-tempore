@@ -88,7 +88,7 @@ V-sub₀-ext : ∀ {Γ Γ' A ρ} → (s : Sub₀ [] Γ Γ') → (et : Et A)
            ≡ eternal-val-ext et (V-sub₀ s V)
 V-sub₀-ext s et (var f x) rewrite eternal?-yes et =
   cong (eternal-val-ext et) (sub-var₀-irr s x _ f)
-V-sub₀-ext s et (const c) = refl
+V-sub₀-ext s et (const B c) = refl
 V-sub₀-ext s et ⋆         = refl
 V-sub₀-ext s et true      = refl
 V-sub₀-ext s et false     = refl
@@ -161,7 +161,7 @@ cong-∷-subˢ-≐ˢ {σ = σ} {σ' = σ'} h = mk≐ˢ goᵛ goᵗ
 eternal-val-ext-≡ : ∀ {Γ A ρ} → (et : Et A) → (p : ρ ≾ᵣ 𝟏ᵣ) → (V : Γ ⊢V⦂ A)
                   → eternal-val-ext et V ≡ V-rename (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren p) V
 eternal-val-ext-≡ et p (var f x) = var-img-≡ (sym (hit-⟨⟩-img p x)) _ _
-eternal-val-ext-≡ et p (const c) = refl
+eternal-val-ext-≡ et p (const B c) = refl
 eternal-val-ext-≡ et p ⋆         = refl
 eternal-val-ext-≡ et p true      = refl
 eternal-val-ext-≡ et p false     = refl
@@ -269,7 +269,7 @@ cong-subˢ-≐ˢ (Γ₀ ⟨ ρ ⟩) h = cong-⟨⟩-subˢ-≐ˢ (cong-subˢ-≐�
 -- and a step the generator's own clause.
 
 V-sub-const : ∀ {Γ Γ' B} → (σ : Sub [] Γ Γ') → (c : BaseConstants B)
-            → V-sub σ (const c) ≡ const c
+            → V-sub σ (const B c) ≡ const B c
 V-sub-const []ˢ      c = refl
 V-sub-const (s ◅ σ) c = cong (V-sub₀ s) (V-sub-const σ c)
 
@@ -489,7 +489,7 @@ mutual
            → (V : Γ' ⊢V⦂ A) → V-sub σ V ≡ V-sub σ' V
 
   V-sub-≐ˢ h (var f x) = atᵛ h x f
-  V-sub-≐ˢ {σ = σ} {σ' = σ'} h (const c) =
+  V-sub-≐ˢ {σ = σ} {σ' = σ'} h (const B c) =
     trans (V-sub-const σ c) (sym (V-sub-const σ' c))
   V-sub-≐ˢ {σ = σ} {σ' = σ'} h ⋆ =
     trans (V-sub-⋆ σ) (sym (V-sub-⋆ σ'))

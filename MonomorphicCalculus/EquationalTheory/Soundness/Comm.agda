@@ -121,7 +121,7 @@ sound-unbox-comm : ∀ {Γ A A₁ B B₂ C ρ₁ ρ₁' ρ₂ ρ₂'}
                  → (x₂ : [ ρ₂ ] B₂ ∈[ ρ₂' ] Γ) → (rel₂ : ρ₂' ≾ᵣ ρ₂)
                  → (w₂ : B₂ <:ᵛ B)
                  → (M : Γ ∷ A ∷ B ⊢C⦂ C)
-                 → Soundᶜ== (unbox-comm x₁ rel₁ w₁ x₂ rel₂ w₂ M)
+                 → Soundᶜ≡ᵗʰ (unbox-comm x₁ rel₁ w₁ x₂ rel₂ w₂ M)
 sound-unbox-comm {Γ = Γ} {A = A} {B = B} x₁ rel₁ w₁ x₂ rel₂ w₂ M pM pR =
     unbox-def x₁ rel₁ w₁ (unbox (Tl-∷ x₂) rel₂ w₂ M) pM
   ∙ ∘ᵐ-congˡ (unbox-def (Tl-∷ x₂) rel₂ w₂ M pM)
@@ -147,7 +147,7 @@ sound-unbox-comm {Γ = Γ} {A = A} {B = B} x₁ rel₁ w₁ x₂ rel₂ w₂ M p
 sound-box-comm : ∀ {Γ A B C ρ ρ'}
                → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A) → (W : Γ ⟨ ρ' ⟩ ⊢V⦂ B)
                → (M : Γ ∷ [ ρ ] A ∷ [ ρ' ] B ⊢C⦂ C)
-               → Soundᶜ== (box-comm V W M)
+               → Soundᶜ≡ᵗʰ (box-comm V W M)
 sound-box-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} {ρ' = ρ'} V W M (pV , (pW' , pM)) (pW , (pV' , pMr)) =
     ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
                         ,   ∘ᵐ-congˡ ([]-congᶠ
@@ -171,7 +171,7 @@ sound-box-unbox-comm : ∀ {Γ A B B₂ C ρ ρ₂ ρ₂'}
                      → (x₂ : [ ρ₂ ] B₂ ∈[ ρ₂' ] Γ) → (rel₂ : ρ₂' ≾ᵣ ρ₂)
                      → (w₂ : B₂ <:ᵛ B)
                      → (M : Γ ∷ [ ρ ] A ∷ B ⊢C⦂ C)
-                     → Soundᶜ== (box-unbox-comm V x₂ rel₂ w₂ M)
+                     → Soundᶜ≡ᵗʰ (box-unbox-comm V x₂ rel₂ w₂ M)
 sound-box-unbox-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} V x₂ rel₂ w₂ M (pV , pM) pR =
     ∘ᵐ-congˡ (  unbox-def (Tl-∷ x₂) rel₂ w₂ M pM
               ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl

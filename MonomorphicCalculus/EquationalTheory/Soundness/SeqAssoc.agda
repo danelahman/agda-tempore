@@ -1,7 +1,7 @@
 ---------------------------------------------------------------------------
 -- Soundness of the sequencing associativity equation `seq-assoc`.       --
 --                                                                       --
--- `(M ⨟ N) ⨟ P == …(M ⨟ (N ⨟ P'))` is the graded monad's associativity  --
+-- `(M ⨟ N) ⨟ P ≡ᵗʰ …(M ⨟ (N ⨟ P'))` is the graded monad's associativity --
 -- (`T-μ∘μ≡μ∘Tμ`) threaded through the strength's multiplication law     --
 -- (`strᵀ-μᵀ`) and product-associativity (`strᵀ-assoc`). Because the box --
 -- is lax (no `δ⁻¹`), the environment box is reconciled with the         --
@@ -89,7 +89,7 @@ sound-seq-assoc : ∀ {Γ A B C ε ε' ε''}
                 → (M : Γ ⊢C⦂ A ! ε)
                 → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
                 → (P : Γ ⟨ ∣ ε ·ₑ ε' ∣ᵉ ⟩ ∷ B ⊢C⦂ C ! ε'')
-                → Soundᶜ== (seq-assoc M N P)
+                → Soundᶜ≡ᵗʰ (seq-assoc M N P)
 sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
     bigchase
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ e (M ⨟ (N ⨟ C-rename r P))) pR pRc

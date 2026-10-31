@@ -130,7 +130,7 @@ mutual
 
   V-rename r (var f x) with var-rename r x
   ... | _ , ρ'≾ρ , y = var (λ p → ≾ᵣ-trans (ρ'≾ρ p) (f p)) y
-  V-rename r (const c)   = const c
+  V-rename r (const B c) = const B c
   V-rename r ⋆           = ⋆
   V-rename r true        = true
   V-rename r false       = false

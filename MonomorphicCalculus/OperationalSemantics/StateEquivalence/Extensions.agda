@@ -41,29 +41,29 @@ open import MonomorphicCalculus.OperationalSemantics.StateEquivalence.Core Spec
 -- `suc-comp-ren (step-extends-state r) c`; simulating them needs the two
 -- derived renamings to agree.
 
-data _≤≐_ : ∀ {St St₁ St' St₁' : 𝕊 []} → St ≤ₛ St₁ → St' ≤ₛ St₁' → Set where
+data _≤≐_ : ∀ {𝕊 𝕊₁ 𝕊' 𝕊₁' : State []} → 𝕊 ≤ₛ 𝕊₁ → 𝕊' ≤ₛ 𝕊₁' → Set where
 
-  id-≤≐ : ∀ {St St' : 𝕊 []} → id-suc {S = St} ≤≐ id-suc {S = St'}
+  id-≤≐ : ∀ {𝕊 𝕊' : State []} → ≤ₛ-refl {𝕊 = 𝕊} ≤≐ ≤ₛ-refl {𝕊 = 𝕊'}
 
-  ⟨⟩-≤≐ : ∀ {St St₁ St' St₁' : 𝕊 []} {q : St ≤ₛ St₁} {q' : St' ≤ₛ St₁'}
-        → (ρ : R) → q ≤≐ q' → (⟨⟩-suc ρ q) ≤≐ (⟨⟩-suc ρ q')
+  ⟨⟩-≤≐ : ∀ {𝕊 𝕊₁ 𝕊' 𝕊₁' : State []} {q : 𝕊 ≤ₛ 𝕊₁} {q' : 𝕊' ≤ₛ 𝕊₁'}
+        → (ρ : R) → q ≤≐ q' → (≤ₛ-lock {ρ = ρ} q) ≤≐ (≤ₛ-lock {ρ = ρ} q')
 
-  ∷-≤≐  : ∀ {St St₁ St' St₁' : 𝕊 []} {A ρ} {q : St ≤ₛ St₁} {q' : St' ≤ₛ St₁'}
-        → {V  : ([] ++ᶜ toCtx St₁  ⟨ ρ ⟩) ⊢V⦂ A}
-        → {V' : ([] ++ᶜ toCtx St₁' ⟨ ρ ⟩) ⊢V⦂ A}
-        → q ≤≐ q' → (∷-suc V q) ≤≐ (∷-suc V' q')
+  ∷-≤≐  : ∀ {𝕊 𝕊₁ 𝕊' 𝕊₁' : State []} {A ρ} {q : 𝕊 ≤ₛ 𝕊₁} {q' : 𝕊' ≤ₛ 𝕊₁'}
+        → {V  : ([] ++ᶜ toCtx 𝕊₁  ⟨ ρ ⟩) ⊢V⦂ A}
+        → {V' : ([] ++ᶜ toCtx 𝕊₁' ⟨ ρ ⟩) ⊢V⦂ A}
+        → q ≤≐ q' → (≤ₛ-res {V = V} q) ≤≐ (≤ₛ-res {V = V'} q')
 
-≤≐-sym : ∀ {St St₁ St' St₁' : 𝕊 []} {q : St ≤ₛ St₁} {q' : St' ≤ₛ St₁'}
+≤≐-sym : ∀ {𝕊 𝕊₁ 𝕊' 𝕊₁' : State []} {q : 𝕊 ≤ₛ 𝕊₁} {q' : 𝕊' ≤ₛ 𝕊₁'}
        → q ≤≐ q' → q' ≤≐ q
 ≤≐-sym id-≤≐       = id-≤≐
 ≤≐-sym (⟨⟩-≤≐ ρ h) = ⟨⟩-≤≐ ρ (≤≐-sym h)
 ≤≐-sym (∷-≤≐ h)    = ∷-≤≐ (≤≐-sym h)
 
-≤ₛ-grade-≤≐ : ∀ {St St₁ St' St₁' : 𝕊 []} {q : St ≤ₛ St₁} {q' : St' ≤ₛ St₁'}
-            → q ≤≐ q' → ≤ₛ-grade q ≡ ≤ₛ-grade q'
-≤ₛ-grade-≤≐ id-≤≐        = refl
-≤ₛ-grade-≤≐ (⟨⟩-≤≐ ρ h)  = cong (_·ᵣ ρ) (≤ₛ-grade-≤≐ h)
-≤ₛ-grade-≤≐ (∷-≤≐ h)     = ≤ₛ-grade-≤≐ h
+κₛ-≤≐ : ∀ {𝕊 𝕊₁ 𝕊' 𝕊₁' : State []} {q : 𝕊 ≤ₛ 𝕊₁} {q' : 𝕊' ≤ₛ 𝕊₁'}
+      → q ≤≐ q' → κₛ q ≡ κₛ q'
+κₛ-≤≐ id-≤≐        = refl
+κₛ-≤≐ (⟨⟩-≤≐ ρ h)  = cong (_·ᵣ ρ) (κₛ-≤≐ h)
+κₛ-≤≐ (∷-≤≐ h)     = κₛ-≤≐ h
 
 -- Transporting a renaming along equalities of both its contexts.
 
@@ -107,12 +107,12 @@ cong-⟨⟩-wk-cast refl = ≐ʳ-refl
 
 -- Extensions of the same shape induce `_≐ʳ_`-equal renamings.
 
-suc-comp-ren-≐ʳ : ∀ {St St₁ St' St₁' : 𝕊 []} {ρ'' ρ''' : R}
-               → {q : St ≤ₛ St₁} → {q' : St' ≤ₛ St₁'}
+suc-comp-ren-≐ʳ : ∀ {𝕊 𝕊₁ 𝕊' 𝕊₁' : State []} {ρ'' ρ''' : R}
+               → {q : 𝕊 ≤ₛ 𝕊₁} → {q' : 𝕊' ≤ₛ 𝕊₁'}
                → (h : q ≤≐ q')
-               → (es : St ≐ˢ St') → (es₁ : St₁ ≐ˢ St₁')
-               → (c  : ≤ₛ-grade q  ·ᵣ ρ''' ≾ᵣ ρ'')
-               → (c' : ≤ₛ-grade q' ·ᵣ ρ''' ≾ᵣ ρ'')
+               → (es : 𝕊 ≐ˢ 𝕊') → (es₁ : 𝕊₁ ≐ˢ 𝕊₁')
+               → (c  : κₛ q  ·ᵣ ρ''' ≾ᵣ ρ'')
+               → (c' : κₛ q' ·ᵣ ρ''' ≾ᵣ ρ'')
                → suc-comp-ren q c
                ≐ʳ castʳ² (cong (_⟨ ρ'' ⟩)  (sym (toCtx-≐ˢ es)))
                          (cong (_⟨ ρ''' ⟩) (sym (toCtx-≐ˢ es₁)))
@@ -135,7 +135,7 @@ suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ'''} (⟨⟩-≤≐ {q' = q'} ρ h) 
                   (cong (_⟨ ρ'' ⟩) (sym (toCtx-≐ˢ es)))
                   (cong (λ Γ₀ → (Γ₀ ⟨ ρ ⟩) ⟨ ρ''' ⟩) (sym (toCtx-≐ˢ es₁)))
                   (cong (_⟨ ρ''' ⟩) (sym (toCtx-≐ˢ (⟨⟩-≐ˢ ρ es₁))))
-                  (suc-comp-ren (⟨⟩-suc ρ q') c')))
+                  (suc-comp-ren (≤ₛ-lock q') c')))
 
 suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ'''}
                (∷-≤≐ {A = A} {ρ = ρ} {q' = q'} {V' = V'} h) es
@@ -153,19 +153,19 @@ suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ'''}
                   (cong (_⟨ ρ'' ⟩) (sym (toCtx-≐ˢ es)))
                   (cong (λ Γ₀ → (Γ₀ ∷ [ ρ ] A) ⟨ ρ''' ⟩) (sym (toCtx-≐ˢ es₁)))
                   (cong (_⟨ ρ''' ⟩) (sym (toCtx-≐ˢ (∷-≐ˢ es₁ eV))))
-                  (suc-comp-ren (∷-suc V' q') c')))
+                  (suc-comp-ren (≤ₛ-res {V = V'} q') c')))
 
--- A cell of `St` is a cell of `St'`, split off at related states and holding
+-- A cell of `𝕊` is a cell of `𝕊'`, split off at related states and holding
 -- equal values.
 
-≐ˢ-var : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-       → [ ρ ] A ∈[ σ ] toCtx St → [ ρ ] A ∈[ σ ] toCtx St'
+≐ˢ-var : ∀ {A ρ σ} {𝕊 𝕊' : State []} → (es : 𝕊 ≐ˢ 𝕊')
+       → [ ρ ] A ∈[ σ ] toCtx 𝕊 → [ ρ ] A ∈[ σ ] toCtx 𝕊'
 ≐ˢ-var {A} {ρ} {σ} es z =
   subst (λ Γ₀ → [ ρ ] A ∈[ σ ] Γ₀) (toCtx-≐ˢ es) z
 
-≐ˢ-fst : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-       → (z : [ ρ ] A ∈[ σ ] toCtx St)
-       → split-state-fst St z ≐ˢ split-state-fst St' (≐ˢ-var es z)
+≐ˢ-fst : ∀ {A ρ σ} {𝕊 𝕊' : State []} → (es : 𝕊 ≐ˢ 𝕊')
+       → (z : [ ρ ] A ∈[ σ ] toCtx 𝕊)
+       → split-state-fst 𝕊 z ≐ˢ split-state-fst 𝕊' (≐ˢ-var es z)
 
 ≐ˢ-fst (⟨⟩-≐ˢ ρ' es) (Tl-⟨⟩ z)
   rewrite subst-Tl-⟨⟩ {ρ = ρ'} (toCtx-≐ˢ es) z = ≐ˢ-fst es z
@@ -174,12 +174,12 @@ suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ'''}
 ≐ˢ-fst (∷-≐ˢ {A₁} {ρ₁} es eV) (Tl-∷ z)
   rewrite subst-Tl-∷ {B = [ ρ₁ ] A₁} (toCtx-≐ˢ es) z = ≐ˢ-fst es z
 
-≐ˢ-lookup : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-          → (z : [ ρ ] A ∈[ σ ] toCtx St)
-          → resource-lookup St z
+≐ˢ-lookup : ∀ {A ρ σ} {𝕊 𝕊' : State []} → (es : 𝕊 ≐ˢ 𝕊')
+          → (z : [ ρ ] A ∈[ σ ] toCtx 𝕊)
+          → resource-lookup 𝕊 z
           ≡ castᵛ (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩)
                          (sym (toCtx-≐ˢ (≐ˢ-fst es z))))
-                   (resource-lookup St' (≐ˢ-var es z))
+                   (resource-lookup 𝕊' (≐ˢ-var es z))
 
 ≐ˢ-lookup (⟨⟩-≐ˢ ρ' es) (Tl-⟨⟩ z)
   rewrite subst-Tl-⟨⟩ {ρ = ρ'} (toCtx-≐ˢ es) z = ≐ˢ-lookup es z
@@ -190,10 +190,10 @@ suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ'''}
 
 -- The part of the state after the cell corresponds too, as a context.
 
-≐ˢ-snd-ctx : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-           → (z : [ ρ ] A ∈[ σ ] toCtx St)
-           → toCtx (split-state-snd St' (≐ˢ-var es z))
-           ≡ toCtx (split-state-snd St z)
+≐ˢ-snd-ctx : ∀ {A ρ σ} {𝕊 𝕊' : State []} → (es : 𝕊 ≐ˢ 𝕊')
+           → (z : [ ρ ] A ∈[ σ ] toCtx 𝕊)
+           → toCtx (split-state-snd 𝕊' (≐ˢ-var es z))
+           ≡ toCtx (split-state-snd 𝕊 z)
 
 ≐ˢ-snd-ctx (⟨⟩-≐ˢ ρ' es) (Tl-⟨⟩ z)
   rewrite subst-Tl-⟨⟩ {ρ = ρ'} (toCtx-≐ˢ es) z =
@@ -204,27 +204,27 @@ suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ'''}
   rewrite subst-Tl-∷ {B = [ ρ₁ ] A₁} (toCtx-≐ˢ es) z =
   cong (_∷ [ ρ₁ ] A₁) (≐ˢ-snd-ctx es z)
 
--- The same, presented at the `St'`-side cell the caller has.
+-- The same, presented at the `𝕊'`-side cell the caller has.
 
-≐ˢ-fst₂ : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-        → (z : [ ρ ] A ∈[ σ ] toCtx St) → (z' : [ ρ ] A ∈[ σ ] toCtx St')
+≐ˢ-fst₂ : ∀ {A ρ σ} {𝕊 𝕊' : State []} → (es : 𝕊 ≐ˢ 𝕊')
+        → (z : [ ρ ] A ∈[ σ ] toCtx 𝕊) → (z' : [ ρ ] A ∈[ σ ] toCtx 𝕊')
         → ≐ˢ-var es z ≡ z'
-        → split-state-fst St z ≐ˢ split-state-fst St' z'
+        → split-state-fst 𝕊 z ≐ˢ split-state-fst 𝕊' z'
 ≐ˢ-fst₂ es z z' refl = ≐ˢ-fst es z
 
-≐ˢ-snd-ctx₂ : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-            → (z : [ ρ ] A ∈[ σ ] toCtx St) → (z' : [ ρ ] A ∈[ σ ] toCtx St')
+≐ˢ-snd-ctx₂ : ∀ {A ρ σ} {𝕊 𝕊' : State []} → (es : 𝕊 ≐ˢ 𝕊')
+            → (z : [ ρ ] A ∈[ σ ] toCtx 𝕊) → (z' : [ ρ ] A ∈[ σ ] toCtx 𝕊')
             → ≐ˢ-var es z ≡ z'
-            → toCtx (split-state-snd St' z') ≡ toCtx (split-state-snd St z)
+            → toCtx (split-state-snd 𝕊' z') ≡ toCtx (split-state-snd 𝕊 z)
 ≐ˢ-snd-ctx₂ es z z' refl = ≐ˢ-snd-ctx es z
 
-≐ˢ-lookup₂ : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-           → (z : [ ρ ] A ∈[ σ ] toCtx St) → (z' : [ ρ ] A ∈[ σ ] toCtx St')
+≐ˢ-lookup₂ : ∀ {A ρ σ} {𝕊 𝕊' : State []} → (es : 𝕊 ≐ˢ 𝕊')
+           → (z : [ ρ ] A ∈[ σ ] toCtx 𝕊) → (z' : [ ρ ] A ∈[ σ ] toCtx 𝕊')
            → (e : ≐ˢ-var es z ≡ z')
-           → resource-lookup St z
+           → resource-lookup 𝕊 z
            ≡ castᵛ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩)
                           (sym (toCtx-≐ˢ (≐ˢ-fst₂ es z z' e))))
-                    (resource-lookup St' z')
+                    (resource-lookup 𝕊' z')
 ≐ˢ-lookup₂ es z z' refl = ≐ˢ-lookup es z
 
 -- `UNBOX` reads the store; related states hold related values.
@@ -232,18 +232,18 @@ suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ'''}
 -- Stated on cells, which is what a `VRed` stated on readability needs;
 -- `unbox-lookup-≐ˢ` below is the same at an `unbox` node's variable.
 
-lookup-body-≐ˢ : ∀ {A ρ} {St St' : 𝕊 []}
-               → (es : St ≐ˢ St')
-               → (t : Var (toCtx St) ([ ρ ] A)) → (t' : Var (toCtx St') ([ ρ ] A))
+lookup-body-≐ˢ : ∀ {A ρ} {𝕊 𝕊' : State []}
+               → (es : 𝕊 ≐ˢ 𝕊')
+               → (t : Var (toCtx 𝕊) ([ ρ ] A)) → (t' : Var (toCtx 𝕊') ([ ρ ] A))
                → t ≡ Var-cast (sym (toCtx-≐ˢ es)) t'
                → (rel : proj₁ t ≾ᵣ ρ) → (rel' : proj₁ t' ≾ᵣ ρ)
                -------------------------------------------------------
-               → lookup-body St t rel
-               ≡ castᵛ (sym (toCtx-≐ˢ es)) (lookup-body St' t' rel')
+               → lookup-body 𝕊 t rel
+               ≡ castᵛ (sym (toCtx-≐ˢ es)) (lookup-body 𝕊' t' rel')
 
-lookup-body-≐ˢ {A} {ρ} {St = St} {St' = St'} es t t' ht rel rel' =
-  subst (λ u → u ≡ castᵛ (sym (toCtx-≐ˢ es)) (lookup-body St' t' rel'))
-        (sym (lookup-body-≡ St ht rel rel'))
+lookup-body-≐ˢ {A} {ρ} {𝕊 = 𝕊} {𝕊' = 𝕊'} es t t' ht rel rel' =
+  subst (λ u → u ≡ castᵛ (sym (toCtx-≐ˢ es)) (lookup-body 𝕊' t' rel'))
+        (sym (lookup-body-≡ 𝕊 ht rel rel'))
         (lookup-body′-≡
            (sym (toCtx-≐ˢ es))
            (sym (toCtx-≐ˢ (≐ˢ-fst₂ es z z' zz))) (≐ˢ-snd-ctx₂ es z z' zz)
@@ -257,15 +257,15 @@ lookup-body-≐ˢ {A} {ρ} {St = St} {St' = St'} es t t' ht rel rel' =
     zz : ≐ˢ-var es z ≡ z'
     zz = subst-subst-sym (toCtx-≐ˢ es)
 
-unbox-lookup-≐ˢ : ∀ {A ρ ρ' ρ''} {St St' : 𝕊 []}
-               → (es : St ≐ˢ St')
-               → {x : [ ρ ] A ∈[ ρ' ] toCtx St} → {x' : [ ρ ] A ∈[ ρ'' ] toCtx St'}
+unbox-lookup-≐ˢ : ∀ {A ρ ρ' ρ''} {𝕊 𝕊' : State []}
+               → (es : 𝕊 ≐ˢ 𝕊')
+               → {x : [ ρ ] A ∈[ ρ' ] toCtx 𝕊} → {x' : [ ρ ] A ∈[ ρ'' ] toCtx 𝕊'}
                → {rel : ρ' ≾ᵣ ρ} → {rel' : ρ'' ≾ᵣ ρ}
-               → _≡_ {A = Var (toCtx St) ([ ρ ] A)}
+               → _≡_ {A = Var (toCtx 𝕊) ([ ρ ] A)}
                      (ρ' , x) (Var-cast (sym (toCtx-≐ˢ es)) (ρ'' , x'))
                -------------------------------------------------------
-               → unbox-lookup St x rel
-               ≡ castᵛ (sym (toCtx-≐ˢ es)) (unbox-lookup St' x' rel')
+               → unbox-lookup 𝕊 x rel
+               ≡ castᵛ (sym (toCtx-≐ˢ es)) (unbox-lookup 𝕊' x' rel')
 
 unbox-lookup-≐ˢ es {x} {x'} {rel} {rel'} h =
   lookup-body-≐ˢ es (_ , x) (_ , x') h rel rel'

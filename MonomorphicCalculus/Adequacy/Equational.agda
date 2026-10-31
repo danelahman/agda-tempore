@@ -2,7 +2,7 @@
 -- Adequacy for the equational theory.                                --
 --                                                                    --
 -- Reasoning in the equational theory is observationally valid: a     --
--- derivation `[] ⊢C⦂ M == N` between closed programs denotes an      --
+-- derivation `[] ⊢C⦂ M ≡ᵗʰ N` between closed programs denotes an     --
 -- equality of global points (`soundᶜ`), and `adequacy` reads that    --
 -- back off the machine: the two programs halt in the same shape, on  --
 -- the same operation, and at an answer type with the same answer     --
@@ -87,67 +87,67 @@ open import MonomorphicCalculus.OperationalSemantics.Termination Spec
 -- ones the two programs carry; the denotation does not depend on either
 -- (`⟦⟧ᶜᵗ-irr`).
 
-==-denotation : ∀ {A ε} → {M N : Prog A ε}
-              → (p : [] ⊢C⦂ M == N) → (mp : Midᶜ p)
-              → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-              ---------------------------------------
-              → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
+≡ᵗʰ-denotation : ∀ {A ε} → {M N : Closed A ε}
+               → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+               → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+               ---------------------------------------
+               → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
 
-==-denotation p mp pM pN = soundᶜ p mp pM pN
+≡ᵗʰ-denotation p mp pM pN = soundᶜ p mp pM pN
 
 -- Provable equals halt alike.
 
-==-adequacy : ∀ {A ε} → {M N : Prog A ε}
-            → (p : [] ⊢C⦂ M == N) → (mp : Midᶜ p)
-            → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-            ---------------------------------------
-            → Same-whnf M N
+≡ᵗʰ-adequacy : ∀ {A ε} → {M N : Closed A ε}
+             → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+             → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+             ---------------------------------------
+             → Same-whnf M N
 
-==-adequacy p mp pM pN = adequacy pM pN (==-denotation p mp pM pN)
+≡ᵗʰ-adequacy p mp pM pN = adequacy pM pN (≡ᵗʰ-denotation p mp pM pN)
 
 -- And so do they in the other direction: `_≈ᵐ_` is symmetric, so this needs no
 -- appeal to `C-sym`.
 
-==-adequacy⁻¹ : ∀ {A ε} → {M N : Prog A ε}
-              → (p : [] ⊢C⦂ M == N) → (mp : Midᶜ p)
-              → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-              ---------------------------------------
-              → Same-whnf N M
+≡ᵗʰ-adequacy⁻¹ : ∀ {A ε} → {M N : Closed A ε}
+               → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+               → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+               ---------------------------------------
+               → Same-whnf N M
 
-==-adequacy⁻¹ p mp pM pN = adequacy pN pM (≈ᵐ-sym (==-denotation p mp pM pN))
+≡ᵗʰ-adequacy⁻¹ p mp pM pN = adequacy pN pM (≈ᵐ-sym (≡ᵗʰ-denotation p mp pM pN))
 
 -- Returning is preserved.
 
-==-returns : ∀ {A ε} → {M N : Prog A ε}
-           → (p : [] ⊢C⦂ M == N) → (mp : Midᶜ p)
-           → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-           → Ret-whnf (⟨ ∅ , M ⟩)
-           ---------------------------------------
-           → Ret-whnf (⟨ ∅ , N ⟩)
+≡ᵗʰ-returns : ∀ {A ε} → {M N : Closed A ε}
+            → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+            → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+            → Ret-whnf (⟨ ∅ ∣ M ⟩)
+            ---------------------------------------
+            → Ret-whnf (⟨ ∅ ∣ N ⟩)
 
-==-returns p mp pM pN = Same-whnf.same-ret (==-adequacy p mp pM pN)
+≡ᵗʰ-returns p mp pM pN = Same-whnf.same-ret (≡ᵗʰ-adequacy p mp pM pN)
 
 -- One side cannot return while the other gets stuck on an operation.
 
-==-ret-not-op : ∀ {A ε} → {M N : Prog A ε}
-              → (p : [] ⊢C⦂ M == N) → (mp : Midᶜ p)
-              → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-              → Ret-whnf (⟨ ∅ , M ⟩) → Op-whnf (⟨ ∅ , N ⟩)
-              ---------------------------------------------
-              → ⊥
+≡ᵗʰ-ret-not-op : ∀ {A ε} → {M N : Closed A ε}
+               → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+               → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+               → Ret-whnf (⟨ ∅ ∣ M ⟩) → Op-whnf (⟨ ∅ ∣ N ⟩)
+               ---------------------------------------------
+               → ⊥
 
-==-ret-not-op p mp pM pN = ret-not-op pM pN (==-denotation p mp pM pN)
+≡ᵗʰ-ret-not-op p mp pM pN = ret-not-op pM pN (≡ᵗʰ-denotation p mp pM pN)
 
 -- The operation a program is stuck on is invariant under provable equality.
 
-==-same-operation : ∀ {A ε} → {M N : Prog A ε}
-                  → (p : [] ⊢C⦂ M == N) → (mp : Midᶜ p)
-                  → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-                  → (w : Op-whnf (⟨ ∅ , M ⟩)) → (w' : Op-whnf (⟨ ∅ , N ⟩))
-                  -----------------------------------------------------------
-                  → Op-whnf.oper w ≡ Op-whnf.oper w'
+≡ᵗʰ-same-operation : ∀ {A ε} → {M N : Closed A ε}
+                   → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+                   → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+                   → (w : Op-whnf (⟨ ∅ ∣ M ⟩)) → (w' : Op-whnf (⟨ ∅ ∣ N ⟩))
+                   -----------------------------------------------------------
+                   → Op-whnf.oper w ≡ Op-whnf.oper w'
 
-==-same-operation p mp pM pN = same-operation pM pN (==-denotation p mp pM pN)
+≡ᵗʰ-same-operation p mp pM pN = same-operation pM pN (≡ᵗʰ-denotation p mp pM pN)
 
 -- What a closed base-typed program can be observed to do: return a constant,
 -- or get stuck on an operation. Two programs agree on the observation when
@@ -156,35 +156,35 @@ open import MonomorphicCalculus.OperationalSemantics.Termination Spec
 -- is read at the program's type (`ret-value`) and its subsumption spine
 -- stripped by `base-val`/`bool-val`.
 
-data Same-answer {b : BaseType} {ε : E} (M N : Prog (Base b) ε) : Set where
+data Same-answer {b : BaseType} {ε : E} (M N : Closed (Base b) ε) : Set where
 
-  both-ret : (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
+  both-ret : (wM : Ret-whnf (⟨ ∅ ∣ M ⟩)) → (wN : Ret-whnf (⟨ ∅ ∣ N ⟩))
            → (c : BaseConstants b)
-           → base-val (ret-value wM) ≡ const c
-           → base-val (ret-value wN) ≡ const c
+           → base-val (ret-value wM) ≡ const b c
+           → base-val (ret-value wN) ≡ const b c
            → Same-answer M N
 
-  both-op  : (wM : Op-whnf (⟨ ∅ , M ⟩)) → (wN : Op-whnf (⟨ ∅ , N ⟩))
+  both-op  : (wM : Op-whnf (⟨ ∅ ∣ M ⟩)) → (wN : Op-whnf (⟨ ∅ ∣ N ⟩))
            → Op-whnf.oper wM ≡ Op-whnf.oper wN
            → Same-answer M N
 
 -- Derivable equations are observational equations: `halts` supplies a whnf on
--- each side, `==-ret-not-op` rules out the mismatched pairings, and the
+-- each side, `≡ᵗʰ-ret-not-op` rules out the mismatched pairings, and the
 -- matching ones are `adequacy-base` resp. `same-operation`. No halting
 -- hypothesis is needed: every program halts.
 
-==-same-answer : ∀ {b ε} → {M N : Prog (Base b) ε}
-               → (p : [] ⊢C⦂ M == N) → (mp : Midᶜ p)
-               → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-               ---------------------------------------
-               → Same-answer M N
+≡ᵗʰ-same-answer : ∀ {b ε} → {M N : Closed (Base b) ε}
+                → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+                → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+                ---------------------------------------
+                → Same-answer M N
 
-==-same-answer {M = M} {N = N} p mp pM pN = go (halts M) (halts N)
+≡ᵗʰ-same-answer {M = M} {N = N} p mp pM pN = go (halts M) (halts N)
   where
     e : ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
-    e = ==-denotation p mp pM pN
+    e = ≡ᵗʰ-denotation p mp pM pN
 
-    go : Halts (⟨ ∅ , M ⟩) → Halts (⟨ ∅ , N ⟩) → Same-answer M N
+    go : Halts (⟨ ∅ ∣ M ⟩) → Halts (⟨ ∅ ∣ N ⟩) → Same-answer M N
     go (halts-ret wM) (halts-ret wN) with adequacy-base pM pN e wM wN
     ... | c , sM , sN = both-ret wM wN c sM sN
     go (halts-ret wM) (halts-op wN)  = ⊥-elim (ret-not-op pM pN e wM wN)
@@ -194,34 +194,34 @@ data Same-answer {b : BaseType} {ε : E} (M N : Prog (Base b) ε) : Set where
 -- The same at `bool`, where the returned answer is one of the two constants
 -- rather than an element of a base signature.
 
-data Same-answer-bool {ε : E} (M N : Prog bool ε) : Set where
+data Same-answer-bool {ε : E} (M N : Closed bool ε) : Set where
 
-  both-true  : (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
+  both-true  : (wM : Ret-whnf (⟨ ∅ ∣ M ⟩)) → (wN : Ret-whnf (⟨ ∅ ∣ N ⟩))
              → bool-val (ret-value wM) ≡ true
              → bool-val (ret-value wN) ≡ true
              → Same-answer-bool M N
 
-  both-false : (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
+  both-false : (wM : Ret-whnf (⟨ ∅ ∣ M ⟩)) → (wN : Ret-whnf (⟨ ∅ ∣ N ⟩))
              → bool-val (ret-value wM) ≡ false
              → bool-val (ret-value wN) ≡ false
              → Same-answer-bool M N
 
-  both-op    : (wM : Op-whnf (⟨ ∅ , M ⟩)) → (wN : Op-whnf (⟨ ∅ , N ⟩))
+  both-op    : (wM : Op-whnf (⟨ ∅ ∣ M ⟩)) → (wN : Op-whnf (⟨ ∅ ∣ N ⟩))
              → Op-whnf.oper wM ≡ Op-whnf.oper wN
              → Same-answer-bool M N
 
-==-same-answer-bool : ∀ {ε} → {M N : Prog bool ε}
-                    → (p : [] ⊢C⦂ M == N) → (mp : Midᶜ p)
-                    → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-                    ---------------------------------------
-                    → Same-answer-bool M N
+≡ᵗʰ-same-answer-bool : ∀ {ε} → {M N : Closed bool ε}
+                     → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+                     → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+                     ---------------------------------------
+                     → Same-answer-bool M N
 
-==-same-answer-bool {M = M} {N = N} p mp pM pN = go (halts M) (halts N)
+≡ᵗʰ-same-answer-bool {M = M} {N = N} p mp pM pN = go (halts M) (halts N)
   where
     e : ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
-    e = ==-denotation p mp pM pN
+    e = ≡ᵗʰ-denotation p mp pM pN
 
-    go : Halts (⟨ ∅ , M ⟩) → Halts (⟨ ∅ , N ⟩) → Same-answer-bool M N
+    go : Halts (⟨ ∅ ∣ M ⟩) → Halts (⟨ ∅ ∣ N ⟩) → Same-answer-bool M N
     go (halts-ret wM) (halts-ret wN) with adequacy-bool pM pN e wM wN
     ... | inj₁ (sM , sN) = both-true  wM wN sM sN
     ... | inj₂ (sM , sN) = both-false wM wN sM sN
@@ -232,12 +232,12 @@ data Same-answer-bool {ε : E} (M N : Prog bool ε) : Set where
 -- Opt-in, as in `adequacy-ticks`: under `HeadTimed` provably equal programs
 -- also take the same time to return.
 
-==-ticks : HF.HeadTimed Spec Cat Fut Pst Adj GTy Mon GE
-         → ∀ {A ε} → {M N : Prog A ε}
-         → (p : [] ⊢C⦂ M == N) → (mp : Midᶜ p)
-         → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-         → (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
-         -------------------------------------------------------------
-         → ret-ticks wM ≡ ret-ticks wN
+≡ᵗʰ-ticks : HF.HeadTimed Spec Cat Fut Pst Adj GTy Mon GE
+          → ∀ {A ε} → {M N : Closed A ε}
+          → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+          → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+          → (wM : Ret-whnf (⟨ ∅ ∣ M ⟩)) → (wN : Ret-whnf (⟨ ∅ ∣ N ⟩))
+          -------------------------------------------------------------
+          → ret-ticks wM ≡ ret-ticks wN
 
-==-ticks ht p mp pM pN = adequacy-ticks ht pM pN (==-denotation p mp pM pN)
+≡ᵗʰ-ticks ht p mp pM pN = adequacy-ticks ht pM pN (≡ᵗʰ-denotation p mp pM pN)

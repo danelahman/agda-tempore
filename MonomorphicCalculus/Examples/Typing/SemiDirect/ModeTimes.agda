@@ -127,8 +127,8 @@ within-eight = listed L.[]
 claimed-in-time : [] ⊢C⦂ Reading ! (ιₑ 5 ·ₑ 𝟏ₑ)
 claimed-in-time =
   check (ιₑ 5 ·ₑ 𝟏ₑ)
-    (box within-eight (const 42)     -- ∷ [ within-eight ] Reading
-      (delay 5                       -- ⟨ ι 5 ⟩
+    (box within-eight (const reading 42) -- ∷ [ within-eight ] Reading
+      (delay 5                           -- ⟨ ι 5 ⟩
         (unbox (Tl-⟨⟩ Hd) (decided (𝟏ᵣ ·ᵣ ιᵣ 5) within-eight) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (return here))))

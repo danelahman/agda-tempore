@@ -74,10 +74,10 @@ open import MonomorphicCalculus.EquationalTheory.Soundness.Base S Cat Fut Pst Ad
 -- (`var-morphism-Hd` lives in `Interpretation.Variables`,
 --  `exch-ren-mor` in `Interpretation.Renaming`.)
 
-sound-unit-eta : ∀ {Γ} → (V : Γ ⊢V⦂ unit) → Soundᵛ== (unit-eta V)
+sound-unit-eta : ∀ {Γ} → (V : Γ ⊢V⦂ unit) → Soundᵛ≡ᵗʰ (unit-eta V)
 sound-unit-eta V pV _ = terminalᵐ-unique
 
-sound-fun-eta : ∀ {Γ A C} → (V : Γ ⊢V⦂ A ⇒ C) → Soundᵛ== (fun-eta V)
+sound-fun-eta : ∀ {Γ A C} → (V : Γ ⊢V⦂ A ⇒ C) → Soundᵛ≡ᵗʰ (fun-eta V)
 sound-fun-eta {Γ} {A} V pV (p₁ , _) =
     ≈ᵐ-sym (uncurryᵐ-curryᵐ-iso (⟦ V ⟧ᵛᵗ pV))
   ∙ curryᵐ-cong (  ≈ᵐ-sym (uncurryᵐ-cong (∘ᵐ-identityˡ (⟦ V ⟧ᵛᵗ pV)))
@@ -89,21 +89,21 @@ sound-fun-eta {Γ} {A} V pV (p₁ , _) =
                       , var-morphism-Hd {Γ} {A} (λ _ → ≾ᵣ-refl) ⟩ᵐ-cong)))
 
 sound-fun-beta : ∀ {Γ A C} → (M : Γ ∷ A ⊢C⦂ C) → (W : Γ ⊢V⦂ A)
-               → Soundᶜ== (fun-beta M W)
+               → Soundᶜ≡ᵗʰ (fun-beta M W)
 sound-fun-beta M W (pM , pW) pR =
     βᵐ (⟦ M ⟧ᶜᵗ pM) (⟦ W ⟧ᵛᵗ pW)
   ∙ ≈ᵐ-sym (C-subst-nat M split-[] W pM pW)
   ∙ ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ W ]c) (subᶜ M split-[] W pM pW) pR
 
 sound-absurd-eta : ∀ {Γ C} → (V : Γ ⊢V⦂ empty) → (M : Γ ∷ empty ⊢C⦂ C)
-                 → Soundᶜ== (absurd-eta V M)
+                 → Soundᶜ≡ᵗʰ (absurd-eta V M)
 sound-absurd-eta V M pV pR = 𝟘ᵐ-strict (⟦ V ⟧ᵛᵗ pV) _ _
 
 -- The comparison beta: the embedded data denote their points, at which the
 -- comparison morphism orders as the data are ordered.
 
 sound-cmp-beta : ∀ {Γ A} → (⋈ : Cmp) → (et : Et A) → (d e : ⟪ A ⟫)
-               → Soundᶜ== (cmp-beta {Γ = Γ} ⋈ et d e)
+               → Soundᶜ≡ᵗʰ (cmp-beta {Γ = Γ} ⋈ et d e)
 sound-cmp-beta ⋈ et d e (pV , pW) pR =
     sound-cmp ⋈ et (⌈ et ⌉ d) (⌈ et ⌉ e) pV pW d e
       (⟦⟧ᵛᵗ-irr (⌈ et ⌉ d) pV (param-⌈⌉ et d) ∙ ⟦⌈⌉⟧ et d)
@@ -113,12 +113,12 @@ sound-cmp-beta ⋈ et d e (pV , pW) pR =
 -- The two boolean betas are the boolean object's own beta laws, read at the
 -- interpretation `⟦ true ⟧ᵛᵗ = trueᵐ ∘ᵐ terminalᵐ` of the scrutinee.
 
-sound-if-beta-true : ∀ {Γ C} → (M N : Γ ⊢C⦂ C) → Soundᶜ== (if-beta-true M N)
+sound-if-beta-true : ∀ {Γ C} → (M N : Γ ⊢C⦂ C) → Soundᶜ≡ᵗʰ (if-beta-true M N)
 sound-if-beta-true M N (_ , pM , pN) pM' =
     ifᵐ-true (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ∙ ⟦⟧ᶜᵗ-irr M pM pM'
 
-sound-if-beta-false : ∀ {Γ C} → (M N : Γ ⊢C⦂ C) → Soundᶜ== (if-beta-false M N)
+sound-if-beta-false : ∀ {Γ C} → (M N : Γ ⊢C⦂ C) → Soundᶜ≡ᵗʰ (if-beta-false M N)
 sound-if-beta-false M N (_ , pM , pN) pN' =
     ifᵐ-false (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ∙ ⟦⟧ᶜᵗ-irr N pN pN'
@@ -129,7 +129,7 @@ sound-if-beta-false M N (_ , pM , pN) pN' =
 -- substitution on both sides, so its certificate comes in separately.
 
 sound-if-eta : ∀ {Γ C} → (V : Γ ⊢V⦂ bool) → (M : Γ ∷ bool ⊢C⦂ C)
-             → Paramᶜ M → Soundᶜ== (if-eta V M)
+             → Paramᶜ M → Soundᶜ≡ᵗʰ (if-eta V M)
 sound-if-eta V M pM (pV , pT , pF) pR =
     ifᵐ-cong ≈ᵐ-refl
       (  ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ true ]c) pT (subᶜ M split-[] true pM tt)
@@ -144,14 +144,14 @@ sound-if-eta V M pM (pV , pT , pF) pR =
 -- is then the substitution of the predecessor.
 
 sound-matchℕ-beta-zero : ∀ {Γ C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ nat ⊢C⦂ C)
-                       → Soundᶜ== (matchℕ-beta-zero M N)
+                       → Soundᶜ≡ᵗʰ (matchℕ-beta-zero M N)
 sound-matchℕ-beta-zero M N (pV , pM , pN) pR =
     matchℕᵐ-zero (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ∙ ⟦⟧ᶜᵗ-irr M pM pR
 
 sound-matchℕ-beta-succ : ∀ {Γ C} → (V : Γ ⊢V⦂ nat)
                        → (M : Γ ⊢C⦂ C) → (N : Γ ∷ nat ⊢C⦂ C)
-                       → Soundᶜ== (matchℕ-beta-succ V M N)
+                       → Soundᶜ≡ᵗʰ (matchℕ-beta-succ V M N)
 sound-matchℕ-beta-succ V M N (pV , pM , pN) pR =
     matchℕᵐ-succ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ∙ ≈ᵐ-sym (C-subst-nat N split-[] V pN pV)
@@ -161,7 +161,7 @@ sound-matchℕ-beta-succ V M N (pV , pM , pN) pR =
 -- the body restricted along `succᵐ`, the shape `matchℕᵐ-η` speaks about.
 
 sound-matchℕ-eta : ∀ {Γ C} → (V : Γ ⊢V⦂ nat) → (M : Γ ∷ nat ⊢C⦂ C)
-                 → Paramᶜ M → Soundᶜ== (matchℕ-eta V M)
+                 → Paramᶜ M → Soundᶜ≡ᵗʰ (matchℕ-eta V M)
 sound-matchℕ-eta {Γ} {C} V M pM (pV , pZ , pS) pR =
     matchℕᵐ-cong ≈ᵐ-refl
       (⟦⟧ᶜᵗ-irr (M [ split-[] ↦ zero ]c) pZ (subᶜ M split-[] zero pM tt)
@@ -189,14 +189,14 @@ sound-matchℕ-eta {Γ} {C} V M pM (pV , pZ , pS) pR =
 sound-recℕ-beta-zero : ∀ {Γ B ε} → (M : Γ ⊢C⦂ B ! ε)
                      → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
                      → (p : ε ·ₑ ε ≾ₑ ε)
-                     → Soundᶜ== (recℕ-beta-zero M N p)
+                     → Soundᶜ≡ᵗʰ (recℕ-beta-zero M N p)
 sound-recℕ-beta-zero M N p (_ , pM , pN) pR =
   sound-RECℕ-ZERO M N p pM pN ∙ ⟦⟧ᶜᵗ-irr M pM pR
 
 sound-recℕ-beta-succ : ∀ {Γ B ε} → (V : Γ ⊢V⦂ nat) → (M : Γ ⊢C⦂ B ! ε)
                      → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
                      → (p : ε ·ₑ ε ≾ₑ ε)
-                     → Soundᶜ== (recℕ-beta-succ V M N p)
+                     → Soundᶜ≡ᵗʰ (recℕ-beta-succ V M N p)
 sound-recℕ-beta-succ V M N p (pV , pM , pN) pR =
     sound-RECℕ-SUCC V M N p pV pM pN
   ∙ ⟦⟧ᶜᵗ-irr (coerce p (recℕ V M N p ⨟ recℕ-step V N)) _ pR
@@ -207,7 +207,7 @@ sound-recℕ-beta-succ V M N p (pV , pM , pN) pR =
 
 sound-match+-beta-inl : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A)
                       → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
-                      → Soundᶜ== (match+-beta-inl V M N)
+                      → Soundᶜ≡ᵗʰ (match+-beta-inl V M N)
 sound-match+-beta-inl V M N (pV , pM , pN) pR =
     match+ᵐ-inl (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ∙ ≈ᵐ-sym (C-subst-nat M split-[] V pM pV)
@@ -215,7 +215,7 @@ sound-match+-beta-inl V M N (pV , pM , pN) pR =
 
 sound-match+-beta-inr : ∀ {Γ A B C} → (V : Γ ⊢V⦂ B)
                       → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
-                      → Soundᶜ== (match+-beta-inr V M N)
+                      → Soundᶜ≡ᵗʰ (match+-beta-inr V M N)
 sound-match+-beta-inr V M N (pV , pM , pN) pR =
     match+ᵐ-inr (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ∙ ≈ᵐ-sym (C-subst-nat N split-[] V pN pV)
@@ -226,7 +226,7 @@ sound-match+-beta-inr V M N (pV , pM , pN) pR =
 -- a substitution on both sides, so its certificate comes in separately.
 
 sound-match+-eta : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A |+| B) → (M : Γ ∷ A |+| B ⊢C⦂ C)
-                 → Paramᶜ M → Soundᶜ== (match+-eta V M)
+                 → Paramᶜ M → Soundᶜ≡ᵗʰ (match+-eta V M)
 sound-match+-eta {Γ} {A} {B} {C} V M pM (pV , pL , pR') pR =
     match+ᵐ-cong ≈ᵐ-refl
       (restrict (inl (var (λ _ → ≾ᵣ-refl) Hd)) tt inlᵐ refl pL)
@@ -262,7 +262,7 @@ sound-match+-eta {Γ} {A} {B} {C} V M pM (pV , pL , pR') pR =
 -- `Midᶜ` payload).
 
 sound-match-eta : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A |×| B) → (M : Γ ∷ A |×| B ⊢C⦂ C)
-                → Paramᶜ M → Soundᶜ== (match-eta V M)
+                → Paramᶜ M → Soundᶜ≡ᵗʰ (match-eta V M)
 sound-match-eta {Γ} {A} {B} {C} V M pM (pV , pB) pR =
     ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr ((C-rename ρ M) [ split-[] ↦ pair ]c) pB
                   (subᶜ (C-rename ρ M) split-[] pair (renᶜ ρ M pM) (tt , tt))
@@ -322,7 +322,7 @@ sound-match-eta {Γ} {A} {B} {C} V M pM (pV , pB) pR =
         , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
 
 sound-match-beta : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ B) → (M : Γ ∷ A ∷ B ⊢C⦂ C)
-                 → Soundᶜ== (match-beta V W M)
+                 → Soundᶜ≡ᵗʰ (match-beta V W M)
 sound-match-beta V W M ((pV , pW) , pM) pR =
     ∘ᵐ-congʳ (⟨ ⟨ ≈ᵐ-refl , ⟨⟩ᵐ-fstᵐ _ _ ⟩ᵐ-cong , ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong)
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr ((M [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c) pR
@@ -333,13 +333,13 @@ sound-match-beta V W M ((pV , pW) , pM) pR =
 -- The list eliminator's betas, as for the reductions at `nil` and `cons`.
 
 sound-matchL-beta-nil : ∀ {Γ A C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
-                      → Soundᶜ== (matchL-beta-nil M N)
+                      → Soundᶜ≡ᵗʰ (matchL-beta-nil M N)
 sound-matchL-beta-nil M N (_ , pM , pN) pR =
   sound-MATCHL-NIL M N pM pN ∙ ⟦⟧ᶜᵗ-irr M pM pR
 
 sound-matchL-beta-cons : ∀ {Γ A C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ list A)
                        → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
-                       → Soundᶜ== (matchL-beta-cons V W M N)
+                       → Soundᶜ≡ᵗʰ (matchL-beta-cons V W M N)
 sound-matchL-beta-cons V W M N ((pV , pW) , pM , pN) pR =
     sound-MATCHL-CONS V W M N pV pW pM pN
   ∙ ⟦⟧ᶜᵗ-irr ((N [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c) _ pR
@@ -349,7 +349,7 @@ sound-matchL-beta-cons V W M N ((pV , pW) , pM , pN) pR =
 -- occurs only under a substitution on both sides.
 
 sound-matchL-eta : ∀ {Γ A C} → (V : Γ ⊢V⦂ list A) → (M : Γ ∷ list A ⊢C⦂ C)
-                 → Paramᶜ M → Soundᶜ== (matchL-eta V M)
+                 → Paramᶜ M → Soundᶜ≡ᵗʰ (matchL-eta V M)
 sound-matchL-eta {Γ} {A} {C} V M pM (pV , pZ , pS) pR =
     matchLᵐ-cong ≈ᵐ-refl
       (⟦⟧ᶜᵗ-irr (M [ split-[] ↦ nil ]c) pZ (subᶜ M split-[] nil pM tt)
@@ -395,7 +395,7 @@ sound-matchL-eta {Γ} {A} {C} V M pM (pV , pZ , pS) pR =
 sound-recL-beta-nil : ∀ {Γ A B ε} → (M : Γ ⊢C⦂ B ! ε)
                     → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
                     → (p : ε ·ₑ ε ≾ₑ ε)
-                    → Soundᶜ== (recL-beta-nil M N p)
+                    → Soundᶜ≡ᵗʰ (recL-beta-nil M N p)
 sound-recL-beta-nil M N p (_ , pM , pN) pR =
   sound-RECL-NIL M N p pM pN ∙ ⟦⟧ᶜᵗ-irr M pM pR
 
@@ -403,7 +403,7 @@ sound-recL-beta-cons : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V�
                      → (M : Γ ⊢C⦂ B ! ε)
                      → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
                      → (p : ε ·ₑ ε ≾ₑ ε)
-                     → Soundᶜ== (recL-beta-cons V W M N p)
+                     → Soundᶜ≡ᵗʰ (recL-beta-cons V W M N p)
 sound-recL-beta-cons V W M N p ((pV , pW) , pM , pN) pR =
     sound-RECL-CONS V W M N p pV pW pM pN
   ∙ ⟦⟧ᶜᵗ-irr (coerce p (recL W M N p ⨟ recL-step V W N)) _ pR

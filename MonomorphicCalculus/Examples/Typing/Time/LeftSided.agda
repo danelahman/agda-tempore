@@ -196,7 +196,7 @@ sampling-then-branching =
 
 claim-after-idling : [] ⊢C⦂ unit ! [ 7 ,+∞⟩
 claim-after-idling =
-  box [ 2 ,+∞⟩ (const 42)            -- ∷ [ [ 2 ,+∞⟩ ] Reading
+  box [ 2 ,+∞⟩ (const reading 42)    -- ∷ [ [ 2 ,+∞⟩ ] Reading
     (delay 3                         -- ⟨ [ 3 ,+∞⟩ ⟩
       (unbox (Tl-⟨⟩ Hd) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -219,7 +219,7 @@ claim-at-once-fails = ≰!
 
 claim-after-sampling : [] ⊢C⦂ unit ! [ 5 ,+∞⟩
 claim-after-sampling =
-  box [ 1 ,+∞⟩ (const 42)            -- ∷ [ [ 1 ,+∞⟩ ] Reading
+  box [ 1 ,+∞⟩ (const reading 42)    -- ∷ [ [ 1 ,+∞⟩ ] Reading
     (perform read ⋆                  -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -231,7 +231,7 @@ claim-after-sampling =
 
 claiming-now : [] ⊢C⦂ unit ! [ 4 ,+∞⟩
 claiming-now =
-  box [ 0 ,+∞⟩ (const 42)            -- ∷ [ [ 0 ,+∞⟩ ] Reading
+  box [ 0 ,+∞⟩ (const reading 42)    -- ∷ [ [ 0 ,+∞⟩ ] Reading
     (unbox Hd ≤! (<:ᵛ-refl _)        -- ∷ Reading
       (perform send here (return ⋆)))
 
@@ -241,9 +241,9 @@ claiming-now =
 
 handed-over : [] ⊢C⦂ unit ! [ 6 ,+∞⟩
 handed-over =
-  box [ 1 ,+∞⟩ (const 42)            -- ∷ [ [ 1 ,+∞⟩ ] Reading
-    (fun                             -- ∷ [ [ 1 ,+∞⟩ ] Reading
-       (perform write (const 0)      -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ unit
+  box [ 1 ,+∞⟩ (const reading 42)       -- ∷ [ [ 1 ,+∞⟩ ] Reading
+    (fun                                -- ∷ [ [ 1 ,+∞⟩ ] Reading
+       (perform write (const reading 0) -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ unit
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
            (perform send here (return ⋆))))
@@ -269,16 +269,16 @@ unreachable-after-a-reading = ≰!
 
 claimed-in-both-branches : [] ⊢C⦂ unit ! [ 6 ,+∞⟩
 claimed-in-both-branches =
-  box [ 1 ,+∞⟩ (const 42)            -- ∷ [ [ 1 ,+∞⟩ ] Reading
+  box [ 1 ,+∞⟩ (const reading 42)            -- ∷ [ [ 1 ,+∞⟩ ] Reading
     (if true
       `then coerce ≤!
-              (perform write (const 0)
+              (perform write (const reading 0)
                                      -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce ≤!
-              (perform send (const 0)
+              (perform send (const reading 0)
                                      -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -290,7 +290,7 @@ claimed-in-both-branches =
 
 either-way : [] ∷ bool ⊢C⦂ unit ! [ 6 ,+∞⟩
 either-way =
-  box [ 1 ,+∞⟩ (const 42)            -- ∷ [ [ 1 ,+∞⟩ ] Reading
+  box [ 1 ,+∞⟩ (const reading 42)    -- ∷ [ [ 1 ,+∞⟩ ] Reading
     (perform read ⋆                  -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
       (delay 1                       -- ⟨ [ 1 ,+∞⟩ ⟩
         (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ≤! (<:ᵛ-refl _)
@@ -313,7 +313,7 @@ either-way =
 
 claim-after-a-store : [] ⊢C⦂ unit ! [ 7 ,+∞⟩
 claim-after-a-store =
-  box [ 3 ,+∞⟩ (const 42)            -- ∷ [ [ 3 ,+∞⟩ ] Reading
+  box [ 3 ,+∞⟩ (const reading 42)            -- ∷ [ [ 3 ,+∞⟩ ] Reading
     ((perform read ⋆ (perform write here (return ⋆)))
       ⨟                              -- ⟨ [ 3 ,+∞⟩ ⟩ ∷ unit
         unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
@@ -331,7 +331,7 @@ coercing-closes-it = ≰!
 
 claim-after-a-coerced-store : [] ⊢C⦂ unit ! [ 6 ,+∞⟩
 claim-after-a-coerced-store =
-  box [ 2 ,+∞⟩ (const 42)            -- ∷ [ [ 2 ,+∞⟩ ] Reading
+  box [ 2 ,+∞⟩ (const reading 42)            -- ∷ [ [ 2 ,+∞⟩ ] Reading
     (coerce {ε' = [ 2 ,+∞⟩} ≤!
        (perform read ⋆ (perform write here (return ⋆)))
       ⨟                              -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ unit
@@ -358,9 +358,9 @@ claim-without-coercing = ≤!
 
 claim-after-a-branch : [] ∷ bool ⊢C⦂ unit ! [ 6 ,+∞⟩
 claim-after-a-branch =
-  box [ 1 ,+∞⟩ (const 42)            -- ∷ [ [ 1 ,+∞⟩ ] Reading
+  box [ 1 ,+∞⟩ (const reading 42)            -- ∷ [ [ 1 ,+∞⟩ ] Reading
     ((if eternal-var boolₑ (Tl-∷ Hd)
-        `then coerce {ε' = [ 2 ,+∞⟩} ≤! (perform send (const 0) (return ⋆))
+        `then coerce {ε' = [ 2 ,+∞⟩} ≤! (perform send (const reading 0) (return ⋆))
         `else delay 2 (return ⋆))
       ⨟                              -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ unit
         unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
@@ -387,7 +387,7 @@ four-ticks-lost-at-the-join = ≰!
 
 duty-cycle : [] ⊢C⦂ unit ! [ 9 ,+∞⟩
 duty-cycle =
-  box [ 4 ,+∞⟩ (const 42)            -- ∷ [ [ 4 ,+∞⟩ ] Reading
+  box [ 4 ,+∞⟩ (const reading 42)    -- ∷ [ [ 4 ,+∞⟩ ] Reading
     (perform read ⋆                  -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
       (perform write here            -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ unit
         (delay 2                     -- ⟨ [ 2 ,+∞⟩ ⟩
@@ -399,7 +399,7 @@ duty-cycle =
 
 waiting-instead : [] ⊢C⦂ unit ! [ 9 ,+∞⟩
 waiting-instead =
-  box [ 4 ,+∞⟩ (const 42)            -- ∷ [ [ 4 ,+∞⟩ ] Reading
+  box [ 4 ,+∞⟩ (const reading 42)    -- ∷ [ [ 4 ,+∞⟩ ] Reading
     (delay 5                         -- ⟨ [ 5 ,+∞⟩ ⟩
       (unbox (Tl-⟨⟩ Hd) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -420,8 +420,8 @@ one-tick-short = ≰!
 
 two-schedules : [] ⊢C⦂ unit ! [ 11 ,+∞⟩
 two-schedules =
-  box [ 2 ,+∞⟩ (const 1)             -- ∷ [ [ 2 ,+∞⟩ ] Reading
-    (box [ 6 ,+∞⟩ (const 2)          -- ∷ [ [ 6 ,+∞⟩ ] Reading
+  box [ 2 ,+∞⟩ (const reading 1)     -- ∷ [ [ 2 ,+∞⟩ ] Reading
+    (box [ 6 ,+∞⟩ (const reading 2)  -- ∷ [ [ 6 ,+∞⟩ ] Reading
       (perform read ⋆                -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
         (perform write here          -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ unit
           (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))) ≤! (<:ᵛ-refl _)
@@ -445,9 +445,9 @@ not-due-yet = ≰!
 
 scheduled-choice : [] ∷ bool ⊢C⦂ unit ! [ 8 ,+∞⟩
 scheduled-choice =
-  box [ 3 ,+∞⟩ (const 42)            -- ∷ [ [ 3 ,+∞⟩ ] Reading
+  box [ 3 ,+∞⟩ (const reading 42)            -- ∷ [ [ 3 ,+∞⟩ ] Reading
     (if eternal-var boolₑ (Tl-∷ Hd)
-      `then perform send (const 0)   -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ unit
+      `then perform send (const reading 0)   -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ unit
               (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
                 (perform send here (return ⋆)))

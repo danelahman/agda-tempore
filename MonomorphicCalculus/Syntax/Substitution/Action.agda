@@ -45,7 +45,7 @@ mutual
          → Γ ⊢V⦂ A
 
   V-sub₀ s (var f x)   = sub-var₀ s x f
-  V-sub₀ s (const c)   = const c
+  V-sub₀ s (const B c) = const B c
   V-sub₀ s ⋆           = ⋆
   V-sub₀ s true        = true
   V-sub₀ s false       = false

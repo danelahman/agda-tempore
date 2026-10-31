@@ -49,21 +49,21 @@ open import MonomorphicCalculus.Syntax.Substitution.Subsumption  Spec
 -- at its own type: `pk` stands at the skeleton its own `CRed` was indexed by,
 -- which is what the recursive call is handed.
 
-seq-CRed : ∀ {s A B ε₁ ε₂} {e : shapeᵛ A ≡ s} {St : 𝕊 []}
-         → {M : toCtx St ⊢C⦂ A ! ε₁}
-         → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
-         → CRedˢ' s e ε₁ St M
-         → (∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ ∣ ε₁ ∣ᵉ ] St₁)
-              → (V : toCtx St₁ ⊢V⦂ A) → VRed A St₁ V
-              → CRed' B ε₂ St₁
+seq-CRed : ∀ {s A B ε₁ ε₂} {e : shapeᵛ A ≡ s} {𝕊 : State []}
+         → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁}
+         → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+         → CRedˢ' s e ε₁ 𝕊 M
+         → (∀ {𝕊₁ : State []} → (q : 𝕊 ⊑ₛ[ ∣ ε₁ ∣ᵉ ] 𝕊₁)
+              → (V : toCtx 𝕊₁ ⊢V⦂ A) → VRed A 𝕊₁ V
+              → CRed' B ε₂ 𝕊₁
                   ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c))
          ------------------------------------------------------------------
-         → CRed' B (ε₁ ·ₑ ε₂) St (M ⨟ N)
+         → CRed' B (ε₁ ·ₑ ε₂) 𝕊 (M ⨟ N)
 
 -- The scrutinee returns.
 
-seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
-         (cred-ret {St₁ = St₁} {V = V} e₀ rs pV) hN
+seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {𝕊 = 𝕊} N
+         (cred-ret {𝕊₁ = 𝕊₁} {V = V} e₀ rs pV) hN
   with seq-steps rs N
 
 ... | N₁ , rs' , eN₁ =
@@ -74,16 +74,16 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
     E₀  = steps-extends-state rs
     srs = suc-comp-ren E₀ (steps-grade-≾ rs)
 
-    b : ≤ₛ-grade E₀ ≾ᵣ ∣ ε₁ ∣ᵉ
+    b : κₛ E₀ ≾ᵣ ∣ ε₁ ∣ᵉ
     b = ≾ᵣ-trans
           (≃ᵣ⇒≾ᵣ
-            (≃ᵣ-trans (≃ᵣ-sym (·ᵣ-identityʳ (≤ₛ-grade E₀))) (·ᵣ-cong ≃ᵣ-refl (≃ᵣ-sym map-𝟏ᵉ))))
+            (≃ᵣ-trans (≃ᵣ-sym (·ᵣ-identityʳ (κₛ E₀))) (·ᵣ-cong ≃ᵣ-refl (≃ᵣ-sym map-𝟏ᵉ))))
           (steps-grade-≾ rs)
 
     q = reach E₀ b
 
     -- the renaming `SEQ-RET` puts in front of the sequel it reached
-    R₁ : Ren [] (toCtx St₁) (toCtx St₁ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩)
+    R₁ : Ren [] (toCtx 𝕊₁) (toCtx 𝕊₁ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩)
     R₁ = ⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren
 
     eqr : (srs ∘ʳ R₁) ≐ʳ unbox-ren q
@@ -114,8 +114,8 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
 
 -- The scrutinee gets stuck on an operation.
 
-seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
-         (cred-op {A₀ = A₀} {ε₁ = ε₃} {St₁ = St₁} {op = op} {W = W} {M' = M'}
+seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {𝕊 = 𝕊} N
+         (cred-op {A₀ = A₀} {ε₁ = ε₃} {𝕊₁ = 𝕊₁} {op = op} {W = W} {M' = M'}
                   e₀ rs pW pk) hN
   with seq-steps rs N
 
@@ -123,7 +123,7 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
   CRed-expand* {e₀ = refl} rs'
     (CRed-expand {e₀ = refl} SEQ-OP
       (CRed-coerce (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) ε₃ ε₂))
-        (cred-op refl ε* pW resump)))
+        (cred-op refl done pW resump)))
   where
     ρₒ  = ∣ op-grade op ∣ᵉ
     Ar  = ⌜ arity op ⌝ᵍ
@@ -133,33 +133,33 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
 
 
     -- the renaming `SEQ-OP` puts in front of the sequel it reached
-    κ : Ren [] ((toCtx St₁ ⟨ ρₒ ⟩ ∷ Ar) ⟨ ∣ ε₃ ∣ᵉ ⟩)
-              (toCtx St₁ ⟨ ∣ op-grade op ·ₑ ε₃ ∣ᵉ ⟩)
+    κ : Ren [] ((toCtx 𝕊₁ ⟨ ρₒ ⟩ ∷ Ar) ⟨ ∣ ε₃ ∣ᵉ ⟩)
+              (toCtx 𝕊₁ ⟨ ∣ op-grade op ·ₑ ε₃ ∣ᵉ ⟩)
     κ = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
 
     N₂ = C-rename (cong-∷-ren κ) N₁
 
-    resump : ∀ {St₂ : 𝕊 []} → (q : St₁ ⊑ₛ[ ρₒ ] St₂)
-           → (W' : toCtx St₂ ⊢V⦂ Ar)
-           → VRedᵍ (arity op) St₂ W'
-           → CRed' B (ε₃ ·ₑ ε₂) St₂ (resume q (M' ⨟ N₂) W')
+    resump : ∀ {𝕊₂ : State []} → (q : 𝕊₁ ⊑ₛ[ ρₒ ] 𝕊₂)
+           → (W' : toCtx 𝕊₂ ⊢V⦂ Ar)
+           → VRedᵍ (arity op) 𝕊₂ W'
+           → CRed' B (ε₃ ·ₑ ε₂) 𝕊₂ (resume q (M' ⨟ N₂) W')
 
-    resump {St₂} q W' pW' = seq-CRed {e = e₀} N₃ (pk q W' pW') hN₃
+    resump {𝕊₂} q W' pW' = seq-CRed {e = e₀} N₃ (pk q W' pW') hN₃
       where
         sq = unbox-ren q
 
         N₃ = (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₂)
                [ split-∷ (split-⟨⟩ split-[]) ↦ W' ]c
 
-        B₁' : ≤ₛ-grade (ext q) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ρₒ ·ᵣ ∣ ε₃ ∣ᵉ
+        B₁' : κₛ (ext q) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ρₒ ·ᵣ ∣ ε₃ ∣ᵉ
         B₁' = ·ᵣ-monoˡ-≾ᵣ (bound q)
 
-        B₁ : ≤ₛ-grade (ext q) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ op-grade op ·ₑ ε₃ ∣ᵉ
+        B₁ : κₛ (ext q) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ op-grade op ·ₑ ε₃ ∣ᵉ
         B₁ = ≾ᵣ-trans B₁' (≃ᵣ⇒≿ᵣ map-·ᵉ)
 
         -- what is left of the sequel's renaming once the arity variable is gone
-        W₁ : Ren [] (toCtx St₂ ⟨ ∣ ε₃ ∣ᵉ ⟩)
-                  (toCtx St₁ ⟨ ∣ op-grade op ·ₑ ε₃ ∣ᵉ ⟩)
+        W₁ : Ren [] (toCtx 𝕊₂ ⟨ ∣ ε₃ ∣ᵉ ⟩)
+                  (toCtx 𝕊₁ ⟨ ∣ op-grade op ·ₑ ε₃ ∣ᵉ ⟩)
         W₁ = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren sq
 
         eW₁ : W₁ ≐ʳ suc-comp-ren (ext q) B₁
@@ -212,28 +212,28 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
                     N₁)
                   (C-rename-∘ (cong-∷-ren W₁) (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N₁))
 
-        hN₃ : ∀ {St₃ : 𝕊 []} → (q' : St₂ ⊑ₛ[ ∣ ε₃ ∣ᵉ ] St₃)
-            → (V : toCtx St₃ ⊢V⦂ A₀) → VRed A₀ St₃ V
-            → CRed' B ε₂ St₃
+        hN₃ : ∀ {𝕊₃ : State []} → (q' : 𝕊₂ ⊑ₛ[ ∣ ε₃ ∣ᵉ ] 𝕊₃)
+            → (V : toCtx 𝕊₃ ⊢V⦂ A₀) → VRed A₀ 𝕊₃ V
+            → CRed' B ε₂ 𝕊₃
                 ((C-rename (cong-∷-ren (unbox-ren q')) N₃) [ split-[] ↦ V ]c)
 
-        hN₃ {St₃} q' V pV =
+        hN₃ {𝕊₃} q' V pV =
           CRed-≡ᶜ shift (hN q₁ (spine rs V) (VRed-spine rs V pV))
           where
             -- the run and the clause's own reach accumulate: the grades multiply
             -- and each is bounded, so the composite stays under `ε₁`
-            B₂ : ≤ₛ-grade (≤ₛ-trans E₀ (ext q)) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ
+            B₂ : κₛ (≤ₛ-trans E₀ (ext q)) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ
             B₂ =
               ≾ᵣ-trans
                 (≃ᵣ⇒≾ᵣ
-                  (≃ᵣ-trans (·ᵣ-cong (≤ₛ-grade-trans E₀ (ext q)) ≃ᵣ-refl) (·ᵣ-assoc (≤ₛ-grade E₀) (≤ₛ-grade (ext q)) ∣ ε₃ ∣ᵉ)))
+                  (≃ᵣ-trans (·ᵣ-cong (κₛ-trans E₀ (ext q)) ≃ᵣ-refl) (·ᵣ-assoc (κₛ E₀) (κₛ (ext q)) ∣ ε₃ ∣ᵉ)))
                 (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ B₁) b₀)
 
-            q₁ : St ⊑ₛ[ ∣ ε₁ ∣ᵉ ] St₃
+            q₁ : 𝕊 ⊑ₛ[ ∣ ε₁ ∣ᵉ ] 𝕊₃
             q₁ = reach (≤ₛ-trans (≤ₛ-trans E₀ (ext q)) (ext q'))
                    (≾ᵣ-trans
                      (≃ᵣ⇒≾ᵣ
-                       (≤ₛ-grade-trans (≤ₛ-trans E₀ (ext q)) (ext q')))
+                       (κₛ-trans (≤ₛ-trans E₀ (ext q)) (ext q')))
                      (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (bound q')) B₂))
 
             composite : suc-comp-ren (ext q₁) (reach-bound q₁)

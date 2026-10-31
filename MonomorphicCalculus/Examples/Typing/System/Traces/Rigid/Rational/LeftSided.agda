@@ -66,9 +66,9 @@ a-unit = [ # 1 ,+∞⟩
 
 settled : [] ⊢C⦂ unit ! _
 settled =
-  box a-unit (const 42)      -- ∷ [ a-unit ] Reading
-    (perform read ⋆          -- ⟨ ∣ opTime read ∣ ⟩ ∷ Reading
-      (delay (# 1)           -- ⟨ ι 1 ⟩
+  box a-unit (const reading 42) -- ∷ [ a-unit ] Reading
+    (perform read ⋆             -- ⟨ ∣ opTime read ∣ ⟩ ∷ Reading
+      (delay (# 1)              -- ⟨ ι 1 ⟩
         (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ≤ᵈ! (<:ᵛ-refl _)
                              -- ∷ Reading
           (perform write here (return ⋆)))))

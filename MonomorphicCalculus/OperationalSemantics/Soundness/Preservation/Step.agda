@@ -426,54 +426,54 @@ seq-coe {d = d} {ε₂ = ε₂} {ε₃ = ε₃} p q f =
 -- Stated in `push-str`'s natural grade `(d ·ₑ ε₃) ·ₑ ε₂`; `seq-coe` re-associates
 -- to the goal's `d ·ₑ (ε₃ ·ₑ ε₂)` afterwards.
 
-seq-step-core : ∀ {ε₁ ε₂ ε₃ A A₀ B P} {S S' : 𝕊 []}
+seq-step-core : ∀ {ε₁ ε₂ ε₃ A A₀ B P} {𝕊 𝕊' : State []}
   → (alg : ∀ {ε} → P ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε₂))
   → (alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
            → alg {εb} ∘ᵐ mapˣᵐ idᵐ (T-≤ q) ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa})
-  → (pv : ⟦ toCtx S ⟧ᶜᵗˣ →ᵐ P)
-  → {M : toCtx S ⊢C⦂ A ! ε₁} → (N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
-  → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃}
-  → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
-  → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
-  → (pS : Paramˢ S)
+  → (pv : ⟦ toCtx 𝕊 ⟧ᶜᵗˣ →ᵐ P)
+  → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁} → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+  → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃}
+  → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
+  → (c : κₛ (step-extends-state r) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
+  → (pS : Paramˢ 𝕊)
   → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-  → (m' : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε₃)
-  → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
+  → (m' : ⟦ hist 𝕊' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε₃)
+  → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ r)
-       ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
+       ∘ᵐ _⋄_ {⟦ hist 𝕊 ⟧ᶜᵗˣ} {⟦ hist 𝕊' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
               m' (stepᵀ r)
   → (alg {ε₁} ∘ᵐ ⟨ pv , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ ⟩ᵐ)
-       ∘ᵐ ⟦ S ⟧ˢ pS
+       ∘ᵐ ⟦ 𝕊 ⟧ˢ pS
     ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ (step-≾ r))
        ∘ᵐ alg {step-grade r ·ₑ ε₃}
-       ∘ᵐ ⟨ pv ∘ᵐ ⟦ S ⟧ˢ pS
+       ∘ᵐ ⟨ pv ∘ᵐ ⟦ 𝕊 ⟧ˢ pS
           ,   Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ μᵀ
-            ∘ᵐ Tᶠ (strᵀ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₃})
+            ∘ᵐ Tᶠ (strᵀ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ ⟦ toCtx 𝕊 ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₃})
             ∘ᵐ Tᶠ (mapˣᵐ idᵐ m')
-            ∘ᵐ strᵀ {[ ∣ ε₃ ∣ᵉ ]ᵒ (⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ)} {⟦ hist S' ⟧ᶜᵗˣ}
+            ∘ᵐ strᵀ {[ ∣ ε₃ ∣ᵉ ]ᵒ (⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ ⟦ toCtx 𝕊 ⟧ᶜᵗˣ)} {⟦ hist 𝕊' ⟧ᶜᵗˣ}
                     {step-grade r}
-            ∘ᵐ ⟨ (δ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {∣ step-grade r ∣ᵉ} {∣ ε₃ ∣ᵉ}
+            ∘ᵐ ⟨ (δ {⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ ⟦ toCtx 𝕊 ⟧ᶜᵗˣ} {∣ step-grade r ∣ᵉ} {∣ ε₃ ∣ᵉ}
                     ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ (map-·ᵉ {step-grade r} {ε₃})))
-                   ∘ᵐ ([]-≤ (map-monotoneᵉ (step-≾ r)) ∘ᵐ (η⊣ ∘ᵐ ⟦ S ⟧ˢ pS))
+                   ∘ᵐ ([]-≤ (map-monotoneᵉ (step-≾ r)) ∘ᵐ (η⊣ ∘ᵐ ⟦ 𝕊 ⟧ˢ pS))
                , stepᵀ r ⟩ᵐ ⟩ᵐ
-seq-step-core {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {P} {S} {S'} alg alg-≤ pv {M} N {M'} r c pS pM pN m' ih =
+seq-step-core {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {P} {𝕊} {𝕊'} alg alg-≤ pv {M} N {M'} r c pS pM pN m' ih =
     ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
   ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-              , seq-push {⟦ toCtx S ⟧ᶜᵗˣ} {⟦ hist S ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {⟦ B ⟧ᵛ} {ε₁} {ε₂}
-                         (⟦ N ⟧ᶜᵗ pN) (⟦ M ⟧ᶜᵗ pM) (⟦ S ⟧ˢ pS) ⟩ᵐ-cong)
+              , seq-push {⟦ toCtx 𝕊 ⟧ᶜᵗˣ} {⟦ hist 𝕊 ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {⟦ B ⟧ᵛ} {ε₁} {ε₂}
+                         (⟦ N ⟧ᶜᵗ pN) (⟦ M ⟧ᶜᵗ pM) (⟦ 𝕊 ⟧ˢ pS) ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ∘ᵐ-congʳ (∘ᵐ-congʳ
-      (⟨_,_⟩ᵐ-cong {f = η⊣ ∘ᵐ ⟦ S ⟧ˢ pS} {f' = η⊣ ∘ᵐ ⟦ S ⟧ˢ pS}
-                   {g = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS}
+      (⟨_,_⟩ᵐ-cong {f = η⊣ ∘ᵐ ⟦ 𝕊 ⟧ˢ pS} {f' = η⊣ ∘ᵐ ⟦ 𝕊 ⟧ˢ pS}
+                   {g = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟧ˢ pS}
                    {g' = T-≤ (step-≾ r) ∘ᵐ (μᵀ ∘ᵐ Tᶠ m' ∘ᵐ stepᵀ r)}
                    ≈ᵐ-refl ih)) ⟩ᵐ-cong)
-  ∙ push-str {⟦ toCtx S ⟧ᶜᵗˣ} {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {⟦ B ⟧ᵛ} {P}
+  ∙ push-str {⟦ toCtx 𝕊 ⟧ᶜᵗˣ} {⟦ hist 𝕊 ⟧ᶜᵗˣ} {⟦ hist 𝕊' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {⟦ B ⟧ᵛ} {P}
              {step-grade r} {ε₁} {ε₂} {ε₃}
-             alg alg-≤ (pv ∘ᵐ ⟦ S ⟧ˢ pS)
-             (η⊣ ∘ᵐ ⟦ S ⟧ˢ pS) (⟦ N ⟧ᶜᵗ pN) m'
+             alg alg-≤ (pv ∘ᵐ ⟦ 𝕊 ⟧ˢ pS)
+             (η⊣ ∘ᵐ ⟦ 𝕊 ⟧ˢ pS) (⟦ N ⟧ᶜᵗ pN) m'
              (stepᵀ r) (step-≾ r)
 
--- The `id-suc` box identity: the residual left by `strᵀ-ηᵀ` in the
+-- The `≤ₛ-refl` box identity: the residual left by `strᵀ-ηᵀ` in the
 -- rules that neither advance time nor allocate. The box's two grade
 -- relaxations merge by `[]-≤-trans` into exactly `box-η`'s hypothesis.
 
@@ -487,13 +487,13 @@ box-core a w =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc δ ([]-≤ a) η⊣))
   ∙ box-η a w
 
-box-id-suc : ∀ {X Y ρ₂ ρ₄}
-           → (a : ∣ 𝟏ₑ ∣ᵉ ·ᵣ ρ₄ ≾ᵣ ρ₂) → (w : ρ₄ ≾ᵣ ρ₂)
-           → (env : Y →ᵐ X)
-           → (εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-𝟏ᵉ))
+box-≤ₛ-refl : ∀ {X Y ρ₂ ρ₄}
+            → (a : ∣ 𝟏ₑ ∣ᵉ ·ᵣ ρ₄ ≾ᵣ ρ₂) → (w : ρ₄ ≾ᵣ ρ₂)
+            → (env : Y →ᵐ X)
+            → (εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-𝟏ᵉ))
                ∘ᵐ (δ ∘ᵐ []-≤ a) ∘ᵐ (η⊣ {X} {ρ₂} ∘ᵐ env)
-           ≈ᵐ [ ρ₄ ]ᶠ (⟨⟩-≤ w ∘ᵐ ⟨ ρ₄ ⟩ᶠ env) ∘ᵐ η⊣ {Y} {ρ₄}
-box-id-suc {ρ₂ = ρ₂} a w env =
+            ≈ᵐ [ ρ₄ ]ᶠ (⟨⟩-≤ w ∘ᵐ ⟨ ρ₄ ⟩ᶠ env) ∘ᵐ η⊣ {Y} {ρ₄}
+box-≤ₛ-refl {ρ₂ = ρ₂} a w env =
     ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc (δ ∘ᵐ []-≤ a) (η⊣ {_} {ρ₂}) env))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc (εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-𝟏ᵉ))
                      ((δ ∘ᵐ []-≤ a) ∘ᵐ η⊣ {_} {ρ₂}) env)
@@ -524,7 +524,7 @@ past-η pu e k =
   ∙ ⟨⟩-≤-irr _ k
 
 -- The environment commutes past that relaxation (`⟨⟩-≤-nat`) and `μ` absorbs it
--- (`μ-≤ˡ`), leaving the renaming `suc-comp-ren` builds for a `⟨⟩-suc`: the `μ`
+-- (`μ-≤ˡ`), leaving the renaming `suc-comp-ren` builds for a `≤ₛ-lock`: the `μ`
 -- folding the state's lock with the new tick.
 
 past-tick : ∀ {A B ρ ρ₂ ρ₄ σ u'}
@@ -546,20 +546,20 @@ past-tick pu e k g w E =
   ∙ ∘ᵐ-congˡ (⟨⟩-≤-trans _ _ ∙ ⟨⟩-≤-irr _ w)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
--- The grade witness that `suc-comp-ren id-suc` carries.
+-- The grade witness that `suc-comp-ren ≤ₛ-refl` carries.
 
 wk-w : ∀ {ρ₂ ρ₄} → (c : 𝟏ᵣ ·ᵣ ρ₄ ≾ᵣ ρ₂) → ρ₄ ≾ᵣ ρ₂
 wk-w {ρ₄ = ρ₄} c = ≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-identityˡ ρ₄)) c
 
--- The `∷-suc` cancellation: `suc-comp-ren` prefixes a `cong-⟨⟩-ren wk-ren`,
+-- The `≤ₛ-res` cancellation: `suc-comp-ren` prefixes a `cong-⟨⟩-ren wk-ren`,
 -- whose `fstᵐ` projects away exactly the cell that `⟦_⟧ˢ` just allocated, so
 -- allocation leaves the environment untouched.
 
-box-∷-suc : ∀ {X Y Z ρ₂ ρ₄} → (w w' : ρ₄ ≾ᵣ ρ₂)
-          → (env : Y →ᵐ X) → (cell : X →ᵐ Z)
-          → ⟨⟩-≤ w ∘ᵐ ⟨ ρ₄ ⟩ᶠ env
-          ≈ᵐ (⟨⟩-≤ w' ∘ᵐ ⟨ ρ₄ ⟩ᶠ fstᵐ) ∘ᵐ ⟨ ρ₄ ⟩ᶠ (⟨ idᵐ , cell ⟩ᵐ ∘ᵐ env)
-box-∷-suc w w' env cell =
+box-≤ₛ-res : ∀ {X Y Z ρ₂ ρ₄} → (w w' : ρ₄ ≾ᵣ ρ₂)
+           → (env : Y →ᵐ X) → (cell : X →ᵐ Z)
+           → ⟨⟩-≤ w ∘ᵐ ⟨ ρ₄ ⟩ᶠ env
+           ≈ᵐ (⟨⟩-≤ w' ∘ᵐ ⟨ ρ₄ ⟩ᶠ fstᵐ) ∘ᵐ ⟨ ρ₄ ⟩ᶠ (⟨ idᵐ , cell ⟩ᵐ ∘ᵐ env)
+box-≤ₛ-res w w' env cell =
     ∘ᵐ-congˡ (⟨⟩-≤-irr w w')
   ∙ ∘ᵐ-congʳ (⟨⟩-congᶠ (≈ᵐ-sym (≈ᵐ-sym (∘ᵐ-assoc _ _ _)
                                 ∙ ∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _)
@@ -573,23 +573,23 @@ box-∷-suc w w' env cell =
 -- `suc-comp-ren` builds. Generic in the two resource grades: a reduction's
 -- own effect grades only instantiate them.
 
-step-box : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []} {ρ₂ ρ₄ : R}
-         → {M : toCtx S ⊢C⦂ A ! ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃}
-         → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
-         → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ ρ₄ ≾ᵣ ρ₂)
+step-box : ∀ {ε₁ ε₃ A A₀} {𝕊 𝕊' : State []} {ρ₂ ρ₄ : R}
+         → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃}
+         → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
+         → (c : κₛ (step-extends-state r) ·ᵣ ρ₄ ≾ᵣ ρ₂)
          → (g : ∣ step-grade r ∣ᵉ ·ᵣ ρ₄ ≾ᵣ ρ₂)
-         → (pS : Paramˢ S) → (pM : Paramᶜ M)
-         → strᵀ {[ ρ₄ ]ᵒ (⟨ ρ₂ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ)} {⟦ hist S' ⟧ᶜᵗˣ} {step-grade r}
-             ∘ᵐ ⟨ (δ {⟨ ρ₂ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {∣ step-grade r ∣ᵉ} {ρ₄} ∘ᵐ []-≤ g)
-                    ∘ᵐ (η⊣ ∘ᵐ ⟦ S ⟧ˢ pS)
+         → (pS : Paramˢ 𝕊) → (pM : Paramᶜ M)
+         → strᵀ {[ ρ₄ ]ᵒ (⟨ ρ₂ ⟩ᵒ ⟦ toCtx 𝕊 ⟧ᶜᵗˣ)} {⟦ hist 𝕊' ⟧ᶜᵗˣ} {step-grade r}
+             ∘ᵐ ⟨ (δ {⟨ ρ₂ ⟩ᵒ ⟦ toCtx 𝕊 ⟧ᶜᵗˣ} {∣ step-grade r ∣ᵉ} {ρ₄} ∘ᵐ []-≤ g)
+                    ∘ᵐ (η⊣ ∘ᵐ ⟦ 𝕊 ⟧ˢ pS)
                 , stepᵀ r ⟩ᵐ
            ≈ᵐ Tᶠ ⟨ [ ρ₄ ]ᶠ (⟦ suc-comp-ren (step-extends-state r) c ⟧ʳ
-                             ∘ᵐ ⟨ ρ₄ ⟩ᶠ (⟦ S' ⟧ˢ (stepᴾˢ r pS pM)))
+                             ∘ᵐ ⟨ ρ₄ ⟩ᶠ (⟦ 𝕊' ⟧ˢ (stepᴾˢ r pS pM)))
                     ∘ᵐ η⊣
                  , idᵐ ⟩ᵐ
               ∘ᵐ stepᵀ r
 
--- The time-preserving rules: `strᵀ-ηᵀ` opens the box, and `box-id-suc`
+-- The time-preserving rules: `strᵀ-ηᵀ` opens the box, and `box-≤ₛ-refl`
 -- is what is left: the environment survives unchanged.
 
 step-box APP c g pS pM =
@@ -599,7 +599,7 @@ step-box APP c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box MATCH c g pS pM =
@@ -609,7 +609,7 @@ step-box MATCH c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box MATCHL c g pS pM =
@@ -619,7 +619,7 @@ step-box MATCHL c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box RECL c g pS pM =
@@ -629,7 +629,7 @@ step-box RECL c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box CMP c g pS pM =
@@ -639,7 +639,7 @@ step-box CMP c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box IF-TRUE c g pS pM =
@@ -649,7 +649,7 @@ step-box IF-TRUE c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box IF-FALSE c g pS pM =
@@ -659,7 +659,7 @@ step-box IF-FALSE c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box MATCHℕ-ZERO c g pS pM =
@@ -669,7 +669,7 @@ step-box MATCHℕ-ZERO c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box RECℕ-ZERO c g pS pM =
@@ -679,7 +679,7 @@ step-box RECℕ-ZERO c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box RECℕ-SUCC c g pS pM =
@@ -689,7 +689,7 @@ step-box RECℕ-SUCC c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box MATCHℕ-SUCC c g pS pM =
@@ -699,7 +699,7 @@ step-box MATCHℕ-SUCC c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box MATCH+ c g pS pM =
@@ -709,7 +709,7 @@ step-box MATCH+ c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box SEQ-RET c g pS pM =
@@ -719,7 +719,7 @@ step-box SEQ-RET c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box SEQ-OP c g pS pM =
@@ -729,7 +729,7 @@ step-box SEQ-OP c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box HANDLE-RET c g pS pM =
@@ -739,7 +739,7 @@ step-box HANDLE-RET c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box HANDLE-OP c g pS pM =
@@ -749,7 +749,7 @@ step-box HANDLE-OP c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box UNBOX c g pS pM =
@@ -759,7 +759,7 @@ step-box UNBOX c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box SUB-APP c g pS pM =
@@ -769,7 +769,7 @@ step-box SUB-APP c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box SUB-HANDLE c g pS pM =
@@ -779,7 +779,7 @@ step-box SUB-HANDLE c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box SUB-HANDLE-TRANS c g pS pM =
@@ -789,7 +789,7 @@ step-box SUB-HANDLE-TRANS c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box SUB-IF c g pS pM =
@@ -799,7 +799,7 @@ step-box SUB-IF c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box SUB-MATCHℕ c g pS pM =
@@ -809,7 +809,7 @@ step-box SUB-MATCHℕ c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box SUB-RECℕ c g pS pM =
@@ -819,7 +819,7 @@ step-box SUB-RECℕ c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 step-box SUB c g pS pM =
@@ -829,7 +829,7 @@ step-box SUB c g pS pM =
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+              ∙ ⟨ box-≤ₛ-refl _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
 -- The recursive rules: `stepᵀ`, `step-extends-state`, and both states are all
@@ -841,19 +841,19 @@ step-box (HANDLE-STEP r c') c g pS (pM , pN , pH , uH) = step-box r c g pS pM
 -- BOX: allocation. `stepᵀ` is still `ηᵀ`; the `fstᵐ` that `suc-comp-ren`
 -- contributes cancels exactly the cell just written.
 
-step-box (BOX {ρ' = ρ'} {S = St} {V = V}) c g pS (pV , pM) =
+step-box (BOX {ρ' = ρ'} {𝕊 = 𝕊} {V = V}) c g pS (pV , pM) =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ (wk-w c) (⟦ St ⟧ˢ pS)
-                  ∙ ∘ᵐ-congˡ ([]-congᶠ (box-∷-suc (wk-w c) (wk-w c) (⟦ St ⟧ˢ pS)
+              ∙ ⟨ box-≤ₛ-refl _ (wk-w c) (⟦ 𝕊 ⟧ˢ pS)
+                  ∙ ∘ᵐ-congˡ ([]-congᶠ (box-≤ₛ-res (wk-w c) (wk-w c) (⟦ 𝕊 ⟧ˢ pS)
                                 (  [ ρ' ]ᶠ (⟦ V-rename (eq-ren (sym ++ᶜ-identityˡ)) V ⟧ᵛᵗ
                                               (renᵛ (eq-ren (sym ++ᶜ-identityˡ)) V pV)
                                             ∘ᵐ ⟦ eq-ren (++ᶜ-identityˡ
-                                                  {toCtx St ⟨ ρ' ⟩}) ⟧ʳ)
+                                                  {toCtx 𝕊 ⟨ ρ' ⟩}) ⟧ʳ)
                                  ∘ᵐ η⊣)))
                 , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
@@ -865,7 +865,7 @@ step-box (BOX {ρ' = ρ'} {S = St} {V = V}) c g pS (pV , pM) =
 -- tick's own grade. Inside the resulting box the shape is the time-preserving
 -- one again.
 
-step-box (DELAY {τ = τ} {S = St}) c g pS pM =
+step-box (DELAY {τ = τ} {𝕊 = 𝕊}) c g pS pM =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ (delayᵀ τ) _ ([ ιᵣ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -907,7 +907,7 @@ step-box (DELAY {τ = τ} {S = St}) c g pS pM =
                             (≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-identityʳ (ιᵣ τ)))
                               (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (≃ᵣ⇒≿ᵣ map-𝟏ᵉ))
                                         (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-ιᵉ ≃ᵣ-refl)))))
-                            g _ (⟦ St ⟧ˢ pS)))
+                            g _ (⟦ 𝕊 ⟧ˢ pS)))
                     , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
       ∙ ηᵀ-nat _)))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-∘ᵐ _ _))
@@ -939,9 +939,9 @@ step-box (DELAY {τ = τ} {S = St}) c g pS pM =
 -- The box `seq-step-core` produces carries two grade relaxations, which merge
 -- into the single one `step-box` expects.
 
-seq-g : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []}
-      → {M : toCtx S ⊢C⦂ A ! ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃}
-      → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
+seq-g : ∀ {ε₁ ε₃ A A₀} {𝕊 𝕊' : State []}
+      → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃}
+      → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
       → ∣ step-grade r ∣ᵉ ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ
 seq-g {ε₃ = ε₃} r =
   ≾ᵣ-trans (≃ᵣ⇒≿ᵣ (map-·ᵉ {step-grade r} {ε₃}))
@@ -1007,28 +1007,28 @@ seq-target {ε₃ = ε₃} {A = A} {B = B} {Γ' = Γ'} alg pv N ρ m' env pN =
              ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
            , ≈ᵐ-refl ⟩ᵐ-cong))
 
-sound-SEQ-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {S S' : 𝕊 []}
-  → {M : toCtx S ⊢C⦂ A ! ε₁} → (N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
-  → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃}
-  → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
-  → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
-  → (pS : Paramˢ S) → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
-  → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
+sound-SEQ-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {𝕊 𝕊' : State []}
+  → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁} → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+  → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε₃}
+  → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
+  → (c : κₛ (step-extends-state r) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
+  → (pS : Paramˢ 𝕊) → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
+  → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ r)
        ∘ᵐ Tᶠ ⟦ step-refines-type r ⟧<:ᵛ
-       ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A₀ ⟧ᵛ} {step-grade r} {ε₃}
-              (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) (stepᵀ r)
-  → ⟦ M ⨟ N ⟧ᶜᵗ (pM , pN) ∘ᵐ ⟦ S ⟧ˢ pS
+       ∘ᵐ _⋄_ {⟦ hist 𝕊 ⟧ᶜᵗˣ} {⟦ hist 𝕊' ⟧ᶜᵗˣ} {⟦ A₀ ⟧ᵛ} {step-grade r} {ε₃}
+              (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ 𝕊' ⟧ˢ (stepᴾˢ r pS pM)) (stepᵀ r)
+  → ⟦ M ⨟ N ⟧ᶜᵗ (pM , pN) ∘ᵐ ⟦ 𝕊 ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ (SEQ-STEP {N = N} r c))
-       ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ B ⟧ᵛ} {step-grade r} {ε₃ ·ₑ ε₂}
+       ∘ᵐ _⋄_ {⟦ hist 𝕊 ⟧ᶜᵗˣ} {⟦ hist 𝕊' ⟧ᶜᵗˣ} {⟦ B ⟧ᵛ} {step-grade r} {ε₃ ·ₑ ε₂}
               (⟦ M' ⨟ subCtx (step-refines-type r)
                         (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N) ⟧ᶜᵗ
                  (pM' , subCtxᴾ (step-refines-type r)
                           (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N)
                           (renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN))
-                 ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
+                 ∘ᵐ ⟦ 𝕊' ⟧ˢ (stepᴾˢ r pS pM))
               (stepᵀ r)
-sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} N {M'} r c pS pM pN pM' ih =
+sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {𝕊} {𝕊'} {M} N {M'} r c pS pM pN pM' ih =
     ∘ᵐ-congˡ (≈ᵐ-sym (μalg-drop _ _))
   ∙ seq-step-core μalg μalg-≤ terminalᵐ N r c pS pM pN mt ih'
   ∙ ∘ᵐ-congʳ (μalg-drop _ _)
@@ -1076,23 +1076,23 @@ sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} N {M'} r c pS
                         η⊣ (⟦ M' ⟧ᶜᵗ pM')))
                  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (μalg-drop _ _))
                  ∙ seq-target {ε₁} {ε₂} {ε₃} {A} {B} {𝟙ᵐ}
-                              {toCtx S} {toCtx S'} {⟦ hist S' ⟧ᶜᵗˣ}
+                              {toCtx 𝕊} {toCtx 𝕊'} {⟦ hist 𝕊' ⟧ᶜᵗˣ}
                               μalg terminalᵐ N (suc-comp-ren (step-extends-state r) c)
                               (Tᶠ ⟦ step-refines-type r ⟧<:ᵛ ∘ᵐ ⟦ M' ⟧ᶜᵗ pM')
-                              (⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) pN
+                              (⟦ 𝕊' ⟧ˢ (stepᴾˢ r pS pM)) pN
                  ∙ μalg-drop _ _))))))
   -- … and the `ε-substᵀ` that `μμ` exposed is exactly what `seq-coe` absorbs
   ∙ seq-coe (step-≾ r) (step-≾ (SEQ-STEP {N = N} r c)) _
   where
-    g : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A₀ ⟧ᵛ ε₃
-    g = ⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)
+    g : ⟦ hist 𝕊' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A₀ ⟧ᵛ ε₃
+    g = ⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ 𝕊' ⟧ˢ (stepᴾˢ r pS pM)
 
-    mt : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε₃
-    mt = (Tᶠ ⟦ step-refines-type r ⟧<:ᵛ ∘ᵐ ⟦ M' ⟧ᶜᵗ pM') ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)
+    mt : ⟦ hist 𝕊' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε₃
+    mt = (Tᶠ ⟦ step-refines-type r ⟧<:ᵛ ∘ᵐ ⟦ M' ⟧ᶜᵗ pM') ∘ᵐ ⟦ 𝕊' ⟧ˢ (stepᴾˢ r pS pM)
 
-    ih' : ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
+    ih' : ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟧ˢ pS
         ≈ᵐ T-≤ (step-≾ r)
-           ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
+           ∘ᵐ _⋄_ {⟦ hist 𝕊 ⟧ᶜᵗˣ} {⟦ hist 𝕊' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
                   mt (stepᵀ r)
     ih' = ih
         ∙ ∘ᵐ-congʳ (≈ᵐ-sym (Tᶠ-bind ⟦ step-refines-type r ⟧<:ᵛ g (stepᵀ r)))
@@ -1102,12 +1102,12 @@ sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} N {M'} r c pS
 -- `SUB`: subsumption at a computation is discarded. Its value half becomes the
 -- step's own type refinement, its effect half the step's sub-effecting.
 
-sound-SUB : ∀ {ε ε' A A'} {S : 𝕊 []}
-  → {M : toCtx S ⊢C⦂ A ! ε}
+sound-SUB : ∀ {ε ε' A A'} {𝕊 : State []}
+  → {M : toCtx 𝕊 ⊢C⦂ A ! ε}
   → (p : A <:ᵛ A') → (q : ε ≾ₑ ε')
-  → (pS : Paramˢ S) → (pM : Paramᶜ M)
-  → ⟦ subC M (p !ₛ q) ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
-    ≈ᵐ T-≤ q ∘ᵐ Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ (⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS)
+  → (pS : Paramˢ 𝕊) → (pM : Paramᶜ M)
+  → ⟦ subC M (p !ₛ q) ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟧ˢ pS
+    ≈ᵐ T-≤ q ∘ᵐ Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ (⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟧ˢ pS)
 sound-SUB p q pS pM =
     ∘ᵐ-congˡ (∘ᵐ-congˡ (T-≤-nat ⟦ p ⟧<:ᵛ q))
   ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)

@@ -20,6 +20,6 @@ open import MonomorphicCalculus.Syntax.Types    S
 record TopLevelOpSemantics : Set where
   field 
     op-sem : (op : Op)
-           → {S : 𝕊 []} -- uniform in S only under `OpSemCoherent`
-           → toCtx S ⊢V⦂ ⌜ param op ⌝ᵍ
-           → toCtx S ⟨ ∣ op-grade op ∣ᵉ ⟩ ⊢V⦂ ⌜ arity op ⌝ᵍ
+           → {𝕊 : State []} -- uniform in 𝕊 only under `OpSemCoherent`
+           → toCtx 𝕊 ⊢V⦂ ⌜ param op ⌝ᵍ
+           → toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ⊢V⦂ ⌜ arity op ⌝ᵍ

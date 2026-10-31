@@ -69,7 +69,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Substitutio
 open import MonomorphicCalculus.EquationalTheory.EquationalTheory S
 
 open import MonomorphicCalculus.EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
-       using (⟦⟧ᶜᵗ-irr; ⟦⟧ᵛᵗ-irr; Soundᶜ==)
+       using (⟦⟧ᶜᵗ-irr; ⟦⟧ᵛᵗ-irr; Soundᶜ≡ᵗʰ)
 open import MonomorphicCalculus.OperationalSemantics.Soundness.Preservation.Step S Cat Fut Pst Adj GTy Mon GE
        using (box-split; η⊣-⟨⟩)
 open import MonomorphicCalculus.OperationalSemantics.Soundness.Preservation.Handle S Cat Fut Pst Adj GTy Mon GE
@@ -99,7 +99,7 @@ private
   handle-perform-rhs : ∀ {Γ ρ A₀ Δ C B ε₁ ε₀} {L : Γ ⊢C⦂ B ! ε₀}
       {M : Γ ⟨ ρ ⟩ ∷ A₀ ⊢C⦂ C} {K : Γ ∷ [ ρ ] (A₀ ⇒ C) ⊢C⦂ B ! ε₁}
     → (e : ε₁ ≃ₑ ε₀)
-    → Γ ⊢C⦂ L == ε-≃ e (box ρ (fun M) K)
+    → Γ ⊢C⦂ L ≡ᵗʰ ε-≃ e (box ρ (fun M) K)
     → (p : Paramᶜ (ε-≃ e (box ρ (fun M) K))) → (pK : Paramᶜ K)
     → (M' : Δ ⊢C⦂ C) → (q : _≡_ {A = Σ Ctx (_⊢C⦂ C)} (Δ , M') (Γ ⟨ ρ ⟩ ∷ A₀ , M))
     → (pM' : Paramᶜ M') → {f : ⟦ Δ ⟧ᶜᵗˣ →ᵐ ⟦ C ⟧ᶜ}
@@ -122,7 +122,7 @@ sound-handle-perform : ∀ {Γ A B ε ε' op}
             ∷ [ ∣ op-grade op' ∣ᵉ ] (⌜ arity op' ⌝ᵍ ⇒ B ! ε'')
          ⊢C⦂ B ! (op-grade op' ·ₑ ε''))
   → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
-  → Soundᶜ== (handle-perform V M H N)
+  → Soundᶜ≡ᵗʰ (handle-perform V M H N)
 sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
                      ((pV , pM) , pN , pH , uH) pR = assembly
   where

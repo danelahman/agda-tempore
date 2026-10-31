@@ -29,38 +29,38 @@ module PureTopLevelProgressTheorem (OpSemantics : TopLevelOpSemantics) where
   open PureTopLevelPreservationTheorem (OpSemantics)
 
   data TopLevelProgresses : {ε : E}
-                          → {S : 𝕊 []}
+                          → {𝕊 : State []}
                           → {A : VType}
-                          → (M : toCtx S ⊢C⦂ A ! ε)
+                          → (M : toCtx 𝕊 ⊢C⦂ A ! ε)
                           → Set where
 
-       is-top-level-value : {S : 𝕊 []}
+       is-top-level-value : {𝕊 : State []}
                           → {A : VType}
-                          → {V : toCtx S ⊢V⦂ A}
+                          → {V : toCtx 𝕊 ⊢V⦂ A}
                           -----------------------------
                           → TopLevelProgresses (return V)
 
        top-level-steps    : ∀ {ε ε'}
                           → {A B : VType}
-                          → {S S' : 𝕊 []}
-                          → {M : toCtx S ⊢C⦂ A ! ε}
-                          → {M' : toCtx S' ⊢C⦂ B ! ε'}
-                          → (prf : state-grade S' ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ state-grade S ·ᵣ ∣ ε ∣ᵉ)
+                          → {𝕊 𝕊' : State []}
+                          → {M : toCtx 𝕊 ⊢C⦂ A ! ε}
+                          → {M' : toCtx 𝕊' ⊢C⦂ B ! ε'}
+                          → (prf : state-grade 𝕊' ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ state-grade 𝕊 ·ᵣ ∣ ε ∣ᵉ)
                           → (t : B <:ᵛ A)
-                          → ⟨ S , M ⟩ ⟿ ⟨ S' , M' ⟩
+                          → ⟨ 𝕊 ∣ M ⟩ ⟶ᵗ ⟨ 𝕊' ∣ M' ⟩
                           ------------------------------------------------------------
                           → TopLevelProgresses M
 
   -- Top-level progress theorem statement
   
-  top-level-progress : ∀ {A ε} → {S : 𝕊 []} → (M : toCtx S ⊢C⦂ A ! ε) → TopLevelProgresses M
-  top-level-progress {S = S} M with progress M
-  ... | is-value =
+  top-level-progress : ∀ {A ε} → {𝕊 : State []} → (M : toCtx 𝕊 ⊢C⦂ A ! ε) → TopLevelProgresses M
+  top-level-progress {𝕊 = 𝕊} M with progress M
+  ... | is-return =
     is-top-level-value
-  ... | is-op =
+  ... | is-perform =
     top-level-steps
       (≃ᵣ⇒≾ᵣ (≃ᵣ-trans (·ᵣ-assoc _ _ _) (·ᵣ-cong ≃ᵣ-refl (≃ᵣ-sym map-·ᵉ))))
       (<:ᵛ-refl _)
       OP-STEP
   ... | steps M⟶M' p t =
-    top-level-steps (cancelled⇒total (step-extends-state M⟶M') p) t (⟶-STEP M⟶M')
+    top-level-steps (cancelled⇒total (step-extends-state M⟶M') p) t (STEP M⟶M')

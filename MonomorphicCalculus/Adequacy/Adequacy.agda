@@ -87,14 +87,14 @@ open HF.BaseFaithful bf
 
 -- Two programs halt alike: same return-or-stuck shape, same operation.
 
-record Same-whnf {A : VType} {ε : E} (M N : Prog A ε) : Set where
+record Same-whnf {A : VType} {ε : E} (M N : Closed A ε) : Set where
 
   field
 
-    same-ret : Ret-whnf (⟨ ∅ , M ⟩) → Ret-whnf (⟨ ∅ , N ⟩)
+    same-ret : Ret-whnf (⟨ ∅ ∣ M ⟩) → Ret-whnf (⟨ ∅ ∣ N ⟩)
 
-    same-op  : (w : Op-whnf (⟨ ∅ , M ⟩))
-             → Σ[ w' ∈ Op-whnf (⟨ ∅ , N ⟩) ] Op-whnf.oper w ≡ Op-whnf.oper w'
+    same-op  : (w : Op-whnf (⟨ ∅ ∣ M ⟩))
+             → Σ[ w' ∈ Op-whnf (⟨ ∅ ∣ N ⟩) ] Op-whnf.oper w ≡ Op-whnf.oper w'
 
 -- Post-composing the functorial action passes into a Kleisli composite, and
 -- through each of the two head shapes: `ηᵀ` and `opᵀ` are natural.
@@ -133,8 +133,8 @@ Tᶠ-nodeᵐ g op w k =
 -- environment is `idᵐ`).
 
 program-run-sound : ∀ {A B ε ε'} {cf' : Config (B ! ε')}
-                  → (M : Prog A ε) → (pM : Paramᶜ M)
-                  → (rs : ⟨ ∅ , M ⟩ ⟶* cf')
+                  → (M : Closed A ε) → (pM : Paramᶜ M)
+                  → (rs : ⟨ ∅ ∣ M ⟩ ⟶* cf')
                   → ⟦ M ⟧ᵖ pM
                   ≈ᵐ delayedᵐ (Tᶠ ⟦ run-refines-type rs ⟧<:ᵛ
                                  ∘ᵐ ⟦ cf' ⟧ᶜᶠ (stepsᴾᶜᶠ rs (tt , pM)))
@@ -148,27 +148,27 @@ program-run-sound M pM rs =
 -- The value a whnf returns, at the program's own type: a run refines the type,
 -- so the value stands at a subtype of it.
 
-ret-value : ∀ {A ε} {M : Prog A ε} → (w : Ret-whnf (⟨ ∅ , M ⟩))
+ret-value : ∀ {A ε} {M : Closed A ε} → (w : Ret-whnf (⟨ ∅ ∣ M ⟩))
           → toCtx (Ret-whnf.state w) ⊢V⦂ A
 ret-value w = subV (Ret-whnf.value w) (run-refines-type (Ret-whnf.run w))
 
 -- The two head presentations of a program, read off a whnf it reaches.
 
-ret-presentation : ∀ {A ε} → (M : Prog A ε) → (pM : Paramᶜ M)
-                 → (w : Ret-whnf (⟨ ∅ , M ⟩))
+ret-presentation : ∀ {A ε} → (M : Closed A ε) → (pM : Paramᶜ M)
+                 → (w : Ret-whnf (⟨ ∅ ∣ M ⟩))
                  → Σ[ Y ∈ Obj ] Σ[ δ ∈ E ] Σ[ a ∈ (Y →ᵐ ⟦ A ⟧ᵛ) ]
                    Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (ret-ticks w) ]
                    Σ[ r ∈ (δ ·ₑ 𝟏ₑ ≾ₑ ε) ]
                      (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ a) d r)
-ret-presentation M pM (ret-whnf St A₀ V rs) =
+ret-presentation M pM (ret-whnf 𝕊 A₀ V rs) =
     _ , _ , _ , _ , stepsᵀ-delays rs , steps-≾ rs
   , ≈ᵐ-trans (program-run-sound M pM rs)
       (delayedᵐ-cong (stepsᵀ rs) (steps-≾ rs)
         (≈ᵐ-trans (∘ᵐ-congʳ (proj₂ (ret-whnf-shape V _ _)))
                   (Tᶠ-leafᵐ _ _)))
 
-op-presentation : ∀ {A ε} → (M : Prog A ε) → (pM : Paramᶜ M)
-                → (w : Op-whnf (⟨ ∅ , M ⟩))
+op-presentation : ∀ {A ε} → (M : Closed A ε) → (pM : Paramᶜ M)
+                → (w : Op-whnf (⟨ ∅ ∣ M ⟩))
                 → Σ[ Y ∈ Obj ] Σ[ δ ∈ E ] Σ[ ε₂ ∈ E ]
                   Σ[ v ∈ (Y →ᵐ ⟦ param (Op-whnf.oper w) ⟧ᵍ) ]
                   Σ[ k ∈ (Y →ᵐ [ ∣ op-grade (Op-whnf.oper w) ∣ᵉ ]ᵒ
@@ -176,7 +176,7 @@ op-presentation : ∀ {A ε} → (M : Prog A ε) → (pM : Paramᶜ M)
                   Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (op-ticks w) ]
                   Σ[ r ∈ (δ ·ₑ (op-grade (Op-whnf.oper w) ·ₑ ε₂) ≾ₑ ε) ]
                     (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (nodeᵐ (Op-whnf.oper w) v k) d r)
-op-presentation M pM (op-whnf St op ε' A₀ W M' rs) =
+op-presentation M pM (op-whnf 𝕊 op ε' A₀ W M' rs) =
     _ , _ , _ , _ , _ , _ , stepsᵀ-delays rs , steps-≾ rs
   , ≈ᵐ-trans (program-run-sound M pM rs)
       (delayedᵐ-cong (stepsᵀ rs) (steps-≾ rs)
@@ -187,10 +187,10 @@ op-presentation M pM (op-whnf St op ε' A₀ W M' rs) =
 -- it is on the same operation: the two presentations meet at `ret≢op`
 -- resp. `op-inj`.
 
-ret-vs-op : ∀ {A ε} → {M N : Prog A ε}
+ret-vs-op : ∀ {A ε} → {M N : Closed A ε}
           → (pM : Paramᶜ M) → (pN : Paramᶜ N)
           → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
-          → Ret-whnf (⟨ ∅ , M ⟩) → Op-whnf (⟨ ∅ , N ⟩)
+          → Ret-whnf (⟨ ∅ ∣ M ⟩) → Op-whnf (⟨ ∅ ∣ N ⟩)
           -------------------------------------------
           → ⊥
 ret-vs-op {M = M} {N = N} pM pN e wM wN
@@ -199,10 +199,10 @@ ret-vs-op {M = M} {N = N} pM pN e wM wN
     | _ , _ , _ , _ , _ , _ , ndN , rN , eN =
   ret≢op ndM ndN rM rN (≈ᵐ-trans (≈ᵐ-sym eM) (≈ᵐ-trans e eN))
 
-same-oper : ∀ {A ε} → {M N : Prog A ε}
+same-oper : ∀ {A ε} → {M N : Closed A ε}
           → (pM : Paramᶜ M) → (pN : Paramᶜ N)
           → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
-          → (wM : Op-whnf (⟨ ∅ , M ⟩)) → (wN : Op-whnf (⟨ ∅ , N ⟩))
+          → (wM : Op-whnf (⟨ ∅ ∣ M ⟩)) → (wN : Op-whnf (⟨ ∅ ∣ N ⟩))
           ---------------------------------------------------------
           → Op-whnf.oper wM ≡ Op-whnf.oper wN
 same-oper {M = M} {N = N} pM pN e wM wN
@@ -214,7 +214,7 @@ same-oper {M = M} {N = N} pM pN e wM wN
 -- Equal denotations halt alike: `halts` supplies a whnf on each side, and the
 -- two lemmas above exclude the mismatched pairing.
 
-adequacy : ∀ {A ε} → {M N : Prog A ε}
+adequacy : ∀ {A ε} → {M N : Closed A ε}
          → (pM : Paramᶜ M) → (pN : Paramᶜ N)
          → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
          ----------------------------
@@ -222,13 +222,13 @@ adequacy : ∀ {A ε} → {M N : Prog A ε}
 
 adequacy {M = M} {N = N} pM pN e = record { same-ret = sr ; same-op = so }
   where
-    sr : Ret-whnf (⟨ ∅ , M ⟩) → Ret-whnf (⟨ ∅ , N ⟩)
+    sr : Ret-whnf (⟨ ∅ ∣ M ⟩) → Ret-whnf (⟨ ∅ ∣ N ⟩)
     sr wM with halts N
     ... | halts-ret wN = wN
     ... | halts-op wN  = ⊥-elim (ret-vs-op pM pN e wM wN)
 
-    so : (wM : Op-whnf (⟨ ∅ , M ⟩))
-       → Σ[ wN ∈ Op-whnf (⟨ ∅ , N ⟩) ] Op-whnf.oper wM ≡ Op-whnf.oper wN
+    so : (wM : Op-whnf (⟨ ∅ ∣ M ⟩))
+       → Σ[ wN ∈ Op-whnf (⟨ ∅ ∣ N ⟩) ] Op-whnf.oper wM ≡ Op-whnf.oper wN
     so wM with halts N
     ... | halts-ret wN = ⊥-elim (ret-vs-op pN pM (≈ᵐ-sym e) wN wM)
     ... | halts-op wN  = wN , same-oper pM pN e wM wN
@@ -238,27 +238,27 @@ adequacy {M = M} {N = N} pM pN e = record { same-ret = sr ; same-op = so }
 -- At a base type the run's refinement is `Baseₛ refl`, whose coercion is the
 -- identity, so the whnf's leaf survives it unchanged.
 
-base-run-leaf : ∀ {b A₀} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A₀)
+base-run-leaf : ∀ {b A₀} {𝕊 : State []} → (V : toCtx 𝕊 ⊢V⦂ A₀)
               → (p : A₀ <:ᵛ Base b)
-              → (pSt : Paramˢ St) → (pV : Paramᵛ V)
+              → (pSt : Paramˢ 𝕊) → (pV : Paramᵛ V)
               → Σ[ c ∈ BaseConstants b ]
-                  (base-val (subV V p) ≡ const c)
-                × (Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
+                  (base-val (subV V p) ≡ const b c)
+                × (Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ ⟨ 𝕊 ∣ return V ⟩ ⟧ᶜᶠ (pSt , pV)
                      ≈ᵐ leafᵐ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ))
 
 base-run-leaf V (Baseₛ refl) pSt pV with base-leaf-const V pSt pV
 ... | c , sc , qc =
   c , sc , ≈ᵐ-trans (∘ᵐ-congˡ T-idᵐ) (≈ᵐ-trans (∘ᵐ-identityˡ _) qc)
 
-const-presentation : ∀ {b ε} → (M : Prog (Base b) ε) → (pM : Paramᶜ M)
-                   → (w : Ret-whnf (⟨ ∅ , M ⟩))
+const-presentation : ∀ {b ε} → (M : Closed (Base b) ε) → (pM : Paramᶜ M)
+                   → (w : Ret-whnf (⟨ ∅ ∣ M ⟩))
                    → Σ[ c ∈ BaseConstants b ] Σ[ Y ∈ Obj ] Σ[ δ ∈ E ]
                      Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (ret-ticks w) ]
                      Σ[ r ∈ (δ ·ₑ 𝟏ₑ ≾ₑ ε) ]
-                       (base-val (ret-value w) ≡ const c)
+                       (base-val (ret-value w) ≡ const b c)
                      × (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ)) d r)
 
-const-presentation M pM (ret-whnf St A₀ V rs)
+const-presentation M pM (ret-whnf 𝕊 A₀ V rs)
   with base-run-leaf V (run-refines-type rs) _ _
 ... | c , sc , qc =
     c , _ , _ , _ , stepsᵀ-delays rs , steps-≾ rs , sc
@@ -268,14 +268,14 @@ const-presentation M pM (ret-whnf St A₀ V rs)
 -- The returned answers are the same constant: `leaf-const` identifies the two
 -- denotations and `const-inj` reflects that to the syntax.
 
-adequacy-base : ∀ {b ε} → {M N : Prog (Base b) ε}
+adequacy-base : ∀ {b ε} → {M N : Closed (Base b) ε}
               → (pM : Paramᶜ M) → (pN : Paramᶜ N)
               → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
-              → (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
+              → (wM : Ret-whnf (⟨ ∅ ∣ M ⟩)) → (wN : Ret-whnf (⟨ ∅ ∣ N ⟩))
               ------------------------------------------------------------
               → Σ[ c ∈ BaseConstants b ]
-                  (base-val (ret-value wM) ≡ const c)
-                × (base-val (ret-value wN) ≡ const c)
+                  (base-val (ret-value wM) ≡ const b c)
+                × (base-val (ret-value wN) ≡ const b c)
 
 adequacy-base {M = M} {N = N} pM pN e wM wN
   with const-presentation M pM wM | const-presentation N pN wN
@@ -290,25 +290,25 @@ adequacy-base {M = M} {N = N} pM pN e wM wN
 -- terminal object, as at a base constant. Which constant it is has to be
 -- carried along, since the two give different leaves.
 
-bool-leaf-value : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ bool)
-                → (pSt : Paramˢ St) → (pV : Paramᵛ V)
+bool-leaf-value : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢V⦂ bool)
+                → (pSt : Paramˢ 𝕊) → (pV : Paramᵛ V)
                 → ((bool-val V ≡ true)
-                   × (⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
+                   × (⟦ ⟨ 𝕊 ∣ return V ⟩ ⟧ᶜᶠ (pSt , pV)
                         ≈ᵐ leafᵐ (trueᵐ ∘ᵐ terminalᵐ)))
                 ⊎ ((bool-val V ≡ false)
-                   × (⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
+                   × (⟦ ⟨ 𝕊 ∣ return V ⟩ ⟧ᶜᶠ (pSt , pV)
                         ≈ᵐ leafᵐ (falseᵐ ∘ᵐ terminalᵐ)))
 
 bool-leaf-value (var f x) pSt pV = ⊥-elim (bool-not-in-toCtx x)
-bool-leaf-value {St = St} true pSt pV =
+bool-leaf-value {𝕊 = 𝕊} true pSt pV =
   inj₁ (refl
-       , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (trueᵐ ∘ᵐ terminalᵐ) (⟦ St ⟧ˢ pSt))
-           (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc trueᵐ terminalᵐ (⟦ St ⟧ˢ pSt))
+       , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (trueᵐ ∘ᵐ terminalᵐ) (⟦ 𝕊 ⟧ˢ pSt))
+           (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc trueᵐ terminalᵐ (⟦ 𝕊 ⟧ˢ pSt))
                                (∘ᵐ-congʳ terminalᵐ-unique))))
-bool-leaf-value {St = St} false pSt pV =
+bool-leaf-value {𝕊 = 𝕊} false pSt pV =
   inj₂ (refl
-       , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (falseᵐ ∘ᵐ terminalᵐ) (⟦ St ⟧ˢ pSt))
-           (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc falseᵐ terminalᵐ (⟦ St ⟧ˢ pSt))
+       , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (falseᵐ ∘ᵐ terminalᵐ) (⟦ 𝕊 ⟧ˢ pSt))
+           (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc falseᵐ terminalᵐ (⟦ 𝕊 ⟧ˢ pSt))
                                (∘ᵐ-congʳ terminalᵐ-unique))))
 bool-leaf-value (subV V boolₛ) pSt pV with bool-leaf-value V pSt pV
 ... | inj₁ (sv , qv) =
@@ -320,13 +320,13 @@ bool-leaf-value (subV V boolₛ) pSt pV with bool-leaf-value V pSt pV
 
 -- The same at `bool`, where the run's refinement is `boolₛ`.
 
-bool-run-leaf : ∀ {A₀} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A₀) → (p : A₀ <:ᵛ bool)
-              → (pSt : Paramˢ St) → (pV : Paramᵛ V)
+bool-run-leaf : ∀ {A₀} {𝕊 : State []} → (V : toCtx 𝕊 ⊢V⦂ A₀) → (p : A₀ <:ᵛ bool)
+              → (pSt : Paramˢ 𝕊) → (pV : Paramᵛ V)
               → ((bool-val (subV V p) ≡ true)
-                 × (Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
+                 × (Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ ⟨ 𝕊 ∣ return V ⟩ ⟧ᶜᶠ (pSt , pV)
                       ≈ᵐ leafᵐ (trueᵐ ∘ᵐ terminalᵐ)))
               ⊎ ((bool-val (subV V p) ≡ false)
-                 × (Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
+                 × (Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ ⟨ 𝕊 ∣ return V ⟩ ⟧ᶜᶠ (pSt , pV)
                       ≈ᵐ leafᵐ (falseᵐ ∘ᵐ terminalᵐ)))
 
 bool-run-leaf V boolₛ pSt pV with bool-leaf-value V pSt pV
@@ -335,8 +335,8 @@ bool-run-leaf V boolₛ pSt pV with bool-leaf-value V pSt pV
 ... | inj₂ (sv , qv) =
   inj₂ (sv , ≈ᵐ-trans (∘ᵐ-congˡ T-idᵐ) (≈ᵐ-trans (∘ᵐ-identityˡ _) qv))
 
-bool-presentation : ∀ {ε} → (M : Prog bool ε) → (pM : Paramᶜ M)
-                  → (w : Ret-whnf (⟨ ∅ , M ⟩))
+bool-presentation : ∀ {ε} → (M : Closed bool ε) → (pM : Paramᶜ M)
+                  → (w : Ret-whnf (⟨ ∅ ∣ M ⟩))
                   → Σ[ Y ∈ Obj ] Σ[ δ ∈ E ]
                     Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (ret-ticks w) ]
                     Σ[ r ∈ (δ ·ₑ 𝟏ₑ ≾ₑ ε) ]
@@ -345,7 +345,7 @@ bool-presentation : ∀ {ε} → (M : Prog bool ε) → (pM : Paramᶜ M)
                       ⊎ ((bool-val (ret-value w) ≡ false)
                          × (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ (falseᵐ ∘ᵐ terminalᵐ)) d r)) )
 
-bool-presentation M pM (ret-whnf St A₀ V rs)
+bool-presentation M pM (ret-whnf 𝕊 A₀ V rs)
   with bool-run-leaf V (run-refines-type rs) _ _
 ... | inj₁ (sv , qv) =
     _ , _ , _ , stepsᵀ-delays rs , steps-≾ rs
@@ -358,10 +358,10 @@ bool-presentation M pM (ret-whnf St A₀ V rs)
 
 -- The returned answers are the same boolean.
 
-adequacy-bool : ∀ {ε} → {M N : Prog bool ε}
+adequacy-bool : ∀ {ε} → {M N : Closed bool ε}
               → (pM : Paramᶜ M) → (pN : Paramᶜ N)
               → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
-              → (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
+              → (wM : Ret-whnf (⟨ ∅ ∣ M ⟩)) → (wN : Ret-whnf (⟨ ∅ ∣ N ⟩))
               ------------------------------------------------------------
               → ((bool-val (ret-value wM) ≡ true)
                  × (bool-val (ret-value wN) ≡ true))
@@ -388,35 +388,35 @@ adequacy-bool {M = M} {N = N} pM pN e wM wN
 -- A point presented as a delayed leaf, resp. a delayed operation node,
 -- dictates how the program halts.
 
-leaf-adequacy : ∀ {A ε Y δ n} → {M : Prog A ε} → (pM : Paramᶜ M)
+leaf-adequacy : ∀ {A ε Y δ n} → {M : Closed A ε} → (pM : Paramᶜ M)
               → {a : Y →ᵐ ⟦ A ⟧ᵛ}
               → {d : 𝟙ᵐ →ᵐ Tᵒ Y δ} → Delaysᵐ d n
               → (r : δ ·ₑ 𝟏ₑ ≾ₑ ε)
               → ⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ a) d r
               -------------------------------------
-              → Ret-whnf (⟨ ∅ , M ⟩)
+              → Ret-whnf (⟨ ∅ ∣ M ⟩)
 
 leaf-adequacy {M = M} pM nd r eq = go (halts M)
   where
-    go : Halts (⟨ ∅ , M ⟩) → Ret-whnf (⟨ ∅ , M ⟩)
+    go : Halts (⟨ ∅ ∣ M ⟩) → Ret-whnf (⟨ ∅ ∣ M ⟩)
     go (halts-ret w) = w
     go (halts-op w) with op-presentation M pM w
     ... | _ , _ , _ , _ , _ , _ , ndO , rO , eO =
       ⊥-elim (ret≢op nd ndO r rO (≈ᵐ-trans (≈ᵐ-sym eq) eO))
 
-node-adequacy : ∀ {A ε ε₂ Y δ n op} → {M : Prog A ε} → (pM : Paramᶜ M)
+node-adequacy : ∀ {A ε ε₂ Y δ n op} → {M : Closed A ε} → (pM : Paramᶜ M)
               → {v : Y →ᵐ ⟦ param op ⟧ᵍ}
               → {k : Y →ᵐ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ A ⟧ᵛ ε₂)}
               → {d : 𝟙ᵐ →ᵐ Tᵒ Y δ} → Delaysᵐ d n
               → (r : δ ·ₑ (op-grade op ·ₑ ε₂) ≾ₑ ε)
               → ⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (nodeᵐ op v k) d r
               ------------------------------------------
-              → Σ[ w' ∈ Op-whnf (⟨ ∅ , M ⟩) ] Op-whnf.oper w' ≡ op
+              → Σ[ w' ∈ Op-whnf (⟨ ∅ ∣ M ⟩) ] Op-whnf.oper w' ≡ op
 
 node-adequacy {op = op} {M = M} pM nd r eq = go (halts M)
   where
-    go : Halts (⟨ ∅ , M ⟩)
-       → Σ[ w' ∈ Op-whnf (⟨ ∅ , M ⟩) ] Op-whnf.oper w' ≡ op
+    go : Halts (⟨ ∅ ∣ M ⟩)
+       → Σ[ w' ∈ Op-whnf (⟨ ∅ ∣ M ⟩) ] Op-whnf.oper w' ≡ op
     go (halts-ret w) with ret-presentation M pM w
     ... | _ , _ , _ , _ , ndR , rR , eR =
       ⊥-elim (ret≢op ndR nd rR r (≈ᵐ-trans (≈ᵐ-sym eR) eq))
@@ -428,10 +428,10 @@ node-adequacy {op = op} {M = M} pM nd r eq = go (halts M)
 -- at the presentations' tick totals).
 
 adequacy-ticks : HF.HeadTimed Spec Cat Fut Pst Adj GTy Mon GE
-               → ∀ {A ε} → {M N : Prog A ε}
+               → ∀ {A ε} → {M N : Closed A ε}
                → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
-               → (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
+               → (wM : Ret-whnf (⟨ ∅ ∣ M ⟩)) → (wN : Ret-whnf (⟨ ∅ ∣ N ⟩))
                -----------------------------------------------------------
                → ret-ticks wM ≡ ret-ticks wN
 
@@ -445,20 +445,20 @@ adequacy-ticks ht {M = M} {N = N} pM pN e wM wN
 -- Every program halts in exactly one of the two shapes; equal denotations
 -- pick the same one.
 
-ret-not-op : ∀ {A ε} → {M N : Prog A ε}
+ret-not-op : ∀ {A ε} → {M N : Closed A ε}
            → (pM : Paramᶜ M) → (pN : Paramᶜ N)
            → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
-           → Ret-whnf (⟨ ∅ , M ⟩) → Op-whnf (⟨ ∅ , N ⟩)
+           → Ret-whnf (⟨ ∅ ∣ M ⟩) → Op-whnf (⟨ ∅ ∣ N ⟩)
            → ⊥
 ret-not-op pM pN e wM wN =
   ⇓-exclusive (Same-whnf.same-ret (adequacy pM pN e) wM) wN
 
 -- And the operation a stuck program is stuck on is a denotational invariant.
 
-same-operation : ∀ {A ε} → {M N : Prog A ε}
+same-operation : ∀ {A ε} → {M N : Closed A ε}
                → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
-               → (w : Op-whnf (⟨ ∅ , M ⟩)) → (w' : Op-whnf (⟨ ∅ , N ⟩))
+               → (w : Op-whnf (⟨ ∅ ∣ M ⟩)) → (w' : Op-whnf (⟨ ∅ ∣ N ⟩))
                → Op-whnf.oper w ≡ Op-whnf.oper w'
 same-operation pM pN e w w' with Same-whnf.same-op (adequacy pM pN e) w
 ... | w'' , eq = trans eq (proj₁ (op-whnf-unique w'' w'))

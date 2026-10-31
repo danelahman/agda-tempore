@@ -116,9 +116,9 @@ impatient = toWitnessFalse {a? = consistent? (waiting , brief)} _
 
 settled : [] ⊢C⦂ unit ! _
 settled =
-  box contract (const 42)    -- ∷ [ contract ] Reading
-    (perform read ⋆          -- ⟨ opTime read ⟩ ∷ Reading
-      (delay 5               -- ⟨ ι 5 ⟩
+  box contract (const reading 42) -- ∷ [ contract ] Reading
+    (perform read ⋆               -- ⟨ opTime read ⟩ ∷ Reading
+      (delay 5                    -- ⟨ ι 5 ⟩
         (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) (holds′ refl , holds′ refl) (<:ᵛ-refl _)
                              -- ∷ Reading
           (perform write here (return ⋆)))))

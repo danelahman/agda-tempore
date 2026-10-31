@@ -76,7 +76,7 @@ open import MonomorphicCalculus.Examples.Typing.Core right-sided-intervals opTim
 open import Language.Comparisons using (Cmp; eq; ne; lt; le; gt; ge; less; equal; greater; holds)
 open import MonomorphicCalculus.Syntax.Data spec using (compareᵈ)
 open import MonomorphicCalculus.OperationalSemantics.State spec using (∅)
-open import MonomorphicCalculus.OperationalSemantics.Reduction           spec using (⟨_,_⟩; _⟶_; CMP)
+open import MonomorphicCalculus.OperationalSemantics.Reduction           spec using (⟨_∣_⟩; _⟶_; CMP)
 
 ------------------------------------------------------------------------
 -- Effectful computations
@@ -359,7 +359,7 @@ length =
 
 three-readings-long : [] ⊢C⦂ nat ! 𝟏ₑ
 three-readings-long =
-  length {Reading} · cons (const 1) (cons (const 2) (cons (const 3) nil))
+  length {Reading} · cons (const reading 1) (cons (const reading 2) (cons (const reading 3) nil))
 
 -- a pure map: each count is incremented; a count is eternal, so the head
 -- crosses the result's lock
@@ -418,7 +418,7 @@ same-node =
 below-after-reading : [] ∷ NodeId ⊢C⦂ bool ! [0, 1 ]
 below-after-reading =
   perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
-    (cmp lt (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))) (const 7) nodeid-eternal)
+    (cmp lt (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))) (const nodeid 7) nodeid-eternal)
 
 -- a reading is not eternal, so no comparison of readings is typed
 
@@ -430,7 +430,7 @@ readings-not-compared = reading-not-eternal
 
 transmitting-above : [] ∷ NodeId ∷ Reading ⊢C⦂ unit ! [0, 6 ]
 transmitting-above =
-  cmp gt (eternal-var nodeid-eternal (Tl-∷ Hd)) (const 3) nodeid-eternal
+  cmp gt (eternal-var nodeid-eternal (Tl-∷ Hd)) (const nodeid 3) nodeid-eternal
     ⨟                                -- ⟨ [0, 0 ] ⟩ ∷ bool
   coerce ≤!
     (if here
@@ -471,8 +471,8 @@ differ-of-less = refl
 -- `CMP` reduces a comparison to the returned outcome, reading the operands'
 -- data off the values
 
-two-below-three-reduces : ⟨ ∅ , cmp lt (numeralᵛ 2) (numeralᵛ 3) natₑ ⟩
-                        ⟶ ⟨ ∅ , return true ⟩
+two-below-three-reduces : ⟨ ∅ ∣ cmp lt (numeralᵛ 2) (numeralᵛ 3) natₑ ⟩
+                        ⟶ ⟨ ∅ ∣ return true ⟩
 two-below-three-reduces = CMP
 
 ------------------------------------------------------------------------
@@ -488,7 +488,7 @@ two-below-three-reduces = CMP
 
 claiming-now : [] ⊢C⦂ unit ! [0, 6 ]
 claiming-now =
-  box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
+  box [0, 6 ] (const reading 42)     -- ∷ [ [0, 6 ] ] Reading
     (unbox Hd ≤! (<:ᵛ-refl _)        -- ∷ Reading
       (perform send here (return ⋆)))
 
@@ -496,7 +496,7 @@ claiming-now =
 
 claim-after-idling : [] ⊢C⦂ unit ! [0, 8 ]
 claim-after-idling =
-  box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
+  box [0, 6 ] (const reading 42)     -- ∷ [ [0, 6 ] ] Reading
     (delay 2                         -- ⟨ [0, 2 ] ⟩
       (unbox (Tl-⟨⟩ Hd) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -506,7 +506,7 @@ claim-after-idling =
 
 claim-after-sampling : [] ⊢C⦂ unit ! [0, 7 ]
 claim-after-sampling =
-  box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
+  box [0, 6 ] (const reading 42)     -- ∷ [ [0, 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [0, 1 ] ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -527,7 +527,7 @@ idling-spends-it = ≰!
 
 handed-over : [] ⊢C⦂ unit ! [0, 7 ]
 handed-over =
-  box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
+  box [0, 6 ] (const reading 42)     -- ∷ [ [0, 6 ] ] Reading
     (fun                             -- ∷ [ [0, 6 ] ] Reading
        (perform read ⋆               -- ⟨ [0, 1 ] ⟩ ∷ Reading
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
@@ -541,7 +541,7 @@ handed-over =
 
 either-way : [] ∷ bool ⊢C⦂ unit ! [0, 7 ]
 either-way =
-  box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
+  box [0, 6 ] (const reading 42)     -- ∷ [ [0, 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [0, 1 ] ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -568,7 +568,7 @@ spent-by-a-transmission = ≰!
 
 claimed-in-both-branches : [] ⊢C⦂ unit ! [0, 12 ]
 claimed-in-both-branches =
-  box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
+  box [0, 6 ] (const reading 42)             -- ∷ [ [0, 6 ] ] Reading
     (if true
       `then coerce ≤!
               (perform read ⋆        -- ⟨ [0, 1 ] ⟩ ∷ Reading
@@ -576,7 +576,7 @@ claimed-in-both-branches =
                                      -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce ≤!
-              (perform send (const 0)
+              (perform send (const reading 0)
                                      -- ⟨ [0, 6 ] ⟩ ∷ unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -594,7 +594,7 @@ claimed-in-both-branches =
 
 claim-after-a-reading : [] ⊢C⦂ unit ! [0, 7 ]
 claim-after-a-reading =
-  box [0, 4 ] (const 42)             -- ∷ [ [0, 4 ] ] Reading
+  box [0, 4 ] (const reading 42)             -- ∷ [ [0, 4 ] ] Reading
     ((perform read ⋆ (return here))
       ⨟                              -- ⟨ [0, 1 ] ⟩ ∷ Reading
         unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
@@ -612,7 +612,7 @@ coercing-closes-it = ≰!
 
 claim-after-a-coerced-reading : [] ⊢C⦂ unit ! [0, 12 ]
 claim-after-a-coerced-reading =
-  box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
+  box [0, 6 ] (const reading 42)             -- ∷ [ [0, 6 ] ] Reading
     (coerce {ε' = [0, 6 ]} ≤! (perform read ⋆ (return here))
       ⨟                              -- ⟨ [0, 6 ] ⟩ ∷ Reading
         unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
@@ -628,7 +628,7 @@ claim-after-a-coerced-reading =
 
 carrying-a-lease : [] ⊢C⦂ unit ! [0, 9 ]
 carrying-a-lease =
-  box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
+  box [0, 6 ] (const reading 42)     -- ∷ [ [0, 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [0, 1 ] ⟩ ∷ Reading
       (delay 2                       -- ⟨ [0, 2 ] ⟩
         (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ≤! (<:ᵛ-refl _)
@@ -645,9 +645,9 @@ reading-is-not = ≰!
 
 longer-lease : [] ⊢C⦂ unit ! [0, 13 ]
 longer-lease =
-  box [0, 9 ] (const 42)             -- ∷ [ [0, 9 ] ] Reading
-    (perform read ⋆                  -- ⟨ [0, 1 ] ⟩ ∷ Reading
-      (perform send (const 0)        -- ⟨ [0, 6 ] ⟩ ∷ unit
+  box [0, 9 ] (const reading 42)      -- ∷ [ [0, 9 ] ] Reading
+    (perform read ⋆                   -- ⟨ [0, 1 ] ⟩ ∷ Reading
+      (perform send (const reading 0) -- ⟨ [0, 6 ] ⟩ ∷ unit
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))
@@ -669,7 +669,7 @@ short-lease-run-out = ≰!
 
 spend-it-either-way : [] ∷ bool ⊢C⦂ unit ! [0, 8 ]
 spend-it-either-way =
-  box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
+  box [0, 6 ] (const reading 42)             -- ∷ [ [0, 6 ] ] Reading
     (if eternal-var boolₑ (Tl-∷ Hd)
       `then delay 2                  -- ⟨ [0, 2 ] ⟩
               (unbox (Tl-⟨⟩ Hd) ≤! (<:ᵛ-refl _)

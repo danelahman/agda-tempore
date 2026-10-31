@@ -151,7 +151,7 @@ permit = permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆
 
 claim-after-sampling : [] ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-sampling =
-  box permit (const 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
+  box permit (const reading 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     (perform read ⋆      -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -159,7 +159,7 @@ claim-after-sampling =
 
 claim-after-idling : [] ⊢C⦂ unit ! permitting ⟅ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
 claim-after-idling =
-  box permit (const 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
+  box permit (const reading 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     (delay 2             -- ⟨ permitting ⟅ ⟨ 2 ⟩ ⟆ ⟩
       (unbox (Tl-⟨⟩ Hd) holds (<:ᵛ-refl _)
                                -- ∷ Reading
@@ -167,7 +167,7 @@ claim-after-idling =
 
 handed-over : [] ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over =
-  box permit (const 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
+  box permit (const reading 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     (fun                 -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
        (perform read ⋆   -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
@@ -177,7 +177,7 @@ handed-over =
 
 either-way : [] ∷ bool ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 either-way =
-  box permit (const 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
+  box permit (const reading 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     (perform read ⋆      -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -207,7 +207,7 @@ listed-now = permitting ⟅ ε ∣ ⌈ read ⌉ ⟆
 
 claiming-now : [] ⊢C⦂ unit ! permitting ⟅ ⌈ send ⌉ ⟆
 claiming-now =
-  box listed-now (const 42)        -- ∷ [ permitting ⟅ ε ∣ ⌈ read ⌉ ⟆ ] Reading
+  box listed-now (const reading 42)        -- ∷ [ permitting ⟅ ε ∣ ⌈ read ⌉ ⟆ ] Reading
     (unbox Hd (holdsᵉ 𝟏ᵣ listed-now) (<:ᵛ-refl _)
                                      -- ∷ Reading
       (perform send here (return ⋆)))
@@ -223,7 +223,7 @@ alternatives = permitting ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
 claimed-in-both-branches :
   [] ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
 claimed-in-both-branches =
-  box alternatives (const 42)
+  box alternatives (const reading 42)
                          -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ ] Reading
     (if true
       `then coerce holds
@@ -232,7 +232,7 @@ claimed-in-both-branches =
                          -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce holds
-              (perform send (const 0)
+              (perform send (const reading 0)
                          -- ⟨ permitting ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                          -- ∷ Reading
@@ -258,7 +258,7 @@ transmitting-branch-needs-its-run = fails
 permit-in-a-branch :
   [] ∷ bool ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
 permit-in-a-branch =
-  box permit (const 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
+  box permit (const reading 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     (if eternal-var boolₑ (Tl-∷ Hd)
       `then coerce holds
               (perform read ⋆  -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading

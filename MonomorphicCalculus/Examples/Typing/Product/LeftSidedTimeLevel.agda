@@ -124,7 +124,7 @@ stale-after-transmitting (_ , tainted) = ⋢! tainted
 
 carried-id : [] ∷ NodeId ⊢C⦂ NodeId ! ([ 4 ,+∞⟩ , High)
 carried-id =
-  perform send (const 0)             -- ⟨ ([ 4 ,+∞⟩ , High) ⟩ ∷ unit
+  perform send (const reading 0)             -- ⟨ ([ 4 ,+∞⟩ , High) ⟩ ∷ unit
     (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
 
 ------------------------------------------------------------------------
@@ -171,7 +171,7 @@ report = ([ 5 ,+∞⟩ , Low)
 
 published : [] ⊢C⦂ unit ! ([ 9 ,+∞⟩ , High)
 published =
-  box report (const 42)              -- ∷ [ report ] Reading
+  box report (const reading 42)      -- ∷ [ report ] Reading
     (perform read ⋆                  -- ⟨ ([ 1 ,+∞⟩ , Low) ⟩ ∷ Reading
       (perform write here            -- ⟨ ([ 2 ,+∞⟩ , Low) ⟩ ∷ unit
         (delay 2                     -- ⟨ ([ 2 ,+∞⟩ , Low) ⟩
@@ -183,7 +183,7 @@ published =
 
 waited-out : [] ⊢C⦂ unit ! ([ 9 ,+∞⟩ , High)
 waited-out =
-  box report (const 42)              -- ∷ [ report ] Reading
+  box report (const reading 42)      -- ∷ [ report ] Reading
     (delay 5                         -- ⟨ ([ 5 ,+∞⟩ , Low) ⟩
       (unbox (Tl-⟨⟩ Hd) (≤! , ⊑!) (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -212,7 +212,7 @@ cleared = ([ 5 ,+∞⟩ , High)
 
 relayed-then-published : [] ⊢C⦂ unit ! ([ 9 ,+∞⟩ , High)
 relayed-then-published =
-  box cleared (const 42)             -- ∷ [ cleared ] Reading
+  box cleared (const reading 42)     -- ∷ [ cleared ] Reading
     (perform read ⋆                  -- ⟨ ([ 1 ,+∞⟩ , Low) ⟩ ∷ Reading
       (perform send here             -- ⟨ ([ 4 ,+∞⟩ , High) ⟩ ∷ unit
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (≤! , ⊑!) (<:ᵛ-refl _)
@@ -227,25 +227,25 @@ relayed-then-published =
 
 quiet-branch : [] ∷ bool ⊢C⦂ unit ! ([ 4 ,+∞⟩ , High)
 quiet-branch =
-  box report (const 42)              -- ∷ [ report ] Reading
+  box report (const reading 42)              -- ∷ [ report ] Reading
     (if eternal-var boolₑ (Tl-∷ Hd)
       `then coerce (≤! , ⊑!)
-              (perform write (const 0)
+              (perform write (const reading 0)
                                      -- ⟨ ([ 2 ,+∞⟩ , Low) ⟩ ∷ unit
                 (delay 3             -- ⟨ ([ 3 ,+∞⟩ , Low) ⟩
                   (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) (≤! , ⊑!) (<:ᵛ-refl _)
                                      -- ∷ Reading
                     (perform send here (return ⋆)))))
-      `else perform send (const 0) (return ⋆))
+      `else perform send (const reading 0) (return ⋆))
 
 -- sequenced after a conditional, a claim is weighed against the join.
 -- Two quiet branches keep it `Low`, and the report is published.
 
 after-a-quiet-branch : [] ∷ bool ⊢C⦂ unit ! ([ 9 ,+∞⟩ , High)
 after-a-quiet-branch =
-  box report (const 42)              -- ∷ [ report ] Reading
+  box report (const reading 42)              -- ∷ [ report ] Reading
     ((if eternal-var boolₑ (Tl-∷ Hd)
-        `then perform write (const 0) (delay 3 (return ⋆))
+        `then perform write (const reading 0) (delay 3 (return ⋆))
         `else delay 5 (return ⋆))
       ⨟                              -- ⟨ ([ 5 ,+∞⟩ , Low) ⟩ ∷ unit
         unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ⊑!) (<:ᵛ-refl _)

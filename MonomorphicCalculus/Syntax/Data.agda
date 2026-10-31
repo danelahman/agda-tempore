@@ -81,7 +81,7 @@ compareᵈ emptyₑ          ()       _
 -- Data as values
 
 ⌈_⌉ : ∀ {Γ A} → Et A → ⟪ A ⟫ → Γ ⊢V⦂ A
-⌈ Baseₑ _ ⌉        c        = const c
+⌈ Baseₑ _ ⌉        c        = const _ c
 ⌈ unitₑ ⌉          _        = ⋆
 ⌈ boolₑ ⌉          true     = true
 ⌈ boolₑ ⌉          false    = false

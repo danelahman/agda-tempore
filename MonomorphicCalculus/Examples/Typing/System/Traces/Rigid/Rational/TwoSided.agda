@@ -68,9 +68,9 @@ window = [ # 1 , ↑ # 3 ]
 
 in-window : [] ⊢C⦂ unit ! _
 in-window =
-  box window (const 42)      -- ∷ [ window ] Reading
-    (perform read ⋆          -- ⟨ ∣ opTime read ∣ ⟩ ∷ Reading
-      (delay (# 1)           -- ⟨ ι 1 ⟩
+  box window (const reading 42) -- ∷ [ window ] Reading
+    (perform read ⋆             -- ⟨ ∣ opTime read ∣ ⟩ ∷ Reading
+      (delay (# 1)              -- ⟨ ι 1 ⟩
         (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ⊆! (<:ᵛ-refl _)
                              -- ∷ Reading
           (perform write here (return ⋆)))))

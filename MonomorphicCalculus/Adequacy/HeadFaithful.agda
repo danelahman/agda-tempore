@@ -107,10 +107,10 @@ data Delaysᵐ : ∀ {X Y : Obj} {δ : E} → (X →ᵐ Tᵒ Y δ) → 𝔻 → 
 -- between the syntactic observable (`ticks`) and the model-side interface.
 -- `stepᵀ` is `ηᵀ` for every rule but `DELAY`.
 
-step-delays : ∀ {ε ε' n} {St St' : 𝕊 []} {A A₀ : VType}
-            → {M : toCtx St ⊢C⦂ A ! ε} → {M' : toCtx St' ⊢C⦂ A₀ ! ε'}
-            → (r : ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩)
-            → {X : Obj} → {δ : E} → {t : ⟦ hist St' ⟧ᶜᵗˣ →ᵐ Tᵒ X δ}
+step-delays : ∀ {ε ε' n} {𝕊 𝕊' : State []} {A A₀ : VType}
+            → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+            → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
+            → {X : Obj} → {δ : E} → {t : ⟦ hist 𝕊' ⟧ᶜᵗˣ →ᵐ Tᵒ X δ}
             → Delaysᵐ t n
             ------------------------------------------
             → Delaysᵐ (t ⋄ stepᵀ r) (step-ticks r +ᴰ n)
@@ -149,11 +149,11 @@ stepsᵀ-delays : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε'
               ------------------------------
               → Delaysᵐ (stepsᵀ rs) (ticks rs)
 
-stepsᵀ-delays ε*       = no-delay
-stepsᵀ-delays (r ◅ rs) = step-delays r (stepsᵀ-delays rs)
+stepsᵀ-delays done     = no-delay
+stepsᵀ-delays (r ▸ rs) = step-delays r (stepsᵀ-delays rs)
 
--- The two head shapes, as morphisms: `⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ` is a leaf and
--- `⟦ ⟨ St , perform op W M' ⟩ ⟧ᶜᶠ` an operation node (`whnf-shape` below).
+-- The two head shapes, as morphisms: `⟦ ⟨ 𝕊 ∣ return V ⟩ ⟧ᶜᶠ` is a leaf and
+-- `⟦ ⟨ 𝕊 ∣ perform op W M' ⟩ ⟧ᶜᶠ` an operation node (`whnf-shape` below).
 
 leafᵐ : ∀ {X Y : Obj} → (a : Y →ᵐ X) → Y →ᵐ Tᵒ X 𝟏ₑ
 leafᵐ a = ηᵀ ∘ᵐ a
@@ -293,9 +293,9 @@ record BaseFaithful : Set where
 
 -- Handler uniformity is carried by the term's own certificate.
 
-uniform⟶ : ∀ {A A₀ ε ε'} {St St' : 𝕊 []}
-         → {M : toCtx St ⊢C⦂ A ! ε} → {M' : toCtx St' ⊢C⦂ A₀ ! ε'}
-         → (r : ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩) → (pM : Paramᶜ M)
+uniform⟶ : ∀ {A A₀ ε ε'} {𝕊 𝕊' : State []}
+         → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+         → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩) → (pM : Paramᶜ M)
          ---------------------------------------------------
          → Uniform⟶ r pM
 
@@ -333,52 +333,52 @@ uniform⟶* : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
           ------------------------------------
           → Uniform⟶* rs p
 
-uniform⟶* ε*       p          = tt
-uniform⟶* (r ◅ rs) (pS , pM)  =
+uniform⟶* done     p          = tt
+uniform⟶* (r ▸ rs) (pS , pM)  =
   uniform⟶ r pM , uniform⟶* rs (stepᴾᶜᶠ r (pS , pM))
 
 -- Unfold `⟦_⟧ᶜᵗ` at the two whnf formers and push the state's environment
 -- inside; it survives only inside the head's components.
 
-ret-whnf-shape : ∀ {A} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A)
-               → (pSt : Paramˢ St) → (pV : Paramᵛ V)
-               → Σ[ a ∈ (⟦ hist St ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ) ]
-                   ⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV) ≈ᵐ leafᵐ a
+ret-whnf-shape : ∀ {A} {𝕊 : State []} → (V : toCtx 𝕊 ⊢V⦂ A)
+               → (pSt : Paramˢ 𝕊) → (pV : Paramᵛ V)
+               → Σ[ a ∈ (⟦ hist 𝕊 ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ) ]
+                   ⟦ ⟨ 𝕊 ∣ return V ⟩ ⟧ᶜᶠ (pSt , pV) ≈ᵐ leafᵐ a
 
-ret-whnf-shape {St = St} V pSt pV =
-  ⟦ V ⟧ᵛᵗ pV ∘ᵐ ⟦ St ⟧ˢ pSt , ∘ᵐ-assoc ηᵀ (⟦ V ⟧ᵛᵗ pV) (⟦ St ⟧ˢ pSt)
+ret-whnf-shape {𝕊 = 𝕊} V pSt pV =
+  ⟦ V ⟧ᵛᵗ pV ∘ᵐ ⟦ 𝕊 ⟧ˢ pSt , ∘ᵐ-assoc ηᵀ (⟦ V ⟧ᵛᵗ pV) (⟦ 𝕊 ⟧ˢ pSt)
 
-op-whnf-shape : ∀ {A ε} {St : 𝕊 []} {op : Op}
-              → (W : toCtx St ⊢V⦂ ⌜ param op ⌝ᵍ)
-              → (M' : toCtx St ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
+op-whnf-shape : ∀ {A ε} {𝕊 : State []} {op : Op}
+              → (W : toCtx 𝕊 ⊢V⦂ ⌜ param op ⌝ᵍ)
+              → (M' : toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
                         ⊢C⦂ A ! ε)
-              → (pSt : Paramˢ St) → (pW : Paramᵛ W) → (pM' : Paramᶜ M')
-              → Σ[ w ∈ (⟦ hist St ⟧ᶜᵗˣ →ᵐ ⟦ param op ⟧ᵍ) ]
-                Σ[ k ∈ (⟦ hist St ⟧ᶜᵗˣ
+              → (pSt : Paramˢ 𝕊) → (pW : Paramᵛ W) → (pM' : Paramᶜ M')
+              → Σ[ w ∈ (⟦ hist 𝕊 ⟧ᶜᵗˣ →ᵐ ⟦ param op ⟧ᵍ) ]
+                Σ[ k ∈ (⟦ hist 𝕊 ⟧ᶜᵗˣ
                           →ᵐ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ A ⟧ᵛ ε)) ]
-                   ⟦ ⟨ St , perform op W M' ⟩ ⟧ᶜᶠ (pSt , pW , pM') ≈ᵐ nodeᵐ op w k
+                   ⟦ ⟨ 𝕊 ∣ perform op W M' ⟩ ⟧ᶜᶠ (pSt , pW , pM') ≈ᵐ nodeᵐ op w k
 
-op-whnf-shape {St = St} {op = op} W M' pSt pW pM' =
+op-whnf-shape {𝕊 = 𝕊} {op = op} W M' pSt pW pM' =
     _ , _
-  , ≈ᵐ-trans (∘ᵐ-assoc (opᵀ op) _ (⟦ St ⟧ˢ pSt))
-             (∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ (⟦ St ⟧ˢ pSt)))
+  , ≈ᵐ-trans (∘ᵐ-assoc (opᵀ op) _ (⟦ 𝕊 ⟧ˢ pSt))
+             (∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ (⟦ 𝕊 ⟧ˢ pSt)))
 
 -- A base-typed value's leaf is a constant's, the constant read through the
 -- subsumption spine (`base-val`); the state's environment is absorbed by the
 -- terminal object, and a spine link by `⟦ Baseₛ refl ⟧<:ᵛ ≡ idᵐ`.
 
-base-leaf-const : ∀ {b} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Base b)
-                → (pSt : Paramˢ St) → (pV : Paramᵛ V)
+base-leaf-const : ∀ {b} {𝕊 : State []} → (V : toCtx 𝕊 ⊢V⦂ Base b)
+                → (pSt : Paramˢ 𝕊) → (pV : Paramᵛ V)
                 → Σ[ c ∈ BaseConstants b ]
-                    (base-val V ≡ const c)
-                  × (⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
+                    (base-val V ≡ const b c)
+                  × (⟦ ⟨ 𝕊 ∣ return V ⟩ ⟧ᶜᶠ (pSt , pV)
                        ≈ᵐ leafᵐ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ))
 
 base-leaf-const (var f x) pSt pV = ⊥-elim (Base-not-in-toCtx x)
-base-leaf-const {St = St} (const c) pSt pV =
+base-leaf-const {𝕊 = 𝕊} (const B c) pSt pV =
     c , refl
-  , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ) (⟦ St ⟧ˢ pSt))
-      (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc ⟦ c ⟧ᵇᶜ terminalᵐ (⟦ St ⟧ˢ pSt))
+  , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ) (⟦ 𝕊 ⟧ˢ pSt))
+      (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc ⟦ c ⟧ᵇᶜ terminalᵐ (⟦ 𝕊 ⟧ˢ pSt))
                           (∘ᵐ-congʳ terminalᵐ-unique)))
 base-leaf-const (subV V (Baseₛ refl)) pSt pV with base-leaf-const V pSt pV
 ... | c , e , eq = c , e , ≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-identityˡ _))) eq

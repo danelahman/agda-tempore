@@ -10,7 +10,7 @@
 --                                                                    --
 -- The zones a context of the fundamental lemma has:                  --
 --                                                                    --
---   * `⌊ St ⌋`, the state, its locks and cells closed by the store;  --
+--   * `⌊ 𝕊 ⌋`, the state, its locks and cells closed by the store;   --
 --   * `_∷ᵉ_`/`_⟨_⟩ᵉ`, the binder telescope, each variable            --
 --     instantiated by a value, each lock matched by a graded reach   --
 --     into a state far enough ahead.                                 --

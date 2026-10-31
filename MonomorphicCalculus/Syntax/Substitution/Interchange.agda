@@ -55,7 +55,7 @@ eternal-val-ext-ren : ∀ {Γ Γ' A ρ} → (et : Et A) → (r : Ren [] Γ Γ')
                     → V-rename (cong-⟨⟩-ren {ρ = ρ} r) (eternal-val-ext et V)
                     ≡ eternal-val-ext et (V-rename r V)
 eternal-val-ext-ren et             r (var f x)   = var-≡
-eternal-val-ext-ren et             r (const c)   = refl
+eternal-val-ext-ren et             r (const B c) = refl
 eternal-val-ext-ren et             r ⋆           = refl
 eternal-val-ext-ren et             r true        = refl
 eternal-val-ext-ren et             r false       = refl
@@ -119,7 +119,7 @@ mutual
             → V-sub₀ ⌜ r ⌝ V ≡ V-rename r V
 
   V-sub₀-⌜⌝ r (var f x) = refl
-  V-sub₀-⌜⌝ r (const c) = refl
+  V-sub₀-⌜⌝ r (const B c) = refl
   V-sub₀-⌜⌝ r ⋆         = refl
   V-sub₀-⌜⌝ r true      = refl
   V-sub₀-⌜⌝ r false     = refl
@@ -301,7 +301,7 @@ mutual
              → V-sub₀ s' (V-rename r V) ≡ V-rename r' (V-sub₀ s V)
 
   V-sub₀-ren h (var f x) = atᵛ h x f
-  V-sub₀-ren h (const c) = refl
+  V-sub₀-ren h (const B c) = refl
   V-sub₀-ren h ⋆         = refl
   V-sub₀-ren h true      = refl
   V-sub₀-ren h false     = refl

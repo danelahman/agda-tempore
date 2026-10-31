@@ -111,7 +111,7 @@ sound-unbox-beta : ∀ {Γ A A' C D ρ}
                  → (u : A <:ᵛ A')
                  → (N : (Γ ∷ [ ρ ] A ++ᶜ hole-ctx K) ∷ A' ⊢C⦂ D)
                  → Paramᵏ K → Paramᶜ N
-                 → Soundᶜ== (unbox-beta V K p u N)
+                 → Soundᶜ≡ᵗʰ (unbox-beta V K p u N)
 sound-unbox-beta {Γ} {A} {A'} {C} {D} {ρ} V K p u N pK pN (pV , pL) (pV' , pR) =
     ⟦⟧ᶜᵗ-irr (box _ V (K [ X ])) (pV , pL) (pV , fillᴾ K pK X pN)
   ∙ fill-cong-env Γ K pK X Y pN pY g hole
