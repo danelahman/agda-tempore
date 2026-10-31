@@ -79,8 +79,9 @@ results.
   for values in program contexts and for computations in open contexts, and is
   complete with respect to scope-closed typings.
 - The reduction of the polymorphic calculus is on run-time terms, raw terms
-  without grades and type annotations, with grade-free states. Instantiation,
-  type safety and termination are for the scope-closed typing.
+  without grades and type annotations; a state records the grade of each
+  passage of time. Instantiation, type safety and termination are for the
+  scope-closed typing.
 - The monomorphic calculus types handler clauses at every continuation grade
   and has comparisons as computations.
 - The denotational results assume uniform handlers, and some of their
