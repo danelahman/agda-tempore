@@ -1,13 +1,13 @@
-------------------------------------------------------------------------
--- Naturality of subsumption at the formers that derive it.            --
---                                                                    --
--- A subsumption commutes with every term former. Where the former has --
+--------------------------------------------------------------------------
+-- Naturality of subsumption at the formers that derive it.             --
+--                                                                      --
+-- A subsumption commutes with every term former. Where the former has  --
 -- an eta rule the commutation is a theorem, not an axiom: the eta rule --
 -- re-expands the node around the subsumption and the beta rules        --
 -- collapse the copies. The atomic value formers get theirs from        --
--- `subV-refl`, the witness at `Base`/`Unit`/`Bool`/`Nat` being        --
--- reflexive.                                                         --
-------------------------------------------------------------------------
+-- `subV-refl`, the witness at `Base`/`Unit`/`Bool`/`Nat` being         --
+-- reflexive.                                                           --
+--------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

@@ -1,24 +1,24 @@
-------------------------------------------------------------------------
--- Semantics of the box modality `[ ρ ] A` on types, as a functor      --
--- graded by a monoid of grades `(R , · , u , ≾)`. It is the analogue  --
--- of the comonadic □-modality on types in Fitch-style modal calculi.  --
---                                                                    --
--- The modality is a *lax* graded comonad: it provides a counit `ε`    --
+--------------------------------------------------------------------------
+-- Semantics of the box modality `[ ρ ] A` on types, as a functor       --
+-- graded by a monoid of grades `(R , · , u , ≾)`. It is the analogue   --
+-- of the comonadic □-modality on types in Fitch-style modal calculi.   --
+--                                                                      --
+-- The modality is a *lax* graded comonad: it provides a counit `ε`     --
 -- and comultiplication `δ`. (With expiring resources the box is        --
 -- genuinely lax — a smaller resource budget is a strictly stronger     --
 -- obligation, so `[ ρ₁ · ρ₂ ]` and `[ ρ₁ ] [ ρ₂ ]` need not coincide.) --
 -- Laws are stated up to the categorical equality `≈ᵐ`, and, because    --
 -- the monoid laws hold only propositionally, the graded comonad laws   --
--- carry explicit `[]-≤` coercions along `·-identityˡ`, `·-identityʳ`,   --
+-- carry explicit `[]-≤` coercions along `·-identityˡ`, `·-identityʳ`,  --
 -- and `·-assoc`.                                                       --
---                                                                    --
+--                                                                      --
 -- At the *unit* resource grade the counit is additionally an           --
 -- isomorphism: a unit-graded unit `ηᵘ : A →ᵐ [ u ]ᵒ A` splits `ε`, so  --
 -- `[ u ]ᵒ A ≅ A`. This is the semantic counterpart of the calculus     --
 -- being able to use a variable once the resources to its right sum to  --
 -- the unit grade, and it is dual to the context modality's             --
 -- unit-graded counit `εᵘ`.                                             --
-------------------------------------------------------------------------
+--------------------------------------------------------------------------
 
 open import Grades.Durations using (Duration)
 open import Grades.Base

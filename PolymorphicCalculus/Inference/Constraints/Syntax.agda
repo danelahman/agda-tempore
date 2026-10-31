@@ -6,7 +6,7 @@
 -- grade orderings, eternality atoms, var-rule disjunctions,    --
 -- existentials over the three sorts, a rigid (eigenvariable)   --
 -- effect-grade quantifier, and a conjunction indexed by        --
--- operation symbols. Computation-type subtyping `C ≾̂ᶜ C'` is  --
+-- operation symbols. Computation-type subtyping `C ≾̂ᶜ C'` is   --
 -- the conjunction of its value and effect atoms; a type        --
 -- equation `A ≐ᵥ B` is mutual subtyping.                       --
 --                                                              --

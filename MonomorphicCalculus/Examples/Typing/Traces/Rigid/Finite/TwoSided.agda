@@ -1,14 +1,14 @@
 ------------------------------------------------------------------------
--- Typed example computations at the rigid timed finite-expression     --
+-- Typed example computations at the rigid timed finite-expression    --
 -- interval grade, in dense time.                                     --
 --                                                                    --
 -- A grade `[ L , U ]` pairs a guarantee with a bound, each a finite  --
 -- expression over interval letters, that a common run fits. The      --
 -- guarantee below demands a reading, then an undisturbed wait of at  --
 -- least one unit, with anything before and after; the bound allows a --
--- reading and at most six units of anything after it. A box at this --
+-- reading and at most six units of anything after it. A box at this  --
 -- grade may be unboxed after a reading and a wait of one unit; after --
--- a reading and a transmission instead it may not, the transmission --
+-- a reading and a transmission instead it may not, the transmission  --
 -- filling the wait the guarantee demands -- though it stays within   --
 -- the bound, and within a guarantee asking only for a unit of        --
 -- anything.                                                          --

@@ -1,12 +1,12 @@
-------------------------------------------------------------------------
--- Soundness of the small-step operational semantics.                   --
---                                                                      --
--- A configuration `⟨ S , M ⟩` denotes `⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ`, a morphism  --
--- out of the state's history `⟦ hist S ⟧ᶜᵗˣ`.                          --
---                                                                      --
--- A reduction step relates the two denotations via a time transition   --
--- (`stepᵀ`) and an effect-refining coercion (`T-≤`).                   --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+-- Soundness of the small-step operational semantics.                  --
+--                                                                     --
+-- A configuration `⟨ S , M ⟩` denotes `⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ`, a morphism --
+-- out of the state's history `⟦ hist S ⟧ᶜᵗˣ`.                         --
+--                                                                     --
+-- A reduction step relates the two denotations via a time transition  --
+-- (`stepᵀ`) and an effect-refining coercion (`T-≤`).                  --
+-------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

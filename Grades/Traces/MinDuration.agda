@@ -1,13 +1,13 @@
-------------------------------------------------------------------------
--- Best-case durations: the *least* duration of a set of timed traces  --
+--------------------------------------------------------------------------
+-- Best-case durations: the *least* duration of a set of timed traces   --
 --                                                                      --
 -- This is the `⊓`-aggregation companion to `MaxDuration.agda`'s        --
--- `⊔`-based `setDuration`. Where `setDuration` measures a set by its    --
--- longest (worst-case) trace, `minSetDuration` measures it by its       --
--- shortest (best-case) trace -- the time taken when the computation     --
--- realises its fastest available trace. The per-trace `duration` is     --
--- shared via `Durations.agda`; only the set-level aggregation differs.  --
-------------------------------------------------------------------------
+-- `⊔`-based `setDuration`. Where `setDuration` measures a set by its   --
+-- longest (worst-case) trace, `minSetDuration` measures it by its      --
+-- shortest (best-case) trace -- the time taken when the computation    --
+-- realises its fastest available trace. The per-trace `duration` is    --
+-- shared via `Durations.agda`; only the set-level aggregation differs. --
+--------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
 

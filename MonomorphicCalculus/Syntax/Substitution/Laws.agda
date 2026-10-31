@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
 -- The substitution laws, as equations between substitutions.         --
 --                                                                    --
--- Each is a `_≐ˢ_` equation between composites, so its proof is a     --
--- calculation on variables; `V-sub-≐ˢ` carries it to terms.           --
+-- Each is a `_≐ˢ_` equation between composites, so its proof is a    --
+-- calculation on variables; `V-sub-≐ˢ` carries it to terms.          --
 ------------------------------------------------------------------------
 
 open import Data.Empty

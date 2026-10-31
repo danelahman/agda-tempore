@@ -1,11 +1,11 @@
-------------------------------------------------------------------------
+--------------------------------------------------------------------------
 -- The interpretation is natural in renamings:                          --
 --   ⟦ C-rename r M ⟧ᶜᵗ ≈ ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ r ⟧ʳ    (and dually for values). --
---                                                                    --
+--                                                                      --
 -- Proved by mutual induction on the term. The `var` case is            --
--- `var-morphism-nat`; the environment-threading formers push `⟦ r ⟧ʳ`    --
--- through the modality structure using `η⊣`/`strᵀ`/box naturality.      --
-------------------------------------------------------------------------
+-- `var-morphism-nat`; the environment-threading formers push `⟦ r ⟧ʳ`  --
+-- through the modality structure using `η⊣`/`strᵀ`/box naturality.     --
+--------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

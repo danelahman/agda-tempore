@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
 -- States up to the term equivalence.                                 --
 --                                                                    --
--- Reduction is a bisimulation for `_≐ˢ_`: related states run to       --
--- related states. The four parts below are the relation itself, the   --
--- shape of state extensions, the bisimulation rule by rule, and       --
--- replaying an extension across the equivalence.                      --
+-- Reduction is a bisimulation for `_≐ˢ_`: related states run to      --
+-- related states. The four parts below are the relation itself, the  --
+-- shape of state extensions, the bisimulation rule by rule, and      --
+-- replaying an extension across the equivalence.                     --
 ------------------------------------------------------------------------
 
 open import Language.Spec

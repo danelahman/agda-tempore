@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Grade morphisms between lifted trace grades.                        --
+-- Grade morphisms between lifted trace grades.                       --
 --                                                                    --
 -- A map `f` of traces between two time domains, a monoid morphism    --
 -- that sends the pure delay by `τ` to the pure delay by `h τ` for a  --

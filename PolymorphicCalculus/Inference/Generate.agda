@@ -6,7 +6,7 @@
 -- by rule: each type a rule leaves undetermined is ∃-bound,    --
 -- each side condition an atom. The expected type is an upper   --
 -- bound: where a rule meets two undetermined types it is the   --
--- right side of a `_≾̂ᵥᶜ_` or `_≾̂ₑᶜ_` atom; elsewhere `_≐ᵥ_`  --
+-- right side of a `_≾̂ᵥᶜ_` or `_≾̂ₑᶜ_` atom; elsewhere `_≐ᵥ_`    --
 -- fixes its shape. A use of a definition owes the constraint   --
 -- of its scheme (`instᶜ`), an unbound position the             --
 -- unsatisfiable one.                                           --

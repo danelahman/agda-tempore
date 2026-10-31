@@ -2,8 +2,8 @@
 -- Finite expressions as grades, in each instance.                    --
 --                                                                    --
 -- The elements are finite expressions with at least one word,        --
--- compared by the runs they denote (`Exact.Lift`), decided by the     --
--- reader (`Exact.Finite`). Sequencing, union, the empty word and the  --
+-- compared by the runs they denote (`Exact.Lift`), decided by the    --
+-- reader (`Exact.Finite`). Sequencing, union, the empty word and the --
 -- unrestricted stretch are the operations; a delay is graded by the  --
 -- hull on each side: a wait of at most its length in the upper       --
 -- instance, of at least its length in the lower one, the delay zero  --

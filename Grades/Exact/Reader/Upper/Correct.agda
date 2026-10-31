@@ -5,7 +5,7 @@
 -- the upper end of its running time, a stretch at its end.           --
 --                                                                    --
 --   sound:    an accepting run on a word against a bound gives, for  --
---             every run of the word, a run of the bound it fits:      --
+--             every run of the word, a run of the bound it fits:     --
 --             the smaller weights of the run are read the same way,  --
 --             the bound's ends are closed within it, and the word of --
 --             the bound is built;                                    --

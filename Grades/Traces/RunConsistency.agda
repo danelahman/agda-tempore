@@ -1,4 +1,4 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Run consistency: a guarantee and an allowance with a common run.    --
 --                                                                     --
 -- A guarantee `p` (read in `Traces.Coverage`, at `costˡᵒ`) and an     --
@@ -28,7 +28,7 @@
 -- the completeness proof rests on `mono`, which says that budget is   --
 -- worth at least as much as slack. Every rule shrinks the guarantee   --
 -- or the allowance, so it is decided by exhaustive search.            --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; s≤s)
 import Data.Nat.Base as ℕ

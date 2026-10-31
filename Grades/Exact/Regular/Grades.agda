@@ -2,7 +2,7 @@
 -- Expressions with iteration as grades, in each instance.            --
 --                                                                    --
 -- The elements are one-sided expressions with at least one word,     --
--- compared by the runs they denote (`Exact.Lift`), decided by the     --
+-- compared by the runs they denote (`Exact.Lift`), decided by the    --
 -- automaton of the reader (`Regular.Decide`) in a commensurable time --
 -- domain. Sequencing, union, the empty word and the unrestricted     --
 -- stretch are the operations; a delay is graded by its hull on each  --

@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Rigid timed regular-expression grades over the non-negative       --
+-- Rigid timed regular-expression grades over the non-negative        --
 -- rationals, as lower bounds.                                        --
 --                                                                    --
 -- Letters reach up without bound: `≥ q` and `> q` stretches of at    --

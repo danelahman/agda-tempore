@@ -1,18 +1,18 @@
-------------------------------------------------------------------------
--- The TICK MONAD: the target of the pure top-level interpretation.      --
---                                                                    --
--- A graded monad with the same unit, multiplication, functorial action  --
--- and sub-effecting as `Monad`, but with no algebraic operations and no --
--- effect handling. In their place, a single primitive:                  --
---                                                                    --
---   tickᵏ δ : [ mapᵉ δ ]ᵒ (Tᵏ A ε) →ᵐ Tᵏ A (δ ·ₑ ε)                     --
---                                                                    --
+----------------------------------------------------------------------------
+-- The TICK MONAD: the target of the pure top-level interpretation.       --
+--                                                                        --
+-- A graded monad with the same unit, multiplication, functorial action   --
+-- and sub-effecting as `Monad`, but with no algebraic operations and no  --
+-- effect handling. In their place, a single primitive:                   --
+--                                                                        --
+--   tickᵏ δ : [ mapᵉ δ ]ᵒ (Tᵏ A ε) →ᵐ Tᵏ A (δ ·ₑ ε)                      --
+--                                                                        --
 -- a delay at an arbitrary effect grade: `δ` worth of time passes and     --
 -- nothing is observed. A delay is `tickᵏ (of-durᵉ τ)`; an operation that --
 -- has been implemented is `tickᵏ (op-grade op)`, leaving only the time   --
 -- it took. `Model.Implementation` supplies the monad morphism running    --
--- the tree monad's operations into these ticks.                         --
-------------------------------------------------------------------------
+-- the tree monad's operations into these ticks.                          --
+----------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

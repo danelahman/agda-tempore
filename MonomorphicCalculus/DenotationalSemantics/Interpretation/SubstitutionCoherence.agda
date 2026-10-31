@@ -1,15 +1,15 @@
-------------------------------------------------------------------------
--- The interpretation is natural in substitutions:                      --
---   ⟦ C-sub₀ s M ⟧ᶜᵗ ≈ ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ s ⟧ˢ₀        (dually for values). --
---                                                                    --
--- `⟦ s ⟧ˢ₀ : ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ` is the semantic counterpart of a    --
--- `Sub₀ [] Γ Γ'`: each generator is a structural map of the model, so it  --
--- is defined by recursion on the substitution alone, and no transports     --
--- along context equalities are needed.                                     --
---                                                                          --
--- Replacing one variable is the instance at `sub-split₀ (split-pf x) W`,    --
--- whose environment morphism is `sub-env x W`.                              --
-------------------------------------------------------------------------
+----------------------------------------------------------------------------
+-- The interpretation is natural in substitutions:                        --
+--   ⟦ C-sub₀ s M ⟧ᶜᵗ ≈ ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ s ⟧ˢ₀        (dually for values).    --
+--                                                                        --
+-- `⟦ s ⟧ˢ₀ : ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ` is the semantic counterpart of a     --
+-- `Sub₀ [] Γ Γ'`: each generator is a structural map of the model, so it --
+-- is defined by recursion on the substitution alone, and no transports   --
+-- along context equalities are needed.                                   --
+--                                                                        --
+-- Replacing one variable is the instance at `sub-split₀ (split-pf x) W`, --
+-- whose environment morphism is `sub-env x W`.                           --
+----------------------------------------------------------------------------
 -- The four parts below are the eternal-value lemmas, the substitution's
 -- environment morphism and the theorem, the transports, and the
 -- one-variable instance.

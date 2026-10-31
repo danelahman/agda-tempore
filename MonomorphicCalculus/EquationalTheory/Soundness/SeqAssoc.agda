@@ -1,14 +1,14 @@
-------------------------------------------------------------------------
--- Soundness of the sequencing associativity equation `seq-assoc`.      --
---                                                                    --
--- `(M ⨟ N) ⨟ P == …(M ⨟ (N ⨟ P'))` is the graded monad's associativity --
+---------------------------------------------------------------------------
+-- Soundness of the sequencing associativity equation `seq-assoc`.       --
+--                                                                       --
+-- `(M ⨟ N) ⨟ P == …(M ⨟ (N ⨟ P'))` is the graded monad's associativity  --
 -- (`T-μ∘μ≡μ∘Tμ`) threaded through the strength's multiplication law     --
 -- (`strᵀ-μᵀ`) and product-associativity (`strᵀ-assoc`). Because the box --
 -- is *lax* (no `δ⁻¹`), the environment box is reconciled with the       --
 -- possibility multiplication `μ` by the adjunction laws `η⊣-δ`,         --
 -- `η⊣-monoidal`, `η⊣-≤` (as in `sound-seq-delay`), rather than by       --
--- cancelling `δ⁻¹ ∘ δ`.                                                --
-------------------------------------------------------------------------
+-- cancelling `δ⁻¹ ∘ δ`.                                                 --
+---------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

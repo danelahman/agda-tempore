@@ -1,34 +1,34 @@
-------------------------------------------------------------------------
--- The context modality `⟨ ρ ⟩ A` on setoid-valued presheaves, with the --
--- *Kripke possibility* semantics over the graded accessibility relation --
+----------------------------------------------------------------------------
+-- The context modality `⟨ ρ ⟩ A` on setoid-valued presheaves, with the   --
+-- *Kripke possibility* semantics over the graded accessibility relation  --
 -- on worlds. An element of `⟨ ρ ⟩ A` at a world `w` is a bundle          --
---                                                                    --
---   mk⟨⟩ (acc : wᵖ ⊑[ ρ ] w) (val : carrier A wᵖ)                       --
---                                                                    --
--- i.e. a *past* world `wᵖ`, reachable to `w` by spending the resource     --
--- grade `ρ`, together with a value of `A` at that past world.             --
---                                                                    --
+--                                                                        --
+--   mk⟨⟩ (acc : wᵖ ⊑[ ρ ] w) (val : carrier A wᵖ)                        --
+--                                                                        --
+-- i.e. a *past* world `wᵖ`, reachable to `w` by spending the resource    --
+-- grade `ρ`, together with a value of `A` at that past world.            --
+--                                                                        --
 -- As the base presheaves are unit-monotone, this Σ-bundle is quotiented  --
 -- into the *coend* `∫^{wᵖ} (wᵖ ⊑[ ρ ] w) ×                               --
--- carrier A wᵖ`. Concretely the per-world equivalence `_≈_` is the        --
--- equivalence closure of the generating relation `_◅_`: a bundle may be   --
+-- carrier A wᵖ`. Concretely the per-world equivalence `_≈_` is the       --
+-- equivalence closure of the generating relation `_◅_`: a bundle may be  --
 -- pushed forward along a unit-accessibility step `wᵖ ⊑[ u ] wᵖ'`,        --
--- transporting its value along and readjusting the witness (the witness   --
+-- transporting its value along and readjusting the witness (the witness  --
 -- readjustment is free, by `⊑-irrelevant`). Taking the closure of this   --
--- one-step relation is exactly what makes the adjunction unit `η⊣`        --
--- natural in the worlds: `η⊣` names the past world by the *present* one,  --
--- and moving the present world forward is a generating step.              --
---                                                                    --
--- The modality is a lax graded monad (unit `η`, multiplication `μ` with   --
--- reversed grade order), packaged as an instance of                       --
--- `MonomorphicCalculus.DenotationalSemantics.Model.Modality.Past`.        --
--- Because transport of a                                                  --
--- bundle only readjusts the witness, keeping the past world and value     --
--- fixed, almost every coherence law is either definitional (`≈-refl`) or  --
--- a single generating step for witness-irrelevance (`≈-mk-irr`). The one  --
--- exception is the congruence of `μ`, which folds a value-level chain     --
--- through the fixed-outer-witness map `postμ`.                            --
-------------------------------------------------------------------------
+-- one-step relation is exactly what makes the adjunction unit `η⊣`       --
+-- natural in the worlds: `η⊣` names the past world by the *present* one, --
+-- and moving the present world forward is a generating step.             --
+--                                                                        --
+-- The modality is a lax graded monad (unit `η`, multiplication `μ` with  --
+-- reversed grade order), packaged as an instance of                      --
+-- `MonomorphicCalculus.DenotationalSemantics.Model.Modality.Past`.       --
+-- Because transport of a                                                 --
+-- bundle only readjusts the witness, keeping the past world and value    --
+-- fixed, almost every coherence law is either definitional (`≈-refl`) or --
+-- a single generating step for witness-irrelevance (`≈-mk-irr`). The one --
+-- exception is the congruence of `μ`, which folds a value-level chain    --
+-- through the fixed-outer-witness map `postμ`.                           --
+----------------------------------------------------------------------------
 
 open import Grades.Base
 open import MonomorphicCalculus.DenotationalSemantics.Model.World

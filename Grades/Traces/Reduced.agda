@@ -1,49 +1,49 @@
-------------------------------------------------------------------------
--- Antichains of timed traces, and the grade structure they carry.     --
---                                                                     --
--- The grades that lift a trace order to sets of traces order them by  --
--- a closure: `P ≾ Q` says every member of `P` has a member of `Q`     --
--- below it, so two sets with the same closure are ordered both ways   --
--- without being the same set. The normal form that repairs this is    --
--- the antichain of the `≼`-minimal members, taken on top of the       --
--- canonical sorting `nf` that `Traces.Sets` already supplies:         --
---                                                                    --
---   n xs = nf (mins xs)                                               --
---                                                                    --
--- `mins` drops every member that has another member strictly below    --
--- it, `nf` sorts what is left and removes duplicates, and `n` is the  --
--- composite. It is idempotent, it preserves non-emptiness, and it     --
--- leaves the closure alone, so a sorted reduced list is determined by --
--- its closure and mutually-ordered sets normalise to the same list.   --
---                                                                    --
+-----------------------------------------------------------------------------
+-- Antichains of timed traces, and the grade structure they carry.         --
+--                                                                         --
+-- The grades that lift a trace order to sets of traces order them by      --
+-- a closure: `P ≾ Q` says every member of `P` has a member of `Q`         --
+-- below it, so two sets with the same closure are ordered both ways       --
+-- without being the same set. The normal form that repairs this is        --
+-- the antichain of the `≼`-minimal members, taken on top of the           --
+-- canonical sorting `nf` that `Traces.Sets` already supplies:             --
+--                                                                         --
+--   n xs = nf (mins xs)                                                   --
+--                                                                         --
+-- `mins` drops every member that has another member strictly below        --
+-- it, `nf` sorts what is left and removes duplicates, and `n` is the      --
+-- composite. It is idempotent, it preserves non-emptiness, and it         --
+-- leaves the closure alone, so a sorted reduced list is determined by     --
+-- its closure and mutually-ordered sets normalise to the same list.       --
+--                                                                         --
 -- The order comes in as a `TracePartialOrder` rather than a `TraceOrder`, --
--- because the two handednesses are both needed: a grade that closes   --
--- upward is this module at the order, one that closes downward is it  --
--- at `flipᵖ` of the order. The unit facts of a `TraceOrder` have no    --
--- converse, and nothing here asks for them.                           --
---                                                                    --
--- `_◃_` is membership in the closure: `x ◃ xs` holds when some member --
--- of `xs` sits `≼`-below `x`. Everything is phrased through it, since --
--- it is the invariant the reduction preserves and the order reads.    --
---                                                                     --
--- On top of the reduction sits the structure the antichains carry     --
--- as a grade: the carrier `Antichain`, the language product with      --
--- unit `{ ε }`, the order                                             --
---                                                                     --
---   P ≾ Q   iff   every member of `P` lies in the closure of `Q`      --
---                                                                     --
--- and the union as its join. One definition of the order serves       --
--- both handednesses: at the order it reads "each member of `P` has    --
--- a member of `Q` below it", and at `flipᵖ` of the order it reads     --
--- "above", which is the other grade. It is a *partial* order,         --
--- antisymmetry being `reduced-ext`, and that is what the reduction    --
--- is for.                                                             --
---                                                                     --
--- The un-reduced carrier of `Traces.Sets` therefore plays no part     --
--- here: the re-export below keeps that module's list-level            --
--- machinery, which the reduction is built from, and leaves its        --
--- set-level monoid behind.                                            --
-------------------------------------------------------------------------
+-- because the two handednesses are both needed: a grade that closes       --
+-- upward is this module at the order, one that closes downward is it      --
+-- at `flipᵖ` of the order. The unit facts of a `TraceOrder` have no       --
+-- converse, and nothing here asks for them.                               --
+--                                                                         --
+-- `_◃_` is membership in the closure: `x ◃ xs` holds when some member     --
+-- of `xs` sits `≼`-below `x`. Everything is phrased through it, since     --
+-- it is the invariant the reduction preserves and the order reads.        --
+--                                                                         --
+-- On top of the reduction sits the structure the antichains carry         --
+-- as a grade: the carrier `Antichain`, the language product with          --
+-- unit `{ ε }`, the order                                                 --
+--                                                                         --
+--   P ≾ Q   iff   every member of `P` lies in the closure of `Q`          --
+--                                                                         --
+-- and the union as its join. One definition of the order serves           --
+-- both handednesses: at the order it reads "each member of `P` has        --
+-- a member of `Q` below it", and at `flipᵖ` of the order it reads         --
+-- "above", which is the other grade. It is a *partial* order,             --
+-- antisymmetry being `reduced-ext`, and that is what the reduction        --
+-- is for.                                                                 --
+--                                                                         --
+-- The un-reduced carrier of `Traces.Sets` therefore plays no part         --
+-- here: the re-export below keeps that module's list-level                --
+-- machinery, which the reduction is built from, and leaves its            --
+-- set-level monoid behind.                                                --
+-----------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
 

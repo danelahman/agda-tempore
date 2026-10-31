@@ -1,21 +1,21 @@
 ------------------------------------------------------------------------
--- The moves that build coverage proofs, and what they add up to.      --
---                                                                     --
--- The relation's rules act on the *heads* of the two traces. These    --
--- helpers lift them to the trace operations the grades are defined    --
--- by: inverting a leading delay of the run, absorbing one into the    --
--- slack, spending slack on one the guarantee names, and padding the   --
--- run on the left. None of them touches `keep`.                       --
---                                                                     --
--- Monotonicity of the trace product holds only with the second slack  --
--- pinned to zero,                                                     --
---                                                                     --
---   mono-∙ : s ≼ᶜ[ j ] s' → t ≼ᶜ[ 0 ] t' → (s ∙ t) ≼ᶜ[ j ] (s' ∙ t')  --
---                                                                     --
--- and not in the slack-additive form, slack after a match being what  --
--- this order refuses to carry. At `j := 0` the pinned form is what    --
--- `Sets.liftˢ`'s `liftˢ-·ˢ` consumes, the lifts being taken at        --
--- `_≼ᶜ_ = _≼ᶜ[ 0 ]_`, so it is the instance the grades need.          --
+-- The moves that build coverage proofs, and what they add up to.     --
+--                                                                    --
+-- The relation's rules act on the *heads* of the two traces. These   --
+-- helpers lift them to the trace operations the grades are defined   --
+-- by: inverting a leading delay of the run, absorbing one into the   --
+-- slack, spending slack on one the guarantee names, and padding the  --
+-- run on the left. None of them touches `keep`.                      --
+--                                                                    --
+-- Monotonicity of the trace product holds only with the second slack --
+-- pinned to zero,                                                    --
+--                                                                    --
+--   mono-∙ : s ≼ᶜ[ j ] s' → t ≼ᶜ[ 0 ] t' → (s ∙ t) ≼ᶜ[ j ] (s' ∙ t') --
+--                                                                    --
+-- and not in the slack-additive form, slack after a match being what --
+-- this order refuses to carry. At `j := 0` the pinned form is what   --
+-- `Sets.liftˢ`'s `liftˢ-·ˢ` consumes, the lifts being taken at       --
+-- `_≼ᶜ_ = _≼ᶜ[ 0 ]_`, so it is the instance the grades need.         --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc)

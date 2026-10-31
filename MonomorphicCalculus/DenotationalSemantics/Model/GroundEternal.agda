@@ -1,28 +1,28 @@
-------------------------------------------------------------------------
--- Eternal structure for the eternal base types.                        --
---                                                                    --
--- The variable rule may use a variable of an *eternal* type at any     --
+---------------------------------------------------------------------------
+-- Eternal structure for the eternal base types.                         --
+--                                                                       --
+-- The variable rule may use a variable of an *eternal* type at any      --
 -- grade, so the interpretation of an eternal type must carry an         --
 -- `Eternalᵒ` structure (in particular the extraction `extᵉ`).           --
---                                                                    --
--- The structure is supplied for each *former* of                         --
--- `MonomorphicCalculus.Syntax.Types.Eternal`:                        --
+--                                                                       --
+-- The structure is supplied for each *former* of                        --
+-- `MonomorphicCalculus.Syntax.Types.Eternal`:                           --
 -- the eternal base types, and closure under `Unit`, `Bool`, `Nat`,      --
--- `Empty`, products, sums and lists. `Interpretation.Variables` then     --
--- assembles an `Eternalᵒ` for every eternal type by recursion on the     --
--- eternality witness, so all the eternal *laws* (grade-uniformity, the   --
--- unit grade, the `⟨_⟩`-algebra law) come from `Eternalᵒ` rather than    --
--- being re-derived per former.                                           --
---                                                                    --
+-- `Empty`, products, sums and lists. `Interpretation.Variables` then    --
+-- assembles an `Eternalᵒ` for every eternal type by recursion on the    --
+-- eternality witness, so all the eternal *laws* (grade-uniformity, the  --
+-- unit grade, the `⟨_⟩`-algebra law) come from `Eternalᵒ` rather than   --
+-- being re-derived per former.                                          --
+--                                                                       --
 -- An eternal base type also carries its order, a comparison morphism    --
 -- (`cmpᵇᵐ`) agreeing with the signature's order on the constants;       --
--- `Interpretation.Comparisons` extends it to every eternal type.         --
---                                                                    --
--- In the presheaf model (`Example.PSh.Modality.Eternal`) the constant    --
--- presheaves `Kᵖ` carry this structure (`Kᵖ-eternalᵒ`), and the formers  --
--- are covered by `𝟙ᵖ-eternalᵒ`, `𝔹ᵖ-eternalᵒ`, `ℕᵖ-eternalᵒ`,          --
--- `𝟘ᵖ-eternalᵒ`, `×ᵖ-eternalᵒ`, `+ᵖ-eternalᵒ` and `Listᵖ-eternalᵒ`.    --
-------------------------------------------------------------------------
+-- `Interpretation.Comparisons` extends it to every eternal type.        --
+--                                                                       --
+-- In the presheaf model (`Example.PSh.Modality.Eternal`) the constant   --
+-- presheaves `Kᵖ` carry this structure (`Kᵖ-eternalᵒ`), and the formers --
+-- are covered by `𝟙ᵖ-eternalᵒ`, `𝔹ᵖ-eternalᵒ`, `ℕᵖ-eternalᵒ`,           --
+-- `𝟘ᵖ-eternalᵒ`, `×ᵖ-eternalᵒ`, `+ᵖ-eternalᵒ` and `Listᵖ-eternalᵒ`.     --
+---------------------------------------------------------------------------
 
 open import Language.BaseTypes
 open import Grades.Base

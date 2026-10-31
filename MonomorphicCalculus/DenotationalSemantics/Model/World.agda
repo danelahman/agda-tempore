@@ -1,36 +1,36 @@
-------------------------------------------------------------------------
--- The Kripke frame of worlds that the presheaf semantics is indexed   --
+--------------------------------------------------------------------------
+-- The Kripke frame of worlds that the presheaf semantics is indexed    --
 -- by.                                                                  --
---                                                                    --
--- The frame carries *no* monoid structure on its carrier of worlds.   --
+--                                                                      --
+-- The frame carries *no* monoid structure on its carrier of worlds.    --
 -- A presheaf is indexed by the worlds `W` monotonely in the *unit*     --
 -- grade only (see                                                      --
 -- `MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Base`); --
 -- the graded order enters through the modalities and the monad.        --
 -- Accordingly, the only structure the frame provides is a single       --
 -- family of preorders on worlds:                                       --
---                                                                    --
---   * `_⊑[ ρ ]_`, graded by the *resource* grades `ρ : R`, driving    --
+--                                                                      --
+--   * `_⊑[ ρ ]_`, graded by the *resource* grades `ρ : R`, driving     --
 --     the box and context modalities (Kripke necessity / possibility)  --
 --     and the world-movement of the graded effect monad.               --
---                                                                    --
+--                                                                      --
 -- The monad is graded by the *effect* grades `ε : E`, but it moves     --
 -- through the worlds along the *resource projection* `mapᵉ ε` of its   --
 -- effect: an operation of grade `op-grade op` advances the worlds by   --
 -- `mapᵉ (op-grade op)` resources, matching the box `[ mapᵉ (op-grade   --
 -- op) ]` that the calculus's operations and handlers use. So no        --
 -- separate effect-graded accessibility is needed — the worlds may      --
--- themselves carry as much history as desired, and `_⊑[_]_` relates   --
+-- themselves carry as much history as desired, and `_⊑[_]_` relates    --
 -- those worlds.                                                        --
---                                                                    --
+--                                                                      --
 -- The family has the natural laws that make the (co)monad / monad      --
 -- coherences hold on the nose (reflexivity at the unit grade,          --
 -- transitivity multiplying the grades, *covariance* in the grade —     --
 -- a larger grade gives a larger relation — and proof irrelevance of    --
--- the witnesses). Covariance is what makes the box modality             --
+-- the witnesses). Covariance is what makes the box modality            --
 -- contravariantly graded (`∀`-shaped) and the context modality and     --
 -- effect monad covariantly graded (`Σ`-shaped).                        --
-------------------------------------------------------------------------
+--------------------------------------------------------------------------
 
 open import Grades.Durations using (Duration)
 open import Grades.Base

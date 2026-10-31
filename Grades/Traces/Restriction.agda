@@ -1,14 +1,14 @@
 ------------------------------------------------------------------------
--- Restricting timed traces along a predicate on operation names.      --
---                                                                     --
--- The sub-alphabet `Op'` is the operations the predicate admits, and   --
--- restriction drops every event outside it while keeping the delays,   --
--- merging the delays that surrounded a dropped operation. Sequencing   --
--- and the language product are preserved, so restriction is a monoid   --
--- map -- which is what makes it a grade morphism.                      --
---                                                                     --
--- Both alphabets are in play at once, so this module opens the trace   --
--- toolkit *unapplied* and names the alphabet at each use.              --
+-- Restricting timed traces along a predicate on operation names.     --
+--                                                                    --
+-- The sub-alphabet `Op'` is the operations the predicate admits, and --
+-- restriction drops every event outside it while keeping the delays, --
+-- merging the delays that surrounded a dropped operation. Sequencing --
+-- and the language product are preserved, so restriction is a monoid --
+-- map -- which is what makes it a grade morphism.                    --
+--                                                                    --
+-- Both alphabets are in play at once, so this module opens the trace --
+-- toolkit *unapplied* and names the alphabet at each use.            --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)

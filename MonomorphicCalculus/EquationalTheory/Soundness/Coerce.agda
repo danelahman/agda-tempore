@@ -1,12 +1,12 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Soundness of the subsumption equations.                             --
--- A subsumption denotes the coercion `⟦_⟧<:ᵛ`/`⟦_⟧<:ᶜ`; each equation  --
--- is a law of that coercion: `subV`/`subC-refl` and `-trans` its       --
--- functoriality, `subC-perform`/`-delay` the naturality and            --
--- sub-effecting of `opᵀ`/`delayᵀ`, and `subC-seq`/`-handle` are        --
--- `strᵀ-≤` then `T-≤-μᵀ` resp. `T-alg-of-handlerᵀ-≤`, crossing the     --
+-- A subsumption denotes the coercion `⟦_⟧<:ᵛ`/`⟦_⟧<:ᶜ`; each equation --
+-- is a law of that coercion: `subV`/`subC-refl` and `-trans` its      --
+-- functoriality, `subC-perform`/`-delay` the naturality and           --
+-- sub-effecting of `opᵀ`/`delayᵀ`, and `subC-seq`/`-handle` are       --
+-- `strᵀ-≤` then `T-≤-μᵀ` resp. `T-alg-of-handlerᵀ-≤`, crossing the    --
 -- lock via `η⊣-≤` and the binder via `subCtx-str`.                    --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

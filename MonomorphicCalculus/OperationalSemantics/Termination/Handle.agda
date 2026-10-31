@@ -1,13 +1,13 @@
 ------------------------------------------------------------------------
 -- Handling preserves reducibility.                                   --
 --                                                                    --
--- As `Bind`, plus a clause premise, and above `Environment` for the   --
--- same reason (`sub-wk-C`).                                           --
+-- As `Bind`, plus a clause premise, and above `Environment` for the  --
+-- same reason (`sub-wk-C`).                                          --
 --                                                                    --
--- Both premises are stated at exactly the reduct the machine          --
--- produces. `HANDLE-OP` boxes the resumption at the operation's own   --
--- grade and `BOX` then allocates it, so the clause fires at           --
--- `St₁ ∷ₛ V₀` with its continuation binder *being* the fresh cell.    --
+-- Both premises are stated at exactly the reduct the machine         --
+-- produces. `HANDLE-OP` boxes the resumption at the operation's own  --
+-- grade and `BOX` then allocates it, so the clause fires at          --
+-- `St₁ ∷ₛ V₀` with its continuation binder *being* the fresh cell.   --
 ------------------------------------------------------------------------
 
 open import Data.Empty

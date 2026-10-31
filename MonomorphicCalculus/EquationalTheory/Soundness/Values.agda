@@ -1,13 +1,13 @@
-------------------------------------------------------------------------
+--------------------------------------------------------------------------
 -- Soundness of the beta/eta equations of the pure fragment.            --
 -- These are the cartesian closed structure: `unit-eta` is the terminal --
 -- object's uniqueness, `fun-beta`/`fun-eta` the exponential's,         --
 -- `match-beta`/`match-eta` the product's, `absurd-eta` the initial     --
--- object's strictness, the boolean equations are the boolean object's --
--- own laws, the natural-number equations those of `caseℕᵐ` and of     --
--- the recursor `recℕᵐ`, the sum equations the coproduct's (`caseᵐ`),  --
--- and the list equations those of `caseLᵐ` and of `recLᵐ`.            --
-------------------------------------------------------------------------
+-- object's strictness, the boolean equations are the boolean object's  --
+-- own laws, the natural-number equations those of `caseℕᵐ` and of      --
+-- the recursor `recℕᵐ`, the sum equations the coproduct's (`caseᵐ`),   --
+-- and the list equations those of `caseLᵐ` and of `recLᵐ`.             --
+--------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

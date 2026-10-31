@@ -1,17 +1,17 @@
-------------------------------------------------------------------------
--- The free graded tick monad on setoid-valued unit-monotone presheaves. --
---                                                                    --
--- Trees are built from                                                  --
---                                                                    --
---   * `leaf`      : a returned value of `A` (grade `uₑ`);              --
+----------------------------------------------------------------------------
+-- The free graded tick monad on setoid-valued unit-monotone presheaves.  --
+--                                                                        --
+-- Trees are built from                                                   --
+--                                                                        --
+--   * `leaf`      : a returned value of `A` (grade `uₑ`);                --
 --   * `tick-node` : `δ` worth of time passes and nothing is observed. It --
 --                   stores its Kripke continuation over every world      --
---                   reachable by `mapᵉ δ`;                              --
---   * `sub`       : sub-effecting.                                      --
---                                                                    --
+--                   reachable by `mapᵉ δ`;                               --
+--   * `sub`       : sub-effecting.                                       --
+--                                                                        --
 -- A tick records nothing, so a coercion may be pushed under it: hence    --
 -- `sub-tick` in the quotient below.                                      --
-------------------------------------------------------------------------
+----------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

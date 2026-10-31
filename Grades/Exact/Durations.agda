@@ -12,7 +12,7 @@
 -- duration it admits (`hull-sound`). In a dense one, for an          --
 -- expression without iteration, it is the least such interval        --
 -- (`hull-least`): every duration it admits lies between two          --
--- durations of words of `e` (`hull-reach`); with iteration it is    --
+-- durations of words of `e` (`hull-reach`); with iteration it is     --
 -- the least too once the domain is Archimedean, a word of positive   --
 -- duration repeated outlasting every duration (`Iterated`). Fitting  --
 -- preserves durations, so the hull is monotone in the order on sets  --

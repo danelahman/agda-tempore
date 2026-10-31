@@ -1,4 +1,4 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- The presheaf model is head-faithful.                                --
 --                                                                     --
 -- Discharges `Adequacy.HeadFaithful`'s record — the model-side        --
@@ -10,7 +10,7 @@
 -- can always pass by a tick) and `ConstFrame` (base constants'        --
 -- equality does not depend on when one looks, needed only for         --
 -- `leaf-const`).                                                      --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Empty
 open import Data.Nat using (ℕ; zero; suc; _+_; _≤_)

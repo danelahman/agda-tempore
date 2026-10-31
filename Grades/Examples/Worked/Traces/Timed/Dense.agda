@@ -9,7 +9,7 @@
 --   write  ]1/4, 3/2]   more than a quarter, at most one and a half  --
 --   send   [1, 2]                                                    --
 --                                                                    --
--- An allowance charges an operation the upper end of its running    --
+-- An allowance charges an operation the upper end of its running     --
 -- time (`RunningTimes.costʰⁱ`), and delays are rational. The whole-  --
 -- step grade reads in dense time along the inclusion of durations    --
 -- (`Timed.Dense`). Every ordering is established by the decision     --

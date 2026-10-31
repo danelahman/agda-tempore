@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
--- The free graded tick monad, and the implementation running the         --
--- operations, as instances of `Model.TickMonad` and                      --
--- `Model.Implementation`.                                               --
+-- The free graded tick monad, and the implementation running the     --
+-- operations, as instances of `Model.TickMonad` and                  --
+-- `Model.Implementation`.                                            --
 ------------------------------------------------------------------------
 
 open import Grades.Base

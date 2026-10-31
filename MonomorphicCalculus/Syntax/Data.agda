@@ -1,6 +1,6 @@
-------------------------------------------------------------------------
+--------------------------------------------------------------------------
 -- The data of a type, and their comparison                             --
---                                                                    --
+--                                                                      --
 -- `⟪ A ⟫` is the set of closed canonical values of `A` read as data:   --
 -- constants, booleans, numerals, pairs, injections and lists. A        --
 -- subtyping acts on data by `⟪_⟫ˢ`. At an eternal type the data carry  --
@@ -8,7 +8,7 @@
 -- `true`, the usual order on numerals, and the lexicographic orders on --
 -- pairs, injections (`inl` before `inr`) and lists. `⌈_⌉` embeds data  --
 -- as values.                                                           --
-------------------------------------------------------------------------
+--------------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)
 open import Data.Empty using (⊥)

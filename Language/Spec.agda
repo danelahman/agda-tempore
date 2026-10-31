@@ -1,4 +1,4 @@
------------------------------------------------------------------
+------------------------------------------------------------------
 -- Bundled specification of a concrete instance of the language --
 --                                                              --
 -- A `LanguageSpec` packages the three pieces of data that the  --
@@ -10,7 +10,7 @@
 --                                                              --
 -- Downstream syntax and semantics modules take a single        --
 -- `LanguageSpec` parameter and open it locally.                --
------------------------------------------------------------------
+------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.BaseTypes

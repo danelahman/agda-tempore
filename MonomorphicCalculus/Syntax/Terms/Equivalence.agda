@@ -1,17 +1,17 @@
-------------------------------------------------------------------------
--- Terms up to irrelevant stored data.                                --
---                                                                    --
+-------------------------------------------------------------------------
+-- Terms up to irrelevant stored data.                                 --
+--                                                                     --
 -- A term stores three pieces of data no rule inspects: a `var`'s      --
 -- grade bound, a subsumption's subtyping witness, and an `unbox`'s    --
 -- grade bound. All three are proof-irrelevant (`≾ᵣ-irrelevant`,       --
 -- `<:ᵛ-irrelevant`/`<:ᶜ-irrelevant`, the first through `fun-ext`), so --
--- terms differing only in them are propositionally equal.            --
---                                                                    --
+-- terms differing only in them are propositionally equal.             --
+--                                                                     --
 -- Equality of terms is therefore `_≡_`, and the congruence at each    --
 -- former is `cong`/`cong₂`. Named here are only the five that are     --
 -- not: the four irrelevance laws, and `handler-≡`, whose clause       --
 -- family is compared pointwise and so needs `fun-ext`.                --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Empty
 open import Data.Product

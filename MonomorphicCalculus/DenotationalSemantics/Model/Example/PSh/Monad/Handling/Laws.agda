@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Effect handling: the η / delay / op / sub-effecting algebra laws.    --
+-- Effect handling: the η / delay / op / sub-effecting algebra laws.  --
 ------------------------------------------------------------------------
 
 {-# OPTIONS --lossy-unification #-}

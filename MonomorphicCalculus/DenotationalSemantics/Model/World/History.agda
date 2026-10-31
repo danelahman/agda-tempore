@@ -1,23 +1,23 @@
--------------------------------------------------------------------------
--- The history frame of a grade over timed traces.                     --
---                                                                     --
--- A world is a timed trace, the run observed so far. A trace is read  --
--- in the grade by reading each operation by its grade and each delay  --
--- by `of-dur`, and sequencing:                                        --
---                                                                     --
---   ⟦ ε ⟧ = u     ⟦ o · s ⟧ = opᵍ o · ⟦ s ⟧     ⟦ d · s ⟧ = of-dur d · ⟦ s ⟧
---                                                                     --
--- a monoid morphism up to `≃`. A grade `ρ` reaches the histories      --
--- extending the current one by a continuation it admits:              --
---                                                                     --
---   w ⊑ʰ[ ρ ] w'   iff   Σ[ s ] w ∙ s ≡ w'  and  ⟦ s ⟧ ≾ ρ            --
---                                                                     --
--- The laws hold at every grade: reflexivity is the empty trace,       --
--- transitivity the morphism and monotonicity of the product,          --
--- covariance transitivity of the order, and proof irrelevance left    --
--- cancellation of traces with irrelevance of the order. Every world   --
--- reached extends the current one, and `⊤` reaches every extension.   --
--------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- The history frame of a grade over timed traces.                            --
+--                                                                            --
+-- A world is a timed trace, the run observed so far. A trace is read         --
+-- in the grade by reading each operation by its grade and each delay         --
+-- by `of-dur`, and sequencing:                                               --
+--                                                                            --
+--   ⟦ ε ⟧ = u     ⟦ o · s ⟧ = opᵍ o · ⟦ s ⟧     ⟦ d · s ⟧ = of-dur d · ⟦ s ⟧ --
+--                                                                            --
+-- a monoid morphism up to `≃`. A grade `ρ` reaches the histories             --
+-- extending the current one by a continuation it admits:                     --
+--                                                                            --
+--   w ⊑ʰ[ ρ ] w'   iff   Σ[ s ] w ∙ s ≡ w'  and  ⟦ s ⟧ ≾ ρ                   --
+--                                                                            --
+-- The laws hold at every grade: reflexivity is the empty trace,              --
+-- transitivity the morphism and monotonicity of the product,                 --
+-- covariance transitivity of the order, and proof irrelevance left           --
+-- cancellation of traces with irrelevance of the order. Every world          --
+-- reached extends the current one, and `⊤` reaches every extension.          --
+--------------------------------------------------------------------------------
 
 open import Grades.Durations using (Duration; TimeDomain)
 open import Grades.Base using (Grade)

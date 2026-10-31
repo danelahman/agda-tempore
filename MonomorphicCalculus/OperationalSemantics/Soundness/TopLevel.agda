@@ -1,4 +1,4 @@
-------------------------------------------------------------------------
+---------------------------------------------------------------------------
 -- Soundness of the pure top-level operational semantics.                --
 --                                                                       --
 -- The top-level machine runs a program against external                 --
@@ -12,7 +12,7 @@
 --                                                                       --
 -- The theorem's one condition, `OpSemCoherent`, is that `op-sem` is the --
 -- semantic implementation `op-semᵐ`.                                    --
-------------------------------------------------------------------------
+---------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

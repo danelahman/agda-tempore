@@ -6,7 +6,7 @@
 -- extending the current one by a continuation whose reading is below --
 -- `U` (`World.History`):                                             --
 --                                                                    --
---   w ⊑ʰ[ U ] w'   iff   Σ[ s ] w ∙ s ≡ w'  and  ⟦ s ⟧ ≾ U            --
+--   w ⊑ʰ[ U ] w'   iff   Σ[ s ] w ∙ s ≡ w'  and  ⟦ s ⟧ ≾ U           --
 --                                                                    --
 -- An operation is read as its literal, a delay of `d` steps as `d`   --
 -- strict waits of at most a step.                                    --

@@ -1,15 +1,15 @@
 ------------------------------------------------------------------------
--- Intervals of a time domain, with open or closed ends, as grades.    --
+-- Intervals of a time domain, with open or closed ends, as grades.   --
 --                                                                    --
--- A grade is an interval of durations, "between `lo` and `hi`", each  --
--- end open or closed and the upper one possibly absent. The order is  --
--- the order of the ends, a wider interval being weaker; sequencing    --
+-- A grade is an interval of durations, "between `lo` and `hi`", each --
+-- end open or closed and the upper one possibly absent. The order is --
+-- the order of the ends, a wider interval being weaker; sequencing   --
 -- adds the ends, an end of a sum being open when an end summed is;   --
--- the join is the hull; and a delay by `τ` is the point `[τ, τ]`.     --
+-- the join is the hull; and a delay by `τ` is the point `[τ, τ]`.    --
 --                                                                    --
--- The laws hold over any time domain. In a dense one the order is     --
--- containment of the durations admitted and sequencing their          --
--- Minkowski sum (`Durations.Intervals.Dense`); that is the grade of    --
+-- The laws hold over any time domain. In a dense one the order is    --
+-- containment of the durations admitted and sequencing their         --
+-- Minkowski sum (`Durations.Intervals.Dense`); that is the grade of  --
 -- rational time, `Example.Time.Dense.TwoSided`.                      --
 ------------------------------------------------------------------------
 

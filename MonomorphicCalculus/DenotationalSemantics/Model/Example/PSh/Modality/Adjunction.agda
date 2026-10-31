@@ -1,17 +1,17 @@
-------------------------------------------------------------------------
--- The graded adjunction `⟨ ρ ⟩ ⊣ [ ρ ]` on setoid-valued presheaves,   --
--- between the context modality (Kripke possibility) and the box        --
--- modality (Kripke necessity) at a common resource grade `ρ`.          --
---                                                                    --
--- The unit `η⊣ : A →ᵖ [ ρ ] ⟨ ρ ⟩ A` names the past world of the       --
--- possibility bundle by the *present* world, transported forward only  --
--- when the box is later opened; the counit `ε⊣ : ⟨ ρ ⟩ [ ρ ] A →ᵖ A`   --
+---------------------------------------------------------------------------
+-- The graded adjunction `⟨ ρ ⟩ ⊣ [ ρ ]` on setoid-valued presheaves,    --
+-- between the context modality (Kripke possibility) and the box         --
+-- modality (Kripke necessity) at a common resource grade `ρ`.           --
+--                                                                       --
+-- The unit `η⊣ : A →ᵖ [ ρ ] ⟨ ρ ⟩ A` names the past world of the        --
+-- possibility bundle by the *present* world, transported forward only   --
+-- when the box is later opened; the counit `ε⊣ : ⟨ ρ ⟩ [ ρ ] A →ᵖ A`    --
 -- opens a boxed value reached through a lock along the very witness     --
 -- that reached it. Both triangle identities and both grade-relaxation   --
 -- laws hold on the nose (`≈-refl`); the only genuine coend reasoning is --
 -- in the congruences of `η⊣` (a single generating step) and `ε⊣`        --
 -- (folding the coend chain through the box's `fun-nat`).                --
-------------------------------------------------------------------------
+---------------------------------------------------------------------------
 
 open import Grades.Base
 open import MonomorphicCalculus.DenotationalSemantics.Model.World

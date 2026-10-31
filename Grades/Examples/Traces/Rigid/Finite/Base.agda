@@ -1,13 +1,13 @@
-------------------------------------------------------------------------
--- Rigid timed finite-expression grades over the non-negative         --
--- rationals: what the right-, left- and two-sided grades share.      --
---                                                                    --
--- Grades are finite one-sided expressions (`Exact.Finite`), written  --
--- with `⌜_⌝`, whose side condition -- no iteration, at least one     --
+-------------------------------------------------------------------------
+-- Rigid timed finite-expression grades over the non-negative          --
+-- rationals: what the right-, left- and two-sided grades share.       --
+--                                                                     --
+-- Grades are finite one-sided expressions (`Exact.Finite`), written   --
+-- with `⌜_⌝`, whose side condition -- no iteration, at least one      --
 -- word -- is computed. A comparison is decided by the reader; `holds` --
--- and `fails` read the decision as a Boolean, so that a comparison   --
--- is checked by evaluation.                                          --
-------------------------------------------------------------------------
+-- and `fails` read the decision as a Boolean, so that a comparison    --
+-- is checked by evaluation.                                           --
+-------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
 open import Data.Nat.Base using (ℕ)

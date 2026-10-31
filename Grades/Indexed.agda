@@ -11,7 +11,7 @@
 --                                                                    --
 -- A semilattice, an action and a grade lift to maps, with every      --
 -- operation, the order included, pointwise, and every law holding    --
--- pointwise; `of-dur τ` is constantly `of-dur τ`. Its hints declare --
+-- pointwise; `of-dur τ` is constantly `of-dur τ`. Its hints declare  --
 -- the unit least and `_·_` commutative where those of the component  --
 -- do, and no closures.                                               --
 ------------------------------------------------------------------------

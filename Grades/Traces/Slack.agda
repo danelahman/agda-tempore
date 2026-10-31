@@ -1,12 +1,12 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- The slack arithmetic the trace orders share.                        --
---                                                                    --
--- Both orders on timed traces carry a duration of banked time        --
+--                                                                     --
+-- Both orders on timed traces carry a duration of banked time         --
 -- and shuffle it about as they walk the two traces, and both are      --
--- decided by recursion on a fuel budget bounding the combined size of  --
--- those traces. None of that depends on the rules, so it is collected  --
+-- decided by recursion on a fuel budget bounding the combined size of --
+-- those traces. None of that depends on the rules, so it is collected --
 -- here rather than restated in each.                                  --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc)
 

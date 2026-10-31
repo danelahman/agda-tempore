@@ -1,21 +1,21 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- The allowance order is antisymmetric, at a positive cost model.     --
---                                                                    --
+--                                                                     --
 -- Positivity of `costʰⁱ` is what the statement needs, and it is taken --
 -- as a parameter exactly as `Allowance.AsOrder` takes it: a free      --
 -- operation would be performed out of an empty budget, so `ε` would   --
 -- permit `⌈ o ⌉` while permitting nothing but itself, and the order   --
 -- would identify two different traces.                                --
---                                                                    --
+--                                                                     --
 -- With a positive cost, `use-op` is blocked at budget zero exactly as --
 -- positive delay lengths block `use-delay`, so a bound and a run that --
 -- permit each other match node for node. The measure that rules out   --
 -- the remaining cases is the duration: `skip-op` and `use-op` each    --
 -- move it by a cost that cannot be made up.                           --
---                                                                    --
+--                                                                     --
 -- This is the field `Allowance.AsOrder` fills in, and through it what --
 -- makes the normal forms of `Traces.Reduced` canonical.               --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Nat.Base using (ℕ; zero; suc)

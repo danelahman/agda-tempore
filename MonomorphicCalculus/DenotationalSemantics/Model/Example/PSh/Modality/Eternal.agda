@@ -1,24 +1,24 @@
-------------------------------------------------------------------------
--- Eternal objects in the concrete presheaf model: constant presheaves. --
---                                                                    --
--- `Kᵖ S` is the presheaf constantly equal to the setoid `S` at every   --
+---------------------------------------------------------------------------
+-- Eternal objects in the concrete presheaf model: constant presheaves.  --
+--                                                                       --
+-- `Kᵖ S` is the presheaf constantly equal to the setoid `S` at every    --
 -- world, with identity transport. Being world-independent, its value    --
--- can be necessitated into, and extracted from, the box / context        --
--- modality at any grade, so `Kᵖ S` carries an `Eternalᵒ` structure       --
--- (`Kᵖ-eternalᵒ`). This is what interprets the eternal *base* types.     --
---                                                                    --
--- The eternal *type formers* are handled by the closure lemmas:          --
+-- can be necessitated into, and extracted from, the box / context       --
+-- modality at any grade, so `Kᵖ S` carries an `Eternalᵒ` structure      --
+-- (`Kᵖ-eternalᵒ`). This is what interprets the eternal *base* types.    --
+--                                                                       --
+-- The eternal *type formers* are handled by the closure lemmas:         --
 -- `𝟙ᵖ-eternalᵒ` (Unit), `𝔹ᵖ-eternalᵒ` (Bool), `ℕᵖ-eternalᵒ` (Nat),      --
 -- `𝟘ᵖ-eternalᵒ` (Empty), `×ᵖ-eternalᵒ` (products), `+ᵖ-eternalᵒ` (sums) --
--- and `Listᵖ-eternalᵒ` (lists), for any eternal objects. Together they   --
--- cover exactly the formers of                                           --
--- `MonomorphicCalculus.Syntax.Types.Eternal`.                            --
---                                                                    --
--- For the constant presheaves the `⟨ ⊤ ⟩`-algebra `α` is the mate         --
--- `ε⊣ ∘ᵖ ⟨ ⊤ ⟩ᶠ nec` of a necessitation `nec`, and its two laws hold by   --
+-- and `Listᵖ-eternalᵒ` (lists), for any eternal objects. Together they  --
+-- cover exactly the formers of                                          --
+-- `MonomorphicCalculus.Syntax.Types.Eternal`.                           --
+--                                                                       --
+-- For the constant presheaves the `⟨ ⊤ ⟩`-algebra `α` is the mate       --
+-- `ε⊣ ∘ᵖ ⟨ ⊤ ⟩ᶠ nec` of a necessitation `nec`, and its two laws hold by --
 -- reflexivity; products, sums and lists reuse the generic closures      --
--- `×ᵐ-eternalᵒ`, `+ᵐ-eternalᵒ` and `Listᵐ-eternalᵒ`.                      --
-------------------------------------------------------------------------
+-- `×ᵐ-eternalᵒ`, `+ᵐ-eternalᵒ` and `Listᵐ-eternalᵒ`.                    --
+---------------------------------------------------------------------------
 
 open import Grades.Base
 open import MonomorphicCalculus.DenotationalSemantics.Model.World

@@ -1,14 +1,14 @@
-------------------------------------------------------------------------
+---------------------------------------------------------------------------
 -- The handler-uniformity condition and the clause the semantics applies --
 -- to a handled operation.                                               --
---                                                                      --
--- Split off from `Preservation` because it is interpretation-only (no    --
--- operational machinery) and its normalisation is heavy: keeping it in    --
--- its own module lets `Preservation` import `clause-sound` rather than    --
--- re-elaborate its body. `HANDLE-OP` includes the handler's clause into  --
--- the ambient context `Γ` along `barrier-ren`, whose denotation is the    --
--- free algebra's unit `⟨⊤⟩-η` on the nose.                                --
-------------------------------------------------------------------------
+--                                                                       --
+-- Split off from `Preservation` because it is interpretation-only (no   --
+-- operational machinery) and its normalisation is heavy: keeping it in  --
+-- its own module lets `Preservation` import `clause-sound` rather than  --
+-- re-elaborate its body. `HANDLE-OP` includes the handler's clause into --
+-- the ambient context `Γ` along `barrier-ren`, whose denotation is the  --
+-- free algebra's unit `⟨⊤⟩-η` on the nose.                              --
+---------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

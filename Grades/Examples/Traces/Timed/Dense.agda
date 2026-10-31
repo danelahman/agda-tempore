@@ -3,10 +3,10 @@
 --                                                                    --
 -- The timed trace grades of `Example.Traces.Timed` are built over    --
 -- any time domain; at `ℚ≥0ᵀ` their delays and costs are rational.    --
--- Whole steps embed: the inclusion `ℕ→ℚ≥0ᴰ` keeps positive          --
+-- Whole steps embed: the inclusion `ℕ→ℚ≥0ᴰ` keeps positive           --
 -- durations positive, so `Example.Traces.Timed.Morphism` carries     --
 -- each grade over ℕ at costs `c` to the dense one at costs `# ∘ c`   --
--- (`Left.left-sided→`, `Right.right-sided→`, `Two.two-sided→`).     --
+-- (`Left.left-sided→`, `Right.right-sided→`, `Two.two-sided→`).      --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)

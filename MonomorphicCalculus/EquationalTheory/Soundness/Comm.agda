@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
--- Soundness of the modal commutation equations.                        --
--- `unbox-comm`/`box-comm`/`box-unbox-comm` say two independent         --
--- resource binders commute; `comm-l`/`comm-r` normalise both orders    --
--- to the same composite.                                               --
+-- Soundness of the modal commutation equations.                      --
+-- `unbox-comm`/`box-comm`/`box-unbox-comm` say two independent       --
+-- resource binders commute; `comm-l`/`comm-r` normalise both orders  --
+-- to the same composite.                                             --
 ------------------------------------------------------------------------
 
 open import Grades.Base

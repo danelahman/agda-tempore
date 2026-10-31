@@ -1,12 +1,12 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Replacing one variable.                                             --
 --                                                                     --
--- A notation, not a definition: replacing a single variable is the     --
--- generating substitution `val-sub` under the suffix that variable     --
--- stands over. That suffix is what a splitting names, so `sub-split₀`  --
--- takes the splitting and recurses on it, and every single-variable    --
+-- A notation, not a definition: replacing a single variable is the    --
+-- generating substitution `val-sub` under the suffix that variable    --
+-- stands over. That suffix is what a splitting names, so `sub-split₀` --
+-- takes the splitting and recurses on it, and every single-variable   --
 -- operator below is the general action at it.                         --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Empty
 open import Data.Product

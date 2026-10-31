@@ -1,23 +1,23 @@
-------------------------------------------------------------------------
--- What the ends of an interval say about the durations it admits.    --
---                                                                    --
--- A duration `x` lies in an interval (`x ∈ⁱ i`) when the lower end   --
--- is below the cut `x ∣ ⁻` and the cut `x ∣ ⁺` below the upper end.  --
--- In any time domain the order of the ends is sound for containment  --
+-------------------------------------------------------------------------
+-- What the ends of an interval say about the durations it admits.     --
+--                                                                     --
+-- A duration `x` lies in an interval (`x ∈ⁱ i`) when the lower end    --
+-- is below the cut `x ∣ ⁻` and the cut `x ∣ ⁺` below the upper end.   --
+-- In any time domain the order of the ends is sound for containment   --
 -- (`⊆ⁱ-sound`) and the sum of two intervals admits the sums of what   --
--- they admit (`⊕-sound`).                                            --
---                                                                    --
--- An inhabited interval admits nothing below `inf` of its lower end  --
--- or above `sup` of a finite upper end, these being the infimum and  --
--- supremum of what it admits, admitted in a discrete time domain.    --
---                                                                    --
+-- they admit (`⊕-sound`).                                             --
+--                                                                     --
+-- An inhabited interval admits nothing below `inf` of its lower end   --
+-- or above `sup` of a finite upper end, these being the infimum and   --
+-- supremum of what it admits, admitted in a discrete time domain.     --
+--                                                                     --
 -- In a dense time domain with a positive duration both are exact:     --
 -- every interval admits some duration (`inhabited`), containment is   --
 -- the order of the ends (`⊆ⁱ-complete`), and whatever the sum admits  --
 -- splits as a sum of what the summands admit (`⊕-complete`). So there --
 -- an interval is determined by the durations it admits, and the sum   --
 -- of intervals is their Minkowski sum.                                --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Grades.Durations
 

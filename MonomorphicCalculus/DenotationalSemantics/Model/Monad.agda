@@ -1,19 +1,19 @@
-------------------------------------------------------------------------
--- The `[-]`-strong graded monad modelling the calculus' effects.     --
---                                                                    --
--- A graded monad `Tᵒ A ε` over the effect grades, built like a free  --
--- monad from the signature's operations and explicit delays.         --
--- Operations, delays and strength mention the box modality at the    --
--- resource projection `mapᵉ` of the effect grade, matching the       --
--- calculus' `⟨ mapᵉ ε ⟩` context advance.                            --
---                                                                    --
--- Grade coercions come in two kinds: `ε-substᵀ` on the nose along    --
--- the monoid laws of `·ₑ`, and `T-≤` for sub-effecting along `≾ₑ`.   --
--- Strength coherence is stated for the lax box. Effect handling      --
--- folds a handler, whose clauses are morphisms, into a `T`-algebra.  --
--- A handler value is an element of `Hᵒ`, the object of families of   --
+-------------------------------------------------------------------------
+-- The `[-]`-strong graded monad modelling the calculus' effects.      --
+--                                                                     --
+-- A graded monad `Tᵒ A ε` over the effect grades, built like a free   --
+-- monad from the signature's operations and explicit delays.          --
+-- Operations, delays and strength mention the box modality at the     --
+-- resource projection `mapᵉ` of the effect grade, matching the        --
+-- calculus' `⟨ mapᵉ ε ⟩` context advance.                             --
+--                                                                     --
+-- Grade coercions come in two kinds: `ε-substᵀ` on the nose along     --
+-- the monoid laws of `·ₑ`, and `T-≤` for sub-effecting along `≾ₑ`.    --
+-- Strength coherence is stated for the lax box. Effect handling       --
+-- folds a handler, whose clauses are morphisms, into a `T`-algebra.   --
+-- A handler value is an element of `Hᵒ`, the object of families of    --
 -- maps `T A ε₀ → T B (ε₀ ·ₑ ε')` over `ε₀ ≾ₑ ε`, natural along `T-≤`. --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

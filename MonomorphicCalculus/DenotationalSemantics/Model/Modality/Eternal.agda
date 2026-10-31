@@ -1,18 +1,18 @@
 ------------------------------------------------------------------------
--- Objects interpreting *eternal* types.                                --
---                                                                      --
--- An eternal type (`MonomorphicCalculus.Syntax.Types.Eternal`) is      --
--- available at any grade, not only below the unit `u`; concretely      --
--- (`Example.PSh`) these are the constant presheaves.                   --
---                                                                      --
--- `Eternalᵒ A` is an Eilenberg–Moore algebra `α : ⟨ ⊤ ⟩ᵒ A →ᵐ A`       --
--- for the monad `⟨⊤⟩` the context modality collapses to at the         --
--- greatest grade `⊤`. Extraction `extᵉ`, necessitation `necᵉ`, and     --
--- their laws are all derived from `α`; a model supplies only the       --
--- algebra.                                                             --
---                                                                      --
--- An isomorphism `A ≅ [ ρ ]ᵒ A` would be too strong; the algebra       --
--- needs no seriality assumption.                                       --
+-- Objects interpreting *eternal* types.                              --
+--                                                                    --
+-- An eternal type (`MonomorphicCalculus.Syntax.Types.Eternal`) is    --
+-- available at any grade, not only below the unit `u`; concretely    --
+-- (`Example.PSh`) these are the constant presheaves.                 --
+--                                                                    --
+-- `Eternalᵒ A` is an Eilenberg–Moore algebra `α : ⟨ ⊤ ⟩ᵒ A →ᵐ A`     --
+-- for the monad `⟨⊤⟩` the context modality collapses to at the       --
+-- greatest grade `⊤`. Extraction `extᵉ`, necessitation `necᵉ`, and   --
+-- their laws are all derived from `α`; a model supplies only the     --
+-- algebra.                                                           --
+--                                                                    --
+-- An isomorphism `A ≅ [ ρ ]ᵒ A` would be too strong; the algebra     --
+-- needs no seriality assumption.                                     --
 ------------------------------------------------------------------------
 
 open import Grades.Durations using (Duration)

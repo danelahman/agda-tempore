@@ -1,13 +1,13 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Worked instance: rigid regular-expression intervals, measured by    --
--- their duration hull.                                               --
---                                                                    --
--- `System.Traces.Rigid.Rational.TwoSided` measures `[ L , U ]` by the  --
--- lower end of the hull of `L` and the upper end of the hull of `U`, --
--- each end keeping its side. Heating takes two to four units,        --
--- cooling more than one and less than two, logging more than a       --
--- quarter and at most a half. Each measure is computed.              --
-------------------------------------------------------------------------
+-- their duration hull.                                                --
+--                                                                     --
+-- `System.Traces.Rigid.Rational.TwoSided` measures `[ L , U ]` by the --
+-- lower end of the hull of `L` and the upper end of the hull of `U`,  --
+-- each end keeping its side. Heating takes two to four units,         --
+-- cooling more than one and less than two, logging more than a        --
+-- quarter and at most a half. Each measure is computed.               --
+-------------------------------------------------------------------------
 
 module Grades.Examples.Worked.System.Traces.Rigid.Rational.TwoSided where
 

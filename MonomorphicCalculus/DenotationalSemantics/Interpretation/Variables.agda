@@ -1,16 +1,16 @@
 ------------------------------------------------------------------------
--- Interpretation of variables.                                         --
---                                                                      --
--- A variable `x : A ∈[ ρ ] Γ` projects through the context to the      --
--- context modality at its accumulated grade, then extracts to          --
--- `⟦ A ⟧`: a non-eternal type needs `ρ ≾ uᵣ` and the possibility       --
--- counit `εᵘ`; an eternal type uses the eternal extraction `extᵉ`      --
--- at any grade `ρ`.                                                    --
---                                                                      --
--- An eternal type's `Eternalᵒ` structure is assembled by recursion     --
--- on the eternality witness from `GroundEternal`'s per-former          --
--- structure, so the eternal laws are inherited rather than             --
--- re-proved for each former.                                           --
+-- Interpretation of variables.                                       --
+--                                                                    --
+-- A variable `x : A ∈[ ρ ] Γ` projects through the context to the    --
+-- context modality at its accumulated grade, then extracts to        --
+-- `⟦ A ⟧`: a non-eternal type needs `ρ ≾ uᵣ` and the possibility     --
+-- counit `εᵘ`; an eternal type uses the eternal extraction `extᵉ`    --
+-- at any grade `ρ`.                                                  --
+--                                                                    --
+-- An eternal type's `Eternalᵒ` structure is assembled by recursion   --
+-- on the eternality witness from `GroundEternal`'s per-former        --
+-- structure, so the eternal laws are inherited rather than           --
+-- re-proved for each former.                                         --
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)

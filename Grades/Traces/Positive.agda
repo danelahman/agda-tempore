@@ -1,15 +1,15 @@
-------------------------------------------------------------------------
--- Strictly positive durations.                                        --
---                                                                     --
--- Delays in a timed trace carry a strictly positive duration of a     --
--- time domain, so that zero-valued delays cannot appear in a trace. A --
--- positive duration is a duration together with the verdict that it   --
--- is positive, so two are equal when their durations are, and a       --
--- literal discharges the side condition by computation.               --
---                                                                     --
+--------------------------------------------------------------------------
+-- Strictly positive durations.                                         --
+--                                                                      --
+-- Delays in a timed trace carry a strictly positive duration of a      --
+-- time domain, so that zero-valued delays cannot appear in a trace. A  --
+-- positive duration is a duration together with the verdict that it    --
+-- is positive, so two are equal when their durations are, and a        --
+-- literal discharges the side condition by computation.                --
+--                                                                      --
 -- Nothing here mentions operations, so this layer is independent of    --
 -- the alphabet `Op` the rest of the trace toolkit is parameterised by. --
-------------------------------------------------------------------------
+--------------------------------------------------------------------------
 
 open import Grades.Durations
 

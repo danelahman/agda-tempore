@@ -1,15 +1,15 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Deciding the coverage relation.                                     --
 --                                                                     --
--- A backtracking search on the two heads, driven by fuel: every        --
--- constructor shrinks the combined size of the two traces by at least  --
--- one, so the combined size is fuel enough. Matching an operation      --
--- recurses at slack *zero*, which is where `keep` puts its premise --   --
--- the banked slack is simply dropped at the match.                     --
+-- A backtracking search on the two heads, driven by fuel: every       --
+-- constructor shrinks the combined size of the two traces by at least --
+-- one, so the combined size is fuel enough. Matching an operation     --
+-- recurses at slack *zero*, which is where `keep` puts its premise -- --
+-- the banked slack is simply dropped at the match.                    --
 --                                                                     --
--- The size measure is shared with the allowance order: it speaks only  --
--- about traces, not about either relation.                             --
-------------------------------------------------------------------------
+-- The size measure is shared with the allowance order: it speaks only --
+-- about traces, not about either relation.                            --
+-------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; s≤s)
 open import Data.Nat.Properties using (+-suc; n≤1+n)

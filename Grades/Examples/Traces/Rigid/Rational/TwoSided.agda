@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Rigid timed regular-expression grades over the non-negative       --
+-- Rigid timed regular-expression grades over the non-negative        --
 -- rationals, as intervals.                                           --
 --                                                                    --
 -- A grade `[ L , U ]` pairs a lower bound `L` with an upper bound    --

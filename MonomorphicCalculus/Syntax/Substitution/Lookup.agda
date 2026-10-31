@@ -1,5 +1,5 @@
 -------------------------------------------------------
--- What a parallel substitution does to a variable    --
+-- What a parallel substitution does to a variable   --
 -------------------------------------------------------
 
 open import Data.Empty

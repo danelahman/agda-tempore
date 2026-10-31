@@ -1,15 +1,15 @@
-------------------------------------------------------------------------
--- Running the operations, on presheaves.                               --
---                                                                    --
+---------------------------------------------------------------------------
+-- Running the operations, on presheaves.                                --
+--                                                                       --
 -- The graded monad morphism from the free tree monad into the free tick --
--- monad, determined by a semantic implementation of the operations       --
---                                                                    --
---   op-semᵐ op : ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ param op ⟧ᵍ →ᵖ ⟦ arity op ⟧ᵍ  --
---                                                                    --
--- On trees it is the identity on leaves, delays and coercions; an        --
--- operation node becomes a tick at the operation's grade, its            --
--- continuation fed the value the implementation computes.                --
-------------------------------------------------------------------------
+-- monad, determined by a semantic implementation of the operations      --
+--                                                                       --
+--   op-semᵐ op : ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ param op ⟧ᵍ →ᵖ ⟦ arity op ⟧ᵍ --
+--                                                                       --
+-- On trees it is the identity on leaves, delays and coercions; an       --
+-- operation node becomes a tick at the operation's grade, its           --
+-- continuation fed the value the implementation computes.               --
+---------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

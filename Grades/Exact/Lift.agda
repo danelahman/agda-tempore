@@ -10,7 +10,7 @@
 -- fits the unrestricted stretch of its own duration, so the set of   --
 -- all words and the stretches of every length admitting every        --
 -- operation are both greatest. The product is monotone, distributes  --
--- over the join, and has the zero-product property once the other   --
+-- over the join, and has the zero-product property once the other    --
 -- factor is inhabited.                                               --
 --                                                                    --
 -- Sets are predicates, and sequencing within them concatenates       --

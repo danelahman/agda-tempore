@@ -4,7 +4,7 @@
 -- `occ*` decide whether a variable of one of the three sorts   --
 -- occurs syntactically in an expression of one of the four     --
 -- categories; only the traversals crossing a sort boundary     --
--- (`∣_∣̂ᵉ`, `[_]_`, `_‼_`) can find one. `chk*` strengthen an  --
+-- (`∣_∣̂ᵉ`, `[_]_`, `_‼_`) can find one. `chk*` strengthen an   --
 -- expression free of the variable to the smaller scope, by the --
 -- single-binding substitution of `Core.For`.                   --
 ------------------------------------------------------------------

@@ -1,27 +1,27 @@
-------------------------------------------------------------------------
--- Interpretation of the operational semantics' states, and of the      --
--- configurations built from them.                                      --
---                                                                    --
--- A state `S : 𝕊 []` is a Fitch-style telescope: `_⟨ ρ ⟩ₛ` records     --
--- that `ρ` worth of time has passed, and `_∷ₛ_ S V` allocates a cell    --
--- *together with the value `V` stored in it*. So a state is not an      --
--- opaque store to be threaded through a state monad — it already        --
+----------------------------------------------------------------------------
+-- Interpretation of the operational semantics' states, and of the        --
+-- configurations built from them.                                        --
+--                                                                        --
+-- A state `S : 𝕊 []` is a Fitch-style telescope: `_⟨ ρ ⟩ₛ` records       --
+-- that `ρ` worth of time has passed, and `_∷ₛ_ S V` allocates a cell     --
+-- *together with the value `V` stored in it*. So a state is not an       --
+-- opaque store to be threaded through a state monad — it already         --
 -- carries all of its data, and it interprets as an *environment* for     --
--- its own context `toCtx S`.                                            --
---                                                                    --
+-- its own context `toCtx S`.                                             --
+--                                                                        --
 -- The environment cannot be closed off entirely, though: the locks       --
 -- `⟨ ρ ⟩` have no global points (`⟨ ρ ⟩ᵒ X` is a Kripke possibility, and --
 -- near time 0 there is no `ρ`-past to be found). What the state *can*    --
 -- supply is exactly the cells. So `⟦ S ⟧ˢ` is a morphism out of the      --
 -- state's *history* `hist S` — the lock-only residue of `toCtx S` —      --
 -- and the passage of time enters from outside it (in the operational     --
--- semantics, via `DELAY`).                                              --
---                                                                    --
+-- semantics, via `DELAY`).                                               --
+--                                                                        --
 -- Note the cell clause of `⟦_⟧ˢ` is precisely the morphism that          --
 -- `⟦ box V M ⟧ᶜᵗ` precomposes with: allocating a resource and extending  --
 -- the store are the same map. That is what makes `BOX` a plain equation  --
--- rather than a state transition.                                       --
-------------------------------------------------------------------------
+-- rather than a state transition.                                        --
+----------------------------------------------------------------------------
 
 open import Grades.Base
 open import Language.Spec

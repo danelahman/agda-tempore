@@ -1,5 +1,5 @@
 ------------------------------------------------------
--- Parallel substitutions: the generating calculus   --
+-- Parallel substitutions: the generating calculus  --
 ------------------------------------------------------
 
 open import Data.Empty

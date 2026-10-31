@@ -1,30 +1,30 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Intervals of a time domain, with open or closed ends.               --
---                                                                    --
+--                                                                     --
 -- An end is a cut of the time domain: a point `p` with a side,        --
 -- `p ∣ ⁻` lying just below `p` and `p ∣ ⁺` just above it, the cuts    --
 -- ordered lexicographically (`_⊑_`). A lower end `c` admits the       --
--- durations above it -- `p ∣ ⁻` is "at least p", `p ∣ ⁺` "more than  --
+-- durations above it -- `p ∣ ⁻` is "at least p", `p ∣ ⁺` "more than   --
 -- p" -- and an upper end, a cut or `∞`, admits those below it --      --
 -- `p ∣ ⁺` is "at most p", `p ∣ ⁻` "less than p".                      --
---                                                                    --
+--                                                                     --
 -- Ends add pointwise, an end of a sum being open exactly when an end  --
 -- summed is: on lower ends that takes the larger side, on upper ends  --
 -- the smaller, so the two kinds of end are two monoids. An interval   --
 -- is a lower and an upper end, the lower strictly below the upper.    --
 -- Intervals are ordered by their ends (`_⊆ⁱ_`), the lower end         --
 -- reversed, summed end by end (`_⊕_`), and joined by the hull         --
--- (`_∪ⁱ_`), with the laws a grade asks for; the grade itself is      --
--- `Grades.Examples.Time.Intervals`.                                  --
---                                                                    --
--- A lower end admits durations from `inf`, an upper cut up to `sup`: --
+-- (`_∪ⁱ_`), with the laws a grade asks for; the grade itself is       --
+-- `Grades.Examples.Time.Intervals`.                                   --
+--                                                                     --
+-- A lower end admits durations from `inf`, an upper cut up to `sup`:  --
 -- the point of the end, or, at an open end in a discrete time domain, --
--- the adjacent step.                                                 --
---                                                                    --
--- What the ends say about the durations admitted (`_∈ⁱ_`) -- that    --
--- the order is containment and the sum the Minkowski sum, in a dense --
--- time domain -- is in `Durations.Intervals.Dense`.                  --
-------------------------------------------------------------------------
+-- the adjacent step.                                                  --
+--                                                                     --
+-- What the ends say about the durations admitted (`_∈ⁱ_`) -- that     --
+-- the order is containment and the sum the Minkowski sum, in a dense  --
+-- time domain -- is in `Durations.Intervals.Dense`.                   --
+-------------------------------------------------------------------------
 
 open import Grades.Durations
 
