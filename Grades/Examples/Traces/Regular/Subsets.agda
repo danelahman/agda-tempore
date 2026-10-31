@@ -158,40 +158,53 @@ tick-nonempty : ∀ x y → x ∈ table (R.of-dur 1) → y ∈ table R.⊤ → x
 tick-nonempty x y x∈ _ eq with trans (sym (cong (_++ y) (R.∈tick⁻ 1 x x∈))) eq
 ... | ()
 
-no-morphism : ¬ (SR.right-sided →ᵍ R.right-sided)
-no-morphism f = R.∈·-elim (R.of-dur 1) R.⊤ (λ v → v ≡ [] → ⊥) [] []∈ tick-nonempty refl
-  where
-  open _→ᵍ_ f
+private
+  module RG = Grade R.right-sided
+  module SG = Grade SR.right-sided
 
-  -- `{ ⟨1⟩ } · any-run` is above `any-run`. Each step is stated at the
-  -- exact terms it relates, the carriers' equations being `refl`: the order
-  -- is decided by a computation the checker would otherwise unfold.
-  top : R.⊤ ≾ R.of-dur 1 ·ᴿ R.⊤
-  top = R≾-trans R.⊤ M (R.of-dur 1 ·ᴿ R.⊤) t₁
-          (R≾-trans M (map (SR.of-durᵖ 1) ·ᴿ map SR.any-run) (R.of-dur 1 ·ᴿ R.⊤) t₂
-            (R≾-trans (map (SR.of-durᵖ 1) ·ᴿ map SR.any-run) (R.of-dur 1 ·ᴿ map SR.any-run)
-                      (R.of-dur 1 ·ᴿ R.⊤) t₃ t₄))
+  -- The argument at variables `d` and `t` for `R.of-dur 1` and `R.⊤`,
+  -- so that no order is decided by unfolding their tables.
+  no-morphism-at : (f : SR.right-sided →ᵍ R.right-sided) (d t : Regular)
+    → _→ᵍ_.map f (SR.of-durᵖ 1) ≾ d
+    → t ≾ _→ᵍ_.map f SG.⊤ → _→ᵍ_.map f SG.⊤ ≾ t
+    → (∀ x y → x ∈ table d → y ∈ table t → x ++ y ≡ [] → ⊥) → [] ∈ table t
+    → ⊥
+  no-morphism-at f d t map-d t-map map-t nonempty []∈t =
+    R.∈·-elim d t (λ v → v ≡ [] → ⊥) [] []∈ nonempty refl
     where
-      module RG = Grade R.right-sided
-      module SG = Grade SR.right-sided
-      R≾-trans : ∀ a b c → a ≾ b → b ≾ c → a ≾ c
-      R≾-trans a b c = RG.≾-trans {a} {b} {c}
-      M = map (SR.of-durᵖ 1 SG.· SR.any-run)
-      e₁ : SG.⊤ ≡ SR.of-durᵖ 1 SG.· SR.any-run
-      e₁ = refl
-      t₁ : R.⊤ ≾ map (SR.of-durᵖ 1 SG.· SR.any-run)
-      t₁ = subst (λ c → R.⊤ ≾ map c) e₁ (proj₂ map-⊤)
-      t₂ : map (SR.of-durᵖ 1 SG.· SR.any-run) ≾ map (SR.of-durᵖ 1) ·ᴿ map SR.any-run
-      t₂ = proj₁ (map-· {SR.of-durᵖ 1} {SR.any-run})
-      t₃ : map (SR.of-durᵖ 1) ·ᴿ map SR.any-run ≾ R.of-dur 1 ·ᴿ map SR.any-run
-      t₃ = RG.·-monoˡ-≾ {map SR.any-run} {map (SR.of-durᵖ 1)} {R.of-dur 1}
-             (proj₁ (map-of-dur {1}))
-      t₄ : R.of-dur 1 ·ᴿ map SR.any-run ≾ R.of-dur 1 ·ᴿ R.⊤
-      t₄ = RG.·-monoʳ-≾ {R.of-dur 1} {map SR.any-run} {R.⊤}
-             (subst (λ c → map c ≾ R.⊤) (sym e₂) (proj₁ map-⊤))
-        where
-          e₂ : SR.any-run ≡ SG.⊤
-          e₂ = refl
+    open _→ᵍ_ f
 
-  []∈ : [] ∈ table (R.of-dur 1 ·ᴿ R.⊤)
-  []∈ = R.≾⇒⊆ R.⊤ (R.of-dur 1 ·ᴿ R.⊤) top [] (R.∈⊤ [])
+    -- `{ ⟨1⟩ } · any-run` is above `any-run`. Each step is stated at the
+    -- exact terms it relates, the carriers' equations being `refl`.
+    top : t ≾ d ·ᴿ t
+    top = R≾-trans t M (d ·ᴿ t) t₁
+            (R≾-trans M (map (SR.of-durᵖ 1) ·ᴿ map SR.any-run) (d ·ᴿ t) t₂
+              (R≾-trans (map (SR.of-durᵖ 1) ·ᴿ map SR.any-run) (d ·ᴿ map SR.any-run)
+                        (d ·ᴿ t) t₃ t₄))
+      where
+        R≾-trans : ∀ a b c → a ≾ b → b ≾ c → a ≾ c
+        R≾-trans a b c = RG.≾-trans {a} {b} {c}
+        M = map (SR.of-durᵖ 1 SG.· SR.any-run)
+        e₁ : SG.⊤ ≡ SR.of-durᵖ 1 SG.· SR.any-run
+        e₁ = refl
+        t₁ : t ≾ map (SR.of-durᵖ 1 SG.· SR.any-run)
+        t₁ = subst (λ c → t ≾ map c) e₁ t-map
+        t₂ : map (SR.of-durᵖ 1 SG.· SR.any-run) ≾ map (SR.of-durᵖ 1) ·ᴿ map SR.any-run
+        t₂ = proj₁ (map-· {SR.of-durᵖ 1} {SR.any-run})
+        t₃ : map (SR.of-durᵖ 1) ·ᴿ map SR.any-run ≾ d ·ᴿ map SR.any-run
+        t₃ = RG.·-monoˡ-≾ {map SR.any-run} {map (SR.of-durᵖ 1)} {d} map-d
+        t₄ : d ·ᴿ map SR.any-run ≾ d ·ᴿ t
+        t₄ = RG.·-monoʳ-≾ {d} {map SR.any-run} {t}
+               (subst (λ c → map c ≾ t) (sym e₂) map-t)
+          where
+            e₂ : SR.any-run ≡ SG.⊤
+            e₂ = refl
+
+    []∈ : [] ∈ table (d ·ᴿ t)
+    []∈ = R.≾⇒⊆ t (d ·ᴿ t) top [] []∈t
+
+no-morphism : ¬ (SR.right-sided →ᵍ R.right-sided)
+no-morphism f =
+  no-morphism-at f (R.of-dur 1) R.⊤ (proj₁ map-of-dur) (proj₂ map-⊤) (proj₁ map-⊤)
+    tick-nonempty (R.∈⊤ [])
+  where open _→ᵍ_ f
