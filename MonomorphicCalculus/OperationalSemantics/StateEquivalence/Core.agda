@@ -360,8 +360,8 @@ cast-unbox⁻ refl _ refl = _ , _ , _ , _ , _ , refl , refl , refl
 
 cast-app-reduct : ∀ {Γ Γ' A C} → (e : Γ' ≡ Γ)
          → (M' : Γ' ∷ A ⊢ᶜ⦂ C) → (W' : Γ' ⊢ᵛ⦂ A)
-         → (castᶜ (cong (_∷ A) e) M') [ split-[] ↦ castᵛ e W' ]c
-         ≡ castᶜ e (M' [ split-[] ↦ W' ]c)
+         → (castᶜ (cong (_∷ A) e) M') [ castᵛ e W' ]₀
+         ≡ castᶜ e (M' [ W' ]₀)
 cast-app-reduct refl M' W' = refl
 
 -- The two projections commute with a context equality: a one-clause
@@ -370,7 +370,7 @@ cast-app-reduct refl M' W' = refl
 fstᵛ-cast : ∀ {A B} {𝕊 𝕊' : State []} → (e : toCtx 𝕊 ≡ toCtx 𝕊')
           → (V : toCtx 𝕊 ⊢ᵛ⦂ A |×| B)
           → fstᵛ (castᵛ e V) ≡ castᵛ e (fstᵛ V)
-fstᵛ-cast e (var _ x)           = ⊥-elim (⦉⦊-not-in-toCtx x)
+fstᵛ-cast e (var x _)           = ⊥-elim (⦉⦊-not-in-toCtx x)
 fstᵛ-cast e ⦉ V , W ⦊           = cong fstᵛ (cast-pair e {V} {W})
 fstᵛ-cast e (subV V (p |×|ₛ _)) =
   trans (cong fstᵛ (cast-subV e {V = V}))
@@ -380,7 +380,7 @@ fstᵛ-cast e (subV V (p |×|ₛ _)) =
 sndᵛ-cast : ∀ {A B} {𝕊 𝕊' : State []} → (e : toCtx 𝕊 ≡ toCtx 𝕊')
           → (V : toCtx 𝕊 ⊢ᵛ⦂ A |×| B)
           → sndᵛ (castᵛ e V) ≡ castᵛ e (sndᵛ V)
-sndᵛ-cast e (var _ x)           = ⊥-elim (⦉⦊-not-in-toCtx x)
+sndᵛ-cast e (var x _)           = ⊥-elim (⦉⦊-not-in-toCtx x)
 sndᵛ-cast e ⦉ V , W ⦊           = cong sndᵛ (cast-pair e {V} {W})
 sndᵛ-cast e (subV V (_ |×|ₛ q)) =
   trans (cong sndᵛ (cast-subV e {V = V}))
@@ -396,7 +396,7 @@ cast-closed refl V = refl
 ⌊⌋ᵈ-cast : ∀ {A} {𝕊 𝕊' : State []} → (e : toCtx 𝕊 ≡ toCtx 𝕊') → (et : Et A)
          → (V : toCtx 𝕊 ⊢ᵛ⦂ A)
          → ⌊_⌋ᵈ {𝕊 = 𝕊'} et (castᵛ e V) ≡ ⌊_⌋ᵈ {𝕊 = 𝕊} et V
-⌊⌋ᵈ-cast e et (var _ x) = ⊥-elim (eternal-not-in-toCtx et x)
+⌊⌋ᵈ-cast e et (var x _) = ⊥-elim (eternal-not-in-toCtx et x)
 ⌊⌋ᵈ-cast {𝕊' = 𝕊'} e et (subV V p) =
   trans (cong (⌊_⌋ᵈ {𝕊 = 𝕊'} et) (cast-subV e {V = V}))
         (cong ⟪ p ⟫ˢ (⌊⌋ᵈ-cast e (<:ᵛ-eternalˡ p et) V))
@@ -443,7 +443,7 @@ castL e (inj₂ (W , L)) = inj₂ (castᵛ e W , castᵛ e L)
 listᵛ-cast : ∀ {A} {𝕊 𝕊' : State []} → (e : toCtx 𝕊 ≡ toCtx 𝕊')
            → (V : toCtx 𝕊 ⊢ᵛ⦂ list A)
            → listᵛ (castᵛ e V) ≡ castL e (listᵛ V)
-listᵛ-cast e (var _ x)            = ⊥-elim (list-not-in-toCtx x)
+listᵛ-cast e (var x _)            = ⊥-elim (list-not-in-toCtx x)
 listᵛ-cast e nil                  = cong listᵛ (cast-nil e)
 listᵛ-cast e (cons V W)           = cong listᵛ (cast-cons e {V} {W})
 listᵛ-cast e (subV V (listₛ p))   =
@@ -483,7 +483,7 @@ cast⊎ e (inj₂ W) = inj₂ (castᵛ e W)
 injᵛ-cast : ∀ {A B} {𝕊 𝕊' : State []} → (e : toCtx 𝕊 ≡ toCtx 𝕊')
           → (V : toCtx 𝕊 ⊢ᵛ⦂ A |+| B)
           → injᵛ (castᵛ e V) ≡ cast⊎ e (injᵛ V)
-injᵛ-cast e (var _ x)           = ⊥-elim (|+|-not-in-toCtx x)
+injᵛ-cast e (var x _)           = ⊥-elim (|+|-not-in-toCtx x)
 injᵛ-cast e (inl V)             = cong injᵛ (cast-inl e {V = V})
 injᵛ-cast e (inr V)             = cong injᵛ (cast-inr e {V = V})
 injᵛ-cast e (subV V (p |+|ₛ q)) =
@@ -505,18 +505,18 @@ cast-match+-reduct refl (inj₂ W) M' N' = refl
 cast-match-reduct : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
            → (M' : Γ' ∷ A ∷ B ⊢ᶜ⦂ C) → (V' : Γ' ⊢ᵛ⦂ A) → (W' : Γ' ⊢ᵛ⦂ B)
            → ((castᶜ (cong (λ Γ₀ → Γ₀ ∷ A ∷ B) e) M')
-                [ split-[] ↦ V-rename wk-ren (castᵛ e W') ]c) [ split-[] ↦ castᵛ e V' ]c
-           ≡ castᶜ e ((M' [ split-[] ↦ V-rename wk-ren W' ]c) [ split-[] ↦ V' ]c)
+                [ V-rename wk-ren (castᵛ e W') ]₀) [ castᵛ e V' ]₀
+           ≡ castᶜ e ((M' [ V-rename wk-ren W' ]₀) [ V' ]₀)
 cast-match-reduct refl M' V' W' = refl
 
 cast-seq-ret : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ)
              → (N' : Γ' ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε) → (V' : Γ' ⊢ᵛ⦂ A)
              → (C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren))
                  (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A) e) N'))
-                   [ split-[] ↦ castᵛ e V' ]c
+                   [ castᵛ e V' ]₀
              ≡ castᶜ e ((C-rename
                           (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren))
-                          N') [ split-[] ↦ V' ]c)
+                          N') [ V' ]₀)
 cast-seq-ret refl N' V' = refl
 
 cast-box-val : ∀ {Γ Γ' A ρ} → (e : Γ' ≡ Γ) → (V' : Γ' ⟨ ρ ⟩ ⊢ᵛ⦂ A)

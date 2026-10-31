@@ -304,11 +304,11 @@ not-in-empty-ctx ()
 fstᵛ : ∀ {Γ A B} {𝕊 : State Γ} → toCtx 𝕊 ⊢ᵛ⦂ A |×| B → toCtx 𝕊 ⊢ᵛ⦂ A
 sndᵛ : ∀ {Γ A B} {𝕊 : State Γ} → toCtx 𝕊 ⊢ᵛ⦂ A |×| B → toCtx 𝕊 ⊢ᵛ⦂ B
 
-fstᵛ (var _ x)        = ⊥-elim (⦉⦊-not-in-toCtx x)
+fstᵛ (var x _)        = ⊥-elim (⦉⦊-not-in-toCtx x)
 fstᵛ ⦉ V , _ ⦊        = V
 fstᵛ (subV V (p |×|ₛ _)) = subV (fstᵛ V) p
 
-sndᵛ (var _ x)        = ⊥-elim (⦉⦊-not-in-toCtx x)
+sndᵛ (var x _)        = ⊥-elim (⦉⦊-not-in-toCtx x)
 sndᵛ ⦉ _ , W ⦊        = W
 sndᵛ (subV V (_ |×|ₛ q)) = subV (sndᵛ V) q
 
@@ -323,7 +323,7 @@ sub⊎ p q (inj₂ W) = inj₂ (subV W q)
 
 injᵛ : ∀ {Γ A B} {𝕊 : State Γ} → toCtx 𝕊 ⊢ᵛ⦂ A |+| B
      → (toCtx 𝕊 ⊢ᵛ⦂ A) ⊎ (toCtx 𝕊 ⊢ᵛ⦂ B)
-injᵛ (var _ x)           = ⊥-elim (|+|-not-in-toCtx x)
+injᵛ (var x _)           = ⊥-elim (|+|-not-in-toCtx x)
 injᵛ (inl V)             = inj₁ V
 injᵛ (inr V)             = inj₂ V
 injᵛ (subV V (p |+|ₛ q)) = sub⊎ p q (injᵛ V)
@@ -346,7 +346,7 @@ subL p (inj₁ tt)      = inj₁ tt
 subL p (inj₂ (W , L)) = inj₂ (subV W p , subV L (listₛ p))
 
 listᵛ : ∀ {Γ A} {𝕊 : State Γ} → toCtx 𝕊 ⊢ᵛ⦂ list A → ListView (toCtx 𝕊) A
-listᵛ (var _ x)             = ⊥-elim (list-not-in-toCtx x)
+listᵛ (var x _)             = ⊥-elim (list-not-in-toCtx x)
 listᵛ nil                   = inj₁ tt
 listᵛ (cons V W)            = inj₂ (V , W)
 listᵛ (subV V (listₛ p))    = subL p (listᵛ V)
@@ -368,7 +368,7 @@ eternal-not-in-toCtx {𝕊 = 𝕊 ∷ₛ _}   et (Tl-∷ x)  = eternal-not-in-to
 -- a datum under a spine of subsumptions, which act on the data.
 
 ⌊_⌋ᵈ : ∀ {Γ A} {𝕊 : State Γ} → Et A → toCtx 𝕊 ⊢ᵛ⦂ A → ⟪ A ⟫
-⌊ et ⌋ᵈ             (var _ x)   = ⊥-elim (eternal-not-in-toCtx et x)
+⌊ et ⌋ᵈ             (var x _)   = ⊥-elim (eternal-not-in-toCtx et x)
 ⌊ et ⌋ᵈ             (subV V p)  = ⟪ p ⟫ˢ (⌊ <:ᵛ-eternalˡ p et ⌋ᵈ V)
 ⌊ Baseₑ _ ⌋ᵈ        (const B c) = c
 ⌊ unitₑ ⌋ᵈ          ⋆           = tt
@@ -385,7 +385,7 @@ eternal-not-in-toCtx {𝕊 = 𝕊 ∷ₛ _}   et (Tl-∷ x)  = eternal-not-in-to
 -- There is no value of the empty type over a state context.
 
 empty-not-value : ∀ {Γ} {𝕊 : State Γ} → toCtx 𝕊 ⊢ᵛ⦂ empty → ⊥
-empty-not-value (var _ x)      = empty-not-in-toCtx x
+empty-not-value (var x _)      = empty-not-in-toCtx x
 empty-not-value (subV V emptyₛ) = empty-not-value V
 
 -- Looking up a resource in the state

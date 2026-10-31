@@ -29,9 +29,10 @@ open import MonomorphicCalculus.Syntax.Substitution.Base  S
 -- lives and where `[] ⋈ᶜ Δ` reduces to `Δ`, so nothing here is transported.
 -- Neither calls the term action, so both recurse on the substitution alone.
 
--- The grade bound is an argument, not a result: producing a value out of a
--- variable needs the `var` rule's own premise. It also pays for crossing a
--- lock, `≾ᵣ-zero-productʳ` extracting the lock's own grade from it.
+-- The side condition is an argument, not a result: producing a value out of
+-- a variable needs the `var` rule's own premise. At a non-eternal type it also
+-- pays for crossing a lock, `≾ᵣ-zero-productʳ` extracting the lock's own grade
+-- from the bound it gives.
 --
 -- The lock rule takes the eternality decision as a parameter rather than
 -- matching on it.
@@ -44,16 +45,16 @@ mutual
   sub-var₀ : ∀ {Δ Δ' A ρ}
            → Sub₀ [] Δ Δ'
            → A ∈[ ρ ] Δ'
-           → (¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
+           → .(A Et∨≾ᵘ ρ)
            ---------------------------
            → Δ ⊢ᵛ⦂ A
 
   sub-var₀ ⌜ r ⌝ x f =
-    var (λ ¬et → ≾ᵣ-trans (proj₁ (proj₂ (var-rename r x)) ¬et) (f ¬et))
-        (proj₂ (proj₂ (var-rename r x)))
+    var (proj₂ (proj₂ (var-rename r x)))
+        (Et∨≾ᵘ-≾ (proj₁ (proj₂ (var-rename r x))) f)
   sub-var₀ (val-sub V) Hd       f = V
-  sub-var₀ (val-sub V) (Tl-∷ y) f = var f y
-  sub-var₀ (cong-∷-sub s) Hd       f = var f Hd
+  sub-var₀ (val-sub V) (Tl-∷ y) f = var y f
+  sub-var₀ (cong-∷-sub s) Hd       f = var Hd f
   sub-var₀ (cong-∷-sub s) (Tl-∷ y) f = V-rename wk-ren (sub-var₀ s y f)
   sub-var₀ {A = A} (cong-⟨⟩-sub s) (Tl-⟨⟩ y) f =
     sub-var₀-⟨⟩ s y f (eternal? A)
@@ -66,17 +67,17 @@ mutual
   sub-var₀-⟨⟩ : ∀ {Δ Δ' A ρ ρ'}
               → Sub₀ [] Δ Δ'
               → A ∈[ ρ' ] Δ'
-              → (¬ Et A → ρ' ·ᵣ ρ ≾ᵣ 𝟏ᵣ)
+              → .(A Et∨≾ᵘ ρ' ·ᵣ ρ)
               → Dec (Et A)
               ----------------------------------
               → Δ ⟨ ρ ⟩ ⊢ᵛ⦂ A
 
   sub-var₀-⟨⟩ s y f (yes et) =
-    eternal-val-ext et (sub-var₀ s y (λ ¬et → ⊥-elim (¬et et)))
+    eternal-val-ext et (sub-var₀ s y (et-ok et))
   sub-var₀-⟨⟩ s y f (no ¬et) =
     V-rename
-      (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et)))
-      (sub-var₀ s y (λ ¬et' → ≾ᵣ-zero-productˡ (f ¬et')))
+      (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (Et∨≾ᵘ→¬Et⇒≾ f ¬et)))
+      (sub-var₀ s y (Et∨≾ᵘ-zero-productˡ f))
 
 -- A variable of box type is what an `unbox` names. Its grade is not bounded
 -- by the unit, so `sub-var₀` cannot read it as a value; its image is again a

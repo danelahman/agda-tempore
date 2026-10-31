@@ -79,7 +79,7 @@ Fired : ∀ {B} → (𝕊 : State []) → (op : Op) → (ε₃ : E) → Fam B (t
       → toCtx (𝕊₁ ∷ₛ V₀) ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε₃)
 Fired 𝕊 op ε₃ H q V₀ W =
   (C-rename (cong-∷-ren (cong-∷-ren (unbox-ren q))) (H op ε₃))
-    [ split-∷ split-[] ↦ W ]c
+    [ W ]₁
 
 Clause-Prem : (B : VType) → (𝕊 : State []) → Fam B (toCtx 𝕊 ⟨ ⊤ᵣ ⟩) → Set
 Clause-Prem B 𝕊 H =
@@ -108,7 +108,7 @@ Seq-Prem : ∀ {A B ε₁ ε₂} {𝕊 : State []}
 Seq-Prem {A} {B} {ε₁} {ε₂} {𝕊} N =
   ∀ {𝕊₁ : State []} → (q : 𝕊 ⊑ₛ[ ∣ ε₁ ∣ᵉ ] 𝕊₁)
     → (V : toCtx 𝕊₁ ⊢ᵛ⦂ A) → VRed A 𝕊₁ V
-    → CRed' B ε₂ 𝕊₁ ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c)
+    → CRed' B ε₂ 𝕊₁ ((C-rename (cong-∷-ren (unbox-ren q)) N) [ V ]₀)
 
 -- Induction on the scrutinee's `CRed` derivation, taken at a skeleton as in
 -- `Bind`. `cred-ret` fires `HANDLE-RET` and is `Bind`'s `cred-ret` verbatim:
@@ -165,8 +165,8 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {𝕊 = 𝕊} H N
 
     -- the sequel the run reached takes the whnf where the original takes its
     -- spine
-    shift : (C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ spine rs V ]c
-          ≡ (C-rename (cong-∷-ren R₁) N₁) [ split-[] ↦ V ]c
+    shift : (C-rename (cong-∷-ren (unbox-ren q)) N) [ spine rs V ]₀
+          ≡ (C-rename (cong-∷-ren R₁) N₁) [ V ]₀
     shift =
       sym
         (trans
@@ -225,7 +225,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {𝕊 = 𝕊} H N
 
     fired : Fired 𝕊 op (ε₃ ·ₑ ε₂) H q₀ V₀ W
           ≡ (C-rename (cong-∷-ren (cong-∷-ren barrier-ren))
-               (H₁ op (ε₃ ·ₑ ε₂))) [ split-∷ split-[] ↦ W ]c
+               (H₁ op (ε₃ ·ₑ ε₂))) [ W ]₁
     fired = sub-≡ᶜ (split-∷ split-[]) (refl) (sym cross)
       where
         cross : C-rename (cong-∷-ren (cong-∷-ren barrier-ren))
@@ -317,7 +317,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {𝕊 = 𝕊} H N
         -- is `resume q₂ M' W'`.
         inner : CRed' B (ε₃ ·ₑ ε₂) 𝕊''
                   ((C-rename (cong-∷-ren (unbox-ren q₂)) Body)
-                     [ split-[] ↦ W' ]c)
+                     [ W' ]₀)
         inner =
           handle-CRed {e = e₀} _ _
             (pk q₂ W' (VRed→VRedᵍ (arity op) W' pW')) hH₂ hN₂
@@ -457,12 +457,12 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {𝕊 = 𝕊} H N
                                   (cong-∷-ren (unbox-ren q₃)) N))
 
                 shift : (C-rename (cong-∷-ren (unbox-ren q₄)) N)
-                          [ split-[] ↦ spine rs V ]c
+                          [ spine rs V ]₀
                       ≡ (C-rename (cong-∷-ren (unbox-ren q₃))
                            ((C-rename
                                (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₁')
                               [ split-∷ (split-⟨⟩ split-[]) ↦ W' ]c))
-                          [ split-[] ↦ V ]c
+                          [ V ]₀
                 shift =
                   sym
                     (trans
@@ -695,12 +695,12 @@ Seq-Prem-sub {N = N} p pε hN q V pV =
           (∘ʳ-assoc-≐ʳ L (suc-comp-ren (ext q) (reach-bound q)) ⟨⟩-η-ren))
 
     eq : (C-rename (cong-∷-ren (unbox-ren q)) (subCtx p (C-rename (cong-∷-ren L) N)))
-           [ split-[] ↦ V ]c
-       ≡ (C-rename (cong-∷-ren (unbox-ren q')) N) [ split-[] ↦ subV V p ]c
+           [ V ]₀
+       ≡ (C-rename (cong-∷-ren (unbox-ren q')) N) [ subV V p ]₀
     eq =
-      trans (cong (_[ split-[] ↦ V ]c) (subCtx-ren (unbox-ren q) p _))
+      trans (cong (_[ V ]₀) (subCtx-ren (unbox-ren q) p _))
         (trans (subCtx-sub p _ V)
-          (cong (_[ split-[] ↦ subV V p ]c)
+          (cong (_[ subV V p ]₀)
             (trans (sym (C-rename-∘ (cong-∷-ren L) (cong-∷-ren (unbox-ren q)) N))
                    (C-rename-≡ (≐ʳ-trans (≐ʳ-sym (cong-∷-ren-∘-≐ʳ L (unbox-ren q)))
                                          (cong-∷-ren-≐ʳ lower)) N))))

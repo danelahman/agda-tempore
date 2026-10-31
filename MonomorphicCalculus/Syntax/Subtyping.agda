@@ -180,6 +180,13 @@ module _ (≾ᵣ-antisym : ∀ {c d} → c ≾ᵣ d → d ≾ᵣ c → c ≡ d)
 <:ᵛ-eternalʳ (listₛ p)     (listₑ et) = listₑ (<:ᵛ-eternalʳ p et)
 <:ᵛ-eternalʳ emptyₛ       et          = et
 
+-- The variable rule's side condition is stable under a subtype and a lower
+-- grade.
+
+Et∨≾ᵘ-<: : ∀ {A B ρ ρ'} → A <:ᵛ B → ρ' ≾ᵣ ρ → B Et∨≾ᵘ ρ → A Et∨≾ᵘ ρ'
+Et∨≾ᵘ-<: p q (et-ok et) = et-ok (<:ᵛ-eternalˡ p et)
+Et∨≾ᵘ-<: p q (≾ᵘ-ok r)  = ≾ᵘ-ok (≾ᵣ-trans q r)
+
 
 -------------------------------------------------------------------
 -- Least upper bounds of value and computation types             --

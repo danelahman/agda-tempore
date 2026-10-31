@@ -56,24 +56,24 @@ wkˢ {B = B} Θ = ⌜ cong-ren {Γ'' = Θ} (wk-ren {A = B}) ⌝ˢ
 
 sub-wk-var : ∀ {Γ B A ρ} → (Θ : Ctx) → (W : Γ ⊢ᵛ⦂ B)
            → (x : A ∈[ ρ ] (Γ ++ᶜ Θ))
-           → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
-           → (f' : ¬ Et A
-                 → proj₁ (var-img (cong-ren {Γ'' = Θ} (wk-ren {A = B})) x) ≾ᵣ 𝟏ᵣ)
+           → .(f : A Et∨≾ᵘ ρ)
+           → .(f' : A Et∨≾ᵘ
+                      proj₁ (var-img (cong-ren {Γ'' = Θ} (wk-ren {A = B})) x))
            → sub-var₀ (cong-sub₀ {Γ'' = Θ} (val-sub W))
                       (proj₂ (var-img (cong-ren {Γ'' = Θ} (wk-ren {A = B})) x)) f'
-           ≡ var f x
+           ≡ var x f
 
-sub-wk-var []        W x        f f' = var-≡
-sub-wk-var (Θ ∷ C)   W Hd       f f' = var-≡
+sub-wk-var []        W x        f f' = refl
+sub-wk-var (Θ ∷ C)   W Hd       f f' = refl
 sub-wk-var (Θ ∷ C)   W (Tl-∷ y) f f' =
-  trans (cong (V-rename wk-ren) (sub-wk-var Θ W y f _)) var-≡
+  cong (V-rename wk-ren) (sub-wk-var Θ W y f _)
 sub-wk-var {A = A} (Θ ⟨ ρ ⟩) W (Tl-⟨⟩ y) f f' with eternal? A
 ... | yes et =
-  trans (cong (eternal-val-ext et) (sub-wk-var Θ W y (et-bound et) _)) var-≡
+  cong (eternal-val-ext et) (sub-wk-var Θ W y (et-ok et) _)
 ... | no ¬et =
-  trans (cong (V-rename (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f' ¬et))))
-              (sub-wk-var Θ W y (λ q → ≾ᵣ-zero-productˡ (f q)) _))
-        (var-img-≡ (hit-⟨⟩-img (≾ᵣ-zero-productʳ (f' ¬et)) y) _ _)
+  trans (cong (V-rename (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (Et∨≾ᵘ→¬Et⇒≾ f' ¬et))))
+              (sub-wk-var Θ W y (Et∨≾ᵘ-zero-productˡ f) _))
+        (var-img-≡ (hit-⟨⟩-img (≾ᵣ-zero-productʳ (Et∨≾ᵘ→¬Et⇒≾ f' ¬et)) y) _ _)
 
 sub-wk-tgt : ∀ {Γ B A ρ ρ'} → (Θ : Ctx) → (W : Γ ⊢ᵛ⦂ B)
            → (y : [ ρ ] A ∈[ ρ' ] (Γ ++ᶜ Θ))
@@ -122,18 +122,18 @@ sub-wk-≡ᶜ {B = B} Θ W M =
 val-sub-tgt-ren : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (W : Γ' ⊢ᵛ⦂ [ ρ ] A)
                 → tgt-img₀ (val-sub (V-rename r W)) Hd
                 ≡ rvar-img′ r (tgt-img₀ (val-sub W) Hd)
-val-sub-tgt-ren r (var g z)           = refl
+val-sub-tgt-ren r (var z g)           = refl
 val-sub-tgt-ren r (subV V ([ _ ]ₛ _)) = val-sub-tgt-ren r V
 
 ⋈-val : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (W : Γ' ⊢ᵛ⦂ B)
       → Interchange (val-sub (V-rename r W)) (cong-∷-ren r) r (val-sub W)
 ⋈-val {Γ} {Γ'} {B} r W = mk⋈ goᵛ goᵗ
   where
-    goᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] (Γ' ∷ B)) → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
-        → V-sub₀ (val-sub (V-rename r W)) (V-rename (cong-∷-ren r) (var f x))
-        ≡ V-rename r (V-sub₀ (val-sub W) (var f x))
+    goᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] (Γ' ∷ B)) → .(f : A Et∨≾ᵘ ρ)
+        → V-sub₀ (val-sub (V-rename r W)) (V-rename (cong-∷-ren r) (var x f))
+        ≡ V-rename r (V-sub₀ (val-sub W) (var x f))
     goᵛ Hd       f = refl
-    goᵛ (Tl-∷ y) f = var-≡
+    goᵛ (Tl-∷ y) f = refl
 
     goᵗ : ∀ {A ρ ρ'} → (y : [ ρ ] A ∈[ ρ' ] (Γ' ∷ B))
         → tgt-img₀ (val-sub (V-rename r W)) (proj₂ (var-img (cong-∷-ren r) y))
@@ -180,19 +180,19 @@ swap-outerˢ W₁ W₂ =
 swap-tgt-Hd : ∀ {Γ B₁ A ρ} → (W₁ : Γ ⊢ᵛ⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢ᵛ⦂ [ ρ ] A)
             → tgt-img₀ (val-sub W₁) (rvar-pos (tgt-img₀ (val-sub W₂) Hd))
             ≡ tgt-img₀ (val-sub (V-sub₀ (val-sub W₁) W₂)) Hd
-swap-tgt-Hd W₁ (var g Hd)          = refl
-swap-tgt-Hd W₁ (var g (Tl-∷ y))    = refl
+swap-tgt-Hd W₁ (var Hd g)          = refl
+swap-tgt-Hd W₁ (var (Tl-∷ y) g)    = refl
 swap-tgt-Hd W₁ (subV V ([ _ ]ₛ _)) = swap-tgt-Hd W₁ V
 
 sub-swap-≐ˢ : ∀ {Γ B₁ B₂} → (W₁ : Γ ⊢ᵛ⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢ᵛ⦂ B₂)
             → swap-innerˢ W₁ W₂ ≐ˢ swap-outerˢ W₁ W₂
 sub-swap-≐ˢ {Γ} {B₁} {B₂} W₁ W₂ = mk≐ˢ goᵛ goᵗ
   where
-    goᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] ((Γ ∷ B₁) ∷ B₂)) → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
+    goᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] ((Γ ∷ B₁) ∷ B₂)) → .(f : A Et∨≾ᵘ ρ)
         → sub-var (swap-innerˢ W₁ W₂) x f ≡ sub-var (swap-outerˢ W₁ W₂) x f
     goᵛ Hd              f = refl
     goᵛ (Tl-∷ Hd)       f = sym (sub-wk-≡ᵛ [] (V-sub₀ (val-sub W₁) W₂) W₁)
-    goᵛ (Tl-∷ (Tl-∷ y)) f = var-≡
+    goᵛ (Tl-∷ (Tl-∷ y)) f = refl
 
     goᵗ : ∀ {A ρ ρ'} → (y : [ ρ ] A ∈[ ρ' ] ((Γ ∷ B₁) ∷ B₂))
         → tgt-img (swap-innerˢ W₁ W₂) y ≡ tgt-img (swap-outerˢ W₁ W₂) y

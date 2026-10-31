@@ -83,7 +83,7 @@ mutual
 
   ⌊_⌋ᵛ : ∀ {Γ A} → Γ ⊢ᵛ⦂ A → ErV
 
-  ⌊ var f x ⌋ᵛ   = var (var-pos x)
+  ⌊ var x f ⌋ᵛ   = var (var-pos x)
   ⌊ const B c ⌋ᵛ = const B c
   ⌊ ⋆ ⌋ᵛ         = ⋆
   ⌊ true ⌋ᵛ      = true

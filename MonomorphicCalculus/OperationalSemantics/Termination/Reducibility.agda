@@ -56,7 +56,7 @@ open import MonomorphicCalculus.Syntax.Substitution.Equivalence  Spec
 
 val-cell : ∀ {Γ A ρ} → Γ ⊢ᵛ⦂ [ ρ ] A
          → Σ[ ρ₀ ∈ R ] Σ[ A₀ ∈ VType ] Var Γ ([ ρ₀ ] A₀)
-val-cell {A = A} {ρ = ρ} (var {ρ = σ} _ x) = ρ , A , σ , x
+val-cell {A = A} {ρ = ρ} (var {ρ = σ} x _) = ρ , A , σ , x
 val-cell (subV V ([ _ ]ₛ _))               = val-cell V
 
 cellᵛ : ∀ {Γ A ρ} → (V : Γ ⊢ᵛ⦂ [ ρ ] A)
@@ -70,7 +70,7 @@ val-typeᵛ : ∀ {Γ A ρ} → Γ ⊢ᵛ⦂ [ ρ ] A → VType
 val-typeᵛ V = proj₁ (proj₂ (val-cell V))
 
 val-subᵛ : ∀ {Γ A ρ} → (V : Γ ⊢ᵛ⦂ [ ρ ] A) → val-typeᵛ V <:ᵛ A
-val-subᵛ {A = A} (var _ x)   = <:ᵛ-refl A
+val-subᵛ {A = A} (var x _)   = <:ᵛ-refl A
 val-subᵛ (subV V ([ _ ]ₛ p)) = <:ᵛ-trans (val-subᵛ V) p
 
 -- The two projections commute with renaming and with a context equality.
@@ -79,14 +79,14 @@ val-subᵛ (subV V ([ _ ]ₛ p)) = <:ᵛ-trans (val-subᵛ V) p
 fstᵛ-ren : ∀ {A B} {𝕊 𝕊' : State []} → (r : Ren [] (toCtx 𝕊') (toCtx 𝕊))
          → (V : toCtx 𝕊 ⊢ᵛ⦂ A |×| B)
          → fstᵛ (V-rename r V) ≡ V-rename r (fstᵛ V)
-fstᵛ-ren r (var _ x)             = ⊥-elim (⦉⦊-not-in-toCtx x)
+fstᵛ-ren r (var x _)             = ⊥-elim (⦉⦊-not-in-toCtx x)
 fstᵛ-ren r ⦉ _ , _ ⦊             = refl
 fstᵛ-ren r (subV V (p |×|ₛ _))   = cong (λ z → subV z p) (fstᵛ-ren r V)
 
 sndᵛ-ren : ∀ {A B} {𝕊 𝕊' : State []} → (r : Ren [] (toCtx 𝕊') (toCtx 𝕊))
          → (V : toCtx 𝕊 ⊢ᵛ⦂ A |×| B)
          → sndᵛ (V-rename r V) ≡ V-rename r (sndᵛ V)
-sndᵛ-ren r (var _ x)             = ⊥-elim (⦉⦊-not-in-toCtx x)
+sndᵛ-ren r (var x _)             = ⊥-elim (⦉⦊-not-in-toCtx x)
 sndᵛ-ren r ⦉ _ , _ ⦊             = refl
 sndᵛ-ren r (subV V (_ |×|ₛ q))   = cong (λ z → subV z q) (sndᵛ-ren r V)
 
@@ -99,7 +99,7 @@ ren⊎ r (inj₂ W) = inj₂ (V-rename r W)
 injᵛ-ren : ∀ {A B} {𝕊 𝕊' : State []} → (r : Ren [] (toCtx 𝕊') (toCtx 𝕊))
          → (V : toCtx 𝕊 ⊢ᵛ⦂ A |+| B)
          → injᵛ (V-rename r V) ≡ ren⊎ r (injᵛ V)
-injᵛ-ren r (var _ x)           = ⊥-elim (|+|-not-in-toCtx x)
+injᵛ-ren r (var x _)           = ⊥-elim (|+|-not-in-toCtx x)
 injᵛ-ren r (inl V)             = refl
 injᵛ-ren r (inr V)             = refl
 injᵛ-ren r (subV V (p |+|ₛ q)) =
@@ -119,7 +119,7 @@ renL r (inj₂ (W , L)) = inj₂ (V-rename r W , V-rename r L)
 listᵛ-ren : ∀ {A} {𝕊 𝕊' : State []} → (r : Ren [] (toCtx 𝕊') (toCtx 𝕊))
           → (V : toCtx 𝕊 ⊢ᵛ⦂ list A)
           → listᵛ (V-rename r V) ≡ renL r (listᵛ V)
-listᵛ-ren r (var _ x)            = ⊥-elim (list-not-in-toCtx x)
+listᵛ-ren r (var x _)            = ⊥-elim (list-not-in-toCtx x)
 listᵛ-ren r nil                  = refl
 listᵛ-ren r (cons V W)           = refl
 listᵛ-ren r (subV V (listₛ p))   =
@@ -632,7 +632,7 @@ bool-canonical : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ bool)
                     → ⟨ 𝕊 ∣ if V `then M `else N ⟩ ⟶* ⟨ 𝕊 ∣ M ⟩)
                ⊎ (∀ {A ε} {M N : toCtx 𝕊 ⊢ᶜ⦂ A ! ε}
                     → ⟨ 𝕊 ∣ if V `then M `else N ⟩ ⟶* ⟨ 𝕊 ∣ N ⟩)
-bool-canonical (var f x)      = ⊥-elim (bool-not-in-toCtx x)
+bool-canonical (var x f)      = ⊥-elim (bool-not-in-toCtx x)
 bool-canonical true           = inj₁ (IF-TRUE ▸ done)
 bool-canonical false          = inj₂ (IF-FALSE ▸ done)
 bool-canonical (subV V boolₛ) with bool-canonical V
@@ -648,8 +648,8 @@ nat-canonical : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ nat)
                    → ⟨ 𝕊 ∣ matchℕ V `zero M `succ N ⟩ ⟶* ⟨ 𝕊 ∣ M ⟩)
               ⊎ Σ[ W ∈ toCtx 𝕊 ⊢ᵛ⦂ nat ]
                   (∀ {A ε} {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} {N : toCtx 𝕊 ∷ nat ⊢ᶜ⦂ A ! ε}
-                     → ⟨ 𝕊 ∣ matchℕ V `zero M `succ N ⟩ ⟶* ⟨ 𝕊 ∣ N [ split-[] ↦ W ]c ⟩)
-nat-canonical (var f x)     = ⊥-elim (nat-not-in-toCtx x)
+                     → ⟨ 𝕊 ∣ matchℕ V `zero M `succ N ⟩ ⟶* ⟨ 𝕊 ∣ N [ W ]₀ ⟩)
+nat-canonical (var x f)     = ⊥-elim (nat-not-in-toCtx x)
 nat-canonical zero          = inj₁ (MATCHℕ-ZERO ▸ done)
 nat-canonical (succ V)      = inj₂ (V , MATCHℕ-SUCC ▸ done)
 nat-canonical (subV V natₛ) with nat-canonical V
@@ -664,7 +664,7 @@ nat-canonical (subV V natₛ) with nat-canonical V
 
 VRedL-all : ∀ {𝕊 : State []} {A} {P : toCtx 𝕊 ⊢ᵛ⦂ A → Set}
           → (∀ W → P W) → (V : toCtx 𝕊 ⊢ᵛ⦂ list A) → VRedL P (listᵛ V)
-VRedL-all h (var _ x)            = ⊥-elim (list-not-in-toCtx x)
+VRedL-all h (var x _)            = ⊥-elim (list-not-in-toCtx x)
 VRedL-all h nil                  = red-nil
 VRedL-all h (cons W L)           = red-cons (h W) (VRedL-all h L)
 VRedL-all h (subV V (listₛ p))   =
@@ -705,7 +705,7 @@ reach-read-val : ∀ {t A ρ} {𝕊 𝕊' : State []} → (q : 𝕊 ⊑ₛ[ 𝟏
                → ∀ {𝕊₂ : State []} → (r : 𝕊' [ cellᵛ (reach-val q V) ]⊑ᶜ 𝕊₂)
                → VRedˢ t e' 𝕊₂ (lookupᶜ r)
 
-reach-read-val {ρ = ρ} q (var _ x) e e' h {𝕊₂} (read ee rel) =
+reach-read-val {ρ = ρ} q (var x _) e e' h {𝕊₂} (read ee rel) =
   VRedˢ-≡ˢ (VRedˢ-≡ᵛ (lookup-body-≡ 𝕊₂ cellEq rel₁ rel)
                      (h (read (≤ₛ-trans (ext q) ee) rel₁)))
   where
@@ -1000,9 +1000,9 @@ CRed-≡ᶜ refl p = p
 SRed-fresh : ∀ {A ρ} {𝕊 : State []} → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢ᵛ⦂ A)
            → (∀ {𝕊'} → (q : 𝕊 ⊑ₛ[ ρ ] 𝕊')
                 → VRed A 𝕊' (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V))
-           → (f : ¬ Et ([ ρ ] A) → 𝟏ᵣ ≾ᵣ 𝟏ᵣ)
+           → .(f : ([ ρ ] A) Et∨≾ᵘ 𝟏ᵣ)
            ------------------------------------------
-           → VRed ([ ρ ] A) (𝕊 ∷ₛ V) (var f Hd)
+           → VRed ([ ρ ] A) (𝕊 ∷ₛ V) (var Hd f)
 
 SRed-fresh {A} {ρ} {𝕊} V pV f {𝕊'} r =
   VRedˢ-≡ˢ (VRed-≡ᵛ A (sym (alloc-lookup-≡ V (extᶜ r) (ready r) q₀ refl))
@@ -1024,9 +1024,9 @@ SRed-fresh {A} {ρ} {𝕊} V pV f {𝕊'} r =
 -- reducible via the store read at the states its own box grade allows.
 
 SRed-var : ∀ {A ρ} {𝕊 : State []} → SRed 𝕊
-         → (x : A ∈[ ρ ] toCtx 𝕊) → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
+         → (x : A ∈[ ρ ] toCtx 𝕊) → .(f : A Et∨≾ᵘ ρ)
          --------------------------------------------------------
-         → VRed A 𝕊 (var f x)
+         → VRed A 𝕊 (var x f)
 
 SRed-var {Base b}    pSt x f = tt
 SRed-var {unit}      pSt x f = tt

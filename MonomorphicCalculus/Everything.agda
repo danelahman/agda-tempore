@@ -13,8 +13,9 @@
 module MonomorphicCalculus.Everything where
 
 ---- Syntax: value, computation and ground types (`VType`, `CType`,
----- `GType`, in `Syntax/Types`), among them the handler types `C ⇛ D`, and
----- eternal types (`Et`); contexts with locks, their grade, and
+---- `GType`, in `Syntax/Types`), among them the handler types `C ⇛ D`,
+---- eternal types (`Et`), and the side condition of the variable rule
+---- (`_Et∨≾ᵘ_`); contexts with locks, their grade, and
 ---- variables under locks (`Ctx`, `ctx-grade`, `_∈[_]_`, in
 ---- `Syntax/Contexts`); subtyping (`_<:ᵛ_`, `_<:ᶜ_`, in `Syntax/Subtyping`),
 ---- a preorder, antisymmetric where the grade orders are, and reflecting
@@ -42,7 +43,8 @@ import MonomorphicCalculus.Syntax.Types
 ---- `var-ren`, `⟨⟩-η-ren`, `⟨⟩-μ-ren`, `⟨⟩-≤-ren`, …), and their action
 ---- (`V-rename`, `C-rename`, in `Syntax/Renaming/Action`), whose instances
 ---- at the generators are the structural rules; unboxing any value of box
----- type is derivable (`unbox-val`). Substitution (`_[_↦_]v`, `_[_↦_]c`, in
+---- type is derivable (`unbox-val`). Substitution (`_[_↦_]v`, `_[_↦_]c`,
+---- and `_[_]₀`, `_[_]₁` at the last two bound variables, in
 ---- `Syntax/Substitution`), over parallel substitutions
 ---- (`Syntax/Substitution/Base`); context subsumption (`subCtx`, in
 ---- `Syntax/Substitution/Subsumption`); subsumption confined to the

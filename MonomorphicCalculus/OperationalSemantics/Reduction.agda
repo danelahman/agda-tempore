@@ -59,7 +59,7 @@ matchL-reduct : ∀ {Γ A C} → ListView Γ A → Γ ⊢ᶜ⦂ C → Γ ∷ A �
               → Γ ⊢ᶜ⦂ C
 matchL-reduct (inj₁ _)       M N = M
 matchL-reduct (inj₂ (W , L)) M N =
-  (N [ split-[] ↦ V-rename wk-ren L ]c) [ split-[] ↦ W ]c
+  (N [ V-rename wk-ren L ]₀) [ W ]₀
 
 recL-reduct : ∀ {Γ A B ε} → ListView Γ A → Γ ⊢ᶜ⦂ B ! ε
             → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε
@@ -73,8 +73,8 @@ recL-reduct (inj₂ (W , L)) M N p = coerce p (recL L M N p ⨟ recL-step W L N)
 
 match+-reduct : ∀ {Γ A B C} → (Γ ⊢ᵛ⦂ A) ⊎ (Γ ⊢ᵛ⦂ B) → Γ ∷ A ⊢ᶜ⦂ C → Γ ∷ B ⊢ᶜ⦂ C
               → Γ ⊢ᶜ⦂ C
-match+-reduct (inj₁ W) M N = M [ split-[] ↦ W ]c
-match+-reduct (inj₂ W) M N = N [ split-[] ↦ W ]c
+match+-reduct (inj₁ W) M N = M [ W ]₀
+match+-reduct (inj₂ W) M N = N [ W ]₀
 
 -- The reduct of a comparison: the relation's truth on the operands' data
 
@@ -95,7 +95,7 @@ mutual
                    → {M : ((toCtx 𝕊) ∷ A) ⊢ᶜ⦂ B ! ε}
                    → {V : (toCtx 𝕊) ⊢ᵛ⦂ A}
                      -----------------------------------------
-                   → ⟨ 𝕊 ∣ fun M · V ⟩ ⟶ ⟨ 𝕊 ∣ M [ split-[] ↦ V ]c ⟩
+                   → ⟨ 𝕊 ∣ fun M · V ⟩ ⟶ ⟨ 𝕊 ∣ M [ V ]₀ ⟩
 
         -- matching: substitute the pair's two components, read off the
         -- scrutinee by `fstᵛ`/`sndᵛ`
@@ -105,8 +105,8 @@ mutual
                    → {M : toCtx 𝕊 ∷ A ∷ B ⊢ᶜ⦂ C}
                      ---------------------------------------------------
                    → ⟨ 𝕊 ∣ match P `with M ⟩ ⟶
-                     ⟨ 𝕊 ∣ (M [ split-[] ↦ V-rename wk-ren (sndᵛ P) ]c)
-                             [ split-[] ↦ fstᵛ P ]c ⟩
+                     ⟨ 𝕊 ∣ (M [ V-rename wk-ren (sndᵛ P) ]₀)
+                             [ fstᵛ P ]₀ ⟩
 
         -- list elimination: the reduct at the scrutinee's canonical
         -- decomposition (`listᵛ`), which pushes its coercions into the head
@@ -168,7 +168,7 @@ mutual
                     → {M : toCtx 𝕊 ⊢ᶜ⦂ C}
                     → {N : toCtx 𝕊 ∷ nat ⊢ᶜ⦂ C}
                       ------------------------------------------------------------
-                    → ⟨ 𝕊 ∣ matchℕ succ V `zero M `succ N ⟩ ⟶ ⟨ 𝕊 ∣ N [ split-[] ↦ V ]c ⟩
+                    → ⟨ 𝕊 ∣ matchℕ succ V `zero M `succ N ⟩ ⟶ ⟨ 𝕊 ∣ N [ V ]₀ ⟩
 
         -- primitive recursion: at zero, the base; at a successor, the
         -- recursion at the predecessor sequenced with one unfolding of the
@@ -228,7 +228,7 @@ mutual
                      ⟨ 𝕊 ∣ (C-rename
                              (cong-∷-ren
                                ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)))
-                              N) [ split-[] ↦ V ]c ⟩
+                              N) [ V ]₀ ⟩
 
         -- sequencing an operation: float it out, the sequel joining its
         -- continuation
@@ -269,7 +269,7 @@ mutual
                      ⟨ 𝕊 ∣ (C-rename
                              (cong-∷-ren
                                (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren))
-                             N) [ split-[] ↦ V ]c ⟩
+                             N) [ V ]₀ ⟩
                      
         -- handling: step the handled computation, carrying time and state forward
         HANDLE-STEP : ∀ {A A₀ B ε₁ ε₂ ε₁'}
@@ -331,7 +331,7 @@ mutual
                              -- when the operation is handled
                              (C-rename (cong-∷-ren (cong-∷-ren barrier-ren))
                                        (H op (ε ·ₑ ε''))
-                              [ split-∷ split-[] ↦ V ]c) ⟩
+                              [ V ]₁) ⟩
 
         -- box: extend the state with a new resource
         BOX         : ∀ {A B ρ' ε} → {𝕊 : State []}
@@ -352,7 +352,7 @@ mutual
                     → {M : toCtx 𝕊 ∷ A ⊢ᶜ⦂ C}
                       ----------------------------------------------------------
                     → ⟨ 𝕊 ∣ unbox z rel p M ⟩ ⟶
-                      ⟨ 𝕊 ∣ M [ split-[] ↦ subV (unbox-lookup 𝕊 z rel) p ]c ⟩
+                      ⟨ 𝕊 ∣ M [ subV (unbox-lookup 𝕊 z rel) p ]₀ ⟩
 
         -- subsumption at an eliminated function: the coercion splits, the
         -- domain half moving onto the argument and the codomain half becoming
@@ -630,12 +630,12 @@ run-refines-type (r ▸ rs)   = <:ᵛ-trans (run-refines-type rs) (step-refines-
 
 MATCH+-INL : ∀ {A B C} {𝕊 : State []} {V : toCtx 𝕊 ⊢ᵛ⦂ A}
            {M : toCtx 𝕊 ∷ A ⊢ᶜ⦂ C} {N : toCtx 𝕊 ∷ B ⊢ᶜ⦂ C}
-           → ⟨ 𝕊 ∣ match+ inl V `inl M `inr N ⟩ ⟶ ⟨ 𝕊 ∣ M [ split-[] ↦ V ]c ⟩
+           → ⟨ 𝕊 ∣ match+ inl V `inl M `inr N ⟩ ⟶ ⟨ 𝕊 ∣ M [ V ]₀ ⟩
 MATCH+-INL = MATCH+
 
 MATCH+-INR : ∀ {A B C} {𝕊 : State []} {V : toCtx 𝕊 ⊢ᵛ⦂ B}
            {M : toCtx 𝕊 ∷ A ⊢ᶜ⦂ C} {N : toCtx 𝕊 ∷ B ⊢ᶜ⦂ C}
-           → ⟨ 𝕊 ∣ match+ inr V `inl M `inr N ⟩ ⟶ ⟨ 𝕊 ∣ N [ split-[] ↦ V ]c ⟩
+           → ⟨ 𝕊 ∣ match+ inr V `inl M `inr N ⟩ ⟶ ⟨ 𝕊 ∣ N [ V ]₀ ⟩
 MATCH+-INR = MATCH+
 
 -- The list eliminators at `nil` and at a `cons`: `MATCHL` and `RECL`, by
@@ -648,7 +648,7 @@ MATCHL-NIL = MATCHL
 MATCHL-CONS : ∀ {A C} {𝕊 : State []} {V : toCtx 𝕊 ⊢ᵛ⦂ A} {W : toCtx 𝕊 ⊢ᵛ⦂ list A}
               {M : toCtx 𝕊 ⊢ᶜ⦂ C} {N : toCtx 𝕊 ∷ A ∷ list A ⊢ᶜ⦂ C}
             → ⟨ 𝕊 ∣ matchL cons V W `nil M `cons N ⟩ ⟶
-              ⟨ 𝕊 ∣ (N [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟩
+              ⟨ 𝕊 ∣ (N [ V-rename wk-ren W ]₀) [ V ]₀ ⟩
 MATCHL-CONS = MATCHL
 
 RECL-NIL   : ∀ {A B ε} {𝕊 : State []} {M : toCtx 𝕊 ⊢ᶜ⦂ B ! ε}

@@ -1039,7 +1039,7 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
                                            ∘ʳ cong-⟨⟩-ren wk-ren)) N)))
                             (C-rename (cong-∷-ren (cong-∷-ren (barrier-ren {Γ})))
                                        (H op (ε ·ₑ ε''))
-                             [ split-∷ split-[] ↦ V ]c) ⟧ᶜᵗ
+                             [ V ]₁) ⟧ᶜᵗ
                      ( (pM
                        , renᶜ (cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN
                        , (λ op' ε' →

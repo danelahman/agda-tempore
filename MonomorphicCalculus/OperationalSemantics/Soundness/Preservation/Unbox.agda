@@ -312,7 +312,7 @@ sound-UNBOX : ∀ {A A₀ C ρ ρ'} → (𝕊 : State [])
             → (M : toCtx 𝕊 ∷ A ⊢ᶜ⦂ C)
             → (pSt : Paramˢ 𝕊) → (pM : Paramᶜ M)
             → ⟦ unbox x rel p M ⟧ᶜᵗ pM ∘ᵐ ⟦ 𝕊 ⟧ˢ pSt
-            ≈ᵐ ⟦ M [ split-[] ↦ subV (unbox-lookup 𝕊 x rel) p ]c ⟧ᶜᵗ
+            ≈ᵐ ⟦ M [ subV (unbox-lookup 𝕊 x rel) p ]₀ ⟧ᶜᵗ
                  (subᶜ M split-[] (subV (unbox-lookup 𝕊 x rel) p) pM
                     (unbox-lookupᴾ 𝕊 x rel pSt))
                ∘ᵐ ⟦ 𝕊 ⟧ˢ pSt

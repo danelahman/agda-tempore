@@ -112,17 +112,17 @@ eternalᵛ-extᵉ-irr et et' with eternal-irrelevant et et'
 
 -- The morphism interpreting a variable: project, then extract.
 
-var-morphism : ∀ {Γ A ρ} → (¬ Et A → ρ ≾ᵣ 𝟏ᵣ) → A ∈[ ρ ] Γ
+var-morphism : ∀ {Γ A ρ} → A ∈[ ρ ] Γ → .(A Et∨≾ᵘ ρ)
              → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
-var-morphism {A = A} f x with eternal? A
+var-morphism {A = A} x f with eternal? A
 ... | yes et = eternalᵛ-extᵉ et ∘ᵐ var-proj x
-... | no ¬et = εᵘ ∘ᵐ ⟨⟩-≤ (f ¬et) ∘ᵐ var-proj x
+... | no ¬et = εᵘ ∘ᵐ ⟨⟩-≤ (Et∨≾ᵘ→¬Et⇒≾ f ¬et) ∘ᵐ var-proj x
 
 -- Unfold `var-morphism` at an eternal type (handles the internal `eternal?`).
 
-var-morphism-unfoldᵉ : ∀ {Γ A ρ} → (et : Et A) → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
+var-morphism-unfoldᵉ : ∀ {Γ A ρ} → (et : Et A) → .(f : A Et∨≾ᵘ ρ)
                      → (y : A ∈[ ρ ] Γ)
-                     → var-morphism f y ≈ᵐ eternalᵛ-extᵉ et ∘ᵐ var-proj y
+                     → var-morphism y f ≈ᵐ eternalᵛ-extᵉ et ∘ᵐ var-proj y
 var-morphism-unfoldᵉ {A = A} et f y with eternal? A
 ... | yes et' = ∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et' et)
 ... | no ¬et = ⊥-elim (¬et et)
@@ -138,22 +138,22 @@ private
 -- The head variable denotes the second projection: at a non-eternal type the
 -- grade bound is reflexive and the possibility counit cancels `η`; at an
 -- eternal one the extraction cancels it.
-var-morphism-Hd : ∀ {Γ A} → (f : ¬ Et A → 𝟏ᵣ ≾ᵣ 𝟏ᵣ)
-                → var-morphism {Γ ∷ A} f Hd ≈ᵐ sndᵐ
+var-morphism-Hd : ∀ {Γ A} → .(f : A Et∨≾ᵘ 𝟏ᵣ)
+                → var-morphism {Γ ∷ A} Hd f ≈ᵐ sndᵐ
 var-morphism-Hd {A = A} f with eternal? A
 ... | yes et =
     ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ᵛ ∘ᵐ-congˡ (∘ᵐ-congˡ (eternalᵛ-extᵉ-𝟏 et) ∙ᵛ ⟨⟩-εᵘ∘η≡id)
   ∙ᵛ ∘ᵐ-identityˡ _
 ... | no ¬et =
-    ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr (f ¬et) ≾ᵣ-refl ∙ᵛ ⟨⟩-≤-refl) ∙ᵛ ∘ᵐ-identityˡ _)
+    ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr (Et∨≾ᵘ→¬Et⇒≾ f ¬et) ≾ᵣ-refl ∙ᵛ ⟨⟩-≤-refl) ∙ᵛ ∘ᵐ-identityˡ _)
   ∙ᵛ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ᵛ ∘ᵐ-congˡ ⟨⟩-εᵘ∘η≡id
   ∙ᵛ ∘ᵐ-identityˡ _
 
 -- Weakening a variable past a `∷` projects the environment.
-var-morphism-Tl-∷ : ∀ {Γ A B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Et B → ρ' ≾ᵣ 𝟏ᵣ)
-                  → var-morphism {Γ ∷ A} f (Tl-∷ y) ≈ᵐ var-morphism f y ∘ᵐ fstᵐ
+var-morphism-Tl-∷ : ∀ {Γ A B ρ'} → (y : B ∈[ ρ' ] Γ) → .(f : B Et∨≾ᵘ ρ')
+                  → var-morphism {Γ ∷ A} (Tl-∷ y) f ≈ᵐ var-morphism y f ∘ᵐ fstᵐ
 var-morphism-Tl-∷ {B = B} y f with eternal? B
 ... | yes et = ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 ... | no ¬et = ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))

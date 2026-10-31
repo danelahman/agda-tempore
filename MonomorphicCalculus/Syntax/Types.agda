@@ -118,3 +118,43 @@ eternal? empty       = yes emptyₑ
 eternal? (_ ⇒ _)     = no λ ()
 eternal? (_ ⇛ _)     = no λ ()
 eternal? ([ _ ] _)   = no λ ()
+
+-- The side condition of the variable rule, `Et(A) ∨ ρ ≾ 𝟏`: a variable bound
+-- `ρ` ago is usable if its type is eternal or `ρ` is within the unit.
+
+infix 4 _Et∨≾ᵘ_
+
+data _Et∨≾ᵘ_ (A : VType) (ρ : R) : Set where
+  et-ok : Et A → A Et∨≾ᵘ ρ
+  ≾ᵘ-ok : ρ ≾ᵣ 𝟏ᵣ → A Et∨≾ᵘ ρ
+
+-- The condition as a bound required of non-eternal types only, and back
+-- through the decision on `Et`. The term formers keep the condition
+-- irrelevant, so the bound is recovered through the decision on `_≾ᵣ_`.
+
+Et∨≾ᵘ→¬Et⇒≾ : ∀ {A ρ} → .(A Et∨≾ᵘ ρ) → ¬ Et A → ρ ≾ᵣ 𝟏ᵣ
+Et∨≾ᵘ→¬Et⇒≾ {ρ = ρ} ok ¬et = recompute (ρ ≾ᵣ? 𝟏ᵣ) (bound ok ¬et)
+  where
+  bound : ∀ {A ρ} → A Et∨≾ᵘ ρ → ¬ Et A → ρ ≾ᵣ 𝟏ᵣ
+  bound (et-ok et) ¬et = ⊥-elim-irr (¬et et)
+  bound (≾ᵘ-ok p)  ¬et = p
+
+¬Et⇒≾→Et∨≾ᵘ : ∀ {A ρ} → (¬ Et A → ρ ≾ᵣ 𝟏ᵣ) → A Et∨≾ᵘ ρ
+¬Et⇒≾→Et∨≾ᵘ {A} f with eternal? A
+... | yes et = et-ok et
+... | no ¬et = ≾ᵘ-ok (f ¬et)
+
+-- Lowering the grade, where the lower grade is bounded unless the type is
+-- eternal.
+
+Et∨≾ᵘ-≾ : ∀ {A ρ ρ'} → (¬ Et A → ρ' ≾ᵣ ρ) → A Et∨≾ᵘ ρ → A Et∨≾ᵘ ρ'
+Et∨≾ᵘ-≾ q (et-ok et) = et-ok et
+Et∨≾ᵘ-≾ {A} q (≾ᵘ-ok p) with eternal? A
+... | yes et = et-ok et
+... | no ¬et = ≾ᵘ-ok (≾ᵣ-trans (q ¬et) p)
+
+-- Leaving a lock: the grade before it is the left factor.
+
+Et∨≾ᵘ-zero-productˡ : ∀ {A ρ ρ'} → A Et∨≾ᵘ (ρ ·ᵣ ρ') → A Et∨≾ᵘ ρ
+Et∨≾ᵘ-zero-productˡ (et-ok et) = et-ok et
+Et∨≾ᵘ-zero-productˡ (≾ᵘ-ok p)  = ≾ᵘ-ok (≾ᵣ-zero-productˡ p)

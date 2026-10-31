@@ -323,7 +323,7 @@ handler-famᵗ-reindex g h h' eh n n' en p =
 mutual
 
   Paramᵛ : ∀ {Γ A} → Γ ⊢ᵛ⦂ A → Set
-  Paramᵛ (var f x)   = ⊤
+  Paramᵛ (var x f)   = ⊤
   Paramᵛ (const B c) = ⊤
   Paramᵛ ⋆           = ⊤
   Paramᵛ true        = ⊤
@@ -379,7 +379,7 @@ mutual
                ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' ⟧ᶜᵗ (pH op ε₁'')
 
   ⟦_⟧ᵛᵗ : ∀ {Γ A} → (V : Γ ⊢ᵛ⦂ A) → Paramᵛ V → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
-  ⟦ var f x   ⟧ᵛᵗ _ = var-morphism f x
+  ⟦ var x f   ⟧ᵛᵗ _ = var-morphism x f
   ⟦ const B c ⟧ᵛᵗ _ = ⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ
   ⟦ ⋆         ⟧ᵛᵗ _ = terminalᵐ
   ⟦ true      ⟧ᵛᵗ _ = trueᵐ ∘ᵐ terminalᵐ

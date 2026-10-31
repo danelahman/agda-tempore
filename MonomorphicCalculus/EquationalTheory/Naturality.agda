@@ -28,7 +28,7 @@ open import MonomorphicCalculus.Syntax.Renaming        S
 open import MonomorphicCalculus.Syntax.Substitution    S
 open import MonomorphicCalculus.Syntax.Types           S
 
-open import MonomorphicCalculus.Syntax.Terms.Equivalence  S using (var-≡; subV-≡)
+open import MonomorphicCalculus.Syntax.Terms.Equivalence  S using (subV-≡)
 open import MonomorphicCalculus.Syntax.Substitution.Laws  S using (sub-wk-≡ᵛ; sub-wk-≡ᶜ)
 
 -- Binder subsumption and its substitution law.
@@ -46,7 +46,7 @@ open import MonomorphicCalculus.EquationalTheory.EquationalTheory S
 -- The topmost variable, at its declared grade.
 
 hd : ∀ {Γ A} → Γ ∷ A ⊢ᵛ⦂ A
-hd = var (λ _ → ≾ᵣ-refl) Hd
+hd = var Hd (≾ᵘ-ok ≾ᵣ-refl)
 
 
 -- The atomic value formers: the witness relates a type to itself, so the
@@ -101,7 +101,7 @@ subC-if {Γ} {C} {C'} w V M N =
     body = subC (if hd `then C-rename wk-ren M `else C-rename wk-ren N) w
 
     fill : (U : Γ ⊢ᵛ⦂ bool)
-         → body [ split-[] ↦ U ]c ≡ subC (if U `then M `else N) w
+         → body [ U ]₀ ≡ subC (if U `then M `else N) w
     fill U = cong₂ (λ X Y → subC (if U `then X `else Y) w)
                    (sub-wk-≡ᶜ [] U M) (sub-wk-≡ᶜ [] U N)
 
@@ -125,7 +125,7 @@ subV-app p w V W =
     (≡ᵗʰ-castᶜ refl (cong (λ X → subC X w) body-sub)
                (fun-beta (subC (subCtx p (V-rename wk-ren V · hd)) w) W))
   where
-    body-sub : subCtx p (V-rename wk-ren V · hd) [ split-[] ↦ W ]c
+    body-sub : subCtx p (V-rename wk-ren V · hd) [ W ]₀
              ≡ V · subV W p
     body-sub =
       trans (subCtx-sub p (V-rename wk-ren V · hd) W)
@@ -252,7 +252,7 @@ subC-seq-in {Γ} {B' = B'} {ε = ε} {ε₁' = ε₁'} v q M N =
         (C-trans (subC-seq-eta v ≾ₑ-refl (M ⨟ N))
         (C-trans (ε-≃-cong _ (subC-cong
                     (≡ᵗʰ-castᶜ refl (cong (λ X → ε-≃ (≃ₑ-sym (·ₑ-assoc ε ε₁' 𝟏ₑ)) (M ⨟ (N ⨟ X)))
-                                          (cong return (subV-≡ var-≡)))
+                                          (cong return (subV-≡ refl)))
                                (seq-assoc M N (return (subV hd v))))))
                  (coerce-ε-≃ _ _ (·ₑ-monoˡ-≾ₑ ≾ₑ-refl) assoc-≾
                                  (M ⨟ (N ⨟ return (subV hd v))))))
@@ -303,10 +303,10 @@ subC-match {Γ} {A} {B} {C} {C'} w V M =
     bodyR : Γ ∷ (A |×| B) ⊢ᶜ⦂ C'
     bodyR = match hd `with subC (C-rename r M) w
 
-    castL : bodyL [ split-[] ↦ V ]c ≡ subC (match V `with M) w
+    castL : bodyL [ V ]₀ ≡ subC (match V `with M) w
     castL = cong (λ X → subC (match V `with X) w) (sub-wk-≡ᶜ ([] ∷ A ∷ B) V M)
 
-    castR : bodyR [ split-[] ↦ V ]c ≡ match V `with subC M w
+    castR : bodyR [ V ]₀ ≡ match V `with subC M w
     castR = cong (λ X → match V `with subC X w) (sub-wk-≡ᶜ ([] ∷ A ∷ B) V M)
 
 
@@ -361,11 +361,11 @@ subC-match+ {Γ} {A} {B} {C} {C'} w V M N =
     bodyR : Γ ∷ (A |+| B) ⊢ᶜ⦂ C'
     bodyR = match+ hd `inl subC (C-rename rA M) w `inr subC (C-rename rB N) w
 
-    castL : bodyL [ split-[] ↦ V ]c ≡ subC (match+ V `inl M `inr N) w
+    castL : bodyL [ V ]₀ ≡ subC (match+ V `inl M `inr N) w
     castL = cong₂ (λ X Y → subC (match+ V `inl X `inr Y) w)
                   (sub-wk-≡ᶜ ([] ∷ A) V M) (sub-wk-≡ᶜ ([] ∷ B) V N)
 
-    castR : bodyR [ split-[] ↦ V ]c ≡ match+ V `inl subC M w `inr subC N w
+    castR : bodyR [ V ]₀ ≡ match+ V `inl subC M w `inr subC N w
     castR = cong₂ (λ X Y → match+ V `inl subC X w `inr subC Y w)
                   (sub-wk-≡ᶜ ([] ∷ A) V M) (sub-wk-≡ᶜ ([] ∷ B) V N)
 
@@ -418,11 +418,11 @@ subC-matchℕ {Γ} {C} {C'} w V M N =
     bodyR : Γ ∷ nat ⊢ᶜ⦂ C'
     bodyR = matchℕ hd `zero subC (C-rename wk-ren M) w `succ subC (C-rename rN N) w
 
-    castL : bodyL [ split-[] ↦ V ]c ≡ subC (matchℕ V `zero M `succ N) w
+    castL : bodyL [ V ]₀ ≡ subC (matchℕ V `zero M `succ N) w
     castL = cong₂ (λ X Y → subC (matchℕ V `zero X `succ Y) w)
                   (sub-wk-≡ᶜ [] V M) (sub-wk-≡ᶜ ([] ∷ nat) V N)
 
-    castR : bodyR [ split-[] ↦ V ]c ≡ matchℕ V `zero subC M w `succ subC N w
+    castR : bodyR [ V ]₀ ≡ matchℕ V `zero subC M w `succ subC N w
     castR = cong₂ (λ X Y → matchℕ V `zero subC X w `succ subC Y w)
                   (sub-wk-≡ᶜ [] V M) (sub-wk-≡ᶜ ([] ∷ nat) V N)
 
@@ -476,10 +476,10 @@ subC-matchL {Γ} {A} {C} {C'} w V M N =
     bodyR : Γ ∷ list A ⊢ᶜ⦂ C'
     bodyR = matchL hd `nil subC (C-rename wk-ren M) w `cons subC (C-rename rN N) w
 
-    castL : bodyL [ split-[] ↦ V ]c ≡ subC (matchL V `nil M `cons N) w
+    castL : bodyL [ V ]₀ ≡ subC (matchL V `nil M `cons N) w
     castL = cong₂ (λ X Y → subC (matchL V `nil X `cons Y) w)
                   (sub-wk-≡ᶜ [] V M) (sub-wk-≡ᶜ ([] ∷ A ∷ list A) V N)
 
-    castR : bodyR [ split-[] ↦ V ]c ≡ matchL V `nil subC M w `cons subC N w
+    castR : bodyR [ V ]₀ ≡ matchL V `nil subC M w `cons subC N w
     castR = cong₂ (λ X Y → matchL V `nil subC X w `cons subC Y w)
                   (sub-wk-≡ᶜ [] V M) (sub-wk-≡ᶜ ([] ∷ A ∷ list A) V N)

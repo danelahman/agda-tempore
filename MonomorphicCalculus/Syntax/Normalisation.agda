@@ -91,8 +91,8 @@ data NfC : ∀ {Γ A ε} → Γ ⊢ᶜ⦂ A ! ε → Set
 
 data NfV where
 
-  varⁿ   : ∀ {Γ A ρ} {f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ} {x : A ∈[ ρ ] Γ}
-         → NfV (var f x)
+  varⁿ   : ∀ {Γ A ρ} .{f : A Et∨≾ᵘ ρ} {x : A ∈[ ρ ] Γ}
+         → NfV (var x f)
 
   constⁿ : ∀ {Γ B} {c : BaseConstants B} → NfV {Γ} (const B c)
 
@@ -269,7 +269,7 @@ C-subCtx : ∀ {Γ₀ Γ₁ A ε} → Γ₀ ≼ᶜ Γ₁ → {M : Γ₁ ⊢ᶜ�
 
 V-subCtx c (varⁿ {f = f} {x = x}) with ≼ᶜ-lookup c x
 ... | lkp y s b e =
-  nfv (var (λ ¬et → ≾ᵣ-trans b (f (λ et → ¬et (<:ᵛ-eternalˡ s et)))) y)
+  nfv (var y (Et∨≾ᵘ-<: s b f))
       s varⁿ (cong var e)
 V-subCtx c (constⁿ {c = b}) =
   nfv (const _ b) (<:ᵛ-refl _) constⁿ refl
@@ -420,8 +420,8 @@ C-subCtx c (boxⁿ nV nN) with V-subCtx (≼-⟨⟩ c ≾ᵣ-refl) nV
 V-normalise : ∀ {Γ A} → (V : Γ ⊢ᵛ⦂ A) → NfResV Γ V
 C-normalise : ∀ {Γ A ε} → (M : Γ ⊢ᶜ⦂ A ! ε) → NfResC Γ M
 
-V-normalise (var f x) =
-  nfv (var f x) (<:ᵛ-refl _) varⁿ refl
+V-normalise (var x f) =
+  nfv (var x f) (<:ᵛ-refl _) varⁿ refl
 V-normalise (const B b) =
   nfv (const B b) (<:ᵛ-refl _) constⁿ refl
 V-normalise ⋆ =
@@ -597,7 +597,7 @@ private
 
   ex-body : ∀ {Γ A}
           → rtm (V-normalise {Γ}
-                   (fun (subC (return {A = A} (var (λ _ → ≾ᵣ-refl) Hd))
+                   (fun (subC (return {A = A} (var Hd (≾ᵘ-ok ≾ᵣ-refl)))
                               (<:ᶜ-refl (A ! 𝟏ₑ)))))
-          ≡ fun (return (var (λ _ → ≾ᵣ-refl) Hd))
+          ≡ fun (return (var Hd (≾ᵘ-ok ≾ᵣ-refl)))
   ex-body = refl

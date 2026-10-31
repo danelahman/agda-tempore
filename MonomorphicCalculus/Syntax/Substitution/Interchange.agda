@@ -54,7 +54,7 @@ eternal-val-ext-ren : ∀ {Γ Γ' A ρ} → (et : Et A) → (r : Ren [] Γ Γ')
                     → (V : Γ' ⊢ᵛ⦂ A)
                     → V-rename (cong-⟨⟩-ren {ρ = ρ} r) (eternal-val-ext et V)
                     ≡ eternal-val-ext et (V-rename r V)
-eternal-val-ext-ren et             r (var f x)   = var-≡
+eternal-val-ext-ren et             r (var x f)   = refl
 eternal-val-ext-ren et             r (const B c) = refl
 eternal-val-ext-ren et             r ⋆           = refl
 eternal-val-ext-ren et             r true        = refl
@@ -82,9 +82,9 @@ cong-∷-sub-⌜⌝ : ∀ {Γ Γ' A} → {s : Sub₀ [] Γ Γ'} → {r : Ren [] 
               → s ≐ˢ₀ ⌜ r ⌝ → cong-∷-sub {A = A} s ≐ˢ₀ ⌜ cong-∷-ren r ⌝
 cong-∷-sub-⌜⌝ h = mk≐ˢ₀ goᵛ goᵗ
   where
-    goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] _) → (f : _) → _
-    goᵛ Hd       f = var-≡
-    goᵛ (Tl-∷ y) f = trans (cong (V-rename wk-ren) (atᵛ h y f)) var-≡
+    goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] _) → .(f : _) → _
+    goᵛ Hd       f = refl
+    goᵛ (Tl-∷ y) f = cong (V-rename wk-ren) (atᵛ h y f)
 
     goᵗ : ∀ {A' ρ ρ'} → (y : [ ρ ] A' ∈[ ρ' ] _) → _
     goᵗ Hd       = refl
@@ -94,14 +94,14 @@ cong-⟨⟩-sub-⌜⌝ : ∀ {Γ Γ' ρ} → {s : Sub₀ [] Γ Γ'} → {r : Ren
                → s ≐ˢ₀ ⌜ r ⌝ → cong-⟨⟩-sub {ρ = ρ} s ≐ˢ₀ ⌜ cong-⟨⟩-ren r ⌝
 cong-⟨⟩-sub-⌜⌝ {ρ = ρ} {r = r} h = mk≐ˢ₀ goᵛ goᵗ
   where
-    goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] _) → (f : _) → _
+    goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] _) → .(f : _) → _
     goᵛ {A'} (Tl-⟨⟩ y) f with eternal? A'
     ... | yes et =
-      trans (cong (eternal-val-ext et) (atᵛ h y _)) var-≡
+      cong (eternal-val-ext et) (atᵛ h y _)
     ... | no ¬et =
-      trans (cong (V-rename (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))))
+      trans (cong (V-rename (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (Et∨≾ᵘ→¬Et⇒≾ f ¬et))))
                   (atᵛ h y _))
-            (var-img-≡ (hit-⟨⟩-img (≾ᵣ-zero-productʳ (f ¬et))
+            (var-img-≡ (hit-⟨⟩-img (≾ᵣ-zero-productʳ (Et∨≾ᵘ→¬Et⇒≾ f ¬et))
                                    (proj₂ (var-img r y))) _ _)
 
     goᵗ : ∀ {A' ρ₀ ρ'} → (y : [ ρ₀ ] A' ∈[ ρ' ] _) → _
@@ -118,7 +118,7 @@ mutual
   V-sub₀-⌜⌝ : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ') → (V : Γ' ⊢ᵛ⦂ A)
             → V-sub₀ ⌜ r ⌝ V ≡ V-rename r V
 
-  V-sub₀-⌜⌝ r (var f x) = refl
+  V-sub₀-⌜⌝ r (var x f) = refl
   V-sub₀-⌜⌝ r (const B c) = refl
   V-sub₀-⌜⌝ r ⋆         = refl
   V-sub₀-⌜⌝ r true      = refl
@@ -213,8 +213,8 @@ record Interchange {Δ Δ' Γ Γ'} (s' : Sub₀ [] Δ Δ') (r : Ren [] Δ' Γ')
                    (r' : Ren [] Δ Γ) (s : Sub₀ [] Γ Γ') : Set where
   constructor mk⋈
   field
-    atᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
-        → V-sub₀ s' (V-rename r (var f x)) ≡ V-rename r' (V-sub₀ s (var f x))
+    atᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → .(f : A Et∨≾ᵘ ρ)
+        → V-sub₀ s' (V-rename r (var x f)) ≡ V-rename r' (V-sub₀ s (var x f))
     atᵗ : ∀ {A ρ ρ'} → (y : [ ρ ] A ∈[ ρ' ] Γ')
         → tgt-img₀ s' (proj₂ (var-img r y)) ≡ rvar-img′ r' (tgt-img₀ s y)
 
@@ -230,13 +230,13 @@ open Interchange public
                   (cong-∷-ren r') (cong-∷-sub s)
 ⋈-∷ {r' = r'} {s = s} h = mk⋈ goᵛ goᵗ
   where
-    goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] _) → (f : _) → _
-    goᵛ Hd       f = var-≡
+    goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] _) → .(f : _) → _
+    goᵛ Hd       f = refl
     goᵛ (Tl-∷ y) f =
       trans (cong (V-rename wk-ren) (atᵛ h y f))
-        (trans (sym (V-rename-∘ r' wk-ren (V-sub₀ s (var f y))))
-          (trans (V-rename-≡ (≐ʳ-sym (wk-ren-nat-≐ʳ r')) (V-sub₀ s (var f y)))
-                 (V-rename-∘ wk-ren (cong-∷-ren r') (V-sub₀ s (var f y)))))
+        (trans (sym (V-rename-∘ r' wk-ren (V-sub₀ s (var y f))))
+          (trans (V-rename-≡ (≐ʳ-sym (wk-ren-nat-≐ʳ r')) (V-sub₀ s (var y f)))
+                 (V-rename-∘ wk-ren (cong-∷-ren r') (V-sub₀ s (var y f)))))
 
     goᵗ : ∀ {A' ρ ρ'} → (y : [ ρ ] A' ∈[ ρ' ] _) → _
     goᵗ Hd       = refl
@@ -262,22 +262,20 @@ open Interchange public
         go v = trans (hit-⟨⟩-img p (proj₂ (var-img r₀ v)))
                      (sym (cong (var-img′ (cong-⟨⟩-ren r₀)) (hit-⟨⟩-img p' v)))
 
-    goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] _) → (f : _) → _
+    goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] _) → .(f : _) → _
     goᵛ {A'} (Tl-⟨⟩ y) f with eternal? A'
     ... | yes et =
-      trans (cong (eternal-val-ext et)
-              (trans (sub-var₀-irr s' _ _ _) (atᵛ h y (et-bound et))))
-            (sym (eternal-val-ext-ren et r' (V-sub₀ s (var (et-bound et) y))))
+      trans (cong (eternal-val-ext et) (atᵛ h y (et-ok et)))
+            (sym (eternal-val-ext-ren et r' (V-sub₀ s (var y (et-ok et)))))
     ... | no ¬et =
       trans (cong (V-rename (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ _)))
-              (trans (sub-var₀-irr s' _ _ _)
-                     (atᵛ h y (λ ¬et' → ≾ᵣ-zero-productˡ (f ¬et')))))
+              (atᵛ h y (Et∨≾ᵘ-zero-productˡ f)))
         (trans (sym (V-rename-∘ r' (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ _))
-                                (V-sub₀ s (var _ y))))
+                                (V-sub₀ s (var y _))))
           (trans (V-rename-≡ (⟨⟩-nat-≐ʳ r' (≾ᵣ-zero-productʳ _) (≾ᵣ-zero-productʳ _))
-                             (V-sub₀ s (var _ y)))
+                             (V-sub₀ s (var y _)))
                  (V-rename-∘ (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ _))
-                             (cong-⟨⟩-ren r') (V-sub₀ s (var _ y)))))
+                             (cong-⟨⟩-ren r') (V-sub₀ s (var y _)))))
 
     goᵗ : ∀ {A' ρ₀ ρ'} → (y : [ ρ₀ ] A' ∈[ ρ' ] _) → _
     goᵗ (Tl-⟨⟩ y) = cong (RVar-⟨⟩ ρ) (atᵗ h y)
@@ -300,7 +298,7 @@ mutual
              → Interchange s' r r' s → (V : Γ' ⊢ᵛ⦂ A)
              → V-sub₀ s' (V-rename r V) ≡ V-rename r' (V-sub₀ s V)
 
-  V-sub₀-ren h (var f x) = atᵛ h x f
+  V-sub₀-ren h (var x f) = atᵛ h x f
   V-sub₀-ren h (const B c) = refl
   V-sub₀-ren h ⋆         = refl
   V-sub₀-ren h true      = refl

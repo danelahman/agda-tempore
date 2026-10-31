@@ -97,7 +97,7 @@ clause-sound : ∀ {Γ B ε''} → (op : Op)
              → (W : ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ ∣ op-grade op ∣ᵉ ]ᵒ
                       (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ B ⟧ᵛ ε''))
              → ⟦ (C-rename (cong-∷-ren (cong-∷-ren (barrier-ren {Γ}))) (H op ε''))
-                     [ split-∷ split-[] ↦ V ]c ⟧ᶜᵗ
+                     [ V ]₁ ⟧ᶜᵗ
                  (subᶜ (C-rename (cong-∷-ren (cong-∷-ren (barrier-ren {Γ}))) (H op ε''))
                        (split-∷ split-[]) V
                        (renᶜ (cong-∷-ren (cong-∷-ren (barrier-ren {Γ})))

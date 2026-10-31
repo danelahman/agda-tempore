@@ -111,7 +111,7 @@ sub-env-is-⟦⟧ˢ₀ (split-⟨⟩ s) W pW = ⟨⟩-congᶠ (sub-env-is-⟦⟧
 mutual
 
   sub-varᴾ : ∀ {Γ Γ' A ρ} → (s : Sub₀ [] Γ Γ') → Paramˢ₀ s
-           → (x : A ∈[ ρ ] Γ') → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
+           → (x : A ∈[ ρ ] Γ') → .(f : A Et∨≾ᵘ ρ)
            → Paramᵛ (sub-var₀ s x f)
   sub-varᴾ ⌜ r ⌝          p  x         f = tt
   sub-varᴾ (val-sub V)    pV Hd        f = pV
@@ -123,18 +123,18 @@ mutual
     sub-varᴾ-⟨⟩ s p y f (eternal? A)
 
   sub-varᴾ-⟨⟩ : ∀ {Γ Γ' A ρ ρ'} → (s : Sub₀ [] Γ Γ') → Paramˢ₀ s
-              → (y : A ∈[ ρ' ] Γ') → (f : ¬ Et A → ρ' ·ᵣ ρ ≾ᵣ 𝟏ᵣ)
+              → (y : A ∈[ ρ' ] Γ') → .(f : A Et∨≾ᵘ ρ' ·ᵣ ρ)
               → (dec : Dec (Et A))
               → Paramᵛ (sub-var₀-⟨⟩ {ρ = ρ} s y f dec)
   sub-varᴾ-⟨⟩ s p y f (yes et) =
-    eternal-val-extᴾ et (sub-var₀ s y (λ ¬et → ⊥-elim (¬et et)))
+    eternal-val-extᴾ et (sub-var₀ s y (et-ok et))
   sub-varᴾ-⟨⟩ s p y f (no ¬et) =
-    renᵛ _ (sub-var₀ s y (λ ¬et' → ≾ᵣ-zero-productˡ (f ¬et')))
-           (sub-varᴾ s p y (λ ¬et' → ≾ᵣ-zero-productˡ (f ¬et')))
+    renᵛ _ (sub-var₀ s y (Et∨≾ᵘ-zero-productˡ f))
+           (sub-varᴾ s p y (Et∨≾ᵘ-zero-productˡ f))
 sub-var-natˢ : ∀ {Γ Γ' A ρ} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
-             → (x : A ∈[ ρ ] Γ') → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
+             → (x : A ∈[ ρ ] Γ') → .(f : A Et∨≾ᵘ ρ)
              → ⟦ sub-var₀ s x f ⟧ᵛᵗ (sub-varᴾ s p x f)
-             ≈ᵐ var-morphism f x ∘ᵐ ⟦ s ⟧ˢ₀ p
+             ≈ᵐ var-morphism x f ∘ᵐ ⟦ s ⟧ˢ₀ p
 
 -- an embedded renaming acts as itself
 sub-var-natˢ ⌜ r ⌝ p x f = var-morphism-nat r f x
@@ -155,7 +155,7 @@ sub-var-natˢ {A = B} (val-sub W) pW Hd f with eternal? B
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _))))
-    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩-≤-irr (f ¬et) ≾ᵣ-refl) ⟨⟩-≤-refl)))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩-≤-irr (Et∨≾ᵘ→¬Et⇒≾ f ¬et) ≾ᵣ-refl) ⟨⟩-≤-refl)))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-identityˡ _))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
     (≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-εᵘ∘η≡id)
@@ -212,7 +212,7 @@ sub-var-natˢ {A = B} (cong-⟨⟩-sub s) p (Tl-⟨⟩ y) f with eternal? B
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
 ... | no ¬et =
-  ≈ᵐ-trans (V-rename-nat (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et)))
+  ≈ᵐ-trans (V-rename-nat (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (Et∨≾ᵘ→¬Et⇒≾ f ¬et)))
                          (sub-var₀ s y _) (sub-varᴾ s p y _))
   (≈ᵐ-trans (∘ᵐ-congˡ (sub-var-natˢ s p y _))
   (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congˡ (var-morphism-¬et y _ ¬et)))
@@ -357,7 +357,7 @@ mutual
 
   subᵛˢ : ∀ {Γ Γ' A} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
         → (V : Γ' ⊢ᵛ⦂ A) → Paramᵛ V → Paramᵛ (V-sub₀ s V)
-  subᵛˢ s p (var f x)   _         = sub-varᴾ s p x f
+  subᵛˢ s p (var x f)   _         = sub-varᴾ s p x f
   subᵛˢ s p (const B c) _         = tt
   subᵛˢ s p ⋆           _         = tt
   subᵛˢ s p true        _         = tt
@@ -448,7 +448,7 @@ mutual
   V-subst-natˢ : ∀ {Γ Γ' A} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
                → (V : Γ' ⊢ᵛ⦂ A) → (pV : Paramᵛ V)
                → ⟦ V-sub₀ s V ⟧ᵛᵗ (subᵛˢ s p V pV) ≈ᵐ ⟦ V ⟧ᵛᵗ pV ∘ᵐ ⟦ s ⟧ˢ₀ p
-  V-subst-natˢ s p (var f x) _ = sub-var-natˢ s p x f
+  V-subst-natˢ s p (var x f) _ = sub-var-natˢ s p x f
   V-subst-natˢ s p (const B c) _ =
     ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
   V-subst-natˢ s p ⋆ _ = ≈ᵐ-sym terminalᵐ-unique

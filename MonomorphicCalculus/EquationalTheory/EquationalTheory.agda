@@ -139,7 +139,7 @@ mutual
             → (V : Γ ⊢ᵛ⦂ A ⇒ C)
             -----------------------------------------------
             → Γ ⊢ᵛ⦂ V
-                ≡ᵗʰ fun (V-rename wk-ren V · var (λ _ → ≾ᵣ-refl) Hd)
+                ≡ᵗʰ fun (V-rename wk-ren V · var Hd (≾ᵘ-ok ≾ᵣ-refl))
 
     -- equations for subsumption
     --
@@ -420,7 +420,7 @@ mutual
                            (cong-∷-ren
                              (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren))
                            M)
-                         [ split-[] ↦ V ]c)
+                         [ V ]₀)
 
     seq-perform : ∀ {A B ε ε' op}
                 → (V : Γ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
@@ -476,7 +476,7 @@ mutual
             → (M : Γ ⊢ᶜ⦂ A ! ε)
             ----------------------------------------------------------
             → Γ ⊢ᶜ⦂ M
-                ≡ᵗʰ ε-≃ (·ₑ-identityʳ ε) (M ⨟ return (var (λ _ → ≾ᵣ-refl) Hd))
+                ≡ᵗʰ ε-≃ (·ₑ-identityʳ ε) (M ⨟ return (var Hd (≾ᵘ-ok ≾ᵣ-refl)))
 
     -- associativity equation for sequential composition
 
@@ -501,7 +501,7 @@ mutual
              → (W : Γ ⊢ᵛ⦂ A)
              ----------------------
              → Γ ⊢ᶜ⦂ fun M · W
-                 ≡ᵗʰ M [ split-[] ↦ W ]c
+                 ≡ᵗʰ M [ W ]₀
 
     -- beta-equation for pattern-matching
 
@@ -511,8 +511,8 @@ mutual
                → (M : Γ ∷ A ∷ B ⊢ᶜ⦂ C)
                ------------------------------------
                → Γ ⊢ᶜ⦂ match ⦉ V , W ⦊ `with M
-                   ≡ᵗʰ M [ split-[] ↦ V-rename wk-ren W ]c
-                         [ split-[] ↦ V ]c
+                   ≡ᵗʰ M [ V-rename wk-ren W ]₀
+                         [ V ]₀
 
     -- eta-equation for pattern-matching
 
@@ -522,8 +522,8 @@ mutual
               -------------------------------------------------------------
               → Γ ⊢ᶜ⦂ match V `with
                        ((C-rename (wk-ren ∘ʳ exch-ren ∘ʳ wk-ren ∘ʳ exch-ren)
-                         M) [ split-[] ↦ ⦉ var (λ _ → ≾ᵣ-refl) (Tl-∷ Hd) , var (λ _ → ≾ᵣ-refl) Hd ⦊ ]c)
-                  ≡ᵗʰ M [ split-[] ↦ V ]c
+                         M) [ ⦉ var (Tl-∷ Hd) (≾ᵘ-ok ≾ᵣ-refl) , var Hd (≾ᵘ-ok ≾ᵣ-refl) ⦊ ]₀)
+                  ≡ᵗʰ M [ V ]₀
 
     -- eta-equation for empty type elimination
 
@@ -532,7 +532,7 @@ mutual
                → (M : Γ ∷ empty ⊢ᶜ⦂ C)
                -----------------------
                → Γ ⊢ᶜ⦂ absurd {C = C} V
-                   ≡ᵗʰ M [ split-[] ↦ V ]c
+                   ≡ᵗʰ M [ V ]₀
 
     -- beta-equation for comparison: at data, the relation's truth on their
     -- order
@@ -565,9 +565,9 @@ mutual
            → (V : Γ ⊢ᵛ⦂ bool)
            → (M : Γ ∷ bool ⊢ᶜ⦂ C)
            ------------------------------------------------------
-           → Γ ⊢ᶜ⦂ if V `then (M [ split-[] ↦ true  ]c)
-                        `else (M [ split-[] ↦ false ]c)
-               ≡ᵗʰ M [ split-[] ↦ V ]c
+           → Γ ⊢ᶜ⦂ if V `then (M [ true  ]₀)
+                        `else (M [ false ]₀)
+               ≡ᵗʰ M [ V ]₀
 
     -- beta-equations for natural-number elimination
 
@@ -582,7 +582,7 @@ mutual
                      → (M : Γ ⊢ᶜ⦂ C)
                      → (N : Γ ∷ nat ⊢ᶜ⦂ C)
                      -------------------------------------------------------------
-                     → Γ ⊢ᶜ⦂ matchℕ succ V `zero M `succ N ≡ᵗʰ N [ split-[] ↦ V ]c
+                     → Γ ⊢ᶜ⦂ matchℕ succ V `zero M `succ N ≡ᵗʰ N [ V ]₀
 
     -- eta-equation for natural-number elimination
     --
@@ -593,10 +593,10 @@ mutual
                → (M : Γ ∷ nat ⊢ᶜ⦂ C)
                ------------------------------------------------------------------
                → Γ ⊢ᶜ⦂ matchℕ V
-                        `zero (M [ split-[] ↦ zero ]c)
+                        `zero (M [ zero ]₀)
                         `succ (C-rename (cong-∷-ren wk-ren) M
-                                [ split-[] ↦ succ (var (λ _ → ≾ᵣ-refl) Hd) ]c)
-                   ≡ᵗʰ M [ split-[] ↦ V ]c
+                                [ succ (var Hd (≾ᵘ-ok ≾ᵣ-refl)) ]₀)
+                   ≡ᵗʰ M [ V ]₀
 
     -- beta-equations for primitive recursion
     --
@@ -626,14 +626,14 @@ mutual
                     → (M : Γ ∷ A ⊢ᶜ⦂ C)
                     → (N : Γ ∷ B ⊢ᶜ⦂ C)
                     ----------------------------------------------------------
-                    → Γ ⊢ᶜ⦂ match+ inl V `inl M `inr N ≡ᵗʰ M [ split-[] ↦ V ]c
+                    → Γ ⊢ᶜ⦂ match+ inl V `inl M `inr N ≡ᵗʰ M [ V ]₀
 
     match+-beta-inr : ∀ {A B C}
                     → (V : Γ ⊢ᵛ⦂ B)
                     → (M : Γ ∷ A ⊢ᶜ⦂ C)
                     → (N : Γ ∷ B ⊢ᶜ⦂ C)
                     ----------------------------------------------------------
-                    → Γ ⊢ᶜ⦂ match+ inr V `inl M `inr N ≡ᵗʰ N [ split-[] ↦ V ]c
+                    → Γ ⊢ᶜ⦂ match+ inr V `inl M `inr N ≡ᵗʰ N [ V ]₀
 
     -- eta-equation for sum elimination
     --
@@ -645,10 +645,10 @@ mutual
                ------------------------------------------------------------------
                → Γ ⊢ᶜ⦂ match+ V
                         `inl (C-rename (cong-∷-ren wk-ren) M
-                                [ split-[] ↦ inl (var (λ _ → ≾ᵣ-refl) Hd) ]c)
+                                [ inl (var Hd (≾ᵘ-ok ≾ᵣ-refl)) ]₀)
                         `inr (C-rename (cong-∷-ren wk-ren) M
-                                [ split-[] ↦ inr (var (λ _ → ≾ᵣ-refl) Hd) ]c)
-                   ≡ᵗʰ M [ split-[] ↦ V ]c
+                                [ inr (var Hd (≾ᵘ-ok ≾ᵣ-refl)) ]₀)
+                   ≡ᵗʰ M [ V ]₀
 
     -- beta-equations for list elimination
 
@@ -665,8 +665,8 @@ mutual
                      → (N : Γ ∷ A ∷ list A ⊢ᶜ⦂ C)
                      ----------------------------------------------
                      → Γ ⊢ᶜ⦂ matchL cons V W `nil M `cons N
-                         ≡ᵗʰ N [ split-[] ↦ V-rename wk-ren W ]c
-                               [ split-[] ↦ V ]c
+                         ≡ᵗʰ N [ V-rename wk-ren W ]₀
+                               [ V ]₀
 
     -- eta-equation for list elimination
     --
@@ -677,11 +677,11 @@ mutual
                → (M : Γ ∷ list A ⊢ᶜ⦂ C)
                -------------------------------------------------------------
                → Γ ⊢ᶜ⦂ matchL V
-                        `nil (M [ split-[] ↦ nil ]c)
+                        `nil (M [ nil ]₀)
                         `cons ((C-rename (wk-ren ∘ʳ exch-ren ∘ʳ wk-ren ∘ʳ exch-ren) M)
-                                 [ split-[] ↦ cons (var (λ _ → ≾ᵣ-refl) (Tl-∷ Hd))
-                                                   (var (λ _ → ≾ᵣ-refl) Hd) ]c)
-                   ≡ᵗʰ M [ split-[] ↦ V ]c
+                                 [ cons (var (Tl-∷ Hd) (≾ᵘ-ok ≾ᵣ-refl))
+                                                   (var Hd (≾ᵘ-ok ≾ᵣ-refl)) ]₀)
+                   ≡ᵗʰ M [ V ]₀
 
     -- beta-equations for primitive recursion on lists; no eta-equation, as
     -- for `recℕ`
@@ -724,7 +724,7 @@ mutual
                               (cong-∷-ren
                                 (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren))
                               N)
-                            [ split-[] ↦ V ]c)
+                            [ V ]₀)
 
     handle-perform : ∀ {A B ε ε' op}
                    → (V : Γ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
@@ -754,7 +754,7 @@ mutual
                                                 (H op' ε''))))
                                   (C-rename (cong-∷-ren (cong-∷-ren barrier-ren))
                                     (H op (ε ·ₑ ε'))
-                                   [ split-∷ split-[] ↦ V ]c))
+                                   [ V ]₁))
 
     handle-delay : ∀ {A B τ ε ε'}
                  → (M : Γ ⟨ ιᵣ τ ⟩ ⊢ᶜ⦂ A ! ε)
@@ -811,7 +811,7 @@ mutual
                                                     (grade-++ᶜˡ-𝟏ᵣ (hole-ctx K)))
                                                   p)
                                         w N ])
-                   ≡ᵗʰ box _ V (K [ N [ split-[] ↦ subV (V-rename ((cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ wk-ren-⟨ρ⟩-ctx refl) V) w ]c ])
+                   ≡ᵗʰ box _ V (K [ N [ subV (V-rename ((cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ wk-ren-⟨ρ⟩-ctx refl) V) w ]₀ ])
 
 
     -- unboxing non-related values commute

@@ -326,7 +326,7 @@ env-cell₀-val (γ ∷ᵉ W) (pγ , pW) (σ , Tl-∷ y) r =
   env-cell₀-val γ pγ (σ , y) r
 
 env-cell₀-val (liftᵉ V γ) (pγ , pV) (σ , Hd) r =
-  VRedˢ-≡ˢ (SRed-fresh V pV (λ _ → ≾ᵣ-refl) r)
+  VRedˢ-≡ˢ (SRed-fresh V pV (≾ᵘ-ok ≾ᵣ-refl) r)
 
 env-cell₀-val (liftᵉ V γ) (pγ , pV) (σ , Tl-∷ y) r =
   VRed-≡ᵛ _ (proj₂ rd) (env-cell₀-val γ pγ (σ , y) (proj₁ rd))
@@ -362,7 +362,7 @@ Var-cast-loop refl t = refl
 val-cell-≡ : ∀ {Γ A ρ} → (W : Γ ⊢ᵛ⦂ [ ρ ] A)
            → tgt-img₀ (val-sub W) Hd ≡ val-cell W
 
-val-cell-≡ (var f x)           = refl
+val-cell-≡ (var x f)           = refl
 val-cell-≡ (subV V ([ _ ]ₛ _)) = val-cell-≡ V
 
 rvar-hit : ∀ {Γ A ρ} → (Θ : Ctx) → (W : Γ ⊢ᵛ⦂ [ ρ ] A)

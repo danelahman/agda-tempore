@@ -102,7 +102,7 @@ mutual
 
   ⟦⟧ᵛᵗ-irr : ∀ {Γ A} → (V : Γ ⊢ᵛ⦂ A) → (p p' : Paramᵛ V)
            → ⟦ V ⟧ᵛᵗ p ≈ᵐ ⟦ V ⟧ᵛᵗ p'
-  ⟦⟧ᵛᵗ-irr (var f x)   _ _ = ≈ᵐ-refl
+  ⟦⟧ᵛᵗ-irr (var x f)   _ _ = ≈ᵐ-refl
   ⟦⟧ᵛᵗ-irr (const B c) _ _ = ≈ᵐ-refl
   ⟦⟧ᵛᵗ-irr ⋆           _ _ = ≈ᵐ-refl
   ⟦⟧ᵛᵗ-irr true        _ _ = ≈ᵐ-refl

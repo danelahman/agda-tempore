@@ -9,9 +9,9 @@
 -- A `nodeid` variable is usable after any passage of time; a         --
 -- `reading` variable only under the bound `ρ ≾ᵣ 𝟏ᵣ` of `var`.        --
 --                                                                    --
--- Shared by the instances: the three ways of meeting the bound of    --
--- `var`, the coercion lemma, and the operation clauses passed to     --
--- `handle`, whose typing is the same at every grade.                 --
+-- Shared by the instances: the three ways of meeting the side        --
+-- condition of `var`, the coercion lemma, and the operation clauses  --
+-- passed to `handle`, whose typing is the same at every grade.       --
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
@@ -58,20 +58,20 @@ nodeid-eternal = Baseₑ tt
 ------------------------------------------------------------------------
 -- Variables
 --
--- `var` asks for `ρ ≾ᵣ 𝟏ᵣ` unless the type is eternal, `ρ` being the
--- time that has passed since the variable was bound. The three ways of
--- meeting it: the variable is the most recent binding, so no time has
--- passed; its type is eternal, so the bound is not asked for; or the
--- bound is supplied.
+-- `var` asks for `A Et∨≾ᵘ ρ`: the type is eternal, or `ρ ≾ᵣ 𝟏ᵣ`, `ρ`
+-- being the time that has passed since the variable was bound. The three
+-- ways of meeting it: the variable is the most recent binding, so no time
+-- has passed; its type is eternal (`et-ok`); or the bound is supplied
+-- (`≾ᵘ-ok`).
 
 here : ∀ {Γ A} → Γ ∷ A ⊢ᵛ⦂ A
-here = var (λ _ → ≾ᵣ-refl) Hd
+here = var Hd (≾ᵘ-ok ≾ᵣ-refl)
 
 eternal-var : ∀ {Γ A ρ} → Et A → A ∈[ ρ ] Γ → Γ ⊢ᵛ⦂ A
-eternal-var et x = var (λ ¬et → ⊥-elim (¬et et)) x
+eternal-var et x = var x (et-ok et)
 
 fresh-var : ∀ {Γ A ρ} → ρ ≾ᵣ 𝟏ᵣ → A ∈[ ρ ] Γ → Γ ⊢ᵛ⦂ A
-fresh-var p x = var (λ _ → p) x
+fresh-var p x = var x (≾ᵘ-ok p)
 
 ------------------------------------------------------------------------
 -- Sub-effecting against unboxing

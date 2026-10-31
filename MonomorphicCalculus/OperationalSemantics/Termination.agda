@@ -115,7 +115,7 @@ fund-match {𝕊 = 𝕊} {A = A} {B = B} γ pγ V M (p₁ , p₂) pM =
     U₁ = fstᵛ (env-V γ V)
     U₂ = sndᵛ (env-V γ V)
 
-    step : (M₀ [ split-[] ↦ V-rename wk-ren U₂ ]c) [ split-[] ↦ U₁ ]c
+    step : (M₀ [ V-rename wk-ren U₂ ]₀) [ U₁ ]₀
          ≡ env-C ((γ ∷ᵉ U₁) ∷ᵉ U₂) M
     step = sub-swap-C [] M₀ U₂ U₁
 
@@ -171,7 +171,7 @@ fund-recℕ {𝕊 = 𝕊} {B = B} {ε = ε} γ pγ V M N p pM pN =
     N₀ = env-Cˢ γ (([] ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) N
 
     go : (U : toCtx 𝕊 ⊢ᵛ⦂ nat) → CRed' B ε 𝕊 (recℕ U M₀ N₀ p)
-    go (var f x)     = ⊥-elim (nat-not-in-toCtx x)
+    go (var x f)     = ⊥-elim (nat-not-in-toCtx x)
     go zero          = CRed-expand RECℕ-ZERO pM
     go (subV U natₛ) = CRed-expand SUB-RECℕ (go U)
     go (succ W)      =
@@ -182,12 +182,12 @@ fund-recℕ {𝕊 = 𝕊} {B = B} {ε = ε} γ pγ V M N p pM pN =
              → (U : toCtx 𝕊₁ ⊢ᵛ⦂ B) → VRed B 𝕊₁ U
              → CRed' B ε 𝕊₁
                  ((C-rename (cong-∷-ren (unbox-ren q)) (recℕ-step W N₀))
-                    [ split-[] ↦ U ]c)
+                    [ U ]₀)
         cont q U pU =
           subst (CRed' _ _ _)
             (cong (λ z → (C-rename (cong-∷-ren (unbox-ren q))
                             (z [ split-∷ (split-⟨⟩ split-[]) ↦ W ]c))
-                           [ split-[] ↦ U ]c)
+                           [ U ]₀)
                   (C-rename-≡ (cong-ren-≐ʳ (([] ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B)
                                            barrier-reach-≐ʳ) N₀))
             (pN ((((γ ⟨ barrier-reach ⟩ᵉ) ∷ᵉ W) ⟨ q ⟩ᵉ) ∷ᵉ U) ((pγ , tt) , pU))
@@ -257,13 +257,13 @@ fund-recL {𝕊 = 𝕊} {A = A} {B = B} {ε = ε} γ pγ V M N p pV pM pN =
              → (U : toCtx 𝕊₁ ⊢ᵛ⦂ B) → VRed B 𝕊₁ U
              → CRed' B ε 𝕊₁
                  ((C-rename (cong-∷-ren (unbox-ren q)) (recL-step W L N₀))
-                    [ split-[] ↦ U ]c)
+                    [ U ]₀)
         cont q U pU =
           subst (CRed' _ _ _)
             (cong (λ z → (C-rename (cong-∷-ren (unbox-ren q))
                             ((z [ split-∷ (split-⟨⟩ (split-∷ split-[])) ↦ W ]c)
                                 [ split-∷ (split-⟨⟩ split-[]) ↦ L ]c))
-                           [ split-[] ↦ U ]c)
+                           [ U ]₀)
                   (C-rename-≡ (cong-ren-≐ʳ (([] ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B)
                                            barrier-reach-≐ʳ) N₀))
             (pN (((((γ ⟨ barrier-reach ⟩ᵉ) ∷ᵉ W) ∷ᵉ L) ⟨ q ⟩ᵉ) ∷ᵉ U)
@@ -390,7 +390,7 @@ fund-perform {𝕊 = 𝕊} {Γ = Γ} {op = op} γ pγ V M pV pM =
             → (W' : toCtx 𝕊₂ ⊢ᵛ⦂ Ar)
             → env-C ((γ ⟨ q ⟩ᵉ) ∷ᵉ W') M ≡ resume q M₀ W'
     resumeq q W' =
-      cong (λ z → (C-rename (cong-∷-ren (unbox-ren q)) z) [ split-[] ↦ W' ]c)
+      cong (λ z → (C-rename (cong-∷-ren (unbox-ren q)) z) [ W' ]₀)
         (trans (castᶜ-irr (sym (++ᶜ-assoc (toCtx 𝕊) ([] ⟨ ρ ⟩) ([] ∷ Ar)))
                           refl _)
                (cong (env-Cˢ γ ([] ⟨ ρ ⟩ ∷ Ar))
@@ -412,7 +412,7 @@ mutual
          -------------------------------
          → VRed A 𝕊 (env-V γ V)
 
-  fund-v γ pγ (var f x)   = env-var γ pγ x f
+  fund-v γ pγ (var x f)   = env-var γ pγ x f
   fund-v γ pγ (const B c) = tt
   fund-v γ pγ ⋆           = tt
   fund-v γ pγ true        = tt

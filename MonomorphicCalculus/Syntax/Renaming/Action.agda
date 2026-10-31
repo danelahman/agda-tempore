@@ -48,9 +48,9 @@ var-rename (r₂ ∘ʳ r₁) x with var-rename r₂ x
   ρ'' , (λ ¬et → ≾ᵣ-trans (ρ''≾ρ' ¬et) (ρ'≾ρ ¬et)) , z
 var-rename wk-ren x =
   _ , (λ _ → ≾ᵣ-refl) , Tl-∷ x
-var-rename (var-ren p y) Hd =
-  _ , p , y
-var-rename (var-ren p y) (Tl-∷ x) =
+var-rename (var-ren y ok) Hd =
+  _ , Et∨≾ᵘ→¬Et⇒≾ ok , y
+var-rename (var-ren y ok) (Tl-∷ x) =
   _ , (λ _ → ≾ᵣ-refl) , x
 var-rename ⟨⟩-η-ren (Tl-⟨⟩ x) =
   _ , (λ _ → ≃ᵣ⇒≿ᵣ (·ᵣ-identityʳ _)) , x
@@ -128,8 +128,8 @@ mutual
            ------------
            → Γ ⊢ᵛ⦂ A
 
-  V-rename r (var f x) with var-rename r x
-  ... | _ , ρ'≾ρ , y = var (λ p → ≾ᵣ-trans (ρ'≾ρ p) (f p)) y
+  V-rename r (var x ok) with var-rename r x
+  ... | _ , ρ'≾ρ , y = var y (Et∨≾ᵘ-≾ ρ'≾ρ ok)
   V-rename r (const B c) = const B c
   V-rename r ⋆           = ⋆
   V-rename r true        = true

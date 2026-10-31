@@ -99,7 +99,7 @@ resume : ∀ {𝕊 𝕊' ρ A ε B}
        → toCtx 𝕊 ⟨ ρ ⟩ ∷ B ⊢ᶜ⦂ A ! ε
        → toCtx 𝕊' ⊢ᵛ⦂ B
        → toCtx 𝕊' ⊢ᶜ⦂ A ! ε
-resume q M W = (C-rename (cong-∷-ren (unbox-ren q)) M) [ split-[] ↦ W ]c
+resume q M W = (C-rename (cong-∷-ren (unbox-ren q)) M) [ W ]₀
 
 -- Two general facts about `_≤ₛ_` that `MonomorphicCalculus.OperationalSemantics.State` does not
 -- carry: extensions compose, and their accumulated grades multiply.
@@ -384,8 +384,8 @@ spine (r ▸ rs) V = subV (spine rs V) (step-refines-type r)
 subCtx-run-sub : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
                → (rs : cf ⟶* cf') → ∀ {Γ C} → (N : Γ ∷ A ⊢ᶜ⦂ C) → (V : Γ ⊢ᵛ⦂ B)
                ---------------------------------------------------------------
-               → subCtx-run rs N [ split-[] ↦ V ]c
-               ≡ N [ split-[] ↦ spine rs V ]c
+               → subCtx-run rs N [ V ]₀
+               ≡ N [ spine rs V ]₀
 
 subCtx-run-sub done     N V = refl
 subCtx-run-sub (r ▸ rs) N V =
