@@ -123,7 +123,7 @@ mutual
 
     -- lambda abstraction
 
-    lam     : RawC Θ (suc n)
+    fun     : RawC Θ (suc n)
               ------------
             → RawV Θ n
 
@@ -167,10 +167,10 @@ mutual
 
     -- pattern-matching
 
-    match_`in_ : RawV Θ n
-               → RawC Θ (suc (suc n))
-               --------------------
-               → RawC Θ n
+    match_`with_ : RawV Θ n
+                 → RawC Θ (suc (suc n))
+                 --------------------
+                 → RawC Θ n
 
     -- empty type elimination
 
@@ -189,7 +189,7 @@ mutual
 
     -- natural-number elimination
 
-    caseℕ_`zero_`succ_
+    matchℕ_`zero_`succ_
             : RawV Θ n
             → RawC Θ n
             → RawC Θ (suc n)
@@ -198,7 +198,7 @@ mutual
 
     -- sum elimination
 
-    case+_`inl_`inr_
+    match+_`inl_`inr_
             : RawV Θ n
             → RawC Θ (suc n)
             → RawC Θ (suc n)
@@ -207,7 +207,7 @@ mutual
 
     -- list elimination
 
-    caseL_`nil_`cons_
+    matchL_`nil_`cons_
             : RawV Θ n
             → RawC Θ n
             → RawC Θ (suc (suc n))
@@ -293,7 +293,7 @@ mutual
   HandlerFreeᵛ (inr V)      = HandlerFreeᵛ V
   HandlerFreeᵛ (cons V W)   = HandlerFreeᵛ V × HandlerFreeᵛ W
   HandlerFreeᵛ (cmp ⋈ V W)  = HandlerFreeᵛ V × HandlerFreeᵛ W
-  HandlerFreeᵛ (lam M)      = HandlerFreeᶜ M
+  HandlerFreeᵛ (fun M)      = HandlerFreeᶜ M
   HandlerFreeᵛ (handler N H) = ⊥
   HandlerFreeᵛ (V ⦂ᵛ A)     = HandlerFreeᵛ V
   HandlerFreeᵛ _            = ⊤
@@ -302,14 +302,14 @@ mutual
   HandlerFreeᶜ (return V)               = HandlerFreeᵛ V
   HandlerFreeᶜ (M ⨟ N)                  = HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (V · W)                  = HandlerFreeᵛ V × HandlerFreeᵛ W
-  HandlerFreeᶜ (match V `in M)          = HandlerFreeᵛ V × HandlerFreeᶜ M
+  HandlerFreeᶜ (match V `with M)        = HandlerFreeᵛ V × HandlerFreeᶜ M
   HandlerFreeᶜ (absurd V)               = HandlerFreeᵛ V
   HandlerFreeᶜ (if V `then M `else N)   = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
-  HandlerFreeᶜ (caseℕ V `zero M `succ N) = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
-  HandlerFreeᶜ (case+ V `inl M `inr N)   = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
-  HandlerFreeᶜ (recℕ V M N)              = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
-  HandlerFreeᶜ (caseL V `nil M `cons N)  = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
-  HandlerFreeᶜ (recL V M N)              = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
+  HandlerFreeᶜ (matchℕ V `zero M `succ N) = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
+  HandlerFreeᶜ (match+ V `inl M `inr N)   = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
+  HandlerFreeᶜ (recℕ V M N)               = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
+  HandlerFreeᶜ (matchL V `nil M `cons N)  = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
+  HandlerFreeᶜ (recL V M N)               = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
   HandlerFreeᶜ (perform op V M)         = HandlerFreeᵛ V × HandlerFreeᶜ M
   HandlerFreeᶜ (delay τ M)              = HandlerFreeᶜ M
   HandlerFreeᶜ (handle M `with V)      = HandlerFreeᶜ M × HandlerFreeᵛ V

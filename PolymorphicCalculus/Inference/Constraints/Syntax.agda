@@ -6,7 +6,7 @@
 -- grade orderings, eternality atoms, var-rule disjunctions,    --
 -- existentials over the three sorts, a rigid (eigenvariable)   --
 -- effect-grade quantifier, and a conjunction indexed by        --
--- operation symbols. Computation-type subtyping `C ≾̂ᶜ C'` is   --
+-- operation symbols. Computation-type subtyping `C <:̂ᶜ C'` is  --
 -- the conjunction of its value and effect atoms; a type        --
 -- equation `A ≐ᵥ B` is mutual subtyping.                       --
 --                                                              --
@@ -40,33 +40,33 @@ open import PolymorphicCalculus.Hypotheses.Quantified S using (_+eⁿ_)
 -- Constraints
 
 data Constraint (Θ : Scope) : Set where
-  ⊤̂     : Constraint Θ                                -- trivially satisfied
-  ⊥̂     : Constraint Θ                                -- unsatisfiable
-  _∧̂_   : Constraint Θ → Constraint Θ → Constraint Θ  -- conjunction
-  _≾̂ᵥᶜ_ : OVType Θ → OVType Θ → Constraint Θ          -- value-type subtyping
-  _≾̂ᵣᶜ_ : RExp Θ → RExp Θ → Constraint Θ              -- resource-grade ordering
-  _≾̂ₑᶜ_ : EExp Θ → EExp Θ → Constraint Θ              -- effect-grade ordering
-  Etᶜ   : OVType Θ → Constraint Θ                     -- eternality of a type
-  Et∨≾ᵘ : OVType Θ → RExp Θ → Constraint Θ            -- the `var`-rule disjunction
-  ∃ᵗ_   : Constraint (Θ +ty) → Constraint Θ           -- fresh type variable
-  ∃ʳ_   : Constraint (Θ +r)  → Constraint Θ           -- fresh resource-grade variable
-  ∃ᵉ_   : Constraint (Θ +e)  → Constraint Θ           -- fresh effect-grade variable
-  ∀ᵉ_   : Constraint (Θ +e)  → Constraint Θ           -- rigid effect-grade variable
-  ⋀ᵒᵖ   : (Op → Constraint Θ) → Constraint Θ          -- conjunction over operations
+  trueᶜ  : Constraint Θ                                -- trivially satisfied
+  falseᶜ : Constraint Θ                                -- unsatisfiable
+  _∧̂_    : Constraint Θ → Constraint Θ → Constraint Θ  -- conjunction
+  _<:̂ᵥᶜ_ : OVType Θ → OVType Θ → Constraint Θ          -- value-type subtyping
+  _≾̂ᵣᶜ_  : RExp Θ → RExp Θ → Constraint Θ              -- resource-grade ordering
+  _≾̂ₑᶜ_  : EExp Θ → EExp Θ → Constraint Θ              -- effect-grade ordering
+  Etᶜ    : OVType Θ → Constraint Θ                     -- eternality of a type
+  Et∨≾ᵘ  : OVType Θ → RExp Θ → Constraint Θ            -- the `var`-rule disjunction
+  ∃ᵗ_    : Constraint (Θ +ty) → Constraint Θ           -- fresh type variable
+  ∃ʳ_    : Constraint (Θ +r)  → Constraint Θ           -- fresh resource-grade variable
+  ∃ᵉ_    : Constraint (Θ +e)  → Constraint Θ           -- fresh effect-grade variable
+  ∀ᵉ_    : Constraint (Θ +e)  → Constraint Θ           -- rigid effect-grade variable
+  ⋀ᵒᵖ    : (Op → Constraint Θ) → Constraint Θ          -- conjunction over operations
 
 -- A type equation
 
 _≐ᵥ_ : ∀ {Θ} → OVType Θ → OVType Θ → Constraint Θ
-A ≐ᵥ B = (A ≾̂ᵥᶜ B) ∧̂ (B ≾̂ᵥᶜ A)
+A ≐ᵥ B = (A <:̂ᵥᶜ B) ∧̂ (B <:̂ᵥᶜ A)
 
 infixr 6 _∧̂_
-infix  4 _≐ᵥ_ _≾̂ᵥᶜ_ _≾̂ᵣᶜ_ _≾̂ₑᶜ_
+infix  4 _≐ᵥ_ _<:̂ᵥᶜ_ _≾̂ᵣᶜ_ _≾̂ₑᶜ_
 infix  2 ∃ᵗ_ ∃ʳ_ ∃ᵉ_ ∀ᵉ_
 
 -- A conjunction over a list
 
 ⋀ᴸ : ∀ {Θ} {A : Set} → List A → (A → Constraint Θ) → Constraint Θ
-⋀ᴸ []       f = ⊤̂
+⋀ᴸ []       f = trueᶜ
 ⋀ᴸ (x ∷ xs) f = f x ∧̂ ⋀ᴸ xs f
 
 -- Existential quantification over fresh variables of one sort, innermost first,
@@ -102,10 +102,10 @@ infix  2 ∃ᵗ_ ∃ʳ_ ∃ᵉ_ ∀ᵉ_
 infixl 50 _[_]ᶜⁿ
 
 _[_]ᶜⁿ : ∀ {Θ Θ'} → Constraint Θ → Subst Θ Θ' → Constraint Θ'
-⊤̂           [ σ ]ᶜⁿ = ⊤̂
-⊥̂           [ σ ]ᶜⁿ = ⊥̂
+trueᶜ       [ σ ]ᶜⁿ = trueᶜ
+falseᶜ      [ σ ]ᶜⁿ = falseᶜ
 (C ∧̂ D)     [ σ ]ᶜⁿ = C [ σ ]ᶜⁿ ∧̂ D [ σ ]ᶜⁿ
-(A ≾̂ᵥᶜ B)   [ σ ]ᶜⁿ = A [ σ ]ᵛ ≾̂ᵥᶜ B [ σ ]ᵛ
+(A <:̂ᵥᶜ B)  [ σ ]ᶜⁿ = A [ σ ]ᵛ <:̂ᵥᶜ B [ σ ]ᵛ
 (ρ ≾̂ᵣᶜ ρ')  [ σ ]ᶜⁿ = ρ [ σ ]ʳ ≾̂ᵣᶜ ρ' [ σ ]ʳ
 (ε ≾̂ₑᶜ ε')  [ σ ]ᶜⁿ = ε [ σ ]ᵉ ≾̂ₑᶜ ε' [ σ ]ᵉ
 Etᶜ A       [ σ ]ᶜⁿ = Etᶜ (A [ σ ]ᵛ)

@@ -221,7 +221,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
     Body = handle M' `with H₁' `in N₁'
 
     V₀ : Boxed B op (ε₃ ·ₑ ε₂) St₁
-    V₀ = V-rename (eq-ren (sym ++ᶜ-identityˡ)) (lam Body)
+    V₀ = V-rename (eq-ren (sym ++ᶜ-identityˡ)) (fun Body)
 
     fired : Fired St op (ε₃ ·ₑ ε₂) H q₀ V₀ W
           ≡ (C-rename (cong-∷-ren (cong-∷-ren barrier-ren))

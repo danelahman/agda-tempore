@@ -77,7 +77,7 @@ claim-after-D ρ τ τ' p =
     elapsed : ∅ᴴ ⊩ 𝟏̂ᵣ ·̂ᵣ ⌜ τ ⌝ʳ ·̂ᵣ ⌜ τ' ⌝ʳ ≾̂ᵣ ⌜ ρ ⌝ʳ
     elapsed = transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-const-· ≡̂ᵣ-refl) ≡̂ᵣ-const-·)) (atomᵣ p)
 
-    ok₀ : VarOK ∅ᴴ unit 𝟏̂ᵣ
+    ok₀ : ∅ᴴ ⊩ unit Et∨≾ᵘ 𝟏̂ᵣ
     ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
 claim-after-typable : ∀ ρ τ τ' → True ((𝟏ᵣ ·ᵣ ιᵣ τ ·ᵣ ιᵣ τ') ≾ᵣ? ιᵣ ρ)
@@ -97,7 +97,7 @@ expected-claim-after τ = ∀[ 0 , 0 , 0 ] ⊤ ⟹ unit ! ⌜ τ ⌝ᵉ
 -- The principal scheme takes a box at the grade of both delays.
 
 inferred-grade : 𝔻 → 𝔻 → RawC ∅ˢ 0
-inferred-grade τ τ' = return (lam (delay τ (delay τ' (unbox (var fzero) (return v₀)))))
+inferred-grade τ τ' = return (fun (delay τ (delay τ' (unbox (var fzero) (return v₀)))))
 
 -- the scheme at the total duration `τ`
 

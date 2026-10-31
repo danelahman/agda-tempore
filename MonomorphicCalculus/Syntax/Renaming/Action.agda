@@ -141,7 +141,7 @@ mutual
   V-rename r (inr V)     = inr (V-rename r V)
   V-rename r nil         = nil
   V-rename r (cons V W)  = cons (V-rename r V) (V-rename r W)
-  V-rename r (lam M)     = lam (C-rename (cong-ren r) M)
+  V-rename r (fun M)     = fun (C-rename (cong-ren r) M)
   V-rename r (handler N H) =
     handler (C-rename (cong-ren r) N)
             (λ op ε'' →
@@ -154,23 +154,23 @@ mutual
            ------------
            → Γ ⊢C⦂ C
 
-  C-rename r (return V)       = return (V-rename r V)
-  C-rename r (M ⨟ N)          = C-rename r M ⨟ C-rename (cong-ren r) N
-  C-rename r (V · W)          = V-rename r V · V-rename r W
-  C-rename r (match V `in M)  = match V-rename r V `in C-rename (cong-ren r) M
-  C-rename r (absurd V)       = absurd (V-rename r V)
-  C-rename r (cmp ⋈ V W et)   = cmp ⋈ (V-rename r V) (V-rename r W) et
+  C-rename r (return V)         = return (V-rename r V)
+  C-rename r (M ⨟ N)            = C-rename r M ⨟ C-rename (cong-ren r) N
+  C-rename r (V · W)            = V-rename r V · V-rename r W
+  C-rename r (match V `with M)  = match V-rename r V `with C-rename (cong-ren r) M
+  C-rename r (absurd V)         = absurd (V-rename r V)
+  C-rename r (cmp ⋈ V W et)     = cmp ⋈ (V-rename r V) (V-rename r W) et
   C-rename r (if V `then M `else N) =
     if V-rename r V `then C-rename r M `else C-rename r N
-  C-rename r (caseℕ V `zero M `succ N) =
-    caseℕ V-rename r V `zero C-rename r M `succ C-rename (cong-ren r) N
+  C-rename r (matchℕ V `zero M `succ N) =
+    matchℕ V-rename r V `zero C-rename r M `succ C-rename (cong-ren r) N
   C-rename r (recℕ V M N p) =
     recℕ (V-rename r V) (C-rename r M)
          (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-⟨⟩-ren r)))) N) p
-  C-rename r (case+ V `inl M `inr N) =
-    case+ V-rename r V `inl C-rename (cong-ren r) M `inr C-rename (cong-ren r) N
-  C-rename r (caseL V `nil M `cons N) =
-    caseL V-rename r V `nil C-rename r M `cons C-rename (cong-ren r) N
+  C-rename r (match+ V `inl M `inr N) =
+    match+ V-rename r V `inl C-rename (cong-ren r) M `inr C-rename (cong-ren r) N
+  C-rename r (matchL V `nil M `cons N) =
+    matchL V-rename r V `nil C-rename r M `cons C-rename (cong-ren r) N
   C-rename r (recL V M N p) =
     recL (V-rename r V) (C-rename r M)
          (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r))))) N) p

@@ -109,11 +109,11 @@ mutual
               ---------------------------------
               → Γ ⊢V⦂ cons V W == cons V' W'
 
-    lam-cong : ∀ {A B ε}
+    fun-cong : ∀ {A B ε}
              → {M N : Γ ∷ A ⊢C⦂ B ! ε}
              → Γ ∷ A ⊢C⦂ M == N
              -------------------------
-             → Γ ⊢V⦂ lam M == lam N
+             → Γ ⊢V⦂ fun M == fun N
 
     handler-cong : ∀ {A B ε ε'}
                  → {N N' : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'}
@@ -139,7 +139,7 @@ mutual
             → (V : Γ ⊢V⦂ A ⇒ C)
             -----------------------------------------------
             → Γ ⊢V⦂ V
-                == lam (V-rename wk-ren V · var (λ _ → ≾ᵣ-refl) Hd)
+                == fun (V-rename wk-ren V · var (λ _ → ≾ᵣ-refl) Hd)
 
     -- equations for subsumption
     --
@@ -168,7 +168,7 @@ mutual
     -- Subsumption is natural in the value formers: the witness splits the way
     -- its type does. At `⦉_,_⦊` that is functoriality of `_|×|_`, at `inl` and
     -- `inr` functoriality of `_|+|_`, at `nil` and `cons` functoriality of
-    -- `list`, at `lam` functoriality of `_⇒_`, contravariant in the domain,
+    -- `list`, at `fun` functoriality of `_⇒_`, contravariant in the domain,
     -- so the binder is subsumed rather than the body coerced there. The atomic formers and `var` have no rule of their
     -- own.
 
@@ -205,13 +205,13 @@ mutual
               → Γ ⊢V⦂ subV (cons V W) (listₛ p)
                    == cons (subV V p) (subV W (listₛ p))
 
-    subV-lam : ∀ {A A' C C'}
+    subV-fun : ∀ {A A' C C'}
              → (p : A' <:ᵛ A)
              → (w : C <:ᶜ C')
              → (M : Γ ∷ A ⊢C⦂ C)
              ------------------------------------------------------
-             → Γ ⊢V⦂ subV (lam M) (p ⇒ₛ w)
-                  == lam (subC (subCtx p M) w)
+             → Γ ⊢V⦂ subV (fun M) (p ⇒ₛ w)
+                  == fun (subC (subCtx p M) w)
 
   infix 18 _⊢V⦂_==_
 
@@ -281,7 +281,7 @@ mutual
                → Γ ⊢V⦂ V == W
                → Γ ∷ A ∷ B ⊢C⦂ M == N
                --------------------------------------
-               → Γ ⊢C⦂ match V `in M == match W `in N
+               → Γ ⊢C⦂ match V `with M == match W `with N
 
     absurd-cong : ∀ {C}
                 → {V W : Γ ⊢V⦂ empty}
@@ -306,15 +306,15 @@ mutual
             ----------------------------------------------------------
             → Γ ⊢C⦂ if V `then M `else N == if W `then M' `else N'
 
-    caseℕ-cong : ∀ {C}
-               → {V W : Γ ⊢V⦂ nat}
-               → {M M' : Γ ⊢C⦂ C}
-               → {N N' : Γ ∷ nat ⊢C⦂ C}
-               → Γ ⊢V⦂ V == W
-               → Γ ⊢C⦂ M == M'
-               → Γ ∷ nat ⊢C⦂ N == N'
-               --------------------------------------------------------------
-               → Γ ⊢C⦂ caseℕ V `zero M `succ N == caseℕ W `zero M' `succ N'
+    matchℕ-cong : ∀ {C}
+                → {V W : Γ ⊢V⦂ nat}
+                → {M M' : Γ ⊢C⦂ C}
+                → {N N' : Γ ∷ nat ⊢C⦂ C}
+                → Γ ⊢V⦂ V == W
+                → Γ ⊢C⦂ M == M'
+                → Γ ∷ nat ⊢C⦂ N == N'
+                --------------------------------------------------------------
+                → Γ ⊢C⦂ matchℕ V `zero M `succ N == matchℕ W `zero M' `succ N'
 
     recℕ-cong : ∀ {B ε}
               → {V W : Γ ⊢V⦂ nat}
@@ -327,15 +327,15 @@ mutual
               -----------------------------------------------
               → Γ ⊢C⦂ recℕ V M N p == recℕ W M' N' p
 
-    caseL-cong : ∀ {A C}
-               → {V W : Γ ⊢V⦂ list A}
-               → {M M' : Γ ⊢C⦂ C}
-               → {N N' : Γ ∷ A ∷ list A ⊢C⦂ C}
-               → Γ ⊢V⦂ V == W
-               → Γ ⊢C⦂ M == M'
-               → Γ ∷ A ∷ list A ⊢C⦂ N == N'
-               ------------------------------------------------------------
-               → Γ ⊢C⦂ caseL V `nil M `cons N == caseL W `nil M' `cons N'
+    matchL-cong : ∀ {A C}
+                → {V W : Γ ⊢V⦂ list A}
+                → {M M' : Γ ⊢C⦂ C}
+                → {N N' : Γ ∷ A ∷ list A ⊢C⦂ C}
+                → Γ ⊢V⦂ V == W
+                → Γ ⊢C⦂ M == M'
+                → Γ ∷ A ∷ list A ⊢C⦂ N == N'
+                ------------------------------------------------------------
+                → Γ ⊢C⦂ matchL V `nil M `cons N == matchL W `nil M' `cons N'
 
     recL-cong : ∀ {A B ε}
               → {V W : Γ ⊢V⦂ list A}
@@ -348,15 +348,15 @@ mutual
               ---------------------------------------------------------
               → Γ ⊢C⦂ recL V M N p == recL W M' N' p
 
-    case+-cong : ∀ {A B C}
-               → {V W : Γ ⊢V⦂ A |+| B}
-               → {M M' : Γ ∷ A ⊢C⦂ C}
-               → {N N' : Γ ∷ B ⊢C⦂ C}
-               → Γ ⊢V⦂ V == W
-               → Γ ∷ A ⊢C⦂ M == M'
-               → Γ ∷ B ⊢C⦂ N == N'
-               ------------------------------------------------------------
-               → Γ ⊢C⦂ case+ V `inl M `inr N == case+ W `inl M' `inr N'
+    match+-cong : ∀ {A B C}
+                → {V W : Γ ⊢V⦂ A |+| B}
+                → {M M' : Γ ∷ A ⊢C⦂ C}
+                → {N N' : Γ ∷ B ⊢C⦂ C}
+                → Γ ⊢V⦂ V == W
+                → Γ ∷ A ⊢C⦂ M == M'
+                → Γ ∷ B ⊢C⦂ N == N'
+                ------------------------------------------------------------
+                → Γ ⊢C⦂ match+ V `inl M `inr N == match+ W `inl M' `inr N'
 
     perform-cong : ∀ {A ε op}
                  → {V W : Γ ⊢V⦂ ⌜ param op ⌝ᵍ}
@@ -500,7 +500,7 @@ mutual
              → (M : Γ ∷ A ⊢C⦂ C)
              → (W : Γ ⊢V⦂ A)
              ----------------------
-             → Γ ⊢C⦂ lam M · W
+             → Γ ⊢C⦂ fun M · W
                  == M [ split-[] ↦ W ]c
 
     -- beta-equation for pattern-matching
@@ -510,7 +510,7 @@ mutual
                → (W : Γ ⊢V⦂ B)
                → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                ------------------------------------
-               → Γ ⊢C⦂ match ⦉ V , W ⦊ `in M
+               → Γ ⊢C⦂ match ⦉ V , W ⦊ `with M
                    == M [ split-[] ↦ V-rename wk-ren W ]c
                         [ split-[] ↦ V ]c
 
@@ -520,7 +520,7 @@ mutual
               → (V : Γ ⊢V⦂ A |×| B)
               → (M : Γ ∷ A |×| B ⊢C⦂ C)
               -------------------------------------------------------------
-              → Γ ⊢C⦂ match V `in
+              → Γ ⊢C⦂ match V `with
                        ((C-rename (wk-ren ∘ʳ exch-ren ∘ʳ wk-ren ∘ʳ exch-ren)
                          M) [ split-[] ↦ ⦉ var (λ _ → ≾ᵣ-refl) (Tl-∷ Hd) , var (λ _ → ≾ᵣ-refl) Hd ⦊ ]c)
                   == M [ split-[] ↦ V ]c
@@ -571,32 +571,32 @@ mutual
 
     -- beta-equations for natural-number elimination
 
-    caseℕ-beta-zero : ∀ {C}
-                    → (M : Γ ⊢C⦂ C)
-                    → (N : Γ ∷ nat ⊢C⦂ C)
-                    -------------------------------------------
-                    → Γ ⊢C⦂ caseℕ zero `zero M `succ N == M
+    matchℕ-beta-zero : ∀ {C}
+                     → (M : Γ ⊢C⦂ C)
+                     → (N : Γ ∷ nat ⊢C⦂ C)
+                     -------------------------------------------
+                     → Γ ⊢C⦂ matchℕ zero `zero M `succ N == M
 
-    caseℕ-beta-succ : ∀ {C}
-                    → (V : Γ ⊢V⦂ nat)
-                    → (M : Γ ⊢C⦂ C)
-                    → (N : Γ ∷ nat ⊢C⦂ C)
-                    -------------------------------------------------------------
-                    → Γ ⊢C⦂ caseℕ succ V `zero M `succ N == N [ split-[] ↦ V ]c
+    matchℕ-beta-succ : ∀ {C}
+                     → (V : Γ ⊢V⦂ nat)
+                     → (M : Γ ⊢C⦂ C)
+                     → (N : Γ ∷ nat ⊢C⦂ C)
+                     -------------------------------------------------------------
+                     → Γ ⊢C⦂ matchℕ succ V `zero M `succ N == N [ split-[] ↦ V ]c
 
     -- eta-equation for natural-number elimination
     --
     -- Commuting conversions are instances of this rule.
 
-    caseℕ-eta : ∀ {C}
-              → (V : Γ ⊢V⦂ nat)
-              → (M : Γ ∷ nat ⊢C⦂ C)
-              ------------------------------------------------------------------
-              → Γ ⊢C⦂ caseℕ V
+    matchℕ-eta : ∀ {C}
+               → (V : Γ ⊢V⦂ nat)
+               → (M : Γ ∷ nat ⊢C⦂ C)
+               ------------------------------------------------------------------
+               → Γ ⊢C⦂ matchℕ V
                         `zero (M [ split-[] ↦ zero ]c)
                         `succ (C-rename (cong-∷-ren wk-ren) M
                                 [ split-[] ↦ succ (var (λ _ → ≾ᵣ-refl) Hd) ]c)
-                  == M [ split-[] ↦ V ]c
+                   == M [ split-[] ↦ V ]c
 
     -- beta-equations for primitive recursion
     --
@@ -621,67 +621,67 @@ mutual
 
     -- beta-equations for sum elimination
 
-    case+-beta-inl : ∀ {A B C}
-                   → (V : Γ ⊢V⦂ A)
-                   → (M : Γ ∷ A ⊢C⦂ C)
-                   → (N : Γ ∷ B ⊢C⦂ C)
-                   ----------------------------------------------------------
-                   → Γ ⊢C⦂ case+ inl V `inl M `inr N == M [ split-[] ↦ V ]c
+    match+-beta-inl : ∀ {A B C}
+                    → (V : Γ ⊢V⦂ A)
+                    → (M : Γ ∷ A ⊢C⦂ C)
+                    → (N : Γ ∷ B ⊢C⦂ C)
+                    ----------------------------------------------------------
+                    → Γ ⊢C⦂ match+ inl V `inl M `inr N == M [ split-[] ↦ V ]c
 
-    case+-beta-inr : ∀ {A B C}
-                   → (V : Γ ⊢V⦂ B)
-                   → (M : Γ ∷ A ⊢C⦂ C)
-                   → (N : Γ ∷ B ⊢C⦂ C)
-                   ----------------------------------------------------------
-                   → Γ ⊢C⦂ case+ inr V `inl M `inr N == N [ split-[] ↦ V ]c
+    match+-beta-inr : ∀ {A B C}
+                    → (V : Γ ⊢V⦂ B)
+                    → (M : Γ ∷ A ⊢C⦂ C)
+                    → (N : Γ ∷ B ⊢C⦂ C)
+                    ----------------------------------------------------------
+                    → Γ ⊢C⦂ match+ inr V `inl M `inr N == N [ split-[] ↦ V ]c
 
     -- eta-equation for sum elimination
     --
     -- Commuting conversions are instances of this rule.
 
-    case+-eta : ∀ {A B C}
-              → (V : Γ ⊢V⦂ A |+| B)
-              → (M : Γ ∷ A |+| B ⊢C⦂ C)
-              ------------------------------------------------------------------
-              → Γ ⊢C⦂ case+ V
+    match+-eta : ∀ {A B C}
+               → (V : Γ ⊢V⦂ A |+| B)
+               → (M : Γ ∷ A |+| B ⊢C⦂ C)
+               ------------------------------------------------------------------
+               → Γ ⊢C⦂ match+ V
                         `inl (C-rename (cong-∷-ren wk-ren) M
                                 [ split-[] ↦ inl (var (λ _ → ≾ᵣ-refl) Hd) ]c)
                         `inr (C-rename (cong-∷-ren wk-ren) M
                                 [ split-[] ↦ inr (var (λ _ → ≾ᵣ-refl) Hd) ]c)
-                  == M [ split-[] ↦ V ]c
+                   == M [ split-[] ↦ V ]c
 
     -- beta-equations for list elimination
 
-    caseL-beta-nil : ∀ {A C}
-                   → (M : Γ ⊢C⦂ C)
-                   → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
-                   -----------------------------------------
-                   → Γ ⊢C⦂ caseL nil `nil M `cons N == M
-
-    caseL-beta-cons : ∀ {A C}
-                    → (V : Γ ⊢V⦂ A)
-                    → (W : Γ ⊢V⦂ list A)
+    matchL-beta-nil : ∀ {A C}
                     → (M : Γ ⊢C⦂ C)
                     → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
-                    ----------------------------------------------
-                    → Γ ⊢C⦂ caseL cons V W `nil M `cons N
-                        == N [ split-[] ↦ V-rename wk-ren W ]c
-                             [ split-[] ↦ V ]c
+                    -----------------------------------------
+                    → Γ ⊢C⦂ matchL nil `nil M `cons N == M
+
+    matchL-beta-cons : ∀ {A C}
+                     → (V : Γ ⊢V⦂ A)
+                     → (W : Γ ⊢V⦂ list A)
+                     → (M : Γ ⊢C⦂ C)
+                     → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
+                     ----------------------------------------------
+                     → Γ ⊢C⦂ matchL cons V W `nil M `cons N
+                         == N [ split-[] ↦ V-rename wk-ren W ]c
+                              [ split-[] ↦ V ]c
 
     -- eta-equation for list elimination
     --
     -- Commuting conversions are instances of this rule.
 
-    caseL-eta : ∀ {A C}
-              → (V : Γ ⊢V⦂ list A)
-              → (M : Γ ∷ list A ⊢C⦂ C)
-              -------------------------------------------------------------
-              → Γ ⊢C⦂ caseL V
+    matchL-eta : ∀ {A C}
+               → (V : Γ ⊢V⦂ list A)
+               → (M : Γ ∷ list A ⊢C⦂ C)
+               -------------------------------------------------------------
+               → Γ ⊢C⦂ matchL V
                         `nil (M [ split-[] ↦ nil ]c)
                         `cons ((C-rename (wk-ren ∘ʳ exch-ren ∘ʳ wk-ren ∘ʳ exch-ren) M)
                                  [ split-[] ↦ cons (var (λ _ → ≾ᵣ-refl) (Tl-∷ Hd))
                                                    (var (λ _ → ≾ᵣ-refl) Hd) ]c)
-                  == M [ split-[] ↦ V ]c
+                   == M [ split-[] ↦ V ]c
 
     -- beta-equations for primitive recursion on lists; no eta-equation, as
     -- for `recℕ`
@@ -737,7 +737,7 @@ mutual
                    ----------------------------------------------------------------
                    → Γ ⊢C⦂ handle perform op V M `with handler N H
                        == ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
-                            (box _ (lam
+                            (box _ (fun
                                    (handle M
                                    `with handler
                                            (C-rename

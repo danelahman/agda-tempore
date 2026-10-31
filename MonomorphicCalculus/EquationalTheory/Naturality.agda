@@ -120,7 +120,7 @@ subV-app : ∀ {Γ A A' C C'}
 subV-app p w V W =
   C-trans
     (app-cong (V-trans (subV-cong (fun-eta V))
-                       (subV-lam p w (V-rename wk-ren V · hd)))
+                       (subV-fun p w (V-rename wk-ren V · hd)))
               V-refl)
     (==-castᶜ refl (cong (λ X → subC X w) body-sub)
               (fun-beta (subC (subCtx p (V-rename wk-ren V · hd)) w) W))
@@ -277,8 +277,8 @@ subC-match-pair : ∀ {Γ A B C C'}
                 → (W : Γ ⊢V⦂ B)
                 → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                 ----------------------------------------------------
-                → Γ ⊢C⦂ subC (match ⦉ V , W ⦊ `in M) w
-                     == match ⦉ V , W ⦊ `in subC M w
+                → Γ ⊢C⦂ subC (match ⦉ V , W ⦊ `with M) w
+                     == match ⦉ V , W ⦊ `with subC M w
 subC-match-pair w V W M =
   C-trans (subC-cong (match-beta V W M))
           (C-sym (match-beta V W (subC M w)))
@@ -288,7 +288,7 @@ subC-match : ∀ {Γ A B C C'}
            → (V : Γ ⊢V⦂ A |×| B)
            → (M : Γ ∷ A ∷ B ⊢C⦂ C)
            ----------------------------------------------------
-           → Γ ⊢C⦂ subC (match V `in M) w == match V `in subC M w
+           → Γ ⊢C⦂ subC (match V `with M) w == match V `with subC M w
 subC-match {Γ} {A} {B} {C} {C'} w V M =
   C-trans
     (C-sym (==-castᶜ refl castL (match-eta V bodyL)))
@@ -298,188 +298,188 @@ subC-match {Γ} {A} {B} {C} {C'} w V M =
     r = cong-ren {Γ'' = [] ∷ A ∷ B} (wk-ren {Δ = Γ} {A = A |×| B})
 
     bodyL : Γ ∷ (A |×| B) ⊢C⦂ C'
-    bodyL = subC (match hd `in C-rename r M) w
+    bodyL = subC (match hd `with C-rename r M) w
 
     bodyR : Γ ∷ (A |×| B) ⊢C⦂ C'
-    bodyR = match hd `in subC (C-rename r M) w
+    bodyR = match hd `with subC (C-rename r M) w
 
-    castL : bodyL [ split-[] ↦ V ]c ≡ subC (match V `in M) w
-    castL = cong (λ X → subC (match V `in X) w) (sub-wk-≡ᶜ ([] ∷ A ∷ B) V M)
+    castL : bodyL [ split-[] ↦ V ]c ≡ subC (match V `with M) w
+    castL = cong (λ X → subC (match V `with X) w) (sub-wk-≡ᶜ ([] ∷ A ∷ B) V M)
 
-    castR : bodyR [ split-[] ↦ V ]c ≡ match V `in subC M w
-    castR = cong (λ X → match V `in subC X w) (sub-wk-≡ᶜ ([] ∷ A ∷ B) V M)
+    castR : bodyR [ split-[] ↦ V ]c ≡ match V `with subC M w
+    castR = cong (λ X → match V `with subC X w) (sub-wk-≡ᶜ ([] ∷ A ∷ B) V M)
 
 
 -- Sum elimination, as pattern matching: at an injected scrutinee the beta
 -- rules reduce both sides to the same substitution, and the eta rule lifts
 -- that to an arbitrary scrutinee.
 
-subC-case+-inl : ∀ {Γ A B C C'}
-               → (w : C <:ᶜ C')
-               → (V : Γ ⊢V⦂ A)
-               → (M : Γ ∷ A ⊢C⦂ C)
-               → (N : Γ ∷ B ⊢C⦂ C)
-               ------------------------------------------------------------
-               → Γ ⊢C⦂ subC (case+ inl V `inl M `inr N) w
-                    == case+ inl V `inl subC M w `inr subC N w
-subC-case+-inl w V M N =
-  C-trans (subC-cong (case+-beta-inl V M N))
-          (C-sym (case+-beta-inl V (subC M w) (subC N w)))
+subC-match+-inl : ∀ {Γ A B C C'}
+                → (w : C <:ᶜ C')
+                → (V : Γ ⊢V⦂ A)
+                → (M : Γ ∷ A ⊢C⦂ C)
+                → (N : Γ ∷ B ⊢C⦂ C)
+                ------------------------------------------------------------
+                → Γ ⊢C⦂ subC (match+ inl V `inl M `inr N) w
+                    == match+ inl V `inl subC M w `inr subC N w
+subC-match+-inl w V M N =
+  C-trans (subC-cong (match+-beta-inl V M N))
+          (C-sym (match+-beta-inl V (subC M w) (subC N w)))
 
-subC-case+-inr : ∀ {Γ A B C C'}
-               → (w : C <:ᶜ C')
-               → (V : Γ ⊢V⦂ B)
-               → (M : Γ ∷ A ⊢C⦂ C)
-               → (N : Γ ∷ B ⊢C⦂ C)
-               ------------------------------------------------------------
-               → Γ ⊢C⦂ subC (case+ inr V `inl M `inr N) w
-                    == case+ inr V `inl subC M w `inr subC N w
-subC-case+-inr w V M N =
-  C-trans (subC-cong (case+-beta-inr V M N))
-          (C-sym (case+-beta-inr V (subC M w) (subC N w)))
+subC-match+-inr : ∀ {Γ A B C C'}
+                → (w : C <:ᶜ C')
+                → (V : Γ ⊢V⦂ B)
+                → (M : Γ ∷ A ⊢C⦂ C)
+                → (N : Γ ∷ B ⊢C⦂ C)
+                ------------------------------------------------------------
+                → Γ ⊢C⦂ subC (match+ inr V `inl M `inr N) w
+                    == match+ inr V `inl subC M w `inr subC N w
+subC-match+-inr w V M N =
+  C-trans (subC-cong (match+-beta-inr V M N))
+          (C-sym (match+-beta-inr V (subC M w) (subC N w)))
 
-subC-case+ : ∀ {Γ A B C C'}
-           → (w : C <:ᶜ C')
-           → (V : Γ ⊢V⦂ A |+| B)
-           → (M : Γ ∷ A ⊢C⦂ C)
-           → (N : Γ ∷ B ⊢C⦂ C)
-           ------------------------------------------------------------
-           → Γ ⊢C⦂ subC (case+ V `inl M `inr N) w
-                == case+ V `inl subC M w `inr subC N w
-subC-case+ {Γ} {A} {B} {C} {C'} w V M N =
+subC-match+ : ∀ {Γ A B C C'}
+            → (w : C <:ᶜ C')
+            → (V : Γ ⊢V⦂ A |+| B)
+            → (M : Γ ∷ A ⊢C⦂ C)
+            → (N : Γ ∷ B ⊢C⦂ C)
+            ------------------------------------------------------------
+            → Γ ⊢C⦂ subC (match+ V `inl M `inr N) w
+                == match+ V `inl subC M w `inr subC N w
+subC-match+ {Γ} {A} {B} {C} {C'} w V M N =
   C-trans
-    (C-sym (==-castᶜ refl castL (case+-eta V bodyL)))
-    (C-trans (case+-cong V-refl (subC-case+-inl w _ _ _) (subC-case+-inr w _ _ _))
-             (==-castᶜ refl castR (case+-eta V bodyR)))
+    (C-sym (==-castᶜ refl castL (match+-eta V bodyL)))
+    (C-trans (match+-cong V-refl (subC-match+-inl w _ _ _) (subC-match+-inr w _ _ _))
+             (==-castᶜ refl castR (match+-eta V bodyR)))
   where
     rA = cong-ren {Γ'' = [] ∷ A} (wk-ren {Δ = Γ} {A = A |+| B})
     rB = cong-ren {Γ'' = [] ∷ B} (wk-ren {Δ = Γ} {A = A |+| B})
 
     bodyL : Γ ∷ (A |+| B) ⊢C⦂ C'
-    bodyL = subC (case+ hd `inl C-rename rA M `inr C-rename rB N) w
+    bodyL = subC (match+ hd `inl C-rename rA M `inr C-rename rB N) w
 
     bodyR : Γ ∷ (A |+| B) ⊢C⦂ C'
-    bodyR = case+ hd `inl subC (C-rename rA M) w `inr subC (C-rename rB N) w
+    bodyR = match+ hd `inl subC (C-rename rA M) w `inr subC (C-rename rB N) w
 
-    castL : bodyL [ split-[] ↦ V ]c ≡ subC (case+ V `inl M `inr N) w
-    castL = cong₂ (λ X Y → subC (case+ V `inl X `inr Y) w)
+    castL : bodyL [ split-[] ↦ V ]c ≡ subC (match+ V `inl M `inr N) w
+    castL = cong₂ (λ X Y → subC (match+ V `inl X `inr Y) w)
                   (sub-wk-≡ᶜ ([] ∷ A) V M) (sub-wk-≡ᶜ ([] ∷ B) V N)
 
-    castR : bodyR [ split-[] ↦ V ]c ≡ case+ V `inl subC M w `inr subC N w
-    castR = cong₂ (λ X Y → case+ V `inl subC X w `inr subC Y w)
+    castR : bodyR [ split-[] ↦ V ]c ≡ match+ V `inl subC M w `inr subC N w
+    castR = cong₂ (λ X Y → match+ V `inl subC X w `inr subC Y w)
                   (sub-wk-≡ᶜ ([] ∷ A) V M) (sub-wk-≡ᶜ ([] ∷ B) V N)
 
 
 -- Natural-number elimination, likewise: the beta rules at `zero` and at a
 -- successor, lifted to an arbitrary scrutinee by the eta rule.
 
-subC-caseℕ-zero : ∀ {Γ C C'}
-                → (w : C <:ᶜ C')
-                → (M : Γ ⊢C⦂ C)
-                → (N : Γ ∷ nat ⊢C⦂ C)
-                ------------------------------------------------------------
-                → Γ ⊢C⦂ subC (caseℕ zero `zero M `succ N) w
-                     == caseℕ zero `zero subC M w `succ subC N w
-subC-caseℕ-zero w M N =
-  C-trans (subC-cong (caseℕ-beta-zero M N))
-          (C-sym (caseℕ-beta-zero (subC M w) (subC N w)))
+subC-matchℕ-zero : ∀ {Γ C C'}
+                 → (w : C <:ᶜ C')
+                 → (M : Γ ⊢C⦂ C)
+                 → (N : Γ ∷ nat ⊢C⦂ C)
+                 ------------------------------------------------------------
+                 → Γ ⊢C⦂ subC (matchℕ zero `zero M `succ N) w
+                     == matchℕ zero `zero subC M w `succ subC N w
+subC-matchℕ-zero w M N =
+  C-trans (subC-cong (matchℕ-beta-zero M N))
+          (C-sym (matchℕ-beta-zero (subC M w) (subC N w)))
 
-subC-caseℕ-succ : ∀ {Γ C C'}
-                → (w : C <:ᶜ C')
-                → (V : Γ ⊢V⦂ nat)
-                → (M : Γ ⊢C⦂ C)
-                → (N : Γ ∷ nat ⊢C⦂ C)
-                ------------------------------------------------------------
-                → Γ ⊢C⦂ subC (caseℕ succ V `zero M `succ N) w
-                     == caseℕ succ V `zero subC M w `succ subC N w
-subC-caseℕ-succ w V M N =
-  C-trans (subC-cong (caseℕ-beta-succ V M N))
-          (C-sym (caseℕ-beta-succ V (subC M w) (subC N w)))
+subC-matchℕ-succ : ∀ {Γ C C'}
+                 → (w : C <:ᶜ C')
+                 → (V : Γ ⊢V⦂ nat)
+                 → (M : Γ ⊢C⦂ C)
+                 → (N : Γ ∷ nat ⊢C⦂ C)
+                 ------------------------------------------------------------
+                 → Γ ⊢C⦂ subC (matchℕ succ V `zero M `succ N) w
+                     == matchℕ succ V `zero subC M w `succ subC N w
+subC-matchℕ-succ w V M N =
+  C-trans (subC-cong (matchℕ-beta-succ V M N))
+          (C-sym (matchℕ-beta-succ V (subC M w) (subC N w)))
 
-subC-caseℕ : ∀ {Γ C C'}
-           → (w : C <:ᶜ C')
-           → (V : Γ ⊢V⦂ nat)
-           → (M : Γ ⊢C⦂ C)
-           → (N : Γ ∷ nat ⊢C⦂ C)
-           ------------------------------------------------------------
-           → Γ ⊢C⦂ subC (caseℕ V `zero M `succ N) w
-                == caseℕ V `zero subC M w `succ subC N w
-subC-caseℕ {Γ} {C} {C'} w V M N =
+subC-matchℕ : ∀ {Γ C C'}
+            → (w : C <:ᶜ C')
+            → (V : Γ ⊢V⦂ nat)
+            → (M : Γ ⊢C⦂ C)
+            → (N : Γ ∷ nat ⊢C⦂ C)
+            ------------------------------------------------------------
+            → Γ ⊢C⦂ subC (matchℕ V `zero M `succ N) w
+                == matchℕ V `zero subC M w `succ subC N w
+subC-matchℕ {Γ} {C} {C'} w V M N =
   C-trans
-    (C-sym (==-castᶜ refl castL (caseℕ-eta V bodyL)))
-    (C-trans (caseℕ-cong V-refl (subC-caseℕ-zero w _ _) (subC-caseℕ-succ w _ _ _))
-             (==-castᶜ refl castR (caseℕ-eta V bodyR)))
+    (C-sym (==-castᶜ refl castL (matchℕ-eta V bodyL)))
+    (C-trans (matchℕ-cong V-refl (subC-matchℕ-zero w _ _) (subC-matchℕ-succ w _ _ _))
+             (==-castᶜ refl castR (matchℕ-eta V bodyR)))
   where
     rN = cong-ren {Γ'' = [] ∷ nat} (wk-ren {Δ = Γ} {A = nat})
 
     bodyL : Γ ∷ nat ⊢C⦂ C'
-    bodyL = subC (caseℕ hd `zero C-rename wk-ren M `succ C-rename rN N) w
+    bodyL = subC (matchℕ hd `zero C-rename wk-ren M `succ C-rename rN N) w
 
     bodyR : Γ ∷ nat ⊢C⦂ C'
-    bodyR = caseℕ hd `zero subC (C-rename wk-ren M) w `succ subC (C-rename rN N) w
+    bodyR = matchℕ hd `zero subC (C-rename wk-ren M) w `succ subC (C-rename rN N) w
 
-    castL : bodyL [ split-[] ↦ V ]c ≡ subC (caseℕ V `zero M `succ N) w
-    castL = cong₂ (λ X Y → subC (caseℕ V `zero X `succ Y) w)
+    castL : bodyL [ split-[] ↦ V ]c ≡ subC (matchℕ V `zero M `succ N) w
+    castL = cong₂ (λ X Y → subC (matchℕ V `zero X `succ Y) w)
                   (sub-wk-≡ᶜ [] V M) (sub-wk-≡ᶜ ([] ∷ nat) V N)
 
-    castR : bodyR [ split-[] ↦ V ]c ≡ caseℕ V `zero subC M w `succ subC N w
-    castR = cong₂ (λ X Y → caseℕ V `zero subC X w `succ subC Y w)
+    castR : bodyR [ split-[] ↦ V ]c ≡ matchℕ V `zero subC M w `succ subC N w
+    castR = cong₂ (λ X Y → matchℕ V `zero subC X w `succ subC Y w)
                   (sub-wk-≡ᶜ [] V M) (sub-wk-≡ᶜ ([] ∷ nat) V N)
 
 
 -- List elimination, likewise: the beta rules at `nil` and at a `cons`, lifted
 -- to an arbitrary scrutinee by the eta rule.
 
-subC-caseL-nil : ∀ {Γ A C C'}
-               → (w : C <:ᶜ C')
-               → (M : Γ ⊢C⦂ C)
-               → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
-               ------------------------------------------------------------
-               → Γ ⊢C⦂ subC (caseL nil `nil M `cons N) w
-                    == caseL nil `nil subC M w `cons subC N w
-subC-caseL-nil w M N =
-  C-trans (subC-cong (caseL-beta-nil M N))
-          (C-sym (caseL-beta-nil (subC M w) (subC N w)))
-
-subC-caseL-cons : ∀ {Γ A C C'}
+subC-matchL-nil : ∀ {Γ A C C'}
                 → (w : C <:ᶜ C')
-                → (V : Γ ⊢V⦂ A)
-                → (W : Γ ⊢V⦂ list A)
                 → (M : Γ ⊢C⦂ C)
                 → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
                 ------------------------------------------------------------
-                → Γ ⊢C⦂ subC (caseL cons V W `nil M `cons N) w
-                     == caseL cons V W `nil subC M w `cons subC N w
-subC-caseL-cons w V W M N =
-  C-trans (subC-cong (caseL-beta-cons V W M N))
-          (C-sym (caseL-beta-cons V W (subC M w) (subC N w)))
+                → Γ ⊢C⦂ subC (matchL nil `nil M `cons N) w
+                    == matchL nil `nil subC M w `cons subC N w
+subC-matchL-nil w M N =
+  C-trans (subC-cong (matchL-beta-nil M N))
+          (C-sym (matchL-beta-nil (subC M w) (subC N w)))
 
-subC-caseL : ∀ {Γ A C C'}
-           → (w : C <:ᶜ C')
-           → (V : Γ ⊢V⦂ list A)
-           → (M : Γ ⊢C⦂ C)
-           → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
-           ------------------------------------------------------------
-           → Γ ⊢C⦂ subC (caseL V `nil M `cons N) w
-                == caseL V `nil subC M w `cons subC N w
-subC-caseL {Γ} {A} {C} {C'} w V M N =
+subC-matchL-cons : ∀ {Γ A C C'}
+                 → (w : C <:ᶜ C')
+                 → (V : Γ ⊢V⦂ A)
+                 → (W : Γ ⊢V⦂ list A)
+                 → (M : Γ ⊢C⦂ C)
+                 → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
+                 ------------------------------------------------------------
+                 → Γ ⊢C⦂ subC (matchL cons V W `nil M `cons N) w
+                     == matchL cons V W `nil subC M w `cons subC N w
+subC-matchL-cons w V W M N =
+  C-trans (subC-cong (matchL-beta-cons V W M N))
+          (C-sym (matchL-beta-cons V W (subC M w) (subC N w)))
+
+subC-matchL : ∀ {Γ A C C'}
+            → (w : C <:ᶜ C')
+            → (V : Γ ⊢V⦂ list A)
+            → (M : Γ ⊢C⦂ C)
+            → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
+            ------------------------------------------------------------
+            → Γ ⊢C⦂ subC (matchL V `nil M `cons N) w
+                == matchL V `nil subC M w `cons subC N w
+subC-matchL {Γ} {A} {C} {C'} w V M N =
   C-trans
-    (C-sym (==-castᶜ refl castL (caseL-eta V bodyL)))
-    (C-trans (caseL-cong V-refl (subC-caseL-nil w _ _) (subC-caseL-cons w _ _ _ _))
-             (==-castᶜ refl castR (caseL-eta V bodyR)))
+    (C-sym (==-castᶜ refl castL (matchL-eta V bodyL)))
+    (C-trans (matchL-cong V-refl (subC-matchL-nil w _ _) (subC-matchL-cons w _ _ _ _))
+             (==-castᶜ refl castR (matchL-eta V bodyR)))
   where
     rN = cong-ren {Γ'' = [] ∷ A ∷ list A} (wk-ren {Δ = Γ} {A = list A})
 
     bodyL : Γ ∷ list A ⊢C⦂ C'
-    bodyL = subC (caseL hd `nil C-rename wk-ren M `cons C-rename rN N) w
+    bodyL = subC (matchL hd `nil C-rename wk-ren M `cons C-rename rN N) w
 
     bodyR : Γ ∷ list A ⊢C⦂ C'
-    bodyR = caseL hd `nil subC (C-rename wk-ren M) w `cons subC (C-rename rN N) w
+    bodyR = matchL hd `nil subC (C-rename wk-ren M) w `cons subC (C-rename rN N) w
 
-    castL : bodyL [ split-[] ↦ V ]c ≡ subC (caseL V `nil M `cons N) w
-    castL = cong₂ (λ X Y → subC (caseL V `nil X `cons Y) w)
+    castL : bodyL [ split-[] ↦ V ]c ≡ subC (matchL V `nil M `cons N) w
+    castL = cong₂ (λ X Y → subC (matchL V `nil X `cons Y) w)
                   (sub-wk-≡ᶜ [] V M) (sub-wk-≡ᶜ ([] ∷ A ∷ list A) V N)
 
-    castR : bodyR [ split-[] ↦ V ]c ≡ caseL V `nil subC M w `cons subC N w
-    castR = cong₂ (λ X Y → caseL V `nil subC X w `cons subC Y w)
+    castR : bodyR [ split-[] ↦ V ]c ≡ matchL V `nil subC M w `cons subC N w
+    castR = cong₂ (λ X Y → matchL V `nil subC X w `cons subC Y w)
                   (sub-wk-≡ᶜ [] V M) (sub-wk-≡ᶜ ([] ∷ A ∷ list A) V N)

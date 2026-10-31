@@ -83,7 +83,7 @@ reach-renᵘ-unbox q = ≐ʳ-refl
 reach-val : ∀ {St St' A} → St ⊑ₛ[ 𝟏ᵣ ] St' → toCtx St ⊢V⦂ A → toCtx St' ⊢V⦂ A
 reach-val q = V-rename (reach-renᵘ q)
 
--- Transporting a term with one more variable on top (a `lam` body).
+-- Transporting a term with one more variable on top (a `fun` body).
 
 reach-under : ∀ {St St' A C} → St ⊑ₛ[ 𝟏ᵣ ] St'
             → toCtx St ∷ A ⊢C⦂ C → toCtx St' ∷ A ⊢C⦂ C

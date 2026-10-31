@@ -319,10 +319,10 @@ V-sub-cons : ∀ {Γ Γ' A} → (σ : Sub [] Γ Γ') → (V : Γ' ⊢V⦂ A) →
 V-sub-cons []ˢ      V W = refl
 V-sub-cons (s ◅ σ) V W = cong (V-sub₀ s) (V-sub-cons σ V W)
 
-V-sub-lam : ∀ {Γ Γ' A C} → (σ : Sub [] Γ Γ') → (M : Γ' ∷ A ⊢C⦂ C)
-          → V-sub σ (lam M) ≡ lam (C-sub (cong-∷-subˢ σ) M)
-V-sub-lam []ˢ      M = refl
-V-sub-lam (s ◅ σ) M = cong (V-sub₀ s) (V-sub-lam σ M)
+V-sub-fun : ∀ {Γ Γ' A C} → (σ : Sub [] Γ Γ') → (M : Γ' ∷ A ⊢C⦂ C)
+          → V-sub σ (fun M) ≡ fun (C-sub (cong-∷-subˢ σ) M)
+V-sub-fun []ˢ      M = refl
+V-sub-fun (s ◅ σ) M = cong (V-sub₀ s) (V-sub-fun σ M)
 
 V-sub-subV : ∀ {Γ Γ' A A'} → (σ : Sub [] Γ Γ') → (p : A <:ᵛ A') → (V : Γ' ⊢V⦂ A)
            → V-sub σ (subV V p) ≡ subV (V-sub σ V) p
@@ -349,8 +349,8 @@ C-sub-· (s ◅ σ) V W = cong (C-sub₀ s) (C-sub-· σ V W)
 
 C-sub-match : ∀ {Γ Γ' A B C} → (σ : Sub [] Γ Γ')
             → (V : Γ' ⊢V⦂ A |×| B) → (M : Γ' ∷ A ∷ B ⊢C⦂ C)
-            → C-sub σ (match V `in M)
-            ≡ match V-sub σ V `in C-sub (cong-∷-subˢ (cong-∷-subˢ σ)) M
+            → C-sub σ (match V `with M)
+            ≡ match V-sub σ V `with C-sub (cong-∷-subˢ (cong-∷-subˢ σ)) M
 C-sub-match []ˢ      V M = refl
 C-sub-match (s ◅ σ) V M = cong (C-sub₀ s) (C-sub-match σ V M)
 
@@ -372,13 +372,13 @@ C-sub-if : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ')
 C-sub-if []ˢ      V M N = refl
 C-sub-if (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-if σ V M N)
 
-C-sub-caseℕ : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ')
-            → (V : Γ' ⊢V⦂ nat) → (M : Γ' ⊢C⦂ C) → (N : Γ' ∷ nat ⊢C⦂ C)
-            → C-sub σ (caseℕ V `zero M `succ N)
-            ≡ caseℕ V-sub σ V `zero C-sub σ M
+C-sub-matchℕ : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ')
+             → (V : Γ' ⊢V⦂ nat) → (M : Γ' ⊢C⦂ C) → (N : Γ' ∷ nat ⊢C⦂ C)
+             → C-sub σ (matchℕ V `zero M `succ N)
+             ≡ matchℕ V-sub σ V `zero C-sub σ M
                               `succ C-sub (cong-∷-subˢ σ) N
-C-sub-caseℕ []ˢ      V M N = refl
-C-sub-caseℕ (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-caseℕ σ V M N)
+C-sub-matchℕ []ˢ      V M N = refl
+C-sub-matchℕ (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-matchℕ σ V M N)
 
 C-sub-recℕ : ∀ {Γ Γ' B ε} → (σ : Sub [] Γ Γ')
            → (V : Γ' ⊢V⦂ nat) → (M : Γ' ⊢C⦂ B ! ε)
@@ -390,20 +390,20 @@ C-sub-recℕ : ∀ {Γ Γ' B ε} → (σ : Sub [] Γ Γ')
 C-sub-recℕ []ˢ      V M N p = refl
 C-sub-recℕ (s ◅ σ) V M N p = cong (C-sub₀ s) (C-sub-recℕ σ V M N p)
 
-C-sub-case+ : ∀ {Γ Γ' A B C} → (σ : Sub [] Γ Γ')
-            → (V : Γ' ⊢V⦂ A |+| B) → (M : Γ' ∷ A ⊢C⦂ C) → (N : Γ' ∷ B ⊢C⦂ C)
-            → C-sub σ (case+ V `inl M `inr N)
-            ≡ case+ V-sub σ V `inl C-sub (cong-∷-subˢ σ) M
+C-sub-match+ : ∀ {Γ Γ' A B C} → (σ : Sub [] Γ Γ')
+             → (V : Γ' ⊢V⦂ A |+| B) → (M : Γ' ∷ A ⊢C⦂ C) → (N : Γ' ∷ B ⊢C⦂ C)
+             → C-sub σ (match+ V `inl M `inr N)
+             ≡ match+ V-sub σ V `inl C-sub (cong-∷-subˢ σ) M
                               `inr C-sub (cong-∷-subˢ σ) N
-C-sub-case+ []ˢ      V M N = refl
-C-sub-case+ (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-case+ σ V M N)
+C-sub-match+ []ˢ      V M N = refl
+C-sub-match+ (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-match+ σ V M N)
 
-C-sub-caseL : ∀ {Γ Γ' A C} → (σ : Sub [] Γ Γ')
-            → (V : Γ' ⊢V⦂ list A) → (M : Γ' ⊢C⦂ C) → (N : Γ' ∷ A ∷ list A ⊢C⦂ C)
-            → C-sub σ (caseL V `nil M `cons N)
-            ≡ caseL V-sub σ V `nil C-sub σ M `cons C-sub (cong-∷-subˢ (cong-∷-subˢ σ)) N
-C-sub-caseL []ˢ      V M N = refl
-C-sub-caseL (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-caseL σ V M N)
+C-sub-matchL : ∀ {Γ Γ' A C} → (σ : Sub [] Γ Γ')
+             → (V : Γ' ⊢V⦂ list A) → (M : Γ' ⊢C⦂ C) → (N : Γ' ∷ A ∷ list A ⊢C⦂ C)
+             → C-sub σ (matchL V `nil M `cons N)
+             ≡ matchL V-sub σ V `nil C-sub σ M `cons C-sub (cong-∷-subˢ (cong-∷-subˢ σ)) N
+C-sub-matchL []ˢ      V M N = refl
+C-sub-matchL (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-matchL σ V M N)
 
 C-sub-recL : ∀ {Γ Γ' A B ε} → (σ : Sub [] Γ Γ')
            → (V : Γ' ⊢V⦂ list A) → (M : Γ' ⊢C⦂ B ! ε)
@@ -517,10 +517,10 @@ mutual
   V-sub-≐ˢ {σ = σ} {σ' = σ'} h (cons V W) =
     trans (V-sub-cons σ V W)
       (trans (cong₂ cons (V-sub-≐ˢ h V) (V-sub-≐ˢ h W)) (sym (V-sub-cons σ' V W)))
-  V-sub-≐ˢ {σ = σ} {σ' = σ'} h (lam M) =
-    trans (V-sub-lam σ M)
-      (trans (cong lam (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) M))
-             (sym (V-sub-lam σ' M)))
+  V-sub-≐ˢ {σ = σ} {σ' = σ'} h (fun M) =
+    trans (V-sub-fun σ M)
+      (trans (cong fun (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) M))
+             (sym (V-sub-fun σ' M)))
   V-sub-≐ˢ {σ = σ} {σ' = σ'} h (handler N H) =
     trans (V-sub-handler σ N H)
       (trans (handler-≡ (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h)) N)
@@ -546,9 +546,9 @@ mutual
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (V · W) =
     trans (C-sub-· σ V W)
       (trans (cong₂ _·_ (V-sub-≐ˢ h V) (V-sub-≐ˢ h W)) (sym (C-sub-· σ' V W)))
-  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (match V `in M) =
+  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (match V `with M) =
     trans (C-sub-match σ V M)
-      (trans (cong₂ match_`in_ (V-sub-≐ˢ h V)
+      (trans (cong₂ match_`with_ (V-sub-≐ˢ h V)
                     (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-∷-subˢ-≐ˢ h)) M))
              (sym (C-sub-match σ' V M)))
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (absurd V) =
@@ -563,33 +563,33 @@ mutual
       (trans (cong₃ if_`then_`else_
                 (V-sub-≐ˢ h V) (C-sub-≐ˢ h M) (C-sub-≐ˢ h N))
              (sym (C-sub-if σ' V M N)))
-  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (caseℕ V `zero M `succ N) =
-    trans (C-sub-caseℕ σ V M N)
-      (trans (cong₃ caseℕ_`zero_`succ_ (V-sub-≐ˢ h V)
+  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (matchℕ V `zero M `succ N) =
+    trans (C-sub-matchℕ σ V M N)
+      (trans (cong₃ matchℕ_`zero_`succ_ (V-sub-≐ˢ h V)
                 (C-sub-≐ˢ h M) (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) N))
-             (sym (C-sub-caseℕ σ' V M N)))
+             (sym (C-sub-matchℕ σ' V M N)))
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (recℕ V M N p) =
     trans (C-sub-recℕ σ V M N p)
       (trans (cong₃ (λ a b c → recℕ a b c p) (V-sub-≐ˢ h V) (C-sub-≐ˢ h M)
                 (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ
                              (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h)))) N))
              (sym (C-sub-recℕ σ' V M N p)))
-  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (caseL V `nil M `cons N) =
-    trans (C-sub-caseL σ V M N)
-      (trans (cong₃ caseL_`nil_`cons_ (V-sub-≐ˢ h V) (C-sub-≐ˢ h M)
+  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (matchL V `nil M `cons N) =
+    trans (C-sub-matchL σ V M N)
+      (trans (cong₃ matchL_`nil_`cons_ (V-sub-≐ˢ h V) (C-sub-≐ˢ h M)
                     (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-∷-subˢ-≐ˢ h)) N))
-             (sym (C-sub-caseL σ' V M N)))
+             (sym (C-sub-matchL σ' V M N)))
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (recL V M N p) =
     trans (C-sub-recL σ V M N p)
       (trans (cong₃ (λ a b c → recL a b c p) (V-sub-≐ˢ h V) (C-sub-≐ˢ h M)
                 (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ
                              (cong-∷-subˢ-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h))))) N))
              (sym (C-sub-recL σ' V M N p)))
-  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (case+ V `inl M `inr N) =
-    trans (C-sub-case+ σ V M N)
-      (trans (cong₃ case+_`inl_`inr_ (V-sub-≐ˢ h V)
+  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (match+ V `inl M `inr N) =
+    trans (C-sub-match+ σ V M N)
+      (trans (cong₃ match+_`inl_`inr_ (V-sub-≐ˢ h V)
                 (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) M) (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) N))
-             (sym (C-sub-case+ σ' V M N)))
+             (sym (C-sub-match+ σ' V M N)))
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (perform op V M) =
     trans (C-sub-perform σ op V M)
       (trans (cong₂ (perform op) (V-sub-≐ˢ h V)

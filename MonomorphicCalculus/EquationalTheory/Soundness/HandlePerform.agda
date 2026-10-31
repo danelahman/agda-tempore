@@ -99,19 +99,19 @@ private
   handle-perform-rhs : ∀ {Γ ρ A₀ Δ C B ε₁ ε₀} {L : Γ ⊢C⦂ B ! ε₀}
       {M : Γ ⟨ ρ ⟩ ∷ A₀ ⊢C⦂ C} {K : Γ ∷ [ ρ ] (A₀ ⇒ C) ⊢C⦂ B ! ε₁}
     → (e : ε₁ ≃ₑ ε₀)
-    → Γ ⊢C⦂ L == ε-≃ e (box ρ (lam M) K)
-    → (p : Paramᶜ (ε-≃ e (box ρ (lam M) K))) → (pK : Paramᶜ K)
+    → Γ ⊢C⦂ L == ε-≃ e (box ρ (fun M) K)
+    → (p : Paramᶜ (ε-≃ e (box ρ (fun M) K))) → (pK : Paramᶜ K)
     → (M' : Δ ⊢C⦂ C) → (q : _≡_ {A = Σ Ctx (_⊢C⦂ C)} (Δ , M') (Γ ⟨ ρ ⟩ ∷ A₀ , M))
     → (pM' : Paramᶜ M') → {f : ⟦ Δ ⟧ᶜᵗˣ →ᵐ ⟦ C ⟧ᶜ}
     → ⟦ M' ⟧ᶜᵗ pM' ≈ᵐ f
-    → ⟦ ε-≃ e (box ρ (lam M) K) ⟧ᶜᵗ p
+    → ⟦ ε-≃ e (box ρ (fun M) K) ⟧ᶜᵗ p
     ≈ᵐ T-≤ (proj₁ e)
          ∘ᵐ ⟦ K ⟧ᶜᵗ pK
          ∘ᵐ ⟨ idᵐ , [ ρ ]ᶠ (curryᵐ (subst (λ Δ → ⟦ Δ ⟧ᶜᵗˣ →ᵐ ⟦ C ⟧ᶜ) (cong proj₁ q) f))
                     ∘ᵐ η⊣ ⟩ᵐ
   handle-perform-rhs {ρ = ρ} {M = M} {K} e _ p pK .M refl pM' eq =
-      ⟦⟧ᶜᵗ-irr (ε-≃ e (box ρ (lam M) K)) p (pM' , pK)
-    ∙ sound-ε-≃ e (box ρ (lam M) K) (pM' , pK)
+      ⟦⟧ᶜᵗ-irr (ε-≃ e (box ρ (fun M) K)) p (pM' , pK)
+    ∙ sound-ε-≃ e (box ρ (fun M) K) (pM' , pK)
     ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong eq)) ⟩ᵐ-cong)
 
 sound-handle-perform : ∀ {Γ A B ε ε' op}

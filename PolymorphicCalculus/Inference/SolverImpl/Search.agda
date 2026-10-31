@@ -66,7 +66,7 @@ open import PolymorphicCalculus.Syntax.Types             S
 open import PolymorphicCalculus.Syntax.GradeSubstitution S
 open import PolymorphicCalculus.Hypotheses               S
 open import PolymorphicCalculus.Hypotheses.Instances     S
-  using (Satisfiable; _≾̂ᵣ?_; _≾̂ₑ?_; ⊩Et?; _<:̂ᵛ?_; VarOK?; ⊨++ᵠ⇒; ⊨++ᵠ⇐; ⊩ᴴ⇒⊨)
+  using (Satisfiable; _≾̂ᵣ?_; _≾̂ₑ?_; ⊩Et?; _<:̂ᵛ?_; Et∨≾ᵘ?; ⊨++ᵠ⇒; ⊨++ᵠ⇐; ⊩ᴴ⇒⊨)
 
 open import PolymorphicCalculus.Inference.SolverImpl.Deferred  S hints
   using (⊩ᴰ→⊩ᴼˢ; ⊩ᴼˢ→⊩ᴰ; κ⟨_⟩; allOf; constsₑ; constsᵣ; _++²_)
@@ -95,7 +95,7 @@ asResid-⊩ {Q' = Q'} {Q} {δ = δ} h g =
     ts' m with ∈-map⁻ tvar m
     ... | α , m₀ , refl = ⊩ets h m₀
 
-    ss' : ∀ {A B} → (A , B) ∈ map (mapᵖ tvar) (subᵥ Q) → Q' ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
+    ss' : ∀ {A B} → (A , B) ∈ map (mapᵖ tvar) (subᵥ Q) → Q' ⊩ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
     ss' m with ∈-map⁻ (mapᵖ tvar) m
     ... | (α , β) , m₀ , refl = ⊩subᵥ h m₀
 
@@ -262,10 +262,10 @@ verify R τ
      | allOf {P = λ { (x , y) → ∅ᴴ ⊩ x [ τ ]ᵉ ≾̂ₑ y [ τ ]ᵉ }}
              (λ { (x , y) → decToMaybe (x [ τ ]ᵉ ≾̂ₑ? y [ τ ]ᵉ) }) (es R)
      | allOf {P = λ A → ∅ᴴ ⊩Et A [ τ ]ᵛ} (λ A → decToMaybe (⊩Et? (A [ τ ]ᵛ))) (ts R)
-     | allOf {P = λ { (A , B) → ∅ᴴ ∣ A [ τ ]ᵛ <:̂ᵛ B [ τ ]ᵛ }}
+     | allOf {P = λ { (A , B) → ∅ᴴ ⊩ A [ τ ]ᵛ <:̂ᵛ B [ τ ]ᵛ }}
              (λ { (A , B) → decToMaybe (A [ τ ]ᵛ <:̂ᵛ? B [ τ ]ᵛ) }) (ss R)
-     | allOf {P = λ { (A , ρ) → VarOK ∅ᴴ (A [ τ ]ᵛ) (ρ [ τ ]ʳ) }}
-             (λ { (A , ρ) → decToMaybe (VarOK? (A [ τ ]ᵛ) (ρ [ τ ]ʳ)) }) (ds R)
+     | allOf {P = λ { (A , ρ) → ∅ᴴ ⊩ A [ τ ]ᵛ Et∨≾ᵘ ρ [ τ ]ʳ }}
+             (λ { (A , ρ) → decToMaybe (Et∨≾ᵘ? (A [ τ ]ᵛ) (ρ [ τ ]ʳ)) }) (ds R)
      | allOf (dischargedAt τ) (dfs R)
 ... | just a | just b | just c | just d | just e | just f = just (mk⊩ᴿ a b c d e f)
 ... | _      | _      | _      | _      | _      | _      = nothing

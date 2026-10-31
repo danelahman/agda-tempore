@@ -60,7 +60,7 @@ closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
 -- A variable no time has passed over
 
-ok₀ : ∀ {A : OVType ∅ˢ} → VarOK ∅ᴴ A 𝟏̂ᵣ
+ok₀ : ∀ {A : OVType ∅ˢ} → ∅ᴴ ⊩ A Et∨≾ᵘ 𝟏̂ᵣ
 ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
 U⇒U : OVType ∅ˢ
@@ -72,10 +72,10 @@ U⇒U = unit ⇒ unit ! 𝟏̂ₑ
 -- A type variable, and a value's unit effect.
 
 id : RawC ∅ˢ 0
-id = return (lam (return v₀))
+id = return (fun (return v₀))
 
 id-typed : IsTyped (infer [] id)
-id-typed = typed-of id (closed {C = U⇒U ! 𝟏̂ₑ} (return (lam (return (var Hd ok₀)))) refl) _
+id-typed = typed-of id (closed {C = U⇒U ! 𝟏̂ₑ} (return (fun (return (var Hd ok₀)))) refl) _
 
 expected-id : Scheme
 expected-id = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ α₀ ! 𝟏̂ₑ) ! 𝟏̂ₑ
@@ -86,10 +86,10 @@ expected-id = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ α₀ ! 𝟏̂ₑ) ! 𝟏̂ₑ
 -- An argument nothing constrains.
 
 ignore : RawC ∅ˢ 0
-ignore = return (lam (return ⋆))
+ignore = return (fun (return ⋆))
 
 ignore-typed : IsTyped (infer [] ignore)
-ignore-typed = typed-of ignore (closed {C = U⇒U ! 𝟏̂ₑ} (return (lam (return ⋆))) refl) _
+ignore-typed = typed-of ignore (closed {C = U⇒U ! 𝟏̂ₑ} (return (fun (return ⋆))) refl) _
 
 expected-ignore : Scheme
 expected-ignore = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ unit ! 𝟏̂ₑ) ! 𝟏̂ₑ
@@ -99,12 +99,12 @@ expected-ignore = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ unit ! 𝟏̂ₑ) ! 𝟏̂
 -- Tempore's scheme: [α,β] β × α → β
 
 fst : RawC ∅ˢ 0
-fst = return (lam (match v₀ `in return v₁))
+fst = return (fun (match v₀ `with return v₁))
 
 fst-typed : IsTyped (infer [] fst)
 fst-typed =
   typed-of fst (closed {C = (unit |×| bool ⇒ unit ! 𝟏̂ₑ) ! 𝟏̂ₑ}
-    (return (lam (match var Hd ok₀ `in return (var (Tl-∷ Hd) ok₀)))) refl) _
+    (return (fun (match var Hd ok₀ `with return (var (Tl-∷ Hd) ok₀)))) refl) _
 
 expected-fst : Scheme
 expected-fst = ∀[ 2 , 0 , 0 ] ⊤ ⟹ (α₁ |×| α₀ ⇒ α₁ ! 𝟏̂ₑ) ! 𝟏̂ₑ
@@ -114,12 +114,12 @@ expected-fst = ∀[ 2 , 0 , 0 ] ⊤ ⟹ (α₁ |×| α₀ ⇒ α₁ ! 𝟏̂ₑ)
 -- Tempore's scheme: [α,β] β × α → α
 
 snd : RawC ∅ˢ 0
-snd = return (lam (match v₀ `in return v₀))
+snd = return (fun (match v₀ `with return v₀))
 
 snd-typed : IsTyped (infer [] snd)
 snd-typed =
   typed-of snd (closed {C = (unit |×| bool ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂ₑ}
-    (return (lam (match var Hd ok₀ `in return (var Hd ok₀)))) refl) _
+    (return (fun (match var Hd ok₀ `with return (var Hd ok₀)))) refl) _
 
 expected-snd : Scheme
 expected-snd = ∀[ 2 , 0 , 0 ] ⊤ ⟹ (α₁ |×| α₀ ⇒ α₀ ! 𝟏̂ₑ) ! 𝟏̂ₑ
@@ -130,12 +130,12 @@ expected-snd = ∀[ 2 , 0 , 0 ] ⊤ ⟹ (α₁ |×| α₀ ⇒ α₀ ! 𝟏̂ₑ)
 -- A closed scheme.
 
 not : RawC ∅ˢ 0
-not = return (lam (if v₀ `then return false `else return true))
+not = return (fun (if v₀ `then return false `else return true))
 
 not-typed : IsTyped (infer [] not)
 not-typed =
   typed-of not (closed {C = (bool ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂ₑ}
-    (return (lam (if var Hd ok₀ `then return false `else return true))) refl) _
+    (return (fun (if var Hd ok₀ `then return false `else return true))) refl) _
 
 expected-not : Scheme
 expected-not = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (bool ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂ₑ
@@ -146,12 +146,12 @@ expected-not = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (bool ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂ₑ
 -- An effect variable; the argument is `empty`, which `absurd` eliminates.
 
 absurd′ : RawC ∅ˢ 0
-absurd′ = return (lam (absurd v₀))
+absurd′ = return (fun (absurd v₀))
 
 absurd′-typed : IsTyped (infer [] absurd′)
 absurd′-typed =
   typed-of absurd′ (closed {C = (empty ⇒ unit ! 𝟏̂ₑ) ! 𝟏̂ₑ}
-    (return (lam (absurd (var Hd ok₀)))) refl) _
+    (return (fun (absurd (var Hd ok₀)))) refl) _
 
 expected-absurd′ : Scheme
 expected-absurd′ = ∀[ 1 , 0 , 1 ] ⊤ ⟹ (empty ⇒ α₀ ! ε₀) ! 𝟏̂ₑ
@@ -162,12 +162,12 @@ expected-absurd′ = ∀[ 1 , 0 , 1 ] ⊤ ⟹ (empty ⇒ α₀ ! ε₀) ! 𝟏̂
 -- An application has the effect of the function applied.
 
 pipe : RawC ∅ˢ 0
-pipe = return (lam (return (lam (v₀ · v₁))))
+pipe = return (fun (return (fun (v₀ · v₁))))
 
 pipe-typed : IsTyped (infer [] pipe)
 pipe-typed =
   typed-of pipe (closed {C = (unit ⇒ (U⇒U ⇒ unit ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ}
-    (return (lam (return (lam (var Hd ok₀ · var (Tl-∷ Hd) ok₀))))) refl) _
+    (return (fun (return (fun (var Hd ok₀ · var (Tl-∷ Hd) ok₀))))) refl) _
 
 expected-pipe : Scheme
 expected-pipe = ∀[ 2 , 0 , 1 ] ⊤ ⟹ (α₁ ⇒ ((α₁ ⇒ α₀ ! ε₀) ⇒ α₀ ! ε₀) ! 𝟏̂ₑ) ! 𝟏̂ₑ
@@ -179,12 +179,12 @@ expected-pipe = ∀[ 2 , 0 , 1 ] ⊤ ⟹ (α₁ ⇒ ((α₁ ⇒ α₀ ! ε₀) �
 -- is least this forces `g` pure (`expected-compose`).
 
 compose : RawC ∅ˢ 0
-compose = return (lam (return (lam (return (lam ((v₁ · v₀) ⨟ (v₃ · v₀)))))))
+compose = return (fun (return (fun (return (fun ((v₁ · v₀) ⨟ (v₃ · v₀)))))))
 
 compose-typed : IsTyped (infer [] compose)
 compose-typed =
   typed-of compose (closed {C = (U⇒U ⇒ (U⇒U ⇒ (unit ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ}
-    (return (lam (return (lam (return (lam
+    (return (fun (return (fun (return (fun
       ((var (Tl-∷ Hd) ok₀ · var Hd ok₀)
        ⨟ (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ Hd)))) (≾ᵘ-ok 𝟏·𝟏≾𝟏) · var Hd ok₀))))))))
     refl) _
@@ -205,14 +205,14 @@ expected-compose =
 -- of `x` and `y`, each used after the comparison: eternal or no time passed.
 
 min : RawC ∅ˢ 0
-min = return (lam (return (lam (return (lam
+min = return (fun (return (fun (return (fun
         ((v₂ · ⦉ v₁ , v₀ ⦊) ⨟ (if v₀ `then return v₂ `else return v₁)))))))
 
 min-typed : IsTyped (infer [] min)
 min-typed =
   typed-of min (closed {C = ((unit |×| unit ⇒ bool ! 𝟏̂ₑ)
                              ⇒ (unit ⇒ (unit ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ}
-    (return (lam (return (lam (return (lam
+    (return (fun (return (fun (return (fun
       ((var (Tl-∷ (Tl-∷ Hd)) ok₀ · ⦉ var (Tl-∷ Hd) ok₀ , var Hd ok₀ ⦊)
        ⨟ (if var Hd ok₀
             `then return (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) (et-ok unitₑ))

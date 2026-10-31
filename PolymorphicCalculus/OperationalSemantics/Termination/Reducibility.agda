@@ -46,6 +46,7 @@ open import PolymorphicCalculus.OperationalSemantics.Reduction S
 
 data MultiStep {n} (𝕊 : State n) (M : RunC n) : ∀ {m} → State m → RunC m → Set
 
+infix 3 MultiStep
 syntax MultiStep 𝕊 M 𝕊' M' = ⟨ 𝕊 ∣ M ⟩⟶*⟨ 𝕊' ∣ M' ⟩
 
 data MultiStep {n} 𝕊 M where
@@ -149,7 +150,7 @@ shape-⌜⌝ ([ ρ ]ᵍ A)  = cong □ˢ (shape-⌜⌝ A)
 
 mutual
 
-  <:-shapeᵛ : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ∣ A <:̂ᵛ B → shapeᵛ A ≡ shapeᵛ B
+  <:-shapeᵛ : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ⊩ A <:̂ᵛ B → shapeᵛ A ≡ shapeᵛ B
   <:-shapeᵛ (tvarₛ p)   = refl
   <:-shapeᵛ (Baseₛ p)   = refl
   <:-shapeᵛ unitₛ       = refl
@@ -163,7 +164,7 @@ mutual
   <:-shapeᵛ (p ⇛ₛ q)    = cong₂ _⇛ˢ_ (sym (<:-shapeᶜ p)) (<:-shapeᶜ q)
   <:-shapeᵛ ([ p ]ₛ q)  = cong □ˢ (<:-shapeᵛ q)
 
-  <:-shapeᶜ : ∀ {Θ} {Q : Hyps Θ} {C D} → Q ∣ C <:̂ᶜ D → shapeᶜ C ≡ shapeᶜ D
+  <:-shapeᶜ : ∀ {Θ} {Q : Hyps Θ} {C D} → Q ⊩ C <:̂ᶜ D → shapeᶜ C ≡ shapeᶜ D
   <:-shapeᶜ (p !ₛ q) = <:-shapeᵛ p
 
 mutual
@@ -242,7 +243,7 @@ VRed (A +ˢ B)   𝕊 _             = ⊥
 VRed (listˢ A)  𝕊 nil           = ⊤
 VRed (listˢ A)  𝕊 (cons V W)    = VRed A 𝕊 V × VRed (listˢ A) 𝕊 W
 VRed (listˢ A)  𝕊 _             = ⊥
-VRed (A ⇒ˢ B)   𝕊 (lam M)       =
+VRed (A ⇒ˢ B)   𝕊 (fun M)       =
   ∀ {m} {𝕊' : State m} (e : 𝕊 ≤ₛ 𝕊') W → VRed A 𝕊' W
   → CRed (VRed B) 𝕊' (renᶜ (ext (wkₛ e)) M [ W ]₀)
 VRed (A ⇒ˢ B)   𝕊 _             = ⊥
@@ -291,7 +292,7 @@ VRed-mono (A +ˢ B)  e (inl V)       r         = VRed-mono A e V r
 VRed-mono (A +ˢ B)  e (inr V)       r         = VRed-mono B e V r
 VRed-mono (listˢ A) e nil           r         = tt
 VRed-mono (listˢ A) e (cons V W)    (r , r')  = VRed-mono A e V r , VRed-mono (listˢ A) e W r'
-VRed-mono (A ⇒ˢ B)  e (lam M)       r {𝕊' = 𝕊''} e' W w  =
+VRed-mono (A ⇒ˢ B)  e (fun M)       r {𝕊' = 𝕊''} e' W w  =
   subst (λ X → CRed (VRed B) 𝕊'' (X [ W ]₀)) (sym (ren-⨾ᶜ e e' M)) (r (e ⨾ₛ e') W w)
 VRed-mono (A ⇛ˢ B)  e (handler N H) r {𝕊' = 𝕊''} e' M c  =
   subst (λ X → CRed (VRed B) 𝕊'' (handle M `with X)) (sym (ren-⨾ᵛ e e' (handler N H)))
@@ -428,7 +429,7 @@ module _ {A B : Shape} {n₀} {𝕊₀ : State n₀} {N : RunC (suc n₀)} {H : 
     where
       g  = e₀ ⨾ₛ ext* ms
       h₁ = renᵛ (wkₛ (ext* ms)) (renᵛ (wkₛ e₀) (handler N H))
-      kv = lam (handle K `with wkᵛ h₁)
+      kv = fun (handle K `with wkᵛ h₁)
 
       kvred : VRed (shapeᵍ (arity op) ⇒ˢ B) (𝕊' ∷ₛ kv) (wkᵛ kv)
       kvred {𝕊' = 𝕊''} e' W w =

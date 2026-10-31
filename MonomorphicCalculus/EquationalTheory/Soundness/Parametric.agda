@@ -69,7 +69,7 @@ mutual
   Midᵛ (inl-cong p)                      = Midᵛ p
   Midᵛ (inr-cong p)                      = Midᵛ p
   Midᵛ (cons-cong p q)                   = Midᵛ p × Midᵛ q
-  Midᵛ (lam-cong p)                      = Midᶜ p
+  Midᵛ (fun-cong p)                      = Midᶜ p
   Midᵛ (handler-cong q hs)               =
     Midᶜ q × ((op : Op) → (ε'' : E) → Midᶜ (hs op ε''))
   Midᵛ (subV-cong p)                     = Midᵛ p
@@ -87,10 +87,10 @@ mutual
   Midᶜ (absurd-cong p)                   = Midᵛ p
   Midᶜ (cmp-cong p q)                    = Midᵛ p × Midᵛ q
   Midᶜ (if-cong p q r)                   = Midᵛ p × Midᶜ q × Midᶜ r
-  Midᶜ (caseℕ-cong p q r)                = Midᵛ p × Midᶜ q × Midᶜ r
-  Midᶜ (case+-cong p q r)                = Midᵛ p × Midᶜ q × Midᶜ r
+  Midᶜ (matchℕ-cong p q r)               = Midᵛ p × Midᶜ q × Midᶜ r
+  Midᶜ (match+-cong p q r)               = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (recℕ-cong p q r)                 = Midᵛ p × Midᶜ q × Midᶜ r
-  Midᶜ (caseL-cong p q r)                = Midᵛ p × Midᶜ q × Midᶜ r
+  Midᶜ (matchL-cong p q r)               = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (recL-cong p q r)                 = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (perform-cong p q)                = Midᵛ p × Midᶜ q
   Midᶜ (delay-cong p)                    = Midᶜ p
@@ -105,9 +105,9 @@ mutual
   -- and under an `ε-subst` on the right.
   Midᶜ (match-eta V M)                   = Paramᶜ M
   Midᶜ (if-eta V M)                      = Paramᶜ M
-  Midᶜ (caseℕ-eta V M)                   = Paramᶜ M
-  Midᶜ (case+-eta V M)                   = Paramᶜ M
-  Midᶜ (caseL-eta V M)                   = Paramᶜ M
+  Midᶜ (matchℕ-eta V M)                  = Paramᶜ M
+  Midᶜ (match+-eta V M)                  = Paramᶜ M
+  Midᶜ (matchL-eta V M)                  = Paramᶜ M
   Midᶜ (delay-delay M)                   = Paramᶜ M
   -- `unbox-beta` mentions `K` and `N` only inside the filled context.
   Midᶜ (unbox-beta V K p w N)            = Paramᵏ K × Paramᶜ N

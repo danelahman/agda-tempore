@@ -59,12 +59,12 @@ closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
 -- A variable no time has passed over
 
-ok₀ : ∀ {Θ} {A : OVType Θ} → VarOK ∅ᴴ A 𝟏̂ᵣ
+ok₀ : ∀ {Θ} {A : OVType Θ} → ∅ᴴ ⊩ A Et∨≾ᵘ 𝟏̂ᵣ
 ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
 -- A variable a value's unit effect has passed over
 
-ok₁ : ∀ {Θ} {A : OVType Θ} → VarOK ∅ᴴ A (𝟏̂ᵣ ·̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ)
+ok₁ : ∀ {Θ} {A : OVType Θ} → ∅ᴴ ⊩ A Et∨≾ᵘ (𝟏̂ᵣ ·̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ)
 ok₁ = ≾ᵘ-ok (transᵣ (eqᵣ ≡̂ᵣ-identityˡ)
                (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≃ᵣ⇒≾ᵣ map-𝟏ᵉ))))
 
@@ -76,12 +76,12 @@ U⇒U = unit ⇒ unit ! 𝟏̂ₑ
 -- `bool` where returned, so its type is `bool`, not a variable.
 
 id-bool : RawC ∅ˢ 0
-id-bool = return (lam (return (v₀ ⦂ᵛ bool) ⨟ return v₁))
+id-bool = return (fun (return (v₀ ⦂ᵛ bool) ⨟ return v₁))
 
 id-bool-typed : IsTyped (infer [] id-bool)
 id-bool-typed =
   typed-of id-bool
-    (closed (return (lam (return (annᵛ bool (var Hd ok₀))
+    (closed (return (fun (return (annᵛ bool (var Hd ok₀))
                           ⨟ return (var (Tl-∷ (Tl-⟨⟩ Hd)) ok₁)))) refl) _
 
 expected-id-bool : Scheme
@@ -92,11 +92,11 @@ expected-id-bool = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (bool ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂
 -- the reported type.
 
 id-unit : RawC ∅ˢ 0
-id-unit = return (lam (return v₀)) ⦂ᶜ (U⇒U ! 𝟏̂ₑ)
+id-unit = return (fun (return v₀)) ⦂ᶜ (U⇒U ! 𝟏̂ₑ)
 
 id-unit-typed : IsTyped (infer [] id-unit)
 id-unit-typed =
-  typed-of id-unit (closed (annᶜ (U⇒U ! 𝟏̂ₑ) (return (lam (return (var Hd ok₀))))) refl) _
+  typed-of id-unit (closed (annᶜ (U⇒U ! 𝟏̂ₑ) (return (fun (return (var Hd ok₀))))) refl) _
 
 expected-id-unit : Scheme
 expected-id-unit = ∀[ 0 , 0 , 0 ] ⊤ ⟹ U⇒U ! 𝟏̂ₑ
@@ -107,13 +107,13 @@ expected-id-unit = ∀[ 0 , 0 , 0 ] ⊤ ⟹ U⇒U ! 𝟏̂ₑ
 
 compose-g : RawC ∅ˢ 0
 compose-g =
-  return (lam (return (lam (return (lam
+  return (fun (return (fun (return (fun
     (((v₁ ⦂ᵛ U⇒U) · v₀) ⨟ (v₃ · v₀)))))))
 
 compose-g-typed : IsTyped (infer [] compose-g)
 compose-g-typed =
   typed-of compose-g (closed {C = (U⇒U ⇒ (U⇒U ⇒ (unit ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ}
-    (return (lam (return (lam (return (lam
+    (return (fun (return (fun (return (fun
       ((annᵛ U⇒U (var (Tl-∷ Hd) ok₀) · var Hd ok₀)
        ⨟ (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ Hd)))) ok₁ · var Hd ok₀))))))))
     refl) _

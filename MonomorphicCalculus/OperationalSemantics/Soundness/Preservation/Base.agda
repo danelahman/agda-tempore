@@ -100,14 +100,14 @@ stepᴾˢ : ∀ {ε ε' A B} {S S' : 𝕊 []}
        → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩) → Paramˢ S → Paramᶜ M → Paramˢ S'
 stepᴾˢ APP                 pS _              = pS
 stepᴾˢ MATCH               pS _              = pS
-stepᴾˢ CASEL               pS _              = pS
+stepᴾˢ MATCHL              pS _              = pS
 stepᴾˢ RECL                pS _              = pS
 stepᴾˢ IF-TRUE             pS _              = pS
 stepᴾˢ CMP                 pS _              = pS
 stepᴾˢ IF-FALSE            pS _              = pS
-stepᴾˢ CASE+               pS _              = pS
-stepᴾˢ CASEℕ-ZERO          pS _              = pS
-stepᴾˢ CASEℕ-SUCC          pS _              = pS
+stepᴾˢ MATCH+              pS _              = pS
+stepᴾˢ MATCHℕ-ZERO         pS _              = pS
+stepᴾˢ MATCHℕ-SUCC         pS _              = pS
 stepᴾˢ RECℕ-ZERO           pS _              = pS
 stepᴾˢ RECℕ-SUCC           pS _              = pS
 stepᴾˢ (SEQ-STEP r _)      pS (pM , _)       = stepᴾˢ r pS pM
@@ -124,7 +124,7 @@ stepᴾˢ SUB-APP             pS _              = pS
 stepᴾˢ SUB-HANDLE          pS _              = pS
 stepᴾˢ SUB-HANDLE-TRANS    pS _              = pS
 stepᴾˢ SUB-IF              pS _              = pS
-stepᴾˢ SUB-CASEℕ           pS _              = pS
+stepᴾˢ SUB-MATCHℕ          pS _              = pS
 stepᴾˢ SUB-RECℕ            pS _              = pS
 stepᴾˢ SUB                 pS _              = pS
 
@@ -150,14 +150,14 @@ step-grade : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
            → E
 step-grade APP                  = 𝟏ₑ
 step-grade MATCH                = 𝟏ₑ
-step-grade CASEL                = 𝟏ₑ
+step-grade MATCHL               = 𝟏ₑ
 step-grade RECL                 = 𝟏ₑ
 step-grade IF-TRUE              = 𝟏ₑ
 step-grade CMP                  = 𝟏ₑ
 step-grade IF-FALSE             = 𝟏ₑ
-step-grade CASE+                = 𝟏ₑ
-step-grade CASEℕ-ZERO           = 𝟏ₑ
-step-grade CASEℕ-SUCC           = 𝟏ₑ
+step-grade MATCH+               = 𝟏ₑ
+step-grade MATCHℕ-ZERO          = 𝟏ₑ
+step-grade MATCHℕ-SUCC          = 𝟏ₑ
 step-grade RECℕ-ZERO            = 𝟏ₑ
 step-grade RECℕ-SUCC            = 𝟏ₑ
 step-grade (SEQ-STEP r _)       = step-grade r
@@ -173,7 +173,7 @@ step-grade SUB-APP              = 𝟏ₑ
 step-grade SUB-HANDLE           = 𝟏ₑ
 step-grade SUB-HANDLE-TRANS     = 𝟏ₑ
 step-grade SUB-IF               = 𝟏ₑ
-step-grade SUB-CASEℕ            = 𝟏ₑ
+step-grade SUB-MATCHℕ           = 𝟏ₑ
 step-grade SUB-RECℕ             = 𝟏ₑ
 step-grade SUB                  = 𝟏ₑ
 
@@ -187,14 +187,14 @@ stepᵀ : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
       → ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ hist St' ⟧ᶜᵗˣ (step-grade r)
 stepᵀ APP               = ηᵀ
 stepᵀ MATCH             = ηᵀ
-stepᵀ CASEL             = ηᵀ
+stepᵀ MATCHL            = ηᵀ
 stepᵀ RECL              = ηᵀ
 stepᵀ IF-TRUE           = ηᵀ
 stepᵀ CMP               = ηᵀ
 stepᵀ IF-FALSE          = ηᵀ
-stepᵀ CASE+             = ηᵀ
-stepᵀ CASEℕ-ZERO        = ηᵀ
-stepᵀ CASEℕ-SUCC        = ηᵀ
+stepᵀ MATCH+            = ηᵀ
+stepᵀ MATCHℕ-ZERO       = ηᵀ
+stepᵀ MATCHℕ-SUCC       = ηᵀ
 stepᵀ RECℕ-ZERO         = ηᵀ
 stepᵀ RECℕ-SUCC         = ηᵀ
 stepᵀ (SEQ-STEP r _)    = stepᵀ r
@@ -210,7 +210,7 @@ stepᵀ SUB-APP           = ηᵀ
 stepᵀ SUB-HANDLE        = ηᵀ
 stepᵀ SUB-HANDLE-TRANS  = ηᵀ
 stepᵀ SUB-IF            = ηᵀ
-stepᵀ SUB-CASEℕ         = ηᵀ
+stepᵀ SUB-MATCHℕ        = ηᵀ
 stepᵀ SUB-RECℕ          = ηᵀ
 stepᵀ SUB               = ηᵀ
 
@@ -223,14 +223,14 @@ step-≾ : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
        → step-grade r ·ₑ ε' ≾ₑ ε
 step-≾ {ε = ε} APP    = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} MATCH  = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
-step-≾ {ε = ε} CASEL  = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
+step-≾ {ε = ε} MATCHL = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} RECL   = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} IF-TRUE  = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} CMP      = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} IF-FALSE = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
-step-≾ {ε = ε} CASE+    = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
-step-≾ {ε = ε} CASEℕ-ZERO = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
-step-≾ {ε = ε} CASEℕ-SUCC = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
+step-≾ {ε = ε} MATCH+   = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
+step-≾ {ε = ε} MATCHℕ-ZERO = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
+step-≾ {ε = ε} MATCHℕ-SUCC = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} RECℕ-ZERO = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} RECℕ-SUCC = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ (SEQ-STEP {ε₂ = ε₂} {ε₃ = ε₃} r _) =
@@ -256,7 +256,7 @@ step-≾ (SUB-HANDLE {q = _ !ₛ s}) =
   ≾ₑ-trans (≃ₑ⇒≾ₑ (·ₑ-identityˡ _)) (·ₑ-monoʳ-≾ₑ s)
 step-≾ {ε = ε} SUB-HANDLE-TRANS = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} SUB-IF  = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
-step-≾ {ε = ε} SUB-CASEℕ = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
+step-≾ {ε = ε} SUB-MATCHℕ = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} SUB-RECℕ = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ (SUB {w = _ !ₛ q}) = ≾ₑ-trans (≃ₑ⇒≾ₑ (·ₑ-identityˡ _)) q
 
@@ -329,7 +329,7 @@ eq-ren-inv refl = ∘ᵐ-identityˡ idᵐ
 
 sound-APP : ∀ {Γ A B ε} → (M : Γ ∷ A ⊢C⦂ B ! ε) → (V : Γ ⊢V⦂ A)
           → (pM : Paramᶜ M) → (pV : Paramᵛ V)
-          → ⟦ lam M · V ⟧ᶜᵗ (pM , pV) ≈ᵐ ⟦ M [ split-[] ↦ V ]c ⟧ᶜᵗ (subᶜ M split-[] V pM pV)
+          → ⟦ fun M · V ⟧ᶜᵗ (pM , pV) ≈ᵐ ⟦ M [ split-[] ↦ V ]c ⟧ᶜᵗ (subᶜ M split-[] V pM pV)
 sound-APP M V pM pV =
   ≈ᵐ-trans (βᵐ (⟦ M ⟧ᶜᵗ pM) (⟦ V ⟧ᵛᵗ pV)) (≈ᵐ-sym (C-subst-nat M split-[] V pM pV))
 
@@ -374,7 +374,7 @@ sndᵛ-sound St (subV P (p |×|ₛ q)) pP        =
 sound-MATCH : ∀ {Γ A B C} → (St : 𝕊 Γ) → (P : toCtx St ⊢V⦂ A |×| B)
             → (M : toCtx St ∷ A ∷ B ⊢C⦂ C)
             → (pP : Paramᵛ P) → (pM : Paramᶜ M)
-            → ⟦ match P `in M ⟧ᶜᵗ (pP , pM)
+            → ⟦ match P `with M ⟧ᶜᵗ (pP , pM)
             ≈ᵐ ⟦ (M [ split-[] ↦ V-rename wk-ren (sndᵛ {S = St} P) ]c)
                    [ split-[] ↦ fstᵛ {S = St} P ]c ⟧ᶜᵗ
                  (subᶜ₂ M (fstᵛ {S = St} P) (sndᵛ {S = St} P) pM (fstᵛᴾ St P pP) (sndᵛᴾ St P pP))
@@ -421,12 +421,12 @@ listᵛ-sound St (subV V (listₛ p))   pV =
 
 -- The reducts of the list eliminators, and their certificates.
 
-caseL-reductᴾ : ∀ {Γ A C} → (l : ListView Γ A) → (M : Γ ⊢C⦂ C)
-              → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
-              → Paramᵛ (unlistᵛ l) → Paramᶜ M → Paramᶜ N
-              → Paramᶜ (caseL-reduct l M N)
-caseL-reductᴾ (inj₁ tt)      M N pl         pM pN = pM
-caseL-reductᴾ (inj₂ (W , L)) M N (pW , pL) pM pN = subᶜ₂ N W L pN pW pL
+matchL-reductᴾ : ∀ {Γ A C} → (l : ListView Γ A) → (M : Γ ⊢C⦂ C)
+               → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
+               → Paramᵛ (unlistᵛ l) → Paramᶜ M → Paramᶜ N
+               → Paramᶜ (matchL-reduct l M N)
+matchL-reductᴾ (inj₁ tt)      M N pl         pM pN = pM
+matchL-reductᴾ (inj₂ (W , L)) M N (pW , pL) pM pN = subᶜ₂ N W L pN pW pL
 
 recL-reductᴾ : ∀ {Γ A B ε} → (l : ListView Γ A) → (M : Γ ⊢C⦂ B ! ε)
              → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
@@ -470,12 +470,12 @@ injᵛ-sound St (inr V)             pV = ≈ᵐ-refl
 injᵛ-sound St (subV V (p |+|ₛ q)) pV =
   sub⊎-sound p q (injᵛ V) (injᵛᴾ St V pV) ∙ ∘ᵐ-congʳ (injᵛ-sound St V pV)
 
-case+-reductᴾ : ∀ {Γ A B C} → (s : (Γ ⊢V⦂ A) ⊎ (Γ ⊢V⦂ B))
-              → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
-              → Paramᵛ (uninjᵛ s) → Paramᶜ M → Paramᶜ N
-              → Paramᶜ (case+-reduct s M N)
-case+-reductᴾ (inj₁ W) M N pW pM pN = subᶜ M split-[] W pM pW
-case+-reductᴾ (inj₂ W) M N pW pM pN = subᶜ N split-[] W pN pW
+match+-reductᴾ : ∀ {Γ A B C} → (s : (Γ ⊢V⦂ A) ⊎ (Γ ⊢V⦂ B))
+               → (M : Γ ∷ A ⊢C⦂ C) → (N : Γ ∷ B ⊢C⦂ C)
+               → Paramᵛ (uninjᵛ s) → Paramᶜ M → Paramᶜ N
+               → Paramᶜ (match+-reduct s M N)
+match+-reductᴾ (inj₁ W) M N pW pM pN = subᶜ M split-[] W pM pW
+match+-reductᴾ (inj₂ W) M N pW pM pN = subᶜ N split-[] W pN pW
 
 -- CMP: a value of an eternal type denotes the point of its datum, at which
 -- the comparison morphism orders as the data are ordered.
@@ -518,24 +518,24 @@ sound-CMP : ∀ {Γ A} → (St : 𝕊 Γ) → (⋈ : Cmp) → (V W : toCtx St �
 sound-CMP St ⋈ V W et pV pW =
   sound-cmp ⋈ et V W pV pW _ _ (⌊⌋ᵈ-sound St et V pV) (⌊⌋ᵈ-sound St et W pW)
 
--- CASEL / RECL: the scrutinee denotes its decomposition, at which the beta
+-- MATCHL / RECL: the scrutinee denotes its decomposition, at which the beta
 -- laws apply.
 
-sound-CASEL : ∀ {Γ A C} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ list A)
-            → (M : toCtx St ⊢C⦂ C) → (N : toCtx St ∷ A ∷ list A ⊢C⦂ C)
-            → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-            → ⟦ caseL V `nil M `cons N ⟧ᶜᵗ (pV , pM , pN)
-            ≈ᵐ ⟦ caseL-reduct (listᵛ {S = St} V) M N ⟧ᶜᵗ
-                 (caseL-reductᴾ (listᵛ V) M N (listᵛᴾ St V pV) pM pN)
-sound-CASEL St V M N pV pM pN =
-    caseLᵐ-cong (≈ᵐ-sym (listᵛ-sound St V pV)) ≈ᵐ-refl ≈ᵐ-refl
+sound-MATCHL : ∀ {Γ A C} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ list A)
+             → (M : toCtx St ⊢C⦂ C) → (N : toCtx St ∷ A ∷ list A ⊢C⦂ C)
+             → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+             → ⟦ matchL V `nil M `cons N ⟧ᶜᵗ (pV , pM , pN)
+             ≈ᵐ ⟦ matchL-reduct (listᵛ {S = St} V) M N ⟧ᶜᵗ
+                  (matchL-reductᴾ (listᵛ V) M N (listᵛᴾ St V pV) pM pN)
+sound-MATCHL St V M N pV pM pN =
+    matchLᵐ-cong (≈ᵐ-sym (listᵛ-sound St V pV)) ≈ᵐ-refl ≈ᵐ-refl
   ∙ go (listᵛ V) (listᵛᴾ St V pV)
   where
     go : (l : ListView (toCtx St) _) → (pl : Paramᵛ (unlistᵛ l))
-       → ⟦ caseL (unlistᵛ l) `nil M `cons N ⟧ᶜᵗ (pl , pM , pN)
-       ≈ᵐ ⟦ caseL-reduct l M N ⟧ᶜᵗ (caseL-reductᴾ l M N pl pM pN)
-    go (inj₁ tt)      pl        = sound-CASEL-NIL M N pM pN
-    go (inj₂ (W , L)) (pW , pL) = sound-CASEL-CONS W L M N pW pL pM pN
+       → ⟦ matchL (unlistᵛ l) `nil M `cons N ⟧ᶜᵗ (pl , pM , pN)
+       ≈ᵐ ⟦ matchL-reduct l M N ⟧ᶜᵗ (matchL-reductᴾ l M N pl pM pN)
+    go (inj₁ tt)      pl        = sound-MATCHL-NIL M N pM pN
+    go (inj₂ (W , L)) (pW , pL) = sound-MATCHL-CONS W L M N pW pL pM pN
 
 sound-RECL : ∀ {Γ A B ε} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ list A)
            → (M : toCtx St ⊢C⦂ B ! ε)
@@ -555,24 +555,24 @@ sound-RECL St V M N p pV pM pN =
     go (inj₁ tt)      pl        = sound-RECL-NIL M N p pM pN
     go (inj₂ (W , L)) (pW , pL) = sound-RECL-CONS W L M N p pW pL pM pN
 
--- CASE+: the scrutinee denotes its decomposition, at which the coproduct's
+-- MATCH+: the scrutinee denotes its decomposition, at which the coproduct's
 -- beta laws apply.
 
-sound-CASE+ : ∀ {Γ A B C} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ A |+| B)
-            → (M : toCtx St ∷ A ⊢C⦂ C) → (N : toCtx St ∷ B ⊢C⦂ C)
-            → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-            → ⟦ case+ V `inl M `inr N ⟧ᶜᵗ (pV , pM , pN)
-            ≈ᵐ ⟦ case+-reduct (injᵛ {S = St} V) M N ⟧ᶜᵗ
-                 (case+-reductᴾ (injᵛ V) M N (injᵛᴾ St V pV) pM pN)
-sound-CASE+ St V M N pV pM pN =
-    caseᵐ-cong (≈ᵐ-sym (injᵛ-sound St V pV)) ≈ᵐ-refl ≈ᵐ-refl
+sound-MATCH+ : ∀ {Γ A B C} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ A |+| B)
+             → (M : toCtx St ∷ A ⊢C⦂ C) → (N : toCtx St ∷ B ⊢C⦂ C)
+             → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+             → ⟦ match+ V `inl M `inr N ⟧ᶜᵗ (pV , pM , pN)
+             ≈ᵐ ⟦ match+-reduct (injᵛ {S = St} V) M N ⟧ᶜᵗ
+                  (match+-reductᴾ (injᵛ V) M N (injᵛᴾ St V pV) pM pN)
+sound-MATCH+ St V M N pV pM pN =
+    match+ᵐ-cong (≈ᵐ-sym (injᵛ-sound St V pV)) ≈ᵐ-refl ≈ᵐ-refl
   ∙ go (injᵛ V) (injᵛᴾ St V pV)
   where
     go : (s : (toCtx St ⊢V⦂ _) ⊎ (toCtx St ⊢V⦂ _)) → (ps : Paramᵛ (uninjᵛ s))
-       → ⟦ case+ uninjᵛ s `inl M `inr N ⟧ᶜᵗ (ps , pM , pN)
-       ≈ᵐ ⟦ case+-reduct s M N ⟧ᶜᵗ (case+-reductᴾ s M N ps pM pN)
-    go (inj₁ W) pW = caseᵐ-inl _ _ _ ∙ ≈ᵐ-sym (C-subst-nat M split-[] W pM pW)
-    go (inj₂ W) pW = caseᵐ-inr _ _ _ ∙ ≈ᵐ-sym (C-subst-nat N split-[] W pN pW)
+       → ⟦ match+ uninjᵛ s `inl M `inr N ⟧ᶜᵗ (ps , pM , pN)
+       ≈ᵐ ⟦ match+-reduct s M N ⟧ᶜᵗ (match+-reductᴾ s M N ps pM pN)
+    go (inj₁ W) pW = match+ᵐ-inl _ _ _ ∙ ≈ᵐ-sym (C-subst-nat M split-[] W pM pW)
+    go (inj₂ W) pW = match+ᵐ-inr _ _ _ ∙ ≈ᵐ-sym (C-subst-nat N split-[] W pN pW)
 
 -- BOX: allocating a resource and extending the store are the same morphism,
 -- so the two configurations' denotations coincide outright. The stored value
@@ -721,31 +721,31 @@ sound-IF-FALSE : ∀ {Γ C} → (M N : Γ ⊢C⦂ C) → (pM : Paramᶜ M) → (
                → ⟦ if false `then M `else N ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ N ⟧ᶜᵗ pN
 sound-IF-FALSE M N pM pN = ifᵐ-false (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
 
--- CASEℕ-ZERO / CASEℕ-SUCC: taking a branch is a beta law of `caseℕᵐ`, the
+-- MATCHℕ-ZERO / MATCHℕ-SUCC: taking a branch is a beta law of `matchℕᵐ`, the
 -- successor's followed by the substitution coherence.
 
-sound-CASEℕ-ZERO : ∀ {Γ C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ nat ⊢C⦂ C)
-                 → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-                 → ⟦ caseℕ zero `zero M `succ N ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ M ⟧ᶜᵗ pM
-sound-CASEℕ-ZERO M N pM pN = caseℕᵐ-zero (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+sound-MATCHℕ-ZERO : ∀ {Γ C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ nat ⊢C⦂ C)
+                  → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+                  → ⟦ matchℕ zero `zero M `succ N ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ M ⟧ᶜᵗ pM
+sound-MATCHℕ-ZERO M N pM pN = matchℕᵐ-zero (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
 
-sound-CASEℕ-SUCC : ∀ {Γ C} → (V : Γ ⊢V⦂ nat)
-                 → (M : Γ ⊢C⦂ C) → (N : Γ ∷ nat ⊢C⦂ C)
-                 → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-                 → ⟦ caseℕ succ V `zero M `succ N ⟧ᶜᵗ (pV , pM , pN)
-                 ≈ᵐ ⟦ N [ split-[] ↦ V ]c ⟧ᶜᵗ (subᶜ N split-[] V pN pV)
-sound-CASEℕ-SUCC V M N pV pM pN =
-    caseℕᵐ-succ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+sound-MATCHℕ-SUCC : ∀ {Γ C} → (V : Γ ⊢V⦂ nat)
+                  → (M : Γ ⊢C⦂ C) → (N : Γ ∷ nat ⊢C⦂ C)
+                  → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+                  → ⟦ matchℕ succ V `zero M `succ N ⟧ᶜᵗ (pV , pM , pN)
+                  ≈ᵐ ⟦ N [ split-[] ↦ V ]c ⟧ᶜᵗ (subᶜ N split-[] V pN pV)
+sound-MATCHℕ-SUCC V M N pV pM pN =
+    matchℕᵐ-succ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ∙ ≈ᵐ-sym (C-subst-nat N split-[] V pN pV)
 
--- SUB-CASEℕ: `nat <:ᵛ nat` denotes the identity.
+-- SUB-MATCHℕ: `nat <:ᵛ nat` denotes the identity.
 
-sound-SUB-CASEℕ : ∀ {Γ C} → (V : Γ ⊢V⦂ nat)
-                → (M : Γ ⊢C⦂ C) → (N : Γ ∷ nat ⊢C⦂ C)
-                → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-                → ⟦ caseℕ subV V natₛ `zero M `succ N ⟧ᶜᵗ (pV , pM , pN)
-                ≈ᵐ ⟦ caseℕ V `zero M `succ N ⟧ᶜᵗ (pV , pM , pN)
-sound-SUB-CASEℕ V M N pV pM pN = caseℕᵐ-cong (∘ᵐ-identityˡ _) ≈ᵐ-refl ≈ᵐ-refl
+sound-SUB-MATCHℕ : ∀ {Γ C} → (V : Γ ⊢V⦂ nat)
+                 → (M : Γ ⊢C⦂ C) → (N : Γ ∷ nat ⊢C⦂ C)
+                 → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+                 → ⟦ matchℕ subV V natₛ `zero M `succ N ⟧ᶜᵗ (pV , pM , pN)
+                 ≈ᵐ ⟦ matchℕ V `zero M `succ N ⟧ᶜᵗ (pV , pM , pN)
+sound-SUB-MATCHℕ V M N pV pM pN = matchℕᵐ-cong (∘ᵐ-identityˡ _) ≈ᵐ-refl ≈ᵐ-refl
 
 -- SUB-RECℕ: `nat <:ᵛ nat` denotes the identity.
 

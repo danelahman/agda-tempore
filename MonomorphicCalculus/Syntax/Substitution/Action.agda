@@ -56,7 +56,7 @@ mutual
   V-sub₀ s (inr V)     = inr (V-sub₀ s V)
   V-sub₀ s nil         = nil
   V-sub₀ s (cons V W)  = cons (V-sub₀ s V) (V-sub₀ s W)
-  V-sub₀ s (lam M)     = lam (C-sub₀ (cong-sub₀ s) M)
+  V-sub₀ s (fun M)     = fun (C-sub₀ (cong-sub₀ s) M)
   V-sub₀ s (handler N H) =
     handler (C-sub₀ (cong-sub₀ s) N)
             (λ op ε'' →
@@ -69,26 +69,26 @@ mutual
          ------------
          → Γ ⊢C⦂ C
 
-  C-sub₀ s (return V)       = return (V-sub₀ s V)
-  C-sub₀ s (M ⨟ N)          = C-sub₀ s M ⨟ C-sub₀ (cong-sub₀ s) N
-  C-sub₀ s (V · W)          = V-sub₀ s V · V-sub₀ s W
-  C-sub₀ s (match V `in M)  = match V-sub₀ s V `in C-sub₀ (cong-sub₀ s) M
-  C-sub₀ s (absurd V)       = absurd (V-sub₀ s V)
-  C-sub₀ s (cmp ⋈ V W et)   = cmp ⋈ (V-sub₀ s V) (V-sub₀ s W) et
+  C-sub₀ s (return V)         = return (V-sub₀ s V)
+  C-sub₀ s (M ⨟ N)            = C-sub₀ s M ⨟ C-sub₀ (cong-sub₀ s) N
+  C-sub₀ s (V · W)            = V-sub₀ s V · V-sub₀ s W
+  C-sub₀ s (match V `with M)  = match V-sub₀ s V `with C-sub₀ (cong-sub₀ s) M
+  C-sub₀ s (absurd V)         = absurd (V-sub₀ s V)
+  C-sub₀ s (cmp ⋈ V W et)     = cmp ⋈ (V-sub₀ s V) (V-sub₀ s W) et
   C-sub₀ s (if V `then M `else N) =
     if V-sub₀ s V `then C-sub₀ s M `else C-sub₀ s N
-  C-sub₀ s (caseℕ V `zero M `succ N) =
-    caseℕ V-sub₀ s V `zero C-sub₀ s M `succ C-sub₀ (cong-sub₀ s) N
+  C-sub₀ s (matchℕ V `zero M `succ N) =
+    matchℕ V-sub₀ s V `zero C-sub₀ s M `succ C-sub₀ (cong-sub₀ s) N
   C-sub₀ s (recℕ V M N p) =
     recℕ (V-sub₀ s V) (C-sub₀ s M)
          (C-sub₀ (cong-∷-sub (cong-⟨⟩-sub (cong-∷-sub (cong-⟨⟩-sub s)))) N) p
-  C-sub₀ s (caseL V `nil M `cons N) =
-    caseL V-sub₀ s V `nil C-sub₀ s M `cons C-sub₀ (cong-sub₀ s) N
+  C-sub₀ s (matchL V `nil M `cons N) =
+    matchL V-sub₀ s V `nil C-sub₀ s M `cons C-sub₀ (cong-sub₀ s) N
   C-sub₀ s (recL V M N p) =
     recL (V-sub₀ s V) (C-sub₀ s M)
          (C-sub₀ (cong-∷-sub (cong-⟨⟩-sub (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s))))) N) p
-  C-sub₀ s (case+ V `inl M `inr N) =
-    case+ V-sub₀ s V `inl C-sub₀ (cong-sub₀ s) M `inr C-sub₀ (cong-sub₀ s) N
+  C-sub₀ s (match+ V `inl M `inr N) =
+    match+ V-sub₀ s V `inl C-sub₀ (cong-sub₀ s) M `inr C-sub₀ (cong-sub₀ s) N
   C-sub₀ s (perform op V M) = perform op (V-sub₀ s V) (C-sub₀ (cong-sub₀ s) M)
   C-sub₀ s (delay τ M)      = delay τ (C-sub₀ (cong-sub₀ s) M)
   C-sub₀ s (handle M `with V) = handle C-sub₀ s M `with V-sub₀ s V

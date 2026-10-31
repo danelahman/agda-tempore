@@ -150,11 +150,11 @@ private
 
   -- views of the reducible values of a shape
 
-  data LamRed {n} (A B : Shape) (𝕊 : State n) : RunV n → Set where
-    lam-red : ∀ {M} → VRed (A ⇒ˢ B) 𝕊 (lam M) → LamRed A B 𝕊 (lam M)
+  data FunRed {n} (A B : Shape) (𝕊 : State n) : RunV n → Set where
+    fun-red : ∀ {M} → VRed (A ⇒ˢ B) 𝕊 (fun M) → FunRed A B 𝕊 (fun M)
 
-  lam-red? : ∀ {n A B} {𝕊 : State n} V → VRed (A ⇒ˢ B) 𝕊 V → LamRed A B 𝕊 V
-  lam-red? (lam M) r = lam-red r
+  fun-red? : ∀ {n A B} {𝕊 : State n} V → VRed (A ⇒ˢ B) 𝕊 V → FunRed A B 𝕊 V
+  fun-red? (fun M) r = fun-red r
 
   data HandlerRed {n} (A B : Shape) (𝕊 : State n) : RunV n → Set where
     handler-red : ∀ {N H} → VRed (A ⇛ˢ B) 𝕊 (handler N H) → HandlerRed A B 𝕊 (handler N H)
@@ -224,7 +224,7 @@ mutual
   fund-v nil             r = tt
   fund-v (cons V W)      r = fund-v V r , fund-v W r
   fund-v (cmp ⋈ V W et)  r = is-cmp ⋈ _ _
-  fund-v {σ = σ} (lam {C = C} M) r {𝕊' = 𝕊'} e W w =
+  fund-v {σ = σ} (fun {C = C} M) r {𝕊' = 𝕊'} e W w =
     subst (CRed (VRed (shapeᶜ C)) 𝕊') (sym (bind (wkₛ e) σ W ∥ M ∥ᶜ))
           (fund-c M (env-∙ (env-mono r e) w))
   fund-v {Γ = Γ} {𝕊 = 𝕊₀} {σ} (handler {A} {B} N H) r e M c =
@@ -277,14 +277,14 @@ mutual
                                        (fund-c N (env-∙ (⟨⟩ᵉ (env-mono r e)) w)))
 
   fund-c {𝕊 = 𝕊} {σ} (_·_ {C = C} V W) r
-    with psubᵛ σ ∥ V ∥ᵛ | lam-red? (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
-  ... | _ | lam-red {M} f =
+    with psubᵛ σ ∥ V ∥ᵛ | fun-red? (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
+  ... | _ | fun-red {M} f =
     cred-back (APP ▸ done)
               (subst (λ X → CRed (VRed (shapeᶜ C)) 𝕊 (X [ psubᵛ σ ∥ W ∥ᵛ ]₀))
                      (ren-idᶜ (ext-id (λ i → refl)) M)
                      (f ≤ₛ-refl _ (fund-v W r)))
 
-  fund-c {𝕊 = 𝕊} {σ} (match_`in_ {C = C} V M) r
+  fund-c {𝕊 = 𝕊} {σ} (match_`with_ {C = C} V M) r
     with psubᵛ σ ∥ V ∥ᵛ | pair-red? (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
   ... | _ | pair-red {V₁} {V₂} r₁ r₂ =
     cred-back (MATCH ▸ done)
@@ -308,27 +308,27 @@ mutual
                            (sym eq) (IF-FALSE ▸ done))
               (fund-c N r)
 
-  fund-c {𝕊 = 𝕊} {σ} (caseℕ_`zero_`succ_ {C = C} V M N) r
+  fund-c {𝕊 = 𝕊} {σ} (matchℕ_`zero_`succ_ {C = C} V M N) r
     with psubᵛ σ ∥ V ∥ᵛ | nat-red? (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
-  ... | _ | zero-red         = cred-back (CASEℕ-ZERO ▸ done) (fund-c M r)
+  ... | _ | zero-red         = cred-back (MATCHℕ-ZERO ▸ done) (fund-c M r)
   ... | _ | succ-red {W} w   =
-    cred-back (CASEℕ-SUCC ▸ done)
+    cred-back (MATCHℕ-SUCC ▸ done)
               (subst (CRed (VRed (shapeᶜ C)) 𝕊) (sym (sub₀ σ W ∥ N ∥ᶜ)) (fund-c N (env-∙ r w)))
 
-  fund-c {𝕊 = 𝕊} {σ} (case+_`inl_`inr_ {C = C} V M N) r
+  fund-c {𝕊 = 𝕊} {σ} (match+_`inl_`inr_ {C = C} V M N) r
     with psubᵛ σ ∥ V ∥ᵛ | sum-red? (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
   ... | _ | inl-red {W} w =
-    cred-back (CASE-INL ▸ done)
+    cred-back (MATCH+-INL ▸ done)
               (subst (CRed (VRed (shapeᶜ C)) 𝕊) (sym (sub₀ σ W ∥ M ∥ᶜ)) (fund-c M (env-∙ r w)))
   ... | _ | inr-red {W} w =
-    cred-back (CASE-INR ▸ done)
+    cred-back (MATCH+-INR ▸ done)
               (subst (CRed (VRed (shapeᶜ C)) 𝕊) (sym (sub₀ σ W ∥ N ∥ᶜ)) (fund-c N (env-∙ r w)))
 
-  fund-c {𝕊 = 𝕊} {σ} (caseL_`nil_`cons_ {C = C} V M N) r
+  fund-c {𝕊 = 𝕊} {σ} (matchL_`nil_`cons_ {C = C} V M N) r
     with psubᵛ σ ∥ V ∥ᵛ | list-red? (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
-  ... | _ | nil-red = cred-back (CASEL-NIL ▸ done) (fund-c M r)
+  ... | _ | nil-red = cred-back (MATCHL-NIL ▸ done) (fund-c M r)
   ... | _ | cons-red {W₁} {W₂} w₁ w₂ =
-    cred-back (CASEL-CONS ▸ done)
+    cred-back (MATCHL-CONS ▸ done)
               (subst (CRed (VRed (shapeᶜ C)) 𝕊)
                      (sym (trans (cong (_[ W₂ ]₀) (sub₁ σ W₁ ∥ N ∥ᶜ)) (sub₀ _ W₂ ∥ N ∥ᶜ)))
                      (fund-c N (env-∙ (env-∙ r w₁) w₂)))

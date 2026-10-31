@@ -156,15 +156,15 @@ Atomˢ : ∀ {Φ} → EVar (Φ +e) → OVType (Φ +e) → OVType (Φ +e) → Set
 Atomˢ {Φ} j A B =
   Σ[ l₀ ∈ List (OVType Φ × OVType Φ) ]
     (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
-       → (∀ {X Y} → (X , Y) ∈ l₀ → Q ∣ X [ δ ]ᵛ <:̂ᵛ Y [ δ ]ᵛ)
-       → wkᵉ-H Q ∣ A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ <:̂ᵛ B [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)
+       → (∀ {X Y} → (X , Y) ∈ l₀ → Q ⊩ X [ δ ]ᵛ <:̂ᵛ Y [ δ ]ᵛ)
+       → wkᵉ-H Q ⊩ A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ <:̂ᵛ B [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)
 
 Atomᵈ : ∀ {Φ} → EVar (Φ +e) → OVType (Φ +e) → RExp (Φ +e) → Set
 Atomᵈ {Φ} j A ρ =
   Σ[ l₀ ∈ List (OVType Φ × RExp Φ) ]
     (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
-       → (∀ {B τ} → (B , τ) ∈ l₀ → VarOK Q (B [ δ ]ᵛ) (τ [ δ ]ʳ))
-       → VarOK (wkᵉ-H Q) (A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ) (ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ))
+       → (∀ {B τ} → (B , τ) ∈ l₀ → Q ⊩ B [ δ ]ᵛ Et∨≾ᵘ τ [ δ ]ʳ)
+       → wkᵉ-H Q ⊩ A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ Et∨≾ᵘ ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ)
 
 -- An ordering with the rigid on one side only holds for every rigid exactly
 -- when it holds at the extreme grade on that side:
@@ -359,7 +359,7 @@ atomˢ : ∀ {Φ} → (j : EVar (Φ +e)) → (A B : OVType (Φ +e)) → Maybe (A
 atomˢ j A B with strᵛ⁺ j A | strᵛ⁺ j B
 ... | just (A₀ , e₁) | just (B₀ , e₂) =
       just ((A₀ , B₀) ∷ [] ,
-            λ δ Q k → subst₂ (wkᵉ-H Q ∣_<:̂ᵛ_)
+            λ δ Q k → subst₂ (wkᵉ-H Q ⊩_<:̂ᵛ_)
                              (sym (pop⨟ᵛ j A e₁ δ)) (sym (pop⨟ᵛ j B e₂ δ))
                              (<:̂ᵛ-wkᵉ (k (here refl))))
 ... | just _         | nothing = nothing
@@ -375,13 +375,13 @@ atomᵈ : ∀ {Φ} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → (ρ : REx
 atomᵈ j A ρ with strᵛ⁺ j A | strʳ⁺ j (ρ [ updᵉ j (econst ⊤ₑ) ]ʳ)
 ... | just (A₀ , e₁) | just (ρ₀ , e₂) =
       just ((A₀ , ρ₀) ∷ [] ,
-            λ δ Q k → VarOK-≡̂ (≡̂ᵛ-refl _)
+            λ δ Q k → Et∨≾ᵘ-≡̂ (≡̂ᵛ-refl _)
                         (mono-substᵣ (updᵉ-above j (econst ⊤ₑ) (popˢ j ⨟ˢ (δ ↑ᵉ)) topₑ) ρ)
-                        (subst₂ (VarOK (wkᵉ-H Q))
+                        (subst₂ (wkᵉ-H Q ⊩_Et∨≾ᵘ_)
                                 (sym (pop⨟ᵛ j A e₁ δ))
                                 (trans (sym (pop⨟ʳ j (ρ [ updᵉ j (econst ⊤ₑ) ]ʳ) e₂ δ))
                                        ([⨟]ʳ ρ (updᵉ j (econst ⊤ₑ)) (popˢ j ⨟ˢ (δ ↑ᵉ))))
-                                (VarOK-wkᵉ (k (here refl)))))
+                                (Et∨≾ᵘ-wkᵉ (k (here refl)))))
 ... | just _         | nothing = nothing
 ... | nothing        | _       = nothing
 
@@ -516,9 +516,9 @@ listᵗ j (A ∷ l) with atomᵗ j A | listᵗ j l
 listˢ : ∀ {Φ} → (j : EVar (Φ +e)) → (l : List (OVType (Φ +e) × OVType (Φ +e)))
       → Maybe (Σ[ l₀ ∈ List (OVType Φ × OVType Φ) ]
                  (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
-                    → (∀ {X Y} → (X , Y) ∈ l₀ → Q ∣ X [ δ ]ᵛ <:̂ᵛ Y [ δ ]ᵛ)
+                    → (∀ {X Y} → (X , Y) ∈ l₀ → Q ⊩ X [ δ ]ᵛ <:̂ᵛ Y [ δ ]ᵛ)
                     → (∀ {A B} → (A , B) ∈ l
-                         → wkᵉ-H Q ∣ A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ
+                         → wkᵉ-H Q ⊩ A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ
                                   <:̂ᵛ B [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)))
 listˢ j []             = just ([] , λ δ Q k → λ ())
 listˢ j ((A , B) ∷ l) with atomˢ j A B | listˢ j l
@@ -532,10 +532,10 @@ listˢ j ((A , B) ∷ l) with atomˢ j A B | listˢ j l
 listᵈ : ∀ {Φ} → (j : EVar (Φ +e)) → (l : List (OVType (Φ +e) × RExp (Φ +e)))
       → Maybe (Σ[ l₀ ∈ List (OVType Φ × RExp Φ) ]
                  (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
-                    → (∀ {B τ} → (B , τ) ∈ l₀ → VarOK Q (B [ δ ]ᵛ) (τ [ δ ]ʳ))
+                    → (∀ {B τ} → (B , τ) ∈ l₀ → Q ⊩ B [ δ ]ᵛ Et∨≾ᵘ τ [ δ ]ʳ)
                     → (∀ {A ρ} → (A , ρ) ∈ l
-                         → VarOK (wkᵉ-H Q) (A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)
-                                           (ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ))))
+                         → wkᵉ-H Q ⊩ A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ
+                                   Et∨≾ᵘ ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ)))
 listᵈ j []             = just ([] , λ δ Q k → λ ())
 listᵈ j ((A , ρ) ∷ l) with atomᵈ j A ρ | listᵈ j l
 ... | just (a , fa) | just (l₀ , f) =
@@ -970,14 +970,14 @@ solveDisj s A ρ (just [])     e =
 solveDisj s A ρ (just (_ ∷ _)) e =
   solved (st (Ω s) (θ s) (pushᵈ (A [ θ s ]ᵛ) (ρ [ θ s ]ʳ) (res s)) (rig s) ,
         mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailᵈ h)) ,
-        λ δ Q h → subst₂ (VarOK Q) ([⨟]ᵛ A (θ s) δ) ([⨟]ʳ ρ (θ s) δ) (⊩ds h (here refl)))
+        λ δ Q h → subst₂ (Q ⊩_Et∨≾ᵘ_) ([⨟]ᵛ A (θ s) δ) ([⨟]ʳ ρ (θ s) δ) (⊩ds h (here refl)))
 
 solve : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ)
       → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))
 
-solve s ⊤̂ = solved (s , ⟶-id , λ δ Q h → tt)
+solve s trueᶜ = solved (s , ⟶-id , λ δ Q h → tt)
 
-solve s ⊥̂ = refuted
+solve s falseᶜ = refuted
 
 solve s (C ∧̂ D) with solve s C
 ... | refuted = refuted
@@ -988,7 +988,7 @@ solve s (C ∧̂ D) with solve s C
 ...   | solved (s₂ , m₂ , w₂) =
         solved (s₂ , ⟶-⨟ m₁ m₂ , λ δ Q h → wit-mono m₂ C w₁ δ Q h , w₂ δ Q h)
 
-solve s (A ≾̂ᵥᶜ B) with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))
+solve s (A <:̂ᵥᶜ B) with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))
 ... | nothing        = refuted
 ... | just (Ω' , δ) with subDec (A [ θ s ]ᵛ [ δ ]ᵛ) (B [ θ s ]ᵛ [ δ ]ᵛ)
 ...   | nothing = refuted
@@ -999,7 +999,7 @@ solve s (A ≾̂ᵥᶜ B) with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss
         solved (st Ω' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e t ∪ᴿ atomsᴿ (atomsOf d))
                  (transRig δ (rig s)) ,
               mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (atomiseᴿ-sound _ e t (∪ᴿ-fst h))) ,
-              λ δ' Q h → subst₂ (Q ∣_<:̂ᵛ_) (chain₂ᵛ A (θ s) δ δ') (chain₂ᵛ B (θ s) δ δ')
+              λ δ' Q h → subst₂ (Q ⊩_<:̂ᵛ_) (chain₂ᵛ A (θ s) δ δ') (chain₂ᵛ B (θ s) δ δ')
                                 (intro d δ' (holdsᴿ (atomsOf d) (∪ᴿ-snd h))))
 
 solve s (ρ ≾̂ᵣᶜ ρ') =

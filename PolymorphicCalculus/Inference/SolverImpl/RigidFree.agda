@@ -63,8 +63,8 @@ threadOps-≢stuck {f = f} g h (op ∷ l) s with g s op in e
 ...   | solved _ = λ ()
 
 solve-rigidFree : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ) → RigidFree C → solve s C ≢ stuck
-solve-rigidFree s ⊤̂ p = λ ()
-solve-rigidFree s ⊥̂ p = λ ()
+solve-rigidFree s trueᶜ p  = λ ()
+solve-rigidFree s falseᶜ p = λ ()
 solve-rigidFree s (C ∧̂ D) (p , q) with solve s C in e
 ... | refuted = λ ()
 ... | stuck   = ⊥-elim (solve-rigidFree s C p e)
@@ -72,7 +72,7 @@ solve-rigidFree s (C ∧̂ D) (p , q) with solve s C in e
 ...   | refuted  = λ ()
 ...   | stuck    = λ _ → solve-rigidFree s₁ D q e'
 ...   | solved _ = λ ()
-solve-rigidFree s (A ≾̂ᵥᶜ B) p with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))
+solve-rigidFree s (A <:̂ᵥᶜ B) p with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))
 ... | nothing = λ ()
 ... | just (Ω' , δ) with subDec (A [ θ s ]ᵛ [ δ ]ᵛ) (B [ θ s ]ᵛ [ δ ]ᵛ)
 ...   | nothing = λ ()

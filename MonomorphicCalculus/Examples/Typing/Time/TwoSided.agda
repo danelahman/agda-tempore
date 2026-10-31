@@ -96,7 +96,7 @@ tagged-relaying =
   perform read ⋆                     -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
                                      -- ∷ NodeId ∷ Reading
-      `in perform send here (return ⋆))
+      `with perform send here (return ⋆))
 
 ------------------------------------------------------------------------
 -- Readings go stale
@@ -213,7 +213,7 @@ claim-after-storing =
 handed-over : [] ⊢C⦂ unit ! [ 6 , 9 ]
 handed-over =
   box [ 1 , 6 ] (const 42)           -- ∷ [ [ 1 , 6 ] ] Reading
-    (lam                             -- ∷ [ [ 1 , 6 ] ] Reading
+    (fun                             -- ∷ [ [ 1 , 6 ] ] Reading
        (perform write (const 0)      -- ⟨ [ 2 , 3 ] ⟩ ∷ unit
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!) (<:ᵛ-refl _)
                                      -- ∷ Reading

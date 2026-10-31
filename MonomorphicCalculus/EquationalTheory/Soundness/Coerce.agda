@@ -224,11 +224,11 @@ sound-subV-inr p q V pV pV' =
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV'))
 
-sound-subV-lam : ∀ {Γ A A' C C'}
+sound-subV-fun : ∀ {Γ A A' C C'}
                → (p : A' <:ᵛ A) → (w : C <:ᶜ C')
                → (M : Γ ∷ A ⊢C⦂ C)
-               → Soundᵛ== (subV-lam p w M)
-sound-subV-lam p w M pM pR =
+               → Soundᵛ== (subV-fun p w M)
+sound-subV-fun p w M pM pR =
     map⇒ᵐ-curryᵐˡʳ ⟦ p ⟧<:ᵛ ⟦ w ⟧<:ᶜ (⟦ M ⟧ᶜᵗ pM)
   ∙ curryᵐ-cong (∘ᵐ-congʳ
       (≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (subCtx p M) pR (subCtxᴾ p M pM)

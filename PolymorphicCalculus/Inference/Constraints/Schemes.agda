@@ -49,7 +49,7 @@ ordsᶜ o = ⋀ᴸ (ors o) (λ { (ρ , ρ') → ρ ≾̂ᵣᶜ ρ' }) ∧̂ ⋀�
 hypsᶜ : ∀ {Θ} → Hyps Θ → Constraint Θ
 hypsᶜ Q =
   ⋀ᴸ (ets Q) (λ α → Etᶜ (tvar α))
-  ∧̂ ⋀ᴸ (subᵥ Q) (λ { (α , β) → tvar α ≾̂ᵥᶜ tvar β })
+  ∧̂ ⋀ᴸ (subᵥ Q) (λ { (α , β) → tvar α <:̂ᵥᶜ tvar β })
   ∧̂ ⋀ᴸ (ordᵣ Q) (λ { (ρ , ρ') → ρ ≾̂ᵣᶜ ρ' })
   ∧̂ ⋀ᴸ (ordₑ Q) (λ { (ε , ε') → ε ≾̂ₑᶜ ε' })
   ∧̂ ⋀ᴸ (disj Q) (λ { (A , ρ) → Et∨≾ᵘ A ρ })
@@ -60,7 +60,7 @@ hypsᶜ Q =
 
 instᶜ-body : ∀ {Θ} → (s : Scheme) → OVType Θ → Constraint (Θ ⊹ Θˢ s)
 instᶜ-body s A =
-  (Xˢ s [ newˢ⊹ (Θˢ s) ]ᵛ ≾̂ᵥᶜ A [ wkˢ⊹ (Θˢ s) ]ᵛ) ∧̂ hypsᶜ (Qˢ s) [ newˢ⊹ (Θˢ s) ]ᶜⁿ
+  (Xˢ s [ newˢ⊹ (Θˢ s) ]ᵛ <:̂ᵥᶜ A [ wkˢ⊹ (Θˢ s) ]ᵛ) ∧̂ hypsᶜ (Qˢ s) [ newˢ⊹ (Θˢ s) ]ᶜⁿ
 
 instᶜ : ∀ {Θ} → Scheme → OVType Θ → Constraint Θ
 instᶜ s A = ∃ˢ (Θˢ s) (instᶜ-body s A)
@@ -172,10 +172,10 @@ hypsᶜ-complete Q' h =
 
 instᶜ-sound : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} (s : Scheme) (A : OVType Θ)
             → σ ⊨[ Q ] instᶜ s A
-            → Σ[ δ ∈ Subst (Θˢ s) Θ' ] (Q ∣ Xˢ s [ δ ]ᵛ <:̂ᵛ A [ σ ]ᵛ) × (Q ⊩ᴴ Qˢ s [ δ ])
+            → Σ[ δ ∈ Subst (Θˢ s) Θ' ] (Q ⊩ Xˢ s [ δ ]ᵛ <:̂ᵛ A [ σ ]ᵛ) × (Q ⊩ᴴ Qˢ s [ δ ])
 instᶜ-sound {σ = σ} {Q} s A h with ∃ˢ-elim {Ω = Θˢ s} {σ = σ} {Q = Q} {C = instᶜ-body s A} h
 ... | δ , (st , hq) =
-  δ , subst₂ (Q ∣_<:̂ᵛ_) eX eA st ,
+  δ , subst₂ (Q ⊩_<:̂ᵛ_) eX eA st ,
   hypsᶜ-sound (Qˢ s)
     (⊨-resp-≐ˢ (newˢ⊹-⊕ˢ σ δ) (hypsᶜ (Qˢ s)) (⊨-subst⁻ (hypsᶜ (Qˢ s)) hq))
   where
@@ -186,11 +186,11 @@ instᶜ-sound {σ = σ} {Q} s A h with ∃ˢ-elim {Ω = Θˢ s} {σ = σ} {Q = Q
     eA = trans ([⨟]ᵛ A (wkˢ⊹ (Θˢ s)) (σ ⊕ˢ δ)) ([≐]ᵛ (wkˢ⊹-⊕ˢ σ δ) A)
 
 instᶜ-complete : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} (s : Scheme) (A : OVType Θ)
-               → (δ : Subst (Θˢ s) Θ') → Q ∣ Xˢ s [ δ ]ᵛ <:̂ᵛ A [ σ ]ᵛ → Q ⊩ᴴ Qˢ s [ δ ]
+               → (δ : Subst (Θˢ s) Θ') → Q ⊩ Xˢ s [ δ ]ᵛ <:̂ᵛ A [ σ ]ᵛ → Q ⊩ᴴ Qˢ s [ δ ]
                → σ ⊨[ Q ] instᶜ s A
 instᶜ-complete {σ = σ} {Q} s A δ st hq =
   ∃ˢ-intro {Ω = Θˢ s} {σ = σ} {Q = Q} {C = instᶜ-body s A} δ
-    (subst₂ (Q ∣_<:̂ᵛ_) (sym eX) (sym eA) st ,
+    (subst₂ (Q ⊩_<:̂ᵛ_) (sym eX) (sym eA) st ,
      ⊨-subst (hypsᶜ (Qˢ s))
        (⊨-resp-≐ˢ (≐ˢ-sym (newˢ⊹-⊕ˢ σ δ)) (hypsᶜ (Qˢ s)) (hypsᶜ-complete (Qˢ s) hq)))
   where
@@ -224,10 +224,10 @@ instᶜ-complete {σ = σ} {Q} s A δ st hq =
 ∃ᵉ*-rigidFree (suc c) r = ∃ᵉ*-rigidFree c r
 
 []ᶜⁿ-rigidFree : ∀ {Θ Θ'} (C : Constraint Θ) (σ : Subst Θ Θ') → RigidFree C → RigidFree (C [ σ ]ᶜⁿ)
-[]ᶜⁿ-rigidFree ⊤̂           σ r       = tt
-[]ᶜⁿ-rigidFree ⊥̂           σ r       = tt
+[]ᶜⁿ-rigidFree trueᶜ       σ r       = tt
+[]ᶜⁿ-rigidFree falseᶜ      σ r       = tt
 []ᶜⁿ-rigidFree (C ∧̂ D)     σ (r , q) = []ᶜⁿ-rigidFree C σ r , []ᶜⁿ-rigidFree D σ q
-[]ᶜⁿ-rigidFree (A ≾̂ᵥᶜ B)   σ r       = tt
+[]ᶜⁿ-rigidFree (A <:̂ᵥᶜ B)  σ r       = tt
 []ᶜⁿ-rigidFree (ρ ≾̂ᵣᶜ ρ')  σ r       = tt
 []ᶜⁿ-rigidFree (ε ≾̂ₑᶜ ε')  σ r       = tt
 []ᶜⁿ-rigidFree (Etᶜ A)     σ r       = tt

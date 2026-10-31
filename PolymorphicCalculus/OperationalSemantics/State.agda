@@ -5,7 +5,7 @@
 -- the passages of time and the resources of a run; `State n`   --
 -- has `n` resources. A state typing `Ψ` types `𝕊` (`Types Ψ`)  --
 -- when each resource has its type `[ ρ ] X` in the context     --
--- before it, behind `ρ`. `𝕊 ≤ₛ 𝕊'` extends a state; `δₛ` is    --
+-- before it, behind `ρ`. `𝕊 ≤ₛ 𝕊'` extends a state; `κₛ` is    --
 -- the grade of the passages added.                             --
 ------------------------------------------------------------------
 
@@ -67,10 +67,10 @@ wkₛ ≤ₛ-refl     i = i
 wkₛ (≤ₛ-lock e) i = wkₛ e i
 wkₛ (≤ₛ-res e)  i = suc (wkₛ e i)
 
-δₛ : ∀ {n m} {𝕊 : State n} {𝕊' : State m} → 𝕊 ≤ₛ 𝕊' → RExp ∅ˢ
-δₛ ≤ₛ-refl             = 𝟏̂ᵣ
-δₛ (≤ₛ-lock {ρ = ρ} e) = δₛ e ·̂ᵣ rconst ρ
-δₛ (≤ₛ-res e)          = δₛ e
+κₛ : ∀ {n m} {𝕊 : State n} {𝕊' : State m} → 𝕊 ≤ₛ 𝕊' → RExp ∅ˢ
+κₛ ≤ₛ-refl             = 𝟏̂ᵣ
+κₛ (≤ₛ-lock {ρ = ρ} e) = κₛ e ·̂ᵣ rconst ρ
+κₛ (≤ₛ-res e)          = κₛ e
 
 infixl 25 _⨾ₛ_
 
@@ -104,25 +104,25 @@ data StateTyping : ∀ {n} → State n → Set where
   _∷[_]_ : ∀ {n} {𝕊 : State n} {V} → StateTyping 𝕊 → RExp ∅ˢ → OVType ∅ˢ
          → StateTyping (𝕊 ∷ₛ V)
 
-ctx : ∀ {n} {𝕊 : State n} → StateTyping 𝕊 → OCtx ∅ˢ n
-ctx ∅                     = []
-ctx (_⟨⟩ˢ {ρ = ρ} Ψ)      = ctx Ψ ⟨ rconst ρ ⟩
-ctx (Ψ ∷[ ρ ] X)          = ctx Ψ ∷ [ ρ ] X
+toCtx : ∀ {n} {𝕊 : State n} → StateTyping 𝕊 → OCtx ∅ˢ n
+toCtx ∅                     = []
+toCtx (_⟨⟩ˢ {ρ = ρ} Ψ)      = toCtx Ψ ⟨ rconst ρ ⟩
+toCtx (Ψ ∷[ ρ ] X)          = toCtx Ψ ∷ [ ρ ] X
 
-ctx-defs : ∀ {n} {𝕊 : State n} → (Ψ : StateTyping 𝕊) → defs (ctx Ψ) ≡ ∅ᵖ
-ctx-defs ∅            = refl
-ctx-defs (Ψ ⟨⟩ˢ)      = ctx-defs Ψ
-ctx-defs (Ψ ∷[ ρ ] X) = ctx-defs Ψ
+toCtx-defs : ∀ {n} {𝕊 : State n} → (Ψ : StateTyping 𝕊) → defs (toCtx Ψ) ≡ ∅ᵖ
+toCtx-defs ∅            = refl
+toCtx-defs (Ψ ⟨⟩ˢ)      = toCtx-defs Ψ
+toCtx-defs (Ψ ∷[ ρ ] X) = toCtx-defs Ψ
 
 data Types : ∀ {n} {𝕊 : State n} → StateTyping 𝕊 → Set where
   ∅    : Types ∅
   _⟨⟩ˢ : ∀ {n} {𝕊 : State n} {ρ} {Ψ : StateTyping 𝕊}
        → Types Ψ → Types (_⟨⟩ˢ {ρ = ρ} Ψ)
   _∷ᵗ_ : ∀ {n} {𝕊 : State n} {Ψ : StateTyping 𝕊} {ρ X V}
-       → Types Ψ → ctx Ψ ⟨ ρ ⟩ ⊢ᵛ V ⦂ X → Types (_∷[_]_ {V = V} Ψ ρ X)
+       → Types Ψ → toCtx Ψ ⟨ ρ ⟩ ⊢ᵛ V ⦂ X → Types (_∷[_]_ {V = V} Ψ ρ X)
 
-types-defs : ∀ {n} {𝕊 : State n} {Ψ : StateTyping 𝕊} → Types Ψ → defs (ctx Ψ) ≡ ∅ᵖ
-types-defs {Ψ = Ψ} _ = ctx-defs Ψ
+types-defs : ∀ {n} {𝕊 : State n} {Ψ : StateTyping 𝕊} → Types Ψ → defs (toCtx Ψ) ≡ ∅ᵖ
+types-defs {Ψ = Ψ} _ = toCtx-defs Ψ
 
 -- Extension of a state typing along an extension of its state
 
@@ -140,7 +140,7 @@ data _⊆[_]_ {n} {𝕊 : State n} (Ψ : StateTyping 𝕊)
 
 ⊆-ext : ∀ {n m} {𝕊 : State n} {𝕊' : State m} {e : 𝕊 ≤ₛ 𝕊'}
           {Ψ : StateTyping 𝕊} {Ψ' : StateTyping 𝕊'}
-      → Ψ ⊆[ e ] Ψ' → Ext ∅ᴴ (ctx Ψ) (ctx Ψ') (δₛ e)
+      → Ψ ⊆[ e ] Ψ' → Ext ∅ᴴ (toCtx Ψ) (toCtx Ψ') (κₛ e)
 epos (⊆-ext {e = e} p) = wkₛ e
 ety  (⊆-ext ⊆-refl)     i = refl
 ety  (⊆-ext (⊆-lock p)) i = ety (⊆-ext p) i
@@ -153,10 +153,10 @@ edfs (⊆-ext ⊆-refl)       = refl
 edfs (⊆-ext (⊆-lock p))   = edfs (⊆-ext p)
 edfs (⊆-ext (⊆-res p))    = edfs (⊆-ext p)
 
-ctx-box : ∀ {n} {𝕊 : State n} → (Ψ : StateTyping 𝕊) → BoxCtx (ctx Ψ)
-ctx-box Ψ = boxed Ψ , ctx-defs Ψ
+toCtx-box : ∀ {n} {𝕊 : State n} → (Ψ : StateTyping 𝕊) → BoxCtx (toCtx Ψ)
+toCtx-box Ψ = boxed Ψ , toCtx-defs Ψ
   where
-    boxed : ∀ {n} {𝕊 : State n} → (Ψ : StateTyping 𝕊) → ∀ {A ρ} → A ∈̂[ ρ ] ctx Ψ
+    boxed : ∀ {n} {𝕊 : State n} → (Ψ : StateTyping 𝕊) → ∀ {A ρ} → A ∈̂[ ρ ] toCtx Ψ
           → Σ[ ρ₀ ∈ RExp ∅ˢ ] Σ[ A₀ ∈ OVType ∅ˢ ] A ≡ [ ρ₀ ] A₀
     boxed (Ψ ⟨⟩ˢ)      (Tl-⟨⟩ x) = boxed Ψ x
     boxed (Ψ ∷[ ρ ] X) Hd        = ρ , X , refl
@@ -166,8 +166,8 @@ ctx-box Ψ = boxed Ψ , ctx-defs Ψ
 
 private
 
-  lookup-ext : ∀ {n m} {𝕊 : State n} {Ψ : StateTyping 𝕊} {Γ : OCtx ∅ˢ m} {δ ρ₀ ρ' A₀}
-             → Types Ψ → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] ctx Ψ) → (e : Ext ∅ᴴ (ctx Ψ) Γ δ)
+  lookup-ext : ∀ {n m} {𝕊 : State n} {Ψ : StateTyping 𝕊} {Γ   : OCtx ∅ˢ m} {δ ρ₀ ρ' A₀}
+             → Types Ψ → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] toCtx Ψ) → (e : Ext ∅ᴴ (toCtx Ψ) Γ δ)
              → ∅ᴴ ⊩ ρ' ·̂ᵣ δ ≾̂ᵣ ρ₀
              → Γ ⊢ᵛ renᵛ (epos e) (lookupₛ 𝕊 (var-pos x)) ⦂ A₀
   lookup-ext (T ⟨⟩ˢ) (Tl-⟨⟩ x) e le =
@@ -186,7 +186,7 @@ private
   ... | D , p = D , trans p (sym (ren-fuseᵛ (λ i → refl) (lookupₛ 𝕊 (var-pos x))))
 
 lookup-typed : ∀ {n} {𝕊 : State n} {Ψ : StateTyping 𝕊} {ρ₀ ρ' A₀}
-             → Types Ψ → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] ctx Ψ) → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ₀
-             → ctx Ψ ⊢ᵛ lookupₛ 𝕊 (var-pos x) ⦂ A₀
+             → Types Ψ → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] toCtx Ψ) → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ₀
+             → toCtx Ψ ⊢ᵛ lookupₛ 𝕊 (var-pos x) ⦂ A₀
 lookup-typed {𝕊 = 𝕊} T x le with lookup-ext T x id-ext (transᵣ (eqᵣ ≡̂ᵣ-identityʳ) le)
 ... | D , p = D , trans p (ren-idᵛ (λ i → refl) (lookupₛ 𝕊 (var-pos x)))

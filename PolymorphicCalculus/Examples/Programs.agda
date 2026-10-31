@@ -73,13 +73,13 @@ rejectedAt (rejected k)   = just k
 -- The definitions; `usedef k` names the one at position `k`, from 0
 
 keep : RawV ∅ˢ 0
-keep = lam (delay ⌜ 1 ⌝ (return v₀))
+keep = fun (delay ⌜ 1 ⌝ (return v₀))
 
 twice : RawV ∅ˢ 0
-twice = lam ((usedef 0 · ⋆) ⨟ (usedef 0 · true))
+twice = fun ((usedef 0 · ⋆) ⨟ (usedef 0 · true))
 
 late : RawV ∅ˢ 0
-late = lam (usedef 0 · lam (return v₀))
+late = fun (usedef 0 · fun (return v₀))
 
 -- The programs
 

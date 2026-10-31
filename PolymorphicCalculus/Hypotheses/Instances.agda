@@ -186,20 +186,20 @@ _≡̂ₑ?_ : (ε ε' : EExp ∅ˢ) → Dec (ε ≡̂ₑ ε')
 
 -- The var-rule disjunction: eternality, or a value below the unit
 
-VarOK-∅ : {A : OVType ∅ˢ} {ρ : RExp ∅ˢ}
-        → VarOK ∅ᴴ A ρ → (∅ᴴ ⊩Et A) ⊎ (valʳ ρ ≾ᵣ 𝟏ᵣ)
-VarOK-∅ ok = [ inj₁ , (λ le → inj₂ (val-≾ᵣ le)) ]′ (VarOK-∅ᴴ ok)
+Et∨≾ᵘ-∅ : {A : OVType ∅ˢ} {ρ : RExp ∅ˢ}
+        → ∅ᴴ ⊩ A Et∨≾ᵘ ρ → (∅ᴴ ⊩Et A) ⊎ (valʳ ρ ≾ᵣ 𝟏ᵣ)
+Et∨≾ᵘ-∅ ok = [ inj₁ , (λ le → inj₂ (val-≾ᵣ le)) ]′ (Et∨≾ᵘ-∅ᴴ ok)
 
-VarOK-∅⁻ : {A : OVType ∅ˢ} {ρ : RExp ∅ˢ}
-         → (∅ᴴ ⊩Et A) ⊎ (valʳ ρ ≾ᵣ 𝟏ᵣ) → VarOK ∅ᴴ A ρ
-VarOK-∅⁻ (inj₁ et) = et-ok et
-VarOK-∅⁻ (inj₂ le) = ≾ᵘ-ok (val-≾ᵣ⁻ le)
+Et∨≾ᵘ-∅⁻ : {A : OVType ∅ˢ} {ρ : RExp ∅ˢ}
+         → (∅ᴴ ⊩Et A) ⊎ (valʳ ρ ≾ᵣ 𝟏ᵣ) → ∅ᴴ ⊩ A Et∨≾ᵘ ρ
+Et∨≾ᵘ-∅⁻ (inj₁ et) = et-ok et
+Et∨≾ᵘ-∅⁻ (inj₂ le) = ≾ᵘ-ok (val-≾ᵣ⁻ le)
 
-VarOK? : (A : OVType ∅ˢ) → (ρ : RExp ∅ˢ) → Dec (VarOK ∅ᴴ A ρ)
-VarOK? A ρ with ⊩Et? A | valʳ ρ ≾ᵣ? 𝟏ᵣ
+Et∨≾ᵘ? : (A : OVType ∅ˢ) → (ρ : RExp ∅ˢ) → Dec (∅ᴴ ⊩ A Et∨≾ᵘ ρ)
+Et∨≾ᵘ? A ρ with ⊩Et? A | valʳ ρ ≾ᵣ? 𝟏ᵣ
 ... | yes et | _      = yes (et-ok et)
 ... | no  _  | yes le = yes (≾ᵘ-ok (val-≾ᵣ⁻ le))
-... | no ¬et | no ¬le = no λ ok → [ ¬et , ¬le ]′ (VarOK-∅ ok)
+... | no ¬et | no ¬le = no λ ok → [ ¬et , ¬le ]′ (Et∨≾ᵘ-∅ ok)
 
 -- Subtyping preserves the outermost former
 
@@ -217,7 +217,7 @@ former (_ |+| _) = 9
 former (list _)  = 10
 former (_ ⇛ _)   = 11
 
-<:̂ᵛ-former : ∀ {Θ} {Q : Hyps Θ} {A B : OVType Θ} → Q ∣ A <:̂ᵛ B → former A ≡ former B
+<:̂ᵛ-former : ∀ {Θ} {Q : Hyps Θ} {A B : OVType Θ} → Q ⊩ A <:̂ᵛ B → former A ≡ former B
 <:̂ᵛ-former (tvarₛ _)  = refl
 <:̂ᵛ-former (Baseₛ _)  = refl
 <:̂ᵛ-former unitₛ      = refl
@@ -233,11 +233,11 @@ former (_ ⇛ _)   = 11
 
 infix 4 _<:̂ᵛ?_ _<:̂ᶜ?_
 
-_<:̂ᵛ?_ : (A B : OVType ∅ˢ) → Dec (∅ᴴ ∣ A <:̂ᵛ B)
-_<:̂ᶜ?_ : (C D : OCType ∅ˢ) → Dec (∅ᴴ ∣ C <:̂ᶜ D)
+_<:̂ᵛ?_ : (A B : OVType ∅ˢ) → Dec (∅ᴴ ⊩ A <:̂ᵛ B)
+_<:̂ᶜ?_ : (C D : OCType ∅ˢ) → Dec (∅ᴴ ⊩ C <:̂ᶜ D)
 
 -- Types with the same outermost former
-same : (A B : OVType ∅ˢ) → former A ≡ former B → Dec (∅ᴴ ∣ A <:̂ᵛ B)
+same : (A B : OVType ∅ˢ) → former A ≡ former B → Dec (∅ᴴ ⊩ A <:̂ᵛ B)
 same (tvar ()) _ _
 same (Base b)  (Base b')  refl = map′ Baseₛ (λ { (Baseₛ p) → p }) (b ≡ᵇ? b')
 same unit      unit       refl = yes unitₛ
@@ -370,11 +370,11 @@ _⊨ᴴ_ {Θ} Q Q' = (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ
 
 mk⊨ᴴ : ∀ {Θ} {Q Q' : Hyps Θ}
      → (∀ {α} → α ∈ ets Q' → Q ⊩Et tvar α)
-     → (∀ {α β} → (α , β) ∈ subᵥ Q' → Q ∣ tvar α <:̂ᵛ tvar β)
+     → (∀ {α β} → (α , β) ∈ subᵥ Q' → Q ⊩ tvar α <:̂ᵛ tvar β)
      → (∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q' → Q ⊩ ρ ≾̂ᵣ ρ')
      → (∀ {ε ε'} → (ε , ε') ∈ ordₑ Q' → Q ⊩ ε ≾̂ₑ ε')
      → ((δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ]
-        → ∀ {A ρ} → (A , ρ) ∈ disj Q' → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ))
+        → ∀ {A ρ} → (A , ρ) ∈ disj Q' → ∅ᴴ ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ [ δ ]ʳ)
      → (∀ {O} → O ∈ qhyps Q' → Q ⊩ᴼ O [ idˢ ])
      → Q ⊨ᴴ Q'
 mk⊨ᴴ et sb oR oE dj qh δ h =
@@ -382,9 +382,9 @@ mk⊨ᴴ et sb oR oE dj qh δ h =
        (λ m → ⊩-substᵣ h (oR m)) (λ m → ⊩-substₑ h (oE m)) (dj δ h)
        (λ {O} m → ⊩ᴼ-resp-≐ˢ O (⨟-idˡ δ) (⊩ᴼ-⨟ O h (qh m)))
 
-VarOK-∅-mono : {A A' : OVType ∅ˢ} {ρ ρ' : RExp ∅ˢ}
-             → (∅ᴴ ⊩Et A → ∅ᴴ ⊩Et A') → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ → VarOK ∅ᴴ A ρ → VarOK ∅ᴴ A' ρ'
-VarOK-∅-mono f q ok = [ (λ et → et-ok (f et)) , (λ le → ≾ᵘ-ok (transᵣ q le)) ]′ (VarOK-∅ᴴ ok)
+Et∨≾ᵘ-∅-mono : {A A' : OVType ∅ˢ} {ρ ρ' : RExp ∅ˢ}
+             → (∅ᴴ ⊩Et A → ∅ᴴ ⊩Et A') → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ → ∅ᴴ ⊩ A Et∨≾ᵘ ρ → ∅ᴴ ⊩ A' Et∨≾ᵘ ρ'
+Et∨≾ᵘ-∅-mono f q ok = [ (λ et → et-ok (f et)) , (λ le → ≾ᵘ-ok (transᵣ q le)) ]′ (Et∨≾ᵘ-∅ᴴ ok)
 
 -- What a set entails holds by value at each of its instances
 
@@ -412,10 +412,10 @@ inst-≡̂ₑ : ∀ {Θ} {ε ε' : EExp Θ} → (δ : Subst Θ ∅ˢ)
         → ε ≡̂ₑ ε' → valᵉ (ε [ δ ]ᵉ) ≃ₑ valᵉ (ε' [ δ ]ᵉ)
 inst-≡̂ₑ δ p = val-≡̂ₑ (≡̂ₑ-subst δ p)
 
-inst-VarOK : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {A : OVType Θ} {ρ : RExp Θ}
-           → ∅ᴴ ⊩ᴴ Q [ δ ] → VarOK Q A ρ
+inst-Et∨≾ᵘ : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {A : OVType Θ} {ρ : RExp Θ}
+           → ∅ᴴ ⊩ᴴ Q [ δ ] → Q ⊩ A Et∨≾ᵘ ρ
            → (∅ᴴ ⊩Et A [ δ ]ᵛ) ⊎ (valʳ (ρ [ δ ]ʳ) ≾ᵣ 𝟏ᵣ)
-inst-VarOK h ok = VarOK-∅ (VarOK-subst h ok)
+inst-Et∨≾ᵘ h ok = Et∨≾ᵘ-∅ (Et∨≾ᵘ-subst h ok)
 
 -- An ordering between expressions convertible to constants is theirs
 

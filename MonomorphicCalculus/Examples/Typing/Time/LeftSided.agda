@@ -91,7 +91,7 @@ tagged-relaying =
   perform read ⋆                     -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
                                      -- ∷ NodeId ∷ Reading
-      `in perform send here (return ⋆))
+      `with perform send here (return ⋆))
 
 ------------------------------------------------------------------------
 -- Nothing goes stale
@@ -242,7 +242,7 @@ claiming-now =
 handed-over : [] ⊢C⦂ unit ! [ 6 ,+∞⟩
 handed-over =
   box [ 1 ,+∞⟩ (const 42)            -- ∷ [ [ 1 ,+∞⟩ ] Reading
-    (lam                             -- ∷ [ [ 1 ,+∞⟩ ] Reading
+    (fun                             -- ∷ [ [ 1 ,+∞⟩ ] Reading
        (perform write (const 0)      -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ unit
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -541,7 +541,7 @@ handling-a-reading :
   [] ∷ [ [ 1 ,+∞⟩ ] Reading
     ⊢V⦂ ((unit ! [ 1 ,+∞⟩) ⇛ (Reading ! 𝟏ₑ)) ⇒ Reading ! [ 1 ,+∞⟩
 handling-a-reading =
-  lam                                -- ∷ handler
+  fun                                -- ∷ handler
     (handle perform read ⋆ (return ⋆) `with here)
 
 handled-by-argument : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢C⦂ Reading ! [ 1 ,+∞⟩

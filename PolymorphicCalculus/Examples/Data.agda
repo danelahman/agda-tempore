@@ -1,8 +1,8 @@
 --------------------------------------------------------------------
 -- Inference on natural numbers, sums and lists                   --
 --                                                                --
--- `caseℕ`, `case+` and `caseL` with their constructors. `nat` is --
--- eternal; sums and lists are covariant, and eternal exactly     --
+-- `matchℕ`, `match+` and `matchL` with their constructors. `nat` --
+-- is eternal; sums and lists are covariant, and eternal exactly  --
 -- when their components are, so they survive a lock where a      --
 -- function does not. `⌜ n ⌝` is the duration of `n` ticks. The   --
 -- instances under `Data/` check each answer by `refl` at both    --
@@ -90,7 +90,7 @@ private
 
   -- A variable no time has passed over
 
-  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → VarOK Q A 𝟏̂ᵣ
+  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → Q ⊩ A Et∨≾ᵘ 𝟏̂ᵣ
   ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
   -- A claim made after exactly the box's grade
@@ -106,16 +106,16 @@ private
 ------------------------------------------------------------------
 -- 1. Eliminating a natural number
 --
---   is-zero n = caseℕ n of zero ↦ true | succ m ↦ false
---   pred n    = caseℕ n of zero ↦ 0    | succ m ↦ m
+--   is-zero n = matchℕ n of zero ↦ true | succ m ↦ false
+--   pred n    = matchℕ n of zero ↦ 0    | succ m ↦ m
 --
 -- Typed at every grade.
 
 is-zero : RawC ∅ˢ 0
-is-zero = return (lam (caseℕ v₀ `zero return true `succ return false))
+is-zero = return (fun (matchℕ v₀ `zero return true `succ return false))
 
 is-zero-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂ₑ
-is-zero-D = return (lam (caseℕ var Hd ok₀ `zero return true `succ return false))
+is-zero-D = return (fun (matchℕ var Hd ok₀ `zero return true `succ return false))
 
 is-zero-typed : IsTyped (infer [] is-zero)
 is-zero-typed = typed-of is-zero (closed is-zero-D refl) _
@@ -124,10 +124,10 @@ expected-is-zero : Scheme
 expected-is-zero = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (nat ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂ₑ
 
 pred : RawC ∅ˢ 0
-pred = return (lam (caseℕ v₀ `zero return zero `succ return v₀))
+pred = return (fun (matchℕ v₀ `zero return zero `succ return v₀))
 
 pred-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ
-pred-D = return (lam (caseℕ var Hd ok₀ `zero return zero `succ return (var Hd ok₀)))
+pred-D = return (fun (matchℕ var Hd ok₀ `zero return zero `succ return (var Hd ok₀)))
 
 pred-typed : IsTyped (infer [] pred)
 pred-typed = typed-of pred (closed pred-D refl) _
@@ -135,12 +135,12 @@ pred-typed = typed-of pred (closed pred-D refl) _
 expected-pred : Scheme
 expected-pred = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ
 
---   case-of-bool = caseℕ true of zero ↦ () | succ m ↦ ()
+--   match-on-bool = matchℕ true of zero ↦ () | succ m ↦ ()
 --
 -- Refused: `bool` is not `nat`.
 
-case-of-bool : RawC ∅ˢ 0
-case-of-bool = caseℕ true `zero return ⋆ `succ return ⋆
+match-on-bool : RawC ∅ˢ 0
+match-on-bool = matchℕ true `zero return ⋆ `succ return ⋆
 
 ------------------------------------------------------------------
 -- 2. A natural number used under a lock
@@ -150,10 +150,10 @@ case-of-bool = caseℕ true `zero return ⋆ `succ return ⋆
 -- `nat` is eternal: typed at every grade.
 
 later-succ : RawC ∅ˢ 0
-later-succ = return (lam (delay ⌜ 1 ⌝ (return (succ v₀))))
+later-succ = return (fun (delay ⌜ 1 ⌝ (return (succ v₀))))
 
 later-succ-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ nat ! (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
-later-succ-D = return (lam (delay ⌜ 1 ⌝ (return (succ (var (Tl-⟨⟩ Hd) (et-ok natₑ))))))
+later-succ-D = return (fun (delay ⌜ 1 ⌝ (return (succ (var (Tl-⟨⟩ Hd) (et-ok natₑ))))))
 
 later-succ-typed : IsTyped (infer [] later-succ)
 later-succ-typed = typed-of later-succ (closed later-succ-D refl) _
@@ -167,7 +167,7 @@ expected-later-succ = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (nat ⇒ nat ! ⌜ 1 ⌝ᵉ) ! �
 -- `eternal α` at the right-sided ones.
 
 later-id : RawC ∅ˢ 0
-later-id = return (lam (delay ⌜ 1 ⌝ (return v₀)))
+later-id = return (fun (delay ⌜ 1 ⌝ (return v₀)))
 
 expected-later-id-eternal : Scheme
 expected-later-id-eternal =
@@ -198,11 +198,11 @@ expected-numeral-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ nat ! ⌜ 1 ⌝ᵉ
 -- A function is not eternal: typed at the left-sided grades only.
 
 function-later : RawC ∅ˢ 0
-function-later = return (lam (return ⋆)) ⨟ delay ⌜ 1 ⌝ (v₀ · ⋆)
+function-later = return (fun (return ⋆)) ⨟ delay ⌜ 1 ⌝ (v₀ · ⋆)
 
 function-later-D : ιᵣ ⌜ 1 ⌝ ≾ᴳ 𝟏ᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 function-later-D q =
-  return (lam {A = unit} (return ⋆))
+  return (fun {A = unit} (return ⋆))
   ⨟ delay ⌜ 1 ⌝ (var (Tl-⟨⟩ Hd) (≾ᵘ-ok (after q)) · ⋆)
 
 function-later-typable : True (ιᵣ ⌜ 1 ⌝ ≾ᵣ? 𝟏ᵣ) → Typable [] function-later
@@ -235,19 +235,19 @@ expected-boxed-numeral = ∀[ 0 , 0 , 0 ] ⊤ ⟹ nat ! ⌜ 2 ⌝ᵉ
 ------------------------------------------------------------------
 -- 4. Branches of different effects
 --
---   joined n = caseℕ n of zero ↦ delay 1; 0 | succ m ↦ delay 3; m
+--   joined n = matchℕ n of zero ↦ delay 1; 0 | succ m ↦ delay 3; m
 --
 -- The effect is the join: three ticks at the right-sided grades, one
 -- at the left-sided ones.
 
 joined : RawC ∅ˢ 0
 joined =
-  return (lam (caseℕ v₀ `zero delay ⌜ 1 ⌝ (return zero)
-                        `succ delay ⌜ 3 ⌝ (return v₀)))
+  return (fun (matchℕ v₀ `zero delay ⌜ 1 ⌝ (return zero)
+                         `succ delay ⌜ 3 ⌝ (return v₀)))
 
 joined-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ nat ! (⌜ 1 ⌝ᵉ ⊔̂ₑ ⌜ 3 ⌝ᵉ)) ! 𝟏̂ₑ
 joined-D =
-  return (lam (caseℕ var Hd ok₀
+  return (fun (matchℕ var Hd ok₀
     `zero coerce (transₑ (eqₑ ≡̂ₑ-identityʳ) ⊔-ubˡₑ) (delay ⌜ 1 ⌝ (return zero))
     `succ coerce (transₑ (eqₑ ≡̂ₑ-identityʳ) ⊔-ubʳₑ)
             (delay ⌜ 3 ⌝ (return (var (Tl-⟨⟩ Hd) (et-ok natₑ))))))
@@ -263,17 +263,17 @@ expected-joined =
 ------------------------------------------------------------------
 -- 5. Sums
 --
---   swap s = case+ s of inl x ↦ inr x | inr y ↦ inl y
+--   swap s = match+ s of inl x ↦ inr x | inr y ↦ inl y
 --
 -- Typed at every grade.
 
 swap : RawC ∅ˢ 0
-swap = return (lam (case+ v₀ `inl return (inr v₀) `inr return (inl v₀)))
+swap = return (fun (match+ v₀ `inl return (inr v₀) `inr return (inl v₀)))
 
 swap-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat |+| bool ⇒ bool |+| nat ! 𝟏̂ₑ) ! 𝟏̂ₑ
 swap-D =
-  return (lam (case+ var Hd ok₀ `inl return (inr (var Hd ok₀))
-                                `inr return (inl (var Hd ok₀))))
+  return (fun (match+ var Hd ok₀ `inl return (inr (var Hd ok₀))
+                                 `inr return (inl (var Hd ok₀))))
 
 swap-typed : IsTyped (infer [] swap)
 swap-typed = typed-of swap (closed swap-D refl) _
@@ -281,18 +281,18 @@ swap-typed = typed-of swap (closed swap-D refl) _
 expected-swap : Scheme
 expected-swap = ∀[ 2 , 0 , 0 ] ⊤ ⟹ (α₁ |+| α₀ ⇒ α₀ |+| α₁ ! 𝟏̂ₑ) ! 𝟏̂ₑ
 
---   choose s = case+ s of inl n ↦ delay 1; succ n | inr _ ↦ delay 3; 0
+--   choose s = match+ s of inl n ↦ delay 1; succ n | inr _ ↦ delay 3; 0
 --
--- The effects are joined as for `caseℕ`.
+-- The effects are joined as for `matchℕ`.
 
 choose : RawC ∅ˢ 0
 choose =
-  return (lam (case+ v₀ `inl delay ⌜ 1 ⌝ (return (succ v₀))
-                        `inr delay ⌜ 3 ⌝ (return zero)))
+  return (fun (match+ v₀ `inl delay ⌜ 1 ⌝ (return (succ v₀))
+                         `inr delay ⌜ 3 ⌝ (return zero)))
 
 choose-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat |+| bool ⇒ nat ! (⌜ 1 ⌝ᵉ ⊔̂ₑ ⌜ 3 ⌝ᵉ)) ! 𝟏̂ₑ
 choose-D =
-  return (lam (case+ var Hd ok₀
+  return (fun (match+ var Hd ok₀
     `inl coerce (transₑ (eqₑ ≡̂ₑ-identityʳ) ⊔-ubˡₑ)
             (delay ⌜ 1 ⌝ (return (succ (var (Tl-⟨⟩ Hd) (et-ok natₑ)))))
     `inr coerce (transₑ (eqₑ ≡̂ₑ-identityʳ) ⊔-ubʳₑ) (delay ⌜ 3 ⌝ (return zero))))
@@ -307,7 +307,7 @@ expected-choose =
 
 -- Subtyping in a summand; typed at every grade.
 --
---   subsume-sum = let f = (λ s. case+ s of inl _ ↦ delay 3; ()
+--   subsume-sum = let f = (λ s. match+ s of inl _ ↦ delay 3; ()
 --                                  | inr g ↦ g ())
 --                   : Nat + (Unit ⇒ Unit ! 1 ⊔ 3) ⇒ Unit ! 1 ⊔ 3
 --           in f (inr (λ _. delay 1; ()) : Nat + (Unit ⇒ Unit ! 1))
@@ -323,18 +323,18 @@ private
 
 subsume-sum : RawC ∅ˢ 0
 subsume-sum =
-  return (lam (case+ v₀ `inl delay ⌜ 3 ⌝ (return ⋆) `inr (v₀ · ⋆))
+  return (fun (match+ v₀ `inl delay ⌜ 3 ⌝ (return ⋆) `inr (v₀ · ⋆))
             ⦂ᵛ (Wide ⇒ unit ! j₁₃))
-  ⨟ (v₀ · (inr (lam (delay ⌜ 1 ⌝ (return ⋆))) ⦂ᵛ Narrow))
+  ⨟ (v₀ · (inr (fun (delay ⌜ 1 ⌝ (return ⋆))) ⦂ᵛ Narrow))
 
 subsume-sum-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! (𝟏̂ₑ ·̂ₑ j₁₃)
 subsume-sum-D =
   return (annᵛ (Wide ⇒ unit ! j₁₃)
-           (lam (case+ var Hd ok₀
+           (fun (match+ var Hd ok₀
                   `inl coerce (transₑ (eqₑ ≡̂ₑ-identityʳ) ⊔-ubʳₑ) (delay ⌜ 3 ⌝ (return ⋆))
                   `inr (var Hd ok₀ · ⋆))))
   ⨟ (var Hd ok₀ · subV (annᵛ Narrow
-                           (inr (lam (coerce (eqₑ ≡̂ₑ-identityʳ) (delay ⌜ 1 ⌝ (return ⋆))))))
+                           (inr (fun (coerce (eqₑ ≡̂ₑ-identityʳ) (delay ⌜ 1 ⌝ (return ⋆))))))
                          (natₛ |+|ₛ (unitₛ ⇒ₛ (unitₛ !ₛ ⊔-ubˡₑ))))
 
 subsume-sum-typed : IsTyped (infer [] subsume-sum)
@@ -381,11 +381,11 @@ expected-inl-later = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (nat |+| α₀) ! ⌜ 1 ⌝ᵉ
 
 fun-sum-later : RawC ∅ˢ 0
 fun-sum-later =
-  return (inr (lam (delay ⌜ 1 ⌝ (return ⋆))) ⦂ᵛ Narrow) ⨟ delay ⌜ 1 ⌝ (return v₀)
+  return (inr (fun (delay ⌜ 1 ⌝ (return ⋆))) ⦂ᵛ Narrow) ⨟ delay ⌜ 1 ⌝ (return v₀)
 
 fun-sum-later-D : ιᵣ ⌜ 1 ⌝ ≾ᴳ 𝟏ᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Narrow ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 fun-sum-later-D q =
-  return (annᵛ Narrow (inr (lam (coerce (eqₑ ≡̂ₑ-identityʳ) (delay ⌜ 1 ⌝ (return ⋆))))))
+  return (annᵛ Narrow (inr (fun (coerce (eqₑ ≡̂ₑ-identityʳ) (delay ⌜ 1 ⌝ (return ⋆))))))
   ⨟ delay ⌜ 1 ⌝ (return (var (Tl-⟨⟩ Hd) (≾ᵘ-ok (after q))))
 
 fun-sum-later-typable : True (ιᵣ ⌜ 1 ⌝ ≾ᵣ? 𝟏ᵣ) → Typable [] fun-sum-later
@@ -395,26 +395,26 @@ expected-fun-sum-later : Scheme
 expected-fun-sum-later =
   ∀[ 0 , 0 , 0 ] ⊤ ⟹ (nat |+| (unit ⇒ unit ! ⌜ 1 ⌝ᵉ)) ! ⌜ 1 ⌝ᵉ
 
---   case-of-bool+ = case+ true of inl _ ↦ () | inr _ ↦ ()
+--   match-on-bool+ = match+ true of inl _ ↦ () | inr _ ↦ ()
 --
 -- Refused: `bool` is not a sum.
 
-case-of-bool+ : RawC ∅ˢ 0
-case-of-bool+ = case+ true `inl return ⋆ `inr return ⋆
+match-on-bool+ : RawC ∅ˢ 0
+match-on-bool+ = match+ true `inl return ⋆ `inr return ⋆
 
 ------------------------------------------------------------------
 -- 6. Lists
 --
---   head-or d l = caseL l of nil ↦ d | cons h t ↦ h
+--   head-or d l = matchL l of nil ↦ d | cons h t ↦ h
 --
 -- The result is a common supertype of `d` and `h`; typed everywhere.
 
 head-or : RawC ∅ˢ 0
-head-or = return (lam (return (lam (caseL v₀ `nil return v₁ `cons return v₁))))
+head-or = return (fun (return (fun (matchL v₀ `nil return v₁ `cons return v₁))))
 
 head-or-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ (list nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 head-or-D =
-  return (lam (return (lam (caseL var Hd ok₀ `nil return (var (Tl-∷ Hd) ok₀)
+  return (fun (return (fun (matchL var Hd ok₀ `nil return (var (Tl-∷ Hd) ok₀)
                                             `cons return (var (Tl-∷ Hd) ok₀)))))
 
 head-or-typed : IsTyped (infer [] head-or)
@@ -467,11 +467,11 @@ private
 
 fun-list-later : RawC ∅ˢ 0
 fun-list-later =
-  return (cons (lam (return ⋆)) nil ⦂ᵛ list Fn) ⨟ delay ⌜ 1 ⌝ (return v₀)
+  return (cons (fun (return ⋆)) nil ⦂ᵛ list Fn) ⨟ delay ⌜ 1 ⌝ (return v₀)
 
 fun-list-later-D : ιᵣ ⌜ 1 ⌝ ≾ᴳ 𝟏ᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ list Fn ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 fun-list-later-D q =
-  return (annᵛ (list Fn) (cons (lam (return ⋆)) nil))
+  return (annᵛ (list Fn) (cons (fun (return ⋆)) nil))
   ⨟ delay ⌜ 1 ⌝ (return (var (Tl-⟨⟩ Hd) (≾ᵘ-ok (after q))))
 
 fun-list-later-typable : True (ιᵣ ⌜ 1 ⌝ ≾ᵣ? 𝟏ᵣ) → Typable [] fun-list-later
@@ -480,9 +480,9 @@ fun-list-later-typable q = closed (fun-list-later-D (toWitness q)) refl
 expected-fun-list-later : Scheme
 expected-fun-list-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ list Fn ! ⌜ 1 ⌝ᵉ
 
---   case-of-nat = caseL 0 of nil ↦ () | cons h t ↦ ()
+--   match-on-nat = matchL 0 of nil ↦ () | cons h t ↦ ()
 --
 -- Refused: `nat` is not a list.
 
-case-of-nat : RawC ∅ˢ 0
-case-of-nat = caseL zero `nil return ⋆ `cons return ⋆
+match-on-nat : RawC ∅ˢ 0
+match-on-nat = matchL zero `nil return ⋆ `cons return ⋆

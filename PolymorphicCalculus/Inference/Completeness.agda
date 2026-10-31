@@ -68,7 +68,7 @@ private
 cmpUseDef : ∀ {Θ n Θ'} → (σ : Subst Θ Θ') → {Q : Hyps Θ'}
           → (Γ : OCtx Θ n) → (k : ℕ) → (A : OVType Θ) → (sc : Scheme)
           → sc ∈ᵖ[ k ] defs Γ → (δ : Subst (Θˢ sc) Θ') → Q ⊩ᴴ Qˢ sc [ δ ]
-          → Q ∣ Xˢ sc [ δ ]ᵛ <:̂ᵛ A [ σ ]ᵛ
+          → Q ⊩ Xˢ sc [ δ ]ᵛ <:̂ᵛ A [ σ ]ᵛ
           → σ ⊨[ Q ] useDefConstraint (lookupᵖ (defs Γ) k) A
 cmpUseDef σ Γ k A sc f δ h st rewrite ∈-lookupᵖ f = instᶜ-complete sc A δ st h
 
@@ -92,7 +92,7 @@ cmpR {σ = σ} {z = z} ι Γ _ res-var var ceq = tt , lty , lgr
     lgr = trans (sym (lookup-gr-subst Γ σ i))
                 (trans (cong (λ G → lookup-gr G i) (sym ceq)) (var-pos-gr z))
 cmpR {σ = σ} {Q = Q} ι Γ _ (res-ann ρₐ Xₐ R p q) (annᵛ {V = V} {A = B} eV eB) ceq =
-  (proj₁ c , subst₂ (Q ∣_<:̂ᵛ_) (sym (proj₁ (proj₂ c))) (sym eB') ([ p ]ₛ q)) ,
+  (proj₁ c , subst₂ (Q ⊩_<:̂ᵛ_) (sym (proj₁ (proj₂ c))) (sym eB') ([ p ]ₛ q)) ,
   eB' , proj₂ (proj₂ c)
   where
     c   = cmpR ι Γ V R (invV V eV) ceq
@@ -106,14 +106,14 @@ mutual
        → (D : Q ∣ Γ₀ ⊢V⦂ A₀)
        → InvV (ι ⨟ˢ σ) V ⌊ D ⌋ᵛ
        → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
-       → Q ∣ A₀ <:̂ᵛ A [ σ ]ᵛ
+       → Q ⊩ A₀ <:̂ᵛ A [ σ ]ᵛ
        --------------------------
        → σ ⊨[ Q ] genVˢ ι Γ V A
 
   -- variables: at `var-pos x` the two lookups agree with `x`'s type and grade
 
   cmpV {σ = σ} {Q = Q} ι Γ A _ (var {A = A₁} {ρ = ρ₁} x ok) var ceq st =
-    subst (λ z → Q ∣ z <:̂ᵛ A [ σ ]ᵛ) (sym lty) st , ok'
+    subst (λ z → Q ⊩ z <:̂ᵛ A [ σ ]ᵛ) (sym lty) st , ok'
     where
       i = var-pos x
 
@@ -125,8 +125,8 @@ mutual
       lgr = trans (sym (lookup-gr-subst Γ σ i))
                   (trans (cong (λ G → lookup-gr G i) (sym ceq)) (var-pos-gr x))
 
-      ok' : VarOK Q (lookup-ty Γ i [ σ ]ᵛ) (lookup-gr Γ i [ σ ]ʳ)
-      ok' = subst₂ (VarOK Q) (sym lty) (sym lgr) ok
+      ok' : Q ⊩ lookup-ty Γ i [ σ ]ᵛ Et∨≾ᵘ lookup-gr Γ i [ σ ]ʳ
+      ok' = subst₂ (Q ⊩_Et∨≾ᵘ_) (sym lty) (sym lgr) ok
 
   -- uses of definitions
 
@@ -137,15 +137,15 @@ mutual
   -- recovers the pin
 
   cmpV {σ = σ} ι Γ A _ (const B c) const ceq st = ⊨-≐ᵥ σ (Base B) A (sym (<:̂ᵛ-Baseˡ st))
-  cmpV {σ = σ} ι Γ A _ ⋆           ⋆     ceq st = ⊨-≐ᵥ σ unit A (sym (<:̂ᵛ-Unitˡ st))
-  cmpV {σ = σ} ι Γ A _ true        true  ceq st = ⊨-≐ᵥ σ bool A (sym (<:̂ᵛ-Boolˡ st))
-  cmpV {σ = σ} ι Γ A _ false       false ceq st = ⊨-≐ᵥ σ bool A (sym (<:̂ᵛ-Boolˡ st))
+  cmpV {σ = σ} ι Γ A _ ⋆           ⋆     ceq st = ⊨-≐ᵥ σ unit A (sym (<:̂ᵛ-unitˡ st))
+  cmpV {σ = σ} ι Γ A _ true        true  ceq st = ⊨-≐ᵥ σ bool A (sym (<:̂ᵛ-boolˡ st))
+  cmpV {σ = σ} ι Γ A _ false       false ceq st = ⊨-≐ᵥ σ bool A (sym (<:̂ᵛ-boolˡ st))
 
   -- natural numbers
 
-  cmpV {σ = σ} ι Γ A _ zero        zero  ceq st = ⊨-≐ᵥ σ nat A (sym (<:̂ᵛ-Natˡ st))
+  cmpV {σ = σ} ι Γ A _ zero        zero  ceq st = ⊨-≐ᵥ σ nat A (sym (<:̂ᵛ-natˡ st))
   cmpV {σ = σ} ι Γ A _ (succ D) (succ {V = V} e) ceq st =
-    ⊨-≐ᵥ σ nat A (sym (<:̂ᵛ-Natˡ st)) , cmpV ι Γ nat V D (invV V e) ceq natₛ
+    ⊨-≐ᵥ σ nat A (sym (<:̂ᵛ-natˡ st)) , cmpV ι Γ nat V D (invV V e) ceq natₛ
 
   -- pairing: a supertype of a product is a product; the slack splits
 
@@ -205,12 +205,12 @@ mutual
   -- tail its lifting
 
   cmpV {Θ = Θ} {σ = σ} ι Γ A _ nil nil ceq st
-    with <:̂ᵛ-Listˡ st
+    with <:̂ᵛ-listˡ st
   ... | B , eq , _ =
     B , ⊨-≐ᵥ (σ ,ᵗ B) (list (tvar (newᵗ {Θ}))) (wkᵗ-v A) (trans (sym eq) (sym (wk-,ᵗ-v σ B A)))
 
   cmpV {Θ = Θ} {σ = σ} ι Γ A _ (cons D₁ D₂) (cons {V = V} {W = W} e₁ e₂) ceq st
-    with <:̂ᵛ-Listˡ st
+    with <:̂ᵛ-listˡ st
   ... | B , eq , st₁ =
     B , ⊨-≐ᵥ (σ ,ᵗ B) (list α) (wkᵗ-v A) (trans (sym eq) (sym pA)) ,
     cmpV ι↑ Γ↑ α V D₁ (reV pι V e₁) (trans ceq (sym pΓ)) st₁ ,
@@ -228,7 +228,7 @@ mutual
 
   cmpV {Θ = Θ} {σ = σ} {Q = Q} ι Γ A _
        (cmp {A = A₁} ⋈ D₁ D₂ et) (cmp {V = V} {W = W} e₁ e₂) ceq st =
-    A₁ , ⊨-≐ᵥ (σ ,ᵗ A₁) bool (wkᵗ-v A) (trans (sym (<:̂ᵛ-Boolˡ st)) (sym pA)) ,
+    A₁ , ⊨-≐ᵥ (σ ,ᵗ A₁) bool (wkᵗ-v A) (trans (sym (<:̂ᵛ-boolˡ st)) (sym pA)) ,
     ih₁ , ih₂ , et
     where
       ι↑ = ι ⨟ˢ wkˢᵗ
@@ -245,8 +245,8 @@ mutual
   -- lambda abstraction
 
   cmpV {Θ = Θ} {σ = σ} {Q = Q} ι Γ A _
-       (lam {A = A₁} {C = A₂ ! ε₀} D) (lam {M = M} e) ceq st =
-    A₁ , A₂ , ε₀ , subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st , ih
+       (fun {A = A₁} {C = A₂ ! ε₀} D) (fun {M = M} e) ceq st =
+    A₁ , A₂ , ε₀ , subst (λ z → Q ⊩ _ <:̂ᵛ z) (sym pA) st , ih
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
       Γ↑ = wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
@@ -267,7 +267,7 @@ mutual
   cmpV {Θ = Θ} {Θ' = Θ'} {σ = σ} {Q = Q} ι Γ A _
        (handler {A = A₁} {B = A₂} {ε = ε₁} {ε' = ε₂} D₂ H)
        (handler {N = N} {H = R} eN eR) ceq st =
-    A₁ , A₂ , ε₁ , ε₂ , subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st , ih₂ , ihH
+    A₁ , A₂ , ε₁ , ε₂ , subst (λ z → Q ⊩ _ <:̂ᵛ z) (sym pA) st , ih₂ , ihH
     where
       ι↑  = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ
       σ'  = σ ,ᵗ A₁ ,ᵗ A₂ ,ᵉ ε₁ ,ᵉ ε₂
@@ -314,7 +314,7 @@ mutual
                  ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ! e''))
              γ⇑ (econst (op-grade op) ·̂ₑ e'')
              (R op) (H op) (reC pι⇑ (R op) (eR op)) (cH op)
-             (subst (λ z → wkᵉ-H Q ∣ wkᵉ-v A₂ <:̂ᵛ z) (sym pγ⇑)
+             (subst (λ z → wkᵉ-H Q ⊩ wkᵉ-v A₂ <:̂ᵛ z) (sym pγ⇑)
                     (<:̂ᵛ-refl (wkᵉ-v A₂)))
              ⊩≾̂ₑ-refl
 
@@ -323,8 +323,8 @@ mutual
 
   cmpV {σ = σ} {Q = Q} ι Γ A _ (annᵛ A₁ D) (annᵛ {V = V} {A = B} eV eB) ceq st =
     cmpV ι Γ (B [ ι ]ᵛ) V D (invV V eV) ceq
-         (subst (λ z → Q ∣ A₁ <:̂ᵛ z) (sym pB) (<:̂ᵛ-refl A₁)) ,
-    subst (λ z → Q ∣ z <:̂ᵛ A [ σ ]ᵛ) (sym pB) st
+         (subst (λ z → Q ⊩ A₁ <:̂ᵛ z) (sym pB) (<:̂ᵛ-refl A₁)) ,
+    subst (λ z → Q ⊩ z <:̂ᵛ A [ σ ]ᵛ) (sym pB) st
     where
       pB : B [ ι ]ᵛ [ σ ]ᵛ ≡ A₁
       pB = trans ([⨟]ᵛ B ι σ) eB
@@ -341,7 +341,7 @@ mutual
        → (D : Q ∣ Γ₀ ⊢C⦂ A₀ ! ε₀)
        → InvC (ι ⨟ˢ σ) M ⌊ D ⌋ᶜ
        → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
-       → Q ∣ A₀ <:̂ᵛ A [ σ ]ᵛ
+       → Q ⊩ A₀ <:̂ᵛ A [ σ ]ᵛ
        → Q ⊩ ε₀ ≾̂ₑ t [ σ ]ᵉ
        --------------------------------
        → σ ⊨[ Q ] genCˢ ι Γ M (A ! t)
@@ -374,14 +374,14 @@ mutual
                  (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
       ih₂ = cmpC ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) A↑ e₂ M₂ D₂ (reC pι M₂ e₂')
                  (cong (λ G → G ⟨ ∣ ε₁ ∣̂ᵉ ⟩ ∷ A₁) (trans ceq (sym pΓ)))
-                 (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st) ⊩≾̂ₑ-refl
+                 (subst (λ z → Q ⊩ _ <:̂ᵛ z) (sym pA) st) ⊩≾̂ₑ-refl
 
   -- function application
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
        (_·_ {A = A₁} {C = A₂ ! ε₀} D₁ D₂) (_·_ {V = V₁} {W = V₂} e₁ e₂) ceq st le =
     A₁ , A₂ , ε₀ , ih₁ , ih₂ ,
-    subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st ,
+    subst (λ z → Q ⊩ _ <:̂ᵛ z) (sym pA) st ,
     subst (λ z → Q ⊩ ε₀ ≾̂ₑ z) (sym pt) le
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
@@ -402,7 +402,7 @@ mutual
   -- pattern-matching
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
-       (match_`in_ {A = A₁} {B = A₂} D₁ D₂) (match {V = V} {M = M} e₁ e₂) ceq st le =
+       (match_`with_ {A = A₁} {B = A₂} D₁ D₂) (match {V = V} {M = M} e₁ e₂) ceq st le =
     A₁ , A₂ , ih₁ , ih₂
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
@@ -421,7 +421,7 @@ mutual
                  (<:̂ᵛ-refl _)
       ih₂ = cmpC ι↑ (Γ↑ ∷ α₁ ∷ α₂) A↑ t↑ M D₂ (reC pι M e₂)
                  (cong (λ G → G ∷ A₁ ∷ A₂) (trans ceq (sym pΓ)))
-                 (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st)
+                 (subst (λ z → Q ⊩ _ <:̂ᵛ z) (sym pA) st)
                  (subst (λ z → Q ⊩ _ ≾̂ₑ z) (sym pt) le)
 
   -- empty type elimination
@@ -439,8 +439,8 @@ mutual
 
   -- natural-number elimination
 
-  cmpC ι Γ A t _ (caseℕ_`zero_`succ_ D₀ D₁ D₂)
-       (caseℕ {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂) ceq st le =
+  cmpC ι Γ A t _ (matchℕ_`zero_`succ_ D₀ D₁ D₂)
+       (matchℕ {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂) ceq st le =
     cmpV ι Γ nat V D₀ (invV V e₀) ceq natₛ ,
     cmpC ι Γ A t M₁ D₁ (invC M₁ e₁) ceq st le ,
     cmpC ι (Γ ∷ nat) A t M₂ D₂ (invC M₂ e₂) (cong (_∷ nat) ceq) st le
@@ -448,8 +448,8 @@ mutual
   -- sum elimination: the scrutinee's summands; the branches inherit the slack
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
-       (case+_`inl_`inr_ {A = A₁} {B = A₂} D₀ D₁ D₂)
-       (case+ {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂) ceq st le =
+       (match+_`inl_`inr_ {A = A₁} {B = A₂} D₀ D₁ D₂)
+       (match+ {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂) ceq st le =
     A₁ , A₂ , ih₀ , ih₁ , ih₂
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
@@ -464,7 +464,7 @@ mutual
       pt = co²ᵗ-e   σ A₁ A₂ t
       pι = co²ᵗ-ˢ   ι σ A₁ A₂
 
-      st↑ = subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st
+      st↑ = subst (λ z → Q ⊩ _ <:̂ᵛ z) (sym pA) st
       le↑ = subst (λ z → Q ⊩ _ ≾̂ₑ z) (sym pt) le
 
       ih₀ = cmpV ι↑ Γ↑ (α₁ |+| α₂) V D₀ (reV pι V e₀) (trans ceq (sym pΓ))
@@ -481,7 +481,7 @@ mutual
        (recℕ {B = B} {ε = ε} D₀ D₁ D₂ it) (recℕ {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂)
        ceq st le =
     B , ε , ih₀ , ih₁ , ih₂ , it ,
-    subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st ,
+    subst (λ z → Q ⊩ _ <:̂ᵛ z) (sym pA) st ,
     subst (λ z → Q ⊩ ε ≾̂ₑ z) (sym pt) le
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
@@ -504,8 +504,8 @@ mutual
   -- list elimination: the scrutinee's element type; the branches inherit the slack
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
-       (caseL_`nil_`cons_ {A = A₁} D₀ D₁ D₂)
-       (caseL {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂) ceq st le =
+       (matchL_`nil_`cons_ {A = A₁} D₀ D₁ D₂)
+       (matchL {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂) ceq st le =
     A₁ , ih₀ , ih₁ , ih₂
     where
       ι↑ = ι ⨟ˢ wkˢᵗ
@@ -519,7 +519,7 @@ mutual
       pt = wk-,ᵗ-e   σ A₁ t
       pι = wk-,ᵗ-ˢ   ι σ A₁
 
-      st↑ = subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st
+      st↑ = subst (λ z → Q ⊩ _ <:̂ᵛ z) (sym pA) st
       le↑ = subst (λ z → Q ⊩ _ ≾̂ₑ z) (sym pt) le
 
       ih₀ = cmpV ι↑ Γ↑ (list α) V D₀ (reV pι V e₀) (trans ceq (sym pΓ))
@@ -534,7 +534,7 @@ mutual
        (recL {A = A₁} {B = B} {ε = ε} D₀ D₁ D₂ it) (recL {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂)
        ceq st le =
     A₁ , B , ε , ih₀ , ih₁ , ih₂ , it ,
-    subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st ,
+    subst (λ z → Q ⊩ _ <:̂ᵛ z) (sym pA) st ,
     subst (λ z → Q ⊩ ε ≾̂ₑ z) (sym pt) le
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
@@ -575,7 +575,7 @@ mutual
       pι = wk-,ᵉ-ˢ   ι σ ε
 
       ih₁ = cmpV ι↑ Γ↑ ⌜ param op ⌝ᵍ V D₁ (reV pι V e₁) (trans ceq (sym pΓ))
-                 (subst (λ z → Q ∣ ⌜ param op ⌝ᵍ <:̂ᵛ z)
+                 (subst (λ z → Q ⊩ ⌜ param op ⌝ᵍ <:̂ᵛ z)
                         (sym (⌜⌝ᵍ-subst σ' (param op)))
                         (<:̂ᵛ-refl ⌜ param op ⌝ᵍ))
       ih₂ = cmpC ι↑ (Γ↑ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ) A↑ e M D₂
@@ -583,7 +583,7 @@ mutual
                  (cong₂ (λ G Z → G ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ Z)
                         (trans ceq (sym pΓ))
                         (sym (⌜⌝ᵍ-subst σ' (arity op))))
-                 (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st) ⊩≾̂ₑ-refl
+                 (subst (λ z → Q ⊩ _ <:̂ᵛ z) (sym pA) st) ⊩≾̂ₑ-refl
 
   -- explicit delaying of a computation
 
@@ -602,7 +602,7 @@ mutual
 
       ih = cmpC ι↑ (Γ↑ ⟨ rconst (ιᵣ τ) ⟩) A↑ e M D (reC pι M e')
                 (cong (_⟨ rconst (ιᵣ τ) ⟩) (trans ceq (sym pΓ)))
-                (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st) ⊩≾̂ₑ-refl
+                (subst (λ z → Q ⊩ _ <:̂ᵛ z) (sym pA) st) ⊩≾̂ₑ-refl
 
   -- effect handling: the two types their own witnesses, the slack in the atom
 
@@ -610,7 +610,7 @@ mutual
        (handle_`with_ {A = A₁} {B = A₂} {ε = ε₁} {ε' = ε₂} D₁ DV)
        (handle {M = M} {V = V} eM eV) ceq st le =
     A₁ , A₂ , ε₁ , ε₂ , ih₁ , ihV ,
-    subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st ,
+    subst (λ z → Q ⊩ _ <:̂ᵛ z) (sym pA) st ,
     subst (λ z → Q ⊩ ε₁ ·̂ₑ ε₂ ≾̂ₑ z) (sym pt) le
     where
       ι↑  = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ
@@ -660,7 +660,7 @@ mutual
 
       ih = cmpC ι↑ (Γ↑ ∷ β) A↑ t↑ N D (reC pι N eN)
                 (cong (_∷ A₂) (trans ceq (sym pΓ)))
-                (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st)
+                (subst (λ z → Q ⊩ _ <:̂ᵛ z) (sym pA) st)
                 (subst (λ z → Q ⊩ _ ≾̂ₑ z) (sym pt) le)
 
   -- boxing up a value: the grade is the annotation's instance, the payload's
@@ -690,7 +690,7 @@ mutual
                  (cong₂ _⟨_⟩ (trans ceq (sym pΓ)) (sym pr)) (<:̂ᵛ-refl _)
       ih₂ = cmpC ι↑ (Γ↑ ∷ [ r ] α) A↑ t↑ N D₂ (reC pι N eN)
                  (cong₂ (λ G z → G ∷ [ z ] A₁) (trans ceq (sym pΓ)) (sym pr))
-                 (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st)
+                 (subst (λ z → Q ⊩ _ <:̂ᵛ z) (sym pA) st)
                  (subst (λ z → Q ⊩ _ ≾̂ₑ z) (sym pt) le)
 
   -- type annotation: as for values, the slack in the two atoms
@@ -698,9 +698,9 @@ mutual
   cmpC {σ = σ} {Q = Q} ι Γ A t _ {A₀ = A₀} {ε₀ = ε₀} (annᶜ _ D)
        (annᶜ {M = M} {A = B} {ε = u} eM eB eu) ceq st le =
     cmpC ι Γ (B [ ι ]ᵛ) (u [ ι ]ᵉ) M D (invC M eM) ceq
-         (subst (λ z → Q ∣ A₀ <:̂ᵛ z) (sym pB) (<:̂ᵛ-refl A₀))
+         (subst (λ z → Q ⊩ A₀ <:̂ᵛ z) (sym pB) (<:̂ᵛ-refl A₀))
          (subst (λ z → Q ⊩ ε₀ ≾̂ₑ z) (sym pu) ⊩≾̂ₑ-refl) ,
-    subst (λ z → Q ∣ z <:̂ᵛ A [ σ ]ᵛ) (sym pB) st ,
+    subst (λ z → Q ⊩ z <:̂ᵛ A [ σ ]ᵛ) (sym pB) st ,
     subst (λ z → Q ⊩ z ≾̂ₑ t [ σ ]ᵉ) (sym pu) le
     where
       pB : B [ ι ]ᵛ [ σ ]ᵛ ≡ A₀
@@ -723,7 +723,7 @@ completeVˢ : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : O
            → (D : Q ∣ Γ₀ ⊢V⦂ A₀)
            → ⌊ D ⌋ᵛ ≡ V [ ι ⨟ˢ σ ]ᴿᵛ
            → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
-           → Q ∣ A₀ <:̂ᵛ A [ σ ]ᵛ
+           → Q ⊩ A₀ <:̂ᵛ A [ σ ]ᵛ
            --------------------------
            → σ ⊨[ Q ] genVˢ ι Γ V A
 
@@ -736,7 +736,7 @@ completeCˢ : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : O
            → (D : Q ∣ Γ₀ ⊢C⦂ A₀ ! ε₀)
            → ⌊ D ⌋ᶜ ≡ M [ ι ⨟ˢ σ ]ᴿᶜ
            → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
-           → Q ∣ A₀ <:̂ᵛ A [ σ ]ᵛ
+           → Q ⊩ A₀ <:̂ᵛ A [ σ ]ᵛ
            → Q ⊩ ε₀ ≾̂ₑ t [ σ ]ᵉ
            --------------------------------
            → σ ⊨[ Q ] genCˢ ι Γ M (A ! t)
@@ -751,7 +751,7 @@ completeV : ∀ {Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : OCtx Θ' 
           → (D : Q ∣ Γ₀ ⊢V⦂ A₀)
           → ⌊ D ⌋ᵛ ≡ V [ σ ]ᴿᵛ
           → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
-          → Q ∣ A₀ <:̂ᵛ A [ σ ]ᵛ
+          → Q ⊩ A₀ <:̂ᵛ A [ σ ]ᵛ
           --------------------------
           → σ ⊨[ Q ] genV Γ V A
 
@@ -764,7 +764,7 @@ completeC : ∀ {Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : OCtx Θ' 
           → (D : Q ∣ Γ₀ ⊢C⦂ A₀ ! ε₀)
           → ⌊ D ⌋ᶜ ≡ M [ σ ]ᴿᶜ
           → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
-          → Q ∣ A₀ <:̂ᵛ A [ σ ]ᵛ
+          → Q ⊩ A₀ <:̂ᵛ A [ σ ]ᵛ
           → Q ⊩ ε₀ ≾̂ₑ t [ σ ]ᵉ
           --------------------------------
           → σ ⊨[ Q ] genC Γ M (A ! t)

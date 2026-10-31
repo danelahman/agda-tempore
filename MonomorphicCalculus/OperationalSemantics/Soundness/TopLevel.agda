@@ -403,31 +403,31 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
                   → (g : ⟦ hist St' ⟧ᶜᵗˣ →ᵐ Tᵏ B εa) → (q : εa ≾ₑ εb)
                   → μᵏ ∘ᵐ Tᵏᶠ (T-≤ᵏ q ∘ᵐ g) ∘ᵐ (implᵐ ∘ᵐ stepᵀ r)
                   ≈ᵐ T-≤ᵏ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵏ ∘ᵐ Tᵏᶠ g ∘ᵐ (implᵐ ∘ᵐ stepᵀ r)
-    T-≤ᵏ-implstep B APP        g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B MATCH      g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B CASEL      g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B RECL       g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B IF-TRUE    g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B CMP        g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B IF-FALSE   g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B CASE+      g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B CASEℕ-ZERO g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B CASEℕ-SUCC g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B RECℕ-ZERO  g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B RECℕ-SUCC  g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B SEQ-RET    g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B SEQ-OP     g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B HANDLE-RET g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B HANDLE-OP  g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B BOX        g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B UNBOX      g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B SUB-APP    g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B SUB-HANDLE g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B APP         g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B MATCH       g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B MATCHL      g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B RECL        g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B IF-TRUE     g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B CMP         g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B IF-FALSE    g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B MATCH+      g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B MATCHℕ-ZERO g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B MATCHℕ-SUCC g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B RECℕ-ZERO   g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B RECℕ-SUCC   g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SEQ-RET     g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SEQ-OP      g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B HANDLE-RET  g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B HANDLE-OP   g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B BOX         g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B UNBOX       g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SUB-APP     g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SUB-HANDLE  g q = ηᵀ-step g q
     T-≤ᵏ-implstep B SUB-HANDLE-TRANS g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B SUB-IF     g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B SUB-CASEℕ  g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B SUB-RECℕ   g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B SUB        g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SUB-IF      g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SUB-MATCHℕ  g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SUB-RECℕ    g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SUB         g q = ηᵀ-step g q
     T-≤ᵏ-implstep B (SEQ-STEP r _)    g q = T-≤ᵏ-implstep B r g q
     T-≤ᵏ-implstep B (HANDLE-STEP r _) g q = T-≤ᵏ-implstep B r g q
     T-≤ᵏ-implstep B (DELAY {τ = τ}) g q =

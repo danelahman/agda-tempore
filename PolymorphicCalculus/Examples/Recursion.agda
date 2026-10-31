@@ -110,12 +110,12 @@ private
 
   -- A variable no time has passed over
 
-  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → VarOK Q A 𝟏̂ᵣ
+  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → Q ⊩ A Et∨≾ᵘ 𝟏̂ᵣ
   ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
   -- A natural number, usable under any lock
 
-  okℕ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → VarOK Q nat ρ
+  okℕ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → Q ⊩ nat Et∨≾ᵘ ρ
   okℕ = et-ok natₑ
 
   -- A unit effect has passed
@@ -137,11 +137,11 @@ private
 -- The effect is the unit; typed at every grade.
 
 add : RawC ∅ˢ 0
-add = return (lam (return (lam (recℕ v₁ (return v₀) (return (succ v₀))))))
+add = return (fun (return (fun (recℕ v₁ (return v₀) (return (succ v₀))))))
 
 add-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 add-D =
-  return (lam (return (lam
+  return (fun (return (fun
     (recℕ (var (Tl-∷ Hd) ok₀) (return (var Hd ok₀)) (return (succ (var Hd ok₀))) pure))))
 
 add-typed : IsTyped (infer [] add)
@@ -157,11 +157,11 @@ add-typed = typed-of add (closed add-D refl) _
 -- out as a second `recℕ`. Typed at every grade.
 
 rebuild : RawC ∅ˢ 0
-rebuild = return (lam (recℕ v₀ (return zero) (return (succ v₁))))
+rebuild = return (fun (recℕ v₀ (return zero) (return (succ v₁))))
 
 rebuild-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ
 rebuild-D =
-  return (lam
+  return (fun
     (recℕ (var Hd ok₀) (return zero) (return (succ (var (Tl-∷ (Tl-⟨⟩ Hd)) okℕ))) pure))
 
 rebuild-typed : IsTyped (infer [] rebuild)
@@ -169,12 +169,12 @@ rebuild-typed = typed-of rebuild (closed rebuild-D refl) _
 
 mul : RawC ∅ˢ 0
 mul =
-  return (lam (return (lam
+  return (fun (return (fun
     (recℕ v₁ (return zero) (recℕ v₂ (return v₀) (return (succ v₀)))))))
 
 mul-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 mul-D =
-  return (lam (return (lam
+  return (fun (return (fun
     (recℕ (var (Tl-∷ Hd) ok₀) (return zero)
           (recℕ (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) okℕ)
                 (return (var Hd ok₀)) (return (succ (var Hd ok₀))) pure)
@@ -191,7 +191,7 @@ mul-typed = typed-of mul (closed mul-D refl) _
 -- `f` is not eternal, so `var` asks `⊤ᵣ ≾ 𝟏ᵣ`.
 
 each : RawC ∅ˢ 0
-each = return (lam (return (lam (recℕ v₀ (return ⋆) (v₃ · ⋆)))))
+each = return (fun (return (fun (recℕ v₀ (return ⋆) (v₃ · ⋆)))))
 
 ------------------------------------------------------------------
 -- 4. A countdown: a tick per step
@@ -201,7 +201,7 @@ each = return (lam (return (lam (recℕ v₀ (return ⋆) (v₃ · ⋆)))))
 -- `⌜ 1 ⌝ ≾ ε` and `ε · ε ≾ ε`.
 
 countdown : RawC ∅ˢ 0
-countdown = return (lam (recℕ v₀ (return ⋆) (delay ⌜ 1 ⌝ (return ⋆))))
+countdown = return (fun (recℕ v₀ (return ⋆) (delay ⌜ 1 ⌝ (return ⋆))))
 
 -- On a numeral, annotated at `k` ticks
 --
@@ -302,19 +302,19 @@ drop-clause =
 -- grade.
 
 length : RawC ∅ˢ 0
-length = return (lam (recL v₀ (return zero) (return (succ v₀))))
+length = return (fun (recL v₀ (return zero) (return (succ v₀))))
 
 length-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (list bool ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ
-length-D = return (lam (recL (var Hd ok₀) (return zero) (return (succ (var Hd ok₀))) pure))
+length-D = return (fun (recL (var Hd ok₀) (return zero) (return (succ (var Hd ok₀))) pure))
 
 length-typed : IsTyped (infer [] length)
 length-typed = typed-of length (closed length-D refl) _
 
 sum : RawC ∅ˢ 0
-sum = return (lam (recL v₀ (return zero) (recℕ v₂ (return v₀) (return (succ v₀)))))
+sum = return (fun (recL v₀ (return zero) (recℕ v₂ (return v₀) (return (succ v₀)))))
 
 inc-all : RawC ∅ˢ 0
-inc-all = return (lam (recL v₀ (return nil) (return (cons (succ v₂) v₀))))
+inc-all = return (fun (recL v₀ (return nil) (return (cons (succ v₂) v₀))))
 
 ------------------------------------------------------------------
 -- 8. The head in the step
@@ -328,7 +328,7 @@ inc-all = return (lam (recL v₀ (return nil) (return (cons (succ v₂) v₀))))
 -- with a tick, eternal at the right-sided grades, so boxes are refused.
 
 copy : RawC ∅ˢ 0
-copy = return (lam (recL v₀ (return nil) (return (cons v₂ v₀))))
+copy = return (fun (recL v₀ (return nil) (return (cons v₂ v₀))))
 
 private
 
@@ -337,7 +337,7 @@ private
 
 copy-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (list Fn ⇒ list Fn ! 𝟏̂ₑ) ! 𝟏̂ₑ
 copy-D =
-  return (lam
+  return (fun
     (recL (var Hd ok₀) (return nil)
           (return (cons (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) (≾ᵘ-ok 𝟏-passed)) (var Hd ok₀)))
           pure))
@@ -346,14 +346,14 @@ copy-typed : IsTyped (infer [] copy)
 copy-typed = typed-of copy (closed copy-D refl) _
 
 call-all : RawC ∅ˢ 0
-call-all = return (lam (recL v₀ (return ⋆) (v₂ · ⋆)))
+call-all = return (fun (recL v₀ (return ⋆) (v₂ · ⋆)))
 
 last-or : RawC ∅ˢ 0
-last-or = return (lam (return (lam (recL v₀ (return v₁) (delay ⌜ 1 ⌝ (return v₂))))))
+last-or = return (fun (return (fun (recL v₀ (return v₁) (delay ⌜ 1 ⌝ (return v₂))))))
 
 last-box : RawC ∅ˢ 0
 last-box =
-  return (lam (return (lam
+  return (fun (return (fun
     (recL (v₀ ⦂ᵛ list ([ ⌜ 1 ⌝ʳ ] nat)) (return v₁) (delay ⌜ 1 ⌝ (return v₂))))))
 
 --   latest l = recL l with nil ↦ 0 | cons h t, r ↦ delay 1; unbox h as x in x
@@ -362,11 +362,11 @@ last-box =
 
 latest : RawC ∅ˢ 0
 latest =
-  return (lam (recL v₀ (return zero) (delay ⌜ 1 ⌝ (unbox (var (fsuc (fsuc fzero))) (return v₀)))))
+  return (fun (recL v₀ (return zero) (delay ⌜ 1 ⌝ (unbox (var (fsuc (fsuc fzero))) (return v₀)))))
 
 latest-ready : RawC ∅ˢ 0
 latest-ready =
-  return (lam (recL (v₀ ⦂ᵛ list ([ ⌜ 1 ⌝ʳ ] nat)) (return zero)
+  return (fun (recL (v₀ ⦂ᵛ list ([ ⌜ 1 ⌝ʳ ] nat)) (return zero)
                     (delay ⌜ 1 ⌝ (unbox (var (fsuc (fsuc fzero))) (return v₀)))))
 
 ------------------------------------------------------------------
@@ -377,7 +377,7 @@ latest-ready =
 -- As `countdown`.
 
 ticks : RawC ∅ˢ 0
-ticks = return (lam (recL v₀ (return ⋆) (delay ⌜ 1 ⌝ (return ⋆))))
+ticks = return (fun (recL v₀ (return ⋆) (delay ⌜ 1 ⌝ (return ⋆))))
 
 -- On a list of three, annotated at `k` ticks, and at the top
 
@@ -411,16 +411,16 @@ ticks-top-typable = closed ticks-top-D refl
 -- absorbs the product of the two calls' effects.
 
 twice-base : ∀ {Θ n} → RawC Θ n
-twice-base = box (rconst ⊤ᵣ) (lam (delay ⌜ 1 ⌝ (return ⋆))) (return v₀)
+twice-base = box (rconst ⊤ᵣ) (fun (delay ⌜ 1 ⌝ (return ⋆))) (return v₀)
 
 twice-step : ∀ {Θ n} → RawC Θ (suc (suc n))
 twice-step =
   box (rconst ⊤ᵣ)
-      (lam (unbox (var (fsuc fzero)) (v₀ · v₁) ⨟ unbox (var (fsuc (fsuc fzero))) (v₀ · v₂)))
+      (fun (unbox (var (fsuc fzero)) (v₀ · v₁) ⨟ unbox (var (fsuc (fsuc fzero))) (v₀ · v₂)))
       (return v₀)
 
 twice : RawC ∅ˢ 0
-twice = return (lam (recℕ v₀ twice-base twice-step))
+twice = return (fun (recℕ v₀ twice-base twice-step))
 
 twice-run : RawC ∅ˢ 0
 twice-run = recℕ (numeral 2) twice-base twice-step ⨟ unbox (var fzero) (v₀ · ⋆)

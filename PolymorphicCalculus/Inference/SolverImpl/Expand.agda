@@ -112,7 +112,7 @@ mutual
 
 mutual
 
-  <:̂ᵛ-shape : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ∣ A <:̂ᵛ B → shapeᵛ A ≡ shapeᵛ B
+  <:̂ᵛ-shape : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ⊩ A <:̂ᵛ B → shapeᵛ A ≡ shapeᵛ B
   <:̂ᵛ-shape (tvarₛ p)    = refl
   <:̂ᵛ-shape (Baseₛ refl) = refl
   <:̂ᵛ-shape unitₛ        = refl
@@ -126,7 +126,7 @@ mutual
   <:̂ᵛ-shape (p ⇛ₛ q)     = cong₂ _s⇛_ (sym (<:̂ᶜ-shape p)) (<:̂ᶜ-shape q)
   <:̂ᵛ-shape ([ r ]ₛ p)   = cong sBox_ (<:̂ᵛ-shape p)
 
-  <:̂ᶜ-shape : ∀ {Θ} {Q : Hyps Θ} {C D} → Q ∣ C <:̂ᶜ D → shapeᶜ C ≡ shapeᶜ D
+  <:̂ᶜ-shape : ∀ {Θ} {Q : Hyps Θ} {C D} → Q ⊩ C <:̂ᶜ D → shapeᶜ C ≡ shapeᶜ D
   <:̂ᶜ-shape (p !ₛ r) = <:̂ᵛ-shape p
 
 -- An open type refines a skeleton when it has the same formers outside the
@@ -646,7 +646,7 @@ unifies⁺ ((A , B) ∷ l) σ k = k (here refl) , unifies⁺ l σ (λ m → k (t
 
 shape-unifies : ∀ {Ω Ω''} {Q : Hyps Ω''} → (l : List (OVType Ω × OVType Ω))
               → (δ₀ : Subst Ω Ω'')
-              → (∀ {A B} → (A , B) ∈ l → Q ∣ A [ δ₀ ]ᵛ <:̂ᵛ B [ δ₀ ]ᵛ)
+              → (∀ {A B} → (A , B) ∈ l → Q ⊩ A [ δ₀ ]ᵛ <:̂ᵛ B [ δ₀ ]ᵛ)
               → Unifiesᵏ (skelEqns l) (shapeˢ δ₀)
 shape-unifies l δ₀ k =
   unifies⁺ l (shapeˢ δ₀)
@@ -689,7 +689,7 @@ ExpMax {Ω} δ₀ = maybe′ (λ x → Σ[ δ' ∈ Subst (proj₁ x) _ ] ((proj�
 
 expandSub-max : ∀ {Ω Ω''} {Q : Hyps Ω''} → (l : List (OVType Ω × OVType Ω))
               → (δ₀ : Subst Ω Ω'')
-              → (∀ {A B} → (A , B) ∈ l → Q ∣ A [ δ₀ ]ᵛ <:̂ᵛ B [ δ₀ ]ᵛ)
+              → (∀ {A B} → (A , B) ∈ l → Q ⊩ A [ δ₀ ]ᵛ <:̂ᵛ B [ δ₀ ]ᵛ)
               → ExpMax δ₀ (expandSub l)
 expandSub-max {Ω} l δ₀ k with unifyᵏ (skelEqns l) in e
 ... | nothing      = unifyᵏ-fail (skelEqns l) e (shapeˢ δ₀) (shape-unifies l δ₀ k)

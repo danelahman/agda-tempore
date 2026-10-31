@@ -65,7 +65,7 @@ open import PolymorphicCalculus.Syntax.Types             S
 open import PolymorphicCalculus.Syntax.GradeSubstitution S
 open import PolymorphicCalculus.Hypotheses               S
 open import PolymorphicCalculus.Hypotheses.Instances     S
-  using (Satisfiable; ⊨⇒⊩ᴴ; VarOK-∅; inst-≡̂ᵣ; inst-≾ᵣ; val-≾ᵣ⁻; closed-≾ᵣ; closed-≾ₑ)
+  using (Satisfiable; ⊨⇒⊩ᴴ; Et∨≾ᵘ-∅; inst-≡̂ᵣ; inst-≾ᵣ; val-≾ᵣ⁻; closed-≾ᵣ; closed-≾ₑ)
 
 open import PolymorphicCalculus.Inference.SolverImpl.Normal S hints
 open import PolymorphicCalculus.Inference.SolverImpl.Resid  S using (etDec; etDec-refute)
@@ -1332,8 +1332,8 @@ record Keptᵈ {Θ : Scope} (l : List (OVType Θ × RExp Θ)) : Set where
     lᵈ   : List (OVType Θ × RExp Θ)
     subᵈ : ∀ {p} → p ∈ lᵈ → p ∈ l
     entᵈ : ∀ {Θ'} {Q : Hyps Θ'} → (δ : Subst Θ Θ')
-         → (∀ {A ρ} → (A , ρ) ∈ lᵈ → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ))
-         → ∀ {A ρ} → (A , ρ) ∈ l → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+         → (∀ {A ρ} → (A , ρ) ∈ lᵈ → Q ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ [ δ ]ʳ)
+         → ∀ {A ρ} → (A , ρ) ∈ l → Q ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ [ δ ]ʳ
 
 open Keptᵈ
 
@@ -1366,8 +1366,8 @@ closedᵈ ((A , ρ) ∷ l) with closedᵈ l
 ...     | just _  = inj₂ (consᵈ k)
 
 falseᵈ : ∀ {Θ} {l : List (OVType Θ × RExp Θ)} → Falseᵈ l → (δ : Subst Θ ∅ˢ)
-       → (∀ {A ρ} → (A , ρ) ∈ l → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ)) → ⊥
-falseᵈ (A , ρ , m , e , n) δ k with VarOK-∅ (k m)
+       → (∀ {A ρ} → (A , ρ) ∈ l → ∅ᴴ ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ [ δ ]ʳ) → ⊥
+falseᵈ (A , ρ , m , e , n) δ k with Et∨≾ᵘ-∅ (k m)
 ... | inj₁ et = etDec-refute A e δ et
 ... | inj₂ le = n δ (val-≾ᵣ⁻ le)
 
@@ -1543,7 +1543,7 @@ checkClosed-⊩ Q refl | inj₂ kʳ | inj₂ kᵉ | inj₂ kᵈ =
     r = ⊩ᴴ-refl {Q = hyps (ets Q) (subᵥ Q) (lʳ kʳ) (lᵉ kᵉ) (lᶠ F) (qhyps Q)}
 
     dsj : ∀ {A ρ} → (A , ρ) ∈ lᵈ kᵈ
-        → VarOK (hyps (ets Q) (subᵥ Q) (lʳ kʳ) (lᵉ kᵉ) (lᶠ F) (qhyps Q)) (A [ idˢ ]ᵛ) (ρ [ idˢ ]ʳ)
+        → (hyps (ets Q) (subᵥ Q) (lʳ kʳ) (lᵉ kᵉ) (lᶠ F) (qhyps Q)) ⊩ A [ idˢ ]ᵛ Et∨≾ᵘ ρ [ idˢ ]ʳ
     dsj m with entᶠ F m
     ... | inj₁ m' = ⊩disj r m'
     ... | inj₂ d  = ≾ᵘ-ok (⊩-substᵣ (mk⊩ᴴ (λ ()) (λ ()) (⊩ordᵣ r) (⊩ordₑ r) (λ ()) (λ ())) d)

@@ -33,11 +33,11 @@ is-zero-reported = refl
 pred-reported : schemeOf (infer [] pred) ≡ just expected-pred
 pred-reported = refl
 
-case-of-bool-verdict : infer [] case-of-bool ≡ untypable
-case-of-bool-verdict = refl
+match-on-bool-verdict : infer [] match-on-bool ≡ untypable
+match-on-bool-verdict = refl
 
-case-of-bool-not-typable : ¬ Typable [] case-of-bool
-case-of-bool-not-typable = infer-untypable [] case-of-bool case-of-bool-verdict
+match-on-bool-not-typable : ¬ Typable [] match-on-bool
+match-on-bool-not-typable = infer-untypable [] match-on-bool match-on-bool-verdict
 
 ------------------------------------------------------------------
 -- 2. Under a lock: a `nat` survives a tick, a function does not,
@@ -85,11 +85,11 @@ subsume-sum-reported = refl
 sum-later-reported : schemeOf (infer [] sum-later) ≡ just expected-sum-later
 sum-later-reported = refl
 
-case-of-bool+-verdict : infer [] case-of-bool+ ≡ untypable
-case-of-bool+-verdict = refl
+match-on-bool+-verdict : infer [] match-on-bool+ ≡ untypable
+match-on-bool+-verdict = refl
 
-case-of-bool+-not-typable : ¬ Typable [] case-of-bool+
-case-of-bool+-not-typable = infer-untypable [] case-of-bool+ case-of-bool+-verdict
+match-on-bool+-not-typable : ¬ Typable [] match-on-bool+
+match-on-bool+-not-typable = infer-untypable [] match-on-bool+ match-on-bool+-verdict
 
 inl-later-reported : schemeOf (infer [] inl-later) ≡ just expected-inl-later-eternal
 inl-later-reported = refl
@@ -118,8 +118,8 @@ fun-list-later-verdict = refl
 fun-list-later-not-typable : ¬ Typable [] fun-list-later
 fun-list-later-not-typable = infer-untypable [] fun-list-later fun-list-later-verdict
 
-case-of-nat-verdict : infer [] case-of-nat ≡ untypable
-case-of-nat-verdict = refl
+match-on-nat-verdict : infer [] match-on-nat ≡ untypable
+match-on-nat-verdict = refl
 
-case-of-nat-not-typable : ¬ Typable [] case-of-nat
-case-of-nat-not-typable = infer-untypable [] case-of-nat case-of-nat-verdict
+match-on-nat-not-typable : ¬ Typable [] match-on-nat
+match-on-nat-not-typable = infer-untypable [] match-on-nat match-on-nat-verdict

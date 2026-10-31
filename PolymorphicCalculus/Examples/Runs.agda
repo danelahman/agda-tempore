@@ -86,9 +86,9 @@ check-typable Γ M () | Check.stuck
 
 budget : 𝔻 → EExp Θ₁ → RawC Θ₁ 0
 budget τ c =
-  (return (lam ((v₀ · ⋆) ⨟ delay τ (return ⋆))
+  (return (fun ((v₀ · ⋆) ⨟ delay τ (return ⋆))
              ⦂ᵛ ((unit ⇒ unit ! ε̂₀) ⇒ unit ! ε̂₀))
-   ⨟ (v₀ · lam (return ⋆)))
+   ⨟ (v₀ · fun (return ⋆)))
   ⦂ᶜ (unit ! c)
 
 -- annotated at the grade of a duration, and at the top
@@ -111,7 +111,7 @@ budget-top τ = budget τ (econst ⊤ₑ)
 -- refuted at a witness at right-sided time, established at left-sided.
 
 late : ∀ {Θ n} → 𝔻 → RawV Θ n
-late τ = lam (delay τ (return ⋆))
+late τ = fun (delay τ (return ⋆))
 
 call-result : ∀ {Θ n} → 𝔻 → Op → RawC (Θ +e) (suc (suc n))
 call-result τ op =

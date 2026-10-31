@@ -173,19 +173,19 @@ cast-sub-handle refl M' N' H' = refl
 -- subsumption at a scrutinised natural number: `natₛ` is dropped on both
 -- sides.
 
-⟶-≐ˢ-sub-caseℕ : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+⟶-≐ˢ-sub-matchℕ : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
               → {V : toCtx St ⊢V⦂ nat} → {M : toCtx St ⊢C⦂ A ! ε}
               → {N : toCtx St ∷ nat ⊢C⦂ A ! ε}
               → (P' : toCtx St' ⊢C⦂ A ! ε)
-              → (caseℕ subV V natₛ `zero M `succ N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
-              → Sim es P' (SUB-CASEℕ {V = V} {M = M} {N = N})
-⟶-≐ˢ-sub-caseℕ es P' eM with cast-caseℕ⁻ (sym (toCtx-≐ˢ es)) P' eM
+              → (matchℕ subV V natₛ `zero M `succ N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+              → Sim es P' (SUB-MATCHℕ {V = V} {M = M} {N = N})
+⟶-≐ˢ-sub-matchℕ es P' eM with cast-matchℕ⁻ (sym (toCtx-≐ˢ es)) P' eM
 ... | Vn' , M₀' , N₀' , refl , eVn , eM₀ , eN₀
   with cast-subV⁻ (sym (toCtx-≐ˢ es)) Vn' eVn
 ...   | natₛ , V' , refl , eV =
-    _ , _ , es , SUB-CASEℕ , id-≤≐
-  , trans (cong₃ (λ v m n → caseℕ v `zero m `succ n) eV eM₀ eN₀)
-          (sym (cast-caseℕ (sym (toCtx-≐ˢ es))))
+    _ , _ , es , SUB-MATCHℕ , id-≤≐
+  , trans (cong₃ (λ v m n → matchℕ v `zero m `succ n) eV eM₀ eN₀)
+          (sym (cast-matchℕ (sym (toCtx-≐ˢ es))))
 
 -- subsumption at a recursion's natural number: `natₛ` is dropped on both
 -- sides.
@@ -232,27 +232,27 @@ cast-sub-handle refl M' N' H' = refl
 -- (`cast-zero⁻`), the reduct the zero branch; or the same successor
 -- (`cast-succ⁻`), the reducts the same substitution into the successor branch.
 
-⟶-≐ˢ-caseℕ-zero : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+⟶-≐ˢ-matchℕ-zero : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
                → {M : toCtx St ⊢C⦂ A ! ε} → {N : toCtx St ∷ nat ⊢C⦂ A ! ε}
                → (P' : toCtx St' ⊢C⦂ A ! ε)
-               → (caseℕ zero `zero M `succ N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
-               → Sim es P' (CASEℕ-ZERO {M = M} {N = N})
-⟶-≐ˢ-caseℕ-zero es P' eM with cast-caseℕ⁻ (sym (toCtx-≐ˢ es)) P' eM
+               → (matchℕ zero `zero M `succ N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+               → Sim es P' (MATCHℕ-ZERO {M = M} {N = N})
+⟶-≐ˢ-matchℕ-zero es P' eM with cast-matchℕ⁻ (sym (toCtx-≐ˢ es)) P' eM
 ... | V' , M₀' , N₀' , refl , eV , eM₀ , eN₀
       with cast-zero⁻ (sym (toCtx-≐ˢ es)) V' eV
-...     | refl = _ , _ , es , CASEℕ-ZERO , id-≤≐ , eM₀
+...     | refl = _ , _ , es , MATCHℕ-ZERO , id-≤≐ , eM₀
 
-⟶-≐ˢ-caseℕ-succ : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+⟶-≐ˢ-matchℕ-succ : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
                → {V : toCtx St ⊢V⦂ nat}
                → {M : toCtx St ⊢C⦂ A ! ε} → {N : toCtx St ∷ nat ⊢C⦂ A ! ε}
                → (P' : toCtx St' ⊢C⦂ A ! ε)
-               → (caseℕ succ V `zero M `succ N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
-               → Sim es P' (CASEℕ-SUCC {V = V} {M = M} {N = N})
-⟶-≐ˢ-caseℕ-succ es P' eM with cast-caseℕ⁻ (sym (toCtx-≐ˢ es)) P' eM
+               → (matchℕ succ V `zero M `succ N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+               → Sim es P' (MATCHℕ-SUCC {V = V} {M = M} {N = N})
+⟶-≐ˢ-matchℕ-succ es P' eM with cast-matchℕ⁻ (sym (toCtx-≐ˢ es)) P' eM
 ... | U' , M' , N' , refl , eU , eM₀ , eN₀
       with cast-succ⁻ (sym (toCtx-≐ˢ es)) U' eU
 ...     | V' , refl , eV =
-    _ , _ , es , CASEℕ-SUCC , id-≤≐
+    _ , _ , es , MATCHℕ-SUCC , id-≤≐
   , subst (λ z → _ ≡ z) (cast-app-reduct (sym (toCtx-≐ˢ es)) N' V')
           (sub-≡ᶜ split-[] eV eN₀)
 
@@ -293,10 +293,10 @@ cast-sub-handle refl M' N' H' = refl
 ⟶-≐ˢ-app : ∀ {A B ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
         → {M₀ : toCtx St ∷ A ⊢C⦂ B ! ε} → {V : toCtx St ⊢V⦂ A}
         → (P' : toCtx St' ⊢C⦂ B ! ε)
-        → (lam M₀ · V) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+        → (fun M₀ · V) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
         → Sim es P' (APP {M = M₀} {V = V})
 ⟶-≐ˢ-app es P' eM with cast-app⁻ (sym (toCtx-≐ˢ es)) P' eM
-... | Vf' , W' , refl , eVf , eW with cast-lam⁻ (sym (toCtx-≐ˢ es)) Vf' eVf
+... | Vf' , W' , refl , eVf , eW with cast-fun⁻ (sym (toCtx-≐ˢ es)) Vf' eVf
 ...   | M₀' , refl , eM₀ =
     _ , _ , es , APP , id-≤≐
   , subst (λ z → _ ≡ z) (cast-app-reduct (sym (toCtx-≐ˢ es)) M₀' W')
@@ -335,33 +335,33 @@ cast-sub-handle refl M' N' H' = refl
 -- list elimination: the scrutinee corresponds on both sides, and its
 -- decomposition commutes with the cast (`listᵛ-cast`).
 
-⟶-≐ˢ-caseL : ∀ {A D ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-           → {U : toCtx St ⊢V⦂ list A}
-           → {M₀ : toCtx St ⊢C⦂ D ! ε} → {N₀ : toCtx St ∷ A ∷ list A ⊢C⦂ D ! ε}
-           → (P' : toCtx St' ⊢C⦂ D ! ε)
-           → caseL U `nil M₀ `cons N₀ ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
-           → Sim es P' (CASEL {V = U} {M = M₀} {N = N₀})
-⟶-≐ˢ-caseL es P' eM with cast-caseL⁻ (sym (toCtx-≐ˢ es)) P' eM
+⟶-≐ˢ-matchL : ∀ {A D ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+            → {U : toCtx St ⊢V⦂ list A}
+            → {M₀ : toCtx St ⊢C⦂ D ! ε} → {N₀ : toCtx St ∷ A ∷ list A ⊢C⦂ D ! ε}
+            → (P' : toCtx St' ⊢C⦂ D ! ε)
+            → matchL U `nil M₀ `cons N₀ ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+            → Sim es P' (MATCHL {V = U} {M = M₀} {N = N₀})
+⟶-≐ˢ-matchL es P' eM with cast-matchL⁻ (sym (toCtx-≐ˢ es)) P' eM
 ... | U' , M₀' , N₀' , refl , eU , eM₀ , eN₀ =
-    _ , _ , es , CASEL , id-≤≐
-  , trans (cong₃ (λ u m n → caseL-reduct (listᵛ u) m n) eU eM₀ eN₀)
-      (trans (cong (λ l → caseL-reduct l _ _) (listᵛ-cast (sym (toCtx-≐ˢ es)) U'))
-             (cast-caseL-reduct (sym (toCtx-≐ˢ es)) (listᵛ U') M₀' N₀'))
+    _ , _ , es , MATCHL , id-≤≐
+  , trans (cong₃ (λ u m n → matchL-reduct (listᵛ u) m n) eU eM₀ eN₀)
+      (trans (cong (λ l → matchL-reduct l _ _) (listᵛ-cast (sym (toCtx-≐ˢ es)) U'))
+             (cast-matchL-reduct (sym (toCtx-≐ˢ es)) (listᵛ U') M₀' N₀'))
 
 -- sum elimination: likewise, by `injᵛ-cast`.
 
-⟶-≐ˢ-case+ : ∀ {A B D ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-           → {U : toCtx St ⊢V⦂ A |+| B}
-           → {M₀ : toCtx St ∷ A ⊢C⦂ D ! ε} → {N₀ : toCtx St ∷ B ⊢C⦂ D ! ε}
-           → (P' : toCtx St' ⊢C⦂ D ! ε)
-           → case+ U `inl M₀ `inr N₀ ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
-           → Sim es P' (CASE+ {V = U} {M = M₀} {N = N₀})
-⟶-≐ˢ-case+ es P' eM with cast-case+⁻ (sym (toCtx-≐ˢ es)) P' eM
+⟶-≐ˢ-match+ : ∀ {A B D ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+            → {U : toCtx St ⊢V⦂ A |+| B}
+            → {M₀ : toCtx St ∷ A ⊢C⦂ D ! ε} → {N₀ : toCtx St ∷ B ⊢C⦂ D ! ε}
+            → (P' : toCtx St' ⊢C⦂ D ! ε)
+            → match+ U `inl M₀ `inr N₀ ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+            → Sim es P' (MATCH+ {V = U} {M = M₀} {N = N₀})
+⟶-≐ˢ-match+ es P' eM with cast-match+⁻ (sym (toCtx-≐ˢ es)) P' eM
 ... | U' , M₀' , N₀' , refl , eU , eM₀ , eN₀ =
-    _ , _ , es , CASE+ , id-≤≐
-  , trans (cong₃ (λ u m n → case+-reduct (injᵛ u) m n) eU eM₀ eN₀)
-      (trans (cong (λ s → case+-reduct s _ _) (injᵛ-cast (sym (toCtx-≐ˢ es)) U'))
-             (cast-case+-reduct (sym (toCtx-≐ˢ es)) (injᵛ U') M₀' N₀'))
+    _ , _ , es , MATCH+ , id-≤≐
+  , trans (cong₃ (λ u m n → match+-reduct (injᵛ u) m n) eU eM₀ eN₀)
+      (trans (cong (λ s → match+-reduct s _ _) (injᵛ-cast (sym (toCtx-≐ˢ es)) U'))
+             (cast-match+-reduct (sym (toCtx-≐ˢ es)) (injᵛ U') M₀' N₀'))
 
 ⟶-≐ˢ-recL : ∀ {A B ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
           → {U : toCtx St ⊢V⦂ list A} → {M₀ : toCtx St ⊢C⦂ B ! ε}
@@ -396,7 +396,7 @@ cast-sub-handle refl M' N' H' = refl
           → {U : toCtx St ⊢V⦂ A |×| B}
           → {M₀ : toCtx St ∷ A ∷ B ⊢C⦂ D ! ε}
           → (P' : toCtx St' ⊢C⦂ D ! ε)
-          → (match U `in M₀) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+          → (match U `with M₀) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
           → Sim es P' (MATCH {P = U} {M = M₀})
 ⟶-≐ˢ-match es P' eM with cast-match⁻ (sym (toCtx-≐ˢ es)) P' eM
 ... | U' , M₀' , refl , eU , eM₀ =
@@ -553,7 +553,7 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                                (⌜ arity op' ⌝ᵍ ⇒ B ! ε')
                          ⊢C⦂ B ! (op-grade op' ·ₑ ε'))
                → (N' : Γ' ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'')
-               → box _ (lam
+               → box _ (fun
                        (handle (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ∣ op-grade op ∣ᵉ ⟩
                                                       ∷ ⌜ arity op ⌝ᵍ)
                                             e) M')
@@ -584,7 +584,7 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                                (H' op (ε ·ₑ ε'')))
                        [ split-∷ split-[] ↦ castᵛ e V' ]c)
                ≡ castᶜ e
-                   (box _ (lam
+                   (box _ (fun
                           (handle M'
                           `with (λ op' ε' →
                                    C-rename
@@ -632,7 +632,7 @@ cast-handle-op refl V' M' H' N' = refl
   , subst (λ z → _ ≡ z)
       (cast-handle-op (sym (toCtx-≐ˢ es)) V' M₀' H' N')
       (cong₂ (box _)
-        (cong lam
+        (cong fun
           (cong₂ handle_`with_ eM₀
             (handler-≡
               (C-rename-cong (cong-∷-ren _) eN)
@@ -743,15 +743,15 @@ cast-handle-op refl V' M' H' N' = refl
 ⟶-≐ˢ es eM APP         = ⟶-≐ˢ-app es _ eM
 ⟶-≐ˢ es eM MATCH       = ⟶-≐ˢ-match es _ eM
 ⟶-≐ˢ es eM CMP         = ⟶-≐ˢ-cmp es _ eM
-⟶-≐ˢ es eM CASEL       = ⟶-≐ˢ-caseL es _ eM
+⟶-≐ˢ es eM MATCHL      = ⟶-≐ˢ-matchL es _ eM
 ⟶-≐ˢ es eM RECL        = ⟶-≐ˢ-recL es _ eM
 ⟶-≐ˢ es eM IF-TRUE     = ⟶-≐ˢ-if-true es _ eM
 ⟶-≐ˢ es eM IF-FALSE    = ⟶-≐ˢ-if-false es _ eM
-⟶-≐ˢ es eM CASEℕ-ZERO  = ⟶-≐ˢ-caseℕ-zero es _ eM
-⟶-≐ˢ es eM CASEℕ-SUCC  = ⟶-≐ˢ-caseℕ-succ es _ eM
+⟶-≐ˢ es eM MATCHℕ-ZERO = ⟶-≐ˢ-matchℕ-zero es _ eM
+⟶-≐ˢ es eM MATCHℕ-SUCC = ⟶-≐ˢ-matchℕ-succ es _ eM
 ⟶-≐ˢ es eM RECℕ-ZERO   = ⟶-≐ˢ-recℕ-zero es _ eM
 ⟶-≐ˢ es eM RECℕ-SUCC   = ⟶-≐ˢ-recℕ-succ es _ eM
-⟶-≐ˢ es eM CASE+       = ⟶-≐ˢ-case+ es _ eM
+⟶-≐ˢ es eM MATCH+      = ⟶-≐ˢ-match+ es _ eM
 ⟶-≐ˢ es eM SEQ-RET     = ⟶-≐ˢ-seq-ret es _ eM
 ⟶-≐ˢ es eM SEQ-OP      = ⟶-≐ˢ-seq-op es _ eM
 ⟶-≐ˢ es eM DELAY       = ⟶-≐ˢ-delay es _ eM
@@ -763,7 +763,7 @@ cast-handle-op refl V' M' H' N' = refl
 ⟶-≐ˢ es eM SUB-HANDLE  = ⟶-≐ˢ-sub-handle es _ eM
 ⟶-≐ˢ es eM SUB-HANDLE-TRANS = ⟶-≐ˢ-sub-handle-trans es _ eM
 ⟶-≐ˢ es eM SUB-IF      = ⟶-≐ˢ-sub-if es _ eM
-⟶-≐ˢ es eM SUB-CASEℕ   = ⟶-≐ˢ-sub-caseℕ es _ eM
+⟶-≐ˢ es eM SUB-MATCHℕ  = ⟶-≐ˢ-sub-matchℕ es _ eM
 ⟶-≐ˢ es eM SUB-RECℕ    = ⟶-≐ˢ-sub-recℕ es _ eM
 ⟶-≐ˢ es eM SUB         = ⟶-≐ˢ-sub es _ eM
 

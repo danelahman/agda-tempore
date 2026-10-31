@@ -253,7 +253,7 @@ mutual
   renᵛ r ⦉ V , W ⦊ (pV , pW) = renᵛ r V pV , renᵛ r W pW
   renᵛ r (inl V)   pV = renᵛ r V pV
   renᵛ r (inr V)   pV = renᵛ r V pV
-  renᵛ r (lam M)   pM = renᶜ (cong-∷-ren r) M pM
+  renᵛ r (fun M)   pM = renᶜ (cong-∷-ren r) M pM
   -- the clauses' uniformity transports by `ren-clauses-uniform`
   renᵛ r (handler N H) (pN , pH , uH) =
       renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN
@@ -263,27 +263,27 @@ mutual
   renᵛ r (subV V p) pV = renᵛ r V pV
 
   renᶜ : ∀ {Γ Γ' C} → (r : Ren [] Γ' Γ) → (M : Γ ⊢C⦂ C) → Paramᶜ M → Paramᶜ (C-rename r M)
-  renᶜ r (return V)       pV        = renᵛ r V pV
-  renᶜ r (M ⨟ N)          (pM , pN) =
+  renᶜ r (return V)         pV        = renᵛ r V pV
+  renᶜ r (M ⨟ N)            (pM , pN) =
     renᶜ r M pM , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN
-  renᶜ r (V · W)          (pV , pW) = renᵛ r V pV , renᵛ r W pW
-  renᶜ r (match V `in M)  (pV , pM) =
+  renᶜ r (V · W)            (pV , pW) = renᵛ r V pV , renᵛ r W pW
+  renᶜ r (match V `with M)  (pV , pM) =
     renᵛ r V pV , renᶜ (cong-∷-ren (cong-∷-ren r)) M pM
-  renᶜ r (absurd V)       pV        = renᵛ r V pV
-  renᶜ r (cmp ⋈ V W et)   (pV , pW) = renᵛ r V pV , renᵛ r W pW
+  renᶜ r (absurd V)         pV        = renᵛ r V pV
+  renᶜ r (cmp ⋈ V W et)     (pV , pW) = renᵛ r V pV , renᵛ r W pW
   renᶜ r (if V `then M `else N) (pV , pM , pN) =
     renᵛ r V pV , renᶜ r M pM , renᶜ r N pN
-  renᶜ r (caseL V `nil M `cons N) (pV , pM , pN) =
+  renᶜ r (matchL V `nil M `cons N) (pV , pM , pN) =
     renᵛ r V pV , renᶜ r M pM , renᶜ (cong-∷-ren (cong-∷-ren r)) N pN
-  renᶜ r (recL V M N p) (pV , pM , pN) =
+  renᶜ r (recL V M N p) (pV , pM , pN)  =
       renᵛ r V pV , renᶜ r M pM
     , renᶜ (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r))))) N pN
-  renᶜ r (caseℕ V `zero M `succ N) (pV , pM , pN) =
+  renᶜ r (matchℕ V `zero M `succ N) (pV , pM , pN) =
     renᵛ r V pV , renᶜ r M pM , renᶜ (cong-∷-ren r) N pN
-  renᶜ r (recℕ V M N p) (pV , pM , pN) =
+  renᶜ r (recℕ V M N p) (pV , pM , pN)  =
       renᵛ r V pV , renᶜ r M pM
     , renᶜ (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-⟨⟩-ren r)))) N pN
-  renᶜ r (case+ V `inl M `inr N) (pV , pM , pN) =
+  renᶜ r (match+ V `inl M `inr N) (pV , pM , pN) =
     renᵛ r V pV , renᶜ (cong-∷-ren r) M pM , renᶜ (cong-∷-ren r) N pN
   renᶜ r (perform op V M) (pV , pM) =
     renᵛ r V pV , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) M pM
@@ -355,7 +355,7 @@ mutual
     ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   V-rename-nat r (inr V) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  V-rename-nat r (lam M) pM =
+  V-rename-nat r (fun M) pM =
     ≈ᵐ-trans (curryᵐ-cong (C-rename-nat (cong-∷-ren r) M pM))
              (curryᵐ-nat ⟦ r ⟧ʳ (⟦ M ⟧ᶜᵗ pM))
   -- the denoted family is natural in the context (`handler-famᵗ-reindex`): the
@@ -410,7 +410,7 @@ mutual
     ≈ᵐ-trans (∘ᵐ-congʳ (⟨ V-rename-nat r V pV , V-rename-nat r W pW ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-  C-rename-nat r (match V `in M) (pV , pM) =
+  C-rename-nat r (match V `with M) (pV , pM) =
     ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren (cong-∷-ren r)) M pM))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
@@ -440,12 +440,12 @@ mutual
     ≈ᵐ-trans (ifᵐ-cong (V-rename-nat r V pV)
                        (C-rename-nat r M pM) (C-rename-nat r N pN))
              (≈ᵐ-sym (ifᵐ-∘ _ _ _ _))
-  -- likewise for `caseℕ` and `case+`: `caseℕᵐ-∘`, `caseᵐ-∘`
-  C-rename-nat r (caseℕ V `zero M `succ N) (pV , pM , pN) =
-    ≈ᵐ-trans (caseℕᵐ-cong (V-rename-nat r V pV)
-                          (C-rename-nat r M pM)
-                          (C-rename-nat (cong-∷-ren r) N pN))
-             (≈ᵐ-sym (caseℕᵐ-∘ _ _ _ _))
+  -- likewise for `matchℕ` and `match+`: `matchℕᵐ-∘`, `match+ᵐ-∘`
+  C-rename-nat r (matchℕ V `zero M `succ N) (pV , pM , pN) =
+    ≈ᵐ-trans (matchℕᵐ-cong (V-rename-nat r V pV)
+                           (C-rename-nat r M pM)
+                           (C-rename-nat (cong-∷-ren r) N pN))
+             (≈ᵐ-sym (matchℕᵐ-∘ _ _ _ _))
   -- the recursor is natural in its context: `recℕᵐ-∘`, the step by
   -- `recℕ-stepᵗ-nat`
   C-rename-nat r (recℕ V M N p) (pV , pM , pN) =
@@ -460,12 +460,12 @@ mutual
                ∙ ⟨ ∘ᵐ-identityʳ _ ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
                ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
     ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  -- lists: `caseLᵐ-∘`, and for the recursor `recLᵐ-∘` with `recL-stepᵗ-nat`
-  C-rename-nat r (caseL V `nil M `cons N) (pV , pM , pN) =
-    ≈ᵐ-trans (caseLᵐ-cong (V-rename-nat r V pV)
-                          (C-rename-nat r M pM)
-                          (C-rename-nat (cong-∷-ren (cong-∷-ren r)) N pN))
-             (≈ᵐ-sym (caseLᵐ-∘ _ _ _ _))
+  -- lists: `matchLᵐ-∘`, and for the recursor `recLᵐ-∘` with `recL-stepᵗ-nat`
+  C-rename-nat r (matchL V `nil M `cons N) (pV , pM , pN) =
+    ≈ᵐ-trans (matchLᵐ-cong (V-rename-nat r V pV)
+                           (C-rename-nat r M pM)
+                           (C-rename-nat (cong-∷-ren (cong-∷-ren r)) N pN))
+             (≈ᵐ-sym (matchLᵐ-∘ _ _ _ _))
   C-rename-nat r (recL V M N p) (pV , pM , pN) =
       ∘ᵐ-cong (recLᵐ-cong (C-rename-nat r M pM)
                 (recL-stepᵗ-nat p _ _ ⟦ r ⟧ʳ
@@ -479,11 +479,11 @@ mutual
                ∙ ⟨ ∘ᵐ-identityʳ _ ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
                ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
     ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  C-rename-nat r (case+ V `inl M `inr N) (pV , pM , pN) =
-    ≈ᵐ-trans (caseᵐ-cong (V-rename-nat r V pV)
-                         (C-rename-nat (cong-∷-ren r) M pM)
-                         (C-rename-nat (cong-∷-ren r) N pN))
-             (≈ᵐ-sym (caseᵐ-∘ _ _ _ _))
+  C-rename-nat r (match+ V `inl M `inr N) (pV , pM , pN) =
+    ≈ᵐ-trans (match+ᵐ-cong (V-rename-nat r V pV)
+                           (C-rename-nat (cong-∷-ren r) M pM)
+                           (C-rename-nat (cong-∷-ren r) N pN))
+             (≈ᵐ-sym (match+ᵐ-∘ _ _ _ _))
   C-rename-nat r (perform op V M) (pV , pM) =
     ≈ᵐ-trans (∘ᵐ-congʳ
       (⟨ ≈ᵐ-trans (substᶜ-≈ (ty-gty (param op)) (V-rename-nat r V pV))

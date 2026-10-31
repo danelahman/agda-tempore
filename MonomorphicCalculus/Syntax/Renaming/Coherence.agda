@@ -73,7 +73,7 @@ mutual
   V-rename-≡ h (inr V)    = cong inr (V-rename-≡ h V)
   V-rename-≡ h nil        = refl
   V-rename-≡ h (cons V W) = cong₂ cons (V-rename-≡ h V) (V-rename-≡ h W)
-  V-rename-≡ h (lam M)    = cong lam (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
+  V-rename-≡ h (fun M)    = cong fun (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
   V-rename-≡ h (handler N H) =
     handler-≡ (C-rename-≡ (cong-ren-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) N)
       (λ op ε'' →
@@ -87,32 +87,32 @@ mutual
   C-rename-≡ h (M ⨟ N) =
     cong₂ _⨟_ (C-rename-≡ h M) (C-rename-≡ (cong-ren-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) N)
   C-rename-≡ h (V · W) = cong₂ _·_ (V-rename-≡ h V) (V-rename-≡ h W)
-  C-rename-≡ h (match V `in M) =
-    cong₂ match_`in_ (V-rename-≡ h V) (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _ ∷ _) h) M)
+  C-rename-≡ h (match V `with M) =
+    cong₂ match_`with_ (V-rename-≡ h V) (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _ ∷ _) h) M)
   C-rename-≡ h (absurd V) = cong absurd (V-rename-≡ h V)
   C-rename-≡ h (cmp ⋈ V W et) =
     cong₂ (λ a b → cmp ⋈ a b et) (V-rename-≡ h V) (V-rename-≡ h W)
   C-rename-≡ h (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-rename-≡ h V) (C-rename-≡ h M) (C-rename-≡ h N)
-  C-rename-≡ h (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_
+  C-rename-≡ h (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_
       (V-rename-≡ h V) (C-rename-≡ h M)
       (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) N)
   C-rename-≡ h (recℕ V M N p) =
     cong₃ (λ a b c → recℕ a b c p)
       (V-rename-≡ h V) (C-rename-≡ h M)
       (C-rename-≡ (cong-ren-≐ʳ (([] ⟨ _ ⟩ ∷ nat) ⟨ _ ⟩ ∷ _) h) N)
-  C-rename-≡ h (caseL V `nil M `cons N) =
-    cong₃ caseL_`nil_`cons_
+  C-rename-≡ h (matchL V `nil M `cons N) =
+    cong₃ matchL_`nil_`cons_
       (V-rename-≡ h V) (C-rename-≡ h M)
       (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _ ∷ _) h) N)
   C-rename-≡ h (recL V M N p) =
     cong₃ (λ a b c → recL a b c p)
       (V-rename-≡ h V) (C-rename-≡ h M)
       (C-rename-≡ (cong-ren-≐ʳ (([] ⟨ _ ⟩ ∷ _ ∷ list _) ⟨ _ ⟩ ∷ _) h) N)
-  C-rename-≡ h (case+ V `inl M `inr N) =
-    cong₃ case+_`inl_`inr_
+  C-rename-≡ h (match+ V `inl M `inr N) =
+    cong₃ match+_`inl_`inr_
       (V-rename-≡ h V) (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
       (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) N)
   C-rename-≡ h (perform op V M) =
@@ -181,7 +181,7 @@ mutual
   V-rename-id-≡ h (inr V)   = cong inr (V-rename-id-≡ h V)
   V-rename-id-≡ h nil       = refl
   V-rename-id-≡ h (cons V W) = cong₂ cons (V-rename-id-≡ h V) (V-rename-id-≡ h W)
-  V-rename-id-≡ h (lam M)   = cong lam (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) M)
+  V-rename-id-≡ h (fun M)   = cong fun (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) M)
   V-rename-id-≡ h (handler N H) =
     handler-≡ (C-rename-id-≡ (cong-ren-id-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) N)
       (λ op ε'' →
@@ -195,32 +195,32 @@ mutual
   C-rename-id-≡ h (M ⨟ N) =
     cong₂ _⨟_ (C-rename-id-≡ h M) (C-rename-id-≡ (cong-ren-id-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) N)
   C-rename-id-≡ h (V · W) = cong₂ _·_ (V-rename-id-≡ h V) (V-rename-id-≡ h W)
-  C-rename-id-≡ h (match V `in M) =
-    cong₂ match_`in_ (V-rename-id-≡ h V) (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _ ∷ _) h) M)
+  C-rename-id-≡ h (match V `with M) =
+    cong₂ match_`with_ (V-rename-id-≡ h V) (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _ ∷ _) h) M)
   C-rename-id-≡ h (absurd V) = cong absurd (V-rename-id-≡ h V)
   C-rename-id-≡ h (cmp ⋈ V W et) =
     cong₂ (λ a b → cmp ⋈ a b et) (V-rename-id-≡ h V) (V-rename-id-≡ h W)
   C-rename-id-≡ h (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-rename-id-≡ h V) (C-rename-id-≡ h M) (C-rename-id-≡ h N)
-  C-rename-id-≡ h (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_
+  C-rename-id-≡ h (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_
       (V-rename-id-≡ h V) (C-rename-id-≡ h M)
       (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) N)
   C-rename-id-≡ h (recℕ V M N p) =
     cong₃ (λ a b c → recℕ a b c p)
       (V-rename-id-≡ h V) (C-rename-id-≡ h M)
       (C-rename-id-≡ (cong-ren-id-≐ʳ (([] ⟨ _ ⟩ ∷ nat) ⟨ _ ⟩ ∷ _) h) N)
-  C-rename-id-≡ h (caseL V `nil M `cons N) =
-    cong₃ caseL_`nil_`cons_
+  C-rename-id-≡ h (matchL V `nil M `cons N) =
+    cong₃ matchL_`nil_`cons_
       (V-rename-id-≡ h V) (C-rename-id-≡ h M)
       (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _ ∷ _) h) N)
   C-rename-id-≡ h (recL V M N p) =
     cong₃ (λ a b c → recL a b c p)
       (V-rename-id-≡ h V) (C-rename-id-≡ h M)
       (C-rename-id-≡ (cong-ren-id-≐ʳ (([] ⟨ _ ⟩ ∷ _ ∷ list _) ⟨ _ ⟩ ∷ _) h) N)
-  C-rename-id-≡ h (case+ V `inl M `inr N) =
-    cong₃ case+_`inl_`inr_
+  C-rename-id-≡ h (match+ V `inl M `inr N) =
+    cong₃ match+_`inl_`inr_
       (V-rename-id-≡ h V) (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) M)
       (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) N)
   C-rename-id-≡ h (perform op V M) =
@@ -340,8 +340,8 @@ mutual
   V-rename-∘ r₂ r₁ (inr V)   = cong inr (V-rename-∘ r₂ r₁ V)
   V-rename-∘ r₂ r₁ nil       = refl
   V-rename-∘ r₂ r₁ (cons V W) = cong₂ cons (V-rename-∘ r₂ r₁ V) (V-rename-∘ r₂ r₁ W)
-  V-rename-∘ r₂ r₁ (lam M)   =
-    cong lam (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _) r₂ r₁) M)
+  V-rename-∘ r₂ r₁ (fun M)   =
+    cong fun (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _) r₂ r₁) M)
                     (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
   V-rename-∘ r₂ r₁ (handler N H) =
     handler-≡ (trans (C-rename-≡ (cong-ren-∘-≐ʳ (_ ⟨ _ ⟩ ∷ _) r₂ r₁) N)
@@ -364,8 +364,8 @@ mutual
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ (_ ⟨ _ ⟩ ∷ _) r₂ r₁) N)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))
   C-rename-∘ r₂ r₁ (V · W) = cong₂ _·_ (V-rename-∘ r₂ r₁ V) (V-rename-∘ r₂ r₁ W)
-  C-rename-∘ r₂ r₁ (match V `in M) =
-    cong₂ match_`in_ (V-rename-∘ r₂ r₁ V)
+  C-rename-∘ r₂ r₁ (match V `with M) =
+    cong₂ match_`with_ (V-rename-∘ r₂ r₁ V)
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _ ∷ _) r₂ r₁) M)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
   C-rename-∘ r₂ r₁ (absurd V) = cong absurd (V-rename-∘ r₂ r₁ V)
@@ -374,24 +374,24 @@ mutual
   C-rename-∘ r₂ r₁ (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-rename-∘ r₂ r₁ V) (C-rename-∘ r₂ r₁ M) (C-rename-∘ r₂ r₁ N)
-  C-rename-∘ r₂ r₁ (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_ (V-rename-∘ r₂ r₁ V) (C-rename-∘ r₂ r₁ M)
+  C-rename-∘ r₂ r₁ (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_ (V-rename-∘ r₂ r₁ V) (C-rename-∘ r₂ r₁ M)
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _) r₂ r₁) N)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))
   C-rename-∘ r₂ r₁ (recℕ V M N p) =
     cong₃ (λ a b c → recℕ a b c p) (V-rename-∘ r₂ r₁ V) (C-rename-∘ r₂ r₁ M)
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ (([] ⟨ _ ⟩ ∷ nat) ⟨ _ ⟩ ∷ _) r₂ r₁) N)
              (C-rename-∘ (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ nat) ⟨ _ ⟩ ∷ _)} r₂) (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ nat) ⟨ _ ⟩ ∷ _)} r₁) N))
-  C-rename-∘ r₂ r₁ (caseL V `nil M `cons N) =
-    cong₃ caseL_`nil_`cons_ (V-rename-∘ r₂ r₁ V) (C-rename-∘ r₂ r₁ M)
+  C-rename-∘ r₂ r₁ (matchL V `nil M `cons N) =
+    cong₃ matchL_`nil_`cons_ (V-rename-∘ r₂ r₁ V) (C-rename-∘ r₂ r₁ M)
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _ ∷ _) r₂ r₁) N)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))
   C-rename-∘ r₂ r₁ (recL V M N p) =
     cong₃ (λ a b c → recL a b c p) (V-rename-∘ r₂ r₁ V) (C-rename-∘ r₂ r₁ M)
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ (([] ⟨ _ ⟩ ∷ _ ∷ list _) ⟨ _ ⟩ ∷ _) r₂ r₁) N)
              (C-rename-∘ (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ _ ∷ list _) ⟨ _ ⟩ ∷ _)} r₂) (cong-ren {Γ'' = (([] ⟨ _ ⟩ ∷ _ ∷ list _) ⟨ _ ⟩ ∷ _)} r₁) N))
-  C-rename-∘ r₂ r₁ (case+ V `inl M `inr N) =
-    cong₃ case+_`inl_`inr_ (V-rename-∘ r₂ r₁ V)
+  C-rename-∘ r₂ r₁ (match+ V `inl M `inr N) =
+    cong₃ match+_`inl_`inr_ (V-rename-∘ r₂ r₁ V)
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _) r₂ r₁) M)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _) r₂ r₁) N)

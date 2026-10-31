@@ -46,22 +46,22 @@ mutual
   psubᵛ σ ⦉ V , W ⦊ = ⦉ (psubᵛ σ V) , (psubᵛ σ W) ⦊
   psubᵛ σ (cons V W) = cons (psubᵛ σ V) (psubᵛ σ W)
   psubᵛ σ (cmp ⋈ V W) = cmp ⋈ (psubᵛ σ V) (psubᵛ σ W)
-  psubᵛ σ (lam M) = lam (psubᶜ (exts σ) M)
+  psubᵛ σ (fun M) = fun (psubᶜ (exts σ) M)
   psubᵛ σ (handler N H) = handler (psubᶜ (exts σ) N) (λ op → psubᶜ (exts (exts σ)) (H op))
 
   psubᶜ : ∀ {n m} → (Fin n → RunV m) → RunC n → RunC m
   psubᶜ σ (return V) = return (psubᵛ σ V)
   psubᶜ σ (M ⨟ N) = (psubᶜ σ M) ⨟ (psubᶜ (exts σ) N)
   psubᶜ σ (V · W) = (psubᵛ σ V) · (psubᵛ σ W)
-  psubᶜ σ (match V `in M) = match (psubᵛ σ V) `in (psubᶜ (exts (exts σ)) M)
+  psubᶜ σ (match V `with M) = match (psubᵛ σ V) `with (psubᶜ (exts (exts σ)) M)
   psubᶜ σ (absurd V) = absurd (psubᵛ σ V)
   psubᶜ σ (if V `then M `else N) = if (psubᵛ σ V) `then (psubᶜ σ M) `else (psubᶜ σ N)
-  psubᶜ σ (caseℕ V `zero M `succ N) =
-    caseℕ (psubᵛ σ V) `zero (psubᶜ σ M) `succ (psubᶜ (exts σ) N)
-  psubᶜ σ (case+ V `inl M `inr N) =
-    case+ (psubᵛ σ V) `inl (psubᶜ (exts σ) M) `inr (psubᶜ (exts σ) N)
-  psubᶜ σ (caseL V `nil M `cons N) =
-    caseL (psubᵛ σ V) `nil (psubᶜ σ M) `cons (psubᶜ (exts (exts σ)) N)
+  psubᶜ σ (matchℕ V `zero M `succ N) =
+    matchℕ (psubᵛ σ V) `zero (psubᶜ σ M) `succ (psubᶜ (exts σ) N)
+  psubᶜ σ (match+ V `inl M `inr N) =
+    match+ (psubᵛ σ V) `inl (psubᶜ (exts σ) M) `inr (psubᶜ (exts σ) N)
+  psubᶜ σ (matchL V `nil M `cons N) =
+    matchL (psubᵛ σ V) `nil (psubᶜ σ M) `cons (psubᶜ (exts (exts σ)) N)
   psubᶜ σ (recℕ V M N) = recℕ (psubᵛ σ V) (psubᶜ σ M) (psubᶜ (exts (exts σ)) N)
   psubᶜ σ (recL V M N) = recL (psubᵛ σ V) (psubᶜ σ M) (psubᶜ (exts (exts (exts σ))) N)
   psubᶜ σ (perform op V M) = perform op (psubᵛ σ V) (psubᶜ (exts σ) M)
@@ -97,7 +97,7 @@ mutual
   psub-congᵛ p ⦉ V , W ⦊ = cong₂ ⦉_,_⦊ (psub-congᵛ p V) (psub-congᵛ p W)
   psub-congᵛ p (cons V W) = cong₂ cons (psub-congᵛ p V) (psub-congᵛ p W)
   psub-congᵛ p (cmp ⋈ V W) = cong₂ (cmp ⋈) (psub-congᵛ p V) (psub-congᵛ p W)
-  psub-congᵛ p (lam M) = cong lam (psub-congᶜ (exts-cong p) M)
+  psub-congᵛ p (fun M) = cong fun (psub-congᶜ (exts-cong p) M)
   psub-congᵛ p (handler N H) =
     cong₂ handler (psub-congᶜ (exts-cong p) N)
                   (fun-ext (λ op → psub-congᶜ (exts-cong (exts-cong p)) (H op)))
@@ -109,19 +109,19 @@ mutual
   psub-congᶜ p (return V) = cong return (psub-congᵛ p V)
   psub-congᶜ p (M ⨟ N) = cong₂ _⨟_ (psub-congᶜ p M) (psub-congᶜ (exts-cong p) N)
   psub-congᶜ p (V · W) = cong₂ _·_ (psub-congᵛ p V) (psub-congᵛ p W)
-  psub-congᶜ p (match V `in M) =
-    cong₂ match_`in_ (psub-congᵛ p V) (psub-congᶜ (exts-cong (exts-cong p)) M)
+  psub-congᶜ p (match V `with M) =
+    cong₂ match_`with_ (psub-congᵛ p V) (psub-congᶜ (exts-cong (exts-cong p)) M)
   psub-congᶜ p (absurd V) = cong absurd (psub-congᵛ p V)
   psub-congᶜ p (if V `then M `else N) =
     cong₃ if_`then_`else_ (psub-congᵛ p V) (psub-congᶜ p M) (psub-congᶜ p N)
-  psub-congᶜ p (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_ (psub-congᵛ p V) (psub-congᶜ p M) (psub-congᶜ (exts-cong p) N)
-  psub-congᶜ p (case+ V `inl M `inr N) =
-    cong₃ case+_`inl_`inr_ (psub-congᵛ p V) (psub-congᶜ (exts-cong p) M)
-                           (psub-congᶜ (exts-cong p) N)
-  psub-congᶜ p (caseL V `nil M `cons N) =
-    cong₃ caseL_`nil_`cons_ (psub-congᵛ p V) (psub-congᶜ p M)
-                            (psub-congᶜ (exts-cong (exts-cong p)) N)
+  psub-congᶜ p (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_ (psub-congᵛ p V) (psub-congᶜ p M) (psub-congᶜ (exts-cong p) N)
+  psub-congᶜ p (match+ V `inl M `inr N) =
+    cong₃ match+_`inl_`inr_ (psub-congᵛ p V) (psub-congᶜ (exts-cong p) M)
+                            (psub-congᶜ (exts-cong p) N)
+  psub-congᶜ p (matchL V `nil M `cons N) =
+    cong₃ matchL_`nil_`cons_ (psub-congᵛ p V) (psub-congᶜ p M)
+                             (psub-congᶜ (exts-cong (exts-cong p)) N)
   psub-congᶜ p (recℕ V M N) =
     cong₃ recℕ (psub-congᵛ p V) (psub-congᶜ p M) (psub-congᶜ (exts-cong (exts-cong p)) N)
   psub-congᶜ p (recL V M N) =
@@ -161,7 +161,7 @@ mutual
   ren-psubᵛ p ⦉ V , W ⦊ = cong₂ ⦉_,_⦊ (ren-psubᵛ p V) (ren-psubᵛ p W)
   ren-psubᵛ p (cons V W) = cong₂ cons (ren-psubᵛ p V) (ren-psubᵛ p W)
   ren-psubᵛ p (cmp ⋈ V W) = cong₂ (cmp ⋈) (ren-psubᵛ p V) (ren-psubᵛ p W)
-  ren-psubᵛ p (lam M) = cong lam (ren-psubᶜ (ren-exts p) M)
+  ren-psubᵛ p (fun M) = cong fun (ren-psubᶜ (ren-exts p) M)
   ren-psubᵛ p (handler N H) =
     cong₂ handler (ren-psubᶜ (ren-exts p) N)
                   (fun-ext (λ op → ren-psubᶜ (ren-exts (ren-exts p)) (H op)))
@@ -173,18 +173,18 @@ mutual
   ren-psubᶜ p (return V) = cong return (ren-psubᵛ p V)
   ren-psubᶜ p (M ⨟ N) = cong₂ _⨟_ (ren-psubᶜ p M) (ren-psubᶜ (ren-exts p) N)
   ren-psubᶜ p (V · W) = cong₂ _·_ (ren-psubᵛ p V) (ren-psubᵛ p W)
-  ren-psubᶜ p (match V `in M) =
-    cong₂ match_`in_ (ren-psubᵛ p V) (ren-psubᶜ (ren-exts (ren-exts p)) M)
+  ren-psubᶜ p (match V `with M) =
+    cong₂ match_`with_ (ren-psubᵛ p V) (ren-psubᶜ (ren-exts (ren-exts p)) M)
   ren-psubᶜ p (absurd V) = cong absurd (ren-psubᵛ p V)
   ren-psubᶜ p (if V `then M `else N) =
     cong₃ if_`then_`else_ (ren-psubᵛ p V) (ren-psubᶜ p M) (ren-psubᶜ p N)
-  ren-psubᶜ p (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_ (ren-psubᵛ p V) (ren-psubᶜ p M) (ren-psubᶜ (ren-exts p) N)
-  ren-psubᶜ p (case+ V `inl M `inr N) =
-    cong₃ case+_`inl_`inr_ (ren-psubᵛ p V) (ren-psubᶜ (ren-exts p) M) (ren-psubᶜ (ren-exts p) N)
-  ren-psubᶜ p (caseL V `nil M `cons N) =
-    cong₃ caseL_`nil_`cons_ (ren-psubᵛ p V) (ren-psubᶜ p M)
-                            (ren-psubᶜ (ren-exts (ren-exts p)) N)
+  ren-psubᶜ p (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_ (ren-psubᵛ p V) (ren-psubᶜ p M) (ren-psubᶜ (ren-exts p) N)
+  ren-psubᶜ p (match+ V `inl M `inr N) =
+    cong₃ match+_`inl_`inr_ (ren-psubᵛ p V) (ren-psubᶜ (ren-exts p) M) (ren-psubᶜ (ren-exts p) N)
+  ren-psubᶜ p (matchL V `nil M `cons N) =
+    cong₃ matchL_`nil_`cons_ (ren-psubᵛ p V) (ren-psubᶜ p M)
+                             (ren-psubᶜ (ren-exts (ren-exts p)) N)
   ren-psubᶜ p (recℕ V M N) =
     cong₃ recℕ (ren-psubᵛ p V) (ren-psubᶜ p M) (ren-psubᶜ (ren-exts (ren-exts p)) N)
   ren-psubᶜ p (recL V M N) =
@@ -220,7 +220,7 @@ mutual
   psub-renᵛ p ⦉ V , W ⦊ = cong₂ ⦉_,_⦊ (psub-renᵛ p V) (psub-renᵛ p W)
   psub-renᵛ p (cons V W) = cong₂ cons (psub-renᵛ p V) (psub-renᵛ p W)
   psub-renᵛ p (cmp ⋈ V W) = cong₂ (cmp ⋈) (psub-renᵛ p V) (psub-renᵛ p W)
-  psub-renᵛ p (lam M) = cong lam (psub-renᶜ (exts-ren p) M)
+  psub-renᵛ p (fun M) = cong fun (psub-renᶜ (exts-ren p) M)
   psub-renᵛ p (handler N H) =
     cong₂ handler (psub-renᶜ (exts-ren p) N)
                   (fun-ext (λ op → psub-renᶜ (exts-ren (exts-ren p)) (H op)))
@@ -232,18 +232,18 @@ mutual
   psub-renᶜ p (return V) = cong return (psub-renᵛ p V)
   psub-renᶜ p (M ⨟ N) = cong₂ _⨟_ (psub-renᶜ p M) (psub-renᶜ (exts-ren p) N)
   psub-renᶜ p (V · W) = cong₂ _·_ (psub-renᵛ p V) (psub-renᵛ p W)
-  psub-renᶜ p (match V `in M) =
-    cong₂ match_`in_ (psub-renᵛ p V) (psub-renᶜ (exts-ren (exts-ren p)) M)
+  psub-renᶜ p (match V `with M) =
+    cong₂ match_`with_ (psub-renᵛ p V) (psub-renᶜ (exts-ren (exts-ren p)) M)
   psub-renᶜ p (absurd V) = cong absurd (psub-renᵛ p V)
   psub-renᶜ p (if V `then M `else N) =
     cong₃ if_`then_`else_ (psub-renᵛ p V) (psub-renᶜ p M) (psub-renᶜ p N)
-  psub-renᶜ p (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_ (psub-renᵛ p V) (psub-renᶜ p M) (psub-renᶜ (exts-ren p) N)
-  psub-renᶜ p (case+ V `inl M `inr N) =
-    cong₃ case+_`inl_`inr_ (psub-renᵛ p V) (psub-renᶜ (exts-ren p) M) (psub-renᶜ (exts-ren p) N)
-  psub-renᶜ p (caseL V `nil M `cons N) =
-    cong₃ caseL_`nil_`cons_ (psub-renᵛ p V) (psub-renᶜ p M)
-                            (psub-renᶜ (exts-ren (exts-ren p)) N)
+  psub-renᶜ p (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_ (psub-renᵛ p V) (psub-renᶜ p M) (psub-renᶜ (exts-ren p) N)
+  psub-renᶜ p (match+ V `inl M `inr N) =
+    cong₃ match+_`inl_`inr_ (psub-renᵛ p V) (psub-renᶜ (exts-ren p) M) (psub-renᶜ (exts-ren p) N)
+  psub-renᶜ p (matchL V `nil M `cons N) =
+    cong₃ matchL_`nil_`cons_ (psub-renᵛ p V) (psub-renᶜ p M)
+                             (psub-renᶜ (exts-ren (exts-ren p)) N)
   psub-renᶜ p (recℕ V M N) =
     cong₃ recℕ (psub-renᵛ p V) (psub-renᶜ p M) (psub-renᶜ (exts-ren (exts-ren p)) N)
   psub-renᶜ p (recL V M N) =
@@ -281,7 +281,7 @@ mutual
   psub-psubᵛ p ⦉ V , W ⦊ = cong₂ ⦉_,_⦊ (psub-psubᵛ p V) (psub-psubᵛ p W)
   psub-psubᵛ p (cons V W) = cong₂ cons (psub-psubᵛ p V) (psub-psubᵛ p W)
   psub-psubᵛ p (cmp ⋈ V W) = cong₂ (cmp ⋈) (psub-psubᵛ p V) (psub-psubᵛ p W)
-  psub-psubᵛ p (lam M) = cong lam (psub-psubᶜ (exts-psub p) M)
+  psub-psubᵛ p (fun M) = cong fun (psub-psubᶜ (exts-psub p) M)
   psub-psubᵛ p (handler N H) =
     cong₂ handler (psub-psubᶜ (exts-psub p) N)
                   (fun-ext (λ op → psub-psubᶜ (exts-psub (exts-psub p)) (H op)))
@@ -293,19 +293,19 @@ mutual
   psub-psubᶜ p (return V) = cong return (psub-psubᵛ p V)
   psub-psubᶜ p (M ⨟ N) = cong₂ _⨟_ (psub-psubᶜ p M) (psub-psubᶜ (exts-psub p) N)
   psub-psubᶜ p (V · W) = cong₂ _·_ (psub-psubᵛ p V) (psub-psubᵛ p W)
-  psub-psubᶜ p (match V `in M) =
-    cong₂ match_`in_ (psub-psubᵛ p V) (psub-psubᶜ (exts-psub (exts-psub p)) M)
+  psub-psubᶜ p (match V `with M) =
+    cong₂ match_`with_ (psub-psubᵛ p V) (psub-psubᶜ (exts-psub (exts-psub p)) M)
   psub-psubᶜ p (absurd V) = cong absurd (psub-psubᵛ p V)
   psub-psubᶜ p (if V `then M `else N) =
     cong₃ if_`then_`else_ (psub-psubᵛ p V) (psub-psubᶜ p M) (psub-psubᶜ p N)
-  psub-psubᶜ p (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_ (psub-psubᵛ p V) (psub-psubᶜ p M) (psub-psubᶜ (exts-psub p) N)
-  psub-psubᶜ p (case+ V `inl M `inr N) =
-    cong₃ case+_`inl_`inr_ (psub-psubᵛ p V) (psub-psubᶜ (exts-psub p) M)
-                           (psub-psubᶜ (exts-psub p) N)
-  psub-psubᶜ p (caseL V `nil M `cons N) =
-    cong₃ caseL_`nil_`cons_ (psub-psubᵛ p V) (psub-psubᶜ p M)
-                            (psub-psubᶜ (exts-psub (exts-psub p)) N)
+  psub-psubᶜ p (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_ (psub-psubᵛ p V) (psub-psubᶜ p M) (psub-psubᶜ (exts-psub p) N)
+  psub-psubᶜ p (match+ V `inl M `inr N) =
+    cong₃ match+_`inl_`inr_ (psub-psubᵛ p V) (psub-psubᶜ (exts-psub p) M)
+                            (psub-psubᶜ (exts-psub p) N)
+  psub-psubᶜ p (matchL V `nil M `cons N) =
+    cong₃ matchL_`nil_`cons_ (psub-psubᵛ p V) (psub-psubᶜ p M)
+                             (psub-psubᶜ (exts-psub (exts-psub p)) N)
   psub-psubᶜ p (recℕ V M N) =
     cong₃ recℕ (psub-psubᵛ p V) (psub-psubᶜ p M) (psub-psubᶜ (exts-psub (exts-psub p)) N)
   psub-psubᶜ p (recL V M N) =
@@ -343,7 +343,7 @@ mutual
   psub-varᵛ p ⦉ V , W ⦊ = cong₂ ⦉_,_⦊ (psub-varᵛ p V) (psub-varᵛ p W)
   psub-varᵛ p (cons V W) = cong₂ cons (psub-varᵛ p V) (psub-varᵛ p W)
   psub-varᵛ p (cmp ⋈ V W) = cong₂ (cmp ⋈) (psub-varᵛ p V) (psub-varᵛ p W)
-  psub-varᵛ p (lam M) = cong lam (psub-varᶜ (exts-var p) M)
+  psub-varᵛ p (fun M) = cong fun (psub-varᶜ (exts-var p) M)
   psub-varᵛ p (handler N H) =
     cong₂ handler (psub-varᶜ (exts-var p) N)
                   (fun-ext (λ op → psub-varᶜ (exts-var (exts-var p)) (H op)))
@@ -355,18 +355,18 @@ mutual
   psub-varᶜ p (return V) = cong return (psub-varᵛ p V)
   psub-varᶜ p (M ⨟ N) = cong₂ _⨟_ (psub-varᶜ p M) (psub-varᶜ (exts-var p) N)
   psub-varᶜ p (V · W) = cong₂ _·_ (psub-varᵛ p V) (psub-varᵛ p W)
-  psub-varᶜ p (match V `in M) =
-    cong₂ match_`in_ (psub-varᵛ p V) (psub-varᶜ (exts-var (exts-var p)) M)
+  psub-varᶜ p (match V `with M) =
+    cong₂ match_`with_ (psub-varᵛ p V) (psub-varᶜ (exts-var (exts-var p)) M)
   psub-varᶜ p (absurd V) = cong absurd (psub-varᵛ p V)
   psub-varᶜ p (if V `then M `else N) =
     cong₃ if_`then_`else_ (psub-varᵛ p V) (psub-varᶜ p M) (psub-varᶜ p N)
-  psub-varᶜ p (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_ (psub-varᵛ p V) (psub-varᶜ p M) (psub-varᶜ (exts-var p) N)
-  psub-varᶜ p (case+ V `inl M `inr N) =
-    cong₃ case+_`inl_`inr_ (psub-varᵛ p V) (psub-varᶜ (exts-var p) M) (psub-varᶜ (exts-var p) N)
-  psub-varᶜ p (caseL V `nil M `cons N) =
-    cong₃ caseL_`nil_`cons_ (psub-varᵛ p V) (psub-varᶜ p M)
-                            (psub-varᶜ (exts-var (exts-var p)) N)
+  psub-varᶜ p (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_ (psub-varᵛ p V) (psub-varᶜ p M) (psub-varᶜ (exts-var p) N)
+  psub-varᶜ p (match+ V `inl M `inr N) =
+    cong₃ match+_`inl_`inr_ (psub-varᵛ p V) (psub-varᶜ (exts-var p) M) (psub-varᶜ (exts-var p) N)
+  psub-varᶜ p (matchL V `nil M `cons N) =
+    cong₃ matchL_`nil_`cons_ (psub-varᵛ p V) (psub-varᶜ p M)
+                             (psub-varᶜ (exts-var (exts-var p)) N)
   psub-varᶜ p (recℕ V M N) =
     cong₃ recℕ (psub-varᵛ p V) (psub-varᶜ p M) (psub-varᶜ (exts-var (exts-var p)) N)
   psub-varᶜ p (recL V M N) =
@@ -422,8 +422,8 @@ mutual
   sub-psubᵛ k U ⦉ V , W ⦊ = cong₂ ⦉_,_⦊ (sub-psubᵛ k U V) (sub-psubᵛ k U W)
   sub-psubᵛ k U (cons V W) = cong₂ cons (sub-psubᵛ k U V) (sub-psubᵛ k U W)
   sub-psubᵛ k U (cmp ⋈ V W) = cong₂ (cmp ⋈) (sub-psubᵛ k U V) (sub-psubᵛ k U W)
-  sub-psubᵛ k U (lam M) =
-    cong lam (trans (sub-psubᶜ (suc k) U M) (psub-congᶜ (subVar-exts₁ k U) M))
+  sub-psubᵛ k U (fun M) =
+    cong fun (trans (sub-psubᶜ (suc k) U M) (psub-congᶜ (subVar-exts₁ k U) M))
   sub-psubᵛ k U (handler N H) =
     cong₂ handler (trans (sub-psubᶜ (suc k) U N) (psub-congᶜ (subVar-exts₁ k U) N))
                   (fun-ext (λ op → trans (sub-psubᶜ (suc (suc k)) U (H op))
@@ -436,23 +436,23 @@ mutual
     cong₂ _⨟_ (sub-psubᶜ k U M)
               (trans (sub-psubᶜ (suc k) U N) (psub-congᶜ (subVar-exts₁ k U) N))
   sub-psubᶜ k U (V · W) = cong₂ _·_ (sub-psubᵛ k U V) (sub-psubᵛ k U W)
-  sub-psubᶜ k U (match V `in M) =
-    cong₂ match_`in_ (sub-psubᵛ k U V)
-                     (trans (sub-psubᶜ (suc (suc k)) U M) (psub-congᶜ (subVar-exts₂ k U) M))
+  sub-psubᶜ k U (match V `with M) =
+    cong₂ match_`with_ (sub-psubᵛ k U V)
+                       (trans (sub-psubᶜ (suc (suc k)) U M) (psub-congᶜ (subVar-exts₂ k U) M))
   sub-psubᶜ k U (absurd V) = cong absurd (sub-psubᵛ k U V)
   sub-psubᶜ k U (if V `then M `else N) =
     cong₃ if_`then_`else_ (sub-psubᵛ k U V) (sub-psubᶜ k U M) (sub-psubᶜ k U N)
-  sub-psubᶜ k U (caseℕ V `zero M `succ N) =
-    cong₃ caseℕ_`zero_`succ_ (sub-psubᵛ k U V) (sub-psubᶜ k U M)
-                             (trans (sub-psubᶜ (suc k) U N) (psub-congᶜ (subVar-exts₁ k U) N))
-  sub-psubᶜ k U (case+ V `inl M `inr N) =
-    cong₃ case+_`inl_`inr_ (sub-psubᵛ k U V)
-                           (trans (sub-psubᶜ (suc k) U M) (psub-congᶜ (subVar-exts₁ k U) M))
-                           (trans (sub-psubᶜ (suc k) U N) (psub-congᶜ (subVar-exts₁ k U) N))
-  sub-psubᶜ k U (caseL V `nil M `cons N) =
-    cong₃ caseL_`nil_`cons_ (sub-psubᵛ k U V) (sub-psubᶜ k U M)
-                            (trans (sub-psubᶜ (suc (suc k)) U N)
-                                   (psub-congᶜ (subVar-exts₂ k U) N))
+  sub-psubᶜ k U (matchℕ V `zero M `succ N) =
+    cong₃ matchℕ_`zero_`succ_ (sub-psubᵛ k U V) (sub-psubᶜ k U M)
+                              (trans (sub-psubᶜ (suc k) U N) (psub-congᶜ (subVar-exts₁ k U) N))
+  sub-psubᶜ k U (match+ V `inl M `inr N) =
+    cong₃ match+_`inl_`inr_ (sub-psubᵛ k U V)
+                            (trans (sub-psubᶜ (suc k) U M) (psub-congᶜ (subVar-exts₁ k U) M))
+                            (trans (sub-psubᶜ (suc k) U N) (psub-congᶜ (subVar-exts₁ k U) N))
+  sub-psubᶜ k U (matchL V `nil M `cons N) =
+    cong₃ matchL_`nil_`cons_ (sub-psubᵛ k U V) (sub-psubᶜ k U M)
+                             (trans (sub-psubᶜ (suc (suc k)) U N)
+                                    (psub-congᶜ (subVar-exts₂ k U) N))
   sub-psubᶜ k U (recℕ V M N) =
     cong₃ recℕ (sub-psubᵛ k U V) (sub-psubᶜ k U M)
                (trans (sub-psubᶜ (suc (suc k)) U N) (psub-congᶜ (subVar-exts₂ k U) N))

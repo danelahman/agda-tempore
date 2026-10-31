@@ -6,10 +6,10 @@
 -- disjunctions and quantified orderings. Grade entailment is   --
 -- semantic consequence: the ordering holds at every closed     --
 -- instance satisfying the set. Eternality, subtyping and       --
--- `VarOK` are inductive over it; entailment is stable under    --
--- instance maps (`_⊩ᴵ_[_]`). The sets are the constraints of   --
--- HM(X) (Odersky, Sulzmann and Wehr) and the givens of         --
--- OutsideIn(X).                                                --
+-- `_⊩_Et∨≾ᵘ_` are inductive over it; entailment is stable      --
+-- under instance maps (`_⊩ᴵ_[_]`). The sets are the            --
+-- constraints of HM(X) (Odersky, Sulzmann and Wehr) and the    --
+-- givens of OutsideIn(X).                                      --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_; map; _++_)
@@ -134,12 +134,12 @@ wkᵉⁿ-H (suc k) Q = wkᵉⁿ-H k (wkᵉ-H Q)
 
 -- Assumed subtyping between type variables, reflexive and transitive
 
-infix 4 _⊩ᵗᵛ_≾_
+infix 4 _⊩ᵗᵛ_<:_
 
-data _⊩ᵗᵛ_≾_ {Θ : Scope} (Q : Hyps Θ) : TyVar Θ → TyVar Θ → Set where
-  reflᵗᵛ  : ∀ {α} → Q ⊩ᵗᵛ α ≾ α
-  hypᵗᵛ   : ∀ {α β} → (α , β) ∈ subᵥ Q → Q ⊩ᵗᵛ α ≾ β
-  transᵗᵛ : ∀ {α β γ} → Q ⊩ᵗᵛ α ≾ β → Q ⊩ᵗᵛ β ≾ γ → Q ⊩ᵗᵛ α ≾ γ
+data _⊩ᵗᵛ_<:_ {Θ : Scope} (Q : Hyps Θ) : TyVar Θ → TyVar Θ → Set where
+  reflᵗᵛ  : ∀ {α} → Q ⊩ᵗᵛ α <: α
+  hypᵗᵛ   : ∀ {α β} → (α , β) ∈ subᵥ Q → Q ⊩ᵗᵛ α <: β
+  transᵗᵛ : ∀ {α β γ} → Q ⊩ᵗᵛ α <: β → Q ⊩ᵗᵛ β <: γ → Q ⊩ᵗᵛ α <: γ
 
 ------------------------------------------------------------------------
 -- Grade entailment: semantic consequence in the grade system
@@ -539,8 +539,8 @@ infix 4 _⊩Et_
 
 data _⊩Et_ {Θ : Scope} (Q : Hyps Θ) : OVType Θ → Set where
   et-hyp  : ∀ {α} → α ∈ ets Q → Q ⊩Et tvar α
-  et-subˡ : ∀ {α β} → Q ⊩ᵗᵛ α ≾ β → Q ⊩Et tvar β → Q ⊩Et tvar α
-  et-subʳ : ∀ {α β} → Q ⊩ᵗᵛ α ≾ β → Q ⊩Et tvar α → Q ⊩Et tvar β
+  et-subˡ : ∀ {α β} → Q ⊩ᵗᵛ α <: β → Q ⊩Et tvar β → Q ⊩Et tvar α
+  et-subʳ : ∀ {α β} → Q ⊩ᵗᵛ α <: β → Q ⊩Et tvar α → Q ⊩Et tvar β
   Baseₑ   : ∀ {b} → .(EternalBaseType b) → Q ⊩Et Base b
   unitₑ   : Q ⊩Et unit
   boolₑ   : Q ⊩Et bool
@@ -648,40 +648,40 @@ data _≡̂ᶜ_ {Θ} where
 -- Shape-preserving subtyping of open types, grade slots entailed from
 -- `Q`; type variables related only by an assumed subtyping
 
-infix  4  _∣_<:̂ᵛ_ _∣_<:̂ᶜ_
+infix  4  _⊩_<:̂ᵛ_ _⊩_<:̂ᶜ_
 infix  37 [_]ₛ_
 infix  32 _|×|ₛ_ _|+|ₛ_
 infixr 30 _⇒ₛ_ _⇛ₛ_
 infix  31 _!ₛ_
 
-data _∣_<:̂ᵛ_ {Θ : Scope} (Q : Hyps Θ) : OVType Θ → OVType Θ → Set
-data _∣_<:̂ᶜ_ {Θ : Scope} (Q : Hyps Θ) : OCType Θ → OCType Θ → Set
+data _⊩_<:̂ᵛ_ {Θ : Scope} (Q : Hyps Θ) : OVType Θ → OVType Θ → Set
+data _⊩_<:̂ᶜ_ {Θ : Scope} (Q : Hyps Θ) : OCType Θ → OCType Θ → Set
 
-data _∣_<:̂ᵛ_ {Θ} Q where
-  tvarₛ  : ∀ {α β} → Q ⊩ᵗᵛ α ≾ β → Q ∣ tvar α <:̂ᵛ tvar β
-  Baseₛ  : ∀ {b b'} → b ≡ b' → Q ∣ Base b <:̂ᵛ Base b'
-  unitₛ  : Q ∣ unit <:̂ᵛ unit
-  boolₛ  : Q ∣ bool <:̂ᵛ bool
-  natₛ   : Q ∣ nat <:̂ᵛ nat
-  _|×|ₛ_ : ∀ {A A' B B'} → Q ∣ A <:̂ᵛ A' → Q ∣ B <:̂ᵛ B'
-         → Q ∣ (A |×| B) <:̂ᵛ (A' |×| B')
-  _|+|ₛ_ : ∀ {A A' B B'} → Q ∣ A <:̂ᵛ A' → Q ∣ B <:̂ᵛ B'
-         → Q ∣ (A |+| B) <:̂ᵛ (A' |+| B')
-  listₛ  : ∀ {A A'} → Q ∣ A <:̂ᵛ A' → Q ∣ list A <:̂ᵛ list A'
-  emptyₛ : Q ∣ empty <:̂ᵛ empty
-  _⇒ₛ_   : ∀ {A A' C C'} → Q ∣ A' <:̂ᵛ A → Q ∣ C <:̂ᶜ C'
-         → Q ∣ (A ⇒ C) <:̂ᵛ (A' ⇒ C')
-  _⇛ₛ_   : ∀ {C C' D D'} → Q ∣ C' <:̂ᶜ C → Q ∣ D <:̂ᶜ D'
-         → Q ∣ (C ⇛ D) <:̂ᵛ (C' ⇛ D')
-  [_]ₛ_  : ∀ {ρ ρ' A A'} → Q ⊩ ρ' ≾̂ᵣ ρ → Q ∣ A <:̂ᵛ A'
-         → Q ∣ ([ ρ ] A) <:̂ᵛ ([ ρ' ] A')
+data _⊩_<:̂ᵛ_ {Θ} Q where
+  tvarₛ  : ∀ {α β} → Q ⊩ᵗᵛ α <: β → Q ⊩ tvar α <:̂ᵛ tvar β
+  Baseₛ  : ∀ {b b'} → b ≡ b' → Q ⊩ Base b <:̂ᵛ Base b'
+  unitₛ  : Q ⊩ unit <:̂ᵛ unit
+  boolₛ  : Q ⊩ bool <:̂ᵛ bool
+  natₛ   : Q ⊩ nat <:̂ᵛ nat
+  _|×|ₛ_ : ∀ {A A' B B'} → Q ⊩ A <:̂ᵛ A' → Q ⊩ B <:̂ᵛ B'
+         → Q ⊩ (A |×| B) <:̂ᵛ (A' |×| B')
+  _|+|ₛ_ : ∀ {A A' B B'} → Q ⊩ A <:̂ᵛ A' → Q ⊩ B <:̂ᵛ B'
+         → Q ⊩ (A |+| B) <:̂ᵛ (A' |+| B')
+  listₛ  : ∀ {A A'} → Q ⊩ A <:̂ᵛ A' → Q ⊩ list A <:̂ᵛ list A'
+  emptyₛ : Q ⊩ empty <:̂ᵛ empty
+  _⇒ₛ_   : ∀ {A A' C C'} → Q ⊩ A' <:̂ᵛ A → Q ⊩ C <:̂ᶜ C'
+         → Q ⊩ (A ⇒ C) <:̂ᵛ (A' ⇒ C')
+  _⇛ₛ_   : ∀ {C C' D D'} → Q ⊩ C' <:̂ᶜ C → Q ⊩ D <:̂ᶜ D'
+         → Q ⊩ (C ⇛ D) <:̂ᵛ (C' ⇛ D')
+  [_]ₛ_  : ∀ {ρ ρ' A A'} → Q ⊩ ρ' ≾̂ᵣ ρ → Q ⊩ A <:̂ᵛ A'
+         → Q ⊩ ([ ρ ] A) <:̂ᵛ ([ ρ' ] A')
 
-data _∣_<:̂ᶜ_ {Θ} Q where
-  _!ₛ_ : ∀ {A A' ε ε'} → Q ∣ A <:̂ᵛ A' → Q ⊩ ε ≾̂ₑ ε'
-       → Q ∣ (A ! ε) <:̂ᶜ (A' ! ε')
+data _⊩_<:̂ᶜ_ {Θ} Q where
+  _!ₛ_ : ∀ {A A' ε ε'} → Q ⊩ A <:̂ᵛ A' → Q ⊩ ε ≾̂ₑ ε'
+       → Q ⊩ (A ! ε) <:̂ᶜ (A' ! ε')
 
-<:̂ᵛ-refl : ∀ {Θ} {Q : Hyps Θ} → (A : OVType Θ) → Q ∣ A <:̂ᵛ A
-<:̂ᶜ-refl : ∀ {Θ} {Q : Hyps Θ} → (C : OCType Θ) → Q ∣ C <:̂ᶜ C
+<:̂ᵛ-refl : ∀ {Θ} {Q : Hyps Θ} → (A : OVType Θ) → Q ⊩ A <:̂ᵛ A
+<:̂ᶜ-refl : ∀ {Θ} {Q : Hyps Θ} → (C : OCType Θ) → Q ⊩ C <:̂ᶜ C
 
 <:̂ᵛ-refl (tvar α)  = tvarₛ reflᵗᵛ
 <:̂ᵛ-refl (Base b)  = Baseₛ refl
@@ -699,9 +699,9 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᶜ-refl (A ! ε) = <:̂ᵛ-refl A !ₛ ⊩≾̂ₑ-refl
 
 <:̂ᵛ-trans : ∀ {Θ} {Q : Hyps Θ} {A B C}
-          → Q ∣ A <:̂ᵛ B → Q ∣ B <:̂ᵛ C → Q ∣ A <:̂ᵛ C
+          → Q ⊩ A <:̂ᵛ B → Q ⊩ B <:̂ᵛ C → Q ⊩ A <:̂ᵛ C
 <:̂ᶜ-trans : ∀ {Θ} {Q : Hyps Θ} {C₁ C₂ C₃}
-          → Q ∣ C₁ <:̂ᶜ C₂ → Q ∣ C₂ <:̂ᶜ C₃ → Q ∣ C₁ <:̂ᶜ C₃
+          → Q ⊩ C₁ <:̂ᶜ C₂ → Q ⊩ C₂ <:̂ᶜ C₃ → Q ⊩ C₁ <:̂ᶜ C₃
 
 <:̂ᵛ-trans (tvarₛ p)  (tvarₛ q)  = tvarₛ (transᵗᵛ p q)
 <:̂ᵛ-trans (Baseₛ p)  (Baseₛ q)  = Baseₛ (trans p q)
@@ -718,8 +718,8 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 
 <:̂ᶜ-trans (p !ₛ r) (q !ₛ s) = <:̂ᵛ-trans p q !ₛ transₑ r s
 
-≡̂ᵛ-<:̂ : ∀ {Θ} {Q : Hyps Θ} {A A'} → A ≡̂ᵛ A' → Q ∣ A <:̂ᵛ A'
-≡̂ᶜ-<:̂ : ∀ {Θ} {Q : Hyps Θ} {C C'} → C ≡̂ᶜ C' → Q ∣ C <:̂ᶜ C'
+≡̂ᵛ-<:̂ : ∀ {Θ} {Q : Hyps Θ} {A A'} → A ≡̂ᵛ A' → Q ⊩ A <:̂ᵛ A'
+≡̂ᶜ-<:̂ : ∀ {Θ} {Q : Hyps Θ} {C C'} → C ≡̂ᶜ C' → Q ⊩ C <:̂ᶜ C'
 
 ≡̂ᵛ-<:̂ tvar≡̂      = tvarₛ reflᵗᵛ
 ≡̂ᵛ-<:̂ Base≡̂      = Baseₛ refl
@@ -738,7 +738,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 
 -- Eternality transfers along subtyping both ways
 
-<:̂ᵛ-eternalˡ : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ∣ A <:̂ᵛ B → Q ⊩Et B → Q ⊩Et A
+<:̂ᵛ-eternalˡ : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ⊩ A <:̂ᵛ B → Q ⊩Et B → Q ⊩Et A
 <:̂ᵛ-eternalˡ (tvarₛ p)    et          = et-subˡ p et
 <:̂ᵛ-eternalˡ (Baseₛ refl) et          = et
 <:̂ᵛ-eternalˡ unitₛ        et          = et
@@ -749,7 +749,7 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-eternalˡ (listₛ p)    (listₑ et)  = listₑ (<:̂ᵛ-eternalˡ p et)
 <:̂ᵛ-eternalˡ emptyₛ       et          = et
 
-<:̂ᵛ-eternalʳ : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ∣ A <:̂ᵛ B → Q ⊩Et A → Q ⊩Et B
+<:̂ᵛ-eternalʳ : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ⊩ A <:̂ᵛ B → Q ⊩Et A → Q ⊩Et B
 <:̂ᵛ-eternalʳ (tvarₛ p)    et          = et-subʳ p et
 <:̂ᵛ-eternalʳ (Baseₛ refl) et          = et
 <:̂ᵛ-eternalʳ unitₛ        et          = et
@@ -763,135 +763,137 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 -- Side condition of the `var` rule: `A` is eternal or `ρ ≾ 𝟏` at every
 -- instance, directly or by a `disj` hypothesis at a grade above
 
-data VarOK {Θ : Scope} (Q : Hyps Θ) : OVType Θ → RExp Θ → Set where
-  et-ok     : ∀ {A ρ} → Q ⊩Et A → VarOK Q A ρ
-  ≾ᵘ-ok     : ∀ {A ρ} → Q ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ → VarOK Q A ρ
-  hyp-ok    : ∀ {A ρ ρ'} → (A , ρ') ∈ disj Q → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A ρ
-  subˡ-ok   : ∀ {A B ρ} → Q ∣ A <:̂ᵛ B → VarOK Q B ρ → VarOK Q A ρ
-  subʳ-ok   : ∀ {A B ρ} → Q ∣ B <:̂ᵛ A → VarOK Q B ρ → VarOK Q A ρ
-  _|×|-ok_  : ∀ {A₁ A₂ ρ} → VarOK Q A₁ ρ → VarOK Q A₂ ρ → VarOK Q (A₁ |×| A₂) ρ
-  _|+|-ok_  : ∀ {A₁ A₂ ρ} → VarOK Q A₁ ρ → VarOK Q A₂ ρ → VarOK Q (A₁ |+| A₂) ρ
-  list-ok   : ∀ {A ρ} → VarOK Q A ρ → VarOK Q (list A) ρ
-  ⊔-ok      : ∀ {A ρ ρ₁ ρ₂} → Q ⊩ ρ ≾̂ᵣ ρ₁ ⊔̂ᵣ ρ₂ → VarOK Q A ρ₁ → VarOK Q A ρ₂
-            → VarOK Q A ρ
+infix 4 _⊩_Et∨≾ᵘ_
+
+data _⊩_Et∨≾ᵘ_ {Θ : Scope} (Q : Hyps Θ) : OVType Θ → RExp Θ → Set where
+  et-ok     : ∀ {A ρ} → Q ⊩Et A → Q ⊩ A Et∨≾ᵘ ρ
+  ≾ᵘ-ok     : ∀ {A ρ} → Q ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ → Q ⊩ A Et∨≾ᵘ ρ
+  hyp-ok    : ∀ {A ρ ρ'} → (A , ρ') ∈ disj Q → Q ⊩ ρ ≾̂ᵣ ρ' → Q ⊩ A Et∨≾ᵘ ρ
+  subˡ-ok   : ∀ {A B ρ} → Q ⊩ A <:̂ᵛ B → Q ⊩ B Et∨≾ᵘ ρ → Q ⊩ A Et∨≾ᵘ ρ
+  subʳ-ok   : ∀ {A B ρ} → Q ⊩ B <:̂ᵛ A → Q ⊩ B Et∨≾ᵘ ρ → Q ⊩ A Et∨≾ᵘ ρ
+  _|×|-ok_  : ∀ {A₁ A₂ ρ} → Q ⊩ A₁ Et∨≾ᵘ ρ → Q ⊩ A₂ Et∨≾ᵘ ρ → Q ⊩ (A₁ |×| A₂) Et∨≾ᵘ ρ
+  _|+|-ok_  : ∀ {A₁ A₂ ρ} → Q ⊩ A₁ Et∨≾ᵘ ρ → Q ⊩ A₂ Et∨≾ᵘ ρ → Q ⊩ (A₁ |+| A₂) Et∨≾ᵘ ρ
+  list-ok   : ∀ {A ρ} → Q ⊩ A Et∨≾ᵘ ρ → Q ⊩ list A Et∨≾ᵘ ρ
+  ⊔-ok      : ∀ {A ρ ρ₁ ρ₂} → Q ⊩ ρ ≾̂ᵣ ρ₁ ⊔̂ᵣ ρ₂ → Q ⊩ A Et∨≾ᵘ ρ₁ → Q ⊩ A Et∨≾ᵘ ρ₂
+            → Q ⊩ A Et∨≾ᵘ ρ
 
 -- A `disj` hypothesis met as it stands
 
-hyp-ok₀ : ∀ {Θ} {Q : Hyps Θ} {A ρ} → (A , ρ) ∈ disj Q → VarOK Q A ρ
+hyp-ok₀ : ∀ {Θ} {Q : Hyps Θ} {A ρ} → (A , ρ) ∈ disj Q → Q ⊩ A Et∨≾ᵘ ρ
 hyp-ok₀ m = hyp-ok m ⊩≾̂ᵣ-refl
 
-VarOK-≾ : ∀ {Θ} {Q : Hyps Θ} {A ρ ρ'} → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A ρ' → VarOK Q A ρ
-VarOK-≾ q (et-ok et)      = et-ok et
-VarOK-≾ q (≾ᵘ-ok le)      = ≾ᵘ-ok (transᵣ q le)
-VarOK-≾ q (hyp-ok m q')   = hyp-ok m (transᵣ q q')
-VarOK-≾ q (subˡ-ok p ok)  = subˡ-ok p (VarOK-≾ q ok)
-VarOK-≾ q (subʳ-ok p ok)  = subʳ-ok p (VarOK-≾ q ok)
-VarOK-≾ q (ok₁ |×|-ok ok₂) = VarOK-≾ q ok₁ |×|-ok VarOK-≾ q ok₂
-VarOK-≾ q (ok₁ |+|-ok ok₂) = VarOK-≾ q ok₁ |+|-ok VarOK-≾ q ok₂
-VarOK-≾ q (list-ok ok)    = list-ok (VarOK-≾ q ok)
-VarOK-≾ q (⊔-ok q' ok₁ ok₂) = ⊔-ok (transᵣ q q') ok₁ ok₂
+Et∨≾ᵘ-≾ : ∀ {Θ} {Q : Hyps Θ} {A ρ ρ'} → Q ⊩ ρ ≾̂ᵣ ρ' → Q ⊩ A Et∨≾ᵘ ρ' → Q ⊩ A Et∨≾ᵘ ρ
+Et∨≾ᵘ-≾ q (et-ok et)      = et-ok et
+Et∨≾ᵘ-≾ q (≾ᵘ-ok le)      = ≾ᵘ-ok (transᵣ q le)
+Et∨≾ᵘ-≾ q (hyp-ok m q')   = hyp-ok m (transᵣ q q')
+Et∨≾ᵘ-≾ q (subˡ-ok p ok)  = subˡ-ok p (Et∨≾ᵘ-≾ q ok)
+Et∨≾ᵘ-≾ q (subʳ-ok p ok)  = subʳ-ok p (Et∨≾ᵘ-≾ q ok)
+Et∨≾ᵘ-≾ q (ok₁ |×|-ok ok₂) = Et∨≾ᵘ-≾ q ok₁ |×|-ok Et∨≾ᵘ-≾ q ok₂
+Et∨≾ᵘ-≾ q (ok₁ |+|-ok ok₂) = Et∨≾ᵘ-≾ q ok₁ |+|-ok Et∨≾ᵘ-≾ q ok₂
+Et∨≾ᵘ-≾ q (list-ok ok)    = list-ok (Et∨≾ᵘ-≾ q ok)
+Et∨≾ᵘ-≾ q (⊔-ok q' ok₁ ok₂) = ⊔-ok (transᵣ q q') ok₁ ok₂
 
-VarOK-≃ : ∀ {Θ} {Q : Hyps Θ} {A A' ρ ρ'}
-        → Q ∣ A <:̂ᵛ A' → Q ∣ A' <:̂ᵛ A → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A' ρ' → VarOK Q A ρ
-VarOK-≃ p _ q ok = subˡ-ok p (VarOK-≾ q ok)
+Et∨≾ᵘ-≃ : ∀ {Θ} {Q : Hyps Θ} {A A' ρ ρ'}
+        → Q ⊩ A <:̂ᵛ A' → Q ⊩ A' <:̂ᵛ A → Q ⊩ ρ ≾̂ᵣ ρ' → Q ⊩ A' Et∨≾ᵘ ρ' → Q ⊩ A Et∨≾ᵘ ρ
+Et∨≾ᵘ-≃ p _ q ok = subˡ-ok p (Et∨≾ᵘ-≾ q ok)
 
 -- A `disj` hypothesis met at a convertible type
 
 hyp-ok-≡̂ : ∀ {Θ} {Q : Hyps Θ} {A A' ρ ρ'}
-         → (A' , ρ') ∈ disj Q → A ≡̂ᵛ A' → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A ρ
+         → (A' , ρ') ∈ disj Q → A ≡̂ᵛ A' → Q ⊩ ρ ≾̂ᵣ ρ' → Q ⊩ A Et∨≾ᵘ ρ
 hyp-ok-≡̂ m p q = subˡ-ok (≡̂ᵛ-<:̂ p) (hyp-ok m q)
 
-VarOK-≡̂ : ∀ {Θ} {Q : Hyps Θ} {A A' ρ ρ'}
-        → A ≡̂ᵛ A' → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A' ρ' → VarOK Q A ρ
-VarOK-≡̂ p = VarOK-≃ (≡̂ᵛ-<:̂ p) (≡̂ᵛ-<:̂ (≡̂ᵛ-sym p))
+Et∨≾ᵘ-≡̂ : ∀ {Θ} {Q : Hyps Θ} {A A' ρ ρ'}
+        → A ≡̂ᵛ A' → Q ⊩ ρ ≾̂ᵣ ρ' → Q ⊩ A' Et∨≾ᵘ ρ' → Q ⊩ A Et∨≾ᵘ ρ
+Et∨≾ᵘ-≡̂ p = Et∨≾ᵘ-≃ (≡̂ᵛ-<:̂ p) (≡̂ᵛ-<:̂ (≡̂ᵛ-sym p))
 
 -- Under no `disj` hypothesis the side condition is its two disjuncts
 
-VarOK-split : ∀ {Θ} {Q : Hyps Θ} {A ρ}
-            → disj Q ≡ [] → VarOK Q A ρ → (Q ⊩Et A) ⊎ (Q ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ)
-VarOK-split e (et-ok et)  = inj₁ et
-VarOK-split e (≾ᵘ-ok le)  = inj₂ le
-VarOK-split e (hyp-ok m _) with subst (_ ∈_) e m
+Et∨≾ᵘ-split : ∀ {Θ} {Q : Hyps Θ} {A ρ}
+            → disj Q ≡ [] → Q ⊩ A Et∨≾ᵘ ρ → (Q ⊩Et A) ⊎ (Q ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ)
+Et∨≾ᵘ-split e (et-ok et)  = inj₁ et
+Et∨≾ᵘ-split e (≾ᵘ-ok le)  = inj₂ le
+Et∨≾ᵘ-split e (hyp-ok m _) with subst (_ ∈_) e m
 ... | ()
-VarOK-split e (subˡ-ok p ok) with VarOK-split e ok
+Et∨≾ᵘ-split e (subˡ-ok p ok) with Et∨≾ᵘ-split e ok
 ... | inj₁ et = inj₁ (<:̂ᵛ-eternalˡ p et)
 ... | inj₂ le = inj₂ le
-VarOK-split e (subʳ-ok p ok) with VarOK-split e ok
+Et∨≾ᵘ-split e (subʳ-ok p ok) with Et∨≾ᵘ-split e ok
 ... | inj₁ et = inj₁ (<:̂ᵛ-eternalʳ p et)
 ... | inj₂ le = inj₂ le
-VarOK-split e (ok₁ |×|-ok ok₂) with VarOK-split e ok₁ | VarOK-split e ok₂
+Et∨≾ᵘ-split e (ok₁ |×|-ok ok₂) with Et∨≾ᵘ-split e ok₁ | Et∨≾ᵘ-split e ok₂
 ... | inj₁ et₁ | inj₁ et₂ = inj₁ (et₁ |×|ₑ et₂)
 ... | inj₂ le  | _        = inj₂ le
 ... | inj₁ _   | inj₂ le  = inj₂ le
-VarOK-split e (ok₁ |+|-ok ok₂) with VarOK-split e ok₁ | VarOK-split e ok₂
+Et∨≾ᵘ-split e (ok₁ |+|-ok ok₂) with Et∨≾ᵘ-split e ok₁ | Et∨≾ᵘ-split e ok₂
 ... | inj₁ et₁ | inj₁ et₂ = inj₁ (et₁ |+|ₑ et₂)
 ... | inj₂ le  | _        = inj₂ le
 ... | inj₁ _   | inj₂ le  = inj₂ le
-VarOK-split e (list-ok ok) with VarOK-split e ok
+Et∨≾ᵘ-split e (list-ok ok) with Et∨≾ᵘ-split e ok
 ... | inj₁ et = inj₁ (listₑ et)
 ... | inj₂ le = inj₂ le
-VarOK-split e (⊔-ok q ok₁ ok₂) with VarOK-split e ok₁ | VarOK-split e ok₂
+Et∨≾ᵘ-split e (⊔-ok q ok₁ ok₂) with Et∨≾ᵘ-split e ok₁ | Et∨≾ᵘ-split e ok₂
 ... | inj₁ et  | _        = inj₁ et
 ... | inj₂ _   | inj₁ et  = inj₁ et
 ... | inj₂ le₁ | inj₂ le₂ = inj₂ (transᵣ q (⊔-lubᵣ le₁ le₂))
 
-VarOK-∅ᴴ : ∀ {Θ} {A : OVType Θ} {ρ} → VarOK ∅ᴴ A ρ → (∅ᴴ ⊩Et A) ⊎ (∅ᴴ ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ)
-VarOK-∅ᴴ = VarOK-split refl
+Et∨≾ᵘ-∅ᴴ : ∀ {Θ} {A : OVType Θ} {ρ} → ∅ᴴ ⊩ A Et∨≾ᵘ ρ → (∅ᴴ ⊩Et A) ⊎ (∅ᴴ ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ)
+Et∨≾ᵘ-∅ᴴ = Et∨≾ᵘ-split refl
 
 -- Inversion of subtyping at each former
 
-<:̂ᵛ-Baseˡ : ∀ {Θ} {Q : Hyps Θ} {b A} → Q ∣ Base b <:̂ᵛ A → A ≡ Base b
+<:̂ᵛ-Baseˡ : ∀ {Θ} {Q : Hyps Θ} {b A} → Q ⊩ Base b <:̂ᵛ A → A ≡ Base b
 <:̂ᵛ-Baseˡ (Baseₛ refl) = refl
 
-<:̂ᵛ-Unitˡ : ∀ {Θ} {Q : Hyps Θ} {A} → Q ∣ unit <:̂ᵛ A → A ≡ unit
-<:̂ᵛ-Unitˡ unitₛ = refl
+<:̂ᵛ-unitˡ : ∀ {Θ} {Q : Hyps Θ} {A} → Q ⊩ unit <:̂ᵛ A → A ≡ unit
+<:̂ᵛ-unitˡ unitₛ = refl
 
-<:̂ᵛ-Boolˡ : ∀ {Θ} {Q : Hyps Θ} {A} → Q ∣ bool <:̂ᵛ A → A ≡ bool
-<:̂ᵛ-Boolˡ boolₛ = refl
-<:̂ᵛ-Natˡ : ∀ {Θ} {Q : Hyps Θ} {A} → Q ∣ nat <:̂ᵛ A → A ≡ nat
-<:̂ᵛ-Natˡ natₛ = refl
+<:̂ᵛ-boolˡ : ∀ {Θ} {Q : Hyps Θ} {A} → Q ⊩ bool <:̂ᵛ A → A ≡ bool
+<:̂ᵛ-boolˡ boolₛ = refl
+<:̂ᵛ-natˡ : ∀ {Θ} {Q : Hyps Θ} {A} → Q ⊩ nat <:̂ᵛ A → A ≡ nat
+<:̂ᵛ-natˡ natₛ = refl
 
 <:̂ᵛ-×ˡ : ∀ {Θ} {Q : Hyps Θ} {A₁ A₂ B}
-       → Q ∣ A₁ |×| A₂ <:̂ᵛ B
+       → Q ⊩ A₁ |×| A₂ <:̂ᵛ B
        → Σ[ B₁ ∈ OVType Θ ] Σ[ B₂ ∈ OVType Θ ]
-           (B ≡ B₁ |×| B₂) × (Q ∣ A₁ <:̂ᵛ B₁) × (Q ∣ A₂ <:̂ᵛ B₂)
+           (B ≡ B₁ |×| B₂) × (Q ⊩ A₁ <:̂ᵛ B₁) × (Q ⊩ A₂ <:̂ᵛ B₂)
 <:̂ᵛ-×ˡ (p |×|ₛ q) = _ , _ , refl , p , q
 
 <:̂ᵛ-+ˡ : ∀ {Θ} {Q : Hyps Θ} {A₁ A₂ B}
-       → Q ∣ A₁ |+| A₂ <:̂ᵛ B
+       → Q ⊩ A₁ |+| A₂ <:̂ᵛ B
        → Σ[ B₁ ∈ OVType Θ ] Σ[ B₂ ∈ OVType Θ ]
-           (B ≡ B₁ |+| B₂) × (Q ∣ A₁ <:̂ᵛ B₁) × (Q ∣ A₂ <:̂ᵛ B₂)
+           (B ≡ B₁ |+| B₂) × (Q ⊩ A₁ <:̂ᵛ B₁) × (Q ⊩ A₂ <:̂ᵛ B₂)
 <:̂ᵛ-+ˡ (p |+|ₛ q) = _ , _ , refl , p , q
 
-<:̂ᵛ-Listˡ : ∀ {Θ} {Q : Hyps Θ} {A B}
-          → Q ∣ list A <:̂ᵛ B
-          → Σ[ B₁ ∈ OVType Θ ] (B ≡ list B₁) × (Q ∣ A <:̂ᵛ B₁)
-<:̂ᵛ-Listˡ (listₛ p) = _ , refl , p
+<:̂ᵛ-listˡ : ∀ {Θ} {Q : Hyps Θ} {A B}
+          → Q ⊩ list A <:̂ᵛ B
+          → Σ[ B₁ ∈ OVType Θ ] (B ≡ list B₁) × (Q ⊩ A <:̂ᵛ B₁)
+<:̂ᵛ-listˡ (listₛ p) = _ , refl , p
 
 <:̂ᵛ-box-grade : ∀ {Θ} {Q : Hyps Θ} {ρ ρ' A A'}
-              → Q ∣ ([ ρ ] A) <:̂ᵛ ([ ρ' ] A') → Q ⊩ ρ' ≾̂ᵣ ρ
+              → Q ⊩ ([ ρ ] A) <:̂ᵛ ([ ρ' ] A') → Q ⊩ ρ' ≾̂ᵣ ρ
 <:̂ᵛ-box-grade ([ q ]ₛ _) = q
 
 <:̂ᵛ-box-type : ∀ {Θ} {Q : Hyps Θ} {ρ ρ' A A'}
-             → Q ∣ ([ ρ ] A) <:̂ᵛ ([ ρ' ] A') → Q ∣ A <:̂ᵛ A'
+             → Q ⊩ ([ ρ ] A) <:̂ᵛ ([ ρ' ] A') → Q ⊩ A <:̂ᵛ A'
 <:̂ᵛ-box-type ([ _ ]ₛ p) = p
 
 <:̂ᵛ-boxʳ : ∀ {Θ} {Q : Hyps Θ} {A ρ B}
-         → Q ∣ A <:̂ᵛ [ ρ ] B
+         → Q ⊩ A <:̂ᵛ [ ρ ] B
          → Σ[ ρ₀ ∈ RExp Θ ] Σ[ A₀ ∈ OVType Θ ]
-             (A ≡ [ ρ₀ ] A₀) × (Q ⊩ ρ ≾̂ᵣ ρ₀) × (Q ∣ A₀ <:̂ᵛ B)
+             (A ≡ [ ρ₀ ] A₀) × (Q ⊩ ρ ≾̂ᵣ ρ₀) × (Q ⊩ A₀ <:̂ᵛ B)
 <:̂ᵛ-boxʳ ([ q ]ₛ p) = _ , _ , refl , q , p
 
 <:̂ᵛ-boxˡ : ∀ {Θ} {Q : Hyps Θ} {ρ A B}
-         → Q ∣ [ ρ ] A <:̂ᵛ B
+         → Q ⊩ [ ρ ] A <:̂ᵛ B
          → Σ[ ρ₁ ∈ RExp Θ ] Σ[ B₁ ∈ OVType Θ ]
-             (B ≡ [ ρ₁ ] B₁) × (Q ⊩ ρ₁ ≾̂ᵣ ρ) × (Q ∣ A <:̂ᵛ B₁)
+             (B ≡ [ ρ₁ ] B₁) × (Q ⊩ ρ₁ ≾̂ᵣ ρ) × (Q ⊩ A <:̂ᵛ B₁)
 <:̂ᵛ-boxˡ ([ q ]ₛ p) = _ , _ , refl , q , p
 
 <:̂ᵛ-⇛ˡ : ∀ {Θ} {Q : Hyps Θ} {C D B}
-       → Q ∣ C ⇛ D <:̂ᵛ B
+       → Q ⊩ C ⇛ D <:̂ᵛ B
        → Σ[ C' ∈ OCType Θ ] Σ[ D' ∈ OCType Θ ]
-           (B ≡ C' ⇛ D') × (Q ∣ C' <:̂ᶜ C) × (Q ∣ D <:̂ᶜ D')
+           (B ≡ C' ⇛ D') × (Q ⊩ C' <:̂ᶜ C) × (Q ⊩ D <:̂ᶜ D')
 <:̂ᵛ-⇛ˡ (p ⇛ₛ q) = _ , _ , refl , p , q
 
 ------------------------------------------------------------------------
@@ -962,10 +964,10 @@ record _⊩ᴴ_[_] {Θ Θ' : Scope} (Q' : Hyps Θ') (Q : Hyps Θ) (σ : Subst Θ
   constructor mk⊩ᴴ
   field
     ⊩ets    : ∀ {α} → α ∈ ets Q → Q' ⊩Et sTy σ α
-    ⊩subᵥ   : ∀ {α β} → (α , β) ∈ subᵥ Q → Q' ∣ sTy σ α <:̂ᵛ sTy σ β
+    ⊩subᵥ   : ∀ {α β} → (α , β) ∈ subᵥ Q → Q' ⊩ sTy σ α <:̂ᵛ sTy σ β
     ⊩ordᵣ   : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q' ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
     ⊩ordₑ   : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q' ⊩ ε [ σ ]ᵉ ≾̂ₑ ε' [ σ ]ᵉ
-    ⊩disj   : ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK Q' (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
+    ⊩disj   : ∀ {A ρ} → (A , ρ) ∈ disj Q → Q' ⊩ A [ σ ]ᵛ Et∨≾ᵘ ρ [ σ ]ʳ
     ⊩qhyps  : ∀ {O} → O ∈ qhyps Q → Q' ⊩ᴼ O [ σ ]
 
 open _⊩ᴴ_[_] public
@@ -980,10 +982,10 @@ record _⊩ᴵ_[_] {Θ Θ' : Scope} (Q' : Hyps Θ') (Q : Hyps Θ) (σ : Subst Θ
   constructor mk⊩ᴵ
   field
     ⊩etsᴵ    : ∀ {α} → α ∈ ets Q → Q' ⊩Et sTy σ α
-    ⊩subᵥᴵ   : ∀ {α β} → (α , β) ∈ subᵥ Q → Q' ∣ sTy σ α <:̂ᵛ sTy σ β
+    ⊩subᵥᴵ   : ∀ {α β} → (α , β) ∈ subᵥ Q → Q' ⊩ sTy σ α <:̂ᵛ sTy σ β
     ⊩ordᵣᴵ   : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q' ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
     ⊩ordₑᴵ   : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q' ⊩ ε [ σ ]ᵉ ≾̂ₑ ε' [ σ ]ᵉ
-    ⊩disjᴵ   : ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK Q' (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
+    ⊩disjᴵ   : ∀ {A ρ} → (A , ρ) ∈ disj Q → Q' ⊩ A [ σ ]ᵛ Et∨≾ᵘ ρ [ σ ]ʳ
     ⊩qhypsᴵ  : ∀ {O} → O ∈ qhyps Q → (es : Vec (EExp Θ') (rigids O))
              → Q' ⊩ᵒ body O [ σ ,ᵉⁿ es ]
 
@@ -1097,7 +1099,7 @@ private
 -- and so are assumed subtyping, eternality and convertibility of types
 
 ⊩ᵗᵛ-substᴵ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {α β}
-           → Q' ⊩ᴵ Q [ σ ] → Q ⊩ᵗᵛ α ≾ β → Q' ∣ sTy σ α <:̂ᵛ sTy σ β
+           → Q' ⊩ᴵ Q [ σ ] → Q ⊩ᵗᵛ α <: β → Q' ⊩ sTy σ α <:̂ᵛ sTy σ β
 ⊩ᵗᵛ-substᴵ {σ = σ} h (reflᵗᵛ {α})  = <:̂ᵛ-refl (sTy σ α)
 ⊩ᵗᵛ-substᴵ         h (hypᵗᵛ m)     = ⊩subᵥᴵ h m
 ⊩ᵗᵛ-substᴵ         h (transᵗᵛ p q) = <:̂ᵛ-trans (⊩ᵗᵛ-substᴵ h p) (⊩ᵗᵛ-substᴵ h q)
@@ -1135,7 +1137,7 @@ private
 ≡̂ᶜ-subst σ (p !≡̂ e) = ≡̂ᵛ-subst σ p !≡̂ ≡̂ₑ-subst σ e
 
 ⊩Et-<:ˢ : ∀ {Θ Θ'} {Q : Hyps Θ'} {σ τ : Subst Θ Θ'}
-        → (∀ α → Q ∣ sTy σ α <:̂ᵛ sTy τ α) → (A : OVType Θ)
+        → (∀ α → Q ⊩ sTy σ α <:̂ᵛ sTy τ α) → (A : OVType Θ)
         → Q ⊩Et A [ τ ]ᵛ → Q ⊩Et A [ σ ]ᵛ
 ⊩Et-<:ˢ k (tvar α)  et           = <:̂ᵛ-eternalˡ (k α) et
 ⊩Et-<:ˢ k (Base b)  et           = et
@@ -1151,9 +1153,9 @@ private
 ⊩Et-<:ˢ k ([ ρ ] A) ()
 
 <:̂ᵛ-substᴵ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {A A' : OVType Θ}
-           → Q' ⊩ᴵ Q [ σ ] → Q ∣ A <:̂ᵛ A' → Q' ∣ A [ σ ]ᵛ <:̂ᵛ A' [ σ ]ᵛ
+           → Q' ⊩ᴵ Q [ σ ] → Q ⊩ A <:̂ᵛ A' → Q' ⊩ A [ σ ]ᵛ <:̂ᵛ A' [ σ ]ᵛ
 <:̂ᶜ-substᴵ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {C C' : OCType Θ}
-           → Q' ⊩ᴵ Q [ σ ] → Q ∣ C <:̂ᶜ C' → Q' ∣ C [ σ ]ᶜ <:̂ᶜ C' [ σ ]ᶜ
+           → Q' ⊩ᴵ Q [ σ ] → Q ⊩ C <:̂ᶜ C' → Q' ⊩ C [ σ ]ᶜ <:̂ᶜ C' [ σ ]ᶜ
 
 <:̂ᵛ-substᴵ h (tvarₛ p)  = ⊩ᵗᵛ-substᴵ h p
 <:̂ᵛ-substᴵ h (Baseₛ p)  = Baseₛ p
@@ -1170,19 +1172,19 @@ private
 
 <:̂ᶜ-substᴵ h (p !ₛ q) = <:̂ᵛ-substᴵ h p !ₛ ⊩-substᴵₑ h q
 
-VarOK-substᴵ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
+Et∨≾ᵘ-substᴵ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
                  {A : OVType Θ} {ρ : RExp Θ}
-             → Q' ⊩ᴵ Q [ σ ] → VarOK Q A ρ → VarOK Q' (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
-VarOK-substᴵ h (et-ok et)         = et-ok (⊩Et-substᴵ h et)
-VarOK-substᴵ h (≾ᵘ-ok le)         = ≾ᵘ-ok (⊩-substᴵᵣ h le)
-VarOK-substᴵ h (hyp-ok m q)       = VarOK-≾ (⊩-substᴵᵣ h q) (⊩disjᴵ h m)
-VarOK-substᴵ h (subˡ-ok p ok)     = subˡ-ok (<:̂ᵛ-substᴵ h p) (VarOK-substᴵ h ok)
-VarOK-substᴵ h (subʳ-ok p ok)     = subʳ-ok (<:̂ᵛ-substᴵ h p) (VarOK-substᴵ h ok)
-VarOK-substᴵ h (ok₁ |×|-ok ok₂)   = VarOK-substᴵ h ok₁ |×|-ok VarOK-substᴵ h ok₂
-VarOK-substᴵ h (ok₁ |+|-ok ok₂)   = VarOK-substᴵ h ok₁ |+|-ok VarOK-substᴵ h ok₂
-VarOK-substᴵ h (list-ok ok)       = list-ok (VarOK-substᴵ h ok)
-VarOK-substᴵ h (⊔-ok q ok₁ ok₂)   =
-  ⊔-ok (⊩-substᴵᵣ h q) (VarOK-substᴵ h ok₁) (VarOK-substᴵ h ok₂)
+             → Q' ⊩ᴵ Q [ σ ] → Q ⊩ A Et∨≾ᵘ ρ → Q' ⊩ A [ σ ]ᵛ Et∨≾ᵘ ρ [ σ ]ʳ
+Et∨≾ᵘ-substᴵ h (et-ok et)         = et-ok (⊩Et-substᴵ h et)
+Et∨≾ᵘ-substᴵ h (≾ᵘ-ok le)         = ≾ᵘ-ok (⊩-substᴵᵣ h le)
+Et∨≾ᵘ-substᴵ h (hyp-ok m q)       = Et∨≾ᵘ-≾ (⊩-substᴵᵣ h q) (⊩disjᴵ h m)
+Et∨≾ᵘ-substᴵ h (subˡ-ok p ok)     = subˡ-ok (<:̂ᵛ-substᴵ h p) (Et∨≾ᵘ-substᴵ h ok)
+Et∨≾ᵘ-substᴵ h (subʳ-ok p ok)     = subʳ-ok (<:̂ᵛ-substᴵ h p) (Et∨≾ᵘ-substᴵ h ok)
+Et∨≾ᵘ-substᴵ h (ok₁ |×|-ok ok₂)   = Et∨≾ᵘ-substᴵ h ok₁ |×|-ok Et∨≾ᵘ-substᴵ h ok₂
+Et∨≾ᵘ-substᴵ h (ok₁ |+|-ok ok₂)   = Et∨≾ᵘ-substᴵ h ok₁ |+|-ok Et∨≾ᵘ-substᴵ h ok₂
+Et∨≾ᵘ-substᴵ h (list-ok ok)       = list-ok (Et∨≾ᵘ-substᴵ h ok)
+Et∨≾ᵘ-substᴵ h (⊔-ok q ok₁ ok₂)   =
+  ⊔-ok (⊩-substᴵᵣ h q) (Et∨≾ᵘ-substᴵ h ok₁) (Et∨≾ᵘ-substᴵ h ok₂)
 
 ⊩ᵒ-⨟ᴵ : ∀ {Ω Ω' Ω''} {Q : Hyps Ω'} {Q' : Hyps Ω''} {o : Ords Ω}
           {δ : Subst Ω Ω'} {δ' : Subst Ω' Ω''}
@@ -1201,9 +1203,9 @@ VarOK-substᴵ h (⊔-ok q ok₁ ok₂)   =
     et m with ↪ets e m
     ... | β , eq , m' = subst (Q' ⊩Et_) (sym eq) (et-hyp m')
 
-    sb : ∀ {α β} → (α , β) ∈ subᵥ Q → Q' ∣ sTy σ α <:̂ᵛ sTy σ β
+    sb : ∀ {α β} → (α , β) ∈ subᵥ Q → Q' ⊩ sTy σ α <:̂ᵛ sTy σ β
     sb m with ↪subᵥ e m
-    ... | α' , β' , eα , eβ , m' = subst₂ (Q' ∣_<:̂ᵛ_) (sym eα) (sym eβ) (tvarₛ (hypᵗᵛ m'))
+    ... | α' , β' , eα , eβ , m' = subst₂ (Q' ⊩_<:̂ᵛ_) (sym eα) (sym eβ) (tvarₛ (hypᵗᵛ m'))
 
     oR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q' ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
     oR m = hypᵣ (↪ordᵣ e m)
@@ -1211,7 +1213,7 @@ VarOK-substᴵ h (⊔-ok q ok₁ ok₂)   =
     oE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q' ⊩ ε [ σ ]ᵉ ≾̂ₑ ε' [ σ ]ᵉ
     oE m = hypₑ (↪ordₑ e m)
 
-    dj : ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK Q' (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
+    dj : ∀ {A ρ} → (A , ρ) ∈ disj Q → Q' ⊩ A [ σ ]ᵛ Et∨≾ᵘ ρ [ σ ]ʳ
     dj m = hyp-ok₀ (↪disj e m)
 
     qh : ∀ {O} → O ∈ qhyps Q → (es : Vec (EExp Θ') (rigids O))
@@ -1411,7 +1413,7 @@ VarOK-substᴵ h (⊔-ok q ok₁ ok₂)   =
     et m with ∈-map⁻ (wkᵉ-tv Θ) m
     ... | α₀ , m₀ , refl = ⊩etsᴵ h m₀
 
-    sb : ∀ {α β} → (α , β) ∈ subᵥ (wkᵉ-H Q) → Q' ∣ sTy (τ ,ᵉ ε) α <:̂ᵛ sTy (τ ,ᵉ ε) β
+    sb : ∀ {α β} → (α , β) ∈ subᵥ (wkᵉ-H Q) → Q' ⊩ sTy (τ ,ᵉ ε) α <:̂ᵛ sTy (τ ,ᵉ ε) β
     sb m with ∈-map⁻ (mapᵖ (wkᵉ-tv Θ)) m
     ... | (α₀ , β₀) , m₀ , refl = ⊩subᵥᴵ h m₀
 
@@ -1425,10 +1427,10 @@ VarOK-substᴵ h (⊔-ok q ok₁ ok₂)   =
     ... | (x , y) , m₀ , refl =
       subst₂ (λ a b → Q' ⊩ a ≾̂ₑ b) (sym (wk-,ᵉ-e τ ε x)) (sym (wk-,ᵉ-e τ ε y)) (⊩ordₑᴵ h m₀)
 
-    dj : ∀ {A ρ} → (A , ρ) ∈ disj (wkᵉ-H Q) → VarOK Q' (A [ τ ,ᵉ ε ]ᵛ) (ρ [ τ ,ᵉ ε ]ʳ)
+    dj : ∀ {A ρ} → (A , ρ) ∈ disj (wkᵉ-H Q) → Q' ⊩ A [ τ ,ᵉ ε ]ᵛ Et∨≾ᵘ ρ [ τ ,ᵉ ε ]ʳ
     dj m with ∈-map⁻ (mapᵈ wkᵉ-v wkᵉ-r) m
     ... | (A , ρ) , m₀ , refl =
-      subst₂ (VarOK Q') (sym (wk-,ᵉ-v τ ε A)) (sym (wk-,ᵉ-r τ ε ρ)) (⊩disjᴵ h m₀)
+      subst₂ (Q' ⊩_Et∨≾ᵘ_) (sym (wk-,ᵉ-v τ ε A)) (sym (wk-,ᵉ-r τ ε ρ)) (⊩disjᴵ h m₀)
 
     qh : ∀ {O} → O ∈ qhyps (wkᵉ-H Q) → (es : Vec (EExp Θ') (rigids O))
        → Q' ⊩ᵒ body O [ (τ ,ᵉ ε) ,ᵉⁿ es ]
@@ -1461,24 +1463,24 @@ VarOK-substᴵ h (⊔-ok q ok₁ ok₂)   =
 ⊩-substₑ h = ⊩-substᴵₑ (⊩ᴴ⇒ᴵ h)
 
 ⊩ᵗᵛ-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {α β}
-          → Q' ⊩ᴴ Q [ σ ] → Q ⊩ᵗᵛ α ≾ β → Q' ∣ sTy σ α <:̂ᵛ sTy σ β
+          → Q' ⊩ᴴ Q [ σ ] → Q ⊩ᵗᵛ α <: β → Q' ⊩ sTy σ α <:̂ᵛ sTy σ β
 ⊩ᵗᵛ-subst h = ⊩ᵗᵛ-substᴵ (⊩ᴴ⇒ᴵ h)
 
 ⊩Et-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {A : OVType Θ}
           → Q' ⊩ᴴ Q [ σ ] → Q ⊩Et A → Q' ⊩Et A [ σ ]ᵛ
 ⊩Et-subst h = ⊩Et-substᴵ (⊩ᴴ⇒ᴵ h)
 
-VarOK-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
+Et∨≾ᵘ-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
                 {A : OVType Θ} {ρ : RExp Θ}
-            → Q' ⊩ᴴ Q [ σ ] → VarOK Q A ρ → VarOK Q' (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
-VarOK-subst h = VarOK-substᴵ (⊩ᴴ⇒ᴵ h)
+            → Q' ⊩ᴴ Q [ σ ] → Q ⊩ A Et∨≾ᵘ ρ → Q' ⊩ A [ σ ]ᵛ Et∨≾ᵘ ρ [ σ ]ʳ
+Et∨≾ᵘ-subst h = Et∨≾ᵘ-substᴵ (⊩ᴴ⇒ᴵ h)
 
 <:̂ᵛ-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {A A' : OVType Θ}
-          → Q' ⊩ᴴ Q [ σ ] → Q ∣ A <:̂ᵛ A' → Q' ∣ A [ σ ]ᵛ <:̂ᵛ A' [ σ ]ᵛ
+          → Q' ⊩ᴴ Q [ σ ] → Q ⊩ A <:̂ᵛ A' → Q' ⊩ A [ σ ]ᵛ <:̂ᵛ A' [ σ ]ᵛ
 <:̂ᵛ-subst h = <:̂ᵛ-substᴵ (⊩ᴴ⇒ᴵ h)
 
 <:̂ᶜ-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {C C' : OCType Θ}
-          → Q' ⊩ᴴ Q [ σ ] → Q ∣ C <:̂ᶜ C' → Q' ∣ C [ σ ]ᶜ <:̂ᶜ C' [ σ ]ᶜ
+          → Q' ⊩ᴴ Q [ σ ] → Q ⊩ C <:̂ᶜ C' → Q' ⊩ C [ σ ]ᶜ <:̂ᶜ C' [ σ ]ᶜ
 <:̂ᶜ-subst h = <:̂ᶜ-substᴵ (⊩ᴴ⇒ᴵ h)
 
 ⊩ᵒ-⨟ : ∀ {Ω Ω' Ω''} {Q : Hyps Ω'} {Q' : Hyps Ω''} {o : Ords Ω}
@@ -1534,17 +1536,17 @@ VarOK-subst h = VarOK-substᴵ (⊩ᴴ⇒ᴵ h)
 ∅⇒⊩Et : ∀ {Θ} {Q : Hyps Θ} {A} → ∅ᴴ ⊩Et A → Q ⊩Et A
 ∅⇒⊩Et {Q = Q} {A} et = subst (Q ⊩Et_) ([id]ᵛ A) (⊩Et-substᴵ (⊩ᴵ-∅ {σ = idˢ}) et)
 
-∅⇒<:̂ᵛ : ∀ {Θ} {Q : Hyps Θ} {A B} → ∅ᴴ ∣ A <:̂ᵛ B → Q ∣ A <:̂ᵛ B
+∅⇒<:̂ᵛ : ∀ {Θ} {Q : Hyps Θ} {A B} → ∅ᴴ ⊩ A <:̂ᵛ B → Q ⊩ A <:̂ᵛ B
 ∅⇒<:̂ᵛ {Q = Q} {A} {B} p =
-  subst₂ (Q ∣_<:̂ᵛ_) ([id]ᵛ A) ([id]ᵛ B) (<:̂ᵛ-substᴵ (⊩ᴵ-∅ {σ = idˢ}) p)
+  subst₂ (Q ⊩_<:̂ᵛ_) ([id]ᵛ A) ([id]ᵛ B) (<:̂ᵛ-substᴵ (⊩ᴵ-∅ {σ = idˢ}) p)
 
-∅⇒<:̂ᶜ : ∀ {Θ} {Q : Hyps Θ} {C D} → ∅ᴴ ∣ C <:̂ᶜ D → Q ∣ C <:̂ᶜ D
+∅⇒<:̂ᶜ : ∀ {Θ} {Q : Hyps Θ} {C D} → ∅ᴴ ⊩ C <:̂ᶜ D → Q ⊩ C <:̂ᶜ D
 ∅⇒<:̂ᶜ {Q = Q} {C} {D} p =
-  subst₂ (Q ∣_<:̂ᶜ_) ([id]ᶜ C) ([id]ᶜ D) (<:̂ᶜ-substᴵ (⊩ᴵ-∅ {σ = idˢ}) p)
+  subst₂ (Q ⊩_<:̂ᶜ_) ([id]ᶜ C) ([id]ᶜ D) (<:̂ᶜ-substᴵ (⊩ᴵ-∅ {σ = idˢ}) p)
 
-∅⇒VarOK : ∀ {Θ} {Q : Hyps Θ} {A ρ} → VarOK ∅ᴴ A ρ → VarOK Q A ρ
-∅⇒VarOK {Q = Q} {A} {ρ} ok =
-  subst₂ (VarOK Q) ([id]ᵛ A) ([id]ʳ ρ) (VarOK-substᴵ (⊩ᴵ-∅ {σ = idˢ}) ok)
+∅⇒Et∨≾ᵘ : ∀ {Θ} {Q : Hyps Θ} {A ρ} → ∅ᴴ ⊩ A Et∨≾ᵘ ρ → Q ⊩ A Et∨≾ᵘ ρ
+∅⇒Et∨≾ᵘ {Q = Q} {A} {ρ} ok =
+  subst₂ (Q ⊩_Et∨≾ᵘ_) ([id]ᵛ A) ([id]ʳ ρ) (Et∨≾ᵘ-substᴵ (⊩ᴵ-∅ {σ = idˢ}) ok)
 
 ⊩ᴼ-hyp⁼ : ∀ {Θ} {Q : Hyps Θ} {O : QOrd Θ} → O ∈ qhyps Q → Q ⊩ᴼ O [ idˢ ]
 ⊩ᴼ-hyp⁼ {Q = Q} {O} m = ⊩ᴼ-hyp O (subst (_∈ qhyps Q) (sym ([id]ᵠ O)) m)
@@ -1553,10 +1555,10 @@ VarOK-subst h = VarOK-substᴵ (⊩ᴴ⇒ᴵ h)
 
 mk⊩ᴴ⁼ : ∀ {Θ} {Q Q' : Hyps Θ}
       → (∀ {α} → α ∈ ets Q → Q' ⊩Et tvar α)
-      → (∀ {α β} → (α , β) ∈ subᵥ Q → Q' ∣ tvar α <:̂ᵛ tvar β)
+      → (∀ {α β} → (α , β) ∈ subᵥ Q → Q' ⊩ tvar α <:̂ᵛ tvar β)
       → (∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q' ⊩ ρ ≾̂ᵣ ρ')
       → (∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q' ⊩ ε ≾̂ₑ ε')
-      → (∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK Q' A ρ)
+      → (∀ {A ρ} → (A , ρ) ∈ disj Q → Q' ⊩ A Et∨≾ᵘ ρ)
       → (∀ {O} → O ∈ qhyps Q → Q' ⊩ᴼ O [ idˢ ])
       → Q' ⊩ᴴ Q
 mk⊩ᴴ⁼ {Q' = Q'} et sb oR oE dj qh =
@@ -1565,7 +1567,7 @@ mk⊩ᴴ⁼ {Q' = Q'} et sb oR oE dj qh =
           subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y) (sym ([id]ʳ ρ)) (sym ([id]ʳ ρ')) (oR m))
        (λ {ε} {ε'} m →
           subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) (sym ([id]ᵉ ε)) (sym ([id]ᵉ ε')) (oE m))
-       (λ {A} {ρ} m → subst₂ (VarOK Q') (sym ([id]ᵛ A)) (sym ([id]ʳ ρ)) (dj m))
+       (λ {A} {ρ} m → subst₂ (Q' ⊩_Et∨≾ᵘ_) (sym ([id]ᵛ A)) (sym ([id]ʳ ρ)) (dj m))
        qh
 
 ⊩ordᵣ⁼ : ∀ {Θ} {Q Q' : Hyps Θ} → Q' ⊩ᴴ Q
@@ -1579,8 +1581,8 @@ mk⊩ᴴ⁼ {Q' = Q'} et sb oR oE dj qh =
   subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([id]ᵉ ε) ([id]ᵉ ε') (⊩ordₑ h m)
 
 ⊩disj⁼ : ∀ {Θ} {Q Q' : Hyps Θ} → Q' ⊩ᴴ Q
-       → ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK Q' A ρ
-⊩disj⁼ {Q' = Q'} h {A} {ρ} m = subst₂ (VarOK Q') ([id]ᵛ A) ([id]ʳ ρ) (⊩disj h m)
+       → ∀ {A ρ} → (A , ρ) ∈ disj Q → Q' ⊩ A Et∨≾ᵘ ρ
+⊩disj⁼ {Q' = Q'} h {A} {ρ} m = subst₂ (Q' ⊩_Et∨≾ᵘ_) ([id]ᵛ A) ([id]ʳ ρ) (⊩disj h m)
 
 ⊩ᴴ-≾ᵣ : ∀ {Θ} {Q Q' : Hyps Θ} {ρ ρ'} → Q' ⊩ᴴ Q → Q ⊩ ρ ≾̂ᵣ ρ' → Q' ⊩ ρ ≾̂ᵣ ρ'
 ⊩ᴴ-≾ᵣ {Q' = Q'} {ρ} {ρ'} h p =
@@ -1590,9 +1592,9 @@ mk⊩ᴴ⁼ {Q' = Q'} et sb oR oE dj qh =
 ⊩ᴴ-≾ₑ {Q' = Q'} {ε} {ε'} h p =
   subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([id]ᵉ ε) ([id]ᵉ ε') (⊩-substₑ h p)
 
-⊩ᴴ-VarOK : ∀ {Θ} {Q Q' : Hyps Θ} {A ρ} → Q' ⊩ᴴ Q → VarOK Q A ρ → VarOK Q' A ρ
-⊩ᴴ-VarOK {Q' = Q'} {A} {ρ} h ok =
-  subst₂ (VarOK Q') ([id]ᵛ A) ([id]ʳ ρ) (VarOK-subst h ok)
+⊩ᴴ-Et∨≾ᵘ : ∀ {Θ} {Q Q' : Hyps Θ} {A ρ} → Q' ⊩ᴴ Q → Q ⊩ A Et∨≾ᵘ ρ → Q' ⊩ A Et∨≾ᵘ ρ
+⊩ᴴ-Et∨≾ᵘ {Q' = Q'} {A} {ρ} h ok =
+  subst₂ (Q' ⊩_Et∨≾ᵘ_) ([id]ᵛ A) ([id]ʳ ρ) (Et∨≾ᵘ-subst h ok)
 
 -- A set entails each set whose hypotheses it holds
 
@@ -1642,9 +1644,9 @@ open _⊆ᴴ_ public
   subst (λ x → wkᵗ-H Q ⊩Et x) (wkˢᵗ-v A) (⊩Et-substᴵ (↪⇒⊩ᴵ ↪-wkᵗ) et)
 
 <:̂ᵛ-wkᵗ : ∀ {Θ} {Q : Hyps Θ} {A A'}
-        → Q ∣ A <:̂ᵛ A' → wkᵗ-H Q ∣ wkᵗ-v A <:̂ᵛ wkᵗ-v A'
+        → Q ⊩ A <:̂ᵛ A' → wkᵗ-H Q ⊩ wkᵗ-v A <:̂ᵛ wkᵗ-v A'
 <:̂ᵛ-wkᵗ {Q = Q} {A} {A'} p =
-  subst₂ (wkᵗ-H Q ∣_<:̂ᵛ_) (wkˢᵗ-v A) (wkˢᵗ-v A') (<:̂ᵛ-substᴵ (↪⇒⊩ᴵ ↪-wkᵗ) p)
+  subst₂ (wkᵗ-H Q ⊩_<:̂ᵛ_) (wkˢᵗ-v A) (wkˢᵗ-v A') (<:̂ᵛ-substᴵ (↪⇒⊩ᴵ ↪-wkᵗ) p)
 
 ⊩-wkʳᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → Q ⊩ ρ ≾̂ᵣ ρ' → wkʳ-H Q ⊩ wkʳ-r ρ ≾̂ᵣ wkʳ-r ρ'
 ⊩-wkʳᵣ {Q = Q} {ρ} {ρ'} p =
@@ -1659,9 +1661,9 @@ open _⊆ᴴ_ public
   subst (λ x → wkʳ-H Q ⊩Et x) (wkˢʳ-v A) (⊩Et-substᴵ (↪⇒⊩ᴵ ↪-wkʳ) et)
 
 <:̂ᵛ-wkʳ : ∀ {Θ} {Q : Hyps Θ} {A A'}
-        → Q ∣ A <:̂ᵛ A' → wkʳ-H Q ∣ wkʳ-v A <:̂ᵛ wkʳ-v A'
+        → Q ⊩ A <:̂ᵛ A' → wkʳ-H Q ⊩ wkʳ-v A <:̂ᵛ wkʳ-v A'
 <:̂ᵛ-wkʳ {Q = Q} {A} {A'} p =
-  subst₂ (wkʳ-H Q ∣_<:̂ᵛ_) (wkˢʳ-v A) (wkˢʳ-v A') (<:̂ᵛ-substᴵ (↪⇒⊩ᴵ ↪-wkʳ) p)
+  subst₂ (wkʳ-H Q ⊩_<:̂ᵛ_) (wkˢʳ-v A) (wkˢʳ-v A') (<:̂ᵛ-substᴵ (↪⇒⊩ᴵ ↪-wkʳ) p)
 
 ⊩-wkᵉᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → Q ⊩ ρ ≾̂ᵣ ρ' → wkᵉ-H Q ⊩ wkᵉ-r ρ ≾̂ᵣ wkᵉ-r ρ'
 ⊩-wkᵉᵣ {Q = Q} {ρ} {ρ'} p =
@@ -1675,15 +1677,15 @@ open _⊆ᴴ_ public
 ⊩Et-wkᵉ {Q = Q} {A} et =
   subst (λ x → wkᵉ-H Q ⊩Et x) (wkˢᵉ-v A) (⊩Et-substᴵ (↪⇒⊩ᴵ ↪-wkᵉ) et)
 
-VarOK-wkᵉ : ∀ {Θ} {Q : Hyps Θ} {A ρ}
-          → VarOK Q A ρ → VarOK (wkᵉ-H Q) (wkᵉ-v A) (wkᵉ-r ρ)
-VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
-  subst₂ (VarOK (wkᵉ-H Q)) (wkˢᵉ-v A) (wkˢᵉ-r ρ) (VarOK-substᴵ (↪⇒⊩ᴵ ↪-wkᵉ) ok)
+Et∨≾ᵘ-wkᵉ : ∀ {Θ} {Q : Hyps Θ} {A ρ}
+          → Q ⊩ A Et∨≾ᵘ ρ → wkᵉ-H Q ⊩ wkᵉ-v A Et∨≾ᵘ wkᵉ-r ρ
+Et∨≾ᵘ-wkᵉ {Q = Q} {A} {ρ} ok =
+  subst₂ (wkᵉ-H Q ⊩_Et∨≾ᵘ_) (wkˢᵉ-v A) (wkˢᵉ-r ρ) (Et∨≾ᵘ-substᴵ (↪⇒⊩ᴵ ↪-wkᵉ) ok)
 
 <:̂ᵛ-wkᵉ : ∀ {Θ} {Q : Hyps Θ} {A A'}
-        → Q ∣ A <:̂ᵛ A' → wkᵉ-H Q ∣ wkᵉ-v A <:̂ᵛ wkᵉ-v A'
+        → Q ⊩ A <:̂ᵛ A' → wkᵉ-H Q ⊩ wkᵉ-v A <:̂ᵛ wkᵉ-v A'
 <:̂ᵛ-wkᵉ {Q = Q} {A} {A'} p =
-  subst₂ (wkᵉ-H Q ∣_<:̂ᵛ_) (wkˢᵉ-v A) (wkˢᵉ-v A') (<:̂ᵛ-substᴵ (↪⇒⊩ᴵ ↪-wkᵉ) p)
+  subst₂ (wkᵉ-H Q ⊩_<:̂ᵛ_) (wkˢᵉ-v A) (wkˢᵉ-v A') (<:̂ᵛ-substᴵ (↪⇒⊩ᴵ ↪-wkᵉ) p)
 
 ⊩ᴴ-↑ᵉ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {δ : Subst Θ Θ'}
       → Q' ⊩ᴴ Q [ δ ] → wkᵉ-H Q' ⊩ᴴ (wkᵉ-H Q) [ δ ↑ᵉ ]
@@ -1694,7 +1696,7 @@ VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
     ... | α₀ , m₀ , refl = ⊩Et-wkᵉ (⊩ets h m₀)
 
     subᵥ↑ : ∀ {α β} → (α , β) ∈ subᵥ (wkᵉ-H Q)
-          → wkᵉ-H Q' ∣ sTy (δ ↑ᵉ) α <:̂ᵛ sTy (δ ↑ᵉ) β
+          → wkᵉ-H Q' ⊩ sTy (δ ↑ᵉ) α <:̂ᵛ sTy (δ ↑ᵉ) β
     subᵥ↑ m with ∈-map⁻ (mapᵖ (wkᵉ-tv Θ)) m
     ... | (α₀ , β₀) , m₀ , refl = <:̂ᵛ-wkᵉ (⊩subᵥ h m₀)
 
@@ -1715,12 +1717,12 @@ VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
              (⊩-wkᵉₑ (⊩ordₑ h m₀))
 
     disj↑ : ∀ {A ρ} → (A , ρ) ∈ disj (wkᵉ-H Q)
-          → VarOK (wkᵉ-H Q') (A [ δ ↑ᵉ ]ᵛ) (ρ [ δ ↑ᵉ ]ʳ)
+          → wkᵉ-H Q' ⊩ A [ δ ↑ᵉ ]ᵛ Et∨≾ᵘ ρ [ δ ↑ᵉ ]ʳ
     disj↑ m with ∈-map⁻ (mapᵈ wkᵉ-v wkᵉ-r) m
     ... | (A₀ , ρ₀) , m₀ , refl =
-      subst₂ (VarOK (wkᵉ-H Q'))
+      subst₂ (wkᵉ-H Q' ⊩_Et∨≾ᵘ_)
              (sym (wk-↑ᵉ-v δ A₀)) (sym (wk-↑ᵉ-r δ ρ₀))
-             (VarOK-wkᵉ (⊩disj h m₀))
+             (Et∨≾ᵘ-wkᵉ (⊩disj h m₀))
 
     qhyps↑ : ∀ {O} → O ∈ qhyps (wkᵉ-H Q) → wkᵉ-H Q' ⊩ᴼ O [ δ ↑ᵉ ]
     qhyps↑ m with ∈-map⁻ (_[ wkˢᵉ ]ᵠ) m
@@ -1756,8 +1758,8 @@ VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
           subst₂ (λ x y → Q'' ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε σ δ) ([⨟]ᵉ ε' σ δ)
                  (⊩-substₑ h' (⊩ordₑ h m)))
        (λ {A} {ρ} m →
-          subst₂ (VarOK Q'') ([⨟]ᵛ A σ δ) ([⨟]ʳ ρ σ δ)
-                 (VarOK-subst h' (⊩disj h m)))
+          subst₂ (Q'' ⊩_Et∨≾ᵘ_) ([⨟]ᵛ A σ δ) ([⨟]ʳ ρ σ δ)
+                 (Et∨≾ᵘ-subst h' (⊩disj h m)))
        (λ {O} m → ⊩ᴼ-⨟ O h' (⊩qhyps h m))
 
 ⊩ᴴ-trans : ∀ {Θ} {Q Q' Q'' : Hyps Θ} → Q'' ⊩ᴴ Q' → Q' ⊩ᴴ Q → Q'' ⊩ᴴ Q
@@ -1769,10 +1771,10 @@ VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
      → σ ≐ˢ σ' → Q' ⊩ᴴ Q [ σ ] → Q' ⊩ᴴ Q [ σ' ]
 ⊩ᴴ-≐ {Q' = Q'} p h =
   mk⊩ᴴ (λ {α} m → subst (Q' ⊩Et_) (≐ᵗ p α) (⊩ets h m))
-       (λ {α} {β} m → subst₂ (λ x y → Q' ∣ x <:̂ᵛ y) (≐ᵗ p α) (≐ᵗ p β) (⊩subᵥ h m))
+       (λ {α} {β} m → subst₂ (λ x y → Q' ⊩ x <:̂ᵛ y) (≐ᵗ p α) (≐ᵗ p β) (⊩subᵥ h m))
        (λ {ρ} {ρ'} m → subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y) ([≐]ʳ p ρ) ([≐]ʳ p ρ') (⊩ordᵣ h m))
        (λ {ε} {ε'} m → subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([≐]ᵉ p ε) ([≐]ᵉ p ε') (⊩ordₑ h m))
-       (λ {A} {ρ} m → subst₂ (VarOK Q') ([≐]ᵛ p A) ([≐]ʳ p ρ) (⊩disj h m))
+       (λ {A} {ρ} m → subst₂ (Q' ⊩_Et∨≾ᵘ_) ([≐]ᵛ p A) ([≐]ʳ p ρ) (⊩disj h m))
        (λ {O} m → ⊩ᴼ-resp-≐ˢ O p (⊩qhyps h m))
 
 

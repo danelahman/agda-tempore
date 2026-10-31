@@ -55,10 +55,10 @@ unbox-lookup {A} {ρ} S z ρ'≾ρ =
 -- branch with both substituted, as for `match`, resp. the recursion at the tail
 -- sequenced with one unfolding of the step.
 
-caseL-reduct : ∀ {Γ A C} → ListView Γ A → Γ ⊢C⦂ C → Γ ∷ A ∷ list A ⊢C⦂ C
-             → Γ ⊢C⦂ C
-caseL-reduct (inj₁ _)       M N = M
-caseL-reduct (inj₂ (W , L)) M N =
+matchL-reduct : ∀ {Γ A C} → ListView Γ A → Γ ⊢C⦂ C → Γ ∷ A ∷ list A ⊢C⦂ C
+              → Γ ⊢C⦂ C
+matchL-reduct (inj₁ _)       M N = M
+matchL-reduct (inj₂ (W , L)) M N =
   (N [ split-[] ↦ V-rename wk-ren L ]c) [ split-[] ↦ W ]c
 
 recL-reduct : ∀ {Γ A B ε} → ListView Γ A → Γ ⊢C⦂ B ! ε
@@ -71,10 +71,10 @@ recL-reduct (inj₂ (W , L)) M N p = coerce p (recL L M N p ⨟ recL-step W L N)
 -- The reduct of sum elimination at a decomposed scrutinee: the branch the
 -- injection names, with the payload substituted.
 
-case+-reduct : ∀ {Γ A B C} → (Γ ⊢V⦂ A) ⊎ (Γ ⊢V⦂ B) → Γ ∷ A ⊢C⦂ C → Γ ∷ B ⊢C⦂ C
-             → Γ ⊢C⦂ C
-case+-reduct (inj₁ W) M N = M [ split-[] ↦ W ]c
-case+-reduct (inj₂ W) M N = N [ split-[] ↦ W ]c
+match+-reduct : ∀ {Γ A B C} → (Γ ⊢V⦂ A) ⊎ (Γ ⊢V⦂ B) → Γ ∷ A ⊢C⦂ C → Γ ∷ B ⊢C⦂ C
+              → Γ ⊢C⦂ C
+match+-reduct (inj₁ W) M N = M [ split-[] ↦ W ]c
+match+-reduct (inj₂ W) M N = N [ split-[] ↦ W ]c
 
 -- The reduct of a comparison: the relation's truth on the operands' data
 
@@ -93,7 +93,7 @@ mutual
                    → {M : ((toCtx S) ∷ A) ⊢C⦂ B ! ε}
                    → {V : (toCtx S) ⊢V⦂ A}
                      -----------------------------------------
-                   → ⟨ S , lam M · V ⟩ ⟶ ⟨ S , M [ split-[] ↦ V ]c ⟩
+                   → ⟨ S , fun M · V ⟩ ⟶ ⟨ S , M [ split-[] ↦ V ]c ⟩
 
         -- matching: substitute the pair's two components, read off the
         -- scrutinee by `fstᵛ`/`sndᵛ`
@@ -102,20 +102,20 @@ mutual
                    → {P : toCtx S ⊢V⦂ A |×| B}
                    → {M : toCtx S ∷ A ∷ B ⊢C⦂ C}
                      ---------------------------------------------------
-                   → ⟨ S , match P `in M ⟩ ⟶
+                   → ⟨ S , match P `with M ⟩ ⟶
                      ⟨ S , (M [ split-[] ↦ V-rename wk-ren (sndᵛ P) ]c)
                              [ split-[] ↦ fstᵛ P ]c ⟩
 
         -- list elimination: the reduct at the scrutinee's canonical
         -- decomposition (`listᵛ`), which pushes its coercions into the head
         -- and the tail
-        CASEL      : ∀ {A C}
+        MATCHL     : ∀ {A C}
                    → {S : 𝕊 []}
                    → {V : toCtx S ⊢V⦂ list A}
                    → {M : toCtx S ⊢C⦂ C}
                    → {N : toCtx S ∷ A ∷ list A ⊢C⦂ C}
                      ------------------------------------------------------------
-                   → ⟨ S , caseL V `nil M `cons N ⟩ ⟶ ⟨ S , caseL-reduct (listᵛ V) M N ⟩
+                   → ⟨ S , matchL V `nil M `cons N ⟩ ⟶ ⟨ S , matchL-reduct (listᵛ V) M N ⟩
 
         -- primitive recursion on lists: at the empty list the base; at a head
         -- and a tail the recursion at the tail sequenced with one unfolding of
@@ -153,20 +153,20 @@ mutual
 
         -- natural-number elimination: take the branch the scrutinee names,
         -- substituting the predecessor into the successor branch
-        CASEℕ-ZERO : ∀ {C}
-                   → {S : 𝕊 []}
-                   → {M : toCtx S ⊢C⦂ C}
-                   → {N : toCtx S ∷ nat ⊢C⦂ C}
-                     ------------------------------------------------
-                   → ⟨ S , caseℕ zero `zero M `succ N ⟩ ⟶ ⟨ S , M ⟩
+        MATCHℕ-ZERO : ∀ {C}
+                    → {S : 𝕊 []}
+                    → {M : toCtx S ⊢C⦂ C}
+                    → {N : toCtx S ∷ nat ⊢C⦂ C}
+                      ------------------------------------------------
+                    → ⟨ S , matchℕ zero `zero M `succ N ⟩ ⟶ ⟨ S , M ⟩
 
-        CASEℕ-SUCC : ∀ {C}
-                   → {S : 𝕊 []}
-                   → {V : toCtx S ⊢V⦂ nat}
-                   → {M : toCtx S ⊢C⦂ C}
-                   → {N : toCtx S ∷ nat ⊢C⦂ C}
-                     ------------------------------------------------------------
-                   → ⟨ S , caseℕ succ V `zero M `succ N ⟩ ⟶ ⟨ S , N [ split-[] ↦ V ]c ⟩
+        MATCHℕ-SUCC : ∀ {C}
+                    → {S : 𝕊 []}
+                    → {V : toCtx S ⊢V⦂ nat}
+                    → {M : toCtx S ⊢C⦂ C}
+                    → {N : toCtx S ∷ nat ⊢C⦂ C}
+                      ------------------------------------------------------------
+                    → ⟨ S , matchℕ succ V `zero M `succ N ⟩ ⟶ ⟨ S , N [ split-[] ↦ V ]c ⟩
 
         -- primitive recursion: at zero, the base; at a successor, the
         -- recursion at the predecessor sequenced with one unfolding of the
@@ -191,13 +191,13 @@ mutual
 
         -- sum elimination: the reduct at the scrutinee's canonical
         -- decomposition (`injᵛ`), which pushes its coercions into the payload
-        CASE+      : ∀ {A B C}
+        MATCH+     : ∀ {A B C}
                    → {S : 𝕊 []}
                    → {V : toCtx S ⊢V⦂ A |+| B}
                    → {M : toCtx S ∷ A ⊢C⦂ C}
                    → {N : toCtx S ∷ B ⊢C⦂ C}
                      ----------------------------------------------------------
-                   → ⟨ S , case+ V `inl M `inr N ⟩ ⟶ ⟨ S , case+-reduct (injᵛ V) M N ⟩
+                   → ⟨ S , match+ V `inl M `inr N ⟩ ⟶ ⟨ S , match+-reduct (injᵛ V) M N ⟩
 
         -- sequencing: step the scrutinee, carrying time and state forward and
         -- subsuming the sequel's binder to the scrutinee's refined type
@@ -311,7 +311,7 @@ mutual
                     → {N : toCtx S ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε''}
                       --------------------------------------------------------------------------
                     → ⟨ S , handle perform op V M `with handler N H ⟩ ⟶
-                      ⟨ S , box _ (lam
+                      ⟨ S , box _ (fun
                               (handle M
                               `with handler
                                       (C-rename
@@ -415,16 +415,16 @@ mutual
 
         -- subsumption at a scrutinised natural number: `nat <:ᵛ nat` is the
         -- identity, so it is dropped
-        SUB-CASEℕ   : ∀ {C}
+        SUB-MATCHℕ  : ∀ {C}
                     → {S : 𝕊 []}
                     → {V : toCtx S ⊢V⦂ nat}
                     → {M : toCtx S ⊢C⦂ C}
                     → {N : toCtx S ∷ nat ⊢C⦂ C}
                       ---------------------------------------------------------
-                    → ⟨ S , caseℕ subV V natₛ `zero M `succ N ⟩ ⟶
-                      ⟨ S , caseℕ V `zero M `succ N ⟩
+                    → ⟨ S , matchℕ subV V natₛ `zero M `succ N ⟩ ⟶
+                      ⟨ S , matchℕ V `zero M `succ N ⟩
 
-        -- subsumption at a recursion's natural number: dropped, as for `caseℕ`
+        -- subsumption at a recursion's natural number: dropped, as for `matchℕ`
         SUB-RECℕ    : ∀ {B ε}
                     → {S : 𝕊 []}
                     → {V : toCtx S ⊢V⦂ nat}
@@ -459,14 +459,14 @@ mutual
 
     step-extends-state APP                  = id-suc
     step-extends-state MATCH                = id-suc
-    step-extends-state CASEL                = id-suc
+    step-extends-state MATCHL               = id-suc
     step-extends-state RECL                 = id-suc
     step-extends-state IF-TRUE              = id-suc
     step-extends-state CMP                  = id-suc
     step-extends-state IF-FALSE             = id-suc
-    step-extends-state CASE+                = id-suc
-    step-extends-state CASEℕ-ZERO           = id-suc
-    step-extends-state CASEℕ-SUCC           = id-suc
+    step-extends-state MATCH+               = id-suc
+    step-extends-state MATCHℕ-ZERO          = id-suc
+    step-extends-state MATCHℕ-SUCC          = id-suc
     step-extends-state RECℕ-ZERO            = id-suc
     step-extends-state RECℕ-SUCC            = id-suc
     step-extends-state (SEQ-STEP M⟶M' _)    = step-extends-state M⟶M'
@@ -482,7 +482,7 @@ mutual
     step-extends-state SUB-HANDLE           = id-suc
     step-extends-state SUB-HANDLE-TRANS     = id-suc
     step-extends-state SUB-IF               = id-suc
-    step-extends-state SUB-CASEℕ            = id-suc
+    step-extends-state SUB-MATCHℕ           = id-suc
     step-extends-state SUB-RECℕ             = id-suc
     step-extends-state SUB                  = id-suc
 
@@ -497,14 +497,14 @@ mutual
 
     step-refines-type {A = A} APP               = <:ᵛ-refl A
     step-refines-type {A = A} MATCH             = <:ᵛ-refl A
-    step-refines-type {A = A} CASEL             = <:ᵛ-refl A
+    step-refines-type {A = A} MATCHL            = <:ᵛ-refl A
     step-refines-type {A = A} RECL              = <:ᵛ-refl A
     step-refines-type {A = A} IF-TRUE           = <:ᵛ-refl A
     step-refines-type CMP                       = boolₛ
     step-refines-type {A = A} IF-FALSE          = <:ᵛ-refl A
-    step-refines-type {A = A} CASE+             = <:ᵛ-refl A
-    step-refines-type {A = A} CASEℕ-ZERO        = <:ᵛ-refl A
-    step-refines-type {A = A} CASEℕ-SUCC        = <:ᵛ-refl A
+    step-refines-type {A = A} MATCH+            = <:ᵛ-refl A
+    step-refines-type {A = A} MATCHℕ-ZERO       = <:ᵛ-refl A
+    step-refines-type {A = A} MATCHℕ-SUCC       = <:ᵛ-refl A
     step-refines-type {A = A} RECℕ-ZERO         = <:ᵛ-refl A
     step-refines-type {A = A} RECℕ-SUCC         = <:ᵛ-refl A
     step-refines-type {A = A} (SEQ-STEP _ _)    = <:ᵛ-refl A
@@ -520,7 +520,7 @@ mutual
     step-refines-type (SUB-HANDLE {q = p !ₛ _}) = p
     step-refines-type {A = A} SUB-HANDLE-TRANS  = <:ᵛ-refl A
     step-refines-type {A = A} SUB-IF            = <:ᵛ-refl A
-    step-refines-type {A = A} SUB-CASEℕ         = <:ᵛ-refl A
+    step-refines-type {A = A} SUB-MATCHℕ        = <:ᵛ-refl A
     step-refines-type {A = A} SUB-RECℕ          = <:ᵛ-refl A
     step-refines-type (SUB {w = p !ₛ _})        = p
 
@@ -538,16 +538,16 @@ step-grade-≾ : ∀ {A B ε ε'}
              -------------------------------------------------
              → ≤ₛ-grade (step-extends-state r) ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ ∣ ε ∣ᵉ
 
-step-grade-≾ APP   = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
-step-grade-≾ MATCH = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
-step-grade-≾ CASEL = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ APP    = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ MATCH  = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ MATCHL = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ RECL = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ IF-TRUE = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ CMP = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ IF-FALSE = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
-step-grade-≾ CASE+ = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
-step-grade-≾ CASEℕ-ZERO = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
-step-grade-≾ CASEℕ-SUCC = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ MATCH+ = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ MATCHℕ-ZERO = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ MATCHℕ-SUCC = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ RECℕ-ZERO = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ RECℕ-SUCC = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} step _) =
@@ -583,7 +583,7 @@ step-grade-≾ (SUB-HANDLE {q = _ !ₛ s}) =
   ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)) (map-monotoneᵉ (·ₑ-monoʳ-≾ₑ s))
 step-grade-≾ SUB-HANDLE-TRANS = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ SUB-IF  = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
-step-grade-≾ SUB-CASEℕ = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
+step-grade-≾ SUB-MATCHℕ = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ SUB-RECℕ = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ (SUB {w = _ !ₛ q}) =
   ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)) (map-monotoneᵉ q)
@@ -623,30 +623,30 @@ run-refines-type : ∀ {A B ε ε'}
 run-refines-type {A = A} ε* = <:ᵛ-refl A
 run-refines-type (r ◅ rs)   = <:ᵛ-trans (run-refines-type rs) (step-refines-type r)
 
--- Sum elimination at an injection: `CASE+`, by computation of `injᵛ`.
+-- Sum elimination at an injection: `MATCH+`, by computation of `injᵛ`.
 
-CASE-INL : ∀ {A B C} {S : 𝕊 []} {V : toCtx S ⊢V⦂ A}
+MATCH+-INL : ∀ {A B C} {S : 𝕊 []} {V : toCtx S ⊢V⦂ A}
            {M : toCtx S ∷ A ⊢C⦂ C} {N : toCtx S ∷ B ⊢C⦂ C}
-         → ⟨ S , case+ inl V `inl M `inr N ⟩ ⟶ ⟨ S , M [ split-[] ↦ V ]c ⟩
-CASE-INL = CASE+
+           → ⟨ S , match+ inl V `inl M `inr N ⟩ ⟶ ⟨ S , M [ split-[] ↦ V ]c ⟩
+MATCH+-INL = MATCH+
 
-CASE-INR : ∀ {A B C} {S : 𝕊 []} {V : toCtx S ⊢V⦂ B}
+MATCH+-INR : ∀ {A B C} {S : 𝕊 []} {V : toCtx S ⊢V⦂ B}
            {M : toCtx S ∷ A ⊢C⦂ C} {N : toCtx S ∷ B ⊢C⦂ C}
-         → ⟨ S , case+ inr V `inl M `inr N ⟩ ⟶ ⟨ S , N [ split-[] ↦ V ]c ⟩
-CASE-INR = CASE+
+           → ⟨ S , match+ inr V `inl M `inr N ⟩ ⟶ ⟨ S , N [ split-[] ↦ V ]c ⟩
+MATCH+-INR = MATCH+
 
--- The list eliminators at `nil` and at a `cons`: `CASEL` and `RECL`, by
+-- The list eliminators at `nil` and at a `cons`: `MATCHL` and `RECL`, by
 -- computation of `listᵛ`.
 
-CASEL-NIL  : ∀ {A C} {S : 𝕊 []} {M : toCtx S ⊢C⦂ C} {N : toCtx S ∷ A ∷ list A ⊢C⦂ C}
-           → ⟨ S , caseL nil `nil M `cons N ⟩ ⟶ ⟨ S , M ⟩
-CASEL-NIL = CASEL
+MATCHL-NIL : ∀ {A C} {S : 𝕊 []} {M : toCtx S ⊢C⦂ C} {N : toCtx S ∷ A ∷ list A ⊢C⦂ C}
+           → ⟨ S , matchL nil `nil M `cons N ⟩ ⟶ ⟨ S , M ⟩
+MATCHL-NIL = MATCHL
 
-CASEL-CONS : ∀ {A C} {S : 𝕊 []} {V : toCtx S ⊢V⦂ A} {W : toCtx S ⊢V⦂ list A}
-             {M : toCtx S ⊢C⦂ C} {N : toCtx S ∷ A ∷ list A ⊢C⦂ C}
-           → ⟨ S , caseL cons V W `nil M `cons N ⟩ ⟶
-             ⟨ S , (N [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟩
-CASEL-CONS = CASEL
+MATCHL-CONS : ∀ {A C} {S : 𝕊 []} {V : toCtx S ⊢V⦂ A} {W : toCtx S ⊢V⦂ list A}
+              {M : toCtx S ⊢C⦂ C} {N : toCtx S ∷ A ∷ list A ⊢C⦂ C}
+            → ⟨ S , matchL cons V W `nil M `cons N ⟩ ⟶
+              ⟨ S , (N [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟩
+MATCHL-CONS = MATCHL
 
 RECL-NIL   : ∀ {A B ε} {S : 𝕊 []} {M : toCtx S ⊢C⦂ B ! ε}
              {N : (toCtx S ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε}

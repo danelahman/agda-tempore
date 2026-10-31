@@ -55,7 +55,7 @@ open import PolymorphicCalculus.Syntax.Types             S
 open import PolymorphicCalculus.Syntax.GradeSubstitution S
 open import PolymorphicCalculus.Hypotheses               S
 open import PolymorphicCalculus.Hypotheses.Instances     S
-  using (_⊨ᴴ_; ⊨ᴴ-trans; ⊩ᴴ-⊨ᴴ; VarOK-∅; val-≾ᵣ; val-≾ᵣ⁻)
+  using (_⊨ᴴ_; ⊨ᴴ-trans; ⊩ᴴ-⊨ᴴ; Et∨≾ᵘ-∅; val-≾ᵣ; val-≾ᵣ⁻)
 
 open import Language.BaseTypes using (module BaseTypes)
 open BaseTypes BTs using (_≡ᵇ?_)
@@ -70,7 +70,7 @@ open import PolymorphicCalculus.Inference.SolverImpl.Entail S hints
   using (decideᵣ; decideₑ; full; memʳ?; memᵉ?; memʳ-⊩; memᵉ-⊩; refute≾𝟏)
 
 -- Derivations from a list of subtyping hypotheses and one of eternality atoms,
--- mirroring `_⊩ᵗᵛ_≾_` and `_⊩Et_`: eternality moves both ways, subtyping forwards
+-- mirroring `_⊩ᵗᵛ_<:_` and `_⊩Et_`: eternality moves both ways, subtyping forwards
 
 infix 4 _⊢ᵖ_≾_
 
@@ -94,12 +94,12 @@ transᵖ (stepᵖ m p) q = stepᵖ m (transᵖ p q)
 ⊢ᵖ-mono k (stepᵖ m p) = stepᵖ (k m) (⊢ᵖ-mono k p)
 
 ⊢ᵖ-⊩ : ∀ {Θ} {Q : Hyps Θ} {l α β} → (∀ {p} → p ∈ l → p ∈ subᵥ Q)
-     → l ⊢ᵖ α ≾ β → Q ⊩ᵗᵛ α ≾ β
+     → l ⊢ᵖ α ≾ β → Q ⊩ᵗᵛ α <: β
 ⊢ᵖ-⊩ k stopᵖ       = reflᵗᵛ
 ⊢ᵖ-⊩ k (stepᵖ m p) = transᵗᵛ (hypᵗᵛ (k m)) (⊢ᵖ-⊩ k p)
 
-⊢ᵖ-⊩' : ∀ {Θ} {Q : Hyps Θ} {l α β} → (∀ {p} → p ∈ l → Q ⊩ᵗᵛ proj₁ p ≾ proj₂ p)
-      → l ⊢ᵖ α ≾ β → Q ⊩ᵗᵛ α ≾ β
+⊢ᵖ-⊩' : ∀ {Θ} {Q : Hyps Θ} {l α β} → (∀ {p} → p ∈ l → Q ⊩ᵗᵛ proj₁ p <: proj₂ p)
+      → l ⊢ᵖ α ≾ β → Q ⊩ᵗᵛ α <: β
 ⊢ᵖ-⊩' k stopᵖ       = reflᵗᵛ
 ⊢ᵖ-⊩' k (stepᵖ m p) = transᵗᵛ (k m) (⊢ᵖ-⊩' k p)
 
@@ -287,7 +287,7 @@ settle A ρ Q with decideᵣ full Q ρ 𝟏̂ᵣ
 -- the set it came from
 
 settle-⊩ : ∀ {Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ)
-         → (settle A ρ Q ⊩ᴴ Q) × VarOK (settle A ρ Q) A ρ
+         → (settle A ρ Q ⊩ᴴ Q) × settle A ρ Q ⊩ A Et∨≾ᵘ ρ
 settle-⊩ A ρ Q with decideᵣ full Q ρ 𝟏̂ᵣ
 ... | just d  = ⊩ᴴ-refl , ≾ᵘ-ok d
 ... | nothing with etDec A in e
@@ -308,7 +308,7 @@ settle-⊩ A ρ Q with decideᵣ full Q ρ 𝟏̂ᵣ
 -- set it leaves
 
 settle-inst : ∀ {Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ) → (δ : Subst Θ ∅ˢ)
-            → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ᴴ settle A ρ Q [ δ ]
+            → ∅ᴴ ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ [ δ ]ʳ → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ᴴ settle A ρ Q [ δ ]
 settle-inst A ρ Q δ d h with decideᵣ full Q ρ 𝟏̂ᵣ
 ... | just _  = h
 ... | nothing with etDec A in e
@@ -317,7 +317,7 @@ settle-inst A ρ Q δ d h with decideᵣ full Q ρ 𝟏̂ᵣ
         ordR : ∀ {ρ₀ ρ₀'} → (ρ₀ , ρ₀') ∈ ordᵣ Q ++ (ρ , 𝟏̂ᵣ) ∷ []
              → ∅ᴴ ⊩ ρ₀ [ δ ]ʳ ≾̂ᵣ ρ₀' [ δ ]ʳ
         ordR m with ∈-++⁻ (ordᵣ Q) m
-        ... | inj₂ (here refl) = [ (λ et → ⊥-elim (etDec-refute A e δ et)) , val-≾ᵣ⁻ ]′ (VarOK-∅ (∅⇒VarOK d))
+        ... | inj₂ (here refl) = [ (λ et → ⊥-elim (etDec-refute A e δ et)) , val-≾ᵣ⁻ ]′ (Et∨≾ᵘ-∅ (∅⇒Et∨≾ᵘ d))
         ... | inj₁ m'          = ⊩ordᵣ h m'
 ...   | just αs with ets? Q αs
 ...     | just _  = h
@@ -327,15 +327,15 @@ settle-inst A ρ Q δ d h with decideᵣ full Q ρ 𝟏̂ᵣ
         etA : ∅ᴴ ⊩Et A [ δ ]ᵛ
         etA = from d
           where
-            from : VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ) → ∅ᴴ ⊩Et A [ δ ]ᵛ
-            from ok = [ (λ et → et) , (λ le → ⊥-elim (ref δ (val-≾ᵣ le))) ]′ (VarOK-∅ᴴ ok)
+            from : ∅ᴴ ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ [ δ ]ʳ → ∅ᴴ ⊩Et A [ δ ]ᵛ
+            from ok = [ (λ et → et) , (λ le → ⊥-elim (ref δ (val-≾ᵣ le))) ]′ (Et∨≾ᵘ-∅ᴴ ok)
 
         et' : ∀ {β} → β ∈ (αs ++ ets Q) → ∅ᴴ ⊩Et sTy δ β
         et' m = [ etDec-compl A e δ etA , ⊩ets h ]′ (∈-++⁻ αs m)
 ...       | nothing = mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) dsj' (⊩qhyps h)
       where
         dsj' : ∀ {A₀ ρ₀} → (A₀ , ρ₀) ∈ ((A , ρ) ∷ disj Q)
-             → VarOK ∅ᴴ (A₀ [ δ ]ᵛ) (ρ₀ [ δ ]ʳ)
+             → ∅ᴴ ⊩ A₀ [ δ ]ᵛ Et∨≾ᵘ ρ₀ [ δ ]ʳ
         dsj' (here refl) = d
         dsj' (there m)   = ⊩disj h m
 
@@ -344,14 +344,14 @@ settleAll []             Q₀ = Q₀
 settleAll ((A , ρ) ∷ l) Q₀ = settle A ρ (settleAll l Q₀)
 
 settleAll-⊩ : ∀ {Θ} → (l : List (OVType Θ × RExp Θ)) → (Q₀ : Hyps Θ)
-            → (settleAll l Q₀ ⊩ᴴ Q₀) × (∀ {A ρ} → (A , ρ) ∈ l → VarOK (settleAll l Q₀) A ρ)
+            → (settleAll l Q₀ ⊩ᴴ Q₀) × (∀ {A ρ} → (A , ρ) ∈ l → settleAll l Q₀ ⊩ A Et∨≾ᵘ ρ)
 settleAll-⊩ []             Q₀ = ⊩ᴴ-refl , λ ()
 settleAll-⊩ ((A , ρ) ∷ l) Q₀ with settle-⊩ A ρ (settleAll l Q₀) | settleAll-⊩ l Q₀
-... | h , d | h' , k = ⊩ᴴ-trans h h' , λ { (here refl) → d ; (there m) → ⊩ᴴ-VarOK h (k m) }
+... | h , d | h' , k = ⊩ᴴ-trans h h' , λ { (here refl) → d ; (there m) → ⊩ᴴ-Et∨≾ᵘ h (k m) }
 
 settleAll-inst : ∀ {Θ} → (l : List (OVType Θ × RExp Θ)) → (Q₀ : Hyps Θ)
                → (δ : Subst Θ ∅ˢ)
-               → (∀ {A ρ} → (A , ρ) ∈ l → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ))
+               → (∀ {A ρ} → (A , ρ) ∈ l → ∅ᴴ ⊩ A [ δ ]ᵛ Et∨≾ᵘ ρ [ δ ]ʳ)
                → ∅ᴴ ⊩ᴴ Q₀ [ δ ] → ∅ᴴ ⊩ᴴ settleAll l Q₀ [ δ ]
 settleAll-inst []             Q₀ δ k h = h
 settleAll-inst ((A , ρ) ∷ l) Q₀ δ k h =
@@ -424,7 +424,7 @@ Hᵈ : ∀ {Θ} → Hyps Θ → List (OVType Θ × RExp Θ) → Hyps Θ
 Hᵈ Q ds = hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) ds (qhyps Q)
 
 Okᵈ : ∀ {Θ} → Hyps Θ → (seen rest : List (OVType Θ × RExp Θ)) → OVType Θ × RExp Θ → Set
-Okᵈ Q seen rest (A , ρ) = VarOK (Hᵈ Q (seen ++ rest)) A ρ
+Okᵈ Q seen rest (A , ρ) = (Hᵈ Q (seen ++ rest)) ⊩ A Et∨≾ᵘ ρ
 
 Aboveᵈ : ∀ {Θ} → Hyps Θ → OVType Θ → RExp Θ → List (OVType Θ × RExp Θ) → Set
 Aboveᵈ {Θ} Q A ρ l =
@@ -460,15 +460,15 @@ walkᵈ-⊩⁻ Q =
 walkᵈ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → walkᵈ Q ⊩ᴴ Q
 walkᵈ-⊩ {Θ} Q =
   mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) hypᵣ hypₑ
-        (Walk.walk-⊨ (Okᵈ Q) (testᵈ Q) (λ p → VarOK (walkᵈ Q) (proj₁ p) (proj₂ p))
+        (Walk.walk-⊨ (Okᵈ Q) (testᵈ Q) (λ p → walkᵈ Q ⊩ proj₁ p Et∨≾ᵘ proj₂ p)
                      close [] (disj Q) (λ ()) hyp-ok₀)
         (λ m → ⊩ᴼ-hyp⁼ m)
   where
     close : ∀ (seen rest : List (OVType Θ × RExp Θ)) {p} → Okᵈ Q seen rest p
-          → (∀ {q} → q ∈ seen ++ rest → VarOK (walkᵈ Q) (proj₁ q) (proj₂ q))
-          → VarOK (walkᵈ Q) (proj₁ p) (proj₂ p)
+          → (∀ {q} → q ∈ seen ++ rest → walkᵈ Q ⊩ proj₁ q Et∨≾ᵘ proj₂ q)
+          → walkᵈ Q ⊩ proj₁ p Et∨≾ᵘ proj₂ p
     close seen rest ok hs =
-      ⊩ᴴ-VarOK (mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) hypᵣ hypₑ hs (λ m → ⊩ᴼ-hyp⁼ m)) ok
+      ⊩ᴴ-Et∨≾ᵘ (mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) hypᵣ hypₑ hs (λ m → ⊩ᴼ-hyp⁼ m)) ok
 
 -- Every disjunction of the set settled, then those entailed by the
 -- others dropped
@@ -519,7 +519,7 @@ pruneᵀ-at : ∀ {Θ} → Hyps Θ → List (TyVar Θ × TyVar Θ) → Hyps Θ
 pruneᵀ-at Q l = hyps (pruneᴱ l (ets Q)) l (ordᵣ Q) (ordₑ Q) (disj Q) (qhyps Q)
 
 pruneᵀ-at-⊩ : ∀ {Θ} → (Q : Hyps Θ) → (l : List (TyVar Θ × TyVar Θ))
-            → (∀ {α β} → (α , β) ∈ subᵥ Q → pruneᵀ-at Q l ⊩ᵗᵛ α ≾ β)
+            → (∀ {α β} → (α , β) ∈ subᵥ Q → pruneᵀ-at Q l ⊩ᵗᵛ α <: β)
             → pruneᵀ-at Q l ⊩ᴴ Q
 pruneᵀ-at-⊩ {Θ} Q l k =
   mk⊩ᴴ⁼ (Walk.walk-⊨ (Okᴱ l) (etᴱ? l) (λ α → pruneᵀ-at Q l ⊩Et tvar α) close
@@ -545,14 +545,14 @@ pruneᵀ Q = pruneᵀ-at Q (pruneᵛ (subᵥ Q))
 pruneᵀ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → pruneᵀ Q ⊩ᴴ Q
 pruneᵀ-⊩ {Θ} Q =
   pruneᵀ-at-⊩ Q l
-    (Walk.walk-⊨ Okᵖ reachᵖ? (λ p → pruneᵀ Q ⊩ᵗᵛ proj₁ p ≾ proj₂ p) close
+    (Walk.walk-⊨ Okᵖ reachᵖ? (λ p → pruneᵀ Q ⊩ᵗᵛ proj₁ p <: proj₂ p) close
                  [] (subᵥ Q) (λ ()) hypᵗᵛ)
   where
     l = pruneᵛ (subᵥ Q)
 
     close : ∀ (seen rest : List (TyVar Θ × TyVar Θ)) {p} → Okᵖ seen rest p
-          → (∀ {q} → q ∈ seen ++ rest → pruneᵀ Q ⊩ᵗᵛ proj₁ q ≾ proj₂ q)
-          → pruneᵀ Q ⊩ᵗᵛ proj₁ p ≾ proj₂ p
+          → (∀ {q} → q ∈ seen ++ rest → pruneᵀ Q ⊩ᵗᵛ proj₁ q <: proj₂ q)
+          → pruneᵀ Q ⊩ᵗᵛ proj₁ p <: proj₂ p
     close seen rest w hs = ⊢ᵖ-⊩' (λ q → hs (∈-++⁺ˡ q)) w
 
 pruneᵀ-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ pruneᵀ Q
@@ -592,13 +592,13 @@ walkᵛ-⊩⁻ Q =
 walkᵛ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → walkᵛ Q ⊩ᴴ Q
 walkᵛ-⊩ {Θ} Q =
   mk⊩ᴴ⁼ et-hyp
-        (λ m → tvarₛ (Walk.walk-⊨ Okᵛ reachᵛ? (λ p → walkᵛ Q ⊩ᵗᵛ proj₁ p ≾ proj₂ p) close
+        (λ m → tvarₛ (Walk.walk-⊨ Okᵛ reachᵛ? (λ p → walkᵛ Q ⊩ᵗᵛ proj₁ p <: proj₂ p) close
                                   [] (subᵥ Q) (λ ()) hypᵗᵛ m))
         hypᵣ hypₑ hyp-ok₀ (λ m → ⊩ᴼ-hyp⁼ m)
   where
     close : ∀ (seen rest : List (TyVar Θ × TyVar Θ)) {p} → Okᵛ seen rest p
-          → (∀ {q} → q ∈ seen ++ rest → walkᵛ Q ⊩ᵗᵛ proj₁ q ≾ proj₂ q)
-          → walkᵛ Q ⊩ᵗᵛ proj₁ p ≾ proj₂ p
+          → (∀ {q} → q ∈ seen ++ rest → walkᵛ Q ⊩ᵗᵛ proj₁ q <: proj₂ q)
+          → walkᵛ Q ⊩ᵗᵛ proj₁ p <: proj₂ p
     close seen rest w hs = ⊢ᵖ-⊩' hs w
 
 -- Grade orderings are pruned by a walk against a test of entailment, the effect

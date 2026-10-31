@@ -77,7 +77,7 @@ private
 
   -- A variable no time has passed over
 
-  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → VarOK Q A 𝟏̂ᵣ
+  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → Q ⊩ A Et∨≾ᵘ 𝟏̂ᵣ
   ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
 U⇒U : ∀ {Θ} → OVType Θ
@@ -94,14 +94,14 @@ U⇒U = unit ⇒ unit ! 𝟏̂ₑ
 
 reused-around-claim : RawC ∅ˢ 0
 reused-around-claim =
-  return (lam (return (lam (return (lam
+  return (fun (return (fun (return (fun
     ((v₁ · ⋆) ⨟ unbox (var (fsuc fzero)) ((v₀ · v₄) ⨟ return v₅)))))))
 
 reused-around-claim-typed : IsTyped (infer [] reused-around-claim)
 reused-around-claim-typed =
   typed-of reused-around-claim
     (closed {C = (unit ⇒ (U⇒U ⇒ ([ ∣ 𝟏̂ₑ ∣̂ᵉ ] U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ))) ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ}
-      (return (lam (return (lam (return (lam
+      (return (fun (return (fun (return (fun
         ((var (Tl-∷ Hd) ok₀ · ⋆)
          ⨟ unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) on-time
              ((var Hd ok₀ · var (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ Hd))))) (et-ok unitₑ))
@@ -126,8 +126,8 @@ expected-reused-around-claim C ε =
 
 claimed-after-call : RawC ∅ˢ 0
 claimed-after-call =
-  return (lam (return (lam
-    ((v₁ · ⋆) ⨟ return (lam (handle (v₀ · ⋆) `with handler (return ⋆) clause-claim-after))))))
+  return (fun (return (fun
+    ((v₁ · ⋆) ⨟ return (fun (handle (v₀ · ⋆) `with handler (return ⋆) clause-claim-after))))))
   where
     clause-claim-after : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc (suc (suc (suc n)))))
     clause-claim-after op =
@@ -137,9 +137,9 @@ claimed-after-call =
 claimed-after-call-typable : Typable [] claimed-after-call
 claimed-after-call-typable =
   closed {C = (U⇒U ⇒ ([ rconst ⊤ᵣ ] unit ⇒ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ) ! 𝟏̂ₑ}
-    (return (lam (return (lam
+    (return (fun (return (fun
       ((var (Tl-∷ Hd) ok₀ · ⋆)
-       ⨟ return (lam (handle var Hd ok₀ · ⋆
+       ⨟ return (fun (handle var Hd ok₀ · ⋆
            `with handler (return ⋆) (λ op →
              unbox (res-var {z = Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ Hd)))))}) topᵣ
                (perform op (var (Tl-∷ (Tl-∷ Hd)) ok₀)

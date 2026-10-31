@@ -641,20 +641,20 @@ bool-canonical (subV V boolₛ) with bool-canonical V
 
 -- A natural number over a state context runs to the zero branch or to the
 -- successor branch at a predecessor: a variable is ruled out by
--- `nat-not-in-toCtx`, and a subsumption is dropped by `SUB-CASEℕ`.
+-- `nat-not-in-toCtx`, and a subsumption is dropped by `SUB-MATCHℕ`.
 
 nat-canonical : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ nat)
               → (∀ {A ε} {M : toCtx St ⊢C⦂ A ! ε} {N : toCtx St ∷ nat ⊢C⦂ A ! ε}
-                   → ⟨ St , caseℕ V `zero M `succ N ⟩ ⟶* ⟨ St , M ⟩)
+                   → ⟨ St , matchℕ V `zero M `succ N ⟩ ⟶* ⟨ St , M ⟩)
               ⊎ Σ[ W ∈ toCtx St ⊢V⦂ nat ]
                   (∀ {A ε} {M : toCtx St ⊢C⦂ A ! ε} {N : toCtx St ∷ nat ⊢C⦂ A ! ε}
-                     → ⟨ St , caseℕ V `zero M `succ N ⟩ ⟶* ⟨ St , N [ split-[] ↦ W ]c ⟩)
+                     → ⟨ St , matchℕ V `zero M `succ N ⟩ ⟶* ⟨ St , N [ split-[] ↦ W ]c ⟩)
 nat-canonical (var f x)     = ⊥-elim (nat-not-in-toCtx x)
-nat-canonical zero          = inj₁ (CASEℕ-ZERO ◅ ε*)
-nat-canonical (succ V)      = inj₂ (V , CASEℕ-SUCC ◅ ε*)
+nat-canonical zero          = inj₁ (MATCHℕ-ZERO ◅ ε*)
+nat-canonical (succ V)      = inj₂ (V , MATCHℕ-SUCC ◅ ε*)
 nat-canonical (subV V natₛ) with nat-canonical V
-... | inj₁ rs       = inj₁ (SUB-CASEℕ ◅ rs)
-... | inj₂ (W , rs) = inj₂ (W , SUB-CASEℕ ◅ rs)
+... | inj₁ rs       = inj₁ (SUB-MATCHℕ ◅ rs)
+... | inj₂ (W , rs) = inj₂ (W , SUB-MATCHℕ ◅ rs)
 
 -- An eternal type is built from base, unit, boolean, natural-number and empty
 -- types, products, sums and lists, so `VRed` asks nothing of a value of

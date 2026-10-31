@@ -5,7 +5,7 @@
 -- hypotheses has satisfiable hypotheses, so inference does not --
 -- refute the term, and every scheme it answers has a closed    --
 -- instance at which the principal type is below the typing's   --
--- (`completeness`), by the scheme's `factor`.                  --
+-- (`completeness`), by the scheme's `complete`.                --
 ------------------------------------------------------------------
 
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
@@ -25,7 +25,7 @@ module PolymorphicCalculus.Inference.ScopeClosed (S : LanguageSpec)
 open import PolymorphicCalculus.Syntax.Types                 S using (OCType)
 open import PolymorphicCalculus.Syntax.Contexts              S using (OCtx; _[_]ᶜᵗˣ; [id]ᶜᵗˣ)
 open import PolymorphicCalculus.Syntax.GradeSubstitution     S
-open import PolymorphicCalculus.Hypotheses                   S using (∅ᴴ; ⊩ᴵ-∅; _∣_<:̂ᶜ_)
+open import PolymorphicCalculus.Hypotheses                   S using (∅ᴴ; ⊩ᴵ-∅; _⊩_<:̂ᶜ_)
 open import PolymorphicCalculus.Hypotheses.Instances         S using (_⊨_)
 open import PolymorphicCalculus.Typing                       S using (_∣_⊢C⦂_)
 open import PolymorphicCalculus.Typing.Erasure               S using (⌊_⌋ᶜ)
@@ -55,7 +55,7 @@ completeness : ∀ {n} {Γ : OCtx ∅ˢ n} {M : RawC ∅ˢ n} {C : OCType ∅ˢ}
              → (D : ∅ᴴ ∣ Γ ⊢C⦂ C) → ⌊ D ⌋ᶜ ≡ M
              → (¬ infer Γ M ≡ untypable)
                × (∀ {p} → infer Γ M ≡ typed p
-                  → Σ[ δ ∈ Subst (Θ̃ p) ∅ˢ ] (δ ⊨ Q̃ p) × (∅ᴴ ∣ X̃ p [ δ ]ᶜ <:̂ᶜ C))
+                  → Σ[ δ ∈ Subst (Θ̃ p) ∅ˢ ] (δ ⊨ Q̃ p) × (∅ᴴ ⊩ X̃ p [ δ ]ᶜ <:̂ᶜ C))
 completeness {Γ = Γ} {M} {C} D e =
   infer-complete Γ M (typable ∅ˢ idˢ ∅ᴴ C (proj₁ D') (proj₂ D') (idˢ , ⊤-sat)) ,
   λ {p} _ → scheme p
@@ -63,6 +63,6 @@ completeness {Γ = Γ} {M} {C} D e =
     D' = at-id D e
 
     scheme : (p : PrincipalScheme Γ M)
-           → Σ[ δ ∈ Subst (Θ̃ p) ∅ˢ ] (δ ⊨ Q̃ p) × (∅ᴴ ∣ X̃ p [ δ ]ᶜ <:̂ᶜ C)
-    scheme p with factor p idˢ ∅ᴴ (proj₁ D') (proj₂ D') idˢ ⊤-sat
-    ... | δ , _ , h , st = δ , h , subst (λ C' → ∅ᴴ ∣ X̃ p [ δ ]ᶜ <:̂ᶜ C') ([id]ᶜ C) st
+           → Σ[ δ ∈ Subst (Θ̃ p) ∅ˢ ] (δ ⊨ Q̃ p) × (∅ᴴ ⊩ X̃ p [ δ ]ᶜ <:̂ᶜ C)
+    scheme p with complete p idˢ ∅ᴴ (proj₁ D') (proj₂ D') idˢ ⊤-sat
+    ... | δ , _ , h , st = δ , h , subst (λ C' → ∅ᴴ ⊩ X̃ p [ δ ]ᶜ <:̂ᶜ C') ([id]ᶜ C) st
