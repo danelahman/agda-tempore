@@ -55,7 +55,7 @@ open import Grades.Examples.Time.Dense.RightSided
          𝕀ᵣ; [0,_]; _≾ₒ_; uₒ; dense-right-sided-intervals; dense-right-sided-intervalsʰ)
 
 open import Grades.Examples.Traces.Rigid.Finite.RightSided Op n code name name-code code-name running
-  using (right-sided; Proper′; ⌜_⌝; expr; _≾ᴳ_; decided; εᵉ; waitᵁ; _≾ᵉ?_; ⟦_⟧; upper; str)
+  using (right-sided; Proper′; ⌜_⌝; expr; _≾ᴳ_; decided; εᵉ; waitᵁ; _≾ᵉ_; _≾ᵉ?_; ⟦_⟧; upper; str)
 open import Data.Fin.Subset using () renaming (⊤ to all)
 
 private
@@ -141,8 +141,12 @@ upper-runs→right-sided-intervals = record
 -- A grade measured by no time has only the empty run
 
 private
+  -- for a general `d`, so that the decider is never unfolded at `εᵉ`
+  lift : (c d : Proper′ upper) → c ≾ᵉ d → c ≾ᴳ d
+  lift c d p = decided (fromWitness {a? = c ≾ᵉ? d} p)
+
   reflects : (c : Proper′ upper) → mapₒ c ≾ₒ uₒ → c ≾ᴳ εᵉ
-  reflects c le = decided (fromWitness {a? = c ≾ᵉ? εᵉ} into)
+  reflects c le = lift c εᵉ into
     where
       dur≤0 : ∀ {x} → ⟦ expr c ⟧ x → dur x ≤ # 0
       dur≤0 {x} x∈ = go (hi (hullᴾ c)) refl le
