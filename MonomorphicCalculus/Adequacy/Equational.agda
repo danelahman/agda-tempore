@@ -6,7 +6,7 @@
 -- equality of global points (`soundᶜ`), and `adequacy` reads that    --
 -- back off the machine: the two programs halt in the same shape, on  --
 -- the same operation, and at an answer type with the same answer     --
--- (the same constant at a base type, the same boolean at `Bool`).    --
+-- (the same constant at a base type, the same boolean at `bool`).    --
 --                                                                    --
 -- The two theorems meet at `⟦ M ⟧ᵖ ≈ᵐ ⟦ N ⟧ᵖ`; everything here is    --
 -- their composition.                                                 --
@@ -191,10 +191,10 @@ data Same-answer {b : BaseType} {ε : E} (M N : Prog (Base b) ε) : Set where
     go (halts-op wM)  (halts-ret wN) = ⊥-elim (ret-not-op pN pM (≈ᵐ-sym e) wN wM)
     go (halts-op wM)  (halts-op wN)  = both-op wM wN (same-operation pM pN e wM wN)
 
--- The same at `Bool`, where the returned answer is one of the two constants
+-- The same at `bool`, where the returned answer is one of the two constants
 -- rather than an element of a base signature.
 
-data Same-answer-bool {ε : E} (M N : Prog Bool ε) : Set where
+data Same-answer-bool {ε : E} (M N : Prog bool ε) : Set where
 
   both-true  : (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
              → bool-val (ret-value wM) ≡ true
@@ -210,7 +210,7 @@ data Same-answer-bool {ε : E} (M N : Prog Bool ε) : Set where
              → Op-whnf.oper wM ≡ Op-whnf.oper wN
              → Same-answer-bool M N
 
-==-same-answer-bool : ∀ {ε} → {M N : Prog Bool ε}
+==-same-answer-bool : ∀ {ε} → {M N : Prog bool ε}
                     → (p : [] ⊢C⦂ M == N) → (mp : Midᶜ p)
                     → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                     ---------------------------------------

@@ -166,37 +166,37 @@ _≡̂ₑ?_ : (ε ε' : EExp ∅ˢ) → Dec (ε ≡̂ₑ ε')
 ------------------------------------------------------------------------
 -- Closed types
 
-⊩ᴱ? : (A : OVType ∅ˢ) → Dec (∅ᴴ ⊩ᴱ A)
-⊩ᴱ? (tvar ())
-⊩ᴱ? (Base b) with eternalBaseType? b
+⊩Et? : (A : OVType ∅ˢ) → Dec (∅ᴴ ⊩Et A)
+⊩Et? (tvar ())
+⊩Et? (Base b) with eternalBaseType? b
 ... | yes p = yes (Baseₑ p)
 ... | no ¬p = no λ { (Baseₑ p) → ⊥-elim-irr (¬p p) }
-⊩ᴱ? Unit      = yes Unitₑ
-⊩ᴱ? Bool      = yes Boolₑ
-⊩ᴱ? Nat       = yes Natₑ
-⊩ᴱ? (A |×| B) =
-  map′ (λ (p , q) → p |×|ₑ q) (λ { (p |×|ₑ q) → p , q }) (⊩ᴱ? A ×-dec ⊩ᴱ? B)
-⊩ᴱ? (A |+| B) =
-  map′ (λ (p , q) → p |+|ₑ q) (λ { (p |+|ₑ q) → p , q }) (⊩ᴱ? A ×-dec ⊩ᴱ? B)
-⊩ᴱ? (|List| A) = map′ |List|ₑ (λ { (|List|ₑ p) → p }) (⊩ᴱ? A)
-⊩ᴱ? Empty     = yes Emptyₑ
-⊩ᴱ? (A ⇒ C)   = no λ ()
-⊩ᴱ? (C ⇛ D)   = no λ ()
-⊩ᴱ? ([ ρ ] A) = no λ ()
+⊩Et? unit      = yes unitₑ
+⊩Et? bool      = yes boolₑ
+⊩Et? nat       = yes natₑ
+⊩Et? (A |×| B) =
+  map′ (λ (p , q) → p |×|ₑ q) (λ { (p |×|ₑ q) → p , q }) (⊩Et? A ×-dec ⊩Et? B)
+⊩Et? (A |+| B) =
+  map′ (λ (p , q) → p |+|ₑ q) (λ { (p |+|ₑ q) → p , q }) (⊩Et? A ×-dec ⊩Et? B)
+⊩Et? (list A)  = map′ listₑ (λ { (listₑ p) → p }) (⊩Et? A)
+⊩Et? empty     = yes emptyₑ
+⊩Et? (A ⇒ C)   = no λ ()
+⊩Et? (C ⇛ D)   = no λ ()
+⊩Et? ([ ρ ] A) = no λ ()
 
 -- The var-rule disjunction: eternality, or a value below the unit
 
 VarOK-∅ : {A : OVType ∅ˢ} {ρ : RExp ∅ˢ}
-        → VarOK ∅ᴴ A ρ → (∅ᴴ ⊩ᴱ A) ⊎ (valʳ ρ ≾ᵣ 𝟏ᵣ)
+        → VarOK ∅ᴴ A ρ → (∅ᴴ ⊩Et A) ⊎ (valʳ ρ ≾ᵣ 𝟏ᵣ)
 VarOK-∅ ok = [ inj₁ , (λ le → inj₂ (val-≾ᵣ le)) ]′ (VarOK-∅ᴴ ok)
 
 VarOK-∅⁻ : {A : OVType ∅ˢ} {ρ : RExp ∅ˢ}
-         → (∅ᴴ ⊩ᴱ A) ⊎ (valʳ ρ ≾ᵣ 𝟏ᵣ) → VarOK ∅ᴴ A ρ
+         → (∅ᴴ ⊩Et A) ⊎ (valʳ ρ ≾ᵣ 𝟏ᵣ) → VarOK ∅ᴴ A ρ
 VarOK-∅⁻ (inj₁ et) = et-ok et
 VarOK-∅⁻ (inj₂ le) = ≾ᵘ-ok (val-≾ᵣ⁻ le)
 
 VarOK? : (A : OVType ∅ˢ) → (ρ : RExp ∅ˢ) → Dec (VarOK ∅ᴴ A ρ)
-VarOK? A ρ with ⊩ᴱ? A | valʳ ρ ≾ᵣ? 𝟏ᵣ
+VarOK? A ρ with ⊩Et? A | valʳ ρ ≾ᵣ? 𝟏ᵣ
 ... | yes et | _      = yes (et-ok et)
 ... | no  _  | yes le = yes (≾ᵘ-ok (val-≾ᵣ⁻ le))
 ... | no ¬et | no ¬le = no λ ok → [ ¬et , ¬le ]′ (VarOK-∅ ok)
@@ -206,27 +206,27 @@ VarOK? A ρ with ⊩ᴱ? A | valʳ ρ ≾ᵣ? 𝟏ᵣ
 former : ∀ {Θ} → OVType Θ → ℕ
 former (tvar _)  = 0
 former (Base _)  = 1
-former Unit      = 2
-former Bool      = 3
+former unit      = 2
+former bool      = 3
 former (_ |×| _) = 4
-former Empty     = 5
+former empty     = 5
 former (_ ⇒ _)   = 6
 former ([ _ ] _) = 7
-former Nat       = 8
+former nat       = 8
 former (_ |+| _) = 9
-former (|List| _) = 10
+former (list _)  = 10
 former (_ ⇛ _)   = 11
 
 <:̂ᵛ-former : ∀ {Θ} {Q : Hyps Θ} {A B : OVType Θ} → Q ∣ A <:̂ᵛ B → former A ≡ former B
 <:̂ᵛ-former (tvarₛ _)  = refl
 <:̂ᵛ-former (Baseₛ _)  = refl
-<:̂ᵛ-former Unitₛ      = refl
-<:̂ᵛ-former Boolₛ      = refl
-<:̂ᵛ-former Natₛ       = refl
+<:̂ᵛ-former unitₛ      = refl
+<:̂ᵛ-former boolₛ      = refl
+<:̂ᵛ-former natₛ       = refl
 <:̂ᵛ-former (_ |×|ₛ _) = refl
 <:̂ᵛ-former (_ |+|ₛ _) = refl
-<:̂ᵛ-former (|List|ₛ _) = refl
-<:̂ᵛ-former Emptyₛ     = refl
+<:̂ᵛ-former (listₛ _)  = refl
+<:̂ᵛ-former emptyₛ     = refl
 <:̂ᵛ-former (_ ⇒ₛ _)   = refl
 <:̂ᵛ-former ([ _ ]ₛ _) = refl
 <:̂ᵛ-former (_ ⇛ₛ _)   = refl
@@ -240,16 +240,16 @@ _<:̂ᶜ?_ : (C D : OCType ∅ˢ) → Dec (∅ᴴ ∣ C <:̂ᶜ D)
 same : (A B : OVType ∅ˢ) → former A ≡ former B → Dec (∅ᴴ ∣ A <:̂ᵛ B)
 same (tvar ()) _ _
 same (Base b)  (Base b')  refl = map′ Baseₛ (λ { (Baseₛ p) → p }) (b ≡ᵇ? b')
-same Unit      Unit       refl = yes Unitₛ
-same Bool      Bool       refl = yes Boolₛ
-same Nat       Nat        refl = yes Natₛ
+same unit      unit       refl = yes unitₛ
+same bool      bool       refl = yes boolₛ
+same nat       nat        refl = yes natₛ
 same (A |×| B) (A' |×| B') refl =
   map′ (λ (p , q) → p |×|ₛ q) (λ { (p |×|ₛ q) → p , q }) (A <:̂ᵛ? A' ×-dec B <:̂ᵛ? B')
 same (A |+| B) (A' |+| B') refl =
   map′ (λ (p , q) → p |+|ₛ q) (λ { (p |+|ₛ q) → p , q }) (A <:̂ᵛ? A' ×-dec B <:̂ᵛ? B')
-same (|List| A) (|List| A') refl =
-  map′ |List|ₛ (λ { (|List|ₛ p) → p }) (A <:̂ᵛ? A')
-same Empty     Empty      refl = yes Emptyₛ
+same (list A)  (list A')  refl =
+  map′ listₛ (λ { (listₛ p) → p }) (A <:̂ᵛ? A')
+same empty     empty      refl = yes emptyₛ
 same (A ⇒ C)   (A' ⇒ C')  refl =
   map′ (λ (p , q) → p ⇒ₛ q) (λ { (p ⇒ₛ q) → p , q }) (A' <:̂ᵛ? A ×-dec C <:̂ᶜ? C')
 same (C ⇛ D)   (C' ⇛ D')  refl =
@@ -261,8 +261,8 @@ A <:̂ᵛ? B with former A ≟ℕ former B
 ... | yes eq = same A B eq
 ... | no  ne = no λ p → ne (<:̂ᵛ-former p)
 
-(A ‼ ε) <:̂ᶜ? (A' ‼ ε') =
-  map′ (λ (p , q) → p ‼ₛ q) (λ { (p ‼ₛ q) → p , q }) (A <:̂ᵛ? A' ×-dec ε ≾̂ₑ? ε')
+(A ! ε) <:̂ᶜ? (A' ! ε') =
+  map′ (λ (p , q) → p !ₛ q) (λ { (p !ₛ q) → p , q }) (A <:̂ᵛ? A' ×-dec ε ≾̂ₑ? ε')
 
 ------------------------------------------------------------------------
 -- Satisfaction at closed instances: each hypothesis holds, a quantified
@@ -369,7 +369,7 @@ _⊨ᴴ_ {Θ} Q Q' = (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ
 -- From entailment of the atoms and, per instance, the disjunctions
 
 mk⊨ᴴ : ∀ {Θ} {Q Q' : Hyps Θ}
-     → (∀ {α} → α ∈ ets Q' → Q ⊩ᴱ tvar α)
+     → (∀ {α} → α ∈ ets Q' → Q ⊩Et tvar α)
      → (∀ {α β} → (α , β) ∈ subᵥ Q' → Q ∣ tvar α <:̂ᵛ tvar β)
      → (∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q' → Q ⊩ ρ ≾̂ᵣ ρ')
      → (∀ {ε ε'} → (ε , ε') ∈ ordₑ Q' → Q ⊩ ε ≾̂ₑ ε')
@@ -378,12 +378,12 @@ mk⊨ᴴ : ∀ {Θ} {Q Q' : Hyps Θ}
      → (∀ {O} → O ∈ qhyps Q' → Q ⊩ᴼ O [ idˢ ])
      → Q ⊨ᴴ Q'
 mk⊨ᴴ et sb oR oE dj qh δ h =
-  mk⊩ᴴ (λ m → ⊩ᴱ-subst h (et m)) (λ m → <:̂ᵛ-subst h (sb m))
+  mk⊩ᴴ (λ m → ⊩Et-subst h (et m)) (λ m → <:̂ᵛ-subst h (sb m))
        (λ m → ⊩-substᵣ h (oR m)) (λ m → ⊩-substₑ h (oE m)) (dj δ h)
        (λ {O} m → ⊩ᴼ-resp-≐ˢ O (⨟-idˡ δ) (⊩ᴼ-⨟ O h (qh m)))
 
 VarOK-∅-mono : {A A' : OVType ∅ˢ} {ρ ρ' : RExp ∅ˢ}
-             → (∅ᴴ ⊩ᴱ A → ∅ᴴ ⊩ᴱ A') → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ → VarOK ∅ᴴ A ρ → VarOK ∅ᴴ A' ρ'
+             → (∅ᴴ ⊩Et A → ∅ᴴ ⊩Et A') → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ → VarOK ∅ᴴ A ρ → VarOK ∅ᴴ A' ρ'
 VarOK-∅-mono f q ok = [ (λ et → et-ok (f et)) , (λ le → ≾ᵘ-ok (transᵣ q le)) ]′ (VarOK-∅ᴴ ok)
 
 -- What a set entails holds by value at each of its instances
@@ -414,7 +414,7 @@ inst-≡̂ₑ δ p = val-≡̂ₑ (≡̂ₑ-subst δ p)
 
 inst-VarOK : ∀ {Θ} {Q : Hyps Θ} {δ : Subst Θ ∅ˢ} {A : OVType Θ} {ρ : RExp Θ}
            → ∅ᴴ ⊩ᴴ Q [ δ ] → VarOK Q A ρ
-           → (∅ᴴ ⊩ᴱ A [ δ ]ᵛ) ⊎ (valʳ (ρ [ δ ]ʳ) ≾ᵣ 𝟏ᵣ)
+           → (∅ᴴ ⊩Et A [ δ ]ᵛ) ⊎ (valʳ (ρ [ δ ]ʳ) ≾ᵣ 𝟏ᵣ)
 inst-VarOK h ok = VarOK-∅ (VarOK-subst h ok)
 
 -- An ordering between expressions convertible to constants is theirs

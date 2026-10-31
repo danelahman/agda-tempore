@@ -112,24 +112,24 @@ eq-ren-clause e Γ' pt kt =
 subst-clauses-uniform :
   ∀ {Δ Δ' B} → (e : Δ ≡ Δ')
   → (H : (op : Op) → (ε'' : E)
-       → Δ ∷ type-of-gtype (param op)
-            ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+       → Δ ∷ ⌜ param op ⌝ᵍ
+            ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+         ⊢C⦂ B ! (op-grade op ·ₑ ε''))
   → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
   → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
        → ⟦ H op ε₂'' ⟧ᶜᵗ (pH op ε₂'')
            ∘ᵐ mapˣᵐ idᵐ ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
        ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' ⟧ᶜᵗ (pH op ε₁''))
   → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
-       → ⟦ subst (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
-                            ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε₂'')
-                          ⊢C⦂ B ‼ (op-grade op ·ₑ ε₂''))
+       → ⟦ subst (λ Γ₀ → Γ₀ ∷ ⌜ param op ⌝ᵍ
+                            ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε₂'')
+                          ⊢C⦂ B ! (op-grade op ·ₑ ε₂''))
                  e (H op ε₂'') ⟧ᶜᵗ (substᴾᶜ e (H op ε₂'') (pH op ε₂''))
            ∘ᵐ mapˣᵐ idᵐ ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
        ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q)
-           ∘ᵐ ⟦ subst (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
-                                 ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε₁'')
-                               ⊢C⦂ B ‼ (op-grade op ·ₑ ε₁''))
+           ∘ᵐ ⟦ subst (λ Γ₀ → Γ₀ ∷ ⌜ param op ⌝ᵍ
+                                 ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε₁'')
+                               ⊢C⦂ B ! (op-grade op ·ₑ ε₁''))
                       e (H op ε₁'') ⟧ᶜᵗ (substᴾᶜ e (H op ε₁'') (pH op ε₁'')))
 subst-clauses-uniform e H pH uH op q =
   ≈ᵐ-trans (∘ᵐ-congˡ (subst-clause-interp e (H op _) (pH op _)))

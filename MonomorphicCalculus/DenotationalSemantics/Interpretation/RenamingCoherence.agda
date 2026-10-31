@@ -301,9 +301,9 @@ mutual
   ren-clauses-uniform :
     ∀ {Δ Δ' B} → (rr : Ren [] Δ' Δ)
     → (H : (op : Op) → (ε'' : E)
-         → Δ ∷ type-of-gtype (param op)
-              ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-           ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+         → Δ ∷ ⌜ param op ⌝ᵍ
+              ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+           ⊢C⦂ B ! (op-grade op ·ₑ ε''))
     → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
     → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
          → ⟦ H op ε₂'' ⟧ᶜᵗ (pH op ε₂'')

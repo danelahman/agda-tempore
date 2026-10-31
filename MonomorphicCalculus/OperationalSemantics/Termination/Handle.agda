@@ -59,13 +59,13 @@ open import MonomorphicCalculus.Syntax.Substitution.Subsumption  Spec
 Boxed : (B : VType) → (op : Op) → (ε₃ : E) → 𝕊 [] → Set
 Boxed B op ε₃ St₁ =
   ([] ++ᶜ toCtx St₁ ⟨ ∣ op-grade op ∣ᵉ ⟩)
-  ⊢V⦂ (type-of-gtype (arity op) ⇒ B ‼ ε₃)
+  ⊢V⦂ (⌜ arity op ⌝ᵍ ⇒ B ! ε₃)
 
 Boxed-VRed : (B : VType) → (op : Op) → (ε₃ : E)
            → (St₁ : 𝕊 []) → Boxed B op ε₃ St₁ → Set
 Boxed-VRed B op ε₃ St₁ V₀ =
   ∀ {St'} → (q : St₁ ⊑ₛ[ ∣ op-grade op ∣ᵉ ] St')
-    → VRed (type-of-gtype (arity op) ⇒ B ‼ ε₃) St'
+    → VRed (⌜ arity op ⌝ᵍ ⇒ B ! ε₃) St'
            (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V₀)
 
 -- The clause, crossed into the context it fires at and given the operation's
@@ -75,8 +75,8 @@ Boxed-VRed B op ε₃ St₁ V₀ =
 
 Fired : ∀ {B} → (St : 𝕊 []) → (op : Op) → (ε₃ : E) → Fam B (toCtx St ⟨ ⊤ᵣ ⟩)
       → {St₁ : 𝕊 []} → (q : St ⊑ₛ[ ⊤ᵣ ] St₁) → (V₀ : Boxed B op ε₃ St₁)
-      → toCtx St₁ ⊢V⦂ type-of-gtype (param op)
-      → toCtx (St₁ ∷ₛ V₀) ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)
+      → toCtx St₁ ⊢V⦂ ⌜ param op ⌝ᵍ
+      → toCtx (St₁ ∷ₛ V₀) ⊢C⦂ B ! (op-grade op ·ₑ ε₃)
 Fired St op ε₃ H q V₀ W =
   (C-rename (cong-∷-ren (cong-∷-ren (unbox-ren q))) (H op ε₃))
     [ split-∷ split-[] ↦ W ]c
@@ -86,8 +86,8 @@ Clause-Prem B St H =
   ∀ {St₁ : 𝕊 []} {op : Op} {ε₃ : E}
     → (q : St ⊑ₛ[ ⊤ᵣ ] St₁)
     → (V₀ : Boxed B op ε₃ St₁) → Boxed-VRed B op ε₃ St₁ V₀
-    → (W : toCtx St₁ ⊢V⦂ type-of-gtype (param op))
-    → VRed (type-of-gtype (param op)) St₁ W
+    → (W : toCtx St₁ ⊢V⦂ ⌜ param op ⌝ᵍ)
+    → VRed ⌜ param op ⌝ᵍ St₁ W
     → CRed' B (op-grade op ·ₑ ε₃) (St₁ ∷ₛ V₀) (Fired St op ε₃ H q V₀ W)
 
 -- Two clause binders' worth of congruence, composed.
@@ -104,7 +104,7 @@ cong-cl-ren-∘-≐ʳ r r' =
 -- The sequel premise, as in `Bind`.
 
 Seq-Prem : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
-         → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂) → Set
+         → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂) → Set
 Seq-Prem {A} {B} {ε₁} {ε₂} {St} N =
   ∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ ∣ ε₁ ∣ᵉ ] St₁)
     → (V : toCtx St₁ ⊢V⦂ A) → VRed A St₁ V
@@ -116,9 +116,9 @@ Seq-Prem {A} {B} {ε₁} {ε₂} {St} N =
 -- with the reach's `𝟏ᵣ` by `suc-comp-ren-grade`.
 
 handle-CRed : ∀ {s A B ε₁ ε₂} {e : shapeᵛ A ≡ s} {St : 𝕊 []}
-            → {M : toCtx St ⊢C⦂ A ‼ ε₁}
+            → {M : toCtx St ⊢C⦂ A ! ε₁}
             → (H : Fam B (toCtx St ⟨ ⊤ᵣ ⟩))
-            → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+            → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
             → CRedˢ' s e ε₁ St M
             → Clause-Prem B St H
             → Seq-Prem N
@@ -195,7 +195,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
           (hH q₀ V₀ bv W (VRedᵍ→VRed (param op) W pW)))))
   where
     ρₒ  = ∣ op-grade op ∣ᵉ
-    Ar  = type-of-gtype (arity op)
+    Ar  = ⌜ arity op ⌝ᵍ
     E₀  = steps-extends-state rs
 
     b₀  = steps-grade-≾ rs
@@ -665,7 +665,7 @@ env-Hˢ-fired : ∀ {St Γ B} → (γ : Env St Γ) → {St₁ : 𝕊 []}
              → (q : St ⊑ₛ[ ⊤ᵣ ] St₁)
              → (H : Fam B (Γ ⟨ ⊤ᵣ ⟩)) → {op : Op} → {ε : E}
              → (V₀ : Boxed B op ε St₁)
-             → (W : toCtx St₁ ⊢V⦂ type-of-gtype (param op))
+             → (W : toCtx St₁ ⊢V⦂ ⌜ param op ⌝ᵍ)
              → Fired St op ε (env-Hˢ γ [] H) q V₀ W
              ≡ env-C (liftᵉ V₀ ((γ ⟨ q ⟩ᵉ) ∷ᵉ W)) (H op ε)
 
@@ -675,7 +675,7 @@ env-Hˢ-fired γ q H V₀ W = refl
 -- a reach at the smaller lock is one at the larger, and the value is subsumed.
 
 Seq-Prem-sub : ∀ {A A₀ B ε₀ ε₁ ε₂} {St : 𝕊 []}
-             → {N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂}
+             → {N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂}
              → (p : A₀ <:ᵛ A) → (pε : ε₀ ≾ₑ ε₁)
              → Seq-Prem N
              → Seq-Prem (subCtx p (C-rename (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε))) N))
@@ -711,18 +711,18 @@ Seq-Prem-sub {N = N} p pε hN q V pV =
 
 handler-CRed : ∀ {s A B ε ε'} {St : 𝕊 []}
              → {H : Fam B (toCtx St ⟨ ⊤ᵣ ⟩)}
-             → {N : toCtx St ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+             → {N : toCtx St ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'}
              → Clause-Prem B St H
              → Seq-Prem N
-             → ∀ {A₀ ε₀ B₀ ε₀'} {U : toCtx St ⊢V⦂ (A₀ ‼ ε₀) ⇛ (B₀ ‼ ε₀')}
+             → ∀ {A₀ ε₀ B₀ ε₀'} {U : toCtx St ⊢V⦂ (A₀ ! ε₀) ⇛ (B₀ ! ε₀')}
              → Use (handler N H) U
-             → {e : shapeᵛ A₀ ≡ s} → {M : toCtx St ⊢C⦂ A₀ ‼ ε₀}
+             → {e : shapeᵛ A₀ ≡ s} → {M : toCtx St ⊢C⦂ A₀ ! ε₀}
              → CRedˢ' s e ε₀ St M
              ------------------------------------------------------
              → CRed' B₀ (ε₀ ·ₑ ε₀') St (handle M `with U)
 
 handler-CRed {H = H} {N = N} hH hN use-id pM = handle-CRed H N pM hH hN
-handler-CRed {H = H} {N = N} hH hN (use-sub ((p ‼ₛ pε) ⇛ₛ (o ‼ₛ _))) pM =
+handler-CRed {H = H} {N = N} hH hN (use-sub ((p !ₛ pε) ⇛ₛ (o !ₛ _))) pM =
   CRed-expand SUB-HANDLE
     (CRedˢ'-≡ˢ {e' = <:ᵛ-shape o}
       (handle-CRed H _ pM hH (Seq-Prem-sub p pε hN)))

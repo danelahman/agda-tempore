@@ -63,20 +63,20 @@ open import MonomorphicCalculus.Examples.Typing.Core
 ------------------------------------------------------------------------
 -- Effectful computations
 
-sampling : [] ⊢C⦂ Reading ‼ ([0, 1 ] , [0, 1 ])
+sampling : [] ⊢C⦂ Reading ! ([0, 1 ] , [0, 1 ])
 sampling =
   perform read ⋆                     -- ⟨ ([0, 1 ] , [0, 1 ]) ⟩ ∷ Reading
     (return here)
 
-relaying : [] ⊢C⦂ Unit ‼ ([0, 7 ] , [0, 6 ])
+relaying : [] ⊢C⦂ unit ! ([0, 7 ] , [0, 6 ])
 relaying =
   perform read ⋆                     -- ⟨ ([0, 1 ] , [0, 1 ]) ⟩ ∷ Reading
-    (perform send here               -- ⟨ ([0, 6 ] , [0, 5 ]) ⟩ ∷ Unit
+    (perform send here               -- ⟨ ([0, 6 ] , [0, 5 ]) ⟩ ∷ unit
       (return ⋆))
 
 -- idling spends time and no energy
 
-idling : [] ⊢C⦂ Unit ‼ ([0, 5 ] , [0, 0 ])
+idling : [] ⊢C⦂ unit ! ([0, 5 ] , [0, 0 ])
 idling = delay 5 (return ⋆)          -- ⟨ ([0, 5 ] , [0, 0 ]) ⟩
 
 -- and a reading goes stale under it all the same, on the time
@@ -96,14 +96,14 @@ budget = ([0, 30 ] , [0, 12 ])
 -- two uplinks, spaced by ten ticks of idling, fit it: the idling costs
 -- time the budget has to spare, and no energy
 
-spaced-uplinks : [] ⊢C⦂ Unit ‼ budget
+spaced-uplinks : [] ⊢C⦂ unit ! budget
 spaced-uplinks =
   coerce (≤! , ≤!)
     (perform read ⋆                  -- ⟨ ([0, 1 ] , [0, 1 ]) ⟩ ∷ Reading
-      (perform send here             -- ⟨ ([0, 6 ] , [0, 5 ]) ⟩ ∷ Unit
+      (perform send here             -- ⟨ ([0, 6 ] , [0, 5 ]) ⟩ ∷ unit
         (delay 10                    -- ⟨ ([0, 10 ] , [0, 0 ]) ⟩
           (perform read ⋆            -- ⟨ ([0, 1 ] , [0, 1 ]) ⟩ ∷ Reading
-            (perform send here       -- ⟨ ([0, 6 ] , [0, 5 ]) ⟩ ∷ Unit
+            (perform send here       -- ⟨ ([0, 6 ] , [0, 5 ]) ⟩ ∷ unit
               (return ⋆))))))
 
 -- three uplinks back to back take less time than that and draw more
@@ -119,9 +119,9 @@ three-uplinks-overdraw (_ , overdrawn) = ≰! overdrawn
 -- slower branch's time and its hungrier branch's energy, even when no
 -- single branch spends both.
 
-branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ ([0, 8 ] , [0, 5 ])
+branching : [] ∷ bool ∷ Reading ⊢C⦂ unit ! ([0, 8 ] , [0, 5 ])
 branching =
-  if eternal-var Boolₑ (Tl-∷ Hd)
+  if eternal-var boolₑ (Tl-∷ Hd)
     `then coerce (≤! , ≤!) (perform send here (return ⋆))
     `else coerce (≤! , ≤!) (delay 8 (return ⋆))
 
@@ -135,7 +135,7 @@ calibration = ([0, 10 ] , [0, 6 ])
 
 -- claimed after eight ticks of idling: eight steps, nothing drawn
 
-claim-after-idling : [] ⊢C⦂ Unit ‼ ([0, 14 ] , [0, 5 ])
+claim-after-idling : [] ⊢C⦂ unit ! ([0, 14 ] , [0, 5 ])
 claim-after-idling =
   box calibration (const 42)         -- ∷ [ calibration ] Reading
     (delay 8                         -- ⟨ ([0, 8 ] , [0, 0 ]) ⟩
@@ -145,11 +145,11 @@ claim-after-idling =
 
 -- claimed after an uplink: seven steps, and the six units exactly
 
-claim-after-relaying : [] ⊢C⦂ Unit ‼ ([0, 10 ] , [0, 8 ])
+claim-after-relaying : [] ⊢C⦂ unit ! ([0, 10 ] , [0, 8 ])
 claim-after-relaying =
   box calibration (const 42)         -- ∷ [ calibration ] Reading
     (perform read ⋆                  -- ⟨ ([0, 1 ] , [0, 1 ]) ⟩ ∷ Reading
-      (perform send here             -- ⟨ ([0, 6 ] , [0, 5 ]) ⟩ ∷ Unit
+      (perform send here             -- ⟨ ([0, 6 ] , [0, 5 ]) ⟩ ∷ unit
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (≤! , ≤!) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform write here (return ⋆)))))
@@ -168,7 +168,7 @@ drifted (late , _) = ≰! late
 ------------------------------------------------------------------------
 -- Effect handling
 
-forwarded : [] ⊢C⦂ Reading ‼ ([0, 1 ] , [0, 1 ])
+forwarded : [] ⊢C⦂ Reading ! ([0, 1 ] , [0, 1 ])
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}

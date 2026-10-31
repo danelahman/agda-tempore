@@ -58,7 +58,7 @@ decided c d {p} = toWitness p
 refuted : (c d : R) {p : False (c ≾ᵣ? d)} → ¬ (c ≾ᵣ d)
 refuted c d {p} = toWitnessFalse p
 
-check : ∀ {Γ A ε} (ε' : E) {p : True (ε ≾ₑ? ε')} → Γ ⊢C⦂ A ‼ ε → Γ ⊢C⦂ A ‼ ε'
+check : ∀ {Γ A ε} (ε' : E) {p : True (ε ≾ₑ? ε')} → Γ ⊢C⦂ A ! ε → Γ ⊢C⦂ A ! ε'
 check ε' {p} M = coerce (toWitness p) M
 
 ------------------------------------------------------------------------
@@ -67,13 +67,13 @@ check ε' {p} M = coerce (toWitness p) M
 one-switch : E
 one-switch = grade (listing ((Idle , Radio , cost 1) L.∷ (Radio , Radio , cost 0) L.∷ L.[]))
 
-two-transmissions : [] ⊢C⦂ Unit ‼ one-switch
+two-transmissions : [] ⊢C⦂ unit ! one-switch
 two-transmissions =
   check one-switch
     (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
-      (perform send here             -- ⟨ opTime send ⟩ ∷ Unit
+      (perform send here             -- ⟨ opTime send ⟩ ∷ unit
         (perform read ⋆              -- ⟨ opTime read ⟩ ∷ Reading
-          (perform send here         -- ⟨ opTime send ⟩ ∷ Unit
+          (perform send here         -- ⟨ opTime send ⟩ ∷ unit
             (return ⋆)))))
 
 -- storing after a transmission gets stuck
@@ -84,7 +84,7 @@ store-after-transmitting-refused = refuted (opTime send ·ₑ opTime write) one-
 ------------------------------------------------------------------------
 -- Readings survive reading and idling, not a store
 
-sample-idle-sample-store : [] ⊢C⦂ Unit ‼ opTime write
+sample-idle-sample-store : [] ⊢C⦂ unit ! opTime write
 sample-idle-sample-store =
   check (opTime write)
     (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
@@ -92,7 +92,7 @@ sample-idle-sample-store =
         (perform read ⋆              -- ⟨ opTime read ⟩ ∷ Reading
           (perform write (fresh-var (decided (𝟏ᵣ ·ᵣ ιᵣ 4 ·ᵣ opTime read) 𝟏ᵣ)
                                       (Tl-∷ (Tl-⟨⟩ (Tl-⟨⟩ Hd))))
-                                     -- ⟨ opTime write ⟩ ∷ Unit
+                                     -- ⟨ opTime write ⟩ ∷ unit
             (return ⋆)))))
 
 stale-after-storing : ¬ (𝟏ᵣ ·ᵣ opTime write ≾ᵣ 𝟏ᵣ)
@@ -107,12 +107,12 @@ at-most-one-switch =
   grade (listing ((Idle , Idle , cost 0) L.∷ (Idle , Radio , cost 1) L.∷ (Radio , Radio , cost 0)
                L.∷ (⋆ , ⋆ , cost 0) L.∷ (⋆ , ✗ , cost 0) L.∷ L.[]))
 
-claim-after-a-transmission : [] ⊢C⦂ Unit ‼ one-switch
+claim-after-a-transmission : [] ⊢C⦂ unit ! one-switch
 claim-after-a-transmission =
   check one-switch
     (box at-most-one-switch (const 7)
                                      -- ∷ [ at-most-one-switch ] Reading
-      (perform send (const 1)        -- ⟨ opTime send ⟩ ∷ Unit
+      (perform send (const 1)        -- ⟨ opTime send ⟩ ∷ unit
         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (decided (𝟏ᵣ ·ᵣ opTime send) at-most-one-switch) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))

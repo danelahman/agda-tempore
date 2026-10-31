@@ -24,7 +24,7 @@ open import MonomorphicCalculus.Syntax.Types    S
 data Progresses : {ε : E}
                 → {S : 𝕊 []}
                 → {A : VType}
-                → (M : toCtx S ⊢C⦂ A ‼ ε)
+                → (M : toCtx S ⊢C⦂ A ! ε)
                 →  Set where
                             
     is-value : {S : 𝕊 []}
@@ -37,16 +37,16 @@ data Progresses : {ε : E}
              → {S : 𝕊 []}
              → {A : VType}
              → {op : Op}
-             → {V : toCtx S ⊢V⦂ type-of-gtype (param op)}
-             → {M : toCtx S ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
+             → {V : toCtx S ⊢V⦂ ⌜ param op ⌝ᵍ}
+             → {M : toCtx S ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε}
                -------------------------------------------------------------------------
              → Progresses (perform op V M) 
 
 
     steps    : ∀ {ε'' ε'''}
              → {S S' : 𝕊 []} {A B : VType}
-             → {M : toCtx S ⊢C⦂ A ‼ ε''}
-             → {M' : toCtx S' ⊢C⦂  B ‼ ε''' }
+             → {M : toCtx S ⊢C⦂ A ! ε''}
+             → {M' : toCtx S' ⊢C⦂  B ! ε''' }
              → (M⟶M' : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
              → (p : ≤ₛ-grade (step-extends-state M⟶M') ·ᵣ ∣ ε''' ∣ᵉ ≾ᵣ ∣ ε'' ∣ᵉ)
              → (t : B <:ᵛ A)
@@ -58,8 +58,8 @@ data Progresses : {ε : E}
 
 step-progress : ∀ {ε'' ε'''}
               → {S S' : 𝕊 []} {A B : VType}
-              → {M : toCtx S ⊢C⦂ A ‼ ε''}
-              → {M' : toCtx S' ⊢C⦂ B ‼ ε'''}
+              → {M : toCtx S ⊢C⦂ A ! ε''}
+              → {M' : toCtx S' ⊢C⦂ B ! ε'''}
               → (M⟶M' : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
                 ---------------------------------
               → Progresses M
@@ -67,7 +67,7 @@ step-progress M⟶M' = steps M⟶M' (step-grade-≾ M⟶M') (step-refines-type M
 
 -- Progress theorem statement
 
-progress : ∀ {A ε'} → {S : 𝕊 []} → (M : toCtx S ⊢C⦂ A ‼ ε') → Progresses M
+progress : ∀ {A ε'} → {S : 𝕊 []} → (M : toCtx S ⊢C⦂ A ! ε') → Progresses M
 
 progress (return V) = is-value
 progress (M ⨟ N) with progress M
@@ -76,25 +76,25 @@ progress ((return V) ⨟ N) | is-value = step-progress SEQ-RET
 progress (M ⨟ N) | steps M⟶M' p _    = step-progress (SEQ-STEP M⟶M' p)
 progress (var ρ≾𝟏ᵣ x · W)          = ⊥-elim (⇒-not-in-toCtx x)
 progress (lam M · W)               = step-progress APP
-progress (subV V (_ ⇒ₛ (_ ‼ₛ _)) · W) = step-progress SUB-APP
+progress (subV V (_ ⇒ₛ (_ !ₛ _)) · W) = step-progress SUB-APP
 progress (match P `in M)           = step-progress MATCH
 progress (caseL V `nil M `cons N)  = step-progress CASEL
 progress (recL V M N p)            = step-progress RECL
 progress (case+ V `inl M `inr N)   = step-progress CASE+
 progress (cmp ⋈ V W et)            = step-progress CMP
 progress (absurd V)                = ⊥-elim (empty-not-value V)
-progress (if var ρ≾𝟏ᵣ x `then M `else N) = ⊥-elim (Bool-not-in-toCtx x)
+progress (if var ρ≾𝟏ᵣ x `then M `else N) = ⊥-elim (bool-not-in-toCtx x)
 progress (if true       `then M `else N) = step-progress IF-TRUE
 progress (if false      `then M `else N) = step-progress IF-FALSE
-progress (if subV V Boolₛ `then M `else N) = step-progress SUB-IF
-progress (caseℕ var ρ≾𝟏ᵣ x `zero M `succ N) = ⊥-elim (Nat-not-in-toCtx x)
+progress (if subV V boolₛ `then M `else N) = step-progress SUB-IF
+progress (caseℕ var ρ≾𝟏ᵣ x `zero M `succ N) = ⊥-elim (nat-not-in-toCtx x)
 progress (caseℕ zero `zero M `succ N)       = step-progress CASEℕ-ZERO
 progress (caseℕ succ V `zero M `succ N)     = step-progress CASEℕ-SUCC
-progress (caseℕ subV V Natₛ `zero M `succ N) = step-progress SUB-CASEℕ
-progress (recℕ (var ρ≾𝟏ᵣ x) M N p)       = ⊥-elim (Nat-not-in-toCtx x)
+progress (caseℕ subV V natₛ `zero M `succ N) = step-progress SUB-CASEℕ
+progress (recℕ (var ρ≾𝟏ᵣ x) M N p)       = ⊥-elim (nat-not-in-toCtx x)
 progress (recℕ zero M N p)                = step-progress RECℕ-ZERO
 progress (recℕ (succ V) M N p)            = step-progress RECℕ-SUCC
-progress (recℕ (subV V Natₛ) M N p)       = step-progress SUB-RECℕ
+progress (recℕ (subV V natₛ) M N p)       = step-progress SUB-RECℕ
 progress (perform op V M)          = is-op
 progress (delay τ M)               = step-progress DELAY
 progress (handle M `with var _ x)  = ⊥-elim (⇛-not-in-toCtx x)
@@ -103,12 +103,12 @@ progress (handle (return V) `with handler N H) | is-value = step-progress HANDLE
 ... | is-op                     = step-progress HANDLE-OP
 ... | steps M⟶M' p _            = step-progress (HANDLE-STEP M⟶M' p)
 progress (handle M `with subV (var _ x) (_ ⇛ₛ _)) = ⊥-elim (⇛-not-in-toCtx x)
-progress (handle M `with subV (handler N H) ((_ ‼ₛ _) ⇛ₛ _)) =
+progress (handle M `with subV (handler N H) ((_ !ₛ _) ⇛ₛ _)) =
   step-progress SUB-HANDLE
 progress (handle M `with subV (subV V p) p') = step-progress SUB-HANDLE-TRANS
 progress (unbox _ _ _ _) = step-progress UNBOX
 progress (box _ _ _)       = step-progress BOX
-progress (subC M (_ ‼ₛ _)) = step-progress SUB
+progress (subC M (_ !ₛ _)) = step-progress SUB
 
 -- is-value is final: it makes no further steps
 
@@ -116,7 +116,7 @@ finality-value : ∀ {A B τ₂}
                 → {S : 𝕊 []}
                 → {S₁ : 𝕊 []}
                 → {V : toCtx S ⊢V⦂ A}
-                → {M₁ : toCtx S₁ ⊢C⦂ B ‼ τ₂}
+                → {M₁ : toCtx S₁ ⊢C⦂ B ! τ₂}
                 → {𝟏ₑ≾ε : 𝟏ₑ ≾ₑ τ₂}
                 → ⟨ S , return V ⟩ ⟶ ⟨ S₁ , M₁ ⟩
                 → ⊥
@@ -127,9 +127,9 @@ finality-value ()
 
 finality-op : ∀ {A B op τ₂ τ₃}
                 → {S S₁ : 𝕊 []}
-                → {V : toCtx S ⊢V⦂ type-of-gtype (param op) }
-                → {M : toCtx S ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ τ₂}
-                → {M₁ : toCtx S₁ ⊢C⦂ B ‼ τ₃}
+                → {V : toCtx S ⊢V⦂ ⌜ param op ⌝ᵍ }
+                → {M : toCtx S ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! τ₂}
+                → {M₁ : toCtx S₁ ⊢C⦂ B ! τ₃}
                 → ⟨ S , perform op V M ⟩ ⟶ ⟨ S₁ , M₁ ⟩
                 → ⊥
 finality-op ()

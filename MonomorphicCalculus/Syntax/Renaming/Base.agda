@@ -32,7 +32,7 @@ open import MonomorphicCalculus.Syntax.Types S
 
 data EternalCtx : Ctx → Set where
   ec-[] : EternalCtx []
-  ec-∷  : ∀ {Δ A} → EternalCtx Δ → Eternal A → EternalCtx (Δ ∷ A)
+  ec-∷  : ∀ {Δ A} → EternalCtx Δ → Et A → EternalCtx (Δ ∷ A)
   ec-⟨⟩ : ∀ {Δ ρ} → 𝟏ᵣ ≾ᵣ ρ → ρ ≾ᵣ 𝟏ᵣ → EternalCtx Δ → EternalCtx (Δ ⟨ ρ ⟩)
 
 -- The 0-graded lock, the case the two bounds are `≾ᵣ-refl`, and the case of a
@@ -45,7 +45,7 @@ ec-⟨⟩ᵘ = ec-⟨⟩ ≾ᵣ-refl ≾ᵣ-refl
 ec-⟨⟩≡ : ∀ {Δ ρ} → ρ ≡ 𝟏ᵣ → EternalCtx Δ → EternalCtx (Δ ⟨ ρ ⟩)
 ec-⟨⟩≡ e = ec-⟨⟩ (≾ᵣ-reflexive (sym e)) (≾ᵣ-reflexive e)
 
-ec-eternal : ∀ {Δ A ρ} → EternalCtx Δ → A ∈[ ρ ] Δ → Eternal A
+ec-eternal : ∀ {Δ A ρ} → EternalCtx Δ → A ∈[ ρ ] Δ → Et A
 ec-eternal (ec-∷ ec et)   Hd        = et
 ec-eternal (ec-∷ ec et)   (Tl-∷ x)  = ec-eternal ec x
 ec-eternal (ec-⟨⟩ q p ec) (Tl-⟨⟩ x) = ec-eternal ec x
@@ -91,7 +91,7 @@ data Ren (Ξ : Ctx) : Ctx → Ctx → Set where
   -- variable renaming (corresponds to contraction). As in the `var` typing
   -- rule, the grade bound is only required for non-eternal types: an eternal
   -- variable is available at any grade (in particular behind a lock).
-  var-ren     : ∀ {Δ A ρ} → (¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ) → A ∈[ ρ ] (Ξ ⋈ᶜ Δ)
+  var-ren     : ∀ {Δ A ρ} → (¬ Et A → ρ ≾ᵣ 𝟏ᵣ) → A ∈[ ρ ] (Ξ ⋈ᶜ Δ)
               → Ren Ξ Δ (Δ ∷ A)
   -- strong monoidal functor renamings for ⟨_⟩ modality
   ⟨⟩-η-ren    : ∀ {Δ} → Ren Ξ Δ (Δ ⟨ 𝟏ᵣ ⟩)
@@ -111,7 +111,7 @@ infixr 20 _∘ʳ_
 
 -- Extending a renaming with a variable
 
-extend-ren : ∀ {Ξ Δ Δ' A ρ} → Ren Ξ Δ Δ' → (¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+extend-ren : ∀ {Ξ Δ Δ' A ρ} → Ren Ξ Δ Δ' → (¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
            → A ∈[ ρ ] (Ξ ⋈ᶜ Δ) → Ren Ξ Δ (Δ' ∷ A)
 extend-ren r p x = cong-∷-ren r ∘ʳ var-ren p x
 

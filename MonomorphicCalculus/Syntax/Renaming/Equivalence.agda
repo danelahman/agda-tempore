@@ -460,12 +460,12 @@ cong-ren-∘-≐ʳ (Γ₀ ⟨ ρ ⟩) r₂ r₁ =
 -- Forces a `with eternal?`-defined function to reduce, by rewriting the
 -- scrutinee.
 
-eternal?-yes : ∀ {A} → (et : Eternal A) → eternal? A ≡ yes et
+eternal?-yes : ∀ {A} → (et : Et A) → eternal? A ≡ yes et
 eternal?-yes {A} et with eternal? A
 ... | yes et' = cong yes (eternal-irrelevant et' et)
 ... | no ¬et  = ⊥-elim (¬et et)
 
-eternal?-no : ∀ {A} → (¬et : ¬ Eternal A) → eternal? A ≡ no ¬et
+eternal?-no : ∀ {A} → (¬et : ¬ Et A) → eternal? A ≡ no ¬et
 eternal?-no {A} ¬et with eternal? A
 ... | yes et  = ⊥-elim (¬et et)
 ... | no ¬et' = cong no (fun-ext (λ e → ⊥-elim (¬et e)))

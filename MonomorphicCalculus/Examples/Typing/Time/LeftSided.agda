@@ -61,32 +61,32 @@ open import MonomorphicCalculus.Examples.Typing.Core left-sided-intervals opTime
 
 -- take a reading and hand it back
 
-sampling : [] ⊢C⦂ Reading ‼ [ 1 ,+∞⟩
+sampling : [] ⊢C⦂ Reading ! [ 1 ,+∞⟩
 sampling =
   perform read ⋆                     -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
     (return here)
 
 -- take a reading and store it
 
-storing : [] ⊢C⦂ Unit ‼ [ 3 ,+∞⟩
+storing : [] ⊢C⦂ unit ! [ 3 ,+∞⟩
 storing =
   perform read ⋆                     -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
-    (perform write here              -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
+    (perform write here              -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ unit
       (return ⋆))
 
 -- take a reading and transmit it
 
-relaying : [] ⊢C⦂ Unit ‼ [ 5 ,+∞⟩
+relaying : [] ⊢C⦂ unit ! [ 5 ,+∞⟩
 relaying =
   perform read ⋆                     -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
-    (perform send here               -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ Unit
+    (perform send here               -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ unit
       (return ⋆))
 
 -- take a reading, tag it with the node's identifier, and transmit the
 -- reading back out of the pair; pairing costs no time, so the grade is
 -- the one `relaying` has
 
-tagged-relaying : [] ∷ NodeId ⊢C⦂ Unit ‼ [ 5 ,+∞⟩
+tagged-relaying : [] ∷ NodeId ⊢C⦂ unit ! [ 5 ,+∞⟩
 tagged-relaying =
   perform read ⋆                     -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
@@ -107,25 +107,25 @@ nothing-goes-stale [ n ,+∞⟩ = ≤!
 -- the idling. The reading is bound above two locks by the time it is
 -- used, and `≤!` is `var`'s bound at their product.
 
-idle-then-transmit : [] ⊢C⦂ Unit ‼ [ 7 ,+∞⟩
+idle-then-transmit : [] ⊢C⦂ unit ! [ 7 ,+∞⟩
 idle-then-transmit =
   perform read ⋆                     -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
     (delay 2                         -- ⟨ [ 2 ,+∞⟩ ⟩
       (perform send (fresh-var ≤! (Tl-⟨⟩ Hd))
-                                     -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ Unit
+                                     -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ unit
         (return ⋆)))
 
 -- the identifier crosses the reading's execution time because it is
 -- eternal, and asks for no bound at all
 
-carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ [ 1 ,+∞⟩
+carried-id : [] ∷ NodeId ⊢C⦂ NodeId ! [ 1 ,+∞⟩
 carried-id =
   perform read ⋆                     -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
     (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
 
 -- a reading crosses it because nothing goes stale
 
-carried-reading : [] ∷ Reading ⊢C⦂ Reading ‼ [ 1 ,+∞⟩
+carried-reading : [] ∷ Reading ⊢C⦂ Reading ! [ 1 ,+∞⟩
 carried-reading =
   perform read ⋆                     -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
     (return (fresh-var ≤! (Tl-∷ (Tl-⟨⟩ Hd))))
@@ -137,7 +137,7 @@ carried-reading =
 -- less". A guarantee may always be forgotten and never invented. It
 -- leaves the context alone: only the grade moves.
 
-forgetting-time : [] ⊢C⦂ Unit ‼ [ 2 ,+∞⟩
+forgetting-time : [] ⊢C⦂ unit ! [ 2 ,+∞⟩
 forgetting-time = coerce ≤! (perform read ⋆ (perform write here (return ⋆)))
 
 inventing-time : ¬ (opTime read ·ₑ (opTime write ·ₑ 𝟏ₑ) ≾ₑ [ 4 ,+∞⟩)
@@ -151,9 +151,9 @@ inventing-time = ≰!
 -- what its faster branch does. Neither branch locks the context: both
 -- start from the context the `if` itself is in.
 
-branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ [ 2 ,+∞⟩
+branching : [] ∷ bool ∷ Reading ⊢C⦂ unit ! [ 2 ,+∞⟩
 branching =
-  if eternal-var Boolₑ (Tl-∷ Hd)
+  if eternal-var boolₑ (Tl-∷ Hd)
     `then coerce ≤! (perform send  here (return ⋆))
     `else coerce ≤! (perform write here (return ⋆))
 
@@ -166,16 +166,16 @@ storing-guarantees-less = ≰!
 -- an `if` over data alone: both branches make the same run, so neither
 -- is coerced
 
-either-reading : [] ∷ Bool ∷ Reading ∷ Reading ⊢C⦂ Unit ‼ [ 4 ,+∞⟩
+either-reading : [] ∷ bool ∷ Reading ∷ Reading ⊢C⦂ unit ! [ 4 ,+∞⟩
 either-reading =
-  if eternal-var Boolₑ (Tl-∷ (Tl-∷ Hd))
+  if eternal-var boolₑ (Tl-∷ (Tl-∷ Hd))
     `then perform send here (return ⋆)
     `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)
 
 -- branching on data that an operation produced: the scrutinee is bound
 -- by the `perform`, so the `if` sits under its lock
 
-sampling-then-branching : [] ⊢C⦂ Unit ‼ [ 3 ,+∞⟩
+sampling-then-branching : [] ⊢C⦂ unit ! [ 3 ,+∞⟩
 sampling-then-branching =
   perform read ⋆                     -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
     (if true
@@ -194,7 +194,7 @@ sampling-then-branching =
 -- premise is `2 ≤ 3`, and waiting longer than the box asks for is
 -- always allowed
 
-claim-after-idling : [] ⊢C⦂ Unit ‼ [ 7 ,+∞⟩
+claim-after-idling : [] ⊢C⦂ unit ! [ 7 ,+∞⟩
 claim-after-idling =
   box [ 2 ,+∞⟩ (const 42)            -- ∷ [ [ 2 ,+∞⟩ ] Reading
     (delay 3                         -- ⟨ [ 3 ,+∞⟩ ⟩
@@ -217,7 +217,7 @@ claim-at-once-fails = ≰!
 -- performing an operation is how time passes. The premise is an
 -- equality: the reading takes exactly the tick the box asks for.
 
-claim-after-sampling : [] ⊢C⦂ Unit ‼ [ 5 ,+∞⟩
+claim-after-sampling : [] ⊢C⦂ unit ! [ 5 ,+∞⟩
 claim-after-sampling =
   box [ 1 ,+∞⟩ (const 42)            -- ∷ [ [ 1 ,+∞⟩ ] Reading
     (perform read ⋆                  -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
@@ -229,7 +229,7 @@ claim-after-sampling =
 -- nothing: `𝟏ᵣ ≾ᵣ ρ` forces the box's grade to the unit, there being no
 -- lock between the binding and the claim
 
-claiming-now : [] ⊢C⦂ Unit ‼ [ 4 ,+∞⟩
+claiming-now : [] ⊢C⦂ unit ! [ 4 ,+∞⟩
 claiming-now =
   box [ 0 ,+∞⟩ (const 42)            -- ∷ [ [ 0 ,+∞⟩ ] Reading
     (unbox Hd ≤! (<:ᵛ-refl _)        -- ∷ Reading
@@ -239,11 +239,11 @@ claiming-now =
 -- takes the box, stores a reading of its own, and then claims it, two
 -- ticks against the one the box asks for
 
-handed-over : [] ⊢C⦂ Unit ‼ [ 6 ,+∞⟩
+handed-over : [] ⊢C⦂ unit ! [ 6 ,+∞⟩
 handed-over =
   box [ 1 ,+∞⟩ (const 42)            -- ∷ [ [ 1 ,+∞⟩ ] Reading
     (lam                             -- ∷ [ [ 1 ,+∞⟩ ] Reading
-       (perform write (const 0)      -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
+       (perform write (const 0)      -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ unit
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
            (perform send here (return ⋆))))
@@ -267,19 +267,19 @@ unreachable-after-a-reading = ≰!
 -- spare (two ticks in one, four in the other), and the conditional
 -- is graded at the floor of the two
 
-claimed-in-both-branches : [] ⊢C⦂ Unit ‼ [ 6 ,+∞⟩
+claimed-in-both-branches : [] ⊢C⦂ unit ! [ 6 ,+∞⟩
 claimed-in-both-branches =
   box [ 1 ,+∞⟩ (const 42)            -- ∷ [ [ 1 ,+∞⟩ ] Reading
     (if true
       `then coerce ≤!
               (perform write (const 0)
-                                     -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
+                                     -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce ≤!
               (perform send (const 0)
-                                     -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ Unit
+                                     -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
                   (perform send here (return ⋆)))))
@@ -288,14 +288,14 @@ claimed-in-both-branches =
 -- claimed reading or one taken along the way), with both branches
 -- making the same run
 
-either-way : [] ∷ Bool ⊢C⦂ Unit ‼ [ 6 ,+∞⟩
+either-way : [] ∷ bool ⊢C⦂ unit ! [ 6 ,+∞⟩
 either-way =
   box [ 1 ,+∞⟩ (const 42)            -- ∷ [ [ 1 ,+∞⟩ ] Reading
     (perform read ⋆                  -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
       (delay 1                       -- ⟨ [ 1 ,+∞⟩ ⟩
         (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
-          (if eternal-var Boolₑ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
+          (if eternal-var boolₑ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
             `then perform send here (return ⋆)
             `else perform send (fresh-var ≤! (Tl-∷ (Tl-⟨⟩ Hd))) (return ⋆)))))
 
@@ -311,11 +311,11 @@ either-way =
 -- a reading and a store guarantee three ticks, exactly what the box
 -- asks for, so the claim has no slack to survive a coercion
 
-claim-after-a-store : [] ⊢C⦂ Unit ‼ [ 7 ,+∞⟩
+claim-after-a-store : [] ⊢C⦂ unit ! [ 7 ,+∞⟩
 claim-after-a-store =
   box [ 3 ,+∞⟩ (const 42)            -- ∷ [ [ 3 ,+∞⟩ ] Reading
     ((perform read ⋆ (perform write here (return ⋆)))
-      ⨟                              -- ⟨ [ 3 ,+∞⟩ ⟩ ∷ Unit
+      ⨟                              -- ⟨ [ 3 ,+∞⟩ ⟩ ∷ unit
         unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))
@@ -329,12 +329,12 @@ coercing-closes-it = ≰!
 -- the same program with the coercion, claiming a box that asks for no
 -- more than the coerced grade guarantees
 
-claim-after-a-coerced-store : [] ⊢C⦂ Unit ‼ [ 6 ,+∞⟩
+claim-after-a-coerced-store : [] ⊢C⦂ unit ! [ 6 ,+∞⟩
 claim-after-a-coerced-store =
   box [ 2 ,+∞⟩ (const 42)            -- ∷ [ [ 2 ,+∞⟩ ] Reading
     (coerce {ε' = [ 2 ,+∞⟩} ≤!
        (perform read ⋆ (perform write here (return ⋆)))
-      ⨟                              -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
+      ⨟                              -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ unit
         unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))
@@ -356,13 +356,13 @@ claim-without-coercing = ≤!
 -- the conditional guarantees two ticks, and the box asks for one, so
 -- the claim goes through with a tick to spare
 
-claim-after-a-branch : [] ∷ Bool ⊢C⦂ Unit ‼ [ 6 ,+∞⟩
+claim-after-a-branch : [] ∷ bool ⊢C⦂ unit ! [ 6 ,+∞⟩
 claim-after-a-branch =
   box [ 1 ,+∞⟩ (const 42)            -- ∷ [ [ 1 ,+∞⟩ ] Reading
-    ((if eternal-var Boolₑ (Tl-∷ Hd)
+    ((if eternal-var boolₑ (Tl-∷ Hd)
         `then coerce {ε' = [ 2 ,+∞⟩} ≤! (perform send (const 0) (return ⋆))
         `else delay 2 (return ⋆))
-      ⨟                              -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
+      ⨟                              -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ unit
         unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))
@@ -385,11 +385,11 @@ four-ticks-lost-at-the-join = ≰!
 -- a store are three ticks, and two of idling make five, a tick more
 -- than the box asks for
 
-duty-cycle : [] ⊢C⦂ Unit ‼ [ 9 ,+∞⟩
+duty-cycle : [] ⊢C⦂ unit ! [ 9 ,+∞⟩
 duty-cycle =
   box [ 4 ,+∞⟩ (const 42)            -- ∷ [ [ 4 ,+∞⟩ ] Reading
     (perform read ⋆                  -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
-      (perform write here            -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
+      (perform write here            -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ unit
         (delay 2                     -- ⟨ [ 2 ,+∞⟩ ⟩
           (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))))) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -397,7 +397,7 @@ duty-cycle =
 
 -- the same resource, reached by idling instead
 
-waiting-instead : [] ⊢C⦂ Unit ‼ [ 9 ,+∞⟩
+waiting-instead : [] ⊢C⦂ unit ! [ 9 ,+∞⟩
 waiting-instead =
   box [ 4 ,+∞⟩ (const 42)            -- ∷ [ [ 4 ,+∞⟩ ] Reading
     (delay 5                         -- ⟨ [ 5 ,+∞⟩ ⟩
@@ -418,15 +418,15 @@ one-tick-short = ≰!
 -- an equality: three ticks have passed against a promise of two, and
 -- seven against a promise of six.
 
-two-schedules : [] ⊢C⦂ Unit ‼ [ 11 ,+∞⟩
+two-schedules : [] ⊢C⦂ unit ! [ 11 ,+∞⟩
 two-schedules =
   box [ 2 ,+∞⟩ (const 1)             -- ∷ [ [ 2 ,+∞⟩ ] Reading
     (box [ 6 ,+∞⟩ (const 2)          -- ∷ [ [ 6 ,+∞⟩ ] Reading
       (perform read ⋆                -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
-        (perform write here          -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
+        (perform write here          -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ unit
           (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
-            (perform send here       -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ Unit
+            (perform send here       -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ unit
               (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))))))
                      ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -443,11 +443,11 @@ not-due-yet = ≰!
 -- the same floor, so the conditional needs no coercion at all, and each
 -- passes the premise with a tick to spare.
 
-scheduled-choice : [] ∷ Bool ⊢C⦂ Unit ‼ [ 8 ,+∞⟩
+scheduled-choice : [] ∷ bool ⊢C⦂ unit ! [ 8 ,+∞⟩
 scheduled-choice =
   box [ 3 ,+∞⟩ (const 42)            -- ∷ [ [ 3 ,+∞⟩ ] Reading
-    (if eternal-var Boolₑ (Tl-∷ Hd)
-      `then perform send (const 0)   -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ Unit
+    (if eternal-var boolₑ (Tl-∷ Hd)
+      `then perform send (const 0)   -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ unit
               (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
                 (perform send here (return ⋆)))
@@ -466,7 +466,7 @@ scheduled-choice =
 -- spends exactly the grade it is typed at. Handling locks its `in` part
 -- by the handled computation's grade, as sequencing does.
 
-forwarded : [] ⊢C⦂ Reading ‼ [ 1 ,+∞⟩
+forwarded : [] ⊢C⦂ Reading ! [ 1 ,+∞⟩
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
@@ -476,7 +476,7 @@ forwarded =
 -- and a clause may reach an eternal binding across the barrier lock, use
 -- its continuation, and answer with what it reached
 
-identified : Node ⊢C⦂ NodeId ‼ [ 1 ,+∞⟩
+identified : Node ⊢C⦂ NodeId ! [ 1 ,+∞⟩
 identified =
   handle perform read ⋆ (return here)
     `with identifying
@@ -500,9 +500,9 @@ no-discarding = ≰!
 -- forward every operation, and on return claim a resource promised in
 -- one tick: the handled computation has taken at least that long
 
-claiming : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢V⦂ (Unit ‼ [ 1 ,+∞⟩) ⇛ (Reading ‼ 𝟏ₑ)
+claiming : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢V⦂ (unit ! [ 1 ,+∞⟩) ⇛ (Reading ! 𝟏ₑ)
 claiming =
-  handler                            -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Unit
+  handler                            -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ unit
     (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
       (return here))
@@ -511,7 +511,7 @@ claiming =
 -- the handler bound once and handling two computations, a reading and
 -- an idle tick
 
-handled-twice : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢C⦂ Reading |×| Reading ‼ [ 2 ,+∞⟩
+handled-twice : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢C⦂ Reading |×| Reading ! [ 2 ,+∞⟩
 handled-twice =
   return claiming                    -- ⟨ [ 0 ,+∞⟩ ⟩ ∷ handler
     ⨟ ((handle perform read ⋆ (return ⋆) `with here)
@@ -523,14 +523,14 @@ handled-twice =
 -- the handler at a computation guaranteed three ticks, by subsumption
 -- at its type; the result keeps all three
 
-handled-longer : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢C⦂ Reading ‼ [ 3 ,+∞⟩
+handled-longer : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢C⦂ Reading ! [ 3 ,+∞⟩
 handled-longer =
   handle perform read ⋆ (perform write here (return ⋆))
-    `with subV claiming ((<:ᵛ-refl _ ‼ₛ ≤!) ⇛ₛ <:ᶜ-refl _)
+    `with subV claiming ((<:ᵛ-refl _ !ₛ ≤!) ⇛ₛ <:ᶜ-refl _)
 
 -- coercing the computation to the handler's grade instead keeps one
 
-coerced-longer : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢C⦂ Reading ‼ [ 1 ,+∞⟩
+coerced-longer : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢C⦂ Reading ! [ 1 ,+∞⟩
 coerced-longer =
   handle coerce ≤! (perform read ⋆ (perform write here (return ⋆)))
     `with claiming
@@ -539,12 +539,12 @@ coerced-longer =
 
 handling-a-reading :
   [] ∷ [ [ 1 ,+∞⟩ ] Reading
-    ⊢V⦂ ((Unit ‼ [ 1 ,+∞⟩) ⇛ (Reading ‼ 𝟏ₑ)) ⇒ Reading ‼ [ 1 ,+∞⟩
+    ⊢V⦂ ((unit ! [ 1 ,+∞⟩) ⇛ (Reading ! 𝟏ₑ)) ⇒ Reading ! [ 1 ,+∞⟩
 handling-a-reading =
   lam                                -- ∷ handler
     (handle perform read ⋆ (return ⋆) `with here)
 
-handled-by-argument : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢C⦂ Reading ‼ [ 1 ,+∞⟩
+handled-by-argument : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢C⦂ Reading ! [ 1 ,+∞⟩
 handled-by-argument = handling-a-reading · claiming
 
 ------------------------------------------------------------------------
@@ -570,7 +570,7 @@ reading-crosses-the-barrier op ε'' = nothing-goes-stale _
 -- the node's reading, answered from inside a clause that performs the
 -- operation again and resumes first
 
-reported : Node ⊢C⦂ Reading ‼ [ 1 ,+∞⟩
+reported : Node ⊢C⦂ Reading ! [ 1 ,+∞⟩
 reported =
   handle perform read ⋆ (return here)
     `with reporting reading-crosses-the-barrier

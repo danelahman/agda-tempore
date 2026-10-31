@@ -40,7 +40,7 @@ case-of-bool-not-typable : ¬ Typable [] case-of-bool
 case-of-bool-not-typable = infer-untypable [] case-of-bool case-of-bool-verdict
 
 ------------------------------------------------------------------
--- 2. Under a lock: a `Nat` survives a tick, a function does not,
+-- 2. Under a lock: a `nat` survives a tick, a function does not,
 -- and an unknown type is asked to be eternal
 
 later-succ-reported : schemeOf (infer [] later-succ) ≡ just expected-later-succ

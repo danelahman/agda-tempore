@@ -97,7 +97,7 @@ M₊-[] : ∀ {Θ Θ' n} → (M : RawC Θ n) → (σ : Subst (Θ +ty +e) Θ')
 M₊-[] M σ = [⨟]ᴿᶜ M wk₊ σ
 
 C[_,_] : ∀ {Θ n} → OCtx Θ n → RawC Θ n → Constraint (Θ +ty +e)
-C[_,_] {Θ} Γ M = genC (Γ₊ Γ) (M₊ M) (X̂ Θ ‼ t̂ Θ)
+C[_,_] {Θ} Γ M = genC (Γ₊ Γ) (M₊ M) (X̂ Θ ! t̂ Θ)
 
 -- The constraint of a term without handlers, using no definition with
 -- quantified hypotheses, has no rigid binder
@@ -124,7 +124,7 @@ record PrincipalSolution {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n)
                 → Q ⊩ᴴ Q⁺ [ δ ]
                 -------------------------------------------------------
                 → Σ[ D ∈ (Q ∣ Γ₊ Γ [ σ⁺ ⨟ˢ δ ]ᶜᵗˣ
-                            ⊢C⦂ (X̂ Θ [ σ⁺ ⨟ˢ δ ]ᵛ) ‼ (t̂ Θ [ σ⁺ ⨟ˢ δ ]ᵉ)) ]
+                            ⊢C⦂ (X̂ Θ [ σ⁺ ⨟ˢ δ ]ᵛ) ! (t̂ Θ [ σ⁺ ⨟ˢ δ ]ᵉ)) ]
                     (⌊ D ⌋ᶜ ≡ M₊ M [ σ⁺ ⨟ˢ δ ]ᴿᶜ)
 
     -- every typing of `M` factors through the principal one at each closed
@@ -132,7 +132,7 @@ record PrincipalSolution {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n)
 
     factor : ∀ {Θ''} → (σ : Subst (Θ +ty +e) Θ'') → (Q : Hyps Θ'')
         → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
-        → (D : Q ∣ Γ₊ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A₀ ‼ ε₀)
+        → (D : Q ∣ Γ₊ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A₀ ! ε₀)
         → ⌊ D ⌋ᶜ ≡ M₊ M [ σ ]ᴿᶜ
         → Q ∣ A₀ <:̂ᵛ X̂ Θ [ σ ]ᵛ
         → Q ⊩ ε₀ ≾̂ₑ t̂ Θ [ σ ]ᵉ
@@ -164,10 +164,10 @@ principalSolution sv {Θ} Γ M {Θ'} {σ} {Q} eq = mkPrincipalSolution
 
 typing₊ : ∀ {Θ n Θ''} {Γ : OCtx Θ n} {M : RawC Θ n} → (σ₀ : Subst Θ Θ'') → {Q : Hyps Θ''}
         → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
-        → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ A₀ ‼ ε₀)
+        → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ A₀ ! ε₀)
         → ⌊ D ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
         -----------------------------------------------------------
-        → Σ[ D' ∈ (Q ∣ Γ₊ Γ [ σ₀ ,ᵗ A₀ ,ᵉ ε₀ ]ᶜᵗˣ ⊢C⦂ A₀ ‼ ε₀) ]
+        → Σ[ D' ∈ (Q ∣ Γ₊ Γ [ σ₀ ,ᵗ A₀ ,ᵉ ε₀ ]ᶜᵗˣ ⊢C⦂ A₀ ! ε₀) ]
             (⌊ D' ⌋ᶜ ≡ M₊ M [ σ₀ ,ᵗ A₀ ,ᵉ ε₀ ]ᴿᶜ)
 typing₊ {Γ = Γ} {M} σ₀ {A₀ = A₀} {ε₀} D e =
   ctx-substᶜ (sym ctxeq) D , trans (⌊ctxᶜ⌋ (sym ctxeq) D) (trans e (sym (M₊-[] M σ)))
@@ -180,7 +180,7 @@ typing₊ {Γ = Γ} {M} σ₀ {A₀ = A₀} {ε₀} D e =
 
 typing-sat : ∀ {Θ n Θ''} {Γ : OCtx Θ n} {M : RawC Θ n} → (σ₀ : Subst Θ Θ'') → {Q : Hyps Θ''}
            → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
-           → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ A₀ ‼ ε₀)
+           → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ A₀ ! ε₀)
            → ⌊ D ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
            ------------------------------------
            → (σ₀ ,ᵗ A₀ ,ᵉ ε₀) ⊨[ Q ] C[ Γ , M ]
@@ -195,7 +195,7 @@ typing-sat {Θ} {Γ = Γ} {M} σ₀ {A₀ = A₀} D e =
 principal-inst : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalSolution Γ M)
                → ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q : Hyps Θ'')
                → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
-               → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ A₀ ‼ ε₀)
+               → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ A₀ ! ε₀)
                → ⌊ D ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
                → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q
                ----------------------------------------------------------
@@ -383,22 +383,22 @@ typableᵛ-⇔ {Δ} {V} p = mk⇔ to from
 
 returnᵛ : ∀ {Θ} {Q : Hyps Θ} {Δ : PCtx} {V : RawV ∅ˢ 0} {X : OVType Θ}
         → (D : Q ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X) → ⌊ D ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
-        → Σ[ D' ∈ (Q ∣ ⌜ Δ ⌝ᵖ [ from∅ ]ᶜᵗˣ ⊢C⦂ X ‼ 𝟏̂ₑ) ] (⌊ D' ⌋ᶜ ≡ return V [ from∅ ]ᴿᶜ)
+        → Σ[ D' ∈ (Q ∣ ⌜ Δ ⌝ᵖ [ from∅ ]ᶜᵗˣ ⊢C⦂ X ! 𝟏̂ₑ) ] (⌊ D' ⌋ᶜ ≡ return V [ from∅ ]ᴿᶜ)
 returnᵛ {Δ = Δ} D e =
   return (ctx-substᵛ (sym (⌜⌝ᵖ-subst Δ from∅)) D) ,
   cong return (trans (⌊ctxᵛ⌋ (sym (⌜⌝ᵖ-subst Δ from∅)) D) e)
 
 typableᵛ→typable : ∀ {Δ V} → Typableᵛ Δ V → Typable ⌜ Δ ⌝ᵖ (return V)
 typableᵛ→typable (typableᵛ Θ₀ Q₀ X₀ D₀ e s) =
-  typable Θ₀ from∅ Q₀ (X₀ ‼ 𝟏̂ₑ) (proj₁ (returnᵛ D₀ e)) (proj₂ (returnᵛ D₀ e)) s
+  typable Θ₀ from∅ Q₀ (X₀ ! 𝟏̂ₑ) (proj₁ (returnᵛ D₀ e)) (proj₂ (returnᵛ D₀ e)) s
 
 -- The value of a derivation erasing to `return W`, at a subtype
 
 returned : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {X : OVType Θ} {ε : EExp Θ} {W : RawV Θ n}
-         → (D : Q ∣ Γ ⊢C⦂ X ‼ ε) → ⌊ D ⌋ᶜ ≡ return W
+         → (D : Q ∣ Γ ⊢C⦂ X ! ε) → ⌊ D ⌋ᶜ ≡ return W
          → Σ[ X' ∈ OVType Θ ] Σ[ D' ∈ (Q ∣ Γ ⊢V⦂ X') ] (⌊ D' ⌋ᵛ ≡ W) × (Q ∣ X' <:̂ᵛ X)
 returned (return D) refl = _ , D , refl , <:̂ᵛ-refl _
-returned (subC D (p ‼ₛ q)) e with returned D e
+returned (subC D (p !ₛ q)) e with returned D e
 ... | X' , D' , e' , p' = X' , D' , e' , <:̂ᵛ-trans p' p
 returned (M ⨟ N)                   ()
 returned (V · W)                   ()
@@ -421,7 +421,7 @@ returned (annᶜ C M)                ()
 -- which every typing of `V` returned bounds
 
 resultᵛ : ∀ {Θ} → OCType Θ → OVType Θ
-resultᵛ (A ‼ ε) = A
+resultᵛ (A ! ε) = A
 
 private
 
@@ -430,12 +430,12 @@ private
             → (D : Q ∣ Γ ⊢C⦂ C [ δ ]ᶜ) → ⌊ D ⌋ᶜ ≡ return W
             → Σ[ X' ∈ OVType Θ' ] Σ[ D' ∈ (Q ∣ Γ ⊢V⦂ X') ] (⌊ D' ⌋ᵛ ≡ W)
                 × (Q ∣ X' <:̂ᵛ resultᵛ C [ δ ]ᵛ)
-  returnedᶜ (A ‼ ε) δ D e = returned D e
+  returnedᶜ (A ! ε) δ D e = returned D e
 
   resultᵛ-<: : ∀ {Θ Θ'} {Q : Hyps Θ'} {B : OVType Θ'} {ε' : EExp Θ'}
              → (C : OCType Θ) → (δ : Subst Θ Θ')
-             → Q ∣ C [ δ ]ᶜ <:̂ᶜ B ‼ ε' → Q ∣ resultᵛ C [ δ ]ᵛ <:̂ᵛ B
-  resultᵛ-<: (A ‼ ε) δ (st ‼ₛ _) = st
+             → Q ∣ C [ δ ]ᶜ <:̂ᶜ B ! ε' → Q ∣ resultᵛ C [ δ ]ᵛ <:̂ᵛ B
+  resultᵛ-<: (A ! ε) δ (st !ₛ _) = st
 
 valueScheme : ∀ {Δ V} → PrincipalScheme {∅ˢ} {0} ⌜ Δ ⌝ᵖ (return V) → PrincipalSchemeᵛ Δ V
 valueScheme {Δ} {V} p = mkPrincipalSchemeᵛ (Θ̃ p) (Q̃ p) (resultᵛ (X̃ p)) inst' fac'

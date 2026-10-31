@@ -47,7 +47,7 @@ pipe-reported = refl
 expected-compose-top : Scheme
 expected-compose-top =
   ∀[ 3 , 0 , 2 ] ⊤ ⟹
-    ((α₁ ⇒ α₀ ‼ ε₀) ⇒ ((α₂ ⇒ α₁ ‼ ε₁) ⇒ (α₂ ⇒ α₀ ‼ (ε₁ ·̂ₑ ε₀)) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
+    ((α₁ ⇒ α₀ ! ε₀) ⇒ ((α₂ ⇒ α₁ ! ε₁) ⇒ (α₂ ⇒ α₀ ! (ε₁ ·̂ₑ ε₀)) ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 
 compose-reported : schemeOf (infer [] compose) ≡ just expected-compose-top
 compose-reported = refl
@@ -57,7 +57,7 @@ compose-reported = refl
 expected-min-top : Scheme
 expected-min-top =
   ∀[ 3 , 0 , 1 ] α₂ <: α₁ ∧ α₀ <: α₁ ⟹
-    ((α₂ |×| α₀ ⇒ Bool ‼ ε₀) ⇒ (α₂ ⇒ (α₀ ⇒ α₁ ‼ ε₀) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
+    ((α₂ |×| α₀ ⇒ bool ! ε₀) ⇒ (α₂ ⇒ (α₀ ⇒ α₁ ! ε₀) ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 
 min-reported : schemeOf (infer [] min) ≡ just expected-min-top
 min-reported = refl

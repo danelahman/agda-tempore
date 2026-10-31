@@ -67,7 +67,7 @@ sub-atˢ₀ {Γ} {B} Θ W = sub-split₀ (split-≡-++ᶜ {Γ ∷ B} {Θ}) W
 
 ⟨_,_⟩[_↦_]var : ∀ {Γ Γ₁ Γ₂ A B ρ'}
               → B ∈[ ρ' ] Γ
-              → (¬ Eternal B → ρ' ≾ᵣ 𝟏ᵣ)
+              → (¬ Et B → ρ' ≾ᵣ 𝟏ᵣ)
               → (s : Γ₁ ∷ A , Γ₂ split Γ)
               → Γ₁ ⊢V⦂ A
               ---------------------------
@@ -116,18 +116,18 @@ M [ s ↦ W ]c = C-sub₀ (sub-split₀ s W) M
 
 _[_↦_]cl : ∀ {Γ Γ₁ Γ₂ A B}
          → ((op : Op) → (ε'' : E)
-              → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+              → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                     ∷ [ ∣ op-grade op ∣ᵉ ]
-                        (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+                        (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+                ⊢C⦂ B ! (op-grade op ·ₑ ε''))
          → (s : Γ₁ ∷ A , Γ₂ split Γ)
          → Γ₁ ⊢V⦂ A
          → (op : Op) → (ε'' : E)
          → (Γ₁ ++ᶜ Γ₂) ⟨ ⊤ᵣ ⟩
-               ∷ type-of-gtype (param op)
+               ∷ ⌜ param op ⌝ᵍ
                ∷ [ ∣ op-grade op ∣ᵉ ]
-                   (type-of-gtype (arity op) ⇒ B ‼ ε'')
-           ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')
+                   (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+           ⊢C⦂ B ! (op-grade op ·ₑ ε'')
 
 (H [ s ↦ W ]cl) op ε'' =
   C-sub₀ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub (sub-split₀ s W))))
@@ -139,10 +139,10 @@ _[_↦_]cl : ∀ {Γ Γ₁ Γ₂ A B}
 -- across the lock binding the recursive call's result
 
 recℕ-step : ∀ {Γ B ε}
-          → Γ ⊢V⦂ Nat
-          → (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε
+          → Γ ⊢V⦂ nat
+          → (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε
           ------------------------------------------
-          → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε
+          → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε
 recℕ-step V N =
   C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren barrier-ren))) N
     [ split-∷ (split-⟨⟩ split-[]) ↦ V ]c
@@ -154,10 +154,10 @@ recℕ-step V N =
 
 recL-step : ∀ {Γ A B ε}
           → Γ ⊢V⦂ A
-          → Γ ⊢V⦂ |List| A
-          → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε
+          → Γ ⊢V⦂ list A
+          → (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε
           ----------------------------------------------------
-          → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε
+          → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε
 recL-step V W N =
   (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-∷-ren barrier-ren)))) N
      [ split-∷ (split-⟨⟩ (split-∷ split-[])) ↦ V ]c)

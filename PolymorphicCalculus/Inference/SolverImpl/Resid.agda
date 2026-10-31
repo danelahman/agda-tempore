@@ -129,7 +129,7 @@ record _⊩ᴿ_[_] {Ω Ω' : Scope} (Q : Hyps Ω') (R : Resid Ω) (δ : Subst Ω
   field
     ⊩rs : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
     ⊩es : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
-    ⊩ts : ∀ {A}    → A ∈ ts R        → Q ⊩ᴱ A [ δ ]ᵛ
+    ⊩ts : ∀ {A}    → A ∈ ts R        → Q ⊩Et A [ δ ]ᵛ
     ⊩ss : ∀ {A B}  → (A , B) ∈ ss R  → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
     ⊩ds : ∀ {A ρ}  → (A , ρ) ∈ ds R  → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
     ⊩dfs : ∀ {E}   → E ∈ dfs R       → Q ⊩ᴼ E [ δ ]
@@ -144,7 +144,7 @@ open _⊩ᴿ_[_] public
 ⊩ᴿ-resp-≐ˢ {Q = Q} p h =
   mk⊩ᴿ (λ {ρ} {ρ'} m → subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) ([≐]ʳ p ρ) ([≐]ʳ p ρ') (⊩rs h m))
        (λ {ε} {ε'} m → subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) ([≐]ᵉ p ε) ([≐]ᵉ p ε') (⊩es h m))
-       (λ {A}       m → subst (Q ⊩ᴱ_) ([≐]ᵛ p A) (⊩ts h m))
+       (λ {A}       m → subst (Q ⊩Et_) ([≐]ᵛ p A) (⊩ts h m))
        (λ {A} {B}   m → subst₂ (Q ∣_<:̂ᵛ_) ([≐]ᵛ p A) ([≐]ᵛ p B) (⊩ss h m))
        (λ {A} {ρ}   m → subst₂ (VarOK Q) ([≐]ᵛ p A) ([≐]ʳ p ρ) (⊩ds h m))
        (λ {E}       m → ⊩ᴼ-resp-≐ˢ E p (⊩dfs h m))
@@ -159,7 +159,7 @@ open _⊩ᴿ_[_] public
                               (⊩rs h (∈-map⁺ (mapᵖ (_[ σ ]ʳ)) m)))
        (λ {ε} {ε'} m → subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε σ δ) ([⨟]ᵉ ε' σ δ)
                               (⊩es h (∈-map⁺ (mapᵖ (_[ σ ]ᵉ)) m)))
-       (λ {A}      m → subst (Q ⊩ᴱ_) ([⨟]ᵛ A σ δ)
+       (λ {A}      m → subst (Q ⊩Et_) ([⨟]ᵛ A σ δ)
                               (⊩ts h (∈-map⁺ (_[ σ ]ᵛ) m)))
        (λ {A} {B}  m → subst₂ (Q ∣_<:̂ᵛ_) ([⨟]ᵛ A σ δ) ([⨟]ᵛ B σ δ)
                               (⊩ss h (∈-map⁺ (mapᵖ (_[ σ ]ᵛ)) m)))
@@ -184,9 +184,9 @@ open _⊩ᴿ_[_] public
     ... | (ε₀ , ε₀') , m₀ , refl =
       subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([⨟]ᵉ ε₀ σ δ)) (sym ([⨟]ᵉ ε₀' σ δ)) (⊩es h m₀)
 
-    ts' : ∀ {A} → A ∈ ts (R [ σ ]ᴿ) → Q ⊩ᴱ A [ δ ]ᵛ
+    ts' : ∀ {A} → A ∈ ts (R [ σ ]ᴿ) → Q ⊩Et A [ δ ]ᵛ
     ts' m with ∈-map⁻ (_[ σ ]ᵛ) m
-    ... | A₀ , m₀ , refl = subst (Q ⊩ᴱ_) (sym ([⨟]ᵛ A₀ σ δ)) (⊩ts h m₀)
+    ... | A₀ , m₀ , refl = subst (Q ⊩Et_) (sym ([⨟]ᵛ A₀ σ δ)) (⊩ts h m₀)
 
     ss' : ∀ {A B} → (A , B) ∈ ss (R [ σ ]ᴿ) → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
     ss' m with ∈-map⁻ (mapᵖ (_[ σ ]ᵛ)) m
@@ -212,7 +212,7 @@ open _⊩ᴿ_[_] public
                               (⊩-substᵣ g (⊩rs h m)))
        (λ {ε} {ε'} m → subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε δ δ') ([⨟]ᵉ ε' δ δ')
                               (⊩-substₑ g (⊩es h m)))
-       (λ {A}      m → subst (Q' ⊩ᴱ_) ([⨟]ᵛ A δ δ') (⊩ᴱ-subst g (⊩ts h m)))
+       (λ {A}      m → subst (Q' ⊩Et_) ([⨟]ᵛ A δ δ') (⊩Et-subst g (⊩ts h m)))
        (λ {A} {B}  m → subst₂ (Q' ∣_<:̂ᵛ_) ([⨟]ᵛ A δ δ') ([⨟]ᵛ B δ δ')
                               (<:̂ᵛ-subst g (⊩ss h m)))
        (λ {A} {ρ}  m → subst₂ (VarOK Q') ([⨟]ᵛ A δ δ') ([⨟]ʳ ρ δ δ')
@@ -558,12 +558,12 @@ etDec A = etDecᵃ A (≺-wf A)
 
 etDec-introᵃ : ∀ {Ω Ω'} {Q : Hyps Ω'} → (A : OVType Ω) → (a : Acc _≺_ A)
              → {αs : List (TyVar Ω)} → etDecᵃ A a ≡ just αs → (δ : Subst Ω Ω')
-             → (∀ {α} → α ∈ αs → Q ⊩ᴱ tvar α [ δ ]ᵛ) → Q ⊩ᴱ A [ δ ]ᵛ
+             → (∀ {α} → α ∈ αs → Q ⊩Et tvar α [ δ ]ᵛ) → Q ⊩Et A [ δ ]ᵛ
 etDec-introᵃ {Q = Q} A (acc r) e δ k with self A
 etDec-introᵃ .(tvar α) (acc r) refl δ k | var α = k (here refl)
 ... | form ps g _ with eternal g in et
 ...   | false = ⊥-elim (nothing≢just e)
-...   | true  = ⊩ᴱ-intro g et δ (tabulate part)
+...   | true  = ⊩Et-intro g et δ (tabulate part)
   where
     part : ∀ {p} → p ∈ ps → Etᴾ Q (p [ δ ∣ δ ]ᴾ)
     part {ty _ X _} m with concatᴹ-⊆ ps e m
@@ -573,16 +573,16 @@ etDec-introᵃ .(tvar α) (acc r) refl δ k | var α = k (here refl)
 
 etDec-intro : ∀ {Ω Ω'} {Q : Hyps Ω'} → (A : OVType Ω) → {αs : List (TyVar Ω)}
             → etDec A ≡ just αs → (δ : Subst Ω Ω')
-            → (∀ {α} → α ∈ αs → Q ⊩ᴱ tvar α [ δ ]ᵛ) → Q ⊩ᴱ A [ δ ]ᵛ
+            → (∀ {α} → α ∈ αs → Q ⊩Et tvar α [ δ ]ᵛ) → Q ⊩Et A [ δ ]ᵛ
 etDec-intro A = etDec-introᵃ A (≺-wf A)
 
 -- The same, read at the identity
 
 etDec-sound : ∀ {Ω} {Q : Hyps Ω} → (A : OVType Ω) → {αs : List (TyVar Ω)}
-            → etDec A ≡ just αs → (∀ {α} → α ∈ αs → Q ⊩ᴱ tvar α) → Q ⊩ᴱ A
+            → etDec A ≡ just αs → (∀ {α} → α ∈ αs → Q ⊩Et tvar α) → Q ⊩Et A
 etDec-sound {Q = Q} A e k =
-  subst (Q ⊩ᴱ_) ([id]ᵛ A)
-        (etDec-intro A e idˢ (λ {α} m → subst (Q ⊩ᴱ_) (sym ([id]ᵛ (tvar α))) (k m)))
+  subst (Q ⊩Et_) ([id]ᵛ A)
+        (etDec-intro A e idˢ (λ {α} m → subst (Q ⊩Et_) (sym ([id]ᵛ (tvar α))) (k m)))
 
 -- A type that is eternal at some instance mentions no grade, so it
 -- strengthens away from any rigid
@@ -591,10 +591,10 @@ etDec-str : ∀ {Ω} → (j : EVar (Ω +e)) → (A : OVType (Ω +e)) → {αs : 
           → etDec A ≡ just αs → Σ[ A₀ ∈ OVType Ω ] (strᵛ j A ≡ just A₀)
 etDec-str j (tvar α) q = _ , refl
 etDec-str j (Base b) q = Base b , refl
-etDec-str j Unit     q = Unit , refl
-etDec-str j Bool     q = Bool , refl
-etDec-str j Nat      q = Nat , refl
-etDec-str j Empty    q = Empty , refl
+etDec-str j unit     q = unit , refl
+etDec-str j bool     q = bool , refl
+etDec-str j nat      q = nat , refl
+etDec-str j empty    q = empty , refl
 etDec-str j (A |×| B) q with zip₂-just _++_ (etDec A) (zip₂ _++_ (etDec B) (just [])) q
 ... | _ , _ , qa , q' , _ with zip₂-just _++_ (etDec B) (just []) q'
 ...   | _ , _ , qb , _ , _ with etDec-str j A qa | etDec-str j B qb
@@ -603,19 +603,19 @@ etDec-str j (A |+| B) q with zip₂-just _++_ (etDec A) (zip₂ _++_ (etDec B) (
 ... | _ , _ , qa , q' , _ with zip₂-just _++_ (etDec B) (just []) q'
 ...   | _ , _ , qb , _ , _ with etDec-str j A qa | etDec-str j B qb
 ...     | A₀ , ra | B₀ , rb = A₀ |+| B₀ , cong₂ (zip₂ _|+|_) ra rb
-etDec-str j (|List| A) q with zip₂-just _++_ (etDec A) (just []) q
+etDec-str j (list A) q with zip₂-just _++_ (etDec A) (just []) q
 ... | _ , _ , qa , _ , _ with etDec-str j A qa
-...   | A₀ , ra = |List| A₀ , cong (mmap |List|) ra
-etDec-str j (A ⇒ (B ‼ ε)) ()
+...   | A₀ , ra = list A₀ , cong (mmap list) ra
+etDec-str j (A ⇒ (B ! ε)) ()
 etDec-str j ([ ρ ] A)     ()
-etDec-str j ((A ‼ ε) ⇛ (B ‼ ε')) ()
+etDec-str j ((A ! ε) ⇛ (B ! ε')) ()
 
 -- Conversely, every atom of a successful decomposition is entailed
 -- by the demand it came from.
 
 etDec-complᵃ : ∀ {Ω Ω'} {Q : Hyps Ω'} → (A : OVType Ω) → (a : Acc _≺_ A)
              → {αs : List (TyVar Ω)} → etDecᵃ A a ≡ just αs → (δ : Subst Ω Ω')
-             → Q ⊩ᴱ A [ δ ]ᵛ → ∀ {α} → α ∈ αs → Q ⊩ᴱ tvar α [ δ ]ᵛ
+             → Q ⊩Et A [ δ ]ᵛ → ∀ {α} → α ∈ αs → Q ⊩Et tvar α [ δ ]ᵛ
 etDec-complᵃ {Q = Q} A (acc r) e δ et n with self A
 etDec-complᵃ .(tvar α) (acc r) refl δ et (here refl) | var α = et
 ... | form ps g _ with eternal g
@@ -624,36 +624,36 @@ etDec-complᵃ .(tvar α) (acc r) refl δ et (here refl) | var α = et
 ...     | _ , m , zs , ez , n' = part m ez n'
   where
     part : ∀ {p} → (m : p ∈ ps) → ∀ {zs} → etPart g r m ≡ just zs
-         → ∀ {α} → α ∈ zs → Q ⊩ᴱ tvar α [ δ ]ᵛ
+         → ∀ {α} → α ∈ zs → Q ⊩Et tvar α [ δ ]ᵛ
     part {ty _ X _} m ez n =
-      etDec-complᵃ X (r (left g m)) ez δ (lookup (proj₂ (⊩ᴱ-elim g δ et)) m) n
+      etDec-complᵃ X (r (left g m)) ez δ (lookup (proj₂ (⊩Et-elim g δ et)) m) n
     part {rg _ _ _} m refl ()
     part {eg _ _ _} m refl ()
 
 etDec-compl : ∀ {Ω Ω'} {Q : Hyps Ω'} → (A : OVType Ω) → {αs : List (TyVar Ω)}
-            → etDec A ≡ just αs → (δ : Subst Ω Ω') → Q ⊩ᴱ A [ δ ]ᵛ
-            → ∀ {α} → α ∈ αs → Q ⊩ᴱ tvar α [ δ ]ᵛ
+            → etDec A ≡ just αs → (δ : Subst Ω Ω') → Q ⊩Et A [ δ ]ᵛ
+            → ∀ {α} → α ∈ αs → Q ⊩Et tvar α [ δ ]ᵛ
 etDec-compl A = etDec-complᵃ A (≺-wf A)
 
 -- A failed decomposition refutes the demand at every instance: substitution
 -- keeps the former, which the column refuses, or a refuted part
 
 etDec-refuteᵃ : ∀ {Ω Ω'} {Q : Hyps Ω'} → (A : OVType Ω) → (a : Acc _≺_ A)
-              → etDecᵃ A a ≡ nothing → (δ : Subst Ω Ω') → ¬ (Q ⊩ᴱ A [ δ ]ᵛ)
+              → etDecᵃ A a ≡ nothing → (δ : Subst Ω Ω') → ¬ (Q ⊩Et A [ δ ]ᵛ)
 etDec-refuteᵃ {Q = Q} A (acc r) e δ et with self A
 etDec-refuteᵃ .(tvar α) (acc r) () δ et | var α
 ... | form ps g _ with eternal g in c
-...   | false = false≢true (trans (sym c) (proj₁ (⊩ᴱ-elim g δ et)))
+...   | false = false≢true (trans (sym c) (proj₁ (⊩Et-elim g δ et)))
 ...   | true with concatᴹ-nothing ps e
 ...     | _ , m , en = part m en
   where
     part : ∀ {p} → (m : p ∈ ps) → etPart g r m ≡ nothing → ⊥
     part {ty _ X _} m en =
-      etDec-refuteᵃ X (r (left g m)) en δ (lookup (proj₂ (⊩ᴱ-elim g δ et)) m)
+      etDec-refuteᵃ X (r (left g m)) en δ (lookup (proj₂ (⊩Et-elim g δ et)) m)
     part {rg _ _ _} m ()
     part {eg _ _ _} m ()
 etDec-refute : ∀ {Ω Ω'} {Q : Hyps Ω'} → (A : OVType Ω) → etDec A ≡ nothing
-             → (δ : Subst Ω Ω') → ¬ (Q ⊩ᴱ A [ δ ]ᵛ)
+             → (δ : Subst Ω Ω') → ¬ (Q ⊩Et A [ δ ]ᵛ)
 etDec-refute A = etDec-refuteᵃ A (≺-wf A)
 
 -- So a disjunction on such a type is met, from no hypotheses, exactly by
@@ -670,11 +670,11 @@ record EtsDec {Ω : Scope} (l : List (OVType Ω)) : Set where
   field
     varsOf : List (TyVar Ω)
     introᵗ : ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω')
-           → (∀ {α} → α ∈ varsOf → Q ⊩ᴱ tvar α [ δ ]ᵛ)
-           → ∀ {A} → A ∈ l → Q ⊩ᴱ A [ δ ]ᵛ
+           → (∀ {α} → α ∈ varsOf → Q ⊩Et tvar α [ δ ]ᵛ)
+           → ∀ {A} → A ∈ l → Q ⊩Et A [ δ ]ᵛ
     elimᵗ  : ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω')
-           → (∀ {A} → A ∈ l → Q ⊩ᴱ A [ δ ]ᵛ)
-           → ∀ {α} → α ∈ varsOf → Q ⊩ᴱ tvar α [ δ ]ᵛ
+           → (∀ {A} → A ∈ l → Q ⊩Et A [ δ ]ᵛ)
+           → ∀ {α} → α ∈ varsOf → Q ⊩Et tvar α [ δ ]ᵛ
 
 open EtsDec public
 
@@ -714,7 +714,7 @@ etsDec-nothing {Ω} (A ∷ l) eq = cons (etDec A) refl (etsDec l) refl eq
 -- A failure refutes the list at every instance
 
 etsDec-refute : ∀ {Ω Ω'} {Q : Hyps Ω'} → (l : List (OVType Ω)) → etsDec l ≡ nothing
-              → (δ : Subst Ω Ω') → ¬ (∀ {A} → A ∈ l → Q ⊩ᴱ A [ δ ]ᵛ)
+              → (δ : Subst Ω Ω') → ¬ (∀ {A} → A ∈ l → Q ⊩Et A [ δ ]ᵛ)
 etsDec-refute l eq δ k with etsDec-nothing l eq
 ... | A , m , q = etDec-refute A q δ (k m)
 
@@ -788,7 +788,7 @@ atomiseᴿ-compl {Q = Q} {δ = δ} R d t h =
     hs : Holds Q δ (atomsOfˢ d)
     hs = elimˢ d δ (⊩ss h)
 
-    ts' : ∀ {A} → A ∈ map tvar (varsOf t) → Q ⊩ᴱ A [ δ ]ᵛ
+    ts' : ∀ {A} → A ∈ map tvar (varsOf t) → Q ⊩Et A [ δ ]ᵛ
     ts' m with ∈-map⁻ tvar m
     ... | α , m₀ , refl = elimᵗ t δ (⊩ts h) m₀
 
@@ -823,8 +823,8 @@ toHyps R with etsDec (ts R) | subsList (ss R)
                subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([id]ᵉ ε)) (sym ([id]ᵉ ε'))
                       (hypₑ (∈-++⁺ʳ (es R) m)))
 
-    ets' : ∀ {A} → A ∈ ts R → Q ⊩ᴱ A [ idˢ ]ᵛ
-    ets' = introᵗ t idˢ (λ {α} m → subst (Q ⊩ᴱ_) (sym ([id]ᵛ (tvar α))) (et-hyp m))
+    ets' : ∀ {A} → A ∈ ts R → Q ⊩Et A [ idˢ ]ᵛ
+    ets' = introᵗ t idˢ (λ {α} m → subst (Q ⊩Et_) (sym ([id]ᵛ (tvar α))) (et-hyp m))
 
     subs' : ∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ idˢ ]ᵛ <:̂ᵛ B [ idˢ ]ᵛ
     subs' = introˢ d idˢ hyps'

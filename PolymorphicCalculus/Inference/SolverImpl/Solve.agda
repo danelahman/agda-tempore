@@ -149,8 +149,8 @@ Atomᵗ : ∀ {Φ} → EVar (Φ +e) → OVType (Φ +e) → Set
 Atomᵗ {Φ} j A =
   Σ[ l₀ ∈ List (OVType Φ) ]
     (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
-       → (∀ {B} → B ∈ l₀ → Q ⊩ᴱ B [ δ ]ᵛ)
-       → wkᵉ-H Q ⊩ᴱ A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)
+       → (∀ {B} → B ∈ l₀ → Q ⊩Et B [ δ ]ᵛ)
+       → wkᵉ-H Q ⊩Et A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)
 
 Atomˢ : ∀ {Φ} → EVar (Φ +e) → OVType (Φ +e) → OVType (Φ +e) → Set
 Atomˢ {Φ} j A B =
@@ -349,8 +349,8 @@ atomᵗ : ∀ {Φ} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → Maybe (At
 atomᵗ j A with strᵛ⁺ j A
 ... | just (A₀ , e₁) =
       just (A₀ ∷ [] ,
-            λ δ Q k → subst (wkᵉ-H Q ⊩ᴱ_) (sym (pop⨟ᵛ j A e₁ δ))
-                            (⊩ᴱ-wkᵉ (k (here refl))))
+            λ δ Q k → subst (wkᵉ-H Q ⊩Et_) (sym (pop⨟ᵛ j A e₁ δ))
+                            (⊩Et-wkᵉ (k (here refl))))
 ... | nothing = nothing
 
 -- A subtyping demand is kept only when both sides strengthen away from the rigid
@@ -502,8 +502,8 @@ listᵉ O O⁺ H j ((ε , ε') ∷ l) with listᵉ O O⁺ H j l
 listᵗ : ∀ {Φ} → (j : EVar (Φ +e)) → (l : List (OVType (Φ +e)))
       → Maybe (Σ[ l₀ ∈ List (OVType Φ) ]
                  (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
-                    → (∀ {B} → B ∈ l₀ → Q ⊩ᴱ B [ δ ]ᵛ)
-                    → (∀ {A} → A ∈ l → wkᵉ-H Q ⊩ᴱ A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)))
+                    → (∀ {B} → B ∈ l₀ → Q ⊩Et B [ δ ]ᵛ)
+                    → (∀ {A} → A ∈ l → wkᵉ-H Q ⊩Et A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)))
 listᵗ j []      = just ([] , λ δ Q k → λ ())
 listᵗ j (A ∷ l) with atomᵗ j A | listᵗ j l
 ... | just (a , fa) | just (l₀ , f) =
@@ -949,7 +949,7 @@ solveEt s A nothing   e = refuted
 solveEt s A (just αs) e =
   solved (st (Ω s) (θ s) (pushᵗ αs (res s)) (rig s) ,
         mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailᵗ h)) ,
-        λ δ Q h → subst (Q ⊩ᴱ_) ([⨟]ᵛ A (θ s) δ)
+        λ δ Q h → subst (Q ⊩Et_) ([⨟]ᵛ A (θ s) δ)
                         (etDec-intro (A [ θ s ]ᵛ) e δ
                                      (λ m → ⊩ts h (∈-++⁺ˡ (∈-map⁺ tvar m)))))
 
@@ -965,7 +965,7 @@ solveDisj s A ρ nothing       e =
         λ δ Q h → ≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ 𝟏̂ᵣ) ([⨟]ʳ ρ (θ s) δ) (⊩rs h (here refl))))
 solveDisj s A ρ (just [])     e =
   solved (s , ⟶-id ,
-        λ δ Q h → et-ok (subst (Q ⊩ᴱ_) ([⨟]ᵛ A (θ s) δ)
+        λ δ Q h → et-ok (subst (Q ⊩Et_) ([⨟]ᵛ A (θ s) δ)
                                (etDec-intro (A [ θ s ]ᵛ) e δ (λ ()))))
 solveDisj s A ρ (just (_ ∷ _)) e =
   solved (st (Ω s) (θ s) (pushᵈ (A [ θ s ]ᵛ) (ρ [ θ s ]ʳ) (res s)) (rig s) ,

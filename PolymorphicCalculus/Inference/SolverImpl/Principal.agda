@@ -170,11 +170,11 @@ pushᵉ-⊩ p h =
        (⊩ts h) (⊩ss h) (⊩ds h) (⊩dfs h)
 
 pushᵗ-⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} {R : Resid Ω} {αs : List (TyVar Ω)} {δ : Subst Ω Ω'}
-        → (∀ {α} → α ∈ αs → Q ⊩ᴱ tvar α [ δ ]ᵛ) → Q ⊩ᴿ R [ δ ] → Q ⊩ᴿ (pushᵗ αs R) [ δ ]
+        → (∀ {α} → α ∈ αs → Q ⊩Et tvar α [ δ ]ᵛ) → Q ⊩ᴿ R [ δ ] → Q ⊩ᴿ (pushᵗ αs R) [ δ ]
 pushᵗ-⊩ {Q = Q} {R = R} {αs = αs} {δ = δ} p h =
   mk⊩ᴿ (⊩rs h) (⊩es h) ts' (⊩ss h) (⊩ds h) (⊩dfs h)
   where
-    ts' : ∀ {A} → A ∈ ts (pushᵗ αs R) → Q ⊩ᴱ A [ δ ]ᵛ
+    ts' : ∀ {A} → A ∈ ts (pushᵗ αs R) → Q ⊩Et A [ δ ]ᵛ
     ts' m with ∈-++⁻ (map tvar αs) m
     ... | inj₂ m' = ⊩ts h m'
     ... | inj₁ m' with ∈-map⁻ tvar m'
@@ -416,11 +416,11 @@ bndᵉ {Q = Q} j ε ε' {ε₀} {ε₀'} q q' γ p =
 bndᵗ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (A : OVType (Φ +e))
      → {A₀ : OVType Φ} → A [ popˢ j ]ᵛ ≡ wkᵉ-v A₀
      → (γ : Subst (Φ +e) (Φ' +e))
-     → wkᵉ-H Q ⊩ᴱ A [ popˢ j ⨟ˢ γ ]ᵛ
-     → Q ⊩ᴱ A₀ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵛ
+     → wkᵉ-H Q ⊩Et A [ popˢ j ⨟ˢ γ ]ᵛ
+     → Q ⊩Et A₀ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵛ
 bndᵗ {Q = Q} j A {A₀} q γ p =
-  subst (Q ⊩ᴱ_) ([⨟]ᵛ A₀ (wkˢᵉ ⨟ˢ γ) κᵉ)
-        (⊩ᴱ-subst ⊩ᴴ-κᵉ (subst (wkᵉ-H Q ⊩ᴱ_) (keyᵛ j A q γ) p))
+  subst (Q ⊩Et_) ([⨟]ᵛ A₀ (wkˢᵉ ⨟ˢ γ) κᵉ)
+        (⊩Et-subst ⊩ᴴ-κᵉ (subst (wkᵉ-H Q ⊩Et_) (keyᵛ j A q γ) p))
 
 bndˢ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (A B : OVType (Φ +e))
      → {A₀ B₀ : OVType Φ} → A [ popˢ j ]ᵛ ≡ wkᵉ-v A₀ → B [ popˢ j ]ᵛ ≡ wkᵉ-v B₀
@@ -476,12 +476,12 @@ stripʳ-unit-bnd {Q = Q} j ρ ρ' {ρ₀} {ρ₀'} e₁ e₂ γ hγ p =
   where
     X = popˢ j ⨟ˢ γ
 
-    unit : sE (X ⨟ˢ κᵉ) j ≡ 𝟏̂ₑ [ X ⨟ˢ κᵉ ]ᵉ
-    unit = cong (_[ κᵉ ]ᵉ) (trans (cong (_[ γ ]ᵉ) (popˢ-hit j)) hγ)
+    j↦𝟏 : sE (X ⨟ˢ κᵉ) j ≡ 𝟏̂ₑ [ X ⨟ˢ κᵉ ]ᵉ
+    j↦𝟏 = cong (_[ κᵉ ]ᵉ) (trans (cong (_[ γ ]ᵉ) (popˢ-hit j)) hγ)
 
     rhs : ρ' [ X ]ʳ [ κᵉ ]ʳ ≡ ρ₀' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ
     rhs = trans ([⨟]ʳ ρ' X κᵉ)
-          (trans (sym ([≐]ʳ (updᵉ-absorb j 𝟏̂ₑ (X ⨟ˢ κᵉ) unit) ρ'))
+          (trans (sym ([≐]ʳ (updᵉ-absorb j 𝟏̂ₑ (X ⨟ˢ κᵉ) j↦𝟏) ρ'))
           (trans (sym ([⨟]ʳ ρ' (updᵉ j 𝟏̂ₑ) (X ⨟ˢ κᵉ)))
           (trans (sym ([⨟]ʳ (ρ' [ updᵉ j 𝟏̂ₑ ]ʳ) X κᵉ))
           (trans (cong (_[ κᵉ ]ʳ) (keyʳ j (ρ' [ updᵉ j 𝟏̂ₑ ]ʳ) e₂ γ))
@@ -500,12 +500,12 @@ stripᵉ-unit-bnd {Q = Q} j ε ε' {ε₀} {ε₀'} e₁ e₂ γ hγ p =
   where
     X = popˢ j ⨟ˢ γ
 
-    unit : sE (X ⨟ˢ κᵉ) j ≡ 𝟏̂ₑ [ X ⨟ˢ κᵉ ]ᵉ
-    unit = cong (_[ κᵉ ]ᵉ) (trans (cong (_[ γ ]ᵉ) (popˢ-hit j)) hγ)
+    j↦𝟏 : sE (X ⨟ˢ κᵉ) j ≡ 𝟏̂ₑ [ X ⨟ˢ κᵉ ]ᵉ
+    j↦𝟏 = cong (_[ κᵉ ]ᵉ) (trans (cong (_[ γ ]ᵉ) (popˢ-hit j)) hγ)
 
     rhs : ε' [ X ]ᵉ [ κᵉ ]ᵉ ≡ ε₀' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ
     rhs = trans ([⨟]ᵉ ε' X κᵉ)
-          (trans (sym ([≐]ᵉ (updᵉ-absorb j 𝟏̂ₑ (X ⨟ˢ κᵉ) unit) ε'))
+          (trans (sym ([≐]ᵉ (updᵉ-absorb j 𝟏̂ₑ (X ⨟ˢ κᵉ) j↦𝟏) ε'))
           (trans (sym ([⨟]ᵉ ε' (updᵉ j 𝟏̂ₑ) (X ⨟ˢ κᵉ)))
           (trans (sym ([⨟]ᵉ (ε' [ updᵉ j 𝟏̂ₑ ]ᵉ) X κᵉ))
           (trans (cong (_[ κᵉ ]ᵉ) (keyᵉ j (ε' [ updᵉ j 𝟏̂ₑ ]ᵉ) e₂ γ))
@@ -720,11 +720,11 @@ atomᵉ-princ O H j ε ε' eq | nothing | nothing with decideₑ full H ε ε'
 atomᵗ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (A : OVType (Φ +e))
             → ∀ {a} → atomᵗ j A ≡ just a
             → (γ : Subst (Φ +e) (Φ' +e))
-            → wkᵉ-H Q ⊩ᴱ A [ popˢ j ⨟ˢ γ ]ᵛ
-            → ∀ {B} → B ∈ proj₁ a → Q ⊩ᴱ B [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵛ
+            → wkᵉ-H Q ⊩Et A [ popˢ j ⨟ˢ γ ]ᵛ
+            → ∀ {B} → B ∈ proj₁ a → Q ⊩Et B [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵛ
 atomᵗ-princ {Q = Q} j A eq with strᵛ⁺ j A
 ... | just (A₀ , e₁) = λ γ p →
-      just-one (λ B → Q ⊩ᴱ B [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵛ) eq (bndᵗ j A e₁ γ p)
+      just-one (λ B → Q ⊩Et B [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵛ) eq (bndᵗ j A e₁ γ p)
 ... | nothing = ⊥just eq
 
 atomˢ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (A B : OVType (Φ +e))
@@ -983,8 +983,8 @@ listᵗ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e))
             → (l : List (OVType (Φ +e)))
             → ∀ {a} → listᵗ j l ≡ just a
             → (γ : Subst (Φ +e) (Φ' +e))
-            → (∀ {A} → A ∈ l → wkᵉ-H Q ⊩ᴱ A [ popˢ j ⨟ˢ γ ]ᵛ)
-            → ∀ {B} → B ∈ proj₁ a → Q ⊩ᴱ B [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵛ
+            → (∀ {A} → A ∈ l → wkᵉ-H Q ⊩Et A [ popˢ j ⨟ˢ γ ]ᵛ)
+            → ∀ {B} → B ∈ proj₁ a → Q ⊩Et B [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵛ
 listᵗ-princ j []      refl γ k = λ ()
 listᵗ-princ j (A ∷ l) eq γ k with atomᵗ j A in e₁ | listᵗ j l in e₂
 ... | just (a , fa) | just (l₁ , f) with eq
@@ -1408,14 +1408,14 @@ solveEt-princ : ∀ {Θ} → (s : St Θ) → (A : OVType Θ)
 solveEt-princ s A nothing   e ()
 solveEt-princ s A (just αs) e refl δ₀ sat h =
   δ₀ , ≐ˢ-refl ,
-  pushᵗ-⊩ (etDec-compl (A [ θ s ]ᵛ) e δ₀ (subst (∅ᴴ ⊩ᴱ_) (sym ([⨟]ᵛ A (θ s) δ₀)) sat)) h ,
+  pushᵗ-⊩ (etDec-compl (A [ θ s ]ᵛ) e δ₀ (subst (∅ᴴ ⊩Et_) (sym ([⨟]ᵛ A (θ s) δ₀)) sat)) h ,
   (λ fx → fx)
 
 solveEt-fail : ∀ {Θ} → (s : St Θ) → (A : OVType Θ)
              → (x : Maybe (List (TyVar (Ω s)))) → (e : etDec (A [ θ s ]ᵛ) ≡ x)
              → solveEt s A x e ≡ refuted → Refut s (Etᶜ A)
 solveEt-fail s A nothing  e eq δ₀ fx h sat =
-  etDec-refute (A [ θ s ]ᵛ) e δ₀ (subst (∅ᴴ ⊩ᴱ_) (sym ([⨟]ᵛ A (θ s) δ₀)) sat)
+  etDec-refute (A [ θ s ]ᵛ) e δ₀ (subst (∅ᴴ ⊩Et_) (sym ([⨟]ᵛ A (θ s) δ₀)) sat)
 solveEt-fail s A (just _) e ()
 
 solveDisj-princ : ∀ {Θ} → (s : St Θ) → (A : OVType Θ) → (ρ : RExp Θ)
@@ -1628,7 +1628,7 @@ popᵉ-escape s C θ'' R'' rg'' m'' ip j eqj eqstr δ₀ fx h sat =
 -- type is eternal at no instance
 
 atomᵗ-fail : ∀ {Φ Ω''} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → atomᵗ j A ≡ nothing
-           → (δ : Subst (Φ +e) Ω'') → ¬ (∅ᴴ ⊩ᴱ A [ δ ]ᵛ)
+           → (δ : Subst (Φ +e) Ω'') → ¬ (∅ᴴ ⊩Et A [ δ ]ᵛ)
 atomᵗ-fail {Φ} j A eq δ et with strᵛ⁺ j A in r
 ... | just _  = ⊥just (sym eq)
 ... | nothing = aux (etDec A) refl
@@ -1638,7 +1638,7 @@ atomᵗ-fail {Φ} j A eq δ et with strᵛ⁺ j A in r
     aux (just αs) e = ⊥just (trans (sym r) (proj₂ (strᵛ⁺-just j A (proj₂ (etDec-str j A e)))))
 
 listᵗ-fail : ∀ {Φ Ω''} → (j : EVar (Φ +e)) → (l : List (OVType (Φ +e))) → listᵗ j l ≡ nothing
-           → (δ : Subst (Φ +e) Ω'') → (∀ {A} → A ∈ l → ∅ᴴ ⊩ᴱ A [ δ ]ᵛ) → ⊥
+           → (δ : Subst (Φ +e) Ω'') → (∀ {A} → A ∈ l → ∅ᴴ ⊩Et A [ δ ]ᵛ) → ⊥
 listᵗ-fail j []      () δ k
 listᵗ-fail j (A ∷ l) eq δ k with atomᵗ j A in e₁ | listᵗ j l in e₂
 ... | just _  | just _  = ⊥just (sym eq)

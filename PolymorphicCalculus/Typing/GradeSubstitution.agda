@@ -45,22 +45,22 @@ open import PolymorphicCalculus.Syntax.Raw.GradeSubstitution S
 clause-ctx : ∀ {Θ n} → OCtx Θ n → OVType Θ → Op → OCtx (Θ +e) (suc (suc n))
 clause-ctx {Θ} Γ B op =
   wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-    ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ}))
+    ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ! evar (newᵉ {Θ}))
 
 clause-ty : ∀ {Θ} → OVType Θ → Op → OCType (Θ +e)
-clause-ty {Θ} B op = wkᵉ-v B ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ}))
+clause-ty {Θ} B op = wkᵉ-v B ! (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ}))
 
 clause-ctx-↑ : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (Γ : OCtx Θ n) → (B : OVType Θ) → (op : Op)
              → clause-ctx Γ B op [ σ ↑ᵉ ]ᶜᵗˣ ≡ clause-ctx (Γ [ σ ]ᶜᵗˣ) (B [ σ ]ᵛ) op
 clause-ctx-↑ σ Γ B op =
   cong₂ _∷_
         (cong₂ _∷_ (cong (_⟨ rconst ⊤ᵣ ⟩) (wk-↑ᵉ-ctx σ Γ)) (⌜⌝ᵍ-subst (σ ↑ᵉ) (param op)))
-        (cong₂ (λ A₀ B₀ → [ rconst ∣ op-grade op ∣ᵉ ] (A₀ ⇒ B₀ ‼ _))
+        (cong₂ (λ A₀ B₀ → [ rconst ∣ op-grade op ∣ᵉ ] (A₀ ⇒ B₀ ! _))
                (⌜⌝ᵍ-subst (σ ↑ᵉ) (arity op)) (wk-↑ᵉ-v σ B))
 
 clause-ty-↑ : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ) → (op : Op)
             → clause-ty B op [ σ ↑ᵉ ]ᶜ ≡ clause-ty (B [ σ ]ᵛ) op
-clause-ty-↑ σ B op = cong (_‼ _) (wk-↑ᵉ-v σ B)
+clause-ty-↑ σ B op = cong (_! _) (wk-↑ᵉ-v σ B)
 
 ------------------------------------------------------------------------
 -- The substitution lemma
@@ -106,7 +106,7 @@ mutual
   substᵛ σ h (inr V)         = inr (substᵛ σ h V)
   substᵛ σ h nil             = nil
   substᵛ σ h (cons V W)      = cons (substᵛ σ h V) (substᵛ σ h W)
-  substᵛ σ h (cmp ⋈ V W et)  = cmp ⋈ (substᵛ σ h V) (substᵛ σ h W) (⊩ᴱ-subst h et)
+  substᵛ σ h (cmp ⋈ V W et)  = cmp ⋈ (substᵛ σ h V) (substᵛ σ h W) (⊩Et-subst h et)
   substᵛ σ h (lam M)         = lam (substᶜ σ h M)
   substᵛ {Γ = Γ} σ h (handler {B = B} N H) =
     handler (substᶜ σ h N) (λ op → substˡ σ h Γ B op (H op))
@@ -245,7 +245,7 @@ mutual
 clause-ctx-at : ∀ {Θ n} → OCtx Θ n → OVType Θ → Op → EExp Θ → OCtx Θ (suc (suc n))
 clause-ctx-at Γ B op ε =
   Γ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-    ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ‼ ε)
+    ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε)
 
 clause-ctx-,ᵉ : ∀ {Θ n} → (Γ : OCtx Θ n) → (B : OVType Θ) → (op : Op) → (ε : EExp Θ)
               → clause-ctx Γ B op [ idˢ ,ᵉ ε ]ᶜᵗˣ ≡ clause-ctx-at Γ B op ε
@@ -253,19 +253,19 @@ clause-ctx-,ᵉ Γ B op ε =
   cong₂ _∷_
         (cong₂ _∷_ (cong (_⟨ rconst ⊤ᵣ ⟩) (trans (wk-,ᵉ-ctx idˢ ε Γ) ([id]ᶜᵗˣ Γ)))
                    (⌜⌝ᵍ-subst (idˢ ,ᵉ ε) (param op)))
-        (cong₂ (λ A₀ B₀ → [ rconst ∣ op-grade op ∣ᵉ ] (A₀ ⇒ B₀ ‼ ε))
+        (cong₂ (λ A₀ B₀ → [ rconst ∣ op-grade op ∣ᵉ ] (A₀ ⇒ B₀ ! ε))
                (⌜⌝ᵍ-subst (idˢ ,ᵉ ε) (arity op))
                (trans (wk-,ᵉ-v idˢ ε B) ([id]ᵛ B)))
 
 clause-ty-,ᵉ : ∀ {Θ} → (B : OVType Θ) → (op : Op) → (ε : EExp Θ)
-             → clause-ty B op [ idˢ ,ᵉ ε ]ᶜ ≡ B ‼ (econst (op-grade op) ·̂ₑ ε)
-clause-ty-,ᵉ B op ε = cong (_‼ _) (trans (wk-,ᵉ-v idˢ ε B) ([id]ᵛ B))
+             → clause-ty B op [ idˢ ,ᵉ ε ]ᶜ ≡ B ! (econst (op-grade op) ·̂ₑ ε)
+clause-ty-,ᵉ B op ε = cong (_! _) (trans (wk-,ᵉ-v idˢ ε B) ([id]ᵛ B))
 
 instantiate-clause : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {B : OVType Θ} {op : Op}
                    → (ε : EExp Θ)
                    → wkᵉ-H Q ∣ clause-ctx Γ B op ⊢C⦂ clause-ty B op
                    ------------------------------------------------------------------
-                   → Q ∣ clause-ctx-at Γ B op ε ⊢C⦂ B ‼ (econst (op-grade op) ·̂ₑ ε)
+                   → Q ∣ clause-ctx-at Γ B op ε ⊢C⦂ B ! (econst (op-grade op) ·̂ₑ ε)
 
 instantiate-clause {Γ = Γ} {B} {op} ε M =
   c-subst (clause-ty-,ᵉ B op ε)

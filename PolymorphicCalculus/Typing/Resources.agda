@@ -48,25 +48,25 @@ nonResource-∅ ()
 nonResource-subst : ∀ {Θ Θ'} → (A : OVType Θ) → (δ : Subst Θ Θ')
                   → NonResource A → NonResource (A [ δ ]ᵛ)
 nonResource-subst (Base b)   δ _ = tt
-nonResource-subst Unit       δ _ = tt
-nonResource-subst Bool       δ _ = tt
-nonResource-subst Nat        δ _ = tt
+nonResource-subst unit       δ _ = tt
+nonResource-subst bool       δ _ = tt
+nonResource-subst nat        δ _ = tt
 nonResource-subst (A |×| B)  δ _ = tt
 nonResource-subst (A |+| B)  δ _ = tt
-nonResource-subst (|List| A) δ _ = tt
-nonResource-subst Empty      δ _ = tt
+nonResource-subst (list A)   δ _ = tt
+nonResource-subst empty      δ _ = tt
 nonResource-subst (A ⇒ C)    δ _ = tt
 nonResource-subst (C ⇛ D)    δ _ = tt
 
 nonResource-<: : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ∣ A <:̂ᵛ B → NonResource A → NonResource B
 nonResource-<: (Baseₛ _)   _ = tt
-nonResource-<: Unitₛ       _ = tt
-nonResource-<: Boolₛ       _ = tt
-nonResource-<: Natₛ        _ = tt
+nonResource-<: unitₛ       _ = tt
+nonResource-<: boolₛ       _ = tt
+nonResource-<: natₛ        _ = tt
 nonResource-<: (_ |×|ₛ _)  _ = tt
 nonResource-<: (_ |+|ₛ _)  _ = tt
-nonResource-<: (|List|ₛ _) _ = tt
-nonResource-<: Emptyₛ      _ = tt
+nonResource-<: (listₛ _)   _ = tt
+nonResource-<: emptyₛ      _ = tt
 nonResource-<: (_ ⇒ₛ _)    _ = tt
 nonResource-<: (_ ⇛ₛ _)    _ = tt
 

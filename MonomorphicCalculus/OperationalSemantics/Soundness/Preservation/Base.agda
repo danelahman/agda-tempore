@@ -96,7 +96,7 @@ Paramᶜᶠ ⟨ St , M ⟩ = Paramˢ St × Paramᶜ M
 -- two congruences inherit the sub-step's.
 
 stepᴾˢ : ∀ {ε ε' A B} {S S' : 𝕊 []}
-       → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
+       → {M : toCtx S ⊢C⦂ A ! ε} → {M' : toCtx S' ⊢C⦂ B ! ε'}
        → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩) → Paramˢ S → Paramᶜ M → Paramˢ S'
 stepᴾˢ APP                 pS _              = pS
 stepᴾˢ MATCH               pS _              = pS
@@ -145,7 +145,7 @@ infixl 25 _⋄_
 -- allocation contributes `𝟏ₑ`.
 
 step-grade : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
-           → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
+           → {M : toCtx St ⊢C⦂ A ! ε} → {M' : toCtx St' ⊢C⦂ B ! ε'}
            → ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩
            → E
 step-grade APP                  = 𝟏ₑ
@@ -182,7 +182,7 @@ step-grade SUB                  = 𝟏ₑ
 -- only way a lock is ever produced.
 
 stepᵀ : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
-      → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
+      → {M : toCtx St ⊢C⦂ A ! ε} → {M' : toCtx St' ⊢C⦂ B ! ε'}
       → (r : ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩)
       → ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ hist St' ⟧ᶜᵗˣ (step-grade r)
 stepᵀ APP               = ηᵀ
@@ -218,7 +218,7 @@ stepᵀ SUB               = ηᵀ
 -- `step-grade-≾` in the effect grades.
 
 step-≾ : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
-       → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
+       → {M : toCtx St ⊢C⦂ A ! ε} → {M' : toCtx St' ⊢C⦂ B ! ε'}
        → (r : ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩)
        → step-grade r ·ₑ ε' ≾ₑ ε
 step-≾ {ε = ε} APP    = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
@@ -251,14 +251,14 @@ step-≾ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op}) =
     (≃ₑ-trans (·ₑ-identityˡ _) (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'')))
 step-≾ {ε = ε} BOX    = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} UNBOX   = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
-step-≾ (SUB-APP {r = _ ‼ₛ s}) = ≾ₑ-trans (≃ₑ⇒≾ₑ (·ₑ-identityˡ _)) s
-step-≾ (SUB-HANDLE {q = _ ‼ₛ s}) =
+step-≾ (SUB-APP {r = _ !ₛ s}) = ≾ₑ-trans (≃ₑ⇒≾ₑ (·ₑ-identityˡ _)) s
+step-≾ (SUB-HANDLE {q = _ !ₛ s}) =
   ≾ₑ-trans (≃ₑ⇒≾ₑ (·ₑ-identityˡ _)) (·ₑ-monoʳ-≾ₑ s)
 step-≾ {ε = ε} SUB-HANDLE-TRANS = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} SUB-IF  = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} SUB-CASEℕ = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ {ε = ε} SUB-RECℕ = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
-step-≾ (SUB {w = _ ‼ₛ q}) = ≾ₑ-trans (≃ₑ⇒≾ₑ (·ₑ-identityˡ _)) q
+step-≾ (SUB {w = _ !ₛ q}) = ≾ₑ-trans (≃ₑ⇒≾ₑ (·ₑ-identityˡ _)) q
 
 -- Sub-effecting is irrelevant in its witness (the effect order is).
 
@@ -327,7 +327,7 @@ eq-ren-inv refl = ∘ᵐ-identityˡ idᵐ
 -- APP: applying an abstraction is substituting into its body (`βᵐ` plus the
 -- substitution coherence, whose environment `sub-env Hd V` is `⟨ idᵐ , ⟦V⟧ ⟩ᵐ`).
 
-sound-APP : ∀ {Γ A B ε} → (M : Γ ∷ A ⊢C⦂ B ‼ ε) → (V : Γ ⊢V⦂ A)
+sound-APP : ∀ {Γ A B ε} → (M : Γ ∷ A ⊢C⦂ B ! ε) → (V : Γ ⊢V⦂ A)
           → (pM : Paramᶜ M) → (pV : Paramᵛ V)
           → ⟦ lam M · V ⟧ᶜᵗ (pM , pV) ≈ᵐ ⟦ M [ split-[] ↦ V ]c ⟧ᶜᵗ (subᶜ M split-[] V pM pV)
 sound-APP M V pM pV =
@@ -391,12 +391,12 @@ subLᴾ : ∀ {Γ A A₁} → (p : A₁ <:ᵛ A) → (l : ListView Γ A₁)
 subLᴾ p (inj₁ tt)      _  = tt
 subLᴾ p (inj₂ (W , L)) pl = pl
 
-listᵛᴾ : ∀ {Γ A} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ |List| A)
+listᵛᴾ : ∀ {Γ A} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ list A)
        → Paramᵛ V → Paramᵛ (unlistᵛ (listᵛ {S = St} V))
-listᵛᴾ St (var f x)            pV = ⊥-elim (|List|-not-in-toCtx x)
+listᵛᴾ St (var f x)            pV = ⊥-elim (list-not-in-toCtx x)
 listᵛᴾ St nil                  pV = tt
 listᵛᴾ St (cons V W)           pV = pV
-listᵛᴾ St (subV V (|List|ₛ p)) pV = subLᴾ p (listᵛ V) (listᵛᴾ St V pV)
+listᵛᴾ St (subV V (listₛ p))   pV = subLᴾ p (listᵛ V) (listᵛᴾ St V pV)
 
 subL-sound : ∀ {Γ A A₁} → (p : A₁ <:ᵛ A) → (l : ListView Γ A₁)
            → (pl : Paramᵛ (unlistᵛ l))
@@ -410,26 +410,26 @@ subL-sound p (inj₂ (W , L)) pl =
          ∙ ∘ᵐ-assoc _ _ _
          ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
 
-listᵛ-sound : ∀ {Γ A} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ |List| A) → (pV : Paramᵛ V)
+listᵛ-sound : ∀ {Γ A} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ list A) → (pV : Paramᵛ V)
             → ⟦ unlistᵛ (listᵛ {S = St} V) ⟧ᵛᵗ (listᵛᴾ St V pV) ≈ᵐ ⟦ V ⟧ᵛᵗ pV
-listᵛ-sound St (var f x)            pV = ⊥-elim (|List|-not-in-toCtx x)
+listᵛ-sound St (var f x)            pV = ⊥-elim (list-not-in-toCtx x)
 listᵛ-sound St nil                  pV = ≈ᵐ-refl
 listᵛ-sound St (cons V W)           pV = ≈ᵐ-refl
-listᵛ-sound St (subV V (|List|ₛ p)) pV =
+listᵛ-sound St (subV V (listₛ p))   pV =
     subL-sound p (listᵛ V) (listᵛᴾ St V pV)
   ∙ ∘ᵐ-congʳ (listᵛ-sound St V pV)
 
 -- The reducts of the list eliminators, and their certificates.
 
 caseL-reductᴾ : ∀ {Γ A C} → (l : ListView Γ A) → (M : Γ ⊢C⦂ C)
-              → (N : Γ ∷ A ∷ |List| A ⊢C⦂ C)
+              → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
               → Paramᵛ (unlistᵛ l) → Paramᶜ M → Paramᶜ N
               → Paramᶜ (caseL-reduct l M N)
 caseL-reductᴾ (inj₁ tt)      M N pl         pM pN = pM
 caseL-reductᴾ (inj₂ (W , L)) M N (pW , pL) pM pN = subᶜ₂ N W L pN pW pL
 
-recL-reductᴾ : ∀ {Γ A B ε} → (l : ListView Γ A) → (M : Γ ⊢C⦂ B ‼ ε)
-             → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
+recL-reductᴾ : ∀ {Γ A B ε} → (l : ListView Γ A) → (M : Γ ⊢C⦂ B ! ε)
+             → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
              → (p : ε ·ₑ ε ≾ₑ ε)
              → Paramᵛ (unlistᵛ l) → Paramᶜ M → Paramᶜ N
              → Paramᶜ (recL-reduct l M N p)
@@ -480,7 +480,7 @@ case+-reductᴾ (inj₂ W) M N pW pM pN = subᶜ N split-[] W pN pW
 -- CMP: a value of an eternal type denotes the point of its datum, at which
 -- the comparison morphism orders as the data are ordered.
 
-⌊⌋ᵈ-sound : ∀ {Γ A} → (St : 𝕊 Γ) → (et : Eternal A) → (V : toCtx St ⊢V⦂ A)
+⌊⌋ᵈ-sound : ∀ {Γ A} → (St : 𝕊 Γ) → (et : Et A) → (V : toCtx St ⊢V⦂ A)
           → (pV : Paramᵛ V) → ⟦ V ⟧ᵛᵗ pV ≈ᵐ ⌜ et ⌝ᵈ (⌊_⌋ᵈ {S = St} et V) ∘ᵐ terminalᵐ
 ⌊⌋ᵈ-sound St et (var _ x) pV = ⊥-elim (eternal-not-in-toCtx et x)
 ⌊⌋ᵈ-sound St et (subV V p) pV =
@@ -488,30 +488,30 @@ case+-reductᴾ (inj₂ W) M N pW pM pN = subᶜ N split-[] W pN pW
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (⌜⌝ᵈ-coe p et _)
 ⌊⌋ᵈ-sound St (Baseₑ _) (const c) pV = ≈ᵐ-refl
-⌊⌋ᵈ-sound St Unitₑ ⋆ pV = ≈ᵐ-sym terminalᵐ-unique
-⌊⌋ᵈ-sound St Boolₑ true pV = ≈ᵐ-refl
-⌊⌋ᵈ-sound St Boolₑ false pV = ≈ᵐ-refl
-⌊⌋ᵈ-sound St Natₑ zero pV = ≈ᵐ-refl
-⌊⌋ᵈ-sound St Natₑ (succ V) pV =
-  ∘ᵐ-congʳ (⌊⌋ᵈ-sound St Natₑ V pV) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+⌊⌋ᵈ-sound St unitₑ ⋆ pV = ≈ᵐ-sym terminalᵐ-unique
+⌊⌋ᵈ-sound St boolₑ true pV = ≈ᵐ-refl
+⌊⌋ᵈ-sound St boolₑ false pV = ≈ᵐ-refl
+⌊⌋ᵈ-sound St natₑ zero pV = ≈ᵐ-refl
+⌊⌋ᵈ-sound St natₑ (succ V) pV =
+  ∘ᵐ-congʳ (⌊⌋ᵈ-sound St natₑ V pV) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 ⌊⌋ᵈ-sound St (et₁ |×|ₑ et₂) ⦉ V , W ⦊ (pV , pW) =
   ⟨ ⌊⌋ᵈ-sound St et₁ V pV , ⌊⌋ᵈ-sound St et₂ W pW ⟩ᵐ-cong ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)
 ⌊⌋ᵈ-sound St (et₁ |+|ₑ et₂) (inl V) pV =
   ∘ᵐ-congʳ (⌊⌋ᵈ-sound St et₁ V pV) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 ⌊⌋ᵈ-sound St (et₁ |+|ₑ et₂) (inr V) pV =
   ∘ᵐ-congʳ (⌊⌋ᵈ-sound St et₂ V pV) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-⌊⌋ᵈ-sound St (|List|ₑ et) nil pV = ≈ᵐ-refl
-⌊⌋ᵈ-sound St (|List|ₑ et) (cons V W) (pV , pW) =
-    ∘ᵐ-congʳ (⟨ ⌊⌋ᵈ-sound St et V pV , ⌊⌋ᵈ-sound St (|List|ₑ et) W pW ⟩ᵐ-cong
+⌊⌋ᵈ-sound St (listₑ et) nil pV = ≈ᵐ-refl
+⌊⌋ᵈ-sound St (listₑ et) (cons V W) (pV , pW) =
+    ∘ᵐ-congʳ (⟨ ⌊⌋ᵈ-sound St et V pV , ⌊⌋ᵈ-sound St (listₑ et) W pW ⟩ᵐ-cong
               ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
-cmp-reductᴾ : ∀ {Γ A} → (St : 𝕊 Γ) → (⋈ : Cmp) → (V W : toCtx St ⊢V⦂ A) → (et : Eternal A)
+cmp-reductᴾ : ∀ {Γ A} → (St : 𝕊 Γ) → (⋈ : Cmp) → (V W : toCtx St ⊢V⦂ A) → (et : Et A)
             → Paramᶜ (cmp-reduct {S = St} ⋈ V W et)
 cmp-reductᴾ St ⋈ V W et =
-  param-⌈⌉ Boolₑ (holds ⋈ (compareᵈ et (⌊_⌋ᵈ {S = St} et V) (⌊_⌋ᵈ {S = St} et W)))
+  param-⌈⌉ boolₑ (holds ⋈ (compareᵈ et (⌊_⌋ᵈ {S = St} et V) (⌊_⌋ᵈ {S = St} et W)))
 
-sound-CMP : ∀ {Γ A} → (St : 𝕊 Γ) → (⋈ : Cmp) → (V W : toCtx St ⊢V⦂ A) → (et : Eternal A)
+sound-CMP : ∀ {Γ A} → (St : 𝕊 Γ) → (⋈ : Cmp) → (V W : toCtx St ⊢V⦂ A) → (et : Et A)
           → (pV : Paramᵛ V) → (pW : Paramᵛ W)
           → ⟦ cmp ⋈ V W et ⟧ᶜᵗ (pV , pW)
           ≈ᵐ ⟦ cmp-reduct {S = St} ⋈ V W et ⟧ᶜᵗ (cmp-reductᴾ St ⋈ V W et)
@@ -521,8 +521,8 @@ sound-CMP St ⋈ V W et pV pW =
 -- CASEL / RECL: the scrutinee denotes its decomposition, at which the beta
 -- laws apply.
 
-sound-CASEL : ∀ {Γ A C} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ |List| A)
-            → (M : toCtx St ⊢C⦂ C) → (N : toCtx St ∷ A ∷ |List| A ⊢C⦂ C)
+sound-CASEL : ∀ {Γ A C} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ list A)
+            → (M : toCtx St ⊢C⦂ C) → (N : toCtx St ∷ A ∷ list A ⊢C⦂ C)
             → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
             → ⟦ caseL V `nil M `cons N ⟧ᶜᵗ (pV , pM , pN)
             ≈ᵐ ⟦ caseL-reduct (listᵛ {S = St} V) M N ⟧ᶜᵗ
@@ -537,9 +537,9 @@ sound-CASEL St V M N pV pM pN =
     go (inj₁ tt)      pl        = sound-CASEL-NIL M N pM pN
     go (inj₂ (W , L)) (pW , pL) = sound-CASEL-CONS W L M N pW pL pM pN
 
-sound-RECL : ∀ {Γ A B ε} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ |List| A)
-           → (M : toCtx St ⊢C⦂ B ‼ ε)
-           → (N : (toCtx St ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
+sound-RECL : ∀ {Γ A B ε} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ list A)
+           → (M : toCtx St ⊢C⦂ B ! ε)
+           → (N : (toCtx St ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
            → (p : ε ·ₑ ε ≾ₑ ε)
            → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
            → ⟦ recL V M N p ⟧ᶜᵗ (pV , pM , pN)
@@ -579,7 +579,7 @@ sound-CASE+ St V M N pV pM pN =
 -- is the boxed one reindexed along `[] ++ᶜ Γ ≡ Γ`, which cancels.
 
 sound-BOX : ∀ {A B ρ ε} → (St : 𝕊 []) → (V : toCtx St ⟨ ρ ⟩ ⊢V⦂ A)
-          → (M : toCtx St ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
+          → (M : toCtx St ∷ [ ρ ] A ⊢C⦂ B ! ε)
           → (pSt : Paramˢ St) → (pV : Paramᵛ V) → (pM : Paramᶜ M)
           → ⟦ box _ V M ⟧ᶜᵗ (pV , pM) ∘ᵐ ⟦ St ⟧ˢ pSt
           ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ∷ₛ V-rename (eq-ren (sym ++ᶜ-identityˡ)) V ⟧ˢ
@@ -631,11 +631,11 @@ sound-SUB-APP : ∀ {Γ A A₁ C C₁} → (V : Γ ⊢V⦂ A₁ ⇒ C₁) → (W
 sound-SUB-APP V W q r pV pW =
   app-map⇒ᵐ ⟦ q ⟧<:ᵛ ⟦ r ⟧<:ᶜ (⟦ V ⟧ᵛᵗ pV) (⟦ W ⟧ᵛᵗ pW)
 
--- SUB-IF: `Bool <:ᵛ Bool` denotes the identity.
+-- SUB-IF: `bool <:ᵛ bool` denotes the identity.
 
-sound-SUB-IF : ∀ {Γ C} → (V : Γ ⊢V⦂ Bool) → (M N : Γ ⊢C⦂ C)
+sound-SUB-IF : ∀ {Γ C} → (V : Γ ⊢V⦂ bool) → (M N : Γ ⊢C⦂ C)
              → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-             → ⟦ if subV V Boolₛ `then M `else N ⟧ᶜᵗ (pV , pM , pN)
+             → ⟦ if subV V boolₛ `then M `else N ⟧ᶜᵗ (pV , pM , pN)
              ≈ᵐ ⟦ if V `then M `else N ⟧ᶜᵗ (pV , pM , pN)
 sound-SUB-IF V M N pV pM pN = ifᵐ-cong (∘ᵐ-identityˡ _) ≈ᵐ-refl ≈ᵐ-refl
 
@@ -724,13 +724,13 @@ sound-IF-FALSE M N pM pN = ifᵐ-false (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
 -- CASEℕ-ZERO / CASEℕ-SUCC: taking a branch is a beta law of `caseℕᵐ`, the
 -- successor's followed by the substitution coherence.
 
-sound-CASEℕ-ZERO : ∀ {Γ C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ Nat ⊢C⦂ C)
+sound-CASEℕ-ZERO : ∀ {Γ C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ nat ⊢C⦂ C)
                  → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                  → ⟦ caseℕ zero `zero M `succ N ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ M ⟧ᶜᵗ pM
 sound-CASEℕ-ZERO M N pM pN = caseℕᵐ-zero (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
 
-sound-CASEℕ-SUCC : ∀ {Γ C} → (V : Γ ⊢V⦂ Nat)
-                 → (M : Γ ⊢C⦂ C) → (N : Γ ∷ Nat ⊢C⦂ C)
+sound-CASEℕ-SUCC : ∀ {Γ C} → (V : Γ ⊢V⦂ nat)
+                 → (M : Γ ⊢C⦂ C) → (N : Γ ∷ nat ⊢C⦂ C)
                  → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                  → ⟦ caseℕ succ V `zero M `succ N ⟧ᶜᵗ (pV , pM , pN)
                  ≈ᵐ ⟦ N [ split-[] ↦ V ]c ⟧ᶜᵗ (subᶜ N split-[] V pN pV)
@@ -738,22 +738,22 @@ sound-CASEℕ-SUCC V M N pV pM pN =
     caseℕᵐ-succ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ∙ ≈ᵐ-sym (C-subst-nat N split-[] V pN pV)
 
--- SUB-CASEℕ: `Nat <:ᵛ Nat` denotes the identity.
+-- SUB-CASEℕ: `nat <:ᵛ nat` denotes the identity.
 
-sound-SUB-CASEℕ : ∀ {Γ C} → (V : Γ ⊢V⦂ Nat)
-                → (M : Γ ⊢C⦂ C) → (N : Γ ∷ Nat ⊢C⦂ C)
+sound-SUB-CASEℕ : ∀ {Γ C} → (V : Γ ⊢V⦂ nat)
+                → (M : Γ ⊢C⦂ C) → (N : Γ ∷ nat ⊢C⦂ C)
                 → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-                → ⟦ caseℕ subV V Natₛ `zero M `succ N ⟧ᶜᵗ (pV , pM , pN)
+                → ⟦ caseℕ subV V natₛ `zero M `succ N ⟧ᶜᵗ (pV , pM , pN)
                 ≈ᵐ ⟦ caseℕ V `zero M `succ N ⟧ᶜᵗ (pV , pM , pN)
 sound-SUB-CASEℕ V M N pV pM pN = caseℕᵐ-cong (∘ᵐ-identityˡ _) ≈ᵐ-refl ≈ᵐ-refl
 
--- SUB-RECℕ: `Nat <:ᵛ Nat` denotes the identity.
+-- SUB-RECℕ: `nat <:ᵛ nat` denotes the identity.
 
-sound-SUB-RECℕ : ∀ {Γ B ε} → (V : Γ ⊢V⦂ Nat) → (M : Γ ⊢C⦂ B ‼ ε)
-               → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
+sound-SUB-RECℕ : ∀ {Γ B ε} → (V : Γ ⊢V⦂ nat) → (M : Γ ⊢C⦂ B ! ε)
+               → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
                → (p : ε ·ₑ ε ≾ₑ ε)
                → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-               → ⟦ recℕ (subV V Natₛ) M N p ⟧ᶜᵗ (pV , pM , pN)
+               → ⟦ recℕ (subV V natₛ) M N p ⟧ᶜᵗ (pV , pM , pN)
                ≈ᵐ ⟦ recℕ V M N p ⟧ᶜᵗ (pV , pM , pN)
 sound-SUB-RECℕ V M N p pV pM pN = ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
 
@@ -783,7 +783,7 @@ coe-cancel e q =
 -- re-associates the transition's `delayᵀ` out.
 
 sound-DELAY : ∀ {A ε} → (τ : 𝔻) → (St : 𝕊 [])
-            → (M : toCtx St ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε)
+            → (M : toCtx St ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε)
             → (q : (ιₑ τ ·ₑ 𝟏ₑ) ·ₑ ε ≾ₑ ιₑ τ ·ₑ ε)
             → (pSt : Paramˢ St) → (pM : Paramᶜ M)
             → ⟦ delay τ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt
@@ -907,7 +907,7 @@ sub-ren r N V pN pV =
 
 -- The parametricity certificate of the `return`-rules' reduct: the sequel
 -- renamed by the re-locking renaming, then substituted into.
-ret-subᴾ : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+ret-subᴾ : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε)
          → Paramᵛ V → Paramᶜ N
          → Paramᶜ (C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
                      [ split-[] ↦ V ]c)
@@ -920,7 +920,7 @@ ret-step : ∀ {Γ A B ε}
          → (alg : Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε) 𝟏ₑ →ᵐ Tᵒ ⟦ B ⟧ᵛ (𝟏ₑ ·ₑ ε))
          → (alg-η : alg ∘ᵐ ηᵀ ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε)))
          → (V : Γ ⊢V⦂ A)
-         → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+         → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε)
          → (pV : Paramᵛ V) → (pN : Paramᶜ N)
          → alg ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
          ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
@@ -960,7 +960,7 @@ ret-step-P : ∀ {Γ A B ε P}
            → (alg-η : alg ∘ᵐ mapˣᵐ idᵐ (ηᵀ {Tᵒ ⟦ B ⟧ᵛ ε})
                     ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε)) ∘ᵐ sndᵐ)
            → (V : Γ ⊢V⦂ A)
-           → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+           → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε)
            → (pV : Paramᵛ V) → (pN : Paramᶜ N)
            → alg ∘ᵐ ⟨ pv , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ ⟩ᵐ
            ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
@@ -994,7 +994,7 @@ ret-step-P {Γ} pv alg alg-η V N pV pN =
 -- SEQ-RET and HANDLE-RET: the two instances of `ret-step`, one for the monad
 -- multiplication and one for the handler's algebra.
 
-sound-SEQ-RET : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+sound-SEQ-RET : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε)
               → (pV : Paramᵛ V) → (pN : Paramᶜ N)
               → ⟦ return V ⨟ N ⟧ᶜᵗ (pV , pN)
               ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
@@ -1005,10 +1005,10 @@ sound-SEQ-RET V N pV pN = ret-step μᵀ T-μ∘η≡id V N pV pN
 sound-HANDLE-RET : ∀ {Γ A B ε}
                  → (V : Γ ⊢V⦂ A)
                  → (H : (op : Op) → (ε'' : E)
-                      → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                           ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                        ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-                 → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+                      → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                           ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+                        ⊢C⦂ B ! (op-grade op ·ₑ ε''))
+                 → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε)
                  → (pV : Paramᵛ V) → (pN : Paramᶜ N)
                  → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
                  → (uH : EffUniformʰ {Γ} H pH)

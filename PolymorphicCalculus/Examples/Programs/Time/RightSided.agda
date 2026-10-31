@@ -24,8 +24,8 @@ open import PolymorphicCalculus.Examples.Variables
 
 keep-twice-reported :
   schemesOf (checkProgram keep-twice)
-    ≡ just ( (∀ᵛ[ 1 , 0 , 0 ] eternal α₀ ⟹ α₀ ⇒ α₀ ‼ ⌜ 1 ⌝ᵉ)
-           ∷ (∀ᵛ[ 1 , 0 , 0 ] ⊤ ⟹ α₀ ⇒ Bool ‼ ⌜ 2 ⌝ᵉ)
+    ≡ just ( (∀ᵛ[ 1 , 0 , 0 ] eternal α₀ ⟹ α₀ ⇒ α₀ ! ⌜ 1 ⌝ᵉ)
+           ∷ (∀ᵛ[ 1 , 0 , 0 ] ⊤ ⟹ α₀ ⇒ bool ! ⌜ 2 ⌝ᵉ)
            ∷ [])
 keep-twice-reported = refl
 

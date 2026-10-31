@@ -197,7 +197,7 @@ Q [ r ]ᴴ = hyps (map (rTy r) (ets Q))
         → Q' ⊩ᴴ Q [ ⌜ r ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᴴ Q [ r ]ᴴ [ δ ]
 ⊩ᴴ-ren⁺ {Q = Q} {Q'} r {δ} h = mk⊩ᴴ et sb oR oE dj qh
   where
-    et : ∀ {α} → α ∈ map (rTy r) (ets Q) → Q' ⊩ᴱ sTy δ α
+    et : ∀ {α} → α ∈ map (rTy r) (ets Q) → Q' ⊩Et sTy δ α
     et m with ∈-map⁻ (rTy r) m
     ... | α , m' , refl = ⊩ets h m'
 
@@ -260,30 +260,30 @@ module _ {Θ : Scope} (M : Vars Θ) where
 
   private
 
-    ⊆-‼ᵛ : (A : OVType Θ) → (ε : EExp Θ) → fvᶜ (A ‼ ε) ⊆ᵛ M → fvᵛ A ⊆ᵛ M
-    ⊆-‼ᵛ A ε h = mk⊆ᵛ (⊆ᵗ h) (⊆ʳ h) (λ i o → ⊆ᵉ h i (∨-inˡ o))
+    ⊆-!ᵛ : (A : OVType Θ) → (ε : EExp Θ) → fvᶜ (A ! ε) ⊆ᵛ M → fvᵛ A ⊆ᵛ M
+    ⊆-!ᵛ A ε h = mk⊆ᵛ (⊆ᵗ h) (⊆ʳ h) (λ i o → ⊆ᵉ h i (∨-inˡ o))
 
-    ⊆-‼ᵉ : (A : OVType Θ) → (ε : EExp Θ) → fvᶜ (A ‼ ε) ⊆ᵛ M → fvᵉ ε ⊆ᵛ M
-    ⊆-‼ᵉ A ε h = mk⊆ᵛ (λ _ ()) (λ _ ()) (λ i o → ⊆ᵉ h i (∨-inʳ (occᵉ-v i A) o))
+    ⊆-!ᵉ : (A : OVType Θ) → (ε : EExp Θ) → fvᶜ (A ! ε) ⊆ᵛ M → fvᵉ ε ⊆ᵛ M
+    ⊆-!ᵉ A ε h = mk⊆ᵛ (λ _ ()) (λ _ ()) (λ i o → ⊆ᵉ h i (∨-inʳ (occᵉ-v i A) o))
 
   mutual
 
     strᵛ : (A : OVType Θ) → fvᵛ A ⊆ᵛ M → OVType kept
     strᵛ (tvar α)  h = tvar (strᵗ α h)
     strᵛ (Base b)  h = Base b
-    strᵛ Unit      h = Unit
-    strᵛ Bool      h = Bool
-    strᵛ Nat       h = Nat
+    strᵛ unit      h = unit
+    strᵛ bool      h = bool
+    strᵛ nat       h = nat
     strᵛ (A |×| B) h = strᵛ A (⊆-∪ˡ (fvᵛ A) (fvᵛ B) h) |×| strᵛ B (⊆-∪ʳ (fvᵛ A) (fvᵛ B) h)
     strᵛ (A |+| B) h = strᵛ A (⊆-∪ˡ (fvᵛ A) (fvᵛ B) h) |+| strᵛ B (⊆-∪ʳ (fvᵛ A) (fvᵛ B) h)
-    strᵛ (|List| A) h = |List| (strᵛ A h)
-    strᵛ Empty     h = Empty
+    strᵛ (list A)  h = list (strᵛ A h)
+    strᵛ empty     h = empty
     strᵛ (A ⇒ C)   h = strᵛ A (⊆-∪ˡ (fvᵛ A) (fvᶜ C) h) ⇒ strᶜ C (⊆-∪ʳ (fvᵛ A) (fvᶜ C) h)
     strᵛ (C ⇛ D)   h = strᶜ C (⊆-∪ˡ (fvᶜ C) (fvᶜ D) h) ⇛ strᶜ D (⊆-∪ʳ (fvᶜ C) (fvᶜ D) h)
     strᵛ ([ ρ ] A) h = [ strʳ ρ (⊆-∪ˡ (fvʳ ρ) (fvᵛ A) h) ] strᵛ A (⊆-∪ʳ (fvʳ ρ) (fvᵛ A) h)
 
     strᶜ : (C : OCType Θ) → fvᶜ C ⊆ᵛ M → OCType kept
-    strᶜ (A ‼ ε) h = strᵛ A (⊆-‼ᵛ A ε h) ‼ strᵉ ε (⊆-‼ᵉ A ε h)
+    strᶜ (A ! ε) h = strᵛ A (⊆-!ᵛ A ε h) ! strᵉ ε (⊆-!ᵉ A ε h)
 
   -- a list, each of whose members is strengthened
 
@@ -346,19 +346,19 @@ module _ {Θ : Scope} (M : Vars Θ) where
     strᵛ-ι : (A : OVType Θ) → (h : fvᵛ A ⊆ᵛ M) → strᵛ A h [ ⌜ thin ⌝ʳ ]ᵛ ≡ A
     strᵛ-ι (tvar α)  h = cong tvar (strᵗ-ι α h)
     strᵛ-ι (Base b)  h = refl
-    strᵛ-ι Unit      h = refl
-    strᵛ-ι Bool      h = refl
-    strᵛ-ι Nat       h = refl
+    strᵛ-ι unit      h = refl
+    strᵛ-ι bool      h = refl
+    strᵛ-ι nat       h = refl
     strᵛ-ι (A |×| B) h = cong₂ _|×|_ (strᵛ-ι A _) (strᵛ-ι B _)
     strᵛ-ι (A |+| B) h = cong₂ _|+|_ (strᵛ-ι A _) (strᵛ-ι B _)
-    strᵛ-ι (|List| A) h = cong |List| (strᵛ-ι A _)
-    strᵛ-ι Empty     h = refl
+    strᵛ-ι (list A)  h = cong list (strᵛ-ι A _)
+    strᵛ-ι empty     h = refl
     strᵛ-ι (A ⇒ C)   h = cong₂ _⇒_ (strᵛ-ι A _) (strᶜ-ι C _)
     strᵛ-ι (C ⇛ D)   h = cong₂ _⇛_ (strᶜ-ι C _) (strᶜ-ι D _)
     strᵛ-ι ([ ρ ] A) h = cong₂ [_]_ (strʳ-ι ρ _) (strᵛ-ι A _)
 
     strᶜ-ι : (C : OCType Θ) → (h : fvᶜ C ⊆ᵛ M) → strᶜ C h [ ⌜ thin ⌝ʳ ]ᶜ ≡ C
-    strᶜ-ι (A ‼ ε) h = cong₂ _‼_ (strᵛ-ι A _) (strᵉ-ι ε _)
+    strᶜ-ι (A ! ε) h = cong₂ _!_ (strᵛ-ι A _) (strᵉ-ι ε _)
 
   strˡ-ι : {X Y : Set} → (f : X → Vars Θ) → (s : (x : X) → f x ⊆ᵛ M → Y)
          → (g : Y → X) → (∀ x h → g (s x h) ≡ x)
@@ -408,10 +408,10 @@ module _ {Θ : Scope} (M : Vars Θ) where
   -- an instance of the kept variables, extended by closed constants
 
   extⁱ : ∀ {Ω} → Subst kept Ω → Subst Θ Ω
-  extⁱ δ = sub (ext (vᵗ M) Unit (sTy δ)) (ext (vʳ M) 𝟏̂ᵣ (sR δ)) (ext (vᵉ M) 𝟏̂ₑ (sE δ))
+  extⁱ δ = sub (ext (vᵗ M) unit (sTy δ)) (ext (vʳ M) 𝟏̂ᵣ (sR δ)) (ext (vᵉ M) 𝟏̂ₑ (sE δ))
 
   extⁱ-ι : ∀ {Ω} → (δ : Subst kept Ω) → ⌜ thin ⌝ʳ ⨟ˢ extⁱ δ ≐ˢ δ
-  extⁱ-ι δ = mk≐ˢ (ext-emb (vᵗ M) Unit (sTy δ)) (ext-emb (vʳ M) 𝟏̂ᵣ (sR δ))
+  extⁱ-ι δ = mk≐ˢ (ext-emb (vᵗ M) unit (sTy δ)) (ext-emb (vʳ M) 𝟏̂ᵣ (sR δ))
                   (ext-emb (vᵉ M) 𝟏̂ₑ (sE δ))
 
 -- A substitution fixing a set fixes every substitution whose image lies in it
@@ -557,7 +557,7 @@ record Strengthened {Θ₀ Θ : Scope} (τ : Subst Θ₀ Θ) (X : OCType Θ) (Q 
 
 extⁱ-fix : ∀ {Θ} → (M : Vars Θ) → Fixes M (extⁱ M idˢ ⨟ˢ ⌜ thin M ⌝ʳ)
 extⁱ-fix M =
-  mkFixes (λ α h → cong (_[ ⌜ thin M ⌝ʳ ]ᵛ) (ext-str (vᵗ M) Unit tvar α h)
+  mkFixes (λ α h → cong (_[ ⌜ thin M ⌝ʳ ]ᵛ) (ext-str (vᵗ M) unit tvar α h)
                    ⊚ cong tvar (emb-str (vᵗ M) α h))
           (λ i h → cong (_[ ⌜ thin M ⌝ʳ ]ʳ) (ext-str (vʳ M) 𝟏̂ᵣ rvar i h)
                    ⊚ cong rvar (emb-str (vʳ M) i h))

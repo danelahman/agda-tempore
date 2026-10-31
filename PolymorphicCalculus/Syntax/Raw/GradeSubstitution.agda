@@ -24,7 +24,7 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import PolymorphicCalculus.Syntax.Types             S using (_‼_)
+open import PolymorphicCalculus.Syntax.Types             S using (_!_)
 open import PolymorphicCalculus.Syntax.GradeSubstitution S
 
 open import PolymorphicCalculus.Syntax.Raw S
@@ -337,7 +337,7 @@ data InvC {Θ Θ' n} (σ : Subst Θ Θ') : RawC Θ n → RawC Θ' n → Set wher
   box     : ∀ {ρ V N ρ' V' N'} → ρ [ σ ]ʳ ≡ ρ' → V [ σ ]ᴿᵛ ≡ V' → N [ σ ]ᴿᶜ ≡ N'
           → InvC σ (box ρ V N) (box ρ' V' N')
   annᶜ    : ∀ {M A ε M' A' ε'} → M [ σ ]ᴿᶜ ≡ M' → A [ σ ]ᵛ ≡ A' → ε [ σ ]ᵉ ≡ ε'
-          → InvC σ (M ⦂ᶜ (A ‼ ε)) (M' ⦂ᶜ (A' ‼ ε'))
+          → InvC σ (M ⦂ᶜ (A ! ε)) (M' ⦂ᶜ (A' ! ε'))
 
 invV : ∀ {Θ Θ' n} {σ : Subst Θ Θ'} → (V : RawV Θ n) → {V' : RawV Θ' n}
      → V [ σ ]ᴿᵛ ≡ V' → InvV σ V V'
@@ -377,4 +377,4 @@ invC (delay τ M)              refl = delay refl
 invC (handle M `with V)       refl = handle refl refl
 invC (unbox V N)              refl = unbox refl refl
 invC (box ρ V N)              refl = box refl refl refl
-invC (M ⦂ᶜ (A ‼ ε))           refl = annᶜ refl refl refl
+invC (M ⦂ᶜ (A ! ε))           refl = annᶜ refl refl refl

@@ -273,25 +273,25 @@ snd-split-time≡time-from-head S x =
 ⦉⦊-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = ⦉⦊-not-in-toCtx x
 ⦉⦊-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = ⦉⦊-not-in-toCtx x
 
-Nat-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} → Nat ∈[ ρ ] toCtx S → ⊥
-Nat-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = Nat-not-in-toCtx x
-Nat-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = Nat-not-in-toCtx x
+nat-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} → nat ∈[ ρ ] toCtx S → ⊥
+nat-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = nat-not-in-toCtx x
+nat-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = nat-not-in-toCtx x
 
 |+|-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} {A B : VType} → A |+| B ∈[ ρ ] toCtx S → ⊥
 |+|-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = |+|-not-in-toCtx x
 |+|-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = |+|-not-in-toCtx x
 
-|List|-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} {A : VType} → |List| A ∈[ ρ ] toCtx S → ⊥
-|List|-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = |List|-not-in-toCtx x
-|List|-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = |List|-not-in-toCtx x
+list-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} {A : VType} → list A ∈[ ρ ] toCtx S → ⊥
+list-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = list-not-in-toCtx x
+list-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = list-not-in-toCtx x
 
-Empty-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} → Empty ∈[ ρ ] toCtx S → ⊥
-Empty-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = Empty-not-in-toCtx x
-Empty-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = Empty-not-in-toCtx x
+empty-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} → empty ∈[ ρ ] toCtx S → ⊥
+empty-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = empty-not-in-toCtx x
+empty-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = empty-not-in-toCtx x
 
-Bool-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} → Bool ∈[ ρ ] toCtx S → ⊥
-Bool-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = Bool-not-in-toCtx x
-Bool-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = Bool-not-in-toCtx x
+bool-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} → bool ∈[ ρ ] toCtx S → ⊥
+bool-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = bool-not-in-toCtx x
+bool-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = bool-not-in-toCtx x
 
 not-in-empty-ctx : {ρ : R} {A : VType} → A ∈[ ρ ] [] → ⊥
 not-in-empty-ctx ()
@@ -337,27 +337,27 @@ uninjᵛ (inj₂ W) = inr W
 -- which the recursion pushes into the head and the tail.
 
 ListView : Ctx → VType → Set
-ListView Γ A = ⊤ ⊎ ((Γ ⊢V⦂ A) × (Γ ⊢V⦂ |List| A))
+ListView Γ A = ⊤ ⊎ ((Γ ⊢V⦂ A) × (Γ ⊢V⦂ list A))
 
 subL : ∀ {Γ A A₁} → A₁ <:ᵛ A → ListView Γ A₁ → ListView Γ A
 subL p (inj₁ tt)      = inj₁ tt
-subL p (inj₂ (W , L)) = inj₂ (subV W p , subV L (|List|ₛ p))
+subL p (inj₂ (W , L)) = inj₂ (subV W p , subV L (listₛ p))
 
-listᵛ : ∀ {Γ A} {S : 𝕊 Γ} → toCtx S ⊢V⦂ |List| A → ListView (toCtx S) A
-listᵛ (var _ x)             = ⊥-elim (|List|-not-in-toCtx x)
+listᵛ : ∀ {Γ A} {S : 𝕊 Γ} → toCtx S ⊢V⦂ list A → ListView (toCtx S) A
+listᵛ (var _ x)             = ⊥-elim (list-not-in-toCtx x)
 listᵛ nil                   = inj₁ tt
 listᵛ (cons V W)            = inj₂ (V , W)
-listᵛ (subV V (|List|ₛ p))  = subL p (listᵛ V)
+listᵛ (subV V (listₛ p))    = subL p (listᵛ V)
 
 -- and back
 
-unlistᵛ : ∀ {Γ A} → ListView Γ A → Γ ⊢V⦂ |List| A
+unlistᵛ : ∀ {Γ A} → ListView Γ A → Γ ⊢V⦂ list A
 unlistᵛ (inj₁ tt)      = nil
 unlistᵛ (inj₂ (W , L)) = cons W L
 
 -- A state context binds only boxed types, none of them eternal.
 
-eternal-not-in-toCtx : ∀ {Γ ρ A} {S : 𝕊 Γ} → Eternal A → A ∈[ ρ ] toCtx S → ⊥
+eternal-not-in-toCtx : ∀ {Γ ρ A} {S : 𝕊 Γ} → Et A → A ∈[ ρ ] toCtx S → ⊥
 eternal-not-in-toCtx {S = S ⟨ _ ⟩ₛ} et (Tl-⟨⟩ x) = eternal-not-in-toCtx et x
 eternal-not-in-toCtx {S = S ∷ₛ _}   () Hd
 eternal-not-in-toCtx {S = S ∷ₛ _}   et (Tl-∷ x)  = eternal-not-in-toCtx et x
@@ -365,26 +365,26 @@ eternal-not-in-toCtx {S = S ∷ₛ _}   et (Tl-∷ x)  = eternal-not-in-toCtx et
 -- The datum a value of an eternal type is. Over a state context the value is
 -- a datum under a spine of subsumptions, which act on the data.
 
-⌊_⌋ᵈ : ∀ {Γ A} {S : 𝕊 Γ} → Eternal A → toCtx S ⊢V⦂ A → ⟪ A ⟫
+⌊_⌋ᵈ : ∀ {Γ A} {S : 𝕊 Γ} → Et A → toCtx S ⊢V⦂ A → ⟪ A ⟫
 ⌊ et ⌋ᵈ             (var _ x)   = ⊥-elim (eternal-not-in-toCtx et x)
 ⌊ et ⌋ᵈ             (subV V p)  = ⟪ p ⟫ˢ (⌊ <:ᵛ-eternalˡ p et ⌋ᵈ V)
 ⌊ Baseₑ _ ⌋ᵈ        (const c)   = c
-⌊ Unitₑ ⌋ᵈ          ⋆           = tt
-⌊ Boolₑ ⌋ᵈ          true        = Bool.true
-⌊ Boolₑ ⌋ᵈ          false       = Bool.false
-⌊ Natₑ ⌋ᵈ           zero        = 0
-⌊ Natₑ ⌋ᵈ           (succ V)    = suc (⌊ Natₑ ⌋ᵈ V)
+⌊ unitₑ ⌋ᵈ          ⋆           = tt
+⌊ boolₑ ⌋ᵈ          true        = Bool.true
+⌊ boolₑ ⌋ᵈ          false       = Bool.false
+⌊ natₑ ⌋ᵈ           zero        = 0
+⌊ natₑ ⌋ᵈ           (succ V)    = suc (⌊ natₑ ⌋ᵈ V)
 ⌊ et₁ |×|ₑ et₂ ⌋ᵈ   ⦉ V , W ⦊    = ⌊ et₁ ⌋ᵈ V , ⌊ et₂ ⌋ᵈ W
 ⌊ et₁ |+|ₑ et₂ ⌋ᵈ   (inl V)     = inj₁ (⌊ et₁ ⌋ᵈ V)
 ⌊ et₁ |+|ₑ et₂ ⌋ᵈ   (inr V)     = inj₂ (⌊ et₂ ⌋ᵈ V)
-⌊ |List|ₑ et ⌋ᵈ     nil         = List.[]
-⌊ |List|ₑ et ⌋ᵈ     (cons V W)  = ⌊ et ⌋ᵈ V List.∷ ⌊ |List|ₑ et ⌋ᵈ W
+⌊ listₑ et ⌋ᵈ       nil         = List.[]
+⌊ listₑ et ⌋ᵈ       (cons V W)  = ⌊ et ⌋ᵈ V List.∷ ⌊ listₑ et ⌋ᵈ W
 
 -- There is no value of the empty type over a state context.
 
-empty-not-value : ∀ {Γ} {S : 𝕊 Γ} → toCtx S ⊢V⦂ Empty → ⊥
-empty-not-value (var _ x)      = Empty-not-in-toCtx x
-empty-not-value (subV V Emptyₛ) = empty-not-value V
+empty-not-value : ∀ {Γ} {S : 𝕊 Γ} → toCtx S ⊢V⦂ empty → ⊥
+empty-not-value (var _ x)      = empty-not-in-toCtx x
+empty-not-value (subV V emptyₛ) = empty-not-value V
 
 -- Looking up a resource in the state
 

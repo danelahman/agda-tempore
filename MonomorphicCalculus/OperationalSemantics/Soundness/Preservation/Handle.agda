@@ -140,7 +140,7 @@ alg-ηᵀ {ε = ε} {ε₂ = ε₂} alg alg-≤ pv f =
 -- the history, and there the parameter passes under the new lock.
 
 step-pv : ∀ {ε₁ ε₃ A A₀ P} {S S' : 𝕊 []}
-        → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
+        → {M : toCtx S ⊢C⦂ A ! ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃}
         → (bc : Eternalᵒ P) → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
         → (⟦ hist S ⟧ᶜᵗˣ →ᵐ P) → (⟦ hist S' ⟧ᶜᵗˣ →ᵐ P)
 step-pv bc APP               pv = pv
@@ -178,7 +178,7 @@ step-pv bc (DELAY {τ = τ})   pv = Eternalᵒ.extᵉ bc ∘ᵐ ⟨ ιᵣ τ ⟩
 -- two step rules inherit their transition from the sub-step.
 
 alg-stepᵀ : ∀ {ε ε₂ ε₁' ε₃' A A₀ B P} {S S' : 𝕊 []}
-          → {M : toCtx S ⊢C⦂ A ‼ ε₁'} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃'}
+          → {M : toCtx S ⊢C⦂ A ! ε₁'} → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃'}
           → (bc : Eternalᵒ P)
           → (alg : ∀ {ε'} → P ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε' →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε' ·ₑ ε₂))
           → (alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
@@ -398,7 +398,7 @@ suc-comp-free q pf =
   ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨⟩-≤-id _) ∙ ∘ᵐ-identityʳ _)
 
 step-pv-state : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []}
-              → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
+              → {M : toCtx S ⊢C⦂ A ! ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃}
               → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
               → (pS : Paramˢ S) → (pM : Paramᶜ M)
               → step-pv (bcᴱ (toCtx S)) r (⟨⊤⟩-η ∘ᵐ ⟦ S ⟧ˢ pS)
@@ -450,13 +450,13 @@ step-pv-state {S = S} (DELAY {τ = τ}) pS pM =
 -- reindexed along the step's `suc-comp-ren` (`T-alg-of-handlerᵀ-natᴾ`).
 
 sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {S S' : 𝕊 []}
-  → {M : toCtx S ⊢C⦂ A ‼ ε₁}
+  → {M : toCtx S ⊢C⦂ A ! ε₁}
   → (H : (op : Op) → (ε'' : E)
-       → toCtx S ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-            ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-  → (N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-  → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
+       → toCtx S ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+            ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+         ⊢C⦂ B ! (op-grade op ·ₑ ε''))
+  → (N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+  → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃}
   → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
   → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
   → (pS : Paramˢ S) → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
@@ -565,9 +565,9 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} H N {M'} r
     fren = suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _)
 
     H' : (op : Op) → (ε'' : E)
-       → toCtx S' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-            ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-         ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')
+       → toCtx S' ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+            ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+         ⊢C⦂ B ! (op-grade op ·ₑ ε'')
     H' op ε'' = C-rename (cong-∷-ren (cong-∷-ren fren)) (H op ε'')
 
     pH' : ∀ op ε'' → Paramᶜ (H' op ε'')
@@ -972,9 +972,9 @@ cont-collapse alg p c =
 -- in an arbitrary context.
 
 sound-SEQ-OP : ∀ {Γ A B ε ε'} → (op : Op)
-             → (V : Γ ⊢V⦂ type-of-gtype (param op))
-             → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
-             → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
+             → (V : Γ ⊢V⦂ ⌜ param op ⌝ᵍ)
+             → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε)
+             → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
              → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
              → ⟦ perform op V M ⨟ N ⟧ᶜᵗ ((pV , pM) , pN)
              ≈ᵐ ⟦ ε-≃ (≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε'))
@@ -997,7 +997,7 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N pV pM pN =
                (∘ᵐ-congʳ (∘ᵐ-congˡ
                  (T-congᶠ (C-rename-nat (cong-∷-ren ren) N pN))))))) ⟩ᵐ-cong)))
   where
-    ren : Ren [] ((Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) ⟨ ∣ ε ∣ᵉ ⟩)
+    ren : Ren [] ((Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ) ⟨ ∣ ε ∣ᵉ ⟩)
                  (Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩)
     ren = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
 
@@ -1013,15 +1013,15 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N pV pM pN =
 -- carried under the operation's box by `necᵉ`.
 
 sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
-                → (V : Γ ⊢V⦂ type-of-gtype (param op))
-                → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
-                       ⊢C⦂ A ‼ ε)
+                → (V : Γ ⊢V⦂ ⌜ param op ⌝ᵍ)
+                → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
+                       ⊢C⦂ A ! ε)
                 → (H : (op' : Op) → (ε' : E)
-                     → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
+                     → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op' ⌝ᵍ
                           ∷ [ ∣ op-grade op' ∣ᵉ ]
-                              (type-of-gtype (arity op') ⇒ B ‼ ε')
-                       ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
-                → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'')
+                              (⌜ arity op' ⌝ᵍ ⇒ B ! ε')
+                       ⊢C⦂ B ! (op-grade op' ·ₑ ε'))
+                → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'')
                 → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                 → (pH : ∀ op' ε' → Paramᶜ (H op' ε'))
                 → (uH : EffUniformʰ {Γ} H pH)
@@ -1032,7 +1032,7 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
                                    `with (λ op' ε' →
                                             C-rename (cong-∷-ren (cong-∷-ren
                                               (barrier-wk-ren ∣ op-grade op ∣ᵉ
-                                                              (type-of-gtype (arity op)))))
+                                                              ⌜ arity op ⌝ᵍ)))
                                               (H op' ε'))
                                    `in (C-rename (cong-∷-ren
                                           ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
@@ -1043,9 +1043,9 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
                      ( (pM
                        , renᶜ (cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN
                        , (λ op' ε' →
-                            renᶜ (cong-∷-ren (cong-∷-ren (barrier-wk-ren ∣ op-grade op ∣ᵉ (type-of-gtype (arity op))))) (H op' ε') (pH op' ε'))
+                            renᶜ (cong-∷-ren (cong-∷-ren (barrier-wk-ren ∣ op-grade op ∣ᵉ ⌜ arity op ⌝ᵍ))) (H op' ε') (pH op' ε'))
                        , ren-clauses-uniform
-                           (barrier-wk-ren ∣ op-grade op ∣ᵉ (type-of-gtype (arity op)))
+                           (barrier-wk-ren ∣ op-grade op ∣ᵉ ⌜ arity op ⌝ᵍ)
                            H pH uH)
                      , subᶜ (C-rename (cong-∷-ren (cong-∷-ren (barrier-ren {Γ})))
                                      (H op (ε ·ₑ ε'')))
@@ -1080,7 +1080,7 @@ sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} op V M H N pV pM pN pH uH =
   where
     Vp = subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV)
 
-    ren : Ren [] ((Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) ⟨ ∣ ε ∣ᵉ ⟩)
+    ren : Ren [] ((Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ) ⟨ ∣ ε ∣ᵉ ⟩)
                  (Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩)
     ren = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
 

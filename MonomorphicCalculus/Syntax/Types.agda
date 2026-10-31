@@ -31,78 +31,78 @@ mutual
 
   data VType : Set  where
     Base  : BaseType → VType                 -- base types
-    Unit  : VType                            -- unit type
-    Bool  : VType                            -- boolean type
-    Nat   : VType                            -- natural-number type
+    unit  : VType                            -- unit type
+    bool  : VType                            -- boolean type
+    nat   : VType                            -- natural-number type
     _|×|_ : VType → VType → VType            -- product type
     _|+|_ : VType → VType → VType            -- sum type
-    |List| : VType → VType                   -- list type
-    Empty : VType                            -- empty type
+    list  : VType → VType                    -- list type
+    empty : VType                            -- empty type
     _⇒_   : VType → CType → VType            -- function type
     _⇛_   : CType → CType → VType            -- handler type
     [_]_  : R → VType → VType                -- box modality: values of type `[ ρ ] A`
                                              -- become available in at most `ρ` steps
   data CType : Set where
-    _‼_ : VType → E → CType
+    _!_ : VType → E → CType
 
   infix  37 [_]_
   infix  32 _|×|_ _|+|_
   infixr 30 _⇒_ _⇛_
-  infix  31 _‼_
+  infix  31 _!_
 
-data Eternal : VType → Set where
-  Baseₑ  : ∀ {b} → .(EternalBaseType b) → Eternal (Base b)
-  Unitₑ  : Eternal Unit
-  Boolₑ  : Eternal Bool
-  Natₑ   : Eternal Nat
-  _|×|ₑ_ : ∀ {A₁ A₂} → Eternal A₁ → Eternal A₂ → Eternal (A₁ |×| A₂)
-  _|+|ₑ_ : ∀ {A₁ A₂} → Eternal A₁ → Eternal A₂ → Eternal (A₁ |+| A₂)
-  |List|ₑ : ∀ {A} → Eternal A → Eternal (|List| A)
-  Emptyₑ : Eternal Empty
+data Et : VType → Set where
+  Baseₑ  : ∀ {b} → .(EternalBaseType b) → Et (Base b)
+  unitₑ  : Et unit
+  boolₑ  : Et bool
+  natₑ   : Et nat
+  _|×|ₑ_ : ∀ {A₁ A₂} → Et A₁ → Et A₂ → Et (A₁ |×| A₂)
+  _|+|ₑ_ : ∀ {A₁ A₂} → Et A₁ → Et A₂ → Et (A₁ |+| A₂)
+  listₑ  : ∀ {A} → Et A → Et (list A)
+  emptyₑ : Et empty
 
 -- Eternality is a property of a type: any two witnesses coincide
 -- (the base-type witness is irrelevant).
 
-eternal-irrelevant : ∀ {A} → (et et' : Eternal A) → et ≡ et'
+eternal-irrelevant : ∀ {A} → (et et' : Et A) → et ≡ et'
 eternal-irrelevant (Baseₑ p) (Baseₑ q) =
   refl
-eternal-irrelevant Unitₑ Unitₑ =
+eternal-irrelevant unitₑ unitₑ =
   refl
-eternal-irrelevant Boolₑ Boolₑ =
+eternal-irrelevant boolₑ boolₑ =
   refl
-eternal-irrelevant Natₑ Natₑ =
+eternal-irrelevant natₑ natₑ =
   refl
 eternal-irrelevant (et₁ |×|ₑ et₂) (et₁' |×|ₑ et₂') =
   cong₂ _|×|ₑ_ (eternal-irrelevant et₁ et₁') (eternal-irrelevant et₂ et₂')
 eternal-irrelevant (et₁ |+|ₑ et₂) (et₁' |+|ₑ et₂') =
   cong₂ _|+|ₑ_ (eternal-irrelevant et₁ et₁') (eternal-irrelevant et₂ et₂')
-eternal-irrelevant (|List|ₑ et) (|List|ₑ et') =
-  cong |List|ₑ (eternal-irrelevant et et')
-eternal-irrelevant Emptyₑ Emptyₑ =
+eternal-irrelevant (listₑ et) (listₑ et') =
+  cong listₑ (eternal-irrelevant et et')
+eternal-irrelevant emptyₑ emptyₑ =
   refl
 
 -- Embedding ground types into types
 
-type-of-gtype : GType → VType
-type-of-gtype (Base B)   = Base B
-type-of-gtype Unit       = Unit
-type-of-gtype Bool       = Bool
-type-of-gtype Nat        = Nat
-type-of-gtype Empty      = Empty
-type-of-gtype (A |×|ᵍ B) = type-of-gtype A |×| type-of-gtype B
-type-of-gtype (A |+|ᵍ B) = type-of-gtype A |+| type-of-gtype B
-type-of-gtype (|List|ᵍ A) = |List| (type-of-gtype A)
-type-of-gtype ([ ρ ]ᵍ A) = [ ρ ] (type-of-gtype A)
+⌜_⌝ᵍ : GType → VType
+⌜ Base B ⌝ᵍ    = Base B
+⌜ unit ⌝ᵍ      = unit
+⌜ bool ⌝ᵍ      = bool
+⌜ nat ⌝ᵍ       = nat
+⌜ empty ⌝ᵍ     = empty
+⌜ A |×|ᵍ B ⌝ᵍ  = ⌜ A ⌝ᵍ |×| ⌜ B ⌝ᵍ
+⌜ A |+|ᵍ B ⌝ᵍ  = ⌜ A ⌝ᵍ |+| ⌜ B ⌝ᵍ
+⌜ listᵍ A ⌝ᵍ   = list ⌜ A ⌝ᵍ
+⌜ [ ρ ]ᵍ A ⌝ᵍ  = [ ρ ] ⌜ A ⌝ᵍ
 
 -- Checking if a type is eternal is decidable
 
-eternal? : (A : VType) → Dec (Eternal A)
+eternal? : (A : VType) → Dec (Et A)
 eternal? (Base b) with eternalBaseType? b
 ... | yes p = yes (Baseₑ p)
 ... | no ¬p = no λ { (Baseₑ p') → ⊥-elim-irr (¬p p') }
-eternal? Unit        = yes Unitₑ
-eternal? Bool        = yes Boolₑ
-eternal? Nat         = yes Natₑ
+eternal? unit        = yes unitₑ
+eternal? bool        = yes boolₑ
+eternal? nat         = yes natₑ
 eternal? (A₁ |×| A₂) with eternal? A₁ | eternal? A₂
 ... | yes p | yes q = yes (p |×|ₑ q)
 ... | yes _ | no ¬q = no λ { (_ |×|ₑ x₂) → ¬q x₂}
@@ -111,10 +111,10 @@ eternal? (A₁ |+| A₂) with eternal? A₁ | eternal? A₂
 ... | yes p | yes q = yes (p |+|ₑ q)
 ... | yes _ | no ¬q = no λ { (_ |+|ₑ x₂) → ¬q x₂}
 ... | no ¬p | _     = no λ { (x₁ |+|ₑ _) → ¬p x₁}
-eternal? (|List| A)  with eternal? A
-... | yes p = yes (|List|ₑ p)
-... | no ¬p = no λ { (|List|ₑ x) → ¬p x }
-eternal? Empty       = yes Emptyₑ
+eternal? (list A)    with eternal? A
+... | yes p = yes (listₑ p)
+... | no ¬p = no λ { (listₑ x) → ¬p x }
+eternal? empty       = yes emptyₑ
 eternal? (_ ⇒ _)     = no λ ()
 eternal? (_ ⇛ _)     = no λ ()
 eternal? ([ _ ] _)   = no λ ()

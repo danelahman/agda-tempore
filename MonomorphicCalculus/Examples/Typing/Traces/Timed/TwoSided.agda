@@ -48,24 +48,24 @@ open import MonomorphicCalculus.Examples.Typing.Core two-sided opTime
 -- guarantee it meets and the allowance it stays within, and each lock
 -- is the one-event interval of the operation that put it up.
 
-sampling : [] ⊢C⦂ Reading ‼ exact ⌈ read ⌉
+sampling : [] ⊢C⦂ Reading ! exact ⌈ read ⌉
 sampling =
   perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
     (return here)
 
-storing : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ write ⌉)
+storing : [] ⊢C⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ write ⌉)
 storing =
   perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
-    (perform write here              -- ⟨ exact ⌈ write ⌉ ⟩ ∷ Unit
+    (perform write here              -- ⟨ exact ⌈ write ⌉ ⟩ ∷ unit
       (return ⋆))
 
-relaying : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
+relaying : [] ⊢C⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 relaying =
   perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
-    (perform send here               -- ⟨ exact ⌈ send ⌉ ⟩ ∷ Unit
+    (perform send here               -- ⟨ exact ⌈ send ⌉ ⟩ ∷ unit
       (return ⋆))
 
-tagged-relaying : [] ∷ NodeId ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
+tagged-relaying : [] ∷ NodeId ⊢C⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 tagged-relaying =
   perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
@@ -82,7 +82,7 @@ tagged-relaying =
 reading-stale-after-an-operation : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ 𝟏ᵣ)
 reading-stale-after-an-operation = fails (𝟏ᵣ ·ᵣ opTime read) 𝟏ᵣ
 
-carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ exact ⌈ read ⌉
+carried-id : [] ∷ NodeId ⊢C⦂ NodeId ! exact ⌈ read ⌉
 carried-id =
   perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
     (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
@@ -97,7 +97,7 @@ carried-id =
 contract : E
 contract = [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
 
-meeting-the-contract : [] ⊢C⦂ Unit ‼ contract
+meeting-the-contract : [] ⊢C⦂ unit ! contract
 meeting-the-contract =
   coerce (holds _ _) (perform read ⋆ (perform write here (return ⋆)))
 
@@ -122,9 +122,9 @@ transmitting-twice-fails-the-cap = fails _ _
 window : E
 window = [ ⟅ ⟨ 2 ⟩ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ ]
 
-branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ window
+branching : [] ∷ bool ∷ Reading ⊢C⦂ unit ! window
 branching =
-  if eternal-var Boolₑ (Tl-∷ Hd)
+  if eternal-var boolₑ (Tl-∷ Hd)
     `then coerce (holds _ _) (perform send  here (return ⋆))
     `else coerce (holds _ _) (perform write here (return ⋆))
 
@@ -138,9 +138,9 @@ three-ticks-not-guaranteed = fails _ _
 -- an `if` over data alone needs no contract found for it
 
 either-reading :
-  [] ∷ Bool ∷ Reading ∷ Reading ⊢C⦂ Unit ‼ exact ⌈ send ⌉
+  [] ∷ bool ∷ Reading ∷ Reading ⊢C⦂ unit ! exact ⌈ send ⌉
 either-reading =
-  if eternal-var Boolₑ (Tl-∷ (Tl-∷ Hd))
+  if eternal-var boolₑ (Tl-∷ (Tl-∷ Hd))
     `then perform send here (return ⋆)
     `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)
 
@@ -157,16 +157,16 @@ either-reading =
 -- store left over, and spends three of the six the allowance leaves
 
 claim-after-storing :
-  [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉)
+  [] ⊢C⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉)
 claim-after-storing =
   box contract (const 42)            -- ∷ [ contract ] Reading
     (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
-      (perform write here            -- ⟨ exact ⌈ write ⌉ ⟩ ∷ Unit
+      (perform write here            -- ⟨ exact ⌈ write ⌉ ⟩ ∷ unit
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))
 
-handed-over : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
+handed-over : [] ⊢C⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 handed-over =
   box contract (const 42)            -- ∷ [ contract ] Reading
     (lam                             -- ∷ [ contract ] Reading
@@ -176,13 +176,13 @@ handed-over =
            (perform send here (return ⋆))))
       · here)
 
-either-way : [] ∷ Bool ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
+either-way : [] ∷ bool ⊢C⦂ unit ! exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 either-way =
   box contract (const 42)            -- ∷ [ contract ] Reading
     (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
-        (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
+        (if eternal-var boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
           `then perform send here (return ⋆)
           `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆))))
 
@@ -218,7 +218,7 @@ alternatives : R
 alternatives = [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ ]
 
 claimed-in-both-branches :
-  [] ⊢C⦂ Unit ‼ [ ⟅ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⟨ 12 ⟩ ⟆ ]
+  [] ⊢C⦂ unit ! [ ⟅ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⟨ 12 ⟩ ⟆ ]
 claimed-in-both-branches =
   box alternatives (const 42)        -- ∷ [ alternatives ] Reading
     (if true
@@ -229,7 +229,7 @@ claimed-in-both-branches =
                   (perform send here (return ⋆))))
       `else coerce (holds _ _)
               (perform send (const 0)
-                                     -- ⟨ exact ⌈ send ⌉ ⟩ ∷ Unit
+                                     -- ⟨ exact ⌈ send ⌉ ⟩ ∷ unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
                   (perform send here (return ⋆)))))
@@ -269,16 +269,16 @@ storing-branch-joins : opTime write ·ₑ 𝟏ₑ ≾ₑ branch-join
 storing-branch-joins = holds _ _
 
 claim-after-a-branch :
-  [] ∷ Bool ⊢C⦂ Unit ‼ [ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆ˡᵒ
+  [] ∷ bool ⊢C⦂ unit ! [ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆ˡᵒ
                        , within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆ ]
 claim-after-a-branch =
   box mixed-contract (const 42)
                                      -- ∷ [ mixed-contract ] Reading
-    ((if eternal-var Boolₑ (Tl-∷ Hd)
+    ((if eternal-var boolₑ (Tl-∷ Hd)
         `then coerce {ε' = branch-join} (holds _ _)
                 (perform read ⋆ (return ⋆))
         `else coerce (holds _ _) (perform write (const 0) (return ⋆)))
-      ⨟                              -- ⟨ branch-join ⟩ ∷ Unit
+      ⨟                              -- ⟨ branch-join ⟩ ∷ unit
         unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))
@@ -293,10 +293,10 @@ claim-after-a-branch =
 -- ticks of allowance for the slower branch.
 
 store-or-not :
-  [] ∷ Bool ⊢C⦂ Unit ‼ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 9 ⟩ ⟆ ]
+  [] ∷ bool ⊢C⦂ unit ! [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 9 ⟩ ⟆ ]
 store-or-not =
   box contract (const 42)            -- ∷ [ contract ] Reading
-    (if eternal-var Boolₑ (Tl-∷ Hd)
+    (if eternal-var boolₑ (Tl-∷ Hd)
       `then coerce (holds _ _)
               (perform read ⋆        -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _) (<:ᵛ-refl _)
@@ -304,7 +304,7 @@ store-or-not =
                   (perform send here (return ⋆))))
       `else coerce (holds _ _)
               (perform read ⋆        -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
-                (perform write here  -- ⟨ exact ⌈ write ⌉ ⟩ ∷ Unit
+                (perform write here  -- ⟨ exact ⌈ write ⌉ ⟩ ∷ unit
                   (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
                     (perform send here (return ⋆))))))
@@ -320,14 +320,14 @@ storing-then-transmitting-first =
 ------------------------------------------------------------------------
 -- Effect handling
 
-forwarded : [] ⊢C⦂ Reading ‼ exact ⌈ read ⌉
+forwarded : [] ⊢C⦂ Reading ! exact ⌈ read ⌉
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
     `in                              -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
       (return here)
 
-identified : Node ⊢C⦂ NodeId ‼ exact ⌈ read ⌉
+identified : Node ⊢C⦂ NodeId ! exact ⌈ read ⌉
 identified =
   handle perform read ⋆ (return here)
     `with identifying

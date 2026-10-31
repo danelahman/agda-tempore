@@ -99,14 +99,14 @@ private
 lt-nats : RawC ∅ˢ 0
 lt-nats = return (cmp lt (numeral 2) (numeral 3))
 
-lt-nats-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Bool ‼ 𝟏̂ₑ
-lt-nats-D = return (cmp lt (numeralᵛ 2) (numeralᵛ 3) Natₑ)
+lt-nats-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ bool ! 𝟏̂ₑ
+lt-nats-D = return (cmp lt (numeralᵛ 2) (numeralᵛ 3) natₑ)
 
 lt-nats-typed : IsTyped (infer [] lt-nats)
 lt-nats-typed = typed-of lt-nats (closed lt-nats-D refl) _
 
 expected-lt-nats : Scheme
-expected-lt-nats = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ 𝟏̂ₑ
+expected-lt-nats = ∀[ 0 , 0 , 0 ] ⊤ ⟹ bool ! 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- 2. Lists of natural numbers
@@ -118,15 +118,15 @@ expected-lt-nats = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ 𝟏̂ₑ
 eq-lists : RawC ∅ˢ 0
 eq-lists = return (cmp eq (cons (numeral 1) nil) (cons (numeral 2) nil))
 
-eq-lists-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Bool ‼ 𝟏̂ₑ
+eq-lists-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ bool ! 𝟏̂ₑ
 eq-lists-D =
-  return (cmp eq (cons (numeralᵛ 1) nil) (cons (numeralᵛ 2) nil) (|List|ₑ Natₑ))
+  return (cmp eq (cons (numeralᵛ 1) nil) (cons (numeralᵛ 2) nil) (listₑ natₑ))
 
 eq-lists-typed : IsTyped (infer [] eq-lists)
 eq-lists-typed = typed-of eq-lists (closed eq-lists-D refl) _
 
 expected-eq-lists : Scheme
-expected-eq-lists = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ 𝟏̂ₑ
+expected-eq-lists = ∀[ 0 , 0 , 0 ] ⊤ ⟹ bool ! 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- 3. Pairs and sums of eternal types
@@ -138,21 +138,21 @@ ge-pairs : RawC ∅ˢ 0
 ge-pairs = return (cmp ge ⦉ zero , true ⦊ ⦉ numeral 1 , false ⦊)
 
 expected-ge-pairs : Scheme
-expected-ge-pairs = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ 𝟏̂ₑ
+expected-ge-pairs = ∀[ 0 , 0 , 0 ] ⊤ ⟹ bool ! 𝟏̂ₑ
 
 ne-sums : RawC ∅ˢ 0
-ne-sums = return (cmp ne (inl zero ⦂ᵛ (Nat |+| Bool)) (inr true ⦂ᵛ (Nat |+| Bool)))
+ne-sums = return (cmp ne (inl zero ⦂ᵛ (nat |+| bool)) (inr true ⦂ᵛ (nat |+| bool)))
 
-ne-sums-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Bool ‼ 𝟏̂ₑ
+ne-sums-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ bool ! 𝟏̂ₑ
 ne-sums-D =
-  return (cmp ne (annᵛ (Nat |+| Bool) (inl zero)) (annᵛ (Nat |+| Bool) (inr true))
-              (Natₑ |+|ₑ Boolₑ))
+  return (cmp ne (annᵛ (nat |+| bool) (inl zero)) (annᵛ (nat |+| bool) (inr true))
+              (natₑ |+|ₑ boolₑ))
 
 ne-sums-typed : IsTyped (infer [] ne-sums)
 ne-sums-typed = typed-of ne-sums (closed ne-sums-D refl) _
 
 expected-ne-sums : Scheme
-expected-ne-sums = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ 𝟏̂ₑ
+expected-ne-sums = ∀[ 0 , 0 , 0 ] ⊤ ⟹ bool ! 𝟏̂ₑ
 
 --   ne-sums' = inl 0 ≠ inr true
 --
@@ -162,7 +162,7 @@ ne-sums' : RawC ∅ˢ 0
 ne-sums' = return (cmp ne (inl zero) (inr true))
 
 expected-ne-sums' : Scheme
-expected-ne-sums' = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ 𝟏̂ₑ
+expected-ne-sums' = ∀[ 0 , 0 , 0 ] ⊤ ⟹ bool ! 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- 4. A polymorphic comparison
@@ -177,12 +177,12 @@ equal = return (lam (return (lam (return (cmp eq v₁ v₀)))))
 expected-equal : Scheme
 expected-equal =
   ∀[ 3 , 0 , 0 ] eternal α₀ ∧ α₂ <: α₀ ∧ α₁ <: α₀ ⟹
-    (α₂ ⇒ (α₁ ⇒ Bool ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
+    (α₂ ⇒ (α₁ ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 
--- An instance at `Nat`, as a derivation
+-- An instance at `nat`, as a derivation
 
-equal-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ (Nat ⇒ Bool ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
-equal-D = return (lam (return (lam (return (cmp eq (var (Tl-∷ Hd) ok₀) (var Hd ok₀) Natₑ)))))
+equal-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ (nat ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
+equal-D = return (lam (return (lam (return (cmp eq (var (Tl-∷ Hd) ok₀) (var Hd ok₀) natₑ)))))
 
 equal-typed : IsTyped (infer [] equal)
 equal-typed = typed-of equal (closed equal-D refl) _
@@ -195,7 +195,7 @@ reflexive : RawC ∅ˢ 0
 reflexive = return (lam (return (cmp eq v₀ v₀)))
 
 expected-reflexive : Scheme
-expected-reflexive = ∀[ 1 , 0 , 0 ] eternal α₀ ⟹ (α₀ ⇒ Bool ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
+expected-reflexive = ∀[ 1 , 0 , 0 ] eternal α₀ ⟹ (α₀ ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- 5. Functions and boxes do not compare
@@ -214,21 +214,21 @@ eq-boxes = box 𝟏̂ᵣ ⋆ (box 𝟏̂ᵣ ⋆ (return (cmp eq v₁ v₀)))
 --
 --   later-lt = let n = 2 in delay 1; n < 3
 --
--- `Nat` survives the lock; typed at every grade.
+-- `nat` survives the lock; typed at every grade.
 
 later-lt : RawC ∅ˢ 0
 later-lt = return (numeral 2) ⨟ delay ⌜ 1 ⌝ (return (cmp lt v₀ (numeral 3)))
 
-later-lt-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Bool ‼ (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
+later-lt-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ bool ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 later-lt-D =
   return (numeralᵛ 2)
-  ⨟ delay ⌜ 1 ⌝ (return (cmp lt (var (Tl-⟨⟩ Hd) (et-ok Natₑ)) (numeralᵛ 3) Natₑ))
+  ⨟ delay ⌜ 1 ⌝ (return (cmp lt (var (Tl-⟨⟩ Hd) (et-ok natₑ)) (numeralᵛ 3) natₑ))
 
 later-lt-typed : IsTyped (infer [] later-lt)
 later-lt-typed = typed-of later-lt (closed later-lt-D refl) _
 
 expected-later-lt : Scheme
-expected-later-lt = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Bool ‼ ⌜ 1 ⌝ᵉ
+expected-later-lt = ∀[ 0 , 0 , 0 ] ⊤ ⟹ bool ! ⌜ 1 ⌝ᵉ
 
 --   later-equal x y = delay 1; x = y
 --
@@ -240,7 +240,7 @@ later-equal = return (lam (return (lam (delay ⌜ 1 ⌝ (return (cmp eq v₁ v�
 expected-later-equal : Scheme
 expected-later-equal =
   ∀[ 3 , 0 , 0 ] eternal α₀ ∧ α₂ <: α₀ ∧ α₁ <: α₀ ⟹
-    (α₂ ⇒ (α₁ ⇒ Bool ‼ ⌜ 1 ⌝ᵉ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
+    (α₂ ⇒ (α₁ ⇒ bool ! ⌜ 1 ⌝ᵉ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- 7. A comparison inspected by `if`
@@ -252,10 +252,10 @@ expected-later-equal =
 max : RawC ∅ˢ 0
 max = return (lam (return (lam (if cmp lt v₁ v₀ `then return v₀ `else return v₁))))
 
-max-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Nat ⇒ (Nat ⇒ Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
+max-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 max-D =
   return (lam (return (lam
-    (if cmp lt (var (Tl-∷ Hd) ok₀) (var Hd ok₀) Natₑ
+    (if cmp lt (var (Tl-∷ Hd) ok₀) (var Hd ok₀) natₑ
      `then return (var Hd ok₀) `else return (var (Tl-∷ Hd) ok₀)))))
 
 max-typed : IsTyped (infer [] max)
@@ -264,4 +264,4 @@ max-typed = typed-of max (closed max-D refl) _
 expected-max : Scheme
 expected-max =
   ∀[ 4 , 0 , 0 ] eternal α₀ ∧ α₃ <: α₀ ∧ α₁ <: α₀ ∧ α₁ <: α₂ ∧ α₃ <: α₂ ⟹
-    (α₃ ⇒ (α₁ ⇒ α₂ ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
+    (α₃ ⇒ (α₁ ⇒ α₂ ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ

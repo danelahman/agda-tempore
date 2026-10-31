@@ -84,27 +84,27 @@ open import MonomorphicCalculus.OperationalSemantics.Reduction           spec us
 -- The grade of a computation adds up the deadlines of the operations
 -- along it, so it is the time the whole run may take at worst.
 
-sampling : [] ⊢C⦂ Reading ‼ [0, 1 ]
+sampling : [] ⊢C⦂ Reading ! [0, 1 ]
 sampling =
   perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
     (return here)
 
-storing : [] ⊢C⦂ Unit ‼ [0, 4 ]
+storing : [] ⊢C⦂ unit ! [0, 4 ]
 storing =
   perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
-    (perform write here              -- ⟨ [0, 3 ] ⟩ ∷ Unit
+    (perform write here              -- ⟨ [0, 3 ] ⟩ ∷ unit
       (return ⋆))
 
 -- take a reading and transmit it at once: the reading is used where it
 -- was bound, with no lock in between, so `var` asks for nothing
 
-relaying : [] ⊢C⦂ Unit ‼ [0, 7 ]
+relaying : [] ⊢C⦂ unit ! [0, 7 ]
 relaying =
   perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
-    (perform send here               -- ⟨ [0, 6 ] ⟩ ∷ Unit
+    (perform send here               -- ⟨ [0, 6 ] ⟩ ∷ unit
       (return ⋆))
 
-tagged-relaying : [] ∷ NodeId ⊢C⦂ Unit ‼ [0, 7 ]
+tagged-relaying : [] ∷ NodeId ⊢C⦂ unit ! [0, 7 ]
 tagged-relaying =
   perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
@@ -126,7 +126,7 @@ reading-stale-after-an-operation = ≰!
 
 -- the identifier is eternal, so it crosses locks all the same
 
-carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ [0, 1 ]
+carried-id : [] ∷ NodeId ⊢C⦂ NodeId ! [0, 1 ]
 carried-id =
   perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
     (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
@@ -138,7 +138,7 @@ carried-id =
 -- more". A deadline may always be relaxed and never tightened. It
 -- leaves the context alone: only the grade moves.
 
-relaxing-a-deadline : [] ⊢C⦂ Unit ‼ [0, 6 ]
+relaxing-a-deadline : [] ⊢C⦂ unit ! [0, 6 ]
 relaxing-a-deadline = coerce ≤! (perform read ⋆ (perform write here (return ⋆)))
 
 tightening-a-deadline : ¬ (opTime read ·ₑ (opTime write ·ₑ 𝟏ₑ) ≾ₑ [0, 3 ])
@@ -151,9 +151,9 @@ tightening-a-deadline = ≰!
 -- larger deadline: a conditional may take as long as its slower
 -- branch. Neither branch locks the context.
 
-branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ [0, 6 ]
+branching : [] ∷ bool ∷ Reading ⊢C⦂ unit ! [0, 6 ]
 branching =
-  if eternal-var Boolₑ (Tl-∷ Hd)
+  if eternal-var boolₑ (Tl-∷ Hd)
     `then coerce ≤! (perform send  here (return ⋆))
     `else coerce ≤! (perform write here (return ⋆))
 
@@ -166,13 +166,13 @@ transmitting-takes-longer = ≰!
 -- an `if` over data alone: both branches make the same run, so neither
 -- is coerced
 
-either-reading : [] ∷ Bool ∷ Reading ∷ Reading ⊢C⦂ Unit ‼ [0, 6 ]
+either-reading : [] ∷ bool ∷ Reading ∷ Reading ⊢C⦂ unit ! [0, 6 ]
 either-reading =
-  if eternal-var Boolₑ (Tl-∷ (Tl-∷ Hd))
+  if eternal-var boolₑ (Tl-∷ (Tl-∷ Hd))
     `then perform send here (return ⋆)
     `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)
 
-sampling-then-branching : [] ⊢C⦂ Unit ‼ [0, 7 ]
+sampling-then-branching : [] ⊢C⦂ unit ! [0, 7 ]
 sampling-then-branching =
   perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
     (if true
@@ -185,32 +185,32 @@ sampling-then-branching =
 -- `caseℕ` binds the predecessor in its successor branch, and, as for
 -- `if`, both branches are coerced to one grade.
 
-is-zero : [] ⊢V⦂ Nat ⇒ Bool ‼ 𝟏ₑ
+is-zero : [] ⊢V⦂ nat ⇒ bool ! 𝟏ₑ
 is-zero = lam (caseℕ here `zero return true `succ return false)
 
-predecessor : [] ⊢V⦂ Nat ⇒ Nat ‼ 𝟏ₑ
+predecessor : [] ⊢V⦂ nat ⇒ nat ! 𝟏ₑ
 predecessor = lam (caseℕ here `zero return zero `succ return here)
 
-two-before-three : [] ⊢C⦂ Nat ‼ 𝟏ₑ
+two-before-three : [] ⊢C⦂ nat ! 𝟏ₑ
 two-before-three = predecessor · numeralᵛ 3
 
 -- a count of pending transmissions: none costs nothing, otherwise the
 -- reading is transmitted; the reading is bound before the branch, with no
 -- lock in between, so `var` asks for nothing
 
-transmitting-if-pending : [] ∷ Nat ∷ Reading ⊢C⦂ Unit ‼ [0, 6 ]
+transmitting-if-pending : [] ∷ nat ∷ Reading ⊢C⦂ unit ! [0, 6 ]
 transmitting-if-pending =
-  caseℕ eternal-var Natₑ (Tl-∷ Hd)
+  caseℕ eternal-var natₑ (Tl-∷ Hd)
     `zero coerce ≤! (return ⋆)
-    `succ perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)  -- ∷ Nat
+    `succ perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)  -- ∷ nat
 
 -- a natural number is eternal: a count crosses a lock, here the one a
 -- reading leaves
 
-count-survives : [] ∷ Nat ⊢C⦂ Nat ‼ [0, 1 ]
+count-survives : [] ∷ nat ⊢C⦂ nat ! [0, 1 ]
 count-survives =
   perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
-    (return (succ (eternal-var Natₑ (Tl-∷ (Tl-⟨⟩ Hd)))))
+    (return (succ (eternal-var natₑ (Tl-∷ (Tl-⟨⟩ Hd)))))
 
 ------------------------------------------------------------------------
 -- Primitive recursion
@@ -224,31 +224,31 @@ count-survives =
 
 -- addition, recursing on the first argument
 
-add : [] ⊢V⦂ Nat ⇒ (Nat ⇒ Nat ‼ 𝟏ₑ) ‼ 𝟏ₑ
+add : [] ⊢V⦂ nat ⇒ (nat ⇒ nat ! 𝟏ₑ) ! 𝟏ₑ
 add =
   lam (return (lam
-    (recℕ (eternal-var Natₑ (Tl-∷ Hd))
+    (recℕ (eternal-var natₑ (Tl-∷ Hd))
       (return here)
-      (return (succ here))         -- ⟨ ⊤ᵣ ⟩ ∷ Nat ⟨ [0, 0 ] ⟩ ∷ Nat
+      (return (succ here))         -- ⟨ ⊤ᵣ ⟩ ∷ nat ⟨ [0, 0 ] ⟩ ∷ nat
       ≤!)))
 
-two-plus-three : [] ⊢C⦂ Nat ‼ 𝟏ₑ
+two-plus-three : [] ⊢C⦂ nat ! 𝟏ₑ
 two-plus-three =
   recℕ (numeralᵛ 2) (return (numeralᵛ 3)) (return (succ here)) ≤!
 
 -- the predecessor, bound by the step, rebuilds the number
 
-rebuild : [] ⊢V⦂ Nat ⇒ Nat ‼ 𝟏ₑ
+rebuild : [] ⊢V⦂ nat ⇒ nat ! 𝟏ₑ
 rebuild =
   lam (recℕ here
         (return zero)
-        (return (succ (eternal-var Natₑ (Tl-∷ (Tl-⟨⟩ Hd)))))
+        (return (succ (eternal-var natₑ (Tl-∷ (Tl-⟨⟩ Hd)))))
         ≤!)
 
 -- an identifier from outside the step: eternal, so it crosses the
 -- barrier
 
-tagging-each : [] ∷ NodeId ⊢C⦂ NodeId ‼ 𝟏ₑ
+tagging-each : [] ∷ NodeId ⊢C⦂ NodeId ! 𝟏ₑ
 tagging-each =
   recℕ (numeralᵛ 2)
     (return here)
@@ -266,15 +266,15 @@ reading-barred-from-step ()
 
 -- a countdown, a tick a step: graded at the top, which absorbs itself
 
-countdown : [] ⊢V⦂ Nat ⇒ Unit ‼ ⊤ₑ
+countdown : [] ⊢V⦂ nat ⇒ unit ! ⊤ₑ
 countdown =
   lam (recℕ here
         (coerce (≾-⊤ₑ 𝟏ₑ) (return ⋆))
         (coerce (≾-⊤ₑ (ιₑ 1 ·ₑ 𝟏ₑ)) (delay 1 (return ⋆)))
-                                   -- ⟨ ⊤ᵣ ⟩ ∷ Nat ⟨ ⌈0, ∞ ⌉ ⟩ ∷ Unit
+                                   -- ⟨ ⊤ᵣ ⟩ ∷ nat ⟨ ⌈0, ∞ ⌉ ⟩ ∷ unit
         (≾-⊤ₑ (⊤ₑ ·ₑ ⊤ₑ)))
 
-three-ticks : [] ⊢C⦂ Unit ‼ ⊤ₑ
+three-ticks : [] ⊢C⦂ unit ! ⊤ₑ
 three-ticks = countdown · numeralᵛ 3
 
 -- at any finite deadline a tick a step does not absorb itself
@@ -288,14 +288,14 @@ tick-a-step-overruns = ≰!
 -- `case+` binds the injected value in the branch its injection names,
 -- and, as for `if`, both branches are coerced to one grade.
 
-swap : ∀ {A B} → [] ⊢V⦂ (A |+| B) ⇒ (B |+| A) ‼ 𝟏ₑ
+swap : ∀ {A B} → [] ⊢V⦂ (A |+| B) ⇒ (B |+| A) ! 𝟏ₑ
 swap = lam (case+ here `inl return (inr here) `inr return (inl here))
 
 -- a reading is transmitted, an identifier stands for none and costs
 -- nothing; the reading is bound by the branch itself, so `var` asks for
 -- nothing
 
-relaying-or-not : [] ∷ (Reading |+| NodeId) ⊢C⦂ Unit ‼ [0, 6 ]
+relaying-or-not : [] ∷ (Reading |+| NodeId) ⊢C⦂ unit ! [0, 6 ]
 relaying-or-not =
   case+ here
     `inl perform send here (return ⋆)  -- ∷ Reading
@@ -304,12 +304,12 @@ relaying-or-not =
 -- a sum is eternal when both summands are: a tagged identifier crosses
 -- a lock, a sum that may hold a reading does not
 
-tag-survives : [] ∷ (NodeId |+| Unit) ⊢C⦂ (NodeId |+| Unit) ‼ [0, 1 ]
+tag-survives : [] ∷ (NodeId |+| unit) ⊢C⦂ (NodeId |+| unit) ! [0, 1 ]
 tag-survives =
   perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
-    (return (eternal-var (nodeid-eternal |+|ₑ Unitₑ) (Tl-∷ (Tl-⟨⟩ Hd))))
+    (return (eternal-var (nodeid-eternal |+|ₑ unitₑ) (Tl-∷ (Tl-⟨⟩ Hd))))
 
-reading-or-tag-not-eternal : ¬ Eternal (Reading |+| NodeId)
+reading-or-tag-not-eternal : ¬ Et (Reading |+| NodeId)
 reading-or-tag-not-eternal (r |+|ₑ _) = reading-not-eternal r
 
 ------------------------------------------------------------------------
@@ -321,23 +321,23 @@ reading-or-tag-not-eternal (r |+|ₑ _) = reading-not-eternal r
 -- the first pending reading is transmitted, an empty list costs nothing;
 -- the head is bound by the branch itself, so `var` asks for nothing
 
-transmitting-the-first : [] ∷ |List| Reading ⊢C⦂ Unit ‼ [0, 6 ]
+transmitting-the-first : [] ∷ list Reading ⊢C⦂ unit ! [0, 6 ]
 transmitting-the-first =
   caseL here
     `nil coerce ≤! (return ⋆)
     `cons perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)
-                                     -- ∷ Reading ∷ |List| Reading
+                                     -- ∷ Reading ∷ list Reading
 
 -- a list is eternal when its elements are: identifiers cross a lock, a
 -- list that may hold readings does not
 
-ids-survive : [] ∷ |List| NodeId ⊢C⦂ |List| NodeId ‼ [0, 1 ]
+ids-survive : [] ∷ list NodeId ⊢C⦂ list NodeId ! [0, 1 ]
 ids-survive =
   perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
-    (return (eternal-var (|List|ₑ nodeid-eternal) (Tl-∷ (Tl-⟨⟩ Hd))))
+    (return (eternal-var (listₑ nodeid-eternal) (Tl-∷ (Tl-⟨⟩ Hd))))
 
-readings-not-eternal : ¬ Eternal (|List| Reading)
-readings-not-eternal (|List|ₑ r) = reading-not-eternal r
+readings-not-eternal : ¬ Et (list Reading)
+readings-not-eternal (listₑ r) = reading-not-eternal r
 
 ------------------------------------------------------------------------
 -- Primitive recursion on lists
@@ -350,49 +350,49 @@ readings-not-eternal (|List|ₑ r) = reading-not-eternal r
 
 -- the length, whatever the elements are
 
-length : ∀ {A} → [] ⊢V⦂ |List| A ⇒ Nat ‼ 𝟏ₑ
+length : ∀ {A} → [] ⊢V⦂ list A ⇒ nat ! 𝟏ₑ
 length =
   lam (recL here
         (return zero)
-        (return (succ here))         -- ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A ⟨ [0, 0 ] ⟩ ∷ Nat
+        (return (succ here))         -- ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A ⟨ [0, 0 ] ⟩ ∷ nat
         ≤!)
 
-three-readings-long : [] ⊢C⦂ Nat ‼ 𝟏ₑ
+three-readings-long : [] ⊢C⦂ nat ! 𝟏ₑ
 three-readings-long =
   length {Reading} · cons (const 1) (cons (const 2) (cons (const 3) nil))
 
 -- a pure map: each count is incremented; a count is eternal, so the head
 -- crosses the result's lock
 
-incrementing : [] ⊢V⦂ |List| Nat ⇒ |List| Nat ‼ 𝟏ₑ
+incrementing : [] ⊢V⦂ list nat ⇒ list nat ! 𝟏ₑ
 incrementing =
   lam (recL here
         (return nil)
-        (return (cons (succ (eternal-var Natₑ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))) here))
+        (return (cons (succ (eternal-var natₑ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))) here))
         ≤!)
 
 -- pacing a list, a tick an element: graded at the top, which absorbs
 -- itself
 
-pacing : ∀ {A} → [] ⊢V⦂ |List| A ⇒ Unit ‼ ⊤ₑ
+pacing : ∀ {A} → [] ⊢V⦂ list A ⇒ unit ! ⊤ₑ
 pacing =
   lam (recL here
         (coerce (≾-⊤ₑ 𝟏ₑ) (return ⋆))
         (coerce (≾-⊤ₑ (ιₑ 1 ·ₑ 𝟏ₑ)) (delay 1 (return ⋆)))
-                                     -- ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A ⟨ ⌈0, ∞ ⌉ ⟩ ∷ Unit
+                                     -- ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A ⟨ ⌈0, ∞ ⌉ ⟩ ∷ unit
         (≾-⊤ₑ (⊤ₑ ·ₑ ⊤ₑ)))
 
 -- The head is bound before the result's lock, so the step reads it only
 -- after the recursion at the tail has run. A reading is a head the step
 -- may use when that takes no time: the latest reading, at the unit.
 
-latest : [] ⊢V⦂ |List| Reading ⇒ (Reading |+| Unit) ‼ 𝟏ₑ
+latest : [] ⊢V⦂ list Reading ⇒ (Reading |+| unit) ! 𝟏ₑ
 latest =
   lam (recL here
         (return (inr ⋆))
         (return (inl (fresh-var ≤! (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))))
-                                     -- ⟨ ⊤ᵣ ⟩ ∷ Reading ∷ |List| Reading
-                                     --   ⟨ [0, 0 ] ⟩ ∷ (Reading |+| Unit)
+                                     -- ⟨ ⊤ᵣ ⟩ ∷ Reading ∷ list Reading
+                                     --   ⟨ [0, 0 ] ⟩ ∷ (Reading |+| unit)
         ≤!)
 
 -- behind the lock of a recursion that may take time, the head is stale
@@ -409,29 +409,29 @@ head-stale-behind-the-top ()
 
 -- two identifiers, bound together, compared at once
 
-same-node : [] ∷ NodeId ∷ NodeId ⊢C⦂ Bool ‼ 𝟏ₑ
+same-node : [] ∷ NodeId ∷ NodeId ⊢C⦂ bool ! 𝟏ₑ
 same-node =
   cmp eq (eternal-var nodeid-eternal (Tl-∷ Hd)) here nodeid-eternal
 
 -- an identifier is eternal, so it is compared after a reading all the same
 
-below-after-reading : [] ∷ NodeId ⊢C⦂ Bool ‼ [0, 1 ]
+below-after-reading : [] ∷ NodeId ⊢C⦂ bool ! [0, 1 ]
 below-after-reading =
   perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
     (cmp lt (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))) (const 7) nodeid-eternal)
 
 -- a reading is not eternal, so no comparison of readings is typed
 
-readings-not-compared : ¬ Eternal Reading
+readings-not-compared : ¬ Et Reading
 readings-not-compared = reading-not-eternal
 
 -- the comparison decides the branch: transmit the reading only to a
 -- node above the threshold
 
-transmitting-above : [] ∷ NodeId ∷ Reading ⊢C⦂ Unit ‼ [0, 6 ]
+transmitting-above : [] ∷ NodeId ∷ Reading ⊢C⦂ unit ! [0, 6 ]
 transmitting-above =
   cmp gt (eternal-var nodeid-eternal (Tl-∷ Hd)) (const 3) nodeid-eternal
-    ⨟                                -- ⟨ [0, 0 ] ⟩ ∷ Bool
+    ⨟                                -- ⟨ [0, 0 ] ⟩ ∷ bool
   coerce ≤!
     (if here
       `then perform send (fresh-var ≤! (Tl-∷ (Tl-⟨⟩ Hd))) (return ⋆)
@@ -440,21 +440,21 @@ transmitting-above =
 -- The order on data, computed: numerals as numbers, lists and pairs
 -- lexicographically, `inl` before `inr`, identifiers as their numbers.
 
-two-below-three : compareᵈ Natₑ 2 3 ≡ less
+two-below-three : compareᵈ natₑ 2 3 ≡ less
 two-below-three = refl
 
-shorter-prefix-first : compareᵈ (|List|ₑ Natₑ) (1 List.∷ 2 List.∷ List.[])
+shorter-prefix-first : compareᵈ (listₑ natₑ) (1 List.∷ 2 List.∷ List.[])
                                        (1 List.∷ 2 List.∷ 0 List.∷ List.[]) ≡ less
 shorter-prefix-first = refl
 
-first-difference-decides : compareᵈ (|List|ₑ Natₑ) (1 List.∷ 5 List.∷ List.[])
+first-difference-decides : compareᵈ (listₑ natₑ) (1 List.∷ 5 List.∷ List.[])
                                            (2 List.∷ 0 List.∷ List.[]) ≡ less
 first-difference-decides = refl
 
-pairs-by-first-then-second : compareᵈ (Natₑ |×|ₑ Boolₑ) (1 , true) (1 , false) ≡ greater
+pairs-by-first-then-second : compareᵈ (natₑ |×|ₑ boolₑ) (1 , true) (1 , false) ≡ greater
 pairs-by-first-then-second = refl
 
-inl-before-inr : compareᵈ (Natₑ |+|ₑ Unitₑ) (inj₁ 9) (inj₂ tt) ≡ less
+inl-before-inr : compareᵈ (natₑ |+|ₑ unitₑ) (inj₁ 9) (inj₂ tt) ≡ less
 inl-before-inr = refl
 
 identifiers-as-numbers : compareᵈ nodeid-eternal 4 4 ≡ equal
@@ -465,13 +465,13 @@ identifiers-as-numbers = refl
 at-most-of-equal : holds le (compareᵈ nodeid-eternal 4 4) ≡ true
 at-most-of-equal = refl
 
-differ-of-less : holds ne (compareᵈ Natₑ 2 3) ≡ true
+differ-of-less : holds ne (compareᵈ natₑ 2 3) ≡ true
 differ-of-less = refl
 
 -- `CMP` reduces a comparison to the returned outcome, reading the operands'
 -- data off the values
 
-two-below-three-reduces : ⟨ ∅ , cmp lt (numeralᵛ 2) (numeralᵛ 3) Natₑ ⟩
+two-below-three-reduces : ⟨ ∅ , cmp lt (numeralᵛ 2) (numeralᵛ 3) natₑ ⟩
                         ⟶ ⟨ ∅ , return true ⟩
 two-below-three-reduces = CMP
 
@@ -486,7 +486,7 @@ two-below-three-reduces = CMP
 
 -- claimed at once, with no lock in between
 
-claiming-now : [] ⊢C⦂ Unit ‼ [0, 6 ]
+claiming-now : [] ⊢C⦂ unit ! [0, 6 ]
 claiming-now =
   box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
     (unbox Hd ≤! (<:ᵛ-refl _)        -- ∷ Reading
@@ -494,7 +494,7 @@ claiming-now =
 
 -- claimed after idling two ticks of the six
 
-claim-after-idling : [] ⊢C⦂ Unit ‼ [0, 8 ]
+claim-after-idling : [] ⊢C⦂ unit ! [0, 8 ]
 claim-after-idling =
   box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
     (delay 2                         -- ⟨ [0, 2 ] ⟩
@@ -504,7 +504,7 @@ claim-after-idling =
 
 -- and after taking a reading, which spends one
 
-claim-after-sampling : [] ⊢C⦂ Unit ‼ [0, 7 ]
+claim-after-sampling : [] ⊢C⦂ unit ! [0, 7 ]
 claim-after-sampling =
   box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [0, 1 ] ⟩ ∷ Reading
@@ -525,7 +525,7 @@ idling-spends-it = ≰!
 
 -- handing a leased resource to a function, which claims it itself
 
-handed-over : [] ⊢C⦂ Unit ‼ [0, 7 ]
+handed-over : [] ⊢C⦂ unit ! [0, 7 ]
 handed-over =
   box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
     (lam                             -- ∷ [ [0, 6 ] ] Reading
@@ -539,13 +539,13 @@ handed-over =
 -- claimed reading or one taken along the way), with both branches
 -- making the same run
 
-either-way : [] ∷ Bool ⊢C⦂ Unit ‼ [0, 7 ]
+either-way : [] ∷ bool ⊢C⦂ unit ! [0, 7 ]
 either-way =
   box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [0, 1 ] ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
-        (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
+        (if eternal-var boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
           `then perform send here (return ⋆)
           `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆))))
 
@@ -566,7 +566,7 @@ spent-by-a-transmission = ≰!
 -- leased for six instead, both branches hold it, and the conditional is
 -- graded at the deadline of the two
 
-claimed-in-both-branches : [] ⊢C⦂ Unit ‼ [0, 12 ]
+claimed-in-both-branches : [] ⊢C⦂ unit ! [0, 12 ]
 claimed-in-both-branches =
   box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
     (if true
@@ -577,7 +577,7 @@ claimed-in-both-branches =
                   (perform send here (return ⋆))))
       `else coerce ≤!
               (perform send (const 0)
-                                     -- ⟨ [0, 6 ] ⟩ ∷ Unit
+                                     -- ⟨ [0, 6 ] ⟩ ∷ unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
                   (perform send here (return ⋆)))))
@@ -592,7 +592,7 @@ claimed-in-both-branches =
 
 -- a reading spends one of the four the lease allows
 
-claim-after-a-reading : [] ⊢C⦂ Unit ‼ [0, 7 ]
+claim-after-a-reading : [] ⊢C⦂ unit ! [0, 7 ]
 claim-after-a-reading =
   box [0, 4 ] (const 42)             -- ∷ [ [0, 4 ] ] Reading
     ((perform read ⋆ (return here))
@@ -610,7 +610,7 @@ coercing-closes-it = ≰!
 -- the same program with the coercion, against a lease long enough for
 -- what it claims to have spent
 
-claim-after-a-coerced-reading : [] ⊢C⦂ Unit ‼ [0, 12 ]
+claim-after-a-coerced-reading : [] ⊢C⦂ unit ! [0, 12 ]
 claim-after-a-coerced-reading =
   box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
     (coerce {ε' = [0, 6 ]} ≤! (perform read ⋆ (return here))
@@ -626,7 +626,7 @@ claim-after-a-coerced-reading =
 -- reading, idles, and transmits a leased resource, the reading it took
 -- itself having gone stale under the idling lock.
 
-carrying-a-lease : [] ⊢C⦂ Unit ‼ [0, 9 ]
+carrying-a-lease : [] ⊢C⦂ unit ! [0, 9 ]
 carrying-a-lease =
   box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [0, 1 ] ⟩ ∷ Reading
@@ -643,11 +643,11 @@ reading-is-not = ≰!
 -- a lease long enough to cover a transmission as well, spent down to
 -- seven of its nine by the time the claim is made
 
-longer-lease : [] ⊢C⦂ Unit ‼ [0, 13 ]
+longer-lease : [] ⊢C⦂ unit ! [0, 13 ]
 longer-lease =
   box [0, 9 ] (const 42)             -- ∷ [ [0, 9 ] ] Reading
     (perform read ⋆                  -- ⟨ [0, 1 ] ⟩ ∷ Reading
-      (perform send (const 0)        -- ⟨ [0, 6 ] ⟩ ∷ Unit
+      (perform send (const 0)        -- ⟨ [0, 6 ] ⟩ ∷ unit
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))
@@ -667,10 +667,10 @@ short-lease-run-out = ≰!
 -- while the lease is still open and transmit afterwards, and the
 -- cheaper branch is coerced to the deadline of the other.
 
-spend-it-either-way : [] ∷ Bool ⊢C⦂ Unit ‼ [0, 8 ]
+spend-it-either-way : [] ∷ bool ⊢C⦂ unit ! [0, 8 ]
 spend-it-either-way =
   box [0, 6 ] (const 42)             -- ∷ [ [0, 6 ] ] Reading
-    (if eternal-var Boolₑ (Tl-∷ Hd)
+    (if eternal-var boolₑ (Tl-∷ Hd)
       `then delay 2                  -- ⟨ [0, 2 ] ⟩
               (unbox (Tl-⟨⟩ Hd) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
@@ -694,14 +694,14 @@ claim-before-transmitting = ≤!
 -- Handling locks its `in` part by the handled computation's grade, as
 -- sequencing does.
 
-forwarded : [] ⊢C⦂ Reading ‼ [0, 1 ]
+forwarded : [] ⊢C⦂ Reading ! [0, 1 ]
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
     `in                              -- ⟨ [0, 1 ] ⟩ ∷ Reading
       (return here)
 
-identified : Node ⊢C⦂ NodeId ‼ [0, 1 ]
+identified : Node ⊢C⦂ NodeId ! [0, 1 ]
 identified =
   handle perform read ⋆ (return here)
     `with identifying
@@ -723,11 +723,11 @@ nothing-fits send  ⌈0, ∞ ⌉   = tt
 -- the operations are suppressed, and the grade the handled computation
 -- is typed at is unchanged by that
 
-suppressed : [] ⊢C⦂ Unit ‼ [0, 4 ]
+suppressed : [] ⊢C⦂ unit ! [0, 4 ]
 suppressed =
   handle perform read ⋆ (perform write here (return ⋆))
     `with discarding {[]} nothing-fits
-    `in                              -- ⟨ [0, 4 ] ⟩ ∷ Unit
+    `in                              -- ⟨ [0, 4 ] ⟩ ∷ unit
       (return ⋆)
 
 ------------------------------------------------------------------------

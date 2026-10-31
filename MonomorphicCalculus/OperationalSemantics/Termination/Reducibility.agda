@@ -117,12 +117,12 @@ renL r (inj₁ tt)      = inj₁ tt
 renL r (inj₂ (W , L)) = inj₂ (V-rename r W , V-rename r L)
 
 listᵛ-ren : ∀ {A} {St St' : 𝕊 []} → (r : Ren [] (toCtx St') (toCtx St))
-          → (V : toCtx St ⊢V⦂ |List| A)
+          → (V : toCtx St ⊢V⦂ list A)
           → listᵛ (V-rename r V) ≡ renL r (listᵛ V)
-listᵛ-ren r (var _ x)            = ⊥-elim (|List|-not-in-toCtx x)
+listᵛ-ren r (var _ x)            = ⊥-elim (list-not-in-toCtx x)
 listᵛ-ren r nil                  = refl
 listᵛ-ren r (cons V W)           = refl
-listᵛ-ren r (subV V (|List|ₛ p)) =
+listᵛ-ren r (subV V (listₛ p))   =
   trans (cong (subL p) (listᵛ-ren r V)) (comm (listᵛ V))
   where
     comm : ∀ l → subL p (renL r l) ≡ renL r (subL p l)
@@ -142,15 +142,15 @@ data Shape : Set where
 
 shapeᵛ : VType → Shape
 shapeᵛ (Base b)      = ⋆ˢ
-shapeᵛ Unit          = ⋆ˢ
-shapeᵛ Bool          = ⋆ˢ
-shapeᵛ Nat           = ⋆ˢ
+shapeᵛ unit          = ⋆ˢ
+shapeᵛ bool          = ⋆ˢ
+shapeᵛ nat           = ⋆ˢ
 shapeᵛ (A |×| B)     = shapeᵛ A ×ˢ shapeᵛ B
 shapeᵛ (A |+| B)     = shapeᵛ A +ˢ shapeᵛ B
-shapeᵛ (|List| A)    = Lˢ (shapeᵛ A)
-shapeᵛ Empty         = ⋆ˢ
-shapeᵛ (A ⇒ (B ‼ _)) = shapeᵛ A →ˢ shapeᵛ B
-shapeᵛ ((A ‼ _) ⇛ (B ‼ _)) = shapeᵛ A ⇛ˢ shapeᵛ B
+shapeᵛ (list A)      = Lˢ (shapeᵛ A)
+shapeᵛ empty         = ⋆ˢ
+shapeᵛ (A ⇒ (B ! _)) = shapeᵛ A →ˢ shapeᵛ B
+shapeᵛ ((A ! _) ⇛ (B ! _)) = shapeᵛ A ⇛ˢ shapeᵛ B
 shapeᵛ ([ _ ] A)     = □ˢ (shapeᵛ A)
 
 ×ˢ-inj₁ : ∀ {t t' s s'} → (t ×ˢ t') ≡ (s ×ˢ s') → t ≡ s
@@ -185,15 +185,15 @@ Lˢ-inj refl = refl
 
 <:ᵛ-shape : ∀ {A A'} → A <:ᵛ A' → shapeᵛ A ≡ shapeᵛ A'
 <:ᵛ-shape (Baseₛ _)       = refl
-<:ᵛ-shape Unitₛ           = refl
-<:ᵛ-shape Boolₛ           = refl
-<:ᵛ-shape Natₛ            = refl
+<:ᵛ-shape unitₛ           = refl
+<:ᵛ-shape boolₛ           = refl
+<:ᵛ-shape natₛ            = refl
 <:ᵛ-shape (p |×|ₛ q)      = cong₂ _×ˢ_ (<:ᵛ-shape p) (<:ᵛ-shape q)
 <:ᵛ-shape (p |+|ₛ q)      = cong₂ _+ˢ_ (<:ᵛ-shape p) (<:ᵛ-shape q)
-<:ᵛ-shape (|List|ₛ p)     = cong Lˢ (<:ᵛ-shape p)
-<:ᵛ-shape Emptyₛ          = refl
-<:ᵛ-shape (p ⇒ₛ (q ‼ₛ _)) = cong₂ _→ˢ_ (sym (<:ᵛ-shape p)) (<:ᵛ-shape q)
-<:ᵛ-shape ((p ‼ₛ _) ⇛ₛ (q ‼ₛ _)) = cong₂ _⇛ˢ_ (sym (<:ᵛ-shape p)) (<:ᵛ-shape q)
+<:ᵛ-shape (listₛ p)       = cong Lˢ (<:ᵛ-shape p)
+<:ᵛ-shape emptyₛ          = refl
+<:ᵛ-shape (p ⇒ₛ (q !ₛ _)) = cong₂ _→ˢ_ (sym (<:ᵛ-shape p)) (<:ᵛ-shape q)
+<:ᵛ-shape ((p !ₛ _) ⇛ₛ (q !ₛ _)) = cong₂ _⇛ˢ_ (sym (<:ᵛ-shape p)) (<:ᵛ-shape q)
 <:ᵛ-shape ([ _ ]ₛ p)      = cong □ˢ (<:ᵛ-shape p)
 
 -- A handler is used as itself, or at a supertype through one subsumption.
@@ -210,12 +210,12 @@ use-<: (use-sub w) = w
 -- The skeletons of the handled and the result type a use stands at.
 
 use-shape₁ : ∀ {Γ A B ε ε' A₀ B₀ ε₀ ε₀' t t'}
-             {V : Γ ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε')} {U : Γ ⊢V⦂ (A₀ ‼ ε₀) ⇛ (B₀ ‼ ε₀')}
+             {V : Γ ⊢V⦂ (A ! ε) ⇛ (B ! ε')} {U : Γ ⊢V⦂ (A₀ ! ε₀) ⇛ (B₀ ! ε₀')}
            → Use V U → (shapeᵛ A ⇛ˢ shapeᵛ B) ≡ (t ⇛ˢ t') → shapeᵛ A₀ ≡ t
 use-shape₁ u e = trans (sym (⇛ˢ-inj₁ (<:ᵛ-shape (use-<: u)))) (⇛ˢ-inj₁ e)
 
 use-shape₂ : ∀ {Γ A B ε ε' A₀ B₀ ε₀ ε₀' t t'}
-             {V : Γ ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε')} {U : Γ ⊢V⦂ (A₀ ‼ ε₀) ⇛ (B₀ ‼ ε₀')}
+             {V : Γ ⊢V⦂ (A ! ε) ⇛ (B ! ε')} {U : Γ ⊢V⦂ (A₀ ! ε₀) ⇛ (B₀ ! ε₀')}
            → Use V U → (shapeᵛ A ⇛ˢ shapeᵛ B) ≡ (t ⇛ˢ t') → shapeᵛ B₀ ≡ t'
 use-shape₂ u e = trans (sym (⇛ˢ-inj₂ (<:ᵛ-shape (use-<: u)))) (⇛ˢ-inj₂ e)
 
@@ -267,61 +267,61 @@ VRedᵍˢ ⋆ˢ        e St V = ⊤
 VRedᵍˢ (t →ˢ t') e St V = ⊤
 VRedᵍˢ (t ⇛ˢ t') e St V = ⊤
 
-VRedᵍˢ (Lˢ t) {|List| A}     e  St V =
+VRedᵍˢ (Lˢ t) {list A}       e  St V =
   VRedL (VRedᵍˢ t (Lˢ-inj e) St) (listᵛ V)
 VRedᵍˢ (Lˢ t) {Base b}      () St V
-VRedᵍˢ (Lˢ t) {Unit}        () St V
-VRedᵍˢ (Lˢ t) {Bool}        () St V
-VRedᵍˢ (Lˢ t) {Nat}         () St V
+VRedᵍˢ (Lˢ t) {unit}        () St V
+VRedᵍˢ (Lˢ t) {bool}        () St V
+VRedᵍˢ (Lˢ t) {nat}         () St V
 VRedᵍˢ (Lˢ t) {A |×| B}     () St V
 VRedᵍˢ (Lˢ t) {A |+| B}     () St V
-VRedᵍˢ (Lˢ t) {Empty}       () St V
-VRedᵍˢ (Lˢ t) {A ⇒ (B ‼ ε)} () St V
-VRedᵍˢ (Lˢ t) {(A ‼ ε) ⇛ (B ‼ ε')} () St V
+VRedᵍˢ (Lˢ t) {empty}       () St V
+VRedᵍˢ (Lˢ t) {A ⇒ (B ! ε)} () St V
+VRedᵍˢ (Lˢ t) {(A ! ε) ⇛ (B ! ε')} () St V
 VRedᵍˢ (Lˢ t) {[ ρ ] A}     () St V
 
 VRedᵍˢ (t ×ˢ t') {A |×| B}     e  St V =
   VRedᵍˢ t (×ˢ-inj₁ e) St (fstᵛ V) × VRedᵍˢ t' (×ˢ-inj₂ e) St (sndᵛ V)
 VRedᵍˢ (t ×ˢ t') {Base b}      () St V
-VRedᵍˢ (t ×ˢ t') {Unit}        () St V
-VRedᵍˢ (t ×ˢ t') {Bool}        () St V
-VRedᵍˢ (t ×ˢ t') {Nat}         () St V
-VRedᵍˢ (t ×ˢ t') {|List| A}    () St V
+VRedᵍˢ (t ×ˢ t') {unit}        () St V
+VRedᵍˢ (t ×ˢ t') {bool}        () St V
+VRedᵍˢ (t ×ˢ t') {nat}         () St V
+VRedᵍˢ (t ×ˢ t') {list A}      () St V
 VRedᵍˢ (t ×ˢ t') {A |+| B}     () St V
 
 VRedᵍˢ (t +ˢ t') {A |+| B}     e  St V =
   VRed⊎ (VRedᵍˢ t (+ˢ-inj₁ e) St) (VRedᵍˢ t' (+ˢ-inj₂ e) St) (injᵛ V)
 VRedᵍˢ (t +ˢ t') {Base b}      () St V
-VRedᵍˢ (t +ˢ t') {Unit}        () St V
-VRedᵍˢ (t +ˢ t') {Bool}        () St V
-VRedᵍˢ (t +ˢ t') {Nat}         () St V
-VRedᵍˢ (t +ˢ t') {|List| A}    () St V
+VRedᵍˢ (t +ˢ t') {unit}        () St V
+VRedᵍˢ (t +ˢ t') {bool}        () St V
+VRedᵍˢ (t +ˢ t') {nat}         () St V
+VRedᵍˢ (t +ˢ t') {list A}      () St V
 VRedᵍˢ (t +ˢ t') {A |×| B}     () St V
-VRedᵍˢ (t +ˢ t') {Empty}       () St V
-VRedᵍˢ (t +ˢ t') {A ⇒ (B ‼ ε)} () St V
-VRedᵍˢ (t +ˢ t') {(A ‼ ε) ⇛ (B ‼ ε')} () St V
+VRedᵍˢ (t +ˢ t') {empty}       () St V
+VRedᵍˢ (t +ˢ t') {A ⇒ (B ! ε)} () St V
+VRedᵍˢ (t +ˢ t') {(A ! ε) ⇛ (B ! ε')} () St V
 VRedᵍˢ (t +ˢ t') {[ ρ ] A}     () St V
-VRedᵍˢ (t ×ˢ t') {Empty}       () St V
-VRedᵍˢ (t ×ˢ t') {A ⇒ (B ‼ ε)} () St V
-VRedᵍˢ (t ×ˢ t') {(A ‼ ε) ⇛ (B ‼ ε')} () St V
+VRedᵍˢ (t ×ˢ t') {empty}       () St V
+VRedᵍˢ (t ×ˢ t') {A ⇒ (B ! ε)} () St V
+VRedᵍˢ (t ×ˢ t') {(A ! ε) ⇛ (B ! ε')} () St V
 VRedᵍˢ (t ×ˢ t') {[ ρ ] A}     () St V
 
 VRedᵍˢ (□ˢ t) {[ ρ ] A}     e  St V =
   ∀ {St'} → (r : St [ cellᵛ V ]⊑ᶜ St')
   → VRedᵍˢ t (trans (<:ᵛ-shape (val-subᵛ V)) (□ˢ-inj e)) St' (lookupᶜ r)
 VRedᵍˢ (□ˢ t) {Base b}      () St V
-VRedᵍˢ (□ˢ t) {Unit}        () St V
-VRedᵍˢ (□ˢ t) {Bool}        () St V
-VRedᵍˢ (□ˢ t) {Nat}         () St V
-VRedᵍˢ (□ˢ t) {|List| A}    () St V
+VRedᵍˢ (□ˢ t) {unit}        () St V
+VRedᵍˢ (□ˢ t) {bool}        () St V
+VRedᵍˢ (□ˢ t) {nat}         () St V
+VRedᵍˢ (□ˢ t) {list A}      () St V
 VRedᵍˢ (□ˢ t) {A |+| B}     () St V
 VRedᵍˢ (□ˢ t) {A |×| B}     () St V
-VRedᵍˢ (□ˢ t) {Empty}       () St V
-VRedᵍˢ (□ˢ t) {A ⇒ (B ‼ ε)} () St V
-VRedᵍˢ (□ˢ t) {(A ‼ ε) ⇛ (B ‼ ε')} () St V
+VRedᵍˢ (□ˢ t) {empty}       () St V
+VRedᵍˢ (□ˢ t) {A ⇒ (B ! ε)} () St V
+VRedᵍˢ (□ˢ t) {(A ! ε) ⇛ (B ! ε')} () St V
 
-VRedᵍ : (G : GType) → (St : 𝕊 []) → toCtx St ⊢V⦂ type-of-gtype G → Set
-VRedᵍ G = VRedᵍˢ (shapeᵛ (type-of-gtype G)) {type-of-gtype G} refl
+VRedᵍ : (G : GType) → (St : 𝕊 []) → toCtx St ⊢V⦂ ⌜ G ⌝ᵍ → Set
+VRedᵍ G = VRedᵍˢ (shapeᵛ ⌜ G ⌝ᵍ) {⌜ G ⌝ᵍ} refl
 
 -- `M` runs to a weak head normal form whose components are reducible. A step
 -- refines the value type as well as the grade, so the whnf's own value type is
@@ -333,12 +333,12 @@ VPred s = {A : VType} → shapeᵛ A ≡ s → (St : 𝕊 []) → toCtx St ⊢V�
 
 data CRed (s : Shape) (P : VPred s)
      : {A : VType} → shapeᵛ A ≡ s
-     → (ε : E) → (St : 𝕊 []) → toCtx St ⊢C⦂ A ‼ ε → Set where
+     → (ε : E) → (St : 𝕊 []) → toCtx St ⊢C⦂ A ! ε → Set where
 
   -- it returns a reducible value
 
   cred-ret : ∀ {A A₀ ε} {e : shapeᵛ A ≡ s} {St St₁ : 𝕊 []}
-           → {M : toCtx St ⊢C⦂ A ‼ ε}
+           → {M : toCtx St ⊢C⦂ A ! ε}
            → {V : toCtx St₁ ⊢V⦂ A₀}
            → (e₀ : shapeᵛ A₀ ≡ s)
            → ⟨ St , M ⟩ ⟶* ⟨ St₁ , return V ⟩
@@ -351,16 +351,16 @@ data CRed (s : Shape) (P : VPred s)
   -- has elapsed
 
   cred-op : ∀ {A A₀ ε ε₁} {e : shapeᵛ A ≡ s} {St St₁ : 𝕊 []} {op : Op}
-          → {M : toCtx St ⊢C⦂ A ‼ ε}
-          → {W : toCtx St₁ ⊢V⦂ type-of-gtype (param op)}
-          → {M' : toCtx St₁ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
-                    ⊢C⦂ A₀ ‼ ε₁}
+          → {M : toCtx St ⊢C⦂ A ! ε}
+          → {W : toCtx St₁ ⊢V⦂ ⌜ param op ⌝ᵍ}
+          → {M' : toCtx St₁ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
+                    ⊢C⦂ A₀ ! ε₁}
           → (e₀ : shapeᵛ A₀ ≡ s)
           → ⟨ St , M ⟩ ⟶* ⟨ St₁ , perform op W M' ⟩
           → VRedᵍ (param op) St₁ W
           → (∀ {St₂ : 𝕊 []}
              → (q : St₁ ⊑ₛ[ ∣ op-grade op ∣ᵉ ] St₂)
-             → (W' : toCtx St₂ ⊢V⦂ type-of-gtype (arity op))
+             → (W' : toCtx St₂ ⊢V⦂ ⌜ arity op ⌝ᵍ)
              → VRedᵍ (arity op) St₂ W'
              → CRed s P e₀ ε₁ St₂ (resume q M' W'))
           -------------------------------------------------------------------
@@ -381,91 +381,91 @@ VRedˢ ⋆ˢ e St V = ⊤
 VRedˢ (t ×ˢ t') {A |×| B}     e  St V =
   VRedˢ t (×ˢ-inj₁ e) St (fstᵛ V) × VRedˢ t' (×ˢ-inj₂ e) St (sndᵛ V)
 VRedˢ (t ×ˢ t') {Base b}      () St V
-VRedˢ (t ×ˢ t') {Unit}        () St V
-VRedˢ (t ×ˢ t') {Bool}        () St V
-VRedˢ (t ×ˢ t') {Nat}         () St V
-VRedˢ (t ×ˢ t') {|List| A}    () St V
+VRedˢ (t ×ˢ t') {unit}        () St V
+VRedˢ (t ×ˢ t') {bool}        () St V
+VRedˢ (t ×ˢ t') {nat}         () St V
+VRedˢ (t ×ˢ t') {list A}      () St V
 VRedˢ (t ×ˢ t') {A |+| B}     () St V
 
 VRedˢ (t +ˢ t') {A |+| B}     e  St V =
   VRed⊎ (VRedˢ t (+ˢ-inj₁ e) St) (VRedˢ t' (+ˢ-inj₂ e) St) (injᵛ V)
 VRedˢ (t +ˢ t') {Base b}      () St V
-VRedˢ (t +ˢ t') {Unit}        () St V
-VRedˢ (t +ˢ t') {Bool}        () St V
-VRedˢ (t +ˢ t') {Nat}         () St V
-VRedˢ (t +ˢ t') {|List| A}    () St V
+VRedˢ (t +ˢ t') {unit}        () St V
+VRedˢ (t +ˢ t') {bool}        () St V
+VRedˢ (t +ˢ t') {nat}         () St V
+VRedˢ (t +ˢ t') {list A}      () St V
 VRedˢ (t +ˢ t') {A |×| B}     () St V
-VRedˢ (t +ˢ t') {Empty}       () St V
-VRedˢ (t +ˢ t') {A ⇒ (B ‼ ε)} () St V
-VRedˢ (t +ˢ t') {(A ‼ ε) ⇛ (B ‼ ε')} () St V
+VRedˢ (t +ˢ t') {empty}       () St V
+VRedˢ (t +ˢ t') {A ⇒ (B ! ε)} () St V
+VRedˢ (t +ˢ t') {(A ! ε) ⇛ (B ! ε')} () St V
 VRedˢ (t +ˢ t') {[ ρ ] A}     () St V
-VRedˢ (t ×ˢ t') {Empty}       () St V
-VRedˢ (t ×ˢ t') {A ⇒ (B ‼ ε)} () St V
-VRedˢ (t ×ˢ t') {(A ‼ ε) ⇛ (B ‼ ε')} () St V
+VRedˢ (t ×ˢ t') {empty}       () St V
+VRedˢ (t ×ˢ t') {A ⇒ (B ! ε)} () St V
+VRedˢ (t ×ˢ t') {(A ! ε) ⇛ (B ! ε')} () St V
 VRedˢ (t ×ˢ t') {[ ρ ] A}     () St V
 
-VRedˢ (Lˢ t) {|List| A}     e  St V =
+VRedˢ (Lˢ t) {list A}       e  St V =
   VRedL (VRedˢ t (Lˢ-inj e) St) (listᵛ V)
 VRedˢ (Lˢ t) {Base b}      () St V
-VRedˢ (Lˢ t) {Unit}        () St V
-VRedˢ (Lˢ t) {Bool}        () St V
-VRedˢ (Lˢ t) {Nat}         () St V
+VRedˢ (Lˢ t) {unit}        () St V
+VRedˢ (Lˢ t) {bool}        () St V
+VRedˢ (Lˢ t) {nat}         () St V
 VRedˢ (Lˢ t) {A |×| B}     () St V
 VRedˢ (Lˢ t) {A |+| B}     () St V
-VRedˢ (Lˢ t) {Empty}       () St V
-VRedˢ (Lˢ t) {A ⇒ (B ‼ ε)} () St V
-VRedˢ (Lˢ t) {(A ‼ ε) ⇛ (B ‼ ε')} () St V
+VRedˢ (Lˢ t) {empty}       () St V
+VRedˢ (Lˢ t) {A ⇒ (B ! ε)} () St V
+VRedˢ (Lˢ t) {(A ! ε) ⇛ (B ! ε')} () St V
 VRedˢ (Lˢ t) {[ ρ ] A}     () St V
 
-VRedˢ (t →ˢ t') {A ⇒ (B ‼ ε)} e  St V =
+VRedˢ (t →ˢ t') {A ⇒ (B ! ε)} e  St V =
   ∀ {St'} → (q : St ⊑ₛ[ 𝟏ᵣ ] St')
   → (W : toCtx St' ⊢V⦂ A)
   → VRedˢ t (→ˢ-inj₁ e) St' W
   → CRed t' (VRedˢ t') (→ˢ-inj₂ e) ε St' (reach-val q V · W)
 VRedˢ (t →ˢ t') {Base b}      () St V
-VRedˢ (t →ˢ t') {Unit}        () St V
-VRedˢ (t →ˢ t') {Bool}        () St V
-VRedˢ (t →ˢ t') {Nat}         () St V
-VRedˢ (t →ˢ t') {|List| A}    () St V
+VRedˢ (t →ˢ t') {unit}        () St V
+VRedˢ (t →ˢ t') {bool}        () St V
+VRedˢ (t →ˢ t') {nat}         () St V
+VRedˢ (t →ˢ t') {list A}      () St V
 VRedˢ (t →ˢ t') {A |+| B}     () St V
 VRedˢ (t →ˢ t') {A |×| B}     () St V
-VRedˢ (t →ˢ t') {Empty}       () St V
-VRedˢ (t →ˢ t') {(A ‼ ε) ⇛ (B ‼ ε')} () St V
+VRedˢ (t →ˢ t') {empty}       () St V
+VRedˢ (t →ˢ t') {(A ! ε) ⇛ (B ! ε')} () St V
 VRedˢ (t →ˢ t') {[ ρ ] A}     () St V
 
 -- the handler and every subsumption of it handle reducible computations
 
-VRedˢ (t ⇛ˢ t') {(A ‼ ε) ⇛ (B ‼ ε')} e St V =
+VRedˢ (t ⇛ˢ t') {(A ! ε) ⇛ (B ! ε')} e St V =
   ∀ {St'} → (q : St ⊑ₛ[ 𝟏ᵣ ] St')
-  → ∀ {A₀ ε₀ B₀ ε₀'} {U : toCtx St' ⊢V⦂ (A₀ ‼ ε₀) ⇛ (B₀ ‼ ε₀')}
+  → ∀ {A₀ ε₀ B₀ ε₀'} {U : toCtx St' ⊢V⦂ (A₀ ! ε₀) ⇛ (B₀ ! ε₀')}
   → (u : Use (reach-val q V) U)
-  → (M : toCtx St' ⊢C⦂ A₀ ‼ ε₀)
+  → (M : toCtx St' ⊢C⦂ A₀ ! ε₀)
   → CRed t (VRedˢ t) (use-shape₁ u e) ε₀ St' M
   → CRed t' (VRedˢ t') (use-shape₂ u e) (ε₀ ·ₑ ε₀') St' (handle M `with U)
 VRedˢ (t ⇛ˢ t') {Base b}      () St V
-VRedˢ (t ⇛ˢ t') {Unit}        () St V
-VRedˢ (t ⇛ˢ t') {Bool}        () St V
-VRedˢ (t ⇛ˢ t') {Nat}         () St V
-VRedˢ (t ⇛ˢ t') {|List| A}    () St V
+VRedˢ (t ⇛ˢ t') {unit}        () St V
+VRedˢ (t ⇛ˢ t') {bool}        () St V
+VRedˢ (t ⇛ˢ t') {nat}         () St V
+VRedˢ (t ⇛ˢ t') {list A}      () St V
 VRedˢ (t ⇛ˢ t') {A |+| B}     () St V
 VRedˢ (t ⇛ˢ t') {A |×| B}     () St V
-VRedˢ (t ⇛ˢ t') {Empty}       () St V
-VRedˢ (t ⇛ˢ t') {A ⇒ (B ‼ ε)} () St V
+VRedˢ (t ⇛ˢ t') {empty}       () St V
+VRedˢ (t ⇛ˢ t') {A ⇒ (B ! ε)} () St V
 VRedˢ (t ⇛ˢ t') {[ ρ ] A}     () St V
 
 VRedˢ (□ˢ t) {[ ρ ] A}     e  St V =
   ∀ {St'} → (r : St [ cellᵛ V ]⊑ᶜ St')
   → VRedˢ t (trans (<:ᵛ-shape (val-subᵛ V)) (□ˢ-inj e)) St' (lookupᶜ r)
 VRedˢ (□ˢ t) {Base b}      () St V
-VRedˢ (□ˢ t) {Unit}        () St V
-VRedˢ (□ˢ t) {Bool}        () St V
-VRedˢ (□ˢ t) {Nat}         () St V
-VRedˢ (□ˢ t) {|List| A}    () St V
+VRedˢ (□ˢ t) {unit}        () St V
+VRedˢ (□ˢ t) {bool}        () St V
+VRedˢ (□ˢ t) {nat}         () St V
+VRedˢ (□ˢ t) {list A}      () St V
 VRedˢ (□ˢ t) {A |+| B}     () St V
 VRedˢ (□ˢ t) {A |×| B}     () St V
-VRedˢ (□ˢ t) {Empty}       () St V
-VRedˢ (□ˢ t) {A ⇒ (B ‼ ε)} () St V
-VRedˢ (□ˢ t) {(A ‼ ε) ⇛ (B ‼ ε')} () St V
+VRedˢ (□ˢ t) {empty}       () St V
+VRedˢ (□ˢ t) {A ⇒ (B ! ε)} () St V
+VRedˢ (□ˢ t) {(A ! ε) ⇛ (B ! ε')} () St V
 
 VRed : (A : VType) → (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set
 VRed A = VRedˢ (shapeᵛ A) {A} refl
@@ -475,10 +475,10 @@ VRed A = VRedˢ (shapeᵛ A) {A} refl
 -- equality index and leaves the predicate alone.
 
 CRedˢ' : (s : Shape) → {A : VType} → shapeᵛ A ≡ s
-       → (ε : E) → (St : 𝕊 []) → toCtx St ⊢C⦂ A ‼ ε → Set
+       → (ε : E) → (St : 𝕊 []) → toCtx St ⊢C⦂ A ! ε → Set
 CRedˢ' s = CRed s (VRedˢ s)
 
-CRed' : (A : VType) → (ε : E) → (St : 𝕊 []) → toCtx St ⊢C⦂ A ‼ ε → Set
+CRed' : (A : VType) → (ε : E) → (St : 𝕊 []) → toCtx St ⊢C⦂ A ! ε → Set
 CRed' A = CRedˢ' (shapeᵛ A) {A} refl
 
 -- Two proofs of a shape equality out of the same type carry the predicate
@@ -493,7 +493,7 @@ VRedˢ-≡ᵛ : ∀ {t A} {St : 𝕊 []} {e : shapeᵛ A ≡ t} {V V' : toCtx St
          → V ≡ V' → VRedˢ t e St V → VRedˢ t e St V'
 VRedˢ-≡ᵛ refl p = p
 
-CRedˢ'-≡ˢ : ∀ {t t' A ε} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ ε}
+CRedˢ'-≡ˢ : ∀ {t t' A ε} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ! ε}
           → {e : shapeᵛ A ≡ t} → {e' : shapeᵛ A ≡ t'}
           → CRedˢ' t e ε St M → CRedˢ' t' e' ε St M
 CRedˢ'-≡ˢ {e = refl} {e' = refl} p = p
@@ -512,7 +512,7 @@ SRed St = ∀ {A ρ σ} {St' : 𝕊 []} → (c : [ ρ ] A ∈[ σ ] toCtx St)
 
 CRed-expand : ∀ {s} {P : VPred s} {A A₀ ε ε₀} {St St₀ : 𝕊 []}
             → {e : shapeᵛ A ≡ s} → {e₀ : shapeᵛ A₀ ≡ s}
-            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₀ : toCtx St₀ ⊢C⦂ A₀ ‼ ε₀}
+            → {M : toCtx St ⊢C⦂ A ! ε} → {M₀ : toCtx St₀ ⊢C⦂ A₀ ! ε₀}
             → ⟨ St , M ⟩ ⟶ ⟨ St₀ , M₀ ⟩
             → CRed s P e₀ ε₀ St₀ M₀
             -------------------------
@@ -526,7 +526,7 @@ CRed-expand r (cred-op e₀ rs pW pk) = cred-op e₀ (r ◅ rs) pW pk
 
 CRed-expand* : ∀ {s} {P : VPred s} {A A₀ ε ε₀} {St St₀ : 𝕊 []}
              → {e : shapeᵛ A ≡ s} → {e₀ : shapeᵛ A₀ ≡ s}
-             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₀ : toCtx St₀ ⊢C⦂ A₀ ‼ ε₀}
+             → {M : toCtx St ⊢C⦂ A ! ε} → {M₀ : toCtx St₀ ⊢C⦂ A₀ ! ε₀}
              → ⟨ St , M ⟩ ⟶* ⟨ St₀ , M₀ ⟩
              → CRed s P e₀ ε₀ St₀ M₀
              -------------------------
@@ -539,14 +539,14 @@ CRed-expand* {e = e} (r ◅ rs) p =
     (CRed-expand* {e = trans (<:ᵛ-shape (step-refines-type r)) e} rs p)
 
 CRed-ε-subst : ∀ {s} {P : VPred s} {A ε ε'} {e : shapeᵛ A ≡ s} {St : 𝕊 []}
-             → (eε : ε ≡ ε') → {M : toCtx St ⊢C⦂ A ‼ ε}
+             → (eε : ε ≡ ε') → {M : toCtx St ⊢C⦂ A ! ε}
              → CRed s P e ε St M → CRed s P e ε' St (ε-subst eε M)
 CRed-ε-subst refl p = p
 
 -- A sub-effected computation is its own reduct, one `SUB` step on.
 
 CRed-coerce : ∀ {s} {P : VPred s} {A ε ε'} {e : shapeᵛ A ≡ s} {St : 𝕊 []}
-            → (q : ε ≾ₑ ε') → {M : toCtx St ⊢C⦂ A ‼ ε}
+            → (q : ε ≾ₑ ε') → {M : toCtx St ⊢C⦂ A ! ε}
             → CRed s P e ε St M → CRed s P e ε' St (coerce q M)
 CRed-coerce q = CRed-expand SUB
 
@@ -561,10 +561,10 @@ VRedˢ-sub : ∀ {s A A'} {e : shapeᵛ A ≡ s} {e' : shapeᵛ A' ≡ s} {St : 
           → VRedˢ s e St V → VRedˢ s e' St (subV V p)
 
 VRedˢ-sub {e' = refl} (Baseₛ refl) V pV         = tt
-VRedˢ-sub {e' = refl} Unitₛ        V pV         = tt
-VRedˢ-sub {e' = refl} Boolₛ        V pV         = tt
-VRedˢ-sub {e' = refl} Natₛ         V pV         = tt
-VRedˢ-sub {e' = refl} Emptyₛ       V pV         = tt
+VRedˢ-sub {e' = refl} unitₛ        V pV         = tt
+VRedˢ-sub {e' = refl} boolₛ        V pV         = tt
+VRedˢ-sub {e' = refl} natₛ         V pV         = tt
+VRedˢ-sub {e' = refl} emptyₛ       V pV         = tt
 VRedˢ-sub {e' = refl} (p |×|ₛ p')  V (pV , pV') =
   VRedˢ-sub p (fstᵛ V) pV , VRedˢ-sub p' (sndᵛ V) pV'
 VRedˢ-sub {A' = A₂ |+| B₂} {e = e} {e' = refl} {St = St} (p |+|ₛ p') V pV =
@@ -575,12 +575,12 @@ VRedˢ-sub {A' = A₂ |+| B₂} {e = e} {e' = refl} {St = St} (p |+|ₛ p') V pV
             → VRed⊎ (VRedˢ (shapeᵛ A₂) refl St) (VRedˢ (shapeᵛ B₂) refl St) (sub⊎ p p' s)
     sub-inj (red-inl pW) = red-inl (VRedˢ-sub p _ pW)
     sub-inj (red-inr pW) = red-inr (VRedˢ-sub p' _ pW)
-VRedˢ-sub {e' = refl} (|List|ₛ p) V pV =
+VRedˢ-sub {e' = refl} (listₛ p) V pV =
   VRedL-sub p (λ W → VRedˢ-sub p W) pV
-VRedˢ-sub {e' = refl} (p ⇒ₛ (p' ‼ₛ q)) V f      =
+VRedˢ-sub {e' = refl} (p ⇒ₛ (p' !ₛ q)) V f      =
   λ q₀ W pW → CRed-expand SUB-APP (f q₀ (subV W p) (VRedˢ-sub p W pW))
 VRedˢ-sub {e' = refl} ([ _ ]ₛ p)   V f          = λ r → VRedˢ-≡ˢ (f r)
-VRedˢ-sub {e' = refl} (p@(_ ‼ₛ _) ⇛ₛ p'@(_ ‼ₛ _)) V f = λ where
+VRedˢ-sub {e' = refl} (p@(_ !ₛ _) ⇛ₛ p'@(_ !ₛ _)) V f = λ where
   q₀ use-id M pM →
     CRedˢ'-≡ˢ (f q₀ (use-sub (p ⇛ₛ p')) M (CRedˢ'-≡ˢ pM))
   q₀ (use-sub w) M pM →
@@ -595,7 +595,7 @@ VRed-sub p V pV = VRedˢ-sub {e = <:ᵛ-shape p} p V (VRedˢ-≡ˢ pV)
 -- A run refines the value type one subsumption at a time, and `spine` applies
 -- them in order; reducibility travels along it.
 
-VRed-spine : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+VRed-spine : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
            → (rs : cf ⟶* cf') → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ B)
            → VRed B St V → VRed A St (spine rs V)
 
@@ -607,14 +607,14 @@ VRed-spine (r ◅ rs) V pV =
 
 CRed-sub : ∀ {s A A' ε ε₀} {e : shapeᵛ A ≡ s} {e' : shapeᵛ A' ≡ s} {St : 𝕊 []}
          → (p : A <:ᵛ A') → (q : ε ≾ₑ ε₀)
-         → {M : toCtx St ⊢C⦂ A ‼ ε}
-         → CRedˢ' s e ε St M → CRedˢ' s e' ε₀ St (subC M (p ‼ₛ q))
+         → {M : toCtx St ⊢C⦂ A ! ε}
+         → CRedˢ' s e ε St M → CRedˢ' s e' ε₀ St (subC M (p !ₛ q))
 
 CRed-sub p q = CRed-expand SUB
 
 CRed'-sub : ∀ {A A' ε ε₀} {St : 𝕊 []} → (p : A <:ᵛ A') → (q : ε ≾ₑ ε₀)
-          → {M : toCtx St ⊢C⦂ A ‼ ε}
-          → CRed' A ε St M → CRed' A' ε₀ St (subC M (p ‼ₛ q))
+          → {M : toCtx St ⊢C⦂ A ! ε}
+          → CRed' A ε St M → CRed' A' ε₀ St (subC M (p !ₛ q))
 
 CRed'-sub p q pM = CRed-sub {e = <:ᵛ-shape p} p q (CRedˢ'-≡ˢ pM)
 
@@ -624,35 +624,35 @@ SRed-∅ : SRed ∅
 SRed-∅ c r = ⊥-elim (not-in-empty-ctx c)
 
 -- A boolean over a state context runs to one of the two constants: a variable
--- is ruled out by `Bool-not-in-toCtx`, and a subsumption is dropped by
+-- is ruled out by `bool-not-in-toCtx`, and a subsumption is dropped by
 -- `SUB-IF`.
 
-bool-canonical : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Bool)
-               → (∀ {A ε} {M N : toCtx St ⊢C⦂ A ‼ ε}
+bool-canonical : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ bool)
+               → (∀ {A ε} {M N : toCtx St ⊢C⦂ A ! ε}
                     → ⟨ St , if V `then M `else N ⟩ ⟶* ⟨ St , M ⟩)
-               ⊎ (∀ {A ε} {M N : toCtx St ⊢C⦂ A ‼ ε}
+               ⊎ (∀ {A ε} {M N : toCtx St ⊢C⦂ A ! ε}
                     → ⟨ St , if V `then M `else N ⟩ ⟶* ⟨ St , N ⟩)
-bool-canonical (var f x)      = ⊥-elim (Bool-not-in-toCtx x)
+bool-canonical (var f x)      = ⊥-elim (bool-not-in-toCtx x)
 bool-canonical true           = inj₁ (IF-TRUE ◅ ε*)
 bool-canonical false          = inj₂ (IF-FALSE ◅ ε*)
-bool-canonical (subV V Boolₛ) with bool-canonical V
+bool-canonical (subV V boolₛ) with bool-canonical V
 ... | inj₁ rs = inj₁ (SUB-IF ◅ rs)
 ... | inj₂ rs = inj₂ (SUB-IF ◅ rs)
 
 -- A natural number over a state context runs to the zero branch or to the
 -- successor branch at a predecessor: a variable is ruled out by
--- `Nat-not-in-toCtx`, and a subsumption is dropped by `SUB-CASEℕ`.
+-- `nat-not-in-toCtx`, and a subsumption is dropped by `SUB-CASEℕ`.
 
-nat-canonical : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Nat)
-              → (∀ {A ε} {M : toCtx St ⊢C⦂ A ‼ ε} {N : toCtx St ∷ Nat ⊢C⦂ A ‼ ε}
+nat-canonical : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ nat)
+              → (∀ {A ε} {M : toCtx St ⊢C⦂ A ! ε} {N : toCtx St ∷ nat ⊢C⦂ A ! ε}
                    → ⟨ St , caseℕ V `zero M `succ N ⟩ ⟶* ⟨ St , M ⟩)
-              ⊎ Σ[ W ∈ toCtx St ⊢V⦂ Nat ]
-                  (∀ {A ε} {M : toCtx St ⊢C⦂ A ‼ ε} {N : toCtx St ∷ Nat ⊢C⦂ A ‼ ε}
+              ⊎ Σ[ W ∈ toCtx St ⊢V⦂ nat ]
+                  (∀ {A ε} {M : toCtx St ⊢C⦂ A ! ε} {N : toCtx St ∷ nat ⊢C⦂ A ! ε}
                      → ⟨ St , caseℕ V `zero M `succ N ⟩ ⟶* ⟨ St , N [ split-[] ↦ W ]c ⟩)
-nat-canonical (var f x)     = ⊥-elim (Nat-not-in-toCtx x)
+nat-canonical (var f x)     = ⊥-elim (nat-not-in-toCtx x)
 nat-canonical zero          = inj₁ (CASEℕ-ZERO ◅ ε*)
 nat-canonical (succ V)      = inj₂ (V , CASEℕ-SUCC ◅ ε*)
-nat-canonical (subV V Natₛ) with nat-canonical V
+nat-canonical (subV V natₛ) with nat-canonical V
 ... | inj₁ rs       = inj₁ (SUB-CASEℕ ◅ rs)
 ... | inj₂ (W , rs) = inj₂ (W , SUB-CASEℕ ◅ rs)
 
@@ -663,20 +663,20 @@ nat-canonical (subV V Natₛ) with nat-canonical V
 -- A predicate that holds of every element holds of every decomposition.
 
 VRedL-all : ∀ {St : 𝕊 []} {A} {P : toCtx St ⊢V⦂ A → Set}
-          → (∀ W → P W) → (V : toCtx St ⊢V⦂ |List| A) → VRedL P (listᵛ V)
-VRedL-all h (var _ x)            = ⊥-elim (|List|-not-in-toCtx x)
+          → (∀ W → P W) → (V : toCtx St ⊢V⦂ list A) → VRedL P (listᵛ V)
+VRedL-all h (var _ x)            = ⊥-elim (list-not-in-toCtx x)
 VRedL-all h nil                  = red-nil
 VRedL-all h (cons W L)           = red-cons (h W) (VRedL-all h L)
-VRedL-all h (subV V (|List|ₛ p)) =
+VRedL-all h (subV V (listₛ p))   =
   VRedL-sub p (λ W pW → pW) (VRedL-all (λ W → h (subV W p)) V)
 
-VRed-eternal : ∀ {A} {St : 𝕊 []} → Eternal A → (V : toCtx St ⊢V⦂ A) → VRed A St V
+VRed-eternal : ∀ {A} {St : 𝕊 []} → Et A → (V : toCtx St ⊢V⦂ A) → VRed A St V
 
 VRed-eternal (Baseₑ _)        V = tt
-VRed-eternal Unitₑ            V = tt
-VRed-eternal Boolₑ            V = tt
-VRed-eternal Natₑ             V = tt
-VRed-eternal Emptyₑ           V = tt
+VRed-eternal unitₑ            V = tt
+VRed-eternal boolₑ            V = tt
+VRed-eternal natₑ             V = tt
+VRed-eternal emptyₑ           V = tt
 VRed-eternal (et₁ |×|ₑ et₂)   V =
   VRed-eternal et₁ (fstᵛ V) , VRed-eternal et₂ (sndᵛ V)
 VRed-eternal (et₁ |+|ₑ et₂)   V = eternal-inj (injᵛ V)
@@ -684,7 +684,7 @@ VRed-eternal (et₁ |+|ₑ et₂)   V = eternal-inj (injᵛ V)
     eternal-inj : ∀ s → VRed⊎ (VRed _ _) (VRed _ _) s
     eternal-inj (inj₁ W) = red-inl (VRed-eternal et₁ W)
     eternal-inj (inj₂ W) = red-inr (VRed-eternal et₂ W)
-VRed-eternal (|List|ₑ et)     V = VRedL-all (VRed-eternal et) V
+VRed-eternal (listₑ et)       V = VRedL-all (VRed-eternal et) V
 
 VRed-≡ᵛ : ∀ {St : 𝕊 []} → (A : VType) → {V V' : toCtx St ⊢V⦂ A}
         → V ≡ V' → VRed A St V → VRed A St V'
@@ -728,14 +728,14 @@ VRedˢ-reach {t ×ˢ t'} {A |×| B}     q e  V (p₁ , p₂) =
   , VRedˢ-≡ᵛ (sym (sndᵛ-ren (reach-renᵘ q) V))
              (VRedˢ-reach q (×ˢ-inj₂ e) (sndᵛ V) p₂)
 VRedˢ-reach {t ×ˢ t'} {Base b}      q () V p
-VRedˢ-reach {t ×ˢ t'} {Unit}        q () V p
-VRedˢ-reach {t ×ˢ t'} {Bool}        q () V p
-VRedˢ-reach {t ×ˢ t'} {Nat}         q () V p
-VRedˢ-reach {t ×ˢ t'} {|List| A}    q () V p
+VRedˢ-reach {t ×ˢ t'} {unit}        q () V p
+VRedˢ-reach {t ×ˢ t'} {bool}        q () V p
+VRedˢ-reach {t ×ˢ t'} {nat}         q () V p
+VRedˢ-reach {t ×ˢ t'} {list A}      q () V p
 VRedˢ-reach {t ×ˢ t'} {A |+| B}     q () V p
-VRedˢ-reach {t ×ˢ t'} {Empty}       q () V p
-VRedˢ-reach {t ×ˢ t'} {A ⇒ (B ‼ ε)} q () V p
-VRedˢ-reach {t ×ˢ t'} {(A ‼ ε) ⇛ (B ‼ ε')} q () V p
+VRedˢ-reach {t ×ˢ t'} {empty}       q () V p
+VRedˢ-reach {t ×ˢ t'} {A ⇒ (B ! ε)} q () V p
+VRedˢ-reach {t ×ˢ t'} {(A ! ε) ⇛ (B ! ε')} q () V p
 VRedˢ-reach {t ×ˢ t'} {[ ρ ] A}     q () V p
 
 VRedˢ-reach {t +ˢ t'} {A |+| B}     q e  V p =
@@ -748,17 +748,17 @@ VRedˢ-reach {t +ˢ t'} {A |+| B}     q e  V p =
     reach-inj (red-inl pW) = red-inl (VRedˢ-reach q (+ˢ-inj₁ e) _ pW)
     reach-inj (red-inr pW) = red-inr (VRedˢ-reach q (+ˢ-inj₂ e) _ pW)
 VRedˢ-reach {t +ˢ t'} {Base b}      q () V p
-VRedˢ-reach {t +ˢ t'} {Unit}        q () V p
-VRedˢ-reach {t +ˢ t'} {Bool}        q () V p
-VRedˢ-reach {t +ˢ t'} {Nat}         q () V p
-VRedˢ-reach {t +ˢ t'} {|List| A}    q () V p
+VRedˢ-reach {t +ˢ t'} {unit}        q () V p
+VRedˢ-reach {t +ˢ t'} {bool}        q () V p
+VRedˢ-reach {t +ˢ t'} {nat}         q () V p
+VRedˢ-reach {t +ˢ t'} {list A}      q () V p
 VRedˢ-reach {t +ˢ t'} {A |×| B}     q () V p
-VRedˢ-reach {t +ˢ t'} {Empty}       q () V p
-VRedˢ-reach {t +ˢ t'} {A ⇒ (B ‼ ε)} q () V p
-VRedˢ-reach {t +ˢ t'} {(A ‼ ε) ⇛ (B ‼ ε')} q () V p
+VRedˢ-reach {t +ˢ t'} {empty}       q () V p
+VRedˢ-reach {t +ˢ t'} {A ⇒ (B ! ε)} q () V p
+VRedˢ-reach {t +ˢ t'} {(A ! ε) ⇛ (B ! ε')} q () V p
 VRedˢ-reach {t +ˢ t'} {[ ρ ] A}     q () V p
 
-VRedˢ-reach {Lˢ t} {|List| A}     q e  V p =
+VRedˢ-reach {Lˢ t} {list A}       q e  V p =
   subst (VRedL (VRedˢ t (Lˢ-inj e) _)) (sym (listᵛ-ren (reach-renᵘ q) V))
         (reach-list p)
   where
@@ -770,33 +770,33 @@ VRedˢ-reach {Lˢ t} {|List| A}     q e  V p =
                (subst (VRedL (VRedˢ t (Lˢ-inj e) _)) (sym (listᵛ-ren (reach-renᵘ q) L))
                       (reach-list pL))
 VRedˢ-reach {Lˢ t} {Base b}      q () V p
-VRedˢ-reach {Lˢ t} {Unit}        q () V p
-VRedˢ-reach {Lˢ t} {Bool}        q () V p
-VRedˢ-reach {Lˢ t} {Nat}         q () V p
+VRedˢ-reach {Lˢ t} {unit}        q () V p
+VRedˢ-reach {Lˢ t} {bool}        q () V p
+VRedˢ-reach {Lˢ t} {nat}         q () V p
 VRedˢ-reach {Lˢ t} {A |×| B}     q () V p
 VRedˢ-reach {Lˢ t} {A |+| B}     q () V p
-VRedˢ-reach {Lˢ t} {Empty}       q () V p
-VRedˢ-reach {Lˢ t} {A ⇒ (B ‼ ε)} q () V p
-VRedˢ-reach {Lˢ t} {(A ‼ ε) ⇛ (B ‼ ε')} q () V p
+VRedˢ-reach {Lˢ t} {empty}       q () V p
+VRedˢ-reach {Lˢ t} {A ⇒ (B ! ε)} q () V p
+VRedˢ-reach {Lˢ t} {(A ! ε) ⇛ (B ! ε')} q () V p
 VRedˢ-reach {Lˢ t} {[ ρ ] A}     q () V p
 
-VRedˢ-reach {t →ˢ t'} {A ⇒ (B ‼ ε)} q₀ e  V f = λ q' W pW →
+VRedˢ-reach {t →ˢ t'} {A ⇒ (B ! ε)} q₀ e  V f = λ q' W pW →
   subst (λ z → CRed t' (VRedˢ t') (→ˢ-inj₂ e) ε _ (z · W))
         (trans (V-rename-≡ (reach-renᵘ-∘ q' q₀) V)
                (V-rename-∘ (reach-renᵘ q₀) (reach-renᵘ q') V))
         (f (reach-∘ q' q₀) W pW)
 VRedˢ-reach {t →ˢ t'} {Base b}      q () V f
-VRedˢ-reach {t →ˢ t'} {Unit}        q () V f
-VRedˢ-reach {t →ˢ t'} {Bool}        q () V f
-VRedˢ-reach {t →ˢ t'} {Nat}         q () V f
-VRedˢ-reach {t →ˢ t'} {|List| A}    q () V f
+VRedˢ-reach {t →ˢ t'} {unit}        q () V f
+VRedˢ-reach {t →ˢ t'} {bool}        q () V f
+VRedˢ-reach {t →ˢ t'} {nat}         q () V f
+VRedˢ-reach {t →ˢ t'} {list A}      q () V f
 VRedˢ-reach {t →ˢ t'} {A |+| B}     q () V f
 VRedˢ-reach {t →ˢ t'} {A |×| B}     q () V f
-VRedˢ-reach {t →ˢ t'} {Empty}       q () V f
-VRedˢ-reach {t →ˢ t'} {(A ‼ ε) ⇛ (B ‼ ε')} q () V f
+VRedˢ-reach {t →ˢ t'} {empty}       q () V f
+VRedˢ-reach {t →ˢ t'} {(A ! ε) ⇛ (B ! ε')} q () V f
 VRedˢ-reach {t →ˢ t'} {[ ρ ] A}     q () V f
 
-VRedˢ-reach {t ⇛ˢ t'} {(A ‼ ε) ⇛ (B ‼ ε')} q₀ e V f = λ q' u M pM →
+VRedˢ-reach {t ⇛ˢ t'} {(A ! ε) ⇛ (B ! ε')} q₀ e V f = λ q' u M pM →
   CRedˢ'-≡ˢ (f (reach-∘ q' q₀) (subst (λ z → Use z _) (sym eq) u) M (CRedˢ'-≡ˢ pM))
   where
     eq : ∀ {St''} {q' : _ ⊑ₛ[ 𝟏ᵣ ] St''}
@@ -804,27 +804,27 @@ VRedˢ-reach {t ⇛ˢ t'} {(A ‼ ε) ⇛ (B ‼ ε')} q₀ e V f = λ q' u M pM
     eq {q' = q'} = trans (V-rename-≡ (reach-renᵘ-∘ q' q₀) V)
                          (V-rename-∘ (reach-renᵘ q₀) (reach-renᵘ q') V)
 VRedˢ-reach {t ⇛ˢ t'} {Base b}      q () V f
-VRedˢ-reach {t ⇛ˢ t'} {Unit}        q () V f
-VRedˢ-reach {t ⇛ˢ t'} {Bool}        q () V f
-VRedˢ-reach {t ⇛ˢ t'} {Nat}         q () V f
-VRedˢ-reach {t ⇛ˢ t'} {|List| A}    q () V f
+VRedˢ-reach {t ⇛ˢ t'} {unit}        q () V f
+VRedˢ-reach {t ⇛ˢ t'} {bool}        q () V f
+VRedˢ-reach {t ⇛ˢ t'} {nat}         q () V f
+VRedˢ-reach {t ⇛ˢ t'} {list A}      q () V f
 VRedˢ-reach {t ⇛ˢ t'} {A |+| B}     q () V f
 VRedˢ-reach {t ⇛ˢ t'} {A |×| B}     q () V f
-VRedˢ-reach {t ⇛ˢ t'} {Empty}       q () V f
-VRedˢ-reach {t ⇛ˢ t'} {A ⇒ (B ‼ ε)} q () V f
+VRedˢ-reach {t ⇛ˢ t'} {empty}       q () V f
+VRedˢ-reach {t ⇛ˢ t'} {A ⇒ (B ! ε)} q () V f
 VRedˢ-reach {t ⇛ˢ t'} {[ ρ ] A}     q () V f
 
 VRedˢ-reach {□ˢ t} {[ ρ ] A}     q e  V f = reach-read-val q V _ _ f
 VRedˢ-reach {□ˢ t} {Base b}      q () V f
-VRedˢ-reach {□ˢ t} {Unit}        q () V f
-VRedˢ-reach {□ˢ t} {Bool}        q () V f
-VRedˢ-reach {□ˢ t} {Nat}         q () V f
-VRedˢ-reach {□ˢ t} {|List| A}    q () V f
+VRedˢ-reach {□ˢ t} {unit}        q () V f
+VRedˢ-reach {□ˢ t} {bool}        q () V f
+VRedˢ-reach {□ˢ t} {nat}         q () V f
+VRedˢ-reach {□ˢ t} {list A}      q () V f
 VRedˢ-reach {□ˢ t} {A |+| B}     q () V f
 VRedˢ-reach {□ˢ t} {A |×| B}     q () V f
-VRedˢ-reach {□ˢ t} {Empty}       q () V f
-VRedˢ-reach {□ˢ t} {A ⇒ (B ‼ ε)} q () V f
-VRedˢ-reach {□ˢ t} {(A ‼ ε) ⇛ (B ‼ ε')} q () V f
+VRedˢ-reach {□ˢ t} {empty}       q () V f
+VRedˢ-reach {□ˢ t} {A ⇒ (B ! ε)} q () V f
+VRedˢ-reach {□ˢ t} {(A ! ε) ⇛ (B ! ε')} q () V f
 
 VRed-reach : ∀ {A St St'} → (q : St ⊑ₛ[ 𝟏ᵣ ] St') → (V : toCtx St ⊢V⦂ A)
            → VRed A St V → VRed A St' (reach-val q V)
@@ -837,157 +837,157 @@ VRed-reach q V p = VRedˢ-reach q refl V p
 -- the cell's declared type, not the one named.
 
 VRedˢ→VRedᵍˢ : (G : GType) → ∀ {A} {St : 𝕊 []}
-             → (e : shapeᵛ A ≡ shapeᵛ (type-of-gtype G))
+             → (e : shapeᵛ A ≡ shapeᵛ ⌜ G ⌝ᵍ)
              → (V : toCtx St ⊢V⦂ A)
-             → VRedˢ (shapeᵛ (type-of-gtype G)) e St V
-             → VRedᵍˢ (shapeᵛ (type-of-gtype G)) e St V
+             → VRedˢ (shapeᵛ ⌜ G ⌝ᵍ) e St V
+             → VRedᵍˢ (shapeᵛ ⌜ G ⌝ᵍ) e St V
 
 VRedˢ→VRedᵍˢ (Base b) e V p = tt
-VRedˢ→VRedᵍˢ Unit     e V p = tt
-VRedˢ→VRedᵍˢ Bool     e V p = tt
-VRedˢ→VRedᵍˢ Nat      e V p = tt
-VRedˢ→VRedᵍˢ Empty    e V p = tt
+VRedˢ→VRedᵍˢ unit     e V p = tt
+VRedˢ→VRedᵍˢ bool     e V p = tt
+VRedˢ→VRedᵍˢ nat      e V p = tt
+VRedˢ→VRedᵍˢ empty    e V p = tt
 
 VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {A |+| B}     e  V p =
   VRed⊎-map (λ W → VRedˢ→VRedᵍˢ G₁ (+ˢ-inj₁ e) W)
             (λ W → VRedˢ→VRedᵍˢ G₂ (+ˢ-inj₂ e) W) p
 VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {Base b}      () V p
-VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {Unit}        () V p
-VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {Bool}        () V p
-VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {Nat}         () V p
-VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {|List| A}    () V p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {unit}        () V p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {bool}        () V p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {nat}         () V p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {list A}      () V p
 VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {A |×| B}     () V p
-VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {Empty}       () V p
-VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {A ⇒ (B ‼ ε)} () V p
-VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {(A ‼ ε) ⇛ (B ‼ ε')} () V p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {empty}       () V p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {A ⇒ (B ! ε)} () V p
+VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {(A ! ε) ⇛ (B ! ε')} () V p
 VRedˢ→VRedᵍˢ (G₁ |+|ᵍ G₂) {[ ρ ] A}     () V p
 
-VRedˢ→VRedᵍˢ (|List|ᵍ G) {|List| A}    e  V p =
+VRedˢ→VRedᵍˢ (listᵍ G) {list A}        e  V p =
   VRedL-map (λ W → VRedˢ→VRedᵍˢ G (Lˢ-inj e) W) p
-VRedˢ→VRedᵍˢ (|List|ᵍ G) {Base b}      () V p
-VRedˢ→VRedᵍˢ (|List|ᵍ G) {Unit}        () V p
-VRedˢ→VRedᵍˢ (|List|ᵍ G) {Bool}        () V p
-VRedˢ→VRedᵍˢ (|List|ᵍ G) {Nat}         () V p
-VRedˢ→VRedᵍˢ (|List|ᵍ G) {A |×| B}     () V p
-VRedˢ→VRedᵍˢ (|List|ᵍ G) {A |+| B}     () V p
-VRedˢ→VRedᵍˢ (|List|ᵍ G) {Empty}       () V p
-VRedˢ→VRedᵍˢ (|List|ᵍ G) {A ⇒ (B ‼ ε)} () V p
-VRedˢ→VRedᵍˢ (|List|ᵍ G) {(A ‼ ε) ⇛ (B ‼ ε')} () V p
-VRedˢ→VRedᵍˢ (|List|ᵍ G) {[ ρ ] A}     () V p
+VRedˢ→VRedᵍˢ (listᵍ G) {Base b}        () V p
+VRedˢ→VRedᵍˢ (listᵍ G) {unit}          () V p
+VRedˢ→VRedᵍˢ (listᵍ G) {bool}          () V p
+VRedˢ→VRedᵍˢ (listᵍ G) {nat}           () V p
+VRedˢ→VRedᵍˢ (listᵍ G) {A |×| B}       () V p
+VRedˢ→VRedᵍˢ (listᵍ G) {A |+| B}       () V p
+VRedˢ→VRedᵍˢ (listᵍ G) {empty}         () V p
+VRedˢ→VRedᵍˢ (listᵍ G) {A ⇒ (B ! ε)}   () V p
+VRedˢ→VRedᵍˢ (listᵍ G) {(A ! ε) ⇛ (B ! ε')} () V p
+VRedˢ→VRedᵍˢ (listᵍ G) {[ ρ ] A}       () V p
 
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {A |×| B}     e  V (p₁ , p₂) =
     VRedˢ→VRedᵍˢ G₁ (×ˢ-inj₁ e) (fstᵛ V) p₁
   , VRedˢ→VRedᵍˢ G₂ (×ˢ-inj₂ e) (sndᵛ V) p₂
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Base b}      () V p
-VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Unit}        () V p
-VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Bool}        () V p
-VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Nat}         () V p
-VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {|List| A}    () V p
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {unit}        () V p
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {bool}        () V p
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {nat}         () V p
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {list A}      () V p
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {A |+| B}     () V p
-VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Empty}       () V p
-VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {A ⇒ (B ‼ ε)} () V p
-VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {(A ‼ ε) ⇛ (B ‼ ε')} () V p
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {empty}       () V p
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {A ⇒ (B ! ε)} () V p
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {(A ! ε) ⇛ (B ! ε')} () V p
 VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {[ ρ ] A}     () V p
 
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {[ ρ ] A}     e  V p =
   λ r → VRedˢ→VRedᵍˢ G _ (lookupᶜ r) (p r)
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Base b}      () V p
-VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Unit}        () V p
-VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Bool}        () V p
-VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Nat}         () V p
-VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {|List| A}    () V p
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {unit}        () V p
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {bool}        () V p
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {nat}         () V p
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {list A}      () V p
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {A |+| B}     () V p
 VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {A |×| B}     () V p
-VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Empty}       () V p
-VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {A ⇒ (B ‼ ε)} () V p
-VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {(A ‼ ε) ⇛ (B ‼ ε')} () V p
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {empty}       () V p
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {A ⇒ (B ! ε)} () V p
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {(A ! ε) ⇛ (B ! ε')} () V p
 
 VRedᵍˢ→VRedˢ : (G : GType) → ∀ {A} {St : 𝕊 []}
-             → (e : shapeᵛ A ≡ shapeᵛ (type-of-gtype G))
+             → (e : shapeᵛ A ≡ shapeᵛ ⌜ G ⌝ᵍ)
              → (V : toCtx St ⊢V⦂ A)
-             → VRedᵍˢ (shapeᵛ (type-of-gtype G)) e St V
-             → VRedˢ (shapeᵛ (type-of-gtype G)) e St V
+             → VRedᵍˢ (shapeᵛ ⌜ G ⌝ᵍ) e St V
+             → VRedˢ (shapeᵛ ⌜ G ⌝ᵍ) e St V
 
 VRedᵍˢ→VRedˢ (Base b) e V p = tt
-VRedᵍˢ→VRedˢ Unit     e V p = tt
-VRedᵍˢ→VRedˢ Bool     e V p = tt
-VRedᵍˢ→VRedˢ Nat      e V p = tt
-VRedᵍˢ→VRedˢ Empty    e V p = tt
+VRedᵍˢ→VRedˢ unit     e V p = tt
+VRedᵍˢ→VRedˢ bool     e V p = tt
+VRedᵍˢ→VRedˢ nat      e V p = tt
+VRedᵍˢ→VRedˢ empty    e V p = tt
 
 VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {A |+| B}     e  V p =
   VRed⊎-map (λ W → VRedᵍˢ→VRedˢ G₁ (+ˢ-inj₁ e) W)
             (λ W → VRedᵍˢ→VRedˢ G₂ (+ˢ-inj₂ e) W) p
 VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {Base b}      () V p
-VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {Unit}        () V p
-VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {Bool}        () V p
-VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {Nat}         () V p
-VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {|List| A}    () V p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {unit}        () V p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {bool}        () V p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {nat}         () V p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {list A}      () V p
 VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {A |×| B}     () V p
-VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {Empty}       () V p
-VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {A ⇒ (B ‼ ε)} () V p
-VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {(A ‼ ε) ⇛ (B ‼ ε')} () V p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {empty}       () V p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {A ⇒ (B ! ε)} () V p
+VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {(A ! ε) ⇛ (B ! ε')} () V p
 VRedᵍˢ→VRedˢ (G₁ |+|ᵍ G₂) {[ ρ ] A}     () V p
 
-VRedᵍˢ→VRedˢ (|List|ᵍ G) {|List| A}    e  V p =
+VRedᵍˢ→VRedˢ (listᵍ G) {list A}        e  V p =
   VRedL-map (λ W → VRedᵍˢ→VRedˢ G (Lˢ-inj e) W) p
-VRedᵍˢ→VRedˢ (|List|ᵍ G) {Base b}      () V p
-VRedᵍˢ→VRedˢ (|List|ᵍ G) {Unit}        () V p
-VRedᵍˢ→VRedˢ (|List|ᵍ G) {Bool}        () V p
-VRedᵍˢ→VRedˢ (|List|ᵍ G) {Nat}         () V p
-VRedᵍˢ→VRedˢ (|List|ᵍ G) {A |×| B}     () V p
-VRedᵍˢ→VRedˢ (|List|ᵍ G) {A |+| B}     () V p
-VRedᵍˢ→VRedˢ (|List|ᵍ G) {Empty}       () V p
-VRedᵍˢ→VRedˢ (|List|ᵍ G) {A ⇒ (B ‼ ε)} () V p
-VRedᵍˢ→VRedˢ (|List|ᵍ G) {(A ‼ ε) ⇛ (B ‼ ε')} () V p
-VRedᵍˢ→VRedˢ (|List|ᵍ G) {[ ρ ] A}     () V p
+VRedᵍˢ→VRedˢ (listᵍ G) {Base b}        () V p
+VRedᵍˢ→VRedˢ (listᵍ G) {unit}          () V p
+VRedᵍˢ→VRedˢ (listᵍ G) {bool}          () V p
+VRedᵍˢ→VRedˢ (listᵍ G) {nat}           () V p
+VRedᵍˢ→VRedˢ (listᵍ G) {A |×| B}       () V p
+VRedᵍˢ→VRedˢ (listᵍ G) {A |+| B}       () V p
+VRedᵍˢ→VRedˢ (listᵍ G) {empty}         () V p
+VRedᵍˢ→VRedˢ (listᵍ G) {A ⇒ (B ! ε)}   () V p
+VRedᵍˢ→VRedˢ (listᵍ G) {(A ! ε) ⇛ (B ! ε')} () V p
+VRedᵍˢ→VRedˢ (listᵍ G) {[ ρ ] A}       () V p
 
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {A |×| B}     e  V (p₁ , p₂) =
     VRedᵍˢ→VRedˢ G₁ (×ˢ-inj₁ e) (fstᵛ V) p₁
   , VRedᵍˢ→VRedˢ G₂ (×ˢ-inj₂ e) (sndᵛ V) p₂
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Base b}      () V p
-VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Unit}        () V p
-VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Bool}        () V p
-VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Nat}         () V p
-VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {|List| A}    () V p
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {unit}        () V p
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {bool}        () V p
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {nat}         () V p
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {list A}      () V p
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {A |+| B}     () V p
-VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Empty}       () V p
-VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {A ⇒ (B ‼ ε)} () V p
-VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {(A ‼ ε) ⇛ (B ‼ ε')} () V p
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {empty}       () V p
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {A ⇒ (B ! ε)} () V p
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {(A ! ε) ⇛ (B ! ε')} () V p
 VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {[ ρ ] A}     () V p
 
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {[ ρ ] A}     e  V p =
   λ r → VRedᵍˢ→VRedˢ G _ (lookupᶜ r) (p r)
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Base b}      () V p
-VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Unit}        () V p
-VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Bool}        () V p
-VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Nat}         () V p
-VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {|List| A}    () V p
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {unit}        () V p
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {bool}        () V p
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {nat}         () V p
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {list A}      () V p
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {A |+| B}     () V p
 VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {A |×| B}     () V p
-VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Empty}       () V p
-VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {A ⇒ (B ‼ ε)} () V p
-VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {(A ‼ ε) ⇛ (B ‼ ε')} () V p
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {empty}       () V p
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {A ⇒ (B ! ε)} () V p
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {(A ! ε) ⇛ (B ! ε')} () V p
 
-VRed→VRedᵍ : (G : GType) → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ type-of-gtype G)
-           → VRed (type-of-gtype G) St V → VRedᵍ G St V
+VRed→VRedᵍ : (G : GType) → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ ⌜ G ⌝ᵍ)
+           → VRed ⌜ G ⌝ᵍ St V → VRedᵍ G St V
 
 VRed→VRedᵍ G V p = VRedˢ→VRedᵍˢ G refl V p
 
-VRedᵍ→VRed : (G : GType) → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ type-of-gtype G)
-           → VRedᵍ G St V → VRed (type-of-gtype G) St V
+VRedᵍ→VRed : (G : GType) → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ ⌜ G ⌝ᵍ)
+           → VRedᵍ G St V → VRed ⌜ G ⌝ᵍ St V
 
 VRedᵍ→VRed G V p = VRedᵍˢ→VRedˢ G refl V p
 
 -- Ground reducibility is insensitive to the equivalence, as `VRed-≡ᵛ` is.
 
-VRedᵍ-≡ᵛ : ∀ {St : 𝕊 []} → (G : GType) → {V V' : toCtx St ⊢V⦂ type-of-gtype G}
+VRedᵍ-≡ᵛ : ∀ {St : 𝕊 []} → (G : GType) → {V V' : toCtx St ⊢V⦂ ⌜ G ⌝ᵍ}
          → V ≡ V' → VRedᵍ G St V → VRedᵍ G St V'
 
 VRedᵍ-≡ᵛ G refl p = p
 
 -- Reducibility is insensitive to the term equivalence.
 
-CRed-≡ᶜ : ∀ {A ε} {St : 𝕊 []} {M M' : toCtx St ⊢C⦂ A ‼ ε}
+CRed-≡ᶜ : ∀ {A ε} {St : 𝕊 []} {M M' : toCtx St ⊢C⦂ A ! ε}
         → M ≡ M' → CRed' A ε St M → CRed' A ε St M'
 CRed-≡ᶜ refl p = p
 
@@ -1000,7 +1000,7 @@ CRed-≡ᶜ refl p = p
 SRed-fresh : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
            → (∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
                 → VRed A St' (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V))
-           → (f : ¬ Eternal ([ ρ ] A) → 𝟏ᵣ ≾ᵣ 𝟏ᵣ)
+           → (f : ¬ Et ([ ρ ] A) → 𝟏ᵣ ≾ᵣ 𝟏ᵣ)
            ------------------------------------------
            → VRed ([ ρ ] A) (St ∷ₛ V) (var f Hd)
 
@@ -1024,18 +1024,18 @@ SRed-fresh {A} {ρ} {St} V pV f {St'} r =
 -- reducible via the store read at the states its own box grade allows.
 
 SRed-var : ∀ {A ρ} {St : 𝕊 []} → SRed St
-         → (x : A ∈[ ρ ] toCtx St) → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+         → (x : A ∈[ ρ ] toCtx St) → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
          --------------------------------------------------------
          → VRed A St (var f x)
 
 SRed-var {Base b}    pSt x f = tt
-SRed-var {Unit}      pSt x f = tt
-SRed-var {Bool}      pSt x f = tt
-SRed-var {Nat}       pSt x f = tt
-SRed-var {Empty}     pSt x f = tt
+SRed-var {unit}      pSt x f = tt
+SRed-var {bool}      pSt x f = tt
+SRed-var {nat}       pSt x f = tt
+SRed-var {empty}     pSt x f = tt
 SRed-var {A₁ |×| A₂} pSt x f = ⊥-elim (⦉⦊-not-in-toCtx x)
 SRed-var {A₁ |+| A₂} pSt x f = ⊥-elim (|+|-not-in-toCtx x)
-SRed-var {|List| A₁} pSt x f = ⊥-elim (|List|-not-in-toCtx x)
+SRed-var {list A₁}   pSt x f = ⊥-elim (list-not-in-toCtx x)
 SRed-var {A₁ ⇒ C}    pSt x f = ⊥-elim (⇒-not-in-toCtx x)
 SRed-var {C ⇛ D}     pSt x f = ⊥-elim (⇛-not-in-toCtx x)
 

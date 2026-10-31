@@ -70,7 +70,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.RenamingCoh
 -- numerals, pairs and injections, never a `lam`, so its result is
 -- parametric outright.
 
-eternal-val-extᴾ : ∀ {Γ A ρ} → (et : Eternal A) → (V : Γ ⊢V⦂ A)
+eternal-val-extᴾ : ∀ {Γ A ρ} → (et : Et A) → (V : Γ ⊢V⦂ A)
                  → Paramᵛ (eternal-val-ext {ρ = ρ} et V)
 eternal-val-extᴾ et (var _ x)                  = tt
 eternal-val-extᴾ _  (const b)                  = tt
@@ -80,8 +80,8 @@ eternal-val-extᴾ _  false                      = tt
 eternal-val-extᴾ _  zero                       = tt
 eternal-val-extᴾ et (succ V)                   = eternal-val-extᴾ et V
 eternal-val-extᴾ _  nil                        = tt
-eternal-val-extᴾ (|List|ₑ et) (cons V W)       =
-  eternal-val-extᴾ et V , eternal-val-extᴾ (|List|ₑ et) W
+eternal-val-extᴾ (listₑ et) (cons V W)         =
+  eternal-val-extᴾ et V , eternal-val-extᴾ (listₑ et) W
 eternal-val-extᴾ (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊    =
   eternal-val-extᴾ et₁ V₁ , eternal-val-extᴾ et₂ V₂
 eternal-val-extᴾ (et₁ |+|ₑ _) (inl V)          = eternal-val-extᴾ et₁ V
@@ -104,7 +104,7 @@ sub-env (split-⟨⟩ {ρ = ρ} s)  W pW = ⟨ ρ ⟩ᶠ (sub-env s W pW)
 -- Extraction commutes with a coercion out of an eternal type: such a
 -- coercion has equal endpoints, hence is the identity.
 
-extᵉ-<: : ∀ {A B ρ} → (et : Eternal A) → (et' : Eternal B) → (p : A <:ᵛ B)
+extᵉ-<: : ∀ {A B ρ} → (et : Et A) → (et' : Et B) → (p : A <:ᵛ B)
         → ⟦ p ⟧<:ᵛ ∘ᵐ eternalᵛ-extᵉ et {ρ} ≈ᵐ eternalᵛ-extᵉ et' ∘ᵐ ⟨ ρ ⟩ᶠ ⟦ p ⟧<:ᵛ
 extᵉ-<: et et' p with <:ᵛ-eternal-≡ et p
 ... | refl =
@@ -114,7 +114,7 @@ extᵉ-<: et et' p with <:ᵛ-eternal-≡ et p
   (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (⟨⟩-congᶠ (⟦⟧<:ᵛ-id p)) ⟨⟩-idᵐ))
                     (∘ᵐ-identityʳ _)))))
 
-eternal-val-ext-nat : ∀ {Γ A ρ} → (et : Eternal A) → (V : Γ ⊢V⦂ A) → (pV : Paramᵛ V)
+eternal-val-ext-nat : ∀ {Γ A ρ} → (et : Et A) → (V : Γ ⊢V⦂ A) → (pV : Paramᵛ V)
                     → ⟦ eternal-val-ext {ρ = ρ} et V ⟧ᵛᵗ (eternal-val-extᴾ et V)
                       ≈ᵐ eternalᵛ-extᵉ et ∘ᵐ ⟨ ρ ⟩ᶠ (⟦ V ⟧ᵛᵗ pV)
 
@@ -134,31 +134,31 @@ eternal-val-ext-nat (Baseₑ eb) (const c) _ =
     (≈ᵐ-trans (∘ᵐ-congˡ (⟦⟧ᵇᶜ-eternal eb c))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
               (∘ᵐ-congʳ terminalᵐ-unique)))))
-eternal-val-ext-nat Unitₑ ⋆ _ =
+eternal-val-ext-nat unitₑ ⋆ _ =
   ≈ᵐ-trans terminalᵐ-unique (≈ᵐ-sym terminalᵐ-unique)
-eternal-val-ext-nat Boolₑ true _ =
+eternal-val-ext-nat boolₑ true _ =
   ≈ᵐ-sym
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
     (≈ᵐ-trans (∘ᵐ-congˡ trueᵐ-eternal)
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
               (∘ᵐ-congʳ terminalᵐ-unique)))))
-eternal-val-ext-nat Boolₑ false _ =
+eternal-val-ext-nat boolₑ false _ =
   ≈ᵐ-sym
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
     (≈ᵐ-trans (∘ᵐ-congˡ falseᵐ-eternal)
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
               (∘ᵐ-congʳ terminalᵐ-unique)))))
-eternal-val-ext-nat Natₑ zero _ =
+eternal-val-ext-nat natₑ zero _ =
   ≈ᵐ-sym
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
     (≈ᵐ-trans (∘ᵐ-congˡ zeroᵐ-eternal)
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
               (∘ᵐ-congʳ terminalᵐ-unique)))))
-eternal-val-ext-nat Natₑ (succ V) pV =
-  ≈ᵐ-trans (∘ᵐ-congʳ (eternal-val-ext-nat Natₑ V pV))
+eternal-val-ext-nat natₑ (succ V) pV =
+  ≈ᵐ-trans (∘ᵐ-congʳ (eternal-val-ext-nat natₑ V pV))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym succᵐ-eternal))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
@@ -186,16 +186,16 @@ eternal-val-ext-nat (et₁ |+|ₑ et₂) (inr V) pV =
                                                (eternalᵛ-Eternalᵒ et₂))))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
             (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))))))
-eternal-val-ext-nat (|List|ₑ et) nil _ =
+eternal-val-ext-nat (listₑ et) nil _ =
   ≈ᵐ-sym
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
     (≈ᵐ-trans (∘ᵐ-congˡ (List-eternalᵒ-nil (eternalᵛ-Eternalᵒ et)))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
               (∘ᵐ-congʳ terminalᵐ-unique)))))
-eternal-val-ext-nat (|List|ₑ et) (cons V W) (pV , pW) =
+eternal-val-ext-nat (listₑ et) (cons V W) (pV , pW) =
   ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans
-    (⟨ eternal-val-ext-nat et V pV , eternal-val-ext-nat (|List|ₑ et) W pW ⟩ᵐ-cong)
+    (⟨ eternal-val-ext-nat et V pV , eternal-val-ext-nat (listₑ et) W pW ⟩ᵐ-cong)
     (≈ᵐ-trans (⟨ ∘ᵐ-congʳ (⟨⟩-congᶠ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)))
                , ∘ᵐ-congʳ (⟨⟩-congᶠ (≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _))) ⟩ᵐ-cong)
     (≈ᵐ-trans (⟨ ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _) , ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _) ⟩ᵐ-cong)
@@ -270,15 +270,15 @@ unbox-step {σ = σ} {lkᵒ = lkᵒ} eM elk =
 -- them as lemmas is what lets the `eternal?` split reduce `var-morphism`
 -- inside a recursive call's type.)
 
-var-morphism-et : ∀ {Γ B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Eternal B → ρ' ≾ᵣ 𝟏ᵣ)
-                → (et : Eternal B)
+var-morphism-et : ∀ {Γ B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Et B → ρ' ≾ᵣ 𝟏ᵣ)
+                → (et : Et B)
                 → var-morphism f y ≈ᵐ eternalᵛ-extᵉ et ∘ᵐ var-proj y
 var-morphism-et {B = B} y f et with eternal? B
 ... | yes et' = ∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et' et)
 ... | no ¬et' = ⊥-elim (¬et' et)
 
-var-morphism-¬et : ∀ {Γ B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Eternal B → ρ' ≾ᵣ 𝟏ᵣ)
-                 → (¬et : ¬ Eternal B)
+var-morphism-¬et : ∀ {Γ B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Et B → ρ' ≾ᵣ 𝟏ᵣ)
+                 → (¬et : ¬ Et B)
                  → var-morphism f y ≈ᵐ εᵘ ∘ᵐ ⟨⟩-≤ (f ¬et) ∘ᵐ var-proj y
 var-morphism-¬et {B = B} y f ¬et with eternal? B
 ... | yes et'  = ⊥-elim (¬et et')

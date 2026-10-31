@@ -5,7 +5,7 @@
 -- `GroundTypes` interpretation, the finite-product/-coproduct and      --
 -- function-type formers via the cartesian closed structure, and the    --
 -- box modality `[ ρ ] A` via `[ ρ ]ᵒ`, a handler type via `Hᵒ`. A      --
--- computation type `A ‼ ε` is the graded monad applied to the value    --
+-- computation type `A ! ε` is the graded monad applied to the value    --
 -- type, `Tᵒ ⟦ A ⟧ ε`.                                                  --
 --                                                                      --
 -- The two interpretations are mutually recursive: a function type      --
@@ -48,16 +48,16 @@ mutual
 
   ⟦_⟧ᵛ : VType → Obj
   ⟦ Base b   ⟧ᵛ = ⟦ b ⟧ᵇ
-  ⟦ Unit     ⟧ᵛ = 𝟙ᵐ
-  ⟦ Bool     ⟧ᵛ = 𝔹ᵐ
-  ⟦ Nat      ⟧ᵛ = ℕᵐ
+  ⟦ unit     ⟧ᵛ = 𝟙ᵐ
+  ⟦ bool     ⟧ᵛ = 𝔹ᵐ
+  ⟦ nat      ⟧ᵛ = ℕᵐ
   ⟦ A |×| B  ⟧ᵛ = ⟦ A ⟧ᵛ ×ᵐ ⟦ B ⟧ᵛ
   ⟦ A |+| B  ⟧ᵛ = ⟦ A ⟧ᵛ +ᵐ ⟦ B ⟧ᵛ
-  ⟦ |List| A ⟧ᵛ = Listᵐ ⟦ A ⟧ᵛ
-  ⟦ Empty    ⟧ᵛ = 𝟘ᵐ
+  ⟦ list A   ⟧ᵛ = Listᵐ ⟦ A ⟧ᵛ
+  ⟦ empty    ⟧ᵛ = 𝟘ᵐ
   ⟦ A ⇒ C    ⟧ᵛ = ⟦ A ⟧ᵛ ⇒ᵐ ⟦ C ⟧ᶜ
-  ⟦ (A ‼ ε) ⇛ (B ‼ ε') ⟧ᵛ = Hᵒ ⟦ A ⟧ᵛ ε ⟦ B ⟧ᵛ ε'
+  ⟦ (A ! ε) ⇛ (B ! ε') ⟧ᵛ = Hᵒ ⟦ A ⟧ᵛ ε ⟦ B ⟧ᵛ ε'
   ⟦ [ ρ ] A  ⟧ᵛ = [ ρ ]ᵒ ⟦ A ⟧ᵛ
 
   ⟦_⟧ᶜ : CType → Obj
-  ⟦ A ‼ ε ⟧ᶜ = Tᵒ ⟦ A ⟧ᵛ ε
+  ⟦ A ! ε ⟧ᶜ = Tᵒ ⟦ A ⟧ᵛ ε

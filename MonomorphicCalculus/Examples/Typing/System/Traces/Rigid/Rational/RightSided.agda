@@ -63,7 +63,7 @@ three-units = [0, ↑ # 3 ]
 -- opened after a reading and a wait of a unit: at most one and a half
 -- units have passed
 
-in-time : [] ⊢C⦂ Unit ‼ _
+in-time : [] ⊢C⦂ unit ! _
 in-time =
   box three-units (const 42) -- ∷ [ three-units ] Reading
     (perform read ⋆          -- ⟨ ∣ opTime read ∣ ⟩ ∷ Reading

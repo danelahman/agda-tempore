@@ -111,7 +111,7 @@ sub-env-is-⟦⟧ˢ₀ (split-⟨⟩ s) W pW = ⟨⟩-congᶠ (sub-env-is-⟦⟧
 mutual
 
   sub-varᴾ : ∀ {Γ Γ' A ρ} → (s : Sub₀ [] Γ Γ') → Paramˢ₀ s
-           → (x : A ∈[ ρ ] Γ') → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+           → (x : A ∈[ ρ ] Γ') → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
            → Paramᵛ (sub-var₀ s x f)
   sub-varᴾ ⌜ r ⌝          p  x         f = tt
   sub-varᴾ (val-sub V)    pV Hd        f = pV
@@ -123,8 +123,8 @@ mutual
     sub-varᴾ-⟨⟩ s p y f (eternal? A)
 
   sub-varᴾ-⟨⟩ : ∀ {Γ Γ' A ρ ρ'} → (s : Sub₀ [] Γ Γ') → Paramˢ₀ s
-              → (y : A ∈[ ρ' ] Γ') → (f : ¬ Eternal A → ρ' ·ᵣ ρ ≾ᵣ 𝟏ᵣ)
-              → (dec : Dec (Eternal A))
+              → (y : A ∈[ ρ' ] Γ') → (f : ¬ Et A → ρ' ·ᵣ ρ ≾ᵣ 𝟏ᵣ)
+              → (dec : Dec (Et A))
               → Paramᵛ (sub-var₀-⟨⟩ {ρ = ρ} s y f dec)
   sub-varᴾ-⟨⟩ s p y f (yes et) =
     eternal-val-extᴾ et (sub-var₀ s y (λ ¬et → ⊥-elim (¬et et)))
@@ -132,7 +132,7 @@ mutual
     renᵛ _ (sub-var₀ s y (λ ¬et' → ≾ᵣ-zero-productˡ (f ¬et')))
            (sub-varᴾ s p y (λ ¬et' → ≾ᵣ-zero-productˡ (f ¬et')))
 sub-var-natˢ : ∀ {Γ Γ' A ρ} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
-             → (x : A ∈[ ρ ] Γ') → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+             → (x : A ∈[ ρ ] Γ') → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
              → ⟦ sub-var₀ s x f ⟧ᵛᵗ (sub-varᴾ s p x f)
              ≈ᵐ var-morphism f x ∘ᵐ ⟦ s ⟧ˢ₀ p
 
@@ -419,9 +419,9 @@ mutual
   sub-clauses-uniformˢ :
     ∀ {Δ Δ' B} → (ss : Sub₀ [] Δ Δ') → (ps : Paramˢ₀ ss)
     → (H : (op : Op) → (ε'' : E)
-         → Δ' ∷ type-of-gtype (param op)
-              ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-           ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+         → Δ' ∷ ⌜ param op ⌝ᵍ
+              ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+           ⊢C⦂ B ! (op-grade op ·ₑ ε''))
     → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
     → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
          → ⟦ H op ε₂'' ⟧ᶜᵗ (pH op ε₂'')

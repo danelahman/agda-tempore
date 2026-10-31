@@ -8,11 +8,11 @@
 -- (`Kᵖ-eternalᵒ`). This interprets the eternal base types.              --
 --                                                                       --
 -- The eternal type formers are handled by the closure lemmas:           --
--- `𝟙ᵖ-eternalᵒ` (Unit), `𝔹ᵖ-eternalᵒ` (Bool), `ℕᵖ-eternalᵒ` (Nat),      --
--- `𝟘ᵖ-eternalᵒ` (Empty), `×ᵖ-eternalᵒ` (products), `+ᵖ-eternalᵒ` (sums) --
+-- `𝟙ᵖ-eternalᵒ` (unit), `𝔹ᵖ-eternalᵒ` (bool), `ℕᵖ-eternalᵒ` (nat),      --
+-- `𝟘ᵖ-eternalᵒ` (empty), `×ᵖ-eternalᵒ` (products), `+ᵖ-eternalᵒ` (sums) --
 -- and `Listᵖ-eternalᵒ` (lists), for any eternal objects. Together they  --
 -- cover exactly the formers of                                          --
--- `MonomorphicCalculus.Syntax.Types.Eternal`.                           --
+-- `MonomorphicCalculus.Syntax.Types.Et`.                                --
 --                                                                       --
 -- For the constant presheaves the `⟨ ⊤ ⟩`-algebra `α` is the mate       --
 -- `ε⊣ ∘ᵖ ⟨ ⊤ ⟩ᶠ nec` of a necessitation `nec`, and its two laws hold by --
@@ -95,7 +95,7 @@ Kᵖ-eternalᵒ S = record
   }
   where open Setoid S renaming (refl to reflˢ)
 
--- Closure: the terminal object (Unit).
+-- Closure: the terminal object (unit).
 
 𝟙ᵖ-eternalᵒ : Eternalᵒ 𝟙ᵖ
 𝟙ᵖ-eternalᵒ = record
@@ -107,7 +107,7 @@ Kᵖ-eternalᵒ S = record
     nec : ∀ {ρ} → 𝟙ᵖ →ᵖ [ ρ ]ᵒ 𝟙ᵖ
     nec = pmap (λ _ → mk[] (λ _ → tt) (λ _ _ → tt)) (λ _ _ → tt) (λ _ _ _ → tt)
 
--- Closure: the initial object (Empty).
+-- Closure: the initial object (empty).
 
 𝟘ᵖ-eternalᵒ : Eternalᵒ 𝟘ᵖ
 𝟘ᵖ-eternalᵒ = record

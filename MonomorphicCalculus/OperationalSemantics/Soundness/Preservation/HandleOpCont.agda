@@ -88,11 +88,11 @@ bcᴱ Γ = ⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ
 -- parameter reindexed along the same renaming.
 module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
          (H : (op' : Op) → (ε₀ : E)
-              → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
-                   ∷ [ ∣ op-grade op' ∣ᵉ ] (type-of-gtype (arity op') ⇒ B ‼ ε₀)
-                ⊢C⦂ B ‼ (op-grade op' ·ₑ ε₀))
-         (M : Γ ⟨ ρ ⟩ ∷ A₀ ⊢C⦂ A ‼ ε)
-         (N : Γ ⟨ σ ⟩ ∷ A ⊢C⦂ B ‼ ε')
+              → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op' ⌝ᵍ
+                   ∷ [ ∣ op-grade op' ∣ᵉ ] (⌜ arity op' ⌝ᵍ ⇒ B ! ε₀)
+                ⊢C⦂ B ! (op-grade op' ·ₑ ε₀))
+         (M : Γ ⟨ ρ ⟩ ∷ A₀ ⊢C⦂ A ! ε)
+         (N : Γ ⟨ σ ⟩ ∷ A ⊢C⦂ B ! ε')
          (ren : Ren [] ((Γ ⟨ ρ ⟩ ∷ A₀) ⟨ ∣ ε ∣ᵉ ⟩) (Γ ⟨ σ ⟩))
          (pM : Paramᶜ M) (pN : Paramᶜ N)
          (pH : ∀ op' ε₀ → Paramᶜ (H op' ε₀))
@@ -105,9 +105,9 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
   -- The reduct's clause family: `H` re-barred along `barrier-wk-ren`, with the
   -- renamed parametricity and uniformity certificates.
   H' : (op' : Op) → (ε₀ : E)
-     → ((Γ ⟨ ρ ⟩) ∷ A₀) ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
-          ∷ [ ∣ op-grade op' ∣ᵉ ] (type-of-gtype (arity op') ⇒ B ‼ ε₀)
-       ⊢C⦂ B ‼ (op-grade op' ·ₑ ε₀)
+     → ((Γ ⟨ ρ ⟩) ∷ A₀) ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op' ⌝ᵍ
+          ∷ [ ∣ op-grade op' ∣ᵉ ] (⌜ arity op' ⌝ᵍ ⇒ B ! ε₀)
+       ⊢C⦂ B ! (op-grade op' ·ₑ ε₀)
   H' op' ε₀ = C-rename (cong-∷-ren (cong-∷-ren (barrier-wk-ren ρ A₀))) (H op' ε₀)
 
   pH' : ∀ op' ε₀ → Paramᶜ (H' op' ε₀)

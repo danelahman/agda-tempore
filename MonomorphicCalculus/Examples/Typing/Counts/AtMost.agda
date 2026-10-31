@@ -62,21 +62,21 @@ open import MonomorphicCalculus.Examples.Typing.Core (at-most-counts 3) opTime
 --
 -- A computation's grade counts the operations along it.
 
-sampling : [] ⊢C⦂ Reading ‼ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ
+sampling : [] ⊢C⦂ Reading ! ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ
 sampling =
   perform read ⋆                     -- ⟨ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ ⟩ ∷ Reading
     (return here)
 
-storing : [] ⊢C⦂ Unit ‼ ⟪ upto 1 , upto 1 , upto 0 ⟫ᵐ
+storing : [] ⊢C⦂ unit ! ⟪ upto 1 , upto 1 , upto 0 ⟫ᵐ
 storing =
   perform read ⋆                     -- ⟨ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ ⟩ ∷ Reading
-    (perform write here              -- ⟨ ⟪ upto 0 , upto 1 , upto 0 ⟫ᵐ ⟩ ∷ Unit
+    (perform write here              -- ⟨ ⟪ upto 0 , upto 1 , upto 0 ⟫ᵐ ⟩ ∷ unit
       (return ⋆))
 
-relaying : [] ⊢C⦂ Unit ‼ ⟪ upto 1 , upto 0 , upto 1 ⟫ᵐ
+relaying : [] ⊢C⦂ unit ! ⟪ upto 1 , upto 0 , upto 1 ⟫ᵐ
 relaying =
   perform read ⋆                     -- ⟨ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ ⟩ ∷ Reading
-    (perform send here               -- ⟨ ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ ⟩ ∷ Unit
+    (perform send here               -- ⟨ ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ ⟩ ∷ unit
       (return ⋆))
 
 ------------------------------------------------------------------------
@@ -85,12 +85,12 @@ relaying =
 -- the reading is transmitted after idling five ticks, which count
 -- nothing, so `var`'s bound holds on every counter
 
-idle-then-transmit : [] ⊢C⦂ Unit ‼ ⟪ upto 1 , upto 0 , upto 1 ⟫ᵐ
+idle-then-transmit : [] ⊢C⦂ unit ! ⟪ upto 1 , upto 0 , upto 1 ⟫ᵐ
 idle-then-transmit =
   perform read ⋆                     -- ⟨ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ ⟩ ∷ Reading
     (delay 5                         -- ⟨ ⟪ upto 0 , upto 0 , upto 0 ⟫ᵐ ⟩
       (perform send (fresh-var (≤! , ≤! , ≤! , tt) (Tl-⟨⟩ Hd))
-                                     -- ⟨ ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ ⟩ ∷ Unit
+                                     -- ⟨ ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ ⟩ ∷ unit
         (return ⋆)))
 
 -- storing the reading first makes it stale for the transmission
@@ -113,18 +113,18 @@ rate-limit = ⟪ unlimited , unlimited , upto 2 ⟫ᵐ
 
 -- two uplinks keep it
 
-two-uplinks : [] ⊢C⦂ Unit ‼ rate-limit
+two-uplinks : [] ⊢C⦂ unit ! rate-limit
 two-uplinks =
   coerce (tt , tt , ≤! , tt)
     (perform read ⋆                  -- ⟨ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ ⟩ ∷ Reading
-      (perform send here             -- ⟨ ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ ⟩ ∷ Unit
+      (perform send here             -- ⟨ ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ ⟩ ∷ unit
         (perform read ⋆              -- ⟨ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ ⟩ ∷ Reading
-          (perform send here         -- ⟨ ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ ⟩ ∷ Unit
+          (perform send here         -- ⟨ ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ ⟩ ∷ unit
             (return ⋆)))))
 
 -- three are a program, graded by what they do
 
-three-uplinks : [] ⊢C⦂ Unit ‼ ⟪ upto 3 , upto 0 , upto 3 ⟫ᵐ
+three-uplinks : [] ⊢C⦂ unit ! ⟪ upto 3 , upto 0 , upto 3 ⟫ᵐ
 three-uplinks =
   perform read ⋆ (perform send here
     (perform read ⋆ (perform send here
@@ -153,12 +153,12 @@ licence = ⟪ unlimited , unlimited , upto 1 ⟫ᵐ
 -- a reading licensed this way is transmitted twice: claimed once before
 -- the first transmission and once after it
 
-sent-twice : [] ⊢C⦂ Unit ‼ ⟪ upto 0 , upto 0 , upto 2 ⟫ᵐ
+sent-twice : [] ⊢C⦂ unit ! ⟪ upto 0 , upto 0 , upto 2 ⟫ᵐ
 sent-twice =
   box licence (const 42)             -- ∷ [ licence ] Reading
     (unbox Hd (tt , tt , ≤! , tt) (<:ᵛ-refl _)
                                      -- ∷ Reading
-      (perform send here             -- ⟨ ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ ⟩ ∷ Unit
+      (perform send here             -- ⟨ ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ ⟩ ∷ unit
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) (tt , tt , ≤! , tt) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))
@@ -170,12 +170,12 @@ a-third-claim (_ , _ , second , _) = ≰! second
 
 -- idling and local work leave the licence as it was
 
-claim-after-a-long-wait : [] ⊢C⦂ Unit ‼ ⟪ upto 1 , upto 1 , upto 1 ⟫ᵐ
+claim-after-a-long-wait : [] ⊢C⦂ unit ! ⟪ upto 1 , upto 1 , upto 1 ⟫ᵐ
 claim-after-a-long-wait =
   box licence (const 42)             -- ∷ [ licence ] Reading
     (delay 100                       -- ⟨ ⟪ upto 0 , upto 0 , upto 0 ⟫ᵐ ⟩
       (perform read ⋆                -- ⟨ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ ⟩ ∷ Reading
-        (perform write here          -- ⟨ ⟪ upto 0 , upto 1 , upto 0 ⟫ᵐ ⟩ ∷ Unit
+        (perform write here          -- ⟨ ⟪ upto 0 , upto 1 , upto 0 ⟫ᵐ ⟩ ∷ unit
           (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-⟨⟩ Hd))))) (tt , tt , ≤! , tt)
                  (<:ᵛ-refl _)        -- ∷ Reading
             (perform send here (return ⋆))))))
@@ -187,9 +187,9 @@ claim-after-a-long-wait =
 -- below is charged a store and a transmission, though each run
 -- performs one of them.
 
-branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ ⟪ upto 0 , upto 1 , upto 1 ⟫ᵐ
+branching : [] ∷ bool ∷ Reading ⊢C⦂ unit ! ⟪ upto 0 , upto 1 , upto 1 ⟫ᵐ
 branching =
-  if eternal-var Boolₑ (Tl-∷ Hd)
+  if eternal-var boolₑ (Tl-∷ Hd)
     `then coerce (≤! , ≤! , ≤! , tt) (perform send  here (return ⋆))
     `else coerce (≤! , ≤! , ≤! , tt) (perform write here (return ⋆))
 
@@ -208,14 +208,14 @@ storing-is-not-transmitting (_ , wrote , _ , _) = ≰! wrote
 nothing-fits : (op : Op) → (ε'' : E) → 𝟏ₑ ≾ₑ op-grade op ·ₑ ε''
 nothing-fits op ε'' = 𝟏ᵛ-least 𝟏ₒ-least (op-grade op ·ₑ ε'')
 
-suppressed : [] ⊢C⦂ Unit ‼ ⟪ upto 1 , upto 0 , upto 2 ⟫ᵐ
+suppressed : [] ⊢C⦂ unit ! ⟪ upto 1 , upto 0 , upto 2 ⟫ᵐ
 suppressed =
   handle perform read ⋆ (perform send here (perform send (const 0) (return ⋆)))
     `with discarding {[]} nothing-fits
-    `in                              -- ⟨ ⟪ upto 1 , upto 0 , upto 2 ⟫ᵐ ⟩ ∷ Unit
+    `in                              -- ⟨ ⟪ upto 1 , upto 0 , upto 2 ⟫ᵐ ⟩ ∷ unit
       (return ⋆)
 
-forwarded : [] ⊢C⦂ Reading ‼ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ
+forwarded : [] ⊢C⦂ Reading ! ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}

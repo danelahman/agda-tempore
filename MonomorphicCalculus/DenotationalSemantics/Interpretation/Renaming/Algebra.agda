@@ -67,13 +67,13 @@ ec-extᵉ ec = Eternalᵒ.extᵉ (ec-Eternalᵒ ec)
 
 -- The extraction's two components, read off the product structure.
 
-ec-extᵉ-fstᵐ : ∀ {Γ A} → (ec : EternalCtx Γ) → (et : Eternal A) → ∀ {ρ}
+ec-extᵉ-fstᵐ : ∀ {Γ A} → (ec : EternalCtx Γ) → (et : Et A) → ∀ {ρ}
              → fstᵐ ∘ᵐ ec-extᵉ (ec-∷ ec et) {ρ} ≈ᵐ ec-extᵉ ec ∘ᵐ ⟨ ρ ⟩ᶠ fstᵐ
 ec-extᵉ-fstᵐ ec et =
   ≈ᵐ-trans (∘ᵐ-congʳ (×-eternalᵒ-extᵉ (ec-Eternalᵒ ec) (eternalᵛ-Eternalᵒ et)))
            (⟨⟩ᵐ-fstᵐ _ _)
 
-ec-extᵉ-sndᵐ : ∀ {Γ A} → (ec : EternalCtx Γ) → (et : Eternal A) → ∀ {ρ}
+ec-extᵉ-sndᵐ : ∀ {Γ A} → (ec : EternalCtx Γ) → (et : Et A) → ∀ {ρ}
              → sndᵐ ∘ᵐ ec-extᵉ (ec-∷ ec et) {ρ} ≈ᵐ eternalᵛ-extᵉ et ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ
 ec-extᵉ-sndᵐ ec et =
   ≈ᵐ-trans (∘ᵐ-congʳ (×-eternalᵒ-extᵉ (ec-Eternalᵒ ec) (eternalᵛ-Eternalᵒ et)))
@@ -81,7 +81,7 @@ ec-extᵉ-sndᵐ ec et =
 
 -- Extraction undoes `η`, so an eternal variable at the head is the projection.
 
-evar-Hd : ∀ {Γ A} → (et : Eternal A)
+evar-Hd : ∀ {Γ A} → (et : Et A)
         → eternalᵛ-extᵉ et ∘ᵐ var-proj (Hd {A} {Γ}) ≈ᵐ sndᵐ
 evar-Hd et =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -99,7 +99,7 @@ prod-ext pf ps =
 -- Crossing a unit-equivalent lock: the morphism of a variable under the lock is
 -- the one below it, precomposed with the lock's counit.
 
-ec-var-lock : ∀ {Γ A ρ' ρ₀} → (p : ρ₀ ≾ᵣ 𝟏ᵣ) → (et : Eternal A)
+ec-var-lock : ∀ {Γ A ρ' ρ₀} → (p : ρ₀ ≾ᵣ 𝟏ᵣ) → (et : Et A)
             → (y : A ∈[ ρ' ] Γ)
             → eternalᵛ-extᵉ et ∘ᵐ var-proj (Tl-⟨⟩ {ρ = ρ₀} y)
             ≈ᵐ (eternalᵛ-extᵉ et ∘ᵐ var-proj y) ∘ᵐ ⟨𝟏≈⟩-counit p
@@ -121,7 +121,7 @@ ec-var-lock p et y =
 -- ambient: `extᵉ` has no naturality law, so only algebra morphisms commute with
 -- it.
 
-ec-var-alg : ∀ {Γ A ρ σ} → (ec : EternalCtx Γ) → (et : Eternal A) → (y : A ∈[ ρ ] Γ)
+ec-var-alg : ∀ {Γ A ρ σ} → (ec : EternalCtx Γ) → (et : Et A) → (y : A ∈[ ρ ] Γ)
            → eternalᵛ-extᵉ et ∘ᵐ ⟨ σ ⟩ᶠ (eternalᵛ-extᵉ et ∘ᵐ var-proj y)
            ≈ᵐ (eternalᵛ-extᵉ et ∘ᵐ var-proj y) ∘ᵐ ec-extᵉ ec {σ}
 

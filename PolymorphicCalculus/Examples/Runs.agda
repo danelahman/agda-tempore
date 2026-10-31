@@ -87,9 +87,9 @@ check-typable Γ M () | Check.stuck
 budget : 𝔻 → EExp Θ₁ → RawC Θ₁ 0
 budget τ c =
   (return (lam ((v₀ · ⋆) ⨟ delay τ (return ⋆))
-             ⦂ᵛ ((Unit ⇒ Unit ‼ ε̂₀) ⇒ Unit ‼ ε̂₀))
+             ⦂ᵛ ((unit ⇒ unit ! ε̂₀) ⇒ unit ! ε̂₀))
    ⨟ (v₀ · lam (return ⋆)))
-  ⦂ᶜ (Unit ‼ c)
+  ⦂ᶜ (unit ! c)
 
 -- annotated at the grade of a duration, and at the top
 

@@ -11,8 +11,8 @@
 -- of its scheme (`instᶜ`), an unbound position the             --
 -- unsatisfiable one.                                           --
 --                                                              --
--- Contract. `σ ⊨[ Q ] genC Γ M (A ‼ t)` holds exactly when     --
--- some derivation of `Q ∣ Γ [ σ ] ⊢C⦂ (A ‼ t) [ σ ]` erases to --
+-- Contract. `σ ⊨[ Q ] genC Γ M (A ! t)` holds exactly when     --
+-- some derivation of `Q ∣ Γ [ σ ] ⊢C⦂ (A ! t) [ σ ]` erases to --
 -- `M [ σ ]` (`charV`, `charC`).                                --
 ------------------------------------------------------------------
 
@@ -69,7 +69,7 @@ useDefConstraint (just s) A = instᶜ s A
 resTy : ∀ {Θ₀ Θ n} → Subst Θ₀ Θ → OCtx Θ n → RawV Θ₀ n → OVType Θ
 resTy ι Γ (var i)  = lookup-ty Γ i
 resTy ι Γ (V ⦂ᵛ B) = B [ ι ]ᵛ
-resTy ι Γ _        = Unit
+resTy ι Γ _        = unit
 
 resGr : ∀ {Θ₀ Θ n} → OCtx Θ n → RawV Θ₀ n → RExp Θ
 resGr Γ (var i)  = lookup-gr Γ i
@@ -99,14 +99,14 @@ mutual
   -- base-typed constants, unit, booleans
 
   genVˢ ι Γ (const B c) A = Base B ≐ᵥ A
-  genVˢ ι Γ ⋆           A = Unit ≐ᵥ A
-  genVˢ ι Γ true        A = Bool ≐ᵥ A
-  genVˢ ι Γ false       A = Bool ≐ᵥ A
+  genVˢ ι Γ ⋆           A = unit ≐ᵥ A
+  genVˢ ι Γ true        A = bool ≐ᵥ A
+  genVˢ ι Γ false       A = bool ≐ᵥ A
 
   -- natural numbers
 
-  genVˢ ι Γ zero        A = Nat ≐ᵥ A
-  genVˢ ι Γ (succ V)    A = (Nat ≐ᵥ A) ∧̂ genVˢ ι Γ V Nat
+  genVˢ ι Γ zero        A = nat ≐ᵥ A
+  genVˢ ι Γ (succ V)    A = (nat ≐ᵥ A) ∧̂ genVˢ ι Γ V nat
 
   -- pairing
 
@@ -142,22 +142,22 @@ mutual
   -- lists: the element type ∃-bound, its list type the expected type
 
   genVˢ {Θ = Θ} ι Γ nil A =
-    ∃ᵗ (|List| α ≐ᵥ wkᵗ-v A)
+    ∃ᵗ (list α ≐ᵥ wkᵗ-v A)
     where
       α = tvar (newᵗ {Θ})
 
   genVˢ {Θ = Θ} ι Γ (cons V W) A =
-    ∃ᵗ ((|List| α ≐ᵥ A↑) ∧̂ genVˢ ι↑ Γ↑ V α ∧̂ genVˢ ι↑ Γ↑ W (|List| α))
+    ∃ᵗ ((list α ≐ᵥ A↑) ∧̂ genVˢ ι↑ Γ↑ V α ∧̂ genVˢ ι↑ Γ↑ W (list α))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ
       α  = tvar (newᵗ {Θ})
       A↑ = wkᵗ-v A
       Γ↑ = wkᵗ-ctx Γ
 
-  -- comparison: the operands' type ∃-bound and eternal, the result `Bool`
+  -- comparison: the operands' type ∃-bound and eternal, the result `bool`
 
   genVˢ {Θ = Θ} ι Γ (cmp ⋈ V W) A =
-    ∃ᵗ ((Bool ≐ᵥ A↑) ∧̂ genVˢ ι↑ Γ↑ V α ∧̂ genVˢ ι↑ Γ↑ W α ∧̂ Etᶜ α)
+    ∃ᵗ ((bool ≐ᵥ A↑) ∧̂ genVˢ ι↑ Γ↑ V α ∧̂ genVˢ ι↑ Γ↑ W α ∧̂ Etᶜ α)
     where
       ι↑ = ι ⨟ˢ wkˢᵗ
       α  = tvar (newᵗ {Θ})
@@ -167,7 +167,7 @@ mutual
   -- lambda abstraction: the body at the synthesised arrow, below the expected type
 
   genVˢ {Θ = Θ} ι Γ (lam M) A =
-    ∃ᵗ (∃ᵗ (∃ᵉ ((α₁ ⇒ (α₂ ‼ e) ≾̂ᵥᶜ A↑) ∧̂ genCˢ ι↑ (Γ↑ ∷ α₁) M (α₂ ‼ e))))
+    ∃ᵗ (∃ᵗ (∃ᵉ ((α₁ ⇒ (α₂ ! e) ≾̂ᵥᶜ A↑) ∧̂ genCˢ ι↑ (Γ↑ ∷ α₁) M (α₂ ! e))))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
       α₁ = wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ})))
@@ -181,15 +181,15 @@ mutual
   -- continuation grade is the rigid of its `∀ᵉ`
 
   genVˢ {Θ = Θ} ι Γ (handler N H) A =
-    ∃ᵗ (∃ᵗ (∃ᵉ (∃ᵉ (  ((α ‼ e₁) ⇛ (γ ‼ e₂) ≾̂ᵥᶜ A↑)
-                    ∧̂ genCˢ ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) N (γ ‼ e₂)
+    ∃ᵗ (∃ᵗ (∃ᵉ (∃ᵉ (  ((α ! e₁) ⇛ (γ ! e₂) ≾̂ᵥᶜ A↑)
+                    ∧̂ genCˢ ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) N (γ ! e₂)
                     ∧̂ ⋀ᵒᵖ (λ op →
                          ∀ᵉ (genCˢ (ι↑ ↑ᵉ)
                                   (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                                     ∷ [ rconst ∣ op-grade op ∣ᵉ ]
-                                        (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
+                                        (⌜ arity op ⌝ᵍ ⇒ γ⇑ ! e''))
                                   (H op)
-                                  (γ⇑ ‼ (econst (op-grade op) ·̂ₑ e''))))))))
+                                  (γ⇑ ! (econst (op-grade op) ·̂ₑ e''))))))))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ
       α  = wkᵉ-v (wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ}))))
@@ -213,13 +213,13 @@ mutual
 
   -- returning a value
 
-  genCˢ ι Γ (return V) (A ‼ t) = genVˢ ι Γ V A ∧̂ (𝟏̂ₑ ≾̂ₑᶜ t)
+  genCˢ ι Γ (return V) (A ! t) = genVˢ ι Γ V A ∧̂ (𝟏̂ₑ ≾̂ₑᶜ t)
 
   -- sequential composition
 
-  genCˢ {Θ = Θ} ι Γ (M₁ ⨟ M₂) (A ‼ t) =
-    ∃ᵗ (∃ᵉ (∃ᵉ (  genCˢ ι↑ Γ↑ M₁ (α ‼ e₁)
-                ∧̂ genCˢ ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) M₂ (A↑ ‼ e₂)
+  genCˢ {Θ = Θ} ι Γ (M₁ ⨟ M₂) (A ! t) =
+    ∃ᵗ (∃ᵉ (∃ᵉ (  genCˢ ι↑ Γ↑ M₁ (α ! e₁)
+                ∧̂ genCˢ ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) M₂ (A↑ ! e₂)
                 ∧̂ ((e₁ ·̂ₑ e₂) ≾̂ₑᶜ t↑))))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ
@@ -232,8 +232,8 @@ mutual
 
   -- function application: the result type and latent effect below the expected
 
-  genCˢ {Θ = Θ} ι Γ (V₁ · V₂) (A ‼ t) =
-    ∃ᵗ (∃ᵗ (∃ᵉ (  genVˢ ι↑ Γ↑ V₁ (α ⇒ (β ‼ e))
+  genCˢ {Θ = Θ} ι Γ (V₁ · V₂) (A ! t) =
+    ∃ᵗ (∃ᵗ (∃ᵉ (  genVˢ ι↑ Γ↑ V₁ (α ⇒ (β ! e))
                 ∧̂ genVˢ ι↑ Γ↑ V₂ α
                 ∧̂ (β ≾̂ᵥᶜ A↑)
                 ∧̂ (e ≾̂ₑᶜ t↑))))
@@ -248,8 +248,8 @@ mutual
 
   -- pattern-matching
 
-  genCˢ {Θ = Θ} ι Γ (match V `in M) (A ‼ t) =
-    ∃ᵗ (∃ᵗ (genVˢ ι↑ Γ↑ V (α₁ |×| α₂) ∧̂ genCˢ ι↑ (Γ↑ ∷ α₁ ∷ α₂) M (A↑ ‼ t↑)))
+  genCˢ {Θ = Θ} ι Γ (match V `in M) (A ! t) =
+    ∃ᵗ (∃ᵗ (genVˢ ι↑ Γ↑ V (α₁ |×| α₂) ∧̂ genCˢ ι↑ (Γ↑ ∷ α₁ ∷ α₂) M (A↑ ! t↑)))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
       α₁ = wkᵗ-v (tvar (newᵗ {Θ}))
@@ -260,24 +260,24 @@ mutual
 
   -- empty type elimination
 
-  genCˢ ι Γ (absurd V) C = genVˢ ι Γ V Empty
+  genCˢ ι Γ (absurd V) C = genVˢ ι Γ V empty
 
   -- boolean elimination
 
-  genCˢ ι Γ (if V `then M₁ `else M₂) (A ‼ t) =
-    genVˢ ι Γ V Bool ∧̂ genCˢ ι Γ M₁ (A ‼ t) ∧̂ genCˢ ι Γ M₂ (A ‼ t)
+  genCˢ ι Γ (if V `then M₁ `else M₂) (A ! t) =
+    genVˢ ι Γ V bool ∧̂ genCˢ ι Γ M₁ (A ! t) ∧̂ genCˢ ι Γ M₂ (A ! t)
 
   -- natural-number elimination
 
-  genCˢ ι Γ (caseℕ V `zero M₁ `succ M₂) (A ‼ t) =
-    genVˢ ι Γ V Nat ∧̂ genCˢ ι Γ M₁ (A ‼ t) ∧̂ genCˢ ι (Γ ∷ Nat) M₂ (A ‼ t)
+  genCˢ ι Γ (caseℕ V `zero M₁ `succ M₂) (A ! t) =
+    genVˢ ι Γ V nat ∧̂ genCˢ ι Γ M₁ (A ! t) ∧̂ genCˢ ι (Γ ∷ nat) M₂ (A ! t)
 
   -- sum elimination: the summands ∃-bound, both branches at the expected type
 
-  genCˢ {Θ = Θ} ι Γ (case+ V `inl M₁ `inr M₂) (A ‼ t) =
+  genCˢ {Θ = Θ} ι Γ (case+ V `inl M₁ `inr M₂) (A ! t) =
     ∃ᵗ (∃ᵗ (  genVˢ ι↑ Γ↑ V (α₁ |+| α₂)
-            ∧̂ genCˢ ι↑ (Γ↑ ∷ α₁) M₁ (A↑ ‼ t↑)
-            ∧̂ genCˢ ι↑ (Γ↑ ∷ α₂) M₂ (A↑ ‼ t↑)))
+            ∧̂ genCˢ ι↑ (Γ↑ ∷ α₁) M₁ (A↑ ! t↑)
+            ∧̂ genCˢ ι↑ (Γ↑ ∷ α₂) M₂ (A↑ ! t↑)))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
       α₁ = wkᵗ-v (tvar (newᵗ {Θ}))
@@ -289,10 +289,10 @@ mutual
   -- primitive recursion on natural numbers: the result type and effect
   -- ∃-bound below the expected ones, the effect absorbing its own iteration
 
-  genCˢ {Θ = Θ} ι Γ (recℕ V M₁ M₂) (A ‼ t) =
-    ∃ᵗ (∃ᵉ (  genVˢ ι↑ Γ↑ V Nat
-            ∧̂ genCˢ ι↑ Γ↑ M₁ (β ‼ e)
-            ∧̂ genCˢ ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) M₂ (β ‼ e)
+  genCˢ {Θ = Θ} ι Γ (recℕ V M₁ M₂) (A ! t) =
+    ∃ᵗ (∃ᵉ (  genVˢ ι↑ Γ↑ V nat
+            ∧̂ genCˢ ι↑ Γ↑ M₁ (β ! e)
+            ∧̂ genCˢ ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) M₂ (β ! e)
             ∧̂ ((e ·̂ₑ e) ≾̂ₑᶜ e)
             ∧̂ (β ≾̂ᵥᶜ A↑)
             ∧̂ (e ≾̂ₑᶜ t↑)))
@@ -306,10 +306,10 @@ mutual
 
   -- list elimination: the element type ∃-bound, both branches at the expected type
 
-  genCˢ {Θ = Θ} ι Γ (caseL V `nil M₁ `cons M₂) (A ‼ t) =
-    ∃ᵗ (  genVˢ ι↑ Γ↑ V (|List| α)
-        ∧̂ genCˢ ι↑ Γ↑ M₁ (A↑ ‼ t↑)
-        ∧̂ genCˢ ι↑ (Γ↑ ∷ α ∷ |List| α) M₂ (A↑ ‼ t↑))
+  genCˢ {Θ = Θ} ι Γ (caseL V `nil M₁ `cons M₂) (A ! t) =
+    ∃ᵗ (  genVˢ ι↑ Γ↑ V (list α)
+        ∧̂ genCˢ ι↑ Γ↑ M₁ (A↑ ! t↑)
+        ∧̂ genCˢ ι↑ (Γ↑ ∷ α ∷ list α) M₂ (A↑ ! t↑))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ
       α  = tvar (newᵗ {Θ})
@@ -319,10 +319,10 @@ mutual
 
   -- primitive recursion on lists: as for `recℕ`, the element type ∃-bound too
 
-  genCˢ {Θ = Θ} ι Γ (recL V M₁ M₂) (A ‼ t) =
-    ∃ᵗ (∃ᵗ (∃ᵉ (  genVˢ ι↑ Γ↑ V (|List| α)
-                ∧̂ genCˢ ι↑ Γ↑ M₁ (β ‼ e)
-                ∧̂ genCˢ ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ α ∷ |List| α) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) M₂ (β ‼ e)
+  genCˢ {Θ = Θ} ι Γ (recL V M₁ M₂) (A ! t) =
+    ∃ᵗ (∃ᵗ (∃ᵉ (  genVˢ ι↑ Γ↑ V (list α)
+                ∧̂ genCˢ ι↑ Γ↑ M₁ (β ! e)
+                ∧̂ genCˢ ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ α ∷ list α) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) M₂ (β ! e)
                 ∧̂ ((e ·̂ₑ e) ≾̂ₑᶜ e)
                 ∧̂ (β ≾̂ᵥᶜ A↑)
                 ∧̂ (e ≾̂ₑᶜ t↑))))
@@ -337,9 +337,9 @@ mutual
 
   -- performing algebraic operations
 
-  genCˢ {Θ = Θ} ι Γ (perform op V M) (A ‼ t) =
+  genCˢ {Θ = Θ} ι Γ (perform op V M) (A ! t) =
     ∃ᵉ (  genVˢ ι↑ Γ↑ V ⌜ param op ⌝ᵍ
-        ∧̂ genCˢ ι↑ (Γ↑ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ) M (A↑ ‼ e)
+        ∧̂ genCˢ ι↑ (Γ↑ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ) M (A↑ ! e)
         ∧̂ ((econst (op-grade op) ·̂ₑ e) ≾̂ₑᶜ t↑))
     where
       ι↑ = ι ⨟ˢ wkˢᵉ
@@ -350,8 +350,8 @@ mutual
 
   -- explicit delaying of a computation
 
-  genCˢ {Θ = Θ} ι Γ (delay τ M) (A ‼ t) =
-    ∃ᵉ (  genCˢ ι↑ (Γ↑ ⟨ rconst (ιᵣ τ) ⟩) M (A↑ ‼ e)
+  genCˢ {Θ = Θ} ι Γ (delay τ M) (A ! t) =
+    ∃ᵉ (  genCˢ ι↑ (Γ↑ ⟨ rconst (ιᵣ τ) ⟩) M (A↑ ! e)
         ∧̂ ((econst (ιₑ τ) ·̂ₑ e) ≾̂ₑᶜ t↑))
     where
       ι↑ = ι ⨟ˢ wkˢᵉ
@@ -363,9 +363,9 @@ mutual
   -- effect handling: the handled type and the handler's result type ∃-bound,
   -- the result below the expected type and effect
 
-  genCˢ {Θ = Θ} ι Γ (handle M `with V) (A ‼ t) =
-    ∃ᵗ (∃ᵗ (∃ᵉ (∃ᵉ (  genCˢ ι↑ Γ↑ M (α ‼ e₁)
-                    ∧̂ genVˢ ι↑ Γ↑ V ((α ‼ e₁) ⇛ (γ ‼ e₂))
+  genCˢ {Θ = Θ} ι Γ (handle M `with V) (A ! t) =
+    ∃ᵗ (∃ᵗ (∃ᵉ (∃ᵉ (  genCˢ ι↑ Γ↑ M (α ! e₁)
+                    ∧̂ genVˢ ι↑ Γ↑ V ((α ! e₁) ⇛ (γ ! e₂))
                     ∧̂ (γ ≾̂ᵥᶜ A↑)
                     ∧̂ ((e₁ ·̂ₑ e₂) ≾̂ₑᶜ t↑)))))
     where
@@ -381,11 +381,11 @@ mutual
   -- unboxing a resource value: it reaches a box of ∃-bound grade and payload,
   -- the grade above the one accumulated at its variable
 
-  genCˢ {Θ = Θ} ι Γ (unbox V N) (A ‼ t) =
+  genCˢ {Θ = Θ} ι Γ (unbox V N) (A ! t) =
     ∃ᵗ (∃ʳ (  resC ι↑ Γ↑ V
             ∧̂ (resTy ι↑ Γ↑ V ≐ᵥ [ r ] β)
             ∧̂ (resGr Γ↑ V ≾̂ᵣᶜ r)
-            ∧̂ genCˢ ι↑ (Γ↑ ∷ β) N (A↑ ‼ t↑)))
+            ∧̂ genCˢ ι↑ (Γ↑ ∷ β) N (A↑ ! t↑)))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
       β  = wkʳ-v (tvar (newᵗ {Θ}))
@@ -396,8 +396,8 @@ mutual
 
   -- boxing up a value: the grade is the annotation, only the payload's type fresh
 
-  genCˢ {Θ = Θ} ι Γ (box ρ V N) (A ‼ t) =
-    ∃ᵗ (genVˢ ι↑ (Γ↑ ⟨ r ⟩) V α ∧̂ genCˢ ι↑ (Γ↑ ∷ [ r ] α) N (A↑ ‼ t↑))
+  genCˢ {Θ = Θ} ι Γ (box ρ V N) (A ! t) =
+    ∃ᵗ (genVˢ ι↑ (Γ↑ ⟨ r ⟩) V α ∧̂ genCˢ ι↑ (Γ↑ ∷ [ r ] α) N (A↑ ! t↑))
     where
       ι↑ = ι ⨟ˢ wkˢᵗ
       r  = ρ [ ι↑ ]ʳ
@@ -408,8 +408,8 @@ mutual
 
   -- type annotation: as for values, split into value and effect atoms
 
-  genCˢ ι Γ (M ⦂ᶜ (B ‼ u)) (A ‼ t) =
-    genCˢ ι Γ M (B' ‼ u') ∧̂ (B' ≾̂ᵥᶜ A) ∧̂ (u' ≾̂ₑᶜ t)
+  genCˢ ι Γ (M ⦂ᶜ (B ! u)) (A ! t) =
+    genCˢ ι Γ M (B' ! u') ∧̂ (B' ≾̂ᵥᶜ A) ∧̂ (u' ≾̂ₑᶜ t)
     where
       B' = B [ ι ]ᵛ
       u' = u [ ι ]ᵉ
@@ -656,43 +656,43 @@ mutual
   genCˢ-rigidFree : ∀ {Θ₀ Θ n Δ} {ι : Subst Θ₀ Θ} {Γ : OCtx Θ n} → defs Γ ≡ Δ
                   → (M : RawC Θ₀ n) → {C : OCType Θ} → NoRigidᶜ Δ M
                   → RigidFree (genCˢ ι Γ M C)
-  genCˢ-rigidFree e (return V)               {A ‼ t} h           =
+  genCˢ-rigidFree e (return V)               {A ! t} h           =
     genVˢ-rigidFree e V h , tt
-  genCˢ-rigidFree {Γ = Γ} e (M₁ ⨟ M₂)        {A ‼ t} (h , k)     =
+  genCˢ-rigidFree {Γ = Γ} e (M₁ ⨟ M₂)        {A ! t} (h , k)     =
     genCˢ-rigidFree (eᵗᵉᵉ Γ e) M₁ h , genCˢ-rigidFree (eᵗᵉᵉ Γ e) M₂ k , tt
-  genCˢ-rigidFree {Γ = Γ} e (V₁ · V₂)        {A ‼ t} (h , k)     =
+  genCˢ-rigidFree {Γ = Γ} e (V₁ · V₂)        {A ! t} (h , k)     =
     genVˢ-rigidFree (eᵗᵗᵉ Γ e) V₁ h , genVˢ-rigidFree (eᵗᵗᵉ Γ e) V₂ k , tt , tt
-  genCˢ-rigidFree {Γ = Γ} e (match V `in M)  {A ‼ t} (h , k)     =
+  genCˢ-rigidFree {Γ = Γ} e (match V `in M)  {A ! t} (h , k)     =
     genVˢ-rigidFree (eᵗᵗ Γ e) V h , genCˢ-rigidFree (eᵗᵗ Γ e) M k
-  genCˢ-rigidFree e (absurd V)               {A ‼ t} h           =
+  genCˢ-rigidFree e (absurd V)               {A ! t} h           =
     genVˢ-rigidFree e V h
-  genCˢ-rigidFree e (if V `then M₁ `else M₂) {A ‼ t} (h , k , l) =
+  genCˢ-rigidFree e (if V `then M₁ `else M₂) {A ! t} (h , k , l) =
     genVˢ-rigidFree e V h , genCˢ-rigidFree e M₁ k , genCˢ-rigidFree e M₂ l
-  genCˢ-rigidFree e (caseℕ V `zero M₁ `succ M₂) {A ‼ t} (h , k , l) =
+  genCˢ-rigidFree e (caseℕ V `zero M₁ `succ M₂) {A ! t} (h , k , l) =
     genVˢ-rigidFree e V h , genCˢ-rigidFree e M₁ k , genCˢ-rigidFree e M₂ l
-  genCˢ-rigidFree {Γ = Γ} e (case+ V `inl M₁ `inr M₂) {A ‼ t} (h , k , l) =
+  genCˢ-rigidFree {Γ = Γ} e (case+ V `inl M₁ `inr M₂) {A ! t} (h , k , l) =
     genVˢ-rigidFree (eᵗᵗ Γ e) V h , genCˢ-rigidFree (eᵗᵗ Γ e) M₁ k
     , genCˢ-rigidFree (eᵗᵗ Γ e) M₂ l
-  genCˢ-rigidFree {Γ = Γ} e (recℕ V M₁ M₂)   {A ‼ t} (h , k , l) =
+  genCˢ-rigidFree {Γ = Γ} e (recℕ V M₁ M₂)   {A ! t} (h , k , l) =
     genVˢ-rigidFree (eᵗᵉ Γ e) V h , genCˢ-rigidFree (eᵗᵉ Γ e) M₁ k
     , genCˢ-rigidFree (eᵗᵉ Γ e) M₂ l , tt , tt , tt
-  genCˢ-rigidFree {Γ = Γ} e (caseL V `nil M₁ `cons M₂) {A ‼ t} (h , k , l) =
+  genCˢ-rigidFree {Γ = Γ} e (caseL V `nil M₁ `cons M₂) {A ! t} (h , k , l) =
     genVˢ-rigidFree (eᵗ Γ e) V h , genCˢ-rigidFree (eᵗ Γ e) M₁ k
     , genCˢ-rigidFree (eᵗ Γ e) M₂ l
-  genCˢ-rigidFree {Γ = Γ} e (recL V M₁ M₂)   {A ‼ t} (h , k , l) =
+  genCˢ-rigidFree {Γ = Γ} e (recL V M₁ M₂)   {A ! t} (h , k , l) =
     genVˢ-rigidFree (eᵗᵗᵉ Γ e) V h , genCˢ-rigidFree (eᵗᵗᵉ Γ e) M₁ k
     , genCˢ-rigidFree (eᵗᵗᵉ Γ e) M₂ l , tt , tt , tt
-  genCˢ-rigidFree {Γ = Γ} e (perform op V M) {A ‼ t} (h , k)     =
+  genCˢ-rigidFree {Γ = Γ} e (perform op V M) {A ! t} (h , k)     =
     genVˢ-rigidFree (eᵉ Γ e) V h , genCˢ-rigidFree (eᵉ Γ e) M k , tt
-  genCˢ-rigidFree {Γ = Γ} e (delay τ M)      {A ‼ t} h           =
+  genCˢ-rigidFree {Γ = Γ} e (delay τ M)      {A ! t} h           =
     genCˢ-rigidFree (eᵉ Γ e) M h , tt
-  genCˢ-rigidFree {Γ = Γ} e (handle M `with V) {A ‼ t} (h , k)   =
+  genCˢ-rigidFree {Γ = Γ} e (handle M `with V) {A ! t} (h , k)   =
     genCˢ-rigidFree (eᵗᵗᵉᵉ Γ e) M h , genVˢ-rigidFree (eᵗᵗᵉᵉ Γ e) V k , tt , tt
-  genCˢ-rigidFree {Γ = Γ} e (unbox V N)      {A ‼ t} (h , k)     =
+  genCˢ-rigidFree {Γ = Γ} e (unbox V N)      {A ! t} (h , k)     =
     resC-rigidFree V , (tt , tt) , tt , genCˢ-rigidFree (eᵗʳ Γ e) N k
-  genCˢ-rigidFree {Γ = Γ} e (box ρ V N)      {A ‼ t} (h , k)     =
+  genCˢ-rigidFree {Γ = Γ} e (box ρ V N)      {A ! t} (h , k)     =
     genVˢ-rigidFree (eᵗ Γ e) V h , genCˢ-rigidFree (eᵗ Γ e) N k
-  genCˢ-rigidFree e (M ⦂ᶜ (B ‼ u'))          {A ‼ t} h           =
+  genCˢ-rigidFree e (M ⦂ᶜ (B ! u'))          {A ! t} h           =
     genCˢ-rigidFree e M h , tt , tt
 
 -- Generation for a raw term over the scope of the context
@@ -736,9 +736,9 @@ private
   ∅ᶜ = []
 
   ex-box : (c : R)
-         → genC ∅ᶜ (box (rconst c) ⋆ (return (var zero))) ([ rconst c ] Unit ‼ 𝟏̂ₑ)
-           ≡ (∃ᵗ (  (Unit ≐ᵥ α₀)
-                  ∧̂ ((([ rconst c ] α₀ ≾̂ᵥᶜ [ rconst c ] Unit)
+         → genC ∅ᶜ (box (rconst c) ⋆ (return (var zero))) ([ rconst c ] unit ! 𝟏̂ₑ)
+           ≡ (∃ᵗ (  (unit ≐ᵥ α₀)
+                  ∧̂ ((([ rconst c ] α₀ ≾̂ᵥᶜ [ rconst c ] unit)
                        ∧̂ Et∨≾ᵘ ([ rconst c ] α₀) 𝟏̂ᵣ)
                      ∧̂ (𝟏̂ₑ ≾̂ₑᶜ 𝟏̂ₑ))))
   ex-box c = refl

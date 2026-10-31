@@ -339,7 +339,7 @@ shift-dfs (ren-shift r) = dfs r
 mutual
 
   eternal-v : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {A : OVType Θ}
-            → Shift Γ Γ' → Q ⊩ᴱ A → Q ∣ Γ ⊢V⦂ A → Q ∣ Γ' ⊢V⦂ A
+            → Shift Γ Γ' → Q ⊩Et A → Q ∣ Γ ⊢V⦂ A → Q ∣ Γ' ⊢V⦂ A
   eternal-v {Γ' = Γ'} f e (var x p) =
     var (∈̂-ty-subst (trans (shift-ty f (var-pos x)) (var-pos-ty x))
                     (lookup-var Γ' (shift f (var-pos x))))
@@ -355,13 +355,13 @@ mutual
   eternal-v f (e₁ |+|ₑ e₂) (inl V)       = inl (eternal-v f e₁ V)
   eternal-v f (e₁ |+|ₑ e₂) (inr V)       = inr (eternal-v f e₂ V)
   eternal-v f e nil                      = nil
-  eternal-v f (|List|ₑ e) (cons V W)     = cons (eternal-v f e V) (eternal-v f (|List|ₑ e) W)
+  eternal-v f (listₑ e) (cons V W)       = cons (eternal-v f e V) (eternal-v f (listₑ e) W)
   eternal-v f e (cmp ⋈ V W et)           = cmp ⋈ (eternal-v f et V) (eternal-v f et W) et
   eternal-v f e (annᵛ A V)               = annᵛ A (eternal-v f e V)
   eternal-v f e (subV V p)               = subV (eternal-v f (<:̂ᵛ-eternalˡ p e) V) p
 
   ∥eternal-v∥ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {A : OVType Θ}
-              → (f : Shift Γ Γ') → (e : Q ⊩ᴱ A) → (V : Q ∣ Γ ⊢V⦂ A)
+              → (f : Shift Γ Γ') → (e : Q ⊩Et A) → (V : Q ∣ Γ ⊢V⦂ A)
               → ∥ eternal-v f e V ∥ᵛ ≡ renᵛ (shift f) ∥ V ∥ᵛ
   ∥eternal-v∥ {Γ' = Γ'} f e (var x p) =
     cong var (trans (var-pos-ty-subst (trans (shift-ty f (var-pos x)) (var-pos-ty x)) _)
@@ -377,8 +377,8 @@ mutual
   ∥eternal-v∥ f (e₁ |+|ₑ e₂) (inl V)   = cong inl (∥eternal-v∥ f e₁ V)
   ∥eternal-v∥ f (e₁ |+|ₑ e₂) (inr V)   = cong inr (∥eternal-v∥ f e₂ V)
   ∥eternal-v∥ f e nil                  = refl
-  ∥eternal-v∥ f (|List|ₑ e) (cons V W) =
-    cong₂ cons (∥eternal-v∥ f e V) (∥eternal-v∥ f (|List|ₑ e) W)
+  ∥eternal-v∥ f (listₑ e) (cons V W)   =
+    cong₂ cons (∥eternal-v∥ f e V) (∥eternal-v∥ f (listₑ e) W)
   ∥eternal-v∥ f e (cmp ⋈ V W et)       = cong₂ (cmp ⋈) (∥eternal-v∥ f et V) (∥eternal-v∥ f et W)
   ∥eternal-v∥ f e (annᵛ A V)           = ∥eternal-v∥ f e V
   ∥eternal-v∥ f e (subV V p)           = ∥eternal-v∥ f (<:̂ᵛ-eternalˡ p e) V

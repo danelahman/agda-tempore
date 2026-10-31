@@ -69,7 +69,7 @@ claim-after : 𝔻 → 𝔻 → 𝔻 → RawC ∅ˢ 0
 claim-after ρ τ τ' = box ⌜ ρ ⌝ʳ ⋆ (delay τ (delay τ' (unbox (var fzero) (return v₀))))
 
 claim-after-D : ∀ ρ τ τ' → 𝟏ᵣ ·ᵣ ιᵣ τ ·ᵣ ιᵣ τ' ≾ᴳ ιᵣ ρ
-              → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (⌜ τ ⌝ᵉ ·̂ₑ (⌜ τ' ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
+              → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! (⌜ τ ⌝ᵉ ·̂ₑ (⌜ τ' ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 claim-after-D ρ τ τ' p =
   box ⌜ ρ ⌝ʳ ⋆
     (delay τ (delay τ' (unbox (res-var {z = Tl-⟨⟩ (Tl-⟨⟩ Hd)}) elapsed (return (var Hd ok₀)))))
@@ -77,7 +77,7 @@ claim-after-D ρ τ τ' p =
     elapsed : ∅ᴴ ⊩ 𝟏̂ᵣ ·̂ᵣ ⌜ τ ⌝ʳ ·̂ᵣ ⌜ τ' ⌝ʳ ≾̂ᵣ ⌜ ρ ⌝ʳ
     elapsed = transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-const-· ≡̂ᵣ-refl) ≡̂ᵣ-const-·)) (atomᵣ p)
 
-    ok₀ : VarOK ∅ᴴ Unit 𝟏̂ᵣ
+    ok₀ : VarOK ∅ᴴ unit 𝟏̂ᵣ
     ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
 claim-after-typable : ∀ ρ τ τ' → True ((𝟏ᵣ ·ᵣ ιᵣ τ ·ᵣ ιᵣ τ') ≾ᵣ? ιᵣ ρ)
@@ -87,7 +87,7 @@ claim-after-typable ρ τ τ' p = closed (claim-after-D ρ τ τ' (toWitness p))
 -- typed, the effect is the grade of the total duration `τ`
 
 expected-claim-after : 𝔻 → Scheme
-expected-claim-after τ = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ⌜ τ ⌝ᵉ
+expected-claim-after τ = ∀[ 0 , 0 , 0 ] ⊤ ⟹ unit ! ⌜ τ ⌝ᵉ
 
 ------------------------------------------------------------------
 -- 2. A box grade inferred over two delays
@@ -102,4 +102,4 @@ inferred-grade τ τ' = return (lam (delay τ (delay τ' (unbox (var fzero) (ret
 -- the scheme at the total duration `τ`
 
 expected-inferred-grade : 𝔻 → Scheme
-expected-inferred-grade τ = ∀[ 1 , 0 , 0 ] ⊤ ⟹ ([ ⌜ τ ⌝ʳ ] α₀ ⇒ α₀ ‼ ⌜ τ ⌝ᵉ) ‼ 𝟏̂ₑ
+expected-inferred-grade τ = ∀[ 1 , 0 , 0 ] ⊤ ⟹ ([ ⌜ τ ⌝ʳ ] α₀ ⇒ α₀ ! ⌜ τ ⌝ᵉ) ! 𝟏̂ₑ

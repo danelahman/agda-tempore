@@ -249,7 +249,7 @@ strᵀ-natʳ g =
 -- bound computation to the binder: the strength carries it across.
 
 subCtx-str : ∀ {Γ A A₀ B ε₁ ε₂ X} {t : A₀ <:ᵛ A}
-           → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂) → (pN : Paramᶜ N)
+           → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂) → (pN : Paramᶜ N)
            → (b : X →ᵐ [ ∣ ε₁ ∣ᵉ ]ᵒ (⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ))
            → (m : X →ᵐ Tᵒ ⟦ A₀ ⟧ᵛ ε₁)
            → Tᶠ (⟦ subCtx t N ⟧ᶜᵗ (subCtxᴾ t N pN))
@@ -431,8 +431,8 @@ seq-step-core : ∀ {ε₁ ε₂ ε₃ A A₀ B P} {S S' : 𝕊 []}
   → (alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
            → alg {εb} ∘ᵐ mapˣᵐ idᵐ (T-≤ q) ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa})
   → (pv : ⟦ toCtx S ⟧ᶜᵗˣ →ᵐ P)
-  → {M : toCtx S ⊢C⦂ A ‼ ε₁} → (N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-  → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
+  → {M : toCtx S ⊢C⦂ A ! ε₁} → (N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+  → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃}
   → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
   → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
   → (pS : Paramˢ S)
@@ -574,7 +574,7 @@ box-∷-suc w w' env cell =
 -- own effect grades only instantiate them.
 
 step-box : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []} {ρ₂ ρ₄ : R}
-         → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
+         → {M : toCtx S ⊢C⦂ A ! ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃}
          → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
          → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ ρ₄ ≾ᵣ ρ₂)
          → (g : ∣ step-grade r ∣ᵉ ·ᵣ ρ₄ ≾ᵣ ρ₂)
@@ -940,7 +940,7 @@ step-box (DELAY {τ = τ} {S = St}) c g pS pM =
 -- into the single one `step-box` expects.
 
 seq-g : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []}
-      → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
+      → {M : toCtx S ⊢C⦂ A ! ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃}
       → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
       → ∣ step-grade r ∣ᵉ ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ
 seq-g {ε₃ = ε₃} r =
@@ -965,7 +965,7 @@ box-merge p q m d h =
 seq-target : ∀ {ε₁ ε₂ ε₃ A B P} {Γ Γ' : Ctx} {H : Obj}
            → (alg : P ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε₃ →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε₃ ·ₑ ε₂))
            → (pv : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ P)
-           → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+           → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
            → (ρ : Ren [] (Γ' ⟨ ∣ ε₃ ∣ᵉ ⟩) (Γ ⟨ ∣ ε₁ ∣ᵉ ⟩))
            → (m' : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε₃)
            → (env : H →ᵐ ⟦ Γ' ⟧ᶜᵗˣ)
@@ -1008,8 +1008,8 @@ seq-target {ε₃ = ε₃} {A = A} {B = B} {Γ' = Γ'} alg pv N ρ m' env pN =
            , ≈ᵐ-refl ⟩ᵐ-cong))
 
 sound-SEQ-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {S S' : 𝕊 []}
-  → {M : toCtx S ⊢C⦂ A ‼ ε₁} → (N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-  → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
+  → {M : toCtx S ⊢C⦂ A ! ε₁} → (N : toCtx S ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+  → {M' : toCtx S' ⊢C⦂ A₀ ! ε₃}
   → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
   → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ ∣ ε₃ ∣ᵉ ≾ᵣ ∣ ε₁ ∣ᵉ)
   → (pS : Paramˢ S) → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
@@ -1103,10 +1103,10 @@ sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} N {M'} r c pS
 -- step's own type refinement, its effect half the step's sub-effecting.
 
 sound-SUB : ∀ {ε ε' A A'} {S : 𝕊 []}
-  → {M : toCtx S ⊢C⦂ A ‼ ε}
+  → {M : toCtx S ⊢C⦂ A ! ε}
   → (p : A <:ᵛ A') → (q : ε ≾ₑ ε')
   → (pS : Paramˢ S) → (pM : Paramᶜ M)
-  → ⟦ subC M (p ‼ₛ q) ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
+  → ⟦ subC M (p !ₛ q) ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
     ≈ᵐ T-≤ q ∘ᵐ Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ (⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS)
 sound-SUB p q pS pM =
     ∘ᵐ-congˡ (∘ᵐ-congˡ (T-≤-nat ⟦ p ⟧<:ᵛ q))
@@ -1157,15 +1157,15 @@ relax-coe n c a =
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘ _ _ _ _ ∙ mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _))
 
 sound-SUB-HANDLE : ∀ {Γ A A₁ B B₁ ε ε₁ ε' ε₁'}
-  → (M : Γ ⊢C⦂ A ‼ ε) → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B₁ ‼ ε₁')
+  → (M : Γ ⊢C⦂ A ! ε) → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B₁ ! ε₁')
   → (H : (op : Op) → (ε'' : E)
-       → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-            ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B₁ ‼ ε'')
-         ⊢C⦂ B₁ ‼ (op-grade op ·ₑ ε''))
+       → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+            ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B₁ ! ε'')
+         ⊢C⦂ B₁ ! (op-grade op ·ₑ ε''))
   → (p : A <:ᵛ A₁) → (pε : ε ≾ₑ ε₁) → (q : B₁ <:ᵛ B) → (s : ε₁' ≾ₑ ε')
   → (pM : Paramᶜ M) → (pN : Paramᶜ N)
   → (pH : ∀ op ε'' → Paramᶜ (H op ε'')) → (uH : EffUniformʰ {Γ} {B₁} H pH)
-  → ⟦ handle M `with subV (handler N H) ((p ‼ₛ pε) ⇛ₛ (q ‼ₛ s)) ⟧ᶜᵗ
+  → ⟦ handle M `with subV (handler N H) ((p !ₛ pε) ⇛ₛ (q !ₛ s)) ⟧ᶜᵗ
       (pM , pN , pH , uH)
   ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ s) ∘ᵐ Tᶠ ⟦ q ⟧<:ᵛ
      ∘ᵐ ⟦ handle M
@@ -1197,7 +1197,7 @@ sound-SUB-HANDLE {Γ} M N H p pε q s pM pN pH uH = lhs ∙ ≈ᵐ-sym rhs
         ∙ ∘ᵐ-congˡ (C-rename-nat (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ pε))) N pN)
         ∙ relax-coe n (map-monotoneᵉ pε) a
 
-    lhs : ⟦ handle M `with subV (handler N H) ((p ‼ₛ pε) ⇛ₛ (q ‼ₛ s)) ⟧ᶜᵗ
+    lhs : ⟦ handle M `with subV (handler N H) ((p !ₛ pε) ⇛ₛ (q !ₛ s)) ⟧ᶜᵗ
             (pM , pN , pH , uH)
         ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ s) ∘ᵐ Tᶠ b ∘ᵐ G ∘ᵐ ⟨ idᵐ , m ⟩ᵐ
     lhs =
@@ -1243,8 +1243,8 @@ sound-SUB-HANDLE {Γ} M N H p pε q s pM pN pH uH = lhs ∙ ≈ᵐ-sym rhs
 -- `SUB-HANDLE-TRANS`: nested coercions denote their composite.
 
 sound-SUB-HANDLE-TRANS : ∀ {Γ A₀ A' A B ε ε'}
-  → (M : Γ ⊢C⦂ A ‼ ε) → (V : Γ ⊢V⦂ A₀)
-  → (p : A₀ <:ᵛ A') → (p' : A' <:ᵛ (A ‼ ε) ⇛ (B ‼ ε'))
+  → (M : Γ ⊢C⦂ A ! ε) → (V : Γ ⊢V⦂ A₀)
+  → (p : A₀ <:ᵛ A') → (p' : A' <:ᵛ (A ! ε) ⇛ (B ! ε'))
   → (pM : Paramᶜ M) → (pV : Paramᵛ V)
   → ⟦ handle M `with subV (subV V p) p' ⟧ᶜᵗ (pM , pV)
   ≈ᵐ ⟦ handle M `with subV V (<:ᵛ-trans p p') ⟧ᶜᵗ (pM , pV)

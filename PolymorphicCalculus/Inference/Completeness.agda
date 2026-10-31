@@ -137,15 +137,15 @@ mutual
   -- recovers the pin
 
   cmpV {σ = σ} ι Γ A _ (const B c) const ceq st = ⊨-≐ᵥ σ (Base B) A (sym (<:̂ᵛ-Baseˡ st))
-  cmpV {σ = σ} ι Γ A _ ⋆           ⋆     ceq st = ⊨-≐ᵥ σ Unit A (sym (<:̂ᵛ-Unitˡ st))
-  cmpV {σ = σ} ι Γ A _ true        true  ceq st = ⊨-≐ᵥ σ Bool A (sym (<:̂ᵛ-Boolˡ st))
-  cmpV {σ = σ} ι Γ A _ false       false ceq st = ⊨-≐ᵥ σ Bool A (sym (<:̂ᵛ-Boolˡ st))
+  cmpV {σ = σ} ι Γ A _ ⋆           ⋆     ceq st = ⊨-≐ᵥ σ unit A (sym (<:̂ᵛ-Unitˡ st))
+  cmpV {σ = σ} ι Γ A _ true        true  ceq st = ⊨-≐ᵥ σ bool A (sym (<:̂ᵛ-Boolˡ st))
+  cmpV {σ = σ} ι Γ A _ false       false ceq st = ⊨-≐ᵥ σ bool A (sym (<:̂ᵛ-Boolˡ st))
 
   -- natural numbers
 
-  cmpV {σ = σ} ι Γ A _ zero        zero  ceq st = ⊨-≐ᵥ σ Nat A (sym (<:̂ᵛ-Natˡ st))
+  cmpV {σ = σ} ι Γ A _ zero        zero  ceq st = ⊨-≐ᵥ σ nat A (sym (<:̂ᵛ-Natˡ st))
   cmpV {σ = σ} ι Γ A _ (succ D) (succ {V = V} e) ceq st =
-    ⊨-≐ᵥ σ Nat A (sym (<:̂ᵛ-Natˡ st)) , cmpV ι Γ Nat V D (invV V e) ceq Natₛ
+    ⊨-≐ᵥ σ nat A (sym (<:̂ᵛ-Natˡ st)) , cmpV ι Γ nat V D (invV V e) ceq natₛ
 
   -- pairing: a supertype of a product is a product; the slack splits
 
@@ -207,14 +207,14 @@ mutual
   cmpV {Θ = Θ} {σ = σ} ι Γ A _ nil nil ceq st
     with <:̂ᵛ-Listˡ st
   ... | B , eq , _ =
-    B , ⊨-≐ᵥ (σ ,ᵗ B) (|List| (tvar (newᵗ {Θ}))) (wkᵗ-v A) (trans (sym eq) (sym (wk-,ᵗ-v σ B A)))
+    B , ⊨-≐ᵥ (σ ,ᵗ B) (list (tvar (newᵗ {Θ}))) (wkᵗ-v A) (trans (sym eq) (sym (wk-,ᵗ-v σ B A)))
 
   cmpV {Θ = Θ} {σ = σ} ι Γ A _ (cons D₁ D₂) (cons {V = V} {W = W} e₁ e₂) ceq st
     with <:̂ᵛ-Listˡ st
   ... | B , eq , st₁ =
-    B , ⊨-≐ᵥ (σ ,ᵗ B) (|List| α) (wkᵗ-v A) (trans (sym eq) (sym pA)) ,
+    B , ⊨-≐ᵥ (σ ,ᵗ B) (list α) (wkᵗ-v A) (trans (sym eq) (sym pA)) ,
     cmpV ι↑ Γ↑ α V D₁ (reV pι V e₁) (trans ceq (sym pΓ)) st₁ ,
-    cmpV ι↑ Γ↑ (|List| α) W D₂ (reV pι W e₂) (trans ceq (sym pΓ)) (|List|ₛ st₁)
+    cmpV ι↑ Γ↑ (list α) W D₂ (reV pι W e₂) (trans ceq (sym pΓ)) (listₛ st₁)
     where
       ι↑ = ι ⨟ˢ wkˢᵗ
       Γ↑ = wkᵗ-ctx Γ
@@ -228,7 +228,7 @@ mutual
 
   cmpV {Θ = Θ} {σ = σ} {Q = Q} ι Γ A _
        (cmp {A = A₁} ⋈ D₁ D₂ et) (cmp {V = V} {W = W} e₁ e₂) ceq st =
-    A₁ , ⊨-≐ᵥ (σ ,ᵗ A₁) Bool (wkᵗ-v A) (trans (sym (<:̂ᵛ-Boolˡ st)) (sym pA)) ,
+    A₁ , ⊨-≐ᵥ (σ ,ᵗ A₁) bool (wkᵗ-v A) (trans (sym (<:̂ᵛ-Boolˡ st)) (sym pA)) ,
     ih₁ , ih₂ , et
     where
       ι↑ = ι ⨟ˢ wkˢᵗ
@@ -245,7 +245,7 @@ mutual
   -- lambda abstraction
 
   cmpV {Θ = Θ} {σ = σ} {Q = Q} ι Γ A _
-       (lam {A = A₁} {C = A₂ ‼ ε₀} D) (lam {M = M} e) ceq st =
+       (lam {A = A₁} {C = A₂ ! ε₀} D) (lam {M = M} e) ceq st =
     A₁ , A₂ , ε₀ , subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st , ih
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
@@ -294,16 +294,16 @@ mutual
       cH : (op : Op)
          → wkᵉ-ctx _ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
               ∷ [ rconst ∣ op-grade op ∣ᵉ ]
-                  (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v _ ‼ evar (newᵉ {Θ'}))
+                  (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v _ ! evar (newᵉ {Θ'}))
            ≡ (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
+                ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ! e''))
              [ σ' ↑ᵉ ]ᶜᵗˣ
       cH op =
         cong₂ _∷_
               (cong₂ _∷_ (cong (_⟨ rconst ⊤ᵣ ⟩) (trans (cong wkᵉ-ctx ceq) (sym pΓ⇑)))
                          (sym (⌜⌝ᵍ-subst (σ' ↑ᵉ) (param op))))
               (cong₂ (λ X Y → [ rconst ∣ op-grade op ∣ᵉ ]
-                                (X ⇒ Y ‼ evar (newᵉ {Θ'})))
+                                (X ⇒ Y ! evar (newᵉ {Θ'})))
                      (sym (⌜⌝ᵍ-subst (σ' ↑ᵉ) (arity op)))
                      (sym pγ⇑))
 
@@ -311,7 +311,7 @@ mutual
       ihH op =
         cmpC (ι↑ ↑ᵉ)
              (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                 ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
+                 ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ! e''))
              γ⇑ (econst (op-grade op) ·̂ₑ e'')
              (R op) (H op) (reC pι⇑ (R op) (eR op)) (cH op)
              (subst (λ z → wkᵉ-H Q ∣ wkᵉ-v A₂ <:̂ᵛ z) (sym pγ⇑)
@@ -338,13 +338,13 @@ mutual
        → (ι : Subst Θ₀ Θ) → (Γ : OCtx Θ n) → (A : OVType Θ) → (t : EExp Θ)
        → (M : RawC Θ₀ n)
        → {A₀ : OVType Θ'} → {ε₀ : EExp Θ'}
-       → (D : Q ∣ Γ₀ ⊢C⦂ A₀ ‼ ε₀)
+       → (D : Q ∣ Γ₀ ⊢C⦂ A₀ ! ε₀)
        → InvC (ι ⨟ˢ σ) M ⌊ D ⌋ᶜ
        → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
        → Q ∣ A₀ <:̂ᵛ A [ σ ]ᵛ
        → Q ⊩ ε₀ ≾̂ₑ t [ σ ]ᵉ
        --------------------------------
-       → σ ⊨[ Q ] genCˢ ι Γ M (A ‼ t)
+       → σ ⊨[ Q ] genCˢ ι Γ M (A ! t)
 
   -- returning a value
 
@@ -379,7 +379,7 @@ mutual
   -- function application
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
-       (_·_ {A = A₁} {C = A₂ ‼ ε₀} D₁ D₂) (_·_ {V = V₁} {W = V₂} e₁ e₂) ceq st le =
+       (_·_ {A = A₁} {C = A₂ ! ε₀} D₁ D₂) (_·_ {V = V₁} {W = V₂} e₁ e₂) ceq st le =
     A₁ , A₂ , ε₀ , ih₁ , ih₂ ,
     subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st ,
     subst (λ z → Q ⊩ ε₀ ≾̂ₑ z) (sym pt) le
@@ -395,7 +395,7 @@ mutual
       pt = co²ᵗᵉ-e   σ A₁ A₂ ε₀ t
       pι = co²ᵗᵉ-ˢ   ι σ A₁ A₂ ε₀
 
-      ih₁ = cmpV ι↑ Γ↑ (α ⇒ (β ‼ e)) V₁ D₁ (reV pι V₁ e₁) (trans ceq (sym pΓ))
+      ih₁ = cmpV ι↑ Γ↑ (α ⇒ (β ! e)) V₁ D₁ (reV pι V₁ e₁) (trans ceq (sym pΓ))
                  (<:̂ᵛ-refl _)
       ih₂ = cmpV ι↑ Γ↑ α V₂ D₂ (reV pι V₂ e₂) (trans ceq (sym pΓ)) (<:̂ᵛ-refl _)
 
@@ -427,13 +427,13 @@ mutual
   -- empty type elimination
 
   cmpC ι Γ A t _ (absurd D) (absurd {V = V} e) ceq st le =
-    cmpV ι Γ Empty V D (invV V e) ceq Emptyₛ
+    cmpV ι Γ empty V D (invV V e) ceq emptyₛ
 
   -- boolean elimination
 
   cmpC ι Γ A t _ (if_`then_`else_ D₀ D₁ D₂) (if {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂)
        ceq st le =
-    cmpV ι Γ Bool V D₀ (invV V e₀) ceq Boolₛ ,
+    cmpV ι Γ bool V D₀ (invV V e₀) ceq boolₛ ,
     cmpC ι Γ A t M₁ D₁ (invC M₁ e₁) ceq st le ,
     cmpC ι Γ A t M₂ D₂ (invC M₂ e₂) ceq st le
 
@@ -441,9 +441,9 @@ mutual
 
   cmpC ι Γ A t _ (caseℕ_`zero_`succ_ D₀ D₁ D₂)
        (caseℕ {V = V} {M = M₁} {N = M₂} e₀ e₁ e₂) ceq st le =
-    cmpV ι Γ Nat V D₀ (invV V e₀) ceq Natₛ ,
+    cmpV ι Γ nat V D₀ (invV V e₀) ceq natₛ ,
     cmpC ι Γ A t M₁ D₁ (invC M₁ e₁) ceq st le ,
-    cmpC ι (Γ ∷ Nat) A t M₂ D₂ (invC M₂ e₂) (cong (_∷ Nat) ceq) st le
+    cmpC ι (Γ ∷ nat) A t M₂ D₂ (invC M₂ e₂) (cong (_∷ nat) ceq) st le
 
   -- sum elimination: the scrutinee's summands; the branches inherit the slack
 
@@ -494,11 +494,11 @@ mutual
       pt = coᵗᵉ-e   σ B ε t
       pι = coᵗᵉ-ˢ   ι σ B ε
 
-      ih₀ = cmpV ι↑ Γ↑ Nat V D₀ (reV pι V e₀) (trans ceq (sym pΓ)) Natₛ
+      ih₀ = cmpV ι↑ Γ↑ nat V D₀ (reV pι V e₀) (trans ceq (sym pΓ)) natₛ
       ih₁ = cmpC ι↑ Γ↑ β e M₁ D₁ (reC pι M₁ e₁) (trans ceq (sym pΓ))
                  (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
-      ih₂ = cmpC ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) β e M₂ D₂ (reC pι M₂ e₂)
-                 (cong (λ G → (G ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B) (trans ceq (sym pΓ)))
+      ih₂ = cmpC ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) β e M₂ D₂ (reC pι M₂ e₂)
+                 (cong (λ G → (G ⟨ rconst ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B) (trans ceq (sym pΓ)))
                  (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
 
   -- list elimination: the scrutinee's element type; the branches inherit the slack
@@ -522,11 +522,11 @@ mutual
       st↑ = subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st
       le↑ = subst (λ z → Q ⊩ _ ≾̂ₑ z) (sym pt) le
 
-      ih₀ = cmpV ι↑ Γ↑ (|List| α) V D₀ (reV pι V e₀) (trans ceq (sym pΓ))
+      ih₀ = cmpV ι↑ Γ↑ (list α) V D₀ (reV pι V e₀) (trans ceq (sym pΓ))
                  (<:̂ᵛ-refl _)
       ih₁ = cmpC ι↑ Γ↑ A↑ t↑ M₁ D₁ (reC pι M₁ e₁) (trans ceq (sym pΓ)) st↑ le↑
-      ih₂ = cmpC ι↑ (Γ↑ ∷ α ∷ |List| α) A↑ t↑ M₂ D₂ (reC pι M₂ e₂)
-                 (cong (λ G → G ∷ A₁ ∷ |List| A₁) (trans ceq (sym pΓ))) st↑ le↑
+      ih₂ = cmpC ι↑ (Γ↑ ∷ α ∷ list α) A↑ t↑ M₂ D₂ (reC pι M₂ e₂)
+                 (cong (λ G → G ∷ A₁ ∷ list A₁) (trans ceq (sym pΓ))) st↑ le↑
 
   -- primitive recursion on lists: as for `recℕ`, the element type a witness too
 
@@ -548,11 +548,11 @@ mutual
       pt = co²ᵗᵉ-e   σ A₁ B ε t
       pι = co²ᵗᵉ-ˢ   ι σ A₁ B ε
 
-      ih₀ = cmpV ι↑ Γ↑ (|List| α) V D₀ (reV pι V e₀) (trans ceq (sym pΓ)) (<:̂ᵛ-refl _)
+      ih₀ = cmpV ι↑ Γ↑ (list α) V D₀ (reV pι V e₀) (trans ceq (sym pΓ)) (<:̂ᵛ-refl _)
       ih₁ = cmpC ι↑ Γ↑ β e M₁ D₁ (reC pι M₁ e₁) (trans ceq (sym pΓ))
                  (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
-      ih₂ = cmpC ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ α ∷ |List| α) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) β e M₂ D₂ (reC pι M₂ e₂)
-                 (cong (λ G → (G ⟨ rconst ⊤ᵣ ⟩ ∷ A₁ ∷ |List| A₁) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B)
+      ih₂ = cmpC ι↑ ((Γ↑ ⟨ rconst ⊤ᵣ ⟩ ∷ α ∷ list α) ⟨ ∣ e ∣̂ᵉ ⟩ ∷ β) β e M₂ D₂ (reC pι M₂ e₂)
+                 (cong (λ G → (G ⟨ rconst ⊤ᵣ ⟩ ∷ A₁ ∷ list A₁) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B)
                        (trans ceq (sym pΓ)))
                  (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
 
@@ -627,7 +627,7 @@ mutual
 
       ih₁ = cmpC ι↑ Γ↑ α e₁ M D₁ (reC pι M eM) (trans ceq (sym pΓ))
                  (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
-      ihV = cmpV ι↑ Γ↑ ((α ‼ e₁) ⇛ (γ ‼ e₂)) V DV (reV pι V eV) (trans ceq (sym pΓ))
+      ihV = cmpV ι↑ Γ↑ ((α ! e₁) ⇛ (γ ! e₂)) V DV (reV pι V eV) (trans ceq (sym pΓ))
                  (<:̂ᵛ-refl _)
 
   -- unboxing a resource value: the witnesses are the payload and the grade
@@ -711,7 +711,7 @@ mutual
 
   -- subsumption: invisible to erasure, its two witnesses composed with the slack
 
-  cmpC ι Γ A t M (subC D (p ‼ₛ q)) inv ceq st le =
+  cmpC ι Γ A t M (subC D (p !ₛ q)) inv ceq st le =
     cmpC ι Γ A t M D inv ceq (<:̂ᵛ-trans p st) (transₑ q le)
 
 -- Completeness: a derivation erasing to an instance of the raw term satisfies
@@ -733,13 +733,13 @@ completeCˢ : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : O
            → (ι : Subst Θ₀ Θ) → (Γ : OCtx Θ n) → (A : OVType Θ) → (t : EExp Θ)
            → (M : RawC Θ₀ n)
            → {A₀ : OVType Θ'} → {ε₀ : EExp Θ'}
-           → (D : Q ∣ Γ₀ ⊢C⦂ A₀ ‼ ε₀)
+           → (D : Q ∣ Γ₀ ⊢C⦂ A₀ ! ε₀)
            → ⌊ D ⌋ᶜ ≡ M [ ι ⨟ˢ σ ]ᴿᶜ
            → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
            → Q ∣ A₀ <:̂ᵛ A [ σ ]ᵛ
            → Q ⊩ ε₀ ≾̂ₑ t [ σ ]ᵉ
            --------------------------------
-           → σ ⊨[ Q ] genCˢ ι Γ M (A ‼ t)
+           → σ ⊨[ Q ] genCˢ ι Γ M (A ! t)
 
 completeCˢ ι Γ A t M D e = cmpC ι Γ A t M D (invC M (sym e))
 
@@ -761,13 +761,13 @@ completeV {σ = σ} Γ A V D e =
 completeC : ∀ {Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : OCtx Θ' n}
           → (Γ : OCtx Θ n) → (A : OVType Θ) → (t : EExp Θ) → (M : RawC Θ n)
           → {A₀ : OVType Θ'} → {ε₀ : EExp Θ'}
-          → (D : Q ∣ Γ₀ ⊢C⦂ A₀ ‼ ε₀)
+          → (D : Q ∣ Γ₀ ⊢C⦂ A₀ ! ε₀)
           → ⌊ D ⌋ᶜ ≡ M [ σ ]ᴿᶜ
           → Γ₀ ≡ Γ [ σ ]ᶜᵗˣ
           → Q ∣ A₀ <:̂ᵛ A [ σ ]ᵛ
           → Q ⊩ ε₀ ≾̂ₑ t [ σ ]ᵉ
           --------------------------------
-          → σ ⊨[ Q ] genC Γ M (A ‼ t)
+          → σ ⊨[ Q ] genC Γ M (A ! t)
 
 completeC {σ = σ} Γ A t M D e =
   completeCˢ idˢ Γ A t M D (trans e (sym ([≐]ᴿᶜ (⨟-idˡ σ) M)))
@@ -788,8 +788,8 @@ charV Γ V A σ Q =
 charC : ∀ {Θ n Θ'} → (Γ : OCtx Θ n) → (M : RawC Θ n) → (A : OVType Θ)
       → (t : EExp Θ) → (σ : Subst Θ Θ') → (Q : Hyps Θ')
       ------------------------------------------------------------------------
-      → (σ ⊨[ Q ] genC Γ M (A ‼ t))
-        ⇔ (Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A [ σ ]ᵛ ‼ t [ σ ]ᵉ) ] (⌊ D ⌋ᶜ ≡ M [ σ ]ᴿᶜ))
+      → (σ ⊨[ Q ] genC Γ M (A ! t))
+        ⇔ (Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A [ σ ]ᵛ ! t [ σ ]ᵉ) ] (⌊ D ⌋ᶜ ≡ M [ σ ]ᴿᶜ))
 
 charC Γ M A t σ Q =
   mk⇔ (soundC Γ M A t)
@@ -804,45 +804,45 @@ private
 
   -- a `return` with slack absorbed: the generated `≾̂ₑᶜ` is the hypothesis
 
-  ex-return : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ Unit) (return ⋆) (Unit ‼ 𝟏̂ₑ)
-  ex-return = completeC {σ = idˢ} (∅ᶜ ∷ Unit) Unit 𝟏̂ₑ (return ⋆) (return ⋆) refl refl
-                        Unitₛ ⊩≾̂ₑ-refl
+  ex-return : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ unit) (return ⋆) (unit ! 𝟏̂ₑ)
+  ex-return = completeC {σ = idˢ} (∅ᶜ ∷ unit) unit 𝟏̂ₑ (return ⋆) (return ⋆) refl refl
+                        unitₛ ⊩≾̂ₑ-refl
 
   -- a subsumption erases away, and completeness sees the same constraint
 
-  ex-sub : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ Unit) (return ⋆) (Unit ‼ 𝟏̂ₑ)
-  ex-sub = completeC {σ = idˢ} (∅ᶜ ∷ Unit) Unit 𝟏̂ₑ (return ⋆)
-                     (coerce ⊩≾̂ₑ-refl (return ⋆)) refl refl Unitₛ ⊩≾̂ₑ-refl
+  ex-sub : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ unit) (return ⋆) (unit ! 𝟏̂ₑ)
+  ex-sub = completeC {σ = idˢ} (∅ᶜ ∷ unit) unit 𝟏̂ₑ (return ⋆)
+                     (coerce ⊩≾̂ₑ-refl (return ⋆)) refl refl unitₛ ⊩≾̂ₑ-refl
 
   -- a variable typed at a supertype: the atom is the subsumption's witness
 
-  ex-var : idˢ ⊨[ ∅ᴴ ] genV (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) (var zero) ([ 𝟏̂ᵣ ] Unit)
-  ex-var = completeV {σ = idˢ} (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) ([ 𝟏̂ᵣ ] Unit) (var zero)
-                     (subV (var Hd (≾ᵘ-ok ⊩≾̂ᵣ-refl)) (<:̂ᵛ-refl ([ 𝟏̂ᵣ ] Unit)))
-                     refl refl (<:̂ᵛ-refl ([ 𝟏̂ᵣ ] Unit))
+  ex-var : idˢ ⊨[ ∅ᴴ ] genV (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) (var zero) ([ 𝟏̂ᵣ ] unit)
+  ex-var = completeV {σ = idˢ} (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) ([ 𝟏̂ᵣ ] unit) (var zero)
+                     (subV (var Hd (≾ᵘ-ok ⊩≾̂ᵣ-refl)) (<:̂ᵛ-refl ([ 𝟏̂ᵣ ] unit)))
+                     refl refl (<:̂ᵛ-refl ([ 𝟏̂ᵣ ] unit))
 
   -- unboxing a boxed variable: the gate is `false`, the row is inhabited
 
-  ex-unbox : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) (unbox (var zero) (return ⋆))
-                              (Unit ‼ 𝟏̂ₑ)
-  ex-unbox = completeC {σ = idˢ} (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) Unit 𝟏̂ₑ (unbox (var zero) (return ⋆))
+  ex-unbox : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) (unbox (var zero) (return ⋆))
+                              (unit ! 𝟏̂ₑ)
+  ex-unbox = completeC {σ = idˢ} (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) unit 𝟏̂ₑ (unbox (var zero) (return ⋆))
                        (unbox (res-var {z = Hd}) ⊩≾̂ᵣ-refl (return ⋆))
-                       refl refl Unitₛ ⊩≾̂ₑ-refl
+                       refl refl unitₛ ⊩≾̂ₑ-refl
 
   -- unboxing an annotated variable: the annotation's atom is the step's
 
-  ex-unbox-ann : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit)
-                                  (unbox (var zero ⦂ᵛ [ 𝟏̂ᵣ ] Unit) (return ⋆)) (Unit ‼ 𝟏̂ₑ)
+  ex-unbox-ann : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit)
+                                  (unbox (var zero ⦂ᵛ [ 𝟏̂ᵣ ] unit) (return ⋆)) (unit ! 𝟏̂ₑ)
   ex-unbox-ann =
-    completeC {σ = idˢ} (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) Unit 𝟏̂ₑ (unbox (var zero ⦂ᵛ [ 𝟏̂ᵣ ] Unit) (return ⋆))
-              (unbox (res-ann 𝟏̂ᵣ Unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl Unitₛ) ⊩≾̂ᵣ-refl (return ⋆))
-              refl refl Unitₛ ⊩≾̂ₑ-refl
+    completeC {σ = idˢ} (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) unit 𝟏̂ₑ (unbox (var zero ⦂ᵛ [ 𝟏̂ᵣ ] unit) (return ⋆))
+              (unbox (res-ann 𝟏̂ᵣ unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl unitₛ) ⊩≾̂ᵣ-refl (return ⋆))
+              refl refl unitₛ ⊩≾̂ₑ-refl
 
   -- boxing a value: the annotation needs no witness, only the payload's type
 
-  ex-box : idˢ ⊨[ ∅ᴴ ] genC ∅ᶜ (box 𝟏̂ᵣ ⋆ (return ⋆)) (Unit ‼ 𝟏̂ₑ)
-  ex-box = completeC {σ = idˢ} ∅ᶜ Unit 𝟏̂ₑ (box 𝟏̂ᵣ ⋆ (return ⋆))
-                     (box 𝟏̂ᵣ ⋆ (return ⋆)) refl refl Unitₛ ⊩≾̂ₑ-refl
+  ex-box : idˢ ⊨[ ∅ᴴ ] genC ∅ᶜ (box 𝟏̂ᵣ ⋆ (return ⋆)) (unit ! 𝟏̂ₑ)
+  ex-box = completeC {σ = idˢ} ∅ᶜ unit 𝟏̂ₑ (box 𝟏̂ᵣ ⋆ (return ⋆))
+                     (box 𝟏̂ᵣ ⋆ (return ⋆)) refl refl unitₛ ⊩≾̂ₑ-refl
 
-  ex-box-is : ex-box ≡ (Unit , ((Unitₛ , Unitₛ) , ((Unitₛ , Unitₛ) , ⊩≾̂ₑ-refl)))
+  ex-box-is : ex-box ≡ (unit , ((unitₛ , unitₛ) , ((unitₛ , unitₛ) , ⊩≾̂ₑ-refl)))
   ex-box-is = refl

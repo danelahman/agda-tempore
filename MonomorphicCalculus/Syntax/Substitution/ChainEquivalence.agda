@@ -53,7 +53,7 @@ infix 4 _≐ˢ_
 record _≐ˢ_ {Γ Γ'} (σ σ' : Sub [] Γ Γ') : Set where
   constructor mk≐ˢ
   field
-    atᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+    atᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
         → sub-var σ x f ≡ sub-var σ' x f
     atᵗ : ∀ {A ρ ρ'} → (y : [ ρ ] A ∈[ ρ' ] Γ') → tgt-img σ y ≡ tgt-img σ' y
 
@@ -82,7 +82,7 @@ open _≐ˢ_ public
 -- An eternal extension passes through a substitution: it builds only
 -- variables, constants, `⋆`, booleans, pairs and injections.
 
-V-sub₀-ext : ∀ {Γ Γ' A ρ} → (s : Sub₀ [] Γ Γ') → (et : Eternal A)
+V-sub₀-ext : ∀ {Γ Γ' A ρ} → (s : Sub₀ [] Γ Γ') → (et : Et A)
            → (V : Γ' ⊢V⦂ A)
            → V-sub₀ (cong-⟨⟩-sub {ρ = ρ} s) (eternal-val-ext et V)
            ≡ eternal-val-ext et (V-sub₀ s V)
@@ -99,8 +99,8 @@ V-sub₀-ext s (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
 V-sub₀-ext s (et₁ |+|ₑ _) (inl V) = cong inl (V-sub₀-ext s et₁ V)
 V-sub₀-ext s (_ |+|ₑ et₂) (inr V) = cong inr (V-sub₀-ext s et₂ V)
 V-sub₀-ext s et nil       = refl
-V-sub₀-ext s (|List|ₑ et) (cons V W) =
-  cong₂ cons (V-sub₀-ext s et V) (V-sub₀-ext s (|List|ₑ et) W)
+V-sub₀-ext s (listₑ et) (cons V W) =
+  cong₂ cons (V-sub₀-ext s et V) (V-sub₀-ext s (listₑ et) W)
 V-sub₀-ext s et (subV V p) =
   cong (λ W → subV W p) (V-sub₀-ext s (<:ᵛ-eternalˡ p et) V)
 
@@ -111,14 +111,14 @@ V-sub₀-ext s et (subV V p) =
 -- Under one more variable.
 
 cong-∷-subˢ-Hd : ∀ {Γ Γ' B} → (σ : Sub [] Γ Γ')
-               → (f : ¬ Eternal B → 𝟏ᵣ ≾ᵣ 𝟏ᵣ)
+               → (f : ¬ Et B → 𝟏ᵣ ≾ᵣ 𝟏ᵣ)
                → sub-var (cong-∷-subˢ {A = B} σ) Hd f ≡ var f Hd
 cong-∷-subˢ-Hd []ˢ      f = refl
 cong-∷-subˢ-Hd (s ◅ σ) f =
   trans (cong (V-sub₀ (cong-∷-sub s)) (cong-∷-subˢ-Hd σ f)) var-≡
 
 cong-∷-subˢ-Tl : ∀ {Γ Γ' A B ρ} → (σ : Sub [] Γ Γ')
-               → (y : A ∈[ ρ ] Γ') → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+               → (y : A ∈[ ρ ] Γ') → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
                → sub-var (cong-∷-subˢ {A = B} σ) (Tl-∷ y) f
                ≡ V-rename wk-ren (sub-var σ y f)
 cong-∷-subˢ-Tl []ˢ      y f = var-≡
@@ -158,7 +158,7 @@ cong-∷-subˢ-≐ˢ {σ = σ} {σ' = σ'} h = mk≐ˢ goᵛ goᵗ
 
 -- Under one more lock. An eternal value crosses a lock either way.
 
-eternal-val-ext-≡ : ∀ {Γ A ρ} → (et : Eternal A) → (p : ρ ≾ᵣ 𝟏ᵣ) → (V : Γ ⊢V⦂ A)
+eternal-val-ext-≡ : ∀ {Γ A ρ} → (et : Et A) → (p : ρ ≾ᵣ 𝟏ᵣ) → (V : Γ ⊢V⦂ A)
                   → eternal-val-ext et V ≡ V-rename (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren p) V
 eternal-val-ext-≡ et p (var f x) = var-img-≡ (sym (hit-⟨⟩-img p x)) _ _
 eternal-val-ext-≡ et p (const c) = refl
@@ -172,8 +172,8 @@ eternal-val-ext-≡ (et₁ |×|ₑ et₂) p ⦉ V₁ , V₂ ⦊ =
 eternal-val-ext-≡ (et₁ |+|ₑ _) p (inl V) = cong inl (eternal-val-ext-≡ et₁ p V)
 eternal-val-ext-≡ (_ |+|ₑ et₂) p (inr V) = cong inr (eternal-val-ext-≡ et₂ p V)
 eternal-val-ext-≡ et p nil       = refl
-eternal-val-ext-≡ (|List|ₑ et) p (cons V W) =
-  cong₂ cons (eternal-val-ext-≡ et p V) (eternal-val-ext-≡ (|List|ₑ et) p W)
+eternal-val-ext-≡ (listₑ et) p (cons V W) =
+  cong₂ cons (eternal-val-ext-≡ et p V) (eternal-val-ext-≡ (listₑ et) p W)
 eternal-val-ext-≡ et p (subV V q) =
   cong (λ W → subV W q) (eternal-val-ext-≡ (<:ᵛ-eternalˡ q et) p V)
 
@@ -182,7 +182,7 @@ eternal-val-ext-≡ et p (subV V q) =
                      (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren p') s
 ⋈-lock {Γ} {Γ'} {ρ} s p p' = mk⋈ goᵛ goᵗ
   where
-    goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] Γ') → (f : ¬ Eternal A' → ρ' ≾ᵣ 𝟏ᵣ)
+    goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] Γ') → (f : ¬ Et A' → ρ' ≾ᵣ 𝟏ᵣ)
         → V-sub₀ (cong-⟨⟩-sub {ρ = ρ} s)
                  (V-rename (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren p) (var f x))
         ≡ V-rename (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren p') (V-sub₀ s (var f x))
@@ -198,8 +198,8 @@ eternal-val-ext-≡ et p (subV V q) =
     goᵗ : ∀ {A' ρ₀ ρ'} → (y : [ ρ₀ ] A' ∈[ ρ' ] _) → _
     goᵗ y = rvar-≡ (sym (hit-⟨⟩-img p' (rvar-pos (tgt-img₀ s y))))
 
-cong-⟨⟩-subˢ-et : ∀ {Γ Γ' A ρ ρ'} → (σ : Sub [] Γ Γ') → (et : Eternal A)
-                → (y : A ∈[ ρ' ] Γ') → (f : ¬ Eternal A → ρ' ·ᵣ ρ ≾ᵣ 𝟏ᵣ)
+cong-⟨⟩-subˢ-et : ∀ {Γ Γ' A ρ ρ'} → (σ : Sub [] Γ Γ') → (et : Et A)
+                → (y : A ∈[ ρ' ] Γ') → (f : ¬ Et A → ρ' ·ᵣ ρ ≾ᵣ 𝟏ᵣ)
                 → sub-var (cong-⟨⟩-subˢ {ρ = ρ} σ) (Tl-⟨⟩ y) f
                 ≡ eternal-val-ext et (sub-var σ y (et-bound et))
 cong-⟨⟩-subˢ-et []ˢ      et y f = var-≡
@@ -207,8 +207,8 @@ cong-⟨⟩-subˢ-et (s ◅ σ) et y f =
   trans (cong (V-sub₀ (cong-⟨⟩-sub s)) (cong-⟨⟩-subˢ-et σ et y f))
         (V-sub₀-ext s et (sub-var σ y (et-bound et)))
 
-cong-⟨⟩-subˢ-ne : ∀ {Γ Γ' A ρ ρ'} → (σ : Sub [] Γ Γ') → (¬et : ¬ Eternal A)
-                → (y : A ∈[ ρ' ] Γ') → (f : ¬ Eternal A → ρ' ·ᵣ ρ ≾ᵣ 𝟏ᵣ)
+cong-⟨⟩-subˢ-ne : ∀ {Γ Γ' A ρ ρ'} → (σ : Sub [] Γ Γ') → (¬et : ¬ Et A)
+                → (y : A ∈[ ρ' ] Γ') → (f : ¬ Et A → ρ' ·ᵣ ρ ≾ᵣ 𝟏ᵣ)
                 → sub-var (cong-⟨⟩-subˢ {ρ = ρ} σ) (Tl-⟨⟩ y) f
                 ≡ V-rename (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et)))
                            (sub-var σ y (λ q → ≾ᵣ-zero-productˡ (f q)))
@@ -232,7 +232,7 @@ cong-⟨⟩-subˢ-≐ˢ : ∀ {Γ Γ' ρ} {σ σ' : Sub [] Γ Γ'}
 cong-⟨⟩-subˢ-≐ˢ {Γ} {Γ'} {ρ} {σ} {σ'} h = mk≐ˢ goᵛ goᵗ
   where
     goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] (Γ' ⟨ ρ ⟩))
-        → (f : ¬ Eternal A' → ρ' ≾ᵣ 𝟏ᵣ)
+        → (f : ¬ Et A' → ρ' ≾ᵣ 𝟏ᵣ)
         → sub-var (cong-⟨⟩-subˢ {ρ = ρ} σ) x f
         ≡ sub-var (cong-⟨⟩-subˢ σ') x f
     goᵛ {A'} (Tl-⟨⟩ y) f with eternal? A'
@@ -252,7 +252,7 @@ cong-⟨⟩-subˢ-≐ˢ {Γ} {Γ'} {ρ} {σ} {σ'} h = mk≐ˢ goᵛ goᵗ
         (trans (cong (RVar-⟨⟩ ρ) (atᵗ h y)) (sym (cong-⟨⟩-subˢ-tgt σ' y)))
 
 sub-var-irr : ∀ {Γ Γ' A ρ} → (σ : Sub [] Γ Γ') → (x : A ∈[ ρ ] Γ')
-            → (f f' : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+            → (f f' : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
             → sub-var σ x f ≡ sub-var σ x f'
 sub-var-irr σ x f f' = cong (λ g → V-sub σ (var g x)) (bound-irr f f')
 
@@ -289,7 +289,7 @@ V-sub-zero : ∀ {Γ Γ'} → (σ : Sub [] Γ Γ') → V-sub σ zero ≡ zero
 V-sub-zero []ˢ      = refl
 V-sub-zero (s ◅ σ) = cong (V-sub₀ s) (V-sub-zero σ)
 
-V-sub-succ : ∀ {Γ Γ'} → (σ : Sub [] Γ Γ') → (V : Γ' ⊢V⦂ Nat)
+V-sub-succ : ∀ {Γ Γ'} → (σ : Sub [] Γ Γ') → (V : Γ' ⊢V⦂ nat)
            → V-sub σ (succ V) ≡ succ (V-sub σ V)
 V-sub-succ []ˢ      V = refl
 V-sub-succ (s ◅ σ) V = cong (V-sub₀ s) (V-sub-succ σ V)
@@ -314,7 +314,7 @@ V-sub-nil : ∀ {Γ Γ' A} → (σ : Sub [] Γ Γ') → V-sub σ (nil {A = A}) �
 V-sub-nil []ˢ      = refl
 V-sub-nil (s ◅ σ) = cong (V-sub₀ s) (V-sub-nil σ)
 
-V-sub-cons : ∀ {Γ Γ' A} → (σ : Sub [] Γ Γ') → (V : Γ' ⊢V⦂ A) → (W : Γ' ⊢V⦂ |List| A)
+V-sub-cons : ∀ {Γ Γ' A} → (σ : Sub [] Γ Γ') → (V : Γ' ⊢V⦂ A) → (W : Γ' ⊢V⦂ list A)
            → V-sub σ (cons V W) ≡ cons (V-sub σ V) (V-sub σ W)
 V-sub-cons []ˢ      V W = refl
 V-sub-cons (s ◅ σ) V W = cong (V-sub₀ s) (V-sub-cons σ V W)
@@ -335,7 +335,7 @@ C-sub-return []ˢ      V = refl
 C-sub-return (s ◅ σ) V = cong (C-sub₀ s) (C-sub-return σ V)
 
 C-sub-⨟ : ∀ {Γ Γ' A B ε ε'} → (σ : Sub [] Γ Γ')
-        → (M : Γ' ⊢C⦂ A ‼ ε) → (N : Γ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
+        → (M : Γ' ⊢C⦂ A ! ε) → (N : Γ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
         → C-sub σ (M ⨟ N)
         ≡ (C-sub σ M ⨟ C-sub (cong-∷-subˢ (cong-⟨⟩-subˢ σ)) N)
 C-sub-⨟ []ˢ      M N = refl
@@ -354,26 +354,26 @@ C-sub-match : ∀ {Γ Γ' A B C} → (σ : Sub [] Γ Γ')
 C-sub-match []ˢ      V M = refl
 C-sub-match (s ◅ σ) V M = cong (C-sub₀ s) (C-sub-match σ V M)
 
-C-sub-absurd : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ') → (V : Γ' ⊢V⦂ Empty)
+C-sub-absurd : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ') → (V : Γ' ⊢V⦂ empty)
              → C-sub σ (absurd {C = C} V) ≡ absurd (V-sub σ V)
 C-sub-absurd []ˢ      V = refl
 C-sub-absurd (s ◅ σ) V = cong (C-sub₀ s) (C-sub-absurd σ V)
 
 C-sub-cmp : ∀ {Γ Γ' A} → (σ : Sub [] Γ Γ') → (⋈ : Cmp) → (V W : Γ' ⊢V⦂ A)
-          → (et : Eternal A)
+          → (et : Et A)
           → C-sub σ (cmp ⋈ V W et) ≡ cmp ⋈ (V-sub σ V) (V-sub σ W) et
 C-sub-cmp []ˢ      ⋈ V W et = refl
 C-sub-cmp (s ◅ σ) ⋈ V W et = cong (C-sub₀ s) (C-sub-cmp σ ⋈ V W et)
 
 C-sub-if : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ')
-         → (V : Γ' ⊢V⦂ Bool) → (M N : Γ' ⊢C⦂ C)
+         → (V : Γ' ⊢V⦂ bool) → (M N : Γ' ⊢C⦂ C)
          → C-sub σ (if V `then M `else N)
          ≡ if V-sub σ V `then C-sub σ M `else C-sub σ N
 C-sub-if []ˢ      V M N = refl
 C-sub-if (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-if σ V M N)
 
 C-sub-caseℕ : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ')
-            → (V : Γ' ⊢V⦂ Nat) → (M : Γ' ⊢C⦂ C) → (N : Γ' ∷ Nat ⊢C⦂ C)
+            → (V : Γ' ⊢V⦂ nat) → (M : Γ' ⊢C⦂ C) → (N : Γ' ∷ nat ⊢C⦂ C)
             → C-sub σ (caseℕ V `zero M `succ N)
             ≡ caseℕ V-sub σ V `zero C-sub σ M
                               `succ C-sub (cong-∷-subˢ σ) N
@@ -381,8 +381,8 @@ C-sub-caseℕ []ˢ      V M N = refl
 C-sub-caseℕ (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-caseℕ σ V M N)
 
 C-sub-recℕ : ∀ {Γ Γ' B ε} → (σ : Sub [] Γ Γ')
-           → (V : Γ' ⊢V⦂ Nat) → (M : Γ' ⊢C⦂ B ‼ ε)
-           → (N : (Γ' ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
+           → (V : Γ' ⊢V⦂ nat) → (M : Γ' ⊢C⦂ B ! ε)
+           → (N : (Γ' ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
            → (p : ε ·ₑ ε ≾ₑ ε)
            → C-sub σ (recℕ V M N p)
            ≡ recℕ (V-sub σ V) (C-sub σ M)
@@ -399,15 +399,15 @@ C-sub-case+ []ˢ      V M N = refl
 C-sub-case+ (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-case+ σ V M N)
 
 C-sub-caseL : ∀ {Γ Γ' A C} → (σ : Sub [] Γ Γ')
-            → (V : Γ' ⊢V⦂ |List| A) → (M : Γ' ⊢C⦂ C) → (N : Γ' ∷ A ∷ |List| A ⊢C⦂ C)
+            → (V : Γ' ⊢V⦂ list A) → (M : Γ' ⊢C⦂ C) → (N : Γ' ∷ A ∷ list A ⊢C⦂ C)
             → C-sub σ (caseL V `nil M `cons N)
             ≡ caseL V-sub σ V `nil C-sub σ M `cons C-sub (cong-∷-subˢ (cong-∷-subˢ σ)) N
 C-sub-caseL []ˢ      V M N = refl
 C-sub-caseL (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-caseL σ V M N)
 
 C-sub-recL : ∀ {Γ Γ' A B ε} → (σ : Sub [] Γ Γ')
-           → (V : Γ' ⊢V⦂ |List| A) → (M : Γ' ⊢C⦂ B ‼ ε)
-           → (N : (Γ' ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
+           → (V : Γ' ⊢V⦂ list A) → (M : Γ' ⊢C⦂ B ! ε)
+           → (N : (Γ' ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
            → (p : ε ·ₑ ε ≾ₑ ε)
            → C-sub σ (recL V M N p)
            ≡ recL (V-sub σ V) (C-sub σ M)
@@ -416,26 +416,26 @@ C-sub-recL []ˢ      V M N p = refl
 C-sub-recL (s ◅ σ) V M N p = cong (C-sub₀ s) (C-sub-recL σ V M N p)
 
 C-sub-perform : ∀ {Γ Γ' A ε} → (σ : Sub [] Γ Γ') → (op : Op)
-              → (V : Γ' ⊢V⦂ type-of-gtype (param op))
-              → (M : Γ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
+              → (V : Γ' ⊢V⦂ ⌜ param op ⌝ᵍ)
+              → (M : Γ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε)
               → C-sub σ (perform op V M)
               ≡ perform op (V-sub σ V) (C-sub (cong-∷-subˢ (cong-⟨⟩-subˢ σ)) M)
 C-sub-perform []ˢ      op V M = refl
 C-sub-perform (s ◅ σ) op V M = cong (C-sub₀ s) (C-sub-perform σ op V M)
 
 C-sub-delay : ∀ {Γ Γ' A ε} → (σ : Sub [] Γ Γ') → (τ : 𝔻)
-            → (M : Γ' ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε)
+            → (M : Γ' ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε)
             → C-sub σ (delay τ M) ≡ delay τ (C-sub (cong-⟨⟩-subˢ σ) M)
 C-sub-delay []ˢ      τ M = refl
 C-sub-delay (s ◅ σ) τ M = cong (C-sub₀ s) (C-sub-delay σ τ M)
 
 V-sub-handler : ∀ {Γ Γ' A B ε ε'} → (σ : Sub [] Γ Γ')
-              → (N : Γ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
+              → (N : Γ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
               → (H : (op : Op) → (ε'' : E)
-                   → Γ' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                   → Γ' ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                          ∷ [ ∣ op-grade op ∣ᵉ ]
-                             (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                     ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+                             (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
+                     ⊢C⦂ B ! (op-grade op ·ₑ ε''))
               → V-sub σ (handler N H)
               ≡ handler (C-sub (cong-∷-subˢ (cong-⟨⟩-subˢ σ)) N)
                         (λ op ε'' →
@@ -444,7 +444,7 @@ V-sub-handler []ˢ      N H = refl
 V-sub-handler (s ◅ σ) N H = cong (V-sub₀ s) (V-sub-handler σ N H)
 
 C-sub-handle : ∀ {Γ Γ' A B ε ε'} → (σ : Sub [] Γ Γ')
-             → (M : Γ' ⊢C⦂ A ‼ ε) → (V : Γ' ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε'))
+             → (M : Γ' ⊢C⦂ A ! ε) → (V : Γ' ⊢V⦂ (A ! ε) ⇛ (B ! ε'))
              → C-sub σ (handle M `with V) ≡ handle C-sub σ M `with V-sub σ V
 C-sub-handle []ˢ      M V = refl
 C-sub-handle (s ◅ σ) M V = cong (C-sub₀ s) (C-sub-handle σ M V)

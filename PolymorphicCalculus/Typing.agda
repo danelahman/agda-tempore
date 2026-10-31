@@ -93,27 +93,27 @@ mutual
 
     ⋆       :
               -------------
-              Q ∣ Γ ⊢V⦂ Unit
+              Q ∣ Γ ⊢V⦂ unit
 
     -- booleans
 
     true    :
               -------------
-              Q ∣ Γ ⊢V⦂ Bool
+              Q ∣ Γ ⊢V⦂ bool
 
     false   :
               -------------
-              Q ∣ Γ ⊢V⦂ Bool
+              Q ∣ Γ ⊢V⦂ bool
 
     -- natural numbers
 
     zero    :
               ------------
-              Q ∣ Γ ⊢V⦂ Nat
+              Q ∣ Γ ⊢V⦂ nat
 
-    succ    : Q ∣ Γ ⊢V⦂ Nat
+    succ    : Q ∣ Γ ⊢V⦂ nat
               -------------
-            → Q ∣ Γ ⊢V⦂ Nat
+            → Q ∣ Γ ⊢V⦂ nat
 
     -- pairing
 
@@ -140,13 +140,13 @@ mutual
 
     nil     : {A : OVType Θ}
               ---------------------
-            → Q ∣ Γ ⊢V⦂ |List| A
+            → Q ∣ Γ ⊢V⦂ list A
 
     cons    : {A : OVType Θ}
             → Q ∣ Γ ⊢V⦂ A
-            → Q ∣ Γ ⊢V⦂ |List| A
+            → Q ∣ Γ ⊢V⦂ list A
             --------------------
-            → Q ∣ Γ ⊢V⦂ |List| A
+            → Q ∣ Γ ⊢V⦂ list A
 
     -- comparison, a value: one rule for the relations of `Cmp`, at an
     -- eternal type
@@ -155,9 +155,9 @@ mutual
             → (⋈ : Cmp)
             → Q ∣ Γ ⊢V⦂ A
             → Q ∣ Γ ⊢V⦂ A
-            → Q ⊩ᴱ A
+            → Q ⊩Et A
             --------------
-            → Q ∣ Γ ⊢V⦂ Bool
+            → Q ∣ Γ ⊢V⦂ bool
 
     -- lambda abstraction
 
@@ -172,14 +172,14 @@ mutual
 
     handler : {A B : OVType Θ}
             → {ε ε' : EExp Θ}
-            → Q ∣ Γ ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'
+            → Q ∣ Γ ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'
             → ((op : Op) →
                  wkᵉ-H Q ∣ wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                              ∷ [ rconst ∣ op-grade op ∣ᵉ ]
-                                 (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ}))
-                   ⊢C⦂ wkᵉ-v B ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ})))
+                                 (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ! evar (newᵉ {Θ}))
+                   ⊢C⦂ wkᵉ-v B ! (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ})))
             ---------------------------------------------------------------
-            → Q ∣ Γ ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε')
+            → Q ∣ Γ ⊢V⦂ (A ! ε) ⇛ (B ! ε')
 
     -- type annotation
 
@@ -204,17 +204,17 @@ mutual
     return  : {A : OVType Θ}
             → Q ∣ Γ ⊢V⦂ A
             -----------------
-            → Q ∣ Γ ⊢C⦂ A ‼ 𝟏̂ₑ
+            → Q ∣ Γ ⊢C⦂ A ! 𝟏̂ₑ
 
     -- sequential composition
 
     _⨟_     : {A B : OVType Θ}      -- input: \;2
             → {ε' : EExp Θ}
             → {ε : EExp Θ}
-            → Q ∣ Γ ⊢C⦂ A ‼ ε
-            → Q ∣ Γ ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'
+            → Q ∣ Γ ⊢C⦂ A ! ε
+            → Q ∣ Γ ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'
             ---------------------------------
-            → Q ∣ Γ ⊢C⦂ B ‼ (ε ·̂ₑ ε')
+            → Q ∣ Γ ⊢C⦂ B ! (ε ·̂ₑ ε')
 
     -- function application
 
@@ -237,7 +237,7 @@ mutual
     -- empty type elimination
 
     absurd  : {C : OCType Θ}
-            → Q ∣ Γ ⊢V⦂ Empty
+            → Q ∣ Γ ⊢V⦂ empty
             -----------------
             → Q ∣ Γ ⊢C⦂ C
 
@@ -245,7 +245,7 @@ mutual
 
     if_`then_`else_
             : {C : OCType Θ}
-            → Q ∣ Γ ⊢V⦂ Bool
+            → Q ∣ Γ ⊢V⦂ bool
             → Q ∣ Γ ⊢C⦂ C
             → Q ∣ Γ ⊢C⦂ C
             ----------------
@@ -255,9 +255,9 @@ mutual
 
     caseℕ_`zero_`succ_
             : {C : OCType Θ}
-            → Q ∣ Γ ⊢V⦂ Nat
+            → Q ∣ Γ ⊢V⦂ nat
             → Q ∣ Γ ⊢C⦂ C
-            → Q ∣ Γ ∷ Nat ⊢C⦂ C
+            → Q ∣ Γ ∷ nat ⊢C⦂ C
             -------------------
             → Q ∣ Γ ⊢C⦂ C
 
@@ -277,9 +277,9 @@ mutual
     caseL_`nil_`cons_
             : {A : OVType Θ}
             → {C : OCType Θ}
-            → Q ∣ Γ ⊢V⦂ |List| A
+            → Q ∣ Γ ⊢V⦂ list A
             → Q ∣ Γ ⊢C⦂ C
-            → Q ∣ Γ ∷ A ∷ |List| A ⊢C⦂ C
+            → Q ∣ Γ ∷ A ∷ list A ⊢C⦂ C
             ----------------------------
             → Q ∣ Γ ⊢C⦂ C
 
@@ -288,23 +288,23 @@ mutual
 
     recℕ    : {B : OVType Θ}
             → {ε : EExp Θ}
-            → Q ∣ Γ ⊢V⦂ Nat
-            → Q ∣ Γ ⊢C⦂ B ‼ ε
-            → Q ∣ (Γ ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε
+            → Q ∣ Γ ⊢V⦂ nat
+            → Q ∣ Γ ⊢C⦂ B ! ε
+            → Q ∣ (Γ ⟨ rconst ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B ⊢C⦂ B ! ε
             → Q ⊩ ε ·̂ₑ ε ≾̂ₑ ε
             ----------------------------------------------------
-            → Q ∣ Γ ⊢C⦂ B ‼ ε
+            → Q ∣ Γ ⊢C⦂ B ! ε
 
     -- primitive recursion on lists, as `recℕ`
 
     recL    : {A B : OVType Θ}
             → {ε : EExp Θ}
-            → Q ∣ Γ ⊢V⦂ |List| A
-            → Q ∣ Γ ⊢C⦂ B ‼ ε
-            → Q ∣ (Γ ⟨ rconst ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε
+            → Q ∣ Γ ⊢V⦂ list A
+            → Q ∣ Γ ⊢C⦂ B ! ε
+            → Q ∣ (Γ ⟨ rconst ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣̂ᵉ ⟩ ∷ B ⊢C⦂ B ! ε
             → Q ⊩ ε ·̂ₑ ε ≾̂ₑ ε
             -------------------------------------------------------------
-            → Q ∣ Γ ⊢C⦂ B ‼ ε
+            → Q ∣ Γ ⊢C⦂ B ! ε
 
     -- performing algebraic operations; parameter and arity types are ground
 
@@ -312,28 +312,28 @@ mutual
             → {ε : EExp Θ}
             → (op : Op)
             → Q ∣ Γ ⊢V⦂ ⌜ param op ⌝ᵍ
-            → Q ∣ Γ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ‼ ε
+            → Q ∣ Γ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε
             ------------------------------------------------------------------
-            → Q ∣ Γ ⊢C⦂ A ‼ (econst (op-grade op) ·̂ₑ ε)
+            → Q ∣ Γ ⊢C⦂ A ! (econst (op-grade op) ·̂ₑ ε)
 
     -- explicit delaying of a computation
 
     delay   : {A : OVType Θ}
             → {ε : EExp Θ}
             → (τ : 𝔻)
-            → Q ∣ Γ ⟨ rconst (ιᵣ τ) ⟩ ⊢C⦂ A ‼ ε
+            → Q ∣ Γ ⟨ rconst (ιᵣ τ) ⟩ ⊢C⦂ A ! ε
             ----------------------------------------
-            → Q ∣ Γ ⊢C⦂ A ‼ (econst (ιₑ τ) ·̂ₑ ε)
+            → Q ∣ Γ ⊢C⦂ A ! (econst (ιₑ τ) ·̂ₑ ε)
 
     -- effect handling
 
     handle_`with_
             : {A B : OVType Θ}
             → {ε ε' : EExp Θ}
-            → Q ∣ Γ ⊢C⦂ A ‼ ε
-            → Q ∣ Γ ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε')
+            → Q ∣ Γ ⊢C⦂ A ! ε
+            → Q ∣ Γ ⊢V⦂ (A ! ε) ⇛ (B ! ε')
             ------------------------------
-            → Q ∣ Γ ⊢C⦂ B ‼ (ε ·̂ₑ ε')
+            → Q ∣ Γ ⊢C⦂ B ! (ε ·̂ₑ ε')
 
     -- unboxing a resource value once enough time `ρ'` has passed since
     -- its variable came into scope
@@ -376,7 +376,7 @@ mutual
 
 -- Numerals
 
-numeralᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} → ℕ → Q ∣ Γ ⊢V⦂ Nat
+numeralᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} → ℕ → Q ∣ Γ ⊢V⦂ nat
 numeralᵛ 0       = zero
 numeralᵛ (suc k) = succ (numeralᵛ k)
 
@@ -384,19 +384,19 @@ numeralᵛ (suc k) = succ (numeralᵛ k)
 
 coerce : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A ε ε'}
        → Q ⊩ ε ≾̂ₑ ε'
-       → Q ∣ Γ ⊢C⦂ A ‼ ε
+       → Q ∣ Γ ⊢C⦂ A ! ε
        ------------------
-       → Q ∣ Γ ⊢C⦂ A ‼ ε'
+       → Q ∣ Γ ⊢C⦂ A ! ε'
 
-coerce {A = A} p M = subC M (<:̂ᵛ-refl A ‼ₛ p)
+coerce {A = A} p M = subC M (<:̂ᵛ-refl A !ₛ p)
 
 -- Transport along equal types
 
 ε̂-subst : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A ε ε'}
           → ε ≡ ε'
-          → Q ∣ Γ ⊢C⦂ A ‼ ε
+          → Q ∣ Γ ⊢C⦂ A ! ε
           ------------------
-          → Q ∣ Γ ⊢C⦂ A ‼ ε'
+          → Q ∣ Γ ⊢C⦂ A ! ε'
 
 ε̂-subst refl M = M
 
@@ -423,22 +423,22 @@ private
   ∅ᶜ : OCtx ∅ˢ 0
   ∅ᶜ = []
 
-  ex-⋆ : ∅ᴴ ∣ (∅ᶜ ∷ Unit) ⊢V⦂ Unit
+  ex-⋆ : ∅ᴴ ∣ (∅ᶜ ∷ unit) ⊢V⦂ unit
   ex-⋆ = ⋆
 
   -- a variable used under a lock, by eternality of its type
 
-  ex-var-lock : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst 𝟏ᵣ ⟩) ⊢V⦂ Unit
-  ex-var-lock = var (Tl-⟨⟩ Hd) (et-ok Unitₑ)
+  ex-var-lock : ∅ᴴ ∣ ((∅ᶜ ∷ unit) ⟨ rconst 𝟏ᵣ ⟩) ⊢V⦂ unit
+  ex-var-lock = var (Tl-⟨⟩ Hd) (et-ok unitₑ)
 
-  ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst ⊤ᵣ ⟩) ⊢V⦂ Unit
-  ex-var-barrier = var (Tl-⟨⟩ Hd) (et-ok Unitₑ)
+  ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ unit) ⟨ rconst ⊤ᵣ ⟩) ⊢V⦂ unit
+  ex-var-barrier = var (Tl-⟨⟩ Hd) (et-ok unitₑ)
 
-  ex-seq : ∅ᴴ ∣ (∅ᶜ ∷ Unit) ⊢C⦂ Unit ‼ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)
+  ex-seq : ∅ᴴ ∣ (∅ᶜ ∷ unit) ⊢C⦂ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)
   ex-seq = return ⋆ ⨟ return ⋆
 
-  ex-unbox : ∅ᴴ ∣ (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) ⊢C⦂ Unit ‼ 𝟏̂ₑ
+  ex-unbox : ∅ᴴ ∣ (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) ⊢C⦂ unit ! 𝟏̂ₑ
   ex-unbox = unbox (res-var {z = Hd}) ⊩≾̂ᵣ-refl (return ⋆)
 
-  ex-unbox-ann : ∅ᴴ ∣ (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) ⊢C⦂ Unit ‼ 𝟏̂ₑ
-  ex-unbox-ann = unbox (res-ann 𝟏̂ᵣ Unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl Unitₛ) ⊩≾̂ᵣ-refl (return ⋆)
+  ex-unbox-ann : ∅ᴴ ∣ (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) ⊢C⦂ unit ! 𝟏̂ₑ
+  ex-unbox-ann = unbox (res-ann 𝟏̂ᵣ unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl unitₛ) ⊩≾̂ᵣ-refl (return ⋆)

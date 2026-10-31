@@ -56,18 +56,18 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types S Cat
 ⟦_⟧<:ᶜ : ∀ {C C'} → C <:ᶜ C' → ⟦ C ⟧ᶜ →ᵐ ⟦ C' ⟧ᶜ
 
 ⟦ Baseₛ refl ⟧<:ᵛ = idᵐ
-⟦ Unitₛ      ⟧<:ᵛ = idᵐ
-⟦ Boolₛ      ⟧<:ᵛ = idᵐ
-⟦ Natₛ       ⟧<:ᵛ = idᵐ
+⟦ unitₛ      ⟧<:ᵛ = idᵐ
+⟦ boolₛ      ⟧<:ᵛ = idᵐ
+⟦ natₛ       ⟧<:ᵛ = idᵐ
 ⟦ p |×|ₛ q   ⟧<:ᵛ = mapˣᵐ ⟦ p ⟧<:ᵛ ⟦ q ⟧<:ᵛ
 ⟦ p |+|ₛ q   ⟧<:ᵛ = map+ᵐ ⟦ p ⟧<:ᵛ ⟦ q ⟧<:ᵛ
-⟦ |List|ₛ p  ⟧<:ᵛ = mapListᵐ ⟦ p ⟧<:ᵛ
-⟦ Emptyₛ     ⟧<:ᵛ = idᵐ
+⟦ listₛ p    ⟧<:ᵛ = mapListᵐ ⟦ p ⟧<:ᵛ
+⟦ emptyₛ     ⟧<:ᵛ = idᵐ
 ⟦ p ⇒ₛ q     ⟧<:ᵛ = map⇒ᵐ ⟦ p ⟧<:ᵛ ⟦ q ⟧<:ᶜ
-⟦ (p ‼ₛ r) ⇛ₛ (q ‼ₛ s) ⟧<:ᵛ = mapʰ ⟦ p ⟧<:ᵛ ⟦ q ⟧<:ᵛ r s
+⟦ (p !ₛ r) ⇛ₛ (q !ₛ s) ⟧<:ᵛ = mapʰ ⟦ p ⟧<:ᵛ ⟦ q ⟧<:ᵛ r s
 ⟦ [_]ₛ_ {ρ' = ρ'} q p ⟧<:ᵛ = [ ρ' ]ᶠ ⟦ p ⟧<:ᵛ ∘ᵐ []-≤ q
 
-⟦ p ‼ₛ q ⟧<:ᶜ = Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ T-≤ q
+⟦ p !ₛ q ⟧<:ᶜ = Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ T-≤ q
 
 -- Witness irrelevance, inherited from the relation's own irrelevance
 
@@ -83,25 +83,25 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types S Cat
 ⟦⟧<:ᶜ-refl : (C : CType) → ⟦ <:ᶜ-refl C ⟧<:ᶜ ≈ᵐ idᵐ
 
 ⟦⟧<:ᵛ-refl (Base b)  = ≈ᵐ-refl
-⟦⟧<:ᵛ-refl Unit      = ≈ᵐ-refl
-⟦⟧<:ᵛ-refl Bool      = ≈ᵐ-refl
-⟦⟧<:ᵛ-refl Nat       = ≈ᵐ-refl
+⟦⟧<:ᵛ-refl unit      = ≈ᵐ-refl
+⟦⟧<:ᵛ-refl bool      = ≈ᵐ-refl
+⟦⟧<:ᵛ-refl nat       = ≈ᵐ-refl
 ⟦⟧<:ᵛ-refl (A |×| B) =
   ≈ᵐ-trans (mapˣᵐ-cong (⟦⟧<:ᵛ-refl A) (⟦⟧<:ᵛ-refl B)) mapˣᵐ-idᵐ
 ⟦⟧<:ᵛ-refl (A |+| B) =
   ≈ᵐ-trans (map+ᵐ-cong (⟦⟧<:ᵛ-refl A) (⟦⟧<:ᵛ-refl B)) map+ᵐ-idᵐ
-⟦⟧<:ᵛ-refl (|List| A) =
+⟦⟧<:ᵛ-refl (list A)  =
   ≈ᵐ-trans (mapListᵐ-cong (⟦⟧<:ᵛ-refl A)) mapListᵐ-idᵐ
-⟦⟧<:ᵛ-refl Empty     = ≈ᵐ-refl
+⟦⟧<:ᵛ-refl empty     = ≈ᵐ-refl
 ⟦⟧<:ᵛ-refl (A ⇒ C)   =
   ≈ᵐ-trans (map⇒ᵐ-cong (⟦⟧<:ᵛ-refl A) (⟦⟧<:ᶜ-refl C)) map⇒ᵐ-idᵐ
-⟦⟧<:ᵛ-refl ((A ‼ ε) ⇛ (B ‼ ε')) =
+⟦⟧<:ᵛ-refl ((A ! ε) ⇛ (B ! ε')) =
   ≈ᵐ-trans (mapʰ-cong _ _ (⟦⟧<:ᵛ-refl A) (⟦⟧<:ᵛ-refl B)) (mapʰ-id _ _)
 ⟦⟧<:ᵛ-refl ([ ρ ] A) =
   ≈ᵐ-trans (∘ᵐ-cong ([]-congᶠ (⟦⟧<:ᵛ-refl A)) []-≤-refl)
            (≈ᵐ-trans (∘ᵐ-congˡ []-idᵐ) (∘ᵐ-identityˡ _))
 
-⟦⟧<:ᶜ-refl (A ‼ ε) =
+⟦⟧<:ᶜ-refl (A ! ε) =
   ≈ᵐ-trans (∘ᵐ-cong (T-congᶠ (⟦⟧<:ᵛ-refl A)) (T-≤-refl ≾ₑ-refl))
            (≈ᵐ-trans (∘ᵐ-congˡ T-idᵐ) (∘ᵐ-identityˡ _))
 
@@ -111,22 +111,22 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types S Cat
             → ⟦ <:ᶜ-trans p q ⟧<:ᶜ ≈ᵐ ⟦ q ⟧<:ᶜ ∘ᵐ ⟦ p ⟧<:ᶜ
 
 ⟦⟧<:ᵛ-trans (Baseₛ refl) (Baseₛ refl) = ≈ᵐ-sym (∘ᵐ-identityˡ _)
-⟦⟧<:ᵛ-trans Unitₛ        Unitₛ        = ≈ᵐ-sym (∘ᵐ-identityˡ _)
-⟦⟧<:ᵛ-trans Boolₛ        Boolₛ        = ≈ᵐ-sym (∘ᵐ-identityˡ _)
-⟦⟧<:ᵛ-trans Natₛ         Natₛ         = ≈ᵐ-sym (∘ᵐ-identityˡ _)
+⟦⟧<:ᵛ-trans unitₛ        unitₛ        = ≈ᵐ-sym (∘ᵐ-identityˡ _)
+⟦⟧<:ᵛ-trans boolₛ        boolₛ        = ≈ᵐ-sym (∘ᵐ-identityˡ _)
+⟦⟧<:ᵛ-trans natₛ         natₛ         = ≈ᵐ-sym (∘ᵐ-identityˡ _)
 ⟦⟧<:ᵛ-trans (p |×|ₛ r)   (q |×|ₛ s)   =
   ≈ᵐ-trans (mapˣᵐ-cong (⟦⟧<:ᵛ-trans p q) (⟦⟧<:ᵛ-trans r s))
            (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _))
 ⟦⟧<:ᵛ-trans (p |+|ₛ r)   (q |+|ₛ s)   =
   ≈ᵐ-trans (map+ᵐ-cong (⟦⟧<:ᵛ-trans p q) (⟦⟧<:ᵛ-trans r s))
            (≈ᵐ-sym (map+ᵐ-∘ _ _ _ _))
-⟦⟧<:ᵛ-trans (|List|ₛ p)  (|List|ₛ q)  =
+⟦⟧<:ᵛ-trans (listₛ p)    (listₛ q)    =
   ≈ᵐ-trans (mapListᵐ-cong (⟦⟧<:ᵛ-trans p q)) (≈ᵐ-sym (mapListᵐ-∘ _ _))
-⟦⟧<:ᵛ-trans Emptyₛ       Emptyₛ       = ≈ᵐ-sym (∘ᵐ-identityˡ _)
+⟦⟧<:ᵛ-trans emptyₛ       emptyₛ       = ≈ᵐ-sym (∘ᵐ-identityˡ _)
 ⟦⟧<:ᵛ-trans (p ⇒ₛ r)     (q ⇒ₛ s)     =
   ≈ᵐ-trans (map⇒ᵐ-cong (⟦⟧<:ᵛ-trans q p) (⟦⟧<:ᶜ-trans r s))
            (map⇒ᵐ-∘ _ _ _ _)
-⟦⟧<:ᵛ-trans ((p ‼ₛ r) ⇛ₛ (p' ‼ₛ r')) ((q ‼ₛ s) ⇛ₛ (q' ‼ₛ s')) =
+⟦⟧<:ᵛ-trans ((p !ₛ r) ⇛ₛ (p' !ₛ r')) ((q !ₛ s) ⇛ₛ (q' !ₛ s')) =
   ≈ᵐ-trans (mapʰ-cong _ _ (⟦⟧<:ᵛ-trans q p) (⟦⟧<:ᵛ-trans p' q'))
            (≈ᵐ-sym (mapʰ-∘ _ _ _ _ _ _ _ _ _ _))
 -- the two grade relaxations meet after the inner coercion crosses the
@@ -140,7 +140,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types S Cat
   (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-≤-nat _ q)))
   (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
 
-⟦⟧<:ᶜ-trans (p ‼ₛ r) (q ‼ₛ s) =
+⟦⟧<:ᶜ-trans (p !ₛ r) (q !ₛ s) =
   ≈ᵐ-trans (∘ᵐ-congˡ (T-congᶠ (⟦⟧<:ᵛ-trans p q)))
   (≈ᵐ-trans (∘ᵐ-congˡ (T-∘ᵐ _ _))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
@@ -167,14 +167,14 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types S Cat
 -- An eternal type has no clause carrying a grade or a function, so a
 -- coercion out of one goes nowhere.
 
-<:ᵛ-eternal-≡ : ∀ {A B} → Eternal A → A <:ᵛ B → A ≡ B
+<:ᵛ-eternal-≡ : ∀ {A B} → Et A → A <:ᵛ B → A ≡ B
 <:ᵛ-eternal-≡ et          (Baseₛ refl) = refl
-<:ᵛ-eternal-≡ et          Unitₛ        = refl
-<:ᵛ-eternal-≡ et          Boolₛ        = refl
-<:ᵛ-eternal-≡ et          Natₛ         = refl
+<:ᵛ-eternal-≡ et          unitₛ        = refl
+<:ᵛ-eternal-≡ et          boolₛ        = refl
+<:ᵛ-eternal-≡ et          natₛ         = refl
 <:ᵛ-eternal-≡ (et |×|ₑ e) (p |×|ₛ q)   =
   cong₂ _|×|_ (<:ᵛ-eternal-≡ et p) (<:ᵛ-eternal-≡ e q)
 <:ᵛ-eternal-≡ (et |+|ₑ e) (p |+|ₛ q)   =
   cong₂ _|+|_ (<:ᵛ-eternal-≡ et p) (<:ᵛ-eternal-≡ e q)
-<:ᵛ-eternal-≡ (|List|ₑ et) (|List|ₛ p)  = cong |List| (<:ᵛ-eternal-≡ et p)
-<:ᵛ-eternal-≡ et          Emptyₛ       = refl
+<:ᵛ-eternal-≡ (listₑ et)  (listₛ p)    = cong list (<:ᵛ-eternal-≡ et p)
+<:ᵛ-eternal-≡ et          emptyₛ       = refl

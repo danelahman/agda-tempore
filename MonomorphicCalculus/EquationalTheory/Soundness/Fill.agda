@@ -301,7 +301,7 @@ fill-cong-env Γ {Γ'} (perform[_]ₖ {A} {ε} p op V K) (pV , pK) N N' pN pN' g
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   where
     Θ₁ : Ctx
-    Θ₁ = [] ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
+    Θ₁ = [] ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
 
     rΓ' : Ren [] ((Γ' ++ᶜ Θ₁) ++ᶜ hole-ctx K) (Γ' ++ᶜ rel-hole-ctx K Θ₁)
     rΓ' = eq-ren (trans (cong (Γ' ++ᶜ_) (rel-hole-ctx-++ᶜ {_} {Θ₁} {[]} K))

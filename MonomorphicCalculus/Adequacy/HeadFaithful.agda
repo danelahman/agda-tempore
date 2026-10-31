@@ -108,7 +108,7 @@ data Delaysᵐ : ∀ {X Y : Obj} {δ : E} → (X →ᵐ Tᵒ Y δ) → 𝔻 → 
 -- `stepᵀ` is `ηᵀ` for every rule but `DELAY`.
 
 step-delays : ∀ {ε ε' n} {St St' : 𝕊 []} {A A₀ : VType}
-            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A₀ ‼ ε'}
+            → {M : toCtx St ⊢C⦂ A ! ε} → {M' : toCtx St' ⊢C⦂ A₀ ! ε'}
             → (r : ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩)
             → {X : Obj} → {δ : E} → {t : ⟦ hist St' ⟧ᶜᵗˣ →ᵐ Tᵒ X δ}
             → Delaysᵐ t n
@@ -144,7 +144,7 @@ step-delays CASEL              d = η-stepᴰ d
 step-delays RECL               d = η-stepᴰ d
 step-delays SUB                d = η-stepᴰ d
 
-stepsᵀ-delays : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+stepsᵀ-delays : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
               → (rs : cf ⟶* cf')
               ------------------------------
               → Delaysᵐ (stepsᵀ rs) (ticks rs)
@@ -232,7 +232,7 @@ record HeadFaithful : Set₂ where
                -----------------------------------------------------------
                → ⟦ c₁ ⟧ᵇᶜ ≈ᵐ ⟦ c₂ ⟧ᵇᶜ
 
-    -- The boolean leaves likewise: what makes the returned answer at `Bool`
+    -- The boolean leaves likewise: what makes the returned answer at `bool`
     -- observable. Stated at the two constants rather than at arbitrary global
     -- elements of `𝔹ᵐ`.
 
@@ -294,7 +294,7 @@ record BaseFaithful : Set where
 -- Handler uniformity is carried by the term's own certificate.
 
 uniform⟶ : ∀ {A A₀ ε ε'} {St St' : 𝕊 []}
-         → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A₀ ‼ ε'}
+         → {M : toCtx St ⊢C⦂ A ! ε} → {M' : toCtx St' ⊢C⦂ A₀ ! ε'}
          → (r : ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩) → (pM : Paramᶜ M)
          ---------------------------------------------------
          → Uniform⟶ r pM
@@ -328,7 +328,7 @@ uniform⟶ CASEL               _         = tt
 uniform⟶ RECL                _         = tt
 uniform⟶ SUB                 _         = tt
 
-uniform⟶* : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+uniform⟶* : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
           → (rs : cf ⟶* cf') → (p : Paramᶜᶠ cf)
           ------------------------------------
           → Uniform⟶* rs p
@@ -349,9 +349,9 @@ ret-whnf-shape {St = St} V pSt pV =
   ⟦ V ⟧ᵛᵗ pV ∘ᵐ ⟦ St ⟧ˢ pSt , ∘ᵐ-assoc ηᵀ (⟦ V ⟧ᵛᵗ pV) (⟦ St ⟧ˢ pSt)
 
 op-whnf-shape : ∀ {A ε} {St : 𝕊 []} {op : Op}
-              → (W : toCtx St ⊢V⦂ type-of-gtype (param op))
-              → (M' : toCtx St ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
-                        ⊢C⦂ A ‼ ε)
+              → (W : toCtx St ⊢V⦂ ⌜ param op ⌝ᵍ)
+              → (M' : toCtx St ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
+                        ⊢C⦂ A ! ε)
               → (pSt : Paramˢ St) → (pW : Paramᵛ W) → (pM' : Paramᶜ M')
               → Σ[ w ∈ (⟦ hist St ⟧ᶜᵗˣ →ᵐ ⟦ param op ⟧ᵍ) ]
                 Σ[ k ∈ (⟦ hist St ⟧ᶜᵗˣ

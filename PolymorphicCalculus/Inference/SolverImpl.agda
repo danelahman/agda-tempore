@@ -517,13 +517,13 @@ reportSolved w X C {Θ'} {σ} {Q} {D} e =
 -- through the principal derivation and then the report, at each closed instance.
 
 scheme : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-       → Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ] → PrincipalScheme Γ M
+       → Reported wk₊ (X̂ Θ ! t̂ Θ) C[ Γ , M ] → PrincipalScheme Γ M
 scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ (Q̃ ++ᵠ R̃) X̃ inst' fac
   where
     open Reported r
 
     X : OCType (Θ +ty +e)
-    X = X̂ Θ ‼ t̂ Θ
+    X = X̂ Θ ! t̂ Θ
 
     p : PrincipalSolution Γ M
     p = principalSolution solver Γ M (runSolver-++ᵠ C[ Γ , M ] sol)
@@ -602,7 +602,7 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ (Q̃ ++ᵠ R̃) X̃ inst' fac
         → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀
         → Σ[ δ ∈ Subst Θ̃ ∅ˢ ]
             ((σ̃ ⨟ˢ δ ≐ˢ σ₀ ⨟ˢ δ₀) × (δ ⊨ Q̃ ++ᵠ R̃) × (∅ᴴ ∣ X̃ [ δ ]ᶜ <:̂ᶜ C₀ [ δ₀ ]ᶜ))
-    fac σ₀ Q₀ {A₀ ‼ ε₀} D₀ e₀ δ₀ h₀ =
+    fac σ₀ Q₀ {A₀ ! ε₀} D₀ e₀ δ₀ h₀ =
       ⌜ ι ⌝ʳ ⨟ˢ δ' , agree , ⊨++ᵠ⇐ (to-Q̃ δ' hQ̂ , to-R̃ δ' (hQ̂ , proj₂ hq)) ,
       <:̂ᶜ-trans (princ δ' hQ̂) below
       where
@@ -621,10 +621,10 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ (Q̃ ++ᵠ R̃) X̃ inst' fac
           ≐ˢ-trans (≐ˢ-sym (⨟-assoc σ̃ ⌜ ι ⌝ʳ δ'))
           (≐ˢ-trans (⨟-congˡ σ̃-ι δ') ceq₁)
 
-        below : ∅ᴴ ∣ X [ σ ]ᶜ [ δ' ]ᶜ <:̂ᶜ (A₀ ‼ ε₀) [ δ₀ ]ᶜ
+        below : ∅ᴴ ∣ X [ σ ]ᶜ [ δ' ]ᶜ <:̂ᶜ (A₀ ! ε₀) [ δ₀ ]ᶜ
         below =
-          subst (λ A → ∅ᴴ ∣ A ‼ t̂ Θ [ σ ]ᵉ [ δ' ]ᵉ <:̂ᶜ A₀ [ δ₀ ]ᵛ ‼ ε₀ [ δ₀ ]ᵉ)
-                (sym aeq) (<:̂ᵛ-refl (A₀ [ δ₀ ]ᵛ) ‼ₛ le)
+          subst (λ A → ∅ᴴ ∣ A ! t̂ Θ [ σ ]ᵉ [ δ' ]ᵉ <:̂ᶜ A₀ [ δ₀ ]ᵛ ! ε₀ [ δ₀ ]ᵉ)
+                (sym aeq) (<:̂ᵛ-refl (A₀ [ δ₀ ]ᵛ) !ₛ le)
 
 -- The solver's answer, closed: an instance types `M`, and a typing
 -- gives an instance
@@ -651,7 +651,7 @@ answer-untypable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                  → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (QOrd Θ')}
                  → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D)
                  → ¬ Satisfiable (Q ++ᵠ D) → ¬ Typable Γ M
-answer-untypable Γ M e n (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e₀ (δ₀ , h₀)) =
+answer-untypable Γ M e n (typable Θ₀ σ₀ Q₀ (A₀ ! ε₀) D₀ e₀ (δ₀ , h₀)) =
   n (proj₁ f , ⊨++ᵠ⇐ (proj₂ (proj₂ f)))
   where
     f = runSolverᴰ-principal C[ Γ , M ] e (σ₀ ,ᵗ A₀ ,ᵉ ε₀) Q₀
@@ -661,7 +661,7 @@ answer-untypable Γ M e n (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e₀ (
 
 refuted-untypable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                   → runSolverᴰ C[ Γ , M ] ≡ refuted → ¬ Typable Γ M
-refuted-untypable Γ M e (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e₀ (δ₀ , h₀)) =
+refuted-untypable Γ M e (typable Θ₀ σ₀ Q₀ (A₀ ! ε₀) D₀ e₀ (δ₀ , h₀)) =
   runSolverᴰ-refutes C[ Γ , M ] e ((σ₀ ,ᵗ A₀ ,ᵉ ε₀) ⨟ˢ δ₀)
     (⊨-mono (⊨⇒⊩ᴴ h₀) C[ Γ , M ] (typing-sat σ₀ D₀ e₀))
 
@@ -670,7 +670,7 @@ refuted-untypable Γ M e (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e₀ (�
 answerScheme : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
              → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {D : List (QOrd Θ')}
              → runSolverᴰ C[ Γ , M ] ≡ solved (Θ' , σ , Q , D) → PrincipalScheme Γ M
-answerScheme {Θ} Γ M e = scheme Γ M (reportSolved wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ] e)
+answerScheme {Θ} Γ M e = scheme Γ M (reportSolved wk₊ (X̂ Θ ! t̂ Θ) C[ Γ , M ] e)
 
 -- The closed check of a reported scheme: `checkClosed` on its hypotheses, which
 -- elimination can make closed; a failure makes them unsatisfiable
