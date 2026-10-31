@@ -4,7 +4,7 @@
 -- The graded monad morphism from the free tree monad into the free tick --
 -- monad, determined by a semantic implementation of the operations      --
 --                                                                       --
---   op-semᵐ op : ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ param op ⟧ᵍ →ᵖ ⟦ arity op ⟧ᵍ --
+--   op-semᵐ op : ⟨ ∣ op-grade op ∣ᵉ ⟩ᵒ ⟦ param op ⟧ᵍ →ᵖ ⟦ arity op ⟧ᵍ   --
 --                                                                       --
 -- On trees it is the identity on leaves, delays and coercions; an       --
 -- operation node becomes a tick at the operation's grade, its           --
@@ -55,28 +55,28 @@ open Category PShCat using (_×ᵐ_; ⟨_,_⟩ᵐ; curryᵐ)
 -- The semantic implementations of the operations.
 
 OpSemᵐ : Set
-OpSemᵐ = (op : Op) → ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ param op ⟧ᵍ →ᵖ ⟦ arity op ⟧ᵍ
+OpSemᵐ = (op : Op) → ⟨ ∣ op-grade op ∣ᵉ ⟩ᵒ ⟦ param op ⟧ᵍ →ᵖ ⟦ arity op ⟧ᵍ
 
 module _ (op-semᵐ : OpSemᵐ) where
 
   -- The arity value the implementation returns, at a world the operation's
   -- continuation reaches.
 
-  semᵃ : ∀ {w w'} → (op : Op) → w ⊑[ mapᵉ (op-grade op) ] w'
+  semᵃ : ∀ {w w'} → (op : Op) → w ⊑[ ∣ op-grade op ∣ᵉ ] w'
        → carrier ⟦ param op ⟧ᵍ w → carrier ⟦ arity op ⟧ᵍ w'
   semᵃ op q v = app (op-semᵐ op) (mk⟨⟩ q v)
 
   -- Its naturality: the value at a later world is the transported one.
 
-  semᵃ-nat : ∀ {w w' w''} → (op : Op) → (q : w ⊑[ mapᵉ (op-grade op) ] w')
-           → (r : w' ⊑[ uᵣ ] w'') → (v : carrier ⟦ param op ⟧ᵍ w)
+  semᵃ-nat : ∀ {w w' w''} → (op : Op) → (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w')
+           → (r : w' ⊑[ 𝟏ᵣ ] w'') → (v : carrier ⟦ param op ⟧ᵍ w)
            → _≈_ ⟦ arity op ⟧ᵍ (semᵃ op (⊑ρ∘ᵘ q r) v)
                                (transport ⟦ arity op ⟧ᵍ r (semᵃ op q v))
   semᵃ-nat op q r v = nat (op-semᵐ op) r (mk⟨⟩ q v)
 
   -- and its congruence: `≈`-equal parameters give `≈`-equal arity values
 
-  semᵃ-cong : ∀ {w w'} → (op : Op) → (q : w ⊑[ mapᵉ (op-grade op) ] w')
+  semᵃ-cong : ∀ {w w'} → (op : Op) → (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w')
             → {v v' : carrier ⟦ param op ⟧ᵍ w}
             → _≈_ ⟦ param op ⟧ᵍ v v'
             → _≈_ ⟦ arity op ⟧ᵍ (semᵃ op q v) (semᵃ op q v')
@@ -106,7 +106,7 @@ module _ (op-semᵐ : OpSemᵐ) where
                       (kn q r (semᵃ op q v))))
           (implˢ-nat r (k q (semᵃ op q v))))
     implˢ (delay-node τ k kn) =
-      tick-node (of-durᵉ τ)
+      tick-node (ιₑ τ)
         (λ q → implˢ (k q))
         (λ q r → ≈ᵏ-trans (implˢ-cong (kn q r)) (implˢ-nat r (k q)))
     implˢ (sub p t) = sub p (implˢ t)
@@ -120,15 +120,15 @@ module _ (op-semᵐ : OpSemᵐ) where
         (≈ᵗ-trans (kc q (semᵃ-cong op q ev)) (ek q (semᵃ op q v'))))
     implˢ-cong (delay-≈ ek) = tick-≈ (λ q → implˢ-cong (ek q))
     implˢ-cong (sub-≈ et)   = sub-≈ (implˢ-cong et)
-    implˢ-cong sub-u        = sub-uᵏ _ _
+    implˢ-cong sub-𝟏        = sub-𝟏ᵏ _ _
     implˢ-cong sub-∘        = sub-∘ᵏ _ _ _ _
     implˢ-cong sub-delay    = sub-tick
     implˢ-cong sub-op       = sub-tick
     -- a delay implements as a tick, so the two delay collapses implement as
     -- the two tick collapses; the split witnesses agree by `⊑-irrelevant`
-    implˢ-cong (delay-zero {k = k} {q₀ = q₀} e) = tick-u {q₀ = q₀} of-durᵉ-zero e
+    implˢ-cong (delay-zero {k = k} {q₀ = q₀} e) = tick-𝟏 {q₀ = q₀} ιₑ-zero e
     implˢ-cong (delay-plus {τ₁ = τ₁} {τ₂ = τ₂} {k = k} {kn = kn} hk e) =
-      tick-· of-durᵉ-plus
+      tick-· ιₑ-plus
         (λ q₁ q₂ → ≈ᵏ-trans (implˢ-cong (hk q₁ q₂))
                      (≡→≈ᵏ (cong (λ z → implˢ (k z)) (⊑-irrelevant _ _))))
         e
@@ -143,7 +143,7 @@ module _ (op-semᵐ : OpSemᵐ) where
                    → implˢ (ε-substˢ e t) ≡ ε-substᵏˢ e (implˢ t)
     implˢ-ε-substˢ refl t = refl
 
-    implˢ-nat : ∀ {A ε w w'} (p : w ⊑[ uᵣ ] w') (t : Tˢ A ε w)
+    implˢ-nat : ∀ {A ε w w'} (p : w ⊑[ 𝟏ᵣ ] w') (t : Tˢ A ε w)
               → implˢ (transportᵗ p t) ≈ᵏ transportᵏ p (implˢ t)
     implˢ-nat {A} p (leaf x) = leaf-≈ (≈-refl A)
     -- the transported parameter, seen from the operation's future, is the
@@ -151,7 +151,7 @@ module _ (op-semᵐ : OpSemᵐ) where
     implˢ-nat p (op-node op v k kc kn) =
       tick-≈ (λ q → implˢ-cong (kc (⊑ᵘ∘ρ p q)
         (app-cong (op-semᵐ op)
-          (≈-sym (⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ param op ⟧ᵍ)
+          (≈-sym (⟨ ∣ op-grade op ∣ᵉ ⟩ᵒ ⟦ param op ⟧ᵍ)
                  (return (p , ≈-refl ⟦ param op ⟧ᵍ))))))
     implˢ-nat p (delay-node τ k kn)    = tick-≈ (λ q → ≈ᵏ-refl _)
     implˢ-nat p (sub e t)              = sub-≈ (implˢ-nat p t)
@@ -205,30 +205,30 @@ module _ (op-semᵐ : OpSemᵐ) where
            → implᵐ ∘ᵖ μᵀ {A} {ε} {ε'} ≈ᵖ μᵏ ∘ᵖ Tᵏᶠ implᵐ ∘ᵖ implᵐ
   implᵐ-μᵀ t = implˢ-μ t
 
-  -- a delay becomes a tick at the delay's grade: the boxes sit at `of-durʳ τ`
-  -- and `mapᵉ (of-durᵉ τ)`, which agree, and `[]-fun-irr` absorbs the witness
+  -- a delay becomes a tick at the delay's grade: the boxes sit at `ιᵣ τ`
+  -- and `∣ ιₑ τ ∣ᵉ`, which agree, and `[]-fun-irr` absorbs the witness
 
   implᵐ-delayᵀ : ∀ {A ε} → (τ : 𝔻)
                → implᵐ ∘ᵖ delayᵀ {A} {ε} τ
-               ≈ᵖ tickᵏ (of-durᵉ τ)
-                  ∘ᵖ []-≤ (≃ᵣ⇒≾ᵣ map-of-durᵉ)
-                  ∘ᵖ [ of-durʳ τ ]ᶠ implᵐ
+               ≈ᵖ tickᵏ (ιₑ τ)
+                  ∘ᵖ []-≤ (≃ᵣ⇒≾ᵣ map-ιᵉ)
+                  ∘ᵖ [ ιᵣ τ ]ᶠ implᵐ
   implᵐ-delayᵀ τ x = tick-≈ (λ q → implˢ-cong ([]-fun-irr x _ _))
 
   -- and an operation becomes a tick, its continuation fed the computed value
 
   implᵐ-opᵀ : ∀ {X A ε} → (op : Op)
             → (v : X →ᵖ ⟦ param op ⟧ᵍ)
-            → (k : (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ ⟦ arity op ⟧ᵍ) →ᵖ Tᵒ A ε)
+            → (k : (⟨ ∣ op-grade op ∣ᵉ ⟩ᵒ X ×ᵐ ⟦ arity op ⟧ᵍ) →ᵖ Tᵒ A ε)
             → implᵐ ∘ᵖ (opᵀ op
-                        ∘ᵖ ⟨ v , [ mapᵉ (op-grade op) ]ᶠ (curryᵐ k) ∘ᵖ η⊣ ⟩ᵐ)
+                        ∘ᵖ ⟨ v , [ ∣ op-grade op ∣ᵉ ]ᶠ (curryᵐ k) ∘ᵖ η⊣ ⟩ᵐ)
             ≈ᵖ tickᵏ (op-grade op)
-               ∘ᵖ [ mapᵉ (op-grade op) ]ᶠ
+               ∘ᵖ [ ∣ op-grade op ∣ᵉ ]ᶠ
                    (implᵐ ∘ᵖ k
-                    ∘ᵖ ⟨ idᵖ , op-semᵐ op ∘ᵖ ⟨ mapᵉ (op-grade op) ⟩ᶠ v ⟩ᵐ)
+                    ∘ᵖ ⟨ idᵖ , op-semᵐ op ∘ᵖ ⟨ ∣ op-grade op ∣ᵉ ⟩ᶠ v ⟩ᵐ)
                ∘ᵖ η⊣
   implᵐ-opᵀ op v k z =
     tick-≈ (λ q → implˢ-cong
       (app-cong k
-        ( transport-refl (⟨ mapᵉ (op-grade op) ⟩ᵒ _) (mk⟨⟩ q z)
+        ( transport-refl (⟨ ∣ op-grade op ∣ᵉ ⟩ᵒ _) (mk⟨⟩ q z)
         , ≈-refl ⟦ arity op ⟧ᵍ )))

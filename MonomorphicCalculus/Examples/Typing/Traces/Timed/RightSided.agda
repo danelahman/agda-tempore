@@ -82,14 +82,14 @@ tagged-relaying =
 ------------------------------------------------------------------------
 -- Readings go stale
 --
--- `var`'s bound is `ρ ≾ᵣ uᵣ`, and the unit permits nothing but the
+-- `var`'s bound is `ρ ≾ᵣ 𝟏ᵣ`, and the unit permits nothing but the
 -- empty run. So a reading is usable only where no lock stands between
 -- its binding and its use.
 
-reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-durʳ 2 ≾ᵣ uᵣ)
+reading-stale-after-idling : ¬ (𝟏ᵣ ·ᵣ ιᵣ 2 ≾ᵣ 𝟏ᵣ)
 reading-stale-after-idling = fails
 
-reading-stale-after-an-operation : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
+reading-stale-after-an-operation : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ 𝟏ᵣ)
 reading-stale-after-an-operation = fails
 
 carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ within ⟅ ⌈ read ⌉ ⟆
@@ -109,7 +109,7 @@ exact-run-to-budget =
   coerce holds (perform read ⋆ (perform write here (return ⋆)))
 
 budget-back-to-the-run :
-  ¬ (opTime read ·ₑ (of-durᵉ 3 ·ₑ uₑ) ≾ₑ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆)
+  ¬ (opTime read ·ₑ (ιₑ 3 ·ₑ 𝟏ₑ) ≾ₑ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆)
 budget-back-to-the-run = fails
 
 ------------------------------------------------------------------------
@@ -128,10 +128,10 @@ branching =
 -- neither branch's own grade will do for the other, an operation being
 -- no payment for a different one
 
-transmitting-is-not-storing : ¬ (opTime send ·ₑ uₑ ≾ₑ within ⟅ ⌈ write ⌉ ⟆)
+transmitting-is-not-storing : ¬ (opTime send ·ₑ 𝟏ₑ ≾ₑ within ⟅ ⌈ write ⌉ ⟆)
 transmitting-is-not-storing = fails
 
-storing-is-not-transmitting : ¬ (opTime write ·ₑ uₑ ≾ₑ within ⟅ ⌈ send ⌉ ⟆)
+storing-is-not-transmitting : ¬ (opTime write ·ₑ 𝟏ₑ ≾ₑ within ⟅ ⌈ send ⌉ ⟆)
 storing-is-not-transmitting = fails
 
 -- a budget covering the costlier branch covers both, time paying for
@@ -145,7 +145,7 @@ timed-branching =
 
 -- five ticks do not pay for a transmission
 
-five-ticks-are-short : ¬ (opTime send ·ₑ uₑ ≾ₑ within ⟅ ⟨ 5 ⟩ ⟆)
+five-ticks-are-short : ¬ (opTime send ·ₑ 𝟏ₑ ≾ₑ within ⟅ ⟨ 5 ⟩ ⟆)
 five-ticks-are-short = fails
 
 -- an `if` over data alone: both branches make the same run, so neither
@@ -204,17 +204,17 @@ claiming-now =
                      -- ∷ Reading
       (perform send here (return ⋆)))
 
-storing-keeps-it-open : uᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ permit
+storing-keeps-it-open : 𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ permit
 storing-keeps-it-open = holds
 
 -- a transmission closes it: it is not named, and six ticks is more than
 -- the permit budgets
 
-transmitting-closes-it : ¬ (uᵣ ·ᵣ opTime send ≾ᵣ permit)
+transmitting-closes-it : ¬ (𝟏ᵣ ·ᵣ opTime send ≾ᵣ permit)
 transmitting-closes-it = fails
 
 transmitting-after-the-reading-too :
-  ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ permit)
+  ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ permit)
 transmitting-after-the-reading-too = fails
 
 handed-over : [] ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
@@ -267,10 +267,10 @@ claimed-in-both-branches =
 
 -- with the reading alone permitted, only one branch reaches it
 
-sampling-branch-reaches : uᵣ ·ᵣ opTime read ≾ᵣ within ⟅ ⌈ read ⌉ ⟆
+sampling-branch-reaches : 𝟏ᵣ ·ᵣ opTime read ≾ᵣ within ⟅ ⌈ read ⌉ ⟆
 sampling-branch-reaches = holds
 
-transmitting-branch-does-not : ¬ (uᵣ ·ᵣ opTime send ≾ᵣ within ⟅ ⌈ read ⌉ ⟆)
+transmitting-branch-does-not : ¬ (𝟏ᵣ ·ᵣ opTime send ≾ᵣ within ⟅ ⌈ read ⌉ ⟆)
 transmitting-branch-does-not = fails
 
 ------------------------------------------------------------------------
@@ -324,7 +324,7 @@ in-order =
 -- overrun the permit, budget not crossing an operation it names
 
 out-of-order :
-  ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime send ·ᵣ opTime write ≾ᵣ scheduled)
+  ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime send ·ᵣ opTime write ≾ᵣ scheduled)
 out-of-order = fails
 
 ------------------------------------------------------------------------
@@ -351,7 +351,7 @@ identified =
 -- allowance, and within `unbounded`, so the coercion a
 -- discarding clause needs always exists
 
-nothing-fits : (op : Op) → (ε'' : E) → uₑ ≾ₑ op-grade op ·ₑ ε''
+nothing-fits : (op : Op) → (ε'' : E) → 𝟏ₑ ≾ₑ op-grade op ·ₑ ε''
 nothing-fits op ε'' = ≾-⊥ (op-grade op ·ₑ ε'')
 
 suppressed : [] ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆

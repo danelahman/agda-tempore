@@ -59,7 +59,7 @@ open _⊑ₛ[_]_ public
 -- The bound in the form `suc-comp-ren` consumes, with the residual spent.
 
 reach-bound : ∀ {St St' ρ} → (q : St ⊑ₛ[ ρ ] St')
-            → ≤ₛ-grade (ext q) ·ᵣ uᵣ ≾ᵣ ρ
+            → ≤ₛ-grade (ext q) ·ᵣ 𝟏ᵣ ≾ᵣ ρ
 reach-bound q = ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityʳ _)) (bound q)
 
 -- The witness an `unbox` needs: enough time has passed for a `ρ`-boxed value
@@ -73,19 +73,19 @@ unbox-ren q = suc-comp-ren (ext q) (reach-bound q) ∘ʳ ⟨⟩-η-ren
 -- with the source lock unwound. So each of its laws is the corresponding
 -- `unbox-ren` law conjugated by `⟨⟩-η⁻¹-ren`.
 
-reach-renᵘ : ∀ {St St'} → St ⊑ₛ[ uᵣ ] St' → Ren [] (toCtx St') (toCtx St)
+reach-renᵘ : ∀ {St St'} → St ⊑ₛ[ 𝟏ᵣ ] St' → Ren [] (toCtx St') (toCtx St)
 reach-renᵘ q = ⟨⟩-η⁻¹-ren ∘ʳ suc-comp-ren (ext q) (reach-bound q) ∘ʳ ⟨⟩-η-ren
 
-reach-renᵘ-unbox : ∀ {St St' : 𝕊 []} → (q : St ⊑ₛ[ uᵣ ] St')
+reach-renᵘ-unbox : ∀ {St St' : 𝕊 []} → (q : St ⊑ₛ[ 𝟏ᵣ ] St')
                  → reach-renᵘ q ≐ʳ (⟨⟩-η⁻¹-ren ∘ʳ unbox-ren q)
 reach-renᵘ-unbox q = ≐ʳ-refl
 
-reach-val : ∀ {St St' A} → St ⊑ₛ[ uᵣ ] St' → toCtx St ⊢V⦂ A → toCtx St' ⊢V⦂ A
+reach-val : ∀ {St St' A} → St ⊑ₛ[ 𝟏ᵣ ] St' → toCtx St ⊢V⦂ A → toCtx St' ⊢V⦂ A
 reach-val q = V-rename (reach-renᵘ q)
 
 -- Transporting a term with one more variable on top (a `lam` body).
 
-reach-under : ∀ {St St' A C} → St ⊑ₛ[ uᵣ ] St'
+reach-under : ∀ {St St' A C} → St ⊑ₛ[ 𝟏ᵣ ] St'
             → toCtx St ∷ A ⊢C⦂ C → toCtx St' ∷ A ⊢C⦂ C
 reach-under q = C-rename (cong-∷-ren (reach-renᵘ q))
 
@@ -128,7 +128,7 @@ resume q M W = (C-rename (cong-∷-ren (unbox-ren q)) M) [ split-[] ↦ W ]c
 reach-≤ : ∀ {St St' ρ ρ₀} → St ⊑ₛ[ ρ ] St' → ρ ≾ᵣ ρ₀ → St ⊑ₛ[ ρ₀ ] St'
 reach-≤ (reach e b) p = reach e (≾ᵣ-trans b p)
 
-reach-id : ∀ {St} → St ⊑ₛ[ uᵣ ] St
+reach-id : ∀ {St} → St ⊑ₛ[ 𝟏ᵣ ] St
 reach-id = reach id-suc ≾ᵣ-refl
 
 reach-∘ᵍ : ∀ {St St' St'' ρ ρ'}
@@ -145,7 +145,7 @@ reach-∘ᵍ (reach e' b') (reach e b) =
 -- and a guarded reach appended to a unit one. Both are the graded law at a
 -- product a unit law collapses.
 
-reach-∘ : ∀ {St St' St'' ρ} → St' ⊑ₛ[ uᵣ ] St'' → St ⊑ₛ[ ρ ] St'
+reach-∘ : ∀ {St St' St'' ρ} → St' ⊑ₛ[ 𝟏ᵣ ] St'' → St ⊑ₛ[ ρ ] St'
         → St ⊑ₛ[ ρ ] St''
 reach-∘ {ρ = ρ} q' q = reach-≤ (reach-∘ᵍ q' q) (≃ᵣ⇒≾ᵣ (·ᵣ-identityʳ ρ))
 
@@ -154,7 +154,7 @@ reach-∘ {ρ = ρ} q' q = reach-≤ (reach-∘ᵍ q' q) (≃ᵣ⇒≾ᵣ (·ᵣ
 
 alloc-reach : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             ------------------------------------------------------------
-            → St ⊑ₛ[ uᵣ ] (St ∷ₛ V)
+            → St ⊑ₛ[ 𝟏ᵣ ] (St ∷ₛ V)
 
 alloc-reach V = reach (∷-suc V id-suc) ≾ᵣ-refl
 
@@ -317,7 +317,7 @@ suc-comp-ren-img (∷-suc V e)  b x =
 
 -- What a reach does to a variable: the embedding of its extension.
 
-reach-renᵘ-img : ∀ {St St' : 𝕊 []} → (q : St ⊑ₛ[ uᵣ ] St')
+reach-renᵘ-img : ∀ {St St' : 𝕊 []} → (q : St ⊑ₛ[ 𝟏ᵣ ] St')
                → ∀ {A σ} → (x : A ∈[ σ ] toCtx St)
                → var-img (reach-renᵘ q) x ≡ ≤ₛ-embed (ext q) x
 reach-renᵘ-img q x =
@@ -345,13 +345,13 @@ steps-extends-state (r ◅ rs) =
 
 steps-grade-≾ : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
               → (rs : cf ⟶* cf')
-              → ≤ₛ-grade (steps-extends-state rs) ·ᵣ mapᵉ ε' ≾ᵣ mapᵉ ε
+              → ≤ₛ-grade (steps-extends-state rs) ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ ∣ ε ∣ᵉ
 
-steps-grade-≾ {ε = ε} ε* = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ (mapᵉ ε))
+steps-grade-≾ {ε = ε} ε* = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ ∣ ε ∣ᵉ)
 steps-grade-≾ {ε' = ε'} (r ◅ rs) =
   ≾ᵣ-trans
     (≃ᵣ⇒≾ᵣ
-      (≃ᵣ-trans (·ᵣ-cong (≤ₛ-grade-trans (step-extends-state r) (steps-extends-state rs)) ≃ᵣ-refl) (·ᵣ-assoc (≤ₛ-grade (step-extends-state r)) (≤ₛ-grade (steps-extends-state rs)) (mapᵉ ε'))))
+      (≃ᵣ-trans (·ᵣ-cong (≤ₛ-grade-trans (step-extends-state r) (steps-extends-state rs)) ≃ᵣ-refl) (·ᵣ-assoc (≤ₛ-grade (step-extends-state r)) (≤ₛ-grade (steps-extends-state rs)) ∣ ε' ∣ᵉ)))
     (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (steps-grade-≾ rs)) (step-grade-≾ r))
 
 -- The renaming a whole run licenses. A run's bound relates two locked contexts,
@@ -359,8 +359,8 @@ steps-grade-≾ {ε' = ε'} (r ◅ rs) =
 
 steps-ren : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
           → (rs : cf ⟶* cf')
-          → Ren [] (toCtx (Config.state cf') ⟨ mapᵉ ε' ⟩)
-                   (toCtx (Config.state cf)  ⟨ mapᵉ ε  ⟩)
+          → Ren [] (toCtx (Config.state cf') ⟨ ∣ ε' ∣ᵉ ⟩)
+                   (toCtx (Config.state cf)  ⟨ ∣ ε ∣ᵉ  ⟩)
 steps-ren rs = suc-comp-ren (steps-extends-state rs) (steps-grade-≾ rs)
 
 -- A step refines the scrutinee's value type, so a congruence rule subsumes the
@@ -410,9 +410,9 @@ subCtx-run-ren (r₀ ◅ rs) r N =
 seq-steps : ∀ {A A₁ B ε ε' ε₂} {St St₁ : 𝕊 []}
           → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A₁ ‼ ε'}
           → (rs : ⟨ St , M ⟩ ⟶* ⟨ St₁ , M₁ ⟩)
-          → (N : toCtx St ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+          → (N : toCtx St ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
           -----------------------------------------------------------------
-          → Σ[ N₁ ∈ (toCtx St₁ ⟨ mapᵉ ε' ⟩ ∷ A₁ ⊢C⦂ B ‼ ε₂) ]
+          → Σ[ N₁ ∈ (toCtx St₁ ⟨ ∣ ε' ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B ‼ ε₂) ]
               (⟨ St , M ⨟ N ⟩ ⟶* ⟨ St₁ , M₁ ⨟ N₁ ⟩)
             × (N₁ ≡ subCtx-run rs (C-rename (cong-∷-ren (steps-ren rs)) N))
 
@@ -463,10 +463,10 @@ handle-steps : ∀ {A A₁ B ε ε' ε₂} {St St₁ : 𝕊 []}
              → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A₁ ‼ ε'}
              → (rs : ⟨ St , M ⟩ ⟶* ⟨ St₁ , M₁ ⟩)
              → (H : (op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St ⟨ ⊤ᵣ ⟩))
-             → (N : toCtx St ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+             → (N : toCtx St ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
              ---------------------------------------------------------------
              → Σ[ H₁ ∈ ((op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St₁ ⟨ ⊤ᵣ ⟩)) ]
-               Σ[ N₁ ∈ (toCtx St₁ ⟨ mapᵉ ε' ⟩ ∷ A₁ ⊢C⦂ B ‼ ε₂) ]
+               Σ[ N₁ ∈ (toCtx St₁ ⟨ ∣ ε' ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B ‼ ε₂) ]
                  (⟨ St , handle M `with H `in N ⟩ ⟶*
                   ⟨ St₁ , handle M₁ `with H₁ `in N₁ ⟩)
                × (∀ op ε₃ → H₁ op ε₃
@@ -543,7 +543,7 @@ handle-steps {B = B} {St = St} {St₁ = St₁} (_◅_ {cf₂ = ⟨ St' , M' ⟩}
 
 -- Transporting a reach's residual grade along a grade equality: the renaming is
 -- unchanged, since the bound is all that differs (`suc-comp-ren-irr`). This is
--- what reconciles a run's `mapᵉ uₑ` with the `uᵣ` a graded reach wants.
+-- what reconciles a run's `∣ 𝟏ₑ ∣ᵉ` with the `𝟏ᵣ` a graded reach wants.
 
 suc-comp-ren-grade : ∀ {St St₁ : 𝕊 []} {ρ'' ρ₁ ρ₂ : R} → (e : St ≤ₛ St₁)
                    → (eg : ρ₁ ≡ ρ₂)
@@ -570,7 +570,7 @@ suc-comp-ren-grade-src e refl b₁ b₂ =
 -- send `Tl-⟨⟩ x` to the composite extension's embedding.
 
 reach-unbox-ren-≐ʳ : ∀ {ρ} {St St' St'' : 𝕊 []}
-                  → (q' : St' ⊑ₛ[ uᵣ ] St'') → (q : St ⊑ₛ[ ρ ] St')
+                  → (q' : St' ⊑ₛ[ 𝟏ᵣ ] St'') → (q : St ⊑ₛ[ ρ ] St')
                   → (unbox-ren q ∘ʳ reach-renᵘ q') ≐ʳ unbox-ren (reach-∘ q' q)
 reach-unbox-ren-≐ʳ q' q = mk≐ʳ go
   where
@@ -584,7 +584,7 @@ reach-unbox-ren-≐ʳ q' q = mk≐ʳ go
 -- Composition for `reach-renᵘ`: the same law conjugated by `⟨⟩-η⁻¹-ren`.
 
 reach-renᵘ-∘ : ∀ {St St' St'' : 𝕊 []}
-             → (q' : St' ⊑ₛ[ uᵣ ] St'') → (q : St ⊑ₛ[ uᵣ ] St')
+             → (q' : St' ⊑ₛ[ 𝟏ᵣ ] St'') → (q : St ⊑ₛ[ 𝟏ᵣ ] St')
              → reach-renᵘ (reach-∘ q' q) ≐ʳ (reach-renᵘ q ∘ʳ reach-renᵘ q')
 reach-renᵘ-∘ q' q =
   ≐ʳ-trans (reach-renᵘ-unbox (reach-∘ q' q))
@@ -613,16 +613,16 @@ unbox-ren-μ-≐ʳ {σ = σ} q b = mk≐ʳ go
                          (sym (suc-comp-ren-img (ext q) b x))
 
 -- Entering the barrier and then following an extension is the reach at budget
--- `⊤ᵣ`: the residual grade is relaxed from `uᵣ` to `⊤ᵣ` (`suc-comp-ren-≤`).
+-- `⊤ᵣ`: the residual grade is relaxed from `𝟏ᵣ` to `⊤ᵣ` (`suc-comp-ren-≤`).
 
 barrier-unbox-≐ʳ : ∀ {St St₁ : 𝕊 []} → (q : St ⊑ₛ[ ⊤ᵣ ] St₁)
                  → (b : ≤ₛ-grade (ext q) ·ᵣ ⊤ᵣ ≾ᵣ ⊤ᵣ)
                  → (suc-comp-ren (ext q) b ∘ʳ barrier-ren) ≐ʳ unbox-ren q
 barrier-unbox-≐ʳ q b =
   ≐ʳ-trans
-    (≐ʳ-sym (∘ʳ-assoc-≐ʳ (suc-comp-ren (ext q) b) (⟨⟩-≤-ren (≾-⊤ᵣ uᵣ))
+    (≐ʳ-sym (∘ʳ-assoc-≐ʳ (suc-comp-ren (ext q) b) (⟨⟩-≤-ren (≾-⊤ᵣ 𝟏ᵣ))
                         ⟨⟩-η-ren))
-    (∘ʳ-≐ʳ (≐ʳ-sym (suc-comp-ren-≤ (ext q) (reach-bound q) b (≾-⊤ᵣ uᵣ)))
+    (∘ʳ-≐ʳ (≐ʳ-sym (suc-comp-ren-≤ (ext q) (reach-bound q) b (≾-⊤ᵣ 𝟏ᵣ)))
           ≐ʳ-refl)
 
 -- At the state itself the `⊤ᵣ`-reach is entering the barrier.
@@ -634,10 +634,10 @@ barrier-reach-≐ʳ : ∀ {St : 𝕊 []} → unbox-ren (barrier-reach {St}) ≐�
 barrier-reach-≐ʳ = ∘ʳ-≐ʳ (⟨⟩-≤-ren-≐ʳ _ _) ≐ʳ-refl
 
 -- Crossing a lock and then following a guarded reach is following the same reach
--- at the unit budget (`reach-≤`): the source grade is relaxed from `ρ` to `uᵣ`,
+-- at the unit budget (`reach-≤`): the source grade is relaxed from `ρ` to `𝟏ᵣ`,
 -- which is pre-composition with `⟨⟩-≤-ren` (`suc-comp-ren-≤ˡ`).
 
-unbox-ren-unit : ∀ {ρ} {St St' : 𝕊 []} → (q : St ⊑ₛ[ ρ ] St') → (p : ρ ≾ᵣ uᵣ)
+unbox-ren-unit : ∀ {ρ} {St St' : 𝕊 []} → (q : St ⊑ₛ[ ρ ] St') → (p : ρ ≾ᵣ 𝟏ᵣ)
                → ((⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ unbox-ren q)
                ≐ʳ reach-renᵘ (reach-≤ q p)
 unbox-ren-unit q p = mk≐ʳ go
@@ -883,7 +883,7 @@ alloc-lookup-≡ {A} {ρ} {St} {St'} V e rel q₀ eq₀ =
 
     h : ctx-grade (Δ₁ ++ᶜ Δ) ≾ᵣ proj₁ (≤ₛ-embed e (Hd {Γ = toCtx St}))
     h = ≃ᵣ⇒≾ᵣ (≃ᵣ-trans (≃ᵣ-trans (ctx-grade-++ᶜ Δ₁ Δ) (·ᵣ-identityˡ (ctx-grade Δ)))
-                (≃ᵣ-reflexive (trans (sym (grade-++ᶜˡ-uᵣ Δ))
+                (≃ᵣ-reflexive (trans (sym (grade-++ᶜˡ-𝟏ᵣ Δ))
                      (sym (cong proj₁ (≤ₛ-embed-push e (Hd {Γ = toCtx St})))))))
 
     eU : resource-lookup St' (proj₂ (≤ₛ-embed e (Hd {Γ = toCtx St})))

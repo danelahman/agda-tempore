@@ -88,7 +88,7 @@ module _ {D' : Duration} (B : Grade D') where
     { Carrier      = Maybe B.Carrier
     ; _≤_          = _≤⁰_
     ; 𝟘            = nothing
-    ; 𝟙            = just B.u
+    ; 𝟙            = just B.𝟏
     ; ⊤            = just B.⊤
     ; _⊕_          = _⊕⁰_
     ; _⊗_          = _⊗⁰_
@@ -361,7 +361,7 @@ equivariant-boxes = record
                   ; a (just (m , t)) → justˡ (same {rename (swap a a) m} {m} λ s →
                       trans (rename-! a a m s) (cong (m !_) (swap-refl a s))) G.≃-refl }
   ; act-𝟘     = λ _ _ → ≈-nothing
-  ; act-𝟙     = λ a b → justˡ (same {rename (swap a b) (everywhere G.u)} {everywhere G.u} λ s → rename-! a b (everywhere G.u) s) G.≃-refl
+  ; act-𝟙     = λ a b → justˡ (same {rename (swap a b) (everywhere G.𝟏)} {everywhere G.𝟏} λ s → rename-! a b (everywhere G.𝟏) s) G.≃-refl
   ; act-⊕     = λ { a b nothing y → Dioid.≈-refl boxes {actᵇ a b y}
                   ; a b (just z) nothing → Dioid.≈-refl boxes {actᵇ a b (just z)}
                   ; a b (just (m , t)) (just (m' , t')) →

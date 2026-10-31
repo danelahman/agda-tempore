@@ -3,7 +3,7 @@
 --                                                                    --
 -- A non-empty finite set of traces denotes the regular language of   --
 -- the encodings of its runs. The map preserves the unit, products,   --
--- unions and `of-dur`, and is an order embedding: the finite sets of --
+-- unions and `ι`, and is an order embedding: the finite sets of      --
 -- `Traces.Subsets.RightSided` embed in the regular grade.            --
 --                                                                    --
 -- The embedding is not a grade morphism: `any-run` is greatest and   --
@@ -101,11 +101,11 @@ lang-reflect {P} {Q} le = SB.⊑-∈ λ s s∈ →
 ------------------------------------------------------------------------
 -- Structure preserved
 
-lang-u : lang S.u ≡ R.u
-lang-u = cong ⟪_⟫ {x = enc ε} {y = []} refl
+lang-𝟏 : lang S.𝟏 ≡ R.𝟏
+lang-𝟏 = cong ⟪_⟫ {x = enc ε} {y = []} refl
 
-lang-of-dur : ∀ m → lang (S.of-dur m) ≡ R.of-dur m
-lang-of-dur m = cong ⟪_⟫ (enc-⟨⟩ m)
+lang-ι : ∀ m → lang (S.ι m) ≡ R.ι m
+lang-ι m = cong ⟪_⟫ (enc-⟨⟩ m)
 
 lang-· : ∀ P Q → lang (P S.· Q) ≡ lang P ·ᴿ lang Q
 lang-· P Q = R.same-language (lang (P S.· Q)) (lang P ·ᴿ lang Q) to′ from′
@@ -154,7 +154,7 @@ lang-∪ P Q = R.same-language (lang (P S.∪ Q)) (lang P ⊔ᴿ lang Q) to′ f
 
 -- A run of the one-tick grade is not empty.
 
-tick-nonempty : ∀ x y → x ∈ table (R.of-dur 1) → y ∈ table R.⊤ → x ++ y ≡ [] → ⊥
+tick-nonempty : ∀ x y → x ∈ table (R.ι 1) → y ∈ table R.⊤ → x ++ y ≡ [] → ⊥
 tick-nonempty x y x∈ _ eq with trans (sym (cong (_++ y) (R.∈tick⁻ 1 x x∈))) eq
 ... | ()
 
@@ -162,10 +162,10 @@ private
   module RG = Grade R.right-sided
   module SG = Grade SR.right-sided
 
-  -- The argument at variables `d` and `t` for `R.of-dur 1` and `R.⊤`,
+  -- The argument at variables `d` and `t` for `R.ι 1` and `R.⊤`,
   -- so that no order is decided by unfolding their tables.
   no-morphism-at : (f : SR.right-sided →ᵍ R.right-sided) (d t : Regular)
-    → _→ᵍ_.map f (SR.of-durᵖ 1) ≾ d
+    → _→ᵍ_.map f (SR.ιᵖ 1) ≾ d
     → t ≾ _→ᵍ_.map f SG.⊤ → _→ᵍ_.map f SG.⊤ ≾ t
     → (∀ x y → x ∈ table d → y ∈ table t → x ++ y ≡ [] → ⊥) → [] ∈ table t
     → ⊥
@@ -178,21 +178,21 @@ private
     -- exact terms it relates, the carriers' equations being `refl`.
     top : t ≾ d ·ᴿ t
     top = R≾-trans t M (d ·ᴿ t) t₁
-            (R≾-trans M (map (SR.of-durᵖ 1) ·ᴿ map SR.any-run) (d ·ᴿ t) t₂
-              (R≾-trans (map (SR.of-durᵖ 1) ·ᴿ map SR.any-run) (d ·ᴿ map SR.any-run)
+            (R≾-trans M (map (SR.ιᵖ 1) ·ᴿ map SR.any-run) (d ·ᴿ t) t₂
+              (R≾-trans (map (SR.ιᵖ 1) ·ᴿ map SR.any-run) (d ·ᴿ map SR.any-run)
                         (d ·ᴿ t) t₃ t₄))
       where
         R≾-trans : ∀ a b c → a ≾ b → b ≾ c → a ≾ c
         R≾-trans a b c = RG.≾-trans {a} {b} {c}
-        M = map (SR.of-durᵖ 1 SG.· SR.any-run)
-        e₁ : SG.⊤ ≡ SR.of-durᵖ 1 SG.· SR.any-run
+        M = map (SR.ιᵖ 1 SG.· SR.any-run)
+        e₁ : SG.⊤ ≡ SR.ιᵖ 1 SG.· SR.any-run
         e₁ = refl
-        t₁ : t ≾ map (SR.of-durᵖ 1 SG.· SR.any-run)
+        t₁ : t ≾ map (SR.ιᵖ 1 SG.· SR.any-run)
         t₁ = subst (λ c → t ≾ map c) e₁ t-map
-        t₂ : map (SR.of-durᵖ 1 SG.· SR.any-run) ≾ map (SR.of-durᵖ 1) ·ᴿ map SR.any-run
-        t₂ = proj₁ (map-· {SR.of-durᵖ 1} {SR.any-run})
-        t₃ : map (SR.of-durᵖ 1) ·ᴿ map SR.any-run ≾ d ·ᴿ map SR.any-run
-        t₃ = RG.·-monoˡ-≾ {map SR.any-run} {map (SR.of-durᵖ 1)} {d} map-d
+        t₂ : map (SR.ιᵖ 1 SG.· SR.any-run) ≾ map (SR.ιᵖ 1) ·ᴿ map SR.any-run
+        t₂ = proj₁ (map-· {SR.ιᵖ 1} {SR.any-run})
+        t₃ : map (SR.ιᵖ 1) ·ᴿ map SR.any-run ≾ d ·ᴿ map SR.any-run
+        t₃ = RG.·-monoˡ-≾ {map SR.any-run} {map (SR.ιᵖ 1)} {d} map-d
         t₄ : d ·ᴿ map SR.any-run ≾ d ·ᴿ t
         t₄ = RG.·-monoʳ-≾ {d} {map SR.any-run} {t}
                (subst (λ c → map c ≾ t) (sym e₂) map-t)
@@ -205,6 +205,6 @@ private
 
 no-morphism : ¬ (SR.right-sided →ᵍ R.right-sided)
 no-morphism f =
-  no-morphism-at f (R.of-dur 1) R.⊤ (proj₁ map-of-dur) (proj₂ map-⊤) (proj₁ map-⊤)
+  no-morphism-at f (R.ι 1) R.⊤ (proj₁ map-ι) (proj₂ map-⊤) (proj₁ map-⊤)
     tick-nonempty (R.∈⊤ [])
   where open _→ᵍ_ f

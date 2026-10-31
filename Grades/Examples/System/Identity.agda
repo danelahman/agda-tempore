@@ -2,7 +2,7 @@
 -- The grade system in which effects and resources are graded alike.  --
 --                                                                    --
 -- Both components are the same ordered monoid and the projection is  --
--- the identity, so `mapᵉ` disappears from the typing rules: the lock --
+-- the identity, so `∣_∣ᵉ` disappears from the typing rules: the lock --
 -- a computation places on the context is its effect grade, and the   --
 -- premise of `unbox` compares what a computation did directly with   --
 -- the grade of the box.                                              --
@@ -26,11 +26,11 @@ idᵍ : {D : Duration} (G : Grade D) → G →ᵍ G
 idᵍ G = strictᵍ record
   { map          = λ c → c
   ; map-monotone = λ rel → rel
-  ; map-u        = refl
+  ; map-𝟏        = refl
   ; map-·        = refl
   ; map-⊤        = refl
   ; map-⊔        = refl
-  ; map-of-dur   = refl
+  ; map-ι        = refl
   }
 
 -- a grade, read as both the effect grades and the resource grades
@@ -40,7 +40,7 @@ identityGradeSystem {D} G = record
   { Dur    = D
   ; RGrade = G
   ; EGrade = G
-  ; ∣_∣ᵉ   = idᵍ G
+  ; ∣-∣ᵉ   = idᵍ G
   }
 
 -- its hints: the grade's for both sorts, and the identity reflects the
@@ -53,7 +53,7 @@ identityʰ : {D : Duration} {G : Grade D} → GradeHints G
 identityʰ H wit = record
   { RHints      = H
   ; EHints      = H
-  ; reflects-u? = just (λ e p → p)
+  ; reflects-𝟏? = just (λ e p → p)
   ; witnesses   = λ d rcs ecs → wit d (rcs ++ ecs)
   }
 

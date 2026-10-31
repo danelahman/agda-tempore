@@ -293,16 +293,16 @@ mutual
 
       cH : (op : Op)
          → wkᵉ-ctx _ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-              ∷ [ rconst (mapᵉ (op-grade op)) ]
+              ∷ [ rconst ∣ op-grade op ∣ᵉ ]
                   (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v _ ‼ evar (newᵉ {Θ'}))
            ≡ (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
+                ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
              [ σ' ↑ᵉ ]ᶜᵗˣ
       cH op =
         cong₂ _∷_
               (cong₂ _∷_ (cong (_⟨ rconst ⊤ᵣ ⟩) (trans (cong wkᵉ-ctx ceq) (sym pΓ⇑)))
                          (sym (⌜⌝ᵍ-subst (σ' ↑ᵉ) (param op))))
-              (cong₂ (λ X Y → [ rconst (mapᵉ (op-grade op)) ]
+              (cong₂ (λ X Y → [ rconst ∣ op-grade op ∣ᵉ ]
                                 (X ⇒ Y ‼ evar (newᵉ {Θ'})))
                      (sym (⌜⌝ᵍ-subst (σ' ↑ᵉ) (arity op)))
                      (sym pγ⇑))
@@ -311,7 +311,7 @@ mutual
       ihH op =
         cmpC (ι↑ ↑ᵉ)
              (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                 ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
+                 ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
              γ⇑ (econst (op-grade op) ·̂ₑ e'')
              (R op) (H op) (reC pι⇑ (R op) (eR op)) (cH op)
              (subst (λ z → wkᵉ-H Q ∣ wkᵉ-v A₂ <:̂ᵛ z) (sym pγ⇑)
@@ -578,9 +578,9 @@ mutual
                  (subst (λ z → Q ∣ ⌜ param op ⌝ᵍ <:̂ᵛ z)
                         (sym (⌜⌝ᵍ-subst σ' (param op)))
                         (<:̂ᵛ-refl ⌜ param op ⌝ᵍ))
-      ih₂ = cmpC ι↑ (Γ↑ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ) A↑ e M D₂
+      ih₂ = cmpC ι↑ (Γ↑ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ) A↑ e M D₂
                  (reC pι M e₂)
-                 (cong₂ (λ G Z → G ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ Z)
+                 (cong₂ (λ G Z → G ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ Z)
                         (trans ceq (sym pΓ))
                         (sym (⌜⌝ᵍ-subst σ' (arity op))))
                  (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st) ⊩≾̂ₑ-refl
@@ -588,7 +588,7 @@ mutual
   -- explicit delaying of a computation
 
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _ (delay {ε = ε} τ D) (delay {M = M} e') ceq st le =
-    ε , ih , subst (λ z → Q ⊩ econst (of-durᵉ τ) ·̂ₑ ε ≾̂ₑ z) (sym pt) le
+    ε , ih , subst (λ z → Q ⊩ econst (ιₑ τ) ·̂ₑ ε ≾̂ₑ z) (sym pt) le
     where
       ι↑ = ι ⨟ˢ wkˢᵉ
       Γ↑ = wkᵉ-ctx Γ
@@ -600,8 +600,8 @@ mutual
       pt = wk-,ᵉ-e   σ ε t
       pι = wk-,ᵉ-ˢ   ι σ ε
 
-      ih = cmpC ι↑ (Γ↑ ⟨ rconst (of-durʳ τ) ⟩) A↑ e M D (reC pι M e')
-                (cong (_⟨ rconst (of-durʳ τ) ⟩) (trans ceq (sym pΓ)))
+      ih = cmpC ι↑ (Γ↑ ⟨ rconst (ιᵣ τ) ⟩) A↑ e M D (reC pι M e')
+                (cong (_⟨ rconst (ιᵣ τ) ⟩) (trans ceq (sym pΓ)))
                 (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st) ⊩≾̂ₑ-refl
 
   -- effect handling: the two types their own witnesses, the slack in the atom
@@ -804,45 +804,45 @@ private
 
   -- a `return` with slack absorbed: the generated `≾̂ₑᶜ` is the hypothesis
 
-  ex-return : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ Unit) (return ⋆) (Unit ‼ ûₑ)
-  ex-return = completeC {σ = idˢ} (∅ᶜ ∷ Unit) Unit ûₑ (return ⋆) (return ⋆) refl refl
+  ex-return : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ Unit) (return ⋆) (Unit ‼ 𝟏̂ₑ)
+  ex-return = completeC {σ = idˢ} (∅ᶜ ∷ Unit) Unit 𝟏̂ₑ (return ⋆) (return ⋆) refl refl
                         Unitₛ ⊩≾̂ₑ-refl
 
   -- a subsumption erases away, and completeness sees the same constraint
 
-  ex-sub : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ Unit) (return ⋆) (Unit ‼ ûₑ)
-  ex-sub = completeC {σ = idˢ} (∅ᶜ ∷ Unit) Unit ûₑ (return ⋆)
+  ex-sub : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ Unit) (return ⋆) (Unit ‼ 𝟏̂ₑ)
+  ex-sub = completeC {σ = idˢ} (∅ᶜ ∷ Unit) Unit 𝟏̂ₑ (return ⋆)
                      (coerce ⊩≾̂ₑ-refl (return ⋆)) refl refl Unitₛ ⊩≾̂ₑ-refl
 
   -- a variable typed at a supertype: the atom is the subsumption's witness
 
-  ex-var : idˢ ⊨[ ∅ᴴ ] genV (∅ᶜ ∷ [ ûᵣ ] Unit) (var zero) ([ ûᵣ ] Unit)
-  ex-var = completeV {σ = idˢ} (∅ᶜ ∷ [ ûᵣ ] Unit) ([ ûᵣ ] Unit) (var zero)
-                     (subV (var Hd (≾ᵘ-ok ⊩≾̂ᵣ-refl)) (<:̂ᵛ-refl ([ ûᵣ ] Unit)))
-                     refl refl (<:̂ᵛ-refl ([ ûᵣ ] Unit))
+  ex-var : idˢ ⊨[ ∅ᴴ ] genV (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) (var zero) ([ 𝟏̂ᵣ ] Unit)
+  ex-var = completeV {σ = idˢ} (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) ([ 𝟏̂ᵣ ] Unit) (var zero)
+                     (subV (var Hd (≾ᵘ-ok ⊩≾̂ᵣ-refl)) (<:̂ᵛ-refl ([ 𝟏̂ᵣ ] Unit)))
+                     refl refl (<:̂ᵛ-refl ([ 𝟏̂ᵣ ] Unit))
 
   -- unboxing a boxed variable: the gate is `false`, the row is inhabited
 
-  ex-unbox : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ [ ûᵣ ] Unit) (unbox (var zero) (return ⋆))
-                              (Unit ‼ ûₑ)
-  ex-unbox = completeC {σ = idˢ} (∅ᶜ ∷ [ ûᵣ ] Unit) Unit ûₑ (unbox (var zero) (return ⋆))
+  ex-unbox : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) (unbox (var zero) (return ⋆))
+                              (Unit ‼ 𝟏̂ₑ)
+  ex-unbox = completeC {σ = idˢ} (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) Unit 𝟏̂ₑ (unbox (var zero) (return ⋆))
                        (unbox (res-var {z = Hd}) ⊩≾̂ᵣ-refl (return ⋆))
                        refl refl Unitₛ ⊩≾̂ₑ-refl
 
   -- unboxing an annotated variable: the annotation's atom is the step's
 
-  ex-unbox-ann : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ [ ûᵣ ] Unit)
-                                  (unbox (var zero ⦂ᵛ [ ûᵣ ] Unit) (return ⋆)) (Unit ‼ ûₑ)
+  ex-unbox-ann : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit)
+                                  (unbox (var zero ⦂ᵛ [ 𝟏̂ᵣ ] Unit) (return ⋆)) (Unit ‼ 𝟏̂ₑ)
   ex-unbox-ann =
-    completeC {σ = idˢ} (∅ᶜ ∷ [ ûᵣ ] Unit) Unit ûₑ (unbox (var zero ⦂ᵛ [ ûᵣ ] Unit) (return ⋆))
-              (unbox (res-ann ûᵣ Unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl Unitₛ) ⊩≾̂ᵣ-refl (return ⋆))
+    completeC {σ = idˢ} (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) Unit 𝟏̂ₑ (unbox (var zero ⦂ᵛ [ 𝟏̂ᵣ ] Unit) (return ⋆))
+              (unbox (res-ann 𝟏̂ᵣ Unit (res-var {z = Hd}) ⊩≾̂ᵣ-refl Unitₛ) ⊩≾̂ᵣ-refl (return ⋆))
               refl refl Unitₛ ⊩≾̂ₑ-refl
 
   -- boxing a value: the annotation needs no witness, only the payload's type
 
-  ex-box : idˢ ⊨[ ∅ᴴ ] genC ∅ᶜ (box ûᵣ ⋆ (return ⋆)) (Unit ‼ ûₑ)
-  ex-box = completeC {σ = idˢ} ∅ᶜ Unit ûₑ (box ûᵣ ⋆ (return ⋆))
-                     (box ûᵣ ⋆ (return ⋆)) refl refl Unitₛ ⊩≾̂ₑ-refl
+  ex-box : idˢ ⊨[ ∅ᴴ ] genC ∅ᶜ (box 𝟏̂ᵣ ⋆ (return ⋆)) (Unit ‼ 𝟏̂ₑ)
+  ex-box = completeC {σ = idˢ} ∅ᶜ Unit 𝟏̂ₑ (box 𝟏̂ᵣ ⋆ (return ⋆))
+                     (box 𝟏̂ᵣ ⋆ (return ⋆)) refl refl Unitₛ ⊩≾̂ₑ-refl
 
   ex-box-is : ex-box ≡ (Unit , ((Unitₛ , Unitₛ) , ((Unitₛ , Unitₛ) , ⊩≾̂ₑ-refl)))
   ex-box-is = refl

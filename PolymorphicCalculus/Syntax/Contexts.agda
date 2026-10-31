@@ -140,7 +140,7 @@ defs-⌜⌝ (Δ ∷ᵖ s) = refl
 -- A variable, at the grade accumulated by the locks after it
 
 data _∈̂[_]_ {Θ : Scope} (A : OVType Θ) : RExp Θ → {n : ℕ} → OCtx Θ n → Set where
-  Hd    : ∀ {n} {Γ : OCtx Θ n}          → A ∈̂[ ûᵣ ] Γ ∷ A
+  Hd    : ∀ {n} {Γ : OCtx Θ n}          → A ∈̂[ 𝟏̂ᵣ ] Γ ∷ A
   Tl-∷  : ∀ {n} {Γ : OCtx Θ n} {B ρ}    → A ∈̂[ ρ ] Γ → A ∈̂[ ρ ] Γ ∷ B
   Tl-⟨⟩ : ∀ {n} {Γ : OCtx Θ n} {ρ ρ'}   → A ∈̂[ ρ' ] Γ → A ∈̂[ ρ' ·̂ᵣ ρ ] Γ ⟨ ρ ⟩
 
@@ -154,7 +154,7 @@ lookup-ty (Γ ∷ A)   (suc i) = lookup-ty Γ i
 lookup-ty (Γ ⟨ ρ ⟩) i       = lookup-ty Γ i
 
 lookup-gr : ∀ {Θ n} → OCtx Θ n → Fin n → RExp Θ
-lookup-gr (Γ ∷ A)   zero    = ûᵣ
+lookup-gr (Γ ∷ A)   zero    = 𝟏̂ᵣ
 lookup-gr (Γ ∷ A)   (suc i) = lookup-gr Γ i
 lookup-gr (Γ ⟨ ρ ⟩) i       = lookup-gr Γ i ·̂ᵣ ρ
 

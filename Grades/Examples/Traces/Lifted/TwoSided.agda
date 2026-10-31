@@ -33,7 +33,7 @@
 -- implies the condition `min ≤ max` required by the projection to    --
 -- time intervals (`◇ˢ₀-dur`).                                        --
 --                                                                    --
--- The greatest grade is `[ u , unbounded ]`, the unit of the floor   --
+-- The greatest grade is `[ 𝟏 , unbounded ]`, the unit of the floor   --
 -- under the unbounded allowance of the cap. It is not absorbing.     --
 ------------------------------------------------------------------------
 
@@ -104,13 +104,13 @@ open import Grades.Examples.Traces.Lifted.LeftSided
   using (Antichain)
   renaming (traces to tracesˡᵒ; nonempty to nonemptyˡᵒ;
             n to nˡᵒ; n-◃⁻ to nˡᵒ-◃⁻; ◃-∈ to ◃ˡᵒ-∈;
-            _·_ to _·ˡᵒ_; u to uˡᵒ; _⊔_ to _⊔ˡᵒ_;
+            _·_ to _·ˡᵒ_; 𝟏 to 𝟏ˡᵒ; _⊔_ to _⊔ˡᵒ_;
             ·-identityʳ to ·ˡᵒ-identityʳ; ·-identityˡ to ·ˡᵒ-identityˡ;
             ·-assoc to ·ˡᵒ-assoc;
-            of-dur to of-durˡᵒ; of-dur-zero to of-durˡᵒ-zero;
-            of-dur-plus to of-durˡᵒ-plus;
+            ι to ιˡᵒ; ι-zero to ιˡᵒ-zero;
+            ι-plus to ιˡᵒ-plus;
             _≾_ to _≾ˡᵒ_; _≾?_ to _≾ˡᵒ?_; ≾-⊤ to ≾ˡᵒ-⊤;
-            u⋠of-dur to uˡᵒ⋠of-durˡᵒ;
+            𝟏⋠ι to 𝟏ˡᵒ⋠ιˡᵒ;
             ≾-refl to ≾ˡᵒ-refl; ≾-trans to ≾ˡᵒ-trans;
             ·-monoˡ to ·ˡᵒ-monoˡ; ·-monoʳ to ·ˡᵒ-monoʳ;
             ≾-zero-productˡ to ≾ˡᵒ-zero-productˡ;
@@ -125,12 +125,12 @@ open import Grades.Examples.Traces.Lifted.LeftSided
 
 open import Grades.Examples.Traces.Lifted.RightSided
   T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans Oᶜ
-  using (Bounds; within_; unbounded; _·ᵇ_; uᵇ; _⊔ᵇ_;
+  using (Bounds; within_; unbounded; _·ᵇ_; 𝟏ᵇ; _⊔ᵇ_;
          ·ᵇ-identityʳ; ·ᵇ-identityˡ; ·ᵇ-assoc)
   renaming (Antichain to Antichainʰⁱ; traces to tracesʰⁱ;
-            u to uʰⁱ; n to nʰⁱ; n-◃⁻ to nʰⁱ-◃⁻; ◃-∈ to ◃ʰⁱ-∈;
-            of-dur to of-durʰⁱ; of-dur-zero to of-durʰⁱ-zero;
-            of-dur-plus to of-durʰⁱ-plus;
+            𝟏 to 𝟏ʰⁱ; n to nʰⁱ; n-◃⁻ to nʰⁱ-◃⁻; ◃-∈ to ◃ʰⁱ-∈;
+            ι to ιʰⁱ; ι-zero to ιʰⁱ-zero;
+            ι-plus to ιʰⁱ-plus;
             _≾₀_ to _≾ʰⁱ₀_;
             _≾_ to _≾ʰⁱ_; _≾?_ to _≾ʰⁱ?_;
             ≾-refl to ≾ʰⁱ-refl; ≾-trans to ≾ʰⁱ-trans; ≾-⊤ to ≾ʰⁱ-⊤;
@@ -336,19 +336,19 @@ i₁ ·ᵗˢ i₂ =
   ] {◇ˢ-·ˢ {tracesˡᵒ (lo i₁)} {tracesˡᵒ (lo i₂)} {hi i₁} {hi i₂}
           (lo◇hi i₁) (lo◇hi i₂)}
 
-uᵗˢ : TwoSided
-uᵗˢ = [ uˡᵒ , within uʰⁱ ] {◇ˢ₀-self (tracesˡᵒ uˡᵒ) tt}
+𝟏ᵗˢ : TwoSided
+𝟏ᵗˢ = [ 𝟏ˡᵒ , within 𝟏ʰⁱ ] {◇ˢ₀-self (tracesˡᵒ 𝟏ˡᵒ) tt}
 
 -- the greatest grade: the weakest guarantee, which is the unit, under
 -- an unbounded allowance
 
 ⊤ᵗˢ : TwoSided
-⊤ᵗˢ = [ uˡᵒ , unbounded ]
+⊤ᵗˢ = [ 𝟏ˡᵒ , unbounded ]
 
-·ᵗˢ-identityʳ : (i : TwoSided) → (i ·ᵗˢ uᵗˢ) ≡ i
+·ᵗˢ-identityʳ : (i : TwoSided) → (i ·ᵗˢ 𝟏ᵗˢ) ≡ i
 ·ᵗˢ-identityʳ i = eqᵗˢ (·ˡᵒ-identityʳ (lo i)) (·ᵇ-identityʳ (hi i))
 
-·ᵗˢ-identityˡ : (i : TwoSided) → (uᵗˢ ·ᵗˢ i) ≡ i
+·ᵗˢ-identityˡ : (i : TwoSided) → (𝟏ᵗˢ ·ᵗˢ i) ≡ i
 ·ᵗˢ-identityˡ i = eqᵗˢ (·ˡᵒ-identityˡ (lo i)) (·ᵇ-identityˡ (hi i))
 
 ·ᵗˢ-assoc : (i₁ i₂ i₃ : TwoSided)
@@ -471,12 +471,12 @@ i₁ ⊔ᵗˢ i₂ =
 -- Only the cap carries information at the unit, the floor half being
 -- vacuous.
 
-≾ᵗˢ-zero-productˡ : {i₁ i₂ : TwoSided} → (i₁ ·ᵗˢ i₂) ≾ᵗˢ uᵗˢ → i₁ ≾ᵗˢ uᵗˢ
+≾ᵗˢ-zero-productˡ : {i₁ i₂ : TwoSided} → (i₁ ·ᵗˢ i₂) ≾ᵗˢ 𝟏ᵗˢ → i₁ ≾ᵗˢ 𝟏ᵗˢ
 ≾ᵗˢ-zero-productˡ {i₁} {i₂} (l , h) =
     ≾ˡᵒ-zero-productˡ {lo i₁} {lo i₂} l
   , ≾ʰⁱ-zero-productˡ {hi i₁} {hi i₂} h
 
-≾ᵗˢ-zero-productʳ : {i₁ i₂ : TwoSided} → (i₁ ·ᵗˢ i₂) ≾ᵗˢ uᵗˢ → i₂ ≾ᵗˢ uᵗˢ
+≾ᵗˢ-zero-productʳ : {i₁ i₂ : TwoSided} → (i₁ ·ᵗˢ i₂) ≾ᵗˢ 𝟏ᵗˢ → i₂ ≾ᵗˢ 𝟏ᵗˢ
 ≾ᵗˢ-zero-productʳ {i₁} {i₂} (l , h) =
     ≾ˡᵒ-zero-productʳ {lo i₁} {lo i₂} l
   , ≾ʰⁱ-zero-productʳ {hi i₁} {hi i₂} h
@@ -489,9 +489,9 @@ i₁ ⊔ᵗˢ i₂ =
 ------------------------------------------------------------------------
 -- Including durations, and deciding the order
 
-of-durᵗˢ : Carrier → TwoSided
-of-durᵗˢ n =
-  [ of-durˡᵒ n , within (of-durʰⁱ n) ] {◇ˢ₀-self (tracesˡᵒ (of-durˡᵒ n)) tt}
+ιᵗˢ : Carrier → TwoSided
+ιᵗˢ n =
+  [ ιˡᵒ n , within (ιʰⁱ n) ] {◇ˢ₀-self (tracesˡᵒ (ιˡᵒ n)) tt}
 
 infix 5 _≾ᵗˢ?_
 
@@ -501,8 +501,8 @@ i₁ ≾ᵗˢ? i₂ = (lo i₁ ≾ˡᵒ? lo i₂) ×-dec (hi i₁ ≾ʰⁱ? hi i
 -- the unit is not least, once some duration is positive, its floor
 -- being greatest among floors
 
-uᵗˢ-not-least : (τ : Carrier) → 0ᴰ <ᴰ τ → ¬ Minimum _≾ᵗˢ_ uᵗˢ
-uᵗˢ-not-least τ pos least = uˡᵒ⋠of-durˡᵒ τ pos (proj₁ (least (of-durᵗˢ τ)))
+𝟏ᵗˢ-not-least : (τ : Carrier) → 0ᴰ <ᴰ τ → ¬ Minimum _≾ᵗˢ_ 𝟏ᵗˢ
+𝟏ᵗˢ-not-least τ pos least = 𝟏ˡᵒ⋠ιˡᵒ τ pos (proj₁ (least (ιᵗˢ τ)))
 
 ------------------------------------------------------------------------
 -- The grade of two-sided trace intervals
@@ -511,7 +511,7 @@ two-sided : Grade D
 two-sided = posetᵍ record
   { Carrier         = TwoSided
   ; _·_             = _·ᵗˢ_
-  ; u               = uᵗˢ
+  ; 𝟏               = 𝟏ᵗˢ
   ; ·-identityʳ     = ·ᵗˢ-identityʳ
   ; ·-identityˡ     = ·ᵗˢ-identityˡ
   ; ·-assoc         = ·ᵗˢ-assoc
@@ -533,9 +533,9 @@ two-sided = posetᵍ record
   ; ≾-zero-productˡ = λ {c} {d} → ≾ᵗˢ-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾ᵗˢ-zero-productʳ {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → ≾ᵗˢ-irrelevant {c} {d}
-  ; of-dur          = of-durᵗˢ
-  ; of-dur-zero     = eqᵗˢ of-durˡᵒ-zero (cong within_ of-durʰⁱ-zero)
-  ; of-dur-plus     = λ {m} {n} →
-                        eqᵗˢ (of-durˡᵒ-plus {m} {n})
-                             (cong within_ (of-durʰⁱ-plus {m} {n}))
+  ; ι               = ιᵗˢ
+  ; ι-zero          = eqᵗˢ ιˡᵒ-zero (cong within_ ιʰⁱ-zero)
+  ; ι-plus          = λ {m} {n} →
+                        eqᵗˢ (ιˡᵒ-plus {m} {n})
+                             (cong within_ (ιʰⁱ-plus {m} {n}))
   }

@@ -156,10 +156,10 @@ FL-case+ {St = St} {A = A} {B = B} {D = D} {ε = ε} γ pγ V M N pV pM pN =
 
 FL-recℕ : ∀ {St Γ B ε} → (γ : Env St Γ) → Rel-Env γ
         → (V : Γ ⊢V⦂ Nat) → (M : Γ ⊢C⦂ B ‼ ε)
-        → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+        → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
         → (p : ε ·ₑ ε ≾ₑ ε)
         → CRed' B ε St (env-C γ M)
-        → (∀ {St'} → (γ' : Env St' ((Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B))
+        → (∀ {St'} → (γ' : Env St' ((Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B))
              → Rel-Env γ' → CRed' B ε St' (env-C γ' N))
         --------------------------------------------------------------
         → CRed' B ε St (env-C γ (recℕ V M N p))
@@ -168,7 +168,7 @@ FL-recℕ {St = St} {B = B} {ε = ε} γ pγ V M N p pM pN =
   subst (CRed' _ _ St) (sym (env-Cˢ-recℕ γ [] V M N p)) (go (env-V γ V))
   where
     M₀ = env-C γ M
-    N₀ = env-Cˢ γ (([] ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B) N
+    N₀ = env-Cˢ γ (([] ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) N
 
     go : (U : toCtx St ⊢V⦂ Nat) → CRed' B ε St (recℕ U M₀ N₀ p)
     go (var f x)     = ⊥-elim (Nat-not-in-toCtx x)
@@ -178,7 +178,7 @@ FL-recℕ {St = St} {B = B} {ε = ε} γ pγ V M N p pM pN =
       CRed-expand RECℕ-SUCC
         (CRed'-sub (<:ᵛ-refl B) p (seq-CRed (recℕ-step W N₀) (go W) cont))
       where
-        cont : ∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ mapᵉ ε ] St₁)
+        cont : ∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ ∣ ε ∣ᵉ ] St₁)
              → (U : toCtx St₁ ⊢V⦂ B) → VRed B St₁ U
              → CRed' B ε St₁
                  ((C-rename (cong-∷-ren (unbox-ren q)) (recℕ-step W N₀))
@@ -188,7 +188,7 @@ FL-recℕ {St = St} {B = B} {ε = ε} γ pγ V M N p pM pN =
             (cong (λ z → (C-rename (cong-∷-ren (unbox-ren q))
                             (z [ split-∷ (split-⟨⟩ split-[]) ↦ W ]c))
                            [ split-[] ↦ U ]c)
-                  (C-rename-≡ (cong-ren-≐ʳ (([] ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B)
+                  (C-rename-≡ (cong-ren-≐ʳ (([] ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B)
                                            barrier-reach-≐ʳ) N₀))
             (pN ((((γ ⟨ barrier-reach ⟩ᵉ) ∷ᵉ W) ⟨ q ⟩ᵉ) ∷ᵉ U) ((pγ , tt) , pU))
 
@@ -227,11 +227,11 @@ FL-caseL {St = St} {A = A} {D = D} {ε = ε} γ pγ V M N pV pM pN =
 
 FL-recL : ∀ {St Γ A B ε} → (γ : Env St Γ) → Rel-Env γ
         → (V : Γ ⊢V⦂ |List| A) → (M : Γ ⊢C⦂ B ‼ ε)
-        → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+        → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
         → (p : ε ·ₑ ε ≾ₑ ε)
         → VRed (|List| A) St (env-V γ V)
         → CRed' B ε St (env-C γ M)
-        → (∀ {St'} → (γ' : Env St' ((Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B))
+        → (∀ {St'} → (γ' : Env St' ((Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B))
              → Rel-Env γ' → CRed' B ε St' (env-C γ' N))
         --------------------------------------------------------------
         → CRed' B ε St (env-C γ (recL V M N p))
@@ -241,7 +241,7 @@ FL-recL {St = St} {A = A} {B = B} {ε = ε} γ pγ V M N p pV pM pN =
     (CRed-expand RECL (go (listᵛ (env-V γ V)) pV))
   where
     M₀ = env-C γ M
-    N₀ = env-Cˢ γ (([] ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B) N
+    N₀ = env-Cˢ γ (([] ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) N
 
     go : (l : ListView (toCtx St) A) → VRedL (VRed A St) l
        → CRed' B ε St (recL-reduct l M₀ N₀ p)
@@ -253,7 +253,7 @@ FL-recL {St = St} {A = A} {B = B} {ε = ε} γ pγ V M N p pV pM pN =
         rec : CRed' B ε St (recL L M₀ N₀ p)
         rec = CRed-expand RECL (go (listᵛ L) pL)
 
-        cont : ∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ mapᵉ ε ] St₁)
+        cont : ∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ ∣ ε ∣ᵉ ] St₁)
              → (U : toCtx St₁ ⊢V⦂ B) → VRed B St₁ U
              → CRed' B ε St₁
                  ((C-rename (cong-∷-ren (unbox-ren q)) (recL-step W L N₀))
@@ -264,7 +264,7 @@ FL-recL {St = St} {A = A} {B = B} {ε = ε} γ pγ V M N p pV pM pN =
                             ((z [ split-∷ (split-⟨⟩ (split-∷ split-[])) ↦ W ]c)
                                 [ split-∷ (split-⟨⟩ split-[]) ↦ L ]c))
                            [ split-[] ↦ U ]c)
-                  (C-rename-≡ (cong-ren-≐ʳ (([] ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B)
+                  (C-rename-≡ (cong-ren-≐ʳ (([] ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B)
                                            barrier-reach-≐ʳ) N₀))
             (pN (((((γ ⟨ barrier-reach ⟩ᵉ) ∷ᵉ W) ∷ᵉ L) ⟨ q ⟩ᵉ) ∷ᵉ U)
                 (((pγ , pW) , pL) , pU))
@@ -279,15 +279,15 @@ FL-recL {St = St} {A = A} {B = B} {ε = ε} γ pγ V M N p pV pM pN =
 -- `Rel-Env` `((pγ , pW) , bv)`.
 
 FL-handler : ∀ {St Γ A B ε₁ ε₂} → (γ : Env St Γ) → Rel-Env γ
-           → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+           → (N : Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
            → (H : Fam B (Γ ⟨ ⊤ᵣ ⟩))
            → (∀ {St'} {op : Op} {ε₃ : E}
                 → (γ' : Env St' (Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                                   ∷ [ mapᵉ (op-grade op) ]
+                                   ∷ [ ∣ op-grade op ∣ᵉ ]
                                        (type-of-gtype (arity op) ⇒ B ‼ ε₃)))
                 → Rel-Env γ'
                 → CRed' B (op-grade op ·ₑ ε₃) St' (env-C γ' (H op ε₃)))
-           → (∀ {St'} → (γ' : Env St' (Γ ⟨ mapᵉ ε₁ ⟩ ∷ A)) → Rel-Env γ'
+           → (∀ {St'} → (γ' : Env St' (Γ ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A)) → Rel-Env γ'
                 → CRed' B ε₂ St' (env-C γ' N))
            → ∀ {s A₀ ε₀ B₀ ε₀'} {U : toCtx St ⊢V⦂ (A₀ ‼ ε₀) ⇛ (B₀ ‼ ε₀')}
            → Use (env-V γ (handler N H)) U
@@ -307,7 +307,7 @@ FL-handler {St = St} {Γ = Γ} {A = A} {B = B} {ε₁ = ε₁} γ pγ N H pH pN 
       subst (CRed' _ _ _) (sym (env-Hˢ-fired γ q H V₀ W))
         (pH (liftᵉ V₀ ((γ ⟨ q ⟩ᵉ) ∷ᵉ W)) ((pγ , pW) , bv))
 
-    sequel : Seq-Prem (env-Cˢ γ ([] ⟨ mapᵉ ε₁ ⟩ ∷ A) N)
+    sequel : Seq-Prem (env-Cˢ γ ([] ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A) N)
     sequel q V pV =
       subst (CRed' _ _ _) (sym (env-Cˢ-head (γ ⟨ q ⟩ᵉ) N V))
             (pN ((γ ⟨ q ⟩ᵉ) ∷ᵉ V) (pγ , pV))
@@ -364,10 +364,10 @@ FL-box {St = St} {Γ = Γ} {A = A} {ρ = ρ} γ pγ V M pV pM =
 
 FL-perform : ∀ {St Γ A ε} {op : Op} → (γ : Env St Γ) → Rel-Env γ
            → (V : Γ ⊢V⦂ type-of-gtype (param op))
-           → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+           → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
                     ⊢C⦂ A ‼ ε)
            → VRed (type-of-gtype (param op)) St (env-V γ V)
-           → (∀ {St'} → (γ' : Env St' (Γ ⟨ mapᵉ (op-grade op) ⟩
+           → (∀ {St'} → (γ' : Env St' (Γ ⟨ ∣ op-grade op ∣ᵉ ⟩
                                          ∷ type-of-gtype (arity op)))
                 → Rel-Env γ' → CRed' A ε St' (env-C γ' M))
            --------------------------------------------------------------
@@ -380,7 +380,7 @@ FL-perform {St = St} {Γ = Γ} {op = op} γ pγ V M pV pM =
          subst (CRed' _ _ _) (resumeq q W')
            (pM ((γ ⟨ q ⟩ᵉ) ∷ᵉ W') (pγ , VRedᵍ→VRed (arity op) W' pW'))))
   where
-    ρ  = mapᵉ (op-grade op)
+    ρ  = ∣ op-grade op ∣ᵉ
     Ar = type-of-gtype (arity op)
     M₀ = env-Cˢ γ ([] ⟨ ρ ⟩ ∷ Ar) M
 
@@ -514,25 +514,25 @@ mutual
     subst (CRed' _ _ _) (sym (env-Cˢ-delay γ [] M))
       (CRed-expand DELAY
         (CRed-≡ᶜ
-          (C-rename-id-≡ unbox-ren-delay-≐ʳ (env-Cˢ γ ([] ⟨ of-durʳ τ ⟩) M))
+          (C-rename-id-≡ unbox-ren-delay-≐ʳ (env-Cˢ γ ([] ⟨ ιᵣ τ ⟩) M))
           (subst (CRed' _ _ _) eqδ (FL-C (γ ⟨ delay-reach ⟩ᵉ) pγ M))))
     where
-      eqδ = cong (C-rename (unbox-ren (delay-reach {of-durʳ τ} {St})))
+      eqδ = cong (C-rename (unbox-ren (delay-reach {ιᵣ τ} {St})))
               (trans
-                (castᶜ-irr (sym (++ᶜ-assoc (toCtx St) ([] ⟨ of-durʳ τ ⟩) []))
+                (castᶜ-irr (sym (++ᶜ-assoc (toCtx St) ([] ⟨ ιᵣ τ ⟩) []))
                            refl _)
-                (cong (env-Cˢ γ ([] ⟨ of-durʳ τ ⟩))
-                      (castᶜ-irr (++ᶜ-assoc _ ([] ⟨ of-durʳ τ ⟩) []) refl M)))
+                (cong (env-Cˢ γ ([] ⟨ ιᵣ τ ⟩))
+                      (castᶜ-irr (++ᶜ-assoc _ ([] ⟨ ιᵣ τ ⟩) []) refl M)))
 
   -- Sequencing: `env-Cˢ-seq` splits the action, `seq-CRed` runs the scrutinee and
   -- then the sequel. The environment the sequel needs is `(γ ⟨ q ⟩ᵉ) ∷ᵉ V`, and
   -- `env-Cˢ (γ ⟨ q ⟩ᵉ) ([] ∷ A)` is `C-rename (cong-∷-ren (unbox-ren q))` of the
-  -- action at suffix `[] ⟨ mapᵉ ε₁ ⟩ ∷ A`, definitionally (both of `env-Cˢ`'s
+  -- action at suffix `[] ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A`, definitionally (both of `env-Cˢ`'s
   -- casts are `refl` at the empty suffix), so only `env-Cˢ-head` is needed.
 
   FL-C {St = St} {ε = ε} γ pγ (_⨟_ {A = A} {ε = ε₁} M N) =
     subst (CRed' _ _ St) (sym (env-Cˢ-seq γ [] M N))
-      (seq-CRed (env-Cˢ γ ([] ⟨ mapᵉ ε₁ ⟩ ∷ A) N) (FL-C γ pγ M)
+      (seq-CRed (env-Cˢ γ ([] ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A) N) (FL-C γ pγ M)
         (λ q V pV →
            subst (CRed' _ _ _) (sym (env-Cˢ-head (γ ⟨ q ⟩ᵉ) N V))
                  (FL-C ((γ ⟨ q ⟩ᵉ) ∷ᵉ V) (pγ , pV) N)))

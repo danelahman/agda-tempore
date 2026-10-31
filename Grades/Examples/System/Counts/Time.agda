@@ -4,8 +4,8 @@
 -- counts.                                                            --
 --                                                                    --
 -- In a count grade, `n` time steps are the unit for every `n`, so    --
--- `of-dur 1` and `of-dur 0` coincide; a time grade distinguishes     --
--- them, so no morphism from counts to time preserves `of-dur`.       --
+-- `ι 1` and `ι 0` coincide; a time grade distinguishes               --
+-- them, so no morphism from counts to time preserves `ι`.            --
 --                                                                    --
 -- A cost model `ks` weighs the counters, and `weigh ks` sums the     --
 -- weighted counts in `G`, the bound of each counter taken `k` times. --
@@ -48,9 +48,9 @@ module _ (G H : Grade ℕᴰ) where
   open Power G using (power)
   open Grade H using () renaming (_≃_ to _≃H_)
 
-  no-projection : ∀ {n} → ¬ (Grade.of-dur H 1 ≃H Grade.of-dur H 0)
+  no-projection : ∀ {n} → ¬ (Grade.ι H 1 ≃H Grade.ι H 0)
                 → ¬ (power n →ᵍ H)
-  no-projection ne F = ne (≃-trans (≃-sym (map-of-dur {1})) (map-of-dur {0}))
+  no-projection ne F = ne (≃-trans (≃-sym (map-ι {1})) (map-ι {0}))
     where open _→ᵍ_ F
           open Grade H using (≃-trans; ≃-sym)
 
@@ -69,7 +69,7 @@ no-at-most-counts→right-sided-intervals =
   no-projection right-sided-intervals right-sided-intervals
     λ e → toWitnessFalse
             {a? = Grade._≾?_ right-sided-intervals
-                    (Grade.of-dur right-sided-intervals 1) (Grade.of-dur right-sided-intervals 0)}
+                    (Grade.ι right-sided-intervals 1) (Grade.ι right-sided-intervals 0)}
             _ (proj₁ e)
 
 no-at-least-counts→left-sided-intervals :
@@ -78,7 +78,7 @@ no-at-least-counts→left-sided-intervals =
   no-projection left-sided-intervals left-sided-intervals
     λ e → toWitnessFalse
             {a? = Grade._≾?_ left-sided-intervals
-                    (Grade.of-dur left-sided-intervals 0) (Grade.of-dur left-sided-intervals 1)}
+                    (Grade.ι left-sided-intervals 0) (Grade.ι left-sided-intervals 1)}
             _ (proj₂ e)
 
 ------------------------------------------------------------------------
@@ -87,12 +87,12 @@ no-at-least-counts→left-sided-intervals =
 module Weigh {D : Duration} (G : Grade D) (comm : Commutative (Grade._≃_ G) (Grade._·_ G)) where
 
   open Grade G renaming (Carrier to C)
-  open Power G using (_·ᵛ_; _⊔ᵛ_; uᵛ; ⊤ᵛ; _≾ᵛ_; ⊔ᵛ-ubˡ; ⊔ᵛ-ubʳ)
+  open Power G using (_·ᵛ_; _⊔ᵛ_; 𝟏ᵛ; ⊤ᵛ; _≾ᵛ_; ⊔ᵛ-ubˡ; ⊔ᵛ-ubʳ)
 
   -- `k` copies of a grade in sequence
 
   times : ℕ → C → C
-  times zero    a = u
+  times zero    a = 𝟏
   times (suc k) a = a · times k a
 
   -- the middle-four interchange
@@ -105,12 +105,12 @@ module Weigh {D : Duration} (G : Grade D) (comm : Commutative (Grade._≃_ G) (G
     (≃-trans (·-cong ≃-refl (·-assoc c b d))
              (≃-sym (·-assoc a c (b · d))))))
 
-  times-u : (k : ℕ) → times k u ≃ u
-  times-u zero    = ≃-refl
-  times-u (suc k) = ≃-trans (·-identityˡ (times k u)) (times-u k)
+  times-𝟏 : (k : ℕ) → times k 𝟏 ≃ 𝟏
+  times-𝟏 zero    = ≃-refl
+  times-𝟏 (suc k) = ≃-trans (·-identityˡ (times k 𝟏)) (times-𝟏 k)
 
   times-· : (k : ℕ) (a b : C) → times k (a · b) ≃ times k a · times k b
-  times-· zero    a b = ≃-sym (·-identityˡ u)
+  times-· zero    a b = ≃-sym (·-identityˡ 𝟏)
   times-· (suc k) a b =
     ≃-trans (·-cong ≃-refl (times-· k a b))
             (interchange a b (times k a) (times k b))
@@ -122,16 +122,16 @@ module Weigh {D : Duration} (G : Grade D) (comm : Commutative (Grade._≃_ G) (G
   -- the weighted sum of a vector of counts
 
   weigh : ∀ {n} → Vec ℕ n → Vec C n → C
-  weigh []       []       = u
+  weigh []       []       = 𝟏
   weigh (k ∷ ks) (a ∷ as) = times k a · weigh ks as
 
-  weigh-u : ∀ {n} (ks : Vec ℕ n) → weigh ks uᵛ ≃ u
-  weigh-u []       = ≃-refl
-  weigh-u (k ∷ ks) = ≃-trans (·-cong (times-u k) (weigh-u ks)) (·-identityˡ u)
+  weigh-𝟏 : ∀ {n} (ks : Vec ℕ n) → weigh ks 𝟏ᵛ ≃ 𝟏
+  weigh-𝟏 []       = ≃-refl
+  weigh-𝟏 (k ∷ ks) = ≃-trans (·-cong (times-𝟏 k) (weigh-𝟏 ks)) (·-identityˡ 𝟏)
 
   weigh-· : ∀ {n} (ks : Vec ℕ n) (c d : Vec C n)
           → weigh ks (c ·ᵛ d) ≃ weigh ks c · weigh ks d
-  weigh-· []       []       []       = ≃-sym (·-identityˡ u)
+  weigh-· []       []       []       = ≃-sym (·-identityˡ 𝟏)
   weigh-· (k ∷ ks) (a ∷ as) (b ∷ bs) =
     ≃-trans (·-cong (times-· k a b) (weigh-· ks as bs))
             (interchange (times k a) (times k b) (weigh ks as) (weigh ks bs))
@@ -155,12 +155,12 @@ module Weigh {D : Duration} (G : Grade D) (comm : Commutative (Grade._≃_ G) (G
   paired : ∀ {n} → Vec ℕ n → Vec C n → C → C
   paired ks c t = t · weigh ks c
 
-  paired-u : ∀ {n} (ks : Vec ℕ n) → paired ks uᵛ u ≃ u
-  paired-u ks = ≃-trans (·-cong ≃-refl (weigh-u ks)) (·-identityˡ u)
+  paired-𝟏 : ∀ {n} (ks : Vec ℕ n) → paired ks 𝟏ᵛ 𝟏 ≃ 𝟏
+  paired-𝟏 ks = ≃-trans (·-cong ≃-refl (weigh-𝟏 ks)) (·-identityˡ 𝟏)
 
-  paired-of-dur : ∀ {n} (ks : Vec ℕ n) (τ : Duration.Carrier D)
-                → paired ks uᵛ (of-dur τ) ≃ of-dur τ
-  paired-of-dur ks τ = ≃-trans (·-cong ≃-refl (weigh-u ks)) (·-identityʳ (of-dur τ))
+  paired-ι : ∀ {n} (ks : Vec ℕ n) (τ : Duration.Carrier D)
+                → paired ks 𝟏ᵛ (ι τ) ≃ ι τ
+  paired-ι ks τ = ≃-trans (·-cong ≃-refl (weigh-𝟏 ks)) (·-identityʳ (ι τ))
 
   paired-· : ∀ {n} (ks : Vec ℕ n) (c d : Vec C n) (s t : C)
            → paired ks (c ·ᵛ d) (s · t) ≃ paired ks c s · paired ks d t
@@ -203,4 +203,4 @@ paired-⊤ˡ : ∀ {n} (ks : Vec ℕ n)
           → Grade._≃_ left-sided-intervals
               (WeighLeft.paired ks (Power.⊤ᵛ left-sided-intervals) (Grade.⊤ left-sided-intervals))
               (Grade.⊤ left-sided-intervals)
-paired-⊤ˡ ks = WeighLeft.paired-u ks
+paired-⊤ˡ ks = WeighLeft.paired-𝟏 ks

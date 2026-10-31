@@ -74,18 +74,18 @@ open T using () renaming (Carrier to Entry; _≤_ to _≤ᵗ_; _≈_ to _≈ᵗ_
 
 Change : Entry → Set
 Change (nothing , _)        = 𝟙ᵗ
-Change (just (m , t) , _)   = ¬ (t ≾ᵢ uᵢ)
+Change (just (m , t) , _)   = ¬ (t ≾ᵢ 𝟏ᵢ)
 
 change? : ∀ x → Dec (Change x)
 change? (nothing , _)      = yes tt
-change? (just (m , t) , _) = ¬? (t ≾ᵢ? uᵢ)
+change? (just (m , t) , _) = ¬? (t ≾ᵢ? 𝟏ᵢ)
 
 private
   totals : ∀ {m t m' t' r r'} → (just (m , t) , r) ≤ᵗ (just (m' , t') , r') → t ≾ᵢ t'
   totals (_ , q) = q
 
-  not-u : ∀ {t t'} → ¬ (t ≾ᵢ uᵢ) → t ≾ᵢ t' → ¬ (t' ≾ᵢ uᵢ)
-  not-u {t} {t'} n p q = n (I.≾-trans {t} {t'} {uᵢ} p q)
+  not-𝟏 : ∀ {t t'} → ¬ (t ≾ᵢ 𝟏ᵢ) → t ≾ᵢ t' → ¬ (t' ≾ᵢ 𝟏ᵢ)
+  not-𝟏 {t} {t'} n p q = n (I.≾-trans {t} {t'} {𝟏ᵢ} p q)
 
 open import Grades.Matrix.ModeGrade ℕ-names times equivariant-times
 
@@ -96,11 +96,11 @@ time-entries = record
                          ; {just _ , _} {nothing , _} _ → inj₂ tt
                          ; {just _ , _} {just _ , _} () }
   ; unit-reflects     = λ { {just (m , t) , _} {just (m' , t') , _} (p , q) _ _ →
-                              ( pointwise⁺ _≾ᵢ_ {m} {everywhere uᵢ} (λ s → I.≾-zero-productˡ {m ! s} {m' ! s}
-                                   (subst (_≾ᵢ uᵢ) (!-map₂ _·ᵢ_ m m' s) (pointwise⁻ _≾ᵢ_ {map₂ _·ᵢ_ m m'} {everywhere uᵢ} p s)))
+                              ( pointwise⁺ _≾ᵢ_ {m} {everywhere 𝟏ᵢ} (λ s → I.≾-zero-productˡ {m ! s} {m' ! s}
+                                   (subst (_≾ᵢ 𝟏ᵢ) (!-map₂ _·ᵢ_ m m' s) (pointwise⁻ _≾ᵢ_ {map₂ _·ᵢ_ m m'} {everywhere 𝟏ᵢ} p s)))
                               , I.≾-zero-productˡ {t} {t'} q )
-                            , ( pointwise⁺ _≾ᵢ_ {m'} {everywhere uᵢ} (λ s → I.≾-zero-productʳ {m ! s} {m' ! s}
-                                   (subst (_≾ᵢ uᵢ) (!-map₂ _·ᵢ_ m m' s) (pointwise⁻ _≾ᵢ_ {map₂ _·ᵢ_ m m'} {everywhere uᵢ} p s)))
+                            , ( pointwise⁺ _≾ᵢ_ {m'} {everywhere 𝟏ᵢ} (λ s → I.≾-zero-productʳ {m ! s} {m' ! s}
+                                   (subst (_≾ᵢ 𝟏ᵢ) (!-map₂ _·ᵢ_ m m' s) (pointwise⁻ _≾ᵢ_ {map₂ _·ᵢ_ m m'} {everywhere 𝟏ᵢ} p s)))
                               , I.≾-zero-productʳ {t} {t'} q )
                           ; {nothing , _} _ a≰ _ → ⊥-elim (a≰ tt)
                           ; {just _ , _} {nothing , _} _ _ b≰ → ⊥-elim (b≰ tt) }
@@ -110,10 +110,10 @@ time-entries = record
   ; change-≈         = λ { {nothing , _} {nothing , _} _ c → tt
                          ; {just _ , _} {nothing , _} (() , _) c
                          ; {nothing , _} {just _ , _} (_ , ()) c
-                         ; {just (_ , t) , _} {just (_ , t') , _} ((_ , q) , _) c → not-u {t} {t'} c q }
+                         ; {just (_ , t) , _} {just (_ , t') , _} ((_ , q) , _) c → not-𝟏 {t} {t'} c q }
   ; change-⊕         = λ { {nothing , _} _ c → c
                          ; {just _ , _} {nothing , _} c _ → c
-                         ; {just (_ , t) , _} {just (_ , t') , _} c _ → not-u {t} {t ⊔ᵢ t'} c (I.⊔-ubˡ t t') }
+                         ; {just (_ , t) , _} {just (_ , t') , _} c _ → not-𝟏 {t} {t ⊔ᵢ t'} c (I.⊔-ubˡ t t') }
   ; change-⊗ˡ        = λ { {nothing , _} _ → tt
                          ; {just _ , _} {nothing , _} _ → tt
                          ; {just (_ , t) , _} {just (_ , t') , _} c q → c (I.≾-zero-productˡ {t} {t'} q) }
@@ -156,10 +156,10 @@ private
 -- the box with `i` in one mode and nothing elsewhere
 
 single : Name → Interval∞ → Map Interval∞
-single p i = uᵢ ∣ ((p , i) ∷ [])
+single p i = 𝟏ᵢ ∣ ((p , i) ∷ [])
 
 private
-  single-! : ∀ p i s → single p i ! s ≡ sel (s ≟ᴺ p) i uᵢ
+  single-! : ∀ p i s → single p i ! s ≡ sel (s ≟ᴺ p) i 𝟏ᵢ
   single-! p i s with s ≟ᴺ p
   ... | yes _ = refl
   ... | no _  = refl
@@ -190,7 +190,7 @@ spent i p =
     fits : ∀ s → time ((p , min i) ∷ []) s ∈ᵢ single p i ! s
     fits s with s ≟ᴺ p
     ... | yes _ = min∈ i
-    ... | no _  = 0∈uᵢ
+    ... | no _  = 0∈𝟏ᵢ
 
 spent-swap : ∀ i a b p → spent i (swap a b p) ≈ᵗ Eq.act a b (spent i p)
 spent-swap i a b p = ≈-just {single (swap a b p) i} {rename (swap a b) (single p i)} {i} {i}
@@ -445,7 +445,7 @@ occurrence bs rt {t} {c} = listed (behaviour-modes bs) (occurrence-entries bs rt
 
 private
   dur : ℕ → Interval∞
-  dur = Grade.of-dur intervals
+  dur = Grade.ι intervals
 
 delay-matrix : ℕ → Matrix
 modes (delay-matrix n) = []
@@ -481,15 +481,15 @@ private
   -- the boxes of delays, pointwise
   zero-box : ∀ p → spent (dur 0) p ≈ᵗ T.𝟙
   zero-box p =
-      (pointwise⁺ _≾ᵢ_ {single p (dur 0)} {everywhere uᵢ}
-         (λ s → subst (_≾ᵢ uᵢ) (sym (single-! p (dur 0) s)) (le (s ≟ᴺ p))) , (z≤n , z≤n))
-    , (pointwise⁺ _≾ᵢ_ {everywhere uᵢ} {single p (dur 0)}
-         (λ s → subst (uᵢ ≾ᵢ_) (sym (single-! p (dur 0) s)) (ge (s ≟ᴺ p))) , (z≤n , z≤n))
+      (pointwise⁺ _≾ᵢ_ {single p (dur 0)} {everywhere 𝟏ᵢ}
+         (λ s → subst (_≾ᵢ 𝟏ᵢ) (sym (single-! p (dur 0) s)) (le (s ≟ᴺ p))) , (z≤n , z≤n))
+    , (pointwise⁺ _≾ᵢ_ {everywhere 𝟏ᵢ} {single p (dur 0)}
+         (λ s → subst (𝟏ᵢ ≾ᵢ_) (sym (single-! p (dur 0) s)) (ge (s ≟ᴺ p))) , (z≤n , z≤n))
     where
-      le : ∀ {A : Set} (d : Dec A) → sel d (dur 0) uᵢ ≾ᵢ uᵢ
+      le : ∀ {A : Set} (d : Dec A) → sel d (dur 0) 𝟏ᵢ ≾ᵢ 𝟏ᵢ
       le (yes _) = z≤n , z≤n
       le (no _)  = z≤n , z≤n
-      ge : ∀ {A : Set} (d : Dec A) → uᵢ ≾ᵢ sel d (dur 0) uᵢ
+      ge : ∀ {A : Set} (d : Dec A) → 𝟏ᵢ ≾ᵢ sel d (dur 0) 𝟏ᵢ
       ge (yes _) = z≤n , z≤n
       ge (no _)  = z≤n , z≤n
 
@@ -509,10 +509,10 @@ private
                   (ge (s ≟ᴺ p)))
       , (ℕₚ.≤-refl , ℕₚ.≤-refl))
     where
-      le : ∀ {A : Set} (d : Dec A) → sel d (dur (m + n)) uᵢ ≾ᵢ (sel d (dur m) uᵢ ·ᵢ sel d (dur n) uᵢ)
+      le : ∀ {A : Set} (d : Dec A) → sel d (dur (m + n)) 𝟏ᵢ ≾ᵢ (sel d (dur m) 𝟏ᵢ ·ᵢ sel d (dur n) 𝟏ᵢ)
       le (yes _) = ℕₚ.≤-refl , ℕₚ.≤-refl
       le (no _)  = z≤n , z≤n
-      ge : ∀ {A : Set} (d : Dec A) → (sel d (dur m) uᵢ ·ᵢ sel d (dur n) uᵢ) ≾ᵢ sel d (dur (m + n)) uᵢ
+      ge : ∀ {A : Set} (d : Dec A) → (sel d (dur m) 𝟏ᵢ ·ᵢ sel d (dur n) 𝟏ᵢ) ≾ᵢ sel d (dur (m + n)) 𝟏ᵢ
       ge (yes _) = ℕₚ.≤-refl , ℕₚ.≤-refl
       ge (no _)  = z≤n , z≤n
 

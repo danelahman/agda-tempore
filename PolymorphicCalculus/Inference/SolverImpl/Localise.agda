@@ -304,13 +304,13 @@ evar? (ε ⊔̂ₑ ε')  = nothing
 -- The eigenvariable goes to the unit (`κᵉ`), or to the top (`κ⊤`).
 
 κᵉ : ∀ {Ω} → Subst (Ω +e) Ω
-κᵉ = κ⟨ ûₑ ⟩
+κᵉ = κ⟨ 𝟏̂ₑ ⟩
 
 κ⊤ : ∀ {Ω} → Subst (Ω +e) Ω
 κ⊤ = κ⟨ econst ⊤ₑ ⟩
 
 ⊩ᴴ-κᵉ : ∀ {Ω} {Q : Hyps Ω} → Q ⊩ᴴ (wkᵉ-H Q) [ κᵉ ]
-⊩ᴴ-κᵉ = ⊩ᴴ-κ ûₑ
+⊩ᴴ-κᵉ = ⊩ᴴ-κ 𝟏̂ₑ
 
 -- Sending the eigenvariable to the top rather than the unit raises every instance
 
@@ -863,7 +863,7 @@ Under : ∀ {Ω} {X : Set} → Hyps Ω → (∀ {Ω'} → Hyps Ω' → Subst Ω 
 Under H P Q δ a = Q ⊩ᴴ H [ δ ] → P Q δ a
 
 settledᵈ : ∀ {Ω} → (H : Hyps Ω) → (a : OVType Ω × RExp Ω) → Maybe (Every (Under H Disj) a)
-settledᵈ H (A , ρ) with decideᵣ full H ρ ûᵣ
+settledᵈ H (A , ρ) with decideᵣ full H ρ 𝟏̂ᵣ
 ... | just p  = just (λ δ h → ≾ᵘ-ok (⊩-substᵣ h p))
 ... | nothing with etDec A in e
 ...   | just [] = just (λ δ _ → et-ok (⊩ᴱ-subst ∅ᴴ-⊩ᴴ (etDec-sound {Q = ∅ᴴ} A e (λ ()))))
@@ -1127,7 +1127,7 @@ record Refined {Ω} (l : List (OVType Ω × RExp Ω)) : Set where
 consᴿ : ∀ {Ω} {l : List (OVType Ω × RExp Ω)} → (A : OVType Ω) → (ρ : RExp Ω)
       → (x : Maybe (List (TyVar Ω))) → etDec A ≡ x → Refined l → Refined ((A , ρ) ∷ l)
 consᴿ A ρ nothing e (refined r os sb bk fw re) =
-  refined r ((ρ , ûᵣ) ∷ os) (λ m → there (sb m))
+  refined r ((ρ , 𝟏̂ᵣ) ∷ os) (λ m → there (sb m))
     (λ δ k o → λ { (here refl) → ≾ᵘ-ok (o (here refl))
                  ; (there m)   → bk δ k (λ m' → o (there m')) m })
     (λ δ k → λ { (here refl) → etDec-grade A e δ (k (here refl))

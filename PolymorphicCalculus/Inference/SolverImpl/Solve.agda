@@ -169,41 +169,41 @@ Atomᵈ {Φ} j A ρ =
 -- An ordering with the rigid on one side only holds for every rigid exactly
 -- when it holds at the extreme grade on that side:
 --
---   ∀j. lhs ≾ rhs(j)  ⟺  lhs ≾ rhs(u)   (`stripᵉ-unit`, the unit least)
+--   ∀j. lhs ≾ rhs(j)  ⟺  lhs ≾ rhs(𝟏)   (`stripᵉ-unit`, the unit least)
 --   ∀j. lhs(j) ≾ rhs  ⟺  lhs(⊤) ≾ rhs   (`stripᵉ-top`)
 --
 -- A local unknown stands for a function of the rigid, so the side `stripᵉ-top`
 -- keeps mentions outer unknowns only (`Outerₑ`).
 
-stripʳ-unit : ∀ {Φ} → Maybe (Is-just uₑ-least?)
+stripʳ-unit : ∀ {Φ} → Maybe (Is-just 𝟏ₑ-least?)
             → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
             → (ρ₀ : RExp Φ) → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → Maybe (Stripʳ j ρ ρ')
 stripʳ-unit nothing    j ρ ρ' ρ₀ e₁ = nothing
-stripʳ-unit (just ij)  j ρ ρ' ρ₀ e₁ with strʳ⁺ j (ρ' [ updᵉ j ûₑ ]ʳ)
+stripʳ-unit (just ij)  j ρ ρ' ρ₀ e₁ with strʳ⁺ j (ρ' [ updᵉ j 𝟏̂ₑ ]ʳ)
 ... | nothing          = nothing
 ... | just (ρ₀' , e₂) =
       just ((ρ₀ , ρ₀') ∷ [] ,
             λ δ Q k → transᵣ (subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ᵣ y)
                                      (sym (pop⨟ʳ j ρ e₁ δ))
-                                     (trans (sym (pop⨟ʳ j (ρ' [ updᵉ j ûₑ ]ʳ) e₂ δ))
-                                            ([⨟]ʳ ρ' (updᵉ j ûₑ) (popˢ j ⨟ˢ (δ ↑ᵉ))))
+                                     (trans (sym (pop⨟ʳ j (ρ' [ updᵉ j 𝟏̂ₑ ]ʳ) e₂ δ))
+                                            ([⨟]ʳ ρ' (updᵉ j 𝟏̂ₑ) (popˢ j ⨟ˢ (δ ↑ᵉ))))
                                      (⊩-wkᵉᵣ (k (here refl))))
-                             (mono-substᵣ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ (to-witness ij))) ρ'))
+                             (mono-substᵣ (updᵉ-below j 𝟏̂ₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ (to-witness ij))) ρ'))
 
-stripᵉ-unit : ∀ {Φ} → Maybe (Is-just uₑ-least?)
+stripᵉ-unit : ∀ {Φ} → Maybe (Is-just 𝟏ₑ-least?)
             → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
             → (ε₀ : EExp Φ) → ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀ → Maybe (Stripᵉ j ε ε')
 stripᵉ-unit nothing    j ε ε' ε₀ e₁ = nothing
-stripᵉ-unit (just ij)  j ε ε' ε₀ e₁ with strᵉ⁺ j (ε' [ updᵉ j ûₑ ]ᵉ)
+stripᵉ-unit (just ij)  j ε ε' ε₀ e₁ with strᵉ⁺ j (ε' [ updᵉ j 𝟏̂ₑ ]ᵉ)
 ... | nothing          = nothing
 ... | just (ε₀' , e₂) =
       just ((ε₀ , ε₀') ∷ [] ,
             λ δ Q k → transₑ (subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ₑ y)
                                      (sym (pop⨟ᵉ j ε e₁ δ))
-                                     (trans (sym (pop⨟ᵉ j (ε' [ updᵉ j ûₑ ]ᵉ) e₂ δ))
-                                            ([⨟]ᵉ ε' (updᵉ j ûₑ) (popˢ j ⨟ˢ (δ ↑ᵉ))))
+                                     (trans (sym (pop⨟ᵉ j (ε' [ updᵉ j 𝟏̂ₑ ]ᵉ) e₂ δ))
+                                            ([⨟]ᵉ ε' (updᵉ j 𝟏̂ₑ) (popˢ j ⨟ˢ (δ ↑ᵉ))))
                                      (⊩-wkᵉₑ (k (here refl))))
-                             (mono-substₑ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ (to-witness ij))) ε'))
+                             (mono-substₑ (updᵉ-below j 𝟏̂ₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ (to-witness ij))) ε'))
 
 stripʳ-top : ∀ {Θ Φ} → Subst Θ (Φ +e) → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
            → (ρ₀' : RExp Φ) → ρ' [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀' → Maybe (Stripʳ j ρ ρ')
@@ -265,7 +265,7 @@ atomʳ O H j ρ ρ' with strʳ⁺ j ρ | strʳ⁺ j ρ'
 ... | just _         | just _           = nothing
 ... | just (ρ₀ , e₁) | nothing          with decideᵣ full H ρ ρ'
 ...   | just p  = just ([] , λ δ Q g k → ⊩-substᵣ g p)
-...   | nothing = fromStripʳ {j = j} {H = H} {ρ = ρ} {ρ' = ρ'} (stripʳ-unit (Is-just? uₑ-least?) j ρ ρ' ρ₀ e₁)
+...   | nothing = fromStripʳ {j = j} {H = H} {ρ = ρ} {ρ' = ρ'} (stripʳ-unit (Is-just? 𝟏ₑ-least?) j ρ ρ' ρ₀ e₁)
 atomʳ O H j ρ ρ' | nothing | just (ρ₀' , e₂) with decideᵣ full H ρ ρ'
 ... | just p  = just ([] , λ δ Q g k → ⊩-substᵣ g p)
 ... | nothing = fromStripʳ {j = j} {H = H} {ρ = ρ} {ρ' = ρ'} (stripʳ-top O j ρ ρ' ρ₀' e₂)
@@ -279,7 +279,7 @@ atomᵉ O H j ε ε' with strᵉ⁺ j ε | strᵉ⁺ j ε'
 ... | just _         | just _           = nothing
 ... | just (ε₀ , e₁) | nothing          with decideₑ full H ε ε'
 ...   | just p  = just ([] , λ δ Q g k → ⊩-substₑ g p)
-...   | nothing = fromStripᵉ {j = j} {H = H} {ε = ε} {ε' = ε'} (stripᵉ-unit (Is-just? uₑ-least?) j ε ε' ε₀ e₁)
+...   | nothing = fromStripᵉ {j = j} {H = H} {ε = ε} {ε' = ε'} (stripᵉ-unit (Is-just? 𝟏ₑ-least?) j ε ε' ε₀ e₁)
 atomᵉ O H j ε ε' | nothing | just (ε₀' , e₂) with decideₑ full H ε ε'
 ... | just p  = just ([] , λ δ Q g k → ⊩-substₑ g p)
 ... | nothing = fromStripᵉ {j = j} {H = H} {ε = ε} {ε' = ε'} (stripᵉ-top O j ε ε' ε₀' e₂)
@@ -368,7 +368,7 @@ atomˢ j A B with strᵛ⁺ j A | strᵛ⁺ j B
 -- A disjunction is kept when its type and grade strengthen away from the rigid,
 -- or, with the rigid in the grade only, at the top rigid (antitone in its grade):
 --
---   ∀j. Et A ∨ ρ(j) ≾ u  ⟺  Et A ∨ ρ(⊤) ≾ u.
+--   ∀j. Et A ∨ ρ(j) ≾ 𝟏  ⟺  Et A ∨ ρ(⊤) ≾ 𝟏.
 
 atomᵈ : ∀ {Φ} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → (ρ : RExp (Φ +e))
       → Maybe (Atomᵈ j A ρ)
@@ -960,9 +960,9 @@ solveDisj : ∀ {Θ} → (s : St Θ) → (A : OVType Θ) → (ρ : RExp Θ)
           → (x : Maybe (List (TyVar (Ω s)))) → etDec (A [ θ s ]ᵛ) ≡ x
           → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (Et∨≾ᵘ A ρ)))
 solveDisj s A ρ nothing       e =
-  solved (st (Ω s) (θ s) (pushʳ (ρ [ θ s ]ʳ) ûᵣ (res s)) (rig s) ,
+  solved (st (Ω s) (θ s) (pushʳ (ρ [ θ s ]ʳ) 𝟏̂ᵣ (res s)) (rig s) ,
         mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailʳ h)) ,
-        λ δ Q h → ≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ (θ s) δ) (⊩rs h (here refl))))
+        λ δ Q h → ≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ 𝟏̂ᵣ) ([⨟]ʳ ρ (θ s) δ) (⊩rs h (here refl))))
 solveDisj s A ρ (just [])     e =
   solved (s , ⟶-id ,
         λ δ Q h → et-ok (subst (Q ⊩ᴱ_) ([⨟]ᵛ A (θ s) δ)
@@ -1016,10 +1016,10 @@ solve s (ε ≾̂ₑᶜ ε') =
 
 solve s (Etᶜ A) = solveEt s A (etDec (A [ θ s ]ᵛ)) refl
 
-solve s (Et∨≾ᵘ A ρ) with decideᵣ full ∅ᴴ (ρ [ θ s ]ʳ) ûᵣ
+solve s (Et∨≾ᵘ A ρ) with decideᵣ full ∅ᴴ (ρ [ θ s ]ʳ) 𝟏̂ᵣ
 ... | just p =
       solved (s , ⟶-id ,
-            λ δ Q h → ≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ (θ s) δ)
+            λ δ Q h → ≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ 𝟏̂ᵣ) ([⨟]ʳ ρ (θ s) δ)
                                    (⊩-substᵣ ∅ᴴ-⊩ᴴ p)))
 ... | nothing = solveDisj s A ρ (etDec (A [ θ s ]ᵛ)) refl
 

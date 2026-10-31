@@ -96,7 +96,7 @@ _⨟ˢ_ : ∀ {Θ Θ' Θ''} → Subst Θ Θ' → Subst Θ' Θ'' → Subst Θ Θ'
 -- The ground instance: type variables to `Unit`, grades to the units
 
 groundˢ : ∀ {Θ} → Subst Θ ∅ˢ
-groundˢ = sub (λ _ → Unit) (λ _ → ûᵣ) (λ _ → ûₑ)
+groundˢ = sub (λ _ → Unit) (λ _ → 𝟏̂ᵣ) (λ _ → 𝟏̂ₑ)
 
 -- Weakening substitutions
 

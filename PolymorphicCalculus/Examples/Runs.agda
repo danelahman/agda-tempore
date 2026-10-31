@@ -24,7 +24,7 @@ module PolymorphicCalculus.Examples.Runs (S : LanguageSpec)
   (hints : SystemHints (LanguageSpec.Grades S)) (opEnum : OpEnum S) where
 
 open LanguageSpec S
-open GradeSystemInterface Grades using (𝔻; of-durᵉ; ⊤ₑ)
+open GradeSystemInterface Grades using (𝔻; ιₑ; ⊤ₑ)
 open Operations Ops using (Op)
 
 open import PolymorphicCalculus.Syntax.Grades S
@@ -63,7 +63,7 @@ check-typable Γ M () | Check.stuck
 -- The grade of a duration
 
 ⌜_⌝ᵉ : ∀ {Θ} → 𝔻 → EExp Θ
-⌜ τ ⌝ᵉ = econst (of-durᵉ τ)
+⌜ τ ⌝ᵉ = econst (ιₑ τ)
 
 ------------------------------------------------------------------
 -- 1. A function annotated to take as long as its argument and `τ`
@@ -73,7 +73,7 @@ check-typable Γ M () | Check.stuck
 --
 -- Where the unit is least this leaves `τ · ε₀ ≾ ε₀ ∧ ε₀ ≾ c`: refuted
 -- through the factor edge if `τ` is not below `c`, else by lowering
--- `ε₀` to the top unless `c` is the top. At left-sided time `u ≾ ε₀`
+-- `ε₀` to the top unless `c` is the top. At left-sided time `𝟏 ≾ ε₀`
 -- refutes every `c` but the top.
 
 -- The scope of the program's variables: one effect variable

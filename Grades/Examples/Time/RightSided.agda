@@ -59,8 +59,8 @@ infixl 7 _·ₒ_
 
 -- interval unit
 
-uₒ : 𝕀ᵣ
-uₒ = [0, ↑ 0 ]
+𝟏ₒ : 𝕀ᵣ
+𝟏ₒ = [0, ↑ 0 ]
 
 -- interval order
 
@@ -79,16 +79,16 @@ infix 6 _≾ₒ_
 
 -- the unit is least: no time at all meets every deadline
 
-uₒ-least : Minimum _≾ₒ_ uₒ
-uₒ-least [0, ↑ _ ] = z≤n
-uₒ-least [0, ∞ ]   = ≤∞-∞ ∞
+𝟏ₒ-least : Minimum _≾ₒ_ 𝟏ₒ
+𝟏ₒ-least [0, ↑ _ ] = z≤n
+𝟏ₒ-least [0, ∞ ]   = ≤∞-∞ ∞
 
 -- identity laws
 
-·ₒ-identityʳ : (i : 𝕀ᵣ) → i ·ₒ uₒ ≡ i
+·ₒ-identityʳ : (i : 𝕀ᵣ) → i ·ₒ 𝟏ₒ ≡ i
 ·ₒ-identityʳ [0, m ] = eq𝕀ᵣ (+∞-identityʳ m)
 
-·ₒ-identityˡ : (i : 𝕀ᵣ) → uₒ ·ₒ i ≡ i
+·ₒ-identityˡ : (i : 𝕀ᵣ) → 𝟏ₒ ·ₒ i ≡ i
 ·ₒ-identityˡ [0, m ] = eq𝕀ᵣ (+∞-identityˡ m)
 
 -- associativity
@@ -134,16 +134,16 @@ _≾ₒ?_ : Decidable _≾ₒ_
 
 -- zero-product properties
 
-≡ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀ᵣ} → i₁ ·ₒ i₂ ≡ uₒ → i₁ ≡ uₒ
+≡ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀ᵣ} → i₁ ·ₒ i₂ ≡ 𝟏ₒ → i₁ ≡ 𝟏ₒ
 ≡ₒ-zero-productˡ {[0, m ]} {[0, n ]} eq = eq𝕀ᵣ (+∞-≡0ˡ {m} {n} (𝕀ᵣ-inj eq))
 
-≡ₒ-zero-productʳ : ∀ {i₁ i₂ : 𝕀ᵣ} → i₁ ·ₒ i₂ ≡ uₒ → i₂ ≡ uₒ
+≡ₒ-zero-productʳ : ∀ {i₁ i₂ : 𝕀ᵣ} → i₁ ·ₒ i₂ ≡ 𝟏ₒ → i₂ ≡ 𝟏ₒ
 ≡ₒ-zero-productʳ {[0, m ]} {[0, n ]} eq = eq𝕀ᵣ (+∞-≡0ʳ {m} {n} (𝕀ᵣ-inj eq))
 
-≾ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀ᵣ} → i₁ ·ₒ i₂ ≾ₒ uₒ → i₁ ≾ₒ uₒ
+≾ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀ᵣ} → i₁ ·ₒ i₂ ≾ₒ 𝟏ₒ → i₁ ≾ₒ 𝟏ₒ
 ≾ₒ-zero-productˡ {[0, m ]} {[0, n ]} rel = +∞-≤∞-0ˡ {m} {n} rel
 
-≾ₒ-zero-productʳ : ∀ {i₁ i₂ : 𝕀ᵣ} → i₁ ·ₒ i₂ ≾ₒ uₒ → i₂ ≾ₒ uₒ
+≾ₒ-zero-productʳ : ∀ {i₁ i₂ : 𝕀ᵣ} → i₁ ·ₒ i₂ ≾ₒ 𝟏ₒ → i₂ ≾ₒ 𝟏ₒ
 ≾ₒ-zero-productʳ {[0, m ]} {[0, n ]} rel = +∞-≤∞-0ʳ {m} {n} rel
 
 -- binary joins: a weaker grade has the larger deadline, so the join
@@ -193,7 +193,7 @@ right-sided-intervals : Grade ℕᴰ
 right-sided-intervals = posetᵍ record
   { Carrier          = 𝕀ᵣ
   ; _·_               = _·ₒ_
-  ; u                 = uₒ
+  ; 𝟏                 = 𝟏ₒ
   ; ·-identityʳ       = ·ₒ-identityʳ
   ; ·-identityˡ       = ·ₒ-identityˡ
   ; ·-assoc           = ·ₒ-assoc
@@ -215,16 +215,16 @@ right-sided-intervals = posetᵍ record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ₒ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ₒ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ₒ-irrelevant {i₁} {i₂}
-  ; of-dur            = λ n → [0, ↑ n ]
-  ; of-dur-zero       = refl
-  ; of-dur-plus       = refl
+  ; ι                 = λ n → [0, ↑ n ]
+  ; ι-zero            = refl
+  ; ι-plus            = refl
   }
 
 -- its hints
 
 right-sided-intervalsʰ : GradeHints right-sided-intervals
 right-sided-intervalsʰ = record
-  { u-least? = just uₒ-least
+  { 𝟏-least? = just 𝟏ₒ-least
   ; ·-comm?  = just (comm-≡ right-sided-intervals ·ₒ-comm)
   ; plus?    = λ i → just (plusₒ i)
   }

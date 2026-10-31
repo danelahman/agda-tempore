@@ -10,7 +10,7 @@ open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
-open import Grades.Examples.Time.RightSided using (uₒ-least)
+open import Grades.Examples.Time.RightSided using (𝟏ₒ-least)
 open import PolymorphicCalculus.Examples.Specs using (module Time-RightSided)
 
 module PolymorphicCalculus.Examples.Handlers.Time.RightSided where
@@ -45,7 +45,7 @@ discard-reported : schemeOf (infer [] discard) ≡ just expected-discard
 discard-reported = refl
 
 discard-derivable : Typable [] discard
-discard-derivable = discard-typable uₒ-least
+discard-derivable = discard-typable 𝟏ₒ-least
 
 -- `j` above the unit is spent twice, and `k'` and `a` go stale
 

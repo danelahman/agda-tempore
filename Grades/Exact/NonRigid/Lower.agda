@@ -70,7 +70,7 @@ open import Grades.Exact.Base T Op n code code-injective
   using (Word; OpSet; op; st; stretch; dur; D⁺; ∣_∣⁺; ∣∣⁺-pos; _+⁺_)
 open import Grades.Exact.Order T Op n code code-injective using (_⊑_; ⊑-trans) renaming (⊑-refl to ⊑ʷ-refl)
 open import Grades.Exact.Lift T Op n code code-injective
-  using (Lang; uᴸ; _·ᴸ_; ⊑-++; ⊑-all; ·-mono; ·-assoc; ·-identityˡ; ·-identityʳ)
+  using (Lang; 𝟏ᴸ; _·ᴸ_; ⊑-++; ⊑-all; ·-mono; ·-assoc; ·-identityˡ; ·-identityʳ)
   renaming (_≈_ to _≈ᴸ_; _≾_ to _≾ᴸ_; ≾-refl to ≾ᴸ-refl; ≾-trans to ≾ᴸ-trans)
 open import Grades.Exact.Expression T Op n code code-injective running
   using (Instance; lower; Expr; ε; ops; str; _∣_; _·_; ‵_; ⟦_⟧; strᴸ)

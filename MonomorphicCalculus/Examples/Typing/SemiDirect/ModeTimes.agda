@@ -94,7 +94,7 @@ sample-and-transmit =
 -- a second transmission may take thirteen steps
 
 two-transmissions : E
-two-transmissions = opTime read ·ₑ (opTime send ·ₑ (opTime send ·ₑ uₑ))
+two-transmissions = opTime read ·ₑ (opTime send ·ₑ (opTime send ·ₑ 𝟏ₑ))
 
 two-transmissions-refused : ¬ (two-transmissions ≾ₑ deadline)
 two-transmissions-refused = refuted two-transmissions deadline
@@ -102,7 +102,7 @@ two-transmissions-refused = refuted two-transmissions deadline
 -- storing after a transmission gets stuck
 
 store-after-transmitting : E
-store-after-transmitting = opTime send ·ₑ (opTime write ·ₑ uₑ)
+store-after-transmitting = opTime send ·ₑ (opTime write ·ₑ 𝟏ₑ)
 
 store-after-transmitting-refused : ¬ (store-after-transmitting ≾ₑ deadline)
 store-after-transmitting-refused = refuted store-after-transmitting deadline
@@ -110,8 +110,8 @@ store-after-transmitting-refused = refuted store-after-transmitting deadline
 ------------------------------------------------------------------------
 -- Readings go stale after any step, idling included
 
-stale-after-idling : ¬ (uᵣ ·ᵣ of-durʳ 1 ≾ᵣ uᵣ)
-stale-after-idling = refuted (uᵣ ·ᵣ of-durʳ 1) uᵣ
+stale-after-idling : ¬ (𝟏ᵣ ·ᵣ ιᵣ 1 ≾ᵣ 𝟏ᵣ)
+stale-after-idling = refuted (𝟏ᵣ ·ᵣ ιᵣ 1) 𝟏ᵣ
 
 ------------------------------------------------------------------------
 -- Unboxing: within eight steps, in whichever mode
@@ -124,21 +124,21 @@ within-eight = listed L.[]
   where
     eight = bounds ([ 0 , ∞ ] ∣ L.[]) [ 0 , ↑ 8 ] (witness L.[] tt)
 
-claimed-in-time : [] ⊢C⦂ Reading ‼ (of-durᵉ 5 ·ₑ uₑ)
+claimed-in-time : [] ⊢C⦂ Reading ‼ (ιₑ 5 ·ₑ 𝟏ₑ)
 claimed-in-time =
-  check (of-durᵉ 5 ·ₑ uₑ)
+  check (ιₑ 5 ·ₑ 𝟏ₑ)
     (box within-eight (const 42)     -- ∷ [ within-eight ] Reading
-      (delay 5                       -- ⟨ of-dur 5 ⟩
-        (unbox (Tl-⟨⟩ Hd) (decided (uᵣ ·ᵣ of-durʳ 5) within-eight) (<:ᵛ-refl _)
+      (delay 5                       -- ⟨ ι 5 ⟩
+        (unbox (Tl-⟨⟩ Hd) (decided (𝟏ᵣ ·ᵣ ιᵣ 5) within-eight) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (return here))))
 
-claimed-too-late : ¬ (uᵣ ·ᵣ of-durʳ 9 ≾ᵣ within-eight)
-claimed-too-late = refuted (uᵣ ·ᵣ of-durʳ 9) within-eight
+claimed-too-late : ¬ (𝟏ᵣ ·ᵣ ιᵣ 9 ≾ᵣ within-eight)
+claimed-too-late = refuted (𝟏ᵣ ·ᵣ ιᵣ 9) within-eight
 
 ------------------------------------------------------------------------
 -- Effect handling: the unit is not least, so no clause discards a
 -- transmission's continuation
 
-cannot-discard : ¬ (uₑ ≾ₑ opTime send ·ₑ uₑ)
-cannot-discard = refuted uₑ (opTime send ·ₑ uₑ)
+cannot-discard : ¬ (𝟏ₑ ≾ₑ opTime send ·ₑ 𝟏ₑ)
+cannot-discard = refuted 𝟏ₑ (opTime send ·ₑ 𝟏ₑ)

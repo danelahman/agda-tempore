@@ -12,7 +12,7 @@
 -- into the coend `∫^{wᵖ} (wᵖ ⊑[ ρ ] w) × carrier A wᵖ`. Concretely the   --
 -- per-world equivalence `_≈_` is the equivalence closure of the          --
 -- generating relation `_◅_`: a bundle may be pushed forward along a      --
--- unit-accessibility step `wᵖ ⊑[ u ] wᵖ'`, transporting its value along  --
+-- unit-accessibility step `wᵖ ⊑[ 𝟏 ] wᵖ'`, transporting its value along  --
 -- and readjusting the witness (the witness readjustment is free, by      --
 -- `⊑-irrelevant`). Taking the closure of this one-step relation is what  --
 -- makes the adjunction unit `η⊣` natural in the worlds: `η⊣` names the   --
@@ -56,10 +56,10 @@ open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Base GS 
 ·-mono-≾ : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≾ ρ₁' → ρ₂ ≾ ρ₂' → ρ₁ · ρ₂ ≾ ρ₁' · ρ₂'
 ·-mono-≾ p q = ≾-trans (·-monoˡ-≾ p) (·-monoʳ-≾ q)
 
--- Composition of a graded step with a unit step, collapsing `ρ ·ᵣ uᵣ`
+-- Composition of a graded step with a unit step, collapsing `ρ ·ᵣ 𝟏ᵣ`
 -- back to `ρ`.
 
-⊑ρ∘ᵘ : ∀ {ρ w w' w''} → w ⊑[ ρ ] w' → w' ⊑[ u ] w'' → w ⊑[ ρ ] w''
+⊑ρ∘ᵘ : ∀ {ρ w w' w''} → w ⊑[ ρ ] w' → w' ⊑[ 𝟏 ] w'' → w ⊑[ ρ ] w''
 ⊑ρ∘ᵘ {ρ} q r = ⊑-mono (≃⇒≾ (·-identityʳ ρ)) (⊑-trans q r)
 
 -- The possibility bundle: a Kripke-possibility element of `⟨ ρ ⟩ A` at `w`.
@@ -79,7 +79,7 @@ open ⟨_⟩ᶜ public
 -- step between past worlds and the value equation it induces.
 
 _◅_ : ∀ {ρ A w} → ⟨ ρ ⟩ᶜ A w → ⟨ ρ ⟩ᶜ A w → Set
-_◅_ {A = A} e e' = Σ[ s ∈ wᵖ e ⊑[ u ] wᵖ e' ] _≈_ A (transport A s (val e)) (val e')
+_◅_ {A = A} e e' = Σ[ s ∈ wᵖ e ⊑[ 𝟏 ] wᵖ e' ] _≈_ A (transport A s (val e)) (val e')
 
 -- Functor
 
@@ -120,11 +120,11 @@ _◅_ {A = A} e e' = Σ[ s ∈ wᵖ e ⊑[ u ] wᵖ e' ] _≈_ A (transport A s 
 
 -- Unit
 
-η : ∀ {A} → A →ᵖ ⟨ u ⟩ᵒ A
+η : ∀ {A} → A →ᵖ ⟨ 𝟏 ⟩ᵒ A
 η {A} = pmap
   (λ x → mk⟨⟩ ⊑-refl x)
   (λ {w} {x} {y} e → return (⊑-refl , ≈-trans A (transport-refl A x) e))
-  (λ {w} {w'} t x → eq-sym (_◅_ {u} {A} {w'}) (return (t , ≈-refl A)))
+  (λ {w} {w'} t x → eq-sym (_◅_ {𝟏} {A} {w'}) (return (t , ≈-refl A)))
 
 -- Multiplication (reversed grade order)
 
@@ -155,7 +155,7 @@ postμ-cong q = gmap (postμ q) (λ st → st)
 μ : ∀ {A ρ₁ ρ₂} → ⟨ ρ₁ ⟩ᵒ (⟨ ρ₂ ⟩ᵒ A) →ᵖ ⟨ ρ₂ · ρ₁ ⟩ᵒ A
 μ = pmap μ-app μ-cong (λ t e → ≈-mk-irr _ _ (val (val e)))
 
--- Unit-graded counit (inverse of `η` at grade `u`). It transports the
+-- Unit-graded counit (inverse of `η` at grade `𝟏`). It transports the
 -- value forward along the unit-accessibility witness, which is possible at
 -- every world because the presheaves are unit-monotone. Its
 -- congruence folds the coend chain, transporting each generating step
@@ -164,20 +164,20 @@ postμ-cong q = gmap (postμ q) (λ st → st)
 A-isEquiv : ∀ {A : PSh} {w} → IsEquivalence (_≈_ A {w})
 A-isEquiv {A} = record { refl = ≈-refl A ; sym = ≈-sym A ; trans = ≈-trans A }
 
-εᵘ-app : ∀ {A w} → ⟨ u ⟩ᶜ A w → carrier A w
+εᵘ-app : ∀ {A w} → ⟨ 𝟏 ⟩ᶜ A w → carrier A w
 εᵘ-app {A} e = transport A (acc e) (val e)
 
-εᵘ-cong : ∀ {A w} {E E' : ⟨ u ⟩ᶜ A w}
-        → _≈_ (⟨ u ⟩ᵒ A) E E' → _≈_ A (εᵘ-app E) (εᵘ-app E')
+εᵘ-cong : ∀ {A w} {E E' : ⟨ 𝟏 ⟩ᶜ A w}
+        → _≈_ (⟨ 𝟏 ⟩ᵒ A) E E' → _≈_ A (εᵘ-app E) (εᵘ-app E')
 εᵘ-cong {A} {w} = gfold (A-isEquiv {A} {w}) εᵘ-app step
   where
-    step : _◅_ {u} {A} {w} =[ εᵘ-app ]⇒ _≈_ A
+    step : _◅_ {𝟏} {A} {w} =[ εᵘ-app ]⇒ _≈_ A
     step {E} {E'} (s , eq) = ≈-trans A
       (transport-irr {A} (acc E) (⊑ᵘ-trans s (acc E')) (val E))
       (≈-trans A (transport-trans A s (acc E') (val E))
                  (transport-cong A (acc E') eq))
 
-εᵘ : ∀ {A} → ⟨ u ⟩ᵒ A →ᵖ A
+εᵘ : ∀ {A} → ⟨ 𝟏 ⟩ᵒ A →ᵖ A
 εᵘ {A} = pmap
   εᵘ-app
   εᵘ-cong
@@ -217,8 +217,8 @@ A-isEquiv {A} = record { refl = ≈-refl A ; sym = ≈-sym A ; trans = ≈-trans
 
 -- η is natural
 
-⟨⟩-η-nat : ∀ {A B} → (f : A →ᵖ B) → ⟨ u ⟩ᶠ f ∘ᵖ η ≈ᵖ η ∘ᵖ f
-⟨⟩-η-nat {B = B} f x = ≈-refl (⟨ u ⟩ᵒ B)
+⟨⟩-η-nat : ∀ {A B} → (f : A →ᵖ B) → ⟨ 𝟏 ⟩ᶠ f ∘ᵖ η ≈ᵖ η ∘ᵖ f
+⟨⟩-η-nat {B = B} f x = ≈-refl (⟨ 𝟏 ⟩ᵒ B)
 
 -- μ is natural
 
@@ -236,12 +236,12 @@ A-isEquiv {A} = record { refl = ≈-refl A ; sym = ≈-sym A ; trans = ≈-trans
 -- Graded monad laws
 
 ⟨⟩-μ∘η≡id : ∀ {A ρ}
-          → μ {A} {u} {ρ} ∘ᵖ η
+          → μ {A} {𝟏} {ρ} ∘ᵖ η
           ≈ᵖ ⟨⟩-≤ (≃⇒≿ (·-identityʳ ρ))
 ⟨⟩-μ∘η≡id {A} x = ≈-mk-irr _ _ (val x)
 
 ⟨⟩-μ∘Tη≡id : ∀ {A ρ}
-           → μ {A} {ρ} {u} ∘ᵖ ⟨ ρ ⟩ᶠ η
+           → μ {A} {ρ} {𝟏} ∘ᵖ ⟨ ρ ⟩ᶠ η
            ≈ᵖ ⟨⟩-≤ (≃⇒≿ (·-identityˡ ρ))
 ⟨⟩-μ∘Tη≡id {A} e = ≈-mk-irr _ _ (val e)
 
@@ -253,7 +253,7 @@ A-isEquiv {A} = record { refl = ≈-refl A ; sym = ≈-sym A ; trans = ≈-trans
 
 -- εᵘ is natural
 
-εᵘ-nat : ∀ {A B} → (f : A →ᵖ B) → f ∘ᵖ εᵘ ≈ᵖ εᵘ ∘ᵖ ⟨ u ⟩ᶠ f
+εᵘ-nat : ∀ {A B} → (f : A →ᵖ B) → f ∘ᵖ εᵘ ≈ᵖ εᵘ ∘ᵖ ⟨ 𝟏 ⟩ᶠ f
 εᵘ-nat f e = nat f (acc e) (val e)
 
 -- εᵘ and the unit η are mutually inverse
@@ -262,7 +262,7 @@ A-isEquiv {A} = record { refl = ≈-refl A ; sym = ≈-sym A ; trans = ≈-trans
 ⟨⟩-εᵘ∘η≡id {A} x = transport-refl A x
 
 ⟨⟩-η∘εᵘ≡id : ∀ {A} → η {A} ∘ᵖ εᵘ ≈ᵖ idᵖ
-⟨⟩-η∘εᵘ≡id {A} {w} E = eq-sym (_◅_ {u} {A} {w}) (return (acc E , ≈-refl A))
+⟨⟩-η∘εᵘ≡id {A} {w} E = eq-sym (_◅_ {𝟏} {A} {w}) (return (acc E , ≈-refl A))
 
 
 -- Packaging the context modality up as a `Past` instance

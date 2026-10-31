@@ -732,16 +732,16 @@ fitᵣ i (rvar j) = toℕ j <ᵇ toℕ i
 fitᵣ i ρ        = not (occʳ-r i ρ)
 
 -- Through the image, the unit is least where both units are and the projection
--- reflects the order at the unit, so `∣ e ∣ ≾ u` sends `e` to the effect unit
+-- reflects the order at the unit, so `∣ e ∣ ≾ 𝟏` sends `e` to the effect unit
 
 Reflects : Set
-Reflects = (e : E) → mapᵉ e ≾ᵣ uᵣ → e ≾ₑ uₑ
+Reflects = (e : E) → ∣ e ∣ᵉ ≾ᵣ 𝟏ᵣ → e ≾ₑ 𝟏ₑ
 
 LeastImage : Set
-LeastImage = Is-just uₑ-least? × Reflects × Is-just uᵣ-least?
+LeastImage = Is-just 𝟏ₑ-least? × Reflects × Is-just 𝟏ᵣ-least?
 
 leastImage? : Maybe LeastImage
-leastImage? with Is-just? uₑ-least? | reflects-u? | Is-just? uᵣ-least?
+leastImage? with Is-just? 𝟏ₑ-least? | reflects-𝟏? | Is-just? 𝟏ᵣ-least?
 ... | just a | just r | just c = just (a , r , c)
 ... | _      | _      | _      = nothing
 
@@ -767,7 +767,7 @@ evalᵣ (a ⊔̂ᵣ b) with evalᵣ a | evalᵣ b
 ... | just (c , p) | just (d , q) = just (c ⊔ᵣ d , ≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ p q) ≡̂ᵣ-const-⊔)
 ... | _            | _            = nothing
 evalᵣ ∣ ε ∣̂ᵉ with evalₑ ε
-... | just (c , p) = just (mapᵉ c , ≡̂ᵣ-trans (≡̂ᵣ-map-cong p) ≡̂ᵣ-map-const)
+... | just (c , p) = just (∣ c ∣ᵉ , ≡̂ᵣ-trans (≡̂ᵣ-map-cong p) ≡̂ᵣ-map-const)
 ... | nothing      = nothing
 
 -- The closure of an expression: that of its value, where the hints
@@ -821,8 +821,8 @@ sortᵉ k = record
   { _≟_ = _≡ᵉ?_ ; _≅_ = _≅ᵉ_ ; _≅?_ = _≟ᵉ_ ; ≅⇒≤ = λ e → eqₑ (≅ᵉ⇒≡̂ e)
   ; occ = occᵉ-e k ; self = evar k
   ; _≤_ = ∅ᴴ ⊩_≾̂ₑ_ ; dec≤ = decideₑ full ∅ᴴ
-  ; join = _⊔̂ₑ_ ; unit = ûₑ ; top = econst ⊤ₑ ; canon = canonₑ
-  ; Least = Is-just uₑ-least? ; least? = Is-just? uₑ-least? ; fit = fitₑ k
+  ; join = _⊔̂ₑ_ ; unit = 𝟏̂ₑ ; top = econst ⊤ₑ ; canon = canonₑ
+  ; Least = Is-just 𝟏ₑ-least? ; least? = Is-just? 𝟏ₑ-least? ; fit = fitₑ k
   ; put = λ b x → x [ updᵉ k b ]ᵉ ; mul = _·̂ₑ_ ; factors = factorsₑ
   ; Closure = Closureₑ ; closure? = closureₑ? }
 
@@ -831,8 +831,8 @@ sortʳ k = record
   { _≟_ = _≡ʳ?_ ; _≅_ = _≅ʳ_ ; _≅?_ = _≟ʳ_ ; ≅⇒≤ = λ e → eqᵣ (≅ʳ⇒≡̂ e)
   ; occ = occʳ-r k ; self = rvar k
   ; _≤_ = ∅ᴴ ⊩_≾̂ᵣ_ ; dec≤ = decideᵣ full ∅ᴴ
-  ; join = _⊔̂ᵣ_ ; unit = ûᵣ ; top = rconst ⊤ᵣ ; canon = canonᵣ
-  ; Least = Is-just uᵣ-least? ; least? = Is-just? uᵣ-least? ; fit = fitᵣ k
+  ; join = _⊔̂ᵣ_ ; unit = 𝟏̂ᵣ ; top = rconst ⊤ᵣ ; canon = canonᵣ
+  ; Least = Is-just 𝟏ᵣ-least? ; least? = Is-just? 𝟏ᵣ-least? ; fit = fitᵣ k
   ; put = λ b x → x [ updʳ k b ]ʳ ; mul = _·̂ᵣ_ ; factors = factorsᵣ
   ; Closure = Closureᵣ ; closure? = closureᵣ? }
 
@@ -841,7 +841,7 @@ imageᵉ k = record
   { _≟_ = _≡ʳ?_ ; _≅_ = _≅ʳ_ ; _≅?_ = _≟ʳ_ ; ≅⇒≤ = λ e → eqᵣ (≅ʳ⇒≡̂ e)
   ; occ = occᵉ-r k ; self = ∣ evar k ∣̂ᵉ
   ; _≤_ = ∅ᴴ ⊩_≾̂ᵣ_ ; dec≤ = decideᵣ full ∅ᴴ
-  ; join = _⊔̂ᵣ_ ; unit = ûᵣ ; top = rconst ⊤ᵣ ; canon = canonᵣ
+  ; join = _⊔̂ᵣ_ ; unit = 𝟏̂ᵣ ; top = rconst ⊤ᵣ ; canon = canonᵣ
   ; Least = LeastImage ; least? = leastImage? ; fit = λ _ → false ; put = putⁱ k
   ; mul = _·̂ᵣ_ ; factors = factorsᵣ ; Closure = λ _ _ → ⊥ ; closure? = λ _ → nothing }
 

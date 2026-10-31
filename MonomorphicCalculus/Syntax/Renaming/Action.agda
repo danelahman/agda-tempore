@@ -61,7 +61,7 @@ var-rename ⟨⟩-μ-ren (Tl-⟨⟩ x) =
 var-rename (⟨⟩-≤-ren {ρ = ρ₁} {ρ' = ρ₂} ρ₂≾ρ₁) (Tl-⟨⟩ x) =
   _ ·ᵣ ρ₂ , (λ _ → ·ᵣ-monoʳ-≾ᵣ ρ₂≾ρ₁) , Tl-⟨⟩ x
 var-rename (cong-∷-ren r) Hd =
-  uᵣ , (λ _ → ≾ᵣ-refl) , Hd
+  𝟏ᵣ , (λ _ → ≾ᵣ-refl) , Hd
 var-rename (cong-∷-ren r) (Tl-∷ x) with var-rename r x
 ... | ρ' , ρ'≾ρ , y = ρ' , ρ'≾ρ , Tl-∷ y
 var-rename (cong-⟨⟩-ren r) (Tl-⟨⟩ x) with var-rename r x
@@ -97,11 +97,11 @@ unbox⇒var : ∀ {Γ Δ A ρ}
               (([ ρ₀ ] A₀ ∈[ ρ' ] Γ) × (ρ' ≾ᵣ ρ₀) × (A₀ <:ᵛ A))
 
 unbox⇒var {ρ = ρ} r V with grad-typ⇒var<: V
-... | ρ₀ , A₀ , σ , y , [ ρ≾ρ₀ ]ₛ p , σ≾u with var-rename r (Tl-⟨⟩ y)
+... | ρ₀ , A₀ , σ , y , [ ρ≾ρ₀ ]ₛ p , σ≾𝟏 with var-rename r (Tl-⟨⟩ y)
 ... | ρ' , ρ'≾σ·ρ , z =
     ρ₀ , A₀ , ρ' , z
   , ≾ᵣ-trans (ρ'≾σ·ρ (λ ()))
-      (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ σ≾u)
+      (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ σ≾𝟏)
         (≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ ρ)) ρ≾ρ₀))
   , p
 

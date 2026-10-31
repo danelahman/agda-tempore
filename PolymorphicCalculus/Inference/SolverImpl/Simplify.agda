@@ -10,7 +10,7 @@
 -- orderings. `trim` settles the disjunctions again and drops   --
 -- every atom entailed by the others. Orderings are decided at  --
 -- the strength `full` and refuted against the unit by          --
--- `refute≾u`.                                                  --
+-- `refute≾𝟏`.                                                  --
 --                                                              --
 -- Contract. `simplify Q` and `trim Q` entail `Q`               --
 -- (`simplify-⊩`, `trim-⊩`), and every closed instance of `Q`   --
@@ -67,7 +67,7 @@ open import PolymorphicCalculus.Inference.SolverImpl.Eliminate S hints using (El
 open import PolymorphicCalculus.Inference.SolverImpl.Product S hints using (_≺ᵣ_; _≺ₑ_)
 open import PolymorphicCalculus.Inference.SolverImpl.Resid  S using (etDec; etDec-sound; etDec-compl; etDec-refute)
 open import PolymorphicCalculus.Inference.SolverImpl.Entail S hints
-  using (decideᵣ; decideₑ; full; memʳ?; memᵉ?; memʳ-⊩; memᵉ-⊩; refute≾u)
+  using (decideᵣ; decideₑ; full; memʳ?; memᵉ?; memʳ-⊩; memᵉ-⊩; refute≾𝟏)
 
 -- Derivations from a list of subtyping hypotheses and one of eternality atoms,
 -- mirroring `_⊩ᵗᵛ_≾_` and `_⊩ᴱ_`: eternality moves both ways, subtyping forwards
@@ -271,14 +271,14 @@ module Walk {A : Set} (Ok : List A → List A → A → Set)
 -- itself and by refutation against the unit
 
 settle : ∀ {Θ} → OVType Θ → RExp Θ → Hyps Θ → Hyps Θ
-settle A ρ Q with decideᵣ full Q ρ ûᵣ
+settle A ρ Q with decideᵣ full Q ρ 𝟏̂ᵣ
 ... | just _  = Q
 ... | nothing with etDec A
-...   | nothing = hyps (ets Q) (subᵥ Q) (ordᵣ Q ++ (ρ , ûᵣ) ∷ []) (ordₑ Q) (disj Q)
+...   | nothing = hyps (ets Q) (subᵥ Q) (ordᵣ Q ++ (ρ , 𝟏̂ᵣ) ∷ []) (ordₑ Q) (disj Q)
                        (qhyps Q)
 ...   | just αs with ets? Q αs
 ...     | just _  = Q
-...     | nothing with refute≾u ρ
+...     | nothing with refute≾𝟏 ρ
 ...       | just _  = hyps (αs ++ ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) (disj Q) (qhyps Q)
 ...       | nothing = hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) ((A , ρ) ∷ disj Q)
                              (qhyps Q)
@@ -288,7 +288,7 @@ settle A ρ Q with decideᵣ full Q ρ ûᵣ
 
 settle-⊩ : ∀ {Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ)
          → (settle A ρ Q ⊩ᴴ Q) × VarOK (settle A ρ Q) A ρ
-settle-⊩ A ρ Q with decideᵣ full Q ρ ûᵣ
+settle-⊩ A ρ Q with decideᵣ full Q ρ 𝟏̂ᵣ
 ... | just d  = ⊩ᴴ-refl , ≾ᵘ-ok d
 ... | nothing with etDec A in e
 ...   | nothing =
@@ -296,7 +296,7 @@ settle-⊩ A ρ Q with decideᵣ full Q ρ ûᵣ
         , ≾ᵘ-ok (hypᵣ (∈-++⁺ʳ (ordᵣ Q) (here refl)))
 ...   | just αs with ets? Q αs
 ...     | just k  = ⊩ᴴ-refl , et-ok (etDec-sound A e k)
-...     | nothing with refute≾u ρ
+...     | nothing with refute≾𝟏 ρ
 ...       | just _  =
             ⊆ᴴ-⊩ (mk⊆ᴴ (∈-++⁺ʳ αs) (λ m → m) (λ m → m) (λ m → m) (λ m → m) (λ m → m))
             , et-ok (etDec-sound A e (λ m → et-hyp (∈-++⁺ˡ m)))
@@ -309,19 +309,19 @@ settle-⊩ A ρ Q with decideᵣ full Q ρ ûᵣ
 
 settle-inst : ∀ {Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ) → (δ : Subst Θ ∅ˢ)
             → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ᴴ settle A ρ Q [ δ ]
-settle-inst A ρ Q δ d h with decideᵣ full Q ρ ûᵣ
+settle-inst A ρ Q δ d h with decideᵣ full Q ρ 𝟏̂ᵣ
 ... | just _  = h
 ... | nothing with etDec A in e
 ...   | nothing = mk⊩ᴴ (⊩ets h) (⊩subᵥ h) ordR (⊩ordₑ h) (⊩disj h) (⊩qhyps h)
       where
-        ordR : ∀ {ρ₀ ρ₀'} → (ρ₀ , ρ₀') ∈ ordᵣ Q ++ (ρ , ûᵣ) ∷ []
+        ordR : ∀ {ρ₀ ρ₀'} → (ρ₀ , ρ₀') ∈ ordᵣ Q ++ (ρ , 𝟏̂ᵣ) ∷ []
              → ∅ᴴ ⊩ ρ₀ [ δ ]ʳ ≾̂ᵣ ρ₀' [ δ ]ʳ
         ordR m with ∈-++⁻ (ordᵣ Q) m
         ... | inj₂ (here refl) = [ (λ et → ⊥-elim (etDec-refute A e δ et)) , val-≾ᵣ⁻ ]′ (VarOK-∅ (∅⇒VarOK d))
         ... | inj₁ m'          = ⊩ordᵣ h m'
 ...   | just αs with ets? Q αs
 ...     | just _  = h
-...     | nothing with refute≾u ρ
+...     | nothing with refute≾𝟏 ρ
 ...       | just ref = mk⊩ᴴ et' (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (⊩disj h) (⊩qhyps h)
       where
         etA : ∅ᴴ ⊩ᴱ A [ δ ]ᵛ
@@ -361,13 +361,13 @@ settleAll-inst ((A , ρ) ∷ l) Q₀ δ k h =
 -- Settling keeps the quantified hypotheses
 
 settle-unq : ∀ {Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ) → Unq Q → Unq (settle A ρ Q)
-settle-unq A ρ Q u with decideᵣ full Q ρ ûᵣ
+settle-unq A ρ Q u with decideᵣ full Q ρ 𝟏̂ᵣ
 ... | just _  = u
 ... | nothing with etDec A
 ...   | nothing = unq (no-qhyps u)
 ...   | just αs with ets? Q αs
 ...     | just _  = u
-...     | nothing with refute≾u ρ
+...     | nothing with refute≾𝟏 ρ
 ...       | just _  = unq (no-qhyps u)
 ...       | nothing = unq (no-qhyps u)
 

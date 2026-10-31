@@ -40,8 +40,8 @@ open import Grades.Regular.Decide k using (⊆ᵇ-sound; ⊆ᵇ-complete; nonemp
 open import Grades.Regular.Closure k
 open import Grades.Regular.Constructions k using (_∈*_; none; more)
 open import Grades.Regular.Grade k tick public
-  using (Regular; regular; table; wf′; ∈·⁺; ∈·-elim; ∈⊔⁺ˡ; ∈⊔⁺ʳ; ∈⊔-elim; ∈u⁻; ∈u⁺; ∈⊤)
-  renaming (_≾_ to _≾ᴿ_; _·ᴿ_ to _·ᴿ_; _⊔ᴿ_ to _⊔ᴿ_; u to uᴿ; ⊤ to ⊤ᴿ)
+  using (Regular; regular; table; wf′; ∈·⁺; ∈·-elim; ∈⊔⁺ˡ; ∈⊔⁺ʳ; ∈⊔-elim; ∈𝟏⁻; ∈𝟏⁺; ∈⊤)
+  renaming (_≾_ to _≾ᴿ_; _·ᴿ_ to _·ᴿ_; _⊔ᴿ_ to _⊔ᴿ_; 𝟏 to 𝟏ᴿ; ⊤ to ⊤ᴿ)
 import Grades.Regular.Grade k tick as G
 open import Grades.Regular.Grade k tick using (starᴿ; ∈*⁻; ∈*⁺; c⁺-def)
 import Grades.Regular.Grade as O
@@ -111,11 +111,11 @@ private
 ------------------------------------------------------------------------
 -- The operations keep languages closed
 
-u : Closed
-u = ⟨ uᴿ ⟩ᶜ λ w v wv v∈ → subst (λ z → z ∈ table uᴿ) (sym (helper wv v∈)) ∈u⁺
+𝟏 : Closed
+𝟏 = ⟨ 𝟏ᴿ ⟩ᶜ λ w v wv v∈ → subst (λ z → z ∈ table 𝟏ᴿ) (sym (helper wv v∈)) ∈𝟏⁺
   where
-    helper : ∀ {w v} → Below′ w v → v ∈ table uᴿ → w ≡ []
-    helper wv v∈ = below-[] (subst (Below′ _) (∈u⁻ _ v∈) wv)
+    helper : ∀ {w v} → Below′ w v → v ∈ table 𝟏ᴿ → w ≡ []
+    helper wv v∈ = below-[] (subst (Below′ _) (∈𝟏⁻ _ v∈) wv)
 
 ⊤ : Closed
 ⊤ = ⟨ ⊤ᴿ ⟩ᶜ λ w _ _ _ → ∈⊤ w
@@ -254,10 +254,10 @@ plusᶜ c = plus c⁺ (≾-intro (Plus.≾-c⁺ P))
 
 -- the monoid laws
 
-·-identityˡ : ∀ c → u · c ≡ c
+·-identityˡ : ∀ c → 𝟏 · c ≡ c
 ·-identityˡ c = lang-injective (G.·-identityˡ (lang c))
 
-·-identityʳ : ∀ c → c · u ≡ c
+·-identityʳ : ∀ c → c · 𝟏 ≡ c
 ·-identityʳ c = lang-injective (G.·-identityʳ (lang c))
 
 ·-assoc : ∀ c d e → (c · d) · e ≡ c · (d · e)
@@ -267,19 +267,19 @@ plusᶜ c = plus c⁺ (≾-intro (Plus.≾-c⁺ P))
 -- The grade, given the durations as closed languages
 
 module WithDurations
-  (of-dur : ℕ → Closed)
-  (of-dur-zero : of-dur 0 ≡ u)
-  (of-dur-plus : ∀ {m n} → of-dur (m + n) ≡ of-dur m · of-dur n) where
+  (ι : ℕ → Closed)
+  (ι-zero : ι 0 ≡ 𝟏)
+  (ι-plus : ∀ {m n} → ι (m + n) ≡ ι m · ι n) where
 
   closed-grade : Grade ℕᴰ
   closed-grade = posetᵍ record
     { Carrier         = Closed
     ; _·_             = _·_
-    ; u               = u
+    ; 𝟏               = 𝟏
     ; _≾_             = _≾_
     ; ⊤               = ⊤
     ; _⊔_             = _⊔_
-    ; of-dur          = of-dur
+    ; ι               = ι
     ; ·-identityˡ     = ·-identityˡ
     ; ·-identityʳ     = ·-identityʳ
     ; ·-assoc         = ·-assoc
@@ -298,15 +298,15 @@ module WithDurations
     ; ·-distribʳ-⊔-≾  = ·-distribʳ-⊔-≾
     ; ≾-zero-productˡ = λ {c} {d} p → ≾-intro (G.≾-zero-productˡ {lang c} {lang d} (≾-lang p))
     ; ≾-zero-productʳ = λ {c} {d} p → ≾-intro (G.≾-zero-productʳ {lang c} {lang d} (≾-lang p))
-    ; of-dur-zero     = of-dur-zero
-    ; of-dur-plus     = λ {m} {n} → of-dur-plus {m} {n}
+    ; ι-zero          = ι-zero
+    ; ι-plus          = λ {m} {n} → ι-plus {m} {n}
     }
 
   -- its hints: Kleene's plus at every grade
 
   closed-gradeʰ : GradeHints closed-grade
   closed-gradeʰ = record
-    { u-least? = nothing
+    { 𝟏-least? = nothing
     ; ·-comm?  = nothing
     ; plus?    = λ c → just (plusᶜ c)
     }

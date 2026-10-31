@@ -31,7 +31,7 @@ module PolymorphicCalculus.Examples.Programs (S : LanguageSpec)
   (st : Stepped (GradeSystem.Dur (LanguageSpec.Grades S))) where
 
 open LanguageSpec S
-open GradeSystemInterface Grades using (𝔻; of-durᵉ)
+open GradeSystemInterface Grades using (𝔻; ιₑ)
 
 open import PolymorphicCalculus.Syntax.Grades      S
 open import PolymorphicCalculus.Syntax.Types       S
@@ -50,7 +50,7 @@ open import PolymorphicCalculus.Examples.Variables
 ⌜ n ⌝ = Stepped.fromℕ st n
 
 ⌜_⌝ᵉ : ∀ {Θ} → ℕ → EExp Θ
-⌜ n ⌝ᵉ = econst (of-durᵉ ⌜ n ⌝)
+⌜ n ⌝ᵉ = econst (ιₑ ⌜ n ⌝)
 
 ------------------------------------------------------------------
 -- The schemes of an accepted program, in order

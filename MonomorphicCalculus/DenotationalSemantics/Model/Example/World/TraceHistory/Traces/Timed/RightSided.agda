@@ -60,7 +60,7 @@ open import Grades.Traces.Allowance.Decidable ℕᵀ Op costʰⁱ
 open import Grades.Examples.Traces.Timed.RightSided
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
   using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_;
-         Trace; ε; traces; u; _∙_; _·ˢ_; ∙-assoc; ∙-identityʳ; ∙-cancelˡ;
+         Trace; ε; traces; 𝟏; _∙_; _·ˢ_; ∙-assoc; ∙-identityʳ; ∙-cancelˡ;
          n-◃⁻; ◃-∈; True-irr)
 
 open DecAllowance _≟ₒ_ using (_≼ᵃ?_)
@@ -104,10 +104,10 @@ extends-∙ w t₁ t₂ eq₁ eq₂ =
 -- reflexivity at the unit grade `{ ε }`: the empty continuation stays
 -- within the empty bound
 
-⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ (within u) ] w
+⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ (within 𝟏) ] w
 ⊑ᵇ-refl {w} =
   mkᵇ ε
-      (fromWitness {a? = any? (λ p → ε ≼ᵃ? p) (traces u)} (here (≼ᵃ-refl ε)))
+      (fromWitness {a? = any? (λ p → ε ≼ᵃ? p) (traces 𝟏)} (here (≼ᵃ-refl ε)))
       (∙-identityʳ w)
 
 -- transitivity multiplies the grades, sequencing the two

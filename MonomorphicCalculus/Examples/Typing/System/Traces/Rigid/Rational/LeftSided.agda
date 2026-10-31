@@ -68,14 +68,14 @@ settled : [] ⊢C⦂ Unit ‼ _
 settled =
   box a-unit (const 42)      -- ∷ [ a-unit ] Reading
     (perform read ⋆          -- ⟨ ∣ opTime read ∣ ⟩ ∷ Reading
-      (delay (# 1)           -- ⟨ of-dur 1 ⟩
+      (delay (# 1)           -- ⟨ ι 1 ⟩
         (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ≤ᵈ! (<:ᵛ-refl _)
                              -- ∷ Reading
           (perform write here (return ⋆)))))
 
 -- right after the reading, only a quarter is certain to have passed
 
-too-soon : ¬ (uᵣ ·ᵣ mapᵉ (opTime read) ≾ᵣ a-unit)
+too-soon : ¬ (𝟏ᵣ ·ᵣ ∣ opTime read ∣ᵉ ≾ᵣ a-unit)
 too-soon = ≰ᵈ!
 
 -- the effect grade of the run is the run itself, measured by its
@@ -84,8 +84,8 @@ too-soon = ≰ᵈ!
 run : E
 run = opTime read ·ₑ (L.⌜ idle ≥ (# 1) ⌝ ·ₑ opTime write)
 
-run-measured : mapᵉ run ≡ [ 9 / 4 ,+∞⟩
+run-measured : ∣ run ∣ᵉ ≡ [ 9 / 4 ,+∞⟩
 run-measured = refl
 
-run-is-delayed : run ≃ₑ opTime read ·ₑ (of-durᵉ (# 1) ·ₑ opTime write)
+run-is-delayed : run ≃ₑ opTime read ·ₑ (ιₑ (# 1) ·ₑ opTime write)
 run-is-delayed = ≃ₑ-refl

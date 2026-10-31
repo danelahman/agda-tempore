@@ -69,24 +69,24 @@ open import Grades.Examples.Counts.Occurrences Op index
 
 collapses : {D : Duration} (G H : Grade D)
           → (∀ c → Grade._·_ G (Grade.⊤ G) c ≡ Grade.⊤ G)
-          → Grade.⊤ H ≡ Grade.u H
-          → (F : G →ᵍ H) (c : Grade.Carrier G) → Grade._≃_ H (_→ᵍ_.map F c) (Grade.u H)
+          → Grade.⊤ H ≡ Grade.𝟏 H
+          → (F : G →ᵍ H) (c : Grade.Carrier G) → Grade._≃_ H (_→ᵍ_.map F c) (Grade.𝟏 H)
 collapses G H absorb top-unit F c =
   ≃-trans (≃-sym (·-identityˡ (map c)))
-  (≃-trans (·-cong (≃-sym top≃u) ≃-refl)
+  (≃-trans (·-cong (≃-sym top≃𝟏) ≃-refl)
   (≃-trans (≃-sym map-·)
   (≃-trans (≃-reflexive (cong map (absorb c)))
-           top≃u)))
+           top≃𝟏)))
   where
     open _→ᵍ_ F
     open Grade H using (≃-trans; ≃-sym; ≃-refl; ≃-reflexive; ·-cong; ·-identityˡ)
-    top≃u : Grade._≃_ H (map (Grade.⊤ G)) (Grade.u H)
-    top≃u = ≃-trans map-⊤ (≃-reflexive top-unit)
+    top≃𝟏 : Grade._≃_ H (map (Grade.⊤ G)) (Grade.𝟏 H)
+    top≃𝟏 = ≃-trans map-⊤ (≃-reflexive top-unit)
 
 -- so every morphism from the cap into the at-least counts is constant
 
 constant : (F : right-sided →ᵍ at-least-counts n) (P : Permits)
-         → Grade._≃_ (at-least-counts n) (_→ᵍ_.map F P) (Grade.u (at-least-counts n))
+         → Grade._≃_ (at-least-counts n) (_→ᵍ_.map F P) (Grade.𝟏 (at-least-counts n))
 constant = collapses right-sided (at-least-counts n) (λ _ → refl) refl
 
 ------------------------------------------------------------------------
@@ -152,9 +152,9 @@ mapₗ-⊔ any-run        Q       = sym (⊤ᵛ-⊔ᵛ (⊤-⊔-≡ ≾ᵗ-antis
 
 -- time draws on no counter
 
-mapₗ-of-dur : (k : ℕ) → mapₗ (Grade.of-dur right-sided k) ≡ uᵛ
-mapₗ-of-dur k =
-  tabulate-uᵛ (certain (⟨ k ⟩ ∷ [])) (λ i → cong certainly (occ-⟨⟩ i k))
+mapₗ-ι : (k : ℕ) → mapₗ (Grade.ι right-sided k) ≡ 𝟏ᵛ
+mapₗ-ι k =
+  tabulate-𝟏ᵛ (certain (⟨ k ⟩ ∷ [])) (λ i → cong certainly (occ-⟨⟩ i k))
 
 ------------------------------------------------------------------------
 -- The grade morphism and the grade system
@@ -163,18 +163,18 @@ subsets→at-least-counts-with-⊤ : right-sided →ᵍ at-least-counts-with-⊤
 subsets→at-least-counts-with-⊤ = strictᵍ record
   { map          = mapₗ
   ; map-monotone = λ {P} {Q} → mapₗ-monotone {P} {Q}
-  ; map-u        = mapₗ-of-dur 0
+  ; map-𝟏        = mapₗ-ι 0
   ; map-·        = λ {P} {Q} → mapₗ-· P Q
   ; map-⊤        = refl
   ; map-⊔        = λ {P} {Q} → mapₗ-⊔ P Q
-  ; map-of-dur   = λ {k} → mapₗ-of-dur k
+  ; map-ι        = λ {k} → mapₗ-ι k
   }
 
 subsetsToAtLeastCountsGradeSystem : GradeSystem
 subsetsToAtLeastCountsGradeSystem = record
   { RGrade = at-least-counts-with-⊤ n
   ; EGrade = right-sided
-  ; ∣_∣ᵉ   = subsets→at-least-counts-with-⊤
+  ; ∣-∣ᵉ   = subsets→at-least-counts-with-⊤
   }
 
 -- its hints
@@ -183,6 +183,6 @@ subsetsToAtLeastCountsGradeSystemʰ : SystemHints subsetsToAtLeastCountsGradeSys
 subsetsToAtLeastCountsGradeSystemʰ = record
   { RHints      = (at-least-counts-with-⊤ʰ n)
   ; EHints      = noGradeHints
-  ; reflects-u? = nothing
+  ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

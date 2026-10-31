@@ -52,7 +52,7 @@ open import Grades.Traces.Coverage T Op costˡᵒ using (duration-≼ᶜ)
 
 open import Grades.Examples.Traces.Timed.LeftSided
   T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
-  using (left-sided; _≾_; Antichain; traces; u; _·_; _∙_; _·ˢ_;
+  using (left-sided; _≾_; Antichain; traces; 𝟏; _·_; _∙_; _·ˢ_;
          n-◃⁻; ◃-∈; True-irr)
 
 open import MonomorphicCalculus.DenotationalSemantics.Model.World
@@ -71,7 +71,7 @@ w ⊑ᵗ[ P ] w' = True (any? (λ p → (w + duration p) ≤? w') (traces P))
 -- reflexivity at the unit grade `{ ε }`: the empty guarantee demands no
 -- time to pass, and none has
 
-⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ u ] w
+⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ 𝟏 ] w
 ⊑ᵗ-refl {w} = fromWitness (here (≤-reflexive (+-identityʳ w)))
 
 -- transitivity multiplies the grades: the two advances compose into the

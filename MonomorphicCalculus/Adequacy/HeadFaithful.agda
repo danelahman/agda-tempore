@@ -85,10 +85,10 @@ data Delaysᵐ : ∀ {X Y : Obj} {δ : E} → (X →ᵐ Tᵒ Y δ) → 𝔻 → 
              → Delaysᵐ (t ⋄ ηᵀ) n
 
   τ-step     : ∀ {X Z : Obj} {δ : E} {n : 𝔻}
-             → (τ : 𝔻) → {t : ⟨ of-durʳ τ ⟩ᵒ X →ᵐ Tᵒ Z δ}
+             → (τ : 𝔻) → {t : ⟨ ιᵣ τ ⟩ᵒ X →ᵐ Tᵒ Z δ}
              → Delaysᵐ t n
              ----------------------------------------------------------------
-             → Delaysᵐ (t ⋄ (delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)) (τ +ᴰ n)
+             → Delaysᵐ (t ⋄ (delayᵀ τ ∘ᵐ [ ιᵣ τ ]ᶠ ηᵀ ∘ᵐ η⊣)) (τ +ᴰ n)
 
   delays-≈   : ∀ {X Y : Obj} {δ : E} {n : 𝔻} {t t' : X →ᵐ Tᵒ Y δ}
              → t ≈ᵐ t' → Delaysᵐ t n
@@ -155,12 +155,12 @@ stepsᵀ-delays (r ◅ rs) = step-delays r (stepsᵀ-delays rs)
 -- The two head shapes, as morphisms: `⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ` is a leaf and
 -- `⟦ ⟨ St , perform op W M' ⟩ ⟧ᶜᶠ` an operation node (`whnf-shape` below).
 
-leafᵐ : ∀ {X Y : Obj} → (a : Y →ᵐ X) → Y →ᵐ Tᵒ X uₑ
+leafᵐ : ∀ {X Y : Obj} → (a : Y →ᵐ X) → Y →ᵐ Tᵒ X 𝟏ₑ
 leafᵐ a = ηᵀ ∘ᵐ a
 
 nodeᵐ : ∀ {X Y : Obj} {ε : E} → (op : Op)
       → (w : Y →ᵐ ⟦ param op ⟧ᵍ)
-      → (k : Y →ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ X ε))
+      → (k : Y →ᵐ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ X ε))
       → Y →ᵐ Tᵒ X (op-grade op ·ₑ ε)
 nodeᵐ op w k = opᵀ op ∘ᵐ ⟨ w , k ⟩ᵐ
 
@@ -195,10 +195,10 @@ record HeadFaithful : Set₂ where
     ret≢op : ∀ {X Y₁ Y₂ : Obj} {ε ε₂ δ₁ δ₂ : E} {n₁ n₂ : 𝔻} {op : Op}
            → {a : Y₁ →ᵐ X}
            → {w : Y₂ →ᵐ ⟦ param op ⟧ᵍ}
-           → {k : Y₂ →ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ X ε₂)}
+           → {k : Y₂ →ᵐ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ X ε₂)}
            → {d₁ : 𝟙ᵐ →ᵐ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
            → {d₂ : 𝟙ᵐ →ᵐ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
-           → (r₁ : δ₁ ·ₑ uₑ ≾ₑ ε)
+           → (r₁ : δ₁ ·ₑ 𝟏ₑ ≾ₑ ε)
            → (r₂ : δ₂ ·ₑ (op-grade op ·ₑ ε₂) ≾ₑ ε)
            ------------------------------------------------------------------
            → ¬ (delayedᵐ (leafᵐ a) d₁ r₁ ≈ᵐ delayedᵐ (nodeᵐ op w k) d₂ r₂)
@@ -207,9 +207,9 @@ record HeadFaithful : Set₂ where
 
     op-inj : ∀ {X Y₁ Y₂ : Obj} {ε ε₁ ε₂ δ₁ δ₂ : E} {n₁ n₂ : 𝔻} {op₁ op₂ : Op}
            → {w₁ : Y₁ →ᵐ ⟦ param op₁ ⟧ᵍ}
-           → {k₁ : Y₁ →ᵐ [ mapᵉ (op-grade op₁) ]ᵒ (⟦ arity op₁ ⟧ᵍ ⇒ᵐ Tᵒ X ε₁)}
+           → {k₁ : Y₁ →ᵐ [ ∣ op-grade op₁ ∣ᵉ ]ᵒ (⟦ arity op₁ ⟧ᵍ ⇒ᵐ Tᵒ X ε₁)}
            → {w₂ : Y₂ →ᵐ ⟦ param op₂ ⟧ᵍ}
-           → {k₂ : Y₂ →ᵐ [ mapᵉ (op-grade op₂) ]ᵒ (⟦ arity op₂ ⟧ᵍ ⇒ᵐ Tᵒ X ε₂)}
+           → {k₂ : Y₂ →ᵐ [ ∣ op-grade op₂ ∣ᵉ ]ᵒ (⟦ arity op₂ ⟧ᵍ ⇒ᵐ Tᵒ X ε₂)}
            → {d₁ : 𝟙ᵐ →ᵐ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
            → {d₂ : 𝟙ᵐ →ᵐ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
            → (r₁ : δ₁ ·ₑ (op-grade op₁ ·ₑ ε₁) ≾ₑ ε)
@@ -225,8 +225,8 @@ record HeadFaithful : Set₂ where
                → {c₁ c₂ : BaseConstants b}
                → {d₁ : 𝟙ᵐ →ᵐ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
                → {d₂ : 𝟙ᵐ →ᵐ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
-               → (r₁ : δ₁ ·ₑ uₑ ≾ₑ ε)
-               → (r₂ : δ₂ ·ₑ uₑ ≾ₑ ε)
+               → (r₁ : δ₁ ·ₑ 𝟏ₑ ≾ₑ ε)
+               → (r₂ : δ₂ ·ₑ 𝟏ₑ ≾ₑ ε)
                → delayedᵐ (leafᵐ (⟦ c₁ ⟧ᵇᶜ ∘ᵐ terminalᵐ)) d₁ r₁
                ≈ᵐ delayedᵐ (leafᵐ (⟦ c₂ ⟧ᵇᶜ ∘ᵐ terminalᵐ)) d₂ r₂
                -----------------------------------------------------------
@@ -239,8 +239,8 @@ record HeadFaithful : Set₂ where
     leaf-bool : ∀ {Y₁ Y₂ : Obj} {ε δ₁ δ₂ : E} {n₁ n₂ : 𝔻}
               → {d₁ : 𝟙ᵐ →ᵐ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
               → {d₂ : 𝟙ᵐ →ᵐ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
-              → (r₁ : δ₁ ·ₑ uₑ ≾ₑ ε)
-              → (r₂ : δ₂ ·ₑ uₑ ≾ₑ ε)
+              → (r₁ : δ₁ ·ₑ 𝟏ₑ ≾ₑ ε)
+              → (r₂ : δ₂ ·ₑ 𝟏ₑ ≾ₑ ε)
               → delayedᵐ (leafᵐ (trueᵐ  ∘ᵐ terminalᵐ)) d₁ r₁
               ≈ᵐ delayedᵐ (leafᵐ (falseᵐ ∘ᵐ terminalᵐ)) d₂ r₂
               -----------------------------------------------------------
@@ -257,17 +257,17 @@ record HeadTimed : Set₂ where
                  → {a₁ : Y₁ →ᵐ X} → {a₂ : Y₂ →ᵐ X}
                  → {d₁ : 𝟙ᵐ →ᵐ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
                  → {d₂ : 𝟙ᵐ →ᵐ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
-                 → (r₁ : δ₁ ·ₑ uₑ ≾ₑ ε)
-                 → (r₂ : δ₂ ·ₑ uₑ ≾ₑ ε)
+                 → (r₁ : δ₁ ·ₑ 𝟏ₑ ≾ₑ ε)
+                 → (r₂ : δ₂ ·ₑ 𝟏ₑ ≾ₑ ε)
                  → delayedᵐ (leafᵐ a₁) d₁ r₁ ≈ᵐ delayedᵐ (leafᵐ a₂) d₂ r₂
                  ---------------------------------------------------------
                  → n₁ ≡ n₂
 
     op-ticks-eq : ∀ {X Y₁ Y₂ : Obj} {ε ε₁ ε₂ δ₁ δ₂ : E} {n₁ n₂ : 𝔻} {op : Op}
                 → {w₁ : Y₁ →ᵐ ⟦ param op ⟧ᵍ}
-                → {k₁ : Y₁ →ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ X ε₁)}
+                → {k₁ : Y₁ →ᵐ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ X ε₁)}
                 → {w₂ : Y₂ →ᵐ ⟦ param op ⟧ᵍ}
-                → {k₂ : Y₂ →ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ X ε₂)}
+                → {k₂ : Y₂ →ᵐ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ X ε₂)}
                 → {d₁ : 𝟙ᵐ →ᵐ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
                 → {d₂ : 𝟙ᵐ →ᵐ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
                 → (r₁ : δ₁ ·ₑ (op-grade op ·ₑ ε₁) ≾ₑ ε)
@@ -350,12 +350,12 @@ ret-whnf-shape {St = St} V pSt pV =
 
 op-whnf-shape : ∀ {A ε} {St : 𝕊 []} {op : Op}
               → (W : toCtx St ⊢V⦂ type-of-gtype (param op))
-              → (M' : toCtx St ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+              → (M' : toCtx St ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
                         ⊢C⦂ A ‼ ε)
               → (pSt : Paramˢ St) → (pW : Paramᵛ W) → (pM' : Paramᶜ M')
               → Σ[ w ∈ (⟦ hist St ⟧ᶜᵗˣ →ᵐ ⟦ param op ⟧ᵍ) ]
                 Σ[ k ∈ (⟦ hist St ⟧ᶜᵗˣ
-                          →ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ A ⟧ᵛ ε)) ]
+                          →ᵐ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ A ⟧ᵛ ε)) ]
                    ⟦ ⟨ St , perform op W M' ⟩ ⟧ᶜᶠ (pSt , pW , pM') ≈ᵐ nodeᵐ op w k
 
 op-whnf-shape {St = St} {op = op} W M' pSt pW pM' =

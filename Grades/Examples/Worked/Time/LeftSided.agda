@@ -20,7 +20,7 @@ open import Util.Equality
 
 open import Grades.Examples.Time.LeftSided
   using ([_,+∞⟩; left-sided-intervals)
-  renaming (𝕀 to 𝕀ˡ; _·ₒ_ to _·ˡ_; uₒ to uˡ; _≾ₒ_ to _≾ˡ_)
+  renaming (𝕀 to 𝕀ˡ; _·ₒ_ to _·ˡ_; 𝟏ₒ to 𝟏ˡ; _≾ₒ_ to _≾ˡ_)
 
 open import Grades.Examples.Worked.Time.Decide using (≤!; ≰!)
 
@@ -47,19 +47,19 @@ lsi-seq = refl
 
 -- the unit claims nothing, and so is the largest grade
 
-lsi-unit : uˡ ≡ [ 0 ,+∞⟩
+lsi-unit : 𝟏ˡ ≡ [ 0 ,+∞⟩
 lsi-unit = refl
 
-lsi-unit-top : [ 7 ,+∞⟩ ≾ˡ uˡ
+lsi-unit-top : [ 7 ,+∞⟩ ≾ˡ 𝟏ˡ
 lsi-unit-top = ≤!
 
 -- so the unit is the designated greatest grade here, and it is not
 -- absorbing
 
-lsi-top : Grade.⊤ left-sided-intervals ≡ uˡ
+lsi-top : Grade.⊤ left-sided-intervals ≡ 𝟏ˡ
 lsi-top = refl
 
 -- `n` time steps, as a grade
 
-lsi-of-dur : Grade.of-dur left-sided-intervals 7 ≡ [ 7 ,+∞⟩
-lsi-of-dur = refl
+lsi-ι : Grade.ι left-sided-intervals 7 ≡ [ 7 ,+∞⟩
+lsi-ι = refl

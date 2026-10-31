@@ -92,7 +92,7 @@ import Grades.Examples.Traces.Timed.TwoSided
 open import Grades.Exact.Base T Op n code code-injective using (Word; stretch; dur; dur-stretch; op; ∣_∣⁺)
 open import Grades.Exact.Order T Op n code code-injective using (_⊑_; ⊑-refl; ⊑-trans; ⊑-dur)
 open import Grades.Exact.Lift T Op n code code-injective
-  using (Lang; uᴸ; _·ᴸ_; _∪ᴸ_)
+  using (Lang; 𝟏ᴸ; _·ᴸ_; _∪ᴸ_)
   renaming (_≈_ to _≈ᴸ_; _≾_ to _≾ᴸ_; ≾-refl to ≾ᴸ-refl; ≾-trans to ≾ᴸ-trans)
 open import Grades.Exact.Expression T Op n code code-injective running
   using (Instance; upper; lower; Expr; ε; ops; str; _∣_; _·_; ‵_; _？; ⟦_⟧; strᴸ)
@@ -414,8 +414,8 @@ up-⊔ (NR.within P) (NR.within Q) =
 up-⊔ (NR.within P) NR.unbounded  = Grade.⊔-ubʳ upperᵍ (upᴮ (NR.within P)) ⊤ᵁ , ≾⊤ _
 up-⊔ NR.unbounded  Q             = Grade.⊔-ubˡ upperᵍ ⊤ᵁ (upᴮ Q) , ≾⊤ _
 
-up-u : Grade._≃_ upperᵍ (upᴮ NR.uᵇ) εᵉ
-up-u = Grade.≾-refl upperᵍ , Grade.≾-refl upperᵍ
+up-𝟏 : Grade._≃_ upperᵍ (upᴮ NR.𝟏ᵇ) εᵉ
+up-𝟏 = Grade.≾-refl upperᵍ , Grade.≾-refl upperᵍ
 
 up-⊤ : upᴮ NR.unbounded ≡ Grade.⊤ upperᵍ
 up-⊤ = refl
@@ -427,21 +427,21 @@ budgetᵁ : Carrier → Proper′ upper
 budgetᵁ τ = ⌜ str all (fin (τ ∣ᶜ ⁺)) ⌝ {ne-strU τ}
 
 private
-  budget-zero : strᴸ {upper} all (fin (0ᴰ ∣ᶜ ⁺)) ≈ᴸ uᴸ
+  budget-zero : strᴸ {upper} all (fin (0ᴰ ∣ᶜ ⁺)) ≈ᴸ 𝟏ᴸ
   budget-zero =
     ⊆⇒≈ (λ { (τ , r , refl) → trans (cong (stretch all) (≤0⇒≡0 (⊑⇒≤ r))) (stretch-0 all) })
         (λ { refl → 0ᴰ , ≤⇒⁺⊑⁺ ≤ᴰ-refl , sym (stretch-0 all) })
 
 upperᵇ : Grade D
 upperᵇ = record upperᵍ
-  { of-dur      = budgetᵁ
-  ; of-dur-zero = ↑² (budgetᵁ 0ᴰ) εᵉ budget-zero
-  ; of-dur-plus = λ {m} {k} → ↑² (budgetᵁ (m +ᴰ k)) (budgetᵁ m ·ᵉ budgetᵁ k) (budget-split all m k)
+  { ι           = budgetᵁ
+  ; ι-zero = ↑² (budgetᵁ 0ᴰ) εᵉ budget-zero
+  ; ι-plus = λ {m} {k} → ↑² (budgetᵁ (m +ᴰ k)) (budgetᵁ m ·ᵉ budgetᵁ k) (budget-split all m k)
   }
 
 private
-  up-of-dur : ∀ τ → ⟦ U.up ⟨ τ ⟩ ⟧ ≈ᴸ strᴸ {upper} all (fin (τ ∣ᶜ ⁺))
-  up-of-dur τ = case (0ᴰ <ᴰ? τ)
+  up-ι : ∀ τ → ⟦ U.up ⟨ τ ⟩ ⟧ ≈ᴸ strᴸ {upper} all (fin (τ ∣ᶜ ⁺))
+  up-ι τ = case (0ᴰ <ᴰ? τ)
     where
       case : Dec (0ᴰ <ᴰ τ) → ⟦ U.up ⟨ τ ⟩ ⟧ ≈ᴸ strᴸ {upper} all (fin (τ ∣ᶜ ⁺))
       case (yes p) rewrite ⟨⟩-pos τ p =
@@ -454,11 +454,11 @@ up-morphism : NR.right-sided →ᵍ upperᵇ
 up-morphism = record
   { map          = upᴮ
   ; map-monotone = λ {c} {c′} → Equivalence.to (up-≾⇔ c c′)
-  ; map-u        = up-u
+  ; map-𝟏        = up-𝟏
   ; map-·        = λ {c} {c′} → up-· c c′
   ; map-⊤        = Grade.≾-refl upperᵍ , Grade.≾-refl upperᵍ
   ; map-⊔        = λ {c} {c′} → up-⊔ c c′
-  ; map-of-dur   = λ {τ} → ↑² _ _ (up-of-dur τ)
+  ; map-ι        = λ {τ} → ↑² _ _ (up-ι τ)
   }
 
 ------------------------------------------------------------------------
@@ -494,8 +494,8 @@ lo-⊔ P Q =
 
 -- the unit, the greatest guarantee, goes to the greatest grade
 
-lo-u : Grade._≃_ lowerᵍ (loᴬ NL.u) (Grade.⊤ lowerᵍ)
-lo-u = ↑² _ _ (≾ᴸ-refl , ≾ᴸ-refl)
+lo-𝟏 : Grade._≃_ lowerᵍ (loᴬ NL.𝟏) (Grade.⊤ lowerᵍ)
+lo-𝟏 = ↑² _ _ (≾ᴸ-refl , ≾ᴸ-refl)
 
 ------------------------------------------------------------------------
 -- Intervals: the two maps end by end
@@ -585,11 +585,11 @@ two-⊔ i j =
 
 -- the unit goes to the guarantee of nothing under the empty run
 
-two-u : Grade._≃_ G₂ (two N2.uᵗˢ) ((Grade.⊤ lowerᵍ , εᵉ) , [] , ([] , ≥0-∈ , ⊑-refl) , ([] , refl , ⊑-refl))
-two-u = (proj₁ lo-u , proj₁ up-u) , (proj₂ lo-u , proj₂ up-u)
+two-𝟏 : Grade._≃_ G₂ (two N2.𝟏ᵗˢ) ((Grade.⊤ lowerᵍ , εᵉ) , [] , ([] , ≥0-∈ , ⊑-refl) , ([] , refl , ⊑-refl))
+two-𝟏 = (proj₁ lo-𝟏 , proj₁ up-𝟏) , (proj₂ lo-𝟏 , proj₂ up-𝟏)
 
 two-⊤ : Grade._≃_ G₂ (two N2.⊤ᵗˢ) (Grade.⊤ G₂)
-two-⊤ = (proj₁ lo-u , Grade.≾-refl upperᵍ) , (proj₂ lo-u , Grade.≾-refl upperᵍ)
+two-⊤ = (proj₁ lo-𝟏 , Grade.≾-refl upperᵍ) , (proj₂ lo-𝟏 , Grade.≾-refl upperᵍ)
 
 ------------------------------------------------------------------------
 -- The decisions agree

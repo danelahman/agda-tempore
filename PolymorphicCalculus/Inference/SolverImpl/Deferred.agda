@@ -230,7 +230,7 @@ wk-κ b = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
 -- One witness per rigid, outermost first, the unit where none is given
 
 hdᵂ : List E → E
-hdᵂ []      = uₑ
+hdᵂ []      = 𝟏ₑ
 hdᵂ (c ∷ _) = c
 
 tlᵂ : List E → List E
@@ -251,7 +251,7 @@ grid cs (suc k) = concatMap (λ c → map (c ∷_) (grid cs k)) cs
 -- and `ecs`: the unit, the top and the hints' `witnesses`, without repetition
 
 candidates : ℕ → List R → List E → List E
-candidates d rcs ecs = deduplicate _≃ₑ?_ (uₑ ∷ ⊤ₑ ∷ witnesses d rcs ecs)
+candidates d rcs ecs = deduplicate _≃ₑ?_ (𝟏ₑ ∷ ⊤ₑ ∷ witnesses d rcs ecs)
 
 -- The constants of an expression, and its occurrences of the rigids where its
 -- ordering can be refuted
@@ -353,13 +353,13 @@ pw-∈ (r ∷ rs) (there m) with pw-∈ rs m
                  (transₑ (⊩oes h m₀) (eqₑ (≡̂ₑ-subst δ (≅ᵉ⇒≡̂ q))))
 
 closeᵈ : ∀ {Ω} → QOrd (Ω +e) → QOrd Ω
-closeᵈ (qord l k o) with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
-... | yes _ = qord l k (o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ)
+closeᵈ (qord l k o) with o [ κ⟨ 𝟏̂ₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
+... | yes _ = qord l k (o [ κ⟨ 𝟏̂ₑ ⟩ ↑ᵉⁿ k ]ᴼ)
 ... | no _  = bindᵈ (qord l k o)
 
 closeᵈ-sound : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} → (E : QOrd (Ω +e))
              → Q ⊩ᴼ closeᵈ E [ δ ] → wkᵉ-H Q ⊩ᴼ E [ δ ↑ᵉ ]
-closeᵈ-sound {Q = Q} {δ} (qord l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
+closeᵈ-sound {Q = Q} {δ} (qord l k o) h with o [ κ⟨ 𝟏̂ₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
 ... | no _  = h
 ... | yes q =
       ⊩ᵒ-same q
@@ -371,10 +371,10 @@ closeᵈ-sound {Q = Q} {δ} (qord l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k 
 
 closeᵈ-princ : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} → (E : QOrd (Ω +e))
              → wkᵉ-H Q ⊩ᴼ E [ δ ↑ᵉ ] → Q ⊩ᴼ closeᵈ E [ δ ]
-closeᵈ-princ {Q = Q} {δ} (qord l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
+closeᵈ-princ {Q = Q} {δ} (qord l k o) h with o [ κ⟨ 𝟏̂ₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
 ... | no _  = h
-... | yes _ = ⊩ᵒ-subst⁻ (⊩ᵒ-resp-≐ˢ eq (⊩ᵒ-⨟ (⊩ᴴ-↑ᵉⁿ k (⊩ᴴ-κ ûₑ)) h))
+... | yes _ = ⊩ᵒ-subst⁻ (⊩ᵒ-resp-≐ˢ eq (⊩ᵒ-⨟ (⊩ᴴ-↑ᵉⁿ k (⊩ᴴ-κ 𝟏̂ₑ)) h))
   where
-    eq : (((δ ↑ᵉ) ↑ᵉⁿ k) ⨟ˢ (κ⟨ ûₑ ⟩ ↑ᵉⁿ k)) ≐ˢ ((κ⟨ ûₑ ⟩ ↑ᵉⁿ k) ⨟ˢ (δ ↑ᵉⁿ k))
-    eq = ≐ˢ-trans (⨟-↑ᵉⁿ (δ ↑ᵉ) κ⟨ ûₑ ⟩ k)
-         (≐ˢ-trans (≐ˢ-↑ᵉⁿ (↑-κ δ uₑ) k) (≐ˢ-sym (⨟-↑ᵉⁿ κ⟨ ûₑ ⟩ δ k)))
+    eq : (((δ ↑ᵉ) ↑ᵉⁿ k) ⨟ˢ (κ⟨ 𝟏̂ₑ ⟩ ↑ᵉⁿ k)) ≐ˢ ((κ⟨ 𝟏̂ₑ ⟩ ↑ᵉⁿ k) ⨟ˢ (δ ↑ᵉⁿ k))
+    eq = ≐ˢ-trans (⨟-↑ᵉⁿ (δ ↑ᵉ) κ⟨ 𝟏̂ₑ ⟩ k)
+         (≐ˢ-trans (≐ˢ-↑ᵉⁿ (↑-κ δ 𝟏ₑ) k) (≐ˢ-sym (⨟-↑ᵉⁿ κ⟨ 𝟏̂ₑ ⟩ δ k)))

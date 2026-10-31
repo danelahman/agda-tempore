@@ -112,7 +112,7 @@ data Star (X : Lang) : Lang where
   more : ∀ {x y} → X x → Star X y → Star X (x ++ y)
 
 ⟦_⟧ : ∀ {s} → Expr s → Lang
-⟦ ε       ⟧ = uᴸ
+⟦ ε       ⟧ = 𝟏ᴸ
 ⟦ ops A   ⟧ = opsᴸ A
 ⟦ str S e ⟧ = strᴸ S e
 ⟦ e ∣ f   ⟧ = ⟦ e ⟧ ∪ᴸ ⟦ f ⟧

@@ -53,7 +53,7 @@ open Future Fut using ([_]ᵒ; [_]ᶠ; []-congᶠ; []-idᵐ; []-∘ᵐ; []-≤; 
 open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; μ; ⟨⟩-≤; ⟨⟩-∘ᵐ; ⟨⟩-congᶠ; ⟨⟩-η-nat; ⟨⟩-μ-nat;
                      ⟨⟩-≤-nat; ⟨⟩-≤-irr; ⟨⟩-≤-refl; ⟨⟩-≤-trans; μ-≤ˡ; μ-≤ʳ;
                      ⟨⟩-μ∘Tη≡id; ⟨⟩-μ∘η≡id)
-open Adjunction Adj using (η⊣; η⊣-nat; η⊣-u; η⊣-≤; η⊣-δ; η⊣-monoidal;
+open Adjunction Adj using (η⊣; η⊣-nat; η⊣-𝟏; η⊣-≤; η⊣-δ; η⊣-monoidal;
                            ε⊣; ε⊣-nat; triangleˡ)
 open GroundTypes GTy using (⟦_⟧ᵍ)
 open Monad Mon
@@ -142,40 +142,40 @@ infixl 25 _⋄_
 -- A step's effect. Only `DELAY` does anything: it is the sole rule that
 -- advances time, by exactly its own delay. Resources (cells) are allocated
 -- into the shape of the store, never into the effect grade, which is why
--- allocation contributes `uₑ`.
+-- allocation contributes `𝟏ₑ`.
 
 step-grade : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
            → ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩
            → E
-step-grade APP                  = uₑ
-step-grade MATCH                = uₑ
-step-grade CASEL                = uₑ
-step-grade RECL                 = uₑ
-step-grade IF-TRUE              = uₑ
-step-grade CMP                  = uₑ
-step-grade IF-FALSE             = uₑ
-step-grade CASE+                = uₑ
-step-grade CASEℕ-ZERO           = uₑ
-step-grade CASEℕ-SUCC           = uₑ
-step-grade RECℕ-ZERO            = uₑ
-step-grade RECℕ-SUCC            = uₑ
+step-grade APP                  = 𝟏ₑ
+step-grade MATCH                = 𝟏ₑ
+step-grade CASEL                = 𝟏ₑ
+step-grade RECL                 = 𝟏ₑ
+step-grade IF-TRUE              = 𝟏ₑ
+step-grade CMP                  = 𝟏ₑ
+step-grade IF-FALSE             = 𝟏ₑ
+step-grade CASE+                = 𝟏ₑ
+step-grade CASEℕ-ZERO           = 𝟏ₑ
+step-grade CASEℕ-SUCC           = 𝟏ₑ
+step-grade RECℕ-ZERO            = 𝟏ₑ
+step-grade RECℕ-SUCC            = 𝟏ₑ
 step-grade (SEQ-STEP r _)       = step-grade r
-step-grade SEQ-RET              = uₑ
-step-grade SEQ-OP               = uₑ
-step-grade (DELAY {τ = τ})      = of-durᵉ τ ·ₑ uₑ
-step-grade HANDLE-RET           = uₑ
+step-grade SEQ-RET              = 𝟏ₑ
+step-grade SEQ-OP               = 𝟏ₑ
+step-grade (DELAY {τ = τ})      = ιₑ τ ·ₑ 𝟏ₑ
+step-grade HANDLE-RET           = 𝟏ₑ
 step-grade (HANDLE-STEP r _)    = step-grade r
-step-grade HANDLE-OP            = uₑ
-step-grade BOX                  = uₑ
-step-grade UNBOX                = uₑ
-step-grade SUB-APP              = uₑ
-step-grade SUB-HANDLE           = uₑ
-step-grade SUB-HANDLE-TRANS     = uₑ
-step-grade SUB-IF               = uₑ
-step-grade SUB-CASEℕ            = uₑ
-step-grade SUB-RECℕ             = uₑ
-step-grade SUB                  = uₑ
+step-grade HANDLE-OP            = 𝟏ₑ
+step-grade BOX                  = 𝟏ₑ
+step-grade UNBOX                = 𝟏ₑ
+step-grade SUB-APP              = 𝟏ₑ
+step-grade SUB-HANDLE           = 𝟏ₑ
+step-grade SUB-HANDLE-TRANS     = 𝟏ₑ
+step-grade SUB-IF               = 𝟏ₑ
+step-grade SUB-CASEℕ            = 𝟏ₑ
+step-grade SUB-RECℕ             = 𝟏ₑ
+step-grade SUB                  = 𝟏ₑ
 
 -- The transition itself. `DELAY` ticks: it names the present as the past of
 -- every world one delay ahead (`η⊣`), and `delayᵀ` reaches those worlds: the
@@ -200,7 +200,7 @@ stepᵀ RECℕ-SUCC         = ηᵀ
 stepᵀ (SEQ-STEP r _)    = stepᵀ r
 stepᵀ SEQ-RET           = ηᵀ
 stepᵀ SEQ-OP            = ηᵀ
-stepᵀ (DELAY {τ = τ})   = delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣
+stepᵀ (DELAY {τ = τ})   = delayᵀ τ ∘ᵐ [ ιᵣ τ ]ᶠ ηᵀ ∘ᵐ η⊣
 stepᵀ HANDLE-RET        = ηᵀ
 stepᵀ (HANDLE-STEP r _) = stepᵀ r
 stepᵀ HANDLE-OP         = ηᵀ
@@ -240,7 +240,7 @@ step-≾ (SEQ-STEP {ε₂ = ε₂} {ε₃ = ε₃} r _) =
 step-≾ SEQ-RET        = ≾ₑ-reflexive refl
 step-≾ {ε = ε} SEQ-OP = ≃ₑ⇒≾ₑ (·ₑ-identityˡ ε)
 step-≾ (DELAY {τ = τ} {ε = ε}) =
-  ≃ₑ⇒≾ₑ (·ₑ-cong (·ₑ-identityʳ (of-durᵉ τ)) ≃ₑ-refl)
+  ≃ₑ⇒≾ₑ (·ₑ-cong (·ₑ-identityʳ (ιₑ τ)) ≃ₑ-refl)
 step-≾ HANDLE-RET     = ≾ₑ-reflexive refl
 step-≾ (HANDLE-STEP {ε₂ = ε₂} {ε₁' = ε₁'} r _) =
   ≾ₑ-trans
@@ -286,11 +286,11 @@ _∙_ = ≈ᵐ-trans
 
 -- Every rule but `DELAY` leaves the history alone, transitioning by `ηᵀ`: the
 -- soundness equation collapses to a plain equation between the two
--- denotations, coerced along the effect refinement (the `uₑ` that `ηᵀ`
+-- denotations, coerced along the effect refinement (the `𝟏ₑ` that `ηᵀ`
 -- contributes is absorbed by `T-≤`).
 
 pure-step : ∀ {X A ε ε'}
-          → (q : uₑ ·ₑ ε' ≾ₑ ε)
+          → (q : 𝟏ₑ ·ₑ ε' ≾ₑ ε)
           → {f : X →ᵐ Tᵒ A ε} → {g : X →ᵐ Tᵒ A ε'}
           → (r : ε' ≾ₑ ε)
           → f ≈ᵐ T-≤ r ∘ᵐ g
@@ -306,7 +306,7 @@ pure-step {ε' = ε'} q {f} {g} r e =
 -- coercion is the identity and only the two denotations need to agree.
 
 pure-step-≡ : ∀ {X A ε}
-            → (q : uₑ ·ₑ ε ≾ₑ ε)
+            → (q : 𝟏ₑ ·ₑ ε ≾ₑ ε)
             → {f g : X →ᵐ Tᵒ A ε}
             → f ≈ᵐ g
             → f ≈ᵐ T-≤ q ∘ᵐ (g ⋄ ηᵀ)
@@ -429,7 +429,7 @@ caseL-reductᴾ (inj₁ tt)      M N pl         pM pN = pM
 caseL-reductᴾ (inj₂ (W , L)) M N (pW , pL) pM pN = subᶜ₂ N W L pN pW pL
 
 recL-reductᴾ : ∀ {Γ A B ε} → (l : ListView Γ A) → (M : Γ ⊢C⦂ B ‼ ε)
-             → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+             → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
              → (p : ε ·ₑ ε ≾ₑ ε)
              → Paramᵛ (unlistᵛ l) → Paramᶜ M → Paramᶜ N
              → Paramᶜ (recL-reduct l M N p)
@@ -539,7 +539,7 @@ sound-CASEL St V M N pV pM pN =
 
 sound-RECL : ∀ {Γ A B ε} → (St : 𝕊 Γ) → (V : toCtx St ⊢V⦂ |List| A)
            → (M : toCtx St ⊢C⦂ B ‼ ε)
-           → (N : (toCtx St ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+           → (N : (toCtx St ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
            → (p : ε ·ₑ ε ≾ₑ ε)
            → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
            → ⟦ recL V M N p ⟧ᶜᵗ (pV , pM , pN)
@@ -659,7 +659,7 @@ insert-coe {h = h} t = ≈ᵐ-sym (∘ᵐ-congˡ (T⟦⟧<:ᵛ-id t) ∙ ∘ᵐ-
 -- `pure-step`, with the coercion passing the sub-effecting by naturality.
 
 pure-step<: : ∀ {X A B ε ε'}
-            → (q : uₑ ·ₑ ε' ≾ₑ ε) → (t : B <:ᵛ A)
+            → (q : 𝟏ₑ ·ₑ ε' ≾ₑ ε) → (t : B <:ᵛ A)
             → {f : X →ᵐ Tᵒ ⟦ A ⟧ᵛ ε} → {g : X →ᵐ Tᵒ ⟦ B ⟧ᵛ ε'}
             → (r : ε' ≾ₑ ε)
             → f ≈ᵐ T-≤ r ∘ᵐ Tᶠ ⟦ t ⟧<:ᵛ ∘ᵐ g
@@ -669,13 +669,13 @@ pure-step<: {ε' = ε'} q t {f} {g} r e =
   ∙ ≈ᵐ-sym
       (  ∘ᵐ-congʳ (∘ᵐ-congʳ (⋄-ηᵀ g))
        ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-       ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-nat ⟦ t ⟧<:ᵛ uₑ·ε'≾ε'))
+       ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-nat ⟦ t ⟧<:ᵛ 𝟏ₑ·ε'≾ε'))
        ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-       ∙ ∘ᵐ-congˡ (T-≤-trans uₑ·ε'≾ε' q r))
+       ∙ ∘ᵐ-congˡ (T-≤-trans 𝟏ₑ·ε'≾ε' q r))
   where
-    uₑ·ε'≾ε' : ε' ≾ₑ uₑ ·ₑ ε'
-    uₑ·ε'≾ε' = ≃ₑ⇒≿ₑ (·ₑ-identityˡ ε')
+    𝟏ₑ·ε'≾ε' : ε' ≾ₑ 𝟏ₑ ·ₑ ε'
+    𝟏ₑ·ε'≾ε' = ≃ₑ⇒≿ₑ (·ₑ-identityˡ ε')
 
 -- A functorial action escapes a bind, by naturality of the multiplication.
 
@@ -750,7 +750,7 @@ sound-SUB-CASEℕ V M N pV pM pN = caseℕᵐ-cong (∘ᵐ-identityˡ _) ≈ᵐ-
 -- SUB-RECℕ: `Nat <:ᵛ Nat` denotes the identity.
 
 sound-SUB-RECℕ : ∀ {Γ B ε} → (V : Γ ⊢V⦂ Nat) → (M : Γ ⊢C⦂ B ‼ ε)
-               → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+               → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                → (p : ε ·ₑ ε ≾ₑ ε)
                → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                → ⟦ recℕ (subV V Natₛ) M N p ⟧ᶜᵗ (pV , pM , pN)
@@ -758,8 +758,8 @@ sound-SUB-RECℕ : ∀ {Γ B ε} → (V : Γ ⊢V⦂ Nat) → (M : Γ ⊢C⦂ B 
 sound-SUB-RECℕ V M N p pV pM pN = ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
 
 delayᵀ-ε-substᵀ : ∀ {A ε ε'} → (τ : 𝔻) → (e : ε ≡ ε')
-                → delayᵀ {A} {ε'} τ ∘ᵐ [ of-durʳ τ ]ᶠ (ε-substᵀ e)
-                ≈ᵐ ε-substᵀ (cong (of-durᵉ τ ·ₑ_) e) ∘ᵐ delayᵀ {A} {ε} τ
+                → delayᵀ {A} {ε'} τ ∘ᵐ [ ιᵣ τ ]ᶠ (ε-substᵀ e)
+                ≈ᵐ ε-substᵀ (cong (ιₑ τ ·ₑ_) e) ∘ᵐ delayᵀ {A} {ε} τ
 delayᵀ-ε-substᵀ τ refl =
   ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans ([]-congᶠ ε-substᵀ-refl) []-idᵐ))
   (≈ᵐ-trans (∘ᵐ-identityʳ _)
@@ -783,21 +783,21 @@ coe-cancel e q =
 -- re-associates the transition's `delayᵀ` out.
 
 sound-DELAY : ∀ {A ε} → (τ : 𝔻) → (St : 𝕊 [])
-            → (M : toCtx St ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
-            → (q : (of-durᵉ τ ·ₑ uₑ) ·ₑ ε ≾ₑ of-durᵉ τ ·ₑ ε)
+            → (M : toCtx St ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε)
+            → (q : (ιₑ τ ·ₑ 𝟏ₑ) ·ₑ ε ≾ₑ ιₑ τ ·ₑ ε)
             → (pSt : Paramˢ St) → (pM : Paramᶜ M)
             → ⟦ delay τ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt
-            ≈ᵐ T-≤ q ∘ᵐ ((⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟨ of-durʳ τ ⟩ₛ ⟧ˢ pSt)
-                          ⋄ (delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣))
+            ≈ᵐ T-≤ q ∘ᵐ ((⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟨ ιᵣ τ ⟩ₛ ⟧ˢ pSt)
+                          ⋄ (delayᵀ τ ∘ᵐ [ ιᵣ τ ]ᶠ ηᵀ ∘ᵐ η⊣))
 sound-DELAY {ε = ε} τ St M q pSt pM =
   lhs≈ ∙ ≈ᵐ-sym (∘ᵐ-congʳ rhs≈ ∙ cancel)
   where
-    g : ⟨ of-durʳ τ ⟩ᵒ ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ _ ε
-    g = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟨ of-durʳ τ ⟩ₛ ⟧ˢ pSt
+    g : ⟨ ιᵣ τ ⟩ᵒ ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ _ ε
+    g = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟨ ιᵣ τ ⟩ₛ ⟧ˢ pSt
 
     -- the common normal form: delay the whole configuration
-    nf : ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ _ (of-durᵉ τ ·ₑ ε)
-    nf = delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ g ∘ᵐ η⊣
+    nf : ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ _ (ιₑ τ ·ₑ ε)
+    nf = delayᵀ τ ∘ᵐ [ ιᵣ τ ]ᶠ g ∘ᵐ η⊣
 
     -- the source: `η⊣`-naturality absorbs the state into the boxed body
     lhs≈ : ⟦ delay τ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt ≈ᵐ nf
@@ -808,18 +808,18 @@ sound-DELAY {ε = ε} τ St M q pSt pM =
       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
       ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
 
-    d : ε ≾ₑ uₑ ·ₑ ε
+    d : ε ≾ₑ 𝟏ₑ ·ₑ ε
     d = ≃ₑ⇒≿ₑ (·ₑ-identityˡ ε)
 
-    c : of-durᵉ τ ·ₑ (uₑ ·ₑ ε) ≾ₑ (of-durᵉ τ ·ₑ uₑ) ·ₑ ε
-    c = ≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) uₑ ε)
+    c : ιₑ τ ·ₑ (𝟏ₑ ·ₑ ε) ≾ₑ (ιₑ τ ·ₑ 𝟏ₑ) ·ₑ ε
+    c = ≃ₑ⇒≿ₑ (·ₑ-assoc (ιₑ τ) 𝟏ₑ ε)
 
-    X : of-durᵉ τ ·ₑ ε ≾ₑ (of-durᵉ τ ·ₑ uₑ) ·ₑ ε
+    X : ιₑ τ ·ₑ ε ≾ₑ (ιₑ τ ·ₑ 𝟏ₑ) ·ₑ ε
     X = ≾ₑ-trans (·ₑ-monoʳ-≾ₑ d) c
 
     -- the target: `delayᵀ` is natural, then algebraic; the leftover unit
     -- laws are pure transports
-    rhs≈ : (g ⋄ (delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣))
+    rhs≈ : (g ⋄ (delayᵀ τ ∘ᵐ [ ιᵣ τ ]ᶠ ηᵀ ∘ᵐ η⊣))
          ≈ᵐ T-≤ c ∘ᵐ T-≤ (·ₑ-monoʳ-≾ₑ d) ∘ᵐ nf
     rhs≈ =
       -- pull `Tᶠ g` through the delay (delayᵀ is natural)
@@ -863,19 +863,19 @@ sound-DELAY {ε = ε} τ St M q pSt pM =
 --
 -- `strᵀ-ηᵀ` opens the boxed environment with the box counit at the unit grade;
 -- the syntax instead re-locks the context with `⟨⟩-η-ren`. The two agree by
--- `η⊣-u`. The grade equality `mapᵉ uₑ ≡ uᵣ` is generalised so that it can be
+-- `η⊣-𝟏`. The grade equality `∣ 𝟏ₑ ∣ᵉ ≡ 𝟏ᵣ` is generalised so that it can be
 -- matched.
 
-ret-env-u : ∀ {X} → εᵇ ∘ᵐ η⊣ {X} {uᵣ} ≈ᵐ η
-ret-env-u =
-    ∘ᵐ-congʳ η⊣-u
+ret-env-𝟏 : ∀ {X} → εᵇ ∘ᵐ η⊣ {X} {𝟏ᵣ} ≈ᵐ η
+ret-env-𝟏 =
+    ∘ᵐ-congʳ η⊣-𝟏
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat η))
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ []-ε∘ηᵘ≡id
   ∙ ∘ᵐ-identityʳ _
 
-ret-env : ∀ {ρ} X → (e : ρ ≃ᵣ uᵣ)
+ret-env : ∀ {ρ} X → (e : ρ ≃ᵣ 𝟏ᵣ)
         → εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ e) ∘ᵐ η⊣ {X} {ρ}
         ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ e) ∘ᵐ η
 ret-env X e =
@@ -883,7 +883,7 @@ ret-env X e =
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat _))
   ∙ ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (ret-env-u {X})
+  ∙ ∘ᵐ-congʳ (ret-env-𝟏 {X})
 
 -- Substituting into a renamed continuation: the renaming lands in the
 -- environment's first component, the substituted value in its second.
@@ -907,24 +907,24 @@ sub-ren r N V pN pV =
 
 -- The parametricity certificate of the `return`-rules' reduct: the sequel
 -- renamed by the re-locking renaming, then substituted into.
-ret-subᴾ : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+ret-subᴾ : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε)
          → Paramᵛ V → Paramᶜ N
-         → Paramᶜ (C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
+         → Paramᶜ (C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
                      [ split-[] ↦ V ]c)
 ret-subᴾ {Γ} V N pV pN =
-  subᶜ (C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N)
+  subᶜ (C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N)
        split-[] V
-    (renᶜ (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N pN) pV
+    (renᶜ (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N pN) pV
 
 ret-step : ∀ {Γ A B ε}
-         → (alg : Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε) uₑ →ᵐ Tᵒ ⟦ B ⟧ᵛ (uₑ ·ₑ ε))
+         → (alg : Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε) 𝟏ₑ →ᵐ Tᵒ ⟦ B ⟧ᵛ (𝟏ₑ ·ₑ ε))
          → (alg-η : alg ∘ᵐ ηᵀ ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε)))
          → (V : Γ ⊢V⦂ A)
-         → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+         → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε)
          → (pV : Paramᵛ V) → (pN : Paramᶜ N)
          → alg ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
          ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
-            ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
+            ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
                    [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 ret-step {Γ} alg alg-η V N pV pN =
     ∘ᵐ-congʳ ret-massage
@@ -935,7 +935,7 @@ ret-step {Γ} alg alg-η V N pV pN =
     -- value's `ηᵀ` opens the boxed environment (`strᵀ-ηᵀ`), which is exactly the
     -- syntax's re-locking renaming (`ret-env`), leaving `ηᵀ ∘ (renamed subst)`.
     ret-massage : Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
-                ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
+                ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
                             [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
     ret-massage =
         ∘ᵐ-congʳ (∘ᵐ-congʳ
@@ -945,26 +945,26 @@ ret-step {Γ} alg alg-η V N pV pN =
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ
-          (⟨ ∘ᵐ-assoc _ _ _ ∙ ret-env ⟦ Γ ⟧ᶜᵗˣ map-uᵉ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+          (⟨ ∘ᵐ-assoc _ _ _ ∙ ret-env ⟦ Γ ⟧ᶜᵗˣ map-𝟏ᵉ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat (⟦ N ⟧ᶜᵗ pN)))
       ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren) N V pN pV))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren) N V pN pV))
 
 -- `ret-step`, threaded with an eternal parameter `P` supplied by `pv`. The
 -- handler's algebra reads its clause-context off `P` (`= ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧`, via
 -- `⟨⊤⟩-η`); the `ηᵀ` law discards it (`sndᵐ`), so returning ignores `P`.
 ret-step-P : ∀ {Γ A B ε P}
            → (pv : ⟦ Γ ⟧ᶜᵗˣ →ᵐ P)
-           → (alg : P ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε) uₑ →ᵐ Tᵒ ⟦ B ⟧ᵛ (uₑ ·ₑ ε))
+           → (alg : P ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε) 𝟏ₑ →ᵐ Tᵒ ⟦ B ⟧ᵛ (𝟏ₑ ·ₑ ε))
            → (alg-η : alg ∘ᵐ mapˣᵐ idᵐ (ηᵀ {Tᵒ ⟦ B ⟧ᵛ ε})
                     ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε)) ∘ᵐ sndᵐ)
            → (V : Γ ⊢V⦂ A)
-           → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+           → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε)
            → (pV : Paramᵛ V) → (pN : Paramᶜ N)
            → alg ∘ᵐ ⟨ pv , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ ⟩ᵐ
            ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
-              ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
+              ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
                      [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 ret-step-P {Γ} pv alg alg-η V N pV pN =
     ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ret-massage ⟩ᵐ-cong)
@@ -975,7 +975,7 @@ ret-step-P {Γ} pv alg alg-η V N pV pN =
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)
   where
     ret-massage : Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
-                ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
+                ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
                             [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
     ret-massage =
         ∘ᵐ-congʳ (∘ᵐ-congʳ
@@ -985,20 +985,20 @@ ret-step-P {Γ} pv alg alg-η V N pV pN =
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ
-          (⟨ ∘ᵐ-assoc _ _ _ ∙ ret-env ⟦ Γ ⟧ᶜᵗˣ map-uᵉ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+          (⟨ ∘ᵐ-assoc _ _ _ ∙ ret-env ⟦ Γ ⟧ᶜᵗˣ map-𝟏ᵉ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat (⟦ N ⟧ᶜᵗ pN)))
       ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren) N V pN pV))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren) N V pN pV))
 
 -- SEQ-RET and HANDLE-RET: the two instances of `ret-step`, one for the monad
 -- multiplication and one for the handler's algebra.
 
-sound-SEQ-RET : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+sound-SEQ-RET : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε)
               → (pV : Paramᵛ V) → (pN : Paramᶜ N)
               → ⟦ return V ⨟ N ⟧ᶜᵗ (pV , pN)
               ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
-                 ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
+                 ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
                         [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 sound-SEQ-RET V N pV pN = ret-step μᵀ T-μ∘η≡id V N pV pN
 
@@ -1006,15 +1006,15 @@ sound-HANDLE-RET : ∀ {Γ A B ε}
                  → (V : Γ ⊢V⦂ A)
                  → (H : (op : Op) → (ε'' : E)
                       → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                           ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                           ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-                 → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+                 → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε)
                  → (pV : Paramᵛ V) → (pN : Paramᶜ N)
                  → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
                  → (uH : EffUniformʰ {Γ} H pH)
                  → ⟦ handle return V `with H `in N ⟧ᶜᵗ (pV , pN , pH , uH)
                  ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
-                    ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
+                    ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
                            [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 sound-HANDLE-RET {Γ} V H N pV pN pH uH =
     handle-in-β (return V) H N pV pN pH uH

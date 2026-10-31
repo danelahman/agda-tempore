@@ -114,7 +114,7 @@ chkᵗ-v : ∀ {Θ} → TyVar (Θ +ty) → OVType (Θ +ty) → Maybe (OVType Θ)
 chkᵗ-v α A = if occᵗ-v α A then nothing else just (A [ Unit forᵗ α ]ᵛ)
 
 chkʳ-r : ∀ {Θ} → RVar (Θ +r) → RExp (Θ +r) → Maybe (RExp Θ)
-chkʳ-r i ρ = if occʳ-r i ρ then nothing else just (ρ [ ûᵣ forʳ i ]ʳ)
+chkʳ-r i ρ = if occʳ-r i ρ then nothing else just (ρ [ 𝟏̂ᵣ forʳ i ]ʳ)
 
 chkᵉ-e : ∀ {Θ} → EVar (Θ +e) → EExp (Θ +e) → Maybe (EExp Θ)
-chkᵉ-e i ε = if occᵉ-e i ε then nothing else just (ε [ ûₑ forᵉ i ]ᵉ)
+chkᵉ-e i ε = if occᵉ-e i ε then nothing else just (ε [ 𝟏̂ₑ forᵉ i ]ᵉ)

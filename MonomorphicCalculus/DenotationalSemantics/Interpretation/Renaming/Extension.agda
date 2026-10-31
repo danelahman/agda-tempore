@@ -218,7 +218,7 @@ var-proj-nat-eternal et (var-ren p y) Hd =
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (var-morphism-unfoldᵉ et p y)))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-u et)) ⟨⟩-εᵘ∘η≡id))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-𝟏 et)) ⟨⟩-εᵘ∘η≡id))
               (∘ᵐ-identityˡ _)))))))
 var-proj-nat-eternal et (var-ren p y) (Tl-∷ x) =
   ≈ᵐ-sym
@@ -235,7 +235,7 @@ var-proj-nat-eternal et ⟨⟩-η-ren (Tl-⟨⟩ x) =
                                 (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
 var-proj-nat-eternal et ⟨⟩-η⁻¹-ren Hd =
-  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (eternalᵛ-extᵉ-≤ et (≃ᵣ⇒≾ᵣ (·ᵣ-identityʳ uᵣ)))))
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (eternalᵛ-extᵉ-≤ et (≃ᵣ⇒≾ᵣ (·ᵣ-identityʳ 𝟏ᵣ)))))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
                       (≈ᵐ-trans (∘ᵐ-congˡ μ-εᵘ) (≈ᵐ-sym (εᵘ-nat _)))))
@@ -312,7 +312,7 @@ var-proj-nat-eternal et (⟨⟩-ext-ctx _ ecΓ) x =
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
             (ec-var-alg ecΓ et x))))
 
-var-morphism-nat : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ ] Γ)
+var-morphism-nat : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ) → (x : A ∈[ ρ ] Γ)
                  → var-morphism (λ q → ≾ᵣ-trans (proj₁ (proj₂ (var-rename r x)) q) (f q))
                                 (proj₂ (proj₂ (var-rename r x)))
                    ≈ᵐ var-morphism f x ∘ᵐ ⟦ r ⟧ʳ

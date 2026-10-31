@@ -5,10 +5,10 @@
 -- and sub-effecting as `Monad`, but with no algebraic operations and no  --
 -- effect handling. In their place, a single primitive:                   --
 --                                                                        --
---   tickᵏ δ : [ mapᵉ δ ]ᵒ (Tᵏ A ε) →ᵐ Tᵏ A (δ ·ₑ ε)                      --
+--   tickᵏ δ : [ ∣ δ ∣ᵉ ]ᵒ (Tᵏ A ε) →ᵐ Tᵏ A (δ ·ₑ ε)                      --
 --                                                                        --
 -- a delay at an arbitrary effect grade: `δ` worth of time passes and     --
--- nothing is observed. A delay is `tickᵏ (of-durᵉ τ)`; an operation that --
+-- nothing is observed. A delay is `tickᵏ (ιₑ τ)`; an operation that      --
 -- has been implemented is `tickᵏ (op-grade op)`, leaving only the time   --
 -- it took. `Model.Implementation` supplies the monad morphism running    --
 -- the tree monad's operations into these ticks.                          --
@@ -45,7 +45,7 @@ record TickMonad : Set₁ where
     Tᵏ : Obj → E → Obj
     Tᵏᶠ : ∀ {A B ε} → A →ᵐ B → Tᵏ A ε →ᵐ Tᵏ B ε
 
-    ηᵏ : ∀ {A} → A →ᵐ Tᵏ A uₑ
+    ηᵏ : ∀ {A} → A →ᵐ Tᵏ A 𝟏ₑ
     μᵏ : ∀ {A ε ε'} → Tᵏ (Tᵏ A ε') ε →ᵐ Tᵏ A (ε ·ₑ ε')
 
     -- transport along an equality of grades
@@ -87,10 +87,10 @@ record TickMonad : Set₁ where
     -- Graded monad laws
 
     Tᵏ-μ∘η≡id : ∀ {A ε}
-              → μᵏ {A} {uₑ} {ε} ∘ᵐ ηᵏ {Tᵏ A ε}
+              → μᵏ {A} {𝟏ₑ} {ε} ∘ᵐ ηᵏ {Tᵏ A ε}
               ≈ᵐ T-≤ᵏ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
     Tᵏ-μ∘Tη≡id : ∀ {A ε}
-               → μᵏ {A} {ε} {uₑ} ∘ᵐ Tᵏᶠ (ηᵏ {A})
+               → μᵏ {A} {ε} {𝟏ₑ} ∘ᵐ Tᵏᶠ (ηᵏ {A})
                ≈ᵐ T-≤ᵏ (≃ₑ⇒≿ₑ (·ₑ-identityʳ ε))
     Tᵏ-μ∘μ≡μ∘Tμ : ∀ {A ε ε' ε''}
                 → μᵏ {A} {ε} {ε' ·ₑ ε''} ∘ᵐ Tᵏᶠ (μᵏ {A} {ε'} {ε''})
@@ -101,22 +101,22 @@ record TickMonad : Set₁ where
     -- The only effect: `δ` worth of time passes, and nothing is observed.
     -- The computation resumes in the future the box reaches.
 
-    tickᵏ : ∀ {A ε} → (δ : E) → [ mapᵉ δ ]ᵒ (Tᵏ A ε) →ᵐ Tᵏ A (δ ·ₑ ε)
+    tickᵏ : ∀ {A ε} → (δ : E) → [ ∣ δ ∣ᵉ ]ᵒ (Tᵏ A ε) →ᵐ Tᵏ A (δ ·ₑ ε)
 
     -- It is natural, algebraic, and sub-effecting passes under it: a tick
     -- records nothing, so coercing the continuation and coercing the whole
     -- computation agree.
 
     tickᵏ-nat : ∀ {A B ε} → (δ : E) → (f : A →ᵐ B)
-              → tickᵏ {ε = ε} δ ∘ᵐ [ mapᵉ δ ]ᶠ (Tᵏᶠ f)
+              → tickᵏ {ε = ε} δ ∘ᵐ [ ∣ δ ∣ᵉ ]ᶠ (Tᵏᶠ f)
               ≈ᵐ Tᵏᶠ f ∘ᵐ tickᵏ δ
 
     tickᵏ-algebraicity : ∀ {A ε ε'} → (δ : E)
                        → μᵏ {A} {δ ·ₑ ε} {ε'} ∘ᵐ tickᵏ {ε = ε} δ
                        ≈ᵐ T-≤ᵏ (≃ₑ⇒≿ₑ (·ₑ-assoc δ ε ε'))
                          ∘ᵐ tickᵏ δ
-                         ∘ᵐ [ mapᵉ δ ]ᶠ (μᵏ {A} {ε} {ε'})
+                         ∘ᵐ [ ∣ δ ∣ᵉ ]ᶠ (μᵏ {A} {ε} {ε'})
 
     tickᵏ-≤ : ∀ {A ε ε'} → (δ : E) → (p : ε ≾ₑ ε')
-            → tickᵏ {A} {ε'} δ ∘ᵐ [ mapᵉ δ ]ᶠ (T-≤ᵏ p)
+            → tickᵏ {A} {ε'} δ ∘ᵐ [ ∣ δ ∣ᵉ ]ᶠ (T-≤ᵏ p)
             ≈ᵐ T-≤ᵏ (·ₑ-monoʳ-≾ₑ p) ∘ᵐ tickᵏ {A} {ε} δ

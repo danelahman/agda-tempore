@@ -113,7 +113,7 @@ infixl 30 _⋈ᶜ_
 -- Amount of time-passage modelled by a context 
 
 ctx-grade : Ctx → R
-ctx-grade []        = uᵣ
+ctx-grade []        = 𝟏ᵣ
 ctx-grade (Γ ∷ A)   = ctx-grade Γ
 ctx-grade (Γ ⟨ ρ ⟩) = ctx-grade Γ ·ᵣ ρ
 
@@ -151,7 +151,7 @@ split-≡-++ᶜ = ≡-split refl
 -- Variable in a context (under ρ-amount of time-passage)
 
 data _∈[_]_ (A : VType) : R → Ctx → Set where
-  Hd    : ∀ {Γ}      → A ∈[ uᵣ ] Γ ∷ A
+  Hd    : ∀ {Γ}      → A ∈[ 𝟏ᵣ ] Γ ∷ A
   Tl-∷  : ∀ {Γ B ρ}  → A ∈[ ρ ] Γ → A ∈[ ρ ] Γ ∷ B
   Tl-⟨⟩ : ∀ {Γ ρ ρ'} → A ∈[ ρ' ] Γ → A ∈[ ρ' ·ᵣ ρ ] Γ ⟨ ρ ⟩
 

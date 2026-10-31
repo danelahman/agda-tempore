@@ -88,7 +88,7 @@ w ⊑ᵗ[ any-run ]      w' = ⊤
 -- reflexivity at the unit grade `{ ε }`: the only permitted run takes
 -- no time, and none has passed
 
-⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ (permitting u) ] w
+⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ (permitting 𝟏) ] w
 ⊑ᵗ-refl {w} = fromWitness (here (≤-reflexive (sym (+-identityʳ w))))
 
 -- transitivity multiplies the grades: the two advances compose into the

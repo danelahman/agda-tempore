@@ -70,21 +70,21 @@ idle e = e & none
 ------------------------------------------------------------------------
 -- The grade
 
-of-dur : ℕ → Closed
-of-dur = steps wait≤1
+ι : ℕ → Closed
+ι = steps wait≤1
 
 right-sided : Grade ℕᴰ
 right-sided =
-  C.WithDurations.closed-grade of-dur refl (λ {m} {n} → steps-plus wait≤1 {m} {n})
+  C.WithDurations.closed-grade ι refl (λ {m} {n} → steps-plus wait≤1 {m} {n})
 
 -- its hints by copatterns, so that `right-sided` is not compared as a
 -- record value
 
 private
   module H = GradeHints
-    (C.WithDurations.closed-gradeʰ of-dur refl (λ {m} {n} → steps-plus wait≤1 {m} {n}))
+    (C.WithDurations.closed-gradeʰ ι refl (λ {m} {n} → steps-plus wait≤1 {m} {n}))
 
 right-sidedʰ : GradeHints right-sided
-GradeHints.u-least? right-sidedʰ = H.u-least?
+GradeHints.𝟏-least? right-sidedʰ = H.𝟏-least?
 GradeHints.·-comm?  right-sidedʰ = H.·-comm?
 GradeHints.plus?    right-sidedʰ = H.plus?

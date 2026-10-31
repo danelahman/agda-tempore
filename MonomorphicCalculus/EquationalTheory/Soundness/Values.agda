@@ -187,14 +187,14 @@ sound-caseℕ-eta {Γ} {C} V M pM (pV , pZ , pS) pR =
 -- The recursor's betas, as for the reductions `RECℕ-ZERO`/`RECℕ-SUCC`.
 
 sound-recℕ-beta-zero : ∀ {Γ B ε} → (M : Γ ⊢C⦂ B ‼ ε)
-                     → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                     → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                      → (p : ε ·ₑ ε ≾ₑ ε)
                      → Soundᶜ== (recℕ-beta-zero M N p)
 sound-recℕ-beta-zero M N p (_ , pM , pN) pR =
   sound-RECℕ-ZERO M N p pM pN ∙ ⟦⟧ᶜᵗ-irr M pM pR
 
 sound-recℕ-beta-succ : ∀ {Γ B ε} → (V : Γ ⊢V⦂ Nat) → (M : Γ ⊢C⦂ B ‼ ε)
-                     → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                     → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                      → (p : ε ·ₑ ε ≾ₑ ε)
                      → Soundᶜ== (recℕ-beta-succ V M N p)
 sound-recℕ-beta-succ V M N p (pV , pM , pN) pR =
@@ -393,7 +393,7 @@ sound-caseL-eta {Γ} {A} {C} V M pM (pV , pZ , pS) pR =
 -- The list recursor's betas, as for the reductions.
 
 sound-recL-beta-nil : ∀ {Γ A B ε} → (M : Γ ⊢C⦂ B ‼ ε)
-                    → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                    → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                     → (p : ε ·ₑ ε ≾ₑ ε)
                     → Soundᶜ== (recL-beta-nil M N p)
 sound-recL-beta-nil M N p (_ , pM , pN) pR =
@@ -401,7 +401,7 @@ sound-recL-beta-nil M N p (_ , pM , pN) pR =
 
 sound-recL-beta-cons : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ |List| A)
                      → (M : Γ ⊢C⦂ B ‼ ε)
-                     → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                     → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                      → (p : ε ·ₑ ε ≾ₑ ε)
                      → Soundᶜ== (recL-beta-cons V W M N p)
 sound-recL-beta-cons V W M N p ((pV , pW) , pM , pN) pR =

@@ -30,18 +30,18 @@ tsi→lsi : two-sided-intervals-with-∞ →ᵍ left-sided-intervals
 tsi→lsi = strictᵍ record
   { map          = λ tsi → [ min tsi ,+∞⟩
   ; map-monotone = λ rel → proj₁ rel
-  ; map-u        = refl
+  ; map-𝟏        = refl
   ; map-·        = refl
   ; map-⊤        = refl
   ; map-⊔        = refl
-  ; map-of-dur   = refl
+  ; map-ι        = refl
   }
 
 twoSidedIntervalsToLeftSidedIntervalsGradeSystem : GradeSystem
 twoSidedIntervalsToLeftSidedIntervalsGradeSystem = record
   { RGrade = left-sided-intervals
   ; EGrade = two-sided-intervals-with-∞
-  ; ∣_∣ᵉ   = tsi→lsi
+  ; ∣-∣ᵉ   = tsi→lsi
   }
 
 -- its hints
@@ -50,6 +50,6 @@ twoSidedIntervalsToLeftSidedIntervalsGradeSystemʰ : SystemHints twoSidedInterva
 twoSidedIntervalsToLeftSidedIntervalsGradeSystemʰ = record
   { RHints      = left-sided-intervalsʰ
   ; EHints      = two-sided-intervals-with-∞ʰ
-  ; reflects-u? = nothing
+  ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

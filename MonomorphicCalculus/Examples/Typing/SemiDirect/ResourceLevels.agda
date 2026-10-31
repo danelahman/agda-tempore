@@ -38,7 +38,7 @@ open import Grades.Examples.Worked.Operations using (Op; read; write; send)
 -- The operations
 
 opTime : Op → Level
-opTime read  = Grade.u (one-resource {ℕᴰ})
+opTime read  = Grade.𝟏 (one-resource {ℕᴰ})
 opTime write = res 0 (+ 1) (+ 1) 1
 opTime send  = res 1 (ℤ.- + 1) (ℤ.- + 1) 0
 
@@ -85,15 +85,15 @@ sample-twice-then-store : [] ⊢C⦂ Unit ‼ res 0 (+ 1) (+ 1) 1
 sample-twice-then-store =
   check (res 0 (+ 1) (+ 1) 1)
     (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
-      (delay 3                       -- ⟨ uᵣ ⟩
+      (delay 3                       -- ⟨ 𝟏ᵣ ⟩
         (perform read ⋆              -- ⟨ opTime read ⟩ ∷ Reading
-          (perform write (fresh-var (decided (uᵣ ·ᵣ of-durʳ 3 ·ᵣ opTime read) uᵣ)
+          (perform write (fresh-var (decided (𝟏ᵣ ·ᵣ ιᵣ 3 ·ᵣ opTime read) 𝟏ᵣ)
                                       (Tl-∷ (Tl-⟨⟩ (Tl-⟨⟩ Hd))))
                                      -- ⟨ opTime write ⟩ ∷ Unit
             (return ⋆)))))
 
-stale-after-storing : ¬ (uᵣ ·ᵣ opTime write ≾ᵣ uᵣ)
-stale-after-storing = refuted (uᵣ ·ᵣ opTime write) uᵣ
+stale-after-storing : ¬ (𝟏ᵣ ·ᵣ opTime write ≾ᵣ 𝟏ᵣ)
+stale-after-storing = refuted (𝟏ᵣ ·ᵣ opTime write) 𝟏ᵣ
 
 ------------------------------------------------------------------------
 -- Unboxing: claimable while at most one slot is occupied since boxing
@@ -106,19 +106,19 @@ claim-after-a-store =
   check (res 0 (+ 0) (+ 0) 1)
     (box one-slot (const 7)          -- ∷ [ one-slot ] Reading
       (perform write (const 1)       -- ⟨ opTime write ⟩ ∷ Unit
-        (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (decided (uᵣ ·ᵣ opTime write) one-slot) (<:ᵛ-refl _)
+        (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (decided (𝟏ᵣ ·ᵣ opTime write) one-slot) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))
 
-claim-after-two-stores : ¬ (uᵣ ·ᵣ opTime write ·ᵣ opTime write ≾ᵣ one-slot)
-claim-after-two-stores = refuted (uᵣ ·ᵣ opTime write ·ᵣ opTime write) one-slot
+claim-after-two-stores : ¬ (𝟏ᵣ ·ᵣ opTime write ·ᵣ opTime write ≾ᵣ one-slot)
+claim-after-two-stores = refuted (𝟏ᵣ ·ᵣ opTime write ·ᵣ opTime write) one-slot
 
-claim-after-a-transmission : ¬ (uᵣ ·ᵣ opTime send ≾ᵣ one-slot)
-claim-after-a-transmission = refuted (uᵣ ·ᵣ opTime send) one-slot
+claim-after-a-transmission : ¬ (𝟏ᵣ ·ᵣ opTime send ≾ᵣ one-slot)
+claim-after-a-transmission = refuted (𝟏ᵣ ·ᵣ opTime send) one-slot
 
 ------------------------------------------------------------------------
 -- Effect handling: the unit is not least, so no clause discards a
 -- store's continuation
 
-cannot-discard : ¬ (uₑ ≾ₑ opTime write ·ₑ uₑ)
-cannot-discard = refuted uₑ (opTime write ·ₑ uₑ)
+cannot-discard : ¬ (𝟏ₑ ≾ₑ opTime write ·ₑ 𝟏ₑ)
+cannot-discard = refuted 𝟏ₑ (opTime write ·ₑ 𝟏ₑ)

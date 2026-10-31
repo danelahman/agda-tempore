@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------
 -- Semantics of the context modality `Γ ⟨ ρ ⟩`, as a functor graded by --
--- a monoid of grades `(R , · , u , ≾)`. It is the analogue of the     --
+-- a monoid of grades `(R , · , 𝟏 , ≾)`. It is the analogue of the     --
 -- monadic lock-modality on contexts in Fitch-style modal calculi.     --
 --                                                                     --
 -- The modality is a lax graded monad, with unit `η` and               --
@@ -9,8 +9,8 @@
 -- equality `≈ᵐ`.                                                      --
 --                                                                     --
 -- At the unit resource grade the unit is moreover an                  --
--- isomorphism: a unit-graded counit `εᵘ : ⟨ u ⟩ᵒ A →ᵐ A` splits `η`,  --
--- so `⟨ u ⟩ᵒ A ≅ A`. This is dual to the box modality's unit-graded   --
+-- isomorphism: a unit-graded counit `εᵘ : ⟨ 𝟏 ⟩ᵒ A →ᵐ A` splits `η`,  --
+-- so `⟨ 𝟏 ⟩ᵒ A ≅ A`. This is dual to the box modality's unit-graded   --
 -- unit `ηᵘ`, and combined with the graded adjunction `⟨ ρ ⟩ ⊣ [ ρ ]`  --
 -- it is what interprets using a variable once the resources to its    --
 -- right sum to the unit grade.                                        --
@@ -57,15 +57,15 @@ record Past : Set₁ where
 
     -- Unit
 
-    η : ∀ {A} → A →ᵐ ⟨ u ⟩ᵒ A
+    η : ∀ {A} → A →ᵐ ⟨ 𝟏 ⟩ᵒ A
 
     -- Multiplication (reversed grade order)
 
     μ : ∀ {A ρ₁ ρ₂} → ⟨ ρ₁ ⟩ᵒ (⟨ ρ₂ ⟩ᵒ A) →ᵐ ⟨ ρ₂ · ρ₁ ⟩ᵒ A
 
-    -- Unit-graded counit: the inverse of the unit `η` at grade `u`.
+    -- Unit-graded counit: the inverse of the unit `η` at grade `𝟏`.
 
-    εᵘ : ∀ {A} → ⟨ u ⟩ᵒ A →ᵐ A
+    εᵘ : ∀ {A} → ⟨ 𝟏 ⟩ᵒ A →ᵐ A
 
     -- PROPERTIES
 
@@ -92,7 +92,7 @@ record Past : Set₁ where
 
     -- η is natural
 
-    ⟨⟩-η-nat : ∀ {A B} → (f : A →ᵐ B) → ⟨ u ⟩ᶠ f ∘ᵐ η ≈ᵐ η ∘ᵐ f
+    ⟨⟩-η-nat : ∀ {A B} → (f : A →ᵐ B) → ⟨ 𝟏 ⟩ᶠ f ∘ᵐ η ≈ᵐ η ∘ᵐ f
 
     -- μ is natural
 
@@ -108,10 +108,10 @@ record Past : Set₁ where
     -- Graded monad laws
 
     ⟨⟩-μ∘η≡id : ∀ {A ρ}
-              → μ {A} {u} {ρ} ∘ᵐ η
+              → μ {A} {𝟏} {ρ} ∘ᵐ η
               ≈ᵐ ⟨⟩-≤ (≃⇒≿ (·-identityʳ ρ))
     ⟨⟩-μ∘Tη≡id : ∀ {A ρ}
-               → μ {A} {ρ} {u} ∘ᵐ ⟨ ρ ⟩ᶠ η
+               → μ {A} {ρ} {𝟏} ∘ᵐ ⟨ ρ ⟩ᶠ η
                ≈ᵐ ⟨⟩-≤ (≃⇒≿ (·-identityˡ ρ))
     ⟨⟩-μ∘μ≡μ∘Tμ : ∀ {A ρ₁ ρ₂ ρ₃}
                 → μ {A} {ρ₂ · ρ₁} {ρ₃} ∘ᵐ μ {⟨ ρ₃ ⟩ᵒ A} {ρ₁} {ρ₂}
@@ -120,9 +120,9 @@ record Past : Set₁ where
 
     -- εᵘ is natural
 
-    εᵘ-nat : ∀ {A B} → (f : A →ᵐ B) → f ∘ᵐ εᵘ ≈ᵐ εᵘ ∘ᵐ ⟨ u ⟩ᶠ f
+    εᵘ-nat : ∀ {A B} → (f : A →ᵐ B) → f ∘ᵐ εᵘ ≈ᵐ εᵘ ∘ᵐ ⟨ 𝟏 ⟩ᶠ f
 
-    -- εᵘ and the unit η are mutually inverse (so `⟨ u ⟩ᵒ A ≅ A`)
+    -- εᵘ and the unit η are mutually inverse (so `⟨ 𝟏 ⟩ᵒ A ≅ A`)
 
     ⟨⟩-εᵘ∘η≡id : ∀ {A} → εᵘ {A} ∘ᵐ η {A} ≈ᵐ idᵐ
     ⟨⟩-η∘εᵘ≡id : ∀ {A} → η {A} ∘ᵐ εᵘ {A} ≈ᵐ idᵐ
@@ -136,9 +136,9 @@ record Past : Set₁ where
     subst (λ w → ⟨⟩-≤ {A} w₁ ≈ᵐ ⟨⟩-≤ {A} w) (≾-irrelevant w₁ w₂) ≈ᵐ-refl
 
   -- Folding a unit-graded outer layer with `μ` (and relaxing the redundant
-  -- `· u`) is the counit `εᵘ`.
+  -- `· 𝟏`) is the counit `εᵘ`.
 
-  μ-εᵘ : ∀ {A ρ} → ⟨⟩-≤ (≃⇒≾ (·-identityʳ ρ)) ∘ᵐ μ {A} {u} {ρ} ≈ᵐ εᵘ
+  μ-εᵘ : ∀ {A ρ} → ⟨⟩-≤ (≃⇒≾ (·-identityʳ ρ)) ∘ᵐ μ {A} {𝟏} {ρ} ≈ᵐ εᵘ
   μ-εᵘ {A} {ρ} =
     ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ _))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym ⟨⟩-η∘εᵘ≡id))
@@ -146,7 +146,7 @@ record Past : Set₁ where
     (≈ᵐ-trans (∘ᵐ-congˡ fη≡id)
               (∘ᵐ-identityˡ εᵘ))))
     where
-      fη≡id : (⟨⟩-≤ (≃⇒≾ (·-identityʳ ρ)) ∘ᵐ μ {A} {u} {ρ}) ∘ᵐ η ≈ᵐ idᵐ
+      fη≡id : (⟨⟩-≤ (≃⇒≾ (·-identityʳ ρ)) ∘ᵐ μ {A} {𝟏} {ρ}) ∘ᵐ η ≈ᵐ idᵐ
       fη≡id =
         ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
         (≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-μ∘η≡id)
@@ -172,14 +172,14 @@ record Past : Set₁ where
 
   -- EXTRACTION BELOW THE UNIT GRADE
   --
-  -- At a grade `ρ ≾ u` the possibility can be discharged outright: relax to
+  -- At a grade `ρ ≾ 𝟏` the possibility can be discharged outright: relax to
   -- the unit grade and apply the counit. This is what interprets a variable
   -- whose remaining resources sum below the unit, and it is the ungraded
   -- counterpart of the eternal `extᵉ` (which does the same at every grade).
 
   -- extraction is natural
 
-  ext-nat : ∀ {X Y ρ} → (p : ρ ≾ u) → (g : X →ᵐ Y)
+  ext-nat : ∀ {X Y ρ} → (p : ρ ≾ 𝟏) → (g : X →ᵐ Y)
           → g ∘ᵐ (εᵘ ∘ᵐ ⟨⟩-≤ p) ≈ᵐ (εᵘ ∘ᵐ ⟨⟩-≤ p) ∘ᵐ ⟨ _ ⟩ᶠ g
   ext-nat p g =
     ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -191,7 +191,7 @@ record Past : Set₁ where
   -- and it is a `⟨_⟩`-algebra: extracting a folded pair of layers is
   -- extracting them one after the other
 
-  ext-alg : ∀ {X ρ₁ ρ₂} → (p : ρ₁ ≾ u) → (q : ρ₂ ≾ u) → (r : ρ₂ · ρ₁ ≾ u)
+  ext-alg : ∀ {X ρ₁ ρ₂} → (p : ρ₁ ≾ 𝟏) → (q : ρ₂ ≾ 𝟏) → (r : ρ₂ · ρ₁ ≾ 𝟏)
           → (εᵘ ∘ᵐ ⟨⟩-≤ r) ∘ᵐ μ {X} {ρ₁} {ρ₂}
           ≈ᵐ (εᵘ ∘ᵐ ⟨⟩-≤ q) ∘ᵐ (εᵘ ∘ᵐ ⟨⟩-≤ p)
   ext-alg {X} {ρ₁} {ρ₂} p q r =
@@ -207,8 +207,8 @@ record Past : Set₁ where
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
     where
-      uu : u · u ≾ u
-      uu = ≃⇒≾ (·-identityʳ u)
+      uu : 𝟏 · 𝟏 ≾ 𝟏
+      uu = ≃⇒≾ (·-identityʳ 𝟏)
 
-      w : ρ₂ · ρ₁ ≾ u
+      w : ρ₂ · ρ₁ ≾ 𝟏
       w = ≾-trans (·-mono-≾ q p) uu

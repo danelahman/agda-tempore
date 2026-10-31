@@ -8,7 +8,7 @@
 --                                                                    --
 -- where `L` permits a run when the encoding of the run is in `L`.    --
 -- Weakening is inclusion, the product sequences runs, the join is    --
--- union, `⊤` permits every run, and `u` permits only the empty run.  --
+-- union, `⊤` permits every run, and `𝟏` permits only the empty run.  --
 -- The greatest element, the set of all runs, lies in the carrier and --
 -- is not absorbing: `{ ⟨1⟩ } · ⊤` permits only runs beginning with a --
 -- delay.                                                             --
@@ -63,10 +63,10 @@ permits-∙ : ∀ L M {s t} → L permits s → M permits t → (L ·ᴿ M) perm
 permits-∙ L M {s} {t} s∈ t∈ =
   subst (λ v → v ∈ table (L ·ᴿ M)) (sym (enc-∙ s t)) (∈·⁺ L M (enc s) (enc t) s∈ t∈)
 
--- `of-dur m` permits the delay of duration `m`
+-- `ι m` permits the delay of duration `m`
 
-permits-⟨⟩ : ∀ m → of-dur m permits ⟨ m ⟩
-permits-⟨⟩ m = subst (λ v → v ∈ table (of-dur m)) (sym (enc-⟨⟩ m)) (∈tick⁺ m)
+permits-⟨⟩ : ∀ m → ι m permits ⟨ m ⟩
+permits-⟨⟩ m = subst (λ v → v ∈ table (ι m)) (sym (enc-⟨⟩ m)) (∈tick⁺ m)
 
 ------------------------------------------------------------------------
 -- Literals: extended regular expressions over the letters

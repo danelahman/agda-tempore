@@ -13,7 +13,7 @@
 --                                                                    --
 -- The two rules that place the unit on opposite sides of the order:  --
 --                                                                    --
---   * the bound `ρ ≾ᵣ uᵣ` of `var` holds at every `ρ`, demanding     --
+--   * the bound `ρ ≾ᵣ 𝟏ᵣ` of `var` holds at every `ρ`, demanding     --
 --     nothing being the greatest grade: no reading goes stale.       --
 --                                                                    --
 --   * a handler clause cannot discard its continuation: a `return`   --
@@ -72,7 +72,7 @@ relaying =
 ------------------------------------------------------------------------
 -- Nothing goes stale
 
-nothing-goes-stale : (ρ : R) → ρ ≾ᵣ uᵣ
+nothing-goes-stale : (ρ : R) → ρ ≾ᵣ 𝟏ᵣ
 nothing-goes-stale ([ _ ,+∞⟩ ∷ᵛ [ _ ,+∞⟩ ∷ᵛ [ _ ,+∞⟩ ∷ᵛ []) = ≤! , ≤! , ≤! , tt
 
 -- a reading transmitted after a store and a transmission of its own
@@ -113,19 +113,19 @@ claim-after-three-readings =
 
 -- after two readings it is not yet available
 
-two-readings-short : ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime read ≾ᵣ average)
+two-readings-short : ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime read ≾ᵣ average)
 two-readings-short (short , _) = ≰! short
 
 -- and no amount of idling makes up the third
 
 idling-is-no-reading :
-  ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime read ·ᵣ of-durʳ 100 ≾ᵣ average)
+  ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime read ·ᵣ ιᵣ 100 ≾ᵣ average)
 idling-is-no-reading (short , _) = ≰! short
 
 -- nor does a transmission
 
 transmitting-is-no-reading :
-  ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ average)
+  ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ average)
 transmitting-is-no-reading (short , _) = ≰! short
 
 ------------------------------------------------------------------------
@@ -144,7 +144,7 @@ three-readings-or-one =
 
 -- sequenced after it, the average is out of reach on either path
 
-one-reading-certain : ¬ (uᵣ ·ᵣ ⟪ 1 , 0 , 0 ⟫ˡ ≾ᵣ average)
+one-reading-certain : ¬ (𝟏ᵣ ·ᵣ ⟪ 1 , 0 , 0 ⟫ˡ ≾ᵣ average)
 one-reading-certain (short , _) = ≰! short
 
 ------------------------------------------------------------------------
@@ -152,14 +152,14 @@ one-reading-certain (short , _) = ≰! short
 
 -- no clause may drop its continuation
 
-no-discarding : ¬ (uₑ ≾ₑ op-grade read ·ₑ uₑ)
+no-discarding : ¬ (𝟏ₑ ≾ₑ op-grade read ·ₑ 𝟏ₑ)
 no-discarding (short , _) = ≰! short
 
 -- and a clause may close over a reading: `⊤ᵣ` demands nothing, so
 -- `var`'s bound holds at the barrier and past it
 
 reading-crosses-the-barrier :
-  (op : Op) → (ε'' : E) → uᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ uᵣ
+  (op : Op) → (ε'' : E) → 𝟏ᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ 𝟏ᵣ
 reading-crosses-the-barrier op ε'' = nothing-goes-stale _
 
 reported : Node ⊢C⦂ Reading ‼ ⟪ 1 , 0 , 0 ⟫ˡ

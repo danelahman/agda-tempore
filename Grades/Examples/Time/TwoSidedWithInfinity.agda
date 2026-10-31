@@ -96,8 +96,8 @@ infixl 7 _·ᵢ_
 
 -- interval unit
 
-uᵢ : Interval∞
-uᵢ = [ 0 , ↑ 0 ]
+𝟏ᵢ : Interval∞
+𝟏ᵢ = [ 0 , ↑ 0 ]
 
 -- interval equality
 
@@ -112,11 +112,11 @@ eqᵢ {_} {i₂} refl refl =
 
 -- right and left identity
 
-·ᵢ-identityʳ : (i : Interval∞) → (i ·ᵢ uᵢ) ≡ i
+·ᵢ-identityʳ : (i : Interval∞) → (i ·ᵢ 𝟏ᵢ) ≡ i
 ·ᵢ-identityʳ i =
   eqᵢ (+-identityʳ (min i)) (+∞-identityʳ (max i))
 
-·ᵢ-identityˡ : (i : Interval∞) → (uᵢ ·ᵢ i) ≡ i
+·ᵢ-identityˡ : (i : Interval∞) → (𝟏ᵢ ·ᵢ i) ≡ i
 ·ᵢ-identityˡ i =
   eqᵢ (+-identityˡ (min i)) (+∞-identityˡ (max i))
 
@@ -151,14 +151,14 @@ i₁ ≾ᵢ i₂ =
 -- the unit is not least: `[ 1 , ↑ 1 ]` is not above it, its lower
 -- bound being higher
 
-uᵢ-not-least : ¬ Minimum _≾ᵢ_ uᵢ
-uᵢ-not-least least = 1+n≰n (proj₁ (least [ 1 , ↑ 1 ]))
+𝟏ᵢ-not-least : ¬ Minimum _≾ᵢ_ 𝟏ᵢ
+𝟏ᵢ-not-least least = 1+n≰n (proj₁ (least [ 1 , ↑ 1 ]))
 
--- uᵢ is the minimal element
+-- 𝟏ᵢ is the minimal element
 
-uᵢ-minimal : ∀ {i} → i ≾ᵢ uᵢ → i ≡ uᵢ
-uᵢ-minimal {i} (_ , maxrel) =
-  eqᵢ {i} {uᵢ}
+𝟏ᵢ-minimal : ∀ {i} → i ≾ᵢ 𝟏ᵢ → i ≡ 𝟏ᵢ
+𝟏ᵢ-minimal {i} (_ , maxrel) =
+  eqᵢ {i} {𝟏ᵢ}
     (n≤0⇒n≡0 (≤∞-trans {↑ min i} (min≤max i) maxrel))
     (≤∞-↑0 maxrel)
 
@@ -201,23 +201,23 @@ i₁ ≾ᵢ? i₂ with min i₂ ≤? min i₁ | max i₁ ≤∞? max i₂
 
 -- zero-product property
 
-≡ᵢ-zero-productˡ : ∀ {i₁ i₂} → i₁ ·ᵢ i₂ ≡ uᵢ → i₁ ≡ uᵢ
+≡ᵢ-zero-productˡ : ∀ {i₁ i₂} → i₁ ·ᵢ i₂ ≡ 𝟏ᵢ → i₁ ≡ 𝟏ᵢ
 ≡ᵢ-zero-productˡ {i₁} {i₂} eq =
    eqᵢ
      (m+n≡0⇒m≡0 (min i₁) (cong min eq))
      (+∞-≡0ˡ {max i₁} {max i₂} (cong max eq))
 
-≡ᵢ-zero-productʳ : ∀ {i₁ i₂} → i₁ ·ᵢ i₂ ≡ uᵢ → i₂ ≡ uᵢ
+≡ᵢ-zero-productʳ : ∀ {i₁ i₂} → i₁ ·ᵢ i₂ ≡ 𝟏ᵢ → i₂ ≡ 𝟏ᵢ
 ≡ᵢ-zero-productʳ {i₁} {i₂} eq =
   eqᵢ
     (m+n≡0⇒n≡0 (min i₁) {min i₂} (cong min eq))
     (+∞-≡0ʳ {max i₁} {max i₂} (cong max eq))
 
-≾ᵢ-zero-productˡ : ∀ {i₁ i₂} → (i₁ ·ᵢ i₂) ≾ᵢ uᵢ → i₁ ≾ᵢ uᵢ
+≾ᵢ-zero-productˡ : ∀ {i₁ i₂} → (i₁ ·ᵢ i₂) ≾ᵢ 𝟏ᵢ → i₁ ≾ᵢ 𝟏ᵢ
 ≾ᵢ-zero-productˡ {i₁} {i₂} (_ , maxrel) =
   z≤n , +∞-≤∞-0ˡ {max i₁} {max i₂} maxrel
 
-≾ᵢ-zero-productʳ : ∀ {i₁ i₂} → (i₁ ·ᵢ i₂) ≾ᵢ uᵢ → i₂ ≾ᵢ uᵢ
+≾ᵢ-zero-productʳ : ∀ {i₁ i₂} → (i₁ ·ᵢ i₂) ≾ᵢ 𝟏ᵢ → i₂ ≾ᵢ 𝟏ᵢ
 ≾ᵢ-zero-productʳ {i₁} {i₂} (_ , maxrel) =
   z≤n , +∞-≤∞-0ʳ {max i₁} {max i₂} maxrel
 
@@ -279,7 +279,7 @@ two-sided-intervals-with-∞ : Grade ℕᴰ
 two-sided-intervals-with-∞ = posetᵍ record
   { Carrier = Interval∞
   ; _·_              = _·ᵢ_
-  ; u                = uᵢ
+  ; 𝟏                = 𝟏ᵢ
   ; ·-identityʳ      = ·ᵢ-identityʳ
   ; ·-identityˡ      = ·ᵢ-identityˡ
   ; ·-assoc          = ·ᵢ-assoc
@@ -305,16 +305,16 @@ two-sided-intervals-with-∞ = posetᵍ record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵢ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ᵢ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ᵢ-irrelevant {i₁} {i₂}
-  ; of-dur            = λ n → [ n , ↑ n ] {fromWitness ≤-refl}
-  ; of-dur-zero       = eqᵢ refl refl
-  ; of-dur-plus       = eqᵢ refl refl
+  ; ι                 = λ n → [ n , ↑ n ] {fromWitness ≤-refl}
+  ; ι-zero            = eqᵢ refl refl
+  ; ι-plus            = eqᵢ refl refl
   }
 
 -- its hints
 
 two-sided-intervals-with-∞ʰ : GradeHints two-sided-intervals-with-∞
 two-sided-intervals-with-∞ʰ = record
-  { u-least? = nothing
+  { 𝟏-least? = nothing
   ; ·-comm?  = just (comm-≡ two-sided-intervals-with-∞ ·ᵢ-comm)
   ; plus?    = λ i → just (plusᵢ i)
   }
@@ -345,8 +345,8 @@ no-window  ·ʷ _          = no-window
 
 infixl 7 _·ʷ_
 
-uʷ : Interval∞⊤
-uʷ = window uᵢ
+𝟏ʷ : Interval∞⊤
+𝟏ʷ = window 𝟏ᵢ
 
 -- interval order, with `no-window` greatest
 
@@ -364,16 +364,16 @@ infix 6 _≾ʷ_
 
 -- the unit is not least, as for the windows themselves
 
-uʷ-not-least : ¬ Minimum _≾ʷ_ uʷ
-uʷ-not-least least = 1+n≰n (proj₁ (least (window [ 1 , ↑ 1 ])))
+𝟏ʷ-not-least : ¬ Minimum _≾ʷ_ 𝟏ʷ
+𝟏ʷ-not-least least = 1+n≰n (proj₁ (least (window [ 1 , ↑ 1 ])))
 
 -- identity laws
 
-·ʷ-identityʳ : (i : Interval∞⊤) → i ·ʷ uʷ ≡ i
+·ʷ-identityʳ : (i : Interval∞⊤) → i ·ʷ 𝟏ʷ ≡ i
 ·ʷ-identityʳ (window i) = cong window_ (·ᵢ-identityʳ i)
 ·ʷ-identityʳ no-window  = refl
 
-·ʷ-identityˡ : (i : Interval∞⊤) → uʷ ·ʷ i ≡ i
+·ʷ-identityˡ : (i : Interval∞⊤) → 𝟏ʷ ·ʷ i ≡ i
 ·ʷ-identityˡ (window i) = cong window_ (·ᵢ-identityˡ i)
 ·ʷ-identityˡ no-window  = refl
 
@@ -457,13 +457,13 @@ no-window  ≾ʷ? no-window  = yes tt
 -- zero-product properties, `no-window` sitting above the unit and not
 -- below it
 
-≾ʷ-zero-productˡ : ∀ {i₁ i₂ : Interval∞⊤} → i₁ ·ʷ i₂ ≾ʷ uʷ → i₁ ≾ʷ uʷ
+≾ʷ-zero-productˡ : ∀ {i₁ i₂ : Interval∞⊤} → i₁ ·ʷ i₂ ≾ʷ 𝟏ʷ → i₁ ≾ʷ 𝟏ʷ
 ≾ʷ-zero-productˡ {window i₁} {window i₂} rel =
   ≾ᵢ-zero-productˡ {i₁} {i₂} rel
 ≾ʷ-zero-productˡ {window _}  {no-window} ()
 ≾ʷ-zero-productˡ {no-window} {_}         ()
 
-≾ʷ-zero-productʳ : ∀ {i₁ i₂ : Interval∞⊤} → i₁ ·ʷ i₂ ≾ʷ uʷ → i₂ ≾ʷ uʷ
+≾ʷ-zero-productʳ : ∀ {i₁ i₂ : Interval∞⊤} → i₁ ·ʷ i₂ ≾ʷ 𝟏ʷ → i₂ ≾ʷ 𝟏ʷ
 ≾ʷ-zero-productʳ {window i₁} {window i₂} rel =
   ≾ᵢ-zero-productʳ {i₁} {i₂} rel
 ≾ʷ-zero-productʳ {window _}  {no-window} ()
@@ -550,7 +550,7 @@ two-sided-intervals-with-⊤ : Grade ℕᴰ
 two-sided-intervals-with-⊤ = posetᵍ record
   { Carrier           = Interval∞⊤
   ; _·_               = _·ʷ_
-  ; u                 = uʷ
+  ; 𝟏                 = 𝟏ʷ
   ; ·-identityʳ       = ·ʷ-identityʳ
   ; ·-identityˡ       = ·ʷ-identityˡ
   ; ·-assoc           = ·ʷ-assoc
@@ -572,16 +572,16 @@ two-sided-intervals-with-⊤ = posetᵍ record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ʷ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ʷ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ʷ-irrelevant {i₁} {i₂}
-  ; of-dur            = λ n → window [ n , ↑ n ] {fromWitness ≤-refl}
-  ; of-dur-zero       = cong window_ (eqᵢ refl refl)
-  ; of-dur-plus       = cong window_ (eqᵢ refl refl)
+  ; ι                 = λ n → window [ n , ↑ n ] {fromWitness ≤-refl}
+  ; ι-zero            = cong window_ (eqᵢ refl refl)
+  ; ι-plus            = cong window_ (eqᵢ refl refl)
   }
 
 -- its hints
 
 two-sided-intervals-with-⊤ʰ : GradeHints two-sided-intervals-with-⊤
 two-sided-intervals-with-⊤ʰ = record
-  { u-least? = nothing
+  { 𝟏-least? = nothing
   ; ·-comm?  = just (comm-≡ two-sided-intervals-with-⊤ ·ʷ-comm)
   ; plus?    = λ i → just (plusʷ i)
   }

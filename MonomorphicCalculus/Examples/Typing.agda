@@ -6,7 +6,7 @@
 -- effect grade.                                                      --
 --                                                                    --
 -- Most instances use an identity grade system, with effect and       --
--- resource grades the same monoid and `∣_∣ᵉ` the identity, so `mapᵉ` --
+-- resource grades the same monoid and `∣-∣ᵉ` the identity, so `∣_∣ᵉ` --
 -- disappears: the lock a computation places on the context is its    --
 -- effect grade, and the premise of `unbox` compares what a           --
 -- computation did with the grade of the box. These instances differ  --
@@ -30,7 +30,7 @@
 --                                                                    --
 -- Two rules place the unit on opposite sides of the order, and each  --
 -- instance settles both by a proof or a refutation: whether a        --
--- non-eternal variable goes stale, which is the bound `ρ ≾ᵣ uᵣ` of   --
+-- non-eternal variable goes stale, which is the bound `ρ ≾ᵣ 𝟏ᵣ` of   --
 -- `var`, and whether a handler clause may discard its continuation.  --
 ------------------------------------------------------------------------
 

@@ -614,8 +614,8 @@ env-Vˢ-pair (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V U =
 -- different (but equal) proofs, reconciled by `castᶜ-irr`.
 
 env-Cˢ-delay : ∀ {St Γ A ε τ} → (γ : Env St Γ) → (Δ : Ctx)
-             → (M : (Γ ++ᶜ Δ) ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
-             → env-Cˢ γ Δ (delay τ M) ≡ delay τ (env-Cˢ γ (Δ ⟨ of-durʳ τ ⟩) M)
+             → (M : (Γ ++ᶜ Δ) ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε)
+             → env-Cˢ γ Δ (delay τ M) ≡ delay τ (env-Cˢ γ (Δ ⟨ ιᵣ τ ⟩) M)
 
 env-Cˢ-delay ⌊ St ⌋ Δ M = refl
 env-Cˢ-delay (reachᵉ γ q) Δ M = cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-delay γ Δ M)
@@ -625,52 +625,52 @@ env-Cˢ-delay {τ = τ} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ'} γ q) Δ M =
     (begin
       castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (delay τ M)))
     ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-delay ei) ⟩
-      castᶜ eo (env-Cˢ γ Δ' (delay τ (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
-    ≡⟨ cong (castᶜ eo) (env-Cˢ-delay γ Δ' (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)) ⟩
-      castᶜ eo (delay τ (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩)
-                          (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
+      castᶜ eo (env-Cˢ γ Δ' (delay τ (castᶜ (cong (_⟨ ιᵣ τ ⟩) ei) M)))
+    ≡⟨ cong (castᶜ eo) (env-Cˢ-delay γ Δ' (castᶜ (cong (_⟨ ιᵣ τ ⟩) ei) M)) ⟩
+      castᶜ eo (delay τ (env-Cˢ γ (Δ' ⟨ ιᵣ τ ⟩)
+                          (castᶜ (cong (_⟨ ιᵣ τ ⟩) ei) M)))
     ≡⟨ cast-delay eo ⟩
-      delay τ (castᶜ (cong (_⟨ of-durʳ τ ⟩) eo)
-                (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
-    ≡⟨ cong (delay τ) (castᶜ-irr (cong (_⟨ of-durʳ τ ⟩) eo) eo₂ _) ⟩
+      delay τ (castᶜ (cong (_⟨ ιᵣ τ ⟩) eo)
+                (env-Cˢ γ (Δ' ⟨ ιᵣ τ ⟩) (castᶜ (cong (_⟨ ιᵣ τ ⟩) ei) M)))
+    ≡⟨ cong (delay τ) (castᶜ-irr (cong (_⟨ ιᵣ τ ⟩) eo) eo₂ _) ⟩
       delay τ (castᶜ eo₂
-                (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
-    ≡⟨ cong (λ z → delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) z)))
-            (castᶜ-irr (cong (_⟨ of-durʳ τ ⟩) ei) ei₂ M) ⟩
-      delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) (castᶜ ei₂ M)))
+                (env-Cˢ γ (Δ' ⟨ ιᵣ τ ⟩) (castᶜ (cong (_⟨ ιᵣ τ ⟩) ei) M)))
+    ≡⟨ cong (λ z → delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ιᵣ τ ⟩) z)))
+            (castᶜ-irr (cong (_⟨ ιᵣ τ ⟩) ei) ei₂ M) ⟩
+      delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ιᵣ τ ⟩) (castᶜ ei₂ M)))
      ∎)
   where
     Δ'  = [] ⟨ ρ' ⟩ ++ᶜ Δ
     eo  = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ' ⟩) Δ)
     ei  = ++ᶜ-assoc Γ ([] ⟨ ρ' ⟩) Δ
-    eo₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ' ⟩) (Δ ⟨ of-durʳ τ ⟩))
-    ei₂ = ++ᶜ-assoc Γ ([] ⟨ ρ' ⟩) (Δ ⟨ of-durʳ τ ⟩)
+    eo₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ' ⟩) (Δ ⟨ ιᵣ τ ⟩))
+    ei₂ = ++ᶜ-assoc Γ ([] ⟨ ρ' ⟩) (Δ ⟨ ιᵣ τ ⟩)
 
 env-Cˢ-delay {τ = τ} (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ'} V₀ γ) Δ M =
   begin
     castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (delay τ M)))
   ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-delay ei) ⟩
-    castᶜ eo (env-Cˢ γ Δ' (delay τ (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
-  ≡⟨ cong (castᶜ eo) (env-Cˢ-delay γ Δ' (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)) ⟩
-    castᶜ eo (delay τ (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩)
-                        (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
+    castᶜ eo (env-Cˢ γ Δ' (delay τ (castᶜ (cong (_⟨ ιᵣ τ ⟩) ei) M)))
+  ≡⟨ cong (castᶜ eo) (env-Cˢ-delay γ Δ' (castᶜ (cong (_⟨ ιᵣ τ ⟩) ei) M)) ⟩
+    castᶜ eo (delay τ (env-Cˢ γ (Δ' ⟨ ιᵣ τ ⟩)
+                        (castᶜ (cong (_⟨ ιᵣ τ ⟩) ei) M)))
   ≡⟨ cast-delay eo ⟩
-    delay τ (castᶜ (cong (_⟨ of-durʳ τ ⟩) eo)
-              (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
-  ≡⟨ cong (delay τ) (castᶜ-irr (cong (_⟨ of-durʳ τ ⟩) eo) eo₂ _) ⟩
+    delay τ (castᶜ (cong (_⟨ ιᵣ τ ⟩) eo)
+              (env-Cˢ γ (Δ' ⟨ ιᵣ τ ⟩) (castᶜ (cong (_⟨ ιᵣ τ ⟩) ei) M)))
+  ≡⟨ cong (delay τ) (castᶜ-irr (cong (_⟨ ιᵣ τ ⟩) eo) eo₂ _) ⟩
     delay τ (castᶜ eo₂
-              (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) (castᶜ (cong (_⟨ of-durʳ τ ⟩) ei) M)))
-  ≡⟨ cong (λ z → delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) z)))
-          (castᶜ-irr (cong (_⟨ of-durʳ τ ⟩) ei) ei₂ M) ⟩
-    delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-durʳ τ ⟩) (castᶜ ei₂ M)))
+              (env-Cˢ γ (Δ' ⟨ ιᵣ τ ⟩) (castᶜ (cong (_⟨ ιᵣ τ ⟩) ei) M)))
+  ≡⟨ cong (λ z → delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ιᵣ τ ⟩) z)))
+          (castᶜ-irr (cong (_⟨ ιᵣ τ ⟩) ei) ei₂ M) ⟩
+    delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ιᵣ τ ⟩) (castᶜ ei₂ M)))
    ∎
   where
     Δ₁  = [] ∷ [ ρ' ] A₀
     Δ'  = Δ₁ ++ᶜ Δ
     eo  = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
     ei  = ++ᶜ-assoc Γ Δ₁ Δ
-    eo₂ = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ⟨ of-durʳ τ ⟩))
-    ei₂ = ++ᶜ-assoc Γ Δ₁ (Δ ⟨ of-durʳ τ ⟩)
+    eo₂ = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ⟨ ιᵣ τ ⟩))
+    ei₂ = ++ᶜ-assoc Γ Δ₁ (Δ ⟨ ιᵣ τ ⟩)
 
 env-Cˢ-delay {τ = τ} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ M =
   begin
@@ -679,35 +679,35 @@ env-Cˢ-delay {τ = τ} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ M =
     sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ (delay τ (castᶜ (exτ eA) M)))) W
   ≡⟨ cong (λ z → sub-atᶜ Δ (castᶜ eIn z) W)
           (env-Cˢ-delay γ Δ₁ (castᶜ (exτ eA) M)) ⟩
-    sub-atᶜ Δ (castᶜ eIn (delay τ (env-Cˢ γ (Δ₁ ⟨ of-durʳ τ ⟩)
+    sub-atᶜ Δ (castᶜ eIn (delay τ (env-Cˢ γ (Δ₁ ⟨ ιᵣ τ ⟩)
                                     (castᶜ (exτ eA) M)))) W
   ≡⟨ cong (λ z → sub-atᶜ Δ z W) (cast-delay eIn) ⟩
-    sub-atᶜ Δ (delay τ (castᶜ (exτ eIn) (env-Cˢ γ (Δ₁ ⟨ of-durʳ τ ⟩)
+    sub-atᶜ Δ (delay τ (castᶜ (exτ eIn) (env-Cˢ γ (Δ₁ ⟨ ιᵣ τ ⟩)
                                           (castᶜ (exτ eA) M)))) W
-  ≡⟨ cong (λ z → delay τ (sub-atᶜ (Δ ⟨ of-durʳ τ ⟩) z W))
+  ≡⟨ cong (λ z → delay τ (sub-atᶜ (Δ ⟨ ιᵣ τ ⟩) z W))
           (castᶜ-irr (exτ eIn) eIn₂ _) ⟩
-    delay τ (sub-atᶜ (Δ ⟨ of-durʳ τ ⟩)
-               (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ of-durʳ τ ⟩)
+    delay τ (sub-atᶜ (Δ ⟨ ιᵣ τ ⟩)
+               (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ ιᵣ τ ⟩)
                              (castᶜ (exτ eA) M))) W)
-  ≡⟨ cong (λ z → delay τ (sub-atᶜ (Δ ⟨ of-durʳ τ ⟩)
-             (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ of-durʳ τ ⟩) z)) W))
+  ≡⟨ cong (λ z → delay τ (sub-atᶜ (Δ ⟨ ιᵣ τ ⟩)
+             (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ ιᵣ τ ⟩) z)) W))
           (castᶜ-irr (exτ eA) eA₂ M) ⟩
-    delay τ (sub-atᶜ (Δ ⟨ of-durʳ τ ⟩)
-               (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ of-durʳ τ ⟩) (castᶜ eA₂ M))) W)
+    delay τ (sub-atᶜ (Δ ⟨ ιᵣ τ ⟩)
+               (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ ιᵣ τ ⟩) (castᶜ eA₂ M))) W)
   ∎
   where
-    exτ   = λ {Γ₁ Γ₂ : Ctx} (e : Γ₁ ≡ Γ₂) → cong (_⟨ of-durʳ τ ⟩) e
+    exτ   = λ {Γ₁ Γ₂ : Ctx} (e : Γ₁ ≡ Γ₂) → cong (_⟨ ιᵣ τ ⟩) e
     Δ₁    = [] ∷ A₀ ++ᶜ Δ
     eIn   = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
-    eIn₂  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (Δ ⟨ of-durʳ τ ⟩))
+    eIn₂  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (Δ ⟨ ιᵣ τ ⟩))
     eA    = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
-    eA₂   = ++ᶜ-assoc Γ ([] ∷ A₀) (Δ ⟨ of-durʳ τ ⟩)
+    eA₂   = ++ᶜ-assoc Γ ([] ∷ A₀) (Δ ⟨ ιᵣ τ ⟩)
 
 env-Cˢ-seq : ∀ {St Γ A B ε ε'} → (γ : Env St Γ) → (Δ : Ctx)
            → (M : (Γ ++ᶜ Δ) ⊢C⦂ A ‼ ε)
-           → (N : (Γ ++ᶜ Δ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε')
+           → (N : (Γ ++ᶜ Δ) ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
            → env-Cˢ γ Δ (M ⨟ N)
-           ≡ (env-Cˢ γ Δ M) ⨟ (env-Cˢ γ (Δ ⟨ mapᵉ ε ⟩ ∷ A) N)
+           ≡ (env-Cˢ γ Δ M) ⨟ (env-Cˢ γ (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) N)
 
 env-Cˢ-seq ⌊ St ⌋ Δ M N = refl
 env-Cˢ-seq (reachᵉ γ q) Δ M N = cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-seq γ Δ M N)
@@ -720,27 +720,27 @@ env-Cˢ-seq {A = A} {ε = ε} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) �
       castᶜ eo (env-Cˢ γ Δ' ((castᶜ ei M) ⨟ (castᶜ (exε ei) N)))
     ≡⟨ cong (castᶜ eo) (env-Cˢ-seq γ Δ' (castᶜ ei M) (castᶜ (exε ei) N)) ⟩
       castᶜ eo ((env-Cˢ γ Δ' (castᶜ ei M))
-                  ⨟ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ (exε ei) N)))
+                  ⨟ (env-Cˢ γ (Δ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) (castᶜ (exε ei) N)))
     ≡⟨ cast-seq eo ⟩
       (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
-        ⨟ (castᶜ (exε eo) (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ (exε ei) N)))
+        ⨟ (castᶜ (exε eo) (env-Cˢ γ (Δ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) (castᶜ (exε ei) N)))
     ≡⟨ cong ((castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M))) ⨟_)
             (castᶜ-irr (exε eo) eo₂ _) ⟩
       (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
-        ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ (exε ei) N)))
+        ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) (castᶜ (exε ei) N)))
     ≡⟨ cong (λ z → (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
-                     ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) z)))
+                     ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) z)))
             (castᶜ-irr (exε ei) ei₂ N) ⟩
       (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
-        ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ ei₂ N)))
+        ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) (castᶜ ei₂ N)))
      ∎)
   where
     Δ'  = [] ⟨ ρ ⟩ ++ᶜ Δ
     eo  = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei  = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
-    eo₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) (Δ ⟨ mapᵉ ε ⟩ ∷ A))
-    ei₂ = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) (Δ ⟨ mapᵉ ε ⟩ ∷ A)
-    exε = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) p
+    eo₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A))
+    ei₂ = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A)
+    exε = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) p
 
 env-Cˢ-seq {A = A} {ε = ε} (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ} V₀ γ) Δ M N =
   begin
@@ -749,28 +749,28 @@ env-Cˢ-seq {A = A} {ε = ε} (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ} 
     castᶜ eo (env-Cˢ γ Δ' ((castᶜ ei M) ⨟ (castᶜ (exε ei) N)))
   ≡⟨ cong (castᶜ eo) (env-Cˢ-seq γ Δ' (castᶜ ei M) (castᶜ (exε ei) N)) ⟩
     castᶜ eo ((env-Cˢ γ Δ' (castᶜ ei M))
-                ⨟ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ (exε ei) N)))
+                ⨟ (env-Cˢ γ (Δ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) (castᶜ (exε ei) N)))
   ≡⟨ cast-seq eo ⟩
     (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
-      ⨟ (castᶜ (exε eo) (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ (exε ei) N)))
+      ⨟ (castᶜ (exε eo) (env-Cˢ γ (Δ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) (castᶜ (exε ei) N)))
   ≡⟨ cong ((castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M))) ⨟_)
           (castᶜ-irr (exε eo) eo₂ _) ⟩
     (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
-      ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ (exε ei) N)))
+      ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) (castᶜ (exε ei) N)))
   ≡⟨ cong (λ z → (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
-                   ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) z)))
+                   ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) z)))
           (castᶜ-irr (exε ei) ei₂ N) ⟩
     (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
-      ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ ei₂ N)))
+      ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) (castᶜ ei₂ N)))
    ∎
   where
     Δ₁  = [] ∷ [ ρ ] A₀
     Δ'  = Δ₁ ++ᶜ Δ
     eo  = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
     ei  = ++ᶜ-assoc Γ Δ₁ Δ
-    eo₂ = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ⟨ mapᵉ ε ⟩ ∷ A))
-    ei₂ = ++ᶜ-assoc Γ Δ₁ (Δ ⟨ mapᵉ ε ⟩ ∷ A)
-    exε = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) p
+    eo₂ = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A))
+    ei₂ = ++ᶜ-assoc Γ Δ₁ (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A)
+    exε = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) p
 
 env-Cˢ-seq {A = A} {ε = ε} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ M N =
   begin
@@ -780,39 +780,39 @@ env-Cˢ-seq {A = A} {ε = ε} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ 
   ≡⟨ cong (λ z → sub-atᶜ Δ (castᶜ eIn z) W)
           (env-Cˢ-seq γ Δ₁ (castᶜ eA M) (castᶜ (exε eA) N)) ⟩
     sub-atᶜ Δ (castᶜ eIn ((env-Cˢ γ Δ₁ (castᶜ eA M))
-                           ⨟ (env-Cˢ γ (Δ₁ ⟨ mapᵉ ε ⟩ ∷ A)
+                           ⨟ (env-Cˢ γ (Δ₁ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A)
                                 (castᶜ (exε eA) N)))) W
   ≡⟨ cong (λ z → sub-atᶜ Δ z W) (cast-seq eIn) ⟩
     sub-atᶜ Δ ((castᶜ eIn (env-Cˢ γ Δ₁ (castᶜ eA M)))
-                 ⨟ (castᶜ (exε eIn) (env-Cˢ γ (Δ₁ ⟨ mapᵉ ε ⟩ ∷ A)
+                 ⨟ (castᶜ (exε eIn) (env-Cˢ γ (Δ₁ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A)
                                       (castᶜ (exε eA) N)))) W
   ≡⟨ cong (λ z → (sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ (castᶜ eA M))) W)
-                   ⨟ (sub-atᶜ (Δ ⟨ mapᵉ ε ⟩ ∷ A) z W))
+                   ⨟ (sub-atᶜ (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) z W))
           (castᶜ-irr (exε eIn) eIn₂ _) ⟩
     (sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ (castᶜ eA M))) W)
-      ⨟ (sub-atᶜ (Δ ⟨ mapᵉ ε ⟩ ∷ A)
-           (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ (exε eA) N))) W)
+      ⨟ (sub-atᶜ (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A)
+           (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) (castᶜ (exε eA) N))) W)
   ≡⟨ cong (λ z → (sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ (castᶜ eA M))) W)
-                   ⨟ (sub-atᶜ (Δ ⟨ mapᵉ ε ⟩ ∷ A)
-                        (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ mapᵉ ε ⟩ ∷ A) z)) W))
+                   ⨟ (sub-atᶜ (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A)
+                        (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) z)) W))
           (castᶜ-irr (exε eA) eA₂ N) ⟩
     (sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ (castᶜ eA M))) W)
-      ⨟ (sub-atᶜ (Δ ⟨ mapᵉ ε ⟩ ∷ A)
-           (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ eA₂ N))) W)
+      ⨟ (sub-atᶜ (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A)
+           (castᶜ eIn₂ (env-Cˢ γ (Δ₁ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) (castᶜ eA₂ N))) W)
   ∎
   where
     Δ₁    = [] ∷ A₀ ++ᶜ Δ
     eIn   = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
-    eIn₂  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (Δ ⟨ mapᵉ ε ⟩ ∷ A))
+    eIn₂  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A))
     eA    = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
-    eA₂   = ++ᶜ-assoc Γ ([] ∷ A₀) (Δ ⟨ mapᵉ ε ⟩ ∷ A)
-    exε   = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) p
+    eA₂   = ++ᶜ-assoc Γ ([] ∷ A₀) (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A)
+    exε   = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) p
 
 env-Cˢ-perform : ∀ {St Γ A ε} {op : Op} → (γ : Env St Γ) → (Δ : Ctx)
            → (V : (Γ ++ᶜ Δ) ⊢V⦂ type-of-gtype (param op))
-           → (M : (Γ ++ᶜ Δ) ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
+           → (M : (Γ ++ᶜ Δ) ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
            → env-Cˢ γ Δ (perform op (V) (M))
-           ≡ perform op (env-Vˢ γ Δ V) (env-Cˢ γ (Δ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) M)
+           ≡ perform op (env-Vˢ γ Δ V) (env-Cˢ γ (Δ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) M)
 
 env-Cˢ-perform ⌊ St ⌋ Δ V M = refl
 env-Cˢ-perform (reachᵉ γ q) Δ V M = cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-perform γ Δ V M)
@@ -824,23 +824,23 @@ env-Cˢ-perform {op = op} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V 
     ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-perform ei) ⟩
       castᶜ eo (env-Cˢ γ Δ' (perform op (castᵛ ei V) (castᶜ (exf ei) M)))
     ≡⟨ cong (castᶜ eo) (env-Cˢ-perform γ Δ' (castᵛ ei V) (castᶜ (exf ei) M)) ⟩
-      castᶜ eo (perform op (env-Vˢ γ Δ' (castᵛ ei V)) (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
+      castᶜ eo (perform op (env-Vˢ γ Δ' (castᵛ ei V)) (env-Cˢ γ (Δ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
     ≡⟨ cast-perform eo ⟩
-      perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ (exf eo) (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
+      perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ (exf eo) (env-Cˢ γ (Δ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
     ≡⟨ cong (λ z → perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (z))
             (castᶜ-irr (exf eo) eo₂ _) ⟩
-      perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
-    ≡⟨ cong (λ z → perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) z)))
+      perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
+    ≡⟨ cong (λ z → perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) z)))
             (castᶜ-irr (exf ei) ei₂ M) ⟩
-      perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ ei₂ M)))
+      perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) (castᶜ ei₂ M)))
      ∎)
   where
     Δ'  = [] ⟨ ρ ⟩ ++ᶜ Δ
     eo  = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei  = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
-    eo₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) (Δ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)))
-    ei₂ = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) (Δ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op))
-    exf = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) p
+    eo₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) (Δ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)))
+    ei₂ = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) (Δ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op))
+    exf = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) p
 
 env-Cˢ-perform {op = op} (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ} V₀ γ) Δ V M =
   begin
@@ -848,24 +848,24 @@ env-Cˢ-perform {op = op} (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ} V₀
   ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-perform ei) ⟩
     castᶜ eo (env-Cˢ γ Δ' (perform op (castᵛ ei V) (castᶜ (exf ei) M)))
   ≡⟨ cong (castᶜ eo) (env-Cˢ-perform γ Δ' (castᵛ ei V) (castᶜ (exf ei) M)) ⟩
-    castᶜ eo (perform op (env-Vˢ γ Δ' (castᵛ ei V)) (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
+    castᶜ eo (perform op (env-Vˢ γ Δ' (castᵛ ei V)) (env-Cˢ γ (Δ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
   ≡⟨ cast-perform eo ⟩
-    perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ (exf eo) (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
+    perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ (exf eo) (env-Cˢ γ (Δ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
   ≡⟨ cong (λ z → perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (z))
           (castᶜ-irr (exf eo) eo₂ _) ⟩
-    perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
-  ≡⟨ cong (λ z → perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) z)))
+    perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
+  ≡⟨ cong (λ z → perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) z)))
           (castᶜ-irr (exf ei) ei₂ M) ⟩
-    perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ ei₂ M)))
+    perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) (castᶜ ei₂ M)))
    ∎
   where
     Δ₁  = [] ∷ [ ρ ] A₀
     Δ'  = Δ₁ ++ᶜ Δ
     eo  = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
     ei  = ++ᶜ-assoc Γ Δ₁ Δ
-    eo₂ = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)))
-    ei₂ = ++ᶜ-assoc Γ Δ₁ (Δ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op))
-    exf = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) p
+    eo₂ = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)))
+    ei₂ = ++ᶜ-assoc Γ Δ₁ (Δ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op))
+    exf = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) p
 
 env-Cˢ-perform {op = op} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V M =
   begin
@@ -893,13 +893,13 @@ env-Cˢ-perform {op = op} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V M 
   ∎
   where
     Δ₁    = [] ∷ A₀ ++ᶜ Δ
-    Δ₂    = Δ₁ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
-    Δ₃    = Δ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+    Δ₂    = Δ₁ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
+    Δ₃    = Δ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
     eIn   = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
-    eIn₂  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (Δ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)))
+    eIn₂  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (Δ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)))
     eA    = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
-    eA₂   = ++ᶜ-assoc Γ ([] ∷ A₀) (Δ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op))
-    exf   = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) p
+    eA₂   = ++ᶜ-assoc Γ ([] ∷ A₀) (Δ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op))
+    exf   = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)) p
 
 env-Cˢ-match : ∀ {St Γ A B C} → (γ : Env St Γ) → (Δ : Ctx)
            → (V : (Γ ++ᶜ Δ) ⊢V⦂ A |×| B)
@@ -1118,11 +1118,11 @@ env-Cˢ-caseℕ (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V M N =
 env-Cˢ-recℕ : ∀ {St Γ B ε} → (γ : Env St Γ) → (Δ : Ctx)
             → (V : (Γ ++ᶜ Δ) ⊢V⦂ Nat)
             → (M : (Γ ++ᶜ Δ) ⊢C⦂ B ‼ ε)
-            → (N : ((Γ ++ᶜ Δ) ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+            → (N : ((Γ ++ᶜ Δ) ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
             → (p : ε ·ₑ ε ≾ₑ ε)
             → env-Cˢ γ Δ (recℕ V M N p)
             ≡ recℕ (env-Vˢ γ Δ V) (env-Cˢ γ Δ M)
-                   (env-Cˢ γ ((Δ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B) N) p
+                   (env-Cˢ γ ((Δ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) N) p
 
 env-Cˢ-recℕ ⌊ St ⌋ Δ V M N p = refl
 env-Cˢ-recℕ (reachᵉ γ q) Δ V M N p =
@@ -1153,7 +1153,7 @@ env-Cˢ-recℕ {B = B} {ε = ε} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q
      ∎)
   where
     stepΔ : Ctx → Ctx
-    stepΔ X = (X ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B
+    stepΔ X = (X ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B
     Δ'  = [] ⟨ ρ ⟩ ++ᶜ Δ
     eo  = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei  = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
@@ -1185,7 +1185,7 @@ env-Cˢ-recℕ {B = B} {ε = ε} (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = �
    ∎
   where
     stepΔ : Ctx → Ctx
-    stepΔ X = (X ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B
+    stepΔ X = (X ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B
     Δ₁  = [] ∷ [ ρ ] A₀
     Δ'  = Δ₁ ++ᶜ Δ
     eo  = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
@@ -1221,7 +1221,7 @@ env-Cˢ-recℕ {B = B} {ε = ε} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) 
   ∎
   where
     stepΔ : Ctx → Ctx
-    stepΔ X = (X ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B
+    stepΔ X = (X ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B
     Δ₁    = [] ∷ A₀ ++ᶜ Δ
     eIn   = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
     eInN  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (stepΔ Δ))
@@ -1648,11 +1648,11 @@ env-Cˢ-caseL {A = A} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V M N =
 env-Cˢ-recL : ∀ {St Γ A B ε} → (γ : Env St Γ) → (Δ : Ctx)
             → (V : (Γ ++ᶜ Δ) ⊢V⦂ |List| A)
             → (M : (Γ ++ᶜ Δ) ⊢C⦂ B ‼ ε)
-            → (N : ((Γ ++ᶜ Δ) ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+            → (N : ((Γ ++ᶜ Δ) ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
             → (p : ε ·ₑ ε ≾ₑ ε)
             → env-Cˢ γ Δ (recL V M N p)
             ≡ recL (env-Vˢ γ Δ V) (env-Cˢ γ Δ M)
-                   (env-Cˢ γ ((Δ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B) N) p
+                   (env-Cˢ γ ((Δ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) N) p
 
 env-Cˢ-recL ⌊ St ⌋ Δ V M N p = refl
 env-Cˢ-recL (reachᵉ γ q) Δ V M N p =
@@ -1683,7 +1683,7 @@ env-Cˢ-recL {A = A} {B = B} {ε = ε} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ
      ∎)
   where
     stepΔ : Ctx → Ctx
-    stepΔ X = (X ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B
+    stepΔ X = (X ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B
     Δ'  = [] ⟨ ρ ⟩ ++ᶜ Δ
     eo  = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei  = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
@@ -1715,7 +1715,7 @@ env-Cˢ-recL {A = A} {B = B} {ε = ε} (liftᵉ {St = St} {Γ = Γ} {A = A₀} {
    ∎
   where
     stepΔ : Ctx → Ctx
-    stepΔ X = (X ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B
+    stepΔ X = (X ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B
     Δ₁  = [] ∷ [ ρ ] A₀
     Δ'  = Δ₁ ++ᶜ Δ
     eo  = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
@@ -1751,7 +1751,7 @@ env-Cˢ-recL {A = A} {B = B} {ε = ε} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} 
   ∎
   where
     stepΔ : Ctx → Ctx
-    stepΔ X = (X ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B
+    stepΔ X = (X ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B
     Δ₁    = [] ∷ A₀ ++ᶜ Δ
     eIn   = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
     eInN  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (stepΔ Δ))
@@ -1932,10 +1932,10 @@ env-Hˢ {B = B} γ Δ K op ε = env-Cˢ γ (Δ ++ᶜ Dcl B op ε) (K op ε)
 
 Cl-cast-irr : ∀ {Γ₀ Γ₀' B} {op : Op} {ε : E} → (e : Γ₀ ≡ Γ₀')
             → (e' : Γ₀ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                       ∷ [ mapᵉ (op-grade op) ]
+                       ∷ [ ∣ op-grade op ∣ᵉ ]
                            (type-of-gtype (arity op) ⇒ B ‼ ε)
                   ≡ Γ₀' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                       ∷ [ mapᵉ (op-grade op) ]
+                       ∷ [ ∣ op-grade op ∣ᵉ ]
                            (type-of-gtype (arity op) ⇒ B ‼ ε))
             → (X : Cl B op ε (Γ₀ ⟨ ⊤ᵣ ⟩))
             → Cl-cast op ε e X ≡ castᶜ e' X
@@ -1946,10 +1946,10 @@ Cl-cast-irr e e' X = castᶜ-irr _ e' X
 -- the same by `uip`.
 
 env-Vˢ-handler : ∀ {St Γ A B ε ε'} → (γ : Env St Γ) → (Δ : Ctx)
-               → (N : (Γ ++ᶜ Δ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε')
+               → (N : (Γ ++ᶜ Δ) ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
                → (H : Fam B ((Γ ++ᶜ Δ) ⟨ ⊤ᵣ ⟩))
                → env-Vˢ γ Δ (handler N H)
-               ≡ handler (env-Cˢ γ (Δ ⟨ mapᵉ ε ⟩ ∷ A) N) (env-Hˢ γ Δ H)
+               ≡ handler (env-Cˢ γ (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) N) (env-Hˢ γ Δ H)
 
 env-Vˢ-handler ⌊ St ⌋ Δ N H = refl
 env-Vˢ-handler (reachᵉ γ q) Δ N H =
@@ -1960,17 +1960,17 @@ env-Vˢ-handler {A = A} {B = B} {ε = ε}
   cong (V-rename (cong-ren (unbox-ren q)))
     (trans (cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-handler ei))
       (trans (cong (λ z → castᵛ eo (env-Vˢ γ Δ' (handler z Hi)))
-                   (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) ei) ei₂ N))
+                   (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) ei) ei₂ N))
         (trans (cong (castᵛ eo) (env-Vˢ-handler γ Δ' _ _))
           (trans (cast-handler eo)
-                 (handler-≡ (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) eo) eo₂ _)
+                 (handler-≡ (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) eo) eo₂ _)
                             cl)))))
   where
     Δ'  = [] ⟨ ρ ⟩ ++ᶜ Δ
     eo  = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei  = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
-    eo₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) (Δ ⟨ mapᵉ ε ⟩ ∷ A))
-    ei₂ = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) (Δ ⟨ mapᵉ ε ⟩ ∷ A)
+    eo₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A))
+    ei₂ = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A)
 
     Hi  = λ op ε₀ → Cl-cast op ε₀ ei (H op ε₀)
 
@@ -1992,18 +1992,18 @@ env-Vˢ-handler {A = A} {B = B} {ε = ε}
               (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ} V γ) Δ N H =
   trans (cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-handler ei))
     (trans (cong (λ z → castᵛ eo (env-Vˢ γ Δ' (handler z Hi)))
-                 (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) ei) ei₂ N))
+                 (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) ei) ei₂ N))
       (trans (cong (castᵛ eo) (env-Vˢ-handler γ Δ' _ _))
         (trans (cast-handler eo)
-               (handler-≡ (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) eo) eo₂ _)
+               (handler-≡ (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) eo) eo₂ _)
                           cl))))
   where
     Δ₁  = [] ∷ [ ρ ] A₀
     Δ'  = Δ₁ ++ᶜ Δ
     eo  = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
     ei  = ++ᶜ-assoc Γ Δ₁ Δ
-    eo₂ = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ⟨ mapᵉ ε ⟩ ∷ A))
-    ei₂ = ++ᶜ-assoc Γ Δ₁ (Δ ⟨ mapᵉ ε ⟩ ∷ A)
+    eo₂ = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A))
+    ei₂ = ++ᶜ-assoc Γ Δ₁ (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A)
 
     Hi  = λ op ε₀ → Cl-cast op ε₀ ei (H op ε₀)
 
@@ -2025,13 +2025,13 @@ env-Vˢ-handler {A = A} {B = B} {ε = ε}
               (cast-handler eA))
     (trans (cong (λ z → sub-atᵛ Δ
                           (castᵛ eIn (env-Vˢ γ Δ' (handler z Hi))) W)
-                 (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) eA) eA₂ N))
+                 (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) eA) eA₂ N))
       (trans (cong (λ z → sub-atᵛ Δ (castᵛ eIn z) W)
                    (env-Vˢ-handler γ Δ' _ _))
         (trans (cong (λ z → sub-atᵛ Δ z W) (cast-handler eIn))
                (handler-≡
-                 (cong (λ z → sub-atᶜ (Δ ⟨ mapᵉ ε ⟩ ∷ A) z W)
-                       (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) eIn)
+                 (cong (λ z → sub-atᶜ (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) z W)
+                       (castᶜ-irr (cong (λ Γ₁ → Γ₁ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) eIn)
                                   eIn₂ Nγ))
                  cl))))
   where
@@ -2039,11 +2039,11 @@ env-Vˢ-handler {A = A} {B = B} {ε = ε}
     Δ'   = Δ₁ ++ᶜ Δ
     eIn  = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
     eA   = ++ᶜ-assoc Γ Δ₁ Δ
-    eIn₂ = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ⟨ mapᵉ ε ⟩ ∷ A))
-    eA₂  = ++ᶜ-assoc Γ Δ₁ (Δ ⟨ mapᵉ ε ⟩ ∷ A)
+    eIn₂ = sym (++ᶜ-assoc (toCtx St) Δ₁ (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A))
+    eA₂  = ++ᶜ-assoc Γ Δ₁ (Δ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A)
 
     Hi  = λ op ε₀ → Cl-cast op ε₀ eA (H op ε₀)
-    Nγ  = env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ eA₂ N)
+    Nγ  = env-Cˢ γ (Δ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) (castᶜ eA₂ N)
 
     cl : ∀ op ε₀
        → sub-atᶜ (Δ ++ᶜ Dcl B op ε₀)

@@ -84,15 +84,15 @@ bind-bindᵏ f t s =
 -- Binding after a tick: a tick is natural and algebraic, so the bind goes
 -- under it, and the transition's `ηᵏ` is absorbed, leaving only a regrading.
 
-tick-z : ∀ (δ : E) (ε : E) → δ ·ₑ ε ≾ₑ (δ ·ₑ uₑ) ·ₑ ε
+tick-z : ∀ (δ : E) (ε : E) → δ ·ₑ ε ≾ₑ (δ ·ₑ 𝟏ₑ) ·ₑ ε
 tick-z δ ε =
   ≾ₑ-trans (·ₑ-monoʳ-≾ₑ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε)))
-           (≃ₑ⇒≿ₑ (·ₑ-assoc δ uₑ ε))
+           (≃ₑ⇒≿ₑ (·ₑ-assoc δ 𝟏ₑ ε))
 
-tick-nf : ∀ {X Y B ε} → (δ : E) → (env : X →ᵐ [ mapᵉ δ ]ᵒ Y)
+tick-nf : ∀ {X Y B ε} → (δ : E) → (env : X →ᵐ [ ∣ δ ∣ᵉ ]ᵒ Y)
         → (f : Y →ᵐ Tᵏ B ε)
-        → μᵏ ∘ᵐ Tᵏᶠ f ∘ᵐ (tickᵏ δ ∘ᵐ [ mapᵉ δ ]ᶠ ηᵏ ∘ᵐ env)
-        ≈ᵐ T-≤ᵏ (tick-z δ ε) ∘ᵐ tickᵏ δ ∘ᵐ [ mapᵉ δ ]ᶠ f ∘ᵐ env
+        → μᵏ ∘ᵐ Tᵏᶠ f ∘ᵐ (tickᵏ δ ∘ᵐ [ ∣ δ ∣ᵉ ]ᶠ ηᵏ ∘ᵐ env)
+        ≈ᵐ T-≤ᵏ (tick-z δ ε) ∘ᵐ tickᵏ δ ∘ᵐ [ ∣ δ ∣ᵉ ]ᶠ f ∘ᵐ env
 tick-nf {ε = ε} δ env f =
     ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (tickᵏ-nat δ f)))

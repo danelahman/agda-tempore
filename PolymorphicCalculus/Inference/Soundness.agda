@@ -569,14 +569,14 @@ mutual
       ihH op =
         soundCˢ (ι↑ ↑ᵉ)
                 (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                    ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
+                    ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
                 (H op) γ⇑ (econst (op-grade op) ·̂ₑ e'') (cls op)
 
       cH : (op : Op) → _
       cH op =
         cong₂ _∷_
               (cong₂ _∷_ (cong (_⟨ rconst ⊤ᵣ ⟩) pΓ⇑) (⌜⌝ᵍ-subst (σ' ↑ᵉ) (param op)))
-              (cong₂ (λ A₀ B₀ → [ rconst (mapᵉ (op-grade op)) ] (A₀ ⇒ B₀ ‼ _))
+              (cong₂ (λ A₀ B₀ → [ rconst ∣ op-grade op ∣ᵉ ] (A₀ ⇒ B₀ ‼ _))
                      (⌜⌝ᵍ-subst (σ' ↑ᵉ) (arity op))
                      pγ⇑)
 
@@ -908,9 +908,9 @@ mutual
       pa = ⌜⌝ᵍ-subst σ' (arity op)
 
       ih₁ = soundVˢ ι↑ Γ↑ V ⌜ param op ⌝ᵍ s₁
-      ih₂ = soundCˢ ι↑ (Γ↑ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ) M A↑ e s₂
+      ih₂ = soundCˢ ι↑ (Γ↑ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ) M A↑ e s₂
 
-      c₂ = cong₂ (λ Γ₀ A₀ → Γ₀ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ A₀) pΓ pa
+      c₂ = cong₂ (λ Γ₀ A₀ → Γ₀ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ A₀) pΓ pa
 
       D₁ = ty-subst pp (ctx-substᵛ pΓ (proj₁ ih₁))
       D₂ = c-subst (cong (_‼ _) pA) (ctx-substᶜ c₂ (proj₁ ih₂))
@@ -940,9 +940,9 @@ mutual
       pt = wk-,ᵉ-e   σ ε t
       pι = wk-,ᵉ-ˢ   ι σ ε
 
-      ih = soundCˢ ι↑ (Γ↑ ⟨ rconst (of-durʳ τ) ⟩) M A↑ e s
+      ih = soundCˢ ι↑ (Γ↑ ⟨ rconst (ιᵣ τ) ⟩) M A↑ e s
 
-      c₀ = cong (_⟨ rconst (of-durʳ τ) ⟩) pΓ
+      c₀ = cong (_⟨ rconst (ιᵣ τ) ⟩) pΓ
 
       D₀ = c-subst (cong (_‼ _) pA) (ctx-substᶜ c₀ (proj₁ ih))
 
@@ -1116,8 +1116,8 @@ private
   -- returning a value: the `≾̂ₑᶜ` conjunct becomes a `coerce`, the type
   -- equation's first half a `subV`
 
-  ex-return : ∅ᴴ ∣ ∅ᶜ ∷ Unit ⊢C⦂ Unit ‼ ûₑ
-  ex-return = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} (∅ᶜ ∷ Unit) (return ⋆) Unit ûₑ
+  ex-return : ∅ᴴ ∣ ∅ᶜ ∷ Unit ⊢C⦂ Unit ‼ 𝟏̂ₑ
+  ex-return = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} (∅ᶜ ∷ Unit) (return ⋆) Unit 𝟏̂ₑ
                             ((Unitₛ , Unitₛ) , ⊩≾̂ₑ-refl))
 
   ex-return-is : ex-return ≡ coerce ⊩≾̂ₑ-refl (return (subV ⋆ Unitₛ))
@@ -1125,8 +1125,8 @@ private
 
   -- a variable used after time-passage: the `Et∨≾ᵘ` disjunction is `VarOK`
 
-  ex-var : ∅ᴴ ∣ (∅ᶜ ∷ Unit) ⟨ ûᵣ ⟩ ⊢V⦂ Unit
-  ex-var = proj₁ (soundV {σ = idˢ} {Q = ∅ᴴ} ((∅ᶜ ∷ Unit) ⟨ ûᵣ ⟩) (var zero) Unit (Unitₛ , et-ok Unitₑ))
+  ex-var : ∅ᴴ ∣ (∅ᶜ ∷ Unit) ⟨ 𝟏̂ᵣ ⟩ ⊢V⦂ Unit
+  ex-var = proj₁ (soundV {σ = idˢ} {Q = ∅ᴴ} ((∅ᶜ ∷ Unit) ⟨ 𝟏̂ᵣ ⟩) (var zero) Unit (Unitₛ , et-ok Unitₑ))
 
   ex-var-erase : ⌊ ex-var ⌋ᵛ ≡ var zero
   ex-var-erase = refl
@@ -1134,10 +1134,10 @@ private
   -- unboxing a variable: the `∃ᵗ∃ʳ` witnesses are the continuation's
   -- binder and the grade
 
-  ex-unbox : ∅ᴴ ∣ ∅ᶜ ∷ [ ûᵣ ] Unit ⊢C⦂ Unit ‼ ûₑ
-  ex-unbox = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} (∅ᶜ ∷ [ ûᵣ ] Unit) (unbox (var zero) (return ⋆))
-                           Unit ûₑ
-                           (Unit , ûᵣ , tt , ([ ⊩≾̂ᵣ-refl ]ₛ Unitₛ , [ ⊩≾̂ᵣ-refl ]ₛ Unitₛ) ,
+  ex-unbox : ∅ᴴ ∣ ∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit ⊢C⦂ Unit ‼ 𝟏̂ₑ
+  ex-unbox = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit) (unbox (var zero) (return ⋆))
+                           Unit 𝟏̂ₑ
+                           (Unit , 𝟏̂ᵣ , tt , ([ ⊩≾̂ᵣ-refl ]ₛ Unitₛ , [ ⊩≾̂ᵣ-refl ]ₛ Unitₛ) ,
                              ⊩≾̂ᵣ-refl ,
                              (Unitₛ , Unitₛ) , ⊩≾̂ₑ-refl))
 
@@ -1146,22 +1146,22 @@ private
 
   -- unboxing an annotated variable: the annotation's atom is solved too
 
-  ex-unbox-ann : ∅ᴴ ∣ ∅ᶜ ∷ [ ûᵣ ] Unit ⊢C⦂ Unit ‼ ûₑ
-  ex-unbox-ann = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} (∅ᶜ ∷ [ ûᵣ ] Unit)
-                               (unbox (var zero ⦂ᵛ [ ûᵣ ] Unit) (return ⋆)) Unit ûₑ
-                               (Unit , ûᵣ , (tt , [ ⊩≾̂ᵣ-refl ]ₛ Unitₛ) ,
+  ex-unbox-ann : ∅ᴴ ∣ ∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit ⊢C⦂ Unit ‼ 𝟏̂ₑ
+  ex-unbox-ann = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} (∅ᶜ ∷ [ 𝟏̂ᵣ ] Unit)
+                               (unbox (var zero ⦂ᵛ [ 𝟏̂ᵣ ] Unit) (return ⋆)) Unit 𝟏̂ₑ
+                               (Unit , 𝟏̂ᵣ , (tt , [ ⊩≾̂ᵣ-refl ]ₛ Unitₛ) ,
                                  ([ ⊩≾̂ᵣ-refl ]ₛ Unitₛ , [ ⊩≾̂ᵣ-refl ]ₛ Unitₛ) ,
                                  ⊩≾̂ᵣ-refl , (Unitₛ , Unitₛ) , ⊩≾̂ₑ-refl))
 
-  ex-unbox-ann-erase : ⌊ ex-unbox-ann ⌋ᶜ ≡ unbox (var zero ⦂ᵛ [ ûᵣ ] Unit) (return ⋆)
+  ex-unbox-ann-erase : ⌊ ex-unbox-ann ⌋ᶜ ≡ unbox (var zero ⦂ᵛ [ 𝟏̂ᵣ ] Unit) (return ⋆)
   ex-unbox-ann-erase = refl
 
   -- boxing a value: the `∃ᵗ` witness is the payload's type, the grade is the
   -- annotation
 
-  ex-box : ∅ᴴ ∣ ∅ᶜ ⊢C⦂ Unit ‼ ûₑ
-  ex-box = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} ∅ᶜ (box ûᵣ ⋆ (return ⋆)) Unit ûₑ
+  ex-box : ∅ᴴ ∣ ∅ᶜ ⊢C⦂ Unit ‼ 𝟏̂ₑ
+  ex-box = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} ∅ᶜ (box 𝟏̂ᵣ ⋆ (return ⋆)) Unit 𝟏̂ₑ
                          (Unit , (Unitₛ , Unitₛ) , (Unitₛ , Unitₛ) , ⊩≾̂ₑ-refl))
 
-  ex-box-erase : ⌊ ex-box ⌋ᶜ ≡ box ûᵣ ⋆ (return ⋆)
+  ex-box-erase : ⌊ ex-box ⌋ᶜ ≡ box 𝟏̂ᵣ ⋆ (return ⋆)
   ex-box-erase = refl

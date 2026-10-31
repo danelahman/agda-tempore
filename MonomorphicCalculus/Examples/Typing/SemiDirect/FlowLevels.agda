@@ -105,7 +105,7 @@ sample-then-store =
 
 -- transmitting the reading is a program, graded by what it does
 
-relaying : [] ⊢C⦂ Unit ‼ (opTime read ·ₑ (opTime send ·ₑ uₑ))
+relaying : [] ⊢C⦂ Unit ‼ (opTime read ·ₑ (opTime send ·ₑ 𝟏ₑ))
 relaying =
   perform read ⋆                     -- ⟨ opTime read ⟩ ∷ Reading
     (perform send here               -- ⟨ opTime send ⟩ ∷ Unit
@@ -113,8 +113,8 @@ relaying =
 
 -- and that grade writes the radio at `High`, breaking the policy
 
-relaying-refused : ¬ (opTime read ·ₑ (opTime send ·ₑ uₑ) ≾ₑ radio-low)
-relaying-refused = refuted (opTime read ·ₑ (opTime send ·ₑ uₑ)) radio-low
+relaying-refused : ¬ (opTime read ·ₑ (opTime send ·ₑ 𝟏ₑ) ≾ₑ radio-low)
+relaying-refused = refuted (opTime read ·ₑ (opTime send ·ₑ 𝟏ₑ)) radio-low
 
 ------------------------------------------------------------------------
 -- Readings survive idling, not an operation
@@ -123,13 +123,13 @@ idle-then-store : [] ⊢C⦂ Unit ‼ radio-low
 idle-then-store =
   check radio-low
     (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
-      (delay 5                       -- ⟨ uᵣ ⟩
+      (delay 5                       -- ⟨ 𝟏ᵣ ⟩
         (perform write (fresh-var decided (Tl-⟨⟩ Hd))
                                      -- ⟨ opTime write ⟩ ∷ Unit
           (return ⋆))))
 
-stale-after-storing : ¬ (uᵣ ·ᵣ opTime write ≾ᵣ uᵣ)
-stale-after-storing = refuted (uᵣ ·ᵣ opTime write) uᵣ
+stale-after-storing : ¬ (𝟏ᵣ ·ᵣ opTime write ≾ᵣ 𝟏ᵣ)
+stale-after-storing = refuted (𝟏ᵣ ·ᵣ opTime write) 𝟏ᵣ
 
 ------------------------------------------------------------------------
 -- Unboxing: a public channel, claimable while nothing `High` has been
@@ -151,20 +151,20 @@ store-then-claim =
 
 -- reading the sensor in between closes it
 
-claim-after-reading : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ channel)
-claim-after-reading = refuted (uᵣ ·ᵣ opTime read) channel
+claim-after-reading : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ channel)
+claim-after-reading = refuted (𝟏ᵣ ·ᵣ opTime read) channel
 
 ------------------------------------------------------------------------
 -- Effect handling: the unit is least, so a clause may discard its
 -- continuation
 
-nothing-fits : (op : Op) → (ε'' : E) → uₑ ≾ₑ op-grade op ·ₑ ε''
+nothing-fits : (op : Op) → (ε'' : E) → 𝟏ₑ ≾ₑ op-grade op ·ₑ ε''
 nothing-fits op ε'' = Low⊑ , pointwise⁺ _ (λ _ → tt)
 
 -- the clauses discard the transmission, but `handle` is graded by the
 -- handled computation, so the radio is still written at `High`
 
-suppressed : [] ⊢C⦂ Unit ‼ ((opTime read ·ₑ (opTime send ·ₑ uₑ)) ·ₑ uₑ)
+suppressed : [] ⊢C⦂ Unit ‼ ((opTime read ·ₑ (opTime send ·ₑ 𝟏ₑ)) ·ₑ 𝟏ₑ)
 suppressed =
   handle perform read ⋆ (perform send here (return ⋆))
     `with discarding {[]} nothing-fits

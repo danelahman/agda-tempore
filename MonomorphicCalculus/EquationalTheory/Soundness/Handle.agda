@@ -71,15 +71,15 @@ open import MonomorphicCalculus.OperationalSemantics.Soundness.Preservation.Unbo
 
 open import MonomorphicCalculus.EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
 open import MonomorphicCalculus.EquationalTheory.Soundness.Seq S Cat Fut Pst Adj GTy Mon GE
-       using (εᵇ-η⊣-u; str-extend; str-delay)
+       using (εᵇ-η⊣-𝟏; str-extend; str-delay)
 
 sound-handle-return : ∀ {Γ A B ε}
   → (V : Γ ⊢V⦂ A)
   → (H : (op : Op) → (ε'' : E)
        → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+            ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-  → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+  → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε)
   → Soundᶜ== (handle-return V H N)
 sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
     handle-in-β (return V) H N pV pN pH uH
@@ -99,7 +99,7 @@ sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
-                        ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ εᵇ-η⊣-u {⟦ Γ ⟧ᶜᵗˣ} map-uᵉ
+                        ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ εᵇ-η⊣-𝟏 {⟦ Γ ⟧ᶜᵗˣ} map-𝟏ᵉ
                           , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ e ((C-rename r N) [ split-[] ↦ V ]c))
                 pR pRc
@@ -113,7 +113,7 @@ sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
                                       , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))
   where
     e = ≃ₑ-sym (·ₑ-identityˡ ε)
-    r   = cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren)
+    r   = cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)
     pRc = subᶜ (C-rename r N) split-[] V (renᶜ r N pN) pV
 
 -- Transports the fold along a clause-family renaming `r` that factors as
@@ -126,7 +126,7 @@ module Reindex
          (r≈ : ⟦ r ⟧ʳ ≈ᵐ ⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ g)
          (H : (op : Op) → (ε'' : E)
             → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                 ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
               ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
          (pH : ∀ op ε'' → Paramᶜ (H op ε''))
          (uH : EffUniformʰ {Γ} H pH)
@@ -134,7 +134,7 @@ module Reindex
 
   Hᵣ : (op : Op) → (ε'' : E)
      → Γ' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-          ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+          ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
        ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')
   Hᵣ op ε'' = C-rename (cong-∷-ren (cong-∷-ren r)) (H op ε'')
 
@@ -241,31 +241,31 @@ sound-handle-unbox x rel w M V (pM , pV) (pM₂ , pV₂) =
 
 private
   -- by a lemma, so that `⟦ delay τ M ⟧ᶜᵗ` is unfolded at a variable `M`
-  delay-congᵗ : ∀ {Γ A ε τ} (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε) (pM : Paramᶜ M) {f}
+  delay-congᵗ : ∀ {Γ A ε τ} (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε) (pM : Paramᶜ M) {f}
               → ⟦ M ⟧ᶜᵗ pM ≈ᵐ f
-              → ⟦ delay τ M ⟧ᶜᵗ pM ≈ᵐ delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ f ∘ᵐ η⊣
+              → ⟦ delay τ M ⟧ᶜᵗ pM ≈ᵐ delayᵀ τ ∘ᵐ [ ιᵣ τ ]ᶠ f ∘ᵐ η⊣
   delay-congᵗ M pM eq = ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ eq))
 
   -- The reduct of `handle-delay` denotes the delayed fold. The equation fixes
   -- the reduct's return clause and handler, so that they are the rule's own
   -- terms.
   handle-delay-rhs : ∀ {Γ A B τ ε ε' ε₀} {L : Γ ⊢C⦂ B ‼ ε₀}
-    → (e : of-durᵉ τ ·ₑ (ε ·ₑ ε') ≃ₑ ε₀)
-    → (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
+    → (e : ιₑ τ ·ₑ (ε ·ₑ ε') ≃ₑ ε₀)
+    → (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε)
     → {H : (op : Op) → (ε'' : E)
-         → Γ ⟨ of-durʳ τ ⟩ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+         → Γ ⟨ ιᵣ τ ⟩ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+              ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
            ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
-    → {N : Γ ⟨ of-durʳ τ ⟩ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+    → {N : Γ ⟨ ιᵣ τ ⟩ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
     → Γ ⊢C⦂ L == ε-≃ e (delay τ (handle M `with handler N H))
     → (p : Paramᶜ (ε-≃ e (delay τ (handle M `with handler N H))))
     → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-    → (pH : ∀ op ε'' → Paramᶜ (H op ε'')) → (uH : EffUniformʰ {Γ ⟨ of-durʳ τ ⟩} H pH)
+    → (pH : ∀ op ε'' → Paramᶜ (H op ε'')) → (uH : EffUniformʰ {Γ ⟨ ιᵣ τ ⟩} H pH)
     → ⟦ ε-≃ e (delay τ (handle M `with handler N H)) ⟧ᶜᵗ p
     ≈ᵐ T-≤ (proj₁ e)
          ∘ᵐ delayᵀ τ
-         ∘ᵐ [ of-durʳ τ ]ᶠ (T-alg-of-handlerᵀ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟨ of-durʳ τ ⟩ ⟧ᶜᵗˣ)
-                                            (⟦_⟧ʰᵗ {Γ ⟨ of-durʳ τ ⟩} H pH uH)
+         ∘ᵐ [ ιᵣ τ ]ᶠ (T-alg-of-handlerᵀ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟨ ιᵣ τ ⟩ ⟧ᶜᵗˣ)
+                                            (⟦_⟧ʰᵗ {Γ ⟨ ιᵣ τ ⟩} H pH uH)
                             ∘ᵐ ⟨ ⟨⊤⟩-η , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ ⟩ᵐ)
          ∘ᵐ η⊣
   handle-delay-rhs {τ = τ} e M {H} {N} _ p pM pN pH uH =
@@ -275,12 +275,12 @@ private
                   (handle-in-β M H N pM pN pH uH))
 
 sound-handle-delay : ∀ {Γ A B τ ε ε'}
-  → (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
+  → (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε)
   → (H : (op : Op) → (ε'' : E)
        → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+            ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-  → (N : Γ ⟨ mapᵉ (of-durᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+  → (N : Γ ⟨ ∣ ιₑ τ ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
   → Soundᶜ== (handle-delay M H N)
 sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
     handle-in-β (delay τ M) H N pM pN pH uH
@@ -327,9 +327,9 @@ sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
                       ∙ ∘ᵐ-congˡ (≈ᵐ-sym (R.alg-nat R.pHᵣ R.uHᵣ))))))
   ∙ ≈ᵐ-sym (handle-delay-rhs e M (handle-delay M H N) pR pM (renᶜ r N pN) R.pHᵣ R.uHᵣ)
   where
-    e = ≃ₑ-sym (·ₑ-assoc (of-durᵉ τ) ε ε')
-    r   = cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))
+    e = ≃ₑ-sym (·ₑ-assoc (ιₑ τ) ε ε')
+    r   = cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-ιᵉ ≃ᵣ-refl)))
                       ∘ʳ ⟨⟩-μ-ren)
 
     module R = Reindex (⟨⟩-≤-ren (≾-⊤ᵣ _) ∘ʳ ⟨⟩-μ-ren)
-                       (⟨⟩-≤ (≾-⊤ᵣ (of-durʳ τ))) (barrier-μ (≾-⊤ᵣ _)) H pH uH
+                       (⟨⟩-≤ (≾-⊤ᵣ (ιᵣ τ))) (barrier-μ (≾-⊤ᵣ _)) H pH uH

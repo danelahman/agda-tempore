@@ -54,7 +54,7 @@ open Future Fut using ([_]ᵒ; [_]ᶠ; []-≤; []-∘ᵐ; []-congᶠ; []-ε-nat;
                        δ; []-monoidal; []-δ-nat; []-monoidal-nat)
                 renaming (ε to εᵇ)
 open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; μ; ⟨⟩-≤; ⟨⟩-∘ᵐ; ⟨⟩-congᶠ; ⟨⟩-≤-irr)
-open Adjunction Adj using (η⊣; η⊣-nat; η⊣-≤; η⊣-u; ε⊣; η⊣-δ; η⊣-monoidal)
+open Adjunction Adj using (η⊣; η⊣-nat; η⊣-≤; η⊣-𝟏; ε⊣; η⊣-δ; η⊣-monoidal)
 open GroundTypes GTy
 open Monad Mon
 
@@ -85,10 +85,10 @@ open import MonomorphicCalculus.EquationalTheory.Soundness.Base S Cat Fut Pst Ad
 
 str-extend : ∀ {X Y A B ε ε'}
            → (m : Y →ᵐ Tᵒ A ε)
-           → (n : ⟨ mapᵉ ε ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
+           → (n : ⟨ ∣ ε ∣ᵉ ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
            → (g : X →ᵐ Y) → (f : Y →ᵐ X)
            → f ∘ᵐ g ≈ᵐ idᵐ
-           →    Tᶠ (n ∘ᵐ mapˣᵐ (⟨ mapᵉ ε ⟩ᶠ f) idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ ∘ᵐ g
+           →    Tᶠ (n ∘ᵐ mapˣᵐ (⟨ ∣ ε ∣ᵉ ⟩ᶠ f) idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ ∘ᵐ g
              ≈ᵐ Tᶠ n ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ∘ᵐ g ⟩ᵐ
 str-extend m n g f fg =  ∘ᵐ-congˡ (T-∘ᵐ _ _)
               ∙ ∘ᵐ-assoc _ _ _
@@ -106,34 +106,34 @@ str-extend m n g f fg =  ∘ᵐ-congˡ (T-∘ᵐ _ _)
 
 seq-extend : ∀ {X Y A B ε ε'}
            → (m : Y →ᵐ Tᵒ A ε)
-           → (n : ⟨ mapᵉ ε ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
+           → (n : ⟨ ∣ ε ∣ᵉ ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
            → (g : X →ᵐ Y) → (f : Y →ᵐ X)
            → f ∘ᵐ g ≈ᵐ idᵐ
-           →    μᵀ ∘ᵐ Tᶠ (n ∘ᵐ mapˣᵐ (⟨ mapᵉ ε ⟩ᶠ f) idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ ∘ᵐ g
+           →    μᵀ ∘ᵐ Tᶠ (n ∘ᵐ mapˣᵐ (⟨ ∣ ε ∣ᵉ ⟩ᶠ f) idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ ∘ᵐ g
              ≈ᵐ μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ∘ᵐ g ⟩ᵐ
 seq-extend m n g f fg = ∘ᵐ-congʳ (str-extend m n g f fg)
 
 
 -- The unit law: sequencing a `return` is substitution. The environment the
 -- continuation is given is the transposed one, which at the unit grade is the
--- possibility unit `η` (`η⊣-≤` down to `uᵣ`, then `η⊣-u`).
+-- possibility unit `η` (`η⊣-≤` down to `𝟏ᵣ`, then `η⊣-𝟏`).
 
-εᵇ-η⊣-u : ∀ {X ρ} → (e : ρ ≃ᵣ uᵣ)
+εᵇ-η⊣-𝟏 : ∀ {X ρ} → (e : ρ ≃ᵣ 𝟏ᵣ)
         → εᵇ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ e) ∘ᵐ η⊣ {X} {ρ}
         ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ e) ∘ᵐ η
-εᵇ-η⊣-u {X} e =
+εᵇ-η⊣-𝟏 {X} e =
     ∘ᵐ-congʳ (η⊣-≤ (≃ᵣ⇒≿ᵣ e))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat _))
   ∙ ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (  ∘ᵐ-congʳ η⊣-u
+  ∙ ∘ᵐ-congʳ (  ∘ᵐ-congʳ η⊣-𝟏
               ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
               ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat _))
               ∙ ∘ᵐ-assoc _ _ _
               ∙ ∘ᵐ-congʳ []-ε∘ηᵘ≡id
               ∙ ∘ᵐ-identityʳ _)
 
-sound-seq-return : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (M : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+sound-seq-return : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (M : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε)
                  → Soundᶜ== (seq-return V M)
 sound-seq-return {Γ} {A} {B} {ε} V M (pV , pM) pR =
     ∘ᵐ-congʳ (  ∘ᵐ-congʳ (  ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
@@ -147,7 +147,7 @@ sound-seq-return {Γ} {A} {B} {ε} V M (pV , pM) pR =
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ T-μ∘η≡id
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
-                        ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ εᵇ-η⊣-u {⟦ Γ ⟧ᶜᵗˣ} map-uᵉ
+                        ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ εᵇ-η⊣-𝟏 {⟦ Γ ⟧ᶜᵗˣ} map-𝟏ᵉ
                           , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ (≃ₑ-sym (·ₑ-identityˡ ε)) ((C-rename r M) [ split-[] ↦ V ]c))
                 pR pRc
@@ -160,7 +160,7 @@ sound-seq-return {Γ} {A} {B} {ε} V M (pV , pM) pR =
                                         ∙ ∘ᵐ-congˡ (⟨⟩-≤-irr _ _)
                                       , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))
   where
-    r   = cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren)
+    r   = cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)
     pRc = subᶜ (C-rename r M) split-[] V (renᶜ r M pM) pV
 
 -- The counit law: sequencing a `return` of the bound variable is the identity.
@@ -181,7 +181,7 @@ sound-seq-eta {Γ} {A} {ε} M pM pN =
     seq-body : ⟦ M ⨟ return (var (λ _ → ≾ᵣ-refl) Hd) ⟧ᶜᵗ (pM , tt)
              ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityʳ ε)) ∘ᵐ ⟦ M ⟧ᶜᵗ pM
     seq-body =
-        ∘ᵐ-congʳ (  ∘ᵐ-congˡ (T-congᶠ (∘ᵐ-congʳ (var-morphism-Hd {Γ ⟨ mapᵉ ε ⟩} {A} _)))
+        ∘ᵐ-congʳ (  ∘ᵐ-congˡ (T-congᶠ (∘ᵐ-congʳ (var-morphism-Hd {Γ ⟨ ∣ ε ∣ᵉ ⟩} {A} _)))
                   ∙ ∘ᵐ-congˡ (T-∘ᵐ _ _)
                   ∙ ∘ᵐ-assoc _ _ _
                   ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -194,7 +194,7 @@ sound-seq-eta {Γ} {A} {ε} M pM pN =
 
 sound-seq-box : ∀ {Γ A B C ρ ε ε'}
               → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A) → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
-              → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
+              → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ C ‼ ε')
               → Soundᶜ== (seq-box V M N)
 sound-seq-box {ρ = ρ} V M N ((pV , pM) , pN) pR =
     ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (box _ V (M ⨟ C-rename r N)) pR (pV , (pM , renᶜ r N pN))
@@ -207,7 +207,7 @@ sound-seq-box {ρ = ρ} V M N ((pV , pM) , pN) pR =
 
 sound-seq-unbox : ∀ {Γ A A₀ B C ρ₀ ρ' ε ε'}
                 → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ₀) → (w : A₀ <:ᵛ A)
-                → (M : Γ ∷ A ⊢C⦂ B ‼ ε) → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
+                → (M : Γ ∷ A ⊢C⦂ B ‼ ε) → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ C ‼ ε')
                 → Soundᶜ== (seq-unbox x rel w M N)
 sound-seq-unbox {ε = ε} x rel w M N (pM , pN) pR =
     ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x rel w (M ⨟ C-rename r N)) pR (pM , renᶜ r N pN)
@@ -226,17 +226,17 @@ sound-seq-unbox {ε = ε} x rel w M N (pM , pN) pR =
 
 -- The transposed pair, boxed, is exactly the tail that `strᵀ-delayᵀ-algebraicity` produces.
 
-delay-core3 : ∀ {X A ε} → (τ : 𝔻) → (m : ⟨ of-durʳ τ ⟩ᵒ X →ᵐ Tᵒ A ε)
-            → [ of-durʳ τ ]ᶠ
-                 ⟨ [ mapᵉ ε ]ᶠ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ
-                       (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl))) ∘ᵐ μ)
+delay-core3 : ∀ {X A ε} → (τ : 𝔻) → (m : ⟨ ιᵣ τ ⟩ᵒ X →ᵐ Tᵒ A ε)
+            → [ ιᵣ τ ]ᶠ
+                 ⟨ [ ∣ ε ∣ᵉ ]ᶠ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ
+                       (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-ιᵉ ≃ᵣ-refl))) ∘ᵐ μ)
                      ∘ᵐ η⊣
                  , m ⟩ᵐ
                 ∘ᵐ η⊣
             ≈ᵐ []-monoidal
                  ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ
-                       (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))) idᵐ
-                 ∘ᵐ ⟨ η⊣ , [ of-durʳ τ ]ᶠ m ∘ᵐ η⊣ ⟩ᵐ
+                       (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-ιᵉ ≃ᵣ-refl)))) idᵐ
+                 ∘ᵐ ⟨ η⊣ , [ ιᵣ τ ]ᶠ m ∘ᵐ η⊣ ⟩ᵐ
 delay-core3 τ m =
     ∘ᵐ-congˡ (  []-congᶠ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
                                   ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
@@ -264,13 +264,13 @@ delay-core3 τ m =
 -- `handle-delay` is this plus `T-alg-of-handlerᵀ-delayᵀ`.
 
 str-delay : ∀ {X A B ε ε'} → (τ : 𝔻)
-          → (m : ⟨ of-durʳ τ ⟩ᵒ X →ᵐ Tᵒ A ε)
-          → (n : ⟨ mapᵉ (of-durᵉ τ ·ₑ ε) ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
-          → Tᶠ n ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ m ∘ᵐ η⊣ ⟩ᵐ
+          → (m : ⟨ ιᵣ τ ⟩ᵒ X →ᵐ Tᵒ A ε)
+          → (n : ⟨ ∣ ιₑ τ ·ₑ ε ∣ᵉ ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
+          → Tᶠ n ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , delayᵀ τ ∘ᵐ [ ιᵣ τ ]ᶠ m ∘ᵐ η⊣ ⟩ᵐ
           ≈ᵐ delayᵀ τ
-               ∘ᵐ [ of-durʳ τ ]ᶠ
+               ∘ᵐ [ ιᵣ τ ]ᶠ
                     (Tᶠ (n ∘ᵐ mapˣᵐ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ
-                            (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl))) ∘ᵐ μ) idᵐ)
+                            (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-ιᵉ ≃ᵣ-refl))) ∘ᵐ μ) idᵐ)
                      ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ)
                ∘ᵐ η⊣
 str-delay {X} {A} {B} {ε} {ε'} τ m n =
@@ -300,8 +300,8 @@ str-delay {X} {A} {B} {ε} {ε'} τ m n =
                                                                           , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))))))
 
 sound-seq-delay : ∀ {Γ A B τ ε ε'}
-                → (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
-                → (N : Γ ⟨ mapᵉ (of-durᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+                → (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε)
+                → (N : Γ ⟨ ∣ ιₑ τ ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
                 → Soundᶜ== (seq-delay M N)
 sound-seq-delay {Γ} {A} {B} {τ} {ε} {ε'} M N (pM , pN) pR =
     ∘ᵐ-congʳ (str-delay τ (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN))
@@ -320,16 +320,16 @@ sound-seq-delay {Γ} {A} {B} {τ} {ε} {ε'} M N (pM , pN) pR =
                 pR pRc
             ∙ sound-ε-≃ e (delay τ (M ⨟ C-rename r N)) pRc)
   where
-    e = ≃ₑ-sym (·ₑ-assoc (of-durᵉ τ) ε ε')
-    rin = ⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))
+    e = ≃ₑ-sym (·ₑ-assoc (ιₑ τ) ε ε')
+    rin = ⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-ιᵉ ≃ᵣ-refl)))
           ∘ʳ ⟨⟩-μ-ren
     r   = cong-∷-ren rin
     pRc = pM , renᶜ r N pN
 
 sound-seq-perform : ∀ {Γ A B ε ε' op}
                   → (V : Γ ⊢V⦂ type-of-gtype (param op))
-                  → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
-                  → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+                  → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
+                  → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
                   → Soundᶜ== (seq-perform V M N)
 sound-seq-perform {Γ} {A} {B} {ε} {ε'} {op} V M N ((pV , pM) , pN) pR =
     ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ e' (perform op V (M ⨟ C-rename r' N)))
@@ -424,13 +424,13 @@ sound-seq-perform {Γ} {A} {B} {ε} {ε'} {op} V M N ((pV , pM) , pN) pR =
     -- the two boxed environments agree by `η⊣`-naturality.
     c4 : ∀ {O} → (eq : ⟦ type-of-gtype (arity op) ⟧ᵛ ≡ O)
        → μᵀ ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ
-           ∘ᵐ ⟨ ([ mapᵉ ε ]ᶠ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ) ∘ᵐ η⊣) ∘ᵐ fstᵐ
-              , subst (λ O' → ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ ×ᵐ O' →ᵐ Tᵒ ⟦ A ⟧ᵛ ε)
+           ∘ᵐ ⟨ ([ ∣ ε ∣ᵉ ]ᶠ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ) ∘ᵐ η⊣) ∘ᵐ fstᵐ
+              , subst (λ O' → ⟨ ∣ op-grade op ∣ᵉ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ ×ᵐ O' →ᵐ Tᵒ ⟦ A ⟧ᵛ ε)
                       eq (⟦ M ⟧ᶜᵗ pM) ⟩ᵐ
-       ≈ᵐ subst (λ O' → ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ ×ᵐ O' →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε'))
+       ≈ᵐ subst (λ O' → ⟨ ∣ op-grade op ∣ᵉ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ ×ᵐ O' →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε'))
                 eq (μᵀ ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ
-                      ∘ᵐ ⟨ [ mapᵉ ε ]ᶠ ((⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ)
-                                         ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ) ∘ᵐ η⊣
+                      ∘ᵐ ⟨ [ ∣ ε ∣ᵉ ]ᶠ ((⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ)
+                                         ∘ᵐ ⟨ ∣ ε ∣ᵉ ⟩ᶠ fstᵐ) ∘ᵐ η⊣
                          , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ)
     c4 refl =
       ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨   ∘ᵐ-assoc _ _ _

@@ -98,21 +98,21 @@ lower-runs→left-sided-intervals : left-sided →ᵍ dense-left-sided-intervals
 lower-runs→left-sided-intervals = record
   { map          = mapₒ
   ; map-monotone = λ {c} {d} p → ⊑⇒≤ (proj₁ (hullᴾ-mono {c = c} {d} p))
-  ; map-u        = ≃-of (cong (λ i → pt (lo i)) (hullᴾ-ε {lower}))
+  ; map-𝟏        = ≃-of (cong (λ i → pt (lo i)) (hullᴾ-ε {lower}))
   ; map-·        = λ {c} {d} → ≃-of (cong (λ i → pt (lo i)) (hullᴾ-· c d))
   ; map-⊤        = ≃-of (cong (λ i → pt (lo i)) (hullᴾ-is (⌜ str all (0ᴰ ∣ᶜ ⁻) ⌝) {⟪ 0ᴰ ∣ᶜ ⁻ , ∞ʰ ⟫} refl))
   ; map-⊔        = λ {c} {d} →
       subst (λ i → (pt (lo (hullᴾ c)) ⊓ pt (lo (hullᴾ d)) ≤ pt (lo i)) × (pt (lo i) ≤ pt (lo (hullᴾ c)) ⊓ pt (lo (hullᴾ d))))
             (sym (hullᴾ-∣ c d))
             (pt-⊓ (lo (hullᴾ c)) (lo (hullᴾ d)) , ⊓-pt (lo (hullᴾ c)) (lo (hullᴾ d)))
-  ; map-of-dur   = λ {τ} → ≃-of (wait-lo τ)
+  ; map-ι        = λ {τ} → ≃-of (wait-lo τ)
   }
 
 lowerRunsToLeftSidedIntervalsGradeSystem : GradeSystem
 lowerRunsToLeftSidedIntervalsGradeSystem = record
   { RGrade = dense-left-sided-intervals
   ; EGrade = left-sided
-  ; ∣_∣ᵉ   = lower-runs→left-sided-intervals
+  ; ∣-∣ᵉ   = lower-runs→left-sided-intervals
   }
 
 -- its hints
@@ -121,6 +121,6 @@ lowerRunsToLeftSidedIntervalsGradeSystemʰ : SystemHints lowerRunsToLeftSidedInt
 lowerRunsToLeftSidedIntervalsGradeSystemʰ = record
   { RHints      = dense-left-sided-intervalsʰ
   ; EHints      = left-sidedʰ
-  ; reflects-u? = nothing
+  ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []
   }

@@ -82,7 +82,7 @@ record TickFrame : Set where
     some-world : W
 
     -- and time can always pass by one tick
-    ⊑-tick : (w : W) → Σ[ w' ∈ W ] w ⊑[ mapᵉ (of-durᵉ 1ᴰ) ] w'
+    ⊑-tick : (w : W) → Σ[ w' ∈ W ] w ⊑[ ∣ ιₑ 1ᴰ ∣ᵉ ] w'
 
 record ConstFrame : Set where
   field
@@ -98,7 +98,7 @@ record ConstFrame : Set where
 
 reachable⇒tick : W → (∀ (ρ : R) (w : W) → Σ[ w' ∈ W ] w ⊑[ ρ ] w') → TickFrame
 reachable⇒tick w₀ f =
-  record { some-world = w₀ ; ⊑-tick = f (mapᵉ (of-durᵉ 1ᴰ)) }
+  record { some-world = w₀ ; ⊑-tick = f ∣ ιₑ 1ᴰ ∣ᵉ }
 
 -- `Delaysᵐ` describes a morphism as `ηᵀ` bound after `delayᵀ`s; at the
 -- presheaf model each of its three shapes computes to the corresponding
@@ -107,10 +107,10 @@ reachable⇒tick w₀ f =
 -- one tick's worth of transition, spelled out at the concrete operations
 
 tick-delays : ∀ {X : PSh} → (τ : 𝔻) → ∀ {w} (x : carrier X w)
-            → Delaysᵗ {⟨ of-durʳ τ ⟩ᵒ X}
-                (app (delayᵀ τ ∘ᵖ [ of-durʳ τ ]ᶠ ηᵀ ∘ᵖ η⊣) x) (τ +ᴰ 0ᴰ)
+            → Delaysᵗ {⟨ ιᵣ τ ⟩ᵒ X}
+                (app (delayᵀ τ ∘ᵖ [ ιᵣ τ ]ᶠ ηᵀ ∘ᵖ η⊣) x) (τ +ᴰ 0ᴰ)
 tick-delays {X} τ {w} x =
-  d-delay τ {k = λ q → leaf (mk⟨⟩ (⊑-mono (≃ᵣ⇒≾ᵣ map-of-durᵉ) q) x)} (λ q → d-leaf)
+  d-delay τ {k = λ q → leaf (mk⟨⟩ (⊑-mono (≃ᵣ⇒≾ᵣ map-ιᵉ) q) x)} (λ q → d-leaf)
 
 delaysᵐ→ᵗ : ∀ {X Y : PSh} {δ n} {d : X →ᵖ Tᵒ Y δ}
           → Delaysᵐ d n → ∀ {w} (x : carrier X w)
@@ -136,7 +136,7 @@ leafᵐ-head a y p = h-leaf tt
 
 nodeᵐ-head : ∀ {X Y : PSh} {ε : E} → (op : Op)
            → (v : Y →ᵖ ⟦ param op ⟧ᵍ)
-           → (k : Y →ᵖ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ X ε))
+           → (k : Y →ᵖ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ X ε))
            → ∀ {w we} (y : carrier Y w) (p : Path w we)
            → Head (isOp op) (app (nodeᵐ op v k) y) p 0
 nodeᵐ-head op v k y p = h-op refl
@@ -181,10 +181,10 @@ module _ (TF : TickFrame) where
   rno : ∀ {X Y₁ Y₂ : PSh} {ε ε₂ δ₁ δ₂ : E} {n₁ n₂ : 𝔻} {op : Op}
       → {a : Y₁ →ᵖ X}
       → {v : Y₂ →ᵖ ⟦ param op ⟧ᵍ}
-      → {k : Y₂ →ᵖ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ X ε₂)}
+      → {k : Y₂ →ᵖ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ X ε₂)}
       → {d₁ : 𝟙ᵖ →ᵖ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
       → {d₂ : 𝟙ᵖ →ᵖ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
-      → (r₁ : δ₁ ·ₑ uₑ ≾ₑ ε)
+      → (r₁ : δ₁ ·ₑ 𝟏ₑ ≾ₑ ε)
       → (r₂ : δ₂ ·ₑ (op-grade op ·ₑ ε₂) ≾ₑ ε)
       --------------------------------------------------------------------
       → ¬ (delayedᵐ (leafᵐ a) d₁ r₁ ≈ᵖ delayedᵐ (nodeᵐ op v k) d₂ r₂)
@@ -198,9 +198,9 @@ module _ (TF : TickFrame) where
 
   oinj : ∀ {X Y₁ Y₂ : PSh} {ε ε₁ ε₂ δ₁ δ₂ : E} {n₁ n₂ : 𝔻} {op₁ op₂ : Op}
        → {v₁ : Y₁ →ᵖ ⟦ param op₁ ⟧ᵍ}
-       → {k₁ : Y₁ →ᵖ [ mapᵉ (op-grade op₁) ]ᵒ (⟦ arity op₁ ⟧ᵍ ⇒ᵖ Tᵒ X ε₁)}
+       → {k₁ : Y₁ →ᵖ [ ∣ op-grade op₁ ∣ᵉ ]ᵒ (⟦ arity op₁ ⟧ᵍ ⇒ᵖ Tᵒ X ε₁)}
        → {v₂ : Y₂ →ᵖ ⟦ param op₂ ⟧ᵍ}
-       → {k₂ : Y₂ →ᵖ [ mapᵉ (op-grade op₂) ]ᵒ (⟦ arity op₂ ⟧ᵍ ⇒ᵖ Tᵒ X ε₂)}
+       → {k₂ : Y₂ →ᵖ [ ∣ op-grade op₂ ∣ᵉ ]ᵒ (⟦ arity op₂ ⟧ᵍ ⇒ᵖ Tᵒ X ε₂)}
        → {d₁ : 𝟙ᵖ →ᵖ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
        → {d₂ : 𝟙ᵖ →ᵖ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
        → (r₁ : δ₁ ·ₑ (op-grade op₁ ·ₑ ε₁) ≾ₑ ε)
@@ -242,8 +242,8 @@ module _ (TF : TickFrame) where
                → {g₁ g₂ : 𝟙ᵖ →ᵖ X}
                → {d₁ : 𝟙ᵖ →ᵖ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
                → {d₂ : 𝟙ᵖ →ᵖ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
-               → (r₁ : δ₁ ·ₑ uₑ ≾ₑ ε)
-               → (r₂ : δ₂ ·ₑ uₑ ≾ₑ ε)
+               → (r₁ : δ₁ ·ₑ 𝟏ₑ ≾ₑ ε)
+               → (r₂ : δ₂ ·ₑ 𝟏ₑ ≾ₑ ε)
                → delayedᵐ (leafᵐ (g₁ ∘ᵖ terminalᵖ {Y₁})) d₁ r₁
                ≈ᵖ delayedᵐ (leafᵐ (g₂ ∘ᵖ terminalᵖ {Y₂})) d₂ r₂
                → (w : W)
@@ -268,8 +268,8 @@ module _ (TF : TickFrame) where
   lbool : ∀ {Y₁ Y₂ : PSh} {ε δ₁ δ₂ : E} {n₁ n₂ : 𝔻}
         → {d₁ : 𝟙ᵖ →ᵖ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
         → {d₂ : 𝟙ᵖ →ᵖ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
-        → (r₁ : δ₁ ·ₑ uₑ ≾ₑ ε)
-        → (r₂ : δ₂ ·ₑ uₑ ≾ₑ ε)
+        → (r₁ : δ₁ ·ₑ 𝟏ₑ ≾ₑ ε)
+        → (r₂ : δ₂ ·ₑ 𝟏ₑ ≾ₑ ε)
         → delayedᵐ (leafᵐ (trueᵖ  ∘ᵖ terminalᵖ {Y₁})) d₁ r₁
         ≈ᵖ delayedᵐ (leafᵐ (falseᵖ ∘ᵖ terminalᵖ {Y₂})) d₂ r₂
         ------------------------------------------------------------
@@ -287,8 +287,8 @@ module _ (TF : TickFrame) where
            → {c₁ c₂ : BaseConstants b}
            → {d₁ : 𝟙ᵖ →ᵖ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
            → {d₂ : 𝟙ᵖ →ᵖ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
-           → (r₁ : δ₁ ·ₑ uₑ ≾ₑ ε)
-           → (r₂ : δ₂ ·ₑ uₑ ≾ₑ ε)
+           → (r₁ : δ₁ ·ₑ 𝟏ₑ ≾ₑ ε)
+           → (r₂ : δ₂ ·ₑ 𝟏ₑ ≾ₑ ε)
            → delayedᵐ (leafᵐ (⟦ c₁ ⟧ᵇᶜ ∘ᵖ terminalᵖ {Y₁})) d₁ r₁
            ≈ᵖ delayedᵐ (leafᵐ (⟦ c₂ ⟧ᵇᶜ ∘ᵖ terminalᵖ {Y₂})) d₂ r₂
            ------------------------------------------------------------
@@ -322,8 +322,8 @@ module _ (TF : TickFrame) where
       → {a₁ : Y₁ →ᵖ X} → {a₂ : Y₂ →ᵖ X}
       → {d₁ : 𝟙ᵖ →ᵖ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
       → {d₂ : 𝟙ᵖ →ᵖ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
-      → (r₁ : δ₁ ·ₑ uₑ ≾ₑ ε)
-      → (r₂ : δ₂ ·ₑ uₑ ≾ₑ ε)
+      → (r₁ : δ₁ ·ₑ 𝟏ₑ ≾ₑ ε)
+      → (r₂ : δ₂ ·ₑ 𝟏ₑ ≾ₑ ε)
       → delayedᵐ (leafᵐ a₁) d₁ r₁ ≈ᵖ delayedᵐ (leafᵐ a₂) d₂ r₂
       ------------------------------------------------------
       → n₁ ≡ n₂
@@ -337,9 +337,9 @@ module _ (TF : TickFrame) where
 
   ote : ∀ {X Y₁ Y₂ : PSh} {ε ε₁ ε₂ δ₁ δ₂ : E} {n₁ n₂ : 𝔻} {op : Op}
       → {v₁ : Y₁ →ᵖ ⟦ param op ⟧ᵍ}
-      → {k₁ : Y₁ →ᵖ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ X ε₁)}
+      → {k₁ : Y₁ →ᵖ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ X ε₁)}
       → {v₂ : Y₂ →ᵖ ⟦ param op ⟧ᵍ}
-      → {k₂ : Y₂ →ᵖ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ X ε₂)}
+      → {k₂ : Y₂ →ᵖ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ X ε₂)}
       → {d₁ : 𝟙ᵖ →ᵖ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
       → {d₂ : 𝟙ᵖ →ᵖ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
       → (r₁ : δ₁ ·ₑ (op-grade op ·ₑ ε₁) ≾ₑ ε)

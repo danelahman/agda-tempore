@@ -184,8 +184,8 @@ IsTyVar _        = ⊥
 tyvar : ∀ {Θ} → (A : OVType Θ) → IsTyVar A → TyVar Θ
 tyvar (tvar α) _ = α
 
--- The atoms. `eternal A ∨ ρ ≾ûᵣ` is a var-rule disjunction: `A` is
--- eternal or `ρ ≾ uᵣ`.
+-- The atoms. `eternal A ∨ ρ ≾𝟏̂ᵣ` is a var-rule disjunction: `A` is
+-- eternal or `ρ ≾ 𝟏ᵣ`.
 
 infix 6 eternal_ _<:_ _≾ᵣ_ _≾ₑ_
 
@@ -201,8 +201,8 @@ _≾ᵣ_ : ∀ {Θ} → RExp Θ → RExp Θ → Conj Θ
 _≾ₑ_ : ∀ {Θ} → EExp Θ → EExp Θ → Conj Θ
 ε ≾ₑ ε' = ordᵉ-atom ε ε' ∷ []
 
-eternal_∨_≾ûᵣ : ∀ {Θ} → OVType Θ → RExp Θ → Conj Θ
-eternal A ∨ ρ ≾ûᵣ = disj-atom A ρ ∷ []
+eternal_∨_≾𝟏̂ᵣ : ∀ {Θ} → OVType Θ → RExp Θ → Conj Θ
+eternal A ∨ ρ ≾𝟏̂ᵣ = disj-atom A ρ ∷ []
 
 -- The hypothesis set with each atom in its field, in order: an expected
 -- scheme lists them in the order the solver reports them.

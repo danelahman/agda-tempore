@@ -4,8 +4,8 @@
 -- A grade is a non-empty regular language over `Fin k`, represented  --
 -- by its canonical table, and equal languages are equal grades. The  --
 -- order is inclusion, the product concatenation and the join union;  --
--- `⊤` is the set of all words, `u` the language of the empty word,   --
--- and `of-dur n` the word `tickⁿ`. Every grade has Kleene's plus,    --
+-- `⊤` is the set of all words, `𝟏` the language of the empty word,   --
+-- and `ι n` the word `tickⁿ`. Every grade has Kleene's plus,         --
 -- `c · c*`, with the laws of `Regular.Plus`.                         --
 --                                                                    --
 -- Proofs about the tables of operations proceed by `subst` along     --
@@ -92,14 +92,14 @@ same-language c d cd dc =
 ⟪_⟫ : Word → Regular
 ⟪ w ⟫ = regular ⟦ w ⟧ (⟦⟧-wf w) (⟦⟧-canonical w) (w , from (∈-⟦⟧ w w) refl)
 
-u : Regular
-u = ⟪ [] ⟫
+𝟏 : Regular
+𝟏 = ⟪ [] ⟫
 
 ⊤ : Regular
 ⊤ = regular Σ* Σ*-wf Σ*-canonical ([] , ∈-Σ* [])
 
-of-dur : ℕ → Regular
-of-dur n = ⟪ replicate n tick ⟫
+ι : ℕ → Regular
+ι n = ⟪ replicate n tick ⟫
 
 _·ᴿ_ : Regular → Regular → Regular
 c ·ᴿ d = regular (table c · table d) (·-wf {table c} {table d} (wf′ c) (wf′ d)) (·-canonical {table c} {table d} (wf′ c) (wf′ d)) inh
@@ -152,16 +152,16 @@ infix  4 _≾_
 ∈⊔⁻ : ∀ c d w → w ∈ table (c ⊔ᴿ d) → w ∈ table c ⊎ w ∈ table d
 ∈⊔⁻ c d w w∈ = to T-∨ (subst T (∪-accepts {table c} {table d} (wf′ c) (wf′ d) w) w∈)
 
-∈u⁻ : ∀ w → w ∈ table u → w ≡ []
-∈u⁻ = ∈⟪⟫⁻ []
+∈𝟏⁻ : ∀ w → w ∈ table 𝟏 → w ≡ []
+∈𝟏⁻ = ∈⟪⟫⁻ []
 
-∈u⁺ : [] ∈ table u
-∈u⁺ = ∈⟪⟫⁺ []
+∈𝟏⁺ : [] ∈ table 𝟏
+∈𝟏⁺ = ∈⟪⟫⁺ []
 
-∈tick⁻ : ∀ n w → w ∈ table (of-dur n) → w ≡ replicate n tick
+∈tick⁻ : ∀ n w → w ∈ table (ι n) → w ≡ replicate n tick
 ∈tick⁻ n = ∈⟪⟫⁻ (replicate n tick)
 
-∈tick⁺ : ∀ n → replicate n tick ∈ table (of-dur n)
+∈tick⁺ : ∀ n → replicate n tick ∈ table (ι n)
 ∈tick⁺ n = ∈⟪⟫⁺ (replicate n tick)
 
 ∈⊤ : ∀ w → w ∈ table ⊤
@@ -195,31 +195,31 @@ private
 
 -- two words with product `[]`
 
-∈u-++ˡ : ∀ x y → (x ++ y) ∈ table u → x ≡ []
-∈u-++ˡ x y xy∈ = ++-conicalˡ x y (∈u⁻ (x ++ y) xy∈)
+∈𝟏-++ˡ : ∀ x y → (x ++ y) ∈ table 𝟏 → x ≡ []
+∈𝟏-++ˡ x y xy∈ = ++-conicalˡ x y (∈𝟏⁻ (x ++ y) xy∈)
 
-∈u-++ʳ : ∀ x y → (x ++ y) ∈ table u → y ≡ []
-∈u-++ʳ x y xy∈ = ++-conicalʳ x y (∈u⁻ (x ++ y) xy∈)
+∈𝟏-++ʳ : ∀ x y → (x ++ y) ∈ table 𝟏 → y ≡ []
+∈𝟏-++ʳ x y xy∈ = ++-conicalʳ x y (∈𝟏⁻ (x ++ y) xy∈)
 
-·-identityˡ : ∀ c → u ·ᴿ c ≡ c
-·-identityˡ c = same-language (u ·ᴿ c) c to′ from′
+·-identityˡ : ∀ c → 𝟏 ·ᴿ c ≡ c
+·-identityˡ c = same-language (𝟏 ·ᴿ c) c to′ from′
   where
-  to′ : ∀ w → w ∈ table (u ·ᴿ c) → w ∈ table c
-  to′ w w∈ = ∈·-elim u c (λ v → v ∈ table c) w w∈ λ x y x∈ y∈ →
-    subst (λ v → (v ++ y) ∈ table c) (sym (∈u⁻ x x∈)) y∈
+  to′ : ∀ w → w ∈ table (𝟏 ·ᴿ c) → w ∈ table c
+  to′ w w∈ = ∈·-elim 𝟏 c (λ v → v ∈ table c) w w∈ λ x y x∈ y∈ →
+    subst (λ v → (v ++ y) ∈ table c) (sym (∈𝟏⁻ x x∈)) y∈
 
-  from′ : ∀ w → w ∈ table c → w ∈ table (u ·ᴿ c)
-  from′ w w∈ = subst (λ v → v ∈ table (u ·ᴿ c)) {[] ++ w} {w} refl (∈·⁺ u c [] w ∈u⁺ w∈)
+  from′ : ∀ w → w ∈ table c → w ∈ table (𝟏 ·ᴿ c)
+  from′ w w∈ = subst (λ v → v ∈ table (𝟏 ·ᴿ c)) {[] ++ w} {w} refl (∈·⁺ 𝟏 c [] w ∈𝟏⁺ w∈)
 
-·-identityʳ : ∀ c → c ·ᴿ u ≡ c
-·-identityʳ c = same-language (c ·ᴿ u) c to′ from′
+·-identityʳ : ∀ c → c ·ᴿ 𝟏 ≡ c
+·-identityʳ c = same-language (c ·ᴿ 𝟏) c to′ from′
   where
-  to′ : ∀ w → w ∈ table (c ·ᴿ u) → w ∈ table c
-  to′ w w∈ = ∈·-elim c u (λ v → v ∈ table c) w w∈ λ x y x∈ y∈ →
-    subst (λ v → v ∈ table c) (sym (trans (cong (x ++_) (∈u⁻ y y∈)) (++-identityʳ x))) x∈
+  to′ : ∀ w → w ∈ table (c ·ᴿ 𝟏) → w ∈ table c
+  to′ w w∈ = ∈·-elim c 𝟏 (λ v → v ∈ table c) w w∈ λ x y x∈ y∈ →
+    subst (λ v → v ∈ table c) (sym (trans (cong (x ++_) (∈𝟏⁻ y y∈)) (++-identityʳ x))) x∈
 
-  from′ : ∀ w → w ∈ table c → w ∈ table (c ·ᴿ u)
-  from′ w w∈ = subst (λ v → v ∈ table (c ·ᴿ u)) (++-identityʳ w) (∈·⁺ c u w [] w∈ ∈u⁺)
+  from′ : ∀ w → w ∈ table c → w ∈ table (c ·ᴿ 𝟏)
+  from′ w w∈ = subst (λ v → v ∈ table (c ·ᴿ 𝟏)) (++-identityʳ w) (∈·⁺ c 𝟏 w [] w∈ ∈𝟏⁺)
 
 ·-assoc : ∀ c d e → (c ·ᴿ d) ·ᴿ e ≡ c ·ᴿ (d ·ᴿ e)
 ·-assoc c d e = same-language ((c ·ᴿ d) ·ᴿ e) (c ·ᴿ (d ·ᴿ e)) to′ from′
@@ -282,37 +282,37 @@ private
       (λ x∈d → ∈⊔⁺ˡ (d ·ᴿ c) (e ·ᴿ c) (x ++ y) (∈·⁺ d c x y x∈d y∈))
       (λ x∈e → ∈⊔⁺ʳ (d ·ᴿ c) (e ·ᴿ c) (x ++ y) (∈·⁺ e c x y x∈e y∈))
 
-≾-zero-productˡ : ∀ {c d} → c ·ᴿ d ≾ u → c ≾ u
-≾-zero-productˡ {c} {d} p = ⊆⇒≾ c u λ x x∈ → go x x∈ (inhabited′ d)
+≾-zero-productˡ : ∀ {c d} → c ·ᴿ d ≾ 𝟏 → c ≾ 𝟏
+≾-zero-productˡ {c} {d} p = ⊆⇒≾ c 𝟏 λ x x∈ → go x x∈ (inhabited′ d)
   where
-  go : ∀ x → x ∈ table c → (∃ λ y → y ∈ table d) → x ∈ table u
+  go : ∀ x → x ∈ table c → (∃ λ y → y ∈ table d) → x ∈ table 𝟏
   go x x∈ (y , y∈) =
-    subst (λ v → v ∈ table u) (sym (∈u-++ˡ x y (≾⇒⊆ (c ·ᴿ d) u p (x ++ y) (∈·⁺ c d x y x∈ y∈)))) ∈u⁺
+    subst (λ v → v ∈ table 𝟏) (sym (∈𝟏-++ˡ x y (≾⇒⊆ (c ·ᴿ d) 𝟏 p (x ++ y) (∈·⁺ c d x y x∈ y∈)))) ∈𝟏⁺
 
-≾-zero-productʳ : ∀ {c d} → c ·ᴿ d ≾ u → d ≾ u
-≾-zero-productʳ {c} {d} p = ⊆⇒≾ d u λ y y∈ → go y y∈ (inhabited′ c)
+≾-zero-productʳ : ∀ {c d} → c ·ᴿ d ≾ 𝟏 → d ≾ 𝟏
+≾-zero-productʳ {c} {d} p = ⊆⇒≾ d 𝟏 λ y y∈ → go y y∈ (inhabited′ c)
   where
-  go : ∀ y → y ∈ table d → (∃ λ x → x ∈ table c) → y ∈ table u
+  go : ∀ y → y ∈ table d → (∃ λ x → x ∈ table c) → y ∈ table 𝟏
   go y y∈ (x , x∈) =
-    subst (λ v → v ∈ table u) (sym (∈u-++ʳ x y (≾⇒⊆ (c ·ᴿ d) u p (x ++ y) (∈·⁺ c d x y x∈ y∈)))) ∈u⁺
+    subst (λ v → v ∈ table 𝟏) (sym (∈𝟏-++ʳ x y (≾⇒⊆ (c ·ᴿ d) 𝟏 p (x ++ y) (∈·⁺ c d x y x∈ y∈)))) ∈𝟏⁺
 
-of-dur-zero : of-dur 0 ≡ u
-of-dur-zero = same-language (of-dur 0) u
-  (λ w w∈ → subst (λ v → v ∈ table u) {[]} {w} (sym (∈tick⁻ 0 w w∈)) ∈u⁺)
-  (λ w w∈ → subst (λ v → v ∈ table (of-dur 0)) {replicate 0 tick} {w} (sym (∈u⁻ w w∈)) (∈tick⁺ 0))
+ι-zero : ι 0 ≡ 𝟏
+ι-zero = same-language (ι 0) 𝟏
+  (λ w w∈ → subst (λ v → v ∈ table 𝟏) {[]} {w} (sym (∈tick⁻ 0 w w∈)) ∈𝟏⁺)
+  (λ w w∈ → subst (λ v → v ∈ table (ι 0)) {replicate 0 tick} {w} (sym (∈𝟏⁻ w w∈)) (∈tick⁺ 0))
 
-of-dur-plus : ∀ {m n} → of-dur (m + n) ≡ of-dur m ·ᴿ of-dur n
-of-dur-plus {m} {n} = same-language (of-dur (m + n)) (of-dur m ·ᴿ of-dur n) to′ from′
+ι-plus : ∀ {m n} → ι (m + n) ≡ ι m ·ᴿ ι n
+ι-plus {m} {n} = same-language (ι (m + n)) (ι m ·ᴿ ι n) to′ from′
   where
-  to′ : ∀ w → w ∈ table (of-dur (m + n)) → w ∈ table (of-dur m ·ᴿ of-dur n)
+  to′ : ∀ w → w ∈ table (ι (m + n)) → w ∈ table (ι m ·ᴿ ι n)
   to′ w w∈ =
-    subst (λ v → v ∈ table (of-dur m ·ᴿ of-dur n))
+    subst (λ v → v ∈ table (ι m ·ᴿ ι n))
           (sym (trans (∈tick⁻ (m + n) w w∈) (replicate-+ m n tick)))
-          (∈·⁺ (of-dur m) (of-dur n) (replicate m tick) (replicate n tick) (∈tick⁺ m) (∈tick⁺ n))
+          (∈·⁺ (ι m) (ι n) (replicate m tick) (replicate n tick) (∈tick⁺ m) (∈tick⁺ n))
 
-  from′ : ∀ w → w ∈ table (of-dur m ·ᴿ of-dur n) → w ∈ table (of-dur (m + n))
-  from′ w w∈ = ∈·-elim (of-dur m) (of-dur n) (λ v → v ∈ table (of-dur (m + n))) w w∈ λ x y x∈ y∈ →
-    subst (λ v → v ∈ table (of-dur (m + n)))
+  from′ : ∀ w → w ∈ table (ι m ·ᴿ ι n) → w ∈ table (ι (m + n))
+  from′ w w∈ = ∈·-elim (ι m) (ι n) (λ v → v ∈ table (ι (m + n))) w w∈ λ x y x∈ y∈ →
+    subst (λ v → v ∈ table (ι (m + n)))
           (sym (trans (cong₂ _++_ (∈tick⁻ m x x∈) (∈tick⁻ n y y∈)) (sym (replicate-+ m n tick))))
           (∈tick⁺ (m + n))
 
@@ -414,11 +414,11 @@ regular-grade : Grade ℕᴰ
 regular-grade = posetᵍ record
   { Carrier         = Regular
   ; _·_             = _·ᴿ_
-  ; u               = u
+  ; 𝟏               = 𝟏
   ; _≾_             = _≾_
   ; ⊤               = ⊤
   ; _⊔_             = _⊔ᴿ_
-  ; of-dur          = of-dur
+  ; ι               = ι
   ; ·-identityˡ     = ·-identityˡ
   ; ·-identityʳ     = ·-identityʳ
   ; ·-assoc         = ·-assoc
@@ -437,15 +437,15 @@ regular-grade = posetᵍ record
   ; ·-distribʳ-⊔-≾  = ·-distribʳ-⊔-≾
   ; ≾-zero-productˡ = λ {c} {d} → ≾-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾-zero-productʳ {c} {d}
-  ; of-dur-zero     = of-dur-zero
-  ; of-dur-plus     = λ {m} {n} → of-dur-plus {m} {n}
+  ; ι-zero          = ι-zero
+  ; ι-plus          = λ {m} {n} → ι-plus {m} {n}
   }
 
 -- its hints: Kleene's plus at every grade
 
 regular-gradeʰ : GradeHints regular-grade
 regular-gradeʰ = record
-  { u-least? = nothing
+  { 𝟏-least? = nothing
   ; ·-comm?  = nothing
   ; plus?    = λ c → just (plusᴿ c)
   }

@@ -95,12 +95,12 @@ map⇒ᵐ-fuse g g' =
 
 opᵀ-push : ∀ {X A B ε ε'} → (op : Op)
          → (v : X →ᵐ ⟦ param op ⟧ᵍ)
-         → (k : X →ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ A ε))
+         → (k : X →ᵐ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ A ε))
          → (h : A →ᵐ B) → (q : ε ≾ₑ ε')
          → (Tᶠ h ∘ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q)) ∘ᵐ opᵀ {A} {ε} op ∘ᵐ ⟨ v , k ⟩ᵐ
          ≈ᵐ opᵀ {B} {ε'} op
               ∘ᵐ ⟨ v
-                 , [ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Tᶠ h ∘ᵐ T-≤ q)) ∘ᵐ k ⟩ᵐ
+                 , [ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ (Tᶠ h ∘ᵐ T-≤ q)) ∘ᵐ k ⟩ᵐ
 opᵀ-push op v k h q =
     ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -120,10 +120,10 @@ opᵀ-push op v k h q =
 -- The same for a delay: `delayᵀ-≤` and `delayᵀ-nat`.
 
 delayᵀ-push : ∀ {X A B ε ε'} → (τ : 𝔻)
-            → (k : X →ᵐ [ of-durʳ τ ]ᵒ (Tᵒ A ε))
+            → (k : X →ᵐ [ ιᵣ τ ]ᵒ (Tᵒ A ε))
             → (h : A →ᵐ B) → (q : ε ≾ₑ ε')
             → (Tᶠ h ∘ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q)) ∘ᵐ delayᵀ {A} {ε} τ ∘ᵐ k
-            ≈ᵐ delayᵀ {B} {ε'} τ ∘ᵐ [ of-durʳ τ ]ᶠ (Tᶠ h ∘ᵐ T-≤ q) ∘ᵐ k
+            ≈ᵐ delayᵀ {B} {ε'} τ ∘ᵐ [ ιᵣ τ ]ᶠ (Tᶠ h ∘ᵐ T-≤ q) ∘ᵐ k
 delayᵀ-push τ k h q =
     ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -266,7 +266,7 @@ sound-subC-unbox x rel v w M pM pM' =
 sound-coerce-seq-in : ∀ {Γ A B ε ε₁' ε₂'}
                     → (rel : ε₁' ≾ₑ ε₂')
                     → (M : Γ ⊢C⦂ A ‼ ε)
-                    → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
+                    → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
                     → Soundᶜ== (coerce-seq-in rel M N)
 sound-coerce-seq-in {B = B} rel M N (pM , pN) (pM' , pN') =
     ≈ᵐ-sym (coe-refl-≈ B (·ₑ-monoʳ-≾ₑ rel) _)
@@ -328,7 +328,7 @@ sound-subC-perform : ∀ {Γ A A' ε ε' op}
                    → (w : A <:ᵛ A')
                    → (rel : ε ≾ₑ ε')
                    → (V : Γ ⊢V⦂ type-of-gtype (param op))
-                   → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+                   → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
                           ⊢C⦂ A ‼ ε)
                    → Soundᶜ== (subC-perform w rel V M)
 sound-subC-perform {op = op} w rel V M (pV , pM) (pV' , pM') =
@@ -349,7 +349,7 @@ sound-subC-perform {op = op} w rel V M (pV , pM) (pV' , pM') =
 sound-subC-delay : ∀ {Γ A A' τ ε ε'}
                  → (w : A <:ᵛ A')
                  → (rel : ε ≾ₑ ε')
-                 → (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
+                 → (M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε)
                  → Soundᶜ== (subC-delay w rel M)
 sound-subC-delay {τ = τ} w rel M pM pM' =
     ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (⟦⟧ᶜᵗ-irr M pM pM'))))
@@ -364,7 +364,7 @@ sound-subC-delay {τ = τ} w rel M pM pM' =
 
 coe-str : ∀ {Γ A B ε₁ ε₂ ε'}
         → (rel : ε₁ ≾ₑ ε₂)
-        → (N : Γ ⟨ mapᵉ ε₂ ⟩ ∷ A ⊢C⦂ B ‼ ε')
+        → (N : Γ ⟨ ∣ ε₂ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε')
         → (pN : Paramᶜ N)
         → (m : ⟦ Γ ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε₁)
         →    Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , T-≤ rel ∘ᵐ m ⟩ᵐ
@@ -398,7 +398,7 @@ sound-subC-seq : ∀ {Γ A A' B ε₁ ε₂ ε'}
                → (w : A <:ᵛ A')
                → (rel : ε₁ ≾ₑ ε₂)
                → (M : Γ ⊢C⦂ A ‼ ε₁)
-               → (N : Γ ⟨ mapᵉ ε₂ ⟩ ∷ A' ⊢C⦂ B ‼ ε')
+               → (N : Γ ⟨ ∣ ε₂ ∣ᵉ ⟩ ∷ A' ⊢C⦂ B ‼ ε')
                → Soundᶜ== (subC-seq w rel M N)
 sound-subC-seq {B = B} w rel M N (pM , pN) (pM' , pR) =
     ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ

@@ -245,10 +245,10 @@ module _ {Θ : Scope} where
   ≡̂ᵣ-assoc : ∀ {ρ₁ ρ₂ ρ₃ : RExp Θ} → (ρ₁ ·̂ᵣ ρ₂) ·̂ᵣ ρ₃ ≡̂ᵣ ρ₁ ·̂ᵣ (ρ₂ ·̂ᵣ ρ₃)
   ≡̂ᵣ-assoc = ≡̂ᵣ-val λ _ → ·ᵣ-assoc _ _ _
 
-  ≡̂ᵣ-identityˡ : ∀ {ρ : RExp Θ} → ûᵣ ·̂ᵣ ρ ≡̂ᵣ ρ
+  ≡̂ᵣ-identityˡ : ∀ {ρ : RExp Θ} → 𝟏̂ᵣ ·̂ᵣ ρ ≡̂ᵣ ρ
   ≡̂ᵣ-identityˡ = ≡̂ᵣ-val λ _ → ·ᵣ-identityˡ _
 
-  ≡̂ᵣ-identityʳ : ∀ {ρ : RExp Θ} → ρ ·̂ᵣ ûᵣ ≡̂ᵣ ρ
+  ≡̂ᵣ-identityʳ : ∀ {ρ : RExp Θ} → ρ ·̂ᵣ 𝟏̂ᵣ ≡̂ᵣ ρ
   ≡̂ᵣ-identityʳ = ≡̂ᵣ-val λ _ → ·ᵣ-identityʳ _
 
   ≡̂ᵣ-const : ∀ {ρ ρ'} → ρ ≃ᵣ ρ' → rconst {Θ} ρ ≡̂ᵣ rconst ρ'
@@ -282,7 +282,7 @@ module _ {Θ : Scope} where
   ≡̂ᵣ-map-⊔ : ∀ {ε ε' : EExp Θ} → ∣ ε ⊔̂ₑ ε' ∣̂ᵉ ≡̂ᵣ ∣ ε ∣̂ᵉ ⊔̂ᵣ ∣ ε' ∣̂ᵉ
   ≡̂ᵣ-map-⊔ = ≡̂ᵣ-val λ _ → map-⊔ᵉ
 
-  ≡̂ᵣ-map-const : ∀ {e} → ∣ econst {Θ} e ∣̂ᵉ ≡̂ᵣ rconst (mapᵉ e)
+  ≡̂ᵣ-map-const : ∀ {e} → ∣ econst {Θ} e ∣̂ᵉ ≡̂ᵣ rconst ∣ e ∣ᵉ
   ≡̂ᵣ-map-const = ≡̂ᵣ-val λ _ → ≃ᵣ-refl
 
   ≡̂ᵣ-map-cong : ∀ {ε ε' : EExp Θ} → ε ≡̂ₑ ε' → ∣ ε ∣̂ᵉ ≡̂ᵣ ∣ ε' ∣̂ᵉ
@@ -307,10 +307,10 @@ module _ {Θ : Scope} where
   ≡̂ₑ-assoc : ∀ {ε₁ ε₂ ε₃ : EExp Θ} → (ε₁ ·̂ₑ ε₂) ·̂ₑ ε₃ ≡̂ₑ ε₁ ·̂ₑ (ε₂ ·̂ₑ ε₃)
   ≡̂ₑ-assoc = ≡̂ₑ-val λ _ → ·ₑ-assoc _ _ _
 
-  ≡̂ₑ-identityˡ : ∀ {ε : EExp Θ} → ûₑ ·̂ₑ ε ≡̂ₑ ε
+  ≡̂ₑ-identityˡ : ∀ {ε : EExp Θ} → 𝟏̂ₑ ·̂ₑ ε ≡̂ₑ ε
   ≡̂ₑ-identityˡ = ≡̂ₑ-val λ _ → ·ₑ-identityˡ _
 
-  ≡̂ₑ-identityʳ : ∀ {ε : EExp Θ} → ε ·̂ₑ ûₑ ≡̂ₑ ε
+  ≡̂ₑ-identityʳ : ∀ {ε : EExp Θ} → ε ·̂ₑ 𝟏̂ₑ ≡̂ₑ ε
   ≡̂ₑ-identityʳ = ≡̂ₑ-val λ _ → ·ₑ-identityʳ _
 
   ≡̂ₑ-const : ∀ {ε ε'} → ε ≃ₑ ε' → econst {Θ} ε ≡̂ₑ econst ε'
@@ -377,13 +377,13 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
   topᵣ : ∀ {ρ} → Q ⊩ ρ ≾̂ᵣ rconst ⊤ᵣ
   topᵣ {ρ} = semᵣ λ δ _ → ≾-⊤ᵣ (valʳ (ρ [ δ ]ʳ))
 
-  minᵣ : ∀ {ρ} → Minimum _≾ᵣ_ uᵣ → Q ⊩ ûᵣ ≾̂ᵣ ρ
+  minᵣ : ∀ {ρ} → Minimum _≾ᵣ_ 𝟏ᵣ → Q ⊩ 𝟏̂ᵣ ≾̂ᵣ ρ
   minᵣ {ρ} least = semᵣ λ δ _ → least (valʳ (ρ [ δ ]ʳ))
 
-  zeroˡᵣ : ∀ {ρ ρ'} → Q ⊩ ρ ·̂ᵣ ρ' ≾̂ᵣ ûᵣ → Q ⊩ ρ ≾̂ᵣ ûᵣ
+  zeroˡᵣ : ∀ {ρ ρ'} → Q ⊩ ρ ·̂ᵣ ρ' ≾̂ᵣ 𝟏̂ᵣ → Q ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ
   zeroˡᵣ p = semᵣ λ δ h → ≾ᵣ-zero-productˡ (runᵣ p δ h)
 
-  zeroʳᵣ : ∀ {ρ ρ'} → Q ⊩ ρ ·̂ᵣ ρ' ≾̂ᵣ ûᵣ → Q ⊩ ρ' ≾̂ᵣ ûᵣ
+  zeroʳᵣ : ∀ {ρ ρ'} → Q ⊩ ρ ·̂ᵣ ρ' ≾̂ᵣ 𝟏̂ᵣ → Q ⊩ ρ' ≾̂ᵣ 𝟏̂ᵣ
   zeroʳᵣ p = semᵣ λ δ h → ≾ᵣ-zero-productʳ (runᵣ p δ h)
 
   plusᵣ : ∀ {c ρ} → (p : Plus _·ᵣ_ _≾ᵣ_ c) → Q ⊩ rconst c ≾̂ᵣ ρ → Q ⊩ ρ ·̂ᵣ ρ ≾̂ᵣ ρ
@@ -444,13 +444,13 @@ module _ {Θ : Scope} {Q : Hyps Θ} where
   topₑ : ∀ {ε} → Q ⊩ ε ≾̂ₑ econst ⊤ₑ
   topₑ {ε} = semₑ λ δ _ → ≾-⊤ₑ (valᵉ (ε [ δ ]ᵉ))
 
-  minₑ : ∀ {ε} → Minimum _≾ₑ_ uₑ → Q ⊩ ûₑ ≾̂ₑ ε
+  minₑ : ∀ {ε} → Minimum _≾ₑ_ 𝟏ₑ → Q ⊩ 𝟏̂ₑ ≾̂ₑ ε
   minₑ {ε} least = semₑ λ δ _ → least (valᵉ (ε [ δ ]ᵉ))
 
-  zeroˡₑ : ∀ {ε ε'} → Q ⊩ ε ·̂ₑ ε' ≾̂ₑ ûₑ → Q ⊩ ε ≾̂ₑ ûₑ
+  zeroˡₑ : ∀ {ε ε'} → Q ⊩ ε ·̂ₑ ε' ≾̂ₑ 𝟏̂ₑ → Q ⊩ ε ≾̂ₑ 𝟏̂ₑ
   zeroˡₑ p = semₑ λ δ h → ≾ₑ-zero-productˡ (runₑ p δ h)
 
-  zeroʳₑ : ∀ {ε ε'} → Q ⊩ ε ·̂ₑ ε' ≾̂ₑ ûₑ → Q ⊩ ε' ≾̂ₑ ûₑ
+  zeroʳₑ : ∀ {ε ε'} → Q ⊩ ε ·̂ₑ ε' ≾̂ₑ 𝟏̂ₑ → Q ⊩ ε' ≾̂ₑ 𝟏̂ₑ
   zeroʳₑ p = semₑ λ δ h → ≾ₑ-zero-productʳ (runₑ p δ h)
 
   plusₑ : ∀ {c ε} → (p : Plus _·ₑ_ _≾ₑ_ c) → Q ⊩ econst c ≾̂ₑ ε → Q ⊩ ε ·̂ₑ ε ≾̂ₑ ε
@@ -760,12 +760,12 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-eternalʳ (|List|ₛ p)  (|List|ₑ et) = |List|ₑ (<:̂ᵛ-eternalʳ p et)
 <:̂ᵛ-eternalʳ Emptyₛ       et          = et
 
--- Side condition of the `var` rule: `A` is eternal or `ρ ≾ u` at every
+-- Side condition of the `var` rule: `A` is eternal or `ρ ≾ 𝟏` at every
 -- instance, directly or by a `disj` hypothesis at a grade above
 
 data VarOK {Θ : Scope} (Q : Hyps Θ) : OVType Θ → RExp Θ → Set where
   et-ok     : ∀ {A ρ} → Q ⊩ᴱ A → VarOK Q A ρ
-  ≾ᵘ-ok     : ∀ {A ρ} → Q ⊩ ρ ≾̂ᵣ ûᵣ → VarOK Q A ρ
+  ≾ᵘ-ok     : ∀ {A ρ} → Q ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ → VarOK Q A ρ
   hyp-ok    : ∀ {A ρ ρ'} → (A , ρ') ∈ disj Q → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A ρ
   subˡ-ok   : ∀ {A B ρ} → Q ∣ A <:̂ᵛ B → VarOK Q B ρ → VarOK Q A ρ
   subʳ-ok   : ∀ {A B ρ} → Q ∣ B <:̂ᵛ A → VarOK Q B ρ → VarOK Q A ρ
@@ -808,7 +808,7 @@ VarOK-≡̂ p = VarOK-≃ (≡̂ᵛ-<:̂ p) (≡̂ᵛ-<:̂ (≡̂ᵛ-sym p))
 -- Under no `disj` hypothesis the side condition is its two disjuncts
 
 VarOK-split : ∀ {Θ} {Q : Hyps Θ} {A ρ}
-            → disj Q ≡ [] → VarOK Q A ρ → (Q ⊩ᴱ A) ⊎ (Q ⊩ ρ ≾̂ᵣ ûᵣ)
+            → disj Q ≡ [] → VarOK Q A ρ → (Q ⊩ᴱ A) ⊎ (Q ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ)
 VarOK-split e (et-ok et)  = inj₁ et
 VarOK-split e (≾ᵘ-ok le)  = inj₂ le
 VarOK-split e (hyp-ok m _) with subst (_ ∈_) e m
@@ -835,7 +835,7 @@ VarOK-split e (⊔-ok q ok₁ ok₂) with VarOK-split e ok₁ | VarOK-split e ok
 ... | inj₂ _   | inj₁ et  = inj₁ et
 ... | inj₂ le₁ | inj₂ le₂ = inj₂ (transᵣ q (⊔-lubᵣ le₁ le₂))
 
-VarOK-∅ᴴ : ∀ {Θ} {A : OVType Θ} {ρ} → VarOK ∅ᴴ A ρ → (∅ᴴ ⊩ᴱ A) ⊎ (∅ᴴ ⊩ ρ ≾̂ᵣ ûᵣ)
+VarOK-∅ᴴ : ∀ {Θ} {A : OVType Θ} {ρ} → VarOK ∅ᴴ A ρ → (∅ᴴ ⊩ᴱ A) ⊎ (∅ᴴ ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ)
 VarOK-∅ᴴ = VarOK-split refl
 
 -- Inversion of subtyping at each former

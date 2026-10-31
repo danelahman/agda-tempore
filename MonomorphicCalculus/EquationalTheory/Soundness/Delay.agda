@@ -59,11 +59,11 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Renaming S 
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
 
 open import MonomorphicCalculus.EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
-open import MonomorphicCalculus.EquationalTheory.Soundness.Seq S Cat Fut Pst Adj GTy Mon GE using (εᵇ-η⊣-u)
+open import MonomorphicCalculus.EquationalTheory.Soundness.Seq S Cat Fut Pst Adj GTy Mon GE using (εᵇ-η⊣-𝟏)
 
 -- `delay 0ᴰ M` is `M` with its lock, unit-graded at `0ᴰ`, discarded.
 
-sound-delay-zero : ∀ {Γ A ε} → (M : Γ ⟨ of-durʳ 0ᴰ ⟩ ⊢C⦂ A ‼ ε)
+sound-delay-zero : ∀ {Γ A ε} → (M : Γ ⟨ ιᵣ 0ᴰ ⟩ ⊢C⦂ A ‼ ε)
                  → Soundᶜ== (delay-zero M)
 sound-delay-zero {Γ} {A} {ε} M pM pR =
     ∘ᵐ-congˡ delayᵀ-zero
@@ -75,21 +75,21 @@ sound-delay-zero {Γ} {A} {ε} M pM pR =
               ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
               ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat _))
               ∙ ∘ᵐ-assoc _ _ _
-              ∙ ∘ᵐ-congʳ (εᵇ-η⊣-u {⟦ Γ ⟧ᶜᵗˣ} of-durʳ-zero))
+              ∙ ∘ᵐ-congʳ (εᵇ-η⊣-𝟏 {⟦ Γ ⟧ᶜᵗˣ} ιᵣ-zero))
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ e (C-rename r M)) pR (renᶜ r M pM)
             ∙ sound-ε-≃ e (C-rename r M) (renᶜ r M pM)
             ∙ ∘ᵐ-congʳ (C-rename-nat r M pM)
             ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))))
   where
-    e = ≃ₑ-sym (≃ₑ-trans (·ₑ-cong of-durᵉ-zero ≃ₑ-refl) (·ₑ-identityˡ ε))
-    r = ⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ of-durʳ-zero) ∘ʳ ⟨⟩-η-ren
+    e = ≃ₑ-sym (≃ₑ-trans (·ₑ-cong ιₑ-zero ≃ₑ-refl) (·ₑ-identityˡ ε))
+    r = ⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ ιᵣ-zero) ∘ʳ ⟨⟩-η-ren
 
 -- Two consecutive delays are the one delay by the sum.
 --
 -- `M` occurs renamed on the left and under an `ε-subst` on the right, so its
 -- own certificate comes in separately (the axiom's `Midᶜ` payload).
 
-sound-delay-delay : ∀ {Γ A τ₁ τ₂ ε} → (M : Γ ⟨ of-durʳ (τ₁ +ᴰ τ₂) ⟩ ⊢C⦂ A ‼ ε)
+sound-delay-delay : ∀ {Γ A τ₁ τ₂ ε} → (M : Γ ⟨ ιᵣ (τ₁ +ᴰ τ₂) ⟩ ⊢C⦂ A ‼ ε)
                   → Paramᶜ M → Soundᶜ== (delay-delay {τ₁ = τ₁} {τ₂ = τ₂} M)
 sound-delay-delay {Γ} {A} {τ₁} {τ₂} {ε} M pM pL pR =
     ⟦⟧ᶜᵗ-irr (delay τ₁ (delay τ₂ (C-rename r M))) pL (renᶜ r M pM)
@@ -106,16 +106,16 @@ sound-delay-delay {Γ} {A} {τ₁} {τ₂} {ε} M pM pL pR =
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ e' (delay (τ₁ +ᴰ τ₂) M)) pR pM
             ∙ sound-ε-≃ e' (delay (τ₁ +ᴰ τ₂) M) pM)
   where
-    e' = ≃ₑ-trans (·ₑ-cong of-durᵉ-plus ≃ₑ-refl) (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε)
-    r  = ⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ of-durʳ-plus) ∘ʳ ⟨⟩-μ-ren
+    e' = ≃ₑ-trans (·ₑ-cong ιₑ-plus ≃ₑ-refl) (·ₑ-assoc (ιₑ τ₁) (ιₑ τ₂) ε)
+    r  = ⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ ιᵣ-plus) ∘ʳ ⟨⟩-μ-ren
 
-    σ = ≃ᵣ⇒≿ᵣ (of-durʳ-plus {τ₁} {τ₂})
+    σ = ≃ᵣ⇒≿ᵣ (ιᵣ-plus {τ₁} {τ₂})
 
     m = ⟦ M ⟧ᶜᵗ pM
 
     -- The two nested transposes rebuild the comultiplication, and the
     -- syntactic lock-merge becomes the grade relaxation the model law wants.
-    lock-split : [ of-durʳ τ₁ ]ᶠ ([ of-durʳ τ₂ ]ᶠ (⟨⟩-≤ {⟦ Γ ⟧ᶜᵗˣ} σ ∘ᵐ μ {⟦ Γ ⟧ᶜᵗˣ} {of-durʳ τ₂} {of-durʳ τ₁}) ∘ᵐ η⊣) ∘ᵐ η⊣
+    lock-split : [ ιᵣ τ₁ ]ᶠ ([ ιᵣ τ₂ ]ᶠ (⟨⟩-≤ {⟦ Γ ⟧ᶜᵗˣ} σ ∘ᵐ μ {⟦ Γ ⟧ᶜᵗˣ} {ιᵣ τ₂} {ιᵣ τ₁}) ∘ᵐ η⊣) ∘ᵐ η⊣
                ≈ᵐ δ ∘ᵐ []-≤ σ ∘ᵐ η⊣
     lock-split =
         ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congˡ ([]-∘ᵐ _ _) ∙ ∘ᵐ-assoc _ _ _))
@@ -128,9 +128,9 @@ sound-delay-delay {Γ} {A} {τ₁} {τ₂} {ε} M pM pL pR =
       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-≤ _))
 
     -- The same, with the delayed computation carried along under the boxes.
-    delay-box : [ of-durʳ τ₁ ]ᶠ
-                  ([ of-durʳ τ₂ ]ᶠ (m ∘ᵐ ⟨⟩-≤ {⟦ Γ ⟧ᶜᵗˣ} σ ∘ᵐ μ {⟦ Γ ⟧ᶜᵗˣ} {of-durʳ τ₂} {of-durʳ τ₁}) ∘ᵐ η⊣) ∘ᵐ η⊣
-              ≈ᵐ δ ∘ᵐ []-≤ σ ∘ᵐ [ of-durʳ (τ₁ +ᴰ τ₂) ]ᶠ m ∘ᵐ η⊣
+    delay-box : [ ιᵣ τ₁ ]ᶠ
+                  ([ ιᵣ τ₂ ]ᶠ (m ∘ᵐ ⟨⟩-≤ {⟦ Γ ⟧ᶜᵗˣ} σ ∘ᵐ μ {⟦ Γ ⟧ᶜᵗˣ} {ιᵣ τ₂} {ιᵣ τ₁}) ∘ᵐ η⊣) ∘ᵐ η⊣
+              ≈ᵐ δ ∘ᵐ []-≤ σ ∘ᵐ [ ιᵣ (τ₁ +ᴰ τ₂) ]ᶠ m ∘ᵐ η⊣
     delay-box =
         ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congˡ ([]-∘ᵐ _ _) ∙ ∘ᵐ-assoc _ _ _))
       ∙ ∘ᵐ-congˡ ([]-∘ᵐ _ _)

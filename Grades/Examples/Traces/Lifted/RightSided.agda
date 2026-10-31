@@ -114,19 +114,19 @@ open R public
 -- below it is therefore a statement about every member of a grade, and
 -- these two lemmas are that statement read in each direction.
 
-≾₀-u-inv : {P : Antichain} → P ≾₀ u → {p : Trace} → p ∈ traces P → p ≼ ε
-≾₀-u-inv {P} rel {p} m with find (toWitness (rel p (fromWitness m)))
-... | t , t∈u , p≼t = subst (p ≼_) (∈-[ε]⁻ t∈u) p≼t
+≾₀-𝟏-inv : {P : Antichain} → P ≾₀ 𝟏 → {p : Trace} → p ∈ traces P → p ≼ ε
+≾₀-𝟏-inv {P} rel {p} m with find (toWitness (rel p (fromWitness m)))
+... | t , t∈𝟏 , p≼t = subst (p ≼_) (∈-[ε]⁻ t∈𝟏) p≼t
 
-≾₀-u : {P : Antichain} → ({p : Trace} → p ∈ traces P → p ≼ ε) → P ≾₀ u
-≾₀-u {P} f p m =
-  fromWitness {a? = any? (_≽?_ p) (traces u)} (here (f (toWitness m)))
+≾₀-𝟏 : {P : Antichain} → ({p : Trace} → p ∈ traces P → p ≼ ε) → P ≾₀ 𝟏
+≾₀-𝟏 {P} f p m =
+  fromWitness {a? = any? (_≽?_ p) (traces 𝟏)} (here (f (toWitness m)))
 
 -- the unit is the least grade, the empty run staying within every bound
 
-≾₀-⊥ : (P : Antichain) → u ≾₀ P
+≾₀-⊥ : (P : Antichain) → 𝟏 ≾₀ P
 ≾₀-⊥ P s m
-  with ∈-[ε]⁻ (toWitness {a? = s ∈? traces u} m)
+  with ∈-[ε]⁻ (toWitness {a? = s ∈? traces 𝟏} m)
 ... | refl with neHead (traces P) (nonempty P)
 ...           | t , t∈P =
                 fromWitness (Any.map (λ eq → subst (ε ≼_) eq ≼-nil) t∈P)
@@ -140,8 +140,8 @@ open R public
 -- the raw language product is itself below a member of the reduced
 -- one, which the hypothesis places below `ε`.
 
-≾₀-zero-productˡ : {P Q : Antichain} → (P · Q) ≾₀ u → P ≾₀ u
-≾₀-zero-productˡ {P} {Q} rel = ≾₀-u {P} step
+≾₀-zero-productˡ : {P Q : Antichain} → (P · Q) ≾₀ 𝟏 → P ≾₀ 𝟏
+≾₀-zero-productˡ {P} {Q} rel = ≾₀-𝟏 {P} step
   where
     step : {p : Trace} → p ∈ traces P → p ≼ ε
     step {p} m with neHead (traces Q) (nonempty Q)
@@ -152,11 +152,11 @@ open R public
               subst (_≼ ε)
                     (sym (∙-conicalˡ {p} {y}
                            (≼-ε-inv (≼-trans py≼r
-                                      (≾₀-u-inv {P · Q} rel r∈PQ)))))
+                                      (≾₀-𝟏-inv {P · Q} rel r∈PQ)))))
                     ≼-nil
 
-≾₀-zero-productʳ : {P Q : Antichain} → (P · Q) ≾₀ u → Q ≾₀ u
-≾₀-zero-productʳ {P} {Q} rel = ≾₀-u {Q} step
+≾₀-zero-productʳ : {P Q : Antichain} → (P · Q) ≾₀ 𝟏 → Q ≾₀ 𝟏
+≾₀-zero-productʳ {P} {Q} rel = ≾₀-𝟏 {Q} step
   where
     step : {q : Trace} → q ∈ traces Q → q ≼ ε
     step {q} m with neHead (traces P) (nonempty P)
@@ -167,7 +167,7 @@ open R public
               subst (_≼ ε)
                     (sym (∙-conicalʳ {x} {q}
                            (≼-ε-inv (≼-trans xq≼r
-                                      (≾₀-u-inv {P · Q} rel r∈PQ)))))
+                                      (≾₀-𝟏-inv {P · Q} rel r∈PQ)))))
                     ≼-nil
 
 ------------------------------------------------------------------------
@@ -192,14 +192,14 @@ _·ᵇ_ : Bounds → Bounds → Bounds
 (within _) ·ᵇ unbounded  = unbounded
 unbounded  ·ᵇ _          = unbounded
 
-uᵇ : Bounds
-uᵇ = within u
+𝟏ᵇ : Bounds
+𝟏ᵇ = within 𝟏
 
-·ᵇ-identityʳ : (P : Bounds) → P ·ᵇ uᵇ ≡ P
+·ᵇ-identityʳ : (P : Bounds) → P ·ᵇ 𝟏ᵇ ≡ P
 ·ᵇ-identityʳ (within P) = cong within_ (·-identityʳ P)
 ·ᵇ-identityʳ unbounded  = refl
 
-·ᵇ-identityˡ : (P : Bounds) → uᵇ ·ᵇ P ≡ P
+·ᵇ-identityˡ : (P : Bounds) → 𝟏ᵇ ·ᵇ P ≡ P
 ·ᵇ-identityˡ (within P) = cong within_ (·-identityˡ P)
 ·ᵇ-identityˡ unbounded  = refl
 
@@ -227,7 +227,7 @@ unbounded  ≾ unbounded  = ⊤
 
 -- and the unit least, `unbounded` being out of its reach
 
-≾-⊥ : (P : Bounds) → uᵇ ≾ P
+≾-⊥ : (P : Bounds) → 𝟏ᵇ ≾ P
 ≾-⊥ (within P) = ≾₀-⊥ P
 ≾-⊥ unbounded  = tt
 
@@ -331,12 +331,12 @@ unbounded  ⊔ᵇ _          = unbounded
 -- `unbounded` is above the unit and not below it, so its clauses are
 -- vacuous and the property is the antichains' own.
 
-≾-zero-productˡ : {P Q : Bounds} → (P ·ᵇ Q) ≾ uᵇ → P ≾ uᵇ
+≾-zero-productˡ : {P Q : Bounds} → (P ·ᵇ Q) ≾ 𝟏ᵇ → P ≾ 𝟏ᵇ
 ≾-zero-productˡ {within P}  {within Q}  p = ≾₀-zero-productˡ {P} {Q} p
 ≾-zero-productˡ {within _}  {unbounded} ()
 ≾-zero-productˡ {unbounded} {_}         ()
 
-≾-zero-productʳ : {P Q : Bounds} → (P ·ᵇ Q) ≾ uᵇ → Q ≾ uᵇ
+≾-zero-productʳ : {P Q : Bounds} → (P ·ᵇ Q) ≾ 𝟏ᵇ → Q ≾ 𝟏ᵇ
 ≾-zero-productʳ {within P}  {within Q}  p = ≾₀-zero-productʳ {P} {Q} p
 ≾-zero-productʳ {within _}  {unbounded} ()
 ≾-zero-productʳ {unbounded} {_}         ()
@@ -344,14 +344,14 @@ unbounded  ⊔ᵇ _          = unbounded
 ------------------------------------------------------------------------
 -- The inclusion of durations, and deciding the order
 
-of-durᵇ : Carrier → Bounds
-of-durᵇ n = within (of-dur n)
+ιᵇ : Carrier → Bounds
+ιᵇ n = within (ι n)
 
-of-durᵇ-zero : of-durᵇ 0ᴰ ≡ uᵇ
-of-durᵇ-zero = cong within_ of-dur-zero
+ιᵇ-zero : ιᵇ 0ᴰ ≡ 𝟏ᵇ
+ιᵇ-zero = cong within_ ι-zero
 
-of-durᵇ-plus : {m n : Carrier} → of-durᵇ (m +ᴰ n) ≡ of-durᵇ m ·ᵇ of-durᵇ n
-of-durᵇ-plus {m} {n} = cong within_ (of-dur-plus {m} {n})
+ιᵇ-plus : {m n : Carrier} → ιᵇ (m +ᴰ n) ≡ ιᵇ m ·ᵇ ιᵇ n
+ιᵇ-plus {m} {n} = cong within_ (ι-plus {m} {n})
 
 infix 5 _≾?_
 
@@ -368,7 +368,7 @@ right-sided : Grade D
 right-sided = posetᵍ record
   { Carrier         = Bounds
   ; _·_             = _·ᵇ_
-  ; u               = uᵇ
+  ; 𝟏               = 𝟏ᵇ
   ; ·-identityʳ     = ·ᵇ-identityʳ
   ; ·-identityˡ     = ·ᵇ-identityˡ
   ; ·-assoc         = ·ᵇ-assoc
@@ -390,16 +390,16 @@ right-sided = posetᵍ record
   ; ≾-zero-productˡ = λ {c} {d} → ≾-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾-zero-productʳ {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → ≾-irrelevant {c} {d}
-  ; of-dur          = of-durᵇ
-  ; of-dur-zero     = of-durᵇ-zero
-  ; of-dur-plus     = λ {m} {n} → of-durᵇ-plus {m} {n}
+  ; ι               = ιᵇ
+  ; ι-zero          = ιᵇ-zero
+  ; ι-plus          = λ {m} {n} → ιᵇ-plus {m} {n}
   }
 
 -- its hints
 
 right-sidedʰ : GradeHints right-sided
 right-sidedʰ = record
-  { u-least? = just ≾-⊥
+  { 𝟏-least? = just ≾-⊥
   ; ·-comm?  = nothing
   ; plus?    = λ _ → nothing
   }

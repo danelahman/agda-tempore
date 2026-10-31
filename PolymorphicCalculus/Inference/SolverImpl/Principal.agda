@@ -139,9 +139,9 @@ uniform-out : ∀ {Θ Φ Ω} → (O : Subst Θ Φ) → (X : Subst Φ (Ω +e)) �
             → (O ⨟ˢ X) ≐ˢ (δ₀ ⨟ˢ wkˢᵉ) → Uniform O X
 uniform-out O X δ₀ =
   agree-out O X κ⊤ κᵉ wkˢᵉ δ₀
-    (λ y → trans (κ-wkᵛ (econst ⊤ₑ) y) (sym (κ-wkᵛ ûₑ y)))
-    (λ y → trans (κ-wkʳ (econst ⊤ₑ) y) (sym (κ-wkʳ ûₑ y)))
-    (λ y → trans (κ-wkᵉ (econst ⊤ₑ) y) (sym (κ-wkᵉ ûₑ y)))
+    (λ y → trans (κ-wkᵛ (econst ⊤ₑ) y) (sym (κ-wkᵛ 𝟏̂ₑ y)))
+    (λ y → trans (κ-wkʳ (econst ⊤ₑ) y) (sym (κ-wkʳ 𝟏̂ₑ y)))
+    (λ y → trans (κ-wkᵉ (econst ⊤ₑ) y) (sym (κ-wkᵉ 𝟏̂ₑ y)))
 
 -- Both components of a union
 
@@ -465,7 +465,7 @@ just-one₂ F refl f (here refl) = f
 
 stripʳ-unit-bnd : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
                 → {ρ₀ ρ₀' : RExp Φ} → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀
-                → ρ' [ updᵉ j ûₑ ]ʳ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀'
+                → ρ' [ updᵉ j 𝟏̂ₑ ]ʳ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀'
                 → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
                 → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ γ ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ γ ]ʳ
                 → Q ⊩ ρ₀ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ ≾̂ᵣ ρ₀' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ
@@ -476,20 +476,20 @@ stripʳ-unit-bnd {Q = Q} j ρ ρ' {ρ₀} {ρ₀'} e₁ e₂ γ hγ p =
   where
     X = popˢ j ⨟ˢ γ
 
-    unit : sE (X ⨟ˢ κᵉ) j ≡ ûₑ [ X ⨟ˢ κᵉ ]ᵉ
+    unit : sE (X ⨟ˢ κᵉ) j ≡ 𝟏̂ₑ [ X ⨟ˢ κᵉ ]ᵉ
     unit = cong (_[ κᵉ ]ᵉ) (trans (cong (_[ γ ]ᵉ) (popˢ-hit j)) hγ)
 
     rhs : ρ' [ X ]ʳ [ κᵉ ]ʳ ≡ ρ₀' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ
     rhs = trans ([⨟]ʳ ρ' X κᵉ)
-          (trans (sym ([≐]ʳ (updᵉ-absorb j ûₑ (X ⨟ˢ κᵉ) unit) ρ'))
-          (trans (sym ([⨟]ʳ ρ' (updᵉ j ûₑ) (X ⨟ˢ κᵉ)))
-          (trans (sym ([⨟]ʳ (ρ' [ updᵉ j ûₑ ]ʳ) X κᵉ))
-          (trans (cong (_[ κᵉ ]ʳ) (keyʳ j (ρ' [ updᵉ j ûₑ ]ʳ) e₂ γ))
+          (trans (sym ([≐]ʳ (updᵉ-absorb j 𝟏̂ₑ (X ⨟ˢ κᵉ) unit) ρ'))
+          (trans (sym ([⨟]ʳ ρ' (updᵉ j 𝟏̂ₑ) (X ⨟ˢ κᵉ)))
+          (trans (sym ([⨟]ʳ (ρ' [ updᵉ j 𝟏̂ₑ ]ʳ) X κᵉ))
+          (trans (cong (_[ κᵉ ]ʳ) (keyʳ j (ρ' [ updᵉ j 𝟏̂ₑ ]ʳ) e₂ γ))
                  ([⨟]ʳ ρ₀' (wkˢᵉ ⨟ˢ γ) κᵉ)))))
 
 stripᵉ-unit-bnd : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
                 → {ε₀ ε₀' : EExp Φ} → ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀
-                → ε' [ updᵉ j ûₑ ]ᵉ [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀'
+                → ε' [ updᵉ j 𝟏̂ₑ ]ᵉ [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀'
                 → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
                 → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ γ ]ᵉ ≾̂ₑ ε' [ popˢ j ⨟ˢ γ ]ᵉ
                 → Q ⊩ ε₀ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ ≾̂ₑ ε₀' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ
@@ -500,15 +500,15 @@ stripᵉ-unit-bnd {Q = Q} j ε ε' {ε₀} {ε₀'} e₁ e₂ γ hγ p =
   where
     X = popˢ j ⨟ˢ γ
 
-    unit : sE (X ⨟ˢ κᵉ) j ≡ ûₑ [ X ⨟ˢ κᵉ ]ᵉ
+    unit : sE (X ⨟ˢ κᵉ) j ≡ 𝟏̂ₑ [ X ⨟ˢ κᵉ ]ᵉ
     unit = cong (_[ κᵉ ]ᵉ) (trans (cong (_[ γ ]ᵉ) (popˢ-hit j)) hγ)
 
     rhs : ε' [ X ]ᵉ [ κᵉ ]ᵉ ≡ ε₀' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ
     rhs = trans ([⨟]ᵉ ε' X κᵉ)
-          (trans (sym ([≐]ᵉ (updᵉ-absorb j ûₑ (X ⨟ˢ κᵉ) unit) ε'))
-          (trans (sym ([⨟]ᵉ ε' (updᵉ j ûₑ) (X ⨟ˢ κᵉ)))
-          (trans (sym ([⨟]ᵉ (ε' [ updᵉ j ûₑ ]ᵉ) X κᵉ))
-          (trans (cong (_[ κᵉ ]ᵉ) (keyᵉ j (ε' [ updᵉ j ûₑ ]ᵉ) e₂ γ))
+          (trans (sym ([≐]ᵉ (updᵉ-absorb j 𝟏̂ₑ (X ⨟ˢ κᵉ) unit) ε'))
+          (trans (sym ([⨟]ᵉ ε' (updᵉ j 𝟏̂ₑ) (X ⨟ˢ κᵉ)))
+          (trans (sym ([⨟]ᵉ (ε' [ updᵉ j 𝟏̂ₑ ]ᵉ) X κᵉ))
+          (trans (cong (_[ κᵉ ]ᵉ) (keyᵉ j (ε' [ updᵉ j 𝟏̂ₑ ]ᵉ) e₂ γ))
                  ([⨟]ᵉ ε₀' (wkˢᵉ ⨟ˢ γ) κᵉ)))))
 
 stripʳ-top-bnd : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (j : EVar (Φ +e))
@@ -587,7 +587,7 @@ stripᵉ-top-bnd {Q = Q} O j ε ε' {ε₀} {ε₀'} e₁ o e₂ γ hγ u p =
     p⊤ : Q ⊩ ε [ X ]ᵉ [ κ⊤ ]ᵉ ≾̂ₑ ε' [ X ]ᵉ [ κ⊤ ]ᵉ
     p⊤ = ⊩-substₑ {σ = κ⊤} (⊩ᴴ-κ (econst ⊤ₑ)) p
 
-stripʳ-unit-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (ij? : Maybe (Is-just uₑ-least?))
+stripʳ-unit-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (ij? : Maybe (Is-just 𝟏ₑ-least?))
              → (j : EVar (Φ +e))
              → (ρ ρ' : RExp (Φ +e)) → (ρ₀ : RExp Φ) → (e₁ : ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀)
              → ∀ {a} → stripʳ-unit ij? j ρ ρ' ρ₀ e₁ ≡ just a
@@ -597,13 +597,13 @@ stripʳ-unit-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (ij? : Maybe (Is-just uₑ-
              → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ ≾̂ᵣ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ
 stripʳ-unit-princ nothing    j ρ ρ' ρ₀ e₁ ()
 stripʳ-unit-princ {Q = Q} (just ij) j ρ ρ' ρ₀ e₁ eq
-  with strʳ⁺ j (ρ' [ updᵉ j ûₑ ]ʳ)
+  with strʳ⁺ j (ρ' [ updᵉ j 𝟏̂ₑ ]ʳ)
 ... | nothing          = ⊥just eq
 ... | just (ρ₀' , e₂) = λ γ hγ p →
       just-one₂ (λ τ τ' → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ ≾̂ᵣ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ) eq
                 (stripʳ-unit-bnd j ρ ρ' e₁ e₂ γ hγ p)
 
-stripᵉ-unit-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (ij? : Maybe (Is-just uₑ-least?))
+stripᵉ-unit-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (ij? : Maybe (Is-just 𝟏ₑ-least?))
              → (j : EVar (Φ +e))
              → (ε ε' : EExp (Φ +e)) → (ε₀ : EExp Φ) → (e₁ : ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀)
              → ∀ {a} → stripᵉ-unit ij? j ε ε' ε₀ e₁ ≡ just a
@@ -613,7 +613,7 @@ stripᵉ-unit-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (ij? : Maybe (Is-just uₑ
              → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ ≾̂ₑ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ
 stripᵉ-unit-princ nothing    j ε ε' ε₀ e₁ ()
 stripᵉ-unit-princ {Q = Q} (just ij) j ε ε' ε₀ e₁ eq
-  with strᵉ⁺ j (ε' [ updᵉ j ûₑ ]ᵉ)
+  with strᵉ⁺ j (ε' [ updᵉ j 𝟏̂ₑ ]ᵉ)
 ... | nothing          = ⊥just eq
 ... | just (ε₀' , e₂) = λ γ hγ p →
       just-one₂ (λ τ τ' → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ ≾̂ₑ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ) eq
@@ -683,7 +683,7 @@ atomʳ-princ {Q = Q} O H j ρ ρ' eq with strʳ⁺ j ρ | strʳ⁺ j ρ'
 ...   | just _  = λ γ hγ u p m → ⊥-elim (just-none eq m)
 ...   | nothing = λ γ hγ u p →
         fromStripʳ-princ (λ τ τ' → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ ≾̂ᵣ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ) _ eq
-          (λ es → stripʳ-unit-princ (Is-just? uₑ-least?) j ρ ρ' ρ₀ e₁ es γ hγ p)
+          (λ es → stripʳ-unit-princ (Is-just? 𝟏ₑ-least?) j ρ ρ' ρ₀ e₁ es γ hγ p)
 atomʳ-princ {Q = Q} O H j ρ ρ' eq | nothing | just (ρ₀' , e₂) with decideᵣ full H ρ ρ'
 ... | just _  = λ γ hγ u p m → ⊥-elim (just-none eq m)
 ... | nothing = λ γ hγ u p →
@@ -707,7 +707,7 @@ atomᵉ-princ {Q = Q} O H j ε ε' eq with strᵉ⁺ j ε | strᵉ⁺ j ε'
 ...   | just _  = λ γ hγ u p m → ⊥-elim (just-none eq m)
 ...   | nothing = λ γ hγ u p →
         fromStripᵉ-princ (λ τ τ' → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ ≾̂ₑ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ) _ eq
-          (λ es → stripᵉ-unit-princ (Is-just? uₑ-least?) j ε ε' ε₀ e₁ es γ hγ p)
+          (λ es → stripᵉ-unit-princ (Is-just? 𝟏ₑ-least?) j ε ε' ε₀ e₁ es γ hγ p)
 atomᵉ-princ {Q = Q} O H j ε ε' eq | nothing | just (ε₀' , e₂) with decideₑ full H ε ε'
 ... | just _  = λ γ hγ u p m → ⊥-elim (just-none eq m)
 ... | nothing = λ γ hγ u p →
@@ -1141,7 +1141,7 @@ popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ sat h
     tri = ≐ˢ-trans (≐ˢ-sym (⨟-assoc δ₀ₛ (wkˢᵉ ⨟ˢ γ) κᵉ))
           (≐ˢ-trans (⨟-congˡ inner κᵉ)
           (≐ˢ-trans (⨟-assoc δ₀ wkˢᵉ κᵉ)
-          (≐ˢ-trans (⨟-congʳ δ₀ (wk-κ ûₑ)) (⨟-idʳ δ₀))))
+          (≐ˢ-trans (⨟-congʳ δ₀ (wk-κ 𝟏̂ₑ)) (⨟-idʳ δ₀))))
 
     -- the unknowns the scope was entered with read the same at the
     -- inner instance as at the outer one lifted over the rigid
@@ -1527,7 +1527,7 @@ solve-principal s (ε ≾̂ₑᶜ ε') refl δ₀ sat h =
 solve-principal s (Etᶜ A) eq = solveEt-princ s A _ refl eq
 
 solve-principal s (Et∨≾ᵘ A ρ) {s'} {m} {w} eq
-  with decideᵣ full ∅ᴴ (ρ [ θ s ]ʳ) ûᵣ
+  with decideᵣ full ∅ᴴ (ρ [ θ s ]ʳ) 𝟏̂ᵣ
 ... | just p  = solved-princ {s = s} {C = Et∨≾ᵘ A ρ} {s₂ = s'} {m₂ = m} {w₂ = w} eq
                              (id-princ s (Et∨≾ᵘ A ρ))
 ... | nothing = solveDisj-princ s A ρ _ refl eq
@@ -1874,7 +1874,7 @@ solve-fail s (ε ≾̂ₑᶜ ε') ()
 
 solve-fail s (Etᶜ A) eq = solveEt-fail s A _ refl eq
 
-solve-fail s (Et∨≾ᵘ A ρ) eq with decideᵣ full ∅ᴴ (ρ [ θ s ]ʳ) ûᵣ
+solve-fail s (Et∨≾ᵘ A ρ) eq with decideᵣ full ∅ᴴ (ρ [ θ s ]ʳ) 𝟏̂ᵣ
 ... | just _  = ⊥solved eq
 ... | nothing = solveDisj-fail s A ρ _ refl eq
 

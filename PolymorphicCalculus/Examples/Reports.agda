@@ -72,24 +72,24 @@ private
 
   -- A claim made after exactly the box's grade
 
-  on-time : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → Q ⊩ ûᵣ ·̂ᵣ ρ ≾̂ᵣ ρ
+  on-time : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → Q ⊩ 𝟏̂ᵣ ·̂ᵣ ρ ≾̂ᵣ ρ
   on-time = eqᵣ ≡̂ᵣ-identityˡ
 
   -- A variable no time has passed over
 
-  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → VarOK Q A ûᵣ
+  ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → VarOK Q A 𝟏̂ᵣ
   ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
 U⇒U : ∀ {Θ} → OVType Θ
-U⇒U = Unit ⇒ Unit ‼ ûₑ
+U⇒U = Unit ⇒ Unit ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- A variable used on both sides of a claim
 --
 --   reused-around-claim a f b = f (); unbox b as g in g a; return a
 --
--- `a` owes `eternal α ∨ ∣ ε_f ∣ ≾ uᵣ` and
--- `eternal α ∨ ∣ ε_f ∣ · ∣ ε_g ∣ ≾ uᵣ`; where the unit is least the
+-- `a` owes `eternal α ∨ ∣ ε_f ∣ ≾ 𝟏ᵣ` and
+-- `eternal α ∨ ∣ ε_f ∣ · ∣ ε_g ∣ ≾ 𝟏ᵣ`; where the unit is least the
 -- second entails the first, which is dropped.
 
 reused-around-claim : RawC ∅ˢ 0
@@ -100,7 +100,7 @@ reused-around-claim =
 reused-around-claim-typed : IsTyped (infer [] reused-around-claim)
 reused-around-claim-typed =
   typed-of reused-around-claim
-    (closed {C = (Unit ⇒ (U⇒U ⇒ ([ ∣ ûₑ ∣̂ᵉ ] U⇒U ⇒ Unit ‼ (ûₑ ·̂ₑ (ûₑ ·̂ₑ ûₑ))) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ}
+    (closed {C = (Unit ⇒ (U⇒U ⇒ ([ ∣ 𝟏̂ₑ ∣̂ᵉ ] U⇒U ⇒ Unit ‼ (𝟏̂ₑ ·̂ₑ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ))) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ}
       (return (lam (return (lam (return (lam
         ((var (Tl-∷ Hd) ok₀ · ⋆)
          ⨟ unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) on-time
@@ -112,7 +112,7 @@ reused-around-claim-typed =
 expected-reused-around-claim : Conj (scope 3 0 2) → EExp (scope 3 0 2) → Scheme
 expected-reused-around-claim C ε =
   ∀[ 3 , 0 , 2 ] C ⟹
-    (α₂ ⇒ ((Unit ⇒ α₁ ‼ ε₁) ⇒ ([ ∣ ε₁ ∣̂ᵉ ] (α₂ ⇒ α₀ ‼ ε₀) ⇒ α₂ ‼ ε) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+    (α₂ ⇒ ((Unit ⇒ α₁ ‼ ε₁) ⇒ ([ ∣ ε₁ ∣̂ᵉ ] (α₂ ⇒ α₀ ‼ ε₀) ⇒ α₂ ‼ ε) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- A box claimed in a clause built after a call
@@ -136,7 +136,7 @@ claimed-after-call =
 
 claimed-after-call-typable : Typable [] claimed-after-call
 claimed-after-call-typable =
-  closed {C = (U⇒U ⇒ ([ rconst ⊤ᵣ ] Unit ⇒ (U⇒U ⇒ Unit ‼ (ûₑ ·̂ₑ ûₑ)) ‼ (ûₑ ·̂ₑ ûₑ)) ‼ ûₑ) ‼ ûₑ}
+  closed {C = (U⇒U ⇒ ([ rconst ⊤ᵣ ] Unit ⇒ (U⇒U ⇒ Unit ‼ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ‼ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ}
     (return (lam (return (lam
       ((var (Tl-∷ Hd) ok₀ · ⋆)
        ⨟ return (lam (handle var Hd ok₀ · ⋆
@@ -150,4 +150,4 @@ claimed-after-call-typable =
 expected-claimed-after-call : RExp (scope 3 0 2) → Scheme
 expected-claimed-after-call ρ =
   ∀[ 3 , 0 , 2 ] ⊤ ⟹
-    ((Unit ⇒ α₂ ‼ ε₁) ⇒ ([ ρ ] α₀ ⇒ ((Unit ⇒ α₁ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ε₁) ‼ ûₑ) ‼ ûₑ
+    ((Unit ⇒ α₂ ‼ ε₁) ⇒ ([ ρ ] α₀ ⇒ ((Unit ⇒ α₁ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ε₁) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ

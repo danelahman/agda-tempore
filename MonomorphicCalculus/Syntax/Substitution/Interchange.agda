@@ -43,7 +43,7 @@ open import MonomorphicCalculus.Syntax.Substitution.Equivalence  S
 -- Where the lock-crossing renaming sends a variable: under the lock, at the
 -- grade the lock contributes.
 
-hit-⟨⟩-img : ∀ {Γ A σ ρ} → (p : ρ ≾ᵣ uᵣ) → (y : A ∈[ σ ] Γ)
+hit-⟨⟩-img : ∀ {Γ A σ ρ} → (p : ρ ≾ᵣ 𝟏ᵣ) → (y : A ∈[ σ ] Γ)
            → var-img (⟨⟩-η⁻¹-ren {Δ = Γ} ∘ʳ ⟨⟩-≤-ren p) y ≡ Var-⟨⟩ ρ (σ , y)
 hit-⟨⟩-img p y = cong (var-img′ (⟨⟩-≤-ren p)) (⟨⟩-η⁻¹-img y)
 
@@ -213,7 +213,7 @@ record Interchange {Δ Δ' Γ Γ'} (s' : Sub₀ [] Δ Δ') (r : Ren [] Δ' Γ')
                    (r' : Ren [] Δ Γ) (s : Sub₀ [] Γ Γ') : Set where
   constructor mk⋈
   field
-    atᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+    atᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
         → V-sub₀ s' (V-rename r (var f x)) ≡ V-rename r' (V-sub₀ s (var f x))
     atᵗ : ∀ {A ρ ρ'} → (y : [ ρ ] A ∈[ ρ' ] Γ')
         → tgt-img₀ s' (proj₂ (var-img r y)) ≡ rvar-img′ r' (tgt-img₀ s y)
@@ -253,7 +253,7 @@ open Interchange public
                    (cong-⟨⟩-ren r') (cong-⟨⟩-sub s)
 ⋈-⟨⟩ {ρ = ρ} {s' = s'} {r = r} {r' = r'} {s = s} h = mk⋈ goᵛ goᵗ
   where
-    ⟨⟩-nat-≐ʳ : ∀ {Γ₀ Γ₀' ρ₀} → (r₀ : Ren [] Γ₀ Γ₀') → (p p' : ρ₀ ≾ᵣ uᵣ)
+    ⟨⟩-nat-≐ʳ : ∀ {Γ₀ Γ₀' ρ₀} → (r₀ : Ren [] Γ₀ Γ₀') → (p p' : ρ₀ ≾ᵣ 𝟏ᵣ)
               → (r₀ ∘ʳ (⟨⟩-η⁻¹-ren {Δ = Γ₀} ∘ʳ ⟨⟩-≤-ren {ρ' = ρ₀} p))
               ≐ʳ ((⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren {ρ' = ρ₀} p') ∘ʳ cong-⟨⟩-ren r₀)
     ⟨⟩-nat-≐ʳ r₀ p p' = mk≐ʳ go

@@ -53,7 +53,7 @@ open import Grades.Durations.Intervals.Dense ℚ≥0ᵀ using (⁺⋢⁻)
 open import Util.NonNegativeRational using (#_; _≤_; _≤?_; ≤-trans)
 open import Grades.Examples.Time.Dense.RightSided
   using (ℚ∞; ↑_; ∞; _≤∞_; ≤∞-refl; _+∞_; _⊔∞_; ⊔∞-ubˡ; ⊔∞-ubʳ; ⊔∞-lub;
-         𝕀ᵣ; [0,_]; _≾ₒ_; uₒ; dense-right-sided-intervals; dense-right-sided-intervalsʰ)
+         𝕀ᵣ; [0,_]; _≾ₒ_; 𝟏ₒ; dense-right-sided-intervals; dense-right-sided-intervalsʰ)
 
 open import Grades.Examples.Traces.Rigid.Rational.RightSided Op n code name name-code code-name running
   using (right-sided; right-sidedʰ; Proper′; ⌜_⌝; expr; _≾ᴳ_; ≾ᴳ-intro; εᵉ; waitᵁ; ⟦_⟧; upper; str)
@@ -126,7 +126,7 @@ upper-runs→right-sided-intervals : right-sided →ᵍ dense-right-sided-interv
 upper-runs→right-sided-intervals = record
   { map          = mapₒ
   ; map-monotone = λ {c} {d} → supᴾ-mono {c} {d}
-  ; map-u        = ≃-of (cong (λ i → supʰ (hi i)) (hullᴾ-ε {upper}))
+  ; map-𝟏        = ≃-of (cong (λ i → supʰ (hi i)) (hullᴾ-ε {upper}))
   ; map-·        = λ {c} {d} →
       ≃-of (trans (cong (λ i → supʰ (hi i)) (hullᴾ-· c d)) (supʰ-+ (hi (hullᴾ c)) (hi (hullᴾ d))))
   ; map-⊤        = ≃-of (cong (λ i → supʰ (hi i)) (hullᴾ-is ⌜ str all ∞ʰ ⌝ {⟪ 0⁻ , ∞ʰ ⟫} refl))
@@ -135,14 +135,14 @@ upper-runs→right-sided-intervals = record
                    Data.Product.× (supʰ (hi (hullᴾ c)) ⊔∞ supʰ (hi (hullᴾ d)) ≤∞ supʰ (hi i)))
             (sym (hullᴾ-∣ c d))
         (supʰ-⊔ (hi (hullᴾ c)) (hi (hullᴾ d)) , ⊔-supʰ (hi (hullᴾ c)) (hi (hullᴾ d)))
-  ; map-of-dur   = λ {τ} → ≃-of (cong supʰ (wait-hi τ))
+  ; map-ι        = λ {τ} → ≃-of (cong supʰ (wait-hi τ))
   }
 
 ------------------------------------------------------------------------
 -- A grade measured by no time has only the empty run
 
 private
-  reflects : (c : Proper′ upper) → mapₒ c ≾ₒ uₒ → c ≾ᴳ εᵉ
+  reflects : (c : Proper′ upper) → mapₒ c ≾ₒ 𝟏ₒ → c ≾ᴳ εᵉ
   reflects c le = ≾ᴳ-intro c εᵉ into
     where
       dur≤0 : ∀ {x} → ⟦ expr c ⟧ x → dur x ≤ # 0
@@ -160,7 +160,7 @@ upperRunsToRightSidedIntervalsGradeSystem : GradeSystem
 upperRunsToRightSidedIntervalsGradeSystem = record
   { RGrade = dense-right-sided-intervals
   ; EGrade = right-sided
-  ; ∣_∣ᵉ   = upper-runs→right-sided-intervals
+  ; ∣-∣ᵉ   = upper-runs→right-sided-intervals
   }
 
 -- its hints: the projection reflects the order at the unit
@@ -169,6 +169,6 @@ upperRunsToRightSidedIntervalsGradeSystemʰ : SystemHints upperRunsToRightSidedI
 upperRunsToRightSidedIntervalsGradeSystemʰ = record
   { RHints      = dense-right-sided-intervalsʰ
   ; EHints      = right-sidedʰ
-  ; reflects-u? = just reflects
+  ; reflects-𝟏? = just reflects
   ; witnesses   = λ _ _ _ → []
   }

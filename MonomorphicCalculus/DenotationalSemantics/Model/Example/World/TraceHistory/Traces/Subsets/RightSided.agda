@@ -84,9 +84,9 @@ extends-∙ : (w t₁ t₂ : Trace) {w' w'' : Trace}
 extends-∙ w t₁ t₂ eq₁ eq₂ =
   trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂)
 
-⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ (permitting u) ] w
+⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ (permitting 𝟏) ] w
 ⊑ᵇ-refl {w} =
-  mkᵇ ε (fromWitness {a? = ε ∈? traces u} (here refl)) (∙-identityʳ w)
+  mkᵇ ε (fromWitness {a? = ε ∈? traces 𝟏} (here refl)) (∙-identityʳ w)
 
 -- transitivity multiplies the grades: the two continuations sequence
 -- into one the product lists

@@ -87,7 +87,7 @@ solve-rigidFree s (Etᶜ A) p = solveEt-≢stuck (etDec (A [ θ s ]ᵛ)) refl
     solveEt-≢stuck : ∀ x e → solveEt s A x e ≢ stuck
     solveEt-≢stuck nothing  e = λ ()
     solveEt-≢stuck (just _) e = λ ()
-solve-rigidFree s (Et∨≾ᵘ A ρ) p with decideᵣ full ∅ᴴ (ρ [ θ s ]ʳ) ûᵣ
+solve-rigidFree s (Et∨≾ᵘ A ρ) p with decideᵣ full ∅ᴴ (ρ [ θ s ]ʳ) 𝟏̂ᵣ
 ... | just _  = λ ()
 ... | nothing = solveDisj-≢stuck (etDec (A [ θ s ]ᵛ)) refl
   where

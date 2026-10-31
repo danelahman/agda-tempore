@@ -26,7 +26,7 @@ import Grades.Examples.Traces.Rigid.Finite.LeftSided Op 3 code name name-code co
 import Grades.Examples.Traces.Rigid.Finite.RightSided Op 3 code name name-code code-name running as U
 
 open import Grades.Base using (module Grade)
-open Grade two-sided using (Carrier; of-dur)
+open Grade two-sided using (Carrier; ι)
   renaming (_·_ to _·ᵢ_)
 
 -- componentwise comparison
@@ -42,12 +42,12 @@ bound = [ ⌜ ‵ heat · L.idle L.≥ (# 2) · ‵ log ⌝ , ⌜ ‵ heat · U.
 -- a delay of two and a half, between heating and logging, meets it
 
 waited : Carrier
-waited = operation heat ·ᵢ (of-dur (5 / 2) ·ᵢ operation log)
+waited = operation heat ·ᵢ (ι (5 / 2) ·ᵢ operation log)
 
 -- a delay of one and a half breaks the wait the lower bound demands
 
 hurried : Carrier
-hurried = operation heat ·ᵢ (of-dur (3 / 2) ·ᵢ operation log)
+hurried = operation heat ·ᵢ (ι (3 / 2) ·ᵢ operation log)
 
 hurried-fails : holds₂ hurried bound ≡ false
 hurried-fails = refl

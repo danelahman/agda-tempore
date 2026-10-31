@@ -16,7 +16,7 @@
 --                                                                --
 -- Contract. Every edge holds where `Q` does (`edgeₑ-sound`,      --
 -- `edgeᵣ-sound`); a `just` is a derivation of `Q ⊩ e ≾̂ e'`, a    --
--- `nothing` claims nothing. `refute≾u` refutes `ρ ≾ u` from      --
+-- `nothing` claims nothing. `refute≾𝟏` refutes `ρ ≾ 𝟏` from      --
 -- every satisfiable set (`refute-⊩`). `checkClosed Q` is         --
 -- equivalent to `Q` (`checkClosed-⊩`, `checkClosed-⊆`) and fails --
 -- only on an unsatisfiable set (`checkClosed-fail`), as a        --
@@ -108,7 +108,7 @@ valʳ? (ρ ⊔̂ᵣ ρ') with valʳ? ρ | valʳ? ρ'
 ... | just c | just c' = just (c ⊔ᵣ c')
 ... | _      | _       = nothing
 valʳ? ∣ ε ∣̂ᵉ with valᵉ? ε
-... | just c  = just (mapᵉ c)
+... | just c  = just ∣ c ∣ᵉ
 ... | nothing = nothing
 
 -- An expression with a value is convertible to it
@@ -147,8 +147,8 @@ convʳ ∣ ε ∣̂ᵉ ()   | nothing
 
 -- The unit's image is the unit
 
-∣û∣ₑ : ∀ {Θ} → ûᵣ {Θ} ≡̂ᵣ ∣ ûₑ ∣̂ᵉ
-∣û∣ₑ = ≡̂ᵣ-sym (≡̂ᵣ-trans ≡̂ᵣ-map-const (≡̂ᵣ-const map-uᵉ))
+∣𝟏̂∣ₑ : ∀ {Θ} → 𝟏̂ᵣ {Θ} ≡̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ
+∣𝟏̂∣ₑ = ≡̂ᵣ-sym (≡̂ᵣ-trans ≡̂ᵣ-map-const (≡̂ᵣ-const map-𝟏ᵉ))
 
 ------------------------------------------------------------------------
 -- The hypothesis graph
@@ -160,7 +160,7 @@ mutual
     same   : ∀ {ε ε'} → ε ≅ᵉ ε' → Edgeₑ Q ε ε'
     cst    : ∀ {c c'} → c ≾ₑ c' → Edgeₑ Q (econst c) (econst c')
     top    : ∀ {ε} → Edgeₑ Q ε (econst ⊤ₑ)
-    unit   : ∀ {ε} → Is-just uₑ-least? → Edgeₑ Q ûₑ ε
+    unit   : ∀ {ε} → Is-just 𝟏ₑ-least? → Edgeₑ Q 𝟏̂ₑ ε
     factor : ∀ {ε ε₀ as bs} → ε ∈ sidesₑ Q → nrmₑ ε ≡ alt as → Keepₑ Q as bs
            → ε₀ ≡̂ₑ ⟦ bs ⟧ᵉˢ → Edgeₑ Q ε₀ ε
 
@@ -172,9 +172,9 @@ mutual
     skip : ∀ {a as bs} → Aboveₑ Q a → Keepₑ Q as bs → Keepₑ Q (a ∷ as) bs
 
   data Aboveₑ {Θ : Scope} (Q : Hyps Θ) : EAtom Θ → Set where
-    const   : ∀ {c} → uₑ ≾ₑ c → Aboveₑ Q (ac c)
-    least   : ∀ {a} → Is-just uₑ-least? → Aboveₑ Q a
-    reached : ∀ {ε c a} → valᵉ? ε ≡ just c → uₑ ≾ₑ c → Star (Edgeₑ Q) ε ⟦ a ⟧ᵉᵃ
+    const   : ∀ {c} → 𝟏ₑ ≾ₑ c → Aboveₑ Q (ac c)
+    least   : ∀ {a} → Is-just 𝟏ₑ-least? → Aboveₑ Q a
+    reached : ∀ {ε c a} → valᵉ? ε ≡ just c → 𝟏ₑ ≾ₑ c → Star (Edgeₑ Q) ε ⟦ a ⟧ᵉᵃ
             → Aboveₑ Q a
 
 mutual
@@ -184,7 +184,7 @@ mutual
     same   : ∀ {ρ ρ'} → ρ ≅ʳ ρ' → Edgeᵣ Q ρ ρ'
     cst    : ∀ {c c'} → c ≾ᵣ c' → Edgeᵣ Q (rconst c) (rconst c')
     top    : ∀ {ρ} → Edgeᵣ Q ρ (rconst ⊤ᵣ)
-    unit   : ∀ {ρ} → Is-just uᵣ-least? → Edgeᵣ Q ûᵣ ρ
+    unit   : ∀ {ρ} → Is-just 𝟏ᵣ-least? → Edgeᵣ Q 𝟏̂ᵣ ρ
     img    : ∀ {a b} → Star (Edgeₑ Q) ⟦ a ⟧ᵉᵃ ⟦ b ⟧ᵉᵃ → Edgeᵣ Q ⟦ ∣ a ∣ᵃ ⟧ʳᵃ ⟦ ∣ b ∣ᵃ ⟧ʳᵃ
     factor : ∀ {ρ ρ₀ as bs} → ρ ∈ sidesᵣ Q → nrmᵣ ρ ≡ alt as → Keepᵣ Q as bs
            → ρ₀ ≡̂ᵣ ⟦ bs ⟧ʳˢ → Edgeᵣ Q ρ₀ ρ
@@ -195,10 +195,10 @@ mutual
     skip : ∀ {a as bs} → Aboveᵣ Q a → Keepᵣ Q as bs → Keepᵣ Q (a ∷ as) bs
 
   data Aboveᵣ {Θ : Scope} (Q : Hyps Θ) : RAtom Θ → Set where
-    const   : ∀ {c} → uᵣ ≾ᵣ c → Aboveᵣ Q (rc c)
-    least   : ∀ {a} → Is-just uᵣ-least? → Aboveᵣ Q a
-    image   : ∀ {i} → Is-just uₑ-least? → Aboveᵣ Q (rm i)
-    reached : ∀ {ρ c a} → valʳ? ρ ≡ just c → uᵣ ≾ᵣ c → Star (Edgeᵣ Q) ρ ⟦ a ⟧ʳᵃ
+    const   : ∀ {c} → 𝟏ᵣ ≾ᵣ c → Aboveᵣ Q (rc c)
+    least   : ∀ {a} → Is-just 𝟏ᵣ-least? → Aboveᵣ Q a
+    image   : ∀ {i} → Is-just 𝟏ₑ-least? → Aboveᵣ Q (rm i)
+    reached : ∀ {ρ c a} → valʳ? ρ ≡ just c → 𝟏ᵣ ≾ᵣ c → Star (Edgeᵣ Q) ρ ⟦ a ⟧ʳᵃ
             → Aboveᵣ Q a
 
 -- Every edge holds where the hypotheses do
@@ -215,7 +215,7 @@ mutual
     transₑ (eqₑ c) (transₑ (keepₑ-sound k)
                            (eqₑ (≡̂ₑ-sym (subst (λ s → ε ≡̂ₑ ⟦ s ⟧ᵉˢ⁺) eq (nrmₑ-≡ ε)))))
 
-  -- `a · u ≾ a · b` where `u ≾ b`
+  -- `a · 𝟏 ≾ a · b` where `𝟏 ≾ b`
 
   keepₑ-sound : ∀ {Θ} {Q : Hyps Θ} {as bs} → Keepₑ Q as bs → Q ⊩ ⟦ bs ⟧ᵉˢ ≾̂ₑ ⟦ as ⟧ᵉˢ
   keepₑ-sound stop       = ⊩≾̂ₑ-refl
@@ -223,7 +223,7 @@ mutual
   keepₑ-sound (skip a k) =
     transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-identityˡ)) (monoₑ (aboveₑ-sound a) (keepₑ-sound k))
 
-  aboveₑ-sound : ∀ {Θ} {Q : Hyps Θ} {a} → Aboveₑ Q a → Q ⊩ ûₑ ≾̂ₑ ⟦ a ⟧ᵉᵃ
+  aboveₑ-sound : ∀ {Θ} {Q : Hyps Θ} {a} → Aboveₑ Q a → Q ⊩ 𝟏̂ₑ ≾̂ₑ ⟦ a ⟧ᵉᵃ
   aboveₑ-sound (const p)                  = atomₑ p
   aboveₑ-sound (least q)                  = minₑ (to-witness q)
   aboveₑ-sound (reached {ε = ε} eq p ch) =
@@ -253,10 +253,10 @@ mutual
   keepᵣ-sound (skip a k) =
     transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityˡ)) (monoᵣ (aboveᵣ-sound a) (keepᵣ-sound k))
 
-  aboveᵣ-sound : ∀ {Θ} {Q : Hyps Θ} {a} → Aboveᵣ Q a → Q ⊩ ûᵣ ≾̂ᵣ ⟦ a ⟧ʳᵃ
+  aboveᵣ-sound : ∀ {Θ} {Q : Hyps Θ} {a} → Aboveᵣ Q a → Q ⊩ 𝟏̂ᵣ ≾̂ᵣ ⟦ a ⟧ʳᵃ
   aboveᵣ-sound (const p)                  = atomᵣ p
   aboveᵣ-sound (least q)                  = minᵣ (to-witness q)
-  aboveᵣ-sound (image q)                  = transᵣ (eqᵣ ∣û∣ₑ) (map-mono (minₑ (to-witness q)))
+  aboveᵣ-sound (image q)                  = transᵣ (eqᵣ ∣𝟏̂∣ₑ) (map-mono (minₑ (to-witness q)))
   aboveᵣ-sound (reached {ρ = ρ} eq p ch) =
     transᵣ (atomᵣ p) (transᵣ (eqᵣ (≡̂ᵣ-sym (convʳ ρ eq))) (chainᵣ-sound ch))
 
@@ -346,11 +346,11 @@ tableᵣ es = Chains.table _ ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ es
 
 -- The unit below anything, along a `unit` edge
 
-min≾ₑ : ∀ {Θ} {Q : Hyps Θ} {ε : EExp Θ} → Maybe (Is-just uₑ-least?) → Maybe (Q ⊩ ûₑ ≾̂ₑ ε)
+min≾ₑ : ∀ {Θ} {Q : Hyps Θ} {ε : EExp Θ} → Maybe (Is-just 𝟏ₑ-least?) → Maybe (Q ⊩ 𝟏̂ₑ ≾̂ₑ ε)
 min≾ₑ (just q) = just (edgeₑ-sound (unit q))
 min≾ₑ nothing  = nothing
 
-min≾ᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → Maybe (Is-just uᵣ-least?) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ρ)
+min≾ᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → Maybe (Is-just 𝟏ᵣ-least?) → Maybe (Q ⊩ 𝟏̂ᵣ ≾̂ᵣ ρ)
 min≾ᵣ (just q) = just (edgeᵣ-sound (unit q))
 min≾ᵣ nothing  = nothing
 
@@ -379,15 +379,15 @@ module Searchₑ {Θ} {Q : Hyps Θ} (es : List (EEdge Q))
   atom≾ₑ : (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
   atom≾ₑ a b = linkₑ? a b <∣> ceilₑ b <∣> reachₑ? a b
 
-  -- The unit below an atom: the grade's unit being least, or as the atom `uₑ`
+  -- The unit below an atom: the grade's unit being least, or as the atom `𝟏ₑ`
 
-  unit≾ₑ : (b : EAtom Θ) → Maybe (Q ⊩ ûₑ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-  unit≾ₑ b = min≾ₑ (Is-just? uₑ-least?) <∣> atom≾ₑ (ac uₑ) b
+  unit≾ₑ : (b : EAtom Θ) → Maybe (Q ⊩ 𝟏̂ₑ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
+  unit≾ₑ b = min≾ₑ (Is-just? 𝟏ₑ-least?) <∣> atom≾ₑ (ac 𝟏ₑ) b
 
-  -- An atom below the unit, as the constant atom `uₑ`
+  -- An atom below the unit, as the constant atom `𝟏ₑ`
 
-  ≾unitₑ : (a : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ûₑ)
-  ≾unitₑ a = atom≾ₑ a (ac uₑ)
+  ≾unitₑ : (a : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ 𝟏̂ₑ)
+  ≾unitₑ a = atom≾ₑ a (ac 𝟏ₑ)
 
   -- The product comparison, its atom comparisons being these
 
@@ -482,7 +482,7 @@ deriveₑ Q = embedₑ (edgesₑ Q)
 
 ------------------------------------------------------------------------
 -- Resource grades: the same, with the image `∣ x ∣` of an effect variable as
--- a third atom, above the unit when either sort's unit is least (`∣ u ∣ = u`)
+-- a third atom, above the unit when either sort's unit is least (`∣ 𝟏 ∣ = 𝟏`)
 
 module Searchᵣ {Θ} {Q : Hyps Θ} (es : List (REdge Q))
                (t : Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
@@ -499,17 +499,17 @@ module Searchᵣ {Θ} {Q : Hyps Θ} (es : List (REdge Q))
   atom≾ᵣ : (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
   atom≾ᵣ a b = linkᵣ? a b <∣> ceilᵣ b <∣> reachᵣ? a b
 
-  minᵐ : (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-  minᵐ (rm i) with Is-just? uₑ-least?
+  minᵐ : (b : RAtom Θ) → Maybe (Q ⊩ 𝟏̂ᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+  minᵐ (rm i) with Is-just? 𝟏ₑ-least?
   ... | just q  = just (aboveᵣ-sound (image q))
   ... | nothing = nothing
   minᵐ _ = nothing
 
-  unit≾ᵣ : (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-  unit≾ᵣ b = min≾ᵣ (Is-just? uᵣ-least?) <∣> minᵐ b <∣> atom≾ᵣ (rc uᵣ) b
+  unit≾ᵣ : (b : RAtom Θ) → Maybe (Q ⊩ 𝟏̂ᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+  unit≾ᵣ b = min≾ᵣ (Is-just? 𝟏ᵣ-least?) <∣> minᵐ b <∣> atom≾ᵣ (rc 𝟏ᵣ) b
 
-  ≾unitᵣ : (a : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ûᵣ)
-  ≾unitᵣ a = atom≾ᵣ a (rc uᵣ)
+  ≾unitᵣ : (a : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ 𝟏̂ᵣ)
+  ≾unitᵣ a = atom≾ᵣ a (rc 𝟏ᵣ)
 
   -- The product comparison, its atom comparisons being these
 
@@ -622,7 +622,7 @@ firsts _≟_ key seen (x ∷ l) with any (λ k → does (key x ≟ k)) seen
 -- A product of constants
 
 prodₑ : List E → E
-prodₑ []       = uₑ
+prodₑ []       = 𝟏ₑ
 prodₑ (c ∷ cs) = c ·ₑ prodₑ cs
 
 prodₑ-≡ : ∀ {Θ} → (cs : List E) → econst {Θ} (prodₑ cs) ≡̂ₑ ⟦ map ac cs ⟧ᵉˢ
@@ -630,7 +630,7 @@ prodₑ-≡ []       = ≡̂ₑ-refl
 prodₑ-≡ (c ∷ cs) = ≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-const-·) (≡̂ₑ-cong ≡̂ₑ-refl (prodₑ-≡ cs))
 
 prodᵣ : List R → R
-prodᵣ []       = uᵣ
+prodᵣ []       = 𝟏ᵣ
 prodᵣ (c ∷ cs) = c ·ᵣ prodᵣ cs
 
 prodᵣ-≡ : ∀ {Θ} → (cs : List R) → rconst {Θ} (prodᵣ cs) ≡̂ᵣ ⟦ map rc cs ⟧ʳˢ
@@ -658,13 +658,13 @@ lookupₑ ((j , a) ∷ U) i with j ≟ᶠ i
 ... | no _     = lookupₑ U i
 
 atomAboveₑ : ∀ {Θ} {Q : Hyps Θ} → Uₑ Q → (a : EAtom Θ) → Maybe (Aboveₑ Q a)
-atomAboveₑ U (ac c) with uₑ ≾ₑ? c
+atomAboveₑ U (ac c) with 𝟏ₑ ≾ₑ? c
 ... | yes p = just (const p)
 ... | no _  = nothing
 atomAboveₑ U (av i) = lookupₑ U i
 
 above?ₑ : ∀ {Θ} {Q : Hyps Θ} → Uₑ Q → (a : EAtom Θ) → Maybe (Aboveₑ Q a)
-above?ₑ U a with Is-just? uₑ-least?
+above?ₑ U a with Is-just? 𝟏ₑ-least?
 ... | just q  = just (least q)
 ... | nothing = atomAboveₑ U a
 
@@ -742,7 +742,7 @@ reachesₑ es ε =
 
 -- The variables reached from a variable-free source above the unit
 
-addVarsₑ : ∀ {Θ} {Q : Hyps Θ} {ε c} → valᵉ? ε ≡ just c → uₑ ≾ₑ c
+addVarsₑ : ∀ {Θ} {Q : Hyps Θ} {ε c} → valᵉ? ε ≡ just c → 𝟏ₑ ≾ₑ c
          → List (Σ[ ε' ∈ EExp Θ ] Star (Edgeₑ Q) ε ε') → Uₑ Q → Uₑ Q
 addVarsₑ q p []                   U = U
 addVarsₑ q p ((evar i , ch) ∷ l) U with lookupₑ U i
@@ -753,7 +753,7 @@ addVarsₑ q p (_ ∷ l)             U = addVarsₑ q p l U
 fromₑ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeₑ Q) → EExp Θ → Uₑ Q → Uₑ Q
 fromₑ es ε U with valᵉ? ε in q
 ... | nothing = U
-... | just c with uₑ ≾ₑ? c
+... | just c with 𝟏ₑ ≾ₑ? c
 ...   | yes p = addVarsₑ q p (reachesₑ es ε) U
 ...   | no _  = U
 
@@ -772,7 +772,7 @@ iterateₑ Q (suc n) U with reachedₑ (graphₑ Q U)
 ...   | false = U
 
 aboveₑ : ∀ {Θ} → (Q : Hyps Θ) → Uₑ Q
-aboveₑ {Θ} Q with Is-just? uₑ-least?
+aboveₑ {Θ} Q with Is-just? 𝟏ₑ-least?
 ... | just _  = []
 ... | nothing = iterateₑ Q (suc (nE Θ)) []
 
@@ -860,16 +860,16 @@ lookupᵣ ((b , x) ∷ U) a with b ≟ᵛᵃᵣ a
 ... | nothing   = lookupᵣ U a
 
 atomAboveᵣ : ∀ {Θ} {Q : Hyps Θ} → Uᵣ Q → (a : RAtom Θ) → Maybe (Aboveᵣ Q a)
-atomAboveᵣ U (rc c) with uᵣ ≾ᵣ? c
+atomAboveᵣ U (rc c) with 𝟏ᵣ ≾ᵣ? c
 ... | yes p = just (const p)
 ... | no _  = nothing
 atomAboveᵣ U (rv i) = lookupᵣ U (rv i)
-atomAboveᵣ U (rm i) with Is-just? uₑ-least?
+atomAboveᵣ U (rm i) with Is-just? 𝟏ₑ-least?
 ... | just q  = just (image q)
 ... | nothing = lookupᵣ U (rm i)
 
 above?ᵣ : ∀ {Θ} {Q : Hyps Θ} → Uᵣ Q → (a : RAtom Θ) → Maybe (Aboveᵣ Q a)
-above?ᵣ U a with Is-just? uᵣ-least?
+above?ᵣ U a with Is-just? 𝟏ᵣ-least?
 ... | just q  = just (least q)
 ... | nothing = atomAboveᵣ U a
 
@@ -940,13 +940,13 @@ reachesᵣ es ρ =
   Chains.sat _ ◅-nil _⋆_ linkˣᵣ _≟ʳ_ (map (λ { (x , y , e) → x , y , e ◅◅ ◅-nil }) es)
              (length es) ((ρ , ◅-nil) ∷ [])
 
-addVarᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ c} → valʳ? ρ ≡ just c → uᵣ ≾ᵣ c
+addVarᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ c} → valʳ? ρ ≡ just c → 𝟏ᵣ ≾ᵣ c
         → (a : RAtom Θ) → Star (Edgeᵣ Q) ρ ⟦ a ⟧ʳᵃ → Uᵣ Q → Uᵣ Q
 addVarᵣ q p a ch U with lookupᵣ U a
 ... | just _  = U
 ... | nothing = (a , reached q p ch) ∷ U
 
-addVarsᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ c} → valʳ? ρ ≡ just c → uᵣ ≾ᵣ c
+addVarsᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ c} → valʳ? ρ ≡ just c → 𝟏ᵣ ≾ᵣ c
          → List (Σ[ ρ' ∈ RExp Θ ] Star (Edgeᵣ Q) ρ ρ') → Uᵣ Q → Uᵣ Q
 addVarsᵣ q p []                        U = U
 addVarsᵣ q p ((rvar i , ch) ∷ l)       U = addVarsᵣ q p l (addVarᵣ q p (rv i) ch U)
@@ -956,7 +956,7 @@ addVarsᵣ q p (_ ∷ l)                   U = addVarsᵣ q p l U
 fromᵣ : ∀ {Θ} {Q : Hyps Θ} → List (GEdgeᵣ Q) → RExp Θ → Uᵣ Q → Uᵣ Q
 fromᵣ es ρ U with valʳ? ρ in q
 ... | nothing = U
-... | just c with uᵣ ≾ᵣ? c
+... | just c with 𝟏ᵣ ≾ᵣ? c
 ...   | yes p = addVarsᵣ q p (reachesᵣ es ρ) U
 ...   | no _  = U
 
@@ -975,7 +975,7 @@ iterateᵣ Q (suc n) U with reachedᵣ (graphᵣ Q U)
 ...   | false = U
 
 aboveᵣ : ∀ {Θ} → (Q : Hyps Θ) → Uᵣ Q
-aboveᵣ {Θ} Q with Is-just? uᵣ-least?
+aboveᵣ {Θ} Q with Is-just? 𝟏ᵣ-least?
 ... | just _  = []
 ... | nothing = iterateᵣ Q (suc (nR Θ + nE Θ)) []
 
@@ -1128,7 +1128,7 @@ decideᵣ full Q ρ ρ' with closedᵣ? ρ ρ'
 ... | _               = fullᵣ Q ρ ρ'
 
 ------------------------------------------------------------------------
--- Refutation of `ρ ≾ u` by the zero-product law
+-- Refutation of `ρ ≾ 𝟏` by the zero-product law
 --
 -- A constant atom not below the unit refutes each alternative it occurs in,
 -- and one refuted alternative the sum. It needs a satisfiable set (`hyp-derives`).
@@ -1136,7 +1136,7 @@ decideᵣ full Q ρ ρ' with closedᵣ? ρ ρ'
 -- No closed instance brings the expression below the unit
 
 Refutedᵤ : ∀ {Ω} → RExp Ω → Set
-Refutedᵤ {Ω} ρ = (δ : Subst Ω ∅ˢ) → ¬ (valʳ (ρ [ δ ]ʳ) ≾ᵣ uᵣ)
+Refutedᵤ {Ω} ρ = (δ : Subst Ω ∅ˢ) → ¬ (valʳ (ρ [ δ ]ʳ) ≾ᵣ 𝟏ᵣ)
 
 -- A product below the unit has both halves below the unit, so a
 -- refutation of either half refutes the product
@@ -1152,7 +1152,7 @@ tail-refutes a as ref δ le = ref δ (≾ᵣ-zero-productʳ le)
 -- A constant that is not below the unit, and a join one of whose
 -- operands is refuted
 
-const-refutes : ∀ {Ω} {c : R} → ¬ (c ≾ᵣ uᵣ) → Refutedᵤ (rconst {Ω} c)
+const-refutes : ∀ {Ω} {c : R} → ¬ (c ≾ᵣ 𝟏ᵣ) → Refutedᵤ (rconst {Ω} c)
 const-refutes ¬p δ le = ¬p le
 
 join-refutesˡ : ∀ {Ω} {ρ ρ' : RExp Ω} → Refutedᵤ ρ → Refutedᵤ (ρ ⊔̂ᵣ ρ')
@@ -1173,17 +1173,17 @@ refute-≡̂ᵣ eq ref δ le = ref δ (≾ᵣ-trans (proj₂ (inst-≡̂ᵣ δ e
 
 refute-[]ʳ : ∀ {Ω Ω'} {ρ : RExp Ω} → (σ : Subst Ω Ω')
            → Refutedᵤ ρ → Refutedᵤ (ρ [ σ ]ʳ)
-refute-[]ʳ {ρ = ρ} σ ref δ le = ref (σ ⨟ˢ δ) (subst (λ x → valʳ x ≾ᵣ uᵣ) ([⨟]ʳ ρ σ δ) le)
+refute-[]ʳ {ρ = ρ} σ ref δ le = ref (σ ⨟ˢ δ) (subst (λ x → valʳ x ≾ᵣ 𝟏ᵣ) ([⨟]ʳ ρ σ δ) le)
 
 -- A refuted expression is entailed by no satisfiable hypothesis set
 
 refute-⊩ : ∀ {Ω} {ρ : RExp Ω} {Q : Hyps Ω} → Satisfiable Q
-         → Refutedᵤ ρ → ¬ (Q ⊩ ρ ≾̂ᵣ ûᵣ)
+         → Refutedᵤ ρ → ¬ (Q ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ)
 refute-⊩ (δ , h) ref d = ref δ (inst-≾ᵣ (⊨⇒⊩ᴴ h) d)
 
 -- Satisfiability is needed: a hypothesis may name any ordering
 
-hyp-derives : ∀ {Ω} → (ρ : RExp Ω) → hyps [] [] ((ρ , ûᵣ) ∷ []) [] [] [] ⊩ ρ ≾̂ᵣ ûᵣ
+hyp-derives : ∀ {Ω} → (ρ : RExp Ω) → hyps [] [] ((ρ , 𝟏̂ᵣ) ∷ []) [] [] [] ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ
 hyp-derives ρ = hypᵣ (here refl)
 
 -- The scan, over the alternatives and their atoms
@@ -1191,7 +1191,7 @@ hyp-derives ρ = hypᵣ (here refl)
 scan-atom : ∀ {Ω} → (a : RAtom Ω) → Maybe (Refutedᵤ ⟦ a ⟧ʳᵃ)
 scan-atom (rv i) = nothing
 scan-atom (rm i) = nothing
-scan-atom (rc c) with c ≾ᵣ? uᵣ
+scan-atom (rc c) with c ≾ᵣ? 𝟏ᵣ
 ... | yes _ = nothing
 ... | no ¬p = just (const-refutes ¬p)
 
@@ -1209,8 +1209,8 @@ scan-sum (P ∷⁺ t) with scan-atoms P | scan-sum t
 ... | nothing | just r = just (join-refutesʳ {ρ = ⟦ P ⟧ʳˢ} {ρ' = ⟦ t ⟧ʳˢ⁺} r)
 ... | nothing | nothing = nothing
 
-refute≾u : ∀ {Ω} → (ρ : RExp Ω) → Maybe (Refutedᵤ ρ)
-refute≾u ρ with scan-sum (nrmᵣ ρ)
+refute≾𝟏 : ∀ {Ω} → (ρ : RExp Ω) → Maybe (Refutedᵤ ρ)
+refute≾𝟏 ρ with scan-sum (nrmᵣ ρ)
 ... | nothing = nothing
 ... | just r  = just (refute-≡̂ᵣ (nrmᵣ-≡ ρ) r)
 
@@ -1324,7 +1324,7 @@ falseᵉ (ε , ε' , m , n) δ k = n δ (k m)
 Falseᵈ : ∀ {Θ} → List (OVType Θ × RExp Θ) → Set
 Falseᵈ {Θ} l = Σ[ A ∈ OVType Θ ] Σ[ ρ ∈ RExp Θ ]
                  ((A , ρ) ∈ l × etDec A ≡ nothing
-                  × ((δ : Subst Θ ∅ˢ) → ¬ (∅ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ûᵣ)))
+                  × ((δ : Subst Θ ∅ˢ) → ¬ (∅ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ 𝟏̂ᵣ)))
 
 record Keptᵈ {Θ : Scope} (l : List (OVType Θ × RExp Θ)) : Set where
   constructor keptᵈ
@@ -1345,7 +1345,7 @@ consᵈ {A = A} {ρ} k =
                    ; (there m)   → entᵈ k δ (λ m' → f (there m')) m })
 
 dropᵈ : ∀ {Θ} {l : List (OVType Θ × RExp Θ)} {A ρ}
-      → (∀ {Q : Hyps Θ} → Q ⊩ ρ ≾̂ᵣ ûᵣ) → Keptᵈ l → Keptᵈ ((A , ρ) ∷ l)
+      → (∀ {Q : Hyps Θ} → Q ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ) → Keptᵈ l → Keptᵈ ((A , ρ) ∷ l)
 dropᵈ p k =
   keptᵈ (lᵈ k) (λ m → there (subᵈ k m))
         (λ δ f → λ { (here refl) → ≾ᵘ-ok (⊩-substᵣ (⊩ᴴ-∅ {σ = δ}) p)
@@ -1358,7 +1358,7 @@ closedᵈ : ∀ {Θ} → (l : List (OVType Θ × RExp Θ)) → Falseᵈ l ⊎ Ke
 closedᵈ [] = inj₂ (keptᵈ [] (λ ()) (λ δ k → λ ()))
 closedᵈ ((A , ρ) ∷ l) with closedᵈ l
 ... | inj₁ f = inj₁ (thereᵈ f)
-... | inj₂ k with closedᵣ? ρ ûᵣ
+... | inj₂ k with closedᵣ? ρ 𝟏̂ᵣ
 ...   | nothing         = inj₂ (consᵈ k)
 ...   | just (holdsᵣ p) = inj₂ (dropᵈ p k)
 ...   | just (failsᵣ n) with etDec A in e
@@ -1490,13 +1490,13 @@ record Followsᵈ {Θ : Scope} (H : Hyps Θ) (l : List (OVType Θ × RExp Θ)) :
   field
     lᶠ   : List (OVType Θ × RExp Θ)
     subᶠ : ∀ {p} → p ∈ lᶠ → p ∈ l
-    entᶠ : ∀ {A ρ} → (A , ρ) ∈ l → ((A , ρ) ∈ lᶠ) ⊎ (H ⊩ ρ ≾̂ᵣ ûᵣ)
+    entᶠ : ∀ {A ρ} → (A , ρ) ∈ l → ((A , ρ) ∈ lᶠ) ⊎ (H ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ)
 
 open Followsᵈ
 
 follows? : ∀ {Θ} → (H : Hyps Θ) → (l : List (OVType Θ × RExp Θ)) → Followsᵈ H l
 follows? H []            = followsᵈ [] (λ ()) (λ ())
-follows? H ((A , ρ) ∷ l) with follows? H l | decideᵣ full H ρ ûᵣ
+follows? H ((A , ρ) ∷ l) with follows? H l | decideᵣ full H ρ 𝟏̂ᵣ
 ... | followsᵈ l' s e | just d  =
       followsᵈ l' (λ m → there (s m)) (λ { (here refl) → inj₂ d ; (there m) → e m })
 ... | followsᵈ l' s e | nothing =

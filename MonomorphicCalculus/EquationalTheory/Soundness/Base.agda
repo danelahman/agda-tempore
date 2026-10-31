@@ -73,10 +73,10 @@ _∙_ = ≈ᵐ-trans
 -- clauses, whatever their certificates.
 
 handler-≈ : ∀ {Γ A B ε ε'}
-          → {N N' : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+          → {N N' : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
           → {H H' : (op : Op) → (ε'' : E)
                   → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                       ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                       ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                     ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
           → (pN : Paramᶜ N) → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
           → (uH : EffUniformʰ {Γ} {B} H pH)

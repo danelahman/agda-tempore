@@ -20,7 +20,7 @@
 -- name under the shift. A shift by a non-empty set of durations is   --
 -- empty only on the empty set, which is (A6). The order is           --
 -- componentwise inclusion, the unit `({0} , ∅)` is not least, and    --
--- `of-dur n` is `({n} , ∅)`. Operations are named by natural         --
+-- `ι n` is `({n} , ∅)`. Operations are named by natural              --
 -- numbers.                                                           --
 ------------------------------------------------------------------------
 
@@ -186,11 +186,11 @@ private
 
 -- the laws of the action, (A1) to (A6)
 
-shift-identity : ∀ E → shift Dur.u E ⊑ E × E ⊑ shift Dur.u E
+shift-identity : ∀ E → shift Dur.𝟏 E ⊑ E × E ⊑ shift Dur.𝟏 E
 shift-identity E =
-    ⊆⇒⊑ (shift Dur.u E) E (λ w w∈ → ∈shift-elim Dur.u E (λ w → w ∈ table E) w w∈
-      λ x y x∈ y∈ → subst (λ x → (x ++ y) ∈ table E) (sym (Dur.∈u⁻ x x∈)) y∈)
-  , ⊆⇒⊑ E (shift Dur.u E) (λ w w∈ → ∈shift⁺ Dur.u E [] w Dur.∈u⁺ w∈)
+    ⊆⇒⊑ (shift Dur.𝟏 E) E (λ w w∈ → ∈shift-elim Dur.𝟏 E (λ w → w ∈ table E) w w∈
+      λ x y x∈ y∈ → subst (λ x → (x ++ y) ∈ table E) (sym (Dur.∈𝟏⁻ x x∈)) y∈)
+  , ⊆⇒⊑ E (shift Dur.𝟏 E) (λ w w∈ → ∈shift⁺ Dur.𝟏 E [] w Dur.∈𝟏⁺ w∈)
 
 shift-comp : ∀ c c' E → shift (c Dur.·ᴿ c') E ⊑ shift c (shift c' E)
                       × shift c (shift c' E) ⊑ shift (c Dur.·ᴿ c') E

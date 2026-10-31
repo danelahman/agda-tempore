@@ -87,4 +87,4 @@ private
 
   ex-∧̂ : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
        → σ ⊨[ Q ] (⊤̂ ∧̂ (∃ʳ (rvar (newʳ {Θ}) ≾̂ᵣᶜ rvar (newʳ {Θ}))))
-  ex-∧̂ = tt , (ûᵣ , ⊩≾̂ᵣ-refl)
+  ex-∧̂ = tt , (𝟏̂ᵣ , ⊩≾̂ᵣ-refl)

@@ -90,11 +90,11 @@ dense-left-sided-cut-intervals : Grade ℚ≥0ᴰ
 dense-left-sided-cut-intervals = posetᵍ record
   { Carrier         = Lower
   ; _·_             = _·ˡ_
-  ; u               = 0⁻
+  ; 𝟏               = 0⁻
   ; _≾_             = _≾ˡ_
   ; ⊤               = 0⁻
   ; _⊔_             = _⊔ˡ_
-  ; of-dur          = ≥_
+  ; ι               = ≥_
   ; ·-identityˡ     = +ˡ-identityˡ
   ; ·-identityʳ     = +ˡ-identityʳ
   ; ·-assoc         = +ˡ-assoc
@@ -113,15 +113,15 @@ dense-left-sided-cut-intervals = posetᵍ record
   ; ·-distribʳ-⊔-≾  = +ˡ-distribʳ-⊓ᶜ
   ; ≾-zero-productˡ = λ {c} _ → 0⁻-least c
   ; ≾-zero-productʳ = λ {_} {d} _ → 0⁻-least d
-  ; of-dur-zero     = refl
-  ; of-dur-plus     = refl
+  ; ι-zero          = refl
+  ; ι-plus          = refl
   }
 
 -- its hints
 
 dense-left-sided-cut-intervalsʰ : GradeHints dense-left-sided-cut-intervals
 dense-left-sided-cut-intervalsʰ = record
-  { u-least? = nothing
+  { 𝟏-least? = nothing
   ; ·-comm?  = just (comm-≡ dense-left-sided-cut-intervals +ˡ-comm)
   ; plus?    = λ c → just (plus-self ⊑-refl (+ˡ-inflate c c))
   }
@@ -134,11 +134,11 @@ closed→cut : GradeMorphism idᴰ Closed.dense-left-sided-intervals
 closed→cut = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}
-  ; map-u        = refl
+  ; map-𝟏        = refl
   ; map-·        = λ {i} {j} → hom {i} {j}
   ; map-⊤        = refl
   ; map-⊔        = λ {i} {j} → join {i} {j}
-  ; map-of-dur   = refl
+  ; map-ι        = refl
   }
   where
     embed : Closed.𝕀 → Lower
@@ -162,11 +162,11 @@ two-sided→cut : GradeMorphism idᴰ TwoSided.dense-two-sided-intervals-with-�
 two-sided→cut = strictᵍ record
   { map          = lo
   ; map-monotone = proj₁
-  ; map-u        = refl
+  ; map-𝟏        = refl
   ; map-·        = refl
   ; map-⊤        = refl
   ; map-⊔        = refl
-  ; map-of-dur   = refl
+  ; map-ι        = refl
   }
 
 ------------------------------------------------------------------------
@@ -177,11 +177,11 @@ left-sided→dense-cut : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.left-sided-inte
 left-sided→dense-cut = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}
-  ; map-u        = refl
+  ; map-𝟏        = refl
   ; map-·        = λ {i} {j} → hom {i} {j}
   ; map-⊤        = refl
   ; map-⊔        = λ {i} {j} → join {i} {j}
-  ; map-of-dur   = refl
+  ; map-ι        = refl
   }
   where
     embed : Discrete.𝕀 → Lower

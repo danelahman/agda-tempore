@@ -74,7 +74,7 @@ resTy ι Γ _        = Unit
 resGr : ∀ {Θ₀ Θ n} → OCtx Θ n → RawV Θ₀ n → RExp Θ
 resGr Γ (var i)  = lookup-gr Γ i
 resGr Γ (V ⦂ᵛ B) = resGr Γ V
-resGr Γ _        = ûᵣ
+resGr Γ _        = 𝟏̂ᵣ
 
 resC : ∀ {Θ₀ Θ n} → Subst Θ₀ Θ → OCtx Θ n → RawV Θ₀ n → Constraint Θ
 resC ι Γ (var i)  = ⊤̂
@@ -186,7 +186,7 @@ mutual
                     ∧̂ ⋀ᵒᵖ (λ op →
                          ∀ᵉ (genCˢ (ι↑ ↑ᵉ)
                                   (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                                    ∷ [ rconst (mapᵉ (op-grade op)) ]
+                                    ∷ [ rconst ∣ op-grade op ∣ᵉ ]
                                         (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
                                   (H op)
                                   (γ⇑ ‼ (econst (op-grade op) ·̂ₑ e''))))))))
@@ -213,7 +213,7 @@ mutual
 
   -- returning a value
 
-  genCˢ ι Γ (return V) (A ‼ t) = genVˢ ι Γ V A ∧̂ (ûₑ ≾̂ₑᶜ t)
+  genCˢ ι Γ (return V) (A ‼ t) = genVˢ ι Γ V A ∧̂ (𝟏̂ₑ ≾̂ₑᶜ t)
 
   -- sequential composition
 
@@ -339,7 +339,7 @@ mutual
 
   genCˢ {Θ = Θ} ι Γ (perform op V M) (A ‼ t) =
     ∃ᵉ (  genVˢ ι↑ Γ↑ V ⌜ param op ⌝ᵍ
-        ∧̂ genCˢ ι↑ (Γ↑ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ) M (A↑ ‼ e)
+        ∧̂ genCˢ ι↑ (Γ↑ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ) M (A↑ ‼ e)
         ∧̂ ((econst (op-grade op) ·̂ₑ e) ≾̂ₑᶜ t↑))
     where
       ι↑ = ι ⨟ˢ wkˢᵉ
@@ -351,8 +351,8 @@ mutual
   -- explicit delaying of a computation
 
   genCˢ {Θ = Θ} ι Γ (delay τ M) (A ‼ t) =
-    ∃ᵉ (  genCˢ ι↑ (Γ↑ ⟨ rconst (of-durʳ τ) ⟩) M (A↑ ‼ e)
-        ∧̂ ((econst (of-durᵉ τ) ·̂ₑ e) ≾̂ₑᶜ t↑))
+    ∃ᵉ (  genCˢ ι↑ (Γ↑ ⟨ rconst (ιᵣ τ) ⟩) M (A↑ ‼ e)
+        ∧̂ ((econst (ιₑ τ) ·̂ₑ e) ≾̂ₑᶜ t↑))
     where
       ι↑ = ι ⨟ˢ wkˢᵉ
       e  = evar (newᵉ {Θ})
@@ -720,13 +720,13 @@ private
 
   -- a variable: the subtyping atom and the disjunction
 
-  ex-var : genV Γ₁ (var zero) α₀ ≡ (α₀ ≾̂ᵥᶜ α₀) ∧̂ Et∨≾ᵘ α₀ ûᵣ
+  ex-var : genV Γ₁ (var zero) α₀ ≡ (α₀ ≾̂ᵥᶜ α₀) ∧̂ Et∨≾ᵘ α₀ 𝟏̂ᵣ
   ex-var = refl
 
   -- the same variable behind a clause barrier: the grade has picked up `⊤ᵣ`
 
   ex-var-⊤ : genV (Γ₁ ⟨ rconst ⊤ᵣ ⟩) (var zero) α₀
-           ≡ (α₀ ≾̂ᵥᶜ α₀) ∧̂ Et∨≾ᵘ α₀ (ûᵣ ·̂ᵣ rconst ⊤ᵣ)
+           ≡ (α₀ ≾̂ᵥᶜ α₀) ∧̂ Et∨≾ᵘ α₀ (𝟏̂ᵣ ·̂ᵣ rconst ⊤ᵣ)
   ex-var-⊤ = refl
 
   -- boxing a value: the annotation is the box's grade, in the payload's context
@@ -736,9 +736,9 @@ private
   ∅ᶜ = []
 
   ex-box : (c : R)
-         → genC ∅ᶜ (box (rconst c) ⋆ (return (var zero))) ([ rconst c ] Unit ‼ ûₑ)
+         → genC ∅ᶜ (box (rconst c) ⋆ (return (var zero))) ([ rconst c ] Unit ‼ 𝟏̂ₑ)
            ≡ (∃ᵗ (  (Unit ≐ᵥ α₀)
                   ∧̂ ((([ rconst c ] α₀ ≾̂ᵥᶜ [ rconst c ] Unit)
-                       ∧̂ Et∨≾ᵘ ([ rconst c ] α₀) ûᵣ)
-                     ∧̂ (ûₑ ≾̂ₑᶜ ûₑ))))
+                       ∧̂ Et∨≾ᵘ ([ rconst c ] α₀) 𝟏̂ᵣ)
+                     ∧̂ (𝟏̂ₑ ≾̂ₑᶜ 𝟏̂ₑ))))
   ex-box c = refl

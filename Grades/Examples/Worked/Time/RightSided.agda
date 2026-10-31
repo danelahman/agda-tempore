@@ -20,7 +20,7 @@ open import Util.Equality
 
 open import Grades.Examples.Time.RightSided
   using ([0,_]; ℕ∞; ↑_; ∞; right-sided-intervals)
-  renaming (𝕀ᵣ to 𝕀ʳ; _·ₒ_ to _·ʳ_; uₒ to uʳ; _≾ₒ_ to _≾ʳ_; ⊤ₒ to ⊤ʳ)
+  renaming (𝕀ᵣ to 𝕀ʳ; _·ₒ_ to _·ʳ_; 𝟏ₒ to 𝟏ʳ; _≾ₒ_ to _≾ʳ_; ⊤ₒ to ⊤ʳ)
 
 open import Grades.Examples.Worked.Time.Decide using (≤!; ≰!)
 
@@ -39,10 +39,10 @@ rsi-seq = refl
 -- the unit is the least grade: "at most 0 ticks" is the strongest
 -- budget there is
 
-rsi-unit : uʳ ≡ [0, ↑ 0 ]
+rsi-unit : 𝟏ʳ ≡ [0, ↑ 0 ]
 rsi-unit = refl
 
-rsi-unit-bottom : uʳ ≾ʳ [0, ↑ 9 ]
+rsi-unit-bottom : 𝟏ʳ ≾ʳ [0, ↑ 9 ]
 rsi-unit-bottom = ≤!
 
 -- and the greatest grade is `[0, ∞ ]`, which imposes no deadline; it is
@@ -57,5 +57,5 @@ rsi-weaken-to-top = _
 rsi-top-absorbs : ⊤ʳ ·ʳ [0, ↑ 9 ] ≡ ⊤ʳ
 rsi-top-absorbs = refl
 
-rsi-of-dur : Grade.of-dur right-sided-intervals 9 ≡ [0, ↑ 9 ]
-rsi-of-dur = refl
+rsi-ι : Grade.ι right-sided-intervals 9 ≡ [0, ↑ 9 ]
+rsi-ι = refl

@@ -251,7 +251,7 @@ env-cell₀ (_⟨_⟩ᵉ {ρ = ρ₀} γ q) (σ , Tl-⟨⟩ y) =
 env-cell₀ (γ ∷ᵉ W) (σ , Hd)     = val-cell W
 env-cell₀ (γ ∷ᵉ W) (σ , Tl-∷ y) = env-cell₀ γ (σ , y)
 
-env-cell₀ {A = A} {ρ = ρ} (liftᵉ V γ) (σ , Hd) = ρ , A , uᵣ , Hd
+env-cell₀ {A = A} {ρ = ρ} (liftᵉ V γ) (σ , Hd) = ρ , A , 𝟏ᵣ , Hd
 env-cell₀ (liftᵉ V γ) (σ , Tl-∷ y)             = RVar-∷ (env-cell₀ γ (σ , y))
 
 -- Reading a cell a zone has moved: the same read, at the cell the inner
@@ -270,7 +270,7 @@ push-read E (read e rel) eq =
     read (≤ₛ-trans E e) (subst (_≾ᵣ _) (sym (cong proj₁ eq)) rel)
   , lookup-body-≡ _ eq _ rel
 
-reach-read : ∀ {St St' St₂ : 𝕊 []} → (q : St ⊑ₛ[ uᵣ ] St')
+reach-read : ∀ {St St' St₂ : 𝕊 []} → (q : St ⊑ₛ[ 𝟏ᵣ ] St')
            → (c : RVar (toCtx St))
            → (r : St' [ rvar-pos (rvar-img′ (reach-renᵘ q) c) ]⊑ᶜ St₂)
            → Σ[ r₀ ∈ St [ rvar-pos c ]⊑ᶜ St₂ ] (lookupᶜ r₀ ≡ lookupᶜ r)
@@ -507,8 +507,8 @@ env-cell-push (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ (σ , Hd) =
     bnd = ∈-++ᶜˡ {Γ = [] ∷ A₀} Δ Hd
 
     -- the boundary variable, come across, is `Hd` pushed under the suffix
-    step-out : Var-cast eOut (grade-++ᶜˡ uᵣ Δ , ∈-++ᶜʳ {Γ = toCtx St} bnd)
-             ≡ Var-++ᶜˡ Δ (uᵣ , Hd {Γ = toCtx St})
+    step-out : Var-cast eOut (grade-++ᶜˡ 𝟏ᵣ Δ , ∈-++ᶜʳ {Γ = toCtx St} bnd)
+             ≡ Var-++ᶜˡ Δ (𝟏ᵣ , Hd {Γ = toCtx St})
     step-out =
       Var-cast-flip (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ) _ _
                     (∈-++ᶜˡ-++ᶜʳ (toCtx St) ([] ∷ A₀) Δ Hd)

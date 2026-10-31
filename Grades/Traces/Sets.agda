@@ -402,8 +402,8 @@ xs ·ˢ ys = cartesianProductWith _∙_ xs ys
 
 -- the unit is the singleton set containing the empty trace
 
-u : NeTraces
-u = neTraces [ ε ]
+𝟏 : NeTraces
+𝟏 = neTraces [ ε ]
 
 infixl 7 _·_
 
@@ -511,12 +511,12 @@ nf-++-nf xs ys =
 -- Each is the corresponding law on the underlying lists, sandwiched
 -- between two normalisations that `nf-ext` sees through.
 
-·-identityʳ : (P : NeTraces) → (P · u) ≡ P
+·-identityʳ : (P : NeTraces) → (P · 𝟏) ≡ P
 ·-identityʳ P =
   ne-ext (trans (cong nf (·ˢ-identityʳ (traces P)))
                 (nf-sorted-id (traces P) (sorted P)))
 
-·-identityˡ : (P : NeTraces) → (u · P) ≡ P
+·-identityˡ : (P : NeTraces) → (𝟏 · P) ≡ P
 ·-identityˡ P =
   ne-ext (trans (cong nf (·ˢ-identityˡ (traces P)))
                 (nf-sorted-id (traces P) (sorted P)))
@@ -561,7 +561,7 @@ all-ε xs s ne h =
 -- member pairs with a member of the other factor, the pair is empty,
 -- and the trace monoid is conical
 
-·-zero-productˡ : {P Q : NeTraces} → (P · Q) ≡ u → P ≡ u
+·-zero-productˡ : {P Q : NeTraces} → (P · Q) ≡ 𝟏 → P ≡ 𝟏
 ·-zero-productˡ {P} {Q} eq =
   ne-ext (all-ε (traces P) (sorted P) (nonempty P) step)
   where
@@ -572,7 +572,7 @@ all-ε xs s ne h =
             (∈-[ε]⁻ (subst ((w ∙ y) ∈_) (cong traces eq)
                        (nf-∈⁺ (∈-cartesianProductWith⁺ _∙_ m y∈Q))))
 
-·-zero-productʳ : {P Q : NeTraces} → (P · Q) ≡ u → Q ≡ u
+·-zero-productʳ : {P Q : NeTraces} → (P · Q) ≡ 𝟏 → Q ≡ 𝟏
 ·-zero-productʳ {P} {Q} eq =
   ne-ext (all-ε (traces Q) (sorted Q) (nonempty Q) step)
   where
@@ -663,17 +663,17 @@ P ∪ Q = neSet (traces P ++ traces Q) (++-ne (nonempty P) (nonempty Q))
 -- Inclusion of durations as pure delays
 --
 -- A duration `τ` becomes the singleton set containing the pure delay of
--- duration `τ`, which is what a grade's `of-dur` asks for.
+-- duration `τ`, which is what a grade's `ι` asks for.
 
-of-dur : Carrier → NeTraces
-of-dur τ = neTraces [ ⟨ τ ⟩ ]
+ι : Carrier → NeTraces
+ι τ = neTraces [ ⟨ τ ⟩ ]
 
-of-dur-zero : of-dur 0ᴰ ≡ u
-of-dur-zero = ne-ext {of-dur 0ᴰ} {u} (cong [_] (⟨⟩-zero 0ᴰ <-irrefl))
+ι-zero : ι 0ᴰ ≡ 𝟏
+ι-zero = ne-ext {ι 0ᴰ} {𝟏} (cong [_] (⟨⟩-zero 0ᴰ <-irrefl))
 
-of-dur-plus : {m n : Carrier} → of-dur (m +ᴰ n) ≡ (of-dur m · of-dur n)
-of-dur-plus {m} {n} =
-  ne-ext {of-dur (m +ᴰ n)} {of-dur m · of-dur n} (cong [_] (⟨⟩-hom m n))
+ι-plus : {m n : Carrier} → ι (m +ᴰ n) ≡ (ι m · ι n)
+ι-plus {m} {n} =
+  ne-ext {ι (m +ᴰ n)} {ι m · ι n} (cong [_] (⟨⟩-hom m n))
 
 ------------------------------------------------------------------------
 -- What decidable equality of operation symbols buys

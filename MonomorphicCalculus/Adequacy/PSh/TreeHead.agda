@@ -78,7 +78,7 @@ isOp-closed e ()
 
 data Path : W → W → Set where
   pnil  : ∀ {w} → Path w w
-  pcons : ∀ {w w' w''} → w ⊑[ mapᵉ (of-durᵉ 1ᴰ) ] w' → Path w' w'' → Path w w''
+  pcons : ∀ {w w' w''} → w ⊑[ ∣ ιₑ 1ᴰ ∣ᵉ ] w' → Path w' w'' → Path w w''
 
 p-len : ∀ {w w'} → Path w w' → ℕ
 p-len pnil        = 0
@@ -87,10 +87,10 @@ p-len (pcons q p) = suc (p-len p)
 
 -- Steps at equal durations, and the step by no time.
 
-⊑-cast : ∀ {τ τ' w w'} → τ ≡ τ' → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → w ⊑[ mapᵉ (of-durᵉ τ') ] w'
+⊑-cast : ∀ {τ τ' w w'} → τ ≡ τ' → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → w ⊑[ ∣ ιₑ τ' ∣ᵉ ] w'
 ⊑-cast refl q = q
 
-⊑-zero : ∀ {τ w} → τ ≡ 0ᴰ → w ⊑[ mapᵉ (of-durᵉ τ) ] w
+⊑-zero : ∀ {τ w} → τ ≡ 0ᴰ → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w
 ⊑-zero z = ⊑-cast (sym z) ⊑-delay0
 
 -- `Head P t p n`: descending `t` along `p` reaches, after `n` ticks, a head
@@ -106,12 +106,12 @@ mutual
             → Head P (leaf x) p 0
 
     h-op    : ∀ {ε w we} {op : Op} {v : carrier ⟦ param op ⟧ᵍ w}
-            → {k : ∀ {w'} → w ⊑[ mapᵉ (op-grade op) ] w'
+            → {k : ∀ {w'} → w ⊑[ ∣ op-grade op ∣ᵉ ] w'
                  → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w'}
-            → {kc : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w')
+            → {kc : ∀ {w'} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w')
                       {y y' : carrier ⟦ arity op ⟧ᵍ w'}
                   → _≈_ ⟦ arity op ⟧ᵍ y y' → k q y ≈ᵗ k q y'}
-            → {kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (op-grade op) ] w') (r : w' ⊑[ uᵣ ] w'')
+            → {kn : ∀ {w' w''} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                       (y : carrier ⟦ arity op ⟧ᵍ w')
                   → k (⊑ρ∘ᵘ q r) (transport ⟦ arity op ⟧ᵍ r y) ≈ᵗ transportᵗ r (k q y)}
             → {p : Path w we}
@@ -125,8 +125,8 @@ mutual
             → Head P (sub e t) p n
 
     h-delay : ∀ {ε w we n} {τ : 𝔻}
-            → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
-            → {kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+            → {k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
+            → {kn : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                   → k (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (k q)}
             → {p : Path w we}
             → Headᵏ P τ k p n
@@ -134,12 +134,12 @@ mutual
             → Head P (delay-node τ k kn) p n
 
   data Headᵏ {A : PSh} (P : Pred A) : ∀ {ε w we} → (τ : 𝔻)
-           → (∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w')
+           → (∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w')
            → Path w we → ℕ → Set where
 
     -- a delay by nothing is descended at a zero-step, at no cost
     hk-zero : ∀ {ε w we n τ}
-            → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
+            → {k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
             → {p : Path w we}
             → (z : τ ≡ 0ᴰ)
             → Head P (k (⊑-zero z)) p n
@@ -148,9 +148,9 @@ mutual
 
     -- and a delay that delays consumes one step of the path per tick
     hk-suc  : ∀ {ε w w₁ we n τ} (τ' : 𝔻)
-            → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
+            → {k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
             → (e : τ ≡ 1ᴰ +ᴰ τ')
-            → (q : w ⊑[ mapᵉ (of-durᵉ 1ᴰ) ] w₁) → {p : Path w₁ we}
+            → (q : w ⊑[ ∣ ιₑ 1ᴰ ∣ᵉ ] w₁) → {p : Path w₁ we}
             → Headᵏ P τ' (λ {w'} q' → k (⊑-cast (sym e) (⊑-split q q'))) p n
             ----------------------------------------------------------------
             → Headᵏ P τ k (pcons q p) (suc n)
@@ -167,9 +167,9 @@ head-⊑ k q q' {p} h = subst (λ z → Head _ (k z) p _) (⊑-irrelevant q q') 
 -- Equal continuations are descended alike.
 
 headᵏ-≡ : ∀ {A} {P : Pred A} {ε w we τ n}
-        → {k k' : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
+        → {k k' : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
         → {p : Path w we}
-        → (∀ {w'} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') → k q ≡ k' q)
+        → (∀ {w'} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') → k q ≡ k' q)
         → Headᵏ P τ k p n
         ------------------
         → Headᵏ P τ k' p n
@@ -183,7 +183,7 @@ head-≡ : ∀ {A} {P : Pred A} {ε w we n n'} {t : Tˢ A ε w} {p : Path w we}
 head-≡ refl h = h
 
 headᵏ-≡ⁿ : ∀ {A} {P : Pred A} {ε w we τ n n'}
-         → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
+         → {k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
          → {p : Path w we}
          → n ≡ n' → Headᵏ P τ k p n → Headᵏ P τ k p n'
 headᵏ-≡ⁿ refl h = h
@@ -199,7 +199,7 @@ head-sub⁻ (h-sub h) = h
 -- both directions: what `sub-delay` needs.
 
 headᵏ-sub : ∀ {A} {P : Pred A} {ε ε' w we τ n} {e : ε ≾ₑ ε'}
-          → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
+          → {k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
           → {p : Path w we}
           → Headᵏ P τ k p n
           → Headᵏ P τ (λ {w'} q → sub e (k q)) p n
@@ -207,7 +207,7 @@ headᵏ-sub (hk-zero z h)      = hk-zero z (h-sub h)
 headᵏ-sub (hk-suc τ' e q h)  = hk-suc τ' e q (headᵏ-sub h)
 
 headᵏ-sub⁻ : ∀ {A} {P : Pred A} {ε ε' w we τ n} {e : ε ≾ₑ ε'}
-           → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
+           → {k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
            → {p : Path w we}
            → Headᵏ P τ (λ {w'} q → sub e (k q)) p n
            → Headᵏ P τ k p n
@@ -231,7 +231,7 @@ mutual
   ... | en , hz = en , h-delay hz
 
   headᵏ-zip : ∀ {A ε w we τ n n'} {P Q : Pred A}
-            → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
+            → {k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
             → {p : Path w we}
             → Headᵏ P τ k p n → Headᵏ Q τ k p n'
             -------------------------------------------------------
@@ -263,7 +263,7 @@ mutual
   head-reach (h-delay h)         = headᵏ-reach h
 
   headᵏ-reach : ∀ {A ε w we τ n} {P : Pred A}
-              → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
+              → {k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
               → {p : Path w we}
               → Headᵏ P τ k p n
               -----------------------------------------------------------
@@ -296,7 +296,7 @@ module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
     head-≈ᵗ (op-≈ _ _)   (h-op px)           = h-op px
     head-≈ᵗ (delay-≈ ek) (h-delay h)         = h-delay (headᵏ-≈ ek h)
     head-≈ᵗ (sub-≈ et)   (h-sub h)           = h-sub (head-≈ᵗ et h)
-    head-≈ᵗ sub-u        (h-sub h)           = h
+    head-≈ᵗ sub-𝟏        (h-sub h)           = h
     head-≈ᵗ sub-∘        (h-sub (h-sub h))   = h-sub h
     head-≈ᵗ sub-delay    (h-sub (h-delay h)) = h-delay (headᵏ-sub h)
     head-≈ᵗ sub-op       (h-sub (h-op px))   = h-op px
@@ -322,7 +322,7 @@ module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
     head-≈ᵗ⁻ (op-≈ _ _)   (h-op px)           = h-op px
     head-≈ᵗ⁻ (delay-≈ ek) (h-delay h)         = h-delay (headᵏ-≈⁻ ek h)
     head-≈ᵗ⁻ (sub-≈ et)   (h-sub h)           = h-sub (head-≈ᵗ⁻ et h)
-    head-≈ᵗ⁻ sub-u        h                   = h-sub h
+    head-≈ᵗ⁻ sub-𝟏        h                   = h-sub h
     head-≈ᵗ⁻ sub-∘        (h-sub h)           = h-sub (h-sub h)
     head-≈ᵗ⁻ sub-delay    (h-delay h)         = h-sub (h-delay (headᵏ-sub⁻ h))
     head-≈ᵗ⁻ sub-op       (h-op px)           = h-sub (h-op px)
@@ -339,9 +339,9 @@ module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
     -- Continuations related pointwise are descended alike.
 
     headᵏ-≈ : ∀ {ε w we τ n}
-            → {k k' : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
+            → {k k' : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
             → {p : Path w we}
-            → (∀ {w'} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') → k q ≈ᵗ k' q)
+            → (∀ {w'} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') → k q ≈ᵗ k' q)
             → Headᵏ P τ k p n
             ------------------
             → Headᵏ P τ k' p n
@@ -351,9 +351,9 @@ module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
       hk-suc τ' e q (headᵏ-≈ (λ q' → ek (⊑-cast (sym e) (⊑-split q q'))) h)
 
     headᵏ-≈⁻ : ∀ {ε w we τ n}
-             → {k k' : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
+             → {k k' : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
              → {p : Path w we}
-             → (∀ {w'} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') → k q ≈ᵗ k' q)
+             → (∀ {w'} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') → k q ≈ᵗ k' q)
              → Headᵏ P τ k' p n
              -------------------
              → Headᵏ P τ k p n
@@ -365,11 +365,11 @@ module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
     -- A continuation is descended alike at an equal duration.
 
     headᵏ-cast : ∀ {ε w we τ τ' n}
-               → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
-               → {k' : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ') ] w' → Tˢ A ε w'}
+               → {k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
+               → {k' : ∀ {w'} → w ⊑[ ∣ ιₑ τ' ∣ᵉ ] w' → Tˢ A ε w'}
                → {p : Path w we}
                → (c : τ ≡ τ')
-               → (∀ {w'} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') → k q ≈ᵗ k' (⊑-cast c q))
+               → (∀ {w'} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') → k q ≈ᵗ k' (⊑-cast c q))
                → Headᵏ P τ k p n
                -------------------
                → Headᵏ P τ' k' p n
@@ -384,15 +384,15 @@ module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
     -- Induction on the outer delay, not on the path.
 
     plus-fwd : ∀ {ε w we n} → (τ₁ τ₂ : 𝔻)
-             → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ (τ₁ +ᴰ τ₂)) ] w' → Tˢ A ε w'}
-             → {k' : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ₁) ] w'
-                   → ∀ {w''} → w' ⊑[ mapᵉ (of-durᵉ τ₂) ] w'' → Tˢ A ε w''}
-             → {kn₂ : ∀ {w'} (q₁ : w ⊑[ mapᵉ (of-durᵉ τ₁) ] w')
-                    → ∀ {w'' w'''} (q₂ : w' ⊑[ mapᵉ (of-durᵉ τ₂) ] w'')
-                        (r : w'' ⊑[ uᵣ ] w''')
+             → {k : ∀ {w'} → w ⊑[ ∣ ιₑ (τ₁ +ᴰ τ₂) ∣ᵉ ] w' → Tˢ A ε w'}
+             → {k' : ∀ {w'} → w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w'
+                   → ∀ {w''} → w' ⊑[ ∣ ιₑ τ₂ ∣ᵉ ] w'' → Tˢ A ε w''}
+             → {kn₂ : ∀ {w'} (q₁ : w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w')
+                    → ∀ {w'' w'''} (q₂ : w' ⊑[ ∣ ιₑ τ₂ ∣ᵉ ] w'')
+                        (r : w'' ⊑[ 𝟏ᵣ ] w''')
                     → k' q₁ (⊑ρ∘ᵘ q₂ r) ≈ᵗ transportᵗ r (k' q₁ q₂)}
-             → (∀ {w' w''} (q₁ : w ⊑[ mapᵉ (of-durᵉ τ₁) ] w')
-                  (q₂ : w' ⊑[ mapᵉ (of-durᵉ τ₂) ] w'')
+             → (∀ {w' w''} (q₁ : w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w')
+                  (q₂ : w' ⊑[ ∣ ιₑ τ₂ ∣ᵉ ] w'')
                 → k' q₁ q₂ ≈ᵗ k (⊑-split q₁ q₂))
              → {p : Path w we}
              → Headᵏ P τ₁ (λ {w'} q₁ → delay-node τ₂ (k' q₁) (kn₂ q₁)) p n
@@ -411,15 +411,15 @@ module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
           h)
 
     plus-bwd : ∀ {ε w we n} → (τ₁ τ₂ : 𝔻)
-             → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ (τ₁ +ᴰ τ₂)) ] w' → Tˢ A ε w'}
-             → {k' : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ₁) ] w'
-                   → ∀ {w''} → w' ⊑[ mapᵉ (of-durᵉ τ₂) ] w'' → Tˢ A ε w''}
-             → {kn₂ : ∀ {w'} (q₁ : w ⊑[ mapᵉ (of-durᵉ τ₁) ] w')
-                    → ∀ {w'' w'''} (q₂ : w' ⊑[ mapᵉ (of-durᵉ τ₂) ] w'')
-                        (r : w'' ⊑[ uᵣ ] w''')
+             → {k : ∀ {w'} → w ⊑[ ∣ ιₑ (τ₁ +ᴰ τ₂) ∣ᵉ ] w' → Tˢ A ε w'}
+             → {k' : ∀ {w'} → w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w'
+                   → ∀ {w''} → w' ⊑[ ∣ ιₑ τ₂ ∣ᵉ ] w'' → Tˢ A ε w''}
+             → {kn₂ : ∀ {w'} (q₁ : w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w')
+                    → ∀ {w'' w'''} (q₂ : w' ⊑[ ∣ ιₑ τ₂ ∣ᵉ ] w'')
+                        (r : w'' ⊑[ 𝟏ᵣ ] w''')
                     → k' q₁ (⊑ρ∘ᵘ q₂ r) ≈ᵗ transportᵗ r (k' q₁ q₂)}
-             → (∀ {w' w''} (q₁ : w ⊑[ mapᵉ (of-durᵉ τ₁) ] w')
-                  (q₂ : w' ⊑[ mapᵉ (of-durᵉ τ₂) ] w'')
+             → (∀ {w' w''} (q₁ : w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w')
+                  (q₂ : w' ⊑[ ∣ ιₑ τ₂ ∣ᵉ ] w'')
                 → k' q₁ q₂ ≈ᵗ k (⊑-split q₁ q₂))
              → {p : Path w we}
              → Headᵏ P (τ₁ +ᴰ τ₂) k p n
@@ -454,10 +454,10 @@ data Delaysᵗ {Y : PSh} : ∀ {δ w} → Tˢ Y δ w → 𝔻 → Set where
           → Delaysᵗ (leaf y) 0ᴰ
 
   d-delay : ∀ {δ w n} → (τ : 𝔻)
-          → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ Y δ w'}
-          → {kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+          → {k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ Y δ w'}
+          → {kn : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                 → k (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (k q)}
-          → (∀ {w'} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') → Delaysᵗ (k q) n)
+          → (∀ {w'} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') → Delaysᵗ (k q) n)
           -------------------------------------------------------------
           → Delaysᵗ (delay-node τ k kn) (τ +ᴰ n)
 
@@ -496,9 +496,9 @@ delays-bind {h = h} pH (d-≈ e d) =
 -- continuation observed at whatever remains. By induction on the path.
 
 headᵏ-walk : ∀ {A} {P : Pred A} {ε w we n} → (τ : 𝔻)
-           → {k : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε w'}
+           → {k : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε w'}
            → (p : Path w we) → (toℕ τ + n) ≤ p-len p
-           → (∀ {w'} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (p' : Path w' we)
+           → (∀ {w'} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (p' : Path w' we)
                 → n ≤ p-len p' → Head P (k q) p' n)
            ------------------------------------------------------------
            → Headᵏ P τ k p (toℕ τ + n)

@@ -67,7 +67,7 @@ in-time : [] ⊢C⦂ Unit ‼ _
 in-time =
   box three-units (const 42) -- ∷ [ three-units ] Reading
     (perform read ⋆          -- ⟨ ∣ opTime read ∣ ⟩ ∷ Reading
-      (delay (# 1)           -- ⟨ of-dur 1 ⟩
+      (delay (# 1)           -- ⟨ ι 1 ⟩
         (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ≤ᵈ! (<:ᵛ-refl _)
                              -- ∷ Reading
           (perform write here (return ⋆)))))
@@ -75,7 +75,7 @@ in-time =
 -- after a reading and a transmission, up to four and a half units may
 -- have passed
 
-too-late : ¬ (uᵣ ·ᵣ mapᵉ (opTime read) ·ᵣ mapᵉ (opTime send) ≾ᵣ three-units)
+too-late : ¬ (𝟏ᵣ ·ᵣ ∣ opTime read ∣ᵉ ·ᵣ ∣ opTime send ∣ᵉ ≾ᵣ three-units)
 too-late = ≰ᵈ!
 
 -- the effect grade of the run is the run itself, measured by its
@@ -84,8 +84,8 @@ too-late = ≰ᵈ!
 run : E
 run = opTime read ·ₑ (U.⌜ idle ≤ (# 1) ⌝ ·ₑ opTime write)
 
-run-measured : mapᵉ run ≡ [0, ↑ 7 / 2 ]
+run-measured : ∣ run ∣ᵉ ≡ [0, ↑ 7 / 2 ]
 run-measured = refl
 
-run-is-delayed : run ≃ₑ opTime read ·ₑ (of-durᵉ (# 1) ·ₑ opTime write)
+run-is-delayed : run ≃ₑ opTime read ·ₑ (ιₑ (# 1) ·ₑ opTime write)
 run-is-delayed = ≃ₑ-refl

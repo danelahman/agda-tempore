@@ -3,7 +3,7 @@
 --                                                                    --
 -- A grade system pairs effect grades (what a computation may do)     --
 -- with resource grades (what is thereby guaranteed), with a grade    --
--- morphism `∣_∣ᵉ` from the first to the second; the projection       --
+-- morphism `∣-∣ᵉ` from the first to the second; the projection       --
 -- determines what the resource grade forgets.                        --
 --                                                                    --
 -- Each module computes the projection on the grades of the sensor    --

@@ -6,7 +6,7 @@
 -- answer by `refl`: `canonᴴ`, `walkᵈ`, `canonᵣ`/`canonₑ`,      --
 -- `decideᵣ`/`decideₑ` at `derive` and `full`, `checkClosed`,   --
 -- `collapse`, `retry` and lowering (`stepᵉ`). The grades are   --
--- chosen for the hint properties the stages read, `u-least?`   --
+-- chosen for the hint properties the stages read, `𝟏-least?`   --
 -- and `·-comm?`.                                               --
 ------------------------------------------------------------------
 
@@ -90,8 +90,8 @@ module Deadline where
   split-left-e = refl
 
   ----------------------------------------------------------------
-  -- `walkᵈ`: with `x ≾ y`, `eternal α ∨ y ≾ uᵣ` entails
-  -- `eternal α ∨ x ≾ uᵣ`, which is pruned, as is the repeat
+  -- `walkᵈ`: with `x ≾ y`, `eternal α ∨ y ≾ 𝟏ᵣ` entails
+  -- `eternal α ∨ x ≾ 𝟏ᵣ`, which is pruned, as is the repeat
 
   prune-entailed :
     disj (walkᵈ (hyps [] [] ((x , y) ∷ []) []
@@ -413,7 +413,7 @@ module Witness where
   open import PolymorphicCalculus.Examples.Specs using (module Time-LeftSided)
   open Time-LeftSided using (spec; hints; enum)
   open LanguageSpec spec using (Grades)
-  open GradeSystemInterface Grades using (uₑ; ⊤ₑ)
+  open GradeSystemInterface Grades using (𝟏ₑ; ⊤ₑ)
 
   open import PolymorphicCalculus.Syntax.Grades                 spec
   open import PolymorphicCalculus.Hypotheses                    spec using (Hyps; ∅ᴴ; _+eⁿ_; ords; qord)
@@ -450,7 +450,7 @@ module Witness where
   refuted-at-one = refl
 
   unit-top-undecided :
-    undecidedⱽ (witnessᵉ {H = ∅ᴴ} 1 ⌜ 3 ⌝ (⌜ 3 ⌝ ·̂ₑ j) (grid (uₑ ∷ ⊤ₑ ∷ []) 1)) ≡ true
+    undecidedⱽ (witnessᵉ {H = ∅ᴴ} 1 ⌜ 3 ⌝ (⌜ 3 ⌝ ·̂ₑ j) (grid (𝟏ₑ ∷ ⊤ₑ ∷ []) 1)) ≡ true
   unit-top-undecided = refl
 
 ------------------------------------------------------------------
@@ -528,21 +528,21 @@ module Lowering where
     -- Tempore's annotated `wait`, `1 · ε ≾ ε ∧ 1 · ε ≾ 1`: the top, and
     -- `1 · ⊤ ≾ 1` is false
 
-    wait-value : value ((⌜ 1 ⌝ ·̂ₑ v , v) ∷ (⌜ 1 ⌝ ·̂ₑ v , ⌜ 1 ⌝) ∷ []) ≡ just (ûₑ ⊔̂ₑ ∞̂ ·̂ₑ ûₑ)
+    wait-value : value ((⌜ 1 ⌝ ·̂ₑ v , v) ∷ (⌜ 1 ⌝ ·̂ₑ v , ⌜ 1 ⌝) ∷ []) ≡ just (𝟏̂ₑ ⊔̂ₑ ∞̂ ·̂ₑ 𝟏̂ₑ)
     wait-value = refl
 
     wait-refuted :
-      checkClosed (hyps [] [] [] ((⌜ 1 ⌝ ·̂ₑ (ûₑ ⊔̂ₑ ∞̂ ·̂ₑ ûₑ) , ⌜ 1 ⌝) ∷ []) [] []) ≡ nothing
+      checkClosed (hyps [] [] [] ((⌜ 1 ⌝ ·̂ₑ (𝟏̂ₑ ⊔̂ₑ ∞̂ ·̂ₑ 𝟏̂ₑ) , ⌜ 1 ⌝) ∷ []) [] []) ≡ nothing
     wait-refuted = refl
 
-    -- its mirror, `ε · 1 ≾ ε ∧ ε · 1 ≾ 1`: `u ⊔ u · 1⁺`
+    -- its mirror, `ε · 1 ≾ ε ∧ ε · 1 ≾ 1`: `𝟏 ⊔ 𝟏 · 1⁺`
 
     wait-mirror-value :
-      value ((v ·̂ₑ ⌜ 1 ⌝ , v) ∷ (v ·̂ₑ ⌜ 1 ⌝ , ⌜ 1 ⌝) ∷ []) ≡ just (ûₑ ⊔̂ₑ ûₑ ·̂ₑ ∞̂)
+      value ((v ·̂ₑ ⌜ 1 ⌝ , v) ∷ (v ·̂ₑ ⌜ 1 ⌝ , ⌜ 1 ⌝) ∷ []) ≡ just (𝟏̂ₑ ⊔̂ₑ 𝟏̂ₑ ·̂ₑ ∞̂)
     wait-mirror-value = refl
 
     wait-mirror-refuted :
-      checkClosed (hyps [] [] [] (((ûₑ ⊔̂ₑ ûₑ ·̂ₑ ∞̂) ·̂ₑ ⌜ 1 ⌝ , ⌜ 1 ⌝) ∷ []) [] []) ≡ nothing
+      checkClosed (hyps [] [] [] (((𝟏̂ₑ ⊔̂ₑ 𝟏̂ₑ ·̂ₑ ∞̂) ·̂ₑ ⌜ 1 ⌝ , ⌜ 1 ⌝) ∷ []) [] []) ≡ nothing
     wait-mirror-refuted = refl
 
     -- left-linear and quadratic: `(L ⊔ D⁺ · L)⁺`, here its own closure

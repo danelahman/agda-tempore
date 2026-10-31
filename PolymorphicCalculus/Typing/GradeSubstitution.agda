@@ -45,7 +45,7 @@ open import PolymorphicCalculus.Syntax.Raw.GradeSubstitution S
 clause-ctx : ∀ {Θ n} → OCtx Θ n → OVType Θ → Op → OCtx (Θ +e) (suc (suc n))
 clause-ctx {Θ} Γ B op =
   wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-    ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ}))
+    ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ}))
 
 clause-ty : ∀ {Θ} → OVType Θ → Op → OCType (Θ +e)
 clause-ty {Θ} B op = wkᵉ-v B ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ}))
@@ -55,7 +55,7 @@ clause-ctx-↑ : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (Γ : OCtx Θ n) →
 clause-ctx-↑ σ Γ B op =
   cong₂ _∷_
         (cong₂ _∷_ (cong (_⟨ rconst ⊤ᵣ ⟩) (wk-↑ᵉ-ctx σ Γ)) (⌜⌝ᵍ-subst (σ ↑ᵉ) (param op)))
-        (cong₂ (λ A₀ B₀ → [ rconst (mapᵉ (op-grade op)) ] (A₀ ⇒ B₀ ‼ _))
+        (cong₂ (λ A₀ B₀ → [ rconst ∣ op-grade op ∣ᵉ ] (A₀ ⇒ B₀ ‼ _))
                (⌜⌝ᵍ-subst (σ ↑ᵉ) (arity op)) (wk-↑ᵉ-v σ B))
 
 clause-ty-↑ : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ) → (op : Op)
@@ -149,7 +149,7 @@ mutual
     recL (substᵛ σ h V) (substᶜ σ h M) (substᶜ σ h N) (⊩-substₑ h p)
   substᶜ {Γ = Γ} σ h (perform op V M)  =
     perform op (ty-subst (⌜⌝ᵍ-subst σ (param op)) (substᵛ σ h V))
-               (ctx-castᶜ (cong (Γ [ σ ]ᶜᵗˣ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷_)
+               (ctx-castᶜ (cong (Γ [ σ ]ᶜᵗˣ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷_)
                                 (⌜⌝ᵍ-subst σ (arity op)))
                           (substᶜ σ h M))
   substᶜ σ h (delay τ M)               = delay τ (substᶜ σ h M)
@@ -224,7 +224,7 @@ mutual
   ⌊substᶜ⌋ {Γ = Γ} σ h (perform op V M)  =
     cong₂ (perform op)
           (trans (⌊ty-subst⌋ (⌜⌝ᵍ-subst σ (param op)) _) (⌊substᵛ⌋ σ h V))
-          (trans (⌊ctx-castᶜ⌋ (cong (Γ [ σ ]ᶜᵗˣ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷_)
+          (trans (⌊ctx-castᶜ⌋ (cong (Γ [ σ ]ᶜᵗˣ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷_)
                                     (⌜⌝ᵍ-subst σ (arity op))) _)
                  (⌊substᶜ⌋ σ h M))
   ⌊substᶜ⌋ σ h (delay τ M)               = cong (delay τ) (⌊substᶜ⌋ σ h M)
@@ -245,7 +245,7 @@ mutual
 clause-ctx-at : ∀ {Θ n} → OCtx Θ n → OVType Θ → Op → EExp Θ → OCtx Θ (suc (suc n))
 clause-ctx-at Γ B op ε =
   Γ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-    ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ B ‼ ε)
+    ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ‼ ε)
 
 clause-ctx-,ᵉ : ∀ {Θ n} → (Γ : OCtx Θ n) → (B : OVType Θ) → (op : Op) → (ε : EExp Θ)
               → clause-ctx Γ B op [ idˢ ,ᵉ ε ]ᶜᵗˣ ≡ clause-ctx-at Γ B op ε
@@ -253,7 +253,7 @@ clause-ctx-,ᵉ Γ B op ε =
   cong₂ _∷_
         (cong₂ _∷_ (cong (_⟨ rconst ⊤ᵣ ⟩) (trans (wk-,ᵉ-ctx idˢ ε Γ) ([id]ᶜᵗˣ Γ)))
                    (⌜⌝ᵍ-subst (idˢ ,ᵉ ε) (param op)))
-        (cong₂ (λ A₀ B₀ → [ rconst (mapᵉ (op-grade op)) ] (A₀ ⇒ B₀ ‼ ε))
+        (cong₂ (λ A₀ B₀ → [ rconst ∣ op-grade op ∣ᵉ ] (A₀ ⇒ B₀ ‼ ε))
                (⌜⌝ᵍ-subst (idˢ ,ᵉ ε) (arity op))
                (trans (wk-,ᵉ-v idˢ ε B) ([id]ᵛ B)))
 

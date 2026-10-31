@@ -4,11 +4,11 @@
 -- A frame reads only a grade's carrier, unit, product and order, so a --
 -- map `g` of grades that is monotone and lax monoidal,                --
 --                                                                     --
---   u ≾ g u        g a · g b ≾ g (a · b)                              --
+--   𝟏 ≾ g 𝟏        g a · g b ≾ g (a · b)                              --
 --                                                                     --
 -- carries a frame for the target back to one for the source, with     --
 -- `w ⊑[ ρ ] w'` read as `w ⊑[ g ρ ] w'`. A grade morphism is such a   --
--- map, strictly (`strict`); so is a map that disagrees with `of-dur`, --
+-- map, strictly (`strict`); so is a map that disagrees with `ι`,      --
 -- `⊤` or the joins, which a frame never sees.                         --
 --                                                                     --
 -- Every law of a frame is universal in the worlds, so any function    --
@@ -34,7 +34,7 @@ record LaxMap {D₁ D₂ : Duration} (G : Grade D₁) (H : Grade D₂) : Set whe
   field
     map      : G.Carrier → H.Carrier
     monotone : ∀ {a b} → a G.≾ b → map a H.≾ map b
-    lax-u    : H.u H.≾ map G.u
+    lax-𝟏    : H.𝟏 H.≾ map G.𝟏
     lax-·    : ∀ {a b} → map a H.· map b H.≾ map (a G.· b)
 
 -- a grade morphism, strictly
@@ -44,7 +44,7 @@ strict : {D₁ D₂ : Duration} {h : D₁ →ᴰ D₂} {G : Grade D₁} {H : Gra
 strict {H = H} f = record
   { map      = map
   ; monotone = map-monotone
-  ; lax-u    = proj₂ map-u
+  ; lax-𝟏    = proj₂ map-𝟏
   ; lax-·    = proj₂ map-·
   }
   where
@@ -58,7 +58,7 @@ reindexᵍ : {D₁ D₂ : Duration} {G : Grade D₁} {H : Grade D₂} → LaxMap
 reindexᵍ g F = record
   { W            = W
   ; _⊑[_]_       = λ w ρ w' → w ⊑[ map ρ ] w'
-  ; ⊑-refl       = ⊑-mono lax-u ⊑-refl
+  ; ⊑-refl       = ⊑-mono lax-𝟏 ⊑-refl
   ; ⊑-trans      = λ p q → ⊑-mono lax-· (⊑-trans p q)
   ; ⊑-mono       = λ r p → ⊑-mono (monotone r) p
   ; ⊑-irrelevant = ⊑-irrelevant

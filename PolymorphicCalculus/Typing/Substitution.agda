@@ -55,7 +55,7 @@ data Drop {Θ : Scope} {n : ℕ} (Γ₀ : OCtx Θ n) (A : OVType Θ)
 module _ {Θ : Scope} {n : ℕ} {Γ₀ : OCtx Θ n} {A : OVType Θ} where
 
   dgrade : ∀ {k Γ Γ⁻} → Drop Γ₀ A k Γ Γ⁻ → RExp Θ
-  dgrade (here _)                = ûᵣ
+  dgrade (here _)                = 𝟏̂ᵣ
   dgrade (there∷ d)              = dgrade d
   dgrade (there⟨⟩ {ρ = ρ} d)     = dgrade d ·̂ᵣ ρ
 
@@ -90,7 +90,7 @@ module _ {Θ : Scope} {n : ℕ} {Γ₀ : OCtx Θ n} {A : OVType Θ} where
 
   -- below the unit, `dshift` is a renaming
 
-  drop-ren : ∀ {k Γ Γ⁻} {Q : Hyps Θ} → (d : Drop Γ₀ A k Γ Γ⁻) → Q ⊩ dgrade d ≾̂ᵣ ûᵣ
+  drop-ren : ∀ {k Γ Γ⁻} {Q : Hyps Θ} → (d : Drop Γ₀ A k Γ Γ⁻) → Q ⊩ dgrade d ≾̂ᵣ 𝟏̂ᵣ
            → Ren Q Γ₀ Γ⁻
   pos (drop-ren d le) = shift (dshift d)
   ty  (drop-ren d le) = shift-ty (dshift d)
@@ -141,7 +141,7 @@ wkᵉ-val {Γ = Γ} {A} V = ty-subst (wkˢᵉ-v A) (ctx-castᵛ (wkˢᵉ-ctx Γ)
 -- Under no hypotheses a box-typed variable meets `VarOK` only below the unit
 
 box-young : ∀ {Θ} {ρ ρ' : RExp Θ} {A : OVType Θ}
-          → VarOK ∅ᴴ ([ ρ ] A) ρ' → ∅ᴴ ⊩ ρ' ≾̂ᵣ ûᵣ
+          → VarOK ∅ᴴ ([ ρ ] A) ρ' → ∅ᴴ ⊩ ρ' ≾̂ᵣ 𝟏̂ᵣ
 box-young ok with VarOK-∅ᴴ ok
 ... | inj₁ ()
 ... | inj₂ le = le
@@ -178,7 +178,7 @@ sub-unbox : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {X X₀ 
 sub-unbox {Γ⁻ = Γ⁻} {X₀ = X₀} {ρ₀ = ρ₀} d U R p N (hit refl refl _) =
   unbox (res-rebase (res-ann ρ₀ X₀ (res-move z' (chain b)) (grade b) (payload b)) R)
         (transᵣ (dshift-gr d i)
-          (transᵣ (monoᵣ (subst (λ w → ∅ᴴ ⊩ w ≾̂ᵣ ûᵣ) (sym (var-pos-gr (res-z b)))
+          (transᵣ (monoᵣ (subst (λ w → ∅ᴴ ⊩ w ≾̂ᵣ 𝟏̂ᵣ) (sym (var-pos-gr (res-z b)))
                                 (box-young (usable b)))
                          ⊩≾̂ᵣ-refl)
             (transᵣ (eqᵣ ≡̂ᵣ-identityˡ) p)))

@@ -38,8 +38,8 @@ open import MonomorphicCalculus.Syntax.Terms.Equivalence     Spec
 -- result with whichever bound its own typing supplies.
 
 var-ren-≡ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (x : A ∈[ ρ ] Γ)
-          → (f  : ¬ Eternal A → ρ ≾ᵣ uᵣ)
-          → (f' : ¬ Eternal A → proj₁ (var-img r x) ≾ᵣ uᵣ)
+          → (f  : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ)
+          → (f' : ¬ Eternal A → proj₁ (var-img r x) ≾ᵣ 𝟏ᵣ)
           → V-rename r (var f x) ≡ var f' (proj₂ (var-img r x))
 var-ren-≡ r x f f' with var-rename r x
 ... | _ , _ , y = var-≡
@@ -47,8 +47,8 @@ var-ren-≡ r x f f' with var-rename r x
 -- The same with the target supplied, for callers that have computed it.
 
 var-ren-img-≡ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (x : A ∈[ ρ ] Γ)
-              → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → {t : Var Γ' A}
-              → var-img r x ≡ t → (f' : ¬ Eternal A → proj₁ t ≾ᵣ uᵣ)
+              → (f : ¬ Eternal A → ρ ≾ᵣ 𝟏ᵣ) → {t : Var Γ' A}
+              → var-img r x ≡ t → (f' : ¬ Eternal A → proj₁ t ≾ᵣ 𝟏ᵣ)
               → V-rename r (var f x) ≡ var f' (proj₂ t)
 var-ren-img-≡ r x f refl f' = var-ren-≡ r x f f'
 

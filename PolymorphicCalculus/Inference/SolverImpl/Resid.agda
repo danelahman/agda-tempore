@@ -660,7 +660,7 @@ etDec-refute A = etDec-refuteᵃ A (≺-wf A)
 -- its grade side
 
 etDec-grade : ∀ {Ω Ω'} → (A : OVType Ω) → etDec A ≡ nothing → (δ : Subst Ω Ω')
-            → {ρ : RExp Ω'} → VarOK ∅ᴴ (A [ δ ]ᵛ) ρ → ∅ᴴ ⊩ ρ ≾̂ᵣ ûᵣ
+            → {ρ : RExp Ω'} → VarOK ∅ᴴ (A [ δ ]ᵛ) ρ → ∅ᴴ ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ
 etDec-grade A e δ ok = [ (λ et → ⊥-elim (etDec-refute A e δ et)) , (λ le → le) ]′ (VarOK-∅ᴴ ok)
 
 -- The decomposition of a whole list of eternality demands

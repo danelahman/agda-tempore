@@ -34,7 +34,7 @@ open import PolymorphicCalculus.Examples.Variables
 -- 1. Pure recursion
 
 expected-add : Scheme
-expected-add = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat ⇒ (Nat ⇒ Nat ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+expected-add = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat ⇒ (Nat ⇒ Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 add-reported : schemeOf (infer [] add) ≡ just expected-add
 add-reported = refl
@@ -43,7 +43,7 @@ add-reported = refl
 -- 2. The predecessor, and an outer natural number, in the step
 
 expected-rebuild : Scheme
-expected-rebuild = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat ⇒ Nat ‼ ûₑ) ‼ ûₑ
+expected-rebuild = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat ⇒ Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 rebuild-reported : schemeOf (infer [] rebuild) ≡ just expected-rebuild
 rebuild-reported = refl
@@ -56,7 +56,7 @@ mul-reported = refl
 
 expected-each : Scheme
 expected-each =
-  ∀[ 0 , 0 , 0 ] ⊤ ⟹ ((Unit ⇒ Unit ‼ ûₑ) ⇒ (Nat ⇒ Unit ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+  ∀[ 0 , 0 , 0 ] ⊤ ⟹ ((Unit ⇒ Unit ‼ 𝟏̂ₑ) ⇒ (Nat ⇒ Unit ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 each-reported : schemeOf (infer [] each) ≡ just expected-each
 each-reported = refl
@@ -65,13 +65,13 @@ each-reported = refl
 -- 4. A countdown: the effect is the unit
 
 expected-countdown : Scheme
-expected-countdown = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat ⇒ Unit ‼ ûₑ) ‼ ûₑ
+expected-countdown = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Nat ⇒ Unit ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 countdown-reported : schemeOf (infer [] countdown) ≡ just expected-countdown
 countdown-reported = refl
 
 countdown-at-0-reported :
-  schemeOf (infer [] (countdown-at 0)) ≡ just (∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ûₑ)
+  schemeOf (infer [] (countdown-at 0)) ≡ just (∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ 𝟏̂ₑ)
 countdown-at-0-reported = refl
 
 -- annotated at three ticks: refuted, the base forcing the unit
@@ -86,11 +86,11 @@ countdown-at-3-not-typable = infer-untypable [] (countdown-at 3) countdown-at-3-
 -- 5. Recursion inside an operation clause: typed and established
 
 in-clause-pure-reported :
-  schemeOf (infer [] in-clause-pure) ≡ just (∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ûₑ)
+  schemeOf (infer [] in-clause-pure) ≡ just (∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ 𝟏̂ₑ)
 in-clause-pure-reported = refl
 
 in-clause-tick-reported :
-  schemeOf (infer [] in-clause-tick) ≡ just (∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ûₑ)
+  schemeOf (infer [] in-clause-tick) ≡ just (∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ 𝟏̂ₑ)
 in-clause-tick-reported = refl
 
 in-clause-tick-verdict : verdict (check [] in-clause-tick) ≡ established
@@ -112,36 +112,36 @@ drop-clause-not-typable = infer-untypable [] drop-clause drop-clause-verdict
 -- 7. Pure recursion on lists
 
 expected-length : Scheme
-expected-length = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (|List| α₀ ⇒ Nat ‼ ûₑ) ‼ ûₑ
+expected-length = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (|List| α₀ ⇒ Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 length-reported : schemeOf (infer [] length) ≡ just expected-length
 length-reported = refl
 
 expected-sum : Scheme
-expected-sum = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (|List| Nat ⇒ Nat ‼ ûₑ) ‼ ûₑ
+expected-sum = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (|List| Nat ⇒ Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 sum-reported : schemeOf (infer [] sum) ≡ just expected-sum
 sum-reported = refl
 
 inc-all-reported :
-  schemeOf (infer [] inc-all) ≡ just (∀[ 0 , 0 , 0 ] ⊤ ⟹ (|List| Nat ⇒ |List| Nat ‼ ûₑ) ‼ ûₑ)
+  schemeOf (infer [] inc-all) ≡ just (∀[ 0 , 0 , 0 ] ⊤ ⟹ (|List| Nat ⇒ |List| Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ)
 inc-all-reported = refl
 
 ------------------------------------------------------------------
 -- 8. The head in the step: usable whatever its type
 
 copy-reported :
-  schemeOf (infer [] copy) ≡ just (∀[ 1 , 0 , 0 ] ⊤ ⟹ (|List| α₀ ⇒ |List| α₀ ‼ ûₑ) ‼ ûₑ)
+  schemeOf (infer [] copy) ≡ just (∀[ 1 , 0 , 0 ] ⊤ ⟹ (|List| α₀ ⇒ |List| α₀ ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ)
 copy-reported = refl
 
 call-all-reported :
   schemeOf (infer [] call-all)
-    ≡ just (∀[ 0 , 0 , 0 ] ⊤ ⟹ (|List| (Unit ⇒ Unit ‼ ûₑ) ⇒ Unit ‼ ûₑ) ‼ ûₑ)
+    ≡ just (∀[ 0 , 0 , 0 ] ⊤ ⟹ (|List| (Unit ⇒ Unit ‼ 𝟏̂ₑ) ⇒ Unit ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ)
 call-all-reported = refl
 
 expected-last-or : Scheme
 expected-last-or =
-  ∀[ 3 , 0 , 0 ] α₂ <: α₁ ∧ α₀ <: α₁ ⟹ (α₂ ⇒ (|List| α₀ ⇒ α₁ ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+  ∀[ 3 , 0 , 0 ] α₂ <: α₁ ∧ α₀ <: α₁ ⟹ (α₂ ⇒ (|List| α₀ ⇒ α₁ ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 last-or-reported : schemeOf (infer [] last-or) ≡ just expected-last-or
 last-or-reported = refl
@@ -149,13 +149,13 @@ last-or-reported = refl
 expected-last-box : Scheme
 expected-last-box =
   ∀[ 0 , 1 , 0 ] ρ₀ ≾ᵣ ⌜ 1 ⌝ʳ ⟹
-    ([ ρ₀ ] Nat ⇒ (|List| ([ ⌜ 1 ⌝ʳ ] Nat) ⇒ [ ρ₀ ] Nat ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+    ([ ρ₀ ] Nat ⇒ (|List| ([ ⌜ 1 ⌝ʳ ] Nat) ⇒ [ ρ₀ ] Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 last-box-reported : schemeOf (infer [] last-box) ≡ just expected-last-box
 last-box-reported = refl
 
 expected-latest : Scheme
-expected-latest = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (|List| ([ ⌜ 1 ⌝ʳ ] Nat) ⇒ Nat ‼ ûₑ) ‼ ûₑ
+expected-latest = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (|List| ([ ⌜ 1 ⌝ʳ ] Nat) ⇒ Nat ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 latest-reported : schemeOf (infer [] latest) ≡ just expected-latest
 latest-reported = refl
@@ -167,7 +167,7 @@ latest-ready-reported = refl
 -- 9. A tick per element: the unit, so three ticks is refuted
 
 ticks-reported :
-  schemeOf (infer [] ticks) ≡ just (∀[ 1 , 0 , 0 ] ⊤ ⟹ (|List| α₀ ⇒ Unit ‼ ûₑ) ‼ ûₑ)
+  schemeOf (infer [] ticks) ≡ just (∀[ 1 , 0 , 0 ] ⊤ ⟹ (|List| α₀ ⇒ Unit ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ)
 ticks-reported = refl
 
 ticks-at-3-verdict : infer [] (ticks-at 3) ≡ untypable

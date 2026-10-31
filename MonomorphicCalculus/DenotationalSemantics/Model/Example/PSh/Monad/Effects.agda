@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------
 -- The algebraic operations and delays of the effect monad. Both       --
--- mention the box modality graded by the resource projection `mapᵉ`   --
+-- mention the box modality graded by the resource projection `∣_∣ᵉ`   --
 -- of the relevant effect grade, and store that box's Kripke value as  --
 -- the node's continuation, rebuilding the node's coherence witnesses  --
 -- from the box's (and, for operations, the exponential's) naturality. --
@@ -40,15 +40,15 @@ open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Monad.Co
 open import MonomorphicCalculus.DenotationalSemantics.Model.Category
 open Category PShCat using (mapˣᵐ; map⇒ᵐ; fstᵐ; sndᵐ; ⟨_,_⟩ᵐ)
 
--- A delay: its continuation box `[ of-durʳ τ ]` is stored in the
+-- A delay: its continuation box `[ ιᵣ τ ]` is stored in the
 -- delay-node; the node's naturality is the box's own `fun-nat`.
 
 delayᵀ : ∀ {A ε} → (τ : 𝔻)
-       → [ of-durʳ τ ]ᵒ (Tᵒ A ε) →ᵖ Tᵒ A (of-durᵉ τ ·ₑ ε)
+       → [ ιᵣ τ ]ᵒ (Tᵒ A ε) →ᵖ Tᵒ A (ιₑ τ ·ₑ ε)
 delayᵀ τ = pmap
-  (λ x → delay-node τ (λ q → fun x (⊑-mono (≃ᵣ⇒≾ᵣ map-of-durᵉ) q))
-           (λ q r → ≈ᵗ-trans ([]-fun-irr x _ _) (fun-nat x (⊑-mono (≃ᵣ⇒≾ᵣ map-of-durᵉ) q) r)))
-  (λ e → delay-≈ (λ q → e (⊑-mono (≃ᵣ⇒≾ᵣ map-of-durᵉ) q)))
+  (λ x → delay-node τ (λ q → fun x (⊑-mono (≃ᵣ⇒≾ᵣ map-ιᵉ) q))
+           (λ q r → ≈ᵗ-trans ([]-fun-irr x _ _) (fun-nat x (⊑-mono (≃ᵣ⇒≾ᵣ map-ιᵉ) q) r)))
+  (λ e → delay-≈ (λ q → e (⊑-mono (≃ᵣ⇒≾ᵣ map-ιᵉ) q)))
   (λ p x → delay-≈ (λ q → []-fun-irr x _ _))
 
 -- An algebraic operation: its boxed continuation `x` is applied at the
@@ -58,7 +58,7 @@ delayᵀ τ = pmap
 -- box's `fun-nat`.
 
 opᵀ : ∀ {A ε} → (op : Op)
-    → ⟦ param op ⟧ᵍ ×ᵖ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A ε)
+    → ⟦ param op ⟧ᵍ ×ᵖ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A ε)
     →ᵖ Tᵒ A (op-grade op ·ₑ ε)
 opᵀ op = pmap
   (λ { (v , x) → op-node op v (λ q y → fun (fun x q) ⊑-refl y)
@@ -76,19 +76,19 @@ opᵀ op = pmap
 
 delayᵀ-zero : ∀ {A ε'}
             → delayᵀ {A} {ε'} 0ᴰ
-            ≈ᵖ T-≤ (≃ₑ⇒≿ₑ (≃ₑ-trans (·ₑ-cong of-durᵉ-zero ≃ₑ-refl) (·ₑ-identityˡ ε')))
+            ≈ᵖ T-≤ (≃ₑ⇒≿ₑ (≃ₑ-trans (·ₑ-cong ιₑ-zero ≃ₑ-refl) (·ₑ-identityˡ ε')))
               ∘ᵖ ε
-              ∘ᵖ []-≤ (≃ᵣ⇒≿ᵣ of-durʳ-zero)
+              ∘ᵖ []-≤ (≃ᵣ⇒≿ᵣ ιᵣ-zero)
 delayᵀ-zero x =
   ≈ᵗ-trans (delay-zero {q₀ = ⊑-delay0} delay0ᵉ)
            (sub-≈ ([]-fun-irr x _ _))
 
 delayᵀ-plus : ∀ {A ε'} → (τ₁ τ₂ : 𝔻)
-            → delayᵀ {A} {of-durᵉ τ₂ ·ₑ ε'} τ₁
-                ∘ᵖ [ of-durʳ τ₁ ]ᶠ (delayᵀ {A} {ε'} τ₂)
+            → delayᵀ {A} {ιₑ τ₂ ·ₑ ε'} τ₁
+                ∘ᵖ [ ιᵣ τ₁ ]ᶠ (delayᵀ {A} {ε'} τ₂)
                 ∘ᵖ δ
-                ∘ᵖ []-≤ (≃ᵣ⇒≿ᵣ of-durʳ-plus)
-            ≈ᵖ T-≤ (≃ₑ⇒≾ₑ (≃ₑ-trans (·ₑ-cong of-durᵉ-plus ≃ₑ-refl) (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε')))
+                ∘ᵖ []-≤ (≃ᵣ⇒≿ᵣ ιᵣ-plus)
+            ≈ᵖ T-≤ (≃ₑ⇒≾ₑ (≃ₑ-trans (·ₑ-cong ιₑ-plus ≃ₑ-refl) (·ₑ-assoc (ιₑ τ₁) (ιₑ τ₂) ε')))
               ∘ᵖ delayᵀ {A} {ε'} (τ₁ +ᴰ τ₂)
 delayᵀ-plus τ₁ τ₂ x =
   ≈ᵗ-trans (delay-plus (λ q₁ q₂ → []-fun-irr x _ _) delay+ᵉ) (sub-≈ (≈ᵗ-refl _))
@@ -96,7 +96,7 @@ delayᵀ-plus τ₁ τ₂ x =
 -- Naturality
 
 delayᵀ-nat : ∀ {A B ε} → (τ : 𝔻) → (f : A →ᵖ B)
-           → delayᵀ {ε = ε} τ ∘ᵖ [ of-durʳ τ ]ᶠ (Tᶠ f) ≈ᵖ Tᶠ f ∘ᵖ delayᵀ τ
+           → delayᵀ {ε = ε} τ ∘ᵖ [ ιᵣ τ ]ᶠ (Tᶠ f) ≈ᵖ Tᶠ f ∘ᵖ delayᵀ τ
 delayᵀ-nat τ f x = delay-≈ (λ q → ≈ᵗ-refl _)
 
 -- Sub-effecting the delayed computation is sub-effecting the delay: the `sub`
@@ -106,7 +106,7 @@ delayᵀ-nat τ f x = delay-≈ (λ q → ≈ᵗ-refl _)
 -- the inner grade, and hence what lets the `⟶*` closure compose.
 
 delayᵀ-≤ : ∀ {A ε ε'} → (τ : 𝔻) → (p : ε ≾ₑ ε')
-         → delayᵀ {A} {ε'} τ ∘ᵖ [ of-durʳ τ ]ᶠ (T-≤ p)
+         → delayᵀ {A} {ε'} τ ∘ᵖ [ ιᵣ τ ]ᶠ (T-≤ p)
          ≈ᵖ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵖ delayᵀ {A} {ε} τ
 delayᵀ-≤ τ p x =
   -- the two delay nodes agree on their continuations, differing only in the
@@ -118,7 +118,7 @@ delayᵀ-≤ τ p x =
 -- is exactly `transport-refl` of the exponential.
 
 opᵀ-nat : ∀ {A B ε} → (op : Op) → (f : A →ᵖ B)
-        → opᵀ {ε = ε} op ∘ᵖ mapˣᵐ idᵖ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵖ (Tᶠ f)))
+        → opᵀ {ε = ε} op ∘ᵖ mapˣᵐ idᵖ ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵖ (Tᶠ f)))
         ≈ᵖ Tᶠ f ∘ᵖ opᵀ op
 opᵀ-nat {A} {ε = ε} op f (v , x) =
   op-≈ (≈-refl ⟦ param op ⟧ᵍ)
@@ -130,7 +130,7 @@ opᵀ-nat {A} {ε = ε} op f (v , x) =
 -- absorbed by `transport-refl`, as in `opᵀ-nat`.
 
 opᵀ-≤ : ∀ {A ε ε'} → (op : Op) → (p : ε ≾ₑ ε')
-      → opᵀ {A} {ε'} op ∘ᵖ mapˣᵐ idᵖ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵖ (T-≤ p)))
+      → opᵀ {A} {ε'} op ∘ᵖ mapˣᵐ idᵖ ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵖ (T-≤ p)))
       ≈ᵖ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵖ opᵀ {A} {ε} op
 opᵀ-≤ {A} {ε = ε} op p (v , x) =
   ≈ᵗ-trans
@@ -141,16 +141,16 @@ opᵀ-≤ {A} {ε = ε} op p (v , x) =
 -- Algebraicity: the operations commute with the monad multiplication.
 
 delayᵀ-algebraicity : ∀ {A ε' ε''} → (τ : 𝔻)
-                    → μᵀ {A} {of-durᵉ τ ·ₑ ε'} {ε''} ∘ᵖ delayᵀ {ε = ε'} τ
-                    ≈ᵖ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) ε' ε''))
-                      ∘ᵖ delayᵀ τ ∘ᵖ [ of-durʳ τ ]ᶠ (μᵀ {A} {ε'} {ε''})
+                    → μᵀ {A} {ιₑ τ ·ₑ ε'} {ε''} ∘ᵖ delayᵀ {ε = ε'} τ
+                    ≈ᵖ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (ιₑ τ) ε' ε''))
+                      ∘ᵖ delayᵀ τ ∘ᵖ [ ιᵣ τ ]ᶠ (μᵀ {A} {ε'} {ε''})
 delayᵀ-algebraicity τ x = sub-≈ (delay-≈ (λ q → ≈ᵗ-refl _))
 
 opᵀ-algebraicity : ∀ {A ε ε'} → (op : Op)
                  → μᵀ {A} {op-grade op ·ₑ ε} {ε'} ∘ᵖ opᵀ {ε = ε} op
                  ≈ᵖ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) ε ε'))
                    ∘ᵖ opᵀ op
-                   ∘ᵖ mapˣᵐ idᵖ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵖ (μᵀ {A} {ε} {ε'})))
+                   ∘ᵖ mapˣᵐ idᵖ ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵖ (μᵀ {A} {ε} {ε'})))
 opᵀ-algebraicity {A} {ε} {ε'} op (v , x) =
   sub-≈
     (op-≈ (≈-refl ⟦ param op ⟧ᵍ)
@@ -162,13 +162,13 @@ opᵀ-algebraicity {A} {ε} {ε'} op (v , x) =
 -- world with box witnesses that agree by `[]-fun-irr` (via `strˢ-congᵗ`).
 
 strᵀ-delayᵀ-algebraicity : ∀ {A B ε} → (τ : 𝔻)
-  → strᵀ {A} {B} {of-durᵉ τ ·ₑ ε} ∘ᵖ mapˣᵐ idᵖ (delayᵀ {B} {ε} τ)
+  → strᵀ {A} {B} {ιₑ τ ·ₑ ε} ∘ᵖ mapˣᵐ idᵖ (delayᵀ {B} {ε} τ)
   ≈ᵖ delayᵀ τ
-    ∘ᵖ [ of-durʳ τ ]ᶠ (strᵀ {A} {B} {ε})
+    ∘ᵖ [ ιᵣ τ ]ᶠ (strᵀ {A} {B} {ε})
     ∘ᵖ []-monoidal
     ∘ᵖ mapˣᵐ (δ ∘ᵖ []-≤ (≃ᵣ⇒≿ᵣ
-         (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))) idᵖ
+         (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-ιᵉ ≃ᵣ-refl)))) idᵖ
 strᵀ-delayᵀ-algebraicity {A} τ (a , x) =
   delay-≈ (λ q →
-    strˢ-congᵗ A (λ r → []-fun-irr a _ _) (≈ᵗ-refl (fun x (⊑-mono (≃ᵣ⇒≾ᵣ map-of-durᵉ) q))))
+    strˢ-congᵗ A (λ r → []-fun-irr a _ _) (≈ᵗ-refl (fun x (⊑-mono (≃ᵣ⇒≾ᵣ map-ιᵉ) q))))
 

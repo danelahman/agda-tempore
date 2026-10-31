@@ -3,7 +3,7 @@
 --                                                                    --
 -- A decidable bounded join-semilattice of levels is a grade: `_·_`   --
 -- and `_⊔_` are both the join, the unit is the least level and `⊤`   --
--- the greatest. `of-dur` is constantly the least level, for any      --
+-- the greatest. `ι` is constantly the least level, for any           --
 -- durations. The unit is least and `_·_` commutes, and its hints     --
 -- declare both.                                                      --
 --                                                                    --
@@ -118,11 +118,11 @@ module _ (L : LevelLattice) where
   level-grade = posetᵍ record
     { Carrier         = Carrier
     ; _·_             = _∨_
-    ; u               = bot
+    ; 𝟏               = bot
     ; _≾_             = _⊑_
     ; ⊤               = top
     ; _⊔_             = _∨_
-    ; of-dur          = λ _ → bot
+    ; ι               = λ _ → bot
     ; ·-identityˡ     = ∨-identityˡ
     ; ·-identityʳ     = ∨-identityʳ
     ; ·-assoc         = ∨-assoc
@@ -141,13 +141,13 @@ module _ (L : LevelLattice) where
     ; ·-distribʳ-⊔-≾  = ∨-distribʳ
     ; ≾-zero-productˡ = λ {a} {b} p → ⊑-trans (∨-ubˡ a b) p
     ; ≾-zero-productʳ = λ {a} {b} p → ⊑-trans (∨-ubʳ a b) p
-    ; of-dur-zero     = refl
-    ; of-dur-plus     = sym (∨-identityˡ bot)
+    ; ι-zero          = refl
+    ; ι-plus          = sym (∨-identityˡ bot)
     }
 
   level-gradeʰ : {D : Duration} → GradeHints (level-grade {D})
   level-gradeʰ {D} = record
-    { u-least? = just bot-⊑
+    { 𝟏-least? = just bot-⊑
     ; ·-comm?  = just (comm-≡ (level-grade {D}) ∨-comm)
     ; plus?    = λ _ → nothing
     }

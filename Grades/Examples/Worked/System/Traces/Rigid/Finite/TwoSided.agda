@@ -31,7 +31,7 @@ import Grades.Examples.Traces.Rigid.Finite.RightSided Op 3 code name name-code c
 open import Grades.Examples.System.Traces.Rigid.Finite.TwoSided Op 3 code name name-code code-name running
   using (interval-runs→intervals)
 
-open Grade two-sided using (u; of-dur) renaming (_·_ to _·ᵢ_)
+open Grade two-sided using (𝟏; ι) renaming (_·_ to _·ᵢ_)
 
 ∣_∣ = map interval-runs→intervals
 
@@ -51,12 +51,12 @@ cool-measured = refl
 
 -- a delay is measured by itself, both hulls together
 
-delay-measured : ∣ of-dur (5 / 2) ∣ ≡ [ 5 / 2 , ↑ 5 / 2 ]
+delay-measured : ∣ ι (5 / 2) ∣ ≡ [ 5 / 2 , ↑ 5 / 2 ]
 delay-measured = refl
 
 -- heating, a delay of two and a half, logging: inside the bound's window
 
-run-measured : ∣ operation heat ·ᵢ (of-dur (5 / 2) ·ᵢ operation log) ∣ ≡ ] 19 / 4 , ↑ # 7 ]
+run-measured : ∣ operation heat ·ᵢ (ι (5 / 2) ·ᵢ operation log) ∣ ≡ ] 19 / 4 , ↑ # 7 ]
 run-measured = refl
 
 -- the projection does not reflect the order at the unit: a guarantee of
@@ -64,7 +64,7 @@ run-measured = refl
 -- guarantee is above the empty one
 
 anything-measured :
-  ∣ [ ⌜ L.≥ (# 0) ⌝ , ⌜ ε ⌝ ]ᵍ ∣ ≡ ∣ u ∣
+  ∣ [ ⌜ L.≥ (# 0) ⌝ , ⌜ ε ⌝ ]ᵍ ∣ ≡ ∣ 𝟏 ∣
 anything-measured = refl
 
 anything-above-unit : holds ⌜ L.≥ (# 0) ⌝ ⌜ ε {lower} ⌝ ≡ false

@@ -41,7 +41,7 @@ open import Grades.Examples.Worked.SemiDirect.WindowedSchedules
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
 
 open Maps ℕ-names using (Map; _∣_)
-open Grade durations using (of-dur)
+open Grade durations using (ι)
 
 -- taking `T`, performing `o` only at times `E`
 
@@ -52,7 +52,7 @@ at T o E = T , (∅ₜ ∣ ((name o , E) L.∷ L.[]))
 -- The operations, each happening at its start
 
 opTime : Op → Grade.Carrier windowed-schedules
-opTime read  = at (of-dur 1)  read  ⟪ 0 ⟫ₜ
+opTime read  = at (ι 1)       read  ⟪ 0 ⟫ₜ
 opTime write = at (span 2 1)  write ⟪ 0 ⟫ₜ
 opTime send  = at (span 4 2)  send  ⟪ 0 ⟫ₜ
 
@@ -83,14 +83,14 @@ late-uplink : [] ⊢C⦂ Reading ‼ warm-up
 late-uplink =
   check warm-up
     (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
-      (delay 2                       -- ⟨ of-dur 2 ⟩
+      (delay 2                       -- ⟨ ι 2 ⟩
         (perform send (const 0)      -- ⟨ opTime send ⟩ ∷ Unit
           (return (const 1)))))
 
 -- transmitting at once is a program, graded by what it does
 
 early : E
-early = opTime read ·ₑ (opTime send ·ₑ uₑ)
+early = opTime read ·ₑ (opTime send ·ₑ 𝟏ₑ)
 
 early-uplink : [] ⊢C⦂ Unit ‼ early
 early-uplink =
@@ -107,8 +107,8 @@ early-refused = refuted early warm-up
 ------------------------------------------------------------------------
 -- Readings go stale after any step, idling included
 
-stale-after-idling : ¬ (uᵣ ·ᵣ of-durʳ 1 ≾ᵣ uᵣ)
-stale-after-idling = refuted (uᵣ ·ᵣ of-durʳ 1) uᵣ
+stale-after-idling : ¬ (𝟏ᵣ ·ᵣ ιᵣ 1 ≾ᵣ 𝟏ᵣ)
+stale-after-idling = refuted (𝟏ᵣ ·ᵣ ιᵣ 1) 𝟏ᵣ
 
 ------------------------------------------------------------------------
 -- Unboxing: a value that goes stale after four steps
@@ -123,23 +123,23 @@ claimed-in-time : [] ⊢C⦂ Unit ‼ at (span 7 2) send ⟪ 3 ⟫ₜ
 claimed-in-time =
   check (at (span 7 2) send ⟪ 3 ⟫ₜ)
     (box within-four (const 42)      -- ∷ [ within-four ] Reading
-      (delay 3                       -- ⟨ of-dur 3 ⟩
-        (unbox (Tl-⟨⟩ Hd) (decided (uᵣ ·ᵣ of-durʳ 3) within-four) (<:ᵛ-refl _)
+      (delay 3                       -- ⟨ ι 3 ⟩
+        (unbox (Tl-⟨⟩ Hd) (decided (𝟏ᵣ ·ᵣ ιᵣ 3) within-four) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))
 
-claimed-too-late : ¬ (uᵣ ·ᵣ of-durʳ 5 ≾ᵣ within-four)
-claimed-too-late = refuted (uᵣ ·ᵣ of-durʳ 5) within-four
+claimed-too-late : ¬ (𝟏ᵣ ·ᵣ ιᵣ 5 ≾ᵣ within-four)
+claimed-too-late = refuted (𝟏ᵣ ·ᵣ ιᵣ 5) within-four
 
 -- after a reading and a store, which take three or four steps, it is
 -- still in time
 
-claimed-after-storing : uᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ within-four
-claimed-after-storing = decided (uᵣ ·ᵣ opTime read ·ᵣ opTime write) within-four
+claimed-after-storing : 𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ within-four
+claimed-after-storing = decided (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime write) within-four
 
 ------------------------------------------------------------------------
 -- Effect handling: the unit is not least, so no clause discards its
 -- continuation
 
-cannot-discard : ¬ (uₑ ≾ₑ opTime read ·ₑ uₑ)
-cannot-discard = refuted uₑ (opTime read ·ₑ uₑ)
+cannot-discard : ¬ (𝟏ₑ ≾ₑ opTime read ·ₑ 𝟏ₑ)
+cannot-discard = refuted 𝟏ₑ (opTime read ·ₑ 𝟏ₑ)

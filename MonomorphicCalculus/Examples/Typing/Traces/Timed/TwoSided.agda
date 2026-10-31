@@ -75,12 +75,12 @@ tagged-relaying =
 ------------------------------------------------------------------------
 -- Readings go stale
 --
--- `ρ ≾ᵣ uᵣ` asks the cap to permit nothing but the empty run, which is
+-- `ρ ≾ᵣ 𝟏ᵣ` asks the cap to permit nothing but the empty run, which is
 -- the upper endpoint deciding it, as at the two-sided windows. So no
 -- lock but the unit may stand over a reading in use.
 
-reading-stale-after-an-operation : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
-reading-stale-after-an-operation = fails (uᵣ ·ᵣ opTime read) uᵣ
+reading-stale-after-an-operation : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ 𝟏ᵣ)
+reading-stale-after-an-operation = fails (𝟏ᵣ ·ᵣ opTime read) 𝟏ᵣ
 
 carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ exact ⌈ read ⌉
 carried-id =
@@ -104,11 +104,11 @@ meeting-the-contract =
 -- the floor refuses a run that takes no reading, and the cap a run that
 -- spends more than the allowance, each with the other endpoint met
 
-idling-fails-the-floor : ¬ (of-durᵉ 5 ·ₑ uₑ ≾ₑ contract)
+idling-fails-the-floor : ¬ (ιₑ 5 ·ₑ 𝟏ₑ ≾ₑ contract)
 idling-fails-the-floor = fails _ _
 
 transmitting-twice-fails-the-cap :
-  ¬ (opTime read ·ₑ (opTime send ·ₑ (opTime read ·ₑ uₑ)) ≾ₑ contract)
+  ¬ (opTime read ·ₑ (opTime send ·ₑ (opTime read ·ₑ 𝟏ₑ)) ≾ₑ contract)
 transmitting-twice-fails-the-cap = fails _ _
 
 ------------------------------------------------------------------------
@@ -132,7 +132,7 @@ branching =
 -- store's worst case rather than its best
 
 three-ticks-not-guaranteed :
-  ¬ (opTime write ·ₑ uₑ ≾ₑ [ ⟅ ⟨ 3 ⟩ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ ])
+  ¬ (opTime write ·ₑ 𝟏ₑ ≾ₑ [ ⟅ ⟨ 3 ⟩ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ ])
 three-ticks-not-guaranteed = fails _ _
 
 -- an `if` over data alone needs no contract found for it
@@ -189,23 +189,23 @@ either-way =
 -- too little: idling covers no reading, though it is well inside the
 -- allowance
 
-idling-covers-nothing : ¬ (uᵣ ·ᵣ of-durʳ 2 ≾ᵣ contract)
+idling-covers-nothing : ¬ (𝟏ᵣ ·ᵣ ιᵣ 2 ≾ᵣ contract)
 idling-covers-nothing = fails _ _
 
-claiming-at-once : ¬ (uᵣ ≾ᵣ contract)
+claiming-at-once : ¬ (𝟏ᵣ ≾ᵣ contract)
 claiming-at-once = fails _ _
 
 -- too much: a reading, a transmission and a reading take seven ticks
 -- beyond the named reading, and the allowance is six
 
 overspending :
-  ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime send ·ᵣ opTime read ≾ᵣ contract)
+  ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime send ·ᵣ opTime read ≾ᵣ contract)
 overspending = fails _ _
 
 -- between the two, a store fits: it covers the reading and its three
 -- ticks come out of the six
 
-storing-fits : uᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ contract
+storing-fits : 𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ contract
 storing-fits = holds _ _
 
 ------------------------------------------------------------------------
@@ -238,11 +238,11 @@ claimed-in-both-branches =
 -- and tightening the allowance to a single tick closes it too
 
 transmitting-branch-covers-nothing :
-  ¬ (uᵣ ·ᵣ opTime send ≾ᵣ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ ])
+  ¬ (𝟏ᵣ ·ᵣ opTime send ≾ᵣ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ ])
 transmitting-branch-covers-nothing = fails _ _
 
 transmitting-branch-overspends :
-  ¬ (uᵣ ·ᵣ opTime send
+  ¬ (𝟏ᵣ ·ᵣ opTime send
      ≾ᵣ [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⟨ 1 ⟩ ⟆ ])
 transmitting-branch-overspends = fails _ _
 
@@ -262,10 +262,10 @@ branch-join =
 mixed-contract : R
 mixed-contract = [ ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ⟆ ]
 
-sampling-branch-joins : opTime read ·ₑ uₑ ≾ₑ branch-join
+sampling-branch-joins : opTime read ·ₑ 𝟏ₑ ≾ₑ branch-join
 sampling-branch-joins = holds _ _
 
-storing-branch-joins : opTime write ·ₑ uₑ ≾ₑ branch-join
+storing-branch-joins : opTime write ·ₑ 𝟏ₑ ≾ₑ branch-join
 storing-branch-joins = holds _ _
 
 claim-after-a-branch :
@@ -313,9 +313,9 @@ store-or-not =
 -- transmission spend nine of an allowance that leaves six
 
 storing-then-transmitting-first :
-  ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime write ·ᵣ opTime send ≾ᵣ contract)
+  ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime write ·ᵣ opTime send ≾ᵣ contract)
 storing-then-transmitting-first =
-  fails (uᵣ ·ᵣ opTime read ·ᵣ opTime write ·ᵣ opTime send) contract
+  fails (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime write ·ᵣ opTime send) contract
 
 ------------------------------------------------------------------------
 -- Effect handling
@@ -337,5 +337,5 @@ identified =
 -- no clause may drop its continuation: the floor asks for the
 -- operation, and returning at once covers nothing
 
-no-discarding : ¬ (uₑ ≾ₑ op-grade read ·ₑ uₑ)
-no-discarding = fails uₑ (op-grade read ·ₑ uₑ)
+no-discarding : ¬ (𝟏ₑ ≾ₑ op-grade read ·ₑ 𝟏ₑ)
+no-discarding = fails 𝟏ₑ (op-grade read ·ₑ 𝟏ₑ)

@@ -76,7 +76,7 @@ bool-val-canonical false          = inj₂ refl
 bool-val-canonical (subV V Boolₛ) = bool-val-canonical V
 
 -- The ticks a step takes: only `DELAY` advances time, by its own delay. The
--- grade `steps-grade` is not an observable: it absorbs `uₑ` factors freely
+-- grade `steps-grade` is not an observable: it absorbs `𝟏ₑ` factors freely
 -- and `_≾ₑ_` is a preorder.
 
 step-ticks : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
@@ -138,7 +138,7 @@ record Op-whnf {A : VType} {ε : E} (cf : Config (A ‼ ε)) : Set where
     resid : E
     vtype : VType
     prm   : toCtx state ⊢V⦂ type-of-gtype (param oper)
-    cont  : toCtx state ⟨ mapᵉ (op-grade oper) ⟩ ∷ type-of-gtype (arity oper)
+    cont  : toCtx state ⟨ ∣ op-grade oper ∣ᵉ ⟩ ∷ type-of-gtype (arity oper)
               ⊢C⦂ vtype ‼ resid
     run   : cf ⟶* ⟨ state , perform oper prm cont ⟩
 
@@ -171,7 +171,7 @@ finality-ret ()
 
 finality-perform : ∀ {A ε op} {D : CType} {St : 𝕊 []}
                  → {W : toCtx St ⊢V⦂ type-of-gtype (param op)}
-                 → {M : toCtx St ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+                 → {M : toCtx St ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
                           ⊢C⦂ A ‼ ε}
                  → {cf : Config D}
                  → ⟨ St , perform op W M ⟩ ⟶ cf
@@ -191,17 +191,17 @@ Step-from cf =
 -- unification: they are whatever the rule builds out of the sub-step.
 
 seq-step : ∀ {A B ε₁ ε₂} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ ε₁}
-         → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+         → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
          → Step-from (⟨ St , M ⟩)
          ---------------------------------
          → Step-from (⟨ St , M ⨟ N ⟩)
 seq-step N (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , _ , SEQ-STEP r (step-grade-≾ r)
 
 handle-step : ∀ {A B ε₁ ε₂} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ ε₁}
-            → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+            → (N : toCtx St ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
             → (H : (op : Op) → (ε₃ : E) →
                      toCtx St ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                             ∷ [ mapᵉ (op-grade op) ]
+                             ∷ [ ∣ op-grade op ∣ᵉ ]
                                  (type-of-gtype (arity op) ⇒ B ‼ ε₃)
                            ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃))
             → Step-from (⟨ St , M ⟩)
@@ -266,16 +266,16 @@ Op-run : ∀ {A ε} → (cf : Config (A ‼ ε)) → Set
 Op-run cf =
   Σ[ St ∈ 𝕊 [] ] Σ[ op ∈ Op ] Σ[ A' ∈ VType ] Σ[ ε' ∈ E ]
   Σ[ W ∈ toCtx St ⊢V⦂ type-of-gtype (param op) ]
-  Σ[ M ∈ (toCtx St ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A' ‼ ε') ]
+  Σ[ M ∈ (toCtx St ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A' ‼ ε') ]
     (cf ⟶* ⟨ St , perform op W M ⟩)
 
 op-run-det : ∀ {A ε} {cf : Config (A ‼ ε)}
            → {St₁ St₂ : 𝕊 []} → {op₁ op₂ : Op} → {A₁ A₂ : VType} → {ε₁' ε₂' : E}
            → {W₁ : toCtx St₁ ⊢V⦂ type-of-gtype (param op₁)}
            → {W₂ : toCtx St₂ ⊢V⦂ type-of-gtype (param op₂)}
-           → {M₁ : toCtx St₁ ⟨ mapᵉ (op-grade op₁) ⟩ ∷ type-of-gtype (arity op₁)
+           → {M₁ : toCtx St₁ ⟨ ∣ op-grade op₁ ∣ᵉ ⟩ ∷ type-of-gtype (arity op₁)
                      ⊢C⦂ A₁ ‼ ε₁'}
-           → {M₂ : toCtx St₂ ⟨ mapᵉ (op-grade op₂) ⟩ ∷ type-of-gtype (arity op₂)
+           → {M₂ : toCtx St₂ ⟨ ∣ op-grade op₂ ∣ᵉ ⟩ ∷ type-of-gtype (arity op₂)
                      ⊢C⦂ A₂ ‼ ε₂'}
            → (rs₁ : cf ⟶* ⟨ St₁ , perform op₁ W₁ M₁ ⟩)
            → (rs₂ : cf ⟶* ⟨ St₂ , perform op₂ W₂ M₂ ⟩)
@@ -304,7 +304,7 @@ op-run-det (r₁ ◅ rs₁) (r₂ ◅ rs₂) with ⟶-det r₁ r₂
             → {St₁ St₂ : 𝕊 []} {op : Op}
             → {V : toCtx St₁ ⊢V⦂ A₁}
             → {W : toCtx St₂ ⊢V⦂ type-of-gtype (param op)}
-            → {M : toCtx St₂ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+            → {M : toCtx St₂ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
                      ⊢C⦂ A₂ ‼ ε'}
             → cf ⟶* ⟨ St₁ , return V ⟩
             → cf ⟶* ⟨ St₂ , perform op W M ⟩

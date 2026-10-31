@@ -1371,11 +1371,11 @@ equateʳ? {Θ} F C Q i o =
 -- Least, and below the unit: equal to it
 
 unit-forcedᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ}
-             → Is-just uᵣ-least? → Q ⊩ ρ ≾̂ᵣ ûᵣ → Q ⊩ ρ ≡̂ᵣ ûᵣ
+             → Is-just 𝟏ᵣ-least? → Q ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ → Q ⊩ ρ ≡̂ᵣ 𝟏̂ᵣ
 unit-forcedᵣ l p = p , minᵣ (to-witness l)
 
 unit-forcedₑ : ∀ {Θ} {Q : Hyps Θ} {ε : EExp Θ}
-             → Is-just uₑ-least? → Q ⊩ ε ≾̂ₑ ûₑ → Q ⊩ ε ≡̂ₑ ûₑ
+             → Is-just 𝟏ₑ-least? → Q ⊩ ε ≾̂ₑ 𝟏̂ₑ → Q ⊩ ε ≡̂ₑ 𝟏̂ₑ
 unit-forcedₑ l p = p , minₑ (to-witness l)
 
 -- A step equal to the identity under hypotheses `Q⁺` that every closed
@@ -1495,7 +1495,7 @@ unitʳ {Θ} C Q i {x₀ , c₀} m₀ f₀@(lst , _ , _) =
          (⊩ᴴ-⊨ᴴ keep₁)
   where
     η₀ : Subst Θ Θ
-    η₀ = updʳ i ûᵣ
+    η₀ = updʳ i 𝟏̂ᵣ
 
     P = partition (Vʳ.forces? {Θ} i) (ordᵣ Q)
 
@@ -1506,16 +1506,16 @@ unitʳ {Θ} C Q i {x₀ , c₀} m₀ f₀@(lst , _ , _) =
     Q₁ = retouched
 
     Q⁺ : Hyps Θ
-    Q⁺ = record Q { ordᵣ = (rvar i , ûᵣ) ∷ ordᵣ Q }
+    Q⁺ = record Q { ordᵣ = (rvar i , 𝟏̂ᵣ) ∷ ordᵣ Q }
 
-    eq⁺ : Q⁺ ⊩ rvar i ≡̂ᵣ ûᵣ
+    eq⁺ : Q⁺ ⊩ rvar i ≡̂ᵣ 𝟏̂ᵣ
     eq⁺ = unit-forcedᵣ lst (hypᵣ (here refl))
 
     lowg : Q⁺ ⊩ η₀ ≾ˢ idˢ
-    lowg = ≾ˢ-idˡ (updʳ-below i ûᵣ idˢ (proj₂ eq⁺))
+    lowg = ≾ˢ-idˡ (updʳ-below i 𝟏̂ᵣ idˢ (proj₂ eq⁺))
 
     hig : Q⁺ ⊩ idˢ ≾ˢ η₀
-    hig = ≾ˢ-idʳ (updʳ-above i ûᵣ idˢ (proj₁ eq⁺))
+    hig = ≾ˢ-idʳ (updʳ-above i 𝟏̂ᵣ idˢ (proj₁ eq⁺))
 
     open Equal {Q = Q⁺} η₀ lowg hig (λ β → tvarₛ reflᵗᵛ) (λ β → tvarₛ reflᵗᵛ)
 
@@ -1541,7 +1541,7 @@ unitʳ {Θ} C Q i {x₀ , c₀} m₀ f₀@(lst , _ , _) =
             toUnit : _ → _
             toUnit f =
               transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-subst η₀ (lhs {ρ} f))
-                                    (subst (_≡̂ᵣ ûᵣ) (sym (updʳ-hit i ûᵣ)) ≡̂ᵣ-refl)))
+                                    (subst (_≡̂ᵣ 𝟏̂ᵣ) (sym (updʳ-hit i 𝟏̂ᵣ)) ≡̂ᵣ-refl)))
                      (minᵣ (to-witness (proj₁ f)))
 
     keep⁺ : Q⁺ ⊨ᴴ Q₁
@@ -1564,7 +1564,7 @@ unitᵉ {Θ} C Q i w =
          (keep₁ w)
   where
     η₀ : Subst Θ Θ
-    η₀ = updᵉ i ûₑ
+    η₀ = updᵉ i 𝟏̂ₑ
 
     Pₑ = partition (Vᵉ.forces? {Θ} i) (ordₑ Q)
     Pᵣ = partition (Vⁱ.forces? {Θ} i) (ordᵣ Q)
@@ -1577,20 +1577,20 @@ unitᵉ {Θ} C Q i w =
     Q₁ = retouched
 
     Q⁺ : Hyps Θ
-    Q⁺ = record Q { ordₑ = (evar i , ûₑ) ∷ ordₑ Q }
+    Q⁺ = record Q { ordₑ = (evar i , 𝟏̂ₑ) ∷ ordₑ Q }
 
-    least : Forcedᵉ Q i → Is-just uₑ-least?
+    least : Forcedᵉ Q i → Is-just 𝟏ₑ-least?
     least (byEff _ (lst , _ , _))       = lst
     least (byImg _ ((lst , _ , _) , _)) = lst
 
-    eq⁺ : Q⁺ ⊩ evar i ≡̂ₑ ûₑ
+    eq⁺ : Q⁺ ⊩ evar i ≡̂ₑ 𝟏̂ₑ
     eq⁺ = unit-forcedₑ (least w) (hypₑ (here refl))
 
     lowg : Q⁺ ⊩ η₀ ≾ˢ idˢ
-    lowg = ≾ˢ-idˡ (updᵉ-below i ûₑ idˢ (proj₂ eq⁺))
+    lowg = ≾ˢ-idˡ (updᵉ-below i 𝟏̂ₑ idˢ (proj₂ eq⁺))
 
     hig : Q⁺ ⊩ idˢ ≾ˢ η₀
-    hig = ≾ˢ-idʳ (updᵉ-above i ûₑ idˢ (proj₁ eq⁺))
+    hig = ≾ˢ-idʳ (updᵉ-above i 𝟏̂ₑ idˢ (proj₁ eq⁺))
 
     open Equal {Q = Q⁺} η₀ lowg hig (λ β → tvarₛ reflᵗᵛ) (λ β → tvarₛ reflᵗᵛ)
 
@@ -1610,15 +1610,15 @@ unitᵉ {Θ} C Q i w =
         ordE (here refl) =
           transₑ (eqₑ (≡̂ₑ-sym (lhsₑ {x} f₀))) (transₑ (hypₑ m₀) (⊩ᴴ-≾ₑ ∅ᴴ-⊩ᴴ (proj₂ (proj₂ f₀))))
         ordE (there m)   = hypₑ m
-    keep₁ (byImg {x , c} m₀ f₀@((_ , refl-u , _) , _ , below-u)) δ h =
+    keep₁ (byImg {x , c} m₀ f₀@((_ , refl-𝟏 , _) , _ , below-𝟏)) δ h =
       mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) ordE (⊩disj h) (⊩qhyps h)
       where
-        image : ∅ᴴ ⊩ ∣ sE δ i ∣̂ᵉ ≾̂ᵣ ûᵣ
+        image : ∅ᴴ ⊩ ∣ sE δ i ∣̂ᵉ ≾̂ᵣ 𝟏̂ᵣ
         image = transᵣ (eqᵣ (≡̂ᵣ-subst δ (≡̂ᵣ-sym (lhsᵣ {x} f₀))))
-                       (transᵣ (⊩ordᵣ h m₀) (⊩-substᵣ ∅ᴴ-⊩ᴴ below-u))
+                       (transᵣ (⊩ordᵣ h m₀) (⊩-substᵣ ∅ᴴ-⊩ᴴ below-𝟏))
 
         ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q⁺ → ∅ᴴ ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
-        ordE (here refl) = val-≾ₑ⁻ (refl-u _ (val-≾ᵣ image))
+        ordE (here refl) = val-≾ₑ⁻ (refl-𝟏 _ (val-≾ᵣ image))
         ordE (there m)   = ⊩ordₑ h m
 
     inst₀ : Unq Q → Q₁ ⊩ᴴ Q [ η₀ ]
@@ -1630,9 +1630,9 @@ unitᵉ {Θ} C Q i w =
             toUnit : _ → _
             toUnit f@((_ , _ , lstᵣ) , _ , _) =
               transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-subst η₀ (lhsᵣ {ρ} f))
-                                    (≡̂ᵣ-trans (subst (λ z → ∣ z ∣̂ᵉ ≡̂ᵣ ∣ ûₑ ∣̂ᵉ)
-                                                     (sym (updᵉ-hit i ûₑ)) ≡̂ᵣ-refl)
-                                              (≡̂ᵣ-trans ≡̂ᵣ-map-const (≡̂ᵣ-const map-uᵉ)))))
+                                    (≡̂ᵣ-trans (subst (λ z → ∣ z ∣̂ᵉ ≡̂ᵣ ∣ 𝟏̂ₑ ∣̂ᵉ)
+                                                     (sym (updᵉ-hit i 𝟏̂ₑ)) ≡̂ᵣ-refl)
+                                              (≡̂ᵣ-trans ≡̂ᵣ-map-const (≡̂ᵣ-const map-𝟏ᵉ)))))
                      (minᵣ (to-witness lstᵣ))
 
         ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q₁ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ ε' [ η₀ ]ᵉ
@@ -1641,7 +1641,7 @@ unitᵉ {Θ} C Q i w =
             toUnit : _ → _
             toUnit f =
               transₑ (eqₑ (≡̂ₑ-trans (≡̂ₑ-subst η₀ (lhsₑ {ε} f))
-                                    (subst (_≡̂ₑ ûₑ) (sym (updᵉ-hit i ûₑ)) ≡̂ₑ-refl)))
+                                    (subst (_≡̂ₑ 𝟏̂ₑ) (sym (updᵉ-hit i 𝟏̂ₑ)) ≡̂ₑ-refl)))
                      (minₑ (to-witness (proj₁ f)))
 
     keep⁺ : Q⁺ ⊨ᴴ Q₁
@@ -1663,7 +1663,7 @@ firstHit p (a ∷ l) with p a
 unitʳ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
        → vʳ F i ≡ false → Maybe (Elimᶠ F C Q)
 unitʳ? {Θ} F C Q i o =
-  Maybe.map (λ { (_ , m , f) → unitʳ C Q i m f , fixes-updʳ i ûᵣ o })
+  Maybe.map (λ { (_ , m , f) → unitʳ C Q i m f , fixes-updʳ i 𝟏̂ᵣ o })
             (firstHit (Vʳ.forces? {Θ} i) (ordᵣ Q))
 
 unitᵉ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
@@ -1671,9 +1671,9 @@ unitᵉ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → 
 unitᵉ? {Θ} F C Q i o = byEff? (firstHit (Vᵉ.forces? {Θ} i) (ordₑ Q))
   where
     byEff? : Maybe (Σ[ a ∈ _ ] ((a ∈ ordₑ Q) × Vᵉ.Forces {Θ} i a)) → Maybe (Elimᶠ F C Q)
-    byEff? (just (_ , m , f)) = just (unitᵉ C Q i (byEff m f) , fixes-updᵉ i ûₑ o)
+    byEff? (just (_ , m , f)) = just (unitᵉ C Q i (byEff m f) , fixes-updᵉ i 𝟏̂ₑ o)
     byEff? nothing =
-      Maybe.map (λ { (_ , m , f) → unitᵉ C Q i (byImg m f) , fixes-updᵉ i ûₑ o })
+      Maybe.map (λ { (_ , m , f) → unitᵉ C Q i (byImg m f) , fixes-updᵉ i 𝟏̂ₑ o })
                 (firstHit (Vⁱ.forces? {Θ} i) (ordᵣ Q))
 
 ------------------------------------------------------------------------

@@ -66,7 +66,7 @@ discard-not-typable = infer-untypable [] discard discard-untypable-verdict
 --
 --   late-discard m = handle m () with handler {op p k ↦ delay 4; return ()}
 --
--- `4 ≾ op · j` holds at `j = u` but retry refutes it at the candidate
+-- `4 ≾ op · j` holds at `j = 𝟏` but retry refutes it at the candidate
 -- `j = 1` (`left-sided-witnesses`).
 
 late-discard : RawC ∅ˢ 0

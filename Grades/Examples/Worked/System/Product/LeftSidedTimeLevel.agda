@@ -55,7 +55,7 @@ module _ where
   open Grade left-sided-time×low-high
   open Checked left-sided-time×low-high
 
-  withheld : ¬ (map (GradeSystem.∣ embargo-and-taint ∣ᵉ) tainted-run
+  withheld : ¬ (map (GradeSystem.∣-∣ᵉ embargo-and-taint) tainted-run
                   ≾ ([ 30 ,+∞⟩ , Low))
   withheld = ⋠! tainted-run ([ 30 ,+∞⟩ , Low)
 
@@ -65,10 +65,10 @@ module _ where
   open Grade left-sided-intervals
   open Checked left-sided-intervals
 
-  forgets-taint : map (GradeSystem.∣ embargo ∣ᵉ) tainted-run ≡ [ 45 ,+∞⟩
+  forgets-taint : map (GradeSystem.∣-∣ᵉ embargo) tainted-run ≡ [ 45 ,+∞⟩
   forgets-taint = refl
 
-  published : map (GradeSystem.∣ embargo ∣ᵉ) tainted-run ≾ [ 30 ,+∞⟩
+  published : map (GradeSystem.∣-∣ᵉ embargo) tainted-run ≾ [ 30 ,+∞⟩
   published = ≾! [ 45 ,+∞⟩ [ 30 ,+∞⟩
 
 -- taint check only: the run is refused whatever the time
@@ -77,5 +77,5 @@ module _ where
   open Grade (two-point-levels {ℕᴰ})
   open Checked (two-point-levels {ℕᴰ})
 
-  refused : ¬ (map (GradeSystem.∣ taint ∣ᵉ) tainted-run ≾ Low)
+  refused : ¬ (map (GradeSystem.∣-∣ᵉ taint) tainted-run ≾ Low)
   refused = ⋠! High Low

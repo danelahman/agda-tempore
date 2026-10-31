@@ -16,7 +16,7 @@
 -- Two consequences of the grades being lower bounds, both checked    --
 -- below:                                                             --
 --                                                                    --
---   * the bound `ρ ≾ᵣ uᵣ` of `var` holds at every `ρ`, so no         --
+--   * the bound `ρ ≾ᵣ 𝟏ᵣ` of `var` holds at every `ρ`, so no         --
 --     variable goes stale.                                           --
 --                                                                    --
 --   * a handler clause cannot discard its continuation. It is graded --
@@ -96,11 +96,11 @@ tagged-relaying =
 ------------------------------------------------------------------------
 -- Nothing goes stale
 --
--- `var` asks for `ρ ≾ᵣ uᵣ` at a non-eternal type, and every grade sits
+-- `var` asks for `ρ ≾ᵣ 𝟏ᵣ` at a non-eternal type, and every grade sits
 -- below the unit here: a floor of `0` is what a bound forgetting
 -- everything says. So a reading survives whatever passes.
 
-nothing-goes-stale : (ρ : R) → ρ ≾ᵣ uᵣ
+nothing-goes-stale : (ρ : R) → ρ ≾ᵣ 𝟏ᵣ
 nothing-goes-stale [ n ,+∞⟩ = ≤!
 
 -- take a reading, idle two ticks, and transmit the reading taken before
@@ -140,7 +140,7 @@ carried-reading =
 forgetting-time : [] ⊢C⦂ Unit ‼ [ 2 ,+∞⟩
 forgetting-time = coerce ≤! (perform read ⋆ (perform write here (return ⋆)))
 
-inventing-time : ¬ (opTime read ·ₑ (opTime write ·ₑ uₑ) ≾ₑ [ 4 ,+∞⟩)
+inventing-time : ¬ (opTime read ·ₑ (opTime write ·ₑ 𝟏ₑ) ≾ₑ [ 4 ,+∞⟩)
 inventing-time = ≰!
 
 ------------------------------------------------------------------------
@@ -160,7 +160,7 @@ branching =
 -- the transmitting branch's own grade will not do for the conditional,
 -- since the storing branch cannot claim four ticks
 
-storing-guarantees-less : ¬ (opTime write ·ₑ uₑ ≾ₑ [ 4 ,+∞⟩)
+storing-guarantees-less : ¬ (opTime write ·ₑ 𝟏ₑ ≾ₑ [ 4 ,+∞⟩)
 storing-guarantees-less = ≰!
 
 -- an `if` over data alone: both branches make the same run, so neither
@@ -205,12 +205,12 @@ claim-after-idling =
 -- taking a reading is one tick's worth of waiting, which is not enough
 -- for that box
 
-claim-after-sampling-fails : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ [ 2 ,+∞⟩)
+claim-after-sampling-fails : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ [ 2 ,+∞⟩)
 claim-after-sampling-fails = ≰!
 
 -- and claiming it at once is not enough either
 
-claim-at-once-fails : ¬ (uᵣ ≾ᵣ [ 2 ,+∞⟩)
+claim-at-once-fails : ¬ (𝟏ᵣ ≾ᵣ [ 2 ,+∞⟩)
 claim-at-once-fails = ≰!
 
 -- a resource promised in one tick is claimable after a reading, since
@@ -226,7 +226,7 @@ claim-after-sampling =
         (perform send here (return ⋆))))
 
 -- a resource claimable with nothing elapsed is one that promises
--- nothing: `uᵣ ≾ᵣ ρ` forces the box's grade to the unit, there being no
+-- nothing: `𝟏ᵣ ≾ᵣ ρ` forces the box's grade to the unit, there being no
 -- lock between the binding and the claim
 
 claiming-now : [] ⊢C⦂ Unit ‼ [ 4 ,+∞⟩
@@ -257,10 +257,10 @@ handed-over =
 -- resource promised in four ticks is claimable after a transmission and
 -- not after a reading.
 
-reachable-after-a-transmission : uᵣ ·ᵣ opTime send ≾ᵣ [ 4 ,+∞⟩
+reachable-after-a-transmission : 𝟏ᵣ ·ᵣ opTime send ≾ᵣ [ 4 ,+∞⟩
 reachable-after-a-transmission = ≤!
 
-unreachable-after-a-reading : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ [ 4 ,+∞⟩)
+unreachable-after-a-reading : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ [ 4 ,+∞⟩)
 unreachable-after-a-reading = ≰!
 
 -- promised in one tick instead, both branches reach it with time to
@@ -323,7 +323,7 @@ claim-after-a-store =
 -- forgetting one of those ticks first puts the box out of reach: the
 -- lock the continuation is typed under is the coerced grade
 
-coercing-closes-it : ¬ (uᵣ ·ᵣ [ 2 ,+∞⟩ ≾ᵣ [ 3 ,+∞⟩)
+coercing-closes-it : ¬ (𝟏ᵣ ·ᵣ [ 2 ,+∞⟩ ≾ᵣ [ 3 ,+∞⟩)
 coercing-closes-it = ≰!
 
 -- the same program with the coercion, claiming a box that asks for no
@@ -342,7 +342,7 @@ claim-after-a-coerced-store =
 -- and that box was within the uncoerced program's reach as well, which
 -- is the direction `coercion-only-closes` gives at every grade
 
-claim-without-coercing : uᵣ ·ᵣ [ 3 ,+∞⟩ ≾ᵣ [ 2 ,+∞⟩
+claim-without-coercing : 𝟏ᵣ ·ᵣ [ 3 ,+∞⟩ ≾ᵣ [ 2 ,+∞⟩
 claim-without-coercing = ≤!
 
 ------------------------------------------------------------------------
@@ -371,7 +371,7 @@ claim-after-a-branch =
 -- (`reachable-after-a-transmission` above), and the join loses them to
 -- the branch that only idles
 
-four-ticks-lost-at-the-join : ¬ (uᵣ ·ᵣ [ 2 ,+∞⟩ ≾ᵣ [ 4 ,+∞⟩)
+four-ticks-lost-at-the-join : ¬ (𝟏ᵣ ·ᵣ [ 2 ,+∞⟩ ≾ᵣ [ 4 ,+∞⟩)
 four-ticks-lost-at-the-join = ≰!
 
 ------------------------------------------------------------------------
@@ -408,7 +408,7 @@ waiting-instead =
 -- one tick short of it, the claim is refused: dropping the store from
 -- `duty-cycle` leaves three ticks against a resource promised in four
 
-one-tick-short : ¬ (uᵣ ·ᵣ opTime read ·ᵣ of-durʳ 2 ≾ᵣ [ 4 ,+∞⟩)
+one-tick-short : ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ ιᵣ 2 ≾ᵣ [ 4 ,+∞⟩)
 one-tick-short = ≰!
 
 -- two resources on different schedules, claimed at the two points of
@@ -434,7 +434,7 @@ two-schedules =
 
 -- and the later one is out of reach at the earlier point
 
-not-due-yet : ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ [ 6 ,+∞⟩)
+not-due-yet : ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ [ 6 ,+∞⟩)
 not-due-yet = ≰!
 
 -- a resource promised in three ticks, claimed on both sides of an
@@ -486,7 +486,7 @@ identified =
 -- what no clause can do here is drop its continuation: it is graded at
 -- the operation's own time and a `return` guarantees none of it
 
-no-discarding : ¬ (uₑ ≾ₑ op-grade read ·ₑ uₑ)
+no-discarding : ¬ (𝟏ₑ ≾ₑ op-grade read ·ₑ 𝟏ₑ)
 no-discarding = ≰!
 
 ------------------------------------------------------------------------
@@ -500,7 +500,7 @@ no-discarding = ≰!
 -- forward every operation, and on return claim a resource promised in
 -- one tick: the handled computation has taken at least that long
 
-claiming : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢V⦂ (Unit ‼ [ 1 ,+∞⟩) ⇛ (Reading ‼ uₑ)
+claiming : [] ∷ [ [ 1 ,+∞⟩ ] Reading ⊢V⦂ (Unit ‼ [ 1 ,+∞⟩) ⇛ (Reading ‼ 𝟏ₑ)
 claiming =
   handler                            -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Unit
     (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
@@ -539,7 +539,7 @@ coerced-longer =
 
 handling-a-reading :
   [] ∷ [ [ 1 ,+∞⟩ ] Reading
-    ⊢V⦂ ((Unit ‼ [ 1 ,+∞⟩) ⇛ (Reading ‼ uₑ)) ⇒ Reading ‼ [ 1 ,+∞⟩
+    ⊢V⦂ ((Unit ‼ [ 1 ,+∞⟩) ⇛ (Reading ‼ 𝟏ₑ)) ⇒ Reading ‼ [ 1 ,+∞⟩
 handling-a-reading =
   lam                                -- ∷ handler
     (handle perform read ⋆ (return ⋆) `with here)
@@ -557,14 +557,14 @@ handled-by-argument = handling-a-reading · claiming
 everything-weakens : (ε : E) → ε ≾ₑ ⊤ₑ
 everything-weakens = ≾-⊤ₑ
 
-reading-survives-⊤ : ⊤ᵣ ≾ᵣ uᵣ
+reading-survives-⊤ : ⊤ᵣ ≾ᵣ 𝟏ᵣ
 reading-survives-⊤ = ≤!
 
 -- so a handler clause may close over a reading: `var`'s bound holds at
 -- the barrier and at whatever the clause spends past it
 
 reading-crosses-the-barrier :
-  (op : Op) → (ε'' : E) → uᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ uᵣ
+  (op : Op) → (ε'' : E) → 𝟏ᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ 𝟏ᵣ
 reading-crosses-the-barrier op ε'' = nothing-goes-stale _
 
 -- the node's reading, answered from inside a clause that performs the

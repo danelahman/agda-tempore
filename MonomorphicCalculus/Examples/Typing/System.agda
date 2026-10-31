@@ -7,7 +7,7 @@
 -- the instance at an identity grade system.                          --
 --                                                                    --
 -- A `nodeid` variable is usable after any passage of time; a         --
--- `reading` variable only under the bound `ρ ≾ᵣ uᵣ` of `var`.        --
+-- `reading` variable only under the bound `ρ ≾ᵣ 𝟏ᵣ` of `var`.        --
 --                                                                    --
 -- Shared by the instances: the three ways of meeting the bound of    --
 -- `var`, the coercion lemma, and the operation clauses passed to     --
@@ -58,7 +58,7 @@ nodeid-eternal = Baseₑ tt
 ------------------------------------------------------------------------
 -- Variables
 --
--- `var` asks for `ρ ≾ᵣ uᵣ` unless the type is eternal, `ρ` being the
+-- `var` asks for `ρ ≾ᵣ 𝟏ᵣ` unless the type is eternal, `ρ` being the
 -- time that has passed since the variable was bound. The three ways of
 -- meeting it: the variable is the most recent binding, so no time has
 -- passed; its type is eternal, so the bound is not asked for; or the
@@ -70,13 +70,13 @@ here = var (λ _ → ≾ᵣ-refl) Hd
 eternal-var : ∀ {Γ A ρ} → Eternal A → A ∈[ ρ ] Γ → Γ ⊢V⦂ A
 eternal-var et x = var (λ ¬et → ⊥-elim (¬et et)) x
 
-fresh-var : ∀ {Γ A ρ} → ρ ≾ᵣ uᵣ → A ∈[ ρ ] Γ → Γ ⊢V⦂ A
+fresh-var : ∀ {Γ A ρ} → ρ ≾ᵣ 𝟏ᵣ → A ∈[ ρ ] Γ → Γ ⊢V⦂ A
 fresh-var p x = var (λ _ → p) x
 
 ------------------------------------------------------------------------
 -- Sub-effecting against unboxing
 --
--- Sequencing types its continuation under the lock `⟨ mapᵉ ε ⟩`, where
+-- Sequencing types its continuation under the lock `⟨ ∣ ε ∣ᵉ ⟩`, where
 -- `ε` is the grade the first part is typed at, not the time it takes,
 -- and `handle`'s `in` part is locked the same way. So a
 -- `coerce` on that first part changes what its continuation may claim,
@@ -88,8 +88,8 @@ fresh-var p x = var (λ _ → p) x
 
 coercion-only-closes : ∀ {ρ ρ'} {ε ε' : E}
                      → ε ≾ₑ ε'
-                     → ρ' ·ᵣ mapᵉ ε' ≾ᵣ ρ
-                     → ρ' ·ᵣ mapᵉ ε  ≾ᵣ ρ
+                     → ρ' ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ ρ
+                     → ρ' ·ᵣ ∣ ε ∣ᵉ  ≾ᵣ ρ
 coercion-only-closes sub claim =
   ≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (map-monotoneᵉ sub)) claim
 
@@ -114,12 +114,12 @@ Node = [] ∷ NodeId ∷ Reading
 
 -- Perform the operation again and resume. The box is claimed under the
 -- very lock the `perform` puts up, so the premise is
--- `uᵣ ·ᵣ mapᵉ (op-grade op) ≾ᵣ mapᵉ (op-grade op)`, which the unit law
+-- `𝟏ᵣ ·ᵣ ∣ op-grade op ∣ᵉ ≾ᵣ ∣ op-grade op ∣ᵉ`, which the unit law
 -- discharges at every grade.
 
 forwarding : ∀ {Γ B} → (op : Op) → (ε'' : E)
            → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                 ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
              ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')
 forwarding op ε'' =
   perform op (fresh-var ≾ᵣ-refl (Tl-∷ Hd))
@@ -134,7 +134,7 @@ forwarding op ε'' =
 
 identifying : (op : Op) → (ε'' : E)
             → Node ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ NodeId ‼ ε'')
+                    ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ NodeId ‼ ε'')
               ⊢C⦂ NodeId ‼ (op-grade op ·ₑ ε'')
 identifying op ε'' =
   ε-≃ (·ₑ-cong ≃ₑ-refl (·ₑ-identityʳ ε''))
@@ -155,10 +155,10 @@ identifying op ε'' =
 
 reporting : (reading-crosses :
               (op : Op) → (ε'' : E)
-              → uᵣ ·ᵣ ⊤ᵣ ·ᵣ mapᵉ (op-grade op) ·ᵣ mapᵉ ε'' ≾ᵣ uᵣ)
+              → 𝟏ᵣ ·ᵣ ⊤ᵣ ·ᵣ ∣ op-grade op ∣ᵉ ·ᵣ ∣ ε'' ∣ᵉ ≾ᵣ 𝟏ᵣ)
           → (op : Op) → (ε'' : E)
           → Node ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Reading ‼ ε'')
+                  ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ Reading ‼ ε'')
             ⊢C⦂ Reading ‼ (op-grade op ·ₑ ε'')
 reporting reading-crosses op ε'' =
   ε-≃ (·ₑ-cong ≃ₑ-refl (·ₑ-identityʳ ε''))
@@ -174,13 +174,13 @@ reporting reading-crosses op ε'' =
 
 -- Drop the continuation and return straight away. The clause still has
 -- to be graded at `op-grade op ·ₑ ε''`, and a `return` is graded at
--- `uₑ`, so it exists exactly when the grade of doing nothing sits below
+-- `𝟏ₑ`, so it exists exactly when the grade of doing nothing sits below
 -- the grade of doing the operation and resuming.
 
 discarding : ∀ {Γ}
-           → (nothing-fits : (op : Op) → (ε'' : E) → uₑ ≾ₑ op-grade op ·ₑ ε'')
+           → (nothing-fits : (op : Op) → (ε'' : E) → 𝟏ₑ ≾ₑ op-grade op ·ₑ ε'')
            → (op : Op) → (ε'' : E)
            → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Unit ‼ ε'')
+                 ∷ [ ∣ op-grade op ∣ᵉ ] (type-of-gtype (arity op) ⇒ Unit ‼ ε'')
              ⊢C⦂ Unit ‼ (op-grade op ·ₑ ε'')
 discarding nothing-fits op ε'' = coerce (nothing-fits op ε'') (return ⋆)

@@ -75,7 +75,7 @@ box-ε-substˢ refl b = b
 app-ε-substˢ : ∀ {P A ε₁ ε₂ w} → (h : Handlerˢ P A) → (op : Op) → (e : ε₁ ≡ ε₂)
              → (pv : carrier P w)
              → (v : carrier ⟦ param op ⟧ᵍ w)
-             → (b : [ mapᵉ (op-grade op) ]ᶜ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A ε₁) w)
+             → (b : [ ∣ op-grade op ∣ᵉ ]ᶜ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A ε₁) w)
              → app (clause h op ε₁) (pv , (v , b))
              ≈ᵗ ε-substˢ (cong (op-grade op ·ₑ_) (sym e))
                   (app (clause h op ε₂) (pv , (v , box-ε-substˢ e b)))
@@ -85,7 +85,7 @@ app-ε-substˢ h op refl pv v b = ≈ᵗ-refl _
 
 box-ε-substˢ-fun : ∀ {A X ρ ε₁ ε₂ w} → (e : ε₁ ≡ ε₂)
                  → (b : [ ρ ]ᶜ (X ⇒ᵖ Tᵒ A ε₁) w)
-                 → ∀ {w'} (q : w ⊑[ ρ ] w') {w''} (r : w' ⊑[ uᵣ ] w'')
+                 → ∀ {w'} (q : w ⊑[ ρ ] w') {w''} (r : w' ⊑[ 𝟏ᵣ ] w'')
                  → (y : carrier X w'')
                  → B.fun (F.fun (box-ε-substˢ e b) q) r y
                  ≡ ε-substˢ e (B.fun (F.fun b q) r y)
@@ -96,22 +96,22 @@ box-ε-substˢ-fun refl b q r y = refl
 -- argument), since `_≈ᵗ_` does not determine it.
 
 delay-ε-substˢ-nat : ∀ {A ε₁ ε₂ τ w} → (e : ε₁ ≡ ε₂)
-                   → (f : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε₁ w')
-                   → (fn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w')
-                             (r : w' ⊑[ uᵣ ] w'')
+                   → (f : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε₁ w')
+                   → (fn : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w')
+                             (r : w' ⊑[ 𝟏ᵣ ] w'')
                          → f (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (f q))
-                   → ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+                   → ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                    → ε-substˢ e (f (⊑ρ∘ᵘ q r)) ≈ᵗ transportᵗ r (ε-substˢ e (f q))
 delay-ε-substˢ-nat e f fn q r =
   ≈ᵗ-trans (ε-substˢ-congᵗ e (fn q r))
            (≡→≈ᵗ (sym (transportᵗ-ε-substˢ r e (f q))))
 
 delay-ε-substˢ : ∀ {A ε₁ ε₂ τ w} → (e : ε₁ ≡ ε₂)
-               → (f : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A ε₁ w')
-               → (fn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+               → (f : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A ε₁ w')
+               → (fn : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
                      → f (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (f q))
                → delay-node τ (λ q → ε-substˢ e (f q)) (delay-ε-substˢ-nat e f fn)
-               ≈ᵗ ε-substˢ (cong (of-durᵉ τ ·ₑ_) e) (delay-node τ f fn)
+               ≈ᵗ ε-substˢ (cong (ιₑ τ ·ₑ_) e) (delay-node τ f fn)
 delay-ε-substˢ refl f fn = delay-≈ (λ q → ≈ᵗ-refl _)
 
 -- Advancing a necessitated parameter under a node (`box▸`) agrees with
@@ -119,10 +119,10 @@ delay-ε-substˢ refl f fn = delay-≈ (λ q → ≈ᵗ-refl _)
 -- comultiplication law `necᵉ-δ` (a composite-grade box splits into nested ones).
 
 necᵉ-box▸ : ∀ {P ρ₀ ε₀ w w' w''} (bc : Eternalᵒ P) (pv : carrier P w)
-            (q : w ⊑[ mapᵉ ρ₀ ] w') (r : w' ⊑[ mapᵉ ε₀ ] w'')
-          → _≈_ P (F.fun (box▸ P q (B.app (Eternalᵒ.necᵉ bc {mapᵉ (ρ₀ ·ₑ ε₀)}) pv)) r)
-                  (F.fun (B.app (Eternalᵒ.necᵉ bc {mapᵉ ε₀})
-                                (F.fun (B.app (Eternalᵒ.necᵉ bc {mapᵉ ρ₀}) pv) q)) r)
+            (q : w ⊑[ ∣ ρ₀ ∣ᵉ ] w') (r : w' ⊑[ ∣ ε₀ ∣ᵉ ] w'')
+          → _≈_ P (F.fun (box▸ P q (B.app (Eternalᵒ.necᵉ bc {∣ ρ₀ ·ₑ ε₀ ∣ᵉ}) pv)) r)
+                  (F.fun (B.app (Eternalᵒ.necᵉ bc {∣ ε₀ ∣ᵉ})
+                                (F.fun (B.app (Eternalᵒ.necᵉ bc {∣ ρ₀ ∣ᵉ}) pv) q)) r)
 necᵉ-box▸ {P = P} bc pv q r =
   ≈-trans P (Eternalᵒ.necᵉ-≤ bc (≃ᵣ⇒≿ᵣ map-·ᵉ) pv (⊑-trans q r))
             (Eternalᵒ.necᵉ-δ bc pv q r)
@@ -142,8 +142,8 @@ T-alg-of-handlerˢ-μˢ : ∀ {P A ε ε' ε'' w} → (bc : Eternalᵒ P) → (h
 T-alg-of-handlerˢ-μˢ {P = P} {ε' = ε'} {ε'' = ε''} bc h pv (leaf t) =
   ≈ᵗ-trans
     (sub-congᵗ (T-alg-of-handlerˢ-congᵖ bc h
-                 (≈-sym P (≈-trans P (Eternalᵒ.necᵉ-≤ bc (≃ᵣ⇒≿ᵣ map-uᵉ) pv ⊑-refl)
-                                     (≈-trans P (Eternalᵒ.necᵉ-u bc pv ⊑-refl)
+                 (≈-sym P (≈-trans P (Eternalᵒ.necᵉ-≤ bc (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) pv ⊑-refl)
+                                     (≈-trans P (Eternalᵒ.necᵉ-𝟏 bc pv ⊑-refl)
                                                 (transport-refl P pv))))
                  t))
     (≈ᵗ-sym (sub-∘ᵗ _ _ _ _))
@@ -157,16 +157,16 @@ T-alg-of-handlerˢ-μˢ {P = P} {A = A} {ε' = ε'} {ε'' = ε''} {w = w} bc h p
       (≈ᵗ-sym (clause-mono h op (≃ₑ⇒≾ₑ (·ₑ-assoc ε₁ ε' ε'')) pv v BXμ BX' rel))))
   where
     -- the RHS's folded, strength-threaded continuation and its coherences
-    cont' : ∀ {w'} → w ⊑[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w'
+    cont' : ∀ {w'} → w ⊑[ ∣ op-grade op ∣ᵉ ] w' → carrier ⟦ arity op ⟧ᵍ w'
           → Tˢ (Tᵒ A (ε' ·ₑ ε'')) ε₁ w'
     cont' q' y = Tˢᶠ (T-alg-of-handlerᵀ bc h)
                      (strˢ P (box▸ P q' (app (Eternalᵒ.necᵉ bc) pv)) (k q' y))
 
-    kc' : ∀ {w'} (q' : w ⊑[ mapᵉ (op-grade op) ] w') {y y' : carrier ⟦ arity op ⟧ᵍ w'}
+    kc' : ∀ {w'} (q' : w ⊑[ ∣ op-grade op ∣ᵉ ] w') {y y' : carrier ⟦ arity op ⟧ᵍ w'}
         → _≈_ ⟦ arity op ⟧ᵍ y y' → cont' q' y ≈ᵗ cont' q' y'
     kc' q' e = Tˢᶠ-congᵗ (T-alg-of-handlerᵀ bc h) (strˢ-congᵗ P (λ r → ≈-refl P) (kc q' e))
 
-    kn' : ∀ {w' w''} (q' : w ⊑[ mapᵉ (op-grade op) ] w') (r : w' ⊑[ uᵣ ] w'')
+    kn' : ∀ {w' w''} (q' : w ⊑[ ∣ op-grade op ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
           (y : carrier ⟦ arity op ⟧ᵍ w')
         → cont' (⊑ρ∘ᵘ q' r) (transport ⟦ arity op ⟧ᵍ r y) ≈ᵗ transportᵗ r (cont' q' y)
     kn' q' r y =
@@ -184,7 +184,7 @@ T-alg-of-handlerˢ-μˢ {P = P} {A = A} {ε' = ε'} {ε'' = ε''} {w = w} bc h p
 
     BX' = handler-box bc pv h op cont' kc' kn'
 
-    rel : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w') {w''} (r : w' ⊑[ uᵣ ] w'')
+    rel : ∀ {w'} (q : w ⊑[ ∣ op-grade op ∣ᵉ ] w') {w''} (r : w' ⊑[ 𝟏ᵣ ] w'')
           (y : carrier ⟦ arity op ⟧ᵍ w'')
         → B.fun (F.fun BX' q) r y ≈ᵗ sub (≃ₑ⇒≾ₑ (·ₑ-assoc ε₁ ε' ε'')) (B.fun (F.fun BXμ q) r y)
     rel q r y =
@@ -193,7 +193,7 @@ T-alg-of-handlerˢ-μˢ {P = P} {A = A} {ε' = ε'} {ε'' = ε''} {w = w} bc h p
           (sub-congᵗ (T-alg-of-handlerˢ-μˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) (⊑ρ∘ᵘ q r))
                                           (k (⊑ρ∘ᵘ q r) y)))
         (≈ᵗ-trans (sub-∘ᵗ _ _ ≾ₑ-refl _)
-        (≈ᵗ-trans (sub-uᵗ _ _)
+        (≈ᵗ-trans (sub-𝟏ᵗ _ _)
           (T-alg-of-handlerˢ-congᵗ bc h _
             (Tˢᶠ-congᵗ (T-alg-of-handlerᵀ bc h)
               (strˢ-congᵗ P (λ r' → ≈-sym P (necᵉ-box▸ bc pv (⊑ρ∘ᵘ q r) r'))
@@ -213,12 +213,12 @@ T-alg-of-handlerˢ-μˢ {P = P} {A = A} {ε' = ε'} {ε'' = ε''} {w = w} bc h p
         (≈ᵗ-sym (sub-delayᵗ (≃ₑ⇒≿ₑ (·ₑ-assoc ε₁ ε' ε'')) f-tgt fn)))))
     (≈ᵗ-sym (sub3ᵗ _ _ _ _ _ _))
   where
-    f-tgt : ∀ {w'} → w ⊑[ mapᵉ (of-durᵉ τ) ] w' → Tˢ A (ε₁ ·ₑ (ε' ·ₑ ε'')) w'
+    f-tgt : ∀ {w'} → w ⊑[ ∣ ιₑ τ ∣ᵉ ] w' → Tˢ A (ε₁ ·ₑ (ε' ·ₑ ε'')) w'
     f-tgt q = T-alg-of-handlerˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) q)
                 (Tˢᶠ (T-alg-of-handlerᵀ bc h)
                   (strˢ P (box▸ P q (app (Eternalᵒ.necᵉ bc) pv)) (k q)))
 
-    fn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-durᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+    fn : ∀ {w' w''} (q : w ⊑[ ∣ ιₑ τ ∣ᵉ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'')
        → f-tgt (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (f-tgt q)
     fn q r =
       ≈ᵗ-trans
@@ -257,5 +257,5 @@ T-alg-of-handlerᵀ-μᵀ : ∀ {P A ε ε' ε''} → (bc : Eternalᵒ P) → (h
                          ∘ᵖ ⟨ fstᵐ
                             , Tᶠ (T-alg-of-handlerᵀ {P} {A} {ε'} {ε''} bc h)
                               ∘ᵖ strᵀ
-                              ∘ᵖ mapˣᵐ (Eternalᵒ.necᵉ bc {mapᵉ ε}) idᵖ ⟩ᵐ
+                              ∘ᵖ mapˣᵐ (Eternalᵒ.necᵉ bc {∣ ε ∣ᵉ}) idᵖ ⟩ᵐ
 T-alg-of-handlerᵀ-μᵀ bc h (pv , t) = T-alg-of-handlerˢ-μˢ bc h pv t

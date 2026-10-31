@@ -73,13 +73,13 @@ tagged-relaying =
 ------------------------------------------------------------------------
 -- Readings go stale
 --
--- `ρ ≾ᵣ uᵣ` asks the elapsed runs to be the empty one, so a reading is
+-- `ρ ≾ᵣ 𝟏ᵣ` asks the elapsed runs to be the empty one, so a reading is
 -- usable only where no lock stands between its binding and its use.
 
-reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-durʳ 2 ≾ᵣ uᵣ)
+reading-stale-after-idling : ¬ (𝟏ᵣ ·ᵣ ιᵣ 2 ≾ᵣ 𝟏ᵣ)
 reading-stale-after-idling = fails
 
-reading-stale-after-an-operation : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
+reading-stale-after-an-operation : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ 𝟏ᵣ)
 reading-stale-after-an-operation = fails
 
 carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ permitting ⟅ ⌈ read ⌉ ⟆
@@ -100,7 +100,7 @@ listing-a-second-run =
   coerce holds (perform read ⋆ (perform write here (return ⋆)))
 
 no-budgeting :
-  ¬ (opTime read ·ₑ (opTime write ·ₑ uₑ) ≾ₑ permitting ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆)
+  ¬ (opTime read ·ₑ (opTime write ·ₑ 𝟏ₑ) ≾ₑ permitting ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆)
 no-budgeting = fails
 
 ------------------------------------------------------------------------
@@ -117,7 +117,7 @@ branching =
     `then coerce holds (perform send  here (return ⋆))
     `else coerce holds (perform write here (return ⋆))
 
-six-ticks-buy-nothing : ¬ (opTime send ·ₑ uₑ ≾ₑ permitting ⟅ ⟨ 6 ⟩ ⟆)
+six-ticks-buy-nothing : ¬ (opTime send ·ₑ 𝟏ₑ ≾ₑ permitting ⟅ ⟨ 6 ⟩ ⟆)
 six-ticks-buy-nothing = fails
 
 -- an `if` over data alone: both branches make the same run, so neither
@@ -187,16 +187,16 @@ either-way =
 
 -- claiming it at once is not among them, the empty run not being listed
 
-claiming-now-not-listed : ¬ (uᵣ ≾ᵣ permit)
-claiming-now-not-listed = failsᵉ uᵣ permit
+claiming-now-not-listed : ¬ (𝟏ᵣ ≾ᵣ permit)
+claiming-now-not-listed = failsᵉ 𝟏ᵣ permit
 
 -- nor is one tick's idling, nor a reading followed by a store: a run
 -- that is not listed is refused however little it costs
 
-one-tick-not-listed : ¬ (uᵣ ·ᵣ of-durʳ 1 ≾ᵣ permit)
+one-tick-not-listed : ¬ (𝟏ᵣ ·ᵣ ιᵣ 1 ≾ᵣ permit)
 one-tick-not-listed = fails
 
-storing-not-listed : ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ permit)
+storing-not-listed : ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ permit)
 storing-not-listed = fails
 
 -- a permit that does list the empty run is claimable at once, with no
@@ -208,7 +208,7 @@ listed-now = permitting ⟅ ε ∣ ⌈ read ⌉ ⟆
 claiming-now : [] ⊢C⦂ Unit ‼ permitting ⟅ ⌈ send ⌉ ⟆
 claiming-now =
   box listed-now (const 42)        -- ∷ [ permitting ⟅ ε ∣ ⌈ read ⌉ ⟆ ] Reading
-    (unbox Hd (holdsᵉ uᵣ listed-now) (<:ᵛ-refl _)
+    (unbox Hd (holdsᵉ 𝟏ᵣ listed-now) (<:ᵛ-refl _)
                                      -- ∷ Reading
       (perform send here (return ⋆)))
 
@@ -241,11 +241,11 @@ claimed-in-both-branches =
 -- and dropping either run closes the branch that makes it
 
 sampling-branch-needs-its-run :
-  ¬ (uᵣ ·ᵣ opTime read ≾ᵣ permitting ⟅ ⌈ send ⌉ ⟆)
+  ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ permitting ⟅ ⌈ send ⌉ ⟆)
 sampling-branch-needs-its-run = fails
 
 transmitting-branch-needs-its-run :
-  ¬ (uᵣ ·ᵣ opTime send ≾ᵣ permitting ⟅ ⌈ read ⌉ ⟆)
+  ¬ (𝟏ᵣ ·ᵣ opTime send ≾ᵣ permitting ⟅ ⌈ read ⌉ ⟆)
 transmitting-branch-needs-its-run = fails
 
 ------------------------------------------------------------------------
@@ -275,11 +275,11 @@ permit-in-a-branch =
 -- other branch
 
 idling-not-covered-by-the-reading :
-  ¬ (uᵣ ·ᵣ of-durʳ 2 ≾ᵣ permitting ⟅ ⌈ read ⌉ ⟆)
+  ¬ (𝟏ᵣ ·ᵣ ιᵣ 2 ≾ᵣ permitting ⟅ ⌈ read ⌉ ⟆)
 idling-not-covered-by-the-reading = fails
 
 reading-not-covered-by-the-idling :
-  ¬ (uᵣ ·ᵣ opTime read ≾ᵣ permitting ⟅ ⟨ 2 ⟩ ⟆)
+  ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ permitting ⟅ ⟨ 2 ⟩ ⟆)
 reading-not-covered-by-the-idling = fails
 
 ------------------------------------------------------------------------
@@ -305,5 +305,5 @@ identified =
 -- no clause may drop its continuation: its grade lists runs that begin
 -- with the operation, and returning at once makes the empty run
 
-no-discarding : ¬ (uₑ ≾ₑ op-grade read ·ₑ uₑ)
-no-discarding = failsᵉ uₑ (op-grade read ·ₑ uₑ)
+no-discarding : ¬ (𝟏ₑ ≾ₑ op-grade read ·ₑ 𝟏ₑ)
+no-discarding = failsᵉ 𝟏ₑ (op-grade read ·ₑ 𝟏ₑ)

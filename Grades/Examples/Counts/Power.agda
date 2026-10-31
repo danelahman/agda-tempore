@@ -34,7 +34,7 @@ open import Relation.Nullary using (Dec; yes; no)
 open import Util.Equality
 
 open Grade G
-  renaming (Carrier to C; _≾_ to _≾ᴳ_; u to uᴳ; ⊤ to ⊤ᴳ; _·_ to _·ᴳ_;
+  renaming (Carrier to C; _≾_ to _≾ᴳ_; 𝟏 to 𝟏ᴳ; ⊤ to ⊤ᴳ; _·_ to _·ᴳ_;
             _⊔_ to _⊔ᴳ_; _≾?_ to _≾ᴳ?_; ≾-refl to ≾ᴳ-refl;
             ≾-trans to ≾ᴳ-trans; ≾-irrelevant to ≾ᴳ-irrelevant;
             _≃_ to _≃ᴳ_)
@@ -49,8 +49,8 @@ infix  5 _≾ᵛ_
 _·ᵛ_ : ∀ {n} → Vec C n → Vec C n → Vec C n
 _·ᵛ_ = zipWith _·ᴳ_
 
-uᵛ : ∀ {n} → Vec C n
-uᵛ {n} = replicate n uᴳ
+𝟏ᵛ : ∀ {n} → Vec C n
+𝟏ᵛ {n} = replicate n 𝟏ᴳ
 
 ⊤ᵛ : ∀ {n} → Vec C n
 ⊤ᵛ {n} = replicate n ⊤ᴳ
@@ -96,8 +96,8 @@ lookup-⊔ᵛ : ∀ {n} (c d : Vec C n) (i : Fin n)
           → lookup (c ⊔ᵛ d) i ≡ lookup c i ⊔ᴳ lookup d i
 lookup-⊔ᵛ c d i = lookup-zipWith _⊔ᴳ_ i c d
 
-lookup-uᵛ : ∀ {n} (i : Fin n) → lookup (uᵛ {n}) i ≡ uᴳ
-lookup-uᵛ i = lookup-replicate i uᴳ
+lookup-𝟏ᵛ : ∀ {n} (i : Fin n) → lookup (𝟏ᵛ {n}) i ≡ 𝟏ᴳ
+lookup-𝟏ᵛ i = lookup-replicate i 𝟏ᴳ
 
 lookup-⊤ᵛ : ∀ {n} (i : Fin n) → lookup (⊤ᵛ {n}) i ≡ ⊤ᴳ
 lookup-⊤ᵛ i = lookup-replicate i ⊤ᴳ
@@ -105,11 +105,11 @@ lookup-⊤ᵛ i = lookup-replicate i ⊤ᴳ
 ------------------------------------------------------------------------
 -- The monoid
 
-·ᵛ-identityˡ : ∀ {n} (c : Vec C n) → uᵛ ·ᵛ c ≃ᵛ c
+·ᵛ-identityˡ : ∀ {n} (c : Vec C n) → 𝟏ᵛ ·ᵛ c ≃ᵛ c
 ·ᵛ-identityˡ []       = tt , tt
 ·ᵛ-identityˡ (a ∷ as) = ∷-≃ᵛ (·-identityˡ a) (·ᵛ-identityˡ as)
 
-·ᵛ-identityʳ : ∀ {n} (c : Vec C n) → c ·ᵛ uᵛ ≃ᵛ c
+·ᵛ-identityʳ : ∀ {n} (c : Vec C n) → c ·ᵛ 𝟏ᵛ ≃ᵛ c
 ·ᵛ-identityʳ []       = tt , tt
 ·ᵛ-identityʳ (a ∷ as) = ∷-≃ᵛ (·-identityʳ a) (·ᵛ-identityʳ as)
 
@@ -194,12 +194,12 @@ _≾ᵛ?_ : ∀ {n} (c d : Vec C n) → Dec (c ≾ᵛ d)
 ------------------------------------------------------------------------
 -- Zero-product property, coordinatewise
 
-≾ᵛ-zero-productˡ : ∀ {n} {c d : Vec C n} → c ·ᵛ d ≾ᵛ uᵛ → c ≾ᵛ uᵛ
+≾ᵛ-zero-productˡ : ∀ {n} {c d : Vec C n} → c ·ᵛ d ≾ᵛ 𝟏ᵛ → c ≾ᵛ 𝟏ᵛ
 ≾ᵛ-zero-productˡ {c = []}    {[]}    _        = tt
 ≾ᵛ-zero-productˡ {c = _ ∷ _} {_ ∷ _} (p , ps) =
   ≾-zero-productˡ p , ≾ᵛ-zero-productˡ ps
 
-≾ᵛ-zero-productʳ : ∀ {n} {c d : Vec C n} → c ·ᵛ d ≾ᵛ uᵛ → d ≾ᵛ uᵛ
+≾ᵛ-zero-productʳ : ∀ {n} {c d : Vec C n} → c ·ᵛ d ≾ᵛ 𝟏ᵛ → d ≾ᵛ 𝟏ᵛ
 ≾ᵛ-zero-productʳ {c = []}    {[]}    _        = tt
 ≾ᵛ-zero-productʳ {c = _ ∷ _} {_ ∷ _} (p , ps) =
   ≾-zero-productʳ p , ≾ᵛ-zero-productʳ ps
@@ -244,9 +244,9 @@ tabulate-⊔ᵛ : ∀ {n} (f g : Fin n → C)
 tabulate-⊔ᵛ {zero}  f g = refl
 tabulate-⊔ᵛ {suc n} f g = cong (f zero ⊔ᴳ g zero ∷_) (tabulate-⊔ᵛ (λ i → f (suc i)) (λ i → g (suc i)))
 
-tabulate-uᵛ : ∀ {n} (f : Fin n → C) → (∀ i → f i ≡ uᴳ) → tabulate f ≡ uᵛ
-tabulate-uᵛ {zero}  f p = refl
-tabulate-uᵛ {suc n} f p = cong₂ _∷_ (p zero) (tabulate-uᵛ (λ i → f (suc i)) (λ i → p (suc i)))
+tabulate-𝟏ᵛ : ∀ {n} (f : Fin n → C) → (∀ i → f i ≡ 𝟏ᴳ) → tabulate f ≡ 𝟏ᵛ
+tabulate-𝟏ᵛ {zero}  f p = refl
+tabulate-𝟏ᵛ {suc n} f p = cong₂ _∷_ (p zero) (tabulate-𝟏ᵛ (λ i → f (suc i)) (λ i → p (suc i)))
 
 tabulate-≾ᵛ : ∀ {n} {f g : Fin n → C} → (∀ i → f i ≾ᴳ g i) → tabulate f ≾ᵛ tabulate g
 tabulate-≾ᵛ {zero}  p = tt
@@ -255,9 +255,9 @@ tabulate-≾ᵛ {suc n} p = p zero , tabulate-≾ᵛ (λ i → p (suc i))
 ------------------------------------------------------------------------
 -- Leastness of the unit carries over
 
-uᵛ-least : Minimum _≾ᴳ_ uᴳ → ∀ {n} → Minimum (_≾ᵛ_ {n}) uᵛ
-uᵛ-least least []       = tt
-uᵛ-least least (a ∷ as) = least a , uᵛ-least least as
+𝟏ᵛ-least : Minimum _≾ᴳ_ 𝟏ᴳ → ∀ {n} → Minimum (_≾ᵛ_ {n}) 𝟏ᵛ
+𝟏ᵛ-least least []       = tt
+𝟏ᵛ-least least (a ∷ as) = least a , 𝟏ᵛ-least least as
 
 ------------------------------------------------------------------------
 -- The grade
@@ -266,7 +266,7 @@ power : ℕ → Grade D
 power n = record
   { Carrier         = Vec C n
   ; _·_             = _·ᵛ_
-  ; u               = uᵛ
+  ; 𝟏               = 𝟏ᵛ
   ; ·-identityˡ     = ·ᵛ-identityˡ
   ; ·-identityʳ     = ·ᵛ-identityʳ
   ; ·-assoc         = ·ᵛ-assoc
@@ -287,16 +287,16 @@ power n = record
   ; _≾?_            = _≾ᵛ?_
   ; ≾-zero-productˡ = λ {c} {d} → ≾ᵛ-zero-productˡ {c = c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾ᵛ-zero-productʳ {c = c} {d}
-  ; of-dur          = λ _ → uᵛ
-  ; of-dur-zero     = ≾ᵛ-refl , ≾ᵛ-refl
-  ; of-dur-plus     = proj₂ (·ᵛ-identityˡ uᵛ) , proj₁ (·ᵛ-identityˡ uᵛ)
+  ; ι               = λ _ → 𝟏ᵛ
+  ; ι-zero          = ≾ᵛ-refl , ≾ᵛ-refl
+  ; ι-plus          = proj₂ (·ᵛ-identityˡ 𝟏ᵛ) , proj₁ (·ᵛ-identityˡ 𝟏ᵛ)
   }
 
 -- its hints: the unit is least and `_·_` commutes where they do in `G`
 
 powerʰ : GradeHints G → (n : ℕ) → GradeHints (power n)
 powerʰ H n = record
-  { u-least? = maybe′ (λ least → just (uᵛ-least least)) nothing (GradeHints.u-least? H)
+  { 𝟏-least? = maybe′ (λ least → just (𝟏ᵛ-least least)) nothing (GradeHints.𝟏-least? H)
   ; ·-comm?  = maybe′ (λ comm → just (·ᵛ-comm comm)) nothing (GradeHints.·-comm? H)
   ; plus?    = λ _ → nothing
   }

@@ -42,22 +42,22 @@ absurd′-reported = refl
 pipe-reported : schemeOf (infer [] pipe) ≡ just expected-pipe
 pipe-reported = refl
 
--- `⊤ = u` meets `f`'s disjunction; `·-comm?` sorts the product
+-- `⊤ = 𝟏` meets `f`'s disjunction; `·-comm?` sorts the product
 
 expected-compose-top-comm : Scheme
 expected-compose-top-comm =
   ∀[ 3 , 0 , 2 ] ⊤ ⟹
-    ((α₁ ⇒ α₀ ‼ ε₀) ⇒ ((α₂ ⇒ α₁ ‼ ε₁) ⇒ (α₂ ⇒ α₀ ‼ (ε₀ ·̂ₑ ε₁)) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+    ((α₁ ⇒ α₀ ‼ ε₀) ⇒ ((α₂ ⇒ α₁ ‼ ε₁) ⇒ (α₂ ⇒ α₀ ‼ (ε₀ ·̂ₑ ε₁)) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 compose-reported : schemeOf (infer [] compose) ≡ just expected-compose-top-comm
 compose-reported = refl
 
--- `⊤ = u` meets both disjunctions; only the subtyping is left
+-- `⊤ = 𝟏` meets both disjunctions; only the subtyping is left
 
 expected-min-top : Scheme
 expected-min-top =
   ∀[ 3 , 0 , 1 ] α₂ <: α₁ ∧ α₀ <: α₁ ⟹
-    ((α₂ |×| α₀ ⇒ Bool ‼ ε₀) ⇒ (α₂ ⇒ (α₀ ⇒ α₁ ‼ ε₀) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+    ((α₂ |×| α₀ ⇒ Bool ‼ ε₀) ⇒ (α₂ ⇒ (α₀ ⇒ α₁ ‼ ε₀) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ) ‼ 𝟏̂ₑ
 
 min-reported : schemeOf (infer [] min) ≡ just expected-min-top
 min-reported = refl

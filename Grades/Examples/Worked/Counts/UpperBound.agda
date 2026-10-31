@@ -31,7 +31,7 @@ open import Grades.Examples.Counts.UpperBound using (counts-upper-bound; restric
 open import Grades.Examples.Time.RightSided using (𝕀ᵣ)
 
 open Maps ℕ-names using (Map; _∣_; _!_)
-open Grade counts-upper-bound using (_≾_; _≾?_; _·_; _⊔_; u; ⊤)
+open Grade counts-upper-bound using (_≾_; _≾?_; _·_; _⊔_; 𝟏; ⊤)
 
 -- the operations as names
 
@@ -104,8 +104,8 @@ joined-read = refl
 
 -- the unit is least, unlimited everywhere greatest
 
-none-least : u ≾ read-send
-none-least = holds u read-send
+none-least : 𝟏 ≾ read-send
+none-least = holds 𝟏 read-send
 
 all-greatest : two-sends-free ≾ ⊤
 all-greatest = holds two-sends-free ⊤

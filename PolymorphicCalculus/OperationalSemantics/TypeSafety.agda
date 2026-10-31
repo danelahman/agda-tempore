@@ -53,8 +53,8 @@ private
 
   module _ {Θ : Scope} {Q : Hyps Θ} where
 
-    û≾∣∣ : ∀ {ε} → Q ⊩ ûₑ ≾̂ₑ ε → Q ⊩ ûᵣ ≾̂ᵣ ∣ ε ∣̂ᵉ
-    û≾∣∣ p = transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-const (≃ᵣ-sym map-uᵉ)) (≡̂ᵣ-sym ≡̂ᵣ-map-const)))
+    𝟏̂≾∣∣ : ∀ {ε} → Q ⊩ 𝟏̂ₑ ≾̂ₑ ε → Q ⊩ 𝟏̂ᵣ ≾̂ᵣ ∣ ε ∣̂ᵉ
+    𝟏̂≾∣∣ p = transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-const (≃ᵣ-sym map-𝟏ᵉ)) (≡̂ᵣ-sym ≡̂ᵣ-map-const)))
                     (map-mono p)
 
     ∣·∣ : ∀ {ε ε'} → Q ⊩ ∣ ε ∣̂ᵉ ·̂ᵣ ∣ ε' ∣̂ᵉ ≾̂ᵣ ∣ ε ·̂ₑ ε' ∣̂ᵉ
@@ -63,10 +63,10 @@ private
     ·∣∣ : ∀ {ε ε'} → Q ⊩ ∣ ε ·̂ₑ ε' ∣̂ᵉ ≾̂ᵣ ∣ ε ∣̂ᵉ ·̂ᵣ ∣ ε' ∣̂ᵉ
     ·∣∣ = eqᵣ ≡̂ᵣ-map-·
 
-    ∣const∣ : ∀ {g} → Q ⊩ rconst (mapᵉ g) ≾̂ᵣ ∣ econst g ∣̂ᵉ
+    ∣const∣ : ∀ {g} → Q ⊩ rconst ∣ g ∣ᵉ ≾̂ᵣ ∣ econst g ∣̂ᵉ
     ∣const∣ = eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-map-const)
 
-    ≾-·ˡ : ∀ {ε₁ ε₂} → Q ⊩ ûₑ ≾̂ₑ ε₁ → Q ⊩ ε₂ ≾̂ₑ ε₁ ·̂ₑ ε₂
+    ≾-·ˡ : ∀ {ε₁ ε₂} → Q ⊩ 𝟏̂ₑ ≾̂ₑ ε₁ → Q ⊩ ε₂ ≾̂ₑ ε₁ ·̂ₑ ε₂
     ≾-·ˡ p = transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-identityˡ)) (monoₑ p ⊩≾̂ₑ-refl)
 
     -- the grade of a lock and of the time it adds, regrouped
@@ -255,7 +255,7 @@ preservation T (D , eD) SEQ-RET with invC≡ D eD
               (cong₂ (subᶜ 0) eV (trans (∥rename-c∥ r DN)
                                         (trans (ren-idᶜ (ext-id (λ i → refl)) ∥ DN ∥ᶜ) eN))))
        (<:̂ᶜ-trans (<:̂ᵛ-refl B ‼ₛ ≾-·ˡ q₃) q₀)
-  where r = lock-remove (û≾∣∣ q₃) ⇑ʳ
+  where r = lock-remove (𝟏̂≾∣∣ q₃) ⇑ʳ
 
 preservation {Ψ = Ψ} T (D , eD) (SEQ-OP {op}) with invC≡ D eD
 ... | _ , (A , B , ε₁ , ε₂ , refl , (DP , eP) , (DN , eN)) , q₀ with invC≡ DP eP
@@ -264,10 +264,10 @@ preservation {Ψ = Ψ} T (D , eD) (SEQ-OP {op}) with invC≡ D eD
        (cong₂ (perform op) eV (cong₂ _⨟_ eM (trans (∥rename-c∥ r DN) (cong (renᶜ (ext suc)) eN))))
        (<:̂ᶜ-trans (<:̂ᵛ-refl B ‼ₛ transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-assoc)) (monoₑ q₃ ⊩≾̂ₑ-refl)) q₀)
   where
-    le : ∅ᴴ ⊩ rconst (mapᵉ (op-grade op)) ·̂ᵣ ∣ ε₃ ∣̂ᵉ ≾̂ᵣ ∣ ε₁ ∣̂ᵉ
+    le : ∅ᴴ ⊩ rconst ∣ op-grade op ∣ᵉ ·̂ᵣ ∣ ε₃ ∣̂ᵉ ≾̂ᵣ ∣ ε₁ ∣̂ᵉ
     le = transᵣ (monoᵣ ∣const∣ ⊩≾̂ᵣ-refl) (transᵣ ∣·∣ (map-mono q₃))
     r : Ren ∅ᴴ (ctx Ψ ⟨ ∣ ε₁ ∣̂ᵉ ⟩ ∷ A)
-               ((ctx Ψ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ) ⟨ ∣ ε₃ ∣̂ᵉ ⟩ ∷ A)
+               ((ctx Ψ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ) ⟨ ∣ ε₃ ∣̂ᵉ ⟩ ∷ A)
     r = ext-lock (wk-ext lock-ext) le ⇑ʳ
 
 preservation T (D , eD) (SEQ-STEP {e = e} s) with invC≡ D eD
@@ -302,8 +302,8 @@ preservation {Ψ = Ψ} {ε = ε} T (D , eD) (DELAY {τ}) with invC≡ D eD
                      (transᵣ ∣·∣ (map-mono q₀))
   }
   where
-    dur : ∅ᴴ ⊩ rconst (of-durʳ τ) ≾̂ᵣ ∣ econst (of-durᵉ τ) ∣̂ᵉ
-    dur = eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-const (≃ᵣ-sym map-of-durᵉ)) (≡̂ᵣ-sym ≡̂ᵣ-map-const))
+    dur : ∅ᴴ ⊩ rconst (ιᵣ τ) ≾̂ᵣ ∣ econst (ιₑ τ) ∣̂ᵉ
+    dur = eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-const (≃ᵣ-sym map-ιᵉ)) (≡̂ᵣ-sym ≡̂ᵣ-map-const))
 
 -- effect handling
 
@@ -317,14 +317,14 @@ preservation T (D , eD) HANDLE-RET with invC≡ D eD
               (cong₂ (subᶜ 0) eV (trans (∥rename-c∥ r DN)
                                         (trans (ren-idᶜ (ext-id (λ i → refl)) ∥ DN ∥ᶜ) eN))))
        (<:̂ᶜ-trans (pB ‼ₛ transₑ pε' (≾-·ˡ q₃)) q₀)
-  where r = lock-remove (û≾∣∣ (transₑ q₃ pε)) ⇑ʳ
+  where r = lock-remove (𝟏̂≾∣∣ (transₑ q₃ pε)) ⇑ʳ
 
 preservation {Ψ = Ψ} T (D , eD) (HANDLE-OP {op} {V} {M} {N} {H}) with invC≡ D eD
 ... | _ , (A , B , ε₁ , ε₂ , refl , (DP , eP) , (DH , eH)) , q₀
     with invC≡ DP eP | invV≡ DH eH
 ... | _ , (A₃ , ε₃ , refl , (DV , eV) , (DM , eM)) , (p₃ ‼ₛ q₃)
     | _ , (A₄ , B₄ , ε₄ , ε₄' , refl , (DN , eN) , (DHs , eHs)) , ((pA ‼ₛ pε) ⇛ₛ (pB ‼ₛ pε')) =
-  stay T (box (rconst (mapᵉ (op-grade op)))
+  stay T (box (rconst ∣ op-grade op ∣ᵉ)
               (lam (handle subC DM (<:̂ᵛ-trans p₃ pA ‼ₛ ⊩≾̂ₑ-refl) `with proj₁ H')) Mop)
        (cong₂ box (cong lam (cong₂ handle_`with_ eM
                                    (trans (proj₂ H')
@@ -333,17 +333,17 @@ preservation {Ψ = Ψ} T (D , eD) (HANDLE-OP {op} {V} {M} {N} {H}) with invC≡ 
                   eMop)
        (<:̂ᶜ-trans (pB ‼ₛ transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-assoc)) (monoₑ q₃ pε')) q₀)
   where
-    e₀ : Ext ∅ᴴ (ctx Ψ) (ctx Ψ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ)
-             (rconst (mapᵉ (op-grade op)))
+    e₀ : Ext ∅ᴴ (ctx Ψ) (ctx Ψ ⟨ rconst ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ)
+             (rconst ∣ op-grade op ∣ᵉ)
     e₀ = wk-ext lock-ext
-    le : ∅ᴴ ⊩ rconst (mapᵉ (op-grade op)) ·̂ᵣ ∣ ε₃ ∣̂ᵉ ≾̂ᵣ ∣ ε₄ ∣̂ᵉ
+    le : ∅ᴴ ⊩ rconst ∣ op-grade op ∣ᵉ ·̂ᵣ ∣ ε₃ ∣̂ᵉ ≾̂ᵣ ∣ ε₄ ∣̂ᵉ
     le = transᵣ (monoᵣ ∣const∣ ⊩≾̂ᵣ-refl) (transᵣ ∣·∣ (map-mono (transₑ q₃ pε)))
     H' = retype {ε₁ = ε₃} e₀ le DN DHs
     Cl = instantiate-clause (ε₃ ·̂ₑ ε₄') (DHs op)
     r : Ren ∅ᴴ (ctx Ψ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                 ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ B₄ ‼ (ε₃ ·̂ₑ ε₄')))
+                 ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B₄ ‼ (ε₃ ·̂ₑ ε₄')))
                (ctx Ψ ∷ ⌜ param op ⌝ᵍ
-                 ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ B₄ ‼ (ε₃ ·̂ₑ ε₄')))
+                 ∷ [ rconst ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B₄ ‼ (ε₃ ·̂ₑ ε₄')))
     r = (lock-remove topᵣ ⇑ʳ) ⇑ʳ
     Mop = sub-c (there∷ (here (types-defs T))) DV (rename-c r Cl)
     eMop : ∥ Mop ∥ᶜ ≡ H op [ V ]₁

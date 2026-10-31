@@ -4,8 +4,8 @@
 -- A graded monad `Tᵒ A ε` over the effect grades, built like a free   --
 -- monad from the signature's operations and explicit delays.          --
 -- Operations, delays and strength mention the box modality at the     --
--- resource projection `mapᵉ` of the effect grade, matching the        --
--- calculus' `⟨ mapᵉ ε ⟩` context advance.                             --
+-- resource projection `∣_∣ᵉ` of the effect grade, matching the        --
+-- calculus' `⟨ ∣ ε ∣ᵉ ⟩` context advance.                             --
 --                                                                     --
 -- Grade coercions come in two kinds: `ε-substᵀ` on the nose along     --
 -- the monoid laws of `·ₑ`, and `T-≤` for sub-effecting along `≾ₑ`.    --
@@ -64,7 +64,7 @@ record Monad : Set₁ where
 
     -- Unit and multiplication
 
-    ηᵀ : ∀ {A} → A →ᵐ Tᵒ A uₑ
+    ηᵀ : ∀ {A} → A →ᵐ Tᵒ A 𝟏ₑ
     μᵀ : ∀ {A ε ε'} → Tᵒ (Tᵒ A ε') ε →ᵐ Tᵒ A (ε ·ₑ ε')
 
     -- On-the-nose grade coercion (transport along ≡)
@@ -126,10 +126,10 @@ record Monad : Set₁ where
     -- Graded monad laws
 
     T-μ∘η≡id : ∀ {A ε}
-             → μᵀ {A} {uₑ} {ε} ∘ᵐ ηᵀ {Tᵒ A ε}
+             → μᵀ {A} {𝟏ₑ} {ε} ∘ᵐ ηᵀ {Tᵒ A ε}
              ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityˡ ε))
     T-μ∘Tη≡id : ∀ {A ε}
-              → μᵀ {A} {ε} {uₑ} ∘ᵐ Tᶠ (ηᵀ {A})
+              → μᵀ {A} {ε} {𝟏ₑ} ∘ᵐ Tᶠ (ηᵀ {A})
               ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-identityʳ ε))
     T-μ∘μ≡μ∘Tμ : ∀ {A ε ε' ε''}
                → μᵀ {A} {ε} {ε' ·ₑ ε''} ∘ᵐ Tᶠ (μᵀ {A} {ε'} {ε''})
@@ -140,83 +140,83 @@ record Monad : Set₁ where
     -- Operations and delays
 
     delayᵀ : ∀ {A ε} → (τ : 𝔻)
-           → [ of-durʳ τ ]ᵒ (Tᵒ A ε) →ᵐ Tᵒ A (of-durᵉ τ ·ₑ ε)
+           → [ ιᵣ τ ]ᵒ (Tᵒ A ε) →ᵐ Tᵒ A (ιₑ τ ·ₑ ε)
 
     opᵀ : ∀ {A ε} → (op : Op)
-        → ⟦ param op ⟧ᵍ ×ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ A ε)
+        → ⟦ param op ⟧ᵍ ×ᵐ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ A ε)
         →ᵐ Tᵒ A (op-grade op ·ₑ ε)
 
     -- Operations and delays are natural
 
     delayᵀ-nat : ∀ {A B ε} → (τ : 𝔻) → (f : A →ᵐ B)
-               → delayᵀ {ε = ε} τ ∘ᵐ [ of-durʳ τ ]ᶠ (Tᶠ f)
+               → delayᵀ {ε = ε} τ ∘ᵐ [ ιᵣ τ ]ᶠ (Tᶠ f)
                ≈ᵐ Tᶠ f ∘ᵐ delayᵀ τ
 
     -- Sub-effecting the delayed computation is sub-effecting the delay, the
     -- inner-grade counterpart of `T-≤-μᵀ`.
 
     delayᵀ-≤ : ∀ {A ε ε'} → (τ : 𝔻) → (p : ε ≾ₑ ε')
-             → delayᵀ {A} {ε'} τ ∘ᵐ [ of-durʳ τ ]ᶠ (T-≤ p)
+             → delayᵀ {A} {ε'} τ ∘ᵐ [ ιᵣ τ ]ᶠ (T-≤ p)
              ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵐ delayᵀ {A} {ε} τ
 
     opᵀ-nat : ∀ {A B ε} → (op : Op) → (f : A →ᵐ B)
-            → opᵀ {ε = ε} op ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Tᶠ f)))
+            → opᵀ {ε = ε} op ∘ᵐ mapˣᵐ idᵐ ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ (Tᶠ f)))
             ≈ᵐ Tᶠ f ∘ᵐ opᵀ op
 
     -- Sub-effecting the continuation is sub-effecting the operation, the
     -- counterpart of `delayᵀ-≤` for `opᵀ`.
 
     opᵀ-≤ : ∀ {A ε ε'} → (op : Op) → (p : ε ≾ₑ ε')
-          → opᵀ {A} {ε'} op ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ p)))
+          → opᵀ {A} {ε'} op ∘ᵐ mapˣᵐ idᵐ ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ (T-≤ p)))
           ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵐ opᵀ {A} {ε} op
 
     -- A delay by no time is no delay, and two consecutive delays are the one
     -- delay by the sum. Both are stated with the grade relaxation `[]-≤`,
-    -- `of-durʳ` being only propositionally a monoid morphism.
+    -- `ιᵣ` being only propositionally a monoid morphism.
 
     delayᵀ-zero : ∀ {A ε'}
                 → delayᵀ {A} {ε'} 0ᴰ
-                ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (≃ₑ-trans (·ₑ-cong of-durᵉ-zero ≃ₑ-refl) (·ₑ-identityˡ ε')))
+                ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (≃ₑ-trans (·ₑ-cong ιₑ-zero ≃ₑ-refl) (·ₑ-identityˡ ε')))
                   ∘ᵐ ε
-                  ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ of-durʳ-zero)
+                  ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ ιᵣ-zero)
 
     delayᵀ-plus : ∀ {A ε'} → (τ₁ τ₂ : 𝔻)
-                → delayᵀ {A} {of-durᵉ τ₂ ·ₑ ε'} τ₁
-                    ∘ᵐ [ of-durʳ τ₁ ]ᶠ (delayᵀ {A} {ε'} τ₂)
+                → delayᵀ {A} {ιₑ τ₂ ·ₑ ε'} τ₁
+                    ∘ᵐ [ ιᵣ τ₁ ]ᶠ (delayᵀ {A} {ε'} τ₂)
                     ∘ᵐ δ
-                    ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ of-durʳ-plus)
-                ≈ᵐ T-≤ (≃ₑ⇒≾ₑ (≃ₑ-trans (·ₑ-cong of-durᵉ-plus ≃ₑ-refl) (·ₑ-assoc (of-durᵉ τ₁) (of-durᵉ τ₂) ε')))
+                    ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ ιᵣ-plus)
+                ≈ᵐ T-≤ (≃ₑ⇒≾ₑ (≃ₑ-trans (·ₑ-cong ιₑ-plus ≃ₑ-refl) (·ₑ-assoc (ιₑ τ₁) (ιₑ τ₂) ε')))
                   ∘ᵐ delayᵀ {A} {ε'} (τ₁ +ᴰ τ₂)
 
     -- Operations and delays are algebraic
 
     delayᵀ-algebraicity : ∀ {A ε' ε''} → (τ : 𝔻)
-                        → μᵀ {A} {of-durᵉ τ ·ₑ ε'} {ε''} ∘ᵐ delayᵀ {ε = ε'} τ
-                        ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) ε' ε''))
+                        → μᵀ {A} {ιₑ τ ·ₑ ε'} {ε''} ∘ᵐ delayᵀ {ε = ε'} τ
+                        ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (ιₑ τ) ε' ε''))
                           ∘ᵐ delayᵀ τ
-                          ∘ᵐ [ of-durʳ τ ]ᶠ (μᵀ {A} {ε'} {ε''})
+                          ∘ᵐ [ ιᵣ τ ]ᶠ (μᵀ {A} {ε'} {ε''})
 
     opᵀ-algebraicity : ∀ {A ε ε'} → (op : Op)
                      → μᵀ {A} {op-grade op ·ₑ ε} {ε'} ∘ᵐ opᵀ {ε = ε} op
                      ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) ε ε'))
                        ∘ᵐ opᵀ op
-                       ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (μᵀ {A} {ε} {ε'})))
+                       ∘ᵐ mapˣᵐ idᵐ ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ (μᵀ {A} {ε} {ε'})))
 
     -- STRENGTH
 
-    -- The [-]-strength: the box on the left is graded by `mapᵉ ε`.
+    -- The [-]-strength: the box on the left is graded by `∣ ε ∣ᵉ`.
 
-    strᵀ : ∀ {A B ε} → [ mapᵉ ε ]ᵒ A ×ᵐ Tᵒ B ε →ᵐ Tᵒ (A ×ᵐ B) ε
+    strᵀ : ∀ {A B ε} → [ ∣ ε ∣ᵉ ]ᵒ A ×ᵐ Tᵒ B ε →ᵐ Tᵒ (A ×ᵐ B) ε
 
     -- Strength is natural
 
     strᵀ-nat : ∀ {A A' B B' ε} → (f : A →ᵐ A') → (g : B →ᵐ B')
-             → strᵀ {A'} {B'} ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ f) (Tᶠ g)
+             → strᵀ {A'} {B'} ∘ᵐ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ f) (Tᶠ g)
              ≈ᵐ Tᶠ (mapˣᵐ f g) ∘ᵐ strᵀ {A} {B}
 
     -- Strength commutes with sub-effecting. Relaxing the tree's grade also
     -- relaxes the box's, contravariantly (`[]-≤`): a box that is available
-    -- `mapᵉ ε'`-far ahead is in particular available `mapᵉ ε`-far ahead.
+    -- `∣ ε' ∣ᵉ`-far ahead is in particular available `∣ ε ∣ᵉ`-far ahead.
 
     strᵀ-≤ : ∀ {A B ε ε'} → (p : ε ≾ₑ ε')
            → strᵀ {A} {B} {ε'} ∘ᵐ mapˣᵐ idᵐ (T-≤ p)
@@ -233,12 +233,12 @@ record Monad : Set₁ where
     -- (multiplication law).
 
     -- Unit: strength on a returned value extracts the boxed component (at
-    -- the reflexive world) and returns the pair. The box grade is `mapᵉ uₑ`,
-    -- coerced to `uᵣ` for the counit along `map-uᵉ`.
+    -- the reflexive world) and returns the pair. The box grade is `∣ 𝟏ₑ ∣ᵉ`,
+    -- coerced to `𝟏ᵣ` for the counit along `map-𝟏ᵉ`.
 
     strᵀ-ηᵀ : ∀ {A B}
-            → strᵀ {A} {B} {uₑ} ∘ᵐ mapˣᵐ idᵐ ηᵀ
-            ≈ᵐ ηᵀ {A ×ᵐ B} ∘ᵐ mapˣᵐ (ε ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-uᵉ)) idᵐ
+            → strᵀ {A} {B} {𝟏ₑ} ∘ᵐ mapˣᵐ idᵐ ηᵀ
+            ≈ᵐ ηᵀ {A ×ᵐ B} ∘ᵐ mapˣᵐ (ε ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-𝟏ᵉ)) idᵐ
 
     -- Multiplication: threading the box through two monad layers agrees with
     -- threading it once at the combined grade, after splitting the box with
@@ -248,7 +248,7 @@ record Monad : Set₁ where
             → strᵀ {A} {B} {ε ·ₑ ε'} ∘ᵐ mapˣᵐ idᵐ (μᵀ {B} {ε} {ε'})
             ≈ᵐ μᵀ {A ×ᵐ B} {ε} {ε'}
               ∘ᵐ Tᶠ (strᵀ {A} {B} {ε'})
-              ∘ᵐ strᵀ {[ mapᵉ ε' ]ᵒ A} {Tᵒ B ε'} {ε}
+              ∘ᵐ strᵀ {[ ∣ ε' ∣ᵉ ]ᵒ A} {Tᵒ B ε'} {ε}
               ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ)) idᵐ
 
     -- Associativity with the product: box monoidality `[]-monoidal`
@@ -262,15 +262,15 @@ record Monad : Set₁ where
     -- Operations are algebraic with respect to the strength.
 
     strᵀ-delayᵀ-algebraicity : ∀ {A B ε} → (τ : 𝔻)
-      → strᵀ {A} {B} {of-durᵉ τ ·ₑ ε} ∘ᵐ mapˣᵐ idᵐ (delayᵀ {B} {ε} τ)
+      → strᵀ {A} {B} {ιₑ τ ·ₑ ε} ∘ᵐ mapˣᵐ idᵐ (delayᵀ {B} {ε} τ)
       ≈ᵐ delayᵀ τ
-        ∘ᵐ [ of-durʳ τ ]ᶠ (strᵀ {A} {B} {ε})
+        ∘ᵐ [ ιᵣ τ ]ᶠ (strᵀ {A} {B} {ε})
         ∘ᵐ []-monoidal
         ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ
-             (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))) idᵐ
+             (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-ιᵉ ≃ᵣ-refl)))) idᵐ
 
     -- The operation is algebraic with respect to the strength. The box
-    -- `[ mapᵉ (op-grade op) ] A` is split off the strengthened argument and
+    -- `[ ∣ op-grade op ∣ᵉ ] A` is split off the strengthened argument and
     -- pushed into the operation's continuation, where it is paired with the
     -- arity value before strengthening the sub-computation.
 
@@ -278,7 +278,7 @@ record Monad : Set₁ where
       → strᵀ {A} {B} {op-grade op ·ₑ ε} ∘ᵐ mapˣᵐ idᵐ (opᵀ {B} {ε} op)
       ≈ᵐ opᵀ op
         ∘ᵐ mapˣᵐ idᵐ
-            ([ mapᵉ (op-grade op) ]ᶠ
+            ([ ∣ op-grade op ∣ᵉ ]ᶠ
                (   map⇒ᵐ idᵐ (strᵀ {A} {B} {ε})
                 ∘ᵐ exp-strᵐ)
              ∘ᵐ []-monoidal
@@ -296,7 +296,7 @@ record Monad : Set₁ where
 
   Clausesᵀ : Obj → Obj → Set
   Clausesᵀ P A = (op : Op) → (ε'' : E)
-             → P ×ᵐ (⟦ param op ⟧ᵍ ×ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ A ε''))
+             → P ×ᵐ (⟦ param op ⟧ᵍ ×ᵐ [ ∣ op-grade op ∣ᵉ ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ A ε''))
                  →ᵐ Tᵒ A (op-grade op ·ₑ ε'')
 
   -- A handler's clauses must be ambivalent in the residual grade `ε''`:
@@ -307,7 +307,7 @@ record Monad : Set₁ where
   Monoᵀ : ∀ {P A} → Clausesᵀ P A → Set
   Monoᵀ {P} {A} cl = ∀ (op : Op) {εa εb} → (q : εa ≾ₑ εb)
                    → cl op εb ∘ᵐ mapˣᵐ idᵐ (mapˣᵐ idᵐ
-                         ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q))))
+                         ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ (T-≤ q))))
                    ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ cl op εa
 
   Handlerᵀ : Obj → Obj → Set
@@ -337,11 +337,11 @@ record Monad : Set₁ where
 
     T-alg-of-handlerᵀ-delayᵀ : ∀ {P A ε' ε''} → (τ : 𝔻) → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                              → T-alg-of-handlerᵀ bc h ∘ᵐ mapˣᵐ idᵐ (delayᵀ {Tᵒ A ε''} {ε'} τ)
-                             ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (of-durᵉ τ) ε' ε''))
+                             ≈ᵐ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (ιₑ τ) ε' ε''))
                                ∘ᵐ delayᵀ τ
-                               ∘ᵐ [ of-durʳ τ ]ᶠ (T-alg-of-handlerᵀ bc h)
+                               ∘ᵐ [ ιᵣ τ ]ᶠ (T-alg-of-handlerᵀ bc h)
                                ∘ᵐ []-monoidal
-                               ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {of-durʳ τ}) idᵐ
+                               ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {ιᵣ τ}) idᵐ
 
     T-alg-of-handlerᵀ-opᵀ : ∀ {P A ε' ε''} → (op : Op) → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                           → T-alg-of-handlerᵀ bc h ∘ᵐ mapˣᵐ idᵐ (opᵀ {Tᵒ A ε''} {ε'} op)
@@ -349,12 +349,12 @@ record Monad : Set₁ where
                             ∘ᵐ clauseᵀ h op (ε' ·ₑ ε'')
                             ∘ᵐ ⟨ fstᵐ
                                , ⟨ fstᵐ ∘ᵐ sndᵐ
-                                 ,   [ mapᵉ (op-grade op) ]ᶠ
+                                 ,   [ ∣ op-grade op ∣ᵉ ]ᶠ
                                        (curryᵐ (T-alg-of-handlerᵀ bc h
                                          ∘ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ
                                             , appᵐ ∘ᵐ ⟨ sndᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ ⟩ᵐ))
                                    ∘ᵐ []-monoidal
-                                   ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {mapᵉ (op-grade op)}) idᵐ
+                                   ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {∣ op-grade op ∣ᵉ}) idᵐ
                                    ∘ᵐ ⟨ fstᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ ⟩ᵐ ⟩ᵐ
 
     -- The fold commutes with sub-effecting in the outer grade, the same shape
@@ -384,7 +384,7 @@ record Monad : Set₁ where
                              ∘ᵐ ⟨ fstᵐ
                                 ,   Tᶠ (T-alg-of-handlerᵀ {P} {A} {ε'} {ε''} bc h)
                                   ∘ᵐ strᵀ
-                                  ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {mapᵉ ε}) idᵐ ⟩ᵐ
+                                  ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {∣ ε ∣ᵉ}) idᵐ ⟩ᵐ
 
     -- Naturality in the eternal parameter: reindexing the handler along a
     -- `[_]`-coalgebra morphism `f : P' →ᵐ P` equals reindexing the fold's
@@ -466,7 +466,7 @@ record Monad : Set₁ where
 
   strᵀ-natˡ : ∀ {A A' B ε} → (f : A →ᵐ A')
             → Tᶠ (mapˣᵐ f (idᵐ {B})) ∘ᵐ strᵀ {A} {B} {ε}
-            ≈ᵐ strᵀ {A'} {B} {ε} ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ f) idᵐ
+            ≈ᵐ strᵀ {A'} {B} {ε} ∘ᵐ mapˣᵐ ([ ∣ ε ∣ᵉ ]ᶠ f) idᵐ
   strᵀ-natˡ f =
     ≈ᵐ-trans (≈ᵐ-sym (strᵀ-nat f idᵐ))
              (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ∘ᵐ-congˡ T-idᵐ ⟩ᵐ-cong))

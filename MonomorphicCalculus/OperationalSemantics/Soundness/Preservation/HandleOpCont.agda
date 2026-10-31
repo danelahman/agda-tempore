@@ -89,16 +89,16 @@ bcᴱ Γ = ⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ
 module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
          (H : (op' : Op) → (ε₀ : E)
               → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
-                   ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε₀)
+                   ∷ [ ∣ op-grade op' ∣ᵉ ] (type-of-gtype (arity op') ⇒ B ‼ ε₀)
                 ⊢C⦂ B ‼ (op-grade op' ·ₑ ε₀))
          (M : Γ ⟨ ρ ⟩ ∷ A₀ ⊢C⦂ A ‼ ε)
          (N : Γ ⟨ σ ⟩ ∷ A ⊢C⦂ B ‼ ε')
-         (ren : Ren [] ((Γ ⟨ ρ ⟩ ∷ A₀) ⟨ mapᵉ ε ⟩) (Γ ⟨ σ ⟩))
+         (ren : Ren [] ((Γ ⟨ ρ ⟩ ∷ A₀) ⟨ ∣ ε ∣ᵉ ⟩) (Γ ⟨ σ ⟩))
          (pM : Paramᶜ M) (pN : Paramᶜ N)
          (pH : ∀ op' ε₀ → Paramᶜ (H op' ε₀))
          (uH : ∀ (op' : Op) {ε₁ ε₂} → (q : ε₁ ≾ₑ ε₂)
              → ⟦ H op' ε₂ ⟧ᶜᵗ (pH op' ε₂)
-                 ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op') ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
+                 ∘ᵐ mapˣᵐ idᵐ ([ ∣ op-grade op' ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
              ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op' ε₁ ⟧ᶜᵗ (pH op' ε₁))
        where
 
@@ -106,7 +106,7 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
   -- renamed parametricity and uniformity certificates.
   H' : (op' : Op) → (ε₀ : E)
      → ((Γ ⟨ ρ ⟩) ∷ A₀) ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
-          ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε₀)
+          ∷ [ ∣ op-grade op' ∣ᵉ ] (type-of-gtype (arity op') ⇒ B ‼ ε₀)
        ⊢C⦂ B ‼ (op-grade op' ·ₑ ε₀)
   H' op' ε₀ = C-rename (cong-∷-ren (cong-∷-ren (barrier-wk-ren ρ A₀))) (H op' ε₀)
 

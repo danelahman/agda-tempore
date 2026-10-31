@@ -117,11 +117,11 @@ P ≾₀ Q = traces P ⊑ traces Q
 -- a language product permitting nothing but the empty run has both
 -- factors permitting nothing but it
 
-≾₀-zero-productˡ : {P Q : NeTraces} → (P · Q) ≾₀ u → P ≾₀ u
+≾₀-zero-productˡ : {P Q : NeTraces} → (P · Q) ≾₀ 𝟏 → P ≾₀ 𝟏
 ≾₀-zero-productˡ {P} {Q} rel =
   ⊑-zero-productˡ {traces P} {traces Q} (nonempty Q) (⊑-nfˡ⁻ rel)
 
-≾₀-zero-productʳ : {P Q : NeTraces} → (P · Q) ≾₀ u → Q ≾₀ u
+≾₀-zero-productʳ : {P Q : NeTraces} → (P · Q) ≾₀ 𝟏 → Q ≾₀ 𝟏
 ≾₀-zero-productʳ {P} {Q} rel =
   ⊑-zero-productʳ {traces P} {traces Q} (nonempty P) (⊑-nfˡ⁻ rel)
 
@@ -155,14 +155,14 @@ _·ᵖ_ : Permits → Permits → Permits
 (permitting _) ·ᵖ any-run        = any-run
 any-run        ·ᵖ _              = any-run
 
-uᵖ : Permits
-uᵖ = permitting u
+𝟏ᵖ : Permits
+𝟏ᵖ = permitting 𝟏
 
-·ᵖ-identityʳ : (P : Permits) → P ·ᵖ uᵖ ≡ P
+·ᵖ-identityʳ : (P : Permits) → P ·ᵖ 𝟏ᵖ ≡ P
 ·ᵖ-identityʳ (permitting P) = cong permitting_ (·-identityʳ P)
 ·ᵖ-identityʳ any-run        = refl
 
-·ᵖ-identityˡ : (P : Permits) → uᵖ ·ᵖ P ≡ P
+·ᵖ-identityˡ : (P : Permits) → 𝟏ᵖ ·ᵖ P ≡ P
 ·ᵖ-identityˡ (permitting P) = cong permitting_ (·-identityˡ P)
 ·ᵖ-identityˡ any-run        = refl
 
@@ -191,8 +191,8 @@ any-run        ≾ any-run        = ⊤
 
 -- there is no least grade: `{ ε }` is below only the lists naming `ε`
 
-uᵖ-not-least : ¬ Minimum _≾_ uᵖ
-uᵖ-not-least least = least (permitting (of-dur 1)) ε _
+𝟏ᵖ-not-least : ¬ Minimum _≾_ 𝟏ᵖ
+𝟏ᵖ-not-least least = least (permitting (ι 1)) ε _
 
 ≾-refl : {P : Permits} → P ≾ P
 ≾-refl {permitting P} = ≾₀-refl {P}
@@ -294,12 +294,12 @@ any-run        ⊔ᵖ _              = any-run
 -- `any-run` is above the unit and not below it, so its clauses are
 -- vacuous and the property is the sets' own.
 
-≾-zero-productˡ : {P Q : Permits} → (P ·ᵖ Q) ≾ uᵖ → P ≾ uᵖ
+≾-zero-productˡ : {P Q : Permits} → (P ·ᵖ Q) ≾ 𝟏ᵖ → P ≾ 𝟏ᵖ
 ≾-zero-productˡ {permitting P} {permitting Q} p = ≾₀-zero-productˡ {P} {Q} p
 ≾-zero-productˡ {permitting _} {any-run}      ()
 ≾-zero-productˡ {any-run}      {_}            ()
 
-≾-zero-productʳ : {P Q : Permits} → (P ·ᵖ Q) ≾ uᵖ → Q ≾ uᵖ
+≾-zero-productʳ : {P Q : Permits} → (P ·ᵖ Q) ≾ 𝟏ᵖ → Q ≾ 𝟏ᵖ
 ≾-zero-productʳ {permitting P} {permitting Q} p = ≾₀-zero-productʳ {P} {Q} p
 ≾-zero-productʳ {permitting _} {any-run}      ()
 ≾-zero-productʳ {any-run}      {_}            ()
@@ -307,14 +307,14 @@ any-run        ⊔ᵖ _              = any-run
 ------------------------------------------------------------------------
 -- The inclusion of ℕ, and deciding the order
 
-of-durᵖ : ℕ → Permits
-of-durᵖ n = permitting (of-dur n)
+ιᵖ : ℕ → Permits
+ιᵖ n = permitting (ι n)
 
-of-durᵖ-zero : of-durᵖ 0 ≡ uᵖ
-of-durᵖ-zero = cong permitting_ of-dur-zero
+ιᵖ-zero : ιᵖ 0 ≡ 𝟏ᵖ
+ιᵖ-zero = cong permitting_ ι-zero
 
-of-durᵖ-plus : {m n : ℕ} → of-durᵖ (m + n) ≡ of-durᵖ m ·ᵖ of-durᵖ n
-of-durᵖ-plus {m} {n} = cong permitting_ (of-dur-plus {m} {n})
+ιᵖ-plus : {m n : ℕ} → ιᵖ (m + n) ≡ ιᵖ m ·ᵖ ιᵖ n
+ιᵖ-plus {m} {n} = cong permitting_ (ι-plus {m} {n})
 
 infix 5 _≾?_
 
@@ -331,7 +331,7 @@ right-sided : Grade ℕᴰ
 right-sided = posetᵍ record
   { Carrier         = Permits
   ; _·_             = _·ᵖ_
-  ; u               = uᵖ
+  ; 𝟏               = 𝟏ᵖ
   ; ·-identityʳ     = ·ᵖ-identityʳ
   ; ·-identityˡ     = ·ᵖ-identityˡ
   ; ·-assoc         = ·ᵖ-assoc
@@ -353,7 +353,7 @@ right-sided = posetᵍ record
   ; ≾-zero-productˡ = λ {c} {d} → ≾-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾-zero-productʳ {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → ≾-irrelevant {c} {d}
-  ; of-dur          = of-durᵖ
-  ; of-dur-zero     = of-durᵖ-zero
-  ; of-dur-plus     = λ {m} {n} → of-durᵖ-plus {m} {n}
+  ; ι               = ιᵖ
+  ; ι-zero          = ιᵖ-zero
+  ; ι-plus          = λ {m} {n} → ιᵖ-plus {m} {n}
   }

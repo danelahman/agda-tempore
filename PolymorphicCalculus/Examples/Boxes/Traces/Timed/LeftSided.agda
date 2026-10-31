@@ -24,7 +24,7 @@ module PolymorphicCalculus.Examples.Boxes.Traces.Timed.LeftSided where
 
 open Traces-Timed-LeftSided using (spec; hints; enum)
 open LanguageSpec spec using (Grades)
-open GradeSystemInterface Grades using (uᵣ; ⊤ᵣ)
+open GradeSystemInterface Grades using (𝟏ᵣ; ⊤ᵣ)
 
 open import PolymorphicCalculus.Syntax.Grades   spec using (rconst)
 open import PolymorphicCalculus.Syntax.Contexts spec using ([])
@@ -143,12 +143,12 @@ nesting-derivable = nesting-typable _
 -- 8. Inside a clause the unit `⊤ᵣ` has elapsed: a box demanding
 -- nothing may be claimed, one demanding a tick may not
 
-claimed-at-u-reported :
-  schemeOf (infer [] (claimed-in-clause (rconst uᵣ))) ≡ just expected-claimed-in-clause
-claimed-at-u-reported = refl
+claimed-at-𝟏-reported :
+  schemeOf (infer [] (claimed-in-clause (rconst 𝟏ᵣ))) ≡ just expected-claimed-in-clause
+claimed-at-𝟏-reported = refl
 
-claimed-at-u-derivable : Typable [] (claimed-in-clause (rconst uᵣ))
-claimed-at-u-derivable = claimed-in-clause-typable uᵣ _
+claimed-at-𝟏-derivable : Typable [] (claimed-in-clause (rconst 𝟏ᵣ))
+claimed-at-𝟏-derivable = claimed-in-clause-typable 𝟏ᵣ _
 
 claimed-at-1-verdict : infer [] (claimed-in-clause ⌜ 1 ⌝ʳ) ≡ untypable
 claimed-at-1-verdict = refl

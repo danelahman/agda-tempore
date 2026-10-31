@@ -7,7 +7,7 @@
 -- the unit, which is the least quota. By monotonicity the bound      --
 -- `⌈ o ⌉` is sent to the unit as well:                               --
 --                                                                    --
---   map F (within ⟅ ⌈ o ⌉ ⟆)  ≡  uᵛ                                  --
+--   map F (within ⟅ ⌈ o ⌉ ⟆)  ≡  𝟏ᵛ                                  --
 --                                                                    --
 -- for every morphism `F` and every operation `o`. No morphism        --
 -- therefore counts what a bound permits: the quota it assigns to     --
@@ -54,10 +54,10 @@ open import Grades.Traces.Allowance.Core ℕᵀ Op costʰⁱ
 
 open import Grades.Examples.Traces.Timed.RightSided
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
-  using (right-sided; within_; _≾_; singleton; of-dur; traces; _≽?_;
+  using (right-sided; within_; _≾_; singleton; ι; traces; _≽?_;
          Trace; ⌈_⌉; ⟨_⟩; ⟨⟩-pos)
 
-open import Grades.Examples.Time.RightSided using (_≾ₒ_; uₒ-least)
+open import Grades.Examples.Time.RightSided using (_≾ₒ_; 𝟏ₒ-least)
 open import Data.Product using (_,_; proj₁)
 open import Grades.Examples.Counts.AtMost
 open import Grades.Examples.Counts.Occurrences Op index
@@ -71,10 +71,10 @@ op≼delay o =
         (bank-delay (use-op (n≤1+n (costʰⁱ o)) nil))
 
 op≾delay : (o : Op)
-         → within singleton ⌈ o ⌉ ≾ Grade.of-dur right-sided (suc (costʰⁱ o))
+         → within singleton ⌈ o ⌉ ≾ Grade.ι right-sided (suc (costʰⁱ o))
 op≾delay o p m with toWitness m
 ... | here refl =
-  fromWitness {a? = any? (_≽?_ ⌈ o ⌉) (traces (of-dur (suc (costʰⁱ o))))}
+  fromWitness {a? = any? (_≽?_ ⌈ o ⌉) (traces (ι (suc (costʰⁱ o))))}
               (here (op≼delay o))
 
 ------------------------------------------------------------------------
@@ -84,10 +84,10 @@ module _ (F : right-sided →ᵍ at-most-counts n) where
 
   open _→ᵍ_ F
 
-  erases : (o : Op) → map (within singleton ⌈ o ⌉) ≃ᵛ uᵛ
+  erases : (o : Op) → map (within singleton ⌈ o ⌉) ≃ᵛ 𝟏ᵛ
   erases o =
-      ≾ᵛ-trans (map-monotone (op≾delay o)) (proj₁ (map-of-dur {suc (costʰⁱ o)}))
-    , uᵛ-least uₒ-least _
+      ≾ᵛ-trans (map-monotone (op≾delay o)) (proj₁ (map-ι {suc (costʰⁱ o)}))
+    , 𝟏ᵛ-least 𝟏ₒ-least _
 
   -- so the quota it gives `⌈ o ⌉` does not cover the run `⌈ o ⌉`
 
@@ -96,7 +96,7 @@ module _ (F : right-sided →ᵍ at-most-counts n) where
   miscounts o rel =
     absurd (subst (λ h → h + 0 ≤ 0) (hit-index o)
              (subst₂ _≾ₒ_ (lookup∘tabulate (λ i → upto (occ i ⌈ o ⌉)) (index o))
-                          (lookup-uᵛ (index o))
+                          (lookup-𝟏ᵛ (index o))
                           (≾ᵛ-lookup (≾ᵛ-trans rel (proj₁ (erases o))) (index o))))
     where
       absurd : ¬ (1 + 0 ≤ 0)

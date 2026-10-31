@@ -110,16 +110,16 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
         → state ≤ᶠ f
         → (op : Op)
         → Γ ⊢V⦂ type-of-gtype (param op)
-        → Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢K[ f ◁ CH ]⦂ A ‼ ε
+        → Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢K[ f ◁ CH ]⦂ A ‼ ε
         -------------------------------------------------------------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (op-grade op ·ₑ ε)
     
     delay[_]ₖ : ∀ {A ε}
         → state ≤ᶠ f
         → (τ : 𝔻)
-        → Γ ⟨ of-durʳ τ ⟩ ⊢K[ f ◁ CH ]⦂ A ‼ ε
+        → Γ ⟨ ιᵣ τ ⟩ ⊢K[ f ◁ CH ]⦂ A ‼ ε
         -----------------------------------------
-        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (of-durᵉ τ ·ₑ ε)
+        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (ιₑ τ ·ₑ ε)
 
     unbox[_]ₖ : ∀ {A A₀ C ρ₀ ρ'}
         → state ≤ᶠ f
@@ -142,7 +142,7 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
     _ₖ[_]⨟_ : ∀ {Aₖ A εₖ ε}
         → Γ ⊢K[ f ◁ CH ]⦂ Aₖ ‼ εₖ
         → eval ≤ᶠ f
-        → Γ ⟨ mapᵉ εₖ ⟩ ∷ Aₖ ⊢C⦂ A ‼ ε
+        → Γ ⟨ ∣ εₖ ∣ᵉ ⟩ ∷ Aₖ ⊢C⦂ A ‼ ε
         ----------------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (εₖ ·ₑ ε)
     
@@ -168,11 +168,11 @@ rel-hole-ctx (sub[ p ]ₖ q K) Γ' =
 rel-hole-ctx (K ₖ[ p ]⨟ N) Γ' =
   rel-hole-ctx K Γ'
 rel-hole-ctx (perform[_]ₖ p op V K) Γ' =
-  rel-hole-ctx K (Γ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op))
+  rel-hole-ctx K (Γ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op))
 rel-hole-ctx (handle[ p ]ₖ K `with V) Γ' =
   rel-hole-ctx K Γ'
 rel-hole-ctx (delay[ p ]ₖ τ K) Γ' =
-  rel-hole-ctx K (Γ' ⟨ of-durʳ τ ⟩)
+  rel-hole-ctx K (Γ' ⟨ ιᵣ τ ⟩)
 rel-hole-ctx (unbox[_]ₖ {A = A} p x rel w K) Γ' =
   rel-hole-ctx K (Γ' ∷ A)
 rel-hole-ctx (box[_]ₖ {A = A} {ρ = ρ} p V K) Γ' =

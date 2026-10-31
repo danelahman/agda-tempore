@@ -34,12 +34,12 @@ open World Wld
 open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Base GS Wld
 
 -- Composition of a graded step with a unit step (and vice versa),
--- collapsing `ρ ·ᵣ uᵣ` resp. `uᵣ ·ᵣ ρ` back to `ρ`.
+-- collapsing `ρ ·ᵣ 𝟏ᵣ` resp. `𝟏ᵣ ·ᵣ ρ` back to `ρ`.
 
-⊑ρ∘ᵘ : ∀ {ρ w w' w''} → w ⊑[ ρ ] w' → w' ⊑[ u ] w'' → w ⊑[ ρ ] w''
+⊑ρ∘ᵘ : ∀ {ρ w w' w''} → w ⊑[ ρ ] w' → w' ⊑[ 𝟏 ] w'' → w ⊑[ ρ ] w''
 ⊑ρ∘ᵘ {ρ} q r = ⊑-mono (≃⇒≾ (·-identityʳ ρ)) (⊑-trans q r)
 
-⊑ᵘ∘ρ : ∀ {ρ w w' w''} → w ⊑[ u ] w' → w' ⊑[ ρ ] w'' → w ⊑[ ρ ] w''
+⊑ᵘ∘ρ : ∀ {ρ w w' w''} → w ⊑[ 𝟏 ] w' → w' ⊑[ ρ ] w'' → w ⊑[ ρ ] w''
 ⊑ᵘ∘ρ {ρ} p q = ⊑-mono (≃⇒≾ (·-identityˡ ρ)) (⊑-trans p q)
 
 -- The underlying Kripke family of a box: a value of `A` at every world
@@ -55,7 +55,7 @@ record [_]ᶜ (ρ : R) (A : PSh) (w : W) : Set where
   constructor mk[]
   field
     fun     : [ ρ ]ᵏ A w
-    fun-nat : ∀ {w' w''} (q : w ⊑[ ρ ] w') (r : w' ⊑[ u ] w'')
+    fun-nat : ∀ {w' w''} (q : w ⊑[ ρ ] w') (r : w' ⊑[ 𝟏 ] w'')
             → _≈_ A (fun (⊑ρ∘ᵘ q r)) (transport A r (fun q))
 
 open [_]ᶜ public
@@ -109,7 +109,7 @@ open [_]ᶜ public
 
 -- Counit
 
-ε : ∀ {A} → [ u ]ᵒ A →ᵖ A
+ε : ∀ {A} → [ 𝟏 ]ᵒ A →ᵖ A
 ε {A} = pmap
   (λ F → fun F ⊑-refl)
   (λ e → e ⊑-refl)
@@ -142,11 +142,11 @@ open [_]ᶜ public
   (λ p FG q → ≈-refl A , ≈-refl B)
 
 
--- Unit-graded unit (inverse of `ε` at grade `u`). It transports the
+-- Unit-graded unit (inverse of `ε` at grade `𝟏`). It transports the
 -- value forward along the unit-accessibility witness, which is possible at
 -- every world because the presheaves are unit-monotone.
 
-ηᵘ : ∀ {A} → A →ᵖ [ u ]ᵒ A
+ηᵘ : ∀ {A} → A →ᵖ [ 𝟏 ]ᵒ A
 ηᵘ {A} = pmap
   (λ x → mk[]
     (λ p → transport A p x)
@@ -156,7 +156,7 @@ open [_]ᶜ public
 
 -- ηᵘ is natural
 
-ηᵘ-nat : ∀ {A B} → (f : A →ᵖ B) → [ u ]ᶠ f ∘ᵖ ηᵘ ≈ᵖ ηᵘ ∘ᵖ f
+ηᵘ-nat : ∀ {A B} → (f : A →ᵖ B) → [ 𝟏 ]ᶠ f ∘ᵖ ηᵘ ≈ᵖ ηᵘ ∘ᵖ f
 ηᵘ-nat f x q = nat f q x
 
 -- ηᵘ and the counit ε are mutually inverse

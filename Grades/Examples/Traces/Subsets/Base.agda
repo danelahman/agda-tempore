@@ -60,20 +60,20 @@ open WithDecEq _≟ₒ_ using (_⊑_; _∈?_; _≟ᵀ_)
 -- the empty trace, and the trace monoid is conical.
 
 ⊑-zero-productˡ : {xs ys : List Trace} → NonEmpty ys
-                → (xs ·ˢ ys) ⊑ traces u → xs ⊑ traces u
+                → (xs ·ˢ ys) ⊑ traces 𝟏 → xs ⊑ traces 𝟏
 ⊑-zero-productˡ {xs} {ys} ne sub = ⊑-∈ step
   where
-    step : (s : Trace) → s ∈ xs → s ∈ traces u
+    step : (s : Trace) → s ∈ xs → s ∈ traces 𝟏
     step s s∈xs with neHead ys ne
     ... | y , y∈ys =
           here (∙-conicalˡ {s} {y}
                  (∈-[ε]⁻ (∈-⊑ sub (∈-cartesianProductWith⁺ _∙_ s∈xs y∈ys))))
 
 ⊑-zero-productʳ : {xs ys : List Trace} → NonEmpty xs
-                → (xs ·ˢ ys) ⊑ traces u → ys ⊑ traces u
+                → (xs ·ˢ ys) ⊑ traces 𝟏 → ys ⊑ traces 𝟏
 ⊑-zero-productʳ {xs} {ys} ne sub = ⊑-∈ step
   where
-    step : (s : Trace) → s ∈ ys → s ∈ traces u
+    step : (s : Trace) → s ∈ ys → s ∈ traces 𝟏
     step s s∈ys with neHead xs ne
     ... | x , x∈xs =
           here (∙-conicalʳ {x} {s}

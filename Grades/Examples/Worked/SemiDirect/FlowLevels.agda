@@ -33,7 +33,7 @@ open Maps ℕ-names using (Map; _∣_; _!_)
 flow : Grade ℕᴰ
 flow = two-point-flow-levels
 
-open Grade flow using (Carrier; _≾_; _≾?_; _·_; _⊔_; u; ⊤)
+open Grade flow using (Carrier; _≾_; _≾?_; _·_; _⊔_; 𝟏; ⊤)
 
 memory radio : ℕ
 memory = 0
@@ -102,13 +102,13 @@ memory-unwritten = refl
 
 -- writing at `Low` is not "not written"
 
-written-low : ¬ (writes memory Low ≾ u)
-written-low = fails (writes memory Low) u
+written-low : ¬ (writes memory Low ≾ 𝟏)
+written-low = fails (writes memory Low) 𝟏
 
 -- the unit is least, and the join takes the higher level at each sink
 
-unit-least : u ≾ read-then-send
-unit-least = holds u read-then-send
+unit-least : 𝟏 ≾ read-then-send
+unit-least = holds 𝟏 read-then-send
 
 joined : proj₂ (read-then-send ⊔ writes memory Low) ! memory ≡ just Low
 joined = refl

@@ -74,11 +74,11 @@ module Left (O₁ : Order.TraceOrder T₁ Op) (O₂ : Order.TraceOrder T₂ Op)
   left-sided→ˢ = record
     { map          = E.mapᴬ
     ; map-monotone = λ {P} {Q} → E.mapᴬ-mono {P} {Q}
-    ; map-u        = trans (E.mapᴬ-singleton _) (cong L₂.singleton f-ε)
+    ; map-𝟏        = trans (E.mapᴬ-singleton _) (cong L₂.singleton f-ε)
     ; map-·        = λ {P} {Q} → E.mapᴬ-· P Q
     ; map-⊤        = trans (E.mapᴬ-singleton _) (cong L₂.singleton f-ε)
     ; map-⊔        = λ {P} {Q} → E.mapᴬ-⊔ P Q
-    ; map-of-dur   = λ {τ} → trans (E.mapᴬ-singleton _) (cong L₂.singleton (f-⟨⟩ τ))
+    ; map-ι        = λ {τ} → trans (E.mapᴬ-singleton _) (cong L₂.singleton (f-⟨⟩ τ))
     }
 
 ------------------------------------------------------------------------
@@ -122,12 +122,12 @@ module Right (O₁ : Order.TraceOrder T₁ Op) (O₂ : Order.TraceOrder T₂ Op)
   right-sided→ˢ = record
     { map          = mapᵇ
     ; map-monotone = λ {P} {Q} → mapᵇ-mono {P} {Q}
-    ; map-u        = cong R₂.within_
+    ; map-𝟏        = cong R₂.within_
                        (trans (E.mapᴬ-singleton _) (cong R₂.singleton f-ε))
     ; map-·        = λ {P} {Q} → mapᵇ-· P Q
     ; map-⊤        = refl
     ; map-⊔        = λ {P} {Q} → mapᵇ-⊔ P Q
-    ; map-of-dur   = λ {τ} → cong R₂.within_
+    ; map-ι        = λ {τ} → cong R₂.within_
                        (trans (E.mapᴬ-singleton _) (cong R₂.singleton (f-⟨⟩ τ)))
     }
 
@@ -203,13 +203,13 @@ module Two
     ; map-monotone = λ { {i} {j} (p , q) →
                            EL.mapᴬ-mono {W₁.lo i} {W₁.lo j} p
                          , MR.mapᵇ-mono {W₁.hi i} {W₁.hi j} q }
-    ; map-u        = W₂.eqᵗˢ (StrictMorphism.map-u ML.left-sided→ˢ)
-                             (StrictMorphism.map-u MR.right-sided→ˢ)
+    ; map-𝟏        = W₂.eqᵗˢ (StrictMorphism.map-𝟏 ML.left-sided→ˢ)
+                             (StrictMorphism.map-𝟏 MR.right-sided→ˢ)
     ; map-·        = λ {i} {j} → W₂.eqᵗˢ (EL.mapᴬ-· (W₁.lo i) (W₁.lo j))
                                          (MR.mapᵇ-· (W₁.hi i) (W₁.hi j))
     ; map-⊤        = W₂.eqᵗˢ (StrictMorphism.map-⊤ ML.left-sided→ˢ) refl
     ; map-⊔        = λ {i} {j} → W₂.eqᵗˢ (EL.mapᴬ-⊔ (W₁.lo i) (W₁.lo j))
                                          (MR.mapᵇ-⊔ (W₁.hi i) (W₁.hi j))
-    ; map-of-dur   = λ {τ} → W₂.eqᵗˢ (StrictMorphism.map-of-dur ML.left-sided→ˢ {τ})
-                                     (StrictMorphism.map-of-dur MR.right-sided→ˢ {τ})
+    ; map-ι        = λ {τ} → W₂.eqᵗˢ (StrictMorphism.map-ι ML.left-sided→ˢ {τ})
+                                     (StrictMorphism.map-ι MR.right-sided→ˢ {τ})
     }

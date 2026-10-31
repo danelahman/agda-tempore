@@ -24,7 +24,7 @@ module PolymorphicCalculus.Examples.Durations (S : LanguageSpec)
 
 open LanguageSpec S
 open GradeSystemInterface Grades
-  using (𝔻; of-durʳ; of-durᵉ; _·ᵣ_; uᵣ; _≾ᵣ?_)
+  using (𝔻; ιᵣ; ιₑ; _·ᵣ_; 𝟏ᵣ; _≾ᵣ?_)
   renaming (_≾ᵣ_ to _≾ᴳ_)
 
 open import PolymorphicCalculus.Syntax.Grades                S
@@ -47,10 +47,10 @@ open import PolymorphicCalculus.Examples.Variables
 -- The grades of a duration
 
 ⌜_⌝ʳ : ∀ {Θ} → 𝔻 → RExp Θ
-⌜ τ ⌝ʳ = rconst (of-durʳ τ)
+⌜ τ ⌝ʳ = rconst (ιᵣ τ)
 
 ⌜_⌝ᵉ : ∀ {Θ} → 𝔻 → EExp Θ
-⌜ τ ⌝ᵉ = econst (of-durᵉ τ)
+⌜ τ ⌝ᵉ = econst (ιₑ τ)
 
 -- A closed derivation in the empty context is a typing
 
@@ -63,24 +63,24 @@ closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 --
 --   claim-after ρ τ τ' = box[ρ] () as x in delay τ; delay τ'; unbox x as y in y
 --
--- `uᵣ · of-dur τ · of-dur τ' ≾ of-dur ρ`, decided on the constants.
+-- `𝟏ᵣ · ι τ · ι τ' ≾ ι ρ`, decided on the constants.
 
 claim-after : 𝔻 → 𝔻 → 𝔻 → RawC ∅ˢ 0
 claim-after ρ τ τ' = box ⌜ ρ ⌝ʳ ⋆ (delay τ (delay τ' (unbox (var fzero) (return v₀))))
 
-claim-after-D : ∀ ρ τ τ' → uᵣ ·ᵣ of-durʳ τ ·ᵣ of-durʳ τ' ≾ᴳ of-durʳ ρ
-              → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (⌜ τ ⌝ᵉ ·̂ₑ (⌜ τ' ⌝ᵉ ·̂ₑ ûₑ))
+claim-after-D : ∀ ρ τ τ' → 𝟏ᵣ ·ᵣ ιᵣ τ ·ᵣ ιᵣ τ' ≾ᴳ ιᵣ ρ
+              → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (⌜ τ ⌝ᵉ ·̂ₑ (⌜ τ' ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 claim-after-D ρ τ τ' p =
   box ⌜ ρ ⌝ʳ ⋆
     (delay τ (delay τ' (unbox (res-var {z = Tl-⟨⟩ (Tl-⟨⟩ Hd)}) elapsed (return (var Hd ok₀)))))
   where
-    elapsed : ∅ᴴ ⊩ ûᵣ ·̂ᵣ ⌜ τ ⌝ʳ ·̂ᵣ ⌜ τ' ⌝ʳ ≾̂ᵣ ⌜ ρ ⌝ʳ
+    elapsed : ∅ᴴ ⊩ 𝟏̂ᵣ ·̂ᵣ ⌜ τ ⌝ʳ ·̂ᵣ ⌜ τ' ⌝ʳ ≾̂ᵣ ⌜ ρ ⌝ʳ
     elapsed = transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-const-· ≡̂ᵣ-refl) ≡̂ᵣ-const-·)) (atomᵣ p)
 
-    ok₀ : VarOK ∅ᴴ Unit ûᵣ
+    ok₀ : VarOK ∅ᴴ Unit 𝟏̂ᵣ
     ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
-claim-after-typable : ∀ ρ τ τ' → True ((uᵣ ·ᵣ of-durʳ τ ·ᵣ of-durʳ τ') ≾ᵣ? of-durʳ ρ)
+claim-after-typable : ∀ ρ τ τ' → True ((𝟏ᵣ ·ᵣ ιᵣ τ ·ᵣ ιᵣ τ') ≾ᵣ? ιᵣ ρ)
                     → Typable [] (claim-after ρ τ τ')
 claim-after-typable ρ τ τ' p = closed (claim-after-D ρ τ τ' (toWitness p)) refl
 
@@ -102,4 +102,4 @@ inferred-grade τ τ' = return (lam (delay τ (delay τ' (unbox (var fzero) (ret
 -- the scheme at the total duration `τ`
 
 expected-inferred-grade : 𝔻 → Scheme
-expected-inferred-grade τ = ∀[ 1 , 0 , 0 ] ⊤ ⟹ ([ ⌜ τ ⌝ʳ ] α₀ ⇒ α₀ ‼ ⌜ τ ⌝ᵉ) ‼ ûₑ
+expected-inferred-grade τ = ∀[ 1 , 0 , 0 ] ⊤ ⟹ ([ ⌜ τ ⌝ʳ ] α₀ ⇒ α₀ ‼ ⌜ τ ⌝ᵉ) ‼ 𝟏̂ₑ

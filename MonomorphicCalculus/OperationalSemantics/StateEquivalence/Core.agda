@@ -139,7 +139,7 @@ cast-false⁻ : ∀ {Γ Γ'} → (e : Γ' ≡ Γ) → (V' : Γ' ⊢V⦂ Bool)
 cast-false⁻ refl _ refl = refl
 
 cast-return⁻ : ∀ {Γ Γ' A} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ A}
-          → (M' : Γ' ⊢C⦂ A ‼ uₑ)
+          → (M' : Γ' ⊢C⦂ A ‼ 𝟏ₑ)
           → return V ≡ castᶜ e M'
           → Σ[ V' ∈ (Γ' ⊢V⦂ A) ] (M' ≡ return V') × (V ≡ castᵛ e V')
 cast-return⁻ refl _ refl = _ , refl , refl
@@ -152,12 +152,12 @@ cast-app⁻ : ∀ {Γ Γ' A C} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ A ⇒ C}
 cast-app⁻ refl _ refl = _ , _ , refl , refl , refl
 
 cast-seq⁻ : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
-       → {M : Γ ⊢C⦂ A ‼ ε} → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+       → {M : Γ ⊢C⦂ A ‼ ε} → {N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
        → (P' : Γ' ⊢C⦂ B ‼ (ε ·ₑ ε'))
        → (M ⨟ N) ≡ castᶜ e P'
-       → Σ[ M' ∈ (Γ' ⊢C⦂ A ‼ ε) ] Σ[ N' ∈ (Γ' ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε') ]
+       → Σ[ M' ∈ (Γ' ⊢C⦂ A ‼ ε) ] Σ[ N' ∈ (Γ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε') ]
            (P' ≡ (M' ⨟ N')) × (M ≡ castᶜ e M')
-         × (N ≡ castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) e) N')
+         × (N ≡ castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) e) N')
 cast-seq⁻ refl _ refl = _ , _ , refl , refl , refl
 
 cast-match⁻ : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
@@ -180,7 +180,7 @@ cast-if⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
 
 cast-cmp⁻ : ∀ {Γ Γ' A ⋈} → (e : Γ' ≡ Γ)
           → {V W : Γ ⊢V⦂ A} → {et : Eternal A}
-          → (P' : Γ' ⊢C⦂ Bool ‼ uₑ)
+          → (P' : Γ' ⊢C⦂ Bool ‼ 𝟏ₑ)
           → cmp ⋈ V W et ≡ castᶜ e P'
           → Σ[ V' ∈ (Γ' ⊢V⦂ A) ] Σ[ W' ∈ (Γ' ⊢V⦂ A) ]
               (P' ≡ cmp ⋈ V' W' et) × (V ≡ castᵛ e V') × (W ≡ castᵛ e W')
@@ -198,24 +198,24 @@ cast-caseℕ⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
 
 cast-recℕ⁻ : ∀ {Γ Γ' B ε} → (e : Γ' ≡ Γ)
            → {V : Γ ⊢V⦂ Nat} → {M : Γ ⊢C⦂ B ‼ ε}
-           → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+           → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
            → {p : ε ·ₑ ε ≾ₑ ε}
            → (P' : Γ' ⊢C⦂ B ‼ ε)
            → recℕ V M N p ≡ castᶜ e P'
            → Σ[ V' ∈ (Γ' ⊢V⦂ Nat) ] Σ[ M' ∈ (Γ' ⊢C⦂ B ‼ ε) ]
-             Σ[ N' ∈ ((Γ' ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε) ]
+             Σ[ N' ∈ ((Γ' ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε) ]
                (P' ≡ recℕ V' M' N' p) × (V ≡ castᵛ e V')
              × (M ≡ castᶜ e M')
-             × (N ≡ castᶜ (cong (λ X → (X ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B) e) N')
+             × (N ≡ castᶜ (cong (λ X → (X ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) e) N')
 cast-recℕ⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
 
 -- The successor reduct of a recursion commutes with a context equality.
 
 cast-recℕ-reduct : ∀ {Γ Γ' B ε} → (e : Γ' ≡ Γ)
                  → (V' : Γ' ⊢V⦂ Nat) → (M' : Γ' ⊢C⦂ B ‼ ε)
-                 → (N' : (Γ' ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                 → (N' : (Γ' ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                  → (p : ε ·ₑ ε ≾ₑ ε)
-                 → let N₁ = castᶜ (cong (λ X → (X ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ mapᵉ ε ⟩ ∷ B) e) N' in
+                 → let N₁ = castᶜ (cong (λ X → (X ⟨ ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) e) N' in
                    coerce p (recℕ (castᵛ e V') (castᶜ e M') N₁ p
                              ⨟ recℕ-step (castᵛ e V') N₁)
                    ≡ castᶜ e (coerce p (recℕ V' M' N' p ⨟ recℕ-step V' N'))
@@ -233,15 +233,15 @@ cast-caseL⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
 
 cast-recL⁻ : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ)
            → {V : Γ ⊢V⦂ |List| A} → {M : Γ ⊢C⦂ B ‼ ε}
-           → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε}
+           → {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε}
            → {p : ε ·ₑ ε ≾ₑ ε}
            → (P' : Γ' ⊢C⦂ B ‼ ε)
            → recL V M N p ≡ castᶜ e P'
            → Σ[ V' ∈ (Γ' ⊢V⦂ |List| A) ] Σ[ M' ∈ (Γ' ⊢C⦂ B ‼ ε) ]
-             Σ[ N' ∈ ((Γ' ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε) ]
+             Σ[ N' ∈ ((Γ' ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε) ]
                (P' ≡ recL V' M' N' p) × (V ≡ castᵛ e V')
              × (M ≡ castᶜ e M')
-             × (N ≡ castᶜ (cong (λ X → (X ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B) e) N')
+             × (N ≡ castᶜ (cong (λ X → (X ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) e) N')
 cast-recL⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
 
 cast-case+⁻ : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
@@ -256,24 +256,24 @@ cast-case+⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
 
 cast-perform⁻ : ∀ {Γ Γ' A ε} → (e : Γ' ≡ Γ) → {op : Op}
            → {V : Γ ⊢V⦂ type-of-gtype (param op)}
-           → {M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
+           → {M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
            → (P' : Γ' ⊢C⦂ A ‼ (op-grade op ·ₑ ε))
            → perform op V M ≡ castᶜ e P'
            → Σ[ V' ∈ (Γ' ⊢V⦂ type-of-gtype (param op)) ]
-             Σ[ M' ∈ (Γ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+             Σ[ M' ∈ (Γ' ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
                         ⊢C⦂ A ‼ ε) ]
                (P' ≡ perform op V' M') × (V ≡ castᵛ e V')
-             × (M ≡ castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩
+             × (M ≡ castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ∣ op-grade op ∣ᵉ ⟩
                                             ∷ type-of-gtype (arity op)) e) M')
 cast-perform⁻ refl _ refl = _ , _ , refl , refl , refl
 
 cast-delay⁻ : ∀ {Γ Γ' A ε τ} → (e : Γ' ≡ Γ)
-         → {M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε}
-         → (P' : Γ' ⊢C⦂ A ‼ (of-durᵉ τ ·ₑ ε))
+         → {M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε}
+         → (P' : Γ' ⊢C⦂ A ‼ (ιₑ τ ·ₑ ε))
          → delay τ M ≡ castᶜ e P'
-         → Σ[ M' ∈ (Γ' ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε) ]
+         → Σ[ M' ∈ (Γ' ⟨ ιᵣ τ ⟩ ⊢C⦂ A ‼ ε) ]
              (P' ≡ delay τ M')
-           × (M ≡ castᶜ (cong (_⟨ of-durʳ τ ⟩) e) M')
+           × (M ≡ castᶜ (cong (_⟨ ιᵣ τ ⟩) e) M')
 cast-delay⁻ refl _ refl = _ , refl , refl
 
 cast-box⁻ : ∀ {Γ Γ' A C ρ} → (e : Γ' ≡ Γ)
@@ -321,26 +321,26 @@ cast-handle⁻ refl _ refl = _ , _ , refl , refl , refl
 cast-handler⁻ : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
           → {H : (op : Op) → (ε'' : E) →
                    Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                     ∷ [ mapᵉ (op-grade op) ]
+                     ∷ [ ∣ op-grade op ∣ᵉ ]
                          (type-of-gtype (arity op) ⇒ B ‼ ε'')
                    ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
-          → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+          → {N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε'}
           → (W' : Γ' ⊢V⦂ (A ‼ ε) ⇛ (B ‼ ε'))
           → handler N H ≡ castᵛ e W'
           → Σ[ H' ∈ ((op : Op) → (ε'' : E) →
                        Γ' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                         ∷ [ mapᵉ (op-grade op) ]
+                         ∷ [ ∣ op-grade op ∣ᵉ ]
                              (type-of-gtype (arity op) ⇒ B ‼ ε'')
                        ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')) ]
-            Σ[ N' ∈ (Γ' ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε') ]
+            Σ[ N' ∈ (Γ' ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε') ]
               (W' ≡ handler N' H')
             × (∀ op ε'' → H op ε''
                  ≡ castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                                          ∷ [ mapᵉ (op-grade op) ]
+                                          ∷ [ ∣ op-grade op ∣ᵉ ]
                                               (type-of-gtype (arity op) ⇒ B ‼ ε''))
                                 e)
                           (H' op ε''))
-            × (N ≡ castᶜ (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) e) N')
+            × (N ≡ castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A) e) N')
 cast-handler⁻ refl _ refl = _ , _ , refl , (λ op ε'' → refl) , refl
 
 cast-unbox⁻ : ∀ {Γ Γ' A A₀ C ρ ρ'} → (e : Γ' ≡ Γ)
@@ -465,10 +465,10 @@ cast-caseL-reduct refl (inj₂ (W , L)) M' N' = refl
 
 cast-recL-reduct : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ) → (l : ListView Γ' A)
                  → (M' : Γ' ⊢C⦂ B ‼ ε)
-                 → (N' : (Γ' ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ B ‼ ε)
+                 → (N' : (Γ' ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ‼ ε)
                  → (p : ε ·ₑ ε ≾ₑ ε)
                  → recL-reduct (castL e l) (castᶜ e M')
-                     (castᶜ (cong (λ X → (X ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ mapᵉ ε ⟩ ∷ B) e) N') p
+                     (castᶜ (cong (λ X → (X ⟨ ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B) e) N') p
                  ≡ castᶜ e (recL-reduct l M' N' p)
 cast-recL-reduct refl (inj₁ tt)      M' N' p = refl
 cast-recL-reduct refl (inj₂ (W , L)) M' N' p = refl
@@ -510,12 +510,12 @@ cast-match-reduct : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
 cast-match-reduct refl M' V' W' = refl
 
 cast-seq-ret : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ)
-             → (N' : Γ' ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε) → (V' : Γ' ⊢V⦂ A)
-             → (C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren))
-                 (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ uₑ ⟩ ∷ A) e) N'))
+             → (N' : Γ' ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ‼ ε) → (V' : Γ' ⊢V⦂ A)
+             → (C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren))
+                 (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A) e) N'))
                    [ split-[] ↦ castᵛ e V' ]c
              ≡ castᶜ e ((C-rename
-                          (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-uᵉ) ∘ʳ ⟨⟩-η-ren))
+                          (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren))
                           N') [ split-[] ↦ V' ]c)
 cast-seq-ret refl N' V' = refl
 

@@ -2,12 +2,12 @@
 -- Setoid-valued unit-monotone presheaves over the worlds `W`.           --
 --                                                                       --
 -- A presheaf is a covariant functor over the preorder of worlds         --
--- `(W, ⊑[ uᵣ ])` given by unit-graded accessibility, valued in          --
+-- `(W, ⊑[ 𝟏ᵣ ])` given by unit-graded accessibility, valued in          --
 -- setoids: each world carries a set `carrier` together with a per-      --
 -- world equivalence `_≈_`. The functorial `transport` moves elements    --
 -- along unit-accessibility, respecting `_≈_` and satisfying the         --
 -- reflexivity and transitivity laws up to `_≈_` (a genuine preorder,    --
--- since `uᵣ ·ᵣ uᵣ ≡ uᵣ`).                                               --
+-- since `𝟏ᵣ ·ᵣ 𝟏ᵣ ≡ 𝟏ᵣ`).                                               --
 --                                                                       --
 -- A morphism is a natural transformation whose components respect       --
 -- `_≈_`. Morphism equality is pointwise target-`_≈_`; every categorical --
@@ -41,10 +41,10 @@ open GradeSystemInterface GS
 open World Wld
 
 -- Composition of unit-accessibility, a genuine preorder since
--- `uᵣ ·ᵣ uᵣ ≡ uᵣ`.
+-- `𝟏ᵣ ·ᵣ 𝟏ᵣ ≡ 𝟏ᵣ`.
 
-⊑ᵘ-trans : ∀ {w w' w''} → w ⊑[ uᵣ ] w' → w' ⊑[ uᵣ ] w'' → w ⊑[ uᵣ ] w''
-⊑ᵘ-trans p q = ⊑-mono (≃ᵣ⇒≾ᵣ (·ᵣ-identityʳ uᵣ)) (⊑-trans p q)
+⊑ᵘ-trans : ∀ {w w' w''} → w ⊑[ 𝟏ᵣ ] w' → w' ⊑[ 𝟏ᵣ ] w'' → w ⊑[ 𝟏ᵣ ] w''
+⊑ᵘ-trans p q = ⊑-mono (≃ᵣ⇒≾ᵣ (·ᵣ-identityʳ 𝟏ᵣ)) (⊑-trans p q)
 
 -- Setoid-valued unit-monotone presheaves over the worlds
 
@@ -59,11 +59,11 @@ record PSh : Set₁ where
     ≈-sym      : ∀ {w} {x y : carrier w} → x ≈ y → y ≈ x
     ≈-trans    : ∀ {w} {x y z : carrier w} → x ≈ y → y ≈ z → x ≈ z
     -- functorial transport along unit-accessibility, respecting `_≈_`
-    transport  : ∀ {w w'} → w ⊑[ uᵣ ] w' → carrier w → carrier w'
-    transport-cong  : ∀ {w w'} (p : w ⊑[ uᵣ ] w') {x y : carrier w}
+    transport  : ∀ {w w'} → w ⊑[ 𝟏ᵣ ] w' → carrier w → carrier w'
+    transport-cong  : ∀ {w w'} (p : w ⊑[ 𝟏ᵣ ] w') {x y : carrier w}
                     → x ≈ y → transport p x ≈ transport p y
     transport-refl  : ∀ {w} (x : carrier w) → transport ⊑-refl x ≈ x
-    transport-trans : ∀ {w w' w''} (p : w ⊑[ uᵣ ] w') (q : w' ⊑[ uᵣ ] w'') (x : carrier w)
+    transport-trans : ∀ {w w' w''} (p : w ⊑[ 𝟏ᵣ ] w') (q : w' ⊑[ 𝟏ᵣ ] w'') (x : carrier w)
                     → transport (⊑ᵘ-trans p q) x ≈ transport q (transport p x)
 
 open PSh public
@@ -71,7 +71,7 @@ open PSh public
 -- Transport is independent of the accessibility witness (up to `≈`),
 -- since witnesses are proof irrelevant.
 
-transport-irr : ∀ {A : PSh} {w w'} (p q : w ⊑[ uᵣ ] w') (x : carrier A w)
+transport-irr : ∀ {A : PSh} {w w'} (p q : w ⊑[ 𝟏ᵣ ] w') (x : carrier A w)
               → _≈_ A (transport A p x) (transport A q x)
 transport-irr {A} p q x with ⊑-irrelevant p q
 ... | refl = ≈-refl A
@@ -83,7 +83,7 @@ record _→ᵖ_ (A B : PSh) : Set where
   field
     app      : ∀ {w} → carrier A w → carrier B w
     app-cong : ∀ {w} {x y : carrier A w} → _≈_ A x y → _≈_ B (app x) (app y)
-    nat      : ∀ {w w'} (p : w ⊑[ uᵣ ] w') (x : carrier A w)
+    nat      : ∀ {w w'} (p : w ⊑[ 𝟏ᵣ ] w') (x : carrier A w)
              → _≈_ B (app (transport A p x)) (transport B p (app x))
 
 open _→ᵖ_ public
@@ -268,11 +268,11 @@ A +ᵖ B = record
     trans⁺ (inj₁ x) (inj₁ y) (inj₁ z) e e' = ≈-trans A e e'
     trans⁺ (inj₂ x) (inj₂ y) (inj₂ z) e e' = ≈-trans B e e'
 
-    tr⁺ : ∀ {w w'} → w ⊑[ uᵣ ] w' → carrier A w ⊎ carrier B w → carrier A w' ⊎ carrier B w'
+    tr⁺ : ∀ {w w'} → w ⊑[ 𝟏ᵣ ] w' → carrier A w ⊎ carrier B w → carrier A w' ⊎ carrier B w'
     tr⁺ p (inj₁ x) = inj₁ (transport A p x)
     tr⁺ p (inj₂ x) = inj₂ (transport B p x)
 
-    tr-cong⁺ : ∀ {w w'} (p : w ⊑[ uᵣ ] w') (x y : carrier A w ⊎ carrier B w)
+    tr-cong⁺ : ∀ {w w'} (p : w ⊑[ 𝟏ᵣ ] w') (x y : carrier A w ⊎ carrier B w)
              → _≈⁺_ {A} {B} x y → _≈⁺_ {A} {B} (tr⁺ p x) (tr⁺ p y)
     tr-cong⁺ p (inj₁ x) (inj₁ y) e = transport-cong A p e
     tr-cong⁺ p (inj₂ x) (inj₂ y) e = transport-cong B p e
@@ -281,7 +281,7 @@ A +ᵖ B = record
     tr-refl⁺ (inj₁ x) = transport-refl A x
     tr-refl⁺ (inj₂ x) = transport-refl B x
 
-    tr-trans⁺ : ∀ {w w' w''} (p : w ⊑[ uᵣ ] w') (q : w' ⊑[ uᵣ ] w'')
+    tr-trans⁺ : ∀ {w w' w''} (p : w ⊑[ 𝟏ᵣ ] w') (q : w' ⊑[ 𝟏ᵣ ] w'')
                 (x : carrier A w ⊎ carrier B w)
               → _≈⁺_ {A} {B} (tr⁺ (⊑ᵘ-trans p q) x) (tr⁺ q (tr⁺ p x))
     tr-trans⁺ p q (inj₁ x) = transport-trans A p q x
@@ -308,7 +308,7 @@ inrᵖ {B = B} = pmap inj₂ (λ e → e) (λ p x → ≈-refl B)
     copair-cong (inj₁ x) (inj₁ y) e = app-cong f e
     copair-cong (inj₂ x) (inj₂ y) e = app-cong g e
 
-    copair-nat : ∀ {w w'} (p : w ⊑[ uᵣ ] w') (x : carrier A w ⊎ carrier B w)
+    copair-nat : ∀ {w w'} (p : w ⊑[ 𝟏ᵣ ] w') (x : carrier A w ⊎ carrier B w)
                → _≈_ C (copair (transport (A +ᵖ B) p x)) (transport C p (copair x))
     copair-nat p (inj₁ x) = nat f p x
     copair-nat p (inj₂ x) = nat g p x
@@ -380,7 +380,7 @@ ifᵖ {X} {A} b f g = pmap
     go-cong e true  = app-cong f e
     go-cong e false = app-cong g e
 
-    go-nat : ∀ {w w'} → (p : w ⊑[ uᵣ ] w') → (x : carrier X w) → (c : Bool)
+    go-nat : ∀ {w w'} → (p : w ⊑[ 𝟏ᵣ ] w') → (x : carrier X w) → (c : Bool)
            → _≈_ A (if c then app f (transport X p x) else app g (transport X p x))
                    (transport A p (if c then app f x else app g x))
     go-nat p x true  = nat f p x
@@ -456,7 +456,7 @@ iterᵖ {A} a f = pmap (λ n → go n) (λ { refl → ≈-refl A }) go-nat
     go zero    = app a tt
     go (suc n) = app f (go n)
 
-    go-nat : ∀ {w w'} (p : w ⊑[ uᵣ ] w') (n : ℕ)
+    go-nat : ∀ {w w'} (p : w ⊑[ 𝟏ᵣ ] w') (n : ℕ)
            → _≈_ A (go n) (transport A p (go n))
     go-nat p zero    = nat a p tt
     go-nat p (suc n) = ≈-trans A (app-cong f (go-nat p n)) (nat f p (go n))
@@ -507,10 +507,10 @@ module _ (A : PSh) where
   transᴸ (x ∷ xs) (y ∷ ys) (z ∷ zs) (e , es) (e' , es') =
     ≈-trans A e e' , transᴸ xs ys zs es es'
 
-  trᴸ : ∀ {w w'} → w ⊑[ uᵣ ] w' → List (carrier A w) → List (carrier A w')
+  trᴸ : ∀ {w w'} → w ⊑[ 𝟏ᵣ ] w' → List (carrier A w) → List (carrier A w')
   trᴸ p = map (transport A p)
 
-  tr-congᴸ : ∀ {w w'} (p : w ⊑[ uᵣ ] w') (xs ys : List (carrier A w))
+  tr-congᴸ : ∀ {w w'} (p : w ⊑[ 𝟏ᵣ ] w') (xs ys : List (carrier A w))
            → xs ≈ᴸ ys → trᴸ p xs ≈ᴸ trᴸ p ys
   tr-congᴸ p []       []       e        = tt
   tr-congᴸ p (x ∷ xs) (y ∷ ys) (e , es) = transport-cong A p e , tr-congᴸ p xs ys es
@@ -519,7 +519,7 @@ module _ (A : PSh) where
   tr-reflᴸ []       = tt
   tr-reflᴸ (x ∷ xs) = transport-refl A x , tr-reflᴸ xs
 
-  tr-transᴸ : ∀ {w w' w''} (p : w ⊑[ uᵣ ] w') (q : w' ⊑[ uᵣ ] w'')
+  tr-transᴸ : ∀ {w w' w''} (p : w ⊑[ 𝟏ᵣ ] w') (q : w' ⊑[ 𝟏ᵣ ] w'')
               (xs : List (carrier A w))
             → trᴸ (⊑ᵘ-trans p q) xs ≈ᴸ trᴸ q (trᴸ p xs)
   tr-transᴸ p q []       = tt
@@ -556,7 +556,7 @@ foldᵖ {A} {C} a f = pmap go go-cong go-nat
     go-cong {xs = []}     {[]}     e        = ≈-refl C
     go-cong {xs = x ∷ xs} {y ∷ ys} (e , es) = app-cong f (e , go-cong es)
 
-    go-nat : ∀ {w w'} (p : w ⊑[ uᵣ ] w') (xs : List (carrier A w))
+    go-nat : ∀ {w w'} (p : w ⊑[ 𝟏ᵣ ] w') (xs : List (carrier A w))
            → _≈_ C (go (trᴸ A p xs)) (transport C p (go xs))
     go-nat p []       = nat a p tt
     go-nat p (x ∷ xs) = ≈-trans C (app-cong f (≈-refl A , go-nat p xs)) (nat f p (x , go xs))
@@ -593,10 +593,10 @@ foldᵖ-unique {A} {C} a f h p q (x ∷ xs) =
 record _⇒ᶜ_ (A B : PSh) (w : W) : Set where
   constructor mk⇒
   field
-    fun      : ∀ {w'} → w ⊑[ uᵣ ] w' → carrier A w' → carrier B w'
-    fun-cong : ∀ {w'} (p : w ⊑[ uᵣ ] w') {a a' : carrier A w'}
+    fun      : ∀ {w'} → w ⊑[ 𝟏ᵣ ] w' → carrier A w' → carrier B w'
+    fun-cong : ∀ {w'} (p : w ⊑[ 𝟏ᵣ ] w') {a a' : carrier A w'}
              → _≈_ A a a' → _≈_ B (fun p a) (fun p a')
-    fun-nat  : ∀ {w' w''} (q : w ⊑[ uᵣ ] w') (r : w' ⊑[ uᵣ ] w'') (a : carrier A w')
+    fun-nat  : ∀ {w' w''} (q : w ⊑[ 𝟏ᵣ ] w') (r : w' ⊑[ 𝟏ᵣ ] w'') (a : carrier A w')
              → _≈_ B (fun (⊑ᵘ-trans q r) (transport A r a)) (transport B r (fun q a))
 
 open _⇒ᶜ_ public
@@ -606,7 +606,7 @@ infix 20 _⇒ᶜ_
 -- The value of a Kripke function is independent of the accessibility
 -- witness (up to `≈`), since witnesses are proof irrelevant.
 
-fun-irr : ∀ {A B w w'} (F : (A ⇒ᶜ B) w) (p q : w ⊑[ uᵣ ] w') (a : carrier A w')
+fun-irr : ∀ {A B w w'} (F : (A ⇒ᶜ B) w) (p q : w ⊑[ 𝟏ᵣ ] w') (a : carrier A w')
         → _≈_ B (fun F p a) (fun F q a)
 fun-irr {B = B} F p q a with ⊑-irrelevant p q
 ... | refl = ≈-refl B
@@ -616,7 +616,7 @@ infixr 22 _⇒ᵖ_
 _⇒ᵖ_ : PSh → PSh → PSh
 A ⇒ᵖ B = record
   { carrier         = A ⇒ᶜ B
-  ; _≈_             = λ {w} F G → ∀ {w'} (p : w ⊑[ uᵣ ] w') (a : carrier A w')
+  ; _≈_             = λ {w} F G → ∀ {w'} (p : w ⊑[ 𝟏ᵣ ] w') (a : carrier A w')
                     → _≈_ B (fun F p a) (fun G p a)
   ; ≈-refl          = λ p a → ≈-refl B
   ; ≈-sym           = λ e p a → ≈-sym B (e p a)

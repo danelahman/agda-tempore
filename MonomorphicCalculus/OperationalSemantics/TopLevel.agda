@@ -22,4 +22,4 @@ record TopLevelOpSemantics : Set where
     op-sem : (op : Op)
            → {S : 𝕊 []} -- uniform in S only under `OpSemCoherent`
            → toCtx S ⊢V⦂ type-of-gtype (param op)
-           → toCtx S ⟨ mapᵉ (op-grade op) ⟩ ⊢V⦂ type-of-gtype (arity op)
+           → toCtx S ⟨ ∣ op-grade op ∣ᵉ ⟩ ⊢V⦂ type-of-gtype (arity op)

@@ -58,7 +58,7 @@ open import Grades.Durations.Intervals T using (fin; ⁻; ⁺) renaming (_∣_ t
 open import Grades.Exact.Base T Op n code code-injective using (Word; op; idle; stretch; stretch-zero)
 open import Grades.Exact.Order T Op n code code-injective using (_⊑_; ⊑-refl; ⊑-trans)
 open import Grades.Exact.Lift T Op n code code-injective
-  using (Lang; uᴸ; _·ᴸ_; ⊑-++) renaming (_≾_ to _≾ᴸ_)
+  using (Lang; 𝟏ᴸ; _·ᴸ_; ⊑-++) renaming (_≾_ to _≾ᴸ_)
 open import Grades.Exact.Expression T Op n code code-injective running
   using (lower; upper; ‵_; ⟦_⟧)
 open import Grades.Exact.Finite T Op n code code-injective name code-name running

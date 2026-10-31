@@ -190,7 +190,7 @@ fill-cong-env Γ {Γ'} (delay[_]ₖ {A} {ε} p τ K) pK N N' pN pN' g eq =
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   where
     Θ₁ : Ctx
-    Θ₁ = [] ⟨ of-durʳ τ ⟩
+    Θ₁ = [] ⟨ ιᵣ τ ⟩
 
     rΓ' : Ren [] ((Γ' ++ᶜ Θ₁) ++ᶜ hole-ctx K) (Γ' ++ᶜ rel-hole-ctx K Θ₁)
     rΓ' = eq-ren (trans (cong (Γ' ++ᶜ_) (rel-hole-ctx-++ᶜ {_} {Θ₁} {[]} K))
@@ -301,7 +301,7 @@ fill-cong-env Γ {Γ'} (perform[_]ₖ {A} {ε} p op V K) (pV , pK) N N' pN pN' g
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   where
     Θ₁ : Ctx
-    Θ₁ = [] ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+    Θ₁ = [] ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ type-of-gtype (arity op)
 
     rΓ' : Ren [] ((Γ' ++ᶜ Θ₁) ++ᶜ hole-ctx K) (Γ' ++ᶜ rel-hole-ctx K Θ₁)
     rΓ' = eq-ren (trans (cong (Γ' ++ᶜ_) (rel-hole-ctx-++ᶜ {_} {Θ₁} {[]} K))
