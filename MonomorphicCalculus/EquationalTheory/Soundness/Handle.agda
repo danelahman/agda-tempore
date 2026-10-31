@@ -239,6 +239,41 @@ sound-handle-unbox x rel w M V (pM , pV) (pM₂ , pV₂) =
 -- `handle-delay`: the handled computation's `delay` becomes a `delay` of the
 -- handled computation.
 
+private
+  -- by a lemma, so that `⟦ delay τ M ⟧ᶜᵗ` is unfolded at a variable `M`
+  delay-congᵗ : ∀ {Γ A ε τ} (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε) (pM : Paramᶜ M) {f}
+              → ⟦ M ⟧ᶜᵗ pM ≈ᵐ f
+              → ⟦ delay τ M ⟧ᶜᵗ pM ≈ᵐ delayᵀ τ ∘ᵐ [ of-durʳ τ ]ᶠ f ∘ᵐ η⊣
+  delay-congᵗ M pM eq = ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ eq))
+
+  -- The reduct of `handle-delay` denotes the delayed fold. The equation fixes
+  -- the reduct's return clause and handler, so that they are the rule's own
+  -- terms.
+  handle-delay-rhs : ∀ {Γ A B τ ε ε' ε₀} {L : Γ ⊢C⦂ B ‼ ε₀}
+    → (e : of-durᵉ τ ·ₑ (ε ·ₑ ε') ≃ₑ ε₀)
+    → (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
+    → {H : (op : Op) → (ε'' : E)
+         → Γ ⟨ of-durʳ τ ⟩ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+           ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
+    → {N : Γ ⟨ of-durʳ τ ⟩ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+    → Γ ⊢C⦂ L == ε-≃ e (delay τ (handle M `with handler N H))
+    → (p : Paramᶜ (ε-≃ e (delay τ (handle M `with handler N H))))
+    → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+    → (pH : ∀ op ε'' → Paramᶜ (H op ε'')) → (uH : EffUniformʰ {Γ ⟨ of-durʳ τ ⟩} H pH)
+    → ⟦ ε-≃ e (delay τ (handle M `with handler N H)) ⟧ᶜᵗ p
+    ≈ᵐ T-≤ (proj₁ e)
+         ∘ᵐ delayᵀ τ
+         ∘ᵐ [ of-durʳ τ ]ᶠ (T-alg-of-handlerᵀ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟨ of-durʳ τ ⟩ ⟧ᶜᵗˣ)
+                                            (⟦_⟧ʰᵗ {Γ ⟨ of-durʳ τ ⟩} H pH uH)
+                            ∘ᵐ ⟨ ⟨⊤⟩-η , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ ⟩ᵐ)
+         ∘ᵐ η⊣
+  handle-delay-rhs {τ = τ} e M {H} {N} _ p pM pN pH uH =
+      ⟦⟧ᶜᵗ-irr (ε-≃ e (delay τ (handle M `with handler N H))) p (pM , pN , pH , uH)
+    ∙ sound-ε-≃ e (delay τ (handle M `with handler N H)) (pM , pN , pH , uH)
+    ∙ ∘ᵐ-congʳ (delay-congᵗ (handle M `with handler N H) (pM , pN , pH , uH)
+                  (handle-in-β M H N pM pN pH uH))
+
 sound-handle-delay : ∀ {Γ A B τ ε ε'}
   → (M : Γ ⟨ of-durʳ τ ⟩ ⊢C⦂ A ‼ ε)
   → (H : (op : Op) → (ε'' : E)
@@ -290,11 +325,7 @@ sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
                                   ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
                       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
                       ∙ ∘ᵐ-congˡ (≈ᵐ-sym (R.alg-nat R.pHᵣ R.uHᵣ))))))
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-≃ e (delay τ (handle M `with R.Hᵣ `in (C-rename r N))))
-                pR pRc
-            ∙ sound-ε-≃ e (delay τ (handle M `with R.Hᵣ `in (C-rename r N))) pRc
-            ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ
-                (handle-in-β M R.Hᵣ (C-rename r N) pM (renᶜ r N pN) R.pHᵣ R.uHᵣ)))))
+  ∙ ≈ᵐ-sym (handle-delay-rhs e M (handle-delay M H N) pR pM (renᶜ r N pN) R.pHᵣ R.uHᵣ)
   where
     e = ≃ₑ-sym (·ₑ-assoc (of-durᵉ τ) ε ε')
     r   = cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ (≃ᵣ-trans map-·ᵉ (·ᵣ-cong map-of-durᵉ ≃ᵣ-refl)))
@@ -302,5 +333,3 @@ sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
 
     module R = Reindex (⟨⟩-≤-ren (≾-⊤ᵣ _) ∘ʳ ⟨⟩-μ-ren)
                        (⟨⟩-≤ (≾-⊤ᵣ (of-durʳ τ))) (barrier-μ (≾-⊤ᵣ _)) H pH uH
-
-    pRc = pM , renᶜ r N pN , R.pHᵣ , R.uHᵣ

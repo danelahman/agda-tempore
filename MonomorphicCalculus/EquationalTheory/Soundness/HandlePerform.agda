@@ -76,11 +76,43 @@ open import MonomorphicCalculus.OperationalSemantics.Soundness.Preservation.Hand
        using (op-pair; op-env; str-op; str-op-box; gty-cancelᵛ; arity-box; cont-collapse)
 open import MonomorphicCalculus.OperationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
        using (handle-op-cont)
+       renaming (H' to H'ᶜ; pH' to pH'ᶜ; uH' to uH'ᶜ)
 
 private
   infixr 3 _∙_
   _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
   _∙_ = ≈ᵐ-trans
+
+  -- `handle M `with H `in N`, at the context read off the clause family `H`
+  handleᴴ : ∀ {Γ A B ε ε'}
+          → ((op : Op) → (ε'' : E)
+               → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                 ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+          → Γ ⊢C⦂ A ‼ ε → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε' → Γ ⊢C⦂ B ‼ (ε ·ₑ ε')
+  handleᴴ H M N = handle M `with H `in N
+
+  -- The reduct of `handle-perform` is the clause applied to the boxed
+  -- continuation. The equation fixes the reduct's subterms, so that they are
+  -- the rule's own terms; the continuation's body `M` is `M'` as a term (`q`),
+  -- and its denotation is taken at the context `Δ` of `M'`.
+  handle-perform-rhs : ∀ {Γ ρ A₀ Δ C B ε₁ ε₀} {L : Γ ⊢C⦂ B ‼ ε₀}
+      {M : Γ ⟨ ρ ⟩ ∷ A₀ ⊢C⦂ C} {K : Γ ∷ [ ρ ] (A₀ ⇒ C) ⊢C⦂ B ‼ ε₁}
+    → (e : ε₁ ≃ₑ ε₀)
+    → Γ ⊢C⦂ L == ε-≃ e (box ρ (lam M) K)
+    → (p : Paramᶜ (ε-≃ e (box ρ (lam M) K))) → (pK : Paramᶜ K)
+    → (M' : Δ ⊢C⦂ C) → (q : _≡_ {A = Σ Ctx (_⊢C⦂ C)} (Δ , M') (Γ ⟨ ρ ⟩ ∷ A₀ , M))
+    → (pM' : Paramᶜ M') → {f : ⟦ Δ ⟧ᶜᵗˣ →ᵐ ⟦ C ⟧ᶜ}
+    → ⟦ M' ⟧ᶜᵗ pM' ≈ᵐ f
+    → ⟦ ε-≃ e (box ρ (lam M) K) ⟧ᶜᵗ p
+    ≈ᵐ T-≤ (proj₁ e)
+         ∘ᵐ ⟦ K ⟧ᶜᵗ pK
+         ∘ᵐ ⟨ idᵐ , [ ρ ]ᶠ (curryᵐ (subst (λ Δ → ⟦ Δ ⟧ᶜᵗˣ →ᵐ ⟦ C ⟧ᶜ) (cong proj₁ q) f))
+                    ∘ᵐ η⊣ ⟩ᵐ
+  handle-perform-rhs {ρ = ρ} {M = M} {K} e _ p pK .M refl pM' eq =
+      ⟦⟧ᶜᵗ-irr (ε-≃ e (box ρ (lam M) K)) p (pM' , pK)
+    ∙ sound-ε-≃ e (box ρ (lam M) K) (pM' , pK)
+    ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong eq)) ⟩ᵐ-cong)
 
 sound-handle-perform : ∀ {Γ A B ε ε' op}
   → (V : Γ ⊢V⦂ type-of-gtype (param op))
@@ -105,32 +137,10 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
 
     e = ≃ₑ-sym (·ₑ-assoc (op-grade op) ε ε')
 
-    -- the reduct's pieces, with their certificates
-    bren = barrier-wk-ren {Γ} (mapᵉ (op-grade op)) (type-of-gtype (arity op))
-
-    H' : (op' : Op) → (ε'' : E)
-       → (Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ ⊤ᵣ ⟩
-           ∷ type-of-gtype (param op')
-           ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε'')
-         ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'')
-    H' op' ε'' = C-rename (cong-∷-ren (cong-∷-ren bren)) (H op' ε'')
-
-    pH' : ∀ op' ε'' → Paramᶜ (H' op' ε'')
-    pH' op' ε'' = renᶜ (cong-∷-ren (cong-∷-ren bren)) (H op' ε'') (pH op' ε'')
-
-    uH' : EffUniformʰ {Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)} H' pH'
-    uH' = ren-clauses-uniform bren H pH uH
-
+    -- the reduct's clause, with its certificate
     Cren = cong-∷-ren (cong-∷-ren barrier-ren)
     CL   = C-rename Cren (H op (ε ·ₑ ε'))
     pCL  = renᶜ Cren (H op (ε ·ₑ ε')) (pH op (ε ·ₑ ε'))
-
-    pBody : Paramᶜ (handle M `with H' `in (C-rename (cong-∷-ren ren) N))
-    pBody = pM , renᶜ (cong-∷-ren ren) N pN , pH' , uH'
-
-    pBox : Paramᶜ (box _ (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))
-                       (CL [ split-∷ split-[] ↦ V ]c))
-    pBox = pBody , subᶜ CL (split-∷ split-[]) V pCL pV
 
     -- the clause, contracted and substituted, is the clause at the empty
     -- extension applied to the eternal projection and the operation's value
@@ -149,14 +159,11 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
                   ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
 
     -- the boxed continuation on the reduct side: the arity coercions cancel
-    -- (`arity-box`), the inner handle's fold is transported to the ambient
-    -- barrier (`handle-op-cont`, shared with operational preservation)
+    -- (`arity-box`)
     boxeq =
         ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
       ∙ ∘ᵐ-congˡ ([]-congᶠ (arity-box (ty-gty (arity op)) _ _ _))
-      ∙ ≈ᵐ-sym (∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong
-          (handle-op-cont H M N ren pM pN pH uH))))
 
     rhs-inner =
         rhs-left
@@ -216,13 +223,13 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
             , ⟨⟩ᵐ-∘ _ _ _
               ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-fstᵐ _ _
                 , boxpart ⟩ᵐ-cong ⟩ᵐ-cong))
-      ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr
-                    (ε-≃ e
-                      (box _ (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))
-                           (CL [ split-∷ split-[] ↦ V ]c)))
-                    pR pBox
-                ∙ sound-ε-≃ e
-                    (box _ (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))
-                         (CL [ split-∷ split-[] ↦ V ]c))
-                    pBox
+      -- the inner handle's fold is transported to the ambient barrier
+      -- (`handle-op-cont`, shared with operational preservation)
+      ∙ ≈ᵐ-sym (  handle-perform-rhs e (handle-perform V M H N) pR
+                    (subᶜ CL (split-∷ split-[]) V pCL pV)
+                    (handleᴴ (H'ᶜ H M N ren pM pN pH uH) M (C-rename (cong-∷-ren ren) N))
+                    refl
+                    (  pM , renᶜ (cong-∷-ren ren) N pN
+                     , pH'ᶜ H M N ren pM pN pH uH , uH'ᶜ H M N ren pM pN pH uH)
+                    (handle-op-cont H M N ren pM pN pH uH)
                 ∙ ∘ᵐ-congʳ rhs-inner)

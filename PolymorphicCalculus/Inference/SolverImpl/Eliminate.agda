@@ -1206,14 +1206,10 @@ equateᵉ {Θ} C Q i b eq =
                  (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m)) (λ m → unq-qhyps u m)
       where
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
-        ordR {ρ} m with apart-∈ _≟ʳ_ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m)
-        ... | inj₁ e  = eqᵣ (≅ʳ⇒≡̂ e)
-        ... | inj₂ m' = hypᵣ m'
+        ordR m = [ (λ e → eqᵣ (≅ʳ⇒≡̂ e)) , hypᵣ ]′ (apart-∈ _≟ʳ_ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m))
 
         ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q₀ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ ε' [ η₀ ]ᵉ
-        ordE {ε} m with apart-∈ _≟ᵉ_ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m)
-        ... | inj₁ e  = eqₑ (≅ᵉ⇒≡̂ e)
-        ... | inj₂ m' = hypₑ m'
+        ordE m = [ (λ e → eqₑ (≅ᵉ⇒≡̂ e)) , hypₑ ]′ (apart-∈ _≟ᵉ_ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m))
 
     keep₀ : Q ⊨ᴴ Q₀
     keep₀ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
@@ -1251,9 +1247,7 @@ equateʳ {Θ} C Q i b eq =
                  (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m)) (λ m → unq-qhyps u m)
       where
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
-        ordR {ρ} m with apart-∈ _≟ʳ_ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m)
-        ... | inj₁ e  = eqᵣ (≅ʳ⇒≡̂ e)
-        ... | inj₂ m' = hypᵣ m'
+        ordR m = [ (λ e → eqᵣ (≅ʳ⇒≡̂ e)) , hypᵣ ]′ (apart-∈ _≟ʳ_ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m))
 
     keep₀ : Q ⊨ᴴ Q₀
     keep₀ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
@@ -1542,12 +1536,13 @@ unitʳ {Θ} C Q i {x₀ , c₀} m₀ f₀@(lst , _ , _) =
     inst₀ u = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR instᵉ instᵈ (λ m → unq-qhyps u m)
       where
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₁ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
-        ordR {ρ} m with which P m
-        ... | inj₁ f  =
+        ordR {ρ} m = [ toUnit , instʳ ]′ (which P m)
+          where
+            toUnit : _ → _
+            toUnit f =
               transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-subst η₀ (lhs {ρ} f))
                                     (subst (_≡̂ᵣ ûᵣ) (sym (updʳ-hit i ûᵣ)) ≡̂ᵣ-refl)))
                      (minᵣ (to-witness (proj₁ f)))
-        ... | inj₂ mk = instʳ mk
 
     keep⁺ : Q⁺ ⊨ᴴ Q₁
     keep⁺ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
@@ -1630,22 +1625,24 @@ unitᵉ {Θ} C Q i w =
     inst₀ u = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE instᵈ (λ m → unq-qhyps u m)
       where
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₁ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
-        ordR {ρ} m with which Pᵣ m
-        ... | inj₁ f@((_ , _ , lstᵣ) , _ , _) =
+        ordR {ρ} m = [ toUnit , instʳ ]′ (which Pᵣ m)
+          where
+            toUnit : _ → _
+            toUnit f@((_ , _ , lstᵣ) , _ , _) =
               transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-subst η₀ (lhsᵣ {ρ} f))
                                     (≡̂ᵣ-trans (subst (λ z → ∣ z ∣̂ᵉ ≡̂ᵣ ∣ ûₑ ∣̂ᵉ)
                                                      (sym (updᵉ-hit i ûₑ)) ≡̂ᵣ-refl)
                                               (≡̂ᵣ-trans ≡̂ᵣ-map-const (≡̂ᵣ-const map-uᵉ)))))
                      (minᵣ (to-witness lstᵣ))
-        ... | inj₂ mk = instʳ mk
 
         ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q₁ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ ε' [ η₀ ]ᵉ
-        ordE {ε} m with which Pₑ m
-        ... | inj₁ f  =
+        ordE {ε} m = [ toUnit , instᵉ ]′ (which Pₑ m)
+          where
+            toUnit : _ → _
+            toUnit f =
               transₑ (eqₑ (≡̂ₑ-trans (≡̂ₑ-subst η₀ (lhsₑ {ε} f))
                                     (subst (_≡̂ₑ ûₑ) (sym (updᵉ-hit i ûₑ)) ≡̂ₑ-refl)))
                      (minₑ (to-witness (proj₁ f)))
-        ... | inj₂ mk = instᵉ mk
 
     keep⁺ : Q⁺ ⊨ᴴ Q₁
     keep⁺ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
@@ -1671,9 +1668,11 @@ unitʳ? {Θ} F C Q i o =
 
 unitᵉ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
        → vᵉ F i ≡ false → Maybe (Elimᶠ F C Q)
-unitᵉ? {Θ} F C Q i o with firstHit (Vᵉ.forces? {Θ} i) (ordₑ Q)
-... | just (_ , m , f) = just (unitᵉ C Q i (byEff m f) , fixes-updᵉ i ûₑ o)
-... | nothing =
+unitᵉ? {Θ} F C Q i o = byEff? (firstHit (Vᵉ.forces? {Θ} i) (ordₑ Q))
+  where
+    byEff? : Maybe (Σ[ a ∈ _ ] ((a ∈ ordₑ Q) × Vᵉ.Forces {Θ} i a)) → Maybe (Elimᶠ F C Q)
+    byEff? (just (_ , m , f)) = just (unitᵉ C Q i (byEff m f) , fixes-updᵉ i ûₑ o)
+    byEff? nothing =
       Maybe.map (λ { (_ , m , f) → unitᵉ C Q i (byImg m f) , fixes-updᵉ i ûₑ o })
                 (firstHit (Vⁱ.forces? {Θ} i) (ordᵣ Q))
 
@@ -1702,9 +1701,12 @@ anyStep {Θ} F C Q =
 
 reduce : ∀ {Θ} → (F : Vars Θ) → ℕ → (C : OCType Θ) → (Q : Hyps Θ) → Elimᶠ F C Q
 reduce F zero    C Q = idElim C Q , fixes-id
-reduce F (suc n) C Q with anyStep F C Q
-... | nothing = idElim C Q , fixes-id
-... | just r  = r ⨾ᶠ reduce F n (Ĉ (proj₁ r)) (Q̂ (proj₁ r))
+reduce F (suc n) C Q = step (anyStep F C Q)
+  where
+    -- by a helper, so that `anyStep F C Q` is not normalised as a `with` scrutinee
+    step : Maybe (Elimᶠ F C Q) → Elimᶠ F C Q
+    step nothing  = idElim C Q , fixes-id
+    step (just r) = r ⨾ᶠ reduce F n (Ĉ (proj₁ r)) (Q̂ (proj₁ r))
 
 -- One round per unknown suffices: a step removes one
 
