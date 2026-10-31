@@ -94,7 +94,9 @@ checkᵛ : (Δ : PCtx) → (V : RawV ∅ˢ 0) → Checkᵛ Δ V
 checkᵛ Δ V = fromCheck (check ⌜ Δ ⌝ᵖ (return V))
 
 ------------------------------------------------------------------------
--- Theorem (Type inference)
+-- Inference for values: a scheme answered is principal, `untypable` only
+-- for untypable values, `stuck` only with handlers or a definition with
+-- quantified hypotheses
 
 inferᵛ-typed : ∀ Δ V {p : PrincipalSchemeᵛ Δ V}
              → inferᵛ Δ V ≡ typed p → Typableᵛ Δ V ⇔ Satisfiable (PrincipalSchemeᵛ.Q̃ p)
@@ -127,7 +129,7 @@ checkᵛ-handlerFree : ∀ Δ V → Unquantified Δ → HandlerFreeᵛ V → che
 checkᵛ-handlerFree Δ V u h = checkᵛ-noRigid Δ V (handlerFree-noRigidᵛ u V h)
 
 ------------------------------------------------------------------------
--- Corollary (Completeness)
+-- Completeness of inference for values
 
 -- A typing of `V` in `Δ` over the empty scope from no hypotheses: no refutation,
 -- and every scheme answered has a closed instance where its type is below the typing's
