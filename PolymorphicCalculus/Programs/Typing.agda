@@ -75,7 +75,7 @@ lenᴾ-⊢ (t ∷ᴾ a) = cong suc (lenᴾ-⊢ t)
 -- scheme in the empty context
 
 closedDef : ∀ {P Δ V} → DefsEnv ⟦ P ⟧ᴾ Δ → (a : Accepted Δ V)
-          → Σ[ D ∈ (Q̃ (principal a) ∣ [] ⊢V⦂ X̃ (principal a)) ]
+          → Σ[ D ∈ (Q̃ (principal a) ∣ [] ⊢ᵛ⦂ X̃ (principal a)) ]
               (∥ D ∥ᵛ ≡ eraseᵛ V [ ⟦ P ⟧ᴾ ]ᵈᵛ)
 closedDef {P} {Δ} {V} r a =
   ctx-castᵛ (local-⌜⌝ Δ) (sdef-v r' D₁) ,
@@ -113,6 +113,6 @@ program-nonResource (_∷ᴾ_ {Δ = Δ} t a) here =
 program-nonResource (t ∷ᴾ a) (there m) = program-nonResource t m
 
 program-resource-value : ∀ {P Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ'' X''}
-                       → ⊢ᴾ P ⦂ defs Γ → (V : Q ∣ Γ ⊢V⦂ [ ρ'' ] X'')
+                       → ⊢ᴾ P ⦂ defs Γ → (V : Q ∣ Γ ⊢ᵛ⦂ [ ρ'' ] X'')
                        → ResourceValue Q Γ ρ'' X'' ⌊ V ⌋ᵛ
 program-resource-value t V = resource-value (program-nonResource t) V

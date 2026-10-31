@@ -51,24 +51,24 @@ open import MonomorphicCalculus.Examples.Typing.Core left-sided opTime
 ------------------------------------------------------------------------
 -- Effectful computations
 
-sampling : [] ⊢C⦂ Reading ! ⟅ ⌈ read ⌉ ⟆
+sampling : [] ⊢ᶜ⦂ Reading ! ⟅ ⌈ read ⌉ ⟆
 sampling =
   perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (return here)
 
-storing : [] ⊢C⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+storing : [] ⊢ᶜ⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 storing =
   perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (perform write here              -- ⟨ ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ unit
       (return ⋆))
 
-relaying : [] ⊢C⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+relaying : [] ⊢ᶜ⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 relaying =
   perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (perform send here               -- ⟨ ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ unit
       (return ⋆))
 
-tagged-relaying : [] ∷ NodeId ⊢C⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+tagged-relaying : [] ∷ NodeId ⊢ᶜ⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 tagged-relaying =
   perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
@@ -77,7 +77,7 @@ tagged-relaying =
 
 -- a computation that only idles, which guarantees time and no work
 
-idling : [] ⊢C⦂ unit ! ⟅ ⟨ 5 ⟩ ⟆
+idling : [] ⊢ᶜ⦂ unit ! ⟅ ⟨ 5 ⟩ ⟆
 idling =
   delay 5                            -- ⟨ ⟅ ⟨ 5 ⟩ ⟆ ⟩
     (return ⋆)
@@ -94,7 +94,7 @@ nothing-goes-stale ρ = ≾-⊤ ρ
 -- take a reading, idle two ticks, and transmit the reading taken
 -- before the idling
 
-idle-then-transmit : [] ⊢C⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+idle-then-transmit : [] ⊢ᶜ⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
 idle-then-transmit =
   perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (delay 2                         -- ⟨ ⟅ ⟨ 2 ⟩ ⟆ ⟩
@@ -102,12 +102,12 @@ idle-then-transmit =
                                      -- ⟨ ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ unit
         (return ⋆)))
 
-carried-reading : [] ∷ Reading ⊢C⦂ Reading ! ⟅ ⌈ read ⌉ ⟆
+carried-reading : [] ∷ Reading ⊢ᶜ⦂ Reading ! ⟅ ⌈ read ⌉ ⟆
 carried-reading =
   perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (return (fresh-var (nothing-goes-stale _) (Tl-∷ (Tl-⟨⟩ Hd))))
 
-carried-id : [] ∷ NodeId ⊢C⦂ NodeId ! ⟅ ⌈ read ⌉ ⟆
+carried-id : [] ∷ NodeId ⊢ᶜ⦂ NodeId ! ⟅ ⌈ read ⌉ ⟆
 carried-id =
   perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
@@ -119,11 +119,11 @@ carried-id =
 -- may forget the operations it performed, or trade them for the time
 -- they took. The context is untouched.
 
-forgetting-the-store : [] ⊢C⦂ unit ! ⟅ ⌈ read ⌉ ⟆
+forgetting-the-store : [] ⊢ᶜ⦂ unit ! ⟅ ⌈ read ⌉ ⟆
 forgetting-the-store =
   coerce holds (perform read ⋆ (perform write here (return ⋆)))
 
-keeping-only-the-time : [] ⊢C⦂ Reading ! ⟅ ⟨ 1 ⟩ ⟆
+keeping-only-the-time : [] ⊢ᶜ⦂ Reading ! ⟅ ⟨ 1 ⟩ ⟆
 keeping-only-the-time = coerce holds (perform read ⋆ (return here))
 
 -- and never more time than the run takes
@@ -145,13 +145,13 @@ idling-guarantees-no-reading = fails
 -- the two branches are both bound to spend. Neither branch locks the
 -- context.
 
-branching : [] ∷ bool ∷ Reading ⊢C⦂ unit ! ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆
+branching : [] ∷ bool ∷ Reading ⊢ᶜ⦂ unit ! ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆
 branching =
   if eternal-var boolₑ (Tl-∷ Hd)
     `then coerce holds (perform send  here (return ⋆))
     `else coerce holds (perform write here (return ⋆))
 
-timed-branching : [] ∷ bool ∷ Reading ⊢C⦂ unit ! ⟅ ⟨ 2 ⟩ ⟆
+timed-branching : [] ∷ bool ∷ Reading ⊢ᶜ⦂ unit ! ⟅ ⟨ 2 ⟩ ⟆
 timed-branching =
   if eternal-var boolₑ (Tl-∷ Hd)
     `then coerce holds (perform send  here (return ⋆))
@@ -166,14 +166,14 @@ three-ticks-not-guaranteed = fails
 -- an `if` over data alone needs no common grade to be found: both
 -- branches make the same run
 
-either-reading : [] ∷ bool ∷ Reading ∷ Reading ⊢C⦂ unit ! ⟅ ⌈ send ⌉ ⟆
+either-reading : [] ∷ bool ∷ Reading ∷ Reading ⊢ᶜ⦂ unit ! ⟅ ⌈ send ⌉ ⟆
 either-reading =
   if eternal-var boolₑ (Tl-∷ (Tl-∷ Hd))
     `then perform send here (return ⋆)
     `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)
 
 sampling-then-branching :
-  [] ⊢C⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+  [] ⊢ᶜ⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 sampling-then-branching =
   perform {ε = ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆} read ⋆
                                      -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
@@ -195,7 +195,7 @@ demand = ⟅ ⌈ read ⌉ ⟆
 -- is not an equality: `⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆` covers the demand for
 -- a reading with the store left over
 
-claim-after-storing : [] ⊢C⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
+claim-after-storing : [] ⊢ᶜ⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-storing =
   box demand (const reading 42)      -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
     (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
@@ -204,7 +204,7 @@ claim-after-storing =
                                      -- ∷ Reading
           (perform send here (return ⋆)))))
 
-handed-over : [] ⊢C⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+handed-over : [] ⊢ᶜ⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over =
   box demand (const reading 42)      -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
     (fun                             -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
@@ -219,7 +219,7 @@ handed-over =
 -- what it was handed. Two locks stand between the binding and the
 -- claim, and their product is `⟅ ⌈ read ⌉ ∙ ⌈ read ⌉ ⟆`.
 
-handed-over' : [] ⊢C⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+handed-over' : [] ⊢ᶜ⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over' =
   box demand (const reading 42)      -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
     (fun                             -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
@@ -230,7 +230,7 @@ handed-over' =
              (perform send here (return ⋆)))))
       · here)
 
-either-way : [] ∷ bool ⊢C⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+either-way : [] ∷ bool ⊢ᶜ⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 either-way =
   box demand (const reading 42)      -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
     (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
@@ -258,7 +258,7 @@ claiming-at-once = failsᵉ 𝟏ᵣ demand
 waiting : R
 waiting = ⟅ ⟨ 2 ⟩ ⟆
 
-claim-after-idling : [] ⊢C⦂ unit ! ⟅ ⟨ 3 ⟩ ∙ ⌈ send ⌉ ⟆
+claim-after-idling : [] ⊢ᶜ⦂ unit ! ⟅ ⟨ 3 ⟩ ∙ ⌈ send ⌉ ⟆
 claim-after-idling =
   box waiting (const reading 42)     -- ∷ [ ⟅ ⟨ 2 ⟩ ⟆ ] Reading
     (delay 3                         -- ⟨ ⟅ ⟨ 3 ⟩ ⟆ ⟩
@@ -279,7 +279,7 @@ storing-covers-it = holds
 alternatives : R
 alternatives = ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
 
-claimed-in-both-branches : [] ⊢C⦂ unit ! ⟅ ⌈ send ⌉ ⟆
+claimed-in-both-branches : [] ⊢ᶜ⦂ unit ! ⟅ ⌈ send ⌉ ⟆
 claimed-in-both-branches =
   box alternatives (const reading 42)
                                      -- ∷ [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ ] Reading
@@ -314,7 +314,7 @@ transmitting-branch-does-not = fails
 -- operation: a reading may be traded for the tick it took, and a box
 -- asking for the reading is then out of reach.
 
-claim-after-a-reading : [] ⊢C⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+claim-after-a-reading : [] ⊢ᶜ⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-a-reading =
   box demand (const reading 42)              -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
     ((perform read ⋆ (return here))
@@ -363,7 +363,7 @@ storing-branch-not-the-reading : ¬ (𝟏ᵣ ·ᵣ opTime write ≾ᵣ demand)
 storing-branch-not-the-reading = fails
 
 claim-after-a-branch :
-  [] ∷ bool ⊢C⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
+  [] ∷ bool ⊢ᶜ⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-a-branch =
   box mixed-demand (const reading 42)
                                      -- ∷ [ ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
@@ -405,7 +405,7 @@ storing-branch-joins : opTime write ·ₑ 𝟏ₑ ≾ₑ three-ways
 storing-branch-joins = holds
 
 claim-after-three-ways :
-  [] ∷ bool ⊢C⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉
+  [] ∷ bool ⊢ᶜ⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉
                        ∣ ⌈ write ⌉ ∙ ⌈ send ⌉
                        ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-three-ways =
@@ -437,7 +437,7 @@ two-ticks-do-not = fails
 two-ticks : R
 two-ticks = ⟅ ⟨ 2 ⟩ ⟆
 
-work-or-wait : [] ∷ bool ⊢C⦂ unit ! ⟅ ⟨ 6 ⟩ ⟆
+work-or-wait : [] ∷ bool ⊢ᶜ⦂ unit ! ⟅ ⟨ 6 ⟩ ⟆
 work-or-wait =
   box two-ticks (const reading 42)           -- ∷ [ ⟅ ⟨ 2 ⟩ ⟆ ] Reading
     (if eternal-var boolₑ (Tl-∷ Hd)
@@ -471,14 +471,14 @@ sampling-branch-too-little = fails
 -- Handling locks its `in` part by the handled computation's grade, as
 -- sequencing does.
 
-forwarded : [] ⊢C⦂ Reading ! ⟅ ⌈ read ⌉ ⟆
+forwarded : [] ⊢ᶜ⦂ Reading ! ⟅ ⌈ read ⌉ ⟆
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
     `in                              -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (return here)
 
-identified : Node ⊢C⦂ NodeId ! ⟅ ⌈ read ⌉ ⟆
+identified : Node ⊢ᶜ⦂ NodeId ! ⟅ ⌈ read ⌉ ⟆
 identified =
   handle perform read ⋆ (return here)
     `with identifying

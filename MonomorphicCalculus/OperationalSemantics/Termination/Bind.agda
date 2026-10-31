@@ -50,11 +50,11 @@ open import MonomorphicCalculus.Syntax.Substitution.Subsumption  Spec
 -- which is what the recursive call is handed.
 
 seq-CRed : ∀ {s A B ε₁ ε₂} {e : shapeᵛ A ≡ s} {𝕊 : State []}
-         → {M : toCtx 𝕊 ⊢C⦂ A ! ε₁}
-         → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+         → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁}
+         → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂)
          → CRedˢ' s e ε₁ 𝕊 M
          → (∀ {𝕊₁ : State []} → (q : 𝕊 ⊑ₛ[ ∣ ε₁ ∣ᵉ ] 𝕊₁)
-              → (V : toCtx 𝕊₁ ⊢V⦂ A) → VRed A 𝕊₁ V
+              → (V : toCtx 𝕊₁ ⊢ᵛ⦂ A) → VRed A 𝕊₁ V
               → CRed' B ε₂ 𝕊₁
                   ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c))
          ------------------------------------------------------------------
@@ -140,7 +140,7 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {𝕊 = 𝕊} N
     N₂ = C-rename (cong-∷-ren κ) N₁
 
     resump : ∀ {𝕊₂ : State []} → (q : 𝕊₁ ⊑ₛ[ ρₒ ] 𝕊₂)
-           → (W' : toCtx 𝕊₂ ⊢V⦂ Ar)
+           → (W' : toCtx 𝕊₂ ⊢ᵛ⦂ Ar)
            → VRedᵍ (arity op) 𝕊₂ W'
            → CRed' B (ε₃ ·ₑ ε₂) 𝕊₂ (resume q (M' ⨟ N₂) W')
 
@@ -213,7 +213,7 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {𝕊 = 𝕊} N
                   (C-rename-∘ (cong-∷-ren W₁) (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N₁))
 
         hN₃ : ∀ {𝕊₃ : State []} → (q' : 𝕊₂ ⊑ₛ[ ∣ ε₃ ∣ᵉ ] 𝕊₃)
-            → (V : toCtx 𝕊₃ ⊢V⦂ A₀) → VRed A₀ 𝕊₃ V
+            → (V : toCtx 𝕊₃ ⊢ᵛ⦂ A₀) → VRed A₀ 𝕊₃ V
             → CRed' B ε₂ 𝕊₃
                 ((C-rename (cong-∷-ren (unbox-ren q')) N₃) [ split-[] ↦ V ]c)
 

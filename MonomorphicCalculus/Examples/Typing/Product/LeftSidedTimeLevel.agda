@@ -78,18 +78,18 @@ open import MonomorphicCalculus.Examples.Typing.Core
 -- A computation's grade adds up the guaranteed times along it and
 -- joins the levels: transmitting raises the label of the whole run.
 
-sampling : [] ⊢C⦂ Reading ! ([ 1 ,+∞⟩ , Low)
+sampling : [] ⊢ᶜ⦂ Reading ! ([ 1 ,+∞⟩ , Low)
 sampling =
   perform read ⋆                     -- ⟨ ([ 1 ,+∞⟩ , Low) ⟩ ∷ Reading
     (return here)
 
-storing : [] ⊢C⦂ unit ! ([ 3 ,+∞⟩ , Low)
+storing : [] ⊢ᶜ⦂ unit ! ([ 3 ,+∞⟩ , Low)
 storing =
   perform read ⋆                     -- ⟨ ([ 1 ,+∞⟩ , Low) ⟩ ∷ Reading
     (perform write here              -- ⟨ ([ 2 ,+∞⟩ , Low) ⟩ ∷ unit
       (return ⋆))
 
-relaying : [] ⊢C⦂ unit ! ([ 5 ,+∞⟩ , High)
+relaying : [] ⊢ᶜ⦂ unit ! ([ 5 ,+∞⟩ , High)
 relaying =
   perform read ⋆                     -- ⟨ ([ 1 ,+∞⟩ , Low) ⟩ ∷ Reading
     (perform send here               -- ⟨ ([ 4 ,+∞⟩ , High) ⟩ ∷ unit
@@ -105,7 +105,7 @@ relaying =
 -- the `logged-uplink` run: the reading is stored, and transmitted after
 -- the store and two ticks of idling, all of them `Low`
 
-logged-uplink : [] ⊢C⦂ unit ! ([ 9 ,+∞⟩ , High)
+logged-uplink : [] ⊢ᶜ⦂ unit ! ([ 9 ,+∞⟩ , High)
 logged-uplink =
   perform read ⋆                     -- ⟨ ([ 1 ,+∞⟩ , Low) ⟩ ∷ Reading
     (perform write here              -- ⟨ ([ 2 ,+∞⟩ , Low) ⟩ ∷ unit
@@ -122,7 +122,7 @@ stale-after-transmitting (_ , tainted) = ⋢! tainted
 
 -- the identifier is eternal, and crosses a transmission all the same
 
-carried-id : [] ∷ NodeId ⊢C⦂ NodeId ! ([ 4 ,+∞⟩ , High)
+carried-id : [] ∷ NodeId ⊢ᶜ⦂ NodeId ! ([ 4 ,+∞⟩ , High)
 carried-id =
   perform send (const reading 0)             -- ⟨ ([ 4 ,+∞⟩ , High) ⟩ ∷ unit
     (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
@@ -133,7 +133,7 @@ carried-id =
 -- `coerce` forgets time and raises the level. Neither is reversible:
 -- there is no declassifying a run that has transmitted.
 
-raising-the-level : [] ⊢C⦂ unit ! ([ 3 ,+∞⟩ , High)
+raising-the-level : [] ⊢ᶜ⦂ unit ! ([ 3 ,+∞⟩ , High)
 raising-the-level =
   coerce (≤! , ⊑!) (perform read ⋆ (perform write here (return ⋆)))
 
@@ -146,7 +146,7 @@ no-declassifying (_ , tainted) = ⋢! tainted
 -- The join keeps the smaller floor and the higher level: a conditional
 -- is `High` if either branch is.
 
-branching : [] ∷ bool ∷ Reading ⊢C⦂ unit ! ([ 2 ,+∞⟩ , High)
+branching : [] ∷ bool ∷ Reading ⊢ᶜ⦂ unit ! ([ 2 ,+∞⟩ , High)
 branching =
   if eternal-var boolₑ (Tl-∷ Hd)
     `then coerce (≤! , ⊑!) (perform send  here (return ⋆))
@@ -169,7 +169,7 @@ report = ([ 5 ,+∞⟩ , Low)
 -- published after reading, storing and idling two ticks: five steps,
 -- all `Low`
 
-published : [] ⊢C⦂ unit ! ([ 9 ,+∞⟩ , High)
+published : [] ⊢ᶜ⦂ unit ! ([ 9 ,+∞⟩ , High)
 published =
   box report (const reading 42)      -- ∷ [ report ] Reading
     (perform read ⋆                  -- ⟨ ([ 1 ,+∞⟩ , Low) ⟩ ∷ Reading
@@ -181,7 +181,7 @@ published =
 
 -- or after waiting the embargo out
 
-waited-out : [] ⊢C⦂ unit ! ([ 9 ,+∞⟩ , High)
+waited-out : [] ⊢ᶜ⦂ unit ! ([ 9 ,+∞⟩ , High)
 waited-out =
   box report (const reading 42)      -- ∷ [ report ] Reading
     (delay 5                         -- ⟨ ([ 5 ,+∞⟩ , Low) ⟩
@@ -210,7 +210,7 @@ waiting-does-not-clean (_ , high) = ⋢! high
 cleared : R
 cleared = ([ 5 ,+∞⟩ , High)
 
-relayed-then-published : [] ⊢C⦂ unit ! ([ 9 ,+∞⟩ , High)
+relayed-then-published : [] ⊢ᶜ⦂ unit ! ([ 9 ,+∞⟩ , High)
 relayed-then-published =
   box cleared (const reading 42)     -- ∷ [ cleared ] Reading
     (perform read ⋆                  -- ⟨ ([ 1 ,+∞⟩ , Low) ⟩ ∷ Reading
@@ -225,7 +225,7 @@ relayed-then-published =
 -- Each branch discharges the premise at what it has itself done: the
 -- quiet branch publishes, the transmitting branch does not try.
 
-quiet-branch : [] ∷ bool ⊢C⦂ unit ! ([ 4 ,+∞⟩ , High)
+quiet-branch : [] ∷ bool ⊢ᶜ⦂ unit ! ([ 4 ,+∞⟩ , High)
 quiet-branch =
   box report (const reading 42)              -- ∷ [ report ] Reading
     (if eternal-var boolₑ (Tl-∷ Hd)
@@ -241,7 +241,7 @@ quiet-branch =
 -- sequenced after a conditional, a claim is weighed against the join.
 -- Two quiet branches keep it `Low`, and the report is published.
 
-after-a-quiet-branch : [] ∷ bool ⊢C⦂ unit ! ([ 9 ,+∞⟩ , High)
+after-a-quiet-branch : [] ∷ bool ⊢ᶜ⦂ unit ! ([ 9 ,+∞⟩ , High)
 after-a-quiet-branch =
   box report (const reading 42)              -- ∷ [ report ] Reading
     ((if eternal-var boolₑ (Tl-∷ Hd)
@@ -261,14 +261,14 @@ after-a-transmitting-branch (_ , high) = ⋢! high
 ------------------------------------------------------------------------
 -- Effect handling
 
-forwarded : [] ⊢C⦂ Reading ! ([ 1 ,+∞⟩ , Low)
+forwarded : [] ⊢ᶜ⦂ Reading ! ([ 1 ,+∞⟩ , Low)
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
     `in                              -- ⟨ ([ 1 ,+∞⟩ , Low) ⟩ ∷ Reading
       (return here)
 
-identified : Node ⊢C⦂ NodeId ! ([ 1 ,+∞⟩ , Low)
+identified : Node ⊢ᶜ⦂ NodeId ! ([ 1 ,+∞⟩ , Low)
 identified =
   handle perform read ⋆ (return here)
     `with identifying

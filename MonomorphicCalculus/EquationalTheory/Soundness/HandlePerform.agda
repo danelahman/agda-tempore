@@ -88,20 +88,20 @@ private
           → ((op : Op) → (ε'' : E)
                → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                     ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-                 ⊢C⦂ B ! (op-grade op ·ₑ ε''))
-          → Γ ⊢C⦂ A ! ε → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε' → Γ ⊢C⦂ B ! (ε ·ₑ ε')
+                 ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε''))
+          → Γ ⊢ᶜ⦂ A ! ε → Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε' → Γ ⊢ᶜ⦂ B ! (ε ·ₑ ε')
   handleᴴ H M N = handle M `with H `in N
 
   -- The reduct of `handle-perform` is the clause applied to the boxed
   -- continuation. The equation fixes the reduct's subterms, so that they are
   -- the rule's own terms; the continuation's body `M` is `M'` as a term (`q`),
   -- and its denotation is taken at the context `Δ` of `M'`.
-  handle-perform-rhs : ∀ {Γ ρ A₀ Δ C B ε₁ ε₀} {L : Γ ⊢C⦂ B ! ε₀}
-      {M : Γ ⟨ ρ ⟩ ∷ A₀ ⊢C⦂ C} {K : Γ ∷ [ ρ ] (A₀ ⇒ C) ⊢C⦂ B ! ε₁}
+  handle-perform-rhs : ∀ {Γ ρ A₀ Δ C B ε₁ ε₀} {L : Γ ⊢ᶜ⦂ B ! ε₀}
+      {M : Γ ⟨ ρ ⟩ ∷ A₀ ⊢ᶜ⦂ C} {K : Γ ∷ [ ρ ] (A₀ ⇒ C) ⊢ᶜ⦂ B ! ε₁}
     → (e : ε₁ ≃ₑ ε₀)
-    → Γ ⊢C⦂ L ≡ᵗʰ ε-≃ e (box ρ (fun M) K)
+    → Γ ⊢ᶜ⦂ L ≡ᵗʰ ε-≃ e (box ρ (fun M) K)
     → (p : Paramᶜ (ε-≃ e (box ρ (fun M) K))) → (pK : Paramᶜ K)
-    → (M' : Δ ⊢C⦂ C) → (q : _≡_ {A = Σ Ctx (_⊢C⦂ C)} (Δ , M') (Γ ⟨ ρ ⟩ ∷ A₀ , M))
+    → (M' : Δ ⊢ᶜ⦂ C) → (q : _≡_ {A = Σ Ctx (_⊢ᶜ⦂ C)} (Δ , M') (Γ ⟨ ρ ⟩ ∷ A₀ , M))
     → (pM' : Paramᶜ M') → {f : ⟦ Δ ⟧ᶜᵗˣ →ᵐ ⟦ C ⟧ᶜ}
     → ⟦ M' ⟧ᶜᵗ pM' ≈ᵐ f
     → ⟦ ε-≃ e (box ρ (fun M) K) ⟧ᶜᵗ p
@@ -115,13 +115,13 @@ private
     ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong eq)) ⟩ᵐ-cong)
 
 sound-handle-perform : ∀ {Γ A B ε ε' op}
-  → (V : Γ ⊢V⦂ ⌜ param op ⌝ᵍ)
-  → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε)
+  → (V : Γ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
+  → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢ᶜ⦂ A ! ε)
   → (H : (op' : Op) → (ε'' : E)
        → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op' ⌝ᵍ
             ∷ [ ∣ op-grade op' ∣ᵉ ] (⌜ arity op' ⌝ᵍ ⇒ B ! ε'')
-         ⊢C⦂ B ! (op-grade op' ·ₑ ε''))
-  → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
+         ⊢ᶜ⦂ B ! (op-grade op' ·ₑ ε''))
+  → (N : Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε')
   → Soundᶜ≡ᵗʰ (handle-perform V M H N)
 sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
                      ((pV , pM) , pN , pH , uH) pR = assembly

@@ -144,7 +144,7 @@ delay-nf {ε = ε} τ env f =
 -- The coercion escapes the bind, for the transition of any step.
 
 T-≤-stepᵀ : ∀ {ε ε' εa εb A A₀} {𝕊 𝕊' : State []} → (B : Obj)
-          → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+          → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
           → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
           → (g : ⟦ hist 𝕊' ⟧ᶜᵗˣ →ᵐ Tᵒ B εa) → (q : εa ≾ₑ εb)
           → μᵀ ∘ᵐ Tᶠ (T-≤ q ∘ᵐ g) ∘ᵐ stepᵀ r
@@ -210,7 +210,7 @@ T-≤-stepᵀ {εa = εa} {εb = εb} B (DELAY {τ = τ}) g q =
 -- It stays a predicate so the soundness statements can take it uniformly.
 
 Uniform⟶ : ∀ {ε ε' A A₀} {𝕊 𝕊' : State []}
-         → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+         → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
          → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩) → Paramᶜ M
          → Set
 Uniform⟶ HANDLE-OP           _            = ⊤
@@ -247,7 +247,7 @@ Uniform⟶ SUB                 _            = ⊤
 -- transports parametricity.
 
 stepᴾᶜ : ∀ {ε ε' A A₀} {𝕊 𝕊' : State []}
-       → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+       → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
        → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩) → Paramˢ 𝕊 → Paramᶜ M → Paramᶜ M'
 stepᴾᶜ (APP {M = M} {V = V})           pS (pM , pV)  = subᶜ M split-[] V pM pV
 stepᴾᶜ (MATCH {𝕊  = 𝕊} {P = P} {M = M}) pS (pP , pM) =
@@ -315,13 +315,13 @@ stepᴾᶜ SUB                              pS pM         = pM
 -- Both halves at once, for a configuration.
 
 stepᴾᶜᶠ : ∀ {ε ε' A A₀} {𝕊 𝕊' : State []}
-        → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+        → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
         → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩) → (p : Paramᶜᶠ (⟨ 𝕊 ∣ M ⟩))
         → Paramᶜᶠ (⟨ 𝕊' ∣ M' ⟩)
 stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 
 ⟶-sound : ∀ {ε ε' A A₀} {𝕊 𝕊' : State []}
-        → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+        → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
         → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
         → (pS : Paramˢ 𝕊) → (pM : Paramᶜ M)
         → Uniform⟶ r pM
@@ -639,7 +639,7 @@ record _⊳_ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
 
 ⟶*-value : ∀ {A A₀ ε} {𝕊' : State []}
          → (M : Closed A ε)
-         → (V : toCtx 𝕊' ⊢V⦂ A₀)
+         → (V : toCtx 𝕊' ⊢ᵛ⦂ A₀)
          → (rs : ⟨ ∅ ∣ M ⟩ ⟶* ⟨ 𝕊' ∣ return V ⟩)
          → (pM : Paramᶜ M)
          → Uniform⟶* rs (tt , pM)

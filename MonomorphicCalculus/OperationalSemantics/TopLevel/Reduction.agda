@@ -36,16 +36,16 @@ module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
     -- Step according to the ordinary small-step semantics
     STEP : ∀ {A B ε ε'}
          → {𝕊 𝕊' : State []}
-         → {M : (toCtx 𝕊 ⊢C⦂ A ! ε)}
-         → {N : (toCtx 𝕊' ⊢C⦂ B ! ε')}
+         → {M : (toCtx 𝕊 ⊢ᶜ⦂ A ! ε)}
+         → {N : (toCtx 𝕊' ⊢ᶜ⦂ B ! ε')}
          → ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ N ⟩
          → ⟨ 𝕊 ∣ M ⟩ ⟶ᵗ ⟨ 𝕊' ∣ N ⟩
 
     -- Run a top-level implementation of an algebraic operation
     OP-STEP : ∀ {A ε op}
             → {𝕊 : State []} 
-            → {V : (toCtx 𝕊) ⊢V⦂ ⌜ param op ⌝ᵍ} 
-            → {M : toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε} 
+            → {V : (toCtx 𝕊) ⊢ᵛ⦂ ⌜ param op ⌝ᵍ} 
+            → {M : toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢ᶜ⦂ A ! ε} 
             → ⟨ 𝕊 ∣ perform op V M ⟩ ⟶ᵗ
               ⟨ grade-pass 𝕊 (∣ op-grade op ∣ᵉ) ∣ M [ split-[] ↦ op-sem op V ]c ⟩
 
@@ -66,8 +66,8 @@ module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
   
   top-level-step-invariants : ∀ {A B ε ε'}
                             → {𝕊 𝕊' : State []}
-                            → {M : toCtx 𝕊 ⊢C⦂ A ! ε}
-                            → {M' : toCtx 𝕊' ⊢C⦂ B ! ε'}
+                            → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε}
+                            → {M' : toCtx 𝕊' ⊢ᶜ⦂ B ! ε'}
                             → ⟨ 𝕊 ∣ M ⟩ ⟶ᵗ ⟨ 𝕊' ∣ M' ⟩
                             → B <:ᵛ A
                             × state-grade 𝕊' ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ state-grade 𝕊 ·ᵣ ∣ ε ∣ᵉ

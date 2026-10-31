@@ -91,7 +91,7 @@ rvar-rename r x =
 
 unbox⇒var : ∀ {Γ Δ A ρ}
           → Ren [] Γ (Δ ⟨ ρ ⟩)
-          → Δ ⊢V⦂ [ ρ ] A
+          → Δ ⊢ᵛ⦂ [ ρ ] A
           --------------------------------------------------------
           → Σ[ ρ₀ ∈ R ] Σ[ A₀ ∈ VType ] Σ[ ρ' ∈ R ]
               (([ ρ₀ ] A₀ ∈[ ρ' ] Γ) × (ρ' ≾ᵣ ρ₀) × (A₀ <:ᵛ A))
@@ -107,10 +107,10 @@ unbox⇒var {ρ = ρ} r V with grad-typ⇒var<: V
 
 unbox-val : ∀ {Γ Δ A C ρ}
           → Ren [] Γ (Δ ⟨ ρ ⟩)
-          → Δ ⊢V⦂ [ ρ ] A
-          → Γ ∷ A ⊢C⦂ C
+          → Δ ⊢ᵛ⦂ [ ρ ] A
+          → Γ ∷ A ⊢ᶜ⦂ C
           ---------------
-          → Γ ⊢C⦂ C
+          → Γ ⊢ᶜ⦂ C
 
 unbox-val r V M with unbox⇒var r V
 ... | _ , _ , _ , x , rel , p = unbox x rel p M
@@ -124,9 +124,9 @@ mutual
 
   V-rename : ∀ {Γ Γ' A}
            → Ren [] Γ Γ'
-           → Γ' ⊢V⦂ A
+           → Γ' ⊢ᵛ⦂ A
            ------------
-           → Γ ⊢V⦂ A
+           → Γ ⊢ᵛ⦂ A
 
   V-rename r (var f x) with var-rename r x
   ... | _ , ρ'≾ρ , y = var (λ p → ≾ᵣ-trans (ρ'≾ρ p) (f p)) y
@@ -150,9 +150,9 @@ mutual
 
   C-rename : ∀ {Γ Γ' C}
            → Ren [] Γ Γ'
-           → Γ' ⊢C⦂ C
+           → Γ' ⊢ᶜ⦂ C
            ------------
-           → Γ ⊢C⦂ C
+           → Γ ⊢ᶜ⦂ C
 
   C-rename r (return V)         = return (V-rename r V)
   C-rename r (M ⨟ N)            = C-rename r M ⨟ C-rename (cong-ren r) N

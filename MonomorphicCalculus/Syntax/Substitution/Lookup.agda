@@ -46,7 +46,7 @@ mutual
            → A ∈[ ρ ] Δ'
            → (¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
            ---------------------------
-           → Δ ⊢V⦂ A
+           → Δ ⊢ᵛ⦂ A
 
   sub-var₀ ⌜ r ⌝ x f =
     var (λ ¬et → ≾ᵣ-trans (proj₁ (proj₂ (var-rename r x)) ¬et) (f ¬et))
@@ -69,7 +69,7 @@ mutual
               → (¬ Et A → ρ' ·ᵣ ρ ≾ᵣ 𝟏ᵣ)
               → Dec (Et A)
               ----------------------------------
-              → Δ ⟨ ρ ⟩ ⊢V⦂ A
+              → Δ ⟨ ρ ⟩ ⊢ᵛ⦂ A
 
   sub-var₀-⟨⟩ s y f (yes et) =
     eternal-val-ext et (sub-var₀ s y (λ ¬et → ⊥-elim (¬et et)))

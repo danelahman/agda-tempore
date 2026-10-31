@@ -76,7 +76,7 @@ open import PolymorphicCalculus.Examples.Variables
 
 -- A closed derivation in the empty context is a typing
 
-closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢C⦂ C)
+closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢ᶜ⦂ C)
        → ⌊ D ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ → Typable [] M
 closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
@@ -122,7 +122,7 @@ U⇒U = unit ⇒ unit ! 𝟏̂ₑ
 stale-call : RawC ∅ˢ 0
 stale-call = return (fun (delay ⌜ 1 ⌝ (v₀ · ⋆)))
 
-stale-call-D : ιᵣ ⌜ 1 ⌝ ≾ᴳ 𝟏ᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
+stale-call-D : ιᵣ ⌜ 1 ⌝ ≾ᴳ 𝟏ᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (U⇒U ⇒ unit ! (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
 stale-call-D q = return (fun (delay ⌜ 1 ⌝ (var (Tl-⟨⟩ Hd) (≾ᵘ-ok (after q)) · ⋆)))
 
 stale-call-typable : True (ιᵣ ⌜ 1 ⌝ ≾ᵣ? 𝟏ᵣ) → Typable [] stale-call
@@ -140,10 +140,10 @@ expected-stale-call =
 boxed-call : RawC ∅ˢ 0
 boxed-call = return (fun (box ⌜ 1 ⌝ʳ v₀ (delay ⌜ 1 ⌝ (unbox (var fzero) (v₀ · ⋆)))))
 
-boxed-call-D : ιᵣ ⌜ 1 ⌝ ≾ᴳ 𝟏ᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
+boxed-call-D : ιᵣ ⌜ 1 ⌝ ≾ᴳ 𝟏ᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (U⇒U ⇒ unit ! (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
 boxed-call-D q =
   return (fun (box ⌜ 1 ⌝ʳ (var (Tl-⟨⟩ Hd) (≾ᵘ-ok (after q)))
-    (delay ⌜ 1 ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) on-time (var Hd ok₀ · ⋆)))))
+    (delay ⌜ 1 ⌝ (unbox (res-var (Tl-⟨⟩ Hd)) on-time (var Hd ok₀ · ⋆)))))
 
 boxed-call-typable : True (ιᵣ ⌜ 1 ⌝ ≾ᵣ? 𝟏ᵣ) → Typable [] boxed-call
 boxed-call-typable q = closed (boxed-call-D (toWitness q)) refl
@@ -159,7 +159,7 @@ handed-box-call-typed : IsTyped (infer [] handed-box-call)
 handed-box-call-typed =
   typed-of handed-box-call
     (closed {C = ([ ⌜ 1 ⌝ʳ ] U⇒U ⇒ unit ! (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ}
-      (return (fun (delay ⌜ 1 ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) on-time (var Hd ok₀ · ⋆)))))
+      (return (fun (delay ⌜ 1 ⌝ (unbox (res-var (Tl-⟨⟩ Hd)) on-time (var Hd ok₀ · ⋆)))))
       refl) _
 
 expected-handed-box-call : Scheme
@@ -196,7 +196,7 @@ expected-boxing-anything =
 -- only componentwise (`_|×|-ok_`).
 
 boxing-a-pair-D : hypsOf {scope 1 1 0} (eternal α₀ ∨ ρ₀ ≾𝟏̂ᵣ)
-                  ∣ [] ⊢C⦂ (α₀ |×| α₀ ⇒ [ ρ₀ ] (α₀ |×| α₀) ! 𝟏̂ₑ) ! 𝟏̂ₑ
+                  ∣ [] ⊢ᶜ⦂ (α₀ |×| α₀ ⇒ [ ρ₀ ] (α₀ |×| α₀) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 boxing-a-pair-D =
   return (fun (box ρ₀ (var (Tl-⟨⟩ Hd) (hyp-ok (here refl) on-time |×|-ok hyp-ok (here refl) on-time))
                       (return (var Hd ok₀))))
@@ -212,9 +212,9 @@ boxing-a-pair-D =
 claim-after : ℕ → RawC ∅ˢ 0
 claim-after d = box ⌜ 3 ⌝ʳ ⋆ (delay ⌜ d ⌝ (unbox (var fzero) (return v₀)))
 
-claim-after-D : ∀ d → ιᵣ ⌜ d ⌝ ≾ᴳ ιᵣ ⌜ 3 ⌝ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ)
+claim-after-D : ∀ d → ιᵣ ⌜ d ⌝ ≾ᴳ ιᵣ ⌜ 3 ⌝ → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ unit ! (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ)
 claim-after-D d p =
-  box ⌜ 3 ⌝ʳ ⋆ (delay ⌜ d ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) (after p) (return (var Hd ok₀))))
+  box ⌜ 3 ⌝ʳ ⋆ (delay ⌜ d ⌝ (unbox (res-var (Tl-⟨⟩ Hd)) (after p) (return (var Hd ok₀))))
 
 claim-after-typable : ∀ d → True (ιᵣ ⌜ d ⌝ ≾ᵣ? ιᵣ ⌜ 3 ⌝) → Typable [] (claim-after d)
 claim-after-typable d p = closed (claim-after-D d (toWitness p)) refl
@@ -240,7 +240,7 @@ inferred-grade-typed : IsTyped (infer [] inferred-grade)
 inferred-grade-typed =
   typed-of inferred-grade
     (closed {C = ([ ⌜ 2 ⌝ʳ ] unit ⇒ unit ! (⌜ 2 ⌝ᵉ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ}
-      (return (fun (delay ⌜ 2 ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) on-time (return (var Hd ok₀))))))
+      (return (fun (delay ⌜ 2 ⌝ (unbox (res-var (Tl-⟨⟩ Hd)) on-time (return (var Hd ok₀))))))
       refl) _
 
 expected-inferred-grade : Scheme
@@ -262,7 +262,7 @@ kept-and-claimed-typed =
     (closed {C = ([ ⌜ 2 ⌝ʳ ] unit
                    ⇒ ([ ⌜ 2 ⌝ʳ ] unit |×| (unit ⇒ unit ! (⌜ 2 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))) ! 𝟏̂ₑ) ! 𝟏̂ₑ}
       (return (fun (return ⦉ var Hd ok₀
-                           , fun (delay ⌜ 2 ⌝ (unbox (res-var {z = Tl-⟨⟩ (Tl-∷ Hd)}) on-time
+                           , fun (delay ⌜ 2 ⌝ (unbox (res-var (Tl-⟨⟩ (Tl-∷ Hd))) on-time
                                             (return (var Hd ok₀)))) ⦊)))
       refl) _
 
@@ -288,11 +288,11 @@ escaping-after d =
   ⨟ ((v₀ · ⋆) ⨟ delay ⌜ d ⌝ (unbox (var fzero) (return v₀)))
 
 escaping-after-D : ∀ d → ιᵣ ⌜ d ⌝ ≾ᴳ ιᵣ ⌜ 2 ⌝
-                 → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! (𝟏̂ₑ ·̂ₑ (𝟏̂ₑ ·̂ₑ (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ)))
+                 → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ unit ! (𝟏̂ₑ ·̂ₑ (𝟏̂ₑ ·̂ₑ (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ)))
 escaping-after-D d p =
   return (fun {A = unit} (box ⌜ 2 ⌝ʳ ⋆ (return (var Hd ok₀))))
   ⨟ ((var Hd ok₀ · ⋆)
-     ⨟ delay ⌜ d ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) (after p) (return (var Hd ok₀))))
+     ⨟ delay ⌜ d ⌝ (unbox (res-var (Tl-⟨⟩ Hd)) (after p) (return (var Hd ok₀))))
 
 escaping-after-typable : ∀ d → True (ιᵣ ⌜ d ⌝ ≾ᵣ? ιᵣ ⌜ 2 ⌝) → Typable [] (escaping-after d)
 escaping-after-typable d p = closed (escaping-after-D d (toWitness p)) refl
@@ -325,10 +325,10 @@ branches-typed =
       (return (fun (return (fun
         (if var (Tl-∷ Hd) ok₀
           `then coerce (transₑ (eqₑ ≡̂ₑ-identityʳ) ⊔-ubˡₑ)
-                  (delay ⌜ 1 ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) (transᵣ on-time ⊔-ubˡᵣ)
+                  (delay ⌜ 1 ⌝ (unbox (res-var (Tl-⟨⟩ Hd)) (transᵣ on-time ⊔-ubˡᵣ)
                               (return (var Hd ok₀))))
           `else coerce (transₑ (eqₑ ≡̂ₑ-identityʳ) ⊔-ubʳₑ)
-                  (delay ⌜ 3 ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) (transᵣ on-time ⊔-ubʳᵣ)
+                  (delay ⌜ 3 ⌝ (unbox (res-var (Tl-⟨⟩ Hd)) (transᵣ on-time ⊔-ubʳᵣ)
                               (return (var Hd ok₀)))))))))
       refl) _
 
@@ -350,11 +350,11 @@ op-licensed op =
   return (fun (box ⌜ 2 ⌝ʳ ⋆ (perform op v₁ (unbox (var (fsuc fzero)) (return v₀)))))
 
 op-licensed-D : (op : Op) → ∣ op-grade op ∣ᵉ ≾ᴳ ιᵣ ⌜ 2 ⌝
-              → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (⌜ param op ⌝ᵍ ⇒ unit ! (econst (op-grade op) ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
+              → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (⌜ param op ⌝ᵍ ⇒ unit ! (econst (op-grade op) ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
 op-licensed-D op p =
   return (fun (box ⌜ 2 ⌝ʳ ⋆
     (perform op (var (Tl-∷ Hd) ok₀)
-      (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) (after p) (return (var Hd ok₀))))))
+      (unbox (res-var (Tl-∷ (Tl-⟨⟩ Hd))) (after p) (return (var Hd ok₀))))))
 
 op-licensed-typable : (op : Op) → True (∣ op-grade op ∣ᵉ ≾ᵣ? ιᵣ ⌜ 2 ⌝)
                     → Typable [] (op-licensed op)
@@ -378,8 +378,8 @@ nested-typed : IsTyped (infer [] nested)
 nested-typed =
   typed-of nested
     (closed {C = ([ ⌜ 1 ⌝ʳ ] ([ ⌜ 2 ⌝ʳ ] unit) ⇒ unit ! (⌜ 1 ⌝ᵉ ·̂ₑ (⌜ 2 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))) ! 𝟏̂ₑ}
-      (return (fun (delay ⌜ 1 ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) on-time
-        (delay ⌜ 2 ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) on-time (return (var Hd ok₀))))))))
+      (return (fun (delay ⌜ 1 ⌝ (unbox (res-var (Tl-⟨⟩ Hd)) on-time
+        (delay ⌜ 2 ⌝ (unbox (res-var (Tl-⟨⟩ Hd)) on-time (return (var Hd ok₀))))))))
       refl) _
 
 expected-nested : Scheme
@@ -397,11 +397,11 @@ nesting =
   box ⌜ 2 ⌝ʳ ⋆ (box ⌜ 1 ⌝ʳ v₀
     (delay ⌜ 1 ⌝ (unbox (var fzero) (delay ⌜ 2 ⌝ (unbox (var fzero) (return v₀))))))
 
-nesting-D : ιᵣ ⌜ 1 ⌝ ≾ᴳ 𝟏ᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! (⌜ 1 ⌝ᵉ ·̂ₑ (⌜ 2 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
+nesting-D : ιᵣ ⌜ 1 ⌝ ≾ᴳ 𝟏ᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ unit ! (⌜ 1 ⌝ᵉ ·̂ₑ (⌜ 2 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 nesting-D q =
   box ⌜ 2 ⌝ʳ ⋆ (box ⌜ 1 ⌝ʳ (var (Tl-⟨⟩ Hd) (≾ᵘ-ok (after q)))
-    (delay ⌜ 1 ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) on-time
-      (delay ⌜ 2 ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) on-time (return (var Hd ok₀)))))))
+    (delay ⌜ 1 ⌝ (unbox (res-var (Tl-⟨⟩ Hd)) on-time
+      (delay ⌜ 2 ⌝ (unbox (res-var (Tl-⟨⟩ Hd)) on-time (return (var Hd ok₀)))))))
 
 nesting-typable : True (ιᵣ ⌜ 1 ⌝ ≾ᵣ? 𝟏ᵣ) → Typable [] nesting
 nesting-typable q = closed (nesting-D (toWitness q)) refl
@@ -435,15 +435,15 @@ private
                           ▸ ⌜ param op ⌝ᵍ
                           ▸ [ rconst ∣ op-grade op ∣ᵉ ]
                               (⌜ arity op ⌝ᵍ ⇒ unit ! evar (newᵉ {∅ˢ}))
-                   ⊢C⦂ unit ! (econst (op-grade op) ·̂ₑ evar (newᵉ {∅ˢ}))
+                   ⊢ᶜ⦂ unit ! (econst (op-grade op) ·̂ₑ evar (newᵉ {∅ˢ}))
   clause-claim-D p op =
-    unbox (res-var {z = Tl-∷ (Tl-∷ (Tl-⟨⟩ Hd))}) (after p)
+    unbox (res-var (Tl-∷ (Tl-∷ (Tl-⟨⟩ Hd)))) (after p)
       (perform op (var (Tl-∷ (Tl-∷ Hd)) ok₀)
-        (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))}) on-time
+        (unbox (res-var (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))) on-time
           (var Hd ok₀ · var (Tl-∷ Hd) ok₀)))
 
 claimed-in-clause-D : ∀ {c} → ⊤ᵣ ≾ᴳ c
-                    → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
+                    → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
 claimed-in-clause-D {c} p =
   return (fun (box (rconst c) ⋆
     (handle var (Tl-∷ Hd) ok₀ · ⋆ `with handler (return ⋆) (clause-claim-D p))))
@@ -495,7 +495,7 @@ annotated-claim-typed =
   typed-of annotated-claim
     (closed {C = ([ ⌜ 2 ⌝ʳ ] unit ⇒ unit ! (⌜ 2 ⌝ᵉ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ}
       (return (fun (delay ⌜ 2 ⌝
-        (unbox (res-ann ⌜ 2 ⌝ʳ unit (res-var {z = Tl-⟨⟩ Hd}) ⊩≾̂ᵣ-refl unitₛ) on-time
+        (unbox (res-ann ⌜ 2 ⌝ʳ unit (res-var (Tl-⟨⟩ Hd)) ⊩≾̂ᵣ-refl unitₛ) on-time
                (return (var Hd ok₀))))))
       refl) _
 
@@ -513,10 +513,10 @@ relabelled a d =
   box ⌜ 3 ⌝ʳ ⋆ (delay ⌜ d ⌝ (unbox (var fzero ⦂ᵛ [ ⌜ a ⌝ʳ ] unit) (return v₀)))
 
 relabelled-D : ∀ a d → ιᵣ ⌜ a ⌝ ≾ᴳ ιᵣ ⌜ 3 ⌝ → ιᵣ ⌜ d ⌝ ≾ᴳ ιᵣ ⌜ a ⌝
-             → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ)
+             → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ unit ! (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ)
 relabelled-D a d q p =
   box ⌜ 3 ⌝ʳ ⋆ (delay ⌜ d ⌝
-    (unbox (res-ann ⌜ a ⌝ʳ unit (res-var {z = Tl-⟨⟩ Hd}) (atomᵣ q) unitₛ) (after p)
+    (unbox (res-ann ⌜ a ⌝ʳ unit (res-var (Tl-⟨⟩ Hd)) (atomᵣ q) unitₛ) (after p)
            (return (var Hd ok₀))))
 
 relabelled-typable : ∀ a d → True (ιᵣ ⌜ a ⌝ ≾ᵣ? ιᵣ ⌜ 3 ⌝)

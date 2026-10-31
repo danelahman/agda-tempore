@@ -46,12 +46,12 @@ var-≡ : ∀ {Γ A ρ} {f f' : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ} {x : A ∈[ ρ ] 
       → var f x ≡ var f' x
 var-≡ {f = f} {f' = f'} {x = x} = cong (λ g → var g x) (bound-irr f f')
 
-subV-≡ : ∀ {Γ A A'} {p p' : A <:ᵛ A'} {V V' : Γ ⊢V⦂ A}
+subV-≡ : ∀ {Γ A A'} {p p' : A <:ᵛ A'} {V V' : Γ ⊢ᵛ⦂ A}
        → V ≡ V' → subV V p ≡ subV V' p'
 subV-≡ {p = p} {p' = p'} {V = V} refl =
   cong (subV V) (<:ᵛ-irrelevant p p')
 
-subC-≡ : ∀ {Γ C C'} {p p' : C <:ᶜ C'} {M M' : Γ ⊢C⦂ C}
+subC-≡ : ∀ {Γ C C'} {p p' : C <:ᶜ C'} {M M' : Γ ⊢ᶜ⦂ C}
        → M ≡ M' → subC M p ≡ subC M' p'
 subC-≡ {p = p} {p' = p'} {M = M} refl =
   cong (subC M) (<:ᶜ-irrelevant p p')
@@ -63,7 +63,7 @@ subC-≡ {p = p} {p' = p'} {M = M} refl =
 unbox-≡ : ∀ {Γ A C ρ₀ ρ₀' A₀ A₀' ρ' ρ''}
             {x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ} {y : [ ρ₀' ] A₀' ∈[ ρ'' ] Γ}
             {rel : ρ' ≾ᵣ ρ₀} {rel' : ρ'' ≾ᵣ ρ₀'}
-            {p : A₀ <:ᵛ A} {p' : A₀' <:ᵛ A} {M M' : Γ ∷ A ⊢C⦂ C}
+            {p : A₀ <:ᵛ A} {p' : A₀' <:ᵛ A} {M M' : Γ ∷ A ⊢ᶜ⦂ C}
         → _≡_ {A = RVar Γ} (ρ₀ , A₀ , ρ' , x) (ρ₀' , A₀' , ρ'' , y) → M ≡ M'
         → unbox x rel p M ≡ unbox y rel' p' M'
 unbox-≡ {x = x} {rel = rel} {rel' = rel'} {p = p} {p' = p'} {M = M} refl refl =
@@ -75,12 +75,12 @@ unbox-≡ {x = x} {rel = rel} {rel' = rel'} {p = p} {p' = p'} {M = M} refl refl 
 -- congruence goes through `fun-ext`.
 
 handler-≡ : ∀ {Γ A B ε ε'}
-              {N N' : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'}
+              {N N' : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε'}
               {H H' : (op : Op) → (ε'' : E) →
                         Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                           ∷ [ ∣ op-grade op ∣ᵉ ]
                               (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-                        ⊢C⦂ B ! (op-grade op ·ₑ ε'')}
+                        ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε'')}
           → N ≡ N'
           → (∀ op ε'' → H op ε'' ≡ H' op ε'')
           → handler N H ≡ handler N' H'

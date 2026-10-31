@@ -68,16 +68,16 @@ private
 -- predecessor by the value, both under the lock binding the recursive call's
 -- result. The renaming and the substitution coherences, composed.
 
-recℕ-stepᴾ : ∀ {Γ B ε} → (V : Γ ⊢V⦂ nat)
-           → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
+recℕ-stepᴾ : ∀ {Γ B ε} → (V : Γ ⊢ᵛ⦂ nat)
+           → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε)
            → Paramᵛ V → Paramᶜ N → Paramᶜ (recℕ-step V N)
 recℕ-stepᴾ V N pV pN =
   subᶜ (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren barrier-ren))) N)
        (split-∷ (split-⟨⟩ split-[])) V
        (renᶜ (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren barrier-ren))) N pN) pV
 
-sound-recℕ-step : ∀ {Γ B ε} → (V : Γ ⊢V⦂ nat)
-                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
+sound-recℕ-step : ∀ {Γ B ε} → (V : Γ ⊢ᵛ⦂ nat)
+                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε)
                 → (pV : Paramᵛ V) → (pN : Paramᶜ N)
                 → ⟦ recℕ-step V N ⟧ᶜᵗ (recℕ-stepᴾ V N pV pN)
                 ≈ᵐ ⟦ N ⟧ᶜᵗ pN
@@ -95,14 +95,14 @@ sound-recℕ-step V N pV pN =
 -- is the recursive call sequenced with the step's body, which, its context
 -- carried under `η⊣` and through the strength, is the unfolding.
 
-sound-RECℕ-ZERO : ∀ {Γ B ε} → (M : Γ ⊢C⦂ B ! ε)
-                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
+sound-RECℕ-ZERO : ∀ {Γ B ε} → (M : Γ ⊢ᶜ⦂ B ! ε)
+                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε)
                 → (p : ε ·ₑ ε ≾ₑ ε) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                 → ⟦ recℕ zero M N p ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ M ⟧ᶜᵗ pM
 sound-RECℕ-ZERO M N p pM pN = recℕᵐ-zero _ _
 
-sound-RECℕ-SUCC : ∀ {Γ B ε} → (V : Γ ⊢V⦂ nat) → (M : Γ ⊢C⦂ B ! ε)
-                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
+sound-RECℕ-SUCC : ∀ {Γ B ε} → (V : Γ ⊢ᵛ⦂ nat) → (M : Γ ⊢ᶜ⦂ B ! ε)
+                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε)
                 → (p : ε ·ₑ ε ≾ₑ ε)
                 → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                 → ⟦ recℕ (succ V) M N p ⟧ᶜᵗ (pV , pM , pN)
@@ -141,8 +141,8 @@ sound-RECℕ-SUCC {B = B} V M N p pV pM pN =
 -- One unfolding of a list recursion's step, likewise: the barred part by
 -- `⟨⊤⟩-η`, the head and the tail by the values, under the lock.
 
-recL-stepᴾ : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ list A)
-           → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
+recL-stepᴾ : ∀ {Γ A B ε} → (V : Γ ⊢ᵛ⦂ A) → (W : Γ ⊢ᵛ⦂ list A)
+           → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε)
            → Paramᵛ V → Paramᵛ W → Paramᶜ N → Paramᶜ (recL-step V W N)
 recL-stepᴾ V W N pV pW pN =
   subᶜ (C-rename r N [ split-∷ (split-⟨⟩ (split-∷ split-[])) ↦ V ]c)
@@ -152,8 +152,8 @@ recL-stepᴾ V W N pV pW pN =
   where
     r = cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren (cong-∷-ren barrier-ren)))
 
-sound-recL-step : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ list A)
-                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
+sound-recL-step : ∀ {Γ A B ε} → (V : Γ ⊢ᵛ⦂ A) → (W : Γ ⊢ᵛ⦂ list A)
+                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε)
                 → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pN : Paramᶜ N)
                 → ⟦ recL-step V W N ⟧ᶜᵗ (recL-stepᴾ V W N pV pW pN)
                 ≈ᵐ ⟦ N ⟧ᶜᵗ pN
@@ -185,15 +185,15 @@ sound-recL-step V W N pV pW pN =
 
 -- The list recursor's beta laws, at `nil` and at a `cons`.
 
-sound-RECL-NIL : ∀ {Γ A B ε} → (M : Γ ⊢C⦂ B ! ε)
-               → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
+sound-RECL-NIL : ∀ {Γ A B ε} → (M : Γ ⊢ᶜ⦂ B ! ε)
+               → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε)
                → (p : ε ·ₑ ε ≾ₑ ε) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                → ⟦ recL nil M N p ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ M ⟧ᶜᵗ pM
 sound-RECL-NIL M N p pM pN = recLᵐ-nil _ _
 
-sound-RECL-CONS : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ list A)
-                → (M : Γ ⊢C⦂ B ! ε)
-                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ B ! ε)
+sound-RECL-CONS : ∀ {Γ A B ε} → (V : Γ ⊢ᵛ⦂ A) → (W : Γ ⊢ᵛ⦂ list A)
+                → (M : Γ ⊢ᶜ⦂ B ! ε)
+                → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε)
                 → (p : ε ·ₑ ε ≾ₑ ε)
                 → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                 → ⟦ recL (cons V W) M N p ⟧ᶜᵗ ((pV , pW) , pM , pN)
@@ -238,13 +238,13 @@ sound-RECL-CONS {B = B} V W M N p pV pW pM pN =
 -- The list eliminator's beta laws: at `nil` the `nil` branch, at a `cons`
 -- the `cons` branch with the head and the tail substituted, as for `match`.
 
-sound-MATCHL-NIL : ∀ {Γ A C} → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
+sound-MATCHL-NIL : ∀ {Γ A C} → (M : Γ ⊢ᶜ⦂ C) → (N : Γ ∷ A ∷ list A ⊢ᶜ⦂ C)
                  → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                  → ⟦ matchL nil `nil M `cons N ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ M ⟧ᶜᵗ pM
 sound-MATCHL-NIL M N pM pN = matchLᵐ-nil _ _
 
-sound-MATCHL-CONS : ∀ {Γ A C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ list A)
-                  → (M : Γ ⊢C⦂ C) → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
+sound-MATCHL-CONS : ∀ {Γ A C} → (V : Γ ⊢ᵛ⦂ A) → (W : Γ ⊢ᵛ⦂ list A)
+                  → (M : Γ ⊢ᶜ⦂ C) → (N : Γ ∷ A ∷ list A ⊢ᶜ⦂ C)
                   → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                   → ⟦ matchL cons V W `nil M `cons N ⟧ᶜᵗ ((pV , pW) , pM , pN)
                   ≈ᵐ ⟦ (N [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟧ᶜᵗ

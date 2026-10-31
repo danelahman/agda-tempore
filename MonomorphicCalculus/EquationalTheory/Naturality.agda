@@ -39,13 +39,13 @@ open import MonomorphicCalculus.EquationalTheory.EquationalTheory S
 
 -- Transporting an equation along syntactic identities of its two sides.
 
-≡ᵗʰ-castᶜ : ∀ {Γ C} {M M' N N' : Γ ⊢C⦂ C}
-          → M ≡ M' → N ≡ N' → Γ ⊢C⦂ M ≡ᵗʰ N → Γ ⊢C⦂ M' ≡ᵗʰ N'
+≡ᵗʰ-castᶜ : ∀ {Γ C} {M M' N N' : Γ ⊢ᶜ⦂ C}
+          → M ≡ M' → N ≡ N' → Γ ⊢ᶜ⦂ M ≡ᵗʰ N → Γ ⊢ᶜ⦂ M' ≡ᵗʰ N'
 ≡ᵗʰ-castᶜ refl refl p = p
 
 -- The topmost variable, at its declared grade.
 
-hd : ∀ {Γ A} → Γ ∷ A ⊢V⦂ A
+hd : ∀ {Γ A} → Γ ∷ A ⊢ᵛ⦂ A
 hd = var (λ _ → ≾ᵣ-refl) Hd
 
 
@@ -54,16 +54,16 @@ hd = var (λ _ → ≾ᵣ-refl) Hd
 
 subV-const : ∀ {Γ b b'} → (e : b ≡ b') → (c : BaseConstants b)
            -----------------------------------------------------------------
-           → Γ ⊢V⦂ subV (const b c) (Baseₛ e) ≡ᵗʰ const b' (subst BaseConstants e c)
+           → Γ ⊢ᵛ⦂ subV (const b c) (Baseₛ e) ≡ᵗʰ const b' (subst BaseConstants e c)
 subV-const refl c = subV-refl (Baseₛ refl) (const _ c)
 
-subV-⋆ : ∀ {Γ} → Γ ⊢V⦂ subV ⋆ unitₛ ≡ᵗʰ ⋆
+subV-⋆ : ∀ {Γ} → Γ ⊢ᵛ⦂ subV ⋆ unitₛ ≡ᵗʰ ⋆
 subV-⋆ = subV-refl unitₛ ⋆
 
-subV-true : ∀ {Γ} → Γ ⊢V⦂ subV true boolₛ ≡ᵗʰ true
+subV-true : ∀ {Γ} → Γ ⊢ᵛ⦂ subV true boolₛ ≡ᵗʰ true
 subV-true = subV-refl boolₛ true
 
-subV-false : ∀ {Γ} → Γ ⊢V⦂ subV false boolₛ ≡ᵗʰ false
+subV-false : ∀ {Γ} → Γ ⊢ᵛ⦂ subV false boolₛ ≡ᵗʰ false
 subV-false = subV-refl boolₛ false
 
 
@@ -72,9 +72,9 @@ subV-false = subV-refl boolₛ false
 
 subC-absurd : ∀ {Γ C C'}
             → (w : C <:ᶜ C')
-            → (V : Γ ⊢V⦂ empty)
+            → (V : Γ ⊢ᵛ⦂ empty)
             --------------------------------------------------------------
-            → Γ ⊢C⦂ subC (absurd {C = C} V) w ≡ᵗʰ absurd {C = C'} V
+            → Γ ⊢ᶜ⦂ subC (absurd {C = C} V) w ≡ᵗʰ absurd {C = C'} V
 subC-absurd w V =
   C-sym (absurd-eta V (subC (absurd hd) w))
 
@@ -83,10 +83,10 @@ subC-absurd w V =
 
 subC-if : ∀ {Γ C C'}
         → (w : C <:ᶜ C')
-        → (V : Γ ⊢V⦂ bool)
-        → (M N : Γ ⊢C⦂ C)
+        → (V : Γ ⊢ᵛ⦂ bool)
+        → (M N : Γ ⊢ᶜ⦂ C)
         --------------------------------------------------------------
-        → Γ ⊢C⦂ subC (if V `then M `else N) w
+        → Γ ⊢ᶜ⦂ subC (if V `then M `else N) w
              ≡ᵗʰ if V `then subC M w `else subC N w
 subC-if {Γ} {C} {C'} w V M N =
   C-trans
@@ -97,10 +97,10 @@ subC-if {Γ} {C} {C'} w V M N =
              (subC-cong (if-beta-true M N))
              (subC-cong (if-beta-false M N)))
   where
-    body : Γ ∷ bool ⊢C⦂ C'
+    body : Γ ∷ bool ⊢ᶜ⦂ C'
     body = subC (if hd `then C-rename wk-ren M `else C-rename wk-ren N) w
 
-    fill : (U : Γ ⊢V⦂ bool)
+    fill : (U : Γ ⊢ᵛ⦂ bool)
          → body [ split-[] ↦ U ]c ≡ subC (if U `then M `else N) w
     fill U = cong₂ (λ X Y → subC (if U `then X `else Y) w)
                    (sub-wk-≡ᶜ [] U M) (sub-wk-≡ᶜ [] U N)
@@ -113,10 +113,10 @@ subC-if {Γ} {C} {C'} w V M N =
 subV-app : ∀ {Γ A A' C C'}
          → (p : A' <:ᵛ A)
          → (w : C <:ᶜ C')
-         → (V : Γ ⊢V⦂ A ⇒ C)
-         → (W : Γ ⊢V⦂ A')
+         → (V : Γ ⊢ᵛ⦂ A ⇒ C)
+         → (W : Γ ⊢ᵛ⦂ A')
          ----------------------------------------------------------
-         → Γ ⊢C⦂ subV V (p ⇒ₛ w) · W ≡ᵗʰ subC (V · subV W p) w
+         → Γ ⊢ᶜ⦂ subV V (p ⇒ₛ w) · W ≡ᵗʰ subC (V · subV W p) w
 subV-app p w V W =
   C-trans
     (app-cong (V-trans (subV-cong (fun-eta V))
@@ -135,35 +135,35 @@ subV-app p w V W =
 -- `ε-subst` is a transport with no content, and a subsumption absorbs the
 -- effect ordering either side of it carries.
 
-ε-subst-cong : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → {M N : Γ ⊢C⦂ A ! ε}
-             → Γ ⊢C⦂ M ≡ᵗʰ N
+ε-subst-cong : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → {M N : Γ ⊢ᶜ⦂ A ! ε}
+             → Γ ⊢ᶜ⦂ M ≡ᵗʰ N
              ------------------------------------------
-             → Γ ⊢C⦂ ε-subst e M ≡ᵗʰ ε-subst e N
+             → Γ ⊢ᶜ⦂ ε-subst e M ≡ᵗʰ ε-subst e N
 ε-subst-cong refl p = p
 
 coerce-ε-subst : ∀ {Γ A ε₁ ε₂ ε₃ ε₄}
                → (e : ε₁ ≡ ε₂) → (e' : ε₃ ≡ ε₄)
                → (c : ε₂ ≾ₑ ε₃) → (c' : ε₁ ≾ₑ ε₄)
-               → (M : Γ ⊢C⦂ A ! ε₁)
+               → (M : Γ ⊢ᶜ⦂ A ! ε₁)
                ----------------------------------------------------------
-               → Γ ⊢C⦂ ε-subst e' (coerce c (ε-subst e M)) ≡ᵗʰ coerce c' M
+               → Γ ⊢ᶜ⦂ ε-subst e' (coerce c (ε-subst e M)) ≡ᵗʰ coerce c' M
 coerce-ε-subst refl refl c c' M = subC-cong C-refl
 
 -- The same for regrading along an equivalence, which is a sub-effecting:
 -- stated at the underlying orderings, which unification can read off a term.
 
-ε-≃-cong : ∀ {Γ A ε ε'} → (c : ε ≾ₑ ε') → {M N : Γ ⊢C⦂ A ! ε}
-         → Γ ⊢C⦂ M ≡ᵗʰ N
+ε-≃-cong : ∀ {Γ A ε ε'} → (c : ε ≾ₑ ε') → {M N : Γ ⊢ᶜ⦂ A ! ε}
+         → Γ ⊢ᶜ⦂ M ≡ᵗʰ N
          ------------------------------------------
-         → Γ ⊢C⦂ coerce c M ≡ᵗʰ coerce c N
+         → Γ ⊢ᶜ⦂ coerce c M ≡ᵗʰ coerce c N
 ε-≃-cong c p = subC-cong p
 
 coerce-ε-≃ : ∀ {Γ A ε₁ ε₂ ε₃ ε₄}
            → (e : ε₁ ≾ₑ ε₂) → (e' : ε₃ ≾ₑ ε₄)
            → (c : ε₂ ≾ₑ ε₃) → (c' : ε₁ ≾ₑ ε₄)
-           → (M : Γ ⊢C⦂ A ! ε₁)
+           → (M : Γ ⊢ᶜ⦂ A ! ε₁)
            ----------------------------------------------------------
-           → Γ ⊢C⦂ coerce e' (coerce c (coerce e M)) ≡ᵗʰ coerce c' M
+           → Γ ⊢ᶜ⦂ coerce e' (coerce c (coerce e M)) ≡ᵗʰ coerce c' M
 coerce-ε-≃ {A = A} e e' c c' M =
   C-trans (subC-cong (subC-trans (<:ᵛ-refl A !ₛ e) (<:ᵛ-refl A !ₛ c)
                                  (<:ᵛ-refl A !ₛ ≾ₑ-trans e c) M))
@@ -178,9 +178,9 @@ coerce-ε-≃ {A = A} e e' c c' M =
 subC-return : ∀ {Γ A A' ε'}
             → (p : A <:ᵛ A')
             → (q : 𝟏ₑ ≾ₑ ε')
-            → (V : Γ ⊢V⦂ A)
+            → (V : Γ ⊢ᵛ⦂ A)
             ----------------------------------------------------------
-            → Γ ⊢C⦂ subC (return V) (p !ₛ q) ≡ᵗʰ coerce q (return (subV V p))
+            → Γ ⊢ᶜ⦂ subC (return V) (p !ₛ q) ≡ᵗʰ coerce q (return (subV V p))
 subC-return p q V =
   C-trans (seq-eta (subC (return V) (p !ₛ q)))
   (C-trans (ε-≃-cong _ (subC-seq p q (return V) (return hd)))
@@ -195,9 +195,9 @@ subC-return p q V =
 subC-seq-eta : ∀ {Γ A A' ε₁ ε₂}
              → (v : A <:ᵛ A')
              → (rel : ε₁ ≾ₑ ε₂)
-             → (M : Γ ⊢C⦂ A ! ε₁)
+             → (M : Γ ⊢ᶜ⦂ A ! ε₁)
              -------------------------------------------------------------
-             → Γ ⊢C⦂ subC M (v !ₛ rel)
+             → Γ ⊢ᶜ⦂ subC M (v !ₛ rel)
                   ≡ᵗʰ ε-≃ (·ₑ-identityʳ ε₂)
                        (coerce (·ₑ-monoˡ-≾ₑ rel) (M ⨟ return (subV hd v)))
 subC-seq-eta v rel M =
@@ -208,16 +208,16 @@ subC-seq-eta v rel M =
 
 seq-ε-subst : ∀ {Γ A B ε ε' ε''}
             → (e : ε' ≡ ε'')
-            → (M : Γ ⊢C⦂ A ! ε)
-            → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
+            → (M : Γ ⊢ᶜ⦂ A ! ε)
+            → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε')
             ------------------------------------------------------
             → M ⨟ ε-subst e N ≡ ε-subst (cong (ε ·ₑ_) e) (M ⨟ N)
 seq-ε-subst refl M N = refl
 
 ε-subst-coerce : ∀ {Γ A ε ε'}
-               → (e : ε ≡ ε') → (c : ε ≾ₑ ε') → (M : Γ ⊢C⦂ A ! ε)
+               → (e : ε ≡ ε') → (c : ε ≾ₑ ε') → (M : Γ ⊢ᶜ⦂ A ! ε)
                ---------------------------------------------------
-               → Γ ⊢C⦂ ε-subst e M ≡ᵗʰ coerce c M
+               → Γ ⊢ᶜ⦂ ε-subst e M ≡ᵗʰ coerce c M
 ε-subst-coerce refl c M = C-sym (subC-refl _ M)
 
 
@@ -229,10 +229,10 @@ seq-ε-subst refl M N = refl
 subC-seq-in : ∀ {Γ A B B' ε ε₁' ε₂'}
             → (v : B <:ᵛ B')
             → (q : ε₁' ≾ₑ ε₂')
-            → (M : Γ ⊢C⦂ A ! ε)
-            → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₁')
+            → (M : Γ ⊢ᶜ⦂ A ! ε)
+            → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₁')
             ----------------------------------------------------------
-            → Γ ⊢C⦂ subC (M ⨟ N) (v !ₛ ·ₑ-monoʳ-≾ₑ q)
+            → Γ ⊢ᶜ⦂ subC (M ⨟ N) (v !ₛ ·ₑ-monoʳ-≾ₑ q)
                  ≡ᵗʰ M ⨟ subC N (v !ₛ q)
 subC-seq-in {Γ} {B' = B'} {ε = ε} {ε₁' = ε₁'} v q M N =
   C-trans (C-sym (subC-trans (v !ₛ ≾ₑ-refl) (<:ᵛ-refl B' !ₛ ·ₑ-monoʳ-≾ₑ q)
@@ -245,7 +245,7 @@ subC-seq-in {Γ} {B' = B'} {ε = ε} {ε₁' = ε₁'} v q M N =
     assoc-≾ : ε ·ₑ (ε₁' ·ₑ 𝟏ₑ) ≾ₑ ε ·ₑ ε₁'
     assoc-≾ = ≃ₑ⇒≾ₑ (·ₑ-cong ≃ₑ-refl (·ₑ-identityʳ ε₁'))
 
-    value-half : Γ ⊢C⦂ subC (M ⨟ N) (v !ₛ ≾ₑ-refl)
+    value-half : Γ ⊢ᶜ⦂ subC (M ⨟ N) (v !ₛ ≾ₑ-refl)
                     ≡ᵗʰ M ⨟ subC N (v !ₛ ≾ₑ-refl)
     value-half =
       C-trans
@@ -273,11 +273,11 @@ subC-seq-in {Γ} {B' = B'} {ε = ε} {ε₁' = ε₁'} v q M N =
 
 subC-match-pair : ∀ {Γ A B C C'}
                 → (w : C <:ᶜ C')
-                → (V : Γ ⊢V⦂ A)
-                → (W : Γ ⊢V⦂ B)
-                → (M : Γ ∷ A ∷ B ⊢C⦂ C)
+                → (V : Γ ⊢ᵛ⦂ A)
+                → (W : Γ ⊢ᵛ⦂ B)
+                → (M : Γ ∷ A ∷ B ⊢ᶜ⦂ C)
                 ----------------------------------------------------
-                → Γ ⊢C⦂ subC (match ⦉ V , W ⦊ `with M) w
+                → Γ ⊢ᶜ⦂ subC (match ⦉ V , W ⦊ `with M) w
                      ≡ᵗʰ match ⦉ V , W ⦊ `with subC M w
 subC-match-pair w V W M =
   C-trans (subC-cong (match-beta V W M))
@@ -285,10 +285,10 @@ subC-match-pair w V W M =
 
 subC-match : ∀ {Γ A B C C'}
            → (w : C <:ᶜ C')
-           → (V : Γ ⊢V⦂ A |×| B)
-           → (M : Γ ∷ A ∷ B ⊢C⦂ C)
+           → (V : Γ ⊢ᵛ⦂ A |×| B)
+           → (M : Γ ∷ A ∷ B ⊢ᶜ⦂ C)
            ----------------------------------------------------
-           → Γ ⊢C⦂ subC (match V `with M) w ≡ᵗʰ match V `with subC M w
+           → Γ ⊢ᶜ⦂ subC (match V `with M) w ≡ᵗʰ match V `with subC M w
 subC-match {Γ} {A} {B} {C} {C'} w V M =
   C-trans
     (C-sym (≡ᵗʰ-castᶜ refl castL (match-eta V bodyL)))
@@ -297,10 +297,10 @@ subC-match {Γ} {A} {B} {C} {C'} w V M =
   where
     r = cong-ren {Γ'' = [] ∷ A ∷ B} (wk-ren {Δ = Γ} {A = A |×| B})
 
-    bodyL : Γ ∷ (A |×| B) ⊢C⦂ C'
+    bodyL : Γ ∷ (A |×| B) ⊢ᶜ⦂ C'
     bodyL = subC (match hd `with C-rename r M) w
 
-    bodyR : Γ ∷ (A |×| B) ⊢C⦂ C'
+    bodyR : Γ ∷ (A |×| B) ⊢ᶜ⦂ C'
     bodyR = match hd `with subC (C-rename r M) w
 
     castL : bodyL [ split-[] ↦ V ]c ≡ subC (match V `with M) w
@@ -316,11 +316,11 @@ subC-match {Γ} {A} {B} {C} {C'} w V M =
 
 subC-match+-inl : ∀ {Γ A B C C'}
                 → (w : C <:ᶜ C')
-                → (V : Γ ⊢V⦂ A)
-                → (M : Γ ∷ A ⊢C⦂ C)
-                → (N : Γ ∷ B ⊢C⦂ C)
+                → (V : Γ ⊢ᵛ⦂ A)
+                → (M : Γ ∷ A ⊢ᶜ⦂ C)
+                → (N : Γ ∷ B ⊢ᶜ⦂ C)
                 ------------------------------------------------------------
-                → Γ ⊢C⦂ subC (match+ inl V `inl M `inr N) w
+                → Γ ⊢ᶜ⦂ subC (match+ inl V `inl M `inr N) w
                     ≡ᵗʰ match+ inl V `inl subC M w `inr subC N w
 subC-match+-inl w V M N =
   C-trans (subC-cong (match+-beta-inl V M N))
@@ -328,11 +328,11 @@ subC-match+-inl w V M N =
 
 subC-match+-inr : ∀ {Γ A B C C'}
                 → (w : C <:ᶜ C')
-                → (V : Γ ⊢V⦂ B)
-                → (M : Γ ∷ A ⊢C⦂ C)
-                → (N : Γ ∷ B ⊢C⦂ C)
+                → (V : Γ ⊢ᵛ⦂ B)
+                → (M : Γ ∷ A ⊢ᶜ⦂ C)
+                → (N : Γ ∷ B ⊢ᶜ⦂ C)
                 ------------------------------------------------------------
-                → Γ ⊢C⦂ subC (match+ inr V `inl M `inr N) w
+                → Γ ⊢ᶜ⦂ subC (match+ inr V `inl M `inr N) w
                     ≡ᵗʰ match+ inr V `inl subC M w `inr subC N w
 subC-match+-inr w V M N =
   C-trans (subC-cong (match+-beta-inr V M N))
@@ -340,11 +340,11 @@ subC-match+-inr w V M N =
 
 subC-match+ : ∀ {Γ A B C C'}
             → (w : C <:ᶜ C')
-            → (V : Γ ⊢V⦂ A |+| B)
-            → (M : Γ ∷ A ⊢C⦂ C)
-            → (N : Γ ∷ B ⊢C⦂ C)
+            → (V : Γ ⊢ᵛ⦂ A |+| B)
+            → (M : Γ ∷ A ⊢ᶜ⦂ C)
+            → (N : Γ ∷ B ⊢ᶜ⦂ C)
             ------------------------------------------------------------
-            → Γ ⊢C⦂ subC (match+ V `inl M `inr N) w
+            → Γ ⊢ᶜ⦂ subC (match+ V `inl M `inr N) w
                 ≡ᵗʰ match+ V `inl subC M w `inr subC N w
 subC-match+ {Γ} {A} {B} {C} {C'} w V M N =
   C-trans
@@ -355,10 +355,10 @@ subC-match+ {Γ} {A} {B} {C} {C'} w V M N =
     rA = cong-ren {Γ'' = [] ∷ A} (wk-ren {Δ = Γ} {A = A |+| B})
     rB = cong-ren {Γ'' = [] ∷ B} (wk-ren {Δ = Γ} {A = A |+| B})
 
-    bodyL : Γ ∷ (A |+| B) ⊢C⦂ C'
+    bodyL : Γ ∷ (A |+| B) ⊢ᶜ⦂ C'
     bodyL = subC (match+ hd `inl C-rename rA M `inr C-rename rB N) w
 
-    bodyR : Γ ∷ (A |+| B) ⊢C⦂ C'
+    bodyR : Γ ∷ (A |+| B) ⊢ᶜ⦂ C'
     bodyR = match+ hd `inl subC (C-rename rA M) w `inr subC (C-rename rB N) w
 
     castL : bodyL [ split-[] ↦ V ]c ≡ subC (match+ V `inl M `inr N) w
@@ -375,10 +375,10 @@ subC-match+ {Γ} {A} {B} {C} {C'} w V M N =
 
 subC-matchℕ-zero : ∀ {Γ C C'}
                  → (w : C <:ᶜ C')
-                 → (M : Γ ⊢C⦂ C)
-                 → (N : Γ ∷ nat ⊢C⦂ C)
+                 → (M : Γ ⊢ᶜ⦂ C)
+                 → (N : Γ ∷ nat ⊢ᶜ⦂ C)
                  ------------------------------------------------------------
-                 → Γ ⊢C⦂ subC (matchℕ zero `zero M `succ N) w
+                 → Γ ⊢ᶜ⦂ subC (matchℕ zero `zero M `succ N) w
                      ≡ᵗʰ matchℕ zero `zero subC M w `succ subC N w
 subC-matchℕ-zero w M N =
   C-trans (subC-cong (matchℕ-beta-zero M N))
@@ -386,11 +386,11 @@ subC-matchℕ-zero w M N =
 
 subC-matchℕ-succ : ∀ {Γ C C'}
                  → (w : C <:ᶜ C')
-                 → (V : Γ ⊢V⦂ nat)
-                 → (M : Γ ⊢C⦂ C)
-                 → (N : Γ ∷ nat ⊢C⦂ C)
+                 → (V : Γ ⊢ᵛ⦂ nat)
+                 → (M : Γ ⊢ᶜ⦂ C)
+                 → (N : Γ ∷ nat ⊢ᶜ⦂ C)
                  ------------------------------------------------------------
-                 → Γ ⊢C⦂ subC (matchℕ succ V `zero M `succ N) w
+                 → Γ ⊢ᶜ⦂ subC (matchℕ succ V `zero M `succ N) w
                      ≡ᵗʰ matchℕ succ V `zero subC M w `succ subC N w
 subC-matchℕ-succ w V M N =
   C-trans (subC-cong (matchℕ-beta-succ V M N))
@@ -398,11 +398,11 @@ subC-matchℕ-succ w V M N =
 
 subC-matchℕ : ∀ {Γ C C'}
             → (w : C <:ᶜ C')
-            → (V : Γ ⊢V⦂ nat)
-            → (M : Γ ⊢C⦂ C)
-            → (N : Γ ∷ nat ⊢C⦂ C)
+            → (V : Γ ⊢ᵛ⦂ nat)
+            → (M : Γ ⊢ᶜ⦂ C)
+            → (N : Γ ∷ nat ⊢ᶜ⦂ C)
             ------------------------------------------------------------
-            → Γ ⊢C⦂ subC (matchℕ V `zero M `succ N) w
+            → Γ ⊢ᶜ⦂ subC (matchℕ V `zero M `succ N) w
                 ≡ᵗʰ matchℕ V `zero subC M w `succ subC N w
 subC-matchℕ {Γ} {C} {C'} w V M N =
   C-trans
@@ -412,10 +412,10 @@ subC-matchℕ {Γ} {C} {C'} w V M N =
   where
     rN = cong-ren {Γ'' = [] ∷ nat} (wk-ren {Δ = Γ} {A = nat})
 
-    bodyL : Γ ∷ nat ⊢C⦂ C'
+    bodyL : Γ ∷ nat ⊢ᶜ⦂ C'
     bodyL = subC (matchℕ hd `zero C-rename wk-ren M `succ C-rename rN N) w
 
-    bodyR : Γ ∷ nat ⊢C⦂ C'
+    bodyR : Γ ∷ nat ⊢ᶜ⦂ C'
     bodyR = matchℕ hd `zero subC (C-rename wk-ren M) w `succ subC (C-rename rN N) w
 
     castL : bodyL [ split-[] ↦ V ]c ≡ subC (matchℕ V `zero M `succ N) w
@@ -432,10 +432,10 @@ subC-matchℕ {Γ} {C} {C'} w V M N =
 
 subC-matchL-nil : ∀ {Γ A C C'}
                 → (w : C <:ᶜ C')
-                → (M : Γ ⊢C⦂ C)
-                → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
+                → (M : Γ ⊢ᶜ⦂ C)
+                → (N : Γ ∷ A ∷ list A ⊢ᶜ⦂ C)
                 ------------------------------------------------------------
-                → Γ ⊢C⦂ subC (matchL nil `nil M `cons N) w
+                → Γ ⊢ᶜ⦂ subC (matchL nil `nil M `cons N) w
                     ≡ᵗʰ matchL nil `nil subC M w `cons subC N w
 subC-matchL-nil w M N =
   C-trans (subC-cong (matchL-beta-nil M N))
@@ -443,12 +443,12 @@ subC-matchL-nil w M N =
 
 subC-matchL-cons : ∀ {Γ A C C'}
                  → (w : C <:ᶜ C')
-                 → (V : Γ ⊢V⦂ A)
-                 → (W : Γ ⊢V⦂ list A)
-                 → (M : Γ ⊢C⦂ C)
-                 → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
+                 → (V : Γ ⊢ᵛ⦂ A)
+                 → (W : Γ ⊢ᵛ⦂ list A)
+                 → (M : Γ ⊢ᶜ⦂ C)
+                 → (N : Γ ∷ A ∷ list A ⊢ᶜ⦂ C)
                  ------------------------------------------------------------
-                 → Γ ⊢C⦂ subC (matchL cons V W `nil M `cons N) w
+                 → Γ ⊢ᶜ⦂ subC (matchL cons V W `nil M `cons N) w
                      ≡ᵗʰ matchL cons V W `nil subC M w `cons subC N w
 subC-matchL-cons w V W M N =
   C-trans (subC-cong (matchL-beta-cons V W M N))
@@ -456,11 +456,11 @@ subC-matchL-cons w V W M N =
 
 subC-matchL : ∀ {Γ A C C'}
             → (w : C <:ᶜ C')
-            → (V : Γ ⊢V⦂ list A)
-            → (M : Γ ⊢C⦂ C)
-            → (N : Γ ∷ A ∷ list A ⊢C⦂ C)
+            → (V : Γ ⊢ᵛ⦂ list A)
+            → (M : Γ ⊢ᶜ⦂ C)
+            → (N : Γ ∷ A ∷ list A ⊢ᶜ⦂ C)
             ------------------------------------------------------------
-            → Γ ⊢C⦂ subC (matchL V `nil M `cons N) w
+            → Γ ⊢ᶜ⦂ subC (matchL V `nil M `cons N) w
                 ≡ᵗʰ matchL V `nil subC M w `cons subC N w
 subC-matchL {Γ} {A} {C} {C'} w V M N =
   C-trans
@@ -470,10 +470,10 @@ subC-matchL {Γ} {A} {C} {C'} w V M N =
   where
     rN = cong-ren {Γ'' = [] ∷ A ∷ list A} (wk-ren {Δ = Γ} {A = list A})
 
-    bodyL : Γ ∷ list A ⊢C⦂ C'
+    bodyL : Γ ∷ list A ⊢ᶜ⦂ C'
     bodyL = subC (matchL hd `nil C-rename wk-ren M `cons C-rename rN N) w
 
-    bodyR : Γ ∷ list A ⊢C⦂ C'
+    bodyR : Γ ∷ list A ⊢ᶜ⦂ C'
     bodyR = matchL hd `nil subC (C-rename wk-ren M) w `cons subC (C-rename rN N) w
 
     castL : bodyL [ split-[] ↦ V ]c ≡ subC (matchL V `nil M `cons N) w

@@ -46,24 +46,24 @@ open import MonomorphicCalculus.Examples.Typing.Core right-sided opTime
 -- grade of a computation is the run it makes, and the locks along it
 -- are that run one event at a time.
 
-sampling : [] ⊢C⦂ Reading ! permitting ⟅ ⌈ read ⌉ ⟆
+sampling : [] ⊢ᶜ⦂ Reading ! permitting ⟅ ⌈ read ⌉ ⟆
 sampling =
   perform read ⋆         -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (return here)
 
-storing : [] ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+storing : [] ⊢ᶜ⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 storing =
   perform read ⋆         -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (perform write here  -- ⟨ permitting ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ unit
       (return ⋆))
 
-relaying : [] ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+relaying : [] ⊢ᶜ⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 relaying =
   perform read ⋆         -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (perform send here   -- ⟨ permitting ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ unit
       (return ⋆))
 
-tagged-relaying : [] ∷ NodeId ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+tagged-relaying : [] ∷ NodeId ⊢ᶜ⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 tagged-relaying =
   perform read ⋆         -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
@@ -82,7 +82,7 @@ reading-stale-after-idling = fails
 reading-stale-after-an-operation : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ 𝟏ᵣ)
 reading-stale-after-an-operation = fails
 
-carried-id : [] ∷ NodeId ⊢C⦂ NodeId ! permitting ⟅ ⌈ read ⌉ ⟆
+carried-id : [] ∷ NodeId ⊢ᶜ⦂ NodeId ! permitting ⟅ ⌈ read ⌉ ⟆
 carried-id =
   perform read ⋆         -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
@@ -95,7 +95,7 @@ carried-id =
 -- is not above the run in question. The context is untouched.
 
 listing-a-second-run :
-  [] ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+  [] ⊢ᶜ⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 listing-a-second-run =
   coerce holds (perform read ⋆ (perform write here (return ⋆)))
 
@@ -111,7 +111,7 @@ no-budgeting = fails
 -- shorter, there being no bound that covers both by costing more.
 
 branching :
-  [] ∷ bool ∷ Reading ⊢C⦂ unit ! permitting ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆
+  [] ∷ bool ∷ Reading ⊢ᶜ⦂ unit ! permitting ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆
 branching =
   if eternal-var boolₑ (Tl-∷ Hd)
     `then coerce holds (perform send  here (return ⋆))
@@ -124,14 +124,14 @@ six-ticks-buy-nothing = fails
 -- is coerced
 
 either-reading :
-  [] ∷ bool ∷ Reading ∷ Reading ⊢C⦂ unit ! permitting ⟅ ⌈ send ⌉ ⟆
+  [] ∷ bool ∷ Reading ∷ Reading ⊢ᶜ⦂ unit ! permitting ⟅ ⌈ send ⌉ ⟆
 either-reading =
   if eternal-var boolₑ (Tl-∷ (Tl-∷ Hd))
     `then perform send here (return ⋆)
     `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)
 
 sampling-then-branching :
-  [] ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+  [] ⊢ᶜ⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 sampling-then-branching =
   perform {ε = permitting ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆} read ⋆
                          -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
@@ -149,7 +149,7 @@ sampling-then-branching =
 permit : R
 permit = permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆
 
-claim-after-sampling : [] ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+claim-after-sampling : [] ⊢ᶜ⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-sampling =
   box permit (const reading 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     (perform read ⋆      -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
@@ -157,7 +157,7 @@ claim-after-sampling =
                                      -- ∷ Reading
         (perform send here (return ⋆))))
 
-claim-after-idling : [] ⊢C⦂ unit ! permitting ⟅ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+claim-after-idling : [] ⊢ᶜ⦂ unit ! permitting ⟅ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
 claim-after-idling =
   box permit (const reading 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     (delay 2             -- ⟨ permitting ⟅ ⟨ 2 ⟩ ⟆ ⟩
@@ -165,7 +165,7 @@ claim-after-idling =
                                -- ∷ Reading
         (perform send here (return ⋆))))
 
-handed-over : [] ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+handed-over : [] ⊢ᶜ⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over =
   box permit (const reading 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     (fun                 -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
@@ -175,7 +175,7 @@ handed-over =
            (perform send here (return ⋆))))
       · here)
 
-either-way : [] ∷ bool ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+either-way : [] ∷ bool ⊢ᶜ⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 either-way =
   box permit (const reading 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     (perform read ⋆      -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
@@ -205,7 +205,7 @@ storing-not-listed = fails
 listed-now : R
 listed-now = permitting ⟅ ε ∣ ⌈ read ⌉ ⟆
 
-claiming-now : [] ⊢C⦂ unit ! permitting ⟅ ⌈ send ⌉ ⟆
+claiming-now : [] ⊢ᶜ⦂ unit ! permitting ⟅ ⌈ send ⌉ ⟆
 claiming-now =
   box listed-now (const reading 42)        -- ∷ [ permitting ⟅ ε ∣ ⌈ read ⌉ ⟆ ] Reading
     (unbox Hd (holdsᵉ 𝟏ᵣ listed-now) (<:ᵛ-refl _)
@@ -221,7 +221,7 @@ alternatives : R
 alternatives = permitting ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
 
 claimed-in-both-branches :
-  [] ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+  [] ⊢ᶜ⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
 claimed-in-both-branches =
   box alternatives (const reading 42)
                          -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ ] Reading
@@ -256,7 +256,7 @@ transmitting-branch-needs-its-run = fails
 -- conditional is graded by the two runs listed together.
 
 permit-in-a-branch :
-  [] ∷ bool ⊢C⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+  [] ∷ bool ⊢ᶜ⦂ unit ! permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
 permit-in-a-branch =
   box permit (const reading 42)        -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     (if eternal-var boolₑ (Tl-∷ Hd)
@@ -288,14 +288,14 @@ reading-not-covered-by-the-idling = fails
 -- Handling locks its `in` part by the handled computation's grade, as
 -- sequencing does.
 
-forwarded : [] ⊢C⦂ Reading ! permitting ⟅ ⌈ read ⌉ ⟆
+forwarded : [] ⊢ᶜ⦂ Reading ! permitting ⟅ ⌈ read ⌉ ⟆
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
     `in                  -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (return here)
 
-identified : Node ⊢C⦂ NodeId ! permitting ⟅ ⌈ read ⌉ ⟆
+identified : Node ⊢ᶜ⦂ NodeId ! permitting ⟅ ⌈ read ⌉ ⟆
 identified =
   handle perform read ⋆ (return here)
     `with identifying

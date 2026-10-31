@@ -86,8 +86,8 @@ open Lookup≼
 
 -- Normal derivations: `subV`/`subC` only at the reconciliation points.
 
-data NfV : ∀ {Γ A} → Γ ⊢V⦂ A → Set
-data NfC : ∀ {Γ A ε} → Γ ⊢C⦂ A ! ε → Set
+data NfV : ∀ {Γ A} → Γ ⊢ᵛ⦂ A → Set
+data NfC : ∀ {Γ A ε} → Γ ⊢ᶜ⦂ A ! ε → Set
 
 data NfV where
 
@@ -104,24 +104,24 @@ data NfV where
 
   zeroⁿ  : ∀ {Γ} → NfV {Γ} zero
 
-  succⁿ  : ∀ {Γ} {V : Γ ⊢V⦂ nat} → NfV V → NfV (succ V)
+  succⁿ  : ∀ {Γ} {V : Γ ⊢ᵛ⦂ nat} → NfV V → NfV (succ V)
 
-  pairⁿ  : ∀ {Γ A B} {V : Γ ⊢V⦂ A} {W : Γ ⊢V⦂ B}
+  pairⁿ  : ∀ {Γ A B} {V : Γ ⊢ᵛ⦂ A} {W : Γ ⊢ᵛ⦂ B}
          → NfV V → NfV W → NfV ⦉ V , W ⦊
 
-  inlⁿ   : ∀ {Γ A B} {V : Γ ⊢V⦂ A} → NfV V → NfV (inl {B = B} V)
+  inlⁿ   : ∀ {Γ A B} {V : Γ ⊢ᵛ⦂ A} → NfV V → NfV (inl {B = B} V)
 
-  inrⁿ   : ∀ {Γ A B} {V : Γ ⊢V⦂ B} → NfV V → NfV (inr {A = A} V)
+  inrⁿ   : ∀ {Γ A B} {V : Γ ⊢ᵛ⦂ B} → NfV V → NfV (inr {A = A} V)
 
   nilⁿ   : ∀ {Γ A} → NfV {Γ} (nil {A = A})
 
   -- the head and the tail meet at the element type
 
-  consⁿ  : ∀ {Γ A A₁ A₂} {V : Γ ⊢V⦂ A₁} {W : Γ ⊢V⦂ A₂}
+  consⁿ  : ∀ {Γ A A₁ A₂} {V : Γ ⊢ᵛ⦂ A₁} {W : Γ ⊢ᵛ⦂ A₂}
              {p : A₁ <:ᵛ A} {q : A₂ <:ᵛ list A}
          → NfV V → NfV W → NfV (cons (subV V p) (subV W q))
 
-  funⁿ   : ∀ {Γ A B ε} {M : Γ ∷ A ⊢C⦂ B ! ε} → NfC M → NfV (fun M)
+  funⁿ   : ∀ {Γ A B ε} {M : Γ ∷ A ⊢ᶜ⦂ B ! ε} → NfC M → NfV (fun M)
 
   -- the clauses and the return clause meet at the handler's result type;
   -- the clauses' effects are fixed by the rule, the return clause's is not
@@ -131,10 +131,10 @@ data NfV where
                {H : (op : Op) → (ε'' : E) →
                       Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                         ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-                      ⊢C⦂ Bh op ε'' ! εh op ε''}
+                      ⊢ᶜ⦂ Bh op ε'' ! εh op ε''}
                {p : (op : Op) → (ε'' : E) →
                       (Bh op ε'' ! εh op ε'') <:ᶜ (B ! (op-grade op ·ₑ ε''))}
-               {N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B₁ ! ε₁} {q : B₁ <:ᵛ B}
+               {N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B₁ ! ε₁} {q : B₁ <:ᵛ B}
            → NfC N
            → ((op : Op) → (ε'' : E) → NfC (H op ε''))
            → NfV (handler (subC N (q !ₛ ≾ₑ-refl))
@@ -142,39 +142,39 @@ data NfV where
 
 data NfC where
 
-  returnⁿ  : ∀ {Γ A} {V : Γ ⊢V⦂ A} → NfV V → NfC (return V)
+  returnⁿ  : ∀ {Γ A} {V : Γ ⊢ᵛ⦂ A} → NfV V → NfC (return V)
 
-  seqⁿ     : ∀ {Γ A B ε ε'} {M : Γ ⊢C⦂ A ! ε} {N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'}
+  seqⁿ     : ∀ {Γ A B ε ε'} {M : Γ ⊢ᶜ⦂ A ! ε} {N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε'}
            → NfC M → NfC N → NfC (M ⨟ N)
 
   -- the argument meets the domain the function fixes
 
-  appⁿ     : ∀ {Γ A A' B ε} {V : Γ ⊢V⦂ A ⇒ B ! ε} {W : Γ ⊢V⦂ A'} {p : A' <:ᵛ A}
+  appⁿ     : ∀ {Γ A A' B ε} {V : Γ ⊢ᵛ⦂ A ⇒ B ! ε} {W : Γ ⊢ᵛ⦂ A'} {p : A' <:ᵛ A}
            → NfV V → NfV W → NfC (V · subV W p)
 
-  matchⁿ   : ∀ {Γ A B C ε} {V : Γ ⊢V⦂ A |×| B} {N : Γ ∷ A ∷ B ⊢C⦂ C ! ε}
+  matchⁿ   : ∀ {Γ A B C ε} {V : Γ ⊢ᵛ⦂ A |×| B} {N : Γ ∷ A ∷ B ⊢ᶜ⦂ C ! ε}
            → NfV V → NfC N → NfC (match V `with N)
 
-  absurdⁿ  : ∀ {Γ A ε} {V : Γ ⊢V⦂ empty} → NfV V → NfC (absurd {C = A ! ε} V)
+  absurdⁿ  : ∀ {Γ A ε} {V : Γ ⊢ᵛ⦂ empty} → NfV V → NfC (absurd {C = A ! ε} V)
 
   -- the operands meet at the compared type
 
-  cmpⁿ     : ∀ {Γ A A₁ A₂ ⋈} {V : Γ ⊢V⦂ A₁} {W : Γ ⊢V⦂ A₂}
+  cmpⁿ     : ∀ {Γ A A₁ A₂ ⋈} {V : Γ ⊢ᵛ⦂ A₁} {W : Γ ⊢ᵛ⦂ A₂}
                {p : A₁ <:ᵛ A} {q : A₂ <:ᵛ A} {et : Et A}
            → NfV V → NfV W → NfC (cmp ⋈ (subV V p) (subV W q) et)
 
   -- the branches meet at the type the `if` is used at
 
-  ifⁿ      : ∀ {Γ A ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ bool}
-               {M : Γ ⊢C⦂ A₁ ! ε₁} {N : Γ ⊢C⦂ A₂ ! ε₂}
+  ifⁿ      : ∀ {Γ A ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢ᵛ⦂ bool}
+               {M : Γ ⊢ᶜ⦂ A₁ ! ε₁} {N : Γ ⊢ᶜ⦂ A₂ ! ε₂}
                {p : (A₁ ! ε₁) <:ᶜ (A ! ε)} {q : (A₂ ! ε₂) <:ᶜ (A ! ε)}
            → NfV V → NfC M → NfC N
            → NfC (if V `then subC M p `else subC N q)
 
   -- likewise for the branches of a `matchℕ` and of a `match+`
 
-  matchℕⁿ  : ∀ {Γ A ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ nat}
-               {M : Γ ⊢C⦂ A₁ ! ε₁} {N : Γ ∷ nat ⊢C⦂ A₂ ! ε₂}
+  matchℕⁿ  : ∀ {Γ A ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢ᵛ⦂ nat}
+               {M : Γ ⊢ᶜ⦂ A₁ ! ε₁} {N : Γ ∷ nat ⊢ᶜ⦂ A₂ ! ε₂}
                {p : (A₁ ! ε₁) <:ᶜ (A ! ε)} {q : (A₂ ! ε₂) <:ᶜ (A ! ε)}
            → NfV V → NfC M → NfC N
            → NfC (matchℕ V `zero subC M p `succ subC N q)
@@ -182,28 +182,28 @@ data NfC where
   -- the base and the step meet at the recursion's type, which the step's
   -- binder fixes
 
-  recℕⁿ    : ∀ {Γ B ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ nat}
-               {M : Γ ⊢C⦂ A₁ ! ε₁} {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ A₂ ! ε₂}
+  recℕⁿ    : ∀ {Γ B ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢ᵛ⦂ nat}
+               {M : Γ ⊢ᶜ⦂ A₁ ! ε₁} {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ A₂ ! ε₂}
                {p : (A₁ ! ε₁) <:ᶜ (B ! ε)} {q : (A₂ ! ε₂) <:ᶜ (B ! ε)}
                {r : ε ·ₑ ε ≾ₑ ε}
            → NfV V → NfC M → NfC N
            → NfC (recℕ V (subC M p) (subC N q) r)
 
-  match+ⁿ  : ∀ {Γ A B A' ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ A |+| B}
-               {M : Γ ∷ A ⊢C⦂ A₁ ! ε₁} {N : Γ ∷ B ⊢C⦂ A₂ ! ε₂}
+  match+ⁿ  : ∀ {Γ A B A' ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢ᵛ⦂ A |+| B}
+               {M : Γ ∷ A ⊢ᶜ⦂ A₁ ! ε₁} {N : Γ ∷ B ⊢ᶜ⦂ A₂ ! ε₂}
                {p : (A₁ ! ε₁) <:ᶜ (A' ! ε)} {q : (A₂ ! ε₂) <:ᶜ (A' ! ε)}
            → NfV V → NfC M → NfC N
            → NfC (match+ V `inl subC M p `inr subC N q)
 
-  matchLⁿ  : ∀ {Γ A A' ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ list A}
-               {M : Γ ⊢C⦂ A₁ ! ε₁} {N : Γ ∷ A ∷ list A ⊢C⦂ A₂ ! ε₂}
+  matchLⁿ  : ∀ {Γ A A' ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢ᵛ⦂ list A}
+               {M : Γ ⊢ᶜ⦂ A₁ ! ε₁} {N : Γ ∷ A ∷ list A ⊢ᶜ⦂ A₂ ! ε₂}
                {p : (A₁ ! ε₁) <:ᶜ (A' ! ε)} {q : (A₂ ! ε₂) <:ᶜ (A' ! ε)}
            → NfV V → NfC M → NfC N
            → NfC (matchL V `nil subC M p `cons subC N q)
 
-  recLⁿ    : ∀ {Γ A B ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢V⦂ list A}
-               {M : Γ ⊢C⦂ A₁ ! ε₁}
-               {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢C⦂ A₂ ! ε₂}
+  recLⁿ    : ∀ {Γ A B ε A₁ ε₁ A₂ ε₂} {V : Γ ⊢ᵛ⦂ list A}
+               {M : Γ ⊢ᶜ⦂ A₁ ! ε₁}
+               {N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ A₂ ! ε₂}
                {p : (A₁ ! ε₁) <:ᶜ (B ! ε)} {q : (A₂ ! ε₂) <:ᶜ (B ! ε)}
                {r : ε ·ₑ ε ≾ₑ ε}
            → NfV V → NfC M → NfC N
@@ -212,46 +212,46 @@ data NfC where
   -- the parameter meets the ground type the operation fixes; the slack is
   -- non-trivial because ground types include the box modality
 
-  performⁿ : ∀ {Γ A ε A' op} {V : Γ ⊢V⦂ A'} {p : A' <:ᵛ ⌜ param op ⌝ᵍ}
-               {M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢C⦂ A ! ε}
+  performⁿ : ∀ {Γ A ε A' op} {V : Γ ⊢ᵛ⦂ A'} {p : A' <:ᵛ ⌜ param op ⌝ᵍ}
+               {M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢ᶜ⦂ A ! ε}
            → NfV V → NfC M → NfC (perform op (subV V p) M)
 
-  delayⁿ   : ∀ {Γ A ε τ} {M : Γ ⟨ ιᵣ τ ⟩ ⊢C⦂ A ! ε} → NfC M → NfC (delay τ M)
+  delayⁿ   : ∀ {Γ A ε τ} {M : Γ ⟨ ιᵣ τ ⟩ ⊢ᶜ⦂ A ! ε} → NfC M → NfC (delay τ M)
 
   -- the handler meets the type of the handled computation
 
-  handleⁿ  : ∀ {Γ A ε C B ε'} {M : Γ ⊢C⦂ A ! ε} {V : Γ ⊢V⦂ C ⇛ (B ! ε')}
+  handleⁿ  : ∀ {Γ A ε C B ε'} {M : Γ ⊢ᶜ⦂ A ! ε} {V : Γ ⊢ᵛ⦂ C ⇛ (B ! ε')}
                {p : (A ! ε) <:ᶜ C}
            → NfC M → NfV V → NfC (handle M `with subV V (p ⇛ₛ <:ᶜ-refl (B ! ε')))
 
   -- the continuation binds the payload at its declared type
 
   unboxⁿ   : ∀ {Γ A ε A₀ ρ₀ ρ'} {x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ} {rel : ρ' ≾ᵣ ρ₀}
-               {N : Γ ∷ A₀ ⊢C⦂ A ! ε}
+               {N : Γ ∷ A₀ ⊢ᶜ⦂ A ! ε}
            → NfC N → NfC (unbox x rel (<:ᵛ-refl A₀) N)
 
-  boxⁿ     : ∀ {Γ A ε A₁ ρ} {V : Γ ⟨ ρ ⟩ ⊢V⦂ A₁} {N : Γ ∷ [ ρ ] A₁ ⊢C⦂ A ! ε}
+  boxⁿ     : ∀ {Γ A ε A₁ ρ} {V : Γ ⟨ ρ ⟩ ⊢ᵛ⦂ A₁} {N : Γ ∷ [ ρ ] A₁ ⊢ᶜ⦂ A ! ε}
            → NfV V → NfC N → NfC (box _ V N)
 
 
 -- A normal derivation in a subtype context, with its residual subtyping
 -- and the erasure it shares with the derivation it came from.
 
-record NfResV (Γ₀ : Ctx) {Γ : Ctx} {A : VType} (V : Γ ⊢V⦂ A) : Set where
+record NfResV (Γ₀ : Ctx) {Γ : Ctx} {A : VType} (V : Γ ⊢ᵛ⦂ A) : Set where
   constructor nfv
   field
     {rty} : VType
-    rtm   : Γ₀ ⊢V⦂ rty
+    rtm   : Γ₀ ⊢ᵛ⦂ rty
     rsub  : rty <:ᵛ A
     rnf   : NfV rtm
     rer   : ⌊ rtm ⌋ᵛ ≡ ⌊ V ⌋ᵛ
 
-record NfResC (Γ₀ : Ctx) {Γ : Ctx} {A : VType} {ε : E} (M : Γ ⊢C⦂ A ! ε) : Set where
+record NfResC (Γ₀ : Ctx) {Γ : Ctx} {A : VType} {ε : E} (M : Γ ⊢ᶜ⦂ A ! ε) : Set where
   constructor nfc
   field
     {rvt} : VType
     {ref} : E
-    rtm   : Γ₀ ⊢C⦂ rvt ! ref
+    rtm   : Γ₀ ⊢ᶜ⦂ rvt ! ref
     rsubv : rvt <:ᵛ A
     rsube : ref ≾ₑ ε
     rnf   : NfC rtm
@@ -264,8 +264,8 @@ open NfResC
 -- Context subsumption: a normal derivation over a context is one over
 -- any context below it, at a subtype and with the same erasure.
 
-V-subCtx : ∀ {Γ₀ Γ₁ A} → Γ₀ ≼ᶜ Γ₁ → {V : Γ₁ ⊢V⦂ A} → NfV V → NfResV Γ₀ V
-C-subCtx : ∀ {Γ₀ Γ₁ A ε} → Γ₀ ≼ᶜ Γ₁ → {M : Γ₁ ⊢C⦂ A ! ε} → NfC M → NfResC Γ₀ M
+V-subCtx : ∀ {Γ₀ Γ₁ A} → Γ₀ ≼ᶜ Γ₁ → {V : Γ₁ ⊢ᵛ⦂ A} → NfV V → NfResV Γ₀ V
+C-subCtx : ∀ {Γ₀ Γ₁ A ε} → Γ₀ ≼ᶜ Γ₁ → {M : Γ₁ ⊢ᶜ⦂ A ! ε} → NfC M → NfResC Γ₀ M
 
 V-subCtx c (varⁿ {f = f} {x = x}) with ≼ᶜ-lookup c x
 ... | lkp y s b e =
@@ -417,8 +417,8 @@ C-subCtx c (boxⁿ nV nN) with V-subCtx (≼-⟨⟩ c ≾ᵣ-refl) nV
 -- Normalisation: every derivation has a normal one at a subtype, with the
 -- same erasure.
 
-V-normalise : ∀ {Γ A} → (V : Γ ⊢V⦂ A) → NfResV Γ V
-C-normalise : ∀ {Γ A ε} → (M : Γ ⊢C⦂ A ! ε) → NfResC Γ M
+V-normalise : ∀ {Γ A} → (V : Γ ⊢ᵛ⦂ A) → NfResV Γ V
+C-normalise : ∀ {Γ A ε} → (M : Γ ⊢ᶜ⦂ A ! ε) → NfResC Γ M
 
 V-normalise (var f x) =
   nfv (var f x) (<:ᵛ-refl _) varⁿ refl
@@ -570,20 +570,20 @@ C-normalise (subC M (pv !ₛ pe)) with C-normalise M
 -- Every derivation equals, up to erasure, one in which every subsumption sits
 -- at a reconciliation point, the root among them.
 
-data NfRootV : ∀ {Γ A} → Γ ⊢V⦂ A → Set where
-  rootⁿ : ∀ {Γ A A'} {V : Γ ⊢V⦂ A} {p : A <:ᵛ A'} → NfV V → NfRootV (subV V p)
+data NfRootV : ∀ {Γ A} → Γ ⊢ᵛ⦂ A → Set where
+  rootⁿ : ∀ {Γ A A'} {V : Γ ⊢ᵛ⦂ A} {p : A <:ᵛ A'} → NfV V → NfRootV (subV V p)
 
-data NfRootC : ∀ {Γ A ε} → Γ ⊢C⦂ A ! ε → Set where
-  rootⁿ : ∀ {Γ A ε A' ε'} {M : Γ ⊢C⦂ A ! ε} {p : (A ! ε) <:ᶜ (A' ! ε')}
+data NfRootC : ∀ {Γ A ε} → Γ ⊢ᶜ⦂ A ! ε → Set where
+  rootⁿ : ∀ {Γ A ε A' ε'} {M : Γ ⊢ᶜ⦂ A ! ε} {p : (A ! ε) <:ᶜ (A' ! ε')}
         → NfC M → NfRootC (subC M p)
 
-V-normal-form : ∀ {Γ A} → (V : Γ ⊢V⦂ A)
-              → Σ[ V' ∈ Γ ⊢V⦂ A ] NfRootV V' × (⌊ V' ⌋ᵛ ≡ ⌊ V ⌋ᵛ)
+V-normal-form : ∀ {Γ A} → (V : Γ ⊢ᵛ⦂ A)
+              → Σ[ V' ∈ Γ ⊢ᵛ⦂ A ] NfRootV V' × (⌊ V' ⌋ᵛ ≡ ⌊ V ⌋ᵛ)
 V-normal-form V with V-normalise V
 ... | nfv V' s n e = subV V' s , rootⁿ n , e
 
-C-normal-form : ∀ {Γ A ε} → (M : Γ ⊢C⦂ A ! ε)
-              → Σ[ M' ∈ Γ ⊢C⦂ A ! ε ] NfRootC M' × (⌊ M' ⌋ᶜ ≡ ⌊ M ⌋ᶜ)
+C-normal-form : ∀ {Γ A ε} → (M : Γ ⊢ᶜ⦂ A ! ε)
+              → Σ[ M' ∈ Γ ⊢ᶜ⦂ A ! ε ] NfRootC M' × (⌊ M' ⌋ᶜ ≡ ⌊ M ⌋ᶜ)
 C-normal-form M with C-normalise M
 ... | nfc M' sv se n e = subC M' (sv !ₛ se) , rootⁿ n , e
 

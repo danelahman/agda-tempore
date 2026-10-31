@@ -51,7 +51,7 @@ hit-⟨⟩-img p y = cong (var-img′ (⟨⟩-≤-ren p)) (⟨⟩-η⁻¹-img y)
 -- booleans, pairs and injections, so a renaming passes through it.
 
 eternal-val-ext-ren : ∀ {Γ Γ' A ρ} → (et : Et A) → (r : Ren [] Γ Γ')
-                    → (V : Γ' ⊢V⦂ A)
+                    → (V : Γ' ⊢ᵛ⦂ A)
                     → V-rename (cong-⟨⟩-ren {ρ = ρ} r) (eternal-val-ext et V)
                     ≡ eternal-val-ext et (V-rename r V)
 eternal-val-ext-ren et             r (var f x)   = var-≡
@@ -115,7 +115,7 @@ cong-sub₀-⌜⌝ (Γ₀ ⟨ ρ ⟩) r = cong-⟨⟩-sub-⌜⌝ (cong-sub₀-�
 
 mutual
 
-  V-sub₀-⌜⌝ : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ') → (V : Γ' ⊢V⦂ A)
+  V-sub₀-⌜⌝ : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ') → (V : Γ' ⊢ᵛ⦂ A)
             → V-sub₀ ⌜ r ⌝ V ≡ V-rename r V
 
   V-sub₀-⌜⌝ r (var f x) = refl
@@ -141,7 +141,7 @@ mutual
                (C-sub₀-⌜⌝ (cong-ren r) (H op ε'')))
   V-sub₀-⌜⌝ r (subV V p) = subV-≡ (V-sub₀-⌜⌝ r V)
 
-  C-sub₀-⌜⌝ : ∀ {Γ Γ' C} → (r : Ren [] Γ Γ') → (M : Γ' ⊢C⦂ C)
+  C-sub₀-⌜⌝ : ∀ {Γ Γ' C} → (r : Ren [] Γ Γ') → (M : Γ' ⊢ᶜ⦂ C)
             → C-sub₀ ⌜ r ⌝ M ≡ C-rename r M
 
   C-sub₀-⌜⌝ r (return V) = cong return (V-sub₀-⌜⌝ r V)
@@ -297,7 +297,7 @@ mutual
 
   V-sub₀-ren : ∀ {Δ Δ' Γ Γ' A} {s' : Sub₀ [] Δ Δ'} {r : Ren [] Δ' Γ'}
                  {r' : Ren [] Δ Γ} {s : Sub₀ [] Γ Γ'}
-             → Interchange s' r r' s → (V : Γ' ⊢V⦂ A)
+             → Interchange s' r r' s → (V : Γ' ⊢ᵛ⦂ A)
              → V-sub₀ s' (V-rename r V) ≡ V-rename r' (V-sub₀ s V)
 
   V-sub₀-ren h (var f x) = atᵛ h x f
@@ -320,7 +320,7 @@ mutual
 
   C-sub₀-ren : ∀ {Δ Δ' Γ Γ' C} {s' : Sub₀ [] Δ Δ'} {r : Ren [] Δ' Γ'}
                  {r' : Ren [] Δ Γ} {s : Sub₀ [] Γ Γ'}
-             → Interchange s' r r' s → (M : Γ' ⊢C⦂ C)
+             → Interchange s' r r' s → (M : Γ' ⊢ᶜ⦂ C)
              → C-sub₀ s' (C-rename r M) ≡ C-rename r' (C-sub₀ s M)
 
   C-sub₀-ren h (return V) = cong return (V-sub₀-ren h V)

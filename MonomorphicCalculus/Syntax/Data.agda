@@ -31,7 +31,7 @@ open import MonomorphicCalculus.Syntax.Types     S
 open import MonomorphicCalculus.Syntax.Subtyping S
 open import MonomorphicCalculus.Syntax.Contexts  S using (Ctx)
 open import MonomorphicCalculus.Syntax.Terms     S
-  using (_⊢V⦂_; const; ⋆; true; false; zero; succ; ⦉_,_⦊; inl; inr; nil; cons)
+  using (_⊢ᵛ⦂_; const; ⋆; true; false; zero; succ; ⦉_,_⦊; inl; inr; nil; cons)
 
 -- The data of a type
 
@@ -80,7 +80,7 @@ compareᵈ emptyₑ          ()       _
 
 -- Data as values
 
-⌈_⌉ : ∀ {Γ A} → Et A → ⟪ A ⟫ → Γ ⊢V⦂ A
+⌈_⌉ : ∀ {Γ A} → Et A → ⟪ A ⟫ → Γ ⊢ᵛ⦂ A
 ⌈ Baseₑ _ ⌉        c        = const _ c
 ⌈ unitₑ ⌉          _        = ⋆
 ⌈ boolₑ ⌉          true     = true
@@ -96,5 +96,5 @@ compareᵈ emptyₑ          ()       _
 
 -- The boolean a comparison returns
 
-⌈_⌉ᵇ : ∀ {Γ} → 𝔹 → Γ ⊢V⦂ bool
+⌈_⌉ᵇ : ∀ {Γ} → 𝔹 → Γ ⊢ᵛ⦂ bool
 ⌈ b ⌉ᵇ = ⌈ boolₑ ⌉ b

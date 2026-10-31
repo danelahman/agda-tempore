@@ -68,7 +68,7 @@ data Env : (𝕊 : State []) → Ctx → Set where
            → Env 𝕊' (Γ ⟨ ρ ⟩)
 
   _∷ᵉ_     : ∀ {𝕊 Γ A}
-           → Env 𝕊 Γ → toCtx 𝕊 ⊢V⦂ A
+           → Env 𝕊 Γ → toCtx 𝕊 ⊢ᵛ⦂ A
            ---------------------------
            → Env 𝕊 (Γ ∷ A)
 
@@ -77,7 +77,7 @@ data Env : (𝕊 : State []) → Ctx → Set where
   -- `[] ∷ [ ρ ] A`.
 
   liftᵉ    : ∀ {𝕊 Γ A ρ}
-           → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢V⦂ A) → Env 𝕊 Γ
+           → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢ᵛ⦂ A) → Env 𝕊 Γ
            ------------------------------------------------
            → Env (𝕊 ∷ₛ V) (Γ ∷ [ ρ ] A)
 

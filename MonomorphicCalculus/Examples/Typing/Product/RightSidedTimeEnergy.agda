@@ -63,12 +63,12 @@ open import MonomorphicCalculus.Examples.Typing.Core
 ------------------------------------------------------------------------
 -- Effectful computations
 
-sampling : [] ⊢C⦂ Reading ! ([0, 1 ] , [0, 1 ])
+sampling : [] ⊢ᶜ⦂ Reading ! ([0, 1 ] , [0, 1 ])
 sampling =
   perform read ⋆                     -- ⟨ ([0, 1 ] , [0, 1 ]) ⟩ ∷ Reading
     (return here)
 
-relaying : [] ⊢C⦂ unit ! ([0, 7 ] , [0, 6 ])
+relaying : [] ⊢ᶜ⦂ unit ! ([0, 7 ] , [0, 6 ])
 relaying =
   perform read ⋆                     -- ⟨ ([0, 1 ] , [0, 1 ]) ⟩ ∷ Reading
     (perform send here               -- ⟨ ([0, 6 ] , [0, 5 ]) ⟩ ∷ unit
@@ -76,7 +76,7 @@ relaying =
 
 -- idling spends time and no energy
 
-idling : [] ⊢C⦂ unit ! ([0, 5 ] , [0, 0 ])
+idling : [] ⊢ᶜ⦂ unit ! ([0, 5 ] , [0, 0 ])
 idling = delay 5 (return ⋆)          -- ⟨ ([0, 5 ] , [0, 0 ]) ⟩
 
 -- and a reading goes stale under it all the same, on the time
@@ -96,7 +96,7 @@ budget = ([0, 30 ] , [0, 12 ])
 -- two uplinks, spaced by ten ticks of idling, fit it: the idling costs
 -- time the budget has to spare, and no energy
 
-spaced-uplinks : [] ⊢C⦂ unit ! budget
+spaced-uplinks : [] ⊢ᶜ⦂ unit ! budget
 spaced-uplinks =
   coerce (≤! , ≤!)
     (perform read ⋆                  -- ⟨ ([0, 1 ] , [0, 1 ]) ⟩ ∷ Reading
@@ -119,7 +119,7 @@ three-uplinks-overdraw (_ , overdrawn) = ≰! overdrawn
 -- slower branch's time and its hungrier branch's energy, even when no
 -- single branch spends both.
 
-branching : [] ∷ bool ∷ Reading ⊢C⦂ unit ! ([0, 8 ] , [0, 5 ])
+branching : [] ∷ bool ∷ Reading ⊢ᶜ⦂ unit ! ([0, 8 ] , [0, 5 ])
 branching =
   if eternal-var boolₑ (Tl-∷ Hd)
     `then coerce (≤! , ≤!) (perform send here (return ⋆))
@@ -135,7 +135,7 @@ calibration = ([0, 10 ] , [0, 6 ])
 
 -- claimed after eight ticks of idling: eight steps, nothing drawn
 
-claim-after-idling : [] ⊢C⦂ unit ! ([0, 14 ] , [0, 5 ])
+claim-after-idling : [] ⊢ᶜ⦂ unit ! ([0, 14 ] , [0, 5 ])
 claim-after-idling =
   box calibration (const reading 42) -- ∷ [ calibration ] Reading
     (delay 8                         -- ⟨ ([0, 8 ] , [0, 0 ]) ⟩
@@ -145,7 +145,7 @@ claim-after-idling =
 
 -- claimed after an uplink: seven steps, and the six units exactly
 
-claim-after-relaying : [] ⊢C⦂ unit ! ([0, 10 ] , [0, 8 ])
+claim-after-relaying : [] ⊢ᶜ⦂ unit ! ([0, 10 ] , [0, 8 ])
 claim-after-relaying =
   box calibration (const reading 42) -- ∷ [ calibration ] Reading
     (perform read ⋆                  -- ⟨ ([0, 1 ] , [0, 1 ]) ⟩ ∷ Reading
@@ -168,7 +168,7 @@ drifted (late , _) = ≰! late
 ------------------------------------------------------------------------
 -- Effect handling
 
-forwarded : [] ⊢C⦂ Reading ! ([0, 1 ] , [0, 1 ])
+forwarded : [] ⊢ᶜ⦂ Reading ! ([0, 1 ] , [0, 1 ])
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}

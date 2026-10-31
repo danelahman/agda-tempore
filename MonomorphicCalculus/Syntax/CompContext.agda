@@ -109,7 +109,7 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
     perform[_]ₖ : ∀ {A ε}
         → state ≤ᶠ f
         → (op : Op)
-        → Γ ⊢V⦂ ⌜ param op ⌝ᵍ
+        → Γ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ
         → Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢K[ f ◁ CH ]⦂ A ! ε
         -------------------------------------------------------------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ A ! (op-grade op ·ₑ ε)
@@ -132,7 +132,7 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
     
     box[_]ₖ : ∀ {A C ρ}
         → state ≤ᶠ f
-        → Γ ⟨ ρ ⟩ ⊢V⦂ A
+        → Γ ⟨ ρ ⟩ ⊢ᵛ⦂ A
         → Γ ∷ [ ρ ] A ⊢K[ f ◁ CH ]⦂ C
         --------------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ C
@@ -142,7 +142,7 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
     _ₖ[_]⨟_ : ∀ {Aₖ A εₖ ε}
         → Γ ⊢K[ f ◁ CH ]⦂ Aₖ ! εₖ
         → eval ≤ᶠ f
-        → Γ ⟨ ∣ εₖ ∣ᵉ ⟩ ∷ Aₖ ⊢C⦂ A ! ε
+        → Γ ⟨ ∣ εₖ ∣ᵉ ⟩ ∷ Aₖ ⊢ᶜ⦂ A ! ε
         ----------------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ A ! (εₖ ·ₑ ε)
     
@@ -150,7 +150,7 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
         : ∀ {A B ε ε'}
         → eval ≤ᶠ f
         → Γ ⊢K[ f ◁ CH ]⦂ A ! ε
-        → Γ ⊢V⦂ (A ! ε) ⇛ (B ! ε')
+        → Γ ⊢ᵛ⦂ (A ! ε) ⇛ (B ! ε')
         ---------------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ B ! (ε ·ₑ ε')
 
@@ -302,8 +302,8 @@ box[ p ]ₖ V K [ L ]ₖ =
 
 _[_] : ∀ {Γ CH C f} 
      → (K : Γ ⊢K[ f ◁ CH ]⦂ C) 
-     → (M : Γ ++ᶜ hole-ctx K ⊢C⦂ CH) 
-     → Γ ⊢C⦂ C
+     → (M : Γ ++ᶜ hole-ctx K ⊢ᶜ⦂ CH) 
+     → Γ ⊢ᶜ⦂ C
 
 []ₖ [ N ] =
   N

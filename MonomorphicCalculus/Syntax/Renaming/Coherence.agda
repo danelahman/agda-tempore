@@ -57,7 +57,7 @@ var-ren-img-≡ r x f refl f' = var-ren-≡ r x f f'
 mutual
 
   V-rename-≡ : ∀ {Γ Γ' A} {r r' : Ren [] Γ Γ'} → r ≐ʳ r'
-             → (V : Γ' ⊢V⦂ A) → V-rename r V ≡ V-rename r' V
+             → (V : Γ' ⊢ᵛ⦂ A) → V-rename r V ≡ V-rename r' V
 
   V-rename-≡ {r = r} {r' = r'} h (var f x)
     with var-rename r x | var-rename r' x | at h x
@@ -81,7 +81,7 @@ mutual
   V-rename-≡ h (subV V p) = subV-≡ (V-rename-≡ h V)
 
   C-rename-≡ : ∀ {Γ Γ' C} {r r' : Ren [] Γ Γ'} → r ≐ʳ r'
-             → (M : Γ' ⊢C⦂ C) → C-rename r M ≡ C-rename r' M
+             → (M : Γ' ⊢ᶜ⦂ C) → C-rename r M ≡ C-rename r' M
 
   C-rename-≡ h (return V) = cong return (V-rename-≡ h V)
   C-rename-≡ h (M ⨟ N) =
@@ -166,7 +166,7 @@ cong-ren-id-≐ʳ (Γ₀ ⟨ ρ ⟩) h = cong-⟨⟩-ren-id-≐ʳ (cong-ren-id-�
 mutual
 
   V-rename-id-≡ : ∀ {Γ A} {r : Ren [] Γ Γ} → r ≐ʳ id-ren
-                → (V : Γ ⊢V⦂ A) → V-rename r V ≡ V
+                → (V : Γ ⊢ᵛ⦂ A) → V-rename r V ≡ V
 
   V-rename-id-≡ {r = r} h (var f x) with var-rename r x | at h x
   ... | _ | refl = var-≡
@@ -189,7 +189,7 @@ mutual
   V-rename-id-≡ h (subV V p) = subV-≡ (V-rename-id-≡ h V)
 
   C-rename-id-≡ : ∀ {Γ C} {r : Ren [] Γ Γ} → r ≐ʳ id-ren
-                → (M : Γ ⊢C⦂ C) → C-rename r M ≡ M
+                → (M : Γ ⊢ᶜ⦂ C) → C-rename r M ≡ M
 
   C-rename-id-≡ h (return V) = cong return (V-rename-id-≡ h V)
   C-rename-id-≡ h (M ⨟ N) =
@@ -245,8 +245,8 @@ eq-ren-≐ʳ e e' rewrite uip {p = e} {q = e'} = ≐ʳ-refl
 -- `id-ren`, so this is `C-rename-id-≡` once the equality is matched.
 
 C-rename-eq-≡ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → {r : Ren [] Γ' Γ}
-              → r ≐ʳ eq-ren e → (M : Γ ⊢C⦂ C)
-              → C-rename r M ≡ subst (_⊢C⦂ C) e M
+              → r ≐ʳ eq-ren e → (M : Γ ⊢ᶜ⦂ C)
+              → C-rename r M ≡ subst (_⊢ᶜ⦂ C) e M
 C-rename-eq-≡ refl h M = C-rename-id-≡ h M
 
 -- Extending such a renaming by a suffix stays identity-like.
@@ -323,7 +323,7 @@ eq-ren-∘-≐ʳ refl refl = ∘ʳ-identityˡ-≐ʳ _
 mutual
 
   V-rename-∘ : ∀ {Γ Γ' Γ'' A} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
-             → (V : Γ'' ⊢V⦂ A)
+             → (V : Γ'' ⊢ᵛ⦂ A)
              → V-rename (r₂ ∘ʳ r₁) V ≡ V-rename r₁ (V-rename r₂ V)
 
   V-rename-∘ r₂ r₁ (var f x) with var-rename r₂ x
@@ -355,7 +355,7 @@ mutual
   V-rename-∘ r₂ r₁ (subV V p) = subV-≡ (V-rename-∘ r₂ r₁ V)
 
   C-rename-∘ : ∀ {Γ Γ' Γ'' C} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
-             → (M : Γ'' ⊢C⦂ C)
+             → (M : Γ'' ⊢ᶜ⦂ C)
              → C-rename (r₂ ∘ʳ r₁) M ≡ C-rename r₁ (C-rename r₂ M)
 
   C-rename-∘ r₂ r₁ (return V) = cong return (V-rename-∘ r₂ r₁ V)
@@ -420,10 +420,10 @@ mutual
 
 -- Renaming related terms gives related terms.
 
-V-rename-cong : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ') → {V V' : Γ' ⊢V⦂ A}
+V-rename-cong : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ') → {V V' : Γ' ⊢ᵛ⦂ A}
               → V ≡ V' → V-rename r V ≡ V-rename r V'
 V-rename-cong r = cong (V-rename r)
 
-C-rename-cong : ∀ {Γ Γ' C} → (r : Ren [] Γ Γ') → {M M' : Γ' ⊢C⦂ C}
+C-rename-cong : ∀ {Γ Γ' C} → (r : Ren [] Γ Γ') → {M M' : Γ' ⊢ᶜ⦂ C}
               → M ≡ M' → C-rename r M ≡ C-rename r M'
 C-rename-cong r = cong (C-rename r)

@@ -71,7 +71,7 @@ open import PolymorphicCalculus.Examples.Variables
 
 -- A closed derivation in the empty context is a typing
 
-closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢C⦂ C)
+closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢ᶜ⦂ C)
        → ⌊ D ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ → Typable [] M
 closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
@@ -114,7 +114,7 @@ private
 is-zero : RawC ∅ˢ 0
 is-zero = return (fun (matchℕ v₀ `zero return true `succ return false))
 
-is-zero-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂ₑ
+is-zero-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (nat ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂ₑ
 is-zero-D = return (fun (matchℕ var Hd ok₀ `zero return true `succ return false))
 
 is-zero-typed : IsTyped (infer [] is-zero)
@@ -126,7 +126,7 @@ expected-is-zero = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (nat ⇒ bool ! 𝟏̂ₑ) ! 𝟏̂�
 pred : RawC ∅ˢ 0
 pred = return (fun (matchℕ v₀ `zero return zero `succ return v₀))
 
-pred-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ
+pred-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ
 pred-D = return (fun (matchℕ var Hd ok₀ `zero return zero `succ return (var Hd ok₀)))
 
 pred-typed : IsTyped (infer [] pred)
@@ -152,7 +152,7 @@ match-on-bool = matchℕ true `zero return ⋆ `succ return ⋆
 later-succ : RawC ∅ˢ 0
 later-succ = return (fun (delay ⌜ 1 ⌝ (return (succ v₀))))
 
-later-succ-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ nat ! (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
+later-succ-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (nat ⇒ nat ! (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ)) ! 𝟏̂ₑ
 later-succ-D = return (fun (delay ⌜ 1 ⌝ (return (succ (var (Tl-⟨⟩ Hd) (et-ok natₑ))))))
 
 later-succ-typed : IsTyped (infer [] later-succ)
@@ -183,7 +183,7 @@ expected-later-id = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ α₀ ! ⌜ 1 ⌝ᵉ) ! 
 numeral-later : RawC ∅ˢ 0
 numeral-later = return (numeral 2) ⨟ delay ⌜ 1 ⌝ (return (succ v₀))
 
-numeral-later-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ nat ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
+numeral-later-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ nat ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 numeral-later-D =
   return (numeralᵛ 2) ⨟ delay ⌜ 1 ⌝ (return (succ (var (Tl-⟨⟩ Hd) (et-ok natₑ))))
 
@@ -200,7 +200,7 @@ expected-numeral-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ nat ! ⌜ 1 ⌝ᵉ
 function-later : RawC ∅ˢ 0
 function-later = return (fun (return ⋆)) ⨟ delay ⌜ 1 ⌝ (v₀ · ⋆)
 
-function-later-D : ιᵣ ⌜ 1 ⌝ ≾ᴳ 𝟏ᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
+function-later-D : ιᵣ ⌜ 1 ⌝ ≾ᴳ 𝟏ᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ unit ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 function-later-D q =
   return (fun {A = unit} (return ⋆))
   ⨟ delay ⌜ 1 ⌝ (var (Tl-⟨⟩ Hd) (≾ᵘ-ok (after q)) · ⋆)
@@ -221,10 +221,10 @@ expected-function-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ unit ! ⌜ 1 ⌝ᵉ
 boxed-numeral : RawC ∅ˢ 0
 boxed-numeral = box ⌜ 2 ⌝ʳ (numeral 3) (delay ⌜ 2 ⌝ (unbox (var fzero) (return (succ v₀))))
 
-boxed-numeral-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ nat ! (⌜ 2 ⌝ᵉ ·̂ₑ 𝟏̂ₑ)
+boxed-numeral-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ nat ! (⌜ 2 ⌝ᵉ ·̂ₑ 𝟏̂ₑ)
 boxed-numeral-D =
   box ⌜ 2 ⌝ʳ (numeralᵛ 3)
-    (delay ⌜ 2 ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) on-time (return (succ (var Hd ok₀)))))
+    (delay ⌜ 2 ⌝ (unbox (res-var (Tl-⟨⟩ Hd)) on-time (return (succ (var Hd ok₀)))))
 
 boxed-numeral-typed : IsTyped (infer [] boxed-numeral)
 boxed-numeral-typed = typed-of boxed-numeral (closed boxed-numeral-D refl) _
@@ -245,7 +245,7 @@ joined =
   return (fun (matchℕ v₀ `zero delay ⌜ 1 ⌝ (return zero)
                          `succ delay ⌜ 3 ⌝ (return v₀)))
 
-joined-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ nat ! (⌜ 1 ⌝ᵉ ⊔̂ₑ ⌜ 3 ⌝ᵉ)) ! 𝟏̂ₑ
+joined-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (nat ⇒ nat ! (⌜ 1 ⌝ᵉ ⊔̂ₑ ⌜ 3 ⌝ᵉ)) ! 𝟏̂ₑ
 joined-D =
   return (fun (matchℕ var Hd ok₀
     `zero coerce (transₑ (eqₑ ≡̂ₑ-identityʳ) ⊔-ubˡₑ) (delay ⌜ 1 ⌝ (return zero))
@@ -270,7 +270,7 @@ expected-joined =
 swap : RawC ∅ˢ 0
 swap = return (fun (match+ v₀ `inl return (inr v₀) `inr return (inl v₀)))
 
-swap-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat |+| bool ⇒ bool |+| nat ! 𝟏̂ₑ) ! 𝟏̂ₑ
+swap-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (nat |+| bool ⇒ bool |+| nat ! 𝟏̂ₑ) ! 𝟏̂ₑ
 swap-D =
   return (fun (match+ var Hd ok₀ `inl return (inr (var Hd ok₀))
                                  `inr return (inl (var Hd ok₀))))
@@ -290,7 +290,7 @@ choose =
   return (fun (match+ v₀ `inl delay ⌜ 1 ⌝ (return (succ v₀))
                          `inr delay ⌜ 3 ⌝ (return zero)))
 
-choose-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat |+| bool ⇒ nat ! (⌜ 1 ⌝ᵉ ⊔̂ₑ ⌜ 3 ⌝ᵉ)) ! 𝟏̂ₑ
+choose-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (nat |+| bool ⇒ nat ! (⌜ 1 ⌝ᵉ ⊔̂ₑ ⌜ 3 ⌝ᵉ)) ! 𝟏̂ₑ
 choose-D =
   return (fun (match+ var Hd ok₀
     `inl coerce (transₑ (eqₑ ≡̂ₑ-identityʳ) ⊔-ubˡₑ)
@@ -327,7 +327,7 @@ subsume-sum =
             ⦂ᵛ (Wide ⇒ unit ! j₁₃))
   ⨟ (v₀ · (inr (fun (delay ⌜ 1 ⌝ (return ⋆))) ⦂ᵛ Narrow))
 
-subsume-sum-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! (𝟏̂ₑ ·̂ₑ j₁₃)
+subsume-sum-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ unit ! (𝟏̂ₑ ·̂ₑ j₁₃)
 subsume-sum-D =
   return (annᵛ (Wide ⇒ unit ! j₁₃)
            (fun (match+ var Hd ok₀
@@ -350,7 +350,7 @@ expected-subsume-sum = ∀[ 0 , 0 , 0 ] ⊤ ⟹ unit ! econst (ιₑ ⌜ 1 ⌝ �
 sum-later : RawC ∅ˢ 0
 sum-later = return (inl (numeral 2) ⦂ᵛ (nat |+| bool)) ⨟ delay ⌜ 1 ⌝ (return v₀)
 
-sum-later-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat |+| bool) ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
+sum-later-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (nat |+| bool) ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 sum-later-D =
   return (annᵛ (nat |+| bool) (inl (numeralᵛ 2)))
   ⨟ delay ⌜ 1 ⌝ (return (var (Tl-⟨⟩ Hd) (et-ok (natₑ |+|ₑ boolₑ))))
@@ -383,7 +383,7 @@ fun-sum-later : RawC ∅ˢ 0
 fun-sum-later =
   return (inr (fun (delay ⌜ 1 ⌝ (return ⋆))) ⦂ᵛ Narrow) ⨟ delay ⌜ 1 ⌝ (return v₀)
 
-fun-sum-later-D : ιᵣ ⌜ 1 ⌝ ≾ᴳ 𝟏ᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Narrow ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
+fun-sum-later-D : ιᵣ ⌜ 1 ⌝ ≾ᴳ 𝟏ᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ Narrow ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 fun-sum-later-D q =
   return (annᵛ Narrow (inr (fun (coerce (eqₑ ≡̂ₑ-identityʳ) (delay ⌜ 1 ⌝ (return ⋆))))))
   ⨟ delay ⌜ 1 ⌝ (return (var (Tl-⟨⟩ Hd) (≾ᵘ-ok (after q))))
@@ -412,7 +412,7 @@ match-on-bool+ = match+ true `inl return ⋆ `inr return ⋆
 head-or : RawC ∅ˢ 0
 head-or = return (fun (return (fun (matchL v₀ `nil return v₁ `cons return v₁))))
 
-head-or-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ (list nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
+head-or-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (nat ⇒ (list nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 head-or-D =
   return (fun (return (fun (matchL var Hd ok₀ `nil return (var (Tl-∷ Hd) ok₀)
                                             `cons return (var (Tl-∷ Hd) ok₀)))))
@@ -431,7 +431,7 @@ expected-head-or =
 list-later : RawC ∅ˢ 0
 list-later = return (cons (numeral 2) nil ⦂ᵛ list nat) ⨟ delay ⌜ 1 ⌝ (return v₀)
 
-list-later-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ list nat ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
+list-later-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ list nat ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 list-later-D =
   return (annᵛ (list nat) (cons (numeralᵛ 2) nil))
   ⨟ delay ⌜ 1 ⌝ (return (var (Tl-⟨⟩ Hd) (et-ok (listₑ natₑ))))
@@ -469,7 +469,7 @@ fun-list-later : RawC ∅ˢ 0
 fun-list-later =
   return (cons (fun (return ⋆)) nil ⦂ᵛ list Fn) ⨟ delay ⌜ 1 ⌝ (return v₀)
 
-fun-list-later-D : ιᵣ ⌜ 1 ⌝ ≾ᴳ 𝟏ᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ list Fn ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
+fun-list-later-D : ιᵣ ⌜ 1 ⌝ ≾ᴳ 𝟏ᵣ → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ list Fn ! (𝟏̂ₑ ·̂ₑ (⌜ 1 ⌝ᵉ ·̂ₑ 𝟏̂ₑ))
 fun-list-later-D q =
   return (annᵛ (list Fn) (cons (fun (return ⋆)) nil))
   ⨟ delay ⌜ 1 ⌝ (return (var (Tl-⟨⟩ Hd) (≾ᵘ-ok (after q))))

@@ -64,13 +64,13 @@ nodeid-eternal = Baseₑ tt
 -- passed; its type is eternal, so the bound is not asked for; or the
 -- bound is supplied.
 
-here : ∀ {Γ A} → Γ ∷ A ⊢V⦂ A
+here : ∀ {Γ A} → Γ ∷ A ⊢ᵛ⦂ A
 here = var (λ _ → ≾ᵣ-refl) Hd
 
-eternal-var : ∀ {Γ A ρ} → Et A → A ∈[ ρ ] Γ → Γ ⊢V⦂ A
+eternal-var : ∀ {Γ A ρ} → Et A → A ∈[ ρ ] Γ → Γ ⊢ᵛ⦂ A
 eternal-var et x = var (λ ¬et → ⊥-elim (¬et et)) x
 
-fresh-var : ∀ {Γ A ρ} → ρ ≾ᵣ 𝟏ᵣ → A ∈[ ρ ] Γ → Γ ⊢V⦂ A
+fresh-var : ∀ {Γ A ρ} → ρ ≾ᵣ 𝟏ᵣ → A ∈[ ρ ] Γ → Γ ⊢ᵛ⦂ A
 fresh-var p x = var (λ _ → p) x
 
 ------------------------------------------------------------------------
@@ -120,7 +120,7 @@ Node = [] ∷ NodeId ∷ Reading
 forwarding : ∀ {Γ B} → (op : Op) → (ε'' : E)
            → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                  ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-             ⊢C⦂ B ! (op-grade op ·ₑ ε'')
+             ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε'')
 forwarding op ε'' =
   perform op (fresh-var ≾ᵣ-refl (Tl-∷ Hd))
                                      -- ⟨ op-grade op ⟩ ∷ arity op
@@ -135,7 +135,7 @@ forwarding op ε'' =
 identifying : (op : Op) → (ε'' : E)
             → Node ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                     ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ NodeId ! ε'')
-              ⊢C⦂ NodeId ! (op-grade op ·ₑ ε'')
+              ⊢ᶜ⦂ NodeId ! (op-grade op ·ₑ ε'')
 identifying op ε'' =
   ε-≃ (·ₑ-cong ≃ₑ-refl (·ₑ-identityʳ ε''))
     (perform op (fresh-var ≾ᵣ-refl (Tl-∷ Hd))
@@ -159,7 +159,7 @@ reporting : (reading-crosses :
           → (op : Op) → (ε'' : E)
           → Node ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                   ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ Reading ! ε'')
-            ⊢C⦂ Reading ! (op-grade op ·ₑ ε'')
+            ⊢ᶜ⦂ Reading ! (op-grade op ·ₑ ε'')
 reporting reading-crosses op ε'' =
   ε-≃ (·ₑ-cong ≃ₑ-refl (·ₑ-identityʳ ε''))
     (perform op (fresh-var ≾ᵣ-refl (Tl-∷ Hd))
@@ -182,5 +182,5 @@ discarding : ∀ {Γ}
            → (op : Op) → (ε'' : E)
            → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                  ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ unit ! ε'')
-             ⊢C⦂ unit ! (op-grade op ·ₑ ε'')
+             ⊢ᶜ⦂ unit ! (op-grade op ·ₑ ε'')
 discarding nothing-fits op ε'' = coerce (nothing-fits op ε'') (return ⋆)

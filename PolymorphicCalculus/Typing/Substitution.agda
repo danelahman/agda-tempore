@@ -127,11 +127,11 @@ wkᵉ-drop (there∷ d)  = there∷ (wkᵉ-drop d)
 wkᵉ-drop (there⟨⟩ d) = there⟨⟩ (wkᵉ-drop d)
 
 wkᵉ-val : ∀ {Θ n} {Γ : OCtx Θ n} {A : OVType Θ}
-        → ∅ᴴ ∣ Γ ⊢V⦂ A → ∅ᴴ ∣ wkᵉ-ctx Γ ⊢V⦂ wkᵉ-v A
+        → ∅ᴴ ∣ Γ ⊢ᵛ⦂ A → ∅ᴴ ∣ wkᵉ-ctx Γ ⊢ᵛ⦂ wkᵉ-v A
 wkᵉ-val {Γ = Γ} {A} V = ty-subst (wkˢᵉ-v A) (ctx-castᵛ (wkˢᵉ-ctx Γ) (substᵛ wkˢᵉ ⊩ᴴ-wkᵉ V))
 
 ∥wkᵉ-val∥ : ∀ {Θ n} {Γ : OCtx Θ n} {A : OVType Θ}
-          → (V : ∅ᴴ ∣ Γ ⊢V⦂ A) → ∥ wkᵉ-val V ∥ᵛ ≡ ∥ V ∥ᵛ
+          → (V : ∅ᴴ ∣ Γ ⊢ᵛ⦂ A) → ∥ wkᵉ-val V ∥ᵛ ≡ ∥ V ∥ᵛ
 ∥wkᵉ-val∥ {Γ = Γ} {A} V =
   trans (cong eraseᵛ (trans (⌊ty-subst⌋ (wkˢᵉ-v A) _)
                             (trans (⌊ctx-castᵛ⌋ (wkˢᵉ-ctx Γ) _) (⌊substᵛ⌋ wkˢᵉ ⊩ᴴ-wkᵉ V))))
@@ -150,16 +150,16 @@ box-young ok with Et∨≾ᵘ-∅ᴴ ok
 -- The substitution lemma
 
 sub-var : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B ρ}
-        → (d : Drop Γ₀ A k Γ Γ⁻) → ∅ᴴ ∣ Γ₀ ⊢V⦂ A
+        → (d : Drop Γ₀ A k Γ Γ⁻) → ∅ᴴ ∣ Γ₀ ⊢ᵛ⦂ A
         → (x : B ∈̂[ ρ ] Γ) → ∅ᴴ ⊩ B Et∨≾ᵘ ρ → DropView d x
-        → ∅ᴴ ∣ Γ⁻ ⊢V⦂ B
+        → ∅ᴴ ∣ Γ⁻ ⊢ᵛ⦂ B
 sub-var d U x p              (miss x' _)       = var x' p
 sub-var d U x p              (hit refl refl _) with Et∨≾ᵘ-∅ᴴ p
 ... | inj₁ e  = eternal-v (dshift d) e U
 ... | inj₂ le = rename-v (drop-ren d le) U
 
 ∥sub-var∥ : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B ρ}
-          → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢V⦂ A)
+          → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢ᵛ⦂ A)
           → (x : B ∈̂[ ρ ] Γ) → (p : ∅ᴴ ⊩ B Et∨≾ᵘ ρ) → (v : DropView d x)
           → ∥ sub-var d U x p v ∥ᵛ ≡ subVar k ∥ U ∥ᵛ (var-pos x)
 ∥sub-var∥ d U x p          (miss x' q)       = sym (q _)
@@ -167,56 +167,69 @@ sub-var d U x p              (hit refl refl _) with Et∨≾ᵘ-∅ᴴ p
 ... | inj₁ e  = trans (∥eternal-v∥ (dshift d) e U) (sym (q _))
 ... | inj₂ le = trans (∥rename-v∥ (drop-ren d le) U) (sym (q _))
 
+-- A rebased resource value erases to the variable it is rebased onto
+
+∥res-rebase∥ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m}
+                 {ρ' σ' : RExp Θ} {A : OVType Θ}
+             → (R : Q ⊢ A ∈̂[ ρ' ] Γ)
+             → (R' : Q ⊢ [ res-grade-of R ] res-payload-of R ∈̂[ σ' ] Γ')
+             → eraseᵛ ⌊ res-rebase R R' ⌋ʳ ≡ eraseᵛ ⌊ R' ⌋ʳ
+∥res-rebase∥ (res-var _)         R' = refl
+∥res-rebase∥ (res-ann _ _ R _ _) R' = ∥res-rebase∥ R R'
+
 -- An `unbox` of the dropped variable unboxes the substituted resource value
 
-sub-unbox : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {X X₀ : OVType Θ}
-              {C : OCType Θ} {ρ₀ ρ' ρ} {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
-          → (d : Drop Γ₀ A k Γ Γ⁻) → ∅ᴴ ∣ Γ₀ ⊢V⦂ A
-          → ∅ᴴ ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ
-          → ∅ᴴ ∣ Γ⁻ ∷ X ⊢C⦂ C → DropView d z
-          → ∅ᴴ ∣ Γ⁻ ⊢C⦂ C
-sub-unbox {Γ⁻ = Γ⁻} {X₀ = X₀} {ρ₀ = ρ₀} d U R p N (hit refl refl _) =
-  unbox (res-rebase (res-ann ρ₀ X₀ (res-move z' (chain b)) (grade b) (payload b)) R)
+sub-unbox : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {X : OVType Θ}
+              {C : OCType Θ} {ρ' ρ}
+          → (d : Drop Γ₀ A k Γ Γ⁻) → ∅ᴴ ∣ Γ₀ ⊢ᵛ⦂ A
+          → (R : ∅ᴴ ⊢ [ ρ ] X ∈̂[ ρ' ] Γ) → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ
+          → ∅ᴴ ∣ Γ⁻ ∷ X ⊢ᶜ⦂ C → DropView d (res-var-of R)
+          → ∅ᴴ ∣ Γ⁻ ⊢ᶜ⦂ C
+sub-unbox {Γ⁻ = Γ⁻} d U R p N (hit refl eρ _) =
+  unbox (res-rebase R (res-ann (res-grade-of R) (res-payload-of R) (res-move (chain b) z')
+                               (grade b) (payload b)))
         (transᵣ (dshift-gr d i)
-          (transᵣ (monoᵣ (subst (λ w → ∅ᴴ ⊩ w ≾̂ᵣ 𝟏̂ᵣ) (sym (var-pos-gr (res-z b)))
+          (transᵣ (monoᵣ (subst (λ w → ∅ᴴ ⊩ w ≾̂ᵣ 𝟏̂ᵣ) (sym (var-pos-gr (res-var-of (chain b))))
                                 (box-young (usable b)))
                          ⊩≾̂ᵣ-refl)
-            (transᵣ (eqᵣ ≡̂ᵣ-identityˡ) p)))
+            (transᵣ (eqᵣ ≡̂ᵣ-identityˡ) (subst (λ w → ∅ᴴ ⊩ w ≾̂ᵣ _) eρ p))))
         N
   where
     b  = resource-value (subst NonResourceDefs (sym (drop-defs d)) nonResource-∅) U
-    i  = var-pos (res-z b)
+    i  = var-pos (res-var-of (chain b))
     j  = shift (dshift d) i
-    eq = trans (shift-ty (dshift d) i) (var-pos-ty (res-z b))
+    eq = trans (shift-ty (dshift d) i) (var-pos-ty (res-var-of (chain b)))
     z' = ∈̂-ty-subst eq (lookup-var Γ⁻ j)
-sub-unbox d U R p N (miss x' _) = unbox (res-move x' R) p N
+sub-unbox d U R p N (miss x' _) = unbox (res-move R x') p N
 
-∥sub-unbox∥ : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {X X₀ : OVType Θ}
-                {C : OCType Θ} {ρ₀ ρ' ρ} {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
-            → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢V⦂ A)
-            → (R : ∅ᴴ ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X) → (p : ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ)
-            → (N : ∅ᴴ ∣ Γ⁻ ∷ X ⊢C⦂ C) → (v : DropView d z)
-            → ∥ sub-unbox d U R p N v ∥ᶜ ≡ unbox (subVar k ∥ U ∥ᵛ (var-pos z)) ∥ N ∥ᶜ
-∥sub-unbox∥ {Γ⁻ = Γ⁻} {X₀ = X₀} {ρ₀ = ρ₀} d U R p N (hit refl refl e) =
+∥sub-unbox∥ : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {X : OVType Θ}
+                {C : OCType Θ} {ρ' ρ}
+            → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢ᵛ⦂ A)
+            → (R : ∅ᴴ ⊢ [ ρ ] X ∈̂[ ρ' ] Γ) → (p : ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ)
+            → (N : ∅ᴴ ∣ Γ⁻ ∷ X ⊢ᶜ⦂ C) → (v : DropView d (res-var-of R))
+            → ∥ sub-unbox d U R p N v ∥ᶜ ≡ unbox (subVar k ∥ U ∥ᵛ (var-pos (res-var-of R))) ∥ N ∥ᶜ
+∥sub-unbox∥ {Γ⁻ = Γ⁻} d U R p N (hit refl eρ e) =
   cong (λ w → unbox w ∥ N ∥ᶜ)
-       (trans (∥res∥ (res-rebase (res-ann ρ₀ X₀ (res-move z' (chain b)) (grade b) (payload b)) R))
+       (trans (∥res-rebase∥ R (res-ann (res-grade-of R) (res-payload-of R) (res-move (chain b) z')
+                                       (grade b) (payload b)))
+       (trans (∥res-move∥ (chain b) z')
          (trans (cong var (trans (var-pos-ty-subst eq _) (var-pos-lookup Γ⁻ j)))
                 (sym (trans (e ∥ U ∥ᵛ)
                             (cong (renᵛ (shift (dshift d)))
-                                  (trans (cong eraseᵛ (sym (erases b))) (∥res∥ (chain b))))))))
+                                  (trans (cong eraseᵛ (sym (erases b))) (∥res∥ (chain b)))))))))
   where
     b  = resource-value (subst NonResourceDefs (sym (drop-defs d)) nonResource-∅) U
-    i  = var-pos (res-z b)
+    i  = var-pos (res-var-of (chain b))
     j  = shift (dshift d) i
-    eq = trans (shift-ty (dshift d) i) (var-pos-ty (res-z b))
+    eq = trans (shift-ty (dshift d) i) (var-pos-ty (res-var-of (chain b)))
     z' = ∈̂-ty-subst eq (lookup-var Γ⁻ j)
 ∥sub-unbox∥ d U R p N (miss x' e) =
-  cong (λ w → unbox w ∥ N ∥ᶜ) (trans (∥res∥ (res-move x' R)) (sym (e _)))
+  cong (λ w → unbox w ∥ N ∥ᶜ) (trans (∥res-move∥ R x') (sym (e _)))
 
 mutual
 
   sub-v : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B : OVType Θ}
-        → Drop Γ₀ A k Γ Γ⁻ → ∅ᴴ ∣ Γ₀ ⊢V⦂ A → ∅ᴴ ∣ Γ ⊢V⦂ B → ∅ᴴ ∣ Γ⁻ ⊢V⦂ B
+        → Drop Γ₀ A k Γ Γ⁻ → ∅ᴴ ∣ Γ₀ ⊢ᵛ⦂ A → ∅ᴴ ∣ Γ ⊢ᵛ⦂ B → ∅ᴴ ∣ Γ⁻ ⊢ᵛ⦂ B
   sub-v d U (var x p)      = sub-var d U x p (drop-view d x)
   sub-v d U (usedef f δ h e) = usedef (subst (_ ∈ᵖ[ _ ]_) (sym (drop-dfs d)) f) δ h e
   sub-v d U (const B c)    = const B c
@@ -239,7 +252,7 @@ mutual
   sub-v d U (subV V p)     = subV (sub-v d U V) p
 
   sub-c : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {C : OCType Θ}
-        → Drop Γ₀ A k Γ Γ⁻ → ∅ᴴ ∣ Γ₀ ⊢V⦂ A → ∅ᴴ ∣ Γ ⊢C⦂ C → ∅ᴴ ∣ Γ⁻ ⊢C⦂ C
+        → Drop Γ₀ A k Γ Γ⁻ → ∅ᴴ ∣ Γ₀ ⊢ᵛ⦂ A → ∅ᴴ ∣ Γ ⊢ᶜ⦂ C → ∅ᴴ ∣ Γ⁻ ⊢ᶜ⦂ C
   sub-c d U (return V)                 = return (sub-v d U V)
   sub-c d U (M ⨟ N)                    = sub-c d U M ⨟ sub-c (there∷ (there⟨⟩ d)) U N
   sub-c d U (V · W)                    = sub-v d U V · sub-v d U W
@@ -260,17 +273,18 @@ mutual
   sub-c d U (perform op V M)           = perform op (sub-v d U V) (sub-c (there∷ (there⟨⟩ d)) U M)
   sub-c d U (delay τ M)                = delay τ (sub-c (there⟨⟩ d) U M)
   sub-c d U (handle M `with V)         = handle sub-c d U M `with sub-v d U V
-  sub-c d U (unbox {z = z} R p N)    = sub-unbox d U R p (sub-c (there∷ d) U N) (drop-view d z)
-  sub-c d U (box ρ V N)               = box ρ (sub-v (there⟨⟩ d) U V) (sub-c (there∷ d) U N)
-  sub-c d U (annᶜ C M)                = annᶜ C (sub-c d U M)
-  sub-c d U (subC M p)                = subC (sub-c d U M) p
+  sub-c d U (unbox R p N)              =
+    sub-unbox d U R p (sub-c (there∷ d) U N) (drop-view d (res-var-of R))
+  sub-c d U (box ρ V N)                = box ρ (sub-v (there⟨⟩ d) U V) (sub-c (there∷ d) U N)
+  sub-c d U (annᶜ C M)                 = annᶜ C (sub-c d U M)
+  sub-c d U (subC M p)                 = subC (sub-c d U M) p
 
 -- The erasure of the substituted derivation is the run-time substitution
 
 mutual
 
   ∥sub-v∥ : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {B : OVType Θ}
-          → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢V⦂ A) → (V : ∅ᴴ ∣ Γ ⊢V⦂ B)
+          → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢ᵛ⦂ A) → (V : ∅ᴴ ∣ Γ ⊢ᵛ⦂ B)
           → ∥ sub-v d U V ∥ᵛ ≡ subᵛ k ∥ U ∥ᵛ ∥ V ∥ᵛ
   ∥sub-v∥ d U (var x p)      = ∥sub-var∥ d U x p (drop-view d x)
   ∥sub-v∥ d U (usedef f δ h e) = refl
@@ -296,7 +310,7 @@ mutual
   ∥sub-v∥ d U (subV V p)     = ∥sub-v∥ d U V
 
   ∥sub-c∥ : ∀ {Θ n k} {Γ₀ : OCtx Θ n} {A : OVType Θ} {Γ Γ⁻} {C : OCType Θ}
-          → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢V⦂ A) → (M : ∅ᴴ ∣ Γ ⊢C⦂ C)
+          → (d : Drop Γ₀ A k Γ Γ⁻) → (U : ∅ᴴ ∣ Γ₀ ⊢ᵛ⦂ A) → (M : ∅ᴴ ∣ Γ ⊢ᶜ⦂ C)
           → ∥ sub-c d U M ∥ᶜ ≡ subᶜ k ∥ U ∥ᵛ ∥ M ∥ᶜ
   ∥sub-c∥ d U (return V)                 = cong return (∥sub-v∥ d U V)
   ∥sub-c∥ d U (M ⨟ N)                    =
@@ -324,10 +338,10 @@ mutual
   ∥sub-c∥ d U (delay τ M)                = cong (delay τ) (∥sub-c∥ (there⟨⟩ d) U M)
   ∥sub-c∥ d U (handle M `with V)         =
     cong₂ handle_`with_ (∥sub-c∥ d U M) (∥sub-v∥ d U V)
-  ∥sub-c∥ d U (unbox {z = z} R p N)    =
-    trans (∥sub-unbox∥ d U R p (sub-c (there∷ d) U N) (drop-view d z))
+  ∥sub-c∥ d U (unbox R p N)              =
+    trans (∥sub-unbox∥ d U R p (sub-c (there∷ d) U N) (drop-view d (res-var-of R)))
           (cong₂ unbox (cong (subᵛ _ ∥ U ∥ᵛ) (sym (∥res∥ R))) (∥sub-c∥ (there∷ d) U N))
-  ∥sub-c∥ d U (box ρ V N)               =
+  ∥sub-c∥ d U (box ρ V N)                =
     cong₂ box (∥sub-v∥ (there⟨⟩ d) U V) (∥sub-c∥ (there∷ d) U N)
-  ∥sub-c∥ d U (annᶜ C M)                = ∥sub-c∥ d U M
-  ∥sub-c∥ d U (subC M p)                = ∥sub-c∥ d U M
+  ∥sub-c∥ d U (annᶜ C M)                 = ∥sub-c∥ d U M
+  ∥sub-c∥ d U (subC M p)                 = ∥sub-c∥ d U M

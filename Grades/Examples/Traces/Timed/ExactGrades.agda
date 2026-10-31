@@ -95,7 +95,7 @@ open import Grades.Exact.Lift T Op n code code-injective
   using (Lang; 𝟏ᴸ; _·ᴸ_; _∪ᴸ_)
   renaming (_≈_ to _≈ᴸ_; _≾_ to _≾ᴸ_; ≾-refl to ≾ᴸ-refl; ≾-trans to ≾ᴸ-trans)
 open import Grades.Exact.Expression T Op n code code-injective running
-  using (Instance; upper; lower; Expr; ε; ops; str; _∣_; _·_; ‵_; _？; ⟦_⟧; strᴸ)
+  using (Instance; upper; lower; Expr; ε; ops; str; _∣_; _·_; ‵_; _ˀ; ⟦_⟧; strᴸ)
 open import Grades.Exact.Finite T Op n code code-injective name code-name running dense κ κ-pos
   using (starFree; words; strWords; members; opw; nonEmpty; Proper)
 open import Grades.Exact.Finite.Grades T Op n code code-injective name code-name running dense κ κ-pos

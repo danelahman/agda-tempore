@@ -73,11 +73,11 @@ _∙_ = ≈ᵐ-trans
 -- clauses, whatever their certificates.
 
 handler-≈ : ∀ {Γ A B ε ε'}
-          → {N N' : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε'}
+          → {N N' : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε'}
           → {H H' : (op : Op) → (ε'' : E)
                   → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                        ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-                    ⊢C⦂ B ! (op-grade op ·ₑ ε'')}
+                    ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε'')}
           → (pN : Paramᶜ N) → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
           → (uH : EffUniformʰ {Γ} {B} H pH)
           → (pN' : Paramᶜ N') → (pH' : ∀ op ε'' → Paramᶜ (H' op ε''))
@@ -100,7 +100,7 @@ handler-≈ {Γ} {N = N} {N'} {H} {H'} pN pH uH pN' pH' uH' eN eH =
 
 mutual
 
-  ⟦⟧ᵛᵗ-irr : ∀ {Γ A} → (V : Γ ⊢V⦂ A) → (p p' : Paramᵛ V)
+  ⟦⟧ᵛᵗ-irr : ∀ {Γ A} → (V : Γ ⊢ᵛ⦂ A) → (p p' : Paramᵛ V)
            → ⟦ V ⟧ᵛᵗ p ≈ᵐ ⟦ V ⟧ᵛᵗ p'
   ⟦⟧ᵛᵗ-irr (var f x)   _ _ = ≈ᵐ-refl
   ⟦⟧ᵛᵗ-irr (const B c) _ _ = ≈ᵐ-refl
@@ -122,7 +122,7 @@ mutual
       (λ op ε'' → ⟦⟧ᶜᵗ-irr (H op ε'') (pH op ε'') (pH' op ε''))
   ⟦⟧ᵛᵗ-irr (subV V w) pV pV' = ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
 
-  ⟦⟧ᶜᵗ-irr : ∀ {Γ C} → (M : Γ ⊢C⦂ C) → (p p' : Paramᶜ M)
+  ⟦⟧ᶜᵗ-irr : ∀ {Γ C} → (M : Γ ⊢ᶜ⦂ C) → (p p' : Paramᶜ M)
            → ⟦ M ⟧ᶜᵗ p ≈ᵐ ⟦ M ⟧ᶜᵗ p'
   ⟦⟧ᶜᵗ-irr (return V) pV pV' = ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
   ⟦⟧ᶜᵗ-irr (M ⨟ N) (pM , pN) (pM' , pN') =
@@ -168,10 +168,10 @@ mutual
   ⟦⟧ᶜᵗ-irr (subC M w) pM pM' = ∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr M pM pM')
 
 
-Soundᵛ≡ᵗʰ : ∀ {Γ A} {V W : Γ ⊢V⦂ A} → Γ ⊢V⦂ V ≡ᵗʰ W → Set
+Soundᵛ≡ᵗʰ : ∀ {Γ A} {V W : Γ ⊢ᵛ⦂ A} → Γ ⊢ᵛ⦂ V ≡ᵗʰ W → Set
 Soundᵛ≡ᵗʰ {V = V} {W = W} _ =
   (pV : Paramᵛ V) → (pW : Paramᵛ W) → ⟦ V ⟧ᵛᵗ pV ≈ᵐ ⟦ W ⟧ᵛᵗ pW
 
-Soundᶜ≡ᵗʰ : ∀ {Γ C} {M N : Γ ⊢C⦂ C} → Γ ⊢C⦂ M ≡ᵗʰ N → Set
+Soundᶜ≡ᵗʰ : ∀ {Γ C} {M N : Γ ⊢ᶜ⦂ C} → Γ ⊢ᶜ⦂ M ≡ᵗʰ N → Set
 Soundᶜ≡ᵗʰ {M = M} {N = N} _ =
   (pM : Paramᶜ M) → (pN : Paramᶜ N) → ⟦ M ⟧ᶜᵗ pM ≈ᵐ ⟦ N ⟧ᶜᵗ pN

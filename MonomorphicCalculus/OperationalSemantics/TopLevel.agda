@@ -21,5 +21,5 @@ record TopLevelOpSemantics : Set where
   field 
     op-sem : (op : Op)
            → {𝕊 : State []} -- uniform in 𝕊 only under `OpSemCoherent`
-           → toCtx 𝕊 ⊢V⦂ ⌜ param op ⌝ᵍ
-           → toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ⊢V⦂ ⌜ arity op ⌝ᵍ
+           → toCtx 𝕊 ⊢ᵛ⦂ ⌜ param op ⌝ᵍ
+           → toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ⊢ᵛ⦂ ⌜ arity op ⌝ᵍ

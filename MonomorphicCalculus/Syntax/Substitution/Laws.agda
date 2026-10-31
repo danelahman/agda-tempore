@@ -43,7 +43,7 @@ open import MonomorphicCalculus.Syntax.Substitution.ChainEquivalence  S
 -- Substituting a value for the variable a suffix `Θ` stands over, and the
 -- weakening that introduces that variable.
 
-sub-atˢ : ∀ {Γ B} → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
+sub-atˢ : ∀ {Γ B} → (Θ : Ctx) → (W : Γ ⊢ᵛ⦂ B)
         → Sub [] (Γ ++ᶜ Θ) ((Γ ∷ B) ++ᶜ Θ)
 sub-atˢ Θ W = [ cong-sub₀ {Γ'' = Θ} (val-sub W) ]ˢ
 
@@ -54,7 +54,7 @@ wkˢ {B = B} Θ = ⌜ cong-ren {Γ'' = Θ} (wk-ren {A = B}) ⌝ˢ
 -- the weakening lands to the right of the substituted one, so the
 -- substitution passes it through.
 
-sub-wk-var : ∀ {Γ B A ρ} → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
+sub-wk-var : ∀ {Γ B A ρ} → (Θ : Ctx) → (W : Γ ⊢ᵛ⦂ B)
            → (x : A ∈[ ρ ] (Γ ++ᶜ Θ))
            → (f : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
            → (f' : ¬ Et A
@@ -75,7 +75,7 @@ sub-wk-var {A = A} (Θ ⟨ ρ ⟩) W (Tl-⟨⟩ y) f f' with eternal? A
               (sub-wk-var Θ W y (λ q → ≾ᵣ-zero-productˡ (f q)) _))
         (var-img-≡ (hit-⟨⟩-img (≾ᵣ-zero-productʳ (f' ¬et)) y) _ _)
 
-sub-wk-tgt : ∀ {Γ B A ρ ρ'} → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
+sub-wk-tgt : ∀ {Γ B A ρ ρ'} → (Θ : Ctx) → (W : Γ ⊢ᵛ⦂ B)
            → (y : [ ρ ] A ∈[ ρ' ] (Γ ++ᶜ Θ))
            → tgt-img₀ (cong-sub₀ {Γ'' = Θ} (val-sub W))
                       (proj₂ (var-img (cong-ren {Γ'' = Θ} (wk-ren {A = B})) y))
@@ -88,13 +88,13 @@ sub-wk-tgt (Θ ⟨ ρ ⟩)   W (Tl-⟨⟩ z) = cong (RVar-⟨⟩ ρ) (sub-wk-tgt
 
 -- The law itself.
 
-sub-wk-≐ˢ : ∀ {Γ B} → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
+sub-wk-≐ˢ : ∀ {Γ B} → (Θ : Ctx) → (W : Γ ⊢ᵛ⦂ B)
           → (wkˢ {B = B} Θ ∘ˢ sub-atˢ Θ W) ≐ˢ []ˢ
 sub-wk-≐ˢ Θ W = mk≐ˢ (λ x f → sub-wk-var Θ W x f _) (λ y → sub-wk-tgt Θ W y)
 
 -- and what it says about terms.
 
-sub-wk-≡ᵛ : ∀ {Γ B A} → (Θ : Ctx) → (W : Γ ⊢V⦂ B) → (V : (Γ ++ᶜ Θ) ⊢V⦂ A)
+sub-wk-≡ᵛ : ∀ {Γ B A} → (Θ : Ctx) → (W : Γ ⊢ᵛ⦂ B) → (V : (Γ ++ᶜ Θ) ⊢ᵛ⦂ A)
           → V-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub W))
                    (V-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) V)
           ≡ V
@@ -103,7 +103,7 @@ sub-wk-≡ᵛ {B = B} Θ W V =
               (sym (V-sub₀-⌜⌝ (cong-ren {Γ'' = Θ} (wk-ren {A = B})) V)))
         (V-sub-≐ˢ (sub-wk-≐ˢ Θ W) V)
 
-sub-wk-≡ᶜ : ∀ {Γ B C} → (Θ : Ctx) → (W : Γ ⊢V⦂ B) → (M : (Γ ++ᶜ Θ) ⊢C⦂ C)
+sub-wk-≡ᶜ : ∀ {Γ B C} → (Θ : Ctx) → (W : Γ ⊢ᵛ⦂ B) → (M : (Γ ++ᶜ Θ) ⊢ᶜ⦂ C)
           → C-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub W))
                    (C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) M)
           ≡ M
@@ -119,13 +119,13 @@ sub-wk-≡ᶜ {B = B} Θ W M =
 -- A box-typed value is a variable up to subsumption, so renaming it is
 -- renaming that variable.
 
-val-sub-tgt-ren : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (W : Γ' ⊢V⦂ [ ρ ] A)
+val-sub-tgt-ren : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (W : Γ' ⊢ᵛ⦂ [ ρ ] A)
                 → tgt-img₀ (val-sub (V-rename r W)) Hd
                 ≡ rvar-img′ r (tgt-img₀ (val-sub W) Hd)
 val-sub-tgt-ren r (var g z)           = refl
 val-sub-tgt-ren r (subV V ([ _ ]ₛ _)) = val-sub-tgt-ren r V
 
-⋈-val : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (W : Γ' ⊢V⦂ B)
+⋈-val : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (W : Γ' ⊢ᵛ⦂ B)
       → Interchange (val-sub (V-rename r W)) (cong-∷-ren r) r (val-sub W)
 ⋈-val {Γ} {Γ'} {B} r W = mk⋈ goᵛ goᵗ
   where
@@ -141,16 +141,16 @@ val-sub-tgt-ren r (subV V ([ _ ]ₛ _)) = val-sub-tgt-ren r V
     goᵗ Hd       = val-sub-tgt-ren r W
     goᵗ (Tl-∷ z) = refl
 
-ren-sub-≡ᵛ : ∀ {Γ Γ' B A} → (Θ : Ctx) → (r : Ren [] Γ Γ') → (W : Γ' ⊢V⦂ B)
-           → (V : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A)
+ren-sub-≡ᵛ : ∀ {Γ Γ' B A} → (Θ : Ctx) → (r : Ren [] Γ Γ') → (W : Γ' ⊢ᵛ⦂ B)
+           → (V : ((Γ' ∷ B) ++ᶜ Θ) ⊢ᵛ⦂ A)
            → V-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub (V-rename r W)))
                     (V-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r)) V)
            ≡ V-rename (cong-ren {Γ'' = Θ} r)
                       (V-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub W)) V)
 ren-sub-≡ᵛ Θ r W V = V-sub₀-ren (⋈-cong Θ (⋈-val r W)) V
 
-ren-sub-≡ᶜ : ∀ {Γ Γ' B C} → (Θ : Ctx) → (r : Ren [] Γ Γ') → (W : Γ' ⊢V⦂ B)
-           → (M : ((Γ' ∷ B) ++ᶜ Θ) ⊢C⦂ C)
+ren-sub-≡ᶜ : ∀ {Γ Γ' B C} → (Θ : Ctx) → (r : Ren [] Γ Γ') → (W : Γ' ⊢ᵛ⦂ B)
+           → (M : ((Γ' ∷ B) ++ᶜ Θ) ⊢ᶜ⦂ C)
            → C-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub (V-rename r W)))
                     (C-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r)) M)
            ≡ C-rename (cong-ren {Γ'' = Θ} r)
@@ -164,11 +164,11 @@ ren-sub-≡ᶜ Θ r W M = C-sub₀-ren (⋈-cong Θ (⋈-val r W)) M
 -- already put in. Two 2-chains with the same endpoints, so the law is a `≐ˢ`
 -- equation.
 
-swap-innerˢ : ∀ {Γ B₁ B₂} → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ B₂)
+swap-innerˢ : ∀ {Γ B₁ B₂} → (W₁ : Γ ⊢ᵛ⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢ᵛ⦂ B₂)
             → Sub [] Γ ((Γ ∷ B₁) ∷ B₂)
 swap-innerˢ W₁ W₂ = val-sub W₁ ◅ [ val-sub W₂ ]ˢ
 
-swap-outerˢ : ∀ {Γ B₁ B₂} → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ B₂)
+swap-outerˢ : ∀ {Γ B₁ B₂} → (W₁ : Γ ⊢ᵛ⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢ᵛ⦂ B₂)
             → Sub [] Γ ((Γ ∷ B₁) ∷ B₂)
 swap-outerˢ W₁ W₂ =
   val-sub (V-sub₀ (val-sub W₁) W₂) ◅ [ cong-∷-sub (val-sub W₁) ]ˢ
@@ -177,14 +177,14 @@ swap-outerˢ W₁ W₂ =
 -- value is of box type, hence a variable up to subsumption, and where that
 -- variable goes is decided by whether it is the one `W₁` replaces.
 
-swap-tgt-Hd : ∀ {Γ B₁ A ρ} → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ [ ρ ] A)
+swap-tgt-Hd : ∀ {Γ B₁ A ρ} → (W₁ : Γ ⊢ᵛ⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢ᵛ⦂ [ ρ ] A)
             → tgt-img₀ (val-sub W₁) (rvar-pos (tgt-img₀ (val-sub W₂) Hd))
             ≡ tgt-img₀ (val-sub (V-sub₀ (val-sub W₁) W₂)) Hd
 swap-tgt-Hd W₁ (var g Hd)          = refl
 swap-tgt-Hd W₁ (var g (Tl-∷ y))    = refl
 swap-tgt-Hd W₁ (subV V ([ _ ]ₛ _)) = swap-tgt-Hd W₁ V
 
-sub-swap-≐ˢ : ∀ {Γ B₁ B₂} → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ B₂)
+sub-swap-≐ˢ : ∀ {Γ B₁ B₂} → (W₁ : Γ ⊢ᵛ⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢ᵛ⦂ B₂)
             → swap-innerˢ W₁ W₂ ≐ˢ swap-outerˢ W₁ W₂
 sub-swap-≐ˢ {Γ} {B₁} {B₂} W₁ W₂ = mk≐ˢ goᵛ goᵗ
   where
@@ -202,15 +202,15 @@ sub-swap-≐ˢ {Γ} {B₁} {B₂} W₁ W₂ = mk≐ˢ goᵛ goᵗ
 
 -- and what it says about terms.
 
-sub-swap-≡ᵛ : ∀ {Γ B₁ B₂ A} → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ B₂)
-            → (V : (Γ ∷ B₁) ∷ B₂ ⊢V⦂ A)
+sub-swap-≡ᵛ : ∀ {Γ B₁ B₂ A} → (W₁ : Γ ⊢ᵛ⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢ᵛ⦂ B₂)
+            → (V : (Γ ∷ B₁) ∷ B₂ ⊢ᵛ⦂ A)
             → V-sub₀ (val-sub W₁) (V-sub₀ (val-sub W₂) V)
             ≡ V-sub₀ (val-sub (V-sub₀ (val-sub W₁) W₂))
                      (V-sub₀ (cong-∷-sub (val-sub W₁)) V)
 sub-swap-≡ᵛ W₁ W₂ V = V-sub-≐ˢ (sub-swap-≐ˢ W₁ W₂) V
 
-sub-swap-≡ᶜ : ∀ {Γ B₁ B₂ C} → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ B₂)
-            → (M : (Γ ∷ B₁) ∷ B₂ ⊢C⦂ C)
+sub-swap-≡ᶜ : ∀ {Γ B₁ B₂ C} → (W₁ : Γ ⊢ᵛ⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢ᵛ⦂ B₂)
+            → (M : (Γ ∷ B₁) ∷ B₂ ⊢ᶜ⦂ C)
             → C-sub₀ (val-sub W₁) (C-sub₀ (val-sub W₂) M)
             ≡ C-sub₀ (val-sub (V-sub₀ (val-sub W₁) W₂))
                      (C-sub₀ (cong-∷-sub (val-sub W₁)) M)
@@ -230,20 +230,20 @@ cong-subˢ-◅ (Γ₀ ∷ A)   s₁ s₂ = cong cong-∷-subˢ (cong-subˢ-◅ �
 cong-subˢ-◅ (Γ₀ ⟨ ρ ⟩) s₁ s₂ = cong cong-⟨⟩-subˢ (cong-subˢ-◅ Γ₀ s₁ s₂)
 
 swap-innerˢ-at : ∀ {Γ B₁ B₂} → (Θ : Ctx)
-               → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ B₂)
+               → (W₁ : Γ ⊢ᵛ⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢ᵛ⦂ B₂)
                → Sub [] (Γ ++ᶜ Θ) (((Γ ∷ B₁) ∷ B₂) ++ᶜ Θ)
 swap-innerˢ-at Θ W₁ W₂ =
   cong-sub₀ {Γ'' = Θ} (val-sub W₁) ◅ [ cong-sub₀ {Γ'' = Θ} (val-sub W₂) ]ˢ
 
 swap-outerˢ-at : ∀ {Γ B₁ B₂} → (Θ : Ctx)
-               → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ B₂)
+               → (W₁ : Γ ⊢ᵛ⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢ᵛ⦂ B₂)
                → Sub [] (Γ ++ᶜ Θ) (((Γ ∷ B₁) ∷ B₂) ++ᶜ Θ)
 swap-outerˢ-at Θ W₁ W₂ =
     cong-sub₀ {Γ'' = Θ} (val-sub (V-sub₀ (val-sub W₁) W₂))
   ◅ [ cong-sub₀ {Γ'' = Θ} (cong-∷-sub (val-sub W₁)) ]ˢ
 
 sub-swap-at-≐ˢ : ∀ {Γ B₁ B₂} → (Θ : Ctx)
-               → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ B₂)
+               → (W₁ : Γ ⊢ᵛ⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢ᵛ⦂ B₂)
                → swap-innerˢ-at Θ W₁ W₂ ≐ˢ swap-outerˢ-at Θ W₁ W₂
 sub-swap-at-≐ˢ Θ W₁ W₂ =
   subst₂ _≐ˢ_ (cong-subˢ-◅ Θ (val-sub W₁) (val-sub W₂))
@@ -254,8 +254,8 @@ sub-swap-at-≐ˢ Θ W₁ W₂ =
 -- and what it says about terms.
 
 sub-swap-at-≡ᵛ : ∀ {Γ B₁ B₂ A} → (Θ : Ctx)
-               → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ B₂)
-               → (V : (((Γ ∷ B₁) ∷ B₂) ++ᶜ Θ) ⊢V⦂ A)
+               → (W₁ : Γ ⊢ᵛ⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢ᵛ⦂ B₂)
+               → (V : (((Γ ∷ B₁) ∷ B₂) ++ᶜ Θ) ⊢ᵛ⦂ A)
                → V-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub W₁))
                         (V-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub W₂)) V)
                ≡ V-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub (V-sub₀ (val-sub W₁) W₂)))
@@ -263,8 +263,8 @@ sub-swap-at-≡ᵛ : ∀ {Γ B₁ B₂ A} → (Θ : Ctx)
 sub-swap-at-≡ᵛ Θ W₁ W₂ V = V-sub-≐ˢ (sub-swap-at-≐ˢ Θ W₁ W₂) V
 
 sub-swap-at-≡ᶜ : ∀ {Γ B₁ B₂ C} → (Θ : Ctx)
-               → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ B₂)
-               → (M : (((Γ ∷ B₁) ∷ B₂) ++ᶜ Θ) ⊢C⦂ C)
+               → (W₁ : Γ ⊢ᵛ⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢ᵛ⦂ B₂)
+               → (M : (((Γ ∷ B₁) ∷ B₂) ++ᶜ Θ) ⊢ᶜ⦂ C)
                → C-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub W₁))
                         (C-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub W₂)) M)
                ≡ C-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub (V-sub₀ (val-sub W₁) W₂)))

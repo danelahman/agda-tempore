@@ -40,9 +40,9 @@ mutual
 
   V-sub₀ : ∀ {Γ Γ' A}
          → Sub₀ [] Γ Γ'
-         → Γ' ⊢V⦂ A
+         → Γ' ⊢ᵛ⦂ A
          ------------
-         → Γ ⊢V⦂ A
+         → Γ ⊢ᵛ⦂ A
 
   V-sub₀ s (var f x)   = sub-var₀ s x f
   V-sub₀ s (const B c) = const B c
@@ -65,9 +65,9 @@ mutual
 
   C-sub₀ : ∀ {Γ Γ' C}
          → Sub₀ [] Γ Γ'
-         → Γ' ⊢C⦂ C
+         → Γ' ⊢ᶜ⦂ C
          ------------
-         → Γ ⊢C⦂ C
+         → Γ ⊢ᶜ⦂ C
 
   C-sub₀ s (return V)         = return (V-sub₀ s V)
   C-sub₀ s (M ⨟ N)            = C-sub₀ s M ⨟ C-sub₀ (cong-sub₀ s) N

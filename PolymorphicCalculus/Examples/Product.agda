@@ -65,7 +65,7 @@ open import PolymorphicCalculus.Examples.Variables
 ------------------------------------------------------------------
 -- A closed derivation in the empty context is a typing
 
-closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢C⦂ C)
+closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢ᶜ⦂ C)
        → ⌊ D ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ → Typable [] M
 closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
@@ -97,9 +97,9 @@ private
 embargoed : RExp ∅ˢ → ℕ → RawC ∅ˢ 0
 embargoed c d = box c ⋆ (delay ⌜ d ⌝ (unbox (var fzero) (return v₀)))
 
-embargoed-D : ∀ c d → ιᵣ ⌜ d ⌝ ≾ᴳ c → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ)
+embargoed-D : ∀ c d → ιᵣ ⌜ d ⌝ ≾ᴳ c → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ unit ! (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ)
 embargoed-D c d p =
-  box (rconst c) ⋆ (delay ⌜ d ⌝ (unbox (res-var {z = Tl-⟨⟩ Hd}) (after p) (return (var Hd ok₀))))
+  box (rconst c) ⋆ (delay ⌜ d ⌝ (unbox (res-var (Tl-⟨⟩ Hd)) (after p) (return (var Hd ok₀))))
 
 embargoed-typable : ∀ c d → True (ιᵣ ⌜ d ⌝ ≾ᵣ? c) → Typable [] (embargoed (rconst c) d)
 embargoed-typable c d p = closed (embargoed-D c d (toWitness p)) refl
@@ -119,12 +119,12 @@ transmitted c op d =
   return (fun (box c ⋆ (perform op v₁ (delay ⌜ d ⌝ (unbox (var (fsuc fzero)) (return v₀))))))
 
 transmitted-D : ∀ c op d → ∣ op-grade op ∣ᵉ ·ᵣ ιᵣ ⌜ d ⌝ ≾ᴳ c
-              → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂
+              → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂
                   (⌜ param op ⌝ᵍ ⇒ unit ! (econst (op-grade op) ·̂ₑ (⌜ d ⌝ᵉ ·̂ₑ 𝟏̂ₑ))) ! 𝟏̂ₑ
 transmitted-D c op d p =
   return (fun (box (rconst c) ⋆
     (perform op (var (Tl-∷ Hd) ok₀)
-      (delay ⌜ d ⌝ (unbox (res-var {z = Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))}) (after₂ p)
+      (delay ⌜ d ⌝ (unbox (res-var (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (after₂ p)
                   (return (var Hd ok₀)))))))
 
 transmitted-typable : ∀ c op d → True ((∣ op-grade op ∣ᵉ ·ᵣ ιᵣ ⌜ d ⌝) ≾ᵣ? c)
@@ -189,7 +189,7 @@ twice : Op → RawC ∅ˢ 0
 twice op = return (fun (perform op v₀ (perform op v₁ (return ⋆))))
 
 twice-D : ∀ op → ∣ op-grade op ∣ᵉ ≾ᴳ 𝟏ᵣ
-        → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂
+        → ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂
             (⌜ param op ⌝ᵍ ⇒ unit ! (econst (op-grade op) ·̂ₑ (econst (op-grade op) ·̂ₑ 𝟏̂ₑ))) ! 𝟏̂ₑ
 twice-D op q =
   return (fun (perform op (var Hd ok₀)

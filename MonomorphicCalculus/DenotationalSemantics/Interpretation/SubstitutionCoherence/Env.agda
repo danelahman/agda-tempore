@@ -91,13 +91,13 @@ Paramˢ₀ (cong-⟨⟩-sub s) = Paramˢ₀ s
 -- variable's own splitting its environment morphism is `sub-env` on the nose,
 -- both recursions being `var-split`'s.
 
-sub-split₀ᴾ : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢V⦂ A)
+sub-split₀ᴾ : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢ᵛ⦂ A)
             → Paramᵛ W → Paramˢ₀ (sub-split₀ s W)
 sub-split₀ᴾ split-[]     W pW = pW
 sub-split₀ᴾ (split-∷ s)  W pW = sub-split₀ᴾ s W pW
 sub-split₀ᴾ (split-⟨⟩ s) W pW = sub-split₀ᴾ s W pW
 
-sub-env-is-⟦⟧ˢ₀ : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢V⦂ A)
+sub-env-is-⟦⟧ˢ₀ : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢ᵛ⦂ A)
                → (pW : Paramᵛ W)
                → ⟦ sub-split₀ s W ⟧ˢ₀ (sub-split₀ᴾ s W pW)
                ≈ᵐ sub-env s W pW
@@ -331,7 +331,7 @@ sub-lkˢ s p y rel w =
 
 unbox-subst-natˢ : ∀ {Γ Γ' A A' C ρ σ} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
                  → (y : [ ρ ] A ∈[ σ ] Γ') → (rel : σ ≾ᵣ ρ) → (w : A <:ᵛ A')
-                 → (M : Γ' ∷ A' ⊢C⦂ C)
+                 → (M : Γ' ∷ A' ⊢ᶜ⦂ C)
                  → {pM : Paramᶜ M} → {pM' : Paramᶜ (C-sub₀ (cong-∷-sub s) M)}
                  → ⟦ C-sub₀ (cong-∷-sub s) M ⟧ᶜᵗ pM'
                    ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ mapˣᵐ (⟦ s ⟧ˢ₀ p) idᵐ
@@ -356,7 +356,7 @@ unbox-subst-natˢ s p y rel w M ih =
 mutual
 
   subᵛˢ : ∀ {Γ Γ' A} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
-        → (V : Γ' ⊢V⦂ A) → Paramᵛ V → Paramᵛ (V-sub₀ s V)
+        → (V : Γ' ⊢ᵛ⦂ A) → Paramᵛ V → Paramᵛ (V-sub₀ s V)
   subᵛˢ s p (var f x)   _         = sub-varᴾ s p x f
   subᵛˢ s p (const B c) _         = tt
   subᵛˢ s p ⋆           _         = tt
@@ -380,7 +380,7 @@ mutual
   subᵛˢ s p (subV V q)  pV        = subᵛˢ s p V pV
 
   subᶜˢ : ∀ {Γ Γ' C} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
-        → (M : Γ' ⊢C⦂ C) → Paramᶜ M → Paramᶜ (C-sub₀ s M)
+        → (M : Γ' ⊢ᶜ⦂ C) → Paramᶜ M → Paramᶜ (C-sub₀ s M)
   subᶜˢ s p (return V)         pV        = subᵛˢ s p V pV
   subᶜˢ s p (M ⨟ N)            (pM , pN) =
     subᶜˢ s p M pM , subᶜˢ (cong-∷-sub (cong-⟨⟩-sub s)) p N pN
@@ -421,7 +421,7 @@ mutual
     → (H : (op : Op) → (ε'' : E)
          → Δ' ∷ ⌜ param op ⌝ᵍ
               ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-           ⊢C⦂ B ! (op-grade op ·ₑ ε''))
+           ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε''))
     → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
     → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
          → ⟦ H op ε₂'' ⟧ᶜᵗ (pH op ε₂'')
@@ -446,7 +446,7 @@ mutual
                                    (H op _) (pH op _)))))))))
 
   V-subst-natˢ : ∀ {Γ Γ' A} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
-               → (V : Γ' ⊢V⦂ A) → (pV : Paramᵛ V)
+               → (V : Γ' ⊢ᵛ⦂ A) → (pV : Paramᵛ V)
                → ⟦ V-sub₀ s V ⟧ᵛᵗ (subᵛˢ s p V pV) ≈ᵐ ⟦ V ⟧ᵛᵗ pV ∘ᵐ ⟦ s ⟧ˢ₀ p
   V-subst-natˢ s p (var f x) _ = sub-var-natˢ s p x f
   V-subst-natˢ s p (const B c) _ =
@@ -507,7 +507,7 @@ mutual
     ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-natˢ s p V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
 
   C-subst-natˢ : ∀ {Γ Γ' C} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
-               → (M : Γ' ⊢C⦂ C) → (pM : Paramᶜ M)
+               → (M : Γ' ⊢ᶜ⦂ C) → (pM : Paramᶜ M)
                → ⟦ C-sub₀ s M ⟧ᶜᵗ (subᶜˢ s p M pM) ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ s ⟧ˢ₀ p
   C-subst-natˢ s p (return V) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-natˢ s p V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))

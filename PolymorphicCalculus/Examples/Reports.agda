@@ -53,7 +53,7 @@ open import PolymorphicCalculus.Examples.Variables
 
 -- A closed derivation in the empty context is a typing
 
-closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢C⦂ C)
+closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢ᶜ⦂ C)
        → ⌊ D ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ → Typable [] M
 closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
@@ -103,7 +103,7 @@ reused-around-claim-typed =
     (closed {C = (unit ⇒ (U⇒U ⇒ ([ ∣ 𝟏̂ₑ ∣̂ᵉ ] U⇒U ⇒ unit ! (𝟏̂ₑ ·̂ₑ (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ))) ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ}
       (return (fun (return (fun (return (fun
         ((var (Tl-∷ Hd) ok₀ · ⋆)
-         ⨟ unbox (res-var {z = Tl-∷ (Tl-⟨⟩ Hd)}) on-time
+         ⨟ unbox (res-var (Tl-∷ (Tl-⟨⟩ Hd))) on-time
              ((var Hd ok₀ · var (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ Hd))))) (et-ok unitₑ))
               ⨟ return (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ Hd)))))))
                             (et-ok unitₑ))))))))))
@@ -141,9 +141,9 @@ claimed-after-call-typable =
       ((var (Tl-∷ Hd) ok₀ · ⋆)
        ⨟ return (fun (handle var Hd ok₀ · ⋆
            `with handler (return ⋆) (λ op →
-             unbox (res-var {z = Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ Hd)))))}) topᵣ
+             unbox (res-var (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ Hd))))))) topᵣ
                (perform op (var (Tl-∷ (Tl-∷ Hd)) ok₀)
-                 (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))}) on-time
+                 (unbox (res-var (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))) on-time
                    (var Hd ok₀ · var (Tl-∷ Hd) ok₀)))))))))))
     refl
 

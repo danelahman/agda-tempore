@@ -209,7 +209,7 @@ private
 mutual
 
   fund-v : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ} {𝕊 : State m} {σ}
-         → (D : Q ∣ Γ ⊢V⦂ A) → Env Γ 𝕊 σ → VRed (shapeᵛ A) 𝕊 (psubᵛ σ ∥ D ∥ᵛ)
+         → (D : Q ∣ Γ ⊢ᵛ⦂ A) → Env Γ 𝕊 σ → VRed (shapeᵛ A) 𝕊 (psubᵛ σ ∥ D ∥ᵛ)
   fund-v {𝕊 = 𝕊} {σ} (var x p) r =
     subst (λ T → VRed (shapeᵛ T) 𝕊 (σ (var-pos x))) (var-pos-ty x) (at r (var-pos x))
   fund-v (const B c)     r = tt
@@ -267,7 +267,7 @@ mutual
   fund-v {𝕊 = 𝕊} (subV V p) r = subst (λ s → VRed s 𝕊 _) (<:-shapeᵛ p) (fund-v V r)
 
   fund-c : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ} {𝕊 : State m} {σ}
-         → (D : Q ∣ Γ ⊢C⦂ C) → Env Γ 𝕊 σ → CRed (VRed (shapeᶜ C)) 𝕊 (psubᶜ σ ∥ D ∥ᶜ)
+         → (D : Q ∣ Γ ⊢ᶜ⦂ C) → Env Γ 𝕊 σ → CRed (VRed (shapeᶜ C)) 𝕊 (psubᶜ σ ∥ D ∥ᶜ)
 
   fund-c (return V) r = cred-ret done (fund-v V r)
 
@@ -395,11 +395,12 @@ mutual
           (ren-idᵛ (λ i → refl) (handler N H))
           (f ≤ₛ-refl _ (fund-c M r))
 
-  fund-c {Γ = Γ} {𝕊 = 𝕊} {σ} (unbox {C = C} {z = x} R p N) r
+  fund-c {Γ = Γ} {𝕊 = 𝕊} {σ} (unbox {C = C} R p N) r
     rewrite ∥res∥ R
-    with σ (var-pos x)
-       | box-red? (σ (var-pos x))
-                  (subst (λ T → VRed (shapeᵛ T) 𝕊 (σ (var-pos x))) (var-pos-ty x) (at r (var-pos x)))
+    with σ (var-pos (res-var-of R))
+       | box-red? (σ (var-pos (res-var-of R)))
+                  (subst (λ T → VRed (shapeᵛ T) 𝕊 (σ (var-pos (res-var-of R))))
+                         (var-pos-ty (res-var-of R)) (at r (var-pos (res-var-of R))))
   ... | _ | box-red {j} w =
     cred-back (UNBOX ▸ done)
               (subst (CRed (VRed (shapeᶜ C)) 𝕊) (sym (sub₀ σ (lookupₛ 𝕊 j) ∥ N ∥ᶜ))

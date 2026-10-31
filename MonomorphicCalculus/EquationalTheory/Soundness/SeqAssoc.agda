@@ -86,9 +86,9 @@ module ≈-Reasoning {A B} = SetoidReasoning (homSetoid {A} {B})
 open ≈-Reasoning
 
 sound-seq-assoc : ∀ {Γ A B C ε ε' ε''}
-                → (M : Γ ⊢C⦂ A ! ε)
-                → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
-                → (P : Γ ⟨ ∣ ε ·ₑ ε' ∣ᵉ ⟩ ∷ B ⊢C⦂ C ! ε'')
+                → (M : Γ ⊢ᶜ⦂ A ! ε)
+                → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε')
+                → (P : Γ ⟨ ∣ ε ·ₑ ε' ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ C ! ε'')
                 → Soundᶜ≡ᵗʰ (seq-assoc M N P)
 sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
     bigchase

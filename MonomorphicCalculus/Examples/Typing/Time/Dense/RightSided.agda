@@ -81,18 +81,18 @@ measured-within-ticks send  = ≤ᵈ!
 ------------------------------------------------------------------------
 -- Effectful computations
 
-sampling : [] ⊢C⦂ Reading ! [0, 1 / 2 ]
+sampling : [] ⊢ᶜ⦂ Reading ! [0, 1 / 2 ]
 sampling =
   perform read ⋆                     -- ⟨ [0, 1 / 2 ] ⟩ ∷ Reading
     (return here)
 
-storing : [] ⊢C⦂ unit ! [0, # 3 ]
+storing : [] ⊢ᶜ⦂ unit ! [0, # 3 ]
 storing =
   perform read ⋆                     -- ⟨ [0, 1 / 2 ] ⟩ ∷ Reading
     (perform write here              -- ⟨ [0, 5 / 2 ] ⟩ ∷ unit
       (return ⋆))
 
-relaying : [] ⊢C⦂ unit ! [0, # 6 ]
+relaying : [] ⊢ᶜ⦂ unit ! [0, # 6 ]
 relaying =
   perform read ⋆                     -- ⟨ [0, 1 / 2 ] ⟩ ∷ Reading
     (perform send here               -- ⟨ [0, 11 / 2 ] ⟩ ∷ unit
@@ -109,7 +109,7 @@ reading-stale-after-sampling = ≰ᵈ!
 -- A deadline may be relaxed by any rational amount, and never
 -- tightened.
 
-relaxing-a-deadline : [] ⊢C⦂ unit ! [0, 13 / 2 ]
+relaxing-a-deadline : [] ⊢ᶜ⦂ unit ! [0, 13 / 2 ]
 relaxing-a-deadline =
   coerce ≤ᵈ! (perform read ⋆ (perform send here (return ⋆)))
 
@@ -122,7 +122,7 @@ tightening-a-deadline = ≰ᵈ!
 --
 -- The storing branch is coerced to the transmitting branch's deadline.
 
-branching : [] ∷ bool ∷ Reading ⊢C⦂ unit ! [0, 11 / 2 ]
+branching : [] ∷ bool ∷ Reading ⊢ᶜ⦂ unit ! [0, 11 / 2 ]
 branching =
   if eternal-var boolₑ (Tl-∷ Hd)
     `then perform send here (return ⋆)
@@ -134,7 +134,7 @@ branching =
 -- A lease of six units, claimed after a reading and a transmission:
 -- measured, they take exactly the six.
 
-claim-after-relaying : [] ⊢C⦂ unit ! [0, 23 / 2 ]
+claim-after-relaying : [] ⊢ᶜ⦂ unit ! [0, 23 / 2 ]
 claim-after-relaying =
   box [0, # 6 ] (const reading 42)   -- ∷ [ [0, # 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [0, 1 / 2 ] ⟩ ∷ Reading
@@ -156,7 +156,7 @@ rounded-up-it-expires = ≰ᵈ!
 half-tick-lease : R
 half-tick-lease = [0, 7 / 2 ]
 
-claim-after-idling-and-sampling : [] ⊢C⦂ unit ! [0, # 9 ]
+claim-after-idling-and-sampling : [] ⊢ᶜ⦂ unit ! [0, # 9 ]
 claim-after-idling-and-sampling =
   box half-tick-lease (const reading 42)
                                      -- ∷ [ [0, 7 / 2 ] ] Reading
@@ -168,7 +168,7 @@ claim-after-idling-and-sampling =
 
 -- two readings and a store fill it as well
 
-claim-after-storing-twice : [] ⊢C⦂ unit ! [0, # 9 ]
+claim-after-storing-twice : [] ⊢ᶜ⦂ unit ! [0, # 9 ]
 claim-after-storing-twice =
   box half-tick-lease (const reading 42)
                                      -- ∷ [ [0, 7 / 2 ] ] Reading
@@ -181,7 +181,7 @@ claim-after-storing-twice =
 
 -- idling for all of it fills it as well
 
-claim-after-idling : [] ⊢C⦂ unit ! [0, # 9 ]
+claim-after-idling : [] ⊢ᶜ⦂ unit ! [0, # 9 ]
 claim-after-idling =
   box half-tick-lease (const reading 42)
                                      -- ∷ [ [0, 7 / 2 ] ] Reading
@@ -204,7 +204,7 @@ sampling-twice-overruns = ≰ᵈ!
 ------------------------------------------------------------------------
 -- Effect handling
 
-forwarded : [] ⊢C⦂ Reading ! [0, 1 / 2 ]
+forwarded : [] ⊢ᶜ⦂ Reading ! [0, 1 / 2 ]
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
@@ -217,7 +217,7 @@ forwarded =
 nothing-fits : (op : Op) → (ε'' : E) → 𝟏ₑ ≾ₑ op-grade op ·ₑ ε''
 nothing-fits op ε'' = 𝟏ₒ-least (op-grade op ·ₑ ε'')
 
-suppressed : [] ⊢C⦂ unit ! [0, # 3 ]
+suppressed : [] ⊢ᶜ⦂ unit ! [0, # 3 ]
 suppressed =
   handle perform read ⋆ (perform write here (return ⋆))
     `with discarding {[]} nothing-fits

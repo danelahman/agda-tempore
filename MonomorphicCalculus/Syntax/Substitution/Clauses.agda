@@ -94,9 +94,9 @@ C-rename-conj : ∀ {Γ₁ Γ₁' Γ₂ Γ₂' C}
               → {R : Ren [] Γ₂' Γ₁} → (e : Γ₁ ≡ Γ₁')
               → {K : Ren [] Γ₂ Γ₁'} → (e' : Γ₂ ≡ Γ₂')
               → R ≐ʳconj⟨ e , K , e' ⟩
-              → (X : Γ₁ ⊢C⦂ C)
+              → (X : Γ₁ ⊢ᶜ⦂ C)
               → C-rename R X
-              ≡ subst (_⊢C⦂ C) e' (C-rename K (subst (_⊢C⦂ C) e X))
+              ≡ subst (_⊢ᶜ⦂ C) e' (C-rename K (subst (_⊢ᶜ⦂ C) e X))
 C-rename-conj e {K = K} e' h X =
   trans (C-rename-≡ h X)
     (trans (C-rename-∘ (eq-ren e) (K ∘ʳ eq-ren e') X)
@@ -108,55 +108,55 @@ C-rename-conj e {K = K} e' h X =
 -- Recording "X is some transport of h" makes the transports compose, and two
 -- such records of the same `h` are equal by `uip`.
 
-IsSub : ∀ {Γ₀ Γ₁ C} → Γ₀ ⊢C⦂ C → Γ₁ ⊢C⦂ C → Set
-IsSub {Γ₀} {Γ₁} {C} h X = Σ[ e ∈ Γ₀ ≡ Γ₁ ] X ≡ subst (_⊢C⦂ C) e h
+IsSub : ∀ {Γ₀ Γ₁ C} → Γ₀ ⊢ᶜ⦂ C → Γ₁ ⊢ᶜ⦂ C → Set
+IsSub {Γ₀} {Γ₁} {C} h X = Σ[ e ∈ Γ₀ ≡ Γ₁ ] X ≡ subst (_⊢ᶜ⦂ C) e h
 
-isSub-refl : ∀ {Γ₀ C} → (h : Γ₀ ⊢C⦂ C) → IsSub h h
+isSub-refl : ∀ {Γ₀ C} → (h : Γ₀ ⊢ᶜ⦂ C) → IsSub h h
 isSub-refl h = refl , refl
 
-isSub-substC : ∀ {Γ₀ Γ₁ Γ₂ C} → {h : Γ₀ ⊢C⦂ C} → (X : Γ₁ ⊢C⦂ C) → (e : Γ₁ ≡ Γ₂)
-             → IsSub h X → IsSub h (subst (_⊢C⦂ C) e X)
+isSub-substC : ∀ {Γ₀ Γ₁ Γ₂ C} → {h : Γ₀ ⊢ᶜ⦂ C} → (X : Γ₁ ⊢ᶜ⦂ C) → (e : Γ₁ ≡ Γ₂)
+             → IsSub h X → IsSub h (subst (_⊢ᶜ⦂ C) e X)
 isSub-substC {C = C} {h = h} X e (e₀ , q) =
   trans e₀ e
-  , trans (cong (subst (_⊢C⦂ C) e) q) (subst-fuseᶜ e₀ e h)
+  , trans (cong (subst (_⊢ᶜ⦂ C) e) q) (subst-fuseᶜ e₀ e h)
 
-isSub-cast : ∀ {Γ₀ Γ₁ Γ₂ C} → {h : Γ₀ ⊢C⦂ C} → (X : Γ₁ ⊢C⦂ C) → (e : Γ₁ ≡ Γ₂)
+isSub-cast : ∀ {Γ₀ Γ₁ Γ₂ C} → {h : Γ₀ ⊢ᶜ⦂ C} → (X : Γ₁ ⊢ᶜ⦂ C) → (e : Γ₁ ≡ Γ₂)
            → IsSub h X → IsSub h (castᶜ e X)
 isSub-cast {C = C} X e p =
   subst (IsSub _) (sym (castᶜ≡subst e X)) (isSub-substC X e p)
 
-isSub-reassoc : ∀ {Γ₀ Γ₁ Γ₂ C} → {h : Γ₀ ⊢C⦂ C} → {X : Γ₁ ⊢C⦂ C} → {Y : Γ₂ ⊢C⦂ C}
+isSub-reassoc : ∀ {Γ₀ Γ₁ Γ₂ C} → {h : Γ₀ ⊢ᶜ⦂ C} → {X : Γ₁ ⊢ᶜ⦂ C} → {Y : Γ₂ ⊢ᶜ⦂ C}
               → IsSub h X → IsSub h Y → IsSub Y X
 isSub-reassoc {C = C} {h = h} (e , q) (e' , q') =
   trans (sym e') e
   , trans q
-      (trans (cong (λ z → subst (_⊢C⦂ C) z h)
+      (trans (cong (λ z → subst (_⊢ᶜ⦂ C) z h)
                    (uip {p = e} {q = trans e' (trans (sym e') e)}))
         (trans (sym (subst-fuseᶜ e' (trans (sym e') e) h))
-               (cong (subst (_⊢C⦂ C) (trans (sym e') e)) (sym q'))))
+               (cong (subst (_⊢ᶜ⦂ C) (trans (sym e') e)) (sym q'))))
 
 -- two transports of `≡`-related terms are `≡`-related
 
-isSub-≡ : ∀ {Γ₀ Γ₁ C} → {M M' : Γ₀ ⊢C⦂ C} → {X Y : Γ₁ ⊢C⦂ C}
+isSub-≡ : ∀ {Γ₀ Γ₁ C} → {M M' : Γ₀ ⊢ᶜ⦂ C} → {X Y : Γ₁ ⊢ᶜ⦂ C}
         → IsSub M X → IsSub M' Y → M ≡ M' → X ≡ Y
 isSub-≡ {C = C} {M' = M'} (e , q) (e' , q') eM =
   trans (q)
     (trans (substᶜ-≡ e eM)
-      ((trans (cong (λ z → subst (_⊢C⦂ C) z M') (uip {p = e} {q = e'}))
+      ((trans (cong (λ z → subst (_⊢ᶜ⦂ C) z M') (uip {p = e} {q = e'}))
                    (sym q'))))
 
 -- The `_≡_`-flavoured alignment, taking the terms and the values related only
 -- up to `_≡_`.
 
 sub-at-≡ : ∀ {Γ₁ Γ₂ B C Θ₁ Θ₂} → (eΓ : Γ₁ ≡ Γ₂) → (eΘ : Θ₁ ≡ Θ₂)
-         → (X₁ : ((Γ₁ ∷ B) ++ᶜ Θ₁) ⊢C⦂ C) → (X₂ : ((Γ₂ ∷ B) ++ᶜ Θ₂) ⊢C⦂ C)
+         → (X₁ : ((Γ₁ ∷ B) ++ᶜ Θ₁) ⊢ᶜ⦂ C) → (X₂ : ((Γ₂ ∷ B) ++ᶜ Θ₂) ⊢ᶜ⦂ C)
          → (e : ((Γ₁ ∷ B) ++ᶜ Θ₁) ≡ ((Γ₂ ∷ B) ++ᶜ Θ₂))
-         → X₂ ≡ subst (_⊢C⦂ C) e X₁
-         → (V₁ : Γ₁ ⊢V⦂ B) → (V₂ : Γ₂ ⊢V⦂ B)
-         → subst (_⊢V⦂ B) eΓ V₁ ≡ V₂
+         → X₂ ≡ subst (_⊢ᶜ⦂ C) e X₁
+         → (V₁ : Γ₁ ⊢ᵛ⦂ B) → (V₂ : Γ₂ ⊢ᵛ⦂ B)
+         → subst (_⊢ᵛ⦂ B) eΓ V₁ ≡ V₂
          → (e' : (Γ₁ ++ᶜ Θ₁) ≡ (Γ₂ ++ᶜ Θ₂))
          → X₂ [ split-≡-++ᶜ {Γ₂ ∷ B} {Θ₂} ↦ V₂ ]c
-         ≡ subst (_⊢C⦂ C) e' (X₁ [ split-≡-++ᶜ {Γ₁ ∷ B} {Θ₁} ↦ V₁ ]c)
+         ≡ subst (_⊢ᶜ⦂ C) e' (X₁ [ split-≡-++ᶜ {Γ₁ ∷ B} {Θ₁} ↦ V₁ ]c)
 sub-at-≡ {C = C} refl refl X₁ X₂ e eX V₁ V₂ eV e'
   rewrite uip {p = e} {q = refl} | uip {p = e'} {q = refl} =
   sub-≡ᶜ split-≡-++ᶜ (sym eV) eX
@@ -165,7 +165,7 @@ sub-at-≡ {C = C} refl refl X₁ X₂ e eX V₁ V₂ eV e'
 -- same generating substitution: `split-++ʳ s (Dcl D op ε)` peels the suffix
 -- into the three congruences `_[_↦_]cl` applies.
 
-cl-≡ : ∀ {Γ₀ Γ₁ Γ₂ A D} → (s : Γ₁ ∷ A , Γ₂ split Γ₀) → (W : Γ₁ ⊢V⦂ A)
+cl-≡ : ∀ {Γ₀ Γ₁ Γ₂ A D} → (s : Γ₁ ∷ A , Γ₂ split Γ₀) → (W : Γ₁ ⊢ᵛ⦂ A)
      → (H : Fam D (Γ₀ ⟨ ⊤ᵣ ⟩)) → (op : Op) → (ε : E)
      → (H [ s ↦ W ]cl) op ε
      ≡ (H op ε) [ split-++ʳ s (Dcl D op ε) ↦ W ]c

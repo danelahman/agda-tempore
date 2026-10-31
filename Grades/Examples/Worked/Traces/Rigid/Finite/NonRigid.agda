@@ -27,7 +27,7 @@ open import Grades.Durations.NonNegativeRational using (ℚ≥0ᵀ)
 open import Grades.Examples.Time.Dense.TwoSided using (_/_; #_)
 open import Grades.Examples.Worked.Traces.Rigid.Finite.Operations
 open import Grades.Examples.Traces.Rigid.Finite.RightSided Op 3 code name name-code code-name running
-  using (Upper; ≤_; idle_; ⌜_⌝; Proper′; upper; lower; holds; _·_; _？; ε; expr; _·ᵉ_)
+  using (Upper; ≤_; idle_; ⌜_⌝; Proper′; upper; lower; holds; _·_; _ˀ; ε; expr; _·ᵉ_)
 open import Grades.Examples.Traces.Rigid.Finite.LeftSided Op 3 code name name-code code-name running
   using (≥_; ‵_)
 open import Grades.Examples.Traces.Rigid.Finite.NonRigid Op 3 code name name-code code-name running
@@ -64,7 +64,7 @@ lower-both P Q = isYes (Grade._≾?_ NL.left-sided P Q) , holds (loᴬ P) (loᴬ
 
 -- a cooling then two units: cooling may happen, then a budget of two
 
-cool-then-two : expr (upᵉ (⌈ cool ⌉ ∙ ⟨ # 2 ⟩)) ≡ cool ？ · (≤ (# 2) · ε)
+cool-then-two : expr (upᵉ (⌈ cool ⌉ ∙ ⟨ # 2 ⟩)) ≡ cool ˀ · (≤ (# 2) · ε)
 cool-then-two = refl
 
 -- as a guarantee: activity, cooling, at least two units, activity

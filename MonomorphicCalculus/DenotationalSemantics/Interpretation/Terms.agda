@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
 -- Interpretation of the well-typed terms (values and computations).  --
 --                                                                    --
--- A value `Γ ⊢V⦂ A` is a morphism `⟦ Γ ⟧ →ᵐ ⟦ A ⟧ᵛ`; a computation   --
--- `Γ ⊢C⦂ C` is `⟦ Γ ⟧ →ᵐ ⟦ C ⟧ᶜ`. Variables use the machinery of     --
+-- A value `Γ ⊢ᵛ⦂ A` is a morphism `⟦ Γ ⟧ →ᵐ ⟦ A ⟧ᵛ`; a computation   --
+-- `Γ ⊢ᶜ⦂ C` is `⟦ Γ ⟧ →ᵐ ⟦ C ⟧ᶜ`. Variables use the machinery of     --
 -- `Interpretation.Variables`, the effectful formers the graded       --
 -- monad, and the Fitch formers the adjunction. Subsumption           --
 -- post-composes the coercion of its witness.                         --
@@ -322,7 +322,7 @@ handler-famᵗ-reindex g h h' eh n n' en p =
 
 mutual
 
-  Paramᵛ : ∀ {Γ A} → Γ ⊢V⦂ A → Set
+  Paramᵛ : ∀ {Γ A} → Γ ⊢ᵛ⦂ A → Set
   Paramᵛ (var f x)   = ⊤
   Paramᵛ (const B c) = ⊤
   Paramᵛ ⋆           = ⊤
@@ -342,7 +342,7 @@ mutual
     Paramᶜ N × Σ[ pH ∈ (∀ op ε'' → Paramᶜ (H op ε'')) ] EffUniformʰ {Γ} {B} H pH
   Paramᵛ (subV V p) = Paramᵛ V
 
-  Paramᶜ : ∀ {Γ C} → Γ ⊢C⦂ C → Set
+  Paramᶜ : ∀ {Γ C} → Γ ⊢ᶜ⦂ C → Set
   Paramᶜ (return V)         = Paramᵛ V
   Paramᶜ (M ⨟ N)            = Paramᶜ M × Paramᶜ N
   Paramᶜ (V · W)            = Paramᵛ V × Paramᵛ W
@@ -370,7 +370,7 @@ mutual
               → (H : (op : Op) → (ε'' : E)
                    → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                         ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-                     ⊢C⦂ B ! (op-grade op ·ₑ ε''))
+                     ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε''))
               → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
               → Set
   EffUniformʰ H pH = ∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
@@ -378,7 +378,7 @@ mutual
                    ∘ᵐ mapˣᵐ idᵐ ([ ∣ op-grade op ∣ᵉ ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
                ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' ⟧ᶜᵗ (pH op ε₁'')
 
-  ⟦_⟧ᵛᵗ : ∀ {Γ A} → (V : Γ ⊢V⦂ A) → Paramᵛ V → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
+  ⟦_⟧ᵛᵗ : ∀ {Γ A} → (V : Γ ⊢ᵛ⦂ A) → Paramᵛ V → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
   ⟦ var f x   ⟧ᵛᵗ _ = var-morphism f x
   ⟦ const B c ⟧ᵛᵗ _ = ⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ
   ⟦ ⋆         ⟧ᵛᵗ _ = terminalᵐ
@@ -397,7 +397,7 @@ mutual
            (handler-famᵗ-nat (⟦ H ⟧ʰᵗ pH uH) (⟦ N ⟧ᶜᵗ pN))
   ⟦ subV V p ⟧ᵛᵗ pV = ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
 
-  ⟦_⟧ᶜᵗ : ∀ {Γ C} → (M : Γ ⊢C⦂ C) → Paramᶜ M → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ C ⟧ᶜ
+  ⟦_⟧ᶜᵗ : ∀ {Γ C} → (M : Γ ⊢ᶜ⦂ C) → Paramᶜ M → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ C ⟧ᶜ
   ⟦ return V ⟧ᶜᵗ pV = ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
   ⟦ _⨟_ {ε = ε} M N ⟧ᶜᵗ (pM , pN) =
     μᵀ ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ
@@ -450,7 +450,7 @@ mutual
         → (H : (op : Op) → (ε'' : E)
              → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                   ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-               ⊢C⦂ B ! (op-grade op ·ₑ ε''))
+               ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε''))
         → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
         → EffUniformʰ {Γ} {B} H pH
         → Handlerᵀ ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ ⟦ B ⟧ᵛ
@@ -485,11 +485,11 @@ mutual
 -- carries no computational content, so it also transports a term's
 -- parametricity certificate.
 
-ε-substᴾ : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢C⦂ A ! ε)
+ε-substᴾ : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢ᶜ⦂ A ! ε)
          → Paramᶜ M → Paramᶜ (ε-subst e M)
 ε-substᴾ refl M p = p
 
-sound-ε-subst : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢C⦂ A ! ε) → (pM : Paramᶜ M)
+sound-ε-subst : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢ᶜ⦂ A ! ε) → (pM : Paramᶜ M)
               → ⟦ ε-subst e M ⟧ᶜᵗ (ε-substᴾ e M pM) ≈ᵐ ε-substᵀ e ∘ᵐ ⟦ M ⟧ᶜᵗ pM
 sound-ε-subst refl M pM =
   ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-congˡ ε-substᵀ-refl) (∘ᵐ-identityˡ _))
@@ -497,7 +497,7 @@ sound-ε-subst refl M pM =
 -- Regrading along an equivalence of effects is a sub-effecting, so it denotes
 -- the monad's `T-≤`, and the certificate is the term's own.
 
-sound-ε-≃ : ∀ {Γ A ε ε'} → (e : ε ≃ₑ ε') → (M : Γ ⊢C⦂ A ! ε) → (pM : Paramᶜ M)
+sound-ε-≃ : ∀ {Γ A ε ε'} → (e : ε ≃ₑ ε') → (M : Γ ⊢ᶜ⦂ A ! ε) → (pM : Paramᶜ M)
           → ⟦ ε-≃ e M ⟧ᶜᵗ pM ≈ᵐ T-≤ (proj₁ e) ∘ᵐ ⟦ M ⟧ᶜᵗ pM
 sound-ε-≃ {A = A} e M pM =
   ∘ᵐ-congˡ (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (T-congᶠ (⟦⟧<:ᵛ-refl A)) T-idᵐ))
@@ -506,12 +506,12 @@ sound-ε-≃ {A = A} e M pM =
 -- Handling with a handler written in place denotes the fold of its clauses
 -- after the return clause is sequenced: `curryʰ-β` at the reflexive index.
 
-handle-in-β : ∀ {Γ A B ε ε'} → (M : Γ ⊢C⦂ A ! ε)
+handle-in-β : ∀ {Γ A B ε ε'} → (M : Γ ⊢ᶜ⦂ A ! ε)
             → (H : (op : Op) → (ε'' : E)
                  → Γ ⟨ ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                       ∷ [ ∣ op-grade op ∣ᵉ ] (⌜ arity op ⌝ᵍ ⇒ B ! ε'')
-                   ⊢C⦂ B ! (op-grade op ·ₑ ε''))
-            → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε')
+                   ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε''))
+            → (N : Γ ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε')
             → (pM : Paramᶜ M) → (pN : Paramᶜ N)
             → (pH : ∀ op ε'' → Paramᶜ (H op ε'')) → (uH : EffUniformʰ {Γ} {B} H pH)
             → ⟦ handle M `with H `in N ⟧ᶜᵗ (pM , pN , pH , uH)

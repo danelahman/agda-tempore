@@ -12,7 +12,7 @@
 -- unsatisfiable one.                                           --
 --                                                              --
 -- Contract. `σ ⊨[ Q ] genC Γ M (A ! t)` holds exactly when     --
--- some derivation of `Q ∣ Γ [ σ ] ⊢C⦂ (A ! t) [ σ ]` erases to --
+-- some derivation of `Q ∣ Γ [ σ ] ⊢ᶜ⦂ (A ! t) [ σ ]` erases to --
 -- `M [ σ ]` (`charV`, `charC`).                                --
 ------------------------------------------------------------------
 

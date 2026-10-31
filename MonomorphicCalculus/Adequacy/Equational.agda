@@ -2,7 +2,7 @@
 -- Adequacy for the equational theory.                                --
 --                                                                    --
 -- Reasoning in the equational theory is observationally valid: a     --
--- derivation `[] ⊢C⦂ M ≡ᵗʰ N` between closed programs denotes an     --
+-- derivation `[] ⊢ᶜ⦂ M ≡ᵗʰ N` between closed programs denotes an     --
 -- equality of global points (`soundᶜ`), and `adequacy` reads that    --
 -- back off the machine: the two programs halt in the same shape, on  --
 -- the same operation, and at an answer type with the same answer     --
@@ -88,7 +88,7 @@ open import MonomorphicCalculus.OperationalSemantics.Termination Spec
 -- (`⟦⟧ᶜᵗ-irr`).
 
 ≡ᵗʰ-denotation : ∀ {A ε} → {M N : Closed A ε}
-               → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+               → (p : [] ⊢ᶜ⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
                → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                ---------------------------------------
                → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
@@ -98,7 +98,7 @@ open import MonomorphicCalculus.OperationalSemantics.Termination Spec
 -- Provable equals halt alike.
 
 ≡ᵗʰ-adequacy : ∀ {A ε} → {M N : Closed A ε}
-             → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+             → (p : [] ⊢ᶜ⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
              → (pM : Paramᶜ M) → (pN : Paramᶜ N)
              ---------------------------------------
              → Same-whnf M N
@@ -109,7 +109,7 @@ open import MonomorphicCalculus.OperationalSemantics.Termination Spec
 -- appeal to `C-sym`.
 
 ≡ᵗʰ-adequacy⁻¹ : ∀ {A ε} → {M N : Closed A ε}
-               → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+               → (p : [] ⊢ᶜ⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
                → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                ---------------------------------------
                → Same-whnf N M
@@ -119,7 +119,7 @@ open import MonomorphicCalculus.OperationalSemantics.Termination Spec
 -- Returning is preserved.
 
 ≡ᵗʰ-returns : ∀ {A ε} → {M N : Closed A ε}
-            → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+            → (p : [] ⊢ᶜ⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
             → (pM : Paramᶜ M) → (pN : Paramᶜ N)
             → Ret-whnf (⟨ ∅ ∣ M ⟩)
             ---------------------------------------
@@ -130,7 +130,7 @@ open import MonomorphicCalculus.OperationalSemantics.Termination Spec
 -- One side cannot return while the other gets stuck on an operation.
 
 ≡ᵗʰ-ret-not-op : ∀ {A ε} → {M N : Closed A ε}
-               → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+               → (p : [] ⊢ᶜ⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
                → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                → Ret-whnf (⟨ ∅ ∣ M ⟩) → Op-whnf (⟨ ∅ ∣ N ⟩)
                ---------------------------------------------
@@ -141,7 +141,7 @@ open import MonomorphicCalculus.OperationalSemantics.Termination Spec
 -- The operation a program is stuck on is invariant under provable equality.
 
 ≡ᵗʰ-same-operation : ∀ {A ε} → {M N : Closed A ε}
-                   → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+                   → (p : [] ⊢ᶜ⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
                    → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                    → (w : Op-whnf (⟨ ∅ ∣ M ⟩)) → (w' : Op-whnf (⟨ ∅ ∣ N ⟩))
                    -----------------------------------------------------------
@@ -174,7 +174,7 @@ data Same-answer {b : BaseType} {ε : E} (M N : Closed (Base b) ε) : Set where
 -- hypothesis is needed: every program halts.
 
 ≡ᵗʰ-same-answer : ∀ {b ε} → {M N : Closed (Base b) ε}
-                → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+                → (p : [] ⊢ᶜ⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
                 → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                 ---------------------------------------
                 → Same-answer M N
@@ -211,7 +211,7 @@ data Same-answer-bool {ε : E} (M N : Closed bool ε) : Set where
              → Same-answer-bool M N
 
 ≡ᵗʰ-same-answer-bool : ∀ {ε} → {M N : Closed bool ε}
-                     → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+                     → (p : [] ⊢ᶜ⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
                      → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                      ---------------------------------------
                      → Same-answer-bool M N
@@ -234,7 +234,7 @@ data Same-answer-bool {ε : E} (M N : Closed bool ε) : Set where
 
 ≡ᵗʰ-ticks : HF.HeadTimed Spec Cat Fut Pst Adj GTy Mon GE
           → ∀ {A ε} → {M N : Closed A ε}
-          → (p : [] ⊢C⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
+          → (p : [] ⊢ᶜ⦂ M ≡ᵗʰ N) → (mp : Midᶜ p)
           → (pM : Paramᶜ M) → (pN : Paramᶜ N)
           → (wM : Ret-whnf (⟨ ∅ ∣ M ⟩)) → (wN : Ret-whnf (⟨ ∅ ∣ N ⟩))
           -------------------------------------------------------------

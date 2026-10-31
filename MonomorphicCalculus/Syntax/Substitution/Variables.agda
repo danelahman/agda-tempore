@@ -62,7 +62,7 @@ castᵛ-var-Var refl x _ refl f f' = var-≡
 -- Casting the target of a renaming is prefixing it with an `eq-ren`.
 
 castᵛ-rename : ∀ {Γ Γ' Γ'' A} → (e : Γ' ≡ Γ'') → (r : Ren [] Γ' Γ)
-             → (V : Γ ⊢V⦂ A)
+             → (V : Γ ⊢ᵛ⦂ A)
              → castᵛ e (V-rename r V) ≡ V-rename (r ∘ʳ eq-ren e) V
 castᵛ-rename refl r V =
   sym (trans (V-rename-∘ r id-ren V) (V-rename-id-≡ ≐ʳ-refl _))
@@ -113,7 +113,7 @@ ren-var-r r x f f' =
 
 sub-var-r : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ∀ {A ρ}
           → (x : A ∈[ ρ ] Γ₂)
-          → (W : Γ₁ ⊢V⦂ B)
+          → (W : Γ₁ ⊢ᵛ⦂ B)
           → (f f' : ¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
           → sub-var₀ (sub-atˢ₀ {Γ₁} {B} Γ₂ W) (∈-++ᶜʳ {Γ = Γ₁ ∷ B} x) f
           ≡ var f' (∈-++ᶜʳ {Γ = Γ₁} x)
@@ -174,7 +174,7 @@ sub-var-r {Γ₁} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? 
 
 sub-var-hit : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ¬ Et B
             → (p : ctx-grade Γ₂ ≾ᵣ 𝟏ᵣ)
-            → (W : Γ₁ ⊢V⦂ B)
+            → (W : Γ₁ ⊢ᵛ⦂ B)
             → (f : ¬ Et B → ctx-grade Γ₂ ≾ᵣ 𝟏ᵣ)
             → sub-var₀ (sub-atˢ₀ {Γ₁} {B} Γ₂ W)
                        (split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) f
@@ -212,7 +212,7 @@ sub-var-hit′ : ∀ {Γ₁ B σ} → (Γ₂ : Ctx) → ¬ Et B
              → _≡_ {A = Var ((Γ₁ ∷ B) ++ᶜ Γ₂) B}
                  (σ , y)
                  (ctx-grade Γ₂ , split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}))
-             → (W : Γ₁ ⊢V⦂ B)
+             → (W : Γ₁ ⊢ᵛ⦂ B)
              → (f : ¬ Et B → σ ≾ᵣ 𝟏ᵣ)
              → sub-var₀ (sub-atˢ₀ {Γ₁} {B} Γ₂ W) y f
              ≡ V-rename (push-ren Γ₂ p) W
@@ -225,12 +225,12 @@ sub-var-hit′ Γ₂ ¬et p _ refl W f = sub-var-hit Γ₂ ¬et p W f
 
 -- The cell the boundary substitution puts a resource variable at.
 
-atᴿ : ∀ {Γ B A ρ σ} → (Θ : Ctx) → ([ ρ ] A ∈[ σ ] ((Γ ∷ B) ++ᶜ Θ)) → Γ ⊢V⦂ B
+atᴿ : ∀ {Γ B A ρ σ} → (Θ : Ctx) → ([ ρ ] A ∈[ σ ] ((Γ ∷ B) ++ᶜ Θ)) → Γ ⊢ᵛ⦂ B
     → RVar (Γ ++ᶜ Θ)
 atᴿ Θ z W = tgt-img₀ (sub-atˢ₀ Θ W) z
 
 sub-rvar-r : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
-           → (z : [ ρ ] A ∈[ σ ] Θ) → (W : Γ ⊢V⦂ B)
+           → (z : [ ρ ] A ∈[ σ ] Θ) → (W : Γ ⊢ᵛ⦂ B)
            → atᴿ {Γ} {B} Θ (∈-++ᶜʳ {Γ = Γ ∷ B} z) W ≡ (ρ , A , σ , ∈-++ᶜʳ {Γ = Γ} z)
 
 sub-rvar-r (Θ ∷ C)   Hd       W = refl
@@ -238,7 +238,7 @@ sub-rvar-r (Θ ∷ C)   (Tl-∷ z) W = cong RVar-∷ (sub-rvar-r Θ z W)
 sub-rvar-r (Θ ⟨ ρ' ⟩) (Tl-⟨⟩ z) W = cong (RVar-⟨⟩ ρ') (sub-rvar-r Θ z W)
 
 sub-rvar-l : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
-           → (z : [ ρ ] A ∈[ σ ] Γ) → (W : Γ ⊢V⦂ B)
+           → (z : [ ρ ] A ∈[ σ ] Γ) → (W : Γ ⊢ᵛ⦂ B)
            → atᴿ {Γ} {B} Θ (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z)) W
            ≡ (ρ , A , grade-++ᶜˡ σ Θ , ∈-++ᶜˡ {Γ = Γ} Θ z)
 

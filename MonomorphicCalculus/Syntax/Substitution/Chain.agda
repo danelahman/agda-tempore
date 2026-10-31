@@ -92,11 +92,11 @@ expose-subˢ-[] {Ξ} s = expose-subˢ Ξ s
 -- Recursion on the chain alone: each step is the already-defined action of a
 -- generator. A one-step chain acts as its generator does, definitionally.
 
-V-sub : ∀ {Γ Γ' A} → Sub [] Γ Γ' → Γ' ⊢V⦂ A → Γ ⊢V⦂ A
+V-sub : ∀ {Γ Γ' A} → Sub [] Γ Γ' → Γ' ⊢ᵛ⦂ A → Γ ⊢ᵛ⦂ A
 V-sub []ˢ      V = V
 V-sub (s ◅ σ) V = V-sub₀ s (V-sub σ V)
 
-C-sub : ∀ {Γ Γ' C} → Sub [] Γ Γ' → Γ' ⊢C⦂ C → Γ ⊢C⦂ C
+C-sub : ∀ {Γ Γ' C} → Sub [] Γ Γ' → Γ' ⊢ᶜ⦂ C → Γ ⊢ᶜ⦂ C
 C-sub []ˢ      M = M
 C-sub (s ◅ σ) M = C-sub₀ s (C-sub σ M)
 
@@ -109,7 +109,7 @@ sub-var : ∀ {Δ Δ' A ρ}
         → A ∈[ ρ ] Δ'
         → (¬ Et A → ρ ≾ᵣ 𝟏ᵣ)
         ---------------------------
-        → Δ ⊢V⦂ A
+        → Δ ⊢ᵛ⦂ A
 
 sub-var σ x f = V-sub σ (var f x)
 
@@ -150,13 +150,13 @@ sub-tgt (s ◅ σ) y =
 -- only thing recursed on, the two actions being applied to the same term.
 
 V-sub-∘ˢ : ∀ {Γ Γ' Γ'' A}
-         → (σ₂ : Sub [] Γ' Γ'') → (σ₁ : Sub [] Γ Γ') → (V : Γ'' ⊢V⦂ A)
+         → (σ₂ : Sub [] Γ' Γ'') → (σ₁ : Sub [] Γ Γ') → (V : Γ'' ⊢ᵛ⦂ A)
          → V-sub (σ₂ ∘ˢ σ₁) V ≡ V-sub σ₁ (V-sub σ₂ V)
 V-sub-∘ˢ σ₂ []ˢ      V = refl
 V-sub-∘ˢ σ₂ (s ◅ σ₁) V = cong (V-sub₀ s) (V-sub-∘ˢ σ₂ σ₁ V)
 
 C-sub-∘ˢ : ∀ {Γ Γ' Γ'' C}
-         → (σ₂ : Sub [] Γ' Γ'') → (σ₁ : Sub [] Γ Γ') → (M : Γ'' ⊢C⦂ C)
+         → (σ₂ : Sub [] Γ' Γ'') → (σ₁ : Sub [] Γ Γ') → (M : Γ'' ⊢ᶜ⦂ C)
          → C-sub (σ₂ ∘ˢ σ₁) M ≡ C-sub σ₁ (C-sub σ₂ M)
 C-sub-∘ˢ σ₂ []ˢ      M = refl
 C-sub-∘ˢ σ₂ (s ◅ σ₁) M = cong (C-sub₀ s) (C-sub-∘ˢ σ₂ σ₁ M)

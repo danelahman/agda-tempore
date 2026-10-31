@@ -78,7 +78,7 @@ nonResource-usedef {s = s} nr f δ refl = nonResource-subst (Xˢ s) δ (nr f)
 -- A value in a context with no variables has a non-resource type
 
 nonResource-closed : ∀ {Θ} {Q : Hyps Θ} {Γ : OCtx Θ 0} {A : OVType Θ}
-                   → NonResourceDefs (defs Γ) → Q ∣ Γ ⊢V⦂ A → NonResource A
+                   → NonResourceDefs (defs Γ) → Q ∣ Γ ⊢ᵛ⦂ A → NonResource A
 nonResource-closed nr (var x p) with var-pos x
 ... | ()
 nonResource-closed nr (usedef f δ h e) = nonResource-usedef nr f δ e
@@ -108,11 +108,10 @@ nonResource-closed nr (subV V p)    = nonResource-<: p (nonResource-closed nr V)
 record ResourceValue {Θ n} (Q : Hyps Θ) (Γ : OCtx Θ n) (ρ'' : RExp Θ) (X'' : OVType Θ)
                      (V : RawV Θ n) : Set where
   field
-    {res-ρ₀ res-ρ' res-ρ} : RExp Θ
-    {res-X₀ res-X}        : OVType Θ
-    res-z     : [ res-ρ₀ ] res-X₀ ∈̂[ res-ρ' ] Γ
-    usable    : Q ⊩ ([ res-ρ₀ ] res-X₀) Et∨≾ᵘ res-ρ'
-    chain     : Q ∣ Γ ⊢↪[ res-ρ' ] res-z ⦂[ res-ρ ] res-X
+    {res-ρ' res-ρ} : RExp Θ
+    {res-X}        : OVType Θ
+    chain     : Q ⊢ [ res-ρ ] res-X ∈̂[ res-ρ' ] Γ
+    usable    : Q ⊩ ([ res-grade-of chain ] res-payload-of chain) Et∨≾ᵘ res-ρ'
     erases    : ⌊ chain ⌋ʳ ≡ V
     grade     : Q ⊩ ρ'' ≾̂ᵣ res-ρ
     payload   : Q ⊩ res-X <:̂ᵛ X''
@@ -121,40 +120,37 @@ open ResourceValue public
 
 resource-value : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ'' : RExp Θ} {X'' : OVType Θ}
                → NonResourceDefs (defs Γ)
-               → (V : Q ∣ Γ ⊢V⦂ [ ρ'' ] X'')
+               → (V : Q ∣ Γ ⊢ᵛ⦂ [ ρ'' ] X'')
                → ResourceValue Q Γ ρ'' X'' ⌊ V ⌋ᵛ
 resource-value nr (var x ok) =
-  record { res-z = x ; usable = ok ; chain = res-var ; erases = refl
+  record { chain = res-var x ; usable = ok ; erases = refl
          ; grade = ⊩≾̂ᵣ-refl ; payload = <:̂ᵛ-refl _ }
 resource-value nr (usedef f δ h e) = ⊥-elim (nonResource-usedef nr f δ e)
 resource-value {ρ'' = ρ''} {X''} nr (annᵛ _ V) =
-  record { res-z = res-z r ; usable = usable r
-         ; chain = res-ann ρ'' X'' (chain r) (grade r) (payload r)
+  record { chain = res-ann ρ'' X'' (chain r) (grade r) (payload r) ; usable = usable r
          ; erases = cong (_⦂ᵛ [ ρ'' ] X'') (erases r)
          ; grade = ⊩≾̂ᵣ-refl ; payload = <:̂ᵛ-refl _ }
   where r = resource-value nr V
 resource-value nr (subV V p) with <:̂ᵛ-boxʳ p
 ... | _ , _ , refl , q , s =
-  record { res-z = res-z r ; usable = usable r ; chain = chain r ; erases = erases r
+  record { chain = chain r ; usable = usable r ; erases = erases r
          ; grade = transᵣ q (grade r) ; payload = <:̂ᵛ-trans (payload r) s }
   where r = resource-value nr V
 
 ------------------------------------------------------------------------
 -- Collapsing and grafting
 
-res-collapse : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ}
-                 {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
-             → Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X
-             → (Q ⊩ ρ ≾̂ᵣ ρ₀) × (Q ⊩ X₀ <:̂ᵛ X)
-res-collapse res-var = ⊩≾̂ᵣ-refl , <:̂ᵛ-refl _
+res-collapse : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ' ρ : RExp Θ} {X : OVType Θ}
+             → (R : Q ⊢ [ ρ ] X ∈̂[ ρ' ] Γ)
+             → (Q ⊩ ρ ≾̂ᵣ res-grade-of R) × (Q ⊩ res-payload-of R <:̂ᵛ X)
+res-collapse (res-var _)         = ⊩≾̂ᵣ-refl , <:̂ᵛ-refl _
 res-collapse (res-ann _ _ R p q) with res-collapse R
 ... | p' , q' = transᵣ p p' , <:̂ᵛ-trans q' q
 
 res-rebase : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m}
-               {ρ' ρ₀ ρ σ' σ₀ : RExp Θ} {X₀ X Y₀ : OVType Θ}
-               {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ} {z' : [ σ₀ ] Y₀ ∈̂[ σ' ] Γ'}
-           → Q ∣ Γ' ⊢↪[ σ' ] z' ⦂[ ρ₀ ] X₀
-           → Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X
-           → Q ∣ Γ' ⊢↪[ σ' ] z' ⦂[ ρ ] X
-res-rebase R' res-var                 = R'
-res-rebase R' (res-ann ρₐ Xₐ R pₐ qₐ) = res-ann ρₐ Xₐ (res-rebase R' R) pₐ qₐ
+               {ρ' σ' : RExp Θ} {A : OVType Θ}
+           → (R : Q ⊢ A ∈̂[ ρ' ] Γ)
+           → Q ⊢ [ res-grade-of R ] res-payload-of R ∈̂[ σ' ] Γ'
+           → Q ⊢ A ∈̂[ σ' ] Γ'
+res-rebase (res-var _)             R' = R'
+res-rebase (res-ann ρₐ Xₐ R pₐ qₐ) R' = res-ann ρₐ Xₐ (res-rebase R R') pₐ qₐ

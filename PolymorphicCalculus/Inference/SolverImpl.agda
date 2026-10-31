@@ -580,7 +580,7 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ (Q̃ ++ᵠ R̃) X̃ inst' fac
         eqR = cong (_[ δ ]ᶜ) (trans ([⨟]ᶜ X̃ ⌜ ι ⌝ʳ π) (trans ([≐]ᶜ πι X̃) ([id]ᶜ X̃)))
 
     inst' : ∀ {Θ''} → (δ : Subst Θ̃ Θ'') → (Q' : Hyps Θ'') → Q' ⊩ᴴ Q̃ ++ᵠ R̃ [ δ ]
-          → Σ[ D ∈ (Q' ∣ Γ [ σ̃ ⨟ˢ δ ]ᶜᵗˣ ⊢C⦂ X̃ [ δ ]ᶜ) ] (⌊ D ⌋ᶜ ≡ M [ σ̃ ⨟ˢ δ ]ᴿᶜ)
+          → Σ[ D ∈ (Q' ∣ Γ [ σ̃ ⨟ˢ δ ]ᶜᵗˣ ⊢ᶜ⦂ X̃ [ δ ]ᶜ) ] (⌊ D ⌋ᶜ ≡ M [ σ̃ ⨟ˢ δ ]ᴿᶜ)
     inst' δ Q' hh =
       subC (ctx-substᶜ ceq D) (≡̂ᶜ-<:̂ (ty δ)) , trans (⌊ctxᶜ⌋ ceq D) (trans e meq)
       where
@@ -598,7 +598,7 @@ scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ (Q̃ ++ᵠ R̃) X̃ inst' fac
         meq = trans (M₊-[] M (σ ⨟ˢ τ)) ([≐]ᴿᶜ (ctx δ) M)
 
     fac : ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q₀ : Hyps Θ'') → {C₀ : OCType Θ''}
-        → (D₀ : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ C₀) → ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
+        → (D₀ : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢ᶜ⦂ C₀) → ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
         → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀
         → Σ[ δ ∈ Subst Θ̃ ∅ˢ ]
             ((σ̃ ⨟ˢ δ ≐ˢ σ₀ ⨟ˢ δ₀) × (δ ⊨ Q̃ ++ᵠ R̃) × (∅ᴴ ⊩ X̃ [ δ ]ᶜ <:̂ᶜ C₀ [ δ₀ ]ᶜ))

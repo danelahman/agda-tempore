@@ -32,11 +32,11 @@ open import PolymorphicCalculus.Syntax.Raw.GradeSubstitution S
 open import PolymorphicCalculus.Syntax.Run                   S
 
 scope-instantiationᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {X : OVType Θ} {δ : Subst Θ ∅ˢ}
-               → (V : Q ∣ Γ ⊢V⦂ X) → δ ⊨ Q
+               → (V : Q ∣ Γ ⊢ᵛ⦂ X) → δ ⊨ Q
                → Γ [ δ ]ᶜᵗˣ ⊢ᵛ eraseᵛ (⌊ V ⌋ᵛ [ δ ]ᴿᵛ) ⦂ X [ δ ]ᵛ
 scope-instantiationᵛ {δ = δ} V h = substᵛ δ (⊨⇒⊩ᴴ h) V , cong eraseᵛ (⌊substᵛ⌋ δ (⊨⇒⊩ᴴ h) V)
 
 scope-instantiation : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ} {δ : Subst Θ ∅ˢ}
-              → (M : Q ∣ Γ ⊢C⦂ C) → δ ⊨ Q
+              → (M : Q ∣ Γ ⊢ᶜ⦂ C) → δ ⊨ Q
               → Γ [ δ ]ᶜᵗˣ ⊢ᶜ eraseᶜ (⌊ M ⌋ᶜ [ δ ]ᴿᶜ) ⦂ C [ δ ]ᶜ
 scope-instantiation {δ = δ} M h = substᶜ δ (⊨⇒⊩ᴴ h) M , cong eraseᶜ (⌊substᶜ⌋ δ (⊨⇒⊩ᴴ h) M)

@@ -70,7 +70,7 @@ open import PolymorphicCalculus.Examples.Variables
 
 -- A closed derivation in the empty context is a typing
 
-closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢C⦂ C)
+closed : {M : RawC ∅ˢ 0} {C : OCType ∅ˢ} → (D : ∅ᴴ ∣ [] ⊢ᶜ⦂ C)
        → ⌊ D ⌋ᶜ ≡ M [ idˢ ]ᴿᶜ → Typable [] M
 closed {C = C} D e = typable ∅ˢ idˢ ∅ᴴ C D e Satisfiable-∅
 
@@ -139,7 +139,7 @@ private
 add : RawC ∅ˢ 0
 add = return (fun (return (fun (recℕ v₁ (return v₀) (return (succ v₀))))))
 
-add-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
+add-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (nat ⇒ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 add-D =
   return (fun (return (fun
     (recℕ (var (Tl-∷ Hd) ok₀) (return (var Hd ok₀)) (return (succ (var Hd ok₀))) pure))))
@@ -159,7 +159,7 @@ add-typed = typed-of add (closed add-D refl) _
 rebuild : RawC ∅ˢ 0
 rebuild = return (fun (recℕ v₀ (return zero) (return (succ v₁))))
 
-rebuild-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ
+rebuild-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ
 rebuild-D =
   return (fun
     (recℕ (var Hd ok₀) (return zero) (return (succ (var (Tl-∷ (Tl-⟨⟩ Hd)) okℕ))) pure))
@@ -172,7 +172,7 @@ mul =
   return (fun (return (fun
     (recℕ v₁ (return zero) (recℕ v₂ (return v₀) (return (succ v₀)))))))
 
-mul-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (nat ⇒ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
+mul-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (nat ⇒ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ
 mul-D =
   return (fun (return (fun
     (recℕ (var (Tl-∷ Hd) ok₀) (return zero)
@@ -225,7 +225,7 @@ countdown-top = countdown-on ⦂ᶜ (unit ! econst ⊤ₑ)
 
 -- typable at every grade
 
-countdown-top-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! econst ⊤ₑ
+countdown-top-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ unit ! econst ⊤ₑ
 countdown-top-D =
   annᶜ (unit ! econst ⊤ₑ)
     (recℕ (numeralᵛ 3) (coerce topₑ (return ⋆)) (coerce topₑ (delay ⌜ 1 ⌝ (return ⋆))) topₑ)
@@ -263,14 +263,14 @@ in-clause-tick = in-clause (delay ⌜ 1 ⌝ (return ⋆))
 
 -- With a pure step, typable at every grade
 
-in-clause-pure-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)
+in-clause-pure-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ unit ! (𝟏̂ₑ ·̂ₑ 𝟏̂ₑ)
 in-clause-pure-D =
   handle (return ⋆)
   `with handler (return ⋆) (λ op →
     coerce (eqₑ ≡̂ₑ-identityˡ)
       (recℕ (numeralᵛ 2) (return ⋆) (return ⋆) pure
        ⨟ perform op (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) (≾ᵘ-ok 𝟏-passed))
-           (unbox (res-var {z = Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))})
+           (unbox (res-var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))))
                   (transᵣ (monoᵣ 𝟏-passed ⊩≾̂ᵣ-refl) (eqᵣ ≡̂ᵣ-identityˡ))
                   (var Hd ok₀ · var (Tl-∷ Hd) ok₀))))
 
@@ -304,7 +304,7 @@ drop-clause =
 length : RawC ∅ˢ 0
 length = return (fun (recL v₀ (return zero) (return (succ v₀))))
 
-length-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (list bool ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ
+length-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (list bool ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ
 length-D = return (fun (recL (var Hd ok₀) (return zero) (return (succ (var Hd ok₀))) pure))
 
 length-typed : IsTyped (infer [] length)
@@ -335,7 +335,7 @@ private
   Fn : ∀ {Θ} → OVType Θ
   Fn = unit ⇒ unit ! 𝟏̂ₑ
 
-copy-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (list Fn ⇒ list Fn ! 𝟏̂ₑ) ! 𝟏̂ₑ
+copy-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ (list Fn ⇒ list Fn ! 𝟏̂ₑ) ! 𝟏̂ₑ
 copy-D =
   return (fun
     (recL (var Hd ok₀) (return nil)
@@ -390,7 +390,7 @@ ticks-at k = ticks-on ⦂ᶜ (unit ! ⌜ k ⌝ᵉ)
 ticks-top : RawC ∅ˢ 0
 ticks-top = ticks-on ⦂ᶜ (unit ! econst ⊤ₑ)
 
-ticks-top-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ unit ! econst ⊤ₑ
+ticks-top-D : ∅ᴴ {∅ˢ} ∣ [] ⊢ᶜ⦂ unit ! econst ⊤ₑ
 ticks-top-D =
   annᶜ (unit ! econst ⊤ₑ)
     (recL (cons ⋆ (cons ⋆ (cons ⋆ nil))) (coerce topₑ (return ⋆))

@@ -81,7 +81,7 @@ open import MonomorphicCalculus.EquationalTheory.Soundness.HandlePerform S Cat F
 
 mutual
 
-  soundᵛ : ∀ {Γ A} {V W : Γ ⊢V⦂ A} → (p : Γ ⊢V⦂ V ≡ᵗʰ W) → Midᵛ p → Soundᵛ≡ᵗʰ p
+  soundᵛ : ∀ {Γ A} {V W : Γ ⊢ᵛ⦂ A} → (p : Γ ⊢ᵛ⦂ V ≡ᵗʰ W) → Midᵛ p → Soundᵛ≡ᵗʰ p
   -- setoid structure
   soundᵛ (V-refl {V = V})     _            pV pW = ⟦⟧ᵛᵗ-irr V pV pW
   soundᵛ (V-sym p)            mp           pV pW = ≈ᵐ-sym (soundᵛ p mp pW pV)
@@ -89,14 +89,14 @@ mutual
     soundᵛ p mp pV pW ∙ soundᵛ q mq pW pU
   -- substitutivity
   soundᵛ (V-subst {V = V} {W = W} p x q U) (pV , pW , pU , mp) pVL pWR =
-      ⟦⟧ᵛᵗ-irr (subst (_⊢V⦂ _) q (V [ x ↦ U ]v)) pVL
+      ⟦⟧ᵛᵗ-irr (subst (_⊢ᵛ⦂ _) q (V [ x ↦ U ]v)) pVL
               (substᴾᵛ {e = q} (V [ x ↦ U ]v) (subᵛ V x U pV pU))
     ∙ subst-val-interp q (V [ x ↦ U ]v) (subᵛ V x U pV pU)
     ∙ ∘ᵐ-congˡ (  V-subst-nat V x U pV pU
                 ∙ ∘ᵐ-congˡ (soundᵛ p mp pV pW)
                 ∙ ≈ᵐ-sym (V-subst-nat W x U pW pU))
     ∙ ≈ᵐ-sym (subst-val-interp q (W [ x ↦ U ]v) (subᵛ W x U pW pU))
-    ∙ ≈ᵐ-sym (⟦⟧ᵛᵗ-irr (subst (_⊢V⦂ _) q (W [ x ↦ U ]v)) pWR
+    ∙ ≈ᵐ-sym (⟦⟧ᵛᵗ-irr (subst (_⊢ᵛ⦂ _) q (W [ x ↦ U ]v)) pWR
                         (substᴾᵛ {e = q} (W [ x ↦ U ]v) (subᵛ W x U pW pU)))
   -- congruences
   soundᵛ (⦉⦊-cong p q)        (mp , mq)    (pV , pW) (pV' , pW') =
@@ -126,7 +126,7 @@ mutual
   soundᵛ (subV-cons p V W)    _            = sound-subV-cons p V W
   soundᵛ (subV-fun p w M)     _            = sound-subV-fun p w M
 
-  soundᶜ : ∀ {Γ C} {M N : Γ ⊢C⦂ C} → (p : Γ ⊢C⦂ M ≡ᵗʰ N) → Midᶜ p → Soundᶜ≡ᵗʰ p
+  soundᶜ : ∀ {Γ C} {M N : Γ ⊢ᶜ⦂ C} → (p : Γ ⊢ᶜ⦂ M ≡ᵗʰ N) → Midᶜ p → Soundᶜ≡ᵗʰ p
   -- setoid structure
   soundᶜ (C-refl {M = M})     _            pM pN = ⟦⟧ᶜᵗ-irr M pM pN
   soundᶜ (C-sym p)            mp           pM pN = ≈ᵐ-sym (soundᶜ p mp pN pM)
@@ -134,14 +134,14 @@ mutual
     soundᶜ p mp pM pN ∙ soundᶜ q mq pN pU
   -- substitutivity
   soundᶜ (C-subst {M = M} {N = N} p x q V) (pM , pN , pV , mp) pML pNR =
-      ⟦⟧ᶜᵗ-irr (subst (_⊢C⦂ _) q (M [ x ↦ V ]c)) pML
+      ⟦⟧ᶜᵗ-irr (subst (_⊢ᶜ⦂ _) q (M [ x ↦ V ]c)) pML
               (substᴾᶜ′ {e = q} (M [ x ↦ V ]c) (subᶜ M x V pM pV))
     ∙ subst-ctx-interp q (M [ x ↦ V ]c) (subᶜ M x V pM pV)
     ∙ ∘ᵐ-congˡ (  C-subst-nat M x V pM pV
                 ∙ ∘ᵐ-congˡ (soundᶜ p mp pM pN)
                 ∙ ≈ᵐ-sym (C-subst-nat N x V pN pV))
     ∙ ≈ᵐ-sym (subst-ctx-interp q (N [ x ↦ V ]c) (subᶜ N x V pN pV))
-    ∙ ≈ᵐ-sym (⟦⟧ᶜᵗ-irr (subst (_⊢C⦂ _) q (N [ x ↦ V ]c)) pNR
+    ∙ ≈ᵐ-sym (⟦⟧ᶜᵗ-irr (subst (_⊢ᶜ⦂ _) q (N [ x ↦ V ]c)) pNR
                         (substᴾᶜ′ {e = q} (N [ x ↦ V ]c) (subᶜ N x V pN pV)))
   -- congruences
   soundᶜ (return-cong p)      mp           pV pV' = ∘ᵐ-congʳ (soundᵛ p mp pV pV')

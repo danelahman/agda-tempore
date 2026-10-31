@@ -80,13 +80,13 @@ reach-renᵘ-unbox : ∀ {𝕊 𝕊' : State []} → (q : 𝕊 ⊑ₛ[ 𝟏ᵣ ]
                  → reach-renᵘ q ≐ʳ (⟨⟩-η⁻¹-ren ∘ʳ unbox-ren q)
 reach-renᵘ-unbox q = ≐ʳ-refl
 
-reach-val : ∀ {𝕊 𝕊' A} → 𝕊 ⊑ₛ[ 𝟏ᵣ ] 𝕊' → toCtx 𝕊 ⊢V⦂ A → toCtx 𝕊' ⊢V⦂ A
+reach-val : ∀ {𝕊 𝕊' A} → 𝕊 ⊑ₛ[ 𝟏ᵣ ] 𝕊' → toCtx 𝕊 ⊢ᵛ⦂ A → toCtx 𝕊' ⊢ᵛ⦂ A
 reach-val q = V-rename (reach-renᵘ q)
 
 -- Transporting a term with one more variable on top (a `fun` body).
 
 reach-under : ∀ {𝕊 𝕊' A C} → 𝕊 ⊑ₛ[ 𝟏ᵣ ] 𝕊'
-            → toCtx 𝕊 ∷ A ⊢C⦂ C → toCtx 𝕊' ∷ A ⊢C⦂ C
+            → toCtx 𝕊 ∷ A ⊢ᶜ⦂ C → toCtx 𝕊' ∷ A ⊢ᶜ⦂ C
 reach-under q = C-rename (cong-∷-ren (reach-renᵘ q))
 
 -- Resuming a continuation guarded by `ρ` at a state where `ρ` has elapsed:
@@ -96,9 +96,9 @@ reach-under q = C-rename (cong-∷-ren (reach-renᵘ q))
 
 resume : ∀ {𝕊 𝕊' ρ A ε B}
        → (q : 𝕊 ⊑ₛ[ ρ ] 𝕊')
-       → toCtx 𝕊 ⟨ ρ ⟩ ∷ B ⊢C⦂ A ! ε
-       → toCtx 𝕊' ⊢V⦂ B
-       → toCtx 𝕊' ⊢C⦂ A ! ε
+       → toCtx 𝕊 ⟨ ρ ⟩ ∷ B ⊢ᶜ⦂ A ! ε
+       → toCtx 𝕊' ⊢ᵛ⦂ B
+       → toCtx 𝕊' ⊢ᶜ⦂ A ! ε
 resume q M W = (C-rename (cong-∷-ren (unbox-ren q)) M) [ split-[] ↦ W ]c
 
 -- Two general facts about `_≤ₛ_` that `MonomorphicCalculus.OperationalSemantics.State` does not
@@ -152,7 +152,7 @@ reach-∘ {ρ = ρ} q' q = reach-≤ (reach-∘ᵍ q' q) (≃ᵣ⇒≾ᵣ (·ᵣ
 -- Allocating a cell accumulates nothing (`BOX`); letting time pass costs
 -- exactly the lock it passes (`DELAY`).
 
-alloc-reach : ∀ {A ρ} {𝕊 : State []} → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢V⦂ A)
+alloc-reach : ∀ {A ρ} {𝕊 : State []} → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢ᵛ⦂ A)
             ------------------------------------------------------------
             → 𝕊 ⊑ₛ[ 𝟏ᵣ ] (𝕊 ∷ₛ V)
 
@@ -369,12 +369,12 @@ steps-ren rs = suc-comp-ren (steps-extends-state rs) (steps-grade-≾ rs)
 -- substituting into it does.
 
 subCtx-run : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
-           → cf ⟶* cf' → ∀ {Γ C} → Γ ∷ A ⊢C⦂ C → Γ ∷ B ⊢C⦂ C
+           → cf ⟶* cf' → ∀ {Γ C} → Γ ∷ A ⊢ᶜ⦂ C → Γ ∷ B ⊢ᶜ⦂ C
 subCtx-run done     N = N
 subCtx-run (r ▸ rs) N = subCtx-run rs (subCtx (step-refines-type r) N)
 
 spine : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
-      → cf ⟶* cf' → ∀ {Γ} → Γ ⊢V⦂ B → Γ ⊢V⦂ A
+      → cf ⟶* cf' → ∀ {Γ} → Γ ⊢ᵛ⦂ B → Γ ⊢ᵛ⦂ A
 spine done     V = V
 spine (r ▸ rs) V = subV (spine rs V) (step-refines-type r)
 
@@ -382,7 +382,7 @@ spine (r ▸ rs) V = subV (spine rs V) (step-refines-type r)
 -- a run.
 
 subCtx-run-sub : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
-               → (rs : cf ⟶* cf') → ∀ {Γ C} → (N : Γ ∷ A ⊢C⦂ C) → (V : Γ ⊢V⦂ B)
+               → (rs : cf ⟶* cf') → ∀ {Γ C} → (N : Γ ∷ A ⊢ᶜ⦂ C) → (V : Γ ⊢ᵛ⦂ B)
                ---------------------------------------------------------------
                → subCtx-run rs N [ split-[] ↦ V ]c
                ≡ N [ split-[] ↦ spine rs V ]c
@@ -394,7 +394,7 @@ subCtx-run-sub (r ▸ rs) N V =
 
 subCtx-run-ren : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
                → (rs : cf ⟶* cf') → ∀ {Γ Δ C} → (r : Ren [] Δ Γ)
-               → (N : Γ ∷ A ⊢C⦂ C)
+               → (N : Γ ∷ A ⊢ᶜ⦂ C)
                -----------------------------------------------
                → C-rename (cong-∷-ren r) (subCtx-run rs N)
                ≡ subCtx-run rs (C-rename (cong-∷-ren r) N)
@@ -408,11 +408,11 @@ subCtx-run-ren (r₀ ▸ rs) r N =
 -- step's own extension, and subsume its binder to the refined value type.
 
 seq-steps : ∀ {A A₁ B ε ε' ε₂} {𝕊 𝕊₁ : State []}
-          → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M₁ : toCtx 𝕊₁ ⊢C⦂ A₁ ! ε'}
+          → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M₁ : toCtx 𝕊₁ ⊢ᶜ⦂ A₁ ! ε'}
           → (rs : ⟨ 𝕊 ∣ M ⟩ ⟶* ⟨ 𝕊₁ ∣ M₁ ⟩)
-          → (N : toCtx 𝕊 ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+          → (N : toCtx 𝕊 ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂)
           -----------------------------------------------------------------
-          → Σ[ N₁ ∈ (toCtx 𝕊₁ ⟨ ∣ ε' ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B ! ε₂) ]
+          → Σ[ N₁ ∈ (toCtx 𝕊₁ ⟨ ∣ ε' ∣ᵉ ⟩ ∷ A₁ ⊢ᶜ⦂ B ! ε₂) ]
               (⟨ 𝕊 ∣ M ⨟ N ⟩ ⟶* ⟨ 𝕊₁ ∣ M₁ ⨟ N₁ ⟩)
             × (N₁ ≡ subCtx-run rs (C-rename (cong-∷-ren (steps-ren rs)) N))
 
@@ -460,13 +460,13 @@ steps-barrier-ren : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! �
 steps-barrier-ren rs = suc-comp-ren (steps-extends-state rs) (≾-⊤ᵣ _)
 
 handle-steps : ∀ {A A₁ B ε ε' ε₂} {𝕊 𝕊₁ : State []}
-             → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M₁ : toCtx 𝕊₁ ⊢C⦂ A₁ ! ε'}
+             → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M₁ : toCtx 𝕊₁ ⊢ᶜ⦂ A₁ ! ε'}
              → (rs : ⟨ 𝕊 ∣ M ⟩ ⟶* ⟨ 𝕊₁ ∣ M₁ ⟩)
              → (H : (op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx 𝕊 ⟨ ⊤ᵣ ⟩))
-             → (N : toCtx 𝕊 ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢C⦂ B ! ε₂)
+             → (N : toCtx 𝕊 ⟨ ∣ ε ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂)
              ---------------------------------------------------------------
              → Σ[ H₁ ∈ ((op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx 𝕊₁ ⟨ ⊤ᵣ ⟩)) ]
-               Σ[ N₁ ∈ (toCtx 𝕊₁ ⟨ ∣ ε' ∣ᵉ ⟩ ∷ A₁ ⊢C⦂ B ! ε₂) ]
+               Σ[ N₁ ∈ (toCtx 𝕊₁ ⟨ ∣ ε' ∣ᵉ ⟩ ∷ A₁ ⊢ᶜ⦂ B ! ε₂) ]
                  (⟨ 𝕊 ∣ handle M `with H `in N ⟩ ⟶*
                   ⟨ 𝕊₁ ∣ handle M₁ `with H₁ `in N₁ ⟩)
                × (∀ op ε₃ → H₁ op ε₃
@@ -594,7 +594,7 @@ reach-renᵘ-∘ q' q =
 
 -- Allocating a cell renames the old context by weakening past it.
 
-alloc-ren-≐ʳ : ∀ {A ρ} {𝕊 : State []} → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢V⦂ A)
+alloc-ren-≐ʳ : ∀ {A ρ} {𝕊 : State []} → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢ᵛ⦂ A)
             → reach-renᵘ (alloc-reach V) ≐ʳ wk-ren
 alloc-ren-≐ʳ V = mk≐ʳ (λ x → reach-renᵘ-img (alloc-reach V) x)
 
@@ -685,12 +685,12 @@ lookup-body′ : ∀ {A ρ σ} {Γ : Ctx} → (Γf Γs : Ctx)
              → (eq : (Γf ∷ [ ρ ] A) ++ᶜ Γs ≡ Γ)
              → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs) ≾ᵣ σ)
              → (rel : σ ≾ᵣ ρ)
-             → ([] ++ᶜ Γf) ⟨ ρ ⟩ ⊢V⦂ A
-             → Γ ⊢V⦂ A
+             → ([] ++ᶜ Γf) ⟨ ρ ⟩ ⊢ᵛ⦂ A
+             → Γ ⊢ᵛ⦂ A
 lookup-body′ Γf Γs eq h rel U = V-rename (lookup-ren′ Γf Γs eq h rel) U
 
 lookup-body : ∀ {A ρ} → (𝕊 : State []) → (t : Var (toCtx 𝕊) ([ ρ ] A))
-            → proj₁ t ≾ᵣ ρ → toCtx 𝕊 ⊢V⦂ A
+            → proj₁ t ≾ᵣ ρ → toCtx 𝕊 ⊢ᵛ⦂ A
 lookup-body {A} {ρ} 𝕊 (ρ' , z) rel =
   lookup-body′
     (toCtx (split-state-fst 𝕊 z)) (toCtx (split-state-snd 𝕊 z))
@@ -709,8 +709,8 @@ lookup-body′-≡ : ∀ {A ρ σ} {Γ Γ' : Ctx} → (eΓ : Γ' ≡ Γ)
                → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs) ≾ᵣ σ)
                → (h' : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs') ≾ᵣ σ)
                → (rel rel' : σ ≾ᵣ ρ)
-               → (U : ([] ++ᶜ Γf) ⟨ ρ ⟩ ⊢V⦂ A)
-               → (U' : ([] ++ᶜ Γf') ⟨ ρ ⟩ ⊢V⦂ A)
+               → (U : ([] ++ᶜ Γf) ⟨ ρ ⟩ ⊢ᵛ⦂ A)
+               → (U' : ([] ++ᶜ Γf') ⟨ ρ ⟩ ⊢ᵛ⦂ A)
                → U ≡ castᵛ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) eF) U'
                → lookup-body′ Γf Γs eq h rel U
                ≡ castᵛ eΓ (lookup-body′ Γf' Γs' eq' h' rel' U')
@@ -743,7 +743,7 @@ lookup-body-≡ 𝕊 refl rel rel' =
 ≤ₛ-embed-lookup : ∀ {𝕊 𝕊₁ : State []} → (e : 𝕊 ≤ₛ 𝕊₁) → ∀ {A ρ σ}
                 → (x : [ ρ ] A ∈[ σ ] toCtx 𝕊)
                 → resource-lookup 𝕊₁ (proj₂ (≤ₛ-embed e x))
-                ≡ subst (λ 𝕊₀ → ([] ++ᶜ toCtx 𝕊₀) ⟨ ρ ⟩ ⊢V⦂ A)
+                ≡ subst (λ 𝕊₀ → ([] ++ᶜ toCtx 𝕊₀) ⟨ ρ ⟩ ⊢ᵛ⦂ A)
                         (sym (≤ₛ-embed-fst e x))
                         (resource-lookup 𝕊 x)
 
@@ -804,13 +804,13 @@ lookup-body-≡ 𝕊 refl rel rel' =
 -- at is transporting it along the contexts.
 
 subst-state-castᵛ : ∀ {A ρ} {𝕊 𝕊' : State []} → (p : 𝕊 ≡ 𝕊')
-                   → (U : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢V⦂ A)
-                   → subst (λ 𝕊₀ → ([] ++ᶜ toCtx 𝕊₀ ⟨ ρ ⟩) ⊢V⦂ A) p U
+                   → (U : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢ᵛ⦂ A)
+                   → subst (λ 𝕊₀ → ([] ++ᶜ toCtx 𝕊₀ ⟨ ρ ⟩) ⊢ᵛ⦂ A) p U
                    ≡ castᵛ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) (cong toCtx p)) U
 subst-state-castᵛ refl U = refl
 
 alloc-lookup-ren : ∀ {A ρ σ} {𝕊 𝕊' : State []}
-                 → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢V⦂ A)
+                 → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢ᵛ⦂ A)
                  → (e : (𝕊 ∷ₛ V) ≤ₛ 𝕊')
                  → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ ≤ₛ-ctx e) ≾ᵣ σ)
                  → (rel : σ ≾ᵣ ρ)
@@ -862,7 +862,7 @@ alloc-lookup-ren {A} {ρ} {σ} {𝕊} {𝕊'} V e h rel q₀ eq₀ = mk≐ʳ go
 -- presents, via `≤ₛ-embed-fst`, `≤ₛ-embed-snd-ctx`, and `≤ₛ-embed-lookup`.
 
 alloc-lookup-≡ : ∀ {A ρ} {𝕊 𝕊' : State []}
-               → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢V⦂ A)
+               → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢ᵛ⦂ A)
                → (e : (𝕊 ∷ₛ V) ≤ₛ 𝕊')
                → (rel : proj₁ (≤ₛ-embed e (Hd {Γ = toCtx 𝕊})) ≾ᵣ ρ)
                → (q₀ : 𝕊 ⊑ₛ[ ρ ] 𝕊')
@@ -910,6 +910,6 @@ open _[_]⊑ᶜ_ public
 -- What reading it yields.
 
 lookupᶜ : ∀ {A ρ σ} {𝕊 𝕊' : State []} {c : [ ρ ] A ∈[ σ ] toCtx 𝕊}
-        → 𝕊 [ c ]⊑ᶜ 𝕊' → toCtx 𝕊' ⊢V⦂ A
+        → 𝕊 [ c ]⊑ᶜ 𝕊' → toCtx 𝕊' ⊢ᵛ⦂ A
 lookupᶜ {c = c} r = lookup-body _ (≤ₛ-embed (extᶜ r) c) (ready r)
 

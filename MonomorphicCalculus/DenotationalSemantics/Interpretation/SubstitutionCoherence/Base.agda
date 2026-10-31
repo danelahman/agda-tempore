@@ -70,7 +70,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.RenamingCoh
 -- numerals, pairs and injections, never a `fun`, so its result is
 -- parametric outright.
 
-eternal-val-extᴾ : ∀ {Γ A ρ} → (et : Et A) → (V : Γ ⊢V⦂ A)
+eternal-val-extᴾ : ∀ {Γ A ρ} → (et : Et A) → (V : Γ ⊢ᵛ⦂ A)
                  → Paramᵛ (eternal-val-ext {ρ = ρ} et V)
 eternal-val-extᴾ et (var _ x)                  = tt
 eternal-val-extᴾ _  (const B b)                = tt
@@ -89,7 +89,7 @@ eternal-val-extᴾ (_ |+|ₑ et₂) (inr V)          = eternal-val-extᴾ et₂ 
 eternal-val-extᴾ et (subV V p)                 =
   eternal-val-extᴾ (<:ᵛ-eternalˡ p et) V
 
-sub-env : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢V⦂ A) → Paramᵛ W
+sub-env : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢ᵛ⦂ A) → Paramᵛ W
         → ⟦ Γ₁ ++ᶜ Γ₂ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ
 sub-env split-[]              W pW = ⟨ idᵐ , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
 sub-env (split-∷ s)           W pW = mapˣᵐ (sub-env s W pW) idᵐ
@@ -114,7 +114,7 @@ extᵉ-<: et et' p with <:ᵛ-eternal-≡ et p
   (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (⟨⟩-congᶠ (⟦⟧<:ᵛ-id p)) ⟨⟩-idᵐ))
                     (∘ᵐ-identityʳ _)))))
 
-eternal-val-ext-nat : ∀ {Γ A ρ} → (et : Et A) → (V : Γ ⊢V⦂ A) → (pV : Paramᵛ V)
+eternal-val-ext-nat : ∀ {Γ A ρ} → (et : Et A) → (V : Γ ⊢ᵛ⦂ A) → (pV : Paramᵛ V)
                     → ⟦ eternal-val-ext {ρ = ρ} et V ⟧ᵛᵗ (eternal-val-extᴾ et V)
                       ≈ᵐ eternalᵛ-extᵉ et ∘ᵐ ⟨ ρ ⟩ᶠ (⟦ V ⟧ᵛᵗ pV)
 
@@ -249,7 +249,7 @@ hd-lookup c =
 -- Given that the continuation and the resource lookup each commute with the
 -- substitution, so does the whole unboxing.
 
-unbox-step : ∀ {Γ Γ' A C} → {M' : Γ' ∷ A ⊢C⦂ C} → {M : Γ ∷ A ⊢C⦂ C}
+unbox-step : ∀ {Γ Γ' A C} → {M' : Γ' ∷ A ⊢ᶜ⦂ C} → {M : Γ ∷ A ⊢ᶜ⦂ C}
            → {σ : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ}
            → {lk' : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ} → {lkᵒ : ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ}
            → {pM' : Paramᶜ M'} → {pM : Paramᶜ M}
@@ -295,7 +295,7 @@ boxed-proj : ∀ {Γ A ρ}
            → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟨ 𝟏ᵣ ⟩ᵒ ⟦ [ ρ ] A ⟧ᵛ
 boxed-proj (_ , _ , _ , x , w , b) = ⟨ 𝟏ᵣ ⟩ᶠ ⟦ w ⟧<:ᵛ ∘ᵐ ⟨⟩-≤ b ∘ᵐ var-proj x
 
-grad-typ-var-nat : ∀ {Γ A ρ} → (W : Γ ⊢V⦂ [ ρ ] A) → (pW : Paramᵛ W)
+grad-typ-var-nat : ∀ {Γ A ρ} → (W : Γ ⊢ᵛ⦂ [ ρ ] A) → (pW : Paramᵛ W)
                  → boxed-proj (grad-typ⇒var<: W) ≈ᵐ η ∘ᵐ ⟦ W ⟧ᵛᵗ pW
 grad-typ-var-nat {A = A} {ρ = ρ} (var f x) _ =
   ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩-congᶠ (⟦⟧<:ᵛ-refl ([ ρ ] A))) ⟨⟩-idᵐ))

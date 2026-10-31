@@ -77,7 +77,7 @@ Paramᵏ (handle[ p ]ₖ K `with V)   = Paramᵏ K × Paramᵛ V
 -- The filled term's certificate.
 
 fillᴾ : ∀ {Γ f CH C} → (K : Γ ⊢K[ f ◁ CH ]⦂ C) → Paramᵏ K
-      → (N : Γ ++ᶜ hole-ctx K ⊢C⦂ CH) → Paramᶜ N
+      → (N : Γ ++ᶜ hole-ctx K ⊢ᶜ⦂ CH) → Paramᶜ N
       → Paramᶜ (K [ N ])
 fillᴾ []ₖ                    _          N pN = pN
 fillᴾ (sub[ p ]ₖ q K)     pK         N pN = fillᴾ K pK N pN
@@ -118,7 +118,7 @@ ren-hyp : (Γ Γ' Θ₁ : Ctx) → ∀ {Δ f CH C} → (K : Δ ⊢K[ f ◁ CH ]�
         → (rΓ : Ren [] ((Γ ++ᶜ Θ₁) ++ᶜ hole-ctx K) (Γ ++ᶜ rel-hole-ctx K Θ₁))
         → ⟦ rΓ' ⟧ʳ ∘ᵐ ext (Γ ++ᶜ Θ₁) (Γ' ++ᶜ Θ₁) (hole-ctx K) (ext Γ Γ' Θ₁ g)
           ≈ᵐ ext Γ Γ' (rel-hole-ctx K Θ₁) g ∘ᵐ ⟦ rΓ ⟧ʳ
-        → (N N' : Γ' ++ᶜ rel-hole-ctx K Θ₁ ⊢C⦂ CH)
+        → (N N' : Γ' ++ᶜ rel-hole-ctx K Θ₁ ⊢ᶜ⦂ CH)
         → (pN : Paramᶜ N) → (pN' : Paramᶜ N')
         → ⟦ N ⟧ᶜᵗ pN ∘ᵐ ext Γ Γ' (rel-hole-ctx K Θ₁) g
           ≈ᵐ ⟦ N' ⟧ᶜᵗ pN' ∘ᵐ ext Γ Γ' (rel-hole-ctx K Θ₁) g
@@ -142,7 +142,7 @@ ren-hyp Γ Γ' Θ₁ K g rΓ' rΓ coh N N' pN pN' eq =
 
 fill-cong-env : (Γ : Ctx) → ∀ {Γ' f CH C} → (K : Γ' ⊢K[ f ◁ CH ]⦂ C)
               → (pK : Paramᵏ K)
-              → (N N' : Γ' ++ᶜ hole-ctx K ⊢C⦂ CH)
+              → (N N' : Γ' ++ᶜ hole-ctx K ⊢ᶜ⦂ CH)
               → (pN : Paramᶜ N) → (pN' : Paramᶜ N')
               → (g : ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ)
               → ⟦ N ⟧ᶜᵗ pN ∘ᵐ ext Γ Γ' (hole-ctx K) g

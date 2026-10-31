@@ -124,7 +124,7 @@ record PrincipalSolution {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n)
           → Q ⊩ᴴ Q⁺ [ δ ]
           -------------------------------------------------------
           → Σ[ D ∈ (Q ∣ Γ₊ Γ [ σ⁺ ⨟ˢ δ ]ᶜᵗˣ
-                      ⊢C⦂ (X̂ Θ [ σ⁺ ⨟ˢ δ ]ᵛ) ! (t̂ Θ [ σ⁺ ⨟ˢ δ ]ᵉ)) ]
+                      ⊢ᶜ⦂ (X̂ Θ [ σ⁺ ⨟ˢ δ ]ᵛ) ! (t̂ Θ [ σ⁺ ⨟ˢ δ ]ᵉ)) ]
                     (⌊ D ⌋ᶜ ≡ M₊ M [ σ⁺ ⨟ˢ δ ]ᴿᶜ)
 
     -- every typing of `M` factors through the principal one at each closed
@@ -132,7 +132,7 @@ record PrincipalSolution {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n)
 
     complete : ∀ {Θ''} → (σ : Subst (Θ +ty +e) Θ'') → (Q : Hyps Θ'')
         → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
-        → (D : Q ∣ Γ₊ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A₀ ! ε₀)
+        → (D : Q ∣ Γ₊ Γ [ σ ]ᶜᵗˣ ⊢ᶜ⦂ A₀ ! ε₀)
         → ⌊ D ⌋ᶜ ≡ M₊ M [ σ ]ᴿᶜ
         → Q ⊩ A₀ <:̂ᵛ X̂ Θ [ σ ]ᵛ
         → Q ⊩ ε₀ ≾̂ₑ t̂ Θ [ σ ]ᵉ
@@ -164,10 +164,10 @@ principalSolution sv {Θ} Γ M {Θ'} {σ} {Q} eq = mkPrincipalSolution
 
 typing₊ : ∀ {Θ n Θ''} {Γ : OCtx Θ n} {M : RawC Θ n} → (σ₀ : Subst Θ Θ'') → {Q : Hyps Θ''}
         → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
-        → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ A₀ ! ε₀)
+        → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢ᶜ⦂ A₀ ! ε₀)
         → ⌊ D ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
         -----------------------------------------------------------
-        → Σ[ D' ∈ (Q ∣ Γ₊ Γ [ σ₀ ,ᵗ A₀ ,ᵉ ε₀ ]ᶜᵗˣ ⊢C⦂ A₀ ! ε₀) ]
+        → Σ[ D' ∈ (Q ∣ Γ₊ Γ [ σ₀ ,ᵗ A₀ ,ᵉ ε₀ ]ᶜᵗˣ ⊢ᶜ⦂ A₀ ! ε₀) ]
             (⌊ D' ⌋ᶜ ≡ M₊ M [ σ₀ ,ᵗ A₀ ,ᵉ ε₀ ]ᴿᶜ)
 typing₊ {Γ = Γ} {M} σ₀ {A₀ = A₀} {ε₀} D e =
   ctx-substᶜ (sym ctxeq) D , trans (⌊ctxᶜ⌋ (sym ctxeq) D) (trans e (sym (M₊-[] M σ)))
@@ -180,7 +180,7 @@ typing₊ {Γ = Γ} {M} σ₀ {A₀ = A₀} {ε₀} D e =
 
 typing-sat : ∀ {Θ n Θ''} {Γ : OCtx Θ n} {M : RawC Θ n} → (σ₀ : Subst Θ Θ'') → {Q : Hyps Θ''}
            → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
-           → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ A₀ ! ε₀)
+           → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢ᶜ⦂ A₀ ! ε₀)
            → ⌊ D ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
            ------------------------------------
            → (σ₀ ,ᵗ A₀ ,ᵉ ε₀) ⊨[ Q ] C[ Γ , M ]
@@ -195,7 +195,7 @@ typing-sat {Θ} {Γ = Γ} {M} σ₀ {A₀ = A₀} D e =
 principal-inst : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalSolution Γ M)
                → ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q : Hyps Θ'')
                → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
-               → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ A₀ ! ε₀)
+               → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢ᶜ⦂ A₀ ! ε₀)
                → ⌊ D ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
                → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q
                ----------------------------------------------------------
@@ -248,11 +248,11 @@ record PrincipalScheme {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) :
     sound : ∀ {Θ''} → (δ : Subst Θ̃ Θ'') → (Q : Hyps Θ'')
           → Q ⊩ᴴ Q̃ [ δ ]
           --------------------------------------------------
-          → Σ[ D ∈ (Q ∣ Γ [ σ̃ ⨟ˢ δ ]ᶜᵗˣ ⊢C⦂ X̃ [ δ ]ᶜ) ]
+          → Σ[ D ∈ (Q ∣ Γ [ σ̃ ⨟ˢ δ ]ᶜᵗˣ ⊢ᶜ⦂ X̃ [ δ ]ᶜ) ]
                     (⌊ D ⌋ᶜ ≡ M [ σ̃ ⨟ˢ δ ]ᴿᶜ)
 
     complete : ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q₀ : Hyps Θ'') → {C₀ : OCType Θ''}
-             → (D₀ : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ C₀)
+             → (D₀ : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢ᶜ⦂ C₀)
              → ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
              → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀
              ---------------------------------------------------
@@ -273,7 +273,7 @@ record Typable {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set whe
     σ₀     : Subst Θ Θ₀
     Q₀     : Hyps Θ₀
     C₀     : OCType Θ₀
-    D₀     : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ C₀
+    D₀     : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢ᶜ⦂ C₀
     erases : ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
     sat    : Satisfiable Q₀
 
@@ -343,10 +343,10 @@ record PrincipalSchemeᵛ (Δ : PCtx) (V : RawV ∅ˢ 0) : Set where
     sound : ∀ {Θ''} → (δ : Subst Θ̃ Θ'') → (Q : Hyps Θ'')
           → Q ⊩ᴴ Q̃ [ δ ]
           -------------------------------------------------------------
-          → Σ[ D ∈ (Q ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X̃ [ δ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ)
+          → Σ[ D ∈ (Q ∣ ⌜ Δ ⌝ᵖ ⊢ᵛ⦂ X̃ [ δ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ)
 
     complete : ∀ {Θ''} → (Q₀ : Hyps Θ'') → {X₀ : OVType Θ''}
-             → (D₀ : Q₀ ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X₀)
+             → (D₀ : Q₀ ∣ ⌜ Δ ⌝ᵖ ⊢ᵛ⦂ X₀)
              → ⌊ D₀ ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
              → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀
              ---------------------------------------------------------------
@@ -360,7 +360,7 @@ record Typableᵛ (Δ : PCtx) (V : RawV ∅ˢ 0) : Set where
     Θ₀     : Scope
     Q₀     : Hyps Θ₀
     X₀     : OVType Θ₀
-    D₀     : Q₀ ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X₀
+    D₀     : Q₀ ∣ ⌜ Δ ⌝ᵖ ⊢ᵛ⦂ X₀
     erases : ⌊ D₀ ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
     sat    : Satisfiable Q₀
 
@@ -382,8 +382,8 @@ typableᵛ-⇔ {Δ} {V} p = mk⇔ to from
 -- A typing of a value is one of the computation returning it
 
 returnᵛ : ∀ {Θ} {Q : Hyps Θ} {Δ : PCtx} {V : RawV ∅ˢ 0} {X : OVType Θ}
-        → (D : Q ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X) → ⌊ D ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
-        → Σ[ D' ∈ (Q ∣ ⌜ Δ ⌝ᵖ [ from∅ ]ᶜᵗˣ ⊢C⦂ X ! 𝟏̂ₑ) ] (⌊ D' ⌋ᶜ ≡ return V [ from∅ ]ᴿᶜ)
+        → (D : Q ∣ ⌜ Δ ⌝ᵖ ⊢ᵛ⦂ X) → ⌊ D ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
+        → Σ[ D' ∈ (Q ∣ ⌜ Δ ⌝ᵖ [ from∅ ]ᶜᵗˣ ⊢ᶜ⦂ X ! 𝟏̂ₑ) ] (⌊ D' ⌋ᶜ ≡ return V [ from∅ ]ᴿᶜ)
 returnᵛ {Δ = Δ} D e =
   return (ctx-substᵛ (sym (⌜⌝ᵖ-subst Δ from∅)) D) ,
   cong return (trans (⌊ctxᵛ⌋ (sym (⌜⌝ᵖ-subst Δ from∅)) D) e)
@@ -395,8 +395,8 @@ typableᵛ→typable (typableᵛ Θ₀ Q₀ X₀ D₀ e s) =
 -- The value of a derivation erasing to `return W`, at a subtype
 
 returned : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {X : OVType Θ} {ε : EExp Θ} {W : RawV Θ n}
-         → (D : Q ∣ Γ ⊢C⦂ X ! ε) → ⌊ D ⌋ᶜ ≡ return W
-         → Σ[ X' ∈ OVType Θ ] Σ[ D' ∈ (Q ∣ Γ ⊢V⦂ X') ] (⌊ D' ⌋ᵛ ≡ W) × (Q ⊩ X' <:̂ᵛ X)
+         → (D : Q ∣ Γ ⊢ᶜ⦂ X ! ε) → ⌊ D ⌋ᶜ ≡ return W
+         → Σ[ X' ∈ OVType Θ ] Σ[ D' ∈ (Q ∣ Γ ⊢ᵛ⦂ X') ] (⌊ D' ⌋ᵛ ≡ W) × (Q ⊩ X' <:̂ᵛ X)
 returned (return D) refl = _ , D , refl , <:̂ᵛ-refl _
 returned (subC D (p !ₛ q)) e with returned D e
 ... | X' , D' , e' , p' = X' , D' , e' , <:̂ᵛ-trans p' p
@@ -427,8 +427,8 @@ private
 
   returnedᶜ : ∀ {Θ Θ' n} {Q : Hyps Θ'} {Γ : OCtx Θ' n} {W : RawV Θ' n}
             → (C : OCType Θ) → (δ : Subst Θ Θ')
-            → (D : Q ∣ Γ ⊢C⦂ C [ δ ]ᶜ) → ⌊ D ⌋ᶜ ≡ return W
-            → Σ[ X' ∈ OVType Θ' ] Σ[ D' ∈ (Q ∣ Γ ⊢V⦂ X') ] (⌊ D' ⌋ᵛ ≡ W)
+            → (D : Q ∣ Γ ⊢ᶜ⦂ C [ δ ]ᶜ) → ⌊ D ⌋ᶜ ≡ return W
+            → Σ[ X' ∈ OVType Θ' ] Σ[ D' ∈ (Q ∣ Γ ⊢ᵛ⦂ X') ] (⌊ D' ⌋ᵛ ≡ W)
                 × (Q ⊩ X' <:̂ᵛ resultᵛ C [ δ ]ᵛ)
   returnedᶜ (A ! ε) δ D e = returned D e
 
@@ -441,7 +441,7 @@ valueScheme : ∀ {Δ V} → PrincipalScheme {∅ˢ} {0} ⌜ Δ ⌝ᵖ (return V
 valueScheme {Δ} {V} p = mkPrincipalSchemeᵛ (Θ̃ p) (Q̃ p) (resultᵛ (X̃ p)) inst' fac'
   where
     inst' : ∀ {Θ''} → (δ : Subst (Θ̃ p) Θ'') → (Q : Hyps Θ'') → Q ⊩ᴴ Q̃ p [ δ ]
-          → Σ[ D ∈ (Q ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ resultᵛ (X̃ p) [ δ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ)
+          → Σ[ D ∈ (Q ∣ ⌜ Δ ⌝ᵖ ⊢ᵛ⦂ resultᵛ (X̃ p) [ δ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ)
     inst' δ Q h with sound p δ Q h
     ... | D , e with returnedᶜ (X̃ p) δ D e
     ...   | X' , D' , e' , st =
@@ -450,7 +450,7 @@ valueScheme {Δ} {V} p = mkPrincipalSchemeᵛ (Θ̃ p) (Q̃ p) (resultᵛ (X̃ p
       where c = ⌜⌝ᵖ-subst Δ (σ̃ p ⨟ˢ δ)
 
     fac' : ∀ {Θ''} → (Q₀ : Hyps Θ'') → {X₀ : OVType Θ''}
-         → (D₀ : Q₀ ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X₀) → ⌊ D₀ ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
+         → (D₀ : Q₀ ∣ ⌜ Δ ⌝ᵖ ⊢ᵛ⦂ X₀) → ⌊ D₀ ⌋ᵛ ≡ V [ from∅ ]ᴿᵛ
          → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀
          → Σ[ δ ∈ Subst (Θ̃ p) ∅ˢ ] (δ ⊨ Q̃ p) × (∅ᴴ ⊩ resultᵛ (X̃ p) [ δ ]ᵛ <:̂ᵛ X₀ [ δ₀ ]ᵛ)
     fac' Q₀ D₀ e δ₀ h₀ with complete p from∅ Q₀ (proj₁ (returnᵛ D₀ e)) (proj₂ (returnᵛ D₀ e)) δ₀ h₀

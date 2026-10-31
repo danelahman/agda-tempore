@@ -50,7 +50,7 @@ decided c d {p} = toWitness p
 refuted : (c d : R) {p : False (c ≾ᵣ? d)} → ¬ (c ≾ᵣ d)
 refuted c d {p} = toWitnessFalse p
 
-check : ∀ {Γ A ε} (ε' : E) {p : True (ε ≾ₑ? ε')} → Γ ⊢C⦂ A ! ε → Γ ⊢C⦂ A ! ε'
+check : ∀ {Γ A ε} (ε' : E) {p : True (ε ≾ₑ? ε')} → Γ ⊢ᶜ⦂ A ! ε → Γ ⊢ᶜ⦂ A ! ε'
 check ε' {p} M = coerce (toWitness p) M
 
 ------------------------------------------------------------------------
@@ -59,7 +59,7 @@ check ε' {p} M = coerce (toWitness p) M
 buffer : E
 buffer = res 0 (+ 0) (+ 0) 1
 
-store-then-transmit : [] ⊢C⦂ unit ! buffer
+store-then-transmit : [] ⊢ᶜ⦂ unit ! buffer
 store-then-transmit =
   check buffer
     (perform read ⋆                     -- ⟨ opTime read ⟩ ∷ Reading
@@ -81,7 +81,7 @@ store-twice-refused =
 ------------------------------------------------------------------------
 -- Readings survive reading and idling, not a store
 
-sample-twice-then-store : [] ⊢C⦂ unit ! res 0 (+ 1) (+ 1) 1
+sample-twice-then-store : [] ⊢ᶜ⦂ unit ! res 0 (+ 1) (+ 1) 1
 sample-twice-then-store =
   check (res 0 (+ 1) (+ 1) 1)
     (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
@@ -101,7 +101,7 @@ stale-after-storing = refuted (𝟏ᵣ ·ᵣ opTime write) 𝟏ᵣ
 one-slot : R
 one-slot = res 0 (+ 0) (+ 1) 1
 
-claim-after-a-store : [] ⊢C⦂ unit ! res 0 (+ 0) (+ 0) 1
+claim-after-a-store : [] ⊢ᶜ⦂ unit ! res 0 (+ 0) (+ 0) 1
 claim-after-a-store =
   check (res 0 (+ 0) (+ 0) 1)
     (box one-slot (const reading 7)    -- ∷ [ one-slot ] Reading

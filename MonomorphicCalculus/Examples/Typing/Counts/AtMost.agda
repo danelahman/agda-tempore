@@ -62,18 +62,18 @@ open import MonomorphicCalculus.Examples.Typing.Core (at-most-counts 3) opTime
 --
 -- A computation's grade counts the operations along it.
 
-sampling : [] ⊢C⦂ Reading ! ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ
+sampling : [] ⊢ᶜ⦂ Reading ! ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ
 sampling =
   perform read ⋆                     -- ⟨ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ ⟩ ∷ Reading
     (return here)
 
-storing : [] ⊢C⦂ unit ! ⟪ upto 1 , upto 1 , upto 0 ⟫ᵐ
+storing : [] ⊢ᶜ⦂ unit ! ⟪ upto 1 , upto 1 , upto 0 ⟫ᵐ
 storing =
   perform read ⋆                     -- ⟨ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ ⟩ ∷ Reading
     (perform write here              -- ⟨ ⟪ upto 0 , upto 1 , upto 0 ⟫ᵐ ⟩ ∷ unit
       (return ⋆))
 
-relaying : [] ⊢C⦂ unit ! ⟪ upto 1 , upto 0 , upto 1 ⟫ᵐ
+relaying : [] ⊢ᶜ⦂ unit ! ⟪ upto 1 , upto 0 , upto 1 ⟫ᵐ
 relaying =
   perform read ⋆                     -- ⟨ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ ⟩ ∷ Reading
     (perform send here               -- ⟨ ⟪ upto 0 , upto 0 , upto 1 ⟫ᵐ ⟩ ∷ unit
@@ -85,7 +85,7 @@ relaying =
 -- the reading is transmitted after idling five ticks, which count
 -- nothing, so `var`'s bound holds on every counter
 
-idle-then-transmit : [] ⊢C⦂ unit ! ⟪ upto 1 , upto 0 , upto 1 ⟫ᵐ
+idle-then-transmit : [] ⊢ᶜ⦂ unit ! ⟪ upto 1 , upto 0 , upto 1 ⟫ᵐ
 idle-then-transmit =
   perform read ⋆                     -- ⟨ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ ⟩ ∷ Reading
     (delay 5                         -- ⟨ ⟪ upto 0 , upto 0 , upto 0 ⟫ᵐ ⟩
@@ -113,7 +113,7 @@ rate-limit = ⟪ unlimited , unlimited , upto 2 ⟫ᵐ
 
 -- two uplinks keep it
 
-two-uplinks : [] ⊢C⦂ unit ! rate-limit
+two-uplinks : [] ⊢ᶜ⦂ unit ! rate-limit
 two-uplinks =
   coerce (tt , tt , ≤! , tt)
     (perform read ⋆                  -- ⟨ ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ ⟩ ∷ Reading
@@ -124,7 +124,7 @@ two-uplinks =
 
 -- three are a program, graded by what they do
 
-three-uplinks : [] ⊢C⦂ unit ! ⟪ upto 3 , upto 0 , upto 3 ⟫ᵐ
+three-uplinks : [] ⊢ᶜ⦂ unit ! ⟪ upto 3 , upto 0 , upto 3 ⟫ᵐ
 three-uplinks =
   perform read ⋆ (perform send here
     (perform read ⋆ (perform send here
@@ -153,7 +153,7 @@ licence = ⟪ unlimited , unlimited , upto 1 ⟫ᵐ
 -- a reading licensed this way is transmitted twice: claimed once before
 -- the first transmission and once after it
 
-sent-twice : [] ⊢C⦂ unit ! ⟪ upto 0 , upto 0 , upto 2 ⟫ᵐ
+sent-twice : [] ⊢ᶜ⦂ unit ! ⟪ upto 0 , upto 0 , upto 2 ⟫ᵐ
 sent-twice =
   box licence (const reading 42)             -- ∷ [ licence ] Reading
     (unbox Hd (tt , tt , ≤! , tt) (<:ᵛ-refl _)
@@ -170,7 +170,7 @@ a-third-claim (_ , _ , second , _) = ≰! second
 
 -- idling and local work leave the licence as it was
 
-claim-after-a-long-wait : [] ⊢C⦂ unit ! ⟪ upto 1 , upto 1 , upto 1 ⟫ᵐ
+claim-after-a-long-wait : [] ⊢ᶜ⦂ unit ! ⟪ upto 1 , upto 1 , upto 1 ⟫ᵐ
 claim-after-a-long-wait =
   box licence (const reading 42)     -- ∷ [ licence ] Reading
     (delay 100                       -- ⟨ ⟪ upto 0 , upto 0 , upto 0 ⟫ᵐ ⟩
@@ -187,7 +187,7 @@ claim-after-a-long-wait =
 -- below is charged a store and a transmission, though each run
 -- performs one of them.
 
-branching : [] ∷ bool ∷ Reading ⊢C⦂ unit ! ⟪ upto 0 , upto 1 , upto 1 ⟫ᵐ
+branching : [] ∷ bool ∷ Reading ⊢ᶜ⦂ unit ! ⟪ upto 0 , upto 1 , upto 1 ⟫ᵐ
 branching =
   if eternal-var boolₑ (Tl-∷ Hd)
     `then coerce (≤! , ≤! , ≤! , tt) (perform send  here (return ⋆))
@@ -208,14 +208,14 @@ storing-is-not-transmitting (_ , wrote , _ , _) = ≰! wrote
 nothing-fits : (op : Op) → (ε'' : E) → 𝟏ₑ ≾ₑ op-grade op ·ₑ ε''
 nothing-fits op ε'' = 𝟏ᵛ-least 𝟏ₒ-least (op-grade op ·ₑ ε'')
 
-suppressed : [] ⊢C⦂ unit ! ⟪ upto 1 , upto 0 , upto 2 ⟫ᵐ
+suppressed : [] ⊢ᶜ⦂ unit ! ⟪ upto 1 , upto 0 , upto 2 ⟫ᵐ
 suppressed =
   handle perform read ⋆ (perform send here (perform send (const reading 0) (return ⋆)))
     `with discarding {[]} nothing-fits
     `in                              -- ⟨ ⟪ upto 1 , upto 0 , upto 2 ⟫ᵐ ⟩ ∷ unit
       (return ⋆)
 
-forwarded : [] ⊢C⦂ Reading ! ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ
+forwarded : [] ⊢ᶜ⦂ Reading ! ⟪ upto 1 , upto 0 , upto 0 ⟫ᵐ
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}

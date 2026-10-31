@@ -19,7 +19,7 @@ module MonomorphicCalculus.Everything where
 ---- `Syntax/Contexts`); subtyping (`_<:ᵛ_`, `_<:ᶜ_`, in `Syntax/Subtyping`),
 ---- a preorder, antisymmetric where the grade orders are, and reflecting
 ---- eternality (`<:ᵛ-refl`, `<:ᵛ-trans`, `<:ᵛ-antisym`, `<:ᵛ-eternalˡ`);
----- intrinsically typed values and computations (`_⊢V⦂_`, `_⊢C⦂_`, in
+---- intrinsically typed values and computations (`_⊢ᵛ⦂_`, `_⊢ᶜ⦂_`, in
 ---- `Syntax/Terms`), with `handle M with H in N` (`handle_`with_`in_`) for
 ---- `handle M with handler N H`. A value of eternal type stays typed under
 ---- a lock (`eternal-val-ext`); a value of box type is a variable of a box
@@ -123,7 +123,7 @@ import MonomorphicCalculus.OperationalSemantics.TopLevel
 import MonomorphicCalculus.OperationalSemantics.TopLevel.Progress
 import MonomorphicCalculus.OperationalSemantics.TopLevel.Reduction
 
----- Equational theory (`_⊢V⦂_≡ᵗʰ_`, `_⊢C⦂_≡ᵗʰ_`, in
+---- Equational theory (`_⊢ᵛ⦂_≡ᵗʰ_`, `_⊢ᶜ⦂_≡ᵗʰ_`, in
 ---- `EquationalTheory/EquationalTheory`), with axioms for sequencing
 ---- (`seq-return`, `seq-perform`, `seq-assoc`, …), functions (`fun-beta`,
 ---- `fun-eta`), handling (`handle-return`, `handle-perform`, …), delays

@@ -90,7 +90,7 @@ record DefsEnv (ρ : Defs) (Δ : PCtx) : Set where
   constructor defsEnv
   field
     closed : ∀ {s k} → s ∈ᵖ[ k ] Δ
-           → Σ[ D ∈ (Qˢ s ∣ [] ⊢V⦂ Xˢ s) ] (ρ k ≡ just ∥ D ∥ᵛ)
+           → Σ[ D ∈ (Qˢ s ∣ [] ⊢ᵛ⦂ Xˢ s) ] (ρ k ≡ just ∥ D ∥ᵛ)
 
 open DefsEnv public
 
@@ -114,7 +114,7 @@ private
 
   use : ∀ {Θ n} {Q : Hyps Θ} (Γ : OCtx Θ n) {ρ : Defs} {s k}
       → DefsEnv ρ (defs Γ) → s ∈ᵖ[ k ] defs Γ → (δ : Subst (Θˢ s) Θ) → Q ⊩ᴴ Qˢ s [ δ ]
-      → Q ∣ local Γ ⊢V⦂ Xˢ s [ δ ]ᵛ
+      → Q ∣ local Γ ⊢ᵛ⦂ Xˢ s [ δ ]ᵛ
   use Γ r f δ h = rename-v (ren₀ Γ) (substᵛ δ h (proj₁ (closed r f)))
 
   ∥use∥ : ∀ {Θ n} {Q : Hyps Θ} (Γ : OCtx Θ n) {ρ : Defs} {s k}
@@ -130,7 +130,7 @@ private
 mutual
 
   sdef-v : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ} {ρ : Defs}
-         → DefsEnv ρ (defs Γ) → Q ∣ Γ ⊢V⦂ A → Q ∣ local Γ ⊢V⦂ A
+         → DefsEnv ρ (defs Γ) → Q ∣ Γ ⊢ᵛ⦂ A → Q ∣ local Γ ⊢ᵛ⦂ A
   sdef-v r (var x p)       = var (∈̂-local x) p
   sdef-v {Γ = Γ} r (usedef f δ h e) = ty-subst (sym e) (use Γ r f δ h)
   sdef-v r (const B c)     = const B c
@@ -153,7 +153,7 @@ mutual
   sdef-v r (subV V p)      = subV (sdef-v r V) p
 
   sdef-c : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ} {ρ : Defs}
-         → DefsEnv ρ (defs Γ) → Q ∣ Γ ⊢C⦂ C → Q ∣ local Γ ⊢C⦂ C
+         → DefsEnv ρ (defs Γ) → Q ∣ Γ ⊢ᶜ⦂ C → Q ∣ local Γ ⊢ᶜ⦂ C
   sdef-c r (return V)                 = return (sdef-v r V)
   sdef-c r (M ⨟ N)                    = sdef-c r M ⨟ sdef-c r N
   sdef-c r (V · W)                    = sdef-v r V · sdef-v r W
@@ -168,17 +168,17 @@ mutual
   sdef-c r (perform op V M)           = perform op (sdef-v r V) (sdef-c r M)
   sdef-c r (delay τ M)                = delay τ (sdef-c r M)
   sdef-c r (handle M `with V)         = handle sdef-c r M `with sdef-v r V
-  sdef-c r (unbox {z = z} R p N)    = unbox (res-move (∈̂-local z) R) p (sdef-c r N)
-  sdef-c r (box ρ V N)               = box ρ (sdef-v r V) (sdef-c r N)
-  sdef-c r (annᶜ C M)                = annᶜ C (sdef-c r M)
-  sdef-c r (subC M p)                = subC (sdef-c r M) p
+  sdef-c r (unbox R p N)              = unbox (res-move R (∈̂-local (res-var-of R))) p (sdef-c r N)
+  sdef-c r (box ρ V N)                = box ρ (sdef-v r V) (sdef-c r N)
+  sdef-c r (annᶜ C M)                 = annᶜ C (sdef-c r M)
+  sdef-c r (subC M p)                 = subC (sdef-c r M) p
 
 -- The erasure of the substituted derivation
 
 mutual
 
   ∥sdef-v∥ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ} {ρ : Defs}
-           → (r : DefsEnv ρ (defs Γ)) → (V : Q ∣ Γ ⊢V⦂ A)
+           → (r : DefsEnv ρ (defs Γ)) → (V : Q ∣ Γ ⊢ᵛ⦂ A)
            → ∥ sdef-v r V ∥ᵛ ≡ ∥ V ∥ᵛ [ ρ ]ᵈᵛ
   ∥sdef-v∥ r (var x p)       = cong var (var-pos-local x)
   ∥sdef-v∥ {Γ = Γ} r (usedef f δ h e) =
@@ -204,7 +204,7 @@ mutual
   ∥sdef-v∥ r (subV V p)      = ∥sdef-v∥ r V
 
   ∥sdef-c∥ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ} {ρ : Defs}
-           → (r : DefsEnv ρ (defs Γ)) → (M : Q ∣ Γ ⊢C⦂ C)
+           → (r : DefsEnv ρ (defs Γ)) → (M : Q ∣ Γ ⊢ᶜ⦂ C)
            → ∥ sdef-c r M ∥ᶜ ≡ ∥ M ∥ᶜ [ ρ ]ᵈᶜ
   ∥sdef-c∥ r (return V)                 = cong return (∥sdef-v∥ r V)
   ∥sdef-c∥ r (M ⨟ N)                    = cong₂ _⨟_ (∥sdef-c∥ r M) (∥sdef-c∥ r N)
@@ -224,10 +224,11 @@ mutual
   ∥sdef-c∥ r (perform op V M)           = cong₂ (perform op) (∥sdef-v∥ r V) (∥sdef-c∥ r M)
   ∥sdef-c∥ r (delay τ M)                = cong (delay τ) (∥sdef-c∥ r M)
   ∥sdef-c∥ r (handle M `with V)         = cong₂ handle_`with_ (∥sdef-c∥ r M) (∥sdef-v∥ r V)
-  ∥sdef-c∥ r (unbox {z = z} R p N)    =
-    cong₂ unbox (trans (∥res∥ (res-move (∈̂-local z) R))
-                       (trans (cong var (var-pos-local z)) (cong (_[ _ ]ᵈᵛ) (sym (∥res∥ R)))))
+  ∥sdef-c∥ r (unbox R p N)              =
+    cong₂ unbox (trans (∥res-move∥ R (∈̂-local (res-var-of R)))
+                       (trans (cong var (var-pos-local (res-var-of R)))
+                              (cong (_[ _ ]ᵈᵛ) (sym (∥res∥ R)))))
                 (∥sdef-c∥ r N)
-  ∥sdef-c∥ r (box ρ V N)               = cong₂ box (∥sdef-v∥ r V) (∥sdef-c∥ r N)
-  ∥sdef-c∥ r (annᶜ C M)                = ∥sdef-c∥ r M
-  ∥sdef-c∥ r (subC M p)                = ∥sdef-c∥ r M
+  ∥sdef-c∥ r (box ρ V N)                = cong₂ box (∥sdef-v∥ r V) (∥sdef-c∥ r N)
+  ∥sdef-c∥ r (annᶜ C M)                 = ∥sdef-c∥ r M
+  ∥sdef-c∥ r (subC M p)                 = ∥sdef-c∥ r M

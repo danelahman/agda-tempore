@@ -53,34 +53,34 @@ open import PolymorphicCalculus.Inference.Generate S
 
 ctx-substᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ Γ' : OCtx Θ n} {A : OVType Θ}
            → Γ ≡ Γ'
-           → Q ∣ Γ  ⊢V⦂ A
+           → Q ∣ Γ  ⊢ᵛ⦂ A
            ---------------
-           → Q ∣ Γ' ⊢V⦂ A
+           → Q ∣ Γ' ⊢ᵛ⦂ A
 
 ctx-substᵛ refl V = V
 
 ctx-substᶜ : ∀ {Θ n} {Q : Hyps Θ} {Γ Γ' : OCtx Θ n} {C : OCType Θ}
            → Γ ≡ Γ'
-           → Q ∣ Γ  ⊢C⦂ C
+           → Q ∣ Γ  ⊢ᶜ⦂ C
            ---------------
-           → Q ∣ Γ' ⊢C⦂ C
+           → Q ∣ Γ' ⊢ᶜ⦂ C
 
 ctx-substᶜ refl M = M
 
 ⌊ty⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A A' : OVType Θ}
-     → (e : A ≡ A') → (V : Q ∣ Γ ⊢V⦂ A) → ⌊ ty-subst e V ⌋ᵛ ≡ ⌊ V ⌋ᵛ
+     → (e : A ≡ A') → (V : Q ∣ Γ ⊢ᵛ⦂ A) → ⌊ ty-subst e V ⌋ᵛ ≡ ⌊ V ⌋ᵛ
 ⌊ty⌋ refl V = refl
 
 ⌊c⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C C' : OCType Θ}
-    → (e : C ≡ C') → (M : Q ∣ Γ ⊢C⦂ C) → ⌊ c-subst e M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
+    → (e : C ≡ C') → (M : Q ∣ Γ ⊢ᶜ⦂ C) → ⌊ c-subst e M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
 ⌊c⌋ refl M = refl
 
 ⌊ctxᵛ⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ Γ' : OCtx Θ n} {A : OVType Θ}
-       → (e : Γ ≡ Γ') → (V : Q ∣ Γ ⊢V⦂ A) → ⌊ ctx-substᵛ e V ⌋ᵛ ≡ ⌊ V ⌋ᵛ
+       → (e : Γ ≡ Γ') → (V : Q ∣ Γ ⊢ᵛ⦂ A) → ⌊ ctx-substᵛ e V ⌋ᵛ ≡ ⌊ V ⌋ᵛ
 ⌊ctxᵛ⌋ refl V = refl
 
 ⌊ctxᶜ⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ Γ' : OCtx Θ n} {C : OCType Θ}
-       → (e : Γ ≡ Γ') → (M : Q ∣ Γ ⊢C⦂ C) → ⌊ ctx-substᶜ e M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
+       → (e : Γ ≡ Γ') → (M : Q ∣ Γ ⊢ᶜ⦂ C) → ⌊ ctx-substᶜ e M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
 ⌊ctxᶜ⌋ refl M = refl
 
 -- Generation weakens into the scope of its `∃`s and satisfaction extends `σ`;
@@ -288,7 +288,7 @@ co²ᵗ²ᵉ-ˢ↑ ι σ B₁ B₂ ε₁ ε₂ =
 soundUseDef : ∀ {Θ n Θ'} → (σ : Subst Θ Θ') → {Q : Hyps Θ'}
             → (Γ : OCtx Θ n) → (k : ℕ) → (A : OVType Θ)
             → σ ⊨[ Q ] useDefConstraint (lookupᵖ (defs Γ) k) A
-            → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ usedef k)
+            → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢ᵛ⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ usedef k)
 soundUseDef σ Γ k A s with lookupᵖ (defs Γ) k in eq
 ... | nothing = ⊥-elim s
 ... | just sc with instᶜ-sound sc A s
@@ -315,11 +315,9 @@ soundR : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {Γ₀ : OCtx �
        → σ ⊨[ Q ] resC ι Γ V
        → {ρ : RExp Θ'} {X : OVType Θ'} → resTy ι Γ V [ σ ]ᵛ ≡ [ ρ ] X
        --------------------------------------------------------------------
-       → Σ[ ρ₀ ∈ RExp Θ' ] Σ[ X₀ ∈ OVType Θ' ]
-         Σ[ z ∈ [ ρ₀ ] X₀ ∈̂[ resGr Γ V [ σ ]ʳ ] Γ₀ ]
-         Σ[ R ∈ Q ∣ Γ₀ ⊢↪[ resGr Γ V [ σ ]ʳ ] z ⦂[ ρ ] X ] (⌊ R ⌋ʳ ≡ V [ ι ⨟ˢ σ ]ᴿᵛ)
+       → Σ[ R ∈ Q ⊢ [ ρ ] X ∈̂[ resGr Γ V [ σ ]ʳ ] Γ₀ ] (⌊ R ⌋ʳ ≡ V [ ι ⨟ˢ σ ]ᴿᵛ)
 soundR {σ = σ} ι Γ (var i) refl s {ρ} {X} e =
-  ρ , X , z , res-var , cong var (trans (var-pos-cast ety egr x) (var-pos-lookup (Γ [ σ ]ᶜᵗˣ) i))
+  res-var z , cong var (trans (var-pos-cast ety egr x) (var-pos-lookup (Γ [ σ ]ᶜᵗˣ) i))
   where
     ety = trans (lookup-ty-subst Γ σ i) e
     egr = lookup-gr-subst Γ σ i
@@ -328,8 +326,8 @@ soundR {σ = σ} ι Γ (var i) refl s {ρ} {X} e =
 soundR {σ = σ} {Q = Q} ι Γ (V ⦂ᵛ B) ceq (s , sa) {ρ} {X} e
   with <:̂ᵛ-boxʳ (subst (Q ⊩ resTy ι Γ V [ σ ]ᵛ <:̂ᵛ_) e sa)
 ... | ρ₁ , X₁ , e₁ , q , p with soundR ι Γ V ceq s e₁
-...   | ρ₀ , X₀ , z , R , er =
-  ρ₀ , X₀ , z , res-ann ρ X R q p , cong₂ _⦂ᵛ_ er (trans (sym e) ([⨟]ᵛ B ι σ))
+...   | R , er =
+  res-ann ρ X R q p , cong₂ _⦂ᵛ_ er (trans (sym e) ([⨟]ᵛ B ι σ))
 soundR ι Γ (usedef k)    ceq () e
 soundR ι Γ (const B c)   ceq () e
 soundR ι Γ ⋆             ceq () e
@@ -352,7 +350,7 @@ mutual
           → (ι : Subst Θ₀ Θ) → (Γ : OCtx Θ n) → (V : RawV Θ₀ n) → (A : OVType Θ)
           → σ ⊨[ Q ] genVˢ ι Γ V A
           --------------------------------------------------------------------
-          → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ ι ⨟ˢ σ ]ᴿᵛ)
+          → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢ᵛ⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ ι ⨟ˢ σ ]ᴿᵛ)
 
   -- variables: the witness is `lookup-var`, at position `i`; the `Et∨≾ᵘ`
   -- conjunct is `_⊩_Et∨≾ᵘ_`, the subtyping atom the `subV` to the expected type
@@ -607,7 +605,7 @@ mutual
           → (A : OVType Θ) → (t : EExp Θ)
           → σ ⊨[ Q ] genCˢ ι Γ M (A ! t)
           ---------------------------------------------------------------------
-          → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A [ σ ]ᵛ ! t [ σ ]ᵉ) ]
+          → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢ᶜ⦂ A [ σ ]ᵛ ! t [ σ ]ᵉ) ]
               (⌊ D ⌋ᶜ ≡ M [ ι ⨟ˢ σ ]ᴿᶜ)
 
   -- returning a value
@@ -992,7 +990,7 @@ mutual
     with <:̂ᵛ-boxʳ sb
   ... | ρ₁ , X₁ , e₁ , q₁ , p₁
     with soundR (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ) (wkʳ-ctx (wkᵗ-ctx Γ)) V (coᵗʳ-ctx σ B ρ Γ) sR e₁
-  ...   | _ , _ , z , R , er = D , q
+  ...   | R , er = D , q
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
       σ' = σ ,ᵗ B ,ʳ ρ
@@ -1087,7 +1085,7 @@ soundV : ∀ {Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
        → (Γ : OCtx Θ n) → (V : RawV Θ n) → (A : OVType Θ)
        → σ ⊨[ Q ] genV Γ V A
        --------------------------------------------------------------
-       → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ σ ]ᴿᵛ)
+       → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢ᵛ⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ σ ]ᴿᵛ)
 
 soundV {σ = σ} Γ V A s =
   proj₁ ih , trans (proj₂ ih) ([≐]ᴿᵛ (⨟-idˡ σ) V)
@@ -1098,7 +1096,7 @@ soundC : ∀ {Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
        → (Γ : OCtx Θ n) → (M : RawC Θ n) → (A : OVType Θ) → (t : EExp Θ)
        → σ ⊨[ Q ] genC Γ M (A ! t)
        -----------------------------------------------------------------------
-       → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A [ σ ]ᵛ ! t [ σ ]ᵉ) ] (⌊ D ⌋ᶜ ≡ M [ σ ]ᴿᶜ)
+       → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢ᶜ⦂ A [ σ ]ᵛ ! t [ σ ]ᵉ) ] (⌊ D ⌋ᶜ ≡ M [ σ ]ᴿᶜ)
 
 soundC {σ = σ} Γ M A t s =
   proj₁ ih , trans (proj₂ ih) ([≐]ᴿᶜ (⨟-idˡ σ) M)
@@ -1116,7 +1114,7 @@ private
   -- returning a value: the `≾̂ₑᶜ` conjunct becomes a `coerce`, the type
   -- equation's first half a `subV`
 
-  ex-return : ∅ᴴ ∣ ∅ᶜ ∷ unit ⊢C⦂ unit ! 𝟏̂ₑ
+  ex-return : ∅ᴴ ∣ ∅ᶜ ∷ unit ⊢ᶜ⦂ unit ! 𝟏̂ₑ
   ex-return = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} (∅ᶜ ∷ unit) (return ⋆) unit 𝟏̂ₑ
                             ((unitₛ , unitₛ) , ⊩≾̂ₑ-refl))
 
@@ -1125,7 +1123,7 @@ private
 
   -- a variable used after time-passage: the `Et∨≾ᵘ` disjunction is `_⊩_Et∨≾ᵘ_`
 
-  ex-var : ∅ᴴ ∣ (∅ᶜ ∷ unit) ⟨ 𝟏̂ᵣ ⟩ ⊢V⦂ unit
+  ex-var : ∅ᴴ ∣ (∅ᶜ ∷ unit) ⟨ 𝟏̂ᵣ ⟩ ⊢ᵛ⦂ unit
   ex-var = proj₁ (soundV {σ = idˢ} {Q = ∅ᴴ} ((∅ᶜ ∷ unit) ⟨ 𝟏̂ᵣ ⟩) (var zero) unit (unitₛ , et-ok unitₑ))
 
   ex-var-erase : ⌊ ex-var ⌋ᵛ ≡ var zero
@@ -1134,7 +1132,7 @@ private
   -- unboxing a variable: the `∃ᵗ∃ʳ` witnesses are the continuation's
   -- binder and the grade
 
-  ex-unbox : ∅ᴴ ∣ ∅ᶜ ∷ [ 𝟏̂ᵣ ] unit ⊢C⦂ unit ! 𝟏̂ₑ
+  ex-unbox : ∅ᴴ ∣ ∅ᶜ ∷ [ 𝟏̂ᵣ ] unit ⊢ᶜ⦂ unit ! 𝟏̂ₑ
   ex-unbox = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) (unbox (var zero) (return ⋆))
                            unit 𝟏̂ₑ
                            (unit , 𝟏̂ᵣ , tt , ([ ⊩≾̂ᵣ-refl ]ₛ unitₛ , [ ⊩≾̂ᵣ-refl ]ₛ unitₛ) ,
@@ -1146,7 +1144,7 @@ private
 
   -- unboxing an annotated variable: the annotation's atom is solved too
 
-  ex-unbox-ann : ∅ᴴ ∣ ∅ᶜ ∷ [ 𝟏̂ᵣ ] unit ⊢C⦂ unit ! 𝟏̂ₑ
+  ex-unbox-ann : ∅ᴴ ∣ ∅ᶜ ∷ [ 𝟏̂ᵣ ] unit ⊢ᶜ⦂ unit ! 𝟏̂ₑ
   ex-unbox-ann = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit)
                                (unbox (var zero ⦂ᵛ [ 𝟏̂ᵣ ] unit) (return ⋆)) unit 𝟏̂ₑ
                                (unit , 𝟏̂ᵣ , (tt , [ ⊩≾̂ᵣ-refl ]ₛ unitₛ) ,
@@ -1159,7 +1157,7 @@ private
   -- boxing a value: the `∃ᵗ` witness is the payload's type, the grade is the
   -- annotation
 
-  ex-box : ∅ᴴ ∣ ∅ᶜ ⊢C⦂ unit ! 𝟏̂ₑ
+  ex-box : ∅ᴴ ∣ ∅ᶜ ⊢ᶜ⦂ unit ! 𝟏̂ₑ
   ex-box = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} ∅ᶜ (box 𝟏̂ᵣ ⋆ (return ⋆)) unit 𝟏̂ₑ
                          (unit , (unitₛ , unitₛ) , (unitₛ , unitₛ) , ⊩≾̂ₑ-refl))
 

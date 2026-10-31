@@ -108,7 +108,7 @@ data Delaysᵐ : ∀ {X Y : Obj} {δ : E} → (X →ᵐ Tᵒ Y δ) → 𝔻 → 
 -- `stepᵀ` is `ηᵀ` for every rule but `DELAY`.
 
 step-delays : ∀ {ε ε' n} {𝕊 𝕊' : State []} {A A₀ : VType}
-            → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+            → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
             → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
             → {X : Obj} → {δ : E} → {t : ⟦ hist 𝕊' ⟧ᶜᵗˣ →ᵐ Tᵒ X δ}
             → Delaysᵐ t n
@@ -294,7 +294,7 @@ record BaseFaithful : Set where
 -- Handler uniformity is carried by the term's own certificate.
 
 uniform⟶ : ∀ {A A₀ ε ε'} {𝕊 𝕊' : State []}
-         → {M : toCtx 𝕊 ⊢C⦂ A ! ε} → {M' : toCtx 𝕊' ⊢C⦂ A₀ ! ε'}
+         → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε'}
          → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩) → (pM : Paramᶜ M)
          ---------------------------------------------------
          → Uniform⟶ r pM
@@ -340,7 +340,7 @@ uniform⟶* (r ▸ rs) (pS , pM)  =
 -- Unfold `⟦_⟧ᶜᵗ` at the two whnf formers and push the state's environment
 -- inside; it survives only inside the head's components.
 
-ret-whnf-shape : ∀ {A} {𝕊 : State []} → (V : toCtx 𝕊 ⊢V⦂ A)
+ret-whnf-shape : ∀ {A} {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ A)
                → (pSt : Paramˢ 𝕊) → (pV : Paramᵛ V)
                → Σ[ a ∈ (⟦ hist 𝕊 ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ) ]
                    ⟦ ⟨ 𝕊 ∣ return V ⟩ ⟧ᶜᶠ (pSt , pV) ≈ᵐ leafᵐ a
@@ -349,9 +349,9 @@ ret-whnf-shape {𝕊 = 𝕊} V pSt pV =
   ⟦ V ⟧ᵛᵗ pV ∘ᵐ ⟦ 𝕊 ⟧ˢ pSt , ∘ᵐ-assoc ηᵀ (⟦ V ⟧ᵛᵗ pV) (⟦ 𝕊 ⟧ˢ pSt)
 
 op-whnf-shape : ∀ {A ε} {𝕊 : State []} {op : Op}
-              → (W : toCtx 𝕊 ⊢V⦂ ⌜ param op ⌝ᵍ)
+              → (W : toCtx 𝕊 ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
               → (M' : toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
-                        ⊢C⦂ A ! ε)
+                        ⊢ᶜ⦂ A ! ε)
               → (pSt : Paramˢ 𝕊) → (pW : Paramᵛ W) → (pM' : Paramᶜ M')
               → Σ[ w ∈ (⟦ hist 𝕊 ⟧ᶜᵗˣ →ᵐ ⟦ param op ⟧ᵍ) ]
                 Σ[ k ∈ (⟦ hist 𝕊 ⟧ᶜᵗˣ
@@ -367,7 +367,7 @@ op-whnf-shape {𝕊 = 𝕊} {op = op} W M' pSt pW pM' =
 -- subsumption spine (`base-val`); the state's environment is absorbed by the
 -- terminal object, and a spine link by `⟦ Baseₛ refl ⟧<:ᵛ ≡ idᵐ`.
 
-base-leaf-const : ∀ {b} {𝕊 : State []} → (V : toCtx 𝕊 ⊢V⦂ Base b)
+base-leaf-const : ∀ {b} {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ Base b)
                 → (pSt : Paramˢ 𝕊) → (pV : Paramᵛ V)
                 → Σ[ c ∈ BaseConstants b ]
                     (base-val V ≡ const b c)

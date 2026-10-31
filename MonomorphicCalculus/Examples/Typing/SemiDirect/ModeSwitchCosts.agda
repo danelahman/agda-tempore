@@ -58,7 +58,7 @@ decided c d {p} = toWitness p
 refuted : (c d : R) {p : False (c ≾ᵣ? d)} → ¬ (c ≾ᵣ d)
 refuted c d {p} = toWitnessFalse p
 
-check : ∀ {Γ A ε} (ε' : E) {p : True (ε ≾ₑ? ε')} → Γ ⊢C⦂ A ! ε → Γ ⊢C⦂ A ! ε'
+check : ∀ {Γ A ε} (ε' : E) {p : True (ε ≾ₑ? ε')} → Γ ⊢ᶜ⦂ A ! ε → Γ ⊢ᶜ⦂ A ! ε'
 check ε' {p} M = coerce (toWitness p) M
 
 ------------------------------------------------------------------------
@@ -67,7 +67,7 @@ check ε' {p} M = coerce (toWitness p) M
 one-switch : E
 one-switch = grade (listing ((Idle , Radio , cost 1) L.∷ (Radio , Radio , cost 0) L.∷ L.[]))
 
-two-transmissions : [] ⊢C⦂ unit ! one-switch
+two-transmissions : [] ⊢ᶜ⦂ unit ! one-switch
 two-transmissions =
   check one-switch
     (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
@@ -84,7 +84,7 @@ store-after-transmitting-refused = refuted (opTime send ·ₑ opTime write) one-
 ------------------------------------------------------------------------
 -- Readings survive reading and idling, not a store
 
-sample-idle-sample-store : [] ⊢C⦂ unit ! opTime write
+sample-idle-sample-store : [] ⊢ᶜ⦂ unit ! opTime write
 sample-idle-sample-store =
   check (opTime write)
     (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
@@ -107,7 +107,7 @@ at-most-one-switch =
   grade (listing ((Idle , Idle , cost 0) L.∷ (Idle , Radio , cost 1) L.∷ (Radio , Radio , cost 0)
                L.∷ (⋆ , ⋆ , cost 0) L.∷ (⋆ , ✗ , cost 0) L.∷ L.[]))
 
-claim-after-a-transmission : [] ⊢C⦂ unit ! one-switch
+claim-after-a-transmission : [] ⊢ᶜ⦂ unit ! one-switch
 claim-after-a-transmission =
   check one-switch
     (box at-most-one-switch (const reading 7)

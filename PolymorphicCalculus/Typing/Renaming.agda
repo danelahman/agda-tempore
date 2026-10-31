@@ -40,27 +40,34 @@ open import PolymorphicCalculus.Syntax.Run                 S
 ------------------------------------------------------------------------
 -- The run-time erasure of a derivation
 
-∥_∥ᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ} → Q ∣ Γ ⊢V⦂ A → RunV n
+∥_∥ᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ} → Q ∣ Γ ⊢ᵛ⦂ A → RunV n
 ∥ V ∥ᵛ = eraseᵛ ⌊ V ⌋ᵛ
 
-∥_∥ᶜ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ} → Q ∣ Γ ⊢C⦂ C → RunC n
+∥_∥ᶜ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ} → Q ∣ Γ ⊢ᶜ⦂ C → RunC n
 ∥ M ∥ᶜ = eraseᶜ ⌊ M ⌋ᶜ
 
-∥res∥ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ}
-        {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
-      → (R : Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X) → eraseᵛ ⌊ R ⌋ʳ ≡ var (var-pos z)
-∥res∥ res-var                = refl
+∥res∥ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ' : RExp Θ} {A : OVType Θ}
+      → (R : Q ⊢ A ∈̂[ ρ' ] Γ) → eraseᵛ ⌊ R ⌋ʳ ≡ var (var-pos (res-var-of R))
+∥res∥ (res-var _)            = refl
 ∥res∥ (res-ann _ _ R _ _)    = ∥res∥ R
 
 -- A resource value's annotations over another variable of its type
 
 res-move : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m}
-             {ρ' ρ'' ρ₀ ρ : RExp Θ} {X₀ X : OVType Θ}
-             {z : [ ρ₀ ] X₀ ∈̂[ ρ' ] Γ}
-         → (z' : [ ρ₀ ] X₀ ∈̂[ ρ'' ] Γ')
-         → Q ∣ Γ ⊢↪[ ρ' ] z ⦂[ ρ ] X → Q ∣ Γ' ⊢↪[ ρ'' ] z' ⦂[ ρ ] X
-res-move z' res-var               = res-var
-res-move z' (res-ann ρₐ Xₐ R p q) = res-ann ρₐ Xₐ (res-move z' R) p q
+             {ρ' ρ'' : RExp Θ} {A : OVType Θ}
+         → (R : Q ⊢ A ∈̂[ ρ' ] Γ)
+         → [ res-grade-of R ] res-payload-of R ∈̂[ ρ'' ] Γ'
+         → Q ⊢ A ∈̂[ ρ'' ] Γ'
+res-move (res-var _)           z' = res-var z'
+res-move (res-ann ρₐ Xₐ R p q) z' = res-ann ρₐ Xₐ (res-move R z') p q
+
+∥res-move∥ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m}
+               {ρ' ρ'' : RExp Θ} {A : OVType Θ}
+           → (R : Q ⊢ A ∈̂[ ρ' ] Γ)
+           → (z' : [ res-grade-of R ] res-payload-of R ∈̂[ ρ'' ] Γ')
+           → eraseᵛ ⌊ res-move R z' ⌋ʳ ≡ var (var-pos z')
+∥res-move∥ (res-var _)         z' = refl
+∥res-move∥ (res-ann _ _ R _ _) z' = ∥res-move∥ R z'
 
 ------------------------------------------------------------------------
 -- Renamings
@@ -138,7 +145,7 @@ clauseʳ r = (lockʳ (rconst ⊤ᵣ) (wkᵉʳ r) ⇑ʳ) ⇑ʳ
 mutual
 
   rename-v : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {A : OVType Θ}
-           → Ren Q Γ Γ' → Q ∣ Γ ⊢V⦂ A → Q ∣ Γ' ⊢V⦂ A
+           → Ren Q Γ Γ' → Q ∣ Γ ⊢ᵛ⦂ A → Q ∣ Γ' ⊢ᵛ⦂ A
   rename-v r (var x p)       =
     var (mem (image r x)) (Et∨≾ᵘ-≡̂ (≡̂ᵛ-refl _) (lower (image r x)) p)
   rename-v r (usedef f δ h e) = usedef (subst (_ ∈ᵖ[ _ ]_) (sym (dfs r)) f) δ h e
@@ -161,7 +168,7 @@ mutual
   rename-v r (subV V p)      = subV (rename-v r V) p
 
   rename-c : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {C : OCType Θ}
-           → Ren Q Γ Γ' → Q ∣ Γ ⊢C⦂ C → Q ∣ Γ' ⊢C⦂ C
+           → Ren Q Γ Γ' → Q ∣ Γ ⊢ᶜ⦂ C → Q ∣ Γ' ⊢ᶜ⦂ C
   rename-c r (return V)                 = return (rename-v r V)
   rename-c r (_⨟_ {ε = ε} M N)          = rename-c r M ⨟ rename-c (lockʳ ∣ ε ∣̂ᵉ r ⇑ʳ) N
   rename-c r (V · W)                    = rename-v r V · rename-v r W
@@ -185,18 +192,19 @@ mutual
     perform op (rename-v r V) (rename-c (lockʳ (rconst ∣ op-grade op ∣ᵉ) r ⇑ʳ) M)
   rename-c r (delay τ M)                = delay τ (rename-c (lockʳ (rconst (ιᵣ τ)) r) M)
   rename-c r (handle M `with V)         = handle rename-c r M `with rename-v r V
-  rename-c r (unbox {z = z} R p N)    =
-    unbox (res-move (mem (image r z)) R) (transᵣ (lower (image r z)) p) (rename-c (r ⇑ʳ) N)
-  rename-c r (box ρ V N)               = box ρ (rename-v (lockʳ ρ r) V) (rename-c (r ⇑ʳ) N)
-  rename-c r (annᶜ C M)                = annᶜ C (rename-c r M)
-  rename-c r (subC M p)                = subC (rename-c r M) p
+  rename-c r (unbox R p N)              =
+    unbox (res-move R (mem (image r (res-var-of R)))) (transᵣ (lower (image r (res-var-of R))) p)
+          (rename-c (r ⇑ʳ) N)
+  rename-c r (box ρ V N)                = box ρ (rename-v (lockʳ ρ r) V) (rename-c (r ⇑ʳ) N)
+  rename-c r (annᶜ C M)                 = annᶜ C (rename-c r M)
+  rename-c r (subC M p)                 = subC (rename-c r M) p
 
 -- The erasure of a renamed derivation is the renamed erasure
 
 mutual
 
   ∥rename-v∥ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {A : OVType Θ}
-             → (r : Ren Q Γ Γ') → (V : Q ∣ Γ ⊢V⦂ A) → ∥ rename-v r V ∥ᵛ ≡ renᵛ (pos r) ∥ V ∥ᵛ
+             → (r : Ren Q Γ Γ') → (V : Q ∣ Γ ⊢ᵛ⦂ A) → ∥ rename-v r V ∥ᵛ ≡ renᵛ (pos r) ∥ V ∥ᵛ
   ∥rename-v∥ r (var x p)       = cong var (at-pos (image r x))
   ∥rename-v∥ r (usedef f δ h e) = refl
   ∥rename-v∥ r (const B c)     = refl
@@ -219,7 +227,7 @@ mutual
   ∥rename-v∥ r (subV V p)      = ∥rename-v∥ r V
 
   ∥rename-c∥ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {C : OCType Θ}
-             → (r : Ren Q Γ Γ') → (M : Q ∣ Γ ⊢C⦂ C) → ∥ rename-c r M ∥ᶜ ≡ renᶜ (pos r) ∥ M ∥ᶜ
+             → (r : Ren Q Γ Γ') → (M : Q ∣ Γ ⊢ᶜ⦂ C) → ∥ rename-c r M ∥ᶜ ≡ renᶜ (pos r) ∥ M ∥ᶜ
   ∥rename-c∥ r (return V)                 = cong return (∥rename-v∥ r V)
   ∥rename-c∥ r (_⨟_ {ε = ε} M N)          =
     cong₂ _⨟_ (∥rename-c∥ r M) (∥rename-c∥ (lockʳ ∣ ε ∣̂ᵉ r ⇑ʳ) N)
@@ -248,14 +256,15 @@ mutual
     cong (delay τ) (∥rename-c∥ (lockʳ (rconst (ιᵣ τ)) r) M)
   ∥rename-c∥ r (handle M `with V)         =
     cong₂ handle_`with_ (∥rename-c∥ r M) (∥rename-v∥ r V)
-  ∥rename-c∥ r (unbox {z = z} R p N)    =
-    cong₂ unbox (trans (∥res∥ (res-move (mem (image r z)) R))
-                       (trans (cong var (at-pos (image r z))) (cong (renᵛ (pos r)) (sym (∥res∥ R)))))
+  ∥rename-c∥ r (unbox R p N)              =
+    cong₂ unbox (trans (∥res-move∥ R (mem (image r (res-var-of R))))
+                       (trans (cong var (at-pos (image r (res-var-of R))))
+                              (cong (renᵛ (pos r)) (sym (∥res∥ R)))))
                 (∥rename-c∥ (r ⇑ʳ) N)
-  ∥rename-c∥ r (box ρ V N)               =
+  ∥rename-c∥ r (box ρ V N)                =
     cong₂ box (∥rename-v∥ (lockʳ ρ r) V) (∥rename-c∥ (r ⇑ʳ) N)
-  ∥rename-c∥ r (annᶜ C M)                = ∥rename-c∥ r M
-  ∥rename-c∥ r (subC M p)                = ∥rename-c∥ r M
+  ∥rename-c∥ r (annᶜ C M)                 = ∥rename-c∥ r M
+  ∥rename-c∥ r (subC M p)                 = ∥rename-c∥ r M
 
 ------------------------------------------------------------------------
 -- Basic renamings
@@ -339,7 +348,7 @@ shift-dfs (ren-shift r) = dfs r
 mutual
 
   eternal-v : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {A : OVType Θ}
-            → Shift Γ Γ' → Q ⊩Et A → Q ∣ Γ ⊢V⦂ A → Q ∣ Γ' ⊢V⦂ A
+            → Shift Γ Γ' → Q ⊩Et A → Q ∣ Γ ⊢ᵛ⦂ A → Q ∣ Γ' ⊢ᵛ⦂ A
   eternal-v {Γ' = Γ'} f e (var x p) =
     var (∈̂-ty-subst (trans (shift-ty f (var-pos x)) (var-pos-ty x))
                     (lookup-var Γ' (shift f (var-pos x))))
@@ -361,7 +370,7 @@ mutual
   eternal-v f e (subV V p)               = subV (eternal-v f (<:̂ᵛ-eternalˡ p e) V) p
 
   ∥eternal-v∥ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {A : OVType Θ}
-              → (f : Shift Γ Γ') → (e : Q ⊩Et A) → (V : Q ∣ Γ ⊢V⦂ A)
+              → (f : Shift Γ Γ') → (e : Q ⊩Et A) → (V : Q ∣ Γ ⊢ᵛ⦂ A)
               → ∥ eternal-v f e V ∥ᵛ ≡ renᵛ (shift f) ∥ V ∥ᵛ
   ∥eternal-v∥ {Γ' = Γ'} f e (var x p) =
     cong var (trans (var-pos-ty-subst (trans (shift-ty f (var-pos x)) (var-pos-ty x)) _)

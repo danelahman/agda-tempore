@@ -58,12 +58,12 @@ open import MonomorphicCalculus.Examples.Typing.Core (at-least-counts 3) opTime
 ------------------------------------------------------------------------
 -- Effectful computations
 
-sampling : [] ⊢C⦂ Reading ! ⟪ 1 , 0 , 0 ⟫ˡ
+sampling : [] ⊢ᶜ⦂ Reading ! ⟪ 1 , 0 , 0 ⟫ˡ
 sampling =
   perform read ⋆                     -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading
     (return here)
 
-relaying : [] ⊢C⦂ unit ! ⟪ 1 , 0 , 1 ⟫ˡ
+relaying : [] ⊢ᶜ⦂ unit ! ⟪ 1 , 0 , 1 ⟫ˡ
 relaying =
   perform read ⋆                     -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading
     (perform send here               -- ⟨ ⟪ 0 , 0 , 1 ⟫ˡ ⟩ ∷ unit
@@ -77,7 +77,7 @@ nothing-goes-stale ([ _ ,+∞⟩ ∷ᵛ [ _ ,+∞⟩ ∷ᵛ [ _ ,+∞⟩ ∷ᵛ 
 
 -- a reading transmitted after a store and a transmission of its own
 
-transmitted-late : [] ⊢C⦂ unit ! ⟪ 1 , 1 , 2 ⟫ˡ
+transmitted-late : [] ⊢ᶜ⦂ unit ! ⟪ 1 , 1 , 2 ⟫ˡ
 transmitted-late =
   perform read ⋆                      -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading
     (perform write here               -- ⟨ ⟪ 0 , 1 , 0 ⟫ˡ ⟩ ∷ unit
@@ -99,7 +99,7 @@ average = ⟪ 3 , 0 , 0 ⟫ˡ
 -- claimed after three readings, a transmission in between: the other
 -- counters demand nothing
 
-claim-after-three-readings : [] ⊢C⦂ unit ! ⟪ 3 , 0 , 2 ⟫ˡ
+claim-after-three-readings : [] ⊢ᶜ⦂ unit ! ⟪ 3 , 0 , 2 ⟫ˡ
 claim-after-three-readings =
   box average (const reading 42)     -- ∷ [ average ] Reading
     (perform read ⋆                  -- ⟨ ⟪ 1 , 0 , 0 ⟫ˡ ⟩ ∷ Reading
@@ -134,7 +134,7 @@ transmitting-is-no-reading (short , _) = ≰! short
 -- The join keeps only what both branches make certain, so a token
 -- claimed after a conditional has to be earned on both paths.
 
-three-readings-or-one : [] ∷ bool ⊢C⦂ unit ! ⟪ 1 , 0 , 0 ⟫ˡ
+three-readings-or-one : [] ∷ bool ⊢ᶜ⦂ unit ! ⟪ 1 , 0 , 0 ⟫ˡ
 three-readings-or-one =
   if eternal-var boolₑ Hd
     `then coerce (≤! , ≤! , ≤! , tt)
@@ -162,7 +162,7 @@ reading-crosses-the-barrier :
   (op : Op) → (ε'' : E) → 𝟏ᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ 𝟏ᵣ
 reading-crosses-the-barrier op ε'' = nothing-goes-stale _
 
-reported : Node ⊢C⦂ Reading ! ⟪ 1 , 0 , 0 ⟫ˡ
+reported : Node ⊢ᶜ⦂ Reading ! ⟪ 1 , 0 , 0 ⟫ˡ
 reported =
   handle perform read ⋆ (return here)
     `with reporting reading-crosses-the-barrier

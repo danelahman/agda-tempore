@@ -67,7 +67,7 @@ decided c d {p} = toWitness p
 refuted : (c d : R) {p : False (c ≾ᵣ? d)} → ¬ (c ≾ᵣ d)
 refuted c d {p} = toWitnessFalse p
 
-check : ∀ {Γ A ε} (ε' : E) {p : True (ε ≾ₑ? ε')} → Γ ⊢C⦂ A ! ε → Γ ⊢C⦂ A ! ε'
+check : ∀ {Γ A ε} (ε' : E) {p : True (ε ≾ₑ? ε')} → Γ ⊢ᶜ⦂ A ! ε → Γ ⊢ᶜ⦂ A ! ε'
 check ε' {p} M = coerce (toWitness p) M
 
 ------------------------------------------------------------------------
@@ -79,7 +79,7 @@ warm-up = span 0 10 , (∅ₜ ∣ ((name read , ⟪ 0 ⟫ₜ) L.∷ (name send ,
 
 -- an uplink with a constant payload, idling two steps first
 
-late-uplink : [] ⊢C⦂ Reading ! warm-up
+late-uplink : [] ⊢ᶜ⦂ Reading ! warm-up
 late-uplink =
   check warm-up
     (perform read ⋆                     -- ⟨ opTime read ⟩ ∷ Reading
@@ -92,7 +92,7 @@ late-uplink =
 early : E
 early = opTime read ·ₑ (opTime send ·ₑ 𝟏ₑ)
 
-early-uplink : [] ⊢C⦂ unit ! early
+early-uplink : [] ⊢ᶜ⦂ unit ! early
 early-uplink =
   check early
     (perform read ⋆                  -- ⟨ opTime read ⟩ ∷ Reading
@@ -119,7 +119,7 @@ within-four = span 0 4 , (ℕₜ ∣ L.[])
 -- claimed after idling three steps: seven to nine steps, transmitting
 -- at time 3
 
-claimed-in-time : [] ⊢C⦂ unit ! at (span 7 2) send ⟪ 3 ⟫ₜ
+claimed-in-time : [] ⊢ᶜ⦂ unit ! at (span 7 2) send ⟪ 3 ⟫ₜ
 claimed-in-time =
   check (at (span 7 2) send ⟪ 3 ⟫ₜ)
     (box within-four (const reading 42) -- ∷ [ within-four ] Reading

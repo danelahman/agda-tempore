@@ -135,7 +135,7 @@ checkᵛ-handlerFree Δ V u h = checkᵛ-noRigid Δ V (handlerFree-noRigidᵛ u 
 -- and every scheme answered has a closed instance where its type is below the typing's
 
 completenessᵛ : ∀ {Δ} {V : RawV ∅ˢ 0} {X : OVType ∅ˢ}
-              → (D : ∅ᴴ ∣ ⌜ Δ ⌝ᵖ ⊢V⦂ X) → ⌊ D ⌋ᵛ ≡ V
+              → (D : ∅ᴴ ∣ ⌜ Δ ⌝ᵖ ⊢ᵛ⦂ X) → ⌊ D ⌋ᵛ ≡ V
               → (¬ inferᵛ Δ V ≡ untypable)
                 × (∀ {p} → inferᵛ Δ V ≡ typed p
                    → Σ[ δ ∈ Subst (PrincipalSchemeᵛ.Θ̃ p) ∅ˢ ]
