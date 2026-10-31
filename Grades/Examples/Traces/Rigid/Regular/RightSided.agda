@@ -77,6 +77,14 @@ right-sided : Grade ℕᴰ
 right-sided =
   C.WithDurations.closed-grade of-dur refl (λ {m} {n} → steps-plus wait≤1 {m} {n})
 
+-- its hints by copatterns, so that `right-sided` is not compared as a
+-- record value
+
+private
+  module H = GradeHints
+    (C.WithDurations.closed-gradeʰ of-dur refl (λ {m} {n} → steps-plus wait≤1 {m} {n}))
+
 right-sidedʰ : GradeHints right-sided
-right-sidedʰ =
-  C.WithDurations.closed-gradeʰ of-dur refl (λ {m} {n} → steps-plus wait≤1 {m} {n})
+GradeHints.u-least? right-sidedʰ = H.u-least?
+GradeHints.·-comm?  right-sidedʰ = H.·-comm?
+GradeHints.plus?    right-sidedʰ = H.plus?

@@ -142,8 +142,17 @@ module Over (L : LevelLattice) where
   flow-levels {D} =
     semidirect (level-grade L) outputs (indexedᵃ (raise-action {D}))
 
+  -- its hints by copatterns, so that `flow-levels` is not compared as a
+  -- record value
+
+  private
+    module H {D : Duration} =
+      GradeHints (semidirectʰ (level-gradeʰ L) outputs (indexedᵃ (raise-action {D})))
+
   flow-levelsʰ : {D : Duration} → GradeHints (flow-levels {D})
-  flow-levelsʰ {D} = semidirectʰ (level-gradeʰ L) outputs (indexedᵃ (raise-action {D}))
+  GradeHints.u-least? (flow-levelsʰ {D}) = H.u-least? {D}
+  GradeHints.·-comm?  (flow-levelsʰ {D}) = H.·-comm? {D}
+  GradeHints.plus?    (flow-levelsʰ {D}) = H.plus? {D}
 
 ------------------------------------------------------------------------
 -- At the two-point lattice `Low < High`

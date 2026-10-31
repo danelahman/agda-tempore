@@ -172,20 +172,3 @@ strᵀ-delayᵀ-algebraicity {A} τ (a , x) =
   delay-≈ (λ q →
     strˢ-congᵗ A (λ r → []-fun-irr a _ _) (≈ᵗ-refl (fun x (⊑-mono (≃ᵣ⇒≾ᵣ map-of-durᵉ) q))))
 
--- The operation is algebraic with respect to the strength. Both sides build
--- the same `op-node`; under it each side strengths the sub-computation with
--- box witnesses that agree by `[]-fun-irr` (via `strˢ-congᵗ`).
-
-strᵀ-opᵀ-algebraicity : ∀ {A B ε} → (op : Op)
-  → strᵀ {A} {B} {op-grade op ·ₑ ε} ∘ᵖ mapˣᵐ idᵖ (opᵀ {B} {ε} op)
-  ≈ᵖ opᵀ op
-    ∘ᵖ mapˣᵐ idᵖ
-        ([ mapᵉ (op-grade op) ]ᶠ
-           (   map⇒ᵐ idᵖ (strᵀ {A} {B} {ε})
-            ∘ᵖ expᵖ-str)
-         ∘ᵖ []-monoidal
-         ∘ᵖ mapˣᵐ (δ ∘ᵖ []-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ)) idᵖ)
-    ∘ᵖ ⟨ fstᵐ ∘ᵖ sndᵐ , ⟨ fstᵐ , sndᵐ ∘ᵖ sndᵐ ⟩ᵐ ⟩ᵐ
-strᵀ-opᵀ-algebraicity {A} {B} {ε} op {w} (a , v , boxk) =
-  op-≈ (≈-refl ⟦ param op ⟧ᵍ)
-    (λ q y → strˢ-congᵗ A (λ r → []-fun-irr a _ _) (fun-irr (fun boxk q) _ _ y))

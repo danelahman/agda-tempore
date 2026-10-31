@@ -43,8 +43,44 @@ open import Grades.Exact.Regular.Interval ℚ≥0ᵀ Op n code code-injective na
 open import Grades.Exact.Regular.Grades ℚ≥0ᵀ Op n code code-injective name code-name
   running ℚ≥0-dense (# 1) one-pos ℚ≥0-commensurable using (lowerʰ; upperʰ)
 
+-- `intervalᵍ` and its hints by copatterns, so that the grade is
+-- compared by name and not as a record value
+
+private
+  module I = Grade intervalᵍ
+
 two-sided : Grade ℚ≥0ᴰ
-two-sided = intervalᵍ
+Grade.Carrier         two-sided = I.Carrier
+Grade._·_             two-sided = I._·_
+Grade.u               two-sided = I.u
+Grade._≾_             two-sided = I._≾_
+Grade.⊤               two-sided = I.⊤
+Grade._⊔_             two-sided = I._⊔_
+Grade.of-dur          two-sided = I.of-dur
+Grade.·-identityˡ     two-sided = I.·-identityˡ
+Grade.·-identityʳ     two-sided = I.·-identityʳ
+Grade.·-assoc         two-sided = I.·-assoc
+Grade.≾-refl          two-sided {c} = I.≾-refl {c}
+Grade.≾-trans         two-sided {c} {d} {e} = I.≾-trans {c} {d} {e}
+Grade.≾-irrelevant    two-sided {c} {d} = I.≾-irrelevant {c} {d}
+Grade._≾?_            two-sided = I._≾?_
+Grade.≾-⊤             two-sided = I.≾-⊤
+Grade.⊔-ubˡ           two-sided = I.⊔-ubˡ
+Grade.⊔-ubʳ           two-sided = I.⊔-ubʳ
+Grade.⊔-lub           two-sided {c} {d} {e} = I.⊔-lub {c} {d} {e}
+Grade.·-monoˡ-≾       two-sided {c} {d} {e} = I.·-monoˡ-≾ {c} {d} {e}
+Grade.·-monoʳ-≾       two-sided {c} {d} {e} = I.·-monoʳ-≾ {c} {d} {e}
+Grade.·-distribˡ-⊔-≾  two-sided = I.·-distribˡ-⊔-≾
+Grade.·-distribʳ-⊔-≾  two-sided = I.·-distribʳ-⊔-≾
+Grade.≾-zero-productˡ two-sided {c} {d} = I.≾-zero-productˡ {c} {d}
+Grade.≾-zero-productʳ two-sided {c} {d} = I.≾-zero-productʳ {c} {d}
+Grade.of-dur-zero     two-sided = I.of-dur-zero
+Grade.of-dur-plus     two-sided {τ} {τ′} = I.of-dur-plus {τ} {τ′}
+
+private
+  module H = GradeHints (intervalʰ lowerʰ upperʰ)
 
 two-sidedʰ : GradeHints two-sided
-two-sidedʰ = intervalʰ lowerʰ upperʰ
+GradeHints.u-least? two-sidedʰ = H.u-least?
+GradeHints.·-comm?  two-sidedʰ = H.·-comm?
+GradeHints.plus?    two-sidedʰ = H.plus?

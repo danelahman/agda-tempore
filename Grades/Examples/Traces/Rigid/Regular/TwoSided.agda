@@ -138,13 +138,22 @@ private
   right-sided = L.C.WithDurations.closed-grade (steps (⌜ e≤ ⌝′ i≤)) refl
                   (λ {m} {n} → L.steps-plus (⌜ e≤ ⌝′ i≤) {m} {n})
 
+  -- their hints by copatterns, so that the grades are not compared as
+  -- record values
+  module Hᴸ = GradeHints (L.C.WithDurations.closed-gradeʰ (steps (⌜ e≥ ⌝′ i≥)) refl
+                            (λ {m} {n} → L.steps-plus (⌜ e≥ ⌝′ i≥) {m} {n}))
+  module Hᵁ = GradeHints (L.C.WithDurations.closed-gradeʰ (steps (⌜ e≤ ⌝′ i≤)) refl
+                            (λ {m} {n} → L.steps-plus (⌜ e≤ ⌝′ i≤) {m} {n}))
+
   left-sidedʰ : GradeHints left-sided
-  left-sidedʰ = L.C.WithDurations.closed-gradeʰ (steps (⌜ e≥ ⌝′ i≥)) refl
-                  (λ {m} {n} → L.steps-plus (⌜ e≥ ⌝′ i≥) {m} {n})
+  GradeHints.u-least? left-sidedʰ = Hᴸ.u-least?
+  GradeHints.·-comm?  left-sidedʰ = Hᴸ.·-comm?
+  GradeHints.plus?    left-sidedʰ = Hᴸ.plus?
 
   right-sidedʰ : GradeHints right-sided
-  right-sidedʰ = L.C.WithDurations.closed-gradeʰ (steps (⌜ e≤ ⌝′ i≤)) refl
-                  (λ {m} {n} → L.steps-plus (⌜ e≤ ⌝′ i≤) {m} {n})
+  GradeHints.u-least? right-sidedʰ = Hᵁ.u-least?
+  GradeHints.·-comm?  right-sidedʰ = Hᵁ.·-comm?
+  GradeHints.plus?    right-sidedʰ = Hᵁ.plus?
 
 consistent : Upward (left-sided ×ᵍ right-sided) Consistent
 consistent = record

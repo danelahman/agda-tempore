@@ -70,28 +70,6 @@ T-alg-of-handlerᵀ-≤ : ∀ {P A ε₁ ε₂ ε'} → (bc : Eternalᵒ P) → 
                     ≈ᵖ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵖ T-alg-of-handlerᵀ {P} {A} {ε₁} {ε'} bc h
 T-alg-of-handlerᵀ-≤ bc h p x = ≈ᵗ-refl _
 
-T-alg-of-handlerᵀ-opᵀ : ∀ {P A ε' ε''} → (op : Op) → (bc : Eternalᵒ P) → (h : Handlerˢ P A)
-                      → T-alg-of-handlerᵀ bc h ∘ᵖ mapˣᵐ idᵖ (opᵀ {Tᵒ A ε''} {ε'} op)
-                      ≈ᵖ T-≤ (≃ₑ⇒≿ₑ (·ₑ-assoc (op-grade op) ε' ε''))
-                        ∘ᵖ clause h op (ε' ·ₑ ε'')
-                        ∘ᵖ ⟨ fstᵐ
-                           , ⟨ fstᵐ ∘ᵖ sndᵐ
-                             ,   [ mapᵉ (op-grade op) ]ᶠ
-                                   (curryᵐ (T-alg-of-handlerᵀ bc h
-                                     ∘ᵖ ⟨ fstᵐ ∘ᵖ fstᵐ
-                                        , appᵐ ∘ᵖ ⟨ sndᵐ ∘ᵖ fstᵐ , sndᵐ ⟩ᵐ ⟩ᵐ))
-                               ∘ᵖ []-monoidal
-                               ∘ᵖ mapˣᵐ (Eternalᵒ.necᵉ bc {mapᵉ (op-grade op)}) idᵖ
-                               ∘ᵖ ⟨ fstᵐ , sndᵐ ∘ᵖ sndᵐ ⟩ᵐ ⟩ᵐ ⟩ᵐ
-T-alg-of-handlerᵀ-opᵀ {P = P} op bc h (pv , (v , boxk)) =
-  sub-congᵗ
-    (app-cong (clause h op _)
-      (≈-refl P ,
-       (≈-refl ⟦ param op ⟧ᵍ ,
-        (λ q p y → T-alg-of-handlerˢ-cong bc h
-                     (fun-nat (app (Eternalᵒ.necᵉ bc) pv) q p)
-                     (fun-nat boxk q p ⊑-refl y)))))
-
 -- The fold is a congruence in the *handler*: pointwise-equal clauses fold to
 -- equal algebras. By induction on the tree — the only handler-dependent node is
 -- `op`, where the matching clause is applied (`heq`) and the folded continuations
