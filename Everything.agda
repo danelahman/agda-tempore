@@ -1,10 +1,11 @@
-------------------------------------------------------------------------
--- Every module: the grades, language and utilities the two calculi
--- share, the polymorphic calculus and its type inference
--- (`PolymorphicCalculus/Everything.agda`), and the monomorphic calculus
--- (`MonomorphicCalculus/Everything.agda`). Check with
--- `agda Everything.agda`.
-------------------------------------------------------------------------
+-----------------------------------------------------------------------
+-- Root for every module of the project: the grades, language and    --
+-- utilities the two calculi share, the polymorphic calculus and its --
+-- type inference (`PolymorphicCalculus/Everything.agda`), and the   --
+-- monomorphic calculus (`MonomorphicCalculus/Everything.agda`).     --
+--                                                                   --
+-- Check with `agda Everything.agda`.                                --
+-----------------------------------------------------------------------
 
 module Everything where
 

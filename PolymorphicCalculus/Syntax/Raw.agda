@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- Raw (well-scoped, untyped) syntax                            --
+-- Raw (well-scoped, untyped) syntax of values and computations --
 --                                                              --
 -- The input of inference: the formers of the typing rules but  --
 -- subsumption, keeping only the annotations (a constant's base --

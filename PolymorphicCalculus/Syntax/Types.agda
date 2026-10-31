@@ -19,7 +19,8 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 
 open BaseTypes BTs using (BaseType)
-open import Language.GroundTypes Grades BTs using (GType; Base; Unit; Bool; Nat; Empty; _|×|ᵍ_; _|+|ᵍ_; |List|ᵍ; [_]ᵍ_)
+open import Language.GroundTypes Grades BTs
+  using (GType; Base; Unit; Bool; Nat; Empty; _|×|ᵍ_; _|+|ᵍ_; |List|ᵍ; [_]ᵍ_)
 
 open import PolymorphicCalculus.Syntax.Grades S
 

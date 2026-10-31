@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- Programs and their erasure                                   --
+-- Programs (top-level let bindings) and their erasure          --
 --                                                              --
 -- A program is a sequence of definitions `f = V`, the first    --
 -- outermost, each a closed raw value naming earlier            --
