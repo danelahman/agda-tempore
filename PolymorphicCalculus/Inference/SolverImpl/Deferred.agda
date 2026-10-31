@@ -75,17 +75,17 @@ open import PolymorphicCalculus.Hypotheses.Instances     S using (_⊩ᴼˢ_[_])
 
 -- An entry over the scope extended by one rigid binds it outermost
 
-bindᵈ : ∀ {Ψ} → QOrd (Ψ +e) → QOrd Ψ
+bindᵈ : ∀ {Ω} → QOrd (Ω +e) → QOrd Ω
 bindᵈ (qord l k o) = qord l (suc k) o
 
 -- A list of entries, discharged member by member
 
-⊩ᴰ→⊩ᴼˢ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (D : List (QOrd Ψ))
+⊩ᴰ→⊩ᴼˢ : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} → (D : List (QOrd Ω))
        → (∀ {E} → E ∈ D → Q ⊩ᴼ E [ δ ]) → Q ⊩ᴼˢ D [ δ ]
 ⊩ᴰ→⊩ᴼˢ []      h = []
 ⊩ᴰ→⊩ᴼˢ (E ∷ D) h = h (here refl) ∷ ⊩ᴰ→⊩ᴼˢ D (λ m → h (there m))
 
-⊩ᴼˢ→⊩ᴰ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (D : List (QOrd Ψ))
+⊩ᴼˢ→⊩ᴰ : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} → (D : List (QOrd Ω))
        → Q ⊩ᴼˢ D [ δ ] → ∀ {E} → E ∈ D → Q ⊩ᴼ E [ δ ]
 ⊩ᴼˢ→⊩ᴰ (E ∷ D) (h ∷ hs) (here refl) = h
 ⊩ᴼˢ→⊩ᴰ (E ∷ D) (h ∷ hs) (there m)   = ⊩ᴼˢ→⊩ᴰ D hs m
@@ -98,22 +98,22 @@ data Dir : Set where
 
 -- The move is below (`dir↓`) or above (`dir↑`) the substitution it moves
 
-Moves : ∀ {Ψ Ψ'} → Dir → Hyps Ψ' → Subst Ψ Ψ → Subst Ψ Ψ' → Set
+Moves : ∀ {Ω Ω'} → Dir → Hyps Ω' → Subst Ω Ω → Subst Ω Ω' → Set
 Moves dir↓ Q σ τ = Q ⊩ (σ ⨟ˢ τ) ≾ˢ τ
 Moves dir↑ Q σ τ = Q ⊩ τ ≾ˢ (σ ⨟ˢ τ)
 
 -- The side an ordering keeps fixed: the greater under a move down, the smaller
 -- under a move up
 
-Fixedʳ : ∀ {Ψ} → Dir → Subst Ψ Ψ → RExp Ψ × RExp Ψ → Set
+Fixedʳ : ∀ {Ω} → Dir → Subst Ω Ω → RExp Ω × RExp Ω → Set
 Fixedʳ dir↓ σ (x , y) = y [ σ ]ʳ ≅ʳ y
 Fixedʳ dir↑ σ (x , y) = x [ σ ]ʳ ≅ʳ x
 
-Fixedᵉ : ∀ {Ψ} → Dir → Subst Ψ Ψ → EExp Ψ × EExp Ψ → Set
+Fixedᵉ : ∀ {Ω} → Dir → Subst Ω Ω → EExp Ω × EExp Ω → Set
 Fixedᵉ dir↓ σ (x , y) = y [ σ ]ᵉ ≅ᵉ y
 Fixedᵉ dir↑ σ (x , y) = x [ σ ]ᵉ ≅ᵉ x
 
-fixedʳ? : ∀ {Ψ} → (d : Dir) → (σ : Subst Ψ Ψ) → (a : RExp Ψ × RExp Ψ) → Maybe (Fixedʳ d σ a)
+fixedʳ? : ∀ {Ω} → (d : Dir) → (σ : Subst Ω Ω) → (a : RExp Ω × RExp Ω) → Maybe (Fixedʳ d σ a)
 fixedʳ? dir↓ σ (x , y) with y [ σ ]ʳ ≟ʳ y
 ... | yes q = just q
 ... | no _  = nothing
@@ -121,7 +121,7 @@ fixedʳ? dir↑ σ (x , y) with x [ σ ]ʳ ≟ʳ x
 ... | yes q = just q
 ... | no _  = nothing
 
-fixedᵉ? : ∀ {Ψ} → (d : Dir) → (σ : Subst Ψ Ψ) → (a : EExp Ψ × EExp Ψ) → Maybe (Fixedᵉ d σ a)
+fixedᵉ? : ∀ {Ω} → (d : Dir) → (σ : Subst Ω Ω) → (a : EExp Ω × EExp Ω) → Maybe (Fixedᵉ d σ a)
 fixedᵉ? dir↓ σ (x , y) with y [ σ ]ᵉ ≟ᵉ y
 ... | yes q = just q
 ... | no _  = nothing
@@ -136,23 +136,23 @@ allOf f (a ∷ l) with f a | allOf f l
 ... | just p | just g = just (λ { (here refl) → p ; (there m) → g m })
 ... | _      | _      = nothing
 
-record Still {Ψ} (d : Dir) (σ : Subst Ψ Ψ) (E : QOrd Ψ) : Set where
+record Still {Ω} (d : Dir) (σ : Subst Ω Ω) (E : QOrd Ω) : Set where
   constructor still
   field
     stʳ : ∀ {a} → a ∈ ors (body E) → Fixedʳ d (σ ↑ᵉⁿ rigids E) a
     stᵉ : ∀ {a} → a ∈ oes (body E) → Fixedᵉ d (σ ↑ᵉⁿ rigids E) a
 
-still? : ∀ {Ψ} → (d : Dir) → (σ : Subst Ψ Ψ) → (E : QOrd Ψ) → Maybe (Still d σ E)
+still? : ∀ {Ω} → (d : Dir) → (σ : Subst Ω Ω) → (E : QOrd Ω) → Maybe (Still d σ E)
 still? d σ E with allOf (fixedʳ? d (σ ↑ᵉⁿ rigids E)) (ors (body E))
                 | allOf (fixedᵉ? d (σ ↑ᵉⁿ rigids E)) (oes (body E))
 ... | just r | just e = just (still r e)
 ... | _      | _      = nothing
 
-stills? : ∀ {Ψ} → (d : Dir) → (σ : Subst Ψ Ψ) → (D : List (QOrd Ψ))
+stills? : ∀ {Ω} → (d : Dir) → (σ : Subst Ω Ω) → (D : List (QOrd Ω))
         → Maybe (∀ {E} → E ∈ D → Still d σ E)
 stills? d σ = allOf (still? d σ)
 
-keepᵈ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {σ : Subst Ψ Ψ} {τ : Subst Ψ Ψ'} → (d : Dir) → (E : QOrd Ψ)
+keepᵈ : ∀ {Ω Ω'} {Q : Hyps Ω'} {σ : Subst Ω Ω} {τ : Subst Ω Ω'} → (d : Dir) → (E : QOrd Ω)
       → Still d σ E → Moves d Q σ τ → Q ⊩ᴼ E [ τ ] → Q ⊩ᴼ E [ σ ⨟ˢ τ ]
 keepᵈ {Q = Q} {σ} {τ} d (qord l k o) (still sr se) mv h = mk⊩ᵒ (r d sr mv) (e d se mv)
   where
@@ -193,30 +193,30 @@ keepᵈ {Q = Q} {σ} {τ} d (qord l k o) (still sr se) mv h = mk⊩ᵒ (r d sr m
 
 -- `κ⟨ b ⟩` sends the newest effect-grade variable to `b`, fixing the rest
 
-κ⟨_⟩ : ∀ {Ψ} → EExp Ψ → Subst (Ψ +e) Ψ
+κ⟨_⟩ : ∀ {Ω} → EExp Ω → Subst (Ω +e) Ω
 κ⟨ b ⟩ = sub tvar rvar (λ { zero → b ; (suc i) → evar i })
 
-wk-κ : ∀ {Ψ} → (b : EExp Ψ) → (wkˢᵉ {Ψ} ⨟ˢ κ⟨ b ⟩) ≐ˢ idˢ
+wk-κ : ∀ {Ω} → (b : EExp Ω) → (wkˢᵉ {Ω} ⨟ˢ κ⟨ b ⟩) ≐ˢ idˢ
 wk-κ b = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
 
-κ-wkᵛ : ∀ {Ψ} → (b : EExp Ψ) → (A : OVType Ψ) → A [ wkˢᵉ ]ᵛ [ κ⟨ b ⟩ ]ᵛ ≡ A
+κ-wkᵛ : ∀ {Ω} → (b : EExp Ω) → (A : OVType Ω) → A [ wkˢᵉ ]ᵛ [ κ⟨ b ⟩ ]ᵛ ≡ A
 κ-wkᵛ b A = trans ([⨟]ᵛ A wkˢᵉ κ⟨ b ⟩) (trans ([≐]ᵛ (wk-κ b) A) ([id]ᵛ A))
 
-κ-wkʳ : ∀ {Ψ} → (b : EExp Ψ) → (ρ : RExp Ψ) → ρ [ wkˢᵉ ]ʳ [ κ⟨ b ⟩ ]ʳ ≡ ρ
+κ-wkʳ : ∀ {Ω} → (b : EExp Ω) → (ρ : RExp Ω) → ρ [ wkˢᵉ ]ʳ [ κ⟨ b ⟩ ]ʳ ≡ ρ
 κ-wkʳ b ρ = trans ([⨟]ʳ ρ wkˢᵉ κ⟨ b ⟩) (trans ([≐]ʳ (wk-κ b) ρ) ([id]ʳ ρ))
 
-κ-wkᵉ : ∀ {Ψ} → (b : EExp Ψ) → (ε : EExp Ψ) → ε [ wkˢᵉ ]ᵉ [ κ⟨ b ⟩ ]ᵉ ≡ ε
+κ-wkᵉ : ∀ {Ω} → (b : EExp Ω) → (ε : EExp Ω) → ε [ wkˢᵉ ]ᵉ [ κ⟨ b ⟩ ]ᵉ ≡ ε
 κ-wkᵉ b ε = trans ([⨟]ᵉ ε wkˢᵉ κ⟨ b ⟩) (trans ([≐]ᵉ (wk-κ b) ε) ([id]ᵉ ε))
 
 -- Every weakened hypothesis is entailed back by the original set
 
-⊩ᴴ-κ : ∀ {Ψ} {Q : Hyps Ψ} → (b : EExp Ψ) → Q ⊩ᴴ (wkᵉ-H Q) [ κ⟨ b ⟩ ]
+⊩ᴴ-κ : ∀ {Ω} {Q : Hyps Ω} → (b : EExp Ω) → Q ⊩ᴴ (wkᵉ-H Q) [ κ⟨ b ⟩ ]
 ⊩ᴴ-κ b = ⊩ᴴ-≐ (mk≐ˢ (λ α → refl) (λ i → refl) (λ { zero → refl ; (suc i) → refl }))
                (⊩ᴴ-wkᵉ-,ᵉ b)
 
 -- A constant commutes with a lift
 
-↑-κ : ∀ {Ψ Ψ'} → (δ : Subst Ψ Ψ') → (c : E)
+↑-κ : ∀ {Ω Ω'} → (δ : Subst Ω Ω') → (c : E)
     → ((δ ↑ᵉ) ⨟ˢ κ⟨ econst c ⟩) ≐ˢ (κ⟨ econst c ⟩ ⨟ˢ δ)
 ↑-κ δ c =
   mk≐ˢ (λ α → trans (cong (_[ κ⟨ econst c ⟩ ]ᵛ) (sym (wkˢᵉ-v (sTy δ α))))
@@ -237,7 +237,7 @@ tlᵂ : List E → List E
 tlᵂ []       = []
 tlᵂ (_ ∷ cs) = cs
 
-wit : ∀ {Ψ} → (k : ℕ) → List E → Subst (Ψ +eⁿ k) Ψ
+wit : ∀ {Ω} → (k : ℕ) → List E → Subst (Ω +eⁿ k) Ω
 wit zero    cs = idˢ
 wit (suc k) cs = wit k (tlᵂ cs) ⨟ˢ κ⟨ econst (hdᵂ cs) ⟩
 
@@ -256,7 +256,7 @@ candidates d rcs ecs = deduplicate _≃ₑ?_ (uₑ ∷ ⊤ₑ ∷ witnesses d rc
 -- The constants of an expression, and its occurrences of the rigids where its
 -- ordering can be refuted
 
-constsₑ : ∀ {Ψ} → EExp Ψ → List E
+constsₑ : ∀ {Ω} → EExp Ω → List E
 constsₑ (evar _)   = []
 constsₑ (econst c) = c ∷ []
 constsₑ (a ·̂ₑ b)   = constsₑ a ++ constsₑ b
@@ -265,20 +265,20 @@ constsₑ (a ⊔̂ₑ b)   = constsₑ a ++ constsₑ b
 _++²_ : List R × List E → List R × List E → List R × List E
 (r , e) ++² (r' , e') = r ++ r' , e ++ e'
 
-constsᵣ : ∀ {Ψ} → RExp Ψ → List R × List E
+constsᵣ : ∀ {Ω} → RExp Ω → List R × List E
 constsᵣ (rvar _)   = [] , []
 constsᵣ (rconst c) = c ∷ [] , []
 constsᵣ (a ·̂ᵣ b)   = constsᵣ a ++² constsᵣ b
 constsᵣ (a ⊔̂ᵣ b)   = constsᵣ a ++² constsᵣ b
 constsᵣ ∣ ε ∣̂ᵉ     = [] , constsₑ ε
 
-degreeₑ : ∀ {Ψ} → EExp Ψ → ℕ
+degreeₑ : ∀ {Ω} → EExp Ω → ℕ
 degreeₑ (evar _)   = 1
 degreeₑ (econst _) = 0
 degreeₑ (a ·̂ₑ b)   = degreeₑ a + degreeₑ b
 degreeₑ (a ⊔̂ₑ b)   = degreeₑ a + degreeₑ b
 
-degreeᵣ : ∀ {Ψ} → RExp Ψ → ℕ
+degreeᵣ : ∀ {Ω} → RExp Ω → ℕ
 degreeᵣ (rvar _)   = 0
 degreeᵣ (rconst _) = 0
 degreeᵣ (a ·̂ᵣ b)   = degreeᵣ a + degreeᵣ b
@@ -287,14 +287,14 @@ degreeᵣ ∣ ε ∣̂ᵉ     = degreeₑ ε
 
 -- The candidates for an ordering of either sort
 
-candidatesₑ : ∀ {Ψ} → EExp Ψ → EExp Ψ → List E
+candidatesₑ : ∀ {Ω} → EExp Ω → EExp Ω → List E
 candidatesₑ x y = candidates (degreeₑ x ⊔ degreeₑ y) [] (constsₑ x ++ constsₑ y)
 
-candidatesᵣ : ∀ {Ψ} → RExp Ψ → RExp Ψ → List E
+candidatesᵣ : ∀ {Ω} → RExp Ω → RExp Ω → List E
 candidatesᵣ x y with constsᵣ x ++² constsᵣ y
 ... | (rcs , ecs) = candidates (degreeᵣ x ⊔ degreeᵣ y) rcs ecs
 
-wit-⨟ : ∀ {Ψ Ψ'} → (δ : Subst Ψ Ψ') → (k : ℕ) → (cs : List E)
+wit-⨟ : ∀ {Ω Ω'} → (δ : Subst Ω Ω') → (k : ℕ) → (cs : List E)
       → ((δ ↑ᵉⁿ k) ⨟ˢ wit k cs) ≐ˢ (wit k cs ⨟ˢ δ)
 wit-⨟ δ zero    cs = ≐ˢ-trans (⨟-idʳ δ) (≐ˢ-sym (⨟-idˡ δ))
 wit-⨟ δ (suc k) cs =
@@ -309,8 +309,8 @@ wit-⨟ δ (suc k) cs =
 
 -- No hypotheses entail the empty set at the witnesses
 
-⊩ᴴ-wit : ∀ {Ψ} → (k : ℕ) → (cs : List E) → ∅ᴴ ⊩ᴴ wkᵉⁿ-H k (∅ᴴ {Ψ}) [ wit k cs ]
-⊩ᴴ-wit {Ψ} k cs = subst (λ H → ∅ᴴ ⊩ᴴ H [ wit k cs ]) (sym (wkᵉⁿ-∅ᴴ {Ψ} k)) ⊩ᴴ-∅
+⊩ᴴ-wit : ∀ {Ω} → (k : ℕ) → (cs : List E) → ∅ᴴ ⊩ᴴ wkᵉⁿ-H k (∅ᴴ {Ω}) [ wit k cs ]
+⊩ᴴ-wit {Ω} k cs = subst (λ H → ∅ᴴ ⊩ᴴ H [ wit k cs ]) (sym (wkᵉⁿ-∅ᴴ {Ω} k)) ⊩ᴴ-∅
 
 ------------------------------------------------------------------------
 -- Closing an entry over the newest variable: bound outermost where the entry
@@ -324,10 +324,10 @@ Pairs _≅_ (x , y) (x' , y') = x ≅ x' × y ≅ y'
 pairs? : ∀ {X : Set} {_≅_ : X → X → Set} → Decidable _≅_ → Decidable (Pairs _≅_)
 pairs? _≟_ (x , y) (x' , y') = (x ≟ x') ×-dec (y ≟ y')
 
-Sameᴼ : ∀ {Ψ} → Ords Ψ → Ords Ψ → Set
+Sameᴼ : ∀ {Ω} → Ords Ω → Ords Ω → Set
 Sameᴼ o o' = Pointwise (Pairs _≅ʳ_) (ors o) (ors o') × Pointwise (Pairs _≅ᵉ_) (oes o) (oes o')
 
-_≟ᴼ_ : ∀ {Ψ} → (o o' : Ords Ψ) → Dec (Sameᴼ o o')
+_≟ᴼ_ : ∀ {Ω} → (o o' : Ords Ω) → Dec (Sameᴼ o o')
 o ≟ᴼ o' = Pw.decidable (pairs? _≟ʳ_) (ors o) (ors o') ×-dec Pw.decidable (pairs? _≟ᵉ_) (oes o) (oes o')
 
 pw-∈ : ∀ {X : Set} {R : X → X → Set} {xs ys y} → Pointwise R xs ys → y ∈ ys
@@ -336,7 +336,7 @@ pw-∈ (r ∷ rs) (here refl) = _ , here refl , r
 pw-∈ (r ∷ rs) (there m) with pw-∈ rs m
 ... | x , m' , q = x , there m' , q
 
-⊩ᵒ-same : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {o o' : Ords Ψ} {δ : Subst Ψ Ψ'}
+⊩ᵒ-same : ∀ {Ω Ω'} {Q : Hyps Ω'} {o o' : Ords Ω} {δ : Subst Ω Ω'}
         → Sameᴼ o o' → Q ⊩ᵒ o [ δ ] → Q ⊩ᵒ o' [ δ ]
 ⊩ᵒ-same {Q = Q} {o' = o'} {δ} (pr , pe) h = mk⊩ᵒ r e
   where
@@ -352,12 +352,12 @@ pw-∈ (r ∷ rs) (there m) with pw-∈ rs m
           transₑ (eqₑ (≡̂ₑ-subst δ (≡̂ₑ-sym (≅ᵉ⇒≡̂ p))))
                  (transₑ (⊩oes h m₀) (eqₑ (≡̂ₑ-subst δ (≅ᵉ⇒≡̂ q))))
 
-closeᵈ : ∀ {Ψ} → QOrd (Ψ +e) → QOrd Ψ
+closeᵈ : ∀ {Ω} → QOrd (Ω +e) → QOrd Ω
 closeᵈ (qord l k o) with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
 ... | yes _ = qord l k (o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ)
 ... | no _  = bindᵈ (qord l k o)
 
-closeᵈ-sound : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (E : QOrd (Ψ +e))
+closeᵈ-sound : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} → (E : QOrd (Ω +e))
              → Q ⊩ᴼ closeᵈ E [ δ ] → wkᵉ-H Q ⊩ᴼ E [ δ ↑ᵉ ]
 closeᵈ-sound {Q = Q} {δ} (qord l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
 ... | no _  = h
@@ -369,7 +369,7 @@ closeᵈ-sound {Q = Q} {δ} (qord l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k 
     eq = ≐ˢ-trans (⨟-↑ᵉⁿ δ wkˢᵉ k)
          (≐ˢ-trans (≐ˢ-↑ᵉⁿ (≐ˢ-sym (wkˢᵉ-↑ᵉ δ)) k) (≐ˢ-sym (⨟-↑ᵉⁿ wkˢᵉ (δ ↑ᵉ) k)))
 
-closeᵈ-princ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (E : QOrd (Ψ +e))
+closeᵈ-princ : ∀ {Ω Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} → (E : QOrd (Ω +e))
              → wkᵉ-H Q ⊩ᴼ E [ δ ↑ᵉ ] → Q ⊩ᴼ closeᵈ E [ δ ]
 closeᵈ-princ {Q = Q} {δ} (qord l k o) h with o [ κ⟨ ûₑ ⟩ ↑ᵉⁿ k ]ᴼ [ wkˢᵉ ↑ᵉⁿ k ]ᴼ ≟ᴼ o
 ... | no _  = h

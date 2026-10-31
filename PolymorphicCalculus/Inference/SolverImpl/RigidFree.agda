@@ -74,7 +74,7 @@ solve-rigidFree s (C ∧̂ D) (p , q) with solve s C in e
 ...   | solved _ = λ ()
 solve-rigidFree s (A ≾̂ᵥᶜ B) p with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))
 ... | nothing = λ ()
-... | just (Ψ' , δ) with subDec (A [ θ s ]ᵛ [ δ ]ᵛ) (B [ θ s ]ᵛ [ δ ]ᵛ)
+... | just (Ω' , δ) with subDec (A [ θ s ]ᵛ [ δ ]ᵛ) (B [ θ s ]ᵛ [ δ ]ᵛ)
 ...   | nothing = λ ()
 ...   | just d  with subsList (ss (res s [ δ ]ᴿ)) | etsDec (ts (res s [ δ ]ᴿ))
 ...     | nothing | _       = λ ()

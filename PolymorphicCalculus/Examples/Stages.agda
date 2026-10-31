@@ -422,20 +422,20 @@ module Witness where
   open import PolymorphicCalculus.Inference.SolverImpl.Solve    spec hints enum
     using (Retried; refutedᵈ; keptᵈ; retryᵈ; Verdict; settled; refuted; undecided; witnessᵉ)
 
-  Ψ : Scope
-  Ψ = scope 0 0 0
+  Ω : Scope
+  Ω = scope 0 0 0
 
-  j : EExp (Ψ +eⁿ 1)
+  j : EExp (Ω +eⁿ 1)
   j = evar zero
 
-  ⌜_⌝ : ℕ → EExp (Ψ +eⁿ 1)
+  ⌜_⌝ : ℕ → EExp (Ω +eⁿ 1)
   ⌜ n ⌝ = econst [ n ,+∞⟩
 
-  refutedᴿ : ∀ {H E} → Retried {Ψ} H E → 𝔹
+  refutedᴿ : ∀ {H E} → Retried {Ω} H E → 𝔹
   refutedᴿ (refutedᵈ _)   = true
   refutedᴿ (keptᵈ _ _ _) = false
 
-  undecidedⱽ : ∀ {X : Set} {H : Hyps Ψ} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set} {a : X}
+  undecidedⱽ : ∀ {X : Set} {H : Hyps Ω} {P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X → Set} {a : X}
              → Verdict H P a → 𝔹
   undecidedⱽ undecided = true
   undecidedⱽ _         = false

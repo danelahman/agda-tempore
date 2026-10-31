@@ -140,10 +140,10 @@ apart-∈ _≟_ {a} {b} m with a ≟ b
 
 -- Along a split, the pieces apart from those with the same two sides
 
-apart-back : ∀ {Ψ} {X : Set} {_≅_ : X → X → Set} → (_≟_ : Decidable _≅_)
-           → {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X × X → Set}
-           → (∀ {Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} {x x'} → x ≅ x' → P Q δ (x , x'))
-           → ∀ {l} → (S : Split P l) → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+apart-back : ∀ {Ω} {X : Set} {_≅_ : X → X → Set} → (_≟_ : Decidable _≅_)
+           → {P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X × X → Set}
+           → (∀ {Ω'} {Q : Hyps Ω'} {δ : Subst Ω Ω'} {x x'} → x ≅ x' → P Q δ (x , x'))
+           → ∀ {l} → (S : Split P l) → ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω')
            → (∀ {b} → b ∈ apart _≟_ (Split.out S) → P Q δ b) → ∀ {a} → a ∈ l → P Q δ a
 apart-back _≟_ {P} prefl S {Q = Q} δ k = Split.back S δ pick
   where
@@ -152,9 +152,9 @@ apart-back _≟_ {P} prefl S {Q = Q} δ k = Split.back S δ pick
     ... | inj₁ e = prefl e
     ... | inj₂ m    = k m
 
-apart-fwd : ∀ {Ψ} {X : Set} {_≅_ : X → X → Set} → (_≟_ : Decidable _≅_)
-          → {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X × X → Set}
-          → ∀ {l} → (S : Split P l) → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+apart-fwd : ∀ {Ω} {X : Set} {_≅_ : X → X → Set} → (_≟_ : Decidable _≅_)
+          → {P : ∀ {Ω'} → Hyps Ω' → Subst Ω Ω' → X × X → Set}
+          → ∀ {l} → (S : Split P l) → ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω')
           → (∀ {a} → a ∈ l → P Q δ a) → ∀ {b} → b ∈ apart _≟_ (Split.out S) → P Q δ b
 apart-fwd _≟_ S δ k mb = Split.fwd S δ k (apart-⊆ _≟_ mb)
 

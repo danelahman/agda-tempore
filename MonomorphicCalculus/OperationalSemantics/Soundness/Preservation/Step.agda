@@ -433,7 +433,7 @@ seq-step-core : ∀ {ε₁ ε₂ ε₃ A A₀ B P} {S S' : 𝕊 []}
   → (pv : ⟦ toCtx S ⟧ᶜᵗˣ →ᵐ P)
   → {M : toCtx S ⊢C⦂ A ‼ ε₁} → (N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
   → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
-  → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+  → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
   → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
   → (pS : Paramˢ S)
   → (pM : Paramᶜ M) → (pN : Paramᶜ N)
@@ -575,7 +575,7 @@ box-∷-suc w w' env cell =
 
 step-box : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []} {ρ₂ ρ₄ : R}
          → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
-         → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+         → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
          → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ ρ₄ ≾ᵣ ρ₂)
          → (g : mapᵉ (step-grade r) ·ᵣ ρ₄ ≾ᵣ ρ₂)
          → (pS : Paramˢ S) → (pM : Paramᶜ M)
@@ -941,7 +941,7 @@ step-box (DELAY {τ = τ} {S = St}) c g pS pM =
 
 seq-g : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []}
       → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
-      → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+      → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
       → mapᵉ (step-grade r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁
 seq-g {ε₃ = ε₃} r =
   ≾ᵣ-trans (≃ᵣ⇒≿ᵣ (map-·ᵉ {step-grade r} {ε₃}))
@@ -1010,7 +1010,7 @@ seq-target {ε₃ = ε₃} {A = A} {B = B} {Γ' = Γ'} alg pv N ρ m' env pN =
 sound-SEQ-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {S S' : 𝕊 []}
   → {M : toCtx S ⊢C⦂ A ‼ ε₁} → (N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
   → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
-  → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+  → (r : ⟨ S , M ⟩ ⟶ ⟨ S' , M' ⟩)
   → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
   → (pS : Paramˢ S) → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
   → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS

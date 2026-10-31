@@ -71,7 +71,7 @@ import MonomorphicCalculus.Syntax.Substitution.Variables
 
 ---- Operational semantics: states, with their grade and extensions (`𝕊`,
 ---- `state-grade`, `_≤ₛ_`, in `OperationalSemantics/State`), and the
----- small-step reduction of configurations (`Config`, `_↝_`, in
+---- small-step reduction of configurations (`Config`, `_⟶_`, in
 ---- `OperationalSemantics/Reduction`). CMP reduces a comparison to its
 ---- boolean; SUB and the SUB-… rules move a subsumption and erase to the
 ---- identity on raw terms; HANDLE-RET, HANDLE-OP and HANDLE-STEP fire on a
@@ -190,7 +190,7 @@ import MonomorphicCalculus.DenotationalSemantics.Interpretation.Variables
 
 ---- Soundness of the equational theory (`soundᵛ`, `soundᶜ`, in
 ---- `EquationalTheory/Soundness`): equal terms with uniform handlers have
----- equal denotations. Soundness of the reduction (`↝*-⊳`, in
+---- equal denotations. Soundness of the reduction (`⟶*-⊳`, in
 ---- `OperationalSemantics/Soundness/Preservation`): a run with uniform
 ---- handlers relates the denotations of its configurations, by a time
 ---- transition and an effect-refining coercion; the same for running

@@ -116,7 +116,7 @@ tick-nf {ε = ε} δ env f =
   ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-trans _ _ (tick-z δ ε))
 
 -- Being a graded monad morphism, an implementation maps a bind to a bind. This
--- is what carries the tree monad's soundness theorem over to `↝-STEP`.
+-- is what carries the tree monad's soundness theorem over to `⟶-STEP`.
 
 module ImplLemmas
          (implᵐ : ∀ {A ε} → Tᵒ A ε →ᵐ Tᵏ A ε)

@@ -115,7 +115,7 @@ wkˢⁿ-varsⁿ {Θ} (suc k) =
 
 -- A substitution under the rigids: its restriction, then their images
 
-wkˢⁿ-split : ∀ {Θ Ψ} → (k : ℕ) → (δ : Subst (Θ +eⁿ k) Ψ)
+wkˢⁿ-split : ∀ {Θ Ω} → (k : ℕ) → (δ : Subst (Θ +eⁿ k) Ω)
            → δ ≐ˢ ((wkˢⁿ k ⨟ˢ δ) ,ᵉⁿ mapᵛ (_[ δ ]ᵉ) (varsⁿ k))
 wkˢⁿ-split k δ =
   ≐ˢ-trans (≐ˢ-sym (⨟-idˡ δ))
@@ -162,25 +162,25 @@ fact-⨟ es σ = ≐ˢ-trans (,ᵉⁿ-⨟ from∅ es σ) (≐ˢ-,ᵉⁿ (from∅
 mapᵖ : ∀ {A B : Set} → (A → B) → A × A → B × B
 mapᵖ f (x , y) = f x , f y
 
-record Ords (Ψ : Scope) : Set where
+record Ords (Ω : Scope) : Set where
   constructor ords
   field
-    ors : List (RExp Ψ × RExp Ψ)
-    oes : List (EExp Ψ × EExp Ψ)
+    ors : List (RExp Ω × RExp Ω)
+    oes : List (EExp Ω × EExp Ω)
 
 open Ords public
 
 infixl 50 _[_]ᴼ
 
-_[_]ᴼ : ∀ {Ψ Ψ'} → Ords Ψ → Subst Ψ Ψ' → Ords Ψ'
+_[_]ᴼ : ∀ {Ω Ω'} → Ords Ω → Subst Ω Ω' → Ords Ω'
 o [ σ ]ᴼ = ords (map (mapᵖ (_[ σ ]ʳ)) (ors o)) (map (mapᵖ (_[ σ ]ᵉ)) (oes o))
 
-[≐]ᴼ : ∀ {Ψ Ψ'} {σ σ' : Subst Ψ Ψ'} → σ ≐ˢ σ' → (o : Ords Ψ) → o [ σ ]ᴼ ≡ o [ σ' ]ᴼ
+[≐]ᴼ : ∀ {Ω Ω'} {σ σ' : Subst Ω Ω'} → σ ≐ˢ σ' → (o : Ords Ω) → o [ σ ]ᴼ ≡ o [ σ' ]ᴼ
 [≐]ᴼ p (ords r e) =
   cong₂ ords (map-cong (λ { (x , y) → cong₂ _,_ ([≐]ʳ p x) ([≐]ʳ p y) }) r)
              (map-cong (λ { (x , y) → cong₂ _,_ ([≐]ᵉ p x) ([≐]ᵉ p y) }) e)
 
-[⨟]ᴼ : ∀ {Ψ Ψ₁ Ψ₂} → (o : Ords Ψ) → (σ : Subst Ψ Ψ₁) → (δ : Subst Ψ₁ Ψ₂)
+[⨟]ᴼ : ∀ {Ω Ω₁ Ω₂} → (o : Ords Ω) → (σ : Subst Ω Ω₁) → (δ : Subst Ω₁ Ω₂)
      → o [ σ ]ᴼ [ δ ]ᴼ ≡ o [ σ ⨟ˢ δ ]ᴼ
 [⨟]ᴼ (ords r e) σ δ =
   cong₂ ords (trans (sym (map-∘ r))
@@ -188,7 +188,7 @@ o [ σ ]ᴼ = ords (map (mapᵖ (_[ σ ]ʳ)) (ors o)) (map (mapᵖ (_[ σ ]ᵉ))
              (trans (sym (map-∘ e))
                     (map-cong (λ { (x , y) → cong₂ _,_ ([⨟]ᵉ x σ δ) ([⨟]ᵉ y σ δ) }) e))
 
-[id]ᴼ : ∀ {Ψ} → (o : Ords Ψ) → o [ idˢ ]ᴼ ≡ o
+[id]ᴼ : ∀ {Ω} → (o : Ords Ω) → o [ idˢ ]ᴼ ≡ o
 [id]ᴼ (ords r e) =
   cong₂ ords (trans (map-cong (λ { (x , y) → cong₂ _,_ ([id]ʳ x) ([id]ʳ y) }) r) (map-id r))
              (trans (map-cong (λ { (x , y) → cong₂ _,_ ([id]ᵉ x) ([id]ᵉ y) }) e) (map-id e))

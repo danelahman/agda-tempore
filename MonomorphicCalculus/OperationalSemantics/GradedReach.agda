@@ -337,14 +337,14 @@ unbox-ren-img q x =
 -- per-step facts under composition, packaged as the reach a run licenses.
 
 steps-extends-state : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
-                    → cf ↝* cf' → Config.state cf ≤ₛ Config.state cf'
+                    → cf ⟶* cf' → Config.state cf ≤ₛ Config.state cf'
 
 steps-extends-state ε*       = id-suc
 steps-extends-state (r ◅ rs) =
   ≤ₛ-trans (step-extends-state r) (steps-extends-state rs)
 
 steps-grade-≾ : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
-              → (rs : cf ↝* cf')
+              → (rs : cf ⟶* cf')
               → ≤ₛ-grade (steps-extends-state rs) ·ᵣ mapᵉ ε' ≾ᵣ mapᵉ ε
 
 steps-grade-≾ {ε = ε} ε* = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ (mapᵉ ε))
@@ -358,7 +358,7 @@ steps-grade-≾ {ε' = ε'} (r ◅ rs) =
 -- so it goes straight to `suc-comp-ren` rather than through a reach.
 
 steps-ren : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
-          → (rs : cf ↝* cf')
+          → (rs : cf ⟶* cf')
           → Ren [] (toCtx (Config.state cf') ⟨ mapᵉ ε' ⟩)
                    (toCtx (Config.state cf)  ⟨ mapᵉ ε  ⟩)
 steps-ren rs = suc-comp-ren (steps-extends-state rs) (steps-grade-≾ rs)
@@ -369,12 +369,12 @@ steps-ren rs = suc-comp-ren (steps-extends-state rs) (steps-grade-≾ rs)
 -- substituting into it does.
 
 subCtx-run : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
-           → cf ↝* cf' → ∀ {Γ C} → Γ ∷ A ⊢C⦂ C → Γ ∷ B ⊢C⦂ C
+           → cf ⟶* cf' → ∀ {Γ C} → Γ ∷ A ⊢C⦂ C → Γ ∷ B ⊢C⦂ C
 subCtx-run ε*       N = N
 subCtx-run (r ◅ rs) N = subCtx-run rs (subCtx (step-refines-type r) N)
 
 spine : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
-      → cf ↝* cf' → ∀ {Γ} → Γ ⊢V⦂ B → Γ ⊢V⦂ A
+      → cf ⟶* cf' → ∀ {Γ} → Γ ⊢V⦂ B → Γ ⊢V⦂ A
 spine ε*       V = V
 spine (r ◅ rs) V = subV (spine rs V) (step-refines-type r)
 
@@ -382,7 +382,7 @@ spine (r ◅ rs) V = subV (spine rs V) (step-refines-type r)
 -- a run.
 
 subCtx-run-sub : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
-               → (rs : cf ↝* cf') → ∀ {Γ C} → (N : Γ ∷ A ⊢C⦂ C) → (V : Γ ⊢V⦂ B)
+               → (rs : cf ⟶* cf') → ∀ {Γ C} → (N : Γ ∷ A ⊢C⦂ C) → (V : Γ ⊢V⦂ B)
                ---------------------------------------------------------------
                → subCtx-run rs N [ split-[] ↦ V ]c
                ≡ N [ split-[] ↦ spine rs V ]c
@@ -393,7 +393,7 @@ subCtx-run-sub (r ◅ rs) N V =
         (subCtx-sub (step-refines-type r) N (spine rs V))
 
 subCtx-run-ren : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
-               → (rs : cf ↝* cf') → ∀ {Γ Δ C} → (r : Ren [] Δ Γ)
+               → (rs : cf ⟶* cf') → ∀ {Γ Δ C} → (r : Ren [] Δ Γ)
                → (N : Γ ∷ A ⊢C⦂ C)
                -----------------------------------------------
                → C-rename (cong-∷-ren r) (subCtx-run rs N)
@@ -409,11 +409,11 @@ subCtx-run-ren (r₀ ◅ rs) r N =
 
 seq-steps : ∀ {A A₁ B ε ε' ε₂} {St St₁ : 𝕊 []}
           → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A₁ ‼ ε'}
-          → (rs : ⟨ St , M ⟩ ↝* ⟨ St₁ , M₁ ⟩)
+          → (rs : ⟨ St , M ⟩ ⟶* ⟨ St₁ , M₁ ⟩)
           → (N : toCtx St ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
           -----------------------------------------------------------------
           → Σ[ N₁ ∈ (toCtx St₁ ⟨ mapᵉ ε' ⟩ ∷ A₁ ⊢C⦂ B ‼ ε₂) ]
-              (⟨ St , M ⨟ N ⟩ ↝* ⟨ St₁ , M₁ ⨟ N₁ ⟩)
+              (⟨ St , M ⨟ N ⟩ ⟶* ⟨ St₁ , M₁ ⨟ N₁ ⟩)
             × (N₁ ≡ subCtx-run rs (C-rename (cong-∷-ren (steps-ren rs)) N))
 
 seq-steps ε* N =
@@ -454,20 +454,20 @@ seq-steps (r ◅ rs) N
 -- lock, at the run's own extension.
 
 steps-barrier-ren : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
-                  → (rs : cf ↝* cf')
+                  → (rs : cf ⟶* cf')
                   → Ren [] (toCtx (Config.state cf') ⟨ ⊤ᵣ ⟩)
                            (toCtx (Config.state cf)  ⟨ ⊤ᵣ ⟩)
 steps-barrier-ren rs = suc-comp-ren (steps-extends-state rs) (≾-⊤ᵣ _)
 
 handle-steps : ∀ {A A₁ B ε ε' ε₂} {St St₁ : 𝕊 []}
              → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A₁ ‼ ε'}
-             → (rs : ⟨ St , M ⟩ ↝* ⟨ St₁ , M₁ ⟩)
+             → (rs : ⟨ St , M ⟩ ⟶* ⟨ St₁ , M₁ ⟩)
              → (H : (op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St ⟨ ⊤ᵣ ⟩))
              → (N : toCtx St ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
              ---------------------------------------------------------------
              → Σ[ H₁ ∈ ((op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St₁ ⟨ ⊤ᵣ ⟩)) ]
                Σ[ N₁ ∈ (toCtx St₁ ⟨ mapᵉ ε' ⟩ ∷ A₁ ⊢C⦂ B ‼ ε₂) ]
-                 (⟨ St , handle M `with H `in N ⟩ ↝*
+                 (⟨ St , handle M `with H `in N ⟩ ⟶*
                   ⟨ St₁ , handle M₁ `with H₁ `in N₁ ⟩)
                × (∀ op ε₃ → H₁ op ε₃
                     ≡ C-rename (cong-∷-ren (cong-∷-ren (steps-barrier-ren rs)))

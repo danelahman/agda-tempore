@@ -73,7 +73,7 @@ data Env : (St : 𝕊 []) → Ctx → Set where
            → Env St (Γ ∷ A)
 
   -- A binder matched by a freshly allocated cell, as `BOX` steps
-  -- `⟨St, box V M⟩ ↝ ⟨St ∷ₛ V', M⟩`; acts as `γ` under the suffix
+  -- `⟨St, box V M⟩ ⟶ ⟨St ∷ₛ V', M⟩`; acts as `γ` under the suffix
   -- `[] ∷ [ ρ ] A`.
 
   liftᵉ    : ∀ {St Γ A ρ}

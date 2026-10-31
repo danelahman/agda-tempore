@@ -92,13 +92,13 @@ map-nothing : ∀ {X Y : Set} → (f : X → Y) → (m : Maybe X) → mmap f m �
 map-nothing f nothing  q = refl
 map-nothing f (just x) ()
 
-strᵉ : ∀ {Ψ} → EVar (Ψ +e) → EExp (Ψ +e) → Maybe (EExp Ψ)
-strᵉ {Ψ} j (evar k)   = mmap evar (thickᵉ {Ψ} j k)
+strᵉ : ∀ {Ω} → EVar (Ω +e) → EExp (Ω +e) → Maybe (EExp Ω)
+strᵉ {Ω} j (evar k)   = mmap evar (thickᵉ {Ω} j k)
 strᵉ     j (econst c) = just (econst c)
 strᵉ     j (ε ·̂ₑ ε')  = zip₂ _·̂ₑ_ (strᵉ j ε) (strᵉ j ε')
 strᵉ     j (ε ⊔̂ₑ ε')  = zip₂ _⊔̂ₑ_ (strᵉ j ε) (strᵉ j ε')
 
-strʳ : ∀ {Ψ} → EVar (Ψ +e) → RExp (Ψ +e) → Maybe (RExp Ψ)
+strʳ : ∀ {Ω} → EVar (Ω +e) → RExp (Ω +e) → Maybe (RExp Ω)
 strʳ j (rvar i)   = just (rvar i)
 strʳ j (rconst c) = just (rconst c)
 strʳ j (ρ ·̂ᵣ ρ')  = zip₂ _·̂ᵣ_ (strʳ j ρ) (strʳ j ρ')
@@ -107,7 +107,7 @@ strʳ j ∣ ε ∣̂ᵉ     = mmap ∣_∣̂ᵉ (strᵉ j ε)
 
 mutual
 
-  strᵛ : ∀ {Ψ} → EVar (Ψ +e) → OVType (Ψ +e) → Maybe (OVType Ψ)
+  strᵛ : ∀ {Ω} → EVar (Ω +e) → OVType (Ω +e) → Maybe (OVType Ω)
   strᵛ j (tvar α)  = just (tvar α)
   strᵛ j (Base b)  = just (Base b)
   strᵛ j Unit      = just Unit
@@ -121,31 +121,31 @@ mutual
   strᵛ j (C ⇛ D)   = zip₂ _⇛_ (strᶜ j C) (strᶜ j D)
   strᵛ j ([ ρ ] A) = zip₂ [_]_ (strʳ j ρ) (strᵛ j A)
 
-  strᶜ : ∀ {Ψ} → EVar (Ψ +e) → OCType (Ψ +e) → Maybe (OCType Ψ)
+  strᶜ : ∀ {Ω} → EVar (Ω +e) → OCType (Ω +e) → Maybe (OCType Ω)
   strᶜ j (A ‼ ε) = zip₂ _‼_ (strᵛ j A) (strᵉ j ε)
 
-popˢ : ∀ {Ψ} → EVar (Ψ +e) → Subst (Ψ +e) (Ψ +e)
-popˢ {Ψ} j = sub tvar rvar
-                 (λ k → maybe′ (λ k₀ → evar (wkᵉ-ev Ψ k₀))
-                               (evar (newᵉ {Ψ}))
-                               (thickᵉ {Ψ} j k))
+popˢ : ∀ {Ω} → EVar (Ω +e) → Subst (Ω +e) (Ω +e)
+popˢ {Ω} j = sub tvar rvar
+                 (λ k → maybe′ (λ k₀ → evar (wkᵉ-ev Ω k₀))
+                               (evar (newᵉ {Ω}))
+                               (thickᵉ {Ω} j k))
 
-popˢ-hit : ∀ {Ψ} → (j : EVar (Ψ +e)) → sE (popˢ {Ψ} j) j ≡ evar (newᵉ {Ψ})
-popˢ-hit {Ψ} j =
-  cong (maybe′ (λ k₀ → evar (wkᵉ-ev Ψ k₀)) (evar (newᵉ {Ψ}))) (thick-refl {nE Ψ} j)
+popˢ-hit : ∀ {Ω} → (j : EVar (Ω +e)) → sE (popˢ {Ω} j) j ≡ evar (newᵉ {Ω})
+popˢ-hit {Ω} j =
+  cong (maybe′ (λ k₀ → evar (wkᵉ-ev Ω k₀)) (evar (newᵉ {Ω}))) (thick-refl {nE Ω} j)
 
-str-popᵉ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (ε : EExp (Ψ +e)) → {ε₀ : EExp Ψ}
+str-popᵉ : ∀ {Ω} → (j : EVar (Ω +e)) → (ε : EExp (Ω +e)) → {ε₀ : EExp Ω}
          → strᵉ j ε ≡ just ε₀ → ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀
-str-popᵉ {Ψ} j (evar k)   q with map-just evar (thickᵉ {Ψ} j k) q
+str-popᵉ {Ω} j (evar k)   q with map-just evar (thickᵉ {Ω} j k) q
 ... | k₀ , qk , refl =
-  cong (maybe′ (λ k₁ → evar (wkᵉ-ev Ψ k₁)) (evar (newᵉ {Ψ}))) qk
+  cong (maybe′ (λ k₁ → evar (wkᵉ-ev Ω k₁)) (evar (newᵉ {Ω}))) qk
 str-popᵉ     j (econst c) refl = refl
 str-popᵉ     j (ε ·̂ₑ ε')  q with zip₂-just _·̂ₑ_ (strᵉ j ε) (strᵉ j ε') q
 ... | a , b , qa , qb , refl = cong₂ _·̂ₑ_ (str-popᵉ j ε qa) (str-popᵉ j ε' qb)
 str-popᵉ     j (ε ⊔̂ₑ ε')  q with zip₂-just _⊔̂ₑ_ (strᵉ j ε) (strᵉ j ε') q
 ... | a , b , qa , qb , refl = cong₂ _⊔̂ₑ_ (str-popᵉ j ε qa) (str-popᵉ j ε' qb)
 
-str-popʳ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (ρ : RExp (Ψ +e)) → {ρ₀ : RExp Ψ}
+str-popʳ : ∀ {Ω} → (j : EVar (Ω +e)) → (ρ : RExp (Ω +e)) → {ρ₀ : RExp Ω}
          → strʳ j ρ ≡ just ρ₀ → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀
 str-popʳ j (rvar i)   refl = refl
 str-popʳ j (rconst c) refl = refl
@@ -158,7 +158,7 @@ str-popʳ j ∣ ε ∣̂ᵉ     q with map-just ∣_∣̂ᵉ (strᵉ j ε) q
 
 mutual
 
-  str-popᵛ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (A : OVType (Ψ +e)) → {A₀ : OVType Ψ}
+  str-popᵛ : ∀ {Ω} → (j : EVar (Ω +e)) → (A : OVType (Ω +e)) → {A₀ : OVType Ω}
            → strᵛ j A ≡ just A₀ → A [ popˢ j ]ᵛ ≡ wkᵉ-v A₀
   str-popᵛ j (tvar α)  refl = refl
   str-popᵛ j (Base b)  refl = refl
@@ -179,18 +179,18 @@ mutual
   str-popᵛ j ([ ρ ] A) q with zip₂-just [_]_ (strʳ j ρ) (strᵛ j A) q
   ... | a , b , qa , qb , refl = cong₂ [_]_ (str-popʳ j ρ qa) (str-popᵛ j A qb)
 
-  str-popᶜ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (C : OCType (Ψ +e)) → {C₀ : OCType Ψ}
+  str-popᶜ : ∀ {Ω} → (j : EVar (Ω +e)) → (C : OCType (Ω +e)) → {C₀ : OCType Ω}
            → strᶜ j C ≡ just C₀ → C [ popˢ j ]ᶜ ≡ wkᵉ-c C₀
   str-popᶜ j (A ‼ ε) q with zip₂-just _‼_ (strᵛ j A) (strᵉ j ε) q
   ... | a , b , qa , qb , refl = cong₂ _‼_ (str-popᵛ j A qa) (str-popᵉ j ε qb)
 
-str-wkᵉ : ∀ {Ψ} → (ε : EExp Ψ) → strᵉ (newᵉ {Ψ}) (wkᵉ-e ε) ≡ just ε
+str-wkᵉ : ∀ {Ω} → (ε : EExp Ω) → strᵉ (newᵉ {Ω}) (wkᵉ-e ε) ≡ just ε
 str-wkᵉ (evar i)   = refl
 str-wkᵉ (econst c) = refl
 str-wkᵉ (ε ·̂ₑ ε')  = cong₂ (zip₂ _·̂ₑ_) (str-wkᵉ ε) (str-wkᵉ ε')
 str-wkᵉ (ε ⊔̂ₑ ε')  = cong₂ (zip₂ _⊔̂ₑ_) (str-wkᵉ ε) (str-wkᵉ ε')
 
-str-wkʳ : ∀ {Ψ} → (ρ : RExp Ψ) → strʳ (newᵉ {Ψ}) (wkᵉ-r ρ) ≡ just ρ
+str-wkʳ : ∀ {Ω} → (ρ : RExp Ω) → strʳ (newᵉ {Ω}) (wkᵉ-r ρ) ≡ just ρ
 str-wkʳ (rvar i)   = refl
 str-wkʳ (rconst c) = refl
 str-wkʳ (ρ ·̂ᵣ ρ')  = cong₂ (zip₂ _·̂ᵣ_) (str-wkʳ ρ) (str-wkʳ ρ')
@@ -199,7 +199,7 @@ str-wkʳ ∣ ε ∣̂ᵉ     = cong (mmap ∣_∣̂ᵉ) (str-wkᵉ ε)
 
 mutual
 
-  str-wkᵛ : ∀ {Ψ} → (A : OVType Ψ) → strᵛ (newᵉ {Ψ}) (wkᵉ-v A) ≡ just A
+  str-wkᵛ : ∀ {Ω} → (A : OVType Ω) → strᵛ (newᵉ {Ω}) (wkᵉ-v A) ≡ just A
   str-wkᵛ (tvar α)  = refl
   str-wkᵛ (Base b)  = refl
   str-wkᵛ Unit      = refl
@@ -213,7 +213,7 @@ mutual
   str-wkᵛ (C ⇛ D)   = cong₂ (zip₂ _⇛_) (str-wkᶜ C) (str-wkᶜ D)
   str-wkᵛ ([ ρ ] A) = cong₂ (zip₂ [_]_) (str-wkʳ ρ) (str-wkᵛ A)
 
-  str-wkᶜ : ∀ {Ψ} → (C : OCType Ψ) → strᶜ (newᵉ {Ψ}) (wkᵉ-c C) ≡ just C
+  str-wkᶜ : ∀ {Ω} → (C : OCType Ω) → strᶜ (newᵉ {Ω}) (wkᵉ-c C) ≡ just C
   str-wkᶜ (A ‼ ε) = cong₂ (zip₂ _‼_) (str-wkᵛ A) (str-wkᵉ ε)
 
 -- The pointwise partial results of the three sorts assembled by a finite
@@ -235,44 +235,44 @@ seqFin {nzero}  f = just ((λ ()) , (λ ()))
 seqFin {nsuc n} {X} {P} f =
   seqFinᵃ P (f zero) (seqFin {P = λ i x → P (suc i) x} (λ i → f (suc i)))
 
-strᵛᵃ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (A : OVType (Ψ +e))
-      → (x : Maybe (OVType Ψ)) → strᵛ j A ≡ x
-      → Maybe (Σ[ A₀ ∈ OVType Ψ ] (A [ popˢ j ]ᵛ ≡ wkᵉ-v A₀))
+strᵛᵃ : ∀ {Ω} → (j : EVar (Ω +e)) → (A : OVType (Ω +e))
+      → (x : Maybe (OVType Ω)) → strᵛ j A ≡ x
+      → Maybe (Σ[ A₀ ∈ OVType Ω ] (A [ popˢ j ]ᵛ ≡ wkᵉ-v A₀))
 strᵛᵃ j A (just A₀) eq = just (A₀ , str-popᵛ j A eq)
 strᵛᵃ j A nothing   eq = nothing
 
-strʳᵃ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (ρ : RExp (Ψ +e))
-      → (x : Maybe (RExp Ψ)) → strʳ j ρ ≡ x
-      → Maybe (Σ[ ρ₀ ∈ RExp Ψ ] (ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀))
+strʳᵃ : ∀ {Ω} → (j : EVar (Ω +e)) → (ρ : RExp (Ω +e))
+      → (x : Maybe (RExp Ω)) → strʳ j ρ ≡ x
+      → Maybe (Σ[ ρ₀ ∈ RExp Ω ] (ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀))
 strʳᵃ j ρ (just ρ₀) eq = just (ρ₀ , str-popʳ j ρ eq)
 strʳᵃ j ρ nothing   eq = nothing
 
-strᵉᵃ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (ε : EExp (Ψ +e))
-      → (x : Maybe (EExp Ψ)) → strᵉ j ε ≡ x
-      → Maybe (Σ[ ε₀ ∈ EExp Ψ ] (ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀))
+strᵉᵃ : ∀ {Ω} → (j : EVar (Ω +e)) → (ε : EExp (Ω +e))
+      → (x : Maybe (EExp Ω)) → strᵉ j ε ≡ x
+      → Maybe (Σ[ ε₀ ∈ EExp Ω ] (ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀))
 strᵉᵃ j ε (just ε₀) eq = just (ε₀ , str-popᵉ j ε eq)
 strᵉᵃ j ε nothing   eq = nothing
 
-strᵛ⁺ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (A : OVType (Ψ +e))
-      → Maybe (Σ[ A₀ ∈ OVType Ψ ] (A [ popˢ j ]ᵛ ≡ wkᵉ-v A₀))
+strᵛ⁺ : ∀ {Ω} → (j : EVar (Ω +e)) → (A : OVType (Ω +e))
+      → Maybe (Σ[ A₀ ∈ OVType Ω ] (A [ popˢ j ]ᵛ ≡ wkᵉ-v A₀))
 strᵛ⁺ j A = strᵛᵃ j A (strᵛ j A) refl
 
-strʳ⁺ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (ρ : RExp (Ψ +e))
-      → Maybe (Σ[ ρ₀ ∈ RExp Ψ ] (ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀))
+strʳ⁺ : ∀ {Ω} → (j : EVar (Ω +e)) → (ρ : RExp (Ω +e))
+      → Maybe (Σ[ ρ₀ ∈ RExp Ω ] (ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀))
 strʳ⁺ j ρ = strʳᵃ j ρ (strʳ j ρ) refl
 
-strᵉ⁺ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (ε : EExp (Ψ +e))
-      → Maybe (Σ[ ε₀ ∈ EExp Ψ ] (ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀))
+strᵉ⁺ : ∀ {Ω} → (j : EVar (Ω +e)) → (ε : EExp (Ω +e))
+      → Maybe (Σ[ ε₀ ∈ EExp Ω ] (ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀))
 strᵉ⁺ j ε = strᵉᵃ j ε (strᵉ j ε) refl
 
-strSubᵃ : ∀ {Θ Ψ} → (j : EVar (Ψ +e)) → (γ : Subst Θ (Ψ +e))
-        → Maybe (Σ[ g ∈ (TyVar Θ → OVType Ψ) ]
+strSubᵃ : ∀ {Θ Ω} → (j : EVar (Ω +e)) → (γ : Subst Θ (Ω +e))
+        → Maybe (Σ[ g ∈ (TyVar Θ → OVType Ω) ]
                    ((α : TyVar Θ) → sTy γ α [ popˢ j ]ᵛ ≡ wkᵉ-v (g α)))
-        → Maybe (Σ[ g ∈ (RVar Θ → RExp Ψ) ]
+        → Maybe (Σ[ g ∈ (RVar Θ → RExp Ω) ]
                    ((i : RVar Θ) → sR γ i [ popˢ j ]ʳ ≡ wkᵉ-r (g i)))
-        → Maybe (Σ[ g ∈ (EVar Θ → EExp Ψ) ]
+        → Maybe (Σ[ g ∈ (EVar Θ → EExp Ω) ]
                    ((i : EVar Θ) → sE γ i [ popˢ j ]ᵉ ≡ wkᵉ-e (g i)))
-        → Maybe (Σ[ γ₀ ∈ Subst Θ Ψ ] ((γ ⨟ˢ popˢ j) ≐ˢ (γ₀ ⨟ˢ wkˢᵉ)))
+        → Maybe (Σ[ γ₀ ∈ Subst Θ Ω ] ((γ ⨟ˢ popˢ j) ≐ˢ (γ₀ ⨟ˢ wkˢᵉ)))
 strSubᵃ j γ (just (fT , pT)) (just (fR , pR)) (just (fE , pE)) =
   just (sub fT fR fE ,
         mk≐ˢ (λ α → trans (pT α) (sym (wkˢᵉ-v (fT α))))
@@ -282,14 +282,14 @@ strSubᵃ j γ (just _) (just _) nothing = nothing
 strSubᵃ j γ (just _) nothing  _       = nothing
 strSubᵃ j γ nothing  _        _       = nothing
 
-strSub : ∀ {Θ Ψ} → (j : EVar (Ψ +e)) → (γ : Subst Θ (Ψ +e))
-       → Maybe (Σ[ γ₀ ∈ Subst Θ Ψ ] ((γ ⨟ˢ popˢ j) ≐ˢ (γ₀ ⨟ˢ wkˢᵉ)))
+strSub : ∀ {Θ Ω} → (j : EVar (Ω +e)) → (γ : Subst Θ (Ω +e))
+       → Maybe (Σ[ γ₀ ∈ Subst Θ Ω ] ((γ ⨟ˢ popˢ j) ≐ˢ (γ₀ ⨟ˢ wkˢᵉ)))
 strSub j γ = strSubᵃ j γ (seqFin (λ α → strᵛ⁺ j (sTy γ α)))
                          (seqFin (λ i → strʳ⁺ j (sR  γ i)))
                          (seqFin (λ i → strᵉ⁺ j (sE  γ i)))
 
-unpopˢ : ∀ {Ψ} → EVar (Ψ +e) → Subst (Ψ +e) (Ψ +e)
-unpopˢ {Ψ} j = sub tvar rvar (λ { zero → evar j ; (suc k) → evar (thinᵉ {Ψ} j k) })
+unpopˢ : ∀ {Ω} → EVar (Ω +e) → Subst (Ω +e) (Ω +e)
+unpopˢ {Ω} j = sub tvar rvar (λ { zero → evar j ; (suc k) → evar (thinᵉ {Ω} j k) })
 
 -- Thickening is `nothing` only at the variable itself
 
@@ -300,18 +300,18 @@ thick-nothing {nsuc n} (suc i) zero   ()
 thick-nothing {nsuc n} (suc i) (suc j) q with thick i j in r
 ... | nothing = cong suc (thick-nothing i j r)
 
-pop-unpop : ∀ {Ψ} → (j : EVar (Ψ +e)) → (popˢ j ⨟ˢ unpopˢ j) ≐ˢ idˢ
-pop-unpop {Ψ} j = mk≐ˢ (λ α → refl) (λ i → refl) sE'
+pop-unpop : ∀ {Ω} → (j : EVar (Ω +e)) → (popˢ j ⨟ˢ unpopˢ j) ≐ˢ idˢ
+pop-unpop {Ω} j = mk≐ˢ (λ α → refl) (λ i → refl) sE'
   where
-    sE' : (k : EVar (Ψ +e)) → sE (popˢ {Ψ} j ⨟ˢ unpopˢ {Ψ} j) k ≡ sE (idˢ {Ψ +e}) k
-    sE' k with thickᵉ {Ψ} j k in r
-    ... | just k₀  = cong evar (sym (thick-just {nE Ψ} j k k₀ r))
-    ... | nothing  = cong evar (sym (thick-nothing {nE Ψ} j k r))
+    sE' : (k : EVar (Ω +e)) → sE (popˢ {Ω} j ⨟ˢ unpopˢ {Ω} j) k ≡ sE (idˢ {Ω +e}) k
+    sE' k with thickᵉ {Ω} j k in r
+    ... | just k₀  = cong evar (sym (thick-just {nE Ω} j k k₀ r))
+    ... | nothing  = cong evar (sym (thick-nothing {nE Ω} j k r))
 
 -- An occurrence of a variable whose image is a variable is renamed, not
 -- removed: Miller's mixed prefix, the rigid as Gentzen's eigenvariable
 
-escᵉ : ∀ {Φ Ψ} → (σ : Subst Φ Ψ) → (j : EVar Φ) → (k : EVar Ψ) → sE σ j ≡ evar k
+escᵉ : ∀ {Φ Ω} → (σ : Subst Φ Ω) → (j : EVar Φ) → (k : EVar Ω) → sE σ j ≡ evar k
      → (ε : EExp Φ) → occᵉ-e j ε ≡ true → occᵉ-e k (ε [ σ ]ᵉ) ≡ true
 escᵉ σ j k r (evar l)   q with true-dec (j ≟ᶠ l) q
 ... | refl = subst (λ x → occᵉ-e k x ≡ true) (sym r) (dec-true (k ≟ᶠ k) refl)
@@ -323,7 +323,7 @@ escᵉ σ j k r (ε ⊔̂ₑ ε')  q with ∨-true (occᵉ-e j ε) (occᵉ-e j �
 ... | inj₁ s = ∨-left  (occᵉ-e k (ε [ σ ]ᵉ)) (occᵉ-e k (ε' [ σ ]ᵉ)) (escᵉ σ j k r ε s)
 ... | inj₂ s = ∨-right (occᵉ-e k (ε [ σ ]ᵉ)) (occᵉ-e k (ε' [ σ ]ᵉ)) (escᵉ σ j k r ε' s)
 
-escʳ : ∀ {Φ Ψ} → (σ : Subst Φ Ψ) → (j : EVar Φ) → (k : EVar Ψ) → sE σ j ≡ evar k
+escʳ : ∀ {Φ Ω} → (σ : Subst Φ Ω) → (j : EVar Φ) → (k : EVar Ω) → sE σ j ≡ evar k
      → (ρ : RExp Φ) → occᵉ-r j ρ ≡ true → occᵉ-r k (ρ [ σ ]ʳ) ≡ true
 escʳ σ j k r (rvar i)   ()
 escʳ σ j k r (rconst c) ()
@@ -337,7 +337,7 @@ escʳ σ j k r ∣ ε ∣̂ᵉ     q = escᵉ σ j k r ε q
 
 mutual
 
-  escᵛ : ∀ {Φ Ψ} → (σ : Subst Φ Ψ) → (j : EVar Φ) → (k : EVar Ψ) → sE σ j ≡ evar k
+  escᵛ : ∀ {Φ Ω} → (σ : Subst Φ Ω) → (j : EVar Φ) → (k : EVar Ω) → sE σ j ≡ evar k
        → (A : OVType Φ) → occᵉ-v j A ≡ true → occᵉ-v k (A [ σ ]ᵛ) ≡ true
   escᵛ σ j k r (tvar α)  ()
   escᵛ σ j k r (Base b)  ()
@@ -362,69 +362,69 @@ mutual
   ... | inj₁ s = ∨-left  (occᵉ-r k (ρ [ σ ]ʳ)) (occᵉ-v k (A [ σ ]ᵛ)) (escʳ σ j k r ρ s)
   ... | inj₂ s = ∨-right (occᵉ-r k (ρ [ σ ]ʳ)) (occᵉ-v k (A [ σ ]ᵛ)) (escᵛ σ j k r A s)
 
-  escᶜ : ∀ {Φ Ψ} → (σ : Subst Φ Ψ) → (j : EVar Φ) → (k : EVar Ψ) → sE σ j ≡ evar k
+  escᶜ : ∀ {Φ Ω} → (σ : Subst Φ Ω) → (j : EVar Φ) → (k : EVar Ω) → sE σ j ≡ evar k
        → (C : OCType Φ) → occᵉ-c j C ≡ true → occᵉ-c k (C [ σ ]ᶜ) ≡ true
   escᶜ σ j k r (A ‼ ε) q with ∨-true (occᵉ-v j A) (occᵉ-e j ε) q
   ... | inj₁ s = ∨-left  (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-e k (ε [ σ ]ᵉ)) (escᵛ σ j k r A s)
   ... | inj₂ s = ∨-right (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-e k (ε [ σ ]ᵉ)) (escᵉ σ j k r ε s)
 
-occ-wkᵉ : ∀ {Ψ} → (ε : EExp Ψ) → occᵉ-e (newᵉ {Ψ}) (wkᵉ-e ε) ≡ true → ⊥
-occ-wkᵉ {Ψ} (evar i)   q with true-dec (newᵉ {Ψ} ≟ᶠ wkᵉ-ev Ψ i) q
+occ-wkᵉ : ∀ {Ω} → (ε : EExp Ω) → occᵉ-e (newᵉ {Ω}) (wkᵉ-e ε) ≡ true → ⊥
+occ-wkᵉ {Ω} (evar i)   q with true-dec (newᵉ {Ω} ≟ᶠ wkᵉ-ev Ω i) q
 ... | ()
 occ-wkᵉ     (econst c) ()
-occ-wkᵉ {Ψ} (ε ·̂ₑ ε')  q =
+occ-wkᵉ {Ω} (ε ·̂ₑ ε')  q =
   [ occ-wkᵉ ε , occ-wkᵉ ε' ]′
-    (∨-true (occᵉ-e (newᵉ {Ψ}) (wkᵉ-e ε)) (occᵉ-e (newᵉ {Ψ}) (wkᵉ-e ε')) q)
-occ-wkᵉ {Ψ} (ε ⊔̂ₑ ε')  q =
+    (∨-true (occᵉ-e (newᵉ {Ω}) (wkᵉ-e ε)) (occᵉ-e (newᵉ {Ω}) (wkᵉ-e ε')) q)
+occ-wkᵉ {Ω} (ε ⊔̂ₑ ε')  q =
   [ occ-wkᵉ ε , occ-wkᵉ ε' ]′
-    (∨-true (occᵉ-e (newᵉ {Ψ}) (wkᵉ-e ε)) (occᵉ-e (newᵉ {Ψ}) (wkᵉ-e ε')) q)
+    (∨-true (occᵉ-e (newᵉ {Ω}) (wkᵉ-e ε)) (occᵉ-e (newᵉ {Ω}) (wkᵉ-e ε')) q)
 
-occ-wkʳ : ∀ {Ψ} → (ρ : RExp Ψ) → occᵉ-r (newᵉ {Ψ}) (wkᵉ-r ρ) ≡ true → ⊥
+occ-wkʳ : ∀ {Ω} → (ρ : RExp Ω) → occᵉ-r (newᵉ {Ω}) (wkᵉ-r ρ) ≡ true → ⊥
 occ-wkʳ     (rvar i)   ()
 occ-wkʳ     (rconst c) ()
-occ-wkʳ {Ψ} (ρ ·̂ᵣ ρ')  q =
+occ-wkʳ {Ω} (ρ ·̂ᵣ ρ')  q =
   [ occ-wkʳ ρ , occ-wkʳ ρ' ]′
-    (∨-true (occᵉ-r (newᵉ {Ψ}) (wkᵉ-r ρ)) (occᵉ-r (newᵉ {Ψ}) (wkᵉ-r ρ')) q)
-occ-wkʳ {Ψ} (ρ ⊔̂ᵣ ρ')  q =
+    (∨-true (occᵉ-r (newᵉ {Ω}) (wkᵉ-r ρ)) (occᵉ-r (newᵉ {Ω}) (wkᵉ-r ρ')) q)
+occ-wkʳ {Ω} (ρ ⊔̂ᵣ ρ')  q =
   [ occ-wkʳ ρ , occ-wkʳ ρ' ]′
-    (∨-true (occᵉ-r (newᵉ {Ψ}) (wkᵉ-r ρ)) (occᵉ-r (newᵉ {Ψ}) (wkᵉ-r ρ')) q)
+    (∨-true (occᵉ-r (newᵉ {Ω}) (wkᵉ-r ρ)) (occᵉ-r (newᵉ {Ω}) (wkᵉ-r ρ')) q)
 occ-wkʳ     ∣ ε ∣̂ᵉ     q = occ-wkᵉ ε q
 
 mutual
 
-  occ-wkᵛ : ∀ {Ψ} → (A : OVType Ψ) → occᵉ-v (newᵉ {Ψ}) (wkᵉ-v A) ≡ true → ⊥
+  occ-wkᵛ : ∀ {Ω} → (A : OVType Ω) → occᵉ-v (newᵉ {Ω}) (wkᵉ-v A) ≡ true → ⊥
   occ-wkᵛ (tvar α)  ()
   occ-wkᵛ (Base b)  ()
   occ-wkᵛ Unit      ()
   occ-wkᵛ Bool      ()
   occ-wkᵛ Nat       ()
   occ-wkᵛ Empty     ()
-  occ-wkᵛ {Ψ} (A |×| B) q =
+  occ-wkᵛ {Ω} (A |×| B) q =
     [ occ-wkᵛ A , occ-wkᵛ B ]′
-      (∨-true (occᵉ-v (newᵉ {Ψ}) (wkᵉ-v A)) (occᵉ-v (newᵉ {Ψ}) (wkᵉ-v B)) q)
-  occ-wkᵛ {Ψ} (A |+| B) q =
+      (∨-true (occᵉ-v (newᵉ {Ω}) (wkᵉ-v A)) (occᵉ-v (newᵉ {Ω}) (wkᵉ-v B)) q)
+  occ-wkᵛ {Ω} (A |+| B) q =
     [ occ-wkᵛ A , occ-wkᵛ B ]′
-      (∨-true (occᵉ-v (newᵉ {Ψ}) (wkᵉ-v A)) (occᵉ-v (newᵉ {Ψ}) (wkᵉ-v B)) q)
-  occ-wkᵛ {Ψ} (|List| A) q = occ-wkᵛ A q
-  occ-wkᵛ {Ψ} (A ⇒ C)   q =
+      (∨-true (occᵉ-v (newᵉ {Ω}) (wkᵉ-v A)) (occᵉ-v (newᵉ {Ω}) (wkᵉ-v B)) q)
+  occ-wkᵛ {Ω} (|List| A) q = occ-wkᵛ A q
+  occ-wkᵛ {Ω} (A ⇒ C)   q =
     [ occ-wkᵛ A , occ-wkᶜ C ]′
-      (∨-true (occᵉ-v (newᵉ {Ψ}) (wkᵉ-v A)) (occᵉ-c (newᵉ {Ψ}) (wkᵉ-c C)) q)
-  occ-wkᵛ {Ψ} (C ⇛ D)   q =
+      (∨-true (occᵉ-v (newᵉ {Ω}) (wkᵉ-v A)) (occᵉ-c (newᵉ {Ω}) (wkᵉ-c C)) q)
+  occ-wkᵛ {Ω} (C ⇛ D)   q =
     [ occ-wkᶜ C , occ-wkᶜ D ]′
-      (∨-true (occᵉ-c (newᵉ {Ψ}) (wkᵉ-c C)) (occᵉ-c (newᵉ {Ψ}) (wkᵉ-c D)) q)
-  occ-wkᵛ {Ψ} ([ ρ ] A) q =
+      (∨-true (occᵉ-c (newᵉ {Ω}) (wkᵉ-c C)) (occᵉ-c (newᵉ {Ω}) (wkᵉ-c D)) q)
+  occ-wkᵛ {Ω} ([ ρ ] A) q =
     [ occ-wkʳ ρ , occ-wkᵛ A ]′
-      (∨-true (occᵉ-r (newᵉ {Ψ}) (wkᵉ-r ρ)) (occᵉ-v (newᵉ {Ψ}) (wkᵉ-v A)) q)
+      (∨-true (occᵉ-r (newᵉ {Ω}) (wkᵉ-r ρ)) (occᵉ-v (newᵉ {Ω}) (wkᵉ-v A)) q)
 
-  occ-wkᶜ : ∀ {Ψ} → (C : OCType Ψ) → occᵉ-c (newᵉ {Ψ}) (wkᵉ-c C) ≡ true → ⊥
-  occ-wkᶜ {Ψ} (A ‼ ε) q =
+  occ-wkᶜ : ∀ {Ω} → (C : OCType Ω) → occᵉ-c (newᵉ {Ω}) (wkᵉ-c C) ≡ true → ⊥
+  occ-wkᶜ {Ω} (A ‼ ε) q =
     [ occ-wkᵛ A , occ-wkᵉ ε ]′
-      (∨-true (occᵉ-v (newᵉ {Ψ}) (wkᵉ-v A)) (occᵉ-e (newᵉ {Ψ}) (wkᵉ-e ε)) q)
+      (∨-true (occᵉ-v (newᵉ {Ω}) (wkᵉ-v A)) (occᵉ-e (newᵉ {Ω}) (wkᵉ-e ε)) q)
 
-str-occᵉ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (ε : EExp (Ψ +e))
+str-occᵉ : ∀ {Ω} → (j : EVar (Ω +e)) → (ε : EExp (Ω +e))
          → strᵉ j ε ≡ nothing → occᵉ-e j ε ≡ true
-str-occᵉ {Ψ} j (evar k)   q =
-  dec-true (j ≟ᶠ k) (sym (thick-nothing {nE Ψ} j k (map-nothing evar (thickᵉ {Ψ} j k) q)))
+str-occᵉ {Ω} j (evar k)   q =
+  dec-true (j ≟ᶠ k) (sym (thick-nothing {nE Ω} j k (map-nothing evar (thickᵉ {Ω} j k) q)))
 str-occᵉ     j (econst c) ()
 str-occᵉ     j (ε ·̂ₑ ε')  q with zip₂-nothing _·̂ₑ_ (strᵉ j ε) (strᵉ j ε') q
 ... | inj₁ s = ∨-left  (occᵉ-e j ε) (occᵉ-e j ε') (str-occᵉ j ε s)
@@ -433,7 +433,7 @@ str-occᵉ     j (ε ⊔̂ₑ ε')  q with zip₂-nothing _⊔̂ₑ_ (strᵉ j �
 ... | inj₁ s = ∨-left  (occᵉ-e j ε) (occᵉ-e j ε') (str-occᵉ j ε s)
 ... | inj₂ s = ∨-right (occᵉ-e j ε) (occᵉ-e j ε') (str-occᵉ j ε' s)
 
-str-occʳ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (ρ : RExp (Ψ +e))
+str-occʳ : ∀ {Ω} → (j : EVar (Ω +e)) → (ρ : RExp (Ω +e))
          → strʳ j ρ ≡ nothing → occᵉ-r j ρ ≡ true
 str-occʳ j (rvar i)   ()
 str-occʳ j (rconst c) ()
@@ -447,7 +447,7 @@ str-occʳ j ∣ ε ∣̂ᵉ     q = str-occᵉ j ε (map-nothing ∣_∣̂ᵉ (s
 
 mutual
 
-  str-occᵛ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (A : OVType (Ψ +e))
+  str-occᵛ : ∀ {Ω} → (j : EVar (Ω +e)) → (A : OVType (Ω +e))
            → strᵛ j A ≡ nothing → occᵉ-v j A ≡ true
   str-occᵛ j (tvar α)  ()
   str-occᵛ j (Base b)  ()
@@ -472,7 +472,7 @@ mutual
   ... | inj₁ s = ∨-left  (occᵉ-r j ρ) (occᵉ-v j A) (str-occʳ j ρ s)
   ... | inj₂ s = ∨-right (occᵉ-r j ρ) (occᵉ-v j A) (str-occᵛ j A s)
 
-  str-occᶜ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (C : OCType (Ψ +e))
+  str-occᶜ : ∀ {Ω} → (j : EVar (Ω +e)) → (C : OCType (Ω +e))
            → strᶜ j C ≡ nothing → occᵉ-c j C ≡ true
   str-occᶜ j (A ‼ ε) q with zip₂-nothing _‼_ (strᵛ j A) (strᵉ j ε) q
   ... | inj₁ s = ∨-left  (occᵉ-v j A) (occᵉ-e j ε) (str-occᵛ j A s)
@@ -481,62 +481,62 @@ mutual
 -- Contrapositive: a failed `strSub` refutes every instance keeping the rigid
 -- an eigenvariable
 
-strᵉ-just : ∀ {Ψ Ξ} → (j : EVar (Ψ +e)) → (ε : EExp (Ψ +e))
-          → (δ : Subst (Ψ +e) (Ξ +e)) → sE δ j ≡ evar (newᵉ {Ξ})
+strᵉ-just : ∀ {Ω Ξ} → (j : EVar (Ω +e)) → (ε : EExp (Ω +e))
+          → (δ : Subst (Ω +e) (Ξ +e)) → sE δ j ≡ evar (newᵉ {Ξ})
           → (ε₀ : EExp Ξ) → ε [ δ ]ᵉ ≡ wkᵉ-e ε₀
-          → Σ[ ε₁ ∈ EExp Ψ ] (strᵉ j ε ≡ just ε₁)
-strᵉ-just {Ψ} {Ξ} j ε δ r ε₀ e =
+          → Σ[ ε₁ ∈ EExp Ω ] (strᵉ j ε ≡ just ε₁)
+strᵉ-just {Ω} {Ξ} j ε δ r ε₀ e =
   notNothing (strᵉ j ε)
     (λ q → occ-wkᵉ ε₀ (subst (λ x → occᵉ-e (newᵉ {Ξ}) x ≡ true) e
                              (escᵉ δ j (newᵉ {Ξ}) r ε (str-occᵉ j ε q))))
 
-strʳ-just : ∀ {Ψ Ξ} → (j : EVar (Ψ +e)) → (ρ : RExp (Ψ +e))
-          → (δ : Subst (Ψ +e) (Ξ +e)) → sE δ j ≡ evar (newᵉ {Ξ})
+strʳ-just : ∀ {Ω Ξ} → (j : EVar (Ω +e)) → (ρ : RExp (Ω +e))
+          → (δ : Subst (Ω +e) (Ξ +e)) → sE δ j ≡ evar (newᵉ {Ξ})
           → (ρ₀ : RExp Ξ) → ρ [ δ ]ʳ ≡ wkᵉ-r ρ₀
-          → Σ[ ρ₁ ∈ RExp Ψ ] (strʳ j ρ ≡ just ρ₁)
-strʳ-just {Ψ} {Ξ} j ρ δ r ρ₀ e =
+          → Σ[ ρ₁ ∈ RExp Ω ] (strʳ j ρ ≡ just ρ₁)
+strʳ-just {Ω} {Ξ} j ρ δ r ρ₀ e =
   notNothing (strʳ j ρ)
     (λ q → occ-wkʳ ρ₀ (subst (λ x → occᵉ-r (newᵉ {Ξ}) x ≡ true) e
                              (escʳ δ j (newᵉ {Ξ}) r ρ (str-occʳ j ρ q))))
 
-strᵛ-just : ∀ {Ψ Ξ} → (j : EVar (Ψ +e)) → (A : OVType (Ψ +e))
-          → (δ : Subst (Ψ +e) (Ξ +e)) → sE δ j ≡ evar (newᵉ {Ξ})
+strᵛ-just : ∀ {Ω Ξ} → (j : EVar (Ω +e)) → (A : OVType (Ω +e))
+          → (δ : Subst (Ω +e) (Ξ +e)) → sE δ j ≡ evar (newᵉ {Ξ})
           → (A₀ : OVType Ξ) → A [ δ ]ᵛ ≡ wkᵉ-v A₀
-          → Σ[ A₁ ∈ OVType Ψ ] (strᵛ j A ≡ just A₁)
-strᵛ-just {Ψ} {Ξ} j A δ r A₀ e =
+          → Σ[ A₁ ∈ OVType Ω ] (strᵛ j A ≡ just A₁)
+strᵛ-just {Ω} {Ξ} j A δ r A₀ e =
   notNothing (strᵛ j A)
     (λ q → occ-wkᵛ A₀ (subst (λ x → occᵉ-v (newᵉ {Ξ}) x ≡ true) e
                              (escᵛ δ j (newᵉ {Ξ}) r A (str-occᵛ j A q))))
 
 -- The verdicts, transported through the auxiliaries
 
-strᵛ⁺-just : ∀ {Ψ} → (j : EVar (Ψ +e)) → (A : OVType (Ψ +e)) → {A₁ : OVType Ψ}
+strᵛ⁺-just : ∀ {Ω} → (j : EVar (Ω +e)) → (A : OVType (Ω +e)) → {A₁ : OVType Ω}
            → strᵛ j A ≡ just A₁
-           → Σ[ y ∈ Σ[ A₀ ∈ OVType Ψ ] (A [ popˢ j ]ᵛ ≡ wkᵉ-v A₀) ] (strᵛ⁺ j A ≡ just y)
-strᵛ⁺-just {Ψ} j A = aux (strᵛ j A) refl
+           → Σ[ y ∈ Σ[ A₀ ∈ OVType Ω ] (A [ popˢ j ]ᵛ ≡ wkᵉ-v A₀) ] (strᵛ⁺ j A ≡ just y)
+strᵛ⁺-just {Ω} j A = aux (strᵛ j A) refl
   where
-    aux : (x : Maybe (OVType Ψ)) → (eq : strᵛ j A ≡ x) → {A₁ : OVType Ψ} → x ≡ just A₁
-        → Σ[ y ∈ Σ[ A₀ ∈ OVType Ψ ] (A [ popˢ j ]ᵛ ≡ wkᵉ-v A₀) ] (strᵛᵃ j A x eq ≡ just y)
+    aux : (x : Maybe (OVType Ω)) → (eq : strᵛ j A ≡ x) → {A₁ : OVType Ω} → x ≡ just A₁
+        → Σ[ y ∈ Σ[ A₀ ∈ OVType Ω ] (A [ popˢ j ]ᵛ ≡ wkᵉ-v A₀) ] (strᵛᵃ j A x eq ≡ just y)
     aux (just A₀) eq refl = (A₀ , str-popᵛ j A eq) , refl
     aux nothing   eq ()
 
-strʳ⁺-just : ∀ {Ψ} → (j : EVar (Ψ +e)) → (ρ : RExp (Ψ +e)) → {ρ₁ : RExp Ψ}
+strʳ⁺-just : ∀ {Ω} → (j : EVar (Ω +e)) → (ρ : RExp (Ω +e)) → {ρ₁ : RExp Ω}
            → strʳ j ρ ≡ just ρ₁
-           → Σ[ y ∈ Σ[ ρ₀ ∈ RExp Ψ ] (ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀) ] (strʳ⁺ j ρ ≡ just y)
-strʳ⁺-just {Ψ} j ρ = aux (strʳ j ρ) refl
+           → Σ[ y ∈ Σ[ ρ₀ ∈ RExp Ω ] (ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀) ] (strʳ⁺ j ρ ≡ just y)
+strʳ⁺-just {Ω} j ρ = aux (strʳ j ρ) refl
   where
-    aux : (x : Maybe (RExp Ψ)) → (eq : strʳ j ρ ≡ x) → {ρ₁ : RExp Ψ} → x ≡ just ρ₁
-        → Σ[ y ∈ Σ[ ρ₀ ∈ RExp Ψ ] (ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀) ] (strʳᵃ j ρ x eq ≡ just y)
+    aux : (x : Maybe (RExp Ω)) → (eq : strʳ j ρ ≡ x) → {ρ₁ : RExp Ω} → x ≡ just ρ₁
+        → Σ[ y ∈ Σ[ ρ₀ ∈ RExp Ω ] (ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀) ] (strʳᵃ j ρ x eq ≡ just y)
     aux (just ρ₀) eq refl = (ρ₀ , str-popʳ j ρ eq) , refl
     aux nothing   eq ()
 
-strᵉ⁺-just : ∀ {Ψ} → (j : EVar (Ψ +e)) → (ε : EExp (Ψ +e)) → {ε₁ : EExp Ψ}
+strᵉ⁺-just : ∀ {Ω} → (j : EVar (Ω +e)) → (ε : EExp (Ω +e)) → {ε₁ : EExp Ω}
            → strᵉ j ε ≡ just ε₁
-           → Σ[ y ∈ Σ[ ε₀ ∈ EExp Ψ ] (ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀) ] (strᵉ⁺ j ε ≡ just y)
-strᵉ⁺-just {Ψ} j ε = aux (strᵉ j ε) refl
+           → Σ[ y ∈ Σ[ ε₀ ∈ EExp Ω ] (ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀) ] (strᵉ⁺ j ε ≡ just y)
+strᵉ⁺-just {Ω} j ε = aux (strᵉ j ε) refl
   where
-    aux : (x : Maybe (EExp Ψ)) → (eq : strᵉ j ε ≡ x) → {ε₁ : EExp Ψ} → x ≡ just ε₁
-        → Σ[ y ∈ Σ[ ε₀ ∈ EExp Ψ ] (ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀) ] (strᵉᵃ j ε x eq ≡ just y)
+    aux : (x : Maybe (EExp Ω)) → (eq : strᵉ j ε ≡ x) → {ε₁ : EExp Ω} → x ≡ just ε₁
+        → Σ[ y ∈ Σ[ ε₀ ∈ EExp Ω ] (ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀) ] (strᵉᵃ j ε x eq ≡ just y)
     aux (just ε₀) eq refl = (ε₀ , str-popᵉ j ε eq) , refl
     aux nothing   eq ()
 
@@ -562,20 +562,20 @@ seqFin-total {nsuc n} {X} {P} f h =
   where
     ih = seqFin-total {P = λ i x → P (suc i) x} (λ i → f (suc i)) (λ i → h (suc i))
 
-strSubᵃ-just : ∀ {Θ Ψ} → (j : EVar (Ψ +e)) → (γ : Subst Θ (Ψ +e))
-             → (a : Maybe (Σ[ g ∈ (TyVar Θ → OVType Ψ) ]
+strSubᵃ-just : ∀ {Θ Ω} → (j : EVar (Ω +e)) → (γ : Subst Θ (Ω +e))
+             → (a : Maybe (Σ[ g ∈ (TyVar Θ → OVType Ω) ]
                              ((α : TyVar Θ) → sTy γ α [ popˢ j ]ᵛ ≡ wkᵉ-v (g α))))
-             → (x : Σ[ g ∈ (TyVar Θ → OVType Ψ) ]
+             → (x : Σ[ g ∈ (TyVar Θ → OVType Ω) ]
                       ((α : TyVar Θ) → sTy γ α [ popˢ j ]ᵛ ≡ wkᵉ-v (g α))) → a ≡ just x
-             → (b : Maybe (Σ[ g ∈ (RVar Θ → RExp Ψ) ]
+             → (b : Maybe (Σ[ g ∈ (RVar Θ → RExp Ω) ]
                              ((i : RVar Θ) → sR γ i [ popˢ j ]ʳ ≡ wkᵉ-r (g i))))
-             → (y : Σ[ g ∈ (RVar Θ → RExp Ψ) ]
+             → (y : Σ[ g ∈ (RVar Θ → RExp Ω) ]
                       ((i : RVar Θ) → sR γ i [ popˢ j ]ʳ ≡ wkᵉ-r (g i))) → b ≡ just y
-             → (c : Maybe (Σ[ g ∈ (EVar Θ → EExp Ψ) ]
+             → (c : Maybe (Σ[ g ∈ (EVar Θ → EExp Ω) ]
                              ((i : EVar Θ) → sE γ i [ popˢ j ]ᵉ ≡ wkᵉ-e (g i))))
-             → (z : Σ[ g ∈ (EVar Θ → EExp Ψ) ]
+             → (z : Σ[ g ∈ (EVar Θ → EExp Ω) ]
                       ((i : EVar Θ) → sE γ i [ popˢ j ]ᵉ ≡ wkᵉ-e (g i))) → c ≡ just z
-             → Σ[ w ∈ Σ[ γ₀ ∈ Subst Θ Ψ ] ((γ ⨟ˢ popˢ j) ≐ˢ (γ₀ ⨟ˢ wkˢᵉ)) ]
+             → Σ[ w ∈ Σ[ γ₀ ∈ Subst Θ Ω ] ((γ ⨟ˢ popˢ j) ≐ˢ (γ₀ ⨟ˢ wkˢᵉ)) ]
                  (strSubᵃ j γ a b c ≡ just w)
 strSubᵃ-just j γ .(just (fT , pT)) (fT , pT) refl
                  .(just (fR , pR)) (fR , pR) refl
@@ -584,28 +584,28 @@ strSubᵃ-just j γ .(just (fT , pT)) (fT , pT) refl
 -- The escape check is complete: if it fails, no instance keeping the rigid an
 -- eigenvariable frees the images of it
 
-strSub-escape : ∀ {Θ Ψ Ξ} → (j : EVar (Ψ +e)) → (γ : Subst Θ (Ψ +e))
-              → (δ : Subst (Ψ +e) (Ξ +e)) → sE δ j ≡ evar (newᵉ {Ξ})
+strSub-escape : ∀ {Θ Ω Ξ} → (j : EVar (Ω +e)) → (γ : Subst Θ (Ω +e))
+              → (δ : Subst (Ω +e) (Ξ +e)) → sE δ j ≡ evar (newᵉ {Ξ})
               → (γ₀ : Subst Θ Ξ) → (γ ⨟ˢ δ) ≐ˢ (γ₀ ⨟ˢ wkˢᵉ)
               → strSub j γ ≡ nothing → ⊥
-strSub-escape {Θ} {Ψ} {Ξ} j γ δ r γ₀ p q = ⊥just (trans (sym q) (proj₂ done))
+strSub-escape {Θ} {Ω} {Ξ} j γ δ r γ₀ p q = ⊥just (trans (sym q) (proj₂ done))
   where
     hT : (α : TyVar Θ)
-       → Σ[ y ∈ Σ[ A₀ ∈ OVType Ψ ] (sTy γ α [ popˢ j ]ᵛ ≡ wkᵉ-v A₀) ]
+       → Σ[ y ∈ Σ[ A₀ ∈ OVType Ω ] (sTy γ α [ popˢ j ]ᵛ ≡ wkᵉ-v A₀) ]
            (strᵛ⁺ j (sTy γ α) ≡ just y)
     hT α = strᵛ⁺-just j (sTy γ α)
              (proj₂ (strᵛ-just j (sTy γ α) δ r (sTy γ₀ α)
                        (trans (≐ᵗ p α) (wkˢᵉ-v (sTy γ₀ α)))))
 
     hR : (i : RVar Θ)
-       → Σ[ y ∈ Σ[ ρ₀ ∈ RExp Ψ ] (sR γ i [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀) ]
+       → Σ[ y ∈ Σ[ ρ₀ ∈ RExp Ω ] (sR γ i [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀) ]
            (strʳ⁺ j (sR γ i) ≡ just y)
     hR i = strʳ⁺-just j (sR γ i)
              (proj₂ (strʳ-just j (sR γ i) δ r (sR γ₀ i)
                        (trans (≐ʳ p i) (wkˢᵉ-r (sR γ₀ i)))))
 
     hE : (i : EVar Θ)
-       → Σ[ y ∈ Σ[ ε₀ ∈ EExp Ψ ] (sE γ i [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀) ]
+       → Σ[ y ∈ Σ[ ε₀ ∈ EExp Ω ] (sE γ i [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀) ]
            (strᵉ⁺ j (sE γ i) ≡ just y)
     hE i = strᵉ⁺-just j (sE γ i)
              (proj₂ (strᵉ-just j (sE γ i) δ r (sE γ₀ i)
@@ -615,7 +615,7 @@ strSub-escape {Θ} {Ψ} {Ξ} j γ δ r γ₀ p q = ⊥just (trans (sym q) (proj�
     tR = seqFin-total (λ i → strʳ⁺ j (sR  γ i)) hR
     tE = seqFin-total (λ i → strᵉ⁺ j (sE  γ i)) hE
 
-    done : Σ[ x ∈ Σ[ γ₁ ∈ Subst Θ Ψ ] ((γ ⨟ˢ popˢ j) ≐ˢ (γ₁ ⨟ˢ wkˢᵉ)) ]
+    done : Σ[ x ∈ Σ[ γ₁ ∈ Subst Θ Ω ] ((γ ⨟ˢ popˢ j) ≐ˢ (γ₁ ⨟ˢ wkˢᵉ)) ]
              (strSub j γ ≡ just x)
     done = strSubᵃ-just j γ _ (proj₁ tT) (proj₂ tT)
                             _ (proj₁ tR) (proj₂ tR)
@@ -623,11 +623,11 @@ strSub-escape {Θ} {Ψ} {Ξ} j γ δ r γ₀ p q = ⊥just (trans (sym q) (proj�
 
 -- With the rigid sent to a constant, an expression strengthens away from it
 
-strᵉ-upd : ∀ {Ψ} → (j : EVar (Ψ +e)) → (c : E) → (ε : EExp (Ψ +e))
-         → Σ[ ε₀ ∈ EExp Ψ ] (strᵉ j (ε [ updᵉ j (econst c) ]ᵉ) ≡ just ε₀)
-strᵉ-upd {Ψ} j c (evar k) with k ≟ᶠ j
+strᵉ-upd : ∀ {Ω} → (j : EVar (Ω +e)) → (c : E) → (ε : EExp (Ω +e))
+         → Σ[ ε₀ ∈ EExp Ω ] (strᵉ j (ε [ updᵉ j (econst c) ]ᵉ) ≡ just ε₀)
+strᵉ-upd {Ω} j c (evar k) with k ≟ᶠ j
 ... | yes refl = econst c , refl
-... | no ne with thickᵉ {Ψ} j k in r
+... | no ne with thickᵉ {Ω} j k in r
 ...   | just k₀ = evar k₀ , refl
 ...   | nothing = ⊥-elim (ne (thick-nothing j k r))
 strᵉ-upd j c (econst c')  = econst c' , refl
@@ -636,8 +636,8 @@ strᵉ-upd j c (ε ·̂ₑ ε') with strᵉ-upd j c ε | strᵉ-upd j c ε'
 strᵉ-upd j c (ε ⊔̂ₑ ε') with strᵉ-upd j c ε | strᵉ-upd j c ε'
 ... | a , qa | b , qb = a ⊔̂ₑ b , cong₂ (zip₂ _⊔̂ₑ_) qa qb
 
-strʳ-upd : ∀ {Ψ} → (j : EVar (Ψ +e)) → (c : E) → (ρ : RExp (Ψ +e))
-         → Σ[ ρ₀ ∈ RExp Ψ ] (strʳ j (ρ [ updᵉ j (econst c) ]ʳ) ≡ just ρ₀)
+strʳ-upd : ∀ {Ω} → (j : EVar (Ω +e)) → (c : E) → (ρ : RExp (Ω +e))
+         → Σ[ ρ₀ ∈ RExp Ω ] (strʳ j (ρ [ updᵉ j (econst c) ]ʳ) ≡ just ρ₀)
 strʳ-upd j c (rvar i)   = rvar i , refl
 strʳ-upd j c (rconst c') = rconst c' , refl
 strʳ-upd j c (ρ ·̂ᵣ ρ') with strʳ-upd j c ρ | strʳ-upd j c ρ'

@@ -103,7 +103,7 @@ delayᵀ-nat τ f x = delay-≈ (λ q → ≈ᵗ-refl _)
 -- the coercion leaves in each continuation may be pulled out past the delay
 -- node, because the grade it coerces factors through the delay's own
 -- (`sub-delay`). This is what makes `T-≤` commute with the multiplication in
--- the inner grade, and hence what lets the `↝*` closure compose.
+-- the inner grade, and hence what lets the `⟶*` closure compose.
 
 delayᵀ-≤ : ∀ {A ε ε'} → (τ : 𝔻) → (p : ε ≾ₑ ε')
          → delayᵀ {A} {ε'} τ ∘ᵖ [ of-durʳ τ ]ᶠ (T-≤ p)

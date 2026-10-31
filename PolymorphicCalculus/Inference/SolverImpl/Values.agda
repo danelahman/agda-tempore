@@ -747,7 +747,7 @@ leastImage? with Is-just? uₑ-least? | reflects-u? | Is-just? uᵣ-least?
 
 -- The value of a variable-free expression, convertible to it
 
-evalₑ : ∀ {Ψ} → (ε : EExp Ψ) → Maybe (Σ[ c ∈ E ] (ε ≡̂ₑ econst c))
+evalₑ : ∀ {Ω} → (ε : EExp Ω) → Maybe (Σ[ c ∈ E ] (ε ≡̂ₑ econst c))
 evalₑ (evar _)   = nothing
 evalₑ (econst c) = just (c , ≡̂ₑ-refl)
 evalₑ (a ·̂ₑ b) with evalₑ a | evalₑ b
@@ -757,7 +757,7 @@ evalₑ (a ⊔̂ₑ b) with evalₑ a | evalₑ b
 ... | just (c , p) | just (d , q) = just (c ⊔ₑ d , ≡̂ₑ-trans (≡̂ₑ-cong-⊔ p q) ≡̂ₑ-const-⊔)
 ... | _            | _            = nothing
 
-evalᵣ : ∀ {Ψ} → (ρ : RExp Ψ) → Maybe (Σ[ c ∈ R ] (ρ ≡̂ᵣ rconst c))
+evalᵣ : ∀ {Ω} → (ρ : RExp Ω) → Maybe (Σ[ c ∈ R ] (ρ ≡̂ᵣ rconst c))
 evalᵣ (rvar _)   = nothing
 evalᵣ (rconst c) = just (c , ≡̂ᵣ-refl)
 evalᵣ (a ·̂ᵣ b) with evalᵣ a | evalᵣ b
@@ -773,20 +773,20 @@ evalᵣ ∣ ε ∣̂ᵉ with evalₑ ε
 -- The closure of an expression: that of its value, where the hints
 -- declare it
 
-Closureₑ : ∀ {Ψ} → EExp Ψ → EExp Ψ → Set
+Closureₑ : ∀ {Ω} → EExp Ω → EExp Ω → Set
 Closureₑ L L⁺ = Σ[ c ∈ E ] Σ[ p ∈ Plus _·ₑ_ _≾ₑ_ c ] ((L ≡̂ₑ econst c) × (L⁺ ≡ econst (Plus.c⁺ p)))
 
-closureₑ? : ∀ {Ψ} → (L : EExp Ψ) → Maybe (Σ[ L⁺ ∈ EExp Ψ ] Closureₑ L L⁺)
+closureₑ? : ∀ {Ω} → (L : EExp Ω) → Maybe (Σ[ L⁺ ∈ EExp Ω ] Closureₑ L L⁺)
 closureₑ? L with evalₑ L
 ... | nothing       = nothing
 ... | just (c , eq) with plusₑ? c
 ...   | nothing = nothing
 ...   | just p  = just (econst (Plus.c⁺ p) , c , p , eq , refl)
 
-Closureᵣ : ∀ {Ψ} → RExp Ψ → RExp Ψ → Set
+Closureᵣ : ∀ {Ω} → RExp Ω → RExp Ω → Set
 Closureᵣ L L⁺ = Σ[ c ∈ R ] Σ[ p ∈ Plus _·ᵣ_ _≾ᵣ_ c ] ((L ≡̂ᵣ rconst c) × (L⁺ ≡ rconst (Plus.c⁺ p)))
 
-closureᵣ? : ∀ {Ψ} → (L : RExp Ψ) → Maybe (Σ[ L⁺ ∈ RExp Ψ ] Closureᵣ L L⁺)
+closureᵣ? : ∀ {Ω} → (L : RExp Ω) → Maybe (Σ[ L⁺ ∈ RExp Ω ] Closureᵣ L L⁺)
 closureᵣ? L with evalᵣ L
 ... | nothing       = nothing
 ... | just (c , eq) with plusᵣ? c
@@ -795,18 +795,18 @@ closureᵣ? L with evalᵣ L
 
 -- The factors of a product
 
-factorsₑ : ∀ {Ψ} → (x : EExp Ψ) → Maybe (Σ[ y ∈ EExp Ψ ] Σ[ z ∈ EExp Ψ ] (x ≡ y ·̂ₑ z))
+factorsₑ : ∀ {Ω} → (x : EExp Ω) → Maybe (Σ[ y ∈ EExp Ω ] Σ[ z ∈ EExp Ω ] (x ≡ y ·̂ₑ z))
 factorsₑ (y ·̂ₑ z) = just (y , z , refl)
 factorsₑ _        = nothing
 
-factorsᵣ : ∀ {Ψ} → (x : RExp Ψ) → Maybe (Σ[ y ∈ RExp Ψ ] Σ[ z ∈ RExp Ψ ] (x ≡ y ·̂ᵣ z))
+factorsᵣ : ∀ {Ω} → (x : RExp Ω) → Maybe (Σ[ y ∈ RExp Ω ] Σ[ z ∈ RExp Ω ] (x ≡ y ·̂ᵣ z))
 factorsᵣ (y ·̂ᵣ z) = just (y , z , refl)
 factorsᵣ _        = nothing
 
 -- An image `∣ b ∣` as the value of the image of an effect unknown sends
 -- the unknown to `b`; any other expression leaves it
 
-putⁱ : ∀ {Ψ} → EVar Ψ → RExp Ψ → RExp Ψ → RExp Ψ
+putⁱ : ∀ {Ω} → EVar Ω → RExp Ω → RExp Ω → RExp Ω
 putⁱ k ∣ b ∣̂ᵉ     x = x [ updᵉ k b ]ʳ
 putⁱ k (rvar _)   x = x
 putⁱ k (rconst _) x = x
@@ -816,7 +816,7 @@ putⁱ k (_ ⊔̂ᵣ _)   x = x
 -- Effect expressions for an effect unknown, resource expressions for a resource
 -- unknown and for an effect unknown through its image `∣ k ∣`
 
-sortᵉ : ∀ {Ψ} → EVar Ψ → Sort (EExp Ψ)
+sortᵉ : ∀ {Ω} → EVar Ω → Sort (EExp Ω)
 sortᵉ k = record
   { _≟_ = _≡ᵉ?_ ; _≅_ = _≅ᵉ_ ; _≅?_ = _≟ᵉ_ ; ≅⇒≤ = λ e → eqₑ (≅ᵉ⇒≡̂ e)
   ; occ = occᵉ-e k ; self = evar k
@@ -826,7 +826,7 @@ sortᵉ k = record
   ; put = λ b x → x [ updᵉ k b ]ᵉ ; mul = _·̂ₑ_ ; factors = factorsₑ
   ; Closure = Closureₑ ; closure? = closureₑ? }
 
-sortʳ : ∀ {Ψ} → RVar Ψ → Sort (RExp Ψ)
+sortʳ : ∀ {Ω} → RVar Ω → Sort (RExp Ω)
 sortʳ k = record
   { _≟_ = _≡ʳ?_ ; _≅_ = _≅ʳ_ ; _≅?_ = _≟ʳ_ ; ≅⇒≤ = λ e → eqᵣ (≅ʳ⇒≡̂ e)
   ; occ = occʳ-r k ; self = rvar k
@@ -836,7 +836,7 @@ sortʳ k = record
   ; put = λ b x → x [ updʳ k b ]ʳ ; mul = _·̂ᵣ_ ; factors = factorsᵣ
   ; Closure = Closureᵣ ; closure? = closureᵣ? }
 
-imageᵉ : ∀ {Ψ} → EVar Ψ → Sort (RExp Ψ)
+imageᵉ : ∀ {Ω} → EVar Ω → Sort (RExp Ω)
 imageᵉ k = record
   { _≟_ = _≡ʳ?_ ; _≅_ = _≅ʳ_ ; _≅?_ = _≟ʳ_ ; ≅⇒≤ = λ e → eqᵣ (≅ʳ⇒≡̂ e)
   ; occ = occᵉ-r k ; self = ∣ evar k ∣̂ᵉ
@@ -845,14 +845,14 @@ imageᵉ k = record
   ; Least = LeastImage ; least? = leastImage? ; fit = λ _ → false ; put = putⁱ k
   ; mul = _·̂ᵣ_ ; factors = factorsᵣ ; Closure = λ _ _ → ⊥ ; closure? = λ _ → nothing }
 
-module Vᵉ {Ψ} (k : EVar Ψ) = Rules {EExp Ψ} (sortᵉ k)
-module Vʳ {Ψ} (k : RVar Ψ) = Rules {RExp Ψ} (sortʳ k)
-module Vⁱ {Ψ} (k : EVar Ψ) = Rules {RExp Ψ} (imageᵉ k)
+module Vᵉ {Ω} (k : EVar Ω) = Rules {EExp Ω} (sortᵉ k)
+module Vʳ {Ω} (k : RVar Ω) = Rules {RExp Ω} (sortʳ k)
+module Vⁱ {Ω} (k : EVar Ω) = Rules {RExp Ω} (imageᵉ k)
 
 ------------------------------------------------------------------------
 -- An assignment leaves alone what the assigned unknown does not occur in
 
-updᵉ-e : ∀ {Ψ} → (k : EVar Ψ) → (b : EExp Ψ) → (ε : EExp Ψ)
+updᵉ-e : ∀ {Ω} → (k : EVar Ω) → (b : EExp Ω) → (ε : EExp Ω)
        → occᵉ-e k ε ≡ false → ε [ updᵉ k b ]ᵉ ≡ ε
 updᵉ-e k b (evar i)   q = updᵉ-miss k b i q
 updᵉ-e k b (econst c) q = refl
@@ -861,7 +861,7 @@ updᵉ-e k b (ε ·̂ₑ ε')  q with ∨-false (occᵉ-e k ε) (occᵉ-e k ε')
 updᵉ-e k b (ε ⊔̂ₑ ε')  q with ∨-false (occᵉ-e k ε) (occᵉ-e k ε') q
 ... | q₁ , q₂ = cong₂ _⊔̂ₑ_ (updᵉ-e k b ε q₁) (updᵉ-e k b ε' q₂)
 
-updᵉ-r : ∀ {Ψ} → (k : EVar Ψ) → (b : EExp Ψ) → (ρ : RExp Ψ)
+updᵉ-r : ∀ {Ω} → (k : EVar Ω) → (b : EExp Ω) → (ρ : RExp Ω)
        → occᵉ-r k ρ ≡ false → ρ [ updᵉ k b ]ʳ ≡ ρ
 updᵉ-r k b (rvar i)   q = refl
 updᵉ-r k b (rconst c) q = refl
@@ -871,7 +871,7 @@ updᵉ-r k b (ρ ⊔̂ᵣ ρ')  q with ∨-false (occᵉ-r k ρ) (occᵉ-r k ρ'
 ... | q₁ , q₂ = cong₂ _⊔̂ᵣ_ (updᵉ-r k b ρ q₁) (updᵉ-r k b ρ' q₂)
 updᵉ-r k b ∣ ε ∣̂ᵉ     q = cong ∣_∣̂ᵉ (updᵉ-e k b ε q)
 
-updʳ-r : ∀ {Ψ} → (k : RVar Ψ) → (b : RExp Ψ) → (ρ : RExp Ψ)
+updʳ-r : ∀ {Ω} → (k : RVar Ω) → (b : RExp Ω) → (ρ : RExp Ω)
        → occʳ-r k ρ ≡ false → ρ [ updʳ k b ]ʳ ≡ ρ
 updʳ-r k b (rvar i)   q = updʳ-miss k b i q
 updʳ-r k b (rconst c) q = refl
@@ -887,7 +887,7 @@ updʳ-r k b ∣ ε ∣̂ᵉ     q = cong ∣_∣̂ᵉ (updʳ-e k b ε)
 joinₑ : ∀ {Θ} → EExp Θ → List (EExp Θ) → EExp Θ
 joinₑ = joins _⊔̂ₑ_
 
-joinₑ-ub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ') → (x₀ : EExp Ψ) → (xs : List (EExp Ψ))
+joinₑ-ub⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} → (τ : Subst Ω Ω') → (x₀ : EExp Ω) → (xs : List (EExp Ω))
           → ∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ᵉ ≾̂ₑ joinₑ x₀ xs [ τ ]ᵉ
 joinₑ-ub⊩ τ x₀ []        (here refl) = ⊩≾̂ₑ-refl
 joinₑ-ub⊩ τ x₀ (x₁ ∷ xs) (here refl) = transₑ ⊔-ubˡₑ (joinₑ-ub⊩ τ (x₀ ⊔̂ₑ x₁) xs (here refl))
@@ -895,8 +895,8 @@ joinₑ-ub⊩ τ x₀ (x₁ ∷ xs) (there (here refl)) =
   transₑ ⊔-ubʳₑ (joinₑ-ub⊩ τ (x₀ ⊔̂ₑ x₁) xs (here refl))
 joinₑ-ub⊩ τ x₀ (x₁ ∷ xs) (there (there m)) = joinₑ-ub⊩ τ (x₀ ⊔̂ₑ x₁) xs (there m)
 
-joinₑ-lub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {y : EExp Ψ'} → (τ : Subst Ψ Ψ')
-           → (x₀ : EExp Ψ) → (xs : List (EExp Ψ))
+joinₑ-lub⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} {y : EExp Ω'} → (τ : Subst Ω Ω')
+           → (x₀ : EExp Ω) → (xs : List (EExp Ω))
            → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ᵉ ≾̂ₑ y)
            → Q ⊩ joinₑ x₀ xs [ τ ]ᵉ ≾̂ₑ y
 joinₑ-lub⊩ τ x₀ []        k = k (here refl)
@@ -908,7 +908,7 @@ joinₑ-lub⊩ τ x₀ (x₁ ∷ xs) k =
 joinᵣ : ∀ {Θ} → RExp Θ → List (RExp Θ) → RExp Θ
 joinᵣ = joins _⊔̂ᵣ_
 
-joinᵣ-ub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ') → (x₀ : RExp Ψ) → (xs : List (RExp Ψ))
+joinᵣ-ub⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} → (τ : Subst Ω Ω') → (x₀ : RExp Ω) → (xs : List (RExp Ω))
           → ∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ʳ ≾̂ᵣ joinᵣ x₀ xs [ τ ]ʳ
 joinᵣ-ub⊩ τ x₀ []        (here refl) = ⊩≾̂ᵣ-refl
 joinᵣ-ub⊩ τ x₀ (x₁ ∷ xs) (here refl) = transᵣ ⊔-ubˡᵣ (joinᵣ-ub⊩ τ (x₀ ⊔̂ᵣ x₁) xs (here refl))
@@ -916,8 +916,8 @@ joinᵣ-ub⊩ τ x₀ (x₁ ∷ xs) (there (here refl)) =
   transᵣ ⊔-ubʳᵣ (joinᵣ-ub⊩ τ (x₀ ⊔̂ᵣ x₁) xs (here refl))
 joinᵣ-ub⊩ τ x₀ (x₁ ∷ xs) (there (there m)) = joinᵣ-ub⊩ τ (x₀ ⊔̂ᵣ x₁) xs (there m)
 
-joinᵣ-lub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {y : RExp Ψ'} → (τ : Subst Ψ Ψ')
-           → (x₀ : RExp Ψ) → (xs : List (RExp Ψ))
+joinᵣ-lub⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} {y : RExp Ω'} → (τ : Subst Ω Ω')
+           → (x₀ : RExp Ω) → (xs : List (RExp Ω))
            → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ʳ ≾̂ᵣ y)
            → Q ⊩ joinᵣ x₀ xs [ τ ]ʳ ≾̂ᵣ y
 joinᵣ-lub⊩ τ x₀ []        k = k (here refl)
@@ -933,8 +933,8 @@ joinᵣ-lub⊩ τ x₀ (x₁ ∷ xs) k =
 
 -- the join of left (right) multipliers leaves what each leaves
 
-joinₑ-mulˡ⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {w : EExp Ψ'} → (τ : Subst Ψ Ψ')
-            → (x₀ : EExp Ψ) → (xs : List (EExp Ψ))
+joinₑ-mulˡ⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} {w : EExp Ω'} → (τ : Subst Ω Ω')
+            → (x₀ : EExp Ω) → (xs : List (EExp Ω))
             → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ᵉ ·̂ₑ w ≾̂ₑ w)
             → Q ⊩ joinₑ x₀ xs [ τ ]ᵉ ·̂ₑ w ≾̂ₑ w
 joinₑ-mulˡ⊩ τ x₀ []        k = k (here refl)
@@ -943,8 +943,8 @@ joinₑ-mulˡ⊩ τ x₀ (x₁ ∷ xs) k =
     (λ { (here refl) → transₑ (eqₑ ≡̂ₑ-distribʳ-⊔) (⊔-lubₑ (k (here refl)) (k (there (here refl))))
        ; (there m)   → k (there (there m)) })
 
-joinₑ-mulʳ⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {w : EExp Ψ'} → (τ : Subst Ψ Ψ')
-            → (x₀ : EExp Ψ) → (xs : List (EExp Ψ))
+joinₑ-mulʳ⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} {w : EExp Ω'} → (τ : Subst Ω Ω')
+            → (x₀ : EExp Ω) → (xs : List (EExp Ω))
             → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ w ·̂ₑ x [ τ ]ᵉ ≾̂ₑ w)
             → Q ⊩ w ·̂ₑ joinₑ x₀ xs [ τ ]ᵉ ≾̂ₑ w
 joinₑ-mulʳ⊩ τ x₀ []        k = k (here refl)
@@ -953,8 +953,8 @@ joinₑ-mulʳ⊩ τ x₀ (x₁ ∷ xs) k =
     (λ { (here refl) → transₑ (eqₑ ≡̂ₑ-distribˡ-⊔) (⊔-lubₑ (k (here refl)) (k (there (here refl))))
        ; (there m)   → k (there (there m)) })
 
-joinᵣ-mulˡ⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {w : RExp Ψ'} → (τ : Subst Ψ Ψ')
-            → (x₀ : RExp Ψ) → (xs : List (RExp Ψ))
+joinᵣ-mulˡ⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} {w : RExp Ω'} → (τ : Subst Ω Ω')
+            → (x₀ : RExp Ω) → (xs : List (RExp Ω))
             → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ʳ ·̂ᵣ w ≾̂ᵣ w)
             → Q ⊩ joinᵣ x₀ xs [ τ ]ʳ ·̂ᵣ w ≾̂ᵣ w
 joinᵣ-mulˡ⊩ τ x₀ []        k = k (here refl)
@@ -963,8 +963,8 @@ joinᵣ-mulˡ⊩ τ x₀ (x₁ ∷ xs) k =
     (λ { (here refl) → transᵣ (eqᵣ ≡̂ᵣ-distribʳ-⊔) (⊔-lubᵣ (k (here refl)) (k (there (here refl))))
        ; (there m)   → k (there (there m)) })
 
-joinᵣ-mulʳ⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {w : RExp Ψ'} → (τ : Subst Ψ Ψ')
-            → (x₀ : RExp Ψ) → (xs : List (RExp Ψ))
+joinᵣ-mulʳ⊩ : ∀ {Ω Ω'} {Q : Hyps Ω'} {w : RExp Ω'} → (τ : Subst Ω Ω')
+            → (x₀ : RExp Ω) → (xs : List (RExp Ω))
             → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ w ·̂ᵣ x [ τ ]ʳ ≾̂ᵣ w)
             → Q ⊩ w ·̂ᵣ joinᵣ x₀ xs [ τ ]ʳ ≾̂ᵣ w
 joinᵣ-mulʳ⊩ τ x₀ []        k = k (here refl)
@@ -973,30 +973,30 @@ joinᵣ-mulʳ⊩ τ x₀ (x₁ ∷ xs) k =
     (λ { (here refl) → transᵣ (eqᵣ ≡̂ᵣ-distribˡ-⊔) (⊔-lubᵣ (k (here refl)) (k (there (here refl))))
        ; (there m)   → k (there (there m)) })
 
-module LowToₑ {Ψ} (k : EVar Ψ) {l : List (EExp Ψ × EExp Ψ)} (lw : Vᵉ.Lows {Ψ} k l) where
+module LowToₑ {Ω} (k : EVar Ω) {l : List (EExp Ω × EExp Ω)} (lw : Vᵉ.Lows {Ω} k l) where
 
   -- the closure of an expression lies above it, below every grade above
   -- it absorbing its own iteration, and leaves what the expression leaves
 
-  clo-above : ∀ {x x⁺} → Vᵉ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+  clo-above : ∀ {x x⁺} → Vᵉ.Clo {Ω} k x x⁺ → ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω')
             → Q ⊩ x [ δ ]ᵉ ≾̂ₑ x⁺ [ δ ]ᵉ
   clo-above (Vᵉ.idem _)                    δ = ⊩≾̂ₑ-refl
   clo-above (Vᵉ.const (c , p , eq , refl)) δ =
     transₑ (eqₑ (≡̂ₑ-subst δ eq)) (atomₑ (Plus.≾-c⁺ p))
 
-  clo-least : ∀ {x x⁺} → Vᵉ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} {w} → (τ : Subst Ψ Ψ')
+  clo-least : ∀ {x x⁺} → Vᵉ.Clo {Ω} k x x⁺ → ∀ {Ω'} {Q : Hyps Ω'} {w} → (τ : Subst Ω Ω')
             → Q ⊩ x [ τ ]ᵉ ≾̂ₑ w → Q ⊩ w ·̂ₑ w ≾̂ₑ w → Q ⊩ x⁺ [ τ ]ᵉ ≾̂ₑ w
   clo-least (Vᵉ.idem _)                    τ h _  = h
   clo-least (Vᵉ.const (c , p , eq , refl)) τ h sq =
     plusₑ p (transₑ (eqₑ (≡̂ₑ-sym (≡̂ₑ-subst τ eq))) h) sq
 
-  clo-indˡ : ∀ {x x⁺} → Vᵉ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} {w} → (τ : Subst Ψ Ψ')
+  clo-indˡ : ∀ {x x⁺} → Vᵉ.Clo {Ω} k x x⁺ → ∀ {Ω'} {Q : Hyps Ω'} {w} → (τ : Subst Ω Ω')
            → Q ⊩ x [ τ ]ᵉ ·̂ₑ w ≾̂ₑ w → Q ⊩ x⁺ [ τ ]ᵉ ·̂ₑ w ≾̂ₑ w
   clo-indˡ (Vᵉ.idem _)                    τ h = h
   clo-indˡ (Vᵉ.const (c , p , eq , refl)) τ h =
     indˡₑ p (transₑ (eqₑ (≡̂ₑ-cong (≡̂ₑ-sym (≡̂ₑ-subst τ eq)) ≡̂ₑ-refl)) h)
 
-  clo-indʳ : ∀ {x x⁺} → Vᵉ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} {w} → (τ : Subst Ψ Ψ')
+  clo-indʳ : ∀ {x x⁺} → Vᵉ.Clo {Ω} k x x⁺ → ∀ {Ω'} {Q : Hyps Ω'} {w} → (τ : Subst Ω Ω')
            → Q ⊩ w ·̂ₑ x [ τ ]ᵉ ≾̂ₑ w → Q ⊩ w ·̂ₑ x⁺ [ τ ]ᵉ ≾̂ₑ w
   clo-indʳ (Vᵉ.idem _)                    τ h = h
   clo-indʳ (Vᵉ.const (c , p , eq , refl)) τ h =
@@ -1004,26 +1004,26 @@ module LowToₑ {Ψ} (k : EVar Ψ) {l : List (EExp Ψ × EExp Ψ)} (lw : Vᵉ.Lo
 
   -- the value lies above `L`
 
-  grows : ∀ {L V} → Vᵉ.LowTo {Ψ} k l lw L V → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+  grows : ∀ {L V} → Vᵉ.LowTo {Ω} k l lw L V → ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω')
         → Q ⊩ L [ δ ]ᵉ ≾̂ₑ V [ δ ]ᵉ
   grows (Vᵉ.lowTo sh y z stL stR sq _) {Q = Q} δ = transₑ (starL stL) (transₑ (starR stR) (sqr sq))
     where
-      starL : ∀ {bs L y} → Vᵉ.StarL {Ψ} k bs L y → Q ⊩ L [ δ ]ᵉ ≾̂ₑ y [ δ ]ᵉ
+      starL : ∀ {bs L y} → Vᵉ.StarL {Ω} k bs L y → Q ⊩ L [ δ ]ᵉ ≾̂ₑ y [ δ ]ᵉ
       starL (Vᵉ.stays _)   = ⊩≾̂ₑ-refl
       starL (Vᵉ.grows _ _) = ⊔-ubˡₑ
 
-      starR : ∀ {cs y z} → Vᵉ.StarR {Ψ} k cs y z → Q ⊩ y [ δ ]ᵉ ≾̂ₑ z [ δ ]ᵉ
+      starR : ∀ {cs y z} → Vᵉ.StarR {Ω} k cs y z → Q ⊩ y [ δ ]ᵉ ≾̂ₑ z [ δ ]ᵉ
       starR (Vᵉ.stays _)   = ⊩≾̂ₑ-refl
       starR (Vᵉ.grows _ _) = ⊔-ubˡₑ
 
-      sqr : ∀ {cs} {sh : Vᵉ.Shapes {Ψ} k cs} {z V} → Vᵉ.Sq {Ψ} k sh z V
+      sqr : ∀ {cs} {sh : Vᵉ.Shapes {Ω} k cs} {z V} → Vᵉ.Sq {Ω} k sh z V
           → Q ⊩ z [ δ ]ᵉ ≾̂ₑ V [ δ ]ᵉ
       sqr (Vᵉ.linear _)      = ⊩≾̂ₑ-refl
       sqr (Vᵉ.quadratic _ c) = clo-above c δ
 
   -- ... and below the unknown, wherever `L` does and the orderings hold
 
-  least : ∀ {L V} → Vᵉ.LowTo {Ψ} k l lw L V → ∀ {Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ')
+  least : ∀ {L V} → Vᵉ.LowTo {Ω} k l lw L V → ∀ {Ω'} {Q : Hyps Ω'} → (τ : Subst Ω Ω')
         → Q ⊩ L [ τ ]ᵉ ≾̂ₑ sE τ k
         → (∀ {a a'} → (a , a') ∈ l → Q ⊩ a [ τ ]ᵉ ≾̂ₑ a' [ τ ]ᵉ)
         → Q ⊩ V [ τ ]ᵉ ≾̂ₑ sE τ k
@@ -1032,7 +1032,7 @@ module LowToₑ {Ψ} (k : EVar Ψ) {l : List (EExp Ψ × EExp Ψ)} (lw : Vᵉ.Lo
       cyc : ∀ {p} → p ∈ Vᵉ.cycs lw → Q ⊩ p [ τ ]ᵉ ≾̂ₑ sE τ k
       cyc m = h (Vᵉ.srcᶜ lw m)
 
-      starL : ∀ {L y} → Vᵉ.StarL {Ψ} k (Vᵉ.lefts sh) L y
+      starL : ∀ {L y} → Vᵉ.StarL {Ω} k (Vᵉ.lefts sh) L y
             → Q ⊩ L [ τ ]ᵉ ≾̂ₑ sE τ k → Q ⊩ y [ τ ]ᵉ ≾̂ₑ sE τ k
       starL (Vᵉ.stays _)              hy = hy
       starL (Vᵉ.grows {b₀} {bs'} e c) hy =
@@ -1040,7 +1040,7 @@ module LowToₑ {Ψ} (k : EVar Ψ) {l : List (EExp Ψ × EExp Ψ)} (lw : Vᵉ.Lo
                           (clo-indˡ c τ (joinₑ-mulˡ⊩ τ b₀ bs'
                              (λ {x} m → cyc (Vᵉ.leftˢ sh (subst (x ∈_) (sym e) m))))))
 
-      starR : ∀ {y z} → Vᵉ.StarR {Ψ} k (Vᵉ.rights sh) y z
+      starR : ∀ {y z} → Vᵉ.StarR {Ω} k (Vᵉ.rights sh) y z
             → Q ⊩ y [ τ ]ᵉ ≾̂ₑ sE τ k → Q ⊩ z [ τ ]ᵉ ≾̂ₑ sE τ k
       starR (Vᵉ.stays _)              hy = hy
       starR (Vᵉ.grows {c₀} {cs'} e c) hy =
@@ -1048,49 +1048,49 @@ module LowToₑ {Ψ} (k : EVar Ψ) {l : List (EExp Ψ × EExp Ψ)} (lw : Vᵉ.Lo
                           (clo-indʳ c τ (joinₑ-mulʳ⊩ τ c₀ cs'
                              (λ {x} m → cyc (Vᵉ.rightˢ sh (subst (x ∈_) (sym e) m))))))
 
-      sqr : ∀ {z V} → Vᵉ.Sq {Ψ} k sh z V → Q ⊩ z [ τ ]ᵉ ≾̂ₑ sE τ k → Q ⊩ V [ τ ]ᵉ ≾̂ₑ sE τ k
+      sqr : ∀ {z V} → Vᵉ.Sq {Ω} k sh z V → Q ⊩ z [ τ ]ᵉ ≾̂ₑ sE τ k → Q ⊩ V [ τ ]ᵉ ≾̂ₑ sE τ k
       sqr (Vᵉ.linear _)                  hz = hz
       sqr (Vᵉ.quadratic {m = m} _ c) hz = clo-least c τ hz (cyc m)
 
   -- for lowering from the join of the bounds: the value lies above each
   -- bound, and below the unknown wherever the orderings hold
 
-  module Join {x₀ : EExp Ψ} {xs : List (EExp Ψ)} (e : Vᵉ.bnds lw ≡ x₀ ∷ xs) where
+  module Join {x₀ : EExp Ω} {xs : List (EExp Ω)} (e : Vᵉ.bnds lw ≡ x₀ ∷ xs) where
 
-    above : ∀ {b} → Vᵉ.LowTo {Ψ} k l lw (joinₑ x₀ xs) b → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+    above : ∀ {b} → Vᵉ.LowTo {Ω} k l lw (joinₑ x₀ xs) b → ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω')
           → ∀ {y} → y ∈ Vᵉ.bnds lw → Q ⊩ y [ δ ]ᵉ ≾̂ₑ b [ δ ]ᵉ
     above to δ m = transₑ (joinₑ-ub⊩ δ x₀ xs (subst (_ ∈_) e m)) (grows to δ)
 
-    below : ∀ {b} → Vᵉ.LowTo {Ψ} k l lw (joinₑ x₀ xs) b → ∀ {Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ')
+    below : ∀ {b} → Vᵉ.LowTo {Ω} k l lw (joinₑ x₀ xs) b → ∀ {Ω'} {Q : Hyps Ω'} → (τ : Subst Ω Ω')
           → (∀ {a a'} → (a , a') ∈ l → Q ⊩ a [ τ ]ᵉ ≾̂ₑ a' [ τ ]ᵉ)
           → Q ⊩ b [ τ ]ᵉ ≾̂ₑ sE τ k
     below to τ h =
       least to τ (joinₑ-lub⊩ τ x₀ xs (λ {y} m → h {y} (Vᵉ.src lw (subst (_ ∈_) (sym e) m)))) h
 
-module LowToᵣ {Ψ} (k : RVar Ψ) {l : List (RExp Ψ × RExp Ψ)} (lw : Vʳ.Lows {Ψ} k l) where
+module LowToᵣ {Ω} (k : RVar Ω) {l : List (RExp Ω × RExp Ω)} (lw : Vʳ.Lows {Ω} k l) where
 
   -- the closure of an expression lies above it, below every grade above
   -- it absorbing its own iteration, and leaves what the expression leaves
 
-  clo-above : ∀ {x x⁺} → Vʳ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+  clo-above : ∀ {x x⁺} → Vʳ.Clo {Ω} k x x⁺ → ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω')
             → Q ⊩ x [ δ ]ʳ ≾̂ᵣ x⁺ [ δ ]ʳ
   clo-above (Vʳ.idem _)                    δ = ⊩≾̂ᵣ-refl
   clo-above (Vʳ.const (c , p , eq , refl)) δ =
     transᵣ (eqᵣ (≡̂ᵣ-subst δ eq)) (atomᵣ (Plus.≾-c⁺ p))
 
-  clo-least : ∀ {x x⁺} → Vʳ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} {w} → (τ : Subst Ψ Ψ')
+  clo-least : ∀ {x x⁺} → Vʳ.Clo {Ω} k x x⁺ → ∀ {Ω'} {Q : Hyps Ω'} {w} → (τ : Subst Ω Ω')
             → Q ⊩ x [ τ ]ʳ ≾̂ᵣ w → Q ⊩ w ·̂ᵣ w ≾̂ᵣ w → Q ⊩ x⁺ [ τ ]ʳ ≾̂ᵣ w
   clo-least (Vʳ.idem _)                    τ h _  = h
   clo-least (Vʳ.const (c , p , eq , refl)) τ h sq =
     plusᵣ p (transᵣ (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst τ eq))) h) sq
 
-  clo-indˡ : ∀ {x x⁺} → Vʳ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} {w} → (τ : Subst Ψ Ψ')
+  clo-indˡ : ∀ {x x⁺} → Vʳ.Clo {Ω} k x x⁺ → ∀ {Ω'} {Q : Hyps Ω'} {w} → (τ : Subst Ω Ω')
            → Q ⊩ x [ τ ]ʳ ·̂ᵣ w ≾̂ᵣ w → Q ⊩ x⁺ [ τ ]ʳ ·̂ᵣ w ≾̂ᵣ w
   clo-indˡ (Vʳ.idem _)                    τ h = h
   clo-indˡ (Vʳ.const (c , p , eq , refl)) τ h =
     indˡᵣ p (transᵣ (eqᵣ (≡̂ᵣ-cong (≡̂ᵣ-sym (≡̂ᵣ-subst τ eq)) ≡̂ᵣ-refl)) h)
 
-  clo-indʳ : ∀ {x x⁺} → Vʳ.Clo {Ψ} k x x⁺ → ∀ {Ψ'} {Q : Hyps Ψ'} {w} → (τ : Subst Ψ Ψ')
+  clo-indʳ : ∀ {x x⁺} → Vʳ.Clo {Ω} k x x⁺ → ∀ {Ω'} {Q : Hyps Ω'} {w} → (τ : Subst Ω Ω')
            → Q ⊩ w ·̂ᵣ x [ τ ]ʳ ≾̂ᵣ w → Q ⊩ w ·̂ᵣ x⁺ [ τ ]ʳ ≾̂ᵣ w
   clo-indʳ (Vʳ.idem _)                    τ h = h
   clo-indʳ (Vʳ.const (c , p , eq , refl)) τ h =
@@ -1098,26 +1098,26 @@ module LowToᵣ {Ψ} (k : RVar Ψ) {l : List (RExp Ψ × RExp Ψ)} (lw : Vʳ.Low
 
   -- the value lies above `L`
 
-  grows : ∀ {L V} → Vʳ.LowTo {Ψ} k l lw L V → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+  grows : ∀ {L V} → Vʳ.LowTo {Ω} k l lw L V → ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω')
         → Q ⊩ L [ δ ]ʳ ≾̂ᵣ V [ δ ]ʳ
   grows (Vʳ.lowTo sh y z stL stR sq _) {Q = Q} δ = transᵣ (starL stL) (transᵣ (starR stR) (sqr sq))
     where
-      starL : ∀ {bs L y} → Vʳ.StarL {Ψ} k bs L y → Q ⊩ L [ δ ]ʳ ≾̂ᵣ y [ δ ]ʳ
+      starL : ∀ {bs L y} → Vʳ.StarL {Ω} k bs L y → Q ⊩ L [ δ ]ʳ ≾̂ᵣ y [ δ ]ʳ
       starL (Vʳ.stays _)   = ⊩≾̂ᵣ-refl
       starL (Vʳ.grows _ _) = ⊔-ubˡᵣ
 
-      starR : ∀ {cs y z} → Vʳ.StarR {Ψ} k cs y z → Q ⊩ y [ δ ]ʳ ≾̂ᵣ z [ δ ]ʳ
+      starR : ∀ {cs y z} → Vʳ.StarR {Ω} k cs y z → Q ⊩ y [ δ ]ʳ ≾̂ᵣ z [ δ ]ʳ
       starR (Vʳ.stays _)   = ⊩≾̂ᵣ-refl
       starR (Vʳ.grows _ _) = ⊔-ubˡᵣ
 
-      sqr : ∀ {cs} {sh : Vʳ.Shapes {Ψ} k cs} {z V} → Vʳ.Sq {Ψ} k sh z V
+      sqr : ∀ {cs} {sh : Vʳ.Shapes {Ω} k cs} {z V} → Vʳ.Sq {Ω} k sh z V
           → Q ⊩ z [ δ ]ʳ ≾̂ᵣ V [ δ ]ʳ
       sqr (Vʳ.linear _)      = ⊩≾̂ᵣ-refl
       sqr (Vʳ.quadratic _ c) = clo-above c δ
 
   -- ... and below the unknown, wherever `L` does and the orderings hold
 
-  least : ∀ {L V} → Vʳ.LowTo {Ψ} k l lw L V → ∀ {Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ')
+  least : ∀ {L V} → Vʳ.LowTo {Ω} k l lw L V → ∀ {Ω'} {Q : Hyps Ω'} → (τ : Subst Ω Ω')
         → Q ⊩ L [ τ ]ʳ ≾̂ᵣ sR τ k
         → (∀ {a a'} → (a , a') ∈ l → Q ⊩ a [ τ ]ʳ ≾̂ᵣ a' [ τ ]ʳ)
         → Q ⊩ V [ τ ]ʳ ≾̂ᵣ sR τ k
@@ -1126,7 +1126,7 @@ module LowToᵣ {Ψ} (k : RVar Ψ) {l : List (RExp Ψ × RExp Ψ)} (lw : Vʳ.Low
       cyc : ∀ {p} → p ∈ Vʳ.cycs lw → Q ⊩ p [ τ ]ʳ ≾̂ᵣ sR τ k
       cyc m = h (Vʳ.srcᶜ lw m)
 
-      starL : ∀ {L y} → Vʳ.StarL {Ψ} k (Vʳ.lefts sh) L y
+      starL : ∀ {L y} → Vʳ.StarL {Ω} k (Vʳ.lefts sh) L y
             → Q ⊩ L [ τ ]ʳ ≾̂ᵣ sR τ k → Q ⊩ y [ τ ]ʳ ≾̂ᵣ sR τ k
       starL (Vʳ.stays _)              hy = hy
       starL (Vʳ.grows {b₀} {bs'} e c) hy =
@@ -1134,7 +1134,7 @@ module LowToᵣ {Ψ} (k : RVar Ψ) {l : List (RExp Ψ × RExp Ψ)} (lw : Vʳ.Low
                           (clo-indˡ c τ (joinᵣ-mulˡ⊩ τ b₀ bs'
                              (λ {x} m → cyc (Vʳ.leftˢ sh (subst (x ∈_) (sym e) m))))))
 
-      starR : ∀ {y z} → Vʳ.StarR {Ψ} k (Vʳ.rights sh) y z
+      starR : ∀ {y z} → Vʳ.StarR {Ω} k (Vʳ.rights sh) y z
             → Q ⊩ y [ τ ]ʳ ≾̂ᵣ sR τ k → Q ⊩ z [ τ ]ʳ ≾̂ᵣ sR τ k
       starR (Vʳ.stays _)              hy = hy
       starR (Vʳ.grows {c₀} {cs'} e c) hy =
@@ -1142,20 +1142,20 @@ module LowToᵣ {Ψ} (k : RVar Ψ) {l : List (RExp Ψ × RExp Ψ)} (lw : Vʳ.Low
                           (clo-indʳ c τ (joinᵣ-mulʳ⊩ τ c₀ cs'
                              (λ {x} m → cyc (Vʳ.rightˢ sh (subst (x ∈_) (sym e) m))))))
 
-      sqr : ∀ {z V} → Vʳ.Sq {Ψ} k sh z V → Q ⊩ z [ τ ]ʳ ≾̂ᵣ sR τ k → Q ⊩ V [ τ ]ʳ ≾̂ᵣ sR τ k
+      sqr : ∀ {z V} → Vʳ.Sq {Ω} k sh z V → Q ⊩ z [ τ ]ʳ ≾̂ᵣ sR τ k → Q ⊩ V [ τ ]ʳ ≾̂ᵣ sR τ k
       sqr (Vʳ.linear _)                  hz = hz
       sqr (Vʳ.quadratic {m = m} _ c) hz = clo-least c τ hz (cyc m)
 
   -- for lowering from the join of the bounds: the value lies above each
   -- bound, and below the unknown wherever the orderings hold
 
-  module Join {x₀ : RExp Ψ} {xs : List (RExp Ψ)} (e : Vʳ.bnds lw ≡ x₀ ∷ xs) where
+  module Join {x₀ : RExp Ω} {xs : List (RExp Ω)} (e : Vʳ.bnds lw ≡ x₀ ∷ xs) where
 
-    above : ∀ {b} → Vʳ.LowTo {Ψ} k l lw (joinᵣ x₀ xs) b → ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+    above : ∀ {b} → Vʳ.LowTo {Ω} k l lw (joinᵣ x₀ xs) b → ∀ {Ω'} {Q : Hyps Ω'} → (δ : Subst Ω Ω')
           → ∀ {y} → y ∈ Vʳ.bnds lw → Q ⊩ y [ δ ]ʳ ≾̂ᵣ b [ δ ]ʳ
     above to δ m = transᵣ (joinᵣ-ub⊩ δ x₀ xs (subst (_ ∈_) e m)) (grows to δ)
 
-    below : ∀ {b} → Vʳ.LowTo {Ψ} k l lw (joinᵣ x₀ xs) b → ∀ {Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ')
+    below : ∀ {b} → Vʳ.LowTo {Ω} k l lw (joinᵣ x₀ xs) b → ∀ {Ω'} {Q : Hyps Ω'} → (τ : Subst Ω Ω')
           → (∀ {a a'} → (a , a') ∈ l → Q ⊩ a [ τ ]ʳ ≾̂ᵣ a' [ τ ]ʳ)
           → Q ⊩ b [ τ ]ʳ ≾̂ᵣ sR τ k
     below to τ h =

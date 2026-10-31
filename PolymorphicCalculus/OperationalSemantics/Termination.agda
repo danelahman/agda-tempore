@@ -122,80 +122,80 @@ private
 ------------------------------------------------------------------------
 -- Environments: reducible values for the variables of a context
 
-record Env {Θ n m} (Γ : OCtx Θ n) (S : State m) (σ : Fin n → RunV m) : Set where
+record Env {Θ n m} (Γ : OCtx Θ n) (𝕊 : State m) (σ : Fin n → RunV m) : Set where
   constructor env
   field
-    at     : ∀ i → VRed (shapeᵛ (lookup-ty Γ i)) S (σ i)
+    at     : ∀ i → VRed (shapeᵛ (lookup-ty Γ i)) 𝕊 (σ i)
     nodefs : defs Γ ≡ ∅ᵖ
 
 open Env
 
 private
 
-  env-mono : ∀ {Θ n m k} {Γ : OCtx Θ n} {S : State m} {S' : State k} {σ}
-           → Env Γ S σ → (e : S ≤ₛ S') → Env Γ S' (λ i → renᵛ (wkₛ e) (σ i))
+  env-mono : ∀ {Θ n m k} {Γ : OCtx Θ n} {𝕊 : State m} {𝕊' : State k} {σ}
+           → Env Γ 𝕊 σ → (e : 𝕊 ≤ₛ 𝕊') → Env Γ 𝕊' (λ i → renᵛ (wkₛ e) (σ i))
   at (env-mono {Γ = Γ} {σ = σ} r e) i = VRed-mono (shapeᵛ (lookup-ty Γ i)) e (σ i) (at r i)
   nodefs (env-mono r e) = nodefs r
 
-  ⟨⟩ᵉ : ∀ {Θ n m} {Γ : OCtx Θ n} {ρ : RExp Θ} {S : State m} {σ}
-      → Env Γ S σ → Env (Γ ⟨ ρ ⟩) S σ
+  ⟨⟩ᵉ : ∀ {Θ n m} {Γ : OCtx Θ n} {ρ : RExp Θ} {𝕊 : State m} {σ}
+      → Env Γ 𝕊 σ → Env (Γ ⟨ ρ ⟩) 𝕊 σ
   at (⟨⟩ᵉ r) = at r
   nodefs (⟨⟩ᵉ r) = nodefs r
 
-  env-∙ : ∀ {Θ n m} {Γ : OCtx Θ n} {A : OVType Θ} {S : State m} {σ W}
-        → Env Γ S σ → VRed (shapeᵛ A) S W → Env (Γ ∷ A) S (σ ∙ W)
+  env-∙ : ∀ {Θ n m} {Γ : OCtx Θ n} {A : OVType Θ} {𝕊 : State m} {σ W}
+        → Env Γ 𝕊 σ → VRed (shapeᵛ A) 𝕊 W → Env (Γ ∷ A) 𝕊 (σ ∙ W)
   at (env-∙ r w) zero    = w
   at (env-∙ r w) (suc i) = at r i
   nodefs (env-∙ r w) = nodefs r
 
   -- views of the reducible values of a shape
 
-  data LamRed {n} (A B : Shape) (S : State n) : RunV n → Set where
-    lam-red : ∀ {M} → VRed (A ⇒ˢ B) S (lam M) → LamRed A B S (lam M)
+  data LamRed {n} (A B : Shape) (𝕊 : State n) : RunV n → Set where
+    lam-red : ∀ {M} → VRed (A ⇒ˢ B) 𝕊 (lam M) → LamRed A B 𝕊 (lam M)
 
-  lam-red? : ∀ {n A B} {S : State n} V → VRed (A ⇒ˢ B) S V → LamRed A B S V
+  lam-red? : ∀ {n A B} {𝕊 : State n} V → VRed (A ⇒ˢ B) 𝕊 V → LamRed A B 𝕊 V
   lam-red? (lam M) r = lam-red r
 
-  data HandlerRed {n} (A B : Shape) (S : State n) : RunV n → Set where
-    handler-red : ∀ {N H} → VRed (A ⇛ˢ B) S (handler N H) → HandlerRed A B S (handler N H)
+  data HandlerRed {n} (A B : Shape) (𝕊 : State n) : RunV n → Set where
+    handler-red : ∀ {N H} → VRed (A ⇛ˢ B) 𝕊 (handler N H) → HandlerRed A B 𝕊 (handler N H)
 
-  handler-red? : ∀ {n A B} {S : State n} V → VRed (A ⇛ˢ B) S V → HandlerRed A B S V
+  handler-red? : ∀ {n A B} {𝕊 : State n} V → VRed (A ⇛ˢ B) 𝕊 V → HandlerRed A B 𝕊 V
   handler-red? (handler N H) r = handler-red r
 
-  data PairRed {n} (A B : Shape) (S : State n) : RunV n → Set where
-    pair-red : ∀ {V W} → VRed A S V → VRed B S W → PairRed A B S ⦉ V , W ⦊
+  data PairRed {n} (A B : Shape) (𝕊 : State n) : RunV n → Set where
+    pair-red : ∀ {V W} → VRed A 𝕊 V → VRed B 𝕊 W → PairRed A B 𝕊 ⦉ V , W ⦊
 
-  pair-red? : ∀ {n A B} {S : State n} V → VRed (A ×ˢ B) S V → PairRed A B S V
+  pair-red? : ∀ {n A B} {𝕊 : State n} V → VRed (A ×ˢ B) 𝕊 V → PairRed A B 𝕊 V
   pair-red? ⦉ V , W ⦊ (r , r') = pair-red r r'
 
-  data SumRed {n} (A B : Shape) (S : State n) : RunV n → Set where
-    inl-red : ∀ {V} → VRed A S V → SumRed A B S (inl V)
-    inr-red : ∀ {V} → VRed B S V → SumRed A B S (inr V)
+  data SumRed {n} (A B : Shape) (𝕊 : State n) : RunV n → Set where
+    inl-red : ∀ {V} → VRed A 𝕊 V → SumRed A B 𝕊 (inl V)
+    inr-red : ∀ {V} → VRed B 𝕊 V → SumRed A B 𝕊 (inr V)
 
-  sum-red? : ∀ {n A B} {S : State n} V → VRed (A +ˢ B) S V → SumRed A B S V
+  sum-red? : ∀ {n A B} {𝕊 : State n} V → VRed (A +ˢ B) 𝕊 V → SumRed A B 𝕊 V
   sum-red? (inl V) r = inl-red r
   sum-red? (inr V) r = inr-red r
 
-  data ListRed {n} (A : Shape) (S : State n) : RunV n → Set where
-    nil-red  : ListRed A S nil
-    cons-red : ∀ {V W} → VRed A S V → VRed (listˢ A) S W → ListRed A S (cons V W)
+  data ListRed {n} (A : Shape) (𝕊 : State n) : RunV n → Set where
+    nil-red  : ListRed A 𝕊 nil
+    cons-red : ∀ {V W} → VRed A 𝕊 V → VRed (listˢ A) 𝕊 W → ListRed A 𝕊 (cons V W)
 
-  list-red? : ∀ {n A} {S : State n} V → VRed (listˢ A) S V → ListRed A S V
+  list-red? : ∀ {n A} {𝕊 : State n} V → VRed (listˢ A) 𝕊 V → ListRed A 𝕊 V
   list-red? nil        r        = nil-red
   list-red? (cons V W) (r , r') = cons-red r r'
 
-  data NatRed {n} (S : State n) : RunV n → Set where
-    zero-red : NatRed S zero
-    succ-red : ∀ {V} → VRed natˢ S V → NatRed S (succ V)
+  data NatRed {n} (𝕊 : State n) : RunV n → Set where
+    zero-red : NatRed 𝕊 zero
+    succ-red : ∀ {V} → VRed natˢ 𝕊 V → NatRed 𝕊 (succ V)
 
-  nat-red? : ∀ {n} {S : State n} V → VRed natˢ S V → NatRed S V
+  nat-red? : ∀ {n} {𝕊 : State n} V → VRed natˢ 𝕊 V → NatRed 𝕊 V
   nat-red? zero     r = zero-red
   nat-red? (succ V) r = succ-red r
 
-  data BoxRed {n} (A : Shape) (S : State n) : RunV n → Set where
-    box-red : ∀ {i} → VRed A S (lookupₛ S i) → BoxRed A S (var i)
+  data BoxRed {n} (A : Shape) (𝕊 : State n) : RunV n → Set where
+    box-red : ∀ {i} → VRed A 𝕊 (lookupₛ 𝕊 i) → BoxRed A 𝕊 (var i)
 
-  box-red? : ∀ {n A} {S : State n} V → VRed (□ˢ A) S V → BoxRed A S V
+  box-red? : ∀ {n A} {𝕊 : State n} V → VRed (□ˢ A) 𝕊 V → BoxRed A 𝕊 V
   box-red? (var i) r = box-red r
 
   decided : ∀ {n} → (⋈ : Cmp) → (V W : RunV n) → decide ⋈ V W ≡ true ⊎ decide ⋈ V W ≡ false
@@ -208,10 +208,10 @@ private
 
 mutual
 
-  fund-v : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ} {S : State m} {σ}
-         → (D : Q ∣ Γ ⊢V⦂ A) → Env Γ S σ → VRed (shapeᵛ A) S (psubᵛ σ ∥ D ∥ᵛ)
-  fund-v {S = S} {σ} (var x p) r =
-    subst (λ T → VRed (shapeᵛ T) S (σ (var-pos x))) (var-pos-ty x) (at r (var-pos x))
+  fund-v : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ} {𝕊 : State m} {σ}
+         → (D : Q ∣ Γ ⊢V⦂ A) → Env Γ 𝕊 σ → VRed (shapeᵛ A) 𝕊 (psubᵛ σ ∥ D ∥ᵛ)
+  fund-v {𝕊 = 𝕊} {σ} (var x p) r =
+    subst (λ T → VRed (shapeᵛ T) 𝕊 (σ (var-pos x))) (var-pos-ty x) (at r (var-pos x))
   fund-v (const B c)     r = tt
   fund-v ⋆               r = tt
   fund-v true            r = is-true
@@ -224,39 +224,39 @@ mutual
   fund-v nil             r = tt
   fund-v (cons V W)      r = fund-v V r , fund-v W r
   fund-v (cmp ⋈ V W et)  r = is-cmp ⋈ _ _
-  fund-v {σ = σ} (lam {C = C} M) r {S' = S'} e W w =
-    subst (CRed (VRed (shapeᶜ C)) S') (sym (bind (wkₛ e) σ W ∥ M ∥ᶜ))
+  fund-v {σ = σ} (lam {C = C} M) r {𝕊' = 𝕊'} e W w =
+    subst (CRed (VRed (shapeᶜ C)) 𝕊') (sym (bind (wkₛ e) σ W ∥ M ∥ᶜ))
           (fund-c M (env-∙ (env-mono r e) w))
-  fund-v {Γ = Γ} {S = S₀} {σ} (handler {A} {B} N H) r e M c =
+  fund-v {Γ = Γ} {𝕊 = 𝕊₀} {σ} (handler {A} {B} N H) r e M c =
     cred-handle {A = shapeᵛ A} {B = shapeᵛ B} hyp-ret hyp-op e c
     where
-      hyp-ret : ∀ {m} {S' : State m} (e : S₀ ≤ₛ S') V → VRed (shapeᵛ A) S' V
-              → CRed (VRed (shapeᵛ B)) S' (renᶜ (ext (wkₛ e)) (psubᶜ (exts σ) ∥ N ∥ᶜ) [ V ]₀)
-      hyp-ret {S' = S'} e V v =
-        subst (CRed (VRed (shapeᵛ B)) S') (sym (bind (wkₛ e) σ V ∥ N ∥ᶜ))
+      hyp-ret : ∀ {m} {𝕊' : State m} (e : 𝕊₀ ≤ₛ 𝕊') V → VRed (shapeᵛ A) 𝕊' V
+              → CRed (VRed (shapeᵛ B)) 𝕊' (renᶜ (ext (wkₛ e)) (psubᶜ (exts σ) ∥ N ∥ᶜ) [ V ]₀)
+      hyp-ret {𝕊' = 𝕊'} e V v =
+        subst (CRed (VRed (shapeᵛ B)) 𝕊') (sym (bind (wkₛ e) σ V ∥ N ∥ᶜ))
               (fund-c N (env-∙ (⟨⟩ᵉ (env-mono r e)) v))
 
-      hyp-op : ∀ op {m} {S' : State m} (e : S₀ ≤ₛ S') V kv
-             → VRedᵍ (param op) S' V
-             → VRed (shapeᵍ (arity op) ⇒ˢ shapeᵛ B) (S' ∷ₛ kv) (wkᵛ kv)
-             → CRed (VRed (shapeᵛ B)) (S' ∷ₛ kv)
+      hyp-op : ∀ op {m} {𝕊' : State m} (e : 𝕊₀ ≤ₛ 𝕊') V kv
+             → VRedᵍ (param op) 𝕊' V
+             → VRed (shapeᵍ (arity op) ⇒ˢ shapeᵛ B) (𝕊' ∷ₛ kv) (wkᵛ kv)
+             → CRed (VRed (shapeᵛ B)) (𝕊' ∷ₛ kv)
                     (renᶜ (ext (ext (wkₛ e))) (psubᶜ (exts (exts σ)) ∥ H op ∥ᶜ) [ V ]₁)
-      hyp-op op {S' = S'} e V kv v k =
-        subst₂ (λ s X → CRed (VRed s) (S' ∷ₛ kv) X)
+      hyp-op op {𝕊' = 𝕊'} e V kv v k =
+        subst₂ (λ s X → CRed (VRed s) (𝕊' ∷ₛ kv) X)
                (wkᵉ-shapeᵛ B)
                (sym (trans (cong (_[ V ]₁) (ren-exts₂ (wkₛ e) σ ∥ H op ∥ᶜ)) (sub₁ _ V ∥ H op ∥ᶜ)))
                (fund-c (H op) env-cl)
         where
-          env-cl : Env (clause-ctx Γ B op) (S' ∷ₛ kv)
+          env-cl : Env (clause-ctx Γ B op) (𝕊' ∷ₛ kv)
                        (exts ((λ i → renᵛ (wkₛ e) (σ i)) ∙ V))
           at env-cl zero          =
-            subst (λ s → VRed s (S' ∷ₛ kv) (wkᵛ kv))
+            subst (λ s → VRed s (𝕊' ∷ₛ kv) (wkᵛ kv))
                   (sym (cong₂ _⇒ˢ_ (shape-⌜⌝ (arity op)) (wkᵉ-shapeᵛ B))) k
           at env-cl (suc zero)    =
-            subst (λ s → VRed s (S' ∷ₛ kv) (wkᵛ V)) (sym (shape-⌜⌝ (param op)))
+            subst (λ s → VRed s (𝕊' ∷ₛ kv) (wkᵛ V)) (sym (shape-⌜⌝ (param op)))
                   (ground-VRed (param op) (wkᵛ V) (VRedᵍ-mono (param op) res₁ V v))
           at env-cl (suc (suc i)) =
-            subst₂ (λ s X → VRed s (S' ∷ₛ kv) X)
+            subst₂ (λ s X → VRed s (𝕊' ∷ₛ kv) X)
                    (trans (sym (wkᵉ-shapeᵛ (lookup-ty Γ i)))
                           (cong shapeᵛ (sym (lookup-ty-wkᵉ Γ i))))
                    (sym (ren-⨾ᵛ e (res₁ {V = kv}) (σ i)))
@@ -264,166 +264,166 @@ mutual
           nodefs env-cl = trans (defs-wkᵉ Γ) (nodefs r)
   fund-v (usedef f δ h e) r = ⊥-elim (∅ᵖ-∌ (subst (_ ∈ᵖ[ _ ]_) (nodefs r) f))
   fund-v (annᵛ A V)      r = fund-v V r
-  fund-v {S = S} (subV V p) r = subst (λ s → VRed s S _) (<:-shapeᵛ p) (fund-v V r)
+  fund-v {𝕊 = 𝕊} (subV V p) r = subst (λ s → VRed s 𝕊 _) (<:-shapeᵛ p) (fund-v V r)
 
-  fund-c : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ} {S : State m} {σ}
-         → (D : Q ∣ Γ ⊢C⦂ C) → Env Γ S σ → CRed (VRed (shapeᶜ C)) S (psubᶜ σ ∥ D ∥ᶜ)
+  fund-c : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ} {𝕊 : State m} {σ}
+         → (D : Q ∣ Γ ⊢C⦂ C) → Env Γ 𝕊 σ → CRed (VRed (shapeᶜ C)) 𝕊 (psubᶜ σ ∥ D ∥ᶜ)
 
   fund-c (return V) r = cred-ret done (fund-v V r)
 
   fund-c {σ = σ} (_⨟_ {A} {B} M N) r =
     cred-seq {A = shapeᵛ A} (fund-c M r)
-             (λ {_} {S'} e W w → subst (CRed (VRed (shapeᵛ B)) S') (sym (bind (wkₛ e) σ W ∥ N ∥ᶜ))
+             (λ {_} {𝕊'} e W w → subst (CRed (VRed (shapeᵛ B)) 𝕊') (sym (bind (wkₛ e) σ W ∥ N ∥ᶜ))
                                        (fund-c N (env-∙ (⟨⟩ᵉ (env-mono r e)) w)))
 
-  fund-c {S = S} {σ} (_·_ {C = C} V W) r
+  fund-c {𝕊 = 𝕊} {σ} (_·_ {C = C} V W) r
     with psubᵛ σ ∥ V ∥ᵛ | lam-red? (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
   ... | _ | lam-red {M} f =
     cred-back (APP ▸ done)
-              (subst (λ X → CRed (VRed (shapeᶜ C)) S (X [ psubᵛ σ ∥ W ∥ᵛ ]₀))
+              (subst (λ X → CRed (VRed (shapeᶜ C)) 𝕊 (X [ psubᵛ σ ∥ W ∥ᵛ ]₀))
                      (ren-idᶜ (ext-id (λ i → refl)) M)
                      (f ≤ₛ-refl _ (fund-v W r)))
 
-  fund-c {S = S} {σ} (match_`in_ {C = C} V M) r
+  fund-c {𝕊 = 𝕊} {σ} (match_`in_ {C = C} V M) r
     with psubᵛ σ ∥ V ∥ᵛ | pair-red? (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
   ... | _ | pair-red {V₁} {V₂} r₁ r₂ =
     cred-back (MATCH ▸ done)
-              (subst (CRed (VRed (shapeᶜ C)) S)
+              (subst (CRed (VRed (shapeᶜ C)) 𝕊)
                      (sym (trans (cong (_[ V₂ ]₀) (sub₁ σ V₁ ∥ M ∥ᶜ)) (sub₀ _ V₂ ∥ M ∥ᶜ)))
                      (fund-c M (env-∙ (env-∙ r r₁) r₂)))
 
   fund-c (absurd V) r = ⊥-elim (fund-v V r)
 
-  fund-c {S = S} {σ} (if V `then M `else N) r
+  fund-c {𝕊 = 𝕊} {σ} (if V `then M `else N) r
     with psubᵛ σ ∥ V ∥ᵛ | fund-v V r
   ... | _ | is-true          = cred-back (IF-TRUE ▸ done) (fund-c M r)
   ... | _ | is-false         = cred-back (IF-FALSE ▸ done) (fund-c N r)
   ... | _ | is-cmp ⋈ W₁ W₂ with decided ⋈ W₁ W₂
   ...   | inj₁ eq =
-    cred-back (CMP ▸ subst (λ X → ⟨ S ∣ if X `then psubᶜ σ ∥ M ∥ᶜ `else psubᶜ σ ∥ N ∥ᶜ ⟩↝*⟨ S ∣ psubᶜ σ ∥ M ∥ᶜ ⟩)
+    cred-back (CMP ▸ subst (λ X → ⟨ 𝕊 ∣ if X `then psubᶜ σ ∥ M ∥ᶜ `else psubᶜ σ ∥ N ∥ᶜ ⟩⟶*⟨ 𝕊 ∣ psubᶜ σ ∥ M ∥ᶜ ⟩)
                            (sym eq) (IF-TRUE ▸ done))
               (fund-c M r)
   ...   | inj₂ eq =
-    cred-back (CMP ▸ subst (λ X → ⟨ S ∣ if X `then psubᶜ σ ∥ M ∥ᶜ `else psubᶜ σ ∥ N ∥ᶜ ⟩↝*⟨ S ∣ psubᶜ σ ∥ N ∥ᶜ ⟩)
+    cred-back (CMP ▸ subst (λ X → ⟨ 𝕊 ∣ if X `then psubᶜ σ ∥ M ∥ᶜ `else psubᶜ σ ∥ N ∥ᶜ ⟩⟶*⟨ 𝕊 ∣ psubᶜ σ ∥ N ∥ᶜ ⟩)
                            (sym eq) (IF-FALSE ▸ done))
               (fund-c N r)
 
-  fund-c {S = S} {σ} (caseℕ_`zero_`succ_ {C = C} V M N) r
+  fund-c {𝕊 = 𝕊} {σ} (caseℕ_`zero_`succ_ {C = C} V M N) r
     with psubᵛ σ ∥ V ∥ᵛ | nat-red? (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
   ... | _ | zero-red         = cred-back (CASEℕ-ZERO ▸ done) (fund-c M r)
   ... | _ | succ-red {W} w   =
     cred-back (CASEℕ-SUCC ▸ done)
-              (subst (CRed (VRed (shapeᶜ C)) S) (sym (sub₀ σ W ∥ N ∥ᶜ)) (fund-c N (env-∙ r w)))
+              (subst (CRed (VRed (shapeᶜ C)) 𝕊) (sym (sub₀ σ W ∥ N ∥ᶜ)) (fund-c N (env-∙ r w)))
 
-  fund-c {S = S} {σ} (case+_`inl_`inr_ {C = C} V M N) r
+  fund-c {𝕊 = 𝕊} {σ} (case+_`inl_`inr_ {C = C} V M N) r
     with psubᵛ σ ∥ V ∥ᵛ | sum-red? (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
   ... | _ | inl-red {W} w =
     cred-back (CASE-INL ▸ done)
-              (subst (CRed (VRed (shapeᶜ C)) S) (sym (sub₀ σ W ∥ M ∥ᶜ)) (fund-c M (env-∙ r w)))
+              (subst (CRed (VRed (shapeᶜ C)) 𝕊) (sym (sub₀ σ W ∥ M ∥ᶜ)) (fund-c M (env-∙ r w)))
   ... | _ | inr-red {W} w =
     cred-back (CASE-INR ▸ done)
-              (subst (CRed (VRed (shapeᶜ C)) S) (sym (sub₀ σ W ∥ N ∥ᶜ)) (fund-c N (env-∙ r w)))
+              (subst (CRed (VRed (shapeᶜ C)) 𝕊) (sym (sub₀ σ W ∥ N ∥ᶜ)) (fund-c N (env-∙ r w)))
 
-  fund-c {S = S} {σ} (caseL_`nil_`cons_ {C = C} V M N) r
+  fund-c {𝕊 = 𝕊} {σ} (caseL_`nil_`cons_ {C = C} V M N) r
     with psubᵛ σ ∥ V ∥ᵛ | list-red? (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
   ... | _ | nil-red = cred-back (CASEL-NIL ▸ done) (fund-c M r)
   ... | _ | cons-red {W₁} {W₂} w₁ w₂ =
     cred-back (CASEL-CONS ▸ done)
-              (subst (CRed (VRed (shapeᶜ C)) S)
+              (subst (CRed (VRed (shapeᶜ C)) 𝕊)
                      (sym (trans (cong (_[ W₂ ]₀) (sub₁ σ W₁ ∥ N ∥ᶜ)) (sub₀ _ W₂ ∥ N ∥ᶜ)))
                      (fund-c N (env-∙ (env-∙ r w₁) w₂)))
 
-  fund-c {S = S} {σ} (recℕ {B = B} V M N p) r = rec (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
+  fund-c {𝕊 = 𝕊} {σ} (recℕ {B = B} V M N p) r = rec (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
     where
       M' = psubᶜ σ ∥ M ∥ᶜ
       N' = psubᶜ (exts (exts σ)) ∥ N ∥ᶜ
 
-      rec : ∀ W → VRed natˢ S W → CRed (VRed (shapeᵛ B)) S (recℕ W M' N')
+      rec : ∀ W → VRed natˢ 𝕊 W → CRed (VRed (shapeᵛ B)) 𝕊 (recℕ W M' N')
       rec W w with nat-red? W w
       ... | zero-red        = cred-back (RECℕ-ZERO ▸ done) (fund-c M r)
       ... | succ-red {W'} w' =
         cred-back (RECℕ-SUCC ▸ done)
           (cred-seq {A = shapeᵛ B} (rec W' w')
-                    (λ {_} {S'} e X x →
-                       subst (CRed (VRed (shapeᵛ B)) S')
+                    (λ {_} {𝕊'} e X x →
+                       subst (CRed (VRed (shapeᵛ B)) 𝕊')
                              (sym (trans (cong (λ Y → renᶜ (ext (wkₛ e)) Y [ X ]₀)
                                                (sub₁ σ W' ∥ N ∥ᶜ))
                                          (bind (wkₛ e) (σ ∙ W') X ∥ N ∥ᶜ)))
                              (fund-c N (env-∙ (env-mono (⟨⟩ᵉ (env-∙ (⟨⟩ᵉ r) w')) e) x))))
 
-  fund-c {S = S} {σ} (recL {A = A} {B = B} V M N p) r = rec (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
+  fund-c {𝕊 = 𝕊} {σ} (recL {A = A} {B = B} V M N p) r = rec (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
     where
       M' = psubᶜ σ ∥ M ∥ᶜ
       N' = psubᶜ (exts (exts (exts σ))) ∥ N ∥ᶜ
 
-      rec : ∀ W → VRed (listˢ (shapeᵛ A)) S W → CRed (VRed (shapeᵛ B)) S (recL W M' N')
+      rec : ∀ W → VRed (listˢ (shapeᵛ A)) 𝕊 W → CRed (VRed (shapeᵛ B)) 𝕊 (recL W M' N')
       rec W w with list-red? W w
       ... | nil-red = cred-back (RECL-NIL ▸ done) (fund-c M r)
       ... | cons-red {W₁} {W₂} w₁ w₂ =
         cred-back (RECL-CONS ▸ done)
           (cred-seq {A = shapeᵛ B} (rec W₂ w₂)
-                    (λ {_} {S'} e X x →
-                       subst (CRed (VRed (shapeᵛ B)) S')
+                    (λ {_} {𝕊'} e X x →
+                       subst (CRed (VRed (shapeᵛ B)) 𝕊')
                              (sym (trans (cong (λ Y → renᶜ (ext (wkₛ e)) Y [ X ]₀)
                                                (trans (cong (_[ W₂ ]₁) (sub₂ σ W₁ ∥ N ∥ᶜ))
                                                       (sub₁ (σ ∙ W₁) W₂ ∥ N ∥ᶜ)))
                                          (bind (wkₛ e) (σ ∙ W₁ ∙ W₂) X ∥ N ∥ᶜ)))
                              (fund-c N (env-∙ (env-mono (⟨⟩ᵉ (env-∙ (env-∙ (⟨⟩ᵉ r) w₁) w₂)) e) x))))
 
-  fund-c {S = S} {σ} (perform {A = A} op V M) r =
+  fund-c {𝕊 = 𝕊} {σ} (perform {A = A} op V M) r =
     cred-op done
             (VRed-ground (param op) (psubᵛ σ ∥ V ∥ᵛ)
-               (subst (λ s → VRed s S (psubᵛ σ ∥ V ∥ᵛ)) (shape-⌜⌝ (param op)) (fund-v V r)))
-            (λ {_} {S'} e W w →
-               subst (CRed (VRed (shapeᵛ A)) S') (sym (bind (wkₛ e) σ W ∥ M ∥ᶜ))
+               (subst (λ s → VRed s 𝕊 (psubᵛ σ ∥ V ∥ᵛ)) (shape-⌜⌝ (param op)) (fund-v V r)))
+            (λ {_} {𝕊'} e W w →
+               subst (CRed (VRed (shapeᵛ A)) 𝕊') (sym (bind (wkₛ e) σ W ∥ M ∥ᶜ))
                      (fund-c M (env-∙ (⟨⟩ᵉ (env-mono r e))
-                                      (subst (λ s → VRed s S' W) (sym (shape-⌜⌝ (arity op)))
+                                      (subst (λ s → VRed s 𝕊' W) (sym (shape-⌜⌝ (arity op)))
                                              (ground-VRed (arity op) W w)))))
 
-  fund-c {Γ = Γ} {S = S} {σ} (delay τ M) r =
+  fund-c {Γ = Γ} {𝕊 = 𝕊} {σ} (delay τ M) r =
     cred-back (DELAY ▸ done) (fund-c M r')
     where
-      r' : Env (Γ ⟨ rconst (of-durʳ τ) ⟩) (S ⟨ τ ⟩ₛ) σ
-      at r' i = subst (VRed (shapeᵛ (lookup-ty Γ i)) (S ⟨ τ ⟩ₛ)) (ren-idᵛ (λ j → refl) (σ i))
+      r' : Env (Γ ⟨ rconst (of-durʳ τ) ⟩) (𝕊 ⟨ τ ⟩ₛ) σ
+      at r' i = subst (VRed (shapeᵛ (lookup-ty Γ i)) (𝕊 ⟨ τ ⟩ₛ)) (ren-idᵛ (λ j → refl) (σ i))
                       (VRed-mono (shapeᵛ (lookup-ty Γ i)) (≤ₛ-lock ≤ₛ-refl) (σ i) (at r i))
       nodefs r' = nodefs r
 
-  fund-c {S = S} {σ} (handle_`with_ {B = B} M V) r
+  fund-c {𝕊 = 𝕊} {σ} (handle_`with_ {B = B} M V) r
     with psubᵛ σ ∥ V ∥ᵛ | handler-red? (psubᵛ σ ∥ V ∥ᵛ) (fund-v V r)
   ... | _ | handler-red {N} {H} f =
-    subst (λ X → CRed (VRed (shapeᵛ B)) S (handle psubᶜ σ ∥ M ∥ᶜ `with X))
+    subst (λ X → CRed (VRed (shapeᵛ B)) 𝕊 (handle psubᶜ σ ∥ M ∥ᶜ `with X))
           (ren-idᵛ (λ i → refl) (handler N H))
           (f ≤ₛ-refl _ (fund-c M r))
 
-  fund-c {Γ = Γ} {S = S} {σ} (unbox {C = C} {z = x} R p N) r
+  fund-c {Γ = Γ} {𝕊 = 𝕊} {σ} (unbox {C = C} {z = x} R p N) r
     rewrite ∥res∥ R
     with σ (var-pos x)
        | box-red? (σ (var-pos x))
-                  (subst (λ T → VRed (shapeᵛ T) S (σ (var-pos x))) (var-pos-ty x) (at r (var-pos x)))
+                  (subst (λ T → VRed (shapeᵛ T) 𝕊 (σ (var-pos x))) (var-pos-ty x) (at r (var-pos x)))
   ... | _ | box-red {j} w =
     cred-back (UNBOX ▸ done)
-              (subst (CRed (VRed (shapeᶜ C)) S) (sym (sub₀ σ (lookupₛ S j) ∥ N ∥ᶜ))
-                     (fund-c N (env-∙ r (subst (λ s → VRed s S (lookupₛ S j))
+              (subst (CRed (VRed (shapeᶜ C)) 𝕊) (sym (sub₀ σ (lookupₛ 𝕊 j) ∥ N ∥ᶜ))
+                     (fund-c N (env-∙ r (subst (λ s → VRed s 𝕊 (lookupₛ 𝕊 j))
                                                (<:-shapeᵛ (proj₂ (res-collapse R)))
                                                w))))
 
-  fund-c {Γ = Γ} {S = S} {σ} (box {A = A} ρ V N) r = cred-back (BOX ▸ done) (fund-c N r')
+  fund-c {Γ = Γ} {𝕊 = 𝕊} {σ} (box {A = A} ρ V N) r = cred-back (BOX ▸ done) (fund-c N r')
     where
-      r' : Env (Γ ∷ [ ρ ] A) (S ∷ₛ psubᵛ σ ∥ V ∥ᵛ) (exts σ)
+      r' : Env (Γ ∷ [ ρ ] A) (𝕊 ∷ₛ psubᵛ σ ∥ V ∥ᵛ) (exts σ)
       at r' zero    = VRed-mono (shapeᵛ A) res₁ _ (fund-v V (⟨⟩ᵉ r))
       at r' (suc i) = VRed-mono (shapeᵛ (lookup-ty Γ i)) res₁ (σ i) (at r i)
       nodefs r' = nodefs r
 
   fund-c (annᶜ C M) r = fund-c M r
-  fund-c {S = S} (subC M p) r = subst (λ s → CRed (VRed s) S _) (<:-shapeᶜ p) (fund-c M r)
+  fund-c {𝕊 = 𝕊} (subC M p) r = subst (λ s → CRed (VRed s) 𝕊 _) (<:-shapeᶜ p) (fund-c M r)
 
 ------------------------------------------------------------------------
 -- Termination
 
 Halts : ∀ {n} → State n → RunC n → Set
-Halts S M = Σ[ m ∈ ℕ ] Σ[ S' ∈ State m ] Σ[ M' ∈ RunC m ] ⟨ S ∣ M ⟩↝*⟨ S' ∣ M' ⟩ × Final M'
+Halts 𝕊 M = Σ[ m ∈ ℕ ] Σ[ 𝕊' ∈ State m ] Σ[ M' ∈ RunC m ] ⟨ 𝕊 ∣ M ⟩⟶*⟨ 𝕊' ∣ M' ⟩ × Final M'
 
-halts : ∀ {P : ∀ {n} → State n → RunV n → Set} {n} {S : State n} {M} → CRed P S M → Halts S M
+halts : ∀ {P : ∀ {n} → State n → RunV n → Set} {n} {𝕊 : State n} {M} → CRed P 𝕊 M → Halts 𝕊 M
 halts (cred-ret ms _)  = _ , _ , _ , ms , is-return _
 halts (cred-op ms _ _) = _ , _ , _ , ms , is-perform _ _ _
 

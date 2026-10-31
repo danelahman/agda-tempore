@@ -407,10 +407,10 @@ module _ {Θ : Scope} (M : Vars Θ) where
 
   -- an instance of the kept variables, extended by closed constants
 
-  extⁱ : ∀ {Ψ} → Subst kept Ψ → Subst Θ Ψ
+  extⁱ : ∀ {Ω} → Subst kept Ω → Subst Θ Ω
   extⁱ δ = sub (ext (vᵗ M) Unit (sTy δ)) (ext (vʳ M) ûᵣ (sR δ)) (ext (vᵉ M) ûₑ (sE δ))
 
-  extⁱ-ι : ∀ {Ψ} → (δ : Subst kept Ψ) → ⌜ thin ⌝ʳ ⨟ˢ extⁱ δ ≐ˢ δ
+  extⁱ-ι : ∀ {Ω} → (δ : Subst kept Ω) → ⌜ thin ⌝ʳ ⨟ˢ extⁱ δ ≐ˢ δ
   extⁱ-ι δ = mk≐ˢ (ext-emb (vᵗ M) Unit (sTy δ)) (ext-emb (vʳ M) ûᵣ (sR δ))
                   (ext-emb (vᵉ M) ûₑ (sE δ))
 
@@ -521,13 +521,13 @@ fixᵈ f (qord l k o) h =
 
 -- a substitution fixing their variables keeps the conditions' meaning
 
-fix-⊩ᴼ : ∀ {Θ Ψ} {Q : Hyps Ψ} {F : Vars Θ} {ρ : Subst Θ Θ} {δ : Subst Θ Ψ}
+fix-⊩ᴼ : ∀ {Θ Ω} {Q : Hyps Ω} {F : Vars Θ} {ρ : Subst Θ Θ} {δ : Subst Θ Ω}
        → Fixes F ρ → {D : List (QOrd Θ)} → fvᴰ D ⊆ᵛ F
        → ∀ {E} → E ∈ D → Q ⊩ᴼ E [ δ ] → Q ⊩ᴼ E [ ρ ⨟ˢ δ ]
 fix-⊩ᴼ {Q = Q} {δ = δ} f h {E} m p =
   ⊩ᴼ-subst E (subst (λ E' → Q ⊩ᴼ E' [ δ ]) (sym (fixᵈ f E (⋃ᵛ-∈ fvᵈ h m))) p)
 
-fix-⊩ᴼ⁻ : ∀ {Θ Ψ} {Q : Hyps Ψ} {F : Vars Θ} {ρ : Subst Θ Θ} {δ : Subst Θ Ψ}
+fix-⊩ᴼ⁻ : ∀ {Θ Ω} {Q : Hyps Ω} {F : Vars Θ} {ρ : Subst Θ Θ} {δ : Subst Θ Ω}
         → Fixes F ρ → {D : List (QOrd Θ)} → fvᴰ D ⊆ᵛ F
         → ∀ {E} → E ∈ D → Q ⊩ᴼ E [ ρ ⨟ˢ δ ] → Q ⊩ᴼ E [ δ ]
 fix-⊩ᴼ⁻ {Q = Q} {δ = δ} f h {E} m p =
@@ -549,7 +549,7 @@ record Strengthened {Θ₀ Θ : Scope} (τ : Subst Θ₀ Θ) (X : OCType Θ) (Q 
     τ-ι   : τ⁻ ⨟ˢ ⌜ ι ⌝ʳ ≐ˢ τ
     X-ι   : X⁻ [ ⌜ ι ⌝ʳ ]ᶜ ≡ X
     Q-ι   : Q⁻ [ ι ]ᴴ ≡ Q
-    ext-ι : ∀ {Ψ} → (δ : Subst Θ⁻ Ψ) → Σ[ δ' ∈ Subst Θ Ψ ] (⌜ ι ⌝ʳ ⨟ˢ δ' ≐ˢ δ)
+    ext-ι : ∀ {Ω} → (δ : Subst Θ⁻ Ω) → Σ[ δ' ∈ Subst Θ Ω ] (⌜ ι ⌝ʳ ⨟ˢ δ' ≐ˢ δ)
     π     : Subst Θ Θ⁻
     π-fix : Fixes V (π ⨟ˢ ⌜ ι ⌝ʳ)
 

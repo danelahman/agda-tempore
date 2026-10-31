@@ -2,7 +2,7 @@
 -- The model-side interface: head faithfulness.                       --
 --                                                                    --
 -- The model must not identify distinct heads: no-confusion and       --
--- injectivity, at the composite shape `↝*-sound` produces: a head    --
+-- injectivity, at the composite shape `⟶*-sound` produces: a head    --
 -- (`ηᵀ`-leaf or `opᵀ`-node) bound after a run's time transition.     --
 -- Transitions are restricted to the class `stepsᵀ` builds, which     --
 -- carries the run's tick total.                                      --
@@ -109,7 +109,7 @@ data Delaysᵐ : ∀ {X Y : Obj} {δ : E} → (X →ᵐ Tᵒ Y δ) → 𝔻 → 
 
 step-delays : ∀ {ε ε' n} {St St' : 𝕊 []} {A A₀ : VType}
             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A₀ ‼ ε'}
-            → (r : ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩)
+            → (r : ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩)
             → {X : Obj} → {δ : E} → {t : ⟦ hist St' ⟧ᶜᵗˣ →ᵐ Tᵒ X δ}
             → Delaysᵐ t n
             ------------------------------------------
@@ -145,7 +145,7 @@ step-delays RECL               d = η-stepᴰ d
 step-delays SUB                d = η-stepᴰ d
 
 stepsᵀ-delays : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
-              → (rs : cf ↝* cf')
+              → (rs : cf ⟶* cf')
               ------------------------------
               → Delaysᵐ (stepsᵀ rs) (ticks rs)
 
@@ -165,7 +165,7 @@ nodeᵐ : ∀ {X Y : Obj} {ε : E} → (op : Op)
 nodeᵐ op w k = opᵀ op ∘ᵐ ⟨ w , k ⟩ᵐ
 
 -- A head, run after a transition and coerced back to the source's grade: the
--- right-hand side of `↝*-sound`.
+-- right-hand side of `⟶*-sound`.
 
 delayedᵐ : ∀ {X Y : Obj} {ε ε' δ : E}
          → (h : Y →ᵐ Tᵒ X ε') → (d : 𝟙ᵐ →ᵐ Tᵒ Y δ) → δ ·ₑ ε' ≾ₑ ε
@@ -293,49 +293,49 @@ record BaseFaithful : Set where
 
 -- Handler uniformity is carried by the term's own certificate.
 
-uniform↝ : ∀ {A A₀ ε ε'} {St St' : 𝕊 []}
+uniform⟶ : ∀ {A A₀ ε ε'} {St St' : 𝕊 []}
          → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A₀ ‼ ε'}
-         → (r : ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩) → (pM : Paramᶜ M)
+         → (r : ⟨ St , M ⟩ ⟶ ⟨ St' , M' ⟩) → (pM : Paramᶜ M)
          ---------------------------------------------------
-         → Uniform↝ r pM
+         → Uniform⟶ r pM
 
-uniform↝ APP                 _         = tt
-uniform↝ MATCH               _         = tt
-uniform↝ CMP                 _         = tt
-uniform↝ IF-TRUE             _         = tt
-uniform↝ IF-FALSE            _         = tt
-uniform↝ CASE+               _         = tt
-uniform↝ CASEℕ-ZERO          _         = tt
-uniform↝ CASEℕ-SUCC          _         = tt
-uniform↝ RECℕ-ZERO           _         = tt
-uniform↝ RECℕ-SUCC           _         = tt
-uniform↝ (SEQ-STEP r _)      (pM , _)  = uniform↝ r pM
-uniform↝ SEQ-RET             _         = tt
-uniform↝ SEQ-OP              _         = tt
-uniform↝ DELAY               _         = tt
-uniform↝ HANDLE-RET          _         = tt
-uniform↝ (HANDLE-STEP r _)   (pM , _)  = uniform↝ r pM
-uniform↝ HANDLE-OP           _         = tt
-uniform↝ BOX                 _         = tt
-uniform↝ UNBOX               _         = tt
-uniform↝ SUB-APP             _         = tt
-uniform↝ SUB-HANDLE          _         = tt
-uniform↝ SUB-HANDLE-TRANS    _         = tt
-uniform↝ SUB-IF              _         = tt
-uniform↝ SUB-CASEℕ           _         = tt
-uniform↝ SUB-RECℕ            _         = tt
-uniform↝ CASEL               _         = tt
-uniform↝ RECL                _         = tt
-uniform↝ SUB                 _         = tt
+uniform⟶ APP                 _         = tt
+uniform⟶ MATCH               _         = tt
+uniform⟶ CMP                 _         = tt
+uniform⟶ IF-TRUE             _         = tt
+uniform⟶ IF-FALSE            _         = tt
+uniform⟶ CASE+               _         = tt
+uniform⟶ CASEℕ-ZERO          _         = tt
+uniform⟶ CASEℕ-SUCC          _         = tt
+uniform⟶ RECℕ-ZERO           _         = tt
+uniform⟶ RECℕ-SUCC           _         = tt
+uniform⟶ (SEQ-STEP r _)      (pM , _)  = uniform⟶ r pM
+uniform⟶ SEQ-RET             _         = tt
+uniform⟶ SEQ-OP              _         = tt
+uniform⟶ DELAY               _         = tt
+uniform⟶ HANDLE-RET          _         = tt
+uniform⟶ (HANDLE-STEP r _)   (pM , _)  = uniform⟶ r pM
+uniform⟶ HANDLE-OP           _         = tt
+uniform⟶ BOX                 _         = tt
+uniform⟶ UNBOX               _         = tt
+uniform⟶ SUB-APP             _         = tt
+uniform⟶ SUB-HANDLE          _         = tt
+uniform⟶ SUB-HANDLE-TRANS    _         = tt
+uniform⟶ SUB-IF              _         = tt
+uniform⟶ SUB-CASEℕ           _         = tt
+uniform⟶ SUB-RECℕ            _         = tt
+uniform⟶ CASEL               _         = tt
+uniform⟶ RECL                _         = tt
+uniform⟶ SUB                 _         = tt
 
-uniform↝* : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
-          → (rs : cf ↝* cf') → (p : Paramᶜᶠ cf)
+uniform⟶* : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+          → (rs : cf ⟶* cf') → (p : Paramᶜᶠ cf)
           ------------------------------------
-          → Uniform↝* rs p
+          → Uniform⟶* rs p
 
-uniform↝* ε*       p          = tt
-uniform↝* (r ◅ rs) (pS , pM)  =
-  uniform↝ r pM , uniform↝* rs (stepᴾᶜᶠ r (pS , pM))
+uniform⟶* ε*       p          = tt
+uniform⟶* (r ◅ rs) (pS , pM)  =
+  uniform⟶ r pM , uniform⟶* rs (stepᴾᶜᶠ r (pS , pM))
 
 -- Unfold `⟦_⟧ᶜᵗ` at the two whnf formers and push the state's environment
 -- inside; it survives only inside the head's components.

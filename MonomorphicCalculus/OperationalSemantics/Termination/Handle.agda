@@ -179,7 +179,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
 
 -- The scrutinee gets stuck on an operation: run to the `perform`, then
 -- `HANDLE-OP` and `BOX`, landing at `⟨ St₁ ∷ₛ V₀ , Fired … ⟩`. No `ε-subst` is
--- needed, `_↝_` relating configurations at different effects.
+-- needed, `_⟶_` relating configurations at different effects.
 
 handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
             (cred-op {A₀ = A₀} {ε₁ = ε₃} {St₁ = St₁} {op = op} {W = W}

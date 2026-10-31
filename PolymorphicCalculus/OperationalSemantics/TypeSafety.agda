@@ -82,19 +82,19 @@ private
 -- The statements
 
 Steps : ∀ {n} → State n → RunC n → Set
-Steps S M = Σ[ m ∈ ℕ ] Σ[ S' ∈ State m ] Σ[ M' ∈ RunC m ] ⟨ S ∣ M ⟩↝⟨ S' ∣ M' ⟩
+Steps 𝕊 M = Σ[ m ∈ ℕ ] Σ[ 𝕊' ∈ State m ] Σ[ M' ∈ RunC m ] ⟨ 𝕊 ∣ M ⟩⟶⟨ 𝕊' ∣ M' ⟩
 
 -- What a step preserves
 
-record Preserved {n m} {S : State n} {S' : State m} (e : S ≤ₛ S') (Σ : StateTyping S)
+record Preserved {n m} {𝕊 : State n} {𝕊' : State m} (e : 𝕊 ≤ₛ 𝕊') (Ψ : StateTyping 𝕊)
                  (M' : RunC m) (X : OVType ∅ˢ) (ε : EExp ∅ˢ) : Set where
   field
-    Σ'      : StateTyping S'
-    extends : Σ ⊆[ e ] Σ'
-    types   : Types Σ'
+    Ψ'      : StateTyping 𝕊'
+    extends : Ψ ⊆[ e ] Ψ'
+    types   : Types Ψ'
     X'      : OVType ∅ˢ
     ε'      : EExp ∅ˢ
-    typed   : ctx Σ' ⊢ᶜ M' ⦂ X' ‼ ε'
+    typed   : ctx Ψ' ⊢ᶜ M' ⦂ X' ‼ ε'
     subtype : ∅ᴴ ∣ X' <:̂ᵛ X
     grade   : ∅ᴴ ⊩ δₛ e ·̂ᵣ ∣ ε' ∣̂ᵉ ≾̂ᵣ ∣ ε ∣̂ᵉ
 
@@ -105,11 +105,11 @@ open Preserved
 
 private
 
-  stay : ∀ {n} {S : State n} {Σ : StateTyping S} {M' C₁ X ε}
-       → Types Σ → (D : ∅ᴴ ∣ ctx Σ ⊢C⦂ C₁) → ∥ D ∥ᶜ ≡ M' → ∅ᴴ ∣ C₁ <:̂ᶜ X ‼ ε
-       → Preserved ≤ₛ-refl Σ M' X ε
-  stay {Σ = Σ} T D eq (p ‼ₛ q) = record
-    { Σ' = Σ ; extends = ⊆-refl ; types = T ; typed = D , eq ; subtype = p
+  stay : ∀ {n} {𝕊 : State n} {Ψ : StateTyping 𝕊} {M' C₁ X ε}
+       → Types Ψ → (D : ∅ᴴ ∣ ctx Ψ ⊢C⦂ C₁) → ∥ D ∥ᶜ ≡ M' → ∅ᴴ ∣ C₁ <:̂ᶜ X ‼ ε
+       → Preserved ≤ₛ-refl Ψ M' X ε
+  stay {Ψ = Ψ} T D eq (p ‼ₛ q) = record
+    { Ψ' = Ψ ; extends = ⊆-refl ; types = T ; typed = D , eq ; subtype = p
     ; grade = transᵣ (eqᵣ ≡̂ᵣ-identityˡ) (map-mono q) }
 
   -- a handler in an extended context, at a lower input grade
@@ -134,10 +134,10 @@ private
 ------------------------------------------------------------------------
 -- Preservation
 
-preservation : ∀ {n m} {S : State n} {S' : State m} {e : S ≤ₛ S'} {Σ : StateTyping S}
+preservation : ∀ {n m} {𝕊 : State n} {𝕊' : State m} {e : 𝕊 ≤ₛ 𝕊'} {Ψ : StateTyping 𝕊}
                  {M M' X ε}
-             → Types Σ → ctx Σ ⊢ᶜ M ⦂ X ‼ ε → ⟨ S ∣ M ⟩↝[ e ]⟨ S' ∣ M' ⟩
-             → Preserved e Σ M' X ε
+             → Types Ψ → ctx Ψ ⊢ᶜ M ⦂ X ‼ ε → ⟨ 𝕊 ∣ M ⟩⟶[ e ]⟨ 𝕊' ∣ M' ⟩
+             → Preserved e Ψ M' X ε
 
 -- functions, data and recursion
 
@@ -180,7 +180,7 @@ preservation T (D , eD) CASEℕ-SUCC with invC≡ D eD
 preservation T (D , eD) RECℕ-ZERO with invC≡ D eD
 ... | _ , (B , ε₀ , refl , (DV , eV) , (DM , eM) , (DN , eN) , pε) , q₀ = stay T DM eM q₀
 
-preservation {Σ = Σ} T (D , eD) RECℕ-SUCC with invC≡ D eD
+preservation {Ψ = Ψ} T (D , eD) RECℕ-SUCC with invC≡ D eD
 ... | _ , (B , ε₀ , refl , (DV , eV) , (DM , eM) , (DN , eN) , pε) , q₀ with invV≡ DV eV
 ... | _ , (refl , (D₁ , e₁)) , _ =
   stay T (subC (recℕ D₁ DM DN pε ⨟ N₁) (<:̂ᵛ-refl B ‼ₛ pε))
@@ -191,7 +191,7 @@ preservation {Σ = Σ} T (D , eD) RECℕ-SUCC with invC≡ D eD
                                    (trans (ren-idᶜ (ext-id (ext-id (λ i → refl))) ∥ DN ∥ᶜ) eN)))))
        q₀
   where
-    r : Ren ∅ᴴ ((ctx Σ ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B) ((ctx Σ ∷ Nat) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B)
+    r : Ren ∅ᴴ ((ctx Ψ ⟨ rconst ⊤ᵣ ⟩ ∷ Nat) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B) ((ctx Ψ ∷ Nat) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B)
     r = lockʳ ∣ ε₀ ∣̂ᵉ (lock-remove topᵣ ⇑ʳ) ⇑ʳ
     N₁ = sub-c (there∷ (there⟨⟩ (here (types-defs T)))) D₁ (rename-c r DN)
 
@@ -223,7 +223,7 @@ preservation T (D , eD) CASEL-CONS with invC≡ D eD
 preservation T (D , eD) RECL-NIL with invC≡ D eD
 ... | _ , (A , B , ε₀ , refl , (DV , eV) , (DM , eM) , (DN , eN) , pε) , q₀ = stay T DM eM q₀
 
-preservation {Σ = Σ} T (D , eD) RECL-CONS with invC≡ D eD
+preservation {Ψ = Ψ} T (D , eD) RECL-CONS with invC≡ D eD
 ... | _ , (A , B , ε₀ , refl , (DV , eV) , (DM , eM) , (DN , eN) , pε) , q₀ with invV≡ DV eV
 ... | _ , (_ , refl , (D₁ , e₁) , (D₂ , e₂)) , (|List|ₛ p₁) =
   stay T (subC (recL (subV D₂ (|List|ₛ p₁)) DM DN pε ⨟ N₂) (<:̂ᵛ-refl B ‼ₛ pε))
@@ -238,8 +238,8 @@ preservation {Σ = Σ} T (D , eD) RECL-CONS with invC≡ D eD
                                                         eN)))))))
        q₀
   where
-    r : Ren ∅ᴴ ((ctx Σ ⟨ rconst ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B)
-               ((ctx Σ ∷ A ∷ |List| A) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B)
+    r : Ren ∅ᴴ ((ctx Ψ ⟨ rconst ⊤ᵣ ⟩ ∷ A ∷ |List| A) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B)
+               ((ctx Ψ ∷ A ∷ |List| A) ⟨ ∣ ε₀ ∣̂ᵉ ⟩ ∷ B)
     r = lockʳ ∣ ε₀ ∣̂ᵉ ((lock-remove topᵣ ⇑ʳ) ⇑ʳ) ⇑ʳ
     N₀ = rename-c r DN
     N₁ = sub-c (there∷ (there⟨⟩ (there∷ (here (types-defs T))))) (subV D₁ p₁) N₀
@@ -257,7 +257,7 @@ preservation T (D , eD) SEQ-RET with invC≡ D eD
        (<:̂ᶜ-trans (<:̂ᵛ-refl B ‼ₛ ≾-·ˡ q₃) q₀)
   where r = lock-remove (û≾∣∣ q₃) ⇑ʳ
 
-preservation {Σ = Σ} T (D , eD) (SEQ-OP {op}) with invC≡ D eD
+preservation {Ψ = Ψ} T (D , eD) (SEQ-OP {op}) with invC≡ D eD
 ... | _ , (A , B , ε₁ , ε₂ , refl , (DP , eP) , (DN , eN)) , q₀ with invC≡ DP eP
 ... | _ , (A₃ , ε₃ , refl , (DV , eV) , (DM , eM)) , (p₃ ‼ₛ q₃) =
   stay T (perform op DV (subC DM (p₃ ‼ₛ ⊩≾̂ₑ-refl) ⨟ rename-c r DN))
@@ -266,15 +266,15 @@ preservation {Σ = Σ} T (D , eD) (SEQ-OP {op}) with invC≡ D eD
   where
     le : ∅ᴴ ⊩ rconst (mapᵉ (op-grade op)) ·̂ᵣ ∣ ε₃ ∣̂ᵉ ≾̂ᵣ ∣ ε₁ ∣̂ᵉ
     le = transᵣ (monoᵣ ∣const∣ ⊩≾̂ᵣ-refl) (transᵣ ∣·∣ (map-mono q₃))
-    r : Ren ∅ᴴ (ctx Σ ⟨ ∣ ε₁ ∣̂ᵉ ⟩ ∷ A)
-               ((ctx Σ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ) ⟨ ∣ ε₃ ∣̂ᵉ ⟩ ∷ A)
+    r : Ren ∅ᴴ (ctx Ψ ⟨ ∣ ε₁ ∣̂ᵉ ⟩ ∷ A)
+               ((ctx Ψ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ) ⟨ ∣ ε₃ ∣̂ᵉ ⟩ ∷ A)
     r = ext-lock (wk-ext lock-ext) le ⇑ʳ
 
 preservation T (D , eD) (SEQ-STEP {e = e} s) with invC≡ D eD
 ... | _ , (A , B , ε₁ , ε₂ , refl , (DM , eM) , (DN , eN)) , (p₀ ‼ₛ q₀)
     with preservation T (DM , eM) s
 ... | P = record
-  { Σ'      = Σ' P
+  { Ψ'      = Ψ' P
   ; extends = extends P
   ; types   = types P
   ; X'      = B
@@ -289,9 +289,9 @@ preservation T (D , eD) (SEQ-STEP {e = e} s) with invC≡ D eD
 
 -- passage of time
 
-preservation {Σ = Σ} {ε = ε} T (D , eD) (DELAY {τ}) with invC≡ D eD
+preservation {Ψ = Ψ} {ε = ε} T (D , eD) (DELAY {τ}) with invC≡ D eD
 ... | _ , (A , ε₁ , refl , (DM , eM)) , (p₀ ‼ₛ q₀) = record
-  { Σ'      = Σ ⟨⟩ˢ
+  { Ψ'      = Ψ ⟨⟩ˢ
   ; extends = ⊆-lock ⊆-refl
   ; types   = T ⟨⟩ˢ
   ; X'      = A
@@ -319,7 +319,7 @@ preservation T (D , eD) HANDLE-RET with invC≡ D eD
        (<:̂ᶜ-trans (pB ‼ₛ transₑ pε' (≾-·ˡ q₃)) q₀)
   where r = lock-remove (û≾∣∣ (transₑ q₃ pε)) ⇑ʳ
 
-preservation {Σ = Σ} T (D , eD) (HANDLE-OP {op} {V} {M} {N} {H}) with invC≡ D eD
+preservation {Ψ = Ψ} T (D , eD) (HANDLE-OP {op} {V} {M} {N} {H}) with invC≡ D eD
 ... | _ , (A , B , ε₁ , ε₂ , refl , (DP , eP) , (DH , eH)) , q₀
     with invC≡ DP eP | invV≡ DH eH
 ... | _ , (A₃ , ε₃ , refl , (DV , eV) , (DM , eM)) , (p₃ ‼ₛ q₃)
@@ -333,16 +333,16 @@ preservation {Σ = Σ} T (D , eD) (HANDLE-OP {op} {V} {M} {N} {H}) with invC≡ 
                   eMop)
        (<:̂ᶜ-trans (pB ‼ₛ transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-assoc)) (monoₑ q₃ pε')) q₀)
   where
-    e₀ : Ext ∅ᴴ (ctx Σ) (ctx Σ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ)
+    e₀ : Ext ∅ᴴ (ctx Ψ) (ctx Ψ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ)
              (rconst (mapᵉ (op-grade op)))
     e₀ = wk-ext lock-ext
     le : ∅ᴴ ⊩ rconst (mapᵉ (op-grade op)) ·̂ᵣ ∣ ε₃ ∣̂ᵉ ≾̂ᵣ ∣ ε₄ ∣̂ᵉ
     le = transᵣ (monoᵣ ∣const∣ ⊩≾̂ᵣ-refl) (transᵣ ∣·∣ (map-mono (transₑ q₃ pε)))
     H' = retype {ε₁ = ε₃} e₀ le DN DHs
     Cl = instantiate-clause (ε₃ ·̂ₑ ε₄') (DHs op)
-    r : Ren ∅ᴴ (ctx Σ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+    r : Ren ∅ᴴ (ctx Ψ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                  ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ B₄ ‼ (ε₃ ·̂ₑ ε₄')))
-               (ctx Σ ∷ ⌜ param op ⌝ᵍ
+               (ctx Ψ ∷ ⌜ param op ⌝ᵍ
                  ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ B₄ ‼ (ε₃ ·̂ₑ ε₄')))
     r = (lock-remove topᵣ ⇑ʳ) ⇑ʳ
     Mop = sub-c (there∷ (here (types-defs T))) DV (rename-c r Cl)
@@ -355,13 +355,13 @@ preservation {Σ = Σ} T (D , eD) (HANDLE-OP {op} {V} {M} {N} {H}) with invC≡ 
                                  (trans (cong eraseᶜ (⌊instantiate-clause⌋ (ε₃ ·̂ₑ ε₄') (DHs op)))
                                         (trans (erase-substᶜ ⌊ DHs op ⌋ᶜ _) (eHs op))))))
 
-preservation {Σ = Σ} T (D , eD) (HANDLE-STEP {e = e} s) with invC≡ D eD
+preservation {Ψ = Ψ} T (D , eD) (HANDLE-STEP {e = e} s) with invC≡ D eD
 ... | _ , (A , B , ε₁ , ε₂ , refl , (DM , eM) , (DH , eH)) , (p₀ ‼ₛ q₀)
-    with handler-form (canon-⇛ (ctx-box Σ) DH) | preservation T (DM , eM) s
+    with handler-form (canon-⇛ (ctx-box Ψ) DH) | preservation T (DM , eM) s
 ... | N , H , cH | P with invV≡ DH cH
 ... | _ , (A₄ , B₄ , ε₄ , ε₄' , refl , (DN , eN) , (DHs , eHs)) , ((pA ‼ₛ pε) ⇛ₛ (pB ‼ₛ pε')) =
   record
-  { Σ'      = Σ' P
+  { Ψ'      = Ψ' P
   ; extends = extends P
   ; types   = types P
   ; X'      = B₄
@@ -380,9 +380,9 @@ preservation {Σ = Σ} T (D , eD) (HANDLE-STEP {e = e} s) with invC≡ D eD
 
 -- resources
 
-preservation {Σ = Σ} T (D , eD) BOX with invC≡ D eD
+preservation {Ψ = Ψ} T (D , eD) BOX with invC≡ D eD
 ... | _ , (ρ , A , (DV , eV) , (DN , eN)) , (p₀ ‼ₛ q₀) = record
-  { Σ'      = Σ ∷[ ρ ] A
+  { Ψ'      = Ψ ∷[ ρ ] A
   ; extends = ⊆-res ⊆-refl
   ; types   = T ∷ᵗ (DV , eV)
   ; X'      = _
@@ -407,12 +407,12 @@ preservation T (D , eD) UNBOX with invC≡ D eD
 
 private
 
-  step : ∀ {n m} {S : State n} {S' : State m} {e : S ≤ₛ S'} {M M'}
-       → ⟨ S ∣ M ⟩↝[ e ]⟨ S' ∣ M' ⟩ → Final M ⊎ Steps S M
+  step : ∀ {n m} {𝕊 : State n} {𝕊' : State m} {e : 𝕊 ≤ₛ 𝕊'} {M M'}
+       → ⟨ 𝕊 ∣ M ⟩⟶[ e ]⟨ 𝕊' ∣ M' ⟩ → Final M ⊎ Steps 𝕊 M
   step s = inj₂ (_ , _ , _ , _ , s)
 
-progress : ∀ {n} {S : State n} {Σ : StateTyping S} {M C}
-         → ctx Σ ⊢ᶜ M ⦂ C → Final M ⊎ Steps S M
+progress : ∀ {n} {𝕊 : State n} {Ψ : StateTyping 𝕊} {M C}
+         → ctx Ψ ⊢ᶜ M ⦂ C → Final M ⊎ Steps 𝕊 M
 
 progress {M = return V}       _ = inj₁ (is-return V)
 progress {M = perform op V M} _ = inj₁ (is-perform op V M)
@@ -423,53 +423,53 @@ progress {M = M ⨟ N} (D , eD) with invC≡ D eD
 ... | inj₁ (is-perform op V M')   = step SEQ-OP
 ... | inj₂ (_ , _ , _ , _ , s)    = step (SEQ-STEP s)
 
-progress {Σ = Σ} {M = V · W} (D , eD) with invC≡ D eD
-... | _ , (A , (DV , eV) , _) , _ with subst LamView eV (canon-⇒ (ctx-box Σ) DV)
+progress {Ψ = Ψ} {M = V · W} (D , eD) with invC≡ D eD
+... | _ , (A , (DV , eV) , _) , _ with subst LamView eV (canon-⇒ (ctx-box Ψ) DV)
 ... | is-lam M = step APP
 
-progress {Σ = Σ} {M = match V `in M} (D , eD) with invC≡ D eD
-... | _ , (A , B , (DV , eV) , _) , _ with subst PairView eV (canon-× (ctx-box Σ) DV)
+progress {Ψ = Ψ} {M = match V `in M} (D , eD) with invC≡ D eD
+... | _ , (A , B , (DV , eV) , _) , _ with subst PairView eV (canon-× (ctx-box Ψ) DV)
 ... | is-pair V₁ V₂ = step MATCH
 
-progress {Σ = Σ} {M = absurd V} (D , eD) with invC≡ D eD
-... | _ , (DV , eV) , _ = ⊥-elim (canon-Empty (ctx-box Σ) DV)
+progress {Ψ = Ψ} {M = absurd V} (D , eD) with invC≡ D eD
+... | _ , (DV , eV) , _ = ⊥-elim (canon-Empty (ctx-box Ψ) DV)
 
-progress {Σ = Σ} {M = if V `then M `else N} (D , eD) with invC≡ D eD
-... | _ , ((DV , eV) , _) , _ with subst BoolView eV (canon-Bool (ctx-box Σ) DV)
+progress {Ψ = Ψ} {M = if V `then M `else N} (D , eD) with invC≡ D eD
+... | _ , ((DV , eV) , _) , _ with subst BoolView eV (canon-Bool (ctx-box Ψ) DV)
 ... | is-true       = step IF-TRUE
 ... | is-false      = step IF-FALSE
 ... | is-cmp ⋈ W W' = step CMP
 
-progress {Σ = Σ} {M = caseℕ V `zero M `succ N} (D , eD) with invC≡ D eD
-... | _ , ((DV , eV) , _) , _ with subst NatView eV (canon-Nat (ctx-box Σ) DV)
+progress {Ψ = Ψ} {M = caseℕ V `zero M `succ N} (D , eD) with invC≡ D eD
+... | _ , ((DV , eV) , _) , _ with subst NatView eV (canon-Nat (ctx-box Ψ) DV)
 ... | is-zero   = step CASEℕ-ZERO
 ... | is-succ W = step CASEℕ-SUCC
 
-progress {Σ = Σ} {M = case+ V `inl M `inr N} (D , eD) with invC≡ D eD
-... | _ , (A , B , (DV , eV) , _) , _ with subst SumView eV (canon-+ (ctx-box Σ) DV)
+progress {Ψ = Ψ} {M = case+ V `inl M `inr N} (D , eD) with invC≡ D eD
+... | _ , (A , B , (DV , eV) , _) , _ with subst SumView eV (canon-+ (ctx-box Ψ) DV)
 ... | is-inl W = step CASE-INL
 ... | is-inr W = step CASE-INR
 
-progress {Σ = Σ} {M = caseL V `nil M `cons N} (D , eD) with invC≡ D eD
-... | _ , (A , (DV , eV) , _) , _ with subst ListView eV (canon-List (ctx-box Σ) DV)
+progress {Ψ = Ψ} {M = caseL V `nil M `cons N} (D , eD) with invC≡ D eD
+... | _ , (A , (DV , eV) , _) , _ with subst ListView eV (canon-List (ctx-box Ψ) DV)
 ... | is-nil       = step CASEL-NIL
 ... | is-cons W W' = step CASEL-CONS
 
-progress {Σ = Σ} {M = recℕ V M N} (D , eD) with invC≡ D eD
-... | _ , (B , ε , refl , (DV , eV) , _) , _ with subst NatView eV (canon-Nat (ctx-box Σ) DV)
+progress {Ψ = Ψ} {M = recℕ V M N} (D , eD) with invC≡ D eD
+... | _ , (B , ε , refl , (DV , eV) , _) , _ with subst NatView eV (canon-Nat (ctx-box Ψ) DV)
 ... | is-zero   = step RECℕ-ZERO
 ... | is-succ W = step RECℕ-SUCC
 
-progress {Σ = Σ} {M = recL V M N} (D , eD) with invC≡ D eD
-... | _ , (A , B , ε , refl , (DV , eV) , _) , _ with subst ListView eV (canon-List (ctx-box Σ) DV)
+progress {Ψ = Ψ} {M = recL V M N} (D , eD) with invC≡ D eD
+... | _ , (A , B , ε , refl , (DV , eV) , _) , _ with subst ListView eV (canon-List (ctx-box Ψ) DV)
 ... | is-nil       = step RECL-NIL
 ... | is-cons W W' = step RECL-CONS
 
 progress {M = delay τ M} _ = step DELAY
 
-progress {Σ = Σ} {M = handle M `with V} (D , eD) with invC≡ D eD
+progress {Ψ = Ψ} {M = handle M `with V} (D , eD) with invC≡ D eD
 ... | _ , (A , B , ε₁ , ε₂ , refl , (DM , eM) , (DH , eH)) , _
-    with progress (DM , eM) | subst HandlerView eH (canon-⇛ (ctx-box Σ) DH)
+    with progress (DM , eM) | subst HandlerView eH (canon-⇛ (ctx-box Ψ) DH)
 ... | inj₁ (is-return W)        | is-handler N H = step HANDLE-RET
 ... | inj₁ (is-perform op W M') | is-handler N H = step HANDLE-OP
 ... | inj₂ (_ , _ , _ , _ , s)  | _              = step (HANDLE-STEP s)
@@ -483,11 +483,11 @@ progress {M = box V N} _ = step BOX
 ------------------------------------------------------------------------
 -- Type safety
 
-type-safety : ∀ {n} {S : State n} {Σ : StateTyping S} {M X ε}
-            → Types Σ → ctx Σ ⊢ᶜ M ⦂ X ‼ ε
+type-safety : ∀ {n} {𝕊 : State n} {Ψ : StateTyping 𝕊} {M X ε}
+            → Types Ψ → ctx Ψ ⊢ᶜ M ⦂ X ‼ ε
             → Final M
-              ⊎ Σ[ m ∈ ℕ ] Σ[ S' ∈ State m ] Σ[ M' ∈ RunC m ] Σ[ e ∈ S ≤ₛ S' ]
-                  ⟨ S ∣ M ⟩↝[ e ]⟨ S' ∣ M' ⟩ × Preserved e Σ M' X ε
+              ⊎ Σ[ m ∈ ℕ ] Σ[ 𝕊' ∈ State m ] Σ[ M' ∈ RunC m ] Σ[ e ∈ 𝕊 ≤ₛ 𝕊' ]
+                  ⟨ 𝕊 ∣ M ⟩⟶[ e ]⟨ 𝕊' ∣ M' ⟩ × Preserved e Ψ M' X ε
 type-safety T D with progress D
 ... | inj₁ f                     = inj₁ f
 ... | inj₂ (_ , _ , _ , e , s)   = inj₂ (_ , _ , _ , e , s , preservation T D s)

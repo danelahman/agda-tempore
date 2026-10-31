@@ -84,10 +84,10 @@ unionᴾ (x ∷ xs) f = f (here refl) ∪ᴾ unionᴾ xs (λ m → f (there m))
 -- The occurrences at the leaves of a value type, each at the sign of its
 -- position, and at the parts of a former
 
-polᵛᵃ : ∀ {Ψ} → (Sign → TyVar Ψ → Pol) → (Sign → RExp Ψ → Pol) → (Sign → EExp Ψ → Pol)
-      → Sign → (A : OVType Ψ) → Acc _≺_ A → Pol
-polᴾ : ∀ {Ψ} → (Sign → TyVar Ψ → Pol) → (Sign → RExp Ψ → Pol) → (Sign → EExp Ψ → Pol)
-     → Sign → {A B : OVType Ψ} {ps : List (Part Ψ)} → Decomp A B ps
+polᵛᵃ : ∀ {Ω} → (Sign → TyVar Ω → Pol) → (Sign → RExp Ω → Pol) → (Sign → EExp Ω → Pol)
+      → Sign → (A : OVType Ω) → Acc _≺_ A → Pol
+polᴾ : ∀ {Ω} → (Sign → TyVar Ω → Pol) → (Sign → RExp Ω → Pol) → (Sign → EExp Ω → Pol)
+     → Sign → {A B : OVType Ω} {ps : List (Part Ω)} → Decomp A B ps
      → WfRec _≺_ (Acc _≺_) A → ∀ {p} → p ∈ ps → Pol
 
 polᵛᵃ lt lr le s A (acc r) with self A
@@ -98,68 +98,68 @@ polᴾ lt lr le s g r {ty v X _} m = atVar v s (λ s' → polᵛᵃ lt lr le s' 
 polᴾ lt lr le s g r {rg v ρ _} m = atVar v s (λ s' → lr s' ρ)
 polᴾ lt lr le s g r {eg v ε _} m = atVar v s (λ s' → le s' ε)
 
-polᵛ : ∀ {Ψ} → (Sign → TyVar Ψ → Pol) → (Sign → RExp Ψ → Pol) → (Sign → EExp Ψ → Pol)
-     → Sign → OVType Ψ → Pol
+polᵛ : ∀ {Ω} → (Sign → TyVar Ω → Pol) → (Sign → RExp Ω → Pol) → (Sign → EExp Ω → Pol)
+     → Sign → OVType Ω → Pol
 polᵛ lt lr le s A = polᵛᵃ lt lr le s A (≺-wf A)
 
 -- Occurrences of one resource-grade unknown
 
-polᵣ-r : ∀ {Ψ} → RVar Ψ → Sign → RExp Ψ → Pol
+polᵣ-r : ∀ {Ω} → RVar Ω → Sign → RExp Ω → Pol
 polᵣ-r i s (rvar j)   = atˢ s ⌊ i ≟ᶠ j ⌋
 polᵣ-r i s (rconst _) = noᴾ
 polᵣ-r i s (ρ ·̂ᵣ ρ')  = polᵣ-r i s ρ ∪ᴾ polᵣ-r i s ρ'
 polᵣ-r i s (ρ ⊔̂ᵣ ρ')  = polᵣ-r i s ρ ∪ᴾ polᵣ-r i s ρ'
 polᵣ-r i s ∣ _ ∣̂ᵉ     = noᴾ
 
-polᵣ-v : ∀ {Ψ} → RVar Ψ → Sign → OVType Ψ → Pol
+polᵣ-v : ∀ {Ω} → RVar Ω → Sign → OVType Ω → Pol
 polᵣ-v i = polᵛ (λ _ _ → noᴾ) (polᵣ-r i) (λ _ _ → noᴾ)
 
-polᵣ-c : ∀ {Ψ} → RVar Ψ → Sign → OCType Ψ → Pol
+polᵣ-c : ∀ {Ω} → RVar Ω → Sign → OCType Ω → Pol
 polᵣ-c i s (A ‼ _) = polᵣ-v i s A
 
 -- Occurrences of one effect-grade unknown, reached in resource expressions
 -- through the monotone `∣_∣̂ᵉ`
 
-polₑ-e : ∀ {Ψ} → EVar Ψ → Sign → EExp Ψ → Pol
+polₑ-e : ∀ {Ω} → EVar Ω → Sign → EExp Ω → Pol
 polₑ-e i s (evar j)   = atˢ s ⌊ i ≟ᶠ j ⌋
 polₑ-e i s (econst _) = noᴾ
 polₑ-e i s (ε ·̂ₑ ε')  = polₑ-e i s ε ∪ᴾ polₑ-e i s ε'
 polₑ-e i s (ε ⊔̂ₑ ε')  = polₑ-e i s ε ∪ᴾ polₑ-e i s ε'
 
-polₑ-r : ∀ {Ψ} → EVar Ψ → Sign → RExp Ψ → Pol
+polₑ-r : ∀ {Ω} → EVar Ω → Sign → RExp Ω → Pol
 polₑ-r i s (rvar _)   = noᴾ
 polₑ-r i s (rconst _) = noᴾ
 polₑ-r i s (ρ ·̂ᵣ ρ')  = polₑ-r i s ρ ∪ᴾ polₑ-r i s ρ'
 polₑ-r i s (ρ ⊔̂ᵣ ρ')  = polₑ-r i s ρ ∪ᴾ polₑ-r i s ρ'
 polₑ-r i s ∣ ε ∣̂ᵉ     = polₑ-e i s ε
 
-polₑ-v : ∀ {Ψ} → EVar Ψ → Sign → OVType Ψ → Pol
+polₑ-v : ∀ {Ω} → EVar Ω → Sign → OVType Ω → Pol
 polₑ-v i = polᵛ (λ _ _ → noᴾ) (polₑ-r i) (polₑ-e i)
 
-polₑ-c : ∀ {Ψ} → EVar Ψ → Sign → OCType Ψ → Pol
+polₑ-c : ∀ {Ω} → EVar Ω → Sign → OCType Ω → Pol
 polₑ-c i s (A ‼ ε) = polₑ-v i s A ∪ᴾ polₑ-e i s ε
 
 -- Orderings and var-rule disjunctions, listed
 
-polsᵣ-disj : ∀ {Ψ} → RVar Ψ → List (OVType Ψ × RExp Ψ) → Pol
+polsᵣ-disj : ∀ {Ω} → RVar Ω → List (OVType Ω × RExp Ω) → Pol
 polsᵣ-disj i []            = noᴾ
 polsᵣ-disj i ((_ , ρ) ∷ l) = polᵣ-r i ⁺ ρ ∪ᴾ polsᵣ-disj i l
 
-polsₑ-ordᵣ : ∀ {Ψ} → EVar Ψ → List (RExp Ψ × RExp Ψ) → Pol
+polsₑ-ordᵣ : ∀ {Ω} → EVar Ω → List (RExp Ω × RExp Ω) → Pol
 polsₑ-ordᵣ i []             = noᴾ
 polsₑ-ordᵣ i ((ρ , ρ') ∷ l) = polₑ-r i ⁺ ρ ∪ᴾ polₑ-r i ⁻ ρ' ∪ᴾ polsₑ-ordᵣ i l
 
-polsₑ-disj : ∀ {Ψ} → EVar Ψ → List (OVType Ψ × RExp Ψ) → Pol
+polsₑ-disj : ∀ {Ω} → EVar Ω → List (OVType Ω × RExp Ω) → Pol
 polsₑ-disj i []            = noᴾ
 polsₑ-disj i ((_ , ρ) ∷ l) = polₑ-r i ⁺ ρ ∪ᴾ polsₑ-disj i l
 
 -- Occurrences of one type variable; eternality atoms and the type side of
 -- var-rule disjunctions read only the skeleton, so bound nothing
 
-polₜ-v : ∀ {Ψ} → TyVar Ψ → Sign → OVType Ψ → Pol
+polₜ-v : ∀ {Ω} → TyVar Ω → Sign → OVType Ω → Pol
 polₜ-v α = polᵛ (λ s β → atˢ s ⌊ α ≟ᶠ β ⌋) (λ _ _ → noᴾ) (λ _ _ → noᴾ)
 
-polₜ-c : ∀ {Ψ} → TyVar Ψ → Sign → OCType Ψ → Pol
+polₜ-c : ∀ {Ω} → TyVar Ω → Sign → OCType Ω → Pol
 polₜ-c α s (A ‼ ε) = polₜ-v α s A
 
 polsₜ-sub : ∀ {n} → Fin n → List (Fin n × Fin n) → Pol

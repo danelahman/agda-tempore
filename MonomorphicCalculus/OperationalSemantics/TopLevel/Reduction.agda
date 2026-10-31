@@ -34,11 +34,11 @@ module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
   data _⟿_ :  {C D : CType} → Config C → Config D → Set where
 
     -- Step according to the ordinary small-step semantics
-    ↝-STEP : ∀ {A B ε ε'}
+    ⟶-STEP : ∀ {A B ε ε'}
            → {S S' : 𝕊 []}
            → {M : (toCtx S ⊢C⦂ A ‼ ε)}
            → {N : (toCtx S' ⊢C⦂ B ‼ ε')}
-           → ⟨ S , M ⟩ ↝ ⟨ S' , N ⟩
+           → ⟨ S , M ⟩ ⟶ ⟨ S' , N ⟩
            → ⟨ S , M ⟩ ⟿ ⟨ S' , N ⟩
 
     -- Run a top-level implementation of an algebraic operation
@@ -72,7 +72,7 @@ module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
                             → B <:ᵛ A
                             × state-grade S' ·ᵣ mapᵉ ε' ≾ᵣ state-grade S ·ᵣ mapᵉ ε
 
-  top-level-step-invariants (↝-STEP step) =
+  top-level-step-invariants (⟶-STEP step) =
     step-invariants step
   top-level-step-invariants {A = A} {S = S} OP-STEP =
     <:ᵛ-refl A ,
