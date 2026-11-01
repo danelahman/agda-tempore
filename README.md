@@ -52,7 +52,7 @@ shows them all and keeps columns aligned. DejaVu Sans Mono lacks several.
 The root of each calculus, `PolymorphicCalculus/Everything.agda` and
 `MonomorphicCalculus/Everything.agda`, names its key modules.
 
-## Formalisation layout
+## Layout
 
 - `Util/`: equality and the non-negative rationals.
 - `Grades/`: grade algebras, grade systems and durations, the hints the solver
