@@ -1,4 +1,5 @@
-open import Data.Empty
+open import Data.Product using (_,_)
+open import Data.Sum using (inj₁; inj₂)
 
 open import Grades.Base
 open import Language.Spec
@@ -13,10 +14,10 @@ open GradeSystemInterface Grades
 open Operations Ops
 
 open import MonomorphicCalculus.OperationalSemantics.Reduction                   S
-open import MonomorphicCalculus.OperationalSemantics.Progress                    S
 open import MonomorphicCalculus.OperationalSemantics.State                       S
 open import MonomorphicCalculus.OperationalSemantics.TopLevel                    S
 open import MonomorphicCalculus.OperationalSemantics.TopLevel.Reduction          S
+open import MonomorphicCalculus.OperationalSemantics.TypeSafety                  S
 
 open import MonomorphicCalculus.Syntax.Contexts S
 open import MonomorphicCalculus.Syntax.Terms    S
@@ -54,13 +55,16 @@ module PureTopLevelProgressTheorem (OpSemantics : TopLevelOpSemantics) where
   -- Top-level progress theorem statement
   
   top-level-progress : ∀ {A ε} → {𝕊 : State []} → (M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε) → TopLevelProgresses M
-  top-level-progress {𝕊 = 𝕊} M with progress M
-  ... | is-return =
+  top-level-progress M with progress M
+  ... | inj₁ (is-return V) =
     is-top-level-value
-  ... | is-perform =
+  ... | inj₁ (is-perform op V M') =
     top-level-steps
       (≃ᵣ⇒≾ᵣ (≃ᵣ-trans (·ᵣ-assoc _ _ _) (·ᵣ-cong ≃ᵣ-refl (≃ᵣ-sym map-·ᵉ))))
       (<:ᵛ-refl _)
       OP-STEP
-  ... | steps M⟶M' p t =
-    top-level-steps (cancelled⇒total (step-extends-state M⟶M') p) t (STEP M⟶M')
+  ... | inj₂ (_ , _ , _ , _ , r) =
+    top-level-steps
+      (cancelled⇒total (step-extends-state r) (Preserved.grade (preservation r)))
+      (Preserved.subtype (preservation r))
+      (STEP r)

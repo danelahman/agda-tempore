@@ -1,5 +1,8 @@
 ------------------------------------------------------------------------
--- Weak-head normalization: the fundamental lemma.                    --
+-- Termination of the reduction: the fundamental lemma.               --
+--                                                                    --
+-- A program, run from the empty state, halts (`termination`): it is  --
+-- reducible (`fund-c`), and a reducible computation halts (`halts`). --
 --                                                                    --
 -- Recursion is primitive recursion on a natural number or a list,    --
 -- so a `recℕ` terminates by induction on the numeral its scrutinee   --
@@ -568,18 +571,18 @@ mutual
   fund-c γ pγ (unbox x rel p M) =
     fund-unbox γ pγ x rel p M (λ γ' pγ' → fund-c γ' pγ' M)
 
--- A reducible computation halts: its run is the evaluation, and which of the
--- two shapes it halts in is which `CRed` constructor it is. Only normalization
--- is read off; the reducibility of the components plays no part.
+-- A reducible computation halts: its run reaches a finished computation, which
+-- of the two it is being which `CRed` constructor it is. Only normalization is
+-- read off; the reducibility of the components plays no part.
 
-CRed-halts : ∀ {s} {P : VPred s} {A ε} {e : shapeᵛ A ≡ s} {𝕊 : State []}
-           → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε}
-           → CRed s P e ε 𝕊 M
-           --------------------
-           → Halts (⟨ 𝕊 ∣ M ⟩)
+halts : ∀ {s} {P : VPred s} {A ε} {e : shapeᵛ A ≡ s} {𝕊 : State []}
+      → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε}
+      → CRed s P e ε 𝕊 M
+      --------------------
+      → Halts 𝕊 M
 
-CRed-halts (cred-ret _ rs _)  = halts-ret (ret-whnf _ _ _ rs)
-CRed-halts (cred-op _ rs _ _) = halts-op (op-whnf _ _ _ _ _ _ rs)
+halts (cred-ret _ rs _)  = _ , _ , _ , _ , rs , is-return _
+halts (cred-op _ rs _ _) = _ , _ , _ , _ , rs , is-perform _ _ _
 
 -- A closed program is reducible at the empty state: `Γ = []`, `𝕊 = ∅`, and
 -- `toCtx ∅` has no variables to make reducible (`SRed-∅`).
@@ -587,8 +590,8 @@ CRed-halts (cred-op _ rs _ _) = halts-op (op-whnf _ _ _ _ _ _ rs)
 normalize : ∀ {A ε} → (M : Closed A ε) → CRed' A ε ∅ M
 normalize M = subst (CRed' _ _ ∅) (env-C-id M) (fund-c ⌊ ∅ ⌋ SRed-∅ M)
 
--- Hence every closed program reaches a weak head normal form: it returns a
--- value, or it gets stuck on an unhandled operation.
+-- Hence every closed program halts: it returns a value, or it gets stuck on an
+-- unhandled operation.
 
-halts : ∀ {A ε} → (M : Closed A ε) → Halts (⟨ ∅ ∣ M ⟩)
-halts M = CRed-halts (normalize M)
+termination : ∀ {A ε} → (M : Closed A ε) → Halts ∅ M
+termination M = halts (normalize M)

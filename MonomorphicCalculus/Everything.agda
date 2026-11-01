@@ -78,16 +78,10 @@ import MonomorphicCalculus.Syntax.Substitution.Variables
 ---- decides it to its boolean constant where `if` scrutinises it; SUB
 ---- and the SUB-… rules move a subsumption and erase to the identity on
 ---- raw terms; HANDLE-RET, HANDLE-OP and HANDLE-STEP fire on a handler
----- literal. Preservation (`step-invariants`): a step extends the
----- state, refines the type, and keeps the grade, the step's included,
----- below the original (`step-extends-state`, `step-refines-type`,
----- `step-grade-≾`). Progress (`progress`, in
----- `OperationalSemantics/Progress`): a computation over a state
----- returns a value, calls an operation, or steps; the first two are
----- final (`finality-value`, `finality-op`). States up to the term
+---- literal. A returned value and an operation call are finished
+---- (`Final`) and make no step (`final-no-step`). States up to the term
 ---- equivalence are in `OperationalSemantics/StateEquivalence`.
 
-import MonomorphicCalculus.OperationalSemantics.Progress
 import MonomorphicCalculus.OperationalSemantics.Reduction
 import MonomorphicCalculus.OperationalSemantics.State
 import MonomorphicCalculus.OperationalSemantics.StateEquivalence
@@ -96,7 +90,15 @@ import MonomorphicCalculus.OperationalSemantics.StateEquivalence.Core
 import MonomorphicCalculus.OperationalSemantics.StateEquivalence.Extensions
 import MonomorphicCalculus.OperationalSemantics.StateEquivalence.Replay
 
----- Termination (`halts`, in `OperationalSemantics/Termination`): a
+---- Type safety (`type-safety`, in `OperationalSemantics/TypeSafety`): a
+---- computation over a state is finished (`Final`) or steps (`Steps`);
+---- a step extends the state (`step-extends-state`), and the computation
+---- it reaches is typed at a subtype, its grade after the step's below
+---- the original (`progress`, `preservation`).
+
+import MonomorphicCalculus.OperationalSemantics.TypeSafety
+
+---- Termination (`termination`, in `OperationalSemantics/Termination`): a
 ---- program, run from the empty state, halts with a returned value or an
 ---- operation call (`Halts`, in `OperationalSemantics/Evaluation`), by the
 ---- fundamental lemma of a logical relation (`VRed`, `CRed`, `SRed`, in
@@ -260,8 +262,9 @@ import MonomorphicCalculus.DenotationalSemantics.Model.World.Reindex
 
 ---- Adequacy (`adequacy`, in `Adequacy/Adequacy`), for head-faithful models
 ---- (`HeadFaithful`, in `Adequacy/HeadFaithful`) and uniform handlers: two
----- programs with equal denotations halt in the same shape, at the same
----- operation or with the same answer. The presheaf model is head-faithful
+---- programs with equal denotations halt with the same outcome
+---- (`Same-outcome`), and at an answer type with the same answer
+---- (`adequacy-base`, `adequacy-bool`). The presheaf model is head-faithful
 ---- (`PShHeadFaithful`, in `Adequacy/PSh/HeadFaithful`). With soundness,
 ---- derivations of the equational theory between programs are
 ---- observationally valid (`Adequacy/Equational`).

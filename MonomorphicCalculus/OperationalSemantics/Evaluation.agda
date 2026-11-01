@@ -1,19 +1,19 @@
 ------------------------------------------------------------------------
--- Weak-head evaluation: the two shapes a configuration halts in.     --
+-- Halting: a run to a finished computation.                          --
 --                                                                    --
--- `progress` halts a configuration at a `return` or at an unhandled  --
--- `perform` (`Progress`'s `is-return`/`is-perform`), and both are    --
--- final. Packaged as evaluation relations on configurations,         --
--- together with the run's observable time, its tick total.           --
+-- A configuration halts when it runs to a returned value or to an    --
+-- unhandled operation call (`Halts`, `Final`). What is observed of   --
+-- a halting is how it finished (`outcome`) and the run's tick total  --
+-- (`halt-ticks`). Reduction is deterministic (`⟶-det`), so a         --
+-- configuration halts in one way only (`halts-det`).                 --
 --                                                                    --
 -- Syntactic: no model parameters.                                    --
 ------------------------------------------------------------------------
 
+import Data.Bool.Base as Bool
 open import Data.Empty
 open import Data.Product
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-
-open import Relation.Nullary using (¬_)
 
 open import Grades.Base
 open import Language.Spec
@@ -29,6 +29,7 @@ open Operations Ops
 
 open import MonomorphicCalculus.OperationalSemantics.Reduction           Spec
 open import MonomorphicCalculus.OperationalSemantics.State               Spec
+open import MonomorphicCalculus.OperationalSemantics.TypeSafety          Spec using (Steps)
 
 open import MonomorphicCalculus.Syntax.Contexts Spec
 open import MonomorphicCalculus.Syntax.Terms    Spec
@@ -77,6 +78,41 @@ bool-val-canonical false          = inj₂ refl
 bool-val-canonical {𝕊} (cmp ⋈ V W et) = decided {𝕊 = 𝕊} ⋈ V W et
 bool-val-canonical (subV V boolₛ) = bool-val-canonical V
 
+-- The constant `base-canonical` reads off is the one the value strips to.
+
+base-canonical-const : ∀ {b} {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ Base b)
+                     → {c : BaseConstants b}
+                     → base-val V ≡ const b c
+                     → proj₁ (base-canonical V) ≡ c
+base-canonical-const V eq = from (base-canonical V)
+  where
+    from : (p : Σ[ c' ∈ BaseConstants _ ] base-val V ≡ const _ c') → proj₁ p ≡ _
+    from (c' , eq') with trans (sym eq') eq
+    ... | refl = refl
+
+-- The boolean a `bool`-typed value strips to.
+
+bool-canonical-value : ∀ {𝕊 : State []} → toCtx 𝕊 ⊢ᵛ⦂ bool → Bool.Bool
+bool-canonical-value V = of (bool-val-canonical V)
+  where
+    of : (bool-val V ≡ true) ⊎ (bool-val V ≡ false) → Bool.Bool
+    of (inj₁ _) = Bool.true
+    of (inj₂ _) = Bool.false
+
+bool-canonical-true : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ bool)
+                    → bool-val V ≡ true → bool-canonical-value V ≡ Bool.true
+bool-canonical-true V eq with bool-val-canonical V
+... | inj₁ _  = refl
+... | inj₂ eq' with trans (sym eq) eq'
+...   | ()
+
+bool-canonical-false : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ bool)
+                     → bool-val V ≡ false → bool-canonical-value V ≡ Bool.false
+bool-canonical-false V eq with bool-val-canonical V
+... | inj₂ _  = refl
+... | inj₁ eq' with trans (sym eq) eq'
+...   | ()
+
 -- The ticks a step takes: only `DELAY` advances time, by its own delay. The
 -- grade `steps-grade` is not an observable: it absorbs `𝟏ₑ` factors freely
 -- and `_≾ₑ_` is a preorder.
@@ -120,41 +156,27 @@ ticks : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
 ticks done     = 0ᴰ
 ticks (r ▸ rs) = step-ticks r +ᴰ ticks rs
 
--- Evaluation to a returned value.
+-- Halting: a run to a finished computation
 
-record Ret-whnf {A : VType} {ε : E} (cf : Config (A ! ε)) : Set where
-  constructor ret-whnf
-  field
-    state : State []
-    vtype : VType
-    value : toCtx state ⊢ᵛ⦂ vtype
-    run   : cf ⟶* ⟨ state ∣ return value ⟩
+Halts : ∀ {A ε} → (𝕊 : State []) → toCtx 𝕊 ⊢ᶜ⦂ A ! ε → Set
+Halts 𝕊 M =
+  Σ[ B ∈ VType ] Σ[ ε' ∈ E ] Σ[ 𝕊' ∈ State [] ] Σ[ M' ∈ toCtx 𝕊' ⊢ᶜ⦂ B ! ε' ]
+    ⟨ 𝕊 ∣ M ⟩ ⟶* ⟨ 𝕊' ∣ M' ⟩ × Final M'
 
--- Evaluation to an unhandled operation, with its parameter and continuation.
+-- How a halted computation finished: it returned, or it called an operation.
 
-record Op-whnf {A : VType} {ε : E} (cf : Config (A ! ε)) : Set where
-  constructor op-whnf
-  field
-    state : State []
-    oper  : Op
-    resid : E
-    vtype : VType
-    prm   : toCtx state ⊢ᵛ⦂ ⌜ param oper ⌝ᵍ
-    cont  : toCtx state ⟨ ∣ op-grade oper ∣ᵉ ⟩ ∷ ⌜ arity oper ⌝ᵍ
-              ⊢ᶜ⦂ vtype ! resid
-    run   : cf ⟶* ⟨ state ∣ perform oper prm cont ⟩
+data Outcome : Set where
+  returned  : Outcome
+  performed : Op → Outcome
 
-data Halts {A : VType} {ε : E} (cf : Config (A ! ε)) : Set where
-  halts-ret : Ret-whnf cf → Halts cf
-  halts-op  : Op-whnf  cf → Halts cf
+outcome : ∀ {A ε} {𝕊 : State []} {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → Halts 𝕊 M → Outcome
+outcome (_ , _ , _ , _ , _ , is-return _)       = returned
+outcome (_ , _ , _ , _ , _ , is-perform op _ _) = performed op
 
--- The observable time of an evaluation.
+-- The observable time of a halted computation: its run's tick total.
 
-ret-ticks : ∀ {A ε} {cf : Config (A ! ε)} → Ret-whnf cf → 𝔻
-ret-ticks w = ticks (Ret-whnf.run w)
-
-op-ticks : ∀ {A ε} {cf : Config (A ! ε)} → Op-whnf cf → 𝔻
-op-ticks w = ticks (Op-whnf.run w)
+halt-ticks : ∀ {A ε} {𝕊 : State []} {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → Halts 𝕊 M → 𝔻
+halt-ticks (_ , _ , _ , _ , rs , _) = ticks rs
 
 -- A closed computation: one typed in the empty context, which is the context
 -- `toCtx ∅` of the empty state.
@@ -162,42 +184,15 @@ op-ticks w = ticks (Op-whnf.run w)
 Closed : VType → E → Set
 Closed A ε = [] ⊢ᶜ⦂ A ! ε
 
--- Neither whnf steps.
-
-finality-ret : ∀ {A} {D : CType} {𝕊 : State []}
-             → {V : toCtx 𝕊 ⊢ᵛ⦂ A} → {cf : Config D}
-             → ⟨ 𝕊 ∣ return V ⟩ ⟶ cf
-             ------------------------
-             → ⊥
-finality-ret ()
-
-finality-perform : ∀ {A ε op} {D : CType} {𝕊 : State []}
-                 → {W : toCtx 𝕊 ⊢ᵛ⦂ ⌜ param op ⌝ᵍ}
-                 → {M : toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
-                          ⊢ᶜ⦂ A ! ε}
-                 → {cf : Config D}
-                 → ⟨ 𝕊 ∣ perform op W M ⟩ ⟶ cf
-                 -----------------------------
-                 → ⊥
-finality-perform ()
-
--- A step out of a configuration is unique, target and derivation alike. Packing
--- grade, target and derivation into one Σ keeps the statement homogeneous, so
--- consumers can match on `refl`.
-
-Step-from : ∀ {A ε} → (cf : Config (A ! ε)) → Set
-Step-from cf =
-  Σ[ A' ∈ VType ] Σ[ ε' ∈ E ] Σ[ cf' ∈ Config (A' ! ε') ] (cf ⟶ cf')
-
--- The two congruences, as maps on packed steps. The reducts are left to
--- unification: they are whatever the rule builds out of the sub-step.
+-- The two congruences, as maps on steps. The reducts are left to unification:
+-- they are whatever the rule builds out of the sub-step.
 
 seq-step : ∀ {A B ε₁ ε₂} {𝕊 : State []} {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁}
          → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂)
-         → Step-from (⟨ 𝕊 ∣ M ⟩)
-         ---------------------------------
-         → Step-from (⟨ 𝕊 ∣ M ⨟ N ⟩)
-seq-step N (A₀ , ε₃ , ⟨ 𝕊' ∣ M' ⟩ , r) = _ , _ , _ , SEQ-STEP r (step-grade-≾ r)
+         → Steps 𝕊 M
+         ---------------------
+         → Steps 𝕊 (M ⨟ N)
+seq-step N (_ , _ , _ , _ , r) = _ , _ , _ , _ , SEQ-STEP r (step-grade-≾ r)
 
 handle-step : ∀ {A B ε₁ ε₂} {𝕊 : State []} {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁}
             → (N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂)
@@ -206,17 +201,21 @@ handle-step : ∀ {A B ε₁ ε₂} {𝕊 : State []} {M : toCtx 𝕊 ⊢ᶜ⦂ 
                              ∷ [ ∣ op-grade op ∣ᵉ ]
                                  (⌜ arity op ⌝ᵍ ⇒ B ! ε₃)
                            ⊢ᶜ⦂ B ! (op-grade op ·ₑ ε₃))
-            → Step-from (⟨ 𝕊 ∣ M ⟩)
-            ------------------------------------------------------
-            → Step-from (⟨ 𝕊 ∣ handle M `with handler N H ⟩)
-handle-step N H (A₀ , ε₃ , ⟨ 𝕊' ∣ M' ⟩ , r) =
-  _ , _ , _ , HANDLE-STEP r (step-grade-≾ r)
+            → Steps 𝕊 M
+            ------------------------------------------
+            → Steps 𝕊 (handle M `with handler N H)
+handle-step N H (_ , _ , _ , _ , r) =
+  _ , _ , _ , _ , HANDLE-STEP r (step-grade-≾ r)
 
-⟶-det : ∀ {A A₁ A₂ ε ε₁ ε₂} {cf : Config (A ! ε)}
-      → {cf₁ : Config (A₁ ! ε₁)} → {cf₂ : Config (A₂ ! ε₂)}
-      → (r₁ : cf ⟶ cf₁) → (r₂ : cf ⟶ cf₂)
-      -----------------------------------------------------------
-      → _≡_ {A = Step-from cf} (A₁ , ε₁ , cf₁ , r₁) (A₂ , ε₂ , cf₂ , r₂)
+-- A step out of a configuration is unique, target and derivation alike. Stated
+-- as an equation in `Steps`, which keeps it homogeneous, so consumers can match
+-- on `refl`.
+
+⟶-det : ∀ {A A₁ A₂ ε ε₁ ε₂} {𝕊 𝕊₁ 𝕊₂ : State []} {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε}
+      → {M₁ : toCtx 𝕊₁ ⊢ᶜ⦂ A₁ ! ε₁} → {M₂ : toCtx 𝕊₂ ⊢ᶜ⦂ A₂ ! ε₂}
+      → (r₁ : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊₁ ∣ M₁ ⟩) → (r₂ : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊₂ ∣ M₂ ⟩)
+      ---------------------------------------------------------------------------
+      → _≡_ {A = Steps 𝕊 M} (A₁ , ε₁ , 𝕊₁ , M₁ , r₁) (A₂ , ε₂ , 𝕊₂ , M₂ , r₂)
 
 -- the rules that fire on a determined term shape
 ⟶-det APP         APP         = refl
@@ -254,73 +253,44 @@ handle-step N H (A₀ , ε₃ , ⟨ 𝕊' ∣ M' ⟩ , r) =
 ⟶-det (HANDLE-STEP {H = H} {N = N} r p) (HANDLE-STEP r' p')
   rewrite ≾ᵣ-irrelevant p (step-grade-≾ r) | ≾ᵣ-irrelevant p' (step-grade-≾ r') =
   cong (handle-step N H) (⟶-det r r')
--- a congruence against a whnf scrutinee cannot happen
-⟶-det (SEQ-STEP r _)    SEQ-RET          = ⊥-elim (finality-ret r)
-⟶-det SEQ-RET           (SEQ-STEP r _)   = ⊥-elim (finality-ret r)
-⟶-det (SEQ-STEP r _)    SEQ-OP           = ⊥-elim (finality-perform r)
-⟶-det SEQ-OP            (SEQ-STEP r _)   = ⊥-elim (finality-perform r)
-⟶-det (HANDLE-STEP r _) HANDLE-RET       = ⊥-elim (finality-ret r)
-⟶-det HANDLE-RET        (HANDLE-STEP r _) = ⊥-elim (finality-ret r)
-⟶-det (HANDLE-STEP r _) HANDLE-OP        = ⊥-elim (finality-perform r)
-⟶-det HANDLE-OP         (HANDLE-STEP r _) = ⊥-elim (finality-perform r)
+-- a congruence against a finished scrutinee cannot happen
+⟶-det (SEQ-STEP r _)    SEQ-RET           = ⊥-elim (final-no-step (is-return _) r)
+⟶-det SEQ-RET           (SEQ-STEP r _)    = ⊥-elim (final-no-step (is-return _) r)
+⟶-det (SEQ-STEP r _)    SEQ-OP            = ⊥-elim (final-no-step (is-perform _ _ _) r)
+⟶-det SEQ-OP            (SEQ-STEP r _)    = ⊥-elim (final-no-step (is-perform _ _ _) r)
+⟶-det (HANDLE-STEP r _) HANDLE-RET        = ⊥-elim (final-no-step (is-return _) r)
+⟶-det HANDLE-RET        (HANDLE-STEP r _) = ⊥-elim (final-no-step (is-return _) r)
+⟶-det (HANDLE-STEP r _) HANDLE-OP         = ⊥-elim (final-no-step (is-perform _ _ _) r)
+⟶-det HANDLE-OP         (HANDLE-STEP r _) = ⊥-elim (final-no-step (is-perform _ _ _) r)
 
-Op-run : ∀ {A ε} → (cf : Config (A ! ε)) → Set
-Op-run cf =
-  Σ[ 𝕊 ∈ State [] ] Σ[ op ∈ Op ] Σ[ A' ∈ VType ] Σ[ ε' ∈ E ]
-  Σ[ W ∈ toCtx 𝕊 ⊢ᵛ⦂ ⌜ param op ⌝ᵍ ]
-  Σ[ M ∈ (toCtx 𝕊 ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢ᶜ⦂ A' ! ε') ]
-    (cf ⟶* ⟨ 𝕊 ∣ perform op W M ⟩)
+-- A computation is finished in one way only.
 
-op-run-det : ∀ {A ε} {cf : Config (A ! ε)}
-           → {𝕊₁ 𝕊₂ : State []} → {op₁ op₂ : Op} → {A₁ A₂ : VType} → {ε₁' ε₂' : E}
-           → {W₁ : toCtx 𝕊₁ ⊢ᵛ⦂ ⌜ param op₁ ⌝ᵍ}
-           → {W₂ : toCtx 𝕊₂ ⊢ᵛ⦂ ⌜ param op₂ ⌝ᵍ}
-           → {M₁ : toCtx 𝕊₁ ⟨ ∣ op-grade op₁ ∣ᵉ ⟩ ∷ ⌜ arity op₁ ⌝ᵍ
-                     ⊢ᶜ⦂ A₁ ! ε₁'}
-           → {M₂ : toCtx 𝕊₂ ⟨ ∣ op-grade op₂ ∣ᵉ ⟩ ∷ ⌜ arity op₂ ⌝ᵍ
-                     ⊢ᶜ⦂ A₂ ! ε₂'}
-           → (rs₁ : cf ⟶* ⟨ 𝕊₁ ∣ perform op₁ W₁ M₁ ⟩)
-           → (rs₂ : cf ⟶* ⟨ 𝕊₂ ∣ perform op₂ W₂ M₂ ⟩)
-           ---------------------------------------------------------------
-           → _≡_ {A = Op-run cf} (𝕊₁ , op₁ , A₁ , ε₁' , W₁ , M₁ , rs₁)
-                                 (𝕊₂ , op₂ , A₂ , ε₂' , W₂ , M₂ , rs₂)
+final-unique : ∀ {Γ C} {M : Γ ⊢ᶜ⦂ C} → (f f' : Final M) → f ≡ f'
+final-unique (is-return _)      (is-return _)      = refl
+final-unique (is-perform _ _ _) (is-perform _ _ _) = refl
 
-op-run-det done       done       = refl
-op-run-det done       (r ▸ _)    = ⊥-elim (finality-perform r)
-op-run-det (r ▸ _)    done       = ⊥-elim (finality-perform r)
-op-run-det (r₁ ▸ rs₁) (r₂ ▸ rs₂) with ⟶-det r₁ r₂
-... | refl =
-  cong (λ z → proj₁ z , proj₁ (proj₂ z) , proj₁ (proj₂ (proj₂ z))
-             , proj₁ (proj₂ (proj₂ (proj₂ z)))
-             , proj₁ (proj₂ (proj₂ (proj₂ (proj₂ z))))
-             , proj₁ (proj₂ (proj₂ (proj₂ (proj₂ (proj₂ z)))))
-             , r₁ ▸ proj₂ (proj₂ (proj₂ (proj₂ (proj₂ (proj₂ z))))))
-       (op-run-det rs₁ rs₂)
+-- A configuration halts in one way only: the run and the finished computation
+-- it reaches are unique. Hence so are the outcome and the tick total.
 
--- The two shapes exclude each other.
+private
 
-⇓-exclusive : ∀ {A ε} {cf : Config (A ! ε)} → Ret-whnf cf → Op-whnf cf → ⊥
-⇓-exclusive w w' = no-both (Ret-whnf.run w) (Op-whnf.run w')
-  where
-    no-both : ∀ {A A₁ A₂ ε ε'} {cf : Config (A ! ε)}
-            → {𝕊₁ 𝕊₂ : State []} {op : Op}
-            → {V : toCtx 𝕊₁ ⊢ᵛ⦂ A₁}
-            → {W : toCtx 𝕊₂ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ}
-            → {M : toCtx 𝕊₂ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ
-                     ⊢ᶜ⦂ A₂ ! ε'}
-            → cf ⟶* ⟨ 𝕊₁ ∣ return V ⟩
-            → cf ⟶* ⟨ 𝕊₂ ∣ perform op W M ⟩
-            → ⊥
-    no-both done       (r ▸ _)    = finality-ret r
-    no-both (r ▸ _)    done       = finality-perform r
-    no-both (r₁ ▸ rs₁) (r₂ ▸ rs₂) with ⟶-det r₁ r₂
-    ... | refl = no-both rs₁ rs₂
+  runs-det : ∀ {A B₁ B₂ ε ε₁ ε₂} {𝕊 𝕊₁ 𝕊₂ : State []} {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε}
+           → {M₁ : toCtx 𝕊₁ ⊢ᶜ⦂ B₁ ! ε₁} → {M₂ : toCtx 𝕊₂ ⊢ᶜ⦂ B₂ ! ε₂}
+           → (rs₁ : ⟨ 𝕊 ∣ M ⟩ ⟶* ⟨ 𝕊₁ ∣ M₁ ⟩) → (f₁ : Final M₁)
+           → (rs₂ : ⟨ 𝕊 ∣ M ⟩ ⟶* ⟨ 𝕊₂ ∣ M₂ ⟩) → (f₂ : Final M₂)
+           → _≡_ {A = Halts 𝕊 M} (B₁ , ε₁ , 𝕊₁ , M₁ , rs₁ , f₁)
+                                 (B₂ , ε₂ , 𝕊₂ , M₂ , rs₂ , f₂)
+  runs-det done f₁ done f₂ with final-unique f₁ f₂
+  ... | refl = refl
+  runs-det done    f₁ (r ▸ _) _  = ⊥-elim (final-no-step f₁ r)
+  runs-det (r ▸ _) _  done    f₂ = ⊥-elim (final-no-step f₂ r)
+  runs-det (_▸_ {cf₂ = ⟨ _ ∣ _ ⟩} r₁ rs₁) f₁ (_▸_ {cf₂ = ⟨ _ ∣ _ ⟩} r₂ rs₂) f₂
+    with ⟶-det r₁ r₂
+  ... | refl with runs-det rs₁ f₁ rs₂ f₂
+  ...   | refl = refl
 
-op-whnf-unique : ∀ {A ε} {cf : Config (A ! ε)} → (w w' : Op-whnf cf)
-               → Σ[ e ∈ Op-whnf.oper w ≡ Op-whnf.oper w' ]
-                   (op-ticks w ≡ op-ticks w')
-op-whnf-unique w w' =
-    cong (λ z → proj₁ (proj₂ z)) eq
-  , cong (λ z → ticks (proj₂ (proj₂ (proj₂ (proj₂ (proj₂ (proj₂ z))))))) eq
-  where
-    eq = op-run-det (Op-whnf.run w) (Op-whnf.run w')
+halts-det : ∀ {A ε} {𝕊 : State []} {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε}
+          → (h h' : Halts 𝕊 M)
+          ----------------------
+          → h ≡ h'
+halts-det (_ , _ , _ , _ , rs , f) (_ , _ , _ , _ , rs' , f') = runs-det rs f rs' f'

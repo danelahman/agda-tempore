@@ -1,4 +1,5 @@
 import Data.Bool.Base as Bool
+open import Data.Empty using (⊥)
 open import Data.Product
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 
@@ -604,20 +605,20 @@ step-grade-≾ SUB-RECℕ = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)
 step-grade-≾ (SUB {w = _ !ₛ q}) =
   ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ _)) (map-monotoneᵉ q)
 
--- invariants preserved by the small-step operational semantics, stated in
--- terms of the two states' grades
+-- A finished computation: a returned value or an operation call
 
-step-invariants : ∀ {A B ε ε'}
-                → {𝕊 𝕊' : State []}
-                → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε}
-                → {M' : toCtx 𝕊' ⊢ᶜ⦂ B ! ε'}
-                → (r : ⟨ 𝕊 ∣ M ⟩ ⟶ ⟨ 𝕊' ∣ M' ⟩)
-                → B <:ᵛ A                                               -- return types become more precise
-                × state-grade 𝕊' ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ state-grade 𝕊 ·ᵣ ∣ ε ∣ᵉ  -- effects become more precise
+data Final {Γ : Ctx} : {C : CType} → Γ ⊢ᶜ⦂ C → Set where
+  is-return  : ∀ {A} → (V : Γ ⊢ᵛ⦂ A) → Final (return V)
+  is-perform : ∀ {A ε} → (op : Op) → (V : Γ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
+             → (M : Γ ⟨ ∣ op-grade op ∣ᵉ ⟩ ∷ ⌜ arity op ⌝ᵍ ⊢ᶜ⦂ A ! ε)
+             → Final (perform op V M)
 
-step-invariants r =
-  step-refines-type r ,
-  cancelled⇒total (step-extends-state r) (step-grade-≾ r)
+-- A finished computation makes no step
+
+final-no-step : ∀ {A ε} {D : CType} {𝕊 : State []} {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} {cf : Config D}
+              → Final M → ⟨ 𝕊 ∣ M ⟩ ⟶ cf → ⊥
+final-no-step (is-return _)      ()
+final-no-step (is-perform _ _ _) ()
 
 -- Reflexive-transitive closure: a run of the machine. Every step refines both
 -- components of the computation type, so both are free at each link.
