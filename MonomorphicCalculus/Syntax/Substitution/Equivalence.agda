@@ -147,6 +147,8 @@ mutual
   V-sub₀-≐ˢ₀ h (inr V)   = cong inr (V-sub₀-≐ˢ₀ h V)
   V-sub₀-≐ˢ₀ h nil       = refl
   V-sub₀-≐ˢ₀ h (cons V W) = cong₂ cons (V-sub₀-≐ˢ₀ h V) (V-sub₀-≐ˢ₀ h W)
+  V-sub₀-≐ˢ₀ h (cmp ⋈ V W et) =
+    cong₂ (λ a b → cmp ⋈ a b et) (V-sub₀-≐ˢ₀ h V) (V-sub₀-≐ˢ₀ h W)
   V-sub₀-≐ˢ₀ h (fun M)   = cong fun (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) M)
   V-sub₀-≐ˢ₀ h (handler N H) =
     handler-≡ (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ (_ ⟨ _ ⟩ ∷ _) h) N)
@@ -164,8 +166,6 @@ mutual
   C-sub₀-≐ˢ₀ h (match V `with M) =
     cong₂ match_`with_ (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _ ∷ _) h) M)
   C-sub₀-≐ˢ₀ h (absurd V) = cong absurd (V-sub₀-≐ˢ₀ h V)
-  C-sub₀-≐ˢ₀ h (cmp ⋈ V W et) =
-    cong₂ (λ a b → cmp ⋈ a b et) (V-sub₀-≐ˢ₀ h V) (V-sub₀-≐ˢ₀ h W)
   C-sub₀-≐ˢ₀ h (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-sub₀-≐ˢ₀ h V) (C-sub₀-≐ˢ₀ h M) (C-sub₀-≐ˢ₀ h N)

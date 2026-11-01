@@ -417,6 +417,7 @@ mutual
   fund-v γ pγ ⋆           = tt
   fund-v γ pγ true        = tt
   fund-v γ pγ false       = tt
+  fund-v γ pγ (cmp ⋈ V W et) = tt
   fund-v γ pγ zero        = tt
   fund-v γ pγ (succ V)    = tt
 
@@ -475,15 +476,9 @@ mutual
 
   fund-c γ pγ (absurd V) = ⊥-elim (empty-not-value (env-V γ V))
 
-  -- `cmp` is head expansion off `CMP`, whose reduct returns a boolean.
-
-  fund-c γ pγ (cmp ⋈ V W et) =
-    subst (CRed' _ _ _) (sym (env-Cˢ-cmp γ [] ⋈ V W et))
-      (CRed-expand {e₀ = refl} CMP (cred-ret refl done tt))
-
   -- `if` is head expansion along whichever run the scrutinee licenses: over a
-  -- state context a boolean reaches one of the two branches
-  -- (`bool-canonical`).
+  -- state context a boolean, a comparison included, reaches one of the two
+  -- branches (`bool-canonical`).
 
   fund-c γ pγ (if V `then M `else N) with bool-canonical (env-V γ V)
   ... | inj₁ rs =

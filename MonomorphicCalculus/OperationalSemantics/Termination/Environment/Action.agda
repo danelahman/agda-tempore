@@ -24,7 +24,6 @@ open Operations Ops
 open import MonomorphicCalculus.OperationalSemantics.Reduction           Spec
 open import MonomorphicCalculus.OperationalSemantics.State               Spec
 
-open import Language.Comparisons using (Cmp)
 open import MonomorphicCalculus.Syntax.Contexts      Spec
 open import MonomorphicCalculus.Syntax.Terms      Spec
 open import MonomorphicCalculus.Syntax.Renaming.Action Spec
@@ -284,69 +283,6 @@ env-Cˢ-app (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ V U =
   ≡⟨⟩
     sub-atᵛ Δ (castᵛ eIn (env-Vˢ γ Δ₁ (castᵛ eA V))) W
       · sub-atᵛ Δ (castᵛ eIn (env-Vˢ γ Δ₁ (castᵛ eA U))) W
-  ∎
-  where
-    Δ₁   = [] ∷ A₀ ++ᶜ Δ
-    eIn  = sym (++ᶜ-assoc (toCtx 𝕊) ([] ∷ A₀) Δ)
-    eA   = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
-
-env-Cˢ-cmp : ∀ {𝕊 Γ A} → (γ : Env 𝕊 Γ) → (Δ : Ctx) → (⋈ : Cmp)
-           → (V U : (Γ ++ᶜ Δ) ⊢ᵛ⦂ A) → (et : Et A)
-           → env-Cˢ γ Δ (cmp ⋈ V U et) ≡ cmp ⋈ (env-Vˢ γ Δ V) (env-Vˢ γ Δ U) et
-
-env-Cˢ-cmp ⌊ 𝕊 ⌋ Δ ⋈ V U et = refl
-env-Cˢ-cmp (reachᵉ γ q) Δ ⋈ V U et =
-  cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-cmp γ Δ ⋈ V U et)
-
-env-Cˢ-cmp (_⟨_⟩ᵉ {𝕊 = 𝕊} {Γ = Γ} {ρ = ρ} γ q) Δ ⋈ V U et =
-  cong (C-rename (cong-ren (unbox-ren q)))
-    (begin
-      castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (cmp ⋈ V U et)))
-    ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-cmp ei) ⟩
-      castᶜ eo (env-Cˢ γ Δ' (cmp ⋈ (castᵛ ei V) (castᵛ ei U) et))
-    ≡⟨ cong (castᶜ eo) (env-Cˢ-cmp γ Δ' ⋈ (castᵛ ei V) (castᵛ ei U) et) ⟩
-      castᶜ eo (cmp ⋈ (env-Vˢ γ Δ' (castᵛ ei V)) (env-Vˢ γ Δ' (castᵛ ei U)) et)
-    ≡⟨ cast-cmp eo ⟩
-      cmp ⋈ (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V)))
-            (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei U))) et
-     ∎)
-  where
-    Δ' = [] ⟨ ρ ⟩ ++ᶜ Δ
-    eo = sym (++ᶜ-assoc (toCtx 𝕊) ([] ⟨ ρ ⟩) Δ)
-    ei = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
-
-env-Cˢ-cmp (liftᵉ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} {ρ = ρ} V₀ γ) Δ ⋈ V U et =
-  begin
-    castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (cmp ⋈ V U et)))
-  ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-cmp ei) ⟩
-    castᶜ eo (env-Cˢ γ Δ' (cmp ⋈ (castᵛ ei V) (castᵛ ei U) et))
-  ≡⟨ cong (castᶜ eo) (env-Cˢ-cmp γ Δ' ⋈ (castᵛ ei V) (castᵛ ei U) et) ⟩
-    castᶜ eo (cmp ⋈ (env-Vˢ γ Δ' (castᵛ ei V)) (env-Vˢ γ Δ' (castᵛ ei U)) et)
-  ≡⟨ cast-cmp eo ⟩
-    cmp ⋈ (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V)))
-          (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei U))) et
-   ∎
-  where
-    Δ₁ = [] ∷ [ ρ ] A₀
-    Δ' = Δ₁ ++ᶜ Δ
-    eo = sym (++ᶜ-assoc (toCtx 𝕊) Δ₁ Δ)
-    ei = ++ᶜ-assoc Γ Δ₁ Δ
-
-env-Cˢ-cmp (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ ⋈ V U et =
-  begin
-    sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ (castᶜ eA (cmp ⋈ V U et)))) W
-  ≡⟨ cong (λ z → sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ z)) W) (cast-cmp eA) ⟩
-    sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ (cmp ⋈ (castᵛ eA V) (castᵛ eA U) et))) W
-  ≡⟨ cong (λ z → sub-atᶜ Δ (castᶜ eIn z) W)
-          (env-Cˢ-cmp γ Δ₁ ⋈ (castᵛ eA V) (castᵛ eA U) et) ⟩
-    sub-atᶜ Δ (castᶜ eIn (cmp ⋈ (env-Vˢ γ Δ₁ (castᵛ eA V))
-                                (env-Vˢ γ Δ₁ (castᵛ eA U)) et)) W
-  ≡⟨ cong (λ z → sub-atᶜ Δ z W) (cast-cmp eIn) ⟩
-    sub-atᶜ Δ (cmp ⋈ (castᵛ eIn (env-Vˢ γ Δ₁ (castᵛ eA V)))
-                     (castᵛ eIn (env-Vˢ γ Δ₁ (castᵛ eA U))) et) W
-  ≡⟨⟩
-    cmp ⋈ (sub-atᵛ Δ (castᵛ eIn (env-Vˢ γ Δ₁ (castᵛ eA V))) W)
-          (sub-atᵛ Δ (castᵛ eIn (env-Vˢ γ Δ₁ (castᵛ eA U))) W) et
   ∎
   where
     Δ₁   = [] ∷ A₀ ++ᶜ Δ

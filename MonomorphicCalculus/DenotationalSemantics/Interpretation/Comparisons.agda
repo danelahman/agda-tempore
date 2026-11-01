@@ -6,7 +6,9 @@
 -- derived ones of `Model.Comparison` for the formers. `⌜_⌝ᵈ` sends a --
 -- datum to a point of the type's interpretation. Compared at points, --
 -- `cmpᵐ` returns the structural order of the data (`cmpᵐ-pt`), and a --
--- coercion acts on points as on data (`⌜⌝ᵈ-coe`).                    --
+-- coercion acts on points as on data (`⌜⌝ᵈ-coe`). Comparison, and so --
+-- the truth of a relation, commutes with the eternal extraction      --
+-- (`cmpᵐ-eternal`, `holdsᵐ-cmpᵐ-eternal`).                           --
 ------------------------------------------------------------------------
 
 open import Grades.Base
@@ -46,12 +48,21 @@ open import MonomorphicCalculus.Syntax.Data      S
 
 open Category Cat
 open GroundTypes GTy
-open GroundEternal GE using (cmpᵇᵐ; cmpᵇᵐ-pt)
+open GroundEternal GE using (cmpᵇᵐ; cmpᵇᵐ-pt; cmpᵇᵐ-eternal; ×-eternalᵒ; ×-eternalᵒ-extᵉ; 𝔹-eternalᵒ)
+open Past Pst using (⟨_⟩ᶠ; ⟨⟩-∘ᵐ; ⟨⟩-congᶠ)
 
 open import MonomorphicCalculus.DenotationalSemantics.Model.Comparison Cat public
 
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types     S Cat Fut Pst Adj GTy Mon
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Subtyping S Cat Fut Pst Adj GTy Mon
+open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
+  using (eternalᵛ-Eternalᵒ; eternalᵛ-extᵉ)
+open import MonomorphicCalculus.DenotationalSemantics.Model.ComparisonEternal S Cat Fut Pst Adj GTy GE
+  using ( Ord-eternalᵒ; EternalMap; extᵉ-nat; ∘ᵉ; holdsᵉ
+        ; cmp𝟙ᵉ; cmp𝟘ᵉ; cmp𝔹ᵉ; cmpℕᵉ; cmp×ᵉ; cmp+ᵉ; cmpLᵉ)
+open import MonomorphicCalculus.DenotationalSemantics.Model.Modality.Eternal
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj
+  using (Eternalᵒ)
 
 private
   infixr 3 _∙_
@@ -123,3 +134,56 @@ cmpᵐ-pt emptyₑ () _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
              ∙ ⟨ ⌜⌝ᵈ-coe p et x , ⌜⌝ᵈ-coe (listₛ p) (listₑ et) xs ⟩ᵐ-cong)
 ⌜⌝ᵈ-coe emptyₛ emptyₑ ()
+
+-- Comparison at an eternal type is a morphism of eternal objects: it
+-- commutes with the eternal extraction at every grade.
+
+cmpᵉ : ∀ {A} → (et : Et A)
+              → EternalMap (×-eternalᵒ (eternalᵛ-Eternalᵒ et) (eternalᵛ-Eternalᵒ et))
+                           Ord-eternalᵒ (cmpᵐ et)
+cmpᵉ (Baseₑ eb)     = record { extᵉ-nat = cmpᵇᵐ-eternal eb }
+cmpᵉ unitₑ          = cmp𝟙ᵉ
+cmpᵉ boolₑ          = cmp𝔹ᵉ
+cmpᵉ natₑ           = cmpℕᵉ
+cmpᵉ (et₁ |×|ₑ et₂) = cmp×ᵉ (cmpᵉ et₁) (cmpᵉ et₂)
+cmpᵉ (et₁ |+|ₑ et₂) = cmp+ᵉ (cmpᵉ et₁) (cmpᵉ et₂)
+cmpᵉ (listₑ et)     = cmpLᵉ (cmpᵉ et)
+cmpᵉ emptyₑ         = cmp𝟘ᵉ
+
+cmpᵐ-eternal : ∀ {A} → (et : Et A) → ∀ {ρ}
+             → cmpᵐ et ∘ᵐ Eternalᵒ.extᵉ (×-eternalᵒ (eternalᵛ-Eternalᵒ et) (eternalᵛ-Eternalᵒ et)) {ρ}
+             ≈ᵐ Eternalᵒ.extᵉ Ord-eternalᵒ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (cmpᵐ et)
+cmpᵐ-eternal et = extᵉ-nat (cmpᵉ et)
+
+-- So is the truth of a relation between two values of an eternal type.
+
+holdsᵐ-cmpᵐ-eternal : ∀ {A} → (⋈ : Cmp) → (et : Et A) → ∀ {ρ}
+                    → (holdsᵐ ⋈ ∘ᵐ cmpᵐ et)
+                      ∘ᵐ Eternalᵒ.extᵉ (×-eternalᵒ (eternalᵛ-Eternalᵒ et) (eternalᵛ-Eternalᵒ et)) {ρ}
+                    ≈ᵐ Eternalᵒ.extᵉ 𝔹-eternalᵒ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (holdsᵐ ⋈ ∘ᵐ cmpᵐ et)
+holdsᵐ-cmpᵐ-eternal ⋈ et = extᵉ-nat (∘ᵉ (holdsᵉ ⋈) (cmpᵉ et))
+
+-- At two values weakened under a lock by the extraction, the truth of the
+-- relation is the weakened truth.
+
+holdsᵐ-cmpᵐ-extᵉ : ∀ {A X} → (⋈ : Cmp) → (et : Et A) → (v w : X →ᵐ ⟦ A ⟧ᵛ) → ∀ {ρ}
+                 → holdsᵐ ⋈ ∘ᵐ cmpᵐ et
+                   ∘ᵐ ⟨ eternalᵛ-extᵉ et {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ v , eternalᵛ-extᵉ et {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ w ⟩ᵐ
+                 ≈ᵐ Eternalᵒ.extᵉ 𝔹-eternalᵒ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (holdsᵐ ⋈ ∘ᵐ cmpᵐ et ∘ᵐ ⟨ v , w ⟩ᵐ)
+holdsᵐ-cmpᵐ-extᵉ ⋈ et v w =
+    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym pair)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (holdsᵐ-cmpᵐ-eternal ⋈ et)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _) ∙ ⟨⟩-congᶠ (∘ᵐ-assoc _ _ _))
+  where
+    eA = eternalᵛ-Eternalᵒ et
+
+    -- the product's extraction, at a pair
+    pair : ∀ {ρ} → Eternalᵒ.extᵉ (×-eternalᵒ eA eA) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ ⟨ v , w ⟩ᵐ
+         ≈ᵐ ⟨ eternalᵛ-extᵉ et {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ v , eternalᵛ-extᵉ et {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ w ⟩ᵐ
+    pair =
+        ∘ᵐ-congˡ (×-eternalᵒ-extᵉ eA eA) ∙ ⟨⟩ᵐ-∘ _ _ _
+      ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _) ∙ ⟨⟩-congᶠ (⟨⟩ᵐ-fstᵐ v w))
+        , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _) ∙ ⟨⟩-congᶠ (⟨⟩ᵐ-sndᵐ v w)) ⟩ᵐ-cong

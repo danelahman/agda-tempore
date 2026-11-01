@@ -94,7 +94,7 @@ compareᵈ emptyₑ          ()       _
 ⌈ listₑ et ⌉       (x ∷ xs) = cons (⌈ et ⌉ x) (⌈ listₑ et ⌉ xs)
 ⌈ emptyₑ ⌉         ()
 
--- The boolean a comparison returns
+-- The boolean constant a comparison decides to
 
 ⌈_⌉ᵇ : ∀ {Γ} → 𝔹 → Γ ⊢ᵛ⦂ bool
 ⌈ b ⌉ᵇ = ⌈ boolₑ ⌉ b

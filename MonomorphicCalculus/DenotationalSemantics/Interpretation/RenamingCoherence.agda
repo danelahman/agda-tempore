@@ -253,6 +253,7 @@ mutual
   renᵛ r ⦉ V , W ⦊ (pV , pW) = renᵛ r V pV , renᵛ r W pW
   renᵛ r (inl V)   pV = renᵛ r V pV
   renᵛ r (inr V)   pV = renᵛ r V pV
+  renᵛ r (cmp ⋈ V W et) (pV , pW) = renᵛ r V pV , renᵛ r W pW
   renᵛ r (fun M)   pM = renᶜ (cong-∷-ren r) M pM
   -- the clauses' uniformity transports by `ren-clauses-uniform`
   renᵛ r (handler N H) (pN , pH , uH) =
@@ -270,7 +271,6 @@ mutual
   renᶜ r (match V `with M)  (pV , pM) =
     renᵛ r V pV , renᶜ (cong-∷-ren (cong-∷-ren r)) M pM
   renᶜ r (absurd V)         pV        = renᵛ r V pV
-  renᶜ r (cmp ⋈ V W et)     (pV , pW) = renᵛ r V pV , renᵛ r W pW
   renᶜ r (if V `then M `else N) (pV , pM , pN) =
     renᵛ r V pV , renᶜ r M pM , renᶜ r N pN
   renᶜ r (matchL V `nil M `cons N) (pV , pM , pN) =
@@ -355,6 +355,12 @@ mutual
     ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   V-rename-nat r (inr V) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  V-rename-nat r (cmp ⋈ V W et) (pV , pW) =
+    ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ
+               (≈ᵐ-trans (⟨ V-rename-nat r V pV , V-rename-nat r W pW ⟩ᵐ-cong)
+                         (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))))
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+              (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
   V-rename-nat r (fun M) pM =
     ≈ᵐ-trans (curryᵐ-cong (C-rename-nat (cong-∷-ren r) M pM))
              (curryᵐ-nat ⟦ r ⟧ʳ (⟦ M ⟧ᶜᵗ pM))
@@ -428,13 +434,6 @@ mutual
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
   C-rename-nat r (absurd V) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  C-rename-nat r (cmp ⋈ V W et) (pV , pW) =
-    ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
-               (≈ᵐ-trans (⟨ V-rename-nat r V pV , V-rename-nat r W pW ⟩ᵐ-cong)
-                         (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))))
-    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-              (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
   -- the renaming distributes over the branches: `ifᵐ-∘`
   C-rename-nat r (if V `then M `else N) (pV , pM , pN) =
     ≈ᵐ-trans (ifᵐ-cong (V-rename-nat r V pV)

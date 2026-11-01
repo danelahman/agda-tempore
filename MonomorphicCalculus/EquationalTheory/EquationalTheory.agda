@@ -109,6 +109,14 @@ mutual
               ---------------------------------
               → Γ ⊢ᵛ⦂ cons V W ≡ᵗʰ cons V' W'
 
+    cmp-cong : ∀ {A ⋈}
+             → {V V' W W' : Γ ⊢ᵛ⦂ A}
+             → {et : Et A}
+             → Γ ⊢ᵛ⦂ V ≡ᵗʰ V'
+             → Γ ⊢ᵛ⦂ W ≡ᵗʰ W'
+             ------------------------------------------
+             → Γ ⊢ᵛ⦂ cmp ⋈ V W et ≡ᵗʰ cmp ⋈ V' W' et
+
     fun-cong : ∀ {A B ε}
              → {M N : Γ ∷ A ⊢ᶜ⦂ B ! ε}
              → Γ ∷ A ⊢ᶜ⦂ M ≡ᵗʰ N
@@ -140,6 +148,17 @@ mutual
             -----------------------------------------------
             → Γ ⊢ᵛ⦂ V
                 ≡ᵗʰ fun (V-rename wk-ren V · var Hd (≾ᵘ-ok ≾ᵣ-refl))
+
+    -- beta-equation for comparison: at data, the boolean constant of the
+    -- relation's truth on their order
+
+    cmp-beta : ∀ {A}
+             → (⋈ : Cmp)
+             → (et : Et A)
+             → (d e : ⟪ A ⟫)
+             -------------------------------------------------------------
+             → Γ ⊢ᵛ⦂ cmp ⋈ (⌈ et ⌉ d) (⌈ et ⌉ e) et
+                 ≡ᵗʰ ⌈ holds ⋈ (compareᵈ et d e) ⌉ᵇ
 
     -- equations for subsumption
     --
@@ -288,14 +307,6 @@ mutual
                 → Γ ⊢ᵛ⦂ V ≡ᵗʰ W
                 ------------------------------------
                 → Γ ⊢ᶜ⦂ absurd {C = C} V ≡ᵗʰ absurd {C = C} W
-
-    cmp-cong : ∀ {A ⋈}
-             → {V V' W W' : Γ ⊢ᵛ⦂ A}
-             → {et : Et A}
-             → Γ ⊢ᵛ⦂ V ≡ᵗʰ V'
-             → Γ ⊢ᵛ⦂ W ≡ᵗʰ W'
-             ------------------------------------------
-             → Γ ⊢ᶜ⦂ cmp ⋈ V W et ≡ᵗʰ cmp ⋈ V' W' et
 
     if-cong : ∀ {C}
             → {V W : Γ ⊢ᵛ⦂ bool}
@@ -533,17 +544,6 @@ mutual
                -----------------------
                → Γ ⊢ᶜ⦂ absurd {C = C} V
                    ≡ᵗʰ M [ V ]₀
-
-    -- beta-equation for comparison: at data, the relation's truth on their
-    -- order
-
-    cmp-beta : ∀ {A}
-             → (⋈ : Cmp)
-             → (et : Et A)
-             → (d e : ⟪ A ⟫)
-             ---------------------------------------------------------------
-             → Γ ⊢ᶜ⦂ cmp ⋈ (⌈ et ⌉ d) (⌈ et ⌉ e) et
-                 ≡ᵗʰ return ⌈ holds ⋈ (compareᵈ et d e) ⌉ᵇ
 
     -- beta-equations for boolean elimination
 

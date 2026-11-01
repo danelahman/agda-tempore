@@ -106,6 +106,8 @@ mutual
   soundᵛ (inr-cong p)         mp           pV pV' = ∘ᵐ-congʳ (soundᵛ p mp pV pV')
   soundᵛ (cons-cong p q)      (mp , mq)    (pV , pW) (pV' , pW') =
     ∘ᵐ-congʳ ⟨ soundᵛ p mp pV pV' , soundᵛ q mq pW pW' ⟩ᵐ-cong
+  soundᵛ (cmp-cong p q)       (mp , mq)    (pV , pW) (pV' , pW') =
+    ∘ᵐ-congʳ (∘ᵐ-congʳ ⟨ soundᵛ p mp pV pV' , soundᵛ q mq pW pW' ⟩ᵐ-cong)
   soundᵛ (fun-cong p)         mp           pM pM' = curryᵐ-cong (soundᶜ p mp pM pM')
   soundᵛ (handler-cong {N = N} {N'} {H} {H'} q hs) (mq , mhs)
          (pN , pH , uH) (pN' , pH' , uH') =
@@ -116,6 +118,8 @@ mutual
   -- eta
   soundᵛ (unit-eta V)         _            pV pW = sound-unit-eta V pV pW
   soundᵛ (fun-eta V)          _            pV pW = sound-fun-eta V pV pW
+  -- beta
+  soundᵛ (cmp-beta ⋈ et d e)  _            = sound-cmp-beta ⋈ et d e
   -- axioms: subsumption
   soundᵛ (subV-refl w V)      _            = sound-subV-refl w V
   soundᵛ (subV-trans w w' w'' V) _         = sound-subV-trans w w' w'' V
@@ -155,8 +159,6 @@ mutual
             (⟨ ⟨ ≈ᵐ-refl , ∘ᵐ-congʳ (soundᵛ p mp pV pV') ⟩ᵐ-cong
              , ∘ᵐ-congʳ (soundᵛ p mp pV pV') ⟩ᵐ-cong)
   soundᶜ (absurd-cong p)      mp           pV pV' = ∘ᵐ-congʳ (soundᵛ p mp pV pV')
-  soundᶜ (cmp-cong p q)       (mp , mq)    (pV , pW) (pV' , pW') =
-    ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ soundᵛ p mp pV pV' , soundᵛ q mq pW pW' ⟩ᵐ-cong)))
   soundᶜ (if-cong p q r)      (mp , mq , mr)
          (pV , pM , pN) (pV' , pM' , pN') =
     ifᵐ-cong (soundᵛ p mp pV pV') (soundᶜ q mq pM pM') (soundᶜ r mr pN pN')
@@ -214,7 +216,6 @@ mutual
   soundᶜ (match-beta V W M)   _  = sound-match-beta V W M
   soundᶜ (match-eta V M)      m  = sound-match-eta V M m
   soundᶜ (absurd-eta V M)     _  = sound-absurd-eta V M
-  soundᶜ (cmp-beta ⋈ et d e)  _  = sound-cmp-beta ⋈ et d e
   soundᶜ (if-beta-true M N)   _  = sound-if-beta-true M N
   soundᶜ (if-beta-false M N)  _  = sound-if-beta-false M N
   soundᶜ (if-eta V M)         m  = sound-if-eta V M m

@@ -14,8 +14,9 @@
 -- from `Eternalᵒ`, not re-derived per former.                           --
 --                                                                       --
 -- An eternal base type also carries its order, a comparison morphism    --
--- (`cmpᵇᵐ`) agreeing with the signature's order on the constants;       --
--- `Interpretation.Comparisons` extends it to every eternal type.        --
+-- (`cmpᵇᵐ`) agreeing with the signature's order on the constants and    --
+-- commuting with the eternal extraction; `Interpretation.Comparisons`   --
+-- extends it to every eternal type.                                     --
 --                                                                       --
 -- In the presheaf model (`Example.PSh.Modality.Eternal`) the constant   --
 -- presheaves `Kᵖ` carry this structure (`Kᵖ-eternalᵒ`), and the formers --
@@ -109,6 +110,14 @@ record GroundEternal : Set₁ where
     cmpᵇᵐ    : (b : BaseType) → .(EternalBaseType b) → ⟦ b ⟧ᵇ ×ᵐ ⟦ b ⟧ᵇ →ᵐ Ordᵐ
     cmpᵇᵐ-pt : ∀ {b} → .(eb : EternalBaseType b)
              → Compares (cmpᵇᵐ b eb) (⟦_⟧ᵇᶜ {b}) (compareᵇ eb)
+
+    -- The comparison is a morphism of eternal objects: it commutes with the
+    -- eternal extraction, so comparing two values weakened under a lock is
+    -- weakening their comparison.
+    cmpᵇᵐ-eternal : ∀ {b} → .(eb : EternalBaseType b) → ∀ {ρ}
+                  → cmpᵇᵐ b eb ∘ᵐ Eternalᵒ.extᵉ (×-eternalᵒ (⟦ b ⟧ᵇᵉ eb) (⟦ b ⟧ᵇᵉ eb)) {ρ}
+                  ≈ᵐ Eternalᵒ.extᵉ (+-eternalᵒ 𝟙-eternalᵒ (+-eternalᵒ 𝟙-eternalᵒ 𝟙-eternalᵒ)) {ρ}
+                     ∘ᵐ ⟨ ρ ⟩ᶠ (cmpᵇᵐ b eb)
 
     -- The two booleans are global elements in the same sense.
     trueᵐ-eternal : ∀ {ρ}

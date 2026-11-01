@@ -265,7 +265,8 @@ stepᴾᶜ (SEQ-RET {V = V} {N = N})        pS (pV , pN)  = ret-subᴾ V N pV pN
 stepᴾᶜ (SEQ-OP {op = op} {𝕊 = 𝕊} {V = V} {M = M} {N = N}) pS ((pV , pM) , pN) =
   (pV , pM , renᶜ (cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN)
 stepᴾᶜ IF-TRUE                          pS (_ , pM , pN) = pM
-stepᴾᶜ (CMP {𝕊 = 𝕊} {⋈ = ⋈} {V = V} {W = W} {et = et}) pS _ = cmp-reductᴾ 𝕊 ⋈ V W et
+stepᴾᶜ (CMP {𝕊 = 𝕊} {⋈ = ⋈} {V = V} {W = W} {et = et}) pS (_ , pM , pN) =
+  decideᴾ 𝕊 ⋈ V W et , pM , pN
 stepᴾᶜ IF-FALSE                         pS (_ , pM , pN) = pN
 stepᴾᶜ MATCHℕ-ZERO                      pS (_ , pM , pN) = pM
 stepᴾᶜ (MATCHℕ-SUCC {V = V} {N = N})   pS (pV , pM , pN) = subᶜ N split-[] V pN pV
@@ -349,9 +350,10 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
   ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ⟶-sound {A = A} r@(IF-TRUE {M = M} {N = N}) pS (_ , pM , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-IF-TRUE M N pM pN)) ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
-⟶-sound r@(CMP {𝕊 = 𝕊} {⋈ = ⋈} {V = V} {W = W} {et = et}) pS (pV , pW) _ =
-  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-CMP 𝕊 ⋈ V W et pV pW))
-  ∙ ∘ᵐ-congʳ (insert-coe boolₛ)
+⟶-sound {A = A} r@(CMP {𝕊 = 𝕊} {⋈ = ⋈} {V = V} {W = W} {et = et} {M = M} {N = N})
+        pS ((pV , pW) , pM , pN) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-CMP 𝕊 ⋈ V W et M N pV pW pM pN))
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ⟶-sound {A = A} r@(IF-FALSE {M = M} {N = N}) pS (_ , pM , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-IF-FALSE M N pM pN)) ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 ⟶-sound {A = A} r@(MATCHℕ-ZERO {M = M} {N = N}) pS (_ , pM , pN) _ =

@@ -369,6 +369,7 @@ mutual
   subᵛˢ s p ⦉ V , W ⦊   (pV , pW) = subᵛˢ s p V pV , subᵛˢ s p W pW
   subᵛˢ s p (inl V)     pV        = subᵛˢ s p V pV
   subᵛˢ s p (inr V)     pV        = subᵛˢ s p V pV
+  subᵛˢ s p (cmp ⋈ V W et) (pV , pW) = subᵛˢ s p V pV , subᵛˢ s p W pW
   subᵛˢ s p (fun M)     pM        = subᶜˢ (cong-∷-sub s) p M pM
   -- the clauses are substituted into under the barrier lock, which acts on the
   -- ambient context only, so the clauses' uniformity transports
@@ -388,7 +389,6 @@ mutual
   subᶜˢ s p (match V `with M)  (pV , pM) =
     subᵛˢ s p V pV , subᶜˢ (cong-∷-sub (cong-∷-sub s)) p M pM
   subᶜˢ s p (absurd V)         pV        = subᵛˢ s p V pV
-  subᶜˢ s p (cmp ⋈ V W et)     (pV , pW) = subᵛˢ s p V pV , subᵛˢ s p W pW
   subᶜˢ s p (if V `then M `else N) (pV , pM , pN) =
     subᵛˢ s p V pV , subᶜˢ s p M pM , subᶜˢ s p N pN
   subᶜˢ s p (matchL V `nil M `cons N) (pV , pM , pN) =
@@ -473,6 +473,12 @@ mutual
     ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-natˢ s p V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   V-subst-natˢ s p (inr V) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-natˢ s p V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  V-subst-natˢ s p (cmp ⋈ V W et) (pV , pW) =
+    ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ
+               (≈ᵐ-trans (⟨ V-subst-natˢ s p V pV , V-subst-natˢ s p W pW ⟩ᵐ-cong)
+                         (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))))
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+              (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
   V-subst-natˢ s p (fun M) pM =
     ≈ᵐ-trans (curryᵐ-cong (C-subst-natˢ (cong-∷-sub s) p M pM))
              (curryᵐ-nat (⟦ s ⟧ˢ₀ p) (⟦ M ⟧ᶜᵗ pM))
@@ -549,13 +555,6 @@ mutual
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
   C-subst-natˢ s p (absurd V) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-natˢ s p V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  C-subst-natˢ s p (cmp ⋈ V W et) (pV , pW) =
-    ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
-               (≈ᵐ-trans (⟨ V-subst-natˢ s p V pV , V-subst-natˢ s p W pW ⟩ᵐ-cong)
-                         (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))))
-    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-              (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
   -- the substitution distributes over the branches: `ifᵐ-∘`
   C-subst-natˢ s p (if V `then M `else N) (pV , pM , pN) =
     ≈ᵐ-trans (ifᵐ-cong (V-subst-natˢ s p V pV)

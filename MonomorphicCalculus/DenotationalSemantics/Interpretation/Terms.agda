@@ -335,6 +335,7 @@ mutual
   Paramᵛ ⦉ V , W ⦊   = Paramᵛ V × Paramᵛ W
   Paramᵛ (inl V)     = Paramᵛ V
   Paramᵛ (inr V)     = Paramᵛ V
+  Paramᵛ (cmp ⋈ V W et) = Paramᵛ V × Paramᵛ W
   Paramᵛ (fun M)     = Paramᶜ M
   -- the return clause, every operation clause, and the clauses' uniformity in
   -- the residual grade
@@ -348,7 +349,6 @@ mutual
   Paramᶜ (V · W)            = Paramᵛ V × Paramᵛ W
   Paramᶜ (match V `with M)  = Paramᵛ V × Paramᶜ M
   Paramᶜ (absurd V)         = Paramᵛ V
-  Paramᶜ (cmp ⋈ V W et)     = Paramᵛ V × Paramᵛ W
   Paramᶜ (if V `then M `else N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (matchℕ V `zero M `succ N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (recℕ V M N p) = Paramᵛ V × Paramᶜ M × Paramᶜ N
@@ -391,6 +391,9 @@ mutual
   ⟦ ⦉ V , W ⦊ ⟧ᵛᵗ (pV , pW) = ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
   ⟦ inl V     ⟧ᵛᵗ pV = inlᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
   ⟦ inr V     ⟧ᵛᵗ pV = inrᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
+  -- the relation's truth on the comparison of the operands
+  ⟦ cmp ⋈ V W et ⟧ᵛᵗ (pV , pW) =
+    holdsᵐ ⋈ ∘ᵐ cmpᵐ et ∘ᵐ ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
   ⟦ fun M     ⟧ᵛᵗ pM = curryᵐ (⟦ M ⟧ᶜᵗ pM)
   ⟦ handler N H ⟧ᵛᵗ (pN , pH , uH) =
     curryʰ (handler-famᵗ (⟦ H ⟧ʰᵗ pH uH) (⟦ N ⟧ᶜᵗ pN))
@@ -405,9 +408,6 @@ mutual
   ⟦ match V `with M ⟧ᶜᵗ (pV , pM) =
     ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ ⟨ idᵐ , fstᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ , sndᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
   ⟦ absurd V ⟧ᶜᵗ pV = initialᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
-  -- the relation's truth on the comparison of the operands
-  ⟦ cmp ⋈ V W et ⟧ᶜᵗ (pV , pW) =
-    ηᵀ ∘ᵐ holdsᵐ ⋈ ∘ᵐ cmpᵐ et ∘ᵐ ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
   ⟦ if V `then M `else N ⟧ᶜᵗ (pV , pM , pN) =
     ifᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ⟦ matchℕ V `zero M `succ N ⟧ᶜᵗ (pV , pM , pN) =

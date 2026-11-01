@@ -478,7 +478,8 @@ match+-reductᴾ (inj₁ W) M N pW pM pN = subᶜ M split-[] W pM pW
 match+-reductᴾ (inj₂ W) M N pW pM pN = subᶜ N split-[] W pN pW
 
 -- CMP: a value of an eternal type denotes the point of its datum, at which
--- the comparison morphism orders as the data are ordered.
+-- the comparison morphism orders as the data are ordered; a comparison is
+-- itself such a value, at the boolean it decides to.
 
 ⌊⌋ᵈ-sound : ∀ {Γ A} → (𝕊 : State Γ) → (et : Et A) → (V : toCtx 𝕊 ⊢ᵛ⦂ A)
           → (pV : Paramᵛ V) → ⟦ V ⟧ᵛᵗ pV ≈ᵐ ⌜ et ⌝ᵈ (⌊_⌋ᵈ {𝕊 = 𝕊} et V) ∘ᵐ terminalᵐ
@@ -491,6 +492,10 @@ match+-reductᴾ (inj₂ W) M N pW pM pN = subᶜ N split-[] W pN pW
 ⌊⌋ᵈ-sound 𝕊 unitₑ ⋆ pV = ≈ᵐ-sym terminalᵐ-unique
 ⌊⌋ᵈ-sound 𝕊 boolₑ true pV = ≈ᵐ-refl
 ⌊⌋ᵈ-sound 𝕊 boolₑ false pV = ≈ᵐ-refl
+⌊⌋ᵈ-sound 𝕊 boolₑ (cmp ⋈ V W et) (pV , pW) =
+    sound-cmp ⋈ et V W pV pW _ _ (⌊⌋ᵈ-sound 𝕊 et V pV) (⌊⌋ᵈ-sound 𝕊 et W pW)
+  ∙ ⟦⌈⌉⟧ {toCtx 𝕊} boolₑ
+      (holds ⋈ (compareᵈ et (⌊_⌋ᵈ {𝕊 = 𝕊} et V) (⌊_⌋ᵈ {𝕊 = 𝕊} et W)))
 ⌊⌋ᵈ-sound 𝕊 natₑ zero pV = ≈ᵐ-refl
 ⌊⌋ᵈ-sound 𝕊 natₑ (succ V) pV =
   ∘ᵐ-congʳ (⌊⌋ᵈ-sound 𝕊 natₑ V pV) ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -506,17 +511,26 @@ match+-reductᴾ (inj₂ W) M N pW pM pN = subᶜ N split-[] W pN pW
               ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
-cmp-reductᴾ : ∀ {Γ A} → (𝕊 : State Γ) → (⋈ : Cmp) → (V W : toCtx 𝕊 ⊢ᵛ⦂ A) → (et : Et A)
-            → Paramᶜ (cmp-reduct {𝕊 = 𝕊} ⋈ V W et)
-cmp-reductᴾ 𝕊 ⋈ V W et =
+decideᴾ : ∀ {Γ A} → (𝕊 : State Γ) → (⋈ : Cmp) → (V W : toCtx 𝕊 ⊢ᵛ⦂ A) → (et : Et A)
+        → Paramᵛ (decide {𝕊 = 𝕊} ⋈ V W et)
+decideᴾ 𝕊 ⋈ V W et =
   param-⌈⌉ boolₑ (holds ⋈ (compareᵈ et (⌊_⌋ᵈ {𝕊 = 𝕊} et V) (⌊_⌋ᵈ {𝕊 = 𝕊} et W)))
 
-sound-CMP : ∀ {Γ A} → (𝕊 : State Γ) → (⋈ : Cmp) → (V W : toCtx 𝕊 ⊢ᵛ⦂ A) → (et : Et A)
-          → (pV : Paramᵛ V) → (pW : Paramᵛ W)
-          → ⟦ cmp ⋈ V W et ⟧ᶜᵗ (pV , pW)
-          ≈ᵐ ⟦ cmp-reduct {𝕊 = 𝕊} ⋈ V W et ⟧ᶜᵗ (cmp-reductᴾ 𝕊 ⋈ V W et)
-sound-CMP 𝕊 ⋈ V W et pV pW =
+sound-decide : ∀ {Γ A} → (𝕊 : State Γ) → (⋈ : Cmp) → (V W : toCtx 𝕊 ⊢ᵛ⦂ A) → (et : Et A)
+             → (pV : Paramᵛ V) → (pW : Paramᵛ W)
+             → ⟦ cmp ⋈ V W et ⟧ᵛᵗ (pV , pW)
+             ≈ᵐ ⟦ decide {𝕊 = 𝕊} ⋈ V W et ⟧ᵛᵗ (decideᴾ 𝕊 ⋈ V W et)
+sound-decide 𝕊 ⋈ V W et pV pW =
   sound-cmp ⋈ et V W pV pW _ _ (⌊⌋ᵈ-sound 𝕊 et V pV) (⌊⌋ᵈ-sound 𝕊 et W pW)
+
+sound-CMP : ∀ {Γ A C} → (𝕊 : State Γ) → (⋈ : Cmp) → (V W : toCtx 𝕊 ⊢ᵛ⦂ A) → (et : Et A)
+          → (M N : toCtx 𝕊 ⊢ᶜ⦂ C)
+          → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+          → ⟦ if cmp ⋈ V W et `then M `else N ⟧ᶜᵗ ((pV , pW) , pM , pN)
+          ≈ᵐ ⟦ if decide {𝕊 = 𝕊} ⋈ V W et `then M `else N ⟧ᶜᵗ
+               (decideᴾ 𝕊 ⋈ V W et , pM , pN)
+sound-CMP 𝕊 ⋈ V W et M N pV pW pM pN =
+  ifᵐ-cong (sound-decide 𝕊 ⋈ V W et pV pW) ≈ᵐ-refl ≈ᵐ-refl
 
 -- MATCHL / RECL: the scrutinee denotes its decomposition, at which the beta
 -- laws apply.

@@ -10,6 +10,7 @@ import Data.Bool.Base as Bool
 import Data.List.Base as List
 
 open import Grades.Base
+open import Language.Comparisons using (holds)
 open import Language.Spec
 
 open import Util.Equality
@@ -20,7 +21,7 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 
 open import MonomorphicCalculus.Syntax.Contexts        S
-open import MonomorphicCalculus.Syntax.Data            S using (⟪_⟫; ⟪_⟫ˢ)
+open import MonomorphicCalculus.Syntax.Data            S using (⟪_⟫; ⟪_⟫ˢ; compareᵈ)
 open import MonomorphicCalculus.Syntax.Terms           S
 open import MonomorphicCalculus.Syntax.Renaming.Action S
 open import MonomorphicCalculus.Syntax.Renaming        S
@@ -365,7 +366,8 @@ eternal-not-in-toCtx {𝕊 = 𝕊 ∷ₛ _}   () Hd
 eternal-not-in-toCtx {𝕊 = 𝕊 ∷ₛ _}   et (Tl-∷ x)  = eternal-not-in-toCtx et x
 
 -- The datum a value of an eternal type is. Over a state context the value is
--- a datum under a spine of subsumptions, which act on the data.
+-- a datum under a spine of subsumptions, which act on the data; a comparison
+-- is the boolean its relation gives on its operands' data.
 
 ⌊_⌋ᵈ : ∀ {Γ A} {𝕊 : State Γ} → Et A → toCtx 𝕊 ⊢ᵛ⦂ A → ⟪ A ⟫
 ⌊ et ⌋ᵈ             (var x _)   = ⊥-elim (eternal-not-in-toCtx et x)
@@ -374,6 +376,7 @@ eternal-not-in-toCtx {𝕊 = 𝕊 ∷ₛ _}   et (Tl-∷ x)  = eternal-not-in-to
 ⌊ unitₑ ⌋ᵈ          ⋆           = tt
 ⌊ boolₑ ⌋ᵈ          true        = Bool.true
 ⌊ boolₑ ⌋ᵈ          false       = Bool.false
+⌊ boolₑ ⌋ᵈ          (cmp ⋈ V W et) = holds ⋈ (compareᵈ et (⌊ et ⌋ᵈ V) (⌊ et ⌋ᵈ W))
 ⌊ natₑ ⌋ᵈ           zero        = 0
 ⌊ natₑ ⌋ᵈ           (succ V)    = suc (⌊ natₑ ⌋ᵈ V)
 ⌊ et₁ |×|ₑ et₂ ⌋ᵈ   ⦉ V , W ⦊    = ⌊ et₁ ⌋ᵈ V , ⌊ et₂ ⌋ᵈ W

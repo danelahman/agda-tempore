@@ -71,20 +71,21 @@ import MonomorphicCalculus.Syntax.Substitution.Lookup
 import MonomorphicCalculus.Syntax.Substitution.Subsumption
 import MonomorphicCalculus.Syntax.Substitution.Variables
 
----- Operational semantics: states, with their grade and extensions (`State`,
----- `state-grade`, `_≤ₛ_`, in `OperationalSemantics/State`), and the
----- small-step reduction of configurations (`Config`, `_⟶_`, in
----- `OperationalSemantics/Reduction`). CMP reduces a comparison to its
----- boolean; SUB and the SUB-… rules move a subsumption and erase to the
----- identity on raw terms; HANDLE-RET, HANDLE-OP and HANDLE-STEP fire on a
----- handler literal. Preservation (`step-invariants`): a step extends the
----- state, refines the type, and keeps the grade, the step's included, below
----- the original (`step-extends-state`, `step-refines-type`,
+---- Operational semantics: states, with their grade and extensions
+---- (`State`, `state-grade`, `_≤ₛ_`, in `OperationalSemantics/State`),
+---- and the small-step reduction of configurations (`Config`, `_⟶_`, in
+---- `OperationalSemantics/Reduction`). A comparison is a value, and CMP
+---- decides it to its boolean constant where `if` scrutinises it; SUB
+---- and the SUB-… rules move a subsumption and erase to the identity on
+---- raw terms; HANDLE-RET, HANDLE-OP and HANDLE-STEP fire on a handler
+---- literal. Preservation (`step-invariants`): a step extends the
+---- state, refines the type, and keeps the grade, the step's included,
+---- below the original (`step-extends-state`, `step-refines-type`,
 ---- `step-grade-≾`). Progress (`progress`, in
----- `OperationalSemantics/Progress`): a computation over a state returns a
----- value, calls an operation, or steps; the first two are final
----- (`finality-value`, `finality-op`). States up to the term equivalence are
----- in `OperationalSemantics/StateEquivalence`.
+---- `OperationalSemantics/Progress`): a computation over a state
+---- returns a value, calls an operation, or steps; the first two are
+---- final (`finality-value`, `finality-op`). States up to the term
+---- equivalence are in `OperationalSemantics/StateEquivalence`.
 
 import MonomorphicCalculus.OperationalSemantics.Progress
 import MonomorphicCalculus.OperationalSemantics.Reduction
@@ -136,19 +137,22 @@ import MonomorphicCalculus.EquationalTheory.Alignment
 import MonomorphicCalculus.EquationalTheory.EquationalTheory
 import MonomorphicCalculus.EquationalTheory.Naturality
 
----- Models, in `DenotationalSemantics/Model/`: a setoid-enriched cartesian
----- closed category (`Category`), the box modality `[ ρ ]` (`Future`) and
----- the context modality `⟨ ρ ⟩` (`Past`) in a graded adjunction
----- (`Adjunction`), eternal objects (`Eternalᵒ`), ground types
----- (`GroundTypes`, `GroundEternal`), and a strong graded monad (`Monad`)
----- with handler values: the object `Hᵒ`, application at a handled grade
----- below the declared one (`appʰ`), and abstraction of a natural family
----- (`curryʰ`) with its β and η laws (`curryʰ-β`, `curryʰ-η`). The tick
----- monad and implementations of the operations (`TickMonad`,
+---- Models, in `DenotationalSemantics/Model/`: a setoid-enriched
+---- cartesian closed category (`Category`), the box modality `[ ρ ]`
+---- (`Future`) and the context modality `⟨ ρ ⟩` (`Past`) in a graded
+---- adjunction (`Adjunction`), eternal objects (`Eternalᵒ`), ground
+---- types (`GroundTypes`, `GroundEternal`) with their comparisons,
+---- which commute with the eternal extraction (`Comparison`,
+---- `ComparisonEternal`), and a strong graded monad (`Monad`) with
+---- handler values: the object `Hᵒ`, application at a handled grade
+---- below the declared one (`appʰ`), and abstraction of a natural
+---- family (`curryʰ`) with its β and η laws (`curryʰ-β`, `curryʰ-η`).
+---- The tick monad and implementations of the operations (`TickMonad`,
 ---- `Implementation`) interpret running operations by implementations.
 
 import MonomorphicCalculus.DenotationalSemantics.Model.Category
 import MonomorphicCalculus.DenotationalSemantics.Model.Comparison
+import MonomorphicCalculus.DenotationalSemantics.Model.ComparisonEternal
 import MonomorphicCalculus.DenotationalSemantics.Model.GroundEternal
 import MonomorphicCalculus.DenotationalSemantics.Model.GroundTypes
 import MonomorphicCalculus.DenotationalSemantics.Model.Implementation

@@ -103,12 +103,12 @@ sound-absurd-eta V M pV pR = 𝟘ᵐ-strict (⟦ V ⟧ᵛᵗ pV) _ _
 -- comparison morphism orders as the data are ordered.
 
 sound-cmp-beta : ∀ {Γ A} → (⋈ : Cmp) → (et : Et A) → (d e : ⟪ A ⟫)
-               → Soundᶜ≡ᵗʰ (cmp-beta {Γ = Γ} ⋈ et d e)
+               → Soundᵛ≡ᵗʰ (cmp-beta {Γ = Γ} ⋈ et d e)
 sound-cmp-beta ⋈ et d e (pV , pW) pR =
     sound-cmp ⋈ et (⌈ et ⌉ d) (⌈ et ⌉ e) pV pW d e
       (⟦⟧ᵛᵗ-irr (⌈ et ⌉ d) pV (param-⌈⌉ et d) ∙ ⟦⌈⌉⟧ et d)
       (⟦⟧ᵛᵗ-irr (⌈ et ⌉ e) pW (param-⌈⌉ et e) ∙ ⟦⌈⌉⟧ et e)
-  ∙ ⟦⟧ᶜᵗ-irr (return ⌈ holds ⋈ (compareᵈ et d e) ⌉ᵇ) _ pR
+  ∙ ⟦⟧ᵛᵗ-irr ⌈ holds ⋈ (compareᵈ et d e) ⌉ᵇ _ pR
 
 -- The two boolean betas are the boolean object's own beta laws, read at the
 -- interpretation `⟦ true ⟧ᵛᵗ = trueᵐ ∘ᵐ terminalᵐ` of the scrutinee.

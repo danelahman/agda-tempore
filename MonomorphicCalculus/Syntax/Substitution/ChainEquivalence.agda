@@ -79,8 +79,8 @@ open _≐ˢ_ public
 ⋈-wk s =
   mk⋈ (λ x f → refl) (λ y → refl)
 
--- An eternal extension passes through a substitution: it builds only
--- variables, constants, `⋆`, booleans, pairs and injections.
+-- An eternal extension passes through a substitution: it rebuilds the value
+-- former by former.
 
 V-sub₀-ext : ∀ {Γ Γ' A ρ} → (s : Sub₀ [] Γ Γ') → (et : Et A)
            → (V : Γ' ⊢ᵛ⦂ A)
@@ -100,6 +100,8 @@ V-sub₀-ext s (_ |+|ₑ et₂) (inr V) = cong inr (V-sub₀-ext s et₂ V)
 V-sub₀-ext s et nil       = refl
 V-sub₀-ext s (listₑ et) (cons V W) =
   cong₂ cons (V-sub₀-ext s et V) (V-sub₀-ext s (listₑ et) W)
+V-sub₀-ext s _ (cmp ⋈ V W et) =
+  cong₂ (λ a b → cmp ⋈ a b et) (V-sub₀-ext s et V) (V-sub₀-ext s et W)
 V-sub₀-ext s et (subV V p) =
   cong (λ W → subV W p) (V-sub₀-ext s (<:ᵛ-eternalˡ p et) V)
 
@@ -173,6 +175,8 @@ eternal-val-ext-≡ (_ |+|ₑ et₂) p (inr V) = cong inr (eternal-val-ext-≡ e
 eternal-val-ext-≡ et p nil       = refl
 eternal-val-ext-≡ (listₑ et) p (cons V W) =
   cong₂ cons (eternal-val-ext-≡ et p V) (eternal-val-ext-≡ (listₑ et) p W)
+eternal-val-ext-≡ _ p (cmp ⋈ V W et) =
+  cong₂ (λ a b → cmp ⋈ a b et) (eternal-val-ext-≡ et p V) (eternal-val-ext-≡ et p W)
 eternal-val-ext-≡ et p (subV V q) =
   cong (λ W → subV W q) (eternal-val-ext-≡ (<:ᵛ-eternalˡ q et) p V)
 
@@ -313,6 +317,12 @@ V-sub-cons : ∀ {Γ Γ' A} → (σ : Sub [] Γ Γ') → (V : Γ' ⊢ᵛ⦂ A) �
 V-sub-cons []ˢ      V W = refl
 V-sub-cons (s ◅ σ) V W = cong (V-sub₀ s) (V-sub-cons σ V W)
 
+V-sub-cmp : ∀ {Γ Γ' A} → (σ : Sub [] Γ Γ') → (⋈ : Cmp) → (V W : Γ' ⊢ᵛ⦂ A)
+          → (et : Et A)
+          → V-sub σ (cmp ⋈ V W et) ≡ cmp ⋈ (V-sub σ V) (V-sub σ W) et
+V-sub-cmp []ˢ      ⋈ V W et = refl
+V-sub-cmp (s ◅ σ) ⋈ V W et = cong (V-sub₀ s) (V-sub-cmp σ ⋈ V W et)
+
 V-sub-fun : ∀ {Γ Γ' A C} → (σ : Sub [] Γ Γ') → (M : Γ' ∷ A ⊢ᶜ⦂ C)
           → V-sub σ (fun M) ≡ fun (C-sub (cong-∷-subˢ σ) M)
 V-sub-fun []ˢ      M = refl
@@ -352,12 +362,6 @@ C-sub-absurd : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ') → (V : Γ' ⊢ᵛ⦂ em
              → C-sub σ (absurd {C = C} V) ≡ absurd (V-sub σ V)
 C-sub-absurd []ˢ      V = refl
 C-sub-absurd (s ◅ σ) V = cong (C-sub₀ s) (C-sub-absurd σ V)
-
-C-sub-cmp : ∀ {Γ Γ' A} → (σ : Sub [] Γ Γ') → (⋈ : Cmp) → (V W : Γ' ⊢ᵛ⦂ A)
-          → (et : Et A)
-          → C-sub σ (cmp ⋈ V W et) ≡ cmp ⋈ (V-sub σ V) (V-sub σ W) et
-C-sub-cmp []ˢ      ⋈ V W et = refl
-C-sub-cmp (s ◅ σ) ⋈ V W et = cong (C-sub₀ s) (C-sub-cmp σ ⋈ V W et)
 
 C-sub-if : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ')
          → (V : Γ' ⊢ᵛ⦂ bool) → (M N : Γ' ⊢ᶜ⦂ C)
@@ -511,6 +515,10 @@ mutual
   V-sub-≐ˢ {σ = σ} {σ' = σ'} h (cons V W) =
     trans (V-sub-cons σ V W)
       (trans (cong₂ cons (V-sub-≐ˢ h V) (V-sub-≐ˢ h W)) (sym (V-sub-cons σ' V W)))
+  V-sub-≐ˢ {σ = σ} {σ' = σ'} h (cmp ⋈ V W et) =
+    trans (V-sub-cmp σ ⋈ V W et)
+      (trans (cong₂ (λ a b → cmp ⋈ a b et) (V-sub-≐ˢ h V) (V-sub-≐ˢ h W))
+             (sym (V-sub-cmp σ' ⋈ V W et)))
   V-sub-≐ˢ {σ = σ} {σ' = σ'} h (fun M) =
     trans (V-sub-fun σ M)
       (trans (cong fun (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) M))
@@ -548,10 +556,6 @@ mutual
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (absurd V) =
     trans (C-sub-absurd σ V)
       (trans (cong absurd (V-sub-≐ˢ h V)) (sym (C-sub-absurd σ' V)))
-  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (cmp ⋈ V W et) =
-    trans (C-sub-cmp σ ⋈ V W et)
-      (trans (cong₂ (λ a b → cmp ⋈ a b et) (V-sub-≐ˢ h V) (V-sub-≐ˢ h W))
-             (sym (C-sub-cmp σ' ⋈ V W et)))
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (if V `then M `else N) =
     trans (C-sub-if σ V M N)
       (trans (cong₃ if_`then_`else_
