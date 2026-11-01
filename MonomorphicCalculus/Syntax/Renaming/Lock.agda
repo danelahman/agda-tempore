@@ -33,6 +33,7 @@
 -- to `(1 , L ! ∘ f)`. So `L` is a parametric right adjoint iff every   --
 -- connected component of every `(Γ ↓ L)` has an initial object         --
 -- (`PRA`).                                                             --
+-- `Lock/Adjunction` proves both equivalent to their hom-set forms.     --
 --                                                                      --
 -- Here `[] ⟨ ρ ⟩` has no variables, so there is at most one renaming   --
 -- `Γ → [] ⟨ ρ ⟩` (`into-[]⟨⟩-≐ʳ`), and `(Γ ↓ L_ρ)` has at most one     --

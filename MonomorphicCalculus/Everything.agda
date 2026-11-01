@@ -54,6 +54,10 @@ import MonomorphicCalculus.Syntax.Types
 ---- right adjoint at every grade when the unit is the greatest grade
 ---- (`PRA-everywhere`, in `Syntax/Renaming/Lock/LowerBounds`); where it
 ---- is one, `σ · σ' ≾ ρ` with `σ' ≾ ρ` forces `σ ≾ 𝟏` (`PRA⇒no-factor`).
+---- Both notions are equivalent to their hom-set forms, a natural bijection
+---- `Ren [] E Δ ≅ Ren [] Γ (Δ ⟨ ρ ⟩)` (`left-adjoint⇔hom`) and one onto
+---- the renamings over each `s : Ren [] Γ ([] ⟨ ρ ⟩)` (`PRA⇔hom`, in
+---- `Syntax/Renaming/Lock/Adjunction`).
 
 import MonomorphicCalculus.Syntax.Normalisation
 import MonomorphicCalculus.Syntax.Renaming
@@ -63,6 +67,7 @@ import MonomorphicCalculus.Syntax.Renaming.Category
 import MonomorphicCalculus.Syntax.Renaming.Coherence
 import MonomorphicCalculus.Syntax.Renaming.Equivalence
 import MonomorphicCalculus.Syntax.Renaming.Lock
+import MonomorphicCalculus.Syntax.Renaming.Lock.Adjunction
 import MonomorphicCalculus.Syntax.Renaming.Lock.LowerBounds
 import MonomorphicCalculus.Syntax.Renaming.Lock.Model
 import MonomorphicCalculus.Syntax.Substitution
