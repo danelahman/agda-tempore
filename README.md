@@ -65,7 +65,7 @@ The root of each calculus, `PolymorphicCalculus/Everything.agda` and
 - `MonomorphicCalculus/`: the intrinsically typed calculus, its operational and
   denotational semantics, equational theory, adequacy, and examples.
 
-## Overview
+## Notes
 
 - The language is parameterised by base types and graded operation signatures.
 - Both calculi support algebraic effect handlers and effect handling.
