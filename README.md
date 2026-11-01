@@ -1,4 +1,4 @@
-# Agda formalisation of the core calculus for graded temporal resources
+# Agda formalisation of the core calculus of Tempore
 
 An Agda formalisation of the core calculus of
 [Tempore](https://tempore-lang.ee/), a prototype language for type-safe
