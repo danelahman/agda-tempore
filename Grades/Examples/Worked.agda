@@ -6,7 +6,7 @@
 -- terms, the orderings between grades and the action of each grade   --
 -- morphism on them. The typing examples of the monomorphic calculus  --
 -- write computations in a language over that alphabet and type them  --
--- at these grades; the type-inference examples use the same          --
+-- at these grades; the type inference examples use the same          --
 -- language.                                                          --
 --                                                                    --
 -- The alphabet is a sensor node: `read` a sensor (1 tick), `write` a --
