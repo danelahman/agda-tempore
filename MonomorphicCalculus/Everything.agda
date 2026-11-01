@@ -49,6 +49,11 @@ import MonomorphicCalculus.Syntax.Types
 ---- (`Syntax/Substitution/Base`); context subsumption (`subCtx`, in
 ---- `Syntax/Substitution/Subsumption`); subsumption confined to the
 ---- reconciliation points (`C-normal-form`, in `Syntax/Normalisation`).
+---- On renamings the lock has a left adjoint exactly at the unit
+---- (`left-adjoint⇔unit`, in `Syntax/Renaming/Lock`), and is a parametric
+---- right adjoint at every grade when the unit is the greatest grade
+---- (`PRA-everywhere`, in `Syntax/Renaming/Lock/LowerBounds`); where it
+---- is one, `σ · σ' ≾ ρ` with `σ' ≾ ρ` forces `σ ≾ 𝟏` (`PRA⇒no-factor`).
 
 import MonomorphicCalculus.Syntax.Normalisation
 import MonomorphicCalculus.Syntax.Renaming
@@ -57,6 +62,9 @@ import MonomorphicCalculus.Syntax.Renaming.Base
 import MonomorphicCalculus.Syntax.Renaming.Category
 import MonomorphicCalculus.Syntax.Renaming.Coherence
 import MonomorphicCalculus.Syntax.Renaming.Equivalence
+import MonomorphicCalculus.Syntax.Renaming.Lock
+import MonomorphicCalculus.Syntax.Renaming.Lock.LowerBounds
+import MonomorphicCalculus.Syntax.Renaming.Lock.Model
 import MonomorphicCalculus.Syntax.Substitution
 import MonomorphicCalculus.Syntax.Substitution.Action
 import MonomorphicCalculus.Syntax.Substitution.At
@@ -277,7 +285,9 @@ import MonomorphicCalculus.Adequacy.PSh.TickFrames
 import MonomorphicCalculus.Adequacy.PSh.TreeHead
 import MonomorphicCalculus.Adequacy.PSh.TreeShape
 
----- Examples: concrete Kripke frames of worlds, and typed computations.
+---- Examples: concrete Kripke frames of worlds, typed computations, and
+---- the adjoints of the lock at particular grades (`Examples/Lock`).
 
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.World
+import MonomorphicCalculus.Examples.Lock
 import MonomorphicCalculus.Examples.Typing
