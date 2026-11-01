@@ -141,6 +141,7 @@ mutual
   V-rename r (inr V)     = inr (V-rename r V)
   V-rename r nil         = nil
   V-rename r (cons V W)  = cons (V-rename r V) (V-rename r W)
+  V-rename r (cmp ⋈ V W et) = cmp ⋈ (V-rename r V) (V-rename r W) et
   V-rename r (fun M)     = fun (C-rename (cong-ren r) M)
   V-rename r (handler N H) =
     handler (C-rename (cong-ren r) N)
@@ -159,7 +160,6 @@ mutual
   C-rename r (V · W)            = V-rename r V · V-rename r W
   C-rename r (match V `with M)  = match V-rename r V `with C-rename (cong-ren r) M
   C-rename r (absurd V)         = absurd (V-rename r V)
-  C-rename r (cmp ⋈ V W et)     = cmp ⋈ (V-rename r V) (V-rename r W) et
   C-rename r (if V `then M `else N) =
     if V-rename r V `then C-rename r M `else C-rename r N
   C-rename r (matchℕ V `zero M `succ N) =

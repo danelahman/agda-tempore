@@ -6,10 +6,11 @@
 -- setoid, whose constants are elements of that setoid; a non-eternal    --
 -- one is interpreted by an arbitrary presheaf, with arbitrary global    --
 -- elements standing for its constants. An eternal base type's order is  --
--- a comparison on its setoid, natural as it stands on a constant        --
--- presheaf. `Kᵖ-eternalᵒ` then supplies the `GroundEternal` structure   --
--- for the eternal case, so the presheaf model is closed over any choice --
--- of base types (`PShBaseTypes`).                                       --
+-- a comparison on its setoid, natural, and commuting with the eternal   --
+-- extraction, as it stands on a constant presheaf. `Kᵖ-eternalᵒ` then   --
+-- supplies the `GroundEternal` structure for the eternal case, so the   --
+-- presheaf model is closed over any choice of base types                --
+-- (`PShBaseTypes`).                                                     --
 ---------------------------------------------------------------------------
 
 open import Language.BaseTypes
@@ -43,7 +44,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Base Gra
 open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Modality.Future Grades Wld
   using (PShFut)
 open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Modality.Past Grades Wld
-  using (PShPast; ⟨_⟩ᶠ)
+  using (PShPast; ⟨_⟩ᶠ; mk⟨⟩)
 open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Modality.Adjunction Grades Wld
   using (PShAdj)
 open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Modality.Eternal Grades Wld
@@ -154,6 +155,20 @@ module PShGround (BT : PShBaseTypes) where
           (⟦ p ⟧ᵉᵒ-const c c') (ordᵖ-pt {w} (⟦ p ⟧ᵉᵒ (⟦ p ⟧ᵉᶜ c) (⟦ p ⟧ᵉᶜ c')))
   cmpᵇ-pt (no ¬p) eb c c' = ⊥-elim-irr (¬p eb)
 
+  -- The comparison commutes with the eternal extraction: on a constant
+  -- presheaf the extraction leaves the compared values, and the outcome,
+  -- unchanged.
+
+  cmpᵇ-eternal : ∀ {b} → (d : Dec (EternalBaseType b)) → .(eb : EternalBaseType b) → ∀ {ρ}
+               → cmpᵇ d eb ∘ᵐ Eternalᵒ.extᵉ (×ᵖ-eternalᵒ (eternalᵇ d eb) (eternalᵇ d eb)) {ρ}
+               ≈ᵐ Eternalᵒ.extᵉ (+ᵖ-eternalᵒ 𝟙ᵖ-eternalᵒ (+ᵖ-eternalᵒ 𝟙ᵖ-eternalᵒ 𝟙ᵖ-eternalᵒ)) {ρ}
+                  ∘ᵐ ⟨ ρ ⟩ᶠ (cmpᵇ d eb)
+  cmpᵇ-eternal (yes p) _ (mk⟨⟩ _ (x , y)) with ⟦ p ⟧ᵉᵒ x y
+  ... | less    = tt
+  ... | equal   = tt
+  ... | greater = tt
+  cmpᵇ-eternal (no ¬p) eb = ⊥-elim-irr (¬p eb)
+
   -- The `GroundTypes` and `GroundEternal` structures assembled from a
   -- choice of base types, deciding eternality per base type.
 
@@ -181,6 +196,7 @@ module PShGround (BT : PShBaseTypes) where
     ; ⟦⟧ᵇᶜ-eternal  = λ {b} eb c → constᵇ-eternal (eternalBaseType? b) eb c
     ; cmpᵇᵐ          = λ b eb → cmpᵇ (eternalBaseType? b) eb
     ; cmpᵇᵐ-pt       = λ {b} eb → cmpᵇ-pt (eternalBaseType? b) eb
+    ; cmpᵇᵐ-eternal  = λ {b} eb → cmpᵇ-eternal (eternalBaseType? b) eb
     ; trueᵐ-eternal  = λ _ → refl
     ; falseᵐ-eternal = λ _ → refl
     ; zeroᵐ-eternal  = λ _ → refl

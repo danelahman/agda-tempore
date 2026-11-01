@@ -88,11 +88,6 @@ cast-if : ∀ {Γ Γ' C} → (e : Γ ≡ Γ')
         ≡ if (castᵛ e V) `then (castᶜ e M) `else (castᶜ e N)
 cast-if refl = refl
 
-cast-cmp : ∀ {Γ Γ' A ⋈} → (e : Γ ≡ Γ')
-         → {V W : Γ ⊢ᵛ⦂ A} → {et : Et A}
-         → castᶜ e (cmp ⋈ V W et) ≡ cmp ⋈ (castᵛ e V) (castᵛ e W) et
-cast-cmp refl = refl
-
 -- The binding formers put their body at an extended context, so the cast
 -- transported there is `cong` of the extension.
 
@@ -142,6 +137,11 @@ cast-nil refl = refl
 cast-cons : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {V : Γ ⊢ᵛ⦂ A} → {W : Γ ⊢ᵛ⦂ list A}
           → castᵛ e (cons V W) ≡ cons (castᵛ e V) (castᵛ e W)
 cast-cons refl = refl
+
+cast-cmp : ∀ {Γ Γ' A ⋈} → (e : Γ ≡ Γ')
+         → {V W : Γ ⊢ᵛ⦂ A} → {et : Et A}
+         → castᵛ e (cmp ⋈ V W et) ≡ cmp ⋈ (castᵛ e V) (castᵛ e W) et
+cast-cmp refl = refl
 
 cast-matchL : ∀ {Γ Γ' A C} → (e : Γ ≡ Γ')
             → {V : Γ ⊢ᵛ⦂ list A} → {M : Γ ⊢ᶜ⦂ C} → {N : Γ ∷ A ∷ list A ⊢ᶜ⦂ C}

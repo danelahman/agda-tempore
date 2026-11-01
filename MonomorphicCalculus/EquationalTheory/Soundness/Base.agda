@@ -116,6 +116,8 @@ mutual
   ⟦⟧ᵛᵗ-irr nil       _ _ = ≈ᵐ-refl
   ⟦⟧ᵛᵗ-irr (cons V W) (pV , pW) (pV' , pW') =
     ∘ᵐ-congʳ ⟨ ⟦⟧ᵛᵗ-irr V pV pV' , ⟦⟧ᵛᵗ-irr W pW pW' ⟩ᵐ-cong
+  ⟦⟧ᵛᵗ-irr (cmp ⋈ V W et) (pV , pW) (pV' , pW') =
+    ∘ᵐ-congʳ (∘ᵐ-congʳ ⟨ ⟦⟧ᵛᵗ-irr V pV pV' , ⟦⟧ᵛᵗ-irr W pW pW' ⟩ᵐ-cong)
   ⟦⟧ᵛᵗ-irr (fun M)   pM pM' = curryᵐ-cong (⟦⟧ᶜᵗ-irr M pM pM')
   ⟦⟧ᵛᵗ-irr (handler N H) (pN , pH , uH) (pN' , pH' , uH') =
     handler-≈ {N = N} {N} {H} {H} pN pH uH pN' pH' uH' (⟦⟧ᶜᵗ-irr N pN pN')
@@ -135,8 +137,6 @@ mutual
             (⟨ ⟨ ≈ᵐ-refl , ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV') ⟩ᵐ-cong
              , ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV') ⟩ᵐ-cong)
   ⟦⟧ᶜᵗ-irr (absurd V) pV pV' = ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
-  ⟦⟧ᶜᵗ-irr (cmp ⋈ V W et) (pV , pW) (pV' , pW') =
-    ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ⟦⟧ᵛᵗ-irr V pV pV' , ⟦⟧ᵛᵗ-irr W pW pW' ⟩ᵐ-cong)))
   ⟦⟧ᶜᵗ-irr (if V `then M `else N) (pV , pM , pN) (pV' , pM' , pN') =
     ifᵐ-cong (⟦⟧ᵛᵗ-irr V pV pV') (⟦⟧ᶜᵗ-irr M pM pM') (⟦⟧ᶜᵗ-irr N pN pN')
   ⟦⟧ᶜᵗ-irr (matchℕ V `zero M `succ N) (pV , pM , pN) (pV' , pM' , pN') =

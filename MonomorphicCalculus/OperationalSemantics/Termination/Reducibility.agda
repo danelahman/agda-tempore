@@ -624,8 +624,8 @@ SRed-∅ : SRed ∅
 SRed-∅ c r = ⊥-elim (not-in-empty-ctx c)
 
 -- A boolean over a state context runs to one of the two constants: a variable
--- is ruled out by `bool-not-in-toCtx`, and a subsumption is dropped by
--- `SUB-IF`.
+-- is ruled out by `bool-not-in-toCtx`, a subsumption is dropped by `SUB-IF`,
+-- and a comparison decides to a constant by `CMP`.
 
 bool-canonical : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ bool)
                → (∀ {A ε} {M N : toCtx 𝕊 ⊢ᶜ⦂ A ! ε}
@@ -635,6 +635,11 @@ bool-canonical : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ bool)
 bool-canonical (var x f)      = ⊥-elim (bool-not-in-toCtx x)
 bool-canonical true           = inj₁ (IF-TRUE ▸ done)
 bool-canonical false          = inj₂ (IF-FALSE ▸ done)
+bool-canonical {𝕊} (cmp ⋈ V W et) with decided {𝕊 = 𝕊} ⋈ V W et
+... | inj₁ e = inj₁ (λ {_} {_} {M} {N} →
+        CMP ▸ subst (λ X → ⟨ 𝕊 ∣ if X `then M `else N ⟩ ⟶* ⟨ 𝕊 ∣ M ⟩) (sym e) (IF-TRUE ▸ done))
+... | inj₂ e = inj₂ (λ {_} {_} {M} {N} →
+        CMP ▸ subst (λ X → ⟨ 𝕊 ∣ if X `then M `else N ⟩ ⟶* ⟨ 𝕊 ∣ N ⟩) (sym e) (IF-FALSE ▸ done))
 bool-canonical (subV V boolₛ) with bool-canonical V
 ... | inj₁ rs = inj₁ (SUB-IF ▸ rs)
 ... | inj₂ rs = inj₂ (SUB-IF ▸ rs)

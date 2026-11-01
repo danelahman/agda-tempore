@@ -403,13 +403,13 @@ head-stale-behind-the-top ()
 ------------------------------------------------------------------------
 -- Comparisons
 --
--- `cmp` compares two values of one eternal type and returns the truth
--- of the relation, taking no time. Identifiers are ordered as their
+-- `cmp` compares two values of one eternal type, and is itself a value:
+-- the boolean truth of the relation. Identifiers are ordered as their
 -- numbers; the data built from eternal types, lexicographically.
 
--- two identifiers, bound together, compared at once
+-- two identifiers, bound together, compared
 
-same-node : [] ∷ NodeId ∷ NodeId ⊢ᶜ⦂ bool ! 𝟏ₑ
+same-node : [] ∷ NodeId ∷ NodeId ⊢ᵛ⦂ bool
 same-node =
   cmp eq (eternal-var nodeid-eternal (Tl-∷ Hd)) here nodeid-eternal
 
@@ -418,7 +418,7 @@ same-node =
 below-after-reading : [] ∷ NodeId ⊢ᶜ⦂ bool ! [0, 1 ]
 below-after-reading =
   perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
-    (cmp lt (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))) (const nodeid 7) nodeid-eternal)
+    (return (cmp lt (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))) (const nodeid 7) nodeid-eternal))
 
 -- a reading is not eternal, so no comparison of readings is typed
 
@@ -430,11 +430,9 @@ readings-not-compared = reading-not-eternal
 
 transmitting-above : [] ∷ NodeId ∷ Reading ⊢ᶜ⦂ unit ! [0, 6 ]
 transmitting-above =
-  cmp gt (eternal-var nodeid-eternal (Tl-∷ Hd)) (const nodeid 3) nodeid-eternal
-    ⨟                                -- ⟨ [0, 0 ] ⟩ ∷ bool
   coerce ≤!
-    (if here
-      `then perform send (fresh-var ≤! (Tl-∷ (Tl-⟨⟩ Hd))) (return ⋆)
+    (if cmp gt (eternal-var nodeid-eternal (Tl-∷ Hd)) (const nodeid 3) nodeid-eternal
+      `then perform send (fresh-var ≤! Hd) (return ⋆)
       `else coerce ≤! (return ⋆))
 
 -- The order on data, computed: numerals as numbers, lists and pairs
@@ -468,11 +466,12 @@ at-most-of-equal = refl
 differ-of-less : holds ne (compareᵈ natₑ 2 3) ≡ true
 differ-of-less = refl
 
--- `CMP` reduces a comparison to the returned outcome, reading the operands'
--- data off the values
+-- `CMP` decides a scrutinised comparison to its boolean constant, reading the
+-- operands' data off the values
 
-two-below-three-reduces : ⟨ ∅ ∣ cmp lt (numeralᵛ 2) (numeralᵛ 3) natₑ ⟩
-                        ⟶ ⟨ ∅ ∣ return true ⟩
+two-below-three-reduces : ⟨ ∅ ∣ if cmp lt (numeralᵛ 2) (numeralᵛ 3) natₑ
+                                  `then return true `else return false ⟩
+                        ⟶ ⟨ ∅ ∣ if true `then return true `else return false ⟩
 two-below-three-reduces = CMP
 
 ------------------------------------------------------------------------

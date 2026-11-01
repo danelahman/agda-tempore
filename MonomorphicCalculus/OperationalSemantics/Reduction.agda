@@ -1,3 +1,4 @@
+import Data.Bool.Base as Bool
 open import Data.Product
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 
@@ -76,11 +77,22 @@ match+-reduct : ∀ {Γ A B C} → (Γ ⊢ᵛ⦂ A) ⊎ (Γ ⊢ᵛ⦂ B) → Γ 
 match+-reduct (inj₁ W) M N = M [ W ]₀
 match+-reduct (inj₂ W) M N = N [ W ]₀
 
--- The reduct of a comparison: the relation's truth on the operands' data
+-- The boolean constant a comparison decides to: the relation's truth on the
+-- operands' data
 
-cmp-reduct : ∀ {Γ A} {𝕊 : State Γ} → Cmp → (V W : toCtx 𝕊 ⊢ᵛ⦂ A) → Et A
-           → toCtx 𝕊 ⊢ᶜ⦂ bool ! 𝟏ₑ
-cmp-reduct ⋈ V W et = return ⌈ holds ⋈ (compareᵈ et (⌊ et ⌋ᵈ V) (⌊ et ⌋ᵈ W)) ⌉ᵇ
+decide : ∀ {Γ A} {𝕊 : State Γ} → Cmp → (V W : toCtx 𝕊 ⊢ᵛ⦂ A) → Et A
+       → toCtx 𝕊 ⊢ᵛ⦂ bool
+decide {𝕊 = 𝕊} ⋈ V W et =
+  ⌈ holds ⋈ (compareᵈ et (⌊_⌋ᵈ {𝕊 = 𝕊} et V) (⌊_⌋ᵈ {𝕊 = 𝕊} et W)) ⌉ᵇ
+
+decided : ∀ {Γ A} {𝕊 : State Γ} → (⋈ : Cmp) → (V W : toCtx 𝕊 ⊢ᵛ⦂ A) → (et : Et A)
+        → (decide {𝕊 = 𝕊} ⋈ V W et ≡ true) ⊎ (decide {𝕊 = 𝕊} ⋈ V W et ≡ false)
+decided {𝕊 = 𝕊} ⋈ V W et =
+  constant {toCtx 𝕊} (holds ⋈ (compareᵈ et (⌊_⌋ᵈ {𝕊 = 𝕊} et V) (⌊_⌋ᵈ {𝕊 = 𝕊} et W)))
+  where
+    constant : ∀ {Δ} → (b : Bool.Bool) → (⌈_⌉ᵇ {Δ} b ≡ true) ⊎ (⌈_⌉ᵇ {Δ} b ≡ false)
+    constant Bool.true  = inj₁ refl
+    constant Bool.false = inj₂ refl
 
 infix 3 _⟶_
 
@@ -131,14 +143,16 @@ mutual
                      ------------------------------------------------------------
                    → ⟨ 𝕊 ∣ recL V M N p ⟩ ⟶ ⟨ 𝕊 ∣ recL-reduct (listᵛ V) M N p ⟩
 
-        -- comparison: the relation's truth on the operands' data
-        CMP        : ∀ {A}
+        -- boolean elimination: a comparison decides to a boolean constant
+        CMP        : ∀ {A C}
                    → {𝕊 : State []}
                    → {⋈ : Cmp}
                    → {V W : toCtx 𝕊 ⊢ᵛ⦂ A}
                    → {et : Et A}
+                   → {M N : toCtx 𝕊 ⊢ᶜ⦂ C}
                      ------------------------------------------------------------
-                   → ⟨ 𝕊 ∣ cmp ⋈ V W et ⟩ ⟶ ⟨ 𝕊 ∣ cmp-reduct ⋈ V W et ⟩
+                   → ⟨ 𝕊 ∣ if cmp ⋈ V W et `then M `else N ⟩ ⟶
+                     ⟨ 𝕊 ∣ if decide {𝕊 = 𝕊} ⋈ V W et `then M `else N ⟩
 
         -- boolean elimination: take the branch the scrutinee names
         IF-TRUE    : ∀ {C}
@@ -502,7 +516,7 @@ mutual
     step-refines-type {A = A} MATCHL            = <:ᵛ-refl A
     step-refines-type {A = A} RECL              = <:ᵛ-refl A
     step-refines-type {A = A} IF-TRUE           = <:ᵛ-refl A
-    step-refines-type CMP                       = boolₛ
+    step-refines-type {A = A} CMP               = <:ᵛ-refl A
     step-refines-type {A = A} IF-FALSE          = <:ᵛ-refl A
     step-refines-type {A = A} MATCH+            = <:ᵛ-refl A
     step-refines-type {A = A} MATCHℕ-ZERO       = <:ᵛ-refl A

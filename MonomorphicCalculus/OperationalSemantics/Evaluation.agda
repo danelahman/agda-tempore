@@ -60,12 +60,13 @@ base-canonical (const B c)           = c , refl
 base-canonical (subV V (Baseₛ refl)) = base-canonical V
 
 -- The same at `bool`, where the spine is again forced to be identity
--- coercions.
+-- coercions, and a comparison stands for the constant it decides to.
 
 bool-val : ∀ {𝕊 : State []} → toCtx 𝕊 ⊢ᵛ⦂ bool → toCtx 𝕊 ⊢ᵛ⦂ bool
 bool-val (var x f)      = ⊥-elim (bool-not-in-toCtx x)
 bool-val true           = true
 bool-val false          = false
+bool-val {𝕊} (cmp ⋈ V W et) = decide {𝕊 = 𝕊} ⋈ V W et
 bool-val (subV V boolₛ) = bool-val V
 
 bool-val-canonical : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ bool)
@@ -73,6 +74,7 @@ bool-val-canonical : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ bool)
 bool-val-canonical (var x f)      = ⊥-elim (bool-not-in-toCtx x)
 bool-val-canonical true           = inj₁ refl
 bool-val-canonical false          = inj₂ refl
+bool-val-canonical {𝕊} (cmp ⋈ V W et) = decided {𝕊 = 𝕊} ⋈ V W et
 bool-val-canonical (subV V boolₛ) = bool-val-canonical V
 
 -- The ticks a step takes: only `DELAY` advances time, by its own delay. The

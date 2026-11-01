@@ -377,17 +377,23 @@ cast-sub-handle refl M' N' H' = refl
       (trans (cong (λ l → recL-reduct l _ _ p) (listᵛ-cast (sym (toCtx-≐ˢ es)) U'))
              (cast-recL-reduct (sym (toCtx-≐ˢ es)) (listᵛ U') M₀' N₀' p))
 
--- comparison: the operands correspond on both sides, and so do their data
--- (`cast-cmp-reduct`).
+-- comparison at a scrutinised boolean: the operands correspond on both
+-- sides, and so do their data, hence the constants decided to
+-- (`cast-decide`).
 
-⟶-≐ˢ-cmp : ∀ {A ⋈} {𝕊 𝕊' : State []} → (es : 𝕊 ≐ˢ 𝕊')
-         → {U W : toCtx 𝕊 ⊢ᵛ⦂ A} → {et : Et A}
-         → (P' : toCtx 𝕊' ⊢ᶜ⦂ bool ! 𝟏ₑ)
-         → cmp ⋈ U W et ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
-         → Sim es P' (CMP {⋈ = ⋈} {V = U} {W = W} {et = et})
-⟶-≐ˢ-cmp {⋈ = ⋈} es {et = et} P' eM with cast-cmp⁻ (sym (toCtx-≐ˢ es)) P' eM
-... | U' , W' , refl , refl , refl =
-    _ , _ , es , CMP , id-≤≐ , cast-cmp-reduct (sym (toCtx-≐ˢ es)) ⋈ U' W' et
+⟶-≐ˢ-cmp : ∀ {A B ε ⋈} {𝕊 𝕊' : State []} → (es : 𝕊 ≐ˢ 𝕊')
+         → {U W : toCtx 𝕊 ⊢ᵛ⦂ A} → {et : Et A} → {M N : toCtx 𝕊 ⊢ᶜ⦂ B ! ε}
+         → (P' : toCtx 𝕊' ⊢ᶜ⦂ B ! ε)
+         → (if cmp ⋈ U W et `then M `else N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+         → Sim es P' (CMP {⋈ = ⋈} {V = U} {W = W} {et = et} {M = M} {N = N})
+⟶-≐ˢ-cmp {⋈ = ⋈} es {et = et} P' eM with cast-if⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | Vb' , M₀' , N₀' , refl , eVb , eM₀ , eN₀
+  with cast-cmp⁻ (sym (toCtx-≐ˢ es)) Vb' eVb
+...   | U' , W' , refl , refl , refl =
+    _ , _ , es , CMP , id-≤≐
+  , trans (cong₃ (λ v m n → if v `then m `else n)
+                 (cast-decide (sym (toCtx-≐ˢ es)) ⋈ U' W' et) eM₀ eN₀)
+          (sym (cast-if (sym (toCtx-≐ˢ es))))
 
 -- matching: the scrutinee corresponds on both sides, and its two projections
 -- commute with the cast (`fstᵛ-cast`/`sndᵛ-cast`).

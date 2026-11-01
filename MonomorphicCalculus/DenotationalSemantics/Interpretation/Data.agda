@@ -3,9 +3,9 @@
 --                                                                    --
 -- The value a datum embeds as (`⌈_⌉`) denotes the datum's point,     --
 -- constant in the context (`⟦⌈⌉⟧`). A comparison of two values       --
--- denoting points of data denotes returning the relation's truth on  --
--- the data's order (`sound-cmp`): the semantic content of `CMP` and  --
--- of the equational theory's comparison β law.                       --
+-- denoting points of data denotes the boolean constant of the        --
+-- relation's truth on the data's order (`sound-cmp`): the semantic   --
+-- content of `CMP` and of the equational theory's comparison β law.  --
 ------------------------------------------------------------------------
 
 open import Grades.Base
@@ -44,12 +44,11 @@ open LanguageSpec S
 open import Language.Comparisons
 open import MonomorphicCalculus.Syntax.Types S
 open import MonomorphicCalculus.Syntax.Terms S
-  using (_⊢ᵛ⦂_; _⊢ᶜ⦂_; cmp; return; const; ⋆; true; false; zero; succ; ⦉_,_⦊; inl; inr; nil; cons)
+  using (_⊢ᵛ⦂_; cmp; const; ⋆; true; false; zero; succ; ⦉_,_⦊; inl; inr; nil; cons)
 open import MonomorphicCalculus.Syntax.Data      S
 
 open Category Cat
 open GroundTypes GTy
-open Monad Mon using (ηᵀ)
 
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types       S Cat Fut Pst Adj GTy Mon
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Comparisons S Cat Fut Pst Adj GTy Mon GE
@@ -96,18 +95,18 @@ param-⌈⌉ emptyₑ         ()
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 ⟦⌈⌉⟧ emptyₑ         ()
 
--- A comparison of values denoting data's points returns the relation's
--- truth on the data's order.
+-- A comparison of values denoting data's points denotes the boolean constant
+-- of the relation's truth on the data's order.
 
 sound-cmp : ∀ {Γ A} → (⋈ : Cmp) → (et : Et A) → (V W : Γ ⊢ᵛ⦂ A)
           → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (d e : ⟪ A ⟫)
           → ⟦ V ⟧ᵛᵗ pV ≈ᵐ ⌜ et ⌝ᵈ d ∘ᵐ terminalᵐ
           → ⟦ W ⟧ᵛᵗ pW ≈ᵐ ⌜ et ⌝ᵈ e ∘ᵐ terminalᵐ
-          → ⟦ cmp ⋈ V W et ⟧ᶜᵗ (pV , pW)
-            ≈ᵐ ⟦ return {Γ} ⌈ holds ⋈ (compareᵈ et d e) ⌉ᵇ ⟧ᶜᵗ
+          → ⟦ cmp ⋈ V W et ⟧ᵛᵗ (pV , pW)
+            ≈ᵐ ⟦ ⌈_⌉ᵇ {Γ} (holds ⋈ (compareᵈ et d e)) ⟧ᵛᵗ
                  (param-⌈⌉ boolₑ (holds ⋈ (compareᵈ et d e)))
 sound-cmp ⋈ et V W pV pW d e eV eW =
-    ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ eV , eW ⟩ᵐ-cong ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (cmpᵐ-pt et d e)))
-  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (holdsᵐ-pt ⋈ (compareᵈ et d e)))
-  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟦⌈⌉⟧ boolₑ (holds ⋈ (compareᵈ et d e))))
+    ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ eV , eW ⟩ᵐ-cong ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (cmpᵐ-pt et d e))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (holdsᵐ-pt ⋈ (compareᵈ et d e))
+  ∙ ≈ᵐ-sym (⟦⌈⌉⟧ boolₑ (holds ⋈ (compareᵈ et d e)))

@@ -14,6 +14,7 @@
 -- and denotations live in the tree monad `Tᵒ`.                       --
 ------------------------------------------------------------------------
 
+import Data.Bool.Base as Bool
 open import Data.Empty
 open import Data.Product
 open import Data.Sum using (_⊎_; inj₁; inj₂)
@@ -58,6 +59,7 @@ open Operations Ops
 open import MonomorphicCalculus.Syntax.Contexts Spec
 open import MonomorphicCalculus.Syntax.Terms    Spec
 open import MonomorphicCalculus.Syntax.Types    Spec
+open import MonomorphicCalculus.Syntax.Data     Spec using (⌈_⌉ᵇ)
 
 open import MonomorphicCalculus.OperationalSemantics.Reduction           Spec
 open import MonomorphicCalculus.OperationalSemantics.State               Spec
@@ -68,6 +70,7 @@ open Past Pst using (⟨_⟩ᵒ)
 open Adjunction Adj using (η⊣)
 open GroundTypes GTy using (⟦_⟧ᵍ; ⟦_⟧ᵇ; ⟦_⟧ᵇᶜ)
 open Monad Mon
+open import MonomorphicCalculus.DenotationalSemantics.Model.Comparison Cat using (⌜_⌝ᵇ)
 
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types     Spec Cat Fut Pst Adj GTy Mon
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Subtyping Spec Cat Fut Pst Adj GTy Mon
@@ -286,9 +289,26 @@ adequacy-base {M = M} {N = N} pM pN e wM wN
 ... | refl = cM , sM , sN
 
 -- A `bool`-typed value's leaf is one of the two constants', read through its
--- subsumption spine by `bool-val`; the state's environment is absorbed by the
--- terminal object, as at a base constant. Which constant it is has to be
--- carried along, since the two give different leaves.
+-- subsumption spine by `bool-val`, a comparison by the constant it decides to;
+-- the state's environment is absorbed by the terminal object, as at a base
+-- constant. Which constant it is has to be carried along, since the two give
+-- different leaves.
+
+bool-leaf-const : ∀ {𝕊 : State []} → (pSt : Paramˢ 𝕊) → (b : Bool.Bool)
+                → {f : ⟦ hist 𝕊 ⟧ᶜᵗˣ →ᵐ Tᵒ 𝔹ᵐ 𝟏ₑ}
+                → f ≈ᵐ (ηᵀ ∘ᵐ (⌜ b ⌝ᵇ ∘ᵐ terminalᵐ)) ∘ᵐ ⟦ 𝕊 ⟧ˢ pSt
+                → ((⌈_⌉ᵇ {toCtx 𝕊} b ≡ true) × (f ≈ᵐ leafᵐ (trueᵐ ∘ᵐ terminalᵐ)))
+                ⊎ ((⌈_⌉ᵇ {toCtx 𝕊} b ≡ false) × (f ≈ᵐ leafᵐ (falseᵐ ∘ᵐ terminalᵐ)))
+bool-leaf-const {𝕊 = 𝕊} pSt Bool.true e =
+  inj₁ (refl
+       , ≈ᵐ-trans e (≈ᵐ-trans (∘ᵐ-assoc ηᵀ (trueᵐ ∘ᵐ terminalᵐ) (⟦ 𝕊 ⟧ˢ pSt))
+           (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc trueᵐ terminalᵐ (⟦ 𝕊 ⟧ˢ pSt))
+                               (∘ᵐ-congʳ terminalᵐ-unique)))))
+bool-leaf-const {𝕊 = 𝕊} pSt Bool.false e =
+  inj₂ (refl
+       , ≈ᵐ-trans e (≈ᵐ-trans (∘ᵐ-assoc ηᵀ (falseᵐ ∘ᵐ terminalᵐ) (⟦ 𝕊 ⟧ˢ pSt))
+           (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc falseᵐ terminalᵐ (⟦ 𝕊 ⟧ˢ pSt))
+                               (∘ᵐ-congʳ terminalᵐ-unique)))))
 
 bool-leaf-value : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ bool)
                 → (pSt : Paramˢ 𝕊) → (pV : Paramᵛ V)
@@ -300,16 +320,11 @@ bool-leaf-value : ∀ {𝕊 : State []} → (V : toCtx 𝕊 ⊢ᵛ⦂ bool)
                         ≈ᵐ leafᵐ (falseᵐ ∘ᵐ terminalᵐ)))
 
 bool-leaf-value (var x f) pSt pV = ⊥-elim (bool-not-in-toCtx x)
-bool-leaf-value {𝕊 = 𝕊} true pSt pV =
-  inj₁ (refl
-       , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (trueᵐ ∘ᵐ terminalᵐ) (⟦ 𝕊 ⟧ˢ pSt))
-           (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc trueᵐ terminalᵐ (⟦ 𝕊 ⟧ˢ pSt))
-                               (∘ᵐ-congʳ terminalᵐ-unique))))
-bool-leaf-value {𝕊 = 𝕊} false pSt pV =
-  inj₂ (refl
-       , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (falseᵐ ∘ᵐ terminalᵐ) (⟦ 𝕊 ⟧ˢ pSt))
-           (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc falseᵐ terminalᵐ (⟦ 𝕊 ⟧ˢ pSt))
-                               (∘ᵐ-congʳ terminalᵐ-unique))))
+bool-leaf-value true  pSt pV = bool-leaf-const pSt Bool.true ≈ᵐ-refl
+bool-leaf-value false pSt pV = bool-leaf-const pSt Bool.false ≈ᵐ-refl
+bool-leaf-value {𝕊 = 𝕊} (cmp ⋈ V W et) pSt (pV , pW) =
+  bool-leaf-const pSt _
+    (∘ᵐ-congˡ (∘ᵐ-congʳ (⌊⌋ᵈ-sound 𝕊 boolₑ (cmp ⋈ V W et) (pV , pW))))
 bool-leaf-value (subV V boolₛ) pSt pV with bool-leaf-value V pSt pV
 ... | inj₁ (sv , qv) =
   inj₁ (sv , ≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-identityˡ _))) qv)

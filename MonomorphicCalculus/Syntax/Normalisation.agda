@@ -121,6 +121,12 @@ data NfV where
              {p : A₁ <:ᵛ A} {q : A₂ <:ᵛ list A}
          → NfV V → NfV W → NfV (cons (subV V p) (subV W q))
 
+  -- the operands meet at the compared type
+
+  cmpⁿ   : ∀ {Γ A A₁ A₂ ⋈} {V : Γ ⊢ᵛ⦂ A₁} {W : Γ ⊢ᵛ⦂ A₂}
+             {p : A₁ <:ᵛ A} {q : A₂ <:ᵛ A} {et : Et A}
+         → NfV V → NfV W → NfV (cmp ⋈ (subV V p) (subV W q) et)
+
   funⁿ   : ∀ {Γ A B ε} {M : Γ ∷ A ⊢ᶜ⦂ B ! ε} → NfC M → NfV (fun M)
 
   -- the clauses and the return clause meet at the handler's result type;
@@ -156,12 +162,6 @@ data NfC where
            → NfV V → NfC N → NfC (match V `with N)
 
   absurdⁿ  : ∀ {Γ A ε} {V : Γ ⊢ᵛ⦂ empty} → NfV V → NfC (absurd {C = A ! ε} V)
-
-  -- the operands meet at the compared type
-
-  cmpⁿ     : ∀ {Γ A A₁ A₂ ⋈} {V : Γ ⊢ᵛ⦂ A₁} {W : Γ ⊢ᵛ⦂ A₂}
-               {p : A₁ <:ᵛ A} {q : A₂ <:ᵛ A} {et : Et A}
-           → NfV V → NfV W → NfC (cmp ⋈ (subV V p) (subV W q) et)
 
   -- the branches meet at the type the `if` is used at
 
@@ -299,6 +299,11 @@ V-subCtx c (consⁿ {p = p} {q = q} nV nW) with V-subCtx c nV | V-subCtx c nW
 ... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
   nfv (cons (subV V' (<:ᵛ-trans s₁ p)) (subV W' (<:ᵛ-trans s₂ q))) (<:ᵛ-refl _)
       (consⁿ n₁ n₂) (cong₂ cons e₁ e₂)
+V-subCtx c (cmpⁿ {⋈ = ⋈} {p = p} {q = q} {et = et} nV nW)
+  with V-subCtx c nV | V-subCtx c nW
+... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
+  nfv (cmp ⋈ (subV V' (<:ᵛ-trans s₁ p)) (subV W' (<:ᵛ-trans s₂ q)) et) boolₛ
+      (cmpⁿ n₁ n₂) (cong₂ (cmp ⋈) e₁ e₂)
 V-subCtx c (funⁿ {A = A} nM) with C-subCtx (≼-∷ c (<:ᵛ-refl A)) nM
 ... | nfc M' sv se n e =
   nfv (fun M') (<:ᵛ-refl A ⇒ₛ (sv !ₛ se)) (funⁿ n) (cong fun e)
@@ -336,11 +341,6 @@ C-subCtx c (matchⁿ nV nN) with V-subCtx c nV
 C-subCtx c (absurdⁿ nV) with V-subCtx c nV
 ... | nfv V' emptyₛ nV' eV =
   nfc (absurd V') (<:ᵛ-refl _) ≾ₑ-refl (absurdⁿ nV') (cong absurd eV)
-C-subCtx c (cmpⁿ {⋈ = ⋈} {p = p} {q = q} {et = et} nV nW)
-  with V-subCtx c nV | V-subCtx c nW
-... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
-  nfc (cmp ⋈ (subV V' (<:ᵛ-trans s₁ p)) (subV W' (<:ᵛ-trans s₂ q)) et) (<:ᵛ-refl _)
-      ≾ₑ-refl (cmpⁿ n₁ n₂) (cong₂ (cmp ⋈) e₁ e₂)
 C-subCtx c (ifⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
 ... | nfv V' boolₛ nV' eV with C-subCtx c nM | C-subCtx c nN
 ...   | nfc M' sv₁ se₁ nM' eM | nfc N' sv₂ se₂ nN' eN =
@@ -449,6 +449,9 @@ V-normalise nil =
 V-normalise (cons V W) with V-normalise V | V-normalise W
 ... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
   nfv (cons (subV V' s₁) (subV W' s₂)) (<:ᵛ-refl _) (consⁿ n₁ n₂) (cong₂ cons e₁ e₂)
+V-normalise (cmp ⋈ V W et) with V-normalise V | V-normalise W
+... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
+  nfv (cmp ⋈ (subV V' s₁) (subV W' s₂) et) boolₛ (cmpⁿ n₁ n₂) (cong₂ (cmp ⋈) e₁ e₂)
 V-normalise (fun {A = A} {C = B ! ε} M) with C-normalise M
 ... | nfc M' sv se n e =
   nfv (fun M') (<:ᵛ-refl A ⇒ₛ (sv !ₛ se)) (funⁿ n) (cong fun e)
@@ -490,10 +493,6 @@ C-normalise (match V `with N) with V-normalise V
 C-normalise (absurd V) with V-normalise V
 ... | nfv V' emptyₛ nV eV =
   nfc (absurd V') (<:ᵛ-refl _) ≾ₑ-refl (absurdⁿ nV) (cong absurd eV)
-C-normalise (cmp ⋈ V W et) with V-normalise V | V-normalise W
-... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
-  nfc (cmp ⋈ (subV V' s₁) (subV W' s₂) et) (<:ᵛ-refl _) ≾ₑ-refl (cmpⁿ n₁ n₂)
-      (cong₂ (cmp ⋈) e₁ e₂)
 C-normalise (if V `then M `else N) with V-normalise V
 ... | nfv V' boolₛ nV eV with C-normalise M | C-normalise N
 ...   | nfc M' sv₁ se₁ nM eM | nfc N' sv₂ se₂ nN eN =

@@ -180,8 +180,8 @@ cast-if⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
 
 cast-cmp⁻ : ∀ {Γ Γ' A ⋈} → (e : Γ' ≡ Γ)
           → {V W : Γ ⊢ᵛ⦂ A} → {et : Et A}
-          → (P' : Γ' ⊢ᶜ⦂ bool ! 𝟏ₑ)
-          → cmp ⋈ V W et ≡ castᶜ e P'
+          → (P' : Γ' ⊢ᵛ⦂ bool)
+          → cmp ⋈ V W et ≡ castᵛ e P'
           → Σ[ V' ∈ (Γ' ⊢ᵛ⦂ A) ] Σ[ W' ∈ (Γ' ⊢ᵛ⦂ A) ]
               (P' ≡ cmp ⋈ V' W' et) × (V ≡ castᵛ e V') × (W ≡ castᵛ e W')
 cast-cmp⁻ refl _ refl = _ , _ , refl , refl , refl
@@ -388,7 +388,8 @@ sndᵛ-cast e (subV V (_ |×|ₛ q)) =
                (sym (cast-subV e)))
 
 -- The datum a value of an eternal type is commutes with a context equality,
--- and so does the comparison's reduct: the data, hence the outcome, agree.
+-- and so does the constant a comparison decides to: the data, hence the
+-- outcome, agree.
 
 cast-closed : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (V : ∀ {Δ} → Δ ⊢ᵛ⦂ A) → castᵛ e V ≡ V
 cast-closed refl V = refl
@@ -405,6 +406,9 @@ cast-closed refl V = refl
 ⌊⌋ᵈ-cast {𝕊' = 𝕊'} e unitₑ ⋆ = cong (⌊_⌋ᵈ {𝕊 = 𝕊'} unitₑ) (cast-closed e ⋆)
 ⌊⌋ᵈ-cast {𝕊' = 𝕊'} e boolₑ true = cong (⌊_⌋ᵈ {𝕊 = 𝕊'} boolₑ) (cast-closed e true)
 ⌊⌋ᵈ-cast {𝕊' = 𝕊'} e boolₑ false = cong (⌊_⌋ᵈ {𝕊 = 𝕊'} boolₑ) (cast-closed e false)
+⌊⌋ᵈ-cast {𝕊' = 𝕊'} e boolₑ (cmp ⋈ V W et) =
+  trans (cong (⌊_⌋ᵈ {𝕊 = 𝕊'} boolₑ) (cast-cmp e {V = V} {W = W} {et = et}))
+        (cong₂ (λ a b → holds ⋈ (compareᵈ et a b)) (⌊⌋ᵈ-cast e et V) (⌊⌋ᵈ-cast e et W))
 ⌊⌋ᵈ-cast {𝕊' = 𝕊'} e natₑ zero = cong (⌊_⌋ᵈ {𝕊 = 𝕊'} natₑ) (cast-closed e zero)
 ⌊⌋ᵈ-cast {𝕊' = 𝕊'} e natₑ (succ V) =
   trans (cong (⌊_⌋ᵈ {𝕊 = 𝕊'} natₑ) (cast-succ e {V = V}))
@@ -424,14 +428,14 @@ cast-closed refl V = refl
   trans (cong (⌊_⌋ᵈ {𝕊 = 𝕊'} et) (cast-cons e {V} {W}))
         (cong₂ List._∷_ (⌊⌋ᵈ-cast e et₁ V) (⌊⌋ᵈ-cast e et W))
 
-cast-cmp-reduct : ∀ {A} {𝕊 𝕊' : State []} → (e : toCtx 𝕊' ≡ toCtx 𝕊)
-                → (⋈ : Cmp) → (V' W' : toCtx 𝕊' ⊢ᵛ⦂ A) → (et : Et A)
-                → cmp-reduct {𝕊 = 𝕊} ⋈ (castᵛ e V') (castᵛ e W') et
-                ≡ castᶜ e (cmp-reduct {𝕊 = 𝕊'} ⋈ V' W' et)
-cast-cmp-reduct e ⋈ V' W' et =
-  trans (cong₂ (λ a b → return ⌈ holds ⋈ (compareᵈ et a b) ⌉ᵇ)
+cast-decide : ∀ {A} {𝕊 𝕊' : State []} → (e : toCtx 𝕊' ≡ toCtx 𝕊)
+            → (⋈ : Cmp) → (V' W' : toCtx 𝕊' ⊢ᵛ⦂ A) → (et : Et A)
+            → decide {𝕊 = 𝕊} ⋈ (castᵛ e V') (castᵛ e W') et
+            ≡ castᵛ e (decide {𝕊 = 𝕊'} ⋈ V' W' et)
+cast-decide e ⋈ V' W' et =
+  trans (cong₂ (λ a b → ⌈ holds ⋈ (compareᵈ et a b) ⌉ᵇ)
                (⌊⌋ᵈ-cast e et V') (⌊⌋ᵈ-cast e et W'))
-        (sym (trans (cast-ret e) (cong return (cast-closed e ⌈ _ ⌉ᵇ))))
+        (sym (cast-closed e ⌈ _ ⌉ᵇ))
 
 -- The decomposition of a list commutes with a context equality, and so do
 -- the reducts the list eliminators build from it.

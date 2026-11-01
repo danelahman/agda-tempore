@@ -115,6 +115,19 @@ mutual
             ---------------
             → Γ ⊢ᵛ⦂ list A
 
+    -- comparison at an eternal type
+
+    -- One rule for the six relations of `Cmp`: both operands at one
+    -- eternal type, the outcome a boolean.
+
+    cmp     : {A : VType}
+            → (⋈ : Cmp)
+            → Γ ⊢ᵛ⦂ A
+            → Γ ⊢ᵛ⦂ A
+            → Et A
+            -----------
+            → Γ ⊢ᵛ⦂ bool
+
     -- lambda abstraction
           
     fun     : {A : VType}
@@ -193,19 +206,6 @@ mutual
             → Γ ⊢ᵛ⦂ empty
             -------------
             → Γ ⊢ᶜ⦂ C
-
-    -- comparison at an eternal type
-
-    -- One rule for the six relations of `Cmp`: both operands at one
-    -- eternal type, the outcome a boolean.
-
-    cmp     : {A : VType}
-            → (⋈ : Cmp)
-            → Γ ⊢ᵛ⦂ A
-            → Γ ⊢ᵛ⦂ A
-            → Et A
-            -----------------
-            → Γ ⊢ᶜ⦂ bool ! 𝟏ₑ
 
     -- boolean elimination
 
@@ -449,5 +449,7 @@ eternal-val-ext _ nil =
   nil
 eternal-val-ext (listₑ et) (cons V W) =
   cons (eternal-val-ext et V) (eternal-val-ext (listₑ et) W)
+eternal-val-ext _ (cmp ⋈ V W et) =
+  cmp ⋈ (eternal-val-ext et V) (eternal-val-ext et W) et
 eternal-val-ext et (subV V p) =
   subV (eternal-val-ext (<:ᵛ-eternalˡ p et) V) p

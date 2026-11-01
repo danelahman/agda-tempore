@@ -48,6 +48,7 @@ mutual
     inr   : ErV → ErV
     nil   : ErV
     cons  : ErV → ErV → ErV
+    cmp   : Cmp → ErV → ErV → ErV
     fun   : ErC → ErV
     handler : ErC → (Op → E → ErC) → ErV
 
@@ -57,7 +58,6 @@ mutual
     _·_               : ErV → ErV → ErC
     match_`with_      : ErV → ErC → ErC
     absurd            : ErV → ErC
-    cmp               : Cmp → ErV → ErV → ErC
     if_`then_`else_   : ErV → ErC → ErC → ErC
     matchℕ_`zero_`succ_ : ErV → ErC → ErC → ErC
     recℕ               : ErV → ErC → ErC → ErC
@@ -95,6 +95,7 @@ mutual
   ⌊ inr V ⌋ᵛ     = inr ⌊ V ⌋ᵛ
   ⌊ nil ⌋ᵛ       = nil
   ⌊ cons V W ⌋ᵛ  = cons ⌊ V ⌋ᵛ ⌊ W ⌋ᵛ
+  ⌊ cmp ⋈ V W _ ⌋ᵛ = cmp ⋈ ⌊ V ⌋ᵛ ⌊ W ⌋ᵛ
   ⌊ fun M ⌋ᵛ     = fun ⌊ M ⌋ᶜ
   ⌊ handler N H ⌋ᵛ = handler ⌊ N ⌋ᶜ (λ op ε'' → ⌊ H op ε'' ⌋ᶜ)
   ⌊ subV V p ⌋ᵛ  = ⌊ V ⌋ᵛ
@@ -106,7 +107,6 @@ mutual
   ⌊ V · W ⌋ᶜ                  = ⌊ V ⌋ᵛ · ⌊ W ⌋ᵛ
   ⌊ match V `with M ⌋ᶜ        = match ⌊ V ⌋ᵛ `with ⌊ M ⌋ᶜ
   ⌊ absurd V ⌋ᶜ               = absurd ⌊ V ⌋ᵛ
-  ⌊ cmp ⋈ V W _ ⌋ᶜ            = cmp ⋈ ⌊ V ⌋ᵛ ⌊ W ⌋ᵛ
   ⌊ if V `then M `else N ⌋ᶜ   = if ⌊ V ⌋ᵛ `then ⌊ M ⌋ᶜ `else ⌊ N ⌋ᶜ
   ⌊ matchℕ V `zero M `succ N ⌋ᶜ = matchℕ ⌊ V ⌋ᵛ `zero ⌊ M ⌋ᶜ `succ ⌊ N ⌋ᶜ
   ⌊ recℕ V M N p ⌋ᶜ             = recℕ ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ ⌊ N ⌋ᶜ

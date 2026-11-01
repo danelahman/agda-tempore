@@ -58,6 +58,8 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Subtyping S
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
+open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Comparisons S Cat Fut Pst Adj GTy Mon GE
+  using (holdsᵐ-cmpᵐ-extᵉ)
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
 
@@ -66,9 +68,8 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.RenamingCoh
 -- rebuild a `Γ`-environment from one for `Γ` with `x` removed, by
 -- computing the missing component with `⟦ W ⟧`.
 
--- `eternal-val-ext` builds only variables, constants, units, booleans,
--- numerals, pairs and injections, never a `fun`, so its result is
--- parametric outright.
+-- `eternal-val-ext` builds only data formers and comparisons, never a `fun`,
+-- so its result is parametric outright.
 
 eternal-val-extᴾ : ∀ {Γ A ρ} → (et : Et A) → (V : Γ ⊢ᵛ⦂ A)
                  → Paramᵛ (eternal-val-ext {ρ = ρ} et V)
@@ -86,6 +87,8 @@ eternal-val-extᴾ (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊    =
   eternal-val-extᴾ et₁ V₁ , eternal-val-extᴾ et₂ V₂
 eternal-val-extᴾ (et₁ |+|ₑ _) (inl V)          = eternal-val-extᴾ et₁ V
 eternal-val-extᴾ (_ |+|ₑ et₂) (inr V)          = eternal-val-extᴾ et₂ V
+eternal-val-extᴾ _ (cmp ⋈ V W et)              =
+  eternal-val-extᴾ et V , eternal-val-extᴾ et W
 eternal-val-extᴾ et (subV V p)                 =
   eternal-val-extᴾ (<:ᵛ-eternalˡ p et) V
 
@@ -99,7 +102,8 @@ sub-env (split-⟨⟩ {ρ = ρ} s)  W pW = ⟨ ρ ⟩ᶠ (sub-env s W pW)
 
 -- Weakening a value of eternal type under a lock: denotationally this is
 -- the eternal extraction applied to the locked environment. Proved by
--- induction on the value (only the eternal formers can occur).
+-- induction on the value (only the eternal formers and comparisons can occur;
+-- a comparison commutes with extraction, `holdsᵐ-cmpᵐ-extᵉ`).
 
 -- Extraction commutes with a coercion out of an eternal type: such a
 -- coercion has equal endpoints, hence is the identity.
@@ -205,6 +209,10 @@ eternal-val-ext-nat (listₑ et) (cons V W) (pV , pW) =
   (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (List-eternalᵒ-cons (eternalᵛ-Eternalᵒ et))))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
             (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))))))
+eternal-val-ext-nat boolₑ (cmp ⋈ V W et) (pV , pW) =
+  ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ
+             ⟨ eternal-val-ext-nat et V pV , eternal-val-ext-nat et W pW ⟩ᵐ-cong))
+           (holdsᵐ-cmpᵐ-extᵉ ⋈ et (⟦ V ⟧ᵛᵗ pV) (⟦ W ⟧ᵛᵗ pW))
 eternal-val-ext-nat et (subV V p) pV =
   ≈ᵐ-trans (∘ᵐ-congʳ (eternal-val-ext-nat (<:ᵛ-eternalˡ p et) V pV))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))

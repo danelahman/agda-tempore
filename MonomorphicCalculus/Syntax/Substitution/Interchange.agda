@@ -47,8 +47,8 @@ hit-⟨⟩-img : ∀ {Γ A σ ρ} → (p : ρ ≾ᵣ 𝟏ᵣ) → (y : A ∈[ σ
            → var-img (⟨⟩-η⁻¹-ren {Δ = Γ} ∘ʳ ⟨⟩-≤-ren p) y ≡ Var-⟨⟩ ρ (σ , y)
 hit-⟨⟩-img p y = cong (var-img′ (⟨⟩-≤-ren p)) (⟨⟩-η⁻¹-img y)
 
--- An eternal extension is natural: it builds only variables, constants, `⋆`,
--- booleans, pairs and injections, so a renaming passes through it.
+-- An eternal extension is natural: it rebuilds the value former by former,
+-- so a renaming passes through it.
 
 eternal-val-ext-ren : ∀ {Γ Γ' A ρ} → (et : Et A) → (r : Ren [] Γ Γ')
                     → (V : Γ' ⊢ᵛ⦂ A)
@@ -71,6 +71,8 @@ eternal-val-ext-ren (_ |+|ₑ et₂)   r (inr V)     =
 eternal-val-ext-ren et             r nil         = refl
 eternal-val-ext-ren (listₑ et)     r (cons V W)  =
   cong₂ cons (eternal-val-ext-ren et r V) (eternal-val-ext-ren (listₑ et) r W)
+eternal-val-ext-ren et             r (cmp ⋈ V W et') =
+  cong₂ (λ a b → cmp ⋈ a b et') (eternal-val-ext-ren et' r V) (eternal-val-ext-ren et' r W)
 eternal-val-ext-ren et             r (subV V p) =
   cong (λ W → subV W p) (eternal-val-ext-ren (<:ᵛ-eternalˡ p et) r V)
 
@@ -130,6 +132,8 @@ mutual
   V-sub₀-⌜⌝ r (inr V)   = cong inr (V-sub₀-⌜⌝ r V)
   V-sub₀-⌜⌝ r nil       = refl
   V-sub₀-⌜⌝ r (cons V W) = cong₂ cons (V-sub₀-⌜⌝ r V) (V-sub₀-⌜⌝ r W)
+  V-sub₀-⌜⌝ r (cmp ⋈ V W et) =
+    cong₂ (λ a b → cmp ⋈ a b et) (V-sub₀-⌜⌝ r V) (V-sub₀-⌜⌝ r W)
   V-sub₀-⌜⌝ r (fun M)   =
     cong fun (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
                     (C-sub₀-⌜⌝ (cong-ren r) M))
@@ -155,8 +159,6 @@ mutual
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _ ∷ _) r) M)
              (C-sub₀-⌜⌝ (cong-ren r) M))
   C-sub₀-⌜⌝ r (absurd V) = cong absurd (V-sub₀-⌜⌝ r V)
-  C-sub₀-⌜⌝ r (cmp ⋈ V W et) =
-    cong₂ (λ a b → cmp ⋈ a b et) (V-sub₀-⌜⌝ r V) (V-sub₀-⌜⌝ r W)
   C-sub₀-⌜⌝ r (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-sub₀-⌜⌝ r V) (C-sub₀-⌜⌝ r M) (C-sub₀-⌜⌝ r N)
@@ -310,6 +312,8 @@ mutual
   V-sub₀-ren h (inr V)   = cong inr (V-sub₀-ren h V)
   V-sub₀-ren h nil       = refl
   V-sub₀-ren h (cons V W) = cong₂ cons (V-sub₀-ren h V) (V-sub₀-ren h W)
+  V-sub₀-ren h (cmp ⋈ V W et) =
+    cong₂ (λ a b → cmp ⋈ a b et) (V-sub₀-ren h V) (V-sub₀-ren h W)
   V-sub₀-ren h (fun M)   = cong fun (C-sub₀-ren (⋈-cong ([] ∷ _) h) M)
   V-sub₀-ren h (handler N H) =
     handler-≡ (C-sub₀-ren (⋈-cong (_ ⟨ _ ⟩ ∷ _) h) N)
@@ -328,8 +332,6 @@ mutual
   C-sub₀-ren h (match V `with M) =
     cong₂ match_`with_ (V-sub₀-ren h V) (C-sub₀-ren (⋈-cong ([] ∷ _ ∷ _) h) M)
   C-sub₀-ren h (absurd V) = cong absurd (V-sub₀-ren h V)
-  C-sub₀-ren h (cmp ⋈ V W et) =
-    cong₂ (λ a b → cmp ⋈ a b et) (V-sub₀-ren h V) (V-sub₀-ren h W)
   C-sub₀-ren h (if V `then M `else N) =
     cong₃ if_`then_`else_
       (V-sub₀-ren h V) (C-sub₀-ren h M) (C-sub₀-ren h N)

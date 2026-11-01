@@ -69,6 +69,7 @@ mutual
   Midᵛ (inl-cong p)                      = Midᵛ p
   Midᵛ (inr-cong p)                      = Midᵛ p
   Midᵛ (cons-cong p q)                   = Midᵛ p × Midᵛ q
+  Midᵛ (cmp-cong p q)                    = Midᵛ p × Midᵛ q
   Midᵛ (fun-cong p)                      = Midᶜ p
   Midᵛ (handler-cong q hs)               =
     Midᶜ q × ((op : Op) → (ε'' : E) → Midᶜ (hs op ε''))
@@ -85,7 +86,6 @@ mutual
   Midᶜ (app-cong p q)                    = Midᵛ p × Midᵛ q
   Midᶜ (match-cong p q)                  = Midᵛ p × Midᶜ q
   Midᶜ (absurd-cong p)                   = Midᵛ p
-  Midᶜ (cmp-cong p q)                    = Midᵛ p × Midᵛ q
   Midᶜ (if-cong p q r)                   = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (matchℕ-cong p q r)               = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (match+-cong p q r)               = Midᵛ p × Midᶜ q × Midᶜ r
