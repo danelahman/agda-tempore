@@ -1,22 +1,22 @@
-# Agda formalisation of the core calculus for grades temporal resources
+# Agda formalisation of the core calculus for graded temporal resources
 
 An Agda formalisation of the core calculus of
 [Tempore](https://tempore-lang.ee/), a prototype language for type-safe
 programming with temporal resources: resources that become available only after
-some time, some events, etc has elapsed since they were brought into scope. The
-calculus has Fitch-style graded modal types over a grade system (a grade algebra
-for effects, one for resources, and a morphism between them), algebraic effects
-and handlers whose operations take time, and a graded effect system.
+some time, some events, etc. have elapsed since they were brought into scope.
+The calculus has Fitch-style graded modal types over a grade system (a grade
+algebra for effects, one for resources, and a morphism between them),
+effect-graded algebraic effects and effect handlers, and a graded effect system.
 
-The formalisation includes two calculi.
+The development formalises two calculi:
 
-- The polymorphic calculus has type and grade variables and quantified type
+- The polymorphic calculus has type and grade variables, and quantified type
   schemes. The development gives constraint-based type and grade inference with
   principal type schemes for it, and proves that its typings instantiate to
-  scope-closed typings, which are type safe and terminating for reducing.
+  scope-closed typings, which are type safe, and their reduction terminates.
 - The monomorphic calculus has types that do not contain variables or
   quantifiers. The development proves type safety and termination for it, and
-  gives a denotational semantics, a sound equational theory and adequacy.
+  gives a denotational semantics, a sound equational theory, and adequacy.
 
 The development builds on two earlier formalisations, in which the passage of
 discrete time is the only means of specifying temporal properties of resources:
@@ -28,22 +28,23 @@ and [rzgdmqt/temporal-resources](https://github.com/rzgdmqt/temporal-resources).
 Agda 2.8.0 with the Agda standard library 2.3, registered as
 `standard-library-2.3` (see `graded-temporal-resources.agda-lib`).
 
-The two calculi do not import each other. Both build on `Grades/`, `Language/`
-and `Util/`. `Everything.agda` checks every module. Each calculus also has its
-own `Everything.agda` root. Approximate timings for typechecking in Agda:
+The two calculi do not import each other. Both build on `Grades/`, `Language/`,
+and `Util/`. `Everything.agda` checks every module, including the type inference
+examples. Each calculus also has its own `Everything.agda` root module, which
+leaves the examples out. Approximate timings for typechecking in Agda are
 
-    agda Everything.agda                          # everything, ~22 min
+    agda Everything.agda                          # everything, ~28 min
     agda PolymorphicCalculus/Everything.agda      # polymorphic calculus, ~7 min
     agda MonomorphicCalculus/Everything.agda      # monomorphic calculus, ~14 min
-    agda PolymorphicCalculus/Examples.agda        # type inference examples, ~6 min more
+    agda PolymorphicCalculus/Examples.agda        # type inference examples, ~6 min
 
 Each set of type inference examples is checked separately by its index, `agda
 PolymorphicCalculus/Examples/<Set>/All.agda`, whose header names the parts of
 the solver it exercises. A check passes when Agda exits with 0 and prints no
-warning. The only postulate is function extensionality (`Util/Equality.agda`).
+warning. The only postulate is function extensionality (`Util/Equality.agda`). 
 
 The sources use many Unicode symbols, including mathematical letters such as
-`𝟏` and `𝕊`, combining accents (`ε̂`) and brackets such as `⦉ ⦊`. A monospace
+`𝟏` and `𝕊`, combining accents (`ε̂`), and brackets such as `⦉ ⦊`. A monospace
 font with wide coverage, such as [JuliaMono](https://juliamono.netlify.app),
 shows them all and keeps columns aligned. DejaVu Sans Mono lacks several.
 
@@ -56,21 +57,21 @@ The root of each calculus, `PolymorphicCalculus/Everything.agda` and
 - `Grades/`: grade algebras, grade systems and durations, the hints the solver
   reads, and the concrete grades in `Grades/Examples/`.
 - `Language/`: language specification that both calculi share: base types,
-  ground types, comparisons and operation signatures.
+  ground types, comparisons, and operation signatures.
 - `PolymorphicCalculus/`: syntax, hypotheses and entailment, typing, the
   operational semantics, type safety and termination, constraints, the solver,
-  type and grade inference, programs and examples.
+  type and grade inference, programs, and examples.
 - `MonomorphicCalculus/`: the intrinsically typed calculus, its operational and
-  denotational semantics, equational theory and adequacy.
+  denotational semantics, equational theory, adequacy, and examples.
 
 ## Scope
 
-- The language is parameterised by base types and operation signatures.
-- Both calculi have effect handlers and effect handling.
+- The language is parameterised by base types and graded operation signatures.
+- Both calculi support algebraic effect handlers and effect handling.
 - Type scheme hypotheses include quantified orderings, which bind several rigid
   effect-grade variables (that are introduced by handler operation cases).
 - In the polymorphic calculus, `unbox` takes a resource value, a variable under
-  annotations, and binds its payload. In the monomorphic calculus just a variable.
+  annotations, and binds its payload. The monomorphic `unbox` takes a variable.
 - A top-level (let) definition is named by its position in the program context.
   Inference is for values in program contexts and for computations in open
   contexts, and is complete with respect to scope-closed typings.
@@ -79,9 +80,9 @@ The root of each calculus, `PolymorphicCalculus/Everything.agda` and
   records the grade of each passage of time, and boxed up resources.
   Instantiation, type safety, and termination are for the scope-closed typing.
 - The monomorphic calculus types handler clauses at every continuation grade
-  by using Agda's dependent functions for a meta-level forall quantifier.
-- The denotational results assume uniform effect handlers, which impose a 
-  parametricity condition on the typings of monomorphic calculus's handlers.
+  by using Agda's dependent functions for a meta-level universal quantifier.
+- The denotational results assume uniform effect handlers, which impose a
+  parametricity condition on the typings of the monomorphic calculus's handlers.
 
 ## Licence
 
