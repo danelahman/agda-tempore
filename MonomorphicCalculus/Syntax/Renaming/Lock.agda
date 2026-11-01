@@ -52,7 +52,7 @@
 --      `σ' ≾ ρ` and `σ · σ' ≾ ρ`, then `σ ≾ 𝟏`;                        --
 --   `PRA⇒unit-maximal`: if `L_ρ` is one and `𝟏 ≾ ρ`, then `ρ ≾ 𝟏`;     --
 --   `PRA-⊤⇒⊤≾𝟏`: if `L_⊤` is one, the unit is the greatest grade.      --
--- The negative results use a predicate model (`Lock/Model`).           --
+-- The negative results use a Kripke model (`Lock/Model`).              --
 --------------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
@@ -185,7 +185,7 @@ left-adjoint-at-unit {ρ} (p , q) Γ = unit-comma q Γ , init
 no-object-at-[] : ∀ {ρ} → ¬ (𝟏ᵣ ≾ᵣ ρ) → Comma ρ [] → ⊥
 no-object-at-[] {ρ} n X = go (sound {w = 𝟏ᵣ} ≾ᵣ-refl (str X) tt)
   where
-  open PredicateModel (λ w → w ≾ᵣ 𝟏ᵣ)
+  open KripkeModel (λ w → w ≾ᵣ 𝟏ᵣ)
 
   go : ⟦ ctx X ⟨ ρ ⟩ ⟧ᶜᵗˣ 𝟏ᵣ → ⊥
   go (w₀ , w₀≾𝟏 , step τ τ≾ρ e , _) =
@@ -218,7 +218,7 @@ module Counterexample {σ σ' ρ : R}
   no-common-source : (I : Comma ρ Γᶜ) → CommaHom I X₁ → CommaHom I X₂ → ⊥
   no-common-source I h₁ h₂ = go (sound {w = σ ·ᵣ σ'} tt (str I) γ)
     where
-    open PredicateModel (λ _ → Unit)
+    open KripkeModel (λ _ → Unit)
 
     γ : ⟦ Γᶜ ⟧ᶜᵗˣ (σ ·ᵣ σ')
     γ =   σ , tt , step σ' ≾ᵣ-refl ≃ᵣ-refl

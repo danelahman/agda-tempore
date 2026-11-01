@@ -1,12 +1,16 @@
 -----------------------------------------------------------------------
--- A predicate model of contexts over the grades, preserved by every --
+-- A Kripke model of contexts over the grades, preserved by every    --
 -- renaming.                                                         --
 --                                                                   --
 -- Worlds are the grades satisfying `W`, and `w' ⊑[ σ ] w` when      --
--- `w ≃ w' · τ` for some `τ ≾ σ`. A box type `[ σ ] A` holds at the  --
--- worlds `σ · τ` with `τ ≾ 𝟏` (`AtUnit`), every other type holds    --
--- everywhere, so eternal types are constant. A context `Γ ⟨ ρ ⟩`    --
--- holds at `w` when `Γ` holds at some world `w' ⊑[ ρ ] w`.          --
+-- `w ≃ w' · τ` for some `τ ≾ σ`: the exact form of the action frame --
+-- (`DenotationalSemantics/Model/World/Action`), which relates `w'`  --
+-- to everything below `w' · σ`. Types are predicates on worlds,     --
+-- closed along steps within the unit. A box type `[ σ ] A` holds at --
+-- the worlds `σ · τ` with `τ ≾ 𝟏` (`AtUnit`), every other type      --
+-- holds everywhere, so eternal types are constant. The lock is      --
+-- possibility: `Γ ⟨ ρ ⟩` holds at `w` when `Γ` holds at some world  --
+-- `w' ⊑[ ρ ] w`.                                                    --
 --                                                                   --
 -- Every renaming maps a point of its source to a point of its       --
 -- target at the same world (`sound`), so a world where the source   --
@@ -30,7 +34,7 @@ open import MonomorphicCalculus.Syntax.Contexts S
 open import MonomorphicCalculus.Syntax.Types    S
 open import MonomorphicCalculus.Syntax.Renaming S
 
-module PredicateModel (W : R → Set) where
+module KripkeModel (W : R → Set) where
 
   record _⊑[_]_ (w' σ w : R) : Set where
     constructor step
