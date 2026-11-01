@@ -16,7 +16,8 @@ The development formalises two calculi:
   scope-closed typings, which are type safe, and their reduction terminates.
 - **Monomorphic calculus** has types that do not contain variables or
   quantifiers. The development proves type safety and termination for it, and
-  gives a denotational semantics, a sound equational theory, and adequacy.
+  gives a denotational semantics, a sound equational theory, and adequacy. This
+  is a declarative simply typed non-polymorphic version of the core calculus.
 
 The development builds on two earlier formalisations, in which the passage of
 discrete time is the only means of specifying temporal properties of resources:
