@@ -24,7 +24,7 @@ discrete time is the only means of specifying temporal properties of resources:
 [danelahman/temporal-resources](https://github.com/danelahman/temporal-resources)
 and [rzgdmqt/temporal-resources](https://github.com/rzgdmqt/temporal-resources).
 
-## Checking
+## Typechecking in Agda
 
 Agda 2.8.0 with the Agda standard library 2.3, registered as
 `standard-library-2.3` (see `graded-temporal-resources.agda-lib`).
@@ -52,7 +52,7 @@ shows them all and keeps columns aligned. DejaVu Sans Mono lacks several.
 The root of each calculus, `PolymorphicCalculus/Everything.agda` and
 `MonomorphicCalculus/Everything.agda`, names its key modules.
 
-## Layout
+## Formalisation layout
 
 - `Util/`: equality and the non-negative rationals.
 - `Grades/`: grade algebras, grade systems and durations, the hints the solver
@@ -65,7 +65,7 @@ The root of each calculus, `PolymorphicCalculus/Everything.agda` and
 - `MonomorphicCalculus/`: the intrinsically typed calculus, its operational and
   denotational semantics, equational theory, adequacy, and examples.
 
-## Scope
+## Overview
 
 - The language is parameterised by base types and graded operation signatures.
 - Both calculi support algebraic effect handlers and effect handling.
