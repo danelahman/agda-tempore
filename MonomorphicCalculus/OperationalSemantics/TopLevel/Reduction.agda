@@ -15,6 +15,7 @@ open Operations Ops
 open import MonomorphicCalculus.OperationalSemantics.Reduction           S
 open import MonomorphicCalculus.OperationalSemantics.State               S
 open import MonomorphicCalculus.OperationalSemantics.TopLevel            S
+open import MonomorphicCalculus.OperationalSemantics.TypeSafety          S
 
 open import MonomorphicCalculus.Syntax.Contexts        S
 open import MonomorphicCalculus.Syntax.Terms           S
@@ -73,7 +74,8 @@ module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
                             × state-grade 𝕊' ·ᵣ ∣ ε' ∣ᵉ ≾ᵣ state-grade 𝕊 ·ᵣ ∣ ε ∣ᵉ
 
   top-level-step-invariants (STEP step) =
-    step-invariants step
+    Preserved.subtype (preservation step) ,
+    cancelled⇒total (step-extends-state step) (Preserved.grade (preservation step))
   top-level-step-invariants {A = A} {𝕊 = 𝕊} OP-STEP =
     <:ᵛ-refl A ,
     ≃ᵣ⇒≾ᵣ
