@@ -1,7 +1,11 @@
 ------------------------------------------------------------------------
--- Primitive recursion on natural numbers and lists: pure and ticking
--- steps (`ε · ε ≾ ε`), outer variables and heads in the step, recursion
--- in a clause. Exercises `Generate`, `Localise` and `Search`.
+-- Primitive recursion                                                --
+--                                                                    --
+-- Primitive recursion on natural numbers and lists: pure and ticking --
+-- steps (`ε · ε ≾ ε`), outer variables and heads in the step, and    --
+-- recursion in a handler clause.                                     --
+--                                                                    --
+-- Exercises: `Generate`, `Localise` and `Search`.                    --
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Examples.Recursion.All where

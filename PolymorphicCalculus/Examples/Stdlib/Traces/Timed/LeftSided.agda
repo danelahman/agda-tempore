@@ -1,9 +1,10 @@
---------------------------------------------------------------------
--- The standard library at timed traces, coverage order           --
---                                                                --
--- The unit is the top: `compose` and `min` report no time        --
--- condition.                                                     --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- The standard library at timed traces, coverage order               --
+--                                                                    --
+-- The unit is the greatest grade: `compose` and `min` get schemes    --
+-- without a time condition. The other functions get the scheme       --
+-- written in `Stdlib`.                                               --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

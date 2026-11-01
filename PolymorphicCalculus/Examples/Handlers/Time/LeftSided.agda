@@ -1,10 +1,13 @@
--------------------------------------------------------------------
--- Handlers at left-sided intervals                              --
---                                                               --
--- The shared schemes; `resume-twice` typed, `discard` refuted.  --
--- A clause that delays and drops its continuation, alone and    --
--- nested, is refuted by retry at a candidate after the unit.    --
--------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Handlers at left-sided intervals                                   --
+--                                                                    --
+-- The unit is the greatest grade and multiplication commutes. Every  --
+-- program gets the scheme written in `Handlers`, `run` in its        --
+-- commuted form; `resume-twice` is typable, and `discard` is         --
+-- refuted. A clause that delays and then drops its continuation,     --
+-- alone and nested in an outer clause, is refuted when inference     --
+-- retries the candidate `j = 1`.                                     --
+------------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
 open import Data.Maybe.Base using (just; nothing)
@@ -66,8 +69,9 @@ discard-not-typable = infer-untypable [] discard discard-untypable-verdict
 --
 --   late-discard m = handle m () with handler {op p k ↦ delay 4; return ()}
 --
--- `4 ≾ op · j` holds at `j = 𝟏` but retry refutes it at the candidate
--- `j = 1` (`left-sided-witnesses`).
+-- `4 ≾ op · j` must hold for every `j`. It holds at `j = 𝟏`, and
+-- inference refutes it by trying the candidate `j = 1`
+-- (`left-sided-witnesses`).
 
 late-discard : RawC ∅ˢ 0
 late-discard =

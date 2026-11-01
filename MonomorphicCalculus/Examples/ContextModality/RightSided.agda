@@ -1,25 +1,27 @@
--------------------------------------------------------------------------
--- The context modality at right-sided time (upper bounds),            --
--- `ρ = [0,2]`.                                                        --
---                                                                     --
--- `Γ = Γ₀ ⟨ [0,1] ⟩ ∷ A ⟨ [0,1] ⟩` with `Γ₀ = [] ∷ B`, where          --
--- `B = [ [0,0] ] unit` and `A = [ [0,1] ] unit` (both non-eternal).   --
--- Four objects of `(Γ ↓ L_[0,2])`, by what they cut:                  --
---                                                                     --
---   Δ₁ = Γ₀                  both modalities and `A`                  --
---   Δ₂ = Γ₀ ⟨ [0,1] ⟩ ∷ A    the last modality                        --
---   Δ₃ = Γ                   nothing (`⟨⟩-η-ren`, `⟨⟩-≤-ren`)         --
---   Δ₄ = Γ₀ ⟨ [0,1] ⟩        the last modality and `A`                --
---                                                                     --
--- The zig-zag `Δ₁ → Δ₄ ← Δ₂ → Δ₃` commutes with the structure maps up --
--- to `_≐ʳ_` (`zigzag`), and `Δ₁` and `Δ₂` have no common source, so   --
--- the comma category has no initial object and `L_[0,2]` is not a     --
--- parametric right adjoint (`not-PRA-[0,2]`).                         --
---                                                                     --
--- With `Γ₀ = []` (eternal) the same shape has the initial object      --
--- `[] ∷ A` (`initial-at-eternal-Γ₀`): the obstruction needs a         --
--- non-eternal variable behind the cut modality.                       --
--------------------------------------------------------------------------
+------------------------------------------------------------------------
+-- The context modality at right-sided time (upper bounds)            --
+--                                                                    --
+-- The example                                                        --
+--   `ρ = [0,2]` and `Γ = Γ₀ ⟨ [0,1] ⟩ ∷ A ⟨ [0,1] ⟩` with            --
+--   `Γ₀ = [] ∷ B`, where `B = [ [0,0] ] unit` and                    --
+--   `A = [ [0,1] ] unit` (both non-eternal). Four objects of         --
+--   `(Γ ↓ L_[0,2])`, by what they cut:                               --
+--                                                                    --
+--     Δ₁ = Γ₀                  both modalities and `A`               --
+--     Δ₂ = Γ₀ ⟨ [0,1] ⟩ ∷ A    the last modality                     --
+--     Δ₃ = Γ                   nothing (`⟨⟩-η-ren`, `⟨⟩-≤-ren`)      --
+--     Δ₄ = Γ₀ ⟨ [0,1] ⟩        the last modality and `A`             --
+--                                                                    --
+-- What it shows                                                      --
+--   The zig-zag `Δ₁ → Δ₄ ← Δ₂ → Δ₃` commutes with the structure maps --
+--   up to `_≐ʳ_` (`zigzag`), and `Δ₁` and `Δ₂` have no common        --
+--   source. So the comma category has no initial object, and         --
+--   `L_[0,2]` is not a parametric right adjoint (`not-PRA-[0,2]`).   --
+--                                                                    --
+--   With `Γ₀ = []` (eternal) the same shape has the initial object   --
+--   `[] ∷ A` (`initial-at-eternal-Γ₀`): the obstruction needs a      --
+--   non-eternal variable behind the cut modality.                    --
+------------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
 open import Data.Nat using (z≤n; s≤s)

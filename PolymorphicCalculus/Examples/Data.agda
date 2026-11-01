@@ -1,13 +1,47 @@
---------------------------------------------------------------------
--- Inference on natural numbers, sums and lists                   --
---                                                                --
--- `matchℕ`, `match+` and `matchL` with their constructors. `nat` --
--- is eternal; sums and lists are covariant, and eternal exactly  --
--- when their components are, so they survive a modality where a  --
--- function does not. `⌜ n ⌝` is the duration of `n` ticks. The   --
--- instances under `Data/` check each answer by `refl` at both    --
--- time grades.                                                   --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Inference on natural numbers, sums and lists                       --
+--                                                                    --
+-- The eliminations `matchℕ`, `match+` and `matchL` with their        --
+-- constructors. `nat` is eternal; sums and lists are covariant, and  --
+-- eternal exactly when their components are, so they survive a       --
+-- modality where a function does not. `⌜ n ⌝` is the duration of     --
+-- `n` ticks.                                                         --
+--                                                                    --
+-- The examples                                                       --
+--   is-zero, pred       eliminating a natural number                 --
+--   later-succ,         a natural number, a variable of unknown      --
+--   later-id,           type and a function, each used after a       --
+--   numeral-later,      delay                                        --
+--   function-later                                                   --
+--   boxed-numeral       a boxed numeral claimed on time              --
+--   joined              branches of different effects, joined        --
+--   swap, choose        eliminating a sum, with branches of          --
+--                       different effects in `choose`                --
+--   subsume-sum         subtyping in a summand                       --
+--   sum-later,          sums used after a delay: annotated, with     --
+--   inl-later,          an unknown summand, and with a function      --
+--   fun-sum-later       summand                                      --
+--   head-or             eliminating a list                           --
+--   list-later,         lists used after a delay: annotated, with    --
+--   nil-later,          an unknown element type, and of functions    --
+--   fun-list-later                                                   --
+--   match-on-bool,      eliminations applied to the wrong type,      --
+--   match-on-bool+,     refused at both grades                       --
+--   match-on-nat                                                     --
+--                                                                    --
+-- How to read them                                                   --
+--   Each program is written above its definition in ordinary         --
+--   syntax. Where a typing is written out as a derivation, the       --
+--   program is checked here to be typed by inference                 --
+--   (`is-zero-typed`). The modules under `Data/` run inference at    --
+--   right-sided and left-sided intervals and check the answer with   --
+--   `refl`:                                                          --
+--     is-zero-reported : schemeOf (infer [] is-zero)                 --
+--                          ≡ just expected-is-zero                   --
+--   A refuted example comes with a proof that it is untypable. A     --
+--   function, alone or inside a sum or a list, is refuted after a    --
+--   delay at right-sided intervals and typed at left-sided ones.     --
+------------------------------------------------------------------------
 
 open import Data.Unit using (tt)
 open import Data.Empty using (⊥-elim)

@@ -1,10 +1,24 @@
---------------------------------------------------------------------
--- Inference with durations that are not whole ticks              --
---                                                                --
--- A box claimed after two delays of arbitrary durations, and a   --
--- box grade inferred over them. The instances under              --
--- `Durations/` check each answer by `refl` at dense time.        --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Inference with durations that are not whole ticks                  --
+--                                                                    --
+-- Boxes and delays over any durations, checked at dense time.        --
+--                                                                    --
+-- The examples                                                       --
+--   claim-after ρ τ τ'    a box of grade `ρ` claimed after a delay   --
+--                         `τ` and then a delay `τ'`; typable when    --
+--                         the two delays together are below `ρ`      --
+--   inferred-grade τ τ'   a box argument claimed after the same two  --
+--                         delays; its grade is inferred as that of   --
+--                         both delays together                       --
+--                                                                    --
+-- How to read them                                                   --
+--   Each program is written above its definition in ordinary syntax. --
+--   The modules under `Durations/` run inference at dense time,      --
+--   bounded from below and from above, and check each answer with    --
+--   `refl`; a refused claim comes with the verdict                   --
+--   `infer [] p ≡ untypable` and the proof `¬ Typable [] p` drawn    --
+--   from it.                                                         --
+------------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero)
 

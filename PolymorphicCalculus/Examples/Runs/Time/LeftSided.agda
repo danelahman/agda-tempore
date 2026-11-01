@@ -1,9 +1,9 @@
-------------------------------------------------------------------
--- Runs at left-sided intervals                                 --
---                                                              --
--- A budget is refuted at every grade but the top, where it is  --
--- established; `stretch` is established.                       --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Runs at left-sided intervals                                       --
+--                                                                    --
+-- A budget is established at the top, and refuted at a grade below   --
+-- its delay and at one above it. `stretch` is established.           --
+------------------------------------------------------------------------
 
 open import Relation.Nullary using (¬_)
 

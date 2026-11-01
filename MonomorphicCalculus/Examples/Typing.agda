@@ -1,37 +1,43 @@
 ------------------------------------------------------------------------
--- Typed example computations, one grade at a time.                   --
+-- Typed example computations, one grade at a time                    --
 --                                                                    --
--- The subtree fixes a language over the alphabet of the sensor node  --
--- and types example computations in it, each at a value type and an  --
--- effect grade.                                                      --
+-- The examples                                                       --
+--   The subtree fixes a language over the alphabet of the sensor     --
+--   node and types example computations in it, each at a value type  --
+--   and an effect grade.                                             --
 --                                                                    --
--- Most instances use an identity grade system, with effect and       --
--- resource grades the same monoid and `∣-∣ᵉ` the identity, so `∣_∣ᵉ` --
--- disappears: the modality a computation places on the context is    --
--- its effect grade, and the premise of `unbox` compares what a       --
--- computation did with the grade of the box. These instances differ  --
--- only in the monoid. The last group uses a genuine grade system,    --
--- whose modalities are the time `∣_∣ᵉ` measures of an effect grade.  --
+--   Most instances use an identity grade system: effect and resource --
+--   grades are the same monoid and `∣-∣ᵉ` is the identity, so `∣_∣ᵉ` --
+--   disappears. The modality a computation places on the context is  --
+--   then its effect grade, and the premise of `unbox` compares what  --
+--   a computation did with the grade of the box. These instances     --
+--   differ only in the monoid.                                       --
 --                                                                    --
--- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
--- modality, `∷ A` a binding. Read downwards, they give the context   --
--- at any point, and the modalities between the binding of a box and  --
--- its `unbox` are the elapsed grade that the premise compares with   --
--- the grade of the box.                                              --
+--   The last group uses a genuine grade system, whose modalities are --
+--   the time `∣_∣ᵉ` measures of an effect grade.                     --
 --                                                                    --
--- Each instance writes its programs out in full at its own grades,   --
--- every side condition discharged where the rule imposes it by the   --
--- decision procedure of the grade. In place of a program that the    --
--- grade refuses stands a refutation of the bound it requires.        --
--- `Typing/System.agda` contains the calculus over the language       --
--- (`Language.Examples.SensorNode`), the three ways of meeting the    --
--- bound of `var`, and the operation clauses passed to `handle`.      --
+-- How to read them                                                   --
+--   The comments inside the programs state what each former appends  --
+--   to the context in which its subcomputation is typed: `⟨ ρ ⟩` a   --
+--   modality, `∷ A` a binding. Read downwards, they give the context --
+--   at any point, and the modalities between the binding of a box    --
+--   and its `unbox` are the elapsed grade that the premise compares  --
+--   with the grade of the box.                                       --
 --                                                                    --
--- Two rules place the unit on opposite sides of the order, and each  --
--- instance settles both by a proof or a refutation: whether a        --
--- non-eternal variable goes stale, which is the bound `ρ ≾ᵣ 𝟏ᵣ` of   --
--- `var`, and whether a handler clause may discard its continuation.  --
+--   Each instance writes its programs out in full at its own grades, --
+--   every side condition discharged where the rule imposes it by the --
+--   decision procedure of the grade. In place of a program that the  --
+--   grade refuses stands a refutation of the bound it requires.      --
+--                                                                    --
+--   Two rules place the unit on opposite sides of the order, and     --
+--   each instance settles both by a proof or a refutation: whether a --
+--   non-eternal variable goes stale, which is the bound `ρ ≾ᵣ 𝟏ᵣ` of --
+--   `var`, and whether a handler clause may discard its              --
+--   continuation.                                                    --
+--                                                                    --
+--   `Typing/System.agda` contains the calculus over the language     --
+--   (`Language.Examples.SensorNode`), the three ways of meeting the  --
+--   bound of `var`, and the operation clauses passed to `handle`.    --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing where
@@ -133,11 +139,36 @@ import MonomorphicCalculus.Examples.Typing.Counts.AtMost
 -- stand in for
 
 import MonomorphicCalculus.Examples.Typing.Counts.AtLeast
+
+-- quotas by operation name, a default bounding the names not listed:
+-- a reading refused or free according to the default
+
 import MonomorphicCalculus.Examples.Typing.Counts.UpperBound
+
+------------------------------------------------------------------------
+-- Grades built as semidirect products
+
+-- flow-sensitive levels: a box is a public channel, claimable while
+-- nothing `High` has been touched
+
 import MonomorphicCalculus.Examples.Typing.SemiDirect.FlowLevels
+
+-- windowed schedules: a box is a value that goes stale after four steps
+
 import MonomorphicCalculus.Examples.Typing.SemiDirect.WindowedSchedules
+
+-- the slots of the local memory: storing occupies one, transmitting
+-- frees it
+
 import MonomorphicCalculus.Examples.Typing.SemiDirect.ResourceLevels
+
+-- the cost of switching the radio on, and operations stuck in the
+-- wrong mode
+
 import MonomorphicCalculus.Examples.Typing.SemiDirect.ModeSwitchCosts
+
+-- running times in the mode an operation starts from
+
 import MonomorphicCalculus.Examples.Typing.SemiDirect.ModeTimes
 
 ------------------------------------------------------------------------

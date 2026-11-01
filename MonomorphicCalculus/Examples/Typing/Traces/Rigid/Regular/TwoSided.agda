@@ -1,18 +1,25 @@
 ------------------------------------------------------------------------
--- Typed example computations at the rigid timed interval grade.      --
+-- Typed computations at the rigid timed interval grade               --
 --                                                                    --
--- A grade `[ L , U ]` pairs a guarantee with a bound, each a regular --
--- expression over interval letters, that a common run fits. The      --
--- guarantee below demands a reading, then an undisturbed wait of at  --
--- least five steps, with anything before and after; the bound allows --
--- a reading and at most twelve steps of anything after it. A box at  --
--- this grade may be unboxed after a reading and a wait of five       --
--- steps; after a reading and two transmissions instead it may not,   --
--- the transmissions filling the wait the guarantee demands, though   --
--- they stay within the bound and within a guarantee asking only for  --
--- five steps of anything.                                            --
+-- The grade                                                          --
+--   A grade `[ L , U ]` pairs a guarantee with a bound, each a       --
+--   regular expression over interval letters, that a common run      --
+--   fits.                                                            --
 --                                                                    --
--- Reading takes one step, writing two or three, sending four to six. --
+--   Reading takes one step, writing two or three, sending four to    --
+--   six.                                                             --
+--                                                                    --
+-- What it shows                                                      --
+--   The guarantee below demands a reading, then an undisturbed wait  --
+--   of at least five steps, with anything before and after; the      --
+--   bound allows a reading and at most twelve steps of anything      --
+--   after it.                                                        --
+--                                                                    --
+--   A box at this grade may be unboxed after a reading and a wait of --
+--   five steps. After a reading and two transmissions instead it may --
+--   not, the transmissions filling the wait the guarantee demands,   --
+--   though they stay within the bound and within a guarantee asking  --
+--   only for five steps of anything.                                 --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Traces.Rigid.Regular.TwoSided where

@@ -1,31 +1,35 @@
 ------------------------------------------------------------------------
--- Typed example computations at the grade of trace guarantees.       --
+-- Typed computations at the grade of trace guarantees                --
 --                                                                    --
--- Effect grades and resource grades are both sets of timed traces at --
--- the coverage order, and each operation is graded by the one-event  --
--- run that performs it. A grade lists guarantees, and a computation  --
--- lies below it when each of its runs covers one of them: every      --
--- operation the guarantee lists has occurred, and every delay it     --
--- lists has elapsed in the run, operations counted at `costˡᵒ` (read --
--- 1, write 2, send 4), the time each is certain to take.             --
+-- The grade                                                          --
+--   Effect grades and resource grades are both sets of timed traces  --
+--   at the coverage order, and each operation is graded by the       --
+--   one-event run that performs it. A grade lists guarantees, and a  --
+--   computation lies below it when each of its runs covers one of    --
+--   them: every operation the guarantee lists has occurred, and      --
+--   every delay it lists has elapsed in the run, operations counted  --
+--   at `costˡᵒ` (read 1, write 2, send 4), the time each is certain  --
+--   to take.                                                         --
 --                                                                    --
--- This is the trace counterpart of the lower-bound intervals: the    --
--- grade states what has happened, and `coerce` may forget part of    --
--- it. The premise of `unbox` then states that the operations the box --
--- demands have been performed, which, unlike a time bound, can       --
--- demand particular operations. Idling discharges a demand for time  --
--- and never a demand for a reading; this is the refusal specific to  --
--- this grade.                                                        --
+-- What it shows                                                      --
+--   This is the trace counterpart of the lower-bound intervals: the  --
+--   grade states what has happened, and `coerce` may forget part of  --
+--   it. The premise of `unbox` then states that the operations the   --
+--   box demands have been performed, which, unlike a time bound, can --
+--   demand particular operations. Idling discharges a demand for     --
+--   time and never a demand for a reading; this is the refusal       --
+--   specific to this grade.                                          --
 --                                                                    --
--- As at the lower bounds, nothing goes stale (every run covers the   --
--- empty guarantee), and no handler clause may discard its            --
--- continuation (returning at once covers nothing).                   --
+--   As at the lower bounds, nothing goes stale (every run covers the --
+--   empty guarantee), and no handler clause may discard its          --
+--   continuation (returning at once covers nothing).                 --
 --                                                                    --
--- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
--- modality, `∷ A` a binding. A modality records which operation ran, --
--- and the premise compares the product of the modalities between the --
--- binding of a box and its `unbox` with the box.                     --
+-- How to read them                                                   --
+--   The comments inside the programs state what each former appends  --
+--   to the context in which its subcomputation is typed: `⟨ ρ ⟩` a   --
+--   modality, `∷ A` a binding. A modality records which operation    --
+--   ran, and the premise compares the product of the modalities      --
+--   between the binding of a box and its `unbox` with the box.       --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Traces.Timed.LeftSided where

@@ -1,9 +1,9 @@
---------------------------------------------------------------------
--- The standard library at right-sided intervals                  --
---                                                                --
--- "At most `n` time steps": the unit is least and multiplication --
--- commutes. Every scheme is the shared one.                      --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- The standard library at right-sided intervals                      --
+--                                                                    --
+-- "At most `n` time steps": the unit is least and multiplication     --
+-- commutes. Every function gets the scheme written in `Stdlib`.      --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

@@ -1,20 +1,25 @@
 ------------------------------------------------------------------------
--- Typed example computations at the rigid timed regular-expression   --
--- interval grade, in dense time.                                     --
+-- Typed computations at the rigid timed regular-expression interval  --
+-- grade, in dense time                                               --
 --                                                                    --
--- A grade `[ L , U ]` pairs a guarantee with a bound, each an        --
--- expression with iteration over interval letters. The guarantee     --
--- below demands readings, each followed by an undisturbed wait of at --
--- least one unit, at least once, with anything before and after; the --
--- bound allows any number of readings, each followed by at most two  --
--- units of anything. A box at this grade may be unboxed after two    --
--- readings each followed by a wait of one unit; after a reading and  --
--- a transmission instead it may not, the transmission filling the    --
--- wait the guarantee demands, and outlasting the bound's pace even   --
--- against a guarantee asking only for a unit of anything.            --
+-- The grade                                                          --
+--   A grade `[ L , U ]` pairs a guarantee with a bound, each an      --
+--   expression with iteration over interval letters.                 --
 --                                                                    --
--- Reading takes more than a quarter and at most half a unit, writing --
--- one to two units, sending two to four.                             --
+--   Reading takes more than a quarter and at most half a unit,       --
+--   writing one to two units, sending two to four.                   --
+--                                                                    --
+-- What it shows                                                      --
+--   The guarantee below demands readings, each followed by an        --
+--   undisturbed wait of at least one unit, at least once, with       --
+--   anything before and after; the bound allows any number of        --
+--   readings, each followed by at most two units of anything.        --
+--                                                                    --
+--   A box at this grade may be unboxed after two readings each       --
+--   followed by a wait of one unit. After a reading and a            --
+--   transmission instead it may not, the transmission filling the    --
+--   wait the guarantee demands, and outlasting the bound's pace even --
+--   against a guarantee asking only for a unit of anything.          --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Traces.Rigid.Rational.TwoSided where

@@ -1,10 +1,11 @@
---------------------------------------------------------------------
--- Boxes at timed traces, coverage order                          --
---                                                                --
--- A box is a demand, claimable once the elapsed run covers it;   --
--- operations count at `costˡᵒ` (read 1, write 2, send 4).        --
--- Nothing goes stale. Early claims are refused.                  --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Boxes at timed traces, coverage order                              --
+--                                                                    --
+-- A box is a demand, claimable once the elapsed run covers it;       --
+-- operations count at `costˡᵒ` (read 1, write 2, send 4). Nothing    --
+-- goes stale, so every program in the first group is typable, and    --
+-- early claims are refused.                                          --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

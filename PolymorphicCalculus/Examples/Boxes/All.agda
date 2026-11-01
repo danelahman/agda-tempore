@@ -1,7 +1,11 @@
 ------------------------------------------------------------------------
--- Boxes and delays: claims early, on time and late, after operations,
--- in branches, in a clause, through `return` and through an annotation.
--- Exercises unbox, the variable rule and closed orderings (`Entail`).
+-- Boxes and delays                                                   --
+--                                                                    --
+-- Boxes claimed early, on time and late: after operations, in        --
+-- branches, in a clause, through `return` and through an annotation. --
+--                                                                    --
+-- Exercises: unbox, the variable rule and closed orderings           --
+-- (`Entail`).                                                        --
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Examples.Boxes.All where

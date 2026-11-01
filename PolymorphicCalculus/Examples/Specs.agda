@@ -1,22 +1,29 @@
---------------------------------------------------------------------
--- The languages the inference examples run in                    --
---                                                                --
--- The sensor node's language (`Language.Examples.SensorNode`)    --
--- with the operation times of `Worked.Operations.Grading`, at    --
--- four grades covering the hint properties the solver reads:     --
---                                                                --
---   grade                      𝟏-least?   ·-comm?                --
---   Time/RightSided            yes        yes                    --
---   Time/LeftSided             no         yes                    --
---   Traces/Timed/RightSided    yes        no                     --
---   Traces/Timed/LeftSided     no         no                     --
---                                                                --
--- and at time paired with a security level (`Footprint`) and at  --
--- dense time on both sides. Hints are `identityʰ`; retry's       --
--- candidates are, at time, the bounds `0, …, s+1` for constants  --
--- summing to `s` (a grid at dense time), at the products these   --
--- paired with both levels, at the timed traces none.             --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- The languages the inference examples run in                        --
+--                                                                    --
+-- The sensor node's language (`Language.Examples.SensorNode`), with  --
+-- the operation times of `Worked.Operations.Grading`, at several     --
+-- grades. Each grade is a module giving the language `spec`, the     --
+-- solver's `hints` and an enumeration `enum` of the operations.      --
+--                                                                    --
+-- The four main grades cover the two properties the solver reads     --
+-- from the hints: whether the unit is least (`𝟏-least?`) and whether --
+-- multiplication commutes (`·-comm?`).                               --
+--                                                                    --
+--   grade                      𝟏-least?   ·-comm?                    --
+--   Time/RightSided            yes        yes                        --
+--   Time/LeftSided             no         yes                        --
+--   Traces/Timed/RightSided    yes        no                         --
+--   Traces/Timed/LeftSided     no         no                         --
+--                                                                    --
+-- The others are time paired with a security level (`Footprint`)     --
+-- and dense time, each on both sides.                                --
+--                                                                    --
+-- The hints are `identityʰ`, with the grades the solver may try as   --
+-- candidates: at time, the bounds `0, …, s+1` for constants summing  --
+-- to `s` (a grid at dense time); at the products, these paired with  --
+-- both levels; at the timed traces, none.                            --
+------------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_)
 open import Data.List.Membership.Propositional using (_∈_)

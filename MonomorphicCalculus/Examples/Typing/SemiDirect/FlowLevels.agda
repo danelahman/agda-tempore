@@ -1,26 +1,31 @@
 ------------------------------------------------------------------------
--- Typed example computations at the flow-sensitive levels.           --
+-- Typed computations at the flow-sensitive levels                    --
 --                                                                    --
--- Effect grades and resource grades are both a level touched and the --
--- level each sink is written at, the sinks being local memory and    --
--- the radio. Reading the sensor touches `High`; storing writes the   --
--- memory and transmitting writes the radio, each at `Low`, raised to --
--- whatever was touched before. Idling touches nothing.               --
+-- The grade                                                          --
+--   Effect grades and resource grades are both a level touched and   --
+--   the level each sink is written at, the sinks being local memory  --
+--   and the radio. Reading the sensor touches `High`; storing writes --
+--   the memory and transmitting writes the radio, each at `Low`,     --
+--   raised to whatever was touched before. Idling touches nothing.   --
 --                                                                    --
--- A policy that keeps the radio at `Low` admits transmitting a       --
--- constant and then reading, and refuses transmitting the reading:   --
--- the order of the two decides the level the radio is written at. A  --
--- box graded `(Low , every sink at High)` is a public channel,       --
--- claimable while nothing `High` has been touched since boxing,      --
--- whatever is written meanwhile.                                     --
+-- What it shows                                                      --
+--   A policy that keeps the radio at `Low` admits transmitting a     --
+--   constant and then reading, and refuses transmitting the reading: --
+--   the order of the two decides the level the radio is written at.  --
 --                                                                    --
--- The two rules that place the unit on opposite sides of the order:  --
--- a reading survives idling and goes stale after an operation, and a --
--- handler clause may discard its continuation, the unit being least. --
+--   A box graded `(Low , every sink at High)` is a public channel,   --
+--   claimable while nothing `High` has been touched since boxing,    --
+--   whatever is written meanwhile.                                   --
 --                                                                    --
--- Every side condition is discharged by the decision procedure of    --
--- the grade (`decided`, `check`), and every refutation by it         --
--- (`refuted`).                                                       --
+--   The two rules that place the unit on opposite sides of the       --
+--   order: a reading survives idling and goes stale after an         --
+--   operation, and a handler clause may discard its continuation,    --
+--   the unit being least.                                            --
+--                                                                    --
+-- How to read them                                                   --
+--   Every side condition is discharged by the decision procedure of  --
+--   the grade (`decided`, `check`), and every refutation by it       --
+--   (`refuted`).                                                     --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.SemiDirect.FlowLevels where

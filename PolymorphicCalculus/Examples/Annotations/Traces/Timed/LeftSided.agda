@@ -1,8 +1,8 @@
-------------------------------------------------------------------
--- Annotated programs at timed traces, coverage order           --
---                                                              --
--- Every scheme is the one written in `Annotations`.            --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Annotated programs at timed traces, coverage order                 --
+--                                                                    --
+-- Every program gets the scheme written in `Annotations`.            --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

@@ -1,34 +1,39 @@
 ------------------------------------------------------------------------
--- Typed example computations at the grade of lower bounds.           --
+-- Typed computations at lower bounds on time                         --
 --                                                                    --
--- Effect grades and resource grades are both `[ n ,+∞⟩`, "at least   --
--- `n` time steps", and the operations are graded by the time they    --
--- are guaranteed to take: read 1, write 2, send 4.                   --
+-- The grade                                                          --
+--   Effect grades and resource grades are both `[ n ,+∞⟩`, "at least --
+--   `n` time steps". The operations are graded by the time they are  --
+--   guaranteed to take: read 1, write 2, send 4.                     --
 --                                                                    --
--- As an effect grade, `[ n ,+∞⟩` states that a computation takes at  --
--- least `n` ticks, and `coerce` may decrease `n`. As a resource      --
--- grade it states that at least `n` ticks have passed, so the        --
--- premise `ρ' ≾ᵣ ρ` of `unbox` (the elapsed grade is at least the    --
--- grade of the box) makes `[ ρ ] A` a resource that becomes          --
--- available once `ρ` has passed. A claim made too early is refused;  --
--- a lower bound imposes no deadline, and no claim is too late.       --
+--   As an effect grade, `[ n ,+∞⟩` states that a computation takes   --
+--   at least `n` ticks, and `coerce` may decrease `n`. As a resource --
+--   grade it states that at least `n` ticks have passed.             --
 --                                                                    --
--- Two consequences of the grades being lower bounds, both checked    --
--- below:                                                             --
+-- What it shows                                                      --
+--   The premise `ρ' ≾ᵣ ρ` of `unbox` (the elapsed grade is at least  --
+--   the grade of the box) makes `[ ρ ] A` a resource that becomes    --
+--   available once `ρ` has passed. A claim made too early is         --
+--   refused; a lower bound imposes no deadline, and no claim is too  --
+--   late.                                                            --
 --                                                                    --
---   * the bound `ρ ≾ᵣ 𝟏ᵣ` of `var` holds at every `ρ`, so no         --
---     variable goes stale.                                           --
+--   Two consequences of the grades being lower bounds, both checked  --
+--   below:                                                           --
 --                                                                    --
---   * a handler clause cannot discard its continuation. It is graded --
---     at `op-grade op ·ₑ ε''`, and returning at once guarantees      --
---     nothing, so the required coercion does not exist.              --
+--   Readings. The bound `ρ ≾ᵣ 𝟏ᵣ` of `var` holds at every `ρ`, so no --
+--   variable goes stale.                                             --
 --                                                                    --
--- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
--- modality, `∷ A` a binding. Read downwards, they give the context   --
--- at any point, and the modalities between the binding of a box and  --
--- its `unbox` are what the premise of that rule compares with the    --
--- grade of the box.                                                  --
+--   Handlers. A handler clause cannot discard its continuation. It   --
+--   is graded at `op-grade op ·ₑ ε''`, and returning at once         --
+--   guarantees nothing, so the required coercion does not exist.     --
+--                                                                    --
+-- How to read them                                                   --
+--   The comments inside the programs state what each former appends  --
+--   to the context in which its subcomputation is typed: `⟨ ρ ⟩` a   --
+--   modality, `∷ A` a binding. Read downwards, they give the context --
+--   at any point, and the modalities between the binding of a box    --
+--   and its `unbox` are what the premise of that rule compares with  --
+--   the grade of the box.                                            --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Time.LeftSided where

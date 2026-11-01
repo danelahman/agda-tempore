@@ -1,10 +1,26 @@
---------------------------------------------------------------------
--- Inference on annotated programs                                --
---                                                                --
--- Annotations of a value (`⦂ᵛ`) and of a computation (`⦂ᶜ`).     --
--- Each program is handler-free and typable, so inference answers --
--- `typed` at every grade, with the shape the annotation forces.  --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Inference on annotated programs                                    --
+--                                                                    --
+-- Annotations on a value (`V ⦂ᵛ A`) and on a computation (`M ⦂ᶜ C`). --
+--                                                                    --
+-- The examples                                                       --
+--   id-bool        the identity with its argument annotated `bool`,  --
+--                  so its type is `bool ⇒ bool`, not a variable      --
+--   id-unit        the identity annotated as a function on `unit`,   --
+--                  which is the type reported                        --
+--   compose-g      composition with `g` annotated as taking no time; --
+--                  `f` asks nothing and stays polymorphic            --
+--                                                                    --
+-- How to read them                                                   --
+--   Each program is written above its definition in ordinary syntax. --
+--   Each is handler-free and typable, so inference answers `typed`   --
+--   at every grade (`id-bool-typed`, …), with the shape the          --
+--   annotation forces. The modules under `Annotations/` run          --
+--   inference at four grades and check with `refl` that it reports   --
+--   the scheme written here:                                         --
+--     id-bool-reported :                                             --
+--       schemeOf (infer [] id-bool) ≡ just expected-id-bool          --
+------------------------------------------------------------------------
 
 open import Data.Unit using (tt)
 open import Data.Empty using (⊥-elim)

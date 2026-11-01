@@ -1,39 +1,43 @@
 ------------------------------------------------------------------------
--- Typed example computations at the grade of upper bounds.           --
+-- Typed computations at upper bounds on time                         --
 --                                                                    --
--- Effect grades and resource grades are both `[0, n ]`, "at most `n` --
--- time steps", and the operations are graded by their worst-case     --
--- time: read 1, write 3, send 6.                                     --
+-- The grade                                                          --
+--   Effect grades and resource grades are both `[0, n ]`, "at most   --
+--   `n` time steps". The operations are graded by their worst-case   --
+--   time: read 1, write 3, send 6.                                   --
 --                                                                    --
--- As an effect grade, `[0, n ]` is a deadline that a computation     --
--- meets, and `coerce` may relax it. As a resource grade it states    --
--- that at most `n` ticks have passed, so the premise `ρ' ≾ᵣ ρ` of    --
--- `unbox` (the elapsed grade lies within the grade of the box) makes --
--- `[ ρ ] A` a lease on a resource: claimable at once and while the   --
--- computation spends no more than `ρ`. A claim made too late is      --
--- refused; an upper bound imposes no release time, and no claim is   --
--- too early.                                                         --
+--   As an effect grade, `[0, n ]` is a deadline that a computation   --
+--   meets, and `coerce` may relax it. As a resource grade it states  --
+--   that at most `n` ticks have passed.                              --
 --                                                                    --
--- The two consequences that are reversed relative to the lower       --
--- bounds, both checked below:                                        --
+--   The endpoint ranges over the extended naturals, so every         --
+--   deadline below is `[0, ↑ n ]`; `[0, ∞ ]` is the greatest grade   --
+--   and imposes no deadline.                                         --
 --                                                                    --
---   * the bound `ρ ≾ᵣ 𝟏ᵣ` of `var` holds only at the unit, so a      --
---     reading goes stale after any activity, and a resource that     --
---     must survive is leased.                                        --
+-- What it shows                                                      --
+--   The premise `ρ' ≾ᵣ ρ` of `unbox` (the elapsed grade lies within  --
+--   the grade of the box) makes `[ ρ ] A` a lease on a resource:     --
+--   claimable at once and while the computation spends no more than  --
+--   `ρ`. A claim made too late is refused; an upper bound imposes no --
+--   release time, and no claim is too early.                         --
 --                                                                    --
---   * a handler clause may discard its continuation: the grade of    --
---     the clause is a deadline, and returning at once meets every    --
---     deadline.                                                      --
+--   Two consequences are reversed relative to the lower bounds, both --
+--   checked below:                                                   --
 --                                                                    --
--- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
--- modality, `∷ A` a binding. The modalities are what the bound of    --
--- `var` and the premise of `unbox` are checked against; every        --
--- modality other than the unit makes a reading stale.                --
+--   Readings. The bound `ρ ≾ᵣ 𝟏ᵣ` of `var` holds only at the unit,   --
+--   so a reading goes stale after any activity, and a resource that  --
+--   must survive is leased.                                          --
 --                                                                    --
--- The endpoint ranges over the extended naturals, so every deadline  --
--- below is `[0, ↑ n ]`; `[0, ∞ ]` is the greatest grade and imposes  --
--- no deadline.                                                       --
+--   Handlers. A handler clause may discard its continuation: the     --
+--   grade of the clause is a deadline, and returning at once meets   --
+--   every deadline.                                                  --
+--                                                                    --
+-- How to read them                                                   --
+--   The comments inside the programs state what each former appends  --
+--   to the context in which its subcomputation is typed: `⟨ ρ ⟩` a   --
+--   modality, `∷ A` a binding. The modalities are what the bound of  --
+--   `var` and the premise of `unbox` are checked against; every      --
+--   modality other than the unit makes a reading stale.              --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Time.RightSided where

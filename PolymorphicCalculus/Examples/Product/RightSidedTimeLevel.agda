@@ -1,11 +1,12 @@
---------------------------------------------------------------------
--- Inference at right-sided time paired with a security level     --
---                                                                --
--- `([0, n ] , ℓ)`: at most `n` ticks, touching nothing above     --
--- `ℓ`; `read` 1 and `write` 3 at `Low`, `send` 6 at `High`. A    --
--- box at `([0, 8 ] , Low)` is a session token, refused when      --
--- late or tainted.                                               --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Inference at right-sided time paired with a security level         --
+--                                                                    --
+-- `([0, n ] , ℓ)` is at most `n` ticks, touching nothing above `ℓ`;  --
+-- `read` takes 1 and `write` 3 at `Low`, `send` 6 at `High`. A box   --
+-- at `([0, 8 ] , Low)` is a session token: claimed early and on      --
+-- time, and after a store; refused late, or after a transmission. A  --
+-- reading goes stale after any operation.                            --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 open import Data.Product using (_,_)

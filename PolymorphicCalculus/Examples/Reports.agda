@@ -1,12 +1,25 @@
-------------------------------------------------------------------
--- Report simplification                                        --
---                                                              --
--- Two schemes the report simplifies where the unit is least: a --
--- var-rule disjunction entailed by another is pruned, and a    --
--- product with the top among its factors is absorbed. The      --
--- instances under `Reports/` check them at the right-sided     --
--- grades.                                                      --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Report simplification                                              --
+--                                                                    --
+-- Two schemes that inference simplifies before reporting them, where --
+-- the unit is least.                                                 --
+--                                                                    --
+-- The examples                                                       --
+--   reused-around-claim   a variable used on both sides of a claim;  --
+--                         of its two time conditions one entails the --
+--                         other, and only that one is reported       --
+--   claimed-after-call    a box claimed in a clause built after a    --
+--                         call; its grade has the top grade as a     --
+--                         factor and is reported as the top          --
+--                                                                    --
+-- How to read them                                                   --
+--   Each program is written above its definition in ordinary syntax. --
+--   The modules under `Reports/` run inference at the two            --
+--   right-sided grades and check with `refl` that the simplified     --
+--   scheme is reported:                                              --
+--     reused-around-claim-reported :                                 --
+--       schemeOf (infer [] reused-around-claim) ≡ just …             --
+------------------------------------------------------------------------
 
 open import Data.Unit using (tt)
 open import Data.Empty using (⊥-elim)

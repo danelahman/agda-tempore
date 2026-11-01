@@ -1,14 +1,37 @@
-------------------------------------------------------------------
--- Solver stages on hand-written constraints                    --
---                                                              --
--- Each test applies one solver stage to hand-written           --
--- hypotheses, grade expressions or a residual, and checks its  --
--- answer by `refl`: `canonᴴ`, `walkᵈ`, `canonᵣ`/`canonₑ`,      --
--- `decideᵣ`/`decideₑ` at `derive` and `full`, `checkClosed`,   --
--- `collapse`, `retry` and lowering (`stepᵉ`). The grades are   --
--- chosen for the hint properties the stages read, `𝟏-least?`   --
--- and `·-comm?`.                                               --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Solver stages on hand-written constraints                          --
+--                                                                    --
+-- The examples                                                       --
+--   Deadline    at right-sided intervals, where the unit is least    --
+--               and multiplication commutes: splitting a join in     --
+--               the hypotheses (`canonᴴ`), pruning an entailed       --
+--               disjunction (`walkᵈ`), a product with the top as a   --
+--               factor (`canonᵣ`, `canonₑ`), deciding an ordering    --
+--               between products (`decideᵣ`, `decideₑ` at `derive`   --
+--               and `full`), comparing closed sides (`checkClosed`)  --
+--   Sequence    at timed traces on the right, where the unit is      --
+--               least and multiplication does not commute: the       --
+--               factors of products match in order only              --
+--   WithTop     at left-sided intervals with a top, where            --
+--               multiplication commutes and the unit is neither      --
+--               least nor the top                                    --
+--   Cycle       a cycle of unknowns local to a handler clause, sent  --
+--               to one rigid variable (`collapse`), at both sides of --
+--               time                                                 --
+--   Witness     a quantified ordering refuted by trying a candidate  --
+--               grade (`retry`)                                      --
+--   Lowering    the value an unknown is lowered to (`stepᵉ`), at     --
+--               right-sided and two-sided intervals                  --
+--                                                                    --
+-- How to read them                                                   --
+--   Each test applies one stage to hand-written hypotheses, grade    --
+--   expressions or a residual, and checks its answer with `refl`.    --
+--   The comment above a test writes its question out, `H ⊩ x ≾ y`    --
+--   for "the hypotheses `H` entail `x ≾ y`". The grades are chosen   --
+--   for the two properties the stages read from the hints: whether   --
+--   the unit is least (`𝟏-least?`) and whether multiplication        --
+--   commutes (`·-comm?`).                                            --
+------------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; not; _∧_) renaming (Bool to 𝔹)
 open import Data.Fin using (Fin; zero; suc)

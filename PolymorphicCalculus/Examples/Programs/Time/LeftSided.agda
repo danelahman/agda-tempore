@@ -1,9 +1,9 @@
-------------------------------------------------------------------
--- Programs at left-sided intervals                             --
---                                                              --
--- Nothing goes stale: `keep`'s scheme has no hypothesis, and   --
--- `late` is accepted.                                          --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Programs at left-sided intervals                                   --
+--                                                                    --
+-- Nothing goes stale: the scheme of `keep` has no hypothesis, and    --
+-- both programs are accepted.                                        --
+------------------------------------------------------------------------
 
 open import Data.List.Base using ([]; _∷_)
 open import Data.Maybe.Base using (just)

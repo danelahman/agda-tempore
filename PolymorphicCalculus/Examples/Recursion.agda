@@ -1,14 +1,50 @@
---------------------------------------------------------------------
--- Inference on primitive recursion                               --
---                                                                --
--- `recℕ V M N` and `recL V M N`. The step is typed under a       --
--- modality at `⊤ᵣ`, so only eternal outer variables are usable   --
--- in it; it binds the predecessor (or head and tail), then,      --
--- after a modality at the effect `ε`, the recursive result. `ε`  --
--- absorbs its own iteration, `ε · ε ≾ ε`. `⌜ n ⌝` is the         --
--- duration of `n` ticks. The instances under `Recursion/` check  --
--- each answer by `refl` at both time grades.                     --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Inference on primitive recursion                                   --
+--                                                                    --
+-- Recursion on natural numbers, `recℕ V M N`, and on lists,          --
+-- `recL V M N`. The step is typed under a modality at `⊤ᵣ`, so only  --
+-- outer variables of eternal type are usable in it. It binds the     --
+-- predecessor (or the head and tail), then, after a modality at the  --
+-- effect `ε` of the recursion, the recursive result. That effect     --
+-- absorbs its own iteration, `ε · ε ≾ ε`. `⌜ n ⌝` is the duration of --
+-- `n` ticks.                                                         --
+--                                                                    --
+-- The examples                                                       --
+--   add                  pure recursion on the recursive result      --
+--   rebuild, mul         the predecessor, and an outer natural       --
+--                        number, in the step                         --
+--   each                 a function from outside the step            --
+--   countdown            a tick per step; also on a numeral,         --
+--                        annotated at `k` ticks (`countdown-at`), at --
+--                        the top (`countdown-top`), and two ticks    --
+--                        annotated at one (`wait-2-at-1`)            --
+--   in-clause-pure,      recursion inside an operation clause, with  --
+--   in-clause-tick       a pure step and with a tick per step        --
+--   drop-clause          a clause that counts down and drops its     --
+--                        continuation                                --
+--   length, sum,         pure recursion on lists                     --
+--   inc-all                                                          --
+--   copy, call-all,      the head in the step: of any type, a        --
+--   last-or, last-box,   function, after a tick, boxed, and unboxed  --
+--   latest, latest-ready                                             --
+--   ticks                a tick per element; also annotated          --
+--                        (`ticks-at`, `ticks-top`)                   --
+--   twice, twice-run     a function calling the recursive result     --
+--                        twice; also annotated (`twice-run-at`)      --
+--                                                                    --
+-- How to read them                                                   --
+--   Each program is written above its definition in ordinary         --
+--   syntax. Where a typing is written out as a derivation, it is     --
+--   checked here (`add-typed`, `countdown-top-typable`). The modules --
+--   under `Recursion/` run inference at right-sided and left-sided   --
+--   intervals and check the answer with `refl`:                      --
+--     add-reported : schemeOf (infer [] add) ≡ just expected-add     --
+--   Where checking the closed program finds a satisfying instance,   --
+--   the verdict `established` is checked too, and read back as a     --
+--   typing (`check-typable`). A refuted example comes with a proof   --
+--   that it is untypable. `twice` and `twice-run` are checked at     --
+--   right-sided intervals only.                                      --
+------------------------------------------------------------------------
 
 open import Data.Unit using (tt)
 open import Data.Empty using (⊥-elim)
@@ -153,8 +189,8 @@ add-typed = typed-of add (closed add-D refl) _
 --   rebuild n = recℕ n with zero ↦ 0 | succ p, r ↦ succ p
 --   mul m n   = recℕ m with zero ↦ 0 | succ p, r ↦ add n r
 --
--- `p` and `n` are `nat`, so `var` asks nothing; `add n r` is written
--- out as a second `recℕ`. Typed at every grade.
+-- `p` and `n` are `nat`, so the variable rule asks nothing; `add n r`
+-- is written out as a second `recℕ`. Typed at every grade.
 
 rebuild : RawC ∅ˢ 0
 rebuild = return (fun (recℕ v₀ (return zero) (return (succ v₁))))
@@ -188,7 +224,7 @@ mul-typed = typed-of mul (closed mul-D refl) _
 --
 --   each f n = recℕ n with zero ↦ () | succ p, r ↦ f ()
 --
--- `f` is not eternal, so `var` asks `⊤ᵣ ≾ 𝟏ᵣ`.
+-- `f` is not eternal, so the variable rule asks `⊤ᵣ ≾ 𝟏ᵣ`.
 
 each : RawC ∅ˢ 0
 each = return (fun (return (fun (recℕ v₀ (return ⋆) (v₃ · ⋆)))))
@@ -241,8 +277,8 @@ countdown-top-typable = closed countdown-top-D refl
 --                               let a = op p in unbox k as k' in k' a;
 --                      return x ↦ ()}
 --
--- The recursion's effect is a clause-local unknown, bounded by
--- `op · j` only through its product with the resumption's.
+-- The recursion's effect is local to the clause, and bounded by
+-- `op · j` only through its product with the resumption's effect.
 
 rec-then-resume : ∀ {Θ n} → RawC (Θ +e) (suc (suc (suc (suc n)))) → Op
                 → RawC (Θ +e) (suc (suc n))

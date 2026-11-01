@@ -1,30 +1,33 @@
 ------------------------------------------------------------------------
--- Typed example computations at upper bounds on time paired with an  --
--- energy budget.                                                     --
+-- Typed computations at upper bounds on time with an energy budget   --
 --                                                                    --
--- Effect grades and resource grades are both `([0, n ] , [0, e ])`,  --
--- "at most `n` time steps and at most `e` units of energy", and an   --
--- operation is graded by its worst-case time and the energy it       --
--- draws: read 1 and 1, write 3 and 2, send 6 and 5. Idling spends    --
--- time and draws no energy.                                          --
+-- The grade                                                          --
+--   Effect grades and resource grades are both                       --
+--   `([0, n ] , [0, e ])`, "at most `n` time steps and at most `e`   --
+--   units of energy". An operation is graded by its worst-case time  --
+--   and the energy it draws: read 1 and 1, write 3 and 2, send 6 and --
+--   5. Idling spends time and draws no energy.                       --
 --                                                                    --
--- As a resource grade, `[ ([0, n ] , [0, e ]) ] A` is a calibration  --
--- that drifts with time and with use: claimable while at most `n`    --
--- steps have passed and at most `e` units have been drawn since      --
--- boxing. The same elapsed time can keep or lose it, according to    --
--- whether it was spent idling or working; both cases are shown       --
--- below.                                                             --
+-- What it shows                                                      --
+--   As a resource grade, `[ ([0, n ] , [0, e ]) ] A` is a            --
+--   calibration that drifts with time and with use: claimable while  --
+--   at most `n` steps have passed and at most `e` units have been    --
+--   drawn since boxing. The same elapsed time can keep or lose it,   --
+--   according to whether it was spent idling or working; both cases  --
+--   are shown below.                                                 --
 --                                                                    --
--- The two rules that place the unit on opposite sides of the order   --
--- behave as at the upper bounds on time: a reading goes stale after  --
--- any activity, and a handler clause may discard its continuation.   --
+--   The two rules that place the unit on opposite sides of the order --
+--   behave as at the upper bounds on time: a reading goes stale      --
+--   after any activity, and a handler clause may discard its         --
+--   continuation.                                                    --
 --                                                                    --
--- Every claim is checked componentwise, `≤!` on the time and on the  --
--- energy; a refutation names the component that fails.               --
+-- How to read them                                                   --
+--   Every claim is checked componentwise, `≤!` on the time and on    --
+--   the energy; a refutation names the component that fails.         --
 --                                                                    --
--- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
--- modality, `∷ A` a binding.                                         --
+--   The comments inside the programs state what each former appends  --
+--   to the context in which its subcomputation is typed: `⟨ ρ ⟩` a   --
+--   modality, `∷ A` a binding.                                       --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Product.RightSidedTimeEnergy where

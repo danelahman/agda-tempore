@@ -1,8 +1,8 @@
-------------------------------------------------------------------
--- Report simplification at timed traces, allowance order       --
---                                                              --
--- Both simplifications apply, the unit being least.            --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Report simplification at timed traces, allowance order             --
+--                                                                    --
+-- The unit is least, so both simplifications apply.                  --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

@@ -1,9 +1,10 @@
---------------------------------------------------------------------
--- Boxes at left-sided intervals                                  --
---                                                                --
--- A box is a promise, claimable once its grade has elapsed;      --
--- nothing goes stale. Early claims are refused.                  --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Boxes at left-sided intervals                                      --
+--                                                                    --
+-- A box is a promise, claimable once its grade has elapsed. Nothing  --
+-- goes stale, so every program in the first group is typable, and    --
+-- early claims are refused.                                          --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

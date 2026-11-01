@@ -1,29 +1,32 @@
 ------------------------------------------------------------------------
--- Typed example computations at the mode times.                      --
+-- Typed computations at the mode times                               --
 --                                                                    --
--- Effect grades and resource grades are both mode times over two     --
--- modes of the node, `Idle` (mode 0) and `Radio` (mode 1), the radio --
--- on; the operations take their running times (`Worked.Operations`)  --
--- in the mode they start from. Reading works in every mode and keeps --
--- it; storing works only when idle; transmitting switches the radio  --
--- on from `Idle`, or transmits with it on. Idling keeps the mode and --
--- spends its time in it.                                             --
+-- The grade                                                          --
+--   Effect grades and resource grades are both mode times over two   --
+--   modes of the node, `Idle` (mode 0) and `Radio` (mode 1), the     --
+--   radio on. The operations take their running times                --
+--   (`Worked.Operations`) in the mode they start from. Reading works --
+--   in every mode and keeps it; storing works only when idle;        --
+--   transmitting switches the radio on from `Idle`, or transmits     --
+--   with it on. Idling keeps the mode and spends its time in it.     --
 --                                                                    --
--- A deadline of twelve steps from `Idle` or `Radio`, never stuck     --
--- from them, admits a reading and a transmission and refuses a       --
--- second transmission, which may take thirteen; storing after a      --
--- transmission gets stuck and is refused. A box graded "within eight --
--- steps, in whichever mode" is claimed after idling five steps and   --
--- refused after nine.                                                --
+-- What it shows                                                      --
+--   A deadline of twelve steps from `Idle` or `Radio`, never stuck   --
+--   from them, admits a reading and a transmission and refuses a     --
+--   second transmission, which may take thirteen; storing after a    --
+--   transmission gets stuck and is refused. A box graded "within     --
+--   eight steps, in whichever mode" is claimed after idling five     --
+--   steps and refused after nine.                                    --
 --                                                                    --
--- The two rules that place the unit on opposite sides of the order:  --
--- the unit spends no time, so a reading goes stale after any step,   --
--- idling included; and it is not least, so a handler clause cannot   --
--- discard its continuation.                                          --
+--   The two rules that place the unit on opposite sides of the       --
+--   order: the unit spends no time, so a reading goes stale after    --
+--   any step, idling included; and it is not least, so a handler     --
+--   clause cannot discard its continuation.                          --
 --                                                                    --
--- Every side condition is discharged by the decision procedure of    --
--- the grade (`decided`, `check`), and every refutation by it         --
--- (`refuted`).                                                       --
+-- How to read them                                                   --
+--   Every side condition is discharged by the decision procedure of  --
+--   the grade (`decided`, `check`), and every refutation by it       --
+--   (`refuted`).                                                     --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.SemiDirect.ModeTimes where

@@ -1,12 +1,38 @@
---------------------------------------------------------------------
--- Inference on comparisons                                       --
---                                                                --
--- `cmp ⋈ V W` compares two operands of one eternal type: natural --
--- numbers, lists, pairs and sums compare, functions and boxes    --
--- do not. An unknown operand type is asked to be eternal         --
--- outright, with no grade disjunct. The instances under          --
--- `Compare/` check each answer by `refl` at both time grades.    --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Inference on comparisons                                           --
+--                                                                    --
+-- A comparison `cmp ⋈ V W` compares two operands of one eternal      --
+-- type: natural numbers, lists, pairs and sums compare, functions    --
+-- and boxes do not. An operand of unknown type is asked to be        --
+-- eternal outright, without the alternative the variable rule        --
+-- allows.                                                            --
+--                                                                    --
+-- The examples                                                       --
+--   lt-nats         two natural numbers                              --
+--   eq-lists        two lists of natural numbers                     --
+--   ge-pairs        two pairs                                        --
+--   ne-sums,        two sums, annotated and unannotated              --
+--   ne-sums'                                                         --
+--   equal,          a polymorphic comparison, and one operand        --
+--   reflexive       compared with itself                             --
+--   eq-funs,        functions and boxes, which do not compare        --
+--   eq-boxes                                                         --
+--   later-lt,       comparisons after a delay                        --
+--   later-equal                                                      --
+--   max             a comparison inspected by `if`                   --
+--                                                                    --
+-- How to read them                                                   --
+--   Each program is written above its definition in ordinary         --
+--   syntax. Where a typing is written out as a derivation, the       --
+--   program is checked here to be typed by inference at every        --
+--   grade (`lt-nats-typed`). The modules under `Compare/` run        --
+--   inference at right-sided and left-sided intervals and check      --
+--   the answer with `refl`:                                          --
+--     lt-nats-reported : schemeOf (infer [] lt-nats)                 --
+--                          ≡ just expected-lt-nats                   --
+--   `eq-funs` and `eq-boxes` are refuted there, each with a proof    --
+--   that it is untypable; every other example is typed at both.      --
+------------------------------------------------------------------------
 
 open import Data.Unit using (tt)
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)

@@ -1,17 +1,27 @@
---------------------------------------------------------------------
--- Checking programs of several top-level definitions             --
---                                                                --
--- Each definition is inferred in the context of those before it  --
--- and added with its principal scheme (`checkProgram`).          --
---                                                                --
---   keep x  = delay 1; x                                         --
---   twice _ = keep (); keep true                                 --
---   late _  = keep (fun x → x)                                   --
---                                                                --
--- `twice` uses `keep` at two instances. Where `keep` requires    --
--- an eternal type, `late` is rejected. The instances under       --
--- `Programs/` check the schemes by `refl`.                       --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Checking programs of several top-level definitions                 --
+--                                                                    --
+-- A program is checked one definition at a time (`checkProgram`):    --
+-- each is inferred in the context of those before it and added with  --
+-- its principal scheme.                                              --
+--                                                                    --
+-- The examples                                                       --
+--   keep x  = delay 1; x                                             --
+--   twice _ = keep (); keep true                                     --
+--   late _  = keep (fun x → x)                                       --
+--                                                                    --
+--   keep-twice   `keep` then `twice`, which uses `keep` at two       --
+--                instances of its scheme                             --
+--   keep-late    `keep` then `late`, which keeps a function;         --
+--                rejected where `keep` requires an eternal type      --
+--                                                                    --
+-- How to read them                                                   --
+--   The modules under `Programs/` check each program at right-sided  --
+--   and left-sided intervals with `refl`, against the list of its    --
+--   schemes or the position of the definition it is rejected at:     --
+--     keep-late-rejected : rejectedAt (checkProgram keep-late)       --
+--                            ≡ just 1                                --
+------------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_; _++_)
 open import Data.Maybe.Base using (Maybe; just; nothing)

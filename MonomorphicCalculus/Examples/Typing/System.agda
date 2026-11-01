@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
--- The language of the typing examples, over a grade system.          --
+-- The language of the typing examples, over a grade system           --
 --                                                                    --
 -- The calculus over the language of the sensor node                  --
--- (`Language.Examples.SensorNode`): the grade system `S` and the     --
--- effect grade `opTime` assigns to each operation vary. `Core` is    --
+-- (`Language.Examples.SensorNode`). The grade system `S` and the     --
+-- effect grade `opTime` assigns to each operation vary; `Core` is    --
 -- the instance at an identity grade system.                          --
 --                                                                    --
 -- A `nodeid` variable is usable after any passage of time; a         --

@@ -4,8 +4,11 @@
 -- The context modality is a parametric right adjoint at every grade  --
 -- exactly when `⊤ ≾ 𝟏` (`PRA-everywhere` in                          --
 -- `Renaming/ContextModality/LowerBounds`, and `PRA-⊤⇒⊤≾𝟏` in         --
--- `Renaming/ContextModality`); otherwise `L_⊤` is not one. Each line --
--- below runs the grade's own decision procedure `⊤ ≾? 𝟏`.            --
+-- `Renaming/ContextModality`); otherwise `L_⊤` is not one.           --
+--                                                                    --
+-- How to read it                                                     --
+--   Each line below runs the grade's own decision procedure `⊤ ≾? 𝟏` --
+--   and checks the answer with `refl`.                               --
 ------------------------------------------------------------------------
 
 open import Data.Bool.Base using (Bool; true; false)

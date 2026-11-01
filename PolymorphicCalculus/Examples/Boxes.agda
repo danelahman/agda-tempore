@@ -1,15 +1,48 @@
---------------------------------------------------------------------
--- Inference on boxes and delays                                  --
---                                                                --
--- `unbox` asks that the grade elapsed since the box was bound be --
--- below the box's grade: at the right-sided grades a box is a    --
--- lease, claimable up to `ρ`; at the left-sided ones a promise,  --
--- claimable from `ρ` on. `⌜ n ⌝` is the duration of `n` ticks.   --
--- A box argument that is only claimed is reported at the least   --
--- grade its claims need, a constant. A claim refused at a        --
--- constant grade is `untypable` (`checkClosed`). The instances   --
--- under `Boxes/` check each answer by `refl` at four grades.     --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Inference on boxes and delays                                      --
+--                                                                    --
+-- `unbox` asks that the grade elapsed since the box was bound lie    --
+-- below the box's grade. At the right-sided grades a box is a lease, --
+-- claimable until its grade has elapsed; at the left-sided ones it   --
+-- is a promise, claimable once its grade has elapsed. `⌜ n ⌝` is the --
+-- duration of `n` ticks.                                             --
+--                                                                    --
+-- The examples, in nine numbered groups                              --
+--   stale-call           a function argument called after a tick     --
+--   boxed-call           the same, with the argument boxed first     --
+--   handed-box-call      a box from the caller, claimed after a tick --
+--   boxing-an-argument   an argument boxed for a tick                --
+--   boxing-a-pair-D      a pair boxed under a hypothesis, meeting    --
+--                        the variable rule component by component    --
+--   claim-after d        a box of three ticks claimed after `d`      --
+--   inferred-grade       a box argument whose grade is inferred      --
+--   kept-and-claimed     a box argument claimed and handed back      --
+--   escaping-after d     a box returned by a function, claimed after --
+--                        `d` ticks                                   --
+--   branches             claims after different delays in the two    --
+--                        branches of an `if`                         --
+--   op-licensed op       a claim after an operation, whose time is   --
+--                        all that elapsed                            --
+--   nested, nesting      a box inside a box, passed in or built in   --
+--                        place                                       --
+--   claimed-in-clause    a box claimed inside an operation clause    --
+--   handed-to-clause     the same, with a box from the caller        --
+--   annotated-claim      a box argument annotated with its grade     --
+--   relabelled a d       a box of three annotated as a box of `a`,   --
+--                        claimed after `d` ticks                     --
+--                                                                    --
+-- How to read them                                                   --
+--   Each program is written above its definition in ordinary syntax, --
+--   with what it needs and where it is typable. A box argument that  --
+--   is only claimed is reported at the least grade its claims need,  --
+--   a constant. A claim refused at constant grades makes inference   --
+--   answer `untypable`. The modules under `Boxes/` run inference at  --
+--   four grades and check each answer with `refl`:                   --
+--     nested-reported :                                              --
+--       schemeOf (infer [] nested) ≡ just expected-nested            --
+--   A refused claim comes with the verdict `infer [] p ≡ untypable`  --
+--   and the proof `¬ Typable [] p` drawn from it.                    --
+------------------------------------------------------------------------
 
 open import Data.Unit using (tt)
 open import Data.Empty using (⊥-elim)
@@ -192,8 +225,8 @@ expected-boxing-anything =
 
 --   boxing-a-pair p = box[ρ₀] p as b in b
 --
--- Under `eternal α₀ ∨ ρ₀ ≾𝟏̂ᵣ`, the pair `α₀ |×| α₀` meets the var rule
--- only componentwise (`_|×|-ok_`).
+-- Under `eternal α₀ ∨ ρ₀ ≾𝟏̂ᵣ`, the pair `α₀ |×| α₀` meets the
+-- variable rule only component by component (`_|×|-ok_`).
 
 boxing-a-pair-D : hypsOf {scope 1 1 0} (eternal α₀ ∨ ρ₀ ≾𝟏̂ᵣ)
                   ∣ [] ⊢ᶜ⦂ (α₀ |×| α₀ ⇒ [ ρ₀ ] (α₀ |×| α₀) ! 𝟏̂ₑ) ! 𝟏̂ₑ
@@ -279,7 +312,7 @@ expected-kept-and-claimed =
 --     let r = mk () in delay d; unbox r as y in y
 --
 -- `⌜ d ⌝ʳ ≾ ⌜ 2 ⌝ʳ`, reached only through `mk`'s result type, so a
--- refused claim is refuted by chained closed orderings (`checkClosed`):
+-- refused claim is refuted by a chain of orderings between constants:
 -- typed at `d = 2`; refused late (`d = 4`) or early (`d = 1`).
 
 escaping-after : ℕ → RawC ∅ˢ 0

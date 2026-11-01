@@ -1,15 +1,21 @@
-------------------------------------------------------------------
--- What inference reports, and notation for writing it          --
---                                                              --
--- `schemeOf` projects a `typed` verdict onto its scheme        --
--- (scope, hypotheses, type), fully evaluated, so a `refl`      --
--- check against a literal runs the solver once; `forceᵛ`       --
--- does the same for the value schemes of a program.            --
--- Notation: `∀[ a , b , c ] C ⟹ X` over `a` type, `b`          --
--- resource-grade and `c` effect-grade variables, `C` a         --
--- conjunction `_∧_` of atoms (`⊤` empty);                      --
--- `∀ᵛ[ a , b , c ] C ⟹ X` is a value scheme.                   --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- What inference reports, and notation for writing it                --
+--                                                                    --
+-- The examples compare what inference answers with a scheme written  --
+-- out by hand: a scope, hypotheses and a type.                       --
+--                                                                    --
+-- Where to look                                                      --
+--   schemeOf          the scheme of a `typed` answer, evaluated in   --
+--                     full, so a `refl` check against a literal runs --
+--                     the solver once                                --
+--   forceᵛ            the same for the value schemes of a program    --
+--   ∀[ a , b , c ]    a scheme over `a` type, `b` resource-grade and --
+--     C ⟹ X           `c` effect-grade variables, with hypotheses    --
+--                     `C` and type `X`                               --
+--   ∀ᵛ[ a , b , c ]   a value scheme                                 --
+--     C ⟹ X                                                          --
+--   _∧_, ⊤            a conjunction of atoms, and the empty one      --
+------------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹; _∧_ to _&&_)
 open import Data.Empty using (⊥)
@@ -184,8 +190,8 @@ IsTyVar _        = ⊥
 tyvar : ∀ {Θ} → (A : OVType Θ) → IsTyVar A → TyVar Θ
 tyvar (tvar α) _ = α
 
--- The atoms. `eternal A ∨ ρ ≾𝟏̂ᵣ` is a var-rule disjunction: `A` is
--- eternal or `ρ ≾ 𝟏ᵣ`.
+-- The atoms. `eternal A ∨ ρ ≾𝟏̂ᵣ` is the disjunction of the variable
+-- rule: `A` is eternal or `ρ ≾ 𝟏ᵣ`.
 
 infix 6 eternal_ _<:_ _≾ᵣ_ _≾ₑ_
 

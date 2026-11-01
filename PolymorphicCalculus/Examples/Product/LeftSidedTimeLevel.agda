@@ -1,11 +1,12 @@
---------------------------------------------------------------------
--- Inference at left-sided time paired with a security level      --
---                                                                --
--- `([ n ,+∞⟩ , ℓ)`: at least `n` ticks, touching nothing above   --
--- `ℓ`; `read` 1 and `write` 2 at `Low`, `send` 4 at `High`. A    --
--- box at `([ 5 ,+∞⟩ , Low)` is an embargoed report, refused      --
--- when early or tainted.                                         --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Inference at left-sided time paired with a security level          --
+--                                                                    --
+-- `([ n ,+∞⟩ , ℓ)` is at least `n` ticks, touching nothing above     --
+-- `ℓ`; `read` takes 1 and `write` 2 at `Low`, `send` 4 at `High`. A  --
+-- box at `([ 5 ,+∞⟩ , Low)` is an embargoed report: claimed on time  --
+-- and late, and after a store; refused early, or after a             --
+-- transmission. A reading survives a store, not a transmission.      --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 open import Data.Product using (_,_)

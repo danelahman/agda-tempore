@@ -1,23 +1,26 @@
 ------------------------------------------------------------------------
--- Typed example computations at the grade of listed runs.            --
+-- Typed computations at the grade of listed runs                     --
 --                                                                    --
--- Effect grades and resource grades are both sets of timed traces,   --
--- and the comparison is inclusion: a computation is graded by `Q`    --
--- when every run it may have is one of the traces that `Q` lists. A  --
--- listed delay pays for no operations and a listed operation permits --
--- only itself, so a grade lists the runs it permits.                 --
+-- The grade                                                          --
+--   Effect grades and resource grades are both sets of timed traces, --
+--   and the comparison is inclusion: a computation is graded by `Q`  --
+--   when every run it may have is one of the traces that `Q` lists.  --
+--   A listed delay pays for no operations and a listed operation     --
+--   permits only itself, so a grade lists the runs it permits.       --
 --                                                                    --
--- The programs are those of the allowance order of                   --
--- `Traces.Timed.RightSided`, with side conditions that hold less     --
--- often. `unbox` requires the elapsed run to be listed on the box,   --
--- so a permit covering a conditional lists the run of each branch,   --
--- and `coerce` can only add runs to a list.                          --
+-- What it shows                                                      --
+--   The programs are those of the allowance order of                 --
+--   `Traces.Timed.RightSided`, with side conditions that hold less   --
+--   often. `unbox` requires the elapsed run to be listed on the box, --
+--   so a permit covering a conditional lists the run of each branch, --
+--   and `coerce` can only add runs to a list.                        --
 --                                                                    --
--- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
--- modality, `∷ A` a binding. The modalities between the binding of a --
--- box and its `unbox` multiply to the elapsed run, which must be     --
--- listed on the box.                                                 --
+-- How to read them                                                   --
+--   The comments inside the programs state what each former appends  --
+--   to the context in which its subcomputation is typed: `⟨ ρ ⟩` a   --
+--   modality, `∷ A` a binding. The modalities between the binding of --
+--   a box and its `unbox` multiply to the elapsed run, which must be --
+--   listed on the box.                                               --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Traces.Subsets.RightSided where

@@ -1,6 +1,9 @@
-------------------------------------------------------------------
--- Comparisons at left-sided intervals                          --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Comparisons at left-sided intervals                                --
+--                                                                    --
+-- Every comparison gets its scheme, checked with `refl`, except      --
+-- those of functions and of boxes, which are refuted.                --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

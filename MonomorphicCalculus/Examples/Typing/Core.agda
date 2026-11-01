@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------
--- The language of the typing examples, over an identity grade        --
--- system.                                                            --
+-- The language of the typing examples, over an identity grade system --
 --                                                                    --
--- Effect grades and resource grades are the same monoid `G` and      --
+-- Effect grades and resource grades are the same monoid `G`, and     --
 -- `∣-∣ᵉ` is the identity, so `∣_∣ᵉ` reduces away. The instances vary --
--- `G` and the grade `opTime` assigns to each operation. The calculus --
--- over the language is `Typing.System`; the example programs are in  --
--- the instances.                                                     --
+-- `G` and the grade `opTime` assigns to each operation.              --
+--                                                                    --
+-- The calculus over the language is `Typing.System`; the example     --
+-- programs are in the instances.                                     --
 ------------------------------------------------------------------------
 
 open import Grades.Durations using (Duration)

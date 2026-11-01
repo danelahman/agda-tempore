@@ -1,11 +1,32 @@
---------------------------------------------------------------------
--- Satisfiability at definitions and establishment at runs        --
---                                                                --
--- Programs whose qualifier inference leaves open: `infer`        --
--- searches it for a refutation (`Search`), and `check` also for  --
--- a closed instance. The instances under `Runs/` check the       --
--- verdicts by `refl` and derive typability or its refutation.    --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Satisfiability at definitions and establishment at runs            --
+--                                                                    --
+-- Some programs leave hypotheses that inference cannot settle on     --
+-- its own. Inference (`infer`) searches them for a refutation;       --
+-- checking a closed program (`check`) also searches for a closed     --
+-- instance that satisfies them, which establishes the program as     --
+-- typable.                                                           --
+--                                                                    --
+-- The examples                                                       --
+--   budget τ c   a function annotated to take as long as its         --
+--                argument and a delay `τ`, the whole annotated at    --
+--                `c`; at a duration (`budget-at`) and at the top     --
+--                (`budget-top`)                                      --
+--   stretch τ    a handler calling the result of its resumption      --
+--                                                                    --
+-- How to read them                                                   --
+--   Each program is written above its definition in ordinary         --
+--   syntax. The modules under `Runs/` check the verdicts with        --
+--   `refl` at right-sided and left-sided intervals:                  --
+--     budget-top-verdict : verdict (check [] (budget-top 1))         --
+--                            ≡ established                           --
+--   An established verdict is read back as a typing                  --
+--   (`check-typable`); an `untypable` verdict from `infer` gives a   --
+--   proof that the program is untypable. A budget is established at  --
+--   the top and refuted at the durations tried, at both grades;      --
+--   `stretch` is refuted at right-sided intervals and established    --
+--   at left-sided ones.                                              --
+------------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
 open import Data.Nat using (suc)
@@ -71,10 +92,10 @@ check-typable Γ M () | Check.stuck
 --   budget τ c = (let f = (λ g. g (); delay τ) : (U → U ! ε₀) → U ! ε₀
 --                 in f (λ _. ())) : U ! c
 --
--- Where the unit is least this leaves `τ · ε₀ ≾ ε₀ ∧ ε₀ ≾ c`: refuted
--- through the factor edge if `τ` is not below `c`, else by lowering
--- `ε₀` to the top unless `c` is the top. At left-sided time `𝟏 ≾ ε₀`
--- refutes every `c` but the top.
+-- Where the unit is least it needs `τ · ε₀ ≾ ε₀ ∧ ε₀ ≾ c`. This fails
+-- if `τ` is not below `c`; otherwise the least `ε₀` it allows is the
+-- top, so it fails unless `c` is the top. At left-sided time the
+-- condition `𝟏 ≾ ε₀` refutes every `c` but the top.
 
 -- The scope of the program's variables: one effect variable
 
@@ -107,8 +128,9 @@ budget-top τ = budget τ (econst ⊤ₑ)
 --                          let f = k' a in f (); (λ _. delay τ);
 --                 return x ↦ λ _. delay τ}
 --
--- Each clause leaves `∀ j. op · j · ε ≾ op · j`, `ε` localised to `τ`:
--- refuted at a witness at right-sided time, established at left-sided.
+-- Each clause needs `∀ j. op · j · ε ≾ op · j` over its grade variable
+-- `j`, with `ε` the delay `τ`: a candidate `j` refutes it at
+-- right-sided time, and it is established at left-sided time.
 
 late : ∀ {Θ n} → 𝔻 → RawV Θ n
 late τ = fun (delay τ (return ⋆))

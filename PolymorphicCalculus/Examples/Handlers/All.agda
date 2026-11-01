@@ -1,7 +1,11 @@
 ------------------------------------------------------------------------
--- Handlers without annotations: cycles of clause-local unknowns, a
--- discarded and a twice-resumed continuation, handlers as values.
--- Exercises clause-local unknowns (`Localise`) and handler types.
+-- Handlers                                                           --
+--                                                                    --
+-- Handlers written without annotations: a continuation resumed       --
+-- through a helper, dropped, or resumed twice, and handlers passed   --
+-- around as values.                                                  --
+--                                                                    --
+-- Exercises: clause-local unknowns (`Localise`) and handler types.   --
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Examples.Handlers.All where

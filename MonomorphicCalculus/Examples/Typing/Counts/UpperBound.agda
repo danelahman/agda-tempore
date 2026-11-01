@@ -1,20 +1,26 @@
 ------------------------------------------------------------------------
--- Typed example computations at upper bounds on counts by name.      --
+-- Typed computations at upper bounds on counts by name               --
 --                                                                    --
--- Effect grades and resource grades are both maps from operation     --
--- names to quotas, a default bounding the operations not listed;     --
--- each operation is graded by one draw on its own name, and idling   --
--- draws on none. A quota listing only transmissions bounds reads by  --
--- its default: with the default 0 a reading is refused, with the     --
--- default `unlimited` it is free.                                    --
+-- The grade                                                          --
+--   Effect grades and resource grades are both maps from operation   --
+--   names to quotas, a default bounding the operations not listed.   --
+--   Each operation is graded by one draw on its own name, and idling --
+--   draws on none.                                                   --
 --                                                                    --
--- The two rules that place the unit on opposite sides of the order:  --
--- a reading survives idling and goes stale after an operation, and a --
--- handler clause may discard its continuation, the unit being least. --
+-- What it shows                                                      --
+--   A quota listing only transmissions bounds reads by its default:  --
+--   with the default 0 a reading is refused, with the default        --
+--   `unlimited` it is free.                                          --
 --                                                                    --
--- Every side condition is discharged by the decision procedure of    --
--- the grade (`decided`, `check`), and every refutation by it         --
--- (`refuted`).                                                       --
+--   The two rules that place the unit on opposite sides of the       --
+--   order: a reading survives idling and goes stale after an         --
+--   operation, and a handler clause may discard its continuation,    --
+--   the unit being least.                                            --
+--                                                                    --
+-- How to read them                                                   --
+--   Every side condition is discharged by the decision procedure of  --
+--   the grade (`decided`, `check`), and every refutation by it       --
+--   (`refuted`).                                                     --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Counts.UpperBound where
