@@ -210,11 +210,11 @@ eq-boxes : RawC ∅ˢ 0
 eq-boxes = box 𝟏̂ᵣ ⋆ (box 𝟏̂ᵣ ⋆ (return (cmp eq v₁ v₀)))
 
 ------------------------------------------------------------------
--- 6. Comparisons under a lock
+-- 6. Comparisons under a modality
 --
 --   later-lt = let n = 2 in delay 1; n < 3
 --
--- `nat` survives the lock; typed at every grade.
+-- `nat` survives the modality; typed at every grade.
 
 later-lt : RawC ∅ˢ 0
 later-lt = return (numeral 2) ⨟ delay ⌜ 1 ⌝ (return (cmp lt v₀ (numeral 3)))

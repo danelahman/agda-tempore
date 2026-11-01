@@ -22,10 +22,10 @@
 -- continuation (returning at once covers nothing).                   --
 --                                                                    --
 -- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
--- `∷ A` a binding. A lock records which operation ran, and the       --
--- premise compares the product of the locks between the binding of a --
--- box and its `unbox` with the box.                                  --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
+-- modality, `∷ A` a binding. A modality records which operation ran, --
+-- and the premise compares the product of the modalities between the --
+-- binding of a box and its `unbox` with the box.                     --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Traces.Timed.LeftSided where
@@ -86,7 +86,7 @@ idling =
 -- Nothing goes stale
 --
 -- `var`'s bound is `ρ ≾ᵣ 𝟏ᵣ`, and every run covers the empty
--- guarantee, so a reading survives whatever locks stand over it.
+-- guarantee, so a reading survives whatever modalities stand over it.
 
 nothing-goes-stale : (ρ : R) → ρ ≾ᵣ 𝟏ᵣ
 nothing-goes-stale ρ = ≾-⊤ ρ
@@ -142,8 +142,8 @@ idling-guarantees-no-reading = fails
 --
 -- The conditional's grade has to be guaranteed by both branches. The
 -- union does it, each branch guaranteeing its own run; so does the time
--- the two branches are both bound to spend. Neither branch locks the
--- context.
+-- the two branches are both bound to spend. Neither branch adds a
+-- modality.
 
 branching : [] ∷ bool ∷ Reading ⊢ᶜ⦂ unit ! ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆
 branching =
@@ -185,7 +185,7 @@ sampling-then-branching =
 -- Unboxing: a resource that comes due when work has been done
 --
 -- `unbox`'s premise is `elapsed ≾ᵣ ρ`: what the computation did between
--- boxing the resource and claiming it (the locks the comments show)
+-- boxing the resource and claiming it (the modalities the comments show)
 -- has to cover what the box asks for. The box below asks for a reading.
 
 demand : R
@@ -216,7 +216,7 @@ handed-over =
 
 -- and the claim survives extra work in between: two readings cover a
 -- demand for one, so the function may sample again before claiming
--- what it was handed. Two locks stand between the binding and the
+-- what it was handed. Two modalities stand between the binding and the
 -- claim, and their product is `⟅ ⌈ read ⌉ ∙ ⌈ read ⌉ ⟆`.
 
 handed-over' : [] ⊢ᶜ⦂ unit ! ⟅ ⌈ read ⌉ ∙ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
@@ -246,7 +246,7 @@ either-way =
 idling-does-not-discharge-it : ¬ (𝟏ᵣ ·ᵣ ιᵣ 2 ≾ᵣ demand)
 idling-does-not-discharge-it = fails
 
--- and neither does doing nothing at all: with no lock in between there
+-- and neither does doing nothing at all: with no modality in between there
 -- is nothing to cover the demand with
 
 claiming-at-once : ¬ (𝟏ᵣ ≾ᵣ demand)
@@ -308,9 +308,9 @@ transmitting-branch-does-not = fails
 ------------------------------------------------------------------------
 -- Sub-effecting against unboxing
 --
--- Sequencing locks its continuation by the grade the first part is
--- typed at and binds that part's result: the `⟨ … ⟩ ∷ …` on the `⨟`
--- line below. What a `coerce` there forgets is not time but the
+-- Sequencing types its continuation under a modality at the grade the
+-- first part is typed at and binds that part's result: the `⟨ … ⟩ ∷ …`
+-- on the `⨟` line below. What a `coerce` there forgets is not time but the
 -- operation: a reading may be traded for the tick it took, and a box
 -- asking for the reading is then out of reach.
 
@@ -328,7 +328,7 @@ claim-after-a-reading =
 trading-it-for-a-tick : opTime read ·ₑ 𝟏ₑ ≾ₑ ιₑ 1 ·ₑ 𝟏ₑ
 trading-it-for-a-tick = holds
 
--- and taking it makes the lock `⟨ ⟅ ⟨ 1 ⟩ ⟆ ⟩`, which covers no
+-- and taking it makes the modality `⟨ ⟅ ⟨ 1 ⟩ ⟆ ⟩`, which covers no
 -- reading, so the box is closed
 
 forgetting-the-reading-closes-it : ¬ (𝟏ᵣ ·ᵣ ιᵣ 1 ≾ᵣ demand)
@@ -468,8 +468,8 @@ sampling-branch-too-little = fails
 ------------------------------------------------------------------------
 -- Effect handling
 --
--- Handling locks its `in` part by the handled computation's grade, as
--- sequencing does.
+-- Handling types its `in` part under a modality at the handled
+-- computation's grade, as sequencing does.
 
 forwarded : [] ⊢ᶜ⦂ Reading ! ⟅ ⌈ read ⌉ ⟆
 forwarded =

@@ -58,9 +58,9 @@ replay : ∀ {𝕊 𝕊' 𝕊₂ : State []} → (es : 𝕊 ≐ˢ 𝕊') → (q 
 
 replay {𝕊' = 𝕊'} es ≤ₛ-refl = 𝕊' , ≤ₛ-refl , es , id-≤≐
 
-replay es (≤ₛ-lock {ρ = ρ} q) with replay es q
+replay es (≤ₛ-⟨⟩ {ρ = ρ} q) with replay es q
 ... | 𝕊₂' , q' , es₂ , h =
-  𝕊₂' ⟨ ρ ⟩ₛ , ≤ₛ-lock q' , ⟨⟩-≐ˢ ρ es₂ , ⟨⟩-≤≐ ρ h
+  𝕊₂' ⟨ ρ ⟩ₛ , ≤ₛ-⟨⟩ q' , ⟨⟩-≐ˢ ρ es₂ , ⟨⟩-≤≐ ρ h
 
 replay es (≤ₛ-res {ρ = ρ} {V = V} q) with replay es q
 ... | 𝕊₂' , q' , es₂ , h =

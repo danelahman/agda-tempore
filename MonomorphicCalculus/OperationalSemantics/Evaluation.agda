@@ -35,7 +35,7 @@ open import MonomorphicCalculus.Syntax.Contexts Spec
 open import MonomorphicCalculus.Syntax.Terms    Spec
 open import MonomorphicCalculus.Syntax.Types    Spec
 
--- A runtime context is built solely from locks and box-typed cells, so it
+-- A runtime context is built solely from modalities and box-typed cells, so it
 -- holds no base-typed variable either (the counterpart of `⇒-not-in-toCtx`,
 -- `⦉⦊-not-in-toCtx` and `empty-not-in-toCtx` in `MonomorphicCalculus.OperationalSemantics.State`).
 

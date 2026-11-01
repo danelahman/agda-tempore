@@ -364,7 +364,7 @@ free-necᵉ-nat f nat =
   ∙ ∘ᵐ-congʳ (η⊣-nat f)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
--- A lock composed before the barrier relaxation is the free algebra's own
+-- A modality composed before the barrier relaxation is the free algebra's own
 -- multiplication applied to the inner relaxation (`⊤` is greatest).
 
 barrier-μ : ∀ {X ρ} → (p : ρ · ⊤ ≾ ⊤)
@@ -377,13 +377,13 @@ barrier-μ {X} {ρ} p =
   ∙ ∘ᵐ-congʳ (μ-≤ˡ (≾-⊤ ρ))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
--- Extraction at a lock, applied to the barrier, is the lock's relaxation to
--- `⊤`.
+-- Extraction at a modality, applied to the barrier, is the modality's
+-- relaxation to `⊤`.
 
-barrier-lock : ∀ {X ρ}
-             → Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ X) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⊤⟩-η {X})
-             ≈ᵐ ⟨⟩-≤ (≾-⊤ ρ)
-barrier-lock {X} {ρ} =
+barrier-⟨⟩ : ∀ {X ρ}
+           → Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ X) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⊤⟩-η {X})
+           ≈ᵐ ⟨⟩-≤ (≾-⊤ ρ)
+barrier-⟨⟩ {X} {ρ} =
     ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-≤-nat ⟨⊤⟩-η (≾-⊤ ρ)))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -941,7 +941,7 @@ module _ {A B : Obj} (f : A →ᵐ B) (g : B →ᵐ A)
 -- At a grade `ρ` that is ≾-equivalent to the unit, `⟨ ρ ⟩ᵒ` is isomorphic to
 -- the identity: `η` relaxed up to `ρ`, and `εᵘ` relaxed down from it, are
 -- mutually inverse. So `⟨ ρ ⟩ᵒ A` is eternal whenever `A` is, which is what
--- makes a lock at such a grade admissible inside an eternal context.
+-- makes a modality at such a grade admissible inside an eternal context.
 
 ⟨𝟏≈⟩-unit : ∀ {A ρ} → 𝟏 ≾ ρ → A →ᵐ ⟨ ρ ⟩ᵒ A
 ⟨𝟏≈⟩-unit q = ⟨⟩-≤ q ∘ᵐ η

@@ -137,9 +137,9 @@ mutual
             → Γ ⊢ᵛ⦂ A ⇒ C
 
     -- handlers: the return clause binds the handled computation's result
-    -- behind the lock of its effect, as the continuation of `_⨟_`. An
+    -- behind the modality of its effect, as the continuation of `_⨟_`. An
     -- operation clause runs at a time the handler does not fix, so its view
-    -- of the ambient context `Γ` is barred by the `≾ᵣ`-greatest lock
+    -- of the ambient context `Γ` is barred by the `≾ᵣ`-greatest modality
     -- `⟨ ⊤ᵣ ⟩`; the parameter and boxed continuation are added on top.
 
     handler : {A B : VType}
@@ -280,7 +280,7 @@ mutual
     -- primitive recursion on lists
 
     -- As for `recℕ`: the step sees the ambient context behind `⟨ ⊤ᵣ ⟩`,
-    -- binds the head and the tail, and, behind the lock of the recursion's
+    -- binds the head and the tail, and, behind the modality of the recursion's
     -- grade, the result of the recursive call on the tail.
 
     recL    : {A B : VType}
@@ -326,8 +326,8 @@ mutual
     -- The value being unboxed is a variable of box type, named at its declared
     -- type `[ ρ₀ ] A₀`; the premise `A₀ <:ᵛ A` lets the continuation bind any
     -- supertype of the payload. That enough time has passed is the grade bound
-    -- `ρ' ≾ᵣ ρ₀`, with `ρ'` the product of the locks standing to the variable's
-    -- right.
+    -- `ρ' ≾ᵣ ρ₀`, with `ρ'` the product of the modalities standing to the
+    -- variable's right.
 
     unbox   : {A A₀ : VType}
             → {C : CType}

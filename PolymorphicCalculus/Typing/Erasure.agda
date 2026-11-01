@@ -110,13 +110,13 @@ private
   ex-⋆-erase : ⌊ ex-⋆ ⌋ᵛ ≡ ⋆
   ex-⋆-erase = refl
 
-  -- locks are forgotten, positions kept
+  -- modalities are forgotten, positions kept
 
-  ex-var-lock : ∅ᴴ ∣ ((∅ᶜ ∷ unit) ⟨ rconst 𝟏ᵣ ⟩) ⊢ᵛ⦂ unit
-  ex-var-lock = var (Tl-⟨⟩ Hd) (et-ok unitₑ)
+  ex-var-⟨⟩ : ∅ᴴ ∣ ((∅ᶜ ∷ unit) ⟨ rconst 𝟏ᵣ ⟩) ⊢ᵛ⦂ unit
+  ex-var-⟨⟩ = var (Tl-⟨⟩ Hd) (et-ok unitₑ)
 
-  ex-var-lock-erase : ⌊ ex-var-lock ⌋ᵛ ≡ var zero
-  ex-var-lock-erase = refl
+  ex-var-⟨⟩-erase : ⌊ ex-var-⟨⟩ ⌋ᵛ ≡ var zero
+  ex-var-⟨⟩-erase = refl
 
   ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ unit) ⟨ rconst ⊤ᵣ ⟩) ⊢ᵛ⦂ unit
   ex-var-barrier = var (Tl-⟨⟩ Hd) (et-ok unitₑ)

@@ -29,8 +29,8 @@
 -- the level; a refutation names the component that fails.            --
 --                                                                    --
 -- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
--- `∷ A` a binding.                                                   --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
+-- modality, `∷ A` a binding.                                         --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Product.LeftSidedTimeLevel where
@@ -115,7 +115,7 @@ logged-uplink =
           (return ⋆))))
 
 -- transmitting first and storing the reading afterwards is refused:
--- the reading would be used past a `High` lock
+-- the reading would be used past a `High` modality
 
 stale-after-transmitting : ¬ (𝟏ᵣ ·ᵣ opTime send ≾ᵣ 𝟏ᵣ)
 stale-after-transmitting (_ , tainted) = ⋢! tainted

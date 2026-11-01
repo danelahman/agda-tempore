@@ -49,8 +49,9 @@ var-img r x = proj₁ (var-rename r x) , proj₂ (proj₂ (var-rename r x))
 var-img′ : ∀ {Γ' Γ'' A} → Ren [] Γ' Γ'' → Var Γ'' A → Var Γ' A
 var-img′ r (ρ' , y) = var-img r y
 
--- Pushing a `Var` under one more binder, resp. one more lock. Named rather than
--- written as a lambda because `Var` is a Σ, so `cong` cannot infer the motive.
+-- Pushing a `Var` under one more binder, resp. one more modality. Named rather
+-- than written as a lambda because `Var` is a Σ, so `cong` cannot infer the
+-- motive.
 
 Var-∷ : ∀ {Γ A B} → Var Γ A → Var (Γ ∷ B) A
 Var-∷ (σ , y) = σ , Tl-∷ y
@@ -193,7 +194,7 @@ eq-ren-img : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
            → var-img (eq-ren e) x ≡ (ρ , subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
 eq-ren-img refl x = refl
 
--- The grade is untouched: only the suffix's own locks stand to its right.
+-- The grade is untouched: only the suffix's own modalities stand to its right.
 
 ∈-++ᶜʳ : ∀ {Γ Δ A ρ} → A ∈[ ρ ] Δ → A ∈[ ρ ] (Γ ++ᶜ Δ)
 ∈-++ᶜʳ Hd        = Hd
@@ -330,7 +331,7 @@ Var-cast-flip⁻ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (t : Var Γ' A) → (
 Var-cast-flip⁻ refl t t' q = sym q
 
 -- The renaming that weakens a context by a whole suffix, defined only when
--- the suffix's grade is bounded by the unit: each lock is crossed by
+-- the suffix's grade is bounded by the unit: each modality is crossed by
 -- `⟨⟩-≤-ren` at its own grade.
 
 push-ren : ∀ {Γ₀} → (Δ : Ctx) → ctx-grade Δ ≾ᵣ 𝟏ᵣ → Ren [] (Γ₀ ++ᶜ Δ) Γ₀
@@ -350,8 +351,8 @@ push-ren-img (Δ ∷ B)    p y = cong Var-∷ (push-ren-img Δ p y)
 push-ren-img (Δ ⟨ ρ' ⟩) p y =
   cong (Var-⟨⟩ ρ') (push-ren-img Δ (≾ᵣ-zero-productˡ p) y)
 
--- At a one-entry suffix it is the weakening, resp. the lock crossing: the two
--- shapes the environment's telescope zones present.
+-- At a one-entry suffix it is the weakening, resp. the modality crossing: the
+-- two shapes the environment's telescope zones present.
 
 push-ren-∷ : ∀ {Γ₀ B} → (p : ctx-grade ([] ∷ B) ≾ᵣ 𝟏ᵣ)
            → push-ren {Γ₀} ([] ∷ B) p ≐ʳ wk-ren
@@ -479,7 +480,7 @@ eternal?-no {A} ¬et with eternal? A
 -- A variable of a concatenation comes from one of the two parts.
 
 -- The grade of a variable of the right part is unchanged: only that part's
--- locks stand to its right.
+-- modalities stand to its right.
 
 ∈-++ᶜ-split : ∀ {A ρ} → (Δ₁ Δ₂ : Ctx) → A ∈[ ρ ] (Δ₁ ++ᶜ Δ₂)
             → (Σ[ ρ' ∈ R ] A ∈[ ρ' ] Δ₁) ⊎ (A ∈[ ρ ] Δ₂)
@@ -493,7 +494,7 @@ eternal?-no {A} ¬et with eternal? A
 ... | inj₂ y = inj₂ (Tl-⟨⟩ y)
 
 -- What the lookup's weakening does to a variable: it is the subst-free push
--- `∈-++ᶜˡ`, at the grade the suffix's locks contribute.
+-- `∈-++ᶜˡ`, at the grade the suffix's modalities contribute.
 
 wk-ren-⟨ρ⟩-ctx-img : ∀ {Γ A σ ρ} → (Γ' : Ctx) → (h : ctx-grade Γ' ≡ ρ)
                    → (x : A ∈[ σ ] Γ)

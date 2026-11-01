@@ -1,18 +1,19 @@
 ---------------------------------------------------------------------------
--- The lock when the unit is the greatest grade (`⊤ ≾ 𝟏`), as for lower  --
--- bounds: a parametric right adjoint at every grade (`PRA-everywhere`). --
+-- The context modality when the unit is the greatest grade (`⊤ ≾ 𝟏`),   --
+-- as for lower bounds: a parametric right adjoint at every grade        --
+-- (`PRA-everywhere`).                                                   --
 --                                                                       --
--- `Γ ↑` cuts `Γ` at the rightmost position whose suffix's locks         --
+-- `Γ ↑` cuts `Γ` at the rightmost position whose suffix's modalities    --
 -- multiply to a grade `≾ ρ`, dropping the suffix whole (`Cut`). When    --
 -- `(Γ ↓ L_ρ)` is nonempty, `(Γ ↑ , η)` is initial in it (`initial`),    --
 -- and the familial representation                                       --
 --   Ren [] Γ (Δ ⟨ ρ ⟩)  ≅  (ctx-grade Γ · 𝟏 ≾ ρ) × Ren [] (Γ ↑) Δ       --
 -- holds up to `_≐ʳ_` (`familial`). It is the form                       --
--- `Hom(Γ, L Δ) ≅ Σ (s : Γ → L 1) Hom(E s, Δ)` of `Renaming/Lock`:       --
--- there is at most one `s : Γ → [] ⟨ ρ ⟩`, and one exactly when         --
--- `ctx-grade Γ · 𝟏 ≾ ρ`, so the `Σ` is that proposition, and `Γ ↑`      --
--- plays `E s`. See M. Weber, Familial 2-functors and parametric right   --
--- adjoints, Theory Appl. Categ. 18 (2007) 665-732.                      --
+-- `Hom(Γ, L Δ) ≅ Σ (s : Γ → L 1) Hom(E s, Δ)` of                        --
+-- `Renaming/ContextModality`: there is at most one `s : Γ → [] ⟨ ρ ⟩`,  --
+-- and one exactly when `ctx-grade Γ · 𝟏 ≾ ρ`, so the `Σ` is that        --
+-- proposition, and `Γ ↑` plays `E s`. See M. Weber, Familial 2-functors --
+-- and parametric right adjoints, Theory Appl. Categ. 18 (2007) 665-732. --
 --                                                                       --
 -- Every renaming `Y → Y'` lifts to the cuts (`lift`, by induction on    --
 -- the renaming) and agrees with the lift on variables (`lift-img`).     --
@@ -28,7 +29,7 @@ open import Language.Spec
 
 open import Util.Equality
 
-module MonomorphicCalculus.Syntax.Renaming.Lock.LowerBounds (S : LanguageSpec) where
+module MonomorphicCalculus.Syntax.Renaming.ContextModality.LowerBounds (S : LanguageSpec) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -36,21 +37,21 @@ open GradeSystemInterface Grades
 open import MonomorphicCalculus.Syntax.Contexts             S
 open import MonomorphicCalculus.Syntax.Renaming             S
 open import MonomorphicCalculus.Syntax.Renaming.Equivalence S
-open import MonomorphicCalculus.Syntax.Renaming.Lock        S
+open import MonomorphicCalculus.Syntax.Renaming.ContextModality        S
 
 module UnitGreatest (top : ⊤ᵣ ≾ᵣ 𝟏ᵣ) (ρ : R) where
 
   all≾𝟏 : (σ : R) → σ ≾ᵣ 𝟏ᵣ
   all≾𝟏 σ = ≾ᵣ-trans (≾-⊤ᵣ σ) top
 
-  -- deleting a lock
+  -- deleting a modality
 
   del : ∀ {Y σ} → Ren [] (Y ⟨ σ ⟩) Y
   del {σ = σ} = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (all≾𝟏 σ)
 
   ----------------------------------------------------------------------
   -- Cuts. `Cut a Y P`: `P` is the prefix of `Y` left at the rightmost
-  -- position whose locks to the right, times `a`, are `≾ ρ`; `drop`
+  -- position whose modalities to the right, times `a`, are `≾ ρ`; `drop`
   -- passes a position that is not.
 
   mutual
@@ -353,8 +354,8 @@ module UnitGreatest (top : ⊤ᵣ ≾ᵣ 𝟏ᵣ) (ρ : R) where
     s : Ren [] Γ (Δ ⟨ ρ ⟩) → ctx-grade Γ ·ᵣ 𝟏ᵣ ≾ᵣ ρ
     s f = comma-grade (Δ ,ᵒ f)
 
--- when the unit is the greatest grade, the lock is a parametric right
--- adjoint at every grade
+-- when the unit is the greatest grade, the context modality is a parametric
+-- right adjoint at every grade
 
 PRA-everywhere : ⊤ᵣ ≾ᵣ 𝟏ᵣ → (ρ : R) → PRA ρ
 PRA-everywhere top ρ = UnitGreatest.is-PRA top ρ

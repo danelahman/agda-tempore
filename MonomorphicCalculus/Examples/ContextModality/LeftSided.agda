@@ -1,9 +1,9 @@
 -------------------------------------------------------------------------
--- The lock at left-sided time (lower bounds). The unit is the         --
--- greatest grade, so the lock is a parametric right adjoint at every  --
+-- The context modality at left-sided time (lower bounds). The unit is --
+-- the greatest grade, so it is a parametric right adjoint at every    --
 -- grade (`PRA-left`), with the familial representation of             --
--- `Renaming/Lock/LowerBounds`; it has a left adjoint only at the unit --
--- (`no-left-adjoint-[1,∞⟩`).                                          --
+-- `Renaming/ContextModality/LowerBounds`; it has a left adjoint only  --
+-- at the unit (`no-left-adjoint-[1,∞⟩`).                              --
 -------------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
@@ -17,7 +17,7 @@ open import Language.BaseTypes using (noBaseTypes)
 open import Language.Spec
 import Language.Operations as Ops
 
-module MonomorphicCalculus.Examples.Lock.LeftSided where
+module MonomorphicCalculus.Examples.ContextModality.LeftSided where
 
 G : GradeSystem
 G = identityGradeSystem left-sided-intervals
@@ -31,8 +31,8 @@ spec = withoutBaseTypes G ops
 
 open GradeSystemInterface G
 
-open import MonomorphicCalculus.Syntax.Renaming.Lock             spec
-open import MonomorphicCalculus.Syntax.Renaming.Lock.LowerBounds spec
+open import MonomorphicCalculus.Syntax.Renaming.ContextModality             spec
+open import MonomorphicCalculus.Syntax.Renaming.ContextModality.LowerBounds spec
 
 PRA-left : (ρ : R) → PRA ρ
 PRA-left = PRA-everywhere ≾ᵣ-refl

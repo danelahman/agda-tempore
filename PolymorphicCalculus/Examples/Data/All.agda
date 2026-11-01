@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
--- Natural numbers, sums and lists: eliminations, use under a lock,
+-- Natural numbers, sums and lists: eliminations, use under a modality,
 -- subtyping through a sum, joined branch effects. Exercises the former
--- table and eternality under locks (`Generate`, `Former`, `Expand`,
+-- table and eternality under modalities (`Generate`, `Former`, `Expand`,
 -- `Entail`).
 ------------------------------------------------------------------------
 

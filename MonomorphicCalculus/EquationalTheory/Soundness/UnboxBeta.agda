@@ -83,7 +83,7 @@ open import MonomorphicCalculus.EquationalTheory.Soundness.Fill S Cat Fut Pst Ad
 -- Reaching under a context suffix commutes with extending the environment
 -- through it. Induction on the suffix, following `wk-ren-⟨ρ⟩-ctx`'s own
 -- recursion: `η` at the empty suffix, projection at a value binder, and `μ`
--- at a lock.
+-- at a modality.
 
 wkc-ext : (Γ Γ' Θ : Ctx) → (g : ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ)
         → ⟦ wk-ren-⟨ρ⟩-ctx {Γ'} {Θ} refl ⟧ʳ ∘ᵐ ext Γ Γ' Θ g
@@ -171,7 +171,7 @@ sound-unbox-beta {Γ} {A} {A'} {C} {D} {ρ} V K p u N pK pN (pV , pL) (pV' , pR)
       ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-nat g p))
       ∙ ∘ᵐ-assoc _ _ _
 
-    -- reaching `xB` is reaching the head variable through the lock
+    -- reaching `xB` is reaching the head variable through the modality
     c : 𝟏ᵣ ·ᵣ ρ ≾ᵣ ρ
     c = ≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ ρ)
 

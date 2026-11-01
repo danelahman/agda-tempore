@@ -730,7 +730,7 @@ private
   ex-var-⊤ = refl
 
   -- boxing a value: the annotation is the box's grade, in the payload's context
-  -- lock and the continuation's box type
+  -- modality and the continuation's box type
 
   ∅ᶜ : OCtx ∅ˢ 0
   ∅ᶜ = []

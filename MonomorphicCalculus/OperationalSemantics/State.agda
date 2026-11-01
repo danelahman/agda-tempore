@@ -75,7 +75,7 @@ data _≤ₛ_ : ∀ {Γ Γ'} → State Γ → State Γ' → Set where
             -----------
             → 𝕊 ≤ₛ 𝕊
 
-    ≤ₛ-lock : ∀ {Γ Γ'}
+    ≤ₛ-⟨⟩   : ∀ {Γ Γ'}
             → {𝕊 : State Γ} 
             → {𝕊' : State Γ'} 
             → {ρ : R}
@@ -96,7 +96,7 @@ data _≤ₛ_ : ∀ {Γ Γ'} → State Γ → State Γ' → Set where
 
 κₛ : ∀ {Γ Γ'} → {𝕊 : State Γ} → {𝕊' : State Γ'} → 𝕊 ≤ₛ 𝕊' → R
 κₛ ≤ₛ-refl             = 𝟏ᵣ
-κₛ (≤ₛ-lock {ρ = ρ} q) = κₛ q ·ᵣ ρ
+κₛ (≤ₛ-⟨⟩ {ρ = ρ} q)   = κₛ q ·ᵣ ρ
 κₛ (≤ₛ-res q)          = κₛ q
 
 -- The overall grade of a successor state factors through κₛ.
@@ -106,7 +106,7 @@ state-grade-≤ₛ : ∀ {Γ Γ'} → {𝕊 : State Γ} → {𝕊' : State Γ'}
                → state-grade 𝕊' ≃ᵣ state-grade 𝕊 ·ᵣ κₛ q
 state-grade-≤ₛ {𝕊 = 𝕊} ≤ₛ-refl =
   ≃ᵣ-sym (·ᵣ-identityʳ (state-grade 𝕊))
-state-grade-≤ₛ {𝕊 = 𝕊} (≤ₛ-lock {ρ = ρ} q) =
+state-grade-≤ₛ {𝕊 = 𝕊} (≤ₛ-⟨⟩ {ρ = ρ} q) =
   ≃ᵣ-trans (·ᵣ-cong (state-grade-≤ₛ q) ≃ᵣ-refl) (·ᵣ-assoc (state-grade 𝕊) (κₛ q) ρ)
 state-grade-≤ₛ (≤ₛ-res q) =
   state-grade-≤ₛ q
@@ -124,7 +124,7 @@ suc-comp-ren : ∀ {Γ Γ'}
 
 suc-comp-ren {ρ''' = ρ'''} ≤ₛ-refl δρ'''≾ρ'' =
   ⟨⟩-≤-ren (≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-identityˡ ρ''')) δρ'''≾ρ'')
-suc-comp-ren {ρ''' = ρ'''} (≤ₛ-lock {ρ = ρ} q) δρ'''≾ρ'' =
+suc-comp-ren {ρ''' = ρ'''} (≤ₛ-⟨⟩ {ρ = ρ} q) δρ'''≾ρ'' =
   suc-comp-ren q (≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-assoc (κₛ q) ρ ρ''')) δρ'''≾ρ'') ∘ʳ ⟨⟩-μ-ren
 suc-comp-ren (≤ₛ-res q) δρ'''≾ρ'' =
   suc-comp-ren q δρ'''≾ρ'' ∘ʳ cong-⟨⟩-ren wk-ren

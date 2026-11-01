@@ -64,7 +64,7 @@ eq-boxes-not-typable : ¬ Typable [] eq-boxes
 eq-boxes-not-typable = infer-untypable [] eq-boxes eq-boxes-verdict
 
 ------------------------------------------------------------------
--- 6. Comparisons under a lock
+-- 6. Comparisons under a modality
 
 later-lt-reported : schemeOf (infer [] later-lt) ≡ just expected-later-lt
 later-lt-reported = refl

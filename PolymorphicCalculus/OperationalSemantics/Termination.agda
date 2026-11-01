@@ -385,7 +385,7 @@ mutual
     where
       r' : Env (Γ ⟨ rconst (ιᵣ τ) ⟩) (𝕊 ⟨ ιᵣ τ ⟩ₛ) σ
       at r' i = subst (VRed (shapeᵛ (lookup-ty Γ i)) (𝕊 ⟨ ιᵣ τ ⟩ₛ)) (ren-idᵛ (λ j → refl) (σ i))
-                      (VRed-mono (shapeᵛ (lookup-ty Γ i)) (≤ₛ-lock ≤ₛ-refl) (σ i) (at r i))
+                      (VRed-mono (shapeᵛ (lookup-ty Γ i)) (≤ₛ-⟨⟩ ≤ₛ-refl) (σ i) (at r i))
       nodefs r' = nodefs r
 
   fund-c {𝕊 = 𝕊} {σ} (handle_`with_ {B = B} M V) r

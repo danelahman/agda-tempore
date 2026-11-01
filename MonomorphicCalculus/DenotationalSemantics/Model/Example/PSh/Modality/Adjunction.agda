@@ -6,7 +6,7 @@
 -- The unit `η⊣ : A →ᵖ [ ρ ] ⟨ ρ ⟩ A` names the past world of the        --
 -- possibility bundle by the present world, transported forward only     --
 -- when the box is later opened; the counit `ε⊣ : ⟨ ρ ⟩ [ ρ ] A →ᵖ A`    --
--- opens a boxed value reached through a lock along the very witness     --
+-- opens a boxed value reached through a modality along the very witness --
 -- that reached it. Both triangle identities and both grade-relaxation   --
 -- laws hold on the nose (`≈-refl`); the only genuine coend reasoning is --
 -- in the congruences of `η⊣` (a single generating step) and `ε⊣`        --
@@ -34,7 +34,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Base GS 
 open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Modality.Future GS Wld hiding (⊑ρ∘ᵘ)
 open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Modality.Past GS Wld
 
--- Unit: transpose a value under a lock into a boxed possibility.
+-- Unit: transpose a value under a modality into a boxed possibility.
 
 η⊣ : ∀ {A ρ} → A →ᵖ [ ρ ]ᵒ (⟨ ρ ⟩ᵒ A)
 η⊣ {A} {ρ} = pmap
@@ -42,7 +42,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Modality
   (λ {w} {x} {y} e p → return (⊑-refl , ≈-trans A (transport-refl A x) e))
   (λ t x p → ≈-sym (⟨ ρ ⟩ᵒ A) (return (t , ≈-refl A)))
 
--- Counit: open a boxed value reached through a lock.
+-- Counit: open a boxed value reached through a modality.
 
 ε⊣-app : ∀ {A ρ w} → ⟨ ρ ⟩ᶜ ([ ρ ]ᵒ A) w → carrier A w
 ε⊣-app E = fun (val E) (acc E)

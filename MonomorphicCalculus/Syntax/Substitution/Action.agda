@@ -34,7 +34,7 @@ open import MonomorphicCalculus.Syntax.Substitution.Lookup  S
 -- so the two recursions are independent.
 --
 -- At the empty ambient throughout, and so transport-free: a handler clause's
--- context is the substituted one under one more lock and two more binders.
+-- context is the substituted one under one more modality and two more binders.
 
 mutual
 

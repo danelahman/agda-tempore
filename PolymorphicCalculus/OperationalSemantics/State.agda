@@ -59,17 +59,17 @@ infix 4 _≤ₛ_
 
 data _≤ₛ_ {n} (𝕊 : State n) : ∀ {m} → State m → Set where
   ≤ₛ-refl : 𝕊 ≤ₛ 𝕊
-  ≤ₛ-lock : ∀ {m} {𝕊' : State m} {ρ} → 𝕊 ≤ₛ 𝕊' → 𝕊 ≤ₛ 𝕊' ⟨ ρ ⟩ₛ
+  ≤ₛ-⟨⟩   : ∀ {m} {𝕊' : State m} {ρ} → 𝕊 ≤ₛ 𝕊' → 𝕊 ≤ₛ 𝕊' ⟨ ρ ⟩ₛ
   ≤ₛ-res  : ∀ {m} {𝕊' : State m} {V} → 𝕊 ≤ₛ 𝕊' → 𝕊 ≤ₛ 𝕊' ∷ₛ V
 
 wkₛ : ∀ {n m} {𝕊 : State n} {𝕊' : State m} → 𝕊 ≤ₛ 𝕊' → Fin n → Fin m
 wkₛ ≤ₛ-refl     i = i
-wkₛ (≤ₛ-lock e) i = wkₛ e i
+wkₛ (≤ₛ-⟨⟩ e)   i = wkₛ e i
 wkₛ (≤ₛ-res e)  i = suc (wkₛ e i)
 
 κₛ : ∀ {n m} {𝕊 : State n} {𝕊' : State m} → 𝕊 ≤ₛ 𝕊' → RExp ∅ˢ
 κₛ ≤ₛ-refl             = 𝟏̂ᵣ
-κₛ (≤ₛ-lock {ρ = ρ} e) = κₛ e ·̂ᵣ rconst ρ
+κₛ (≤ₛ-⟨⟩ {ρ = ρ} e)   = κₛ e ·̂ᵣ rconst ρ
 κₛ (≤ₛ-res e)          = κₛ e
 
 infixl 25 _⨾ₛ_
@@ -77,19 +77,19 @@ infixl 25 _⨾ₛ_
 _⨾ₛ_ : ∀ {n m k} {𝕊 : State n} {𝕊' : State m} {𝕊'' : State k}
      → 𝕊 ≤ₛ 𝕊' → 𝕊' ≤ₛ 𝕊'' → 𝕊 ≤ₛ 𝕊''
 e ⨾ₛ ≤ₛ-refl     = e
-e ⨾ₛ ≤ₛ-lock e'  = ≤ₛ-lock (e ⨾ₛ e')
+e ⨾ₛ ≤ₛ-⟨⟩ e'    = ≤ₛ-⟨⟩ (e ⨾ₛ e')
 e ⨾ₛ ≤ₛ-res e'   = ≤ₛ-res (e ⨾ₛ e')
 
 wkₛ-⨾ : ∀ {n m k} {𝕊 : State n} {𝕊' : State m} {𝕊'' : State k}
       → (e : 𝕊 ≤ₛ 𝕊') → (e' : 𝕊' ≤ₛ 𝕊'') → ∀ i → wkₛ (e ⨾ₛ e') i ≡ wkₛ e' (wkₛ e i)
 wkₛ-⨾ e ≤ₛ-refl      i = refl
-wkₛ-⨾ e (≤ₛ-lock e') i = wkₛ-⨾ e e' i
+wkₛ-⨾ e (≤ₛ-⟨⟩ e')   i = wkₛ-⨾ e e' i
 wkₛ-⨾ e (≤ₛ-res e')  i = cong suc (wkₛ-⨾ e e' i)
 
 lookupₛ-wk : ∀ {n m} {𝕊 : State n} {𝕊' : State m} → (e : 𝕊 ≤ₛ 𝕊')
            → ∀ i → lookupₛ 𝕊' (wkₛ e i) ≡ renᵛ (wkₛ e) (lookupₛ 𝕊 i)
 lookupₛ-wk {𝕊 = 𝕊} ≤ₛ-refl i = sym (ren-idᵛ (λ j → refl) (lookupₛ 𝕊 i))
-lookupₛ-wk (≤ₛ-lock e) i = lookupₛ-wk e i
+lookupₛ-wk (≤ₛ-⟨⟩ e) i = lookupₛ-wk e i
 lookupₛ-wk {𝕊 = 𝕊} (≤ₛ-res e) i =
   trans (cong wkᵛ (lookupₛ-wk e i)) (ren-fuseᵛ (λ j → refl) (lookupₛ 𝕊 i))
 
@@ -131,8 +131,8 @@ infix 4 _⊆[_]_
 data _⊆[_]_ {n} {𝕊 : State n} (Ψ : StateTyping 𝕊)
      : ∀ {m} {𝕊' : State m} → 𝕊 ≤ₛ 𝕊' → StateTyping 𝕊' → Set where
   ⊆-refl : Ψ ⊆[ ≤ₛ-refl ] Ψ
-  ⊆-lock : ∀ {m} {𝕊' : State m} {e : 𝕊 ≤ₛ 𝕊'} {Ψ' : StateTyping 𝕊'} {ρ}
-         → Ψ ⊆[ e ] Ψ' → Ψ ⊆[ ≤ₛ-lock {ρ = ρ} e ] (Ψ' ⟨⟩ˢ)
+  ⊆-⟨⟩   : ∀ {m} {𝕊' : State m} {e : 𝕊 ≤ₛ 𝕊'} {Ψ' : StateTyping 𝕊'} {ρ}
+         → Ψ ⊆[ e ] Ψ' → Ψ ⊆[ ≤ₛ-⟨⟩ {ρ = ρ} e ] (Ψ' ⟨⟩ˢ)
   ⊆-res  : ∀ {m} {𝕊' : State m} {e : 𝕊 ≤ₛ 𝕊'} {Ψ' : StateTyping 𝕊'} {V ρ X}
          → Ψ ⊆[ e ] Ψ' → Ψ ⊆[ ≤ₛ-res {V = V} e ] (Ψ' ∷[ ρ ] X)
 
@@ -143,14 +143,14 @@ data _⊆[_]_ {n} {𝕊 : State n} (Ψ : StateTyping 𝕊)
       → Ψ ⊆[ e ] Ψ' → Ext ∅ᴴ (toCtx Ψ) (toCtx Ψ') (κₛ e)
 epos (⊆-ext {e = e} p) = wkₛ e
 ety  (⊆-ext ⊆-refl)     i = refl
-ety  (⊆-ext (⊆-lock p)) i = ety (⊆-ext p) i
+ety  (⊆-ext (⊆-⟨⟩ p))   i = ety (⊆-ext p) i
 ety  (⊆-ext (⊆-res p))  i = ety (⊆-ext p) i
 egr  (⊆-ext ⊆-refl)     i = eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)
-egr  (⊆-ext (⊆-lock p)) i =
+egr  (⊆-ext (⊆-⟨⟩ p))   i =
   transᵣ (monoᵣ (egr (⊆-ext p) i) ⊩≾̂ᵣ-refl) (eqᵣ ≡̂ᵣ-assoc)
 egr  (⊆-ext (⊆-res p))  i = egr (⊆-ext p) i
 edfs (⊆-ext ⊆-refl)       = refl
-edfs (⊆-ext (⊆-lock p))   = edfs (⊆-ext p)
+edfs (⊆-ext (⊆-⟨⟩ p))     = edfs (⊆-ext p)
 edfs (⊆-ext (⊆-res p))    = edfs (⊆-ext p)
 
 toCtx-box : ∀ {n} {𝕊 : State n} → (Ψ : StateTyping 𝕊) → BoxCtx (toCtx Ψ)
@@ -181,7 +181,7 @@ private
   lookup-ext {𝕊 = 𝕊 ∷ₛ V} (T ∷ᵗ (D , refl)) Hd e le =
     rename-v r D , trans (∥rename-v∥ r D) (sym (ren-fuseᵛ (λ i → refl) ∥ D ∥ᵛ))
     where
-      r = ext-unlock (ext-∘ʳ e wk-ren) (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityˡ)) le)
+      r = ext-⟨⟩-remove (ext-∘ʳ e wk-ren) (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityˡ)) le)
   lookup-ext {𝕊 = 𝕊 ∷ₛ V} (T ∷ᵗ _) (Tl-∷ x) e le with lookup-ext T x (ext-∘ʳ e wk-ren) le
   ... | D , p = D , trans p (sym (ren-fuseᵛ (λ i → refl) (lookupₛ 𝕊 (var-pos x))))
 

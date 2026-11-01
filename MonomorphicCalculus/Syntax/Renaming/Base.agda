@@ -21,22 +21,22 @@ open GradeSystemInterface Grades
 open import MonomorphicCalculus.Syntax.Contexts S
 open import MonomorphicCalculus.Syntax.Types S
 
--- All-eternal, and lock-free apart from locks at a grade ≾-equivalent to the
--- unit. Interprets to a graded `⟨_⟩`-algebra (`𝟙ᵐ` and `×ᵐ` are eternal
+-- All-eternal, and modality-free apart from modalities at a grade ≾-equivalent
+-- to the unit. Interprets to a graded `⟨_⟩`-algebra (`𝟙ᵐ` and `×ᵐ` are eternal
 -- objects, and `⟨ ρ ⟩ᵒ` is the identity up to isomorphism at a unit-equivalent
 -- `ρ`).
 --
--- A unit-equivalent lock is admissible rather than new: `⟨⟩-η-ren`/`⟨⟩-η⁻¹-ren`
--- and `⟨⟩-≤-ren` already move a context across it in both directions. Both
--- bounds are needed.
+-- A unit-equivalent modality is admissible rather than new:
+-- `⟨⟩-η-ren`/`⟨⟩-η⁻¹-ren` and `⟨⟩-≤-ren` already move a context across it in
+-- both directions. Both bounds are needed.
 
 data EternalCtx : Ctx → Set where
   ec-[] : EternalCtx []
   ec-∷  : ∀ {Δ A} → EternalCtx Δ → Et A → EternalCtx (Δ ∷ A)
   ec-⟨⟩ : ∀ {Δ ρ} → 𝟏ᵣ ≾ᵣ ρ → ρ ≾ᵣ 𝟏ᵣ → EternalCtx Δ → EternalCtx (Δ ⟨ ρ ⟩)
 
--- The 0-graded lock, the case the two bounds are `≾ᵣ-refl`, and the case of a
--- grade only propositionally equal to the unit, which is the form the grades
+-- The 0-graded modality, the case the two bounds are `≾ᵣ-refl`, and the case of
+-- a grade only propositionally equal to the unit, which is the form the grades
 -- standing in a context take (`ιᵣ-zero`, `map-𝟏ᵉ`).
 
 ec-⟨⟩ᵘ : ∀ {Δ} → EternalCtx Δ → EternalCtx (Δ ⟨ 𝟏ᵣ ⟩)
@@ -76,10 +76,10 @@ ec-split (Δ' ⟨ ρ ⟩) (ec-⟨⟩ q p ec) =
 -- semantically, each is natural in `Ξ` (`⟨⟩-η-nat`, `εᵘ-nat`, `⟨⟩-μ-nat`,
 -- `⟨⟩-≤-nat` are laws of the model).
 --
--- The exception is `⟨⟩-ext-ctx`: it introduces a lock, the counit of `⟨ ρ ⟩`
--- at an arbitrary grade, available only via the `Eternalᵒ` algebra `extᵉ` of
--- an eternal object. It is the one map of the model carrying no naturality
--- law.
+-- The exception is `⟨⟩-ext-ctx`: it introduces a modality, the counit of
+-- `⟨ ρ ⟩` at an arbitrary grade, available only via the `Eternalᵒ` algebra
+-- `extᵉ` of an eternal object. It is the one map of the model carrying no
+-- naturality law.
 
 data Ren (Ξ : Ctx) : Ctx → Ctx → Set where
   -- identity renaming
@@ -90,7 +90,7 @@ data Ren (Ξ : Ctx) : Ctx → Ctx → Set where
   wk-ren      : ∀ {Δ A} → Ren Ξ (Δ ∷ A) Δ
   -- variable renaming (corresponds to contraction), under the side
   -- condition of the `var` typing rule: an eternal variable is available at
-  -- any grade (in particular behind a lock).
+  -- any grade (in particular behind a modality).
   var-ren     : ∀ {Δ A ρ} → A ∈[ ρ ] (Ξ ⋈ᶜ Δ) → .(A Et∨≾ᵘ ρ)
               → Ren Ξ Δ (Δ ∷ A)
   -- strong monoidal functor renamings for ⟨_⟩ modality
@@ -99,7 +99,7 @@ data Ren (Ξ : Ctx) : Ctx → Ctx → Set where
   ⟨⟩-μ-ren    : ∀ {Δ ρ ρ'} → Ren Ξ (Δ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Δ ⟨ ρ ·ᵣ ρ' ⟩)
   -- monotonicity renaming for ⟨_⟩ modality
   ⟨⟩-≤-ren    : ∀ {Δ ρ ρ'} → ρ' ≾ᵣ ρ → Ren Ξ (Δ ⟨ ρ' ⟩) (Δ ⟨ ρ ⟩)
-  -- introducing a lock: available when the context to its left, `Ξ ++ᶜ Δ`,
+  -- introducing a modality: available when the context to its left, `Ξ ++ᶜ Δ`,
   -- is eternal (`ec-++ᶜ` assembles the two halves). The only rule that reads
   -- the ambient.
   ⟨⟩-ext-ctx  : ∀ {Δ ρ} → EternalCtx Ξ → EternalCtx Δ → Ren Ξ (Δ ⟨ ρ ⟩) Δ
@@ -131,7 +131,7 @@ cong-ren {Γ'' = Γ'' ∷ A} r   = cong-∷-ren (cong-ren r)
 cong-ren {Γ'' = Γ'' ⟨ ρ' ⟩} r = cong-⟨⟩-ren (cong-ren r)
 
 -- Extending the ambient on the left. Only `⟨⟩-ext-ctx` constrains it: the
--- prefix, which then stands to the left of the lock, must be eternal too.
+-- prefix, which then stands to the left of the modality, must be eternal too.
 
 cong-renˡ : ∀ {Ξ Δ Δ'} → (Γ'' : Ctx) → EternalCtx Γ''
           → Ren Ξ Δ Δ' → Ren (Γ'' ++ᶜ Ξ) Δ Δ'
@@ -222,8 +222,8 @@ exch-ren {Ξ = Ξ} =
 -- The barrier `⟨ ⊤ᵣ ⟩` guarding a handler's clauses, as renamings.
 --
 -- `barrier-ren` includes a clause's view of the ambient context into the
--- ambient itself. `barrier-wk-ren` re-bars a context extended by a lock and a
--- binder: `⊤ᵣ` is greatest, so the two locks fold into it.
+-- ambient itself. `barrier-wk-ren` re-bars a context extended by a modality and
+-- a binder: `⊤ᵣ` is greatest, so the two modalities fold into it.
 
 barrier-ren : ∀ {Δ} → Ren [] Δ (Δ ⟨ ⊤ᵣ ⟩)
 barrier-ren = ⟨⟩-≤-ren (≾-⊤ᵣ 𝟏ᵣ) ∘ʳ ⟨⟩-η-ren
@@ -234,7 +234,7 @@ barrier-wk-ren ρ A = ⟨⟩-≤-ren (≾-⊤ᵣ _) ∘ʳ ⟨⟩-μ-ren ∘ʳ co
 
 -- Inserting a context `Γ'` immediately after the ambient, under an arbitrary
 -- suffix `Θ`. Recursion on `Θ`, bottoming out in an insertion at the top; the
--- lock case uses `⟨⟩-ext-ctx`, requiring the ambient to be eternal.
+-- modality case uses `⟨⟩-ext-ctx`, requiring the ambient to be eternal.
 
 wk-ctx-ren : ∀ {Ξ} → EternalCtx Ξ → (Γ' : Ctx) → Ren Ξ Γ' []
 wk-ctx-ren ec []         = id-ren

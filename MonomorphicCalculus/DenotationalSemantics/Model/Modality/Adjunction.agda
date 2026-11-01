@@ -6,9 +6,9 @@
 -- possibility, `Σ` over accessible past worlds) is left adjoint to     --
 -- the box modality (Kripke necessity, `∀` over accessible future       --
 -- worlds). This adjunction interprets the Fitch-style formers: the     --
--- unit `η⊣` transposes a value typed under a lock into a boxed value   --
--- (the semantics of `box`), and the counit `ε⊣` extracts a boxed value --
--- reached through a lock (the semantics of `unbox`).                   --
+-- unit `η⊣` transposes a value typed under a modality into a boxed     --
+-- value (the semantics of `box`), and the counit `ε⊣` extracts a boxed --
+-- value reached through a modality (the semantics of `unbox`).         --
 --                                                                      --
 -- Both modalities carry the same grade `ρ`, so the triangle            --
 -- identities need no grade coercions.                                  --
@@ -41,11 +41,11 @@ record Adjunction : Set₁ where
 
     -- STRUCTURE
 
-    -- Unit: transpose a value under a lock into a boxed value.
+    -- Unit: transpose a value under a modality into a boxed value.
 
     η⊣ : ∀ {A ρ} → A →ᵐ [ ρ ]ᵒ (⟨ ρ ⟩ᵒ A)
 
-    -- Counit: extract a boxed value reached through a lock.
+    -- Counit: extract a boxed value reached through a modality.
 
     ε⊣ : ∀ {A ρ} → ⟨ ρ ⟩ᵒ ([ ρ ]ᵒ A) →ᵐ A
 

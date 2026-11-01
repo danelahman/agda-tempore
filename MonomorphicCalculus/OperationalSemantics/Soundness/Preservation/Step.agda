@@ -524,8 +524,8 @@ past-η pu e k =
   ∙ ⟨⟩-≤-irr _ k
 
 -- The environment commutes past that relaxation (`⟨⟩-≤-nat`) and `μ` absorbs it
--- (`μ-≤ˡ`), leaving the renaming `suc-comp-ren` builds for a `≤ₛ-lock`: the `μ`
--- folding the state's lock with the new tick.
+-- (`μ-≤ˡ`), leaving the renaming `suc-comp-ren` builds for a `≤ₛ-⟨⟩`: the `μ`
+-- folding the state's modality with the new tick.
 
 past-tick : ∀ {A B ρ ρ₂ ρ₄ σ u'}
           → (pu : 𝟏ᵣ ≾ᵣ u') → (e : ρ ·ᵣ u' ≾ᵣ σ) → (k : ρ ≾ᵣ σ)

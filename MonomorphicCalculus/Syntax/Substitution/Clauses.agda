@@ -2,10 +2,10 @@
 -- Handler clauses against substitution.                                --
 --                                                                      --
 -- A clause family lives over `Γ ++ᶜ Dcl`, an ordinary suffix extension --
--- by the barrier lock and the clause's two binders. `IsSub` records a  --
--- transport of one, so towers of them compose and are identified by    --
--- `uip`; `cl-≡` says that substituting in a clause is the general      --
--- substitution at that suffix.                                         --
+-- by the barrier modality and the clause's two binders. `IsSub`        --
+-- records a transport of one, so towers of them compose and are        --
+-- identified by `uip`; `cl-≡` says that substituting in a clause is    --
+-- the general substitution at that suffix.                             --
 --------------------------------------------------------------------------
 
 open import Data.Empty
@@ -47,7 +47,7 @@ open import MonomorphicCalculus.Syntax.Substitution.ChainEquivalence  S
 open import MonomorphicCalculus.Syntax.Substitution.Variables         S
 open import MonomorphicCalculus.Syntax.Substitution.At                S
 
--- The barrier lock and a clause's two binders, as a suffix.
+-- The barrier modality and a clause's two binders, as a suffix.
 
 Dcl : VType → Op → E → Ctx
 Dcl D op ε'' =

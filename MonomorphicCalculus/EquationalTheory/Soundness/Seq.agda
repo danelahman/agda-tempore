@@ -75,7 +75,7 @@ open import MonomorphicCalculus.EquationalTheory.Soundness.Base S Cat Fut Pst Ad
 -- Extending the environment commutes with sequencing: if `g` extends the
 -- environment and `f` undoes the extension, then reindexing the whole `⨟`
 -- along `g` is reindexing only the sequenced computation, the continuation
--- being reindexed under the lock instead (which is what the equations'
+-- being reindexed under the modality instead (which is what the equations'
 -- `cong-⟨⟩-ren wk-ren` does).
 
 -- The `μᵀ`-free core: the same statement about the strengthened continuation

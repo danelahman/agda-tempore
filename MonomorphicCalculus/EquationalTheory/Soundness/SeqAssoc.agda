@@ -110,20 +110,20 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
 
     φ = ⟦ rin ⟧ʳ
 
-    -- (‡) The lock-merging renaming denotes "weaken, then fold the two locks
-    -- with `μ`, then relax the merged grade"; the only place the syntax of
-    -- `rin` is used.
+    -- (‡) The modality-merging renaming denotes "weaken, then fold the two
+    -- modalities with `μ`, then relax the merged grade"; the only place the
+    -- syntax of `rin` is used.
     φ-def : φ ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ ∘ᵐ ⟨ ∣ ε' ∣ᵉ ⟩ᶠ fstᵐ
     φ-def = ∘ᵐ-congˡ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _)) ∙ ∘ᵐ-assoc _ _ _
 
-    -- The environment's `⟨ ∣ ε ∣ᵉ ⟩`-lock, transposed at `∣ ε' ∣ᵉ` and merged
-    -- with the outer lock by `μ`. This is the value the box carries once the
-    -- comultiplication `δ` has split it.
+    -- The environment's modality `⟨ ∣ ε ∣ᵉ ⟩`, transposed at `∣ ε' ∣ᵉ` and
+    -- merged with the outer modality by `μ`. This is the value the box carries
+    -- once the comultiplication `δ` has split it.
     α : ⟨ ∣ ε ∣ᵉ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ ∣ ε' ∣ᵉ ]ᵒ (⟨ ∣ ε ·ₑ ε' ∣ᵉ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ)
     α = [ ∣ ε' ∣ᵉ ]ᶠ (⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ) ∘ᵐ η⊣
 
-    -- (†) The transposed lock-merge `α`, precomposed with the projection that
-    -- forgets the bound value, is the renaming `φ` transposed.
+    -- (†) The transposed merge `α` of the two modalities, precomposed with the
+    -- projection that forgets the bound value, is the renaming `φ` transposed.
     α-fstᵐ : α ∘ᵐ fstᵐ {B = ⟦ A ⟧ᵛ} ≈ᵐ [ ∣ ε' ∣ᵉ ]ᶠ φ ∘ᵐ η⊣
     α-fstᵐ =
         ∘ᵐ-assoc _ _ _
@@ -133,7 +133,8 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
                   ∙ []-congᶠ (∘ᵐ-assoc _ _ _ ∙ ≈ᵐ-sym φ-def))
 
     -- (Step B) The split box `δ ∘ []-≤ σ ∘ η⊣` is the transpose of `α`: the
-    -- adjunction reconciles the comultiplication with the lock merge.
+    -- adjunction reconciles the comultiplication with the merge of the
+    -- modalities.
     box-split : δ ∘ᵐ []-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ η⊣
               ≈ᵐ [ ∣ ε ∣ᵉ ]ᶠ α ∘ᵐ η⊣
     box-split =
@@ -158,7 +159,7 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
       ∙ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
 
     -- (★★) With the box split, what remains under the outer `Tᶠ` is a pure
-    -- strength-naturality statement: threading the merged lock through the
+    -- strength-naturality statement: threading the merged modality through the
     -- inner strength is reindexing the inner computation by `φ`.
     inner : strᵀ ∘ᵐ mapˣᵐ idᵐ n ∘ᵐ ×ᵐ-assoc ∘ᵐ mapˣᵐ ⟨ α , idᵐ ⟩ᵐ idᵐ
           ≈ᵐ Tᶠ (mapˣᵐ φ idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , n ⟩ᵐ

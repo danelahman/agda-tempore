@@ -54,7 +54,7 @@ open import MonomorphicCalculus.Syntax.Substitution.Subsumption  Spec
 -- The clause premise: at the state the operation is handled at, with the
 -- resumption already boxed and allocated. `V₀` is the boxed resumption in the
 -- shape `_∷ₛ_` stores it, and the hypothesis about it is `SRed-fresh`'s:
--- reducible at every state the lock permits.
+-- reducible at every state the modality permits.
 
 Boxed : (B : VType) → (op : Op) → (ε₃ : E) → State [] → Set
 Boxed B op ε₃ 𝕊₁ =
@@ -658,7 +658,7 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {𝕊 = 𝕊} H N
                         (sym (cancelled op₃ ε₄))))
 
 -- `env-Hˢ` at the empty suffix is the action at the clause suffix, and the
--- barrier crossing is the lock zone `_⟨_⟩ᵉ` at the same reach, so the two
+-- barrier crossing is the modality zone `_⟨_⟩ᵉ` at the same reach, so the two
 -- sides are the same term.
 
 env-Hˢ-fired : ∀ {𝕊 Γ B} → (γ : Env 𝕊 Γ) → {𝕊₁ : State []}
@@ -672,7 +672,8 @@ env-Hˢ-fired : ∀ {𝕊 Γ B} → (γ : Env 𝕊 Γ) → {𝕊₁ : State []}
 env-Hˢ-fired γ q H V₀ W = refl
 
 -- The sequel premise survives the return clause's subsumption at `SUB-HANDLE`:
--- a reach at the smaller lock is one at the larger, and the value is subsumed.
+-- a reach at the smaller modality is one at the larger, and the value is
+-- subsumed.
 
 Seq-Prem-sub : ∀ {A A₀ B ε₀ ε₁ ε₂} {𝕊 : State []}
              → {N : toCtx 𝕊 ⟨ ∣ ε₁ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε₂}

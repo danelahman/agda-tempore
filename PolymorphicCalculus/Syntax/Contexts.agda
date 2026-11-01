@@ -4,9 +4,9 @@
 --                                                              --
 -- A program context binds definitions, named by position from  --
 -- the first, to closed type schemes `∀ Θ. Q ⇒ X`. A context    --
--- extends a program context by variables and locks, indexed by --
--- its number of variables, with open grade expressions as      --
--- grades.                                                      --
+-- extends a program context by variables and modalities,       --
+-- indexed by its number of variables, with open grade          --
+-- expressions as grades.                                       --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -137,7 +137,7 @@ defs-⌜⌝ : ∀ {Θ} → (Δ : PCtx) → defs (⌜_⌝ᵖ {Θ} Δ) ≡ Δ
 defs-⌜⌝ ∅ᵖ       = refl
 defs-⌜⌝ (Δ ∷ᵖ s) = refl
 
--- A variable, at the grade accumulated by the locks after it
+-- A variable, at the grade accumulated by the modalities after it
 
 data _∈̂[_]_ {Θ : Scope} (A : OVType Θ) : RExp Θ → {n : ℕ} → OCtx Θ n → Set where
   Hd    : ∀ {n} {Γ : OCtx Θ n}          → A ∈̂[ 𝟏̂ᵣ ] Γ ∷ A

@@ -88,7 +88,7 @@ mutual
             -------------
             → Q ∣ Γ ⊢ᵛ⦂ A
 
-    -- use of a definition, at an instance of its scheme; no lock
+    -- use of a definition, at an instance of its scheme; no modality
     -- condition, as a definition is closed
 
     usedef  : ∀ {k} {s : Scheme} {A : OVType Θ}
@@ -185,7 +185,7 @@ mutual
             → Q ∣ Γ ⊢ᵛ⦂ A ⇒ C
 
     -- handlers: the return clause as the continuation of `_⨟_`; the
-    -- operation clauses under a lock at `⊤ᵣ`, continuation grade rigid
+    -- operation clauses under a modality at `⊤ᵣ`, continuation grade rigid
 
     handler : {A B : OVType Θ}
             → {ε ε' : EExp Θ}
@@ -300,7 +300,7 @@ mutual
             ----------------------------
             → Q ∣ Γ ⊢ᶜ⦂ C
 
-    -- primitive recursion on natural numbers: the step under a lock at
+    -- primitive recursion on natural numbers: the step under a modality at
     -- `⊤ᵣ`, the effect absorbing its own iteration
 
     recℕ    : {B : OVType Θ}
@@ -441,10 +441,10 @@ private
   ex-⋆ : ∅ᴴ ∣ (∅ᶜ ∷ unit) ⊢ᵛ⦂ unit
   ex-⋆ = ⋆
 
-  -- a variable used under a lock, by eternality of its type
+  -- a variable used under a modality, by eternality of its type
 
-  ex-var-lock : ∅ᴴ ∣ ((∅ᶜ ∷ unit) ⟨ rconst 𝟏ᵣ ⟩) ⊢ᵛ⦂ unit
-  ex-var-lock = var (Tl-⟨⟩ Hd) (et-ok unitₑ)
+  ex-var-⟨⟩ : ∅ᴴ ∣ ((∅ᶜ ∷ unit) ⟨ rconst 𝟏ᵣ ⟩) ⊢ᵛ⦂ unit
+  ex-var-⟨⟩ = var (Tl-⟨⟩ Hd) (et-ok unitₑ)
 
   ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ unit) ⟨ rconst ⊤ᵣ ⟩) ⊢ᵛ⦂ unit
   ex-var-barrier = var (Tl-⟨⟩ Hd) (et-ok unitₑ)

@@ -24,8 +24,9 @@
 --     the lower bounds.                                              --
 --                                                                    --
 -- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
--- `∷ A` a binding. They write an interval as `[ min , max ]`.        --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
+-- modality, `∷ A` a binding. They write an interval as               --
+-- `[ min , max ]`.                                                   --
 --                                                                    --
 -- The upper endpoint ranges over the extended naturals, so every     --
 -- window below is `[ min , ↑ max ]`; `[ 0 , ∞ ]` is the greatest     --
@@ -71,7 +72,7 @@ open import MonomorphicCalculus.Examples.Typing.Core
 -- Effectful computations
 --
 -- Sequencing adds both endpoints, so the grade of a run is the window
--- its total time falls in, and each `perform` locks the context by the
+-- its total time falls in, and each `perform` adds a modality at the
 -- window its own operation takes.
 
 sampling : [] ⊢ᶜ⦂ Reading ! [ 1 , 1 ]
@@ -102,7 +103,7 @@ tagged-relaying =
 -- Readings go stale
 --
 -- `ρ ≾ᵣ 𝟏ᵣ` is `0 ≤ min ρ × max ρ ≤ 0`: the upper endpoint has to be
--- `0`, so a reading is usable only where no lock stands between its
+-- `0`, so a reading is usable only where no modality stands between its
 -- binding and its use.
 
 reading-stale-after-an-operation : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ 𝟏ᵣ)
@@ -175,7 +176,7 @@ sampling-then-branching =
 -- Unboxing: a resource with a window
 --
 -- A box graded `[ 2 , 6 ]` is available from two ticks and gone after
--- six, and what it is compared against is the product of the locks
+-- six, and what it is compared against is the product of the modalities
 -- between its binding and the claim. Idling three ticks lands inside
 -- the window, clear of both endpoints; claiming it at once is too
 -- early; a reading and a transmission spend up to seven, too late.
@@ -267,9 +268,9 @@ claimed-in-both-branches =
 ------------------------------------------------------------------------
 -- Sub-effecting against unboxing
 --
--- Sequencing locks its continuation by the grade the first part is
--- typed at, so a `coerce` there changes the lock, and here it moves
--- both endpoints and can close a box from either side. Below it is the
+-- Sequencing types its continuation under a modality at the grade the
+-- first part is typed at, so a `coerce` there changes the modality, and here it
+-- moves both endpoints and can close a box from either side. Below it is the
 -- floor that gives way.
 
 -- a reading and a store take between three and four ticks, which lands

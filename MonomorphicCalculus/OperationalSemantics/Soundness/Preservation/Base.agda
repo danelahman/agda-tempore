@@ -92,8 +92,8 @@ Paramᶜᶠ ⟨ 𝕊 ∣ M ⟩ = Paramˢ 𝕊 × Paramᶜ M
 
 -- The state's certificate across a step. Only `BOX` changes it: the cell it
 -- allocates stores the boxed value, whose certificate is the term's,
--- renamed. Every other rule either keeps the state or only locks it, and the
--- two congruences inherit the sub-step's.
+-- renamed. Every other rule either keeps the state or only adds a modality to
+-- it, and the two congruences inherit the sub-step's.
 
 stepᴾˢ : ∀ {ε ε' A B} {𝕊 𝕊' : State []}
        → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ B ! ε'}
@@ -179,7 +179,7 @@ step-grade SUB                  = 𝟏ₑ
 
 -- The transition itself. `DELAY` ticks: it names the present as the past of
 -- every world one delay ahead (`η⊣`), and `delayᵀ` reaches those worlds: the
--- only way a lock is ever produced.
+-- only way a modality is ever produced.
 
 stepᵀ : ∀ {ε ε'} {𝕊 𝕊' : State []} {A B : VType}
       → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε} → {M' : toCtx 𝕊' ⊢ᶜ⦂ B ! ε'}
@@ -792,7 +792,7 @@ coe-cancel e q =
 -- DELAY: the tick.
 --
 -- The only rule that advances time, and the only one whose history grows. The
--- state's interpretation passes under the new lock
+-- state's interpretation passes under the new modality
 -- (`⟦ 𝕊 ⟨ ρ ⟩ₛ ⟧ˢ = ⟨ ρ ⟩ᶠ ⟦ 𝕊 ⟧ˢ`), and `delayᵀ`'s algebraicity
 -- re-associates the transition's `delayᵀ` out.
 
@@ -876,7 +876,7 @@ sound-DELAY {ε = ε} τ 𝕊 M q pSt pM =
 -- The environment a `return` hands to its continuation.
 --
 -- `strᵀ-ηᵀ` opens the boxed environment with the box counit at the unit grade;
--- the syntax instead re-locks the context with `⟨⟩-η-ren`. The two agree by
+-- the syntax instead adds a unit modality with `⟨⟩-η-ren`. The two agree by
 -- `η⊣-𝟏`. The grade equality `∣ 𝟏ₑ ∣ᵉ ≡ 𝟏ᵣ` is generalised so that it can be
 -- matched.
 
@@ -920,7 +920,7 @@ sub-ren r N V pN pV =
 -- `HANDLE-RET` share one proof.
 
 -- The parametricity certificate of the `return`-rules' reduct: the sequel
--- renamed by the re-locking renaming, then substituted into.
+-- renamed by the renaming adding the unit modality, then substituted into.
 ret-subᴾ : ∀ {Γ A B ε} → (V : Γ ⊢ᵛ⦂ A) → (N : Γ ⟨ ∣ 𝟏ₑ ∣ᵉ ⟩ ∷ A ⊢ᶜ⦂ B ! ε)
          → Paramᵛ V → Paramᶜ N
          → Paramᶜ (C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
@@ -947,7 +947,8 @@ ret-step {Γ} alg alg-η V N pV pN =
   where
     -- the environment-threading part (independent of the algebra): the returned
     -- value's `ηᵀ` opens the boxed environment (`strᵀ-ηᵀ`), which is exactly the
-    -- syntax's re-locking renaming (`ret-env`), leaving `ηᵀ ∘ (renamed subst)`.
+    -- syntax's renaming adding the unit modality (`ret-env`), leaving
+    -- `ηᵀ ∘ (renamed subst)`.
     ret-massage : Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
                 ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-𝟏ᵉ) ∘ʳ ⟨⟩-η-ren)) N
                             [ V ]₀ ⟧ᶜᵗ (ret-subᴾ V N pV pN)

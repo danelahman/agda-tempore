@@ -1048,7 +1048,7 @@ env-Cˢ-matchℕ (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ V M N =
     exN   = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (_∷ nat) p
 
 -- Primitive recursion: the base sits at the suffix itself, the step at the
--- suffix extended by the barrier, the predecessor, the lock and the result,
+-- suffix extended by the barrier, the predecessor, the modality and the result,
 -- reconciled by `castᶜ-irr` as for `matchℕ`.
 
 env-Cˢ-recℕ : ∀ {𝕊 Γ B ε} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
@@ -1855,9 +1855,9 @@ env-Cˢ-head : ∀ {𝕊 Γ A C} → (γ : Env 𝕊 Γ) → (M : Γ ∷ A ⊢ᶜ
             → (env-Cˢ γ ([] ∷ A) M) [ W ]₀ ≡ env-C (γ ∷ᵉ W) M
 env-Cˢ-head γ M W = refl
 
--- A clause lives over the ambient under the barrier lock and the clause's two
--- binders (`Dcl`), an ordinary suffix, so the action on a family is the action
--- at that suffix.
+-- A clause lives over the ambient under the barrier modality and the clause's
+-- two binders (`Dcl`), an ordinary suffix, so the action on a family is the
+-- action at that suffix.
 
 env-Hˢ : ∀ {𝕊 Γ B} → (γ : Env 𝕊 Γ) → (Δ : Ctx)
        → Fam B ((Γ ++ᶜ Δ) ⟨ ⊤ᵣ ⟩) → Fam B ((toCtx 𝕊 ++ᶜ Δ) ⟨ ⊤ᵣ ⟩)

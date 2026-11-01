@@ -100,7 +100,7 @@ record GroundEternal : Set₁ where
 
     -- A constant of an eternal base type denotes a global element: it is
     -- the same at every world, so the eternal extraction recovers it. This
-    -- is what lets a constant be weakened under a lock (`eternal-val-ext`).
+    -- is what lets a constant be weakened under a modality (`eternal-val-ext`).
     ⟦⟧ᵇᶜ-eternal : ∀ {b} → .(eb : EternalBaseType b) → (c : BaseConstants b) → ∀ {ρ}
                  → Eternalᵒ.extᵉ (⟦ b ⟧ᵇᵉ eb) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟦_⟧ᵇᶜ {b} c)
                  ≈ᵐ ⟦_⟧ᵇᶜ {b} c ∘ᵐ terminalᵐ
@@ -112,7 +112,7 @@ record GroundEternal : Set₁ where
              → Compares (cmpᵇᵐ b eb) (⟦_⟧ᵇᶜ {b}) (compareᵇ eb)
 
     -- The comparison is a morphism of eternal objects: it commutes with the
-    -- eternal extraction, so comparing two values weakened under a lock is
+    -- eternal extraction, so comparing two values weakened under a modality is
     -- weakening their comparison.
     cmpᵇᵐ-eternal : ∀ {b} → .(eb : EternalBaseType b) → ∀ {ρ}
                   → cmpᵇᵐ b eb ∘ᵐ Eternalᵒ.extᵉ (×-eternalᵒ (⟦ b ⟧ᵇᵉ eb) (⟦ b ⟧ᵇᵉ eb)) {ρ}

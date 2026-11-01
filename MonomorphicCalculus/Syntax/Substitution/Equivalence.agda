@@ -85,7 +85,7 @@ open _≐ˢ₀_ public
         (λ y → trans (atᵗ h y) (atᵗ h' y))
 
 -- Unlike a renaming's, a substitution's image is a term: a congruence
--- weakens it (`∷`) or extends it past a lock (`⟨⟩`) rather than relocating
+-- weakens it (`∷`) or extends it past a modality (`⟨⟩`) rather than relocating
 -- a variable, each a `cong` of the operation the clause applies.
 
 cong-∷-sub-≐ˢ₀ : ∀ {Γ Γ' A} {s s' : Sub₀ [] Γ Γ'}
@@ -100,8 +100,8 @@ cong-∷-sub-≐ˢ₀ h = mk≐ˢ₀ goᵛ goᵗ
     goᵗ Hd       = refl
     goᵗ (Tl-∷ y) = cong RVar-∷ (atᵗ h y)
 
--- Crossing a lock splits on the variable's eternality, but both sides split on
--- the same decision, which the clause takes as an argument.
+-- Crossing a modality splits on the variable's eternality, but both sides split
+-- on the same decision, which the clause takes as an argument.
 
 cong-⟨⟩-sub-≐ˢ₀ : ∀ {Γ Γ' ρ} {s s' : Sub₀ [] Γ Γ'}
                 → s ≐ˢ₀ s' → cong-⟨⟩-sub {ρ = ρ} s ≐ˢ₀ cong-⟨⟩-sub s'

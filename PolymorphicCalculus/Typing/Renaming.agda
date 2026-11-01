@@ -105,7 +105,7 @@ image {Q = Q} {Γ' = Γ'} r x = record
     i  = var-pos x
     eq = trans (ty r i) (var-pos-ty x)
 
--- Lifting under a variable, a lock and an effect-grade variable
+-- Lifting under a variable, a modality and an effect-grade variable
 
 _⇑ʳ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {A : OVType Θ}
     → Ren Q Γ Γ' → Ren Q (Γ ∷ A) (Γ' ∷ A)
@@ -116,12 +116,12 @@ gr  (r ⇑ʳ) zero    = ⊩≾̂ᵣ-refl
 gr  (r ⇑ʳ) (suc i) = gr r i
 dfs (r ⇑ʳ)         = dfs r
 
-lockʳ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m}
-      → (ρ : RExp Θ) → Ren Q Γ Γ' → Ren Q (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ ⟩)
-pos (lockʳ ρ r) = pos r
-ty  (lockʳ ρ r) = ty r
-gr  (lockʳ ρ r) i = monoᵣ (gr r i) ⊩≾̂ᵣ-refl
-dfs (lockʳ ρ r)   = dfs r
+⟨⟩ʳ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m}
+    → (ρ : RExp Θ) → Ren Q Γ Γ' → Ren Q (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ ⟩)
+pos (⟨⟩ʳ ρ r)   = pos r
+ty  (⟨⟩ʳ ρ r)   = ty r
+gr  (⟨⟩ʳ ρ r) i = monoᵣ (gr r i) ⊩≾̂ᵣ-refl
+dfs (⟨⟩ʳ ρ r)   = dfs r
 
 wkᵉʳ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m}
      → Ren Q Γ Γ' → Ren (wkᵉ-H Q) (wkᵉ-ctx Γ) (wkᵉ-ctx Γ')
@@ -137,7 +137,7 @@ dfs (wkᵉʳ {Γ = Γ} {Γ'} r) = trans (defs-wkᵉ Γ') (trans (dfs r) (sym (de
 clauseʳ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {A B : OVType (Θ +e)}
         → Ren Q Γ Γ'
         → Ren (wkᵉ-H Q) (wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩ ∷ A ∷ B) (wkᵉ-ctx Γ' ⟨ rconst ⊤ᵣ ⟩ ∷ A ∷ B)
-clauseʳ r = (lockʳ (rconst ⊤ᵣ) (wkᵉʳ r) ⇑ʳ) ⇑ʳ
+clauseʳ r = (⟨⟩ʳ (rconst ⊤ᵣ) (wkᵉʳ r) ⇑ʳ) ⇑ʳ
 
 ------------------------------------------------------------------------
 -- The action on derivations
@@ -163,14 +163,14 @@ mutual
   rename-v r (cmp ⋈ V W et)  = cmp ⋈ (rename-v r V) (rename-v r W) et
   rename-v r (fun M)         = fun (rename-c (r ⇑ʳ) M)
   rename-v r (handler {ε = ε} N H) =
-    handler (rename-c (lockʳ ∣ ε ∣̂ᵉ r ⇑ʳ) N) (λ op → rename-c (clauseʳ r) (H op))
+    handler (rename-c (⟨⟩ʳ ∣ ε ∣̂ᵉ r ⇑ʳ) N) (λ op → rename-c (clauseʳ r) (H op))
   rename-v r (annᵛ A V)      = annᵛ A (rename-v r V)
   rename-v r (subV V p)      = subV (rename-v r V) p
 
   rename-c : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {C : OCType Θ}
            → Ren Q Γ Γ' → Q ∣ Γ ⊢ᶜ⦂ C → Q ∣ Γ' ⊢ᶜ⦂ C
   rename-c r (return V)                 = return (rename-v r V)
-  rename-c r (_⨟_ {ε = ε} M N)          = rename-c r M ⨟ rename-c (lockʳ ∣ ε ∣̂ᵉ r ⇑ʳ) N
+  rename-c r (_⨟_ {ε = ε} M N)          = rename-c r M ⨟ rename-c (⟨⟩ʳ ∣ ε ∣̂ᵉ r ⇑ʳ) N
   rename-c r (V · W)                    = rename-v r V · rename-v r W
   rename-c r (match V `with M)          = match rename-v r V `with rename-c ((r ⇑ʳ) ⇑ʳ) M
   rename-c r (absurd V)                 = absurd (rename-v r V)
@@ -184,18 +184,18 @@ mutual
     matchL rename-v r V `nil rename-c r M `cons rename-c ((r ⇑ʳ) ⇑ʳ) N
   rename-c r (recℕ {ε = ε} V M N p)     =
     recℕ (rename-v r V) (rename-c r M)
-         (rename-c (lockʳ ∣ ε ∣̂ᵉ (lockʳ (rconst ⊤ᵣ) r ⇑ʳ) ⇑ʳ) N) p
+         (rename-c (⟨⟩ʳ ∣ ε ∣̂ᵉ (⟨⟩ʳ (rconst ⊤ᵣ) r ⇑ʳ) ⇑ʳ) N) p
   rename-c r (recL {ε = ε} V M N p)     =
     recL (rename-v r V) (rename-c r M)
-         (rename-c (lockʳ ∣ ε ∣̂ᵉ ((lockʳ (rconst ⊤ᵣ) r ⇑ʳ) ⇑ʳ) ⇑ʳ) N) p
+         (rename-c (⟨⟩ʳ ∣ ε ∣̂ᵉ ((⟨⟩ʳ (rconst ⊤ᵣ) r ⇑ʳ) ⇑ʳ) ⇑ʳ) N) p
   rename-c r (perform op V M)           =
-    perform op (rename-v r V) (rename-c (lockʳ (rconst ∣ op-grade op ∣ᵉ) r ⇑ʳ) M)
-  rename-c r (delay τ M)                = delay τ (rename-c (lockʳ (rconst (ιᵣ τ)) r) M)
+    perform op (rename-v r V) (rename-c (⟨⟩ʳ (rconst ∣ op-grade op ∣ᵉ) r ⇑ʳ) M)
+  rename-c r (delay τ M)                = delay τ (rename-c (⟨⟩ʳ (rconst (ιᵣ τ)) r) M)
   rename-c r (handle M `with V)         = handle rename-c r M `with rename-v r V
   rename-c r (unbox R p N)              =
     unbox (res-move R (mem (image r (res-var-of R)))) (transᵣ (lower (image r (res-var-of R))) p)
           (rename-c (r ⇑ʳ) N)
-  rename-c r (box ρ V N)                = box ρ (rename-v (lockʳ ρ r) V) (rename-c (r ⇑ʳ) N)
+  rename-c r (box ρ V N)                = box ρ (rename-v (⟨⟩ʳ ρ r) V) (rename-c (r ⇑ʳ) N)
   rename-c r (annᶜ C M)                 = annᶜ C (rename-c r M)
   rename-c r (subC M p)                 = subC (rename-c r M) p
 
@@ -221,7 +221,7 @@ mutual
   ∥rename-v∥ r (cmp ⋈ V W et)  = cong₂ (cmp ⋈) (∥rename-v∥ r V) (∥rename-v∥ r W)
   ∥rename-v∥ r (fun M)         = cong fun (∥rename-c∥ (r ⇑ʳ) M)
   ∥rename-v∥ r (handler {ε = ε} N H) =
-    cong₂ handler (∥rename-c∥ (lockʳ ∣ ε ∣̂ᵉ r ⇑ʳ) N)
+    cong₂ handler (∥rename-c∥ (⟨⟩ʳ ∣ ε ∣̂ᵉ r ⇑ʳ) N)
                   (fun-ext (λ op → ∥rename-c∥ (clauseʳ r) (H op)))
   ∥rename-v∥ r (annᵛ A V)      = ∥rename-v∥ r V
   ∥rename-v∥ r (subV V p)      = ∥rename-v∥ r V
@@ -230,7 +230,7 @@ mutual
              → (r : Ren Q Γ Γ') → (M : Q ∣ Γ ⊢ᶜ⦂ C) → ∥ rename-c r M ∥ᶜ ≡ renᶜ (pos r) ∥ M ∥ᶜ
   ∥rename-c∥ r (return V)                 = cong return (∥rename-v∥ r V)
   ∥rename-c∥ r (_⨟_ {ε = ε} M N)          =
-    cong₂ _⨟_ (∥rename-c∥ r M) (∥rename-c∥ (lockʳ ∣ ε ∣̂ᵉ r ⇑ʳ) N)
+    cong₂ _⨟_ (∥rename-c∥ r M) (∥rename-c∥ (⟨⟩ʳ ∣ ε ∣̂ᵉ r ⇑ʳ) N)
   ∥rename-c∥ r (V · W)                    = cong₂ _·_ (∥rename-v∥ r V) (∥rename-v∥ r W)
   ∥rename-c∥ r (match V `with M)          =
     cong₂ match_`with_ (∥rename-v∥ r V) (∥rename-c∥ ((r ⇑ʳ) ⇑ʳ) M)
@@ -245,15 +245,15 @@ mutual
     cong₃ matchL_`nil_`cons_ (∥rename-v∥ r V) (∥rename-c∥ r M) (∥rename-c∥ ((r ⇑ʳ) ⇑ʳ) N)
   ∥rename-c∥ r (recℕ {ε = ε} V M N p)     =
     cong₃ recℕ (∥rename-v∥ r V) (∥rename-c∥ r M)
-               (∥rename-c∥ (lockʳ ∣ ε ∣̂ᵉ (lockʳ (rconst ⊤ᵣ) r ⇑ʳ) ⇑ʳ) N)
+               (∥rename-c∥ (⟨⟩ʳ ∣ ε ∣̂ᵉ (⟨⟩ʳ (rconst ⊤ᵣ) r ⇑ʳ) ⇑ʳ) N)
   ∥rename-c∥ r (recL {ε = ε} V M N p)     =
     cong₃ recL (∥rename-v∥ r V) (∥rename-c∥ r M)
-               (∥rename-c∥ (lockʳ ∣ ε ∣̂ᵉ ((lockʳ (rconst ⊤ᵣ) r ⇑ʳ) ⇑ʳ) ⇑ʳ) N)
+               (∥rename-c∥ (⟨⟩ʳ ∣ ε ∣̂ᵉ ((⟨⟩ʳ (rconst ⊤ᵣ) r ⇑ʳ) ⇑ʳ) ⇑ʳ) N)
   ∥rename-c∥ r (perform op V M)           =
     cong₂ (perform op) (∥rename-v∥ r V)
-                       (∥rename-c∥ (lockʳ (rconst ∣ op-grade op ∣ᵉ) r ⇑ʳ) M)
+                       (∥rename-c∥ (⟨⟩ʳ (rconst ∣ op-grade op ∣ᵉ) r ⇑ʳ) M)
   ∥rename-c∥ r (delay τ M)                =
-    cong (delay τ) (∥rename-c∥ (lockʳ (rconst (ιᵣ τ)) r) M)
+    cong (delay τ) (∥rename-c∥ (⟨⟩ʳ (rconst (ιᵣ τ)) r) M)
   ∥rename-c∥ r (handle M `with V)         =
     cong₂ handle_`with_ (∥rename-c∥ r M) (∥rename-v∥ r V)
   ∥rename-c∥ r (unbox R p N)              =
@@ -262,7 +262,7 @@ mutual
                               (cong (renᵛ (pos r)) (sym (∥res∥ R)))))
                 (∥rename-c∥ (r ⇑ʳ) N)
   ∥rename-c∥ r (box ρ V N)                =
-    cong₂ box (∥rename-v∥ (lockʳ ρ r) V) (∥rename-c∥ (r ⇑ʳ) N)
+    cong₂ box (∥rename-v∥ (⟨⟩ʳ ρ r) V) (∥rename-c∥ (r ⇑ʳ) N)
   ∥rename-c∥ r (annᶜ C M)                 = ∥rename-c∥ r M
   ∥rename-c∥ r (subC M p)                 = ∥rename-c∥ r M
 
@@ -288,44 +288,44 @@ ty  wk-ren i = refl
 gr  wk-ren i = ⊩≾̂ᵣ-refl
 dfs wk-ren   = refl
 
--- A lock above the unit may be removed; one below it inserted
+-- A modality above the unit may be removed; one below it inserted
 
-lock-remove : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ : RExp Θ}
-            → Q ⊩ 𝟏̂ᵣ ≾̂ᵣ ρ → Ren Q (Γ ⟨ ρ ⟩) Γ
-pos (lock-remove le) i = i
-ty  (lock-remove le) i = refl
-gr  (lock-remove le) i = transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)) (monoᵣ ⊩≾̂ᵣ-refl le)
-dfs (lock-remove le)   = refl
+⟨⟩-remove : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ : RExp Θ}
+          → Q ⊩ 𝟏̂ᵣ ≾̂ᵣ ρ → Ren Q (Γ ⟨ ρ ⟩) Γ
+pos (⟨⟩-remove le) i = i
+ty  (⟨⟩-remove le) i = refl
+gr  (⟨⟩-remove le) i = transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)) (monoᵣ ⊩≾̂ᵣ-refl le)
+dfs (⟨⟩-remove le)   = refl
 
-lock-insert : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ : RExp Θ}
-            → Q ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ → Ren Q Γ (Γ ⟨ ρ ⟩)
-pos (lock-insert le) i = i
-ty  (lock-insert le) i = refl
-gr  (lock-insert le) i = transᵣ (monoᵣ ⊩≾̂ᵣ-refl le) (eqᵣ ≡̂ᵣ-identityʳ)
-dfs (lock-insert le)   = refl
+⟨⟩-insert : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ : RExp Θ}
+          → Q ⊩ ρ ≾̂ᵣ 𝟏̂ᵣ → Ren Q Γ (Γ ⟨ ρ ⟩)
+pos (⟨⟩-insert le) i = i
+ty  (⟨⟩-insert le) i = refl
+gr  (⟨⟩-insert le) i = transᵣ (monoᵣ ⊩≾̂ᵣ-refl le) (eqᵣ ≡̂ᵣ-identityʳ)
+dfs (⟨⟩-insert le)   = refl
 
--- A lock may be lowered; two adjacent locks are their product
+-- A modality may be lowered; two adjacent modalities are their product
 
-lock-lower : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ ρ' : RExp Θ}
-           → Q ⊩ ρ' ≾̂ᵣ ρ → Ren Q (Γ ⟨ ρ ⟩) (Γ ⟨ ρ' ⟩)
-pos (lock-lower le) i = i
-ty  (lock-lower le) i = refl
-gr  (lock-lower le) i = monoᵣ ⊩≾̂ᵣ-refl le
-dfs (lock-lower le)   = refl
+⟨⟩-lower : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ ρ' : RExp Θ}
+         → Q ⊩ ρ' ≾̂ᵣ ρ → Ren Q (Γ ⟨ ρ ⟩) (Γ ⟨ ρ' ⟩)
+pos (⟨⟩-lower le) i = i
+ty  (⟨⟩-lower le) i = refl
+gr  (⟨⟩-lower le) i = monoᵣ ⊩≾̂ᵣ-refl le
+dfs (⟨⟩-lower le)   = refl
 
-lock-merge : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ ρ' : RExp Θ}
-           → Ren Q (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Γ ⟨ ρ ·̂ᵣ ρ' ⟩)
-pos lock-merge i = i
-ty  lock-merge i = refl
-gr  lock-merge i = eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-assoc)
-dfs lock-merge   = refl
+⟨⟩-merge : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ ρ' : RExp Θ}
+         → Ren Q (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Γ ⟨ ρ ·̂ᵣ ρ' ⟩)
+pos ⟨⟩-merge i = i
+ty  ⟨⟩-merge i = refl
+gr  ⟨⟩-merge i = eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-assoc)
+dfs ⟨⟩-merge   = refl
 
-lock-split : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ ρ' : RExp Θ}
-           → Ren Q (Γ ⟨ ρ ·̂ᵣ ρ' ⟩) (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩)
-pos lock-split i = i
-ty  lock-split i = refl
-gr  lock-split i = eqᵣ ≡̂ᵣ-assoc
-dfs lock-split   = refl
+⟨⟩-split : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ ρ' : RExp Θ}
+         → Ren Q (Γ ⟨ ρ ·̂ᵣ ρ' ⟩) (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩)
+pos ⟨⟩-split i = i
+ty  ⟨⟩-split i = refl
+gr  ⟨⟩-split i = eqᵣ ≡̂ᵣ-assoc
+dfs ⟨⟩-split   = refl
 
 ------------------------------------------------------------------------
 -- Values of eternal type
@@ -405,26 +405,26 @@ record Ext {Θ : Scope} {n m : ℕ} (Q : Hyps Θ) (Γ : OCtx Θ n) (Γ' : OCtx �
 
 open Ext public
 
--- The renamings an extension gives behind and in place of locks
+-- The renamings an extension gives behind and in place of modalities
 
-ext-lock : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {δ ρ ρ' : RExp Θ}
-         → Ext Q Γ Γ' δ → Q ⊩ δ ·̂ᵣ ρ' ≾̂ᵣ ρ → Ren Q (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ' ⟩)
-pos (ext-lock e le) = epos e
-ty  (ext-lock e le) = ety e
-gr  (ext-lock e le) i =
+ext-⟨⟩ : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {δ ρ ρ' : RExp Θ}
+       → Ext Q Γ Γ' δ → Q ⊩ δ ·̂ᵣ ρ' ≾̂ᵣ ρ → Ren Q (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ' ⟩)
+pos (ext-⟨⟩ e le)   = epos e
+ty  (ext-⟨⟩ e le)   = ety e
+gr  (ext-⟨⟩ e le) i =
   transᵣ (monoᵣ (egr e i) ⊩≾̂ᵣ-refl) (transᵣ (eqᵣ ≡̂ᵣ-assoc) (monoᵣ ⊩≾̂ᵣ-refl le))
-dfs (ext-lock e le) = edfs e
+dfs (ext-⟨⟩ e le) = edfs e
 
-ext-unlock : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {δ ρ : RExp Θ}
-           → Ext Q Γ Γ' δ → Q ⊩ δ ≾̂ᵣ ρ → Ren Q (Γ ⟨ ρ ⟩) Γ'
-pos (ext-unlock e le) = epos e
-ty  (ext-unlock e le) = ety e
-gr  (ext-unlock e le) i = transᵣ (egr e i) (monoᵣ ⊩≾̂ᵣ-refl le)
-dfs (ext-unlock e le)   = edfs e
+ext-⟨⟩-remove : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {δ ρ : RExp Θ}
+              → Ext Q Γ Γ' δ → Q ⊩ δ ≾̂ᵣ ρ → Ren Q (Γ ⟨ ρ ⟩) Γ'
+pos (ext-⟨⟩-remove e le) = epos e
+ty  (ext-⟨⟩-remove e le) = ety e
+gr  (ext-⟨⟩-remove e le) i = transᵣ (egr e i) (monoᵣ ⊩≾̂ᵣ-refl le)
+dfs (ext-⟨⟩-remove e le)   = edfs e
 
 ext-top : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {δ : RExp Θ}
         → Ext Q Γ Γ' δ → Ren Q (Γ ⟨ rconst ⊤ᵣ ⟩) (Γ' ⟨ rconst ⊤ᵣ ⟩)
-ext-top e = ext-lock e topᵣ
+ext-top e = ext-⟨⟩ e topᵣ
 
 ext-clause : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {δ : RExp Θ}
                {A B : OVType (Θ +e)}
@@ -445,11 +445,11 @@ ety  id-ext i = refl
 egr  id-ext i = eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)
 edfs id-ext   = refl
 
-lock-ext : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ : RExp Θ} → Ext Q Γ (Γ ⟨ ρ ⟩) ρ
-epos lock-ext i = i
-ety  lock-ext i = refl
-egr  lock-ext i = ⊩≾̂ᵣ-refl
-edfs lock-ext   = refl
+⟨⟩-ext : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {ρ : RExp Θ} → Ext Q Γ (Γ ⟨ ρ ⟩) ρ
+epos ⟨⟩-ext i = i
+ety  ⟨⟩-ext i = refl
+egr  ⟨⟩-ext i = ⊩≾̂ᵣ-refl
+edfs ⟨⟩-ext   = refl
 
 wk-ext : ∀ {Θ n m} {Q : Hyps Θ} {Γ : OCtx Θ n} {Γ' : OCtx Θ m} {δ : RExp Θ} {A : OVType Θ}
        → Ext Q Γ Γ' δ → Ext Q Γ (Γ' ∷ A) δ

@@ -706,7 +706,7 @@ mutual
     -- computational/beta-equations for effect handling
     --
     -- `return`, `perform` and `delay` are handled by a handler literal, whose
-    -- clause family is re-barred across the binder or lock the handle moves
+    -- clause family is re-barred across the binder or modality the handle moves
     -- under. The binders `box` and `unbox` commute with handling by any
     -- handler value, weakened past them. Handler values have no η-law.
 
@@ -919,9 +919,9 @@ mutual
                     ≡ᵗʰ delay τ (subC M (w !ₛ rel))
 
     -- Moving a scrutinee's subsumption outwards relaxes the continuation's
-    -- lock along the effect half and subsumes its binder along the value half.
-    -- For `handle` both halves move onto the handler value. Neither `_⨟_` nor
-    -- `handle_`with_` carries a payload witness of its own, as `unbox` does.
+    -- modality along the effect half and subsumes its binder along the value
+    -- half. For `handle` both halves move onto the handler value. Neither `_⨟_`
+    -- nor `handle_`with_` carries a payload witness of its own, as `unbox` does.
 
     subC-seq : ∀ {A A' B ε₁ ε₂ ε'}
              → (w : A <:ᵛ A')

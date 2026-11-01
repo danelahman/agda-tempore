@@ -8,12 +8,12 @@
 -- its data: it is not a store threaded through a state monad, but an     --
 -- environment for its own context `toCtx 𝕊`.                             --
 --                                                                        --
--- The locks `⟨ ρ ⟩` have no global points (`⟨ ρ ⟩ᵒ X` is a Kripke        --
+-- The modalities `⟨ ρ ⟩` have no global points (`⟨ ρ ⟩ᵒ X` is a Kripke   --
 -- possibility, and near time 0 there is no `ρ`-past to be found), so     --
 -- the state supplies only the cells. `⟦ 𝕊 ⟧ˢ` is a morphism out of the   --
--- state's history `hist 𝕊`, the lock-only residue of `toCtx 𝕊`, and the  --
--- passage of time enters from outside it (in the operational semantics,  --
--- via `DELAY`).                                                          --
+-- state's history `hist 𝕊`, the modality-only residue of `toCtx 𝕊`, and  --
+-- the passage of time enters from outside it (in the operational         --
+-- semantics, via `DELAY`).                                               --
 --                                                                        --
 -- The cell clause of `⟦_⟧ˢ` is the morphism that `⟦ box V M ⟧ᶜᵗ`         --
 -- precomposes with: allocating a resource and extending the store are    --
@@ -70,7 +70,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Contexts S 
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
 
--- The history of a state: the locks it has accumulated, with the cells
+-- The history of a state: the modalities it has accumulated, with the cells
 -- dropped. This is the part of `toCtx 𝕊` that the state cannot itself
 -- supply, and hence the domain of its interpretation.
 
@@ -89,7 +89,7 @@ Paramˢ (𝕊 ∷ₛ V)  = Paramˢ 𝕊 × Paramᵛ V
 
 -- The state as an environment for its own context.
 --
---   * a lock is passed through by the context modality's functorial action;
+--   * a modality is passed through by the context modality's functorial action;
 --   * a cell is filled by the value stored in it, boxed up by the
 --     adjunction unit (`[ ρ ]ᶠ ⟦ V ⟧ ∘ᵐ η⊣`, the `box` morphism).
 --

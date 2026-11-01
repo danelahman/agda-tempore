@@ -260,7 +260,7 @@ mutual
                                       (cong-∷-ren ((⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren))
                                       N)) ⟩
 
-        -- delay: let time pass, moving the lock into the state
+        -- delay: let time pass, moving the modality into the state
         DELAY      : ∀ {A τ ε}
                    → {𝕊 : State []}
                    → {M : toCtx 𝕊 ⟨ ιᵣ τ ⟩ ⊢ᶜ⦂ A ! ε} → 
@@ -382,10 +382,10 @@ mutual
                     → ⟨ 𝕊 ∣ subV V (q ⇒ₛ r) · W ⟩ ⟶ ⟨ 𝕊 ∣ V · subV W q ⟩
 
         -- subsumption at a handler literal: the coercion splits, the input
-        -- half moving into the return clause (its lock lowered to the smaller
-        -- handled effect, its binder subsumed) and the output half becoming
-        -- the step's own refinement; the operation clauses do not mention the
-        -- handled computation
+        -- half moving into the return clause (its modality lowered to the
+        -- smaller handled effect, its binder subsumed) and the output half
+        -- becoming the step's own refinement; the operation clauses do not
+        -- mention the handled computation
         SUB-HANDLE  : ∀ {A A₁ B B₁ ε ε₁ ε' ε₁'}
                     → {𝕊 : State []}
                     → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε}
@@ -489,7 +489,7 @@ mutual
     step-extends-state (SEQ-STEP M⟶M' _)    = step-extends-state M⟶M'
     step-extends-state SEQ-RET              = ≤ₛ-refl
     step-extends-state SEQ-OP               = ≤ₛ-refl
-    step-extends-state DELAY                = ≤ₛ-lock ≤ₛ-refl
+    step-extends-state DELAY                = ≤ₛ-⟨⟩ ≤ₛ-refl
     step-extends-state HANDLE-RET           = ≤ₛ-refl
     step-extends-state (HANDLE-STEP M⟶M' _) = step-extends-state M⟶M'
     step-extends-state HANDLE-OP            = ≤ₛ-refl

@@ -3,7 +3,7 @@
 --                                                                --
 -- `matchℕ`, `match+` and `matchL` with their constructors. `nat` --
 -- is eternal; sums and lists are covariant, and eternal exactly  --
--- when their components are, so they survive a lock where a      --
+-- when their components are, so they survive a modality where a  --
 -- function does not. `⌜ n ⌝` is the duration of `n` ticks. The   --
 -- instances under `Data/` check each answer by `refl` at both    --
 -- time grades.                                                   --
@@ -143,7 +143,7 @@ match-on-bool : RawC ∅ˢ 0
 match-on-bool = matchℕ true `zero return ⋆ `succ return ⋆
 
 ------------------------------------------------------------------
--- 2. A natural number used under a lock
+-- 2. A natural number used under a modality
 --
 --   later-succ n = delay 1; succ n
 --

@@ -24,11 +24,11 @@
 --     nothing, so the required coercion does not exist.              --
 --                                                                    --
 -- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
--- `∷ A` a binding. Read downwards, they give the context at any      --
--- point, and the locks between the binding of a box and its `unbox`  --
--- are what the premise of that rule compares with the grade of the   --
--- box.                                                               --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
+-- modality, `∷ A` a binding. Read downwards, they give the context   --
+-- at any point, and the modalities between the binding of a box and  --
+-- its `unbox` are what the premise of that rule compares with the    --
+-- grade of the box.                                                  --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Time.LeftSided where
@@ -56,7 +56,7 @@ open import MonomorphicCalculus.Examples.Typing.Core left-sided-intervals opTime
 --
 -- A computation's grade is the sum of the grades of the operations
 -- along it: the time the whole run is guaranteed to take. Each
--- `perform` locks the context by the operation's grade and binds its
+-- `perform` adds a modality at the operation's grade and binds its
 -- result.
 
 -- take a reading and hand it back
@@ -104,7 +104,7 @@ nothing-goes-stale : (ρ : R) → ρ ≾ᵣ 𝟏ᵣ
 nothing-goes-stale [ n ,+∞⟩ = ≤!
 
 -- take a reading, idle two ticks, and transmit the reading taken before
--- the idling. The reading is bound above two locks by the time it is
+-- the idling. The reading is bound above two modalities by the time it is
 -- used, and `≤!` is `var`'s bound at their product.
 
 idle-then-transmit : [] ⊢ᶜ⦂ unit ! [ 7 ,+∞⟩
@@ -148,7 +148,7 @@ inventing-time = ≰!
 --
 -- The two branches are typed at one grade, so both are coerced to it.
 -- That grade is the smaller floor: a conditional guarantees only
--- what its faster branch does. Neither branch locks the context: both
+-- what its faster branch does. Neither branch adds a modality: both
 -- start from the context the `if` itself is in.
 
 branching : [] ∷ bool ∷ Reading ⊢ᶜ⦂ unit ! [ 2 ,+∞⟩
@@ -173,7 +173,7 @@ either-reading =
     `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)
 
 -- branching on data that an operation produced: the scrutinee is bound
--- by the `perform`, so the `if` sits under its lock
+-- by the `perform`, so the `if` sits under its modality
 
 sampling-then-branching : [] ⊢ᶜ⦂ unit ! [ 3 ,+∞⟩
 sampling-then-branching =
@@ -187,7 +187,7 @@ sampling-then-branching =
 --
 -- `unbox`'s premise `elapsed ≾ᵣ ρ` reads `ρ ≤ elapsed` here: the box
 -- may be claimed once at least as much time has passed as it asks for.
--- What has elapsed is the product of the locks standing between the
+-- What has elapsed is the product of the modalities standing between the
 -- box's binding and the claim: the `⟨ … ⟩` entries the comments show.
 
 -- a reading promised in two ticks, claimed after idling three: the
@@ -227,7 +227,7 @@ claim-after-sampling =
 
 -- a resource claimable with nothing elapsed is one that promises
 -- nothing: `𝟏ᵣ ≾ᵣ ρ` forces the box's grade to the unit, there being no
--- lock between the binding and the claim
+-- modality between the binding and the claim
 
 claiming-now : [] ⊢ᶜ⦂ unit ! [ 4 ,+∞⟩
 claiming-now =
@@ -302,10 +302,10 @@ either-way =
 ------------------------------------------------------------------------
 -- Sub-effecting against unboxing
 --
--- Sequencing locks its continuation by the grade the first part is
--- typed at and binds that part's result: the `⟨ … ⟩ ∷ …` on the `⨟`
--- line below. A `coerce` on the first part therefore changes the
--- lock, and at these grades can only take claims away: coercing
+-- Sequencing types its continuation under a modality at the grade the
+-- first part is typed at and binds that part's result: the `⟨ … ⟩ ∷ …`
+-- on the `⨟` line below. A `coerce` on the first part therefore changes the
+-- modality, and at these grades can only take claims away: coercing
 -- forgets time, and time is what the box is compared against.
 
 -- a reading and a store guarantee three ticks, exactly what the box
@@ -321,7 +321,7 @@ claim-after-a-store =
           (perform send here (return ⋆)))
 
 -- forgetting one of those ticks first puts the box out of reach: the
--- lock the continuation is typed under is the coerced grade
+-- modality the continuation is typed under is the coerced grade
 
 coercing-closes-it : ¬ (𝟏ᵣ ·ᵣ [ 2 ,+∞⟩ ≾ᵣ [ 3 ,+∞⟩)
 coercing-closes-it = ≰!
@@ -349,9 +349,9 @@ claim-without-coercing = ≤!
 -- Joining branches, and what survives the join
 --
 -- A conditional's grade is the join of its branches', which at these
--- intervals is the smaller floor. Sequencing after it locks the
--- continuation by that join, so a box claimed there has to have been
--- discharged by both branches.
+-- intervals is the smaller floor. Sequencing after it types the
+-- continuation under a modality at that join, so a box claimed there has to
+-- have been discharged by both branches.
 
 -- the conditional guarantees two ticks, and the box asks for one, so
 -- the claim goes through with a tick to spare
@@ -378,7 +378,7 @@ four-ticks-lost-at-the-join = ≰!
 -- Programs written at these intervals
 --
 -- A lower bound counts time and nothing else. The two runs below reach
--- the same resource, one by working and one by waiting, the locks
+-- the same resource, one by working and one by waiting, the modalities
 -- between binding and claim multiplying to `[ 5 ,+∞⟩` either way.
 
 -- a resource promised in four ticks, reached by working: a reading and
@@ -463,8 +463,9 @@ scheduled-choice =
 -- Effect handling
 --
 -- The forwarding clause performs the operation again and resumes, so it
--- spends exactly the grade it is typed at. Handling locks its `in` part
--- by the handled computation's grade, as sequencing does.
+-- spends exactly the grade it is typed at. Handling types its `in` part
+-- under a modality at the handled computation's grade, as sequencing
+-- does.
 
 forwarded : [] ⊢ᶜ⦂ Reading ! [ 1 ,+∞⟩
 forwarded =
@@ -473,7 +474,7 @@ forwarded =
     `in                              -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
       (return here)
 
--- and a clause may reach an eternal binding across the barrier lock, use
+-- and a clause may reach an eternal binding across the barrier modality, use
 -- its continuation, and answer with what it reached
 
 identified : Node ⊢ᶜ⦂ NodeId ! [ 1 ,+∞⟩
@@ -492,9 +493,9 @@ no-discarding = ≰!
 ------------------------------------------------------------------------
 -- Handler values
 --
--- A handler is a value of type `C ⇛ D`, its return clause locked by the
--- handled grade. The type is contravariant in that grade: a handler for
--- computations taking at least `n` ticks handles any computation
+-- A handler is a value of type `C ⇛ D`, its return clause under a
+-- modality at the handled grade. The type is contravariant in that grade: a
+-- handler for computations taking at least `n` ticks handles any computation
 -- guaranteed more, and the result is graded by that computation.
 
 -- forward every operation, and on return claim a resource promised in
@@ -551,7 +552,7 @@ handled-by-argument = handling-a-reading · claiming
 -- The greatest grade
 --
 -- Here it is the unit: "at least 0 ticks" claims nothing, so every
--- grade weakens to it and a lock at `⊤ᵣ` lets everything through:
+-- grade weakens to it and a modality at `⊤ᵣ` lets everything through:
 -- nothing ever expires under a lower bound.
 
 everything-weakens : (ε : E) → ε ≾ₑ ⊤ₑ

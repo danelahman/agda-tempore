@@ -130,7 +130,7 @@ send-overruns-not-typable = infer-untypable [] (op-licensed send) send-overruns-
 
 ------------------------------------------------------------------
 -- 7. Nested boxes: typed; built in place, the inner box goes stale
--- under the outer box's lock
+-- under the outer box's modality
 
 nested-reported : schemeOf (infer [] nested) ≡ just expected-nested
 nested-reported = refl

@@ -4,7 +4,8 @@
 -- The top-level machine runs a program against external                 --
 -- implementations of the algebraic operations (`op-sem`): an ordinary   --
 -- step `STEP`, and `OP-STEP`, which replaces an operation call by       --
--- the implementation's value and locks the state by `op-grade op`.      --
+-- the implementation's value and adds a modality `⟨ op-grade op ⟩ₛ`     --
+-- to the state.                                                         --
 --                                                                       --
 -- Its denotation lands in the tick monad (`Model.TickMonad`), composed  --
 -- with the tree-monad denotation via the implementation                 --

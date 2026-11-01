@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------
 -- Semantics of the context modality `Γ ⟨ ρ ⟩`, as a functor graded by --
 -- a monoid of grades `(R , · , 𝟏 , ≾)`. It is the analogue of the     --
--- monadic lock-modality on contexts in Fitch-style modal calculi.     --
+-- monadic context modality in Fitch-style modal calculi.              --
 --                                                                     --
 -- The modality is a lax graded monad, with unit `η` and               --
 -- multiplication `μ`. Concretely it is Kripke possibility (a Σ-type   --

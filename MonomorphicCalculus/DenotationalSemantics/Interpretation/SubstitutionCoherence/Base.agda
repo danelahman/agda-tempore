@@ -100,10 +100,10 @@ sub-env (split-⟨⟩ {ρ = ρ} s)  W pW = ⟨ ρ ⟩ᶠ (sub-env s W pW)
 
 -- (`var-morphism-Tl-∷` lives in `Interpretation.Variables`.)
 
--- Weakening a value of eternal type under a lock: denotationally this is
--- the eternal extraction applied to the locked environment. Proved by
--- induction on the value (only the eternal formers and comparisons can occur;
--- a comparison commutes with extraction, `holdsᵐ-cmpᵐ-extᵉ`).
+-- Weakening a value of eternal type under a modality: denotationally this is
+-- the eternal extraction applied to the environment under the modality.
+-- Proved by induction on the value (only the eternal formers and comparisons
+-- can occur; a comparison commutes with extraction, `holdsᵐ-cmpᵐ-extᵉ`).
 
 -- Extraction commutes with a coercion out of an eternal type: such a
 -- coercion has equal endpoints, hence is the identity.
@@ -239,8 +239,8 @@ lk-irr : ∀ {Γ A A₀ ρ} → {t t' : Var Γ ([ ρ ] A₀)} → t ≡ t'
 lk-irr refl b b' w w'
   rewrite ≾ᵣ-irrelevant b b' | <:ᵛ-irrelevant w w' = ≈ᵐ-refl
 
--- Projecting the head variable through one lock and relaxing the redundant
--- `𝟏ᵣ ·ᵣ ρ` back to `ρ` is the (locked) second projection.
+-- Projecting the head variable through one modality and relaxing the redundant
+-- `𝟏ᵣ ·ᵣ ρ` back to `ρ` is the second projection under the modality.
 
 hd-lookup : ∀ {Δ₀ B ρ} → (c : 𝟏ᵣ ·ᵣ ρ ≾ᵣ ρ)
           → ⟨⟩-≤ c ∘ᵐ var-proj (Tl-⟨⟩ {Γ = Δ₀ ∷ B} {ρ = ρ} Hd) ≈ᵐ ⟨ ρ ⟩ᶠ sndᵐ

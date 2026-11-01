@@ -186,7 +186,7 @@ no-dropping-a-branch = fails
 -- As a resource grade: what opens a box
 --
 -- `unbox`'s premise `ρ' ≾ᵣ ρ` weighs what elapsed (the product of
--- the locks standing to the variable's right) against the grade on
+-- the modalities standing to the variable's right) against the grade on
 -- the box: whatever elapsed covers one of the demands the box lists. A
 -- box listing more demands is easier to open, and waiting opens no box
 -- that demands an operation.

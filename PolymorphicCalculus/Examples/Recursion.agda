@@ -1,13 +1,13 @@
 --------------------------------------------------------------------
 -- Inference on primitive recursion                               --
 --                                                                --
--- `recℕ V M N` and `recL V M N`. The step is typed under a lock  --
--- at `⊤ᵣ`, so only eternal outer variables are usable in it; it  --
--- binds the predecessor (or head and tail), then, after a lock   --
--- at the effect `ε`, the recursive result. `ε` absorbs its own   --
--- iteration, `ε · ε ≾ ε`. `⌜ n ⌝` is the duration of `n` ticks.  --
--- The instances under `Recursion/` check each answer by `refl`   --
--- at both time grades.                                           --
+-- `recℕ V M N` and `recL V M N`. The step is typed under a       --
+-- modality at `⊤ᵣ`, so only eternal outer variables are usable   --
+-- in it; it binds the predecessor (or head and tail), then,      --
+-- after a modality at the effect `ε`, the recursive result. `ε`  --
+-- absorbs its own iteration, `ε · ε ≾ ε`. `⌜ n ⌝` is the         --
+-- duration of `n` ticks. The instances under `Recursion/` check  --
+-- each answer by `refl` at both time grades.                     --
 --------------------------------------------------------------------
 
 open import Data.Unit using (tt)
@@ -113,7 +113,7 @@ private
   ok₀ : ∀ {Θ} {Q : Hyps Θ} {A : OVType Θ} → Q ⊩ A Et∨≾ᵘ 𝟏̂ᵣ
   ok₀ = ≾ᵘ-ok ⊩≾̂ᵣ-refl
 
-  -- A natural number, usable under any lock
+  -- A natural number, usable under any modality
 
   okℕ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → Q ⊩ nat Et∨≾ᵘ ρ
   okℕ = et-ok natₑ

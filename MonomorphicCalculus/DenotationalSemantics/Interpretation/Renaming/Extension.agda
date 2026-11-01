@@ -302,9 +302,9 @@ var-proj-nat-eternal et (cong-⟨⟩-ren r) (Tl-⟨⟩ x)
     (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))
     (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))))
               (∘ᵐ-assoc _ _ _)))))))))))
--- Introducing a lock: `extᵉ-μ` splits the extraction across the new lock, and
--- `ec-var-alg` absorbs the outer half into the ambient's own extraction. This is
--- the case the ambient index exists for.
+-- Introducing a modality: `extᵉ-μ` splits the extraction across the new
+-- modality, and `ec-var-alg` absorbs the outer half into the ambient's own
+-- extraction. This is the case the ambient index exists for.
 var-proj-nat-eternal et (⟨⟩-ext-ctx _ ecΓ) x =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-μ et))
