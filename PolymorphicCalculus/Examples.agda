@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- The type-inference examples                                        --
+-- The type inference examples                                        --
 --                                                                    --
 -- Programs run through type inference at concrete grades, and solver --
 -- stages run on hand-written constraints, in sets by what they test. --
