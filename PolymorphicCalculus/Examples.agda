@@ -6,11 +6,13 @@
 -- Each answer is checked by `refl`: a scheme against the one         --
 -- expected, a refusal against `untypable`.                           --
 --                                                                    --
--- The examples run the solver and take minutes, so                   --
--- `PolymorphicCalculus/Everything.agda` does not include them. Check --
--- them all with `agda PolymorphicCalculus/Examples.agda`, or one set --
--- alone with `agda PolymorphicCalculus/Examples/<Set>/All.agda`,     --
--- whose header names the solver parts it exercises.                  --
+-- The examples run the solver and take minutes in total to check, so --
+-- the top-level `Everything.agda` file checks them and               --
+-- `PolymorphicCalculus/Everything.agda` does not.                    --
+--                                                                    --
+-- Check them alone with `agda PolymorphicCalculus/Examples.agda`, or --
+-- one set with `agda PolymorphicCalculus/Examples/<Set>/All.agda`,   --
+-- whose header comment names the solver parts it exercises.          --
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Examples where
