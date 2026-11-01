@@ -7,6 +7,10 @@
 -- (`PolymorphicCalculus/`) and the monomorphic declarative calculus  --
 -- (`MonomorphicCalculus/`) with eq. theory and denot. semantics.     --
 --                                                                    --
+-- It also checks the polymorphic calculus's type inference examples  --
+-- (`PolymorphicCalculus/Examples.agda`), which run the solver and    --
+-- take minutes to check in total. Calculi's root leaves them out.    --
+--                                                                    --
 -- Check with `agda Everything.agda`.                                 --
 ------------------------------------------------------------------------
 
@@ -222,7 +226,9 @@ import Language.Examples.SensorNode.Identity
 -- The two calculi                                                    --
 ------------------------------------------------------------------------
 
--- Each root lists its own modules.
+-- Each root lists its own modules. The type inference examples run the
+-- solver at concrete grades (taking minutes) and are checked only here.
 
 import PolymorphicCalculus.Everything
+import PolymorphicCalculus.Examples
 import MonomorphicCalculus.Everything

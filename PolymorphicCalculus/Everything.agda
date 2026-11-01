@@ -18,8 +18,9 @@
 --                                                                    --
 -- Check with `agda PolymorphicCalculus/Everything.agda`.             --
 --                                                                    --
--- The inference examples are checked with                            --
---   `agda PolymorphicCalculus/Examples.agda`.                        --
+-- The type inference examples are not imported here: the top-level   --
+-- `Everything.agda` file checks them, and                            --
+-- `agda PolymorphicCalculus/Examples.agda` checks them separately.   --
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Everything where
