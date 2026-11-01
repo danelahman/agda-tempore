@@ -152,7 +152,7 @@ mapˣ-swapᵐ a c =
             (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _))))
 
 -- A primitive recursion's step is natural in its context: reindexing the
--- context `X` reindexes the body's context under both locks.
+-- context `X` reindexes the body's context under both modalities.
 
 recℕ-stepᵗ-nat : ∀ {X X' B ε} → (p : ε ·ₑ ε ≾ₑ ε)
                → (n : ⟨ ∣ ε ∣ᵉ ⟩ᵒ (⟨ ⊤ᵣ ⟩ᵒ X ×ᵐ ℕᵐ) ×ᵐ B →ᵐ Tᵒ B ε)
@@ -365,8 +365,8 @@ mutual
     ≈ᵐ-trans (curryᵐ-cong (C-rename-nat (cong-∷-ren r) M pM))
              (curryᵐ-nat ⟦ r ⟧ʳ (⟦ M ⟧ᶜᵗ pM))
   -- the denoted family is natural in the context (`handler-famᵗ-reindex`): the
-  -- clauses are renamed under the barrier lock, the return clause under the
-  -- lock of the handled effect
+  -- clauses are renamed under the barrier modality, the return clause under the
+  -- modality of the handled effect
   V-rename-nat {Γ} {Γ'} r (handler N H) (pN , pH , uH) =
     ≈ᵐ-trans (curryʰ-cong _ _ λ p →
                handler-famᵗ-reindex ⟦ r ⟧ʳ h _ ⟦⟧ʰᵗ-nat _ _

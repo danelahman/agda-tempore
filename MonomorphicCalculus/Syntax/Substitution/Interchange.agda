@@ -40,8 +40,8 @@ open import MonomorphicCalculus.Syntax.Substitution.Lookup    S
 open import MonomorphicCalculus.Syntax.Substitution.Action       S
 open import MonomorphicCalculus.Syntax.Substitution.Equivalence  S
 
--- Where the lock-crossing renaming sends a variable: under the lock, at the
--- grade the lock contributes.
+-- Where the modality-crossing renaming sends a variable: under the modality, at
+-- the grade the modality contributes.
 
 hit-⟨⟩-img : ∀ {Γ A σ ρ} → (p : ρ ≾ᵣ 𝟏ᵣ) → (y : A ∈[ σ ] Γ)
            → var-img (⟨⟩-η⁻¹-ren {Δ = Γ} ∘ʳ ⟨⟩-≤-ren p) y ≡ Var-⟨⟩ ρ (σ , y)
@@ -209,7 +209,7 @@ mutual
 -- and on resource variables; the theorem is that they then agree on terms.
 --
 -- The premise is closed under extending the substitution by a binder and by a
--- lock, each closure a variable-level calculation.
+-- modality, each closure a variable-level calculation.
 
 record Interchange {Δ Δ' Γ Γ'} (s' : Sub₀ [] Δ Δ') (r : Ren [] Δ' Γ')
                    (r' : Ren [] Δ Γ) (s : Sub₀ [] Γ Γ') : Set where
@@ -244,9 +244,9 @@ open Interchange public
     goᵗ Hd       = refl
     goᵗ (Tl-∷ y) = cong RVar-∷ (atᵗ h y)
 
--- Under one more lock. At an eternal type both sides extend the image
--- (`eternal-val-ext-ren`); otherwise both weaken along the lock-collapsing
--- renaming, whose image is the variable pushed under the lock.
+-- Under one more modality. At an eternal type both sides extend the image
+-- (`eternal-val-ext-ren`); otherwise both weaken along the modality-collapsing
+-- renaming, whose image is the variable pushed under the modality.
 
 ⋈-⟨⟩ : ∀ {Δ Δ' Γ Γ' ρ} {s' : Sub₀ [] Δ Δ'} {r : Ren [] Δ' Γ'}
          {r' : Ren [] Δ Γ} {s : Sub₀ [] Γ Γ'}

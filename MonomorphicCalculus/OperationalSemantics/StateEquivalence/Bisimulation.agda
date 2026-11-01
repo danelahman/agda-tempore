@@ -302,7 +302,7 @@ cast-sub-handle refl M' N' H' = refl
   , subst (λ z → _ ≡ z) (cast-app-reduct (sym (toCtx-≐ˢ es)) M₀' W')
           (sub-≡ᶜ split-[] eW eM₀)
 
--- a delay moves the lock into the state, so the two states are related by
+-- a delay moves the modality into the state, so the two states are related by
 -- `⟨⟩-≐ˢ` and the extensions by `⟨⟩-≤≐`
 
 ⟶-≐ˢ-delay : ∀ {A ε τ} {𝕊 𝕊' : State []} → (es : 𝕊 ≐ˢ 𝕊')

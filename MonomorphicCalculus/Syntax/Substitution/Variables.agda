@@ -168,7 +168,7 @@ sub-var-r {Γ₁} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? 
 -- The third possibility: the variable looked up is the one being replaced, so
 -- what comes back is the value, pushed under the suffix by `push-ren`, up to
 -- the grade bounds `_≐ʳ_` does not see. Non-eternality selects that branch at a
--- lock; at an eternal type the substitution extends the value instead.
+-- modality; at an eternal type the substitution extends the value instead.
 
 sub-var-hit : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ¬ Et B
             → (p : ctx-grade Γ₂ ≾ᵣ 𝟏ᵣ)

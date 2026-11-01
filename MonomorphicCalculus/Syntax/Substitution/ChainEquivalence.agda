@@ -157,7 +157,7 @@ cong-∷-subˢ-≐ˢ {σ = σ} {σ' = σ'} h = mk≐ˢ goᵛ goᵗ
       trans (cong-∷-subˢ-tgt σ y)
         (trans (cong RVar-∷ (atᵗ h y)) (sym (cong-∷-subˢ-tgt σ' y)))
 
--- Under one more lock. An eternal value crosses a lock either way.
+-- Under one more modality. An eternal value crosses a modality either way.
 
 eternal-val-ext-≡ : ∀ {Γ A ρ} → (et : Et A) → (p : ρ ≾ᵣ 𝟏ᵣ) → (V : Γ ⊢ᵛ⦂ A)
                   → eternal-val-ext et V ≡ V-rename (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren p) V
@@ -180,10 +180,10 @@ eternal-val-ext-≡ _ p (cmp ⋈ V W et) =
 eternal-val-ext-≡ et p (subV V q) =
   cong (λ W → subV W q) (eternal-val-ext-≡ (<:ᵛ-eternalˡ q et) p V)
 
-⋈-lock : ∀ {Γ Γ' ρ} → (s : Sub₀ [] Γ Γ') → (p p' : ρ ≾ᵣ 𝟏ᵣ)
-       → Interchange (cong-⟨⟩-sub {ρ = ρ} s) (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren p)
+⋈-wk-⟨⟩ : ∀ {Γ Γ' ρ} → (s : Sub₀ [] Γ Γ') → (p p' : ρ ≾ᵣ 𝟏ᵣ)
+        → Interchange (cong-⟨⟩-sub {ρ = ρ} s) (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren p)
                      (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren p') s
-⋈-lock {Γ} {Γ'} {ρ} s p p' = mk⋈ goᵛ goᵗ
+⋈-wk-⟨⟩ {Γ} {Γ'} {ρ} s p p' = mk⋈ goᵛ goᵗ
   where
     goᵛ : ∀ {A' ρ'} → (x : A' ∈[ ρ' ] Γ') → .(f : A' Et∨≾ᵘ ρ')
         → V-sub₀ (cong-⟨⟩-sub {ρ = ρ} s)
@@ -217,7 +217,7 @@ cong-⟨⟩-subˢ-ne []ˢ      ¬et y f =
   var-img-≡ (sym (hit-⟨⟩-img (≾ᵣ-zero-productʳ (Et∨≾ᵘ→¬Et⇒≾ f ¬et)) y)) _ _
 cong-⟨⟩-subˢ-ne (s ◅ σ) ¬et y f =
   trans (cong (V-sub₀ (cong-⟨⟩-sub s)) (cong-⟨⟩-subˢ-ne σ ¬et y f))
-        (V-sub₀-ren (⋈-lock s p p) (sub-var σ y (Et∨≾ᵘ-zero-productˡ f)))
+        (V-sub₀-ren (⋈-wk-⟨⟩ s p p) (sub-var σ y (Et∨≾ᵘ-zero-productˡ f)))
   where
     p = ≾ᵣ-zero-productʳ (Et∨≾ᵘ→¬Et⇒≾ f ¬et)
 
@@ -638,7 +638,7 @@ id-◅-≐ˢ {r = r} h σ =
                       (V-rename-id-≡ h (sub-var σ x f)))
        (λ y → rvar-≡ (at h (rvar-pos (tgt-img σ y))))
 
--- A retyping under one more binder, resp. lock, is that binder's congruence
+-- A retyping under one more binder, resp. modality, is that binder's congruence
 -- applied to the retyping.
 
 eq-ren-∷-≐ˢ₀ : ∀ {Γ₁ Γ₂ B} → (e' : Γ₁ ≡ Γ₂) → (e : Γ₁ ∷ B ≡ Γ₂ ∷ B)

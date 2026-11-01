@@ -31,10 +31,10 @@ open import MonomorphicCalculus.Syntax.Substitution.Base  S
 
 -- The side condition is an argument, not a result: producing a value out of
 -- a variable needs the `var` rule's own premise. At a non-eternal type it also
--- pays for crossing a lock, `≾ᵣ-zero-productʳ` extracting the lock's own grade
--- from the bound it gives.
+-- pays for crossing a modality, `≾ᵣ-zero-productʳ` extracting the modality's
+-- own grade from the bound it gives.
 --
--- The lock rule takes the eternality decision as a parameter rather than
+-- The modality rule takes the eternality decision as a parameter rather than
 -- matching on it.
 --
 -- The renaming rule reads `var-rename` off with projections rather than a
@@ -59,9 +59,9 @@ mutual
   sub-var₀ {A = A} (cong-⟨⟩-sub s) (Tl-⟨⟩ y) f =
     sub-var₀-⟨⟩ s y f (eternal? A)
 
-  -- Crossing a lock. An eternal-typed value is available at any grade
+  -- Crossing a modality. An eternal-typed value is available at any grade
   -- extension; otherwise the bound splits, its right factor collapsing the
-  -- lock (`⟨⟩-≤-ren` then `⟨⟩-η⁻¹-ren`) and its left factor being what the
+  -- modality (`⟨⟩-≤-ren` then `⟨⟩-η⁻¹-ren`) and its left factor being what the
   -- image under `s` is formed with.
 
   sub-var₀-⟨⟩ : ∀ {Δ Δ' A ρ ρ'}

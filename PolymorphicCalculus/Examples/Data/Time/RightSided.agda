@@ -40,7 +40,7 @@ match-on-bool-not-typable : ¬ Typable [] match-on-bool
 match-on-bool-not-typable = infer-untypable [] match-on-bool match-on-bool-verdict
 
 ------------------------------------------------------------------
--- 2. Under a lock: a `nat` survives a tick, a function does not,
+-- 2. Under a modality: a `nat` survives a tick, a function does not,
 -- and an unknown type is asked to be eternal
 
 later-succ-reported : schemeOf (infer [] later-succ) ≡ just expected-later-succ

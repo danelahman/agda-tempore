@@ -3,8 +3,8 @@
 --                                                                     --
 -- A context is interpreted as an object: the empty context is the     --
 -- terminal object, a variable extension `Γ ∷ A` is a product with the --
--- value type's interpretation, and a time-passage lock `Γ ⟨ ρ ⟩` is   --
--- the context (possibility) modality `⟨ ρ ⟩ᵒ` applied to the          --
+-- value type's interpretation, and a time-passage modality `Γ ⟨ ρ ⟩`  --
+-- is the context (possibility) modality `⟨ ρ ⟩ᵒ` applied to the       --
 -- interpretation of `Γ`.                                              --
 -------------------------------------------------------------------------
 

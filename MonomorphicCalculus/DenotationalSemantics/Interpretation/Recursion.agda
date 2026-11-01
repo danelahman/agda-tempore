@@ -65,8 +65,8 @@ private
 
 -- One unfolding of a primitive recursion's step denotes the step's body with
 -- its context rebuilt from the ambient one: the barred part by `⟨⊤⟩-η`, the
--- predecessor by the value, both under the lock binding the recursive call's
--- result. The renaming and the substitution coherences, composed.
+-- predecessor by the value, both under the modality binding the recursive
+-- call's result. The renaming and the substitution coherences, composed.
 
 recℕ-stepᴾ : ∀ {Γ B ε} → (V : Γ ⊢ᵛ⦂ nat)
            → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ nat) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε)
@@ -139,7 +139,7 @@ sound-RECℕ-SUCC {B = B} V M N p pV pM pN =
       ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _)
 
 -- One unfolding of a list recursion's step, likewise: the barred part by
--- `⟨⊤⟩-η`, the head and the tail by the values, under the lock.
+-- `⟨⊤⟩-η`, the head and the tail by the values, under the modality.
 
 recL-stepᴾ : ∀ {Γ A B ε} → (V : Γ ⊢ᵛ⦂ A) → (W : Γ ⊢ᵛ⦂ list A)
            → (N : (Γ ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A) ⟨ ∣ ε ∣ᵉ ⟩ ∷ B ⊢ᶜ⦂ B ! ε)

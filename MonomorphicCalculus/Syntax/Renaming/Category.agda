@@ -51,7 +51,7 @@ open import MonomorphicCalculus.Syntax.Terms.Equivalence     Spec
 --
 -- Only two constructors read `Ξ`: `var-ren`, whose variable ranges over
 -- `Ξ ⋈ᶜ Δ` (the ambient may be read, never rewritten), and `⟨⟩-ext-ctx`,
--- which also demands `EternalCtx Ξ`: the lock-introducing map exists only
+-- which also demands `EternalCtx Ξ`: the modality-introducing map exists only
 -- over an eternal ambient.
 
 -- Forgetting what a renaming fixes is the projection to the fibre over the
@@ -70,7 +70,7 @@ expose-ren-[]-∘ r₂ r₁ = refl
 -- Extending the ambient on the left is the reindexing functor of the
 -- indexing, and likewise strictly functorial. Its `EternalCtx` premise is
 -- the obligation `⟨⟩-ext-ctx` incurs: the prefix, which then stands to the
--- left of the lock, must be eternal too.
+-- left of the modality, must be eternal too.
 
 cong-renˡ-id : ∀ {Ξ Δ} → (Γ'' : Ctx) → (ec : EternalCtx Γ'')
              → cong-renˡ {Ξ} {Δ} Γ'' ec id-ren ≡ id-ren

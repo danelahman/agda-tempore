@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------
--- The adjoints of the lock in hom-set form.                            --
+-- The adjoints of the context modality in hom-set form.                --
 --                                                                      --
 -- A left adjoint of `L_ρ` at `Γ` is a context `E` with a bijection     --
 -- `Ren [] E Δ ≅ Ren [] Γ (Δ ⟨ ρ ⟩)` up to `_≐ʳ_`, natural in `Δ`       --
@@ -31,7 +31,7 @@ open import Data.Product using (Σ; Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Grades.Base
 open import Language.Spec
 
-module MonomorphicCalculus.Syntax.Renaming.Lock.Adjunction (S : LanguageSpec) where
+module MonomorphicCalculus.Syntax.Renaming.ContextModality.Adjunction (S : LanguageSpec) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -39,7 +39,7 @@ open GradeSystemInterface Grades
 open import MonomorphicCalculus.Syntax.Contexts             S
 open import MonomorphicCalculus.Syntax.Renaming             S
 open import MonomorphicCalculus.Syntax.Renaming.Equivalence S
-open import MonomorphicCalculus.Syntax.Renaming.Lock        S
+open import MonomorphicCalculus.Syntax.Renaming.ContextModality        S
 
 ------------------------------------------------------------------------
 -- Left adjoint

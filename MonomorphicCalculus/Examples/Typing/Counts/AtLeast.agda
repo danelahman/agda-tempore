@@ -23,8 +23,8 @@
 -- names the counter that falls short.                                --
 --                                                                    --
 -- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
--- `∷ A` a binding.                                                   --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
+-- modality, `∷ A` a binding.                                         --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Counts.AtLeast where

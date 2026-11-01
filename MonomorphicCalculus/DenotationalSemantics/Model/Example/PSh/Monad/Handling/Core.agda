@@ -2,8 +2,9 @@
 -- Effect handling: the parameterised fold and its (co)naturality.       --
 --                                                                       --
 -- `T-alg-of-handlerˢ` folds a handler over a computation tree, carrying --
--- an eternal parameter `P` (a `Eternalᵒ`, crossing locks via `necᵉ`),   --
--- with its two one-sided congruences and joint world-naturality.        --
+-- an eternal parameter `P` (a `Eternalᵒ`, crossing modalities via       --
+-- `necᵉ`), with its two one-sided congruences and joint                 --
+-- world-naturality.                                                     --
 ---------------------------------------------------------------------------
 
 open import Grades.Base

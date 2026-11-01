@@ -86,7 +86,7 @@ state-past (𝕊 ∷ₛ W)   (Tl-∷ y)  (pSt , _)  = state-past 𝕊 y pSt
 --
 -- Each case is a naturality law of the modality against the corresponding
 -- clause of `⟦_⟧ˢ`: `Hd` is `η`'s naturality against the cell just written,
--- `Tl-∷` drops a later cell by `fstᵐ`, and `Tl-⟨⟩` folds a lock with `μ`'s
+-- `Tl-∷` drops a later cell by `fstᵐ`, and `Tl-⟨⟩` folds a modality with `μ`'s
 -- naturality, the grades multiplying as `ctx-grade` says.
 
 state-lookup : ∀ {A ρ ρ'} → (𝕊 : State []) → (x : [ ρ ] A ∈[ ρ' ] toCtx 𝕊)
@@ -190,13 +190,13 @@ past-core {A} {ρ} (_∷ₛ_ {B} {σ} 𝕊 W) (Tl-∷ y) (pSt , pW) p =
     assoc = ++ᶜ-assoc (toCtx (split-state-fst 𝕊 y)) ([] ∷ [ ρ ] A)
                       (toCtx (split-state-snd 𝕊 y))
 
--- a lock: fold it with `μ`, the grades multiplying on both sides
+-- a modality: fold it with `μ`, the grades multiplying on both sides
 past-core {A} {ρ} (𝕊 ⟨ σ ⟩ₛ) (Tl-⟨⟩ y) pSt p =
     ∘ᵐ-congʳ (∘ᵐ-congˡ
       (≡→≈ᵐ (cong (λ z → ⟦ eq-ren z ⟧ʳ) (sym-cong {f = _⟨ σ ⟩} assoc))
        ∙ eq-ren-⟨⟩ (sym assoc)))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (eq-ren-⟨⟩ (split-state-++ᶜ 𝕊 y))))
-  -- everything under the lock is a `⟨ σ ⟩`-image: collect it
+  -- everything under the modality is a `⟨ σ ⟩`-image: collect it
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
@@ -217,10 +217,10 @@ past-core {A} {ρ} (𝕊 ⟨ σ ⟩ₛ) (Tl-⟨⟩ y) pSt p =
 -- `⟨⟩-≤` (here `Γ`, `Γ'` and `ρ` are independent, so the equality can be
 -- matched, unlike inside `past-core`).
 
-wk-lock-≤ : ∀ {Γ Γ' ρ} → (e : ctx-grade Γ' ≡ ρ)
-          → ⟦ wk-ren-⟨ρ⟩-ctx {Γ} {Γ'} e ⟧ʳ
-          ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive e) ∘ᵐ ⟦ wk-ren-⟨ρ⟩-ctx {Γ} {Γ'} refl ⟧ʳ
-wk-lock-≤ refl =
+wk-⟨⟩-≤ : ∀ {Γ Γ' ρ} → (e : ctx-grade Γ' ≡ ρ)
+        → ⟦ wk-ren-⟨ρ⟩-ctx {Γ} {Γ'} e ⟧ʳ
+        ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive e) ∘ᵐ ⟦ wk-ren-⟨ρ⟩-ctx {Γ} {Γ'} refl ⟧ʳ
+wk-⟨⟩-≤ refl =
   ≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩-≤-irr _ ≾ᵣ-refl ∙ ⟨⟩-≤-refl) ∙ ∘ᵐ-identityˡ _)
 
 -- `UNBOX`: reading the resource it refers to, out of the state's environment,

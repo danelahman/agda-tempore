@@ -14,10 +14,10 @@
 -- and `coerce` can only add runs to a list.                          --
 --                                                                    --
 -- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
--- `∷ A` a binding. The locks between the binding of a box and its    --
--- `unbox` multiply to the elapsed run, which must be listed on the   --
--- box.                                                               --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
+-- modality, `∷ A` a binding. The modalities between the binding of a --
+-- box and its `unbox` multiply to the elapsed run, which must be     --
+-- listed on the box.                                                 --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Traces.Subsets.RightSided where
@@ -43,7 +43,7 @@ open import MonomorphicCalculus.Examples.Typing.Core right-sided opTime
 -- Effectful computations
 --
 -- At singleton grades sequencing still concatenates the runs, so the
--- grade of a computation is the run it makes, and the locks along it
+-- grade of a computation is the run it makes, and the modalities along it
 -- are that run one event at a time.
 
 sampling : [] ⊢ᶜ⦂ Reading ! permitting ⟅ ⌈ read ⌉ ⟆
@@ -74,7 +74,7 @@ tagged-relaying =
 -- Readings go stale
 --
 -- `ρ ≾ᵣ 𝟏ᵣ` asks the elapsed runs to be the empty one, so a reading is
--- usable only where no lock stands between its binding and its use.
+-- usable only where no modality stands between its binding and its use.
 
 reading-stale-after-idling : ¬ (𝟏ᵣ ·ᵣ ιᵣ 2 ≾ᵣ 𝟏ᵣ)
 reading-stale-after-idling = fails
@@ -143,7 +143,7 @@ sampling-then-branching =
 -- Unboxing: a permit that names its runs
 --
 -- The permit below lists two runs: taking a reading, and idling two
--- ticks. A claim is allowed after either of them (when the locks in
+-- ticks. A claim is allowed after either of them (when the modalities in
 -- between multiply to one of the two) and after nothing else.
 
 permit : R
@@ -200,7 +200,7 @@ storing-not-listed : ¬ (𝟏ᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ per
 storing-not-listed = fails
 
 -- a permit that does list the empty run is claimable at once, with no
--- lock in between
+-- modality in between
 
 listed-now : R
 listed-now = permitting ⟅ ε ∣ ⌈ read ⌉ ⟆
@@ -285,8 +285,8 @@ reading-not-covered-by-the-idling = fails
 ------------------------------------------------------------------------
 -- Effect handling
 --
--- Handling locks its `in` part by the handled computation's grade, as
--- sequencing does.
+-- Handling types its `in` part under a modality at the handled
+-- computation's grade, as sequencing does.
 
 forwarded : [] ⊢ᶜ⦂ Reading ! permitting ⟅ ⌈ read ⌉ ⟆
 forwarded =

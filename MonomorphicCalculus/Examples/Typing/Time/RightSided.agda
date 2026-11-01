@@ -26,10 +26,10 @@
 --     deadline.                                                      --
 --                                                                    --
 -- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
--- `∷ A` a binding. The locks are what the bound of `var` and the     --
--- premise of `unbox` are checked against; every lock other than the  --
--- unit makes a reading stale.                                        --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
+-- modality, `∷ A` a binding. The modalities are what the bound of    --
+-- `var` and the premise of `unbox` are checked against; every        --
+-- modality other than the unit makes a reading stale.                --
 --                                                                    --
 -- The endpoint ranges over the extended naturals, so every deadline  --
 -- below is `[0, ↑ n ]`; `[0, ∞ ]` is the greatest grade and imposes  --
@@ -96,7 +96,7 @@ storing =
       (return ⋆))
 
 -- take a reading and transmit it at once: the reading is used where it
--- was bound, with no lock in between, so `var` asks for nothing
+-- was bound, with no modality in between, so `var` asks for nothing
 
 relaying : [] ⊢ᶜ⦂ unit ! [0, 7 ]
 relaying =
@@ -115,7 +115,7 @@ tagged-relaying =
 -- Readings go stale
 --
 -- `var` asks for `ρ ≾ᵣ 𝟏ᵣ` at a non-eternal type, and the only grade
--- below `[0, 0 ]` is itself, so a reading is usable only where no lock
+-- below `[0, 0 ]` is itself, so a reading is usable only where no modality
 -- stands between its binding and its use.
 
 reading-stale-after-idling : ¬ (𝟏ᵣ ·ᵣ ιᵣ 2 ≾ᵣ 𝟏ᵣ)
@@ -124,7 +124,7 @@ reading-stale-after-idling = ≰!
 reading-stale-after-an-operation : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ 𝟏ᵣ)
 reading-stale-after-an-operation = ≰!
 
--- the identifier is eternal, so it crosses locks all the same
+-- the identifier is eternal, so it crosses modalities all the same
 
 carried-id : [] ∷ NodeId ⊢ᶜ⦂ NodeId ! [0, 1 ]
 carried-id =
@@ -149,7 +149,7 @@ tightening-a-deadline = ≰!
 --
 -- Both branches are coerced to one grade, and here that grade is the
 -- larger deadline: a conditional may take as long as its slower
--- branch. Neither branch locks the context.
+-- branch. Neither branch adds a modality.
 
 branching : [] ∷ bool ∷ Reading ⊢ᶜ⦂ unit ! [0, 6 ]
 branching =
@@ -196,7 +196,7 @@ two-before-three = predecessor · numeralᵛ 3
 
 -- a count of pending transmissions: none costs nothing, otherwise the
 -- reading is transmitted; the reading is bound before the branch, with no
--- lock in between, so `var` asks for nothing
+-- modality in between, so `var` asks for nothing
 
 transmitting-if-pending : [] ∷ nat ∷ Reading ⊢ᶜ⦂ unit ! [0, 6 ]
 transmitting-if-pending =
@@ -204,7 +204,7 @@ transmitting-if-pending =
     `zero coerce ≤! (return ⋆)
     `succ perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)  -- ∷ nat
 
--- a natural number is eternal: a count crosses a lock, here the one a
+-- a natural number is eternal: a count crosses a modality, here the one a
 -- reading leaves
 
 count-survives : [] ∷ nat ⊢ᶜ⦂ nat ! [0, 1 ]
@@ -216,7 +216,7 @@ count-survives =
 -- Primitive recursion
 --
 -- `recℕ`'s step sees the ambient context behind `⟨ ⊤ᵣ ⟩`, binds the
--- predecessor, and, behind the lock of the recursion's own grade, the
+-- predecessor, and, behind the modality of the recursion's own grade, the
 -- result at the predecessor. The grade absorbs its own iteration,
 -- `ε · ε ≾ ε`, which "at most `n` ticks" meets only at no tick and at no
 -- deadline: a pure recursion is graded at the unit, a countdown at the
@@ -302,7 +302,7 @@ relaying-or-not =
     `inr coerce ≤! (return ⋆)          -- ∷ NodeId
 
 -- a sum is eternal when both summands are: a tagged identifier crosses
--- a lock, a sum that may hold a reading does not
+-- a modality, a sum that may hold a reading does not
 
 tag-survives : [] ∷ (NodeId |+| unit) ⊢ᶜ⦂ (NodeId |+| unit) ! [0, 1 ]
 tag-survives =
@@ -328,7 +328,7 @@ transmitting-the-first =
     `cons perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)
                                      -- ∷ Reading ∷ list Reading
 
--- a list is eternal when its elements are: identifiers cross a lock, a
+-- a list is eternal when its elements are: identifiers cross a modality, a
 -- list that may hold readings does not
 
 ids-survive : [] ∷ list NodeId ⊢ᶜ⦂ list NodeId ! [0, 1 ]
@@ -343,7 +343,7 @@ readings-not-eternal (listₑ r) = reading-not-eternal r
 -- Primitive recursion on lists
 --
 -- `recL`'s step sees the ambient context behind `⟨ ⊤ᵣ ⟩`, binds the head
--- and the tail, and, behind the lock of the recursion's own grade, the
+-- and the tail, and, behind the modality of the recursion's own grade, the
 -- result at the tail. As for `recℕ`, the grade absorbs its own
 -- iteration: a pure recursion is graded at the unit, one that idles at
 -- each element at the top.
@@ -362,7 +362,7 @@ three-readings-long =
   length {Reading} · cons (const reading 1) (cons (const reading 2) (cons (const reading 3) nil))
 
 -- a pure map: each count is incremented; a count is eternal, so the head
--- crosses the result's lock
+-- crosses the result's modality
 
 incrementing : [] ⊢ᵛ⦂ list nat ⇒ list nat ! 𝟏ₑ
 incrementing =
@@ -382,7 +382,7 @@ pacing =
                                      -- ⟨ ⊤ᵣ ⟩ ∷ A ∷ list A ⟨ ⌈0, ∞ ⌉ ⟩ ∷ unit
         (≾-⊤ₑ (⊤ₑ ·ₑ ⊤ₑ)))
 
--- The head is bound before the result's lock, so the step reads it only
+-- The head is bound before the result's modality, so the step reads it only
 -- after the recursion at the tail has run. A reading is a head the step
 -- may use when that takes no time: the latest reading, at the unit.
 
@@ -395,7 +395,7 @@ latest =
                                      --   ⟨ [0, 0 ] ⟩ ∷ (Reading |+| unit)
         ≤!)
 
--- behind the lock of a recursion that may take time, the head is stale
+-- behind the modality of a recursion that may take time, the head is stale
 
 head-stale-behind-the-top : ¬ (𝟏ᵣ ·ᵣ ∣ ⊤ₑ ∣ᵉ ≾ᵣ 𝟏ᵣ)
 head-stale-behind-the-top ()
@@ -479,11 +479,11 @@ two-below-three-reduces = CMP
 --
 -- `unbox`'s premise `elapsed ≾ᵣ ρ` reads `elapsed ≤ ρ` here: the box
 -- may be claimed while what the computation has spent (the product of
--- the locks between the box's binding and the claim) is still within
+-- the modalities between the box's binding and the claim) is still within
 -- what the box allows. The resource below is leased for six ticks'
 -- worth of work.
 
--- claimed at once, with no lock in between
+-- claimed at once, with no modality in between
 
 claiming-now : [] ⊢ᶜ⦂ unit ! [0, 6 ]
 claiming-now =
@@ -584,9 +584,9 @@ claimed-in-both-branches =
 ------------------------------------------------------------------------
 -- Sub-effecting against unboxing
 --
--- Sequencing locks its continuation by the grade the first part is
--- typed at. A `coerce` there can only take claims away: coercing
--- relaxes the deadline, so the lock grows and the lease is spent
+-- Sequencing types its continuation under a modality at the grade the
+-- first part is typed at. A `coerce` there can only take claims away: coercing
+-- relaxes the deadline, so the modality grows and the lease is spent
 -- against a larger figure.
 
 -- a reading spends one of the four the lease allows
@@ -623,7 +623,7 @@ claim-after-a-coerced-reading =
 --
 -- What a reading cannot do here, a lease can: the run below takes a
 -- reading, idles, and transmits a leased resource, the reading it took
--- itself having gone stale under the idling lock.
+-- itself having gone stale under the idling modality.
 
 carrying-a-lease : [] ⊢ᶜ⦂ unit ! [0, 9 ]
 carrying-a-lease =
@@ -690,8 +690,8 @@ claim-before-transmitting = ≤!
 ------------------------------------------------------------------------
 -- Effect handling
 --
--- Handling locks its `in` part by the handled computation's grade, as
--- sequencing does.
+-- Handling types its `in` part under a modality at the handled
+-- computation's grade, as sequencing does.
 
 forwarded : [] ⊢ᶜ⦂ Reading ! [0, 1 ]
 forwarded =

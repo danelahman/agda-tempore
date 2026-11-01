@@ -16,9 +16,9 @@
 -- exhibit both.                                                      --
 --                                                                    --
 -- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
--- `∷ A` a binding. A grade with a name is written by that name, the  --
--- grades being pairs of trace sets.                                  --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
+-- modality, `∷ A` a binding. A grade with a name is written by that  --
+-- name, the grades being pairs of trace sets.                        --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Traces.Timed.TwoSided where
@@ -45,7 +45,7 @@ open import MonomorphicCalculus.Examples.Typing.Core two-sided opTime
 -- Effectful computations
 --
 -- A computation with one run is pinned exactly: its run is both the
--- guarantee it meets and the allowance it stays within, and each lock
+-- guarantee it meets and the allowance it stays within, and each modality
 -- is the one-event interval of the operation that put it up.
 
 sampling : [] ⊢ᶜ⦂ Reading ! exact ⌈ read ⌉
@@ -77,7 +77,7 @@ tagged-relaying =
 --
 -- `ρ ≾ᵣ 𝟏ᵣ` asks the cap to permit nothing but the empty run, which is
 -- the upper endpoint deciding it, as at the two-sided windows. So no
--- lock but the unit may stand over a reading in use.
+-- modality but the unit may stand over a reading in use.
 
 reading-stale-after-an-operation : ¬ (𝟏ᵣ ·ᵣ opTime read ≾ᵣ 𝟏ᵣ)
 reading-stale-after-an-operation = fails (𝟏ᵣ ·ᵣ opTime read) 𝟏ᵣ
@@ -147,7 +147,7 @@ either-reading =
 ------------------------------------------------------------------------
 -- Unboxing: a resource with a contract
 --
--- `unbox`'s premise asks what elapsed (the product of the locks
+-- `unbox`'s premise asks what elapsed (the product of the modalities
 -- between the box's binding and the claim) to cover the box's
 -- guarantee and stay within its allowance. The box below asks for a
 -- reading, and allows a reading and six ticks' worth of other work.

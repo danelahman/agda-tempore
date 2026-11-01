@@ -68,7 +68,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.State S Cat
 open import MonomorphicCalculus.DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj
        using (Eternalᵒ; ⟨⊤⟩-eternalᵒ; ⟨⊤⟩-η; ⟨⊤⟩-μ; ⟨⊤⟩-η-nat; ⟨⊤⟩-μ∘Tη≡id; ⟨⊤⟩-μ-nat;
-              free-extᵉ-nat; free-necᵉ-nat; barrier-μ; barrier-lock)
+              free-extᵉ-nat; free-necᵉ-nat; barrier-μ; barrier-⟨⟩)
 open import MonomorphicCalculus.OperationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
   using (handle-op-cont)
 open import MonomorphicCalculus.OperationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
@@ -137,7 +137,7 @@ alg-ηᵀ {ε = ε} {ε₂ = ε₂} alg alg-≤ pv f =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (ηᵀ-nat (alg ∘ᵐ ⟨ pv , f ⟩ᵐ)))
 
 -- The eternal parameter carried across a step transition. Only `DELAY` extends
--- the history, and there the parameter passes under the new lock.
+-- the history, and there the parameter passes under the new modality.
 
 step-pv : ∀ {ε₁ ε₃ A A₀ P} {𝕊 𝕊' : State []}
         → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁} → {M' : toCtx 𝕊' ⊢ᶜ⦂ A₀ ! ε₃}
@@ -232,7 +232,7 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {�
   -- Both sides reach the same normal form: the tick, with the whole bind
   -- carried under the box. `alg-ηᵀ` does the work there: under `[ ιᵣ τ ]`
   -- the step is the trivial one, and the parameter has crossed the box as the
-  -- lock's extraction.
+  -- modality's extraction.
   lhs ∙ ∘ᵐ-congˡ (T-≤-irr _ _) ∙ ≈ᵐ-sym rhs
   where
     pv' = Eternalᵒ.extᵉ bc {ιᵣ τ} ∘ᵐ ⟨ ιᵣ τ ⟩ᶠ pv
@@ -256,8 +256,8 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {�
       ∙ ∘ᵐ-congˡ (delayᵀ-algebraicity τ)
       ∙ ∘ᵐ-assoc _ _ _
 
-    -- the parameter crosses the tick's box as the lock's extraction, and pairs
-    -- back up with the bind under one box (`necᵉ-mate`, `η⊣-⟨⟩`)
+    -- the parameter crosses the tick's box as the modality's extraction, and
+    -- pairs back up with the bind under one box (`necᵉ-mate`, `η⊣-⟨⟩`)
     cross : []-monoidal ∘ᵐ ⟨ Eternalᵒ.necᵉ bc {ιᵣ τ} ∘ᵐ pv
                            , [ ιᵣ τ ]ᶠ μᵀ
                                ∘ᵐ ([ ιᵣ τ ]ᶠ (Tᶠ f ∘ᵐ ηᵀ) ∘ᵐ η⊣) ⟩ᵐ
@@ -334,13 +334,13 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {�
 
 -- The state's barrier across a step: the parameter `step-pv` carries forward is
 -- the one read off the new state, reindexed along the step's `suc-comp-ren`.
--- Only `DELAY` and `BOX` do anything: the lock the delay adds folds into the
--- barrier, and the cell the box allocates is projected away.
+-- Only `DELAY` and `BOX` do anything: the modality the delay adds folds into
+-- the barrier, and the cell the box allocates is projected away.
 
 ⟨⟩-≤-id : ∀ {X ρ} → (p : ρ ≾ᵣ ρ) → ⟨⟩-≤ {X} p ≈ᵐ idᵐ
 ⟨⟩-≤-id p = ⟨⟩-≤-irr p ≾ᵣ-refl ∙ ⟨⟩-≤-refl
 
--- A lock in front of the barrier, refolded: `⊤ᵣ` absorbs it.
+-- A modality in front of the barrier, refolded: `⊤ᵣ` absorbs it.
 delay-suc : ∀ {X ρ} → (q : ρ ·ᵣ ⊤ᵣ ≾ᵣ ⊤ᵣ)
           → (⟨⟩-≤ q ∘ᵐ μ {X} {⊤ᵣ} {ρ}) ∘ᵐ ⟨⊤⟩-η ≈ᵐ ⟨⟩-≤ (≾-⊤ᵣ ρ)
 delay-suc {X} {ρ} q =
@@ -355,19 +355,19 @@ delay-suc {X} {ρ} q =
              → h ≈ᵐ ⟨⟩-≤ p ∘ᵐ h
 ≤ₛ-refl-step p h = ≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩-≤-id p) ∙ ∘ᵐ-identityˡ _)
 
--- A state successor, read as a map into the earlier state's barrier: each lock
--- it passed is extracted, each cell it allocated is projected away.
+-- A state successor, read as a map into the earlier state's barrier: each
+-- modality it passed is extracted, each cell it allocated is projected away.
 
 suc-g : ∀ {Γ Γ'} → {𝕊 : State Γ} → {𝕊' : State Γ'}
       → (q : 𝕊 ≤ₛ 𝕊') → ⟦ toCtx 𝕊' ⟧ᶜᵗˣ →ᵐ ⟦ toCtx 𝕊 ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
 suc-g ≤ₛ-refl = ⟨⊤⟩-η
-suc-g {𝕊 = 𝕊} (≤ₛ-lock {ρ = ρ} q) =
+suc-g {𝕊 = 𝕊} (≤ₛ-⟨⟩ {ρ = ρ} q) =
   Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ ⟦ toCtx 𝕊 ⟧ᶜᵗˣ) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (suc-g q)
 suc-g (≤ₛ-res q) = suc-g q ∘ᵐ fstᵐ
 
 -- `suc-comp-ren` is the free algebra's extension of `suc-g`: extraction at the
--- outer lock applied to it. The barrier is a free algebra, so the renaming is an
--- algebra morphism, which is what the fold's parameter-naturality needs.
+-- outer modality applied to it. The barrier is a free algebra, so the renaming
+-- is an algebra morphism, which is what the fold's parameter-naturality needs.
 
 suc-comp-free-at : ∀ {Γ Γ' a} → {𝕊 : State Γ} → {𝕊' : State Γ'}
                  → (q : 𝕊 ≤ₛ 𝕊') → (pf : κₛ q ·ᵣ a ≾ᵣ ⊤ᵣ)
@@ -375,8 +375,8 @@ suc-comp-free-at : ∀ {Γ Γ' a} → {𝕊 : State Γ} → {𝕊' : State Γ'}
                  ≈ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ ⟦ toCtx 𝕊 ⟧ᶜᵗˣ) {a} ∘ᵐ ⟨ a ⟩ᶠ (suc-g q)
 suc-comp-free-at {a = a} {𝕊 = 𝕊} ≤ₛ-refl pf =
     ⟨⟩-≤-irr _ (≾-⊤ᵣ a)
-  ∙ ≈ᵐ-sym (barrier-lock {⟦ toCtx 𝕊 ⟧ᶜᵗˣ} {a})
-suc-comp-free-at (≤ₛ-lock q) pf =
+  ∙ ≈ᵐ-sym (barrier-⟨⟩ {⟦ toCtx 𝕊 ⟧ᶜᵗˣ} {a})
+suc-comp-free-at (≤ₛ-⟨⟩ q) pf =
     ∘ᵐ-congˡ (suc-comp-free-at q _)
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩-μ-nat (suc-g q))
@@ -440,7 +440,7 @@ step-pv-state (BOX {V = V}) pS (pV , _) =
 step-pv-state {𝕊 = 𝕊} (DELAY {τ = τ}) pS pM =
     ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (barrier-lock {⟦ toCtx 𝕊 ⟧ᶜᵗˣ} {ιᵣ τ})
+  ∙ ∘ᵐ-congˡ (barrier-⟨⟩ {⟦ toCtx 𝕊 ⟧ᶜᵗˣ} {ιᵣ τ})
   ∙ ≈ᵐ-sym (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (delay-suc _))
 
 -- `HANDLE-STEP`: the same assembly as `SEQ-STEP`, with the handler's fold in
@@ -672,7 +672,7 @@ op-env a =
 
 -- The heart of `SEQ-OP`: splitting the environment's box into the
 -- operation's and the continuation's grades (`box-split`) matches the
--- syntax's refolding of the two locks into one (`⟨⟩-μ-ren`).
+-- syntax's refolding of the two modalities into one (`⟨⟩-μ-ren`).
 
 seq-op-box : ∀ {X A B ε ε'} → (op : Op)
   → (alg : Tᵒ (Tᵒ B ε') ε →ᵐ Tᵒ B (ε ·ₑ ε'))
@@ -1001,8 +1001,8 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N pV pM pN =
                  (Γ ⟨ ∣ op-grade op ·ₑ ε ∣ᵉ ⟩)
     ren = (⟨⟩-≤-ren (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
 
-    -- the renaming is the `μ`-refold of the two locks, after weakening past the
-    -- arity value the continuation binds
+    -- the renaming is the `μ`-refold of the two modalities, after weakening
+    -- past the arity value the continuation binds
     ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≃ᵣ⇒≿ᵣ map-·ᵉ) ∘ᵐ μ ∘ᵐ ⟨ ∣ ε ∣ᵉ ⟩ᶠ fstᵐ
     ern = ∘ᵐ-congˡ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _)) ∙ ∘ᵐ-assoc _ _ _
 

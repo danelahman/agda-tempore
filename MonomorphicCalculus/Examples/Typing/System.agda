@@ -76,14 +76,14 @@ fresh-var p x = var x (≾ᵘ-ok p)
 ------------------------------------------------------------------------
 -- Sub-effecting against unboxing
 --
--- Sequencing types its continuation under the lock `⟨ ∣ ε ∣ᵉ ⟩`, where
+-- Sequencing types its continuation under the modality `⟨ ∣ ε ∣ᵉ ⟩`, where
 -- `ε` is the grade the first part is typed at, not the time it takes,
--- and `handle`'s `in` part is locked the same way. So a
+-- and `handle` types its `in` part the same way. So a
 -- `coerce` on that first part changes what its continuation may claim,
 -- and it can only take claims away; the instances exhibit the converse
 -- failing.
 --
--- An operation's own lock is not subject to any of this: `perform`
+-- An operation's own modality is not subject to any of this: `perform`
 -- takes it from the signature, where no coercion reaches it.
 
 coercion-only-closes : ∀ {ρ ρ'} {ε ε' : E}
@@ -96,7 +96,7 @@ coercion-only-closes sub claim =
 ------------------------------------------------------------------------
 -- A context to handle in
 --
--- Clauses see the ambient context behind the barrier lock `⟨ ⊤ᵣ ⟩`. In a
+-- Clauses see the ambient context behind the barrier modality `⟨ ⊤ᵣ ⟩`. In a
 -- context holding both base types, the identifier crosses it by being
 -- eternal; whether the reading does is a question about `⊤ᵣ`, which each
 -- instance answers.
@@ -113,7 +113,7 @@ Node = [] ∷ NodeId ∷ Reading
 -- runs once the operation has finished.
 
 -- Perform the operation again and resume. The box is claimed under the
--- very lock the `perform` puts up, so the premise is
+-- very modality the `perform` puts up, so the premise is
 -- `𝟏ᵣ ·ᵣ ∣ op-grade op ∣ᵉ ≾ᵣ ∣ op-grade op ∣ᵉ`, which the unit law
 -- discharges at every grade.
 

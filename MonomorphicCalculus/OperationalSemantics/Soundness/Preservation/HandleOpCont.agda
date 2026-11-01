@@ -60,7 +60,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj
        using (Eternalᵒ; ⟨⊤⟩-eternalᵒ; ⟨⊤⟩-η; ⟨⊤⟩-μ; ⟨⊤⟩-μ-nat; ⟨⊤⟩-μ∘μ≡μ∘Tμ;
               ⟨⊤⟩-μ∘Tη≡id; ⟨⊤⟩-η-nat; free-extᵉ-nat; free-necᵉ-nat; barrier-μ;
-              barrier-lock)
+              barrier-⟨⟩)
 
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
@@ -76,7 +76,7 @@ _∙_ = ≈ᵐ-trans
 bcᴱ : ∀ (Γ : Ctx) → Eternalᵒ ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
 bcᴱ Γ = ⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ
 
--- `free-extᵉ-nat`, `free-necᵉ-nat`, `barrier-μ`, `barrier-lock` are facts
+-- `free-extᵉ-nat`, `free-necᵉ-nat`, `barrier-μ`, `barrier-⟨⟩` are facts
 -- about the free `⟨⊤⟩`-algebra, imported above from `Eternal`. `free-necᵉ-nat`
 -- applied to `free-extᵉ-nat` is the coalgebra-morphism premise of
 -- `T-alg-of-handlerᵀ-natᴾ` that every reindexing of a handler's parameter
@@ -150,7 +150,7 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
       barrier-wk : (Eternalᵒ.extᵉ (bcᴱ Γ) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⊤⟩-η {⟦ Γ ⟧ᶜᵗˣ})) ∘ᵐ fstᵐ
                  ≈ᵐ f ∘ᵐ ⟨⊤⟩-η
       barrier-wk =
-          ∘ᵐ-congˡ (barrier-lock {⟦ Γ ⟧ᶜᵗˣ} {ρ})
+          ∘ᵐ-congˡ (barrier-⟨⟩ {⟦ Γ ⟧ᶜᵗˣ} {ρ})
         ∙ ≈ᵐ-sym (  ∘ᵐ-congˡ f≈
                   ∙ ∘ᵐ-assoc _ _ _
                   ∙ ∘ᵐ-congʳ (⟨⊤⟩-η-nat g)

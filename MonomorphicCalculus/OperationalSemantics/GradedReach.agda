@@ -2,9 +2,9 @@
 -- Graded reachability: the frame the logical relation is indexed by. --
 --                                                                    --
 -- Kripke over an accessibility that carries a grade budget: an       --
--- extension together with the bound licensing the lock it crossed,   --
--- rather than over `≤ₛ` alone, since reindexing along `≤ₛ` is not    --
--- free weakening.                                                    --
+-- extension together with the bound licensing the modality it        --
+-- crossed, rather than over `≤ₛ` alone, since reindexing along `≤ₛ`  --
+-- is not free weakening.                                             --
 ------------------------------------------------------------------------
 
 open import Data.Product
@@ -70,7 +70,7 @@ unbox-ren : ∀ {𝕊 ρ 𝕊'} → 𝕊 ⊑ₛ[ ρ ] 𝕊' → Ren [] (toCtx �
 unbox-ren q = suc-comp-ren (ext q) (reach-bound q) ∘ʳ ⟨⟩-η-ren
 
 -- At the unit budget it is a plain renaming `toCtx 𝕊 → toCtx 𝕊'`: `unbox-ren`
--- with the source lock unwound. So each of its laws is the corresponding
+-- with the source modality unwound. So each of its laws is the corresponding
 -- `unbox-ren` law conjugated by `⟨⟩-η⁻¹-ren`.
 
 reach-renᵘ : ∀ {𝕊 𝕊'} → 𝕊 ⊑ₛ[ 𝟏ᵣ ] 𝕊' → Ren [] (toCtx 𝕊') (toCtx 𝕊)
@@ -90,9 +90,9 @@ reach-under : ∀ {𝕊 𝕊' A C} → 𝕊 ⊑ₛ[ 𝟏ᵣ ] 𝕊'
 reach-under q = C-rename (cong-∷-ren (reach-renᵘ q))
 
 -- Resuming a continuation guarded by `ρ` at a state where `ρ` has elapsed:
--- cross the lock along the reach, then feed it the arity value. The reach is the
--- one `unbox` consumes, because that is how a resumption is reached: `HANDLE-OP`
--- boxes it at `ρ` and the clause unboxes it once `ρ` has passed.
+-- cross the modality along the reach, then feed it the arity value. The reach
+-- is the one `unbox` consumes, because that is how a resumption is reached:
+-- `HANDLE-OP` boxes it at `ρ` and the clause unboxes it once `ρ` has passed.
 
 resume : ∀ {𝕊 𝕊' ρ A ε B}
        → (q : 𝕊 ⊑ₛ[ ρ ] 𝕊')
@@ -110,7 +110,7 @@ resume q M W = (C-rename (cong-∷-ren (unbox-ren q)) M) [ W ]₀
          → 𝕊 ≤ₛ 𝕊''
 
 ≤ₛ-trans q ≤ₛ-refl      = q
-≤ₛ-trans q (≤ₛ-lock q') = ≤ₛ-lock (≤ₛ-trans q q')
+≤ₛ-trans q (≤ₛ-⟨⟩ q')   = ≤ₛ-⟨⟩ (≤ₛ-trans q q')
 ≤ₛ-trans q (≤ₛ-res q')  = ≤ₛ-res (≤ₛ-trans q q')
 
 κₛ-trans : ∀ {Γ Γ' Γ''} → {𝕊 : State Γ} → {𝕊' : State Γ'} → {𝕊'' : State Γ''}
@@ -120,7 +120,7 @@ resume q M W = (C-rename (cong-∷-ren (unbox-ren q)) M) [ W ]₀
 
 κₛ-trans q ≤ₛ-refl              =
   ≃ᵣ-sym (·ᵣ-identityʳ (κₛ q))
-κₛ-trans q (≤ₛ-lock {ρ = ρ} q') =
+κₛ-trans q (≤ₛ-⟨⟩ {ρ = ρ} q') =
   ≃ᵣ-trans (·ᵣ-cong (κₛ-trans q q') ≃ᵣ-refl) (·ᵣ-assoc _ _ ρ)
 κₛ-trans q (≤ₛ-res q')          =
   κₛ-trans q q'
@@ -150,7 +150,7 @@ reach-∘ : ∀ {𝕊 𝕊' 𝕊'' ρ} → 𝕊' ⊑ₛ[ 𝟏ᵣ ] 𝕊'' → �
 reach-∘ {ρ = ρ} q' q = reach-≤ (reach-∘ᵍ q' q) (≃ᵣ⇒≾ᵣ (·ᵣ-identityʳ ρ))
 
 -- Allocating a cell accumulates nothing (`BOX`); letting time pass costs
--- exactly the lock it passes (`DELAY`).
+-- exactly the modality it passes (`DELAY`).
 
 alloc-reach : ∀ {A ρ} {𝕊 : State []} → (V : ([] ++ᶜ toCtx 𝕊 ⟨ ρ ⟩) ⊢ᵛ⦂ A)
             ------------------------------------------------------------
@@ -162,7 +162,7 @@ delay-reach : ∀ {ρ} {𝕊 : State []}
             ----------------------------
             → 𝕊 ⊑ₛ[ ρ ] (𝕊 ⟨ ρ ⟩ₛ)
 
-delay-reach {ρ} = reach (≤ₛ-lock ≤ₛ-refl) (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ ρ))
+delay-reach {ρ} = reach (≤ₛ-⟨⟩ ≤ₛ-refl) (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ ρ))
 
 -- Extending twice is extending once along the composite.
 
@@ -204,7 +204,7 @@ suc-comp-ren-≤ ≤ₛ-refl b b₁ p = mk≐ʳ go
     go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
     go (Tl-⟨⟩ x) = refl
 
-suc-comp-ren-≤ (≤ₛ-lock q) b b₁ p =
+suc-comp-ren-≤ (≤ₛ-⟨⟩ q) b b₁ p =
   ≐ʳ-trans (∘ʳ-≐ʳ (suc-comp-ren-≤ q _ _ (·ᵣ-monoʳ-≾ᵣ p)) ≐ʳ-refl)
     (≐ʳ-trans (∘ʳ-assoc-≐ʳ (suc-comp-ren q _) (⟨⟩-≤-ren (·ᵣ-monoʳ-≾ᵣ p))
                           ⟨⟩-μ-ren)
@@ -233,7 +233,7 @@ suc-comp-ren-≤ˡ ≤ₛ-refl b b₁ p = mk≐ʳ go
     go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
     go (Tl-⟨⟩ x) = refl
 
-suc-comp-ren-≤ˡ (≤ₛ-lock e) b b₁ p =
+suc-comp-ren-≤ˡ (≤ₛ-⟨⟩ e) b b₁ p =
   ≐ʳ-trans (∘ʳ-≐ʳ (suc-comp-ren-≤ˡ e _ _ p) ≐ʳ-refl)
            (∘ʳ-assoc-≐ʳ (⟨⟩-≤-ren p) (suc-comp-ren e _) ⟨⟩-μ-ren)
 
@@ -258,7 +258,7 @@ suc-comp-ren-∘-≐ʳ {ρ₂ = ρ₂} e ≤ₛ-refl b b₁ b₂ =
   suc-comp-ren-≤ e b b₁
     (≾ᵣ-trans (≃ᵣ⇒≿ᵣ (·ᵣ-identityˡ ρ₂)) b₂)
 
-suc-comp-ren-∘-≐ʳ e (≤ₛ-lock e') b b₁ b₂ =
+suc-comp-ren-∘-≐ʳ e (≤ₛ-⟨⟩ e') b b₁ b₂ =
   ≐ʳ-trans (∘ʳ-≐ʳ (suc-comp-ren-∘-≐ʳ e e' _ b₁ _) ≐ʳ-refl)
            (∘ʳ-assoc-≐ʳ (suc-comp-ren e b₁) (suc-comp-ren e' _) ⟨⟩-μ-ren)
 
@@ -267,13 +267,14 @@ suc-comp-ren-∘-≐ʳ e (≤ₛ-res e') b b₁ b₂ =
            (∘ʳ-assoc-≐ʳ (suc-comp-ren e b₁) (suc-comp-ren e' _)
                        (cong-⟨⟩-ren wk-ren))
 
--- `suc-comp-ren` sends a locked variable to a locked variable: the extension
--- embeds `toCtx 𝕊` into `toCtx 𝕊₁`, under the lock.
+-- `suc-comp-ren` sends a variable under a modality to a variable under a
+-- modality: the extension embeds `toCtx 𝕊` into `toCtx 𝕊₁`, under the
+-- modality.
 
 ≤ₛ-embed : ∀ {𝕊 𝕊₁ : State []} → (e : 𝕊 ≤ₛ 𝕊₁) → ∀ {A σ}
          → A ∈[ σ ] toCtx 𝕊 → Σ[ σ' ∈ R ] A ∈[ σ' ] toCtx 𝕊₁
 ≤ₛ-embed ≤ₛ-refl             {σ = σ} x = σ , x
-≤ₛ-embed (≤ₛ-lock {ρ = ρ} e) x with ≤ₛ-embed e x
+≤ₛ-embed (≤ₛ-⟨⟩ {ρ = ρ} e) x with ≤ₛ-embed e x
 ... | σ' , y = σ' ·ᵣ ρ , Tl-⟨⟩ y
 ≤ₛ-embed (≤ₛ-res e)          x with ≤ₛ-embed e x
 ... | σ' , y = σ' , Tl-∷ y
@@ -285,7 +286,7 @@ suc-comp-ren-img : ∀ {𝕊 𝕊₁ : State []} {ρ₂ ρ₃ : R} → (e : 𝕊
                  ≡ (proj₁ (≤ₛ-embed e x) ·ᵣ ρ₃ , Tl-⟨⟩ (proj₂ (≤ₛ-embed e x)))
 
 suc-comp-ren-img ≤ₛ-refl     b x = refl
-suc-comp-ren-img (≤ₛ-lock e) b x =
+suc-comp-ren-img (≤ₛ-⟨⟩ e)   b x =
   cong (var-img′ ⟨⟩-μ-ren) (suc-comp-ren-img e _ x)
 suc-comp-ren-img (≤ₛ-res e)  b x =
   cong (var-img′ (cong-⟨⟩-ren wk-ren)) (suc-comp-ren-img e _ x)
@@ -298,19 +299,19 @@ suc-comp-ren-img (≤ₛ-res e)  b x =
            → ∀ {A σ} → (x : A ∈[ σ ] toCtx 𝕊)
            → ≤ₛ-embed (≤ₛ-trans e e') x ≡ ≤ₛ-embed e' (proj₂ (≤ₛ-embed e x))
 ≤ₛ-embed-∘ e ≤ₛ-refl              x = refl
-≤ₛ-embed-∘ e (≤ₛ-lock {ρ = ρ} e') x =
+≤ₛ-embed-∘ e (≤ₛ-⟨⟩ {ρ = ρ} e')   x =
   cong (λ z → proj₁ z ·ᵣ ρ , Tl-⟨⟩ (proj₂ z)) (≤ₛ-embed-∘ e e' x)
 ≤ₛ-embed-∘ e (≤ₛ-res e')          x =
   cong (λ z → proj₁ z , Tl-∷ (proj₂ z)) (≤ₛ-embed-∘ e e' x)
 
 -- What the embedding does to a variable's grade: it accumulates exactly the
--- extension's own grade, the locks passed being the same ones.
+-- extension's own grade, the modalities passed being the same ones.
 
 ≤ₛ-embed-grade : ∀ {𝕊 𝕊₁ : State []} → (e : 𝕊 ≤ₛ 𝕊₁) → ∀ {A σ}
                → (x : A ∈[ σ ] toCtx 𝕊)
                → proj₁ (≤ₛ-embed e x) ≃ᵣ σ ·ᵣ κₛ e
 ≤ₛ-embed-grade ≤ₛ-refl             {σ = σ} x = ≃ᵣ-sym (·ᵣ-identityʳ σ)
-≤ₛ-embed-grade (≤ₛ-lock {ρ = ρ} e) {σ = σ} x =
+≤ₛ-embed-grade (≤ₛ-⟨⟩ {ρ = ρ} e)   {σ = σ} x =
   ≃ᵣ-trans (·ᵣ-cong (≤ₛ-embed-grade e x) ≃ᵣ-refl)
            (·ᵣ-assoc σ (κₛ e) ρ)
 ≤ₛ-embed-grade (≤ₛ-res e)          x = ≤ₛ-embed-grade e x
@@ -354,8 +355,9 @@ steps-grade-≾ {ε' = ε'} (r ▸ rs) =
       (≃ᵣ-trans (·ᵣ-cong (κₛ-trans (step-extends-state r) (steps-extends-state rs)) ≃ᵣ-refl) (·ᵣ-assoc (κₛ (step-extends-state r)) (κₛ (steps-extends-state rs)) ∣ ε' ∣ᵉ)))
     (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (steps-grade-≾ rs)) (step-grade-≾ r))
 
--- The renaming a whole run licenses. A run's bound relates two locked contexts,
--- so it goes straight to `suc-comp-ren` rather than through a reach.
+-- The renaming a whole run licenses. A run's bound relates two contexts
+-- under modalities, so it goes straight to `suc-comp-ren` rather than through a
+-- reach.
 
 steps-ren : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
           → (rs : cf ⟶* cf')
@@ -451,7 +453,7 @@ seq-steps (r ▸ rs) N
                 N)))))
 
 -- The same under `handle`, which also retypes the clauses along the barrier
--- lock, at the run's own extension.
+-- modality, at the run's own extension.
 
 steps-barrier-ren : ∀ {A B ε ε'} {cf : Config (A ! ε)} {cf' : Config (B ! ε')}
                   → (rs : cf ⟶* cf')
@@ -566,8 +568,8 @@ suc-comp-ren-grade-src : ∀ {𝕊 𝕊₁ : State []} {ρ₁ ρ₂ ρ₃ : R} �
 suc-comp-ren-grade-src e refl b₁ b₂ =
   ≐ʳ-trans (∘ʳ-identityˡ-≐ʳ (suc-comp-ren e b₁)) (suc-comp-ren-irr e b₁ b₂)
 
--- Crossing a lock and then moving on is crossing it into the later state: both
--- send `Tl-⟨⟩ x` to the composite extension's embedding.
+-- Crossing a modality and then moving on is crossing it into the later state:
+-- both send `Tl-⟨⟩ x` to the composite extension's embedding.
 
 reach-unbox-ren-≐ʳ : ∀ {ρ} {𝕊 𝕊' 𝕊'' : State []}
                   → (q' : 𝕊' ⊑ₛ[ 𝟏ᵣ ] 𝕊'') → (q : 𝕊 ⊑ₛ[ ρ ] 𝕊')
@@ -599,8 +601,8 @@ alloc-ren-≐ʳ : ∀ {A ρ} {𝕊 : State []} → (V : ([] ++ᶜ toCtx 𝕊 ⟨
 alloc-ren-≐ʳ V = mk≐ʳ (λ x → reach-renᵘ-img (alloc-reach V) x)
 
 -- The same for the renaming an `unbox` consumes: splitting the guard into the
--- reach's own part and a residual `σ`, then crossing the lock under `σ`, is the
--- extension at residual `σ`.
+-- reach's own part and a residual `σ`, then crossing the modality under `σ`, is
+-- the extension at residual `σ`.
 
 unbox-ren-μ-≐ʳ : ∀ {𝕊 𝕊₁ : State []} {ρ σ : R} → (q : 𝕊 ⊑ₛ[ ρ ] 𝕊₁)
               → (b : κₛ (ext q) ·ᵣ σ ≾ᵣ ρ ·ᵣ σ)
@@ -633,9 +635,9 @@ barrier-reach = reach ≤ₛ-refl (≾-⊤ᵣ _)
 barrier-reach-≐ʳ : ∀ {𝕊 : State []} → unbox-ren (barrier-reach {𝕊}) ≐ʳ barrier-ren
 barrier-reach-≐ʳ = ∘ʳ-≐ʳ (⟨⟩-≤-ren-≐ʳ _ _) ≐ʳ-refl
 
--- Crossing a lock and then following a guarded reach is following the same reach
--- at the unit budget (`reach-≤`): the source grade is relaxed from `ρ` to `𝟏ᵣ`,
--- which is pre-composition with `⟨⟩-≤-ren` (`suc-comp-ren-≤ˡ`).
+-- Crossing a modality and then following a guarded reach is following the same
+-- reach at the unit budget (`reach-≤`): the source grade is relaxed from `ρ` to
+-- `𝟏ᵣ`, which is pre-composition with `⟨⟩-≤-ren` (`suc-comp-ren-≤ˡ`).
 
 unbox-ren-unit : ∀ {ρ} {𝕊 𝕊' : State []} → (q : 𝕊 ⊑ₛ[ ρ ] 𝕊') → (p : ρ ≾ᵣ 𝟏ᵣ)
                → ((⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ unbox-ren q)
@@ -650,7 +652,8 @@ unbox-ren-unit q p = mk≐ʳ go
 
 -- Two reaches whose renamings are identity-like: the unit reach at a state, and
 -- the reach a `DELAY` takes (whose target context is the source under the
--- lock). Both are needed to recognise a reduct as the action of an environment.
+-- modality). Both are needed to recognise a reduct as the action of an
+-- environment.
 
 -- Both are `≤ₛ-embed` of the identity extension, which is the identity: a
 -- variable of a state context cannot be case-split on, so this goes through the
@@ -737,7 +740,7 @@ lookup-body-≡ 𝕊 refl rel rel' =
              ≡ split-state-fst 𝕊 x
 
 ≤ₛ-embed-fst ≤ₛ-refl     x = refl
-≤ₛ-embed-fst (≤ₛ-lock e) x = ≤ₛ-embed-fst e x
+≤ₛ-embed-fst (≤ₛ-⟨⟩ e)   x = ≤ₛ-embed-fst e x
 ≤ₛ-embed-fst (≤ₛ-res e)  x = ≤ₛ-embed-fst e x
 
 ≤ₛ-embed-lookup : ∀ {𝕊 𝕊₁ : State []} → (e : 𝕊 ≤ₛ 𝕊₁) → ∀ {A ρ σ}
@@ -748,7 +751,7 @@ lookup-body-≡ 𝕊 refl rel rel' =
                         (resource-lookup 𝕊 x)
 
 ≤ₛ-embed-lookup ≤ₛ-refl     x = refl
-≤ₛ-embed-lookup (≤ₛ-lock e) x = ≤ₛ-embed-lookup e x
+≤ₛ-embed-lookup (≤ₛ-⟨⟩ e)   x = ≤ₛ-embed-lookup e x
 ≤ₛ-embed-lookup (≤ₛ-res e)  x = ≤ₛ-embed-lookup e x
 
 -- `SRed-fresh` compares the lookup at a later state with the value that was
@@ -757,7 +760,7 @@ lookup-body-≡ 𝕊 refl rel rel' =
 
 ≤ₛ-ctx : {𝕊₀ 𝕊₂ : State []} → 𝕊₀ ≤ₛ 𝕊₂ → Ctx
 ≤ₛ-ctx ≤ₛ-refl                    = []
-≤ₛ-ctx (≤ₛ-lock {ρ = ρ} e)        = ≤ₛ-ctx e ⟨ ρ ⟩
+≤ₛ-ctx (≤ₛ-⟨⟩ {ρ = ρ} e)          = ≤ₛ-ctx e ⟨ ρ ⟩
 ≤ₛ-ctx (≤ₛ-res {ρ = ρ} {A = A} e) = ≤ₛ-ctx e ∷ [ ρ ] A
 
 ≤ₛ-embed-snd-ctx : ∀ {A ρ σ} {𝕊₀ 𝕊₂ : State []} → (e : 𝕊₀ ≤ₛ 𝕊₂)
@@ -766,7 +769,7 @@ lookup-body-≡ 𝕊 refl rel rel' =
                  ≡ toCtx (split-state-snd 𝕊₀ c) ++ᶜ ≤ₛ-ctx e
 
 ≤ₛ-embed-snd-ctx ≤ₛ-refl             c = refl
-≤ₛ-embed-snd-ctx (≤ₛ-lock {ρ = ρ} e) c = cong (_⟨ ρ ⟩) (≤ₛ-embed-snd-ctx e c)
+≤ₛ-embed-snd-ctx (≤ₛ-⟨⟩ {ρ = ρ} e)   c = cong (_⟨ ρ ⟩) (≤ₛ-embed-snd-ctx e c)
 ≤ₛ-embed-snd-ctx (≤ₛ-res e)          c = cong (_∷ _) (≤ₛ-embed-snd-ctx e c)
 
 -- And the state itself grows the same way.
@@ -774,7 +777,7 @@ lookup-body-≡ 𝕊 refl rel rel' =
 ≤ₛ-ctx-toCtx : {𝕊₀ 𝕊₂ : State []} → (e : 𝕊₀ ≤ₛ 𝕊₂)
              → toCtx 𝕊₂ ≡ toCtx 𝕊₀ ++ᶜ ≤ₛ-ctx e
 ≤ₛ-ctx-toCtx ≤ₛ-refl             = refl
-≤ₛ-ctx-toCtx (≤ₛ-lock {ρ = ρ} e) = cong (_⟨ ρ ⟩) (≤ₛ-ctx-toCtx e)
+≤ₛ-ctx-toCtx (≤ₛ-⟨⟩ {ρ = ρ} e)   = cong (_⟨ ρ ⟩) (≤ₛ-ctx-toCtx e)
 ≤ₛ-ctx-toCtx (≤ₛ-res e)          = cong (_∷ _) (≤ₛ-ctx-toCtx e)
 
 -- So an extension's embedding is the push under the context it adds.
@@ -786,11 +789,11 @@ lookup-body-≡ 𝕊 refl rel rel' =
                   (grade-++ᶜˡ ρ (≤ₛ-ctx e) , ∈-++ᶜˡ (≤ₛ-ctx e) y)
 
 ≤ₛ-embed-push ≤ₛ-refl             y = refl
-≤ₛ-embed-push (≤ₛ-lock {ρ = ρ} e) y =
+≤ₛ-embed-push (≤ₛ-⟨⟩ {ρ = ρ} e)   y =
   trans (cong (Var-⟨⟩ ρ) (≤ₛ-embed-push e y))
     (trans (sym (Var-cast-⟨⟩ ρ (sym (≤ₛ-ctx-toCtx e)) _))
            (Var-cast-irr (cong (_⟨ ρ ⟩) (sym (≤ₛ-ctx-toCtx e)))
-                         (sym (≤ₛ-ctx-toCtx (≤ₛ-lock e))) _))
+                         (sym (≤ₛ-ctx-toCtx (≤ₛ-⟨⟩ e))) _))
 ≤ₛ-embed-push (≤ₛ-res {V = V} e)  y =
   trans (cong Var-∷ (≤ₛ-embed-push e y))
     (trans (sym (Var-cast-∷ (sym (≤ₛ-ctx-toCtx e)) _))

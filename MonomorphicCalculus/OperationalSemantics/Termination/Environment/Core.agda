@@ -60,7 +60,7 @@ data Env : (𝕊 : State []) → Ctx → Set where
            ------------------------------
            → Env 𝕊' Γ
 
-  -- a lock, matched by any state far enough ahead
+  -- a modality, matched by any state far enough ahead
 
   _⟨_⟩ᵉ    : ∀ {𝕊 𝕊' Γ ρ}
            → Env 𝕊 Γ → 𝕊 ⊑ₛ[ ρ ] 𝕊'

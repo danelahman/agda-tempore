@@ -7,18 +7,18 @@
 --                                                                    --
 -- Most instances use an identity grade system, with effect and       --
 -- resource grades the same monoid and `∣-∣ᵉ` the identity, so `∣_∣ᵉ` --
--- disappears: the lock a computation places on the context is its    --
--- effect grade, and the premise of `unbox` compares what a           --
+-- disappears: the modality a computation places on the context is    --
+-- its effect grade, and the premise of `unbox` compares what a       --
 -- computation did with the grade of the box. These instances differ  --
 -- only in the monoid. The last group uses a genuine grade system,    --
--- whose locks are the time `∣_∣ᵉ` measures of an effect grade.       --
+-- whose modalities are the time `∣_∣ᵉ` measures of an effect grade.  --
 --                                                                    --
 -- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
--- `∷ A` a binding. Read downwards, they give the context at any      --
--- point, and the locks between the binding of a box and its `unbox`  --
--- are the elapsed grade that the premise compares with the grade of  --
--- the box.                                                           --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
+-- modality, `∷ A` a binding. Read downwards, they give the context   --
+-- at any point, and the modalities between the binding of a box and  --
+-- its `unbox` are the elapsed grade that the premise compares with   --
+-- the grade of the box.                                              --
 --                                                                    --
 -- Each instance writes its programs out in full at its own grades,   --
 -- every side condition discharged where the rule imposes it by the   --

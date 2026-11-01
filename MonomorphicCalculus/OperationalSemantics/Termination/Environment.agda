@@ -10,10 +10,11 @@
 --                                                                    --
 -- The zones a context of the fundamental lemma has:                  --
 --                                                                    --
---   * `⌊ 𝕊 ⌋`, the state, its locks and cells closed by the store;   --
+--   * `⌊ 𝕊 ⌋`, the state, its modalities and cells closed by the     --
+--     store;                                                         --
 --   * `_∷ᵉ_`/`_⟨_⟩ᵉ`, the binder telescope, each variable            --
---     instantiated by a value, each lock matched by a graded reach   --
---     into a state far enough ahead.                                 --
+--     instantiated by a value, each modality matched by a graded     --
+--     reach into a state far enough ahead.                           --
 ------------------------------------------------------------------------
 
 open import Language.Spec

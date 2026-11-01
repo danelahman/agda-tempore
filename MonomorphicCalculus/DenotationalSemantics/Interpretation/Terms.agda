@@ -183,7 +183,7 @@ handle-foldᵗ-⟨⟩ h n g m =
                                        ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)) ⟩ᵐ-cong)
 
 -- The fold commutes with relaxing the handled grade, the return clause
--- reaching its context through the relaxed lock.
+-- reaching its context through the relaxed modality.
 
 handle-foldᵗ-≤ : ∀ {X A B ε₀ ε₁ ε'} → (h : Handlerᵀ (⟨ ⊤ᵣ ⟩ᵒ X) B)
                → (n : ⟨ ∣ ε₁ ∣ᵉ ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε') → (q : ε₀ ≾ₑ ε₁)
@@ -199,7 +199,7 @@ handle-foldᵗ-≤ {X} h n q =
   where
     m = map-monotoneᵉ q
     fst-eq = ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _ ∙ ∘ᵐ-identityˡ _)
-    -- the box relaxation `strᵀ-≤` leaves is the lock relaxation under `η⊣`
+    -- the box relaxation `strᵀ-≤` leaves is the modality relaxation under `η⊣`
     unit-eq : mapˣᵐ ([]-≤ m) idᵐ ∘ᵐ mapˣᵐ η⊣ (idᵐ {Tᵒ _ _})
             ≈ᵐ mapˣᵐ ([ _ ]ᶠ (⟨⟩-≤ m)) idᵐ ∘ᵐ mapˣᵐ η⊣ idᵐ
     unit-eq = mapˣᵐ-∘ _ _ _ _
@@ -267,14 +267,14 @@ handle-foldᵗ-nat {X} {Y} g h h' eh n n' en =
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
 -- The family a handler value denotes: at an index `ε₀ ≾ₑ ε`, the return
--- clause reaches its context through the relaxed lock `⟨⟩-≤`.
+-- clause reaches its context through the relaxed modality `⟨⟩-≤`.
 
 handler-famᵗ : ∀ {X A B ε ε'} → Handlerᵀ (⟨ ⊤ᵣ ⟩ᵒ X) B
              → ⟨ ∣ ε ∣ᵉ ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε'
              → Familyʰ X A ε B ε'
 handler-famᵗ h n p = handle-foldᵗ h (n ∘ᵐ mapˣᵐ (⟨⟩-≤ (map-monotoneᵉ p)) idᵐ)
 
--- Composing two lock relaxations under the return clause
+-- Composing two modality relaxations under the return clause
 
 relax-∘ : ∀ {X A C ρ₀ ρ₁ ρ} → (n : ⟨ ρ ⟩ᵒ X ×ᵐ A →ᵐ C)
         → (a : ρ₁ ≾ᵣ ρ) → (b : ρ₀ ≾ᵣ ρ₁) → (c : ρ₀ ≾ᵣ ρ)

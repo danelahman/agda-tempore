@@ -5,7 +5,7 @@
 -- functoriality, `subC-perform`/`-delay` the naturality and           --
 -- sub-effecting of `opᵀ`/`delayᵀ`, and `subC-seq`/`-handle` are       --
 -- `strᵀ-≤` then `T-≤-μᵀ` resp. `T-alg-of-handlerᵀ-≤`, crossing the    --
--- lock via `η⊣-≤` and the binder via `subCtx-str`.                    --
+-- modality via `η⊣-≤` and the binder via `subCtx-str`.                --
 -------------------------------------------------------------------------
 
 open import Grades.Base
@@ -357,10 +357,11 @@ sound-subC-delay {τ = τ} w rel M pM pM' =
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
 
 
--- Commutation with a bind: the coercion of the scrutinee crosses the lock and
--- the binder, and lands outside as sub-effecting of the composite.
+-- Commutation with a bind: the coercion of the scrutinee crosses the modality
+-- and the binder, and lands outside as sub-effecting of the composite.
 
--- The continuation lives under the lock the coercion relaxes; transposes across it.
+-- The continuation lives under the modality the coercion relaxes; transposes
+-- across it.
 
 coe-str : ∀ {Γ A B ε₁ ε₂ ε'}
         → (rel : ε₁ ≾ₑ ε₂)

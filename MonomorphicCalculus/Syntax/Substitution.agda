@@ -54,7 +54,7 @@ sub-split₀ (split-⟨⟩ s) W = cong-⟨⟩-sub (sub-split₀ s W)
 
 -- A prefix boundary names its own splitting too, `split-≡-++ᶜ`, whose halves
 -- are the prefix and suffix as given. `≡-split` recurses on the suffix in step
--- with `sub-split₀`, so extending the suffix by a binder, resp. a lock, is
+-- with `sub-split₀`, so extending the suffix by a binder, resp. a modality, is
 -- `cong-∷-sub`, resp. `cong-⟨⟩-sub`, again definitionally.
 
 sub-atˢ₀ : ∀ {Γ B} → (Θ : Ctx) → Γ ⊢ᵛ⦂ B
@@ -122,7 +122,7 @@ M [ W ]₀ = M [ split-[] ↦ W ]c
 _[_]₁ : ∀ {Γ A B C} → Γ ∷ A ∷ B ⊢ᶜ⦂ C → Γ ⊢ᵛ⦂ A → Γ ∷ B ⊢ᶜ⦂ C
 M [ W ]₁ = M [ split-∷ split-[] ↦ W ]c
 
--- and in a handler's clause family, which sits under the barrier lock
+-- and in a handler's clause family, which sits under the barrier modality
 -- `⟨ ⊤ᵣ ⟩` and two binders. That is an ordinary suffix, so the clause
 -- substitution is the general one at it.
 
@@ -148,7 +148,7 @@ _[_↦_]cl : ∀ {Γ Γ₁ Γ₂ A B}
 -- One unfolding of a primitive recursion's step at a predecessor: the step's
 -- view of the ambient context is included into the ambient itself (as a
 -- handler clause's is when it fires), and the predecessor is substituted
--- across the lock binding the recursive call's result
+-- across the modality binding the recursive call's result
 
 recℕ-step : ∀ {Γ B ε}
           → Γ ⊢ᵛ⦂ nat
@@ -161,7 +161,7 @@ recℕ-step V N =
 
 -- One unfolding of a list recursion's step at a head and a tail: as for
 -- `recℕ-step`, the barred view is included into the ambient context, then the
--- head and the tail are substituted across the lock binding the recursive
+-- head and the tail are substituted across the modality binding the recursive
 -- call's result, the head first.
 
 recL-step : ∀ {Γ A B ε}

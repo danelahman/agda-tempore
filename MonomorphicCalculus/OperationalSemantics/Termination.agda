@@ -318,7 +318,8 @@ fund-handler {𝕊 = 𝕊} {Γ = Γ} {A = A} {B = B} {ε₁ = ε₁} γ pγ N H 
 -- Boxing: `BOX` allocates, and the reduct lives over the new state's context, so
 -- the environment keeps the binder as the fresh cell (`liftᵉ`) rather than
 -- substituting for it. The reduct is the action at `liftᵉ V₀ γ`, and its
--- `Rel-Env` is the boxed value's reducibility at every state the lock permits.
+-- `Rel-Env` is the boxed value's reducibility at every state the modality
+-- permits.
 
 fund-box : ∀ {𝕊 Γ A D ρ ε} → (γ : Env 𝕊 Γ) → Rel-Env γ
          → (V : Γ ⟨ ρ ⟩ ⊢ᵛ⦂ A) → (M : Γ ∷ [ ρ ] A ⊢ᶜ⦂ D ! ε)
@@ -361,9 +362,9 @@ fund-box {𝕊 = 𝕊} {Γ = Γ} {A = A} {ρ = ρ} γ pγ V M pV pM =
 
 -- Performing: already a weak head normal form, so this is `cred-op` at the empty
 -- run. Its resumption premise is the induction hypothesis at the environment a
--- `resume` amounts to (the lock the operation is performed under, matched by
--- the resumption's own reach, and the arity value on top), where the action is
--- the resumption, both of `env-Cˢ`'s casts being `refl` at the empty suffix.
+-- `resume` amounts to (the modality the operation is performed under, matched
+-- by the resumption's own reach, and the arity value on top), where the action
+-- is the resumption, both of `env-Cˢ`'s casts being `refl` at the empty suffix.
 
 fund-perform : ∀ {𝕊 Γ A ε} {op : Op} → (γ : Env 𝕊 Γ) → Rel-Env γ
              → (V : Γ ⊢ᵛ⦂ ⌜ param op ⌝ᵍ)
@@ -461,8 +462,8 @@ mutual
   -- vacuous, since no value of the empty type lives over a state context.
   --
   -- Application instantiates the function's Kripke clause at the state it
-  -- already stands in, and `delay` at the reach the lock it passes gives. In
-  -- both, the renaming the clause inserts is identity-like, so the reduct is
+  -- already stands in, and `delay` at the reach the modality it passes gives.
+  -- In both, the renaming the clause inserts is identity-like, so the reduct is
   -- the action itself up to `_≡_`.
 
   fund-c : ∀ {𝕊 Γ A ε} → (γ : Env 𝕊 Γ) → Rel-Env γ

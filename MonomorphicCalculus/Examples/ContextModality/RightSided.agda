@@ -1,14 +1,15 @@
 -------------------------------------------------------------------------
--- The lock at right-sided time (upper bounds), `ρ = [0,2]`.           --
+-- The context modality at right-sided time (upper bounds),            --
+-- `ρ = [0,2]`.                                                        --
 --                                                                     --
 -- `Γ = Γ₀ ⟨ [0,1] ⟩ ∷ A ⟨ [0,1] ⟩` with `Γ₀ = [] ∷ B`, where          --
 -- `B = [ [0,0] ] unit` and `A = [ [0,1] ] unit` (both non-eternal).   --
 -- Four objects of `(Γ ↓ L_[0,2])`, by what they cut:                  --
 --                                                                     --
---   Δ₁ = Γ₀                  both locks and `A`                       --
---   Δ₂ = Γ₀ ⟨ [0,1] ⟩ ∷ A    the last lock                            --
+--   Δ₁ = Γ₀                  both modalities and `A`                  --
+--   Δ₂ = Γ₀ ⟨ [0,1] ⟩ ∷ A    the last modality                        --
 --   Δ₃ = Γ                   nothing (`⟨⟩-η-ren`, `⟨⟩-≤-ren`)         --
---   Δ₄ = Γ₀ ⟨ [0,1] ⟩        the last lock and `A`                    --
+--   Δ₄ = Γ₀ ⟨ [0,1] ⟩        the last modality and `A`                --
 --                                                                     --
 -- The zig-zag `Δ₁ → Δ₄ ← Δ₂ → Δ₃` commutes with the structure maps up --
 -- to `_≐ʳ_` (`zigzag`), and `Δ₁` and `Δ₂` have no common source, so   --
@@ -17,7 +18,7 @@
 --                                                                     --
 -- With `Γ₀ = []` (eternal) the same shape has the initial object      --
 -- `[] ∷ A` (`initial-at-eternal-Γ₀`): the obstruction needs a         --
--- non-eternal variable behind the cut lock.                           --
+-- non-eternal variable behind the cut modality.                       --
 -------------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
@@ -34,7 +35,7 @@ import Language.Operations as Ops
 
 open import Util.Equality
 
-module MonomorphicCalculus.Examples.Lock.RightSided where
+module MonomorphicCalculus.Examples.ContextModality.RightSided where
 
 G : GradeSystem
 G = identityGradeSystem right-sided-intervals
@@ -52,7 +53,7 @@ open import MonomorphicCalculus.Syntax.Contexts             spec
 open import MonomorphicCalculus.Syntax.Types                spec
 open import MonomorphicCalculus.Syntax.Renaming             spec
 open import MonomorphicCalculus.Syntax.Renaming.Equivalence spec
-open import MonomorphicCalculus.Syntax.Renaming.Lock        spec
+open import MonomorphicCalculus.Syntax.Renaming.ContextModality        spec
 
 [0,_]ⁿ : _ → R
 [0, n ]ⁿ = [0, ↑ n ]
@@ -79,7 +80,7 @@ X₃ X₄ : Comma ρ Γᶜ
 X₃ = Γᶜ ,ᵒ (⟨⟩-≤-ren z≤n ∘ʳ ⟨⟩-η-ren)
 X₄ = (Γ₀ ⟨ [0, 1 ]ⁿ ⟩) ,ᵒ (⟨⟩-≤-ren (s≤s z≤n) ∘ʳ cong-⟨⟩-ren wk-ren)
 
--- Δ₁ → Δ₄: add a lock (`[0,0] ≾ [0,1]`)
+-- Δ₁ → Δ₄: add a modality (`[0,0] ≾ [0,1]`)
 
 h₁₄ : CommaHom X₁ X₄
 h₁₄ = (⟨⟩-≤-ren z≤n ∘ʳ ⟨⟩-η-ren) ,ʰ mk≐ʳ tri'
@@ -97,7 +98,7 @@ h₂₄ = wk-ren ,ʰ mk≐ʳ tri'
   tri' (Tl-⟨⟩ (Tl-⟨⟩ Hd))         = refl
   tri' (Tl-⟨⟩ (Tl-⟨⟩ (Tl-∷ ())))
 
--- Δ₂ → Δ₃: add a lock (`[0,0] ≾ [0,1]`)
+-- Δ₂ → Δ₃: add a modality (`[0,0] ≾ [0,1]`)
 
 h₂₃ : CommaHom X₂ X₃
 h₂₃ = (⟨⟩-≤-ren z≤n ∘ʳ ⟨⟩-η-ren) ,ʰ mk≐ʳ tri'

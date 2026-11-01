@@ -1,10 +1,11 @@
 ------------------------------------------------------------------------
 -- Is the unit the greatest grade (`⊤ ≾ 𝟏`)?                          --
 --                                                                    --
--- The lock is a parametric right adjoint at every grade exactly when --
--- `⊤ ≾ 𝟏` (`PRA-everywhere` in `Renaming/Lock/LowerBounds`, and      --
--- `PRA-⊤⇒⊤≾𝟏` in `Renaming/Lock`); otherwise `L_⊤` is not one. Each  --
--- line below runs the grade's own decision procedure `⊤ ≾? 𝟏`.       --
+-- The context modality is a parametric right adjoint at every grade  --
+-- exactly when `⊤ ≾ 𝟏` (`PRA-everywhere` in                          --
+-- `Renaming/ContextModality/LowerBounds`, and `PRA-⊤⇒⊤≾𝟏` in         --
+-- `Renaming/ContextModality`); otherwise `L_⊤` is not one. Each line --
+-- below runs the grade's own decision procedure `⊤ ≾? 𝟏`.            --
 ------------------------------------------------------------------------
 
 open import Data.Bool.Base using (Bool; true; false)
@@ -16,7 +17,7 @@ open import Grades.Durations.Nat using (ℕᴰ)
 
 open import Util.Equality
 
-module MonomorphicCalculus.Examples.Lock.Survey where
+module MonomorphicCalculus.Examples.ContextModality.Survey where
 
 ⊤≾𝟏? : {D : Duration} → Grade D → Bool
 ⊤≾𝟏? G = does (Grade._≾?_ G (Grade.⊤ G) (Grade.𝟏 G))

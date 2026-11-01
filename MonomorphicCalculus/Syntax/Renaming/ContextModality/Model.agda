@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 -- A Kripke model of contexts over the grades, preserved by every    --
--- renaming.                                                         --
+-- renaming, used in showing when the ctx. modality is not a PRA.    --
 --                                                                   --
 -- Worlds are the grades satisfying `W`, and `w' ⊑[ σ ] w` when      --
 -- `w ≃ w' · τ` for some `τ ≾ σ`: the exact form of the action frame --
@@ -8,9 +8,9 @@
 -- to everything below `w' · σ`. Types are predicates on worlds,     --
 -- closed along steps within the unit. A box type `[ σ ] A` holds at --
 -- the worlds `σ · τ` with `τ ≾ 𝟏` (`AtUnit`), every other type      --
--- holds everywhere, so eternal types are constant. The lock is      --
--- possibility: `Γ ⟨ ρ ⟩` holds at `w` when `Γ` holds at some world  --
--- `w' ⊑[ ρ ] w`.                                                    --
+-- holds everywhere, so eternal types are constant. The context      --
+-- modality is possibility: `Γ ⟨ ρ ⟩` holds at `w` when `Γ` holds at --
+-- some world `w' ⊑[ ρ ] w`.                                         --
 --                                                                   --
 -- Every renaming maps a point of its source to a point of its       --
 -- target at the same world (`sound`), so a world where the source   --
@@ -25,7 +25,7 @@ open import Relation.Nullary using (yes; no)
 open import Grades.Base
 open import Language.Spec
 
-module MonomorphicCalculus.Syntax.Renaming.Lock.Model (S : LanguageSpec) where
+module MonomorphicCalculus.Syntax.Renaming.ContextModality.Model (S : LanguageSpec) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -56,7 +56,7 @@ module KripkeModel (W : R → Set) where
   ⊑-mono : ∀ {w' w σ σ'} → σ ≾ᵣ σ' → w' ⊑[ σ ] w → w' ⊑[ σ' ] w
   ⊑-mono q (step τ p e) = step τ (≾ᵣ-trans p q) e
 
-  -- a step within the unit stays within a lock's reach
+  -- a step within the unit stays within a modality's reach
 
   ⊑-unit : ∀ {w'' w' w ρ σ} → w'' ⊑[ ρ ] w' → w' ⊑[ σ ] w → σ ≾ᵣ 𝟏ᵣ
          → w'' ⊑[ ρ ] w

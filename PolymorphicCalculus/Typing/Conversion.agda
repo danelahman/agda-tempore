@@ -84,7 +84,7 @@ module _ (𝒞 : Conversion) where
     base  : ∀ {Γ : OCtx Θ 0} → CtxRel Q Γ Γ
     _∷ʳ_  : ∀ {n} {Γ' Γ : OCtx Θ n} {A' A}
           → CtxRel Q Γ' Γ → Rel Q A' A → CtxRel Q (Γ' ∷ A') (Γ ∷ A)
-    lockʳ : ∀ {n} {Γ' Γ : OCtx Θ n} {ρ}
+    ⟨⟩ʳ   : ∀ {n} {Γ' Γ : OCtx Θ n} {ρ}
           → CtxRel Q Γ' Γ → CtxRel Q (Γ' ⟨ ρ ⟩) (Γ ⟨ ρ ⟩)
 
   infixl 31 _∷ʳ_
@@ -93,7 +93,7 @@ module _ (𝒞 : Conversion) where
   crel-refl []        = base
   crel-refl (Δ ▶ s)   = base
   crel-refl (Γ ∷ A)   = crel-refl Γ ∷ʳ rel-refl A
-  crel-refl (Γ ⟨ ρ ⟩) = lockʳ (crel-refl Γ)
+  crel-refl (Γ ⟨ ρ ⟩) = ⟨⟩ʳ (crel-refl Γ)
 
   private
 
@@ -106,13 +106,13 @@ module _ (𝒞 : Conversion) where
     crel-defs : ∀ {Θ n} {Q : Hyps Θ} {Γ' Γ : OCtx Θ n} → CtxRel Q Γ' Γ → defs Γ' ≡ defs Γ
     crel-defs base      = refl
     crel-defs (c ∷ʳ _)  = crel-defs c
-    crel-defs (lockʳ c) = crel-defs c
+    crel-defs (⟨⟩ʳ c)   = crel-defs c
 
     crel-wkᵉ : ∀ {Θ n} {Q : Hyps Θ} {Γ' Γ : OCtx Θ n}
              → CtxRel Q Γ' Γ → CtxRel (wkᵉ-H Q) (wkᵉ-ctx Γ') (wkᵉ-ctx Γ)
     crel-wkᵉ base      = base
     crel-wkᵉ (c ∷ʳ r)  = crel-wkᵉ c ∷ʳ rel-wkᵉ r
-    crel-wkᵉ (lockʳ c) = lockʳ (crel-wkᵉ c)
+    crel-wkᵉ (⟨⟩ʳ c)   = ⟨⟩ʳ (crel-wkᵉ c)
 
     no-var : ∀ {Θ} {Γ : OCtx Θ 0} {A ρ} {P : Set} → A ∈̂[ ρ ] Γ → P
     no-var x with var-pos x
@@ -137,7 +137,7 @@ module _ (𝒞 : Conversion) where
   image (c ∷ʳ r)  (Tl-∷ x)  =
     record { ty' = ty' i ; mem' = Tl-∷ (mem' i) ; rel' = rel' i ; pos' = cong suc (pos' i) }
     where i = image c x
-  image (lockʳ c) (Tl-⟨⟩ x) =
+  image (⟨⟩ʳ c) (Tl-⟨⟩ x) =
     record { ty' = ty' i ; mem' = Tl-⟨⟩ (mem' i) ; rel' = rel' i ; pos' = pos' i }
     where i = image c x
 
@@ -215,15 +215,15 @@ module _ (𝒞 : Conversion) where
     conv-v c (cmp ⋈ V W et)  = cmp ⋈ (conv-v c V) (conv-v c W) et
     conv-v c (fun {A = A} M) = fun (conv-c (c ∷≡ A) M)
     conv-v c (handler {A = A} N H) =
-      handler (conv-c (lockʳ c ∷≡ A) N)
-              (λ op → conv-c (lockʳ (crel-wkᵉ c) ∷≡ _ ∷≡ _) (H op))
+      handler (conv-c (⟨⟩ʳ c ∷≡ A) N)
+              (λ op → conv-c (⟨⟩ʳ (crel-wkᵉ c) ∷≡ _ ∷≡ _) (H op))
     conv-v c (annᵛ A V)      = annᵛ A (conv-v c V)
     conv-v c (subV V p)      = subV (conv-v c V) p
 
     conv-c : ∀ {Θ n} {Q : Hyps Θ} {Γ' Γ : OCtx Θ n} {C : OCType Θ}
            → CtxRel Q Γ' Γ → Q ∣ Γ ⊢ᶜ⦂ C → Q ∣ Γ' ⊢ᶜ⦂ C
     conv-c c (return V)                  = return (conv-v c V)
-    conv-c c (_⨟_ {A = A} M N)           = conv-c c M ⨟ conv-c (lockʳ c ∷≡ A) N
+    conv-c c (_⨟_ {A = A} M N)           = conv-c c M ⨟ conv-c (⟨⟩ʳ c ∷≡ A) N
     conv-c c (V · W)                     = conv-v c V · conv-v c W
     conv-c c (match_`with_ {A = A} {B} V M) = match conv-v c V `with conv-c (c ∷≡ A ∷≡ B) M
     conv-c c (absurd V)                  = absurd (conv-v c V)
@@ -235,12 +235,12 @@ module _ (𝒞 : Conversion) where
     conv-c c (matchL_`nil_`cons_ {A = A} V M N) =
       matchL conv-v c V `nil conv-c c M `cons conv-c (c ∷≡ A ∷≡ list A) N
     conv-c c (recℕ {B = B} V M N p)    =
-      recℕ (conv-v c V) (conv-c c M) (conv-c (lockʳ (lockʳ c ∷≡ nat) ∷≡ B) N) p
+      recℕ (conv-v c V) (conv-c c M) (conv-c (⟨⟩ʳ (⟨⟩ʳ c ∷≡ nat) ∷≡ B) N) p
     conv-c c (recL {A = A} {B} V M N p) =
       recL (conv-v c V) (conv-c c M)
-           (conv-c (lockʳ (lockʳ c ∷≡ A ∷≡ list A) ∷≡ B) N) p
-    conv-c c (perform op V M)          = perform op (conv-v c V) (conv-c (lockʳ c ∷≡ _) M)
-    conv-c c (delay τ M)               = delay τ (conv-c (lockʳ c) M)
+           (conv-c (⟨⟩ʳ (⟨⟩ʳ c ∷≡ A ∷≡ list A) ∷≡ B) N) p
+    conv-c c (perform op V M)          = perform op (conv-v c V) (conv-c (⟨⟩ʳ c ∷≡ _) M)
+    conv-c c (delay τ M)               = delay τ (conv-c (⟨⟩ʳ c) M)
     conv-c c (handle M `with V)        = handle conv-c c M `with conv-v c V
     conv-c c (unbox R p N)             =
       unbox (chain* r) (transᵣ p (<:̂ᵛ-box-grade (rel-sub (rel* r))))
@@ -248,7 +248,7 @@ module _ (𝒞 : Conversion) where
       where
         b = box-image c (res-var-of R)
         r = res-image R (z' b) (zpos b) (zrel b)
-    conv-c c (box {A = A} ρ V N)       = box ρ (conv-v (lockʳ c) V) (conv-c (c ∷≡ [ ρ ] A) N)
+    conv-c c (box {A = A} ρ V N)       = box ρ (conv-v (⟨⟩ʳ c) V) (conv-c (c ∷≡ [ ρ ] A) N)
     conv-c c (annᶜ C M)                = annᶜ C (conv-c c M)
     conv-c c (subC M p)                = subC (conv-c c M) p
 
@@ -275,8 +275,8 @@ module _ (𝒞 : Conversion) where
     ⌊conv-v⌋ c (cmp ⋈ V W et)  = cong₂ (cmp ⋈) (⌊conv-v⌋ c V) (⌊conv-v⌋ c W)
     ⌊conv-v⌋ c (fun {A = A} M) = cong fun (⌊conv-c⌋ (c ∷≡ A) M)
     ⌊conv-v⌋ c (handler {A = A} N H) =
-      cong₂ handler (⌊conv-c⌋ (lockʳ c ∷≡ A) N)
-            (fun-ext (λ op → ⌊conv-c⌋ (lockʳ (crel-wkᵉ c) ∷≡ _ ∷≡ _) (H op)))
+      cong₂ handler (⌊conv-c⌋ (⟨⟩ʳ c ∷≡ A) N)
+            (fun-ext (λ op → ⌊conv-c⌋ (⟨⟩ʳ (crel-wkᵉ c) ∷≡ _ ∷≡ _) (H op)))
     ⌊conv-v⌋ c (annᵛ A V)      = cong (_⦂ᵛ A) (⌊conv-v⌋ c V)
     ⌊conv-v⌋ c (subV V p)      = ⌊conv-v⌋ c V
 
@@ -285,7 +285,7 @@ module _ (𝒞 : Conversion) where
              → ⌊ conv-c c M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
     ⌊conv-c⌋ c (return V)                  = cong return (⌊conv-v⌋ c V)
     ⌊conv-c⌋ c (_⨟_ {A = A} M N)           =
-      cong₂ _⨟_ (⌊conv-c⌋ c M) (⌊conv-c⌋ (lockʳ c ∷≡ A) N)
+      cong₂ _⨟_ (⌊conv-c⌋ c M) (⌊conv-c⌋ (⟨⟩ʳ c ∷≡ A) N)
     ⌊conv-c⌋ c (V · W)                     = cong₂ _·_ (⌊conv-v⌋ c V) (⌊conv-v⌋ c W)
     ⌊conv-c⌋ c (match_`with_ {A = A} {B} V M) =
       cong₂ match_`with_ (⌊conv-v⌋ c V) (⌊conv-c⌋ (c ∷≡ A ∷≡ B) M)
@@ -300,13 +300,13 @@ module _ (𝒞 : Conversion) where
       cong₃ matchL_`nil_`cons_ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M)
             (⌊conv-c⌋ (c ∷≡ A ∷≡ list A) N)
     ⌊conv-c⌋ c (recℕ {B = B} V M N p)    =
-      cong₃ recℕ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M) (⌊conv-c⌋ (lockʳ (lockʳ c ∷≡ nat) ∷≡ B) N)
+      cong₃ recℕ (⌊conv-v⌋ c V) (⌊conv-c⌋ c M) (⌊conv-c⌋ (⟨⟩ʳ (⟨⟩ʳ c ∷≡ nat) ∷≡ B) N)
     ⌊conv-c⌋ c (recL {A = A} {B} V M N p) =
       cong₃ recL (⌊conv-v⌋ c V) (⌊conv-c⌋ c M)
-            (⌊conv-c⌋ (lockʳ (lockʳ c ∷≡ A ∷≡ list A) ∷≡ B) N)
+            (⌊conv-c⌋ (⟨⟩ʳ (⟨⟩ʳ c ∷≡ A ∷≡ list A) ∷≡ B) N)
     ⌊conv-c⌋ c (perform op V M)          =
-      cong₂ (perform op) (⌊conv-v⌋ c V) (⌊conv-c⌋ (lockʳ c ∷≡ _) M)
-    ⌊conv-c⌋ c (delay τ M)               = cong (delay τ) (⌊conv-c⌋ (lockʳ c) M)
+      cong₂ (perform op) (⌊conv-v⌋ c V) (⌊conv-c⌋ (⟨⟩ʳ c ∷≡ _) M)
+    ⌊conv-c⌋ c (delay τ M)               = cong (delay τ) (⌊conv-c⌋ (⟨⟩ʳ c) M)
     ⌊conv-c⌋ c (handle M `with V)        =
       cong₂ handle_`with_ (⌊conv-c⌋ c M) (⌊conv-v⌋ c V)
     ⌊conv-c⌋ c (unbox R p N)             =
@@ -315,7 +315,7 @@ module _ (𝒞 : Conversion) where
         b = box-image c (res-var-of R)
         r = res-image R (z' b) (zpos b) (zrel b)
     ⌊conv-c⌋ c (box {A = A} ρ V N)       =
-      cong₂ (box ρ) (⌊conv-v⌋ (lockʳ c) V) (⌊conv-c⌋ (c ∷≡ [ ρ ] A) N)
+      cong₂ (box ρ) (⌊conv-v⌋ (⟨⟩ʳ c) V) (⌊conv-c⌋ (c ∷≡ [ ρ ] A) N)
     ⌊conv-c⌋ c (annᶜ C M)                = cong (_⦂ᶜ C) (⌊conv-c⌋ c M)
     ⌊conv-c⌋ c (subC M p)                = ⌊conv-c⌋ c M
 

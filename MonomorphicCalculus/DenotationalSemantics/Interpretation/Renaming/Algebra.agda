@@ -54,8 +54,8 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.Variables S
 
 -- An eternal context interprets to a graded `⟨_⟩`-algebra: `𝟙ᵐ` and `×ᵐ` are
 -- eternal objects, and the entries are eternal by assumption. This is what a
--- lock-introducing renaming needs of the context standing to its left, and why
--- `⟨⟩-ext-ctx` alone constrains it.
+-- modality-introducing renaming needs of the context standing to its left, and
+-- why `⟨⟩-ext-ctx` alone constrains it.
 
 ec-Eternalᵒ : ∀ {Γ} → EternalCtx Γ → Eternalᵒ ⟦ Γ ⟧ᶜᵗˣ
 ec-Eternalᵒ ec-[]          = 𝟙-eternalᵒ
@@ -96,14 +96,14 @@ prod-ext pf ps =
   ≈ᵐ-trans (⟨⟩ᵐ-unique _ _ _ ≈ᵐ-refl ≈ᵐ-refl)
            (≈ᵐ-sym (⟨⟩ᵐ-unique _ _ _ (≈ᵐ-sym pf) (≈ᵐ-sym ps)))
 
--- Crossing a unit-equivalent lock: the morphism of a variable under the lock is
--- the one below it, precomposed with the lock's counit.
+-- Crossing a unit-equivalent modality: the morphism of a variable under the
+-- modality is the one below it, precomposed with the modality's counit.
 
-ec-var-lock : ∀ {Γ A ρ' ρ₀} → (p : ρ₀ ≾ᵣ 𝟏ᵣ) → (et : Et A)
-            → (y : A ∈[ ρ' ] Γ)
-            → eternalᵛ-extᵉ et ∘ᵐ var-proj (Tl-⟨⟩ {ρ = ρ₀} y)
-            ≈ᵐ (eternalᵛ-extᵉ et ∘ᵐ var-proj y) ∘ᵐ ⟨𝟏≈⟩-counit p
-ec-var-lock p et y =
+ec-var-⟨⟩ : ∀ {Γ A ρ' ρ₀} → (p : ρ₀ ≾ᵣ 𝟏ᵣ) → (et : Et A)
+          → (y : A ∈[ ρ' ] Γ)
+          → eternalᵛ-extᵉ et ∘ᵐ var-proj (Tl-⟨⟩ {ρ = ρ₀} y)
+          ≈ᵐ (eternalᵛ-extᵉ et ∘ᵐ var-proj y) ∘ᵐ ⟨𝟏≈⟩-counit p
+ec-var-⟨⟩ p et y =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-μ et))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
@@ -142,14 +142,14 @@ ec-var-alg (ec-∷ ec et') et (Tl-∷ y) =
             (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))))))))
 
 ec-var-alg (ec-⟨⟩ q p ec) et (Tl-⟨⟩ y) =
-  ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (ec-var-lock p et y)))
+  ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (ec-var-⟨⟩ p et y)))
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (ec-var-alg ec et y))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
             (≈ᵐ-sym
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨𝟏≈⟩-eternalᵒ-extᵉ q p (ec-Eternalᵒ ec)))
-      (≈ᵐ-trans (∘ᵐ-congˡ (ec-var-lock p et y))
+      (≈ᵐ-trans (∘ᵐ-congˡ (ec-var-⟨⟩ p et y))
       (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
       (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
       (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨𝟏≈⟩-counit-unit q p)))

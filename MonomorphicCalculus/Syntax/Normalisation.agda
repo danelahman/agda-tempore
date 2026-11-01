@@ -11,9 +11,9 @@
 -- `NfV`/`NfC` pin those positions and `C-normal-form` is the theorem. --
 --                                                                     --
 -- The tool is context subsumption along `_≼ᶜ_`, which lowers binder   --
--- types and lock grades at once. It is a statement about derivations: --
--- nothing in the substitution calculus may call it, since it rebuilds --
--- every variable.                                                     --
+-- types and modality grades at once. It is a statement about          --
+-- derivations: nothing in the substitution calculus may call it,      --
+-- since it rebuilds every variable.                                   --
 -------------------------------------------------------------------------
 
 open import Data.Product
@@ -46,7 +46,7 @@ open import MonomorphicCalculus.Syntax.Types    S
 ·ₑ-mono p q = ≾ₑ-trans (·ₑ-monoˡ-≾ₑ p) (·ₑ-monoʳ-≾ₑ q)
 
 
--- Context subsumption: pointwise on binder types and lock grades.
+-- Context subsumption: pointwise on binder types and modality grades.
 
 infix 4 _≼ᶜ_
 

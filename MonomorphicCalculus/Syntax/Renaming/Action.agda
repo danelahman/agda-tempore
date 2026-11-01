@@ -86,7 +86,7 @@ rvar-rename r x =
   , proj₁ (proj₂ (var-rename r x)) (λ ())
 
 -- The value-taking reading of `unbox`, as a derived rule. The value is taken not
--- in `Γ` but in a `Δ` that `Γ` reaches through one lock of the box's own
+-- in `Γ` but in a `Δ` that `Γ` reaches through one modality of the box's own
 -- grade: a Fitch-style witness, and the source of the elapsed grade.
 
 unbox⇒var : ∀ {Γ Δ A ρ}
@@ -118,7 +118,7 @@ unbox-val r V M with unbox⇒var r V
 -- Action of renamings on well-typed values and computations
 --
 -- At the empty ambient throughout, and so transport-free: a handler clause's
--- context is the renamed one under one more lock and two more binders.
+-- context is the renamed one under one more modality and two more binders.
 
 mutual
 

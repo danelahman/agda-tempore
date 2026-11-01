@@ -2,10 +2,10 @@
 -- The grade system in which effects and resources are graded alike.  --
 --                                                                    --
 -- Both components are the same ordered monoid and the projection is  --
--- the identity, so `∣_∣ᵉ` disappears from the typing rules: the lock --
--- a computation places on the context is its effect grade, and the   --
--- premise of `unbox` compares what a computation did directly with   --
--- the grade of the box.                                              --
+-- the identity, so `∣_∣ᵉ` disappears from the typing rules: the      --
+-- modality a computation places on the context is its effect grade,  --
+-- and the premise of `unbox` compares what a computation did         --
+-- directly with the grade of the box.                                --
 ------------------------------------------------------------------------
 
 module Grades.Examples.System.Identity where

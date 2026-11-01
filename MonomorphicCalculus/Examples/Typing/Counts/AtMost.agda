@@ -4,7 +4,7 @@
 -- Effect grades and resource grades are both `⟪ r , w , s ⟫ᵐ`, "at   --
 -- most `r` reads, `w` writes and `s` sends", and each operation is   --
 -- graded by one draw on its own counter. Idling draws on none:       --
--- `delay` locks the context by the unit.                             --
+-- `delay` adds a modality at the unit.                               --
 --                                                                    --
 -- As an effect grade, a quota is a rate limit that a computation     --
 -- keeps, and `coerce` may raise it. As a resource grade it bounds    --
@@ -26,8 +26,8 @@
 -- overflows.                                                         --
 --                                                                    --
 -- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
--- `∷ A` a binding.                                                   --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
+-- modality, `∷ A` a binding.                                         --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Counts.AtMost where

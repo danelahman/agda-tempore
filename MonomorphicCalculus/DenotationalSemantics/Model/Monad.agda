@@ -39,7 +39,8 @@ open import Data.Product using (_,_; proj₁; proj₂; Σ; Σ-syntax)
 open import Util.Equality
 
 -- The eternal parameter threaded through effect handling is an `Eternalᵒ`
--- object; its box-coalgebra part (`necᵉ` and its laws) is what crosses locks.
+-- object; its box-coalgebra part (`necᵉ` and its laws) is what crosses
+-- modalities.
 open import MonomorphicCalculus.DenotationalSemantics.Model.Modality.Eternal
   Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut Pst Adj
 

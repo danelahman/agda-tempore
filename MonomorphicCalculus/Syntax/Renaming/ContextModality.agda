@@ -1,10 +1,11 @@
 --------------------------------------------------------------------------
--- The lock as a functor on renamings, and its adjoints.                --
+-- The context modality as a functor on renamings, and its adjoints.    --
 --                                                                      --
 -- Contexts and renamings `Ren [] Γ Δ` up to `_≐ʳ_` form a category     --
--- (`Renaming/Category`), on which the lock `L_ρ = _⟨ ρ ⟩` acts by      --
--- `cong-⟨⟩-ren`. The comma category `(Γ ↓ L_ρ)` has objects `(Δ , f)`  --
--- with `f : Ren [] Γ (Δ ⟨ ρ ⟩)` (`Comma ρ Γ`), and morphisms           --
+-- (`Renaming/Category`), on which the context modality `L_ρ = _⟨ ρ ⟩`, --
+-- the lock of Fitch-style calculi, acts by `cong-⟨⟩-ren`. The comma    --
+-- category `(Γ ↓ L_ρ)` has objects `(Δ , f)` with                      --
+-- `f : Ren [] Γ (Δ ⟨ ρ ⟩)` (`Comma ρ Γ`), and morphisms                --
 -- `g : Ren [] Δ Δ'` with `L_ρ g ∘ f ≐ʳ f'` (`CommaHom`).               --
 --                                                                      --
 -- Left adjoint. A functor `L` has a left adjoint iff every `(Γ ↓ L)`   --
@@ -33,7 +34,8 @@
 -- to `(1 , L ! ∘ f)`. So `L` is a parametric right adjoint iff every   --
 -- connected component of every `(Γ ↓ L)` has an initial object         --
 -- (`PRA`).                                                             --
--- `Lock/Adjunction` proves both equivalent to their hom-set forms.     --
+-- `ContextModality/Adjunction` proves both equivalent to their hom-set --
+-- forms.                                                               --
 --                                                                      --
 -- Here `[] ⟨ ρ ⟩` has no variables, so there is at most one renaming   --
 -- `Γ → [] ⟨ ρ ⟩` (`into-[]⟨⟩-≐ʳ`), and `(Γ ↓ L_ρ)` has at most one     --
@@ -52,7 +54,7 @@
 --      `σ' ≾ ρ` and `σ · σ' ≾ ρ`, then `σ ≾ 𝟏`;                        --
 --   `PRA⇒unit-maximal`: if `L_ρ` is one and `𝟏 ≾ ρ`, then `ρ ≾ 𝟏`;     --
 --   `PRA-⊤⇒⊤≾𝟏`: if `L_⊤` is one, the unit is the greatest grade.      --
--- The negative results use a Kripke model (`Lock/Model`).              --
+-- The negative results use a Kripke model (`ContextModality/Model`).   --
 --------------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
@@ -66,7 +68,7 @@ open import Language.Spec
 
 open import Util.Equality
 
-module MonomorphicCalculus.Syntax.Renaming.Lock (S : LanguageSpec) where
+module MonomorphicCalculus.Syntax.Renaming.ContextModality (S : LanguageSpec) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -75,7 +77,7 @@ open import MonomorphicCalculus.Syntax.Contexts             S
 open import MonomorphicCalculus.Syntax.Types                S
 open import MonomorphicCalculus.Syntax.Renaming             S
 open import MonomorphicCalculus.Syntax.Renaming.Equivalence S
-open import MonomorphicCalculus.Syntax.Renaming.Lock.Model  S
+open import MonomorphicCalculus.Syntax.Renaming.ContextModality.Model  S
 
 ------------------------------------------------------------------------
 -- The comma category (Γ ↓ L_ρ)
@@ -157,7 +159,8 @@ connected X Y =
   fwd (proj₁ (proj₂ (terminal X) X)) (bwd (proj₁ (proj₂ (terminal X) Y)) here)
 
 ------------------------------------------------------------------------
--- At a unit-equivalent grade the lock has a left adjoint, the identity
+-- At a unit-equivalent grade the context modality has a left adjoint, the
+-- identity
 
 unit-comma : ∀ {ρ} → 𝟏ᵣ ≾ᵣ ρ → (Γ : Ctx) → Comma ρ Γ
 unit-comma q Γ = Γ ,ᵒ (⟨⟩-≤-ren q ∘ʳ ⟨⟩-η-ren)
@@ -197,9 +200,9 @@ no-object-at-[] {ρ} n X = go (sound {w = 𝟏ᵣ} ≾ᵣ-refl (str X) tt)
 -- Two objects with no common source
 --
 -- `Γᶜ = [] ∷ B ⟨ σ ⟩ ∷ A ⟨ σ' ⟩`, with `B = [ 𝟏 ] unit` and
--- `A = [ σ ] unit`. `X₁` cuts both locks and `A` (`σ · σ' ≾ ρ`), `X₂`
--- the last lock (`σ' ≾ ρ`). A source of both holds `B` within the unit
--- and `A` behind the `σ`-lock at one world, which `σ ⋦ 𝟏` rules out.
+-- `A = [ σ ] unit`. `X₁` cuts both modalities and `A` (`σ · σ' ≾ ρ`), `X₂`
+-- the last modality (`σ' ≾ ρ`). A source of both holds `B` within the unit
+-- and `A` behind the modality `⟨ σ ⟩` at one world, which `σ ⋦ 𝟏` rules out.
 
 module Counterexample {σ σ' ρ : R}
   (σ≰𝟏 : ¬ (σ ≾ᵣ 𝟏ᵣ)) (σ'≾ρ : σ' ≾ᵣ ρ) (σσ'≾ρ : σ ·ᵣ σ' ≾ᵣ ρ) where
@@ -279,8 +282,8 @@ PRA⇒no-factor {ρ} {σ} pra q q' with σ ≾ᵣ? 𝟏ᵣ
 PRA⇒unit-maximal : ∀ {ρ} → PRA ρ → 𝟏ᵣ ≾ᵣ ρ → ρ ≾ᵣ 𝟏ᵣ
 PRA⇒unit-maximal {ρ} pra q = PRA⇒no-factor {σ = ρ} {σ' = 𝟏ᵣ} pra q (≃ᵣ⇒≾ᵣ (·ᵣ-identityʳ ρ))
 
--- so the lock is a parametric right adjoint at every grade only if the
--- unit is the greatest grade
+-- so the context modality is a parametric right adjoint at every grade only
+-- if the unit is the greatest grade
 
 PRA-⊤⇒⊤≾𝟏 : PRA ⊤ᵣ → ⊤ᵣ ≾ᵣ 𝟏ᵣ
 PRA-⊤⇒⊤≾𝟏 pra = PRA⇒unit-maximal pra (≾-⊤ᵣ 𝟏ᵣ)

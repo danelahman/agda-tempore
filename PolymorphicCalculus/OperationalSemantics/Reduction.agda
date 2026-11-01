@@ -166,7 +166,7 @@ data Step {n} 𝕊 where
   -- passage of time
 
   DELAY      : ∀ {τ M}
-             → ⟨ 𝕊 ∣ delay τ M ⟩⟶[ ≤ₛ-lock ≤ₛ-refl ]⟨ 𝕊 ⟨ ιᵣ τ ⟩ₛ ∣ M ⟩
+             → ⟨ 𝕊 ∣ delay τ M ⟩⟶[ ≤ₛ-⟨⟩ ≤ₛ-refl ]⟨ 𝕊 ⟨ ιᵣ τ ⟩ₛ ∣ M ⟩
 
   -- effect handling
 

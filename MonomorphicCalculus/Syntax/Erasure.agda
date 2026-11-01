@@ -5,8 +5,8 @@
 -- condition and subsumption witness dropped; a box keeps its    --
 -- grade and a delay its duration, both being part of the        --
 -- program. Variables become de Bruijn positions, counting       --
--- binders and skipping locks. Two derivations have the same     --
--- erasure exactly when they are the same program typed          --
+-- binders and skipping modalities. Two derivations have the     --
+-- same erasure exactly when they are the same program typed     --
 -- differently.                                                  --
 --                                                               --
 -- A handler's clause family is indexed by the operation and the --
@@ -70,7 +70,7 @@ mutual
     unbox              : ℕ → ErC → ErC
     box                : R → ErV → ErC → ErC
 
--- De Bruijn position of a variable: locks contribute nothing.
+-- De Bruijn position of a variable: modalities contribute nothing.
 
 var-pos : ∀ {Γ A ρ} → A ∈[ ρ ] Γ → ℕ
 var-pos Hd        = zero

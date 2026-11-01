@@ -197,7 +197,7 @@ sub-var-natˢ (cong-∷-sub s) p (Tl-∷ y) f =
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
             (∘ᵐ-congˡ (≈ᵐ-sym (var-morphism-Tl-∷ y f)))))))
 
--- crossing a lock
+-- crossing a modality
 sub-var-natˢ {A = B} (cong-⟨⟩-sub s) p (Tl-⟨⟩ y) f with eternal? B
 ... | yes et =
   ≈ᵐ-trans (eternal-val-ext-nat et (sub-var₀ s y _) (sub-varᴾ s p y _))
@@ -371,8 +371,8 @@ mutual
   subᵛˢ s p (inr V)     pV        = subᵛˢ s p V pV
   subᵛˢ s p (cmp ⋈ V W et) (pV , pW) = subᵛˢ s p V pV , subᵛˢ s p W pW
   subᵛˢ s p (fun M)     pM        = subᶜˢ (cong-∷-sub s) p M pM
-  -- the clauses are substituted into under the barrier lock, which acts on the
-  -- ambient context only, so the clauses' uniformity transports
+  -- the clauses are substituted into under the barrier modality, which acts on
+  -- the ambient context only, so the clauses' uniformity transports
   subᵛˢ s p (handler N H) (pN , pH , uH) =
       subᶜˢ (cong-∷-sub (cong-⟨⟩-sub s)) p N pN
     , (λ op ε'' → subᶜˢ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s)))

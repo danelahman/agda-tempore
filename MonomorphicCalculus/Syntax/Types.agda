@@ -153,7 +153,7 @@ Et∨≾ᵘ-≾ {A} q (≾ᵘ-ok p) with eternal? A
 ... | yes et = et-ok et
 ... | no ¬et = ≾ᵘ-ok (≾ᵣ-trans (q ¬et) p)
 
--- Leaving a lock: the grade before it is the left factor.
+-- Leaving a modality: the grade before it is the left factor.
 
 Et∨≾ᵘ-zero-productˡ : ∀ {A ρ ρ'} → A Et∨≾ᵘ (ρ ·ᵣ ρ') → A Et∨≾ᵘ ρ
 Et∨≾ᵘ-zero-productˡ (et-ok et) = et-ok et

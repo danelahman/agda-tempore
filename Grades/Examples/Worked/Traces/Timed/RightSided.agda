@@ -198,7 +198,7 @@ no-tightening = fails
 -- As a resource grade: a permit that expires
 --
 -- `unbox`'s premise `ρ' ≾ᵣ ρ` weighs what elapsed (the product of
--- the locks standing to the variable's right) against the grade on
+-- the modalities standing to the variable's right) against the grade on
 -- the box, both read as upper bounds: what elapsed is still within what
 -- the box allows. Overspending closes the box.
 

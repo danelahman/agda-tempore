@@ -334,8 +334,9 @@ env-Vˢ-var-l (_∷ᵉ_ {𝕊 = 𝕊} {Γ = Γ} {A = A₀} γ W) Δ ¬et p Hd f 
               f f
 
 -- The two one-entry instances. `env-var-tl` substitutes `Hd` into a weakening,
--- which cancels (`sub-wk-V []`); `env-var-lock` composes the lock crossing with
--- the reach, which `unbox-ren-unit` recognises as the unit reach's renaming.
+-- which cancels (`sub-wk-V []`); `env-var-⟨⟩` composes the modality crossing
+-- with the reach, which `unbox-ren-unit` recognises as the unit reach's
+-- renaming.
 
 env-var-tl : ∀ {𝕊 Γ A A₀ ρ} → (γ : Env 𝕊 Γ) → (W : toCtx 𝕊 ⊢ᵛ⦂ A₀)
            → ¬ Et A
@@ -350,13 +351,13 @@ env-var-tl γ W ¬et x f f' =
                 (V-rename-≡ (push-ren-∷ ≾ᵣ-refl) _)))
     (sub-wk-V [] (env-Vˢ γ [] (var x f')) W)
 
-env-var-lock : ∀ {𝕊 𝕊' Γ A ρ ρ'} → (γ : Env 𝕊 Γ) → (q : 𝕊 ⊑ₛ[ ρ ] 𝕊')
-             → ¬ Et A
-             → (p : ρ ≾ᵣ 𝟏ᵣ) → (x : A ∈[ ρ' ] Γ)
-             → .(f : A Et∨≾ᵘ ρ' ·ᵣ ρ)
-             → .(f' : A Et∨≾ᵘ ρ')
-             → env-V (γ ⟨ q ⟩ᵉ) (var (Tl-⟨⟩ x) f)
-             ≡ reach-val (reach-≤ q p) (env-V γ (var x f'))
+env-var-⟨⟩ : ∀ {𝕊 𝕊' Γ A ρ ρ'} → (γ : Env 𝕊 Γ) → (q : 𝕊 ⊑ₛ[ ρ ] 𝕊')
+           → ¬ Et A
+           → (p : ρ ≾ᵣ 𝟏ᵣ) → (x : A ∈[ ρ' ] Γ)
+           → .(f : A Et∨≾ᵘ ρ' ·ᵣ ρ)
+           → .(f' : A Et∨≾ᵘ ρ')
+           → env-V (γ ⟨ q ⟩ᵉ) (var (Tl-⟨⟩ x) f)
+           ≡ reach-val (reach-≤ q p) (env-V γ (var x f'))
 
 -- The cell zone's own instance: `Δ := [] ∷ [ ρ ] A₀`, where the push is the
 -- weakening past the new cell and there is nothing to cancel: `liftᵉ` keeps the
@@ -372,7 +373,7 @@ env-var-lift {A₀ = A₀} {ρ = ρ} V γ ¬et x f f' =
   trans (env-Vˢ-var-l γ ([] ∷ [ ρ ] A₀) ¬et ≾ᵣ-refl x f f')
            (V-rename-≡ (push-ren-∷ ≾ᵣ-refl) _)
 
-env-var-lock {ρ = ρ} γ q ¬et p x f f' =
+env-var-⟨⟩ {ρ = ρ} γ q ¬et p x f f' =
   trans
     (V-rename-cong (unbox-ren q)
       (env-Vˢ-var-l γ ([] ⟨ ρ ⟩) ¬et pₗ x f f'))
@@ -415,7 +416,7 @@ env-var {A = A} (liftᵉ V γ) (pγ , pV) (Tl-∷ x) f with eternal? A
 env-var {A = A} (γ ⟨ q ⟩ᵉ) pγ (Tl-⟨⟩ x) f with eternal? A
 ... | yes et = VRed-eternal et _
 ... | no ¬et =
-  VRed-≡ᵛ _ (sym (env-var-lock γ q ¬et p x f f'))
+  VRed-≡ᵛ _ (sym (env-var-⟨⟩ γ q ¬et p x f f'))
             (VRed-reach (reach-≤ q p) _ (env-var γ pγ x f'))
   where
     p  = ≾ᵣ-zero-productʳ (Et∨≾ᵘ→¬Et⇒≾ f ¬et)

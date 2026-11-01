@@ -19,11 +19,11 @@
 -- conditional is graded by the union of the grades of its branches.  --
 --                                                                    --
 -- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
--- `∷ A` a binding. The locks between the binding of a box and its    --
--- `unbox` multiply to the run that the premise compares with the     --
--- allowance of the box, so the order of the locks is part of what is --
--- checked.                                                           --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
+-- modality, `∷ A` a binding. The modalities between the binding of a --
+-- box and its `unbox` multiply to the run that the premise compares  --
+-- with the allowance of the box, so the order of the modalities is   --
+-- part of what is checked.                                           --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Traces.Timed.RightSided where
@@ -52,7 +52,7 @@ open import MonomorphicCalculus.Examples.Typing.Core right-sided opTime
 -- Effectful computations
 --
 -- Sequencing is the language product, so at singleton grades the grade
--- of a computation is the run it makes, and the locks along it are
+-- of a computation is the run it makes, and the modalities along it are
 -- that run, one event at a time.
 
 sampling : [] ⊢ᶜ⦂ Reading ! within ⟅ ⌈ read ⌉ ⟆
@@ -83,7 +83,7 @@ tagged-relaying =
 -- Readings go stale
 --
 -- `var`'s bound is `ρ ≾ᵣ 𝟏ᵣ`, and the unit permits nothing but the
--- empty run. So a reading is usable only where no lock stands between
+-- empty run. So a reading is usable only where no modality stands between
 -- its binding and its use.
 
 reading-stale-after-idling : ¬ (𝟏ᵣ ·ᵣ ιᵣ 2 ≾ᵣ 𝟏ᵣ)
@@ -116,8 +116,8 @@ budget-back-to-the-run = fails
 -- Conditional branching
 --
 -- The union of two grades is their join, so the grade of the
--- conditional lists what each branch does. Neither branch locks the
--- context.
+-- conditional lists what each branch does. Neither branch adds a
+-- modality.
 
 branching : [] ∷ bool ∷ Reading ⊢ᶜ⦂ unit ! within ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆
 branching =
@@ -170,7 +170,7 @@ sampling-then-branching =
 ------------------------------------------------------------------------
 -- Unboxing: a permit for a particular run
 --
--- `unbox`'s premise is `elapsed ≾ᵣ ρ`: the locks between the box's
+-- `unbox`'s premise is `elapsed ≾ᵣ ρ`: the modalities between the box's
 -- binding and the claim multiply to the run the computation made, and
 -- it has to be one the box permits. The permit below names a reading
 -- and budgets three ticks for whatever else happens.
@@ -302,7 +302,7 @@ permit-in-a-branch =
 
 -- Where the budget sits is part of the permit. This one names a
 -- reading, then budgets three ticks, then names a transmission, and the
--- run below spends its store inside that window, as the locks show
+-- run below spends its store inside that window, as the modalities show
 -- in the order the permit reads them.
 
 scheduled : R
@@ -330,8 +330,8 @@ out-of-order = fails
 ------------------------------------------------------------------------
 -- Effect handling
 --
--- Handling locks its `in` part by the handled computation's grade, as
--- sequencing does.
+-- Handling types its `in` part under a modality at the handled
+-- computation's grade, as sequencing does.
 
 forwarded : [] ⊢ᶜ⦂ Reading ! within ⟅ ⌈ read ⌉ ⟆
 forwarded =

@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- The lock at two-sided time, `ρ = [1,2]`, which is not above the    --
--- unit `[0,0]`. With `σ = [0,1]` and `σ' = [1,1]`, `σ ⋦ 𝟏`, `σ' ≾ ρ` --
--- and `σ · σ' ≾ ρ`, so `L_[1,2]` is not a parametric right adjoint   --
--- (`not-PRA-[1,2]`); it has no left adjoint either                   --
--- (`no-left-adjoint-[1,2]`). The grade's own `_≾?_` decides the side --
--- conditions.                                                        --
+-- The context modality at two-sided time, `ρ = [1,2]`, which is not  --
+-- above the unit `[0,0]`. With `σ = [0,1]` and `σ' = [1,1]`,         --
+-- `σ ⋦ 𝟏`, `σ' ≾ ρ` and `σ · σ' ≾ ρ`, so `L_[1,2]` is not a          --
+-- parametric right adjoint (`not-PRA-[1,2]`); it has no left adjoint --
+-- either (`no-left-adjoint-[1,2]`). The grade's own `_≾?_` decides   --
+-- the side conditions.                                               --
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
@@ -20,7 +20,7 @@ open import Language.BaseTypes using (noBaseTypes)
 open import Language.Spec
 import Language.Operations as Ops
 
-module MonomorphicCalculus.Examples.Lock.TwoSided where
+module MonomorphicCalculus.Examples.ContextModality.TwoSided where
 
 G : GradeSystem
 G = identityGradeSystem two-sided-intervals-with-∞
@@ -35,7 +35,7 @@ spec = withoutBaseTypes G ops
 open GradeSystemInterface G
 
 open import MonomorphicCalculus.Syntax.Contexts      spec using ([])
-open import MonomorphicCalculus.Syntax.Renaming.Lock spec
+open import MonomorphicCalculus.Syntax.Renaming.ContextModality spec
 
 ρ σ σ' : R
 ρ  = [ 1 , ↑ 2 ]

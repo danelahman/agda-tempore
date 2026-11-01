@@ -163,7 +163,7 @@ holdsᵐ-cmpᵐ-eternal : ∀ {A} → (⋈ : Cmp) → (et : Et A) → ∀ {ρ}
                     ≈ᵐ Eternalᵒ.extᵉ 𝔹-eternalᵒ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (holdsᵐ ⋈ ∘ᵐ cmpᵐ et)
 holdsᵐ-cmpᵐ-eternal ⋈ et = extᵉ-nat (∘ᵉ (holdsᵉ ⋈) (cmpᵉ et))
 
--- At two values weakened under a lock by the extraction, the truth of the
+-- At two values weakened under a modality by the extraction, the truth of the
 -- relation is the weakened truth.
 
 holdsᵐ-cmpᵐ-extᵉ : ∀ {A X} → (⋈ : Cmp) → (et : Et A) → (v w : X →ᵐ ⟦ A ⟧ᵛ) → ∀ {ρ}

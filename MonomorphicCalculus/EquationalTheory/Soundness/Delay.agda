@@ -61,7 +61,7 @@ open import MonomorphicCalculus.DenotationalSemantics.Interpretation.RenamingCoh
 open import MonomorphicCalculus.EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
 open import MonomorphicCalculus.EquationalTheory.Soundness.Seq S Cat Fut Pst Adj GTy Mon GE using (εᵇ-η⊣-𝟏)
 
--- `delay 0ᴰ M` is `M` with its lock, unit-graded at `0ᴰ`, discarded.
+-- `delay 0ᴰ M` is `M` with its modality, unit-graded at `0ᴰ`, discarded.
 
 sound-delay-zero : ∀ {Γ A ε} → (M : Γ ⟨ ιᵣ 0ᴰ ⟩ ⊢ᶜ⦂ A ! ε)
                  → Soundᶜ≡ᵗʰ (delay-zero M)
@@ -114,10 +114,11 @@ sound-delay-delay {Γ} {A} {τ₁} {τ₂} {ε} M pM pL pR =
     m = ⟦ M ⟧ᶜᵗ pM
 
     -- The two nested transposes rebuild the comultiplication, and the
-    -- syntactic lock-merge becomes the grade relaxation the model law wants.
-    lock-split : [ ιᵣ τ₁ ]ᶠ ([ ιᵣ τ₂ ]ᶠ (⟨⟩-≤ {⟦ Γ ⟧ᶜᵗˣ} σ ∘ᵐ μ {⟦ Γ ⟧ᶜᵗˣ} {ιᵣ τ₂} {ιᵣ τ₁}) ∘ᵐ η⊣) ∘ᵐ η⊣
-               ≈ᵐ δ ∘ᵐ []-≤ σ ∘ᵐ η⊣
-    lock-split =
+    -- syntactic merge of the two modalities becomes the grade relaxation the
+    -- model law wants.
+    ⟨⟩-split : [ ιᵣ τ₁ ]ᶠ ([ ιᵣ τ₂ ]ᶠ (⟨⟩-≤ {⟦ Γ ⟧ᶜᵗˣ} σ ∘ᵐ μ {⟦ Γ ⟧ᶜᵗˣ} {ιᵣ τ₂} {ιᵣ τ₁}) ∘ᵐ η⊣) ∘ᵐ η⊣
+             ≈ᵐ δ ∘ᵐ []-≤ σ ∘ᵐ η⊣
+    ⟨⟩-split =
         ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congˡ ([]-∘ᵐ _ _) ∙ ∘ᵐ-assoc _ _ _))
       ∙ ∘ᵐ-congˡ ([]-∘ᵐ _ _)
       ∙ ∘ᵐ-assoc _ _ _
@@ -135,7 +136,7 @@ sound-delay-delay {Γ} {A} {τ₁} {τ₂} {ε} M pM pL pR =
         ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congˡ ([]-∘ᵐ _ _) ∙ ∘ᵐ-assoc _ _ _))
       ∙ ∘ᵐ-congˡ ([]-∘ᵐ _ _)
       ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ lock-split
+      ∙ ∘ᵐ-congʳ ⟨⟩-split
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ ([]-δ-nat _)
       ∙ ∘ᵐ-assoc _ _ _
