@@ -10,11 +10,11 @@ effect-graded algebraic effects and effect handlers, and a graded effect system.
 
 The development formalises two calculi:
 
-- The polymorphic calculus has type and grade variables, and quantified type
+- **Polymorphic calculus** has type and grade variables, and quantified type
   schemes. The development gives constraint-based type and grade inference with
   principal type schemes for it, and proves that its typings instantiate to
   scope-closed typings, which are type safe, and their reduction terminates.
-- The monomorphic calculus has types that do not contain variables or
+- **Monomorphic calculus** has types that do not contain variables or
   quantifiers. The development proves type safety and termination for it, and
   gives a denotational semantics, a sound equational theory, and adequacy.
 
