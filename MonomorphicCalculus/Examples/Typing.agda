@@ -2,9 +2,9 @@
 -- Typed example computations, one grade at a time                    --
 --                                                                    --
 -- The examples                                                       --
---   The subtree fixes a language over the alphabet of the sensor     --
---   node and types example computations in it, each at a value type  --
---   and an effect grade.                                             --
+--   The subtree fixes a language specificaton over the alphabet of   --
+--   the sensor node and types example computations in it, each at    --
+--   a value type and an effect grade.                                --
 --                                                                    --
 --   Most instances use an identity grade system: effect and resource --
 --   grades are the same monoid and `∣-∣ᵉ` is the identity, so `∣_∣ᵉ` --

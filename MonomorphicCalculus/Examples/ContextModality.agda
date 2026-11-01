@@ -1,10 +1,8 @@
 ------------------------------------------------------------------------
 -- The context modality on renamings, at particular grades            --
 --                                                                    --
--- `Renaming/ContextModality` shows that the context modality         --
--- `L_ρ = _⟨ ρ ⟩` has a left adjoint only at the unit, and that it is --
--- a parametric right adjoint at every grade exactly when the unit is --
--- the greatest grade. The examples instantiate both sides.           --
+-- `Renaming/ContextModality` shows when the context modality         --
+-- `L_ρ = _⟨ ρ ⟩` has a left adjoint, and when it is a PRA.           --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.ContextModality where

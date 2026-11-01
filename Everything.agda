@@ -2,10 +2,10 @@
 -- The whole development                                              --
 --                                                                    --
 -- The root of the development. It checks the modules the two calculi --
--- share (utilities, grades and the language) and both calculi: the   --
--- polymorphic calculus with its type inference                       --
--- (`PolymorphicCalculus/Everything.agda`) and the monomorphic        --
--- calculus (`MonomorphicCalculus/Everything.agda`).                  --
+-- share (utilities, grades and the language specification) and both  --
+-- calculi: the polymorphic calculus with its type inference          --
+-- (`PolymorphicCalculus/`) and the monomorphic declarative calculus  --
+-- (`MonomorphicCalculus/`) with eq. theory and denot. semantics.     --
 --                                                                    --
 -- Check with `agda Everything.agda`.                                 --
 ------------------------------------------------------------------------
