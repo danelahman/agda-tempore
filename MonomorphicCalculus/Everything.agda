@@ -1,31 +1,49 @@
------------------------------------------------------------------------------
--- Every module of the monomorphic calculus.                               --
---                                                                         --
--- The comments below name the key modules, with their main definitions    --
--- and results; module paths are relative to `MonomorphicCalculus/`.       --
---                                                                         --
--- The calculus is parameterised by a `LanguageSpec` (`Language/Spec`): a  --
--- grade system, base types and an operation signature.                    --
---                                                                         --
--- Check with `agda MonomorphicCalculus/Everything.agda`.                  --
------------------------------------------------------------------------------
+------------------------------------------------------------------------
+-- The monomorphic calculus                                           --
+--                                                                    --
+-- Every module of the monomorphic calculus: its syntax, operational  --
+-- semantics and type safety, termination, equational theory,         --
+-- denotational semantics with soundness and adequacy, and examples.  --
+--                                                                    --
+-- The calculus is parameterised by a language (`LanguageSpec`, in    --
+-- `Language/Spec`): a grade system, base types and an operation      --
+-- signature. Module paths below are relative to                      --
+-- `MonomorphicCalculus/`.                                            --
+--                                                                    --
+-- Check with `agda MonomorphicCalculus/Everything.agda`.             --
+------------------------------------------------------------------------
 
 module MonomorphicCalculus.Everything where
 
----- Syntax: value, computation and ground types (`VType`, `CType`,
----- `GType`, in `Syntax/Types`), among them the handler types `C ⇛ D`,
----- eternal types (`Et`), and the side condition of the variable rule
----- (`_Et∨≾ᵘ_`); contexts with modalities, their grade, and
----- variables under modalities (`Ctx`, `ctx-grade`, `_∈[_]_`, in
----- `Syntax/Contexts`); subtyping (`_<:ᵛ_`, `_<:ᶜ_`, in `Syntax/Subtyping`),
----- a preorder, antisymmetric where the grade orders are, and reflecting
----- eternality (`<:ᵛ-refl`, `<:ᵛ-trans`, `<:ᵛ-antisym`, `<:ᵛ-eternalˡ`);
----- intrinsically typed values and computations (`_⊢ᵛ⦂_`, `_⊢ᶜ⦂_`, in
----- `Syntax/Terms`), with `handle M with H in N` (`handle_`with_`in_`) for
----- `handle M with handler N H`. A value of eternal type stays typed under
----- a modality (`eternal-val-ext`); a value of box type is a variable of a box
----- subtype (`grad-typ⇒var<:`). The data of a type and their structural
----- order (`Syntax/Data`), and erasure to raw terms (`Syntax/Erasure`).
+------------------------------------------------------------------------
+-- Syntax                                                             --
+------------------------------------------------------------------------
+
+-- Types, contexts and terms. A context lists variables and modalities
+-- `⟨ ρ ⟩`. The variable rule asks that a variable's type be eternal, or
+-- that the grade of the modalities after it lie below the unit. Values
+-- and computations are intrinsically typed.
+--
+-- Where to look
+--   Syntax/Types      value, computation and ground types, among them the
+--                     handler types `C ⇛ D` (VType, CType, GType); eternal
+--                     types (Et); the side condition of the variable rule
+--                     (_Et∨≾ᵘ_)
+--   Syntax/Contexts   contexts, their grade, and variables under modalities
+--                     (Ctx, ctx-grade, _∈[_]_)
+--   Syntax/Subtyping  subtyping of value and computation types (_<:ᵛ_, _<:ᶜ_)
+--   Syntax/Terms      intrinsically typed values and computations (_⊢ᵛ⦂_,
+--                     _⊢ᶜ⦂_); `handle M with H in N` stands for
+--                     `handle M with handler N H` (handle_`with_`in_)
+--   Syntax/Data       the data of a type and their structural order
+--   Syntax/Erasure    erasure to raw terms
+--
+-- Main results
+--   <:ᵛ-refl, <:ᵛ-trans  subtyping is a preorder
+--   <:ᵛ-antisym          it is antisymmetric where the grade orders are
+--   <:ᵛ-eternalˡ         a subtype of an eternal type is eternal
+--   eternal-val-ext      a value of eternal type stays typed under a modality
+--   grad-typ⇒var<:       a value of box type is a variable of a box subtype
 
 import MonomorphicCalculus.Syntax.CompContext
 import MonomorphicCalculus.Syntax.Contexts
@@ -38,27 +56,51 @@ import MonomorphicCalculus.Syntax.Terms.Equivalence
 import MonomorphicCalculus.Syntax.Terms.Transport
 import MonomorphicCalculus.Syntax.Types
 
----- Renamings (`Ren`, in `Syntax/Renaming/Base`), generated by weakening,
----- exchange, variables and the renamings of modalities (`wk-ren`, `exch-ren`,
----- `var-ren`, `⟨⟩-η-ren`, `⟨⟩-μ-ren`, `⟨⟩-≤-ren`, …), and their action
----- (`V-rename`, `C-rename`, in `Syntax/Renaming/Action`), whose instances
----- at the generators are the structural rules; unboxing any value of box
----- type is derivable (`unbox-val`). Substitution (`_[_↦_]v`, `_[_↦_]c`,
----- and `_[_]₀`, `_[_]₁` at the last two bound variables, in
----- `Syntax/Substitution`), over parallel substitutions
----- (`Syntax/Substitution/Base`); context subsumption (`subCtx`, in
----- `Syntax/Substitution/Subsumption`); subsumption confined to the
----- reconciliation points (`C-normal-form`, in `Syntax/Normalisation`).
----- On renamings the context modality has a left adjoint exactly at the
----- unit (`left-adjoint⇔unit`, in `Syntax/Renaming/ContextModality`), and
----- is a parametric right adjoint at every grade when the unit is the
----- greatest grade (`PRA-everywhere`, in
----- `Syntax/Renaming/ContextModality/LowerBounds`); where it is one,
----- `σ · σ' ≾ ρ` with `σ' ≾ ρ` forces `σ ≾ 𝟏` (`PRA⇒no-factor`). Both notions
----- are equivalent to their hom-set forms, a natural bijection
----- `Ren [] E Δ ≅ Ren [] Γ (Δ ⟨ ρ ⟩)` (`left-adjoint⇔hom`) and one onto the
----- renamings over each `s : Ren [] Γ ([] ⟨ ρ ⟩)` (`PRA⇔hom`, in
----- `Syntax/Renaming/ContextModality/Adjunction`).
+------------------------------------------------------------------------
+-- Renaming and substitution                                          --
+------------------------------------------------------------------------
+
+-- Renamings are built from weakening, exchange, variables and the
+-- renamings of modalities, and act on terms; at the generators the
+-- action gives the structural rules. Substitution is defined over
+-- parallel substitutions. On renamings, the context modality `_⟨ ρ ⟩`
+-- has a left adjoint only at the unit, and is a parametric right adjoint
+-- at every grade when the unit is the greatest grade.
+--
+-- Where to look
+--   Syntax/Renaming/Base             renamings and their generators (Ren,
+--                                    wk-ren, exch-ren, var-ren, ⟨⟩-η-ren,
+--                                    ⟨⟩-μ-ren, ⟨⟩-≤-ren, …)
+--   Syntax/Renaming/Action           the action on terms (V-rename, C-rename)
+--   Syntax/Substitution/Base         parallel substitutions
+--   Syntax/Substitution              substitution for a variable, and for the
+--                                    last two bound variables (_[_↦_]v,
+--                                    _[_↦_]c, _[_]₀, _[_]₁)
+--   Syntax/Substitution/Subsumption  context subsumption (subCtx)
+--   Syntax/Normalisation             subsumption confined to the
+--                                    reconciliation points
+--   Syntax/Renaming/ContextModality  the adjoints of the context modality
+--   Syntax/Renaming/ContextModality/LowerBounds
+--                                    parametric right adjoints
+--   Syntax/Renaming/ContextModality/Adjunction
+--                                    their hom-set forms
+--
+-- Main results
+--   unbox-val          unboxing any value of box type is derivable
+--   C-normal-form      a computation has a derivation with the same erasure
+--                      whose subsumptions sit only at the reconciliation
+--                      points
+--   left-adjoint⇔unit  the context modality has a left adjoint exactly at the
+--                      unit
+--   PRA-everywhere     it is a parametric right adjoint at every grade when
+--                      the unit is the greatest grade
+--   PRA⇒no-factor      where it is one, `σ · σ' ≾ ρ` with `σ' ≾ ρ` forces
+--                      `σ ≾ 𝟏`
+--   left-adjoint⇔hom   a left adjoint amounts to a natural bijection
+--                      `Ren [] E Δ ≅ Ren [] Γ (Δ ⟨ ρ ⟩)`
+--   PRA⇔hom            a parametric right adjoint amounts to a natural
+--                      bijection onto the renamings over each
+--                      `s : Ren [] Γ ([] ⟨ ρ ⟩)`
 
 import MonomorphicCalculus.Syntax.Normalisation
 import MonomorphicCalculus.Syntax.Renaming
@@ -85,16 +127,25 @@ import MonomorphicCalculus.Syntax.Substitution.Lookup
 import MonomorphicCalculus.Syntax.Substitution.Subsumption
 import MonomorphicCalculus.Syntax.Substitution.Variables
 
----- Operational semantics: states, with their grade and extensions
----- (`State`, `state-grade`, `_≤ₛ_`, in `OperationalSemantics/State`),
----- and the small-step reduction of configurations (`Config`, `_⟶_`, in
----- `OperationalSemantics/Reduction`). A comparison is a value, and CMP
----- decides it to its boolean constant where `if` scrutinises it; SUB
----- and the SUB-… rules move a subsumption and erase to the identity on
----- raw terms; HANDLE-RET, HANDLE-OP and HANDLE-STEP fire on a handler
----- literal. A returned value and an operation call are finished
----- (`Final`) and make no step (`final-no-step`). States up to the term
----- equivalence are in `OperationalSemantics/StateEquivalence`.
+------------------------------------------------------------------------
+-- Operational semantics                                              --
+------------------------------------------------------------------------
+
+-- A small-step reduction of configurations, each a computation over a
+-- state. A comparison is a value, and CMP decides it to its boolean
+-- constant where `if` scrutinises it. SUB and the SUB-… rules move a
+-- subsumption and erase to the identity on raw terms; HANDLE-RET,
+-- HANDLE-OP and HANDLE-STEP fire on a handler literal.
+--
+-- Where to look, under `OperationalSemantics/`
+--   State             states, their grade and extensions (State, state-grade,
+--                     _≤ₛ_)
+--   Reduction         configurations and reduction (Config, _⟶_)
+--   StateEquivalence  states up to the term equivalence
+--
+-- Main results
+--   final-no-step  a returned value or an operation call is finished (Final)
+--                  and makes no step
 
 import MonomorphicCalculus.OperationalSemantics.Reduction
 import MonomorphicCalculus.OperationalSemantics.State
@@ -104,20 +155,42 @@ import MonomorphicCalculus.OperationalSemantics.StateEquivalence.Core
 import MonomorphicCalculus.OperationalSemantics.StateEquivalence.Extensions
 import MonomorphicCalculus.OperationalSemantics.StateEquivalence.Replay
 
----- Type safety (`type-safety`, in `OperationalSemantics/TypeSafety`): a
----- computation over a state is finished (`Final`) or steps (`Steps`);
----- a step extends the state (`step-extends-state`), and the computation
----- it reaches is typed at a subtype, its grade after the step's below
----- the original (`progress`, `preservation`).
+------------------------------------------------------------------------
+-- Type safety                                                        --
+------------------------------------------------------------------------
+
+-- A typed computation over a state is finished or takes a step, and the
+-- step keeps it typed.
+--
+-- Where to look, under `OperationalSemantics/`
+--   TypeSafety  progress and preservation
+--
+-- Main results
+--   progress            a computation over a state is finished (Final) or
+--                       steps (Steps)
+--   step-extends-state  a step extends the state
+--   preservation        the computation a step reaches is typed at a subtype,
+--                       its grade after the step's below the original
+--   type-safety         progress and preservation together
 
 import MonomorphicCalculus.OperationalSemantics.TypeSafety
 
----- Termination (`termination`, in `OperationalSemantics/Termination`): a
----- program, run from the empty state, halts with a returned value or an
----- operation call (`Halts`, in `OperationalSemantics/Evaluation`), by the
----- fundamental lemma of a logical relation (`VRed`, `CRed`, `SRed`, in
----- `OperationalSemantics/Termination/Reducibility`) indexed by graded
----- reachability (`OperationalSemantics/GradedReach`).
+------------------------------------------------------------------------
+-- Termination                                                        --
+------------------------------------------------------------------------
+
+-- A program run from the empty state halts, with a returned value or an
+-- operation call. The proof is the fundamental lemma of a logical
+-- relation indexed by graded reachability.
+--
+-- Where to look, under `OperationalSemantics/`
+--   Evaluation                runs that halt (Halts)
+--   GradedReach               graded reachability
+--   Termination               the theorem
+--   Termination/Reducibility  the logical relation (VRed, CRed, SRed)
+--
+-- Main results
+--   termination  a program run from the empty state halts (in Termination)
 
 import MonomorphicCalculus.OperationalSemantics.Evaluation
 import MonomorphicCalculus.OperationalSemantics.GradedReach
@@ -131,40 +204,77 @@ import MonomorphicCalculus.OperationalSemantics.Termination.Environment.Variable
 import MonomorphicCalculus.OperationalSemantics.Termination.Handle
 import MonomorphicCalculus.OperationalSemantics.Termination.Reducibility
 
----- Running operations by implementations (`TopLevelOpSemantics`, in
----- `OperationalSemantics/TopLevel`): preservation and progress for the
----- machine that replaces an operation call by its implementation's value
----- (`PureTopLevelPreservationTheorem`, in
----- `OperationalSemantics/TopLevel/Reduction`; `PureTopLevelProgressTheorem`,
----- in `OperationalSemantics/TopLevel/Progress`).
+------------------------------------------------------------------------
+-- Running operations by implementations                              --
+------------------------------------------------------------------------
+
+-- A machine that replaces an operation call by the value of its
+-- implementation, with preservation and progress.
+--
+-- Where to look, under `OperationalSemantics/`
+--   TopLevel            the machine (TopLevelOpSemantics)
+--   TopLevel/Reduction  preservation
+--   TopLevel/Progress   progress
+--
+-- Main results
+--   PureTopLevelPreservationTheorem  preservation
+--   PureTopLevelProgressTheorem      progress
 
 import MonomorphicCalculus.OperationalSemantics.TopLevel
 import MonomorphicCalculus.OperationalSemantics.TopLevel.Progress
 import MonomorphicCalculus.OperationalSemantics.TopLevel.Reduction
 
----- Equational theory (`_⊢ᵛ⦂_≡ᵗʰ_`, `_⊢ᶜ⦂_≡ᵗʰ_`, in
----- `EquationalTheory/EquationalTheory`), with axioms for sequencing
----- (`seq-return`, `seq-perform`, `seq-assoc`, …), functions (`fun-beta`,
----- `fun-eta`), handling (`handle-return`, `handle-perform`, …), delays
----- (`delay-zero`, `delay-delay`) and boxes (`unbox-beta`, `box-comm`, …).
----- The term equivalence is contained in it (`EquationalTheory/Alignment`).
+------------------------------------------------------------------------
+-- Equational theory                                                  --
+------------------------------------------------------------------------
+
+-- An equational theory of values and computations. The term equivalence
+-- is contained in it.
+--
+-- Where to look
+--   EquationalTheory/EquationalTheory  the theory (_⊢ᵛ⦂_≡ᵗʰ_, _⊢ᶜ⦂_≡ᵗʰ_)
+--   EquationalTheory/Alignment         the term equivalence lies within it
+--
+-- Axioms
+--   seq-return, seq-perform, seq-assoc, …  sequencing
+--   fun-beta, fun-eta                      functions
+--   handle-return, handle-perform, …       handling
+--   delay-zero, delay-delay                delays
+--   unbox-beta, box-comm, …                boxes
 
 import MonomorphicCalculus.EquationalTheory.Alignment
 import MonomorphicCalculus.EquationalTheory.EquationalTheory
 import MonomorphicCalculus.EquationalTheory.Naturality
 
----- Models, in `DenotationalSemantics/Model/`: a setoid-enriched
----- cartesian closed category (`Category`), the box modality `[ ρ ]`
----- (`Future`) and the context modality `⟨ ρ ⟩` (`Past`) in a graded
----- adjunction (`Adjunction`), eternal objects (`Eternalᵒ`), ground
----- types (`GroundTypes`, `GroundEternal`) with their comparisons,
----- which commute with the eternal extraction (`Comparison`,
----- `ComparisonEternal`), and a strong graded monad (`Monad`) with
----- handler values: the object `Hᵒ`, application at a handled grade
----- below the declared one (`appʰ`), and abstraction of a natural
----- family (`curryʰ`) with its β and η laws (`curryʰ-β`, `curryʰ-η`).
----- The tick monad and implementations of the operations (`TickMonad`,
----- `Implementation`) interpret running operations by implementations.
+------------------------------------------------------------------------
+-- Models                                                             --
+------------------------------------------------------------------------
+
+-- A model is a setoid-enriched cartesian closed category with the box
+-- modality `[ ρ ]` and the context modality `⟨ ρ ⟩` in a graded
+-- adjunction, eternal objects, ground types with their comparisons, and
+-- a strong graded monad with handler values.
+--
+-- Where to look, under `DenotationalSemantics/Model/`
+--   Category                       the setoid-enriched cartesian closed
+--                                  category
+--   Modality/Future                the box modality `[ ρ ]`
+--   Modality/Past                  the context modality `⟨ ρ ⟩`
+--   Modality/Adjunction            their graded adjunction
+--   Modality/Eternal               eternal objects (Eternalᵒ)
+--   GroundTypes, GroundEternal     ground types
+--   Comparison, ComparisonEternal  their comparisons, which commute with the
+--                                  eternal extraction
+--   Monad                          the strong graded monad with handler values
+--   TickMonad, Implementation      the tick monad and implementations of the
+--                                  operations, interpreting running operations
+--                                  by implementations
+--
+-- Handler values, in Monad
+--   Hᵒ                  the object of handlers
+--   appʰ                application at a handled grade below the declared one
+--   curryʰ              abstraction of a natural family
+--   curryʰ-β, curryʰ-η  its β and η laws
 
 import MonomorphicCalculus.DenotationalSemantics.Model.Category
 import MonomorphicCalculus.DenotationalSemantics.Model.Comparison
@@ -180,15 +290,28 @@ import MonomorphicCalculus.DenotationalSemantics.Model.Monad
 import MonomorphicCalculus.DenotationalSemantics.Model.Monad.Enrichment
 import MonomorphicCalculus.DenotationalSemantics.Model.TickMonad
 
----- Interpretation, in `DenotationalSemantics/Interpretation/`, of types
----- (`⟦_⟧ᵛ`, `⟦_⟧ᶜ`, in `Types`), contexts (`⟦_⟧ᶜᵗˣ`, in `Contexts`) and
----- terms (`⟦_⟧ᵛᵗ`, `⟦_⟧ᶜᵗ`, in `Terms`), for derivations whose handlers are
----- uniform (`Paramᵛ`, `Paramᶜ`). Handling with a handler written in place
----- denotes the fold of the clauses after the return clause
----- (`handle-in-β`). The interpretation is natural in renamings
----- (`V-rename-nat`, `C-rename-nat`, in `RenamingCoherence`) and in
----- substitutions (`V-subst-nat`, `C-subst-nat`, in
----- `SubstitutionCoherence/Core`).
+------------------------------------------------------------------------
+-- Interpretation                                                     --
+------------------------------------------------------------------------
+
+-- Types, contexts and terms are interpreted in any model, for
+-- derivations whose handlers are uniform. The interpretation is natural
+-- in renamings and in substitutions.
+--
+-- Where to look, under `DenotationalSemantics/Interpretation/`
+--   Types                       types (⟦_⟧ᵛ, ⟦_⟧ᶜ)
+--   Contexts                    contexts (⟦_⟧ᶜᵗˣ)
+--   Terms                       terms (⟦_⟧ᵛᵗ, ⟦_⟧ᶜᵗ), with uniform handlers
+--                               (Paramᵛ, Paramᶜ)
+--   RenamingCoherence           naturality in renamings
+--   SubstitutionCoherence/Core  naturality in substitutions
+--
+-- Main results
+--   handle-in-β                 handling with a handler written in place
+--                               denotes the fold of the clauses after the
+--                               return clause
+--   V-rename-nat, C-rename-nat  the interpretation is natural in renamings
+--   V-subst-nat, C-subst-nat    and in substitutions
 
 import MonomorphicCalculus.DenotationalSemantics.Interpretation.Comparisons
 import MonomorphicCalculus.DenotationalSemantics.Interpretation.Contexts
@@ -210,14 +333,27 @@ import MonomorphicCalculus.DenotationalSemantics.Interpretation.Terms
 import MonomorphicCalculus.DenotationalSemantics.Interpretation.Types
 import MonomorphicCalculus.DenotationalSemantics.Interpretation.Variables
 
----- Soundness of the equational theory (`soundᵛ`, `soundᶜ`, in
----- `EquationalTheory/Soundness`): equal terms with uniform handlers have
----- equal denotations. Soundness of the reduction (`⟶*-⊳`, in
----- `OperationalSemantics/Soundness/Preservation`): a run with uniform
----- handlers relates the denotations of its configurations, by a time
----- transition and an effect-refining coercion; the same for running
----- operations by implementations, into the tick monad (`⟶*ᵗ-sound`, in
----- `OperationalSemantics/Soundness/TopLevel`).
+------------------------------------------------------------------------
+-- Soundness                                                          --
+------------------------------------------------------------------------
+
+-- For terms with uniform handlers, equal terms have equal denotations,
+-- and a run relates the denotations of its configurations.
+--
+-- Where to look
+--   EquationalTheory/Soundness  the equational theory
+--   OperationalSemantics/Soundness/Preservation
+--                               the reduction
+--   OperationalSemantics/Soundness/TopLevel
+--                               running operations by implementations
+--
+-- Main results
+--   soundᵛ, soundᶜ  equal terms with uniform handlers have equal denotations
+--   ⟶*-⊳            a run with uniform handlers relates the denotations of its
+--                   configurations, by a time transition and an
+--                   effect-refining coercion
+--   ⟶*ᵗ-sound       the same for running operations by implementations, into
+--                   the tick monad
 
 import MonomorphicCalculus.EquationalTheory.Soundness
 import MonomorphicCalculus.EquationalTheory.Soundness.Base
@@ -243,13 +379,20 @@ import MonomorphicCalculus.OperationalSemantics.Soundness.Preservation.Unbox
 import MonomorphicCalculus.OperationalSemantics.Soundness.TickLemmas
 import MonomorphicCalculus.OperationalSemantics.Soundness.TopLevel
 
----- The presheaf model, over a Kripke frame of worlds (`World`, in
----- `DenotationalSemantics/Model/World`), in
----- `DenotationalSemantics/Model/Example/PSh/`: presheaves (`PShCat`, in
----- `Base`) and the free graded monad on them (`PShMonad`, in
----- `Monad/Instance`), whose handler values are families of Kripke
----- functions over the handled grades, natural along sub-effecting (`Hᵖ`,
----- `appʰᵖ`, `curryʰᵖ`, in `Monad/HandlerValues`).
+------------------------------------------------------------------------
+-- The presheaf model                                                 --
+------------------------------------------------------------------------
+
+-- Presheaves over a Kripke frame of worlds, with the free graded monad
+-- on them. Its handler values are families of Kripke functions over the
+-- handled grades, natural along sub-effecting.
+--
+-- Where to look
+--   DenotationalSemantics/Model/World  Kripke frames of worlds (World)
+--   DenotationalSemantics/Model/Example/PSh/
+--     Base                 presheaves (PShCat)
+--     Monad/Instance       the free graded monad (PShMonad)
+--     Monad/HandlerValues  handler values (Hᵖ, appʰᵖ, curryʰᵖ)
 
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Base
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.GroundTypes
@@ -274,14 +417,26 @@ import MonomorphicCalculus.DenotationalSemantics.Model.World.History
 import MonomorphicCalculus.DenotationalSemantics.Model.World.Product
 import MonomorphicCalculus.DenotationalSemantics.Model.World.Reindex
 
----- Adequacy (`adequacy`, in `Adequacy/Adequacy`), for head-faithful models
----- (`HeadFaithful`, in `Adequacy/HeadFaithful`) and uniform handlers: two
----- programs with equal denotations halt with the same outcome
----- (`Same-outcome`), and at an answer type with the same answer
----- (`adequacy-base`, `adequacy-bool`). The presheaf model is head-faithful
----- (`PShHeadFaithful`, in `Adequacy/PSh/HeadFaithful`). With soundness,
----- derivations of the equational theory between programs are
----- observationally valid (`Adequacy/Equational`).
+------------------------------------------------------------------------
+-- Adequacy                                                           --
+------------------------------------------------------------------------
+
+-- In a head-faithful model, two programs with uniform handlers and equal
+-- denotations halt with the same outcome. The presheaf model is
+-- head-faithful. With soundness, derivations of the equational theory
+-- between programs are observationally valid.
+--
+-- Where to look
+--   Adequacy/HeadFaithful      head-faithful models (HeadFaithful)
+--   Adequacy/Adequacy          adequacy
+--   Adequacy/PSh/HeadFaithful  the presheaf model is head-faithful
+--   Adequacy/Equational        the equational theory is observationally valid
+--
+-- Main results
+--   adequacy                      programs with equal denotations halt with
+--                                 the same outcome (Same-outcome)
+--   adequacy-base, adequacy-bool  at an answer type, with the same answer
+--   PShHeadFaithful               the presheaf model is head-faithful
 
 import MonomorphicCalculus.Adequacy.Adequacy
 import MonomorphicCalculus.Adequacy.Equational
@@ -291,9 +446,19 @@ import MonomorphicCalculus.Adequacy.PSh.TickFrames
 import MonomorphicCalculus.Adequacy.PSh.TreeHead
 import MonomorphicCalculus.Adequacy.PSh.TreeShape
 
----- Examples: concrete Kripke frames of worlds, typed computations, and
----- the adjoints of the context modality at particular grades
----- (`Examples/ContextModality`).
+------------------------------------------------------------------------
+-- Examples                                                           --
+------------------------------------------------------------------------
+
+-- Concrete Kripke frames of worlds, typed computations, and the adjoints
+-- of the context modality at particular grades.
+--
+-- Where to look
+--   DenotationalSemantics/Model/Example/World
+--                             Kripke frames
+--   Examples/Typing           typed computations
+--   Examples/ContextModality  the adjoints of the context modality at
+--                             particular grades
 
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.World
 import MonomorphicCalculus.Examples.ContextModality

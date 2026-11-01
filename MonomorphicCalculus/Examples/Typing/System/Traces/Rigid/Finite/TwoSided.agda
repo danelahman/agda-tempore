@@ -1,19 +1,23 @@
 ------------------------------------------------------------------------
--- Typed example computations over the duration-hull system of the    --
--- rigid finite-expression intervals, in dense time.                  --
+-- Typed computations over the duration-hull system of the rigid      --
+-- finite-expression intervals, in dense time                         --
 --                                                                    --
--- Effect grades are consistent pairs of a lower and an upper bound   --
--- over interval letters, each operation graded by itself at both;    --
--- resource grades are intervals of dense time, and an effect grade   --
--- is measured by its duration hull. A box at the window between one  --
--- and three units may be opened after a reading and a wait of a      --
--- unit; right after the reading it may not, too little time being    --
--- certain to have passed, nor after a reading and a transmission,    --
--- too much possibly having passed. The effect grade records the run  --
--- itself, its two ends measured apart.                               --
+-- The grade system                                                   --
+--   Effect grades are consistent pairs of a lower and an upper bound --
+--   over interval letters, each operation graded by itself at both;  --
+--   resource grades are intervals of dense time, and an effect grade --
+--   is measured by its duration hull.                                --
 --                                                                    --
--- Reading takes more than a quarter and at most half a unit, writing --
--- one to two units, sending two to four.                             --
+--   Reading takes more than a quarter and at most half a unit,       --
+--   writing one to two units, sending two to four.                   --
+--                                                                    --
+-- What it shows                                                      --
+--   A box at the window between one and three units may be opened    --
+--   after a reading and a wait of a unit. Right after the reading it --
+--   may not, too little time being certain to have passed, nor after --
+--   a reading and a transmission, too much possibly having passed.   --
+--   The effect grade records the run itself, its two ends measured   --
+--   apart.                                                           --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.System.Traces.Rigid.Finite.TwoSided where

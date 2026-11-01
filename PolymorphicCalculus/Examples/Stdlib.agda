@@ -1,12 +1,32 @@
-------------------------------------------------------------------
--- Inference on Tempore's standard library                      --
---                                                              --
--- Nine functions of Tempore's standard library as raw terms.   --
--- Each is handler-free and typable at a closed instance, so    --
--- inference answers `typed` at every grade (`p-typed`).        --
--- `expected-p` is the reported scheme, checked by `refl` at    --
--- the instances under `Stdlib/`.                               --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Inference on the standard library                                  --
+--                                                                    --
+-- Nine functions of Tempore's standard library, as raw terms.        --
+--                                                                    --
+-- The examples                                                       --
+--   id, ignore       the identity, and a function that drops its     --
+--                    argument                                        --
+--   fst, snd         the projections of a pair                       --
+--   not              boolean negation, with a closed scheme          --
+--   absurd′          elimination of the empty type                   --
+--   pipe             application written `x |> f`                    --
+--   compose          function composition; where the unit is least,  --
+--                    the inner function must be pure                 --
+--   min              the lesser of two values by a comparison passed --
+--                    in; both are read after the comparison, so each --
+--                    must be eternal or the comparison take no time  --
+--                                                                    --
+-- How to read them                                                   --
+--   Each function is written above its definition as Tempore source, --
+--   with the scheme Tempore gives it. Each is handler-free and has   --
+--   a typing at a closed instance, so inference answers `typed` at   --
+--   every grade (`id-typed`, …). The modules under `Stdlib/` check   --
+--   the scheme inference reports at the four combinations of a least --
+--   unit and a commuting multiplication:                             --
+--     id-reported : schemeOf (infer [] id) ≡ just expected-id        --
+--   `expected-p` is the scheme of `p` in general; an instance states --
+--   its own where the grade's properties simplify it.                --
+------------------------------------------------------------------------
 
 open import Data.Unit using (tt)
 open import Data.Empty using (⊥-elim)

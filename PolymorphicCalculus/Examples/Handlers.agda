@@ -1,12 +1,30 @@
---------------------------------------------------------------------
--- Inference on handlers                                          --
---                                                                --
--- Handlers without annotations. `relay` and `relay-boxed` leave  --
--- cycles of clause-local unknowns for `Localise`; `discard` and  --
--- `resume-twice` are typable only at some grades; `bound`, `run` --
--- and `run-forward` use a handler as a value. The instances      --
--- under `Handlers/` check each answer by `refl` at four grades.  --
---------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Inference on handlers                                              --
+--                                                                    --
+-- Handlers written without annotations.                              --
+--                                                                    --
+-- The examples                                                       --
+--   relay            a handler resuming through a helper function    --
+--   relay-boxed      the helper applied twice to the boxed           --
+--                    continuation                                    --
+--   discard          a clause that drops its continuation; typable   --
+--                    where the unit is least                         --
+--   resume-twice     a clause that resumes twice; typable where the  --
+--                    unit is the greatest grade                      --
+--   bound, run,      handlers passed around as values; typable over  --
+--   run-forward      any language                                    --
+--                                                                    --
+-- How to read them                                                   --
+--   Each program is written above its definition in ordinary syntax, --
+--   followed by a typing in the declarative system where one exists. --
+--   The modules under `Handlers/` run inference at four grades and   --
+--   check each answer with `refl`:                                   --
+--     relay-reported :                                               --
+--       schemeOf (infer [] relay) ≡ just expected-relay              --
+--   A refuted program comes with the verdict                         --
+--   `infer [] p ≡ untypable` and the proof `¬ Typable [] p` drawn    --
+--   from it.                                                         --
+------------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
 open import Relation.Binary.Definitions using (Minimum)
@@ -78,8 +96,9 @@ U⇒U = unit ⇒ unit ! 𝟏̂ₑ
 --     op p k ↦ let a = op p in
 --              let h = λ x. x in h (h (λ _. k a)) ()}
 --
--- `h`'s argument and result effects form a cycle of clause-local
--- unknowns, collapsed and sent to the rigid `j`.
+-- The argument and result effects of `h` constrain each other in a
+-- cycle; inference identifies them and takes them to be the clause's
+-- grade variable `j`.
 
 resume-through : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc n))
 resume-through op =
@@ -89,7 +108,8 @@ resume-through op =
 relay : RawC ∅ˢ 0
 relay = return (fun (handle (v₀ · ⋆) `with handler (return ⋆) resume-through))
 
--- Typable, `h` at `unit ⇒ unit ! j`, so never refuted
+-- Typable, with `h` at `unit ⇒ unit ! j`, so inference does not
+-- refute it
 
 private
 
@@ -131,8 +151,8 @@ expected-relay = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((unit ⇒ α₀ ! ε₀) ⇒ unit ! �
 --     op p k ↦ let h = λ x. x in let k₁ = h k in let k₂ = h k₁ in
 --              let a = op p in unbox k₂ as k' in k' a}
 --
--- Two cycles form, of box grades and of latent effects; both collapse
--- to the continuation's type.
+-- The box grades and the latent effects each constrain one another
+-- in a cycle; inference resolves both to the continuation's type.
 
 through-box : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc n))
 through-box op =
@@ -186,8 +206,9 @@ expected-relay-boxed = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((unit ⇒ α₀ ! ε₀) ⇒ un
 --
 --   discard m = handle m () with handler {op p k ↦ return ()}
 --
--- Needs `𝟏̂ₑ ≾ op · j` for the rigid `j`: typable where the unit is
--- least, refuted at the left-sided grades.
+-- Needs `𝟏̂ₑ ≾ op · j` for every value of the clause's grade variable
+-- `j`: typable where the unit is least, refuted at the left-sided
+-- grades.
 
 discard : RawC ∅ˢ 0
 discard = return (fun (handle (v₀ · ⋆) `with handler (return ⋆) (λ _ → return ⋆)))

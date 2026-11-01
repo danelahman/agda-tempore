@@ -1,6 +1,10 @@
 ------------------------------------------------------------------------
--- Annotated programs, at both annotation forms, each with the type the
--- annotation forces. Exercises the annotations.
+-- Annotations                                                        --
+--                                                                    --
+-- Annotated programs, with both kinds of annotation, each given the  --
+-- type the annotation forces.                                        --
+--                                                                    --
+-- Exercises: the annotations.                                        --
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Examples.Annotations.All where

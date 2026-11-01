@@ -1,7 +1,11 @@
 ------------------------------------------------------------------------
--- Nine functions of Tempore's standard library, `typed` over any
--- language, with schemes checked at the four combinations of `𝟏-least?`
--- and `·-comm?`. Exercises `Generate`, `Solve` and `SolverImpl`.
+-- The standard library                                               --
+--                                                                    --
+-- Nine functions of Tempore's standard library, typed over any       --
+-- language, with their schemes checked at the four combinations of a --
+-- least unit and a commuting multiplication.                         --
+--                                                                    --
+-- Exercises: `Generate`, `Solve` and `SolverImpl`.                   --
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Examples.Stdlib.All where

@@ -1,9 +1,11 @@
-------------------------------------------------------------------
--- Durations at left-sided intervals of dense time              --
---                                                              --
--- A box is a promise: two half-unit delays meet a promise of   --
--- one unit; a half and a quarter fall short.                   --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Durations at left-sided intervals of dense time                    --
+--                                                                    --
+-- A box is a promise. Two delays of half a unit meet a promise of    --
+-- one unit, as do a half and three quarters; a half and a quarter    --
+-- fall short and are refused. A box argument claimed after a half    --
+-- and a quarter is inferred as a promise due within three quarters.  --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

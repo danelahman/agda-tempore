@@ -1,9 +1,12 @@
-------------------------------------------------------------------
--- Durations at right-sided intervals of dense time             --
---                                                              --
--- A box is a lease: two half-unit delays fill a lease of one   --
--- unit; a half and three quarters overrun it.                  --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Durations at right-sided intervals of dense time                   --
+--                                                                    --
+-- A box is a lease. Two delays of half a unit fill a lease of one    --
+-- unit, and a half and a quarter fit in it; a half and three         --
+-- quarters overrun it and are refused. A box argument claimed after  --
+-- a half and a quarter is inferred as a lease of at least three      --
+-- quarters.                                                          --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

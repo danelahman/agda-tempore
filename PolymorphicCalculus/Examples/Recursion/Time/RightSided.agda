@@ -1,12 +1,14 @@
-------------------------------------------------------------------
--- Primitive recursion at right-sided intervals                 --
---                                                              --
--- `ε · ε ≾ ε` holds only at the unit and the top: a pure       --
--- recursion has the unit, one ticking per step the top,        --
--- refuted at any finite bound, in a clause too. Functions are  --
--- not usable in the step; with a tick per step, heads must be  --
--- eternal.                                                     --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Primitive recursion at right-sided intervals                       --
+--                                                                    --
+-- Here `ε · ε ≾ ε` holds only at the unit and the top. A pure        --
+-- recursion has the unit as its effect; one ticking per step has     --
+-- the top, and is refuted under each finite annotation tried, in a   --
+-- clause too. A function from outside is not usable in the step;     --
+-- with a tick per step a head must be eternal, so boxed heads are    --
+-- refused. A clause that drops its continuation after a countdown    --
+-- is refuted.                                                        --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 
@@ -34,7 +36,7 @@ open import PolymorphicCalculus.Examples.Recursion spec hints enum ℕᴰ-steppe
 open import PolymorphicCalculus.Examples.Variables
 
 ------------------------------------------------------------------
--- 1. Pure recursion: the effect is lowered to the unit
+-- 1. Pure recursion: the effect is the unit
 
 expected-add : Scheme
 expected-add = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (nat ⇒ (nat ⇒ nat ! 𝟏̂ₑ) ! 𝟏̂ₑ) ! 𝟏̂ₑ

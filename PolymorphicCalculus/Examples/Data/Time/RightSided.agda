@@ -1,9 +1,11 @@
-------------------------------------------------------------------
--- Natural numbers, sums and lists at right-sided intervals     --
---                                                              --
--- After a tick only variables of eternal type are usable; a    --
--- join of delays is the longer.                                --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Natural numbers, sums and lists at right-sided intervals           --
+--                                                                    --
+-- After a delay only variables of eternal type are usable: a         --
+-- variable of unknown type is asked to be eternal, and a function,   --
+-- alone or in a sum or a list, is refuted. A join of delays is the   --
+-- longer. The eliminations at the wrong type are refuted.            --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

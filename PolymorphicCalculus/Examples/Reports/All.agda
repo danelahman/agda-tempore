@@ -1,6 +1,11 @@
 ------------------------------------------------------------------------
--- Two schemes the report simplifies at the right-sided grades. With the
--- standard-library set, exercises `Simplify`, `Canon` and `Eliminate`.
+-- Report simplification                                              --
+--                                                                    --
+-- Two schemes that inference simplifies before reporting them, at    --
+-- the right-sided grades.                                            --
+--                                                                    --
+-- Exercises, with the standard-library set: `Simplify`, `Canon` and  --
+-- `Eliminate`.                                                       --
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Examples.Reports.All where

@@ -1,7 +1,10 @@
 ------------------------------------------------------------------------
--- Comparisons at eternal types, refused at functions and boxes,
--- polymorphic, after a tick and under `if`. Exercises eternality asked
--- of an unknown (`Generate`, `Solve`).
+-- Comparisons                                                        --
+--                                                                    --
+-- Comparisons at eternal types: refused at functions and boxes,      --
+-- polymorphic, after a delay and under `if`.                         --
+--                                                                    --
+-- Exercises: eternality asked of an unknown (`Generate`, `Solve`).   --
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Examples.Compare.All where

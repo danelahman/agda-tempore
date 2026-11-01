@@ -1,9 +1,11 @@
--------------------------------------------------------------------
--- The standard library at left-sided intervals                  --
---                                                               --
--- The unit is the top and multiplication commutes: `compose`    --
--- and `min` report no time condition; effects come sorted.      --
--------------------------------------------------------------------
+------------------------------------------------------------------------
+-- The standard library at left-sided intervals                       --
+--                                                                    --
+-- The unit is the greatest grade and multiplication commutes:        --
+-- `compose` and `min` get schemes without a time condition, the      --
+-- effects in `compose` sorted. The other functions get the scheme    --
+-- written in `Stdlib`.                                               --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

@@ -1,12 +1,11 @@
-------------------------------------------------------------------
--- Primitive recursion at left-sided intervals                  --
---                                                              --
--- The unit is the top, so every recursion's effect is the unit --
--- and a countdown on three is refuted at three ticks.          --
--- Functions and heads of any type are usable in the step. A    --
--- clause dropping its continuation after a countdown is        --
--- refuted.                                                     --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Primitive recursion at left-sided intervals                        --
+--                                                                    --
+-- The unit is the top, so every recursion's effect is the unit, and  --
+-- a countdown on three annotated at three ticks is refuted.          --
+-- Functions and heads of any type are usable in the step. A clause   --
+-- that drops its continuation after a countdown is refuted.          --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

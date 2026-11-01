@@ -1,8 +1,9 @@
-------------------------------------------------------------------
--- Handlers at timed traces, allowance order                    --
---                                                              --
--- The shared schemes; `discard` typed, `resume-twice` refuted. --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Handlers at timed traces, allowance order                          --
+--                                                                    --
+-- The unit is least. Every program gets the scheme written in        --
+-- `Handlers`; `discard` is typable, and `resume-twice` is refuted.   --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

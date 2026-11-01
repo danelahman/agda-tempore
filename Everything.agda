@@ -1,33 +1,43 @@
------------------------------------------------------------------------
--- Root for every module of the project: the grades, language and    --
--- utilities the two calculi share, the polymorphic calculus and its --
--- type inference (`PolymorphicCalculus/Everything.agda`), and the   --
--- monomorphic calculus (`MonomorphicCalculus/Everything.agda`).     --
---                                                                   --
--- Check with `agda Everything.agda`.                                --
------------------------------------------------------------------------
+------------------------------------------------------------------------
+-- The whole development                                              --
+--                                                                    --
+-- The root of the development. It checks the modules the two calculi --
+-- share (utilities, grades and the language) and both calculi: the   --
+-- polymorphic calculus with its type inference                       --
+-- (`PolymorphicCalculus/Everything.agda`) and the monomorphic        --
+-- calculus (`MonomorphicCalculus/Everything.agda`).                  --
+--                                                                    --
+-- Check with `agda Everything.agda`.                                 --
+------------------------------------------------------------------------
 
 module Everything where
 
--- UTILITIES
-------------
+------------------------------------------------------------------------
+-- Utilities                                                          --
+------------------------------------------------------------------------
+
+-- Equality lemmas and the non-negative rationals.
 
 import Util.Equality
 import Util.NonNegativeRational
 
 
--- GRADES
----------
+------------------------------------------------------------------------
+-- Grades                                                             --
+------------------------------------------------------------------------
 
----- Grade algebras, grade morphisms and grade systems
+-- The grade algebras and grade systems the calculi are parameterised
+-- by, the constructions on them, and their examples.
+
+-- Grade algebras, grade morphisms and grade systems
 
 import Grades.Base
 
----- The hints the solver reads
+-- The hints the solver reads
 
 import Grades.Hints
 
----- Durations: the monoid of delays, time domains, intervals
+-- Durations: the monoid of delays, time domains, intervals
 
 import Grades.Durations
 import Grades.Durations.Intervals
@@ -37,15 +47,15 @@ import Grades.Durations.Nat
 import Grades.Durations.NonNegativeRational
 import Grades.Durations.Solver
 
----- Constructions on grades: products, upward closure, semidirect
----- products, indexed families
+-- Constructions on grades: products, upward closure, semidirect
+-- products, indexed families
 
 import Grades.Product
 import Grades.Upward
 import Grades.SemiDirect
 import Grades.Indexed
 
----- Mode matrices
+-- Mode matrices
 
 import Grades.Matrix
 import Grades.Matrix.Boxes
@@ -57,7 +67,7 @@ import Grades.Matrix.Modes
 import Grades.Matrix.Nominal
 import Grades.Matrix.Restrict
 
----- The timed-trace toolkit of the trace-based grades
+-- The timed-trace toolkit of the trace-based grades
 
 import Grades.Traces
 import Grades.Traces.Allowance
@@ -93,7 +103,7 @@ import Grades.Traces.RunningTimes
 import Grades.Traces.Sets
 import Grades.Traces.Slack
 
----- Regular languages as grades
+-- Regular languages as grades
 
 import Grades.Regular
 import Grades.Regular.Automaton
@@ -123,7 +133,7 @@ import Grades.Regular.Plus
 import Grades.Regular.Properties
 import Grades.Regular.Reach
 
----- Exact timed words and interval-letter grades
+-- Exact timed words and interval-letter grades
 
 import Grades.Exact
 import Grades.Exact.Base
@@ -184,13 +194,17 @@ import Grades.Exact.Resize
 import Grades.Exact.Slots
 import Grades.Exact.Splice
 
----- Examples
+-- Examples
 
 import Grades.Examples
 
 
--- LANGUAGE
------------
+------------------------------------------------------------------------
+-- Language                                                           --
+------------------------------------------------------------------------
+
+-- What a language fixes besides its grades: base types, ground types,
+-- comparisons and an operation signature, bundled as a `LanguageSpec`.
 
 import Language.BaseTypes
 import Language.Comparisons
@@ -198,14 +212,17 @@ import Language.GroundTypes
 import Language.Operations
 import Language.Spec
 
----- Examples
+-- Examples
 
 import Language.Examples.SensorNode
 import Language.Examples.SensorNode.Identity
 
 
--- THE TWO CALCULI
-------------------
+------------------------------------------------------------------------
+-- The two calculi                                                    --
+------------------------------------------------------------------------
+
+-- Each root lists its own modules.
 
 import PolymorphicCalculus.Everything
 import MonomorphicCalculus.Everything

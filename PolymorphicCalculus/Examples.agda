@@ -1,9 +1,16 @@
 ------------------------------------------------------------------------
--- The type-inference examples, in sets. They run the solver and take
--- minutes, so `PolymorphicCalculus/Everything.agda` does not include them.
--- Check with `agda PolymorphicCalculus/Examples.agda`; each set's index
--- `PolymorphicCalculus/Examples/<Set>/All.agda` names the solver parts it
--- exercises and can be checked alone.
+-- The type-inference examples                                        --
+--                                                                    --
+-- Programs run through type inference at concrete grades, and solver --
+-- stages run on hand-written constraints, in sets by what they test. --
+-- Each answer is checked by `refl`: a scheme against the one         --
+-- expected, a refusal against `untypable`.                           --
+--                                                                    --
+-- The examples run the solver and take minutes, so                   --
+-- `PolymorphicCalculus/Everything.agda` does not include them. Check --
+-- them all with `agda PolymorphicCalculus/Examples.agda`, or one set --
+-- alone with `agda PolymorphicCalculus/Examples/<Set>/All.agda`,     --
+-- whose header names the solver parts it exercises.                  --
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Examples where

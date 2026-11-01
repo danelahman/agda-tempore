@@ -1,9 +1,9 @@
-------------------------------------------------------------------
--- Runs at right-sided intervals                                --
---                                                              --
--- A budget at the top is established, at any finite grade      --
--- refuted; `stretch` is refuted.                               --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Runs at right-sided intervals                                      --
+--                                                                    --
+-- A budget is established at the top, and refuted at a grade below   --
+-- its delay and at one above it. `stretch` is refuted.               --
+------------------------------------------------------------------------
 
 open import Relation.Nullary using (¬_)
 
@@ -31,7 +31,7 @@ budget-top-verdict = refl
 budget-top-typable : Typable [] (budget-top 1)
 budget-top-typable = check-typable [] (budget-top 1) budget-top-verdict
 
--- below the delay: refuted through the factor edge
+-- below the delay: refuted, as `τ` is not below `c`
 
 budget-short-verdict : infer [] (budget-at 2 1) ≡ untypable
 budget-short-verdict = refl
@@ -39,7 +39,7 @@ budget-short-verdict = refl
 budget-short-not-typable : ¬ Typable [] (budget-at 2 1)
 budget-short-not-typable = infer-untypable [] (budget-at 2 1) budget-short-verdict
 
--- above the delay: `ε₀` is lowered to the top, and `⊤ ≾ ⌜ 3 ⌝` is false
+-- above the delay: the least `ε₀` is the top, and `⊤ ≾ ⌜ 3 ⌝` is false
 
 budget-long-verdict : infer [] (budget-at 1 3) ≡ untypable
 budget-long-verdict = refl
@@ -49,7 +49,7 @@ budget-long-not-typable = infer-untypable [] (budget-at 1 3) budget-long-verdict
 
 ------------------------------------------------------------------
 -- 2. A handler calling the result of its resumption: refuted at a
--- witness
+-- candidate grade
 
 stretch-verdict : infer [] (stretch 1) ≡ untypable
 stretch-verdict = refl

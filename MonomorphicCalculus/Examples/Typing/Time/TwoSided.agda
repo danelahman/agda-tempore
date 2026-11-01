@@ -1,36 +1,39 @@
 ------------------------------------------------------------------------
--- Typed example computations at the grade of two-sided windows.      --
+-- Typed computations at two-sided windows of time                    --
 --                                                                    --
--- Effect grades and resource grades are both `[ min , max ]`, and    --
--- the operations are graded by the window in which their execution   --
--- time lies: read 1, write 2-3, send 4-6.                            --
+-- The grade                                                          --
+--   Effect grades and resource grades are both `[ min , max ]`. The  --
+--   operations are graded by the window in which their execution     --
+--   time lies: read 1, write 2-3, send 4-6.                          --
 --                                                                    --
--- `ρ' ≾ᵣ ρ` requires both `min ρ ≤ min ρ'` and `max ρ' ≤ max ρ`, so  --
--- the premise of `unbox` states that the elapsed grade is late       --
--- enough for the box and still within it. A box is a resource with a --
--- window: available from `min ρ` and unavailable after `max ρ`. The  --
--- examples below exhibit both failures: a claim made before the      --
--- window opens and one made after it closes.                         --
+--   The upper endpoint ranges over the extended naturals, so every   --
+--   window below is `[ min , ↑ max ]`; `[ 0 , ∞ ]` is the greatest   --
+--   grade, bounding the elapsed time at neither end.                 --
 --                                                                    --
--- The two endpoints settle the two questions that the one-sided      --
--- grades settle one each:                                            --
+-- What it shows                                                      --
+--   `ρ' ≾ᵣ ρ` requires both `min ρ ≤ min ρ'` and `max ρ' ≤ max ρ`,   --
+--   so the premise of `unbox` states that the elapsed grade is late  --
+--   enough for the box and still within it. A box is a resource with --
+--   a window: available from `min ρ` and unavailable after `max ρ`.  --
+--   The examples below exhibit both failures: a claim made before    --
+--   the window opens and one made after it closes.                   --
 --                                                                    --
---   * the bound `ρ ≾ᵣ 𝟏ᵣ` of `var` forces `max ρ` to `0`, so a       --
---     reading goes stale after any activity; the upper endpoint      --
---     decides it, as at the upper bounds.                            --
+--   The two endpoints settle the two questions that the one-sided    --
+--   grades settle one each:                                          --
 --                                                                    --
---   * a handler clause cannot discard its continuation, `𝟏ₑ ≾ₑ ε`    --
---     forcing `min ε` to `0`; the lower endpoint decides it, as at   --
---     the lower bounds.                                              --
+--   Readings. The bound `ρ ≾ᵣ 𝟏ᵣ` of `var` forces `max ρ` to `0`, so --
+--   a reading goes stale after any activity; the upper endpoint      --
+--   decides it, as at the upper bounds.                              --
 --                                                                    --
--- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
--- modality, `∷ A` a binding. They write an interval as               --
--- `[ min , max ]`.                                                   --
+--   Handlers. A handler clause cannot discard its continuation,      --
+--   `𝟏ₑ ≾ₑ ε` forcing `min ε` to `0`; the lower endpoint decides it, --
+--   as at the lower bounds.                                          --
 --                                                                    --
--- The upper endpoint ranges over the extended naturals, so every     --
--- window below is `[ min , ↑ max ]`; `[ 0 , ∞ ]` is the greatest     --
--- grade, bounding the elapsed time at neither end.                   --
+-- How to read them                                                   --
+--   The comments inside the programs state what each former appends  --
+--   to the context in which its subcomputation is typed: `⟨ ρ ⟩` a   --
+--   modality, `∷ A` a binding. They write an interval as             --
+--   `[ min , max ]`.                                                 --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Time.TwoSided where

@@ -1,24 +1,27 @@
 ------------------------------------------------------------------------
--- Typed example computations at the grade of trace contracts.        --
+-- Typed computations at the grade of trace contracts                 --
 --                                                                    --
--- A grade `[ P , Q ]` pairs a coverage floor with an allowance cap:  --
--- whatever the computation did, it covered one of the guarantees in  --
--- `P` and stayed within one of the allowances in `Q`. Each operation --
--- is graded by the one-event run that performs it, at both           --
--- endpoints.                                                         --
+-- The grade                                                          --
+--   A grade `[ P , Q ]` pairs a coverage floor with an allowance     --
+--   cap: whatever the computation did, it covered one of the         --
+--   guarantees in `P` and stayed within one of the allowances in     --
+--   `Q`. Each operation is graded by the one-event run that performs --
+--   it, at both endpoints.                                           --
 --                                                                    --
--- This is the trace counterpart of the two-sided time windows, the   --
--- two endpoints refusing independently, over the operations          --
--- performed rather than their duration. A box demands that certain   --
--- operations have been performed and that no more than its           --
--- allowance has been spent since, so a claim can be refused for      --
--- doing too little and for doing too much; the examples below        --
--- exhibit both.                                                      --
+-- What it shows                                                      --
+--   This is the trace counterpart of the two-sided time windows, the --
+--   two endpoints refusing independently, over the operations        --
+--   performed rather than their duration. A box demands that certain --
+--   operations have been performed and that no more than its         --
+--   allowance has been spent since, so a claim can be refused for    --
+--   doing too little and for doing too much; the examples below      --
+--   exhibit both.                                                    --
 --                                                                    --
--- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
--- modality, `∷ A` a binding. A grade with a name is written by that  --
--- name, the grades being pairs of trace sets.                        --
+-- How to read them                                                   --
+--   The comments inside the programs state what each former appends  --
+--   to the context in which its subcomputation is typed: `⟨ ρ ⟩` a   --
+--   modality, `∷ A` a binding. A grade with a name is written by     --
+--   that name, the grades being pairs of trace sets.                 --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Traces.Timed.TwoSided where

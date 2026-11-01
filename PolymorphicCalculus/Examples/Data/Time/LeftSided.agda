@@ -1,9 +1,11 @@
-------------------------------------------------------------------
--- Natural numbers, sums and lists at left-sided intervals      --
---                                                              --
--- Nothing goes stale and eternality is never asked for; a join --
--- of delays is the shorter.                                    --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Natural numbers, sums and lists at left-sided intervals            --
+--                                                                    --
+-- Nothing goes stale and eternality is never asked for: every        --
+-- example using a value after a delay is typed, functions included.  --
+-- A join of delays is the shorter. The eliminations at the wrong     --
+-- type are refuted.                                                  --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

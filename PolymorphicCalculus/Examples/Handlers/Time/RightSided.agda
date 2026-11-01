@@ -1,8 +1,10 @@
-------------------------------------------------------------------
--- Handlers at right-sided intervals                            --
---                                                              --
--- The shared schemes; `discard` typed, `resume-twice` refuted. --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Handlers at right-sided intervals                                  --
+--                                                                    --
+-- The unit is least and multiplication commutes. Every program gets  --
+-- the scheme written in `Handlers`, `run` in its commuted form;      --
+-- `discard` is typable, and `resume-twice` is refuted.               --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

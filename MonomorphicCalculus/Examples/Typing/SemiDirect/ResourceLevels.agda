@@ -1,25 +1,29 @@
 ------------------------------------------------------------------------
--- Typed example computations at the resource levels.                 --
+-- Typed computations at the resource levels                          --
 --                                                                    --
--- Effect grades and resource grades are both the levels of one       --
--- resource, the slots of the node's local memory: storing a reading  --
--- occupies a slot, `(0 , [1 , 1] , 1)`, and transmitting one frees   --
--- it, `(-1 , [-1 , -1] , 0)`; reading and idling touch no slot.      --
+-- The grade                                                          --
+--   Effect grades and resource grades are both the levels of one     --
+--   resource, the slots of the node's local memory: storing a        --
+--   reading occupies a slot, `(0 , [1 , 1] , 1)`, and transmitting   --
+--   one frees it, `(-1 , [-1 , -1] , 0)`; reading and idling touch   --
+--   no slot.                                                         --
 --                                                                    --
--- A buffer of one slot, all freed and none freed that was not        --
--- occupied, `(0 , [0 , 0] , 1)`, admits storing and then             --
--- transmitting, and refuses transmitting first and storing twice. A  --
--- box graded `(0 , [0 , 1] , 1)` is claimable while at most one slot --
--- has been occupied since boxing and none freed beyond.              --
+-- What it shows                                                      --
+--   A buffer of one slot, all freed and none freed that was not      --
+--   occupied, `(0 , [0 , 0] , 1)`, admits storing and then           --
+--   transmitting, and refuses transmitting first and storing twice.  --
+--   A box graded `(0 , [0 , 1] , 1)` is claimable while at most one  --
+--   slot has been occupied since boxing and none freed beyond.       --
 --                                                                    --
--- The two rules that place the unit on opposite sides of the order:  --
--- a reading survives reading and idling and goes stale after a store --
--- or a transmission, and the unit is not least, so a handler clause  --
--- cannot discard its continuation.                                   --
+--   The two rules that place the unit on opposite sides of the       --
+--   order: a reading survives reading and idling and goes stale      --
+--   after a store or a transmission, and the unit is not least, so a --
+--   handler clause cannot discard its continuation.                  --
 --                                                                    --
--- Every side condition is discharged by the decision procedure of    --
--- the grade (`decided`, `check`), and every refutation by it         --
--- (`refuted`).                                                       --
+-- How to read them                                                   --
+--   Every side condition is discharged by the decision procedure of  --
+--   the grade (`decided`, `check`), and every refutation by it       --
+--   (`refuted`).                                                     --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.SemiDirect.ResourceLevels where

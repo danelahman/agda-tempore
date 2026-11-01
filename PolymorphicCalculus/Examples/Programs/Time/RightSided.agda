@@ -1,9 +1,10 @@
-------------------------------------------------------------------
--- Programs at right-sided intervals                            --
---                                                              --
--- `keep`'s scheme requires an eternal type: `twice` is         --
--- accepted, `late`, keeping a function, rejected.              --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Programs at right-sided intervals                                  --
+--                                                                    --
+-- The scheme of `keep` requires an eternal type, so `keep-twice` is  --
+-- accepted and `keep-late`, keeping a function, is rejected at       --
+-- `late`.                                                            --
+------------------------------------------------------------------------
 
 open import Data.List.Base using ([]; _∷_)
 open import Data.Maybe.Base using (just)

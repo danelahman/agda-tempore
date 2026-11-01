@@ -1,12 +1,34 @@
--------------------------------------------------------------------
--- Inference at a grade of two components                        --
---                                                               --
--- A grade pairing time with a security level: a box is          --
--- claimable once enough time has passed and only while nothing  --
--- above its level has been touched since it was boxed. `⌜ n ⌝`  --
--- is the duration of `n` ticks. The instances under `Product/`  --
--- check each answer by `refl`.                                  --
--------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Inference at a grade of two components                             --
+--                                                                    --
+-- A grade pairing time with a security level: a box is claimable     --
+-- once enough time has passed, and only while nothing above its      --
+-- level has been touched since it was boxed. `⌜ n ⌝` is the duration --
+-- of `n` ticks.                                                      --
+--                                                                    --
+-- The examples, in five numbered groups                              --
+--   embargoed c d        a box of grade `c` claimed after `d` ticks; --
+--                        a tick touches no level                     --
+--   transmitted c op d   the same claim after an operation and `d`   --
+--                        ticks, checked in time and in level at once --
+--   joined-claim         a claim after one operation and then one    --
+--                        of two more, by branch; the box's grade     --
+--                        and the effect join the two branches        --
+--   publish op           a higher-order function: the box's grade    --
+--                        mixes the argument's effect with a constant --
+--   twice op             a reading used again after an operation     --
+--                                                                    --
+-- How to read them                                                   --
+--   Each program is written above its definition in ordinary syntax, --
+--   with what it needs. The modules under `Product/` run inference   --
+--   at time bounded from below and from above, each paired with a    --
+--   security level, and check each answer with `refl`:               --
+--     publish-reported :                                             --
+--       schemeOf (infer [] (publish send))                           --
+--         ≡ just (expected-publish send)                             --
+--   A refused claim comes with the verdict `infer [] p ≡ untypable`  --
+--   and the proof `¬ Typable [] p` drawn from it.                    --
+------------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
 open import Data.Nat using (ℕ)

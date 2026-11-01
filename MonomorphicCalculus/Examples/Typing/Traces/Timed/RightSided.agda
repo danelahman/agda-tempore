@@ -1,29 +1,33 @@
 ------------------------------------------------------------------------
--- Typed example computations at the grade of trace allowances.       --
+-- Typed computations at the grade of trace allowances                --
 --                                                                    --
--- Effect grades and resource grades are both sets of timed traces at --
--- the allowance order, and each operation is graded by the one-event --
--- run that performs it. A grade is a set of bounds, and a            --
--- computation lies below it when each of its runs stays within one   --
--- of them: the operations of the bound are permissions and its       --
--- delays a budget, spent on idling and on operations the bound does  --
--- not list, at `costʰⁱ` (read 1, write 3, send 6).                   --
+-- The grade                                                          --
+--   Effect grades and resource grades are both sets of timed traces  --
+--   at the allowance order, and each operation is graded by the      --
+--   one-event run that performs it. A grade is a set of bounds, and  --
+--   a computation lies below it when each of its runs stays within   --
+--   one of them: the operations of the bound are permissions and its --
+--   delays a budget, spent on idling and on operations the bound     --
+--   does not list, at `costʰⁱ` (read 1, write 3, send 6).            --
 --                                                                    --
--- The grade records which operations a run performed and where.      --
--- The premise of `unbox` requires the elapsed run to be one the box  --
--- permits, and a claim can be refused for performing the wrong       --
--- operations, or the right operations in the wrong order, rather     --
--- than for taking too long. Both refusals are shown below.           --
+--   Sub-effecting is the same order, and a union is a join, so a     --
+--   conditional is graded by the union of the grades of its          --
+--   branches.                                                        --
 --                                                                    --
--- Sub-effecting is the same order, and a union is a join, so a       --
--- conditional is graded by the union of the grades of its branches.  --
+-- What it shows                                                      --
+--   The grade records which operations a run performed and where.    --
+--   The premise of `unbox` requires the elapsed run to be one the    --
+--   box permits, and a claim can be refused for performing the wrong --
+--   operations, or the right operations in the wrong order, rather   --
+--   than for taking too long. Both refusals are shown below.         --
 --                                                                    --
--- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
--- modality, `∷ A` a binding. The modalities between the binding of a --
--- box and its `unbox` multiply to the run that the premise compares  --
--- with the allowance of the box, so the order of the modalities is   --
--- part of what is checked.                                           --
+-- How to read them                                                   --
+--   The comments inside the programs state what each former appends  --
+--   to the context in which its subcomputation is typed: `⟨ ρ ⟩` a   --
+--   modality, `∷ A` a binding. The modalities between the binding of --
+--   a box and its `unbox` multiply to the run that the premise       --
+--   compares with the allowance of the box, so the order of the      --
+--   modalities is part of what is checked.                           --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Traces.Timed.RightSided where

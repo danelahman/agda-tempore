@@ -1,17 +1,20 @@
 ------------------------------------------------------------------------
--- Typed example computations over the duration-hull system of the    --
--- rigid regular-expression lower bounds, in dense time.              --
+-- Typed computations over the duration-hull system of the rigid      --
+-- regular-expression lower bounds, in dense time                     --
 --                                                                    --
--- Effect grades are lower bounds over interval letters, each         --
--- operation graded by itself; resource grades are left-sided time    --
--- intervals, and an effect grade is measured by its fastest run. A   --
--- box asking for a unit of time may be opened after a reading and a  --
--- wait of a unit, the reading's quarter adding to it; right after    --
--- the reading it may not. The effect grade records the run itself:   --
--- the reading, an undisturbed wait, and the store.                   --
+-- The grade system                                                   --
+--   Effect grades are lower bounds over interval letters, each       --
+--   operation graded by itself; resource grades are left-sided time  --
+--   intervals, and an effect grade is measured by its fastest run.   --
 --                                                                    --
--- Reading takes more than a quarter and at most half a unit, writing --
--- one to two units, sending two to four.                             --
+--   Reading takes more than a quarter and at most half a unit,       --
+--   writing one to two units, sending two to four.                   --
+--                                                                    --
+-- What it shows                                                      --
+--   A box asking for a unit of time may be opened after a reading    --
+--   and a wait of a unit, the reading's quarter adding to it; right  --
+--   after the reading it may not. The effect grade records the run   --
+--   itself: the reading, an undisturbed wait, and the store.         --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.System.Traces.Rigid.Rational.LeftSided where

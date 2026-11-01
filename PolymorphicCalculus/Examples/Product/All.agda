@@ -1,7 +1,11 @@
 ------------------------------------------------------------------------
--- Time paired with a security level: boxes refused for being out of
--- time or tainted. Exercises product grades and normal forms
--- (`Product`, `Normal`, `Entail`).
+-- A grade of two components                                          --
+--                                                                    --
+-- Time paired with a security level: boxes refused for being out of  --
+-- time or tainted.                                                   --
+--                                                                    --
+-- Exercises: product grades and normal forms (`Product`, `Normal`,   --
+-- `Entail`).                                                         --
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Examples.Product.All where

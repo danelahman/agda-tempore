@@ -1,10 +1,15 @@
 ------------------------------------------------------------------------
--- The context modality at two-sided time, `ρ = [1,2]`, which is not  --
--- above the unit `[0,0]`. With `σ = [0,1]` and `σ' = [1,1]`,         --
--- `σ ⋦ 𝟏`, `σ' ≾ ρ` and `σ · σ' ≾ ρ`, so `L_[1,2]` is not a          --
--- parametric right adjoint (`not-PRA-[1,2]`); it has no left adjoint --
--- either (`no-left-adjoint-[1,2]`). The grade's own `_≾?_` decides   --
--- the side conditions.                                               --
+-- The context modality at two-sided time                             --
+--                                                                    --
+-- The example                                                        --
+--   `ρ = [1,2]`, which is not above the unit `[0,0]`, with           --
+--   `σ = [0,1]` and `σ' = [1,1]`. Then `σ ⋦ 𝟏`, `σ' ≾ ρ` and         --
+--   `σ · σ' ≾ ρ`.                                                    --
+--                                                                    --
+-- What it shows                                                      --
+--   `L_[1,2]` is not a parametric right adjoint (`not-PRA-[1,2]`),   --
+--   and it has no left adjoint either (`no-left-adjoint-[1,2]`). The --
+--   grade's own `_≾?_` decides the side conditions.                  --
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥)

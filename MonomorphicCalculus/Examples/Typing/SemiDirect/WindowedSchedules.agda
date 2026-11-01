@@ -1,26 +1,29 @@
 ------------------------------------------------------------------------
--- Typed example computations at the windowed schedules.              --
+-- Typed computations at the windowed schedules                       --
 --                                                                    --
--- Effect grades and resource grades are both a set of durations and, --
--- for each operation, the times at which it happens. A reading takes --
--- one step, storing two or three, transmitting four to six, each     --
--- happening at its own start; `delay n` takes `n` steps and does     --
--- nothing.                                                           --
+-- The grade                                                          --
+--   Effect grades and resource grades are both a set of durations    --
+--   and, for each operation, the times at which it happens. A        --
+--   reading takes one step, storing two or three, transmitting four  --
+--   to six, each happening at its own start; `delay n` takes `n`     --
+--   steps and does nothing.                                          --
 --                                                                    --
--- A schedule that lets the radio warm up for three steps admits an   --
--- uplink that idles two steps between reading and transmitting, and  --
--- refuses one that transmits at once. A box graded "within four      --
--- steps, anything at any time" is a value that goes stale: it is     --
--- claimed after idling three steps, and refused after five.          --
+-- What it shows                                                      --
+--   A schedule that lets the radio warm up for three steps admits an --
+--   uplink that idles two steps between reading and transmitting,    --
+--   and refuses one that transmits at once. A box graded "within     --
+--   four steps, anything at any time" is a value that goes stale: it --
+--   is claimed after idling three steps, and refused after five.     --
 --                                                                    --
--- The two rules that place the unit on opposite sides of the order:  --
--- the unit takes no time, so a reading goes stale after any step,    --
--- idling included; and it is not least, so a handler clause cannot   --
--- discard its continuation.                                          --
+--   The two rules that place the unit on opposite sides of the       --
+--   order: the unit takes no time, so a reading goes stale after any --
+--   step, idling included; and it is not least, so a handler clause  --
+--   cannot discard its continuation.                                 --
 --                                                                    --
--- Every side condition is discharged by the decision procedure of    --
--- the grade (`decided`, `check`), and every refutation by it         --
--- (`refuted`).                                                       --
+-- How to read them                                                   --
+--   Every side condition is discharged by the decision procedure of  --
+--   the grade (`decided`, `check`), and every refutation by it       --
+--   (`refuted`).                                                     --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.SemiDirect.WindowedSchedules where

@@ -1,8 +1,8 @@
-------------------------------------------------------------------
--- Annotated programs at left-sided intervals                   --
---                                                              --
--- Every scheme is the one written in `Annotations`.            --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Annotated programs at left-sided intervals                         --
+--                                                                    --
+-- Every program gets the scheme written in `Annotations`.            --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

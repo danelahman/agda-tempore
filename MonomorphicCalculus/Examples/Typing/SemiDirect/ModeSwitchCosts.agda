@@ -1,27 +1,30 @@
 ------------------------------------------------------------------------
--- Typed example computations at the mode-switch costs.               --
+-- Typed computations at the mode-switch costs                        --
 --                                                                    --
--- Effect grades and resource grades are both mode-switch costs over  --
--- two modes of the node, `Idle` (mode 0) and `Radio` (mode 1), the   --
--- radio on. Reading works in every mode and keeps it; storing works  --
--- only when idle, the memory and the radio sharing a bus; and        --
--- transmitting switches the radio on from `Idle`, at cost 1, or      --
--- transmits with it on, at no cost. From any other mode an operation --
--- gets stuck.                                                        --
+-- The grade                                                          --
+--   Effect grades and resource grades are both mode-switch costs     --
+--   over two modes of the node, `Idle` (mode 0) and `Radio` (mode    --
+--   1), the radio on. Reading works in every mode and keeps it;      --
+--   storing works only when idle, the memory and the radio sharing a --
+--   bus; and transmitting switches the radio on from `Idle`, at cost --
+--   1, or transmits with it on, at no cost. From any other mode an   --
+--   operation gets stuck.                                            --
 --                                                                    --
--- A policy "the radio switched on at most once, never stuck from     --
--- `Idle` or `Radio`" admits two transmissions and refuses storing    --
--- after a transmission, which gets stuck. A box graded "at most one  --
--- switch since boxing" is claimable after a transmission.            --
+-- What it shows                                                      --
+--   A policy "the radio switched on at most once, never stuck from   --
+--   `Idle` or `Radio`" admits two transmissions and refuses storing  --
+--   after a transmission, which gets stuck. A box graded "at most    --
+--   one switch since boxing" is claimable after a transmission.      --
 --                                                                    --
--- The two rules that place the unit on opposite sides of the order:  --
--- a reading survives reading and idling and goes stale after a       --
--- store, which gets stuck from `Radio`; and the unit is not least,   --
--- so a handler clause cannot discard its continuation.               --
+--   The two rules that place the unit on opposite sides of the       --
+--   order: a reading survives reading and idling and goes stale      --
+--   after a store, which gets stuck from `Radio`; and the unit is    --
+--   not least, so a handler clause cannot discard its continuation.  --
 --                                                                    --
--- Every side condition is discharged by the decision procedure of    --
--- the grade (`decided`, `check`), and every refutation by it         --
--- (`refuted`).                                                       --
+-- How to read them                                                   --
+--   Every side condition is discharged by the decision procedure of  --
+--   the grade (`decided`, `check`), and every refutation by it       --
+--   (`refuted`).                                                     --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.SemiDirect.ModeSwitchCosts where

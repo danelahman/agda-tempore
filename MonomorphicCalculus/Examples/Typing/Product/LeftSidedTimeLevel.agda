@@ -1,36 +1,42 @@
 ------------------------------------------------------------------------
--- Typed example computations at lower bounds on time paired with a   --
--- security level.                                                    --
+-- Typed computations at lower bounds on time with a security level   --
 --                                                                    --
--- Effect grades and resource grades are both `([ n ,+∞⟩ , ℓ)`, "at   --
--- least `n` time steps, touching nothing above `ℓ`", and an          --
--- operation is graded by the time it is guaranteed to take and the   --
--- level it touches: read 1 and write 2 at `Low`, send 4 at `High`.   --
+-- The grade                                                          --
+--   Effect grades and resource grades are both `([ n ,+∞⟩ , ℓ)`, "at --
+--   least `n` time steps, touching nothing above `ℓ`". An operation  --
+--   is graded by the time it is guaranteed to take and the level it  --
+--   touches: read 1 and write 2 at `Low`, send 4 at `High`.          --
 --                                                                    --
--- Sequencing adds the times and joins the levels, so the level is a  --
--- floating label: once a run has transmitted, it is `High`           --
--- thereafter. As a resource grade, `[ ([ n ,+∞⟩ , Low) ] A` is an    --
--- embargoed report: the premise of `unbox` requires that `n` steps   --
--- have passed since boxing and that nothing since has touched        --
--- `High`. A claim can be refused for being early or for being        --
--- tainted; waiting removes the first reason and never the second.    --
--- Both refusals are shown below.                                     --
+--   Sequencing adds the times and joins the levels, so the level is  --
+--   a floating label: once a run has transmitted, it is `High`       --
+--   thereafter.                                                      --
 --                                                                    --
--- The two rules that place the unit on opposite sides of the order   --
--- are decided by different components:                               --
+-- What it shows                                                      --
+--   As a resource grade, `[ ([ n ,+∞⟩ , Low) ] A` is an embargoed    --
+--   report: the premise of `unbox` requires that `n` steps have      --
+--   passed since boxing and that nothing since has touched `High`. A --
+--   claim can be refused for being early or for being tainted;       --
+--   waiting removes the first reason and never the second. Both      --
+--   refusals are shown below.                                        --
 --                                                                    --
---   * the bound `ρ ≾ᵣ 𝟏ᵣ` of `var` holds exactly when `ρ` is `Low`:  --
---     time never makes a reading stale, and a transmission does.     --
+--   The two rules that place the unit on opposite sides of the order --
+--   are decided by different components:                             --
 --                                                                    --
---   * a handler clause cannot discard its continuation, returning at --
---     once guaranteeing none of the time of the operation.           --
+--   Readings. The bound `ρ ≾ᵣ 𝟏ᵣ` of `var` holds exactly when `ρ` is --
+--   `Low`: time never makes a reading stale, and a transmission      --
+--   does.                                                            --
 --                                                                    --
--- Every claim is checked componentwise, `≤!` on the time and `⊑!` on --
--- the level; a refutation names the component that fails.            --
+--   Handlers. A handler clause cannot discard its continuation,      --
+--   returning at once guaranteeing none of the time of the           --
+--   operation.                                                       --
 --                                                                    --
--- The comments inside the programs state what each former appends to --
--- the context in which its subcomputation is typed: `⟨ ρ ⟩` a        --
--- modality, `∷ A` a binding.                                         --
+-- How to read them                                                   --
+--   Every claim is checked componentwise, `≤!` on the time and `⊑!`  --
+--   on the level; a refutation names the component that fails.       --
+--                                                                    --
+--   The comments inside the programs state what each former appends  --
+--   to the context in which its subcomputation is typed: `⟨ ρ ⟩` a   --
+--   modality, `∷ A` a binding.                                       --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.Examples.Typing.Product.LeftSidedTimeLevel where

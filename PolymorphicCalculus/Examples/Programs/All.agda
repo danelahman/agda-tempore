@@ -1,8 +1,11 @@
 ------------------------------------------------------------------------
--- Programs of several definitions: a definition used at two instances
--- of its scheme, and at one failing its hypotheses. Exercises uses of a
--- definition, value schemes and program checking (`Generate`, `Values`,
--- `Checking`).
+-- Programs of several definitions                                    --
+--                                                                    --
+-- A definition used at two instances of its scheme, and at one       --
+-- failing its hypotheses.                                            --
+--                                                                    --
+-- Exercises: uses of a definition, value schemes and program         --
+-- checking (`Generate`, `Values`, `Checking`).                       --
 ------------------------------------------------------------------------
 
 module PolymorphicCalculus.Examples.Programs.All where

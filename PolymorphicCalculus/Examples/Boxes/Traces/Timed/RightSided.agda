@@ -1,11 +1,12 @@
--------------------------------------------------------------------
--- Boxes at timed traces, allowance order                        --
---                                                               --
--- A box is a permit, claimable while the elapsed run stays      --
--- within it; operations cost `costʰⁱ` (read 1, write 3,         --
--- send 6). No non-eternal variable survives a tick. Late        --
--- claims are refused.                                           --
--------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Boxes at timed traces, allowance order                             --
+--                                                                    --
+-- A box is a permit, claimable while the elapsed run stays within    --
+-- it; operations cost `costʰⁱ` (read 1, write 3, send 6). No         --
+-- non-eternal variable survives a tick, so `stale-call`,             --
+-- `boxed-call` and `nesting` are refuted, and late claims are        --
+-- refused.                                                           --
+------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 
