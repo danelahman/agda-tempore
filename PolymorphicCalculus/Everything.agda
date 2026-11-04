@@ -169,6 +169,22 @@ import PolymorphicCalculus.OperationalSemantics.Termination.Reducibility
 import PolymorphicCalculus.OperationalSemantics.TypeSafety
 
 ------------------------------------------------------------------------
+-- Running operations by top-level (pure) implementations             --
+------------------------------------------------------------------------
+
+-- Model of a (pure) top-level semantics that replaces an operation call
+-- by the value of its implementation, with preservation and progress.
+--
+-- Where to look, under `OperationalSemantics/`
+--   TopLevel            the implementations (TopLevelOpSemantics)
+--   TopLevel/Reduction  the machine (TopLevelStep) and preservation
+--   TopLevel/Progress   progress
+
+import PolymorphicCalculus.OperationalSemantics.TopLevel
+import PolymorphicCalculus.OperationalSemantics.TopLevel.Progress
+import PolymorphicCalculus.OperationalSemantics.TopLevel.Reduction
+
+------------------------------------------------------------------------
 -- Programs                                                           --
 ------------------------------------------------------------------------
 
