@@ -6,7 +6,7 @@
 -- morphism `h` of durations, lifts to grade morphisms along `h`      --
 -- between the lifted grades built over the two time domains, as soon --
 -- as it is monotone for the trace orders they are built at. The      --
--- carriers are mapped through `Traces.Embedding`; the two-sided      --
+-- carriers are mapped through `Traces.Embedding`; the interval       --
 -- grade's coherence field is carried by mapping the witnessing run.  --
 ------------------------------------------------------------------------
 
@@ -48,9 +48,9 @@ open import Grades.Base using (strictᵍ; Grade; GradeMorphism; StrictMorphism)
 
 import Grades.Traces.Embedding as Embedding
 import Grades.Traces.Durations as Dur
-import Grades.Examples.Traces.Lifted.LeftSided as LeftSided
-import Grades.Examples.Traces.Lifted.RightSided as RightSided
-import Grades.Examples.Traces.Lifted.TwoSided as TwoSided
+import Grades.Examples.Traces.Lifted.LowerBound as LowerBound
+import Grades.Examples.Traces.Lifted.UpperBound as UpperBound
+import Grades.Examples.Traces.Lifted.Interval as Interval
 
 ------------------------------------------------------------------------
 -- Lower bounds
@@ -61,17 +61,17 @@ module Left (O₁ : Order.TraceOrder T₁ Op) (O₂ : Order.TraceOrder T₂ Op)
   where
 
   private
-    module L₁ = LeftSided T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₁
-    module L₂ = LeftSided T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₂
+    module L₁ = LowerBound T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₁
+    module L₂ = LowerBound T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₂
     module E = Embedding T₁ T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
                  (Order.TraceOrder.base O₁) (Order.TraceOrder.base O₂) f f-∙ f-mono
 
-  left-sided→ˢ : StrictMorphism h L₁.left-sided L₂.left-sided
+  lower-bound→ˢ : StrictMorphism h L₁.lower-bound L₂.lower-bound
 
-  left-sided→ : GradeMorphism h L₁.left-sided L₂.left-sided
-  left-sided→ = strictᵍ left-sided→ˢ
+  lower-bound→ : GradeMorphism h L₁.lower-bound L₂.lower-bound
+  lower-bound→ = strictᵍ lower-bound→ˢ
 
-  left-sided→ˢ = record
+  lower-bound→ˢ = record
     { map          = E.mapᴬ
     ; map-monotone = λ {P} {Q} → E.mapᴬ-mono {P} {Q}
     ; map-𝟏        = trans (E.mapᴬ-singleton _) (cong L₂.singleton f-ε)
@@ -89,8 +89,8 @@ module Right (O₁ : Order.TraceOrder T₁ Op) (O₂ : Order.TraceOrder T₂ Op)
           → Order.TraceOrder._≼_ O₁ s t → Order.TraceOrder._≼_ O₂ (f s) (f t))
   where
 
-  module R₁ = RightSided T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₁
-  module R₂ = RightSided T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₂
+  module R₁ = UpperBound T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₁
+  module R₂ = UpperBound T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₂
   module E = Embedding T₁ T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
                  (Order.flipᵖ T₁ Op (Order.TraceOrder.base O₁))
                  (Order.flipᵖ T₂ Op (Order.TraceOrder.base O₂)) f f-∙ f-mono
@@ -114,12 +114,12 @@ module Right (O₁ : Order.TraceOrder T₁ Op) (O₂ : Order.TraceOrder T₂ Op)
   mapᵇ-⊔ (R₁.within _) R₁.unbounded  = refl
   mapᵇ-⊔ R₁.unbounded  _             = refl
 
-  right-sided→ˢ : StrictMorphism h R₁.right-sided R₂.right-sided
+  upper-bound→ˢ : StrictMorphism h R₁.upper-bound R₂.upper-bound
 
-  right-sided→ : GradeMorphism h R₁.right-sided R₂.right-sided
-  right-sided→ = strictᵍ right-sided→ˢ
+  upper-bound→ : GradeMorphism h R₁.upper-bound R₂.upper-bound
+  upper-bound→ = strictᵍ upper-bound→ˢ
 
-  right-sided→ˢ = record
+  upper-bound→ˢ = record
     { map          = mapᵇ
     ; map-monotone = λ {P} {Q} → mapᵇ-mono {P} {Q}
     ; map-𝟏        = cong R₂.within_
@@ -165,9 +165,9 @@ module Two
   where
 
   private
-    module W₁ = TwoSided T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ₁ costʰⁱ₁ cost-≤₁
+    module W₁ = Interval T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ₁ costʰⁱ₁ cost-≤₁
                   Oᶠ₁ Oᶜ₁ durᶠ₁ durᶜ₁ consistent?₁
-    module W₂ = TwoSided T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ₂ costʰⁱ₂ cost-≤₂
+    module W₂ = Interval T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ₂ costʰⁱ₂ cost-≤₂
                   Oᶠ₂ Oᶜ₂ durᶠ₂ durᶜ₂ consistent?₂
     module ML = Left Oᶠ₁ Oᶠ₂ f-monoᶠ
     module MR = Right Oᶜ₁ Oᶜ₂ f-monoᶜ
@@ -192,24 +192,24 @@ module Two
     W₂.◇ˢ₀-n-n {map f xs} {map f (MR.R₁.traces Q)} (map-◇ˢ₀ p)
   map-◇ˢ {xs} {MR.R₁.unbounded} _ = tt
 
-  mapᵗˢ : W₁.TwoSided → W₂.TwoSided
+  mapᵗˢ : W₁.Interval → W₂.Interval
   mapᵗˢ i =
     W₂.[ EL.mapᴬ (W₁.lo i) , MR.mapᵇ (W₁.hi i) ]
        {map-◇ˢ {EL.R₁.traces (W₁.lo i)} {W₁.hi i} (W₁.lo◇hi i)}
 
-  two-sided→ : GradeMorphism h W₁.two-sided W₂.two-sided
-  two-sided→ = strictᵍ record
+  interval→ : GradeMorphism h W₁.interval W₂.interval
+  interval→ = strictᵍ record
     { map          = mapᵗˢ
     ; map-monotone = λ { {i} {j} (p , q) →
                            EL.mapᴬ-mono {W₁.lo i} {W₁.lo j} p
                          , MR.mapᵇ-mono {W₁.hi i} {W₁.hi j} q }
-    ; map-𝟏        = W₂.eqᵗˢ (StrictMorphism.map-𝟏 ML.left-sided→ˢ)
-                             (StrictMorphism.map-𝟏 MR.right-sided→ˢ)
+    ; map-𝟏        = W₂.eqᵗˢ (StrictMorphism.map-𝟏 ML.lower-bound→ˢ)
+                             (StrictMorphism.map-𝟏 MR.upper-bound→ˢ)
     ; map-·        = λ {i} {j} → W₂.eqᵗˢ (EL.mapᴬ-· (W₁.lo i) (W₁.lo j))
                                          (MR.mapᵇ-· (W₁.hi i) (W₁.hi j))
-    ; map-⊤        = W₂.eqᵗˢ (StrictMorphism.map-⊤ ML.left-sided→ˢ) refl
+    ; map-⊤        = W₂.eqᵗˢ (StrictMorphism.map-⊤ ML.lower-bound→ˢ) refl
     ; map-⊔        = λ {i} {j} → W₂.eqᵗˢ (EL.mapᴬ-⊔ (W₁.lo i) (W₁.lo j))
                                          (MR.mapᵇ-⊔ (W₁.hi i) (W₁.hi j))
-    ; map-ι        = λ {τ} → W₂.eqᵗˢ (StrictMorphism.map-ι ML.left-sided→ˢ {τ})
-                                     (StrictMorphism.map-ι MR.right-sided→ˢ {τ})
+    ; map-ι        = λ {τ} → W₂.eqᵗˢ (StrictMorphism.map-ι ML.lower-bound→ˢ {τ})
+                                     (StrictMorphism.map-ι MR.upper-bound→ˢ {τ})
     }

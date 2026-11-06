@@ -5,13 +5,13 @@
 -- grade can see: a sequence of operations, each with the exact time  --
 -- it ran for, and of stretches, each with an exact length and the    --
 -- set of operations that may happen inside it. A stretch with the    --
--- empty set is a strict wait, `idle t`: pure waiting. Lengths and    --
+-- empty set is an idle wait, `idle t`: pure waiting. Lengths and     --
 -- running times are positive durations of a time domain.             --
 --                                                                    --
 -- Sequencing merges adjacent stretches with the same set, adding     --
 -- their lengths, so a word in normal form has no two adjacent        --
 -- stretches with one set; the normal words form a monoid, and the    --
--- strict waits a monoid morphism from the durations.                 --
+-- idle waits a monoid morphism from the durations.                   --
 --                                                                    --
 -- Operations are coded injectively into `Fin n`, and the sets of a   --
 -- stretch are subsets of the codes.                                  --
@@ -243,7 +243,7 @@ dur-∙ (i ∷ x) y =
 ∙-conicalʳ (i ∷ x) eq = ⊥-elim (◂-nonempty i _ eq)
 
 ------------------------------------------------------------------------
--- Stretches of a given length, and strict waits
+-- Stretches of a given length, and idle waits
 
 -- the stretch of a positive length, and of no length
 
@@ -254,7 +254,7 @@ stretch-of S τ (no _)  = []
 stretch : OpSet → Carrier → Word
 stretch S τ = stretch-of S τ (0ᴰ <ᴰ? τ)
 
--- a strict wait admits no operation
+-- an idle wait admits no operation
 
 idle : Carrier → Word
 idle τ = stretch Data.Fin.Subset.⊥ τ

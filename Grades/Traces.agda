@@ -7,12 +7,12 @@
 -- supplies non-empty finite sets of such traces, the runs a          --
 -- computation may have, with the language product, the orders on     --
 -- traces, and the antichain normal forms a set is cut down to under  --
--- an order. The `Timed.*` and `Subsets.*` grades of                  --
+-- an order. The `Banked.*` and `FiniteRunSets.*` grades of           --
 -- `Grades.Examples.Traces` are built on these sets, each with its    --
 -- own carrier: antichains for a floor, antichains with an added      --
--- greatest point for a cap, and their consistent pairs; the subset   --
--- cap is sets with an added greatest point. The regular and rigid    --
--- grades are represented by automata and expressions.                --
+-- greatest point for a cap, and their consistent pairs; the finite   --
+-- run set cap is sets with an added greatest point. The regular and  --
+-- rigid grades are represented by automata and expressions.          --
 --                                                                    --
 -- Nothing here is itself a grade. The module is only an index:       --
 -- everything is parameterised by the alphabet `Op`, and the trace    --
@@ -35,9 +35,9 @@ import Grades.Traces.Positive
 
 import Grades.Traces.Base
 
--- Non-empty finite sets of timed traces, which the timed and subset
--- grades are built on, with the language product as their monoid and
--- the subset preorder on the underlying lists. A set is held
+-- Non-empty finite sets of timed traces, which the banked and finite
+-- run set grades are built on, with the language product as their
+-- monoid and the subset preorder on the underlying lists. A set is held
 -- canonically, as the list of its members in increasing lexicographic
 -- order, so it is determined by which traces it names.
 

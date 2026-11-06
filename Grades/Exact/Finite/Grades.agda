@@ -301,7 +301,7 @@ module Common (s : Instance) where
 
 open Common
 
--- the upper instance: right-sided grades
+-- the upper instance: upper-bound grades
 
 upperᵍ : Grade D
 upperᵍ = record
@@ -333,7 +333,7 @@ upperᵍ = record
   ; ι-plus = λ {m} {n} → ↑² (waitᵁ (m +ᴰ n)) (waitᵁ m ·ᵉ waitᵁ n) (upper-split m n)
   }
 
--- the lower instance: left-sided grades
+-- the lower instance: lower-bound grades
 
 private
   lower-hom : ∀ m n (a : Dec (0ᴰ <ᴰ m)) (b : Dec (0ᴰ <ᴰ n)) (c : Dec (0ᴰ <ᴰ m +ᴰ n))

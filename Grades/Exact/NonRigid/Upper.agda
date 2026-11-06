@@ -4,7 +4,7 @@
 -- A timed trace read as a bound translates letter by letter:         --
 --                                                                    --
 --   up (o ; t)  =  o? · up t       an operation the bound permits    --
---   up (d ; t)  =  ≤d · up t       a budget of at most the delay     --
+--   up (d ; t)  =  ≤d · up t       a span of at most the delay       --
 --                                                                    --
 -- where `≤d` is a stretch admitting every operation. Then            --
 --                                                                    --
@@ -84,7 +84,7 @@ open import Grades.Exact.NonRigid.Base T Op n code code-injective running
 ------------------------------------------------------------------------
 -- The translation
 
--- a budget of at most a delay
+-- a span of at most a delay
 
 ≤ᵇ : D⁺ → Expr upper
 ≤ᵇ d = str all (fin (∣ d ∣⁺ ∣ᶜ ⁺))
@@ -242,7 +242,7 @@ mutual
   choices⁻ ε⁻ᵗ              = [] ∷ []
   choices⁻ (operation⁻ o t) = map (op o ∷_) (choices t) ++ choices t
 
--- a word of the bound: some operations kept, every delay a budget
+-- a word of the bound: some operations kept, every delay a span
 
 data Choice : Trace → Word′ upper → Set where
   nilᶜ  : Choice εᵗ []
@@ -483,7 +483,7 @@ up-prepend : ∀ d t → ⟦ up (prepend d t) ⟧ ≈ᴸ (⟦ ≤ᵇ d ⟧ ·ᴸ
 up-prepend d εᵗ              = ≈-refl
 up-prepend d (operation o t) = ≈-refl
 up-prepend d (delay e t⁻)    =
-  ≈-trans (·-cong (budget-split all ∣ d ∣⁺ ∣ e ∣⁺) ≈-refl)
+  ≈-trans (·-cong (span-split all ∣ d ∣⁺ ∣ e ∣⁺) ≈-refl)
           (·-assoc ⟦ ≤ᵇ d ⟧ ⟦ ≤ᵇ e ⟧ ⟦ up⁻ t⁻ ⟧)
 
 up-∙ : ∀ s t → ⟦ up (s ∙ᵗ t) ⟧ ≈ᴸ (⟦ up s ⟧ ·ᴸ ⟦ up t ⟧)

@@ -157,7 +157,7 @@ private
     fill a (≤ᴰ-reflexive (trans (+ᴰ-identityˡ (len i)) e))
       (subst (λ z → Pour x 0ᴰ (st d S ∷ y) z) (sym (trans (+ᴰ-identityˡ (len i)) e)) (nexty w))
 
-  -- a strict wait admits nothing, so fits any stretch
+  -- an idle wait admits nothing, so fits any stretch
   wait : (t : Carrier) → 0ᴰ <ᴰ t → Item
   wait t p = st (pos⁺ t p) Data.Fin.Subset.⊥
 

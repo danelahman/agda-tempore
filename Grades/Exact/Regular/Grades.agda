@@ -384,7 +384,7 @@ module Common (s : Instance) where
 
 open Common
 
--- the upper instance: right-sided grades
+-- the upper instance: upper-bound grades
 
 upperᵍ : Grade D
 upperᵍ = record
@@ -421,7 +421,7 @@ upperᵍ = record
 upperʰ : GradeHints upperᵍ
 upperʰ = record { 𝟏-least? = nothing ; ·-comm? = nothing ; plus? = λ c → just (plusᵉ upper c) }
 
--- the lower instance: left-sided grades
+-- the lower instance: lower-bound grades
 
 lowerᵍ : Grade D
 lowerᵍ = record

@@ -14,7 +14,7 @@
 -- and `x ⊑ y`, `x` fits `y`, says the two words take the same time    --
 -- and `x`'s label lies below `y`'s at every instant. So an operation  --
 -- of `y` is matched by the same operation of `x` over the same span,  --
--- since equal offsets at an instant mean equal starts; a strict wait  --
+-- since equal offsets at an instant mean equal starts; an idle wait   --
 -- of `y` is waited out by `x`; inside a stretch of `y` admitting `S`, --
 -- `x` waits, or runs stretches with smaller sets, or runs operations  --
 -- of `S`: an operation of `x` that `y` does not match belongs to      --
@@ -377,7 +377,7 @@ private
 normalise-⊑ : ∀ {x} → x ∙ [] ⊑ x
 normalise-⊑ {x} = fits (dur-[] x) (λ p r → ≤ˡ-reflexive (lab-++-[] x r))
 
--- a strict wait fits a stretch of its length
+-- an idle wait fits a stretch of its length
 
 wait⊑st : ∀ {d S} → st d Data.Fin.Subset.⊥ ∷ [] ⊑ st d S ∷ []
 wait⊑st = st⊑st ⊥⊆

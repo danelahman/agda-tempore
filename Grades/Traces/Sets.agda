@@ -6,7 +6,7 @@
 -- monoid is the language product, which sequences each trace of one   --
 -- set with each trace of the other, with unit `{ ε }`. The grades of  --
 -- `Grades.Examples.Traces` differ in the order they put on this       --
--- carrier, and the two-sided ones pair two such sets, as a floor and  --
+-- carrier, and the interval ones pair two such sets, as a floor and   --
 -- a cap.                                                              --
 --                                                                     --
 -- A set is represented canonically: the underlying list is strictly   --

@@ -4,7 +4,7 @@
 -- Let a lower and an upper grade each denote sets of exact words,    --
 -- their orders below the ∀∃ lift (`Exact.Lift`), the unit holding    --
 -- the empty word, sequencing the concatenations, and a delay the     --
--- strict wait of its length. A pair `(L , U)` is consistent when     --
+-- idle wait of its length. A pair `(L , U)` is consistent when       --
 -- some exact word fits a word of each,                               --
 --                                                                    --
 --   Σ[ x ] (Σ[ y ∈ ⟦ L ⟧ ] x ⊑ y) × (Σ[ z ∈ ⟦ U ⟧ ] x ⊑ z)           --
@@ -99,8 +99,8 @@ intervalᵍ = (Lᵍ ×ᵍ Uᵍ) ∣ᵍ consistent
 
 -- its hints, from those of the ends
 
-intervalʰ : GradeHints Lᵍ → GradeHints Uᵍ → GradeHints intervalᵍ
-intervalʰ Hˡ Hᵘ = (Hˡ ×ʰ Hᵘ) ∣ʰ consistent
+intervalᵍʰ : GradeHints Lᵍ → GradeHints Uᵍ → GradeHints intervalᵍ
+intervalᵍʰ Hˡ Hᵘ = (Hˡ ×ʰ Hᵘ) ∣ʰ consistent
 
 ------------------------------------------------------------------------
 -- Consistency witnessed by a run

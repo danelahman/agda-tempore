@@ -90,9 +90,9 @@ split-front {x} {y} S a b p =
 ------------------------------------------------------------------------
 -- Upper stretches of one set add
 
-budget-split : ∀ S m n → strᴸ {upper} S (fin ((m +ᴰ n) ∣ᶜ ⁺))
+span-split : ∀ S m n → strᴸ {upper} S (fin ((m +ᴰ n) ∣ᶜ ⁺))
                          ≈ᴸ (strᴸ {upper} S (fin (m ∣ᶜ ⁺)) ·ᴸ strᴸ {upper} S (fin (n ∣ᶜ ⁺)))
-budget-split S m n = to , from
+span-split S m n = to , from
   where
     parts : ∀ τ → τ ≤ᴰ m +ᴰ n → Σ[ a ∈ Carrier ] Σ[ b ∈ Carrier ] a ≤ᴰ m × b ≤ᴰ n × a +ᴰ b ≡ τ
     parts τ r with τ ≤ᴰ? m

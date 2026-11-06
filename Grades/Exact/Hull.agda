@@ -3,9 +3,9 @@
 --                                                                    --
 -- A run is a sequence of operations and delays. It denotes the exact --
 -- words in which each operation runs for a time its running-time     --
--- interval admits and each delay is a strict wait of exactly its     --
+-- interval admits and each delay is an idle wait of exactly its      --
 -- length. A one-sided instance reads the run by its hull on its      --
--- side: a delay `d` becomes a strict wait of at most `d` (upper), or --
+-- side: a delay `d` becomes an idle wait of at most `d` (upper), or  --
 -- of at least `d` (lower; no delay stays nothing). The run lies      --
 -- within its hull, and against an expression of the same side the    --
 -- two are compared alike:                                            --

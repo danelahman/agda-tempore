@@ -141,7 +141,7 @@ _∪ᴸ_ : Lang → Lang → Lang
 anyᴸ : Lang
 anyᴸ w = Σ[ τ ∈ Carrier ] w ≡ stretch all τ
 
--- the strict wait of a duration
+-- the idle wait of a duration
 
 ιᴸ : Carrier → Lang
 ιᴸ τ w = w ≡ idle τ
@@ -236,7 +236,7 @@ zero-productʳ : ∀ {X Y} → (∃ X) → X ·ᴸ Y ≾ 𝟏ᴸ → Y ≾ 𝟏�
 zero-productʳ {X} {Y} (x , x∈) f y y∈ with f (x ++ y) (x , y , refl , x∈ , y∈)
 ... | _ , refl , r = [] , refl , subst (_⊑ []) (sym (++-conicalʳ x (⊑-ε r))) ⊑-refl
 
--- strict waits are a monoid morphism
+-- idle waits are a monoid morphism
 
 ι-zero : ιᴸ 0ᴰ ≈ 𝟏ᴸ
 ι-zero =

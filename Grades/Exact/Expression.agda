@@ -13,7 +13,7 @@
 -- iteration. In the upper instance a stretch's interval reaches down --
 -- to zero and its end is an upper end, a cut or `∞`; in the lower    --
 -- instance it reaches up to `∞` and its end is a lower end, a cut.   --
--- A strict wait is a stretch with the empty set. A stretch of length --
+-- An idle wait is a stretch with the empty set. A stretch of length  --
 -- zero is the empty word.                                            --
 ------------------------------------------------------------------------
 

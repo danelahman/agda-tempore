@@ -396,7 +396,7 @@ a ≤ᶠ b = decode a ≤ˢ decode b
 ≤ᶠ-trans : ∀ a b c → T (a ≤ᶠ b) → T (b ≤ᶠ c) → T (a ≤ᶠ c)
 ≤ᶠ-trans a b c = ≤ˢ-trans (decode a) (decode b) (decode c)
 
--- the strict wait, as a letter
+-- the idle wait, as a letter
 
 tick : Fin k
 tick = encode (inˢ Data.Fin.Subset.⊥)

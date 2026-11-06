@@ -12,7 +12,7 @@
 -- monoids.                                                           --
 --                                                                    --
 -- The inclusion `ℕ→ℚ≥0ᴰ` of whole steps into dense time is the       --
--- instance the grade morphisms of `Example.Traces.Timed.Morphism`    --
+-- instance the grade morphisms of `Example.Traces.Banked.Morphism`   --
 -- are built on.                                                      --
 ------------------------------------------------------------------------
 

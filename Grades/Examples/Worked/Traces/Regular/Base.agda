@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Worked instances of the regular trace sets, as tables.             --
+-- Worked instances of the regular trace languages, as tables.        --
 --                                                                    --
 -- Languages over `read`, `send` and `tick`, built by the operations  --
 -- on canonical tables: inclusions with their shortest                --

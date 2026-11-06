@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- The duration hull of the regular-expression grades.                --
+-- The duration hull of the timed regex grades.                       --
 --                                                                    --
 -- A grade is an expression with a word, so its hull (`Exact.         --
 -- Durations`) is an interval, `hullᴾ`: in a commensurable time       --
