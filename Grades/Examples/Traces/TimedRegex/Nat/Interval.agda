@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Rigid timed regex grades in whole steps, as intervals.             --
+-- Timed regex grades in whole steps, as intervals.                   --
 --                                                                    --
 -- A grade `[ L , U ]` pairs a lower bound with an upper bound that   --
 -- are consistent: some letter word lies in both closed languages,    --

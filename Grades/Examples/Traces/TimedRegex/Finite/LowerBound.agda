@@ -1,16 +1,16 @@
 ------------------------------------------------------------------------
--- Rigid timed finite-expression grades over the non-negative         --
--- rationals, as lower bounds.                                        --
+-- Finite timed regex grades over the non-negative rationals, as      --
+-- lower bounds.                                                      --
 --                                                                    --
--- Letters reach up without bound: `≥ q` and `> q` stretches of at    --
+-- Letters reach up without bound: `≥ q` and `> q` time spans of at   --
 -- least and of more than `q` in which any operation may run, `e & S` --
--- the stretch `e` admitting only the operations of `S`, and `idle e` --
--- the stretch `e` admitting none, an idle wait: `idle ≥ q` of at     --
--- least `q`, `idle > q` of more than `q`. Activity before, between   --
--- and after operations is allowed only by explicit stretches such as --
--- `≥ 0`, so the empty word is not the greatest grade. A delay is     --
--- graded by the wait of at least its length, the delay zero by the   --
--- empty word.                                                        --
+-- the time span `e` admitting only the operations of `S`, and        --
+-- `idle e` the time span `e` admitting none, an idle wait:           --
+-- `idle ≥ q` of at least `q`, `idle > q` of more than `q`. Activity  --
+-- before, between and after operations is allowed only by explicit   --
+-- time spans such as `≥ 0`, so the empty word is not the greatest    --
+-- grade. A delay is graded by the wait of at least its length, the   --
+-- delay zero by the empty word.                                      --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -54,14 +54,14 @@ _&_ : Lower → OpSet → Lower
 str _ e & S = str S e
 e       & _ = e
 
--- whether an expression is a span letter: one stretch admitting
--- every operation
+-- whether an expression is a time span admitting every operation
 
 span? : Lower → Bool
 span? (str S _) = foldr′ _∧_ true S
 span? _         = false
 
--- an idle wait, a span letter admitting no operation
+-- an idle wait: a time span admitting every operation, restricted to
+-- admit none
 
 idle_ : (e : Lower) {_ : T (span? e)} → Lower
 idle e = e & none

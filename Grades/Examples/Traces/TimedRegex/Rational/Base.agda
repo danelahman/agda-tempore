@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Rigid timed regex grades over the non-negative rationals:          --
--- what the upper-bound, lower-bound and interval grades share.       --
+-- Rational timed regex grades: what the upper-bound, lower-bound and --
+-- interval grades share.                                             --
 --                                                                    --
 -- Grades are one-sided expressions with iteration                    --
 -- (`Exact.Regular.Grades`), written with `⌜_⌝`, whose side condition --

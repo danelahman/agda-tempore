@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
--- The non-rigid banked trace grades as interval-letter grades.       --
+-- The trace grades with banked delays as interval-letter grades.     --
 --                                                                    --
 -- A grade of written-out traces maps to the union of their           --
--- translations (`NonRigid.Upper`, `NonRigid.Lower`), at the costs of --
+-- translations (`Banked.Upper`, `Banked.Lower`), at the costs of     --
 -- the running times:                                                 --
 --                                                                    --
 --   upper  `Banked.UpperBound`  →  `upperᵍ`, `unbounded` to `≤∞`     --
@@ -11,13 +11,14 @@
 --                                                                    --
 -- Each map preserves and reflects the order, and sends products and  --
 -- joins to products and joins. The upper map sends the unit to the   --
--- unit and the greatest grade to the greatest; it grades a delay by  --
--- a budget, so it is a grade morphism into `upperᵇ`, the upper grade --
--- with delays read as budgets. The lower map sends the unit `{ ε }`, --
--- the greatest guarantee, to the greatest grade `≥0`; the interval   --
--- map sends the unit to `(≥0 , ε)`. A run consistent with both ends  --
--- of a trace interval gives a word both translations admit, so the   --
--- translated ends are consistent.                                    --
+-- unit and the greatest grade to the greatest; it grades a delay `τ` --
+-- by the span of at most `τ` admitting every operation, so it is a   --
+-- grade morphism into `upperᵇ`, the upper grade with delays read as  --
+-- such spans. The lower map sends the unit `{ ε }`, the greatest     --
+-- guarantee, to the greatest grade `≥0`; the interval map sends the  --
+-- unit to `(≥0 , ε)`. A run consistent with both ends of a trace     --
+-- interval gives a word both translations admit, so the translated   --
+-- ends are consistent.                                               --
 --                                                                    --
 -- The grades' orders are decided, the interval-letter ones by the    --
 -- reader, so the decisions agree.                                    --
@@ -83,11 +84,11 @@ import Grades.Traces.Allowance.Core T Op costʰⁱ as AC
 import Grades.Traces.Coverage.Core T Op costˡᵒ as CC
 
 import Grades.Examples.Traces.Banked.UpperBound
-  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos as NR
+  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos as BU
 import Grades.Examples.Traces.Banked.LowerBound
-  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ as NL
+  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ as BL
 import Grades.Examples.Traces.Banked.Interval
-  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos as N2
+  T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos as BI
 
 open import Grades.Exact.Base T Op n code code-injective using (Word; stretch; dur; dur-stretch; op; ∣_∣⁺)
 open import Grades.Exact.Order T Op n code code-injective using (_⊑_; ⊑-refl; ⊑-trans; ⊑-dur)
@@ -105,9 +106,9 @@ open import Grades.Exact.Finite.Interval T Op n code code-injective name code-na
   using (Consistent; intervalᵍ)
 open RunningTimes.RunningTimes running using (rt-inhabited⁺)
 import Grades.Exact.Lift T Op n code code-injective as LiftM
-import Grades.Exact.NonRigid.Upper T Op n code code-injective running dense κ κ-pos as U
-import Grades.Exact.NonRigid.Lower T Op n code code-injective running dense κ κ-pos as L
-open import Grades.Exact.NonRigid.Base T Op n code code-injective running
+import Grades.Exact.Banked.Upper T Op n code code-injective running dense κ κ-pos as U
+import Grades.Exact.Banked.Lower T Op n code code-injective running dense κ κ-pos as L
+open import Grades.Exact.Banked.Base T Op n code code-injective running
   using (stretch-0; span-split)
 
 ------------------------------------------------------------------------
@@ -335,60 +336,60 @@ module Lifted {s : Instance} (tr : Trace → Proper′ s)
 private
   module UL = Lifted upᵉ _≼ᵃ_ U.sound U.reflect
                 (λ v → AC.≼ᵃ-refl v)
-                U.up-∙ NR.n (λ {v} {xs} → NR.n-∈⁻ {v} {xs}) NR.n-◃⁻
+                U.up-∙ BU.n (λ {v} {xs} → BU.n-∈⁻ {v} {xs}) BU.n-◃⁻
 
   ⊤ᵁ : Proper′ upper
   ⊤ᵁ = ⌜ str all ∞ ⌝
 
-upᴮ : NR.Bounds → Proper′ upper
-upᴮ (NR.within P) = UL.⋃ᴾ (NR.traces P) (NR.nonempty P)
-upᴮ NR.unbounded  = ⊤ᵁ
+upᴮ : BU.Bounds → Proper′ upper
+upᴮ (BU.within P) = UL.⋃ᴾ (BU.traces P) (BU.nonempty P)
+upᴮ BU.unbounded  = ⊤ᵁ
 
 private
   ε∈⋃ : ∀ xs nx → ⟦ expr (UL.⋃ᴾ xs nx) ⟧ []
   ε∈⋃ (t ∷ ts) nx = UL.sem← (t ∷ ts) nx (here (U.ε∈ t))
 
   ε∈ᴮ : ∀ B → ⟦ expr (upᴮ B) ⟧ []
-  ε∈ᴮ (NR.within P) = ε∈⋃ (NR.traces P) (NR.nonempty P)
-  ε∈ᴮ NR.unbounded  = 0ᴰ , tt , sym (stretch-0 all)
+  ε∈ᴮ (BU.within P) = ε∈⋃ (BU.traces P) (BU.nonempty P)
+  ε∈ᴮ BU.unbounded  = 0ᴰ , tt , sym (stretch-0 all)
 
   ≾⊤ : ∀ c → c ≾ᴳ ⊤ᵁ
   ≾⊤ = Grade.≾-⊤ upperᵍ
 
   -- written-out bounds do not reach the unrestricted stretch
 
-  spans : List Trace → Carrier
-  spans []       = 0ᴰ
-  spans (t ∷ ts) = U.span t +ᴰ spans ts
+  totals : List Trace → Carrier
+  totals []       = 0ᴰ
+  totals (t ∷ ts) = U.total t +ᴰ totals ts
 
-  span-≤ : ∀ {t} ts → t ∈ˡ ts → U.span t ≤ᴰ spans ts
-  span-≤ (t ∷ ts) (here refl) = ≤ᴰ-+ (U.span t) (spans ts)
-  span-≤ (t ∷ ts) (there m)   = ≤ᴰ-trans (span-≤ ts m) (≤ᴰ-+ˡ (spans ts) (U.span t))
+  total-≤ : ∀ {t} ts → t ∈ˡ ts → U.total t ≤ᴰ totals ts
+  total-≤ (t ∷ ts) (here refl) = ≤ᴰ-+ (U.total t) (totals ts)
+  total-≤ (t ∷ ts) (there m)   = ≤ᴰ-trans (total-≤ ts m) (≤ᴰ-+ˡ (totals ts) (U.total t))
 
-  no-top : ∀ P → ¬ (⟦ expr ⊤ᵁ ⟧ ≾ᴸ ⟦ expr (upᴮ (NR.within P)) ⟧)
+  no-top : ∀ P → ¬ (⟦ expr ⊤ᵁ ⟧ ≾ᴸ ⟦ expr (upᴮ (BU.within P)) ⟧)
   no-top P f with f (stretch all (B +ᴰ κ)) (B +ᴰ κ , tt , refl)
-    where B = spans (NR.traces P)
-  ... | y , y∈ , fit with find (UL.sem→ (NR.traces P) (NR.nonempty P) y∈)
+    where B = totals (BU.traces P)
+  ... | y , y∈ , fit with find (UL.sem→ (BU.traces P) (BU.nonempty P) y∈)
   ...   | q , q∈ , y∈q = κ-pos (+ᴰ-cancelˡ-≤ B (subst (_≤ᴰ B +ᴰ 0ᴰ) eq (≤ᴰ-trans (U.up-dur q y∈q) bound)))
     where
-      B = spans (NR.traces P)
+      B = totals (BU.traces P)
       eq : dur y ≡ B +ᴰ κ
       eq = trans (sym (⊑-dur fit)) (dur-stretch all (B +ᴰ κ))
-      bound : U.span q ≤ᴰ B +ᴰ 0ᴰ
-      bound = subst (U.span q ≤ᴰ_) (sym (+ᴰ-identityʳ B)) (span-≤ (NR.traces P) q∈)
+      bound : U.total q ≤ᴰ B +ᴰ 0ᴰ
+      bound = subst (U.total q ≤ᴰ_) (sym (+ᴰ-identityʳ B)) (total-≤ (BU.traces P) q∈)
 
 -- the upper map preserves and reflects the order
 
-up-≾⇔ : ∀ P Q → P NR.≾ Q ⇔ upᴮ P ≾ᴳ upᴮ Q
-up-≾⇔ (NR.within P) (NR.within Q) = mk⇔
-  (λ p → ↑ _ _ (Equivalence.to (UL.≾⇔ (NR.traces P) (NR.traces Q) (NR.nonempty P) (NR.nonempty Q))
-                  (λ m → NR.≾ˢ-◃ {NR.traces P} {NR.traces Q} p m)))
-  (λ g → NR.◃-≾ˢ {NR.traces P} {NR.traces Q}
-           (Equivalence.from (UL.≾⇔ (NR.traces P) (NR.traces Q) (NR.nonempty P) (NR.nonempty Q))
+up-≾⇔ : ∀ P Q → P BU.≾ Q ⇔ upᴮ P ≾ᴳ upᴮ Q
+up-≾⇔ (BU.within P) (BU.within Q) = mk⇔
+  (λ p → ↑ _ _ (Equivalence.to (UL.≾⇔ (BU.traces P) (BU.traces Q) (BU.nonempty P) (BU.nonempty Q))
+                  (λ m → BU.≾ˢ-◃ {BU.traces P} {BU.traces Q} p m)))
+  (λ g → BU.◃-≾ˢ {BU.traces P} {BU.traces Q}
+           (Equivalence.from (UL.≾⇔ (BU.traces P) (BU.traces Q) (BU.nonempty P) (BU.nonempty Q))
               (↓ _ _ g)))
-up-≾⇔ (NR.within P) NR.unbounded = mk⇔ (λ _ → ≾⊤ _) (λ _ → tt)
-up-≾⇔ NR.unbounded (NR.within Q) = mk⇔ (λ ()) (λ g → ⊥-elim (no-top Q (↓ _ _ g)))
-up-≾⇔ NR.unbounded NR.unbounded  = mk⇔ (λ _ → ≾⊤ _) (λ _ → tt)
+up-≾⇔ (BU.within P) BU.unbounded = mk⇔ (λ _ → ≾⊤ _) (λ _ → tt)
+up-≾⇔ BU.unbounded (BU.within Q) = mk⇔ (λ ()) (λ g → ⊥-elim (no-top Q (↓ _ _ g)))
+up-≾⇔ BU.unbounded BU.unbounded  = mk⇔ (λ _ → ≾⊤ _) (λ _ → tt)
 
 -- products, joins, the unit and the greatest grade
 
@@ -400,43 +401,43 @@ private
   ⊤≾·ˡ B = ↑ _ _ (λ w w∈ → w ++ [] , (w , [] , refl , w∈ , ε∈ᴮ B) ,
                    subst (w ⊑_) (sym (++-identityʳ w)) ⊑-refl)
 
-up-· : ∀ P Q → Grade._≃_ upperᵍ (upᴮ (P NR.·ᵇ Q)) (upᴮ P ·ᵉ upᴮ Q)
-up-· (NR.within P) (NR.within Q) =
-  ↑² _ _ (UL.·-sem (NR.traces P) (NR.traces Q) (NR.nonempty P) (NR.nonempty Q)
-                   (NR.nonempty (P NR.· Q)))
-up-· (NR.within P) NR.unbounded  = ⊤≾·ʳ (NR.within P) , ≾⊤ _
-up-· NR.unbounded  Q             = ⊤≾·ˡ Q , ≾⊤ _
+up-· : ∀ P Q → Grade._≃_ upperᵍ (upᴮ (P BU.·ᵇ Q)) (upᴮ P ·ᵉ upᴮ Q)
+up-· (BU.within P) (BU.within Q) =
+  ↑² _ _ (UL.·-sem (BU.traces P) (BU.traces Q) (BU.nonempty P) (BU.nonempty Q)
+                   (BU.nonempty (P BU.· Q)))
+up-· (BU.within P) BU.unbounded  = ⊤≾·ʳ (BU.within P) , ≾⊤ _
+up-· BU.unbounded  Q             = ⊤≾·ˡ Q , ≾⊤ _
 
-up-⊔ : ∀ P Q → Grade._≃_ upperᵍ (upᴮ (P NR.⊔ᵇ Q)) (upᴮ P ∣ᵉ upᴮ Q)
-up-⊔ (NR.within P) (NR.within Q) =
-  ↑² _ _ (UL.⊔-sem (NR.traces P) (NR.traces Q) (NR.nonempty P) (NR.nonempty Q)
-                   (NR.nonempty (P NR.⊔ Q)))
-up-⊔ (NR.within P) NR.unbounded  = Grade.⊔-ubʳ upperᵍ (upᴮ (NR.within P)) ⊤ᵁ , ≾⊤ _
-up-⊔ NR.unbounded  Q             = Grade.⊔-ubˡ upperᵍ ⊤ᵁ (upᴮ Q) , ≾⊤ _
+up-⊔ : ∀ P Q → Grade._≃_ upperᵍ (upᴮ (P BU.⊔ᵇ Q)) (upᴮ P ∣ᵉ upᴮ Q)
+up-⊔ (BU.within P) (BU.within Q) =
+  ↑² _ _ (UL.⊔-sem (BU.traces P) (BU.traces Q) (BU.nonempty P) (BU.nonempty Q)
+                   (BU.nonempty (P BU.⊔ Q)))
+up-⊔ (BU.within P) BU.unbounded  = Grade.⊔-ubʳ upperᵍ (upᴮ (BU.within P)) ⊤ᵁ , ≾⊤ _
+up-⊔ BU.unbounded  Q             = Grade.⊔-ubˡ upperᵍ ⊤ᵁ (upᴮ Q) , ≾⊤ _
 
-up-𝟏 : Grade._≃_ upperᵍ (upᴮ NR.𝟏ᵇ) εᵉ
+up-𝟏 : Grade._≃_ upperᵍ (upᴮ BU.𝟏ᵇ) εᵉ
 up-𝟏 = Grade.≾-refl upperᵍ , Grade.≾-refl upperᵍ
 
-up-⊤ : upᴮ NR.unbounded ≡ Grade.⊤ upperᵍ
+up-⊤ : upᴮ BU.unbounded ≡ Grade.⊤ upperᵍ
 up-⊤ = refl
 
 ------------------------------------------------------------------------
--- The upper grade with delays read as budgets
+-- The upper grade with delays read as spans admitting every operation
 
-budgetᵁ : Carrier → Proper′ upper
-budgetᵁ τ = ⌜ str all (fin (τ ∣ᶜ ⁺)) ⌝ {ne-strU τ}
+spanᵁ : Carrier → Proper′ upper
+spanᵁ τ = ⌜ str all (fin (τ ∣ᶜ ⁺)) ⌝ {ne-strU τ}
 
 private
-  budget-zero : strᴸ {upper} all (fin (0ᴰ ∣ᶜ ⁺)) ≈ᴸ 𝟏ᴸ
-  budget-zero =
+  span-zero : strᴸ {upper} all (fin (0ᴰ ∣ᶜ ⁺)) ≈ᴸ 𝟏ᴸ
+  span-zero =
     ⊆⇒≈ (λ { (τ , r , refl) → trans (cong (stretch all) (≤0⇒≡0 (⊑⇒≤ r))) (stretch-0 all) })
         (λ { refl → 0ᴰ , ≤⇒⁺⊑⁺ ≤ᴰ-refl , sym (stretch-0 all) })
 
 upperᵇ : Grade D
 upperᵇ = record upperᵍ
-  { ι           = budgetᵁ
-  ; ι-zero = ↑² (budgetᵁ 0ᴰ) εᵉ budget-zero
-  ; ι-plus = λ {m} {k} → ↑² (budgetᵁ (m +ᴰ k)) (budgetᵁ m ·ᵉ budgetᵁ k) (span-split all m k)
+  { ι           = spanᵁ
+  ; ι-zero = ↑² (spanᵁ 0ᴰ) εᵉ span-zero
+  ; ι-plus = λ {m} {k} → ↑² (spanᵁ (m +ᴰ k)) (spanᵁ m ·ᵉ spanᵁ k) (span-split all m k)
   }
 
 private
@@ -446,11 +447,12 @@ private
       case : Dec (0ᴰ <ᴰ τ) → ⟦ U.up ⟨ τ ⟩ ⟧ ≈ᴸ strᴸ {upper} all (fin (τ ∣ᶜ ⁺))
       case (yes p) rewrite ⟨⟩-pos τ p =
         LiftM.·-identityʳ (strᴸ {upper} all (fin (τ ∣ᶜ ⁺)))
-      case (no ¬p) rewrite ⟨⟩-zero τ ¬p | ≮0⇒≡0 ¬p = ≈-sym budget-zero
+      case (no ¬p) rewrite ⟨⟩-zero τ ¬p | ≮0⇒≡0 ¬p = ≈-sym span-zero
 
--- the upper map is a grade morphism into the grade with budget delays
+-- the upper map is a grade algebra morphism into the grade algebra with
+-- span delays
 
-up-morphism : NR.upper-bound →ᵍ upperᵇ
+up-morphism : BU.upper-bound →ᵍ upperᵇ
 up-morphism = record
   { map          = upᴮ
   ; map-monotone = λ {c} {c′} → Equivalence.to (up-≾⇔ c c′)
@@ -467,34 +469,34 @@ up-morphism = record
 private
   module LL = Lifted loᵉ (λ v y → y ≼ᶜ v) L.sound L.reflect
                 (λ v → CC.≼ᶜ-refl v)
-                L.lo-∙ NL.n (λ {v} {xs} → NL.n-∈⁻ {v} {xs}) NL.n-◃⁻
+                L.lo-∙ BL.n (λ {v} {xs} → BL.n-∈⁻ {v} {xs}) BL.n-◃⁻
 
-loᴬ : NL.Antichain → Proper′ lower
-loᴬ P = LL.⋃ᴾ (NL.traces P) (NL.nonempty P)
+loᴬ : BL.Antichain → Proper′ lower
+loᴬ P = LL.⋃ᴾ (BL.traces P) (BL.nonempty P)
 
 -- the lower map preserves and reflects the order
 
-lo-≾⇔ : ∀ P Q → P NL.≾ Q ⇔ loᴬ P ≾ᴳ loᴬ Q
+lo-≾⇔ : ∀ P Q → P BL.≾ Q ⇔ loᴬ P ≾ᴳ loᴬ Q
 lo-≾⇔ P Q = mk⇔
-  (λ p → ↑ _ _ (Equivalence.to (LL.≾⇔ (NL.traces P) (NL.traces Q) (NL.nonempty P) (NL.nonempty Q))
-                  (λ m → NL.≾ˢ-◃ {NL.traces P} {NL.traces Q} p m)))
-  (λ g → NL.◃-≾ˢ {NL.traces P} {NL.traces Q}
-           (Equivalence.from (LL.≾⇔ (NL.traces P) (NL.traces Q) (NL.nonempty P) (NL.nonempty Q))
+  (λ p → ↑ _ _ (Equivalence.to (LL.≾⇔ (BL.traces P) (BL.traces Q) (BL.nonempty P) (BL.nonempty Q))
+                  (λ m → BL.≾ˢ-◃ {BL.traces P} {BL.traces Q} p m)))
+  (λ g → BL.◃-≾ˢ {BL.traces P} {BL.traces Q}
+           (Equivalence.from (LL.≾⇔ (BL.traces P) (BL.traces Q) (BL.nonempty P) (BL.nonempty Q))
               (↓ _ _ g)))
 
-lo-· : ∀ P Q → Grade._≃_ lowerᵍ (loᴬ (P NL.· Q)) (loᴬ P ·ᵉ loᴬ Q)
+lo-· : ∀ P Q → Grade._≃_ lowerᵍ (loᴬ (P BL.· Q)) (loᴬ P ·ᵉ loᴬ Q)
 lo-· P Q =
-  ↑² _ _ (LL.·-sem (NL.traces P) (NL.traces Q) (NL.nonempty P) (NL.nonempty Q)
-                   (NL.nonempty (P NL.· Q)))
+  ↑² _ _ (LL.·-sem (BL.traces P) (BL.traces Q) (BL.nonempty P) (BL.nonempty Q)
+                   (BL.nonempty (P BL.· Q)))
 
-lo-⊔ : ∀ P Q → Grade._≃_ lowerᵍ (loᴬ (P NL.⊔ Q)) (loᴬ P ∣ᵉ loᴬ Q)
+lo-⊔ : ∀ P Q → Grade._≃_ lowerᵍ (loᴬ (P BL.⊔ Q)) (loᴬ P ∣ᵉ loᴬ Q)
 lo-⊔ P Q =
-  ↑² _ _ (LL.⊔-sem (NL.traces P) (NL.traces Q) (NL.nonempty P) (NL.nonempty Q)
-                   (NL.nonempty (P NL.⊔ Q)))
+  ↑² _ _ (LL.⊔-sem (BL.traces P) (BL.traces Q) (BL.nonempty P) (BL.nonempty Q)
+                   (BL.nonempty (P BL.⊔ Q)))
 
 -- the unit, the greatest guarantee, goes to the greatest grade
 
-lo-𝟏 : Grade._≃_ lowerᵍ (loᴬ NL.𝟏) (Grade.⊤ lowerᵍ)
+lo-𝟏 : Grade._≃_ lowerᵍ (loᴬ BL.𝟏) (Grade.⊤ lowerᵍ)
 lo-𝟏 = ↑² _ _ (≾ᴸ-refl , ≾ᴸ-refl)
 
 ------------------------------------------------------------------------
@@ -536,59 +538,59 @@ private
 
   -- a run consistent with a guarantee and an allowance makes their
   -- translations consistent
-  lo-fits : ∀ P {p x} → p ∈ˡ NL.traces P → p ≼ᶜ x
+  lo-fits : ∀ P {p x} → p ∈ˡ BL.traces P → p ≼ᶜ x
           → Σ[ y ∈ Word ] ⟦ expr (loᴬ P) ⟧ y × run x ⊑ y
   lo-fits P {p} {x} p∈ px with Equivalence.to (L.≼ᶜ⇔ p x) px (run x) (run-lo x)
-  ... | y , y∈ , xy = y , LL.sem← (NL.traces P) (NL.nonempty P) (lose p∈ y∈) , xy
+  ... | y , y∈ , xy = y , LL.sem← (BL.traces P) (BL.nonempty P) (lose p∈ y∈) , xy
 
-  up-fits : ∀ Q {q x} → q ∈ˡ NR.traces Q → x ≼ᵃ q
-          → Σ[ y ∈ Word ] ⟦ expr (upᴮ (NR.within Q)) ⟧ y × run x ⊑ y
+  up-fits : ∀ Q {q x} → q ∈ˡ BU.traces Q → x ≼ᵃ q
+          → Σ[ y ∈ Word ] ⟦ expr (upᴮ (BU.within Q)) ⟧ y × run x ⊑ y
   up-fits Q {q} {x} q∈ xq with Equivalence.to (U.≼ᵃ⇔ x q) xq (run x) (run-up x)
-  ... | y , y∈ , xy = y , UL.sem← (NR.traces Q) (NR.nonempty Q) (lose q∈ y∈) , xy
+  ... | y , y∈ , xy = y , UL.sem← (BU.traces Q) (BU.nonempty Q) (lose q∈ y∈) , xy
 
   -- every word fits the unbounded allowance
   ⊤-fits : ∀ w → Σ[ y ∈ Word ] ⟦ expr ⊤ᵁ ⟧ y × w ⊑ y
   ⊤-fits w = stretch all (dur w) , (dur w , tt , refl) , LiftM.⊑-all w
 
-  two-consistent : ∀ (P : NL.Antichain) (Y : NR.Bounds) → NL.traces P N2.◇ˢ Y
+  two-consistent : ∀ (P : BL.Antichain) (Y : BU.Bounds) → BL.traces P BI.◇ˢ Y
                  → Consistent (loᴬ P , upᴮ Y)
-  two-consistent P (NR.within Q) c with N2.◇ˢ₀-elim c
-  ... | N2.witness p∈ q∈ (x , px , xq) = run x , lo-fits P p∈ px , up-fits Q q∈ xq
-  two-consistent P NR.unbounded _ = first (NL.traces P) (NL.nonempty P) (λ m → m)
+  two-consistent P (BU.within Q) c with BI.◇ˢ₀-elim c
+  ... | BI.witness p∈ q∈ (x , px , xq) = run x , lo-fits P p∈ px , up-fits Q q∈ xq
+  two-consistent P BU.unbounded _ = first (BL.traces P) (BL.nonempty P) (λ m → m)
     where
-      first : ∀ xs → NonEmpty xs → (∀ {p} → p ∈ˡ xs → p ∈ˡ NL.traces P)
+      first : ∀ xs → NonEmpty xs → (∀ {p} → p ∈ˡ xs → p ∈ˡ BL.traces P)
             → Consistent (loᴬ P , ⊤ᵁ)
       first (p ∷ _) _ f =
         run p , lo-fits P (f (here refl)) (CC.≼ᶜ-refl p) , ⊤-fits (run p)
 
-two : N2.Interval → Grade.Carrier intervalᵍ
-two i = (loᴬ (N2.lo i) , upᴮ (N2.hi i)) , two-consistent (N2.lo i) (N2.hi i) (N2.lo◇hi i)
+two : BI.Interval → Grade.Carrier intervalᵍ
+two i = (loᴬ (BI.lo i) , upᴮ (BI.hi i)) , two-consistent (BI.lo i) (BI.hi i) (BI.lo◇hi i)
 
 private
   G₂ : Grade D
   G₂ = intervalᵍ
 
-two-≾⇔ : ∀ i j → i N2.≾ᵗˢ j ⇔ Grade._≾_ G₂ (two i) (two j)
+two-≾⇔ : ∀ i j → i BI.≾ᵗˢ j ⇔ Grade._≾_ G₂ (two i) (two j)
 two-≾⇔ i j = mk⇔
-  (λ (l , h) → Equivalence.to (lo-≾⇔ (N2.lo i) (N2.lo j)) l , Equivalence.to (up-≾⇔ (N2.hi i) (N2.hi j)) h)
-  (λ (l , h) → Equivalence.from (lo-≾⇔ (N2.lo i) (N2.lo j)) l , Equivalence.from (up-≾⇔ (N2.hi i) (N2.hi j)) h)
+  (λ (l , h) → Equivalence.to (lo-≾⇔ (BI.lo i) (BI.lo j)) l , Equivalence.to (up-≾⇔ (BI.hi i) (BI.hi j)) h)
+  (λ (l , h) → Equivalence.from (lo-≾⇔ (BI.lo i) (BI.lo j)) l , Equivalence.from (up-≾⇔ (BI.hi i) (BI.hi j)) h)
 
-two-· : ∀ i j → Grade._≃_ G₂ (two (i N2.·ᵗˢ j)) (Grade._·_ G₂ (two i) (two j))
+two-· : ∀ i j → Grade._≃_ G₂ (two (i BI.·ᵗˢ j)) (Grade._·_ G₂ (two i) (two j))
 two-· i j =
-  (proj₁ (lo-· (N2.lo i) (N2.lo j)) , proj₁ (up-· (N2.hi i) (N2.hi j))) ,
-  (proj₂ (lo-· (N2.lo i) (N2.lo j)) , proj₂ (up-· (N2.hi i) (N2.hi j)))
+  (proj₁ (lo-· (BI.lo i) (BI.lo j)) , proj₁ (up-· (BI.hi i) (BI.hi j))) ,
+  (proj₂ (lo-· (BI.lo i) (BI.lo j)) , proj₂ (up-· (BI.hi i) (BI.hi j)))
 
-two-⊔ : ∀ i j → Grade._≃_ G₂ (two (i N2.⊔ᵗˢ j)) (Grade._⊔_ G₂ (two i) (two j))
+two-⊔ : ∀ i j → Grade._≃_ G₂ (two (i BI.⊔ᵗˢ j)) (Grade._⊔_ G₂ (two i) (two j))
 two-⊔ i j =
-  (proj₁ (lo-⊔ (N2.lo i) (N2.lo j)) , proj₁ (up-⊔ (N2.hi i) (N2.hi j))) ,
-  (proj₂ (lo-⊔ (N2.lo i) (N2.lo j)) , proj₂ (up-⊔ (N2.hi i) (N2.hi j)))
+  (proj₁ (lo-⊔ (BI.lo i) (BI.lo j)) , proj₁ (up-⊔ (BI.hi i) (BI.hi j))) ,
+  (proj₂ (lo-⊔ (BI.lo i) (BI.lo j)) , proj₂ (up-⊔ (BI.hi i) (BI.hi j)))
 
 -- the unit goes to the guarantee of nothing under the empty run
 
-two-𝟏 : Grade._≃_ G₂ (two N2.𝟏ᵗˢ) ((Grade.⊤ lowerᵍ , εᵉ) , [] , ([] , ≥0-∈ , ⊑-refl) , ([] , refl , ⊑-refl))
+two-𝟏 : Grade._≃_ G₂ (two BI.𝟏ᵗˢ) ((Grade.⊤ lowerᵍ , εᵉ) , [] , ([] , ≥0-∈ , ⊑-refl) , ([] , refl , ⊑-refl))
 two-𝟏 = (proj₁ lo-𝟏 , proj₁ up-𝟏) , (proj₂ lo-𝟏 , proj₂ up-𝟏)
 
-two-⊤ : Grade._≃_ G₂ (two N2.⊤ᵗˢ) (Grade.⊤ G₂)
+two-⊤ : Grade._≃_ G₂ (two BI.⊤ᵗˢ) (Grade.⊤ G₂)
 two-⊤ = (proj₁ lo-𝟏 , Grade.≾-refl upperᵍ) , (proj₂ lo-𝟏 , Grade.≾-refl upperᵍ)
 
 ------------------------------------------------------------------------
@@ -601,11 +603,11 @@ private
   isYes-⇔ e (no ¬a) (yes b) = ⊥-elim (¬a (Equivalence.from e b))
   isYes-⇔ e (no _)  (no _)  = refl
 
-up-decides : ∀ P Q → isYes (P NR.≾? Q) ≡ isYes (Grade._≾?_ upperᵍ (upᴮ P) (upᴮ Q))
+up-decides : ∀ P Q → isYes (P BU.≾? Q) ≡ isYes (Grade._≾?_ upperᵍ (upᴮ P) (upᴮ Q))
 up-decides P Q = isYes-⇔ (up-≾⇔ P Q) _ _
 
-lo-decides : ∀ P Q → isYes (Grade._≾?_ NL.lower-bound P Q) ≡ isYes (Grade._≾?_ lowerᵍ (loᴬ P) (loᴬ Q))
+lo-decides : ∀ P Q → isYes (Grade._≾?_ BL.lower-bound P Q) ≡ isYes (Grade._≾?_ lowerᵍ (loᴬ P) (loᴬ Q))
 lo-decides P Q = isYes-⇔ (lo-≾⇔ P Q) _ _
 
-two-decides : ∀ i j → isYes (Grade._≾?_ N2.interval i j) ≡ isYes (Grade._≾?_ G₂ (two i) (two j))
+two-decides : ∀ i j → isYes (Grade._≾?_ BI.interval i j) ≡ isYes (Grade._≾?_ G₂ (two i) (two j))
 two-decides i j = isYes-⇔ (two-≾⇔ i j) _ _

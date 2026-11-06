@@ -4,11 +4,11 @@
 --                                                                    --
 -- `s ≼ᶜ t` reads: the run `t` covers the trace `s`. Every operation  --
 -- `s` names must occur in `t`, in order, never bought with time, and --
--- every delay `s` names must be covered by what `t` does             --
--- between the same two operations it names, unmatched operations     --
--- counting at their execution time. So `⟨ n ⟩ ≼ᶜ t` as soon as `t`   --
--- spends `n` where `s` asks for it, and `⌈ o ⌉ ≼ᶜ t` only when `t`   --
--- performs `o`.                                                      --
+-- every delay `s` names must be covered by what `t` does between the --
+-- same two operations it names, unmatched operations counting at     --
+-- their running time. So `⟨ n ⟩ ≼ᶜ t` as soon as `t` spends `n`      --
+-- where `s` asks for it, and `⌈ o ⌉ ≼ᶜ t` only when `t` performs     --
+-- `o`.                                                               --
 --                                                                    --
 -- This is the order a guarantee wants. It is not the converse of     --
 -- `Traces.Allowance`, where a bound's delays buy the run's           --

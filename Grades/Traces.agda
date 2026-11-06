@@ -11,8 +11,9 @@
 -- `Grades.Examples.Traces` are built on these sets, each with its    --
 -- own carrier: antichains for a floor, antichains with an added      --
 -- greatest point for a cap, and their consistent pairs; the finite   --
--- run set cap is sets with an added greatest point. The regular and  --
--- rigid grades are represented by automata and expressions.          --
+-- run set cap is sets with an added greatest point. The regular      --
+-- trace languages and the timed regex grades are represented by      --
+-- automata and expressions.                                          --
 --                                                                    --
 -- Nothing here is itself a grade. The module is only an index:       --
 -- everything is parameterised by the alphabet `Op`, and the trace    --
@@ -57,8 +58,8 @@ import Grades.Traces.Lexicographic
 ------------------------------------------------------------------------
 -- Measuring time
 --
--- How long a trace takes, relative to an assignment of an execution
--- time to each operation symbol.
+-- How long a trace takes, relative to an assignment of an running time
+-- to each operation symbol.
 
 -- The per-trace duration, shared by both set-level aggregations below.
 
@@ -109,7 +110,7 @@ import Grades.Traces.Slack
 -- The allowance order: when a bound permits a run. The bound's
 -- operations are permissions and its delays are a budget, which the run
 -- spends on its own idling and on operations the bound does not name,
--- at their execution time. Budget does not cross an operation the bound
+-- at their running time. Budget does not cross an operation the bound
 -- names, so a bound says when its slack is available and not merely how
 -- much of it there is.
 

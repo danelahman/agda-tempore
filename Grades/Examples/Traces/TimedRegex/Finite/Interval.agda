@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Rigid timed finite-expression grades over the non-negative         --
--- rationals, as intervals.                                           --
+-- Finite timed regex grades over the non-negative rationals, as      --
+-- intervals.                                                         --
 --                                                                    --
 -- A grade `[ L , U ]` pairs a lower bound `L` with an upper bound    --
 -- `U` that some exact run fits (`Exact.Finite.Interval`), compared   --

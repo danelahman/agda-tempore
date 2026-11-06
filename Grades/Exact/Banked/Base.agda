@@ -1,5 +1,6 @@
 ------------------------------------------------------------------------
--- Stretches split and joined, for the non-rigid translations.        --
+-- Stretches split and joined, for the translations of the trace      --
+-- grades with banked delays.                                         --
 --                                                                    --
 -- A stretch of length `a + b` fits the stretch of length `a` then    --
 -- the one of length `b`, with the same set, and conversely; a word   --
@@ -16,7 +17,7 @@ open import Util.Equality
 open import Grades.Durations using (Duration; TimeDomain)
 import Grades.Traces.RunningTimes as RunningTimes
 
-module Grades.Exact.NonRigid.Base
+module Grades.Exact.Banked.Base
   {D : Duration} (T : TimeDomain D)
   (Op : Set) (n : ℕ) (code : Op → Fin n)
   (code-injective : ∀ {o o′} → code o ≡ code o′ → o ≡ o′)

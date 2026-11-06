@@ -48,21 +48,21 @@ open import Grades.Base using (strictᵍ; Grade; GradeMorphism; StrictMorphism)
 
 import Grades.Traces.Embedding as Embedding
 import Grades.Traces.Durations as Dur
-import Grades.Examples.Traces.Lifted.LowerBound as LowerBound
-import Grades.Examples.Traces.Lifted.UpperBound as UpperBound
-import Grades.Examples.Traces.Lifted.Interval as Interval
+import Grades.Examples.Traces.Lifted.LowerBound as LowerBoundGrade
+import Grades.Examples.Traces.Lifted.UpperBound as UpperBoundGrade
+import Grades.Examples.Traces.Lifted.Interval as IntervalGrade
 
 ------------------------------------------------------------------------
 -- Lower bounds
 
-module Left (O₁ : Order.TraceOrder T₁ Op) (O₂ : Order.TraceOrder T₂ Op)
+module LowerBound (O₁ : Order.TraceOrder T₁ Op) (O₂ : Order.TraceOrder T₂ Op)
   (f-mono : {s t : Base.Trace T₁ Op}
           → Order.TraceOrder._≼_ O₁ s t → Order.TraceOrder._≼_ O₂ (f s) (f t))
   where
 
   private
-    module L₁ = LowerBound T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₁
-    module L₂ = LowerBound T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₂
+    module L₁ = LowerBoundGrade T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₁
+    module L₂ = LowerBoundGrade T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₂
     module E = Embedding T₁ T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
                  (Order.TraceOrder.base O₁) (Order.TraceOrder.base O₂) f f-∙ f-mono
 
@@ -84,13 +84,13 @@ module Left (O₁ : Order.TraceOrder T₁ Op) (O₂ : Order.TraceOrder T₂ Op)
 ------------------------------------------------------------------------
 -- Upper bounds
 
-module Right (O₁ : Order.TraceOrder T₁ Op) (O₂ : Order.TraceOrder T₂ Op)
+module UpperBound (O₁ : Order.TraceOrder T₁ Op) (O₂ : Order.TraceOrder T₂ Op)
   (f-mono : {s t : Base.Trace T₁ Op}
           → Order.TraceOrder._≼_ O₁ s t → Order.TraceOrder._≼_ O₂ (f s) (f t))
   where
 
-  module R₁ = UpperBound T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₁
-  module R₂ = UpperBound T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₂
+  module R₁ = UpperBoundGrade T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₁
+  module R₂ = UpperBoundGrade T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O₂
   module E = Embedding T₁ T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
                  (Order.flipᵖ T₁ Op (Order.TraceOrder.base O₁))
                  (Order.flipᵖ T₂ Op (Order.TraceOrder.base O₂)) f f-∙ f-mono
@@ -134,7 +134,7 @@ module Right (O₁ : Order.TraceOrder T₁ Op) (O₂ : Order.TraceOrder T₂ Op)
 ------------------------------------------------------------------------
 -- Intervals
 
-module Two
+module Interval
   (costˡᵒ₁ costʰⁱ₁ : Op → Duration.Carrier D₁)
   (cost-≤₁ : (o : Op) → TimeDomain._≤ᴰ_ T₁ (costˡᵒ₁ o) (costʰⁱ₁ o))
   (costˡᵒ₂ costʰⁱ₂ : Op → Duration.Carrier D₂)
@@ -165,12 +165,12 @@ module Two
   where
 
   private
-    module W₁ = Interval T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ₁ costʰⁱ₁ cost-≤₁
+    module W₁ = IntervalGrade T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ₁ costʰⁱ₁ cost-≤₁
                   Oᶠ₁ Oᶜ₁ durᶠ₁ durᶜ₁ consistent?₁
-    module W₂ = Interval T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ₂ costʰⁱ₂ cost-≤₂
+    module W₂ = IntervalGrade T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ₂ costʰⁱ₂ cost-≤₂
                   Oᶠ₂ Oᶜ₂ durᶠ₂ durᶜ₂ consistent?₂
-    module ML = Left Oᶠ₁ Oᶠ₂ f-monoᶠ
-    module MR = Right Oᶜ₁ Oᶜ₂ f-monoᶜ
+    module ML = LowerBound Oᶠ₁ Oᶠ₂ f-monoᶠ
+    module MR = UpperBound Oᶜ₁ Oᶜ₂ f-monoᶜ
     module EL = Embedding T₁ T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
                   (Order.TraceOrder.base Oᶠ₁) (Order.TraceOrder.base Oᶠ₂) f f-∙ f-monoᶠ
     module ER = Embedding T₁ T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans

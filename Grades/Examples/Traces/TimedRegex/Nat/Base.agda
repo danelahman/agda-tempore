@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Rigid timed regex grades in whole steps: the closed languages of   --
--- slots, and the literals of one-sided expressions.                  --
+-- Timed regex grades in whole steps: the closed languages of slots,  --
+-- and the literals of one-sided expressions.                         --
 --                                                                    --
 -- A grade is a non-empty regular language over the slot letters      --
 -- (`Exact.Slots`) closed downward under the slot order. The literal  --
@@ -12,7 +12,7 @@
 --                                                                    --
 -- An expression is compiled to an extended regular expression over   --
 -- the letters: an operation to the slots of each of its running      --
--- times, a stretch to runs of its slot of each length its end        --
+-- times, a time span to runs of its slot of each length its end      --
 -- admits.                                                            --
 --                                                                    --
 -- Operations are coded bijectively into `Fin n`.                     --

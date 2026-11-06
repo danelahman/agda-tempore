@@ -1,14 +1,14 @@
 ------------------------------------------------------------------------
--- Rigid timed finite-expression grades over the non-negative         --
--- rationals, as upper bounds.                                        --
+-- Finite timed regex grades over the non-negative rationals, as      --
+-- upper bounds.                                                      --
 --                                                                    --
--- Letters reach down to zero: `≤ q` and `< q` stretches of at most   --
+-- Letters reach down to zero: `≤ q` and `< q` time spans of at most  --
 -- and of less than `q` in which any operation may run, `≤∞` one of   --
--- any length, `e & S` the stretch `e` admitting only the operations  --
--- of `S`, and `idle e` the stretch `e` admitting none, an idle wait: --
--- `idle ≤ q` of at most `q`, `idle < q` of less than `q`. A          --
--- delay is graded by the wait of at most its length, the hull of the --
--- delay on this side.                                                --
+-- any length, `e & S` the time span `e` admitting only the           --
+-- operations of `S`, and `idle e` the time span `e` admitting none,  --
+-- an idle wait: `idle ≤ q` of at most `q`, `idle < q` of less than   --
+-- `q`. A delay is graded by the wait of at most its length, the hull --
+-- of the delay on this side.                                         --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -48,20 +48,20 @@ infix 9   ≤_ <_
 infix 8.5 idle_
 infix 8   _&_
 
--- a stretch admitting only the operations of a set
+-- a time span admitting only the operations of a set
 
 _&_ : Upper → OpSet → Upper
 str _ e & S = str S e
 e       & _ = e
 
--- whether an expression is a span letter: one stretch admitting
--- every operation
+-- whether an expression is a time span admitting every operation
 
 span? : Upper → Bool
 span? (str S _) = foldr′ _∧_ true S
 span? _         = false
 
--- an idle wait, a span letter admitting no operation
+-- an idle wait: a time span admitting every operation, restricted to
+-- admit none
 
 idle_ : (e : Upper) {_ : T (span? e)} → Upper
 idle e = e & none

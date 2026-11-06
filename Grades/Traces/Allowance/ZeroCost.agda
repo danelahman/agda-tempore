@@ -44,7 +44,7 @@ open import Grades.Traces.Allowance T Op costʰⁱ
 
 module FreeOperation (o : Op) (free : costʰⁱ o ≡ 0ᴰ) where
 
-  -- its execution time fits inside an empty budget
+  -- its running time fits inside an empty budget
 
   free≤0 : costʰⁱ o ≤ 0ᴰ
   free≤0 = ≤-reflexive free

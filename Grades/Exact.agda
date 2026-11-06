@@ -1,6 +1,10 @@
 ------------------------------------------------------------------------
 -- Exact timed words: runs with exact running times and stretches     --
--- that admit sets of operations. This module is only an index.       --
+-- that admit sets of operations. A stretch is a piece of an exact    --
+-- word of one length; a time span `e & S` is a letter of an          --
+-- expression, whose length lies within an interval and which denotes --
+-- the stretches of those lengths admitting the operations of `S`.    --
+-- This module is only an index.                                      --
 ------------------------------------------------------------------------
 
 module Grades.Exact where
@@ -90,13 +94,13 @@ import Grades.Exact.Reader.Lower.Correct
 import Grades.Exact.Finite
 import Grades.Exact.Finite.Grades
 
--- the non-rigid banked trace grades as instances: allowances as upper
+-- the trace grades with banked delays as instances: allowances as upper
 -- expressions, guarantees as lower ones (the maps of grades are
 -- `Grades.Examples.Traces.Banked.ExactGrades`)
 
-import Grades.Exact.NonRigid.Base
-import Grades.Exact.NonRigid.Upper
-import Grades.Exact.NonRigid.Lower
+import Grades.Exact.Banked.Base
+import Grades.Exact.Banked.Upper
+import Grades.Exact.Banked.Lower
 
 -- regular expressions over a common time unit: units and scaling,
 -- unbounded stretches unrolled, the words of an expression with star,

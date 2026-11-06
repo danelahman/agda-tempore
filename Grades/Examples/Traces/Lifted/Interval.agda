@@ -17,10 +17,9 @@
 -- either end.                                                        --
 --                                                                    --
 -- The construction takes the two orders `Oᶠ` and `Oᶜ` separately,    --
--- and `Example.Traces.Banked.Interval` instantiates them at the      --
--- incomparable `Traces.Coverage` and `Traces.Allowance`, with the    --
--- cost models `costˡᵒ` for a guarantee and `costʰⁱ` for an           --
--- allowance.                                                         --
+-- and `Traces.Banked.Interval` instantiates them at the incomparable --
+-- `Traces.Coverage` and `Traces.Allowance`, with the cost models     --
+-- `costˡᵒ` for a guarantee and `costʰⁱ` for an allowance.            --
 --                                                                    --
 -- The coherence field is run consistency: some run covers a listed   --
 -- guarantee and stays within a listed allowance,                     --

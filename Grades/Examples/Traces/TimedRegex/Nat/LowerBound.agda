@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------
--- Rigid timed regex grades in whole steps, as lower bounds.          --
+-- Timed regex grades in whole steps, as lower bounds.                --
 --                                                                    --
 -- A grade is written with one-sided letters whose lengths reach up   --
--- to no bound: `≥ d` a stretch of at least `d` in which any          --
+-- to no bound: `≥ d` a time span of at least `d` in which any        --
 -- operation may run, `> d` one longer than `d`, `≥ d & S` one in     --
 -- which only those of `S` may, and `idle ≥ d` an idle wait of at     --
 -- least `d`, in which none may. Activity before, between and after   --
--- is admitted only where a stretch says so (`≥ 0` is the flank       --
+-- is admitted only where a time span says so (`≥ 0` is the flank     --
 -- admitting anything), so the empty word is not the greatest grade.  --
 -- A delay of `d` steps is graded by `d` idle waits of at least a     --
 -- step each, the hull of the delay on this side (`Exact.Hull`).      --
@@ -49,20 +49,20 @@ infix 9   ≥_ >_
 infix 8.5 idle_
 infix 8   _&_
 
--- a stretch admitting only the operations of a set
+-- a time span admitting only the operations of a set
 
 _&_ : Lower → OpSet → Lower
 str _ c & S = str S c
 e       & _ = e
 
--- whether an expression is a span letter: one stretch admitting
--- every operation
+-- whether an expression is a time span admitting every operation
 
 span? : Lower → Bool
 span? (str S _) = foldr′ _∧_ true S
 span? _         = false
 
--- an idle wait, a span letter admitting no operation
+-- an idle wait: a time span admitting every operation, restricted to
+-- admit none
 
 idle_ : (e : Lower) {_ : T (span? e)} → Lower
 idle e = e & none

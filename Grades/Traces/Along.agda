@@ -11,9 +11,9 @@
 -- difference, follow from it being a morphism of canonically ordered --
 -- monoids.                                                           --
 --                                                                    --
--- The inclusion `ℕ→ℚ≥0ᴰ` of whole steps into dense time is the       --
--- instance the grade morphisms of `Example.Traces.Banked.Morphism`   --
--- are built on.                                                      --
+-- The inclusion `ℕ→ℚ≥0ᴰ` of whole steps into rational time is the    --
+-- instance the grade morphisms of                                    --
+-- `Grades.Examples.Traces.Banked.Morphism` are built on.             --
 ------------------------------------------------------------------------
 
 open import Relation.Nullary using (Dec; yes; no; ¬_)

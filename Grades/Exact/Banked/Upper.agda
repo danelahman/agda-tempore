@@ -29,7 +29,7 @@ open import Grades.Durations using (Duration; TimeDomain; Dense)
 import Grades.Traces.RunningTimes as RunningTimes
 import Grades.Durations.Monus as Monus
 
-module Grades.Exact.NonRigid.Upper
+module Grades.Exact.Banked.Upper
   {D : Duration} (T : TimeDomain D)
   (Op : Set) (n : ℕ) (code : Op → Fin n)
   (code-injective : ∀ {o o′} → code o ≡ code o′ → o ≡ o′)
@@ -79,7 +79,7 @@ open import Grades.Exact.Reader.Upper T Op n code code-injective running
   using (Ph; sumʰ; Fitsᵁ; RunU; ChU; OverU; done; match; start; pour; over; close; enter; pass)
 open import Grades.Exact.Reader.Upper.Correct T Op n code code-injective running dense κ κ-pos
   using (symᵁ; ValidW; UnionL; completeᵁ)
-open import Grades.Exact.NonRigid.Base T Op n code code-injective running
+open import Grades.Exact.Banked.Base T Op n code code-injective running
 
 ------------------------------------------------------------------------
 -- The translation
@@ -499,36 +499,36 @@ up-∙ (delay d (operation⁻ o s)) t =
           (≈-sym (·-assoc ⟦ ≤ᵇ d ⟧ (⟦ _ˀ {upper} o ⟧ ·ᴸ ⟦ up s ⟧) ⟦ up t ⟧))
 
 ------------------------------------------------------------------------
--- A run of a translation lasts at most the bound's span, operations
--- counted at their costs
+-- A run of a translation lasts at most the total of the bound,
+-- operations counted at their costs
 
 mutual
 
-  span : Trace → Carrier
-  span εᵗ              = 0ᴰ
-  span (operation o t) = costʰⁱ o +ᴰ span t
-  span (delay d t⁻)    = ∣ d ∣⁺ +ᴰ span⁻ t⁻
+  total : Trace → Carrier
+  total εᵗ              = 0ᴰ
+  total (operation o t) = costʰⁱ o +ᴰ total t
+  total (delay d t⁻)    = ∣ d ∣⁺ +ᴰ total⁻ t⁻
 
-  span⁻ : Trace⁻ → Carrier
-  span⁻ ε⁻ᵗ              = 0ᴰ
-  span⁻ (operation⁻ o t) = costʰⁱ o +ᴰ span t
+  total⁻ : Trace⁻ → Carrier
+  total⁻ ε⁻ᵗ              = 0ᴰ
+  total⁻ (operation⁻ o t) = costʰⁱ o +ᴰ total t
 
 mutual
 
-  up-dur : ∀ t {x} → ⟦ up t ⟧ x → dur x ≤ᴰ span t
+  up-dur : ∀ t {x} → ⟦ up t ⟧ x → dur x ≤ᴰ total t
   up-dur εᵗ refl = ≤ᴰ-refl
   up-dur (operation o t) x∈ = op-dur o t x∈
   up-dur (delay d t⁻) (_ , x₂ , refl , (τ , r , refl) , x₂∈) =
     subst (_≤ᴰ _) (sym (trans (dur-++ (stretch all τ) x₂) (cong (_+ᴰ dur x₂) (dur-stretch all τ))))
           (+ᴰ-mono-≤ (⊑⇒≤ r) (up-dur⁻ t⁻ x₂∈))
 
-  up-dur⁻ : ∀ t⁻ {x} → ⟦ up⁻ t⁻ ⟧ x → dur x ≤ᴰ span⁻ t⁻
+  up-dur⁻ : ∀ t⁻ {x} → ⟦ up⁻ t⁻ ⟧ x → dur x ≤ᴰ total⁻ t⁻
   up-dur⁻ ε⁻ᵗ refl = ≤ᴰ-refl
   up-dur⁻ (operation⁻ o t) x∈ = op-dur o t x∈
 
-  op-dur : ∀ o t {x} → ⟦ o ˀ · up t ⟧ x → dur x ≤ᴰ costʰⁱ o +ᴰ span t
+  op-dur : ∀ o t {x} → ⟦ o ˀ · up t ⟧ x → dur x ≤ᴰ costʰⁱ o +ᴰ total t
   op-dur o t (_ , x₂ , refl , inj₁ (o′ , dd , c , r , refl) , x₂∈)
     with code-injective (x∈⁅y⁆⇒x≡y (code o) c)
   ... | refl =
     +ᴰ-mono-≤ (rt-≤ o r) (up-dur t x₂∈)
-  op-dur o t (_ , x₂ , refl , inj₂ refl , x₂∈) = ≤ᴰ-trans (up-dur t x₂∈) (≤ᴰ-+ˡ (span t) (costʰⁱ o))
+  op-dur o t (_ , x₂ , refl , inj₂ refl , x₂∈) = ≤ᴰ-trans (up-dur t x₂∈) (≤ᴰ-+ˡ (total t) (costʰⁱ o))

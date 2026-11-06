@@ -8,7 +8,7 @@
 -- representation with no two adjacent delays.                          --
 --                                                                      --
 -- Delays are durations of a time domain `T`: whole steps over ℕ, or    --
--- units of dense time over ℚ≥0.                                        --
+-- units of rational time over ℚ≥0.                                     --
 --                                                                      --
 -- This is the trace layer alone. The sets of traces the grades are     --
 -- built from live in `Traces.Sets`, and the positive durations a delay --

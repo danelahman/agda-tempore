@@ -1,7 +1,6 @@
 -------------------------------------------------------------------------
--- Rigid timed finite-expression grades over the non-negative          --
--- rationals: what the upper-bound, lower-bound and interval grades    --
--- share.                                                              --
+-- Finite timed regex grades over the non-negative rationals: what the --
+-- upper-bound, lower-bound and interval grades share.                 --
 --                                                                     --
 -- Grades are finite one-sided expressions (`Exact.Finite`), written   --
 -- with `⌜_⌝`, whose side condition (no iteration, at least one        --

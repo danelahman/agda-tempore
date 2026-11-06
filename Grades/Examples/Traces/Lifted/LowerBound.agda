@@ -28,9 +28,8 @@
 -- The unit `{ ε }` is the greatest grade, the empty trace being      --
 -- covered by every run. `TracePartialOrder` does not supply this,    --
 -- and the construction does not otherwise inspect the order.         --
--- `Example.Traces.Banked.LowerBound` instantiates it at the coverage --
--- order, in which only an operation covers a demand for that         --
--- operation.                                                         --
+-- `Traces.Banked.LowerBound` instantiates it at the coverage order,  --
+-- in which only an operation covers a demand for that operation.     --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)

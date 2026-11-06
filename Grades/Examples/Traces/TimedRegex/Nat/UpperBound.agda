@@ -1,12 +1,13 @@
 ------------------------------------------------------------------------
--- Rigid timed regex grades in whole steps, as upper bounds.          --
+-- Timed regex grades in whole steps, as upper bounds.                --
 --                                                                    --
 -- A grade is written with one-sided letters whose lengths reach down --
--- to zero: `≤ d` a stretch of at most `d` in which any operation may --
--- run, `≤ d & S` one in which only those of `S` may, `≤∞` one of any --
--- length, and `idle ≤ d` an idle wait of at most `d`, in which none  --
--- may. A delay of `d` steps is graded by `d` idle waits of at most   --
--- a step each, the hull of the delay on this side (`Exact.Hull`).    --
+-- to zero: `≤ d` a time span of at most `d` in which any operation   --
+-- may run, `≤ d & S` one in which only those of `S` may, `≤∞` one of --
+-- any length, and `idle ≤ d` an idle wait of at most `d`, in which   --
+-- none may. A delay of `d` steps is graded by `d` idle waits of at   --
+-- most a step each, the hull of the delay on this side               --
+-- (`Exact.Hull`).                                                    --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -46,20 +47,20 @@ infix 9   ≤_ <_
 infix 8.5 idle_
 infix 8   _&_
 
--- a stretch admitting only the operations of a set
+-- a time span admitting only the operations of a set
 
 _&_ : Upper → OpSet → Upper
 str _ e & S = str S e
 e       & _ = e
 
--- whether an expression is a span letter: one stretch admitting
--- every operation
+-- whether an expression is a time span admitting every operation
 
 span? : Upper → Bool
 span? (str S _) = foldr′ _∧_ true S
 span? _         = false
 
--- an idle wait, a span letter admitting no operation
+-- an idle wait: a time span admitting every operation, restricted to
+-- admit none
 
 idle_ : (e : Upper) {_ : T (span? e)} → Upper
 idle e = e & none

@@ -8,8 +8,8 @@
 --     and is never bought with time;                                  --
 --   * every delay `s` names is paid out of slack (`use-delay`), and   --
 --     slack is banked from whatever `t` did that `s` did not name:    --
---     its unmatched operations at their execution time (`pay-op`)     --
---     and its delays at their length (`del-delay`);                   --
+--     its unmatched operations at their running time (`pay-op`) and   --
+--     its delays at their length (`del-delay`);                       --
 --   * and slack does not cross a match. `keep` recurses at slack      --
 --     zero, so a delay `s` places between two operations it names is  --
 --     paid only by what the run does between those same two.          --
@@ -64,7 +64,7 @@ data _≼ᶜ[_]_ : Trace → Carrier → Trace → Set where
             --------------------------------------
             → operation o s ≼ᶜ[ k ] operation o t
 
-  -- an undemanded operation of the run is banked, at its execution time
+  -- an undemanded operation of the run is banked, at its running time
   pay-op    : ∀ {k o s t}
             → s ≼ᶜ[ k + costˡᵒ o ] t
             -------------------------

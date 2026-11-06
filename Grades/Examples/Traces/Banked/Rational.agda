@@ -1,12 +1,13 @@
 ------------------------------------------------------------------------
--- Banked trace grades of dense time, and whole steps read in them.   --
+-- Banked trace grades of rational time, and whole steps read in      --
+-- them.                                                              --
 --                                                                    --
--- The banked trace grades of `Example.Traces.Banked` are built over  --
--- any time domain; at `ℚ≥0ᵀ` their delays and costs are rational.    --
--- Whole steps embed: the inclusion `ℕ→ℚ≥0ᴰ` keeps positive           --
--- durations positive, so `Example.Traces.Banked.Morphism` carries    --
--- each grade over ℕ at costs `c` to the dense one at costs `# ∘ c`   --
--- (`Left.lower-bound→`, `Right.upper-bound→`, `Two.interval→`).      --
+-- The banked trace grades of `Traces.Banked` are built over any time --
+-- domain; at `ℚ≥0ᵀ` their delays and costs are rational. Whole steps --
+-- embed: the inclusion `ℕ→ℚ≥0ᴰ` keeps positive durations positive,   --
+-- so `Traces.Banked.Morphism` carries each grade over ℕ at costs `c` --
+-- to the rational one at costs `# ∘ c` (`LowerBound.lower-bound→`,   --
+-- `UpperBound.upper-bound→`, `Interval.interval→`).                  --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)

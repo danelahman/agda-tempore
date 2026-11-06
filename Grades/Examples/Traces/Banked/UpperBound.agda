@@ -1,7 +1,8 @@
 ------------------------------------------------------------------------
--- Upper trace bounds: sets of timed traces at the allowance order.   --
+-- Banked trace upper bounds: sets of timed traces at the allowance   --
+-- order.                                                             --
 --                                                                    --
--- `Example.Traces.Lifted.UpperBound` at the order `_≼ᵃ_` of          --
+-- `Traces.Lifted.UpperBound` at the order `_≼ᵃ_` of                  --
 -- `Traces.Allowance`. A grade lists bounds, and a run stays within a --
 -- bound when the bound lists every operation the run performs, or    --
 -- leaves enough budget to cover those it does not list, and enough   --

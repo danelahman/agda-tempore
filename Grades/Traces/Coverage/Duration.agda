@@ -4,7 +4,7 @@
 -- A guarantee is no longer than the run that covers it, up to the     --
 -- slack already banked: `s ≼ᶜ[ k ] t` gives                           --
 -- `duration s ≤ duration t + k`, where both durations charge an       --
--- operation its execution time. At zero slack this is monotonicity of --
+-- operation its running time. At zero slack this is monotonicity of   --
 -- `duration` for `_≼ᶜ_`, which is what a time-ticks frame reads the   --
 -- order through, and what makes a guarantee of a trace imply a        --
 -- guarantee of the time it takes.                                     --
@@ -80,7 +80,7 @@ duration-slack {k} (keep {o = o} {s = s} {t = t} p) =
           (m≤m+n (costˡᵒ o + duration t) k)
 
 -- an unmatched operation of the run moves from its duration into the
--- slack, at its execution time
+-- slack, at its running time
 duration-slack {k} (pay-op {o = o} {t = t} p) =
   ≤-trans (duration-slack p)
           (≤-reflexive (lem-front (duration t) k (costˡᵒ o)))

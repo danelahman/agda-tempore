@@ -22,8 +22,14 @@
 --                                                                    --
 -- `FiniteRunSets.*` has the cap, `FiniteRunSets.UpperBound`.         --
 --                                                                    --
--- `Regular.*` has the cap at inclusion, over regular sets of runs    --
--- represented by canonical minimal automata.                         --
+-- `Regular.*` has the cap at inclusion, over regular trace languages --
+-- represented by canonical minimal automata. `TimedRegex.*` are the  --
+-- timed regex grades: one-sided expressions over interval letters    --
+-- compared by the exact runs they denote, in whole steps             --
+-- (`TimedRegex.Nat.*`), finite over the non-negative rationals       --
+-- (`TimedRegex.Finite.*`), and with iteration over the non-negative  --
+-- rationals (`TimedRegex.Rational.*`), each as upper bounds, lower   --
+-- bounds and intervals.                                              --
 --                                                                    --
 -- Every endpoint is read disjunctively, one listed trace carrying    --
 -- the grade: grades weaken by gaining members, and the union of two  --
@@ -65,7 +71,8 @@ import Grades.Examples.Traces.Banked.Interval
 
 import Grades.Examples.Traces.Banked.ExactGrades
 
--- along a morphism of time domains, and whole steps read in dense time
+-- along a morphism of time domains, and whole steps read in rational
+-- time
 
 import Grades.Examples.Traces.Banked.Morphism
 import Grades.Examples.Traces.Banked.Rational
@@ -82,7 +89,7 @@ import Grades.Examples.Traces.FiniteRunSets.UpperBound
 ------------------------------------------------------------------------
 -- Regular trace languages
 --
--- A grade is a non-empty regular set of runs, represented by the
+-- A grade is a non-empty regular trace language, represented by the
 -- canonical minimal automaton of its encoding over `Op ⊎ tick`; the
 -- finite run sets of `FiniteRunSets.UpperBound` embed in it, but no
 -- grade morphism exists.
@@ -91,7 +98,7 @@ import Grades.Examples.Traces.Regular.UpperBound
 import Grades.Examples.Traces.Regular.FiniteRunSets
 
 ------------------------------------------------------------------------
--- Rigid timed regex grades, in whole steps
+-- Timed regex grades, in whole steps
 --
 -- A grade is a non-empty regular language of whole-step slots closed
 -- downward under the slot order, the order on exact words
@@ -105,7 +112,7 @@ import Grades.Examples.Traces.TimedRegex.Nat.LowerBound
 import Grades.Examples.Traces.TimedRegex.Nat.Interval
 
 ------------------------------------------------------------------------
--- Rigid timed finite-expression grades
+-- Finite timed regex grades
 --
 -- Grades over the non-negative rationals: finite one-sided
 -- expressions over interval letters with open or closed ends, compared
@@ -117,12 +124,12 @@ import Grades.Examples.Traces.TimedRegex.Finite.UpperBound
 import Grades.Examples.Traces.TimedRegex.Finite.LowerBound
 import Grades.Examples.Traces.TimedRegex.Finite.Interval
 
--- the non-rigid banked trace grades read as finite-expression grades
+-- the trace grades with banked delays read as finite timed regex grades
 
-import Grades.Examples.Traces.TimedRegex.Finite.NonRigid
+import Grades.Examples.Traces.TimedRegex.Finite.Banked
 
 ------------------------------------------------------------------------
--- Rigid timed regex grades
+-- Rational timed regex grades
 --
 -- Grades over the non-negative rationals: one-sided expressions with
 -- iteration over interval letters, compared by the runs they denote and

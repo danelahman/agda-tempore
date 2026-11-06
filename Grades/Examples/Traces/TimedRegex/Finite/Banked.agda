@@ -1,6 +1,7 @@
 ------------------------------------------------------------------------
--- The non-rigid banked trace grades over the non-negative rationals  --
--- as rigid finite-expression grades (`Traces.Banked.ExactGrades`).   --
+-- The trace grades with banked delays over the non-negative          --
+-- rationals as finite timed regex grades                             --
+-- (`Traces.Banked.ExactGrades`).                                     --
 --                                                                    --
 -- The traces are ordered by the codes of their operations, and the   --
 -- costs are the ends of the running times: an allowance charges an   --
@@ -15,7 +16,7 @@ open import Util.Equality
 open import Grades.Durations.NonNegativeRational using (ℚ≥0ᵀ; ℚ≥0-dense)
 import Grades.Traces.RunningTimes as RunningTimes
 
-module Grades.Examples.Traces.TimedRegex.Finite.NonRigid
+module Grades.Examples.Traces.TimedRegex.Finite.Banked
   (Op : Set) (n : ℕ) (code : Op → Fin n) (name : Fin n → Op)
   (name-code : ∀ o → name (code o) ≡ o) (code-name : ∀ c → code (name c) ≡ c)
   (running : RunningTimes.RunningTimes ℚ≥0ᵀ Op) where

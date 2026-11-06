@@ -6,15 +6,16 @@
 --                                                                    --
 --   ops A      exactly one operation of the set `A`, running for a   --
 --              time its running-time interval admits                 --
---   str S e    a stretch admitting the operations of `S`, of a       --
+--   str S e    a time span admitting the operations of `S`, of a     --
 --              length within the one-sided interval with end `e`     --
 --                                                                    --
 -- and is built with the empty word, union, concatenation and         --
--- iteration. In the upper instance a stretch's interval reaches down --
--- to zero and its end is an upper end, a cut or `∞`; in the lower    --
--- instance it reaches up to `∞` and its end is a lower end, a cut.   --
--- An idle wait is a stretch with the empty set. A stretch of length  --
--- zero is the empty word.                                            --
+-- iteration. In the upper instance the interval of a time span       --
+-- reaches down to zero and its end is an upper end, a cut or `∞`; in --
+-- the lower instance it reaches up to `∞` and its end is a lower     --
+-- end, a cut. An idle wait is the time span admitting none, the one  --
+-- with the empty set. A time span of length zero denotes the empty   --
+-- word.                                                              --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)

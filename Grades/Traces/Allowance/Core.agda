@@ -6,7 +6,7 @@
 --                                                                      --
 --   * an operation the bound names is permitted outright (`keep`),     --
 --     and one the bound does not name is paid for out of budget, at    --
---     its execution time (`use-op`);                                   --
+--     its running time (`use-op`);                                     --
 --   * a delay the run takes is paid for out of budget (`use-delay`);   --
 --   * budget comes from the bound's delays, at their length            --
 --     (`bank-delay`), and from nowhere else: an operation the bound    --
@@ -91,7 +91,7 @@ data _≼ᵃ[_]_ : Trace → Carrier → Trace → Set where
              ----------------------------
              → delay d s⁻ ≼ᵃ[ k ] t
 
-  -- and on an operation the bound does not name, at its execution time
+  -- and on an operation the bound does not name, at its running time
   use-op     : ∀ {k o s t}
              → costʰⁱ o ≤ k
              → s ≼ᵃ[ k ∸ costʰⁱ o ] t

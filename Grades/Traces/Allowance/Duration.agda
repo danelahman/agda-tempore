@@ -4,9 +4,9 @@
 -- A permitted run is no longer than the bound that permits it, up to  --
 -- the budget already banked: `s ≼ᵃ[ k ] t` gives                      --
 -- `duration s ≤ duration t + k`, where both durations charge an       --
--- operation its execution time. At zero budget this is monotonicity   --
--- of `duration` for `_≼ᵃ_`, which is what a time-ticks frame reads    --
--- the order through.                                                  --
+-- operation its running time. At zero budget this is monotonicity of  --
+-- `duration` for `_≼ᵃ_`, which is what a time-ticks frame reads the   --
+-- order through.                                                      --
 --                                                                     --
 -- The bound is one-way: a bound may take longer than everything it    --
 -- permits, since its operations may be skipped and its delays left    --
@@ -102,7 +102,7 @@ duration-slack {k} (use-delay {d = d} {s⁻ = s⁻} {t = t} le p) =
                      (trans (lem-past ∣ d ∣⁺ (duration t) (k ∸ ∣ d ∣⁺))
                             (cong (duration t +_) (m+[n∸m]≡n le)))))
 
--- and so is an operation the bound does not name, at its execution time
+-- and so is an operation the bound does not name, at its running time
 duration-slack {k} (use-op {o = o} {t = t} le p) =
   ≤-trans (+-monoʳ-≤ (costʰⁱ o) (duration-slack p))
           (≤-reflexive

@@ -31,7 +31,7 @@ open import Grades.Durations using (Duration; TimeDomain; Dense)
 import Grades.Traces.RunningTimes as RunningTimes
 import Grades.Durations.Monus as Monus
 
-module Grades.Exact.NonRigid.Lower
+module Grades.Exact.Banked.Lower
   {D : Duration} (T : TimeDomain D)
   (Op : Set) (n : ℕ) (code : Op → Fin n)
   (code-injective : ∀ {o o′} → code o ≡ code o′ → o ≡ o′)
@@ -82,7 +82,7 @@ open import Grades.Exact.Reader.Lower.Read T Op n code code-injective running
   using (ValidL)
 open import Grades.Exact.Reader.Lower.Correct T Op n code code-injective running dense κ κ-pos
   using (symᴸ; AllValidL; UnionLᴸ; completeᴸ)
-open import Grades.Exact.NonRigid.Base T Op n code code-injective running
+open import Grades.Exact.Banked.Base T Op n code code-injective running
 
 ------------------------------------------------------------------------
 -- The translation

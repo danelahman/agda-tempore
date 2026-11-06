@@ -1,6 +1,5 @@
 ------------------------------------------------------------------------
--- Rigid timed regex grades over the non-negative rationals, as       --
--- intervals.                                                         --
+-- Rational timed regex grades, as intervals.                         --
 --                                                                    --
 -- A grade `[ L , U ]` pairs a lower bound `L` with an upper bound    --
 -- `U` that some exact run fits (`Exact.Regular.Interval`), compared  --

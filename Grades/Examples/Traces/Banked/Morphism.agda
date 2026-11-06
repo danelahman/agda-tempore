@@ -7,9 +7,9 @@
 -- costs `h ∘ c`: traces are mapped delay by delay (`Traces.Along`),  --
 -- which is monotone for the coverage and allowance orders and scales --
 -- durations by `h`, so the lifted grades are mapped by               --
--- `Lifted.Morphism`. At the inclusion of whole steps into dense time --
--- this reads every trace grade over ℕ in dense time                  --
--- (`Example.Traces.Banked.Rational`).                                --
+-- `Lifted.Morphism`. At the inclusion of whole steps into rational   --
+-- time this reads every trace grade over ℕ in rational time          --
+-- (`Traces.Banked.Rational`).                                        --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
@@ -57,33 +57,33 @@ private
   h-≢0 ne e = ne (M₁.≤0⇒≡0 (h-pos _ (M₂.≤ᴰ-reflexive e)))
 
 ------------------------------------------------------------------------
--- Guarantees: `Left.lower-bound→`, from the grade at costs `costˡᵒ` to
--- the grade at costs `h ∘ costˡᵒ`
+-- Guarantees: `LowerBound.lower-bound→`, from the grade at costs
+-- `costˡᵒ` to the grade at costs `h ∘ costˡᵒ`
 
-module Left (costˡᵒ : Op → Duration.Carrier D₁) =
-  L.Left
+module LowerBound (costˡᵒ : Op → Duration.Carrier D₁) =
+  L.LowerBound
     (CoverageOrder.coverageOrder T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ)
     (CoverageOrder.coverageOrder T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans (λ o → hᴰ (costˡᵒ o)))
     (A.Coverage.mapᵀ-≼ᶜ₀ costˡᵒ)
 
 ------------------------------------------------------------------------
--- Allowances: `Right.upper-bound→`
+-- Allowances: `UpperBound.upper-bound→`
 
-module Right (costʰⁱ : Op → Duration.Carrier D₁)
+module UpperBound (costʰⁱ : Op → Duration.Carrier D₁)
   (costʰⁱ-pos : (o : Op) → ¬ (costʰⁱ o ≡ Duration.0ᴰ D₁)) =
-  L.Right
+  L.UpperBound
     (AllowanceOrder.allowanceOrder T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos)
     (AllowanceOrder.allowanceOrder T₂ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans (λ o → hᴰ (costʰⁱ o))
        (λ o → h-≢0 (costʰⁱ-pos o)))
     (A.Allowance.mapᵀ-≼ᵃ₀ costʰⁱ)
 
 ------------------------------------------------------------------------
--- Intervals: `Two.interval→`
+-- Intervals: `Interval.interval→`
 
-module Two (costˡᵒ costʰⁱ : Op → Duration.Carrier D₁)
+module Interval (costˡᵒ costʰⁱ : Op → Duration.Carrier D₁)
   (cost-≤ : (o : Op) → TimeDomain._≤ᴰ_ T₁ (costˡᵒ o) (costʰⁱ o))
   (costʰⁱ-pos : (o : Op) → ¬ (costʰⁱ o ≡ Duration.0ᴰ D₁)) =
-  L.Two
+  L.Interval
     costˡᵒ costʰⁱ cost-≤ (λ o → hᴰ (costˡᵒ o)) (λ o → hᴰ (costʰⁱ o))
     (λ o → A.h-mono (cost-≤ o))
     (CoverageOrder.coverageOrder T₁ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ)

@@ -1,7 +1,8 @@
 ------------------------------------------------------------------------
--- Lower trace bounds: sets of timed traces at the coverage order.    --
+-- Banked trace lower bounds: sets of timed traces at the coverage    --
+-- order.                                                             --
 --                                                                    --
--- `Example.Traces.Lifted.LowerBound` at the order `_≼ᶜ_` of          --
+-- `Traces.Lifted.LowerBound` at the order `_≼ᶜ_` of                  --
 -- `Traces.Coverage`: a grade lists guarantees, and in every run of   --
 -- the computation at least one of them is covered, every operation   --
 -- it lists having occurred and every delay it lists having elapsed   --

@@ -1,17 +1,16 @@
 -------------------------------------------------------------------------
--- Trace intervals: a coverage floor under an allowance cap.           --
+-- Banked trace intervals: a coverage floor under an allowance cap.    --
 --                                                                     --
--- `Example.Traces.Lifted.Interval` at the order `_≼ᶜ_` of             --
--- `Traces.Coverage` below and the order `_≼ᵃ_` of `Traces.Allowance`  --
--- above. A grade `[ P , Q ]` states:                                  --
+-- `Traces.Lifted.Interval` at the order `_≼ᶜ_` of `Traces.Coverage`   --
+-- below and the order `_≼ᵃ_` of `Traces.Allowance` above. A grade     --
+-- `[ P , Q ]` states:                                                 --
 --                                                                     --
 --   whatever the computation did, it covered one of the traces in `P` --
 --   and stayed within one of the traces in `Q`                        --
 --                                                                     --
 -- with both sets read disjunctively, so that both weaken by gaining   --
--- members. `Example.Traces.Banked.LowerBound` and                     --
--- `Example.Traces.Banked.UpperBound` are its two endpoints on their   --
--- own.                                                                --
+-- members. `Traces.Banked.LowerBound` and `Traces.Banked.UpperBound`  --
+-- are its two endpoints on their own.                                 --
 --                                                                     --
 -- The floor credits an operation with `costˡᵒ`, the least time it can --
 -- take, and the cap charges it `costʰⁱ`, the most. Only the cap       --

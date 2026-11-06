@@ -33,11 +33,10 @@
 -- that a `TraceOrder` adds to the order-theoretic part used by the   --
 -- reduction.                                                         --
 --                                                                    --
--- `Example.Traces.Banked.UpperBound` instantiates the construction   --
--- at the allowance order, under which a run stays within a bound     --
--- when the operations of the bound permit those of the run and its   --
--- delays form a budget that the run spends where the bound places    --
--- it.                                                                --
+-- `Traces.Banked.UpperBound` instantiates the construction at the    --
+-- allowance order, under which a run stays within a bound when the   --
+-- operations of the bound permit those of the run and its delays     --
+-- form a budget that the run spends where the bound places it.       --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
