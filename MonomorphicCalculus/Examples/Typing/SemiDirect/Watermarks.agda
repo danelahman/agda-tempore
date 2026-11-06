@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Typed computations at the resource levels                          --
+-- Typed computations at the watermark grades                         --
 --                                                                    --
 -- The grade                                                          --
 --   Effect grades and resource grades are both the levels of one     --
@@ -26,7 +26,7 @@
 --   (`refuted`).                                                     --
 ------------------------------------------------------------------------
 
-module MonomorphicCalculus.Examples.Typing.SemiDirect.ResourceLevels where
+module MonomorphicCalculus.Examples.Typing.SemiDirect.Watermarks where
 
 open import Data.Integer.Base as ℤ using (+_)
 open import Relation.Nullary using (¬_)
@@ -34,19 +34,19 @@ open import Relation.Nullary.Decidable using (True; False; toWitness; toWitnessF
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
-open import Grades.Examples.SemiDirect.ResourceLevels using (Level; one-resource)
-open import Grades.Examples.Worked.SemiDirect.ResourceLevels using (res)
+open import Grades.Examples.SemiDirect.Watermarks using (Level; one-watermark)
+open import Grades.Examples.Worked.SemiDirect.Watermarks using (res)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
 
 ------------------------------------------------------------------------
 -- The operations
 
 opTime : Op → Level
-opTime read  = Grade.𝟏 (one-resource {ℕᴰ})
+opTime read  = Grade.𝟏 (one-watermark {ℕᴰ})
 opTime write = res 0 (+ 1) (+ 1) 1
 opTime send  = res 1 (ℤ.- + 1) (ℤ.- + 1) 0
 
-open import MonomorphicCalculus.Examples.Typing.Core (one-resource {ℕᴰ}) opTime
+open import MonomorphicCalculus.Examples.Typing.Core (one-watermark {ℕᴰ}) opTime
 
 decided : (c d : R) {p : True (c ≾ᵣ? d)} → c ≾ᵣ d
 decided c d {p} = toWitness p

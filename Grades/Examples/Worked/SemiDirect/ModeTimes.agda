@@ -28,7 +28,7 @@ open import Relation.Nullary.Decidable using (True; False; toWitness; toWitnessF
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
-open import Grades.Examples.Time.TwoSidedWithInfinity using (Interval∞; [_,_]; ↑_; ∞)
+open import Grades.Examples.Time.Interval using (Interval∞; [_,_]; ↑_; ∞)
 open import Grades.Indexed using (ℕ-names; module Maps)
 open import Grades.Examples.SemiDirect.ModeTimes.Boxes using (witness)
 open import Grades.Examples.SemiDirect.ModeTimes

@@ -46,7 +46,7 @@ open import Relation.Nullary.Decidable using (_×-dec_)
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
 open import Grades.Indexed using (ℕ-names; module Maps; Names)
-open import Grades.Examples.Time.TwoSidedWithInfinity
+open import Grades.Examples.Time.Interval
 open import Grades.Examples.SemiDirect.ModeTimes.Boxes
 open import Grades.Matrix.Dioid using (Dioid)
 open import Grades.Matrix.Nominal ℕ-names using (Equivariant)

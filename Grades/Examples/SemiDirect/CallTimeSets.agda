@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Windowed schedules: the durations of a computation and the times   --
+-- Call-time sets: the durations of a computation and the times       --
 -- at which each operation happens.                                   --
 --                                                                    --
 -- A grade `(T , E)` is "takes a number of time steps in `T`, and     --
@@ -15,7 +15,7 @@
 --                                                                    --
 -- The durations are the non-empty such sets, the regular grade over  --
 -- one letter; the times are all such sets, the empty one included,   --
--- ordered by inclusion with union the join. The windowed schedules   --
+-- ordered by inclusion with union the join. The call-time sets       --
 -- are the semidirect product of the durations with the times by      --
 -- name under the shift. A shift by a non-empty set of durations is   --
 -- empty only on the empty set, which is (A6). The order is           --
@@ -24,7 +24,7 @@
 -- numbers.                                                           --
 ------------------------------------------------------------------------
 
-module Grades.Examples.SemiDirect.WindowedSchedules where
+module Grades.Examples.SemiDirect.CallTimeSets where
 
 open import Data.Bool.Base using (T)
 open import Data.Bool.Properties using (T-∨; T-irrelevant)
@@ -261,6 +261,6 @@ shift-action = record
 times-by-name : Semilattice
 times-by-name = indexedˢ times-semilattice
 
-windowed-schedules : Grade ℕᴰ
-windowed-schedules =
+call-time-sets : Grade ℕᴰ
+call-time-sets =
   semidirect durations times-by-name (indexedᵃ {M = durations} {N = times-semilattice} shift-action)

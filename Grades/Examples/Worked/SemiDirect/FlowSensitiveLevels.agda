@@ -11,7 +11,7 @@
 -- the grade, and every computation by reduction.                     --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.SemiDirect.FlowLevels where
+module Grades.Examples.Worked.SemiDirect.FlowSensitiveLevels where
 
 open import Data.List.Base using ([]; _∷_)
 open import Data.Maybe.Base using (Maybe; just; nothing)
@@ -25,13 +25,13 @@ open import Util.Equality
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
 open import Grades.Indexed using (ℕ-names; module Maps)
-open import Grades.Examples.SecurityLevel using (LowHigh; Low; High)
-open import Grades.Examples.SemiDirect.FlowLevels using (two-point-flow-levels)
+open import Grades.Examples.Lattice using (LowHigh; Low; High)
+open import Grades.Examples.SemiDirect.FlowSensitiveLevels using (two-point-flow-sensitive-levels)
 
 open Maps ℕ-names using (Map; _∣_; _!_)
 
 flow : Grade ℕᴰ
-flow = two-point-flow-levels
+flow = two-point-flow-sensitive-levels
 
 open Grade flow using (Carrier; _≾_; _≾?_; _·_; _⊔_; 𝟏; ⊤)
 

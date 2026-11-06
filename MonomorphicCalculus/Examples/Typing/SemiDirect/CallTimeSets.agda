@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Typed computations at the windowed schedules                       --
+-- Typed computations at the call-time sets                           --
 --                                                                    --
 -- The grade                                                          --
 --   Effect grades and resource grades are both a set of durations    --
@@ -26,7 +26,7 @@
 --   (`refuted`).                                                     --
 ------------------------------------------------------------------------
 
-module MonomorphicCalculus.Examples.Typing.SemiDirect.WindowedSchedules where
+module MonomorphicCalculus.Examples.Typing.SemiDirect.CallTimeSets where
 
 open import Data.Nat.Base using (ℕ; suc; _+_)
 open import Data.Product using (_,_)
@@ -37,9 +37,9 @@ import Data.List.Base as L
 
 open import Grades.Base using (Grade)
 open import Grades.Indexed using (ℕ-names; module Maps)
-open import Grades.Examples.SemiDirect.WindowedSchedules
-  using (windowed-schedules; durations; Durations; Times; ⟪_⟫ₜ; _∪ₜ_; ∅ₜ; ℕₜ)
-open import Grades.Examples.Worked.SemiDirect.WindowedSchedules
+open import Grades.Examples.SemiDirect.CallTimeSets
+  using (call-time-sets; durations; Durations; Times; ⟪_⟫ₜ; _∪ₜ_; ∅ₜ; ℕₜ)
+open import Grades.Examples.Worked.SemiDirect.CallTimeSets
   using (name; span; window)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
 
@@ -48,18 +48,18 @@ open Grade durations using (ι)
 
 -- taking `T`, performing `o` only at times `E`
 
-at : Durations → Op → Times → Grade.Carrier windowed-schedules
+at : Durations → Op → Times → Grade.Carrier call-time-sets
 at T o E = T , (∅ₜ ∣ ((name o , E) L.∷ L.[]))
 
 ------------------------------------------------------------------------
 -- The operations, each happening at its start
 
-opTime : Op → Grade.Carrier windowed-schedules
+opTime : Op → Grade.Carrier call-time-sets
 opTime read  = at (ι 1)       read  ⟪ 0 ⟫ₜ
 opTime write = at (span 2 1)  write ⟪ 0 ⟫ₜ
 opTime send  = at (span 4 2)  send  ⟪ 0 ⟫ₜ
 
-open import MonomorphicCalculus.Examples.Typing.Core windowed-schedules opTime
+open import MonomorphicCalculus.Examples.Typing.Core call-time-sets opTime
 
 -- the grades are given: a meta for one would be eta-expanded into its
 -- table before the decision could run

@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Resource levels: the levels a computation reaches of each resource --
--- it holds, such as the number of open files.                        --
+-- Watermark grades: the levels a computation reaches of each         --
+-- resource it holds, such as the number of open files.               --
 --                                                                    --
 -- A grade of one resource is `(t , [d₁ , d₂] , h)`, relative to the  --
 -- level at the start: the trough `t`, the lowest level reached; the  --
@@ -30,12 +30,12 @@
 -- grade below the unit, which gives the zero-product law: from       --
 -- `x · y ≾ 𝟏` the trough and peak of `x` are `0`, its range is       --
 -- `[0 , 0]` by consistency, and so `y ≾ 𝟏`. The unit is not least,   --
--- `_·_` does not commute, and delays change no level. The resource   --
--- levels are the grade of one resource indexed by the resource names --
+-- `_·_` does not commute, and delays change no level. The watermark  --
+-- grades are the grade of one resource indexed by the resource names --
 -- (`Grades.Indexed`).                                                --
 ------------------------------------------------------------------------
 
-module Grades.Examples.SemiDirect.ResourceLevels where
+module Grades.Examples.SemiDirect.Watermarks where
 
 open import Data.Integer.Base as ℤ using (ℤ)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
@@ -257,10 +257,10 @@ zero-productʳ {x} {y} p@(pl , pu) =
     cons′ = ≤∞-trans (consistent x) (≤∞-reflexive (+∞-comm (net (lower x)) (net (upper x))))
 
 ------------------------------------------------------------------------
--- The grade of one resource
+-- The grade of one watermark: the levels of one resource
 
-one-resource : {D : Duration} → Grade D
-one-resource = record
+one-watermark : {D : Duration} → Grade D
+one-watermark = record
   { Carrier         = Level
   ; _·_             = _·ᴸ_
   ; 𝟏               = 𝟏ᴸ
@@ -299,10 +299,10 @@ one-resource = record
     pair (p , p') (q , q') = (p , q) , (p' , q')
 
 ------------------------------------------------------------------------
--- The resource levels: one grade per resource name
+-- The watermark grades: one grade per resource name
 
-resource-levels : {D : Duration} → Grade D
-resource-levels {D} = Maps.indexedᵍ ℕ-names (one-resource {D})
+watermarks : {D : Duration} → Grade D
+watermarks {D} = Maps.indexedᵍ ℕ-names (one-watermark {D})
 
 ------------------------------------------------------------------------
 -- Literals: the trough, the range of net changes and the peak, the

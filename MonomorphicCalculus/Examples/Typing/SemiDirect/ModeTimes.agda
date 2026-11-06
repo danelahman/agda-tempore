@@ -41,7 +41,7 @@ open import Data.Product using (_,_)
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
 open import Grades.Indexed using (ℕ-names; module Maps)
-open import Grades.Examples.Time.TwoSidedWithInfinity using ([_,_]; ↑_; ∞)
+open import Grades.Examples.Time.Interval using ([_,_]; ↑_; ∞)
 open import Grades.Examples.SemiDirect.ModeTimes.Boxes using (witness)
 open import Grades.Examples.SemiDirect.ModeTimes
   renaming (decided to grade)

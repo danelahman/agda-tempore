@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Worked instances of the resource levels.                           --
+-- Worked instances of the watermark grades.                          --
 --                                                                    --
 -- Opening a file is `(0 , [1 , 1] , 1)` and closing one              --
 -- `(-1 , [-1 , -1] , 0)`. Opening and then closing holds one file at --
@@ -14,7 +14,7 @@
 -- grade, and every computation by reduction.                         --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.SemiDirect.ResourceLevels where
+module Grades.Examples.Worked.SemiDirect.Watermarks where
 
 open import Data.Integer.Base as ℤ using (ℤ; +_)
 open import Data.List.Base using ([]; _∷_)
@@ -27,15 +27,15 @@ open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
 open import Grades.Indexed using (ℕ-names; module Maps)
 open import Grades.Examples.SemiDirect.ExtendedInteger
-open import Grades.Examples.SemiDirect.ResourceLevels
+open import Grades.Examples.SemiDirect.Watermarks
 
 open import Util.Equality
 
 open Maps ℕ-names using (Map; _∣_; _!_)
 
 private
-  module L = Grade (one-resource {ℕᴰ})
-  module R = Grade (resource-levels {ℕᴰ})
+  module L = Grade (one-watermark {ℕᴰ})
+  module R = Grade (watermarks {ℕᴰ})
 
 -- the trough `-a`, the range `[d₁ , d₂]` and the peak `h`
 

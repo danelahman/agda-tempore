@@ -28,7 +28,7 @@
 --   (`refuted`).                                                     --
 ------------------------------------------------------------------------
 
-module MonomorphicCalculus.Examples.Typing.SemiDirect.FlowLevels where
+module MonomorphicCalculus.Examples.Typing.SemiDirect.FlowSensitiveLevels where
 
 open import Data.Maybe.Base using (just; nothing)
 open import Data.Nat.Base using (ℕ)
@@ -40,8 +40,8 @@ open import Relation.Nullary.Decidable using (True; False; toWitness; toWitnessF
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
 open import Grades.Indexed using (ℕ-names; module Maps)
-open import Grades.Examples.SecurityLevel using (LowHigh; Low; High; Low⊑)
-open import Grades.Examples.SemiDirect.FlowLevels using (two-point-flow-levels)
+open import Grades.Examples.Lattice using (LowHigh; Low; High; Low⊑)
+open import Grades.Examples.SemiDirect.FlowSensitiveLevels using (two-point-flow-sensitive-levels)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
 
 import Data.List.Base as L
@@ -49,7 +49,7 @@ import Data.List.Base as L
 open Maps ℕ-names using (Map; _∣_; pointwise⁺)
 
 flow : Grade ℕᴰ
-flow = two-point-flow-levels
+flow = two-point-flow-sensitive-levels
 
 memory radio : ℕ
 memory = 0

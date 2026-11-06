@@ -3,7 +3,7 @@
 --                                                                    --
 -- A box of mode times bounds, by an interval of whole steps, the     --
 -- time spent in each mode and the total time (`Matrix.Boxes` over    --
--- the two-sided intervals with `∞`): sequencing adds the intervals,  --
+-- the intervals with `∞`): sequencing adds the intervals,            --
 -- the join takes hulls, and the order is inclusion. A box is         --
 -- realisable when some summary of a trace fits it: a time in each    --
 -- mode, finitely many of them nonzero, each in the interval of its   --
@@ -33,7 +33,7 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
 open import Grades.Indexed using (ℕ-names; module Maps)
-open import Grades.Examples.Time.TwoSidedWithInfinity
+open import Grades.Examples.Time.Interval
 open import Grades.Matrix.Dioid using (Dioid)
 open import Grades.Matrix.Modes ℕ-names using (Name; _≟ᴺ_; swap; swap-inv; swap-injective)
 import Grades.Matrix.Boxes
@@ -44,9 +44,6 @@ open import Util.Equality
 
 open Maps ℕ-names using (Map; _∣_; _!_; others; named; lookup; everywhere; map₂; !-map₂;
                          pointwise⁻; pointwise⁺)
-
-intervals : Grade ℕᴰ
-intervals = two-sided-intervals-with-∞
 
 module B = Grades.Matrix.Boxes ℕ-names intervals
 open B public using (Box; boxes; equivariant-boxes; rename; rename-!; orbit; orbit-∈; orbit-∉)

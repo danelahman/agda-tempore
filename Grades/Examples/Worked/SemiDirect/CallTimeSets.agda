@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Worked instances of the windowed schedules, at the sensor node.    --
+-- Worked instances of the call-time sets, at the sensor node.        --
 --                                                                    --
 -- The operations are the names 0, 1, 2 (`read`, `write`, `send`). A  --
 -- transmission taking one step is `(1 , send at {0})`: it happens at --
@@ -13,7 +13,7 @@
 -- reduction.                                                         --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.SemiDirect.WindowedSchedules where
+module Grades.Examples.Worked.SemiDirect.CallTimeSets where
 
 open import Data.List.Base using ([]; _∷_)
 open import Data.Nat.Base using (ℕ; suc; _+_)
@@ -24,11 +24,11 @@ open import Relation.Nullary.Decidable using (True; False; toWitness; toWitnessF
 open import Grades.Base using (Grade)
 open import Grades.Indexed using (ℕ-names; module Maps)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
-open import Grades.Examples.SemiDirect.WindowedSchedules
-  using (windowed-schedules; durations; Durations; Times; ⟪_⟫ₜ; _∪ₜ_; ∅ₜ)
+open import Grades.Examples.SemiDirect.CallTimeSets
+  using (call-time-sets; durations; Durations; Times; ⟪_⟫ₜ; _∪ₜ_; ∅ₜ)
 
 open Maps ℕ-names using (Map; _∣_)
-open Grade windowed-schedules using (Carrier; _≾_; _≾?_; _≃_; _≃?_; _·_; _⊔_; 𝟏)
+open Grade call-time-sets using (Carrier; _≾_; _≾?_; _≃_; _≃?_; _·_; _⊔_; 𝟏)
 open Grade durations using (ι) renaming (_⊔_ to _⊔ᴰ_)
 
 name : Op → ℕ

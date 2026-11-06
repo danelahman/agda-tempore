@@ -17,7 +17,7 @@
 -- natural numbers.                                                   --
 ------------------------------------------------------------------------
 
-module Grades.Examples.SemiDirect.FlowLevels where
+module Grades.Examples.SemiDirect.FlowSensitiveLevels where
 
 open import Data.Empty using (⊥-elim) renaming (⊥ to 𝟘)
 open import Data.Maybe.Base using (Maybe; just; nothing)
@@ -30,7 +30,7 @@ open import Relation.Nullary using (yes; no)
 open import Grades.Durations using (Duration)
 open import Grades.Base using (Grade)
 open import Grades.Hints using (GradeHints)
-open import Grades.Examples.SecurityLevel
+open import Grades.Examples.Lattice
   using (LevelLattice; level-grade; level-gradeʰ; low-high; LowHigh; Low; High)
 open import Grades.Indexed using (ℕ-names; module Maps)
 open Maps ℕ-names using (indexedˢ; indexedᵃ; Map)
@@ -138,25 +138,26 @@ module Over (L : LevelLattice) where
   ----------------------------------------------------------------------
   -- The grade
 
-  flow-levels : {D : Duration} → Grade D
-  flow-levels {D} =
+  flow-sensitive-levels : {D : Duration} → Grade D
+  flow-sensitive-levels {D} =
     semidirect (level-grade L) outputs (indexedᵃ (raise-action {D}))
 
-  -- its hints by copatterns, so that `flow-levels` is not compared as a
-  -- record value
+  -- its hints by copatterns, so that `flow-sensitive-levels` is not
+  -- compared as a record value
 
   private
     module H {D : Duration} =
       GradeHints (semidirectʰ (level-gradeʰ L) outputs (indexedᵃ (raise-action {D})))
 
-  flow-levelsʰ : {D : Duration} → GradeHints (flow-levels {D})
-  GradeHints.𝟏-least? (flow-levelsʰ {D}) = H.𝟏-least? {D}
-  GradeHints.·-comm?  (flow-levelsʰ {D}) = H.·-comm? {D}
-  GradeHints.plus?    (flow-levelsʰ {D}) = H.plus? {D}
+  flow-sensitive-levelsʰ : {D : Duration} → GradeHints (flow-sensitive-levels {D})
+  GradeHints.𝟏-least? (flow-sensitive-levelsʰ {D}) = H.𝟏-least? {D}
+  GradeHints.·-comm?  (flow-sensitive-levelsʰ {D}) = H.·-comm? {D}
+  GradeHints.plus?    (flow-sensitive-levelsʰ {D}) = H.plus? {D}
 
 ------------------------------------------------------------------------
 -- At the two-point lattice `Low < High`
 
 open Over low-high public
   using (written-at; outputs; raise; raise-action)
-  renaming (flow-levels to two-point-flow-levels; flow-levelsʰ to two-point-flow-levelsʰ)
+  renaming ( flow-sensitive-levels  to two-point-flow-sensitive-levels
+           ; flow-sensitive-levelsʰ to two-point-flow-sensitive-levelsʰ )
