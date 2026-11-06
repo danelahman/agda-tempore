@@ -8,24 +8,24 @@
 -- typable.                                                           --
 --                                                                    --
 -- The examples                                                       --
---   budget τ c   a function annotated to take as long as its         --
---                argument and a delay `τ`, the whole annotated at    --
---                `c`; at a duration (`budget-at`) and at the top     --
---                (`budget-top`)                                      --
---   stretch τ    a handler calling the result of its resumption      --
+--   deadline τ c   a function annotated to take as long as its       --
+--                  argument and a delay `τ`, the whole annotated at  --
+--                  `c`; at a duration (`deadline-at`) and at the     --
+--                  top (`deadline-top`)                              --
+--   stretch τ      a handler calling the result of its resumption    --
 --                                                                    --
 -- How to read them                                                   --
 --   Each program is written above its definition in ordinary         --
 --   syntax. The modules under `Runs/` check the verdicts with        --
 --   `refl` at upper and lower bounds:                                --
---     budget-top-verdict : verdict (check [] (budget-top 1))         --
---                            ≡ established                           --
+--     deadline-top-verdict : verdict (check [] (deadline-top 1))     --
+--                              ≡ established                         --
 --   An established verdict is read back as a typing                  --
 --   (`check-typable`); an `untypable` verdict from `infer` gives a   --
---   proof that the program is untypable. A budget is established at  --
---   the top and refuted at the durations tried, at both grades;      --
---   `stretch` is refuted at upper bounds and established             --
---   at lower-bound ones.                                             --
+--   proof that the program is untypable. A deadline is established   --
+--   at the top and refuted at the durations tried, at both grades;   --
+--   `stretch` is refuted at upper bounds and established at lower    --
+--   bounds.                                                          --
 ------------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
@@ -89,8 +89,8 @@ check-typable Γ M () | Check.stuck
 ------------------------------------------------------------------
 -- 1. A function annotated to take as long as its argument and `τ`
 --
---   budget τ c = (let f = (λ g. g (); delay τ) : (U → U ! ε₀) → U ! ε₀
---                 in f (λ _. ())) : U ! c
+--   deadline τ c = (let f = (λ g. g (); delay τ) : (U → U ! ε₀) → U ! ε₀
+--                   in f (λ _. ())) : U ! c
 --
 -- Where the unit is least it needs `τ · ε₀ ≾ ε₀ ∧ ε₀ ≾ c`. This fails
 -- if `τ` is not below `c`; otherwise the least `ε₀` it allows is the
@@ -105,8 +105,8 @@ check-typable Γ M () | Check.stuck
 ε̂₀ : EExp Θ₁
 ε̂₀ = evar fzero
 
-budget : 𝔻 → EExp Θ₁ → RawC Θ₁ 0
-budget τ c =
+deadline : 𝔻 → EExp Θ₁ → RawC Θ₁ 0
+deadline τ c =
   (return (fun ((v₀ · ⋆) ⨟ delay τ (return ⋆))
              ⦂ᵛ ((unit ⇒ unit ! ε̂₀) ⇒ unit ! ε̂₀))
    ⨟ (v₀ · fun (return ⋆)))
@@ -114,11 +114,11 @@ budget τ c =
 
 -- annotated at the grade of a duration, and at the top
 
-budget-at : 𝔻 → 𝔻 → RawC Θ₁ 0
-budget-at τ c = budget τ ⌜ c ⌝ᵉ
+deadline-at : 𝔻 → 𝔻 → RawC Θ₁ 0
+deadline-at τ c = deadline τ ⌜ c ⌝ᵉ
 
-budget-top : 𝔻 → RawC Θ₁ 0
-budget-top τ = budget τ (econst ⊤ₑ)
+deadline-top : 𝔻 → RawC Θ₁ 0
+deadline-top τ = deadline τ (econst ⊤ₑ)
 
 ------------------------------------------------------------------
 -- 2. A handler calling the result of its resumption

@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- A time-ticks Kripke frame for the intervals of dense               --
--- time, each end open or closed and the right one possibly absent.   --
+-- A time-ticks Kripke frame for the intervals of rational time, each --
+-- end open or closed and the right one possibly absent.              --
 --                                                                    --
 -- Worlds are time points `ℚ≥0`. A grade `i` reaches exactly the      --
 -- worlds ahead by a duration it admits:                              --
@@ -23,7 +23,7 @@ open import Grades.Durations.NonNegativeRational using (ℚ≥0ᵀ; ℚ≥0-dens
 open import Util.NonNegativeRational
   using (ℚ≥0; _+_; 0ᵈ; 1ᵈ; _≤?_)
 open import Grades.Examples.Time.Rational.Interval
-  using (pointⁱ; _⊕_; rational-intervals)
+  using (pointⁱ; _⊕_; rational-interval)
 open import Grades.Durations.Intervals.Dense ℚ≥0ᵀ
   using (_∈ⁱ_; shift-∈; module Exact)
 
@@ -35,8 +35,8 @@ open import MonomorphicCalculus.DenotationalSemantics.Model.World.Action using (
 
 -- The frame.
 
-ticks : World rational-intervals
-ticks = reindexʷ (action rational-intervals) pointⁱ
+ticks : World rational-interval
+ticks = reindexʷ (action rational-interval) pointⁱ
 
 open World ticks public using () renaming (_⊑[_]_ to _⊑ᵗ[_]_)
 

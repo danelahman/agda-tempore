@@ -9,11 +9,12 @@
 --   steps and does nothing.                                          --
 --                                                                    --
 -- What it shows                                                      --
---   A schedule that lets the radio warm up for three steps admits an --
---   uplink that idles two steps between reading and transmitting,    --
---   and refuses one that transmits at once. A box graded "within     --
---   four steps, anything at any time" is a value that goes stale: it --
---   is claimed after idling three steps, and refused after five.     --
+--   A call-time set that lets the radio warm up for three steps      --
+--   admits an uplink that idles two steps between reading and        --
+--   transmitting, and refuses one that transmits at once. A box      --
+--   graded "within four steps, anything at any time" is a value that --
+--   goes stale: it is claimed after idling three steps, and refused  --
+--   after five.                                                      --
 --                                                                    --
 --   The two rules that place the unit on opposite sides of the       --
 --   order: the unit takes no time, so a reading goes stale after any --
@@ -40,7 +41,7 @@ open import Grades.Indexed using (ℕ-names; module Maps)
 open import Grades.Examples.SemiDirect.CallTimeSets
   using (call-time-sets; durations; Durations; Times; ⟪_⟫ₜ; _∪ₜ_; ∅ₜ; ℕₜ)
 open import Grades.Examples.Worked.SemiDirect.CallTimeSets
-  using (name; span; window)
+  using (name; durations-between; times-between)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
 
 open Maps ℕ-names using (Map; _∣_)
@@ -56,8 +57,8 @@ at T o E = T , (∅ₜ ∣ ((name o , E) L.∷ L.[]))
 
 opTime : Op → Grade.Carrier call-time-sets
 opTime read  = at (ι 1)       read  ⟪ 0 ⟫ₜ
-opTime write = at (span 2 1)  write ⟪ 0 ⟫ₜ
-opTime send  = at (span 4 2)  send  ⟪ 0 ⟫ₜ
+opTime write = at (durations-between 2 1)  write ⟪ 0 ⟫ₜ
+opTime send  = at (durations-between 4 2)  send  ⟪ 0 ⟫ₜ
 
 open import MonomorphicCalculus.Examples.Typing.Core call-time-sets opTime
 
@@ -74,11 +75,11 @@ check : ∀ {Γ A ε} (ε' : E) {p : True (ε ≾ₑ? ε')} → Γ ⊢ᶜ⦂ A !
 check ε' {p} M = coerce (toWitness p) M
 
 ------------------------------------------------------------------------
--- A schedule: within ten steps, reading at the start, and the radio
--- warming up for three steps
+-- A call-time set: within ten steps, reading at the start, and the
+-- radio warming up for three steps
 
 warm-up : E
-warm-up = span 0 10 , (∅ₜ ∣ ((name read , ⟪ 0 ⟫ₜ) L.∷ (name send , window 3 7) L.∷ L.[]))
+warm-up = durations-between 0 10 , (∅ₜ ∣ ((name read , ⟪ 0 ⟫ₜ) L.∷ (name send , times-between 3 7) L.∷ L.[]))
 
 -- an uplink with a constant payload, idling two steps first
 
@@ -117,14 +118,14 @@ stale-after-idling = refuted (𝟏ᵣ ·ᵣ ιᵣ 1) 𝟏ᵣ
 -- Unboxing: a value that goes stale after four steps
 
 within-four : R
-within-four = span 0 4 , (ℕₜ ∣ L.[])
+within-four = durations-between 0 4 , (ℕₜ ∣ L.[])
 
 -- claimed after idling three steps: seven to nine steps, transmitting
 -- at time 3
 
-claimed-in-time : [] ⊢ᶜ⦂ unit ! at (span 7 2) send ⟪ 3 ⟫ₜ
+claimed-in-time : [] ⊢ᶜ⦂ unit ! at (durations-between 7 2) send ⟪ 3 ⟫ₜ
 claimed-in-time =
-  check (at (span 7 2) send ⟪ 3 ⟫ₜ)
+  check (at (durations-between 7 2) send ⟪ 3 ⟫ₜ)
     (box within-four (const reading 42) -- ∷ [ within-four ] Reading
       (delay 3                          -- ⟨ ι 3 ⟩
         (unbox (Tl-⟨⟩ Hd) (decided (𝟏ᵣ ·ᵣ ιᵣ 3) within-four) (<:ᵛ-refl _)

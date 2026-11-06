@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------
--- Typed computations over the duration-hull system of the rigid      --
--- finite-expression intervals, in dense time                         --
+-- Typed computations over the duration-hull system of the finite     --
+-- timed regex intervals, in rational time                            --
 --                                                                    --
 -- The grade system                                                   --
 --   Effect grades are consistent pairs of a lower and an upper bound --
 --   over interval letters, each operation graded by itself at both;  --
---   resource grades are intervals of dense time, and an effect grade --
---   is measured by its duration hull.                                --
+--   resource grades are intervals of rational time, and an effect    --
+--   grade is measured by its duration hull.                          --
 --                                                                    --
 --   Reading takes more than a quarter and at most half a unit,       --
 --   writing one to two units, sending two to four.                   --
@@ -41,7 +41,7 @@ import Grades.Examples.Traces.TimedRegex.Finite.UpperBound Op 3 code name name-c
 open import Grades.Examples.Traces.TimedRegex.Finite.Interval Op 3 code name name-code code-name running
   using (interval; operation; perform; delay) renaming ([_,_] to [_,_]ᵍ)
 open import Grades.Examples.System.Traces.TimedRegex.Finite.Interval Op 3 code name name-code code-name running
-  using (intervalRunsToIntervalsGradeSystem)
+  using (timed-regex→intervals-grade-system)
 
 -- containments of intervals, decided
 
@@ -58,7 +58,7 @@ opTime : Op → Grade.Carrier interval
 opTime = operation
 
 open import MonomorphicCalculus.Examples.Typing.System
-  intervalRunsToIntervalsGradeSystem opTime
+  timed-regex→intervals-grade-system opTime
   hiding (_/_)
 
 ------------------------------------------------------------------------

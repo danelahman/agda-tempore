@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- A trace-history Kripke frame for the rigid timed regex grades in   --
--- whole steps, as intervals.                                         --
+-- A trace-history Kripke frame for the timed regex grades in whole   --
+-- steps, as intervals.                                               --
 --                                                                    --
 -- Worlds are timed traces, and a grade `[ L , U ]` reaches the       --
 -- histories extending the current one by one continuation that both  --
@@ -19,7 +19,7 @@ open import Util.Equality
 open import Grades.Durations.Nat using (ℕᵀ)
 import Grades.Traces.RunningTimes as RunningTimes
 
-module MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Nat.Interval
+module MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TimedRegex.Nat.Interval
   (Op : Set) (n : ℕ) (code : Op → Fin n) (name : Fin n → Op)
   (name-code : ∀ o → name (code o) ≡ o) (code-name : ∀ c → code (name c) ≡ c)
   (running : RunningTimes.RunningTimes ℕᵀ Op) where

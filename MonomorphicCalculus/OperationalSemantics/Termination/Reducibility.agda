@@ -2,7 +2,7 @@
 -- The logical relation: reducible values, computations and stores.   --
 --                                                                    --
 -- Unary and syntactic, since it only has to deliver weak-head        --
--- normalization; soundness and head-faithfulness are separate.       --
+-- normalisation; soundness and head-faithfulness are separate.       --
 --                                                                    --
 -- `CRed` is an inductive family, not a recursion on a measure: `E`   --
 -- is an arbitrary preordered monoid, so `op-grade op ·ₑ ε` need not  --

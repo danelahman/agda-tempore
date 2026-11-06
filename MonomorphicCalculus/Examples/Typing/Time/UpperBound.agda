@@ -55,7 +55,7 @@ open import Data.Unit using (tt)
 open import Util.Equality
 
 open import Grades.Examples.Time.UpperBound
-  using (𝕀ᵣ; ℕ∞; ↑_; ∞; upper-bounds)
+  using (𝕀ᵣ; ℕ∞; ↑_; ∞; upper-bound)
   renaming ([0,_] to ⌈0,_⌉)
 
 -- every deadline written below is finite, and `⌈0, ∞ ⌉` is the greatest
@@ -75,7 +75,7 @@ open import Grades.Examples.Worked.Time.Decide using (≤!; ≰!)
 open import Grades.Examples.Worked.Operations.Grading using (module Time-UpperBound)
 open Time-UpperBound using (opTime) public
 
-open import MonomorphicCalculus.Examples.Typing.Core upper-bounds opTime
+open import MonomorphicCalculus.Examples.Typing.Core upper-bound opTime
 
 open import Language.Comparisons using (Cmp; eq; ne; lt; le; gt; ge; less; equal; greater; holds)
 open import MonomorphicCalculus.Syntax.Data spec using (compareᵈ)
@@ -118,8 +118,8 @@ tagged-relaying =
 ------------------------------------------------------------------------
 -- Readings go stale
 --
--- `var` asks for `ρ ≾ᵣ 𝟏ᵣ` at a non-eternal type, and the only grade
--- below `[0, 0 ]` is itself, so a reading is usable only where no modality
+-- `var` asks for `ρ ≾ᵣ 𝟏ᵣ` at a noneternal type, and the only grade below
+-- `[0, 0 ]` is itself, so a reading is usable only where no modality
 -- stands between its binding and its use.
 
 reading-stale-after-idling : ¬ (𝟏ᵣ ·ᵣ ιᵣ 2 ≾ᵣ 𝟏ᵣ)
@@ -424,7 +424,7 @@ below-after-reading =
   perform read ⋆                     -- ⟨ [0, 1 ] ⟩ ∷ Reading
     (return (cmp lt (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))) (const nodeid 7) nodeid-eternal))
 
--- a reading is not eternal, so no comparison of readings is typed
+-- a reading is noneternal, so no comparison of readings is typed
 
 readings-not-compared : ¬ Et Reading
 readings-not-compared = reading-not-eternal

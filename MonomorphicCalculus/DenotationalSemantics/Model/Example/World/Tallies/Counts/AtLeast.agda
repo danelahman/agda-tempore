@@ -19,14 +19,14 @@ open import Data.Unit using () renaming (⊤ to 𝟙)
 open import Data.Vec.Base using ([]; _∷_)
 
 open import Grades.Examples.Time.LowerBound
-  using (lower-bounds; [_,+∞⟩)
+  using (lower-bound; [_,+∞⟩)
 open import Grades.Examples.Counts.AtLeast using (at-least-counts)
 
 open import Util.Equality
 
 open import MonomorphicCalculus.DenotationalSemantics.Model.World
 open import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Tallies.Counts.Power
-  lower-bounds using (_^_)
+  lower-bound using (_^_)
 
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.LowerBound as LS
 

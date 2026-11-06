@@ -22,7 +22,7 @@ open import Data.Product using (_×_)
 open import Grades.Durations using (Duration)
 open import Grades.Examples.Lattice
   using (LevelLattice; module LevelLattice; level-grade;
-         low-high; two-point-levels; taint-lattice; taint-sets)
+         low-high-lattice; low-high; taint-lattice; taint-sets)
 
 open import Util.Equality
 
@@ -47,8 +47,8 @@ module _ {D : Duration} (L : LevelLattice) where
 
 -- at `Low < High`
 
-two-point-labels : {D : Duration} → World (two-point-levels {D})
-two-point-labels = labels low-high
+two-point-labels : {D : Duration} → World (low-high {D})
+two-point-labels = labels low-high-lattice
 
 -- at taint sets over `Fin n`
 

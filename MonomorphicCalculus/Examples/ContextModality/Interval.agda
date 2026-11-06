@@ -20,7 +20,7 @@ open import Relation.Nullary.Decidable using (toWitness; toWitnessFalse)
 
 open import Grades.Base
 open import Grades.Examples.Time.Interval
-open import Grades.Examples.System.Identity using (identityGradeSystem)
+open import Grades.Examples.System.Identity using (identity-grade-system)
 open import Language.BaseTypes using (noBaseTypes)
 open import Language.Spec
 import Language.Operations as Ops
@@ -28,7 +28,7 @@ import Language.Operations as Ops
 module MonomorphicCalculus.Examples.ContextModality.Interval where
 
 G : GradeSystem
-G = identityGradeSystem intervals
+G = identity-grade-system interval
 
 ops : Ops.Operations G noBaseTypes
 ops = record

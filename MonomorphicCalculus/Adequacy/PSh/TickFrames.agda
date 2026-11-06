@@ -18,5 +18,5 @@ open import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.
 
 -- "at least `n` ticks" reaches exactly `n` ticks ahead
 
-lsi-reachable : ∀ (ρ : 𝕀) (w : ℕ) → Σ[ w' ∈ ℕ ] (w ⊑ᵗ[ ρ ] w')
-lsi-reachable [ n ,+∞⟩ w = n + w , ≤-refl
+lower-reachable : ∀ (ρ : 𝕀) (w : ℕ) → Σ[ w' ∈ ℕ ] (w ⊑ᵗ[ ρ ] w')
+lower-reachable [ n ,+∞⟩ w = n + w , ≤-refl

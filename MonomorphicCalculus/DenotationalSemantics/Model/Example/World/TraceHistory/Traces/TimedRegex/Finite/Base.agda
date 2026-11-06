@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Trace-history frames for the rigid timed finite-expression grades: --
--- what the upper-bound, lower-bound and interval frames share.       --
+-- Trace-history frames for the finite timed regex grades: what the   --
+-- upper-bound, lower-bound and interval frames share.                --
 --                                                                    --
 -- A history is a timed trace, read in a grade by `World.History`. An --
 -- operation is read as the letter `‵ o`, one run of it for a time    --
@@ -16,7 +16,7 @@ open import Util.Equality
 open import Grades.Durations.NonNegativeRational using (ℚ≥0ᵀ; ℚ≥0-dense)
 import Grades.Traces.RunningTimes as RunningTimes
 
-module MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Finite.Base
+module MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TimedRegex.Finite.Base
   (Op : Set) (n : ℕ) (code : Op → Fin n) (name : Fin n → Op)
   (name-code : ∀ o → name (code o) ≡ o) (code-name : ∀ c → code (name c) ≡ c)
   (running : RunningTimes.RunningTimes ℚ≥0ᵀ Op) where

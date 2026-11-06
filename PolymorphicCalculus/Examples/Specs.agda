@@ -16,13 +16,13 @@
 --   Traces/Banked/UpperBound    yes        no                        --
 --   Traces/Banked/LowerBound     no         no                       --
 --                                                                    --
--- The others are time paired with a lattice (`Footprint`)            --
--- and dense time, each on both sides.                                --
+-- The others are time paired with a lattice (`Footprint`) and        --
+-- rational time, each on both sides.                                 --
 --                                                                    --
 -- The hints are `identityʰ`, with the grades the solver may try as   --
 -- candidates: at time, the bounds `0, …, s+1` for constants summing  --
--- to `s` (a grid at dense time); at the products, these paired with  --
--- both levels; at the timed traces, none.                            --
+-- to `s` (a grid at rational time); at the products, these paired    --
+-- with both levels; at the timed traces, none.                       --
 ------------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_)
@@ -53,14 +53,14 @@ sensor-complete send  = there (there (here refl))
 module Time-UpperBound where
 
   open import Grades.Examples.Time.UpperBound
-    using (upper-bounds; upper-boundsʰ; upper-bound-witnesses)
+    using (upper-bound; upper-boundʰ; upper-bound-witnesses)
   open Grading.Time-UpperBound using (opTime)
-  open import Language.Examples.SensorNode.Identity upper-bounds opTime
+  open import Language.Examples.SensorNode.Identity upper-bound opTime
     using (spec) public
   open import PolymorphicCalculus.Inference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
   hints : SystemHints (LanguageSpec.Grades spec)
-  hints = identityʰ upper-boundsʰ upper-bound-witnesses
+  hints = identityʰ upper-boundʰ upper-bound-witnesses
 
   enum : OpEnum
   enum = opEnum sensor-ops sensor-complete
@@ -68,14 +68,14 @@ module Time-UpperBound where
 module Time-LowerBound where
 
   open import Grades.Examples.Time.LowerBound
-    using (lower-bounds; lower-boundsʰ; lower-bound-witnesses)
+    using (lower-bound; lower-boundʰ; lower-bound-witnesses)
   open Grading.Time-LowerBound using (opTime)
-  open import Language.Examples.SensorNode.Identity lower-bounds opTime
+  open import Language.Examples.SensorNode.Identity lower-bound opTime
     using (spec) public
   open import PolymorphicCalculus.Inference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
   hints : SystemHints (LanguageSpec.Grades spec)
-  hints = identityʰ lower-boundsʰ lower-bound-witnesses
+  hints = identityʰ lower-boundʰ lower-bound-witnesses
 
   enum : OpEnum
   enum = opEnum sensor-ops sensor-complete
@@ -150,40 +150,40 @@ module Product-TimeUpperBoundLattice where
   enum : OpEnum
   enum = opEnum sensor-ops sensor-complete
 
-module Rational-Time-UpperBound where
+module Time-Rational-UpperBound where
 
   open import Grades.Examples.Time.Rational.UpperBound
-    using (rational-upper-bounds; rational-upper-boundsʰ; rational-upper-bound-witnesses)
+    using (rational-upper-bound; rational-upper-boundʰ; rational-upper-bound-witnesses)
   open Grading.Time-Rational-UpperBound using (opTime)
-  open import Language.Examples.SensorNode.Identity rational-upper-bounds opTime
+  open import Language.Examples.SensorNode.Identity rational-upper-bound opTime
     using (spec) public
   open import PolymorphicCalculus.Inference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
   hints : SystemHints (LanguageSpec.Grades spec)
-  hints = identityʰ rational-upper-boundsʰ rational-upper-bound-witnesses
+  hints = identityʰ rational-upper-boundʰ rational-upper-bound-witnesses
 
   enum : OpEnum
   enum = opEnum sensor-ops sensor-complete
 
-module Rational-Time-LowerBound where
+module Time-Rational-LowerBound where
 
   open import Grades.Base using (GradeMorphism)
   open import Grades.Examples.Time.Rational.LowerBound
-    using (𝕀; rational-lower-bounds; rational-lower-boundsʰ; rational-lower-bound-witnesses;
+    using (𝕀; rational-lower-bound; rational-lower-boundʰ; rational-lower-bound-witnesses;
            lower-bound→rational)
   module Discrete = Grading.Time-LowerBound
 
-  -- the discrete figures, read in dense time
+  -- the discrete figures, read in rational time
 
   opTime : Op → 𝕀
   opTime o = GradeMorphism.map lower-bound→rational (Discrete.opTime o)
 
-  open import Language.Examples.SensorNode.Identity rational-lower-bounds opTime
+  open import Language.Examples.SensorNode.Identity rational-lower-bound opTime
     using (spec) public
   open import PolymorphicCalculus.Inference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
   hints : SystemHints (LanguageSpec.Grades spec)
-  hints = identityʰ rational-lower-boundsʰ rational-lower-bound-witnesses
+  hints = identityʰ rational-lower-boundʰ rational-lower-bound-witnesses
 
   enum : OpEnum
   enum = opEnum sensor-ops sensor-complete

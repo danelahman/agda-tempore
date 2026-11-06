@@ -3,9 +3,9 @@
 --                                                                    --
 -- A variable `x : A ∈[ ρ ] Γ` projects through the context to the    --
 -- context modality at its accumulated grade, then extracts to        --
--- `⟦ A ⟧`: a non-eternal type needs `ρ ≾ 𝟏ᵣ` and the possibility     --
--- counit `εᵘ`; an eternal type uses the eternal extraction `extᵉ`    --
--- at any grade `ρ`.                                                  --
+-- `⟦ A ⟧`: a noneternal type needs `ρ ≾ 𝟏ᵣ` and the possibility      --
+-- counit `εᵘ`; an eternal type uses the eternal extraction `extᵉ` at --
+-- any grade `ρ`.                                                     --
 --                                                                    --
 -- An eternal type's `Eternalᵒ` structure is assembled by recursion   --
 -- on the eternality witness from `GroundEternal`'s per-former        --
@@ -135,7 +135,7 @@ private
   _∙ᵛ_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
   _∙ᵛ_ = ≈ᵐ-trans
 
--- The head variable denotes the second projection: at a non-eternal type the
+-- The head variable denotes the second projection: at a noneternal type the
 -- grade bound is reflexive and the possibility counit cancels `η`; at an
 -- eternal one the extraction cancels it.
 var-morphism-Hd : ∀ {Γ A} → .(f : A Et∨≾ᵘ 𝟏ᵣ)

@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- A trace-history Kripke frame for the rigid timed finite-expression --
--- grades as lower bounds.                                            --
+-- A trace-history Kripke frame for the finite timed regex grades as  --
+-- lower bounds.                                                      --
 --                                                                    --
 -- Worlds are timed traces. A grade `L` reaches the histories         --
 -- extending the current one by a continuation whose reading is below --
@@ -21,7 +21,7 @@ open import Util.Equality
 open import Grades.Durations.NonNegativeRational using (ℚ≥0ᵀ)
 import Grades.Traces.RunningTimes as RunningTimes
 
-module MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Finite.LowerBound
+module MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TimedRegex.Finite.LowerBound
   (Op : Set) (n : ℕ) (code : Op → Fin n) (name : Fin n → Op)
   (name-code : ∀ o → name (code o) ≡ o) (code-name : ∀ c → code (name c) ≡ c)
   (running : RunningTimes.RunningTimes ℚ≥0ᵀ Op) where
@@ -38,7 +38,7 @@ open import Grades.Examples.Traces.TimedRegex.Finite.LowerBound Op n code name n
   using (lower-bound; Instance; lower; at-least′; Proper′; expr; _≾ᴳ_; _≾ᵉ?_; decided; by-reader; ‵_; ⟦_⟧)
   renaming (_·_ to _·ᵉ_; ε to εᵉ; str to strᵉ)
 
-open import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Finite.Base
+open import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TimedRegex.Finite.Base
   Op n code name name-code code-name running
   using (‵ᵍ; events; events⁻; code-injective)
 

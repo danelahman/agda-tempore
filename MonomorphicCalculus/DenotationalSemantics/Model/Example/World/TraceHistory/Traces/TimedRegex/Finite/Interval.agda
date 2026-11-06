@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- A trace-history Kripke frame for the rigid timed finite-expression --
--- grades as intervals.                                               --
+-- A trace-history Kripke frame for the finite timed regex grades as  --
+-- intervals.                                                         --
 --                                                                    --
 -- Worlds are timed traces, and a grade `[ L , U ]` reaches the       --
 -- histories extending the current one by one continuation that both  --
@@ -21,7 +21,7 @@ open import Util.Equality
 open import Grades.Durations.NonNegativeRational using (ℚ≥0ᵀ)
 import Grades.Traces.RunningTimes as RunningTimes
 
-module MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Finite.Interval
+module MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TimedRegex.Finite.Interval
   (Op : Set) (n : ℕ) (code : Op → Fin n) (name : Fin n → Op)
   (name-code : ∀ o → name (code o) ≡ o) (code-name : ∀ c → code (name c) ≡ c)
   (running : RunningTimes.RunningTimes ℚ≥0ᵀ Op) where
@@ -37,7 +37,7 @@ open import Grades.Examples.Traces.TimedRegex.Finite.Interval Op n code name nam
 open import Grades.Examples.Traces.TimedRegex.Finite.Base Op n code name name-code code-name running
   using (expr; ⟦_⟧; _≾ᴳ_; waitᴸ; waitᵁ) renaming (_·ᵉ_ to _·ᵍ_)
 
-open import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Finite.Base
+open import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TimedRegex.Finite.Base
   Op n code name name-code code-name running
   using (‵ᵍ; events; code-injective)
 
@@ -45,9 +45,9 @@ open import Grades.Exact.Lift ℚ≥0ᵀ Op n code code-injective using (_≾_)
 open import Grades.Exact.Hull ℚ≥0ᵀ Op n code code-injective running
   using (runᴸ)
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Finite.LowerBound
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TimedRegex.Finite.LowerBound
   Op n code name name-code code-name running as FL
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Finite.UpperBound
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TimedRegex.Finite.UpperBound
   Op n code name name-code code-name running as FU
 
 open import MonomorphicCalculus.DenotationalSemantics.Model.World.History ℚ≥0ᵀ Op interval

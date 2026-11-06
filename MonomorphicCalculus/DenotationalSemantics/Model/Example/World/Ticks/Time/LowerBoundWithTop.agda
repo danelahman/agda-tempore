@@ -24,7 +24,7 @@ open import Data.Nat.Properties
 
 open import Grades.Examples.Time.LowerBound
   using (𝕀⊤; timed_; untimed; [_,+∞⟩; _·ᵗ_; _≾ᵗ_;
-         lower-bounds-with-⊤)
+         lower-bound-with-⊤)
 
 open import Util.Equality
 
@@ -78,7 +78,7 @@ w ⊑ᵗ[ untimed ]        w' = w ≤ w'
 
 -- The frame.
 
-ticks : World lower-bounds-with-⊤
+ticks : World lower-bound-with-⊤
 ticks = record
   { W             = ℕ
   ; _⊑[_]_       = _⊑ᵗ[_]_

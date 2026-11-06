@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- A trace-history Kripke frame for the trace intervals.              --
+-- A trace-history Kripke frame for the banked trace intervals.       --
 --                                                                    --
 -- Worlds are timed traces, and a grade `[ P , Q ]` reaches the       --
 -- histories obtained by appending one continuation that satisfies    --

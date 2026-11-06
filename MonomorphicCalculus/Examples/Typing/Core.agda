@@ -19,4 +19,4 @@ open import Grades.Examples.Worked.Operations using (Op)
 module MonomorphicCalculus.Examples.Typing.Core
   {D : Duration} (G : Grade D) (opTime : Op → Grade.Carrier G) where
 
-open import MonomorphicCalculus.Examples.Typing.System (identityGradeSystem G) opTime public
+open import MonomorphicCalculus.Examples.Typing.System (identity-grade-system G) opTime public

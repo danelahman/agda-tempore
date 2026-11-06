@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Handlers at timed traces, allowance order                          --
+-- Handlers at banked trace upper bounds, allowance order             --
 --                                                                    --
 -- The unit is least. Every program gets the scheme written in        --
 -- `Handlers`; `discard` is typable, and `resume-twice` is refuted.   --

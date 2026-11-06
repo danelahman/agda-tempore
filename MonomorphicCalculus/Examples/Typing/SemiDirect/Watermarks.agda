@@ -2,11 +2,11 @@
 -- Typed computations at the watermark grades                         --
 --                                                                    --
 -- The grade                                                          --
---   Effect grades and resource grades are both the levels of one     --
---   resource, the slots of the node's local memory: storing a        --
---   reading occupies a slot, `(0 , [1 , 1] , 1)`, and transmitting   --
---   one frees it, `(-1 , [-1 , -1] , 0)`; reading and idling touch   --
---   no slot.                                                         --
+--   Effect grades and resource grades are both the trough, net       --
+--   change and peak of one resource, the slots of the node's local   --
+--   memory: storing a reading occupies a slot, `(0 , [1 , 1] , 1)`,  --
+--   and transmitting one frees it, `(-1 , [-1 , -1] , 0)`; reading   --
+--   and idling touch no slot.                                        --
 --                                                                    --
 -- What it shows                                                      --
 --   A buffer of one slot, all freed and none freed that was not      --
@@ -34,14 +34,14 @@ open import Relation.Nullary.Decidable using (True; False; toWitness; toWitnessF
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
-open import Grades.Examples.SemiDirect.Watermarks using (Level; one-watermark)
+open import Grades.Examples.SemiDirect.Watermarks using (Watermark; one-watermark)
 open import Grades.Examples.Worked.SemiDirect.Watermarks using (res)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
 
 ------------------------------------------------------------------------
 -- The operations
 
-opTime : Op → Level
+opTime : Op → Watermark
 opTime read  = Grade.𝟏 (one-watermark {ℕᴰ})
 opTime write = res 0 (+ 1) (+ 1) 1
 opTime send  = res 1 (ℤ.- + 1) (ℤ.- + 1) 0

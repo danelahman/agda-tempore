@@ -1,9 +1,9 @@
 # Agda formalisation of the core calculus of Tempore
 
 An Agda formalisation of the core calculus of
-[Tempore](https://tempore-lang.ee/), a prototype language for type-safe
-programming with temporal resources: resources that become available only after
-some time, some events, etc. have elapsed since they were brought into scope.
+[Tempore](https://tempore-lang.ee/), a language for type-safe programming with
+temporal resources: resources that become available only after some time, some
+events, etc. have elapsed since they were brought into scope.
 The calculus has Fitch-style graded modal types over a grade system (a grade
 algebra for effects, one for resources, and a morphism between them),
 effect-graded algebraic effects and effect handlers, and a graded effect system.
@@ -42,7 +42,10 @@ leaves the examples out. Approximate timings for typechecking in Agda are
 Each set of type inference examples is checked separately by its index, `agda
 PolymorphicCalculus/Examples/<Set>/All.agda`, whose header names the parts of
 the solver it exercises. A check passes when Agda exits with 0 and prints no
-warning. The only postulate is function extensionality (`Util/Equality.agda`). 
+warning. The only postulate is function extensionality (`Util/Equality.agda`).
+The denotational semantics and the adequacy proof of the monomorphic calculus
+use eight `TERMINATING` pragmas, each justified where it stands; the polymorphic
+calculus uses none.
 
 The sources use many Unicode symbols, including mathematical letters such as
 `𝟏` and `𝕊`, combining accents (`ε̂`), and brackets such as `⦉ ⦊`. A monospace
@@ -56,7 +59,8 @@ The root of each calculus, `PolymorphicCalculus/Everything.agda` and
 
 - `Util/`: equality and the non-negative rationals.
 - `Grades/`: grade algebras, grade systems and durations, the hints the solver
-  reads, and the concrete grades in `Grades/Examples/`.
+  reads, and the example grade algebras and grade systems, indexed in
+  `Grades/Examples.agda`.
 - `Language/`: language specification that both calculi share: base types,
   ground types, comparisons, and operation signatures.
 - `PolymorphicCalculus/`: syntax, hypotheses and entailment, typing, the
@@ -78,7 +82,7 @@ The root of each calculus, `PolymorphicCalculus/Everything.agda` and
   contexts, and is complete with respect to scope-closed typings.
 - The reduction of the polymorphic calculus is on run-time terms paired with
   run-time states, raw terms without grades and type annotations. A state
-  records the grade of each passage of time, and boxed up resources.
+  records the grade of each passage of time, and resources.
   Instantiation, type safety, and termination are for the scope-closed typing.
 - The monomorphic calculus types handler clauses at every continuation grade
   by using Agda's dependent functions for a meta-level universal quantifier.

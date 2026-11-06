@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Handlers at timed traces, coverage order                           --
+-- Handlers at banked trace lower bounds, coverage order              --
 --                                                                    --
 -- The unit is the greatest grade. Every program gets the scheme      --
 -- written in `Handlers`; `resume-twice` is typable, and `discard` is --

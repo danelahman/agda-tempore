@@ -16,4 +16,4 @@ open import Grades.Examples.Worked.Operations using (Op)
 module Language.Examples.SensorNode.Identity
   {D : Duration} (G : Grade D) (opTime : Op → Grade.Carrier G) where
 
-open import Language.Examples.SensorNode (identityGradeSystem G) opTime public
+open import Language.Examples.SensorNode (identity-grade-system G) opTime public

@@ -149,9 +149,9 @@ identifying op ε'' =
                        (Tl-⟨⟩ (Tl-∷ Hd)))))))))))))
 
 -- Resume, and then answer with the reading the clause closed over. A
--- reading is not eternal, so `var` asks for its bound at the barrier
--- and at everything the clause has spent since: the question `Node`
--- leaves to each instance.
+-- reading is noneternal, so `var` asks for its bound at the barrier and
+-- at everything the clause has spent since: the question `Node` leaves
+-- to each instance.
 
 reporting : (reading-crosses :
               (op : Op) → (ε'' : E)

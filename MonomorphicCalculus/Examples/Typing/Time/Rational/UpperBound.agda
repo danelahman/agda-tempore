@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Typed computations at upper bounds on dense time                   --
+-- Typed computations at upper bounds on rational time                --
 --                                                                    --
 -- The grade                                                          --
 --   Effect grades and resource grades are both `[0, q ]`, "at most   --
@@ -7,8 +7,8 @@
 --                                                                    --
 --   The clock of the node counts whole ticks, and the figures of the --
 --   alphabet (read 1, write 3, send 6 at worst) are rounded up to    --
---   whole ticks. In dense time the operations take at most read 1/2, --
---   write 5/2 and send 11/2, each half a tick below its rounded      --
+--   whole ticks. In rational time the operations take at most read   --
+--   1/2, write 5/2 and send 11/2, each half a tick below its rounded --
 --   figure; `delay q` idles for `q` units, a non-negative rational.  --
 --                                                                    --
 -- What it shows                                                      --
@@ -39,7 +39,7 @@ open import Grades.Base using (GradeMorphism)
 
 open import Grades.Examples.Time.Rational.UpperBound
   using (𝕀ᵣ; ↑_; ℚ≥0; _/_; #_; nonZero; 𝟏ₒ-least;
-         rational-upper-bounds; upper-bound→rational)
+         rational-upper-bound; upper-bound→rational)
   renaming ([0,_] to ⌈0,_⌉; _≤_ to _≤ᵈ_; _≤?_ to _≤ᵈ?_)
 
 import Grades.Examples.Time.UpperBound as Discrete
@@ -66,14 +66,14 @@ open import Grades.Examples.Worked.Operations
 open import Grades.Examples.Worked.Operations.Grading using (module Time-Rational-UpperBound)
 open Time-Rational-UpperBound using (opTime) public
 
--- the whole-tick figures of the alphabet, read in dense time through
--- the embedding of the discrete intervals
+-- the whole-tick figures of the alphabet, read in rational time through
+-- the embedding of the upper bounds in whole steps
 
 ticks : Op → 𝕀ᵣ
 ticks o = GradeMorphism.map upper-bound→rational Discrete.[0, Discrete.↑ slow o ]
 
 open import MonomorphicCalculus.Examples.Typing.Core
-  rational-upper-bounds opTime
+  rational-upper-bound opTime
   hiding (_/_)
 
 -- each measured figure is within its rounded one

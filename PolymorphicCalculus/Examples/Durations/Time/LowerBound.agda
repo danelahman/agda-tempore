@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Durations at lower bounds on dense time                            --
+-- Durations at lower bounds on rational time                         --
 --                                                                    --
 -- A box is a promise. Two delays of half a unit meet a promise of    --
 -- one unit, as do a half and three quarters; a half and a quarter    --
@@ -16,11 +16,11 @@ open import Util.Equality
 open import Util.NonNegativeRational
   using (_/_; #_; nonZero)
 
-open import PolymorphicCalculus.Examples.Specs using (module Rational-Time-LowerBound)
+open import PolymorphicCalculus.Examples.Specs using (module Time-Rational-LowerBound)
 
 module PolymorphicCalculus.Examples.Durations.Time.LowerBound where
 
-open Rational-Time-LowerBound using (spec; hints; enum)
+open Time-Rational-LowerBound using (spec; hints; enum)
 
 open import PolymorphicCalculus.Syntax.Contexts spec using ([])
 open import PolymorphicCalculus.Inference.Principality spec using (Typable; untypable)

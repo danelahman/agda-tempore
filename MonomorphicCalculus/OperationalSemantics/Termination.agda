@@ -573,7 +573,7 @@ mutual
     fund-unbox γ pγ x rel p M (λ γ' pγ' → fund-c γ' pγ' M)
 
 -- A reducible computation halts: its run reaches a finished computation, which
--- of the two it is being which `CRed` constructor it is. Only normalization is
+-- of the two it is being which `CRed` constructor it is. Only normalisation is
 -- read off; the reducibility of the components plays no part.
 
 halts : ∀ {s} {P : VPred s} {A ε} {e : shapeᵛ A ≡ s} {𝕊 : State []}

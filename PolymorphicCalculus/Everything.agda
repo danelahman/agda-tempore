@@ -31,15 +31,16 @@ module PolymorphicCalculus.Everything where
 
 -- Grade systems live in `Grades/` and are checked by the root
 -- `Everything.agda`. A grade system is a grade algebra for effects, one
--- for resources, and a grade morphism between them. The examples include
--- grades of time over ℕ and ℚ≥0, operation counts, lattices,
--- regular expressions and timed traces, grade systems pairing two of
--- them, and pairs of grades with no grade morphism between them.
+-- for resources, and a grade algebra morphism between them. The examples
+-- include grade algebras of time over ℕ and ℚ≥0, operation counts,
+-- lattices, regular expressions and timed traces, grade systems pairing
+-- two of them, and pairs of grade algebras with no grade algebra
+-- morphism between them.
 --
 -- Where to look, under `Grades/`
---   Base       grade systems, grade algebras and grade morphisms
+--   Base       grade systems, grade algebras and grade algebra morphisms
 --              (GradeSystem, Grade, GradeMorphism)
---   Examples/  the example grades and grade systems
+--   Examples/  the example grade algebras and grade systems
 
 ------------------------------------------------------------------------
 -- Syntax                                                             --

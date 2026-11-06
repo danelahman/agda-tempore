@@ -2,7 +2,7 @@
 -- Durations                                                          --
 --                                                                    --
 -- Boxes claimed after delays of rational durations, and a box grade  --
--- inferred over them, at dense time.                                 --
+-- inferred over them, at rational time.                              --
 --                                                                    --
 -- Exercises: durations other than ticks (`Entail`).                  --
 ------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- A time-ticks Kripke frame for the trace intervals.                 --
+-- A time-ticks Kripke frame for the banked trace intervals.          --
 --                                                                    --
 -- Worlds are time points of the time domain, and a grade `[ P , Q ]` --
 -- bounds the advance from both sides:                                --

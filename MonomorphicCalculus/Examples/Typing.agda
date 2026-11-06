@@ -2,9 +2,9 @@
 -- Typed example computations, one grade at a time                    --
 --                                                                    --
 -- The examples                                                       --
---   The subtree fixes a language specificaton over the alphabet of   --
---   the sensor node and types example computations in it, each at    --
---   a value type and an effect grade.                                --
+--   The subtree fixes a language specification over the alphabet of  --
+--   the sensor node and types example computations in it, each at a  --
+--   value type and an effect grade.                                  --
 --                                                                    --
 --   Most instances use an identity grade system: effect and resource --
 --   grades are the same monoid and `∣-∣ᵉ` is the identity, so `∣_∣ᵉ` --
@@ -31,7 +31,7 @@
 --                                                                    --
 --   Two rules place the unit on opposite sides of the order, and     --
 --   each instance settles both by a proof or a refutation: whether a --
---   non-eternal variable goes stale, which is the bound `ρ ≾ᵣ 𝟏ᵣ` of --
+--   noneternal variable goes stale, which is the bound `ρ ≾ᵣ 𝟏ᵣ` of  --
 --   `var`, and whether a handler clause may discard its              --
 --   continuation.                                                    --
 --                                                                    --
@@ -66,7 +66,7 @@ import MonomorphicCalculus.Examples.Typing.Time.UpperBound
 
 import MonomorphicCalculus.Examples.Typing.Time.Interval
 
--- "at most `q` units" of dense time: the operations measured to the
+-- "at most `q` units" of rational time: the operations measured to the
 -- half tick, and a lease spent to the half tick
 
 import MonomorphicCalculus.Examples.Typing.Time.Rational.UpperBound
@@ -74,8 +74,9 @@ import MonomorphicCalculus.Examples.Typing.Time.Rational.UpperBound
 ------------------------------------------------------------------------
 -- Grades that record which runs there were
 --
--- The same programs against grades that see which operations ran and
--- where, at the three cost-sensitive orders and at the subset order.
+-- Programs of the same shape against grades that see which operations
+-- ran and where, at the three cost-sensitive orders and at the subset
+-- order.
 
 -- sets of traces at the coverage order: a box asks for work to have
 -- been done, and time cannot stand in for it
@@ -101,7 +102,7 @@ import MonomorphicCalculus.Examples.Typing.Traces.FiniteRunSets.UpperBound
 
 import MonomorphicCalculus.Examples.Typing.Traces.TimedRegex.Nat.Interval
 
--- the same over finite expressions in dense time: a box opened after an
+-- the same over finite timed regex grades: a box opened after an
 -- undisturbed wait, and refused after an operation fills it
 
 import MonomorphicCalculus.Examples.Typing.Traces.TimedRegex.Finite.Interval
@@ -130,18 +131,18 @@ import MonomorphicCalculus.Examples.Typing.Product.TimeUpperBoundEnergy
 ------------------------------------------------------------------------
 -- Grades that count operations
 
--- quotas: a rate limit on transmissions, and a box is a licence that
--- idling does not spend
+-- at-most counts: a rate limit on transmissions, and a box is a licence
+-- that idling does not spend
 
 import MonomorphicCalculus.Examples.Typing.Counts.AtMost
 
--- certain counts: a box is a token earned by work, which idling cannot
+-- at-least counts: a box is a token earned by work, which idling cannot
 -- stand in for
 
 import MonomorphicCalculus.Examples.Typing.Counts.AtLeast
 
--- quotas by operation name, a default bounding the names not listed:
--- a reading refused or free according to the default
+-- at-most counts by operation name, a default bounding the names not
+-- listed: a reading refused or free according to the default
 
 import MonomorphicCalculus.Examples.Typing.Counts.AtMost.ByName
 
@@ -174,7 +175,7 @@ import MonomorphicCalculus.Examples.Typing.SemiDirect.ModeTimes
 ------------------------------------------------------------------------
 -- Grade systems that measure effects by time
 
--- the rigid finite-expression grades as effects, time intervals as
+-- the finite timed regex grades as effects, time intervals as
 -- resources, their duration hull between: a box opened once enough time
 -- has passed, and refused too soon or too late
 
@@ -182,7 +183,7 @@ import MonomorphicCalculus.Examples.Typing.System.Traces.TimedRegex.Finite.Upper
 import MonomorphicCalculus.Examples.Typing.System.Traces.TimedRegex.Finite.LowerBound
 import MonomorphicCalculus.Examples.Typing.System.Traces.TimedRegex.Finite.Interval
 
--- the same over the rigid timed regex grades
+-- the same over the rational timed regex grades
 
 import MonomorphicCalculus.Examples.Typing.System.Traces.TimedRegex.Rational.UpperBound
 import MonomorphicCalculus.Examples.Typing.System.Traces.TimedRegex.Rational.LowerBound

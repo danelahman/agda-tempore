@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- The standard library at timed traces, coverage order               --
+-- The standard library at banked trace lower bounds, coverage order  --
 --                                                                    --
 -- The unit is the greatest grade: `compose` and `min` get schemes    --
 -- without a time condition. The other functions get the scheme       --

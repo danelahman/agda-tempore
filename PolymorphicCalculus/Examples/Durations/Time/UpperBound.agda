@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Durations at upper bounds on dense time                            --
+-- Durations at upper bounds on rational time                         --
 --                                                                    --
 -- A box is a lease. Two delays of half a unit fill a lease of one    --
 -- unit, and a half and a quarter fit in it; a half and three         --
@@ -17,11 +17,11 @@ open import Util.Equality
 open import Util.NonNegativeRational
   using (_/_; #_; nonZero)
 
-open import PolymorphicCalculus.Examples.Specs using (module Rational-Time-UpperBound)
+open import PolymorphicCalculus.Examples.Specs using (module Time-Rational-UpperBound)
 
 module PolymorphicCalculus.Examples.Durations.Time.UpperBound where
 
-open Rational-Time-UpperBound using (spec; hints; enum)
+open Time-Rational-UpperBound using (spec; hints; enum)
 
 open import PolymorphicCalculus.Syntax.Contexts spec using ([])
 open import PolymorphicCalculus.Inference.Principality spec using (Typable; untypable)

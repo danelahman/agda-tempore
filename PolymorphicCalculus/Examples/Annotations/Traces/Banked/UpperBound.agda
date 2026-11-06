@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Annotated programs at timed traces, allowance order                --
+-- Annotated programs at banked trace upper bounds, allowance order   --
 --                                                                    --
 -- Every program gets the scheme written in `Annotations`.            --
 ------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Typed computations at certain counts of the operations             --
+-- Typed computations at at-least counts of the operations            --
 --                                                                    --
 -- The grade                                                          --
 --   Effect grades and resource grades are both `⟪ r , w , s ⟫ˡ`, "at --

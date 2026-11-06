@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 -- Runs at upper bounds                                               --
 --                                                                    --
--- A budget is established at the top, and refuted at a grade below   --
+-- A deadline is established at the top, and refuted at a grade below --
 -- its delay and at one above it. `stretch` is refuted.               --
 ------------------------------------------------------------------------
 
@@ -21,31 +21,31 @@ open import PolymorphicCalculus.Inference.SolverImpl spec hints enum using (infe
 open import PolymorphicCalculus.Examples.Runs spec hints enum
 
 ------------------------------------------------------------------
--- 1. Budgets
+-- 1. Deadlines
 
 -- at the top: `ε₀ = ⊤` is a closed instance
 
-budget-top-verdict : verdict (check [] (budget-top 1)) ≡ established
-budget-top-verdict = refl
+deadline-top-verdict : verdict (check [] (deadline-top 1)) ≡ established
+deadline-top-verdict = refl
 
-budget-top-typable : Typable [] (budget-top 1)
-budget-top-typable = check-typable [] (budget-top 1) budget-top-verdict
+deadline-top-typable : Typable [] (deadline-top 1)
+deadline-top-typable = check-typable [] (deadline-top 1) deadline-top-verdict
 
 -- below the delay: refuted, as `τ` is not below `c`
 
-budget-short-verdict : infer [] (budget-at 2 1) ≡ untypable
-budget-short-verdict = refl
+deadline-short-verdict : infer [] (deadline-at 2 1) ≡ untypable
+deadline-short-verdict = refl
 
-budget-short-not-typable : ¬ Typable [] (budget-at 2 1)
-budget-short-not-typable = infer-untypable [] (budget-at 2 1) budget-short-verdict
+deadline-short-not-typable : ¬ Typable [] (deadline-at 2 1)
+deadline-short-not-typable = infer-untypable [] (deadline-at 2 1) deadline-short-verdict
 
 -- above the delay: the least `ε₀` is the top, and `⊤ ≾ ⌜ 3 ⌝` is false
 
-budget-long-verdict : infer [] (budget-at 1 3) ≡ untypable
-budget-long-verdict = refl
+deadline-long-verdict : infer [] (deadline-at 1 3) ≡ untypable
+deadline-long-verdict = refl
 
-budget-long-not-typable : ¬ Typable [] (budget-at 1 3)
-budget-long-not-typable = infer-untypable [] (budget-at 1 3) budget-long-verdict
+deadline-long-not-typable : ¬ Typable [] (deadline-at 1 3)
+deadline-long-not-typable = infer-untypable [] (deadline-at 1 3) deadline-long-verdict
 
 ------------------------------------------------------------------
 -- 2. A handler calling the result of its resumption: refuted at a

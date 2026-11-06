@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- The standard library at timed traces, allowance order              --
+-- The standard library at banked trace upper bounds, allowance order --
 --                                                                    --
 -- The unit is least, and multiplication does not commute. Every      --
 -- function gets the scheme written in `Stdlib`.                      --

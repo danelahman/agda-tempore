@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- A trace-history Kripke frame for the trace grade of upper bounds.  --
+-- A trace-history Kripke frame for the banked trace upper bounds.    --
 --                                                                    --
 -- Worlds are timed traces: the history observed so far. A grade `P`  --
 -- reaches the histories obtained by appending a continuation that    --

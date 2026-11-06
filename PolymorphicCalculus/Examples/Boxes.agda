@@ -149,7 +149,7 @@ U⇒U = unit ⇒ unit ! 𝟏̂ₑ
 --
 --   stale-call f = delay 1; f ()
 --
--- A function is not eternal, so `var` asks `⌜ 1 ⌝ʳ ≾ 𝟏ᵣ`: typed at the
+-- A function is noneternal, so `var` asks `⌜ 1 ⌝ʳ ≾ 𝟏ᵣ`: typed at the
 -- lower-bound grades, refuted at the upper-bound ones.
 
 stale-call : RawC ∅ˢ 0
@@ -423,7 +423,7 @@ expected-nested =
 --   nesting = box[2] () as x in box[1] x as y in
 --             delay 1; unbox y as x' in delay 2; unbox x' as z in z
 --
--- A box is not eternal, so boxing `x` asks `⌜ 1 ⌝ʳ ≾ 𝟏ᵣ`, as `stale-call`.
+-- A box is noneternal, so boxing `x` asks `⌜ 1 ⌝ʳ ≾ 𝟏ᵣ`, as `stale-call`.
 
 nesting : RawC ∅ˢ 0
 nesting =

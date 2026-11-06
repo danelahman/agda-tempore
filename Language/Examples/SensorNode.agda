@@ -43,7 +43,7 @@ open GradeSystemInterface grades public
 -- Base types
 --
 -- A reading is the sensor's value at the moment it was taken, so it is
--- not eternal; the node's identifier is.
+-- noneternal; the node's identifier is eternal.
 
 data BT : Set where
   reading : BT

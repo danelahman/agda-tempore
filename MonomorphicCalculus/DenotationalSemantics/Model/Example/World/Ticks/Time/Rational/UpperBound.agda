@@ -1,6 +1,5 @@
 -------------------------------------------------------------------------
--- A time-ticks Kripke frame for the upper bounds of dense             --
--- time.                                                               --
+-- A time-ticks Kripke frame for the upper bounds of rational time.    --
 --                                                                     --
 -- Worlds are time points `ℚ≥0`. A grade `[0, a ]` (with `a : ℚ∞`)     --
 -- reaches the worlds ahead by at most `a` time units, an infinite `a` --
@@ -19,7 +18,7 @@ open import Data.Product using (_×_)
 
 open import Grades.Examples.Time.Rational.UpperBound
   using (ℚ≥0; [0,_]; ↑_; _+∞_; _≤∞_; _≤_; ≤-refl; ≤-trans; ≤-irrelevant;
-         rational-upper-bounds)
+         rational-upper-bound)
 
 open import Util.Equality
 
@@ -29,8 +28,8 @@ open import MonomorphicCalculus.DenotationalSemantics.Model.World.Action using (
 
 -- The frame.
 
-ticks : World rational-upper-bounds
-ticks = forward (reindexʷ (action rational-upper-bounds) (λ p → [0, ↑ p ]))
+ticks : World rational-upper-bound
+ticks = forward (reindexʷ (action rational-upper-bound) (λ p → [0, ↑ p ]))
                 _≤_ ≤-refl ≤-trans ≤-irrelevant
 
 open World ticks public using () renaming (_⊑[_]_ to _⊑ᵗ[_]_)

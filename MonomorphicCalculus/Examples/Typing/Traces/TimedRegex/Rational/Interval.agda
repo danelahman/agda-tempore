@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Typed computations at the rigid timed regex interval               --
--- grade, in dense time                                               --
+-- Typed computations at the rational timed regex interval grade, in  --
+-- rational time                                                      --
 --                                                                    --
 -- The grade                                                          --
 --   A grade `[ L , U ]` pairs a guarantee with a bound, each an      --

@@ -15,7 +15,7 @@ open import Relation.Nullary using (¬_)
 
 open import Grades.Base
 open import Grades.Examples.Time.LowerBound
-open import Grades.Examples.System.Identity using (identityGradeSystem)
+open import Grades.Examples.System.Identity using (identity-grade-system)
 open import Language.BaseTypes using (noBaseTypes)
 open import Language.Spec
 import Language.Operations as Ops
@@ -23,7 +23,7 @@ import Language.Operations as Ops
 module MonomorphicCalculus.Examples.ContextModality.LowerBound where
 
 G : GradeSystem
-G = identityGradeSystem lower-bounds
+G = identity-grade-system lower-bound
 
 ops : Ops.Operations G noBaseTypes
 ops = record

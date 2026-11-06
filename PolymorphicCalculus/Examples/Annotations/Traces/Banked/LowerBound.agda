@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Annotated programs at timed traces, coverage order                 --
+-- Annotated programs at banked trace lower bounds, coverage order    --
 --                                                                    --
 -- Every program gets the scheme written in `Annotations`.            --
 ------------------------------------------------------------------------

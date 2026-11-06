@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- A time-ticks Kripke frame for the trace grade of upper bounds.     --
+-- A time-ticks Kripke frame for the banked trace upper bounds.       --
 --                                                                    --
 -- Worlds are time points of the time domain. A tick world records    --
 -- only elapsed time, and a grade is read through the durations of    --

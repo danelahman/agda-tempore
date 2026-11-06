@@ -261,14 +261,14 @@ module Sequence where
 module WithTop where
 
   open import Grades.Examples.Time.LowerBound
-    using (untimed; timed_; [_,+∞⟩; lower-bounds-with-⊤; lower-bounds-with-⊤ʰ;
+    using (untimed; timed_; [_,+∞⟩; lower-bound-with-⊤; lower-bound-with-⊤ʰ;
            lower-bound-witnesses-with-⊤)
   open import Grades.Examples.System.Identity using (identityʰ)
   open import Language.Examples.SensorNode.Identity
-    lower-bounds-with-⊤ (λ _ → timed [ 1 ,+∞⟩) using (spec)
+    lower-bound-with-⊤ (λ _ → timed [ 1 ,+∞⟩) using (spec)
 
   hints : SystemHints (LanguageSpec.Grades spec)
-  hints = identityʰ lower-bounds-with-⊤ʰ lower-bound-witnesses-with-⊤
+  hints = identityʰ lower-bound-with-⊤ʰ lower-bound-witnesses-with-⊤
 
   open import PolymorphicCalculus.Syntax.Grades               spec
   open import PolymorphicCalculus.Hypotheses                  spec using (hyps; ∅ᴴ)
@@ -579,15 +579,15 @@ module Lowering where
   module Interval where
 
     open import Grades.Examples.Time.Interval
-      using (↑_; ∞; intervals; intervalsʰ)
+      using (↑_; ∞; interval; intervalʰ)
       renaming ([_,_] to ⌈_,_⌉)
     open Grading.Time-Interval using (opTime)
     open import Grades.Examples.System.Identity using (identityʰ; noWitnesses)
     open import Language.Examples.SensorNode.Identity
-      intervals opTime using (spec)
+      interval opTime using (spec)
 
     hints : SystemHints (LanguageSpec.Grades spec)
-    hints = identityʰ intervalsʰ noWitnesses
+    hints = identityʰ intervalʰ noWitnesses
 
     open import PolymorphicCalculus.Syntax.Grades               spec
     open import PolymorphicCalculus.Hypotheses                  spec using (hyps)

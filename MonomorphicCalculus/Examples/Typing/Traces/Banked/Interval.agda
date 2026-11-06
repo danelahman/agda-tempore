@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Typed computations at the grade of trace contracts                 --
+-- Typed computations at the banked trace intervals                   --
 --                                                                    --
 -- The grade                                                          --
 --   A grade `[ P , Q ]` pairs a coverage floor with an allowance     --

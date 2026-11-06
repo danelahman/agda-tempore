@@ -224,7 +224,7 @@ mul-typed = typed-of mul (closed mul-D refl) _
 --
 --   each f n = recℕ n with zero ↦ () | succ p, r ↦ f ()
 --
--- `f` is not eternal, so the variable rule asks `⊤ᵣ ≾ 𝟏ᵣ`.
+-- `f` is noneternal, so the variable rule asks `⊤ᵣ ≾ 𝟏ᵣ`.
 
 each : RawC ∅ˢ 0
 each = return (fun (return (fun (recℕ v₀ (return ⋆) (v₃ · ⋆)))))

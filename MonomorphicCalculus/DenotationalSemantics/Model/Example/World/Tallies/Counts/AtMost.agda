@@ -21,14 +21,14 @@ open import Data.Unit using () renaming (⊤ to 𝟙)
 open import Data.Vec.Base using ([]; _∷_)
 
 open import Grades.Examples.Time.UpperBound
-  using (upper-bounds; [0,_]; ↑_; _+∞_; _≤∞_)
+  using (upper-bound; [0,_]; ↑_; _+∞_; _≤∞_)
 open import Grades.Examples.Counts.AtMost using (at-most-counts)
 
 open import Util.Equality
 
 open import MonomorphicCalculus.DenotationalSemantics.Model.World
 open import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Tallies.Counts.Power
-  upper-bounds using (_^_)
+  upper-bound using (_^_)
 
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.UpperBound as RS
 

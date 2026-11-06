@@ -29,8 +29,8 @@ open import MonomorphicCalculus.Syntax.Substitution.Base  S
 -- lives and where `[] ⋈ᶜ Δ` reduces to `Δ`, so nothing here is transported.
 -- Neither calls the term action, so both recurse on the substitution alone.
 
--- The side condition is an argument, not a result: producing a value out of
--- a variable needs the `var` rule's own premise. At a non-eternal type it also
+-- The side condition is an argument, not a result: producing a value out of a
+-- variable needs the `var` rule's own premise. At a noneternal type it also
 -- pays for crossing a modality, `≾ᵣ-zero-productʳ` extracting the modality's
 -- own grade from the bound it gives.
 --

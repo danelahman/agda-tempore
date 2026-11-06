@@ -4,7 +4,7 @@
 -- The example                                                        --
 --   `ρ = [0,2]` and `Γ = Γ₀ ⟨ [0,1] ⟩ ∷ A ⟨ [0,1] ⟩` with            --
 --   `Γ₀ = [] ∷ B`, where `B = [ [0,0] ] unit` and                    --
---   `A = [ [0,1] ] unit` (both non-eternal). Four objects of         --
+--   `A = [ [0,1] ] unit` (both noneternal). Four objects of          --
 --   `(Γ ↓ L_[0,2])`, by what they cut:                               --
 --                                                                    --
 --     Δ₁ = Γ₀                  both modalities and `A`               --
@@ -20,7 +20,7 @@
 --                                                                    --
 --   With `Γ₀ = []` (eternal) the same shape has the initial object   --
 --   `[] ∷ A` (`initial-at-eternal-Γ₀`): the obstruction needs a      --
---   non-eternal variable behind the cut modality.                    --
+--   noneternal variable behind the cut modality.                     --
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
@@ -30,7 +30,7 @@ open import Relation.Nullary using (¬_)
 
 open import Grades.Base
 open import Grades.Examples.Time.UpperBound
-open import Grades.Examples.System.Identity using (identityGradeSystem)
+open import Grades.Examples.System.Identity using (identity-grade-system)
 open import Language.BaseTypes using (noBaseTypes)
 open import Language.Spec
 import Language.Operations as Ops
@@ -40,7 +40,7 @@ open import Util.Equality
 module MonomorphicCalculus.Examples.ContextModality.UpperBound where
 
 G : GradeSystem
-G = identityGradeSystem upper-bounds
+G = identity-grade-system upper-bound
 
 ops : Ops.Operations G noBaseTypes
 ops = record

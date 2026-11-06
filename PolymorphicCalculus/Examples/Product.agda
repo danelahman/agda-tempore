@@ -205,7 +205,7 @@ expected-publish op =
 --
 --   twice op r = op r; op r
 --
--- A reading is not eternal: `var` asks `op-grade op ≾ 𝟏ᵣ`.
+-- A reading is noneternal: `var` asks `op-grade op ≾ 𝟏ᵣ`.
 
 twice : Op → RawC ∅ˢ 0
 twice op = return (fun (perform op v₀ (perform op v₁ (return ⋆))))

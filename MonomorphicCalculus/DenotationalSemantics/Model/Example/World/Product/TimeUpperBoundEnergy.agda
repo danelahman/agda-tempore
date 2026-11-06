@@ -22,7 +22,7 @@ open import Data.Product using (_×_; _,_)
 
 open import Grades.Base using (Grade)
 open import Grades.Examples.Time.UpperBound
-  using (upper-bounds; [0,_]; ↑_; _+∞_; _≤∞_; _·ₒ_)
+  using (upper-bound; [0,_]; ↑_; _+∞_; _≤∞_; _·ₒ_)
 open import Grades.Examples.Product.TimeUpperBoundEnergy
   using (energy; time-upper-bound×energy)
 
@@ -34,11 +34,11 @@ open import MonomorphicCalculus.DenotationalSemantics.Model.World.Reindex using 
 
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.UpperBound as RS
 
-open Grade upper-bounds using (≾-refl)
+open Grade upper-bound using (≾-refl)
 
 -- energy: the upper-bound tick frame, along the identity
 
-energy→time : LaxMap energy upper-bounds
+energy→time : LaxMap energy upper-bound
 energy→time = record
   { map      = λ c → c
   ; monotone = λ r → r

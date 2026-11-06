@@ -49,7 +49,7 @@ open import Relation.Nullary.Decidable
 
 open import Grades.Examples.Time.LowerBound using (𝕀; [_,+∞⟩)
 open import Grades.Examples.Lattice
-  using (LevelLattice; LowHigh; Low; High; _⊑ₗₕ_; low-high)
+  using (LevelLattice; LowHigh; Low; High; _⊑ₗₕ_; low-high-lattice)
 open import Grades.Examples.Product.TimeLowerBoundLattice
   using (time-lower-bound×low-high)
 
@@ -59,7 +59,7 @@ open import Grades.Examples.Worked.Operations.Footprint using (touches)
 
 open import Grades.Examples.Worked.Time.Decide using (≤!; ≰!)
 
-open LevelLattice low-high using (_⊑?_)
+open LevelLattice low-high-lattice using (_⊑?_)
 
 -- the level component, decided by the lattice's own procedure
 
@@ -104,7 +104,7 @@ relaying =
 ------------------------------------------------------------------------
 -- Readings survive time, not a transmission
 --
--- `var` asks for `ρ ≾ᵣ 𝟏ᵣ` at a non-eternal type. The time component
+-- `var` asks for `ρ ≾ᵣ 𝟏ᵣ` at a noneternal type. The time component
 -- always meets it, the unit being the greatest floor; the level
 -- component meets it only at `Low`.
 

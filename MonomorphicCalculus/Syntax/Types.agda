@@ -128,7 +128,7 @@ data _Et∨≾ᵘ_ (A : VType) (ρ : R) : Set where
   et-ok : Et A → A Et∨≾ᵘ ρ
   ≾ᵘ-ok : ρ ≾ᵣ 𝟏ᵣ → A Et∨≾ᵘ ρ
 
--- The condition as a bound required of non-eternal types only, and back
+-- The condition as a bound required of noneternal types only, and back
 -- through the decision on `Et`. The term formers keep the condition
 -- irrelevant, so the bound is recovered through the decision on `_≾ᵣ_`.
 

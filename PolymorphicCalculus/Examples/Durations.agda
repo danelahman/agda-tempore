@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 -- Inference with durations that are not whole ticks                  --
 --                                                                    --
--- Boxes and delays over any durations, checked at dense time.        --
+-- Boxes and delays over any durations, checked at rational time.     --
 --                                                                    --
 -- The examples                                                       --
 --   claim-after ρ τ τ'    a box of grade `ρ` claimed after a delay   --
@@ -13,7 +13,7 @@
 --                                                                    --
 -- How to read them                                                   --
 --   Each program is written above its definition in ordinary syntax. --
---   The modules under `Durations/` run inference at dense time,      --
+--   The modules under `Durations/` run inference at rational time,   --
 --   bounded from below and from above, and check each answer with    --
 --   `refl`; a refused claim comes with the verdict                   --
 --   `infer [] p ≡ untypable` and the proof `¬ Typable [] p` drawn    --

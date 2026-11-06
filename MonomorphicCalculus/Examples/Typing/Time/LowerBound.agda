@@ -41,7 +41,7 @@ module MonomorphicCalculus.Examples.Typing.Time.LowerBound where
 open import Relation.Nullary using (¬_)
 
 open import Grades.Examples.Time.LowerBound
-  using (𝕀; [_,+∞⟩; lower-bounds)
+  using (𝕀; [_,+∞⟩; lower-bound)
 
 open import Grades.Examples.Worked.Operations
   using (Op; read; write; send)
@@ -54,7 +54,7 @@ open import Grades.Examples.Worked.Time.Decide using (≤!; ≰!)
 open import Grades.Examples.Worked.Operations.Grading using (module Time-LowerBound)
 open Time-LowerBound using (opTime) public
 
-open import MonomorphicCalculus.Examples.Typing.Core lower-bounds opTime
+open import MonomorphicCalculus.Examples.Typing.Core lower-bound opTime
 
 ------------------------------------------------------------------------
 -- Effectful computations
@@ -101,7 +101,7 @@ tagged-relaying =
 ------------------------------------------------------------------------
 -- Nothing goes stale
 --
--- `var` asks for `ρ ≾ᵣ 𝟏ᵣ` at a non-eternal type, and every grade sits
+-- `var` asks for `ρ ≾ᵣ 𝟏ᵣ` at a noneternal type, and every grade sits
 -- below the unit here: a floor of `0` is what a bound forgetting
 -- everything says. So a reading survives whatever passes.
 
@@ -120,7 +120,7 @@ idle-then-transmit =
                                      -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ unit
         (return ⋆)))
 
--- the identifier crosses the reading's execution time because it is
+-- the identifier crosses the reading's running time because it is
 -- eternal, and asks for no bound at all
 
 carried-id : [] ∷ NodeId ⊢ᶜ⦂ NodeId ! [ 1 ,+∞⟩

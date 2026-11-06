@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Typed computations at the grade of trace guarantees                --
+-- Typed computations at the banked trace lower bounds                --
 --                                                                    --
 -- The grade                                                          --
 --   Effect grades and resource grades are both sets of timed traces  --

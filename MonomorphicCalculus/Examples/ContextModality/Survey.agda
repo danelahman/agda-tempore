@@ -28,41 +28,42 @@ module MonomorphicCalculus.Examples.ContextModality.Survey where
 ------------------------------------------------------------------------
 -- Time
 
-open import Grades.Examples.Time.UpperBound using (upper-bounds)
+open import Grades.Examples.Time.UpperBound
+  using () renaming (upper-bound to time-upper-bound)
 open import Grades.Examples.Time.LowerBound
-  using (lower-bounds; lower-bounds-with-⊤)
+  using () renaming (lower-bound to time-lower-bound; lower-bound-with-⊤ to time-lower-bound-with-⊤)
 open import Grades.Examples.Time.Interval
-  using (intervals; intervals-with-⊤)
-open import Grades.Examples.Time.Rational.UpperBound using (rational-upper-bounds)
-open import Grades.Examples.Time.Rational.LowerBound using (rational-lower-bounds)
-open import Grades.Examples.Time.Rational.UpperBoundCut using (rational-upper-bound-cuts)
-open import Grades.Examples.Time.Rational.LowerBoundCut using (rational-lower-bound-cuts)
-open import Grades.Examples.Time.Rational.Interval using (rational-intervals)
+  using () renaming (interval to time-interval; interval-with-⊤ to time-interval-with-⊤)
+open import Grades.Examples.Time.Rational.UpperBound using (rational-upper-bound)
+open import Grades.Examples.Time.Rational.LowerBound using (rational-lower-bound)
+open import Grades.Examples.Time.Rational.UpperBoundCut using (rational-upper-bound-cut)
+open import Grades.Examples.Time.Rational.LowerBoundCut using (rational-lower-bound-cut)
+open import Grades.Examples.Time.Rational.Interval using (rational-interval)
 open import Grades.Examples.Time.Rational.IntervalClosed
-  using (rational-closed-intervals)
+  using (rational-closed-interval)
 
-time-right    : ⊤≾𝟏? upper-bounds ≡ false
-time-right    = refl
-time-left     : ⊤≾𝟏? lower-bounds ≡ true
-time-left     = refl
-time-left-⊤   : ⊤≾𝟏? lower-bounds-with-⊤ ≡ false
-time-left-⊤   = refl
-time-two      : ⊤≾𝟏? intervals ≡ false
-time-two      = refl
-time-two-⊤    : ⊤≾𝟏? intervals-with-⊤ ≡ false
-time-two-⊤    = refl
-rational-upper   : ⊤≾𝟏? rational-upper-bounds ≡ false
-rational-upper   = refl
-rational-lower    : ⊤≾𝟏? rational-lower-bounds ≡ true
-rational-lower    = refl
-rational-upper-cut : ⊤≾𝟏? rational-upper-bound-cuts ≡ false
-rational-upper-cut = refl
-rational-lower-cut  : ⊤≾𝟏? rational-lower-bound-cuts ≡ true
-rational-lower-cut  = refl
-rational-interval     : ⊤≾𝟏? rational-intervals ≡ false
-rational-interval     = refl
-rational-interval-closed : ⊤≾𝟏? rational-closed-intervals ≡ false
-rational-interval-closed = refl
+time-upper-bound′         : ⊤≾𝟏? time-upper-bound ≡ false
+time-upper-bound′         = refl
+time-lower-bound′         : ⊤≾𝟏? time-lower-bound ≡ true
+time-lower-bound′         = refl
+time-lower-bound-with-⊤′  : ⊤≾𝟏? time-lower-bound-with-⊤ ≡ false
+time-lower-bound-with-⊤′  = refl
+time-interval′            : ⊤≾𝟏? time-interval ≡ false
+time-interval′            = refl
+time-interval-with-⊤′     : ⊤≾𝟏? time-interval-with-⊤ ≡ false
+time-interval-with-⊤′     = refl
+rational-upper-bound′     : ⊤≾𝟏? rational-upper-bound ≡ false
+rational-upper-bound′     = refl
+rational-lower-bound′     : ⊤≾𝟏? rational-lower-bound ≡ true
+rational-lower-bound′     = refl
+rational-upper-bound-cut′ : ⊤≾𝟏? rational-upper-bound-cut ≡ false
+rational-upper-bound-cut′ = refl
+rational-lower-bound-cut′ : ⊤≾𝟏? rational-lower-bound-cut ≡ true
+rational-lower-bound-cut′ = refl
+rational-interval′        : ⊤≾𝟏? rational-interval ≡ false
+rational-interval′        = refl
+rational-closed-interval′ : ⊤≾𝟏? rational-closed-interval ≡ false
+rational-closed-interval′ = refl
 
 ------------------------------------------------------------------------
 -- Counts, levels, products, semidirect products
@@ -70,7 +71,7 @@ rational-interval-closed = refl
 open import Grades.Examples.Counts.AtLeast using (at-least-counts; at-least-counts-with-⊤)
 open import Grades.Examples.Counts.AtMost using (at-most-counts)
 open import Grades.Examples.Counts.AtMost.ByName using (at-most-counts-by-name)
-open import Grades.Examples.Lattice using (two-point-levels; taint-sets)
+open import Grades.Examples.Lattice using (low-high; taint-sets)
 open import Grades.Examples.Product.TimeLowerBoundLattice using (time-lower-bound×low-high)
 open import Grades.Examples.Product.TimeUpperBoundLattice using (time-upper-bound×low-high)
 open import Grades.Examples.Product.TimeUpperBoundEnergy using (energy; time-upper-bound×energy)
@@ -88,18 +89,18 @@ at-most-2       : ⊤≾𝟏? (at-most-counts 2) ≡ false
 at-most-2       = refl
 at-most-by-name : ⊤≾𝟏? at-most-counts-by-name ≡ false
 at-most-by-name = refl
-levels          : ⊤≾𝟏? (two-point-levels {ℕᴰ}) ≡ false
-levels          = refl
+low-high′       : ⊤≾𝟏? (low-high {ℕᴰ}) ≡ false
+low-high′       = refl
 taint-2         : ⊤≾𝟏? (taint-sets {ℕᴰ} 2) ≡ false
 taint-2         = refl
-left×level      : ⊤≾𝟏? time-lower-bound×low-high ≡ false
-left×level      = refl
-right×level     : ⊤≾𝟏? time-upper-bound×low-high ≡ false
-right×level     = refl
+time-lower-bound×low-high′ : ⊤≾𝟏? time-lower-bound×low-high ≡ false
+time-lower-bound×low-high′ = refl
+time-upper-bound×low-high′ : ⊤≾𝟏? time-upper-bound×low-high ≡ false
+time-upper-bound×low-high′ = refl
 energy′         : ⊤≾𝟏? energy ≡ false
 energy′         = refl
-right×energy    : ⊤≾𝟏? time-upper-bound×energy ≡ false
-right×energy    = refl
+time-upper-bound×energy′ : ⊤≾𝟏? time-upper-bound×energy ≡ false
+time-upper-bound×energy′ = refl
 durations′      : ⊤≾𝟏? durations ≡ false
 durations′      = refl
 call-time-sets′ : ⊤≾𝟏? call-time-sets ≡ false
@@ -122,7 +123,7 @@ open import Data.Fin.Base using (zero)
 open import Data.Nat.Properties using (<⇒≢)
 open import Grades.Durations.Nat using (ℕᵀ)
 
-module Timed where
+module Banked where
   open import Grades.Examples.Worked.Operations
     using (Op; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; costˡᵒ; costʰⁱ; cost-≤; costʰⁱ-pos)
 
@@ -141,8 +142,8 @@ module Timed where
   banked-floor         = refl
   banked-cap           : ⊤≾𝟏? upper-bound ≡ false
   banked-cap           = refl
-  banked-interval           : ⊤≾𝟏? interval ≡ false
-  banked-interval           = refl
+  banked-interval      : ⊤≾𝟏? interval ≡ false
+  banked-interval      = refl
   finite-run-sets-cap : ⊤≾𝟏? finite-run-sets ≡ false
   finite-run-sets-cap = refl
 
@@ -177,14 +178,14 @@ module TimedRegexFinite where
   finite-floor = refl
   finite-cap   : ⊤≾𝟏? upper-bound ≡ false
   finite-cap   = refl
-  finite-two   : ⊤≾𝟏? interval ≡ false
-  finite-two   = refl
-  rational-floor : ⊤≾𝟏? ratˡ ≡ false
-  rational-floor = refl
-  rational-cap   : ⊤≾𝟏? ratʳ ≡ false
-  rational-cap   = refl
-  rational-two   : ⊤≾𝟏? ratᵗ ≡ false
-  rational-two   = refl
+  finite-interval : ⊤≾𝟏? interval ≡ false
+  finite-interval = refl
+  rational-regex-floor    : ⊤≾𝟏? ratˡ ≡ false
+  rational-regex-floor    = refl
+  rational-regex-cap      : ⊤≾𝟏? ratʳ ≡ false
+  rational-regex-cap      = refl
+  rational-regex-interval : ⊤≾𝟏? ratᵗ ≡ false
+  rational-regex-interval = refl
 
 module TimedRegexNat where
   open import Grades.Examples.Worked.Traces.TimedRegex.Nat.UpperBound
@@ -196,9 +197,9 @@ module TimedRegexNat where
   open import Grades.Examples.Traces.TimedRegex.Nat.Interval
     Op 3 code name name-code code-name running using (interval)
 
-  regular-floor : ⊤≾𝟏? lower-bound ≡ false
-  regular-floor = refl
-  regular-cap   : ⊤≾𝟏? upper-bound ≡ false
-  regular-cap   = refl
-  regular-two   : ⊤≾𝟏? interval ≡ false
-  regular-two   = refl
+  nat-floor    : ⊤≾𝟏? lower-bound ≡ false
+  nat-floor    = refl
+  nat-cap      : ⊤≾𝟏? upper-bound ≡ false
+  nat-cap      = refl
+  nat-interval : ⊤≾𝟏? interval ≡ false
+  nat-interval = refl

@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------
--- A trace-history Kripke frame for regular sets of timed traces as    --
--- upper bounds.                                                       --
+-- A trace-history Kripke frame for regular trace languages as upper   --
+-- bounds.                                                             --
 --                                                                     --
 -- Worlds are timed traces: the history observed so far. A grade `L`   --
 -- reaches the histories obtained by appending a run it permits:       --
@@ -8,7 +8,7 @@
 --   w ⊑ʳ[ L ] w'   iff   Σ[ cont ] w ∙ cont ≡ w'                      --
 --                          and  L permits cont                        --
 --                                                                     --
--- As for the finite subsets, accessibility is membership. The proofs  --
+-- As for the finite run sets, accessibility is membership. The proofs --
 -- use the lemmas of the grade on languages, without computation on    --
 -- tables.                                                             --
 -------------------------------------------------------------------------

@@ -229,7 +229,7 @@ expected-numeral-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ nat ! ⌜ 1 ⌝ᵉ
 
 --   function-later = let f = (λ _. ()) in delay 1; f ()
 --
--- A function is not eternal: typed at the lower-bound grades only.
+-- A function is noneternal: typed at the lower-bound grades only.
 
 function-later : RawC ∅ˢ 0
 function-later = return (fun (return ⋆)) ⨟ delay ⌜ 1 ⌝ (v₀ · ⋆)
@@ -411,7 +411,7 @@ expected-inl-later = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (nat |+| α₀) ! ⌜ 1 ⌝ᵉ
 --   fun-sum-later = let s = (inr (λ _. delay 1; ()) : Nat + (Unit ⇒ Unit ! 1))
 --                   in delay 1; s
 --
--- A function summand is not eternal: typed at the lower-bound grades only.
+-- A function summand is noneternal: typed at the lower-bound grades only.
 
 fun-sum-later : RawC ∅ˢ 0
 fun-sum-later =
@@ -492,7 +492,7 @@ expected-nil-later = ∀[ 1 , 0 , 0 ] ⊤ ⟹ list α₀ ! ⌜ 1 ⌝ᵉ
 
 --   fun-list-later = let l = ([λ _. ()] : List (Unit ⇒ Unit)) in delay 1; l
 --
--- Not eternal: typed at the lower-bound grades only.
+-- Noneternal: typed at the lower-bound grades only.
 
 private
 

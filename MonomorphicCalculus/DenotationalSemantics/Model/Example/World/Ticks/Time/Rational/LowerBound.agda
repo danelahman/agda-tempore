@@ -1,6 +1,5 @@
 ------------------------------------------------------------------------
--- A time-ticks Kripke frame for the lower bounds of dense            --
--- time.                                                              --
+-- A time-ticks Kripke frame for the lower bounds of rational time.   --
 --                                                                    --
 -- Worlds are time points `ℚ≥0`. A grade `[ q ,+∞⟩` reaches every     --
 -- world at least `q` time units ahead:                               --
@@ -15,7 +14,7 @@
 module MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.Rational.LowerBound where
 
 open import Grades.Examples.Time.Rational.LowerBound
-  using (ℚ≥0; [_,+∞⟩; _+_; _≤_; rational-lower-bounds)
+  using (ℚ≥0; [_,+∞⟩; _+_; _≤_; rational-lower-bound)
 
 open import Util.Equality
 
@@ -25,8 +24,8 @@ open import MonomorphicCalculus.DenotationalSemantics.Model.World.Action using (
 
 -- The frame.
 
-ticks : World rational-lower-bounds
-ticks = reindexʷ (action rational-lower-bounds) [_,+∞⟩
+ticks : World rational-lower-bound
+ticks = reindexʷ (action rational-lower-bound) [_,+∞⟩
 
 open World ticks public using () renaming (_⊑[_]_ to _⊑ᵗ[_]_)
 

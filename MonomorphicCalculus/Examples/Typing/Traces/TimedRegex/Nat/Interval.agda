@@ -1,5 +1,6 @@
 ------------------------------------------------------------------------
--- Typed computations at the rigid timed interval grade               --
+-- Typed computations at the timed regex interval grade in whole      --
+-- steps                                                              --
 --                                                                    --
 -- The grade                                                          --
 --   A grade `[ L , U ]` pairs a guarantee with a bound, each a       --

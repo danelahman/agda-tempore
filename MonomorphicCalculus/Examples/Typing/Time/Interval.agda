@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- Typed computations at windows of time                              --
+-- Typed computations at time intervals                               --
 --                                                                    --
 -- The grade                                                          --
 --   Effect grades and resource grades are both `[ min , max ]`. The  --
---   operations are graded by the window in which their execution     --
---   time lies: read 1, write 2-3, send 4-6.                          --
+--   operations are graded by the window in which their running time  --
+--   lies: read 1, write 2-3, send 4-6.                               --
 --                                                                    --
 --   The upper endpoint ranges over the extended naturals, so every   --
 --   window below is `[ min , ↑ max ]`; `[ 0 , ∞ ]` is the greatest   --
@@ -48,7 +48,7 @@ open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable using (True)
 
 open import Grades.Examples.Time.Interval
-  using (Interval∞; ↑_; ∞; intervals)
+  using (Interval∞; ↑_; ∞; interval)
   renaming ([_,_] to ⌈_,_⌉)
 
 -- every window written below has a finite upper endpoint; `⌈ 0 , ∞ ⌉`
@@ -63,13 +63,13 @@ open import Grades.Examples.Worked.Operations
 open import Grades.Examples.Worked.Time.Decide using (≤!; ≰!)
 
 ------------------------------------------------------------------------
--- The operations, graded by the window their execution time falls in
+-- The operations, graded by the window their running time falls in
 
 open import Grades.Examples.Worked.Operations.Grading using (module Time-Interval)
 open Time-Interval using (opTime) public
 
 open import MonomorphicCalculus.Examples.Typing.Core
-  intervals opTime
+  interval opTime
 
 ------------------------------------------------------------------------
 -- Effectful computations

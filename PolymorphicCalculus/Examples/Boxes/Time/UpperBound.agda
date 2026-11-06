@@ -2,9 +2,8 @@
 -- Boxes at upper bounds                                              --
 --                                                                    --
 -- A box is a lease, claimable until its grade has elapsed. No        --
--- non-eternal variable survives a tick, so `stale-call`,             --
--- `boxed-call` and `nesting` are refuted, and late claims are        --
--- refused.                                                           --
+-- noneternal variable survives a tick, so `stale-call`, `boxed-call` --
+-- and `nesting` are refuted, and late claims are refused.            --
 ------------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)

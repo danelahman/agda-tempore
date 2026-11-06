@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Typed computations over the duration-hull system of the rigid      --
--- finite-expression lower bounds, in dense time                      --
+-- Typed computations over the duration-hull system of the finite     --
+-- timed regex lower bounds, in rational time                         --
 --                                                                    --
 -- The grade system                                                   --
 --   Effect grades are lower bounds over interval letters, each       --
@@ -34,7 +34,7 @@ open import MonomorphicCalculus.Examples.Typing.Traces.TimedRegex.Finite.Interva
 
 import Grades.Examples.Traces.TimedRegex.Finite.LowerBound Op 3 code name name-code code-name running as L
 open import Grades.Examples.System.Traces.TimedRegex.Finite.LowerBound Op 3 code name name-code code-name running
-  using (lowerRunsToLowerBoundsGradeSystem; lower-runs→lower-bounds)
+  using (timed-regex→lower-bounds-grade-system; timed-regex→lower-bounds)
 
 open L using (Proper′; ‵_; _·_; idle_; ≥_; lower)
 
@@ -55,7 +55,7 @@ opTime write = L.⌜ ‵_ {lower} write ⌝
 opTime send  = L.⌜ ‵_ {lower} send ⌝
 
 open import MonomorphicCalculus.Examples.Typing.System
-  lowerRunsToLowerBoundsGradeSystem opTime
+  timed-regex→lower-bounds-grade-system opTime
   hiding (_/_)
 
 ------------------------------------------------------------------------

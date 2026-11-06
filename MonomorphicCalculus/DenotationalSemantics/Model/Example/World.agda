@@ -10,16 +10,16 @@
 --                                                                    --
 -- The frames form four families:                                     --
 --                                                                    --
---   * `Ticks.*`: a world is a time point, in `ℕ` or, for dense time, --
---     in `ℚ≥0`, recording the elapsed time. Accessibility bounds how --
---     far ahead the grade moves: an exact tick for a grade that      --
---     fixes a duration, a window for one that bounds it.             --
+--   * `Ticks.*`: a world is a time point, in `ℕ` or, for rational    --
+--     time, in `ℚ≥0`, recording the elapsed time. Accessibility      --
+--     bounds how far ahead the grade moves: an exact tick for a      --
+--     grade that fixes a duration, a window for one that bounds it.  --
 --                                                                    --
 --   * `Tallies.*`: a world is a tally of how often each counter has  --
 --     been drawn on, a time point per counter.                       --
 --                                                                    --
---   * `Labels.*`: a world is the security label reached so far,      --
---     rising as the grade allows.                                    --
+--   * `Labels.*`: a world is the level of the lattice reached so     --
+--     far, rising as the grade allows.                               --
 --                                                                    --
 --   * `TraceHistory.*`: a world is a timed trace, the history        --
 --     observed so far, recording the operations as well as their     --
@@ -38,15 +38,15 @@
 -- `Product.*` pairs frames componentwise                             --
 -- (`MonomorphicCalculus.DenotationalSemantics.Model.World.Product`). --
 --                                                                    --
--- The rigid interval-letter grades share one history frame           --
+-- The timed regex grades share one history frame                     --
 -- (`MonomorphicCalculus.DenotationalSemantics.Model.World.History`): --
 -- a continuation is read in the grade, operations by their grades    --
--- and delays by `ι`, and is admitted when its reading is below       --
--- the grade.                                                         --
+-- and delays by `ι`, and is admitted when its reading is below the   --
+-- grade.                                                             --
 --                                                                    --
--- The timed and finite-subset trace grades have a frame of either    --
--- kind; the tick frames see a grade only through durations, and      --
--- identify distinctions that the history frames keep.                --
+-- The trace grades with banked delays and the finite run sets have a --
+-- frame of either kind; the tick frames see a grade only through     --
+-- durations, and identify distinctions that the history frames keep. --
 --                                                                    --
 -- The module is an index: the trace-based frames are parameterised   --
 -- by the alphabet `Op`, and are listed rather than re-exported.      --
@@ -145,10 +145,10 @@ import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistor
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.FiniteRunSets.UpperBound
 
 ------------------------------------------------------------------------
--- Dense time-ticks frames: worlds are points of `ℚ≥0`
+-- Rational time-ticks frames: worlds are points of `ℚ≥0`
 --
--- The discrete tick frames' relations over dense time, each the action
--- frame of its grade at the points.
+-- The discrete tick frames' relations over rational time, each the
+-- action frame of its grade at the points.
 
 -- reach every world at least `q` ahead
 
@@ -173,16 +173,16 @@ import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.
 
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Tallies.Counts.Power
 
--- a quota: each tally rises by at most its bound
+-- at-most counts: each tally rises by at most its bound
 
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Tallies.Counts.AtMost
 
--- a guarantee: each tally rises by at least its bound
+-- at-least counts: each tally rises by at least its bound
 
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Tallies.Counts.AtLeast
 
 ------------------------------------------------------------------------
--- Label frames: worlds are security labels
+-- Label frames: worlds are levels of a lattice
 --
 -- `w ⊑ˡ[ ℓ ] w'` iff `w ⊑ w' ⊑ w ∨ ℓ`: the label floats up, by at most
 -- `ℓ`; at `Low < High` and at taint sets
@@ -208,31 +208,31 @@ import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Product.Tim
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Product.TimeUpperBoundEnergy
 
 ------------------------------------------------------------------------
--- Trace-history frames over regular sets of runs
+-- Trace-history frames over regular trace languages
 
 -- append a continuation whose encoding the language contains:
--- membership outright, as for the finite subsets
+-- membership outright, as for the finite run sets
 
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Regular.UpperBound
 
 ------------------------------------------------------------------------
--- Trace-history frames for the rigid interval-letter grades
+-- Trace-history frames for the timed regex grades
 --
 -- `w ⊑ʰ[ ρ ] w'` asks for a continuation `s` with `w ∙ s ≡ w'` whose
 -- reading in the grade is below `ρ`; at an interval one continuation
 -- answers to both endpoints.
 
--- whole steps, regular expressions; every operation admits a whole
+-- the timed regex grades in whole steps; every operation admits a whole
 -- number of steps
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Nat.UpperBound
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Nat.LowerBound
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Nat.Interval
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TimedRegex.Nat.UpperBound
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TimedRegex.Nat.LowerBound
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TimedRegex.Nat.Interval
 
--- rationals, finite expressions; accessibility is shown to be the
+-- the finite timed regex grades; accessibility is shown to be the
 -- reading the order gives: every exact word of the continuation's run
 -- fits a word of the grade
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Finite.UpperBound
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Finite.LowerBound
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Finite.Interval
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TimedRegex.Finite.UpperBound
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TimedRegex.Finite.LowerBound
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TimedRegex.Finite.Interval

@@ -26,7 +26,7 @@ open import Data.Product using (_×_; _,_)
 open import Grades.Examples.Time.Interval
   using (Interval∞; [_,_]; min; max;
          Interval∞⊤; window_; no-window; _·ʷ_; _≾ʷ_;
-         intervals-with-⊤;
+         interval-with-⊤;
          ℕ∞; ↑_; ∞; _+∞_; _≤∞_; +∞-mono-≤∞; ≤∞-refl; ≤∞-trans; ≤∞-irrelevant;
          +∞-assoc)
 
@@ -104,7 +104,7 @@ w ⊑ᵗ[ no-window ] w' = w ≤ w'
 
 -- The frame.
 
-ticks : World intervals-with-⊤
+ticks : World interval-with-⊤
 ticks = record
   { W             = ℕ
   ; _⊑[_]_       = _⊑ᵗ[_]_

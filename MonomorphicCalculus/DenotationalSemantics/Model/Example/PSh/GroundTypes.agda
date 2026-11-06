@@ -3,8 +3,8 @@
 --                                                                       --
 -- A base type is interpreted by deciding its eternality. An eternal     --
 -- base type is interpreted by a constant presheaf `Kᵖ` on a chosen      --
--- setoid, whose constants are elements of that setoid; a non-eternal    --
--- one is interpreted by an arbitrary presheaf, with arbitrary global    --
+-- setoid, whose constants are elements of that setoid; a noneternal one --
+-- is interpreted by an arbitrary presheaf, with arbitrary global        --
 -- elements standing for its constants. An eternal base type's order is  --
 -- a comparison on its setoid, natural, and commuting with the eternal   --
 -- extraction, as it stands on a constant presheaf. `Kᵖ-eternalᵒ` then   --
@@ -72,7 +72,7 @@ record PShBaseTypes : Set₁ where
     ⟦_⟧ᵉˢ : (b : BaseType) → EternalBaseType b → Setoid 0ℓ 0ℓ
     ⟦_⟧ᵉᶜ : ∀ {b} → (p : EternalBaseType b) → BaseConstants b → Setoid.Carrier (⟦ b ⟧ᵉˢ p)
 
-    -- a non-eternal base type's presheaf, and its constants as global elements
+    -- a noneternal base type's presheaf, and its constants as global elements
     ⟦_⟧ⁿᵖ : (b : BaseType) → ¬ EternalBaseType b → PSh
     ⟦_⟧ⁿᶜ : ∀ {b} → (¬p : ¬ EternalBaseType b) → BaseConstants b → 𝟙ᵖ →ᵖ ⟦ b ⟧ⁿᵖ ¬p
 
@@ -108,7 +108,7 @@ module PShGround (BT : PShBaseTypes) where
   eternalᵇ (no ¬p) eb = ⊥-elim-irr (¬p eb)
 
   -- An eternal base type's constant is a global element, matched by
-  -- `Kᵖ-eternalᵒ`'s extraction; the non-eternal case is again vacuous.
+  -- `Kᵖ-eternalᵒ`'s extraction; the noneternal case is again vacuous.
 
   constᵇ-eternal : ∀ {b} → (d : Dec (EternalBaseType b)) → .(eb : EternalBaseType b) → (c : BaseConstants b) → ∀ {ρ}
                  → Eternalᵒ.extᵉ (eternalᵇ d eb) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (constᵇ d c) ≈ᵐ constᵇ d c ∘ᵐ terminalᵐ
@@ -134,7 +134,7 @@ module PShGround (BT : PShBaseTypes) where
   ordᵖ-pt greater = tt
 
   -- An eternal base type's comparison, pointwise on its constant presheaf
-  -- (so natural); the non-eternal case is vacuous.
+  -- (so natural); the noneternal case is vacuous.
 
   cmpᵇ : ∀ {b} → (d : Dec (EternalBaseType b)) → .(EternalBaseType b)
        → interpᵇ b d ×ᵖ interpᵇ b d →ᵖ Ordᵐ

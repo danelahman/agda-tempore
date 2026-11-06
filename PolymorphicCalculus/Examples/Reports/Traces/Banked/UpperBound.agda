@@ -1,5 +1,6 @@
 ------------------------------------------------------------------------
--- Report simplification at timed traces, allowance order             --
+-- Report simplification at banked trace upper bounds, allowance      --
+-- order                                                              --
 --                                                                    --
 -- The unit is least, so both simplifications apply.                  --
 ------------------------------------------------------------------------

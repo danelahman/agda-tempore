@@ -9,7 +9,7 @@
 
 module MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Product.TimeLowerBoundLattice where
 
-open import Grades.Examples.Lattice using (LevelLattice; low-high)
+open import Grades.Examples.Lattice using (LevelLattice; low-high-lattice)
 open import Grades.Examples.Product.TimeLowerBoundLattice
   using (time-lower-bound×lattice; time-lower-bound×low-high)
 
@@ -28,4 +28,4 @@ ticks×labels L = LS.ticks ⊗ labels L
 -- at `Low < High`
 
 ticks×low-high : World time-lower-bound×low-high
-ticks×low-high = ticks×labels low-high
+ticks×low-high = ticks×labels low-high-lattice

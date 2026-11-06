@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Boxes at timed traces, coverage order                              --
+-- Boxes at banked trace lower bounds, coverage order                 --
 --                                                                    --
 -- A box is a demand, claimable once the elapsed run covers it;       --
 -- operations count at `costˡᵒ` (read 1, write 2, send 4). Nothing    --

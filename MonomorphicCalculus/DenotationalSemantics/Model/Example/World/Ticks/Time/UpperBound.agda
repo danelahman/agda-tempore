@@ -31,7 +31,7 @@ open import Data.Nat.Properties
 open import Data.Product using (_×_)
 
 open import Grades.Examples.Time.UpperBound
-  using (𝕀ᵣ; [0,_]; _·ₒ_; _≾ₒ_; upper-bounds;
+  using (𝕀ᵣ; [0,_]; _·ₒ_; _≾ₒ_; upper-bound;
          ℕ∞; ↑_; ∞; _+∞_; _≤∞_; +∞-mono-≤∞; ≤∞-refl; ≤∞-trans; ≤∞-irrelevant;
          +∞-assoc)
 
@@ -80,7 +80,7 @@ w ⊑ᵗ[ [0, n ] ] w' = ↑ w' ≤∞ (↑ w +∞ n)
 -- the bound as a frame
 
 private
-  bounded : World upper-bounds
+  bounded : World upper-bound
   bounded = record
     { W             = ℕ
     ; _⊑[_]_       = _⊑ᵗ[_]_
@@ -92,7 +92,7 @@ private
 
 -- The frame: the bound, forward moves only.
 
-ticks : World upper-bounds
+ticks : World upper-bound
 ticks = forward bounded _≤_ ≤-refl ≤-trans ≤-irrelevant
 
 -- the relation it states

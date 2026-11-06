@@ -28,7 +28,7 @@ open import Data.Nat.Properties
 open import Data.Product using (_,_)
 
 open import Grades.Examples.Time.Interval
-  using (Interval∞; [_,_]; min; max; _·ᵢ_; _≾ᵢ_; intervals;
+  using (Interval∞; [_,_]; min; max; _·ᵢ_; _≾ᵢ_; interval;
          ℕ∞; ↑_; ∞; _+∞_; _≤∞_; +∞-mono-≤∞; ≤∞-refl; ≤∞-trans; ≤∞-irrelevant)
 
 open import Grades.Traces.Base ℕᵀ Op
@@ -95,7 +95,7 @@ open _⊑ʰ[_]_
 
 -- The frame.
 
-histories : World intervals
+histories : World interval
 histories = record
   { W             = Trace
   ; _⊑[_]_       = _⊑ʰ[_]_

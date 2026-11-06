@@ -32,7 +32,7 @@ open import Data.Product using (_,_)
 open import Grades.Examples.Time.Interval
   using (Interval∞; [_,_]; min; max;
          Interval∞⊤; window_; no-window; _·ʷ_; _≾ʷ_;
-         intervals-with-⊤;
+         interval-with-⊤;
          ℕ∞; ↑_; ∞; _+∞_; _≤∞_; +∞-mono-≤∞; ≤∞-refl; ≤∞-trans; ≤∞-irrelevant)
 
 open import Grades.Traces.Base ℕᵀ Op
@@ -136,7 +136,7 @@ w ⊑ʰ[ no-window ] w' = w ≼ʰ w'
 
 -- The frame.
 
-histories : World intervals-with-⊤
+histories : World interval-with-⊤
 histories = record
   { W             = Trace
   ; _⊑[_]_       = _⊑ʰ[_]_

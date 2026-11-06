@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Typed computations over the duration-hull system of the rigid      --
--- timed regex upper bounds, in dense time                            --
+-- Typed computations over the duration-hull system of the rational   --
+-- timed regex upper bounds, in rational time                         --
 --                                                                    --
 -- The grade system                                                   --
 --   Effect grades are upper bounds over interval letters, each       --
@@ -34,7 +34,7 @@ open import MonomorphicCalculus.Examples.Typing.Traces.TimedRegex.Finite.Interva
 
 import Grades.Examples.Traces.TimedRegex.Rational.UpperBound Op 3 code name name-code code-name running as U
 open import Grades.Examples.System.Traces.TimedRegex.Rational.UpperBound Op 3 code name name-code code-name running
-  using (upperRunsToUpperBoundsGradeSystem)
+  using (timed-regex→upper-bounds-grade-system)
 
 open U using (Proper′; ‵_; _·_; _*; idle_; ≤_; upper)
 
@@ -55,7 +55,7 @@ opTime write = U.⌜ ‵_ {upper} write ⌝
 opTime send  = U.⌜ ‵_ {upper} send ⌝
 
 open import MonomorphicCalculus.Examples.Typing.System
-  upperRunsToUpperBoundsGradeSystem opTime
+  timed-regex→upper-bounds-grade-system opTime
   hiding (_/_)
 
 ------------------------------------------------------------------------

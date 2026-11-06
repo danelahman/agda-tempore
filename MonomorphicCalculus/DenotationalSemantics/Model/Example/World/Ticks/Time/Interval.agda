@@ -22,7 +22,7 @@ open import Data.Nat.Properties
 open import Data.Product using (_×_; _,_)
 
 open import Grades.Examples.Time.Interval
-  using (Interval∞; [_,_]; min; max; _·ᵢ_; _≾ᵢ_; intervals;
+  using (Interval∞; [_,_]; min; max; _·ᵢ_; _≾ᵢ_; interval;
          ℕ∞; ↑_; ∞; _+∞_; _≤∞_; +∞-mono-≤∞; ≤∞-refl; ≤∞-trans; ≤∞-irrelevant;
          +∞-assoc)
 
@@ -84,7 +84,7 @@ w ⊑ᵗ[ i ] w' = (min i + w ≤ w') × (↑ w' ≤∞ (max i +∞ ↑ w))
 
 -- The frame.
 
-ticks : World intervals
+ticks : World interval
 ticks = record
   { W             = ℕ
   ; _⊑[_]_       = _⊑ᵗ[_]_
