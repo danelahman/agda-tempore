@@ -12,7 +12,7 @@ module PolymorphicCalculus.Examples.Boxes.All where
 
 import PolymorphicCalculus.Examples.Boxes
 
-import PolymorphicCalculus.Examples.Boxes.Time.RightSided
-import PolymorphicCalculus.Examples.Boxes.Time.LeftSided
-import PolymorphicCalculus.Examples.Boxes.Traces.Timed.RightSided
-import PolymorphicCalculus.Examples.Boxes.Traces.Timed.LeftSided
+import PolymorphicCalculus.Examples.Boxes.Time.UpperBound
+import PolymorphicCalculus.Examples.Boxes.Time.LowerBound
+import PolymorphicCalculus.Examples.Boxes.Traces.Banked.UpperBound
+import PolymorphicCalculus.Examples.Boxes.Traces.Banked.LowerBound

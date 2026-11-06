@@ -26,7 +26,7 @@
 --   syntax. Where a typing is written out as a derivation, the       --
 --   program is checked here to be typed by inference at every        --
 --   grade (`lt-nats-typed`). The modules under `Compare/` run        --
---   inference at right-sided and left-sided intervals and check      --
+--   inference at upper and lower bounds and check                    --
 --   the answer with `refl`:                                          --
 --     lt-nats-reported : schemeOf (infer [] lt-nats)                 --
 --                          ≡ just expected-lt-nats                   --

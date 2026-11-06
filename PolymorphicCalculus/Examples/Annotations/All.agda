@@ -11,7 +11,7 @@ module PolymorphicCalculus.Examples.Annotations.All where
 
 import PolymorphicCalculus.Examples.Annotations
 
-import PolymorphicCalculus.Examples.Annotations.Time.RightSided
-import PolymorphicCalculus.Examples.Annotations.Time.LeftSided
-import PolymorphicCalculus.Examples.Annotations.Traces.Timed.RightSided
-import PolymorphicCalculus.Examples.Annotations.Traces.Timed.LeftSided
+import PolymorphicCalculus.Examples.Annotations.Time.UpperBound
+import PolymorphicCalculus.Examples.Annotations.Time.LowerBound
+import PolymorphicCalculus.Examples.Annotations.Traces.Banked.UpperBound
+import PolymorphicCalculus.Examples.Annotations.Traces.Banked.LowerBound

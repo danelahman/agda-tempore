@@ -11,5 +11,5 @@ module PolymorphicCalculus.Examples.Durations.All where
 
 import PolymorphicCalculus.Examples.Durations
 
-import PolymorphicCalculus.Examples.Durations.Time.RightSided
-import PolymorphicCalculus.Examples.Durations.Time.LeftSided
+import PolymorphicCalculus.Examples.Durations.Time.UpperBound
+import PolymorphicCalculus.Examples.Durations.Time.LowerBound

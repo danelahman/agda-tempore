@@ -12,7 +12,7 @@ module PolymorphicCalculus.Examples.Handlers.All where
 
 import PolymorphicCalculus.Examples.Handlers
 
-import PolymorphicCalculus.Examples.Handlers.Time.RightSided
-import PolymorphicCalculus.Examples.Handlers.Time.LeftSided
-import PolymorphicCalculus.Examples.Handlers.Traces.Timed.RightSided
-import PolymorphicCalculus.Examples.Handlers.Traces.Timed.LeftSided
+import PolymorphicCalculus.Examples.Handlers.Time.UpperBound
+import PolymorphicCalculus.Examples.Handlers.Time.LowerBound
+import PolymorphicCalculus.Examples.Handlers.Traces.Banked.UpperBound
+import PolymorphicCalculus.Examples.Handlers.Traces.Banked.LowerBound

@@ -34,13 +34,13 @@
 --   syntax. Where a typing is written out as a derivation, the       --
 --   program is checked here to be typed by inference                 --
 --   (`is-zero-typed`). The modules under `Data/` run inference at    --
---   right-sided and left-sided intervals and check the answer with   --
+--   upper and lower bounds and check the answer with                 --
 --   `refl`:                                                          --
 --     is-zero-reported : schemeOf (infer [] is-zero)                 --
 --                          ≡ just expected-is-zero                   --
 --   A refuted example comes with a proof that it is untypable. A     --
 --   function, alone or inside a sum or a list, is refuted after a    --
---   delay at right-sided intervals and typed at left-sided ones.     --
+--   delay at upper bounds and typed at lower-bound ones.             --
 ------------------------------------------------------------------------
 
 open import Data.Unit using (tt)
@@ -197,8 +197,8 @@ expected-later-succ = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (nat ⇒ nat ! ⌜ 1 ⌝ᵉ) ! �
 
 --   later-id x = delay 1; x
 --
--- `eternal α ∨ ⌜ 1 ⌝ʳ ≾ 𝟏ᵣ`: dropped at the left-sided grades,
--- `eternal α` at the right-sided ones.
+-- `eternal α ∨ ⌜ 1 ⌝ʳ ≾ 𝟏ᵣ`: dropped at the lower-bound grades,
+-- `eternal α` at the upper-bound ones.
 
 later-id : RawC ∅ˢ 0
 later-id = return (fun (delay ⌜ 1 ⌝ (return v₀)))
@@ -229,7 +229,7 @@ expected-numeral-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ nat ! ⌜ 1 ⌝ᵉ
 
 --   function-later = let f = (λ _. ()) in delay 1; f ()
 --
--- A function is not eternal: typed at the left-sided grades only.
+-- A function is not eternal: typed at the lower-bound grades only.
 
 function-later : RawC ∅ˢ 0
 function-later = return (fun (return ⋆)) ⨟ delay ⌜ 1 ⌝ (v₀ · ⋆)
@@ -271,8 +271,8 @@ expected-boxed-numeral = ∀[ 0 , 0 , 0 ] ⊤ ⟹ nat ! ⌜ 2 ⌝ᵉ
 --
 --   joined n = matchℕ n of zero ↦ delay 1; 0 | succ m ↦ delay 3; m
 --
--- The effect is the join: three ticks at the right-sided grades, one
--- at the left-sided ones.
+-- The effect is the join: three ticks at the upper-bound grades, one
+-- at the lower-bound ones.
 
 joined : RawC ∅ˢ 0
 joined =
@@ -397,7 +397,7 @@ expected-sum-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (nat |+| bool) ! ⌜ 1 ⌝ᵉ
 
 --   inl-later = let s = inl 2 in delay 1; s
 --
--- The unknown summand is asked to be eternal at the right-sided grades.
+-- The unknown summand is asked to be eternal at the upper-bound grades.
 
 inl-later : RawC ∅ˢ 0
 inl-later = return (inl (numeral 2)) ⨟ delay ⌜ 1 ⌝ (return v₀)
@@ -411,7 +411,7 @@ expected-inl-later = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (nat |+| α₀) ! ⌜ 1 ⌝ᵉ
 --   fun-sum-later = let s = (inr (λ _. delay 1; ()) : Nat + (Unit ⇒ Unit ! 1))
 --                   in delay 1; s
 --
--- A function summand is not eternal: typed at the left-sided grades only.
+-- A function summand is not eternal: typed at the lower-bound grades only.
 
 fun-sum-later : RawC ∅ˢ 0
 fun-sum-later =
@@ -478,7 +478,7 @@ expected-list-later = ∀[ 0 , 0 , 0 ] ⊤ ⟹ list nat ! ⌜ 1 ⌝ᵉ
 
 --   nil-later = let l = [] in delay 1; l
 --
--- The unknown element type is asked to be eternal at the right-sided
+-- The unknown element type is asked to be eternal at the upper-bound
 -- grades.
 
 nil-later : RawC ∅ˢ 0
@@ -492,7 +492,7 @@ expected-nil-later = ∀[ 1 , 0 , 0 ] ⊤ ⟹ list α₀ ! ⌜ 1 ⌝ᵉ
 
 --   fun-list-later = let l = ([λ _. ()] : List (Unit ⇒ Unit)) in delay 1; l
 --
--- Not eternal: typed at the left-sided grades only.
+-- Not eternal: typed at the lower-bound grades only.
 
 private
 

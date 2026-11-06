@@ -15,7 +15,7 @@
 -- How to read them                                                   --
 --   Each program is written above its definition in ordinary syntax. --
 --   The modules under `Reports/` run inference at the two            --
---   right-sided grades and check with `refl` that the simplified     --
+--   upper-bound grades and check with `refl` that the simplified     --
 --   scheme is reported:                                              --
 --     reused-around-claim-reported :                                 --
 --       schemeOf (infer [] reused-around-claim) ≡ just …             --

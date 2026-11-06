@@ -11,9 +11,9 @@ open import Data.Nat using (ℕ; _+_)
 open import Data.Nat.Properties using (≤-refl)
 open import Data.Product
 
-open import Grades.Examples.Time.LeftSided using (𝕀; [_,+∞⟩)
+open import Grades.Examples.Time.LowerBound using (𝕀; [_,+∞⟩)
 
-open import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.LeftSided
+open import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.LowerBound
   using (_⊑ᵗ[_]_)
 
 -- "at least `n` ticks" reaches exactly `n` ticks ahead

@@ -17,15 +17,15 @@
 -- How to read them                                                   --
 --   Each program is written above its definition in ordinary         --
 --   syntax. The modules under `Runs/` check the verdicts with        --
---   `refl` at right-sided and left-sided intervals:                  --
+--   `refl` at upper and lower bounds:                                --
 --     budget-top-verdict : verdict (check [] (budget-top 1))         --
 --                            ≡ established                           --
 --   An established verdict is read back as a typing                  --
 --   (`check-typable`); an `untypable` verdict from `infer` gives a   --
 --   proof that the program is untypable. A budget is established at  --
 --   the top and refuted at the durations tried, at both grades;      --
---   `stretch` is refuted at right-sided intervals and established    --
---   at left-sided ones.                                              --
+--   `stretch` is refuted at upper bounds and established             --
+--   at lower-bound ones.                                             --
 ------------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
@@ -94,7 +94,7 @@ check-typable Γ M () | Check.stuck
 --
 -- Where the unit is least it needs `τ · ε₀ ≾ ε₀ ∧ ε₀ ≾ c`. This fails
 -- if `τ` is not below `c`; otherwise the least `ε₀` it allows is the
--- top, so it fails unless `c` is the top. At left-sided time the
+-- top, so it fails unless `c` is the top. At lower bounds on time the
 -- condition `𝟏 ≾ ε₀` refutes every `c` but the top.
 
 -- The scope of the program's variables: one effect variable
@@ -130,7 +130,7 @@ budget-top τ = budget τ (econst ⊤ₑ)
 --
 -- Each clause needs `∀ j. op · j · ε ≾ op · j` over its grade variable
 -- `j`, with `ε` the delay `τ`: a candidate `j` refutes it at
--- right-sided time, and it is established at left-sided time.
+-- upper bounds on time, and it is established at lower bounds on time.
 
 late : ∀ {Θ n} → 𝔻 → RawV Θ n
 late τ = fun (delay τ (return ⋆))

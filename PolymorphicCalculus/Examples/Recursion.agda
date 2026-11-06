@@ -36,14 +36,14 @@
 --   Each program is written above its definition in ordinary         --
 --   syntax. Where a typing is written out as a derivation, it is     --
 --   checked here (`add-typed`, `countdown-top-typable`). The modules --
---   under `Recursion/` run inference at right-sided and left-sided   --
---   intervals and check the answer with `refl`:                      --
+--   under `Recursion/` run inference at upper and lower bounds and   --
+--   check the answer with `refl`:                                    --
 --     add-reported : schemeOf (infer [] add) ≡ just expected-add     --
 --   Where checking the closed program finds a satisfying instance,   --
 --   the verdict `established` is checked too, and read back as a     --
 --   typing (`check-typable`). A refuted example comes with a proof   --
 --   that it is untypable. `twice` and `twice-run` are checked at     --
---   right-sided intervals only.                                      --
+--   upper bounds only.                                               --
 ------------------------------------------------------------------------
 
 open import Data.Unit using (tt)
@@ -361,7 +361,7 @@ inc-all = return (fun (recL v₀ (return nil) (return (cons (succ v₂) v₀))))
 --   last-box d l = last-or d (l : List ([1] Nat))
 --
 -- The head needs `eternal A ∨ ∣ ε ∣ ≾ 𝟏ᵣ`: any type with a pure step;
--- with a tick, eternal at the right-sided grades, so boxes are refused.
+-- with a tick, eternal at the upper-bound grades, so boxes are refused.
 
 copy : RawC ∅ˢ 0
 copy = return (fun (recL v₀ (return nil) (return (cons v₂ v₀))))

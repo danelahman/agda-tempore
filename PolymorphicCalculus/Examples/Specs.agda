@@ -11,12 +11,12 @@
 -- multiplication commutes (`·-comm?`).                               --
 --                                                                    --
 --   grade                      𝟏-least?   ·-comm?                    --
---   Time/RightSided            yes        yes                        --
---   Time/LeftSided             no         yes                        --
---   Traces/Timed/RightSided    yes        no                         --
---   Traces/Timed/LeftSided     no         no                         --
+--   Time/UpperBound            yes        yes                        --
+--   Time/LowerBound             no         yes                       --
+--   Traces/Banked/UpperBound    yes        no                        --
+--   Traces/Banked/LowerBound     no         no                       --
 --                                                                    --
--- The others are time paired with a security level (`Footprint`)     --
+-- The others are time paired with a lattice (`Footprint`)            --
 -- and dense time, each on both sides.                                --
 --                                                                    --
 -- The hints are `identityʰ`, with the grades the solver may try as   --
@@ -50,55 +50,55 @@ sensor-complete read  = here refl
 sensor-complete write = there (here refl)
 sensor-complete send  = there (there (here refl))
 
-module Time-RightSided where
+module Time-UpperBound where
 
-  open import Grades.Examples.Time.RightSided
-    using (right-sided-intervals; right-sided-intervalsʰ; right-sided-witnesses)
-  open Grading.Time-RightSided using (opTime)
-  open import Language.Examples.SensorNode.Identity right-sided-intervals opTime
+  open import Grades.Examples.Time.UpperBound
+    using (upper-bounds; upper-boundsʰ; upper-bound-witnesses)
+  open Grading.Time-UpperBound using (opTime)
+  open import Language.Examples.SensorNode.Identity upper-bounds opTime
     using (spec) public
   open import PolymorphicCalculus.Inference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
   hints : SystemHints (LanguageSpec.Grades spec)
-  hints = identityʰ right-sided-intervalsʰ right-sided-witnesses
+  hints = identityʰ upper-boundsʰ upper-bound-witnesses
 
   enum : OpEnum
   enum = opEnum sensor-ops sensor-complete
 
-module Time-LeftSided where
+module Time-LowerBound where
 
-  open import Grades.Examples.Time.LeftSided
-    using (left-sided-intervals; left-sided-intervalsʰ; left-sided-witnesses)
-  open Grading.Time-LeftSided using (opTime)
-  open import Language.Examples.SensorNode.Identity left-sided-intervals opTime
+  open import Grades.Examples.Time.LowerBound
+    using (lower-bounds; lower-boundsʰ; lower-bound-witnesses)
+  open Grading.Time-LowerBound using (opTime)
+  open import Language.Examples.SensorNode.Identity lower-bounds opTime
     using (spec) public
   open import PolymorphicCalculus.Inference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
   hints : SystemHints (LanguageSpec.Grades spec)
-  hints = identityʰ left-sided-intervalsʰ left-sided-witnesses
+  hints = identityʰ lower-boundsʰ lower-bound-witnesses
 
   enum : OpEnum
   enum = opEnum sensor-ops sensor-complete
 
-module Traces-Timed-RightSided where
+module Traces-Banked-UpperBound where
 
-  open import Grades.Examples.Worked.Traces.Timed.RightSided using (right-sided; right-sidedʰ)
-  open Grading.Traces-Timed-RightSided using (opTime)
-  open import Language.Examples.SensorNode.Identity right-sided opTime
+  open import Grades.Examples.Worked.Traces.Banked.UpperBound using (upper-bound; upper-boundʰ)
+  open Grading.Traces-Banked-UpperBound using (opTime)
+  open import Language.Examples.SensorNode.Identity upper-bound opTime
     using (spec) public
   open import PolymorphicCalculus.Inference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
   hints : SystemHints (LanguageSpec.Grades spec)
-  hints = identityʰ right-sidedʰ noWitnesses
+  hints = identityʰ upper-boundʰ noWitnesses
 
   enum : OpEnum
   enum = opEnum sensor-ops sensor-complete
 
-module Traces-Timed-LeftSided where
+module Traces-Banked-LowerBound where
 
-  open import Grades.Examples.Worked.Traces.Timed.LeftSided using (left-sided)
-  open Grading.Traces-Timed-LeftSided using (opTime)
-  open import Language.Examples.SensorNode.Identity left-sided opTime
+  open import Grades.Examples.Worked.Traces.Banked.LowerBound using (lower-bound)
+  open Grading.Traces-Banked-LowerBound using (opTime)
+  open import Language.Examples.SensorNode.Identity lower-bound opTime
     using (spec) public
   open import PolymorphicCalculus.Inference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
@@ -108,30 +108,30 @@ module Traces-Timed-LeftSided where
   enum : OpEnum
   enum = opEnum sensor-ops sensor-complete
 
-module Product-LeftSidedTimeLevel where
+module Product-TimeLowerBoundLattice where
 
-  open import Grades.Examples.Product.LeftSidedTimeLevel
-    using (left-sided-time×low-high; left-sided-time×low-highʰ)
-  open import Grades.Examples.Time.LeftSided using (left-sided-witnesses)
-  open import Grades.Examples.SecurityLevel using (low-high-witnesses)
-  open Grading.Product-LeftSidedTimeLevel using (opTime)
-  open import Language.Examples.SensorNode.Identity left-sided-time×low-high opTime
+  open import Grades.Examples.Product.TimeLowerBoundLattice
+    using (time-lower-bound×low-high; time-lower-bound×low-highʰ)
+  open import Grades.Examples.Time.LowerBound using (lower-bound-witnesses)
+  open import Grades.Examples.Lattice using (low-high-witnesses)
+  open Grading.Product-TimeLowerBoundLattice using (opTime)
+  open import Language.Examples.SensorNode.Identity time-lower-bound×low-high opTime
     using (spec) public
   open import PolymorphicCalculus.Inference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
   hints : SystemHints (LanguageSpec.Grades spec)
-  hints = identityʰ left-sided-time×low-highʰ (left-sided-witnesses ×ʷ low-high-witnesses)
+  hints = identityʰ time-lower-bound×low-highʰ (lower-bound-witnesses ×ʷ low-high-witnesses)
 
   enum : OpEnum
   enum = opEnum sensor-ops sensor-complete
 
-module Product-RightSidedTimeLevel where
+module Product-TimeUpperBoundLattice where
 
   open import Data.Product using (_×_; _,_)
-  open import Grades.Examples.Product.RightSidedTimeLevel
-    using (right-sided-time×low-high; right-sided-time×low-highʰ)
-  open import Grades.Examples.Time.RightSided using (𝕀ᵣ; [0,_]; ↑_; right-sided-witnesses)
-  open import Grades.Examples.SecurityLevel using (LowHigh; low-high-witnesses)
+  open import Grades.Examples.Product.TimeUpperBoundLattice
+    using (time-upper-bound×low-high; time-upper-bound×low-highʰ)
+  open import Grades.Examples.Time.UpperBound using (𝕀ᵣ; [0,_]; ↑_; upper-bound-witnesses)
+  open import Grades.Examples.Lattice using (LowHigh; low-high-witnesses)
   open import Grades.Examples.Worked.Operations using (slow)
   open import Grades.Examples.Worked.Operations.Footprint using (touches)
 
@@ -140,50 +140,50 @@ module Product-RightSidedTimeLevel where
   opTime : Op → 𝕀ᵣ × LowHigh
   opTime o = ([0, ↑ slow o ] , touches o)
 
-  open import Language.Examples.SensorNode.Identity right-sided-time×low-high opTime
+  open import Language.Examples.SensorNode.Identity time-upper-bound×low-high opTime
     using (spec) public
   open import PolymorphicCalculus.Inference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
   hints : SystemHints (LanguageSpec.Grades spec)
-  hints = identityʰ right-sided-time×low-highʰ (right-sided-witnesses ×ʷ low-high-witnesses)
+  hints = identityʰ time-upper-bound×low-highʰ (upper-bound-witnesses ×ʷ low-high-witnesses)
 
   enum : OpEnum
   enum = opEnum sensor-ops sensor-complete
 
-module Dense-Time-RightSided where
+module Rational-Time-UpperBound where
 
-  open import Grades.Examples.Time.Dense.RightSided
-    using (dense-right-sided-intervals; dense-right-sided-intervalsʰ; dense-right-sided-witnesses)
-  open Grading.Time-Dense-RightSided using (opTime)
-  open import Language.Examples.SensorNode.Identity dense-right-sided-intervals opTime
+  open import Grades.Examples.Time.Rational.UpperBound
+    using (rational-upper-bounds; rational-upper-boundsʰ; rational-upper-bound-witnesses)
+  open Grading.Time-Rational-UpperBound using (opTime)
+  open import Language.Examples.SensorNode.Identity rational-upper-bounds opTime
     using (spec) public
   open import PolymorphicCalculus.Inference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
   hints : SystemHints (LanguageSpec.Grades spec)
-  hints = identityʰ dense-right-sided-intervalsʰ dense-right-sided-witnesses
+  hints = identityʰ rational-upper-boundsʰ rational-upper-bound-witnesses
 
   enum : OpEnum
   enum = opEnum sensor-ops sensor-complete
 
-module Dense-Time-LeftSided where
+module Rational-Time-LowerBound where
 
   open import Grades.Base using (GradeMorphism)
-  open import Grades.Examples.Time.Dense.LeftSided
-    using (𝕀; dense-left-sided-intervals; dense-left-sided-intervalsʰ; dense-left-sided-witnesses;
-           left-sided→dense)
-  module Discrete = Grading.Time-LeftSided
+  open import Grades.Examples.Time.Rational.LowerBound
+    using (𝕀; rational-lower-bounds; rational-lower-boundsʰ; rational-lower-bound-witnesses;
+           lower-bound→rational)
+  module Discrete = Grading.Time-LowerBound
 
   -- the discrete figures, read in dense time
 
   opTime : Op → 𝕀
-  opTime o = GradeMorphism.map left-sided→dense (Discrete.opTime o)
+  opTime o = GradeMorphism.map lower-bound→rational (Discrete.opTime o)
 
-  open import Language.Examples.SensorNode.Identity dense-left-sided-intervals opTime
+  open import Language.Examples.SensorNode.Identity rational-lower-bounds opTime
     using (spec) public
   open import PolymorphicCalculus.Inference.SolverImpl.Enum spec using (OpEnum; opEnum)
 
   hints : SystemHints (LanguageSpec.Grades spec)
-  hints = identityʰ dense-left-sided-intervalsʰ dense-left-sided-witnesses
+  hints = identityʰ rational-lower-boundsʰ rational-lower-bound-witnesses
 
   enum : OpEnum
   enum = opEnum sensor-ops sensor-complete

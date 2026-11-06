@@ -2,8 +2,8 @@
 -- Inference on boxes and delays                                      --
 --                                                                    --
 -- `unbox` asks that the grade elapsed since the box was bound lie    --
--- below the box's grade. At the right-sided grades a box is a lease, --
--- claimable until its grade has elapsed; at the left-sided ones it   --
+-- below the box's grade. At the upper-bound grades a box is a lease, --
+-- claimable until its grade has elapsed; at the lower-bound ones it  --
 -- is a promise, claimable once its grade has elapsed. `⌜ n ⌝` is the --
 -- duration of `n` ticks.                                             --
 --                                                                    --
@@ -150,7 +150,7 @@ U⇒U = unit ⇒ unit ! 𝟏̂ₑ
 --   stale-call f = delay 1; f ()
 --
 -- A function is not eternal, so `var` asks `⌜ 1 ⌝ʳ ≾ 𝟏ᵣ`: typed at the
--- left-sided grades, refuted at the right-sided ones.
+-- lower-bound grades, refuted at the upper-bound ones.
 
 stale-call : RawC ∅ˢ 0
 stale-call = return (fun (delay ⌜ 1 ⌝ (v₀ · ⋆)))
@@ -203,7 +203,7 @@ expected-handed-box-call =
 --   boxing-an-argument x = box[1] x as b in b
 --
 -- `eternal α ∨ ⌜ 1 ⌝ʳ ≾ 𝟏ᵣ` is decided on its grade: dropped at the
--- left-sided grades, `eternal α` at the right-sided ones.
+-- lower-bound grades, `eternal α` at the upper-bound ones.
 
 boxing-an-argument : RawC ∅ˢ 0
 boxing-an-argument = return (fun (box ⌜ 1 ⌝ʳ v₀ (return v₀)))
@@ -343,7 +343,7 @@ expected-escaping d = ∀[ 0 , 0 , 0 ] ⊤ ⟹ unit ! ⌜ d ⌝ᵉ
 --                       else (delay 3; unbox b as y in y)
 --
 -- The box's grade and the effect are the join `⌜ 1 ⌝ ⊔ ⌜ 3 ⌝`: three
--- ticks at the right-sided grades, one at the left-sided ones.
+-- ticks at the upper-bound grades, one at the lower-bound ones.
 
 branches : RawC ∅ˢ 0
 branches =

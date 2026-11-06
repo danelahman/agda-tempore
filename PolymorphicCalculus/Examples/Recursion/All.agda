@@ -12,5 +12,5 @@ module PolymorphicCalculus.Examples.Recursion.All where
 
 import PolymorphicCalculus.Examples.Recursion
 
-import PolymorphicCalculus.Examples.Recursion.Time.RightSided
-import PolymorphicCalculus.Examples.Recursion.Time.LeftSided
+import PolymorphicCalculus.Examples.Recursion.Time.UpperBound
+import PolymorphicCalculus.Examples.Recursion.Time.LowerBound

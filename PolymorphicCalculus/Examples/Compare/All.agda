@@ -11,5 +11,5 @@ module PolymorphicCalculus.Examples.Compare.All where
 
 import PolymorphicCalculus.Examples.Compare
 
-import PolymorphicCalculus.Examples.Compare.Time.RightSided
-import PolymorphicCalculus.Examples.Compare.Time.LeftSided
+import PolymorphicCalculus.Examples.Compare.Time.UpperBound
+import PolymorphicCalculus.Examples.Compare.Time.LowerBound

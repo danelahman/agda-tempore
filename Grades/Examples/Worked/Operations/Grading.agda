@@ -15,11 +15,11 @@ open import Grades.Examples.Worked.Operations
 open import Grades.Examples.Worked.Operations.Footprint using (touches)
 
 ------------------------------------------------------------------------
--- Right-sided time: the time an operation may take at worst
+-- Upper bounds on time: the time an operation may take at worst
 
-module Time-RightSided where
+module Time-UpperBound where
 
-  open import Grades.Examples.Time.RightSided using (𝕀ᵣ; ↑_; [0,_])
+  open import Grades.Examples.Time.UpperBound using (𝕀ᵣ; ↑_; [0,_])
 
   opTime : Op → 𝕀ᵣ
   opTime read  = [0, ↑ 1 ]
@@ -27,11 +27,11 @@ module Time-RightSided where
   opTime send  = [0, ↑ 6 ]
 
 ------------------------------------------------------------------------
--- Left-sided time: the time an operation is guaranteed to take
+-- Lower bounds on time: the time an operation is guaranteed to take
 
-module Time-LeftSided where
+module Time-LowerBound where
 
-  open import Grades.Examples.Time.LeftSided using (𝕀; [_,+∞⟩)
+  open import Grades.Examples.Time.LowerBound using (𝕀; [_,+∞⟩)
 
   opTime : Op → 𝕀
   opTime read  = [ 1 ,+∞⟩
@@ -39,11 +39,11 @@ module Time-LeftSided where
   opTime send  = [ 4 ,+∞⟩
 
 ------------------------------------------------------------------------
--- Two-sided time: the window an operation's execution time falls in
+-- Intervals of time: the window an operation's execution time falls in
 
-module Time-TwoSided where
+module Time-Interval where
 
-  open import Grades.Examples.Time.TwoSidedWithInfinity
+  open import Grades.Examples.Time.Interval
     using (Interval∞; ↑_; [_,_])
 
   opTime : Op → Interval∞
@@ -52,11 +52,11 @@ module Time-TwoSided where
   opTime send  = [ 4 , ↑ 6 ]
 
 ------------------------------------------------------------------------
--- Dense right-sided time: the measured worst case
+-- Rational upper bounds on time: the measured worst case
 
-module Time-Dense-RightSided where
+module Time-Rational-UpperBound where
 
-  open import Grades.Examples.Time.Dense.RightSided using (𝕀ᵣ; ↑_; _/_; [0,_])
+  open import Grades.Examples.Time.Rational.UpperBound using (𝕀ᵣ; ↑_; _/_; [0,_])
 
   opTime : Op → 𝕀ᵣ
   opTime read  = [0, ↑ (1 / 2) ]
@@ -64,11 +64,11 @@ module Time-Dense-RightSided where
   opTime send  = [0, ↑ (11 / 2) ]
 
 ------------------------------------------------------------------------
--- Right-sided timed traces: the run that performs an operation
+-- Upper-bound timed traces: the run that performs an operation
 
-module Traces-Timed-RightSided where
+module Traces-Banked-UpperBound where
 
-  open import Grades.Examples.Worked.Traces.Timed.RightSided
+  open import Grades.Examples.Worked.Traces.Banked.UpperBound
     using (Bounds; within_; Antichain; ⟅_⟆)
 
   opTime₀ : Op → Antichain
@@ -78,24 +78,24 @@ module Traces-Timed-RightSided where
   opTime o = within (opTime₀ o)
 
 ------------------------------------------------------------------------
--- Left-sided timed traces: the run that performs an operation
+-- Lower-bound timed traces: the run that performs an operation
 
-module Traces-Timed-LeftSided where
+module Traces-Banked-LowerBound where
 
-  open import Grades.Examples.Worked.Traces.Timed.LeftSided
+  open import Grades.Examples.Worked.Traces.Banked.LowerBound
     using (Antichain; ⟅_⟆)
 
   opTime : Op → Antichain
   opTime o = ⟅ ⌈ o ⌉ ⟆
 
 ------------------------------------------------------------------------
--- Left-sided time with a security level: guaranteed time and the
+-- Lower bounds on time with a lattice: guaranteed time and the
 -- level touched
 
-module Product-LeftSidedTimeLevel where
+module Product-TimeLowerBoundLattice where
 
-  open import Grades.Examples.Time.LeftSided using (𝕀; [_,+∞⟩)
-  open import Grades.Examples.SecurityLevel using (LowHigh)
+  open import Grades.Examples.Time.LowerBound using (𝕀; [_,+∞⟩)
+  open import Grades.Examples.Lattice using (LowHigh)
 
   opTime : Op → 𝕀 × LowHigh
   opTime o = ([ fast o ,+∞⟩ , touches o)

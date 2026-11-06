@@ -20,7 +20,7 @@ module Grades.Examples.Worked.Operations.Footprint where
 
 open import Data.Nat.Base using (ℕ)
 
-open import Grades.Examples.SecurityLevel using (LowHigh; Low; High)
+open import Grades.Examples.Lattice using (LowHigh; Low; High)
 
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
 

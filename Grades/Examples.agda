@@ -9,21 +9,21 @@ module Grades.Examples where
 -- Time intervals
 --
 -- Bounds on elapsed time. The one-sided intervals have one endpoint,
--- the two-sided ones two.
+-- the interval ones two.
 
 -- "at least `n` time steps"; a smaller bound is the weaker grade
 
-import Grades.Examples.Time.LeftSided
+import Grades.Examples.Time.LowerBound
 
 -- "at most `n` time steps"; the mirror image
 
-import Grades.Examples.Time.RightSided
+import Grades.Examples.Time.UpperBound
 
 -- "between `min` and `max` time steps", with `max` allowed to be `∞`,
 -- which imposes no upper bound; a wider window is weaker
 
 import Grades.Examples.Time.ExtendedNat
-import Grades.Examples.Time.TwoSidedWithInfinity
+import Grades.Examples.Time.Interval
 
 -- intervals of any time domain, each end open or closed, the upper
 -- one possibly absent
@@ -31,25 +31,25 @@ import Grades.Examples.Time.TwoSidedWithInfinity
 import Grades.Examples.Time.Intervals
 
 -- the same three shapes over the non-negative rationals ℚ≥0, with
--- morphisms embedding the discrete grades above; the two-sided grade
+-- morphisms embedding the discrete grades above; the interval grade
 -- and the one-sided `*Cut` grades have open or closed ends, the closed
--- intervals being sub-grades, and the two-sided intervals map onto
+-- intervals being sub-grades, and the intervals map onto
 -- each of their ends
 
-import Grades.Examples.Time.Dense.ExtendedRational
-import Grades.Examples.Time.Dense.LeftSided
-import Grades.Examples.Time.Dense.RightSided
-import Grades.Examples.Time.Dense.TwoSidedClosed
-import Grades.Examples.Time.Dense.TwoSided
-import Grades.Examples.Time.Dense.LeftSidedCut
-import Grades.Examples.Time.Dense.RightSidedCut
+import Grades.Examples.Time.Rational.ExtendedRational
+import Grades.Examples.Time.Rational.LowerBound
+import Grades.Examples.Time.Rational.UpperBound
+import Grades.Examples.Time.Rational.IntervalClosed
+import Grades.Examples.Time.Rational.Interval
+import Grades.Examples.Time.Rational.LowerBoundCut
+import Grades.Examples.Time.Rational.UpperBoundCut
 
 ------------------------------------------------------------------------
--- Security levels
+-- Grade lattices
 --
 -- A decidable join-semilattice of levels, floating upward on read.
 
-import Grades.Examples.SecurityLevel
+import Grades.Examples.Lattice
 
 ------------------------------------------------------------------------
 -- Products
@@ -57,19 +57,19 @@ import Grades.Examples.SecurityLevel
 -- `Grades.Product` pairs two grades componentwise; these pair
 -- members of the families above.
 
--- left-sided time and a security level: an embargo with a taint check
+-- lower bounds on time and a lattice: an embargo with a taint check
 
-import Grades.Examples.Product.LeftSidedTimeLevel
+import Grades.Examples.Product.TimeLowerBoundLattice
 
--- right-sided time and a security level: an expiring, untainted
+-- upper bounds on time and a lattice: an expiring, untainted
 -- capability
 
-import Grades.Examples.Product.RightSidedTimeLevel
+import Grades.Examples.Product.TimeUpperBoundLattice
 
--- right-sided time and an energy budget: a calibration that drifts
+-- upper bounds on time and an energy budget: a calibration that drifts
 -- with both
 
-import Grades.Examples.Product.RightSidedTimeEnergy
+import Grades.Examples.Product.TimeUpperBoundEnergy
 
 ------------------------------------------------------------------------
 -- Sets of timed traces
@@ -120,68 +120,69 @@ import Grades.Examples.Counts.Occurrences
 
 import Grades.Examples.System.Identity
 
--- left-sided time paired with a security level, at the identity, at
+-- lower bounds on time paired with a lattice, at the identity, at
 -- time alone, and at the level alone: timed declassification and its
 -- two projections, an embargo alone and a taint check alone
 
-import Grades.Examples.System.Product.LeftSidedTimeLevel
+import Grades.Examples.System.Product.TimeLowerBoundLattice
 
--- two-sided intervals to left-sided ones: forget the upper bound, keep
+-- intervals to lower bounds ones: forget the upper bound, keep
 -- the guarantee that at least so much time has passed
 
-import Grades.Examples.System.IntervalsToLeftSidedIntervals
+import Grades.Examples.System.IntervalsToLowerBounds
 
--- the timed trace grades to time intervals: forget which runs a grade
+-- the banked trace grades to time intervals: forget which runs a grade
 -- mentions and which operations they perform, keep what their
 -- durations say: the cap the deadline its slowest bound imposes, the
--- floor what its fastest guarantee takes, and the two-sided one their
+-- floor what its fastest guarantee takes, and the interval one their
 -- pair
 
-import Grades.Examples.System.Traces.Timed.RightSided
-import Grades.Examples.System.Traces.Timed.LeftSided
-import Grades.Examples.System.Traces.Timed.TwoSided
+import Grades.Examples.System.Traces.Banked.UpperBound
+import Grades.Examples.System.Traces.Banked.LowerBound
+import Grades.Examples.System.Traces.Banked.Interval
 
--- the subset cap to time intervals: the same, the deadline being the
--- one its slowest listed run imposes
+-- the finite run set cap to time intervals: the same, the deadline
+-- being the one its slowest listed run imposes
 
-import Grades.Examples.System.Traces.Subsets.RightSided
+import Grades.Examples.System.Traces.FiniteRunSets.UpperBound
 
 -- the rigid finite-expression grades to time intervals by their
 -- duration hull: an upper bound to the longest run it admits, a lower
 -- bound to the shortest, an interval to the pair of its ends
 
-import Grades.Examples.System.Traces.Rigid.Finite.RightSided
-import Grades.Examples.System.Traces.Rigid.Finite.LeftSided
-import Grades.Examples.System.Traces.Rigid.Finite.TwoSided
+import Grades.Examples.System.Traces.TimedRegex.Finite.UpperBound
+import Grades.Examples.System.Traces.TimedRegex.Finite.LowerBound
+import Grades.Examples.System.Traces.TimedRegex.Finite.Interval
 
--- the same for the rigid regular-expression grades, iteration included
+-- the same for the rigid timed regex grades, iteration included
 
-import Grades.Examples.System.Traces.Rigid.Rational.RightSided
-import Grades.Examples.System.Traces.Rigid.Rational.LeftSided
-import Grades.Examples.System.Traces.Rigid.Rational.TwoSided
+import Grades.Examples.System.Traces.TimedRegex.Rational.UpperBound
+import Grades.Examples.System.Traces.TimedRegex.Rational.LowerBound
+import Grades.Examples.System.Traces.TimedRegex.Rational.Interval
 
--- the subset cap to at-most counts: on each counter, the greatest
--- count among the listed traces, a quota covering the run that draws
--- on it most
+-- the finite run set cap to at-most counts: on each counter, the
+-- greatest count among the listed traces, a quota covering the run
+-- that draws on it most
 
-import Grades.Examples.System.Counts.Subsets.AtMost
+import Grades.Examples.System.Counts.FiniteRunSets.AtMost
 
--- the subset cap to at-least counts: on each counter, the least count
--- among the listed traces, a guarantee certain of every run
+-- the finite run set cap to at-least counts: on each counter, the
+-- least count among the listed traces, a guarantee certain of every
+-- run
 
-import Grades.Examples.System.Counts.Subsets.AtLeast
+import Grades.Examples.System.Counts.FiniteRunSets.AtLeast
 
 -- antichains of guarantees to at-least counts, at an arbitrary trace
 -- order that never covers a demand with fewer operations; instantiated
 -- at the coverage floor
 
-import Grades.Examples.System.Counts.Lifted.LeftSided
-import Grades.Examples.System.Counts.Timed.LeftSided
+import Grades.Examples.System.Counts.Lifted.LowerBound
+import Grades.Examples.System.Counts.Banked.LowerBound
 
 -- the allowance cap does not project onto quotas: no morphism into
 -- at-most counts counts what a bound permits
 
-import Grades.Examples.System.Counts.Timed.RightSided
+import Grades.Examples.System.Counts.Banked.UpperBound
 
 -- no count grade projects onto time, and a cost model preserves all
 -- but the join when time is paired with the counts
@@ -195,18 +196,19 @@ import Grades.Examples.System.Counts.Time
 -- products (`Grades.SemiDirect`) and mode matrices
 -- (`Grades.Matrix`).
 
--- upper bounds on counts by name, an indexed grade; flow-sensitive
--- levels and windowed schedules, semidirect products
+-- at-most counts by name, an indexed grade; flow-sensitive
+-- levels and call-time sets, semidirect products
 
-import Grades.Examples.Counts.UpperBound
-import Grades.Examples.SemiDirect.FlowLevels
-import Grades.Examples.SemiDirect.WindowedSchedules
+import Grades.Examples.Counts.AtMost.ByName
+import Grades.Examples.SemiDirect.FlowSensitiveLevels
+import Grades.Examples.SemiDirect.CallTimeSets
 
--- the levels each resource reaches: a trough, a range of net changes
--- and a peak, over the integers with infinities
+-- the watermark grades: the levels each resource reaches, a trough,
+-- a range of net changes and a peak, over the integers with
+-- infinities
 
 import Grades.Examples.SemiDirect.ExtendedInteger
-import Grades.Examples.SemiDirect.ResourceLevels
+import Grades.Examples.SemiDirect.Watermarks
 
 -- the costs of switching between the modes of a device, as max-plus
 -- mode matrices

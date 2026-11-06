@@ -35,7 +35,7 @@ open import Relation.Binary.Definitions
   using (DecidableEquality; Transitive; Trichotomous; tri<; tri≈; tri>)
 open import Relation.Nullary using (yes; no)
 
-open import Grades.Examples.Time.TwoSidedWithInfinity
+open import Grades.Examples.Time.Interval
   using (Interval∞; [_,_]; ↑_)
 
 open import Util.Equality

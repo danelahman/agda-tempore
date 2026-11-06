@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- The context modality at left-sided time (lower bounds)             --
+-- The context modality at lower bounds on time                       --
 --                                                                    --
 -- What it shows                                                      --
 --   The unit is the greatest grade, so the context modality is a     --
@@ -14,16 +14,16 @@ open import Data.Product using (proj₂)
 open import Relation.Nullary using (¬_)
 
 open import Grades.Base
-open import Grades.Examples.Time.LeftSided
+open import Grades.Examples.Time.LowerBound
 open import Grades.Examples.System.Identity using (identityGradeSystem)
 open import Language.BaseTypes using (noBaseTypes)
 open import Language.Spec
 import Language.Operations as Ops
 
-module MonomorphicCalculus.Examples.ContextModality.LeftSided where
+module MonomorphicCalculus.Examples.ContextModality.LowerBound where
 
 G : GradeSystem
-G = identityGradeSystem left-sided-intervals
+G = identityGradeSystem lower-bounds
 
 ops : Ops.Operations G noBaseTypes
 ops = record

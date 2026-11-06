@@ -38,10 +38,10 @@ import Grades.Examples.Worked.Time
 
 -- The two-point security level and taint sets over `Fin 3`.
 
-import Grades.Examples.Worked.SecurityLevel
+import Grades.Examples.Worked.Lattice
 
--- Left- and right-sided time with a security level, and right-sided
--- time with an energy budget.
+-- Lower and upper bounds on time with a lattice, and upper
+-- bounds on time with an energy budget.
 
 import Grades.Examples.Worked.Product
 
@@ -51,9 +51,9 @@ import Grades.Examples.Worked.Product
 import Grades.Examples.Worked.System
 
 -- The trace grades: a floor, a cap and their pairing at the
--- cost-sensitive orders, and a cap at the subset order, each read as an
+-- cost-sensitive orders, and the finite run set cap, each read as an
 -- effect grade and as a resource grade; the regular cap; and the rigid
--- regular, finite-expression and regular-expression grades.
+-- regular, finite-expression and timed regex grades.
 
 import Grades.Examples.Worked.Traces
 
@@ -61,12 +61,12 @@ import Grades.Examples.Worked.Traces
 
 import Grades.Examples.Worked.Counts
 
--- Flow-sensitive levels and windowed schedules, semidirect products;
--- resource levels; and mode-switch costs and mode times, mode
+-- Flow-sensitive levels and call-time sets, semidirect products;
+-- watermark grades; and mode-switch costs and mode times, mode
 -- matrices.
 
-import Grades.Examples.Worked.SemiDirect.FlowLevels
-import Grades.Examples.Worked.SemiDirect.WindowedSchedules
-import Grades.Examples.Worked.SemiDirect.ResourceLevels
+import Grades.Examples.Worked.SemiDirect.FlowSensitiveLevels
+import Grades.Examples.Worked.SemiDirect.CallTimeSets
+import Grades.Examples.Worked.SemiDirect.Watermarks
 import Grades.Examples.Worked.SemiDirect.ModeSwitchCosts
 import Grades.Examples.Worked.SemiDirect.ModeTimes

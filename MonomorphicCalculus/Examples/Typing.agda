@@ -54,22 +54,22 @@ import MonomorphicCalculus.Examples.Typing.Core
 -- "at least `n` time steps": a box is a resource that becomes
 -- available, and nothing goes stale
 
-import MonomorphicCalculus.Examples.Typing.Time.LeftSided
+import MonomorphicCalculus.Examples.Typing.Time.LowerBound
 
 -- "at most `n` time steps": a box is a lease that expires, and a
 -- reading goes stale as soon as anything happens
 
-import MonomorphicCalculus.Examples.Typing.Time.RightSided
+import MonomorphicCalculus.Examples.Typing.Time.UpperBound
 
 -- both bounds at once: a box has a window, and a claim can be made too
 -- early or too late
 
-import MonomorphicCalculus.Examples.Typing.Time.TwoSided
+import MonomorphicCalculus.Examples.Typing.Time.Interval
 
 -- "at most `q` units" of dense time: the operations measured to the
 -- half tick, and a lease spent to the half tick
 
-import MonomorphicCalculus.Examples.Typing.Time.Dense.RightSided
+import MonomorphicCalculus.Examples.Typing.Time.Rational.UpperBound
 
 ------------------------------------------------------------------------
 -- Grades that record which runs there were
@@ -80,36 +80,36 @@ import MonomorphicCalculus.Examples.Typing.Time.Dense.RightSided
 -- sets of traces at the coverage order: a box asks for work to have
 -- been done, and time cannot stand in for it
 
-import MonomorphicCalculus.Examples.Typing.Traces.Timed.LeftSided
+import MonomorphicCalculus.Examples.Typing.Traces.Banked.LowerBound
 
 -- at the allowance order: a box permits particular runs, so a claim can
 -- be refused over which operations were performed and where
 
-import MonomorphicCalculus.Examples.Typing.Traces.Timed.RightSided
+import MonomorphicCalculus.Examples.Typing.Traces.Banked.UpperBound
 
 -- at both: a box asks for work and caps what may have happened since
 
-import MonomorphicCalculus.Examples.Typing.Traces.Timed.TwoSided
+import MonomorphicCalculus.Examples.Typing.Traces.Banked.Interval
 
--- the subset order as a cap: a box names the runs it covers outright,
+-- the finite run set cap: a box names the runs it covers outright,
 -- nothing paying for anything else
 
-import MonomorphicCalculus.Examples.Typing.Traces.Subsets.RightSided
+import MonomorphicCalculus.Examples.Typing.Traces.FiniteRunSets.UpperBound
 
 -- a guarantee and a bound over interval letters: a box opened after an
 -- undisturbed wait, and refused after operations fill it
 
-import MonomorphicCalculus.Examples.Typing.Traces.Rigid.Regular.TwoSided
+import MonomorphicCalculus.Examples.Typing.Traces.TimedRegex.Nat.Interval
 
 -- the same over finite expressions in dense time: a box opened after an
 -- undisturbed wait, and refused after an operation fills it
 
-import MonomorphicCalculus.Examples.Typing.Traces.Rigid.Finite.TwoSided
+import MonomorphicCalculus.Examples.Typing.Traces.TimedRegex.Finite.Interval
 
 -- the same over expressions with iteration: a box opened after repeated
 -- readings and waits, and refused after a transmission
 
-import MonomorphicCalculus.Examples.Typing.Traces.Rigid.Rational.TwoSided
+import MonomorphicCalculus.Examples.Typing.Traces.TimedRegex.Rational.Interval
 
 ------------------------------------------------------------------------
 -- Grades that pair time with something else
@@ -117,15 +117,15 @@ import MonomorphicCalculus.Examples.Typing.Traces.Rigid.Rational.TwoSided
 -- What each operation touches and draws is fixed in
 -- `Operations.Footprint`.
 
--- lower bounds on time with a security level: a box is an embargoed
+-- lower bounds on time with a lattice: a box is an embargoed
 -- report, refused when claimed too early or after a transmission
 
-import MonomorphicCalculus.Examples.Typing.Product.LeftSidedTimeLevel
+import MonomorphicCalculus.Examples.Typing.Product.TimeLowerBoundLattice
 
 -- upper bounds on time with an energy budget: a box is a calibration
 -- that drifts with time and with use, idling drawing nothing
 
-import MonomorphicCalculus.Examples.Typing.Product.RightSidedTimeEnergy
+import MonomorphicCalculus.Examples.Typing.Product.TimeUpperBoundEnergy
 
 ------------------------------------------------------------------------
 -- Grades that count operations
@@ -143,7 +143,7 @@ import MonomorphicCalculus.Examples.Typing.Counts.AtLeast
 -- quotas by operation name, a default bounding the names not listed:
 -- a reading refused or free according to the default
 
-import MonomorphicCalculus.Examples.Typing.Counts.UpperBound
+import MonomorphicCalculus.Examples.Typing.Counts.AtMost.ByName
 
 ------------------------------------------------------------------------
 -- Grades built as semidirect products
@@ -151,16 +151,16 @@ import MonomorphicCalculus.Examples.Typing.Counts.UpperBound
 -- flow-sensitive levels: a box is a public channel, claimable while
 -- nothing `High` has been touched
 
-import MonomorphicCalculus.Examples.Typing.SemiDirect.FlowLevels
+import MonomorphicCalculus.Examples.Typing.SemiDirect.FlowSensitiveLevels
 
--- windowed schedules: a box is a value that goes stale after four steps
+-- call-time sets: a box is a value that goes stale after four steps
 
-import MonomorphicCalculus.Examples.Typing.SemiDirect.WindowedSchedules
+import MonomorphicCalculus.Examples.Typing.SemiDirect.CallTimeSets
 
 -- the slots of the local memory: storing occupies one, transmitting
 -- frees it
 
-import MonomorphicCalculus.Examples.Typing.SemiDirect.ResourceLevels
+import MonomorphicCalculus.Examples.Typing.SemiDirect.Watermarks
 
 -- the cost of switching the radio on, and operations stuck in the
 -- wrong mode
@@ -178,12 +178,12 @@ import MonomorphicCalculus.Examples.Typing.SemiDirect.ModeTimes
 -- resources, their duration hull between: a box opened once enough time
 -- has passed, and refused too soon or too late
 
-import MonomorphicCalculus.Examples.Typing.System.Traces.Rigid.Finite.RightSided
-import MonomorphicCalculus.Examples.Typing.System.Traces.Rigid.Finite.LeftSided
-import MonomorphicCalculus.Examples.Typing.System.Traces.Rigid.Finite.TwoSided
+import MonomorphicCalculus.Examples.Typing.System.Traces.TimedRegex.Finite.UpperBound
+import MonomorphicCalculus.Examples.Typing.System.Traces.TimedRegex.Finite.LowerBound
+import MonomorphicCalculus.Examples.Typing.System.Traces.TimedRegex.Finite.Interval
 
--- the same over the rigid regular-expression grades
+-- the same over the rigid timed regex grades
 
-import MonomorphicCalculus.Examples.Typing.System.Traces.Rigid.Rational.RightSided
-import MonomorphicCalculus.Examples.Typing.System.Traces.Rigid.Rational.LeftSided
-import MonomorphicCalculus.Examples.Typing.System.Traces.Rigid.Rational.TwoSided
+import MonomorphicCalculus.Examples.Typing.System.Traces.TimedRegex.Rational.UpperBound
+import MonomorphicCalculus.Examples.Typing.System.Traces.TimedRegex.Rational.LowerBound
+import MonomorphicCalculus.Examples.Typing.System.Traces.TimedRegex.Rational.Interval

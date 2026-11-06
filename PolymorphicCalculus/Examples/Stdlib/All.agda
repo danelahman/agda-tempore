@@ -12,7 +12,7 @@ module PolymorphicCalculus.Examples.Stdlib.All where
 
 import PolymorphicCalculus.Examples.Stdlib
 
-import PolymorphicCalculus.Examples.Stdlib.Time.RightSided
-import PolymorphicCalculus.Examples.Stdlib.Time.LeftSided
-import PolymorphicCalculus.Examples.Stdlib.Traces.Timed.RightSided
-import PolymorphicCalculus.Examples.Stdlib.Traces.Timed.LeftSided
+import PolymorphicCalculus.Examples.Stdlib.Time.UpperBound
+import PolymorphicCalculus.Examples.Stdlib.Time.LowerBound
+import PolymorphicCalculus.Examples.Stdlib.Traces.Banked.UpperBound
+import PolymorphicCalculus.Examples.Stdlib.Traces.Banked.LowerBound

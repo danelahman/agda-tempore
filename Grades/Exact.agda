@@ -5,7 +5,7 @@
 
 module Grades.Exact where
 
--- words, merging of stretches with one set, the monoid, strict waits
+-- words, merging of stretches with one set, the monoid, idle waits
 
 import Grades.Exact.Base
 
@@ -90,9 +90,9 @@ import Grades.Exact.Reader.Lower.Correct
 import Grades.Exact.Finite
 import Grades.Exact.Finite.Grades
 
--- the non-rigid timed trace grades as instances: allowances as upper
+-- the non-rigid banked trace grades as instances: allowances as upper
 -- expressions, guarantees as lower ones (the maps of grades are
--- `Grades.Examples.Traces.Timed.ExactGrades`)
+-- `Grades.Examples.Traces.Banked.ExactGrades`)
 
 import Grades.Exact.NonRigid.Base
 import Grades.Exact.NonRigid.Upper
@@ -138,7 +138,7 @@ import Grades.Exact.Finite.Interval
 import Grades.Exact.Interval
 import Grades.Exact.Regular.Interval
 
--- the duration hull of the regular-expression grades
+-- the duration hull of the timed regex grades
 
 import Grades.Exact.Regular.Durations
 

@@ -31,7 +31,7 @@
 -- (`MonomorphicCalculus.DenotationalSemantics.Model.World.Action`):  --
 -- the grade acting by multiplication on the points it measures,      --
 -- `w ⊑[ ρ ] w'` iff `w' ≾ w · ρ`. Its restriction `forward` adds     --
--- `w ≤ w'`, and every frame bounded only from above (the right-sided --
+-- `w ≤ w'`, and every frame bounded only from above (the upper-bound --
 -- ticks, the at-most tallies, the labels) uses it. No frame reaches  --
 -- the past: a lower bound keeps the other frames forward, and an     --
 -- adjoined greatest grade reaches exactly the worlds ahead.          --
@@ -63,46 +63,46 @@ module MonomorphicCalculus.DenotationalSemantics.Model.Example.World where
 
 -- reach every world at least `n` ticks ahead
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.LeftSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.LowerBound
 
 -- reach the worlds ahead by at most `n` ticks, never behind: the mirror
 -- image
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.RightSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.UpperBound
 
 -- reach the worlds inside the window `[ min , max ]` ticks ahead, with
 -- an infinite `max` imposing no upper bound
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSidedWithInfinity
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.Interval
 
 -- the same two with a formal greatest grade adjoined, which reaches
 -- every world ahead: the greatest forward relation, containing every
 -- other, as covariance requires, and closed under composition, the
 -- adjoined point being absorbing
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.LeftSidedWithTop
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSidedWithInfinityAndTop
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.LowerBoundWithTop
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.IntervalWithTop
 
 -- advance no further than one of the bounds a trace grade lists: the
--- right-sided interval frame, with the bound read off a trace; these
+-- upper bound frame, with the bound read off a trace; these
 -- three are over any time domain, worlds being its time points
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.RightSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Traces.Banked.UpperBound
 
 -- advance at least as far as one of the guarantees a trace grade lists:
 -- the mirror image, with the bound read off a trace
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.LeftSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Traces.Banked.LowerBound
 
 -- both at once, the two witnesses independent
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.TwoSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Traces.Banked.Interval
 
--- the cap at the subset order. The quantifier over the listed runs is
+-- the finite run set cap. The quantifier over the listed runs is
 -- existential, following the direction in which the grade weakens:
 -- moving forward takes no longer than one of the listed runs
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.RightSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Traces.FiniteRunSets.UpperBound
 
 ------------------------------------------------------------------------
 -- Trace-history frames: worlds are timed traces
@@ -114,35 +114,35 @@ import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Trace
 -- append a continuation whose duration falls in `[ min , max ]`, with
 -- an infinite `max` imposing no upper bound
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Time.TwoSidedWithInfinity
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Time.Interval
 
 -- the same with a formal greatest grade adjoined, which reaches every
 -- history extending the current one: the greatest forward relation
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Time.TwoSidedWithInfinityAndTop
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Time.IntervalWithTop
 
 -- append a continuation that stays within one of the bounds a trace
 -- grade lists: accessibility is "the continuation is a run the grade
 -- admits"
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.RightSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Banked.UpperBound
 
 -- append a continuation that covers one of the guarantees a trace grade
 -- lists: the comparison runs the other way round
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.LeftSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Banked.LowerBound
 
 -- append one continuation answering to both endpoints at once, which a
 -- history frame expresses and a tick frame does not
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.TwoSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Banked.Interval
 
--- the cap at the subset order, where accessibility is membership, with
--- no comparison between the continuation and a listed run. The frame is
+-- the finite run set cap, where accessibility is membership, with no
+-- comparison between the continuation and a listed run. The frame is
 -- as fine as the grade, distinguishing runs that the tick frame
 -- identifies by their durations
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Subsets.RightSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.FiniteRunSets.UpperBound
 
 ------------------------------------------------------------------------
 -- Dense time-ticks frames: worlds are points of `ℚ≥0`
@@ -152,16 +152,16 @@ import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistor
 
 -- reach every world at least `q` ahead
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.Dense.LeftSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.Rational.LowerBound
 
 -- reach the worlds ahead by at most `a`, never behind
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.Dense.RightSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.Rational.UpperBound
 
 -- reach the worlds ahead by a duration the interval admits, its ends
 -- open or closed
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.Dense.TwoSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.Rational.Interval
 
 ------------------------------------------------------------------------
 -- Tally frames: worlds are per-counter tallies
@@ -187,7 +187,7 @@ import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Tallies.Cou
 -- `w ⊑ˡ[ ℓ ] w'` iff `w ⊑ w' ⊑ w ∨ ℓ`: the label floats up, by at most
 -- `ℓ`; at `Low < High` and at taint sets
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Labels.SecurityLevel
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Labels.Lattice
 
 ------------------------------------------------------------------------
 -- Product frames: worlds are pairs
@@ -196,16 +196,16 @@ import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Labels.Secu
 
 -- time points and labels: an embargo with a taint check
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Product.LeftSidedTimeLevel
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Product.TimeLowerBoundLattice
 
 -- time points and labels: an expiring, untainted capability
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Product.RightSidedTimeLevel
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Product.TimeUpperBoundLattice
 
 -- time points and energy spent, the energy frame being the time frame
 -- along the identity, which ignores `ι`
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Product.RightSidedTimeEnergy
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Product.TimeUpperBoundEnergy
 
 ------------------------------------------------------------------------
 -- Trace-history frames over regular sets of runs
@@ -213,7 +213,7 @@ import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Product.Rig
 -- append a continuation whose encoding the language contains:
 -- membership outright, as for the finite subsets
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Regular.RightSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Regular.UpperBound
 
 ------------------------------------------------------------------------
 -- Trace-history frames for the rigid interval-letter grades
@@ -225,14 +225,14 @@ import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistor
 -- whole steps, regular expressions; every operation admits a whole
 -- number of steps
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Regular.RightSided
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Regular.LeftSided
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Regular.TwoSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Nat.UpperBound
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Nat.LowerBound
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Nat.Interval
 
 -- rationals, finite expressions; accessibility is shown to be the
 -- reading the order gives: every exact word of the continuation's run
 -- fits a word of the grade
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Finite.RightSided
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Finite.LeftSided
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.Rigid.Finite.TwoSided
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Finite.UpperBound
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Finite.LowerBound
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.TraceHistory.TimedRegex.Finite.Interval

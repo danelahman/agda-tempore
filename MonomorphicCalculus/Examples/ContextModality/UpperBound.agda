@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- The context modality at right-sided time (upper bounds)            --
+-- The context modality at upper bounds on time                       --
 --                                                                    --
 -- The example                                                        --
 --   `ρ = [0,2]` and `Γ = Γ₀ ⟨ [0,1] ⟩ ∷ A ⟨ [0,1] ⟩` with            --
@@ -29,7 +29,7 @@ open import Data.Product using (_,_; proj₂)
 open import Relation.Nullary using (¬_)
 
 open import Grades.Base
-open import Grades.Examples.Time.RightSided
+open import Grades.Examples.Time.UpperBound
 open import Grades.Examples.System.Identity using (identityGradeSystem)
 open import Language.BaseTypes using (noBaseTypes)
 open import Language.Spec
@@ -37,10 +37,10 @@ import Language.Operations as Ops
 
 open import Util.Equality
 
-module MonomorphicCalculus.Examples.ContextModality.RightSided where
+module MonomorphicCalculus.Examples.ContextModality.UpperBound where
 
 G : GradeSystem
-G = identityGradeSystem right-sided-intervals
+G = identityGradeSystem upper-bounds
 
 ops : Ops.Operations G noBaseTypes
 ops = record

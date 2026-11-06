@@ -2,7 +2,7 @@
 -- Solver stages on hand-written constraints                          --
 --                                                                    --
 -- The examples                                                       --
---   Deadline    at right-sided intervals, where the unit is least    --
+--   Deadline    at upper bounds, where the unit is least             --
 --               and multiplication commutes: splitting a join in     --
 --               the hypotheses (`canonᴴ`), pruning an entailed       --
 --               disjunction (`walkᵈ`), a product with the top as a   --
@@ -12,7 +12,7 @@
 --   Sequence    at timed traces on the right, where the unit is      --
 --               least and multiplication does not commute: the       --
 --               factors of products match in order only              --
---   WithTop     at left-sided intervals with a top, where            --
+--   WithTop     at lower bounds with a top, where                    --
 --               multiplication commutes and the unit is neither      --
 --               least nor the top                                    --
 --   Cycle       a cycle of unknowns local to a handler clause, sent  --
@@ -21,7 +21,7 @@
 --   Witness     a quantified ordering refuted by trying a candidate  --
 --               grade (`retry`)                                      --
 --   Lowering    the value an unknown is lowered to (`stepᵉ`), at     --
---               right-sided and two-sided intervals                  --
+--               upper bounds and intervals                           --
 --                                                                    --
 -- How to read them                                                   --
 --   Each test applies one stage to hand-written hypotheses, grade    --
@@ -56,13 +56,13 @@ open import PolymorphicCalculus.Inference.SolverImpl.Enum using (OpEnum)
 module PolymorphicCalculus.Examples.Stages where
 
 ------------------------------------------------------------------
--- Right-sided intervals: the unit least, `·` commutative
+-- Upper bounds: the unit least, `·` commutative
 
 module Deadline where
 
-  open import Grades.Examples.Time.RightSided using ([0,_]; ↑_)
-  open import PolymorphicCalculus.Examples.Specs using (module Time-RightSided)
-  open Time-RightSided using (spec; hints)
+  open import Grades.Examples.Time.UpperBound using ([0,_]; ↑_)
+  open import PolymorphicCalculus.Examples.Specs using (module Time-UpperBound)
+  open Time-UpperBound using (spec; hints)
   open LanguageSpec spec using (Grades)
   open GradeSystemInterface Grades using (⊤ᵣ; ⊤ₑ)
 
@@ -226,8 +226,8 @@ module Deadline where
 
 module Sequence where
 
-  open import PolymorphicCalculus.Examples.Specs using (module Traces-Timed-RightSided)
-  open Traces-Timed-RightSided using (spec; hints)
+  open import PolymorphicCalculus.Examples.Specs using (module Traces-Banked-UpperBound)
+  open Traces-Banked-UpperBound using (spec; hints)
 
   open import PolymorphicCalculus.Syntax.Grades               spec
   open import PolymorphicCalculus.Hypotheses                  spec using (hyps)
@@ -255,20 +255,20 @@ module Sequence where
   crossed-in-order-swapped = refl
 
 ------------------------------------------------------------------
--- Left-sided intervals with a top: `·` commutative, the unit not
+-- Lower bounds with a top: `·` commutative, the unit not
 -- least, the top not the unit
 
 module WithTop where
 
-  open import Grades.Examples.Time.LeftSided
-    using (untimed; timed_; [_,+∞⟩; left-sided-intervals-with-⊤; left-sided-intervals-with-⊤ʰ;
-           left-sided-witnesses-with-⊤)
+  open import Grades.Examples.Time.LowerBound
+    using (untimed; timed_; [_,+∞⟩; lower-bounds-with-⊤; lower-bounds-with-⊤ʰ;
+           lower-bound-witnesses-with-⊤)
   open import Grades.Examples.System.Identity using (identityʰ)
   open import Language.Examples.SensorNode.Identity
-    left-sided-intervals-with-⊤ (λ _ → timed [ 1 ,+∞⟩) using (spec)
+    lower-bounds-with-⊤ (λ _ → timed [ 1 ,+∞⟩) using (spec)
 
   hints : SystemHints (LanguageSpec.Grades spec)
-  hints = identityʰ left-sided-intervals-with-⊤ʰ left-sided-witnesses-with-⊤
+  hints = identityʰ lower-bounds-with-⊤ʰ lower-bound-witnesses-with-⊤
 
   open import PolymorphicCalculus.Syntax.Grades               spec
   open import PolymorphicCalculus.Hypotheses                  spec using (hyps; ∅ᴴ)
@@ -396,9 +396,9 @@ module Cycle (S : LanguageSpec) (hints : SystemHints (LanguageSpec.Grades S))
   blocked-without : 𝔹
   blocked-without = blocked (suc zero) Rm ∧ blocked (suc (suc zero)) Rt
 
-module Cycle-RightSided where
-  open import PolymorphicCalculus.Examples.Specs using (module Time-RightSided)
-  open Cycle Time-RightSided.spec Time-RightSided.hints Time-RightSided.enum
+module Cycle-UpperBound where
+  open import PolymorphicCalculus.Examples.Specs using (module Time-UpperBound)
+  open Cycle Time-UpperBound.spec Time-UpperBound.hints Time-UpperBound.enum
 
   with-collapse-closes : with-collapse ≡ true
   with-collapse-closes = refl
@@ -409,12 +409,12 @@ module Cycle-RightSided where
   without-collapse-blocked : blocked-without ≡ true
   without-collapse-blocked = refl
 
--- At left-sided time the self-referential bounds hold everywhere, so
+-- At lower bounds on time the self-referential bounds hold everywhere, so
 -- `t` and `m` are lowered; the close is stuck all the same
 
-module Cycle-LeftSided where
-  open import PolymorphicCalculus.Examples.Specs using (module Time-LeftSided)
-  open Cycle Time-LeftSided.spec Time-LeftSided.hints Time-LeftSided.enum
+module Cycle-LowerBound where
+  open import PolymorphicCalculus.Examples.Specs using (module Time-LowerBound)
+  open Cycle Time-LowerBound.spec Time-LowerBound.hints Time-LowerBound.enum
 
   with-collapse-closes : with-collapse ≡ true
   with-collapse-closes = refl
@@ -426,15 +426,15 @@ module Cycle-LeftSided where
   without-collapse-unblocked = refl
 
 ------------------------------------------------------------------
--- `retry`: at left-sided time `∀ j. 3 ≾ 3 · j` holds at the unit (also
--- the top) but fails at the candidate `j = 1` (`left-sided-witnesses`);
+-- `retry`: at lower bounds on time `∀ j. 3 ≾ 3 · j` holds at the unit (also
+-- the top) but fails at the candidate `j = 1` (`lower-bound-witnesses`);
 -- the unit and the top alone leave it undecided.
 
 module Witness where
 
-  open import Grades.Examples.Time.LeftSided using (𝕀; [_,+∞⟩)
-  open import PolymorphicCalculus.Examples.Specs using (module Time-LeftSided)
-  open Time-LeftSided using (spec; hints; enum)
+  open import Grades.Examples.Time.LowerBound using (𝕀; [_,+∞⟩)
+  open import PolymorphicCalculus.Examples.Specs using (module Time-LowerBound)
+  open Time-LowerBound using (spec; hints; enum)
   open LanguageSpec spec using (Grades)
   open GradeSystemInterface Grades using (𝟏ₑ; ⊤ₑ)
 
@@ -504,13 +504,13 @@ module Lowering where
     value : List (EExp Θ × EExp Θ) → Maybe (EExp Θ)
     value l = mapᴹ proj₁ (stepᵉ zero (resid [] l [] [] [] []))
 
-  -- right-sided intervals: the closure of a non-zero bound is the top
+  -- upper bounds: the closure of a non-zero bound is the top
 
-  module RightSided where
+  module UpperBound where
 
-    open import Grades.Examples.Time.RightSided using ([0,_]; ↑_; ∞)
-    open import PolymorphicCalculus.Examples.Specs using (module Time-RightSided)
-    open Time-RightSided using (spec; hints)
+    open import Grades.Examples.Time.UpperBound using ([0,_]; ↑_; ∞)
+    open import PolymorphicCalculus.Examples.Specs using (module Time-UpperBound)
+    open Time-UpperBound using (spec; hints)
 
     open import PolymorphicCalculus.Syntax.Grades               spec
     open import PolymorphicCalculus.Hypotheses                  spec using (hyps)
@@ -574,20 +574,20 @@ module Lowering where
               ≡ just (⌜ 1 ⌝ ⊔̂ₑ ∞̂ ·̂ₑ ⌜ 1 ⌝)
     mixed = refl
 
-  -- two-sided intervals: the closure keeps the lower endpoint
+  -- intervals: the closure keeps the lower endpoint
 
-  module TwoSided where
+  module Interval where
 
-    open import Grades.Examples.Time.TwoSidedWithInfinity
-      using (↑_; ∞; two-sided-intervals-with-∞; two-sided-intervals-with-∞ʰ)
+    open import Grades.Examples.Time.Interval
+      using (↑_; ∞; intervals; intervalsʰ)
       renaming ([_,_] to ⌈_,_⌉)
-    open Grading.Time-TwoSided using (opTime)
+    open Grading.Time-Interval using (opTime)
     open import Grades.Examples.System.Identity using (identityʰ; noWitnesses)
     open import Language.Examples.SensorNode.Identity
-      two-sided-intervals-with-∞ opTime using (spec)
+      intervals opTime using (spec)
 
     hints : SystemHints (LanguageSpec.Grades spec)
-    hints = identityʰ two-sided-intervals-with-∞ʰ noWitnesses
+    hints = identityʰ intervalsʰ noWitnesses
 
     open import PolymorphicCalculus.Syntax.Grades               spec
     open import PolymorphicCalculus.Hypotheses                  spec using (hyps)

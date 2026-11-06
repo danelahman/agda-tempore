@@ -16,8 +16,8 @@
 --                rejected where `keep` requires an eternal type      --
 --                                                                    --
 -- How to read them                                                   --
---   The modules under `Programs/` check each program at right-sided  --
---   and left-sided intervals with `refl`, against the list of its    --
+--   The modules under `Programs/` check each program at upper-bound  --
+--   and lower bounds with `refl`, against the list of its            --
 --   schemes or the position of the definition it is rejected at:     --
 --     keep-late-rejected : rejectedAt (checkProgram keep-late)       --
 --                            ≡ just 1                                --

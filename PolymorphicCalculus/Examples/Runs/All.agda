@@ -12,5 +12,5 @@ module PolymorphicCalculus.Examples.Runs.All where
 
 import PolymorphicCalculus.Examples.Runs
 
-import PolymorphicCalculus.Examples.Runs.Time.RightSided
-import PolymorphicCalculus.Examples.Runs.Time.LeftSided
+import PolymorphicCalculus.Examples.Runs.Time.UpperBound
+import PolymorphicCalculus.Examples.Runs.Time.LowerBound

@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- The context modality at two-sided time                             --
+-- The context modality at intervals of time                          --
 --                                                                    --
 -- The example                                                        --
 --   `ρ = [1,2]`, which is not above the unit `[0,0]`, with           --
@@ -19,16 +19,16 @@ open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable using (toWitness; toWitnessFalse)
 
 open import Grades.Base
-open import Grades.Examples.Time.TwoSidedWithInfinity
+open import Grades.Examples.Time.Interval
 open import Grades.Examples.System.Identity using (identityGradeSystem)
 open import Language.BaseTypes using (noBaseTypes)
 open import Language.Spec
 import Language.Operations as Ops
 
-module MonomorphicCalculus.Examples.ContextModality.TwoSided where
+module MonomorphicCalculus.Examples.ContextModality.Interval where
 
 G : GradeSystem
-G = identityGradeSystem two-sided-intervals-with-∞
+G = identityGradeSystem intervals
 
 ops : Ops.Operations G noBaseTypes
 ops = record

@@ -12,5 +12,5 @@ module PolymorphicCalculus.Examples.Data.All where
 
 import PolymorphicCalculus.Examples.Data
 
-import PolymorphicCalculus.Examples.Data.Time.RightSided
-import PolymorphicCalculus.Examples.Data.Time.LeftSided
+import PolymorphicCalculus.Examples.Data.Time.UpperBound
+import PolymorphicCalculus.Examples.Data.Time.LowerBound

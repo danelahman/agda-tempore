@@ -207,7 +207,7 @@ expected-relay-boxed = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((unit ⇒ α₀ ! ε₀) ⇒ un
 --   discard m = handle m () with handler {op p k ↦ return ()}
 --
 -- Needs `𝟏̂ₑ ≾ op · j` for every value of the clause's grade variable
--- `j`: typable where the unit is least, refuted at the left-sided
+-- `j`: typable where the unit is least, refuted at the lower-bound
 -- grades.
 
 discard : RawC ∅ˢ 0
@@ -231,7 +231,7 @@ expected-discard = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((unit ⇒ α₀ ! ε₀) ⇒ unit !
 --     op p k ↦ let a = op p in let k' = unbox k in (k' a ; k' a)}
 --
 -- Needs `op · (j · j) ≾ op · j` and, for the second call, `∣ j ∣ ≾ 𝟏ᵣ`:
--- typable where the unit is the top, refuted at the right-sided grades.
+-- typable where the unit is the top, refuted at the upper-bound grades.
 
 resume-twice-clause : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc n))
 resume-twice-clause op =
