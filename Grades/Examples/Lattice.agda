@@ -13,7 +13,7 @@
 -- and `[ ℓ ] A` can be unboxed only while the label raised since     --
 -- boxing is `≾ ℓ`: a `Low`-boxed public channel is unusable once     --
 -- `High` data has been touched, so there is no write-down after      --
--- read-up. A variable that is not eternal requires the modalities to --
+-- read-up. A variable that is noneternal requires the modalities to  --
 -- its right to be `≾` the unit, and goes stale after any `High`      --
 -- activity.                                                          --
 --                                                                    --
@@ -171,8 +171,8 @@ _∨ₗₕ_ : LowHigh → LowHigh → LowHigh
 Low  ∨ₗₕ ℓ = ℓ
 High ∨ₗₕ _ = High
 
-low-high : LevelLattice
-low-high = record
+low-high-lattice : LevelLattice
+low-high-lattice = record
   { Carrier      = LowHigh
   ; _⊑_          = _⊑ₗₕ_
   ; bot          = Low
@@ -193,11 +193,11 @@ low-high = record
   ; ∨-lub        = λ { Low⊑ q → q ; High⊑ _ → High⊑ }
   }
 
-two-point-levels : {D : Duration} → Grade D
-two-point-levels = level-grade low-high
+low-high : {D : Duration} → Grade D
+low-high = level-grade low-high-lattice
 
-two-point-levelsʰ : {D : Duration} → GradeHints (two-point-levels {D})
-two-point-levelsʰ = level-gradeʰ low-high
+low-highʰ : {D : Duration} → GradeHints (low-high {D})
+low-highʰ = level-gradeʰ low-high-lattice
 
 ------------------------------------------------------------------------
 -- Powers: `n`-tuples of levels, ordered and joined pointwise
@@ -294,7 +294,7 @@ TaintSet : ℕ → Set
 TaintSet n = Vec LowHigh n
 
 taint-lattice : ℕ → LevelLattice
-taint-lattice = Power.power low-high
+taint-lattice = Power.power low-high-lattice
 
 taint-sets : {D : Duration} → ℕ → Grade D
 taint-sets n = level-grade (taint-lattice n)
@@ -314,7 +314,7 @@ label (suc i) = Low ∷ label i
 infixl 6 _∪ᵗ_
 
 _∪ᵗ_ : ∀ {n} → TaintSet n → TaintSet n → TaintSet n
-_∪ᵗ_ = Power._∨ⱽ_ low-high
+_∪ᵗ_ = Power._∨ⱽ_ low-high-lattice
 
 
 ------------------------------------------------------------------------

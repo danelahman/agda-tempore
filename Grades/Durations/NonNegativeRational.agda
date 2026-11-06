@@ -21,7 +21,8 @@ open import Relation.Nullary.Decidable.Core using (fromWitness)
 
 open import Util.Equality
 
--- Dense time: a duration is a non-negative rational number of time units
+-- Rational time: a duration is a non-negative rational number of time
+-- units
 
 ℚ≥0ᴰ : Duration
 ℚ≥0ᴰ = record

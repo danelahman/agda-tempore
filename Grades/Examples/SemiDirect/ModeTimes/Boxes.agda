@@ -45,7 +45,7 @@ open import Util.Equality
 open Maps ℕ-names using (Map; _∣_; _!_; others; named; lookup; everywhere; map₂; !-map₂;
                          pointwise⁻; pointwise⁺)
 
-module B = Grades.Matrix.Boxes ℕ-names intervals
+module B = Grades.Matrix.Boxes ℕ-names interval
 open B public using (Box; boxes; equivariant-boxes; rename; rename-!; orbit; orbit-∈; orbit-∉)
 
 ------------------------------------------------------------------------
@@ -247,7 +247,7 @@ RealisableEntry nothing        = 𝟙ᵗ
 RealisableEntry (just (m , t)) = Realisable m t
 
 private
-  open Grade intervals using () renaming (_≾_ to _≾ⁱ_)
+  open Grade interval using () renaming (_≾_ to _≾ⁱ_)
 
   up-just : ∀ {m t m' t'} → just (m , t) ≤ᵇ just (m' , t') → Realisable m t → Realisable m' t'
   up-just {m} {t} {m'} {t'} (p , q) (w , fit , tot) =

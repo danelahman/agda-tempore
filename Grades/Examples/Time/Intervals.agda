@@ -10,7 +10,7 @@
 -- The laws hold over any time domain. In a dense one the order is    --
 -- containment of the durations admitted and sequencing their         --
 -- Minkowski sum (`Durations.Intervals.Dense`); that is the grade of  --
--- rational time, `Example.Time.Rational.Interval`.                   --
+-- rational time, `Time.Rational.Interval`.                           --
 ------------------------------------------------------------------------
 
 open import Grades.Durations
@@ -38,8 +38,8 @@ plusⁱ i = plus (i⁺ i)
   (λ { (p , q) → p , plusʰ-indˡ {hi i} q })
   (λ { (p , q) → p , plusʰ-indʳ {hi i} q })
 
-intervals : Grade D
-intervals = posetᵍ record
+domain-interval : Grade D
+domain-interval = posetᵍ record
   { Carrier         = Interval
   ; _·_             = _⊕_
   ; 𝟏               = 0ⁱ
@@ -71,9 +71,9 @@ intervals = posetᵍ record
 
 -- its hints
 
-intervalsʰ : GradeHints intervals
-intervalsʰ = record
+domain-intervalʰ : GradeHints domain-interval
+domain-intervalʰ = record
   { 𝟏-least? = nothing
-  ; ·-comm?  = just (comm-≡ intervals ⊕-comm)
+  ; ·-comm?  = just (comm-≡ domain-interval ⊕-comm)
   ; plus?    = λ i → just (plusⁱ i)
   }

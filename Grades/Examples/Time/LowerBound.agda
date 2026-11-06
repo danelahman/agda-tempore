@@ -31,7 +31,7 @@ open import Grades.Hints using (GradeHints; comm-≡)
 
 open import Util.Equality
 
--- type of (left) one-sided intervals
+-- type of time lower bounds
 
 data 𝕀 : Set where
   [_,+∞⟩ : ℕ → 𝕀
@@ -167,15 +167,15 @@ infixl 7 _⊔ₒ_
 ·ₒ-distribʳ-⊔ₒ [ m ,+∞⟩ [ n ,+∞⟩ [ o ,+∞⟩ =
   ≤-reflexive (sym (+-distribʳ-⊓ m n o))
 
--- the grade of one-sided intervals
+-- the grade algebra of time lower bounds
 
 -- every grade absorbs its own iteration, and is its own closure
 
 ·ₒ-iter : (i : 𝕀) → i ·ₒ i ≾ₒ i
 ·ₒ-iter [ m ,+∞⟩ = m≤m+n m m
 
-lower-bounds : Grade ℕᴰ
-lower-bounds = posetᵍ record
+lower-bound : Grade ℕᴰ
+lower-bound = posetᵍ record
   { Carrier          = 𝕀
   ; _·_               = _·ₒ_
   ; 𝟏                 = 𝟏ₒ
@@ -207,10 +207,10 @@ lower-bounds = posetᵍ record
 
 -- its hints
 
-lower-boundsʰ : GradeHints lower-bounds
-lower-boundsʰ = record
+lower-boundʰ : GradeHints lower-bound
+lower-boundʰ = record
   { 𝟏-least? = nothing
-  ; ·-comm?  = just (comm-≡ lower-bounds ·ₒ-comm)
+  ; ·-comm?  = just (comm-≡ lower-bound ·ₒ-comm)
   ; plus?    = λ i → just (plus-self (≾ₒ-refl {i}) (·ₒ-iter i))
   }
 
@@ -399,7 +399,7 @@ infixl 7 _⊔ᵗ_
 ·ᵗ-distribʳ-⊔ᵗ untimed   (timed _) untimed   = tt
 ·ᵗ-distribʳ-⊔ᵗ _         untimed   _         = tt
 
--- the grade of one-sided intervals with a formal greatest grade
+-- the grade algebra of time lower bounds with a formal greatest grade
 
 -- every grade absorbs its own iteration, and is its own closure
 
@@ -407,8 +407,8 @@ infixl 7 _⊔ᵗ_
 ·ᵗ-iter (timed i) = ·ₒ-iter i
 ·ᵗ-iter untimed   = tt
 
-lower-bounds-with-⊤ : Grade ℕᴰ
-lower-bounds-with-⊤ = posetᵍ record
+lower-bound-with-⊤ : Grade ℕᴰ
+lower-bound-with-⊤ = posetᵍ record
   { Carrier           = 𝕀⊤
   ; _·_               = _·ᵗ_
   ; 𝟏                 = 𝟏ᵗ
@@ -440,10 +440,10 @@ lower-bounds-with-⊤ = posetᵍ record
 
 -- its hints
 
-lower-bounds-with-⊤ʰ : GradeHints lower-bounds-with-⊤
-lower-bounds-with-⊤ʰ = record
+lower-bound-with-⊤ʰ : GradeHints lower-bound-with-⊤
+lower-bound-with-⊤ʰ = record
   { 𝟏-least? = nothing
-  ; ·-comm?  = just (comm-≡ lower-bounds-with-⊤ ·ᵗ-comm)
+  ; ·-comm?  = just (comm-≡ lower-bound-with-⊤ ·ᵗ-comm)
   ; plus?    = λ i → just (plus-self (≾ᵗ-refl {i}) (·ᵗ-iter i))
   }
 

@@ -8,9 +8,9 @@
 -- `[0, ∞ ]` imposes no deadline and is absorbing. A delay by `q` has --
 -- grade `[0, ↑ q ]`.                                                 --
 --                                                                    --
--- The discrete intervals of `Time.UpperBound` embed along the        --
--- inclusion of durations, a deadline of `n` time steps being read as --
--- one of `n` units of dense time.                                    --
+-- The upper bounds in whole steps of `Time.UpperBound` embed along   --
+-- the inclusion of durations, a deadline of `n` time steps being     --
+-- read as one of `n` units of rational time.                         --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Time.Rational.UpperBound where
@@ -39,7 +39,7 @@ open import Grades.Examples.Time.Rational.ExtendedRational public
 
 import Grades.Examples.Time.UpperBound as Discrete
 
--- type of one-sided intervals
+-- type of time upper bounds
 
 data 𝕀ᵣ : Set where
   [0,_] : ℚ∞ → 𝕀ᵣ
@@ -173,7 +173,7 @@ infixl 7 _⊔ₒ_
 ·ₒ-distribʳ-⊔ₒ : (i₁ i₂ i₃ : 𝕀ᵣ) → (i₂ ⊔ₒ i₃) ·ₒ i₁ ≾ₒ (i₂ ·ₒ i₁) ⊔ₒ (i₃ ·ₒ i₁)
 ·ₒ-distribʳ-⊔ₒ [0, a ] [0, b ] [0, c ] = ≤∞-reflexive (+∞-distribʳ-⊔∞ a b c)
 
--- the grade of (right) one-sided intervals of dense time
+-- the grade algebra of upper bounds on rational time
 
 -- the closure: no time absorbs its own iteration, and of the other
 -- bounds only the absent one does
@@ -191,8 +191,8 @@ plusₒ [0, a ] = plus [0, plus∞ a ] (≤∞-plus∞ a) (plus∞-iter a) (λ {
     indʳ : ∀ d → d ·ₒ [0, a ] ≾ₒ d → d ·ₒ [0, plus∞ a ] ≾ₒ d
     indʳ [0, b ] = plus∞-indʳ
 
-rational-upper-bounds : Grade ℚ≥0ᴰ
-rational-upper-bounds = posetᵍ record
+rational-upper-bound : Grade ℚ≥0ᴰ
+rational-upper-bound = posetᵍ record
   { Carrier           = 𝕀ᵣ
   ; _·_               = _·ₒ_
   ; 𝟏                 = 𝟏ₒ
@@ -224,18 +224,18 @@ rational-upper-bounds = posetᵍ record
 
 -- its hints
 
-rational-upper-boundsʰ : GradeHints rational-upper-bounds
-rational-upper-boundsʰ = record
+rational-upper-boundʰ : GradeHints rational-upper-bound
+rational-upper-boundʰ = record
   { 𝟏-least? = just 𝟏ₒ-least
-  ; ·-comm?  = just (comm-≡ rational-upper-bounds ·ₒ-comm)
+  ; ·-comm?  = just (comm-≡ rational-upper-bound ·ₒ-comm)
   ; plus?    = λ i → just (plusₒ i)
   }
 
 ------------------------------------------------------------------------
--- The discrete intervals embed
+-- The upper bounds in whole steps embed
 
-upper-bound→rational : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.upper-bounds
-                                         rational-upper-bounds
+upper-bound→rational : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.upper-bound
+                                         rational-upper-bound
 upper-bound→rational = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}

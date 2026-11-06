@@ -133,8 +133,8 @@ plusᵘ x = plus
 ------------------------------------------------------------------------
 -- The grade
 
-rational-upper-bound-cuts : Grade ℚ≥0ᴰ
-rational-upper-bound-cuts = posetᵍ record
+rational-upper-bound-cut : Grade ℚ≥0ᴰ
+rational-upper-bound-cut = posetᵍ record
   { Carrier         = Upper
   ; _·_             = _·ᵘ_
   ; 𝟏               = 𝟏ᵘ
@@ -169,18 +169,18 @@ rational-upper-bound-cuts = posetᵍ record
 
 -- its hints
 
-rational-upper-bound-cutsʰ : GradeHints rational-upper-bound-cuts
-rational-upper-bound-cutsʰ = record
+rational-upper-bound-cutʰ : GradeHints rational-upper-bound-cut
+rational-upper-bound-cutʰ = record
   { 𝟏-least? = just admits0
-  ; ·-comm?  = just (comm-≡ rational-upper-bound-cuts (λ x y → eqᵘ (+ʰ-comm (bound x) (bound y))))
+  ; ·-comm?  = just (comm-≡ rational-upper-bound-cut (λ x y → eqᵘ (+ʰ-comm (bound x) (bound y))))
   ; plus?    = λ x → just (plusᵘ x)
   }
 
 ------------------------------------------------------------------------
 -- The closed bounds are a sub-grade
 
-closed→cut : GradeMorphism idᴰ Closed.rational-upper-bounds
-                               rational-upper-bound-cuts
+closed→cut : GradeMorphism idᴰ Closed.rational-upper-bound
+                               rational-upper-bound-cut
 closed→cut = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}
@@ -206,8 +206,8 @@ closed→cut = strictᵍ record
 ------------------------------------------------------------------------
 -- The intervals map onto their upper ends
 
-interval→cut : GradeMorphism idᴰ IntervalGrade.rational-intervals
-                                  rational-upper-bound-cuts
+interval→cut : GradeMorphism idᴰ IntervalGrade.rational-interval
+                                  rational-upper-bound-cut
 interval→cut = strictᵍ record
   { map          = embed
   ; map-monotone = proj₂
@@ -224,8 +224,8 @@ interval→cut = strictᵍ record
 ------------------------------------------------------------------------
 -- The discrete bounds embed
 
-upper-bound→rational-cut : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.upper-bounds
-                                             rational-upper-bound-cuts
+upper-bound→rational-cut : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.upper-bound
+                                             rational-upper-bound-cut
 upper-bound→rational-cut = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}

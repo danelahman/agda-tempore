@@ -27,9 +27,9 @@ open import Grades.Base using (Grade)
 open import Grades.Hints using (GradeHints)
 
 open import Grades.Examples.Time.UpperBound
-  using (upper-bounds; upper-boundsʰ; 𝕀ᵣ; [0,_]; ↑_; ∞)
+  using (upper-bound; upper-boundʰ; 𝕀ᵣ; [0,_]; ↑_; ∞)
 
-open import Grades.Examples.Counts.Power upper-bounds public
+open import Grades.Examples.Counts.Power upper-bound public
 
 -- the grade over `n` counters
 
@@ -37,7 +37,7 @@ at-most-counts : ℕ → Grade ℕᴰ
 at-most-counts = power
 
 at-most-countsʰ : (n : ℕ) → GradeHints (at-most-counts n)
-at-most-countsʰ = powerʰ upper-boundsʰ
+at-most-countsʰ = powerʰ upper-boundʰ
 
 -- one coordinate
 

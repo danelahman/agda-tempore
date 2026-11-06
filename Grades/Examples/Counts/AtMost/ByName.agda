@@ -29,9 +29,9 @@ open import Grades.Indexed using (ℕ-names; module Maps)
 open import Grades.Hints using (GradeHints)
 open Maps ℕ-names using (indexedᵍ; indexedʰ; Map; _∣_; _!_; !-map₂; pointwise⁻)
 
-open import Grades.Examples.Time.UpperBound using (upper-bounds; upper-boundsʰ; 𝕀ᵣ)
+open import Grades.Examples.Time.UpperBound using (upper-bound; upper-boundʰ; 𝕀ᵣ)
 open import Grades.Examples.Counts.AtMost using (at-most-counts)
-import Grades.Examples.Counts.Power upper-bounds as P
+import Grades.Examples.Counts.Power upper-bound as P
 
 open import Util.Equality
 
@@ -54,15 +54,15 @@ untimedʰ H = record { 𝟏-least? = H.𝟏-least? ; ·-comm? = H.·-comm? ; plu
 -- The grade
 
 at-most-counts-by-name : Grade ℕᴰ
-at-most-counts-by-name = indexedᵍ (untimed upper-bounds)
+at-most-counts-by-name = indexedᵍ (untimed upper-bound)
 
 at-most-counts-by-nameʰ : GradeHints at-most-counts-by-name
-at-most-counts-by-nameʰ = indexedʰ (untimed upper-bounds) (untimedʰ upper-boundsʰ)
+at-most-counts-by-nameʰ = indexedʰ (untimed upper-bound) (untimedʰ upper-boundʰ)
 
 -- "at most `k` of the operation `s`", none of the others
 
 upto : ℕ → 𝕀ᵣ → Map 𝕀ᵣ
-upto s k = Grade.𝟏 upper-bounds ∣ ((s , k) ∷ [])
+upto s k = Grade.𝟏 upper-bound ∣ ((s , k) ∷ [])
 
 ------------------------------------------------------------------------
 -- Restriction to the first `n` names
@@ -70,7 +70,7 @@ upto s k = Grade.𝟏 upper-bounds ∣ ((s , k) ∷ [])
 module _ (n : ℕ) where
 
   private
-    open Grade upper-bounds
+    open Grade upper-bound
       using () renaming (_·_ to _·ᴳ_; _⊔_ to _⊔ᴳ_; _≾_ to _≾ᴳ_)
     open Grade (at-most-counts n) using () renaming (_≃_ to _≃ᵛ_)
 

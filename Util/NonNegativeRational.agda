@@ -9,8 +9,8 @@
 -- by computation.                                                    --
 --                                                                    --
 -- `#_` embeds ℕ as a monotone monoid morphism that preserves both    --
--- lattice operations, reading whole numbers of time steps in dense   --
--- time.                                                              --
+-- lattice operations, reading whole numbers of time steps in         --
+-- rational time.                                                     --
 ------------------------------------------------------------------------
 
 module Util.NonNegativeRational where

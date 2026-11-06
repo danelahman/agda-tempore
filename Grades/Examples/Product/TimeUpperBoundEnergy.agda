@@ -11,7 +11,7 @@
 -- most `e` units". As a resource grade, a value boxed at it can be   --
 -- unboxed only while at most `n` steps have passed and at most `e`   --
 -- units have been spent since boxing, as for a calibration that      --
--- drifts with time and with use. A variable that is not eternal goes --
+-- drifts with time and with use. A variable that is noneternal goes  --
 -- stale after any step or any expenditure of energy.                 --
 --                                                                    --
 -- The unit is least and `_·_` commutes; its hints declare both.      --
@@ -24,7 +24,7 @@ open import Grades.Base using (posetᵍ; Grade)
 open import Grades.Hints using (GradeHints)
 open import Grades.Product using (_×ᵍ_; _×ʰ_)
 open import Grades.Examples.Time.UpperBound
-  using ([0,_]; ↑_; upper-bounds; upper-boundsʰ)
+  using ([0,_]; ↑_; upper-bound; upper-boundʰ)
 
 open import Util.Equality
 
@@ -59,16 +59,16 @@ energy = record
   ; ι-zero          = R.≃-refl
   ; ι-plus          = R.≃-refl
   }
-  where module R = Grade upper-bounds
+  where module R = Grade upper-bound
 
 -- its hints, those of upper bounds on time
 
 energyʰ : GradeHints energy
 energyʰ = record { 𝟏-least? = R.𝟏-least? ; ·-comm? = R.·-comm? ; plus? = R.plus? }
-  where module R = GradeHints upper-boundsʰ
+  where module R = GradeHints upper-boundʰ
 
 time-upper-bound×energy : Grade ℕᴰ
-time-upper-bound×energy = upper-bounds ×ᵍ energy
+time-upper-bound×energy = upper-bound ×ᵍ energy
 
 time-upper-bound×energyʰ : GradeHints time-upper-bound×energy
-time-upper-bound×energyʰ = upper-boundsʰ ×ʰ energyʰ
+time-upper-bound×energyʰ = upper-boundʰ ×ʰ energyʰ

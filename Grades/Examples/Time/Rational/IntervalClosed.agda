@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Closed intervals of dense time, with a possibly infinite           --
+-- Closed intervals of rational time, with a possibly infinite        --
 -- right-hand endpoint, as grades.                                    --
 --                                                                    --
 -- A grade `[ min , max ]` bounds the elapsed time from both sides,   --
@@ -10,9 +10,9 @@
 --                                                                    --
 -- These are the intervals of `Time.Rational.Interval` whose ends are --
 -- closed, and they embed there by a grade morphism. The discrete     --
--- windows of `Time.Interval` embed here along the                    --
--- inclusion of durations, a window of time steps being read as the   --
--- same window of dense time.                                         --
+-- windows of `Time.Interval` embed here along the inclusion of       --
+-- durations, a window of time steps being read as the same window of --
+-- rational time.                                                     --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Time.Rational.IntervalClosed where
@@ -239,7 +239,7 @@ infixl 7 _⊔ᵢ_
     ≤-reflexive (sym (+-distribʳ-⊓ (min i₁) (min i₂) (min i₃)))
   , ≤∞-reflexive (+∞-distribʳ-⊔∞ (max i₁) (max i₂) (max i₃))
 
--- the grade of closed intervals of dense time
+-- the grade of closed intervals of rational time
 
 -- the closure: the same lower bound, and an upper bound that only no
 -- time or the absent bound absorbs
@@ -254,8 +254,8 @@ plusᵢ i = plus i⁺ (≤-refl , ≤∞-plus∞ (max i))
     i⁺ = [ min i , plus∞ (max i) ]
            {fromWitness (≤∞-trans {↑ min i} {max i} (min≤max i) (≤∞-plus∞ (max i)))}
 
-rational-closed-intervals : Grade ℚ≥0ᴰ
-rational-closed-intervals = posetᵍ record
+rational-closed-interval : Grade ℚ≥0ᴰ
+rational-closed-interval = posetᵍ record
   { Carrier = Interval∞
   ; _·_              = _·ᵢ_
   ; 𝟏                = 𝟏ᵢ
@@ -292,18 +292,18 @@ rational-closed-intervals = posetᵍ record
 
 -- its hints
 
-rational-closed-intervalsʰ : GradeHints rational-closed-intervals
-rational-closed-intervalsʰ = record
+rational-closed-intervalʰ : GradeHints rational-closed-interval
+rational-closed-intervalʰ = record
   { 𝟏-least? = nothing
-  ; ·-comm?  = just (comm-≡ rational-closed-intervals ·ᵢ-comm)
+  ; ·-comm?  = just (comm-≡ rational-closed-interval ·ᵢ-comm)
   ; plus?    = λ i → just (plusᵢ i)
   }
 
 ------------------------------------------------------------------------
--- The discrete windows embed
+-- The time intervals in whole steps embed
 
-interval→rational-closed : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.intervals
-                                     rational-closed-intervals
+interval→rational-closed : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.interval
+                                     rational-closed-interval
 interval→rational-closed = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}

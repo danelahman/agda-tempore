@@ -22,22 +22,22 @@ open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
 open import Grades.Hints using (GradeHints)
 open import Grades.Product using (_×ᵍ_; _×ʰ_)
-open import Grades.Examples.Time.LowerBound using (lower-bounds; lower-boundsʰ)
+open import Grades.Examples.Time.LowerBound using (lower-bound; lower-boundʰ)
 open import Grades.Examples.Lattice
-  using (LevelLattice; level-grade; level-gradeʰ; low-high)
+  using (LevelLattice; level-grade; level-gradeʰ; low-high-lattice)
 
 -- lower bounds on time and a lattice of levels
 
 time-lower-bound×lattice : LevelLattice → Grade ℕᴰ
-time-lower-bound×lattice L = lower-bounds ×ᵍ level-grade L
+time-lower-bound×lattice L = lower-bound ×ᵍ level-grade L
 
 time-lower-bound×latticeʰ : (L : LevelLattice) → GradeHints (time-lower-bound×lattice L)
-time-lower-bound×latticeʰ L = lower-boundsʰ ×ʰ level-gradeʰ L
+time-lower-bound×latticeʰ L = lower-boundʰ ×ʰ level-gradeʰ L
 
 -- at the two-point lattice
 
 time-lower-bound×low-high : Grade ℕᴰ
-time-lower-bound×low-high = time-lower-bound×lattice low-high
+time-lower-bound×low-high = time-lower-bound×lattice low-high-lattice
 
 time-lower-bound×low-highʰ : GradeHints time-lower-bound×low-high
-time-lower-bound×low-highʰ = time-lower-bound×latticeʰ low-high
+time-lower-bound×low-highʰ = time-lower-bound×latticeʰ low-high-lattice

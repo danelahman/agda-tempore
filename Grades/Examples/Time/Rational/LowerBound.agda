@@ -7,9 +7,9 @@
 -- the weaker grade. A delay by `q` has grade `[ q ,+∞⟩`, so a delay  --
 -- of half a unit has grade `[ 1 / 2 ,+∞⟩`.                           --
 --                                                                    --
--- The discrete intervals of `Time.LowerBound` embed along the        --
--- inclusion of durations, a bound of `n` time steps being read as    --
--- `n` units of dense time.                                           --
+-- The lower bounds in whole steps of `Time.LowerBound` embed along   --
+-- the inclusion of durations, a bound of `n` time steps being read   --
+-- as `n` units of rational time.                                     --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Time.Rational.LowerBound where
@@ -40,7 +40,7 @@ open import Util.NonNegativeRational public
 
 import Grades.Examples.Time.LowerBound as Discrete
 
--- type of (left) one-sided intervals
+-- type of time lower bounds
 
 data 𝕀 : Set where
   [_,+∞⟩ : ℚ≥0 → 𝕀
@@ -172,15 +172,15 @@ infixl 7 _⊔ₒ_
 ·ₒ-distribʳ-⊔ₒ [ p ,+∞⟩ [ q ,+∞⟩ [ r ,+∞⟩ =
   ≤-reflexive (sym (+-distribʳ-⊓ p q r))
 
--- the grade of one-sided intervals of dense time
+-- the grade algebra of lower bounds on rational time
 
 -- every grade absorbs its own iteration, and is its own closure
 
 ·ₒ-iter : (i : 𝕀) → i ·ₒ i ≾ₒ i
 ·ₒ-iter [ p ,+∞⟩ = p≤p+q p p
 
-rational-lower-bounds : Grade ℚ≥0ᴰ
-rational-lower-bounds = posetᵍ record
+rational-lower-bound : Grade ℚ≥0ᴰ
+rational-lower-bound = posetᵍ record
   { Carrier           = 𝕀
   ; _·_               = _·ₒ_
   ; 𝟏                 = 𝟏ₒ
@@ -212,18 +212,18 @@ rational-lower-bounds = posetᵍ record
 
 -- its hints
 
-rational-lower-boundsʰ : GradeHints rational-lower-bounds
-rational-lower-boundsʰ = record
+rational-lower-boundʰ : GradeHints rational-lower-bound
+rational-lower-boundʰ = record
   { 𝟏-least? = nothing
-  ; ·-comm?  = just (comm-≡ rational-lower-bounds ·ₒ-comm)
+  ; ·-comm?  = just (comm-≡ rational-lower-bound ·ₒ-comm)
   ; plus?    = λ i → just (plus-self (≾ₒ-refl {i}) (·ₒ-iter i))
   }
 
 ------------------------------------------------------------------------
--- The discrete intervals embed
+-- The lower bounds in whole steps embed
 
-lower-bound→rational : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.lower-bounds
-                                       rational-lower-bounds
+lower-bound→rational : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.lower-bound
+                                       rational-lower-bound
 lower-bound→rational = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}

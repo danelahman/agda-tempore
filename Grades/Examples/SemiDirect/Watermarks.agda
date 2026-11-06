@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
--- Watermark grades: the levels a computation reaches of each         --
--- resource it holds, such as the number of open files.               --
+-- Watermark grades: the trough, net change and peak of each resource --
+-- a computation holds, such as the number of open files.             --
 --                                                                    --
 -- A grade of one resource is `(t , [d₁ , d₂] , h)`, relative to the  --
--- level at the start: the trough `t`, the lowest level reached; the  --
--- range `[d₁ , d₂]` of the net change, the level at the end; and the --
--- peak `h`, the highest level reached, with                          --
+-- amount held at the start: the trough `t`, the lowest amount        --
+-- reached; the range `[d₁ , d₂]` of the net change, the amount at    --
+-- the end; and the peak `h`, the highest amount reached, with        --
 --                                                                    --
 --   t ≤ min(0 , d₁)    d₁ ≤ d₂    max(0 , d₂) ≤ h .                  --
 --                                                                    --
@@ -30,9 +30,9 @@
 -- grade below the unit, which gives the zero-product law: from       --
 -- `x · y ≾ 𝟏` the trough and peak of `x` are `0`, its range is       --
 -- `[0 , 0]` by consistency, and so `y ≾ 𝟏`. The unit is not least,   --
--- `_·_` does not commute, and delays change no level. The watermark  --
--- grades are the grade of one resource indexed by the resource names --
--- (`Grades.Indexed`).                                                --
+-- `_·_` does not commute, and delays change no amount held. The      --
+-- watermark grades are the grade of one resource indexed by the      --
+-- resource names (`Grades.Indexed`).                                 --
 ------------------------------------------------------------------------
 
 module Grades.Examples.SemiDirect.Watermarks where
@@ -162,26 +162,26 @@ private
                      (⊔∞-mono (⊔∞-ubʳ (ext s') _) (⊔∞-ubʳ (ext s'') _)))
 
 ------------------------------------------------------------------------
--- The levels of one resource: a lower side, held negated, and an
--- upper side, with consistent net changes
+-- The trough, net change and peak of one resource: a lower side, held
+-- negated, and an upper side, with consistent net changes
 
-record Level : Set where
-  constructor level
+record Watermark : Set where
+  constructor watermark
   field
     lower       : Side
     upper       : Side
     consistent : 0∞ ≤∞ net lower +∞ net upper
 
-open Level public
+open Watermark public
 
 
-infixl 7 _·ᴸ_
-infixl 6 _⊔ᴸ_
-infix  4 _≾ᴸ_
+infixl 7 _·ᵂ_
+infixl 6 _⊔ᵂ_
+infix  4 _≾ᵂ_
 
-_·ᴸ_ : Level → Level → Level
-x ·ᴸ y =
-  level (lower x ·ˢ lower y) (upper x ·ˢ upper y)
+_·ᵂ_ : Watermark → Watermark → Watermark
+x ·ᵂ y =
+  watermark (lower x ·ˢ lower y) (upper x ·ˢ upper y)
         (≤∞-trans (≥-≡ (+∞-identityˡ 0∞))
           (≤∞-trans (+∞-mono (consistent x) (consistent y))
                     (≤-≡ (shuffle (net (lower x)) (net (upper x)) (net (lower y)) (net (upper y))))))
@@ -193,23 +193,23 @@ x ·ᴸ y =
                                (trans (cong (_+∞ d) (+∞-comm b c)) (+∞-assoc c b d))))
                (sym (+∞-assoc a c (b +∞ d))))
 
-𝟏ᴸ : Level
-𝟏ᴸ = level 𝟏ˢ 𝟏ˢ (≤∞-reflexive (sym (+∞-identityˡ 0∞)))
+𝟏ᵂ : Watermark
+𝟏ᵂ = watermark 𝟏ˢ 𝟏ˢ (≤∞-reflexive (sym (+∞-identityˡ 0∞)))
 
-⊤ᴸ : Level
-⊤ᴸ = level ⊤ˢ ⊤ˢ ≤∞-∞
+⊤ᵂ : Watermark
+⊤ᵂ = watermark ⊤ˢ ⊤ˢ ≤∞-∞
 
-_⊔ᴸ_ : Level → Level → Level
-x ⊔ᴸ y =
-  level (lower x ⊔ˢ lower y) (upper x ⊔ˢ upper y)
+_⊔ᵂ_ : Watermark → Watermark → Watermark
+x ⊔ᵂ y =
+  watermark (lower x ⊔ˢ lower y) (upper x ⊔ˢ upper y)
         (≤∞-trans (consistent x)
           (+∞-mono (⊔∞-ubˡ (net (lower x)) _) (⊔∞-ubˡ (net (upper x)) _)))
 
-_≾ᴸ_ : Level → Level → Set
-x ≾ᴸ y = (lower x ≤ˢ lower y) × (upper x ≤ˢ upper y)
+_≾ᵂ_ : Watermark → Watermark → Set
+x ≾ᵂ y = (lower x ≤ˢ lower y) × (upper x ≤ˢ upper y)
 
-_≾ᴸ?_ : ∀ x y → Dec (x ≾ᴸ y)
-x ≾ᴸ? y = side? (lower x) (lower y) ×-dec side? (upper x) (upper y)
+_≾ᵂ?_ : ∀ x y → Dec (x ≾ᵂ y)
+x ≾ᵂ? y = side? (lower x) (lower y) ×-dec side? (upper x) (upper y)
   where
     side? : ∀ s s' → Dec (s ≤ˢ s')
     side? s s' = map′ (λ (p , q) → p , q) (λ (p , q) → p , q)
@@ -241,12 +241,12 @@ private
       h'≤0 : ext s' ≤∞ 0∞
       h'≤0 = +∞-≤0ʳ n (≤∞-trans (⊔∞-ubʳ (ext s) _) e)
 
-zero-productˡ : ∀ {x y} → x ·ᴸ y ≾ᴸ 𝟏ᴸ → x ≾ᴸ 𝟏ᴸ
+zero-productˡ : ∀ {x y} → x ·ᵂ y ≾ᵂ 𝟏ᵂ → x ≾ᵂ 𝟏ᵂ
 zero-productˡ {x} {y} ((_ , el) , (_ , eu)) =
     (net-≤0 (lower x) (ext-≤0 (lower x) (lower y) el) , ext-≤0 (lower x) (lower y) el)
   , (net-≤0 (upper x) (ext-≤0 (upper x) (upper y) eu) , ext-≤0 (upper x) (upper y) eu)
 
-zero-productʳ : ∀ {x y} → x ·ᴸ y ≾ᴸ 𝟏ᴸ → y ≾ᴸ 𝟏ᴸ
+zero-productʳ : ∀ {x y} → x ·ᵂ y ≾ᵂ 𝟏ᵂ → y ≾ᵂ 𝟏ᵂ
 zero-productʳ {x} {y} p@(pl , pu) =
     second-≤𝟏 (lower x) (lower y) (net-≥0 (net (upper x)) (net (lower x)) nu cons′) pl
   , second-≤𝟏 (upper x) (upper y) (net-≥0 (net (lower x)) (net (upper x)) nl (consistent x)) pu
@@ -257,17 +257,18 @@ zero-productʳ {x} {y} p@(pl , pu) =
     cons′ = ≤∞-trans (consistent x) (≤∞-reflexive (+∞-comm (net (lower x)) (net (upper x))))
 
 ------------------------------------------------------------------------
--- The grade of one watermark: the levels of one resource
+-- The grade of one watermark: the trough, net change and peak of one
+-- resource
 
 one-watermark : {D : Duration} → Grade D
 one-watermark = record
-  { Carrier         = Level
-  ; _·_             = _·ᴸ_
-  ; 𝟏               = 𝟏ᴸ
-  ; _≾_             = _≾ᴸ_
-  ; ⊤               = ⊤ᴸ
-  ; _⊔_             = _⊔ᴸ_
-  ; ι               = λ _ → 𝟏ᴸ
+  { Carrier         = Watermark
+  ; _·_             = _·ᵂ_
+  ; 𝟏               = 𝟏ᵂ
+  ; _≾_             = _≾ᵂ_
+  ; ⊤               = ⊤ᵂ
+  ; _⊔_             = _⊔ᵂ_
+  ; ι               = λ _ → 𝟏ᵂ
   ; ·-identityˡ     = λ x → pair (·ˢ-identityˡ (lower x)) (·ˢ-identityˡ (upper x))
   ; ·-identityʳ     = λ x → pair (·ˢ-identityʳ (lower x)) (·ˢ-identityʳ (upper x))
   ; ·-assoc         = λ x y z → pair (·ˢ-assoc (lower x) (lower y) (lower z))
@@ -277,7 +278,7 @@ one-watermark = record
   ; ≾-irrelevant    = λ ((a , b) , (c , d)) ((a' , b') , (c' , d')) →
       cong₂ _,_ (cong₂ _,_ (≤∞-irrelevant a a') (≤∞-irrelevant b b'))
                 (cong₂ _,_ (≤∞-irrelevant c c') (≤∞-irrelevant d d'))
-  ; _≾?_            = _≾ᴸ?_
+  ; _≾?_            = _≾ᵂ?_
   ; ≾-⊤             = λ x → (≤∞-∞ , ≤∞-∞) , (≤∞-∞ , ≤∞-∞)
   ; ⊔-ubˡ           = λ x y → ⊔ˢ-ubˡ (lower x) (lower y) , ⊔ˢ-ubˡ (upper x) (upper y)
   ; ⊔-ubʳ           = λ x y → ⊔ˢ-ubʳ (lower x) (lower y) , ⊔ˢ-ubʳ (upper x) (upper y)
@@ -318,6 +319,6 @@ Wellformed t̃ d̃₁ d₂ h =
 
 -- `(t , [d₁ , d₂] , h)` from `t̃ = -t` and `d̃₁ = -d₁`
 
-levelⁿ : (t̃ d̃₁ d₂ h : ℤ∞) {w : Wellformed t̃ d̃₁ d₂ h} → Level
-levelⁿ t̃ d̃₁ d₂ h {w} with toWitness w
-... | (a , b) , ((c , d) , e) = level (side d̃₁ t̃ a b) (side d₂ h c d) e
+watermarkⁿ : (t̃ d̃₁ d₂ h : ℤ∞) {w : Wellformed t̃ d̃₁ d₂ h} → Watermark
+watermarkⁿ t̃ d̃₁ d₂ h {w} with toWitness w
+... | (a , b) , ((c , d) , e) = watermark (side d̃₁ t̃ a b) (side d₂ h c d) e

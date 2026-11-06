@@ -37,7 +37,7 @@ open import Util.Equality
 
 open import Grades.Examples.Time.ExtendedNat public
 
--- type of one-sided intervals
+-- type of time upper bounds
 
 data 𝕀ᵣ : Set where
   [0,_] : ℕ∞ → 𝕀ᵣ
@@ -171,7 +171,7 @@ infixl 7 _⊔ₒ_
 ·ₒ-distribʳ-⊔ₒ : (i₁ i₂ i₃ : 𝕀ᵣ) → (i₂ ⊔ₒ i₃) ·ₒ i₁ ≾ₒ (i₂ ·ₒ i₁) ⊔ₒ (i₃ ·ₒ i₁)
 ·ₒ-distribʳ-⊔ₒ [0, m ] [0, n ] [0, o ] = ≤∞-reflexive (+∞-distribʳ-⊔∞ m n o)
 
--- the grade of (right) one-sided intervals
+-- the grade algebra of time upper bounds
 
 -- the closure: no time absorbs its own iteration, and of the other
 -- bounds only the absent one does
@@ -189,8 +189,8 @@ plusₒ [0, m ] = plus [0, plus∞ m ] (≤∞-plus∞ m) (plus∞-iter m) (λ {
     indʳ : ∀ d → d ·ₒ [0, m ] ≾ₒ d → d ·ₒ [0, plus∞ m ] ≾ₒ d
     indʳ [0, n ] = plus∞-indʳ
 
-upper-bounds : Grade ℕᴰ
-upper-bounds = posetᵍ record
+upper-bound : Grade ℕᴰ
+upper-bound = posetᵍ record
   { Carrier          = 𝕀ᵣ
   ; _·_               = _·ₒ_
   ; 𝟏                 = 𝟏ₒ
@@ -222,10 +222,10 @@ upper-bounds = posetᵍ record
 
 -- its hints
 
-upper-boundsʰ : GradeHints upper-bounds
-upper-boundsʰ = record
+upper-boundʰ : GradeHints upper-bound
+upper-boundʰ = record
   { 𝟏-least? = just 𝟏ₒ-least
-  ; ·-comm?  = just (comm-≡ upper-bounds ·ₒ-comm)
+  ; ·-comm?  = just (comm-≡ upper-bound ·ₒ-comm)
   ; plus?    = λ i → just (plusₒ i)
   }
 

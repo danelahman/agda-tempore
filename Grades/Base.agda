@@ -1,6 +1,6 @@
---------------------------------------
--- Grades for effects and resources --
---------------------------------------
+----------------------------------------------
+-- Grade algebras for effects and resources --
+----------------------------------------------
 
 module Grades.Base where
 
@@ -38,8 +38,8 @@ plus-self : ∀ {C : Set} {_·_ : C → C → C} {_≾_ : C → C → Set} {c : 
           → c ≾ c → (c · c) ≾ c → Plus _·_ _≾_ c
 plus-self {c = c} refl' it = plus c refl' it (λ cv _ → cv) (λ q → q) (λ q → q)
 
--- Preordered effect and resource monoids, over a monoid `D` of
--- durations. Equality of grades is the order's equivalence
+-- Grade algebras: preordered effect and resource monoids, over a monoid
+-- `D` of durations. Equality of grades is the order's equivalence
 --
 --   c ≃ d   =   c ≾ d × d ≾ c
 --
@@ -259,8 +259,8 @@ posetᵍ G = record
     ≡⇒≃ refl = P.≾-refl , P.≾-refl
 
 
--- Morphisms of effect and resource monoids, along a morphism `h` of
--- their durations
+-- Grade algebra morphisms: morphisms of effect and resource monoids,
+-- along a morphism `h` of their durations
 
 record GradeMorphism {D₁ D₂ : Duration} (h : D₁ →ᴰ D₂)
                      (G₁ : Grade D₁) (G₂ : Grade D₂) : Set₁ where

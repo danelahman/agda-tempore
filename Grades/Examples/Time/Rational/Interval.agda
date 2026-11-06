@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Intervals of dense time, each end open or closed and the           --
--- right-hand one possibly absent, as grades.                         --
+-- Intervals of rational time, each end open or closed and the upper  --
+-- one possibly absent, as grades.                                    --
 --                                                                    --
 -- A grade bounds the elapsed time from both sides: `[ p , a ]`       --
 -- "between `p` and `a` time units" inclusive, `p` a non-negative     --
@@ -10,12 +10,12 @@
 -- `[ p , ∞ [` and `[ p , ∞ ]` are the same grade. A delay by `q` has --
 -- grade `[ q , ↑ q ]`.                                               --
 --                                                                    --
--- This is `Example.Time.Intervals` at the rational time domain: the  --
+-- This is `Time.Intervals` at the rational time domain: the          --
 -- intervals are the convex sets of durations, ordered by containment --
 -- and sequenced by the Minkowski sum (`Durations.Intervals.Dense`).  --
 -- The closed intervals of `Time.Rational.IntervalClosed` are a       --
--- sub-grade (`closed→strict`), and the discrete windows of           --
--- `Time.Interval` embed along the inclusion of durations             --
+-- sub-grade (`closed→interval`), and the time intervals in whole     --
+-- steps of `Time.Interval` embed along the inclusion of durations    --
 -- (`interval→rational`).                                             --
 ------------------------------------------------------------------------
 
@@ -89,11 +89,11 @@ _⊔ᵢ_ = _∪ⁱ_
 ------------------------------------------------------------------------
 -- The grade
 
-rational-intervals : Grade ℚ≥0ᴰ
-rational-intervals = intervals
+rational-interval : Grade ℚ≥0ᴰ
+rational-interval = domain-interval
 
-rational-intervalsʰ : GradeHints rational-intervals
-rational-intervalsʰ = intervalsʰ
+rational-intervalʰ : GradeHints rational-interval
+rational-intervalʰ = domain-intervalʰ
 
 ------------------------------------------------------------------------
 -- The closed intervals are a sub-grade
@@ -139,9 +139,9 @@ closed : Closed.Interval∞ → Interval
 closed i = ⟪ Closed.min i ∣ ⁻ , ⌈ Closed.max i ⌉ ⟫
              {fromWitness (closed◁ {Closed.min i} {Closed.max i} (Closed.min≤max i))}
 
-closed→strict : GradeMorphism Grades.Durations.idᴰ Closed.rational-closed-intervals
-                                                   rational-intervals
-closed→strict = strictᵍ record
+closed→interval : GradeMorphism Grades.Durations.idᴰ Closed.rational-closed-interval
+                                                   rational-interval
+closed→interval = strictᵍ record
   { map          = closed
   ; map-monotone = λ { {i} {j} (r , r') → ≤⇒⁻⊑⁻ r , ⌈⌉-mono {Closed.max i} {Closed.max j} r' }
   ; map-𝟏        = eqⁱ refl refl
@@ -155,26 +155,26 @@ closed→strict = strictᵍ record
   }
 
 ------------------------------------------------------------------------
--- The discrete windows embed, through the closed intervals
+-- The time intervals in whole steps embed, through the closed intervals
 
-interval→rational : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.intervals
-                                     rational-intervals
+interval→rational : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.interval
+                                     rational-interval
 interval→rational = record
   { map          = λ i → closed (D.map i)
   ; map-monotone = λ {i} {j} r →
       S.map-monotone {D.map i} {D.map j} (D.map-monotone {i} {j} r)
-  ; map-𝟏        = trG (closed (D.map (Grade.𝟏 Discrete.intervals))) (closed (Grade.𝟏 Closed.rational-closed-intervals)) (Grade.𝟏 G) (S.map-≃ {c₁ = D.map (Grade.𝟏 Discrete.intervals)} {c₁' = Grade.𝟏 Closed.rational-closed-intervals} D.map-𝟏) S.map-𝟏
+  ; map-𝟏        = trG (closed (D.map (Grade.𝟏 Discrete.interval))) (closed (Grade.𝟏 Closed.rational-closed-interval)) (Grade.𝟏 G) (S.map-≃ {c₁ = D.map (Grade.𝟏 Discrete.interval)} {c₁' = Grade.𝟏 Closed.rational-closed-interval} D.map-𝟏) S.map-𝟏
   ; map-·        = λ {i} {j} →
-      trG (closed (D.map (Grade._·_ Discrete.intervals i j))) (closed (Grade._·_ Closed.rational-closed-intervals (D.map i) (D.map j))) (Grade._·_ G (closed (D.map i)) (closed (D.map j))) (S.map-≃ {c₁ = D.map (Grade._·_ Discrete.intervals i j)} {c₁' = Grade._·_ Closed.rational-closed-intervals (D.map i) (D.map j)} (D.map-· {i} {j})) (S.map-· {D.map i} {D.map j})
-  ; map-⊤        = trG (closed (D.map (Grade.⊤ Discrete.intervals))) (closed (Grade.⊤ Closed.rational-closed-intervals)) (Grade.⊤ G) (S.map-≃ {c₁ = D.map (Grade.⊤ Discrete.intervals)} {c₁' = Grade.⊤ Closed.rational-closed-intervals} D.map-⊤) S.map-⊤
+      trG (closed (D.map (Grade._·_ Discrete.interval i j))) (closed (Grade._·_ Closed.rational-closed-interval (D.map i) (D.map j))) (Grade._·_ G (closed (D.map i)) (closed (D.map j))) (S.map-≃ {c₁ = D.map (Grade._·_ Discrete.interval i j)} {c₁' = Grade._·_ Closed.rational-closed-interval (D.map i) (D.map j)} (D.map-· {i} {j})) (S.map-· {D.map i} {D.map j})
+  ; map-⊤        = trG (closed (D.map (Grade.⊤ Discrete.interval))) (closed (Grade.⊤ Closed.rational-closed-interval)) (Grade.⊤ G) (S.map-≃ {c₁ = D.map (Grade.⊤ Discrete.interval)} {c₁' = Grade.⊤ Closed.rational-closed-interval} D.map-⊤) S.map-⊤
   ; map-⊔        = λ {i} {j} →
-      trG (closed (D.map (Grade._⊔_ Discrete.intervals i j))) (closed (Grade._⊔_ Closed.rational-closed-intervals (D.map i) (D.map j))) (Grade._⊔_ G (closed (D.map i)) (closed (D.map j))) (S.map-≃ {c₁ = D.map (Grade._⊔_ Discrete.intervals i j)} {c₁' = Grade._⊔_ Closed.rational-closed-intervals (D.map i) (D.map j)} (D.map-⊔ {i} {j})) (S.map-⊔ {D.map i} {D.map j})
-  ; map-ι        = λ {τ} → trG (closed (D.map (Grade.ι Discrete.intervals τ))) (closed (Grade.ι Closed.rational-closed-intervals (Grades.Durations._→ᴰ_.map ℕ→ℚ≥0ᴰ τ))) (Grade.ι G (Grades.Durations._→ᴰ_.map ℕ→ℚ≥0ᴰ τ)) (S.map-≃ {c₁ = D.map (Grade.ι Discrete.intervals τ)} {c₁' = Grade.ι Closed.rational-closed-intervals (Grades.Durations._→ᴰ_.map ℕ→ℚ≥0ᴰ τ)} (D.map-ι {τ})) S.map-ι
+      trG (closed (D.map (Grade._⊔_ Discrete.interval i j))) (closed (Grade._⊔_ Closed.rational-closed-interval (D.map i) (D.map j))) (Grade._⊔_ G (closed (D.map i)) (closed (D.map j))) (S.map-≃ {c₁ = D.map (Grade._⊔_ Discrete.interval i j)} {c₁' = Grade._⊔_ Closed.rational-closed-interval (D.map i) (D.map j)} (D.map-⊔ {i} {j})) (S.map-⊔ {D.map i} {D.map j})
+  ; map-ι        = λ {τ} → trG (closed (D.map (Grade.ι Discrete.interval τ))) (closed (Grade.ι Closed.rational-closed-interval (Grades.Durations._→ᴰ_.map ℕ→ℚ≥0ᴰ τ))) (Grade.ι G (Grades.Durations._→ᴰ_.map ℕ→ℚ≥0ᴰ τ)) (S.map-≃ {c₁ = D.map (Grade.ι Discrete.interval τ)} {c₁' = Grade.ι Closed.rational-closed-interval (Grades.Durations._→ᴰ_.map ℕ→ℚ≥0ᴰ τ)} (D.map-ι {τ})) S.map-ι
   }
   where
     module D = GradeMorphism Closed.interval→rational-closed
-    module S = GradeMorphism closed→strict
-    G = rational-intervals
+    module S = GradeMorphism closed→interval
+    G = rational-interval
     open Grade using (≃-trans)
 
     trG : (a b c : Interval) → Grade._≃_ G a b → Grade._≃_ G b c → Grade._≃_ G a c

@@ -86,8 +86,8 @@ _⊔ˡ_ = _⊓ᶜ_
 ------------------------------------------------------------------------
 -- The grade
 
-rational-lower-bound-cuts : Grade ℚ≥0ᴰ
-rational-lower-bound-cuts = posetᵍ record
+rational-lower-bound-cut : Grade ℚ≥0ᴰ
+rational-lower-bound-cut = posetᵍ record
   { Carrier         = Lower
   ; _·_             = _·ˡ_
   ; 𝟏               = 0⁻
@@ -119,18 +119,18 @@ rational-lower-bound-cuts = posetᵍ record
 
 -- its hints
 
-rational-lower-bound-cutsʰ : GradeHints rational-lower-bound-cuts
-rational-lower-bound-cutsʰ = record
+rational-lower-bound-cutʰ : GradeHints rational-lower-bound-cut
+rational-lower-bound-cutʰ = record
   { 𝟏-least? = nothing
-  ; ·-comm?  = just (comm-≡ rational-lower-bound-cuts +ˡ-comm)
+  ; ·-comm?  = just (comm-≡ rational-lower-bound-cut +ˡ-comm)
   ; plus?    = λ c → just (plus-self ⊑-refl (+ˡ-inflate c c))
   }
 
 ------------------------------------------------------------------------
 -- The closed bounds are a sub-grade
 
-closed→cut : GradeMorphism idᴰ Closed.rational-lower-bounds
-                               rational-lower-bound-cuts
+closed→cut : GradeMorphism idᴰ Closed.rational-lower-bound
+                               rational-lower-bound-cut
 closed→cut = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}
@@ -157,8 +157,8 @@ closed→cut = strictᵍ record
 ------------------------------------------------------------------------
 -- The intervals map onto their lower ends
 
-interval→cut : GradeMorphism idᴰ IntervalGrade.rational-intervals
-                                  rational-lower-bound-cuts
+interval→cut : GradeMorphism idᴰ IntervalGrade.rational-interval
+                                  rational-lower-bound-cut
 interval→cut = strictᵍ record
   { map          = lo
   ; map-monotone = proj₁
@@ -172,8 +172,8 @@ interval→cut = strictᵍ record
 ------------------------------------------------------------------------
 -- The discrete bounds embed
 
-lower-bound→rational-cut : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.lower-bounds
-                                           rational-lower-bound-cuts
+lower-bound→rational-cut : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.lower-bound
+                                           rational-lower-bound-cut
 lower-bound→rational-cut = strictᵍ record
   { map          = embed
   ; map-monotone = λ {i} {j} → mono {i} {j}

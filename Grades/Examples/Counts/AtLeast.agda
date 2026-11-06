@@ -28,11 +28,11 @@ open import Grades.Base using (Grade)
 open import Grades.Hints using (GradeHints)
 
 open import Grades.Examples.Time.LowerBound
-  using (lower-bounds; lower-bounds-with-⊤; lower-boundsʰ;
-         lower-bounds-with-⊤ʰ;
+  using (lower-bound; lower-bound-with-⊤; lower-boundʰ;
+         lower-bound-with-⊤ʰ;
          𝕀; [_,+∞⟩; 𝟏ₒ-not-least; 𝕀⊤; timed_; untimed)
 
-open import Grades.Examples.Counts.Power lower-bounds public
+open import Grades.Examples.Counts.Power lower-bound public
 
 -- the grade over `n` counters
 
@@ -40,7 +40,7 @@ at-least-counts : ℕ → Grade ℕᴰ
 at-least-counts = power
 
 at-least-countsʰ : (n : ℕ) → GradeHints (at-least-counts n)
-at-least-countsʰ = powerʰ lower-boundsʰ
+at-least-countsʰ = powerʰ lower-boundʰ
 
 -- one coordinate
 
@@ -63,13 +63,13 @@ atleast k = [ k ,+∞⟩
 -- grades whose greatest element is absorbing project to these counts.
 
 import Grades.Examples.Counts.Power as Power
-module WithTop = Power lower-bounds-with-⊤
+module WithTop = Power lower-bound-with-⊤
 
 at-least-counts-with-⊤ : ℕ → Grade ℕᴰ
 at-least-counts-with-⊤ = WithTop.power
 
 at-least-counts-with-⊤ʰ : (n : ℕ) → GradeHints (at-least-counts-with-⊤ n)
-at-least-counts-with-⊤ʰ = WithTop.powerʰ lower-bounds-with-⊤ʰ
+at-least-counts-with-⊤ʰ = WithTop.powerʰ lower-bound-with-⊤ʰ
 
 -- one coordinate
 

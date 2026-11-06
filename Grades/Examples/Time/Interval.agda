@@ -275,8 +275,8 @@ plusᵢ i = plus i⁺ (≤-refl , ≤∞-plus∞ (max i))
 
 -- the grade of intervals with possibly-infinite max
 
-intervals : Grade ℕᴰ
-intervals = posetᵍ record
+interval : Grade ℕᴰ
+interval = posetᵍ record
   { Carrier = Interval∞
   ; _·_              = _·ᵢ_
   ; 𝟏                = 𝟏ᵢ
@@ -312,10 +312,10 @@ intervals = posetᵍ record
 
 -- its hints
 
-intervalsʰ : GradeHints intervals
-intervalsʰ = record
+intervalʰ : GradeHints interval
+intervalʰ = record
   { 𝟏-least? = nothing
-  ; ·-comm?  = just (comm-≡ intervals ·ᵢ-comm)
+  ; ·-comm?  = just (comm-≡ interval ·ᵢ-comm)
   ; plus?    = λ i → just (plusᵢ i)
   }
 
@@ -546,8 +546,8 @@ plusʷ no-window = plus no-window tt tt least indˡ indʳ
 
 -- the grade of intervals with a formal greatest grade
 
-intervals-with-⊤ : Grade ℕᴰ
-intervals-with-⊤ = posetᵍ record
+interval-with-⊤ : Grade ℕᴰ
+interval-with-⊤ = posetᵍ record
   { Carrier           = Interval∞⊤
   ; _·_               = _·ʷ_
   ; 𝟏                 = 𝟏ʷ
@@ -579,9 +579,9 @@ intervals-with-⊤ = posetᵍ record
 
 -- its hints
 
-intervals-with-⊤ʰ : GradeHints intervals-with-⊤
-intervals-with-⊤ʰ = record
+interval-with-⊤ʰ : GradeHints interval-with-⊤
+interval-with-⊤ʰ = record
   { 𝟏-least? = nothing
-  ; ·-comm?  = just (comm-≡ intervals-with-⊤ ·ʷ-comm)
+  ; ·-comm?  = just (comm-≡ interval-with-⊤ ·ʷ-comm)
   ; plus?    = λ i → just (plusʷ i)
   }

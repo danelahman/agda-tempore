@@ -65,7 +65,7 @@ open Maps ℕ-names using (Map; _∣_; _!_; others; named; lookup; everywhere; m
 private
   module T = Dioid times
   module Eq = Equivariant equivariant-times
-  module I = Grade intervals
+  module I = Grade interval
 open T using () renaming (Carrier to Entry; _≤_ to _≤ᵗ_; _≈_ to _≈ᵗ_)
 
 ------------------------------------------------------------------------
@@ -445,7 +445,7 @@ occurrence bs rt {t} {c} = listed (behaviour-modes bs) (occurrence-entries bs rt
 
 private
   dur : ℕ → Interval∞
-  dur = Grade.ι intervals
+  dur = Grade.ι interval
 
 delay-matrix : ℕ → Matrix
 modes (delay-matrix n) = []

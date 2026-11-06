@@ -31,7 +31,7 @@ open import Grades.Durations using (Duration)
 open import Grades.Base using (Grade)
 open import Grades.Hints using (GradeHints)
 open import Grades.Examples.Lattice
-  using (LevelLattice; level-grade; level-gradeʰ; low-high; LowHigh; Low; High)
+  using (LevelLattice; level-grade; level-gradeʰ; low-high-lattice; LowHigh; Low; High)
 open import Grades.Indexed using (ℕ-names; module Maps)
 open Maps ℕ-names using (indexedˢ; indexedᵃ; Map)
 open import Grades.SemiDirect using (Semilattice; Action; semidirect; semidirectʰ)
@@ -157,7 +157,7 @@ module Over (L : LevelLattice) where
 ------------------------------------------------------------------------
 -- At the two-point lattice `Low < High`
 
-open Over low-high public
+open Over low-high-lattice public
   using (written-at; outputs; raise; raise-action)
   renaming ( flow-sensitive-levels  to two-point-flow-sensitive-levels
            ; flow-sensitive-levelsʰ to two-point-flow-sensitive-levelsʰ )
