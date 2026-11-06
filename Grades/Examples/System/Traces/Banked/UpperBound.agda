@@ -42,6 +42,7 @@ open import Relation.Binary.Definitions
 open import Grades.Base
 open import Grades.Hints using (SystemHints)
 open import Grades.Examples.Time.UpperBound
+  renaming (upper-bound to time-upper-bound; upper-boundʰ to time-upper-boundʰ)
 
 open import Util.Equality
 
@@ -152,8 +153,8 @@ mapₒ-⊔ (within _) unbounded  = refl
 mapₒ-⊔ unbounded  (within _) = refl
 mapₒ-⊔ unbounded  unbounded  = refl
 
-traces→upper-bounds : upper-bound →ᵍ upper-bounds
-traces→upper-bounds = strictᵍ record
+banked→upper-bounds : upper-bound →ᵍ time-upper-bound
+banked→upper-bounds = strictᵍ record
   { map          = mapₒ
   ; map-monotone = λ {P} {Q} → mapₒ-monotone {P} {Q}
   ; map-𝟏        = refl
@@ -164,18 +165,18 @@ traces→upper-bounds = strictᵍ record
       eq𝕀ᵣ (cong ↑_ (trans (⊔-identityʳ (duration ⟨ n ⟩)) (duration-⟨⟩ n)))
   }
 
-tracesToUpperBoundsGradeSystem : GradeSystem
-tracesToUpperBoundsGradeSystem = record
-  { RGrade = upper-bounds
+banked→upper-bounds-grade-system : GradeSystem
+banked→upper-bounds-grade-system = record
+  { RGrade = time-upper-bound
   ; EGrade = upper-bound
-  ; ∣-∣ᵉ   = traces→upper-bounds
+  ; ∣-∣ᵉ   = banked→upper-bounds
   }
 
 -- its hints
 
-tracesToUpperBoundsGradeSystemʰ : SystemHints tracesToUpperBoundsGradeSystem
-tracesToUpperBoundsGradeSystemʰ = record
-  { RHints      = upper-boundsʰ
+banked→upper-bounds-grade-systemʰ : SystemHints banked→upper-bounds-grade-system
+banked→upper-bounds-grade-systemʰ = record
+  { RHints      = time-upper-boundʰ
   ; EHints      = upper-boundʰ
   ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ

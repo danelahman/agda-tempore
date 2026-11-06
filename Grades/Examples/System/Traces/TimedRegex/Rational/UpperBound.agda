@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 -- A grade system in which the resource grades measure only time.     --
 --                                                                    --
--- The effect grades are the rigid timed regex upper bounds of        --
+-- The effect grades are the rational timed regex upper bounds of     --
 -- `Traces.TimedRegex.Rational.UpperBound`; the resource grades are   --
--- the upper bounds on dense time, "at most `q` time units". The      --
+-- the upper bounds on rational time, "at most `q` time units". The   --
 -- projection measures a grade by the supremum of the durations of    --
 -- its runs, the upper end of its duration hull                       --
 -- (`Exact.Regular.Durations`):                                       --
@@ -53,7 +53,7 @@ open import Grades.Durations.Intervals.Dense ℚ≥0ᵀ using (⁺⋢⁻)
 open import Util.NonNegativeRational using (#_; _≤_; _≤?_; ≤-trans)
 open import Grades.Examples.Time.Rational.UpperBound
   using (ℚ∞; ↑_; ∞; _≤∞_; ≤∞-refl; _+∞_; _⊔∞_; ⊔∞-ubˡ; ⊔∞-ubʳ; ⊔∞-lub;
-         𝕀ᵣ; [0,_]; _≾ₒ_; 𝟏ₒ; rational-upper-bounds; rational-upper-boundsʰ)
+         𝕀ᵣ; [0,_]; _≾ₒ_; 𝟏ₒ; rational-upper-bound; rational-upper-boundʰ)
 
 open import Grades.Examples.Traces.TimedRegex.Rational.UpperBound Op n code name name-code code-name running
   using (upper-bound; upper-boundʰ; Proper′; ⌜_⌝; expr; _≾ᴳ_; ≾ᴳ-intro; εᵉ; waitᵁ; ⟦_⟧; upper; str)
@@ -122,8 +122,8 @@ private
   ≃-of : ∀ {a b} → a ≡ b → (a ≤∞ b) Data.Product.× (b ≤∞ a)
   ≃-of {a} refl = ≤∞-refl {a} , ≤∞-refl {a}
 
-upper-runs→upper-bounds : upper-bound →ᵍ rational-upper-bounds
-upper-runs→upper-bounds = record
+timed-regex→upper-bounds : upper-bound →ᵍ rational-upper-bound
+timed-regex→upper-bounds = record
   { map          = mapₒ
   ; map-monotone = λ {c} {d} → supᴾ-mono {c} {d}
   ; map-𝟏        = ≃-of (cong (λ i → supʰ (hi i)) (hullᴾ-ε {upper}))
@@ -156,18 +156,18 @@ private
       into []      x∈ = [] , refl , ⊑-refl
       into (i ∷ w) x∈ = ⊥-elim (dur-pos i w (dur≤0 x∈))
 
-upperRunsToUpperBoundsGradeSystem : GradeSystem
-upperRunsToUpperBoundsGradeSystem = record
-  { RGrade = rational-upper-bounds
+timed-regex→upper-bounds-grade-system : GradeSystem
+timed-regex→upper-bounds-grade-system = record
+  { RGrade = rational-upper-bound
   ; EGrade = upper-bound
-  ; ∣-∣ᵉ   = upper-runs→upper-bounds
+  ; ∣-∣ᵉ   = timed-regex→upper-bounds
   }
 
 -- its hints: the projection reflects the order at the unit
 
-upperRunsToUpperBoundsGradeSystemʰ : SystemHints upperRunsToUpperBoundsGradeSystem
-upperRunsToUpperBoundsGradeSystemʰ = record
-  { RHints      = rational-upper-boundsʰ
+timed-regex→upper-bounds-grade-systemʰ : SystemHints timed-regex→upper-bounds-grade-system
+timed-regex→upper-bounds-grade-systemʰ = record
+  { RHints      = rational-upper-boundʰ
   ; EHints      = upper-boundʰ
   ; reflects-𝟏? = just reflects
   ; witnesses   = λ _ _ _ → []

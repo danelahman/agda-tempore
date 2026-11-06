@@ -33,21 +33,21 @@ open import Grades.Examples.Time.LowerBound
 [ m , n ] {m≤n} = mkᵢ m (↑ n) {m≤n}
 
 open import Grades.Examples.System.IntervalsToLowerBounds
-  using (tsi→lsi)
+  using (intervals→lower-bounds)
 
 open import Grades.Examples.Worked.Time.Decide using (≤!)
 open import Grades.Examples.Worked.Time.Interval using (uplink-window)
 
 -- the projection reads off the lower endpoint
 
-forget-max : map tsi→lsi uplink-window ≡ [ 7 ,+∞⟩
+forget-max : map intervals→lower-bounds uplink-window ≡ [ 7 ,+∞⟩
 forget-max = refl
 
 -- so two effect grades differing only in their deadline become the same
 -- resource grade: that difference is exactly what is forgotten
 
 deadline-forgotten :
-  map tsi→lsi [ 7 , 9 ] ≡ map tsi→lsi [ 7 , 12 ]
+  map intervals→lower-bounds [ 7 , 9 ] ≡ map intervals→lower-bounds [ 7 , 12 ]
 deadline-forgotten = refl
 
 -- monotonicity: enlarging the window to `[ 5 , 12 ]` weakens the lower
@@ -55,10 +55,10 @@ deadline-forgotten = refl
 
 forget-max-mono : [ 7 ,+∞⟩ ≾ₒ [ 5 ,+∞⟩
 forget-max-mono =
-  map-monotone tsi→lsi {uplink-window} {[ 5 , 12 ]} (≤! , ≤!)
+  map-monotone intervals→lower-bounds {uplink-window} {[ 5 , 12 ]} (≤! , ≤!)
 
 -- and it is a monoid map: sequencing before or after projecting agrees
 
-forget-max-· : map tsi→lsi ([ 1 , 1 ] ·ᵢ [ 6 , 8 ])
-             ≡ map tsi→lsi [ 1 , 1 ] ·ₒ map tsi→lsi [ 6 , 8 ]
+forget-max-· : map intervals→lower-bounds ([ 1 , 1 ] ·ᵢ [ 6 , 8 ])
+             ≡ map intervals→lower-bounds [ 1 , 1 ] ·ₒ map intervals→lower-bounds [ 6 , 8 ]
 forget-max-· = refl

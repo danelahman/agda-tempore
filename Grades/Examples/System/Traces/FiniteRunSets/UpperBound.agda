@@ -37,6 +37,7 @@ open import Relation.Binary.Definitions
 open import Grades.Base
 open import Grades.Hints using (SystemHints; noGradeHints)
 open import Grades.Examples.Time.UpperBound
+  renaming (upper-bound to time-upper-bound; upper-boundʰ to time-upper-boundʰ)
 
 open import Util.Equality
 
@@ -98,7 +99,7 @@ mapₒ-⊔ (permitting _) any-run        = refl
 mapₒ-⊔ any-run        (permitting _) = refl
 mapₒ-⊔ any-run        any-run        = refl
 
-finite-run-sets→upper-bounds : upper-bound →ᵍ upper-bounds
+finite-run-sets→upper-bounds : upper-bound →ᵍ time-upper-bound
 finite-run-sets→upper-bounds = strictᵍ record
   { map          = mapₒ
   ; map-monotone = λ {P} {Q} → mapₒ-monotone {P} {Q}
@@ -110,18 +111,18 @@ finite-run-sets→upper-bounds = strictᵍ record
       eq𝕀ᵣ (cong ↑_ (trans (⊔-identityʳ (duration ⟨ n ⟩)) (duration-⟨⟩ n)))
   }
 
-finiteRunSetsToUpperBoundsGradeSystem : GradeSystem
-finiteRunSetsToUpperBoundsGradeSystem = record
-  { RGrade = upper-bounds
+finite-run-sets→upper-bounds-grade-system : GradeSystem
+finite-run-sets→upper-bounds-grade-system = record
+  { RGrade = time-upper-bound
   ; EGrade = upper-bound
   ; ∣-∣ᵉ   = finite-run-sets→upper-bounds
   }
 
 -- its hints
 
-finiteRunSetsToUpperBoundsGradeSystemʰ : SystemHints finiteRunSetsToUpperBoundsGradeSystem
-finiteRunSetsToUpperBoundsGradeSystemʰ = record
-  { RHints      = upper-boundsʰ
+finite-run-sets→upper-bounds-grade-systemʰ : SystemHints finite-run-sets→upper-bounds-grade-system
+finite-run-sets→upper-bounds-grade-systemʰ = record
+  { RHints      = time-upper-boundʰ
   ; EHints      = noGradeHints
   ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ

@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Worked: the non-rigid banked trace grades as rigid                 --
--- finite-expression grades in dense time.                            --
+-- Worked: the trace grades with banked delays as finite timed regex  --
+-- grades in rational time.                                           --
 --                                                                    --
 -- The operations of `TimedRegex.Finite.Operations`: heating takes    --
 -- two to four units, cooling more than one and less than two,        --
@@ -12,7 +12,7 @@
 -- they always do.                                                    --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.Traces.TimedRegex.Finite.NonRigid where
+module Grades.Examples.Worked.Traces.TimedRegex.Finite.Banked where
 
 open import Data.Bool.Base using (Bool; true; false)
 open import Data.List.Base using ([]; _∷_)
@@ -30,7 +30,7 @@ open import Grades.Examples.Traces.TimedRegex.Finite.UpperBound Op 3 code name n
   using (Upper; ≤_; idle_; ⌜_⌝; Proper′; upper; lower; holds; _·_; _ˀ; ε; expr; _·ᵉ_)
 open import Grades.Examples.Traces.TimedRegex.Finite.LowerBound Op 3 code name name-code code-name running
   using (≥_; ‵_)
-open import Grades.Examples.Traces.TimedRegex.Finite.NonRigid Op 3 code name name-code code-name running
+open import Grades.Examples.Traces.TimedRegex.Finite.Banked Op 3 code name name-code code-name running
 
 open import Grades.Traces.RunningTimes ℚ≥0ᵀ Op using (module RunningTimes)
 open RunningTimes running using (costˡᵒ; costʰⁱ; costʰⁱ-pos)
@@ -39,25 +39,25 @@ open import Grades.Traces.Sets ℚ≥0ᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
   using (Trace; ⌈_⌉; ⟨_⟩; _∙_)
 
 import Grades.Examples.Traces.Banked.UpperBound
-  ℚ≥0ᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos as NR
+  ℚ≥0ᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos as BU
 import Grades.Examples.Traces.Banked.LowerBound
-  ℚ≥0ᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ as NL
+  ℚ≥0ᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ as BL
 
 -- one written-out trace, as a bound and as a guarantee
 
-⟅_⟆ʳ : Trace → NR.Bounds
-⟅ t ⟆ʳ = NR.within NR.acSet (t ∷ []) tt
+⟅_⟆ʳ : Trace → BU.Bounds
+⟅ t ⟆ʳ = BU.within BU.acSet (t ∷ []) tt
 
-⟅_⟆ˡ : Trace → NL.Antichain
-⟅ t ⟆ˡ = NL.acSet (t ∷ []) tt
+⟅_⟆ˡ : Trace → BL.Antichain
+⟅ t ⟆ˡ = BL.acSet (t ∷ []) tt
 
 -- the two decisions of an upper comparison, and of a lower one
 
-upper-both : NR.Bounds → NR.Bounds → Bool × Bool
-upper-both P Q = isYes (P NR.≾? Q) , holds (upᴮ P) (upᴮ Q)
+upper-both : BU.Bounds → BU.Bounds → Bool × Bool
+upper-both P Q = isYes (P BU.≾? Q) , holds (upᴮ P) (upᴮ Q)
 
-lower-both : NL.Antichain → NL.Antichain → Bool × Bool
-lower-both P Q = isYes (Grade._≾?_ NL.lower-bound P Q) , holds (loᴬ P) (loᴬ Q)
+lower-both : BL.Antichain → BL.Antichain → Bool × Bool
+lower-both P Q = isYes (Grade._≾?_ BL.lower-bound P Q) , holds (loᴬ P) (loᴬ Q)
 
 ------------------------------------------------------------------------
 -- The translations, computed
@@ -104,13 +104,13 @@ heat-for-delay = refl
 
 -- the unit is least, and goes to the unit
 
-unit-least : upper-both NR.𝟏ᵇ ⟅ ⌈ heat ⌉ ⟆ʳ ≡ (true , true)
+unit-least : upper-both BU.𝟏ᵇ ⟅ ⌈ heat ⌉ ⟆ʳ ≡ (true , true)
 unit-least = refl
 
--- the unbounded grade goes to the unrestricted stretch, above every
+-- the unbounded grade goes to the unrestricted time span, above every
 -- written-out bound and below none
 
-unbounded-above : upper-both ⟅ ⟨ # 5 ⟩ ∙ ⌈ heat ⌉ ⟆ʳ NR.unbounded ≡ (true , true)
+unbounded-above : upper-both ⟅ ⟨ # 5 ⟩ ∙ ⌈ heat ⌉ ⟆ʳ BU.unbounded ≡ (true , true)
 unbounded-above = refl
 
 ------------------------------------------------------------------------
@@ -139,19 +139,19 @@ wait-placed = refl
 
 -- the unit guarantees nothing, and goes to the greatest grade
 
-unit-greatest : lower-both ⟅ ⌈ heat ⌉ ∙ ⟨ # 2 ⟩ ⟆ˡ NL.𝟏 ≡ (true , true)
+unit-greatest : lower-both ⟅ ⌈ heat ⌉ ∙ ⟨ # 2 ⟩ ⟆ˡ BL.𝟏 ≡ (true , true)
 unit-greatest = refl
 
 ------------------------------------------------------------------------
 -- Products and joins
 
 product-commutes :
-  holds (upᴮ (⟅ ⌈ cool ⌉ ⟆ʳ NR.·ᵇ ⟅ ⟨ # 1 ⟩ ⟆ʳ)) (upᴮ ⟅ ⌈ cool ⌉ ⟆ʳ ·ᵉ upᴮ ⟅ ⟨ # 1 ⟩ ⟆ʳ)
+  holds (upᴮ (⟅ ⌈ cool ⌉ ⟆ʳ BU.·ᵇ ⟅ ⟨ # 1 ⟩ ⟆ʳ)) (upᴮ ⟅ ⌈ cool ⌉ ⟆ʳ ·ᵉ upᴮ ⟅ ⟨ # 1 ⟩ ⟆ʳ)
   ≡ true
 product-commutes = refl
 
 product-commutes-lower :
-  holds (loᴬ ⟅ ⟨ # 1 ⟩ ⟆ˡ ·ᵉ loᴬ ⟅ ⟨ # 1 ⟩ ⟆ˡ) (loᴬ (⟅ ⟨ # 1 ⟩ ⟆ˡ NL.· ⟅ ⟨ # 1 ⟩ ⟆ˡ))
+  holds (loᴬ ⟅ ⟨ # 1 ⟩ ⟆ˡ ·ᵉ loᴬ ⟅ ⟨ # 1 ⟩ ⟆ˡ) (loᴬ (⟅ ⟨ # 1 ⟩ ⟆ˡ BL.· ⟅ ⟨ # 1 ⟩ ⟆ˡ))
   ≡ true
 product-commutes-lower = refl
 

@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Worked instance of the finite run set cap, projected onto certain  --
+-- Worked instance of the finite run set cap, projected onto at-least --
 -- counts.                                                            --
 --                                                                    --
 -- Each counter takes the least count among the listed runs, and      --

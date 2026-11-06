@@ -9,8 +9,10 @@
 -- `Banked.*`, time pays for operations in one direction and          --
 -- operations pay for time in the other; under `FiniteRunSets.*`      --
 -- neither pays for the other, and a grade lists the runs it permits. --
--- `Regular.*` compares as `FiniteRunSets.*` does, over regular sets  --
--- of runs, and is worked out at its order and operations only.       --
+-- `Regular.*` compares as `FiniteRunSets.*` does, over regular trace --
+-- languages, and is worked out at its order and operations only.     --
+-- `TimedRegex.*` are the timed regex grades in whole steps, finite,  --
+-- and rational, worked out at their orders.                          --
 --                                                                    --
 -- Every run is written out in full in every claim, and every claim   --
 -- is established by the decision procedure of the grade.             --
@@ -33,8 +35,8 @@ import Grades.Examples.Worked.Traces.Banked.UpperBound
 
 import Grades.Examples.Worked.Traces.Banked.Interval
 
--- in dense time: running times with open or closed ends, rational
--- delays, and whole steps read in dense time
+-- in rational time: running times with open or closed ends, rational
+-- delays, and whole steps read in it
 
 import Grades.Examples.Worked.Traces.Banked.Rational
 
@@ -46,20 +48,20 @@ import Grades.Examples.Worked.Traces.Banked.Rational
 import Grades.Examples.Worked.Traces.FiniteRunSets.UpperBound
 
 ------------------------------------------------------------------------
--- Regular sets
+-- Regular trace languages
 
 -- canonical tables, and the operations on them
 
 import Grades.Examples.Worked.Traces.Regular.Base
 
--- runs that may occur, as a regular set, with literals
+-- runs that may occur, as a regular trace language, with literals
 
 import Grades.Examples.Worked.Traces.Regular.UpperBound
 
 ------------------------------------------------------------------------
--- Rigid timed regex grades, in whole steps
+-- Timed regex grades, in whole steps
 
--- upper bounds: the order of idle waits and spans, rejected runs,
+-- upper bounds: the order of idle waits and time spans, rejected runs,
 -- the window rule, the delays
 
 import Grades.Examples.Worked.Traces.TimedRegex.Nat.UpperBound
@@ -69,11 +71,11 @@ import Grades.Examples.Worked.Traces.TimedRegex.Nat.UpperBound
 import Grades.Examples.Worked.Traces.TimedRegex.Nat.LowerBound
 
 ------------------------------------------------------------------------
--- Rigid timed finite-expression grades, in dense time
+-- Finite timed regex grades
 
--- upper bounds: products of spans at rational lengths, open against
--- closed ends, an equivalence of distinct expressions, the window rule,
--- open running times, the hull
+-- upper bounds: products of time spans at rational lengths, open
+-- against closed ends, an equivalence of distinct expressions, the
+-- window rule, open running times, the hull
 
 import Grades.Examples.Worked.Traces.TimedRegex.Finite.UpperBound
 
@@ -82,20 +84,21 @@ import Grades.Examples.Worked.Traces.TimedRegex.Finite.UpperBound
 
 import Grades.Examples.Worked.Traces.TimedRegex.Finite.LowerBound
 
--- intervals: a demanded wait separating spans, delays read on both
+-- intervals: a demanded wait separating time spans, delays read on both
 -- sides
 
 import Grades.Examples.Worked.Traces.TimedRegex.Finite.Interval
 
--- the non-rigid grades as finite-expression grades: the translations,
--- both decisions agreeing, products, a delay read as a span
+-- the trace grades with banked delays as finite timed regex grades: the
+-- translations, both decisions agreeing, products, a delay read as a
+-- time span
 
-import Grades.Examples.Worked.Traces.TimedRegex.Finite.NonRigid
+import Grades.Examples.Worked.Traces.TimedRegex.Finite.Banked
 
 ------------------------------------------------------------------------
--- Rigid timed regex grades, in dense time
+-- Rational timed regex grades
 
--- upper bounds: open bounds adding up, unbounded stretches as
+-- upper bounds: open bounds adding up, unbounded time spans as
 -- iterations, iteration against open ends, the window rule, the plus,
 -- the hull
 

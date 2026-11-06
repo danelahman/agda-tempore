@@ -159,8 +159,8 @@ finite-run-sets→at-most-counts = strictᵍ record
   ; map-ι        = λ {k} → mapₒ-ι k
   }
 
-finiteRunSetsToAtMostCountsGradeSystem : GradeSystem
-finiteRunSetsToAtMostCountsGradeSystem = record
+finite-run-sets→at-most-counts-grade-system : GradeSystem
+finite-run-sets→at-most-counts-grade-system = record
   { RGrade = at-most-counts n
   ; EGrade = upper-bound
   ; ∣-∣ᵉ   = finite-run-sets→at-most-counts
@@ -168,8 +168,8 @@ finiteRunSetsToAtMostCountsGradeSystem = record
 
 -- its hints
 
-finiteRunSetsToAtMostCountsGradeSystemʰ : SystemHints finiteRunSetsToAtMostCountsGradeSystem
-finiteRunSetsToAtMostCountsGradeSystemʰ = record
+finite-run-sets→at-most-counts-grade-systemʰ : SystemHints finite-run-sets→at-most-counts-grade-system
+finite-run-sets→at-most-counts-grade-systemʰ = record
   { RHints      = (at-most-countsʰ n)
   ; EHints      = noGradeHints
   ; reflects-𝟏? = nothing

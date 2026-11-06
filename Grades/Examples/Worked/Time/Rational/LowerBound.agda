@@ -19,7 +19,7 @@ open import Grades.Examples.Time.Rational.ExtendedRational
 
 open import Grades.Examples.Worked.Time.Rational.Decide using (module Decide)
 
-open Decide L.rational-lower-bounds renaming (≾! to ≾ˡ!; ⋠! to ⋠ˡ!)
+open Decide L.rational-lower-bound renaming (≾! to ≾ˡ!; ⋠! to ⋠ˡ!)
 
 ------------------------------------------------------------------------
 -- Lower-bound: "at least q units"
@@ -28,18 +28,18 @@ open Decide L.rational-lower-bounds renaming (≾! to ≾ˡ!; ⋠! to ⋠ˡ!)
 
 -- "at least 1" is stronger than "at least 0.5"
 
-lsi-weaken : L.[ # 1 ,+∞⟩ L.≾ₒ L.[ 1 / 2 ,+∞⟩
-lsi-weaken = ≾ˡ!
+lower-weaken : L.[ # 1 ,+∞⟩ L.≾ₒ L.[ 1 / 2 ,+∞⟩
+lower-weaken = ≾ˡ!
 
-lsi-no-strengthen : ¬ (L.[ 1 / 2 ,+∞⟩ L.≾ₒ L.[ # 1 ,+∞⟩)
-lsi-no-strengthen = ⋠ˡ!
+lower-no-strengthen : ¬ (L.[ 1 / 2 ,+∞⟩ L.≾ₒ L.[ # 1 ,+∞⟩)
+lower-no-strengthen = ⋠ˡ!
 
 -- two half-unit delays make at least one unit
 
-lsi-halves : L.[ 1 / 2 ,+∞⟩ L.·ₒ L.[ 1 / 2 ,+∞⟩ ≡ L.[ # 1 ,+∞⟩
-lsi-halves = refl
+lower-halves : L.[ 1 / 2 ,+∞⟩ L.·ₒ L.[ 1 / 2 ,+∞⟩ ≡ L.[ # 1 ,+∞⟩
+lower-halves = refl
 
 -- the join keeps the smaller guarantee
 
-lsi-join : L.[ 1 / 3 ,+∞⟩ L.⊔ₒ L.[ 1 / 2 ,+∞⟩ ≡ L.[ 1 / 3 ,+∞⟩
-lsi-join = refl
+lower-join : L.[ 1 / 3 ,+∞⟩ L.⊔ₒ L.[ 1 / 2 ,+∞⟩ ≡ L.[ 1 / 3 ,+∞⟩
+lower-join = refl

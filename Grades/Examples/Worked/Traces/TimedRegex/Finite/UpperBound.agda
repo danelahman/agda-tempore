@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Worked rigid timed finite-expression upper bounds in dense time.   --
+-- Worked finite timed regex upper bounds in rational time.           --
 --                                                                    --
 -- Heating takes two to four units, cooling more than one and less    --
 -- than two, logging more than a quarter and at most a half. The      --
@@ -58,7 +58,7 @@ same-runs : holds ⌜ idle ≤ (# 1) · (< (# 1) & ⁅ code log ⁆) ⌝ ⌜ idl
 same-runs = refl , refl
 
 ------------------------------------------------------------------------
--- The window rule: an operation spanning stretches belongs to each
+-- The window rule: an operation spanning time spans belongs to each
 
 log-across : holds ⌜ ‵ log ⌝ ⌜ (≤ (1 / 4) & ⁅ code log ⁆) · (≤ (1 / 4) & ⁅ code log ⁆) ⌝ ≡ true
 log-across = refl

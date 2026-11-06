@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
 -- A grade system in which the resource grades measure only time.     --
 --                                                                    --
--- The effect grades are the rigid timed regex intervals of           --
+-- The effect grades are the rational timed regex intervals of        --
 -- `Traces.TimedRegex.Rational.Interval`: a lower bound `L` and an    --
 -- upper bound `U` that some run fits. The resource grades are the    --
--- intervals of dense time, each end open or closed. The projection   --
--- is the duration hull, read off each end                            --
+-- intervals of rational time, each end open or closed. The           --
+-- projection is the duration hull, read off each end                 --
 -- (`Exact.Regular.Durations`):                                       --
 --                                                                    --
 --   ∣ [ L , U ] ∣ᵉ  =  ⟪ lower end of the hull of L ,                --
@@ -53,7 +53,7 @@ open import Grades.Durations.Intervals ℚ≥0ᵀ
 open import Grades.Durations.Intervals.Dense ℚ≥0ᵀ using (⁺⋢⁻)
 open import Util.NonNegativeRational using (#_; _≤?_)
 open import Grades.Examples.Time.Rational.Interval
-  using (rational-intervals; rational-intervalsʰ)
+  using (rational-interval; rational-intervalʰ)
 
 open import Grades.Examples.Traces.TimedRegex.Rational.Interval Op n code name name-code code-name running
   using (interval; intervalʰ; Consistent)
@@ -96,14 +96,14 @@ mapₒ : Grade.Carrier interval → Interval
 mapₒ ((L , U) , c) = ⟪ lo (hullᴾ L) , hi (hullᴾ U) ⟫ {fromWitness (coherent L U c)}
 
 private
-  open Grade rational-intervals using (≃-reflexive) renaming (_≃_ to _≃ᵢ_)
+  open Grade rational-interval using (≃-reflexive) renaming (_≃_ to _≃ᵢ_)
 
   -- an interval is determined by its ends
   ends : ∀ (i j : Interval) → lo i ≡ lo j → hi i ≡ hi j → i ≃ᵢ j
   ends i j e e′ = ≃-reflexive (eqⁱ {i} {j} e e′)
 
   module E = Grade interval
-  module R = Grade rational-intervals
+  module R = Grade rational-interval
 
   wait-lo : ∀ τ → lo (hullᴾ (waitᴸ τ)) ≡ τ ∣ᶜ ⁻
   wait-lo τ = case (0ᴰ <ᴰ? τ)
@@ -121,8 +121,8 @@ private
       case (yes _) eq = cong hi (just-injective (sym eq))
       case (no ¬p) _  = ⊥-elim (¬p (λ r → ⁺⋢⁻ (⊑-trans r (0⁻-least (τ ∣ᶜ ⁻)))))
 
-interval-runs→intervals : interval →ᵍ rational-intervals
-interval-runs→intervals = record
+timed-regex→intervals : interval →ᵍ rational-interval
+timed-regex→intervals = record
   { map          = mapₒ
   ; map-monotone = λ {a} {b} (pL , pU) →
       proj₁ (hullᴾ-mono {c = proj₁ (proj₁ a)} {proj₁ (proj₁ b)} pL) ,
@@ -140,18 +140,18 @@ interval-runs→intervals = record
   ; map-ι        = λ {τ} → ends (mapₒ (E.ι τ)) (R.ι τ) (wait-lo τ) (wait-hi τ)
   }
 
-intervalRunsToIntervalsGradeSystem : GradeSystem
-intervalRunsToIntervalsGradeSystem = record
-  { RGrade = rational-intervals
+timed-regex→intervals-grade-system : GradeSystem
+timed-regex→intervals-grade-system = record
+  { RGrade = rational-interval
   ; EGrade = interval
-  ; ∣-∣ᵉ   = interval-runs→intervals
+  ; ∣-∣ᵉ   = timed-regex→intervals
   }
 
 -- its hints
 
-intervalRunsToIntervalsGradeSystemʰ : SystemHints intervalRunsToIntervalsGradeSystem
-intervalRunsToIntervalsGradeSystemʰ = record
-  { RHints      = rational-intervalsʰ
+timed-regex→intervals-grade-systemʰ : SystemHints timed-regex→intervals-grade-system
+timed-regex→intervals-grade-systemʰ = record
+  { RHints      = rational-intervalʰ
   ; EHints      = intervalʰ
   ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []

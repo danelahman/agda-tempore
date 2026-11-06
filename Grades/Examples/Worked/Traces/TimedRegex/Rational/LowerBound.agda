@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
--- Worked rigid timed regex lower bounds in dense time.               --
+-- Worked rational timed regex lower bounds.                          --
 --                                                                    --
 -- The operations of `TimedRegex.Finite.Operations`. The cases: waits --
 -- add up under iteration; the empty word is no wait; activity needs  --
 -- explicit flanks, here iterated; open against closed ends under     --
 -- iteration; the Kleene plus; the hull of a delay; and an idle wait  --
--- made only from a span letter.                                      --
+-- made only from a time span admitting every operation.              --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Worked.Traces.TimedRegex.Rational.LowerBound where
@@ -36,7 +36,7 @@ waits-plus : holds (⌜ idle ≥ (# 1) ⌝ ⁺ᵉ) ⌜ idle ≥ (# 1) ⌝ ≡ tr
 waits-plus = refl , refl
 
 ------------------------------------------------------------------------
--- Logs, iterated, within a stretch admitting them; an interrupting
+-- Logs, iterated, within a time span admitting them; an interrupting
 -- operation needs its own flanks
 
 logs-in-stretch : holds ⌜ ‵ log * ⌝ ⌜ ≥ (# 0) & L ⌝ ≡ true
@@ -69,8 +69,8 @@ delay-iterated : holds (waitᴸ (# 2)) ⌜ (idle ≥ (1 / 2)) * ⌝ ≡ true
 delay-iterated = refl
 
 ------------------------------------------------------------------------
--- An idle wait is made only from a span letter: `idle ‵ heat` is
--- refused
+-- An idle wait is made only from a time span admitting every operation:
+-- `idle ‵ heat` is refused
 
 heat-not-span : span? (‵ heat) ≡ false
 heat-not-span = refl

@@ -23,7 +23,7 @@ open import Grades.Base using (Grade)
 open import Util.Equality
 
 open import Grades.Examples.Lattice
-  using (LowHigh; Low; High; two-point-levels; TaintSet; taint-sets;
+  using (LowHigh; Low; High; low-high; TaintSet; taint-sets;
          label; _∪ᵗ_)
 
 open import Grades.Examples.Worked.Operations using (read; write; send)
@@ -49,15 +49,15 @@ module _ {D : Duration} {G : Grade D} where
 
 module _ where
 
-  open Grade (two-point-levels {ℕᴰ})
+  open Grade (low-high {ℕᴰ})
 
   -- a `Low` computation may be treated as `High`, not conversely
 
   low-⊑-high : Low ≾ High
-  low-⊑-high = ≾! {G = two-point-levels {ℕᴰ}}
+  low-⊑-high = ≾! {G = low-high {ℕᴰ}}
 
   high-⋢-low : ¬ (High ≾ Low)
-  high-⋢-low = ⋠! {G = two-point-levels {ℕᴰ}}
+  high-⋢-low = ⋠! {G = low-high {ℕᴰ}}
 
   -- reading `High` data raises the label for the rest of the run
 

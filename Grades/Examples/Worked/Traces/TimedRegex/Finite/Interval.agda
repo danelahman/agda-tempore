@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Worked rigid timed finite-expression intervals in dense time.      --
+-- Worked finite timed regex intervals in rational time.              --
 --                                                                    --
 -- An interval `[ L , U ]` pairs a lower and an upper bound that a    --
 -- common run fits, checked in a literal. The lower bound demanding a --

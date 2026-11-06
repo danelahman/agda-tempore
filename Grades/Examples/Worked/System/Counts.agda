@@ -7,17 +7,17 @@
 
 module Grades.Examples.Worked.System.Counts where
 
--- the finite run set cap, projected onto quotas and onto certain
--- counts
+-- the finite run set cap, projected onto at-most counts and onto
+-- at-least counts
 
 import Grades.Examples.Worked.System.Counts.FiniteRunSets.AtMost
 import Grades.Examples.Worked.System.Counts.FiniteRunSets.AtLeast
 
--- the coverage floor, projected onto certain counts
+-- the coverage floor, projected onto at-least counts
 
 import Grades.Examples.Worked.System.Counts.Banked.LowerBound
 
--- the allowance cap does not project onto quotas
+-- the allowance cap does not project onto at-most counts
 
 import Grades.Examples.Worked.System.Counts.Banked.UpperBound
 

@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
 -- Worked instances of at-least counts, at the sensor node.           --
 --                                                                    --
--- A certain count for each of `read`, `write` and `send`. A smaller  --
--- demand is weaker, and demanding nothing is the greatest grade.     --
--- Every ordering is established by the decision procedure of the     --
--- grade, and every computation by reduction.                         --
+-- An at-least count for each of `read`, `write` and `send`. A        --
+-- smaller demand is weaker, and demanding nothing is the greatest    --
+-- grade. Every ordering is established by the decision procedure of  --
+-- the grade, and every computation by reduction.                     --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Worked.Counts.AtLeast where
@@ -42,7 +42,7 @@ one-reading = fails
 send-for-read : ¬ (⟪ 0 , 0 , 1 ⟫ˡ ≾ᵛ ⟪ 1 , 0 , 0 ⟫ˡ)
 send-for-read = fails
 
--- sequencing adds the certain counts; the join keeps only what both
+-- sequencing adds the at-least counts; the join keeps only what both
 -- make certain
 
 sequenced : ⟪ 1 , 0 , 1 ⟫ˡ ·ᵛ ⟪ 2 , 1 , 0 ⟫ˡ ≡ ⟪ 3 , 1 , 1 ⟫ˡ

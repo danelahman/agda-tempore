@@ -39,19 +39,19 @@ private
 
 -- the trough `-a`, the range `[d₁ , d₂]` and the peak `h`
 
-res : (a : ℕ) (d₁ d₂ : ℤ) (h : ℕ) {w : Wellformed ⟨ a ⟩ (fin (ℤ.- d₁)) (fin d₂) ⟨ h ⟩} → Level
-res a d₁ d₂ h {w} = levelⁿ ⟨ a ⟩ (fin (ℤ.- d₁)) (fin d₂) ⟨ h ⟩ {w}
+res : (a : ℕ) (d₁ d₂ : ℤ) (h : ℕ) {w : Wellformed ⟨ a ⟩ (fin (ℤ.- d₁)) (fin d₂) ⟨ h ⟩} → Watermark
+res a d₁ d₂ h {w} = watermarkⁿ ⟨ a ⟩ (fin (ℤ.- d₁)) (fin d₂) ⟨ h ⟩ {w}
 
-holds : (c d : Level) {p : True (c L.≾? d)} → c L.≾ d
+holds : (c d : Watermark) {p : True (c L.≾? d)} → c L.≾ d
 holds c d {p} = toWitness p
 
-fails : (c d : Level) {p : False (c L.≾? d)} → ¬ (c L.≾ d)
+fails : (c d : Watermark) {p : False (c L.≾? d)} → ¬ (c L.≾ d)
 fails c d {p} = toWitnessFalse p
 
-same : (c d : Level) {p : True (c L.≃? d)} → c L.≃ d
+same : (c d : Watermark) {p : True (c L.≃? d)} → c L.≃ d
 same c d {p} = toWitness p
 
-open-file close-file : Level
+open-file close-file : Watermark
 open-file  = res 0 (+ 1) (+ 1) 1
 close-file = res 1 (ℤ.- + 1) (ℤ.- + 1) 0
 
@@ -71,7 +71,7 @@ not-commutative = fails (open-file L.· close-file) (close-file L.· open-file)
 -- a policy: at most two files at a time, all released, none closed that
 -- was not opened
 
-two-at-a-time : Level
+two-at-a-time : Watermark
 two-at-a-time = res 0 (+ 0) (+ 0) 2
 
 nested : open-file L.· (open-file L.· close-file L.· close-file) L.≾ two-at-a-time
@@ -111,23 +111,23 @@ sockets = 1
 
 -- `x` for the resource `r`, the unit for the others
 
-only : ℕ → Level → Map Level
+only : ℕ → Watermark → Map Watermark
 only r x = L.𝟏 ∣ ((r , x) ∷ [])
 
-holdsᴿ : (c d : Map Level) {p : True (c R.≾? d)} → c R.≾ d
+holdsᴿ : (c d : Map Watermark) {p : True (c R.≾? d)} → c R.≾ d
 holdsᴿ c d {p} = toWitness p
 
-failsᴿ : (c d : Map Level) {p : False (c R.≾? d)} → ¬ (c R.≾ d)
+failsᴿ : (c d : Map Watermark) {p : False (c R.≾? d)} → ¬ (c R.≾ d)
 failsᴿ c d {p} = toWitnessFalse p
 
 -- at most two files and one socket at a time, all released
 
-budget : Map Level
+budget : Map Watermark
 budget = L.𝟏 ∣ ((files , two-at-a-time) ∷ (sockets , res 0 (+ 0) (+ 0) 1) ∷ [])
 
 -- a file and a socket opened together, both closed
 
-file-and-socket : Map Level
+file-and-socket : Map Watermark
 file-and-socket =
   only files open-file R.· only sockets open-file R.· only sockets close-file R.· only files close-file
 
@@ -142,7 +142,7 @@ two-sockets-refused =
   failsᴿ (only sockets open-file R.· only sockets open-file
           R.· only sockets close-file R.· only sockets close-file) budget
 
--- the files' levels are untouched by the sockets
+-- the files' watermarks are untouched by the sockets
 
 files-alone : (only sockets open-file R.· only files open-file) ! files ≡ L.𝟏 L.· open-file
 files-alone = refl

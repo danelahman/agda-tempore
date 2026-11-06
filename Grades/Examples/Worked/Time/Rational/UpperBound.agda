@@ -19,30 +19,30 @@ open import Grades.Examples.Time.Rational.ExtendedRational
 
 open import Grades.Examples.Worked.Time.Rational.Decide using (module Decide)
 
-open Decide R.rational-upper-bounds renaming (≾! to ≾ʳ!; ⋠! to ⋠ʳ!)
+open Decide R.rational-upper-bound renaming (≾! to ≾ʳ!; ⋠! to ⋠ʳ!)
 
 ------------------------------------------------------------------------
 -- Upper-bound: "at most q units", a real-time deadline
 
 -- meeting a deadline of 2.5 units meets one of 3
 
-rsi-weaken : R.[0, ↑ 5 / 2 ] R.≾ₒ R.[0, ↑ # 3 ]
-rsi-weaken = ≾ʳ!
+upper-weaken : R.[0, ↑ 5 / 2 ] R.≾ₒ R.[0, ↑ # 3 ]
+upper-weaken = ≾ʳ!
 
-rsi-no-strengthen : ¬ (R.[0, ↑ # 3 ] R.≾ₒ R.[0, ↑ 5 / 2 ])
-rsi-no-strengthen = ⋠ʳ!
+upper-no-strengthen : ¬ (R.[0, ↑ # 3 ] R.≾ₒ R.[0, ↑ 5 / 2 ])
+upper-no-strengthen = ⋠ʳ!
 
 -- every deadline is below having none
 
-rsi-top : R.[0, ↑ 5 / 2 ] R.≾ₒ R.[0, ∞ ]
-rsi-top = ≾ʳ! {R.[0, ↑ 5 / 2 ]} {R.[0, ∞ ]}
+upper-top : R.[0, ↑ 5 / 2 ] R.≾ₒ R.[0, ∞ ]
+upper-top = ≾ʳ! {R.[0, ↑ 5 / 2 ]} {R.[0, ∞ ]}
 
 -- deadlines add: 1/2 + 2/3 = 7/6
 
-rsi-add : R.[0, ↑ 1 / 2 ] R.·ₒ R.[0, ↑ 2 / 3 ] ≡ R.[0, ↑ 7 / 6 ]
-rsi-add = refl
+upper-add : R.[0, ↑ 1 / 2 ] R.·ₒ R.[0, ↑ 2 / 3 ] ≡ R.[0, ↑ 7 / 6 ]
+upper-add = refl
 
 -- an unbounded computation stays unbounded
 
-rsi-absorb : R.[0, ↑ 1 / 2 ] R.·ₒ R.[0, ∞ ] ≡ R.[0, ∞ ]
-rsi-absorb = refl
+upper-absorb : R.[0, ↑ 1 / 2 ] R.·ₒ R.[0, ∞ ] ≡ R.[0, ∞ ]
+upper-absorb = refl

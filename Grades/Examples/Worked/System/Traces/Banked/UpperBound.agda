@@ -31,7 +31,7 @@ open import Grades.Examples.Time.UpperBound
 
 open import Grades.Examples.System.Traces.Banked.UpperBound
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
-  using (traces→upper-bounds)
+  using (banked→upper-bounds)
 
 open import Grades.Examples.Worked.Traces.Banked.UpperBound
   using (_≾_; holds; within_; unbounded; _·ᵇ_)
@@ -40,20 +40,20 @@ open import Grades.Examples.Worked.Traces.Banked.UpperBound
 -- a reading and six ticks' worth of work is a seven-tick deadline
 
 budget-measured :
-  map traces→upper-bounds (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ) ≡ [0, 7 ]
+  map banked→upper-bounds (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ) ≡ [0, 7 ]
 budget-measured = refl
 
 -- and a grade listing alternatives is measured by the slowest of them
 
 alternatives-measured :
-  map traces→upper-bounds
+  map banked→upper-bounds
       (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ʰⁱ)
   ≡ [0, 12 ]
 alternatives-measured = refl
 
 -- the unbounded grade becomes the deadline that is no deadline
 
-unbounded-measured : map traces→upper-bounds unbounded ≡ mkᵣ ∞
+unbounded-measured : map banked→upper-bounds unbounded ≡ mkᵣ ∞
 unbounded-measured = refl
 
 -- what the projection forgets is which operations are permitted: a
@@ -62,8 +62,8 @@ unbounded-measured = refl
 -- outright
 
 operations-forgotten :
-  map traces→upper-bounds (within ⟅ ⌈ write ⌉ ⟆ʰⁱ)
-  ≡ map traces→upper-bounds (within ⟅ ⟨ 3 ⟩ ⟆ʰⁱ)
+  map banked→upper-bounds (within ⟅ ⌈ write ⌉ ⟆ʰⁱ)
+  ≡ map banked→upper-bounds (within ⟅ ⟨ 3 ⟩ ⟆ʰⁱ)
 operations-forgotten = refl
 
 -- upstream those two are ordered one way and not the other, which the
@@ -76,18 +76,18 @@ store-within-three-ticks = holds
 -- it, from four ticks to seven
 
 deadline-rises :
-  map traces→upper-bounds (within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ʰⁱ)
-  ≾ᵣ map traces→upper-bounds (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ)
+  map banked→upper-bounds (within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ʰⁱ)
+  ≾ᵣ map banked→upper-bounds (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ)
 deadline-rises =
-  map-monotone traces→upper-bounds
+  map-monotone banked→upper-bounds
                {within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ʰⁱ}
                {within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ} holds
 
 -- and it is a monoid map: sequencing before or after measuring agrees
 
 deadlines-add :
-  map traces→upper-bounds
+  map banked→upper-bounds
       (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ ·ᵇ within ⟅ ⌈ send ⌉ ⟆ʰⁱ)
-  ≡ map traces→upper-bounds (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ)
-    ·ᵣ map traces→upper-bounds (within ⟅ ⌈ send ⌉ ⟆ʰⁱ)
+  ≡ map banked→upper-bounds (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ)
+    ·ᵣ map banked→upper-bounds (within ⟅ ⌈ send ⌉ ⟆ʰⁱ)
 deadlines-add = refl

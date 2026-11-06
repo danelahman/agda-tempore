@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Worked instances of the trace intervals.                           --
+-- Worked instances of the banked trace intervals.                    --
 --                                                                    --
 -- A grade `[ P , Q ]` states that whatever the computation did, it   --
 -- covered one of the traces in `P` and stayed within one of those in --

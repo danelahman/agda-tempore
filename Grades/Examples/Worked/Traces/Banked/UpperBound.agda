@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------
--- Worked instances of the trace grade of upper bounds, at the        --
+-- Worked instances of the banked trace upper bounds, at the          --
 -- allowance order.                                                   --
 --                                                                    --
 -- A grade lists bounds, and a computation is graded by it when every --
 -- run it may have stays within one of them. The operations of a      --
 -- bound are permissions, which the run may perform, and its delays   --
 -- are a budget, which the run spends on idling and on operations the --
--- bound does not list, at their execution time.                      --
+-- bound does not list, at their running time.                        --
 --                                                                    --
 -- Thus `⌈ read ⌉ ∙ ⟨ 6 ⟩` reads "take a reading, then spend up to    --
 -- six ticks on anything": a duty-cycle budget, which specifies what  --

@@ -3,8 +3,8 @@
 --                                                                    --
 -- A grade system pairs effect grades (what a computation may do)     --
 -- with resource grades (what is thereby guaranteed), with a grade    --
--- morphism `∣-∣ᵉ` from the first to the second; the projection       --
--- determines what the resource grade forgets.                        --
+-- algebra morphism `∣-∣ᵉ` from the first to the second; the          --
+-- projection determines what the resource grade forgets.             --
 --                                                                    --
 -- Each module computes the projection on the grades of the sensor    --
 -- node and exercises its monotonicity: an ordering between two       --
@@ -12,10 +12,10 @@
 --                                                                    --
 -- There is one system between time intervals; ten from trace grades  --
 -- to time intervals, at the three banked grades, the finite run set  --
--- cap, and the three rigid finite-expression and three rigid timed   --
--- regex grades; one over lower bounds on time paired with a security --
--- level; and those of the counts. Every projection onto time         --
--- intervals measures a set of runs by a duration; the sets are read  --
+-- cap, and the three finite timed regex and three rational timed     --
+-- regex grades; one over time lower bounds paired with a lattice;    --
+-- and those of the counts. Every projection onto time intervals      --
+-- measures a set of runs by a duration; the sets are read            --
 -- disjunctively, so a cap measures its slowest member and a floor    --
 -- its fastest.                                                       --
 --                                                                    --
@@ -38,13 +38,13 @@ import Grades.Examples.Worked.System.Traces.Banked.Interval
 
 import Grades.Examples.Worked.System.Traces.FiniteRunSets.UpperBound
 
--- the rigid finite-expression grades, measured by their duration hull
+-- the finite timed regex grades, measured by their duration hull
 
 import Grades.Examples.Worked.System.Traces.TimedRegex.Finite.UpperBound
 import Grades.Examples.Worked.System.Traces.TimedRegex.Finite.LowerBound
 import Grades.Examples.Worked.System.Traces.TimedRegex.Finite.Interval
 
--- the rigid timed regex grades, measured by their duration hull
+-- the rational timed regex grades, measured by their duration hull
 
 import Grades.Examples.Worked.System.Traces.TimedRegex.Rational.UpperBound
 import Grades.Examples.Worked.System.Traces.TimedRegex.Rational.LowerBound

@@ -33,7 +33,7 @@ import Util.NonNegativeRational
 -- The grade algebras and grade systems the calculi are parameterised
 -- by, the constructions on them, and their examples.
 
--- Grade algebras, grade morphisms and grade systems
+-- Grade algebras, grade algebra morphisms and grade systems
 
 import Grades.Base
 
@@ -51,7 +51,7 @@ import Grades.Durations.Nat
 import Grades.Durations.NonNegativeRational
 import Grades.Durations.Solver
 
--- Constructions on grades: products, upward closure, semidirect
+-- Constructions on grade algebras: products, upward closure, semidirect
 -- products, indexed families
 
 import Grades.Product
@@ -137,9 +137,12 @@ import Grades.Regular.Plus
 import Grades.Regular.Properties
 import Grades.Regular.Reach
 
--- Exact timed words and interval-letter grades
+-- Exact timed words and the timed regex grades
 
 import Grades.Exact
+import Grades.Exact.Banked.Base
+import Grades.Exact.Banked.Lower
+import Grades.Exact.Banked.Upper
 import Grades.Exact.Base
 import Grades.Exact.Durations
 import Grades.Exact.Expression
@@ -159,9 +162,6 @@ import Grades.Exact.Joint.Zone
 import Grades.Exact.Joint.Zoned
 import Grades.Exact.Letters
 import Grades.Exact.Lift
-import Grades.Exact.NonRigid.Base
-import Grades.Exact.NonRigid.Lower
-import Grades.Exact.NonRigid.Upper
 import Grades.Exact.Offsets
 import Grades.Exact.Order
 import Grades.Exact.Positions

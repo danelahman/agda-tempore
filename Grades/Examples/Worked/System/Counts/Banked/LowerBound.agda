@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Worked instance of the coverage floor, projected onto certain      --
+-- Worked instance of the coverage floor, projected onto at-least     --
 -- counts.                                                            --
 --                                                                    --
 -- Each counter takes the least count among the listed guarantees.    --

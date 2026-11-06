@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 -- Worked instance: a cost model does not preserve the join.          --
 --                                                                    --
--- Each counter is weighted by its worst-case execution time, 1, 3    --
--- and 6 ticks. A write weighs 3 and a transmission 6, but their      --
--- join, one of each, weighs 9, more than either.                     --
+-- Each counter is weighted by its worst-case running time, 1, 3 and  --
+-- 6 ticks. A write weighs 3 and a transmission 6, but their join,    --
+-- one of each, weighs 9, more than either.                           --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Worked.System.Counts.Time where
@@ -17,8 +17,8 @@ open import Util.Equality
 open import Grades.Examples.Worked.Counts.Index using (⟪_,_,_⟫ᵐ)
 
 open import Grades.Examples.Counts.AtMost using (upto; _⊔ᵛ_)
-open import Grades.Examples.System.Counts.Time using (module WeighRight)
-open WeighRight using (weigh)
+open import Grades.Examples.System.Counts.Time using (module WeighUpper)
+open WeighUpper using (weigh)
 open import Grades.Examples.Time.UpperBound using (_⊔ₒ_)
 
 slow : Vec _ 3

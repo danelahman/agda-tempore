@@ -28,7 +28,7 @@ open import Grades.Examples.System.Traces.FiniteRunSets.UpperBound
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ using (finite-run-sets→upper-bounds)
 
 open import Grades.Examples.System.Traces.Banked.LowerBound
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ using (traces→lower-bounds)
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ using (banked→lower-bounds)
 
 open import Grades.Examples.Time.LowerBound using ([_,+∞⟩)
 
@@ -60,7 +60,7 @@ cap-measured = refl
 -- than a particular one, promises only what the faster of them takes
 
 banked-floor-measured :
-  map traces→lower-bounds the-branchesˡᵒ ≡ [ 1 ,+∞⟩
+  map banked→lower-bounds the-branchesˡᵒ ≡ [ 1 ,+∞⟩
 banked-floor-measured = refl
 
 -- monotonicity: permitting a further run raises the deadline

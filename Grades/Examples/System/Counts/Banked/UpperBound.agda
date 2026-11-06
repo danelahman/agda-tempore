@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- The allowance cap does not project onto quotas.                    --
+-- The allowance cap does not project onto at-most counts.            --
 --                                                                    --
 -- Going up the allowance order, an operation becomes a delay that    --
 -- covers it: `⌈ o ⌉ ≼ᵃ ⟨ 1 + costʰⁱ o ⟩`. A pure delay draws on no   --

@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------
--- Worked instance: rigid timed regex lower bounds, measured by        --
--- the fastest run.                                                    --
+-- Worked instance: rational timed regex lower bounds, measured by the --
+-- fastest run.                                                        --
 --                                                                     --
 -- `System.Traces.TimedRegex.Rational.LowerBound` measures a lower     --
 -- bound by the infimum of the durations of its runs. Heating takes    --
@@ -22,9 +22,9 @@ open import Grades.Examples.Time.Rational.LowerBound using ([_,+∞⟩; _/_; #_)
 open import Grades.Examples.Worked.Traces.TimedRegex.Finite.Operations
 open import Grades.Examples.Traces.TimedRegex.Rational.LowerBound Op 3 code name name-code code-name running
 open import Grades.Examples.System.Traces.TimedRegex.Rational.LowerBound Op 3 code name name-code code-name running
-  using (lower-runs→lower-bounds)
+  using (timed-regex→lower-bounds)
 
-∣_∣ = map lower-runs→lower-bounds
+∣_∣ = map timed-regex→lower-bounds
 
 -- heating, an undisturbed wait of at least one, logging: at least three
 -- and a quarter units, the open end of logging closed

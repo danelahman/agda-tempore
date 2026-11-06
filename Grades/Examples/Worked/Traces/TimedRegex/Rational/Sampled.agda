@@ -85,11 +85,11 @@ holds {lower} e f = isYes (e ≾ᴸ? f)
 ------------------------------------------------------------------------
 -- Upper bounds
 
--- an unbounded wait is an iteration of open stretches
+-- an unbounded wait is an iteration of open time spans
 u-unbounded : holds {upper} (str none ∞) ((str sAB (fin ((# 1) ∣ᶜ ⁻))) *) ≡ true
 u-unbounded = refl
 
--- iterated b's leave no room for a stretch of a's
+-- iterated b's leave no room for a time span of a's
 u-only-b : holds {upper} (str sA (fin ((# 2) ∣ᶜ ⁺))) ((ops sB) *) ≡ false
 u-only-b = refl
 
@@ -97,14 +97,15 @@ u-only-b = refl
 u-a-wait : holds {upper} (ops sA) (str none (fin ((3 / 2) ∣ᶜ ⁻))) ≡ false
 u-a-wait = refl
 
--- a closed wait of two is not below an open stretch of two
+-- a closed wait of two is not below an open time span of two
 u-closed-open : holds {upper} (str none (fin ((# 2) ∣ᶜ ⁺))) (str sA (fin ((# 2) ∣ᶜ ⁻))) ≡ false
 u-closed-open = refl
 
 ------------------------------------------------------------------------
 -- Lower bounds
 
--- a b fits a nested iteration of operations each followed by a stretch
+-- a b fits a nested iteration of operations each followed by a time
+-- span
 l-nested : holds {lower} (ops sB) ((((ops sAB) · (str sAB ((# 0) ∣ᶜ ⁻))) *) *) ≡ true
 l-nested = refl
 
@@ -116,6 +117,6 @@ l-star-empty = refl
 l-wait : holds {lower} (str none ((1 / 2) ∣ᶜ ⁻)) (str none ((# 0) ∣ᶜ ⁺)) ≡ true
 l-wait = refl
 
--- a single b is not a sequence of two operations around a stretch
+-- a single b is not a sequence of two operations around a time span
 l-short : holds {lower} (ops sB) (((ops sA) · (str sA ((1 / 2) ∣ᶜ ⁻))) · (ops sAB)) ≡ false
 l-short = refl

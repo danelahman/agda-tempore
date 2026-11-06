@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------
--- Worked instance: rigid timed regex intervals, measured by           --
--- their duration hull.                                                --
+-- Worked instance: rational timed regex intervals, measured by their  --
+-- duration hull.                                                      --
 --                                                                     --
 -- `System.Traces.TimedRegex.Rational.Interval` measures `[ L , U ]`   --
 -- by the lower end of the hull of `L` and the upper end of the hull   --
@@ -29,11 +29,11 @@ open import Grades.Examples.Traces.TimedRegex.Rational.Base Op 3 code name name-
 import Grades.Examples.Traces.TimedRegex.Rational.LowerBound Op 3 code name name-code code-name running as L
 import Grades.Examples.Traces.TimedRegex.Rational.UpperBound Op 3 code name name-code code-name running as U
 open import Grades.Examples.System.Traces.TimedRegex.Rational.Interval Op 3 code name name-code code-name running
-  using (interval-runs→intervals)
+  using (timed-regex→intervals)
 
 open Grade interval using (𝟏; ι) renaming (_·_ to _·ᵢ_)
 
-∣_∣ = map interval-runs→intervals
+∣_∣ = map timed-regex→intervals
 
 -- heating, a wait of at least two, logging, all within six units of
 -- anything: more than four and a quarter units, at most ten and a half

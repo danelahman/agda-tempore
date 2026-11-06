@@ -160,8 +160,8 @@ lower-bound→at-least-counts = strictᵍ record
   ; map-ι        = λ {k} → mapₗ-ι k
   }
 
-lowerBoundToAtLeastCountsGradeSystem : GradeSystem
-lowerBoundToAtLeastCountsGradeSystem = record
+lower-bound→at-least-counts-grade-system : GradeSystem
+lower-bound→at-least-counts-grade-system = record
   { RGrade = at-least-counts n
   ; EGrade = lower-bound
   ; ∣-∣ᵉ   = lower-bound→at-least-counts
@@ -169,8 +169,8 @@ lowerBoundToAtLeastCountsGradeSystem = record
 
 -- its hints
 
-lowerBoundToAtLeastCountsGradeSystemʰ : SystemHints lowerBoundToAtLeastCountsGradeSystem
-lowerBoundToAtLeastCountsGradeSystemʰ = record
+lower-bound→at-least-counts-grade-systemʰ : SystemHints lower-bound→at-least-counts-grade-system
+lower-bound→at-least-counts-grade-systemʰ = record
   { RHints      = (at-least-countsʰ n)
   ; EHints      = noGradeHints
   ; reflects-𝟏? = nothing

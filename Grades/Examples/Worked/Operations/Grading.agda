@@ -39,7 +39,7 @@ module Time-LowerBound where
   opTime send  = [ 4 ,+∞⟩
 
 ------------------------------------------------------------------------
--- Intervals of time: the window an operation's execution time falls in
+-- Intervals of time: the window an operation's running time falls in
 
 module Time-Interval where
 

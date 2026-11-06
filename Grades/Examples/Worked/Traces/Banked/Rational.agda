@@ -1,9 +1,8 @@
 ------------------------------------------------------------------------
--- Worked instances of the banked trace grades in dense time.         --
+-- Worked instances of the banked trace grades in rational time.      --
 --                                                                    --
--- The sensor node of `Worked.Operations`, with running               --
--- times in units of dense time, each an interval with open or closed --
--- ends:                                                              --
+-- The sensor node of `Worked.Operations`, with running times in      --
+-- units of rational time, each an interval with open or closed ends: --
 --                                                                    --
 --   read   [1/2, 1]     between half a unit and one                  --
 --   write  ]1/4, 3/2]   more than a quarter, at most one and a half  --
@@ -11,7 +10,7 @@
 --                                                                    --
 -- An allowance charges an operation the upper end of its running     --
 -- time (`RunningTimes.costʰⁱ`), and delays are rational. The whole-  --
--- step grade reads in dense time along the inclusion of durations    --
+-- step grade reads in rational time along the inclusion of durations --
 -- (`Banked.Rational`). Every ordering is established by the decision --
 -- procedure of the grade.                                            --
 ------------------------------------------------------------------------
@@ -71,7 +70,7 @@ write-costs : (costˡᵒ write ≡ 1 / 4) × (costʰⁱ write ≡ 3 / 2)
 write-costs = refl , refl
 
 ------------------------------------------------------------------------
--- The grade of upper bounds in dense time
+-- The grade of upper bounds in rational time
 
 open import Grades.Traces.Sets ℚ≥0ᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
   using (Trace; ⌈_⌉; ⟨_⟩; _∙_)
@@ -113,13 +112,13 @@ halves : ⟨ 1 / 2 ⟩ ∙ ⟨ 1 / 2 ⟩ ≡ ⟨ # 1 ⟩
 halves = refl
 
 ------------------------------------------------------------------------
--- Whole steps, read in dense time
+-- Whole steps, read in rational time
 
 open import Grades.Examples.Traces.Banked.Rational
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans using (module Right)
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans using (module UpperBound)
 
 private
-  module W = Right Steps.costʰⁱ (λ o e → <⇒≢ (Steps.costʰⁱ-pos o) (sym e))
+  module W = UpperBound Steps.costʰⁱ (λ o e → <⇒≢ (Steps.costʰⁱ-pos o) (sym e))
 
 -- the duty-cycle bound of `Worked.Traces.Banked.UpperBound`, six ticks
 -- after a reading, is six units after a reading

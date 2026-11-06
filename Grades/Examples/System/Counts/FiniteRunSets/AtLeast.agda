@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- The finite run set cap, read as certain counts.                    --
+-- The finite run set cap, read as at-least counts.                   --
 --                                                                    --
 -- Every run of a computation is listed, so on each counter the least --
 -- count among the listed runs is certain:                            --
@@ -170,8 +170,8 @@ finite-run-sets→at-least-counts-with-⊤ = strictᵍ record
   ; map-ι        = λ {k} → mapₗ-ι k
   }
 
-finiteRunSetsToAtLeastCountsGradeSystem : GradeSystem
-finiteRunSetsToAtLeastCountsGradeSystem = record
+finite-run-sets→at-least-counts-grade-system : GradeSystem
+finite-run-sets→at-least-counts-grade-system = record
   { RGrade = at-least-counts-with-⊤ n
   ; EGrade = upper-bound
   ; ∣-∣ᵉ   = finite-run-sets→at-least-counts-with-⊤
@@ -179,8 +179,8 @@ finiteRunSetsToAtLeastCountsGradeSystem = record
 
 -- its hints
 
-finiteRunSetsToAtLeastCountsGradeSystemʰ : SystemHints finiteRunSetsToAtLeastCountsGradeSystem
-finiteRunSetsToAtLeastCountsGradeSystemʰ = record
+finite-run-sets→at-least-counts-grade-systemʰ : SystemHints finite-run-sets→at-least-counts-grade-system
+finite-run-sets→at-least-counts-grade-systemʰ = record
   { RHints      = (at-least-counts-with-⊤ʰ n)
   ; EHints      = noGradeHints
   ; reflects-𝟏? = nothing

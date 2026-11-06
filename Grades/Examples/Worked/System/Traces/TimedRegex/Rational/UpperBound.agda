@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------
--- Worked instance: rigid timed regex upper bounds, measured by         --
--- the slowest run.                                                     --
+-- Worked instance: rational timed regex upper bounds, measured by the  --
+-- slowest run.                                                         --
 --                                                                      --
 -- `System.Traces.TimedRegex.Rational.UpperBound` measures an upper     --
 -- bound by the supremum of the durations of its runs. Heating takes    --
@@ -22,9 +22,9 @@ open import Grades.Examples.Time.Rational.UpperBound using ([0,_]; ↑_; ∞; _/
 open import Grades.Examples.Worked.Traces.TimedRegex.Finite.Operations
 open import Grades.Examples.Traces.TimedRegex.Rational.UpperBound Op 3 code name name-code code-name running
 open import Grades.Examples.System.Traces.TimedRegex.Rational.UpperBound Op 3 code name name-code code-name running
-  using (upper-runs→upper-bounds)
+  using (timed-regex→upper-bounds)
 
-∣_∣ = map upper-runs→upper-bounds
+∣_∣ = map timed-regex→upper-bounds
 
 -- heating, less than a unit of anything, logging: at most five and a
 -- half units, the open end of the span closed
@@ -42,7 +42,7 @@ cool-measured = refl
 heat-or-cool : ∣ ⌜ ‵ heat ∣ ‵ cool ⌝ ∣ ≡ [0, ↑ # 4 ]
 heat-or-cool = refl
 
--- an unbounded stretch imposes no deadline
+-- an unbounded time span imposes no deadline
 
 unbounded : ∣ ⌜ ‵ log · ≤∞ ⌝ ∣ ≡ [0, ∞ ]
 unbounded = refl

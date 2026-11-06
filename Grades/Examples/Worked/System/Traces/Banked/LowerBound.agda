@@ -19,7 +19,7 @@ open _→ᵍ_ using (map; map-monotone)
 open import Grades.Examples.Time.LowerBound using ([_,+∞⟩; _·ₒ_; _≾ₒ_)
 
 open import Grades.Examples.System.Traces.Banked.LowerBound
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ using (traces→lower-bounds)
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ using (banked→lower-bounds)
 
 open import Grades.Examples.Worked.Traces.Banked.LowerBound
   using () renaming (holds to holdsᶜ; Antichain to Antichainˡᵒ; _·_ to _·ˡᵒ_;
@@ -29,14 +29,14 @@ open import Grades.Examples.Worked.Traces.Banked.LowerBound
 -- ticks, the two operations credited at their best case
 
 guarantee-measured :
-  map traces→lower-bounds ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ˡᵒ ≡ [ 7 ,+∞⟩
+  map banked→lower-bounds ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ˡᵒ ≡ [ 7 ,+∞⟩
 guarantee-measured = refl
 
 -- and a grade listing alternatives is measured by the fastest of them,
 -- which is the reverse of what the cap's projection does
 
 alternatives-measured-below :
-  map traces→lower-bounds
+  map banked→lower-bounds
       ⟅ ⌈ send ⌉ ∣ ⌈ read ⌉ ⟆ˡᵒ
   ≡ [ 1 ,+∞⟩
 alternatives-measured-below = refl
@@ -47,24 +47,24 @@ alternatives-measured-below = refl
 -- store
 
 stores-forgotten :
-  map traces→lower-bounds ⟅ ⌈ write ⌉ ⟆ˡᵒ
-  ≡ map traces→lower-bounds ⟅ ⟨ 2 ⟩ ⟆ˡᵒ
+  map banked→lower-bounds ⟅ ⌈ write ⌉ ⟆ˡᵒ
+  ≡ map banked→lower-bounds ⟅ ⟨ 2 ⟩ ⟆ˡᵒ
 stores-forgotten = refl
 
 -- monotonicity: dropping to the reading alone drops the guarantee from
 -- seven ticks to one
 
 guarantee-falls :
-  map traces→lower-bounds ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ˡᵒ
-  ≾ₒ map traces→lower-bounds ⟅ ⌈ read ⌉ ⟆ˡᵒ
+  map banked→lower-bounds ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ˡᵒ
+  ≾ₒ map banked→lower-bounds ⟅ ⌈ read ⌉ ⟆ˡᵒ
 guarantee-falls =
-  map-monotone traces→lower-bounds
+  map-monotone banked→lower-bounds
                {⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ˡᵒ} {⟅ ⌈ read ⌉ ⟆ˡᵒ} holdsᶜ
 
 -- and it is a monoid map: sequencing before or after measuring agrees
 
 guarantees-add :
-  map traces→lower-bounds (⟅ ⌈ read ⌉ ⟆ˡᵒ ·ˡᵒ ⟅ ⌈ send ⌉ ⟆ˡᵒ)
-  ≡ map traces→lower-bounds ⟅ ⌈ read ⌉ ⟆ˡᵒ
-    ·ₒ map traces→lower-bounds ⟅ ⌈ send ⌉ ⟆ˡᵒ
+  map banked→lower-bounds (⟅ ⌈ read ⌉ ⟆ˡᵒ ·ˡᵒ ⟅ ⌈ send ⌉ ⟆ˡᵒ)
+  ≡ map banked→lower-bounds ⟅ ⌈ read ⌉ ⟆ˡᵒ
+    ·ₒ map banked→lower-bounds ⟅ ⌈ send ⌉ ⟆ˡᵒ
 guarantees-add = refl

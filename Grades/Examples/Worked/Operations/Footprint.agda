@@ -9,10 +9,10 @@
 --   write    Low       2       local memory                          --
 --   send     High      5       the radio                             --
 --                                                                    --
--- `touches` is the security level an operation touches: the radio is --
--- the one contact of the node with the outside network, so a         --
--- transmission touches `High` and taints the rest of the run, and no --
--- local operation does. `draws` is the energy an operation draws     --
+-- `touches` is the level of the lattice an operation touches: the    --
+-- radio is the one contact of the node with the outside network, so  --
+-- a transmission touches `High` and taints the rest of the run, and  --
+-- no local operation does. `draws` is the energy an operation draws  --
 -- from the battery.                                                  --
 ------------------------------------------------------------------------
 

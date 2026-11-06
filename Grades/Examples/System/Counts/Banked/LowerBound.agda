@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- A grade system in which the resource grades are certain counts.    --
+-- A grade system in which the resource grades are at-least counts.   --
 --                                                                    --
 -- The effect grades are the coverage floor: whatever a computation   --
 -- does, one of the listed guarantees has been covered. The resource  --

@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- The operations of the worked finite-expression grades, with        --
--- running times in dense time, ends open or closed:                  --
+-- The operations of the worked finite timed regex grades, with       --
+-- running times in rational time, ends open or closed:               --
 --                                                                    --
 --   heat   [2, 4]                                                    --
 --   cool   ]1, 2[    more than one unit, less than two               --

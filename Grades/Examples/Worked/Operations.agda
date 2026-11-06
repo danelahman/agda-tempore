@@ -2,7 +2,7 @@
 -- The alphabet of the worked examples.                               --
 --                                                                    --
 -- A sensor node, which can `read` a sensor, `write` a reading to     --
--- local memory, and `send` one over the radio, with the execution    --
+-- local memory, and `send` one over the radio, with the running      --
 -- times:                                                             --
 --                                                                    --
 --   read   1 tick     local                                          --
@@ -11,10 +11,10 @@
 --                                                                    --
 -- Two cost models are read off these figures, `fast` (the best case) --
 -- and `slow` (the worst case), and `opTime` gives the interval in    --
--- which the execution time of an operation lies. A guarantee credits --
+-- which the running time of an operation lies. A guarantee credits   --
 -- an operation with `costˡᵒ = fast`, the time it is certain to take; --
--- an allowance charges `costʰⁱ = slow`, the time a schedule must     --
--- budget for.                                                        --
+-- an allowance charges `costʰⁱ = slow`, the time a deadline must     --
+-- allow for.                                                         --
 --                                                                    --
 -- The module re-exports the timed traces over this alphabet.         --
 ------------------------------------------------------------------------
@@ -86,9 +86,9 @@ data _<ᵒ_ : Rel Op lzero where
 <ᵒ-cmp send  send  = tri≈ (λ ()) refl (λ ())
 
 ------------------------------------------------------------------------
--- Execution times
+-- Running times
 
--- the interval an operation's execution time falls in
+-- the interval an operation's running time falls in
 
 opTime : Op → Interval∞
 opTime read  = [ 1 , ↑ 1 ]

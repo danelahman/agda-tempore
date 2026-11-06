@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Worked instances of the trace grade of guarantees, at the coverage --
+-- Worked instances of the banked trace lower bounds, at the coverage --
 -- order.                                                             --
 --                                                                    --
 -- A grade lists traces, and in every run of the computation at least --
@@ -115,9 +115,9 @@ everything-guarantees-the-empty-trace = holdsᵉ ⟅ ⌈ read ⌉ ⟆ ⟅ ε ⟆
 -- An operation guarantees the time it takes
 --
 -- The direction that holds is operation to time: a store covers a
--- two-tick guarantee, at its best-case execution time. Time never
--- covers an operation, as a guarantee requires; under the allowance
--- order it does.
+-- two-tick guarantee, at its best-case running time. Time never covers
+-- an operation, as a guarantee requires; under the allowance order it
+-- does.
 
 a-store-guarantees-two-ticks : ⟅ ⌈ write ⌉ ⟆ ≾ ⟅ ⟨ 2 ⟩ ⟆
 a-store-guarantees-two-ticks = holds

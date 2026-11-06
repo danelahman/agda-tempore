@@ -5,11 +5,11 @@
 -- transmission taking one step is `(1 , send at {0})`: it happens at --
 -- its start. Two of them in a row take two steps and transmit at     --
 -- times 0 and 1; idling two steps first shifts the transmission to   --
--- time 2. A schedule that allows transmissions only in the window    --
--- `[2 , 4]` admits the second and refuses the first. The unit,       --
--- taking no time and doing nothing, is not least: a grade that takes --
--- at least one step is not above it. Every ordering is established   --
--- by the decision procedure of the grade, and every computation by   --
+-- time 2. A call-time set that allows transmissions only at times 2  --
+-- to 4 admits the second and refuses the first. The unit, taking no  --
+-- time and doing nothing, is not least: a grade that takes at least  --
+-- one step is not above it. Every ordering is established by the     --
+-- decision procedure of the grade, and every computation by          --
 -- reduction.                                                         --
 ------------------------------------------------------------------------
 
@@ -38,15 +38,15 @@ name send  = 2
 
 -- the durations from `n` to `n + k`
 
-span : ℕ → ℕ → Durations
-span n 0       = ι n
-span n (suc k) = span n k ⊔ᴰ ι (n + suc k)
+durations-between : ℕ → ℕ → Durations
+durations-between n 0       = ι n
+durations-between n (suc k) = durations-between n k ⊔ᴰ ι (n + suc k)
 
 -- the times from `n` to `n + k`
 
-window : ℕ → ℕ → Times
-window n 0       = ⟪ n ⟫ₜ
-window n (suc k) = window n k ∪ₜ ⟪ n + suc k ⟫ₜ
+times-between : ℕ → ℕ → Times
+times-between n 0       = ⟪ n ⟫ₜ
+times-between n (suc k) = times-between n k ∪ₜ ⟪ n + suc k ⟫ₜ
 
 -- taking `T`, performing nothing
 
@@ -74,18 +74,19 @@ transmit = at (ι 1) send ⟪ 0 ⟫ₜ
 
 -- two in a row transmit at times 0 and 1, and take two steps
 
-twice : transmit · transmit ≃ at (ι 2) send (window 0 1)
-twice = equal (transmit · transmit) (at (ι 2) send (window 0 1))
+twice : transmit · transmit ≃ at (ι 2) send (times-between 0 1)
+twice = equal (transmit · transmit) (at (ι 2) send (times-between 0 1))
 
 -- idling first shifts the transmission
 
 idle-first : takes (ι 2) · transmit ≃ at (ι 3) send ⟪ 2 ⟫ₜ
 idle-first = equal (takes (ι 2) · transmit) (at (ι 3) send ⟪ 2 ⟫ₜ)
 
--- a schedule: two to six steps, transmitting only between times 2 and 4
+-- a call-time set: two to six steps, transmitting only between times 2
+-- and 4
 
 slot : Carrier
-slot = at (span 2 4) send (window 2 2)
+slot = at (durations-between 2 4) send (times-between 2 2)
 
 late-ok : takes (ι 2) · transmit ≾ slot
 late-ok = holds (takes (ι 2) · transmit) slot
@@ -101,8 +102,8 @@ not-commutative = fails (takes (ι 2) · transmit) (transmit · takes (ι 2))
 -- a branch that idles one or two steps first transmits at time 1 or 2
 
 branching : (takes (ι 1) ⊔ takes (ι 2)) · transmit
-          ≃ at (span 2 1) send (window 1 1)
-branching = equal ((takes (ι 1) ⊔ takes (ι 2)) · transmit) (at (span 2 1) send (window 1 1))
+          ≃ at (durations-between 2 1) send (times-between 1 1)
+branching = equal ((takes (ι 1) ⊔ takes (ι 2)) · transmit) (at (durations-between 2 1) send (times-between 1 1))
 
 -- the unit is not least
 

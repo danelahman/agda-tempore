@@ -1,13 +1,13 @@
 ------------------------------------------------------------------------
--- Worked instances of the example grades and grade systems.          --
+-- Worked instances of the example grade algebras and grade systems.  --
 --                                                                    --
 -- `Grades.Examples` gives the constructions; this subtree            --
 -- instantiates them at one alphabet and exhibits, as checked Agda    --
 -- terms, the orderings between grades and the action of each grade   --
--- morphism on them. The typing examples of the monomorphic calculus  --
--- write computations in a language over that alphabet and type them  --
--- at these grades; the type inference examples use the same          --
--- language.                                                          --
+-- algebra morphism on them. The typing examples of the monomorphic   --
+-- calculus write computations in a language over that alphabet and   --
+-- type them at these grades; the type inference examples use the     --
+-- same language.                                                     --
 --                                                                    --
 -- The alphabet is a sensor node: `read` a sensor (1 tick), `write` a --
 -- reading to local memory (2–3), `send` one over the radio (4–6).    --
@@ -22,21 +22,22 @@
 
 module Grades.Examples.Worked where
 
--- The alphabet, its execution times, and the runs the examples use.
+-- The alphabet, its running times, and the runs the examples use.
 
 import Grades.Examples.Worked.Operations
 
--- What each operation touches and draws besides time: a security
--- level and an amount of energy.
+-- What each operation touches and draws besides time: a level of the
+-- lattice and an amount of energy.
 
 import Grades.Examples.Worked.Operations.Footprint
 
--- Orderings and products in the three interval grades: the direction
--- of weakening in each, and the incomparable windows.
+-- Orderings and products in time lower bounds, time upper bounds and
+-- time intervals: the direction of weakening in each, and the
+-- incomparable intervals.
 
 import Grades.Examples.Worked.Time
 
--- The two-point security level and taint sets over `Fin 3`.
+-- The two-point lattice and taint sets over `Fin 3`.
 
 import Grades.Examples.Worked.Lattice
 
@@ -45,19 +46,19 @@ import Grades.Examples.Worked.Lattice
 
 import Grades.Examples.Worked.Product
 
--- The grade morphisms, computed on the node's own grades, and their
--- monotonicity carrying the orderings above across.
+-- The grade algebra morphisms, computed on the node's own grades, and
+-- their monotonicity carrying the orderings above across.
 
 import Grades.Examples.Worked.System
 
 -- The trace grades: a floor, a cap and their pairing at the
 -- cost-sensitive orders, and the finite run set cap, each read as an
--- effect grade and as a resource grade; the regular cap; and the rigid
--- regular, finite-expression and timed regex grades.
+-- effect grade and as a resource grade; the regular cap; and the timed
+-- regex grades in whole steps, finite, and rational.
 
 import Grades.Examples.Worked.Traces
 
--- Quotas and certain counts on the three operations.
+-- At-most counts and at-least counts on the three operations.
 
 import Grades.Examples.Worked.Counts
 

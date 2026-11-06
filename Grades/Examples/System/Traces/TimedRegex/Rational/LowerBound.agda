@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 -- A grade system in which the resource grades measure only time.     --
 --                                                                    --
--- The effect grades are the rigid timed regex lower bounds of        --
+-- The effect grades are the rational timed regex lower bounds of     --
 -- `Traces.TimedRegex.Rational.LowerBound`; the resource grades are   --
--- the lower bounds on dense time, "at least `q` time units". The     --
+-- the lower bounds on rational time, "at least `q` time units". The  --
 -- projection measures a grade by the infimum of the durations of its --
 -- runs, the lower end of its duration hull                           --
 -- (`Exact.Regular.Durations`):                                       --
@@ -48,7 +48,7 @@ open import Grades.Durations.Intervals ℚ≥0ᵀ
   renaming (_∣_ to _∣ᶜ_; ∞ to ∞ʰ)
 open import Grades.Examples.Time.Rational.LowerBound
   using (#_; _≤_; _≤?_; ≤-refl; _⊓_; ⊓-lbˡ; ⊓-lbʳ; ⊓-glb;
-         𝕀; [_,+∞⟩; rational-lower-bounds; rational-lower-boundsʰ)
+         𝕀; [_,+∞⟩; rational-lower-bound; rational-lower-boundʰ)
 
 open import Grades.Examples.Traces.TimedRegex.Rational.LowerBound Op n code name name-code code-name running
   using (lower-bound; lower-boundʰ; Proper′; ⌜_⌝; expr; εᵉ; at-least′; waitᴸ; lower; str)
@@ -94,8 +94,8 @@ private
       case (yes p) = cong (λ i → pt (lo i)) (hullᴾ-is (at-least′ τ (yes p)) {⟪ τ ∣ᶜ ⁻ , ∞ʰ ⟫} refl)
       case (no ¬p) = trans (cong (λ i → pt (lo i)) (hullᴾ-ε {lower})) (sym (≮0⇒≡0 ¬p))
 
-lower-runs→lower-bounds : lower-bound →ᵍ rational-lower-bounds
-lower-runs→lower-bounds = record
+timed-regex→lower-bounds : lower-bound →ᵍ rational-lower-bound
+timed-regex→lower-bounds = record
   { map          = mapₒ
   ; map-monotone = λ {c} {d} p → ⊑⇒≤ (proj₁ (hullᴾ-mono {c = c} {d} p))
   ; map-𝟏        = ≃-of (cong (λ i → pt (lo i)) (hullᴾ-ε {lower}))
@@ -108,18 +108,18 @@ lower-runs→lower-bounds = record
   ; map-ι        = λ {τ} → ≃-of (wait-lo τ)
   }
 
-lowerRunsToLowerBoundsGradeSystem : GradeSystem
-lowerRunsToLowerBoundsGradeSystem = record
-  { RGrade = rational-lower-bounds
+timed-regex→lower-bounds-grade-system : GradeSystem
+timed-regex→lower-bounds-grade-system = record
+  { RGrade = rational-lower-bound
   ; EGrade = lower-bound
-  ; ∣-∣ᵉ   = lower-runs→lower-bounds
+  ; ∣-∣ᵉ   = timed-regex→lower-bounds
   }
 
 -- its hints
 
-lowerRunsToLowerBoundsGradeSystemʰ : SystemHints lowerRunsToLowerBoundsGradeSystem
-lowerRunsToLowerBoundsGradeSystemʰ = record
-  { RHints      = rational-lower-boundsʰ
+timed-regex→lower-bounds-grade-systemʰ : SystemHints timed-regex→lower-bounds-grade-system
+timed-regex→lower-bounds-grade-systemʰ = record
+  { RHints      = rational-lower-boundʰ
   ; EHints      = lower-boundʰ
   ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []

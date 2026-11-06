@@ -26,9 +26,9 @@ open import Grades.Examples.Time.Interval
 
 open import Util.Equality
 
-tsi→lsi : intervals →ᵍ lower-bounds
-tsi→lsi = strictᵍ record
-  { map          = λ tsi → [ min tsi ,+∞⟩
+intervals→lower-bounds : interval →ᵍ lower-bound
+intervals→lower-bounds = strictᵍ record
+  { map          = λ i → [ min i ,+∞⟩
   ; map-monotone = λ rel → proj₁ rel
   ; map-𝟏        = refl
   ; map-·        = refl
@@ -37,19 +37,19 @@ tsi→lsi = strictᵍ record
   ; map-ι        = refl
   }
 
-intervalsToLowerBoundsGradeSystem : GradeSystem
-intervalsToLowerBoundsGradeSystem = record
-  { RGrade = lower-bounds
-  ; EGrade = intervals
-  ; ∣-∣ᵉ   = tsi→lsi
+intervals→lower-bounds-grade-system : GradeSystem
+intervals→lower-bounds-grade-system = record
+  { RGrade = lower-bound
+  ; EGrade = interval
+  ; ∣-∣ᵉ   = intervals→lower-bounds
   }
 
 -- its hints
 
-intervalsToLowerBoundsGradeSystemʰ : SystemHints intervalsToLowerBoundsGradeSystem
-intervalsToLowerBoundsGradeSystemʰ = record
-  { RHints      = lower-boundsʰ
-  ; EHints      = intervalsʰ
+intervals→lower-bounds-grade-systemʰ : SystemHints intervals→lower-bounds-grade-system
+intervals→lower-bounds-grade-systemʰ = record
+  { RHints      = lower-boundʰ
+  ; EHints      = intervalʰ
   ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

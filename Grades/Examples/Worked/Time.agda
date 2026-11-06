@@ -1,10 +1,11 @@
 ------------------------------------------------------------------------
--- Worked instances of the interval grades.                           --
+-- Worked instances of the time lower bounds, time upper bounds and   --
+-- time intervals.                                                    --
 --                                                                    --
 -- The running example is the `uplink` run of the sensor node: read,  --
 -- idle two ticks, send. Under `opTime` it takes between 7 and 9      --
--- ticks: read 1, the idle 2, and send between 4 and 6. Each interval --
--- grade records part of this:                                        --
+-- ticks: read 1, the idle 2, and send between 4 and 6. Each grade    --
+-- records part of this:                                              --
 --                                                                    --
 --   lower-bound   [ 7 ,+∞⟩       "at least 7 ticks have passed"      --
 --   upper-bound  [0, ↑ 9 ]      "at most 9 ticks have passed"        --

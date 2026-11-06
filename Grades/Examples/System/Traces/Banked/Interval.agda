@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
 -- A grade system in which the resource grades measure only time.     --
 --                                                                    --
--- The effect grades are the trace intervals of                       --
--- `Example.Traces.Banked.Interval`: a grade `[ P , Q ]` states that  --
--- whatever the computation did, it covered one of the traces in `P`  --
--- and stayed within one of those in `Q`. The resource grades are the --
+-- The effect grades are the banked trace intervals of                --
+-- `Traces.Banked.Interval`: a grade `[ P , Q ]` states that whatever --
+-- the computation did, it covered one of the traces in `P` and       --
+-- stayed within one of those in `Q`. The resource grades are the     --
 -- time intervals, "between `min` and `max` time steps".              --
 --                                                                    --
 -- The projection reads each endpoint through durations, in the       --
@@ -42,6 +42,7 @@ open import Relation.Binary.Definitions
 open import Grades.Base
 open import Grades.Hints using (SystemHints; noGradeHints)
 open import Grades.Examples.Time.Interval
+  renaming (interval to time-interval; intervalʰ to time-intervalʰ)
 
 open import Util.Equality
 
@@ -192,8 +193,8 @@ mapₒ-⊔ i₁ i₂ =
                 (nonemptyˡᵒ (lo i₁)) (nonemptyˡᵒ (lo i₂))))
       (capDuration-⊔ (hi i₁) (hi i₂))
 
-interval-traces→intervals : interval →ᵍ intervals
-interval-traces→intervals = strictᵍ record
+banked→intervals : interval →ᵍ time-interval
+banked→intervals = strictᵍ record
   { map          = mapₒ
   ; map-monotone = λ {i₁} {i₂} → mapₒ-monotone {i₁} {i₂}
   ; map-𝟏        = eqᵢ refl refl
@@ -205,18 +206,18 @@ interval-traces→intervals = strictᵍ record
           (cong ↑_ (trans (⊔-identityʳ (durationʰⁱ ⟨ n ⟩)) (duration-⟨⟩ʰⁱ n)))
   }
 
-tracesToIntervalsGradeSystem : GradeSystem
-tracesToIntervalsGradeSystem = record
-  { RGrade = intervals
+banked→intervals-grade-system : GradeSystem
+banked→intervals-grade-system = record
+  { RGrade = time-interval
   ; EGrade = interval
-  ; ∣-∣ᵉ   = interval-traces→intervals
+  ; ∣-∣ᵉ   = banked→intervals
   }
 
 -- its hints
 
-tracesToIntervalsGradeSystemʰ : SystemHints tracesToIntervalsGradeSystem
-tracesToIntervalsGradeSystemʰ = record
-  { RHints      = intervalsʰ
+banked→intervals-grade-systemʰ : SystemHints banked→intervals-grade-system
+banked→intervals-grade-systemʰ = record
+  { RHints      = time-intervalʰ
   ; EHints      = noGradeHints
   ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ

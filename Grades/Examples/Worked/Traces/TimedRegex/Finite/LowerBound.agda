@@ -1,10 +1,11 @@
 ------------------------------------------------------------------------
--- Worked rigid timed finite-expression lower bounds in dense time.   --
+-- Worked finite timed regex lower bounds in rational time.           --
 --                                                                    --
 -- The operations of `Operations`. The cases: idle waits add up,      --
 -- undisturbed waits are kept, activity needs explicit flanks, open   --
 -- against closed ends, an equivalence of distinct expressions, the   --
--- hull of a delay, and an idle wait made only from a span letter.    --
+-- hull of a delay, and an idle wait made only from a time span       --
+-- admitting every operation.                                         --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Worked.Traces.TimedRegex.Finite.LowerBound where
@@ -30,7 +31,7 @@ interrupted : holds ⌜ ‵ heat · idle ≥ (# 2) · ‵ cool · idle ≥ (# 3)
 interrupted = refl
 
 ------------------------------------------------------------------------
--- Activity is allowed only where a stretch allows it
+-- Activity is allowed only where a time span allows it
 
 not-nothing : holds {lower} ⌜ ‵ heat ⌝ ⌜ ε ⌝ ≡ false
 not-nothing = refl
@@ -77,8 +78,8 @@ delay-short : holds (waitᴸ (1 / 4)) ⌜ idle > (1 / 4) ⌝ ≡ false
 delay-short = refl
 
 ------------------------------------------------------------------------
--- An idle wait is made only from a span letter: `idle ‵ heat` is
--- refused
+-- An idle wait is made only from a time span admitting every operation:
+-- `idle ‵ heat` is refused
 
 heat-not-span : span? (‵ heat) ≡ false
 heat-not-span = refl

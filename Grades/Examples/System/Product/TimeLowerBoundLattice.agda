@@ -37,9 +37,9 @@ open import Grades.Base using (GradeSystem)
 open import Grades.Hints using (SystemHints)
 open import Grades.Product using (π₁ᵍ; π₂ᵍ; _→ˢ_; _×ˢ_⟨_⟩; _×ʰˢ_⟨_⟩; π₁ˢ)
 open import Grades.Examples.System.Identity
-  using (idᵍ; identityGradeSystem; identityʰ; noWitnesses)
-open import Grades.Examples.Time.LowerBound using (lower-bounds; lower-boundsʰ)
-open import Grades.Examples.Lattice using (two-point-levels; two-point-levelsʰ)
+  using (idᵍ; identity-grade-system; identityʰ; noWitnesses)
+open import Grades.Examples.Time.LowerBound using (lower-bound; lower-boundʰ)
+open import Grades.Examples.Lattice using (low-high; low-highʰ)
 open import Grades.Examples.Product.TimeLowerBoundLattice
   using (time-lower-bound×low-high; time-lower-bound×low-highʰ)
 
@@ -51,7 +51,7 @@ open import Util.Equality
 -- timed declassification: embargo and taint check
 
 embargo-and-taint : GradeSystem
-embargo-and-taint = identityGradeSystem time-lower-bound×low-high
+embargo-and-taint = identity-grade-system time-lower-bound×low-high
 
 embargo-and-taintʰ : SystemHints embargo-and-taint
 embargo-and-taintʰ = identityʰ time-lower-bound×low-highʰ noWitnesses
@@ -61,14 +61,14 @@ embargo-and-taintʰ = identityʰ time-lower-bound×low-highʰ noWitnesses
 embargo : GradeSystem
 embargo = record
   { Dur    = ℕᴰ
-  ; RGrade = lower-bounds
+  ; RGrade = lower-bound
   ; EGrade = time-lower-bound×low-high
-  ; ∣-∣ᵉ   = π₁ᵍ {G₁ = lower-bounds} {two-point-levels}
+  ; ∣-∣ᵉ   = π₁ᵍ {G₁ = lower-bound} {low-high}
   }
 
 embargoʰ : SystemHints embargo
 embargoʰ = record
-  { RHints      = lower-boundsʰ
+  { RHints      = lower-boundʰ
   ; EHints      = time-lower-bound×low-highʰ
   ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
@@ -79,14 +79,14 @@ embargoʰ = record
 taint : GradeSystem
 taint = record
   { Dur    = ℕᴰ
-  ; RGrade = two-point-levels
+  ; RGrade = low-high
   ; EGrade = time-lower-bound×low-high
-  ; ∣-∣ᵉ   = π₂ᵍ {G₁ = lower-bounds} {two-point-levels}
+  ; ∣-∣ᵉ   = π₂ᵍ {G₁ = lower-bound} {low-high}
   }
 
 taintʰ : SystemHints taint
 taintʰ = record
-  { RHints      = two-point-levelsʰ
+  { RHints      = low-highʰ
   ; EHints      = time-lower-bound×low-highʰ
   ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
@@ -99,7 +99,7 @@ embargo-and-taint→embargo : embargo-and-taint →ˢ embargo
 embargo-and-taint→embargo = record
   { mapᴰ   = idᴰ
   ; mapᴱ   = idᵍ time-lower-bound×low-high
-  ; mapᴿ   = π₁ᵍ {G₁ = lower-bounds} {two-point-levels}
+  ; mapᴿ   = π₁ᵍ {G₁ = lower-bound} {low-high}
   ; square = λ _ → refl
   }
 
@@ -107,23 +107,23 @@ embargo-and-taint→taint : embargo-and-taint →ˢ taint
 embargo-and-taint→taint = record
   { mapᴰ   = idᴰ
   ; mapᴱ   = idᵍ time-lower-bound×low-high
-  ; mapᴿ   = π₂ᵍ {G₁ = lower-bounds} {two-point-levels}
+  ; mapᴿ   = π₂ᵍ {G₁ = lower-bound} {low-high}
   ; square = λ _ → refl
   }
 
-embargo→time : embargo →ˢ identityGradeSystem lower-bounds
+embargo→time : embargo →ˢ identity-grade-system lower-bound
 embargo→time = record
   { mapᴰ   = idᴰ
-  ; mapᴱ   = π₁ᵍ {G₁ = lower-bounds} {two-point-levels}
-  ; mapᴿ   = idᵍ lower-bounds
+  ; mapᴱ   = π₁ᵍ {G₁ = lower-bound} {low-high}
+  ; mapᴿ   = idᵍ lower-bound
   ; square = λ _ → refl
   }
 
-taint→level : taint →ˢ identityGradeSystem two-point-levels
+taint→level : taint →ˢ identity-grade-system low-high
 taint→level = record
   { mapᴰ   = idᴰ
-  ; mapᴱ   = π₂ᵍ {G₁ = lower-bounds} {two-point-levels}
-  ; mapᴿ   = idᵍ two-point-levels
+  ; mapᴱ   = π₂ᵍ {G₁ = lower-bound} {low-high}
+  ; mapᴿ   = idᵍ low-high
   ; square = λ _ → refl
   }
 
@@ -132,12 +132,12 @@ taint→level = record
 -- level
 
 identities : GradeSystem
-identities = identityGradeSystem lower-bounds
-          ×ˢ identityGradeSystem two-point-levels ⟨ refl ⟩
+identities = identity-grade-system lower-bound
+          ×ˢ identity-grade-system low-high ⟨ refl ⟩
 
 identitiesʰ : SystemHints identities
-identitiesʰ = identityʰ lower-boundsʰ noWitnesses
-           ×ʰˢ identityʰ two-point-levelsʰ noWitnesses ⟨ refl ⟩
+identitiesʰ = identityʰ lower-boundʰ noWitnesses
+           ×ʰˢ identityʰ low-highʰ noWitnesses ⟨ refl ⟩
 
 embargo-and-taint→identities : embargo-and-taint →ˢ identities
 embargo-and-taint→identities = record
@@ -147,7 +147,7 @@ embargo-and-taint→identities = record
   ; square = λ _ → refl
   }
 
-identities→time : identities →ˢ identityGradeSystem lower-bounds
-identities→time = π₁ˢ (identityGradeSystem lower-bounds)
-                      (identityGradeSystem two-point-levels) refl
+identities→time : identities →ˢ identity-grade-system lower-bound
+identities→time = π₁ˢ (identity-grade-system lower-bound)
+                      (identity-grade-system low-high) refl
 

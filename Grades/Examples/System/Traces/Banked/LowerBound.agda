@@ -40,6 +40,7 @@ open import Relation.Binary.Definitions
 open import Grades.Base
 open import Grades.Hints using (SystemHints; noGradeHints)
 open import Grades.Examples.Time.LowerBound
+  renaming (lower-bound to time-lower-bound; lower-boundʰ to time-lower-boundʰ)
 
 open import Util.Equality
 
@@ -133,8 +134,8 @@ mapₒ-⊔ P Q =
              (minSetDuration-++ (traces P) (traces Q)
                 (nonempty P) (nonempty Q)))
 
-traces→lower-bounds : lower-bound →ᵍ lower-bounds
-traces→lower-bounds = strictᵍ record
+banked→lower-bounds : lower-bound →ᵍ time-lower-bound
+banked→lower-bounds = strictᵍ record
   { map          = mapₒ
   ; map-monotone = λ {P} {Q} → mapₒ-monotone {P} {Q}
   ; map-𝟏        = refl
@@ -144,18 +145,18 @@ traces→lower-bounds = strictᵍ record
   ; map-ι        = λ {n} → eq𝕀 (duration-⟨⟩ n)
   }
 
-tracesToLowerBoundsGradeSystem : GradeSystem
-tracesToLowerBoundsGradeSystem = record
-  { RGrade = lower-bounds
+banked→lower-bounds-grade-system : GradeSystem
+banked→lower-bounds-grade-system = record
+  { RGrade = time-lower-bound
   ; EGrade = lower-bound
-  ; ∣-∣ᵉ   = traces→lower-bounds
+  ; ∣-∣ᵉ   = banked→lower-bounds
   }
 
 -- its hints
 
-tracesToLowerBoundsGradeSystemʰ : SystemHints tracesToLowerBoundsGradeSystem
-tracesToLowerBoundsGradeSystemʰ = record
-  { RHints      = lower-boundsʰ
+banked→lower-bounds-grade-systemʰ : SystemHints banked→lower-bounds-grade-system
+banked→lower-bounds-grade-systemʰ = record
+  { RHints      = time-lower-boundʰ
   ; EHints      = noGradeHints
   ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ

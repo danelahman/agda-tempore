@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
--- Worked rigid timed regex lower bounds, in whole steps.             --
+-- Worked timed regex lower bounds, in whole steps.                   --
 --                                                                    --
 -- A guarantee fixes the skeleton of a run: activity before, between  --
--- and after its letters only where a stretch admits it (`≥ 0`, the   --
+-- and after its letters only where a time span admits it (`≥ 0`, the --
 -- flank), and an idle wait demands an undisturbed wait. Operations   --
--- count inside a span at their running time; the stirs below take    --
--- at least three steps each.                                         --
+-- count inside a span at their running time; the stirs below take at --
+-- least three steps each.                                            --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Worked.Traces.TimedRegex.Nat.LowerBound where
@@ -113,7 +113,7 @@ interrupted : ¬ C._≾_ interrupted-run settle
 interrupted = fails interrupted-run settle refl
 
 ------------------------------------------------------------------------
--- The kinds of stretch
+-- The kinds of time span
 
 idle-below-span : C._≾_ wait-5 span-5
 idle-below-span = holds wait-5 span-5 refl
@@ -143,8 +143,8 @@ not-nothing : ¬ C._≾_ open-then-stir C.𝟏
 not-nothing = fails open-then-stir C.𝟏 refl
 
 ------------------------------------------------------------------------
--- An idle wait is made only from a span letter: `idle ‵ stir` is
--- refused
+-- An idle wait is made only from a time span admitting every operation:
+-- `idle ‵ stir` is refused
 
 stir-not-span : ¬ T (span? (‵_ {lower} stir))
 stir-not-span ()

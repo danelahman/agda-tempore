@@ -4,7 +4,7 @@
 -- "Between `min` and `max` units", ordered by containment: orderings --
 -- between concrete grades, each established by the decision          --
 -- procedure of the grade; the join, sequencing, and the discrete     --
--- windows read in dense time.                                        --
+-- windows read in rational time.                                     --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Worked.Time.Rational.Interval where
@@ -25,59 +25,59 @@ open import Grades.Examples.Time.Rational.ExtendedRational
 
 open import Grades.Examples.Worked.Time.Rational.Decide using (module Decide)
 
-open Decide T.rational-intervals renaming (≾! to ≾²!; ⋠! to ⋠²!)
+open Decide T.rational-interval renaming (≾! to ≾²!; ⋠! to ⋠²!)
 
 ------------------------------------------------------------------------
 -- Interval: "between min and max units"
 --
 -- The order is containment: a wider window is weaker.
 
-tsi-weaken : T.[ # 1 , ↑ # 2 ] T.≾ᵢ T.[ 1 / 2 , ↑ 5 / 2 ]
-tsi-weaken = ≾²!
+interval-weaken : T.[ # 1 , ↑ # 2 ] T.≾ᵢ T.[ 1 / 2 , ↑ 5 / 2 ]
+interval-weaken = ≾²!
 
-tsi-no-strengthen : ¬ (T.[ 1 / 2 , ↑ 5 / 2 ] T.≾ᵢ T.[ # 1 , ↑ # 2 ])
-tsi-no-strengthen = ⋠²!
+interval-no-strengthen : ¬ (T.[ 1 / 2 , ↑ 5 / 2 ] T.≾ᵢ T.[ # 1 , ↑ # 2 ])
+interval-no-strengthen = ⋠²!
 
 -- overlapping windows are incomparable
 
-tsi-incomparable₁ : ¬ (T.[ 1 / 2 , ↑ # 1 ] T.≾ᵢ T.[ # 1 , ↑ # 2 ])
-tsi-incomparable₁ = ⋠²!
+interval-incomparable₁ : ¬ (T.[ 1 / 2 , ↑ # 1 ] T.≾ᵢ T.[ # 1 , ↑ # 2 ])
+interval-incomparable₁ = ⋠²!
 
-tsi-incomparable₂ : ¬ (T.[ # 1 , ↑ # 2 ] T.≾ᵢ T.[ 1 / 2 , ↑ # 1 ])
-tsi-incomparable₂ = ⋠²!
+interval-incomparable₂ : ¬ (T.[ # 1 , ↑ # 2 ] T.≾ᵢ T.[ 1 / 2 , ↑ # 1 ])
+interval-incomparable₂ = ⋠²!
 
 -- and their join is the smallest window containing both
 
-tsi-join : T.[ 1 / 2 , ↑ # 1 ] T.⊔ᵢ T.[ # 1 , ↑ # 2 ] ≡ T.[ 1 / 2 , ↑ # 2 ]
-tsi-join = refl
+interval-join : T.[ 1 / 2 , ↑ # 1 ] T.⊔ᵢ T.[ # 1 , ↑ # 2 ] ≡ T.[ 1 / 2 , ↑ # 2 ]
+interval-join = refl
 
 -- a half-unit delay followed by a task of 1 to 2 units
 
-tsi-seq : T.[ 1 / 2 , ↑ 1 / 2 ] T.·ᵢ T.[ # 1 , ↑ # 2 ] ≡ T.[ 3 / 2 , ↑ 5 / 2 ]
-tsi-seq = refl
+interval-seq : T.[ 1 / 2 , ↑ 1 / 2 ] T.·ᵢ T.[ # 1 , ↑ # 2 ] ≡ T.[ 3 / 2 , ↑ 5 / 2 ]
+interval-seq = refl
 
 -- a delay by one unit is two half-unit delays
 
-tsi-tick : Grade.ι T.rational-intervals (# 1)
+interval-tick : Grade.ι T.rational-interval (# 1)
          ≡ T.[ 1 / 2 , ↑ 1 / 2 ] T.·ᵢ T.[ 1 / 2 , ↑ 1 / 2 ]
-tsi-tick = refl
+interval-tick = refl
 
 ------------------------------------------------------------------------
--- The discrete windows, read in dense time
+-- The time intervals in whole steps, read in rational time
 
-tsi-embed : GradeMorphism.map T.interval→rational Discrete.[ 1 , Discrete.↑ 2 ]
+interval-embed : GradeMorphism.map T.interval→rational Discrete.[ 1 , Discrete.↑ 2 ]
           ≡ T.[ # 1 , ↑ # 2 ]
-tsi-embed = refl
+interval-embed = refl
 
-tsi-embed-∞ : GradeMorphism.map T.interval→rational Discrete.[ 3 , Discrete.∞ ]
+interval-embed-∞ : GradeMorphism.map T.interval→rational Discrete.[ 3 , Discrete.∞ ]
             ≡ T.[ # 3 , ∞ ]
-tsi-embed-∞ = refl
+interval-embed-∞ = refl
 
 -- a dense window strictly inside the image of a discrete one
 
-tsi-inside : T.[ 1 / 2 , ↑ 3 / 2 ]
+interval-inside : T.[ 1 / 2 , ↑ 3 / 2 ]
                T.≾ᵢ GradeMorphism.map T.interval→rational Discrete.[ 0 , Discrete.↑ 2 ]
-tsi-inside = ≾²!
+interval-inside = ≾²!
 
 ------------------------------------------------------------------------
 -- Open ends
@@ -85,39 +85,39 @@ tsi-inside = ≾²!
 -- an open end is a smaller interval than the closed one at the same
 -- point, and not the other way round
 
-tsi-open-inside : T.] # 1 , ↑ # 2 ] T.≾ᵢ T.[ # 1 , ↑ # 2 ]
-tsi-open-inside = ≾²!
+interval-open-inside : T.] # 1 , ↑ # 2 ] T.≾ᵢ T.[ # 1 , ↑ # 2 ]
+interval-open-inside = ≾²!
 
-tsi-open-not-outside : ¬ (T.[ # 1 , ↑ # 2 ] T.≾ᵢ T.] # 1 , ↑ # 2 ])
-tsi-open-not-outside = ⋠²!
+interval-open-not-outside : ¬ (T.[ # 1 , ↑ # 2 ] T.≾ᵢ T.] # 1 , ↑ # 2 ])
+interval-open-not-outside = ⋠²!
 
 -- and a closed interval with a higher lower end does not contain it
 
-tsi-open-not-closed : ¬ (T.] # 1 , ↑ # 2 ] T.≾ᵢ T.[ 1001 / 1000 , ↑ # 2 ])
-tsi-open-not-closed = ⋠²!
+interval-open-not-closed : ¬ (T.] # 1 , ↑ # 2 ] T.≾ᵢ T.[ 1001 / 1000 , ↑ # 2 ])
+interval-open-not-closed = ⋠²!
 
 -- an end of a sum is open when an end summed is
 
-tsi-open-seq : T.] # 0 , ↑ # 1 [ T.·ᵢ T.[ 1 / 2 , ↑ # 1 ] ≡ T.] 1 / 2 , ↑ # 2 [
-tsi-open-seq = refl
+interval-open-seq : T.] # 0 , ↑ # 1 [ T.·ᵢ T.[ 1 / 2 , ↑ # 1 ] ≡ T.] 1 / 2 , ↑ # 2 [
+interval-open-seq = refl
 
-tsi-closed-seq : T.[ # 1 , ↑ # 2 ] T.·ᵢ T.[ # 1 , ↑ # 1 ] ≡ T.[ # 2 , ↑ # 3 ]
-tsi-closed-seq = refl
+interval-closed-seq : T.[ # 1 , ↑ # 2 ] T.·ᵢ T.[ # 1 , ↑ # 1 ] ≡ T.[ # 2 , ↑ # 3 ]
+interval-closed-seq = refl
 
 -- the join of two half-open windows meeting at a point is the closed
 -- window around both
 
-tsi-open-join : T.[ # 0 , ↑ # 1 [ T.⊔ᵢ T.] # 1 , ↑ # 2 ] ≡ T.[ # 0 , ↑ # 2 ]
-tsi-open-join = refl
+interval-open-join : T.[ # 0 , ↑ # 1 [ T.⊔ᵢ T.] # 1 , ↑ # 2 ] ≡ T.[ # 0 , ↑ # 2 ]
+interval-open-join = refl
 
 -- without an upper bound, the open and closed ends are the same grade
 
-tsi-open-∞ : T.[ # 3 , ∞ [ ≡ T.[ # 3 , ∞ ]
-tsi-open-∞ = refl
+interval-open-∞ : T.[ # 3 , ∞ [ ≡ T.[ # 3 , ∞ ]
+interval-open-∞ = refl
 
 ------------------------------------------------------------------------
 -- The closed intervals, as a sub-grade
 
-tsi-closed : GradeMorphism.map T.closed→strict Closed.[ 1 / 2 , ↑ # 2 ]
+interval-closed : GradeMorphism.map T.closed→interval Closed.[ 1 / 2 , ↑ # 2 ]
            ≡ T.[ 1 / 2 , ↑ # 2 ]
-tsi-closed = refl
+interval-closed = refl

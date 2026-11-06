@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Worked rigid timed regex upper bounds, in whole steps.             --
+-- Worked timed regex upper bounds, in whole steps.                   --
 --                                                                    --
 -- Heating takes two to four steps, cooling one or two, logging one.  --
 -- The cases: sequenced spans, the order of idle waits and            --
@@ -126,7 +126,7 @@ two-steps-fit : C._≾_ (‵ᵍ cool) wait-around
 two-steps-fit = holds (‵ᵍ cool) wait-around refl
 
 ------------------------------------------------------------------------
--- The kinds of stretch: an idle wait lies below a span, not the
+-- The kinds of time span: an idle wait lies below a span, not the
 -- converse; an unused idle wait is passed over
 
 idle-below-span : C._≾_ wait-5 span-5
@@ -167,8 +167,8 @@ stirred-idle : ¬ C._≾_ stirred-run heat-idle-cool
 stirred-idle = fails stirred-run heat-idle-cool refl
 
 ------------------------------------------------------------------------
--- The window rule: an operation the bound does not match belongs to
--- the set of every stretch it overlaps
+-- The window rule: an operation the bound does not match belongs to the
+-- set of every time span it overlaps
 
 across-two-windows : C._≾_ across within-cool-and-log
 across-two-windows = holds across within-cool-and-log refl

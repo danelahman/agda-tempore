@@ -33,7 +33,7 @@ open import Grades.Examples.Time.Interval
 
 open import Grades.Examples.System.Traces.Banked.Interval
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
-  using (interval-traces→intervals)
+  using (banked→intervals)
 
 open import Grades.Examples.Worked.Traces.Banked.LowerBound
   using () renaming (⟅_⟆ to ⟅_⟆ˡᵒ; ⟅_∣_⟆ to ⟅_∣_⟆ˡᵒ)
@@ -48,7 +48,7 @@ open import Grades.Examples.Worked.Traces.Banked.Interval
 -- work becomes the window between one tick and seven
 
 contract-measured :
-  map interval-traces→intervals
+  map banked→intervals
       ⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ ⟫
   ≡ [ 1 , 7 ]
 contract-measured = refl
@@ -57,7 +57,7 @@ contract-measured = refl
 -- aggregating its own way
 
 alternatives-measured-both :
-  map interval-traces→intervals
+  map banked→intervals
       ⟪ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ˡᵒ
       , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ʰⁱ ⟫
   ≡ [ 1 , 12 ]
@@ -68,7 +68,7 @@ alternatives-measured-both = refl
 -- to take three ticks and may take four
 
 exact-measured :
-  map interval-traces→intervals (exact (⌈ read ⌉ ∙ ⌈ write ⌉))
+  map banked→intervals (exact (⌈ read ⌉ ∙ ⌈ write ⌉))
                ≡ [ 3 , 4 ]
 exact-measured = refl
 
@@ -76,11 +76,11 @@ exact-measured = refl
 -- inside the contract's window
 
 window-contains :
-  map interval-traces→intervals (exact (⌈ read ⌉ ∙ ⌈ write ⌉))
-  ≾ᵢ map interval-traces→intervals
+  map banked→intervals (exact (⌈ read ⌉ ∙ ⌈ write ⌉))
+  ≾ᵢ map banked→intervals
          ⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ ⟫
 window-contains =
-  map-monotone interval-traces→intervals
+  map-monotone banked→intervals
                {exact (⌈ read ⌉ ∙ ⌈ write ⌉)}
                {⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ ⟫}
                (holdsᵗˢ _ _)
@@ -88,7 +88,7 @@ window-contains =
 -- and it is a monoid map: sequencing before or after measuring agrees
 
 windows-add :
-  map interval-traces→intervals (exact ⌈ read ⌉ ·ᵗˢ exact ⌈ send ⌉)
-  ≡ map interval-traces→intervals (exact ⌈ read ⌉)
-    ·ᵢ map interval-traces→intervals (exact ⌈ send ⌉)
+  map banked→intervals (exact ⌈ read ⌉ ·ᵗˢ exact ⌈ send ⌉)
+  ≡ map banked→intervals (exact ⌈ read ⌉)
+    ·ᵢ map banked→intervals (exact ⌈ send ⌉)
 windows-add = refl

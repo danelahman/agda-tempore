@@ -6,10 +6,10 @@
 module Grades.Examples where
 
 ------------------------------------------------------------------------
--- Time intervals
+-- Time bounds and intervals
 --
--- Bounds on elapsed time. The one-sided intervals have one endpoint,
--- the interval ones two.
+-- Bounds on elapsed time: time lower bounds and time upper bounds have
+-- one endpoint, time intervals two.
 
 -- "at least `n` time steps"; a smaller bound is the weaker grade
 
@@ -31,10 +31,10 @@ import Grades.Examples.Time.Interval
 import Grades.Examples.Time.Intervals
 
 -- the same three shapes over the non-negative rationals ℚ≥0, with
--- morphisms embedding the discrete grades above; the interval grade
--- and the one-sided `*Cut` grades have open or closed ends, the closed
--- intervals being sub-grades, and the intervals map onto
--- each of their ends
+-- morphisms embedding the grades in whole steps above; the interval
+-- grade and the one-sided `*Cut` grades have open or closed ends, the
+-- closed intervals being sub-grades, and the intervals map onto each of
+-- their ends
 
 import Grades.Examples.Time.Rational.ExtendedRational
 import Grades.Examples.Time.Rational.LowerBound
@@ -120,14 +120,14 @@ import Grades.Examples.Counts.Occurrences
 
 import Grades.Examples.System.Identity
 
--- lower bounds on time paired with a lattice, at the identity, at
--- time alone, and at the level alone: timed declassification and its
--- two projections, an embargo alone and a taint check alone
+-- lower bounds on time paired with a lattice, at the identity, at time
+-- alone, and at the lattice alone: timed declassification and its two
+-- projections, an embargo alone and a taint check alone
 
 import Grades.Examples.System.Product.TimeLowerBoundLattice
 
--- intervals to lower bounds ones: forget the upper bound, keep
--- the guarantee that at least so much time has passed
+-- time intervals to time lower bounds: forget the upper bound, keep the
+-- guarantee that at least so much time has passed
 
 import Grades.Examples.System.IntervalsToLowerBounds
 
@@ -146,15 +146,15 @@ import Grades.Examples.System.Traces.Banked.Interval
 
 import Grades.Examples.System.Traces.FiniteRunSets.UpperBound
 
--- the rigid finite-expression grades to time intervals by their
--- duration hull: an upper bound to the longest run it admits, a lower
--- bound to the shortest, an interval to the pair of its ends
+-- the finite timed regex grades to time intervals by their duration
+-- hull: an upper bound to the longest run it admits, a lower bound to
+-- the shortest, an interval to the pair of its ends
 
 import Grades.Examples.System.Traces.TimedRegex.Finite.UpperBound
 import Grades.Examples.System.Traces.TimedRegex.Finite.LowerBound
 import Grades.Examples.System.Traces.TimedRegex.Finite.Interval
 
--- the same for the rigid timed regex grades, iteration included
+-- the same for the rational timed regex grades, iteration included
 
 import Grades.Examples.System.Traces.TimedRegex.Rational.UpperBound
 import Grades.Examples.System.Traces.TimedRegex.Rational.LowerBound
@@ -179,8 +179,8 @@ import Grades.Examples.System.Counts.FiniteRunSets.AtLeast
 import Grades.Examples.System.Counts.Lifted.LowerBound
 import Grades.Examples.System.Counts.Banked.LowerBound
 
--- the allowance cap does not project onto quotas: no morphism into
--- at-most counts counts what a bound permits
+-- the allowance cap does not project onto at-most counts: no morphism
+-- into at-most counts counts what a bound permits
 
 import Grades.Examples.System.Counts.Banked.UpperBound
 
@@ -203,9 +203,8 @@ import Grades.Examples.Counts.AtMost.ByName
 import Grades.Examples.SemiDirect.FlowSensitiveLevels
 import Grades.Examples.SemiDirect.CallTimeSets
 
--- the watermark grades: the levels each resource reaches, a trough,
--- a range of net changes and a peak, over the integers with
--- infinities
+-- the watermark grades: the trough, net change and peak of each
+-- resource, the net change a range, over the integers with infinities
 
 import Grades.Examples.SemiDirect.ExtendedInteger
 import Grades.Examples.SemiDirect.Watermarks

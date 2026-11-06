@@ -27,9 +27,9 @@ open import Grades.Examples.Time.Rational.ExtendedRational
 
 open import Grades.Examples.Worked.Time.Rational.Decide using (module Decide)
 
-open Decide L.rational-lower-bound-cuts renaming (≾! to ≾ˡ!; ⋠! to ⋠ˡ!)
+open Decide L.rational-lower-bound-cut renaming (≾! to ≾ˡ!; ⋠! to ⋠ˡ!)
 
-G = L.rational-lower-bound-cuts
+G = L.rational-lower-bound-cut
 
 ------------------------------------------------------------------------
 -- The order: containment of the durations admitted

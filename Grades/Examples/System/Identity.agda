@@ -35,8 +35,8 @@ idᵍ G = strictᵍ record
 
 -- a grade, read as both the effect grades and the resource grades
 
-identityGradeSystem : {D : Duration} → Grade D → GradeSystem
-identityGradeSystem {D} G = record
+identity-grade-system : {D : Duration} → Grade D → GradeSystem
+identity-grade-system {D} G = record
   { Dur    = D
   ; RGrade = G
   ; EGrade = G
@@ -49,7 +49,7 @@ identityGradeSystem {D} G = record
 
 identityʰ : {D : Duration} {G : Grade D} → GradeHints G
           → (ℕ → List (Grade.Carrier G) → List (Grade.Carrier G))
-          → SystemHints (identityGradeSystem G)
+          → SystemHints (identity-grade-system G)
 identityʰ H wit = record
   { RHints      = H
   ; EHints      = H

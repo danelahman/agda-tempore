@@ -57,28 +57,28 @@ module _ (G H : Grade ℕᴰ) where
 -- at the two time grades the counts are built from
 
 open import Grades.Examples.Time.UpperBound
-  using (upper-bounds)
+  using (upper-bound)
 open import Grades.Examples.Time.LowerBound
-  using (lower-bounds)
+  using (lower-bound)
 open import Grades.Examples.Counts.AtMost using (at-most-counts)
 open import Grades.Examples.Counts.AtLeast using (at-least-counts)
 
 no-at-most-counts→upper-bounds :
-  ∀ {n} → ¬ (at-most-counts n →ᵍ upper-bounds)
+  ∀ {n} → ¬ (at-most-counts n →ᵍ upper-bound)
 no-at-most-counts→upper-bounds =
-  no-projection upper-bounds upper-bounds
+  no-projection upper-bound upper-bound
     λ e → toWitnessFalse
-            {a? = Grade._≾?_ upper-bounds
-                    (Grade.ι upper-bounds 1) (Grade.ι upper-bounds 0)}
+            {a? = Grade._≾?_ upper-bound
+                    (Grade.ι upper-bound 1) (Grade.ι upper-bound 0)}
             _ (proj₁ e)
 
 no-at-least-counts→lower-bounds :
-  ∀ {n} → ¬ (at-least-counts n →ᵍ lower-bounds)
+  ∀ {n} → ¬ (at-least-counts n →ᵍ lower-bound)
 no-at-least-counts→lower-bounds =
-  no-projection lower-bounds lower-bounds
+  no-projection lower-bound lower-bound
     λ e → toWitnessFalse
-            {a? = Grade._≾?_ lower-bounds
-                    (Grade.ι lower-bounds 0) (Grade.ι lower-bounds 1)}
+            {a? = Grade._≾?_ lower-bound
+                    (Grade.ι lower-bound 0) (Grade.ι lower-bound 1)}
             _ (proj₂ e)
 
 ------------------------------------------------------------------------
@@ -183,15 +183,15 @@ module Weigh {D : Duration} (G : Grade D) (comm : Commutative (Grade._≃_ G) (G
 open import Grades.Examples.Time.UpperBound using (·ₒ-comm; [0,_]; ∞)
 open import Grades.Examples.Time.LowerBound using () renaming (·ₒ-comm to ·ₗ-comm)
 
-module WeighRight = Weigh upper-bounds
-                      (λ a b → Grade.≃-reflexive upper-bounds (·ₒ-comm a b))
-module WeighLeft  = Weigh lower-bounds
-                      (λ a b → Grade.≃-reflexive lower-bounds (·ₗ-comm a b))
+module WeighUpper = Weigh upper-bound
+                      (λ a b → Grade.≃-reflexive upper-bound (·ₒ-comm a b))
+module WeighLower  = Weigh lower-bound
+                      (λ a b → Grade.≃-reflexive lower-bound (·ₗ-comm a b))
 
 -- the deadline's greatest grade absorbs
 
-paired-⊤ʳ : ∀ {n} (ks : Vec ℕ n) → WeighRight.paired ks (Power.⊤ᵛ upper-bounds) [0, ∞ ] ≡ [0, ∞ ]
-paired-⊤ʳ = WeighRight.paired-⊤ absorb
+paired-⊤ʳ : ∀ {n} (ks : Vec ℕ n) → WeighUpper.paired ks (Power.⊤ᵛ upper-bound) [0, ∞ ] ≡ [0, ∞ ]
+paired-⊤ʳ = WeighUpper.paired-⊤ absorb
   where
     absorb : ∀ a → _ ≡ [0, ∞ ]
     absorb [0, _ ] = refl
@@ -200,7 +200,7 @@ paired-⊤ʳ = WeighRight.paired-⊤ absorb
 -- counter
 
 paired-⊤ˡ : ∀ {n} (ks : Vec ℕ n)
-          → Grade._≃_ lower-bounds
-              (WeighLeft.paired ks (Power.⊤ᵛ lower-bounds) (Grade.⊤ lower-bounds))
-              (Grade.⊤ lower-bounds)
-paired-⊤ˡ ks = WeighLeft.paired-𝟏 ks
+          → Grade._≃_ lower-bound
+              (WeighLower.paired ks (Power.⊤ᵛ lower-bound) (Grade.⊤ lower-bound))
+              (Grade.⊤ lower-bound)
+paired-⊤ˡ ks = WeighLower.paired-𝟏 ks

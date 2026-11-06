@@ -19,7 +19,7 @@ open import Grades.Base using (Grade)
 open import Util.Equality
 
 open import Grades.Examples.Time.LowerBound
-  using ([_,+∞⟩; lower-bounds)
+  using ([_,+∞⟩; lower-bound)
   renaming (𝕀 to 𝕀ˡ; _·ₒ_ to _·ˡ_; 𝟏ₒ to 𝟏ˡ; _≾ₒ_ to _≾ˡ_)
 
 open import Grades.Examples.Worked.Time.Decide using (≤!; ≰!)
@@ -30,36 +30,36 @@ uplink-lo = [ 7 ,+∞⟩
 -- "at least 7" is a stronger guarantee than "at least 4", so it is the
 -- smaller grade
 
-lsi-weaken : [ 7 ,+∞⟩ ≾ˡ [ 4 ,+∞⟩
-lsi-weaken = ≤!
+lower-weaken : [ 7 ,+∞⟩ ≾ˡ [ 4 ,+∞⟩
+lower-weaken = ≤!
 
 -- and the other direction fails: nothing lets a grade claim more time
 -- has passed than it recorded
 
-lsi-no-strengthen : ¬ ([ 4 ,+∞⟩ ≾ˡ [ 7 ,+∞⟩)
-lsi-no-strengthen = ≰!
+lower-no-strengthen : ¬ ([ 4 ,+∞⟩ ≾ˡ [ 7 ,+∞⟩)
+lower-no-strengthen = ≰!
 
 -- sequencing adds the guarantees: read (≥1) then the rest of the uplink
 -- (≥6) guarantees ≥7
 
-lsi-seq : [ 1 ,+∞⟩ ·ˡ [ 6 ,+∞⟩ ≡ [ 7 ,+∞⟩
-lsi-seq = refl
+lower-seq : [ 1 ,+∞⟩ ·ˡ [ 6 ,+∞⟩ ≡ [ 7 ,+∞⟩
+lower-seq = refl
 
 -- the unit claims nothing, and so is the largest grade
 
-lsi-unit : 𝟏ˡ ≡ [ 0 ,+∞⟩
-lsi-unit = refl
+lower-unit : 𝟏ˡ ≡ [ 0 ,+∞⟩
+lower-unit = refl
 
-lsi-unit-top : [ 7 ,+∞⟩ ≾ˡ 𝟏ˡ
-lsi-unit-top = ≤!
+lower-unit-top : [ 7 ,+∞⟩ ≾ˡ 𝟏ˡ
+lower-unit-top = ≤!
 
 -- so the unit is the designated greatest grade here, and it is not
 -- absorbing
 
-lsi-top : Grade.⊤ lower-bounds ≡ 𝟏ˡ
-lsi-top = refl
+lower-top : Grade.⊤ lower-bound ≡ 𝟏ˡ
+lower-top = refl
 
 -- `n` time steps, as a grade
 
-lsi-ι : Grade.ι lower-bounds 7 ≡ [ 7 ,+∞⟩
-lsi-ι = refl
+lower-ι : Grade.ι lower-bound 7 ≡ [ 7 ,+∞⟩
+lower-ι = refl

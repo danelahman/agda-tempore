@@ -18,8 +18,8 @@ open import Relation.Nullary.Decidable
 open import Grades.Durations using (Duration)
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade; GradeSystem; _→ᵍ_)
-open import Grades.Examples.Time.LowerBound using ([_,+∞⟩; lower-bounds)
-open import Grades.Examples.Lattice using (High; Low; two-point-levels)
+open import Grades.Examples.Time.LowerBound using ([_,+∞⟩; lower-bound)
+open import Grades.Examples.Lattice using (High; Low; low-high)
 open import Grades.Examples.Product.TimeLowerBoundLattice
   using (time-lower-bound×low-high)
 open import Grades.Examples.System.Product.TimeLowerBoundLattice
@@ -62,8 +62,8 @@ module _ where
 -- embargo only: the taint is forgotten, and the run may publish
 
 module _ where
-  open Grade lower-bounds
-  open Checked lower-bounds
+  open Grade lower-bound
+  open Checked lower-bound
 
   forgets-taint : map (GradeSystem.∣-∣ᵉ embargo) tainted-run ≡ [ 45 ,+∞⟩
   forgets-taint = refl
@@ -74,8 +74,8 @@ module _ where
 -- taint check only: the run is refused whatever the time
 
 module _ where
-  open Grade (two-point-levels {ℕᴰ})
-  open Checked (two-point-levels {ℕᴰ})
+  open Grade (low-high {ℕᴰ})
+  open Checked (low-high {ℕᴰ})
 
   refused : ¬ (map (GradeSystem.∣-∣ᵉ taint) tainted-run ≾ Low)
   refused = ⋠! High Low

@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Worked rigid timed regex intervals in dense time.                  --
+-- Worked rational timed regex intervals.                             --
 --                                                                    --
 -- An interval `[ L , U ]` pairs a lower and an upper bound that a    --
 -- common run fits, checked in a literal. Here a cycle: heating, then --
