@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 -- The non-negative rationals ℚ≥0.                                    --
 --                                                                    --
--- The endpoints of the dense-time grades. A value is a normalised    --
+-- The endpoints of the rational time grades. A value is a normalised --
 -- rational of the standard library together with the verdict of      --
 -- `0ℚ ≤? q` as an implicit side condition; two values are equal      --
 -- exactly when their rationals are, and a literal is written `n / d` --

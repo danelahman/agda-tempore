@@ -19,7 +19,7 @@ open import Grades.Examples.Worked.Counts.Index using (⟪_,_,_⟫ᵐ)
 open import Grades.Examples.Counts.AtMost using (upto; _⊔ᵛ_)
 open import Grades.Examples.System.Counts.Time using (module WeighRight)
 open WeighRight using (weigh)
-open import Grades.Examples.Time.RightSided using (_⊔ₒ_)
+open import Grades.Examples.Time.UpperBound using (_⊔ₒ_)
 
 slow : Vec _ 3
 slow = 1 ∷ 3 ∷ 6 ∷ []

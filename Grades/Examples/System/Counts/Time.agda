@@ -56,29 +56,29 @@ module _ (G H : Grade ℕᴰ) where
 
 -- at the two time grades the counts are built from
 
-open import Grades.Examples.Time.RightSided
-  using (right-sided-intervals)
-open import Grades.Examples.Time.LeftSided
-  using (left-sided-intervals)
+open import Grades.Examples.Time.UpperBound
+  using (upper-bounds)
+open import Grades.Examples.Time.LowerBound
+  using (lower-bounds)
 open import Grades.Examples.Counts.AtMost using (at-most-counts)
 open import Grades.Examples.Counts.AtLeast using (at-least-counts)
 
-no-at-most-counts→right-sided-intervals :
-  ∀ {n} → ¬ (at-most-counts n →ᵍ right-sided-intervals)
-no-at-most-counts→right-sided-intervals =
-  no-projection right-sided-intervals right-sided-intervals
+no-at-most-counts→upper-bounds :
+  ∀ {n} → ¬ (at-most-counts n →ᵍ upper-bounds)
+no-at-most-counts→upper-bounds =
+  no-projection upper-bounds upper-bounds
     λ e → toWitnessFalse
-            {a? = Grade._≾?_ right-sided-intervals
-                    (Grade.ι right-sided-intervals 1) (Grade.ι right-sided-intervals 0)}
+            {a? = Grade._≾?_ upper-bounds
+                    (Grade.ι upper-bounds 1) (Grade.ι upper-bounds 0)}
             _ (proj₁ e)
 
-no-at-least-counts→left-sided-intervals :
-  ∀ {n} → ¬ (at-least-counts n →ᵍ left-sided-intervals)
-no-at-least-counts→left-sided-intervals =
-  no-projection left-sided-intervals left-sided-intervals
+no-at-least-counts→lower-bounds :
+  ∀ {n} → ¬ (at-least-counts n →ᵍ lower-bounds)
+no-at-least-counts→lower-bounds =
+  no-projection lower-bounds lower-bounds
     λ e → toWitnessFalse
-            {a? = Grade._≾?_ left-sided-intervals
-                    (Grade.ι left-sided-intervals 0) (Grade.ι left-sided-intervals 1)}
+            {a? = Grade._≾?_ lower-bounds
+                    (Grade.ι lower-bounds 0) (Grade.ι lower-bounds 1)}
             _ (proj₂ e)
 
 ------------------------------------------------------------------------
@@ -180,17 +180,17 @@ module Weigh {D : Duration} (G : Grade D) (comm : Commutative (Grade._≃_ G) (G
 ------------------------------------------------------------------------
 -- The two instances
 
-open import Grades.Examples.Time.RightSided using (·ₒ-comm; [0,_]; ∞)
-open import Grades.Examples.Time.LeftSided using () renaming (·ₒ-comm to ·ₗ-comm)
+open import Grades.Examples.Time.UpperBound using (·ₒ-comm; [0,_]; ∞)
+open import Grades.Examples.Time.LowerBound using () renaming (·ₒ-comm to ·ₗ-comm)
 
-module WeighRight = Weigh right-sided-intervals
-                      (λ a b → Grade.≃-reflexive right-sided-intervals (·ₒ-comm a b))
-module WeighLeft  = Weigh left-sided-intervals
-                      (λ a b → Grade.≃-reflexive left-sided-intervals (·ₗ-comm a b))
+module WeighRight = Weigh upper-bounds
+                      (λ a b → Grade.≃-reflexive upper-bounds (·ₒ-comm a b))
+module WeighLeft  = Weigh lower-bounds
+                      (λ a b → Grade.≃-reflexive lower-bounds (·ₗ-comm a b))
 
 -- the deadline's greatest grade absorbs
 
-paired-⊤ʳ : ∀ {n} (ks : Vec ℕ n) → WeighRight.paired ks (Power.⊤ᵛ right-sided-intervals) [0, ∞ ] ≡ [0, ∞ ]
+paired-⊤ʳ : ∀ {n} (ks : Vec ℕ n) → WeighRight.paired ks (Power.⊤ᵛ upper-bounds) [0, ∞ ] ≡ [0, ∞ ]
 paired-⊤ʳ = WeighRight.paired-⊤ absorb
   where
     absorb : ∀ a → _ ≡ [0, ∞ ]
@@ -200,7 +200,7 @@ paired-⊤ʳ = WeighRight.paired-⊤ absorb
 -- counter
 
 paired-⊤ˡ : ∀ {n} (ks : Vec ℕ n)
-          → Grade._≃_ left-sided-intervals
-              (WeighLeft.paired ks (Power.⊤ᵛ left-sided-intervals) (Grade.⊤ left-sided-intervals))
-              (Grade.⊤ left-sided-intervals)
+          → Grade._≃_ lower-bounds
+              (WeighLeft.paired ks (Power.⊤ᵛ lower-bounds) (Grade.⊤ lower-bounds))
+              (Grade.⊤ lower-bounds)
 paired-⊤ˡ ks = WeighLeft.paired-𝟏 ks

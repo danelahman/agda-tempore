@@ -4,7 +4,7 @@
 -- `↑ n` is the finite value `n` and `∞` the point at infinity,       --
 -- absorbing for addition and greatest in the order. ℕ∞ is an ordered --
 -- monoid in its own right; it provides the endpoints of the          --
--- right-sided intervals and the upper endpoints of `Interval∞`.      --
+-- upper bounds and the upper endpoints of `Interval∞`.               --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Time.ExtendedNat where

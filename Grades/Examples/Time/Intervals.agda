@@ -10,7 +10,7 @@
 -- The laws hold over any time domain. In a dense one the order is    --
 -- containment of the durations admitted and sequencing their         --
 -- Minkowski sum (`Durations.Intervals.Dense`); that is the grade of  --
--- rational time, `Example.Time.Dense.TwoSided`.                      --
+-- rational time, `Example.Time.Rational.Interval`.                   --
 ------------------------------------------------------------------------
 
 open import Grades.Durations

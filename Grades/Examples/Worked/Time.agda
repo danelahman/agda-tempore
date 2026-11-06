@@ -6,9 +6,9 @@
 -- ticks: read 1, the idle 2, and send between 4 and 6. Each interval --
 -- grade records part of this:                                        --
 --                                                                    --
---   left-sided   [ 7 ,+∞⟩       "at least 7 ticks have passed"       --
---   right-sided  [0, ↑ 9 ]      "at most 9 ticks have passed"        --
---   two-sided    [ 7 , ↑ 9 ]    both bounds at once                  --
+--   lower-bound   [ 7 ,+∞⟩       "at least 7 ticks have passed"      --
+--   upper-bound  [0, ↑ 9 ]      "at most 9 ticks have passed"        --
+--   interval    [ 7 , ↑ 9 ]    both bounds at once                   --
 --                                                                    --
 -- Both upper endpoints range over the extended naturals, so          --
 -- `[0, ∞ ]` and `[ 7 , ∞ ]` impose no upper bound.                   --
@@ -29,36 +29,36 @@ import Grades.Examples.Worked.Time.Decide
 
 -- "at least `n` ticks have passed"
 
-import Grades.Examples.Worked.Time.LeftSided
+import Grades.Examples.Worked.Time.LowerBound
 
 -- "at most `n` ticks have passed"; the mirror image
 
-import Grades.Examples.Worked.Time.RightSided
+import Grades.Examples.Worked.Time.UpperBound
 
 -- both bounds at once, including the infinite upper endpoint
 
-import Grades.Examples.Worked.Time.TwoSided
+import Grades.Examples.Worked.Time.Interval
 
 ------------------------------------------------------------------------
 -- The dense analogue: units range over an extended rational, not ℕ
 
 -- discharging the numeric side conditions the dense instances reduce to
 
-import Grades.Examples.Worked.Time.Dense.Decide
+import Grades.Examples.Worked.Time.Rational.Decide
 
 -- "at least q units have passed"
 
-import Grades.Examples.Worked.Time.Dense.LeftSided
+import Grades.Examples.Worked.Time.Rational.LowerBound
 
 -- "at most q units have passed"; the mirror image
 
-import Grades.Examples.Worked.Time.Dense.RightSided
+import Grades.Examples.Worked.Time.Rational.UpperBound
 
 -- both bounds at once, including the infinite upper endpoint
 
-import Grades.Examples.Worked.Time.Dense.TwoSided
+import Grades.Examples.Worked.Time.Rational.Interval
 
 -- one-sided bounds with an open or closed end
 
-import Grades.Examples.Worked.Time.Dense.LeftSidedCut
-import Grades.Examples.Worked.Time.Dense.RightSidedCut
+import Grades.Examples.Worked.Time.Rational.LowerBoundCut
+import Grades.Examples.Worked.Time.Rational.UpperBoundCut
