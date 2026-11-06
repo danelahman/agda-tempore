@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Worked instances of left-sided time paired with a security level.  --
+-- Worked instances of lower bounds on time paired with a lattice.    --
 --                                                                    --
 -- The embargo-with-taint-check grade `([ n ,+∞⟩ , ℓ)` at the sensor  --
 -- node, each operation graded by `fast` and `touches`: orderings,    --
@@ -7,7 +7,7 @@
 -- the grade or by computation.                                       --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.Product.LeftSidedTimeLevel where
+module Grades.Examples.Worked.Product.TimeLowerBoundLattice where
 
 open import Data.Product using (_,_)
 
@@ -17,10 +17,10 @@ open import Relation.Nullary.Decidable
   using (True; False; toWitness; toWitnessFalse)
 
 open import Grades.Base using (Grade)
-open import Grades.Examples.Time.LeftSided using ([_,+∞⟩)
-open import Grades.Examples.SecurityLevel using (Low; High)
-open import Grades.Examples.Product.LeftSidedTimeLevel
-  using (left-sided-time×low-high)
+open import Grades.Examples.Time.LowerBound using ([_,+∞⟩)
+open import Grades.Examples.Lattice using (Low; High)
+open import Grades.Examples.Product.TimeLowerBoundLattice
+  using (time-lower-bound×low-high)
 
 open import Grades.Examples.Worked.Operations
   using (Op; read; write; send; fast)
@@ -31,7 +31,7 @@ open import Util.Equality
 ------------------------------------------------------------------------
 -- Checked orderings, by the grade's decision procedure
 
-open Grade left-sided-time×low-high
+open Grade time-lower-bound×low-high
 
 ≾! : (c d : Carrier) {p : True (c ≾? d)} → c ≾ d
 ≾! _ _ {p} = toWitness p

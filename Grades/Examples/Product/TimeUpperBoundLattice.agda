@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Right-sided time paired with a security level.                     --
+-- Upper bounds on time paired with a lattice.                        --
 --                                                                    --
 -- A grade `([0, n ] , ℓ)` states "at most `n` time steps, touching   --
 -- nothing above `ℓ`". A time step advances the first component only. --
@@ -14,28 +14,28 @@
 -- The unit is least and `_·_` commutes; its hints declare both.      --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Product.RightSidedTimeLevel where
+module Grades.Examples.Product.TimeUpperBoundLattice where
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
 open import Grades.Hints using (GradeHints)
 open import Grades.Product using (_×ᵍ_; _×ʰ_)
-open import Grades.Examples.Time.RightSided using (right-sided-intervals; right-sided-intervalsʰ)
-open import Grades.Examples.SecurityLevel
+open import Grades.Examples.Time.UpperBound using (upper-bounds; upper-boundsʰ)
+open import Grades.Examples.Lattice
   using (LevelLattice; level-grade; level-gradeʰ; low-high)
 
--- right-sided time and a lattice of levels
+-- upper bounds on time and a lattice of levels
 
-right-sided-time×level : LevelLattice → Grade ℕᴰ
-right-sided-time×level L = right-sided-intervals ×ᵍ level-grade L
+time-upper-bound×lattice : LevelLattice → Grade ℕᴰ
+time-upper-bound×lattice L = upper-bounds ×ᵍ level-grade L
 
-right-sided-time×levelʰ : (L : LevelLattice) → GradeHints (right-sided-time×level L)
-right-sided-time×levelʰ L = right-sided-intervalsʰ ×ʰ level-gradeʰ L
+time-upper-bound×latticeʰ : (L : LevelLattice) → GradeHints (time-upper-bound×lattice L)
+time-upper-bound×latticeʰ L = upper-boundsʰ ×ʰ level-gradeʰ L
 
 -- at the two-point lattice
 
-right-sided-time×low-high : Grade ℕᴰ
-right-sided-time×low-high = right-sided-time×level low-high
+time-upper-bound×low-high : Grade ℕᴰ
+time-upper-bound×low-high = time-upper-bound×lattice low-high
 
-right-sided-time×low-highʰ : GradeHints right-sided-time×low-high
-right-sided-time×low-highʰ = right-sided-time×levelʰ low-high
+time-upper-bound×low-highʰ : GradeHints time-upper-bound×low-high
+time-upper-bound×low-highʰ = time-upper-bound×latticeʰ low-high

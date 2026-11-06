@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Security levels as grades.                                         --
+-- Lattices as grades.                                                --
 --                                                                    --
 -- A decidable bounded join-semilattice of levels is a grade: `_·_`   --
 -- and `_⊔_` are both the join, the unit is the least level and `⊤`   --
@@ -23,7 +23,7 @@
 -- propositional equality.                                            --
 ------------------------------------------------------------------------
 
-module Grades.Examples.SecurityLevel where
+module Grades.Examples.Lattice where
 
 open import Data.Fin.Base using (Fin; zero; suc)
 open import Data.List.Base using (List) renaming ([] to []ᴸ; _∷_ to _∷ᴸ_)

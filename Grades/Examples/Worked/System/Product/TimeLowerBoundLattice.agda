@@ -1,13 +1,13 @@
 ------------------------------------------------------------------------
--- Worked instances of the grade systems over left-sided time paired  --
--- with a security level.                                             --
+-- Worked instances of the grade systems over lower bounds on time    --
+-- paired with a lattice.                                             --
 --                                                                    --
 -- The report under each system: a run of 45 steps that reads `High`  --
 -- data distinguishes timed declassification, an embargo alone and a  --
 -- taint check alone.                                                 --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.System.Product.LeftSidedTimeLevel where
+module Grades.Examples.Worked.System.Product.TimeLowerBoundLattice where
 
 open import Data.Product using (_,_)
 
@@ -18,11 +18,11 @@ open import Relation.Nullary.Decidable
 open import Grades.Durations using (Duration)
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade; GradeSystem; _→ᵍ_)
-open import Grades.Examples.Time.LeftSided using ([_,+∞⟩; left-sided-intervals)
-open import Grades.Examples.SecurityLevel using (High; Low; two-point-levels)
-open import Grades.Examples.Product.LeftSidedTimeLevel
-  using (left-sided-time×low-high)
-open import Grades.Examples.System.Product.LeftSidedTimeLevel
+open import Grades.Examples.Time.LowerBound using ([_,+∞⟩; lower-bounds)
+open import Grades.Examples.Lattice using (High; Low; two-point-levels)
+open import Grades.Examples.Product.TimeLowerBoundLattice
+  using (time-lower-bound×low-high)
+open import Grades.Examples.System.Product.TimeLowerBoundLattice
   using (embargo-and-taint; embargo; taint)
 
 open import Util.Equality
@@ -46,14 +46,14 @@ module Checked {D : Duration} (G : Grade D) where
 
 open _→ᵍ_ using (map)
 
-tainted-run : Grade.Carrier left-sided-time×low-high
+tainted-run : Grade.Carrier time-lower-bound×low-high
 tainted-run = ([ 45 ,+∞⟩ , High)
 
 -- embargo and taint check: the tainted run may not publish
 
 module _ where
-  open Grade left-sided-time×low-high
-  open Checked left-sided-time×low-high
+  open Grade time-lower-bound×low-high
+  open Checked time-lower-bound×low-high
 
   withheld : ¬ (map (GradeSystem.∣-∣ᵉ embargo-and-taint) tainted-run
                   ≾ ([ 30 ,+∞⟩ , Low))
@@ -62,8 +62,8 @@ module _ where
 -- embargo only: the taint is forgotten, and the run may publish
 
 module _ where
-  open Grade left-sided-intervals
-  open Checked left-sided-intervals
+  open Grade lower-bounds
+  open Checked lower-bounds
 
   forgets-taint : map (GradeSystem.∣-∣ᵉ embargo) tainted-run ≡ [ 45 ,+∞⟩
   forgets-taint = refl

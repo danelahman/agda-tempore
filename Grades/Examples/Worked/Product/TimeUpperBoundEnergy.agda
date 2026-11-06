@@ -1,5 +1,6 @@
 ------------------------------------------------------------------------
--- Worked instances of right-sided time paired with an energy budget. --
+-- Worked instances of upper bounds on time paired with an energy     --
+-- budget.                                                            --
 --                                                                    --
 -- The drifting-calibration grade `([0, n ] , [0, e ])` at the sensor --
 -- node, each operation graded by `slow` and `draws`: orderings and   --
@@ -7,7 +8,7 @@
 -- procedure of the grade or by computation.                          --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.Product.RightSidedTimeEnergy where
+module Grades.Examples.Worked.Product.TimeUpperBoundEnergy where
 
 open import Data.Product using (_,_)
 
@@ -16,9 +17,9 @@ open import Relation.Nullary.Decidable
   using (True; False; toWitness; toWitnessFalse)
 
 open import Grades.Base using (Grade)
-open import Grades.Examples.Time.RightSided using ([0,_]; ↑_; ∞)
-open import Grades.Examples.Product.RightSidedTimeEnergy
-  using (right-sided-time×energy)
+open import Grades.Examples.Time.UpperBound using ([0,_]; ↑_; ∞)
+open import Grades.Examples.Product.TimeUpperBoundEnergy
+  using (time-upper-bound×energy)
 
 open import Grades.Examples.Worked.Operations
   using (Op; read; send; slow)
@@ -29,7 +30,7 @@ open import Util.Equality
 ------------------------------------------------------------------------
 -- Checked orderings, by the grade's decision procedure
 
-open Grade right-sided-time×energy
+open Grade time-upper-bound×energy
 
 ≾! : (c d : Carrier) {p : True (c ≾? d)} → c ≾ d
 ≾! _ _ {p} = toWitness p

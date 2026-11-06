@@ -6,15 +6,15 @@
 
 module Grades.Examples.Worked.Product where
 
--- left-sided time and a security level: an embargo with a taint check
+-- lower bounds on time and a lattice: an embargo with a taint check
 
-import Grades.Examples.Worked.Product.LeftSidedTimeLevel
+import Grades.Examples.Worked.Product.TimeLowerBoundLattice
 
--- right-sided time and a security level: an expiring, untainted
+-- upper bounds on time and a lattice: an expiring, untainted
 -- capability
 
-import Grades.Examples.Worked.Product.RightSidedTimeLevel
+import Grades.Examples.Worked.Product.TimeUpperBoundLattice
 
--- right-sided time and an energy budget: a drifting calibration
+-- upper bounds on time and an energy budget: a drifting calibration
 
-import Grades.Examples.Worked.Product.RightSidedTimeEnergy
+import Grades.Examples.Worked.Product.TimeUpperBoundEnergy

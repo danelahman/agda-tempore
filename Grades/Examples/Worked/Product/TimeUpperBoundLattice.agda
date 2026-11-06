@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Worked instances of right-sided time paired with a security level. --
+-- Worked instances of upper bounds on time paired with a lattice.    --
 --                                                                    --
 -- The expiring-untainted-capability grade `([0, n ] , ℓ)` at the     --
 -- sensor node, each operation graded by `slow` and `touches`:        --
@@ -7,7 +7,7 @@
 -- the grade or by computation.                                       --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.Product.RightSidedTimeLevel where
+module Grades.Examples.Worked.Product.TimeUpperBoundLattice where
 
 open import Data.Product using (_,_)
 
@@ -16,10 +16,10 @@ open import Relation.Nullary.Decidable
   using (True; False; toWitness; toWitnessFalse)
 
 open import Grades.Base using (Grade)
-open import Grades.Examples.Time.RightSided using ([0,_]; ↑_; ∞)
-open import Grades.Examples.SecurityLevel using (Low; High)
-open import Grades.Examples.Product.RightSidedTimeLevel
-  using (right-sided-time×low-high)
+open import Grades.Examples.Time.UpperBound using ([0,_]; ↑_; ∞)
+open import Grades.Examples.Lattice using (Low; High)
+open import Grades.Examples.Product.TimeUpperBoundLattice
+  using (time-upper-bound×low-high)
 
 open import Grades.Examples.Worked.Operations
   using (Op; read; write; send; slow)
@@ -30,7 +30,7 @@ open import Util.Equality
 ------------------------------------------------------------------------
 -- Checked orderings, by the grade's decision procedure
 
-open Grade right-sided-time×low-high
+open Grade time-upper-bound×low-high
 
 ≾! : (c d : Carrier) {p : True (c ≾? d)} → c ≾ d
 ≾! _ _ {p} = toWitness p

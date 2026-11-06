@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------
--- A Kripke frame for security levels: worlds are labels.              --
+-- A Kripke frame for lattices: worlds are labels.                     --
 --                                                                     --
 -- A world is the label reached so far. It floats upward, and a grade  --
 -- `ℓ` raises it by at most `ℓ`:                                       --
@@ -14,13 +14,13 @@
 -- sets over `Fin n`, where a world is the set of labels touched.      --
 -------------------------------------------------------------------------
 
-module MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Labels.SecurityLevel where
+module MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Labels.Lattice where
 
 open import Data.Nat.Base using (ℕ)
 open import Data.Product using (_×_)
 
 open import Grades.Durations using (Duration)
-open import Grades.Examples.SecurityLevel
+open import Grades.Examples.Lattice
   using (LevelLattice; module LevelLattice; level-grade;
          low-high; two-point-levels; taint-lattice; taint-sets)
 

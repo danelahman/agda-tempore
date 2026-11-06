@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Inference at left-sided time paired with a security level          --
+-- Inference at lower bounds on time paired with a lattice            --
 --                                                                    --
 -- `([ n ,+∞⟩ , ℓ)` is at least `n` ticks, touching nothing above     --
 -- `ℓ`; `read` takes 1 and `write` 2 at `Low`, `send` 4 at `High`. A  --
@@ -22,15 +22,15 @@ open import Grades.Base
 open import Language.Spec
 open import Language.Operations
 
-open import Grades.Examples.Time.LeftSided using ([_,+∞⟩)
-open import Grades.Examples.SecurityLevel using (Low; High)
+open import Grades.Examples.Time.LowerBound using ([_,+∞⟩)
+open import Grades.Examples.Lattice using (Low; High)
 open import Grades.Examples.Worked.Operations using (read; write; send)
 
-open import PolymorphicCalculus.Examples.Specs using (module Product-LeftSidedTimeLevel)
+open import PolymorphicCalculus.Examples.Specs using (module Product-TimeLowerBoundLattice)
 
-module PolymorphicCalculus.Examples.Product.LeftSidedTimeLevel where
+module PolymorphicCalculus.Examples.Product.TimeLowerBoundLattice where
 
-open Product-LeftSidedTimeLevel using (spec; hints; enum)
+open Product-TimeLowerBoundLattice using (spec; hints; enum)
 open LanguageSpec spec using (Grades; Ops)
 open GradeSystemInterface Grades using (_·ₑ_; _⊔ₑ_)
 open Operations Ops using (op-grade)

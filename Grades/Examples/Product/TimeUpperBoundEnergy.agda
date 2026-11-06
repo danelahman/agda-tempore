@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
--- Right-sided time paired with an energy budget.                     --
+-- Upper bounds on time paired with an energy budget.                 --
 --                                                                    --
 -- The energy grade `[0, e ]` states "at most `e` units spent". It    --
 -- has the carrier, sum, order, join and `⊤ = [0, ∞ ]` of the         --
--- right-sided intervals, with `ι` constantly `[0, ↑ 0 ]`:            --
+-- upper bounds, with `ι` constantly `[0, ↑ 0 ]`:                     --
 -- `delay` spends time and no energy, and energy is spent by          --
 -- operations alone.                                                  --
 --                                                                    --
@@ -17,14 +17,14 @@
 -- The unit is least and `_·_` commutes; its hints declare both.      --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Product.RightSidedTimeEnergy where
+module Grades.Examples.Product.TimeUpperBoundEnergy where
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (posetᵍ; Grade)
 open import Grades.Hints using (GradeHints)
 open import Grades.Product using (_×ᵍ_; _×ʰ_)
-open import Grades.Examples.Time.RightSided
-  using ([0,_]; ↑_; right-sided-intervals; right-sided-intervalsʰ)
+open import Grades.Examples.Time.UpperBound
+  using ([0,_]; ↑_; upper-bounds; upper-boundsʰ)
 
 open import Util.Equality
 
@@ -59,16 +59,16 @@ energy = record
   ; ι-zero          = R.≃-refl
   ; ι-plus          = R.≃-refl
   }
-  where module R = Grade right-sided-intervals
+  where module R = Grade upper-bounds
 
--- its hints, those of right-sided time
+-- its hints, those of upper bounds on time
 
 energyʰ : GradeHints energy
 energyʰ = record { 𝟏-least? = R.𝟏-least? ; ·-comm? = R.·-comm? ; plus? = R.plus? }
-  where module R = GradeHints right-sided-intervalsʰ
+  where module R = GradeHints upper-boundsʰ
 
-right-sided-time×energy : Grade ℕᴰ
-right-sided-time×energy = right-sided-intervals ×ᵍ energy
+time-upper-bound×energy : Grade ℕᴰ
+time-upper-bound×energy = upper-bounds ×ᵍ energy
 
-right-sided-time×energyʰ : GradeHints right-sided-time×energy
-right-sided-time×energyʰ = right-sided-intervalsʰ ×ʰ energyʰ
+time-upper-bound×energyʰ : GradeHints time-upper-bound×energy
+time-upper-bound×energyʰ = upper-boundsʰ ×ʰ energyʰ

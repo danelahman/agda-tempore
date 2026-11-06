@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Inference at right-sided time paired with a security level         --
+-- Inference at upper bounds on time paired with a lattice            --
 --                                                                    --
 -- `([0, n ] , ℓ)` is at most `n` ticks, touching nothing above `ℓ`;  --
 -- `read` takes 1 and `write` 3 at `Low`, `send` 6 at `High`. A box   --
@@ -22,15 +22,15 @@ open import Grades.Base
 open import Language.Spec
 open import Language.Operations
 
-open import Grades.Examples.Time.RightSided using ([0,_]; ↑_)
-open import Grades.Examples.SecurityLevel using (Low; High)
+open import Grades.Examples.Time.UpperBound using ([0,_]; ↑_)
+open import Grades.Examples.Lattice using (Low; High)
 open import Grades.Examples.Worked.Operations using (read; write; send)
 
-open import PolymorphicCalculus.Examples.Specs using (module Product-RightSidedTimeLevel)
+open import PolymorphicCalculus.Examples.Specs using (module Product-TimeUpperBoundLattice)
 
-module PolymorphicCalculus.Examples.Product.RightSidedTimeLevel where
+module PolymorphicCalculus.Examples.Product.TimeUpperBoundLattice where
 
-open Product-RightSidedTimeLevel using (spec; hints; enum)
+open Product-TimeUpperBoundLattice using (spec; hints; enum)
 open LanguageSpec spec using (Grades; Ops)
 open GradeSystemInterface Grades using (_·ₑ_; _⊔ₑ_)
 open Operations Ops using (op-grade)

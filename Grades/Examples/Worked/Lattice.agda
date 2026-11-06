@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Worked instances of the security-level grades.                     --
+-- Worked instances of the lattice grades.                            --
 --                                                                    --
 -- The two-point lattice `Low < High`, with the runs of the sensor    --
 -- node graded by `touches`, and taint sets over `Fin 3`: orderings,  --
@@ -7,7 +7,7 @@
 -- decision procedure of the grade or by computation.                 --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.SecurityLevel where
+module Grades.Examples.Worked.Lattice where
 
 open import Data.Fin.Base using (zero; suc)
 open import Data.Vec.Base using ([]; _∷_)
@@ -22,7 +22,7 @@ open import Grades.Base using (Grade)
 
 open import Util.Equality
 
-open import Grades.Examples.SecurityLevel
+open import Grades.Examples.Lattice
   using (LowHigh; Low; High; two-point-levels; TaintSet; taint-sets;
          label; _∪ᵗ_)
 

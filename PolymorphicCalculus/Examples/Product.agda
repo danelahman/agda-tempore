@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 -- Inference at a grade of two components                             --
 --                                                                    --
--- A grade pairing time with a security level: a box is claimable     --
+-- A grade pairing time with a lattice: a box is claimable            --
 -- once enough time has passed, and only while nothing above its      --
 -- level has been touched since it was boxed. `⌜ n ⌝` is the duration --
 -- of `n` ticks.                                                      --
@@ -22,7 +22,7 @@
 --   Each program is written above its definition in ordinary syntax, --
 --   with what it needs. The modules under `Product/` run inference   --
 --   at time bounded from below and from above, each paired with a    --
---   security level, and check each answer with `refl`:               --
+--   lattice level, and check each answer with `refl`:                --
 --     publish-reported :                                             --
 --       schemeOf (infer [] (publish send))                           --
 --         ≡ just (expected-publish send)                             --

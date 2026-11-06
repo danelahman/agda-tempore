@@ -30,18 +30,18 @@
 --   modality, `∷ A` a binding.                                       --
 ------------------------------------------------------------------------
 
-module MonomorphicCalculus.Examples.Typing.Product.RightSidedTimeEnergy where
+module MonomorphicCalculus.Examples.Typing.Product.TimeUpperBoundEnergy where
 
 open import Data.Nat.Base using (ℕ)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
 open import Relation.Nullary using (¬_)
 
-open import Grades.Examples.Time.RightSided
+open import Grades.Examples.Time.UpperBound
   using (𝕀ᵣ; ↑_; 𝟏ₒ-least)
   renaming ([0,_] to ⌈0,_⌉)
-open import Grades.Examples.Product.RightSidedTimeEnergy
-  using (right-sided-time×energy)
+open import Grades.Examples.Product.TimeUpperBoundEnergy
+  using (time-upper-bound×energy)
 
 open import Grades.Examples.Worked.Operations
   using (Op; read; write; send; slow)
@@ -61,7 +61,7 @@ opTime : Op → 𝕀ᵣ × 𝕀ᵣ
 opTime o = ([0, slow o ] , [0, draws o ])
 
 open import MonomorphicCalculus.Examples.Typing.Core
-  right-sided-time×energy opTime
+  time-upper-bound×energy opTime
 
 ------------------------------------------------------------------------
 -- Effectful computations

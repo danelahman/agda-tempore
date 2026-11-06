@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Typed computations at lower bounds on time with a security level   --
+-- Typed computations at lower bounds on time with a lattice          --
 --                                                                    --
 -- The grade                                                          --
 --   Effect grades and resource grades are both `([ n ,+∞⟩ , ℓ)`, "at --
@@ -39,7 +39,7 @@
 --   modality, `∷ A` a binding.                                       --
 ------------------------------------------------------------------------
 
-module MonomorphicCalculus.Examples.Typing.Product.LeftSidedTimeLevel where
+module MonomorphicCalculus.Examples.Typing.Product.TimeLowerBoundLattice where
 
 open import Data.Product using (_×_; _,_)
 
@@ -47,11 +47,11 @@ open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable
   using (True; False; toWitness; toWitnessFalse)
 
-open import Grades.Examples.Time.LeftSided using (𝕀; [_,+∞⟩)
-open import Grades.Examples.SecurityLevel
+open import Grades.Examples.Time.LowerBound using (𝕀; [_,+∞⟩)
+open import Grades.Examples.Lattice
   using (LevelLattice; LowHigh; Low; High; _⊑ₗₕ_; low-high)
-open import Grades.Examples.Product.LeftSidedTimeLevel
-  using (left-sided-time×low-high)
+open import Grades.Examples.Product.TimeLowerBoundLattice
+  using (time-lower-bound×low-high)
 
 open import Grades.Examples.Worked.Operations
   using (Op; read; write; send; fast)
@@ -72,11 +72,11 @@ open LevelLattice low-high using (_⊑?_)
 ------------------------------------------------------------------------
 -- The operations, graded by guaranteed time and the level touched
 
-open import Grades.Examples.Worked.Operations.Grading using (module Product-LeftSidedTimeLevel)
-open Product-LeftSidedTimeLevel using (opTime) public
+open import Grades.Examples.Worked.Operations.Grading using (module Product-TimeLowerBoundLattice)
+open Product-TimeLowerBoundLattice using (opTime) public
 
 open import MonomorphicCalculus.Examples.Typing.Core
-  left-sided-time×low-high opTime
+  time-lower-bound×low-high opTime
 
 ------------------------------------------------------------------------
 -- Effectful computations
