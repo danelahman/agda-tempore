@@ -29,7 +29,7 @@ open import Grades.Durations.Nat using (ℕᵀ)
 
 open import Data.Nat.Properties using (<⇒≢)
 
-module Grades.Examples.System.Counts.Timed.RightSided
+module Grades.Examples.System.Counts.Banked.UpperBound
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
@@ -52,12 +52,12 @@ open import Grades.Base
 open import Grades.Traces.Allowance.Core ℕᵀ Op costʰⁱ
   using (_≼ᵃ[_]_; nil; bank-delay; use-op)
 
-open import Grades.Examples.Traces.Timed.RightSided
+open import Grades.Examples.Traces.Banked.UpperBound
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
-  using (right-sided; within_; _≾_; singleton; ι; traces; _≽?_;
+  using (upper-bound; within_; _≾_; singleton; ι; traces; _≽?_;
          Trace; ⌈_⌉; ⟨_⟩; ⟨⟩-pos)
 
-open import Grades.Examples.Time.RightSided using (_≾ₒ_; 𝟏ₒ-least)
+open import Grades.Examples.Time.UpperBound using (_≾ₒ_; 𝟏ₒ-least)
 open import Data.Product using (_,_; proj₁)
 open import Grades.Examples.Counts.AtMost
 open import Grades.Examples.Counts.Occurrences Op index
@@ -71,7 +71,7 @@ op≼delay o =
         (bank-delay (use-op (n≤1+n (costʰⁱ o)) nil))
 
 op≾delay : (o : Op)
-         → within singleton ⌈ o ⌉ ≾ Grade.ι right-sided (suc (costʰⁱ o))
+         → within singleton ⌈ o ⌉ ≾ Grade.ι upper-bound (suc (costʰⁱ o))
 op≾delay o p m with toWitness m
 ... | here refl =
   fromWitness {a? = any? (_≽?_ ⌈ o ⌉) (traces (ι (suc (costʰⁱ o))))}
@@ -80,7 +80,7 @@ op≾delay o p m with toWitness m
 ------------------------------------------------------------------------
 -- Every morphism into at-most counts forgets the operation
 
-module _ (F : right-sided →ᵍ at-most-counts n) where
+module _ (F : upper-bound →ᵍ at-most-counts n) where
 
   open _→ᵍ_ F
 

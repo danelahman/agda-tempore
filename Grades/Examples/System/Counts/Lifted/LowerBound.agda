@@ -36,7 +36,7 @@ import Grades.Examples.Counts.Occurrences as Occurrences
 
 open import Grades.Durations.Nat using (ℕᵀ)
 
-module Grades.Examples.System.Counts.Lifted.LeftSided
+module Grades.Examples.System.Counts.Lifted.LowerBound
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
@@ -58,13 +58,13 @@ open import Data.Vec.Properties using (tabulate-cong)
 open import Grades.Base
 open import Grades.Hints using (SystemHints; noGradeHints)
 
-open import Grades.Examples.Traces.Lifted.LeftSided
+open import Grades.Examples.Traces.Lifted.LowerBound
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O
-  using (left-sided; Antichain; traces; nonempty; _≾_; _·_; _⊔_; 𝟏; ι;
+  using (lower-bound; Antichain; traces; nonempty; _≾_; _·_; _⊔_; 𝟏; ι;
          Trace; ⟨_⟩; ε; ·ˢ-ne; ++-ne; n-ne; n-∈⁻; n-◃⁻; ◃-∈; ≾ˢ-◃)
   renaming (NonEmpty to NonEmptyˢ; _·ˢ_ to _⊙_; n to reduce)
 
-open import Grades.Examples.Time.LeftSided using (𝕀; [_,+∞⟩; _⊔ₒ_)
+open import Grades.Examples.Time.LowerBound using (𝕀; [_,+∞⟩; _⊔ₒ_)
 
 open import Grades.Examples.Counts.AtLeast
 open import Grades.Examples.Counts.Extrema
@@ -149,8 +149,8 @@ mapₗ-ι k = tabulate-𝟏ᵛ (certain (⟨ k ⟩ ∷ [])) (λ i → cong atlea
 ------------------------------------------------------------------------
 -- The grade morphism and the grade system
 
-left-sided→at-least-counts : left-sided →ᵍ at-least-counts n
-left-sided→at-least-counts = strictᵍ record
+lower-bound→at-least-counts : lower-bound →ᵍ at-least-counts n
+lower-bound→at-least-counts = strictᵍ record
   { map          = mapₗ
   ; map-monotone = λ {P} {Q} → mapₗ-monotone {P} {Q}
   ; map-𝟏        = mapₗ-ι 0
@@ -160,17 +160,17 @@ left-sided→at-least-counts = strictᵍ record
   ; map-ι        = λ {k} → mapₗ-ι k
   }
 
-leftSidedToAtLeastCountsGradeSystem : GradeSystem
-leftSidedToAtLeastCountsGradeSystem = record
+lowerBoundToAtLeastCountsGradeSystem : GradeSystem
+lowerBoundToAtLeastCountsGradeSystem = record
   { RGrade = at-least-counts n
-  ; EGrade = left-sided
-  ; ∣-∣ᵉ   = left-sided→at-least-counts
+  ; EGrade = lower-bound
+  ; ∣-∣ᵉ   = lower-bound→at-least-counts
   }
 
 -- its hints
 
-leftSidedToAtLeastCountsGradeSystemʰ : SystemHints leftSidedToAtLeastCountsGradeSystem
-leftSidedToAtLeastCountsGradeSystemʰ = record
+lowerBoundToAtLeastCountsGradeSystemʰ : SystemHints lowerBoundToAtLeastCountsGradeSystem
+lowerBoundToAtLeastCountsGradeSystemʰ = record
   { RHints      = (at-least-countsʰ n)
   ; EHints      = noGradeHints
   ; reflects-𝟏? = nothing

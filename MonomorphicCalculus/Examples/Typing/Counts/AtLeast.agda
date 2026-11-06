@@ -40,7 +40,7 @@ open import Data.Vec.Base using ([]) renaming (_∷_ to _∷ᵛ_)
 
 open import Relation.Nullary using (¬_)
 
-open import Grades.Examples.Time.LeftSided using ([_,+∞⟩)
+open import Grades.Examples.Time.LowerBound using ([_,+∞⟩)
 open import Grades.Examples.Counts.AtLeast using (at-least-counts)
 
 open import Grades.Examples.Worked.Operations

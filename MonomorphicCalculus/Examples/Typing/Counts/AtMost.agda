@@ -42,7 +42,7 @@ open import Data.Unit using (tt)
 
 open import Relation.Nullary using (¬_)
 
-open import Grades.Examples.Time.RightSided using (𝟏ₒ-least)
+open import Grades.Examples.Time.UpperBound using (𝟏ₒ-least)
 open import Grades.Examples.Counts.AtMost
   using (at-most-counts; upto; unlimited; 𝟏ᵛ-least)
 

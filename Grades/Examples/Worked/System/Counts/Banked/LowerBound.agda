@@ -5,7 +5,7 @@
 -- Each counter takes the least count among the listed guarantees.    --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.System.Counts.Timed.LeftSided where
+module Grades.Examples.Worked.System.Counts.Banked.LowerBound where
 
 open import Util.Equality
 
@@ -14,13 +14,13 @@ open import Grades.Base using (_→ᵍ_)
 open import Grades.Examples.Worked.Operations
   using (Op; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; costˡᵒ; logged; uplink; chatty-uplink; pause)
 open import Grades.Examples.Worked.Counts.Index using (index; ⟪_,_,_⟫ˡ)
-open import Grades.Examples.Worked.Traces.Timed.LeftSided
+open import Grades.Examples.Worked.Traces.Banked.LowerBound
   using (⟅_⟆; ⟅_∣_⟆)
-open import Grades.Examples.System.Counts.Timed.LeftSided
+open import Grades.Examples.System.Counts.Banked.LowerBound
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ index
-  using (left-sided→at-least-counts)
+  using (lower-bound→at-least-counts)
 
-open _→ᵍ_ left-sided→at-least-counts using (map)
+open _→ᵍ_ lower-bound→at-least-counts using (map)
 
 -- stored or transmitted: the reading is certain, neither of the rest
 

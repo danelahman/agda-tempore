@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------
 -- Worked instance: forgetting the upper bound.                       --
 --                                                                    --
--- `IntervalsToLeftSidedIntervals` keeps the lower endpoint only: the --
+-- `IntervalsToLowerBounds` keeps the lower endpoint only: the        --
 -- effect grade states that the uplink takes between 7 and 9 ticks,   --
 -- the resource grade only that at least 7 have passed.               --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.System.IntervalsToLeftSidedIntervals where
+module Grades.Examples.Worked.System.IntervalsToLowerBounds where
 
 open import Data.Nat.Base using (ℕ)
 open import Data.Nat.Properties using (_≤?_)
@@ -20,11 +20,11 @@ open import Grades.Base using (_→ᵍ_)
 
 open _→ᵍ_ using (map; map-monotone)
 
-open import Grades.Examples.Time.TwoSidedWithInfinity
+open import Grades.Examples.Time.Interval
   using (Interval∞; eqᵢ; _·ᵢ_; _≾ᵢ_; ↑_; ∞)
   renaming ([_,_] to mkᵢ)
 
-open import Grades.Examples.Time.LeftSided
+open import Grades.Examples.Time.LowerBound
   using ([_,+∞⟩; _·ₒ_; _≾ₒ_)
 
 -- every window below has a finite upper endpoint
@@ -32,11 +32,11 @@ open import Grades.Examples.Time.LeftSided
 [_,_] : (m n : ℕ) {m≤n : True (m ≤? n)} → Interval∞
 [ m , n ] {m≤n} = mkᵢ m (↑ n) {m≤n}
 
-open import Grades.Examples.System.IntervalsToLeftSidedIntervals
+open import Grades.Examples.System.IntervalsToLowerBounds
   using (tsi→lsi)
 
 open import Grades.Examples.Worked.Time.Decide using (≤!)
-open import Grades.Examples.Worked.Time.TwoSided using (uplink-window)
+open import Grades.Examples.Worked.Time.Interval using (uplink-window)
 
 -- the projection reads off the lower endpoint
 

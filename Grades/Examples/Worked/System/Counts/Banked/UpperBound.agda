@@ -6,7 +6,7 @@
 -- therefore sends `⌈ read ⌉` to the unit.                            --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.System.Counts.Timed.RightSided where
+module Grades.Examples.Worked.System.Counts.Banked.UpperBound where
 
 open import Util.Equality
 
@@ -15,9 +15,9 @@ open import Grades.Base using (_→ᵍ_)
 open import Grades.Examples.Worked.Operations
   using (Op; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; costʰⁱ; costʰⁱ-pos; ⌈_⌉; ⟨_⟩; read)
 open import Grades.Examples.Worked.Counts.Index using (index)
-open import Grades.Examples.Worked.Traces.Timed.RightSided
+open import Grades.Examples.Worked.Traces.Banked.UpperBound
   using (within_; ⟅_⟆; _≾_; holds)
-open import Grades.Examples.System.Counts.Timed.RightSided
+open import Grades.Examples.System.Counts.Banked.UpperBound
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos index
   using (erases; miscounts)
 

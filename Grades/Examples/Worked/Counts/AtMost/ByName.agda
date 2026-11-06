@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Worked instances of upper bounds on counts by name.                --
+-- Worked instances of at-most counts by name.                        --
 --                                                                    --
 -- The operations of the sensor node are the names 0, 1, 2 (`read`,   --
 -- `write`, `send`); every other name is some other operation, all of --
@@ -12,7 +12,7 @@
 -- computation by reduction.                                          --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.Counts.UpperBound where
+module Grades.Examples.Worked.Counts.AtMost.ByName where
 
 open import Data.List.Base using (List; []; _∷_)
 open import Data.Nat.Base using (ℕ)
@@ -27,11 +27,11 @@ open import Grades.Indexed using (ℕ-names; module Maps)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
 open import Grades.Examples.Worked.Counts.Index using (⟪_,_,_⟫ᵐ)
 open import Grades.Examples.Counts.AtMost using (upto; unlimited)
-open import Grades.Examples.Counts.UpperBound using (counts-upper-bound; restrict)
-open import Grades.Examples.Time.RightSided using (𝕀ᵣ)
+open import Grades.Examples.Counts.AtMost.ByName using (at-most-counts-by-name; restrict)
+open import Grades.Examples.Time.UpperBound using (𝕀ᵣ)
 
 open Maps ℕ-names using (Map; _∣_; _!_)
-open Grade counts-upper-bound using (_≾_; _≾?_; _·_; _⊔_; 𝟏; ⊤)
+open Grade at-most-counts-by-name using (_≾_; _≾?_; _·_; _⊔_; 𝟏; ⊤)
 
 -- the operations as names
 

@@ -13,8 +13,8 @@ open import Data.Vec.Base using (Vec; []; _∷_)
 
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
 
-open import Grades.Examples.Time.RightSided using (𝕀ᵣ)
-open import Grades.Examples.Time.LeftSided using (𝕀)
+open import Grades.Examples.Time.UpperBound using (𝕀ᵣ)
+open import Grades.Examples.Time.LowerBound using (𝕀)
 
 import Grades.Examples.Counts.AtLeast as AtLeast
 

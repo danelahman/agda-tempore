@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- Upper bounds on counts, by name: "at most `k` of each operation",  --
+-- At-most counts by name: "at most `k` of each operation",           --
 -- for every operation name.                                          --
 --                                                                    --
 -- A grade maps each name to an extended natural number, all but      --
 -- finitely many names to one default bound: the indexed grade of the --
--- right-sided time intervals, with delays drawing on no counter      --
+-- upper bounds on time, with delays drawing on no counter            --
 -- (`untimed`). Sequencing adds the counts name by name, the order is --
 -- `≤` at each name and the join the maximum; the unit, every count   --
 -- 0, is least, and `_·_` commutes.                                   --
@@ -13,7 +13,7 @@
 -- `n`-counter quotas `at-most-counts n`.                             --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Counts.UpperBound where
+module Grades.Examples.Counts.AtMost.ByName where
 
 open import Data.Fin.Base using (Fin; toℕ)
 open import Data.List.Base using ([]; _∷_)
@@ -29,9 +29,9 @@ open import Grades.Indexed using (ℕ-names; module Maps)
 open import Grades.Hints using (GradeHints)
 open Maps ℕ-names using (indexedᵍ; indexedʰ; Map; _∣_; _!_; !-map₂; pointwise⁻)
 
-open import Grades.Examples.Time.RightSided using (right-sided-intervals; right-sided-intervalsʰ; 𝕀ᵣ)
+open import Grades.Examples.Time.UpperBound using (upper-bounds; upper-boundsʰ; 𝕀ᵣ)
 open import Grades.Examples.Counts.AtMost using (at-most-counts)
-import Grades.Examples.Counts.Power right-sided-intervals as P
+import Grades.Examples.Counts.Power upper-bounds as P
 
 open import Util.Equality
 
@@ -53,16 +53,16 @@ untimedʰ H = record { 𝟏-least? = H.𝟏-least? ; ·-comm? = H.·-comm? ; plu
 ------------------------------------------------------------------------
 -- The grade
 
-counts-upper-bound : Grade ℕᴰ
-counts-upper-bound = indexedᵍ (untimed right-sided-intervals)
+at-most-counts-by-name : Grade ℕᴰ
+at-most-counts-by-name = indexedᵍ (untimed upper-bounds)
 
-counts-upper-boundʰ : GradeHints counts-upper-bound
-counts-upper-boundʰ = indexedʰ (untimed right-sided-intervals) (untimedʰ right-sided-intervalsʰ)
+at-most-counts-by-nameʰ : GradeHints at-most-counts-by-name
+at-most-counts-by-nameʰ = indexedʰ (untimed upper-bounds) (untimedʰ upper-boundsʰ)
 
 -- "at most `k` of the operation `s`", none of the others
 
 upto : ℕ → 𝕀ᵣ → Map 𝕀ᵣ
-upto s k = Grade.𝟏 right-sided-intervals ∣ ((s , k) ∷ [])
+upto s k = Grade.𝟏 upper-bounds ∣ ((s , k) ∷ [])
 
 ------------------------------------------------------------------------
 -- Restriction to the first `n` names
@@ -70,7 +70,7 @@ upto s k = Grade.𝟏 right-sided-intervals ∣ ((s , k) ∷ [])
 module _ (n : ℕ) where
 
   private
-    open Grade right-sided-intervals
+    open Grade upper-bounds
       using () renaming (_·_ to _·ᴳ_; _⊔_ to _⊔ᴳ_; _≾_ to _≾ᴳ_)
     open Grade (at-most-counts n) using () renaming (_≃_ to _≃ᵛ_)
 
@@ -80,7 +80,7 @@ module _ (n : ℕ) where
   restrict : Map 𝕀ᵣ → Vec 𝕀ᵣ n
   restrict f = tabulate (λ i → f ! toℕ i)
 
-  restrictᵍ : counts-upper-bound →ᵍ at-most-counts n
+  restrictᵍ : at-most-counts-by-name →ᵍ at-most-counts n
   restrictᵍ = record
     { map          = restrict
     ; map-monotone = λ p → P.tabulate-≾ᵛ (λ i → pointwise⁻ _≾ᴳ_ p (toℕ i))

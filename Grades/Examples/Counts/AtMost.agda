@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Counts as upper bounds: "at most `k` of each operation".           --
+-- At-most counts: "at most `k` of each operation".                   --
 --                                                                    --
 -- A grade is one bound per counter; a computation is graded by it    --
 -- when it draws on each counter at most that often. Sequencing adds  --
@@ -7,7 +7,7 @@
 -- the weaker grade, and the join is the pointwise maximum. The unit, --
 -- no operations at all, is least.                                    --
 --                                                                    --
--- Each coordinate is the endpoint of a right-sided time interval, an --
+-- Each coordinate is the endpoint of an upper bound on time, an      --
 -- extended natural number: `unlimited` on one counter lifts that     --
 -- quota and keeps the others, and the greatest grade is `unlimited`  --
 -- on every counter. The order and the joins are those of the         --
@@ -26,10 +26,10 @@ open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
 open import Grades.Hints using (GradeHints)
 
-open import Grades.Examples.Time.RightSided
-  using (right-sided-intervals; right-sided-intervalsʰ; 𝕀ᵣ; [0,_]; ↑_; ∞)
+open import Grades.Examples.Time.UpperBound
+  using (upper-bounds; upper-boundsʰ; 𝕀ᵣ; [0,_]; ↑_; ∞)
 
-open import Grades.Examples.Counts.Power right-sided-intervals public
+open import Grades.Examples.Counts.Power upper-bounds public
 
 -- the grade over `n` counters
 
@@ -37,7 +37,7 @@ at-most-counts : ℕ → Grade ℕᴰ
 at-most-counts = power
 
 at-most-countsʰ : (n : ℕ) → GradeHints (at-most-counts n)
-at-most-countsʰ = powerʰ right-sided-intervalsʰ
+at-most-countsʰ = powerʰ upper-boundsʰ
 
 -- one coordinate
 

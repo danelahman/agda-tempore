@@ -7,18 +7,19 @@
 
 module Grades.Examples.Worked.System.Counts where
 
--- the subset cap, projected onto quotas and onto certain counts
+-- the finite run set cap, projected onto quotas and onto certain
+-- counts
 
-import Grades.Examples.Worked.System.Counts.Subsets.AtMost
-import Grades.Examples.Worked.System.Counts.Subsets.AtLeast
+import Grades.Examples.Worked.System.Counts.FiniteRunSets.AtMost
+import Grades.Examples.Worked.System.Counts.FiniteRunSets.AtLeast
 
 -- the coverage floor, projected onto certain counts
 
-import Grades.Examples.Worked.System.Counts.Timed.LeftSided
+import Grades.Examples.Worked.System.Counts.Banked.LowerBound
 
 -- the allowance cap does not project onto quotas
 
-import Grades.Examples.Worked.System.Counts.Timed.RightSided
+import Grades.Examples.Worked.System.Counts.Banked.UpperBound
 
 -- a cost model does not preserve the join
 

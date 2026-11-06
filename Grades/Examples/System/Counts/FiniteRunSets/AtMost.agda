@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 -- A grade system in which the resource grades are quotas.            --
 --                                                                    --
--- The effect grades are the subset grade of upper bounds: every run  --
--- of a computation is one of the listed traces. The resource grades  --
--- are at-most counts, one quota per counter.                         --
+-- The effect grades are the finite run set grade of upper bounds:    --
+-- every run of a computation is one of the listed traces. The        --
+-- resource grades are at-most counts, one quota per counter.         --
 --                                                                    --
 --   ∣ Q ∣ᵉ  =  on each counter, the greatest count among the traces  --
 --              of Q                                                  --
@@ -36,7 +36,7 @@ open import Util.Equality
 
 open import Grades.Durations.Nat using (ℕᵀ)
 
-module Grades.Examples.System.Counts.Subsets.AtMost
+module Grades.Examples.System.Counts.FiniteRunSets.AtMost
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
@@ -57,11 +57,11 @@ open import Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
   using (Trace; traces; nonempty; nf; nf-∈⁺; nf-∈⁻; ⟨_⟩)
   renaming (NonEmpty to NonEmptyˢ; _·ˢ_ to _⊙_)
 
-open import Grades.Examples.Traces.Subsets.RightSided
+open import Grades.Examples.Traces.FiniteRunSets.UpperBound
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
-  using (right-sided; Permits; permitting_; any-run; _·ᵖ_; _⊔ᵖ_; _≾_)
+  using (upper-bound; Permits; permitting_; any-run; _·ᵖ_; _⊔ᵖ_; _≾_)
 
-open import Grades.Examples.Time.RightSided
+open import Grades.Examples.Time.UpperBound
   using (𝕀ᵣ; [0,_]; ↑_; ∞; _·ₒ_; ≾ₒ-antisym)
 
 open import Grades.Examples.Counts.AtMost
@@ -140,7 +140,7 @@ mapₒ-⊔ any-run        Q              = sym (⊤ᵛ-⊔ᵛ (⊤-⊔-≡ ≾�
 ------------------------------------------------------------------------
 -- Time draws on no counter
 
-mapₒ-ι : (k : ℕ) → mapₒ (Grade.ι right-sided k) ≡ 𝟏ᵛ
+mapₒ-ι : (k : ℕ) → mapₒ (Grade.ι upper-bound k) ≡ 𝟏ᵛ
 mapₒ-ι k =
   tabulate-𝟏ᵛ (need (⟨ k ⟩ ∷ []))
     (λ i → cong upto (trans (⊔-identityʳ (occ i ⟨ k ⟩)) (occ-⟨⟩ i k)))
@@ -148,8 +148,8 @@ mapₒ-ι k =
 ------------------------------------------------------------------------
 -- The grade morphism and the grade system
 
-subsets→at-most-counts : right-sided →ᵍ at-most-counts n
-subsets→at-most-counts = strictᵍ record
+finite-run-sets→at-most-counts : upper-bound →ᵍ at-most-counts n
+finite-run-sets→at-most-counts = strictᵍ record
   { map          = mapₒ
   ; map-monotone = λ {P} {Q} → mapₒ-monotone {P} {Q}
   ; map-𝟏        = mapₒ-ι 0
@@ -159,17 +159,17 @@ subsets→at-most-counts = strictᵍ record
   ; map-ι        = λ {k} → mapₒ-ι k
   }
 
-subsetsToAtMostCountsGradeSystem : GradeSystem
-subsetsToAtMostCountsGradeSystem = record
+finiteRunSetsToAtMostCountsGradeSystem : GradeSystem
+finiteRunSetsToAtMostCountsGradeSystem = record
   { RGrade = at-most-counts n
-  ; EGrade = right-sided
-  ; ∣-∣ᵉ   = subsets→at-most-counts
+  ; EGrade = upper-bound
+  ; ∣-∣ᵉ   = finite-run-sets→at-most-counts
   }
 
 -- its hints
 
-subsetsToAtMostCountsGradeSystemʰ : SystemHints subsetsToAtMostCountsGradeSystem
-subsetsToAtMostCountsGradeSystemʰ = record
+finiteRunSetsToAtMostCountsGradeSystemʰ : SystemHints finiteRunSetsToAtMostCountsGradeSystem
+finiteRunSetsToAtMostCountsGradeSystemʰ = record
   { RHints      = (at-most-countsʰ n)
   ; EHints      = noGradeHints
   ; reflects-𝟏? = nothing

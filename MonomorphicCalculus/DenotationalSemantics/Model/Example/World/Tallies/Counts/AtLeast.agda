@@ -7,7 +7,7 @@
 --                                                                    --
 --   ws ⊑[ ks ] ws'   iff   kᵢ + wᵢ ≤ w'ᵢ   for every counter i       --
 --                                                                    --
--- It is the power of the left-sided tick frame, whose lower bound    --
+-- It is the power of the lower-bound tick frame, whose lower bound   --
 -- keeps every move forward.                                          --
 ------------------------------------------------------------------------
 
@@ -18,17 +18,17 @@ open import Data.Product using (_×_)
 open import Data.Unit using () renaming (⊤ to 𝟙)
 open import Data.Vec.Base using ([]; _∷_)
 
-open import Grades.Examples.Time.LeftSided
-  using (left-sided-intervals; [_,+∞⟩)
+open import Grades.Examples.Time.LowerBound
+  using (lower-bounds; [_,+∞⟩)
 open import Grades.Examples.Counts.AtLeast using (at-least-counts)
 
 open import Util.Equality
 
 open import MonomorphicCalculus.DenotationalSemantics.Model.World
 open import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Tallies.Counts.Power
-  left-sided-intervals using (_^_)
+  lower-bounds using (_^_)
 
-import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.LeftSided as LS
+import MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.LowerBound as LS
 
 -- The frame.
 

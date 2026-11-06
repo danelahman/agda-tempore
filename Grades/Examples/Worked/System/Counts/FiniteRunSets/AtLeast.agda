@@ -1,11 +1,12 @@
 ------------------------------------------------------------------------
--- Worked instance of the subset cap, projected onto certain counts.  --
+-- Worked instance of the finite run set cap, projected onto certain  --
+-- counts.                                                            --
 --                                                                    --
 -- Each counter takes the least count among the listed runs, and      --
 -- `any-run` makes no claim.                                          --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.System.Counts.Subsets.AtLeast where
+module Grades.Examples.Worked.System.Counts.FiniteRunSets.AtLeast where
 
 open import Data.Vec.Base using ([]; _∷_)
 
@@ -16,15 +17,15 @@ open import Grades.Base using (_→ᵍ_)
 open import Grades.Examples.Worked.Operations
   using (Op; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; ⟅_∣_⟆; poll; uplink)
 open import Grades.Examples.Worked.Counts.Index using (index)
-open import Grades.Examples.Worked.Traces.Subsets.RightSided
+open import Grades.Examples.Worked.Traces.FiniteRunSets.UpperBound
   using (permitting_; any-run)
 import Grades.Examples.Counts.AtLeast as AtLeast
 open AtLeast using (certainly; no-claim)
-open import Grades.Examples.System.Counts.Subsets.AtLeast
+open import Grades.Examples.System.Counts.FiniteRunSets.AtLeast
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans index
-  using (subsets→at-least-counts-with-⊤)
+  using (finite-run-sets→at-least-counts-with-⊤)
 
-open _→ᵍ_ subsets→at-least-counts-with-⊤ using (map)
+open _→ᵍ_ finite-run-sets→at-least-counts-with-⊤ using (map)
 
 -- polling or uplinking: the reading is certain, the transmission not
 

@@ -2,9 +2,9 @@
 -- A grade system in which the resource grades keep only a lower      --
 -- bound.                                                             --
 --                                                                    --
--- The effect grades are two-sided time intervals, bounding the       --
+-- The effect grades are time intervals, bounding the                 --
 -- running time of a computation from both sides; the resource grades --
--- are left-sided intervals. The projection forgets the upper         --
+-- are lower bounds. The projection forgets the upper                 --
 -- endpoint, so a resource grade states only for how long data is     --
 -- guaranteed to have been available.                                 --
 --                                                                    --
@@ -13,7 +13,7 @@
 -- keeps, and the projection sends one to the other.                  --
 ------------------------------------------------------------------------
 
-module Grades.Examples.System.IntervalsToLeftSidedIntervals where
+module Grades.Examples.System.IntervalsToLowerBounds where
 
 open import Data.List.Base using () renaming ([] to []ᴸ)
 open import Data.Product
@@ -21,12 +21,12 @@ open import Data.Maybe.Base using (nothing)
 
 open import Grades.Base
 open import Grades.Hints using (SystemHints)
-open import Grades.Examples.Time.LeftSided
-open import Grades.Examples.Time.TwoSidedWithInfinity
+open import Grades.Examples.Time.LowerBound
+open import Grades.Examples.Time.Interval
 
 open import Util.Equality
 
-tsi→lsi : two-sided-intervals-with-∞ →ᵍ left-sided-intervals
+tsi→lsi : intervals →ᵍ lower-bounds
 tsi→lsi = strictᵍ record
   { map          = λ tsi → [ min tsi ,+∞⟩
   ; map-monotone = λ rel → proj₁ rel
@@ -37,19 +37,19 @@ tsi→lsi = strictᵍ record
   ; map-ι        = refl
   }
 
-twoSidedIntervalsToLeftSidedIntervalsGradeSystem : GradeSystem
-twoSidedIntervalsToLeftSidedIntervalsGradeSystem = record
-  { RGrade = left-sided-intervals
-  ; EGrade = two-sided-intervals-with-∞
+intervalsToLowerBoundsGradeSystem : GradeSystem
+intervalsToLowerBoundsGradeSystem = record
+  { RGrade = lower-bounds
+  ; EGrade = intervals
   ; ∣-∣ᵉ   = tsi→lsi
   }
 
 -- its hints
 
-twoSidedIntervalsToLeftSidedIntervalsGradeSystemʰ : SystemHints twoSidedIntervalsToLeftSidedIntervalsGradeSystem
-twoSidedIntervalsToLeftSidedIntervalsGradeSystemʰ = record
-  { RHints      = left-sided-intervalsʰ
-  ; EHints      = two-sided-intervals-with-∞ʰ
+intervalsToLowerBoundsGradeSystemʰ : SystemHints intervalsToLowerBoundsGradeSystem
+intervalsToLowerBoundsGradeSystemʰ = record
+  { RHints      = lower-boundsʰ
+  ; EHints      = intervalsʰ
   ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

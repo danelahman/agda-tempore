@@ -8,7 +8,7 @@
 -- Under the coverage order, every operation a guarantee lists occurs --
 -- in a run that covers it. A covering run therefore draws on every   --
 -- counter at least as often as the guarantee, which is the           --
--- assumption of `Lifted.LeftSided`, and every field of the           --
+-- assumption of `Lifted.LowerBound`, and every field of the          --
 -- projection is preserved.                                           --
 --                                                                    --
 -- As a resource grade, `atleast 3` on a `heartbeat` counter makes a  --
@@ -28,7 +28,7 @@ open import Util.Equality
 
 open import Grades.Durations.Nat using (ℕᵀ)
 
-module Grades.Examples.System.Counts.Timed.LeftSided
+module Grades.Examples.System.Counts.Banked.LowerBound
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
@@ -67,6 +67,6 @@ occ-≼ᶜ (use-delay {s⁻ = s⁻} _ p)         i =
 ------------------------------------------------------------------------
 -- The projection, its grade morphism and the grade system
 
-open import Grades.Examples.System.Counts.Lifted.LeftSided
+open import Grades.Examples.System.Counts.Lifted.LowerBound
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans coverageOrder index occ-≼ᶜ
   public

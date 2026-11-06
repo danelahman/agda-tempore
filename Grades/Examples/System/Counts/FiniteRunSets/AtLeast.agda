@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- The subset cap, read as certain counts.                            --
+-- The finite run set cap, read as certain counts.                    --
 --                                                                    --
 -- Every run of a computation is listed, so on each counter the least --
 -- count among the listed runs is certain:                            --
@@ -31,7 +31,7 @@ open import Util.Equality
 
 open import Grades.Durations.Nat using (ℕᵀ)
 
-module Grades.Examples.System.Counts.Subsets.AtLeast
+module Grades.Examples.System.Counts.FiniteRunSets.AtLeast
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
@@ -52,11 +52,11 @@ open import Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
   using (Trace; traces; nonempty; nf; nf-ne; nf-∈⁺; nf-∈⁻; ⟨_⟩; ·ˢ-ne; ++-ne)
   renaming (NonEmpty to NonEmptyˢ; _·ˢ_ to _⊙_)
 
-open import Grades.Examples.Traces.Subsets.RightSided
+open import Grades.Examples.Traces.FiniteRunSets.UpperBound
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
-  using (right-sided; Permits; permitting_; any-run; _·ᵖ_; _⊔ᵖ_; _≾_)
+  using (upper-bound; Permits; permitting_; any-run; _·ᵖ_; _⊔ᵖ_; _≾_)
 
-open import Grades.Examples.Time.LeftSided using (𝕀⊤; timed_; untimed; _·ᵗ_; ≾ᵗ-antisym)
+open import Grades.Examples.Time.LowerBound using (𝕀⊤; timed_; untimed; _·ᵗ_; ≾ᵗ-antisym)
 
 open import Grades.Examples.Counts.AtLeast
   using (at-least-counts; at-least-counts-with-⊤; at-least-counts-with-⊤ʰ; certainly; module WithTop)
@@ -85,9 +85,9 @@ collapses G H absorb top-unit F c =
 
 -- so every morphism from the cap into the at-least counts is constant
 
-constant : (F : right-sided →ᵍ at-least-counts n) (P : Permits)
+constant : (F : upper-bound →ᵍ at-least-counts n) (P : Permits)
          → Grade._≃_ (at-least-counts n) (_→ᵍ_.map F P) (Grade.𝟏 (at-least-counts n))
-constant = collapses right-sided (at-least-counts n) (λ _ → refl) refl
+constant = collapses upper-bound (at-least-counts n) (λ _ → refl) refl
 
 ------------------------------------------------------------------------
 -- The projection, into the counts with a formal greatest grade
@@ -152,15 +152,15 @@ mapₗ-⊔ any-run        Q       = sym (⊤ᵛ-⊔ᵛ (⊤-⊔-≡ ≾ᵗ-antis
 
 -- time draws on no counter
 
-mapₗ-ι : (k : ℕ) → mapₗ (Grade.ι right-sided k) ≡ 𝟏ᵛ
+mapₗ-ι : (k : ℕ) → mapₗ (Grade.ι upper-bound k) ≡ 𝟏ᵛ
 mapₗ-ι k =
   tabulate-𝟏ᵛ (certain (⟨ k ⟩ ∷ [])) (λ i → cong certainly (occ-⟨⟩ i k))
 
 ------------------------------------------------------------------------
 -- The grade morphism and the grade system
 
-subsets→at-least-counts-with-⊤ : right-sided →ᵍ at-least-counts-with-⊤ n
-subsets→at-least-counts-with-⊤ = strictᵍ record
+finite-run-sets→at-least-counts-with-⊤ : upper-bound →ᵍ at-least-counts-with-⊤ n
+finite-run-sets→at-least-counts-with-⊤ = strictᵍ record
   { map          = mapₗ
   ; map-monotone = λ {P} {Q} → mapₗ-monotone {P} {Q}
   ; map-𝟏        = mapₗ-ι 0
@@ -170,17 +170,17 @@ subsets→at-least-counts-with-⊤ = strictᵍ record
   ; map-ι        = λ {k} → mapₗ-ι k
   }
 
-subsetsToAtLeastCountsGradeSystem : GradeSystem
-subsetsToAtLeastCountsGradeSystem = record
+finiteRunSetsToAtLeastCountsGradeSystem : GradeSystem
+finiteRunSetsToAtLeastCountsGradeSystem = record
   { RGrade = at-least-counts-with-⊤ n
-  ; EGrade = right-sided
-  ; ∣-∣ᵉ   = subsets→at-least-counts-with-⊤
+  ; EGrade = upper-bound
+  ; ∣-∣ᵉ   = finite-run-sets→at-least-counts-with-⊤
   }
 
 -- its hints
 
-subsetsToAtLeastCountsGradeSystemʰ : SystemHints subsetsToAtLeastCountsGradeSystem
-subsetsToAtLeastCountsGradeSystemʰ = record
+finiteRunSetsToAtLeastCountsGradeSystemʰ : SystemHints finiteRunSetsToAtLeastCountsGradeSystem
+finiteRunSetsToAtLeastCountsGradeSystemʰ = record
   { RHints      = (at-least-counts-with-⊤ʰ n)
   ; EHints      = noGradeHints
   ; reflects-𝟏? = nothing

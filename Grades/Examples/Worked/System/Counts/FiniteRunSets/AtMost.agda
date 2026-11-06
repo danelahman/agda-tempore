@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- Worked instance of the subset cap, projected onto quotas.          --
+-- Worked instance of the finite run set cap, projected onto quotas.  --
 --                                                                    --
 -- Each counter takes the greatest count among the listed runs.       --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.System.Counts.Subsets.AtMost where
+module Grades.Examples.Worked.System.Counts.FiniteRunSets.AtMost where
 
 open import Util.Equality
 
@@ -14,14 +14,14 @@ open import Grades.Examples.Worked.Operations
   using (Op; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; ⌈_⌉; ⟅_⟆; ⟅_∣_⟆; poll; uplink;
          chatty-uplink; write; send; pause)
 open import Grades.Examples.Worked.Counts.Index using (index; ⟪_,_,_⟫ᵐ)
-open import Grades.Examples.Worked.Traces.Subsets.RightSided
+open import Grades.Examples.Worked.Traces.FiniteRunSets.UpperBound
   using (permitting_; any-run)
 open import Grades.Examples.Counts.AtMost using (upto; unlimited)
-open import Grades.Examples.System.Counts.Subsets.AtMost
+open import Grades.Examples.System.Counts.FiniteRunSets.AtMost
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans index
-  using (subsets→at-most-counts)
+  using (finite-run-sets→at-most-counts)
 
-open _→ᵍ_ subsets→at-most-counts using (map)
+open _→ᵍ_ finite-run-sets→at-most-counts using (map)
 
 -- a reading, and possibly a transmission
 

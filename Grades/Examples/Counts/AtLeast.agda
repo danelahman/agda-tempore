@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Counts as lower bounds: "at least `k` of each operation".          --
+-- At-least counts: "at least `k` of each operation".                 --
 --                                                                    --
 -- A grade is one bound per counter; a computation is graded by it    --
 -- when it has drawn on each counter at least that often. Sequencing  --
@@ -7,7 +7,7 @@
 -- being the weaker grade, and the join is the pointwise minimum. The --
 -- unit, demanding nothing, is the greatest grade.                    --
 --                                                                    --
--- Each coordinate is the endpoint of a left-sided time interval, a   --
+-- Each coordinate is the endpoint of a lower bound on time, a        --
 -- natural number; no point at infinity is needed.                    --
 --                                                                    --
 -- As a resource grade this is a guarantee: a token graded            --
@@ -27,12 +27,12 @@ open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
 open import Grades.Hints using (GradeHints)
 
-open import Grades.Examples.Time.LeftSided
-  using (left-sided-intervals; left-sided-intervals-with-⊤; left-sided-intervalsʰ;
-         left-sided-intervals-with-⊤ʰ;
+open import Grades.Examples.Time.LowerBound
+  using (lower-bounds; lower-bounds-with-⊤; lower-boundsʰ;
+         lower-bounds-with-⊤ʰ;
          𝕀; [_,+∞⟩; 𝟏ₒ-not-least; 𝕀⊤; timed_; untimed)
 
-open import Grades.Examples.Counts.Power left-sided-intervals public
+open import Grades.Examples.Counts.Power lower-bounds public
 
 -- the grade over `n` counters
 
@@ -40,7 +40,7 @@ at-least-counts : ℕ → Grade ℕᴰ
 at-least-counts = power
 
 at-least-countsʰ : (n : ℕ) → GradeHints (at-least-counts n)
-at-least-countsʰ = powerʰ left-sided-intervalsʰ
+at-least-countsʰ = powerʰ lower-boundsʰ
 
 -- one coordinate
 
@@ -63,13 +63,13 @@ atleast k = [ k ,+∞⟩
 -- grades whose greatest element is absorbing project to these counts.
 
 import Grades.Examples.Counts.Power as Power
-module WithTop = Power left-sided-intervals-with-⊤
+module WithTop = Power lower-bounds-with-⊤
 
 at-least-counts-with-⊤ : ℕ → Grade ℕᴰ
 at-least-counts-with-⊤ = WithTop.power
 
 at-least-counts-with-⊤ʰ : (n : ℕ) → GradeHints (at-least-counts-with-⊤ n)
-at-least-counts-with-⊤ʰ = WithTop.powerʰ left-sided-intervals-with-⊤ʰ
+at-least-counts-with-⊤ʰ = WithTop.powerʰ lower-bounds-with-⊤ʰ
 
 -- one coordinate
 

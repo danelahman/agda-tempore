@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Typed computations at upper bounds on counts by name               --
+-- Typed computations under at-most counts by name                    --
 --                                                                    --
 -- The grade                                                          --
 --   Effect grades and resource grades are both maps from operation   --
@@ -23,7 +23,7 @@
 --   (`refuted`).                                                     --
 ------------------------------------------------------------------------
 
-module MonomorphicCalculus.Examples.Typing.Counts.UpperBound where
+module MonomorphicCalculus.Examples.Typing.Counts.AtMost.ByName where
 
 open import Data.Product using (_,_)
 open import Relation.Nullary using (¬_)
@@ -31,10 +31,10 @@ open import Relation.Nullary.Decidable using (True; False; toWitness; toWitnessF
 
 open import Grades.Base using (Grade)
 open import Grades.Indexed using (ℕ-names; module Maps)
-open import Grades.Examples.Time.RightSided using (𝟏ₒ-least)
+open import Grades.Examples.Time.UpperBound using (𝟏ₒ-least)
 open import Grades.Examples.Counts.AtMost using (upto; unlimited)
-open import Grades.Examples.Counts.UpperBound using (counts-upper-bound)
-open import Grades.Examples.Worked.Counts.UpperBound using (single)
+open import Grades.Examples.Counts.AtMost.ByName using (at-most-counts-by-name)
+open import Grades.Examples.Worked.Counts.AtMost.ByName using (single)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
 
 open Maps ℕ-names using (pointwise⁺) renaming (_!_ to _!ᵐ_)
@@ -42,12 +42,12 @@ open Maps ℕ-names using (pointwise⁺) renaming (_!_ to _!ᵐ_)
 ------------------------------------------------------------------------
 -- The operations, each drawing once on its own name
 
-opTime : Op → Grade.Carrier counts-upper-bound
+opTime : Op → Grade.Carrier at-most-counts-by-name
 opTime read  = single read (upto 1) (upto 0)
 opTime write = single write (upto 1) (upto 0)
 opTime send  = single send (upto 1) (upto 0)
 
-open import MonomorphicCalculus.Examples.Typing.Core counts-upper-bound opTime
+open import MonomorphicCalculus.Examples.Typing.Core at-most-counts-by-name opTime
 
 -- side conditions, decided
 
