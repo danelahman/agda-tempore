@@ -44,8 +44,8 @@ PolymorphicCalculus/Examples/<Set>/All.agda`, whose header names the parts of
 the solver it exercises. A check passes when Agda exits with 0 and prints no
 warning. The only postulate is function extensionality (`Util/Equality.agda`).
 The denotational semantics and the adequacy proof of the monomorphic calculus
-use eight `TERMINATING` pragmas, each justified where it stands; the polymorphic
-calculus uses none.
+use eight `TERMINATING` pragmas for difficult-to-prove-terminating recursions, 
+each justified where it stands; the polymorphic calculus uses none.
 
 The sources use many Unicode symbols, including mathematical letters such as
 `𝟏` and `𝕊`, combining accents (`ε̂`), and brackets such as `⦉ ⦊`. A monospace
@@ -77,7 +77,7 @@ The root of each calculus, `PolymorphicCalculus/Everything.agda` and
   effect-grade variables (that are introduced by handler operation cases).
 - In the polymorphic calculus, `unbox` takes a resource value, a variable under
   annotations, and binds its payload. The monomorphic `unbox` takes a variable.
-- A top-level (let) definition is named by its position in the program context.
+- A top-level (`let`) definition is named by its position in the program context.
   Inference is for values in program contexts and for computations in open
   contexts, and is complete with respect to scope-closed typings.
 - The reduction of the polymorphic calculus is on run-time terms paired with
