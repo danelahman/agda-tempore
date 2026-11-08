@@ -2,11 +2,11 @@
 -- The context modality at lower bounds on time                       --
 --                                                                    --
 -- What it shows                                                      --
---   The unit is the greatest grade, so the context modality is a     --
---   parametric right adjoint at every grade (`PRA-left`), with the   --
---   familial representation of                                       --
+--   The unit `𝟏` of the grades is the greatest grade, so the context --
+--   modality is a parametric right adjoint at every grade            --
+--   (`PRA-left`), with the familial representation of                --
 --   `Renaming/ContextModality/LowerBounds`. It has a left adjoint    --
---   only at the unit (`no-left-adjoint-[1,∞⟩`).                      --
+--   only at `𝟏` (`no-left-adjoint-[1,∞⟩`).                           --
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
@@ -41,5 +41,5 @@ PRA-left : (ρ : R) → PRA ρ
 PRA-left = PRA-everywhere ≾ᵣ-refl
 
 no-left-adjoint-[1,∞⟩ : ¬ LeftAdjoint [ 1 ,+∞⟩
-no-left-adjoint-[1,∞⟩ la with proj₂ (left-adjoint⇒unit la)
+no-left-adjoint-[1,∞⟩ la with proj₂ (left-adjoint⇒ρ≃𝟏 la)
 ... | ()

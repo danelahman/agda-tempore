@@ -67,11 +67,11 @@ import MonomorphicCalculus.Syntax.Types
 --   Syntax/Substitution/Subsumption  context subsumption (subCtx)
 --   Syntax/Normalisation             subsumption confined to the
 --                                    reconciliation points
---   Syntax/Renaming/ContextModality  the adjoints of the context modality
+--   Syntax/Renaming/ContextModality  the adjoints of the context modality,
+--                                    in hom-set form
 --   Syntax/Renaming/ContextModality/LowerBounds
---                                    parametric right adjoints
---   Syntax/Renaming/ContextModality/Adjunction
---                                    their hom-set forms
+--                                    parametric right adjoints when the
+--                                    unit 𝟏 of the grades is greatest
 
 import MonomorphicCalculus.Syntax.Normalisation
 import MonomorphicCalculus.Syntax.Renaming
@@ -81,7 +81,6 @@ import MonomorphicCalculus.Syntax.Renaming.Category
 import MonomorphicCalculus.Syntax.Renaming.Coherence
 import MonomorphicCalculus.Syntax.Renaming.Equivalence
 import MonomorphicCalculus.Syntax.Renaming.ContextModality
-import MonomorphicCalculus.Syntax.Renaming.ContextModality.Adjunction
 import MonomorphicCalculus.Syntax.Renaming.ContextModality.LowerBounds
 import MonomorphicCalculus.Syntax.Renaming.ContextModality.Model
 import MonomorphicCalculus.Syntax.Substitution

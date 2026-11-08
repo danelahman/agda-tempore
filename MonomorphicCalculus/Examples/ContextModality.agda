@@ -12,7 +12,8 @@ module MonomorphicCalculus.Examples.ContextModality where
 
 import MonomorphicCalculus.Examples.ContextModality.UpperBound
 
--- both bounds: the obstruction at a grade not above the unit
+-- both bounds: the obstruction at a grade not above the unit `𝟏` of the
+-- grades
 
 import MonomorphicCalculus.Examples.ContextModality.Interval
 
@@ -20,6 +21,6 @@ import MonomorphicCalculus.Examples.ContextModality.Interval
 
 import MonomorphicCalculus.Examples.ContextModality.LowerBound
 
--- whether the unit is the greatest grade, grade by grade
+-- whether the unit `𝟏` of the grades is the greatest grade, grade by grade
 
 import MonomorphicCalculus.Examples.ContextModality.Survey

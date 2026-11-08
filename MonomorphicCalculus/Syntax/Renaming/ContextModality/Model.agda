@@ -6,7 +6,7 @@
 -- `w ≃ w' · τ` for some `τ ≾ σ`: the exact form of the action frame --
 -- (`DenotationalSemantics/Model/World/Action`), which relates `w'`  --
 -- to everything below `w' · σ`. Types are predicates on worlds,     --
--- closed along steps within the unit. A box type `[ σ ] A` holds at --
+-- closed along steps within `𝟏`. A box type `[ σ ] A` holds at      --
 -- the worlds `σ · τ` with `τ ≾ 𝟏` (`AtUnit`), every other type      --
 -- holds everywhere, so eternal types are constant. The context      --
 -- modality is possibility: `Γ ⟨ ρ ⟩` holds at `w` when `Γ` holds at --
@@ -56,7 +56,7 @@ module KripkeModel (W : R → Set) where
   ⊑-mono : ∀ {w' w σ σ'} → σ ≾ᵣ σ' → w' ⊑[ σ ] w → w' ⊑[ σ' ] w
   ⊑-mono q (step τ p e) = step τ (≾ᵣ-trans p q) e
 
-  -- a step within the unit stays within a modality's reach
+  -- a step within `𝟏` stays within a modality's reach
 
   ⊑-unit : ∀ {w'' w' w ρ σ} → w'' ⊑[ ρ ] w' → w' ⊑[ σ ] w → σ ≾ᵣ 𝟏ᵣ
          → w'' ⊑[ ρ ] w

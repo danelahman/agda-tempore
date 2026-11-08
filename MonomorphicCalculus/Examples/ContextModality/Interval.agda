@@ -2,9 +2,9 @@
 -- The context modality at intervals of time                          --
 --                                                                    --
 -- The example                                                        --
---   `ρ = [1,2]`, which is not above the unit `[0,0]`, with           --
---   `σ = [0,1]` and `σ' = [1,1]`. Then `σ ⋦ 𝟏`, `σ' ≾ ρ` and         --
---   `σ · σ' ≾ ρ`.                                                    --
+--   `ρ = [1,2]`, which is not above the unit `𝟏 = [0,0]` of the      --
+--   grades, with `σ = [0,1]` and `σ' = [1,1]`. Then `σ ⋦ 𝟏`,         --
+--   `σ' ≾ ρ` and `σ · σ' ≾ ρ`.                                       --
 --                                                                    --
 -- What it shows                                                      --
 --   `L_[1,2]` is not a parametric right adjoint (`not-PRA-[1,2]`),   --
@@ -13,7 +13,7 @@
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
-open import Data.Product using (proj₁)
+open import Data.Product using (proj₂)
 open import Data.Unit using (tt)
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable using (toWitness; toWitnessFalse)
@@ -63,4 +63,4 @@ not-PRA-[1,2] : ¬ PRA ρ
 not-PRA-[1,2] = Counterexample.not-PRA σ≰𝟏 σ'≾ρ σσ'≾ρ
 
 no-left-adjoint-[1,2] : ¬ LeftAdjoint ρ
-no-left-adjoint-[1,2] la = no-object-at-[] 𝟏≰ρ (proj₁ (la []))
+no-left-adjoint-[1,2] la = no-representation-at-[] 𝟏≰ρ (proj₂ (la []))

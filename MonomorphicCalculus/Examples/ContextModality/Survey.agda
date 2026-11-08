@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Is the unit the greatest grade (`⊤ ≾ 𝟏`)?                          --
+-- Is the unit `𝟏` of the grades the greatest grade (`⊤ ≾ 𝟏`)?        --
 --                                                                    --
 -- The context modality is a parametric right adjoint at every grade  --
 -- exactly when `⊤ ≾ 𝟏` (`PRA-everywhere` in                          --

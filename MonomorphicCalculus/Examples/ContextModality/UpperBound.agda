@@ -4,8 +4,8 @@
 -- The example                                                        --
 --   `ρ = [0,2]` and `Γ = Γ₀ ⟨ [0,1] ⟩ ∷ A ⟨ [0,1] ⟩` with            --
 --   `Γ₀ = [] ∷ B`, where `B = [ [0,0] ] unit` and                    --
---   `A = [ [0,1] ] unit` (both noneternal). Four objects of          --
---   `(Γ ↓ L_[0,2])`, by what they cut:                               --
+--   `A = [ [0,1] ] unit` (both noneternal). Four renamings           --
+--   `fᵢ : Γ → Δᵢ ⟨ [0,2] ⟩`, by what they cut:                       --
 --                                                                    --
 --     Δ₁ = Γ₀                  both modalities and `A`               --
 --     Δ₂ = Γ₀ ⟨ [0,1] ⟩ ∷ A    the last modality                     --
@@ -13,14 +13,18 @@
 --     Δ₄ = Γ₀ ⟨ [0,1] ⟩        the last modality and `A`             --
 --                                                                    --
 -- What it shows                                                      --
---   The zig-zag `Δ₁ → Δ₄ ← Δ₂ → Δ₃` commutes with the structure maps --
---   up to `_≐ʳ_` (`zigzag`), and `Δ₁` and `Δ₂` have no common        --
---   source. So the comma category has no initial object, and         --
---   `L_[0,2]` is not a parametric right adjoint (`not-PRA-[0,2]`).   --
+--   The renamings `h₁₄ : Δ₁ → Δ₄`, `h₂₄ : Δ₂ → Δ₄` and               --
+--   `h₂₃ : Δ₂ → Δ₃` satisfy `L_[0,2] h ∘ fᵢ ≐ʳ fⱼ` (`tri₁₄`,         --
+--   `tri₂₄`, `tri₂₃`). No context `I` with a renaming                --
+--   `Γ → I ⟨ [0,2] ⟩` has renamings into both `Δ₁` and `Δ₂`          --
+--   (`no-common-source`). So `Ren [] Γ (_ ⟨ [0,2] ⟩)` has no         --
+--   representation, although there is an `s : Γ → [] ⟨ [0,2] ⟩`,     --
+--   and `L_[0,2]` is not a parametric right adjoint                  --
+--   (`not-PRA-[0,2]`).                                               --
 --                                                                    --
---   With `Γ₀ = []` (eternal) the same shape has the initial object   --
---   `[] ∷ A` (`initial-at-eternal-Γ₀`): the obstruction needs a      --
---   noneternal variable behind the cut modality.                     --
+--   With `Γ₀ = []` (eternal) the same shape is represented by        --
+--   `[] ∷ A` (`representation-at-eternal-Γ₀`): the obstruction needs --
+--   a noneternal variable behind the cut modality.                   --
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
@@ -78,54 +82,69 @@ open Counterexample {σ = [0, 1 ]ⁿ} {σ' = [0, 1 ]ⁿ} {ρ = ρ} [0,1]≰𝟏 
 Γ-is : Γᶜ ≡ ((Γ₀ ⟨ [0, 1 ]ⁿ ⟩) ∷ A) ⟨ [0, 1 ]ⁿ ⟩
 Γ-is = refl
 
-X₃ X₄ : Comma ρ Γᶜ
-X₃ = Γᶜ ,ᵒ (⟨⟩-≤-ren z≤n ∘ʳ ⟨⟩-η-ren)
-X₄ = (Γ₀ ⟨ [0, 1 ]ⁿ ⟩) ,ᵒ (⟨⟩-≤-ren (s≤s z≤n) ∘ʳ cong-⟨⟩-ren wk-ren)
+Δ₃ Δ₄ : Ctx
+Δ₃ = Γᶜ
+Δ₄ = Γ₀ ⟨ [0, 1 ]ⁿ ⟩
+
+f₃ : Ren [] Γᶜ (Δ₃ ⟨ ρ ⟩)
+f₃ = ⟨⟩-≤-ren z≤n ∘ʳ ⟨⟩-η-ren
+
+f₄ : Ren [] Γᶜ (Δ₄ ⟨ ρ ⟩)
+f₄ = ⟨⟩-≤-ren (s≤s z≤n) ∘ʳ cong-⟨⟩-ren wk-ren
 
 -- Δ₁ → Δ₄: add a modality (`[0,0] ≾ [0,1]`)
 
-h₁₄ : CommaHom X₁ X₄
-h₁₄ = (⟨⟩-≤-ren z≤n ∘ʳ ⟨⟩-η-ren) ,ʰ mk≐ʳ tri'
+h₁₄ : Ren [] Δ₁ Δ₄
+h₁₄ = ⟨⟩-≤-ren z≤n ∘ʳ ⟨⟩-η-ren
+
+tri₁₄ : (cong-⟨⟩-ren h₁₄ ∘ʳ f₁) ≐ʳ f₄
+tri₁₄ = mk≐ʳ go
   where
-  tri' : ∀ {C σ} → (x : C ∈[ σ ] (ctx X₄ ⟨ ρ ⟩)) → _
-  tri' (Tl-⟨⟩ (Tl-⟨⟩ Hd))         = refl
-  tri' (Tl-⟨⟩ (Tl-⟨⟩ (Tl-∷ ())))
+  go : ∀ {C σ} → (x : C ∈[ σ ] (Δ₄ ⟨ ρ ⟩))
+     → var-img (cong-⟨⟩-ren h₁₄ ∘ʳ f₁) x ≡ var-img f₄ x
+  go (Tl-⟨⟩ (Tl-⟨⟩ Hd))         = refl
+  go (Tl-⟨⟩ (Tl-⟨⟩ (Tl-∷ ())))
 
 -- Δ₂ → Δ₄: weakening
 
-h₂₄ : CommaHom X₂ X₄
-h₂₄ = wk-ren ,ʰ mk≐ʳ tri'
+h₂₄ : Ren [] Δ₂ Δ₄
+h₂₄ = wk-ren
+
+tri₂₄ : (cong-⟨⟩-ren h₂₄ ∘ʳ f₂) ≐ʳ f₄
+tri₂₄ = mk≐ʳ go
   where
-  tri' : ∀ {C σ} → (x : C ∈[ σ ] (ctx X₄ ⟨ ρ ⟩)) → _
-  tri' (Tl-⟨⟩ (Tl-⟨⟩ Hd))         = refl
-  tri' (Tl-⟨⟩ (Tl-⟨⟩ (Tl-∷ ())))
+  go : ∀ {C σ} → (x : C ∈[ σ ] (Δ₄ ⟨ ρ ⟩))
+     → var-img (cong-⟨⟩-ren h₂₄ ∘ʳ f₂) x ≡ var-img f₄ x
+  go (Tl-⟨⟩ (Tl-⟨⟩ Hd))         = refl
+  go (Tl-⟨⟩ (Tl-⟨⟩ (Tl-∷ ())))
 
 -- Δ₂ → Δ₃: add a modality (`[0,0] ≾ [0,1]`)
 
-h₂₃ : CommaHom X₂ X₃
-h₂₃ = (⟨⟩-≤-ren z≤n ∘ʳ ⟨⟩-η-ren) ,ʰ mk≐ʳ tri'
-  where
-  tri' : ∀ {C σ} → (x : C ∈[ σ ] (ctx X₃ ⟨ ρ ⟩)) → _
-  tri' (Tl-⟨⟩ (Tl-⟨⟩ Hd))                        = refl
-  tri' (Tl-⟨⟩ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))))         = refl
-  tri' (Tl-⟨⟩ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ ())))))
+h₂₃ : Ren [] Δ₂ Δ₃
+h₂₃ = ⟨⟩-≤-ren z≤n ∘ʳ ⟨⟩-η-ren
 
-zigzag : Zigzag X₁ X₃
-zigzag = fwd h₁₄ (bwd h₂₄ (fwd h₂₃ here))
+tri₂₃ : (cong-⟨⟩-ren h₂₃ ∘ʳ f₂) ≐ʳ f₃
+tri₂₃ = mk≐ʳ go
+  where
+  go : ∀ {C σ} → (x : C ∈[ σ ] (Δ₃ ⟨ ρ ⟩))
+     → var-img (cong-⟨⟩-ren h₂₃ ∘ʳ f₂) x ≡ var-img f₃ x
+  go (Tl-⟨⟩ (Tl-⟨⟩ Hd))                        = refl
+  go (Tl-⟨⟩ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))))         = refl
+  go (Tl-⟨⟩ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ ())))))
 
 not-PRA-[0,2] : ¬ PRA ρ
 not-PRA-[0,2] = not-PRA
 
 ------------------------------------------------------------------------
--- With `Γ₀ = []` the same shape has an initial object `[] ∷ A`
+-- With `Γ₀ = []` the same shape is represented by `[] ∷ A`
 
 module EternalPrefix where
 
   Γᵉ : Ctx
   Γᵉ = (([] ⟨ [0, 1 ]ⁿ ⟩) ∷ A) ⟨ [0, 1 ]ⁿ ⟩
 
-  Iᵉ : Comma ρ Γᵉ
-  Iᵉ = ([] ∷ A) ,ᵒ (⟨⟩-≤-ren (s≤s z≤n) ∘ʳ cong-⟨⟩-ren (cong-∷-ren (⟨⟩-ext-ctx ec-[] ec-[])))
+  ηᵉ : Ren [] Γᵉ (([] ∷ A) ⟨ ρ ⟩)
+  ηᵉ = ⟨⟩-≤-ren (s≤s z≤n) ∘ʳ cong-⟨⟩-ren (cong-∷-ren (⟨⟩-ext-ctx ec-[] ec-[]))
 
   only-A : ∀ {C σ} → C ∈[ σ ] Γᵉ → C ≡ A
   only-A (Tl-⟨⟩ Hd)                 = refl
@@ -150,10 +169,15 @@ module EternalPrefix where
   build (Δ ⟨ σ ⟩) ok =
     ⟨⟩-≤-ren (𝟏ₒ-least σ) ∘ʳ (⟨⟩-η-ren ∘ʳ build Δ (λ x → ok (Tl-⟨⟩ x)))
 
-  initial-at-eternal-Γ₀ : Initial Iᵉ
-  initial-at-eternal-Γ₀ X =
-      (g ,ʰ mk≐ʳ (λ x → pos-unique _ _))
-    , λ h' → mk≐ʳ (λ x → pos-unique-A _ _)
-    where
-    g : Ren [] ([] ∷ A) (ctx X)
-    g = build (ctx X) (λ x → only-A (proj₂ (var-img (str X) (Tl-⟨⟩ x))))
+  -- any two renamings out of `Γᵉ`, or out of `[] ∷ A`, agree
+
+  representation-at-eternal-Γ₀ : HomIso ρ Γᵉ ([] ∷ A)
+  representation-at-eternal-Γ₀ = record
+    { φ      = λ g → cong-⟨⟩-ren g ∘ʳ ηᵉ
+    ; ψ      = λ {Δ} f → build Δ (λ x → only-A (proj₂ (var-img f (Tl-⟨⟩ x))))
+    ; φ-cong = λ _ → mk≐ʳ (λ _ → pos-unique _ _)
+    ; ψ-cong = λ _ → mk≐ʳ (λ _ → pos-unique-A _ _)
+    ; ψ∘φ    = λ _ → mk≐ʳ (λ _ → pos-unique-A _ _)
+    ; φ∘ψ    = λ _ → mk≐ʳ (λ _ → pos-unique _ _)
+    ; φ-nat  = λ _ _ → mk≐ʳ (λ _ → pos-unique _ _)
+    }

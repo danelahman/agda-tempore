@@ -1,12 +1,14 @@
 ---------------------------------------------------------------------------
--- The context modality when the unit is the greatest grade (`⊤ ≾ 𝟏`),   --
--- as for lower bounds: a parametric right adjoint at every grade        --
--- (`PRA-everywhere`).                                                   --
+-- The context modality when the unit `𝟏` of the grades is the greatest  --
+-- grade (`⊤ ≾ 𝟏`), as for lower bounds: a parametric right adjoint at   --
+-- every grade (`PRA-everywhere`).                                       --
 --                                                                       --
 -- `Γ ↑` cuts `Γ` at the rightmost position whose suffix's modalities    --
--- multiply to a grade `≾ ρ`, dropping the suffix whole (`Cut`). When    --
--- `(Γ ↓ L_ρ)` is nonempty, `(Γ ↑ , η)` is initial in it (`initial`),    --
--- and the familial representation                                       --
+-- multiply to a grade `≾ ρ`, dropping the suffix whole (`Cut`). A       --
+-- renaming `Γ → Δ ⟨ ρ ⟩` gives `ctx-grade Γ · 𝟏 ≾ ρ`                    --
+-- (`ren-grade-bound`), and under that bound `Γ ↑` represents            --
+-- `Ren [] Γ (_ ⟨ ρ ⟩)`, with `φ g = L_ρ g ∘ η` and `ψ = transpose`      --
+-- (`representation`). The familial representation                       --
 --   Ren [] Γ (Δ ⟨ ρ ⟩)  ≅  (ctx-grade Γ · 𝟏 ≾ ρ) × Ren [] (Γ ↑) Δ       --
 -- holds up to `_≐ʳ_` (`familial`). It is the form                       --
 -- `Hom(Γ, L Δ) ≅ Σ (s : Γ → L 1) Hom(E s, Δ)` of                        --
@@ -208,7 +210,7 @@ module UnitGreatest (top : ⊤ᵣ ≾ᵣ 𝟏ᵣ) (ρ : R) where
   ----------------------------------------------------------------------
   -- Unit and counit
 
-  -- renamings do not decrease the elapsed grade (the unit being greatest)
+  -- renamings do not decrease the elapsed grade (`𝟏` being greatest)
 
   ren-grade : ∀ {Y Y'} → Ren [] Y Y' → ctx-grade Y ≾ᵣ ctx-grade Y'
   ren-grade id-ren                 = ≾ᵣ-refl
@@ -270,7 +272,7 @@ module UnitGreatest (top : ⊤ᵣ ≾ᵣ 𝟏ᵣ) (ρ : R) where
   emb-inj (drop _ s-[])     e = e
 
   ----------------------------------------------------------------------
-  -- The initial object
+  -- The representation
 
   module _ {Γ : Ctx} (h : ctx-grade Γ ·ᵣ 𝟏ᵣ ≾ᵣ ρ) where
 
@@ -280,10 +282,7 @@ module UnitGreatest (top : ⊤ᵣ ≾ᵣ 𝟏ᵣ) (ρ : R) where
     ηΓ : Ren [] Γ ((Γ ↑) ⟨ ρ ⟩)
     ηΓ = unitᶜ cΓ h ∘ʳ ⟨⟩-η-ren
 
-    Iᵘ : Comma ρ Γ
-    Iᵘ = (Γ ↑) ,ᵒ ηΓ
-
-    -- the composite with the unit, on variables
+    -- the composite with `ηΓ`, on variables
 
     through : ∀ {Δ C σ} → (g : Ren [] (Γ ↑) Δ) → (y : C ∈[ σ ] Δ)
             → var-img (cong-⟨⟩-ren g ∘ʳ ηΓ) (Tl-⟨⟩ y) ≡ emb cΓ (var-img g y)
@@ -313,27 +312,30 @@ module UnitGreatest (top : ⊤ᵣ ≾ᵣ 𝟏ᵣ) (ρ : R) where
           (trans (at e (Tl-⟨⟩ y))
             (trans (sym (at (transpose-tri f) (Tl-⟨⟩ y))) (through (transpose f) y)))))
 
-    initialᵘ : Initial Iᵘ
-    initialᵘ X =
-        (transpose (str X) ,ʰ transpose-tri (str X))
-      , λ h' → transpose-unique (str X) (map h') (tri h')
+    representation : HomIso ρ Γ (Γ ↑)
+    representation = record
+      { φ      = λ g → cong-⟨⟩-ren g ∘ʳ ηΓ
+      ; ψ      = transpose
+      ; φ-cong = λ e → ∘ʳ-≐ʳ (cong-⟨⟩-ren-≐ʳ e) ≐ʳ-refl
+      ; ψ-cong = λ {_} {f} {f'} e →
+          transpose-unique f' (transpose f) (≐ʳ-trans (transpose-tri f) e)
+      ; ψ∘φ    = λ g → ≐ʳ-sym (transpose-unique (cong-⟨⟩-ren g ∘ʳ ηΓ) g ≐ʳ-refl)
+      ; φ∘ψ    = transpose-tri
+      ; φ-nat  = λ k g →
+          ≐ʳ-trans (∘ʳ-≐ʳ (cong-⟨⟩-ren-∘-≐ʳ k g) ≐ʳ-refl) (∘ʳ-assoc-≐ʳ _ _ _)
+      }
 
-  -- an object gives the grade bound
+  -- a renaming `Γ → Δ ⟨ ρ ⟩` gives the grade bound
 
-  comma-grade : ∀ {Γ} → Comma ρ Γ → ctx-grade Γ ·ᵣ 𝟏ᵣ ≾ᵣ ρ
-  comma-grade {Γ} X =
+  ren-grade-bound : ∀ {Γ Δ} → Ren [] Γ (Δ ⟨ ρ ⟩) → ctx-grade Γ ·ᵣ 𝟏ᵣ ≾ᵣ ρ
+  ren-grade-bound {Γ} {Δ} f =
     ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityʳ (ctx-grade Γ)))
-      (≾ᵣ-trans (ren-grade (str X))
-        (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (all≾𝟏 (ctx-grade (ctx X))))
+      (≾ᵣ-trans (ren-grade f)
+        (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (all≾𝟏 (ctx-grade Δ)))
           (≃ᵣ⇒≾ᵣ (·ᵣ-identityˡ ρ))))
 
-  initial : ∀ {Γ} → Comma ρ Γ → Σ[ I ∈ Comma ρ Γ ] Initial I
-  initial X = Iᵘ (comma-grade X) , initialᵘ (comma-grade X)
-
   is-PRA : PRA ρ
-  is-PRA Γ X =
-    proj₁ (initial X) , fwd (proj₁ (proj₂ (initial X) X)) here
-    , λ Y _ → proj₂ (initial X) Y
+  is-PRA Γ s = Γ ↑ , representation (ren-grade-bound s)
 
   -- the familial representation, over the proposition
   -- `ctx-grade Γ · 𝟏 ≾ ρ`
@@ -352,10 +354,10 @@ module UnitGreatest (top : ⊤ᵣ ≾ᵣ 𝟏ᵣ) (ρ : R) where
                                 (≾ᵣ-irrelevant s₀ _) ≐ʳ-refl))
     where
     s : Ren [] Γ (Δ ⟨ ρ ⟩) → ctx-grade Γ ·ᵣ 𝟏ᵣ ≾ᵣ ρ
-    s f = comma-grade (Δ ,ᵒ f)
+    s f = ren-grade-bound f
 
--- when the unit is the greatest grade, the context modality is a parametric
--- right adjoint at every grade
+-- when the unit `𝟏` of the grades is the greatest grade, the context
+-- modality is a parametric right adjoint at every grade
 
 PRA-everywhere : ⊤ᵣ ≾ᵣ 𝟏ᵣ → (ρ : R) → PRA ρ
 PRA-everywhere top ρ = UnitGreatest.is-PRA top ρ
