@@ -141,16 +141,45 @@ import PolymorphicCalculus.Typing.Substitution
 import PolymorphicCalculus.Typing.Transport
 
 ------------------------------------------------------------------------
+-- The context modality                                               --
+------------------------------------------------------------------------
+
+-- Contexts and renamings form a category, on which the context modality
+-- `L_ρ = _⟨ ρ ⟩` acts. It has a left adjoint, equivalently is a
+-- parametric right adjoint, iff every context has a lowering by `ρ`;
+-- a left adjoint needs residuals by `ρ`.
+--
+-- Where to look
+--   Typing/Renaming/ContextModality  representations, left adjoints,
+--                                    parametric right adjoints, residuals
+--                                    and lowerings (HomIso, LeftAdjoint,
+--                                    PRA, Residual, Lowering)
+--   Examples/ContextModality         left adjoints at every grade at upper
+--                                    and lower bounds, none at the
+--                                    interval `[1,2]`
+
+import PolymorphicCalculus.Typing.Renaming.ContextModality
+import PolymorphicCalculus.Examples.ContextModality
+
+------------------------------------------------------------------------
 -- Operational semantics                                              --
 ------------------------------------------------------------------------
 
 -- A small-step reduction rel. `⟨ 𝕊 ∣ M ⟩⟶⟨ 𝕊' ∣ M' ⟩` of run-time terms.
 --
 -- Where to look, under `OperationalSemantics/`
---   State      states and state typings, with their extensions (State,
---              StateTyping, _≤ₛ_, _⊆[_]_)
---   Reduction  the reduction (Step)
+--   State       states and state typings, with their extensions (State,
+--               StateTyping, _≤ₛ_, _⊆[_]_)
+--   Reduction   the reduction (Step), comparing values by their data
+--               (Datum, compareᴰ)
+--   Data        the data of a closed type, and the data of the values
+--               of a typed comparison (⟪_⟫, ⌊_⌋ᵈ, datum-typed,
+--               compared-data)
+--   Data/Order  the order on the data of a closed eternal type is a
+--               strict total order (compareᴰ-isStrictTotalOrder)
 
+import PolymorphicCalculus.OperationalSemantics.Data
+import PolymorphicCalculus.OperationalSemantics.Data.Order
 import PolymorphicCalculus.OperationalSemantics.Reduction
 import PolymorphicCalculus.OperationalSemantics.State
 
