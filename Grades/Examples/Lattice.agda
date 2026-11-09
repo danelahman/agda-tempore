@@ -4,8 +4,9 @@
 -- A decidable bounded join-semilattice of levels is a grade: `_·_`   --
 -- and `_⊔_` are both the join, the unit is the least level and `⊤`   --
 -- the greatest. `ι` is constantly the least level, for any           --
--- durations. The unit is least and `_·_` commutes, and its hints     --
--- declare both.                                                      --
+-- durations. The unit is least, `_·_` commutes and, the join being   --
+-- idempotent, every level is its own closure. Its hints declare all  --
+-- three.                                                             --
 --                                                                    --
 -- The level is a floating label, as in LIO. The effect grade of a    --
 -- computation is the highest level it has touched (for taint sets,   --
@@ -27,7 +28,7 @@ module Grades.Examples.Lattice where
 
 open import Data.Fin.Base using (Fin; zero; suc)
 open import Data.List.Base using (List) renaming ([] to []ᴸ; _∷_ to _∷ᴸ_)
-open import Data.Maybe.Base using (just; nothing)
+open import Data.Maybe.Base using (just)
 open import Data.Nat.Base using (ℕ; zero; suc)
 open import Data.Vec.Base using (Vec; []; _∷_; replicate)
 
@@ -39,7 +40,7 @@ open import Relation.Binary.Definitions
 open import Relation.Nullary using (¬_; yes; no)
 
 open import Grades.Durations using (Duration)
-open import Grades.Base using (posetᵍ; Grade)
+open import Grades.Base using (posetᵍ; Grade; plus-self)
 open import Grades.Hints using (GradeHints; comm-≡)
 
 open import Util.Equality
@@ -150,7 +151,7 @@ module _ (L : LevelLattice) where
   level-gradeʰ {D} = record
     { 𝟏-least? = just bot-⊑
     ; ·-comm?  = just (comm-≡ (level-grade {D}) ∨-comm)
-    ; plus?    = λ _ → nothing
+    ; plus?    = λ _ → just (plus-self ⊑-refl (∨-lub ⊑-refl ⊑-refl))
     }
 
 ------------------------------------------------------------------------

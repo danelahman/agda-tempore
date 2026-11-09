@@ -11,7 +11,8 @@
 -- early by reading `High` data. A variable that is noneternal goes   --
 -- stale after any step or any `High` activity.                       --
 --                                                                    --
--- The unit is least and `_·_` commutes; its hints declare both.      --
+-- The unit is least, `_·_` commutes and every grade has a closure;   --
+-- its hints declare all three.                                       --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Product.TimeUpperBoundLattice where

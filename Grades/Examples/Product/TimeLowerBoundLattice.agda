@@ -13,7 +13,7 @@
 -- `High` does.                                                       --
 --                                                                    --
 -- The unit is not least, as for lower bounds on time; `_·_`          --
--- commutes, as its hints declare.                                    --
+-- commutes and every grade has a closure, as its hints declare.      --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Product.TimeLowerBoundLattice where

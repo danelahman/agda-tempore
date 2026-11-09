@@ -9,6 +9,10 @@
 -- The inclusion of durations is constantly the unit: delays draw on  --
 -- no counter. Time is paired with the counters by a product of       --
 -- grades.                                                            --
+--                                                                    --
+-- The hints of the power declare the unit least and `_·_`            --
+-- commutative where those of `G` do, and the closure of a grade,     --
+-- coordinatewise, where every coordinate has one.                    --
 ------------------------------------------------------------------------
 
 open import Grades.Durations using (Duration)
@@ -18,7 +22,8 @@ open import Grades.Hints using (GradeHints)
 module Grades.Examples.Counts.Power {D : Duration} (G : Grade D) where
 
 open import Data.Fin.Base using (Fin; zero; suc)
-open import Data.Maybe.Base using (just; nothing; maybe′)
+open import Data.Maybe.Base using (Maybe; just; nothing; maybe′)
+  renaming (zipWith to zipWithᴹ)
 open import Data.Nat.Base using (ℕ; zero; suc)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Data.Unit using (tt) renaming (⊤ to 𝟙)
@@ -260,6 +265,28 @@ tabulate-≾ᵛ {suc n} p = p zero , tabulate-≾ᵛ (λ i → p (suc i))
 𝟏ᵛ-least least (a ∷ as) = least a , 𝟏ᵛ-least least as
 
 ------------------------------------------------------------------------
+-- Closures, coordinatewise
+
+plusᵛ-[] : Plus _·ᵛ_ _≾ᵛ_ []
+plusᵛ-[] = plus [] tt tt (λ { {[]} _ _ → tt }) (λ { {[]} _ → tt }) (λ { {[]} _ → tt })
+
+plusᵛ-∷ : ∀ {n a} {as : Vec C n}
+        → Plus _·ᴳ_ _≾ᴳ_ a → Plus _·ᵛ_ _≾ᵛ_ as → Plus _·ᵛ_ _≾ᵛ_ (a ∷ as)
+plusᵛ-∷ p ps =
+  plus (Plus.c⁺ p ∷ Plus.c⁺ ps) (Plus.≾-c⁺ p , Plus.≾-c⁺ ps)
+       (Plus.c⁺-iter p , Plus.c⁺-iter ps)
+       (λ { {_ ∷ _} (q , qs) (r , rs) → Plus.c⁺-least p q r , Plus.c⁺-least ps qs rs })
+       (λ { {_ ∷ _} (q , qs) → Plus.⁺-indˡ p q , Plus.⁺-indˡ ps qs })
+       (λ { {_ ∷ _} (q , qs) → Plus.⁺-indʳ p q , Plus.⁺-indʳ ps qs })
+
+-- the closure of a vector, where every coordinate has one
+
+plusᵛ? : ((a : C) → Maybe (Plus _·ᴳ_ _≾ᴳ_ a))
+       → ∀ {n} (c : Vec C n) → Maybe (Plus _·ᵛ_ _≾ᵛ_ c)
+plusᵛ? pl []       = just plusᵛ-[]
+plusᵛ? pl (a ∷ as) = zipWithᴹ plusᵛ-∷ (pl a) (plusᵛ? pl as)
+
+------------------------------------------------------------------------
 -- The grade
 
 power : ℕ → Grade D
@@ -292,11 +319,12 @@ power n = record
   ; ι-plus          = proj₂ (·ᵛ-identityˡ 𝟏ᵛ) , proj₁ (·ᵛ-identityˡ 𝟏ᵛ)
   }
 
--- its hints: the unit is least and `_·_` commutes where they do in `G`
+-- its hints: the unit is least and `_·_` commutes where they do in
+-- `G`, and the closure is coordinatewise where every coordinate has one
 
 powerʰ : GradeHints G → (n : ℕ) → GradeHints (power n)
 powerʰ H n = record
   { 𝟏-least? = maybe′ (λ least → just (𝟏ᵛ-least least)) nothing (GradeHints.𝟏-least? H)
   ; ·-comm?  = maybe′ (λ comm → just (·ᵛ-comm comm)) nothing (GradeHints.·-comm? H)
-  ; plus?    = λ _ → nothing
+  ; plus?    = plusᵛ? (GradeHints.plus? H)
   }

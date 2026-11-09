@@ -11,9 +11,9 @@
 --                                                                    --
 -- A semilattice, an action and a grade lift to maps, with every      --
 -- operation, the order included, pointwise, and every law holding    --
--- pointwise; `ι τ` is constantly `ι τ`. Its hints declare            --
--- the unit least and `_·_` commutative where those of the component  --
--- do, and no closures.                                               --
+-- pointwise; `ι τ` is constantly `ι τ`. Its hints declare the unit   --
+-- least, `_·_` commutative and closures, pointwise, where those of   --
+-- the component do.                                                  --
 ------------------------------------------------------------------------
 
 module Grades.Indexed where
@@ -25,7 +25,6 @@ open import Data.List.Membership.Propositional.Properties using (∈-++⁺ˡ; �
 import Data.List.Membership.DecPropositional as DecMembership
 open import Data.List.Relation.Unary.All as All using (All)
 open import Data.List.Relation.Unary.Any using (here; there)
-open import Data.Maybe.Base using (nothing)
 import Data.Maybe.Base as Maybe
 open import Data.Nat.Base using (ℕ; suc; _≤_; _+_; z≤n; s≤s)
 open import Data.Nat.Properties using (≤-trans; m≤m+n; m≤n+m; n≮n; ≤-refl; _≟_)
@@ -315,6 +314,53 @@ module Maps (𝒩 : Names) where
       ≾-at : ∀ {a a' b b'} → a ≡ a' → b ≡ b' → a' ≾ b' → a ≾ b
       ≾-at refl refl p = p
 
+      -- closures at the entries of a map
+      PlusAt : Name × G.Carrier → Set
+      PlusAt (_ , c) = Plus _·_ _≾_ c
+
+      plus-all? : ((c : G.Carrier) → Maybe.Maybe (Plus _·_ _≾_ c))
+                → (es : List (Name × G.Carrier)) → Maybe.Maybe (All PlusAt es)
+      plus-all? pl []             = Maybe.just All.[]
+      plus-all? pl ((_ , c) ∷ es) = Maybe.zipWith All._∷_ (pl c) (plus-all? pl es)
+
+      closures : ∀ {es} → All PlusAt es → List (Name × G.Carrier)
+      closures {[]}          All.[]       = []
+      closures {(s , _) ∷ _} (p All.∷ ps) = (s , Plus.c⁺ p) ∷ closures ps
+
+      -- the closure at a name, the first entry for it or the default's
+      plus-at : ∀ {d} → Plus _·_ _≾_ d → ∀ {es} → All PlusAt es
+              → (s : Name) → Plus _·_ _≾_ (lookup d es s)
+      plus-at p₀ All.[] s = p₀
+      plus-at p₀ {(s' , _) ∷ _} (p All.∷ ps) s with s ≟ᴺ s'
+      ... | yes _ = p
+      ... | no _  = plus-at p₀ ps s
+
+      !-closures : ∀ {d} (p₀ : Plus _·_ _≾_ d) {es} (ps : All PlusAt es) (s : Name)
+                 → lookup (Plus.c⁺ p₀) (closures ps) s ≡ Plus.c⁺ (plus-at p₀ ps s)
+      !-closures p₀ All.[] s = refl
+      !-closures p₀ {(s' , _) ∷ _} (p All.∷ ps) s with s ≟ᴺ s'
+      ... | yes _ = refl
+      ... | no _  = !-closures p₀ ps s
+
+      -- the closure of a map, at every name the closure there
+      plusᴹ : ∀ {m} → Plus _·_ _≾_ (others m) → All PlusAt (named m)
+            → Plus (map₂ _·_) (Pointwise _≾_) m
+      plusᴹ {m} p₀ ps = plus m⁺
+        (pw λ s → ≾-at refl (e s) (Plus.≾-c⁺ (P s)))
+        (pw λ s → ≾-at (trans (!· m⁺ m⁺ s) (cong₂ _·_ (e s) (e s))) (e s) (Plus.c⁺-iter (P s)))
+        (λ {v} q r → pw λ s →
+           ≾-at (e s) refl (Plus.c⁺-least (P s) (at q s) (≾-at (sym (!· v v s)) refl (at r s))))
+        (λ {d} q → pw λ s →
+           ≾-at (trans (!· m⁺ d s) (cong (_· (d ! s)) (e s))) refl
+                (Plus.⁺-indˡ (P s) (≾-at (sym (!· m d s)) refl (at q s))))
+        (λ {d} q → pw λ s →
+           ≾-at (trans (!· d m⁺ s) (cong ((d ! s) ·_) (e s))) refl
+                (Plus.⁺-indʳ (P s) (≾-at (sym (!· d m s)) refl (at q s))))
+        where
+          m⁺ = Plus.c⁺ p₀ ∣ closures ps
+          P  = plus-at p₀ ps
+          e  = !-closures p₀ ps
+
     indexedᵍ : Grade D
     indexedᵍ = record
       { Carrier         = Map G.Carrier
@@ -361,14 +407,16 @@ module Maps (𝒩 : Names) where
           ≃-at refl (!· (everywhere (G.ι τ)) (everywhere (G.ι τ')) s) G.ι-plus
       }
 
-    -- its hints, from those of `G`
+    -- its hints, from those of `G`, the closure of a map where its
+    -- default and its entries have one
 
     indexedʰ : GradeHints G → GradeHints indexedᵍ
     indexedʰ H = record
       { 𝟏-least? = Maybe.map (λ l m → pw λ s → l (m ! s)) (GradeHints.𝟏-least? H)
       ; ·-comm?  = Maybe.map (λ c m m' → pw≃ λ s →
                      ≃-at (!· m m' s) (!· m' m s) (c (m ! s) (m' ! s))) (GradeHints.·-comm? H)
-      ; plus?    = λ _ → nothing
+      ; plus?    = λ m → Maybe.zipWith (plusᴹ {m}) (GradeHints.plus? H (others m))
+                                   (plus-all? (GradeHints.plus? H) (named m))
       }
 
     -- evaluation at a name is a grade morphism onto `G`
