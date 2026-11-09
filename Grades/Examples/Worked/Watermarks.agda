@@ -10,8 +10,10 @@
 -- two nested opens meet it, three do not, and neither does closing   --
 -- first. A branch joins the ranges: opening a file or not is         --
 -- `(0 , [0 , 1] , 1)`. By name, files and sockets are counted apart. --
--- Every ordering is established by the decision procedure of the     --
--- grade, and every computation by reduction.                         --
+-- A savepoint, `(0 , [0 , ∞] , ∞)`, may be used as long as the level --
+-- has never fallen below the level at which it was taken. Every      --
+-- ordering is established by the decision procedure of the grade,    --
+-- and every computation by reduction.                                --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Worked.Watermarks where
@@ -101,6 +103,30 @@ unit-not-least = fails L.𝟏 open-file
 
 open-close-not-below-unit : ¬ (open-file L.· close-file L.≾ L.𝟏)
 open-close-not-below-unit = fails (open-file L.· close-file) L.𝟏
+
+------------------------------------------------------------------------
+-- A savepoint, (0 , [0 , ∞] , ∞), may be used as long as the level has
+-- never fallen below the level at which it was taken
+
+savepoint : Watermark
+savepoint = watermarkⁿ ⟨ 0 ⟩ ⟨ 0 ⟩ ∞ ∞
+
+-- opened and closed again: the level never fell below
+
+savepoint-after-open-close : open-file L.· close-file L.≾ savepoint
+savepoint-after-open-close = holds (open-file L.· close-file) savepoint
+
+savepoint-after-two-opens : open-file L.· open-file L.≾ savepoint
+savepoint-after-two-opens = holds (open-file L.· open-file) savepoint
+
+-- a close takes the level below
+
+savepoint-after-close-refused : ¬ (close-file L.≾ savepoint)
+savepoint-after-close-refused = fails close-file savepoint
+
+savepoint-after-open-close-close-refused : ¬ (open-file L.· close-file L.· close-file L.≾ savepoint)
+savepoint-after-open-close-close-refused =
+  fails (open-file L.· close-file L.· close-file) savepoint
 
 ------------------------------------------------------------------------
 -- By name: files (0) and sockets (1)

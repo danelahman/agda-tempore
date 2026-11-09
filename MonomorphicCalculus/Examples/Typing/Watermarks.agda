@@ -14,6 +14,8 @@
 --   transmitting, and refuses transmitting first and storing twice.  --
 --   A box graded `(0 , [0 , 1] , 1)` is claimable while at most one  --
 --   slot has been occupied since boxing and none freed beyond.       --
+--   A savepoint, graded `(0 , [0 , ∞] , ∞)`, is claimable as long    --
+--   as the level has never fallen below the level at boxing.         --
 --                                                                    --
 --   The two rules that place the unit on opposite sides of the       --
 --   order: a reading survives reading and idling and goes stale      --
@@ -34,7 +36,8 @@ open import Relation.Nullary.Decidable using (True; False; toWitness; toWitnessF
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
-open import Grades.Examples.Watermarks using (Watermark; one-watermark)
+open import Grades.Examples.Watermarks using (Watermark; one-watermark; watermarkⁿ)
+open import Grades.Examples.Watermarks.ExtendedInteger using (⟨_⟩; ∞)
 open import Grades.Examples.Worked.Watermarks using (res)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
 
@@ -119,6 +122,36 @@ claim-after-two-stores = refuted (𝟏ᵣ ·ᵣ opTime write ·ᵣ opTime write)
 
 claim-after-a-transmission : ¬ (𝟏ᵣ ·ᵣ opTime send ≾ᵣ one-slot)
 claim-after-a-transmission = refuted (𝟏ᵣ ·ᵣ opTime send) one-slot
+
+------------------------------------------------------------------------
+-- Savepoints: claimable as long as the level has never fallen below
+-- the level at boxing
+
+savepoint : R
+savepoint = watermarkⁿ ⟨ 0 ⟩ ⟨ 0 ⟩ ∞ ∞
+
+claim-after-a-store-and-a-transmission : [] ⊢ᶜ⦂ unit ! buffer
+claim-after-a-store-and-a-transmission =
+  check buffer
+    (box savepoint (const reading 7)      -- ∷ [ savepoint ] Reading
+      (perform write (const reading 1)    -- ⟨ opTime write ⟩ ∷ unit
+        (perform send (const reading 1)   -- ⟨ opTime send ⟩ ∷ unit
+          (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))))
+                 (decided (𝟏ᵣ ·ᵣ opTime write ·ᵣ opTime send) savepoint) (<:ᵛ-refl _)
+                                          -- ∷ Reading
+            (perform write here           -- ⟨ opTime write ⟩ ∷ unit
+              (perform send (const reading 0) (return ⋆)))))))
+
+claim-after-two-stores-at-a-savepoint : 𝟏ᵣ ·ᵣ opTime write ·ᵣ opTime write ≾ᵣ savepoint
+claim-after-two-stores-at-a-savepoint = decided (𝟏ᵣ ·ᵣ opTime write ·ᵣ opTime write) savepoint
+
+claim-after-a-transmission-at-a-savepoint : ¬ (𝟏ᵣ ·ᵣ opTime send ≾ᵣ savepoint)
+claim-after-a-transmission-at-a-savepoint = refuted (𝟏ᵣ ·ᵣ opTime send) savepoint
+
+claim-after-balancing-and-a-transmission :
+  ¬ (𝟏ᵣ ·ᵣ opTime write ·ᵣ opTime send ·ᵣ opTime send ≾ᵣ savepoint)
+claim-after-balancing-and-a-transmission =
+  refuted (𝟏ᵣ ·ᵣ opTime write ·ᵣ opTime send ·ᵣ opTime send) savepoint
 
 ------------------------------------------------------------------------
 -- Effect handling: the unit is not least, so no clause discards a
