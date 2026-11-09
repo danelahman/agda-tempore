@@ -190,11 +190,11 @@ import Grades.Examples.System.Counts.Banked.UpperBound
 import Grades.Examples.System.Counts.Time
 
 ------------------------------------------------------------------------
--- Indexed, semidirect and matrix grades
+-- Indexed, semidirect, watermark and matrix grades
 --
 -- Grades over maps from names (`Grades.Indexed`), semidirect
--- products (`Grades.SemiDirect`) and mode matrices
--- (`Grades.Matrix`).
+-- products (`Grades.SemiDirect`), the watermark grades, defined
+-- directly, and mode matrices (`Grades.Matrix`).
 
 -- at-most counts by name, an indexed grade; flow-sensitive
 -- levels and call-time sets, semidirect products
@@ -206,19 +206,19 @@ import Grades.Examples.SemiDirect.CallTimeSets
 -- the watermark grades: the trough, net change and peak of each
 -- resource, the net change a range, over the integers with infinities
 
-import Grades.Examples.SemiDirect.ExtendedInteger
-import Grades.Examples.SemiDirect.Watermarks
+import Grades.Examples.Watermarks.ExtendedInteger
+import Grades.Examples.Watermarks
 
 -- the costs of switching between the modes of a device, as max-plus
 -- mode matrices
 
-import Grades.Examples.SemiDirect.ModeSwitchCosts
+import Grades.Examples.Modes.SwitchCosts
 
 -- the time spent in each mode of a device, as mode matrices of
 -- realisable boxes of intervals
 
-import Grades.Examples.SemiDirect.ModeTimes.Boxes
-import Grades.Examples.SemiDirect.ModeTimes
+import Grades.Examples.Modes.Times.Boxes
+import Grades.Examples.Modes.Times
 
 ------------------------------------------------------------------------
 -- Worked instances

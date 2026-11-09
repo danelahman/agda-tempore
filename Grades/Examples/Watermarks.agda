@@ -16,13 +16,12 @@
 --    = (min(t , d₁ + t') , [d₁ + d₁' , d₂ + d₂'] , max(h , d₂ + h')) --
 --                                                                    --
 -- The upper side `(d₂ , h)` is a net change and its greatest prefix  --
--- (`Side`). It multiplies as in the semidirect product of the net    --
--- changes in `ℤ∞` acting on the peaks by shifting, but only the      --
--- pairs `max(0 , d₂) ≤ h` are kept: a subsemigroup, with `(0 , 0)`   --
--- as its own unit. `Side` is defined directly, not by                --
--- `Grades.SemiDirect`. The lower side is its mirror image, held      --
--- negated: `(-d₁ , -t)` is a side as well. A grade is a lower and an --
--- upper side whose ranges are consistent, `d₁ ≤ d₂`.                 --
+-- (`Side`). Its product adds the net changes and shifts the later    --
+-- prefix by the earlier net change, and only the pairs               --
+-- `max(0 , d₂) ≤ h` are kept, with `(0 , 0)` as the unit. The lower  --
+-- side is its mirror image, held negated: `(-d₁ , -t)` is a side as  --
+-- well. A grade is a lower and an upper side whose ranges are        --
+-- consistent, `d₁ ≤ d₂`.                                             --
 --                                                                    --
 -- The order is `t ≥ t'`, `d₁ ≥ d₁'`, `d₂ ≤ d₂'` and `h ≤ h'`, and    --
 -- the join is the minimum or the maximum accordingly; `⊤` is         --
@@ -35,7 +34,7 @@
 -- resource names (`Grades.Indexed`).                                 --
 ------------------------------------------------------------------------
 
-module Grades.Examples.SemiDirect.Watermarks where
+module Grades.Examples.Watermarks where
 
 open import Data.Integer.Base as ℤ using (ℤ)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
@@ -45,7 +44,7 @@ open import Relation.Nullary.Decidable using (_×-dec_; True; toWitness; map′)
 open import Grades.Durations using (Duration)
 open import Grades.Base using (Grade)
 open import Grades.Indexed using (ℕ-names; module Maps)
-open import Grades.Examples.SemiDirect.ExtendedInteger
+open import Grades.Examples.Watermarks.ExtendedInteger
 
 open import Util.Equality
 

@@ -14,7 +14,7 @@
 -- grade, and every computation by reduction.                         --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.SemiDirect.Watermarks where
+module Grades.Examples.Worked.Watermarks where
 
 open import Data.Integer.Base as ℤ using (ℤ; +_)
 open import Data.List.Base using ([]; _∷_)
@@ -26,8 +26,8 @@ open import Relation.Nullary.Decidable using (True; False; toWitness; toWitnessF
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
 open import Grades.Indexed using (ℕ-names; module Maps)
-open import Grades.Examples.SemiDirect.ExtendedInteger
-open import Grades.Examples.SemiDirect.Watermarks
+open import Grades.Examples.Watermarks.ExtendedInteger
+open import Grades.Examples.Watermarks
 
 open import Util.Equality
 

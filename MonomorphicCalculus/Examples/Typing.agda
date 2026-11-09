@@ -158,19 +158,22 @@ import MonomorphicCalculus.Examples.Typing.SemiDirect.FlowSensitiveLevels
 
 import MonomorphicCalculus.Examples.Typing.SemiDirect.CallTimeSets
 
+------------------------------------------------------------------------
+-- Watermark grades and mode matrices
+
 -- the slots of the local memory: storing occupies one, transmitting
 -- frees it
 
-import MonomorphicCalculus.Examples.Typing.SemiDirect.Watermarks
+import MonomorphicCalculus.Examples.Typing.Watermarks
 
 -- the cost of switching the radio on, and operations stuck in the
 -- wrong mode
 
-import MonomorphicCalculus.Examples.Typing.SemiDirect.ModeSwitchCosts
+import MonomorphicCalculus.Examples.Typing.Modes.SwitchCosts
 
 -- running times in the mode an operation starts from
 
-import MonomorphicCalculus.Examples.Typing.SemiDirect.ModeTimes
+import MonomorphicCalculus.Examples.Typing.Modes.Times
 
 ------------------------------------------------------------------------
 -- Grade systems that measure effects by time

@@ -16,7 +16,7 @@
 -- reduction.                                                         --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.SemiDirect.ModeTimes where
+module Grades.Examples.Worked.Modes.Times where
 
 open import Data.List.Base using (List; []; _∷_)
 open import Data.Maybe.Base using (just)
@@ -30,8 +30,8 @@ open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
 open import Grades.Examples.Time.Interval using (Interval∞; [_,_]; ↑_; ∞)
 open import Grades.Indexed using (ℕ-names; module Maps)
-open import Grades.Examples.SemiDirect.ModeTimes.Boxes using (witness)
-open import Grades.Examples.SemiDirect.ModeTimes
+open import Grades.Examples.Modes.Times.Boxes using (witness)
+open import Grades.Examples.Modes.Times
 open import Grades.Matrix.Modes ℕ-names using (⌜_⌝)
 
 open import Util.Equality

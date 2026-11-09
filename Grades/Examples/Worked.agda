@@ -63,11 +63,11 @@ import Grades.Examples.Worked.Traces
 import Grades.Examples.Worked.Counts
 
 -- Flow-sensitive levels and call-time sets, semidirect products;
--- watermark grades; and mode-switch costs and mode times, mode
--- matrices.
+-- the watermark grades, defined directly; and mode-switch costs and
+-- mode times, mode matrices.
 
 import Grades.Examples.Worked.SemiDirect.FlowSensitiveLevels
 import Grades.Examples.Worked.SemiDirect.CallTimeSets
-import Grades.Examples.Worked.SemiDirect.Watermarks
-import Grades.Examples.Worked.SemiDirect.ModeSwitchCosts
-import Grades.Examples.Worked.SemiDirect.ModeTimes
+import Grades.Examples.Worked.Watermarks
+import Grades.Examples.Worked.Modes.SwitchCosts
+import Grades.Examples.Worked.Modes.Times

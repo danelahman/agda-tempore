@@ -29,7 +29,7 @@
 --   (`refuted`).                                                     --
 ------------------------------------------------------------------------
 
-module MonomorphicCalculus.Examples.Typing.SemiDirect.ModeTimes where
+module MonomorphicCalculus.Examples.Typing.Modes.Times where
 
 open import Data.Unit using (tt)
 open import Relation.Nullary using (¬_)
@@ -42,8 +42,8 @@ open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
 open import Grades.Indexed using (ℕ-names; module Maps)
 open import Grades.Examples.Time.Interval using ([_,_]; ↑_; ∞)
-open import Grades.Examples.SemiDirect.ModeTimes.Boxes using (witness)
-open import Grades.Examples.SemiDirect.ModeTimes
+open import Grades.Examples.Modes.Times.Boxes using (witness)
+open import Grades.Examples.Modes.Times
   renaming (decided to grade)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
   renaming (opTime to running)

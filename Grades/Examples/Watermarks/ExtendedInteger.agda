@@ -7,7 +7,7 @@
 -- decidable, proof-irrelevant total order.                           --
 ------------------------------------------------------------------------
 
-module Grades.Examples.SemiDirect.ExtendedInteger where
+module Grades.Examples.Watermarks.ExtendedInteger where
 
 open import Data.Integer.Base as ℤ using (ℤ; +_; -[1+_]; 0ℤ)
 import Data.Integer.Properties as ℤₚ

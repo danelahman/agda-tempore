@@ -27,7 +27,7 @@
 --   (`refuted`).                                                     --
 ------------------------------------------------------------------------
 
-module MonomorphicCalculus.Examples.Typing.SemiDirect.ModeSwitchCosts where
+module MonomorphicCalculus.Examples.Typing.Modes.SwitchCosts where
 
 open import Data.Product using (_,_)
 open import Relation.Nullary using (¬_)
@@ -37,7 +37,7 @@ import Data.List.Base as L
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
-open import Grades.Examples.SemiDirect.ModeSwitchCosts
+open import Grades.Examples.Modes.SwitchCosts
   renaming (decided to grade)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
 

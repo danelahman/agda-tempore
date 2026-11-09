@@ -20,7 +20,7 @@
 -- no entry starts is stuck at cost 0 (`listing`).                    --
 ------------------------------------------------------------------------
 
-module Grades.Examples.SemiDirect.ModeSwitchCosts where
+module Grades.Examples.Modes.SwitchCosts where
 
 open import Data.Bool.Base using (Bool; true; false; _∨_; if_then_else_)
 open import Data.Empty using (⊥-elim)

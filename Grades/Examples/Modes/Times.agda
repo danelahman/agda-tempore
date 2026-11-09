@@ -25,7 +25,7 @@
 -- which no entry starts is stuck at no time.                         --
 ------------------------------------------------------------------------
 
-module Grades.Examples.SemiDirect.ModeTimes where
+module Grades.Examples.Modes.Times where
 
 open import Data.Bool.Base using (Bool; true; false; _∨_; _∧_; if_then_else_)
 open import Data.Empty using (⊥-elim)
@@ -47,7 +47,7 @@ open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
 open import Grades.Indexed using (ℕ-names; module Maps; Names)
 open import Grades.Examples.Time.Interval
-open import Grades.Examples.SemiDirect.ModeTimes.Boxes
+open import Grades.Examples.Modes.Times.Boxes
 open import Grades.Matrix.Dioid using (Dioid)
 open import Grades.Matrix.Nominal ℕ-names using (Equivariant)
 open import Grades.Matrix.Modes ℕ-names

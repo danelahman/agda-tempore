@@ -26,7 +26,7 @@
 --   (`refuted`).                                                     --
 ------------------------------------------------------------------------
 
-module MonomorphicCalculus.Examples.Typing.SemiDirect.Watermarks where
+module MonomorphicCalculus.Examples.Typing.Watermarks where
 
 open import Data.Integer.Base as ℤ using (+_)
 open import Relation.Nullary using (¬_)
@@ -34,8 +34,8 @@ open import Relation.Nullary.Decidable using (True; False; toWitness; toWitnessF
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
-open import Grades.Examples.SemiDirect.Watermarks using (Watermark; one-watermark)
-open import Grades.Examples.Worked.SemiDirect.Watermarks using (res)
+open import Grades.Examples.Watermarks using (Watermark; one-watermark)
+open import Grades.Examples.Worked.Watermarks using (res)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
 
 ------------------------------------------------------------------------

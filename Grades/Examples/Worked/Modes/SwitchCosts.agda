@@ -14,7 +14,7 @@
 -- procedure of the grade, and every computation by reduction.        --
 ------------------------------------------------------------------------
 
-module Grades.Examples.Worked.SemiDirect.ModeSwitchCosts where
+module Grades.Examples.Worked.Modes.SwitchCosts where
 
 open import Data.List.Base using ([]; _∷_)
 open import Data.Nat.Base using (ℕ)
@@ -24,7 +24,7 @@ open import Relation.Nullary.Decidable using (True; False; toWitness; toWitnessF
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
-open import Grades.Examples.SemiDirect.ModeSwitchCosts
+open import Grades.Examples.Modes.SwitchCosts
 
 open import Util.Equality
 

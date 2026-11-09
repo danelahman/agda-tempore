@@ -15,7 +15,7 @@
 -- sub-dioid (`times`), the entries of the mode-time matrices.        --
 ------------------------------------------------------------------------
 
-module Grades.Examples.SemiDirect.ModeTimes.Boxes where
+module Grades.Examples.Modes.Times.Boxes where
 
 open import Data.Empty using (⊥-elim)
 open import Data.List.Base using (List; []; _∷_) renaming (map to mapᴸ)
