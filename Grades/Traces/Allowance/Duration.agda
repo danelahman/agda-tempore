@@ -15,7 +15,8 @@
 -- The empty bound permits only the empty run. That needs every        --
 -- operation to cost something, since a free operation could be paid   --
 -- for out of no budget, so positivity of `costʰⁱ` is an argument      --
--- where it is used; the grade's zero-product law rests on it.         --
+-- where it is used; the grade's zero-product law rests on it, and     --
+-- under it only the empty run has duration `0`.                       --
 -------------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -126,3 +127,16 @@ duration-≼ᵃ {s} {t} p =
 ≼ᵃ-ε-inv pos nil                      = refl
 ≼ᵃ-ε-inv pos (use-delay {d = d} le _) = ⊥-elim (∣∣⁺-pos d le)
 ≼ᵃ-ε-inv pos (use-op {o = o} le _)    = ⊥-elim (pos o (n≤0⇒n≡0 le))
+
+------------------------------------------------------------------------
+-- Only the empty run takes no time
+--
+-- Operations cost something and delays are positive, so a run of
+-- duration `0` has neither.
+
+duration-ε : ((o : Op) → ¬ (costʰⁱ o ≡ 0ᴰ)) → (s : Trace) → duration s ≡ 0ᴰ → s ≡ ε
+duration-ε pos ε               _ = refl
+duration-ε pos (operation o t) e =
+  ⊥-elim (pos o (n≤0⇒n≡0 (subst (costʰⁱ o ≤_) e (m≤m+n (costʰⁱ o) (duration t)))))
+duration-ε pos (delay d t)     e =
+  ⊥-elim (∣∣⁺-pos d (subst (∣ d ∣⁺ ≤_) e (m≤m+n ∣ d ∣⁺ (duration⁻ t))))

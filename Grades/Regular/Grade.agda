@@ -375,6 +375,11 @@ private
       case : (⟪ d ⟫ˡ K.·ˡ ⟪ c ·ᴿ starᴿ c ⟫ˡ) w → (⟪ d ⟫ˡ K.·ˡ (⟪ c ⟫ˡ K.⁺)) w
       case (z , a , e , z∈ , a∈) = z , a , e , z∈ , ⁺⇒ c a a∈
 
+-- a word of the plus is one of the plus of the language
+
+∈⁺⁻ : ∀ c w → w ∈ table (c ·ᴿ starᴿ c) → Grades.Regular.Plus._⁺ {Fin k} (λ v → v ∈ table c) w
+∈⁺⁻ = ⁺⇒
+
 plusᴿ : (c : Regular) → Plus _·ᴿ_ _≾_ c
 plusᴿ c = plus (c ·ᴿ starᴿ c) ≾-c⁺ c⁺-iter (λ {v} → least {v}) (λ {d} → indˡ {d}) (λ {d} → indʳ {d})
   where

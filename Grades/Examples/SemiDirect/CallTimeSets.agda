@@ -20,8 +20,13 @@
 -- name under the shift. A shift by a non-empty set of durations is   --
 -- empty only on the empty set, which is (A6). The order is           --
 -- componentwise inclusion, the unit `({0} , ∅)` is not least, and    --
--- `ι n` is `({n} , ∅)`. Operations are named by natural              --
--- numbers.                                                           --
+-- `ι n` is `({n} , ∅)`. A set of times that the shift by `T` keeps   --
+-- within itself the shift by `T⁺`, Kleene's plus of the durations,   --
+-- keeps within it too, and its hints declare the closure             --
+--                                                                    --
+--   (T , E)⁺  =  (T⁺ , E ∪ (T⁺ + E)) .                               --
+--                                                                    --
+-- Operations are named by natural numbers.                           --
 ------------------------------------------------------------------------
 
 module Grades.Examples.SemiDirect.CallTimeSets where
@@ -30,6 +35,7 @@ open import Data.Bool.Base using (T)
 open import Data.Bool.Properties using (T-∨; T-irrelevant)
 open import Data.Empty using (⊥-elim)
 open import Data.Fin.Base using (Fin; zero)
+open import Data.Maybe.Base using (just)
 open import Data.List.Base using (List; []; _∷_; _++_; replicate)
 open import Data.List.Properties using (++-assoc)
 open import Data.Nat.Base using (ℕ)
@@ -40,9 +46,10 @@ open import Relation.Nullary using (Dec)
 open import Relation.Nullary.Decidable using (T?; recompute)
 
 open import Grades.Durations.Nat using (ℕᴰ)
-open import Grades.Base using (Grade)
+open import Grades.Base using (Grade; Plus)
+open import Grades.Hints using (GradeHints)
 open import Grades.Indexed using (ℕ-names; module Maps)
-open import Grades.SemiDirect using (Semilattice; Action; semidirect)
+open import Grades.SemiDirect using (Semilattice; Action; semidirect; semidirect⁺ʰ)
 
 open import Grades.Regular.Automaton 1
 open import Grades.Regular.Operations 1 using (_∪_; _·_; Σ*; ⟦_⟧)
@@ -52,8 +59,9 @@ open import Grades.Regular.Inclusion 1 using (_⊆ᵇ_)
 open import Grades.Regular.Decide 1
   using (⊆ᵇ-sound; ⊆ᵇ-complete; ∅ᴰ; ∅ᴰ-wf; ∉∅ᴰ; wellFormed?)
 import Grades.Regular.Grade 1 zero as Dur
+import Grades.Regular.Plus as K
 
-open Maps ℕ-names using (indexedˢ; indexedᵃ; Map)
+open Maps ℕ-names using (indexedˢ; indexedᵃ; indexed⁺; Map)
 open Equivalence using (to; from)
 
 open import Util.Equality
@@ -242,6 +250,20 @@ shift-reflects-∅ {c} {E} q = ⊆⇒⊑ E ∅ₜ λ y y∈ →
                          (∈shift⁺ c E x y (proj₂ (Dur.inhabited′ c)) y∈)))
   where x = proj₁ (Dur.inhabited′ c)
 
+-- what a shift by `c` does not raise, a shift by its closure `c⁺`
+-- does not raise either: from `c + E ⊆ E`, `c⁺ + E ⊆ E` (Kleene's
+-- induction)
+
+shift-⁺ : ∀ c {E} → shift c E ⊑ E → shift (Plus.c⁺ (Dur.plusᴿ c)) E ⊑ E
+shift-⁺ c {E} q = ⊆⇒⊑ (shift c⁺ E) E λ w w∈ →
+  ∈shift-elim c⁺ E (_∈ table E) w w∈ λ x y x∈ y∈ →
+    K.⁺-indˡ {X = λ v → v ∈ Dur.table c} {D = λ v → v ∈ table E}
+      (λ u (a , b , e , a∈ , b∈) →
+         subst (_∈ table E) (sym e) (⊑⇒⊆ (shift c E) E q (a ++ b) (∈shift⁺ c E a b a∈ b∈)))
+      (x ++ y) (x , y , refl , Dur.∈⁺⁻ c x x∈ , y∈)
+  where
+    c⁺ = Plus.c⁺ (Dur.plusᴿ c)
+
 shift-action : Action durations times-semilattice
 shift-action = record
   { act              = shift
@@ -264,3 +286,19 @@ times-by-name = indexedˢ times-semilattice
 call-time-sets : Grade ℕᴰ
 call-time-sets =
   semidirect durations times-by-name (indexedᵃ {M = durations} {N = times-semilattice} shift-action)
+
+-- its hints: the closure of `(T , E)` is `(T⁺ , E ∪ (T⁺ + E))`, name
+-- by name; by copatterns, so that `call-time-sets` is not compared as
+-- a record value
+
+private
+  module H = GradeHints
+    (semidirect⁺ʰ Dur.regular-gradeʰ times-by-name
+       (indexedᵃ {M = durations} {N = times-semilattice} shift-action)
+       (λ c → just (indexed⁺ {M = durations} {N = times-semilattice} shift-action
+                      record { closure = Dur.plusᴿ c ; act-⁺ = λ {E} → shift-⁺ c {E} })))
+
+call-time-setsʰ : GradeHints call-time-sets
+GradeHints.𝟏-least? call-time-setsʰ = H.𝟏-least?
+GradeHints.·-comm?  call-time-setsʰ = H.·-comm?
+GradeHints.plus?    call-time-setsʰ = H.plus?

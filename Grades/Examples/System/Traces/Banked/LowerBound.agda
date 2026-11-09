@@ -38,7 +38,7 @@ open import Relation.Binary.Definitions
   using (DecidableEquality; Transitive; Trichotomous)
 
 open import Grades.Base
-open import Grades.Hints using (SystemHints; noGradeHints)
+open import Grades.Hints using (SystemHints)
 open import Grades.Examples.Time.LowerBound
   renaming (lower-bound to time-lower-bound; lower-boundʰ to time-lower-boundʰ)
 
@@ -64,7 +64,7 @@ open import Grades.Traces.Coverage ℕᵀ Op costˡᵒ using (duration-≼ᶜ)
 
 open import Grades.Examples.Traces.Banked.LowerBound
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
-  using (lower-bound; _≾_; Antichain; traces; nonempty; _·_; _⊔_;
+  using (lower-bound; lower-boundʰ; _≾_; Antichain; traces; nonempty; _·_; _⊔_;
          Trace; NonEmpty; n; n-ne; n-∈⁻; n-◃⁻; ◃-∈; _·ˢ_; ·ˢ-ne; ++-ne)
 
 open MinDurations costˡᵒ
@@ -157,7 +157,7 @@ banked→lower-bounds-grade-system = record
 banked→lower-bounds-grade-systemʰ : SystemHints banked→lower-bounds-grade-system
 banked→lower-bounds-grade-systemʰ = record
   { RHints      = time-lower-boundʰ
-  ; EHints      = noGradeHints
+  ; EHints      = lower-boundʰ
   ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

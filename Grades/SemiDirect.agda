@@ -29,13 +29,18 @@
 -- every `act m` reflects `⊥`.                                        --
 --                                                                    --
 -- Its hints declare the unit least where those of `M` do; `_·_` is   --
--- not declared to commute, and no closures are declared. The first   --
+-- not declared to commute. Given closures `m⁺` in `M` whose action   --
+-- raises nothing that of `m` does not, they declare the closures     --
+--                                                                    --
+--   (m , n)⁺  =  (m⁺ , n ∨ act m⁺ n)                                 --
+--                                                                    --
+-- (`semidirect⁺ʰ`), and otherwise none (`semidirectʰ`). The first    --
 -- projection is a grade morphism onto `M`.                           --
 ------------------------------------------------------------------------
 
 module Grades.SemiDirect where
 
-open import Data.Maybe.Base using (nothing)
+open import Data.Maybe.Base using (Maybe; nothing)
 import Data.Maybe.Base as Maybe
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
@@ -251,15 +256,81 @@ semidirect M N A = record
          → ((m M.≾ m') × (n N.⊑ n')) × ((m' M.≾ m) × (n' N.⊑ n))
     pair (p , p') (q , q') = (p , q) , (p' , q')
 
--- its hints, from those of `M`
+------------------------------------------------------------------------
+-- Closures
+--
+-- Where `m` has a closure `m⁺` in `M` and every `n` that `act m` does
+-- not raise is not raised by `act m⁺` either, the closure of `(m , n)`
+-- is
+--
+--   (m , n)⁺  =  (m⁺ , n ∨ act m⁺ n) .
+
+module _ {D : Duration} {M : Grade D} {N : Semilattice} (A : Action M N) where
+
+  private
+    module M = Grade M
+    module N = Semilattice N
+    module G = Grade (M ⋉⟨ A ⟩ N)
+  open Action A
+  open N using (_⊑_; _∨_)
+
+  -- a closure in `M` whose action raises nothing that of `m` does not
+
+  record ActionPlus (m : M.Carrier) : Set where
+    field
+      closure : Plus M._·_ M._≾_ m
+      act-⁺   : ∀ {n} → act m n ⊑ n → act (Plus.c⁺ closure) n ⊑ n
+
+  plusˢ : ∀ {m} → ActionPlus m → (n : N.Carrier) → Plus G._·_ G._≾_ (m , n)
+  plusˢ {m} P n = plus (m⁺ , k)
+    (P.≾-c⁺ , N.∨-ubˡ n _)
+    (P.c⁺-iter , N.∨-lub N.⊑-refl act-k)
+    (λ (q , q') (r , r') →
+         P.c⁺-least q r
+       , N.∨-lub q' (N.⊑-trans (act-monoˡ (P.c⁺-least q r))
+                               (N.⊑-trans (act-monoʳ q') (N.⊑-trans (N.∨-ubʳ _ _) r'))))
+    (λ (q , q') →
+         P.⁺-indˡ q
+       , N.∨-lub (N.∨-lub (N.⊑-trans (N.∨-ubˡ _ _) q')
+                          (N.⊑-trans (act-monoʳ (N.⊑-trans (N.∨-ubˡ _ _) q'))
+                                     (act-⁺ (N.⊑-trans (N.∨-ubʳ _ _) q'))))
+                 (act-⁺ (N.⊑-trans (N.∨-ubʳ _ _) q')))
+    (λ {(m' , n')} (q , q') →
+         P.⁺-indʳ q
+       , N.∨-lub N.⊑-refl
+           (N.⊑-trans (act-∨ m' n (act m⁺ n))
+             (N.∨-lub (N.⊑-trans (N.∨-ubʳ _ _) q')
+                      (N.⊑-trans (proj₂ (act-comp m' m⁺ n))
+                        (N.⊑-trans (act-monoˡ (P.⁺-indʳ q)) (N.⊑-trans (N.∨-ubʳ _ _) q'))))))
+    where
+      open ActionPlus P
+      module P = Plus closure
+      m⁺ = P.c⁺
+      k  = n ∨ act m⁺ n
+
+      -- `act m⁺` does not raise `k`
+      act-k : act m⁺ k ⊑ k
+      act-k = N.⊑-trans (act-∨ m⁺ n (act m⁺ n))
+                (N.∨-lub (N.∨-ubʳ n _)
+                         (N.⊑-trans (proj₂ (act-comp m⁺ m⁺ n))
+                                    (N.⊑-trans (act-monoˡ P.c⁺-iter) (N.∨-ubʳ n _))))
+
+-- its hints, from those of `M` and closures in `M` as above
+
+semidirect⁺ʰ : {D : Duration} {M : Grade D} → GradeHints M
+             → (N : Semilattice) (A : Action M N)
+             → ((m : Grade.Carrier M) → Maybe (ActionPlus A m)) → GradeHints (M ⋉⟨ A ⟩ N)
+semidirect⁺ʰ H N A plus? = record
+  { 𝟏-least? = Maybe.map (λ l (m , n) → l m , Semilattice.bot-⊑ N n) (GradeHints.𝟏-least? H)
+  ; ·-comm?  = nothing
+  ; plus?    = λ (m , n) → Maybe.map (λ P → plusˢ A P n) (plus? m)
+  }
+
+-- its hints, from those of `M` alone
 
 semidirectʰ : {D : Duration} {M : Grade D} → GradeHints M
             → (N : Semilattice) (A : Action M N) → GradeHints (M ⋉⟨ A ⟩ N)
-semidirectʰ H N A = record
-  { 𝟏-least? = Maybe.map (λ l (m , n) → l m , Semilattice.bot-⊑ N n) (GradeHints.𝟏-least? H)
-  ; ·-comm?  = nothing
-  ; plus?    = λ _ → nothing
-  }
+semidirectʰ H N A = semidirect⁺ʰ H N A (λ _ → nothing)
 
 ------------------------------------------------------------------------
 -- The first projection

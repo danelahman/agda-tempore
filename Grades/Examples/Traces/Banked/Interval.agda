@@ -19,6 +19,8 @@
 --                                                                     --
 -- The coherence field, run consistency, is decided by walking a       --
 -- guarantee and an allowance together (`Traces.RunConsistency`).      --
+--                                                                     --
+-- Its hints declare Kleene's plus `[ P , Q⁺ ]` (`Lifted.Interval`).   --
 -------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
@@ -49,7 +51,7 @@ open import Grades.Traces.Coverage T Op costˡᵒ using (duration-≼ᶜ)
 open import Grades.Traces.Allowance.AsOrder
   T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
   using (allowanceOrder)
-open import Grades.Traces.Allowance T Op costʰⁱ using (duration-≼ᵃ)
+open import Grades.Traces.Allowance T Op costʰⁱ using (duration-≼ᵃ; duration-ε)
 
 open import Grades.Traces.RunConsistency T Op costˡᵒ costʰⁱ cost-≤
   using (module DecConsistency)
@@ -58,3 +60,7 @@ open DecConsistency _≟ₒ_ using (_⋈?_)
 open import Grades.Examples.Traces.Lifted.Interval
   T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤
   coverageOrder allowanceOrder duration-≼ᶜ duration-≼ᵃ _⋈?_ public
+
+-- closures, only `ε` taking no time at `costʰⁱ`
+
+open Closures (duration-ε costʰⁱ-pos) public using (plusᵗˢ; intervalʰ)

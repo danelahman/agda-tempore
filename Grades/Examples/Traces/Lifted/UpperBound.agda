@@ -33,6 +33,13 @@
 -- that a `TraceOrder` adds to the order-theoretic part used by the   --
 -- reduction.                                                         --
 --                                                                    --
+-- Given a measure of traces in durations that is additive, monotone  --
+-- and `0` only at `ε` (`Closures`), no written-out grade absorbs a   --
+-- product with a trace not below `ε`, a member of greatest measure   --
+-- being raised. A grade below the unit is then its own Kleene plus   --
+-- and any other has `unbounded`; without a measure the hints declare --
+-- no Kleene plus (`upper-boundʰ`).                                   --
+--                                                                    --
 -- `Traces.Banked.UpperBound` instantiates the construction at the    --
 -- allowance order, under which a run stays within a bound when the   --
 -- operations of the bound permit those of the run and its delays     --
@@ -58,16 +65,20 @@ module Grades.Examples.Traces.Lifted.UpperBound
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
   (O : Order.TraceOrder T Op) where
 
-open import Data.Empty using (⊥)
+open import Data.Empty using (⊥; ⊥-elim)
+open import Data.List.Base using (List; []; _∷_)
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺)
-open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
-open import Grades.Durations.Monus T using (Carrier; 0ᴰ; _+ᴰ_)
-open import Data.Product using (_,_)
+open import Data.List.Relation.Unary.Any as Any using (Any; here; there; any?)
+open import Grades.Durations.Monus T
+  using (Carrier; 0ᴰ; _+ᴰ_; _≤ᴰ_; ≤ᴰ-refl; ≤ᴰ-trans; ≤ᴰ-reflexive; ≤ᴰ-antisym;
+         ≤ᴰ-total; +ᴰ-comm; 0ᴰ-least; ∸-self; +-≤-∸)
+open import Data.Product using (Σ; _×_; _,_; proj₂)
+open import Data.Sum using (inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
 
-open import Relation.Nullary using (Dec; yes; no)
+open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Data.Maybe.Base using (just; nothing)
@@ -75,7 +86,7 @@ open import Data.Maybe.Base using (just; nothing)
 open import Grades.Base
 open import Grades.Hints using (GradeHints; comm-≡)
 
-open Order.TraceOrder O using (_≼_; ≼-trans; ≼-nil; ≼-ε-inv)
+open Order.TraceOrder O using (_≼_; _≼?_; ≼-refl; ≼-trans; ≼-nil; ≼-ε-inv)
 
 -- the carrier of the written-out bounds and every law the
 -- order-theoretic half supplies: the monoid, the order, its decision
@@ -395,7 +406,7 @@ upper-bound = posetᵍ record
   ; ι-plus          = λ {m} {n} → ιᵇ-plus {m} {n}
   }
 
--- its hints
+-- its hints, without closures
 
 upper-boundʰ : GradeHints upper-bound
 upper-boundʰ = record
@@ -403,3 +414,117 @@ upper-boundʰ = record
   ; ·-comm?  = nothing
   ; plus?    = λ _ → nothing
   }
+
+------------------------------------------------------------------------
+-- Closures
+--
+-- Given a measure `μ` of traces, additive, monotone for `_≼_` and `0`
+-- only at `ε`, no written-out grade absorbs a product with a trace not
+-- below `ε`, on either side: a member of greatest measure, followed or
+-- preceded by that trace, lies within no member. So a grade with a
+-- member not below `ε` is absorbed by `unbounded` alone, which is its
+-- closure; a grade below the unit is its own.
+
+module Closures
+  (μ   : Trace → Carrier)
+  (μ-∙ : (s t : Trace) → μ (s ∙ t) ≡ μ s +ᴰ μ t)
+  (μ-≼ : {s t : Trace} → s ≼ t → μ s ≤ᴰ μ t)
+  (μ-ε : (s : Trace) → μ s ≡ 0ᴰ → s ≡ ε)
+  where
+
+  private
+    -- a sum below one summand: the other is `0`
+    absorbs : (a b : Carrier) → a +ᴰ b ≤ᴰ b → a ≡ 0ᴰ
+    absorbs a b h =
+      ≤ᴰ-antisym (subst (a ≤ᴰ_) (∸-self b)
+                        (+-≤-∸ ≤ᴰ-refl (≤ᴰ-trans (≤ᴰ-reflexive (+ᴰ-comm b a)) h)))
+                 (0ᴰ-least a)
+
+    -- a trace not below `ε` has a positive measure
+    μ-pos : {t : Trace} → ¬ (t ≼ ε) → ¬ (μ t ≡ 0ᴰ)
+    μ-pos {t} ¬t e = ¬t (subst (_≼ ε) (sym (μ-ε t e)) (≼-refl ε))
+
+    -- a member of greatest measure
+    top : (x : Trace) (xs : List Trace)
+        → Σ Trace λ m → m ∈ (x ∷ xs) × ({y : Trace} → y ∈ (x ∷ xs) → μ y ≤ᴰ μ m)
+    top x [] = x , here refl , λ { (here refl) → ≤ᴰ-refl ; (there ()) }
+    top x (x' ∷ xs) with top x' xs
+    ... | m , m∈ , ub with ≤ᴰ-total (μ x) (μ m)
+    ...   | inj₁ le = m , there m∈ , λ { (here refl) → le ; (there y∈) → ub y∈ }
+    ...   | inj₂ ge = x , here refl , λ { (here refl) → ≤ᴰ-refl ; (there y∈) → ≤ᴰ-trans (ub y∈) ge }
+
+    -- no non-empty list absorbs a trace not below `ε`, on the left
+    no-absorbˡ : {t q : Trace} {Q : List Trace} → ¬ (t ≼ ε) → q ∈ Q
+               → ¬ ({y : Trace} → y ∈ Q → (t ∙ y) ◃ Q)
+    no-absorbˡ {Q = []}     _  ()
+    no-absorbˡ {t} {Q = x ∷ xs} ¬t _ f with top x xs
+    ... | m , m∈ , ub with find (f m∈)
+    ...   | z , z∈ , tm≼z =
+            μ-pos ¬t (absorbs (μ t) (μ m)
+              (subst (_≤ᴰ μ m) (μ-∙ t m) (≤ᴰ-trans (μ-≼ tm≼z) (ub z∈))))
+
+    -- ... and on the right
+    no-absorbʳ : {t q : Trace} {Q : List Trace} → ¬ (t ≼ ε) → q ∈ Q
+               → ¬ ({y : Trace} → y ∈ Q → (y ∙ t) ◃ Q)
+    no-absorbʳ {Q = []}     _  ()
+    no-absorbʳ {t} {Q = x ∷ xs} ¬t _ f with top x xs
+    ... | m , m∈ , ub with find (f m∈)
+    ...   | z , z∈ , mt≼z =
+            μ-pos ¬t (absorbs (μ t) (μ m)
+              (≤ᴰ-trans (≤ᴰ-reflexive (trans (+ᴰ-comm (μ t) (μ m)) (sym (μ-∙ m t))))
+                        (≤ᴰ-trans (μ-≼ mt≼z) (ub z∈))))
+
+    -- a product of members lies within a member of a grade above the
+    -- product
+    prod-◃ : {P Q R : Antichain} → (P · Q) ≾₀ R
+           → {a b : Trace} → a ∈ traces P → b ∈ traces Q → (a ∙ b) ◃ traces R
+    prod-◃ {P} {Q} {R} rel a∈ b∈ =
+      ◃-trans {traces (P · Q)} {traces R} (λ {w} → ≾ˢ-◃ {traces (P · Q)} {traces R} rel {w})
+        (n-◃⁻ (traces P ·ˢ traces Q) (◃-∈ (∈-cartesianProductWith⁺ _∙_ a∈ b∈)))
+
+    -- a grade with no member outside `ε` is below the unit
+    below-𝟏 : (P : Antichain) → ({p : Trace} → p ∈ traces P → ¬ (p ≼ ε) → ⊥) → P ≾₀ 𝟏
+    below-𝟏 P f = ≾₀-𝟏 {P} step
+      where
+        step : {p : Trace} → p ∈ traces P → p ≼ ε
+        step {p} m with p ≼? ε
+        ... | yes q = q
+        ... | no ¬q = ⊥-elim (f m ¬q)
+
+  plusᵇ : (P : Bounds) → Plus _·ᵇ_ _≾_ P
+  plusᵇ unbounded = plus-self tt tt
+  plusᵇ (within P) with P ≾₀? 𝟏
+  ... | yes r = plus-self (≾₀-refl {P})
+                  (subst ((P · P) ≾₀_) (·-identityˡ P) (·-monoˡ₀ {P} {P} {𝟏} r))
+  ... | no ¬r = plus unbounded tt tt least indˡ indʳ
+    where
+      least : {v : Bounds} → within P ≾ v → v ·ᵇ v ≾ v → unbounded ≾ v
+      least {within Q} r₁ r₂ = ¬r (below-𝟏 P step)
+        where
+          step : {p : Trace} → p ∈ traces P → ¬ (p ≼ ε) → ⊥
+          step p∈ ¬p with find (≾ˢ-◃ {traces P} {traces Q} r₁ p∈)
+          ... | q , q∈ , p≼q =
+                no-absorbʳ (λ q≼ε → ¬p (≼-trans p≼q q≼ε)) q∈
+                  (λ y∈ → prod-◃ {Q} {Q} {Q} r₂ y∈ q∈)
+      least {unbounded} _ _ = tt
+
+      indˡ : {d : Bounds} → within P ·ᵇ d ≾ d → unbounded ·ᵇ d ≾ d
+      indˡ {within Q} r = ¬r (below-𝟏 P λ p∈ ¬p →
+        no-absorbˡ ¬p (proj₂ (neHead (traces Q) (nonempty Q)))
+          (λ y∈ → prod-◃ {P} {Q} {Q} r p∈ y∈))
+      indˡ {unbounded} _ = tt
+
+      indʳ : {d : Bounds} → d ·ᵇ within P ≾ d → d ·ᵇ unbounded ≾ d
+      indʳ {within Q} r = ¬r (below-𝟏 P λ p∈ ¬p →
+        no-absorbʳ ¬p (proj₂ (neHead (traces Q) (nonempty Q)))
+          (λ y∈ → prod-◃ {Q} {P} {Q} r y∈ p∈))
+      indʳ {unbounded} _ = tt
+
+  -- its hints, with closures
+
+  upper-bound⁺ʰ : GradeHints upper-bound
+  upper-bound⁺ʰ = record
+    { 𝟏-least? = just ≾-⊥
+    ; ·-comm?  = nothing
+    ; plus?    = λ P → just (plusᵇ P)
+    }

@@ -29,20 +29,30 @@
 -- grade below the unit, which gives the zero-product law: from       --
 -- `x · y ≾ 𝟏` the trough and peak of `x` are `0`, its range is       --
 -- `[0 , 0]` by consistency, and so `y ≾ 𝟏`. The unit is not least,   --
--- `_·_` does not commute, and delays change no amount held. The      --
--- watermark grades are the grade of one resource indexed by the      --
--- resource names (`Grades.Indexed`).                                 --
+-- `_·_` does not commute, and delays change no amount held.          --
+--                                                                    --
+-- A side whose net change is at most `0` is its own closure, and     --
+-- that of any other is `⊤ˢ`: the closure of a grade keeps the lower  --
+-- side if `d₁ ≥ 0` and sends `t` and `d₁` to `-∞` otherwise, and     --
+-- keeps the upper side if `d₂ ≤ 0` and sends `d₂` and `h` to `∞`     --
+-- otherwise, as its hints declare. The watermark grades are the      --
+-- grade of one resource indexed by the resource names                --
+-- (`Grades.Indexed`).                                                --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Watermarks where
 
+open import Data.Empty using (⊥-elim)
 open import Data.Integer.Base as ℤ using (ℤ)
+import Data.Integer.Properties as ℤₚ
+open import Data.Maybe.Base using (just; nothing)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
-open import Relation.Nullary using (Dec; yes; no)
+open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable using (_×-dec_; True; toWitness; map′)
 
 open import Grades.Durations using (Duration)
-open import Grades.Base using (Grade)
+open import Grades.Base using (Grade; Plus; plus; plus-self)
+open import Grades.Hints using (GradeHints)
 open import Grades.Indexed using (ℕ-names; module Maps)
 open import Grades.Examples.Watermarks.ExtendedInteger
 
@@ -161,6 +171,42 @@ private
                      (⊔∞-mono (⊔∞-ubʳ (ext s') _) (⊔∞-ubʳ (ext s'') _)))
 
 ------------------------------------------------------------------------
+-- Closures of a side
+--
+-- A side whose net change is at most `0` absorbs its own iteration and
+-- is its own closure. Iterating one whose net change is positive
+-- raises the net change without bound, and its closure is `⊤ˢ`: only
+-- a side of infinite net change absorbs it, on either side.
+
+private
+  -- a positive net change raises every amount but `∞` it is added to
+  pos-+ : ∀ {x y} → ¬ (x ≤∞ 0∞) → x +∞ y ≤∞ y → y ≡ ∞
+  pos-+ {fin i} {fin j} ¬p (fin≤fin q) = ⊥-elim (¬p (fin≤fin
+    (ℤₚ.≤-trans (ℤₚ.≤-reflexive (sym (trans (ℤₚ.+-assoc i j (ℤ.- j))
+                                              (trans (cong (ℤ._+_ i) (ℤₚ.+-inverseʳ j))
+                                                     (ℤₚ.+-identityʳ i)))))
+       (ℤₚ.≤-trans (ℤₚ.+-monoˡ-≤ (ℤ.- j) q) (ℤₚ.≤-reflexive (ℤₚ.+-inverseʳ j))))))
+  pos-+ {∞}     {fin _} _ ()
+  pos-+ {_}     {∞}     _ _ = refl
+
+  -- a side of infinite net change is above every side
+  ∞-≤ˢ : ∀ s {s'} → net s' ≡ ∞ → s ≤ˢ s'
+  ∞-≤ˢ s {s'} e =
+      subst (net s ≤∞_) (sym e) ≤∞-∞
+    , ≤∞-trans (subst (ext s ≤∞_) (sym e) ≤∞-∞) (net≤ext s')
+
+plusˢ : (s : Side) → Plus _·ˢ_ _≤ˢ_ s
+plusˢ s with net s ≤∞? 0∞
+... | yes p = plus-self ≤ˢ-refl
+    ( ≤∞-trans (+∞-monoˡ (net s) p) (≤-≡ (+∞-identityˡ (net s)))
+    , ⊔∞-lub ≤∞-refl (≤∞-trans (+∞-monoˡ (ext s) p) (≤-≡ (+∞-identityˡ (ext s)))) )
+... | no ¬p = plus ⊤ˢ (≤∞-∞ , ≤∞-∞) (≤∞-∞ , ≤∞-∞)
+    (λ {v} (q , _) (r , _) → ∞-≤ˢ ⊤ˢ (pos-+ (λ v≤0 → ¬p (≤∞-trans q v≤0)) r))
+    (λ {d} (r , _) → ∞-≤ˢ (⊤ˢ ·ˢ d) (pos-+ ¬p r))
+    (λ {d} (r , _) → ∞-≤ˢ (d ·ˢ ⊤ˢ)
+       (pos-+ ¬p (≤∞-trans (≤∞-reflexive (+∞-comm (net s) (net d))) r)))
+
+------------------------------------------------------------------------
 -- The trough, net change and peak of one resource: a lower side, held
 -- negated, and an upper side, with consistent net changes
 
@@ -256,6 +302,23 @@ zero-productʳ {x} {y} p@(pl , pu) =
     cons′ = ≤∞-trans (consistent x) (≤∞-reflexive (+∞-comm (net (lower x)) (net (upper x))))
 
 ------------------------------------------------------------------------
+-- Closures, side by side: a closure raises net changes, which keeps
+-- them consistent
+
+plusᵂ : (x : Watermark) → Plus _·ᵂ_ _≾ᵂ_ x
+plusᵂ x = plus (watermark L.c⁺ U.c⁺ consistent⁺)
+  (L.≾-c⁺ , U.≾-c⁺)
+  (L.c⁺-iter , U.c⁺-iter)
+  (λ (q , q') (r , r') → L.c⁺-least q r , U.c⁺-least q' r')
+  (λ (q , q') → L.⁺-indˡ q , U.⁺-indˡ q')
+  (λ (q , q') → L.⁺-indʳ q , U.⁺-indʳ q')
+  where
+    module L = Plus (plusˢ (lower x))
+    module U = Plus (plusˢ (upper x))
+    consistent⁺ : 0∞ ≤∞ net L.c⁺ +∞ net U.c⁺
+    consistent⁺ = ≤∞-trans (consistent x) (+∞-mono (net-≤ L.≾-c⁺) (net-≤ U.≾-c⁺))
+
+------------------------------------------------------------------------
 -- The grade of one watermark: the trough, net change and peak of one
 -- resource
 
@@ -298,11 +361,26 @@ one-watermark = record
          → ((a ≤ˢ b) × (c ≤ˢ d)) × ((b ≤ˢ a) × (d ≤ˢ c))
     pair (p , p') (q , q') = (p , q) , (p' , q')
 
+-- its hints: the unit is not least and `_·_` does not commute; every
+-- grade has its closure
+
+one-watermarkʰ : {D : Duration} → GradeHints (one-watermark {D})
+one-watermarkʰ = record
+  { 𝟏-least? = nothing
+  ; ·-comm?  = nothing
+  ; plus?    = λ x → just (plusᵂ x)
+  }
+
 ------------------------------------------------------------------------
 -- The watermark grades: one grade per resource name
 
 watermarks : {D : Duration} → Grade D
 watermarks {D} = Maps.indexedᵍ ℕ-names (one-watermark {D})
+
+-- their hints, by name
+
+watermarksʰ : {D : Duration} → GradeHints (watermarks {D})
+watermarksʰ {D} = Maps.indexedʰ ℕ-names (one-watermark {D}) one-watermarkʰ
 
 ------------------------------------------------------------------------
 -- Literals: the trough, the range of net changes and the peak, the

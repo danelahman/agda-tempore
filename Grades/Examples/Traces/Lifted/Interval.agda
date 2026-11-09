@@ -34,6 +34,9 @@
 --                                                                    --
 -- The greatest grade is `[ 𝟏 , unbounded ]`, the unit of the floor   --
 -- under the unbounded allowance of the cap. It is not absorbing.     --
+-- Where only `ε` has cap duration `0` (`Closures`), the Kleene plus  --
+-- of `[ P , Q ]` is `[ P , Q⁺ ]`, that of each endpoint at its own   --
+-- grade.                                                             --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
@@ -88,9 +91,10 @@ open import Relation.Nullary using (¬_; Dec)
 open import Relation.Nullary.Decidable
   using (True; toWitness; fromWitness; _×-dec_)
 
-open import Data.Maybe.Base using (nothing)
+open import Data.Maybe.Base using (just; nothing)
 
 open import Grades.Base
+open import Grades.Hints using (GradeHints)
 
 open import Grades.Traces.Sets T Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Grades.Traces.Durations T Op
@@ -101,7 +105,7 @@ open import Grades.Traces.Durations T Op
 open import Grades.Examples.Traces.Lifted.LowerBound
   T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans Oᶠ
   using (Antichain)
-  renaming (traces to tracesˡᵒ; nonempty to nonemptyˡᵒ;
+  renaming (plusᴸ to plusˡᵒ; ·-idem to ·ˡᵒ-idem; traces to tracesˡᵒ; nonempty to nonemptyˡᵒ;
             n to nˡᵒ; n-◃⁻ to nˡᵒ-◃⁻; ◃-∈ to ◃ˡᵒ-∈;
             _·_ to _·ˡᵒ_; 𝟏 to 𝟏ˡᵒ; _⊔_ to _⊔ˡᵒ_;
             ·-identityʳ to ·ˡᵒ-identityʳ; ·-identityˡ to ·ˡᵒ-identityˡ;
@@ -126,7 +130,8 @@ open import Grades.Examples.Traces.Lifted.UpperBound
   T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans Oᶜ
   using (Bounds; within_; unbounded; _·ᵇ_; 𝟏ᵇ; _⊔ᵇ_;
          ·ᵇ-identityʳ; ·ᵇ-identityˡ; ·ᵇ-assoc)
-  renaming (Antichain to Antichainʰⁱ; traces to tracesʰⁱ;
+  renaming (module Closures to Closuresʰⁱ; ≾ˢ-◃ to ≾ˢʰⁱ-◃;
+            Antichain to Antichainʰⁱ; traces to tracesʰⁱ;
             𝟏 to 𝟏ʰⁱ; n to nʰⁱ; n-◃⁻ to nʰⁱ-◃⁻; ◃-∈ to ◃ʰⁱ-∈;
             ι to ιʰⁱ; ι-zero to ιʰⁱ-zero;
             ι-plus to ιʰⁱ-plus;
@@ -538,3 +543,49 @@ interval = posetᵍ record
                         eqᵗˢ (ιˡᵒ-plus {m} {n})
                              (cong within_ (ιʰⁱ-plus {m} {n}))
   }
+
+------------------------------------------------------------------------
+-- Closures
+--
+-- Where only `ε` has cap duration `0`, the closure of `[ P , U ]` is
+-- `[ P , U⁺ ]`, each endpoint closed at its own grade: the floor is
+-- its own closure (`Lifted.LowerBound`), the cap's is that of
+-- `Lifted.UpperBound` measured by the cap duration, and raising the
+-- cap keeps run consistency.
+
+-- run consistency survives raising the cap: the witnessing allowance
+-- is replaced by one above it
+
+◇ˢ-mono : {xs : List Trace} {Y Y' : Bounds} → xs ◇ˢ Y → Y ≾ʰⁱ Y' → xs ◇ˢ Y'
+◇ˢ-mono {xs} {within Q} {within Q'} p r with ◇ˢ₀-elim p
+... | witness p∈ q∈ (x , px , xq)
+        with find (≾ˢʰⁱ-◃ {tracesʰⁱ Q} {tracesʰⁱ Q'} r q∈)
+...     | _ , q'∈ , q≼q' = ◇ˢ₀-intro p∈ q'∈ (x , px , ≼ᶜ-trans xq q≼q')
+◇ˢ-mono {Y = within _}  {unbounded} _ _  = tt
+◇ˢ-mono {Y = unbounded} {within _}  _ ()
+◇ˢ-mono {Y = unbounded} {unbounded} _ _  = tt
+
+module Closures (durʰⁱ-ε : (s : Trace) → durationʰⁱ s ≡ 0ᴰ → s ≡ ε) where
+
+  private
+    module C = Closuresʰⁱ durationʰⁱ (Durations.duration-∙ costʰⁱ) durᶜ durʰⁱ-ε
+
+  plusᵗˢ : (i : Interval) → Plus _·ᵗˢ_ _≾ᵗˢ_ i
+  plusᵗˢ i = plus
+    ([ lo i , U.c⁺ ] {◇ˢ-mono {tracesˡᵒ (lo i)} {hi i} {U.c⁺} (lo◇hi i) U.≾-c⁺})
+    (≾ˡᵒ-refl {lo i} , U.≾-c⁺)
+    (·ˡᵒ-idem (lo i) , U.c⁺-iter)
+    (λ (q , q') (_ , r') → q , U.c⁺-least q' r')
+    (λ (q , q') → q , U.⁺-indˡ q')
+    (λ (q , q') → q , U.⁺-indʳ q')
+    where
+      module U = Plus (C.plusᵇ (hi i))
+
+  -- its hints: the unit is not least, and every grade has its closure
+
+  intervalʰ : GradeHints interval
+  intervalʰ = record
+    { 𝟏-least? = nothing
+    ; ·-comm?  = nothing
+    ; plus?    = λ i → just (plusᵗˢ i)
+    }

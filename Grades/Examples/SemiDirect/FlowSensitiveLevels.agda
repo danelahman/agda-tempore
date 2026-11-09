@@ -13,8 +13,12 @@
 -- Keeping `⊥` apart from "written at the least level" makes `raise   --
 -- l` preserve `⊥`, and every `raise l` reflects it. The unit         --
 -- `(⊥ , ⊥)` is least, as its hints declare; they do not declare      --
--- `_·_` commutative. Delays touch no level. Sinks are named by       --
--- natural numbers.                                                   --
+-- `_·_` commutative. A level is its own closure, and the hints       --
+-- declare the closure                                                --
+--                                                                    --
+--   (l , W)⁺  =  (l , W ∨ raise l W) .                               --
+--                                                                    --
+-- Delays touch no level. Sinks are named by natural numbers.         --
 ------------------------------------------------------------------------
 
 module Grades.Examples.SemiDirect.FlowSensitiveLevels where
@@ -28,13 +32,14 @@ open import Data.Unit using (tt) renaming (⊤ to 𝟙)
 open import Relation.Nullary using (yes; no)
 
 open import Grades.Durations using (Duration)
-open import Grades.Base using (Grade)
+open import Grades.Base using (Grade; plus-self)
 open import Grades.Hints using (GradeHints)
 open import Grades.Examples.Lattice
   using (LevelLattice; level-grade; level-gradeʰ; low-high-lattice; LowHigh; Low; High)
 open import Grades.Indexed using (ℕ-names; module Maps)
-open Maps ℕ-names using (indexedˢ; indexedᵃ; Map)
-open import Grades.SemiDirect using (Semilattice; Action; semidirect; semidirectʰ)
+open Maps ℕ-names using (indexedˢ; indexedᵃ; indexed⁺; Map)
+open import Grades.SemiDirect
+  using (Semilattice; Action; ActionPlus; semidirect; semidirect⁺ʰ)
 
 open import Util.Equality
 
@@ -142,12 +147,22 @@ module Over (L : LevelLattice) where
   flow-sensitive-levels {D} =
     semidirect (level-grade L) outputs (indexedᵃ (raise-action {D}))
 
+  -- a level is its own closure
+
+  level-plus : {D : Duration} (l : L.Carrier)
+             → ActionPlus (indexedᵃ (raise-action {D})) l
+  level-plus {D} l = indexed⁺ (raise-action {D}) record
+    { closure = plus-self L.⊑-refl (L.∨-lub L.⊑-refl L.⊑-refl)
+    ; act-⁺   = λ q → q
+    }
+
   -- its hints by copatterns, so that `flow-sensitive-levels` is not
   -- compared as a record value
 
   private
     module H {D : Duration} =
-      GradeHints (semidirectʰ (level-gradeʰ L) outputs (indexedᵃ (raise-action {D})))
+      GradeHints (semidirect⁺ʰ (level-gradeʰ L) outputs (indexedᵃ (raise-action {D}))
+                               (λ l → just (level-plus l)))
 
   flow-sensitive-levelsʰ : {D : Duration} → GradeHints (flow-sensitive-levels {D})
   GradeHints.𝟏-least? (flow-sensitive-levelsʰ {D}) = H.𝟏-least? {D}

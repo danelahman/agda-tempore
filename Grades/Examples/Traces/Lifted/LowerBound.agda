@@ -27,7 +27,9 @@
 --                                                                    --
 -- The unit `{ ε }` is the greatest grade, the empty trace being      --
 -- covered by every run. `TracePartialOrder` does not supply this,    --
--- and the construction does not otherwise inspect the order.         --
+-- and the construction does not otherwise inspect the order. A run   --
+-- covers each of its prefixes, so every grade absorbs its own        --
+-- iteration and is its own Kleene plus, as its hints declare.        --
 -- `Traces.Banked.LowerBound` instantiates it at the coverage order,  --
 -- in which only an operation covers a demand for that operation.     --
 ------------------------------------------------------------------------
@@ -51,7 +53,12 @@ module Grades.Examples.Traces.Lifted.LowerBound
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
   (O : Order.TraceOrder T Op) where
 
+open import Data.List.Membership.Propositional using (_∈_)
+open import Data.List.Membership.Propositional.Properties
+  using (∈-cartesianProductWith⁻)
 open import Data.List.Relation.Unary.Any using (here; any?)
+open import Data.Maybe.Base using (just; nothing)
+open import Data.Product using (_,_)
 
 open import Relation.Nullary using (¬_)
 open import Data.Empty using (⊥)
@@ -61,8 +68,9 @@ open import Grades.Durations.Monus T using (Carrier; 0ᴰ; _<ᴰ_)
 open import Relation.Nullary.Decidable using (fromWitness)
 
 open import Grades.Base
+open import Grades.Hints using (GradeHints)
 
-open Order.TraceOrder O using (≼-nil)
+open Order.TraceOrder O using (_≼_; ≼-nil; ≼-refl; mono-∙)
 
 -- the carrier and every law the order-theoretic half supplies: the
 -- monoid, the order, its decision procedure, the joins and the
@@ -131,6 +139,28 @@ open R public hiding (≾-antisym)
   subst (((P ⊔ Q) · C) ≾_) (·-distribʳ-⊔ C P Q) (≾-refl {(P ⊔ Q) · C})
 
 ------------------------------------------------------------------------
+-- Closures
+--
+-- A trace covers each of its prefixes, `p ≼ p ∙ q` by monotonicity of
+-- the product at `ε ≼ q`, so every product of two members of `P` lies
+-- in the closure of `P`. Every grade absorbs its own iteration and is
+-- its own closure.
+
+≼-∙ʳ : (p q : Trace) → p ≼ (p ∙ q)
+≼-∙ʳ p q = subst (_≼ (p ∙ q)) (∙-identityʳ p) (mono-∙ (≼-refl p) (≼-nil {q}))
+
+·-idem : (P : Antichain) → (P · P) ≾ P
+·-idem P = ◃-≾ˢ {traces (P · P)} {traces P} λ {v} m →
+  step (n-∈⁻ {v} {traces P ·ˢ traces P} m)
+  where
+    step : {v : Trace} → v ∈ (traces P ·ˢ traces P) → v ◃ traces P
+    step m with ∈-cartesianProductWith⁻ _∙_ (traces P) (traces P) m
+    ... | a , b , a∈ , _ , refl = ◃-intro a∈ (≼-∙ʳ a b)
+
+plusᴸ : (P : Antichain) → Plus _·_ _≾_ P
+plusᴸ P = plus-self (≾-refl {P}) (·-idem P)
+
+------------------------------------------------------------------------
 -- The grade of antichains of timed traces, read as guarantees
 
 lower-bound : Grade D
@@ -162,4 +192,13 @@ lower-bound = posetᵍ record
   ; ι               = ι
   ; ι-zero          = ι-zero
   ; ι-plus          = λ {m} {n} → ι-plus {m} {n}
+  }
+
+-- its hints: the unit is greatest, and every grade is its own closure
+
+lower-boundʰ : GradeHints lower-bound
+lower-boundʰ = record
+  { 𝟏-least? = nothing
+  ; ·-comm?  = nothing
+  ; plus?    = λ P → just (plusᴸ P)
   }

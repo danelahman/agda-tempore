@@ -11,6 +11,8 @@
 -- does between the same two.                                         --
 --                                                                    --
 -- A bound charges an operation `costʰⁱ`, the most time it can take.  --
+-- Its hints declare Kleene's plus, measured by the duration at       --
+-- `costʰⁱ` (`Lifted.UpperBound.Closures`).                           --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
@@ -22,6 +24,8 @@ open import Relation.Binary.Definitions
 open import Util.Equality
 
 open import Relation.Nullary using (¬_)
+
+open import Grades.Hints using (GradeHints)
 
 open import Grades.Durations using (Duration; TimeDomain)
 
@@ -38,3 +42,22 @@ open import Grades.Traces.Allowance.AsOrder
 
 open import Grades.Examples.Traces.Lifted.UpperBound
   T Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans allowanceOrder public
+  hiding (upper-boundʰ)
+
+open import Grades.Traces.Durations T Op using (module Durations)
+open import Grades.Traces.Allowance T Op costʰⁱ using (duration-≼ᵃ; duration-ε)
+open Durations costʰⁱ using (duration; duration-∙)
+
+------------------------------------------------------------------------
+-- Closures, measured by the duration of a trace, an operation counted
+-- at `costʰⁱ`: only `ε` has duration `0`
+
+open Closures duration duration-∙ duration-≼ᵃ (duration-ε costʰⁱ-pos) public
+  using (plusᵇ)
+
+-- its hints: the unit is least, and the closure of a grade below the
+-- unit is itself, that of any other `unbounded`
+
+upper-boundʰ : GradeHints upper-bound
+upper-boundʰ =
+  Closures.upper-bound⁺ʰ duration duration-∙ duration-≼ᵃ (duration-ε costʰⁱ-pos)

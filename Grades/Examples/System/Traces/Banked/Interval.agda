@@ -40,7 +40,7 @@ open import Relation.Binary.Definitions
   using (DecidableEquality; Transitive; Trichotomous)
 
 open import Grades.Base
-open import Grades.Hints using (SystemHints; noGradeHints)
+open import Grades.Hints using (SystemHints)
 open import Grades.Examples.Time.Interval
   renaming (interval to time-interval; intervalʰ to time-intervalʰ)
 
@@ -72,7 +72,7 @@ open import Grades.Traces.MaxDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
 open import Grades.Examples.Traces.Banked.Interval
   ℕᵀ Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ (λ o e → <⇒≢ (costʰⁱ-pos o) (sym e))
-  using (Interval; lo; hi; lo◇hi; _·ᵗˢ_; _⊔ᵗˢ_; ⊤ᵗˢ; ιᵗˢ; interval;
+  using (Interval; lo; hi; lo◇hi; _·ᵗˢ_; _⊔ᵗˢ_; ⊤ᵗˢ; ιᵗˢ; interval; intervalʰ;
          _≾ᵗˢ_; _◇ˢ₀_; ◇ˢ₀-dur)
 
 open import Grades.Examples.Traces.Banked.UpperBound
@@ -218,7 +218,7 @@ banked→intervals-grade-system = record
 banked→intervals-grade-systemʰ : SystemHints banked→intervals-grade-system
 banked→intervals-grade-systemʰ = record
   { RHints      = time-intervalʰ
-  ; EHints      = noGradeHints
+  ; EHints      = intervalʰ
   ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

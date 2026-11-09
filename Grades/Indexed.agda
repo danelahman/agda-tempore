@@ -13,7 +13,9 @@
 -- operation, the order included, pointwise, and every law holding    --
 -- pointwise; `ι τ` is constantly `ι τ`. Its hints declare the unit   --
 -- least, `_·_` commutative and closures, pointwise, where those of   --
--- the component do.                                                  --
+-- the component do. The condition under which a closure gives one of --
+-- a semidirect product (`ActionPlus`) holds of the action on maps    --
+-- where it holds of the action (`indexed⁺`).                         --
 ------------------------------------------------------------------------
 
 module Grades.Indexed where
@@ -38,7 +40,7 @@ open import Relation.Nullary.Decidable using (_×-dec_; map′)
 open import Grades.Durations using (Duration)
 open import Grades.Base
 open import Grades.Hints
-open import Grades.SemiDirect using (Semilattice; Action)
+open import Grades.SemiDirect using (Semilattice; Action; ActionPlus)
 
 open import Util.Equality
 
@@ -284,6 +286,18 @@ module Maps (𝒩 : Names) where
       where
         inner : ∀ m m' f s → map (A.act m) (map (A.act m') f) ! s ≡ A.act m (A.act m' (f ! s))
         inner m m' f s = trans (!-map (A.act m) (map (A.act m') f) s) (cong (A.act m) (!-map (A.act m') f s))
+
+    -- a closure whose action raises nothing that of `m` does not, at
+    -- every name
+
+    indexed⁺ : ∀ {m} → ActionPlus A m → ActionPlus indexedᵃ m
+    indexed⁺ {m} P = record
+      { closure = closure
+      ; act-⁺   = λ {f} q → pw λ s →
+          subst (_⊑ (f ! s)) (sym (!-map (A.act (Plus.c⁺ closure)) f s))
+                (act-⁺ (subst (_⊑ (f ! s)) (!-map (A.act m) f s) (at q s)))
+      }
+      where open ActionPlus P
 
   ----------------------------------------------------------------------
   -- Lifting a grade, pointwise
