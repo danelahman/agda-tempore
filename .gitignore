@@ -6,8 +6,8 @@
 MAlonzo/**
 _build/
 
-# Scratch notes and spikes (kept out of the repository on purpose)
+# Local notes
 notes/
 
-# Retired modules, kept locally
+# Local modules outside the development
 backup/
