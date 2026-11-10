@@ -131,6 +131,11 @@ import Grades.Examples.System.Product.TimeLowerBoundLattice
 
 import Grades.Examples.System.IntervalsToLowerBounds
 
+-- time intervals to time upper bounds: forget the lower bound, keep the
+-- guarantee that at most so much time has passed
+
+import Grades.Examples.System.IntervalsToUpperBounds
+
 -- the banked trace grades to time intervals: forget which runs a grade
 -- mentions and which operations they perform, keep what their
 -- durations say: the cap the deadline its slowest bound imposes, the

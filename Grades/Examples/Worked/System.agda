@@ -10,7 +10,7 @@
 -- node and exercises its monotonicity: an ordering between two       --
 -- effect grades holds between their images.                          --
 --                                                                    --
--- There is one system between time intervals; ten from trace grades  --
+-- There are two systems from time intervals; ten from trace grades   --
 -- to time intervals, at the three banked grades, the finite run set  --
 -- cap, and the three finite timed regex and three rational timed     --
 -- regex grades; one over time lower bounds paired with a lattice;    --
@@ -27,6 +27,10 @@ module Grades.Examples.Worked.System where
 -- forgetting the upper bound of an interval
 
 import Grades.Examples.Worked.System.IntervalsToLowerBounds
+
+-- forgetting the lower bound of an interval
+
+import Grades.Examples.Worked.System.IntervalsToUpperBounds
 
 -- the banked trace grades, measured against time intervals
 
