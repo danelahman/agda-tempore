@@ -345,8 +345,7 @@ import MonomorphicCalculus.Adequacy.PSh.TreeShape
 -- Examples                                                           --
 ------------------------------------------------------------------------
 
--- Concrete Kripke frames of worlds, typed computations, and the adjoints
--- of the context modality at particular grades.
+-- Concrete Kripke frames of worlds, and typed computations.
 --
 -- Where to look
 --   DenotationalSemantics/Model/Example/World

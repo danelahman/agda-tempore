@@ -4,7 +4,7 @@
 -- A grade records the runs a computation may have. The families      --
 -- differ in the comparison between a run and a listed trace:         --
 --                                                                    --
---   Banked.*          the two cost-sensitive orders on traces. Going --
+--   Banked.*         the two cost-sensitive orders on traces. Going  --
 --                    up the allowance order, an operation becomes a  --
 --                    delay that covers it; going up the coverage     --
 --                    order, a run may do more than is demanded.      --
@@ -14,10 +14,10 @@
 --                                                                    --
 -- `Banked.*` has a floor, a cap and their pairing:                   --
 --                                                                    --
---   Banked.LowerBound   a lower bound on what happened, reduced to   --
---                     the antichain of its weakest guarantees        --
+--   Banked.LowerBound  a lower bound on what happened, reduced to    --
+--                      the antichain of its weakest guarantees       --
 --   Banked.UpperBound  an upper bound, reduced to the antichain of   --
---                     its most permissive bounds                     --
+--                      its most permissive bounds                    --
 --   Banked.Interval    both at once, with a coherence field          --
 --                                                                    --
 -- `FiniteRunSets.*` has the cap, `FiniteRunSets.UpperBound`.         --

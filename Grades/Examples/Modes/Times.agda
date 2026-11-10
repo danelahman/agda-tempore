@@ -5,7 +5,7 @@
 -- A grade gives each pair of a start and an end mode either no       --
 -- trace, or a realisable box of the times of its traces: an interval --
 -- of whole steps for the time in each mode and for the total time    --
--- (`ModeTimes.Boxes`). It is a mode matrix over the boxes            --
+-- (`Modes.Times.Boxes`). It is a mode matrix over the boxes          --
 -- (`Matrix.ModeGrade`): total, its only trace from `stuck` to        --
 -- `stuck` at no time, and each change between two distinct ordinary  --
 -- modes a change, its total time having a positive upper end.        --

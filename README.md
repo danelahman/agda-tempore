@@ -32,7 +32,8 @@ Agda 2.8.0 with the Agda standard library 2.3, registered as
 The two calculi do not import each other. Both build on `Grades/`, `Language/`,
 and `Util/`. `Everything.agda` checks every module, including the type inference
 examples. Each calculus also has its own `Everything.agda` root module, which
-leaves the examples out. Approximate timings for typechecking in Agda are
+leaves the type inference examples out. Approximate timings for typechecking in
+Agda are
 
     agda Everything.agda                          # everything, ~28 min
     agda PolymorphicCalculus/Everything.agda      # polymorphic calculus, ~7 min
@@ -44,7 +45,7 @@ PolymorphicCalculus/Examples/<Set>/All.agda`, whose header names the parts of
 the solver it exercises. A check passes when Agda exits with 0 and prints no
 warning. The only postulate is function extensionality (`Util/Equality.agda`).
 The denotational semantics and the adequacy proof of the monomorphic calculus
-use eight `TERMINATING` pragmas for difficult-to-prove-terminating recursions, 
+use eight `TERMINATING` pragmas for difficult-to-prove-terminating recursions,
 each justified where it stands; the polymorphic calculus uses none.
 
 The sources use many Unicode symbols, including mathematical letters such as
@@ -58,14 +59,16 @@ The root of each calculus, `PolymorphicCalculus/Everything.agda` and
 ## Layout
 
 - `Util/`: equality and the non-negative rationals.
-- `Grades/`: grade algebras, grade systems and durations, the hints the solver
-  reads, and the example grade algebras and grade systems, indexed in
-  `Grades/Examples.agda`.
+- `Grades/`: grade algebras, grade systems and durations, the constructions on
+  grade algebras (products, semidirect products, indexed families, mode
+  matrices), timed traces, regular languages and timed regular expressions, the
+  hints the solver reads, and the example grade algebras and grade systems,
+  indexed in `Grades/Examples.agda`.
 - `Language/`: language specification that both calculi share: base types,
   ground types, comparisons, and operation signatures.
 - `PolymorphicCalculus/`: syntax, hypotheses and entailment, typing, the
-  operational semantics, type safety and termination, constraints, the solver,
-  type and grade inference, programs, and examples.
+  context modality, the operational semantics, type safety and termination,
+  constraints, the solver, type and grade inference, programs, and examples.
 - `MonomorphicCalculus/`: the intrinsically typed calculus, its operational and
   denotational semantics, equational theory, adequacy, and examples.
 

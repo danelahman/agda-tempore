@@ -136,7 +136,7 @@ import Grades.Examples.System.IntervalsToLowerBounds
 
 import Grades.Examples.System.IntervalsToUpperBounds
 
--- the banked trace grades to time intervals: forget which runs a grade
+-- the banked trace grades to the time grades: forget which runs a grade
 -- mentions and which operations they perform, keep what their
 -- durations say: the cap the deadline its slowest bound imposes, the
 -- floor what its fastest guarantee takes, and the interval one their
@@ -146,12 +146,12 @@ import Grades.Examples.System.Traces.Banked.UpperBound
 import Grades.Examples.System.Traces.Banked.LowerBound
 import Grades.Examples.System.Traces.Banked.Interval
 
--- the finite run set cap to time intervals: the same, the deadline
+-- the finite run set cap to time upper bounds: the same, the deadline
 -- being the one its slowest listed run imposes
 
 import Grades.Examples.System.Traces.FiniteRunSets.UpperBound
 
--- the finite timed regex grades to time intervals by their duration
+-- the finite timed regex grades to the time grades by their duration
 -- hull: an upper bound to the longest run it admits, a lower bound to
 -- the shortest, an interval to the pair of its ends
 

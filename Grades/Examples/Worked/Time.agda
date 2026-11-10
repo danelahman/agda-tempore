@@ -7,9 +7,9 @@
 -- ticks: read 1, the idle 2, and send between 4 and 6. Each grade    --
 -- records part of this:                                              --
 --                                                                    --
---   lower-bound   [ 7 ,+∞⟩       "at least 7 ticks have passed"      --
---   upper-bound  [0, ↑ 9 ]      "at most 9 ticks have passed"        --
---   interval    [ 7 , ↑ 9 ]    both bounds at once                   --
+--   lower-bound  [ 7 ,+∞⟩     "at least 7 ticks have passed"         --
+--   upper-bound  [0, ↑ 9 ]    "at most 9 ticks have passed"          --
+--   interval     [ 7 , ↑ 9 ]  both bounds at once                    --
 --                                                                    --
 -- Both upper endpoints range over the extended naturals, so          --
 -- `[0, ∞ ]` and `[ 7 , ∞ ]` impose no upper bound.                   --

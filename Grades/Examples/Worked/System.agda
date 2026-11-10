@@ -11,10 +11,10 @@
 -- effect grades holds between their images.                          --
 --                                                                    --
 -- There are two systems from time intervals; ten from trace grades   --
--- to time intervals, at the three banked grades, the finite run set  --
+-- to time grades, at the three banked grades, the finite run set     --
 -- cap, and the three finite timed regex and three rational timed     --
 -- regex grades; one over time lower bounds paired with a lattice;    --
--- and those of the counts. Every projection onto time intervals      --
+-- and those of the counts. Every projection onto a time grade        --
 -- measures a set of runs by a duration; the sets are read            --
 -- disjunctively, so a cap measures its slowest member and a floor    --
 -- its fastest.                                                       --
@@ -32,7 +32,7 @@ import Grades.Examples.Worked.System.IntervalsToLowerBounds
 
 import Grades.Examples.Worked.System.IntervalsToUpperBounds
 
--- the banked trace grades, measured against time intervals
+-- the banked trace grades, measured against the time grades
 
 import Grades.Examples.Worked.System.Traces.Banked.UpperBound
 import Grades.Examples.Worked.System.Traces.Banked.LowerBound
