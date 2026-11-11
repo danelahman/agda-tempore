@@ -35,10 +35,10 @@ examples. Each calculus also has its own `Everything.agda` root module, which
 leaves the type inference examples out. Approximate timings for typechecking in
 Agda are
 
-    agda Everything.agda                          # everything, ~28 min
-    agda PolymorphicCalculus/Everything.agda      # polymorphic calculus, ~7 min
+    agda Everything.agda                          # everything, ~27 min
+    agda PolymorphicCalculus/Everything.agda      # polymorphic calculus, ~6 min
     agda MonomorphicCalculus/Everything.agda      # monomorphic calculus, ~14 min
-    agda PolymorphicCalculus/Examples.agda        # type inference examples, ~6 min
+    agda PolymorphicCalculus/Examples.agda        # type inference examples, ~11 min
 
 Each set of type inference examples is checked separately by its index, `agda
 PolymorphicCalculus/Examples/<Set>/All.agda`, whose header names the parts of
