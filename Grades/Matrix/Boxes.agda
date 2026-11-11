@@ -46,9 +46,9 @@ open import Grades.Matrix.Modes 𝒩 using (swap; swap-inv; swap-a; swap-b; swap
 
 open import Util.Equality
 
-open Names 𝒩 using (Name; _≟ᴺ_; fresh; fresh-∉)
+open Names 𝒩 using (dec; Name; _≟ᴺ_; fresh; fresh-∉)
 open DecMembership _≟ᴺ_ using (_∈?_)
-open Maps 𝒩
+open Maps dec
 private module G = Grade G
 open G using (_≾_; _·_; _⊔_)
 
@@ -143,10 +143,10 @@ Box = Map G.Carrier × G.Carrier
 -- the boxes as a grade: by name and as a whole
 
 box-grade : Grade D
-box-grade = Maps.indexedᵍ 𝒩 G ×ᵍ G
+box-grade = Maps.indexedᵍ dec G ×ᵍ G
 
 box-gradeʰ : GradeHints G → GradeHints box-grade
-box-gradeʰ H = Maps.indexedʰ 𝒩 G H ×ʰ H
+box-gradeʰ H = Maps.indexedʰ dec G H ×ʰ H
 
 boxes : Dioid
 boxes = adjoin-zero box-grade
@@ -157,6 +157,20 @@ private
   open Grade box-grade using () renaming (_≾_ to _≾ᴮ_)
   pw = pointwise⁺ _≾_
   at = pointwise⁻ _≾_
+  at₀ = Pointwise.at-others
+
+  -- at every name, the default at a fresh name
+  pw-fresh : ∀ {m m'} → (∀ s → m ! s ≾ m' ! s) → Pointwise _≾_ m m'
+  pw-fresh {m} {m'} f =
+    pw (subst₂ _≾_ (lookup-∉ (others m) (named m) s (λ q → fresh-∉ ks (∈-++⁺ˡ q)))
+                   (lookup-∉ (others m') (named m') s (λ q → fresh-∉ ks (∈-++⁺ʳ (keys m) q)))
+                   (f s))
+       f
+    where
+      open import Data.List.Base using (_++_)
+      open import Data.List.Membership.Propositional.Properties using (∈-++⁺ˡ; ∈-++⁺ʳ)
+      ks = keys m ++ keys m'
+      s  = fresh ks
 
 ------------------------------------------------------------------------
 -- Renaming
@@ -186,9 +200,11 @@ private
       case (yes refl) = swap-a s s
       case (no ne)    = swap-fix ne ne
 
-  -- maps with the same values are equivalent
-  same : ∀ {m m'} → (∀ s → m ! s ≡ m' ! s) → (Pointwise _≾_ m m') × (Pointwise _≾_ m' m)
-  same e = pw (λ s → G.≾-reflexive (e s)) , pw (λ s → G.≾-reflexive (sym (e s)))
+  -- maps with the same default and the same values are equivalent
+  same : ∀ {m m'} → others m ≡ others m' → (∀ s → m ! s ≡ m' ! s)
+       → (Pointwise _≾_ m m') × (Pointwise _≾_ m' m)
+  same e₀ e = pw (G.≾-reflexive e₀) (λ s → G.≾-reflexive (e s))
+            , pw (G.≾-reflexive (sym e₀)) (λ s → G.≾-reflexive (sym (e s)))
 
   justˡ : ∀ {m m' t t'} → (Pointwise _≾_ m m' × Pointwise _≾_ m' m) → t G.≃ t'
         → (just (m , t) ≤ᵇ just (m' , t')) × (just (m' , t') ≤ᵇ just (m , t))
@@ -212,6 +228,10 @@ renameᴾ ((a , b) ∷ π) m = rename (swap a b) (renameᴾ π m)
 renameᴾ-! : ∀ π m s → renameᴾ π m ! s ≡ m ! ρ π s
 renameᴾ-! []            m s = refl
 renameᴾ-! ((a , b) ∷ π) m s = trans (rename-! a b (renameᴾ π m) s) (renameᴾ-! π m (swap a b s))
+
+others-renameᴾ : ∀ π m → others (renameᴾ π m) ≡ others m
+others-renameᴾ []            m = refl
+others-renameᴾ ((a , b) ∷ π) m = others-renameᴾ π m
 
 along-just : ∀ π m t → along actᵇ π (just (m , t)) ≡ just (renameᴾ π m , t)
 along-just []            m t = refl
@@ -353,25 +373,25 @@ equivariant-boxes = record
   { act       = actᵇ
   ; act-mono  = λ {a} {b} {x} {y} → mono {a} {b} {x} {y}
   ; act-inv   = λ { a b nothing → ≈-nothing
-                  ; a b (just (m , t)) → justˡ (same {rename (swap a b) (rename (swap a b) m)} {m} λ s →
+                  ; a b (just (m , t)) → justˡ (same {rename (swap a b) (rename (swap a b) m)} {m} refl λ s →
                       trans (rename-! a b (rename (swap a b) m) s)
                             (trans (rename-! a b m (swap a b s)) (cong (m !_) (swap-inv a b s))))
                       G.≃-refl }
   ; act-refl  = λ { a nothing → ≈-nothing
-                  ; a (just (m , t)) → justˡ (same {rename (swap a a) m} {m} λ s →
+                  ; a (just (m , t)) → justˡ (same {rename (swap a a) m} {m} refl λ s →
                       trans (rename-! a a m s) (cong (m !_) (swap-refl a s))) G.≃-refl }
   ; act-𝟘     = λ _ _ → ≈-nothing
-  ; act-𝟙     = λ a b → justˡ (same {rename (swap a b) (everywhere G.𝟏)} {everywhere G.𝟏} λ s → rename-! a b (everywhere G.𝟏) s) G.≃-refl
+  ; act-𝟙     = λ a b → justˡ (same {rename (swap a b) (everywhere G.𝟏)} {everywhere G.𝟏} refl λ s → rename-! a b (everywhere G.𝟏) s) G.≃-refl
   ; act-⊕     = λ { a b nothing y → Dioid.≈-refl boxes {actᵇ a b y}
                   ; a b (just z) nothing → Dioid.≈-refl boxes {actᵇ a b (just z)}
                   ; a b (just (m , t)) (just (m' , t')) →
                       justˡ (same {rename (swap a b) (map₂ _⊔_ m m')} {map₂ _⊔_ (rename (swap a b) m) (rename (swap a b) m')}
-                                  λ s → pointwise-op _⊔_ a b m m' s) G.≃-refl }
+                                  refl λ s → pointwise-op _⊔_ a b m m' s) G.≃-refl }
   ; act-⊗     = λ { a b nothing y → ≈-nothing
                   ; a b (just _) nothing → ≈-nothing
                   ; a b (just (m , t)) (just (m' , t')) →
                       justˡ (same {rename (swap a b) (map₂ _·_ m m')} {map₂ _·_ (rename (swap a b) m) (rename (swap a b) m')}
-                                  λ s → pointwise-op _·_ a b m m' s) G.≃-refl }
+                                  refl λ s → pointwise-op _·_ a b m m' s) G.≃-refl }
   ; ⟨_⟩_      = ⟨_⟩ᵇ_
   ; orbit-ub  = λ {A} {x} → ub {A} {x}
   ; orbit-lub = λ {A} {x} {t} → lub {A} {x} {t}
@@ -382,7 +402,7 @@ equivariant-boxes = record
     mono : ∀ {a b x y} → x ≤ᵇ y → actᵇ a b x ≤ᵇ actᵇ a b y
     mono {x = nothing} _ = tt
     mono {a} {b} {just (m , t)} {just (m' , t')} (p , q) =
-      pw (λ s → subst₂ _≾_ (sym (rename-! a b m s)) (sym (rename-! a b m' s)) (at p (swap a b s))) , q
+      pw (at₀ p) (λ s → subst₂ _≾_ (sym (rename-! a b m s)) (sym (rename-! a b m' s)) (at p (swap a b s))) , q
 
     pointwise-op : (f : G.Carrier → G.Carrier → G.Carrier) → ∀ a b m m' s
                  → rename (swap a b) (map₂ f m m') ! s ≡ map₂ f (rename (swap a b) m) (rename (swap a b) m') ! s
@@ -395,7 +415,9 @@ equivariant-boxes = record
     ub {A} {nothing} π fix = subst (_≤ᵇ nothing) (sym (along-nothing π)) tt
     ub {A} {just (m , t)} π fix =
       subst (_≤ᵇ _) (sym (along-just π m t))
-        ( pw (λ s → G.≾-trans (G.≾-reflexive (renameᴾ-! π m s)) (at-s s (s ∈? A)))
+        ( pw (G.≾-trans (G.≾-reflexive (others-renameᴾ π m))
+                        (fold-ub-d (others m) (mapᴸ (m !_) (outside A m))))
+             (λ s → G.≾-trans (G.≾-reflexive (renameᴾ-! π m s)) (at-s s (s ∈? A)))
         , G.≾-refl )
       where
         at-s : ∀ s → Dec (s ∈ A) → m ! ρ π s ≾ orbit A m ! s
@@ -406,7 +428,7 @@ equivariant-boxes = record
     lub {A} {nothing} f = tt
     lub {A} {just (m , t₀)} {nothing} f = ⊥-elim (f [] [])
     lub {A} {just (m , t₀)} {just (n , t₁)} f =
-      pw (λ s → at-s s (s ∈? A)) , proj₂ (f [] [])
+      pw-fresh (λ s → at-s s (s ∈? A)) , proj₂ (f [] [])
       where
         at-s : ∀ s → Dec (s ∈ A) → orbit A m ! s ≾ n ! s
         at-s s (yes s∈) = G.≾-trans (G.≾-reflexive (orbit-∈ A m s∈)) (permuted [] m t₀ (f [] []) s)
@@ -425,7 +447,7 @@ equivariant-boxes = record
     lub-⊗ʳ {A} {just _} {nothing} f = tt
     lub-⊗ʳ {A} {just (m , t₀)} {just (mc , tc)} {nothing} f = ⊥-elim (f [] [])
     lub-⊗ʳ {A} {just (m , t₀)} {just (mc , tc)} {just (n , t₁)} f =
-      pw (λ s → G.≾-trans (G.≾-reflexive (!-map₂ _·_ (orbit A m) mc s)) (at-s s (s ∈? A))) , proj₂ (f [] [])
+      pw-fresh (λ s → G.≾-trans (G.≾-reflexive (!-map₂ _·_ (orbit A m) mc s)) (at-s s (s ∈? A))) , proj₂ (f [] [])
       where
         at-s : ∀ s → Dec (s ∈ A) → (orbit A m ! s) · (mc ! s) ≾ n ! s
         at-s s (yes s∈) =
@@ -447,7 +469,7 @@ equivariant-boxes = record
     lub-⊗ˡ {A} {just _} {nothing} f = tt
     lub-⊗ˡ {A} {just (m , t₀)} {just (mc , tc)} {nothing} f = ⊥-elim (f [] [])
     lub-⊗ˡ {A} {just (m , t₀)} {just (mc , tc)} {just (n , t₁)} f =
-      pw (λ s → G.≾-trans (G.≾-reflexive (!-map₂ _·_ mc (orbit A m) s)) (at-s s (s ∈? A))) , proj₂ (f [] [])
+      pw-fresh (λ s → G.≾-trans (G.≾-reflexive (!-map₂ _·_ mc (orbit A m) s)) (at-s s (s ∈? A))) , proj₂ (f [] [])
       where
         at-s : ∀ s → Dec (s ∈ A) → (mc ! s) · (orbit A m ! s) ≾ n ! s
         at-s s (yes s∈) =

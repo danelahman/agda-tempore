@@ -1,13 +1,13 @@
 ------------------------------------------------------------------------
 -- Indexed grades: maps from names, constant outside a finite set.    --
 --                                                                    --
--- Over an infinite set of names with decidable equality, `Map C` is  --
--- the set of maps from names to `C` that are constant outside a      --
--- finite set, each held as a default and finitely many entries;      --
--- `m ! s` is the value at the name `s`. Pointwise operations are     --
--- again such maps, and a relation holds pointwise iff it holds at    --
--- the default and at every name of an entry (`pointwise`): a name    --
--- outside the entries stands for all of them.                        --
+-- Over a set of names with decidable equality, `Map C` is the set of --
+-- maps from names to `C` that are constant outside a finite set,     --
+-- each held as a default and finitely many entries; `m ! s` is the   --
+-- value at the name `s`. Pointwise operations are again such maps.   --
+-- A relation is lifted to maps by holding between the defaults and   --
+-- at every name of an entry (`Pointwise`); it then holds at every    --
+-- name (`pointwise⁻`).                                               --
 --                                                                    --
 -- A semilattice, an action and a grade lift to maps, with every      --
 -- operation, the order included, pointwise, and every law holding    --
@@ -45,20 +45,31 @@ open import Grades.SemiDirect using (Semilattice; Action; ActionPlus)
 open import Util.Equality
 
 ------------------------------------------------------------------------
--- Infinite sets of names with decidable equality
+-- Sets of names with decidable equality
+
+record DecNames : Set₁ where
+  field
+    Name : Set
+    _≟ᴺ_ : DecidableEquality Name
+
+-- infinite ones, with a name outside every list
 
 record Names : Set₁ where
   field
-    Name    : Set
-    _≟ᴺ_    : DecidableEquality Name
+    dec     : DecNames
+  open DecNames dec public
+  field
     fresh   : List Name → Name
     fresh-∉ : ∀ ns → fresh ns ∉ ns
 
 -- the natural numbers
 
-ℕ-names : Names
-ℕ-names = record
-  { Name = ℕ ; _≟ᴺ_ = _≟_ ; fresh = λ ns → suc (sum ns) ; fresh-∉ = λ ns p → n≮n (sum ns) (≤-sum p) }
+ℕ-names : DecNames
+ℕ-names = record { Name = ℕ ; _≟ᴺ_ = _≟_ }
+
+ℕ-infinite : Names
+ℕ-infinite = record
+  { dec = ℕ-names ; fresh = λ ns → suc (sum ns) ; fresh-∉ = λ ns p → n≮n (sum ns) (≤-sum p) }
   where
     sum : List ℕ → ℕ
     sum = List.foldr _+_ 0
@@ -69,9 +80,9 @@ record Names : Set₁ where
 ------------------------------------------------------------------------
 -- Maps constant outside a finite set
 
-module Maps (𝒩 : Names) where
+module Maps (𝒩 : DecNames) where
 
-  open Names 𝒩
+  open DecNames 𝒩
   open DecMembership _≟ᴺ_ using (_∈?_)
 
   record Map (C : Set) : Set where
@@ -183,15 +194,8 @@ module Maps (𝒩 : Names) where
                (sym (lookup-∉ (others m') (named m') s (λ q → ¬p (∈-++⁺ʳ (keys m) q))))
                r
 
-    pointwise⁺ : ∀ {m m'} → (∀ s → R (m ! s) (m' ! s)) → Pointwise m m'
-    pointwise⁺ {m} {m'} f =
-        subst₂ R (lookup-∉ (others m) (named m) s (λ q → fresh-∉ ks (∈-++⁺ˡ q)))
-                 (lookup-∉ (others m') (named m') s (λ q → fresh-∉ ks (∈-++⁺ʳ (keys m) q)))
-                 (f s)
-      ,ᵖ All.tabulate (λ {s} _ → f s)
-      where
-        ks = keys m ++ keys m'
-        s  = fresh ks
+    pointwise⁺ : ∀ {m m'} → R (others m) (others m') → (∀ s → R (m ! s) (m' ! s)) → Pointwise m m'
+    pointwise⁺ r f = r ,ᵖ All.tabulate (λ {s} _ → f s)
 
     Pointwise? : Decidable R → Decidable Pointwise
     Pointwise? R? m m' =
@@ -217,6 +221,7 @@ module Maps (𝒩 : Names) where
 
       pw = pointwise⁺ _⊑_
       at = pointwise⁻ _⊑_
+      at₀ = Pointwise.at-others
 
       !∨ : ∀ m m' s → map₂ _∨_ m m' ! s ≡ (m ! s) ∨ (m' ! s)
       !∨ = !-map₂ _∨_
@@ -228,15 +233,15 @@ module Maps (𝒩 : Names) where
       ; bot          = everywhere N.bot
       ; top          = everywhere N.top
       ; _∨_          = map₂ _∨_
-      ; ⊑-refl       = pw λ _ → N.⊑-refl
-      ; ⊑-trans      = λ p q → pw λ s → N.⊑-trans (at p s) (at q s)
+      ; ⊑-refl       = pw N.⊑-refl λ _ → N.⊑-refl
+      ; ⊑-trans      = λ p q → pw (N.⊑-trans (at₀ p) (at₀ q)) λ s → N.⊑-trans (at p s) (at q s)
       ; ⊑-irrelevant = Pointwise-irrelevant _⊑_ N.⊑-irrelevant
       ; _⊑?_         = Pointwise? _⊑_ N._⊑?_
-      ; bot-⊑        = λ m → pw λ s → N.bot-⊑ (m ! s)
-      ; ⊑-top        = λ m → pw λ s → N.⊑-top (m ! s)
-      ; ∨-ubˡ        = λ m m' → pw λ s → subst ((m ! s) ⊑_) (sym (!∨ m m' s)) (N.∨-ubˡ _ _)
-      ; ∨-ubʳ        = λ m m' → pw λ s → subst ((m' ! s) ⊑_) (sym (!∨ m m' s)) (N.∨-ubʳ _ _)
-      ; ∨-lub        = λ {m} {m'} p q → pw λ s →
+      ; bot-⊑        = λ m → pw (N.bot-⊑ (others m)) λ s → N.bot-⊑ (m ! s)
+      ; ⊑-top        = λ m → pw (N.⊑-top (others m)) λ s → N.⊑-top (m ! s)
+      ; ∨-ubˡ        = λ m m' → pw (N.∨-ubˡ _ _) λ s → subst ((m ! s) ⊑_) (sym (!∨ m m' s)) (N.∨-ubˡ _ _)
+      ; ∨-ubʳ        = λ m m' → pw (N.∨-ubʳ _ _) λ s → subst ((m' ! s) ⊑_) (sym (!∨ m m' s)) (N.∨-ubʳ _ _)
+      ; ∨-lub        = λ {m} {m'} p q → pw (N.∨-lub (at₀ p) (at₀ q)) λ s →
                          subst (_⊑ _) (sym (!∨ m m' s)) (N.∨-lub (at p s) (at q s))
       }
 
@@ -252,35 +257,40 @@ module Maps (𝒩 : Names) where
       open N using (_⊑_; _∨_)
       pw = pointwise⁺ _⊑_
       at = pointwise⁻ _⊑_
+      at₀ = Pointwise.at-others
 
     indexedᵃ : Action M (indexedˢ N)
     indexedᵃ = record
       { act              = λ m → map (A.act m)
       ; act-identity     = λ f →
-            (pw λ s → subst (_⊑ _) (sym (!-map (A.act M.𝟏) f s)) (proj₁ (A.act-identity (f ! s))))
-          , (pw λ s → subst (_ ⊑_) (sym (!-map (A.act M.𝟏) f s)) (proj₂ (A.act-identity (f ! s))))
+            (pw (proj₁ (A.act-identity (others f))) λ s →
+               subst (_⊑ _) (sym (!-map (A.act M.𝟏) f s)) (proj₁ (A.act-identity (f ! s))))
+          , (pw (proj₂ (A.act-identity (others f))) λ s →
+               subst (_ ⊑_) (sym (!-map (A.act M.𝟏) f s)) (proj₂ (A.act-identity (f ! s))))
       ; act-comp         = λ m m' f →
-            (pw λ s → subst₂ _⊑_ (sym (!-map (A.act (m M.· m')) f s)) (sym (inner m m' f s))
-                                (proj₁ (A.act-comp m m' (f ! s))))
-          , (pw λ s → subst₂ _⊑_ (sym (inner m m' f s)) (sym (!-map (A.act (m M.· m')) f s))
-                                (proj₂ (A.act-comp m m' (f ! s))))
-      ; act-bot          = λ m → pw λ s → A.act-bot m
-      ; act-∨            = λ m f f' → pw λ s →
+            (pw (proj₁ (A.act-comp m m' (others f))) λ s →
+               subst₂ _⊑_ (sym (!-map (A.act (m M.· m')) f s)) (sym (inner m m' f s))
+                      (proj₁ (A.act-comp m m' (f ! s))))
+          , (pw (proj₂ (A.act-comp m m' (others f))) λ s →
+               subst₂ _⊑_ (sym (inner m m' f s)) (sym (!-map (A.act (m M.· m')) f s))
+                      (proj₂ (A.act-comp m m' (f ! s))))
+      ; act-bot          = λ m → pw (A.act-bot m) λ s → A.act-bot m
+      ; act-∨            = λ m f f' → pw (A.act-∨ m (others f) (others f')) λ s →
           subst₂ _⊑_ (sym (trans (!-map (A.act m) (map₂ _∨_ f f') s)
                                  (cong (A.act m) (!-map₂ _∨_ f f' s))))
                      (sym (trans (!-map₂ _∨_ (map (A.act m) f) (map (A.act m) f') s)
                                  (cong₂ _∨_ (!-map (A.act m) f s) (!-map (A.act m) f' s))))
                      (A.act-∨ m (f ! s) (f' ! s))
-      ; act-⊔            = λ m m' f → pw λ s →
+      ; act-⊔            = λ m m' f → pw (A.act-⊔ m m' (others f)) λ s →
           subst₂ _⊑_ (sym (!-map (A.act (m M.⊔ m')) f s))
                      (sym (trans (!-map₂ _∨_ (map (A.act m) f) (map (A.act m') f) s)
                                  (cong₂ _∨_ (!-map (A.act m) f s) (!-map (A.act m') f s))))
                      (A.act-⊔ m m' (f ! s))
-      ; act-monoˡ        = λ {m} {m'} {f} p → pw λ s →
+      ; act-monoˡ        = λ {m} {m'} {f} p → pw (A.act-monoˡ p) λ s →
           subst₂ _⊑_ (sym (!-map (A.act m) f s)) (sym (!-map (A.act m') f s)) (A.act-monoˡ p)
-      ; act-monoʳ        = λ {m} {f} {f'} q → pw λ s →
+      ; act-monoʳ        = λ {m} {f} {f'} q → pw (A.act-monoʳ (at₀ q)) λ s →
           subst₂ _⊑_ (sym (!-map (A.act m) f s)) (sym (!-map (A.act m) f' s)) (A.act-monoʳ (at q s))
-      ; act-reflects-bot = λ {m} {f} p q → pw λ s →
+      ; act-reflects-bot = λ {m} {f} p q → pw (A.act-reflects-bot p (at₀ q)) λ s →
           A.act-reflects-bot p (subst (_⊑ N.bot) (!-map (A.act m) f s) (at q s))
       }
       where
@@ -293,7 +303,7 @@ module Maps (𝒩 : Names) where
     indexed⁺ : ∀ {m} → ActionPlus A m → ActionPlus indexedᵃ m
     indexed⁺ {m} P = record
       { closure = closure
-      ; act-⁺   = λ {f} q → pw λ s →
+      ; act-⁺   = λ {f} q → pw (act-⁺ (at₀ q)) λ s →
           subst (_⊑ (f ! s)) (sym (!-map (A.act (Plus.c⁺ closure)) f s))
                 (act-⁺ (subst (_⊑ (f ! s)) (!-map (A.act m) f s) (at q s)))
       }
@@ -309,6 +319,7 @@ module Maps (𝒩 : Names) where
       open G using (_≾_; _·_; _⊔_)
       pw = pointwise⁺ _≾_
       at = pointwise⁻ _≾_
+      at₀ = Pointwise.at-others
 
       !· : ∀ m m' s → map₂ _·_ m m' ! s ≡ (m ! s) · (m' ! s)
       !· = !-map₂ _·_
@@ -317,9 +328,9 @@ module Maps (𝒩 : Names) where
       !⊔ = !-map₂ _⊔_
 
       -- equivalences, pointwise
-      pw≃ : ∀ {m m'} → (∀ s → (m ! s) G.≃ (m' ! s))
+      pw≃ : ∀ {m m'} → others m G.≃ others m' → (∀ s → (m ! s) G.≃ (m' ! s))
           → Pointwise _≾_ m m' × Pointwise _≾_ m' m
-      pw≃ e = (pw λ s → proj₁ (e s)) , (pw λ s → proj₂ (e s))
+      pw≃ e₀ e = (pw (proj₁ e₀) λ s → proj₁ (e s)) , (pw (proj₂ e₀) λ s → proj₂ (e s))
 
       -- rewriting along equations at a name
       ≃-at : ∀ {a a' b b'} → a ≡ a' → b ≡ b' → a' G.≃ b' → a G.≃ b
@@ -360,14 +371,15 @@ module Maps (𝒩 : Names) where
       plusᴹ : ∀ {m} → Plus _·_ _≾_ (others m) → All PlusAt (named m)
             → Plus (map₂ _·_) (Pointwise _≾_) m
       plusᴹ {m} p₀ ps = plus m⁺
-        (pw λ s → ≾-at refl (e s) (Plus.≾-c⁺ (P s)))
-        (pw λ s → ≾-at (trans (!· m⁺ m⁺ s) (cong₂ _·_ (e s) (e s))) (e s) (Plus.c⁺-iter (P s)))
-        (λ {v} q r → pw λ s →
+        (pw (Plus.≾-c⁺ p₀) λ s → ≾-at refl (e s) (Plus.≾-c⁺ (P s)))
+        (pw (Plus.c⁺-iter p₀) λ s →
+           ≾-at (trans (!· m⁺ m⁺ s) (cong₂ _·_ (e s) (e s))) (e s) (Plus.c⁺-iter (P s)))
+        (λ {v} q r → pw (Plus.c⁺-least p₀ (at₀ q) (at₀ r)) λ s →
            ≾-at (e s) refl (Plus.c⁺-least (P s) (at q s) (≾-at (sym (!· v v s)) refl (at r s))))
-        (λ {d} q → pw λ s →
+        (λ {d} q → pw (Plus.⁺-indˡ p₀ (at₀ q)) λ s →
            ≾-at (trans (!· m⁺ d s) (cong (_· (d ! s)) (e s))) refl
                 (Plus.⁺-indˡ (P s) (≾-at (sym (!· m d s)) refl (at q s))))
-        (λ {d} q → pw λ s →
+        (λ {d} q → pw (Plus.⁺-indʳ p₀ (at₀ q)) λ s →
            ≾-at (trans (!· d m⁺ s) (cong ((d ! s) ·_) (e s))) refl
                 (Plus.⁺-indʳ (P s) (≾-at (sym (!· d m s)) refl (at q s))))
         where
@@ -384,40 +396,43 @@ module Maps (𝒩 : Names) where
       ; ⊤               = everywhere G.⊤
       ; _⊔_             = map₂ _⊔_
       ; ι               = λ τ → everywhere (G.ι τ)
-      ; ·-identityˡ     = λ m → pw≃ λ s → ≃-at (!· (everywhere G.𝟏) m s) refl (G.·-identityˡ (m ! s))
-      ; ·-identityʳ     = λ m → pw≃ λ s → ≃-at (!· m (everywhere G.𝟏) s) refl (G.·-identityʳ (m ! s))
-      ; ·-assoc         = λ m m' m'' → pw≃ λ s →
+      ; ·-identityˡ     = λ m → pw≃ (G.·-identityˡ (others m)) λ s →
+          ≃-at (!· (everywhere G.𝟏) m s) refl (G.·-identityˡ (m ! s))
+      ; ·-identityʳ     = λ m → pw≃ (G.·-identityʳ (others m)) λ s →
+          ≃-at (!· m (everywhere G.𝟏) s) refl (G.·-identityʳ (m ! s))
+      ; ·-assoc         = λ m m' m'' → pw≃ (G.·-assoc (others m) (others m') (others m'')) λ s →
           ≃-at (trans (!· (map₂ _·_ m m') m'' s) (cong (_· (m'' ! s)) (!· m m' s)))
                (trans (!· m (map₂ _·_ m' m'') s) (cong ((m ! s) ·_) (!· m' m'' s)))
                (G.·-assoc (m ! s) (m' ! s) (m'' ! s))
-      ; ≾-refl          = pw λ _ → G.≾-refl
-      ; ≾-trans         = λ p q → pw λ s → G.≾-trans (at p s) (at q s)
+      ; ≾-refl          = pw G.≾-refl λ _ → G.≾-refl
+      ; ≾-trans         = λ p q → pw (G.≾-trans (at₀ p) (at₀ q)) λ s → G.≾-trans (at p s) (at q s)
       ; ≾-irrelevant    = Pointwise-irrelevant _≾_ G.≾-irrelevant
       ; _≾?_            = Pointwise? _≾_ G._≾?_
-      ; ≾-⊤             = λ m → pw λ s → G.≾-⊤ (m ! s)
-      ; ⊔-ubˡ           = λ m m' → pw λ s → ≾-at refl (!⊔ m m' s) (G.⊔-ubˡ _ _)
-      ; ⊔-ubʳ           = λ m m' → pw λ s → ≾-at refl (!⊔ m m' s) (G.⊔-ubʳ _ _)
-      ; ⊔-lub           = λ {m} {m'} p q → pw λ s → ≾-at (!⊔ m m' s) refl (G.⊔-lub (at p s) (at q s))
-      ; ·-monoˡ-≾       = λ {m''} {m} {m'} p → pw λ s →
+      ; ≾-⊤             = λ m → pw (G.≾-⊤ (others m)) λ s → G.≾-⊤ (m ! s)
+      ; ⊔-ubˡ           = λ m m' → pw (G.⊔-ubˡ _ _) λ s → ≾-at refl (!⊔ m m' s) (G.⊔-ubˡ _ _)
+      ; ⊔-ubʳ           = λ m m' → pw (G.⊔-ubʳ _ _) λ s → ≾-at refl (!⊔ m m' s) (G.⊔-ubʳ _ _)
+      ; ⊔-lub           = λ {m} {m'} p q → pw (G.⊔-lub (at₀ p) (at₀ q)) λ s →
+          ≾-at (!⊔ m m' s) refl (G.⊔-lub (at p s) (at q s))
+      ; ·-monoˡ-≾       = λ {m''} {m} {m'} p → pw (G.·-monoˡ-≾ (at₀ p)) λ s →
           ≾-at (!· m m'' s) (!· m' m'' s) (G.·-monoˡ-≾ (at p s))
-      ; ·-monoʳ-≾       = λ {m''} {m} {m'} p → pw λ s →
+      ; ·-monoʳ-≾       = λ {m''} {m} {m'} p → pw (G.·-monoʳ-≾ (at₀ p)) λ s →
           ≾-at (!· m'' m s) (!· m'' m' s) (G.·-monoʳ-≾ (at p s))
-      ; ·-distribˡ-⊔-≾  = λ m m' m'' → pw λ s →
+      ; ·-distribˡ-⊔-≾  = λ m m' m'' → pw (G.·-distribˡ-⊔-≾ (others m) (others m') (others m'')) λ s →
           ≾-at (trans (!· m (map₂ _⊔_ m' m'') s) (cong ((m ! s) ·_) (!⊔ m' m'' s)))
                (trans (!⊔ (map₂ _·_ m m') (map₂ _·_ m m'') s)
                       (cong₂ _⊔_ (!· m m' s) (!· m m'' s)))
                (G.·-distribˡ-⊔-≾ (m ! s) (m' ! s) (m'' ! s))
-      ; ·-distribʳ-⊔-≾  = λ m m' m'' → pw λ s →
+      ; ·-distribʳ-⊔-≾  = λ m m' m'' → pw (G.·-distribʳ-⊔-≾ (others m) (others m') (others m'')) λ s →
           ≾-at (trans (!· (map₂ _⊔_ m' m'') m s) (cong (_· (m ! s)) (!⊔ m' m'' s)))
                (trans (!⊔ (map₂ _·_ m' m) (map₂ _·_ m'' m) s)
                       (cong₂ _⊔_ (!· m' m s) (!· m'' m s)))
                (G.·-distribʳ-⊔-≾ (m ! s) (m' ! s) (m'' ! s))
-      ; ≾-zero-productˡ = λ {m} {m'} p → pw λ s →
+      ; ≾-zero-productˡ = λ {m} {m'} p → pw (G.≾-zero-productˡ (at₀ p)) λ s →
           G.≾-zero-productˡ (≾-at (sym (!· m m' s)) refl (at p s))
-      ; ≾-zero-productʳ = λ {m} {m'} p → pw λ s →
+      ; ≾-zero-productʳ = λ {m} {m'} p → pw (G.≾-zero-productʳ (at₀ p)) λ s →
           G.≾-zero-productʳ (≾-at (sym (!· m m' s)) refl (at p s))
-      ; ι-zero          = pw≃ λ _ → G.ι-zero
-      ; ι-plus          = λ {τ} {τ'} → pw≃ λ s →
+      ; ι-zero          = pw≃ G.ι-zero λ _ → G.ι-zero
+      ; ι-plus          = λ {τ} {τ'} → pw≃ G.ι-plus λ s →
           ≃-at refl (!· (everywhere (G.ι τ)) (everywhere (G.ι τ')) s) G.ι-plus
       }
 
@@ -426,8 +441,8 @@ module Maps (𝒩 : Names) where
 
     indexedʰ : GradeHints G → GradeHints indexedᵍ
     indexedʰ H = record
-      { 𝟏-least? = Maybe.map (λ l m → pw λ s → l (m ! s)) (GradeHints.𝟏-least? H)
-      ; ·-comm?  = Maybe.map (λ c m m' → pw≃ λ s →
+      { 𝟏-least? = Maybe.map (λ l m → pw (l (others m)) λ s → l (m ! s)) (GradeHints.𝟏-least? H)
+      ; ·-comm?  = Maybe.map (λ c m m' → pw≃ (c (others m) (others m')) λ s →
                      ≃-at (!· m m' s) (!· m' m s) (c (m ! s) (m' ! s))) (GradeHints.·-comm? H)
       ; plus?    = λ m → Maybe.zipWith (plusᴹ {m}) (GradeHints.plus? H (others m))
                                    (plus-all? (GradeHints.plus? H) (named m))

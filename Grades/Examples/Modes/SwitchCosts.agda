@@ -34,7 +34,7 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 
 open import Grades.Durations using (Duration)
 open import Grades.Base using (Grade)
-open import Grades.Indexed using (ℕ-names)
+open import Grades.Indexed using (ℕ-infinite)
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Matrix.Dioid using (Dioid)
 open import Function.Base using (_$_)
@@ -279,8 +279,8 @@ private
   unit-reflects {unbounded} {cost _}    () _ _
   unit-reflects {unbounded} {unbounded} () _ _
 
-open import Grades.Matrix.Nominal ℕ-names using (trivial)
-open import Grades.Matrix.ModeGrade ℕ-names costs (trivial costs)
+open import Grades.Matrix.Nominal ℕ-infinite using (trivial)
+open import Grades.Matrix.ModeGrade ℕ-infinite costs (trivial costs)
 
 cost-entries : ModeEntries
 cost-entries = record
@@ -326,10 +326,10 @@ mode-switch-costs : {D : Duration} → Grade D
 mode-switch-costs = mode-grade cost-entries
 
 open Decided cost-entries change? public using (decided)
-open import Grades.Matrix.Matrices ℕ-names costs (trivial costs) public
+open import Grades.Matrix.Matrices ℕ-infinite costs (trivial costs) public
   using (Matrix; entry)
-open import Grades.Matrix.Fields ℕ-names costs using (fields; fromFields)
-open import Grades.Matrix.Modes ℕ-names public using (Mode; stuck; ⌜_⌝)
+open import Grades.Matrix.Fields ℕ-infinite costs using (fields; fromFields)
+open import Grades.Matrix.Modes ℕ-infinite public using (Mode; stuck; ⌜_⌝)
 
 ------------------------------------------------------------------------
 -- Literals

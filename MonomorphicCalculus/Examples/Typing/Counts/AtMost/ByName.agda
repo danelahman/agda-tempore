@@ -37,7 +37,7 @@ open import Grades.Examples.Counts.AtMost.ByName using (at-most-counts-by-name)
 open import Grades.Examples.Worked.Counts.AtMost.ByName using (single)
 open import Grades.Examples.Worked.Operations using (Op; read; write; send)
 
-open Maps ℕ-names using (pointwise⁺) renaming (_!_ to _!ᵐ_)
+open Maps ℕ-names using (pointwise⁺; others) renaming (_!_ to _!ᵐ_)
 
 ------------------------------------------------------------------------
 -- The operations, each drawing once on its own name
@@ -146,7 +146,8 @@ claim-after-local-work =
 -- continuation
 
 nothing-fits : (op : Op) → (ε'' : E) → 𝟏ₑ ≾ₑ op-grade op ·ₑ ε''
-nothing-fits op ε'' = pointwise⁺ _ (λ s → 𝟏ₒ-least ((op-grade op ·ₑ ε'') !ᵐ s))
+nothing-fits op ε'' =
+  pointwise⁺ _ (𝟏ₒ-least (others (op-grade op ·ₑ ε''))) (λ s → 𝟏ₒ-least ((op-grade op ·ₑ ε'') !ᵐ s))
 
 suppressed : [] ⊢ᶜ⦂ unit ! rate-limit
 suppressed =

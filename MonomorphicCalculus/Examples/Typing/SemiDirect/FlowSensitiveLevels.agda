@@ -164,7 +164,7 @@ claim-after-reading = refuted (𝟏ᵣ ·ᵣ opTime read) channel
 -- continuation
 
 nothing-fits : (op : Op) → (ε'' : E) → 𝟏ₑ ≾ₑ op-grade op ·ₑ ε''
-nothing-fits op ε'' = Low⊑ , pointwise⁺ _ (λ _ → tt)
+nothing-fits op ε'' = Low⊑ , pointwise⁺ _ tt (λ _ → tt)
 
 -- the clauses discard the transmission, but `handle` is graded by the
 -- handled computation, so the radio is still written at `High`

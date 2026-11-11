@@ -45,12 +45,12 @@ open import Relation.Nullary.Decidable using (_×-dec_)
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
-open import Grades.Indexed using (ℕ-names; module Maps; Names)
+open import Grades.Indexed using (ℕ-names; ℕ-infinite; module Maps; Names)
 open import Grades.Examples.Time.Interval
 open import Grades.Examples.Modes.Times.Boxes
 open import Grades.Matrix.Dioid using (Dioid)
-open import Grades.Matrix.Nominal ℕ-names using (Equivariant)
-open import Grades.Matrix.Modes ℕ-names
+open import Grades.Matrix.Nominal ℕ-infinite using (Equivariant)
+open import Grades.Matrix.Modes ℕ-infinite
   using (Mode; stuck; ⌜_⌝; Name; _≟ᴺ_; _∈?_; swap; swapᴹ; swap-a; swap-b; swap-fix; swap-inv; swap-∈; swap-∉;
          swap-injective; ⌜⌝-injective)
 
@@ -60,7 +60,7 @@ import Data.List.Base
 open import Util.Equality
 
 open Maps ℕ-names using (Map; _∣_; _!_; others; named; lookup; everywhere; map₂; !-map₂;
-                         pointwise⁻; pointwise⁺)
+                         pointwise⁻; pointwise⁺; module Pointwise)
 
 private
   module T = Dioid times
@@ -87,7 +87,7 @@ private
   not-𝟏 : ∀ {t t'} → ¬ (t ≾ᵢ 𝟏ᵢ) → t ≾ᵢ t' → ¬ (t' ≾ᵢ 𝟏ᵢ)
   not-𝟏 {t} {t'} n p q = n (I.≾-trans {t} {t'} {𝟏ᵢ} p q)
 
-open import Grades.Matrix.ModeGrade ℕ-names times equivariant-times
+open import Grades.Matrix.ModeGrade ℕ-infinite times equivariant-times
 
 time-entries : ModeEntries
 time-entries = record
@@ -96,10 +96,14 @@ time-entries = record
                          ; {just _ , _} {nothing , _} _ → inj₂ tt
                          ; {just _ , _} {just _ , _} () }
   ; unit-reflects     = λ { {just (m , t) , _} {just (m' , t') , _} (p , q) _ _ →
-                              ( pointwise⁺ _≾ᵢ_ {m} {everywhere 𝟏ᵢ} (λ s → I.≾-zero-productˡ {m ! s} {m' ! s}
+                              ( pointwise⁺ _≾ᵢ_ {m} {everywhere 𝟏ᵢ}
+                                  (I.≾-zero-productˡ {others m} {others m'} (Pointwise.at-others p))
+                                  (λ s → I.≾-zero-productˡ {m ! s} {m' ! s}
                                    (subst (_≾ᵢ 𝟏ᵢ) (!-map₂ _·ᵢ_ m m' s) (pointwise⁻ _≾ᵢ_ {map₂ _·ᵢ_ m m'} {everywhere 𝟏ᵢ} p s)))
                               , I.≾-zero-productˡ {t} {t'} q )
-                            , ( pointwise⁺ _≾ᵢ_ {m'} {everywhere 𝟏ᵢ} (λ s → I.≾-zero-productʳ {m ! s} {m' ! s}
+                            , ( pointwise⁺ _≾ᵢ_ {m'} {everywhere 𝟏ᵢ}
+                                  (I.≾-zero-productʳ {others m} {others m'} (Pointwise.at-others p))
+                                  (λ s → I.≾-zero-productʳ {m ! s} {m' ! s}
                                    (subst (_≾ᵢ 𝟏ᵢ) (!-map₂ _·ᵢ_ m m' s) (pointwise⁻ _≾ᵢ_ {map₂ _·ᵢ_ m m'} {everywhere 𝟏ᵢ} p s)))
                               , I.≾-zero-productʳ {t} {t'} q )
                           ; {nothing , _} _ a≰ _ → ⊥-elim (a≰ tt)
@@ -127,7 +131,7 @@ time-entries = record
   ; change-orbit     = λ { {x = nothing , _} c → tt ; {x = just _ , _} c → c }
   }
 
-open import Grades.Matrix.Matrices ℕ-names times equivariant-times
+open import Grades.Matrix.Matrices ℕ-infinite times equivariant-times
   using (Matrix; module Matrix; entry; _≟ᴹ_; Iᴹ; Iᴹ-diag; Iᴹ-off; _⊗ᴹ_; ⊗ᴹ-ub; ⊗ᴹ-lub;
          pointwise⇒≤ᴹ; _≤ᵖ_; _≤ᴹ_)
 open Matrix
@@ -137,11 +141,11 @@ open Matrix
 
 private
   ≈-just : ∀ {m m' t t'} r r'
-         → (∀ s → m ! s ≡ m' ! s) → t ≡ t'
+         → others m ≡ others m' → (∀ s → m ! s ≡ m' ! s) → t ≡ t'
          → (just (m , t) , r) ≈ᵗ (just (m' , t') , r')
-  ≈-just {m} {m'} {t} _ _ e refl =
-      (pointwise⁺ _≾ᵢ_ {m} {m'} (λ s → I.≾-reflexive (e s)) , I.≾-refl {t})
-    , (pointwise⁺ _≾ᵢ_ {m'} {m} (λ s → I.≾-reflexive (sym (e s))) , I.≾-refl {t})
+  ≈-just {m} {m'} {t} _ _ e₀ e refl =
+      (pointwise⁺ _≾ᵢ_ {m} {m'} (I.≾-reflexive e₀) (λ s → I.≾-reflexive (e s)) , I.≾-refl {t})
+    , (pointwise⁺ _≾ᵢ_ {m'} {m} (I.≾-reflexive (sym e₀)) (λ s → I.≾-reflexive (sym (e s))) , I.≾-refl {t})
 
   sel : ∀ {A X : Set} → Dec A → X → X → X
   sel (yes _) x _ = x
@@ -194,7 +198,7 @@ spent i p =
 
 spent-swap : ∀ i a b p → spent i (swap a b p) ≈ᵗ Eq.act a b (spent i p)
 spent-swap i a b p = ≈-just {single (swap a b p) i} {rename (swap a b) (single p i)} {i} {i}
-  (proj₂ (spent i (swap a b p))) (proj₂ (Eq.act a b (spent i p))) (λ s → trans (single-swap a b p i s) (sym (rename-! a b (single p i) s))) refl
+  (proj₂ (spent i (swap a b p))) (proj₂ (Eq.act a b (spent i p))) refl (λ s → trans (single-swap a b p i s) (sym (rename-! a b (single p i) s))) refl
 
 ------------------------------------------------------------------------
 -- Templates: entries naming their start mode, alike for the modes not
@@ -260,7 +264,7 @@ module _ (w : Witness) (m : Map Interval∞) (t : Interval∞) where
     candidates = fresh-name ∷ (keys es Data.List.Base.++ keysᴹ m)
       where
         open import Data.List.Base using (_++_)
-        fresh-name = Names.fresh ℕ-names (keys es ++ keysᴹ m)
+        fresh-name = Names.fresh ℕ-infinite (keys es ++ keysᴹ m)
 
   -- whether the summary fits the box, decided at its modes, those of
   -- the box and a fresh one
@@ -273,8 +277,8 @@ module _ (w : Witness) (m : Map Interval∞) (t : Interval∞) where
     where
       open import Data.List.Base using (_++_)
       open import Data.List.Membership.Propositional.Properties using (∈-++⁺ˡ; ∈-++⁺ʳ)
-      f₀ = Names.fresh ℕ-names (keys es ++ keysᴹ m)
-      f₀∉ = Names.fresh-∉ ℕ-names (keys es ++ keysᴹ m)
+      f₀ = Names.fresh ℕ-infinite (keys es ++ keysᴹ m)
+      f₀∉ = Names.fresh-∉ ℕ-infinite (keys es ++ keysᴹ m)
       pointwise : ∀ s → time es s ∈ᵢ m ! s
       pointwise s with s ∈? (keys es ++ keysᴹ m)
       ... | yes s∈ = All.lookup all (there s∈)
@@ -293,7 +297,7 @@ bounds : ∀ {F} (m : Map Interval∞) (t : Interval∞) (w : Witness)
 at (bounds m t w {fit}) _ = just (m , t) , w , toWitness fit
 equivariant (bounds {F} m t w {fit} {sub}) {a} {b} a∉ b∉ p =
   ≈-just {m} {rename (swap a b) m} {t} {t} (w , toWitness fit) (proj₂ (Eq.act a b (just (m , t) , w , toWitness fit)))
-    (λ s → sym (trans (rename-! a b m s)
+    refl (λ s → sym (trans (rename-! a b m s)
                       (lookup-swap (others m) (named m)
                          (λ k∈ → All.lookup (toWitness sub) k∈) a∉ b∉ s)))
     refl
@@ -457,8 +461,8 @@ equivariant (delay-matrix n) {a} {b} _ _ p y =
   where
     swapᴹ-injective : ∀ {x z} → swapᴹ a b x ≡ swapᴹ a b z → x ≡ z
     swapᴹ-injective {x} {z} e =
-      trans (sym (Grades.Matrix.Modes.swapᴹ-inv ℕ-names a b x))
-        (trans (cong (swapᴹ a b) e) (Grades.Matrix.Modes.swapᴹ-inv ℕ-names a b z))
+      trans (sym (Grades.Matrix.Modes.swapᴹ-inv ℕ-infinite a b x))
+        (trans (cong (swapᴹ a b) e) (Grades.Matrix.Modes.swapᴹ-inv ℕ-infinite a b z))
     case : (d : Dec (y ≡ ⌜ p ⌝)) → sel d (spent (dur n) (swap a b p)) T.𝟘 ≈ᵗ Eq.act a b (sel d (spent (dur n) p) T.𝟘)
     case (yes _) = spent-swap (dur n) a b p
     case (no _)  = T.≈-sym {Eq.act a b T.𝟘} {T.𝟘} (Eq.act-𝟘 a b)
@@ -481,9 +485,9 @@ private
   -- the boxes of delays, pointwise
   zero-box : ∀ p → spent (dur 0) p ≈ᵗ T.𝟙
   zero-box p =
-      (pointwise⁺ _≾ᵢ_ {single p (dur 0)} {everywhere 𝟏ᵢ}
+      (pointwise⁺ _≾ᵢ_ {single p (dur 0)} {everywhere 𝟏ᵢ} (z≤n , z≤n)
          (λ s → subst (_≾ᵢ 𝟏ᵢ) (sym (single-! p (dur 0) s)) (le (s ≟ᴺ p))) , (z≤n , z≤n))
-    , (pointwise⁺ _≾ᵢ_ {everywhere 𝟏ᵢ} {single p (dur 0)}
+    , (pointwise⁺ _≾ᵢ_ {everywhere 𝟏ᵢ} {single p (dur 0)} (z≤n , z≤n)
          (λ s → subst (𝟏ᵢ ≾ᵢ_) (sym (single-! p (dur 0) s)) (ge (s ≟ᴺ p))) , (z≤n , z≤n))
     where
       le : ∀ {A : Set} (d : Dec A) → sel d (dur 0) 𝟏ᵢ ≾ᵢ 𝟏ᵢ
@@ -496,12 +500,14 @@ private
   plus-box : ∀ m n p → spent (dur (m + n)) p ≈ᵗ T._⊗_ (spent (dur m) p) (spent (dur n) p)
   plus-box m n p =
       (pointwise⁺ _≾ᵢ_ {single p (dur (m + n))} {map₂ _·ᵢ_ (single p (dur m)) (single p (dur n))}
+         (z≤n , z≤n)
          (λ s → subst₂ _≾ᵢ_ (sym (single-! p (dur (m + n)) s))
                   (sym (trans (!-map₂ _·ᵢ_ (single p (dur m)) (single p (dur n)) s)
                               (cong₂ _·ᵢ_ (single-! p (dur m) s) (single-! p (dur n) s))))
                   (le (s ≟ᴺ p)))
       , (ℕₚ.≤-refl , ℕₚ.≤-refl))
     , (pointwise⁺ _≾ᵢ_ {map₂ _·ᵢ_ (single p (dur m)) (single p (dur n))} {single p (dur (m + n))}
+         (z≤n , z≤n)
          (λ s → subst₂ _≾ᵢ_
                   (sym (trans (!-map₂ _·ᵢ_ (single p (dur m)) (single p (dur n)) s)
                               (cong₂ _·ᵢ_ (single-! p (dur m) s) (single-! p (dur n) s))))

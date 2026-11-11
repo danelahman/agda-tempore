@@ -32,10 +32,10 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base using (Grade)
-open import Grades.Indexed using (ℕ-names; module Maps)
+open import Grades.Indexed using (ℕ-names; ℕ-infinite; module Maps)
 open import Grades.Examples.Time.Interval
 open import Grades.Matrix.Dioid using (Dioid)
-open import Grades.Matrix.Modes ℕ-names using (Name; _≟ᴺ_; swap; swap-inv; swap-injective)
+open import Grades.Matrix.Modes ℕ-infinite using (Name; _≟ᴺ_; swap; swap-inv; swap-injective)
 import Grades.Matrix.Boxes
 import Grades.Matrix.Restrict
 import Grades.Matrix.Nominal
@@ -43,9 +43,9 @@ import Grades.Matrix.Nominal
 open import Util.Equality
 
 open Maps ℕ-names using (Map; _∣_; _!_; others; named; lookup; everywhere; map₂; !-map₂;
-                         pointwise⁻; pointwise⁺)
+                         pointwise⁻)
 
-module B = Grades.Matrix.Boxes ℕ-names interval
+module B = Grades.Matrix.Boxes ℕ-infinite interval
 open B public using (Box; boxes; equivariant-boxes; rename; rename-!; orbit; orbit-∈; orbit-∉)
 
 ------------------------------------------------------------------------
@@ -259,7 +259,7 @@ private
     (λ s → subst₂ _∈ᵢ_ (sym (merge-time es es' s d)) (sym (!-map₂ _·ᵢ_ m m' s)) (∈ᵢ-· {i = m ! s} {i' = m' ! s} (fit s) (fit' s))) ,
     subst (_∈ᵢ t ·ᵢ t') (sym (merge-total-time es es' d')) (∈ᵢ-· {i = t} {i' = t'} tot tot')
 
-closed : Grades.Matrix.Restrict.Closed ℕ-names equivariant-boxes RealisableEntry
+closed : Grades.Matrix.Restrict.Closed ℕ-infinite equivariant-boxes RealisableEntry
 closed = record
   { P-𝟘     = tt
   ; P-𝟙     = witness [] tt , (λ s → 0∈𝟏ᵢ) , 0∈𝟏ᵢ
@@ -288,7 +288,7 @@ closed = record
 -- the entries of the mode-time matrices
 
 times : Dioid
-times = Grades.Matrix.Restrict.restricted ℕ-names equivariant-boxes closed
+times = Grades.Matrix.Restrict.restricted ℕ-infinite equivariant-boxes closed
 
-equivariant-times : Grades.Matrix.Nominal.Equivariant ℕ-names times
-equivariant-times = Grades.Matrix.Restrict.restricted-equivariant ℕ-names equivariant-boxes closed
+equivariant-times : Grades.Matrix.Nominal.Equivariant ℕ-infinite times
+equivariant-times = Grades.Matrix.Restrict.restricted-equivariant ℕ-infinite equivariant-boxes closed
