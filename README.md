@@ -40,6 +40,12 @@ Agda are
     agda MonomorphicCalculus/Everything.agda      # monomorphic calculus, ~14 min
     agda PolymorphicCalculus/Examples.agda        # type inference examples, ~11 min
 
+Typechecking needs a lot of memory, and we recommend a machine with at least
+16 GB. On an Apple M3 Pro with 18 GB, the peak memory footprint of the
+polymorphic calculus and of `Everything.agda` is about 20 GB, of which 10 to
+13 GB are resident, and Agda was killed in a container limited to 12 GB.
+The monomorphic calculus peaks at about 6.5 GB.
+
 Each set of type inference examples is checked separately by its index, `agda
 PolymorphicCalculus/Examples/<Set>/All.agda`, whose header names the parts of
 the solver it exercises. A check passes when Agda exits with 0 and prints no
