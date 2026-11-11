@@ -101,3 +101,8 @@ The root of each calculus, `PolymorphicCalculus/Everything.agda` and
 ## Licence
 
 MIT, see `LICENSE.md`.
+
+## AI usage disclaimer
+
+Agentic AI tools (from Anthropic's Claude family) have been used to develop
+parts of this formalisation.
