@@ -14,10 +14,10 @@
 -- `y`, form one orbit under the permutations fixing the named modes, --
 -- `x` and `y`, so the join is the orbit join of the finite join over --
 -- the named modes, `x`, `y`, `stuck` and one fresh mode (`⊗ᴹ-ub`,    --
--- `⊗ᴹ-lub`). The join, the order and `⊤ᴹ` are entrywise, the order   --
--- decided at the representatives (`≤ᴹ⇒pointwise`). The product is    --
--- associative, has the unit `Iᴹ`, is monotone and distributes over   --
--- the join, entrywise.                                               --
+-- `⊗ᴹ-lub`). The join and the order are entrywise, and `⊤ᴹ` is `⊤`   --
+-- off the row of `stuck`, the order decided at the representatives   --
+-- (`≤ᴹ⇒pointwise`). The product is associative, has the unit `Iᴹ`,   --
+-- is monotone and distributes over the join, entrywise.              --
 ------------------------------------------------------------------------
 
 open import Grades.Indexed using (Names)

@@ -24,7 +24,8 @@
 -- the inequalities of A3 and A4 that follow from A5 being omitted.   --
 -- The identities follow from A1 and A3, associativity from A2 and    --
 -- A3, the left distributive law from A3 and the right one from A4.   --
--- A6 is exactly the right zero-product law (`zero-productʳ⇒A6`); it  --
+-- A6 is needed for the right unit-product law (`zero-productʳ⇒A6`)   --
+-- and, with the law of `M`, gives it (the field of `semidirect`); it --
 -- holds where the unit of `M` is least (`A6-of-𝟏-least`) and where   --
 -- every `act m` reflects `⊥`.                                        --
 --                                                                    --
@@ -186,7 +187,7 @@ module Pairs {D : Duration} (M : Grade D) (N : Semilattice)
   _≾ˢ_ : M.Carrier × N.Carrier → M.Carrier × N.Carrier → Set
   (m , n) ≾ˢ (m' , n') = (m M.≾ m') × (n N.⊑ n')
 
-  -- (A6) is necessary for the right zero-product law
+  -- (A6) is necessary for the right unit-product law
 
   zero-productʳ⇒A6 : (∀ {c d} → c ·ˢ d ≾ˢ 𝟏ˢ → d ≾ˢ 𝟏ˢ)
                    → ∀ {m n} → m M.≾ M.𝟏 → act m n N.⊑ N.bot → n N.⊑ N.bot

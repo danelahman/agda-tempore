@@ -8,10 +8,10 @@
 --                                                                    --
 --   Z ⊕ W   the sums of what `Z` and `W` admit (`Intervals.Dense`),  --
 --   C ⊖ I   the positive `t` with `e + t` in `C` for an `e` in `I`:  --
---           its lower end is `0⁺` or the lower end of `C` less the   --
---           upper end of `I`, its upper end the upper end of `C`     --
---           less the lower end of `I`, an end open when either end   --
---           it comes from is.                                        --
+--           its lower end is the larger of `0⁺` and the lower end    --
+--           of `C` less the upper end of `I`, its upper end the      --
+--           upper end of `C` less the lower end of `I`, an end open  --
+--           when either end it comes from is.                        --
 --                                                                    --
 -- Each is sound in any time domain and exact in a dense one, where   --
 -- every inhabited zone admits a duration.                            --

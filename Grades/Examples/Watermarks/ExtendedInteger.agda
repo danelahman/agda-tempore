@@ -4,7 +4,7 @@
 -- `ℤ∞` is ordered by `≤` with `∞` greatest, added with `∞`           --
 -- absorbing, and joined by the maximum. Addition is monotone and     --
 -- distributes over the maximum on both sides; the order is a         --
--- decidable, proof-irrelevant total order.                           --
+-- decidable, proof-irrelevant partial order.                         --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Watermarks.ExtendedInteger where

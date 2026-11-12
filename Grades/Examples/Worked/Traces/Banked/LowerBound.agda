@@ -139,7 +139,7 @@ a-store-guarantees-no-third-tick = fails
 -- The guarantee asks for two ticks between the reading and the
 -- transmission. A run that stores in that window covers it; one that
 -- stores before the reading does not, though it performs the same
--- operations and takes the same ten ticks.
+-- operations and is guaranteed the same seven ticks.
 
 storing-in-the-window :
   ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆

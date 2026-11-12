@@ -18,7 +18,7 @@
 -- grade admits.                                                      --
 --                                                                    --
 -- The resource grade forgets which operations were performed:        --
--- `⌈ write ⌉` and `⟨ 3 ⟩` become the same guarantee of elapsed time, --
+-- `⌈ write ⌉` and `⟨ 2 ⟩` become the same guarantee of elapsed time, --
 -- although only the first guarantees a store.                        --
 --                                                                    --
 -- Monotonicity relates the two orders: weakening a grade replaces    --

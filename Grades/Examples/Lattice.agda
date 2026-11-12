@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Lattices as grades.                                                --
+-- Bounded join-semilattices as grades.                               --
 --                                                                    --
 -- A decidable bounded join-semilattice of levels is a grade: `_·_`   --
 -- and `_⊔_` are both the join, the unit is the least level and `⊤`   --
@@ -8,8 +8,8 @@
 -- idempotent, every level is its own closure. Its hints declare all  --
 -- three.                                                             --
 --                                                                    --
--- The level is a floating label, as in LIO. The effect grade of a    --
--- computation is the highest level it has touched (for taint sets,   --
+-- The level is a floating label. The effect grade of a computation   --
+-- is the highest level it has touched (for taint sets,               --
 -- the set of labels). A modality `⟨ ℓ ⟩` joins `ℓ` into the label,   --
 -- and `[ ℓ ] A` can be unboxed only while the label raised since     --
 -- boxing is `≾ ℓ`: a `Low`-boxed public channel is unusable once     --

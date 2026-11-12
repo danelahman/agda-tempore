@@ -10,8 +10,9 @@
 --   a⁻¹(L · M)  = (a⁻¹L) · M ∪ [ε ∈ L] a⁻¹M    (a state and a set)   --
 --   a⁻¹(L *)    = (a⁻¹L) · L *                 (a set of states)     --
 --                                                                    --
--- Termination is the finiteness of the state types; the bound each   --
--- automaton carries is their size.                                   --
+-- Exploration terminates on the fuel `bound` that each automaton     --
+-- carries: at most `bound` states represent its `Good` states up to  --
+-- `_≟_`.                                                             --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _≡ᵇ_; _<ᵇ_)

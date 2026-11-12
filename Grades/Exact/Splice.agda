@@ -2,8 +2,8 @@
 -- Removing and inserting time inside the stretches of a word.        --
 --                                                                    --
 -- `CutOf w a c w′`: `w′` is `w` with the time from `a` to `a + c`    --
--- taken out. `InsOf w a c b w′`: `w′` is `w` with `c` units of time  --
--- put in at `a`, labelled as `w` is at `b`. Both are stated through  --
+-- taken out. `InsOf w a c ℓ w′`: `w′` is `w` with `c` units of time  --
+-- put in at `a`, all of it labelled `ℓ`. Both are stated through     --
 -- the labels, and both are preserved by fitting: removing the same   --
 -- time from two words that fit keeps them fitting, and so does       --
 -- inserting the same time, when what is inserted into the lesser     --

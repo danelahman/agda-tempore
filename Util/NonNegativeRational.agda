@@ -187,7 +187,7 @@ q≤p+q p q = ≤-trans (p≤p+q q p) (≤-reflexive (+-comm q p))
     lt = subst (ℚ._< val p ℚ.+ val p) (ℚ.+-identityʳ (val p))
                (ℚ.+-monoʳ-< (val p) (ℚ.≰⇒> (λ x → ¬r (*≤ᵈ* x))))
 
--- a value that a summand does not move is moved by zero
+-- a summand that does not raise what it is added to is zero
 
 +-absorbˡ : ∀ {p q} → p + q ≤ q → p ≤ 0ᵈ
 +-absorbˡ {p} {q} r with p ≤? 0ᵈ
@@ -302,7 +302,8 @@ p≥q⇒p⊓q≡q (*≤ᵈ* q≤p) = ≡-val (ℚ.p≥q⇒p⊓q≡q q≤p)
 -- A finite grid of candidate values for a rigid occurring at most `K`
 -- times on a side of an ordering whose constants are `cs`, `D` the
 -- least common multiple of their denominators and `s` their sum: the
--- multiples of `1 / (2·D·K!)` up to `⌈s⌉ + 1`. Each side is an extremum
+-- multiples of `1 / (2·D·(K ⊔ 1)!)` up to `1 + Σ ⌈c⌉`, the sum of the
+-- ceilings of the constants. Each side is an extremum
 -- of pieces `c + a·j`, `a ≤ K`, whose crossings lie at multiples of
 -- `1 / (D·a')`, `a' ≤ K`, below `s`; between two crossings, and beyond
 -- the last, the two sides are affine, so an ordering failing at some

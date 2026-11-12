@@ -5,7 +5,7 @@
 -- and the order are those of the components, and `ι τ` is            --
 -- `(ι τ , ι τ)`, a delay advancing both components; the              --
 -- components share their durations.                                  --
--- Every law holds componentwise, the zero-product laws included, and --
+-- Every law holds componentwise, the unit-product laws included, and --
 -- the order is decided componentwise. The hints of the product       --
 -- declare the unit least, `_·_` commutative and closures where both  --
 -- components' hints do.                                              --

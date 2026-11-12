@@ -10,13 +10,14 @@
 -- `[ p , ∞ [` and `[ p , ∞ ]` are the same grade. A delay by `q` has --
 -- grade `[ q , ↑ q ]`.                                               --
 --                                                                    --
--- This is `Time.Intervals` at the rational time domain: the          --
--- intervals are the convex sets of durations, ordered by containment --
--- and sequenced by the Minkowski sum (`Durations.Intervals.Dense`).  --
--- The closed intervals of `Time.Rational.IntervalClosed` are a       --
--- sub-grade (`closed→interval`), and the time intervals in whole     --
--- steps of `Time.Interval` embed along the inclusion of durations    --
--- (`interval→rational`).                                             --
+-- This is `Time.Intervals` at the rational time domain: an interval  --
+-- is determined by the durations it admits, and the intervals are    --
+-- ordered by containment and sequenced by the Minkowski sum          --
+-- (`Durations.Intervals.Dense`).                                     --
+-- The closed intervals of `Time.Rational.IntervalClosed` map into    --
+-- them by a grade morphism (`closed→interval`), and so do the time   --
+-- intervals in whole steps of `Time.Interval`, along the inclusion   --
+-- of durations (`interval→rational`).                                --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Time.Rational.Interval where
@@ -96,7 +97,7 @@ rational-intervalʰ : GradeHints rational-interval
 rational-intervalʰ = domain-intervalʰ
 
 ------------------------------------------------------------------------
--- The closed intervals are a sub-grade
+-- The closed intervals, by a grade morphism
 
 -- the minimum and maximum of the rationals are those of the time
 -- domain
@@ -155,7 +156,8 @@ closed→interval = strictᵍ record
   }
 
 ------------------------------------------------------------------------
--- The time intervals in whole steps embed, through the closed intervals
+-- The time intervals in whole steps, by a grade morphism through the closed
+-- intervals
 
 interval→rational : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.interval
                                      rational-interval

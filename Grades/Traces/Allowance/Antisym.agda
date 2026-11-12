@@ -3,8 +3,8 @@
 --                                                                     --
 -- The statement needs `costʰⁱ` positive, a parameter here as in       --
 -- `Allowance.AsOrder`: a free operation would be performed out of an  --
--- empty budget, so `ε` would permit `⌈ o ⌉` while permitting nothing  --
--- but itself, and the order would identify two different traces.      --
+-- empty budget, so `ε` would permit `⌈ o ⌉` and be permitted by it,   --
+-- and the order would identify two different traces.                  --
 --                                                                     --
 -- With a positive cost, `use-op` is blocked at budget zero exactly as --
 -- positive delay lengths block `use-delay`, so a bound and a run that --

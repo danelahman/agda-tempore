@@ -7,11 +7,11 @@
 -- change of mode may have; the row of `stuck` is that of the unit.   --
 -- The product, the join and the order are those of the matrices, the --
 -- unit is `Iᴹ`, and `⊤` is `⊤ᴹ`. These matrices are closed under the --
--- product and the join, and the unit is the only one below the unit: --
--- if `x · y ≾ 𝟏`, then `x` changes no mode and gets stuck from none, --
+-- product and the join, and satisfy the unit-product law: if         --
+-- `x · y ≾ 𝟏`, then `x` changes no mode and gets stuck from none,    --
 -- for a change followed by a nonzero entry is not below `𝟙` and      --
 -- `stuck` is never left, hence `x ≾ 𝟏` and `y ≾ 𝟏`. The dioid is to  --
--- have no zero divisors, `𝟙` above `𝟘`, and products of nonzero      --
+-- have no zero divisors, `𝟙` not below `𝟘`, and products of nonzero  --
 -- entries below `𝟙` only from factors below `𝟙`, the changes being   --
 -- kept by the action and by orbit joins (`ModeEntries`). Delays are  --
 -- a monoid morphism from the durations (`Delays`), the unit when     --
@@ -261,7 +261,7 @@ module _ (E : ModeEntries) where
     stuck-row M N ⌜ _ ⌝ = ≤-refl
 
   ----------------------------------------------------------------------
-  -- The zero-product law
+  -- The unit-product law
 
   module _ (x y : ModeMatrix) (h : x ·ᵐ y ≾ᵐ 𝟏ᵐ) where
 

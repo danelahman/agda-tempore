@@ -6,7 +6,7 @@
 -- empty word iff `p` is final and `q` is not. The pairs reachable    --
 -- from `(0 , 0)` are explored breadth-first, each with the word that --
 -- reached it, and the first pair holding the empty word gives a      --
--- shortest counterexample.                                           --
+-- counterexample.                                                    --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _≡ᵇ_)
@@ -46,8 +46,7 @@ witnesses L M = record
   ; bound = size L ℕ.* size M
   }
 
--- the first discovered pair holding a counterexample, whose word is
--- then a shortest one
+-- the first discovered pair holding a counterexample
 
 search : DFA → DFA → List ((ℕ × ℕ) × Word) → Maybe Word
 search L M []              = nothing

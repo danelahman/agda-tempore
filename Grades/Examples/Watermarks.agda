@@ -15,18 +15,18 @@
 --   (t , [d₁ , d₂] , h) · (t' , [d₁' , d₂'] , h')                    --
 --    = (min(t , d₁ + t') , [d₁ + d₁' , d₂ + d₂'] , max(h , d₂ + h')) --
 --                                                                    --
--- The upper side `(d₂ , h)` is a net change and its greatest prefix  --
--- (`Side`). Its product adds the net changes and shifts the later    --
--- prefix by the earlier net change, and only the pairs               --
--- `max(0 , d₂) ≤ h` are kept, with `(0 , 0)` as the unit. The lower  --
--- side is its mirror image, held negated: `(-d₁ , -t)` is a side as  --
--- well. A grade is a lower and an upper side whose ranges are        --
--- consistent, `d₁ ≤ d₂`.                                             --
+-- The upper side `(d₂ , h)` is a net change and the greatest net     --
+-- change of a prefix (`Side`). Its product adds the net changes and  --
+-- shifts the later greatest by the earlier net change, and only the  --
+-- pairs `max(0 , d₂) ≤ h` are kept, with `(0 , 0)` as the unit. The  --
+-- lower side is its mirror image, held negated: `(-d₁ , -t)` is a    --
+-- side as well. A grade is a lower and an upper side whose ranges    --
+-- are consistent, `d₁ ≤ d₂`.                                         --
 --                                                                    --
 -- The order is `t ≥ t'`, `d₁ ≥ d₁'`, `d₂ ≤ d₂'` and `h ≤ h'`, and    --
 -- the join is the minimum or the maximum accordingly; `⊤` is         --
 -- `(-∞ , (-∞ , ∞) , ∞)`. The unit `(0 , [0 , 0] , 0)` is the only    --
--- grade below the unit, which gives the zero-product law: from       --
+-- grade below the unit, which gives the unit-product law: from       --
 -- `x · y ≾ 𝟏` the trough and peak of `x` are `0`, its range is       --
 -- `[0 , 0]` by consistency, and so `y ≾ 𝟏`. The unit is not least,   --
 -- `_·_` does not commute, and delays change no amount held.          --
@@ -59,7 +59,7 @@ open import Grades.Examples.Watermarks.ExtendedInteger
 open import Util.Equality
 
 ------------------------------------------------------------------------
--- A side: a net change and its greatest prefix
+-- A side: a net change and the greatest net change of a prefix
 
 record Side : Set where
   constructor side
@@ -261,7 +261,7 @@ x ≾ᵂ? y = side? (lower x) (lower y) ×-dec side? (upper x) (upper y)
                       ((net s ≤∞? net s') ×-dec (ext s ≤∞? ext s'))
 
 ------------------------------------------------------------------------
--- The zero-product law
+-- The unit-product law
 
 private
   -- the extreme of the first side of a product below the unit's

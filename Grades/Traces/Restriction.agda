@@ -5,7 +5,7 @@
 -- restriction drops every event outside it while keeping the delays, --
 -- merging the delays that surrounded a dropped operation. Sequencing --
 -- and the language product are preserved, so restriction is a monoid --
--- map, and so a grade morphism.                                      --
+-- map on traces and on sets of traces.                               --
 --                                                                    --
 -- Both alphabets are in play, so the trace toolkit is opened         --
 -- unapplied and the alphabet named at each use.                      --

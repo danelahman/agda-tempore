@@ -4,7 +4,7 @@
 --                                                                    --
 -- "At most `a` units", "less than `a` units" and no bound: orderings --
 -- between concrete grades, each established by the decision          --
--- procedure of the grade; sequencing, the join, the zero-product law --
+-- procedure of the grade; sequencing, the join, the unit-product law --
 -- and the morphisms into the grade, computed.                        --
 ------------------------------------------------------------------------
 
@@ -51,7 +51,7 @@ rci-smaller = ≾ʳ!
 rci-larger-not-below : ¬ (R.< 5 / 2 R.≾ᵘ R.≤ ↑ # 2)
 rci-larger-not-below = ⋠ʳ!
 
--- every bound is below none, and no bound is below a finite one
+-- every bound is below `≤ ∞`, and `≤ ∞` is below no finite bound
 
 rci-top : R.≤ ↑ # 2 R.≾ᵘ R.≤ ∞
 rci-top = ≾ʳ! {R.≤ ↑ # 2} {R.≤ ∞}
@@ -90,7 +90,7 @@ rci-join-∞ : R.< # 1 R.⊔ᵘ R.≤ ∞ ≡ R.≤ ∞
 rci-join-∞ = refl
 
 ------------------------------------------------------------------------
--- The unit "at most 0" is the least grade, and the zero-product law
+-- The unit "at most 0" is the least grade, and the unit-product law
 
 rci-unit-least : Grade.𝟏 G R.≾ᵘ R.< 1 / 2
 rci-unit-least = ≾ʳ!

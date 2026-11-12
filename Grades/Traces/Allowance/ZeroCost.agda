@@ -8,10 +8,10 @@
 --                                                                    --
 -- At an operation `o` with `costʰⁱ o ≡ 0`, the bound `ε` permits the --
 -- run `⌈ o ⌉`: `use-op` pays for the operation out of an empty       --
--- budget. Both facts about the unit the grade construction reads     --
--- then fail. The empty bound permits a run different from itself, so --
--- `≼-ε-inv` is false, and since `ε` is permitted by every bound, two --
--- distinct traces permit each other, so `≼-antisym` is false too.    --
+-- budget. Two fields the grade construction reads then fail. The     --
+-- empty bound permits a run different from itself, so `≼-ε-inv` is   --
+-- false, and since `ε` is permitted by every bound, two distinct     --
+-- traces permit each other, so `≼-antisym` is false too.             --
 -- `FreeOperation` exhibits each as a checked term.                   --
 --                                                                    --
 -- The failure is one of the cost model, not of the allowance order:  --
@@ -66,7 +66,7 @@ module FreeOperation (o : Op) (free : costʰⁱ o ≡ 0ᴰ) where
 
   -- the empty bound therefore permits more than the empty run, which
   -- is the `≼-ε-inv` field of `TraceOrder` and what the grades'
-  -- zero-product law rests on
+  -- unit-product law rests on
 
   ¬-≼ᵃ-ε-inv : ¬ ({s : Trace} → s ≼ᵃ ε → s ≡ ε)
   ¬-≼ᵃ-ε-inv ε-inv = op≢ε (ε-inv op≼ε)

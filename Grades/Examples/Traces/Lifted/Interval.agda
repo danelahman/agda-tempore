@@ -470,7 +470,7 @@ i₁ ⊔ᵗˢ i₂ =
        (≾ʰⁱ-antisym {hi i₁} {hi i₂} h₁ h₂)
 
 ------------------------------------------------------------------------
--- Zero-product property
+-- Unit-product property
 --
 -- Only the cap carries information at the unit, the floor half being
 -- vacuous.

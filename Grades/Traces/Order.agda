@@ -14,12 +14,12 @@
 -- for those that close downward.                                     --
 --                                                                    --
 -- `TraceOrder` adds the two facts about the unit that the grades'    --
--- zero-product properties rest on. Those are not self-dual (`ε ≼ t`  --
+-- unit-product properties rest on. Those are not self-dual (`ε ≼ t`  --
 -- has no converse), so they make sense at one handedness only and    --
 -- stay out of the layer that is flipped.                             --
 --                                                                    --
 -- Monotonicity is the demanding field: it fails for the prefix order --
--- (`Traces.Prefix`), and so contiguity-based orders carry no grade.  --
+-- (`Traces.Prefix`), which therefore carries no grade.               --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (Decidable)

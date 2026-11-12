@@ -11,10 +11,9 @@
 -- boundary of its own word. Two pieces running at once must meet:    --
 -- an operation lies inside a stretch admitting it, and two           --
 -- operations run together only from a common start, as one. So the   --
--- walk is the run of a timed automaton with two clocks, the time     --
--- each word's current piece has run, one of them reset at every      --
--- stop. A stretch letter admitting no time may be passed at a        --
--- boundary.                                                          --
+-- walk keeps two clocks, the time each word's current piece has run, --
+-- one of them reset at every stop. A stretch letter admitting no     --
+-- time may be passed at a boundary.                                  --
 --                                                                    --
 --   sound:    a walk builds the three words, and the two pourings    --
 --             (`Exact.Pour`) of the common one into the others;      --

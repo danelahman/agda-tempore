@@ -2,19 +2,19 @@
 -- Whether a lower and an upper expression with iteration have a      --
 -- common run, decided.                                               --
 --                                                                    --
--- In a commensurable time domain the ends of the letters of the two  --
--- expressions and the running times lie on the grid of one unit, so  --
--- the zones the walk on zones meets (`Joint.Zoned`) are computed in  --
--- counts of the unit (`Joint.Scale`), and normalised they lie within --
--- the largest count. The walk is searched over the tables of the     --
--- words of the two expressions (`Regular.Words`): a state is a state --
--- of each table and a phase, the letter in progress with its zone; a --
--- move reads the letters the walk moves past. Finitely many states   --
--- occur, so a search of the states reachable from the start          --
--- (`Regular.Reach`) decides whether one has both tables accepting    --
--- and no piece in progress: exactly when some run is common. The     --
--- search passes over states where either table is in its sink, from  --
--- which it accepts nothing.                                          --
+-- In a dense commensurable time domain the ends of the letters of    --
+-- the two expressions and the running times lie on the grid of one   --
+-- unit, so the zones the walk on zones meets (`Joint.Zoned`) are     --
+-- computed in counts of the unit (`Joint.Scale`), and normalised     --
+-- they lie within the largest count. The walk is searched over the   --
+-- tables of the words of the two expressions (`Regular.Words`): a    --
+-- state is a state of each table and a phase, the letter in progress --
+-- with its zone; a move reads the letters the walk moves past.       --
+-- Finitely many states occur, so a search of the states reachable    --
+-- from the start (`Regular.Reach`) decides whether one has both      --
+-- tables accepting and no piece in progress: exactly when some run   --
+-- is common. The search passes over states where either table is in  --
+-- its sink, from which it accepts nothing.                           --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -1272,8 +1272,6 @@ module Search (L : Expr lower) (U : Expr upper) where
 
       step-∈ᵐ : ∀ {s s′} → Step s s′ → s′ ∈ˡ succᵐ s
       step-∈ᵐ {s} mv = subst (_ ∈ˡ_) (sym (succᵐ≡ s)) (step-∈ mv)
-
-    -- only states from which both tables still accept are kept
 
     -- a state of a table that is not final and that every letter leaves
     -- unchanged accepts nothing; states of both tables that are not

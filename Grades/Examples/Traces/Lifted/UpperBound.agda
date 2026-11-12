@@ -29,9 +29,9 @@
 -- permits nothing and is excluded. It is the greatest grade.         --
 --                                                                    --
 -- `{ ε }` is the least grade, the empty run staying within every     --
--- bound, and a zero for the product. Both rest on the two unit facts --
--- that a `TraceOrder` adds to the order-theoretic part used by the   --
--- reduction.                                                         --
+-- bound, and the unit-product law holds. Both rest on the two unit   --
+-- facts that a `TraceOrder` adds to the order-theoretic part used by --
+-- the reduction.                                                     --
 --                                                                    --
 -- Given a measure of traces in durations that is additive, monotone  --
 -- and `0` only at `ε` (`Closures`), no written-out grade absorbs a   --
@@ -143,7 +143,7 @@ open R public
                 fromWitness (Any.map (λ eq → subst (ε ≼_) eq ≼-nil) t∈P)
 
 ------------------------------------------------------------------------
--- Zero-product property
+-- Unit-product property
 --
 -- A bound below `{ ε }` permits nothing but the empty run, and the
 -- trace monoid is conical, so a product below the unit has each factor
@@ -337,7 +337,7 @@ unbounded  ⊔ᵇ _          = unbounded
 ·ᵇ-distribʳ-⊔ unbounded  unbounded  _          = tt
 
 ------------------------------------------------------------------------
--- Zero-product property at the carrier
+-- Unit-product property at the carrier
 --
 -- `unbounded` is above the unit and not below it, so its clauses are
 -- vacuous and the property is the antichains' own.

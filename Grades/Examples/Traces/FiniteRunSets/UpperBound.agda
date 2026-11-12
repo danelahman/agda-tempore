@@ -16,9 +16,9 @@
 --   Q ≾ Q'   iff   Q ⊆ Q'                                            --
 --                                                                    --
 -- and the set is read disjunctively: a longer list permits more,     --
--- and the union of two grades is their join. There is no least       --
--- grade: `{ ε }`, permitting only the empty run, lies below only the --
--- lists that contain the empty run.                                  --
+-- and the union of two grades is their join. The unit is not least:  --
+-- `{ ε }`, permitting only the empty run, lies below only the lists  --
+-- that contain the empty run.                                        --
 --                                                                    --
 -- No finite list permits every run, and the carrier has `any-run` as --
 -- a separate point, permitting any run, possibly infinite, and       --
@@ -205,7 +205,7 @@ any-run        ≾ any-run        = ⊤
 ≾-⊤ (permitting _) = tt
 ≾-⊤ any-run        = tt
 
--- there is no least grade: `{ ε }` is below only the lists naming `ε`
+-- the unit is not least: `{ ε }` is below only the lists naming `ε`
 
 𝟏ᵖ-not-least : ¬ Minimum _≾_ 𝟏ᵖ
 𝟏ᵖ-not-least least = least (permitting (ι 1)) ε _
@@ -305,7 +305,7 @@ any-run        ⊔ᵖ _              = any-run
 ·-distribʳ-⊔ any-run        any-run        _              = tt
 
 ------------------------------------------------------------------------
--- Zero-product property
+-- Unit-product property
 --
 -- `any-run` is above the unit and not below it, so its clauses are
 -- vacuous and the property is the sets' own.

@@ -19,8 +19,8 @@ open import Grades.Durations
 open import Util.Equality
 
 -- The closure of `c`, Kleene's plus: the least grade above `c` that
--- absorbs its own iteration; a grade that `c` does not move, on either
--- side, `c⁺` does not move either (induction)
+-- absorbs its own iteration; a grade that `c` does not raise, on either
+-- side, `c⁺` does not raise either (induction)
 
 record Plus {C : Set} (_·_ : C → C → C) (_≾_ : C → C → Set) (c : C) : Set where
   constructor plus
@@ -99,7 +99,7 @@ record Grade (D : Duration) : Set₁ where
     ·-distribˡ-⊔-≾ : (c d e : Carrier) → c · (d ⊔ e) ≾ (c · d) ⊔ (c · e)
     ·-distribʳ-⊔-≾ : (c d e : Carrier) → (d ⊔ e) · c ≾ (d · c) ⊔ (e · c)
 
-    -- the unit's zero-product property
+    -- the unit's unit-product property
     ≾-zero-productˡ : ∀ {c d} → c · d ≾ 𝟏 → c ≾ 𝟏
     ≾-zero-productʳ : ∀ {c d} → c · d ≾ 𝟏 → d ≾ 𝟏
 

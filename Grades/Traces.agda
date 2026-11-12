@@ -130,7 +130,7 @@ import Grades.Traces.Allowance.ZeroCost
 
 -- Its interface instance, which asks every operation to cost
 -- something: that is what makes the empty bound permit nothing but the
--- empty run, and what the grades' zero-product law rests on.
+-- empty run, and what the grades' unit-product law rests on.
 
 import Grades.Traces.Allowance.AsOrder
 
@@ -144,7 +144,7 @@ import Grades.Traces.Allowance.AsOrder
 -- named operation, so a demand for time is met only where it is placed.
 --
 -- This is the order a guarantee wants. It is not the converse of the
--- allowance order; the two are incomparable.
+-- allowance order.
 
 import Grades.Traces.Coverage
 

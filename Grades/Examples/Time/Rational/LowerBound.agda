@@ -7,9 +7,9 @@
 -- the weaker grade. A delay by `q` has grade `[ q ,+∞⟩`, so a delay  --
 -- of half a unit has grade `[ 1 / 2 ,+∞⟩`.                           --
 --                                                                    --
--- The lower bounds in whole steps of `Time.LowerBound` embed along   --
--- the inclusion of durations, a bound of `n` time steps being read   --
--- as `n` units of rational time.                                     --
+-- The lower bounds in whole steps of `Time.LowerBound` map here, by  --
+-- a grade morphism along the inclusion of durations, a bound of `n`  --
+-- time steps being read as `n` units of rational time.               --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Time.Rational.LowerBound where
@@ -129,7 +129,7 @@ _≾ₒ?_ : Decidable _≾ₒ_
 𝟏ₒ-not-least least =
   toWitnessFalse {a? = [ 0ᵈ ,+∞⟩ ≾ₒ? [ 1 / 2 ,+∞⟩} tt (least [ 1 / 2 ,+∞⟩)
 
--- zero-product properties
+-- unit-product properties
 
 ≡ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≡ 𝟏ₒ → i₁ ≡ 𝟏ₒ
 ≡ₒ-zero-productˡ {[ p ,+∞⟩} {[ q ,+∞⟩} eq =
@@ -220,7 +220,7 @@ rational-lower-boundʰ = record
   }
 
 ------------------------------------------------------------------------
--- The lower bounds in whole steps embed
+-- The lower bounds in whole steps, by a grade morphism
 
 lower-bound→rational : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.lower-bound
                                        rational-lower-bound

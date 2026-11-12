@@ -8,9 +8,9 @@
 -- `[0, ∞ ]` imposes no deadline and is absorbing. A delay by `q` has --
 -- grade `[0, ↑ q ]`.                                                 --
 --                                                                    --
--- The upper bounds in whole steps of `Time.UpperBound` embed along   --
--- the inclusion of durations, a deadline of `n` time steps being     --
--- read as one of `n` units of rational time.                         --
+-- The upper bounds in whole steps of `Time.UpperBound` map here, by  --
+-- a grade morphism along the inclusion of durations, a deadline of   --
+-- `n` time steps being read as one of `n` units of rational time.    --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Time.Rational.UpperBound where
@@ -132,7 +132,7 @@ infix 6 _≾ₒ_
 _≾ₒ?_ : Decidable _≾ₒ_
 [0, a ] ≾ₒ? [0, b ] = a ≤∞? b
 
--- zero-product properties
+-- unit-product properties
 
 ≡ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀ᵣ} → i₁ ·ₒ i₂ ≡ 𝟏ₒ → i₁ ≡ 𝟏ₒ
 ≡ₒ-zero-productˡ {[0, a ]} {[0, b ]} eq =
@@ -232,7 +232,7 @@ rational-upper-boundʰ = record
   }
 
 ------------------------------------------------------------------------
--- The upper bounds in whole steps embed
+-- The upper bounds in whole steps, by a grade morphism
 
 upper-bound→rational : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.upper-bound
                                          rational-upper-bound

@@ -22,8 +22,8 @@
 -- the adjacent step.                                                  --
 --                                                                     --
 -- What the ends say about the durations admitted (`_∈ⁱ_`), that in a  --
--- dense time domain the order is containment and the sum the          --
--- Minkowski sum, is in `Durations.Intervals.Dense`.                   --
+-- dense time domain with a positive duration the order is containment --
+-- and the sum the Minkowski sum, is in `Durations.Intervals.Dense`.   --
 -------------------------------------------------------------------------
 
 open import Grades.Durations
@@ -454,7 +454,8 @@ c ⊔ᶜ c' with c ⊑? c'
 ... | yes _ = inj₂ refl
 ... | no _  = inj₁ refl
 
--- on cuts at one side, they are the smaller and larger point
+-- the meet of two cuts at `⁻` is at the smaller point, and the join of two
+-- cuts at `⁺` at the larger
 
 ⊓ᶜ-⁻ : ∀ p q → (p ∣ ⁻) ⊓ᶜ (q ∣ ⁻) ≡ (p ⊓ᴰ q) ∣ ⁻
 ⊓ᶜ-⁻ p q = ⊑-antisym below (⊓ᶜ-glb (≤⇒⁻⊑⁻ (⊓-lbˡ p q)) (≤⇒⁻⊑⁻ (⊓-lbʳ p q)))
@@ -830,7 +831,7 @@ pointⁱ-+ p q = eqⁱ refl refl
               (cong₂ _∪ⁱ_ (⊕-comm i j) (⊕-comm i k))
          (⊕-distribˡ-∪ⁱ i j k)
 
--- zero-product: a sum within the unit has its summands within it
+-- unit-product: a sum within the unit has its summands within it
 
 ⊆ⁱ-0ⁱ-sumˡ : ∀ i j → i ⊕ j ⊆ⁱ 0ⁱ → i ⊆ⁱ 0ⁱ
 ⊆ⁱ-0ⁱ-sumˡ i j (_ , q) =
@@ -861,7 +862,7 @@ plusʰ ∞ = ∞
 0⁺-pinned : ∀ {c} → 0⁺ ⊑ c → c ⊑ 0⁺ → c ≡ 0⁺
 0⁺-pinned p q = ⊑-antisym q p
 
--- an upper end above `0 ∣ ⁺` strictly grows what it is added to
+-- an upper end above `0 ∣ ⁺` strictly grows every finite end it is added to
 
 +ʰ-grows : ∀ {c} → ¬ (c ⊑ 0⁺) → ∀ c' → ¬ (fin c +ʰ fin c' ⊑ʰ fin c')
 +ʰ-grows {p ∣ s} ¬r (q ∣ t) r with compare 0ᴰ p

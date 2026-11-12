@@ -97,7 +97,7 @@ infix 6 _≤∞_
 ≤∞-trans {∞}   {∞}   {↑ _} p ()
 ≤∞-trans {∞}   {∞}   {∞}   p q = tt
 
--- ∞ is comparable only with itself, so mutual bounds force equality
+-- only ∞ lies above ∞, so mutual bounds force equality
 
 ≤∞-antisym : {a b : ℕ∞} → a ≤∞ b → b ≤∞ a → a ≡ b
 ≤∞-antisym {↑ _} {↑ _} p q = cong ↑_ (≤-antisym p q)
@@ -186,10 +186,10 @@ infixl 7 _⊔∞_
 ------------------------------------------------------------------------
 -- ↑ 0 is the least element
 --
--- The zero-product properties of the grades are built from these: a
+-- The unit-product properties of the grades are built from these: a
 -- sum within `↑ 0` has no summand ∞.
 
--- a finite sum that is ↑ 0 forces both summands below ↑ 0
+-- a sum below ↑ 0 forces both summands below ↑ 0
 
 +∞-≤∞-0ˡ : ∀ {a b} → (a +∞ b) ≤∞ ↑ 0 → a ≤∞ ↑ 0
 +∞-≤∞-0ˡ {↑ x} {↑ _} p = m+n≤o⇒m≤o x p

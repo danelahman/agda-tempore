@@ -75,7 +75,7 @@ lci-join-point : L.> # 1 L.⊔ˡ L.> # 2 ≡ L.> # 1
 lci-join-point = refl
 
 ------------------------------------------------------------------------
--- The unit is the greatest grade, so the zero-product law holds of
+-- The unit is the greatest grade, so the unit-product law holds of
 -- every product
 
 lci-zero-product : L.> # 1 L.·ˡ L.≥ # 2 L.≾ˡ Grade.𝟏 G

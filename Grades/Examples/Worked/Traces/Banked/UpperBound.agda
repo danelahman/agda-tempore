@@ -328,9 +328,9 @@ dropping-the-empty-run = refl
 -- Where the budget sits
 --
 -- Budget does not cross an operation the bound names, so a bound
--- prescribes when its spare time is available: two bounds differing
--- only in where six ticks sit each admit exactly one of two runs
--- differing only in where the store falls.
+-- prescribes when its spare time is available: two bounds that budget
+-- for the store on opposite sides of the transmission each admit exactly
+-- one of two runs differing only in where the store falls.
 
 storing-in-the-window :
   within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆

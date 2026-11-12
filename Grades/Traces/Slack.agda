@@ -44,7 +44,7 @@ lem-swap a b c =
 ------------------------------------------------------------------------
 -- A structural size measure on traces
 --
--- Each node counts as one; a leading delay counts the size of its
+-- Each node counts as one; a leading delay counts one plus the size of its
 -- delay-free-headed continuation. Every rule of either order strictly
 -- decreases the combined size of the two traces, which is what fuels
 -- the decision procedures.

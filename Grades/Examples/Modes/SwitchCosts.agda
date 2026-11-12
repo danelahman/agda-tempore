@@ -4,7 +4,7 @@
 --                                                                    --
 -- A grade gives each pair of modes `(p , q)` the greatest cost of    --
 -- the traces that start in `p` and end in `q`, or `none` if there is --
--- no such trace. The costs form the max-plus dioid: no trace, below  --
+-- no such trace. The costs form a max-plus dioid: no trace, below    --
 -- the natural numbers, below `∞`; the join is the maximum and the    --
 -- product the sum, `none` absorbing and then `∞`. A grade is a mode  --
 -- matrix over it, the costs naming no modes (the trivial action,     --

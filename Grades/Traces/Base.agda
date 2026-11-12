@@ -2,9 +2,9 @@
 -- Timed traces and their monoid structure.                             --
 --                                                                      --
 -- A timed trace is one run of a computation as it is observed from     --
--- outside: an alternation of positive delays and operations. The       --
--- monoid sequences two runs, merging the trailing delay of the first   --
--- with the leading delay of the second, so that a trace has a unique   --
+-- outside: a sequence of positive delays and operations. The monoid    --
+-- sequences two runs, merging the trailing delay of the first with     --
+-- the leading delay of the second, so that a trace has a unique        --
 -- representation with no two adjacent delays.                          --
 --                                                                      --
 -- Delays are durations of a time domain `T`: whole steps over ℕ, or    --
@@ -145,7 +145,7 @@ prepend-∙ d (delay e (operation⁻ o t)) u = refl
 -- Conicality
 --
 -- The monoid is conical: a product is the empty trace only if both
--- factors are. This is what the grades' zero-product properties, and
+-- factors are. This is what the grades' unit-product properties, and
 -- hence the "no time passes" grade, rest on.
 
 ∙-conicalˡ : {s t : Trace} → (s ∙ t) ≡ ε → s ≡ ε

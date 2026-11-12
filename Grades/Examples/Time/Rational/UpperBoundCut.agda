@@ -12,11 +12,11 @@
 -- bound; `≤ ↑ 0` is the unit and the least grade, and `≤ ∞` the      --
 -- greatest. A delay by `q` has grade `≤ ↑ q`.                        --
 --                                                                    --
--- The closed bounds of `Time.Rational.UpperBound` are a sub-grade    --
--- (`closed→cut`), the intervals of `Time.Rational.Interval`          --
--- map onto their upper ends (`interval→cut`), and the discrete       --
--- bounds of `Time.UpperBound` embed along the inclusion of durations --
--- (`upper-bound→rational-cut`).                                      --
+-- The closed bounds of `Time.Rational.UpperBound` map into them by a --
+-- grade morphism (`closed→cut`), the intervals of                    --
+-- `Time.Rational.Interval` map onto their upper ends                 --
+-- (`interval→cut`), and the discrete bounds of `Time.UpperBound` map --
+-- along the inclusion of durations (`upper-bound→rational-cut`).     --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Time.Rational.UpperBoundCut where
@@ -177,7 +177,7 @@ rational-upper-bound-cutʰ = record
   }
 
 ------------------------------------------------------------------------
--- The closed bounds are a sub-grade
+-- The closed bounds, by a grade morphism
 
 closed→cut : GradeMorphism idᴰ Closed.rational-upper-bound
                                rational-upper-bound-cut
@@ -222,7 +222,7 @@ interval→cut = strictᵍ record
     embed i = upper! (hi i) (◁⇒0⁺⊑ʰ {lo i} {hi i} (lo◁hi i))
 
 ------------------------------------------------------------------------
--- The discrete bounds embed
+-- The discrete bounds, by a grade morphism
 
 upper-bound→rational-cut : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.upper-bound
                                              rational-upper-bound-cut

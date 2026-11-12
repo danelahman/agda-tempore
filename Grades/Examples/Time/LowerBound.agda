@@ -126,7 +126,7 @@ _≾ₒ?_ : Decidable _≾ₒ_
   +-cancelˡ-≤ m₁ m₃ m₂ rel
 
 
--- zero-product properties
+-- unit-product properties
 
 ≡ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≡ 𝟏ₒ → i₁ ≡ 𝟏ₒ
 ≡ₒ-zero-productˡ {[ m ,+∞⟩} {[ _ ,+∞⟩} eq = eq𝕀 (m+n≡0⇒m≡0 m (𝕀-inj eq))
@@ -343,7 +343,7 @@ _≾ᵗ?_ : Decidable _≾ᵗ_
 untimed   ≾ᵗ? (timed _) = no λ ()
 untimed   ≾ᵗ? untimed   = yes tt
 
--- zero-product properties, `untimed` sitting above the unit and not
+-- unit-product properties, `untimed` sitting above the unit and not
 -- below it
 
 ≾ᵗ-zero-productˡ : ∀ {i₁ i₂ : 𝕀⊤} → i₁ ·ᵗ i₂ ≾ᵗ 𝟏ᵗ → i₁ ≾ᵗ 𝟏ᵗ
@@ -356,7 +356,7 @@ untimed   ≾ᵗ? untimed   = yes tt
 ≾ᵗ-zero-productʳ {timed _}  {untimed}  ()
 ≾ᵗ-zero-productʳ {untimed}  {_}        ()
 
--- binary joins, with `untimed` the join of anything with itself
+-- binary joins, with `untimed` the join of itself with anything
 
 _⊔ᵗ_ : 𝕀⊤ → 𝕀⊤ → 𝕀⊤
 (timed i) ⊔ᵗ (timed j) = timed (i ⊔ₒ j)

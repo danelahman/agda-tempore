@@ -4,7 +4,7 @@
 -- A grade of `power n` is a vector of `n` grades of `G`, one per     --
 -- counter, and the product, the order, the greatest grade and the    --
 -- joins are pointwise. Every law of `G` holds coordinatewise, the    --
--- zero-product laws included.                                        --
+-- unit-product laws included.                                        --
 --                                                                    --
 -- The inclusion of durations is constantly the unit: delays draw on  --
 -- no counter. Time is paired with the counters by a product of       --
@@ -197,7 +197,7 @@ _≾ᵛ?_ : ∀ {n} (c d : Vec C n) → Dec (c ≾ᵛ d)
   ·-distribʳ-⊔-≾ a b c , ·ᵛ-distribʳ-⊔ᵛ as bs cs
 
 ------------------------------------------------------------------------
--- Zero-product property, coordinatewise
+-- Unit-product property, coordinatewise
 
 ≾ᵛ-zero-productˡ : ∀ {n} {c d : Vec C n} → c ·ᵛ d ≾ᵛ 𝟏ᵛ → c ≾ᵛ 𝟏ᵛ
 ≾ᵛ-zero-productˡ {c = []}    {[]}    _        = tt

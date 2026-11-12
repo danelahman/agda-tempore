@@ -1,5 +1,6 @@
 ------------------------------------------------------------------------
--- The allowance cap does not project onto at-most counts.            --
+-- No morphism from the allowance cap to at-most counts counts the    --
+-- operations.                                                        --
 --                                                                    --
 -- Going up the allowance order, an operation becomes a delay that    --
 -- covers it: `⌈ o ⌉ ≼ᵃ ⟨ 1 + costʰⁱ o ⟩`. A pure delay draws on no   --
@@ -7,7 +8,7 @@
 -- the unit, which is the least quota. By monotonicity the bound      --
 -- `⌈ o ⌉` is sent to the unit as well:                               --
 --                                                                    --
---   map F (within ⟅ ⌈ o ⌉ ⟆)  ≡  𝟏ᵛ                                  --
+--   map F (within ⟅ ⌈ o ⌉ ⟆)  ≃ᵛ  𝟏ᵛ                                 --
 --                                                                    --
 -- for every morphism `F` and every operation `o`. No morphism        --
 -- therefore counts what a bound permits: the quota it assigns to     --

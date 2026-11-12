@@ -200,8 +200,8 @@ private
 ------------------------------------------------------------------------
 -- The grades
 --
--- A grade's order is the reader's decision: `c ≾ᴳ d` holds when the
--- runs of `c` are found among those of `d`. It is the order of the
+-- A grade's order is the reader's decision: `c ≾ᴳ d` holds when every
+-- run of `c` fits a run of `d`. It is the order of the
 -- denotations, read through the decision, and so proof-irrelevant.
 
 private

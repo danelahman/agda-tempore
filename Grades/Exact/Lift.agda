@@ -10,7 +10,7 @@
 -- fits the unrestricted stretch of its own duration, so the set of   --
 -- all words and the stretches of every length admitting every        --
 -- operation are both greatest. The product is monotone, distributes  --
--- over the join, and has the zero-product property once the other    --
+-- over the join, and has the unit-product property once the other    --
 -- factor is inhabited.                                               --
 --                                                                    --
 -- Sets are predicates, and sequencing within them concatenates       --
@@ -218,7 +218,7 @@ anyᴸ w = Σ[ τ ∈ Carrier ] w ≡ stretch all τ
   ⊆⇒≾ (λ { w (x , _ , refl , x∈ , (y , z , refl , y∈ , z∈)) →
              x ++ y , z , sym (++-assoc x y z) , (x , y , refl , x∈ , y∈) , z∈ })
 
--- the zero-product property, against an inhabited factor
+-- the unit-product property, against an inhabited factor
 
 ++-conicalˡ : ∀ (x : Word) {y} → x ++ y ≡ [] → x ≡ []
 ++-conicalˡ []      _  = refl

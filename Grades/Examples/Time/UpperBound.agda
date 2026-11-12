@@ -132,7 +132,7 @@ _≾ₒ?_ : Decidable _≾ₒ_
 
 -- _·ₒ_ is not cancellative, ∞ being absorbing.
 
--- zero-product properties
+-- unit-product properties
 
 ≡ₒ-zero-productˡ : ∀ {i₁ i₂ : 𝕀ᵣ} → i₁ ·ₒ i₂ ≡ 𝟏ₒ → i₁ ≡ 𝟏ₒ
 ≡ₒ-zero-productˡ {[0, m ]} {[0, n ]} eq = eq𝕀ᵣ (+∞-≡0ˡ {m} {n} (𝕀ᵣ-inj eq))

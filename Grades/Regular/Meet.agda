@@ -5,8 +5,8 @@
 -- complement of `M`, the table of `M` with its final bits flipped.   --
 -- So the counterexample search of `L ⊆ ∁ M` (`Regular.Inclusion`),   --
 -- exploring the pairs of states of `L` and `M` reachable together,   --
--- decides whether `L ∩ M` is inhabited, and finds a shortest common  --
--- word when it is.                                                   --
+-- decides whether `L ∩ M` is inhabited, and finds a common word when --
+-- it is.                                                             --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _<_; s≤s)

@@ -199,7 +199,7 @@ i₁ ≾ᵢ? i₂ with min i₂ ≤? min i₁ | max i₁ ≤∞? max i₂
 
 -- _·ᵢ_ is not cancellative, ∞ being absorbing.
 
--- zero-product property
+-- unit-product property
 
 ≡ᵢ-zero-productˡ : ∀ {i₁ i₂} → i₁ ·ᵢ i₂ ≡ 𝟏ᵢ → i₁ ≡ 𝟏ᵢ
 ≡ᵢ-zero-productˡ {i₁} {i₂} eq =
@@ -454,7 +454,7 @@ _≾ʷ?_ : Decidable _≾ʷ_
 no-window  ≾ʷ? (window _) = no λ ()
 no-window  ≾ʷ? no-window  = yes tt
 
--- zero-product properties, `no-window` sitting above the unit and not
+-- unit-product properties, `no-window` sitting above the unit and not
 -- below it
 
 ≾ʷ-zero-productˡ : ∀ {i₁ i₂ : Interval∞⊤} → i₁ ·ʷ i₂ ≾ʷ 𝟏ʷ → i₁ ≾ʷ 𝟏ʷ
@@ -469,7 +469,7 @@ no-window  ≾ʷ? no-window  = yes tt
 ≾ʷ-zero-productʳ {window _}  {no-window} ()
 ≾ʷ-zero-productʳ {no-window} {_}         ()
 
--- binary joins, with `no-window` the join of anything with itself
+-- binary joins, with `no-window` the join of itself with anything
 
 _⊔ʷ_ : Interval∞⊤ → Interval∞⊤ → Interval∞⊤
 (window i) ⊔ʷ (window j) = window (i ⊔ᵢ j)

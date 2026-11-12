@@ -15,8 +15,8 @@
 -- durations of words of `e` (`hull-reach`); with iteration it is     --
 -- the least too once the domain is Archimedean, a word of positive   --
 -- duration repeated outlasting every duration (`Iterated`). Fitting  --
--- preserves durations, so the hull is monotone in the order on sets  --
--- of words (`hull-mono`, `hull-mono*`).                              --
+-- preserves durations, so where the hull is least it is monotone in  --
+-- the order on sets of words (`hull-mono`, `hull-mono*`).            --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)

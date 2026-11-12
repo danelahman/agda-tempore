@@ -3,12 +3,12 @@
 --                                                                    --
 -- The elements are one-sided expressions with at least one word,     --
 -- compared by the runs they denote (`Exact.Lift`), decided by the    --
--- automaton of the reader (`Regular.Decide`) in a commensurable time --
--- domain. Sequencing, union, the empty word and the unrestricted     --
--- stretch are the operations; a delay is graded by its hull on each  --
--- side. The Kleene plus of a grade is `e · e*`: the least grade      --
--- above `e` closed under sequencing, with the induction laws, at the --
--- ∀∃ lift of iteration.                                              --
+-- automaton of the reader (`Regular.Decide`) in a dense              --
+-- commensurable time domain. Sequencing, union, the empty word and   --
+-- the unrestricted stretch are the operations; a delay is graded by  --
+-- its hull on each side. The Kleene plus of a grade is `e · e*`: the --
+-- least grade above `e` closed under sequencing, with the induction  --
+-- laws, at the ∀∃ lift of iteration.                                 --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -289,8 +289,8 @@ private
 ------------------------------------------------------------------------
 -- The grades
 --
--- A grade's order is the decision: `c ≾ᴳ d` holds when the runs of `c`
--- are found among those of `d`.
+-- A grade's order is the decision: `c ≾ᴳ d` holds when every run of `c`
+-- fits a run of `d`.
 
 infix 4 _≾ᴳ_
 

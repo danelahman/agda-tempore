@@ -14,8 +14,8 @@
 --     recorded in the effect grades, so types record what code       --
 --     touched, but a box does not check it.                          --
 --                                                                    --
---   * The level only, along `π₂ᵍ`: a taint check alone, LIO's rule   --
---     of no write-down after read-up, with time recorded in the      --
+--   * The level only, along `π₂ᵍ`: a taint check alone, with no      --
+--     write-down after read-up, and with time recorded in the        --
 --     effect grades but not awaited by a box.                        --
 --                                                                    --
 -- The identity system maps to the other two by the identity on       --

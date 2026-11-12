@@ -306,7 +306,7 @@ the-cap-absorbs = refl
 ------------------------------------------------------------------------
 -- The product does not commute
 --
--- Reading and then writing meets neither end of writing and then
+-- Reading and then writing does not meet both ends of writing and then
 -- reading.
 
 not-commutative :

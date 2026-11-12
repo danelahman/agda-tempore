@@ -18,7 +18,7 @@
 -- ordered by inclusion with union the join. The call-time sets       --
 -- are the semidirect product of the durations with the times by      --
 -- name under the shift. A shift by a non-empty set of durations is   --
--- empty only on the empty set, which is (A6). The order is           --
+-- empty only on the empty set, which gives (A6). The order is        --
 -- componentwise inclusion, the unit `({0} , ∅)` is not least, and    --
 -- `ι n` is `({n} , ∅)`. A set of times that the shift by `T` keeps   --
 -- within itself the shift by `T⁺`, Kleene's plus of the durations,   --
@@ -251,8 +251,7 @@ shift-reflects-∅ {c} {E} q = ⊆⇒⊑ E ∅ₜ λ y y∈ →
   where x = proj₁ (Dur.inhabited′ c)
 
 -- what a shift by `c` does not raise, a shift by its closure `c⁺`
--- does not raise either: from `c + E ⊆ E`, `c⁺ + E ⊆ E` (Kleene's
--- induction)
+-- does not raise either: from `c + E ⊆ E`, `c⁺ + E ⊆ E` (induction)
 
 shift-⁺ : ∀ c {E} → shift c E ⊑ E → shift (Plus.c⁺ (Dur.plusᴿ c)) E ⊑ E
 shift-⁺ c {E} q = ⊆⇒⊑ (shift c⁺ E) E λ w w∈ →

@@ -73,7 +73,7 @@ interval-embed-∞ : GradeMorphism.map T.interval→rational Discrete.[ 3 , Disc
             ≡ T.[ # 3 , ∞ ]
 interval-embed-∞ = refl
 
--- a dense window strictly inside the image of a discrete one
+-- a dense window inside the image of a discrete one
 
 interval-inside : T.[ 1 / 2 , ↑ 3 / 2 ]
                T.≾ᵢ GradeMorphism.map T.interval→rational Discrete.[ 0 , Discrete.↑ 2 ]
@@ -116,7 +116,7 @@ interval-open-∞ : T.[ # 3 , ∞ [ ≡ T.[ # 3 , ∞ ]
 interval-open-∞ = refl
 
 ------------------------------------------------------------------------
--- The closed intervals, as a sub-grade
+-- The closed intervals, by their grade morphism
 
 interval-closed : GradeMorphism.map T.closed→interval Closed.[ 1 / 2 , ↑ # 2 ]
            ≡ T.[ 1 / 2 , ↑ # 2 ]

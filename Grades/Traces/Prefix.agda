@@ -11,13 +11,13 @@
 --                                                                     --
 --   s ⊑ᵖ t   iff   t ≡ s ∙ r   for some continuation r                --
 --                                                                     --
--- It is a preorder, but the language product is not monotone for it   --
+-- It is a preorder, but the product of traces is not monotone for it  --
 -- on the left, as the `·-monoˡ-≾` field of a `Grade` asks.            --
 -- `Separation` exhibits the failure as a checked term.                --
 --                                                                     --
--- The obstruction is not special to prefixes: any order asking the    --
--- demanded events to be contiguous in the run fails the same way,     --
--- sequencing two gap-free demands leaving a gap between them. An      --
+-- The obstruction does not seem special to prefixes: an order asking  --
+-- the demanded events to be contiguous in the run would fail the same --
+-- way, sequencing two gap-free demands leaving a gap between them. An --
 -- order's tolerance of unmatched operations in the middle is what     --
 -- makes the trace grades monoid-graded at all.                        --
 -------------------------------------------------------------------------
@@ -92,7 +92,7 @@ module Separation (a b : Op) (a≢b : ¬ (a ≡ b)) where
   b-not-before-ab : ¬ (⌈ b ⌉ ⊑ᵖ (⌈ a ⌉ ∙ ⌈ b ⌉))
   b-not-before-ab (r , p) = a≢b (sym (op-head {b} {a} {r} {⌈ b ⌉} p))
 
-  -- so the language product is not monotone on the left, against the
+  -- so the product of traces is not monotone on the left, against the
   -- `·-monoˡ-≾` field of `Grade`: no grade can be built over the prefix
   -- order by the construction the trace grades use.
 

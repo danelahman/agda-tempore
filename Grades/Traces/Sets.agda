@@ -1,13 +1,13 @@
 -------------------------------------------------------------------------
 -- Non-empty finite sets of timed traces, and their monoid structure.  --
 --                                                                     --
--- Every trace-based grade is built from the same carrier: a non-empty --
--- finite set of timed traces, read as a set of alternative runs. The  --
--- monoid is the language product, which sequences each trace of one   --
--- set with each trace of the other, with unit `{ ε }`. The grades of  --
--- `Grades.Examples.Traces` differ in the order they put on this       --
--- carrier, and the interval ones pair two such sets, as a floor and   --
--- a cap.                                                              --
+-- The finite trace grades are built from one carrier: a non-empty     --
+-- finite set of timed traces, read as a set of alternative runs, or   --
+-- its antichain normal form (`Traces.Reduced`). The monoid is the     --
+-- language product, which sequences each trace of one set with each   --
+-- trace of the other, with unit `{ ε }`. These grades differ in the   --
+-- order they put on the carrier, and the interval ones pair two such  --
+-- sets, as a floor and a cap.                                         --
 --                                                                     --
 -- A set is represented canonically: the underlying list is strictly   --
 -- increasing for the lexicographic order `_<ᵀ_` on traces, so it      --
@@ -529,7 +529,7 @@ nf-++-nf xs ys =
                   (sym (nf-·ˢ-nfʳ (traces P) (traces Q ·ˢ traces R)))))
 
 ------------------------------------------------------------------------
--- Zero-product property of the unit
+-- Unit-product property of the unit
 
 -- the only element of the unit is the empty trace
 

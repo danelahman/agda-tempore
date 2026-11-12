@@ -15,7 +15,7 @@
 -- The empty bound permits only the empty run. That needs every        --
 -- operation to cost something, since a free operation could be paid   --
 -- for out of no budget, so positivity of `costʰⁱ` is an argument      --
--- where it is used; the grade's zero-product law rests on it, and     --
+-- where it is used; the grade's unit-product law rests on it, and     --
 -- under it only the empty run has duration `0`.                       --
 -------------------------------------------------------------------------
 

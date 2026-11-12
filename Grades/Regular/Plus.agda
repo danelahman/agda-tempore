@@ -3,8 +3,8 @@
 --                                                                    --
 -- For a language `L`, a predicate on words, `L ⁺ = L · L*` is the    --
 -- least language above `L` closed under concatenation, and it        --
--- satisfies the induction laws of a Kleene algebra: what `L` does    --
--- not move on one side, `L ⁺` does not move either. The proofs are   --
+-- satisfies two induction laws: what `L` does not raise on one       --
+-- side, `L ⁺` does not raise either. The proofs are                  --
 -- about words, by induction on iteration; the grade of regular       --
 -- languages (`Regular.Grade`) declares its plus from them.           --
 ------------------------------------------------------------------------

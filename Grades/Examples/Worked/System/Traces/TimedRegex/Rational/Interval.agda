@@ -71,7 +71,7 @@ anything-above-unit : holds ⌜ L.≥ (# 0) ⌝ ⌜ ε {lower} ⌝ ≡ false
 anything-above-unit = refl
 
 -- a cycle of heating and a rest of one to three units, at least once:
--- more than three units, unbounded above
+-- at least three units, unbounded above
 
 cycle-measured :
   ∣ [ ⌜ ‵ heat · L.idle L.≥ (# 1) ⌝ ⁺ᵉ , ⌜ ‵ heat · U.idle U.≤ (# 3) ⌝ ⁺ᵉ ]ᵍ ∣

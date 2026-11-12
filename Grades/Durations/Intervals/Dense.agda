@@ -75,7 +75,8 @@ shift-∈ {w} {i} r = ⊕-sound {pointⁱ w} {i} (∈-pointⁱ w) r
 ⁺⋢⁻ (by-pt a)      = ⊥-elim-irr (<-irrefl a)
 ⁺⋢⁻ (by-side _ ())
 
--- below the cut just below a point is strictly below the point
+-- a cut just above `p` that is below the cut just below `q` has `p` strictly
+-- below `q`
 
 ⊑⁻⇒< : ∀ {p s q} → (p ∣ s) ⊑ (q ∣ ⁻) → s ≡ ⁺ → p <ᴰ q
 ⊑⁻⇒< {p} {s} {q} r refl with q ≤ᴰ? p
@@ -159,7 +160,8 @@ private
   variable
     x z q r : Carrier
 
-  -- `x` fits under `z ∸ q` exactly when `q` fits under `z ∸ x`
+  -- for `q` and `x` below `z`: if `x` fits under `z ∸ q`, then `q` fits
+  -- under `z ∸ x`
   swap-∸ : q ≤ᴰ z → x ≤ᴰ z → x ≤ᴰ z ∸ᴰ q → q ≤ᴰ z ∸ᴰ x
   swap-∸ {q} {z} {x} q≤z x≤z p =
     +-≤-∸ x≤z (≤ᴰ-trans (≤ᴰ-reflexive (+ᴰ-comm x q))
@@ -178,8 +180,8 @@ private
     a (≤ᴰ-trans (≤-+-∸ z q)
                 (≤ᴰ-trans (+ᴰ-monoʳ-≤ q b) (≤ᴰ-reflexive (+ᴰ-comm q x))))
 
-  -- and `z` strictly below a sum leaves the difference strictly below
-  -- the other summand
+  -- and, for `r` below `z`, `z` strictly below a sum `x + r` leaves `z ∸ r`
+  -- strictly below `x`
   ∸-< : r ≤ᴰ z → z <ᴰ x +ᴰ r → z ∸ᴰ r <ᴰ x
   ∸-< {r} {z} {x} r≤z a b =
     a (≤ᴰ-trans (+ᴰ-monoˡ-≤ r b) (≤ᴰ-reflexive (∸-+ r≤z)))

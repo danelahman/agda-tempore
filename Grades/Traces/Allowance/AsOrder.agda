@@ -8,7 +8,7 @@
 --                                                                    --
 -- Positivity of `costʰⁱ` is a parameter: it is what makes the order  --
 -- antisymmetric and the empty bound permit nothing but the empty     --
--- run, and so what the grades' zero-product law rests on.            --
+-- run, and so what the grades' unit-product law rests on.            --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)

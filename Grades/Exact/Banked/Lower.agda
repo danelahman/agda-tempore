@@ -13,8 +13,8 @@
 --                                                                    --
 --   s ≼ᶜ t   iff   ⟦ lo t ⟧ ≾ ⟦ lo s ⟧                               --
 --                                                                    --
--- and a run is below a union of guarantees when it covers one of     --
--- them. Soundness is by induction on the coverage, a stretch in      --
+-- and a run is below a union of guarantees only when it covers one   --
+-- of them. Soundness is by induction on the coverage, a stretch in   --
 -- front of the run standing for the slack it has banked. Reflection  --
 -- reads the word of the run without flanks at the lower reader: the  --
 -- chains of a run of the reader bank what they pour and close by     --

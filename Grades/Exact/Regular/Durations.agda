@@ -2,7 +2,7 @@
 -- The duration hull of the timed regex grades.                       --
 --                                                                    --
 -- A grade is an expression with a word, so its hull (`Exact.         --
--- Durations`) is an interval, `hullᴾ`: in a commensurable time       --
+-- Durations`) is an interval, `hullᴾ`: in a dense commensurable time --
 -- domain, which is Archimedean, the least interval holding the       --
 -- durations of its runs, iteration included. It is monotone in the   --
 -- grade order and sends the empty word to the point zero, sequencing --

@@ -15,9 +15,9 @@
 --                                                                    --
 -- A resource for exactly two `beep`s, the first at once, the second  --
 -- 200 to 300 units after it, and the end at most 10 units after the  --
--- second (`fresh-gain`), admits two beeps 250 units apart, and       --
--- refuses one beep, two beeps 100 units apart, and a call of `draw`  --
--- after the second beep.                                             --
+-- second (`fresh-gain`), admits two beeps separated by a delay of    --
+-- 250 units, and refuses one beep, two beeps separated by a delay of --
+-- 100 units, and a call of `draw` after the second beep.             --
 --                                                                    --
 -- Every ordering is established by the decision procedure of the     --
 -- grade, and every computation by reduction.                         --

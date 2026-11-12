@@ -3,7 +3,7 @@
 --                                                                     --
 -- The interface `Allowance.AsOrder` meets, at the order a guarantee   --
 -- wants. `mono-∙` holds only with the second slack pinned to zero     --
--- (the slack-additive form fails, as `Coverage.Moves` records),       --
+-- (the slack-additive form fails, as `Coverage.Moves` remarks),       --
 -- which is the instance the lift, taken at slack zero, needs. Nothing --
 -- is asked of `costˡᵒ`: an operation is never bought.                 --
 -------------------------------------------------------------------------

@@ -13,9 +13,10 @@
 --                                                                    --
 -- A piece pours freely, overflows into the next stretch when the     --
 -- chain is met inside it and not before, and a chain closes once met.--
--- States of M from which M accepts nothing are left out. A chain not --
--- yet met lacks at most the largest bound and weight, so finitely    --
--- many configurations serve.                                         --
+-- States of M that are not final and that every letter leaves        --
+-- unchanged, which accept nothing, are left out. A chain not yet met --
+-- lacks at most the largest bound and weight, so finitely many       --
+-- configurations serve.                                              --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -183,8 +184,8 @@ private
   not? (yes x) = no λ ¬x → ¬x x
   not? (no ¬x) = yes ¬x
 
--- the states of M from which some word is accepted; a dead state is
--- not final and has every letter loop on it
+-- the states of M that are not dead; a dead state is not final and has
+-- every letter loop on it, so it accepts nothing
 
 dead : ℕ → Bool
 dead q = not (Y.isFinal M q) ∧ all (λ b → next q b ℕ.≡ᵇ q) ys

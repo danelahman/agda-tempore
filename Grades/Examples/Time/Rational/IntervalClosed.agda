@@ -9,8 +9,8 @@
 -- weaker grade; a delay by `q` has grade `[ q , ↑ q ]`.              --
 --                                                                    --
 -- These are the intervals of `Time.Rational.Interval` whose ends are --
--- closed, and they embed there by a grade morphism. The discrete     --
--- windows of `Time.Interval` embed here along the inclusion of       --
+-- closed, and they map there by a grade morphism. The discrete       --
+-- windows of `Time.Interval` map here along the inclusion of         --
 -- durations, a window of time steps being read as the same window of --
 -- rational time.                                                     --
 ------------------------------------------------------------------------
@@ -179,7 +179,7 @@ i₁ ≾ᵢ? i₂ with min i₂ ≤? min i₁ | max i₁ ≤∞? max i₂
 ... | yes _ | no ¬q = no λ r → ¬q (proj₂ r)
 ... | no ¬p | _     = no λ r → ¬p (proj₁ r)
 
--- zero-product property
+-- unit-product property
 
 ≡ᵢ-zero-productˡ : ∀ {i₁ i₂} → i₁ ·ᵢ i₂ ≡ 𝟏ᵢ → i₁ ≡ 𝟏ᵢ
 ≡ᵢ-zero-productˡ {i₁} {i₂} eq =
@@ -300,7 +300,7 @@ rational-closed-intervalʰ = record
   }
 
 ------------------------------------------------------------------------
--- The time intervals in whole steps embed
+-- The time intervals in whole steps, by a grade morphism
 
 interval→rational-closed : GradeMorphism ℕ→ℚ≥0ᴰ Discrete.interval
                                      rational-closed-interval

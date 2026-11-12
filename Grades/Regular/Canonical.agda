@@ -1,8 +1,9 @@
 ------------------------------------------------------------------------
 -- The canonical table of a regular language.                         --
 --                                                                    --
--- `canon` sends a table to the minimal complete DFA of its language, --
--- with states numbered breadth-first. Two steps:                     --
+-- `canon` sends a table to the quotient of its reachable states by   --
+-- language equivalence, a complete DFA of its language, with states  --
+-- numbered breadth-first. Two steps:                                 --
 --                                                                    --
 --   * Moore's partition refinement. Round `i` puts two states in one --
 --     class iff they agree on every word shorter than `i`; a round   --

@@ -127,8 +127,8 @@ bigMin-mono f g xs ne h =
   bigMin-bound g xs (bigMin (map f xs)) ne
     (λ t t∈xs → ≤-trans (bigMin-mem f t xs t∈xs) (h t))
 
--- `bigMin` is a monoid homomorphism `(List ℕ, ++) → (ℕ, ⊓)` on non-empty
--- lists, both arguments taken in cons form as `NonEmpty` is defined on
+-- `bigMin` is a semigroup homomorphism from non-empty lists under `++` to
+-- `(ℕ, ⊓)`, both arguments taken in cons form as `NonEmpty` is defined on
 -- `List Trace` only
 
 bigMin-++ : (a : ℕ) (as : List ℕ) (b : ℕ) (bs : List ℕ)
@@ -196,8 +196,8 @@ module MinDurations (c : Op → ℕ) where
     bigMin-bound duration xs (minSetDuration ys) ne
       (λ t t∈xs → bigMin-mem duration t ys (toWitness (sub t (fromWitness t∈xs))))
 
-  -- `minSetDuration` is a monoid homomorphism for concatenation of
-  -- (non-empty) sets of traces (as a `⊓`-monoid map)
+  -- `minSetDuration` is a semigroup homomorphism from concatenation of
+  -- non-empty sets of traces to `(ℕ, ⊓)`
 
   minSetDuration-++ : (xs ys : List Trace) → NonEmpty xs → NonEmpty ys
                     → minSetDuration (xs ++ ys) ≡ minSetDuration xs ⊓ minSetDuration ys

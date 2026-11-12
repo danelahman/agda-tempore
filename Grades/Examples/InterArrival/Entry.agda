@@ -16,17 +16,17 @@
 -- lead time (`_▸_`), from an active part before a silent one, its    --
 -- duration added to the tail (`_◂_`), and from two active parts, the --
 -- counts added and the tail of the first with the lead time of the   --
--- second a new gap (`_⋈_`). The order is inclusion, case by case and --
--- component by component; the join is the hull; the unit is silent   --
--- for no time; the top admits every silent duration and every active --
--- run; and a delay by `τ` is silent for `τ`.                         --
+-- second a new gap (`_⋈_`). The order compares the ends, case by     --
+-- case and component by component; the join is the hull; the unit is --
+-- silent for no time; the top admits every silent duration and every --
+-- active run; and a delay by `τ` is silent for `τ`.                  --
 --                                                                    --
 -- Every law holds on the nose and the order is antisymmetric         --
 -- (`entry-poset`). The joins of intervals are associative,           --
 -- commutative and idempotent and the sums distribute over them, so   --
 -- that both sides of the associativity and the distributivity laws   --
 -- are joins of the same cases, which the solver for idempotent       --
--- commutative monoids regroups. The zero-product laws use that no    --
+-- commutative monoids regroups. The unit-product laws use that no    --
 -- entry is empty: a product below the unit has no active part, so    --
 -- neither factor has one. The top is greatest as counts are          --
 -- positive. The closures are in `InterArrival.Closure`.              --
@@ -462,7 +462,7 @@ entry s a {p} ⊔ᵉ entry s' a' {p'} = entry (s ∪? s') (a ∨ᵃ? a') {inhabi
 ιᵉ : 𝔻 → Entry
 ιᵉ τ = entry (just (pointⁱ τ)) nothing
 
--- the order: inclusion, case by case
+-- the order: comparison of the ends, case by case
 
 record _⊑ᵉ_ (e e' : Entry) : Set where
   constructor entry-⊑
@@ -661,7 +661,7 @@ private
                  (regroup (lift₂ _▸_ t a) (lift₂ _▸_ t' a) (lift₂ _◂_ b s) (lift₂ _◂_ b' s)
                           (lift₂ _⋈_ b a) (lift₂ _⋈_ b' a)))
 
--- the zero-product laws: a product below the unit has no active part,
+-- the unit-product laws: a product below the unit has no active part,
 -- so none of its three cases contributes one; as no entry is empty,
 -- neither factor has an active part, and the silent durations of both
 -- lie within those of the unit

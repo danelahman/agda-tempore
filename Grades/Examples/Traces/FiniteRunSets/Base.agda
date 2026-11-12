@@ -2,7 +2,7 @@
 -- The subset order on sets of traces.                                --
 --                                                                    --
 -- The finite run set grade orders `NeTraces` by `_⊑_` of `Sets`;     --
--- below are the reading of `_⊑_` as membership and the zero-product  --
+-- below are the reading of `_⊑_` as membership and the unit-product  --
 -- law of the grade.                                                  --
 --                                                                    --
 -- `_⊑_` is `liftˢ _≡_`, the set-level lift of the ordered trace      --
@@ -53,7 +53,7 @@ open WithDecEq _≟ₒ_ using (_⊑_; _∈?_; _≟ᵀ_)
 ⊑-∈ f s m = fromWitness (f s (toWitness m))
 
 ------------------------------------------------------------------------
--- Zero-product, for a cap
+-- Unit-product, for a cap
 --
 -- A language product inside `{ ε }` has both factors inside it: each
 -- member of a factor pairs with some member of the other, the pair is

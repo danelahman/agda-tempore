@@ -19,7 +19,7 @@ import Grades.Exact.Base
 import Grades.Exact.Order
 
 -- sets of words under the ∀∃ lift: a preorder, a monotone product
--- distributing over joins, greatest elements, the zero-product property
+-- distributing over joins, greatest elements, the unit-product property
 
 import Grades.Exact.Lift
 

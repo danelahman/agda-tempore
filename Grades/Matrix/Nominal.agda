@@ -3,12 +3,13 @@
 --                                                                    --
 -- The transpositions `swap a b` of names act on the dioid by         --
 -- automorphisms: monotone, involutive, the identity at `a = b`, and  --
--- preserving `𝟘`, `𝟙`, `_⊕_` and `_⊗_`. A permutation is a list of   --
--- transpositions, and it fixes a finite set `A` of names when none   --
--- of its transpositions touches `A`. The dioid has the joins of      --
--- orbits: for every `A` and `x`, `⟨ x ⟩ A` is the least upper bound  --
--- of the elements `π · x` for the permutations `π` fixing `A`, and   --
--- `_⊗_` distributes over it on both sides.                           --
+-- preserving `𝟘`, `𝟙`, `_⊕_` and `_⊗_`. A permutation is given as a  --
+-- list of transpositions, acting one after another, with no          --
+-- relations between transpositions assumed, and it fixes a finite    --
+-- set `A` of names when none of its transpositions touches `A`. The  --
+-- dioid has the joins of orbits: for every `A` and `x`, `⟨ x ⟩ A` is --
+-- the least upper bound of the elements `π · x` for the permutations --
+-- `π` fixing `A`, and `_⊗_` distributes over it on both sides.       --
 --                                                                    --
 -- A dioid whose elements name no names is equivariant with the       --
 -- trivial action, its orbits being single elements (`trivial`).      --

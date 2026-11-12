@@ -7,10 +7,10 @@
 -- adds the ends, an end of a sum being open when an end summed is;   --
 -- the join is the hull; and a delay by `τ` is the point `[τ, τ]`.    --
 --                                                                    --
--- The laws hold over any time domain. In a dense one the order is    --
--- containment of the durations admitted and sequencing their         --
--- Minkowski sum (`Durations.Intervals.Dense`); that is the grade of  --
--- rational time, `Time.Rational.Interval`.                           --
+-- The laws hold over any time domain. In a dense one with a positive --
+-- duration the order is containment of the durations admitted and    --
+-- sequencing their Minkowski sum (`Durations.Intervals.Dense`); that --
+-- is the grade of rational time, `Time.Rational.Interval`.           --
 ------------------------------------------------------------------------
 
 open import Grades.Durations

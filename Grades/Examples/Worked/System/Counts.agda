@@ -17,7 +17,7 @@ import Grades.Examples.Worked.System.Counts.FiniteRunSets.AtLeast
 
 import Grades.Examples.Worked.System.Counts.Banked.LowerBound
 
--- the allowance cap does not project onto at-most counts
+-- no morphism from the allowance cap to at-most counts counts the operations
 
 import Grades.Examples.Worked.System.Counts.Banked.UpperBound
 

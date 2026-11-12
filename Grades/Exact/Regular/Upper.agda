@@ -17,10 +17,11 @@
 -- Each move of the reader is a move of the automaton, reading a      --
 -- piece when it pours or matches one, silent otherwise; so a word of --
 -- pieces is accepted exactly when the reader accepts it against some --
--- bound of M. States of M from which M accepts nothing are left out. --
--- The gaps the automaton meets are bounded by the largest bound and  --
--- weight, so finitely many configurations serve and the automaton    --
--- determinises (`Regular.Determinise`).                              --
+-- bound of M. States of M that are not final and that every letter   --
+-- leaves unchanged, which accept nothing, are left out. The gaps the --
+-- automaton meets are bounded by the largest bound and weight, so    --
+-- finitely many configurations serve and the automaton determinises  --
+-- (`Regular.Determinise`).                                           --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)
@@ -208,8 +209,8 @@ private
   both′ (yes _) (no ¬y) = no λ { (_ , y) → ¬y y }
   both′ (no ¬x) _       = no λ { (x , _) → ¬x x }
 
--- the states of M from which some word is accepted; a dead state is
--- not final and has every letter loop on it
+-- the states of M that are not dead; a dead state is not final and has
+-- every letter loop on it, so it accepts nothing
 
 dead : ℕ → Bool
 dead q = not (Y.isFinal M q) ∧ all (λ b → next q b ℕ.≡ᵇ q) ys

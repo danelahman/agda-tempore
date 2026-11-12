@@ -14,7 +14,8 @@
 -- drifts with time and with use. A variable that is noneternal goes  --
 -- stale after any step or any expenditure of energy.                 --
 --                                                                    --
--- The unit is least and `_·_` commutes; its hints declare both.      --
+-- The unit is least, `_·_` commutes, and every grade has a closure;  --
+-- its hints declare all three.                                       --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Product.TimeUpperBoundEnergy where

@@ -17,7 +17,7 @@
 -- case possibly absent, together with the total duration of the run, --
 -- which all operations share. It is the grade of one operation       --
 -- indexed by the names (`Grades.Indexed`), paired with the intervals --
--- of the total duration (`Grades.Product`): the order is inclusion,  --
+-- of the total duration (`Grades.Product`): the order compares ends, --
 -- joins are hulls, the unit is silent for no time at every name and  --
 -- takes no time, and a delay by `τ` is silent for `τ` at every name  --
 -- and takes `τ`.                                                     --

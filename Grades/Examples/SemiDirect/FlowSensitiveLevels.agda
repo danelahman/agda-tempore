@@ -3,7 +3,7 @@
 --                                                                    --
 -- A grade `(l , W)` is "touches nothing above `l`, and writes each   --
 -- sink `s` at most at the level `W s`", where `W s` is in `L⊥`, the  --
--- levels below a new least element `⊥`, "not written". It is the     --
+-- levels with a new least element `⊥`, "not written". It is the      --
 -- semidirect product of the levels with the outputs, the level       --
 -- touched raising each output written after it:                      --
 --                                                                    --
@@ -12,9 +12,9 @@
 -- where `raise l` sends `⊥` to `⊥` and a level `l'` to `l ∨ l'`.     --
 -- Keeping `⊥` apart from "written at the least level" makes `raise   --
 -- l` preserve `⊥`, and every `raise l` reflects it. The unit         --
--- `(⊥ , ⊥)` is least, as its hints declare; they do not declare      --
--- `_·_` commutative. A level is its own closure, and the hints       --
--- declare the closure                                                --
+-- `(bot , ⊥)`, with `bot` the least level, is least, as its hints    --
+-- declare; they do not declare `_·_` commutative. A level is its own --
+-- closure, and the hints declare the closure                         --
 --                                                                    --
 --   (l , W)⁺  =  (l , W ∨ raise l W) .                               --
 --                                                                    --
@@ -49,7 +49,7 @@ module Over (L : LevelLattice) where
   open L using (_∨_)
 
   ----------------------------------------------------------------------
-  -- The levels below a new least element
+  -- The levels with a new least element
 
   infix 4 _⊑⊥_
 

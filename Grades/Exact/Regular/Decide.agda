@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 -- The order on one-sided expressions with iteration, decided.        --
 --                                                                    --
--- In a commensurable time domain the durations of two expressions,   --
--- and the running times of the operations, are multiples of one unit --
--- `δ`. Then                                                          --
+-- In a dense commensurable time domain the durations of two          --
+-- expressions, and the running times of the operations, are          --
+-- multiples of one unit `δ`. Then                                    --
 --                                                                    --
 --   ⟦ e ⟧ ≾ ⟦ f ⟧   iff   L(X) ⊆ L(D_f)                              --
 --                                                                    --

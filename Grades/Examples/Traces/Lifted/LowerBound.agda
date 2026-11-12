@@ -14,11 +14,11 @@
 --   P ≾ P'   iff   ∀ p ∈ P. ∃ p' ∈ P'. p' ≼ p                        --
 --                                                                    --
 -- that is, every listed guarantee has a weaker one listed in `P'`.   --
--- Both endpoints are read disjunctively and weaken by gaining        --
--- members, and the union of two grades is their join. The            --
--- quantifiers range universally over the set of the stronger grade   --
--- and existentially over that of the weaker, the mirror image of     --
--- `Lifted.UpperBound`.                                               --
+-- The set is read disjunctively and weakens by gaining members, and  --
+-- the union of two grades is their join. The quantifiers range       --
+-- universally over the set of the stronger grade and existentially   --
+-- over that of the weaker, as in `Lifted.UpperBound`, with the       --
+-- comparison of traces reversed.                                     --
 --                                                                    --
 -- The order is `P ⊆ ↑P'`, so the closure is upward and the canonical --
 -- form of a grade is the antichain of its `≼`-minimal members. The   --
@@ -113,7 +113,7 @@ open R public hiding (≾-antisym)
 𝟏-not-least τ pos least = 𝟏⋠ι τ pos (least (ι τ))
 
 ------------------------------------------------------------------------
--- Zero-product property
+-- Unit-product property
 --
 -- The unit is greatest, so every grade lies below it and the property is
 -- vacuous.

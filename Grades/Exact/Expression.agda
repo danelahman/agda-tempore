@@ -131,7 +131,7 @@ _^_ : ∀ {s} → Expr s → ℕ → Expr s
 e ^ zero  = ε
 e ^ suc m = e · e ^ m
 
--- between `m` and `n` repetitions
+-- between `m` and `n` repetitions, for `m ≤ n`
 
 _^[_,_] : ∀ {s} → Expr s → ℕ → ℕ → Expr s
 e ^[ m , n ] = e ^ m · (e ∣ ε) ^ (n ∸ m)

@@ -6,11 +6,11 @@
 -- its start. Two of them in a row take two steps and transmit at     --
 -- times 0 and 1; idling two steps first shifts the transmission to   --
 -- time 2. A call-time set that allows transmissions only at times 2  --
--- to 4 admits the second and refuses the first. The unit, taking no  --
--- time and doing nothing, is not least: a grade that takes at least  --
--- one step is not above it. Every ordering is established by the     --
--- decision procedure of the grade, and every computation by          --
--- reduction.                                                         --
+-- to 4 admits the second, and refuses transmitting before idling two --
+-- steps. The unit, taking no time and doing nothing, is not least: a --
+-- grade that takes at least one step is not above it. Every ordering --
+-- is established by the decision procedure of the grade, and every   --
+-- computation by reduction.                                          --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Worked.SemiDirect.CallTimeSets where
