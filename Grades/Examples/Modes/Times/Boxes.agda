@@ -13,6 +13,9 @@
 -- are closed under the unit, sums, hulls, renaming and orbit joins,  --
 -- and "no trace" is realisable, so they form an equivariant          --
 -- sub-dioid (`times`), the entries of the mode-time matrices.        --
+--                                                                    --
+-- Every entry has a closure, by name and as a whole the closures of  --
+-- the intervals (`times-plus`).                                      --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Modes.Times.Boxes where
@@ -31,7 +34,7 @@ open import Data.Unit using (tt) renaming (⊤ to 𝟙ᵗ)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 
 open import Grades.Durations.Nat using (ℕᴰ)
-open import Grades.Base using (Grade)
+open import Grades.Base using (Grade; Plus; plus; plus-self)
 open import Grades.Indexed using (ℕ-names; ℕ-infinite; module Maps)
 open import Grades.Examples.Time.Interval
 open import Grades.Matrix.Dioid using (Dioid)
@@ -43,7 +46,7 @@ import Grades.Matrix.Nominal
 open import Util.Equality
 
 open Maps ℕ-names using (Map; _∣_; _!_; others; named; lookup; everywhere; map₂; !-map₂;
-                         pointwise⁻)
+                         pointwise⁻; plus-map)
 
 module B = Grades.Matrix.Boxes ℕ-infinite interval
 open B public using (Box; boxes; equivariant-boxes; rename; rename-!; orbit; orbit-∈; orbit-∉)
@@ -292,3 +295,44 @@ times = Grades.Matrix.Restrict.restricted ℕ-infinite equivariant-boxes closed
 
 equivariant-times : Grades.Matrix.Nominal.Equivariant ℕ-infinite times
 equivariant-times = Grades.Matrix.Restrict.restricted-equivariant ℕ-infinite equivariant-boxes closed
+
+------------------------------------------------------------------------
+-- Closures of the entries: by name and as a whole the closures of the
+-- intervals, realisable where the box is, and "no trace" its own
+
+private
+  module BG = Grade B.box-grade
+
+  plusᵇ : (b : Box) → Plus BG._·_ BG._≾_ b
+  plusᵇ (m , t) =
+    plus (Plus.c⁺ pm , Plus.c⁺ pt) (Plus.≾-c⁺ pm , Plus.≾-c⁺ pt)
+         (Plus.c⁺-iter pm , Plus.c⁺-iter pt)
+         (λ {v} (a₁ , a₂) (b₁ , b₂) →
+            Plus.c⁺-least pm {proj₁ v} a₁ b₁ , Plus.c⁺-least pt {proj₂ v} a₂ b₂)
+         (λ {d} (a₁ , a₂) → Plus.⁺-indˡ pm {proj₁ d} a₁ , Plus.⁺-indˡ pt {proj₂ d} a₂)
+         (λ {d} (a₁ , a₂) → Plus.⁺-indʳ pm {proj₁ d} a₁ , Plus.⁺-indʳ pt {proj₂ d} a₂)
+    where
+      pm = plus-map interval plusᵢ m
+      pt = plusᵢ t
+
+times-plus : (x : Dioid.Carrier times) → Plus (Dioid._⊗_ times) (Dioid._≤_ times) x
+times-plus (nothing , r) = plus-self tt tt
+times-plus (just (m , t) , r) =
+  plus (just (Plus.c⁺ pb) , r⁺)
+       (Plus.≾-c⁺ pb) (Plus.c⁺-iter pb)
+       (λ {v} → least {v}) (λ {d} → indˡ {d}) (λ {d} → indʳ {d})
+  where
+    pb = plusᵇ (m , t)
+    r⁺ = up-just {m} {t} {proj₁ (Plus.c⁺ pb)} {proj₂ (Plus.c⁺ pb)} (Plus.≾-c⁺ pb) r
+    least : ∀ {v} → Dioid._≤_ times (just (m , t) , r) v → Dioid._≤_ times (Dioid._⊗_ times v v) v
+          → Dioid._≤_ times (just (Plus.c⁺ pb) , r⁺) v
+    least {nothing , _} () _
+    least {just c , _}  p  q = Plus.c⁺-least pb {c} p q
+    indˡ : ∀ {d} → Dioid._≤_ times (Dioid._⊗_ times (just (m , t) , r) d) d
+         → Dioid._≤_ times (Dioid._⊗_ times (just (Plus.c⁺ pb) , r⁺) d) d
+    indˡ {nothing , _} _ = tt
+    indˡ {just c , _}  p = Plus.⁺-indˡ pb {c} p
+    indʳ : ∀ {d} → Dioid._≤_ times (Dioid._⊗_ times d (just (m , t) , r)) d
+         → Dioid._≤_ times (Dioid._⊗_ times d (just (Plus.c⁺ pb) , r⁺)) d
+    indʳ {nothing , _} _ = tt
+    indʳ {just c , _}  p = Plus.⁺-indʳ pb {c} p

@@ -436,6 +436,12 @@ module Maps (𝒩 : DecNames) where
           ≃-at refl (!· (everywhere (G.ι τ)) (everywhere (G.ι τ')) s) G.ι-plus
       }
 
+    -- the closure of a map, from a closure of every element
+
+    plus-map : ((c : G.Carrier) → Plus _·_ _≾_ c) → (m : Map G.Carrier)
+             → Plus (map₂ _·_) (Pointwise _≾_) m
+    plus-map pl m = plusᴹ {m} (pl (others m)) (All.universal (λ (_ , c) → pl c) (named m))
+
     -- its hints, from those of `G`, the closure of a map where its
     -- default and its entries have one
 

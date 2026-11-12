@@ -16,6 +16,12 @@
 -- kept by the action and by orbit joins (`ModeEntries`). Delays are  --
 -- a monoid morphism from the durations (`Delays`), the unit when     --
 -- they keep the mode and spend nothing (`mode-grade`).               --
+--                                                                    --
+-- From a star on the entries, `Closures` builds for each grade a     --
+-- candidate closure that satisfies every law of a closure but        --
+-- iteration; where iteration, decided, holds too, it is the closure  --
+-- (`plus?`). No hints declare it. A dioid with closures has a star   --
+-- (`stars-from`).                                                    --
 ------------------------------------------------------------------------
 
 open import Grades.Indexed using (Names)
@@ -39,8 +45,12 @@ open import Data.List.Membership.Propositional using (find)
 open import Data.List.Membership.Propositional using (_∉_)
 open import Data.Unit using () renaming (⊤ to ⊤′; tt to tt′)
 
+open import Data.List.Base using (length)
+open import Data.Maybe.Base using (Maybe; just; nothing)
+open import Data.Nat.Base using (ℕ; zero; suc)
+
 open import Grades.Durations using (Duration)
-open import Grades.Base using (Grade)
+open import Grades.Base using (Grade; Plus; plus)
 
 open import Util.Equality
 
@@ -71,6 +81,67 @@ record ModeEntries : Set₁ where
     -- kept by the action and by orbit joins
     change-act      : ∀ {a b x} → Change x → Change (act a b x)
     change-orbit    : ∀ {A x} → Change x → Change (⟨ x ⟩ A)
+
+------------------------------------------------------------------------
+-- A star on the entries, for closures (`Closures`): above the unit,
+-- below the unit joined with any element above its argument and closed
+-- under the product, with the two induction laws, and kept by the
+-- equivalence and the action
+
+record Stars : Set where
+  field
+    star       : Carrier → Carrier
+    star-unit  : ∀ a → 𝟙 ≤ star a
+    star-least : ∀ {a v} → a ≤ v → v ⊗ v ≤ v → star a ≤ 𝟙 ⊕ v
+    star-indˡ  : ∀ {a d} → a ⊗ d ≤ d → star a ⊗ d ≤ d
+    star-indʳ  : ∀ {a d} → d ⊗ a ≤ d → d ⊗ star a ≤ d
+    star-cong  : ∀ {a b} → a ≈ b → star a ≈ star b
+    star-act   : ∀ p q a → act p q (star a) ≈ star (act p q a)
+
+-- the star of a dioid with closures: the unit joined with the closure
+
+stars-from : ((a : Carrier) → Plus _⊗_ _≤_ a) → Stars
+stars-from pl = record
+  { star       = star
+  ; star-unit  = λ a → ⊕-ubˡ 𝟙 (⁺ a)
+  ; star-least = λ {a} h hv → ⊕-mono ≤-refl (Plus.c⁺-least (pl a) h hv)
+  ; star-indˡ  = λ {a} {d} h →
+      ≤-trans (⊗-distribʳ d 𝟙 (⁺ a)) (⊕-lub (proj₁ (⊗-identityˡ d)) (Plus.⁺-indˡ (pl a) h))
+  ; star-indʳ  = λ {a} {d} h →
+      ≤-trans (⊗-distribˡ d 𝟙 (⁺ a)) (⊕-lub (proj₁ (⊗-identityʳ d)) (Plus.⁺-indʳ (pl a) h))
+  ; star-cong  = λ (p , q) → ⊕-mono ≤-refl (⁺-mono p) , ⊕-mono ≤-refl (⁺-mono q)
+  ; star-act   = λ p q a →
+        ≤-trans (proj₁ (act-⊕ p q 𝟙 (⁺ a)))
+          (⊕-mono (proj₁ (act-𝟙 p q)) (act-⁺ p q a))
+      , ≤-trans (⊕-mono (proj₂ (act-𝟙 p q)) (⁺-act p q a))
+          (proj₂ (act-⊕ p q 𝟙 (⁺ a)))
+  }
+  where
+    ⁺ : Carrier → Carrier
+    ⁺ a = Plus.c⁺ (pl a)
+
+    star : Carrier → Carrier
+    star a = 𝟙 ⊕ ⁺ a
+
+    ⁺-mono : ∀ {a b} → a ≤ b → ⁺ a ≤ ⁺ b
+    ⁺-mono {a} {b} p = Plus.c⁺-least (pl a) (≤-trans p (Plus.≾-c⁺ (pl b))) (Plus.c⁺-iter (pl b))
+
+    -- the action of the closure is the closure of the action
+    ⁺-act : ∀ p q a → ⁺ (act p q a) ≤ act p q (⁺ a)
+    ⁺-act p q a =
+      Plus.c⁺-least (pl (act p q a)) (act-mono (Plus.≾-c⁺ (pl a)))
+        (≤-trans (proj₂ (act-⊗ p q (⁺ a) (⁺ a))) (act-mono (Plus.c⁺-iter (pl a))))
+
+    act-⁺ : ∀ p q a → act p q (⁺ a) ≤ ⁺ (act p q a)
+    act-⁺ p q a =
+      ≤-trans (act-mono {p} {q} least) (proj₁ (act-inv p q (⁺ (act p q a))))
+      where
+        w = act p q (⁺ (act p q a))
+        least : ⁺ a ≤ w
+        least = Plus.c⁺-least (pl a)
+          (≤-trans (proj₂ (act-inv p q a)) (act-mono (Plus.≾-c⁺ (pl (act p q a)))))
+          (≤-trans (proj₂ (act-⊗ p q (⁺ (act p q a)) (⁺ (act p q a))))
+                   (act-mono (Plus.c⁺-iter (pl (act p q a)))))
 
 module _ (E : ModeEntries) where
 
@@ -399,3 +470,247 @@ module _ (E : ModeEntries) where
 
   mode-grade : {D : Duration} → Grade D
   mode-grade = mode-grade-with unit-delays
+
+  ----------------------------------------------------------------------
+  -- Closures from a star on the entries
+  --
+  -- For a grade `A`, `B = A ⊔ A · A ⊔ … ⊔ Aᵏ⁺¹` and `S` the diagonal
+  -- matrix of the stars of the diagonal entries of `B`, the matrix
+  --
+  --   X  =  (𝟏 ⊔ B) · S · B
+  --
+  -- is above `A`, below every grade above `A` closed under the
+  -- product, and satisfies both induction laws (`candidate-plus`).
+  -- Where also `X · X ≾ X`, which is decided, `X` is the closure of
+  -- `A` (`plus?`), taking `k` from the number of modes `A` names.
+
+  module Closures (St : Stars) where
+
+    open Stars St
+
+    private
+      infixr 4 _⟫_
+
+      _⟫_ : ∀ {M N P} → M ≤ᵖ N → N ≤ᵖ P → M ≤ᵖ P
+      (p ⟫ q) x y = ≤-trans (p x y) (q x y)
+
+      ≤ᵖ-refl : ∀ {M} → M ≤ᵖ M
+      ≤ᵖ-refl _ _ = ≤-refl
+
+      swapᴹ-inj : ∀ {a b x y} → swapᴹ a b x ≡ swapᴹ a b y → x ≡ y
+      swapᴹ-inj {a} {b} {x} {y} eq =
+        trans (sym (swapᴹ-inv a b x)) (trans (cong (swapᴹ a b) eq) (swapᴹ-inv a b y))
+
+      -- the entry of the diagonal matrix of stars
+      ds : Matrix → (p : Name) (y : Mode) → Dec (y ≡ ⌜ p ⌝) → Carrier
+      ds M p y (yes _) = star (row M p ⌜ p ⌝)
+      ds M p y (no _)  = 𝟘
+
+      ds-swap : ∀ M {a b} → a ∉ modes M → b ∉ modes M → ∀ p y
+              → (d : Dec (swapᴹ a b y ≡ ⌜ swap a b p ⌝)) (d' : Dec (y ≡ ⌜ p ⌝))
+              → ds M (swap a b p) (swapᴹ a b y) d ≈ act a b (ds M p y d')
+      ds-swap M {a} {b} a∉ b∉ p y (yes _) (yes _) =
+        ≈-trans (star-cong (equivariant M a∉ b∉ p ⌜ p ⌝)) (≈-sym (star-act a b _))
+      ds-swap M {a} {b} a∉ b∉ p y (yes e) (no ne) = ⊥-elim (ne (swapᴹ-inj e))
+      ds-swap M {a} {b} a∉ b∉ p y (no ne) (yes e) = ⊥-elim (ne (cong (swapᴹ a b) e))
+      ds-swap M {a} {b} a∉ b∉ p y (no _)  (no _)  = ≈-sym (act-𝟘 a b)
+
+    -- the diagonal matrix of the stars of the diagonal entries
+
+    starsᴹ : Matrix → Matrix
+    modes (starsᴹ M) = modes M
+    row (starsᴹ M) p y = ds M p y (y ≟ᴹ ⌜ p ⌝)
+    equivariant (starsᴹ M) a∉ b∉ p y =
+      ds-swap M a∉ b∉ p y (_ ≟ᴹ _) (y ≟ᴹ ⌜ p ⌝)
+
+    private
+      stars-diag : ∀ M p → entry (starsᴹ M) ⌜ p ⌝ ⌜ p ⌝ ≡ star (row M p ⌜ p ⌝)
+      stars-diag M p with ⌜ p ⌝ ≟ᴹ ⌜ p ⌝
+      ... | yes _ = refl
+      ... | no ne = ⊥-elim (ne refl)
+
+      stars-off : ∀ M p {y} → ¬ y ≡ ⌜ p ⌝ → entry (starsᴹ M) ⌜ p ⌝ y ≡ 𝟘
+      stars-off M p {y} ne with y ≟ᴹ ⌜ p ⌝
+      ... | yes e = ⊥-elim (ne e)
+      ... | no _  = refl
+
+    starsᵐ : ModeMatrix → ModeMatrix
+    mat (starsᵐ x) = starsᴹ (mat x)
+    total (starsᵐ x) n =
+      ⌜ n ⌝ , λ le → 𝟙≰𝟘 (≤-trans (star-unit _)
+                           (≤-trans (≤-reflexive (sym (stars-diag (mat x) n))) le))
+    changes (starsᵐ x) {p} ne =
+      change-𝟘 (≤-reflexive (stars-off (mat x) p (λ e → ne (sym (⌜⌝-injective e)))))
+
+    ----------------------------------------------------------------------
+    -- The laws of the stars, entrywise
+
+    private
+      -- the unit is below the stars
+      I≤S : ∀ M → Iᴹ ≤ᵖ starsᴹ M
+      I≤S M stuck   y = stuck-row Iᴹ (starsᴹ M) y
+      I≤S M ⌜ p ⌝ y with y ≟ᴹ ⌜ p ⌝
+      ... | yes refl =
+        ≤-trans (≤-reflexive (Iᴹ-diag ⌜ p ⌝)) (star-unit _)
+      ... | no ne =
+        ≤-trans (≤-reflexive (Iᴹ-off (λ e → ne (sym e)))) (𝟘-≤ _)
+
+      -- below the unit joined with any matrix above and closed
+      S-least : ∀ {M V} → M ≤ᵖ V → V ⊗ᴹ V ≤ᵖ V → starsᴹ M ≤ᵖ Iᴹ ⊕ᴹ V
+      S-least {M} {V} hM hV stuck   y = stuck-row (starsᴹ M) (Iᴹ ⊕ᴹ V) y
+      S-least {M} {V} hM hV ⌜ p ⌝ y with y ≟ᴹ ⌜ p ⌝
+      ... | yes refl =
+        ≤-trans (star-least (hM ⌜ p ⌝ ⌜ p ⌝)
+                  (≤-trans (⊗ᴹ-ub V V ⌜ p ⌝ ⌜ p ⌝ ⌜ p ⌝) (hV ⌜ p ⌝ ⌜ p ⌝)))
+          (≤-trans (⊕-mono (≤-reflexive (sym (Iᴹ-diag ⌜ p ⌝))) ≤-refl)
+                   (proj₂ (⊕ᴹ-entry Iᴹ V ⌜ p ⌝ ⌜ p ⌝)))
+      ... | no ne = 𝟘-≤ _
+
+      S-indˡ : ∀ {M D} → M ⊗ᴹ D ≤ᵖ D → starsᴹ M ⊗ᴹ D ≤ᵖ D
+      S-indˡ {M} {D} h x y = ⊗ᴹ-lub (starsᴹ M) D x y (term x)
+        where
+          term : ∀ x q → entry (starsᴹ M) x q ⊗ entry D q y ≤ entry D x y
+          term stuck stuck   = proj₁ (⊗-identityˡ _)
+          term stuck ⌜ _ ⌝ = ≤-trans (⊗-zeroˡ _) (𝟘-≤ _)
+          term ⌜ p ⌝ q with q ≟ᴹ ⌜ p ⌝
+          ... | yes refl = star-indˡ (≤-trans (⊗ᴹ-ub M D ⌜ p ⌝ y ⌜ p ⌝) (h ⌜ p ⌝ y))
+          ... | no _     = ≤-trans (⊗-zeroˡ _) (𝟘-≤ _)
+
+      S-indʳ : ∀ {M D} → D ⊗ᴹ M ≤ᵖ D → D ⊗ᴹ starsᴹ M ≤ᵖ D
+      S-indʳ {M} {D} h x y = ⊗ᴹ-lub D (starsᴹ M) x y (term y)
+        where
+          term : ∀ y q → entry D x q ⊗ entry (starsᴹ M) q y ≤ entry D x y
+          term stuck   stuck = proj₁ (⊗-identityʳ _)
+          term ⌜ _ ⌝ stuck = ≤-trans (⊗-zeroʳ _) (𝟘-≤ _)
+          term y ⌜ m ⌝ with y ≟ᴹ ⌜ m ⌝
+          ... | yes refl = star-indʳ (≤-trans (⊗ᴹ-ub D M x ⌜ m ⌝ ⌜ m ⌝) (h x ⌜ m ⌝))
+          ... | no _     = ≤-trans (⊗-zeroʳ _) (𝟘-≤ _)
+
+    ----------------------------------------------------------------------
+    -- Joins of powers
+
+    powers : ModeMatrix → ℕ → ModeMatrix
+    powers A zero    = A
+    powers A (suc k) = A ⊔ᵐ (A ·ᵐ powers A k)
+
+    private
+      A≤P : ∀ A k → mat A ≤ᵖ mat (powers A k)
+      A≤P A zero    = ≤ᵖ-refl
+      A≤P A (suc k) = ⊕ᴹ-ubˡ (mat A) _
+
+      P-least : ∀ A k {V} → mat A ≤ᵖ V → V ⊗ᴹ V ≤ᵖ V → mat (powers A k) ≤ᵖ V
+      P-least A zero    hA hV = hA
+      P-least A (suc k) hA hV =
+        ⊕ᴹ-lub {mat A} {mat A ⊗ᴹ mat (powers A k)} hA
+          (⊗ᴹ-mono {mat A} {_} {mat (powers A k)} hA (P-least A k hA hV) ⟫ hV)
+
+      P-indˡ : ∀ A k {D} → mat A ⊗ᴹ D ≤ᵖ D → mat (powers A k) ⊗ᴹ D ≤ᵖ D
+      P-indˡ A zero    h = h
+      P-indˡ A (suc k) {D} h =
+        ⊗ᴹ-distribʳ D (mat A) (mat A ⊗ᴹ mat (powers A k))
+        ⟫ ⊕ᴹ-lub {mat A ⊗ᴹ D} {(mat A ⊗ᴹ mat (powers A k)) ⊗ᴹ D} h
+            (⊗ᴹ-assoc (mat A) (mat (powers A k)) D
+             ⟫ ⊗ᴹ-mono {mat A} {mat A} {mat (powers A k) ⊗ᴹ D} {D}
+                 ≤ᵖ-refl (P-indˡ A k h)
+             ⟫ h)
+
+      P-indʳ : ∀ A k {D} → D ⊗ᴹ mat A ≤ᵖ D → D ⊗ᴹ mat (powers A k) ≤ᵖ D
+      P-indʳ A zero    h = h
+      P-indʳ A (suc k) {D} h =
+        ⊗ᴹ-distribˡ D (mat A) (mat A ⊗ᴹ mat (powers A k))
+        ⟫ ⊕ᴹ-lub {D ⊗ᴹ mat A} {D ⊗ᴹ (mat A ⊗ᴹ mat (powers A k))} h
+            (⊗ᴹ-assoc⁻ D (mat A) (mat (powers A k))
+             ⟫ ⊗ᴹ-mono {D ⊗ᴹ mat A} {D} {mat (powers A k)} {mat (powers A k)}
+                 h ≤ᵖ-refl
+             ⟫ P-indʳ A k h)
+
+    ----------------------------------------------------------------------
+    -- The candidate
+
+    candidate : ℕ → ModeMatrix → ModeMatrix
+    candidate k A = ((𝟏ᵐ ⊔ᵐ powers A k) ·ᵐ starsᵐ (powers A k)) ·ᵐ powers A k
+
+    private
+      module _ (A : ModeMatrix) (k : ℕ) where
+
+        Bᴬ = mat (powers A k)
+        Sᴮ = starsᴹ Bᴬ
+        Jᴮ = Iᴹ ⊕ᴹ Bᴬ
+
+        A≤X : mat A ≤ᵖ mat (candidate k A)
+        A≤X = A≤P A k
+            ⟫ ⊗ᴹ-identityˡ⁻ Bᴬ
+            ⟫ ⊗ᴹ-mono {Iᴹ} {Iᴹ ⊗ᴹ Iᴹ} {Bᴬ} {Bᴬ} (⊗ᴹ-identityˡ⁻ Iᴹ) ≤ᵖ-refl
+            ⟫ ⊗ᴹ-mono {Iᴹ ⊗ᴹ Iᴹ} {Jᴮ ⊗ᴹ Sᴮ} {Bᴬ} {Bᴬ}
+                (⊗ᴹ-mono {Iᴹ} {Jᴮ} {Iᴹ} {Sᴮ} (⊕ᴹ-ubˡ Iᴹ Bᴬ) (I≤S Bᴬ)) ≤ᵖ-refl
+
+        X-least : ∀ {V} → mat A ≤ᵖ V → V ⊗ᴹ V ≤ᵖ V → mat (candidate k A) ≤ᵖ V
+        X-least {V} hA hV =
+            ⊗ᴹ-mono {Jᴮ ⊗ᴹ Sᴮ} {(Iᴹ ⊕ᴹ V) ⊗ᴹ (Iᴹ ⊕ᴹ V)} {Bᴬ} {V}
+              (⊗ᴹ-mono {Jᴮ} {Iᴹ ⊕ᴹ V} {Sᴮ} {Iᴹ ⊕ᴹ V}
+                 (⊕ᴹ-lub {Iᴹ} {Bᴬ} (⊕ᴹ-ubˡ Iᴹ V) (hB ⟫ ⊕ᴹ-ubʳ Iᴹ V))
+                 (S-least hB hV))
+              hB
+          ⟫ ⊗ᴹ-assoc (Iᴹ ⊕ᴹ V) (Iᴹ ⊕ᴹ V) V
+          ⟫ ⊗ᴹ-mono {Iᴹ ⊕ᴹ V} {Iᴹ ⊕ᴹ V} {(Iᴹ ⊕ᴹ V) ⊗ᴹ V} {V} ≤ᵖ-refl JV
+          ⟫ JV
+          where
+            hB : Bᴬ ≤ᵖ V
+            hB = P-least A k hA hV
+            JV : (Iᴹ ⊕ᴹ V) ⊗ᴹ V ≤ᵖ V
+            JV = ⊗ᴹ-distribʳ V Iᴹ V ⟫ ⊕ᴹ-lub {Iᴹ ⊗ᴹ V} {V ⊗ᴹ V} (⊗ᴹ-identityˡ V) hV
+
+        X-indˡ : ∀ {D} → mat A ⊗ᴹ D ≤ᵖ D → mat (candidate k A) ⊗ᴹ D ≤ᵖ D
+        X-indˡ {D} h =
+            ⊗ᴹ-assoc (Jᴮ ⊗ᴹ Sᴮ) Bᴬ D
+          ⟫ ⊗ᴹ-mono {Jᴮ ⊗ᴹ Sᴮ} {Jᴮ ⊗ᴹ Sᴮ} {Bᴬ ⊗ᴹ D} {D} ≤ᵖ-refl hB
+          ⟫ ⊗ᴹ-assoc Jᴮ Sᴮ D
+          ⟫ ⊗ᴹ-mono {Jᴮ} {Jᴮ} {Sᴮ ⊗ᴹ D} {D} ≤ᵖ-refl (S-indˡ hB)
+          ⟫ ⊗ᴹ-distribʳ D Iᴹ Bᴬ
+          ⟫ ⊕ᴹ-lub {Iᴹ ⊗ᴹ D} {Bᴬ ⊗ᴹ D} (⊗ᴹ-identityˡ D) hB
+          where
+            hB : Bᴬ ⊗ᴹ D ≤ᵖ D
+            hB = P-indˡ A k h
+
+        X-indʳ : ∀ {D} → D ⊗ᴹ mat A ≤ᵖ D → D ⊗ᴹ mat (candidate k A) ≤ᵖ D
+        X-indʳ {D} h =
+            ⊗ᴹ-assoc⁻ D (Jᴮ ⊗ᴹ Sᴮ) Bᴬ
+          ⟫ ⊗ᴹ-mono {D ⊗ᴹ (Jᴮ ⊗ᴹ Sᴮ)} {D} {Bᴬ} {Bᴬ}
+              (⊗ᴹ-assoc⁻ D Jᴮ Sᴮ
+               ⟫ ⊗ᴹ-mono {D ⊗ᴹ Jᴮ} {D} {Sᴮ} {Sᴮ}
+                   (⊗ᴹ-distribˡ D Iᴹ Bᴬ ⟫ ⊕ᴹ-lub {D ⊗ᴹ Iᴹ} {D ⊗ᴹ Bᴬ} (⊗ᴹ-identityʳ D) hB)
+                   ≤ᵖ-refl
+               ⟫ S-indʳ hB)
+              ≤ᵖ-refl
+          ⟫ hB
+          where
+            hB : D ⊗ᴹ Bᴬ ≤ᵖ D
+            hB = P-indʳ A k h
+
+    -- the candidate is the closure where it is closed under the product
+
+    candidate-plus : ∀ k A → candidate k A ·ᵐ candidate k A ≾ᵐ candidate k A
+                   → Plus _·ᵐ_ _≾ᵐ_ A
+    candidate-plus k A it = plus (candidate k A) (pw (A≤X A k)) it
+      (λ {v} hA hv → pw (X-least A k {mat v} (at {A} {v} hA) (at {v ·ᵐ v} {v} hv)))
+      (λ {d} h → pw (X-indˡ A k {mat d} (at {A ·ᵐ d} {d} h)))
+      (λ {d} h → pw (X-indʳ A k {mat d} (at {d ·ᵐ A} {d} h)))
+
+    -- the closure, where the candidate is closed under the product,
+    -- with powers up to the number of modes named and four more; the
+    -- decision recomputes the entries of every power, and its cost by
+    -- reduction is exponential in that number
+
+    private
+      plus-at : ∀ k A → Dec (candidate k A ·ᵐ candidate k A ≾ᵐ candidate k A)
+              → Maybe (Plus _·ᵐ_ _≾ᵐ_ A)
+      plus-at k A (yes it) = just (candidate-plus k A it)
+      plus-at k A (no _)   = nothing
+
+      decide : ∀ k A → Dec (candidate k A ·ᵐ candidate k A ≾ᵐ candidate k A)
+      decide k A = mat (candidate k A ·ᵐ candidate k A) ≤ᴹ? mat (candidate k A)
+
+    plus? : (A : ModeMatrix) → Maybe (Plus _·ᵐ_ _≾ᵐ_ A)
+    plus? A = plus-at k A (decide k A)
+      where k = suc (suc (suc (length (modes (mat A)))))
+

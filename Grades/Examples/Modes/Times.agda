@@ -23,6 +23,10 @@
 -- not named `⋆` and `⋆'`, and `stuck` `✗`, each entry a template     --
 -- naming its own start mode (`listing`, `Template`); a mode from     --
 -- which no entry starts is stuck at no time.                         --
+--                                                                    --
+-- `Matrix.ModeGrade.Closures` finds closures with the star of the    --
+-- closures of the entries (`mode-times-plus?`). No hints declare     --
+-- them.                                                              --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Modes.Times where
@@ -610,3 +614,11 @@ delays = record
 
 mode-times : Grade ℕᴰ
 mode-times = mode-grade-with time-entries delays
+
+-- the closure of a grade, where `Closures` finds it, from the star of
+-- the closures of the entries
+
+time-stars : Stars
+time-stars = stars-from times-plus
+
+mode-times-plus? = Closures.plus? time-entries time-stars

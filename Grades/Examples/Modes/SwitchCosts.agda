@@ -18,6 +18,10 @@
 -- Literals list entries `(from , to , cost)`, the modes not named    --
 -- written `⋆`, another one `⋆'` and `stuck` `✗`; a mode from which   --
 -- no entry starts is stuck at cost 0 (`listing`).                    --
+--                                                                    --
+-- `Matrix.ModeGrade.Closures` finds closures with the star of the    --
+-- costs, `cost 0` up to `cost 0` and `unbounded` above               --
+-- (`mode-switch-costs-plus?`). No hints declare them.                --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Modes.SwitchCosts where
@@ -320,10 +324,76 @@ change? : ∀ a → Dec (Change a)
 change? a = (a ≤ᶜ? none) ⊎-dec (cost 1 ≤ᶜ? a)
 
 ------------------------------------------------------------------------
+-- The star of a cost: `cost 0` up to `cost 0`, `unbounded` above it
+
+starᶜ : Cost → Cost
+starᶜ none           = cost 0
+starᶜ (cost zero)    = cost 0
+starᶜ (cost (suc _)) = unbounded
+starᶜ unbounded      = unbounded
+
+private
+  ≤ᶜ-antisym : ∀ {a b} → a ≤ᶜ b → b ≤ᶜ a → a ≡ b
+  ≤ᶜ-antisym none≤     none≤     = refl
+  ≤ᶜ-antisym (cost≤ p) (cost≤ q) = cong cost (ℕₚ.≤-antisym p q)
+  ≤ᶜ-antisym cost≤unb  ()
+  ≤ᶜ-antisym unb≤unb   unb≤unb   = refl
+
+  ≤ᶜ-reflexive′ : ∀ {a b} → a ≡ b → a ≤ᶜ b
+  ≤ᶜ-reflexive′ refl = ≤ᶜ-refl
+
+  -- a positive cost added to `m` exceeds `m`
+  exceeds : ∀ {k m} → ¬ (suc k + m ≤ m)
+  exceeds {k} {m} = ℕₚ.<⇒≱ (ℕₚ.m<n+m m {suc k} (s≤s z≤n))
+
+  star-unit : ∀ a → cost 0 ≤ᶜ starᶜ a
+  star-unit none           = ≤ᶜ-refl
+  star-unit (cost zero)    = ≤ᶜ-refl
+  star-unit (cost (suc _)) = cost≤unb
+  star-unit unbounded      = cost≤unb
+
+  star-least : ∀ {a v} → a ≤ᶜ v → v ⊗ᶜ v ≤ᶜ v → starᶜ a ≤ᶜ cost 0 ⊕ᶜ v
+  star-least {none}         {v} _ _ = ⊕ᶜ-ubˡ (cost 0) v
+  star-least {cost zero}    {v} _ _ = ⊕ᶜ-ubˡ (cost 0) v
+  star-least {cost (suc n)} {cost m} (cost≤ p) (cost≤ q) =
+    ⊥-elim (ℕₚ.<⇒≱ (ℕₚ.m<m+n m (ℕₚ.≤-trans (s≤s z≤n) p)) q)
+  star-least {cost (suc _)} {unbounded} _ _ = unb≤unb
+  star-least {unbounded}    {unbounded} _ _ = unb≤unb
+
+  star-indˡ : ∀ {a d} → a ⊗ᶜ d ≤ᶜ d → starᶜ a ⊗ᶜ d ≤ᶜ d
+  star-indˡ {none}         {d}         _ = ≤ᶜ-reflexive′ (⊗ᶜ-identityˡ d)
+  star-indˡ {cost zero}    {d}         _ = ≤ᶜ-reflexive′ (⊗ᶜ-identityˡ d)
+  star-indˡ {cost (suc _)} {none}      _ = none≤
+  star-indˡ {cost (suc _)} {cost _}    (cost≤ p) = ⊥-elim (exceeds p)
+  star-indˡ {cost (suc _)} {unbounded} _ = unb≤unb
+  star-indˡ {unbounded}    {none}      _ = none≤
+  star-indˡ {unbounded}    {cost _}    ()
+  star-indˡ {unbounded}    {unbounded} _ = unb≤unb
+
+  star-indʳ : ∀ {a d} → d ⊗ᶜ a ≤ᶜ d → d ⊗ᶜ starᶜ a ≤ᶜ d
+  star-indʳ {a} {d} h =
+    subst (_≤ᶜ d) (⊗ᶜ-comm (starᶜ a) d) (star-indˡ (subst (_≤ᶜ d) (⊗ᶜ-comm d a) h))
+
+cost-stars : Stars
+cost-stars = record
+  { star       = starᶜ
+  ; star-unit  = star-unit
+  ; star-least = star-least
+  ; star-indˡ  = star-indˡ
+  ; star-indʳ  = star-indʳ
+  ; star-cong  = λ (p , q) → ≡⇒≈ (cong starᶜ (≤ᶜ-antisym p q))
+  ; star-act   = λ _ _ a → ≡⇒≈ refl
+  }
+
+------------------------------------------------------------------------
 -- The grade
 
 mode-switch-costs : {D : Duration} → Grade D
 mode-switch-costs = mode-grade cost-entries
+
+-- the closure of a grade, where `Closures` finds it
+
+mode-switch-costs-plus? = Closures.plus? cost-entries cost-stars
 
 open Decided cost-entries change? public using (decided)
 open import Grades.Matrix.Matrices ℕ-infinite costs (trivial costs) public
