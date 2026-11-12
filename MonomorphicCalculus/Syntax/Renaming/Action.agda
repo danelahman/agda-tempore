@@ -87,7 +87,7 @@ rvar-rename r x =
 
 -- The value-taking reading of `unbox`, as a derived rule. The value is taken not
 -- in `Γ` but in a `Δ` that `Γ` reaches through one modality of the box's own
--- grade: a Fitch-style witness, and the source of the elapsed grade.
+-- grade, which is the source of the elapsed grade.
 
 unbox⇒var : ∀ {Γ Δ A ρ}
           → Ren [] Γ (Δ ⟨ ρ ⟩)

@@ -2,11 +2,11 @@
 -- Interpretation of the operational semantics' states, and of the        --
 -- configurations built from them.                                        --
 --                                                                        --
--- A state `𝕊 : State []` is a Fitch-style telescope: `_⟨ ρ ⟩ₛ` records   --
--- that `ρ` worth of time has passed, and `_∷ₛ_ 𝕊 V` allocates a cell     --
--- together with the value `V` stored in it. A state thus carries all of  --
--- its data: it is not a store threaded through a state monad, but an     --
--- environment for its own context `toCtx 𝕊`.                             --
+-- A state `𝕊 : State []` is a telescope of modalities and cells:         --
+-- `_⟨ ρ ⟩ₛ` records that `ρ` worth of time has passed, and `_∷ₛ_ 𝕊 V`    --
+-- allocates a cell together with the value `V` stored in it. A state     --
+-- thus carries all of its data: it is not a store threaded through a     --
+-- state monad, but an environment for its own context `toCtx 𝕊`.         --
 --                                                                        --
 -- The modalities `⟨ ρ ⟩` need not have global points (`⟨ ρ ⟩ᵒ X` is a    --
 -- Kripke possibility, and near time 0 there is no `ρ`-past to be found), --

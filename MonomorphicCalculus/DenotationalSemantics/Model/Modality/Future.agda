@@ -1,7 +1,6 @@
 --------------------------------------------------------------------------
 -- Semantics of the box modality `[ ρ ] A` on types, as a functor       --
--- graded by a monoid of grades `(R , · , 𝟏 , ≾)`. It is the analogue   --
--- of the comonadic □-modality on types in Fitch-style modal calculi.   --
+-- graded by a monoid of grades `(R , · , 𝟏 , ≾)`.                      --
 --                                                                      --
 -- The modality is a graded comonad, with counit `ε` and                --
 -- comultiplication `δ`. The comultiplication need not be invertible,   --
