@@ -16,7 +16,8 @@
 --                                                                    --
 -- How to read them                                                   --
 --   Each program is written above its definition in ordinary syntax, --
---   followed by a typing in the declarative system where one exists. --
+--   followed by a typing in the declarative system where one is      --
+--   written out.                                                     --
 --   The modules under `Handlers/` run inference at four grades and   --
 --   check each answer with `refl`:                                   --
 --     relay-reported :                                               --

@@ -2,12 +2,12 @@
 -- Inference on primitive recursion                                   --
 --                                                                    --
 -- Recursion on natural numbers, `recℕ V M N`, and on lists,          --
--- `recL V M N`. The step is typed under a modality at `⊤ᵣ`, so only  --
--- outer variables of eternal type are usable in it. It binds the     --
--- predecessor (or the head and tail), then, after a modality at the  --
--- effect `ε` of the recursion, the recursive result. That effect     --
--- absorbs its own iteration, `ε · ε ≾ ε`. `⌜ n ⌝` is the duration of --
--- `n` ticks.                                                         --
+-- `recL V M N`. The step is typed under a modality at `⊤ᵣ`, so       --
+-- unless `⊤ᵣ ≾ 𝟏ᵣ` only outer variables of eternal type are usable   --
+-- in it. It binds the predecessor (or the head and tail), then,      --
+-- after a modality at the effect `ε` of the recursion, the           --
+-- recursive result. That effect absorbs its own iteration,           --
+-- `ε · ε ≾ ε`. `⌜ n ⌝` is the duration of `n` ticks.                 --
 --                                                                    --
 -- The examples                                                       --
 --   add                  pure recursion on the recursive result      --
@@ -394,7 +394,8 @@ last-box =
 
 --   latest l = recL l with nil ↦ 0 | cons h t, r ↦ delay 1; unbox h as x in x
 --
--- Unboxing the head asks only that the box's grade be reached.
+-- Unboxing the head asks only that the grade accumulated be within the
+-- box's grade.
 
 latest : RawC ∅ˢ 0
 latest =

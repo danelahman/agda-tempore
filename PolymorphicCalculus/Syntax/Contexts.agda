@@ -168,7 +168,8 @@ var-pos Hd        = zero
 var-pos (Tl-∷ x)  = suc (var-pos x)
 var-pos (Tl-⟨⟩ x) = var-pos x
 
--- Lookup and `var-pos` are mutually inverse
+-- `var-pos` inverts `lookup-var`, and lookup at `var-pos x` gives the type
+-- and grade of `x`
 
 var-pos-ty : ∀ {Θ n} {A : OVType Θ} {ρ} {Γ : OCtx Θ n}
            → (x : A ∈̂[ ρ ] Γ) → lookup-ty Γ (var-pos x) ≡ A

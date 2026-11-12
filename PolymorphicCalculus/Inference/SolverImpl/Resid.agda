@@ -16,9 +16,9 @@
 -- expansion (`expandSub-dec`, `reexpand-dec`), and a failure   --
 -- of `etDec` refutes the demand (`etDec-refute`). `atomiseᴿ`   --
 -- keeps the instances (`atomiseᴿ-sound`, `atomiseᴿ-compl`).    --
--- `toHyps R` entails `R`, is entailed by it (`toHyps-compl`),  --
--- and fails only on an undecomposable demand                   --
--- (`toHyps-nothing`).                                          --
+-- `toHyps R` entails the atoms of `R` (`bareᴿ R`), is entailed --
+-- by it (`toHyps-compl`), and fails only on an undecomposable  --
+-- demand (`toHyps-nothing`).                                   --
 --                                                              --
 -- The name follows OutsideIn(X).                               --
 ------------------------------------------------------------------

@@ -690,9 +690,9 @@ closed-untypable : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : Principa
 closed-untypable p n t = n (Equivalence.to (typable-⇔ p) t)
 
 ------------------------------------------------------------------------
--- Inference: a principal type scheme, a refutation, or `stuck`, only where a
--- handler clause's scope closes with a local unknown `Localise` assigns no
--- value
+-- Inference: a principal type scheme, a refutation, or `stuck`, only where the
+-- scope of a handler clause, or of a definition's quantified hypotheses,
+-- closes with a local unknown `Localise` assigns no value
 
 inferReported : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n}
               → (p : PrincipalScheme Γ M) → ClosedReport p → Inference Γ M
@@ -827,7 +827,8 @@ checkFrom-stuck Γ M (solved (Θ' , σ , Q , D)) e eq = ⊥-elim (established' (
 --
 -- A typed verdict is a principal scheme, satisfiable exactly when `M` is
 -- typable; an untypable verdict is sound, so inference is complete up to
--- `stuck`, and a handler-free `M` is never stuck. An established check is typable.
+-- `stuck`, and a handler-free `M` in a program context without quantified
+-- hypotheses is never stuck. An established check is typable.
 
 infer-typed : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalScheme Γ M}
             → infer Γ M ≡ typed p

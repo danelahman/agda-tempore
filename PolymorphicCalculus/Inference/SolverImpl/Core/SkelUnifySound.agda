@@ -4,8 +4,6 @@
 -- A successful run of `unifyᵏ` returns a store whose denotation --
 -- makes both sides of every equation equal. The proof mirrors   --
 -- the unifier, along the store extension `_++ᴷ_` (`mono++ᵏ`).   --
---                                                               --
--- Follows McBride's structural unification.                     --
 -------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_)

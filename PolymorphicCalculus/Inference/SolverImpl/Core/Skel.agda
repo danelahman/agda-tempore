@@ -7,9 +7,6 @@
 -- sends each type variable to the skeleton variable of its       --
 -- index, so unifying two records that they have one shape        --
 -- without identifying them.                                      --
---                                                                --
--- Substitution, `_forᵏ_` and `checkᵏ` follow McBride's           --
--- structural unification, at one sort.                           --
 --------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin; punchIn)

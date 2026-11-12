@@ -7,9 +7,9 @@
 -- rigids: exactly when no hypotheses entail the set there      --
 -- (`⊨⇒⊩ᴴ`, `⊩ᴴ⇒⊨`). Semantic entailment `Q ⊨ᴴ Q'`: every       --
 -- closed instance of `Q` is one of `Q'`. Between closed        --
--- expressions, entailment is the carrier's ordering of values; --
--- closed subtyping, eternality and the var-rule disjunction    --
--- are decidable.                                               --
+-- expressions, entailment from no hypotheses is the carrier's  --
+-- ordering of values; closed subtyping, eternality and the     --
+-- var-rule disjunction are decidable.                          --
 ------------------------------------------------------------------
 
 open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)

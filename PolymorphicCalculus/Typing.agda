@@ -395,7 +395,7 @@ numeralᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} → ℕ → Q ∣ Γ ⊢�
 numeralᵛ 0       = zero
 numeralᵛ (suc k) = succ (numeralᵛ k)
 
--- Sub-effecting, as subsumption at an effect-only derivation
+-- Sub-effecting: subsumption with the value type unchanged
 
 coerce : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A ε ε'}
        → Q ⊩ ε ≾̂ₑ ε'

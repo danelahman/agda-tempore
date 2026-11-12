@@ -309,7 +309,7 @@ pop-unpop {Ω} j = mk≐ˢ (λ α → refl) (λ i → refl) sE'
     ... | nothing  = cong evar (sym (thick-nothing {nE Ω} j k r))
 
 -- An occurrence of a variable whose image is a variable is renamed, not
--- removed: Miller's mixed prefix, the rigid as Gentzen's eigenvariable
+-- removed
 
 escᵉ : ∀ {Φ Ω} → (σ : Subst Φ Ω) → (j : EVar Φ) → (k : EVar Ω) → sE σ j ≡ evar k
      → (ε : EExp Φ) → occᵉ-e j ε ≡ true → occᵉ-e k (ε [ σ ]ᵉ) ≡ true

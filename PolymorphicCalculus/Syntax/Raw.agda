@@ -261,7 +261,7 @@ mutual
             --------------
             → RawC Θ n
 
-    -- boxing up a value, usable after the grade
+    -- boxing up a value as a resource usable within the grade
 
     box     : RExp Θ
             → RawV Θ n

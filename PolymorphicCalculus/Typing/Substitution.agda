@@ -3,10 +3,11 @@
 --                                                              --
 -- Under no hypotheses, a variable `x : A` at depth `k` of `Γ`  --
 -- (`Drop Γ₀ A k Γ Γ⁻`) and a value of type `A` in `Γ₀`, the    --
--- context before `x`, give `Γ⁻ ⊢ M[V/x]` from `Γ ⊢ M`          --
--- (`sub-v`, `sub-c`), erasing to `subᶜ k`. A use of `x` behind --
--- modalities meets its side condition: `V` moves past them as  --
--- an eternal value, or by a renaming below the unit.           --
+-- context before `x`, which holds no definitions, give         --
+-- `Γ⁻ ⊢ M[V/x]` from `Γ ⊢ M` (`sub-v`, `sub-c`), erasing to    --
+-- `subᶜ k`. A use of `x` behind modalities meets its side      --
+-- condition: `V` moves past them as an eternal value, or by a  --
+-- renaming below the unit.                                     --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)

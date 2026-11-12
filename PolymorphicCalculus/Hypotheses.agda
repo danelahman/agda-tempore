@@ -5,11 +5,9 @@
 -- atoms on type variables, grade orderings, var-rule           --
 -- disjunctions and quantified orderings. Grade entailment is   --
 -- semantic consequence: the ordering holds at every closed     --
--- instance satisfying the set. Eternality, subtyping and       --
--- `_⊩_Et∨≾ᵘ_` are inductive over it; entailment is stable      --
--- under instance maps (`_⊩ᴵ_[_]`). The sets are the            --
--- constraints of HM(X) (Odersky, Sulzmann and Wehr) and the    --
--- givens of OutsideIn(X).                                      --
+-- instance satisfying the grade orderings of the set.          --
+-- Eternality, subtyping and `_⊩_Et∨≾ᵘ_` are inductive over     --
+-- it; entailment is stable under instance maps (`_⊩ᴵ_[_]`).    --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_; map; _++_)
@@ -171,7 +169,8 @@ open _⊨ᵍ_ public
 ⊨ᵍ-∅ : ∀ {Θ} {δ : Subst Θ ∅ˢ} → δ ⊨ᵍ ∅ᴴ
 ⊨ᵍ-∅ = mk⊨ᵍ (λ ()) (λ ()) (λ ())
 
--- Entailed ordering: it holds at every closed instance satisfying the set
+-- Entailed ordering: it holds at every closed instance satisfying the grade
+-- orderings of the set (`_⊨ᵍ_`)
 
 infix 4 _≡̂ᵣ_ _≡̂ₑ_ _⊩_≾̂ᵣ_ _⊩_≾̂ₑ_
 
@@ -760,8 +759,10 @@ data _⊩_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-eternalʳ (listₛ p)    (listₑ et)  = listₑ (<:̂ᵛ-eternalʳ p et)
 <:̂ᵛ-eternalʳ emptyₛ       et          = et
 
--- Side condition of the `var` rule: `A` is eternal or `ρ ≾ 𝟏` at every
--- instance, directly or by a `disj` hypothesis at a grade above
+-- Side condition of the `var` rule: at every instance `A` is eternal or
+-- `ρ ≾ 𝟏`: derived directly, from a `disj` hypothesis at a grade above, along
+-- subtyping, componentwise at products, sums and lists, and from a join of
+-- grades
 
 infix 4 _⊩_Et∨≾ᵘ_
 

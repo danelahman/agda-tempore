@@ -6,8 +6,6 @@
 -- store. A failure refutes the equations at every substitution. --
 -- No skeleton variable is rigid, so maximality relative to the  --
 -- empty store is most-generality.                               --
---                                                               --
--- Follows McBride's correctness proof, its optimist's theorem.  --
 -------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_)

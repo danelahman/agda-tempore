@@ -11,31 +11,36 @@
 -- Left adjoint. A representation of `Hom(Γ, L_ρ -)` is a       --
 -- context `E` and a bijection `Hom(E, Δ) ≅ Hom(Γ, L_ρ Δ)`      --
 -- natural in `Δ` (`HomIso`); the representations determine an  --
--- adjunction (`adjunction`). See S. Mac Lane, Categories for   --
--- the Working Mathematician, 2nd ed., Springer 1998, IV.1.     --
+-- adjunction (`adjunction`).                                   --
 --                                                              --
--- Parametric right adjoint. A representation for each          --
--- `s : Γ → L_ρ ⌜ P ⌝ᵖ` (`PRA`). See R. Street, The petit topos --
--- of globular sets, J. Pure Appl. Algebra 154 (2000); M.       --
--- Weber, Theory Appl. Categ. 13 (2004) and 18 (2007). Every    --
--- context has exactly one such `s` (`section`), so `L_ρ` is a  --
--- parametric right adjoint iff it has a left adjoint           --
+-- Parametric right adjoint. `L_ρ` is one when the functor it   --
+-- induces into the slice over `L_ρ ⌜ P ⌝ᵖ` has a left          --
+-- adjoint (M. Weber, Familial 2-functors and parametric        --
+-- right adjoints, Theory Appl. Categ. 18 (2007), Def. 2.3,     --
+-- which credits R. Street, The petit topos of globular sets,   --
+-- J. Pure Appl. Algebra 154 (2000)): for each                  --
+-- `s : Γ → L_ρ ⌜ P ⌝ᵖ`, a representation of the maps           --
+-- `Γ → L_ρ Δ` over `s`. Every context has exactly one such     --
+-- `s` (`section`, `section-unique`), so every map lies over    --
+-- it, and `PRA` asks for a representation of                   --
+-- `Hom(Γ, L_ρ -)` at each `s`. So `L_ρ` is a parametric        --
+-- right adjoint iff it has a left adjoint                      --
 -- (`PRA⇔LeftAdjoint`).                                         --
 --                                                              --
 -- At the empty scope the left adjoints are built from          --
 -- residuals: `e` is the residual of `g` by `ρ` when            --
 -- `e ≾ d ⇔ g ≾ d · ρ` for all `d` (`IsResidual`), the least    --
--- `d` with `g ≾ d · ρ`. See N. Galatos, P. Jipsen, T. Kowalski --
--- and H. Ono, Residuated Lattices, Elsevier 2007. A            --
--- lowering of `Γ` by `ρ` is a context of the variables of `Γ`  --
--- at grades `≾ ⊤ · ρ`, each at the residual of its grade       --
--- (`Lowering`).                                                --
+-- `d` with `g ≾ d · ρ`. A lowering of `Γ` by `ρ` is a context  --
+-- of the variables of `Γ` at grades `≾ ⊤ · ρ`, each at the     --
+-- residual of its grade (`Lowering`).                          --
 --                                                              --
 -- Results:                                                     --
 --   `left-adjoint-at-𝟏`: at `ρ` entailed equal to `𝟏`, `L_ρ`   --
 --      has the left adjoint `E Γ = Γ`;                         --
---   `left-adjoint⇔lowering`, `PRA⇔lowering`: `L_ρ` has a left  --
---      adjoint iff every context has a lowering by `ρ`;        --
+--   `left-adjoint⇔lowering`, `PRA⇔lowering`: at the empty      --
+--      scope, under no hypotheses and at a constant `ρ`, `L_ρ` --
+--      has a left adjoint iff every context has a lowering by  --
+--      `ρ`;                                                    --
 --   `left-adjoint⇒residual`, `PRA⇒residual`: a left adjoint    --
 --      gives the residual by `ρ` of every `g ≾ ⊤ · ρ`, and     --
 --      only those have one (`residual-bounded`).               --

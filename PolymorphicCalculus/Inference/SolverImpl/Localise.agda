@@ -6,20 +6,19 @@
 -- A round writes the atoms in normal form (`loc-normal`),      --
 -- identifies each cycle of whole unknowns (`collapse`), and    --
 -- sends each local unknown a rule of `Values` applies to to    --
--- its value: the join of its lower bounds (Pottier's           --
--- condition), an upper bound, the unit, or the top. Where none --
--- applies, a set reached from the rigid goes to the top        --
--- (`raiseL`). Settled atoms are dropped around every round     --
--- (`loc-settle`).                                              --
+-- its value: the join of its lower bounds, an upper bound,     --
+-- the unit, or the top. Where none applies, a set reached      --
+-- from the rigid goes to the top (`raiseL`). Settled atoms     --
+-- are dropped around every round (`loc-settle`).               --
 --                                                              --
 -- Contract (`Localised`): outer unknowns are fixed (`lfix`), a --
 -- discharge of the new residual is one of the old (`lsnd`), an --
 -- instance entering the scope keeps discharging it (`lcpl`),   --
--- and only grade unknowns are assigned (`latom`). The lowering --
--- values are principal (`minₑ`, `minᵣ`); the others only keep  --
--- instances. A local unknown no step resolves leaves the scope --
--- stuck, as `a` in `j · a ≾ a ≾ c · j`, `j` the rigid and `c`  --
--- outer.                                                       --
+-- and atomic subtyping demands stay atomic (`latom`). The      --
+-- lowering values are principal (`LowToₑ`, `LowToᵣ`); the      --
+-- others only keep instances. A local unknown no step          --
+-- resolves leaves the scope stuck, as `a` in                   --
+-- `j · a ≾ a ≾ c · j`, `j` the rigid and `c` outer.            --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; _∧_; not; true; false; if_then_else_) renaming (Bool to 𝔹)
@@ -1995,7 +1994,7 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
                         keepAll (λ α → refl))
 
   -- A round: normal form, cycles identified, values given. Each round that
-  -- changes something settles an unknown, so one round per unknown suffices.
+  -- changes something settles an unknown; the fuel is one round per unknown.
 
   rounds : ℕ → Localised O R → Localised O R
   rounds nzero    L = L

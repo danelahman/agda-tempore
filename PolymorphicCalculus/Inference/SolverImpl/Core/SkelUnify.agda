@@ -11,8 +11,6 @@
 -- the equations (`unifyᵏ-sound`) and through which every unifier --
 -- factors (`unifyᵏ-max`); a failure refutes them                 --
 -- (`unifyᵏ-fail`).                                               --
---                                                                --
--- Follows McBride's unification by structural recursion.         --
 --------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_) renaming (Bool to 𝔹)

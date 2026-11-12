@@ -9,9 +9,6 @@
 -- operation symbols. Computation-type subtyping `C <:̂ᶜ C'` is  --
 -- the conjunction of its value and effect atoms; a type        --
 -- equation `A ≐ᵥ B` is mutual subtyping.                       --
---                                                              --
--- Constraints with binders follow Pottier and Rémy's Essence   --
--- of ML Type Inference.                                        --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)

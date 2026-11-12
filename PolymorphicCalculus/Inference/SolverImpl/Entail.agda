@@ -1128,7 +1128,7 @@ decideᵣ full Q ρ ρ' with closedᵣ? ρ ρ'
 ... | _               = fullᵣ Q ρ ρ'
 
 ------------------------------------------------------------------------
--- Refutation of `ρ ≾ 𝟏` by the zero-product law
+-- Refutation of `ρ ≾ 𝟏` by the unit-product law
 --
 -- A constant atom not below the unit refutes each alternative it occurs in,
 -- and one refuted alternative the sum. It needs a satisfiable set (`hyp-derives`).

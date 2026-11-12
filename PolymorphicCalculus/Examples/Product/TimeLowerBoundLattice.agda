@@ -66,7 +66,7 @@ early-not-typable = infer-untypable [] (embargoed embargo 4) early-verdict
 
 ------------------------------------------------------------------
 -- 2. Clean after a store and three ticks, `([ 5 ,+∞⟩ , Low)`; tainted
--- after a transmission, `([ 7 ,+∞⟩ , High)`, whatever the delay
+-- after a transmission, `([ 7 ,+∞⟩ , High)`
 
 stored : op-grade write ·ₑ ([ 3 ,+∞⟩ , Low) ≡ ([ 5 ,+∞⟩ , Low)
 stored = refl

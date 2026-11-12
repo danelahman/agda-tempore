@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
 -- Inference at a grade of two components                             --
 --                                                                    --
--- A grade pairing time with a lattice: a box is claimable            --
--- once enough time has passed, and only while nothing above its      --
--- level has been touched since it was boxed. `⌜ n ⌝` is the duration --
--- of `n` ticks.                                                      --
+-- A grade pairing time with a lattice: a box is claimable while the  --
+-- time passed is within its bound, from below or from above, and     --
+-- only while nothing above its level has been touched since it was   --
+-- boxed. `⌜ n ⌝` is the duration of `n` ticks.                       --
 --                                                                    --
 -- The examples, in five numbered groups                              --
 --   embargoed c d        a box of grade `c` claimed after `d` ticks; --

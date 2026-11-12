@@ -20,8 +20,7 @@
 --     decided below a least unit;                              --
 --   * equating (`equate`), principal: to an expression a test  --
 --     places above and below `v`.                              --
--- Lowering and raising follow elimination by polarity          --
--- (Pottier; Trifonov and Smith).                               --
+-- Lowering and raising are elimination by polarity.            --
 --                                                              --
 -- Contract. Read before and after the assignment, each value   --
 -- keeps every ordering (`lower-keeps`, `raise-keeps`,          --

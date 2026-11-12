@@ -8,9 +8,7 @@
 -- entailing `Q` and the quantified orderings `R`, `σ ⨟ δ`      --
 -- solves `C`.                                                  --
 --                                                              --
--- Follows Pottier and Rémy, proof-relevantly; "residual        --
--- constraint" is the term of OutsideIn(X); cf. Pretnar's       --
--- inference of algebraic effects.                              --
+-- "Residual constraint" is the term of OutsideIn(X).           --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)

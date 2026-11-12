@@ -6,8 +6,10 @@
 -- The base types' comparisons are lawful, and lawfulness is    --
 -- closed under the formers, so `compareᴰ` is lawful on the     --
 -- data of every closed eternal type and `less` is a strict     --
--- total order on them (`compareᴰ-isStrictTotalOrder`). Each    --
--- relation of `Cmp` then means what its name says.             --
+-- total order on them (`compareᴰ-isStrictTotalOrder`). Then    --
+-- `eq` holds only of equal data and `le` only of `less` or     --
+-- equal data, and `gt` is `lt` with its arguments swapped      --
+-- (`holds-eq`, `holds-le`, `holds-gt`).                        --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false)

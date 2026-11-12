@@ -12,9 +12,6 @@
 -- decomposes (`expandSub-dec`); every substitution meeting the   --
 -- demands factors through it, and a failure refutes them         --
 -- (`expandSub-max`).                                             --
---                                                                --
--- Match-then-decompose, as in Fuh and Mishra's structural        --
--- subtyping inference.                                           --
 --------------------------------------------------------------------
 
 open import Data.List.Base using (List; map)

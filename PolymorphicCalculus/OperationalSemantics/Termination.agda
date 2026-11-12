@@ -1,11 +1,11 @@
 ------------------------------------------------------------------
 -- Termination of the reduction                                 --
 --                                                              --
--- A typed term, its variables replaced by reducible values, is --
--- reducible (`fund-v`, `fund-c`); a term typed in the empty    --
--- context, run from the empty state, reduces in finitely many  --
--- steps to a returned value or an operation call               --
--- (`termination`).                                             --
+-- A typed term in a context without definitions, its           --
+-- variables replaced by reducible values, is reducible         --
+-- (`fund-v`, `fund-c`); a term typed in the empty context, run --
+-- from the empty state, reduces in finitely many steps to a    --
+-- returned value or an operation call (`termination`).         --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)

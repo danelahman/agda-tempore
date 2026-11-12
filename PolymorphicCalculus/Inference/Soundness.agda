@@ -4,8 +4,7 @@
 -- A solution of a generated constraint elaborates to a         --
 -- derivation of the polymorphic calculus erasing to the raw    --
 -- term, its annotations instantiated by the solution           --
--- (`soundV`, `soundC`). The proof follows that of Tavits's MSc --
--- thesis.                                                      --
+-- (`soundV`, `soundC`).                                        --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -1103,7 +1102,7 @@ soundC {σ = σ} Γ M A t s =
   where
     ih = soundCˢ idˢ Γ M A t s
 
--- Sanity checks: four closed examples, solved by the identity substitution from
+-- Sanity checks: five closed examples, solved by the identity substitution from
 -- no hypotheses, elaborated and erased back
 
 private

@@ -16,9 +16,8 @@
 -- `PrincipalSchemeᵛ Δ V` is the scheme of a closed value,      --
 -- given by that of `return V` (`valueScheme`).                 --
 --                                                              --
--- Principal types with constraints follow Pretnar; the context --
--- being fixed, the principal object is a type scheme (Damas    --
--- and Milner), not a principal typing (Wells).                 --
+-- The context being fixed, the principal object is a type      --
+-- scheme, not a principal typing.                              --
 ------------------------------------------------------------------
 
 open import Data.List.Base using ([])
@@ -235,7 +234,7 @@ principal-inst {Θ} {Γ = Γ} {M = M} p {Θ''} σ₀ Q {A₀} {ε₀} D e δ₀ 
 -- of the program's variables. Every instance entailing `Q̃` types `M`
 -- (`sound`); every typing factors through it at each closed instance,
 -- where `X̃` is a subtype of its type (`complete`). Entailment is by closed
--- instances, as in HM(X).
+-- instances.
 
 record PrincipalScheme {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
   constructor mkPrincipalScheme

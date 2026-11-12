@@ -3,8 +3,8 @@
 --                                                              --
 -- The shape of an open type is its skeleton with all type      --
 -- variables identified; subtyping relates only types of equal  --
--- shape, and `subDec` succeeds exactly on two decorations of   --
--- one skeleton (`_◃ᵛ_`). `decorate` produces a decoration      --
+-- shape, and `subDec` succeeds on two decorations of one       --
+-- skeleton (`_◃ᵛ_`). `decorate` produces a decoration          --
 -- (`decorate-◃`), most general among the refinements `_⊑ᵛ_`    --
 -- (`decorate-max`).                                            --
 --                                                              --

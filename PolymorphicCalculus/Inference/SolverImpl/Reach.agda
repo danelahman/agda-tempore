@@ -6,9 +6,9 @@
 -- starting from the edges and the chains `same?` gives on the    --
 -- diagonal. The representative of a vertex is the first vertex   --
 -- in a given order joined to it both ways (`rep`). Cycle         --
--- elimination (`Collapse`; Fähndrich, Foster, Su and Aiken)      --
--- sends each movable vertex to its component's representative,   --
--- preferring the preferred vertices, then the immovable ones.    --
+-- elimination (`Collapse`) sends each movable vertex to its      --
+-- component's representative, preferring the preferred vertices, --
+-- then the immovable ones.                                       --
 --                                                                --
 -- Contract. Sound by type: an entry is a chain (`reach`), a      --
 -- representative and each pair of a collapse come with a chain   --

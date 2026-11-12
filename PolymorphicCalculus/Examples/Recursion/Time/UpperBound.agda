@@ -5,8 +5,9 @@
 -- recursion has the unit as its effect; one ticking per step has     --
 -- the top, and is refuted under each finite annotation tried, in a   --
 -- clause too. A function from outside is not usable in the step;     --
--- with a tick per step a head must be eternal, so boxed heads are    --
--- refused. A clause that drops its continuation after a countdown    --
+-- with a tick per step a head returned as a value must be eternal,   --
+-- so a boxed one is refused, while a head boxed at the top can be    --
+-- unboxed. A clause that drops its continuation after a countdown    --
 -- is refuted.                                                        --
 ------------------------------------------------------------------------
 

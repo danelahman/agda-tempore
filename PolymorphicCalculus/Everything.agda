@@ -119,9 +119,10 @@ import PolymorphicCalculus.Typing.ScopeClosed
 -- Structural properties of typing                                    --
 ------------------------------------------------------------------------
 
--- Typing is stable under substitution of types and grades, renaming and
--- substitution of term variables, conversion of a context's types, and
--- instantiation of the scope.
+-- Typing is stable under substitution of types and grades, renaming,
+-- substitution of term variables (under no hypotheses and in a context
+-- without definitions), conversion of a context's types, and instantiation
+-- of the scope.
 --
 -- Where to look
 --   Typing/GradeSubstitution  substitution of types and grades
@@ -145,9 +146,10 @@ import PolymorphicCalculus.Typing.Transport
 ------------------------------------------------------------------------
 
 -- Contexts and renamings form a category, on which the context modality
--- `L_ρ = _⟨ ρ ⟩` acts. It has a left adjoint, equivalently is a
--- parametric right adjoint, iff every context has a lowering by `ρ`;
--- a left adjoint needs residuals by `ρ`.
+-- `L_ρ = _⟨ ρ ⟩` acts. At the empty scope, under no hypotheses and at a
+-- constant `ρ`, it has a left adjoint, equivalently is a parametric right
+-- adjoint, iff every context has a lowering by `ρ`; a left adjoint gives the
+-- residuals by `ρ` of the grades below `⊤ · ρ`.
 --
 -- Where to look
 --   Typing/Renaming/ContextModality  representations, left adjoints,

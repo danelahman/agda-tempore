@@ -16,10 +16,6 @@
 -- instance (`keep`), at which the new type is a subtype of the --
 -- old (`princ`). Steps compose (`_⨾ᴱ_`); `Elimᶠ` fixes the     --
 -- given unknowns. Which unknowns remain is not claimed.        --
---                                                              --
--- Polarity-based elimination follows Pottier's simplification  --
--- of subtyping constraints; cycle elimination follows          --
--- Fähndrich, Foster, Su and Aiken.                             --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; not; _∨_; _∧_) renaming (Bool to 𝔹)
@@ -492,9 +488,11 @@ falses {a} with isFalse a | falses₂
 liveᵉ : ∀ {Θ} → EVar Θ → Hyps Θ → List (RExp Θ × RExp Θ)
 liveᵉ {Θ} i Q = kept (Vⁱ.lives {Θ} i (ordᵣ Q))
 
--- The oracle of an effect unknown: it may decrease where it is on no greater
--- side of a live resource ordering and nowhere covariant in the type, and
--- increase where on no smaller side, in no disjunction's grade, nowhere contravariant
+-- The oracle of an effect unknown. A step must keep the hypotheses and make
+-- the type no larger. So the unknown may be lowered where it is on no greater
+-- side of a live resource ordering and occurs in the type only in covariant
+-- positions, and raised where it is on no smaller side of one, is in no
+-- disjunction's grade, and occurs in the type only in contravariant positions.
 
 oracleᵉ : ∀ {Θ} → OCType Θ → Hyps Θ → (i : EVar Θ) → Vᵉ.Oracle {Θ} i
 oracleᵉ C Q i = record
@@ -633,8 +631,9 @@ polsᵣ-disj-∈ i ((A₀ , ρ₀) ∷ l) q (here refl) =
 polsᵣ-disj-∈ i ((A₀ , ρ₀) ∷ l) q (there m)   =
   polsᵣ-disj-∈ i l (proj₂ (below-∪ (polᵣ-r i ⁺ ρ₀) (polsᵣ-disj i l) q)) m
 
--- The oracle of a resource unknown: it may decrease where nowhere covariant in
--- the type, increase where in no disjunction's grade and nowhere contravariant
+-- The oracle of a resource unknown: it may be lowered where it occurs in the
+-- type only in covariant positions, and raised where it is in no
+-- disjunction's grade and occurs in the type only in contravariant positions.
 
 oracleʳ : ∀ {Θ} → OCType Θ → Hyps Θ → (i : RVar Θ) → Vʳ.Oracle {Θ} i
 oracleʳ C Q i = record
@@ -1708,7 +1707,7 @@ reduce F (suc n) C Q = step (anyStep F C Q)
     step nothing  = idElim C Q , fixes-id
     step (just r) = r ⨾ᶠ reduce F n (Ĉ (proj₁ r)) (Q̂ (proj₁ r))
 
--- One round per unknown suffices: a step removes one
+-- The fuel is one round per unknown, a step removing one
 
 eliminate : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → Elimᶠ F C Q
 eliminate {Θ} F C Q = reduce F (nE Θ + nR Θ + nTy Θ) C Q

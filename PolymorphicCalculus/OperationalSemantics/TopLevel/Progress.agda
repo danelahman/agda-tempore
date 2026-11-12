@@ -2,9 +2,10 @@
 -- Progress of the top-level reduction                          --
 --                                                              --
 -- A configuration typed at `X ! ε` over a typed state is a     --
--- returned value or makes a top-level step, an operation call  --
--- run by its top-level implementation, that preserves its      --
--- typing (`top-level-progress`).                               --
+-- returned value or makes a top-level step, a step of the      --
+-- reduction or an operation call run by its top-level          --
+-- implementation, that preserves its typing                    --
+-- (`top-level-progress`).                                      --
 ------------------------------------------------------------------
 
 open import Data.Product using (_,_)

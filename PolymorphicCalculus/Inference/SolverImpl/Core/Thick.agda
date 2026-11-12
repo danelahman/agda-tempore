@@ -5,9 +5,6 @@
 -- `nothing` exactly when `j` is `i`; its section, thinning, is --
 -- the standard library's `punchIn`. The per-sort wrappers are  --
 -- the bare `Fin` operations on the counter of their sort.      --
---                                                              --
--- Follows McBride's first-order unification by structural      --
--- recursion.                                                   --
 ------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin; zero; suc; punchIn)

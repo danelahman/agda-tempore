@@ -4,9 +4,9 @@
 -- A state `𝕊 ::= ∅ | 𝕊 ⟨ ρ ⟩ₛ | 𝕊 ∷ₛ V` records the grades of  --
 -- the passages of time and the resources of a run; `State n`   --
 -- has `n` resources. A state typing `Ψ` types `𝕊` (`Types Ψ`)  --
--- when each resource has its type `[ ρ ] X` in the context     --
--- before it, behind `ρ`. `𝕊 ≤ₛ 𝕊'` extends a state; `κₛ` is    --
--- the grade of the passages added.                             --
+-- when each resource, entered as `[ ρ ] X`, has type `X` in    --
+-- the context before it, behind `ρ`. `𝕊 ≤ₛ 𝕊'` extends a       --
+-- state; `κₛ` is the grade of the passages added.              --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)

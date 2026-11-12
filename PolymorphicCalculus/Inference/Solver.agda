@@ -5,12 +5,11 @@
 -- `SolverImpl.solver` meets it for an enumerated set of        --
 -- operations. A solution is a substitution with a residual     --
 -- hypothesis set, its quantified hypotheses the deferred rigid --
--- conditions. Principality is semantic, as in HM(X): it holds  --
--- at each closed instance. The outcome is a solution, a        --
--- refutation, or stuck (`Outcome`), which claims nothing.      --
+-- conditions. Principality is semantic: it holds at each       --
+-- closed instance. The outcome is a solution, a refutation,    --
+-- or stuck (`Outcome`), which claims nothing.                  --
 --                                                              --
--- "Residual constraint" is the term of OutsideIn(X); cf.       --
--- Pretnar.                                                     --
+-- "Residual constraint" is the term of OutsideIn(X).           --
 ------------------------------------------------------------------
 
 open import Data.Product using (Σ-syntax; _×_; _,_)

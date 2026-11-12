@@ -19,8 +19,8 @@
 -- solution (`foundᵉ`). An undecided or exhausted search claims   --
 -- nothing.                                                       --
 --                                                                --
--- Backtracking over a finite domain per unknown (Golomb and      --
--- Baumert).                                                      --
+-- Exhaustive search over a finite domain per unknown, class by   --
+-- class.                                                         --
 --------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; _∨_; _∧_; not; if_then_else_) renaming (Bool to 𝔹)

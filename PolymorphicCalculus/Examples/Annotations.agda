@@ -89,7 +89,8 @@ U⇒U = unit ⇒ unit ! 𝟏̂ₑ
 
 ------------------------------------------------------------------
 -- An argument annotation: the identity with its argument annotated
--- `bool` where returned, so its type is `bool`, not a variable.
+-- `bool` in a `return` whose result is discarded, so its type is `bool`,
+-- not a variable.
 
 id-bool : RawC ∅ˢ 0
 id-bool = return (fun (return (v₀ ⦂ᵛ bool) ⨟ return v₁))
