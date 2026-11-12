@@ -25,6 +25,8 @@
 -- guarantee and stays within some listed allowance. It implies that  --
 -- the guarantee, measured in the left column, is no greater than the --
 -- allowance, measured in the right, and asks more.                   --
+--                                                                    --
+-- The product does not commute.                                      --
 ------------------------------------------------------------------------
 
 open import Grades.Durations.Nat using (ℕᵀ)
@@ -300,3 +302,13 @@ the-cap-absorbs :
   hi (⊤ᵗˢ ·ᵗˢ exact ⌈ read ⌉) ≡ unbounded
 the-cap-absorbs = refl
 
+
+------------------------------------------------------------------------
+-- The product does not commute
+--
+-- Reading and then writing meets neither end of writing and then
+-- reading.
+
+not-commutative :
+  ¬ (exact ⌈ read ⌉ ·ᵗˢ exact ⌈ write ⌉ ≾ᵗˢ exact ⌈ write ⌉ ·ᵗˢ exact ⌈ read ⌉)
+not-commutative = fails _ _

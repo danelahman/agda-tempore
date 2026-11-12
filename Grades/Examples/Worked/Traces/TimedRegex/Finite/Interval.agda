@@ -5,6 +5,8 @@
 -- common run fits, checked in a literal. The lower bound demanding a --
 -- wait is what separates the spans of the upper one; a delay is      --
 -- graded by both hulls, a wait of exactly its length.                --
+--                                                                    --
+-- The product does not commute, and the unit is not least.           --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Worked.Traces.TimedRegex.Finite.Interval where
@@ -13,7 +15,7 @@ open import Data.Bool.Base using (Bool; true; false; _∧_)
 open import Data.List.Base using ([]; _∷_)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Relation.Nullary using (¬_)
-open import Relation.Nullary.Decidable using (toWitnessFalse)
+open import Relation.Nullary.Decidable using (False; toWitnessFalse)
 
 open import Util.Equality
 
@@ -26,7 +28,7 @@ import Grades.Examples.Traces.TimedRegex.Finite.LowerBound Op 3 code name name-c
 import Grades.Examples.Traces.TimedRegex.Finite.UpperBound Op 3 code name name-code code-name running as U
 
 open import Grades.Base using (module Grade)
-open Grade interval using (Carrier; ι)
+open Grade interval using (Carrier; ι; 𝟏; _≾_; _≾?_)
   renaming (_·_ to _·ᵢ_)
 
 -- componentwise comparison
@@ -59,3 +61,22 @@ waited-meets = refl
 
 impatient : ¬ Consistent (⌜ L.idle L.≥ (# 5) ⌝ , ⌜ U.≤ (# 2) ⌝)
 impatient = toWitnessFalse {a? = consistent? (⌜ L.idle L.≥ (# 5) ⌝ , ⌜ U.≤ (# 2) ⌝)} _
+
+------------------------------------------------------------------------
+-- Failures of commutativity and of the unit being least, as
+-- comparisons of the grade, established by its decision
+
+fails : (c d : Carrier) {p : False (c ≾? d)} → ¬ (c ≾ d)
+fails c d {p} = toWitnessFalse p
+
+-- heating and then cooling is not cooling and then heating
+
+not-commutative :
+  ¬ (operation heat ·ᵢ operation cool ≾ operation cool ·ᵢ operation heat)
+not-commutative =
+  fails (operation heat ·ᵢ operation cool) (operation cool ·ᵢ operation heat)
+
+-- the empty run is not a run of heating
+
+unit-not-least : ¬ (𝟏 ≾ operation heat)
+unit-not-least = fails 𝟏 (operation heat)

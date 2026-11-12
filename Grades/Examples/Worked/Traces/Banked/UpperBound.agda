@@ -31,6 +31,8 @@
 --   ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ read ⌉            8 ticks                --
 --   ⌈ write ⌉ ∙ ⌈ read ⌉                      4 ticks                --
 --                                                                    --
+-- The product does not commute.                                      --
+--                                                                    --
 -- Every run is written out in full in every claim, and every claim   --
 -- is established by the decision procedure of the grade.             --
 ------------------------------------------------------------------------
@@ -399,3 +401,17 @@ the-top-weakens-to-no-list = failsᵉ unbounded (within ⟅ ⌈ read ⌉ ∙ ⟨
 the-top-absorbs :
   (unbounded ·ᵇ within ⟅ ⌈ read ⌉ ⟆) ≡ unbounded
 the-top-absorbs = refl
+
+------------------------------------------------------------------------
+-- The product does not commute
+--
+-- Reading and then writing is not permitted by writing and then
+-- reading: both operations are named, and a named operation permits
+-- itself only in its place.
+
+not-commutative :
+  ¬ (within ⟅ ⌈ read ⌉ ⟆ ·ᵇ within ⟅ ⌈ write ⌉ ⟆
+     ≾ within ⟅ ⌈ write ⌉ ⟆ ·ᵇ within ⟅ ⌈ read ⌉ ⟆)
+not-commutative =
+  failsᵉ (within ⟅ ⌈ read ⌉ ⟆ ·ᵇ within ⟅ ⌈ write ⌉ ⟆)
+         (within ⟅ ⌈ write ⌉ ⟆ ·ᵇ within ⟅ ⌈ read ⌉ ⟆)

@@ -6,6 +6,8 @@
 -- against closed ends, an equivalence of distinct expressions, the   --
 -- hull of a delay, and an idle wait made only from a time span       --
 -- admitting every operation.                                         --
+--                                                                    --
+-- The product does not commute, and the unit is not least.           --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Worked.Traces.TimedRegex.Finite.LowerBound where
@@ -13,12 +15,19 @@ module Grades.Examples.Worked.Traces.TimedRegex.Finite.LowerBound where
 open import Data.Bool.Base using (true; false)
 open import Data.Fin.Subset using (⁅_⁆)
 open import Data.Product using (_×_; _,_)
+open import Relation.Nullary using (¬_)
+open import Relation.Nullary.Decidable using (False; toWitnessFalse)
 
 open import Util.Equality
 
 open import Grades.Examples.Time.Rational.Interval using (_/_; #_)
 open import Grades.Examples.Worked.Traces.TimedRegex.Finite.Operations
 open import Grades.Examples.Traces.TimedRegex.Finite.LowerBound Op 3 code name name-code code-name running
+
+open import Grades.Base using (module Grade)
+
+private
+  module G = Grade lower-bound
 
 ------------------------------------------------------------------------
 -- Idle waits add up, and undisturbed waits are kept
@@ -83,3 +92,20 @@ delay-short = refl
 
 heat-not-span : span? (‵ heat) ≡ false
 heat-not-span = refl
+
+------------------------------------------------------------------------
+-- Failures of commutativity and of the unit being least, as
+-- comparisons of the grade, established by its decision
+
+fails : (c d : G.Carrier) {p : False (c G.≾? d)} → ¬ (c G.≾ d)
+fails c d {p} = toWitnessFalse p
+
+-- heating and then cooling is not cooling and then heating
+
+not-commutative : ¬ (⌜ ‵ heat ⌝ G.· ⌜ ‵ cool ⌝ G.≾ ⌜ ‵ cool ⌝ G.· ⌜ ‵ heat ⌝)
+not-commutative = fails (⌜ ‵ heat ⌝ G.· ⌜ ‵ cool ⌝) (⌜ ‵ cool ⌝ G.· ⌜ ‵ heat ⌝)
+
+-- the empty run is not a run of heating
+
+unit-not-least : ¬ (G.𝟏 G.≾ ⌜ ‵ heat ⌝)
+unit-not-least = fails G.𝟏 ⌜ ‵ heat ⌝

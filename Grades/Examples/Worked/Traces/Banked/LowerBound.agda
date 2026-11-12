@@ -24,6 +24,8 @@
 --   ⌈ write ⌉ ∙ ⌈ read ⌉ ∙ ⌈ send ⌉                7 ticks           --
 --   ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉                    7 ticks           --
 --                                                                    --
+-- The product does not commute.                                      --
+--                                                                    --
 -- Every run is written out in full in every claim, and every claim   --
 -- is established by the decision procedure of the grade.             --
 ------------------------------------------------------------------------
@@ -247,3 +249,14 @@ a-redundant-branch = refl
 weakening-both-ways :
   ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≡ ⟅ ⌈ read ⌉ ⟆
 weakening-both-ways = ≾-antisym holds holds
+
+------------------------------------------------------------------------
+-- The product does not commute
+--
+-- A run reading and then writing does not cover writing and then
+-- reading, the operations of a guarantee occurring in order.
+
+not-commutative :
+  ¬ (⟅ ⌈ read ⌉ ⟆ · ⟅ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ write ⌉ ⟆ · ⟅ ⌈ read ⌉ ⟆)
+not-commutative =
+  failsᵉ (⟅ ⌈ read ⌉ ⟆ · ⟅ ⌈ write ⌉ ⟆) (⟅ ⌈ write ⌉ ⟆ · ⟅ ⌈ read ⌉ ⟆)
