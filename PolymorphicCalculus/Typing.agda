@@ -352,8 +352,8 @@ mutual
             ------------------------------
             → Q ∣ Γ ⊢ᶜ⦂ B ! (ε ·̂ₑ ε')
 
-    -- unboxing a resource value once enough time `ρ'` has passed since
-    -- its variable came into scope
+    -- unboxing a resource value while the grade `ρ'` accumulated since
+    -- its variable came into scope is below its grade `ρ`
 
     unbox   : {X : OVType Θ}
             → {C : OCType Θ}
@@ -364,7 +364,7 @@ mutual
             -----------------
             → Q ∣ Γ ⊢ᶜ⦂ C
 
-    -- boxing a value that is ready for use in at least `ρ` grade steps
+    -- boxing a value as a resource usable within the grade `ρ`
 
     box     : {A : OVType Θ}
             → {C : OCType Θ}

@@ -2,11 +2,11 @@
 -- Hints for the solver.                                              --
 --                                                                    --
 -- What a grade or a grade system declares beyond its structure and   --
--- laws: properties it has, and candidate values for refuting. The    --
--- solver uses them to decide more; no declarative judgement depends  --
--- on them, entailment being semantic consequence in the grade        --
--- system. Each property is a proof under `Maybe`, `nothing` leaving  --
--- it undeclared.                                                     --
+-- laws: properties it has, and candidate values for the solver to    --
+-- try. The solver uses them to decide more; no declarative judgement --
+-- depends on them, entailment being semantic consequence in the      --
+-- grade system. Each property is a proof under `Maybe`, `nothing`    --
+-- leaving it undeclared.                                             --
 ------------------------------------------------------------------------
 
 module Grades.Hints where
@@ -68,7 +68,8 @@ record SystemHints (S : GradeSystem) : Set where
     -- candidate values of an effect rigid of a deferred condition, from
     -- the number of occurrences of the rigids on a side of an ordering
     -- (the degree) and the condition's resource and effect constants;
-    -- any list is sound, the candidates serving only to refute
+    -- any list is sound: a condition failing at a candidate is refuted,
+    -- and the search for a closed instance tries the candidates as well
     witnesses : ℕ → List R → List E → List E
 
 -- no hints

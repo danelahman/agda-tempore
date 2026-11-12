@@ -21,6 +21,6 @@ data GType : Set where
   _|+|ᵍ_ : GType → GType → GType           -- sum type
   listᵍ  : GType → GType                   -- list type
   [_]ᵍ_  : R → GType → GType               -- box modality: values of type `[ ρ ]ᵍ A`
-                                           -- become available in at most `ρ` steps
+                                           -- are usable within the grade `ρ`
 infix 38 _|×|ᵍ_ _|+|ᵍ_
 infix 37 [_]ᵍ_

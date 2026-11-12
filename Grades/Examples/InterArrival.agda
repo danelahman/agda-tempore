@@ -56,9 +56,9 @@ open Maps 𝒩 using (Map; _∣_; _!_; everywhere; indexedᵍ; indexedʰ) public
 inter-arrival : Grade D
 inter-arrival = indexedᵍ entryᵍ ×ᵍ domain-interval
 
--- its hints: the unit is not least, the product does not commute, and
--- the closures are those of the entries, name by name, paired with
--- those of the total duration
+-- its hints: the closures are those of the entries, name by name,
+-- paired with those of the total duration; neither that the unit is
+-- least nor that the product commutes is declared, as neither holds
 
 inter-arrivalʰ : GradeHints inter-arrival
 inter-arrivalʰ = record

@@ -2,8 +2,9 @@
 
 An Agda formalisation of the core calculus of
 [Tempore](https://tempore-lang.ee/), a language for type-safe programming with
-temporal resources: resources that become available only after some time, some
-events, etc. have elapsed since they were brought into scope.
+temporal resources: resources that may be used only while the time, the
+events, etc. that have elapsed since they were brought into scope stay within a
+prescribed grade, e.g., only after, or only before, some time has passed.
 The calculus has Fitch-style graded modal types over a grade system (a grade
 algebra for effects, one for resources, and a morphism between them),
 effect-graded algebraic effects and effect handlers, and a graded effect system.

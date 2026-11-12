@@ -13,7 +13,7 @@
 -- It is above the entry, absorbs its own iteration, is the least     --
 -- entry doing both, and satisfies both induction laws (`plusᵉ`). The --
 -- hints of the grade of one operation (`entryʰ`) declare these       --
--- closures, the unit not least and the product not commutative.      --
+-- closures, and nothing else.                                        --
 ------------------------------------------------------------------------
 
 open import Grades.Durations

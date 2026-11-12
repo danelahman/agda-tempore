@@ -26,7 +26,8 @@
 -- is the reference entry point: a scheme is principal and its  --
 -- hypotheses are satisfiable exactly when the term is typable  --
 -- (`infer-typed`); a refutation means the term is untypable    --
--- (`infer-untypable`); a handler-free term is never stuck      --
+-- (`infer-untypable`); a handler-free term is never stuck in a --
+-- program context without quantified hypotheses                --
 -- (`infer-handlerFree`). `check` also searches for a closed    --
 -- instance (`check-established`).                              --
 --                                                              --
