@@ -46,7 +46,7 @@ open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Grades.Durations using (Duration)
 open import Grades.Base
-open import Grades.Hints using (SystemHints; noGradeHints)
+open import Grades.Hints using (SystemHints)
 
 open import Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
   using (Trace; traces; nonempty; nf; nf-ne; nf-∈⁺; nf-∈⁻; ⟨_⟩; ·ˢ-ne; ++-ne)
@@ -54,7 +54,7 @@ open import Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
 open import Grades.Examples.Traces.FiniteRunSets.UpperBound
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
-  using (upper-bound; Permits; permitting_; any-run; _·ᵖ_; _⊔ᵖ_; _≾_)
+  using (upper-bound; upper-boundʰ; Permits; permitting_; any-run; _·ᵖ_; _⊔ᵖ_; _≾_)
 
 open import Grades.Examples.Time.LowerBound using (𝕀⊤; timed_; untimed; _·ᵗ_; ≾ᵗ-antisym)
 
@@ -182,7 +182,7 @@ finite-run-sets→at-least-counts-grade-system = record
 finite-run-sets→at-least-counts-grade-systemʰ : SystemHints finite-run-sets→at-least-counts-grade-system
 finite-run-sets→at-least-counts-grade-systemʰ = record
   { RHints      = (at-least-counts-with-⊤ʰ n)
-  ; EHints      = noGradeHints
+  ; EHints      = upper-boundʰ
   ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

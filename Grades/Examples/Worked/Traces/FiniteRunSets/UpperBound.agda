@@ -9,7 +9,8 @@
 --                                                                    --
 -- The set is read disjunctively: a longer list permits more, the     --
 -- union of two grades is their join, and `{ ε }` lies below every    --
--- list containing the empty run.                                     --
+-- list containing the empty run. The product does not commute, and   --
+-- a grade listing a run other than `ε` has `any-run` as its closure. --
 --                                                                    --
 -- Every run is written out in full in every claim, and every claim   --
 -- is established by the decision procedure of the grade.             --
@@ -21,7 +22,7 @@ open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable
   using (True; False; toWitness; toWitnessFalse)
 
-open import Grades.Base using (Grade)
+open import Grades.Base using (Grade; Plus)
 
 open import Util.Equality
 
@@ -29,7 +30,7 @@ open import Grades.Examples.Worked.Operations
 
 open import Grades.Examples.Traces.FiniteRunSets.UpperBound
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
-  using (upper-bound; Permits; permitting_; any-run; _·ᵖ_; _≾_; _≾?_) public
+  using (upper-bound; Permits; permitting_; any-run; _·ᵖ_; _≾_; _≾?_; plusᵖ) public
 
 order : Grade._≾_ upper-bound ≡ _≾_
 order = refl
@@ -157,6 +158,26 @@ sequencing-adds-nothing-else :
   ¬ ((permitting ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ·ᵖ permitting ⟅ ⌈ send ⌉ ⟆)
      ≾ permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆)
 sequencing-adds-nothing-else = fails
+
+-- the product does not commute: reading and then writing is not a run
+-- of writing and then reading
+
+not-commutative :
+  ¬ ((permitting ⟅ ⌈ read ⌉ ⟆ ·ᵖ permitting ⟅ ⌈ write ⌉ ⟆)
+     ≾ (permitting ⟅ ⌈ write ⌉ ⟆ ·ᵖ permitting ⟅ ⌈ read ⌉ ⟆))
+not-commutative = fails
+
+------------------------------------------------------------------------
+-- Closures
+--
+-- A grade listing a run other than `ε` has `any-run` as its closure,
+-- no finite list being closed under the product; `{ ε }` is its own.
+
+read-closure : Plus.c⁺ (plusᵖ (permitting ⟅ ⌈ read ⌉ ⟆)) ≡ any-run
+read-closure = refl
+
+pure-closure : Plus.c⁺ (plusᵖ (permitting ⟅ ε ⟆)) ≡ permitting ⟅ ε ⟆
+pure-closure = refl
 
 ------------------------------------------------------------------------
 -- As a resource grade

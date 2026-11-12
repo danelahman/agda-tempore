@@ -35,7 +35,7 @@ open import Relation.Binary.Definitions
   using (DecidableEquality; Transitive; Trichotomous)
 
 open import Grades.Base
-open import Grades.Hints using (SystemHints; noGradeHints)
+open import Grades.Hints using (SystemHints)
 open import Grades.Examples.Time.UpperBound
   renaming (upper-bound to time-upper-bound; upper-boundʰ to time-upper-boundʰ)
 
@@ -55,7 +55,7 @@ open import Grades.Traces.MaxDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
 open import Grades.Examples.Traces.FiniteRunSets.UpperBound
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
-  using (upper-bound; Permits; permitting_; any-run; _·ᵖ_; _⊔ᵖ_; _≾_; _≾₀_)
+  using (upper-bound; upper-boundʰ; Permits; permitting_; any-run; _·ᵖ_; _⊔ᵖ_; _≾_; _≾₀_)
 
 open MaxDurations costʰⁱ
 
@@ -123,7 +123,7 @@ finite-run-sets→upper-bounds-grade-system = record
 finite-run-sets→upper-bounds-grade-systemʰ : SystemHints finite-run-sets→upper-bounds-grade-system
 finite-run-sets→upper-bounds-grade-systemʰ = record
   { RHints      = time-upper-boundʰ
-  ; EHints      = noGradeHints
+  ; EHints      = upper-boundʰ
   ; reflects-𝟏? = nothing
   ; witnesses   = λ _ _ _ → []ᴸ
   }

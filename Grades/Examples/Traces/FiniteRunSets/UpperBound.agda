@@ -29,6 +29,11 @@
 -- have, and `coerce` adds runs to it. As a resource grade it is a    --
 -- permit listing exactly the runs it covers, and the premise         --
 -- `ρ' ≾ᵣ ρ` of `unbox` requires the elapsed runs to be among them.   --
+--                                                                    --
+-- Every grade has a closure: `{ ε }` and `any-run` are their own,    --
+-- and any other grade has `any-run`, since no finite set listing a   --
+-- run other than `ε` is closed under the product. The hints declare  --
+-- the closures.                                                      --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
@@ -46,16 +51,27 @@ module Grades.Examples.Traces.FiniteRunSets.UpperBound
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_) where
 
-open import Data.Empty using (⊥)
-open import Data.Nat.Base using (ℕ; _+_)
+open import Data.Empty using (⊥; ⊥-elim)
+open import Data.List.Base using (List; []; _∷_)
+open import Data.List.Membership.Propositional using (_∈_)
+open import Data.List.Membership.Propositional.Properties
+  using (∈-cartesianProductWith⁺)
+open import Data.List.Relation.Unary.Any using (here; there)
+open import Data.Nat.Base using (ℕ; _+_; _≤_; _<_)
+open import Data.Nat.Properties
+  using (≤-refl; ≤-trans; ≤-total; +-comm; m≤m+n; m<m+n; n≢0⇒n>0; <⇒≱)
+open import Data.Product using (Σ; _×_; _,_; proj₂)
+open import Data.Sum using (inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (¬_; Dec; yes; no)
 
-open import Data.Maybe.Base using (nothing)
+open import Data.Maybe.Base using (nothing; just)
 
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Base
+open import Grades.Hints using (GradeHints)
+open import Grades.Traces.Durations ℕᵀ Op using (module Durations)
 
 open import Grades.Traces.Sets ℕᵀ Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Grades.Examples.Traces.FiniteRunSets.Base Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
@@ -356,4 +372,109 @@ upper-bound = posetᵍ record
   ; ι               = ιᵖ
   ; ι-zero          = ιᵖ-zero
   ; ι-plus          = λ {m} {n} → ιᵖ-plus {m} {n}
+  }
+
+------------------------------------------------------------------------
+-- Closures
+--
+-- A trace is measured by its number of operations and the total length
+-- of its delays; the measure is additive and `0` only at `ε`. No
+-- non-empty list of traces is closed under sequencing with a trace
+-- other than `ε`, on either side: a member of greatest measure,
+-- followed or preceded by that trace, is not a member. So a grade
+-- listing a run other than `ε` has `any-run` as its closure, and
+-- `{ ε }` is its own.
+
+private
+  open Durations (λ _ → 1) using () renaming
+    (duration to μ; duration⁻ to μ⁻; duration-∙ to μ-∙)
+
+  -- only `ε` has measure `0`
+  μ-ε : (s : Trace) → μ s ≡ 0 → s ≡ ε
+  μ-ε ε               _ = refl
+  μ-ε (operation o t) ()
+  μ-ε (delay d t)     e =
+    ⊥-elim (∣∣⁺-pos d (subst (∣ d ∣⁺ ≤_) e (m≤m+n ∣ d ∣⁺ (μ⁻ t))))
+
+  -- a trace other than `ε` has a positive measure
+  μ-pos : {t : Trace} → ¬ (t ≡ ε) → 0 < μ t
+  μ-pos {t} ¬t = n≢0⇒n>0 (λ e → ¬t (μ-ε t e))
+
+  -- a member of greatest measure
+  top : (x : Trace) (xs : List Trace)
+      → Σ Trace λ m → m ∈ (x ∷ xs) × ({y : Trace} → y ∈ (x ∷ xs) → μ y ≤ μ m)
+  top x [] = x , here refl , λ { (here refl) → ≤-refl ; (there ()) }
+  top x (x' ∷ xs) with top x' xs
+  ... | m , m∈ , ub with ≤-total (μ x) (μ m)
+  ...   | inj₁ le = m , there m∈ , λ { (here refl) → le ; (there y∈) → ub y∈ }
+  ...   | inj₂ ge = x , here refl ,
+                    λ { (here refl) → ≤-refl ; (there y∈) → ≤-trans (ub y∈) ge }
+
+  -- no non-empty list is closed under sequencing with a trace other
+  -- than `ε` on the left
+  no-closedˡ : {t q : Trace} {Q : List Trace} → ¬ (t ≡ ε) → q ∈ Q
+             → ¬ ({y : Trace} → y ∈ Q → (t ∙ y) ∈ Q)
+  no-closedˡ {Q = []}     _  ()
+  no-closedˡ {t} {Q = x ∷ xs} ¬t _ f with top x xs
+  ... | m , m∈ , ub =
+        <⇒≱ (m<m+n (μ m) (μ-pos ¬t))
+            (subst (_≤ μ m) (trans (μ-∙ t m) (+-comm (μ t) (μ m))) (ub (f m∈)))
+
+  -- ... and on the right
+  no-closedʳ : {t q : Trace} {Q : List Trace} → ¬ (t ≡ ε) → q ∈ Q
+             → ¬ ({y : Trace} → y ∈ Q → (y ∙ t) ∈ Q)
+  no-closedʳ {Q = []}     _  ()
+  no-closedʳ {t} {Q = x ∷ xs} ¬t _ f with top x xs
+  ... | m , m∈ , ub =
+        <⇒≱ (m<m+n (μ m) (μ-pos ¬t)) (subst (_≤ μ m) (μ-∙ m t) (ub (f m∈)))
+
+  -- a product of members is a member of a grade above the product
+  prod-∈ : {P Q R : NeTraces} → (P · Q) ≾₀ R
+         → {a b : Trace} → a ∈ traces P → b ∈ traces Q → (a ∙ b) ∈ traces R
+  prod-∈ {P} {Q} {R} rel a∈ b∈ =
+    ∈-⊑ {traces (P · Q)} {traces R} rel
+      (nf-∈⁺ (∈-cartesianProductWith⁺ _∙_ a∈ b∈))
+
+  -- a grade with no member other than `ε` is below the unit
+  below-𝟏 : (P : NeTraces) → ({p : Trace} → p ∈ traces P → ¬ (p ≡ ε) → ⊥)
+          → P ≾₀ 𝟏
+  below-𝟏 P f = ⊑-∈ step
+    where
+      step : (p : Trace) → p ∈ traces P → p ∈ traces 𝟏
+      step p m with p ≟ᵀ ε
+      ... | yes q = here q
+      ... | no ¬q = ⊥-elim (f m ¬q)
+
+plusᵖ : (P : Permits) → Plus _·ᵖ_ _≾_ P
+plusᵖ any-run = plus-self tt tt
+plusᵖ (permitting P) with P ≾₀? 𝟏
+... | yes r = plus-self (≾₀-refl {P})
+                (subst ((P · P) ≾₀_) (·-identityˡ P) (·-monoˡ₀ {P} {P} {𝟏} r))
+... | no ¬r = plus any-run tt tt least indˡ indʳ
+  where
+    least : {v : Permits} → permitting P ≾ v → v ·ᵖ v ≾ v → any-run ≾ v
+    least {permitting Q} r₁ r₂ = ¬r (below-𝟏 P λ p∈ ¬p →
+      no-closedˡ ¬p (∈-⊑ {traces P} {traces Q} r₁ p∈)
+        (λ y∈ → prod-∈ {Q} {Q} {Q} r₂ (∈-⊑ {traces P} {traces Q} r₁ p∈) y∈))
+    least {any-run} _ _ = tt
+
+    indˡ : {d : Permits} → permitting P ·ᵖ d ≾ d → any-run ·ᵖ d ≾ d
+    indˡ {permitting Q} r = ¬r (below-𝟏 P λ p∈ ¬p →
+      no-closedˡ ¬p (proj₂ (neHead (traces Q) (nonempty Q)))
+        (λ y∈ → prod-∈ {P} {Q} {Q} r p∈ y∈))
+    indˡ {any-run} _ = tt
+
+    indʳ : {d : Permits} → d ·ᵖ permitting P ≾ d → d ·ᵖ any-run ≾ d
+    indʳ {permitting Q} r = ¬r (below-𝟏 P λ p∈ ¬p →
+      no-closedʳ ¬p (proj₂ (neHead (traces Q) (nonempty Q)))
+        (λ y∈ → prod-∈ {Q} {P} {Q} r y∈ p∈))
+    indʳ {any-run} _ = tt
+
+-- its hints, with closures
+
+upper-boundʰ : GradeHints upper-bound
+upper-boundʰ = record
+  { 𝟏-least? = nothing
+  ; ·-comm?  = nothing
+  ; plus?    = λ P → just (plusᵖ P)
   }
