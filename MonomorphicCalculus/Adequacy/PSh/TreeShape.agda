@@ -121,7 +121,7 @@ head0-⊑ : ∀ {A ε w s τ}
         → Head0 (k q') s
 head0-⊑ k q q' h = subst (λ z → Head0 (k z) _) (⊑-irrelevant q q') h
 
--- Bisimilar trees have the same zero-delay head shape. Mutual with its
+-- Equivalent trees have the same zero-delay head shape. Mutual with its
 -- converse, since `≈ᵗ-sym` is a constructor.
 
 mutual

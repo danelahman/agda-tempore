@@ -273,17 +273,18 @@ mutual
   headᵏ-reach (hk-suc τ' e q h) with headᵏ-reach h
   ... | w' , ρ , acc , r , pr = w' , _ , ⊑-trans q acc , r , pr
 
--- Bisimilar trees have the same head and the same tick total. Mutual
+-- Equivalent trees have the same head and the same tick total. Mutual
 -- with its converse, since `≈ᵗ-sym` is a constructor.
 
 module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
 
   mutual
 
-    -- `TERMINATING`: lexicographic in the bisimulation proof, then the `Head`
-    -- derivation, where the `≈ᵗ-trans`/`≈ᵗ-sym` wrappers that `plus-fwd`, `plus-bwd`
-    -- and `headᵏ-cast` put around a subproof count as that subproof and a
-    -- reflexivity proof counts as least; the checker cannot see through the wrappers.
+    -- `TERMINATING`: the recursion is not structural. The intended measure is
+    -- lexicographic in the equivalence proof, then the `Head` derivation, with the
+    -- `≈ᵗ-trans`/`≈ᵗ-sym` wrappers that `plus-fwd`, `plus-bwd` and `headᵏ-cast`
+    -- put around a subproof counted as that subproof and a reflexivity proof as
+    -- least. This measure is not checked.
 
     {-# TERMINATING #-}
 

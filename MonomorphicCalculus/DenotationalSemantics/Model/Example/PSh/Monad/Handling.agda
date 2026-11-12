@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------
--- Effect handling for the free graded monad.                          --
+-- Effect handling for the graded tree monad.                          --
 --                                                                     --
 -- A handler is a family of clause morphisms, one per operation and    --
 -- residual effect grade, closing over an eternal parameter `P`.       --

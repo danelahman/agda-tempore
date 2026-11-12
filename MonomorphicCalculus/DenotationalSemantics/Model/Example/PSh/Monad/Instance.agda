@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Packaging the free graded monad on presheaves as an instance of    --
+-- Packaging the graded tree monad on presheaves as an instance of    --
 -- the abstract `Monad` interface.                                    --
 ------------------------------------------------------------------------
 

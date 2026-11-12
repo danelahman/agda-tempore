@@ -11,12 +11,12 @@
 --                                                                       --
 -- both boxed by the resource projection `∣ ε ∣ᵉ` of the effect grade.   --
 --                                                                       --
--- The two are inter-derivable (`enr-of-str` / `str-of-enr`), and        --
--- these translations are mutually inverse (`str-of-enr-of-str`,         --
--- `enr-of-str-of-enr`), so a natural `[-]`-strength is the same data    --
--- as a natural `[-]`-enrichment. The enrichment `enrᵀ` derived from the --
--- monad's strength is natural (`enrᵀ-nat`) and recovers the strength    --
--- (`str-of-enrᵀ≈strᵀ`).                                                 --
+-- The two are inter-derivable (`enr-of-str` / `str-of-enr`), these      --
+-- translations are mutually inverse on natural ones                     --
+-- (`str-of-enr-of-str`, `enr-of-str-of-enr`), and `enr-of-str`          --
+-- preserves naturality (`enr-of-str-nat`). The enrichment `enrᵀ`        --
+-- derived from the monad's strength is natural (`enrᵀ-nat`) and         --
+-- recovers the strength (`str-of-enrᵀ≈strᵀ`).                           --
 --                                                                       --
 -- The correspondence concerns the strength/enrichment and their         --
 -- naturality only: the box is lax, so the further enrichment            --

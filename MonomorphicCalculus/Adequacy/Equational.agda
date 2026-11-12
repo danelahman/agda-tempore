@@ -1,12 +1,13 @@
 ------------------------------------------------------------------------
 -- Adequacy for the equational theory.                                --
 --                                                                    --
--- Reasoning in the equational theory is observationally valid: a     --
--- derivation `[] ⊢ᶜ⦂ M ≡ᵗʰ N` between closed programs denotes an     --
--- equality of global points (`soundᶜ`), and `adequacy` reads that    --
--- back off the machine: the two programs halt with the same outcome, --
--- and at an answer type with the same answer (the same constant at a --
--- base type, the same boolean at `bool`).                            --
+-- In a head-faithful and base-faithful model, reasoning in the       --
+-- equational theory is observationally valid: a derivation           --
+-- `[] ⊢ᶜ⦂ M ≡ᵗʰ N` between closed programs, with certificates,       --
+-- denotes an equality of global points (`soundᶜ`), and `adequacy`    --
+-- reads that back off the machine: the two programs halt with the    --
+-- same outcome, and at an answer type with the same answer (the same --
+-- constant at a base type, the same boolean at `bool`).              --
 --                                                                    --
 -- The two theorems meet at `⟦ M ⟧ᵖ ≈ᵐ ⟦ N ⟧ᵖ`; everything here is    --
 -- their composition.                                                 --

@@ -125,7 +125,7 @@ import MonomorphicCalculus.OperationalSemantics.TypeSafety
 -- Termination                                                        --
 ------------------------------------------------------------------------
 
--- Termination (strong normalisation) proven using logical relations.
+-- Termination: every closed program halts, proven using a logical relation.
 --
 -- Where to look, under `OperationalSemantics/`
 --   Evaluation                runs that halt (Halts)
@@ -165,7 +165,7 @@ import MonomorphicCalculus.OperationalSemantics.TopLevel.Reduction
 -- Equational theory                                                  --
 ------------------------------------------------------------------------
 
--- A local state theory based equational theory of values and computations.
+-- An equational theory of values and computations.
 --
 -- Where to look
 --   EquationalTheory/EquationalTheory  the theory (_⊢ᵛ⦂_≡ᵗʰ_, _⊢ᶜ⦂_≡ᵗʰ_)
@@ -192,7 +192,7 @@ import MonomorphicCalculus.EquationalTheory.Naturality
 --   GroundTypes, GroundEternal     ground types
 --   Comparison, ComparisonEternal  their comparisons, which commute with the
 --                                  eternal extraction
---   Monad                          the strong graded monad with handler values
+--   Monad                          the `[-]`-strong graded monad with handler values
 --   TickMonad, Implementation      the tick monad and implementations of the
 --                                  operations, interpreting running operations
 --                                  by implementations
@@ -249,8 +249,9 @@ import MonomorphicCalculus.DenotationalSemantics.Interpretation.Variables
 -- Soundness                                                          --
 ------------------------------------------------------------------------
 
--- For terms with uniformly defined handlers, equal terms have equal
--- denotations, and a run relates the denotations of its configurations.
+-- For terms with uniformly defined handlers, and derivations with certified
+-- intermediate terms, equal terms have equal denotations, and a run relates
+-- the denotations of its configurations.
 --
 -- Where to look
 --   EquationalTheory/Soundness  the equational theory
@@ -287,14 +288,14 @@ import MonomorphicCalculus.OperationalSemantics.Soundness.TopLevel
 -- The presheaf model                                                 --
 ------------------------------------------------------------------------
 
--- Presheaves over a Kripke frame of worlds, with the free graded monad
+-- Presheaves over a Kripke frame of worlds, with the graded tree monad
 -- on them, given an instance of the general notion of a model.
 --
 -- Where to look
 --   DenotationalSemantics/Model/World  Kripke frames of worlds (World)
 --   DenotationalSemantics/Model/Example/PSh/
 --     Base                 presheaves (PShCat)
---     Monad/Instance       the free graded monad (PShMonad)
+--     Monad/Instance       the graded tree monad (PShMonad)
 --     Monad/HandlerValues  handler values (Hᵖ, appʰᵖ, curryʰᵖ)
 
 import MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Base
@@ -325,13 +326,16 @@ import MonomorphicCalculus.DenotationalSemantics.Model.World.Reindex
 ------------------------------------------------------------------------
 
 -- In a head-faithful model, two programs with uniform handlers and equal
--- denotations halt with the same outcome, e.g., in the presheaf model.
+-- denotations halt with the same outcome. The presheaf model is
+-- head-faithful when durations are stepped and the frame satisfies
+-- `TickFrame` and `ConstFrame`.
 --
 -- Where to look
 --   Adequacy/HeadFaithful      head-faithful models (HeadFaithful)
 --   Adequacy/Adequacy          adequacy
 --   Adequacy/PSh/HeadFaithful  the presheaf model is head-faithful
 --   Adequacy/Equational        the equational theory is observationally valid
+--                              in such a model
 
 import MonomorphicCalculus.Adequacy.Adequacy
 import MonomorphicCalculus.Adequacy.Equational

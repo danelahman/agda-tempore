@@ -8,11 +8,11 @@
 -- its data: it is not a store threaded through a state monad, but an     --
 -- environment for its own context `toCtx 𝕊`.                             --
 --                                                                        --
--- The modalities `⟨ ρ ⟩` have no global points (`⟨ ρ ⟩ᵒ X` is a Kripke   --
--- possibility, and near time 0 there is no `ρ`-past to be found), so     --
--- the state supplies only the cells. `⟦ 𝕊 ⟧ˢ` is a morphism out of the   --
--- state's history `hist 𝕊`, the modality-only residue of `toCtx 𝕊`, and  --
--- the passage of time enters from outside it (in the operational         --
+-- The modalities `⟨ ρ ⟩` need not have global points (`⟨ ρ ⟩ᵒ X` is a    --
+-- Kripke possibility, and near time 0 there is no `ρ`-past to be found), --
+-- so the state supplies only the cells. `⟦ 𝕊 ⟧ˢ` is a morphism out of    --
+-- the state's history `hist 𝕊`, the modality-only residue of `toCtx 𝕊`,  --
+-- and the passage of time enters from outside it (in the operational     --
 -- semantics, via `DELAY`).                                               --
 --                                                                        --
 -- The cell clause of `⟦_⟧ˢ` is the morphism that `⟦ box V M ⟧ᶜᵗ`         --

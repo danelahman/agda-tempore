@@ -1,14 +1,15 @@
 -------------------------------------------------------------------------
 -- The `[-]`-strong graded monad modelling the calculus' effects.      --
 --                                                                     --
--- A graded monad `Tᵒ A ε` over the effect grades, built like a free   --
--- monad from the signature's operations and explicit delays.          --
--- Operations, delays and strength mention the box modality at the     --
--- resource projection `∣_∣ᵉ` of the effect grade, matching the        --
--- calculus' `⟨ ∣ ε ∣ᵉ ⟩` context advance.                             --
+-- A graded monad `Tᵒ A ε` over the effect grades, with the            --
+-- signature's operations and explicit delays. Operations, delays and  --
+-- strength mention the box modality at the resource projection `∣_∣ᵉ` --
+-- of the effect grade, matching the calculus' `⟨ ∣ ε ∣ᵉ ⟩` context    --
+-- advance.                                                            --
 --                                                                     --
--- Grade coercions come in two kinds: `ε-substᵀ` on the nose along     --
--- the monoid laws of `·ₑ`, and `T-≤` for sub-effecting along `≾ₑ`.    --
+-- Grade coercions come in two kinds: `ε-substᵀ` along an equality `≡` --
+-- of grades, and `T-≤` along `≾ₑ`, which also carries the monoid laws --
+-- of `·ₑ`, as these hold up to `≃ₑ`.                                  --
 -- Strength coherence is stated for the lax box. Effect handling       --
 -- folds a handler, whose clauses are morphisms, into a `T`-algebra.   --
 -- A handler value is an element of `Hᵒ`, the object of families of    --
@@ -68,7 +69,7 @@ record Monad : Set₁ where
     ηᵀ : ∀ {A} → A →ᵐ Tᵒ A 𝟏ₑ
     μᵀ : ∀ {A ε ε'} → Tᵒ (Tᵒ A ε') ε →ᵐ Tᵒ A (ε ·ₑ ε')
 
-    -- On-the-nose grade coercion (transport along ≡)
+    -- Grade coercion (transport along ≡)
 
     ε-substᵀ : ∀ {A ε ε'} → ε ≡ ε' → Tᵒ A ε →ᵐ Tᵒ A ε'
     ε-substᵀ-refl : ∀ {A ε} → ε-substᵀ {A} {ε} refl ≈ᵐ idᵐ
@@ -173,7 +174,7 @@ record Monad : Set₁ where
 
     -- A delay by no time is no delay, and two consecutive delays are the one
     -- delay by the sum. Both are stated with the grade relaxation `[]-≤`,
-    -- `ιᵣ` being only propositionally a monoid morphism.
+    -- `ιₑ` being a monoid morphism only up to `≃ₑ`.
 
     delayᵀ-zero : ∀ {A ε'}
                 → delayᵀ {A} {ε'} 0ᴰ

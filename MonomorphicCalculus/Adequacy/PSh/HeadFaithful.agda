@@ -2,13 +2,13 @@
 -- The presheaf model is head-faithful.                                --
 --                                                                     --
 -- Discharges `Adequacy.HeadFaithful`'s record, the model-side         --
--- assumption of the adequacy theorem, for the free graded tree monad  --
--- on presheaves, and `HeadTimed` with it.                             --
+-- assumption of the adequacy theorem, for the graded tree monad on    --
+-- presheaves, and `HeadTimed` with it.                                --
 --                                                                     --
 -- Needs stepped durations, a duration being a number of unit ticks,   --
 -- and two frame assumptions: `TickFrame` (worlds are inhabited, time  --
--- can always pass by a tick) and `ConstFrame` (base constants'        --
--- equality does not depend on when one looks, needed only for         --
+-- can always pass by a tick) and `ConstFrame` (base constants equal   --
+-- at a later world are equal at every earlier one, needed only for    --
 -- `leaf-const`).                                                      --
 -------------------------------------------------------------------------
 

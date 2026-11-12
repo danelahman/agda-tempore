@@ -1,8 +1,10 @@
 -------------------------------------------------------------------------
--- The concrete tick frames can always let time pass.                  --
+-- Reachability in the frame of tick counts.                           --
 --                                                                     --
--- Checks that `PSh.HeadFaithful`'s `TickFrame` premise (some world    --
--- is reachable at every grade) holds for the simplest concrete frame. --
+-- In the frame of tick counts with lower time bounds, some world is   --
+-- reachable from every world at every grade. This is the hypothesis   --
+-- of `reachable⇒tick` in `PSh.HeadFaithful`, which gives a            --
+-- `TickFrame`.                                                        --
 -------------------------------------------------------------------------
 
 module MonomorphicCalculus.Adequacy.PSh.TickFrames where

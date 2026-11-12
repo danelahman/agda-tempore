@@ -6,10 +6,10 @@
 -- `MonomorphicCalculus.DenotationalSemantics.Model.Example.PSh.Base`   --
 -- a presheaf is indexed by the worlds `W` monotonely in the unit grade --
 -- only; the graded order enters through the modalities and the monad.  --
--- The frame provides a single family of preorders on worlds,           --
--- `_⊑[ ρ ]_`, graded by the resource grades `ρ : R`, driving the box   --
--- and context modalities (Kripke necessity / possibility) and the      --
--- world-movement of the graded effect monad.                           --
+-- The frame provides a single graded preorder on worlds, `_⊑[ ρ ]_`,   --
+-- indexed by the resource grades `ρ : R`, driving the box and context  --
+-- modalities (Kripke necessity / possibility) and the world-movement   --
+-- of the graded effect monad.                                          --
 --                                                                      --
 -- The monad is graded by the effect grades `ε : E`, but it moves       --
 -- through the worlds along the resource projection `∣ ε ∣ᵉ` of its     --

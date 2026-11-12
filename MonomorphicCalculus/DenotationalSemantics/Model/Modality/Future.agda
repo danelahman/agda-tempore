@@ -3,14 +3,12 @@
 -- graded by a monoid of grades `(R , · , 𝟏 , ≾)`. It is the analogue   --
 -- of the comonadic □-modality on types in Fitch-style modal calculi.   --
 --                                                                      --
--- The modality is a lax graded comonad, with counit `ε` and            --
--- comultiplication `δ`. (With expiring resources the box is            --
--- genuinely lax: a smaller resource budget is a strictly stronger      --
--- obligation, so `[ ρ₁ · ρ₂ ]` and `[ ρ₁ ] [ ρ₂ ]` need not coincide.) --
--- Laws are stated up to the categorical equality `≈ᵐ`, and, because    --
--- the monoid laws hold only propositionally, the graded comonad laws   --
--- carry explicit `[]-≤` coercions along `·-identityˡ`, `·-identityʳ`,  --
--- and `·-assoc`.                                                       --
+-- The modality is a graded comonad, with counit `ε` and                --
+-- comultiplication `δ`. The comultiplication need not be invertible,   --
+-- so `[ ρ₁ · ρ₂ ]` and `[ ρ₁ ] [ ρ₂ ]` need not coincide. Laws are     --
+-- stated up to the categorical equality `≈ᵐ`, and, because the monoid  --
+-- laws hold only up to `≃`, the graded comonad laws carry explicit     --
+-- `[]-≤` coercions along `·-identityˡ`, `·-identityʳ`, and `·-assoc`.  --
 --                                                                      --
 -- At the unit resource grade the counit is moreover an                 --
 -- isomorphism: a unit-graded unit `ηᵘ : A →ᵐ [ 𝟏 ]ᵒ A` splits `ε`, so  --

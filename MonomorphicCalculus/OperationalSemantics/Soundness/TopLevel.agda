@@ -11,8 +11,9 @@
 -- with the tree-monad denotation via the implementation                 --
 -- `implᵐ : Tᵒ A ε →ᵐ Tᵏ A ε` (`Model.Implementation`).                  --
 --                                                                       --
--- The theorem's one condition, `OpSemCoherent`, is that `op-sem` is the --
--- semantic implementation `op-semᵐ`.                                    --
+-- The theorem's conditions are `OpSemParametric`, on the values         --
+-- `op-sem` returns, and `OpSemCoherent`, that `op-sem` is the semantic  --
+-- implementation `op-semᵐ`.                                             --
 ---------------------------------------------------------------------------
 
 open import Grades.Base

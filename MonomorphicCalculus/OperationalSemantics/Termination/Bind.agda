@@ -44,10 +44,10 @@ open import MonomorphicCalculus.OperationalSemantics.GradedReach Spec
 open import MonomorphicCalculus.Syntax.Substitution.Equivalence  Spec
 open import MonomorphicCalculus.Syntax.Substitution.Subsumption  Spec
 
--- Induction on the scrutinee's `CRed` derivation, recursing on the `pk` field
--- exactly as `CRed-≐ˢ` does. The scrutinee is taken at a skeleton rather than
--- at its own type: `pk` stands at the skeleton its own `CRed` was indexed by,
--- which is what the recursive call is handed.
+-- Induction on the scrutinee's `CRed` derivation, recursing on the `pk` field.
+-- The scrutinee is taken at a skeleton rather than at its own type: `pk` stands
+-- at the skeleton its own `CRed` was indexed by, which is what the recursive
+-- call is handed.
 
 seq-CRed : ∀ {s A B ε₁ ε₂} {e : shapeᵛ A ≡ s} {𝕊 : State []}
          → {M : toCtx 𝕊 ⊢ᶜ⦂ A ! ε₁}

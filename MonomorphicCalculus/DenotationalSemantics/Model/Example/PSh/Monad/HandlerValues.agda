@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Handler values for the free graded monad.                          --
+-- Handler values for the graded tree monad.                          --
 --                                                                    --
 -- An element of `Hᵖ A ε B ε'` at a world is a family, over the       --
 -- handled grades `ε₀ ≾ₑ ε`, of Kripke functions                      --

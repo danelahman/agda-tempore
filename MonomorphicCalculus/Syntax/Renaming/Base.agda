@@ -36,7 +36,7 @@ data EternalCtx : Ctx → Set where
   ec-⟨⟩ : ∀ {Δ ρ} → 𝟏ᵣ ≾ᵣ ρ → ρ ≾ᵣ 𝟏ᵣ → EternalCtx Δ → EternalCtx (Δ ⟨ ρ ⟩)
 
 -- The 0-graded modality, the case the two bounds are `≾ᵣ-refl`, and the case of
--- a grade only propositionally equal to the unit, which is the form the grades
+-- a grade equal to the unit only up to `≃ᵣ`, which is the form the grades
 -- standing in a context take (`ιᵣ-zero`, `map-𝟏ᵉ`).
 
 ec-⟨⟩ᵘ : ∀ {Δ} → EternalCtx Δ → EternalCtx (Δ ⟨ 𝟏ᵣ ⟩)
@@ -65,7 +65,7 @@ ec-split (Δ' ⟨ ρ ⟩) (ec-⟨⟩ q p ec) =
 
 -- Variable renamings (as the smallest relation closed under
 -- identities, composition, congruences, ordinary variable
--- renamings, and strong monoidal functor structure for ⟨_⟩)
+-- renamings, and the unit, its inverse, and the multiplication of ⟨_⟩)
 --
 -- A `Ren Ξ Δ Δ'` is a morphism `Ξ ++ᶜ Δ → Ξ ++ᶜ Δ'` of contexts. The action on
 -- terms is contravariant: it takes a `Ξ ++ᶜ Δ'`-term to a `Ξ ++ᶜ Δ`-term
@@ -93,7 +93,7 @@ data Ren (Ξ : Ctx) : Ctx → Ctx → Set where
   -- any grade (in particular behind a modality).
   var-ren     : ∀ {Δ A ρ} → A ∈[ ρ ] (Ξ ⋈ᶜ Δ) → .(A Et∨≾ᵘ ρ)
               → Ren Ξ Δ (Δ ∷ A)
-  -- strong monoidal functor renamings for ⟨_⟩ modality
+  -- unit, its inverse, and multiplication renamings for ⟨_⟩ modality
   ⟨⟩-η-ren    : ∀ {Δ} → Ren Ξ Δ (Δ ⟨ 𝟏ᵣ ⟩)
   ⟨⟩-η⁻¹-ren  : ∀ {Δ} → Ren Ξ (Δ ⟨ 𝟏ᵣ ⟩) Δ
   ⟨⟩-μ-ren    : ∀ {Δ ρ ρ'} → Ren Ξ (Δ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Δ ⟨ ρ ·ᵣ ρ' ⟩)

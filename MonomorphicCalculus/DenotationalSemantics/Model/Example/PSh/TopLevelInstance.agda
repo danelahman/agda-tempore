@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- The free graded tick monad, and the implementation running the     --
+-- The graded tick monad, and the implementation running the          --
 -- operations, as instances of `Model.TickMonad` and                  --
 -- `Model.Implementation`.                                            --
 ------------------------------------------------------------------------

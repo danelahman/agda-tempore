@@ -1,6 +1,7 @@
 --------------------------------------------------------------------------
 -- Denotational soundness of the equational theory.                     --
--- Every derivable `M ≡ᵗʰ N` denotes `⟦M⟧ ≈ᵐ ⟦N⟧`.                      --
+-- A derivable `M ≡ᵗʰ N` with certificates (`Midᶜ`, `Paramᶜ`) denotes   --
+-- `⟦M⟧ ≈ᵐ ⟦N⟧`.                                                        --
 -- Congruences recurse on their premises; axioms dispatch to their      --
 -- own `sound-*` lemma. `Midᵛ`/`Midᶜ` thread certificates the endpoints --
 -- do not determine.                                                    --

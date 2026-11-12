@@ -6,6 +6,7 @@
 --   * halting: `termination` (syntactic)                             --
 --   * a run denotes its source: `⟶*-sound`                           --
 --   * head faithfulness: `HeadFaithful` (model side)                 --
+--   * faithful base constants: `BaseFaithful` (model side)           --
 --                                                                    --
 -- Stated for two programs: `⟦ M ⟧ ≈ᵐ ⟦ N ⟧` implies they halt with   --
 -- the same outcome, and at an answer type with the same answer.      --

@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------
--- The free graded tick monad on setoid-valued unit-monotone presheaves.  --
+-- The graded tick monad on setoid-valued unit-monotone presheaves.       --
 --                                                                        --
 -- Trees are built from                                                   --
 --                                                                        --
@@ -80,7 +80,7 @@ mutual
              ≈ᵏ tick-node δ (λ q → sub e (k q)) kn'
 
     -- A tick that takes no time is no tick, and two consecutive ticks are the
-    -- one tick by the product of their times. The image of the free monad's
+    -- one tick by the product of their times. The image of the tree monad's
     -- `delay-zero`/`delay-plus` under `implˢ`, and for the same reason: a tick
     -- records only the passage of time.
 

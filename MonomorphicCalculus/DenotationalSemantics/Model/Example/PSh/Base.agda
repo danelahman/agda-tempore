@@ -6,8 +6,8 @@
 -- setoids: each world carries a set `carrier` together with a per-      --
 -- world equivalence `_≈_`. The functorial `transport` moves elements    --
 -- along unit-accessibility, respecting `_≈_` and satisfying the         --
--- reflexivity and transitivity laws up to `_≈_` (a genuine preorder,    --
--- since `𝟏ᵣ ·ᵣ 𝟏ᵣ ≡ 𝟏ᵣ`).                                               --
+-- reflexivity and transitivity laws up to `_≈_` (a preorder, since      --
+-- `𝟏ᵣ ·ᵣ 𝟏ᵣ ≃ᵣ 𝟏ᵣ`).                                                    --
 --                                                                       --
 -- A morphism is a natural transformation whose components respect       --
 -- `_≈_`. Morphism equality is pointwise target-`_≈_`; every categorical --
@@ -40,8 +40,8 @@ open import MonomorphicCalculus.DenotationalSemantics.Model.Category
 open GradeSystemInterface GS
 open World Wld
 
--- Composition of unit-accessibility, a genuine preorder since
--- `𝟏ᵣ ·ᵣ 𝟏ᵣ ≡ 𝟏ᵣ`.
+-- Composition of unit-accessibility, a preorder since
+-- `𝟏ᵣ ·ᵣ 𝟏ᵣ ≃ᵣ 𝟏ᵣ`.
 
 ⊑ᵘ-trans : ∀ {w w' w''} → w ⊑[ 𝟏ᵣ ] w' → w' ⊑[ 𝟏ᵣ ] w'' → w ⊑[ 𝟏ᵣ ] w''
 ⊑ᵘ-trans p q = ⊑-mono (≃ᵣ⇒≾ᵣ (·ᵣ-identityʳ 𝟏ᵣ)) (⊑-trans p q)
