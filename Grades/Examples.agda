@@ -195,11 +195,12 @@ import Grades.Examples.System.Counts.Banked.UpperBound
 import Grades.Examples.System.Counts.Time
 
 ------------------------------------------------------------------------
--- Indexed, semidirect, watermark and matrix grades
+-- Indexed, semidirect, watermark, inter-arrival and matrix grades
 --
 -- Grades over maps from names (`Grades.Indexed`), semidirect
 -- products (`Grades.SemiDirect`), the watermark grades, defined
--- directly, and mode matrices (`Grades.Matrix`).
+-- directly, the inter-arrival grades, indexed and paired with the
+-- total duration, and mode matrices (`Grades.Matrix`).
 
 -- at-most counts by name, an indexed grade; flow-sensitive
 -- levels and call-time sets, semidirect products
@@ -213,6 +214,17 @@ import Grades.Examples.SemiDirect.CallTimeSets
 
 import Grades.Examples.Watermarks.ExtendedInteger
 import Grades.Examples.Watermarks
+
+-- the inter-arrival grades over a time domain: for each operation, the
+-- silent durations, and the counts, lead times, gaps and tails of the
+-- runs calling it, with the total duration of the run; the grade of
+-- one operation, its closures, and the possibly empty values its cases
+-- are built from
+
+import Grades.Examples.InterArrival.Options
+import Grades.Examples.InterArrival.Entry
+import Grades.Examples.InterArrival.Closure
+import Grades.Examples.InterArrival
 
 -- the costs of switching between the modes of a device, as max-plus
 -- mode matrices

@@ -71,3 +71,9 @@ import Grades.Examples.Worked.SemiDirect.CallTimeSets
 import Grades.Examples.Worked.Watermarks
 import Grades.Examples.Worked.Modes.SwitchCosts
 import Grades.Examples.Worked.Modes.Times
+
+-- The inter-arrival grades in rational time: the unit not least, the
+-- product not commutative, a loop invariant from a closure, and a
+-- resource for exactly two calls a bounded time apart.
+
+import Grades.Examples.Worked.InterArrival
