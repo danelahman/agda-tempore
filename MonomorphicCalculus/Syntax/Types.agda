@@ -40,8 +40,9 @@ mutual
     empty : VType                            -- empty type
     _⇒_   : VType → CType → VType            -- function type
     _⇛_   : CType → CType → VType            -- handler type
-    [_]_  : R → VType → VType                -- box modality: values of type `[ ρ ] A`
-                                             -- become available in at most `ρ` steps
+    [_]_  : R → VType → VType                -- box modality: a value of type `[ ρ ] A`
+                                             -- is usable while the grade accumulated
+                                             -- since it was boxed is below `ρ`
   data CType : Set where
     _!_ : VType → E → CType
 

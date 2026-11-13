@@ -314,8 +314,8 @@ mutual
                                          (H op ε₃)) ⟩
 
         -- handling an operation: apply its clause, with the rest of the handled
-        -- computation boxed up, so that its resources are not used before enough
-        -- time has passed
+        -- computation boxed up, so that its resources are used only within their
+        -- grades
         HANDLE-OP   : ∀ {A B ε ε'' op}
                     → {𝕊 : State []} 
                     → {V : toCtx 𝕊 ⊢ᵛ⦂ ⌜ param op ⌝ᵍ}

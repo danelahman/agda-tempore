@@ -100,11 +100,6 @@ sub-env (split-⟨⟩ {ρ = ρ} s)  W pW = ⟨ ρ ⟩ᶠ (sub-env s W pW)
 
 -- (`var-morphism-Tl-∷` lives in `Interpretation.Variables`.)
 
--- Weakening a value of eternal type under a modality: denotationally this is
--- the eternal extraction applied to the environment under the modality.
--- Proved by induction on the value (only the eternal formers and comparisons
--- can occur; a comparison commutes with extraction, `holdsᵐ-cmpᵐ-extᵉ`).
-
 -- Extraction commutes with a coercion out of an eternal type: such a
 -- coercion has equal endpoints, hence is the identity.
 
@@ -117,6 +112,11 @@ extᵉ-<: et et' p with <:ᵛ-eternal-≡ et p
   (≈ᵐ-trans (eternalᵛ-extᵉ-irr et et')
   (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (⟨⟩-congᶠ (⟦⟧<:ᵛ-id p)) ⟨⟩-idᵐ))
                     (∘ᵐ-identityʳ _)))))
+
+-- Weakening a value of eternal type under a modality: denotationally this is
+-- the eternal extraction applied to the environment under the modality.
+-- Proved by induction on the value (only the eternal formers and comparisons
+-- can occur; a comparison commutes with extraction, `holdsᵐ-cmpᵐ-extᵉ`).
 
 eternal-val-ext-nat : ∀ {Γ A ρ} → (et : Et A) → (V : Γ ⊢ᵛ⦂ A) → (pV : Paramᵛ V)
                     → ⟦ eternal-val-ext {ρ = ρ} et V ⟧ᵛᵗ (eternal-val-extᴾ et V)

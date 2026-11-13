@@ -93,8 +93,8 @@ record ConstFrame : Set where
                     → _≈_ ⟦ b ⟧ᵇ {w}  (app ⟦ c₁ ⟧ᵇᶜ tt) (app ⟦ c₂ ⟧ᵇᶜ tt)
 
 -- `TickFrame` from a frame in which any grade can be spent from any world.
--- The concrete tick frames are such frames (`PSh.TickFrames`), so the
--- assumption is not vacuous.
+-- The frame of tick counts with lower time bounds is such a frame
+-- (`PSh.TickFrames`), so the assumption is not vacuous.
 
 reachable⇒tick : W → (∀ (ρ : R) (w : W) → Σ[ w' ∈ W ] w ⊑[ ρ ] w') → TickFrame
 reachable⇒tick w₀ f =

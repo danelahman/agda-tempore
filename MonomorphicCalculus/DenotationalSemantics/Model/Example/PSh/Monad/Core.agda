@@ -66,7 +66,7 @@ delay-·ᵣ : ∀ {τ₁ τ₂}
 delay-·ᵣ = ≃ᵣ-trans (·ᵣ-cong map-ιᵉ map-ιᵉ)
                     (≃ᵣ-trans (≃ᵣ-sym ιᵣ-plus) (≃ᵣ-sym map-ιᵉ))
 
--- Splitting a `τ₁ +ᴰ τ₂` step into a `τ₁` step followed by a `τ₂` one.
+-- Joining a `τ₁` step and a `τ₂` step after it into a `τ₁ +ᴰ τ₂` step.
 
 ⊑-split : ∀ {τ₁ τ₂ w w' w''}
         → w ⊑[ ∣ ιₑ τ₁ ∣ᵉ ] w' → w' ⊑[ ∣ ιₑ τ₂ ∣ᵉ ] w''

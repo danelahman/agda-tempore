@@ -173,8 +173,8 @@ record Monad : Set₁ where
           ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵐ opᵀ {A} {ε} op
 
     -- A delay by no time is no delay, and two consecutive delays are the one
-    -- delay by the sum. Both are stated with the grade relaxation `[]-≤`,
-    -- `ιₑ` being a monoid morphism only up to `≃ₑ`.
+    -- delay by the sum. Both are stated with the grade relaxations `[]-≤` and
+    -- `T-≤`, `ιᵣ` and `ιₑ` being monoid morphisms only up to `≃ᵣ` and `≃ₑ`.
 
     delayᵀ-zero : ∀ {A ε'}
                 → delayᵀ {A} {ε'} 0ᴰ

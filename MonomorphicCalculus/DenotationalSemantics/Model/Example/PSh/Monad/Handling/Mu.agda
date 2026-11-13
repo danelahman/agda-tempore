@@ -58,11 +58,12 @@ sub-ε-substˢ refl q q' t = sub-≈ (≈ᵗ-refl t)
 ε-substˢ-sub' q refl q' t = sub-≈ (≈ᵗ-refl t)
 
 -- The handler is uniform in its grade index. The algebra law applies the
--- clause at two grades that differ as expressions:
+-- clause at two grades that are equal only up to `≃ₑ`:
 -- `(ε₁ ·ₑ ε') ·ₑ ε''` on the left, `ε₁ ·ₑ (ε' ·ₑ ε'')` on the right. A
 -- `Handlerˢ` is an arbitrary family indexed by the grade, so those are
--- different morphisms at different types; but they coincide up to
--- transport, which is what the following make precise.
+-- different morphisms at different types. The lemmas that follow relate
+-- the clause at two propositionally equal grades by transport, and the
+-- two associations are related below by `clause-mono`.
 
 -- Transporting a boxed continuation along an equality of residual grades.
 

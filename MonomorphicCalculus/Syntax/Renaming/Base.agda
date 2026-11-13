@@ -36,8 +36,8 @@ data EternalCtx : Ctx → Set where
   ec-⟨⟩ : ∀ {Δ ρ} → 𝟏ᵣ ≾ᵣ ρ → ρ ≾ᵣ 𝟏ᵣ → EternalCtx Δ → EternalCtx (Δ ⟨ ρ ⟩)
 
 -- The unit-graded modality, the case the two bounds are `≾ᵣ-refl`, and the case
--- of a grade equal to the unit only up to `≃ᵣ`, which is the form the grades
--- standing in a context take (`ιᵣ-zero`, `map-𝟏ᵉ`).
+-- of a grade propositionally equal to the unit. A grade equal to it only up to
+-- `≃ᵣ` (`ιᵣ-zero`, `map-𝟏ᵉ`) gives the two bounds of `ec-⟨⟩` directly.
 
 ec-⟨⟩ᵘ : ∀ {Δ} → EternalCtx Δ → EternalCtx (Δ ⟨ 𝟏ᵣ ⟩)
 ec-⟨⟩ᵘ = ec-⟨⟩ ≾ᵣ-refl ≾ᵣ-refl
@@ -65,7 +65,8 @@ ec-split (Δ' ⟨ ρ ⟩) (ec-⟨⟩ q p ec) =
 
 -- Variable renamings (as the smallest relation closed under
 -- identities, composition, congruences, ordinary variable
--- renamings, and the unit, its inverse, and the multiplication of ⟨_⟩)
+-- renamings, and the unit, its inverse, the multiplication and the
+-- monotonicity of ⟨_⟩, and its extraction over eternal contexts)
 --
 -- A `Ren Ξ Δ Δ'` is a morphism `Ξ ++ᶜ Δ → Ξ ++ᶜ Δ'` of contexts. The action on
 -- terms is contravariant: it takes a `Ξ ++ᶜ Δ'`-term to a `Ξ ++ᶜ Δ`-term
@@ -100,8 +101,8 @@ data Ren (Ξ : Ctx) : Ctx → Ctx → Set where
   -- monotonicity renaming for ⟨_⟩ modality
   ⟨⟩-≤-ren    : ∀ {Δ ρ ρ'} → ρ' ≾ᵣ ρ → Ren Ξ (Δ ⟨ ρ' ⟩) (Δ ⟨ ρ ⟩)
   -- introducing a modality: available when the context to its left, `Ξ ++ᶜ Δ`,
-  -- is eternal (`ec-++ᶜ` assembles the two halves). The only rule that reads
-  -- the ambient.
+  -- is eternal (`ec-++ᶜ` assembles the two halves). With `var-ren`, one of the
+  -- two rules that read the ambient.
   ⟨⟩-ext-ctx  : ∀ {Δ ρ} → EternalCtx Ξ → EternalCtx Δ → Ren Ξ (Δ ⟨ ρ ⟩) Δ
   -- congruence renamings
   cong-∷-ren  : ∀ {Δ Δ' A} → Ren Ξ Δ Δ' → Ren Ξ (Δ ∷ A) (Δ' ∷ A)

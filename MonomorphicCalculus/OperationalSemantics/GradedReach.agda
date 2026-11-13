@@ -62,8 +62,8 @@ reach-bound : ∀ {𝕊 𝕊' ρ} → (q : 𝕊 ⊑ₛ[ ρ ] 𝕊')
             → κₛ (ext q) ·ᵣ 𝟏ᵣ ≾ᵣ ρ
 reach-bound q = ≾ᵣ-trans (≃ᵣ⇒≾ᵣ (·ᵣ-identityʳ _)) (bound q)
 
--- The witness an `unbox` needs: enough time has passed for a `ρ`-boxed value
--- to be ready at `𝕊'`. This is the shape of `UNBOX`'s premise, hence what
+-- The witness an `unbox` needs: the grade accumulated up to `𝕊'` is below that
+-- of a `ρ`-boxed value. This is the shape of `UNBOX`'s premise, hence what
 -- `unbox-lookup` consumes.
 
 unbox-ren : ∀ {𝕊 ρ 𝕊'} → 𝕊 ⊑ₛ[ ρ ] 𝕊' → Ren [] (toCtx 𝕊') (toCtx 𝕊 ⟨ ρ ⟩)

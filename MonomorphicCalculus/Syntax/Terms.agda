@@ -321,11 +321,11 @@ mutual
             --------------------------
             → Γ ⊢ᶜ⦂ B ! (ε ·ₑ ε')
 
-    -- unboxing a boxed value/resource after enough time has passed for it to be ready
+    -- unboxing a boxed value/resource while the accumulated grade is below its box grade
 
     -- The value being unboxed is a variable of box type, named at its declared
     -- type `[ ρ₀ ] A₀`; the premise `A₀ <:ᵛ A` lets the continuation bind any
-    -- supertype of the payload. That enough time has passed is the grade bound
+    -- supertype of the payload. That the box is usable is the grade bound
     -- `ρ' ≾ᵣ ρ₀`, with `ρ'` the product of the modalities standing to the
     -- variable's right.
 
@@ -339,7 +339,7 @@ mutual
             ---------------------------
             → Γ ⊢ᶜ⦂ C
 
-    -- boxing up a value/resource that is ready for use in at least `ρ` grade steps
+    -- boxing up a value/resource that is usable while the accumulated grade is below `ρ`
 
     box     : {A : VType}
             → {C : CType}

@@ -60,7 +60,7 @@ Pred A = ∀ {w} → Res A w → Set
 ≈-closed : (A : PSh) → Pred A → Set
 ≈-closed A P = ∀ {w} {x y : carrier A w} → _≈_ A x y → P (ret-res x) → P (ret-res y)
 
--- the three predicates the statements below are read at
+-- the two predicates the statements below are read at
 
 isRet : ∀ {A} → Pred A
 isRet (ret-res _) = ⊤
