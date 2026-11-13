@@ -53,7 +53,7 @@ the solver it exercises. A check passes when Agda exits with 0 and prints no
 warning. The only postulate is function extensionality (`Util/Equality.agda`).
 The denotational semantics and the adequacy proof of the monomorphic calculus
 use eight `TERMINATING` pragmas for difficult-to-prove-terminating recursions,
-each justified where it stands; the polymorphic calculus uses none.
+each explained where it stands; the polymorphic calculus uses none.
 
 The sources use many Unicode symbols, including mathematical letters such as
 `𝟏` and `𝕊`, combining accents (`ε̂`), and brackets such as `⦉ ⦊`. A monospace
