@@ -1,11 +1,10 @@
 ---------------------------------------------------------------------------
 -- Soundness of the pure top-level operational semantics.                --
 --                                                                       --
--- The top-level machine runs a program against external                 --
--- implementations of the algebraic operations (`op-sem`): an ordinary   --
--- step `STEP`, and `OP-STEP`, which replaces an operation call by       --
--- the implementation's value and adds a modality `⟨ op-grade op ⟩ₛ`     --
--- to the state.                                                         --
+-- The top-level machine runs a program against external implementations --
+-- of the algebraic operations (`op-sem`): an ordinary step `STEP`, and  --
+-- `OP-STEP`, which replaces an operation call by the implementation's   --
+-- value and adds a modality `⟨ ∣ op-grade op ∣ᵉ ⟩ₛ` to the state.       --
 --                                                                       --
 -- Its denotation lands in the tick monad (`Model.TickMonad`), composed  --
 -- with the tree-monad denotation via the implementation                 --

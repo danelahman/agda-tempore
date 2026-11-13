@@ -18,9 +18,9 @@
 -- unit is least, and without `w ≤ w'` the unit grade would reach the --
 -- past.                                                              --
 --                                                                    --
--- With `Time.LowerBound` and `Time.Interval`, every grade            --
--- of `Grades.Examples.Time` has a tick frame, whose direction is     --
--- that of the grade.                                                 --
+-- With `Time.LowerBound` and `Time.Interval`, the three grades of    --
+-- whole ticks of `Grades.Examples.Time` have tick frames, whose      --
+-- direction is that of the grade.                                    --
 ------------------------------------------------------------------------
 
 module MonomorphicCalculus.DenotationalSemantics.Model.Example.World.Ticks.Time.UpperBound where
