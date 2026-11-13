@@ -424,9 +424,9 @@ listed : (F : List Name) (es : List (Point × Point × Template F))
        → ModeMatrix time-entries
 listed F es {t} {c} = decided (Listing.listing F es) {t} {c}
 
--- an operation performed from the start points of `behaviour`, taking
--- each to its end point and spending the running time `rt` in the
--- start mode, or getting stuck at no time
+-- an operation performed from the start points of the behaviour `bs`,
+-- taking each to its end point and spending the running time `rt` in
+-- the start mode, or getting stuck at no time
 
 occurrence-entries : ∀ {F} → List (Point × Point) → Interval∞ → List (Point × Point × Template F)
 occurrence-entries []             rt = []

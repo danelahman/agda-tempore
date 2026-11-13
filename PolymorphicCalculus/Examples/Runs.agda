@@ -93,9 +93,10 @@ check-typable Γ M () | Check.stuck
 --                   in f (λ _. ())) : U ! c
 --
 -- Where the unit is least it needs `τ · ε₀ ≾ ε₀ ∧ ε₀ ≾ c`. This fails
--- if `τ` is not below `c`; otherwise the least `ε₀` it allows is the
--- top, so it fails unless `c` is the top. At lower bounds on time the
--- condition `𝟏 ≾ ε₀` refutes every `c` but the top.
+-- if `τ` is not below `c`; otherwise, for a positive `τ`, the least
+-- `ε₀` it allows is the top, so it fails unless `c` is the top. At
+-- lower bounds on time the condition `𝟏 ≾ ε₀` refutes every `c` but
+-- the top.
 
 -- The scope of the program's variables: one effect variable
 

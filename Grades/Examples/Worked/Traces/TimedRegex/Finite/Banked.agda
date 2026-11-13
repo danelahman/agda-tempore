@@ -97,7 +97,7 @@ kept-separates = refl
 skipped-joins : upper-both ⟅ ⟨ # 2 ⟩ ⟆ʳ ⟅ ⟨ # 1 ⟩ ∙ ⌈ heat ⌉ ∙ ⟨ # 1 ⟩ ⟆ʳ ≡ (true , true)
 skipped-joins = refl
 
--- a delay of the run is a span, so it may stand for an operation
+-- a delay of the run is a span, so an operation does not stand for it
 
 heat-for-delay : upper-both ⟅ ⟨ # 4 ⟩ ⟆ʳ ⟅ ⌈ heat ⌉ ⟆ʳ ≡ (false , false)
 heat-for-delay = refl
