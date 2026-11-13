@@ -35,8 +35,8 @@ data EternalCtx : Ctx → Set where
   ec-∷  : ∀ {Δ A} → EternalCtx Δ → Et A → EternalCtx (Δ ∷ A)
   ec-⟨⟩ : ∀ {Δ ρ} → 𝟏ᵣ ≾ᵣ ρ → ρ ≾ᵣ 𝟏ᵣ → EternalCtx Δ → EternalCtx (Δ ⟨ ρ ⟩)
 
--- The 0-graded modality, the case the two bounds are `≾ᵣ-refl`, and the case of
--- a grade equal to the unit only up to `≃ᵣ`, which is the form the grades
+-- The unit-graded modality, the case the two bounds are `≾ᵣ-refl`, and the case
+-- of a grade equal to the unit only up to `≃ᵣ`, which is the form the grades
 -- standing in a context take (`ιᵣ-zero`, `map-𝟏ᵉ`).
 
 ec-⟨⟩ᵘ : ∀ {Δ} → EternalCtx Δ → EternalCtx (Δ ⟨ 𝟏ᵣ ⟩)
