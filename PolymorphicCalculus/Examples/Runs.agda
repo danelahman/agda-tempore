@@ -92,7 +92,7 @@ check-typable Γ M () | Check.stuck
 --   deadline τ c = (let f = (λ g. g (); delay τ) : (U → U ! ε₀) → U ! ε₀
 --                   in f (λ _. ())) : U ! c
 --
--- Where the unit is least it needs `τ · ε₀ ≾ ε₀ ∧ ε₀ ≾ c`. This fails
+-- Where the unit is least it needs `ε₀ · τ ≾ ε₀ ∧ ε₀ ≾ c`. This fails
 -- if `τ` is not below `c`; otherwise, for a positive `τ`, the least
 -- `ε₀` it allows is the top, so it fails unless `c` is the top. At
 -- lower bounds on time the condition `𝟏 ≾ ε₀` refutes every `c` but

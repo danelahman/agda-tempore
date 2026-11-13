@@ -64,14 +64,14 @@ module FreeOperation (o : Op) (free : costʰⁱ o ≡ 0ᴰ) where
   op≢ε : ¬ (⌈ o ⌉ ≡ ε)
   op≢ε ()
 
-  -- the empty bound therefore permits more than the empty run, which
-  -- is the `≼-ε-inv` field of `TraceOrder` and what the grades'
-  -- unit-product law rests on
+  -- the empty bound therefore permits more than the empty run, against
+  -- the `≼-ε-inv` field of `TraceOrder`, on which the grades'
+  -- unit-product law rests
 
   ¬-≼ᵃ-ε-inv : ¬ ({s : Trace} → s ≼ᵃ ε → s ≡ ε)
   ¬-≼ᵃ-ε-inv ε-inv = op≢ε (ε-inv op≼ε)
 
-  -- and two distinct traces permit each other, which is the
+  -- and two distinct traces permit each other, against the
   -- `≼-antisym` field of `TracePartialOrder`
 
   ¬-≼ᵃ-antisym : ¬ ({s t : Trace} → s ≼ᵃ t → t ≼ᵃ s → s ≡ t)

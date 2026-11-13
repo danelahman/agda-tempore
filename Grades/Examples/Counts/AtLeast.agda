@@ -58,9 +58,10 @@ atleast k = [ k ,+∞⟩
 ------------------------------------------------------------------------
 -- The same counts with a formal greatest grade on each counter
 --
--- The unit demands nothing and is greatest, but is not absorbing.
--- `untimed` on a counter makes no claim about it and is absorbing; the
--- grades whose greatest element is absorbing project to these counts.
+-- In the counts above, the unit demands nothing and is greatest, but
+-- is not absorbing. `untimed` on a counter makes no claim about it and
+-- is absorbing; the grades whose greatest element is absorbing project
+-- to these counts.
 
 import Grades.Examples.Counts.Power as Power
 module WithTop = Power lower-bound-with-⊤

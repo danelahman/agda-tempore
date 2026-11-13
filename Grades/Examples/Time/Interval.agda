@@ -322,10 +322,10 @@ intervalʰ = record
 ------------------------------------------------------------------------
 -- The same intervals with a formal greatest grade
 --
--- `[ 0 , ∞ ]` is greatest but not absorbing, its `min` endpoint being
--- the unit. `no-window` claims no bound at either end and is absorbing;
--- the grades whose greatest element is absorbing project to these
--- intervals.
+-- Among the intervals above, `[ 0 , ∞ ]` is greatest but not
+-- absorbing, its `min` endpoint being the unit. `no-window` claims no
+-- bound at either end and is absorbing; the grades whose greatest
+-- element is absorbing project to these intervals.
 
 infix 50 window_
 
