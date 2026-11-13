@@ -9,14 +9,13 @@
 -- three.                                                             --
 --                                                                    --
 -- The level is a floating label. The effect grade of a computation   --
--- is the highest level it has touched (for taint sets,               --
--- the set of labels). A modality `⟨ ℓ ⟩` joins `ℓ` into the label,   --
--- and `[ ℓ ] A` can be unboxed only while the label raised since     --
--- boxing is `≾ ℓ`: a `Low`-boxed public channel is unusable once     --
--- `High` data has been touched, so there is no write-down after      --
--- read-up. A variable that is noneternal requires the modalities to  --
--- its right to be `≾` the unit, and goes stale after any `High`      --
--- activity.                                                          --
+-- is the join of the levels it has touched (for taint sets, the set  --
+-- of labels). A modality `⟨ ℓ ⟩` joins `ℓ` into the label, and       --
+-- `[ ℓ ] A` can be unboxed only while the label raised since boxing  --
+-- is `≾ ℓ`: a `Low`-boxed public channel is unusable once `High`     --
+-- data has been touched, so there is no write-down after read-up. A  --
+-- variable that is noneternal requires the modalities to its right   --
+-- to be `≾` the unit, and goes stale after any `High` activity.      --
 --                                                                    --
 -- Instances: the two-point `Low < High`, and sets of taint labels    --
 -- over `Fin n`, the `n`-fold power of the two-point lattice,         --

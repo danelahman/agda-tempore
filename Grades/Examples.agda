@@ -241,7 +241,6 @@ import Grades.Examples.Modes.Times
 -- Worked instances
 --
 -- All of the above at one alphabet: the orderings between concrete
--- grades and the action of each morphism on them, as checked terms, and
--- example computations typed at the grades.
+-- grades and the action of each morphism on them, as checked terms.
 
 import Grades.Examples.Worked
