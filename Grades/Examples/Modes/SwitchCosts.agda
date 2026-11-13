@@ -19,9 +19,11 @@
 -- written `⋆`, another one `⋆'` and `stuck` `✗`; a mode from which   --
 -- no entry starts is stuck at cost 0 (`listing`).                    --
 --                                                                    --
--- `Matrix.ModeGrade.Closures` finds closures with the star of the    --
--- costs, `cost 0` up to `cost 0` and `unbounded` above               --
--- (`mode-switch-costs-plus?`). No hints declare them.                --
+-- Every grade has a closure: the candidate of                        --
+-- `Matrix.ModeGrade.Closures` with the star of the costs, `cost 0`   --
+-- up to `cost 0` and `unbounded` above, a Kleene star                --
+-- (`Matrix.ModeClosure`, `mode-switch-costs-closure`). The hints     --
+-- declare it (`mode-switch-costsʰ`).                                 --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Modes.SwitchCosts where
@@ -37,7 +39,9 @@ open import Relation.Nullary.Decidable using (_⊎-dec_)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 
 open import Grades.Durations using (Duration)
-open import Grades.Base using (Grade)
+open import Grades.Base using (Grade; Plus)
+open import Grades.Hints using (GradeHints)
+open import Data.Maybe.Base using (just; nothing)
 open import Grades.Indexed using (ℕ-infinite)
 open import Grades.Durations.Nat using (ℕᴰ)
 open import Grades.Matrix.Dioid using (Dioid)
@@ -285,6 +289,7 @@ private
 
 open import Grades.Matrix.Nominal ℕ-infinite using (trivial)
 open import Grades.Matrix.ModeGrade ℕ-infinite costs (trivial costs)
+open import Grades.Matrix.ModeClosure ℕ-infinite costs (trivial costs)
 
 cost-entries : ModeEntries
 cost-entries = record
@@ -385,6 +390,49 @@ cost-stars = record
   ; star-act   = λ _ _ a → ≡⇒≈ refl
   }
 
+-- the star is a Kleene star
+
+private
+  -- the values of the star
+  star-values : ∀ a → (starᶜ a ≡ cost 0) ⊎ (starᶜ a ≡ unbounded)
+  star-values none           = inj₁ refl
+  star-values (cost zero)    = inj₁ refl
+  star-values (cost (suc _)) = inj₂ refl
+  star-values unbounded      = inj₂ refl
+
+  star-ext : ∀ a → a ≤ᶜ starᶜ a
+  star-ext none           = none≤
+  star-ext (cost zero)    = ≤ᶜ-refl
+  star-ext (cost (suc _)) = cost≤unb
+  star-ext unbounded      = unb≤unb
+
+  star-idem : ∀ a → starᶜ a ⊗ᶜ starᶜ a ≤ᶜ starᶜ a
+  star-idem a with starᶜ a | star-values a
+  ... | _ | inj₁ refl = ≤ᶜ-refl
+  ... | _ | inj₂ refl = unb≤unb
+
+  -- a product between two stars, each `cost 0` or `unbounded`
+  split : ∀ {s t} → (s ≡ cost 0) ⊎ (s ≡ unbounded) → (t ≡ cost 0) ⊎ (t ≡ unbounded)
+        → ∀ b → (s ⊗ᶜ b) ⊗ᶜ t ≤ᶜ (s ⊗ᶜ b) ⊕ᶜ (b ⊗ᶜ t)
+  split (inj₁ refl) _           none      = none≤
+  split (inj₂ refl) _           none      = none≤
+  split (inj₁ refl) (inj₁ refl) (cost n) =
+    cost≤ (ℕₚ.≤-trans (ℕₚ.≤-reflexive (ℕₚ.+-identityʳ n)) (ℕₚ.m≤m⊔n n (n + 0)))
+  split (inj₁ refl) (inj₂ refl) (cost n)  = unb≤unb
+  split (inj₂ refl) (inj₁ refl) (cost n)  = unb≤unb
+  split (inj₂ refl) (inj₂ refl) (cost n)  = unb≤unb
+  split (inj₁ refl) (inj₁ refl) unbounded = unb≤unb
+  split (inj₁ refl) (inj₂ refl) unbounded = unb≤unb
+  split (inj₂ refl) (inj₁ refl) unbounded = unb≤unb
+  split (inj₂ refl) (inj₂ refl) unbounded = unb≤unb
+
+cost-kleene : KleeneStars cost-stars
+cost-kleene = record
+  { star-ext   = star-ext
+  ; star-idem  = star-idem
+  ; star-split = λ a b c → split (star-values a) (star-values c) b
+  }
+
 ------------------------------------------------------------------------
 -- The grade
 
@@ -394,6 +442,21 @@ mode-switch-costs = mode-grade cost-entries
 -- the closure of a grade, where `Closures` finds it
 
 mode-switch-costs-plus? = Closures.plus? cost-entries cost-stars
+
+-- the closure of every grade, the candidate of `Closures` with the
+-- Kleene star of the costs, the costs naming no modes
+
+mode-switch-costs-closure : (c : ModeMatrix cost-entries) → Plus (_·ᵐ_ cost-entries) (_≾ᵐ_ cost-entries) c
+mode-switch-costs-closure = closure cost-entries cost-stars cost-kleene (λ _ _ _ → ≡⇒≈ refl)
+
+-- the hints: the closures
+
+mode-switch-costsʰ : {D : Duration} → GradeHints (mode-switch-costs {D})
+mode-switch-costsʰ = record
+  { 𝟏-least? = nothing
+  ; ·-comm?  = nothing
+  ; plus?    = λ c → just (mode-switch-costs-closure c)
+  }
 
 open Decided cost-entries change? public using (decided)
 open import Grades.Matrix.Matrices ℕ-infinite costs (trivial costs) public
