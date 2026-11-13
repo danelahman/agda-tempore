@@ -21,13 +21,13 @@
 --   (A5) act is monotone in each argument                            --
 --   (A6) for m ≾ 𝟏, act m n ≾ ⊥ only if n ≾ ⊥                        --
 --                                                                    --
--- the inequalities of A3 and A4 that follow from A5 being omitted.   --
--- The identities follow from A1 and A3, associativity from A2 and    --
--- A3, the left distributive law from A3 and the right one from A4.   --
--- A6 is needed for the right unit-product law (`zero-productʳ⇒A6`)   --
--- and, with the law of `M`, gives it (the field of `semidirect`); it --
--- holds where the unit of `M` is least (`A6-of-𝟏-least`) and where   --
--- every `act m` reflects `⊥`.                                        --
+-- the inequalities of A3 and A4 that follow from A5, or from `⊥`     --
+-- being least, being omitted. The identities follow from A1 and A3,  --
+-- associativity from A2 and A3, the left distributive law from A3    --
+-- and the right one from A4. A6 is needed for the right unit-product --
+-- law (`zero-productʳ⇒A6`) and, with the law of `M`, gives it (the   --
+-- field of `semidirect`); it holds where the unit of `M` is least    --
+-- (`A6-of-𝟏-least`) and where every `act m` reflects `⊥`.            --
 --                                                                    --
 -- Its hints declare the unit least where those of `M` do; `_·_` is   --
 -- not declared to commute. Given closures `m⁺` in `M` whose action   --

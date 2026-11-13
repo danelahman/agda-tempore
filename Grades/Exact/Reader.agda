@@ -20,10 +20,11 @@
 --          and not before; a chain is closed once its bounds are     --
 --          met.                                                      --
 --                                                                    --
--- `mid` records that the first piece has already overflowed, so the  --
--- chain cannot be closed before it. Weights and bounds are abstract  --
--- here: the extremal reading of a word and the exact reading of a    --
--- run are two instances of one reader.                               --
+-- The Boolean flag of a chain records that the first piece has       --
+-- already overflowed, so the chain cannot be closed before it.       --
+-- Weights and bounds are abstract here: the extremal reading of a    --
+-- word and the exact reading of a run are two instances of one       --
+-- reader.                                                            --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)

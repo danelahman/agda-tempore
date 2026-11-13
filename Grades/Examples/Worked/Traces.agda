@@ -1,9 +1,10 @@
 ------------------------------------------------------------------------
 -- Worked instances of the trace grades.                              --
 --                                                                    --
--- One module per grade, each worked out twice: as an effect grade,   --
--- along whose order `coerce` moves, and as a resource grade, against --
--- which `unbox` discharges its premise.                              --
+-- One module per grade. The banked lower and upper bounds and the    --
+-- finite run sets are worked out twice: as an effect grade, along    --
+-- whose order `coerce` moves, and as a resource grade, against which --
+-- `unbox` discharges its premise.                                    --
 --                                                                    --
 -- The families differ in what a trace may stand in for. Under        --
 -- `Banked.*`, time pays for operations in one direction and          --

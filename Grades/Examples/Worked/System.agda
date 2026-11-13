@@ -6,8 +6,11 @@
 -- algebra morphism `∣-∣ᵉ` from the first to the second; the          --
 -- projection determines what the resource grade forgets.             --
 --                                                                    --
--- Each module computes the projection on the grades of the sensor    --
--- node and exercises its monotonicity: an ordering between two       --
+-- Each module computes the projection on worked grades, those of the --
+-- sensor node or, for the timed regex grades, of the operations      --
+-- `heat`, `cool`, and `log`. The modules of the time intervals, the  --
+-- banked grades, the finite run sets, and the timed regex upper      --
+-- bounds also exercise its monotonicity: an ordering between two     --
 -- effect grades holds between their images.                          --
 --                                                                    --
 -- There are two systems from time intervals; ten from trace grades   --

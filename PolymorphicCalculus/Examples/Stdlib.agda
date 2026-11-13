@@ -24,8 +24,9 @@
 --   the scheme inference reports at the four combinations of a least --
 --   unit and a commuting multiplication:                             --
 --     id-reported : schemeOf (infer [] id) ≡ just expected-id        --
---   `expected-p` is the scheme of `p` in general; an instance states --
---   its own where the grade's properties simplify it.                --
+--   `expected-p` is the scheme of `p` where the unit is least; an    --
+--   instance states its own where the grade's properties give        --
+--   another.                                                         --
 ------------------------------------------------------------------------
 
 open import Data.Unit using (tt)
