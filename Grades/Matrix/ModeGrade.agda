@@ -21,8 +21,10 @@
 -- candidate closure that satisfies every law of a closure but        --
 -- iteration; where iteration, decided, holds too, it is the closure  --
 -- (`plus?`). For a Kleene star over the trivial action, iteration    --
--- holds with enough powers (`Matrix.ModeClosure`). A dioid with      --
--- closures has a star (`stars-from`).                                --
+-- holds with enough powers (`Matrix.ModeClosure`), and so it does    --
+-- for a dioid with coordinates in such a dioid                       --
+-- (`Matrix.ModeCoordinates`). A dioid with closures has a star       --
+-- (`stars-from`).                                                    --
 ------------------------------------------------------------------------
 
 open import Grades.Indexed using (Names)
@@ -143,6 +145,50 @@ stars-from pl = record
           (≤-trans (proj₂ (act-inv p q a)) (act-mono (Plus.≾-c⁺ (pl (act p q a)))))
           (≤-trans (proj₂ (act-⊗ p q (⁺ (act p q a)) (⁺ (act p q a))))
                    (act-mono (Plus.c⁺-iter (pl (act p q a)))))
+
+------------------------------------------------------------------------
+-- The diagonal matrix of the stars of the diagonal entries of a matrix
+
+module StarMatrices (St : Stars) where
+
+  open Stars St
+
+  private
+    swapᴹ-inj : ∀ {a b x y} → swapᴹ a b x ≡ swapᴹ a b y → x ≡ y
+    swapᴹ-inj {a} {b} {x} {y} eq =
+      trans (sym (swapᴹ-inv a b x)) (trans (cong (swapᴹ a b) eq) (swapᴹ-inv a b y))
+
+    -- the entry of the diagonal matrix of stars
+    ds : Matrix → (p : Name) (y : Mode) → Dec (y ≡ ⌜ p ⌝) → Carrier
+    ds M p y (yes _) = star (row M p ⌜ p ⌝)
+    ds M p y (no _)  = 𝟘
+
+    ds-swap : ∀ M {a b} → a ∉ modes M → b ∉ modes M → ∀ p y
+            → (d : Dec (swapᴹ a b y ≡ ⌜ swap a b p ⌝)) (d' : Dec (y ≡ ⌜ p ⌝))
+            → ds M (swap a b p) (swapᴹ a b y) d ≈ act a b (ds M p y d')
+    ds-swap M {a} {b} a∉ b∉ p y (yes _) (yes _) =
+      ≈-trans (star-cong (equivariant M a∉ b∉ p ⌜ p ⌝)) (≈-sym (star-act a b _))
+    ds-swap M {a} {b} a∉ b∉ p y (yes e) (no ne) = ⊥-elim (ne (swapᴹ-inj e))
+    ds-swap M {a} {b} a∉ b∉ p y (no ne) (yes e) = ⊥-elim (ne (cong (swapᴹ a b) e))
+    ds-swap M {a} {b} a∉ b∉ p y (no _)  (no _)  = ≈-sym (act-𝟘 a b)
+
+  -- the diagonal matrix of the stars of the diagonal entries
+
+  starsᴹ : Matrix → Matrix
+  modes (starsᴹ M) = modes M
+  row (starsᴹ M) p y = ds M p y (y ≟ᴹ ⌜ p ⌝)
+  equivariant (starsᴹ M) a∉ b∉ p y =
+    ds-swap M a∉ b∉ p y (_ ≟ᴹ _) (y ≟ᴹ ⌜ p ⌝)
+
+  stars-diag : ∀ M p → entry (starsᴹ M) ⌜ p ⌝ ⌜ p ⌝ ≡ star (row M p ⌜ p ⌝)
+  stars-diag M p with ⌜ p ⌝ ≟ᴹ ⌜ p ⌝
+  ... | yes _ = refl
+  ... | no ne = ⊥-elim (ne refl)
+
+  stars-off : ∀ M p {y} → ¬ y ≡ ⌜ p ⌝ → entry (starsᴹ M) ⌜ p ⌝ y ≡ 𝟘
+  stars-off M p {y} ne with y ≟ᴹ ⌜ p ⌝
+  ... | yes e = ⊥-elim (ne e)
+  ... | no _  = refl
 
 module _ (E : ModeEntries) where
 
@@ -485,7 +531,9 @@ module _ (E : ModeEntries) where
   -- Where also `X · X ≾ X`, which is decided, `X` is the closure of
   -- `A` (`plus?`), taking `k` from the number of modes `A` names. For
   -- a Kleene star over the trivial action, `X · X ≾ X` holds with `k`
-  -- four more than that number (`Matrix.ModeClosure`).
+  -- four more than that number (`Matrix.ModeClosure`), and through
+  -- coordinates in such a dioid with `k` larger by a bound on the
+  -- names at a coordinate (`Matrix.ModeCoordinates`).
 
   module Closures (St : Stars) where
 
@@ -500,42 +548,7 @@ module _ (E : ModeEntries) where
       ≤ᵖ-refl : ∀ {M} → M ≤ᵖ M
       ≤ᵖ-refl _ _ = ≤-refl
 
-      swapᴹ-inj : ∀ {a b x y} → swapᴹ a b x ≡ swapᴹ a b y → x ≡ y
-      swapᴹ-inj {a} {b} {x} {y} eq =
-        trans (sym (swapᴹ-inv a b x)) (trans (cong (swapᴹ a b) eq) (swapᴹ-inv a b y))
-
-      -- the entry of the diagonal matrix of stars
-      ds : Matrix → (p : Name) (y : Mode) → Dec (y ≡ ⌜ p ⌝) → Carrier
-      ds M p y (yes _) = star (row M p ⌜ p ⌝)
-      ds M p y (no _)  = 𝟘
-
-      ds-swap : ∀ M {a b} → a ∉ modes M → b ∉ modes M → ∀ p y
-              → (d : Dec (swapᴹ a b y ≡ ⌜ swap a b p ⌝)) (d' : Dec (y ≡ ⌜ p ⌝))
-              → ds M (swap a b p) (swapᴹ a b y) d ≈ act a b (ds M p y d')
-      ds-swap M {a} {b} a∉ b∉ p y (yes _) (yes _) =
-        ≈-trans (star-cong (equivariant M a∉ b∉ p ⌜ p ⌝)) (≈-sym (star-act a b _))
-      ds-swap M {a} {b} a∉ b∉ p y (yes e) (no ne) = ⊥-elim (ne (swapᴹ-inj e))
-      ds-swap M {a} {b} a∉ b∉ p y (no ne) (yes e) = ⊥-elim (ne (cong (swapᴹ a b) e))
-      ds-swap M {a} {b} a∉ b∉ p y (no _)  (no _)  = ≈-sym (act-𝟘 a b)
-
-    -- the diagonal matrix of the stars of the diagonal entries
-
-    starsᴹ : Matrix → Matrix
-    modes (starsᴹ M) = modes M
-    row (starsᴹ M) p y = ds M p y (y ≟ᴹ ⌜ p ⌝)
-    equivariant (starsᴹ M) a∉ b∉ p y =
-      ds-swap M a∉ b∉ p y (_ ≟ᴹ _) (y ≟ᴹ ⌜ p ⌝)
-
-    private
-      stars-diag : ∀ M p → entry (starsᴹ M) ⌜ p ⌝ ⌜ p ⌝ ≡ star (row M p ⌜ p ⌝)
-      stars-diag M p with ⌜ p ⌝ ≟ᴹ ⌜ p ⌝
-      ... | yes _ = refl
-      ... | no ne = ⊥-elim (ne refl)
-
-      stars-off : ∀ M p {y} → ¬ y ≡ ⌜ p ⌝ → entry (starsᴹ M) ⌜ p ⌝ y ≡ 𝟘
-      stars-off M p {y} ne with y ≟ᴹ ⌜ p ⌝
-      ... | yes e = ⊥-elim (ne e)
-      ... | no _  = refl
+    open StarMatrices St public
 
     starsᵐ : ModeMatrix → ModeMatrix
     mat (starsᵐ x) = starsᴹ (mat x)

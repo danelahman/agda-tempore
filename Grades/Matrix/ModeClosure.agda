@@ -5,14 +5,15 @@
 -- closed under the product, and with a product between two stars     --
 -- below the join of the products with one of them (`KleeneStars`).   --
 -- Over the trivial action, the candidate `X` of `ModeGrade.Closures` --
--- with `bound = 4 + n`, `n` the number of modes the grade `A` names, --
--- is closed under the product, and so it is the closure of `A`       --
+-- with `k ≥ 4 + n` powers, `n` the number of modes the matrix `A`    --
+-- names, satisfies `X · A ≾ X` (`Core.candidate-closedᴹ`, on         --
+-- matrices); with `k = bound = 4 + n` it is the closure of a grade   --
 -- (`closure`). By the right induction law, `X · X ≾ X` follows from  --
 -- `X · A ≾ X`, a term of which is a walk with a star at one of its   --
--- modes. A walk of more than `bound + 1` steps is below one through  --
--- the modes named, `stuck`, its two ends and two modes not named, as --
+-- modes. A walk of more than `k + 1` steps is below one through the  --
+-- modes named, `stuck`, its two ends and two modes not named, as     --
 -- exchanging modes not named keeps the entries; by the pigeonhole    --
--- principle that walk has a cycle of at most `bound + 1` steps,      --
+-- principle that walk has a cycle of at most `k + 1` steps,          --
 -- below the star at its mode, and the product between the two stars  --
 -- is below the join of two walks with one star each and fewer steps  --
 -- (pumping).                                                         --
@@ -104,12 +105,63 @@ private
   names stuck   = []
   names ⌜ n ⌝ = n ∷ []
 
-module _ (E : ModeEntries) (St : Stars) (K : KleeneStars St)
-         (act-trivial : ∀ a b x → act a b x ≈ x) where
+-- the star from closures is above its argument and closed under the
+-- product
+
+module _ (pl : (a : Carrier) → Plus _⊗_ _≤_ a) where
+
+  private
+    star = Stars.star (stars-from pl)
+
+  stars-from-ext : ∀ a → a ≤ star a
+  stars-from-ext a = ≤-trans (Plus.≾-c⁺ (pl a)) (⊕-ubʳ 𝟙 _)
+
+  stars-from-idem : ∀ a → star a ⊗ star a ≤ star a
+  stars-from-idem a =
+    ≤-trans (⊗-distribʳ (𝟙 ⊕ p) 𝟙 p)
+      (⊕-lub (proj₁ (⊗-identityˡ _))
+             (≤-trans (⊗-distribˡ p 𝟙 p)
+               (≤-trans (⊕-lub (proj₁ (⊗-identityʳ p)) (Plus.c⁺-iter (pl a))) (⊕-ubʳ 𝟙 p))))
+    where p = Plus.c⁺ (pl a)
+
+-- The joins of the powers of a matrix, and the candidate closure, on
+-- matrices
+
+module Candidates (St : Stars) where
+
+  open StarMatrices St
+
+  powersᴹ : Matrix → ℕ → Matrix
+  powersᴹ M zero    = M
+  powersᴹ M (suc j) = M ⊕ᴹ (M ⊗ᴹ powersᴹ M j)
+
+  candidateᴹ : ℕ → Matrix → Matrix
+  candidateᴹ k M = ((Iᴹ ⊕ᴹ powersᴹ M k) ⊗ᴹ starsᴹ (powersᴹ M k)) ⊗ᴹ powersᴹ M k
+
+-- those of a grade are those of its matrix
+
+module _ (E : ModeEntries) (St : Stars) where
+
+  open Closures E St
+  open Candidates St
+
+  powers-mat : ∀ A j → mat (powers A j) ≡ powersᴹ (mat A) j
+  powers-mat A zero    = refl
+  powers-mat A (suc j) = cong (λ P → mat A ⊕ᴹ (mat A ⊗ᴹ P)) (powers-mat A j)
+
+  candidate-mat : ∀ k A → mat (candidate k A) ≡ candidateᴹ k (mat A)
+  candidate-mat k A = cong (λ P → ((Iᴹ ⊕ᴹ P) ⊗ᴹ starsᴹ P) ⊗ᴹ P) (powers-mat A k)
+
+-- The candidate is closed under the product, for a Kleene star over the
+-- trivial action
+
+module Core (St : Stars) (K : KleeneStars St)
+            (act-trivial : ∀ a b x → act a b x ≈ x) where
 
   open Stars St
   open KleeneStars K
-  open Closures E St
+  open StarMatrices St
+  open Candidates St
 
   private
     -- under the trivial action, a permutation acts below the identity
@@ -153,34 +205,27 @@ module _ (E : ModeEntries) (St : Stars) (K : KleeneStars St)
     regroup⁻ c₁ a b c₂ =
       ≤-trans (assocˡ c₁ a (b ⊗ c₂)) (monoʳ c₁ (assocʳ a b c₂))
 
-  module _ (A : ModeMatrix E) where
+  -- with at least four more powers than the matrix names modes: for
+  -- the named modes, `stuck`, the two ends of a walk and two further
+  -- modes not named
+
+  module _ (M : Matrix) (k : ℕ) (k≥ : 4 + length (modes M) ≤ⁿ k) where
 
     private
-      M : Matrix
-      M = mat A
-
       F : List Name
       F = modes M
 
       e : Mode → Mode → Carrier
       e = entry M
 
-    -- the number of powers: the named modes, `stuck`, the two ends of
-    -- a walk and two further modes not named
-    bound : ℕ
-    bound = 4 + length F
-
-    private
-      k = bound
-
       P : ℕ → Matrix
-      P j = mat (powers A j)
+      P j = powersᴹ M j
 
       B J Sᴮ X : Matrix
       B  = P k
       J  = Iᴹ ⊕ᴹ B
       Sᴮ = starsᴹ B
-      X  = mat (candidate k A)
+      X  = candidateᴹ k M
 
       -- the star at a mode
       s : Mode → Carrier
@@ -488,8 +533,8 @@ module _ (E : ModeEntries) (St : Stars) (K : KleeneStars St)
         L : List Mode
         L = stuck ∷ x ∷ z ∷ ⌜ c₀ ⌝ ∷ ⌜ c₁ ⌝ ∷ mapᴸ ⌜_⌝ F
 
-        length-L : length L ≡ suc k
-        length-L = cong (λ n → 5 + n) (length-map ⌜_⌝ F)
+        length-L : length L ≤ⁿ suc k
+        length-L = ℕₚ.≤-trans (ℕₚ.≤-reflexive (cong (λ n → 5 + n) (length-map ⌜_⌝ F))) (s≤s k≥)
 
         private
           c₀∉ : c₀ ∉ names x ++ names z ++ F
@@ -520,7 +565,7 @@ module _ (E : ModeEntries) (St : Stars) (K : KleeneStars St)
         with from-rep x ys' _
                (rep (length (Onto.L x (end x ys))) (Onto.L x (end x ys)) (x ∷ ys') ℕₚ.≤-refl
                     (there (here refl) ∷ al)
-                    (s≤s (ℕₚ.≤-trans (ℕₚ.≤-reflexive (Onto.length-L x (end x ys)))
+                    (s≤s (ℕₚ.≤-trans (Onto.length-L x (end x ys))
                                      (ℕₚ.≤-trans l (ℕₚ.≤-reflexive (sym l'))))))
       ... | as , cs , ds , refl , cyc , p₁ , p₂ = record
         { as = as ; cs = cs ; ds = ds ; cyc = cyc
@@ -528,7 +573,7 @@ module _ (E : ModeEntries) (St : Stars) (K : KleeneStars St)
                                   (trans (end-++ (end x as) cs ds) (cong (λ t → end t ds) cyc)))) en'
         ; len = trans (sym l') (trans (length-++ as) (cong (length as +_) (length-++ cs)))
         ; pos = p₁
-        ; short = ℕₚ.≤-trans p₂ (ℕₚ.≤-reflexive (Onto.length-L x (end x ys)))
+        ; short = ℕₚ.≤-trans p₂ (Onto.length-L x (end x ys))
         ; weight = ≤-trans le
             (≤-trans (proj₁ (w-++ x as (cs ++ ds)))
               (monoʳ (w x as) (≤-trans (proj₁ (w-++ (end x as) cs ds))
@@ -733,8 +778,30 @@ module _ (E : ModeEntries) (St : Stars) (K : KleeneStars St)
                          (ℕₚ.≤-trans (ℕₚ.≤-reflexive (len-snoc vs y)) (s≤s lv))
                          (ℕₚ.≤-trans (s≤s z≤n) (ℕₚ.≤-reflexive (sym (len-snoc vs y)))))))
 
+    candidate-closedᴹ : X ⊗ᴹ M ≤ᵖ X
+    candidate-closedᴹ = X·A
+
+------------------------------------------------------------------------
+-- The closures of mode grades
+
+module _ (E : ModeEntries) (St : Stars) (K : KleeneStars St)
+         (act-trivial : ∀ a b x → act a b x ≈ x) where
+
+  open Closures E St
+  open Core St K act-trivial
+
+  module _ (A : ModeMatrix E) where
+
+    -- the number of powers: four more than the modes `A` names
+    bound : ℕ
+    bound = 4 + length (modes (mat A))
+
     candidate-iter : _≾ᵐ_ E (_·ᵐ_ E (candidate bound A) (candidate bound A)) (candidate bound A)
-    candidate-iter = pointwise⇒≤ᴹ (candidate-indʳ bound A {X} X·A)
+    candidate-iter =
+      pointwise⇒≤ᴹ (candidate-indʳ bound A
+        (subst (λ X → X ⊗ᴹ mat A ≤ᵖ X) (sym (candidate-mat E St bound A))
+               (candidate-closedᴹ (mat A) bound ℕₚ.≤-refl)))
+      where open Candidates St
 
     -- the closure of a grade
 
