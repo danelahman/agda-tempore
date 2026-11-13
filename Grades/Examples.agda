@@ -235,6 +235,7 @@ import Grades.Examples.Modes.SwitchCosts
 -- realisable boxes of intervals
 
 import Grades.Examples.Modes.Times.Boxes
+import Grades.Examples.Modes.Times.Closure
 import Grades.Examples.Modes.Times
 
 ------------------------------------------------------------------------

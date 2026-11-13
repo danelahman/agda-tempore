@@ -24,9 +24,11 @@
 -- naming its own start mode (`listing`, `Template`); a mode from     --
 -- which no entry starts is stuck at no time.                         --
 --                                                                    --
--- `Matrix.ModeGrade.Closures` finds closures with the star of the    --
--- closures of the entries (`mode-times-plus?`). No hints declare     --
--- them.                                                              --
+-- Every grade has a closure: the candidate of                        --
+-- `Matrix.ModeGrade.Closures` with the star of the closures of the   --
+-- entries, a Kleene star, through the coordinates of the entries in  --
+-- the intervals (`Modes.Times.Closure`, `mode-times-closure`). The   --
+-- hints declare it (`mode-timesʰ`).                                  --
 ------------------------------------------------------------------------
 
 module Grades.Examples.Modes.Times where
@@ -48,10 +50,14 @@ open import Relation.Nullary using (¬_; Dec; yes; no; ¬?)
 open import Relation.Nullary.Decidable using (_×-dec_)
 
 open import Grades.Durations.Nat using (ℕᴰ)
-open import Grades.Base using (Grade)
+open import Grades.Base using (Grade; Plus)
+open import Grades.Hints using (GradeHints)
 open import Grades.Indexed using (ℕ-names; ℕ-infinite; module Maps; Names)
 open import Grades.Examples.Time.Interval
 open import Grades.Examples.Modes.Times.Boxes
+open import Grades.Examples.Modes.Times.Closure using (intervals; interval-kleene; time-coordinates)
+open import Grades.Matrix.ModeClosure ℕ-infinite times equivariant-times using (KleeneStars)
+open import Grades.Matrix.ModeCoordinates ℕ-infinite times equivariant-times intervals using (kleeneᶜ; closureᶜ)
 open import Grades.Matrix.Dioid using (Dioid)
 open import Grades.Matrix.Nominal ℕ-infinite using (Equivariant)
 open import Grades.Matrix.Modes ℕ-infinite
@@ -622,3 +628,23 @@ time-stars : Stars
 time-stars = stars-from times-plus
 
 mode-times-plus? = Closures.plus? time-entries time-stars
+
+-- the star is a Kleene star, through the coordinates of the entries
+
+time-kleene : KleeneStars time-stars
+time-kleene = kleeneᶜ time-coordinates interval-kleene
+
+-- the closure of every grade, the candidate of `Closures` with the
+-- star of the closures of the entries, through their coordinates
+
+mode-times-closure : (c : ModeMatrix time-entries) → Plus (_·ᵐ_ time-entries) (_≾ᵐ_ time-entries) c
+mode-times-closure = closureᶜ time-entries interval-kleene time-coordinates
+
+-- the hints: the closures
+
+mode-timesʰ : GradeHints mode-times
+mode-timesʰ = record
+  { 𝟏-least? = nothing
+  ; ·-comm?  = nothing
+  ; plus?    = λ c → just (mode-times-closure c)
+  }

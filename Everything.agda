@@ -66,6 +66,8 @@ import Grades.Matrix.Boxes
 import Grades.Matrix.Dioid
 import Grades.Matrix.Fields
 import Grades.Matrix.Matrices
+import Grades.Matrix.ModeClosure
+import Grades.Matrix.ModeCoordinates
 import Grades.Matrix.ModeGrade
 import Grades.Matrix.Modes
 import Grades.Matrix.Nominal
