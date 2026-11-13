@@ -20,8 +20,9 @@
 -- From a star on the entries, `Closures` builds for each grade a     --
 -- candidate closure that satisfies every law of a closure but        --
 -- iteration; where iteration, decided, holds too, it is the closure  --
--- (`plus?`). No hints declare it. A dioid with closures has a star   --
--- (`stars-from`).                                                    --
+-- (`plus?`). For a Kleene star over the trivial action, iteration    --
+-- holds with enough powers (`Matrix.ModeClosure`). A dioid with      --
+-- closures has a star (`stars-from`).                                --
 ------------------------------------------------------------------------
 
 open import Grades.Indexed using (Names)
@@ -482,7 +483,9 @@ module _ (E : ModeEntries) where
   -- is above `A`, below every grade above `A` closed under the
   -- product, and satisfies both induction laws (`candidate-plus`).
   -- Where also `X · X ≾ X`, which is decided, `X` is the closure of
-  -- `A` (`plus?`), taking `k` from the number of modes `A` names.
+  -- `A` (`plus?`), taking `k` from the number of modes `A` names. For
+  -- a Kleene star over the trivial action, `X · X ≾ X` holds with `k`
+  -- four more than that number (`Matrix.ModeClosure`).
 
   module Closures (St : Stars) where
 
@@ -686,6 +689,11 @@ module _ (E : ModeEntries) where
           where
             hB : D ⊗ᴹ Bᴬ ≤ᵖ D
             hB = P-indʳ A k h
+
+    -- the right induction law of the candidate, entrywise
+
+    candidate-indʳ : ∀ k A {D} → D ⊗ᴹ mat A ≤ᵖ D → D ⊗ᴹ mat (candidate k A) ≤ᵖ D
+    candidate-indʳ k A = X-indʳ A k
 
     -- the candidate is the closure where it is closed under the product
 
