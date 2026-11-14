@@ -89,13 +89,11 @@ record Adjunction : Set₁ where
     ε⊣-𝟏 : ∀ {A} → ε⊣ {A} {𝟏} ≈ᵐ εᵘ ∘ᵐ ⟨ 𝟏 ⟩ᶠ ε
     η⊣-𝟏 : ∀ {A} → η⊣ {A} {𝟏} ≈ᵐ [ 𝟏 ]ᶠ η ∘ᵐ ηᵘ
 
-    -- The graded adjunction is compatible with composition of grades. An
-    -- eternal object being a `Past.μ`-algebra (via the extraction `extᵉ` /
-    -- counit `ε⊣`), the counit-side law is primitive: extracting a
-    -- doubly-boxed value after folding the two pasts with `μ` agrees with
-    -- extracting through the two `δ`-split box layers. The unit-side
-    -- companion `η⊣-δ` (which mentions the future comultiplication `δ` on the
-    -- left) is derived from it below.
+    -- The graded adjunction is compatible with composition of grades. The
+    -- counit-side law is primitive: extracting a doubly-boxed value after
+    -- folding the two pasts with `μ` agrees with extracting through the two
+    -- `δ`-split box layers. The unit-side companion `η⊣-δ` (which mentions the
+    -- future comultiplication `δ` on the left) is derived from it below.
 
     ε⊣-μ : ∀ {A ρ₁ ρ₂}
          → ε⊣ {A} {ρ₁ · ρ₂} ∘ᵐ μ {[ ρ₁ · ρ₂ ]ᵒ A} {ρ₂} {ρ₁}

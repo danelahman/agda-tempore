@@ -136,10 +136,10 @@ record Future : Set₁ where
     []-ε∘ηᵘ≡id : ∀ {A} → ε {A} ∘ᵐ ηᵘ {A} ≈ᵐ idᵐ
     []-ηᵘ∘ε≡id : ∀ {A} → ηᵘ {A} ∘ᵐ ε {A} ≈ᵐ idᵐ
 
-    -- []-monoidal is compatible with the projections, and is a section of the
-    -- canonical projection pairing. Together these say the box preserves finite
-    -- products: `[ ρ ]ᵒ (A ×ᵐ B) ≅ [ ρ ]ᵒ A ×ᵐ [ ρ ]ᵒ B`. They let a map into a
-    -- boxed product be reconstructed from its two boxed projections.
+    -- []-monoidal is compatible with the projections, and is a retraction of
+    -- the canonical projection pairing. Together these say the box preserves
+    -- finite products: `[ ρ ]ᵒ (A ×ᵐ B) ≅ [ ρ ]ᵒ A ×ᵐ [ ρ ]ᵒ B`. They let a map
+    -- into a boxed product be reconstructed from its two boxed projections.
 
     []-monoidal-fstᵐ : ∀ {A B ρ}
                      → [ ρ ]ᶠ (fstᵐ {A} {B}) ∘ᵐ []-monoidal ≈ᵐ fstᵐ

@@ -2,15 +2,17 @@
 -- Comparison morphisms, derived from the universal structure.           --
 --                                                                       --
 -- An outcome is a point of `Ordᵐ = 𝟙ᵐ +ᵐ (𝟙ᵐ +ᵐ 𝟙ᵐ)`. A comparison on   --
--- an object `A` is a morphism `A ×ᵐ A →ᵐ Ordᵐ`; the unit, the booleans, --
--- the natural numbers, products, coproducts and lists carry one (the    --
--- latter three given comparisons on the components), built from the     --
--- copairings, `ifᵐ`, iteration, folds and the exponentials. Each comes  --
--- with its laws at points: compared at the points of data, it returns   --
--- the outcome of the structural order on the data                       --
--- (`MonomorphicCalculus.Syntax.Data`). `lexᵐ`, the recursive ones and   --
--- those on coproducts also come with their equations at the             --
--- constructors, as maps of the constructors' arguments.                 --
+-- an object `A` is a morphism `A ×ᵐ A →ᵐ Ordᵐ`; the unit (constantly    --
+-- equal), the empty object (from `initialᵐ`), the booleans, the natural --
+-- numbers, products, coproducts and lists carry one (the latter three   --
+-- given comparisons on the components), the last five built from the    --
+-- copairings, `ifᵐ`, iteration, folds and the exponentials. Each but    --
+-- that of the empty object, whose type has no data, comes with its laws --
+-- at points: compared at the points of data, it returns the outcome of  --
+-- the structural order on the data (`MonomorphicCalculus.Syntax.Data`). --
+-- `lexᵐ`, the recursive ones and those on coproducts also come with     --
+-- their equations at the constructors, as maps of the constructors'     --
+-- arguments.                                                            --
 ---------------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)

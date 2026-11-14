@@ -188,7 +188,8 @@ mutual
     -- its type does. At `⦉_,_⦊` that is functoriality of `_|×|_`, at `inl` and
     -- `inr` functoriality of `_|+|_`, at `nil` and `cons` functoriality of
     -- `list`, at `fun` functoriality of `_⇒_`, contravariant in the domain,
-    -- so the binder is subsumed rather than the body coerced there. The atomic formers and `var` have no rule of their
+    -- so the binder is subsumed rather than the body coerced there. The atomic
+    -- formers, `handler` (see `subV-handle`) and `var` have no rule of their
     -- own.
 
     subV-pair : ∀ {A A' B B'}

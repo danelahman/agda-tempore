@@ -63,7 +63,7 @@ module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
 
   -- invariants preserved by the top-level small-step operational semantics;
   -- running a top-level implementation of an algebraic operation gives an
-  -- equality 𝕊' · ε' ≡ 𝕊 · ε
+  -- equivalence 𝕊' · ε' ≃ 𝕊 · ε
   
   top-level-step-invariants : ∀ {A B ε ε'}
                             → {𝕊 𝕊' : State []}

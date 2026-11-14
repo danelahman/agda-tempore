@@ -104,11 +104,11 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     subst (λ O → ⟨ ∣ op-grade op ∣ᵉ ⟩ᵒ ⟦ toCtx 𝕊 ⟧ᶜᵗˣ →ᵐ O)
           (ty-gty (arity op)) (⟦ op-sem op V ⟧ᵛᵗ pOp)
 
-  -- The theorem's only condition: the syntactic implementation `op-sem` is the
-  -- semantic one, `op-semᵐ`. Both take the parameter as seen from
-  -- `∣ op-grade op ∣ᵉ` in its future, and return the arity value. As
-  -- `op-semᵐ` is a single morphism, not indexed by the state, this also forces
-  -- `op-sem` to be uniform in the state.
+  -- The theorem's coherence condition: the syntactic implementation `op-sem` is
+  -- the semantic one, `op-semᵐ`. Both take the parameter as seen from
+  -- `∣ op-grade op ∣ᵉ` in its future, and return the arity value. As `op-semᵐ`
+  -- is a single morphism, not indexed by the state, this also forces `op-sem`
+  -- to be uniform in the state.
 
   -- The implementation's values are parametric. `op-sem` is a parameter of the
   -- theorem, so this is assumed alongside its coherence.

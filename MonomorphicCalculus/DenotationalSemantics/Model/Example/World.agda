@@ -27,15 +27,16 @@
 --     admits, so these frames distinguish the operations a grade     --
 --     prescribes, which the tick frames do not.                      --
 --                                                                    --
--- The tick, tally and label frames are instances of one construction --
+-- The label frames and the tick frames of `Ticks.Time.Rational` are  --
+-- built from one construction                                        --
 -- (`MonomorphicCalculus.DenotationalSemantics.Model.World.Action`):  --
 -- the grade acting by multiplication on the points it measures,      --
--- `w ⊑[ ρ ] w'` iff `w' ≾ w · ρ`. Its restriction `forward` adds     --
--- `w ≤ w'`, and every frame bounded only from above (the upper-bound --
--- ticks, the at-most tallies, the labels) uses it. No frame reaches  --
--- the past: a lower bound keeps the other frames forward, and an     --
--- adjoined greatest grade reaches exactly the worlds ahead.          --
--- `Product.*` pairs frames componentwise                             --
+-- `w ⊑[ ρ ] w'` iff `w' ≾ w · ρ`. Its restriction                    --
+-- `forward` adds `w ≤ w'`, and every frame bounded only from above   --
+-- (the upper-bound ticks, the at-most tallies, the labels) uses it.  --
+-- No frame reaches the past: a lower bound keeps the other frames    --
+-- forward, and an adjoined greatest grade reaches exactly the worlds --
+-- ahead. `Product.*` pairs frames componentwise                      --
 -- (`MonomorphicCalculus.DenotationalSemantics.Model.World.Product`). --
 --                                                                    --
 -- The timed regex grades share one history frame                     --

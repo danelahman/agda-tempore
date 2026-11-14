@@ -129,7 +129,7 @@ module _ (M : Monad) where
   enr-of-str str {A} {B} {ε} = curryᵐ (Tᶠ appᵐ ∘ᵐ str {A ⇒ᵐ B} {A} {ε})
 
   -- Strength from enrichment: pack the boxed value into the constant
-  -- pairing `A ⇒ᵐ (A ×ᵐ B)`, then enrich the `Tᵒ B` and uncurry.
+  -- pairing `B ⇒ᵐ (A ×ᵐ B)`, then enrich the `Tᵒ B` and uncurry.
 
   str-of-enr : Enrᵀ → Strᵀ
   str-of-enr enr {A} {B} {ε} =
