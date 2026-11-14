@@ -3,8 +3,10 @@
 --                                                                    --
 -- Programs run through type inference at concrete grades, and solver --
 -- stages run on hand-written constraints, in sets by what they test. --
--- Each answer is checked by `refl`: a scheme against the one         --
--- expected, a refusal against `untypable`.                           --
+-- Each answer is checked by `refl`: a scheme or a stage's output     --
+-- against the one expected, a grade against its value, a refusal     --
+-- against `untypable`, a check against `established`, a program      --
+-- against its schemes or the position it is rejected at.             --
 --                                                                    --
 -- The examples run the solver and take minutes in total to check, so --
 -- the top-level `Everything.agda` file checks them and               --

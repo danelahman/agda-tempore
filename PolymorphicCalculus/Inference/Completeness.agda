@@ -821,7 +821,8 @@ private
                      (subV (var Hd (≾ᵘ-ok ⊩≾̂ᵣ-refl)) (<:̂ᵛ-refl ([ 𝟏̂ᵣ ] unit)))
                      refl refl (<:̂ᵛ-refl ([ 𝟏̂ᵣ ] unit))
 
-  -- unboxing a boxed variable: the gate is `false`, the row is inhabited
+  -- unboxing a boxed variable: the resource is reached by `res-var`, its grade
+  -- bound reflexive
 
   ex-unbox : idˢ ⊨[ ∅ᴴ ] genC (∅ᶜ ∷ [ 𝟏̂ᵣ ] unit) (unbox (var zero) (return ⋆))
                               (unit ! 𝟏̂ₑ)
