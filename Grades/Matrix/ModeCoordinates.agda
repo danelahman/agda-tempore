@@ -18,7 +18,7 @@
 -- the candidate is closed under the product at every coordinate      --
 -- (`ModeClosure.Core`), hence in `S`: with `w` a bound on the number --
 -- of names at a coordinate and `n` the number of modes a grade       --
--- names, the candidate with `4 + (w + n)` powers is its closure      --
+-- names, the candidate at `k = 4 + (w + n)` is its closure           --
 -- (`closureᶜ`).                                                      --
 ------------------------------------------------------------------------
 
@@ -279,8 +279,8 @@ module _ (E : ModeEntries) {St : Stars} {Stᵀ : GT.Stars}
   private
     module CoreT = CT.Core Stᵀ Kᵀ (λ _ _ _ → T.≈-refl)
 
-  -- the candidate with at least `4 + (width + n)` powers, `n` the
-  -- number of modes the matrix names, is closed under the product
+  -- the candidate at `k ≥ 4 + (width + n)`, `n` the number of modes
+  -- the matrix names, satisfies `X · M ≾ X`
   candidate-closedᶜ : ∀ M k → 4 + (width + length (modes M)) ≤ⁿ k
                     → candidateᴹ k M ⊗ᴹ M ≤ᵖ candidateᴹ k M
   candidate-closedᶜ M k k≥ x y = reflect λ c →
@@ -296,7 +296,7 @@ module _ (E : ModeEntries) {St : Stars} {Stᵀ : GT.Stars}
 
   module _ (A : ModeMatrix E) where
 
-    -- the number of powers
+    -- the index of the candidate
     boundᶜ : ℕ
     boundᶜ = 4 + (width + length (modes (mat A)))
 

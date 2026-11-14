@@ -2,18 +2,18 @@
 -- Worked instances of the example grade algebras and grade systems.  --
 --                                                                    --
 -- `Grades.Examples` gives the constructions; this subtree            --
--- instantiates them at one alphabet and exhibits, as checked Agda    --
--- terms, the orderings between grades and the action of each grade   --
--- algebra morphism on them. The typing examples of the monomorphic   --
--- calculus write computations in a language over that alphabet and   --
--- type them at these grades; the type inference examples use the     --
--- same language.                                                     --
+-- instantiates them, mostly at one alphabet, the sensor node, and    --
+-- exhibits, as checked Agda terms, the orderings between grades and  --
+-- the action of each grade algebra morphism on them. The typing      --
+-- examples of the monomorphic calculus write computations in a       --
+-- language over that alphabet and type them at these grades; the     --
+-- type inference examples use the same language.                     --
 --                                                                    --
--- The alphabet is a sensor node: `read` a sensor (1 tick), `write` a --
--- reading to local memory (2–3), `send` one over the radio (4–6).    --
--- Its runs are `poll` (a read), `logged` (read then write), `uplink` --
--- (read, idle two ticks, send), which takes at most 9 ticks,         --
--- `logged-uplink`, `chatty-uplink` and `pause`.                      --
+-- The sensor node can `read` a sensor (1 tick), `write` a reading to --
+-- local memory (2–3), `send` one over the radio (4–6). Its runs are  --
+-- `poll` (a read), `logged` (read then write), `uplink` (read, idle  --
+-- two ticks, send), which takes at most 9 ticks, `logged-uplink`,    --
+-- `chatty-uplink` and `pause`.                                       --
 --                                                                    --
 -- Positive and negative claims are both discharged by running the    --
 -- relevant decision procedure, and the tables in the module headers  --
@@ -30,6 +30,11 @@ import Grades.Examples.Worked.Operations
 -- lattice and an amount of energy.
 
 import Grades.Examples.Worked.Operations.Footprint
+
+-- The effect grade of each operation at the example grades, for the
+-- typing and inference examples.
+
+import Grades.Examples.Worked.Operations.Grading
 
 -- Orderings and products in time lower bounds, time upper bounds and
 -- time intervals: the direction of weakening in each, and the

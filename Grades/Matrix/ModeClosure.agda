@@ -5,13 +5,13 @@
 -- closed under the product, and with a product between two stars     --
 -- below the join of the products with one of them (`KleeneStars`).   --
 -- Over the trivial action, the candidate `X` of `ModeGrade.Closures` --
--- with `k ≥ 4 + n` powers, `n` the number of modes the matrix `A`    --
--- names, satisfies `X · A ≾ X` (`Core.candidate-closedᴹ`, on         --
--- matrices); with `k = bound = 4 + n` it is the closure of a grade   --
--- (`closure`). By the right induction law, `X · X ≾ X` follows from  --
--- `X · A ≾ X`, a term of which is a walk with a star at one of its   --
--- modes. A walk of more than `k + 1` steps is below one through the  --
--- modes named, `stuck`, its two ends and two modes not named, as     --
+-- at `k ≥ 4 + n` (powers up to `Aᵏ⁺¹`), `n` the number of modes the  --
+-- matrix `A` names, satisfies `X · A ≾ X` (`Core.candidate-closedᴹ`, --
+-- on matrices); with `k = bound = 4 + n` it is the closure of a      --
+-- grade (`closure`). By the right induction law, `X · X ≾ X` follows --
+-- from `X · A ≾ X`, a term of which is a walk with a star at one of  --
+-- its modes. A walk of more than `k + 1` steps is below one through  --
+-- the modes named, `stuck`, its two ends and two modes not named, as --
 -- exchanging modes not named keeps the entries; by the pigeonhole    --
 -- principle that walk has a cycle of at most `k + 1` steps,          --
 -- below the star at its mode, and the product between the two stars  --
@@ -205,9 +205,9 @@ module Core (St : Stars) (K : KleeneStars St)
     regroup⁻ c₁ a b c₂ =
       ≤-trans (assocˡ c₁ a (b ⊗ c₂)) (monoʳ c₁ (assocʳ a b c₂))
 
-  -- with at least four more powers than the matrix names modes: for
-  -- the named modes, `stuck`, the two ends of a walk and two further
-  -- modes not named
+  -- at `k` at least four more than the number of modes the matrix
+  -- names: for the named modes, `stuck`, the two ends of a walk and
+  -- two further modes not named
 
   module _ (M : Matrix) (k : ℕ) (k≥ : 4 + length (modes M) ≤ⁿ k) where
 
@@ -492,8 +492,8 @@ module Core (St : Stars) (K : KleeneStars St)
             y ∷ pre , r , mid' , post' , cong (y ∷_) eq , ℕₚ.<-trans lm (remove-< y∈)
 
     ----------------------------------------------------------------------
-    -- A walk of at least `bound + 1` steps is below a walk with the
-    -- same ends and steps and a cycle of at most `bound + 1` steps
+    -- A walk of at least `k + 1` steps is below a walk with the same
+    -- ends and steps and a cycle of at most `k + 1` steps
 
     private
       record Cut (x : Mode) (ys : List Mode) : Set where
@@ -792,7 +792,7 @@ module _ (E : ModeEntries) (St : Stars) (K : KleeneStars St)
 
   module _ (A : ModeMatrix E) where
 
-    -- the number of powers: four more than the modes `A` names
+    -- the index of the candidate: four more than the modes `A` names
     bound : ℕ
     bound = 4 + length (modes (mat A))
 

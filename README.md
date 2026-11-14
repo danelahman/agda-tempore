@@ -67,10 +67,10 @@ The root of each calculus, `PolymorphicCalculus/Everything.agda` and
 
 - `Util/`: equality and the non-negative rationals.
 - `Grades/`: grade algebras, grade systems and durations, the constructions on
-  grade algebras (products, semidirect products, indexed families, mode
-  matrices), timed traces, regular languages and timed regular expressions, the
-  hints the solver reads, and the example grade algebras and grade systems,
-  indexed in `Grades/Examples.agda`.
+  grade algebras (products, upward-closed sub-grades, semidirect products,
+  indexed families, mode matrices), timed traces, regular languages and timed
+  regular expressions, the hints the solver reads, and the example grade
+  algebras and grade systems, indexed in `Grades/Examples.agda`.
 - `Language/`: language specification that both calculi share: base types,
   ground types, comparisons, and operation signatures.
 - `PolymorphicCalculus/`: syntax, hypotheses and entailment, typing, the
