@@ -19,10 +19,10 @@
 --                                                                    --
 -- From a star on the entries, `Closures` builds for each grade a     --
 -- candidate closure that satisfies every law of a closure but        --
--- iteration; where iteration, decided, holds too, it is the closure  --
--- (`plus?`). For a Kleene star over the trivial action, iteration    --
--- holds with enough powers (`Matrix.ModeClosure`), and so it does    --
--- for a dioid with coordinates in such a dioid                       --
+-- iteration; where iteration holds too, it is the closure            --
+-- (`candidate-plus`). For a Kleene star over the trivial action,     --
+-- iteration holds with enough powers (`Matrix.ModeClosure`), and so  --
+-- it does for a dioid with coordinates in such a dioid               --
 -- (`Matrix.ModeCoordinates`). A dioid with closures has a star       --
 -- (`stars-from`).                                                    --
 ------------------------------------------------------------------------
@@ -48,8 +48,6 @@ open import Data.List.Membership.Propositional using (find)
 open import Data.List.Membership.Propositional using (_∉_)
 open import Data.Unit using () renaming (⊤ to ⊤′; tt to tt′)
 
-open import Data.List.Base using (length)
-open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Nat.Base using (ℕ; zero; suc)
 
 open import Grades.Durations using (Duration)
@@ -528,12 +526,12 @@ module _ (E : ModeEntries) where
   --
   -- is above `A`, below every grade above `A` closed under the
   -- product, and satisfies both induction laws (`candidate-plus`).
-  -- Where also `X · X ≾ X`, which is decided, `X` is the closure of
-  -- `A` (`plus?`), taking `k` from the number of modes `A` names. For
-  -- a Kleene star over the trivial action, `X · X ≾ X` holds with `k`
-  -- four more than that number (`Matrix.ModeClosure`), and through
-  -- coordinates in such a dioid with `k` larger by a bound on the
-  -- names at a coordinate (`Matrix.ModeCoordinates`).
+  -- Where also `X · X ≾ X`, `X` is the closure of `A`
+  -- (`candidate-plus`). For a Kleene star over the trivial action this
+  -- holds at every `k ≥ 4 + n`, `n` the number of modes `A` names
+  -- (`Matrix.ModeClosure`), and through coordinates in such a dioid
+  -- at every `k ≥ 4 + (w + n)`, `w` a bound on the names at a
+  -- coordinate (`Matrix.ModeCoordinates`).
 
   module Closures (St : Stars) where
 
@@ -716,22 +714,3 @@ module _ (E : ModeEntries) where
       (λ {v} hA hv → pw (X-least A k {mat v} (at {A} {v} hA) (at {v ·ᵐ v} {v} hv)))
       (λ {d} h → pw (X-indˡ A k {mat d} (at {A ·ᵐ d} {d} h)))
       (λ {d} h → pw (X-indʳ A k {mat d} (at {d ·ᵐ A} {d} h)))
-
-    -- the closure, where the candidate is closed under the product,
-    -- with powers up to the number of modes named and four more; the
-    -- decision recomputes the entries of every power, and its cost by
-    -- reduction is exponential in that number
-
-    private
-      plus-at : ∀ k A → Dec (candidate k A ·ᵐ candidate k A ≾ᵐ candidate k A)
-              → Maybe (Plus _·ᵐ_ _≾ᵐ_ A)
-      plus-at k A (yes it) = just (candidate-plus k A it)
-      plus-at k A (no _)   = nothing
-
-      decide : ∀ k A → Dec (candidate k A ·ᵐ candidate k A ≾ᵐ candidate k A)
-      decide k A = mat (candidate k A ·ᵐ candidate k A) ≤ᴹ? mat (candidate k A)
-
-    plus? : (A : ModeMatrix) → Maybe (Plus _·ᵐ_ _≾ᵐ_ A)
-    plus? A = plus-at k A (decide k A)
-      where k = suc (suc (suc (length (modes (mat A)))))
-

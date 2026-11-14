@@ -621,15 +621,13 @@ delays = record
 mode-times : Grade ℕᴰ
 mode-times = mode-grade-with time-entries delays
 
--- the closure of a grade, where `Closures` finds it, from the star of
--- the closures of the entries
+-- the star of the entries, from their closures
 
 time-stars : Stars
 time-stars = stars-from times-plus
 
-mode-times-plus? = Closures.plus? time-entries time-stars
-
--- the star is a Kleene star, through the coordinates of the entries
+-- the star of the entries is a Kleene star, through their coordinates;
+-- the closure below uses `interval-kleene` and the coordinates instead
 
 time-kleene : KleeneStars time-stars
 time-kleene = kleeneᶜ time-coordinates interval-kleene

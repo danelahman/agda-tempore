@@ -439,10 +439,6 @@ cost-kleene = record
 mode-switch-costs : {D : Duration} → Grade D
 mode-switch-costs = mode-grade cost-entries
 
--- the closure of a grade, where `Closures` finds it
-
-mode-switch-costs-plus? = Closures.plus? cost-entries cost-stars
-
 -- the closure of every grade, the candidate of `Closures` with the
 -- Kleene star of the costs, the costs naming no modes
 
